@@ -5370,6 +5370,68 @@ static void test_create_device_from_d3d3(void)
     DestroyWindow(window);
 }
 
+static void test_create_device_1(void)
+{
+    IDirect3DRM *d3drm = NULL;
+    IDirect3DRMDevice *device = (IDirect3DRMDevice *)0xdeadbeef;
+    HRESULT hr;
+
+    hr = Direct3DRMCreate(&d3drm);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x).\n", hr);
+
+    hr = IDirect3DRM_CreateDevice(d3drm, 640, 480, &device);
+    ok(hr == D3DRMERR_BADDEVICE, "Expected hr == D3DRMERR_BADDEVICE, got %x.\n", hr);
+    ok(device == NULL, "Expected device returned == NULL, got %p.\n", device);
+    hr = IDirect3DRM_CreateDevice(d3drm, 640, 480, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %x.\n", hr);
+
+    IDirect3DRM_Release(d3drm);
+}
+
+static void test_create_device_2(void)
+{
+    IDirect3DRM *d3drm = NULL;
+    IDirect3DRM2 *d3drm2 = NULL;
+    IDirect3DRMDevice2 *device2 = (IDirect3DRMDevice2 *)0xdeadbeef;
+    HRESULT hr;
+
+    hr = Direct3DRMCreate(&d3drm);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x).\n", hr);
+    hr = IDirect3DRM_QueryInterface(d3drm, &IID_IDirect3DRM2, (void **)&d3drm2);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM3 interface (hr = %x).\n", hr);
+
+    hr = IDirect3DRM2_CreateDevice(d3drm2, 640, 480, &device2);
+    ok(hr == D3DRMERR_BADDEVICE, "Expected hr == D3DRMERR_BADDEVICE, got %x.\n", hr);
+    ok(device2 == NULL, "Expected device returned == NULL, got %p.\n", device2);
+    hr = IDirect3DRM2_CreateDevice(d3drm2, 640, 480, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %x.\n", hr);
+
+    IDirect3DRM2_Release(d3drm2);
+    IDirect3DRM_Release(d3drm);
+}
+
+static void test_create_device_3(void)
+{
+    IDirect3DRM *d3drm = NULL;
+    IDirect3DRM3 *d3drm3 = NULL;
+    IDirect3DRMDevice3 *device3 = (IDirect3DRMDevice3 *)0xdeadbeef;
+    HRESULT hr;
+
+    hr = Direct3DRMCreate(&d3drm);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x).\n", hr);
+    hr = IDirect3DRM_QueryInterface(d3drm, &IID_IDirect3DRM3, (void **)&d3drm3);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM3 interface (hr = %x).\n", hr);
+
+    hr = IDirect3DRM3_CreateDevice(d3drm3, 640, 480, &device3);
+    ok(hr == D3DRMERR_BADDEVICE, "Expected hr == D3DRMERR_BADDEVICE, got %x.\n", hr);
+    ok(device3 == NULL, "Expected device returned == NULL, got %p.\n", device3);
+    hr = IDirect3DRM3_CreateDevice(d3drm3, 640, 480, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %x.\n", hr);
+
+    IDirect3DRM3_Release(d3drm3);
+    IDirect3DRM_Release(d3drm);
+}
+
 static char *create_bitmap(unsigned int w, unsigned int h, BOOL palettized)
 {
     unsigned int bpp = palettized ? 8 : 24;
@@ -7432,6 +7494,9 @@ START_TEST(d3drm)
     test_create_device_from_d3d1();
     test_create_device_from_d3d2();
     test_create_device_from_d3d3();
+    test_create_device_1();
+    test_create_device_2();
+    test_create_device_3();
     test_load_texture();
     test_texture_qi();
     test_viewport_qi();

@@ -2702,8 +2702,9 @@ binmode(STDOUT, ":utf8");
 
 target_init(\@global_settings);
 
-foreach(@ARGV) {
-  my $arg=$_;
+my @args = @ARGV;
+while (@args>0) {
+  my $arg=shift @args;
   # General options
   if ($arg eq "--nobanner") {
     $opt_no_banner=1;
@@ -2712,7 +2713,7 @@ foreach(@ARGV) {
   } elsif ($arg eq "--nobackup") {
     $opt_backup=0;
   } elsif ($arg eq "--single-target") {
-    $opt_single_target=shift @ARGV;
+    $opt_single_target=shift @args;
   } elsif ($arg eq "--lower-none") {
     $opt_lower=$OPT_LOWER_NONE;
   } elsif ($arg eq "--lower-all") {

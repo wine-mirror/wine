@@ -20,9 +20,9 @@
 105 stub     AVIMAKECOMPRESSEDSTREAM
 106 stub     AVIMAKEFILEFROMSTREAMS
 107 stub     AVIMAKESTREAMFROMCLIPBOARD
-110 pascal   AVIStreamGetFrame(long long) AVIStreamGetFrame
-111 pascal   AVIStreamGetFrameClose(long) AVIStreamGetFrameClose
-112 pascal   AVIStreamGetFrameOpen(long ptr) AVIStreamGetFrameOpen
+110 pascal   AVIStreamGetFrame(long long) AVIStreamGetFrame16
+111 pascal   AVIStreamGetFrameClose(long) AVIStreamGetFrameClose16
+112 pascal   AVIStreamGetFrameOpen(long ptr) AVIStreamGetFrameOpen16
 120 stub     _AVISAVE
 121 stub     AVISAVEV
 122 stub     AVISAVEOPTIONS
@@ -36,13 +36,13 @@
 141 pascal   AVIFileRelease(long) AVIFileRelease
 142 pascal   AVIFileInfo(long ptr long) AVIFileInfoA
 143 pascal   AVIFileGetStream(long ptr long long) AVIFileGetStream
-144 pascal   AVIFileCreateStream(long ptr ptr) AVIFileCreateStreamA
+144 pascal   AVIFileCreateStream(long ptr ptr) AVIFileCreateStream16
 146 pascal   AVIFileWriteData(long long ptr long) AVIFileWriteData
 147 pascal   AVIFileReadData(long long ptr ptr) AVIFileReadData
 148 pascal   AVIFileEndRecord(long) AVIFileEndRecord
 160 pascal   AVIStreamAddRef(long) AVIStreamAddRef
 161 pascal   AVIStreamRelease(long) AVIStreamRelease
-162 pascal   AVIStreamInfo(long ptr long) AVIStreamInfoA
+162 pascal   AVIStreamInfo(long ptr long) AVIStreamInfo16
 163 pascal   AVIStreamFindSample(long long long) AVIStreamFindSample
 164 pascal   AVIStreamReadFormat(long long ptr ptr) AVIStreamReadFormat
 165 pascal   AVIStreamReadData(long long ptr ptr) AVIStreamReadData

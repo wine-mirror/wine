@@ -52,8 +52,6 @@ static ULONG  (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
 static BOOL   (WINAPI *pGetProcessDEPPolicy)(HANDLE, LPDWORD, PBOOL);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static NTSTATUS (WINAPI *pNtProtectVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG, ULONG *);
-static NTSTATUS (WINAPI *pNtAllocateVirtualMemory)(HANDLE, PVOID *, ULONG, SIZE_T *, ULONG, ULONG);
-static NTSTATUS (WINAPI *pNtFreeVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG);
 
 /* ############################### */
 
@@ -230,8 +228,6 @@ static void test_VirtualAlloc(void)
     void *addr1, *addr2;
     DWORD old_prot;
     MEMORY_BASIC_INFORMATION info;
-    NTSTATUS status;
-    SIZE_T size;
 
     SetLastError(0xdeadbeef);
     addr1 = VirtualAlloc(0, 0, MEM_RESERVE, PAGE_NOACCESS);
@@ -440,52 +436,11 @@ static void test_VirtualAlloc(void)
     addr2 = VirtualAlloc(addr1, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     ok(addr2 == addr1, "VirtualAlloc returned %p, expected %p\n", addr2, addr1);
 
-    /* allocation conflicts because of 64k align */
-    size = 0x1000;
-    addr2 = (char *)addr1 + 0x1000;
-    status = pNtAllocateVirtualMemory(GetCurrentProcess(), &addr2, 0, &size,
-                                      MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    ok(status == STATUS_CONFLICTING_ADDRESSES, "NtAllocateVirtualMemory returned %08x\n", status);
-
-    /* it should conflict, even when zero_bits is explicitly set */
-    size = 0x1000;
-    addr2 = (char *)addr1 + 0x1000;
-    status = pNtAllocateVirtualMemory(GetCurrentProcess(), &addr2, 12, &size,
-                                      MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    todo_wine
-    ok(status == STATUS_CONFLICTING_ADDRESSES, "NtAllocateVirtualMemory returned %08x\n", status);
-    if (status == STATUS_SUCCESS) ok(VirtualFree(addr2, 0, MEM_RELEASE), "VirtualFree failed\n");
-
-    /* 21 zero bits is valid */
-    size = 0x1000;
-    addr2 = NULL;
-    status = pNtAllocateVirtualMemory(GetCurrentProcess(), &addr2, 21, &size,
-                                      MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    ok(status == STATUS_SUCCESS || status == STATUS_NO_MEMORY,
-       "NtAllocateVirtualMemory returned %08x\n", status);
-    if (status == STATUS_SUCCESS) ok(VirtualFree(addr2, 0, MEM_RELEASE), "VirtualFree failed\n");
-
-    /* 22 zero bits is invalid */
-    size = 0x1000;
-    addr2 = NULL;
-    status = pNtAllocateVirtualMemory(GetCurrentProcess(), &addr2, 22, &size,
-                                      MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    ok(status == STATUS_INVALID_PARAMETER_3, "NtAllocateVirtualMemory returned %08x\n", status);
-    if (status == STATUS_SUCCESS) ok(VirtualFree(addr2, 0, MEM_RELEASE), "VirtualFree failed\n");
-
     /* AT_ROUND_TO_PAGE flag is not supported for VirtualAlloc */
     SetLastError(0xdeadbeef);
     addr2 = VirtualAlloc(addr1, 0x1000, MEM_RESERVE | MEM_COMMIT | AT_ROUND_TO_PAGE, PAGE_EXECUTE_READWRITE);
     ok(!addr2, "VirtualAlloc unexpectedly succeeded\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %d, expected ERROR_INVALID_PARAMETER\n", GetLastError());
-
-    /* AT_ROUND_TO_PAGE flag is not supported for NtAllocateVirtualMemory */
-    size = 0x1000;
-    addr2 = (char *)addr1 + 0x1000;
-    status = pNtAllocateVirtualMemory(GetCurrentProcess(), &addr2, 0, &size, MEM_RESERVE |
-                                      MEM_COMMIT | AT_ROUND_TO_PAGE, PAGE_EXECUTE_READWRITE);
-    todo_wine
-    ok(status == STATUS_INVALID_PARAMETER_5, "NtAllocateVirtualMemory returned %08x\n", status);
 
     ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
 }
@@ -3945,7 +3900,7 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags, BOOL readonly )
     for (i = 0; i < ARRAY_SIZE(page_prot); i++)
     {
         SetLastError(0xdeadbeef);
-        hmap = CreateFileMappingW(hfile, NULL, page_prot[i] | sec_flags, 0, si.dwPageSize, NULL);
+        hmap = CreateFileMappingW(hfile, NULL, page_prot[i] | sec_flags, 0, 2*si.dwPageSize, NULL);
 
         if (readonly && (page_prot[i] == PAGE_READWRITE || page_prot[i] == PAGE_EXECUTE_READ
                     || page_prot[i] == PAGE_EXECUTE_READWRITE || page_prot[i] == PAGE_EXECUTE_WRITECOPY))
@@ -4062,7 +4017,8 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags, BOOL readonly )
             ret = VirtualQuery(base, &info, sizeof(info));
             ok(ret, "%d: VirtualQuery failed %d\n", j, GetLastError());
             ok(info.BaseAddress == base, "%d: (%04x) got %p, expected %p\n", j, view[j].access, info.BaseAddress, base);
-            ok(info.RegionSize == si.dwPageSize, "%d: (%04x) got %#lx != expected %#x\n", j, view[j].access, info.RegionSize, si.dwPageSize);
+            ok(info.RegionSize == 2*si.dwPageSize || (info.RegionSize == si.dwPageSize && (sec_flags & SEC_IMAGE)),
+               "%d: (%04x) got %#lx != expected %#x\n", j, view[j].access, info.RegionSize, 2*si.dwPageSize);
             if (sec_flags & SEC_IMAGE)
                 ok(info.Protect == PAGE_READONLY,
                     "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, info.Protect, view[j].prot);
@@ -4177,7 +4133,7 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags, BOOL readonly )
 
             if (!anon_mapping && is_compatible_protection(alloc_prot, PAGE_WRITECOPY))
             {
-                ret = VirtualProtect(base, si.dwPageSize, PAGE_WRITECOPY, &old_prot);
+                ret = VirtualProtect(base, sec_flags & SEC_IMAGE ? si.dwPageSize : 2*si.dwPageSize, PAGE_WRITECOPY, &old_prot);
                 todo_wine_if(readonly && view[j].prot != PAGE_WRITECOPY)
                 ok(ret, "VirtualProtect error %d, map %#x, view %#x\n", GetLastError(), page_prot[i], view[j].prot);
                 if (ret) *(DWORD*)base = 0xdeadbeef;
@@ -4186,9 +4142,21 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags, BOOL readonly )
                 todo_wine
                 ok(info.Protect == PAGE_READWRITE, "VirtualProtect wrong prot, map %#x, view %#x got %#x\n",
                    page_prot[i], view[j].prot, info.Protect );
+                todo_wine_if (!(sec_flags & SEC_IMAGE))
+                ok(info.RegionSize == si.dwPageSize, "wrong region size %#lx after write, map %#x, view %#x got %#x\n",
+                   info.RegionSize, page_prot[i], view[j].prot, info.Protect );
 
                 prev_prot = info.Protect;
                 alloc_prot = info.AllocationProtect;
+
+                if (!(sec_flags & SEC_IMAGE))
+                {
+                    ret = VirtualQuery((char*)base + si.dwPageSize, &info, sizeof(info));
+                    ok(ret, "%d: VirtualQuery failed %d\n", j, GetLastError());
+                    todo_wine_if(readonly && view[j].prot != PAGE_WRITECOPY)
+                    ok(info.Protect == PAGE_WRITECOPY, "wrong prot, map %#x, view %#x got %#x\n",
+                       page_prot[i], view[j].prot, info.Protect);
+                }
 
                 for (k = 0; k < ARRAY_SIZE(page_prot); k++)
                 {
@@ -4244,7 +4212,7 @@ static void test_mappings(void)
 
     hfile = CreateFileA(file_name, GENERIC_READ|GENERIC_WRITE|GENERIC_EXECUTE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(hfile != INVALID_HANDLE_VALUE, "CreateFile(%s) error %d\n", file_name, GetLastError());
-    SetFilePointer(hfile, si.dwPageSize, NULL, FILE_BEGIN);
+    SetFilePointer(hfile, 2*si.dwPageSize, NULL, FILE_BEGIN);
     SetEndOfFile(hfile);
 
     test_mapping( hfile, SEC_COMMIT, FALSE );
@@ -4423,8 +4391,6 @@ START_TEST(virtual)
     pRtlAddVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlAddVectoredExceptionHandler" );
     pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlRemoveVectoredExceptionHandler" );
     pNtProtectVirtualMemory = (void *)GetProcAddress( hntdll, "NtProtectVirtualMemory" );
-    pNtAllocateVirtualMemory = (void *)GetProcAddress( hntdll, "NtAllocateVirtualMemory" );
-    pNtFreeVirtualMemory = (void *)GetProcAddress( hntdll, "NtFreeVirtualMemory" );
 
     GetSystemInfo(&si);
     trace("system page size %#x\n", si.dwPageSize);

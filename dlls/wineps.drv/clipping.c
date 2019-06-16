@@ -88,8 +88,8 @@ void PSDRV_SetClip( PHYSDEV dev )
         return;
     }
 
-    hrgn = CreateRectRgn(0,0,0,0);
-    if (GetClipRgn(dev->hdc, hrgn))
+    hrgn = CreateRectRgn(0, 0, 0, 0);
+    if (GetRandomRgn(dev->hdc, hrgn, 3) == 1) /* clip && meta */
     {
         PSDRV_WriteGSave(dev);
         PSDRV_AddClip( dev, hrgn );
@@ -104,11 +104,12 @@ void PSDRV_SetClip( PHYSDEV dev )
 void PSDRV_ResetClip( PHYSDEV dev )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-    HRGN hrgn = CreateRectRgn(0,0,0,0);
-    BOOL empty;
+    HRGN hrgn;
 
-    empty = !GetClipRgn(dev->hdc, hrgn);
-    if(!empty && !physDev->pathdepth)
+    if (physDev->pathdepth) return;
+
+    hrgn = CreateRectRgn(0, 0, 0, 0);
+    if (GetRandomRgn(dev->hdc, hrgn, 3) == 1) /* clip && meta */
         PSDRV_WriteGRestore(dev);
     DeleteObject(hrgn);
 }

@@ -1,6 +1,7 @@
 MODULE    = rundll32.exe
-APPMODE   = -mwindows -municode
 IMPORTS   = user32
+
+EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
 
 C_SRCS = \
 	rundll32.c

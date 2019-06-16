@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(relay);
 
 struct relay_descr  /* descriptor for a module */
 {
-    void               *magic;               /* signature */
+    ULONG_PTR           magic;               /* signature */
     void               *relay_call;          /* functions to call from relay thunks */
     void               *private;             /* reserved for the relay code private data */
     const char         *entry_point_base;    /* base address of entry point thunks */
@@ -50,7 +50,13 @@ struct relay_descr  /* descriptor for a module */
     const char         *args_string;         /* string describing the arguments */
 };
 
-#define RELAY_DESCR_MAGIC  ((void *)0xdeb90002)
+struct relay_descr_rva  /* RVA to the descriptor for PE dlls */
+{
+    DWORD magic;
+    DWORD descr;
+};
+
+#define RELAY_DESCR_MAGIC  0xdeb90002
 #define IS_INTARG(x)       (((ULONG_PTR)(x) >> 16) == 0)
 
 /* private data built at dll load time */
@@ -837,6 +843,26 @@ __ASM_GLOBAL_FUNC( relay_call,
 #endif
 
 
+static struct relay_descr *get_relay_descr( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
+                                            DWORD exp_size )
+{
+    struct relay_descr *descr;
+    struct relay_descr_rva *rva;
+    ULONG_PTR ptr = (ULONG_PTR)module + exports->Name;
+
+    /* sanity checks */
+    if (ptr <= (ULONG_PTR)(exports + 1)) return NULL;
+    if (ptr > (ULONG_PTR)exports + exp_size) return NULL;
+    if (ptr % sizeof(DWORD)) return NULL;
+
+    rva = (struct relay_descr_rva *)ptr - 1;
+    if (rva->magic != RELAY_DESCR_MAGIC) return NULL;
+    if (rva->descr) descr = (struct relay_descr *)((char *)module + rva->descr);
+    else descr = (struct relay_descr *)((const char *)exports + exp_size);
+    if (descr->magic != RELAY_DESCR_MAGIC) return NULL;
+    return descr;
+}
+
 /***********************************************************************
  *           RELAY_GetProcAddress
  *
@@ -846,9 +872,9 @@ FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *expo
                               DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user )
 {
     struct relay_private_data *data;
-    const struct relay_descr *descr = (const struct relay_descr *)((const char *)exports + exp_size);
+    const struct relay_descr *descr = get_relay_descr( module, exports, exp_size );
 
-    if (descr->magic != RELAY_DESCR_MAGIC || !(data = descr->private)) return proc;  /* no relay data */
+    if (!descr || !(data = descr->private)) return proc;  /* no relay data */
     if (!data->entry_points[ordinal].orig_func) return proc;  /* not a relayed function */
     if (check_from_module( debug_from_relay_includelist, debug_from_relay_excludelist, user ))
         return proc;  /* we want to relay it */
@@ -866,18 +892,19 @@ void RELAY_SetupDLL( HMODULE module )
     IMAGE_EXPORT_DIRECTORY *exports;
     DWORD *funcs;
     unsigned int i, len;
-    DWORD size, entry_point_rva;
+    DWORD size, entry_point_rva, old_prot;
     struct relay_descr *descr;
     struct relay_private_data *data;
     const WORD *ordptr;
+    void *func_base;
+    SIZE_T func_size;
 
     RtlRunOnceExecuteOnce( &init_once, init_debug_lists, NULL, NULL );
 
     exports = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
     if (!exports) return;
 
-    descr = (struct relay_descr *)((char *)exports + size);
-    if (descr->magic != RELAY_DESCR_MAGIC) return;
+    if (!(descr = get_relay_descr( module, exports, size ))) return;
 
     if (!(data = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) +
                                   (exports->NumberOfFunctions-1) * sizeof(data->entry_points) )))
@@ -889,7 +916,7 @@ void RELAY_SetupDLL( HMODULE module )
     data->module = module;
     data->base   = exports->Base;
     len = strlen( (char *)module + exports->Name );
-    if (len > 4 && !strcasecmp( (char *)module + exports->Name + len - 4, ".dll" )) len -= 4;
+    if (len > 4 && !_stricmp( (char *)module + exports->Name + len - 4, ".dll" )) len -= 4;
     len = min( len, sizeof(data->dllname) - 1 );
     memcpy( data->dllname, (char *)module + exports->Name, len );
     data->dllname[len] = 0;
@@ -907,6 +934,10 @@ void RELAY_SetupDLL( HMODULE module )
 
     funcs = (DWORD *)((char *)module + exports->AddressOfFunctions);
     entry_point_rva = descr->entry_point_base - (const char *)module;
+
+    func_base = funcs;
+    func_size = exports->NumberOfFunctions * sizeof(*funcs);
+    NtProtectVirtualMemory( NtCurrentProcess(), &func_base, &func_size, PAGE_READWRITE, &old_prot );
     for (i = 0; i < exports->NumberOfFunctions; i++, funcs++)
     {
         if (!descr->entry_point_offsets[i]) continue;   /* not a normal function */
@@ -916,6 +947,8 @@ void RELAY_SetupDLL( HMODULE module )
         data->entry_points[i].orig_func = (char *)module + *funcs;
         *funcs = entry_point_rva + descr->entry_point_offsets[i];
     }
+    if (old_prot != PAGE_READWRITE)
+        NtProtectVirtualMemory( NtCurrentProcess(), &func_base, &func_size, old_prot, &old_prot );
 }
 
 #else  /* __i386__ || __x86_64__ || __arm__ || __aarch64__ */
@@ -1054,7 +1087,7 @@ void SNOOP_SetupDLL(HMODULE hmod)
     (*dll)->nrofordinals = exports->NumberOfFunctions;
     strcpy( (*dll)->name, name );
     p = (*dll)->name + strlen((*dll)->name) - 4;
-    if (p > (*dll)->name && !strcasecmp( p, ".dll" )) *p = 0;
+    if (p > (*dll)->name && !_stricmp( p, ".dll" )) *p = 0;
 
     size = exports->NumberOfFunctions * sizeof(SNOOP_FUN);
     addr = NULL;
@@ -1320,7 +1353,7 @@ void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Return( void **stack )
                         "leal 12(%esp),%eax\n\t"                        \
                         "pushl %eax\n\t"                                \
                         __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")       \
-                        "call " __ASM_NAME("__regs_" #name) __ASM_STDCALL(4) "\n\t" \
+                        "call " __ASM_STDCALL("__regs_" #name,4) "\n\t" \
                         __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")      \
                         "popl %edx\n\t"                                 \
                         __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")      \

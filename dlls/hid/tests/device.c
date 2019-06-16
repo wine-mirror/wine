@@ -79,10 +79,17 @@ static void run_for_each_device(device_test *test)
                 trace("Not enough permissions to read device %s.\n", wine_dbgstr_w(data->DevicePath));
                 continue;
             }
+            if (file == INVALID_HANDLE_VALUE && GetLastError() == ERROR_SHARING_VIOLATION)
+            {
+                trace("Device is busy: %s.\n", wine_dbgstr_w(data->DevicePath));
+                continue;
+            }
+
             ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u.\n",
                 wine_dbgstr_w(data->DevicePath), GetLastError());
 
-            test(file);
+            if (file != INVALID_HANDLE_VALUE)
+                test(file);
 
             CloseHandle(file);
         }

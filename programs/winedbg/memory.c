@@ -491,7 +491,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                                 WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
                                 HeapFree(GetProcessHeap(), 0, ptr);
                                 dbg_printf("%s", tmp);
-                                count = 0; /* so that we'll get away from outter loop */
+                                count = 0; /* so that we'll get away from outer loop */
                                 break;
                             }
                         }

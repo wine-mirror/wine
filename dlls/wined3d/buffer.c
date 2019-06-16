@@ -135,13 +135,16 @@ void wined3d_buffer_invalidate_location(struct wined3d_buffer *buffer, DWORD loc
 /* Context activation is done by the caller. */
 static void wined3d_buffer_gl_bind(struct wined3d_buffer_gl *buffer_gl, struct wined3d_context *context)
 {
-    context_bind_bo(context, buffer_gl->buffer_type_hint, buffer_gl->buffer_object);
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+
+    wined3d_context_gl_bind_bo(context_gl, buffer_gl->buffer_type_hint, buffer_gl->buffer_object);
 }
 
 /* Context activation is done by the caller. */
 static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *buffer_gl,
         struct wined3d_context *context)
 {
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     struct wined3d_resource *resource = &buffer_gl->b.resource;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -177,7 +180,7 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
                  * when deleting a potentially bound transform feedback buffer.
                  * This may happen when the device is being destroyed. */
                 WARN("Deleting buffer object for buffer %p, disabling transform feedback.\n", buffer_gl);
-                context_end_transform_feedback(context);
+                wined3d_context_gl_end_transform_feedback(context_gl);
             }
         }
     }
@@ -1216,7 +1219,8 @@ void wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_off
     src.addr += src_offset;
 
     context = context_acquire(dst_buffer->resource.device, NULL, 0);
-    context_copy_bo_address(context, &dst, wined3d_buffer_gl(dst_buffer)->buffer_type_hint,
+    wined3d_context_gl_copy_bo_address(wined3d_context_gl(context),
+            &dst, wined3d_buffer_gl(dst_buffer)->buffer_type_hint,
             &src, wined3d_buffer_gl(src_buffer)->buffer_type_hint, size);
     context_release(context);
 

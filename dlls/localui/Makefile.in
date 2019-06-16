@@ -1,6 +1,8 @@
 MODULE    = localui.dll
 IMPORTS   = winspool user32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	localui.c
 

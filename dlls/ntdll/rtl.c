@@ -50,18 +50,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-#ifdef __i386__
-#define DEFINE_FASTCALL_WRAPPER(func,args) \
-    __ASM_STDCALL_FUNC( __fastcall_ ## func, args, \
-                       "popl %eax\n\t" \
-                       "pushl %edx\n\t" \
-                       "pushl %ecx\n\t" \
-                       "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
-#else
-#define DEFINE_FASTCALL_WRAPPER(func,args) /* nothing */
-#endif
-
 /* CRC polynomial 0xedb88320 */
 static const DWORD CRC_table[256] =
 {
@@ -1259,8 +1247,8 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushListSListEx(PSLIST_HEADER list, PSLIST_ENT
  * RtlInterlockedPushListSList   [NTDLL.@]
  */
 DEFINE_FASTCALL_WRAPPER(RtlInterlockedPushListSList, 16)
-PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
-                                                PSLIST_ENTRY last, ULONG count)
+PSLIST_ENTRY FASTCALL RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
+                                                  PSLIST_ENTRY last, ULONG count)
 {
     return RtlInterlockedPushListSListEx(list, first, last, count);
 }
@@ -1655,39 +1643,6 @@ void WINAPI RtlInitializeGenericTableAvl(PRTL_AVL_TABLE table, PRTL_AVL_COMPARE_
 void WINAPI RtlInsertElementGenericTableAvl(PRTL_AVL_TABLE table, void *buffer, ULONG size, BOOL *element)
 {
     FIXME("%p %p %u %p: stub\n", table, buffer, size, element);
-}
-
-typedef struct _RTL_UNLOAD_EVENT_TRACE
-{
-    PVOID BaseAddress;
-    SIZE_T SizeOfImage;
-    ULONG Sequence;
-    ULONG TimeDateStamp;
-    ULONG CheckSum;
-    WCHAR ImageName[32];
-} RTL_UNLOAD_EVENT_TRACE, *PRTL_UNLOAD_EVENT_TRACE;
-
-/*********************************************************************
- *           RtlGetUnloadEventTrace [NTDLL.@]
- */
-RTL_UNLOAD_EVENT_TRACE * WINAPI RtlGetUnloadEventTrace(void)
-{
-    FIXME("stub!\n");
-    return NULL;
-}
-
-/*********************************************************************
- *           RtlGetUnloadEventTraceEx [NTDLL.@]
- */
-void WINAPI RtlGetUnloadEventTraceEx(ULONG **size, ULONG **count, void **trace)
-{
-    static ULONG dummy_size, dummy_count;
-
-    FIXME("(%p, %p, %p): stub!\n", size, count, trace);
-
-    if (size)  *size  = &dummy_size;
-    if (count) *count = &dummy_count;
-    if (trace) *trace = NULL;
 }
 
 /*********************************************************************

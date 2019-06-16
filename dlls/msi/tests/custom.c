@@ -34,15 +34,15 @@
 
 static int todo_level, todo_do_loop;
 
-static void ok_(MSIHANDLE hinst, int todo, const char *file, int line, int condition, const char *msg, ...)
+static void WINAPIV ok_(MSIHANDLE hinst, int todo, const char *file, int line, int condition, const char *msg, ...)
 {
     static char buffer[2000];
     MSIHANDLE record;
-    va_list valist;
+    __ms_va_list valist;
 
-    va_start(valist, msg);
+    __ms_va_start(valist, msg);
     vsprintf(buffer, msg, valist);
-    va_end(valist);
+    __ms_va_end(valist);
 
     record = MsiCreateRecord(5);
     MsiRecordSetInteger(record, 1, todo);
@@ -1112,11 +1112,160 @@ static void test_costs(MSIHANDLE hinst)
     ok(hinst, sz == 2, "got size %u\n", sz);
 }
 
+static void test_invalid_functions(MSIHANDLE hinst)
+{
+    char path[MAX_PATH], package_name[20];
+    MSIHANDLE db, preview, package;
+    UINT r;
+
+    r = MsiGetDatabaseState(hinst);
+    ok(hinst, r == MSIDBSTATE_ERROR, "got %u\n", r);
+
+    db = MsiGetActiveDatabase(hinst);
+    ok(hinst, db, "MsiGetActiveDatabase failed\n");
+
+    r = MsiDatabaseGenerateTransformA(db, db, "bogus.mst", 0, 0);
+    todo_wine ok(hinst, r == ERROR_INVALID_HANDLE, "got %u\n", r);
+
+    r = MsiDatabaseApplyTransformA(db, "bogus.mst", 0);
+    ok(hinst, r == ERROR_INVALID_HANDLE, "got %u\n", r);
+
+    r = MsiCreateTransformSummaryInfoA(db, db, "bogus.mst", 0, 0);
+    todo_wine ok(hinst, r == ERROR_INSTALL_PACKAGE_OPEN_FAILED, "got %u\n", r);
+
+    GetCurrentDirectoryA(sizeof(path), path);
+    r = MsiDatabaseExportA(db, "Test", path, "bogus.idt");
+    ok(hinst, r == ERROR_INVALID_HANDLE, "got %u\n", r);
+
+    r = MsiDatabaseImportA(db, path, "bogus.idt");
+    ok(hinst, r == ERROR_INVALID_HANDLE, "got %u\n", r);
+
+    r = MsiDatabaseCommit(db);
+    ok(hinst, r == ERROR_SUCCESS, "got %u\n", r);
+
+    r = MsiDatabaseMergeA(db, db, "MergeErrors");
+    ok(hinst, r == ERROR_INVALID_HANDLE, "got %u\n", r);
+
+    r = MsiGetDatabaseState(db);
+    ok(hinst, r == MSIDBSTATE_ERROR, "got %u\n", r);
+
+    r = MsiEnableUIPreview(db, &preview);
+    ok(hinst, r == ERROR_INVALID_HANDLE, "got %u\n", r);
+
+    sprintf(package_name, "#%u", db);
+    r = MsiOpenPackageA(package_name, &package);
+    ok(hinst, r == ERROR_INVALID_HANDLE, "got %u\n", r);
+
+    MsiCloseHandle(db);
+}
+
+static void test_view_get_error(MSIHANDLE hinst)
+{
+    MSIHANDLE db, view, rec;
+    char buffer[5];
+    MSIDBERROR err;
+    DWORD sz;
+    UINT r;
+
+    db = MsiGetActiveDatabase(hinst);
+    ok(hinst, db, "MsiGetActiveDatabase failed\n");
+
+    r = MsiDatabaseOpenViewA(db, "SELECT * FROM `test2`", &view);
+    ok(hinst, !r, "got %u\n", r);
+
+    r = MsiViewExecute(view, 0);
+    ok(hinst, !r, "got %u\n", r);
+
+    sz = 0;
+    err = MsiViewGetErrorA(0, NULL, &sz);
+    todo_wine ok(hinst, err == MSIDBERROR_FUNCTIONERROR, "got %d\n", err);
+    ok(hinst, sz == 0, "got size %u\n", sz);
+
+    err = MsiViewGetErrorA(view, NULL, NULL);
+    ok(hinst, err == MSIDBERROR_INVALIDARG, "got %d\n", err);
+
+    sz = 0;
+    err = MsiViewGetErrorA(view, NULL, &sz);
+    ok(hinst, err == MSIDBERROR_FUNCTIONERROR, "got %d\n", err);
+    ok(hinst, sz == 0, "got size %u\n", sz);
+
+    sz = 0;
+    strcpy(buffer, "x");
+    err = MsiViewGetErrorA(view, buffer, &sz);
+    ok(hinst, err == MSIDBERROR_FUNCTIONERROR, "got %d\n", err);
+    ok(hinst, !strcmp(buffer, "x"), "got \"%s\"\n", buffer);
+    ok(hinst, sz == 0, "got size %u\n", sz);
+
+    sz = 1;
+    strcpy(buffer, "x");
+    err = MsiViewGetErrorA(view, buffer, &sz);
+    ok(hinst, err == MSIDBERROR_NOERROR, "got %d\n", err);
+    ok(hinst, !buffer[0], "got \"%s\"\n", buffer);
+    ok(hinst, sz == 0, "got size %u\n", sz);
+
+    rec = MsiCreateRecord(2);
+    MsiRecordSetInteger(rec, 1, 1);
+    MsiRecordSetInteger(rec, 2, 2);
+    r = MsiViewModify(view, MSIMODIFY_VALIDATE_NEW, rec);
+    ok(hinst, r == ERROR_INVALID_DATA, "got %u\n", r);
+
+    sz = 2;
+    strcpy(buffer, "x");
+    err = MsiViewGetErrorA(view, buffer, &sz);
+    ok(hinst, err == MSIDBERROR_DUPLICATEKEY, "got %d\n", err);
+    ok(hinst, !strcmp(buffer, "A"), "got \"%s\"\n", buffer);
+    ok(hinst, sz == 1, "got size %u\n", sz);
+
+    sz = 2;
+    strcpy(buffer, "x");
+    err = MsiViewGetErrorA(view, buffer, &sz);
+    todo_wine ok(hinst, err == MSIDBERROR_NOERROR, "got %d\n", err);
+    todo_wine ok(hinst, !buffer[0], "got \"%s\"\n", buffer);
+    todo_wine ok(hinst, sz == 0, "got size %u\n", sz);
+
+    r = MsiViewModify(view, MSIMODIFY_VALIDATE_NEW, rec);
+    ok(hinst, r == ERROR_INVALID_DATA, "got %u\n", r);
+
+    sz = 1;
+    strcpy(buffer, "x");
+    err = MsiViewGetErrorA(view, buffer, &sz);
+    ok(hinst, err == MSIDBERROR_MOREDATA, "got %d\n", err);
+    ok(hinst, !buffer[0], "got \"%s\"\n", buffer);
+    ok(hinst, sz == 1, "got size %u\n", sz);
+
+    sz = 1;
+    strcpy(buffer, "x");
+    err = MsiViewGetErrorA(view, buffer, &sz);
+    todo_wine ok(hinst, err == MSIDBERROR_NOERROR, "got %d\n", err);
+    ok(hinst, !buffer[0], "got \"%s\"\n", buffer);
+    todo_wine ok(hinst, sz == 0, "got size %u\n", sz);
+
+    r = MsiViewModify(view, MSIMODIFY_VALIDATE_NEW, rec);
+    ok(hinst, r == ERROR_INVALID_DATA, "got %u\n", r);
+
+    sz = 0;
+    strcpy(buffer, "x");
+    err = MsiViewGetErrorA(view, buffer, &sz);
+    ok(hinst, err == MSIDBERROR_FUNCTIONERROR, "got %d\n", err);
+    ok(hinst, !strcmp(buffer, "x"), "got \"%s\"\n", buffer);
+    ok(hinst, sz == 0, "got size %u\n", sz);
+
+    sz = 0;
+    strcpy(buffer, "x");
+    err = MsiViewGetErrorA(view, buffer, &sz);
+    ok(hinst, err == MSIDBERROR_FUNCTIONERROR, "got %d\n", err);
+    ok(hinst, !strcmp(buffer, "x"), "got \"%s\"\n", buffer);
+    ok(hinst, sz == 0, "got size %u\n", sz);
+
+    MsiCloseHandle(rec);
+    MsiCloseHandle(view);
+    MsiCloseHandle(db);
+}
+
 /* Main test. Anything that doesn't depend on a specific install configuration
  * or have undesired side effects should go here. */
 UINT WINAPI main_test(MSIHANDLE hinst)
 {
-    UINT res;
     IUnknown *unk = NULL;
     HRESULT hr;
 
@@ -1131,11 +1280,6 @@ UINT WINAPI main_test(MSIHANDLE hinst)
     ok(hinst, hr == S_OK, "got %#x\n", hr);
     CoUninitialize();
 
-    /* Test MsiGetDatabaseState() */
-    res = MsiGetDatabaseState(hinst);
-    todo_wine
-    ok(hinst, res == MSIDBSTATE_ERROR, "expected MSIDBSTATE_ERROR, got %u\n", res);
-
     test_props(hinst);
     test_db(hinst);
     test_doaction(hinst);
@@ -1144,6 +1288,8 @@ UINT WINAPI main_test(MSIHANDLE hinst)
     test_feature_states(hinst);
     test_format_record(hinst);
     test_costs(hinst);
+    test_invalid_functions(hinst);
+    test_view_get_error(hinst);
 
     return ERROR_SUCCESS;
 }

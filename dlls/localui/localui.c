@@ -30,7 +30,6 @@
 #include "ddk/winsplp.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "localui.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(localui);
@@ -187,7 +186,7 @@ static void dlg_port_already_exists(HWND hWnd, LPCWSTR portname)
     message = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     if (message) {
         message[0] = '\0';
-        snprintfW(message, len, res_PortExistsW, portname);
+        swprintf(message, len, res_PortExistsW, portname);
         MessageBoxW(hWnd, message, res_PortW, MB_OK | MB_ICONERROR);
         HeapFree(GetProcessHeap(), 0, message);
     }
@@ -213,7 +212,7 @@ static void dlg_invalid_portname(HWND hWnd, LPCWSTR portname)
     message = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     if (message) {
         message[0] = '\0';
-        snprintfW(message, len, res_InvalidNameW, portname);
+        swprintf(message, len, res_InvalidNameW, portname);
         MessageBoxW(hWnd, message, res_PortW, MB_OK | MB_ICONERROR);
         HeapFree(GetProcessHeap(), 0, message);
     }
@@ -380,7 +379,7 @@ static INT_PTR CALLBACK dlgproc_lptconfig(HWND hwnd, UINT msg, WPARAM wparam, LP
 
             /* native localui.dll use the same limits */
             if ((res > 0) && (res < 1000000) && status) {
-                sprintfW(bufferW, fmt_uW, res);
+                swprintf(bufferW, ARRAY_SIZE(bufferW), fmt_uW, res);
                 res = XcvDataW( data->hXcv, cmd_ConfigureLPTPortCommandOKW,
                         (PBYTE) bufferW,
                         (lstrlenW(bufferW) +1) * sizeof(WCHAR),
@@ -416,13 +415,13 @@ static DWORD get_type_from_name(LPCWSTR name)
 {
     HANDLE  hfile;
 
-    if (!strncmpiW(name, portname_LPT, ARRAY_SIZE(portname_LPT) -1))
+    if (!wcsnicmp(name, portname_LPT, ARRAY_SIZE(portname_LPT) -1))
         return PORT_IS_LPT;
 
-    if (!strncmpiW(name, portname_COM, ARRAY_SIZE(portname_COM) -1))
+    if (!wcsnicmp(name, portname_COM, ARRAY_SIZE(portname_COM) -1))
         return PORT_IS_COM;
 
-    if (!strcmpiW(name, portname_FILE))
+    if (!wcsicmp(name, portname_FILE))
         return PORT_IS_FILE;
 
     if (name[0] == '/')
@@ -431,10 +430,10 @@ static DWORD get_type_from_name(LPCWSTR name)
     if (name[0] == '|')
         return PORT_IS_PIPE;
 
-    if (!strncmpW(name, portname_CUPS, ARRAY_SIZE(portname_CUPS) -1))
+    if (!wcsncmp(name, portname_CUPS, ARRAY_SIZE(portname_CUPS) -1))
         return PORT_IS_CUPS;
 
-    if (!strncmpW(name, portname_LPR, ARRAY_SIZE(portname_LPR) -1))
+    if (!wcsncmp(name, portname_LPR, ARRAY_SIZE(portname_LPR) -1))
         return PORT_IS_LPR;
 
     /* Must be a file or a directory. Does the file exist ? */

@@ -45,13 +45,15 @@ static BOOL tgt_process_module_write(HANDLE hProcess, void* addr,
 enum dbg_start tgt_module_load(const char* name, BOOL keep)
 {
     DWORD opts = SymGetOptions();
+    BOOL native;
     HANDLE hDummy = (HANDLE)0x87654321;
     enum dbg_start ret = start_ok;
     WCHAR* nameW;
     unsigned len;
 
     SymSetOptions((opts & ~(SYMOPT_UNDNAME|SYMOPT_DEFERRED_LOADS)) |
-                  SYMOPT_LOAD_LINES | SYMOPT_AUTO_PUBLICS | 0x40000000);
+                  SYMOPT_LOAD_LINES | SYMOPT_AUTO_PUBLICS);
+    native = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
     if (!dbg_init(hDummy, NULL, FALSE))
         return start_error_init;
     len = MultiByteToWideChar(CP_ACP, 0, name, -1, NULL, 0);
@@ -76,7 +78,7 @@ enum dbg_start tgt_module_load(const char* name, BOOL keep)
     {
         dbg_printf("Non supported mode... errors may occur\n"
                    "Use at your own risks\n");
-        SymSetOptions(SymGetOptions() | 0x40000000);
+        SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
         dbg_curr_process = dbg_add_process(&be_process_module_io, 1, hDummy);
         dbg_curr_pid = 1;
         dbg_curr_thread = dbg_add_thread(dbg_curr_process, 2, NULL, NULL);
@@ -87,6 +89,7 @@ enum dbg_start tgt_module_load(const char* name, BOOL keep)
     {
         SymCleanup(hDummy);
         SymSetOptions(opts);
+        SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, native);
     }
 
     return ret;

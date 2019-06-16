@@ -182,6 +182,7 @@ static char *glExtensions;
 static const char *glxExtensions;
 static char wglExtensions[4096];
 static int glxVersion[2];
+static int glx_opcode;
 
 struct wgl_pixel_format
 {
@@ -336,7 +337,6 @@ static void (*pglXDestroyContext)( Display *dpy, GLXContext ctx );
 static Bool (*pglXMakeCurrent)( Display *dpy, GLXDrawable drawable, GLXContext ctx);
 static void (*pglXCopyContext)( Display *dpy, GLXContext src, GLXContext dst, unsigned long mask );
 static void (*pglXSwapBuffers)( Display *dpy, GLXDrawable drawable );
-static Bool (*pglXQueryExtension)( Display *dpy, int *errorb, int *event );
 static Bool (*pglXQueryVersion)( Display *dpy, int *maj, int *min );
 static Bool (*pglXIsDirect)( Display *dpy, GLXContext ctx );
 static GLXContext (*pglXGetCurrentContext)( void );
@@ -412,6 +412,8 @@ static BOOL has_extension( const char *list, const char *ext )
 static int GLXErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 {
     /* In the future we might want to find the exact X or GLX error to report back to the app */
+    if (event->request_code != glx_opcode)
+        return 0;
     return 1;
 }
 
@@ -594,7 +596,6 @@ static BOOL WINAPI init_opengl( INIT_ONCE *once, void *param, void **context )
     LOAD_FUNCPTR(glXIsDirect);
     LOAD_FUNCPTR(glXMakeCurrent);
     LOAD_FUNCPTR(glXSwapBuffers);
-    LOAD_FUNCPTR(glXQueryExtension);
     LOAD_FUNCPTR(glXQueryVersion);
 
     /* GLX 1.1 */
@@ -633,7 +634,8 @@ static BOOL WINAPI init_opengl( INIT_ONCE *once, void *param, void **context )
 
     if(!X11DRV_WineGL_InitOpenglInfo()) goto failed;
 
-    if (pglXQueryExtension(gdi_display, &error_base, &event_base)) {
+    if (XQueryExtension( gdi_display, "GLX", &glx_opcode, &event_base, &error_base ))
+    {
         TRACE("GLX is up and running error_base = %d\n", error_base);
     } else {
         ERR( "GLX extension is missing, disabling OpenGL.\n" );
@@ -1328,7 +1330,7 @@ static GLXContext create_glxcontext(Display *display, struct wgl_context *contex
 /***********************************************************************
  *              create_gl_drawable
  */
-static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel_format *format )
+static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel_format *format, BOOL known_child )
 {
     struct gl_drawable *gl, *prev;
     XVisualInfo *visual = format->visual;
@@ -1349,7 +1351,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel
     gl->format = format;
     gl->ref = 1;
 
-    if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* top-level window */
+    if (!known_child && !GetWindow( hwnd, GW_CHILD ) && GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* childless top-level window */
     {
         gl->type = DC_GL_WINDOW;
         gl->window = create_client_window( hwnd, visual );
@@ -1412,7 +1414,7 @@ static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
 
     if (!format->visual) return FALSE;
 
-    if (!(gl = create_gl_drawable( hwnd, format ))) return FALSE;
+    if (!(gl = create_gl_drawable( hwnd, format, FALSE ))) return FALSE;
 
     TRACE( "created GL drawable %lx for win %p %s\n",
            gl->drawable, hwnd, debugstr_fbconfig( format->fbconfig ));
@@ -1471,7 +1473,7 @@ static BOOL set_pixel_format(HDC hdc, int format, BOOL allow_change)
 /***********************************************************************
  *              sync_gl_drawable
  */
-void sync_gl_drawable( HWND hwnd )
+void sync_gl_drawable( HWND hwnd, BOOL known_child )
 {
     struct gl_drawable *old, *new;
 
@@ -1479,8 +1481,11 @@ void sync_gl_drawable( HWND hwnd )
 
     switch (old->type)
     {
+    case DC_GL_WINDOW:
+        if (!known_child) break; /* Still a childless top-level window */
+        /* fall through */
     case DC_GL_PIXMAP_WIN:
-        if (!(new = create_gl_drawable( hwnd, old->format ))) break;
+        if (!(new = create_gl_drawable( hwnd, old->format, known_child ))) break;
         mark_drawable_dirty( old, new );
         XFlush( gdi_display );
         TRACE( "Recreated GL drawable %lx to replace %lx\n", new->drawable, old->drawable );
@@ -1517,7 +1522,7 @@ void set_gl_drawable_parent( HWND hwnd, HWND parent )
         return;
     }
 
-    if ((new = create_gl_drawable( hwnd, old->format )))
+    if ((new = create_gl_drawable( hwnd, old->format, FALSE )))
     {
         mark_drawable_dirty( old, new );
         release_gl_drawable( new );
@@ -3304,9 +3309,10 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
         }
         pglXSwapBuffers(gdi_display, gl->drawable);
         break;
+    case DC_GL_WINDOW:
     case DC_GL_CHILD_WIN:
         if (ctx) sync_context( ctx );
-        escape.gl_drawable = gl->window;
+        if (gl->type == DC_GL_CHILD_WIN) escape.gl_drawable = gl->window;
         /* fall through */
     default:
         if (escape.gl_drawable && pglXSwapBuffersMscOML)
@@ -3362,7 +3368,7 @@ struct opengl_funcs *get_glx_driver( UINT version )
     return NULL;
 }
 
-void sync_gl_drawable( HWND hwnd )
+void sync_gl_drawable( HWND hwnd, BOOL known_child )
 {
 }
 

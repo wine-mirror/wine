@@ -28,8 +28,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <wchar.h>
 #include <wine/heap.h>
-#include <wine/unicode.h>
 
 /* msdn specified max for Win XP */
 #define MAXSTRING 8192
@@ -137,7 +137,7 @@ static inline WCHAR *heap_strdupW(const WCHAR *str)
     if(str) {
         size_t size;
 
-        size = (strlenW(str)+1)*sizeof(WCHAR);
+        size = (lstrlenW(str)+1)*sizeof(WCHAR);
         ret = heap_xalloc(size);
         memcpy(ret, str, size);
     }
@@ -147,7 +147,7 @@ static inline WCHAR *heap_strdupW(const WCHAR *str)
 
 static inline BOOL ends_with_backslash( const WCHAR *path )
 {
-    return path[0] && path[strlenW(path) - 1] == '\\';
+    return path[0] && path[lstrlenW(path) - 1] == '\\';
 }
 
 /* Data structure to hold context when executing batch files */

@@ -1064,9 +1064,17 @@ static unsigned char get_parameter_fc( const var_t *var, int is_return, unsigned
             case TGT_UNION:
             case TGT_USER_TYPE:
             case TGT_RANGE:
-            case TGT_ARRAY:
-                *flags |= IsSimpleRef | MustFree;
+                *flags |= MustFree | IsSimpleRef;
                 *typestring_offset = ref->typestring_offset;
+                if (!is_in && is_out) server_size = type_memsize( ref );
+                break;
+            case TGT_ARRAY:
+                *flags |= MustFree;
+                if (!type_array_is_decl_as_ptr(ref))
+                {
+                    *flags |= IsSimpleRef;
+                    *typestring_offset = ref->typestring_offset;
+                }
                 if (!is_in && is_out) server_size = type_memsize( ref );
                 break;
             case TGT_STRING:
@@ -2125,6 +2133,7 @@ static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs
             case TGT_POINTER:
             case TGT_CTXT_HANDLE:
             case TGT_CTXT_HANDLE_POINTER:
+            case TGT_ARRAY:
                 flags |= FC_ALLOCED_ON_STACK;
                 break;
             case TGT_IFACE_POINTER:
@@ -2943,14 +2952,10 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
     unsigned int size;
     unsigned int start_offset;
     unsigned char fc;
-    int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
     unsigned int baseoff
         = !type_array_is_decl_as_ptr(type) && current_structure
         ? type_memsize(current_structure)
         : 0;
-
-    if (!pointer_type)
-        pointer_type = FC_RP;
 
     if (!is_string_type(attrs, type_array_get_element(type)))
         write_embedded_types(file, attrs, type_array_get_element(type), name, FALSE, typestring_offset);
@@ -3572,9 +3577,8 @@ static unsigned int write_range_tfs(FILE *file, const attr_list_t *attrs,
     return start_offset;
 }
 
-static unsigned int write_type_tfs(FILE *file, int indent,
-                                   const attr_list_t *attrs, type_t *type,
-                                   const char *name,
+static unsigned int write_type_tfs(FILE *file, const attr_list_t *attrs,
+                                   type_t *type, const char *name,
                                    enum type_context context,
                                    unsigned int *typeformat_offset)
 {
@@ -3603,8 +3607,7 @@ static unsigned int write_type_tfs(FILE *file, int indent,
             context != TYPE_CONTEXT_CONTAINER_NO_POINTERS)
         {
             int ptr_type;
-            ptr_type = get_pointer_fc(type, attrs,
-                                      context == TYPE_CONTEXT_TOPLEVELPARAM);
+            ptr_type = get_pointer_fc_context(type, attrs, context);
             if (ptr_type != FC_RP || type_array_is_decl_as_ptr(type))
             {
                 unsigned int absoff = type->typestring_offset;
@@ -3656,13 +3659,13 @@ static unsigned int write_type_tfs(FILE *file, int indent,
             if (context != TYPE_CONTEXT_CONTAINER_NO_POINTERS)
                 write_pointer_tfs(file, attrs, type, *typeformat_offset + 4, context, typeformat_offset);
 
-            offset = write_type_tfs(file, indent, attrs, ref, name, ref_context, typeformat_offset);
+            offset = write_type_tfs(file, attrs, ref, name, ref_context, typeformat_offset);
             if (context == TYPE_CONTEXT_CONTAINER_NO_POINTERS)
                 return 0;
             return offset;
         }
 
-        offset = write_type_tfs( file, indent, attrs, type_pointer_get_ref(type), name,
+        offset = write_type_tfs( file, attrs, type_pointer_get_ref(type), name,
                                  ref_context, typeformat_offset);
         if (context == TYPE_CONTEXT_CONTAINER_NO_POINTERS)
             return 0;
@@ -3678,7 +3681,7 @@ static unsigned int write_type_tfs(FILE *file, int indent,
 static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *type,
                                 const char *name, int write_ptr, unsigned int *tfsoff)
 {
-    return write_type_tfs(file, 2, attrs, type, name, write_ptr ? TYPE_CONTEXT_CONTAINER : TYPE_CONTEXT_CONTAINER_NO_POINTERS, tfsoff);
+    return write_type_tfs(file, attrs, type, name, write_ptr ? TYPE_CONTEXT_CONTAINER : TYPE_CONTEXT_CONTAINER_NO_POINTERS, tfsoff);
 }
 
 static void process_tfs_iface(type_t *iface, FILE *file, int indent, unsigned int *offset)
@@ -3705,12 +3708,12 @@ static void process_tfs_iface(type_t *iface, FILE *file, int indent, unsigned in
 
             var = type_function_get_retval(func->type);
             if (!is_void(var->type))
-                var->typestring_offset = write_type_tfs( file, 2, var->attrs, var->type, func->name,
+                var->typestring_offset = write_type_tfs( file, var->attrs, var->type, func->name,
                                                          TYPE_CONTEXT_RETVAL, offset);
 
             if (type_get_function_args(func->type))
                 LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), var_t, entry )
-                    var->typestring_offset = write_type_tfs( file, 2, var->attrs, var->type, var->name,
+                    var->typestring_offset = write_type_tfs( file, var->attrs, var->type, var->name,
                                                              TYPE_CONTEXT_TOPLEVELPARAM, offset );
             break;
 
@@ -3722,7 +3725,7 @@ static void process_tfs_iface(type_t *iface, FILE *file, int indent, unsigned in
             {
                 if (is_attr(type_entry->type->attrs, ATTR_ENCODE)
                     || is_attr(type_entry->type->attrs, ATTR_DECODE))
-                    type_entry->type->typestring_offset = write_type_tfs( file, 2,
+                    type_entry->type->typestring_offset = write_type_tfs( file,
                             type_entry->type->attrs, type_entry->type, type_entry->type->name,
                             TYPE_CONTEXT_CONTAINER, offset);
             }
@@ -5061,10 +5064,10 @@ void write_exceptions( FILE *file )
     fprintf( file, "    siglongjmp( exc_frame->jmp, 1 );\n");
     fprintf( file, "}\n");
     fprintf( file, "\n");
-    fprintf( file, "static DWORD __widl_exception_handler( EXCEPTION_RECORD *record,\n");
-    fprintf( file, "                                       EXCEPTION_REGISTRATION_RECORD *frame,\n");
-    fprintf( file, "                                       CONTEXT *context,\n");
-    fprintf( file, "                                       EXCEPTION_REGISTRATION_RECORD **pdispatcher )\n");
+    fprintf( file, "static DWORD __cdecl __widl_exception_handler( EXCEPTION_RECORD *record,\n");
+    fprintf( file, "                                               EXCEPTION_REGISTRATION_RECORD *frame,\n");
+    fprintf( file, "                                               CONTEXT *context,\n");
+    fprintf( file, "                                               EXCEPTION_REGISTRATION_RECORD **pdispatcher )\n");
     fprintf( file, "{\n");
     fprintf( file, "    struct __exception_frame *exc_frame = (struct __exception_frame *)frame;\n");
     fprintf( file, "\n");

@@ -334,16 +334,15 @@ static struct module* module_get_container(const struct process* pcs,
  *           module_get_containee
  *
  */
-struct module* module_get_containee(const struct process* pcs, 
-                                    const struct module* outter)
+struct module* module_get_containee(const struct process* pcs, const struct module* outer)
 {
     struct module*      module;
-     
+
     for (module = pcs->lmodules; module; module = module->next)
     {
-        if (module != outter &&
-            outter->module.BaseOfImage <= module->module.BaseOfImage &&
-            outter->module.BaseOfImage + outter->module.ImageSize >=
+        if (module != outer &&
+            outer->module.BaseOfImage <= module->module.BaseOfImage &&
+            outer->module.BaseOfImage + outer->module.ImageSize >=
             module->module.BaseOfImage + module->module.ImageSize)
             return module;
     }
@@ -833,7 +832,7 @@ BOOL  WINAPI SymEnumerateModulesW64(HANDLE hProcess,
     
     for (module = pcs->lmodules; module; module = module->next)
     {
-        if (!(dbghelp_options & SYMOPT_WINE_WITH_NATIVE_MODULES) &&
+        if (!dbghelp_opt_native &&
             (module->type == DMT_ELF || module->type == DMT_MACHO))
             continue;
         if (!EnumModulesCallback(module->modulename,

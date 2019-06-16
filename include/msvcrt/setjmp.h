@@ -146,11 +146,17 @@ extern "C" {
 int __cdecl _setjmp(jmp_buf);
 void __cdecl longjmp(jmp_buf,int);
 
+#if defined(_WIN64) && defined(__GNUC__)
+int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) _setjmpex(jmp_buf,void*);
+# define setjmp(buf)   _setjmpex(buf,__builtin_frame_address(0))
+# define setjmpex(buf) _setjmpex(buf,__builtin_frame_address(0))
+#else
+# define setjmp _setjmp
+#endif
+
 #ifdef __cplusplus
 }
 #endif
-
-#define setjmp _setjmp
 
 #include <poppack.h>
 

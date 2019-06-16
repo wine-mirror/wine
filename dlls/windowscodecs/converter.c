@@ -458,8 +458,9 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
                     dstpixel=(DWORD*)dstrow;
                     for (x=0; x<prc->Width; x++)
                     {
+                        srcbyte++;
                         *dstpixel++ = 0xff000000|(*srcbyte<<16)|(*srcbyte<<8)|*srcbyte;
-                        srcbyte+=2;
+                        srcbyte++;
                     }
                     srcrow += srcstride;
                     dstrow += cbStride;
@@ -776,9 +777,9 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
                     dstpixel=(DWORD*)dstrow;
                     for (x=0; x<prc->Width; x++) {
                         BYTE red, green, blue;
-                        red = *srcpixel++; srcpixel++;
-                        green = *srcpixel++; srcpixel++;
-                        blue = *srcpixel++; srcpixel++;
+                        srcpixel++; red = *srcpixel++;
+                        srcpixel++; green = *srcpixel++;
+                        srcpixel++; blue = *srcpixel++;
                         *dstpixel++=0xff000000|red<<16|green<<8|blue;
                     }
                     srcrow += srcstride;
@@ -820,10 +821,10 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
                     dstpixel=(DWORD*)dstrow;
                     for (x=0; x<prc->Width; x++) {
                         BYTE red, green, blue, alpha;
-                        red = *srcpixel++; srcpixel++;
-                        green = *srcpixel++; srcpixel++;
-                        blue = *srcpixel++; srcpixel++;
-                        alpha = *srcpixel++; srcpixel++;
+                        srcpixel++; red = *srcpixel++;
+                        srcpixel++; green = *srcpixel++;
+                        srcpixel++; blue = *srcpixel++;
+                        srcpixel++; alpha = *srcpixel++;
                         *dstpixel++=alpha<<24|red<<16|green<<8|blue;
                     }
                     srcrow += srcstride;
@@ -1348,7 +1349,7 @@ static HRESULT copypixels_to_8bppGray(struct FormatConverter *This, const WICRec
     if (!srcdata) return E_OUTOFMEMORY;
 
     hr = copypixels_to_24bppBGR(This, prc, srcstride, srcdatasize, srcdata, source_format);
-    if (SUCCEEDED(hr) && prc)
+    if (SUCCEEDED(hr))
     {
         INT x, y;
         BYTE *src = srcdata, *dst = pbBuffer;
@@ -1438,7 +1439,7 @@ static HRESULT copypixels_to_8bppIndexed(struct FormatConverter *This, const WIC
     if (!srcdata) return E_OUTOFMEMORY;
 
     hr = copypixels_to_24bppBGR(This, prc, srcstride, srcdatasize, srcdata, source_format);
-    if (SUCCEEDED(hr) && prc)
+    if (SUCCEEDED(hr))
     {
         INT x, y;
         BYTE *src = srcdata, *dst = pbBuffer;

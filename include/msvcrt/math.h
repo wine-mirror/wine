@@ -70,6 +70,9 @@ double __cdecl ldexp(double, int);
 double __cdecl frexp(double, int*);
 double __cdecl modf(double, double*);
 double __cdecl fmod(double, double);
+double __cdecl fmin(double, double);
+double __cdecl fmax(double, double);
+double __cdecl erf(double);
 
 double __cdecl _hypot(double, double);
 double __cdecl _j0(double);
@@ -98,7 +101,16 @@ long __cdecl lrintf(float);
 long __cdecl lround(double);
 long __cdecl lroundf(float);
 
-#if defined(__x86_64__) || defined(__arm__)
+double __cdecl _copysign (double, double);
+double __cdecl _chgsign (double);
+double __cdecl _scalb(double, __msvcrt_long);
+double __cdecl _logb(double);
+double __cdecl _nextafter(double, double);
+int    __cdecl _finite(double);
+int    __cdecl _isnan(double);
+int    __cdecl _fpclass(double);
+
+#ifndef __i386__
 
 float __cdecl sinf(float);
 float __cdecl cosf(float);
@@ -121,41 +133,57 @@ float __cdecl sqrtf(float);
 float __cdecl ceilf(float);
 float __cdecl floorf(float);
 float __cdecl fabsf(float);
-float __cdecl ldexpf(float, int);
 float __cdecl frexpf(float, int*);
 float __cdecl modff(float, float*);
 float __cdecl fmodf(float, float);
 
+float __cdecl _copysignf(float, float);
+float __cdecl _chgsignf(float);
+float __cdecl _logbf(float);
+int   __cdecl _finitef(float);
+int   __cdecl _isnanf(float);
+int   __cdecl _fpclassf(float);
+
 #else
 
-#define sinf(x) ((float)sin((double)(x)))
-#define cosf(x) ((float)cos((double)(x)))
-#define tanf(x) ((float)tan((double)(x)))
-#define sinhf(x) ((float)sinh((double)(x)))
-#define coshf(x) ((float)cosh((double)(x)))
-#define tanhf(x) ((float)tanh((double)(x)))
-#define asinf(x) ((float)asin((double)(x)))
-#define acosf(x) ((float)acos((double)(x)))
-#define atanf(x) ((float)atan((double)(x)))
-#define atan2f(x,y) ((float)atan2((double)(x), (double)(y)))
-#define asinhf(x) ((float)asinh((double)(x)))
-#define acoshf(x) ((float)acosh((double)(x)))
-#define atanhf(x) ((float)atanh((double)(x)))
-#define expf(x) ((float)exp((double)(x)))
-#define logf(x) ((float)log((double)(x)))
-#define log10f(x) ((float)log10((double)(x)))
-#define powf(x,y) ((float)pow((double)(x), (double)(y)))
-#define sqrtf(x) ((float)sqrt((double)(x)))
-#define ceilf(x) ((float)ceil((double)(x)))
-#define floorf(x) ((float)floor((double)(x)))
-#define fabsf(x) ((float)fabs((double)(x)))
-#define frexpf(x) ((float)frexp((double)(x)))
-#define modff(x,y) ((float)modf((double)(x), (double*)(y)))
-#define fmodf(x,y) ((float)fmod((double)(x), (double)(y)))
+static inline float sinf(float x) { return sin(x); }
+static inline float cosf(float x) { return cos(x); }
+static inline float tanf(float x) { return tan(x); }
+static inline float sinhf(float x) { return sinh(x); }
+static inline float coshf(float x) { return cosh(x); }
+static inline float tanhf(float x) { return tanh(x); }
+static inline float asinf(float x) { return asin(x); }
+static inline float acosf(float x) { return acos(x); }
+static inline float atanf(float x) { return atan(x); }
+static inline float atan2f(float x, float y) { return atan2(x, y); }
+static inline float asinhf(float x) { return asinh(x); }
+static inline float acoshf(float x) { return acosh(x); }
+static inline float atanhf(float x) { return atanh(x); }
+static inline float expf(float x) { return exp(x); }
+static inline float logf(float x) { return log(x); }
+static inline float log10f(float x) { return log10(x); }
+static inline float powf(float x, float y) { return pow(x, y); }
+static inline float sqrtf(float x) { return sqrt(x); }
+static inline float ceilf(float x) { return ceil(x); }
+static inline float floorf(float x) { return floor(x); }
+static inline float fabsf(float x) { return fabs(x); }
+static inline float frexpf(float x, int *y) { return frexp(x, y); }
+static inline float modff(float x, float *y) { double yd, ret = modf(x, &yd); *y = yd; return ret; }
+static inline float fmodf(float x, float y) { return fmod(x, y); }
+
+static inline float _copysignf(float x, float y) { return _copysign(x, y); }
+static inline float _chgsignf(float x) { return _chgsign(x); }
+static inline float _logbf(float x) { return _logb(x); }
+static inline int   _finitef(float x) { return _finite(x); }
+static inline int   _isnanf(float x) { return _isnan(x); }
+static inline int   _fpclassf(float x) { return _fpclass(x); }
 
 #endif
 
-#define ldexpf(x,y) ((float)ldexp((double)(x),(y)))
+static inline float ldexpf(float x, int y) { return ldexp(x, y); }
+
+#define copysign(x,y)  _copysign(x,y)
+#define copysignf(x,y) _copysignf(x,y)
 
 double __cdecl nearbyint(double);
 float __cdecl nearbyintf(float);
@@ -177,6 +205,18 @@ static const union {
 #  endif
 #endif
 
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+# define INFINITY __builtin_inff()
+# define NAN      __builtin_nanf("")
+#else
+static const union {
+    unsigned int __i;
+    float __f;
+} __inff = { 0x7f800000 }, __nanf = { 0x7fc00000 };
+# define INFINITY (__inff.__f)
+# define NAN      (__nanf.__f)
+#endif
+
 #define FP_INFINITE   1
 #define FP_NAN        2
 #define FP_NORMAL    -1
@@ -184,10 +224,10 @@ static const union {
 #define FP_ZERO       0
 
 short __cdecl _dclass(double);
-#define isfinite(x) (_dclass((double)(x)) <= FP_ZERO)
-#define isinf(x)    (_dclass((double)(x)) == FP_INFINITE)
-#define isnan(x)    (_dclass((double)(x)) == FP_NAN)
-#define isnormal(x) (_dclass((double)(x)) == FP_NORMAL)
+#define isfinite(x) (_finite(x))
+#define isinf(x)    (!(_finite(x) || _isnan(x)))
+#define isnan(x)    (_isnan(x))
+#define isnormal(x) (!!(_fpclass((double)(x)) & (_FPCLASS_NN|_FPCLASS_PN)))
 
 #ifdef __cplusplus
 }
@@ -195,7 +235,7 @@ short __cdecl _dclass(double);
 
 #include <poppack.h>
 
-#ifdef _USE_MATH_DEFINES
+#if !defined(__STRICT_ANSI__) || defined(_POSIX_C_SOURCE) || defined(_POSIX_SOURCE) || defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE) || defined(_USE_MATH_DEFINES)
 #ifndef _MATH_DEFINES_DEFINED
 #define _MATH_DEFINES_DEFINED
 #define M_E         2.71828182845904523536
@@ -221,7 +261,6 @@ static inline double jn( int n, double x ) { return _jn( n, x ); }
 static inline double y0( double x ) { return _y0( x ); }
 static inline double y1( double x ) { return _y1( x ); }
 static inline double yn( int n, double x ) { return _yn( n, x ); }
-static inline double cabs( struct _complex z ) { return _cabs( z ); }
 
 static inline float hypotf( float x, float y ) { return _hypotf( x, y ); }
 

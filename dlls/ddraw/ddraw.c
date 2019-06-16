@@ -365,43 +365,31 @@ static ULONG WINAPI d3d1_AddRef(IDirect3D *iface)
 
 static void ddraw_destroy_swapchain(struct ddraw *ddraw)
 {
+    unsigned int i;
+
     TRACE("Destroying the swapchain.\n");
+
+    wined3d_swapchain_decref(ddraw->wined3d_swapchain);
+
+    for (i = 0; i < ddraw->numConvertedDecls; ++i)
+    {
+        wined3d_vertex_declaration_decref(ddraw->decls[i].decl);
+    }
+    heap_free(ddraw->decls);
+    ddraw->numConvertedDecls = 0;
 
     wined3d_swapchain_decref(ddraw->wined3d_swapchain);
     ddraw->wined3d_swapchain = NULL;
 
-    if (!(ddraw->flags & DDRAW_NO3D))
+    /* Free the d3d window if one was created. */
+    if (ddraw->d3d_window && ddraw->d3d_window != ddraw->dest_window)
     {
-        UINT i;
-
-        for (i = 0; i < ddraw->numConvertedDecls; ++i)
-        {
-            wined3d_vertex_declaration_decref(ddraw->decls[i].decl);
-        }
-        heap_free(ddraw->decls);
-        ddraw->numConvertedDecls = 0;
-
-        if (FAILED(wined3d_device_uninit_3d(ddraw->wined3d_device)))
-        {
-            ERR("Failed to uninit 3D.\n");
-        }
-        else
-        {
-            /* Free the d3d window if one was created. */
-            if (ddraw->d3d_window && ddraw->d3d_window != ddraw->dest_window)
-            {
-                TRACE("Destroying the hidden render window %p.\n", ddraw->d3d_window);
-                DestroyWindow(ddraw->d3d_window);
-                ddraw->d3d_window = 0;
-            }
-        }
-
-        ddraw->flags &= ~DDRAW_D3D_INITIALIZED;
+        TRACE("Destroying the hidden render window %p.\n", ddraw->d3d_window);
+        DestroyWindow(ddraw->d3d_window);
+        ddraw->d3d_window = 0;
     }
-    else
-    {
-        wined3d_device_uninit_gdi(ddraw->wined3d_device);
-    }
+
+    ddraw->flags &= ~DDRAW_D3D_INITIALIZED;
 
     ddraw_set_swapchain_window(ddraw, NULL);
 
@@ -561,65 +549,14 @@ static HRESULT ddraw_set_focus_window(struct ddraw *ddraw, HWND window)
     return DD_OK;
 }
 
-static HRESULT ddraw_attach_d3d_device(struct ddraw *ddraw,
-        struct wined3d_swapchain_desc *swapchain_desc)
-{
-    HWND window = swapchain_desc->device_window;
-    HRESULT hr;
-
-    TRACE("ddraw %p.\n", ddraw);
-
-    if (!window || window == GetDesktopWindow())
-    {
-        window = CreateWindowExA(0, DDRAW_WINDOW_CLASS_NAME, "Hidden D3D Window",
-                WS_DISABLED, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
-                NULL, NULL, NULL, NULL);
-        if (!window)
-        {
-            ERR("Failed to create window, last error %#x.\n", GetLastError());
-            return E_FAIL;
-        }
-
-        ShowWindow(window, SW_HIDE);   /* Just to be sure */
-        WARN("No window for the Direct3DDevice, created hidden window %p.\n", window);
-
-        swapchain_desc->device_window = window;
-    }
-    else
-    {
-        TRACE("Using existing window %p for Direct3D rendering.\n", window);
-    }
-    ddraw->d3d_window = window;
-
-    /* Set this NOW, otherwise creating the depth stencil surface will cause a
-     * recursive loop until ram or emulated video memory is full. */
-    ddraw->flags |= DDRAW_D3D_INITIALIZED;
-    hr = wined3d_device_init_3d(ddraw->wined3d_device, swapchain_desc);
-    if (FAILED(hr))
-    {
-        ddraw->flags &= ~DDRAW_D3D_INITIALIZED;
-        return hr;
-    }
-
-    ddraw->declArraySize = 2;
-    if (!(ddraw->decls = heap_alloc_zero(ddraw->declArraySize * sizeof(*ddraw->decls))))
-    {
-        ERR("Error allocating an array for the converted vertex decls.\n");
-        ddraw->declArraySize = 0;
-        hr = wined3d_device_uninit_3d(ddraw->wined3d_device);
-        return E_OUTOFMEMORY;
-    }
-
-    TRACE("Successfully initialized 3D.\n");
-
-    return DD_OK;
-}
-
-static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL windowed)
+static HRESULT ddraw_attach_d3d_device(struct ddraw *ddraw, HWND window,
+        BOOL windowed, struct wined3d_swapchain **wined3d_swapchain)
 {
     struct wined3d_swapchain_desc swapchain_desc;
     struct wined3d_display_mode mode;
-    HRESULT hr = WINED3D_OK;
+    HRESULT hr;
+
+    TRACE("ddraw %p.\n", ddraw);
 
     if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
     {
@@ -636,26 +573,79 @@ static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL win
     swapchain_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;
     swapchain_desc.device_window = window;
     swapchain_desc.windowed = windowed;
-    swapchain_desc.flags = WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH;
+    swapchain_desc.flags = WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH | WINED3D_SWAPCHAIN_IMPLICIT;
 
-    if (!(ddraw->flags & DDRAW_NO3D))
-        hr = ddraw_attach_d3d_device(ddraw, &swapchain_desc);
+    if (ddraw->flags & DDRAW_NO3D)
+        return wined3d_swapchain_create(ddraw->wined3d_device, &swapchain_desc,
+                NULL, &ddraw_null_wined3d_parent_ops, wined3d_swapchain);
+
+    if (!window || window == GetDesktopWindow())
+    {
+        window = CreateWindowExA(0, DDRAW_WINDOW_CLASS_NAME, "Hidden D3D Window",
+                WS_DISABLED, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
+                NULL, NULL, NULL, NULL);
+        if (!window)
+        {
+            ERR("Failed to create window, last error %#x.\n", GetLastError());
+            return E_FAIL;
+        }
+
+        ShowWindow(window, SW_HIDE);   /* Just to be sure */
+        WARN("No window for the Direct3DDevice, created hidden window %p.\n", window);
+
+        swapchain_desc.device_window = window;
+    }
     else
-        hr = wined3d_device_init_gdi(ddraw->wined3d_device, &swapchain_desc);
+    {
+        TRACE("Using existing window %p for Direct3D rendering.\n", window);
+    }
+    ddraw->d3d_window = window;
 
-    if (FAILED(hr))
+    /* Set this NOW, otherwise creating the depth stencil surface will cause a
+     * recursive loop until ram or emulated video memory is full. */
+    ddraw->flags |= DDRAW_D3D_INITIALIZED;
+    if (FAILED(hr = wined3d_swapchain_create(ddraw->wined3d_device, &swapchain_desc,
+            NULL, &ddraw_null_wined3d_parent_ops, wined3d_swapchain)))
+    {
+        ddraw->flags &= ~DDRAW_D3D_INITIALIZED;
+        DestroyWindow(window);
+        ddraw->d3d_window = NULL;
+        return hr;
+    }
+
+    ddraw->declArraySize = 2;
+    if (!(ddraw->decls = heap_alloc_zero(ddraw->declArraySize * sizeof(*ddraw->decls))))
+    {
+        ERR("Error allocating an array for the converted vertex decls.\n");
+        ddraw->declArraySize = 0;
+        wined3d_swapchain_decref(*wined3d_swapchain);
+        DestroyWindow(window);
+        ddraw->d3d_window = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    TRACE("Successfully initialized 3D.\n");
+
+    return DD_OK;
+}
+
+static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL windowed)
+{
+    HRESULT hr;
+
+    if (ddraw->wined3d_swapchain)
+    {
+        ERR("Swapchain already created.\n");
+        return E_FAIL;
+    }
+
+    if (FAILED(hr = ddraw_attach_d3d_device(ddraw, window, windowed, &ddraw->wined3d_swapchain)))
     {
         ERR("Failed to create swapchain, hr %#x.\n", hr);
         return hr;
     }
-
-    if (!(ddraw->wined3d_swapchain = wined3d_device_get_swapchain(ddraw->wined3d_device, 0)))
-    {
-        ERR("Failed to get swapchain.\n");
-        return DDERR_INVALIDPARAMS;
-    }
-
     wined3d_swapchain_incref(ddraw->wined3d_swapchain);
+
     ddraw_set_swapchain_window(ddraw, window);
 
     if (ddraw->primary && ddraw->primary->palette)
@@ -1336,10 +1326,13 @@ HRESULT ddraw_get_d3dcaps(const struct ddraw *ddraw, D3DDEVICEDESC7 *caps)
         D3DPRASTERCAPS_PAT               | D3DPRASTERCAPS_ZTEST                | D3DPRASTERCAPS_SUBPIXEL             |
         D3DPRASTERCAPS_SUBPIXELX         | D3DPRASTERCAPS_FOGVERTEX            | D3DPRASTERCAPS_FOGTABLE             |
         D3DPRASTERCAPS_STIPPLE           | D3DPRASTERCAPS_ANTIALIASSORTDEPENDENT | D3DPRASTERCAPS_ANTIALIASSORTINDEPENDENT |
-        D3DPRASTERCAPS_ANTIALIASEDGES    | D3DPRASTERCAPS_MIPMAPLODBIAS        | D3DPRASTERCAPS_ZBIAS                |
+        D3DPRASTERCAPS_ANTIALIASEDGES    | D3DPRASTERCAPS_MIPMAPLODBIAS |
         D3DPRASTERCAPS_ZBUFFERLESSHSR    | D3DPRASTERCAPS_FOGRANGE             | D3DPRASTERCAPS_ANISOTROPY           |
         D3DPRASTERCAPS_WBUFFER           | D3DPRASTERCAPS_TRANSLUCENTSORTINDEPENDENT | D3DPRASTERCAPS_WFOG           |
-        D3DPRASTERCAPS_ZFOG);
+        D3DPRASTERCAPS_ZFOG | WINED3DPRASTERCAPS_DEPTHBIAS);
+    if (caps->dpcLineCaps.dwRasterCaps & WINED3DPRASTERCAPS_DEPTHBIAS)
+        caps->dpcLineCaps.dwRasterCaps = (caps->dpcLineCaps.dwRasterCaps | D3DPRASTERCAPS_ZBIAS)
+                & ~WINED3DPRASTERCAPS_DEPTHBIAS;
 
     caps->dpcLineCaps.dwZCmpCaps &= (
         D3DPCMPCAPS_NEVER                | D3DPCMPCAPS_LESS                    | D3DPCMPCAPS_EQUAL                   |
@@ -1516,6 +1509,8 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
 
     caps.dwCaps |= DDCAPS_ALIGNSTRIDE;
     caps.dwAlignStrideAlign = DDRAW_STRIDE_ALIGNMENT;
+
+    caps.ddsOldCaps.dwCaps = caps.ddsCaps.dwCaps;
 
     if(DriverCaps)
     {
@@ -4980,27 +4975,6 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     return hr;
 }
 
-static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent *device_parent,
-        struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **swapchain)
-{
-    struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
-    HRESULT hr;
-
-    TRACE("device_parent %p, desc %p, swapchain %p.\n", device_parent, desc, swapchain);
-
-    if (ddraw->wined3d_swapchain)
-    {
-        ERR("Swapchain already created.\n");
-        return E_FAIL;
-    }
-
-    if (FAILED(hr = wined3d_swapchain_create(ddraw->wined3d_device, desc, NULL,
-            &ddraw_null_wined3d_parent_ops, swapchain)))
-        WARN("Failed to create swapchain, hr %#x.\n", hr);
-
-    return hr;
-}
-
 static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
@@ -5008,7 +4982,6 @@ static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
     device_parent_activate,
     device_parent_texture_sub_resource_created,
     device_parent_create_swapchain_texture,
-    device_parent_create_swapchain,
 };
 
 HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type device_type)

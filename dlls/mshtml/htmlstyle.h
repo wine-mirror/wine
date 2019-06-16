@@ -16,20 +16,29 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-struct HTMLStyle {
+typedef struct CSSStyle CSSStyle;
+typedef void *(*style_qi_t)(CSSStyle*,REFIID);
+
+struct CSSStyle {
     DispatchEx dispex;
+    IHTMLCSSStyleDeclaration IHTMLCSSStyleDeclaration_iface;
+    IHTMLCSSStyleDeclaration2 IHTMLCSSStyleDeclaration2_iface;
+
+    LONG ref;
+    style_qi_t qi;
+
+    nsIDOMCSSStyleDeclaration *nsstyle;
+};
+
+struct HTMLStyle {
+    CSSStyle css_style;
     IHTMLStyle  IHTMLStyle_iface;
     IHTMLStyle2 IHTMLStyle2_iface;
     IHTMLStyle3 IHTMLStyle3_iface;
     IHTMLStyle4 IHTMLStyle4_iface;
     IHTMLStyle5 IHTMLStyle5_iface;
     IHTMLStyle6 IHTMLStyle6_iface;
-    IHTMLCSSStyleDeclaration IHTMLCSSStyleDeclaration_iface;
-    IHTMLCSSStyleDeclaration2 IHTMLCSSStyleDeclaration2_iface;
 
-    LONG ref;
-
-    nsIDOMCSSStyleDeclaration *nsstyle;
     HTMLElement *elem;
 };
 
@@ -128,9 +137,15 @@ typedef enum {
 } styleid_t;
 
 HRESULT HTMLStyle_Create(HTMLElement*,HTMLStyle**) DECLSPEC_HIDDEN;
+HRESULT create_computed_style(nsIDOMCSSStyleDeclaration*,IHTMLCSSStyleDeclaration**) DECLSPEC_HIDDEN;
+void init_css_style(CSSStyle*,nsIDOMCSSStyleDeclaration*,style_qi_t,
+                    dispex_static_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
 
-HRESULT get_nsstyle_property(nsIDOMCSSStyleDeclaration*,styleid_t,compat_mode_t,BSTR*) DECLSPEC_HIDDEN;
-HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration*,styleid_t,compat_mode_t,VARIANT*) DECLSPEC_HIDDEN;
+void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode) DECLSPEC_HIDDEN;
+const dispex_static_data_vtbl_t CSSStyle_dispex_vtbl DECLSPEC_HIDDEN;
+
+HRESULT get_style_property(CSSStyle*,styleid_t,BSTR*) DECLSPEC_HIDDEN;
+HRESULT get_style_property_var(CSSStyle*,styleid_t,VARIANT*) DECLSPEC_HIDDEN;
 
 HRESULT get_elem_style(HTMLElement*,styleid_t,BSTR*) DECLSPEC_HIDDEN;
 HRESULT set_elem_style(HTMLElement*,styleid_t,const WCHAR*) DECLSPEC_HIDDEN;

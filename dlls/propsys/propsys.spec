@@ -111,7 +111,7 @@
 @ stub PropVariantToBooleanVector
 @ stub PropVariantToBooleanVectorAlloc
 @ stub PropVariantToBooleanWithDefault
-@ stub PropVariantToBuffer
+@ stdcall PropVariantToBuffer(ptr ptr long)
 @ stdcall PropVariantToDouble(ptr ptr)
 @ stub PropVariantToDoubleVector
 @ stub PropVariantToDoubleVectorAlloc
@@ -133,7 +133,7 @@
 @ stub PropVariantToInt64VectorAlloc
 @ stub PropVariantToInt64WithDefault
 @ stub PropVariantToStrRet
-@ stub PropVariantToString
+@ stdcall PropVariantToString(ptr ptr long)
 @ stdcall PropVariantToStringAlloc(ptr ptr)
 @ stub PropVariantToStringVector
 @ stub PropVariantToStringVectorAlloc

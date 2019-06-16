@@ -291,6 +291,7 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define ERROR_NO_DATA                                      232
 #define ERROR_PIPE_NOT_CONNECTED                           233
 #define ERROR_MORE_DATA                                    234
+#define ERROR_NO_WORK_DONE                                 235
 #define ERROR_VC_DISCONNECTED                              240
 #define ERROR_INVALID_EA_NAME                              254
 #define ERROR_EA_LIST_INCONSISTENT                         255
@@ -3089,6 +3090,13 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define WININET_E_NOT_INITIALIZED                          _HRESULT_TYPEDEF_(0x80072f8c)
 #define WININET_E_LOGIN_FAILURE_DISPLAY_ENTITY_BODY        _HRESULT_TYPEDEF_(0x80072f8e)
 #define WININET_E_DECODING_FAILED                          _HRESULT_TYPEDEF_(0x80072f8f)
+
+#define DWM_E_COMPOSITIONDISABLED                          _HRESULT_TYPEDEF_(0x80263001)
+#define DWM_E_REMOTING_NOT_SUPPORTED                       _HRESULT_TYPEDEF_(0x80263002)
+#define DWM_E_NO_REDIRECTION_SURFACE_AVAILABLE             _HRESULT_TYPEDEF_(0x80263003)
+#define DWM_E_NOT_QUEUING_PRESENTS                         _HRESULT_TYPEDEF_(0x80263004)
+#define DWM_E_ADAPTER_NOT_FOUND                            _HRESULT_TYPEDEF_(0x80263005)
+#define DWM_S_GDI_REDIRECTION_SURFACE                      _HRESULT_TYPEDEF_(0x00263005)
 
 #define D3D11_ERROR_TOO_MANY_UNIQUE_STATE_OBJECTS          _HRESULT_TYPEDEF_(0x887c0001)
 #define D3D11_ERROR_FILE_NOT_FOUND                         _HRESULT_TYPEDEF_(0x887c0002)

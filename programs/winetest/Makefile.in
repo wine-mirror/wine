@@ -1,7 +1,8 @@
 MODULE    = winetest.exe
-APPMODE   = -mconsole
 IMPORTS   = uuid comctl32 version user32 gdi32 advapi32 wsock32
 DELAYIMPORTS = ole32
+
+EXTRADLLFLAGS = -mconsole -mno-cygwin
 
 C_SRCS = \
 	gui.c \

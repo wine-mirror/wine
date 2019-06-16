@@ -24,20 +24,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
-#ifdef HAVE_FLOAT_H
-# include <float.h>
-#endif
+#include <float.h>
 
 #include "d3dx9_private.h"
 #undef MAKE_DDHRESULT
 #include "dxfile.h"
 #include "rmxfguid.h"
 #include "rmxftmpl.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
@@ -1590,10 +1585,10 @@ static void fill_attribute_table(DWORD *attrib_buffer, DWORD numfaces, void *ind
     attrib_table_size++;
 }
 
-static int attrib_entry_compare(const DWORD **a, const DWORD **b)
+static int attrib_entry_compare(const void *a, const void *b)
 {
-    const DWORD *ptr_a = *a;
-    const DWORD *ptr_b = *b;
+    const DWORD *ptr_a = *(const DWORD **)a;
+    const DWORD *ptr_b = *(const DWORD **)b;
     int delta = *ptr_a - *ptr_b;
 
     if (delta)
@@ -1623,8 +1618,7 @@ static HRESULT remap_faces_for_attrsort(struct d3dx9_mesh *This, const DWORD *in
 
     for (i = 0; i < This->numfaces; i++)
         sorted_attrib_ptr_buffer[i] = &attrib_buffer[i];
-    qsort(sorted_attrib_ptr_buffer, This->numfaces, sizeof(*sorted_attrib_ptr_buffer),
-         (int(*)(const void *, const void *))attrib_entry_compare);
+    qsort(sorted_attrib_ptr_buffer, This->numfaces, sizeof(*sorted_attrib_ptr_buffer), attrib_entry_compare);
 
     for (i = 0; i < This->numfaces; i++)
     {
@@ -3330,6 +3324,13 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
              nb_skin_weights_info, mesh_data->nb_bones);
         hr = E_FAIL;
         goto end;
+    }
+
+    if ((provide_flags & PROVIDE_SKININFO) && !mesh_data->skin_info)
+    {
+        if (FAILED(hr = D3DXCreateSkinInfoFVF(mesh_data->num_vertices, mesh_data->fvf,
+                mesh_data->nb_bones, &mesh_data->skin_info)))
+            goto end;
     }
 
     hr = D3D_OK;
@@ -6150,7 +6151,7 @@ HRESULT WINAPI D3DXCreateTextW(struct IDirect3DDevice9 *device, HDC hdc, const W
     }
     oldfont = SelectObject(hdc, font);
 
-    textlen = strlenW(text);
+    textlen = lstrlenW(text);
     for (i = 0; i < textlen; i++)
     {
         int datasize = GetGlyphOutlineW(hdc, text[i], GGO_NATIVE, &gm, 0, NULL, &identity);

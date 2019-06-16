@@ -123,7 +123,7 @@ static inline int u_strcmp( const unsigned char *s1, const unsigned char *s2 )
 
 static inline int u_strcasecmp( const unsigned char *s1, const unsigned char *s2 )
 {
-  return strcasecmp( (const char*)s1, (const char*)s2 );
+  return MSVCRT__stricmp( (const char*)s1, (const char*)s2 );
 }
 
 static inline int u_strncmp( const unsigned char *s1, const unsigned char *s2, MSVCRT_size_t len )
@@ -133,7 +133,7 @@ static inline int u_strncmp( const unsigned char *s1, const unsigned char *s2, M
 
 static inline int u_strncasecmp( const unsigned char *s1, const unsigned char *s2, MSVCRT_size_t len )
 {
-  return strncasecmp( (const char*)s1, (const char*)s2, len );
+  return MSVCRT__strnicmp( (const char*)s1, (const char*)s2, len );
 }
 
 static inline unsigned char *u_strchr( const unsigned char *s, unsigned char x )
@@ -404,7 +404,7 @@ unsigned int CDECL _mbctolower(unsigned int c)
       FIXME("Handle MBC chars\n");
       return c;
     }
-    return tolower(c); /* ASCII CP or SB char */
+    return MSVCRT__tolower_l(c, NULL); /* ASCII CP or SB char */
 }
 
 /*********************************************************************
@@ -417,7 +417,7 @@ unsigned int CDECL _mbctoupper(unsigned int c)
       FIXME("Handle MBC chars\n");
       return c;
     }
-    return toupper(c); /* ASCII CP or SB char */
+    return MSVCRT__toupper_l(c, NULL); /* ASCII CP or SB char */
 }
 
 /*********************************************************************
@@ -1909,7 +1909,7 @@ unsigned char* CDECL _mbslwr(unsigned char* s)
       *s++=c;
     }
   }
-  else for ( ; *s; s++) *s = tolower(*s);
+  else for ( ; *s; s++) *s = MSVCRT__tolower_l(*s, NULL);
   return ret;
 }
 
@@ -1943,7 +1943,7 @@ int CDECL _mbslwr_s(unsigned char* s, MSVCRT_size_t len)
       *s++=c;
     }
   }
-  else for ( ; *s && len > 0; s++, len--) *s = tolower(*s);
+  else for ( ; *s && len > 0; s++, len--) *s = MSVCRT__tolower_l(*s, NULL);
   if (*s)
   {
     *s = '\0';
@@ -1977,7 +1977,7 @@ unsigned char* CDECL _mbsupr(unsigned char* s)
       *s++=c;
     }
   }
-  else for ( ; *s; s++) *s = toupper(*s);
+  else for ( ; *s; s++) *s = MSVCRT__toupper_l(*s, NULL);
   return ret;
 }
 
@@ -2011,7 +2011,7 @@ int CDECL _mbsupr_s(unsigned char* s, MSVCRT_size_t len)
       *s++=c;
     }
   }
-  else for ( ; *s && len > 0; s++, len--) *s = toupper(*s);
+  else for ( ; *s && len > 0; s++, len--) *s = MSVCRT__toupper_l(*s, NULL);
   if (*s)
   {
     *s = '\0';

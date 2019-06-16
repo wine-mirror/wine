@@ -1,7 +1,7 @@
 @ stub LookupAccountNameLocalA
 @ stub LookupAccountNameLocalW
-@ stub LookupAccountSidLocalA
-@ stub LookupAccountSidLocalW
+@ stdcall LookupAccountSidLocalA(ptr ptr ptr ptr ptr ptr) advapi32.LookupAccountSidLocalA
+@ stdcall LookupAccountSidLocalW(ptr ptr ptr ptr ptr ptr) advapi32.LookupAccountSidLocalW
 @ stub LsaLookupClose
 @ stub LsaLookupFreeMemory
 @ stub LsaLookupGetDomainInfo

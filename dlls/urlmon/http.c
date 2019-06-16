@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 typedef struct {
     Protocol base;
 
-    IUnknown            IUnknown_outer;
+    IUnknown            IUnknown_inner;
     IInternetProtocolEx IInternetProtocolEx_iface;
     IInternetPriority   IInternetPriority_iface;
     IWinInetHttpInfo    IWinInetHttpInfo_iface;
@@ -47,7 +47,7 @@ typedef struct {
 
 static inline HttpProtocol *impl_from_IUnknown(IUnknown *iface)
 {
-    return CONTAINING_RECORD(iface, HttpProtocol, IUnknown_outer);
+    return CONTAINING_RECORD(iface, HttpProtocol, IUnknown_inner);
 }
 
 static inline HttpProtocol *impl_from_IInternetProtocolEx(IInternetProtocolEx *iface)
@@ -637,7 +637,7 @@ static HRESULT WINAPI HttpProtocolUnk_QueryInterface(IUnknown *iface, REFIID rii
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IUnknown_outer;
+        *ppv = &This->IUnknown_inner;
     }else if(IsEqualGUID(&IID_IInternetProtocolRoot, riid)) {
         TRACE("(%p)->(IID_IInternetProtocolRoot %p)\n", This, ppv);
         *ppv = &This->IInternetProtocolEx_iface;
@@ -967,16 +967,16 @@ static HRESULT create_http_protocol(BOOL https, IUnknown *outer, void **ppobj)
         return E_OUTOFMEMORY;
 
     ret->base.vtbl = &AsyncProtocolVtbl;
-    ret->IUnknown_outer.lpVtbl            = &HttpProtocolUnkVtbl;
+    ret->IUnknown_inner.lpVtbl            = &HttpProtocolUnkVtbl;
     ret->IInternetProtocolEx_iface.lpVtbl = &HttpProtocolVtbl;
     ret->IInternetPriority_iface.lpVtbl   = &HttpPriorityVtbl;
     ret->IWinInetHttpInfo_iface.lpVtbl    = &WinInetHttpInfoVtbl;
 
     ret->https = https;
     ret->ref = 1;
-    ret->outer = outer ? outer : &ret->IUnknown_outer;
+    ret->outer = outer ? outer : &ret->IUnknown_inner;
 
-    *ppobj = &ret->IUnknown_outer;
+    *ppobj = &ret->IUnknown_inner;
 
     URLMON_LockModule();
     return S_OK;

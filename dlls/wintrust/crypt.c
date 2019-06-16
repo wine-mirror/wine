@@ -147,6 +147,17 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
 }
 
 /***********************************************************************
+ *             CryptCATAdminAcquireContext2 (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATAdminAcquireContext2(HCATADMIN *catAdmin, const GUID *sys, const WCHAR *algorithm,
+                                         const CERT_STRONG_SIGN_PARA *policy, DWORD flags)
+{
+    FIXME("%p %s %s %p %x stub\n", catAdmin, debugstr_guid(sys), debugstr_w(algorithm), policy, flags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *             CryptCATAdminAddCatalog (WINTRUST.@)
  */
 HCATINFO WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, PWSTR catalogFile,

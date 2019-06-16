@@ -20,7 +20,7 @@
 @ stdcall IStream_Size(ptr ptr)
 @ stdcall IStream_Write(ptr ptr long) _IStream_Write
 @ stub IStream_WriteStr
-@ stdcall IUnknown_AtomicRelease(long)
+@ stdcall IUnknown_AtomicRelease(ptr)
 @ stdcall IUnknown_GetSite(ptr ptr ptr)
 @ stdcall IUnknown_QueryService(ptr ptr ptr ptr)
 @ stdcall IUnknown_Set(ptr ptr)

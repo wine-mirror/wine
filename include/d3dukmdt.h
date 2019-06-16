@@ -25,6 +25,8 @@
         ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
 #endif /* MAKEFOURCC */
 
+typedef UINT D3DKMT_HANDLE;
+
 typedef enum _D3DDDIFORMAT
 {
     D3DDDIFMT_UNKNOWN                 = 0,
@@ -135,5 +137,7 @@ typedef enum _D3DDDIFORMAT
     D3DDDIFMT_YUY2                    = MAKEFOURCC('Y', 'U', 'Y', '2'),
     D3DDDIFMT_FORCE_UINT              = 0x7fffffff,
 } D3DDDIFORMAT;
+
+typedef UINT D3DDDI_VIDEO_PRESENT_SOURCE_ID;
 
 #endif /* __WINE_D3DUKMDT_H */

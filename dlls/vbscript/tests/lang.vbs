@@ -1366,7 +1366,7 @@ end sub
 call test_identifiers()
 
 sub test_dotIdentifiers
-    ' test keywords that can also be an indentifier after a dot
+    ' test keywords that can also be an identifier after a dot
     ' Call ok(testObj.rem = 10, "testObj.rem = " & testObj.rem & " expected 10")
     Call ok(testObj.true = 10, "testObj.true = " & testObj.true & " expected 10")
     Call ok(testObj.false = 10, "testObj.false = " & testObj.false & " expected 10")

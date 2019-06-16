@@ -24,7 +24,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "wingdi.h"
-#include "wine/unicode.h"
 
 #define COBJMACROS
 #include "objbase.h"
@@ -2225,7 +2224,7 @@ void get_log_fontW(const GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
     lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
     lf->lfQuality = DEFAULT_QUALITY;
     lf->lfPitchAndFamily = 0;
-    strcpyW(lf->lfFaceName, font->family->FamilyName);
+    lstrcpyW(lf->lfFaceName, font->family->FamilyName);
 }
 
 static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
@@ -5114,7 +5113,7 @@ GpStatus gdip_format_string(HDC hdc,
 
     for(i = 0, j = 0; i < length; i++){
         /* FIXME: This makes the indexes passed to callback inaccurate. */
-        if(!isprintW(string[i]) && (string[i] != '\n'))
+        if(!iswprint(string[i]) && (string[i] != '\n'))
             continue;
 
         /* FIXME: tabs should be handled using tabstops from stringformat */
@@ -6941,7 +6940,7 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
         return InvalidParameter;
 
     if (length == -1)
-        length = strlenW(text);
+        length = lstrlenW(text);
 
     if (length == 0)
     {
@@ -7302,7 +7301,7 @@ static GpStatus draw_driver_string(GpGraphics *graphics, GDIPCONST UINT16 *text,
     GpStatus stat = NotImplemented;
 
     if (length == -1)
-        length = strlenW(text);
+        length = lstrlenW(text);
 
     if (graphics->hdc && !graphics->alpha_hdc &&
         ((flags & DriverStringOptionsRealizedAdvance) || length <= 1) &&

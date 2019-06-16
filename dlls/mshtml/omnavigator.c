@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -47,8 +48,12 @@ typedef struct {
 typedef struct {
     DispatchEx dispex;
     IHTMLDOMImplementation IHTMLDOMImplementation_iface;
+    IHTMLDOMImplementation2 IHTMLDOMImplementation2_iface;
 
     LONG ref;
+
+    nsIDOMDOMImplementation *implementation;
+    GeckoBrowser *browser;
 } HTMLDOMImplementation;
 
 static inline HTMLDOMImplementation *impl_from_IHTMLDOMImplementation(IHTMLDOMImplementation *iface)
@@ -64,6 +69,8 @@ static HRESULT WINAPI HTMLDOMImplementation_QueryInterface(IHTMLDOMImplementatio
 
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IHTMLDOMImplementation, riid)) {
         *ppv = &This->IHTMLDOMImplementation_iface;
+    }else if(IsEqualGUID(&IID_IHTMLDOMImplementation2, riid)) {
+        *ppv = &This->IHTMLDOMImplementation2_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
@@ -94,6 +101,9 @@ static ULONG WINAPI HTMLDOMImplementation_Release(IHTMLDOMImplementation *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        assert(!This->browser);
+        if(This->implementation)
+            nsIDOMDOMImplementation_Release(This->implementation);
         release_dispex(&This->dispex);
         heap_free(This);
     }
@@ -157,32 +167,184 @@ static const IHTMLDOMImplementationVtbl HTMLDOMImplementationVtbl = {
     HTMLDOMImplementation_hasFeature
 };
 
+static inline HTMLDOMImplementation *impl_from_IHTMLDOMImplementation2(IHTMLDOMImplementation2 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDOMImplementation, IHTMLDOMImplementation2_iface);
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_QueryInterface(IHTMLDOMImplementation2 *iface, REFIID riid, void **ppv)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IHTMLDOMImplementation_QueryInterface(&This->IHTMLDOMImplementation_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLDOMImplementation2_AddRef(IHTMLDOMImplementation2 *iface)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IHTMLDOMImplementation_AddRef(&This->IHTMLDOMImplementation_iface);
+}
+
+static ULONG WINAPI HTMLDOMImplementation2_Release(IHTMLDOMImplementation2 *iface)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IHTMLDOMImplementation_Release(&This->IHTMLDOMImplementation_iface);
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_GetTypeInfoCount(IHTMLDOMImplementation2 *iface, UINT *pctinfo)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_GetTypeInfo(IHTMLDOMImplementation2 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_GetIDsOfNames(IHTMLDOMImplementation2 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames,
+            cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_Invoke(IHTMLDOMImplementation2 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid,
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_createDocumentType(IHTMLDOMImplementation2 *iface, BSTR name,
+        VARIANT *public_id, VARIANT *system_id, IDOMDocumentType **new_type)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    FIXME("(%p)->(%s %s %s %p)\n", This, debugstr_w(name), debugstr_variant(public_id),
+          debugstr_variant(system_id), new_type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_createDocument(IHTMLDOMImplementation2 *iface, VARIANT *ns,
+        VARIANT *tag_name, IDOMDocumentType *document_type, IHTMLDocument7 **new_document)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    FIXME("(%p)->(%s %s %p %p)\n", This, debugstr_variant(ns), debugstr_variant(tag_name),
+          document_type, new_document);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_createHTMLDocument(IHTMLDOMImplementation2 *iface, BSTR title,
+        IHTMLDocument7 **new_document)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+    HTMLDocumentNode *new_document_node;
+    nsIDOMHTMLDocument *html_doc;
+    nsIDOMDocument *doc;
+    nsAString title_str;
+    nsresult nsres;
+    HRESULT hres;
+
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(title), new_document);
+
+    if(!This->browser)
+        return E_UNEXPECTED;
+
+    nsAString_InitDepend(&title_str, title);
+    nsres = nsIDOMDOMImplementation_CreateHTMLDocument(This->implementation, &title_str, &doc);
+    nsAString_Finish(&title_str);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateHTMLDocument failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMDocument_QueryInterface(doc, &IID_nsIDOMHTMLDocument, (void**)&html_doc);
+    nsIDOMDocument_Release(doc);
+    assert(nsres == NS_OK);
+
+    hres = create_document_node(html_doc, This->browser, NULL, dispex_compat_mode(&This->dispex), &new_document_node);
+    nsIDOMHTMLDocument_Release(html_doc);
+    if(FAILED(hres))
+        return hres;
+
+    *new_document = &new_document_node->basedoc.IHTMLDocument7_iface;
+    return S_OK;
+}
+
+static HRESULT WINAPI HTMLDOMImplementation2_hasFeature(IHTMLDOMImplementation2 *iface, BSTR feature,
+        VARIANT version, VARIANT_BOOL *pfHasFeature)
+{
+    HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
+
+    FIXME("(%p)->(%s %s %p) returning false\n", This, debugstr_w(feature), debugstr_variant(&version), pfHasFeature);
+
+    *pfHasFeature = VARIANT_FALSE;
+    return S_OK;
+}
+
+static const IHTMLDOMImplementation2Vtbl HTMLDOMImplementation2Vtbl = {
+    HTMLDOMImplementation2_QueryInterface,
+    HTMLDOMImplementation2_AddRef,
+    HTMLDOMImplementation2_Release,
+    HTMLDOMImplementation2_GetTypeInfoCount,
+    HTMLDOMImplementation2_GetTypeInfo,
+    HTMLDOMImplementation2_GetIDsOfNames,
+    HTMLDOMImplementation2_Invoke,
+    HTMLDOMImplementation2_createDocumentType,
+    HTMLDOMImplementation2_createDocument,
+    HTMLDOMImplementation2_createHTMLDocument,
+    HTMLDOMImplementation2_hasFeature
+};
+
 static const tid_t HTMLDOMImplementation_iface_tids[] = {
     IHTMLDOMImplementation_tid,
     0
 };
 static dispex_static_data_t HTMLDOMImplementation_dispex = {
     NULL,
-    IHTMLDOMImplementation_tid,
+    DispHTMLDOMImplementation_tid,
     HTMLDOMImplementation_iface_tids
 };
 
-HRESULT create_dom_implementation(IHTMLDOMImplementation **ret)
+HRESULT create_dom_implementation(HTMLDocumentNode *doc_node, IHTMLDOMImplementation **ret)
 {
     HTMLDOMImplementation *dom_implementation;
+    nsresult nsres;
+
+    if(!doc_node->browser)
+        return E_UNEXPECTED;
 
     dom_implementation = heap_alloc_zero(sizeof(*dom_implementation));
     if(!dom_implementation)
         return E_OUTOFMEMORY;
 
     dom_implementation->IHTMLDOMImplementation_iface.lpVtbl = &HTMLDOMImplementationVtbl;
+    dom_implementation->IHTMLDOMImplementation2_iface.lpVtbl = &HTMLDOMImplementation2Vtbl;
     dom_implementation->ref = 1;
+    dom_implementation->browser = doc_node->browser;
 
-    init_dispex(&dom_implementation->dispex, (IUnknown*)&dom_implementation->IHTMLDOMImplementation_iface,
-            &HTMLDOMImplementation_dispex);
+    init_dispex_with_compat_mode(&dom_implementation->dispex, (IUnknown*)&dom_implementation->IHTMLDOMImplementation_iface,
+                                 &HTMLDOMImplementation_dispex, doc_node->document_mode);
+
+    nsres = nsIDOMHTMLDocument_GetImplementation(doc_node->nsdoc, &dom_implementation->implementation);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDOMImplementation failed: %08x\n", nsres);
+        IHTMLDOMImplementation_Release(&dom_implementation->IHTMLDOMImplementation_iface);
+        return E_FAIL;
+    }
 
     *ret = &dom_implementation->IHTMLDOMImplementation_iface;
     return S_OK;
+}
+
+void detach_dom_implementation(IHTMLDOMImplementation *iface)
+{
+    HTMLDOMImplementation *dom_implementation = impl_from_IHTMLDOMImplementation(iface);
+    dom_implementation->browser = NULL;
 }
 
 typedef struct {
@@ -504,16 +666,16 @@ static HRESULT WINAPI OmHistory_Invoke(IOmHistory *iface, DISPID dispIdMember, R
 static HRESULT WINAPI OmHistory_get_length(IOmHistory *iface, short *p)
 {
     OmHistory *This = impl_from_IOmHistory(iface);
+    GeckoBrowser *browser = NULL;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->window || !This->window->base.outer_window->doc_obj
-            || !This->window->base.outer_window->doc_obj->travel_log) {
-        *p = 0;
-    }else {
-        *p = ITravelLog_CountEntries(This->window->base.outer_window->doc_obj->travel_log,
-                This->window->base.outer_window->doc_obj->browser_service);
-    }
+    if(This->window && This->window->base.outer_window)
+        browser = This->window->base.outer_window->browser;
+
+    *p = browser->doc->travel_log
+        ? ITravelLog_CountEntries(browser->doc->travel_log, browser->doc->browser_service)
+        : 0;
     return S_OK;
 }
 

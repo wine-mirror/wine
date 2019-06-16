@@ -197,6 +197,7 @@ static HRESULT create_folder(const WCHAR*, IFolder**);
 static HRESULT create_file(BSTR, IFile**);
 static HRESULT create_foldercoll_enum(struct foldercollection*, IUnknown**);
 static HRESULT create_filecoll_enum(struct filecollection*, IUnknown**);
+static HRESULT create_drivecoll_enum(struct drivecollection*, IUnknown**);
 
 static inline BOOL is_dir_data(const WIN32_FIND_DATAW *data)
 {
@@ -1555,8 +1556,8 @@ static HRESULT WINAPI drivecoll_enumvariant_Reset(IEnumVARIANT *iface)
 static HRESULT WINAPI drivecoll_enumvariant_Clone(IEnumVARIANT *iface, IEnumVARIANT **pclone)
 {
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
-    FIXME("(%p)->(%p): stub\n", This, pclone);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pclone);
+    return create_drivecoll_enum(This->data.u.drivecoll.coll, (IUnknown**)pclone);
 }
 
 static const IEnumVARIANTVtbl drivecollenumvariantvtbl = {

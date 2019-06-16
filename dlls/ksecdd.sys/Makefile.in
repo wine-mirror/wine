@@ -1,0 +1,7 @@
+MODULE    = ksecdd.sys
+EXTRADLLFLAGS = -mno-cygwin -Wl,--subsystem,native
+
+C_SRCS = \
+	main.c
+
+RC_SRCS = version.rc

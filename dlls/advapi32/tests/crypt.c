@@ -268,12 +268,14 @@ static void test_incorrect_api_usage(void)
     dwTemp = CRYPT_MODE_ECB;    
     result = pCryptSetKeyParam(hKey2, KP_MODE, (BYTE*)&dwTemp, sizeof(DWORD));
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
-    
+
+    hProv2 = 0xdeadbeef;
     result = pCryptAcquireContextA(&hProv2, szBadKeySet, NULL, PROV_RSA_FULL, 
                                    CRYPT_DELETEKEYSET);
     ok (result, "%d\n", GetLastError());
+    ok (hProv2 == 0, "%ld\n", hProv2);
     if (!result) return;
-    
+
     result = pCryptReleaseContext(hProv, 0);
     ok (result, "%d\n", GetLastError());
     if (!result) return;
@@ -1176,9 +1178,11 @@ static void test_container_sd(void)
     ret = CryptReleaseContext(prov, 0);
     ok(ret, "got %u\n", GetLastError());
 
+    prov = 0xdeadbeef;
     ret = CryptAcquireContextA(&prov, "winetest", "Microsoft Enhanced Cryptographic Provider v1.0",
                                PROV_RSA_FULL, CRYPT_MACHINE_KEYSET|CRYPT_DELETEKEYSET);
     ok(ret, "got %u\n", GetLastError());
+    ok(prov == 0, "got %ld\n", prov);
 }
 
 START_TEST(crypt)

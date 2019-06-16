@@ -19,7 +19,6 @@
  *
  */
 
-#include "config.h"
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -146,7 +145,7 @@ HRESULT WINAPI DwmGetTransportAttributes(BOOL *pfIsRemoting, BOOL *pfIsConnected
 {
     FIXME("(%p, %p, %p) stub\n", pfIsRemoting, pfIsConnected, pDwGeneration);
 
-    return E_NOTIMPL;
+    return DWM_E_COMPOSITIONDISABLED;
 }
 
 /**********************************************************************

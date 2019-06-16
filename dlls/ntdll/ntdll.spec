@@ -680,6 +680,7 @@
 @ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr)
 # @ stub RtlGetSecurityDescriptorRMControl
 # @ stub RtlGetSetBootStatusData
+@ stdcall -ret64 RtlGetSystemTimePrecise()
 @ stdcall RtlGetThreadErrorMode()
 @ stdcall RtlGetUnloadEventTrace()
 @ stdcall RtlGetUnloadEventTraceEx(ptr ptr ptr)
@@ -722,7 +723,7 @@
 # @ stub RtlInitializeStackTraceDataBase
 @ stub RtlInsertElementGenericTable
 @ stdcall RtlInsertElementGenericTableAvl(ptr ptr long ptr)
-@ cdecl -arch=x86_64 RtlInstallFunctionTableCallback(long long long ptr ptr wstr)
+@ cdecl -arch=arm,arm64,x86_64 RtlInstallFunctionTableCallback(long long long ptr ptr wstr)
 @ stdcall RtlInt64ToUnicodeString(int64 long ptr)
 @ stdcall RtlIntegerToChar(long long long ptr)
 @ stdcall RtlIntegerToUnicodeString(long long ptr)
@@ -1391,7 +1392,7 @@
 @ cdecl -private _strcmpi(str str) _stricmp
 @ cdecl -private _stricmp(str str)
 @ cdecl -private _strlwr(str)
-@ cdecl -private _strnicmp(str str long)
+@ cdecl _strnicmp(str str long) #add _strnicmp to importlib so it can be used instead of strncasecmp
 @ cdecl -private _strupr(str)
 @ cdecl -private _tolower(long) NTDLL__tolower
 @ cdecl -private _toupper(long) NTDLL__toupper
@@ -1504,6 +1505,12 @@
 @ cdecl wine_server_release_fd(long long)
 @ cdecl wine_server_send_fd(long)
 @ cdecl __wine_make_process_system()
+
+# Debugging
+@ cdecl -norelay __wine_dbg_get_channel_flags(ptr)
+@ cdecl -norelay __wine_dbg_header(long long str)
+@ cdecl -norelay __wine_dbg_output(str)
+@ cdecl -norelay __wine_dbg_strdup(str)
 
 # Virtual memory
 @ cdecl __wine_locked_recvmsg(long ptr long)

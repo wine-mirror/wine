@@ -36,6 +36,7 @@
 #include "cpsf.h"
 #include "ndr_misc.h"
 #include "ndr_stubless.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -457,6 +458,8 @@ void WINAPI NdrProxyInitialize(void *This,
   TRACE("(%p,%p,%p,%p,%d)\n", This, pRpcMsg, pStubMsg, pStubDescriptor, ProcNum);
   NdrClientInitializeNew(pRpcMsg, pStubMsg, pStubDescriptor, ProcNum);
   StdProxy_GetChannel(This, &pStubMsg->pRpcChannelBuffer);
+  if (!pStubMsg->pRpcChannelBuffer)
+    RpcRaiseException(CO_E_OBJNOTCONNECTED);
   IRpcChannelBuffer_GetDestCtx(pStubMsg->pRpcChannelBuffer,
                                &pStubMsg->dwDestContext,
                                &pStubMsg->pvDestContext);

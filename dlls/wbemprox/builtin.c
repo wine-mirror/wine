@@ -62,6 +62,7 @@
 #include "winspool.h"
 #include "setupapi.h"
 
+#include "wine/asm.h"
 #include "wine/debug.h"
 #include "wbemprox_private.h"
 
@@ -204,6 +205,8 @@ static const WCHAR prop_destinationW[] =
     {'D','e','s','t','i','n','a','t','i','o','n',0};
 static const WCHAR prop_deviceidW[] =
     {'D','e','v','i','c','e','I','d',0};
+static const WCHAR prop_devicelocatorW[] =
+    {'D','e','v','i','c','e','L','o','c','a','t','o','r',0};
 static const WCHAR prop_dhcpenabledW[] =
     {'D','H','C','P','E','n','a','b','l','e','d',0};
 static const WCHAR prop_directionW[] =
@@ -312,6 +315,8 @@ static const WCHAR prop_numlogicalprocessorsW[] =
     {'N','u','m','b','e','r','O','f','L','o','g','i','c','a','l','P','r','o','c','e','s','s','o','r','s',0};
 static const WCHAR prop_numprocessorsW[] =
     {'N','u','m','b','e','r','O','f','P','r','o','c','e','s','s','o','r','s',0};
+static const WCHAR prop_operatingsystemskuW[] =
+    {'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m','S','K','U',0};
 static const WCHAR prop_osarchitectureW[] =
     {'O','S','A','r','c','h','i','t','e','c','t','u','r','e',0};
 static const WCHAR prop_oslanguageW[] =
@@ -392,6 +397,8 @@ static const WCHAR prop_suitemaskW[] =
     {'S','u','i','t','e','M','a','s','k',0};
 static const WCHAR prop_systemdirectoryW[] =
     {'S','y','s','t','e','m','D','i','r','e','c','t','o','r','y',0};
+static const WCHAR prop_systemdriveW[] =
+    {'S','y','s','t','e','m','D','r','i','v','e',0};
 static const WCHAR prop_systemnameW[] =
     {'S','y','s','t','e','m','N','a','m','e',0};
 static const WCHAR prop_tagW[] =
@@ -586,6 +593,7 @@ static const struct column col_os[] =
     { prop_localdatetimeW,          CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_localeW,                 CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_nameW,                   CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_operatingsystemskuW,     CIM_UINT32, VT_I4 },
     { prop_osarchitectureW,         CIM_STRING },
     { prop_oslanguageW,             CIM_UINT32, VT_I4 },
     { prop_osproductsuiteW,         CIM_UINT32, VT_I4 },
@@ -596,6 +604,7 @@ static const struct column col_os[] =
     { prop_servicepackminorW,       CIM_UINT16, VT_I4 },
     { prop_suitemaskW,              CIM_UINT32, VT_I4 },
     { prop_systemdirectoryW,        CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_systemdriveW,            CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_totalvirtualmemorysizeW, CIM_UINT64 },
     { prop_totalvisiblememorysizeW, CIM_UINT64 },
     { prop_versionW,                CIM_STRING|COL_FLAG_DYNAMIC }
@@ -617,8 +626,9 @@ static const struct column col_physicalmedia[] =
 };
 static const struct column col_physicalmemory[] =
 {
-    { prop_capacityW,   CIM_UINT64 },
-    { prop_memorytypeW, CIM_UINT16, VT_I4 }
+    { prop_capacityW,      CIM_UINT64 },
+    { prop_devicelocatorW, CIM_STRING },
+    { prop_memorytypeW,    CIM_UINT16, VT_I4 }
 };
 static const struct column col_pnpentity[] =
 {
@@ -1012,6 +1022,7 @@ struct record_operatingsystem
     const WCHAR *localdatetime;
     const WCHAR *locale;
     const WCHAR *name;
+    UINT32       operatingsystemsku;
     const WCHAR *osarchitecture;
     UINT32       oslanguage;
     UINT32       osproductsuite;
@@ -1022,6 +1033,7 @@ struct record_operatingsystem
     UINT16       servicepackminor;
     UINT32       suitemask;
     const WCHAR *systemdirectory;
+    const WCHAR *systemdrive;
     UINT64       totalvirtualmemorysize;
     UINT64       totalvisiblememorysize;
     const WCHAR *version;
@@ -1043,8 +1055,9 @@ struct record_physicalmedia
 };
 struct record_physicalmemory
 {
-    UINT64 capacity;
-    UINT16 memorytype;
+    UINT64       capacity;
+    const WCHAR *devicelocator;
+    UINT16       memorytype;
 };
 struct record_pnpentity
 {
@@ -2639,6 +2652,7 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
 
 static enum fill_status fill_physicalmemory( struct table *table, const struct expr *cond )
 {
+    static const WCHAR dimm0W[] = {'D','I','M','M',' ','0',0};
     struct record_physicalmemory *rec;
     enum fill_status status = FILL_STATUS_UNFILTERED;
     UINT row = 0;
@@ -2646,8 +2660,9 @@ static enum fill_status fill_physicalmemory( struct table *table, const struct e
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     rec = (struct record_physicalmemory *)table->data;
-    rec->capacity   = get_total_physical_memory();
-    rec->memorytype = 9; /* RAM */
+    rec->capacity      = get_total_physical_memory();
+    rec->devicelocator = heap_strdupW( dimm0W );
+    rec->memorytype    = 9; /* RAM */
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
@@ -3092,6 +3107,13 @@ static WCHAR *get_systemdirectory(void)
     Wow64RevertWow64FsRedirection( redir );
     return ret;
 }
+static WCHAR *get_systemdrive(void)
+{
+    WCHAR *ret = heap_alloc( 3 * sizeof(WCHAR) ); /* "c:" */
+    if (ret && GetEnvironmentVariableW( prop_systemdriveW, ret, 3 )) return ret;
+    heap_free( ret );
+    return NULL;
+}
 static WCHAR *get_codeset(void)
 {
     static const WCHAR fmtW[] = {'%','u',0};
@@ -3191,6 +3213,12 @@ static WCHAR *get_osversion( OSVERSIONINFOEXW *ver )
     if (ret) sprintfW( ret, fmtW, ver->dwMajorVersion, ver->dwMinorVersion, ver->dwBuildNumber );
     return ret;
 }
+static DWORD get_operatingsystemsku(void)
+{
+    DWORD ret = PRODUCT_UNDEFINED;
+    GetProductInfo( 6, 0, 0, 0, &ret );
+    return ret;
+}
 
 static enum fill_status fill_os( struct table *table, const struct expr *cond )
 {
@@ -3216,6 +3244,7 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec->localdatetime          = get_localdatetime();
     rec->locale                 = get_locale();
     rec->name                   = get_osname( rec->caption );
+    rec->operatingsystemsku     = get_operatingsystemsku();
     rec->osarchitecture         = get_osarchitecture();
     rec->oslanguage             = GetSystemDefaultLangID();
     rec->osproductsuite         = 2461140; /* Windows XP Professional  */
@@ -3226,6 +3255,7 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec->servicepackminor       = ver.wServicePackMinor;
     rec->suitemask              = 272;     /* Single User + Terminal */
     rec->systemdirectory        = get_systemdirectory();
+    rec->systemdrive            = get_systemdrive();
     rec->totalvirtualmemorysize = get_total_physical_memory() / 1024;
     rec->totalvisiblememorysize = rec->totalvirtualmemorysize;
     rec->version                = get_osversion( &ver );

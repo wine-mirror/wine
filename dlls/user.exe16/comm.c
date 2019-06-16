@@ -416,7 +416,7 @@ INT16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 
 	TRACE("(%s), ptr %p\n", device, lpdcb);
 
-	if (strncasecmp(device,"COM",3))
+	if (_strnicmp(device,"COM",3))
 		return -1;
 	port = device[3] - '0';
 
@@ -457,7 +457,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 	if (port-- == 0)
 		ERR("BUG ! COM0 or LPT0 don't exist !\n");
 
-	if (!strncasecmp(device,"COM",3))
+	if (!_strnicmp(device,"COM",3))
         {
 		if (COM[port].handle)
 			return IE_OPEN;
@@ -508,7 +508,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 		}
 	}
 	else
-	if (!strncasecmp(device,"LPT",3)) {
+	if (!_strnicmp(device,"LPT",3)) {
 
 		if (LPT[port].handle)
 			return IE_OPEN;

@@ -22,4 +22,5 @@ C_SRCS = \
 	rtlstr.c \
 	string.c \
 	threadpool.c \
-	time.c
+	time.c \
+	virtual.c

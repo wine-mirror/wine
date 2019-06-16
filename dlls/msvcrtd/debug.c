@@ -18,24 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wine/debug.h"
-
-#include "winbase.h"
-
-#define  _DEBUG
-#include "crtdbg.h"
+#include "msvcrt.h"
 
 int _crtAssertBusy = -1;
 int _crtBreakAlloc = -1;
 int _crtDbgFlag = 0;
 
-#ifdef _WIN64
-typedef unsigned __int64 MSVCRT_size_t;
-#else
-typedef unsigned long MSVCRT_size_t;
-#endif
-
-extern int _callnewh(MSVCRT_size_t);
 
 /*********************************************************************
  *		_CrtSetDumpClient (MSVCRTD.@)

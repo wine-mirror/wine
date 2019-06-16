@@ -1,15 +1,17 @@
+@ stdcall -arch=arm,arm64,x86_64 ExAcquireFastMutex(ptr)
 @ stdcall -fastcall ExAcquireFastMutexUnsafe(ptr)
 @ stub ExAcquireRundownProtection
 @ stub ExAcquireRundownProtectionEx
 @ stub ExInitializeRundownProtection
 @ stub ExInterlockedAddLargeStatistic
 @ stub ExInterlockedCompareExchange64
-@ stub ExInterlockedFlushSList
+@ stdcall -fastcall -arch=i386 ExInterlockedFlushSList(ptr) NTOSKRNL_ExInterlockedFlushSList
 @ stdcall -fastcall -arch=i386 ExInterlockedPopEntrySList(ptr ptr) NTOSKRNL_ExInterlockedPopEntrySList
 @ stdcall -fastcall -arch=i386 ExInterlockedPushEntrySList (ptr ptr ptr) NTOSKRNL_ExInterlockedPushEntrySList
 @ stub ExReInitializeRundownProtection
+@ stdcall -arch=arm,arm64,x86_64 ExReleaseFastMutex(ptr)
 @ stdcall -fastcall ExReleaseFastMutexUnsafe(ptr)
-@ stdcall ExReleaseResourceLite(ptr)
+@ stdcall -fastcall ExReleaseResourceLite(ptr)
 @ stub ExReleaseRundownProtection
 @ stub ExReleaseRundownProtectionEx
 @ stub ExRundownCompleted
@@ -27,6 +29,7 @@
 @ stub Exfi386InterlockedDecrementLong
 @ stub Exfi386InterlockedExchangeUlong
 @ stub Exfi386InterlockedIncrementLong
+@ stdcall -arch=win64 ExpInterlockedFlushSList(ptr) RtlInterlockedFlushSList
 @ stdcall -arch=win64 ExpInterlockedPopEntrySList(ptr) RtlInterlockedPopEntrySList
 @ stdcall -arch=win64 ExpInterlockedPushEntrySList(ptr ptr) RtlInterlockedPushEntrySList
 @ stub HalExamineMBR
@@ -121,9 +124,9 @@
 @ stdcall DbgQueryDebugFilterState(long long)
 @ stub DbgSetDebugFilterState
 @ stdcall ExAcquireResourceExclusiveLite(ptr long)
-@ stub ExAcquireResourceSharedLite
-@ stub ExAcquireSharedStarveExclusive
-@ stub ExAcquireSharedWaitForExclusive
+@ stdcall ExAcquireResourceSharedLite(ptr long)
+@ stdcall ExAcquireSharedStarveExclusive(ptr long)
+@ stdcall ExAcquireSharedWaitForExclusive(ptr long)
 @ stub ExAllocateFromPagedLookasideList
 @ stdcall ExAllocatePool(long long)
 @ stdcall ExAllocatePoolWithQuota(long long)
@@ -146,9 +149,9 @@
 @ stub ExFreeToPagedLookasideList
 @ stub ExGetCurrentProcessorCounts
 @ stub ExGetCurrentProcessorCpuUsage
-@ stub ExGetExclusiveWaiterCount
+@ stdcall ExGetExclusiveWaiterCount(ptr)
 @ stub ExGetPreviousMode
-@ stub ExGetSharedWaiterCount
+@ stdcall ExGetSharedWaiterCount(ptr)
 @ stdcall ExInitializeNPagedLookasideList(ptr ptr ptr long long long long)
 @ stdcall ExInitializePagedLookasideList(ptr ptr ptr long long long long)
 @ stdcall ExInitializeResourceLite(ptr)
@@ -165,8 +168,8 @@
 @ stub ExInterlockedPushEntryList
 @ stdcall ExInterlockedRemoveHeadList(ptr ptr)
 @ stub ExIsProcessorFeaturePresent
-@ stub ExIsResourceAcquiredExclusiveLite
-@ stub ExIsResourceAcquiredSharedLite
+@ stdcall ExIsResourceAcquiredExclusiveLite(ptr)
+@ stdcall ExIsResourceAcquiredSharedLite(ptr)
 @ stdcall ExLocalTimeToSystemTime(ptr ptr) RtlLocalTimeToSystemTime
 @ stub ExNotifyCallback
 @ stub ExQueryPoolBlockSize
@@ -181,7 +184,7 @@
 @ stdcall ExReleaseResourceForThreadLite(ptr long)
 @ extern ExSemaphoreObjectType
 @ stub ExSetResourceOwnerPointer
-@ stub ExSetTimerResolution
+@ stdcall ExSetTimerResolution(long long)
 @ stub ExSystemExceptionFilter
 @ stdcall ExSystemTimeToLocalTime(ptr ptr) RtlSystemTimeToLocalTime
 @ stub ExUnregisterCallback
@@ -329,13 +332,13 @@
 @ stub IoAttachDeviceByPointer
 @ stdcall IoAttachDeviceToDeviceStack(ptr ptr)
 @ stub IoAttachDeviceToDeviceStackSafe
-@ stub IoBuildAsynchronousFsdRequest
+@ stdcall IoBuildAsynchronousFsdRequest(long ptr ptr long ptr ptr)
 @ stdcall IoBuildDeviceIoControlRequest(long ptr ptr long ptr long long ptr ptr)
 @ stub IoBuildPartialMdl
 @ stdcall IoBuildSynchronousFsdRequest(long ptr ptr long ptr ptr ptr)
 @ stdcall IoCallDriver(ptr ptr)
 @ stub IoCancelFileOpen
-@ stub IoCancelIrp
+@ stdcall IoCancelIrp(ptr)
 @ stub IoCheckDesiredAccess
 @ stub IoCheckEaBufferValidity
 @ stub IoCheckFunctionAccess
@@ -366,7 +369,7 @@
 @ stdcall IoDeleteDevice(ptr)
 @ stdcall IoDeleteDriver(ptr)
 @ stdcall IoDeleteSymbolicLink(ptr)
-@ stub IoDetachDevice
+@ stdcall IoDetachDevice(ptr)
 @ stub IoDeviceHandlerObjectSize
 @ stub IoDeviceHandlerObjectType
 @ extern IoDeviceObjectType
@@ -382,7 +385,7 @@
 @ stub IoFreeErrorLogEntry
 @ stdcall IoFreeIrp(ptr)
 @ stdcall IoFreeMdl(ptr)
-@ stub IoFreeWorkItem
+@ stdcall IoFreeWorkItem(ptr)
 @ stdcall IoGetAttachedDevice(ptr)
 @ stdcall IoGetAttachedDeviceReference(ptr)
 @ stub IoGetBaseFileSystemDeviceObject
@@ -427,7 +430,7 @@
 @ stub IoQueryFileInformation
 @ stub IoQueryVolumeInformation
 @ stub IoQueueThreadIrp
-@ stub IoQueueWorkItem
+@ stdcall IoQueueWorkItem(ptr ptr long ptr)
 @ stub IoRaiseHardError
 @ stub IoRaiseInformationalHardError
 @ stub IoReadDiskSignature
@@ -490,7 +493,7 @@
 @ stub IoWMIDeviceObjectToInstanceName
 @ stub IoWMIExecuteMethod
 @ stub IoWMIHandleToInstanceName
-@ stub IoWMIOpenBlock
+@ stdcall IoWMIOpenBlock(ptr long ptr)
 @ stub IoWMIQueryAllData
 @ stub IoWMIQueryAllDataMultiple
 @ stub IoWMIQuerySingleInstance
@@ -520,7 +523,7 @@
 @ stdcall KeAcquireSpinLockAtDpcLevel(ptr)
 @ stdcall -arch=arm,arm64,x86_64 KeAcquireSpinLockRaiseToDpc(ptr)
 @ stub KeAddSystemServiceTable
-@ stub KeAreApcsDisabled
+@ stdcall KeAreApcsDisabled()
 @ stub KeAttachProcess
 @ stub KeBugCheck
 @ stub KeBugCheckEx
@@ -672,7 +675,7 @@
 @ stub MmAllocateMappingAddress
 @ stdcall MmAllocateNonCachedMemory(long)
 @ stdcall MmAllocatePagesForMdl(int64 int64 int64 long)
-@ stub MmBuildMdlForNonPagedPool
+@ stdcall MmBuildMdlForNonPagedPool(ptr)
 @ stub MmCanFileBeTruncated
 @ stub MmCommitSessionMappedView
 @ stdcall MmCopyVirtualMemory(ptr ptr ptr ptr long long ptr)
@@ -732,7 +735,7 @@
 @ stdcall MmUnlockPagableImageSection(ptr)
 @ stdcall MmUnlockPages(ptr)
 @ stdcall MmUnmapIoSpace(ptr long)
-@ stub MmUnmapLockedPages
+@ stdcall MmUnmapLockedPages(ptr ptr)
 @ stub MmUnmapReservedMapping
 @ stub MmUnmapVideoDisplay
 @ stub MmUnmapViewInSessionSpace
@@ -821,7 +824,7 @@
 @ stub ObLogSecurityDescriptor
 @ stub ObMakeTemporaryObject
 @ stub ObOpenObjectByName
-@ stub ObOpenObjectByPointer
+@ stdcall ObOpenObjectByPointer(ptr long ptr long ptr long ptr)
 @ stdcall ObQueryNameString(ptr ptr long ptr)
 @ stub ObQueryObjectAuditingByHandle
 @ stdcall ObReferenceObjectByHandle(long long ptr long ptr ptr)
@@ -885,7 +888,7 @@
 @ stub PsGetProcessExitTime
 @ stdcall PsGetProcessId(ptr)
 @ stub PsGetProcessImageFileName
-@ stub PsGetProcessInheritedFromUniqueProcessId
+@ stdcall PsGetProcessInheritedFromUniqueProcessId(ptr)
 @ stub PsGetProcessJob
 @ stub PsGetProcessPeb
 @ stub PsGetProcessPriorityClass
@@ -897,23 +900,23 @@
 @ stdcall -arch=x86_64 PsGetProcessWow64Process(ptr)
 @ stub PsGetThreadFreezeCount
 @ stub PsGetThreadHardErrorsAreDisabled
-@ stub PsGetThreadId
+@ stdcall PsGetThreadId(ptr)
 @ stub PsGetThreadProcess
-@ stub PsGetThreadProcessId
+@ stdcall PsGetThreadProcessId(ptr)
 @ stub PsGetThreadSessionId
 @ stub PsGetThreadTeb
 @ stub PsGetThreadWin32Thread
 @ stdcall PsGetVersion(ptr ptr ptr ptr)
 @ stdcall PsImpersonateClient(ptr ptr long long long)
-@ stub PsInitialSystemProcess
+@ extern PsInitialSystemProcess
 @ stub PsIsProcessBeingDebugged
-@ stub PsIsSystemThread
+@ stdcall PsIsSystemThread(ptr)
 @ stub PsIsThreadImpersonating
 @ stub PsIsThreadTerminating
 @ stub PsJobType
 @ stdcall PsLookupProcessByProcessId(ptr ptr)
 @ stub PsLookupProcessThreadByCid
-@ stub PsLookupThreadByThreadId
+@ stdcall PsLookupThreadByThreadId(ptr ptr)
 @ extern PsProcessType
 @ stub PsReferenceImpersonationToken
 @ stub PsReferencePrimaryToken
@@ -1371,7 +1374,7 @@
 @ stdcall -private ZwQueryFullAttributesFile(ptr ptr) NtQueryFullAttributesFile
 @ stdcall -private ZwQueryInformationFile(long ptr ptr long long) NtQueryInformationFile
 @ stdcall -private ZwQueryInformationJobObject(long long ptr long ptr) NtQueryInformationJobObject
-@ stdcall -private ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
+@ stdcall ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
 @ stdcall -private ZwQueryInformationThread(long long ptr long ptr) NtQueryInformationThread
 @ stdcall -private ZwQueryInformationToken(long long ptr long ptr) NtQueryInformationToken
 @ stdcall -private ZwQueryInstallUILanguage(ptr) NtQueryInstallUILanguage
@@ -1395,7 +1398,7 @@
 @ stdcall -private ZwSetDefaultLocale(long long) NtSetDefaultLocale
 @ stdcall -private ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
 @ stdcall -private ZwSetEaFile(long ptr ptr long) NtSetEaFile
-@ stdcall -private ZwSetEvent(long ptr) NtSetEvent
+@ stdcall ZwSetEvent(long ptr) NtSetEvent
 @ stdcall -private ZwSetInformationFile(long ptr ptr long long) NtSetInformationFile
 @ stdcall -private ZwSetInformationJobObject(long long ptr long) NtSetInformationJobObject
 @ stdcall -private ZwSetInformationObject(long long ptr long) NtSetInformationObject

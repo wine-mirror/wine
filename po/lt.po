@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-02-19 08:48+0300\n"
+"PO-Revision-Date: 2019-05-22 21:25+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -70,7 +70,7 @@ msgstr "Priežiūros informacija"
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
 #: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
-#: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
+#: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
@@ -85,7 +85,7 @@ msgstr ""
 msgid "Publisher:"
 msgstr "Leidėjas:"
 
-#: appwiz.rc:81 winefile.rc:166
+#: appwiz.rc:81 winefile.rc:165
 msgid "Version:"
 msgstr "Versija:"
 
@@ -153,8 +153,8 @@ msgstr "&Įdiegti"
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
 #: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
 msgstr "Atsisakyti"
@@ -207,7 +207,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nenurodyta"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
 msgid "Name"
 msgstr "Vardas"
 
@@ -328,7 +328,7 @@ msgstr "min."
 msgid "hours"
 msgstr "val."
 
-#: comctl32.rc:68 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:156
 msgid "Properties for %s"
 msgstr "%s savybės"
 
@@ -467,7 +467,7 @@ msgid "Dri&ves:"
 msgstr "&Diskai:"
 
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
-#: winefile.rc:173
+#: winefile.rc:172
 msgid "&Read Only"
 msgstr "&Tik skaitymui"
 
@@ -719,7 +719,7 @@ msgstr "&Savybės"
 msgid "Print to fi&le"
 msgstr "Spausdinti į fai&lą"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "&Vardas:"
 
@@ -2994,7 +2994,7 @@ msgstr "Vieta"
 msgid "Select a certificate"
 msgstr "Išrinkite liudijimą"
 
-#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
 msgstr "Dar nerealizuota"
 
@@ -3466,7 +3466,7 @@ msgstr ""
 msgid "Delete"
 msgstr "Šalinti"
 
-#: inetcpl.rc:90 winefile.rc:115
+#: inetcpl.rc:90 winefile.rc:114
 msgid "Security"
 msgstr "Saugumas"
 
@@ -4161,7 +4161,7 @@ msgstr "Baigėsi semaforo laikas.\n"
 msgid "Insufficient buffer.\n"
 msgstr "Nepakankamas buferis.\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr "Neteisingas vardas.\n"
 
@@ -4956,7 +4956,7 @@ msgid "Too many links.\n"
 msgstr "Per daug nuorodų.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "Reikalinga naujesnė „windows“ versija.\n"
 
 #: winerror.mc:1483
@@ -5735,7 +5735,7 @@ msgstr "Klasė neegzistuoja.\n"
 msgid "Class has open windows.\n"
 msgstr "Klasė turi atvertų langų.\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "Neteisingas indeksas.\n"
 
@@ -6814,6 +6814,390 @@ msgstr "Nepavyko išsiųsti laiškų, nes neturite įdiegto MAPI pašto kliento.
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr "Laiškų siuntimas"
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr "Pradžios užklausa jau padaryta.\n"
+
+#: mferror.mc:599
+msgid "Sink has not been finalized.\n"
+msgstr "Rinktuvas nebuvo užbaigtas.\n"
+
+#: mferror.mc:32
+msgid "Media Foundation platform is not initialized.\n"
+msgstr "Medijos pagrindo platforma neinicijuota.\n"
+
+#: mferror.mc:39
+msgid "Buffer is too small.\n"
+msgstr "Buferis per mažas.\n"
+
+#: mferror.mc:46
+msgid "Invalid request.\n"
+msgstr "Neteisinga užklausa.\n"
+
+#: mferror.mc:53
+msgid "Invalid stream number.\n"
+msgstr "Neteisingas srauto numeris.\n"
+
+#: mferror.mc:60
+msgid "Invalid media type.\n"
+msgstr "Neteisingas medijos tipas.\n"
+
+#: mferror.mc:67
+msgid "No more input is accepted.\n"
+msgstr "Daugiau įvedimo nepriimama.\n"
+
+#: mferror.mc:74
+msgid "Object is not initialized.\n"
+msgstr "Objektas neinicijuotas.\n"
+
+#: mferror.mc:81
+msgid "Representation is not supported.\n"
+msgstr "Reprezentavimas nepalaikomas.\n"
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr "Daugiau nėra tipų siūlomų medijos tipų sąraše.\n"
+
+#: mferror.mc:95
+msgid "Unsupported service.\n"
+msgstr "Nepalaikoma tarnyba.\n"
+
+#: mferror.mc:102
+msgid "Unexpected error.\n"
+msgstr "Netikėta klaida.\n"
+
+#: mferror.mc:116
+msgid "Invalid type.\n"
+msgstr "Neteisingas tipas.\n"
+
+#: mferror.mc:123
+msgid "Invalid file format.\n"
+msgstr "Neteisingas failo formatas.\n"
+
+#: mferror.mc:137
+msgid "Invalid timestamp.\n"
+msgstr "Neteisinga laiko žyma.\n"
+
+#: mferror.mc:144
+msgid "Unsupported scheme.\n"
+msgstr "Nepalaikoma schema.\n"
+
+#: mferror.mc:151
+msgid "Unsupported bytestream type.\n"
+msgstr "Nepalaikomas baitų srauto tipas.\n"
+
+#: mferror.mc:158
+msgid "Unsupported time format.\n"
+msgstr "Nepalaikomas laiko formatas.\n"
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr "Laiko žyma nenustatyta elementui.\n"
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr "Trukmė nenustatyta elementui.\n"
+
+#: mferror.mc:179
+msgid "Invalid stream data.\n"
+msgstr "Neteisingi srauto duomenys.\n"
+
+#: mferror.mc:186
+msgid "Realtime support is not available.\n"
+msgstr "Tikralaikis palaikymas neprieinamas.\n"
+
+#: mferror.mc:193
+msgid "Unsupported rate.\n"
+msgstr "Nepalaikomas dažnis.\n"
+
+#: mferror.mc:200
+msgid "Unsupported thinning.\n"
+msgstr "Nepalaikomas retinimas.\n"
+
+#: mferror.mc:207
+msgid "Reversing is not supported.\n"
+msgstr "Apgręžimas nepalaikomas.\n"
+
+#: mferror.mc:214
+msgid "Unsupported rate transition.\n"
+msgstr "Nepalaikoma dažnio moduliacija.\n"
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr "Dažnio pakeitimui užkirstas kelias.\n"
+
+#: mferror.mc:228
+msgid "Object or value wasn't found.\n"
+msgstr "Objektas ar reikšmė nerasta.\n"
+
+#: mferror.mc:235
+msgid "Value is not available.\n"
+msgstr "Reikšmė neprieinama.\n"
+
+#: mferror.mc:242
+msgid "Clock is not available.\n"
+msgstr "Laikrodis neprieinamas.\n"
+
+#: mferror.mc:263
+msgid "Multiple subscribers are not supported.\n"
+msgstr "Daugybiniai abonentai nepalaikomi.\n"
+
+#: mferror.mc:270
+msgid "The timer was orphaned.\n"
+msgstr "Laikmatis buvo apleistas.\n"
+
+#: mferror.mc:277
+msgid "State transition is pending.\n"
+msgstr "Būsenos perėjimas laukiamas.\n"
+
+#: mferror.mc:284
+msgid "Unsupported state transition.\n"
+msgstr "Nepalaikomas būsenos perėjimas.\n"
+
+#: mferror.mc:291
+msgid "Unrecoverable error occurred.\n"
+msgstr "Įvyko nepataisoma klaida.\n"
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr "Elementas turi per daug buferių.\n"
+
+#: mferror.mc:305
+msgid "Sample is not writable.\n"
+msgstr "Į elementą negalima rašyti.\n"
+
+#: mferror.mc:312
+msgid "Key is invalid.\n"
+msgstr "Raktas neteisingas.\n"
+
+#: mferror.mc:319
+msgid "Bad startup version.\n"
+msgstr "Bloga paleidimo versija.\n"
+
+#: mferror.mc:326
+msgid "Unsupported caption.\n"
+msgstr "Nepalaikoma antraštė.\n"
+
+#: mferror.mc:333
+msgid "Invalid position.\n"
+msgstr "Neteisinga pozicija.\n"
+
+#: mferror.mc:340
+msgid "Attribute is not found.\n"
+msgstr "Atributas nerastas.\n"
+
+#: mferror.mc:347
+msgid "Property type is not allowed.\n"
+msgstr "Savybės tipas neleidžiamas.\n"
+
+#: mferror.mc:354
+msgid "Property type is not supported.\n"
+msgstr "Savybės tipas nepalaikomas.\n"
+
+#: mferror.mc:361
+msgid "Property is empty.\n"
+msgstr "Savybė tuščia.\n"
+
+#: mferror.mc:368
+msgid "Property is not empty.\n"
+msgstr "Savybė netuščia.\n"
+
+#: mferror.mc:375
+msgid "Vector property is not allowed.\n"
+msgstr "Vektorinė savybė neleidžiama.\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr "Vektorinė savybė būtina.\n"
+
+#: mferror.mc:389
+msgid "Operation was cancelled.\n"
+msgstr "Operacija nutraukta.\n"
+
+#: mferror.mc:396
+msgid "Bytestream is not seekable.\n"
+msgstr "Baitų srautas yra nuoseklus.\n"
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr "Platforma išjungta saugioje veiksenoje.\n"
+
+#: mferror.mc:410
+msgid "Cannot parse bytestream.\n"
+msgstr "Nepavyko išnagrinėti baitų srauto.\n"
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr "Nesuderinami žymos bitai perduoti šaltinio nustatymui.\n"
+
+#: mferror.mc:424
+msgid "Unknown bytestream length.\n"
+msgstr "Nežinomas baitų srauto ilgis.\n"
+
+#: mferror.mc:431
+msgid "Invalid work queue index.\n"
+msgstr "Neteisingas darbo eilės indeksas.\n"
+
+#: mferror.mc:438
+msgid "No events available.\n"
+msgstr "Nėra pasiekiamų įvykių.\n"
+
+#: mferror.mc:445
+msgid "Invalid media source state transition.\n"
+msgstr "Neteisingas medijos šaltinio būsenos perėjimas.\n"
+
+#: mferror.mc:452
+msgid "End of media stream has been reached.\n"
+msgstr "Pasiekta medijos srauto pabaiga.\n"
+
+#: mferror.mc:459
+msgid "Shutdown() was called.\n"
+msgstr "Shutdown() buvo iškviesta.\n"
+
+#: mferror.mc:466
+msgid "Media stream has no duration set.\n"
+msgstr "Medijos srautui nenustatyta trukmė.\n"
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid.\n"
+msgstr "Medijos formatas atpažintas, bet neteisingas.\n"
+
+#: mferror.mc:480
+msgid "Property wasn't found.\n"
+msgstr "Savybė nerasta.\n"
+
+#: mferror.mc:487
+msgid "Property is read-only.\n"
+msgstr "Savybė tik skaitymui.\n"
+
+#: mferror.mc:494
+msgid "Property is not allowed.\n"
+msgstr "Savybė neleidžiama.\n"
+
+#: mferror.mc:501
+msgid "Media source is not started.\n"
+msgstr "Medijos šaltinis nepradėtas.\n"
+
+#: mferror.mc:508
+msgid "Unsupported media format.\n"
+msgstr "Nepalaikomas medijos formatas.\n"
+
+#: mferror.mc:515
+msgid "Media source is in wrong state.\n"
+msgstr "Medijos šaltinis neteisingoje būsenoje.\n"
+
+#: mferror.mc:522
+msgid "No media streams were selected.\n"
+msgstr "Nepasirinktas nė vienas medijos srautas.\n"
+
+#: mferror.mc:529
+msgid "Unsupported media source characteristics.\n"
+msgstr "Nepalaikomos medijos šaltinio charakteristikos.\n"
+
+#: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr "Srauto rinktuvas buvo pašalintas.\n"
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr "Srauto rinktuvai nesutampa.\n"
+
+#: mferror.mc:550
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "Medijos rinktuvo srauto rinktuvai fiksuoti.\n"
+
+#: mferror.mc:557
+msgid "Stream sink already exists.\n"
+msgstr "Srauto rinktuvas jau egzistuoja.\n"
+
+#: mferror.mc:564
+msgid "Sample allocation was canceled.\n"
+msgstr "Elemento paskyrimas nutrauktas.\n"
+
+#: mferror.mc:571
+msgid "Sample allocator is empty.\n"
+msgstr "Elementų skirstytuvas tuščias.\n"
+
+#: mferror.mc:578
+msgid "Sink was already stopped.\n"
+msgstr "Rinktuvas jau sustabdytas.\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr "Pralaidumas buvo nežinomas ASF failo rinktuvui.\n"
+
+#: mferror.mc:592
+msgid "No streams were selected for the sink.\n"
+msgstr "Nepasirinktas nė vienas srautas rinktuvui.\n"
+
+#: mferror.mc:606
+msgid "Metadata was too long.\n"
+msgstr "Metaduomenys per ilgi.\n"
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr "Rinktuvas neapdorojo nė vieno elemento.\n"
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr "Rinktuvui nebuvo pateiktos reikalingos antraštės.\n"
+
+#: mferror.mc:627
+msgid "Optional node is invalid.\n"
+msgstr "Nebūtinas mazgas neteisingas.\n"
+
+#: mferror.mc:634
+msgid "Cannot find decryptor.\n"
+msgstr "Nepavyko rasti dešifratoriaus.\n"
+
+#: mferror.mc:641
+msgid "Codec was not found.\n"
+msgstr "Kodekas nerastas.\n"
+
+#: mferror.mc:648
+msgid "Cannot connect topology nodes.\n"
+msgstr "Nepavyko sujungti topologijos mazgų.\n"
+
+#: mferror.mc:655
+msgid "Topology request is not supported.\n"
+msgstr "Topologijos užklausa nepalaikoma.\n"
+
+#: mferror.mc:662
+msgid "Invalid topology time attributes.\n"
+msgstr "Neteisingi topologijos laiko atributai.\n"
+
+#: mferror.mc:669
+msgid "Found loops in topology.\n"
+msgstr "Aptikti ciklai topologijoje.\n"
+
+#: mferror.mc:676
+msgid "Presentation descriptor is missing.\n"
+msgstr "Trūksta pateikimo aprašo.\n"
+
+#: mferror.mc:683
+msgid "Stream descriptor is missing.\n"
+msgstr "Trūksta srauto aprašo.\n"
+
+#: mferror.mc:690
+msgid "Stream descriptor is not selected.\n"
+msgstr "Srauto aprašas nepasirinktas.\n"
+
+#: mferror.mc:697
+msgid "Source is missing.\n"
+msgstr "Trūksta šaltinio.\n"
+
+#: mferror.mc:704
+msgid "Topology loader does not support sink activates.\n"
+msgstr "Topologijos įkėlyklė nepalaiko rinktuvų aktyvatorių.\n"
+
+#: mferror.mc:711
+msgid "Clock has no time source set.\n"
+msgstr "Laikrodis neturi nustatyto laiko šaltinio.\n"
+
+#: mferror.mc:718
+msgid "Clock state was already set.\n"
+msgstr "Laikrodžio būsena jau nustatyta.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8598,7 +8982,7 @@ msgid "&Open:"
 msgstr "&Atverti:"
 
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:130
+#: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Parinkti..."
 
@@ -8610,7 +8994,7 @@ msgstr "Failo tipas:"
 msgid "Location:"
 msgstr "Vieta:"
 
-#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+#: shell32.rc:361 shell32.rc:394 winefile.rc:169
 msgid "Size:"
 msgstr "Dydis:"
 
@@ -8622,11 +9006,11 @@ msgstr "Sukūrimo data:"
 msgid "Attributes:"
 msgstr "Atributai:"
 
-#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+#: shell32.rc:371 shell32.rc:408 winefile.rc:173
 msgid "H&idden"
 msgstr "&Paslėptas"
 
-#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+#: shell32.rc:372 shell32.rc:409 winefile.rc:174
 msgid "&Archive"
 msgstr "&Archyvuotinas"
 
@@ -8646,7 +9030,7 @@ msgstr "Paskutinis pakeitimas:"
 msgid "Last accessed:"
 msgstr "Paskutinė prieiga:"
 
-#: shell32.rc:138 shell32.rc:142 winefile.rc:108
+#: shell32.rc:138 shell32.rc:142 winefile.rc:107
 msgid "Size"
 msgstr "Dydis"
 
@@ -8658,7 +9042,7 @@ msgstr "Tipas"
 msgid "Modified"
 msgstr "Modifikuotas"
 
-#: shell32.rc:141 winefile.rc:172 winefile.rc:114
+#: shell32.rc:141 winefile.rc:171 winefile.rc:113
 msgid "Attributes"
 msgstr "Požymiai"
 
@@ -8686,7 +9070,7 @@ msgstr "Originali vieta"
 msgid "Date deleted"
 msgstr "Pašalinimo data"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Darbalaukis"
@@ -8808,7 +9192,7 @@ msgstr "Program Files (x86)"
 msgid "Contacts"
 msgstr "Kontaktai"
 
-#: shell32.rc:225 winefile.rc:113
+#: shell32.rc:225 winefile.rc:112
 msgid "Links"
 msgstr "Saitai"
 
@@ -10614,8 +10998,8 @@ msgstr ""
 
 #: winmm.rc:128
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "Nurodytas MIDI prievadas jau naudojamas. Palaukite, kol jis bus laisvas ir "
 "mėginkite vėl."
@@ -10635,7 +11019,7 @@ msgstr "Įvyko klaida su nurodytu prievadu."
 #: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "Visi įvairialypės terpės laikmačiai yra naudojami kitų programų. Išeikite iš "
 "vienos tokios programos ir mėginkite vėl."
@@ -11390,8 +11774,8 @@ msgid ""
 "/affinity mask Start the program with the specified affinity mask.\n"
 "/wait          Wait for the started program to finish, then exit with its\n"
 "exit code.\n"
-"/unix          Use a Unix filename and start the file like windows\n"
-"explorer.\n"
+"/unix          Use a Unix filename and start the file like Windows\n"
+"Explorer.\n"
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
@@ -12980,7 +13364,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "Failas „%s“ egzistuoja. Neperrašytas."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr "Išsaugoti grupę kaip „%s“, taip neperrašant originalių failų."
 
 #: progman.rc:84
@@ -14954,7 +15338,7 @@ msgstr "Diskų konfigūravimas"
 
 #: winecfg.rc:233
 msgid ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
+"Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
 "Nepavyko prisijungti prie diskų tvarkytuvės, diskų konfigūracija negali būti "
@@ -15248,7 +15632,7 @@ msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
+"it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 "Ar tikrai norite pašalinti „C“ diską?\n"
 "\n"
@@ -15766,67 +16150,67 @@ msgstr "Iškloti &stačiai\tVald+F4"
 msgid "&About Wine File Manager"
 msgstr "&Apie „Wine“ failų tvarkytuvę"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Select destination"
 msgstr "Išrinkite paskirtį"
 
-#: winefile.rc:135
+#: winefile.rc:134
 msgid "By File Type"
 msgstr "Pagal failo tipą"
 
-#: winefile.rc:140
+#: winefile.rc:139
 msgid "File type"
 msgstr "Failo tipas"
 
-#: winefile.rc:141
+#: winefile.rc:140
 msgid "&Directories"
 msgstr "&Katalogai"
 
-#: winefile.rc:143
+#: winefile.rc:142
 msgid "&Programs"
 msgstr "&Programos"
 
-#: winefile.rc:145
+#: winefile.rc:144
 msgid "Docu&ments"
 msgstr "&Dokumentai"
 
-#: winefile.rc:147
+#: winefile.rc:146
 msgid "&Other files"
 msgstr "Kiti &failai"
 
-#: winefile.rc:149
+#: winefile.rc:148
 msgid "Show Hidden/&System Files"
 msgstr "Rodyti paslėptus/&sisteminius failus"
 
-#: winefile.rc:160
+#: winefile.rc:159
 msgid "&File Name:"
 msgstr "&Failo vardas:"
 
-#: winefile.rc:162
+#: winefile.rc:161
 msgid "Full &Path:"
 msgstr "Visas &kelias:"
 
-#: winefile.rc:164
+#: winefile.rc:163
 msgid "Last Change:"
 msgstr "Pask. keitimas:"
 
-#: winefile.rc:168
+#: winefile.rc:167
 msgid "Cop&yright:"
 msgstr "&Autoriaus teisės:"
 
-#: winefile.rc:176
+#: winefile.rc:175
 msgid "&System"
 msgstr "&Sisteminis"
 
-#: winefile.rc:177
+#: winefile.rc:176
 msgid "&Compressed"
 msgstr "Su&glaudintas"
 
-#: winefile.rc:178
+#: winefile.rc:177
 msgid "Version information"
 msgstr "Versijos informacija"
 
-#: winefile.rc:194
+#: winefile.rc:193
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr "S"
@@ -15847,31 +16231,27 @@ msgstr "„Wine“ failų tvarkytuvė"
 msgid "root fs"
 msgstr "šakninė fs"
 
-#: winefile.rc:99
-msgid "unixfs"
-msgstr "unix fs"
-
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Shell"
 msgstr "Apvalkalas"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Creation date"
 msgstr "Sukūrimo data"
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Access date"
 msgstr "Kreipties data"
 
-#: winefile.rc:111
+#: winefile.rc:110
 msgid "Modification date"
 msgstr "Pakeitimo data"
 
-#: winefile.rc:112
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr "Indeksas/Inode"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr "%1 iš %2 laisva"
 
@@ -16543,7 +16923,7 @@ msgid ""
 "\tmore files.\n"
 "[/S]  Copy directories and subdirectories.\n"
 "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-"[/Q]  Do not list names during copy, that is be quiet.\n"
+"[/Q]  Do not list names during copy; that is, be quiet.\n"
 "[/F]  Show full source and destination names during copy.\n"
 "[/L]  Simulate operation, showing names which would be copied.\n"
 "[/W]  Prompts before beginning the copy operation.\n"
@@ -16553,13 +16933,13 @@ msgid ""
 "[/P]  Prompts on each source file before copying.\n"
 "[/N]  Copy using short names.\n"
 "[/U]  Copy only files which already exist in destination.\n"
-"[/R]  Overwrite any read only files.\n"
+"[/R]  Overwrite any read-only files.\n"
 "[/H]  Include hidden and system files in the copy.\n"
 "[/C]  Continue even if an error occurs during the copy.\n"
 "[/A]  Only copy files with archive attribute set.\n"
 "[/M]  Only copy files with archive attribute set, removes the\n"
 "\tarchive attribute.\n"
-"[/K]  Copy file attributes, without this attributes are not preserved.\n"
+"[/K]  Copy file attributes; without this, attributes are not preserved.\n"
 "[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
 "\t\tIf no date is supplied, only copy if destination is older\n"
 "\t\tthan source.\n"

@@ -65,8 +65,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 #define GECKO_SHA "???"
 #endif
 
-#define MONO_VERSION "4.8.0"
-#define MONO_SHA "890159ffd1679ca7d45e840e1890caba8c24acbc18c59db1ca718b35a5ab8778"
+#define MONO_VERSION "4.8.3"
+#define MONO_SHA "d6fa1f019bfa3c572438e4a2473ce25af1e937ed4cdcbe46554164ce25db0a76"
 
 typedef struct {
     const char *version;
@@ -330,6 +330,8 @@ static enum install_res install_from_default_dir(void)
         ret = install_from_unix_file(INSTALL_DATADIR "/wine/", addon->subdir_name, addon->file_name);
     if (ret == INSTALL_NEXT && strcmp(INSTALL_DATADIR, "/usr/share"))
         ret = install_from_unix_file("/usr/share/wine/", addon->subdir_name, addon->file_name);
+    if (ret == INSTALL_NEXT)
+        ret = install_from_unix_file("/opt/wine/", addon->subdir_name, addon->file_name);
     return ret;
 }
 
@@ -794,6 +796,7 @@ BOOL install_addon(addon_t addon_type)
      * - $datadir/$addon_subdir/
      * - $INSTALL_DATADIR/wine/$addon_subdir/
      * - /usr/share/wine/$addon_subdir/
+     * - /opt/wine/$addon_subdir/
      * - download from URL stored in $url_config_key value of HKCU/Software/Wine/$config_key key
      */
     if (install_from_registered_dir() == INSTALL_NEXT

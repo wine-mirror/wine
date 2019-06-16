@@ -139,7 +139,21 @@ LPSTR WINAPI GetEnvironmentStringsA(void)
  */
 LPWSTR WINAPI GetEnvironmentStringsW(void)
 {
-    return NtCurrentTeb()->Peb->ProcessParameters->Environment;
+    LPWSTR ret, ptrW;
+    unsigned len;
+
+    RtlAcquirePebLock();
+
+    ptrW = NtCurrentTeb()->Peb->ProcessParameters->Environment;
+    while (*ptrW) ptrW += strlenW(ptrW) + 1;
+    ptrW++;
+
+    len = (ptrW - NtCurrentTeb()->Peb->ProcessParameters->Environment) * sizeof(WCHAR);
+    ret = HeapAlloc(GetProcessHeap(), 0, len);
+    if (ret) memcpy(ret, NtCurrentTeb()->Peb->ProcessParameters->Environment, len);
+
+    RtlReleasePebLock();
+    return ret;
 }
 
 
@@ -157,7 +171,7 @@ BOOL WINAPI FreeEnvironmentStringsA( LPSTR ptr )
  */
 BOOL WINAPI FreeEnvironmentStringsW( LPWSTR ptr )
 {
-    return TRUE;
+    return HeapFree( GetProcessHeap(), 0, ptr );
 }
 
 

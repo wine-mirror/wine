@@ -1,18 +1,12 @@
 EXTRALIBS = $(DL_LIBS) $(COREFOUNDATION_LIBS) $(CORESERVICES_LIBS)
-EXTRADEFS = -DWINE_UNICODE_API=""
 
 C_SRCS = \
-	casemap.c \
-	collation.c \
 	config.c \
 	debug.c \
 	ldt.c \
 	loader.c \
 	mmap.c \
-	port.c \
-	sortkey.c \
-	string.c \
-	wctype.c
+	port.c
 
 EXTRA_OBJS = version.o
 
@@ -25,7 +19,6 @@ config_EXTRADEFS = \
 	-DBIN_TO_DATADIR=\"`$(MAKEDEP) -R ${bindir} ${datadir}/wine`\"
 
 SHAREDLIB = $(LIBWINE_SHAREDLIB)
-IMPORTLIB = $(LIBWINE_IMPORTLIB)
 
 libwine_LDFLAGS = $(LIBWINE_LDFLAGS)
 libwine_DEPS = $(LIBWINE_DEPENDS)

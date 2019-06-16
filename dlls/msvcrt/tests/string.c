@@ -101,6 +101,7 @@ static int (__cdecl *p__atodbl_l)(_CRT_DOUBLE*,char*,_locale_t);
 static double (__cdecl *p__atof_l)(const char*,_locale_t);
 static double (__cdecl *p__strtod_l)(const char *,char**,_locale_t);
 static int (__cdecl *p__strnset_s)(char*,size_t,int,size_t);
+static int (__cdecl *p__wcsnset_s)(wchar_t*,size_t,wchar_t,size_t);
 static int (__cdecl *p__wcsset_s)(wchar_t*,size_t,wchar_t);
 static size_t (__cdecl *p__mbsnlen)(const unsigned char*, size_t);
 static int (__cdecl *p__mbccpy_s)(unsigned char*, size_t, int*, const unsigned char*);
@@ -3047,6 +3048,23 @@ static void test_atoi(void)
     ok(r == 0, "atoi(4294967296) = %d\n", r);
 }
 
+static void test_atol(void)
+{
+    int r;
+
+    r = atol("0");
+    ok(r == 0, "atol(0) = %d\n", r);
+
+    r = atol("-1");
+    ok(r == -1, "atol(-1) = %d\n", r);
+
+    r = atol("1");
+    ok(r == 1, "atol(1) = %d\n", r);
+
+    r = atol("4294967296");
+    ok(r == 0, "atol(4294967296) = %d\n", r);
+}
+
 static void test_atof(void)
 {
     double d;
@@ -3080,29 +3098,33 @@ static void test_atof(void)
 static void test_strncpy(void)
 {
 #define TEST_STRNCPY_LEN 10
+    /* use function pointer to bypass gcc builtin */
+    char *(__cdecl *p_strncpy)(char*,const char*,size_t);
     char *ret;
     char dst[TEST_STRNCPY_LEN + 1];
     char not_null_terminated[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
 
+    p_strncpy = (void *)GetProcAddress( GetModuleHandleA("msvcrt.dll"), "strncpy");
+
     /* strlen(src) > TEST_STRNCPY_LEN */
-    ret = strncpy(dst, "01234567890123456789", TEST_STRNCPY_LEN);
+    ret = p_strncpy(dst, "01234567890123456789", TEST_STRNCPY_LEN);
     ok(ret == dst, "ret != dst\n");
     ok(!strncmp(dst, "0123456789", TEST_STRNCPY_LEN), "dst != 0123456789\n");
 
     /* without null-terminated */
-    ret = strncpy(dst, not_null_terminated, TEST_STRNCPY_LEN);
+    ret = p_strncpy(dst, not_null_terminated, TEST_STRNCPY_LEN);
     ok(ret == dst, "ret != dst\n");
     ok(!strncmp(dst, "0123456789", TEST_STRNCPY_LEN), "dst != 0123456789\n");
 
     /* strlen(src) < TEST_STRNCPY_LEN */
     strcpy(dst, "0123456789");
-    ret = strncpy(dst, "012345", TEST_STRNCPY_LEN);
+    ret = p_strncpy(dst, "012345", TEST_STRNCPY_LEN);
     ok(ret == dst, "ret != dst\n");
     ok(!strcmp(dst, "012345"), "dst != 012345\n");
     ok(dst[TEST_STRNCPY_LEN - 1] == '\0', "dst[TEST_STRNCPY_LEN - 1] != 0\n");
 
     /* strlen(src) == TEST_STRNCPY_LEN */
-    ret = strncpy(dst, "0123456789", TEST_STRNCPY_LEN);
+    ret = p_strncpy(dst, "0123456789", TEST_STRNCPY_LEN);
     ok(ret == dst, "ret != dst\n");
     ok(!strncmp(dst, "0123456789", TEST_STRNCPY_LEN), "dst != 0123456789\n");
 }
@@ -3204,6 +3226,45 @@ static void test__strnset_s(void)
     ok(!buf[0] && buf[1]=='c' && buf[2]=='b', "buf = %s\n", buf);
 }
 
+static void test__wcsnset_s(void)
+{
+    wchar_t text[] = { 't','e','x','t',0 };
+    int r;
+
+    if(!p__wcsnset_s) {
+        win_skip("_wcsnset_s not available\n");
+        return;
+    }
+
+    r = p__wcsnset_s(NULL, 0, 'a', 0);
+    ok(r == 0, "r = %d\n", r);
+
+    r = p__wcsnset_s(text, 0, 'a', 1);
+    ok(r == EINVAL, "r = %d\n", r);
+    ok(text[0] == 't', "text[0] = %d\n", text[0]);
+
+    r = p__wcsnset_s(NULL, 2, 'a', 1);
+    ok(r == EINVAL, "r = %d\n", r);
+
+    r = p__wcsnset_s(text, 2, 'a', 3);
+    ok(r == EINVAL, "r = %d\n", r);
+    ok(text[0] == 0, "text[0] = %d\n", text[0]);
+    ok(text[1] == 'e', "text[1] = %d\n", text[1]);
+
+    text[0] = 't';
+    r = p__wcsnset_s(text, 5, 'a', 1);
+    ok(r == 0, "r = %d\n", r);
+    ok(text[0] == 'a', "text[0] = %d\n", text[0]);
+    ok(text[1] == 'e', "text[1] = %d\n", text[1]);
+
+    text[1] = 0;
+    r = p__wcsnset_s(text, 5, 'b', 3);
+    ok(r == 0, "r = %d\n", r);
+    ok(text[0] == 'b', "text[0] = %d\n", text[0]);
+    ok(text[1] == 0, "text[1] = %d\n", text[1]);
+    ok(text[2] == 'x', "text[2] = %d\n", text[2]);
+}
+
 static void test__wcsset_s(void)
 {
     wchar_t str[10];
@@ -3233,6 +3294,7 @@ static void test__wcsset_s(void)
     str[1] = 0;
     str[2] = 'b';
     r = p__wcsset_s(str, 3, 'c');
+    ok(r == 0, "r = %d\n", r);
     ok(str[0] == 'c', "str[0] = %d\n", str[0]);
     ok(str[1] == 0, "str[1] = %d\n", str[1]);
     ok(str[2] == 'b', "str[2] = %d\n", str[2]);
@@ -3770,6 +3832,7 @@ START_TEST(string)
     p__atof_l = (void*)GetProcAddress(hMsvcrt, "_atof_l");
     p__strtod_l = (void*)GetProcAddress(hMsvcrt, "_strtod_l");
     p__strnset_s = (void*)GetProcAddress(hMsvcrt, "_strnset_s");
+    p__wcsnset_s = (void*)GetProcAddress(hMsvcrt, "_wcsnset_s");
     p__wcsset_s = (void*)GetProcAddress(hMsvcrt, "_wcsset_s");
     p__mbsnlen = (void*)GetProcAddress(hMsvcrt, "_mbsnlen");
     p__mbccpy_s = (void*)GetProcAddress(hMsvcrt, "_mbccpy_s");
@@ -3831,10 +3894,12 @@ START_TEST(string)
     test__stricmp();
     test__wcstoi64();
     test_atoi();
+    test_atol();
     test_atof();
     test_strncpy();
     test_strxfrm();
     test__strnset_s();
+    test__wcsnset_s();
     test__wcsset_s();
     test__mbscmp();
     test__ismbclx();

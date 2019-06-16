@@ -19,6 +19,11 @@
 import "mfobjects.idl";
 import "mftransform.idl";
 
+typedef [v1_enum] enum MF_SOURCE_READER_CONTROL_FLAG
+{
+    MF_SOURCE_READER_CONTROLF_DRAIN = 0x00000001,
+} MF_SOURCE_READER_CONTROL_FLAG;
+
 enum
 {
     MF_SOURCE_READER_INVALID_STREAM_INDEX = 0xffffffff,
@@ -30,15 +35,15 @@ enum
     MF_SOURCE_READER_CURRENT_TYPE_INDEX   = 0xffffffff
 };
 
-typedef enum MF_SOURCE_READER_FLAG
+typedef [v1_enum] enum MF_SOURCE_READER_FLAG
 {
-    MF_SOURCE_READERF_ERROR                   = 0x001,
-    MF_SOURCE_READERF_ENDOFSTREAM             = 0x002,
-    MF_SOURCE_READERF_NEWSTREAM               = 0x004,
-    MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED  = 0x010,
-    MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED = 0x020,
-    MF_SOURCE_READERF_STREAMTICK              = 0x100,
-    MF_SOURCE_READERF_ALLEFFECTSREMOVED       = 0x200
+    MF_SOURCE_READERF_ERROR                   = 0x00000001,
+    MF_SOURCE_READERF_ENDOFSTREAM             = 0x00000002,
+    MF_SOURCE_READERF_NEWSTREAM               = 0x00000004,
+    MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED  = 0x00000010,
+    MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED = 0x00000020,
+    MF_SOURCE_READERF_STREAMTICK              = 0x00000100,
+    MF_SOURCE_READERF_ALLEFFECTSREMOVED       = 0x00000200,
 } MF_SOURCE_READER_FLAG;
 
 typedef struct _MF_SINK_WRITER_STATISTICS
@@ -77,6 +82,39 @@ cpp_quote("EXTERN_GUID(MF_READWRITE_MMCSS_PRIORITY,             0x43ad19ce, 0xf3
 cpp_quote("EXTERN_GUID(MF_READWRITE_MMCSS_CLASS_AUDIO,          0x430847da, 0x0890, 0x4b0e, 0x93, 0x8c, 0x05, 0x43, 0x32, 0xc5, 0x47, 0xe1);")
 cpp_quote("EXTERN_GUID(MF_READWRITE_MMCSS_PRIORITY_AUDIO,       0x273db885, 0x2de2, 0x4db2, 0xa6, 0xa7, 0xfd, 0xb6, 0x6f, 0xb4, 0x0b, 0x61);")
 cpp_quote("EXTERN_GUID(MF_READWRITE_D3D_OPTIONAL,               0x216479d9, 0x3071, 0x42ca, 0xbb, 0x6c, 0x4c, 0x22, 0x10, 0x2e, 0x1d, 0x18);")
+
+cpp_quote("EXTERN_GUID(MF_SOURCE_READER_ASYNC_CALLBACK,                     0x1e3dbeac, 0xbb43, 0x4c35, 0xb5, 0x07, 0xcd, 0x64, 0x44, 0x64, 0xc9, 0x65);")
+cpp_quote("EXTERN_GUID(MF_SOURCE_READER_D3D_MANAGER,                        0xec822da2, 0xe1e9, 0x4b29, 0xa0, 0xd8, 0x56, 0x3c, 0x71, 0x9f, 0x52, 0x69);")
+cpp_quote("EXTERN_GUID(MF_SOURCE_READER_D3D11_BIND_FLAGS,                   0x33f3197b, 0xf73a, 0x4e14, 0x8d, 0x85, 0x0e, 0x4c, 0x43, 0x68, 0x78, 0x8d);")
+cpp_quote("EXTERN_GUID(MF_SOURCE_READER_DISABLE_CAMERA_PLUGINS,             0x9d3365dd, 0x058f, 0x4cfb, 0x9f, 0x97, 0xb3, 0x14, 0xcc, 0x99, 0xc8, 0xad);")
+cpp_quote("EXTERN_GUID(MF_SOURCE_READER_DISABLE_DXVA,                       0xaa456cfd, 0x3943, 0x4a1e, 0xa7, 0x7d, 0x18, 0x38, 0xc0, 0xea, 0x2e, 0x35);")
+cpp_quote("EXTERN_GUID(MF_SOURCE_READER_DISCONNECT_MEDIASOURCE_ON_SHUTDOWN, 0x56b67165, 0x219e, 0x456d, 0xa2, 0x2e, 0x2d, 0x30, 0x04, 0xc7, 0xfe, 0x56);")
+cpp_quote("EXTERN_GUID(MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING,   0x0f81da2c, 0xb537, 0x4672, 0xa8, 0xb2, 0xa6, 0x81, 0xb1, 0x73, 0x07, 0xa3);")
+cpp_quote("EXTERN_GUID(MF_SOURCE_READER_ENABLE_TRANSCODE_ONLY_TRANSFORMS,   0xdfd4f008, 0xb5fd, 0x4e78, 0xae, 0x44, 0x62, 0xa1, 0xe6, 0x7b, 0xbe, 0x27);")
+cpp_quote("EXTERN_GUID(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING,            0xfb394f3d, 0xccf1, 0x42ee, 0xbb, 0xb3, 0xf9, 0xb8, 0x45, 0xd5, 0x68, 0x1d);")
+cpp_quote("EXTERN_GUID(MF_SOURCE_READER_MEDIASOURCE_CHARACTERISTICS,        0x6d23f5c8, 0xc5d7, 0x4a9b, 0x99, 0x71, 0x5d, 0x11, 0xf8, 0xbc, 0xa8, 0x80);")
+cpp_quote("EXTERN_GUID(MF_SOURCE_READER_MEDIASOURCE_CONFIG,                 0x9085abeb, 0x0354, 0x48f9, 0xab, 0xb5, 0x20, 0x0d, 0xf8, 0x38, 0xc6, 0x8e);")
+
+[
+    object,
+    uuid(deec8d99-fa1d-4d82-84c2-2c8969944867),
+    local
+]
+interface IMFSourceReaderCallback : IUnknown
+{
+    HRESULT OnReadSample(
+            [in] HRESULT hr,
+            [in] DWORD stream_index,
+            [in] DWORD stream_flags,
+            [in] LONGLONG timestamp,
+            [in] IMFSample *sample);
+
+    HRESULT OnFlush([in] DWORD stream_index);
+
+    HRESULT OnEvent(
+            [in] DWORD stream_index,
+            [in] IMFMediaEvent *event);
+}
 
 interface IMFMediaSource;
 
@@ -151,3 +189,4 @@ cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromByteStream(IMFByteStream *str
 cpp_quote( "                                                  IMFSourceReader **reader);" )
 cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAttributes *attributes," )
 cpp_quote( "                                                   IMFSourceReader **reader);" )
+cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromURL(const WCHAR *url, IMFAttributes *attributes, IMFSourceReader **reader);" )

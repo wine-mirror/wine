@@ -197,7 +197,6 @@
 @ cdecl ___mb_cur_max_func() MSVCRT____mb_cur_max_func
 @ cdecl ___setlc_active_func() MSVCRT____setlc_active_func
 @ cdecl ___unguarded_readlc_active_add_func() MSVCRT____unguarded_readlc_active_add_func
-@ cdecl __acrt_iob_func(long) MSVCRT___acrt_iob_func  # for compatibility with Mingw
 @ extern __argc MSVCRT___argc
 @ extern __argv MSVCRT___argv
 @ extern __badioinfo MSVCRT___badioinfo
@@ -215,7 +214,7 @@
 @ stub __get_app_type
 @ cdecl __getmainargs(ptr ptr ptr long ptr)
 @ extern __initenv MSVCRT___initenv
-@ cdecl __iob_func() MSVCRT___iob_func
+@ cdecl __iob_func() __p__iob
 @ cdecl __isascii(long) MSVCRT___isascii
 @ cdecl __iscsym(long) MSVCRT___iscsym
 @ cdecl __iscsymf(long) MSVCRT___iscsymf
@@ -246,35 +245,35 @@
 @ cdecl -arch=i386 -norelay __libm_sse2_tan() MSVCRT___libm_sse2_tan
 @ cdecl -arch=i386 -norelay __libm_sse2_tanf() MSVCRT___libm_sse2_tanf
 @ extern __mb_cur_max MSVCRT___mb_cur_max
-@ cdecl __p___argc() MSVCRT___p___argc
-@ cdecl __p___argv() MSVCRT___p___argv
-@ cdecl __p___initenv()
-@ cdecl __p___mb_cur_max()
-@ cdecl __p___wargv() MSVCRT___p___wargv
-@ cdecl __p___winitenv()
-@ cdecl __p__acmdln() MSVCRT___p__acmdln
-@ cdecl __p__amblksiz()
-@ cdecl __p__commode()
-@ cdecl __p__daylight() MSVCRT___p__daylight
-@ cdecl __p__dstbias() MSVCRT___p__dstbias
-@ cdecl __p__environ() MSVCRT___p__environ
-@ stub __p__fileinfo()
-@ cdecl __p__fmode() MSVCRT___p__fmode
-@ cdecl __p__iob() MSVCRT___iob_func
-@ stub __p__mbcasemap()
-@ cdecl __p__mbctype()
-@ cdecl __p__osver()
-@ cdecl __p__pctype() MSVCRT___p__pctype
-@ cdecl __p__pgmptr() MSVCRT___p__pgmptr
-@ stub __p__pwctype()
-@ cdecl __p__timezone() MSVCRT___p__timezone
-@ cdecl __p__tzname()
-@ cdecl __p__wcmdln() MSVCRT___p__wcmdln
-@ cdecl __p__wenviron() MSVCRT___p__wenviron
-@ cdecl __p__winmajor()
-@ cdecl __p__winminor()
-@ cdecl __p__winver()
-@ cdecl __p__wpgmptr() MSVCRT___p__wpgmptr
+@ cdecl -arch=win32 __p___argc() MSVCRT___p___argc
+@ cdecl -arch=win32 __p___argv() MSVCRT___p___argv
+@ cdecl -arch=win32 __p___initenv()
+@ cdecl -arch=win32 __p___mb_cur_max()
+@ cdecl -arch=win32 __p___wargv() MSVCRT___p___wargv
+@ cdecl -arch=win32 __p___winitenv()
+@ cdecl -arch=win32 __p__acmdln() MSVCRT___p__acmdln
+@ cdecl -arch=win32 __p__amblksiz()
+@ cdecl -arch=win32 __p__commode()
+@ cdecl -arch=win32 __p__daylight() MSVCRT___p__daylight
+@ cdecl -arch=win32 __p__dstbias() MSVCRT___p__dstbias
+@ cdecl -arch=win32 __p__environ() MSVCRT___p__environ
+@ stub -arch=win32 __p__fileinfo()
+@ cdecl -arch=win32 __p__fmode() MSVCRT___p__fmode
+@ cdecl __p__iob()
+@ stub -arch=win32 __p__mbcasemap()
+@ cdecl -arch=win32 __p__mbctype()
+@ cdecl -arch=win32 __p__osver()
+@ cdecl -arch=win32 __p__pctype() MSVCRT___p__pctype
+@ cdecl -arch=win32 __p__pgmptr() MSVCRT___p__pgmptr
+@ stub -arch=win32 __p__pwctype()
+@ cdecl -arch=win32 __p__timezone() MSVCRT___p__timezone
+@ cdecl -arch=win32 __p__tzname()
+@ cdecl -arch=win32 __p__wcmdln() MSVCRT___p__wcmdln
+@ cdecl -arch=win32 __p__wenviron() MSVCRT___p__wenviron
+@ cdecl -arch=win32 __p__winmajor()
+@ cdecl -arch=win32 __p__winminor()
+@ cdecl -arch=win32 __p__winver()
+@ cdecl -arch=win32 __p__wpgmptr() MSVCRT___p__wpgmptr
 @ cdecl __pctype_func() MSVCRT___pctype_func
 @ extern __pioinfo MSVCRT___pioinfo
 # stub __pwctype_func()
@@ -422,7 +421,6 @@
 @ varargs _execle(str str)
 @ varargs _execlp(str str)
 @ varargs _execlpe(str str)
-@ cdecl _execute_onexit_table(ptr) MSVCRT__execute_onexit_table  # for compatibility with Mingw
 @ cdecl _execv(str ptr)
 @ cdecl _execve(str ptr ptr) MSVCRT__execve
 @ cdecl _execvp(str ptr)
@@ -503,7 +501,7 @@
 @ cdecl _gcvt_s(ptr long  double long) MSVCRT__gcvt_s
 @ cdecl _get_current_locale() MSVCRT__get_current_locale
 @ cdecl _get_doserrno(ptr)
-# stub _get_environ(ptr)
+@ cdecl _get_environ(ptr) MSVCRT__get_environ
 @ cdecl _get_errno(ptr)
 # stub _get_fileinfo(ptr)
 @ cdecl _get_fmode(ptr) MSVCRT__get_fmode
@@ -514,7 +512,7 @@
 @ cdecl _get_output_format() MSVCRT__get_output_format
 @ cdecl _get_pgmptr(ptr)
 @ cdecl _get_sbh_threshold()
-# stub _get_wenviron(ptr)
+@ cdecl _get_wenviron(ptr) MSVCRT__get_wenviron
 @ cdecl _get_winmajor(ptr) MSVCRT__get_winmajor
 @ cdecl _get_winminor(ptr) MSVCRT__get_winminor
 # stub _get_winver(ptr)
@@ -555,7 +553,6 @@
 @ cdecl _i64toa_s(int64 ptr long long) MSVCRT__i64toa_s
 @ cdecl _i64tow(int64 ptr long) ntdll._i64tow
 @ cdecl _i64tow_s(int64 ptr long long) MSVCRT__i64tow_s
-@ cdecl _initialize_onexit_table(ptr) MSVCRT__initialize_onexit_table  # for compatibility with Mingw
 @ cdecl _initterm(ptr ptr)
 @ cdecl _initterm_e(ptr ptr)
 @ stub -arch=i386 _inp(long)
@@ -686,7 +683,6 @@
 @ cdecl _makepath(ptr str str str str) MSVCRT__makepath
 @ cdecl _makepath_s(ptr long str str str str) MSVCRT__makepath_s
 # stub _malloc_dbg(long long str long)
-@ cdecl _matherr(ptr) MSVCRT__matherr
 @ cdecl _mbbtombc(long)
 # stub _mbbtombc_l(long ptr)
 @ cdecl _mbbtype(long long)
@@ -869,7 +865,6 @@
 # extern _pwctype
 @ cdecl _read(long ptr long) MSVCRT__read
 # stub _realloc_dbg(ptr long long str long)
-@ cdecl _register_onexit_function(ptr ptr) MSVCRT__register_onexit_function  # for compatibility with Mingw
 @ cdecl _resetstkoflw() MSVCRT__resetstkoflw
 @ cdecl _rmdir(str) MSVCRT__rmdir
 @ cdecl _rmtmp() MSVCRT__rmtmp
@@ -907,7 +902,7 @@
 @ cdecl _seterrormode(long)
 @ cdecl -arch=i386,x86_64,arm,arm64 -norelay _setjmp(ptr) MSVCRT__setjmp
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) MSVCRT__setjmp3
-@ cdecl -arch=x86_64,arm -norelay _setjmpex(ptr ptr) MSVCRT__setjmpex
+@ cdecl -arch=x86_64,arm,arm64 -norelay _setjmpex(ptr ptr) MSVCRT__setjmpex
 @ cdecl _setmaxstdio(long) MSVCRT__setmaxstdio
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long) MSVCRT__setmode
@@ -933,13 +928,13 @@
 @ varargs _snwscanf_s_l(wstr long wstr ptr) MSVCRT__snwscanf_s_l
 @ varargs _sopen(str long long) MSVCRT__sopen
 @ cdecl _sopen_s(ptr str long long long) MSVCRT__sopen_s
-@ varargs _spawnl(long str str)
-@ varargs _spawnle(long str str)
-@ varargs _spawnlp(long str str)
-@ varargs _spawnlpe(long str str)
-@ cdecl _spawnv(long str ptr)
+@ varargs _spawnl(long str str) MSVCRT__spawnl
+@ varargs _spawnle(long str str) MSVCRT__spawnle
+@ varargs _spawnlp(long str str) MSVCRT__spawnlp
+@ varargs _spawnlpe(long str str) MSVCRT__spawnlpe
+@ cdecl _spawnv(long str ptr) MSVCRT__spawnv
 @ cdecl _spawnve(long str ptr ptr) MSVCRT__spawnve
-@ cdecl _spawnvp(long str ptr)
+@ cdecl _spawnvp(long str ptr) MSVCRT__spawnvp
 @ cdecl _spawnvpe(long str ptr ptr) MSVCRT__spawnvpe
 @ cdecl _splitpath(str ptr ptr ptr ptr) MSVCRT__splitpath
 @ cdecl _splitpath_s(str ptr long ptr long ptr long ptr long) MSVCRT__splitpath_s
@@ -1121,7 +1116,7 @@
 @ cdecl _wcsnicoll(wstr wstr long) MSVCRT__wcsnicoll
 @ cdecl _wcsnicoll_l(wstr wstr long ptr) MSVCRT__wcsnicoll_l
 @ cdecl _wcsnset(wstr long long) MSVCRT__wcsnset
-# stub _wcsnset_s(wstr long long)
+@ cdecl _wcsnset_s(wstr long long long) MSVCRT__wcsnset_s
 @ cdecl _wcsrev(wstr) MSVCRT__wcsrev
 @ cdecl _wcsset(wstr long) MSVCRT__wcsset
 @ cdecl _wcsset_s(wstr long long) MSVCRT__wcsset_s
@@ -1208,13 +1203,13 @@
 @ cdecl _wsetlocale(long wstr) MSVCRT__wsetlocale
 @ varargs _wsopen(wstr long long) MSVCRT__wsopen
 @ cdecl _wsopen_s(ptr wstr long long long) MSVCRT__wsopen_s
-@ varargs _wspawnl(long wstr wstr)
-@ varargs _wspawnle(long wstr wstr)
-@ varargs _wspawnlp(long wstr wstr)
-@ varargs _wspawnlpe(long wstr wstr)
-@ cdecl _wspawnv(long wstr ptr)
+@ varargs _wspawnl(long wstr wstr) MSVCRT__wspawnl
+@ varargs _wspawnle(long wstr wstr) MSVCRT__wspawnle
+@ varargs _wspawnlp(long wstr wstr) MSVCRT__wspawnlp
+@ varargs _wspawnlpe(long wstr wstr) MSVCRT__wspawnlpe
+@ cdecl _wspawnv(long wstr ptr) MSVCRT__wspawnv
 @ cdecl _wspawnve(long wstr ptr ptr) MSVCRT__wspawnve
-@ cdecl _wspawnvp(long wstr ptr)
+@ cdecl _wspawnvp(long wstr ptr) MSVCRT__wspawnvp
 @ cdecl _wspawnvpe(long wstr ptr ptr) MSVCRT__wspawnvpe
 @ cdecl _wsplitpath(wstr ptr ptr ptr ptr) MSVCRT__wsplitpath
 @ cdecl _wsplitpath_s(wstr ptr long ptr long ptr long ptr long) MSVCRT__wsplitpath_s
@@ -1293,6 +1288,8 @@
 @ cdecl fgetws(ptr long ptr) MSVCRT_fgetws
 @ cdecl floor(double) MSVCRT_floor
 @ cdecl -arch=arm,x86_64,arm64 floorf(float) MSVCRT_floorf
+@ cdecl fma(double double double) MSVCRT_fma
+@ cdecl -arch=arm,x86_64,arm64 fmaf(float float float) MSVCRT_fmaf
 @ cdecl fmod(double double) MSVCRT_fmod
 @ cdecl -arch=arm,x86_64,arm64 fmodf(float float) MSVCRT_fmodf
 @ cdecl fopen(str str) MSVCRT_fopen

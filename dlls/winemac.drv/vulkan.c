@@ -45,6 +45,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 #ifdef SONAME_LIBMOLTENVK
 
+WINE_DECLARE_DEBUG_CHANNEL(fps);
+
 typedef VkFlags VkMacOSSurfaceCreateFlagsMVK;
 #define VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK 1000123000
 
@@ -463,7 +465,30 @@ static VkResult macdrv_vkGetSwapchainImagesKHR(VkDevice device,
 static VkResult macdrv_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info)
 {
     TRACE("%p, %p\n", queue, present_info);
-    return pvkQueuePresentKHR(queue, present_info);
+    VkResult res = pvkQueuePresentKHR(queue, present_info);
+
+    if (TRACE_ON(fps))
+    {
+        static unsigned long frames, frames_total;
+        static long prev_time, start_time;
+        DWORD time;
+
+        time = GetTickCount();
+        frames++;
+        frames_total++;
+        if (time - prev_time > 1500)
+        {
+            TRACE_(fps)("%p @ approx %.2ffps, total %.2ffps\n",
+                    queue, 1000.0 * frames / (time - prev_time),
+                    1000.0 * frames_total / (time - start_time));
+            prev_time = time;
+            frames = 0;
+            if (!start_time)
+                start_time = time;
+        }
+    }
+
+    return res;
 }
 
 static const struct vulkan_funcs vulkan_funcs =

@@ -67,6 +67,7 @@ struct state_test
 /* Apparently recorded stateblocks record and apply vertex declarations,
  * but don't capture them */
 #define SB_QUIRK_RECORDED_VDECL_CAPTURE  0x00000001
+#define SB_QUIRK_STREAM_OFFSET_NOT_UPDATED 0x00000002
 
 struct event_data
 {
@@ -135,6 +136,7 @@ static void execute_test_chain(IDirect3DDevice9 *device, struct state_test *test
     {
         const void *data;
 
+        trace("event %u.\n", j);
         /* Execute the next event handler (if available). */
         if (event[j].event_fn)
         {
@@ -349,16 +351,17 @@ static void execute_test_chain_all(IDirect3DDevice9 *device, struct state_test *
     struct event capture_reapply_stateblock_events[] =
     {
         {begin_stateblock,          SB_DATA_NONE,           SB_DATA_TEST_IN},
-        {end_stateblock,            SB_DATA_NONE,           SB_DATA_NONE},
+        {end_stateblock,            SB_DATA_NONE,           SB_DATA_DEFAULT},
         {capture_stateblock,        SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
-        {apply_stateblock,          SB_DATA_DEFAULT,        SB_DATA_NONE,       SB_QUIRK_RECORDED_VDECL_CAPTURE},
+        {capture_stateblock,        SB_DATA_TEST_ALL,       SB_DATA_DEFAULT},
+        {apply_stateblock,          SB_DATA_TEST_ALL,       SB_DATA_DEFAULT, SB_QUIRK_RECORDED_VDECL_CAPTURE},
     };
 
     struct event create_stateblock_capture_apply_all_events[] =
     {
         {create_stateblock_all,     SB_DATA_DEFAULT,        SB_DATA_TEST_IN},
         {capture_stateblock,        SB_DATA_TEST_ALL,       SB_DATA_DEFAULT},
-        {apply_stateblock,          SB_DATA_TEST_ALL,       SB_DATA_NONE},
+        {apply_stateblock,          SB_DATA_TEST_ALL,       SB_DATA_NONE, SB_QUIRK_STREAM_OFFSET_NOT_UPDATED},
     };
 
     struct event create_stateblock_apply_all_events[] =
@@ -421,43 +424,52 @@ static void execute_test_chain_all(IDirect3DDevice9 *device, struct state_test *
     }
 
     trace("Running initial read state tests\n");
-    execute_test_chain(device, test, ntests, read_events, 1, NULL);
+    execute_test_chain(device, test, ntests, read_events, ARRAY_SIZE(read_events), NULL);
 
     trace("Running write-read state tests\n");
-    execute_test_chain(device, test, ntests, write_read_events, 2, NULL);
+    execute_test_chain(device, test, ntests, write_read_events, ARRAY_SIZE(write_read_events), NULL);
 
     trace("Running stateblock abort state tests\n");
-    execute_test_chain(device, test, ntests, abort_stateblock_events, 3, &arg);
+    execute_test_chain(device, test, ntests, abort_stateblock_events, ARRAY_SIZE(abort_stateblock_events), &arg);
 
     trace("Running stateblock apply state tests\n");
-    execute_test_chain(device, test, ntests, apply_stateblock_events, 3, &arg);
+    execute_test_chain(device, test, ntests, apply_stateblock_events, ARRAY_SIZE(apply_stateblock_events), &arg);
 
     trace("Running stateblock capture/reapply state tests\n");
-    execute_test_chain(device, test, ntests, capture_reapply_stateblock_events, 4, &arg);
+    execute_test_chain(device, test, ntests, capture_reapply_stateblock_events,
+            ARRAY_SIZE(capture_reapply_stateblock_events), &arg);
 
     trace("Running create stateblock capture/apply all state tests\n");
-    execute_test_chain(device, test, ntests, create_stateblock_capture_apply_all_events, 3, &arg);
+    execute_test_chain(device, test, ntests, create_stateblock_capture_apply_all_events,
+            ARRAY_SIZE(create_stateblock_capture_apply_all_events), &arg);
 
     trace("Running create stateblock apply state all tests\n");
-    execute_test_chain(device, test, ntests, create_stateblock_apply_all_events, 3, &arg);
+    execute_test_chain(device, test, ntests, create_stateblock_apply_all_events,
+            ARRAY_SIZE(create_stateblock_apply_all_events), &arg);
 
     trace("Running create stateblock capture/apply vertex state tests\n");
-    execute_test_chain(device, test, ntests, create_stateblock_capture_apply_vertex_events, 3, &arg);
+    execute_test_chain(device, test, ntests, create_stateblock_capture_apply_vertex_events,
+            ARRAY_SIZE(create_stateblock_capture_apply_vertex_events), &arg);
 
     trace("Running create stateblock apply vertex state tests\n");
-    execute_test_chain(device, test, ntests, create_stateblock_apply_vertex_events, 3, &arg);
+    execute_test_chain(device, test, ntests, create_stateblock_apply_vertex_events,
+            ARRAY_SIZE(create_stateblock_apply_vertex_events), &arg);
 
     trace("Running create stateblock capture/apply pixel state tests\n");
-    execute_test_chain(device, test, ntests, create_stateblock_capture_apply_pixel_events, 3, &arg);
+    execute_test_chain(device, test, ntests, create_stateblock_capture_apply_pixel_events,
+            ARRAY_SIZE(create_stateblock_capture_apply_pixel_events), &arg);
 
     trace("Running create stateblock apply pixel state tests\n");
-    execute_test_chain(device, test, ntests, create_stateblock_apply_pixel_events, 3, &arg);
+    execute_test_chain(device, test, ntests, create_stateblock_apply_pixel_events,
+            ARRAY_SIZE(create_stateblock_apply_pixel_events), &arg);
 
     trace("Running rendertarget switch state tests\n");
-    execute_test_chain(device, test, ntests, rendertarget_switch_events, 3, &arg);
+    execute_test_chain(device, test, ntests, rendertarget_switch_events,
+            ARRAY_SIZE(rendertarget_switch_events), &arg);
 
     trace("Running stateblock apply over rendertarget switch interrupt tests\n");
-    execute_test_chain(device, test, ntests, rendertarget_stateblock_events, 5, &arg);
+    execute_test_chain(device, test, ntests, rendertarget_stateblock_events,
+            ARRAY_SIZE(rendertarget_stateblock_events), &arg);
 
     /* Cleanup resources */
     for (i = 0; i < ntests; ++i)
@@ -648,6 +660,7 @@ static const struct light_data light_poison_data =
     0x1337c0de,
     0x1337c0de,
 };
+
 
 static const struct light_data light_default_data =
 {
@@ -1666,6 +1679,7 @@ struct resource_test_data
     IDirect3DPixelShader9 *ps;
     IDirect3DIndexBuffer9 *ib;
     IDirect3DVertexBuffer9 **vb;
+    unsigned int stream_offset, stream_stride;
     IDirect3DTexture9 **tex;
 };
 
@@ -1682,6 +1696,7 @@ static void resource_apply_data(IDirect3DDevice9 *device, const struct state_tes
 {
     const struct resource_test_arg *arg = test->test_arg;
     const struct resource_test_data *d = data;
+    IDirect3DVertexBuffer9 *temp_vb = NULL;
     unsigned int i;
     HRESULT hr;
 
@@ -1699,10 +1714,26 @@ static void resource_apply_data(IDirect3DDevice9 *device, const struct state_tes
 
     for (i = 0; i < arg->stream_count; ++i)
     {
-        hr = IDirect3DDevice9_SetStreamSource(device, i, d->vb[i], 0, 64);
-        ok(SUCCEEDED(hr), "SetStreamSource (%u, %p, 0, 64) returned %#x.\n",
-                i, d->vb[i], hr);
+        if (!d->vb[i])
+        {
+            /* Use a non NULL vertex buffer to really set offset and stride and avoid leftover values. */
+            if (!temp_vb)
+            {
+                hr = IDirect3DDevice9_CreateVertexBuffer(device, 64, D3DUSAGE_DYNAMIC,
+                        0, D3DPOOL_DEFAULT, &temp_vb, NULL);
+                ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            }
+            hr = IDirect3DDevice9_SetStreamSource(device, i, temp_vb, d->stream_offset, d->stream_stride);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        }
+
+        hr = IDirect3DDevice9_SetStreamSource(device, i, d->vb[i], d->stream_offset, d->stream_stride);
+        ok(hr == D3D_OK, "Unexpected SetStreamSource result, i %u, vb %p, "
+                "stream_offset %u, stream_stride %u), hr %#x.\n",
+                i, d->vb[i], d->stream_offset, d->stream_stride, hr);
     }
+    if (temp_vb)
+        IDirect3DVertexBuffer9_Release(temp_vb);
 
     for (i = 0; i < arg->tex_count; ++i)
     {
@@ -1718,6 +1749,7 @@ static void resource_check_data(IDirect3DDevice9 *device, const struct state_tes
     const struct resource_test_data *poison = &ctx->poison_data;
     const struct resource_test_arg *arg = test->test_arg;
     const struct resource_test_data *d = expected_data;
+    unsigned int expected_offset;
     unsigned int i;
     HRESULT hr;
     void *ptr;
@@ -1771,6 +1803,7 @@ static void resource_check_data(IDirect3DDevice9 *device, const struct state_tes
         IDirect3DIndexBuffer9_Release((IDirect3DIndexBuffer9 *)ptr);
     }
 
+    expected_offset = quirk & SB_QUIRK_STREAM_OFFSET_NOT_UPDATED ? 0 : d->stream_offset;
     for (i = 0; i < arg->stream_count; ++i)
     {
         ptr = poison->vb[i];
@@ -1778,6 +1811,8 @@ static void resource_check_data(IDirect3DDevice9 *device, const struct state_tes
         ok(SUCCEEDED(hr), "GetStreamSource (%u) returned %#x.\n", i, hr);
         ok(ptr == d->vb[i], "Chain stage %u, stream %u, expected vertex buffer %p, received %p.\n",
                 chain_stage, i, d->vb[i], ptr);
+        ok(v == expected_offset, "Stream source offset %u, expected %u, stride %u.\n", v, expected_offset, w);
+        ok(w == d->stream_stride, "Stream source stride %u, expected %u.\n", w, d->stream_stride);
         if (SUCCEEDED(hr) && ptr)
         {
             IDirect3DIndexBuffer9_Release((IDirect3DVertexBuffer9 *)ptr);
@@ -1811,6 +1846,8 @@ static void resource_default_data_init(struct resource_test_data *data, const st
     {
         data->vb[i] = NULL;
     }
+    data->stream_offset = 0;
+    data->stream_stride = 0;
     data->tex = HeapAlloc(GetProcessHeap(), 0, arg->tex_count * sizeof(*data->tex));
     for (i = 0; i < arg->tex_count; ++i)
     {
@@ -1885,6 +1922,8 @@ static void resource_test_data_init(IDirect3DDevice9 *device,
                 0, D3DPOOL_DEFAULT, &data->vb[i], NULL);
         ok(SUCCEEDED(hr), "CreateVertexBuffer (%u) returned %#x.\n", i, hr);
     }
+    data->stream_offset = 4;
+    data->stream_stride = 64;
     data->tex = HeapAlloc(GetProcessHeap(), 0, arg->tex_count * sizeof(*data->tex));
     for (i = 0; i < arg->tex_count; ++i)
     {
@@ -1908,6 +1947,8 @@ static void resource_poison_data_init(struct resource_test_data *data, const str
     {
         data->vb[i] = (IDirect3DVertexBuffer9 *)poison++;
     }
+    data->stream_offset = 16;
+    data->stream_stride = 128;
     data->tex = HeapAlloc(GetProcessHeap(), 0, arg->tex_count * sizeof(*data->tex));
     for (i = 0; i < arg->tex_count; ++i)
     {

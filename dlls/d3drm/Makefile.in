@@ -2,6 +2,8 @@ MODULE    = d3drm.dll
 IMPORTLIB = d3drm
 IMPORTS   = d3dxof ddraw
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	d3drm.c \
 	d3drm_main.c \

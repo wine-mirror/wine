@@ -1,8 +1,8 @@
 /* Unicode Vertical Orientation */
-/* generated from http://www.unicode.org/Public/11.0.0/ucd/VerticalOrientation.txt */
+/* generated from http://www.unicode.org/Public/12.0.0/ucd/VerticalOrientation.txt */
 /* DO NOT EDIT!! */
 
-#include "wine/unicode.h"
+#include "windef.h"
 
 const unsigned short DECLSPEC_HIDDEN vertical_orientation_table[1616] =
 {

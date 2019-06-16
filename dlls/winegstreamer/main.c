@@ -24,16 +24,11 @@
 
 #include <gst/gst.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winreg.h"
-#include "winerror.h"
-#include "advpub.h"
-#include "wine/debug.h"
-
-#include "wine/unicode.h"
 #include "gst_private.h"
+#include "rpcproxy.h"
+#include "wine/debug.h"
+#include "wine/unicode.h"
+
 #include "initguid.h"
 #include "gst_guids.h"
 
@@ -257,101 +252,56 @@ void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt)
     TRACE("\t%s\n\t%s\n\t...\n\t%s\n", debugstr_guid(&pmt->majortype), debugstr_guid(&pmt->subtype), debugstr_guid(&pmt->formattype));
 }
 
-DWORD Gstreamer_init(void)
+static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ctx)
 {
-    static int inited;
+    BOOL *status = param;
+    char argv0[] = "wine";
+    char argv1[] = "--gst-disable-registry-fork";
+    char *args[3];
+    char **argv = args;
+    int argc = 2;
+    GError *err = NULL;
 
-    if (!inited) {
-        char argv0[] = "wine";
-        char argv1[] = "--gst-disable-registry-fork";
-        char **argv = HeapAlloc(GetProcessHeap(), 0, sizeof(char *)*3);
-        int argc = 2;
-        GError *err = NULL;
+    TRACE("Initializing...\n");
 
-        TRACE("initializing\n");
+    argv[0] = argv0;
+    argv[1] = argv1;
+    argv[2] = NULL;
+    *status = gst_init_check(&argc, &argv, &err);
+    if (*status)
+    {
+        HINSTANCE handle;
 
-        argv[0] = argv0;
-        argv[1] = argv1;
-        argv[2] = NULL;
-        inited = gst_init_check(&argc, &argv, &err);
-        HeapFree(GetProcessHeap(), 0, argv);
-        if (err) {
-            ERR("Failed to initialize gstreamer: %s\n", err->message);
-            g_error_free(err);
-        }
-        if (inited) {
-            HINSTANCE newhandle;
-            /* Unloading glib is a bad idea.. it installs atexit handlers,
-             * so never unload the dll after loading */
-            GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-                               (LPCWSTR)hInst, &newhandle);
-            if (!newhandle)
-                ERR("Could not pin module %p\n", hInst);
+        TRACE("Initialized, version %s. Built with %d.%d.%d.\n", gst_version_string(),
+                GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
 
-            start_dispatch_thread();
-        }
+        /* Unloading glib is a bad idea.. it installs atexit handlers,
+         * so never unload the dll after loading */
+        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
+                (LPCWSTR)hInst, &handle);
+        if (!handle)
+            ERR("Failed to pin module %p.\n", hInst);
+
+        start_dispatch_thread();
     }
-    return inited;
+    else if (err)
+    {
+        ERR("Failed to initialize gstreamer: %s\n", debugstr_a(err->message));
+        g_error_free(err);
+    }
+
+    return TRUE;
 }
 
-#define INF_SET_ID(id)            \
-    do                            \
-    {                             \
-        static CHAR name[] = #id; \
-                                  \
-        pse[i].pszName = name;    \
-        clsids[i++] = &id;        \
-    } while (0)
-
-#define INF_SET_CLSID(clsid) INF_SET_ID(CLSID_ ## clsid)
-
-static HRESULT register_server(BOOL do_register)
+BOOL init_gstreamer(void)
 {
-    HRESULT hres;
-    HMODULE hAdvpack;
-    HRESULT (WINAPI *pRegInstall)(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable);
-    STRTABLEA strtable;
-    STRENTRYA pse[3];
-    static CLSID const *clsids[3];
-    unsigned int i = 0;
+    static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+    static BOOL status;
 
-    static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
+    InitOnceExecuteOnce(&once, init_gstreamer_proc, &status, NULL);
 
-    TRACE("(%x)\n", do_register);
-
-    INF_SET_CLSID(AsyncReader);
-    INF_SET_ID(MEDIATYPE_Stream);
-    INF_SET_ID(WINESUBTYPE_Gstreamer);
-
-    for(i = 0; i < ARRAY_SIZE(pse); i++) {
-        pse[i].pszValue = HeapAlloc(GetProcessHeap(),0,39);
-        sprintf(pse[i].pszValue, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-                clsids[i]->Data1, clsids[i]->Data2, clsids[i]->Data3, clsids[i]->Data4[0],
-                clsids[i]->Data4[1], clsids[i]->Data4[2], clsids[i]->Data4[3], clsids[i]->Data4[4],
-                clsids[i]->Data4[5], clsids[i]->Data4[6], clsids[i]->Data4[7]);
-    }
-
-    strtable.cEntries = ARRAY_SIZE(pse);
-    strtable.pse = pse;
-
-    hAdvpack = LoadLibraryW(wszAdvpack);
-    pRegInstall = (void *)GetProcAddress(hAdvpack, "RegInstall");
-
-    hres = pRegInstall(hInst, do_register ? "RegisterDll" : "UnregisterDll", &strtable);
-
-    for(i = 0; i < ARRAY_SIZE(pse); i++)
-        HeapFree(GetProcessHeap(),0,pse[i].pszValue);
-
-    if(FAILED(hres)) {
-        ERR("RegInstall failed: %08x\n", hres);
-        return hres;
-    }
-
-    return hres;
+    return status;
 }
-
-#undef INF_SET_CLSID
-#undef INF_SET_ID
 
 /***********************************************************************
  *      DllRegisterServer
@@ -364,7 +314,7 @@ HRESULT WINAPI DllRegisterServer(void)
 
     hr = AMovieDllRegisterServer2(TRUE);
     if (SUCCEEDED(hr))
-        hr = register_server(TRUE);
+        hr = __wine_register_resources(hInst);
     return hr;
 }
 
@@ -379,6 +329,6 @@ HRESULT WINAPI DllUnregisterServer(void)
 
     hr = AMovieDllRegisterServer2(FALSE);
     if (SUCCEEDED(hr))
-        hr = register_server(FALSE);
+        hr = __wine_unregister_resources(hInst);
     return hr;
 }

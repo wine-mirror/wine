@@ -1,7 +1,9 @@
 MODULE    = hidclass.sys
 IMPORTLIB = hidclass
-IMPORTS   = ntoskrnl
+IMPORTS   = hal ntoskrnl
 DELAYIMPORTS = setupapi hid
+
+EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	buffer.c \

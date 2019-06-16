@@ -1,6 +1,7 @@
 MODULE    = msiexec.exe
-APPMODE   = -mwindows
 IMPORTS   = msi ole32 advapi32 user32
+
+EXTRADLLFLAGS = -mwindows -mno-cygwin
 
 C_SRCS = \
 	msiexec.c \

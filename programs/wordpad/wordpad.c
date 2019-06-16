@@ -36,7 +36,6 @@
 #include <math.h>
 #include <errno.h>
 
-#include "wine/unicode.h"
 #include "wordpad.h"
 
 #ifdef NONAMELESSUNION
@@ -1383,7 +1382,7 @@ static void number_with_units(LPWSTR buffer, int number)
     static const WCHAR fmt[] = {'%','.','2','f',' ','%','s','\0'};
     float converted = (float)number / (float)TWIPS_PER_INCH *(float)CENTMM_PER_INCH / 1000.0;
 
-    sprintfW(buffer, fmt, converted, units_cmW);
+    swprintf(buffer, MAX_STRING_LEN, fmt, converted, units_cmW);
 }
 
 static BOOL get_comboexlist_selection(HWND hComboEx, LPWSTR wszBuffer, UINT bufferLength)

@@ -108,7 +108,7 @@ static WORD ATOM_Hash(
 
     TRACE("%x, %s, %x\n", entries, str, len);
 
-    for (i = 0; i < len; i++) hash ^= toupper(str[i]) + i;
+    for (i = 0; i < len; i++) hash ^= RtlUpperChar(str[i]) + i;
     return hash % entries;
 }
 
@@ -223,7 +223,7 @@ ATOM WINAPI AddAtom16( LPCSTR str )
     {
         entryPtr = ATOM_MakePtr( entry );
         if ((entryPtr->length == len) &&
-            (!strncasecmp( entryPtr->str, buffer, len )))
+            (!_strnicmp( entryPtr->str, buffer, len )))
         {
             entryPtr->refCount++;
             TRACE("-- existing 0x%x\n", entry);
@@ -310,7 +310,7 @@ ATOM WINAPI FindAtom16( LPCSTR str )
     {
         ATOMENTRY * entryPtr = ATOM_MakePtr( entry );
         if ((entryPtr->length == len) &&
-            (!strncasecmp( entryPtr->str, str, len )))
+            (!_strnicmp( entryPtr->str, str, len )))
         {
             TRACE("-- found %x\n", entry);
             return HANDLETOATOM( entry );

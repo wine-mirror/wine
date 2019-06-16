@@ -24,10 +24,7 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-
-#ifndef MAKELANGID
 #include "winnls.h"
-#endif
 
 #ifndef VS_FFI_SIGNATURE
 #include "winver.h"

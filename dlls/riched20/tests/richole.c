@@ -853,15 +853,19 @@ static void test_ITextRange_ScrollIntoView(void)
 
   /* Scroll to the top. */
   check_range(w, txtDoc, 0, 1, tomStart, 0);
+  check_range(w, txtDoc, 0, 1, tomEnd, 0);
 
   /* Scroll to the bottom. */
   check_range(w, txtDoc, 19, 20, tomStart, 1);
+  check_range(w, txtDoc, 19, 20, tomEnd, 1);
 
   /* Back up to the top. */
   check_range(w, txtDoc, 0, 1, tomStart, 0);
+  check_range(w, txtDoc, 0, 1, tomEnd, 0);
 
   /* Large range */
   check_range(w, txtDoc, 0, 20, tomStart, 0);
+  check_range(w, txtDoc, 0, 20, tomEnd, 1);
 
   hres = ITextDocument_Range(txtDoc, 0, 0, &txtRge);
   ok(hres == S_OK, "got 0x%08x\n", hres);
@@ -3328,6 +3332,61 @@ static void test_InsertObject(void)
   /* received_reo4 didn't be zeroed in E_INVALIDARG case */
   CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo2.polesite, 2);
 
+  SendMessageA(hwnd, EM_SETSEL, 0, 1);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 1;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo1.polesite, 1);
+
+  SendMessageA(hwnd, EM_SETSEL, 1, 2);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo3.polesite, 3);
+
+  SendMessageA(hwnd, EM_SETSEL, 2, 3);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo2.polesite, 2);
+
+  SendMessageA(hwnd, EM_SETSEL, 0, 2);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo1.polesite, 1);
+
+  SendMessageA(hwnd, EM_SETSEL, 1, 3);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo3.polesite, 3);
+
+  SendMessageA(hwnd, EM_SETSEL, 2, 0);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo1.polesite, 1);
+
+  SendMessageA(hwnd, EM_SETSEL, 0, 6);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
+  CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo1.polesite, 1);
+
+  SendMessageA(hwnd, EM_SETSEL, 4, 5);
+  received_reo4.cbStruct = sizeof(received_reo4);
+  received_reo4.cp = 0;
+  hr = IRichEditOle_GetObject(reole, REO_IOB_SELECTION, &received_reo4, REO_GETOBJ_ALL_INTERFACES);
+  ok(hr == E_INVALIDARG, "IRichEditOle_GetObject should fail: 0x%08x\n", hr);
+
   release_interfaces(&hwnd, &reole, &doc, NULL);
 }
 
@@ -3531,6 +3590,51 @@ static void _check_selection(ITextSelection *selection, LONG expected_start, LON
                      expected_end, value);
 }
 
+static void test_ITextRange_SetRange(void)
+{
+  static const CHAR test_text1[] = "TestSomeText";
+  ITextDocument *txtDoc = NULL;
+  IRichEditOle *reOle = NULL;
+  ITextRange *txtRge = NULL;
+  HRESULT hr;
+  HWND w;
+
+  create_interfaces(&w, &reOle, &txtDoc, NULL);
+  SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
+  ITextDocument_Range(txtDoc, 0, 0, &txtRge);
+
+  hr = ITextRange_SetRange(txtRge, 2, 4);
+  ok(hr == S_OK, "got 0x%08x.\n", hr);
+  CHECK_RANGE(txtRge, 2, 4);
+
+  hr = ITextRange_SetRange(txtRge, 2, 4);
+  ok(hr == S_FALSE, "got 0x%08x.\n", hr);
+  CHECK_RANGE(txtRge, 2, 4);
+
+  hr = ITextRange_SetRange(txtRge, 4, 2);
+  ok(hr == S_FALSE, "got 0x%08x.\n", hr);
+  CHECK_RANGE(txtRge, 2, 4);
+
+  hr = ITextRange_SetRange(txtRge, 14, 14);
+  ok(hr == S_OK, "got 0x%08x.\n", hr);
+  CHECK_RANGE(txtRge, 12, 12);
+
+  hr = ITextRange_SetRange(txtRge, 15, 15);
+  ok(hr == S_FALSE, "got 0x%08x.\n", hr);
+  CHECK_RANGE(txtRge, 12, 12);
+
+  hr = ITextRange_SetRange(txtRge, 14, 1);
+  ok(hr == S_OK, "got 0x%08x.\n", hr);
+  CHECK_RANGE(txtRge, 1, 13);
+
+  hr = ITextRange_SetRange(txtRge, -1, 4);
+  ok(hr == S_OK, "got 0x%08x.\n", hr);
+  CHECK_RANGE(txtRge, 0, 4);
+
+  ITextRange_Release(txtRge);
+  release_interfaces(&w, &reOle, &txtDoc, NULL);
+}
+
 static void test_Expand(void)
 {
   static const char test_text1[] = "TestSomeText";
@@ -3721,6 +3825,7 @@ START_TEST(richole)
   test_ITextRange_GetChar();
   test_ITextRange_ScrollIntoView();
   test_ITextRange_GetStart_GetEnd();
+  test_ITextRange_SetRange();
   test_ITextRange_GetDuplicate();
   test_ITextRange_Collapse();
   test_GetClientSite();

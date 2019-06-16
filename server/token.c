@@ -83,6 +83,7 @@ static const SID_N(5) local_user_sid = { SID_REVISION, 5, { SECURITY_NT_AUTHORIT
 static const SID_N(2) builtin_admins_sid = { SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS } };
 static const SID_N(2) builtin_users_sid = { SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS } };
 static const SID_N(3) builtin_logon_sid = { SID_REVISION, 3, { SECURITY_NT_AUTHORITY }, { SECURITY_LOGON_IDS_RID, 0, 0 } };
+static const SID_N(5) domain_users_sid = { SID_REVISION, 5, { SECURITY_NT_AUTHORITY }, { SECURITY_NT_NON_UNIQUE, 0, 0, 0, DOMAIN_GROUP_RID_USERS } };
 
 const PSID security_world_sid = (PSID)&world_sid;
 static const PSID security_local_sid = (PSID)&local_sid;
@@ -92,6 +93,7 @@ const PSID security_local_system_sid = (PSID)&local_system_sid;
 const PSID security_local_user_sid = (PSID)&local_user_sid;
 const PSID security_builtin_admins_sid = (PSID)&builtin_admins_sid;
 const PSID security_builtin_users_sid = (PSID)&builtin_users_sid;
+const PSID security_domain_users_sid = (PSID)&domain_users_sid;
 const PSID security_high_label_sid = (PSID)&high_label_sid;
 
 static luid_t prev_luid_value = { 1000, 0 };
@@ -156,6 +158,7 @@ static const struct object_ops token_ops =
     no_link_name,              /* link_name */
     NULL,                      /* unlink_name */
     no_open_file,              /* open_file */
+    no_kernel_obj_list,        /* get_kernel_obj_list */
     no_close_handle,           /* close_handle */
     token_destroy              /* destroy */
 };
@@ -304,8 +307,7 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
     owner = sd_get_owner( sd );
     if (owner)
     {
-        size_t needed_size = security_sid_len( owner );
-        if ((sd->owner_len < sizeof(SID)) || (needed_size > sd->owner_len))
+        if ((sd->owner_len < sizeof(SID)) || (security_sid_len( owner ) > sd->owner_len))
             return FALSE;
     }
     offset += sd->owner_len;
@@ -316,8 +318,7 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
     group = sd_get_group( sd );
     if (group)
     {
-        size_t needed_size = security_sid_len( group );
-        if ((sd->group_len < sizeof(SID)) || (needed_size > sd->group_len))
+        if ((sd->group_len < sizeof(SID)) || (security_sid_len( group ) > sd->group_len))
             return FALSE;
     }
     offset += sd->group_len;
@@ -838,6 +839,7 @@ struct token *token_create_admin( void )
             { security_local_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
             { security_interactive_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
             { security_authenticated_user_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+            { security_domain_users_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_OWNER },
             { alias_admins_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_OWNER },
             { alias_users_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
             { logon_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_LOGON_ID },

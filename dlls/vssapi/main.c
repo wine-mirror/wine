@@ -23,31 +23,10 @@
 #include "vss.h"
 #include "vswriter.h"
 #include "vsbackup.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL( vssapi );
-
-#undef __thiscall
-#ifdef __i386__  /* thiscall functions are i386-specific */
-
-#define THISCALL(func) __thiscall_ ## func
-#define THISCALL_NAME(func) __ASM_NAME("__thiscall_" #func)
-#define __thiscall __stdcall
-#define DEFINE_THISCALL_WRAPPER(func,args) \
-    extern void THISCALL(func)(void); \
-    __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
-                      "popl %eax\n\t" \
-                      "pushl %ecx\n\t" \
-                      "pushl %eax\n\t" \
-                      "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
-#else /* __i386__ */
-
-#define THISCALL(func) func
-#define THISCALL_NAME(func) __ASM_NAME(#func)
-#define __thiscall __cdecl
-#define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
-
-#endif /* __i386__ */
 
 struct CVssWriter
 {

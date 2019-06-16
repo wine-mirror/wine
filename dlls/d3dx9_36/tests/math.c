@@ -321,11 +321,11 @@ static void D3DXMatrixTest(void)
     D3DXMATRIX expectedmat, gotmat, mat, mat2, mat3;
     BOOL expected, got, equal;
     float angle, determinant;
-    D3DXMATRIX *funcpointer;
     D3DXPLANE plane;
     D3DXQUATERNION q, r;
     D3DXVECTOR3 at, axis, eye, last;
     D3DXVECTOR4 light;
+    D3DXMATRIX *ret;
 
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -410,8 +410,12 @@ static void D3DXMatrixTest(void)
     expect_matrix(&expectedmat, &gotmat, 1);
     equal = compare_float(determinant, -147888.0f, 0);
     ok(equal, "Got unexpected determinant %.8e.\n", determinant);
-    funcpointer = D3DXMatrixInverse(&gotmat,NULL,&mat2);
-    ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
+    determinant = 5.0f;
+    ret = D3DXMatrixInverse(&gotmat, &determinant, &mat2);
+    ok(!ret, "Unexpected return value %p.\n", ret);
+    expect_matrix(&expectedmat, &gotmat, 1);
+    ok(compare_float(determinant, 5.0f, 0) || broken(!determinant), /* Vista 64 bit testbot */
+            "Unexpected determinant %.8e.\n", determinant);
 
 /*____________D3DXMatrixIsIdentity______________*/
     expected = FALSE;
@@ -2026,7 +2030,7 @@ static void D3DXVector2Test(void)
     D3DXVec2TransformCoord(&gotvec, &u, &mat);
     expect_vec2(&expectedvec, &gotvec, 1);
     gotvec.x = u.x; gotvec.y = u.y;
-    D3DXVec2TransformCoord(&gotvec, (D3DXVECTOR2 *)&gotvec, &mat);
+    D3DXVec2TransformCoord(&gotvec, &gotvec, &mat);
     expect_vec2(&expectedvec, &gotvec, 1);
 
  /*_______________D3DXVec2TransformNormal______________________*/
@@ -4042,7 +4046,7 @@ static void test_D3DXSHMultiply3(void)
     D3DXSHMultiply3(c, c, b);
     for (i = 0; i < ARRAY_SIZE(expected_aliased); ++i)
     {
-        equal = compare_float(c[i], expected_aliased[i], 32);
+        equal = compare_float(c[i], expected_aliased[i], 34);
         ok(equal, "Expected[%u] = %.8e, received = %.8e.\n", i, expected_aliased[i], c[i]);
     }
 }
@@ -4320,7 +4324,7 @@ static void test_D3DXSHRotateZ(void)
                             expected = ( i + 1.0f ) * ( i + 1.0f );
                     else
                         expected = table[36 * (l + 3 * j) + i];
-                    equal = compare_float(expected, out_temp[i], 256);
+                    equal = compare_float(expected, out_temp[i], 512);
                     ok(equal || (fabs(expected) < 2.0e-5f && fabs(out_temp[i]) < 2.0e-5f),
                             "angle %.8e, order %u index %u, expected %.8e, received %.8e.\n",
                             angle[j], order, i, expected, out_temp[i]);

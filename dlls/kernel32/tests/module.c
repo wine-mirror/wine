@@ -430,6 +430,11 @@ static void testLoadLibraryEx(void)
     ok(hmodule != 0, "Expected valid module handle\n");
 
     SetLastError(0xdeadbeef);
+    ret = FreeLibrary( (HMODULE)((ULONG_PTR)hmodule + 0x1230));
+    ok(!ret, "Free succeeded on wrong handle\n");
+    ok(GetLastError() == ERROR_BAD_EXE_FORMAT, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     ret = FreeLibrary(hmodule);
     ok(ret, "Expected to be able to free the module, failed with %d\n", GetLastError());
     SetLastError(0xdeadbeef);
@@ -560,6 +565,31 @@ static void test_LoadLibraryEx_search_flags(void)
         mod = LoadLibraryExA( path, 0, LOAD_LIBRARY_SEARCH_SYSTEM32 );
         ok( mod != NULL, "LoadLibrary failed err %u\n", GetLastError() );
         FreeLibrary( mod );
+
+        SetLastError( 0xdeadbeef );
+        mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_WITH_ALTERED_SEARCH_PATH );
+        ok( !mod, "LoadLibrary succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_WITH_ALTERED_SEARCH_PATH );
+        ok( !mod, "LoadLibrary succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_WITH_ALTERED_SEARCH_PATH );
+        ok( !mod, "LoadLibrary succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_WITH_ALTERED_SEARCH_PATH );
+        ok( !mod, "LoadLibrary succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_WITH_ALTERED_SEARCH_PATH );
+        ok( !mod, "LoadLibrary succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
     }
 
     SetCurrentDirectoryA( curdir );

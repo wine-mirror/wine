@@ -205,8 +205,8 @@ Options:\n\
 /affinity mask Start the program with the specified affinity mask.\n\
 /wait          Wait for the started program to finish, then exit with its\n\
                exit code.\n\
-/unix          Use a Unix filename and start the file like windows\n\
-               explorer.\n\
+/unix          Use a Unix filename and start the file like Windows\n\
+               Explorer.\n\
 /ProgIDOpen    Open a document using the specified progID.\n\
 /?             Display this help and exit.\n"
 

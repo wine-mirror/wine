@@ -187,7 +187,7 @@ LPENUMFORMATETC IEnumFORMATETC_Constructor(UINT cfmt, const FORMATETC afmt[])
     }
 
     TRACE("(%p)->(%u,%p)\n",ef, cfmt, afmt);
-    return (LPENUMFORMATETC)ef;
+    return &ef->IEnumFORMATETC_iface;
 }
 
 
@@ -274,7 +274,7 @@ static ULONG WINAPI IDataObject_fnRelease(IDataObject *iface)
 	{
 	  TRACE(" destroying IDataObject(%p)\n",This);
 	  _ILFreeaPidl(This->apidl, This->cidl);
-	  ILFree(This->pidl),
+          ILFree(This->pidl);
 	  heap_free(This);
 	}
 	return refCount;

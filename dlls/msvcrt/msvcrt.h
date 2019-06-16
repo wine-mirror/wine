@@ -63,6 +63,7 @@
 typedef unsigned char  MSVCRT_bool;
 typedef unsigned short MSVCRT_wchar_t;
 typedef unsigned short MSVCRT_wint_t;
+typedef unsigned short MSVCRT_wctrans_t;
 typedef unsigned short MSVCRT_wctype_t;
 typedef unsigned short MSVCRT__ino_t;
 typedef unsigned int   MSVCRT__fsize_t;
@@ -78,7 +79,11 @@ typedef unsigned long MSVCRT_size_t;
 typedef long MSVCRT_intptr_t;
 typedef unsigned long MSVCRT_uintptr_t;
 #endif
+#ifdef _CRTDLL
+typedef short MSVCRT__dev_t;
+#else
 typedef unsigned int   MSVCRT__dev_t;
+#endif
 typedef int MSVCRT__off_t;
 typedef int MSVCRT_clock_t;
 typedef int MSVCRT___time32_t;
@@ -204,6 +209,13 @@ typedef struct MSVCRT_localeinfo_struct
     MSVCRT_pthreadlocinfo locinfo;
     MSVCRT_pthreadmbcinfo mbcinfo;
 } MSVCRT__locale_tstruct, *MSVCRT__locale_t;
+
+typedef struct MSVCRT__onexit_table_t
+{
+    MSVCRT__onexit_t *_first;
+    MSVCRT__onexit_t *_last;
+    MSVCRT__onexit_t *_end;
+} MSVCRT__onexit_table_t;
 
 typedef struct _frame_info
 {
@@ -1145,6 +1157,10 @@ void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_
                                        const MSVCRT_wchar_t *file, unsigned int line, MSVCRT_uintptr_t arg);
 int __cdecl      MSVCRT__toupper_l(int,MSVCRT__locale_t);
 int __cdecl      MSVCRT__tolower_l(int,MSVCRT__locale_t);
+int __cdecl      MSVCRT__towupper_l(MSVCRT_wint_t,MSVCRT__locale_t);
+int __cdecl      MSVCRT__towlower_l(MSVCRT_wint_t,MSVCRT__locale_t);
+int __cdecl      MSVCRT__stricmp(const char*, const char*);
+int __cdecl      MSVCRT__strnicmp(const char*, const char*, MSVCRT_size_t);
 int __cdecl      MSVCRT__strnicoll_l(const char*, const char*, MSVCRT_size_t, MSVCRT__locale_t);
 int __cdecl      MSVCRT__strncoll_l(const char*, const char*, MSVCRT_size_t, MSVCRT__locale_t);
 unsigned int __cdecl MSVCRT__get_output_format(void);

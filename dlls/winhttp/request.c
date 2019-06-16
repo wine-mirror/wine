@@ -1673,6 +1673,9 @@ static BOOL open_connection( struct request *request )
         }
         netconn_set_timeout( netconn, TRUE, request->send_timeout );
         netconn_set_timeout( netconn, FALSE, request->receive_response_timeout );
+
+        request->netconn = netconn;
+
         if (is_secure)
         {
             if (connect->session->proxy_server &&
@@ -1680,6 +1683,7 @@ static BOOL open_connection( struct request *request )
             {
                 if (!secure_proxy_connect( request ))
                 {
+                    request->netconn = NULL;
                     heap_free( addressW );
                     netconn_close( netconn );
                     return FALSE;
@@ -1693,13 +1697,13 @@ static BOOL open_connection( struct request *request )
                 !netconn_secure_connect( netconn, connect->hostname, request->security_flags,
                                          &request->cred_handle, request->check_revocation ))
             {
+                request->netconn = NULL;
                 heap_free( addressW );
                 netconn_close( netconn );
                 return FALSE;
             }
         }
 
-        request->netconn = netconn;
         send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, strlenW(addressW) + 1 );
     }
     else

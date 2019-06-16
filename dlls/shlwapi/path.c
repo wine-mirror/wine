@@ -2027,22 +2027,18 @@ BOOL WINAPI PathIsSameRootW(LPCWSTR lpszPath1, LPCWSTR lpszPath2)
  *  a content type is registered, it is compared (case insensitively) to
  *  lpszContentType. Only if this matches does the function succeed.
  */
-BOOL WINAPI PathIsContentTypeA(LPCSTR lpszPath, LPCSTR lpszContentType)
+BOOL WINAPI PathIsContentTypeA(LPCSTR path, LPCSTR content_type)
 {
-  LPCSTR szExt;
-  DWORD dwDummy;
-  char szBuff[MAX_PATH];
+    char buf[MAX_PATH];
+    DWORD size = sizeof(buf);
+    LPCSTR ext;
 
-  TRACE("(%s,%s)\n", debugstr_a(lpszPath), debugstr_a(lpszContentType));
+    TRACE("(%s,%s)\n", debugstr_a(path), debugstr_a(content_type));
 
-  if (lpszPath && (szExt = PathFindExtensionA(lpszPath)) && *szExt &&
-      !SHGetValueA(HKEY_CLASSES_ROOT, szExt, "Content Type",
-                   REG_NONE, szBuff, &dwDummy) &&
-      !strcasecmp(lpszContentType, szBuff))
-  {
-    return TRUE;
-  }
-  return FALSE;
+    if(!path) return FALSE;
+    if(!(ext = PathFindExtensionA(path)) || !*ext) return FALSE;
+    if(SHGetValueA(HKEY_CLASSES_ROOT, ext, "Content Type", NULL, buf, &size)) return FALSE;
+    return !lstrcmpiA(content_type, buf);
 }
 
 /*************************************************************************

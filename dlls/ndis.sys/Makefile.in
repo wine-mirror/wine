@@ -1,5 +1,7 @@
 MODULE    = ndis.sys
-EXTRADLLFLAGS = -Wb,--subsystem,native
+EXTRADLLFLAGS = -Wl,--subsystem,native
+
+EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	main.c

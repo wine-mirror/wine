@@ -1,6 +1,8 @@
 MODULE    = dmband.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	band.c \
 	bandtrack.c \

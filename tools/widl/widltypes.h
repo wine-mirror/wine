@@ -497,6 +497,7 @@ struct _importinfo_t {
 };
 
 struct _importlib_t {
+    int offset;
     char *name;
 
     int version;

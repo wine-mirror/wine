@@ -289,9 +289,48 @@ int compare_name_id(const name_id_t *n1, const name_id_t *n2)
 	return 0; /* Keep the compiler happy */
 }
 
+#ifdef _WIN32
+
+int is_valid_codepage(int id)
+{
+    return IsValidCodePage( id );
+}
+
+int wrc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+{
+    return MultiByteToWideChar( codepage, flags, src, srclen, dst, dstlen );
+}
+
+int wrc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
+{
+    return WideCharToMultiByte( codepage, flags, src, srclen, dst, dstlen, NULL, NULL );
+}
+
+#else  /* _WIN32 */
+
+#include "wine/unicode.h"
+
+int is_valid_codepage(int cp)
+{
+    return cp == CP_UTF8 || wine_cp_get_table(cp);
+}
+
+int wrc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+{
+    if (codepage == CP_UTF8) return wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
+    return wine_cp_mbstowcs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen );
+}
+
+int wrc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
+{
+    if (codepage == CP_UTF8) return wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
+    return wine_cp_wcstombs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen, NULL, NULL );
+}
+
+#endif  /* _WIN32 */
+
 string_t *convert_string(const string_t *str, enum str_e type, int codepage)
 {
-    const union cptable *cptable = codepage ? wine_cp_get_table( codepage ) : NULL;
     string_t *ret = xmalloc(sizeof(*ret));
     int res;
 
@@ -303,15 +342,10 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
     if((str->type == str_char) && (type == str_unicode))
     {
         ret->type = str_unicode;
-        ret->size = cptable ? wine_cp_mbstowcs( cptable, 0, str->str.cstr, str->size, NULL, 0 )
-                            : wine_utf8_mbstowcs( 0, str->str.cstr, str->size, NULL, 0 );
+        ret->size = wrc_mbstowcs( codepage, 0, str->str.cstr, str->size, NULL, 0 );
         ret->str.wstr = xmalloc( (ret->size+1) * sizeof(WCHAR) );
-        if (cptable)
-            res = wine_cp_mbstowcs( cptable, MB_ERR_INVALID_CHARS, str->str.cstr, str->size,
-                                    ret->str.wstr, ret->size );
-        else
-            res = wine_utf8_mbstowcs( MB_ERR_INVALID_CHARS, str->str.cstr, str->size,
-                                      ret->str.wstr, ret->size );
+        res = wrc_mbstowcs( codepage, MB_ERR_INVALID_CHARS, str->str.cstr, str->size,
+                            ret->str.wstr, ret->size );
         if (res == -2)
             parser_error( "Invalid character in string '%.*s' for codepage %u",
                    str->size, str->str.cstr, codepage );
@@ -320,13 +354,9 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
     else if((str->type == str_unicode) && (type == str_char))
     {
         ret->type = str_char;
-        ret->size = cptable ? wine_cp_wcstombs( cptable, 0, str->str.wstr, str->size, NULL, 0, NULL, NULL )
-                            : wine_utf8_wcstombs( 0, str->str.wstr, str->size, NULL, 0 );
+        ret->size = wrc_wcstombs( codepage, 0, str->str.wstr, str->size, NULL, 0 );
         ret->str.cstr = xmalloc( ret->size + 1 );
-        if (cptable)
-            wine_cp_wcstombs( cptable, 0, str->str.wstr, str->size, ret->str.cstr, ret->size, NULL, NULL );
-        else
-            wine_utf8_wcstombs( 0, str->str.wstr, str->size, ret->str.cstr, ret->size );
+        wrc_wcstombs( codepage, 0, str->str.wstr, str->size, ret->str.cstr, ret->size );
         ret->str.cstr[ret->size] = 0;
     }
     else if(str->type == str_unicode)
@@ -363,7 +393,8 @@ int check_valid_utf8( const string_t *str, int codepage )
 
     if (!check_utf8) return 0;
     if (!codepage) return 0;
-    if (!wine_cp_get_table( codepage )) return 0;
+    if (codepage == CP_UTF8) return 0;
+    if (!is_valid_codepage( codepage )) return 0;
 
     for (i = 0; i < str->size; i++)
     {
@@ -373,7 +404,7 @@ int check_valid_utf8( const string_t *str, int codepage )
     }
     if (i == str->size) return 0;  /* no 8-bit chars at all */
 
-    if (wine_utf8_mbstowcs( MB_ERR_INVALID_CHARS, str->str.cstr, str->size, NULL, 0 ) >= 0) return 1;
+    if (wrc_mbstowcs( CP_UTF8, MB_ERR_INVALID_CHARS, str->str.cstr, str->size, NULL, 0 ) >= 0) return 1;
 
 done:
     check_utf8 = 0;  /* at least one 8-bit non-utf8 string found, stop checking */
@@ -426,6 +457,7 @@ static const struct lang2cp lang2cps[] =
     { LANG_ARABIC,         SUBLANG_NEUTRAL,              1256 },
     { LANG_ARMENIAN,       SUBLANG_NEUTRAL,              0    },
     { LANG_ASSAMESE,       SUBLANG_NEUTRAL,              0    },
+    { LANG_ASTURIAN,       SUBLANG_NEUTRAL,              1252 },
     { LANG_AZERI,          SUBLANG_NEUTRAL,              1254 },
     { LANG_AZERI,          SUBLANG_AZERI_CYRILLIC,       1251 },
     { LANG_BASHKIR,        SUBLANG_NEUTRAL,              1251 },
@@ -577,6 +609,6 @@ int get_language_codepage( unsigned short lang, unsigned short sublang )
     }
 
     if (cp == -1) cp = defcp;
-    assert( cp <= 0 || wine_cp_get_table(cp) );
+    assert( cp <= 0 || is_valid_codepage(cp) );
     return cp;
 }

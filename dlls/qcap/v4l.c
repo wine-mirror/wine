@@ -1,11 +1,8 @@
 /*
- * DirectShow capture services (QCAP.DLL)
+ * v4l2 backend to the VFW Capture filter
  *
  * Copyright 2005 Maarten Lankhorst
- *
- * This file contains the part of the vfw capture interface that
- * does the actual Video4Linux(1/2) stuff required for capturing
- * and setting/getting media format..
+ * Copyright 2019 Zebediah Figura
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +18,8 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+#define BIONIC_IOCTL_NO_SIGNEDNESS_OVERLOAD  /* work around ioctl breakage on Android */
 
 #include "config.h"
 #include "wine/port.h"
@@ -43,11 +42,8 @@
 #ifdef HAVE_ASM_TYPES_H
 #include <asm/types.h>
 #endif
-#ifdef HAVE_LIBV4L1_H
-#include <libv4l1.h>
-#endif
-#ifdef HAVE_LINUX_VIDEODEV_H
-#include <linux/videodev.h>
+#ifdef HAVE_LINUX_VIDEODEV2_H
+#include <linux/videodev2.h>
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -67,37 +63,36 @@
 #include "capture.h"
 #include "qcap_main.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(qcap_v4l);
+WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
-#ifdef VIDIOCMCAPTURE
+#ifdef HAVE_LINUX_VIDEODEV2_H
+
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static typeof(open) *video_open = open;
 static typeof(close) *video_close = close;
 static typeof(ioctl) *video_ioctl = ioctl;
 static typeof(read) *video_read = read;
-static typeof(mmap) *video_mmap = mmap;
-static typeof(munmap) *video_munmap = munmap;
 
-static void video_init(void)
+static BOOL video_init(void)
 {
-#ifdef SONAME_LIBV4L1
+#ifdef SONAME_LIBV4L2
     static void *video_lib;
 
     if (video_lib)
-        return;
-    video_lib = wine_dlopen(SONAME_LIBV4L1, RTLD_NOW, NULL, 0);
-    if (!video_lib)
-        return;
-    video_open = wine_dlsym(video_lib, "v4l1_open", NULL, 0);
-    video_close = wine_dlsym(video_lib, "v4l1_close", NULL, 0);
-    video_ioctl = wine_dlsym(video_lib, "v4l1_ioctl", NULL, 0);
-    video_read = wine_dlsym(video_lib, "v4l1_read", NULL, 0);
-    video_mmap = wine_dlsym(video_lib, "v4l1_mmap", NULL, 0);
-    video_munmap = wine_dlsym(video_lib, "v4l1_munmap", NULL, 0);
+        return TRUE;
+    if (!(video_lib = wine_dlopen(SONAME_LIBV4L2, RTLD_NOW, NULL, 0)))
+        return FALSE;
+    video_open = wine_dlsym(video_lib, "v4l2_open", NULL, 0);
+    video_close = wine_dlsym(video_lib, "v4l2_close", NULL, 0);
+    video_ioctl = wine_dlsym(video_lib, "v4l2_ioctl", NULL, 0);
+    video_read = wine_dlsym(video_lib, "v4l2_read", NULL, 0);
+
+    return TRUE;
+#else
+    return FALSE;
 #endif
 }
-
-typedef void (* Renderer)(const Capture *, LPBYTE bufferin, const BYTE *stream);
 
 struct _Capture
 {
@@ -109,61 +104,9 @@ struct _Capture
     IPin *pOut;
     int fd, mmap;
     BOOL iscommitted, stopped;
-    struct video_picture pict;
-    int dbrightness, dhue, dcolour, dcontrast;
-
-    /* mmap (V4l1) */
-    struct video_mmap *grab_buf;
-    struct video_mbuf gb_buffers;
-    unsigned char *pmap;
-    int buffers;
-
-    /* read (V4l1) */
-    int imagesize;
-    char * grab_data;
-
-    int curframe;
 
     HANDLE thread;
-    Renderer renderer;
 };
-
-struct renderlist
-{
-    int depth;
-    const char* name;
-    Renderer renderer;
-};
-
-static void renderer_RGB(const Capture *capBox, LPBYTE bufferin, const BYTE *stream);
-static void renderer_YUV(const Capture *capBox, LPBYTE bufferin, const BYTE *stream);
-
-static const struct renderlist renderlist_V4l[] = {
-    {  0, "NULL renderer",               NULL },
-    {  8, "Gray scales",                 NULL }, /* 1,  Don't support  */
-    {  0, "High 240 cube (BT848)",       NULL }, /* 2,  Don't support  */
-    { 16, "16 bit RGB (565)",            NULL }, /* 3,  Don't support  */
-    { 24, "24 bit RGB values",   renderer_RGB }, /* 4,  Supported,     */
-    { 32, "32 bit RGB values",   renderer_RGB }, /* 5,  Supported      */
-    { 16, "15 bit RGB (555)",            NULL }, /* 6,  Don't support  */
-    { 16, "YUV 422 (Not P)",     renderer_YUV }, /* 7,  Supported */
-    { 16, "YUYV (Not P)",        renderer_YUV }, /* 8,  Supported */
-    { 16, "UYVY (Not P)",        renderer_YUV }, /* 9,  Supported */
-    { 16, "YUV 420 (Not P)", NULL }, /* 10, Not supported, if I had to guess it's YYUYYV */
-    { 12, "YUV 411 (Not P)",     renderer_YUV }, /* 11, Supported */
-    {  0, "Raw capturing (BT848)",       NULL }, /* 12, Don't support  */
-    { 16, "YUV 422 (Planar)",    renderer_YUV }, /* 13, Supported */
-    { 12, "YUV 411 (Planar)",    renderer_YUV }, /* 14, Supported */
-    { 12, "YUV 420 (Planar)",    renderer_YUV }, /* 15, Supported */
-    { 10, "YUV 410 (Planar)",    renderer_YUV }, /* 16, Supported */
-    /* FIXME: add YUV420 support */
-    {  0, NULL,                          NULL },
-};
-
-static const int fallback_V4l[] = { 4, 5, 7, 8, 9, 13, 15, 14, 16, 11, -1 };
-/* Fallback: First try raw formats (Should try yuv first perhaps?), then yuv */
-
-/* static const Capture defbox; */
 
 static int xioctl(int fd, int request, void * arg)
 {
@@ -174,72 +117,6 @@ static int xioctl(int fd, int request, void * arg)
     } while (-1 == r && EINTR == errno);
 
     return r;
-}
-
-/* Prepare the capture buffers */
-static HRESULT V4l_Prepare(Capture *capBox)
-{
-    TRACE("%p: Preparing for %dx%d resolution\n", capBox, capBox->width, capBox->height);
-
-    /* Try mmap */
-    capBox->mmap = 0;
-    if (xioctl(capBox->fd, VIDIOCGMBUF, &capBox->gb_buffers) != -1 &&
-        capBox->gb_buffers.frames)
-    {
-        capBox->buffers = capBox->gb_buffers.frames;
-        if (capBox->gb_buffers.frames > 1)
-            capBox->buffers = 1;
-        TRACE("%p: Using %d/%d buffers\n", capBox,
-              capBox->buffers, capBox->gb_buffers.frames);
-
-        capBox->pmap = video_mmap( 0, capBox->gb_buffers.size, PROT_READ|PROT_WRITE,
-                                   MAP_SHARED, capBox->fd, 0 );
-        if (capBox->pmap != MAP_FAILED)
-        {
-            int i;
-
-            capBox->grab_buf = CoTaskMemAlloc(sizeof(struct video_mmap) * capBox->buffers);
-            if (!capBox->grab_buf)
-            {
-                video_munmap(capBox->pmap, capBox->gb_buffers.size);
-                return E_OUTOFMEMORY;
-            }
-
-            /* Setup mmap capture buffers. */
-            for (i = 0; i < capBox->buffers; i++)
-            {
-                capBox->grab_buf[i].format = capBox->pict.palette;
-                capBox->grab_buf[i].frame = i;
-                capBox->grab_buf[i].width = capBox->width;
-                capBox->grab_buf[i].height = capBox->height;
-            }
-            capBox->mmap = 1;
-        }
-    }
-    if (!capBox->mmap)
-    {
-        capBox->buffers = 1;
-        capBox->imagesize = renderlist_V4l[capBox->pict.palette].depth *
-                                capBox->height * capBox->width / 8;
-        capBox->grab_data = CoTaskMemAlloc(capBox->imagesize);
-        if (!capBox->grab_data)
-            return E_OUTOFMEMORY;
-    }
-    TRACE("Using mmap: %d\n", capBox->mmap);
-    return S_OK;
-}
-
-static void V4l_Unprepare(Capture *capBox)
-{
-    if (capBox->mmap)
-    {
-        for (capBox->curframe = 0; capBox->curframe < capBox->buffers; capBox->curframe++) 
-            xioctl(capBox->fd, VIDIOCSYNC, &capBox->grab_buf[capBox->curframe]);
-        video_munmap(capBox->pmap, capBox->gb_buffers.size);
-        CoTaskMemFree(capBox->grab_buf);
-    }
-    else
-        CoTaskMemFree(capBox->grab_data);
 }
 
 HRESULT qcap_driver_destroy(Capture *capBox)
@@ -254,52 +131,81 @@ HRESULT qcap_driver_destroy(Capture *capBox)
     return S_OK;
 }
 
-HRESULT qcap_driver_set_format(Capture *capBox, AM_MEDIA_TYPE * mT)
+HRESULT qcap_driver_check_format(Capture *device, const AM_MEDIA_TYPE *mt)
 {
-    int newheight, newwidth;
-    struct video_window window;
-    VIDEOINFOHEADER *format;
+    HRESULT hr;
+    TRACE("device %p, mt %p.\n", device, mt);
+    dump_AM_MEDIA_TYPE(mt);
 
-    TRACE("%p\n", capBox);
+    if (!mt)
+        return E_POINTER;
 
-    format = (VIDEOINFOHEADER *) mT->pbFormat;
-    if (format->bmiHeader.biBitCount != 24 ||
-        format->bmiHeader.biCompression != BI_RGB)
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
+        return S_FALSE;
+
+    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo) && mt->pbFormat
+            && mt->cbFormat >= sizeof(VIDEOINFOHEADER))
     {
-        FIXME("unsupported media type %d %d\n", format->bmiHeader.biBitCount,
-              format->bmiHeader.biCompression );
-        return VFW_E_INVALIDMEDIATYPE;
+        VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)mt->pbFormat;
+        if (vih->bmiHeader.biBitCount == 24 && vih->bmiHeader.biCompression == BI_RGB)
+            hr = S_OK;
+        else
+        {
+            FIXME("Unsupported compression %#x, bpp %u.\n", vih->bmiHeader.biCompression,
+                    vih->bmiHeader.biBitCount);
+            hr = S_FALSE;
+        }
     }
+    else
+        hr = VFW_E_INVALIDMEDIATYPE;
 
-    newwidth = format->bmiHeader.biWidth;
-    newheight = format->bmiHeader.biHeight;
+    return hr;
+}
 
-    TRACE("%p -> (%p) - %d %d\n", capBox, mT, newwidth, newheight);
+HRESULT qcap_driver_set_format(Capture *device, AM_MEDIA_TYPE *mt)
+{
+    struct v4l2_format format = {0};
+    int newheight, newwidth;
+    VIDEOINFOHEADER *vih;
+    int fd = device->fd;
+    HRESULT hr;
 
-    if (capBox->height == newheight && capBox->width == newwidth)
+    if (FAILED(hr = qcap_driver_check_format(device, mt)))
+        return hr;
+    vih = (VIDEOINFOHEADER *)mt->pbFormat;
+
+    newwidth = vih->bmiHeader.biWidth;
+    newheight = vih->bmiHeader.biHeight;
+
+    if (device->height == newheight && device->width == newwidth)
         return S_OK;
 
-    if(-1 == xioctl(capBox->fd, VIDIOCGWIN, &window))
+    format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (xioctl(fd, VIDIOC_G_FMT, &format) == -1)
     {
-        ERR("ioctl(VIDIOCGWIN) failed (%d)\n", errno);
-        return E_FAIL;
+        ERR("Failed to get current format: %s\n", strerror(errno));
+        return VFW_E_TYPE_NOT_ACCEPTED;
     }
-    window.width = newwidth;
-    window.height = newheight;
-    if (xioctl(capBox->fd, VIDIOCSWIN, &window) == -1)
+
+    format.fmt.pix.width = newwidth;
+    format.fmt.pix.height = newheight;
+
+    if (!xioctl(fd, VIDIOC_S_FMT, &format)
+            && format.fmt.pix.width == newwidth
+            && format.fmt.pix.height == newheight)
     {
-        TRACE("using software resize: %dx%d -> %dx%d\n",
-               window.width, window.height, capBox->width, capBox->height);
-        capBox->swresize = TRUE;
+        device->width = newwidth;
+        device->height = newheight;
+        device->swresize = FALSE;
     }
     else
     {
-        capBox->height = window.height;
-        capBox->width = window.width;
-        capBox->swresize = FALSE;
+        TRACE("Using software resize: %dx%d -> %dx%d.\n",
+               format.fmt.pix.width, format.fmt.pix.height, device->width, device->height);
+        device->swresize = TRUE;
     }
-    capBox->outputwidth = window.width;
-    capBox->outputheight = window.height;
+    device->outputwidth = format.fmt.pix.width;
+    device->outputheight = format.fmt.pix.height;
     return S_OK;
 }
 
@@ -349,161 +255,79 @@ HRESULT qcap_driver_get_format(const Capture *capBox, AM_MEDIA_TYPE ** mT)
     return S_OK;
 }
 
-HRESULT qcap_driver_get_prop_range( Capture *capBox,
-            VideoProcAmpProperty Property, LONG *pMin, LONG *pMax,
-            LONG *pSteppingDelta, LONG *pDefault, LONG *pCapsFlags )
+static __u32 v4l2_cid_from_qcap_property(VideoProcAmpProperty property)
 {
-    TRACE("%p -> %d %p %p %p %p %p\n", capBox, Property,
-          pMin, pMax, pSteppingDelta, pDefault, pCapsFlags);
-
-    switch (Property)
+    switch (property)
     {
     case VideoProcAmp_Brightness:
-        *pDefault = capBox->dbrightness;
-        break;
+        return V4L2_CID_BRIGHTNESS;
     case VideoProcAmp_Contrast:
-        *pDefault = capBox->dcontrast;
-        break;
+        return V4L2_CID_CONTRAST;
     case VideoProcAmp_Hue:
-        *pDefault = capBox->dhue;
-        break;
+        return V4L2_CID_HUE;
     case VideoProcAmp_Saturation:
-        *pDefault = capBox->dcolour;
-        break;
+        return V4L2_CID_SATURATION;
     default:
-        FIXME("Not implemented %d\n", Property);
-        return E_NOTIMPL;
+        FIXME("Unhandled property %d.\n", property);
+        return 0;
     }
-    *pMin = 0;
-    *pMax = 65535;
-    *pSteppingDelta = 65536/256;
-    *pCapsFlags = VideoProcAmp_Flags_Manual;
+}
+
+HRESULT qcap_driver_get_prop_range(Capture *device, VideoProcAmpProperty property,
+        LONG *min, LONG *max, LONG *step, LONG *default_value, LONG *flags)
+{
+    struct v4l2_queryctrl ctrl;
+
+    ctrl.id = v4l2_cid_from_qcap_property(property);
+
+    if (xioctl(device->fd, VIDIOC_QUERYCTRL, &ctrl) == -1)
+    {
+        WARN("Failed to query control: %s\n", strerror(errno));
+        return E_PROP_ID_UNSUPPORTED;
+    }
+
+    *min = ctrl.minimum;
+    *max = ctrl.maximum;
+    *step = ctrl.step;
+    *default_value = ctrl.default_value;
+    *flags = VideoProcAmp_Flags_Manual;
     return S_OK;
 }
 
-HRESULT qcap_driver_get_prop( Capture *capBox,
-            VideoProcAmpProperty Property, LONG *lValue, LONG *Flags )
+HRESULT qcap_driver_get_prop(Capture *device, VideoProcAmpProperty property,
+        LONG *value, LONG *flags)
 {
-    TRACE("%p -> %d %p %p\n", capBox, Property, lValue, Flags);
+    struct v4l2_control ctrl;
 
-    switch (Property)
+    ctrl.id = v4l2_cid_from_qcap_property(property);
+
+    if (xioctl(device->fd, VIDIOC_G_CTRL, &ctrl) == -1)
     {
-    case VideoProcAmp_Brightness:
-        *lValue = capBox->pict.brightness;
-        break;
-    case VideoProcAmp_Contrast:
-        *lValue = capBox->pict.contrast;
-        break;
-    case VideoProcAmp_Hue:
-        *lValue = capBox->pict.hue;
-        break;
-    case VideoProcAmp_Saturation:
-        *lValue = capBox->pict.colour;
-        break;
-    default:
-        FIXME("Not implemented %d\n", Property);
-        return E_NOTIMPL;
-    }
-    *Flags = VideoProcAmp_Flags_Manual;
-    return S_OK;
-}
-
-HRESULT qcap_driver_set_prop(Capture *capBox, VideoProcAmpProperty Property,
-            LONG lValue, LONG Flags)
-{
-    TRACE("%p -> %d %d %d\n", capBox, Property, lValue, Flags);
-
-    switch (Property)
-    {
-    case VideoProcAmp_Brightness:
-        capBox->pict.brightness = lValue;
-        break;
-    case VideoProcAmp_Contrast:
-        capBox->pict.contrast = lValue;
-        break;
-    case VideoProcAmp_Hue:
-        capBox->pict.hue = lValue;
-        break;
-    case VideoProcAmp_Saturation:
-        capBox->pict.colour = lValue;
-        break;
-    default:
-        FIXME("Not implemented %d\n", Property);
-        return E_NOTIMPL;
-    }
-
-    if (xioctl(capBox->fd, VIDIOCSPICT, &capBox->pict) == -1)
-    {
-        ERR("ioctl(VIDIOCSPICT) failed (%d)\n",errno);
+        WARN("Failed to get property: %s\n", strerror(errno));
         return E_FAIL;
     }
+
+    *value = ctrl.value;
+    *flags = VideoProcAmp_Flags_Manual;
+
     return S_OK;
 }
 
-static void renderer_RGB(const Capture *capBox, LPBYTE bufferin, const BYTE *stream)
+HRESULT qcap_driver_set_prop(Capture *device, VideoProcAmpProperty property,
+        LONG value, LONG flags)
 {
-    int depth = renderlist_V4l[capBox->pict.palette].depth;
-    int size = capBox->height * capBox->width * depth / 8;
-    int pointer, offset;
+    struct v4l2_control ctrl;
 
-    switch (depth)
+    ctrl.id = v4l2_cid_from_qcap_property(property);
+    ctrl.value = value;
+
+    if (xioctl(device->fd, VIDIOC_S_CTRL, &ctrl) == -1)
     {
-    case 24:
-        memcpy(bufferin, stream, size);
-        break;
-    case 32:
-        pointer = 0;
-        offset = 1;
-        while (pointer + offset <= size)
-        {
-            bufferin[pointer] = stream[pointer + offset];
-            pointer++;
-            bufferin[pointer] = stream[pointer + offset];
-            pointer++;
-            bufferin[pointer] = stream[pointer + offset];
-            pointer++;
-            offset++;
-        }
-        break;
-    default:
-        ERR("Unknown bit depth %d\n", depth);
-        return;
+        WARN("Failed to set property: %s\n", strerror(errno));
+        return E_FAIL;
     }
-}
 
-static void renderer_YUV(const Capture *capBox, LPBYTE bufferin, const BYTE *stream)
-{
-    enum YUV_Format format;
-
-    switch (capBox->pict.palette)
-    {
-    case  7: /* YUV422  -  same as YUYV */
-    case  8: /* YUYV    */
-        format = YUYV;
-        break;
-    case  9: /* UYVY    */
-        format = UYVY;
-        break;
-    case 11: /* YUV411  */
-        format = UYYVYY;
-        break;
-    case 13: /* YUV422P */
-        format = YUVP_421;
-        break;
-    case 14: /* YUV411P */
-        format = YUVP_441;
-        break;
-    case 15: /* YUV420P */
-        format = YUVP_422;
-        break;
-    case 16: /* YUV410P */
-        format = YUVP_444;
-        break;
-    default:
-        ERR("Unknown palette %d\n", capBox->pict.palette);
-        return;
-    }
-    YUV_To_RGB24(format, bufferin, stream, capBox->width, capBox->height);
+    return S_OK;
 }
 
 static void Resize(const Capture * capBox, LPBYTE output, const BYTE *input)
@@ -562,60 +386,23 @@ static void Resize(const Capture * capBox, LPBYTE output, const BYTE *input)
     }
 }
 
-static void V4l_GetFrame(Capture * capBox, unsigned char ** pInput)
-{
-    if (capBox->mmap)
-    {
-        if (xioctl(capBox->fd, VIDIOCSYNC, &capBox->grab_buf[capBox->curframe]) == -1)
-            WARN("Syncing ioctl failed: %d\n", errno);
-
-        *pInput = capBox->pmap + capBox->gb_buffers.offsets[capBox->curframe];
-    }
-    else
-    {
-        int retval;
-        while ((retval = video_read(capBox->fd, capBox->grab_data, capBox->imagesize)) == -1)
-            if (errno != EAGAIN) break;
-        if (retval == -1)
-            WARN("Error occurred while reading from device: %s\n", strerror(errno));
-        *pInput = (unsigned char*) capBox->grab_data;
-    }
-}
-
-static void V4l_FreeFrame(Capture * capBox)
-{
-    TRACE("\n");
-    if (capBox->mmap)
-    {
-        if (xioctl(capBox->fd, VIDIOCMCAPTURE, &capBox->grab_buf[capBox->curframe]) == -1)
-           ERR("Freeing frame for capture failed: %s\n", strerror(errno));
-    }
-    if (++capBox->curframe == capBox->buffers)
-        capBox->curframe = 0;
-}
-
 static DWORD WINAPI ReadThread(LPVOID lParam)
 {
     Capture * capBox = lParam;
     HRESULT hr;
     IMediaSample *pSample = NULL;
     ULONG framecount = 0;
-    unsigned char *pTarget, *pInput, *pOutput;
+    unsigned char *pTarget, *image_data;
+    unsigned int image_size;
 
-    hr = V4l_Prepare(capBox);
-    if (FAILED(hr))
+    image_size = capBox->height * capBox->width * 3;
+    if (!(image_data = heap_alloc(image_size)))
     {
-        ERR("Stop IFilterGraph: %x\n", hr);
+        ERR("Failed to allocate memory.\n");
         capBox->thread = 0;
         capBox->stopped = TRUE;
         return 0;
     }
-
-    pOutput = CoTaskMemAlloc(capBox->width * capBox->height * capBox->bitDepth / 8);
-    capBox->curframe = 0;
-    do {
-        V4l_FreeFrame(capBox);
-    } while (capBox->curframe != 0);
 
     while (1)
     {
@@ -637,19 +424,24 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
             TRACE("Data length: %d KB\n", len / 1024);
 
             IMediaSample_GetPointer(pSample, &pTarget);
-            /* FIXME: Check return values.. */
-            V4l_GetFrame(capBox, &pInput);
-            capBox->renderer(capBox, pOutput, pInput);
-            Resize(capBox, pTarget, pOutput);
+
+            while (video_read(capBox->fd, image_data, image_size) == -1)
+            {
+                if (errno != EAGAIN)
+                {
+                    ERR("Failed to read frame: %s\n", strerror(errno));
+                    break;
+                }
+            }
+
+            Resize(capBox, pTarget, image_data);
             hr = BaseOutputPinImpl_Deliver((BaseOutputPin *)capBox->pOut, pSample);
             TRACE("%p -> Frame %u: %x\n", capBox, ++framecount, hr);
             IMediaSample_Release(pSample);
-            V4l_FreeFrame(capBox);
         }
         if (FAILED(hr) && hr != VFW_E_NOT_CONNECTED)
         {
             TRACE("Return %x, stop IFilterGraph\n", hr);
-            V4l_Unprepare(capBox);
             capBox->thread = 0;
             capBox->stopped = TRUE;
             break;
@@ -658,7 +450,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
     }
 
     LeaveCriticalSection(&capBox->CritSect);
-    CoTaskMemFree(pOutput);
+    heap_free(image_data);
     return 0;
 }
 
@@ -769,7 +561,6 @@ HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
             if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
                 WARN("Decommitting allocator: %x\n", hr);
         }
-        V4l_Unprepare(capBox);
     }
 
     *state = State_Stopped;
@@ -779,135 +570,96 @@ HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
 
 Capture * qcap_driver_init( IPin *pOut, USHORT card )
 {
-    Capture * capBox = NULL;
-    char device[20];
-    struct video_capability capa;
-    struct video_picture pict;
-    struct video_window window;
+    struct v4l2_capability caps = {{0}};
+    struct v4l2_format format = {0};
+    Capture *device = NULL;
+    BOOL have_libv4l2;
+    char path[20];
+    int fd;
 
-    YUV_Init();
-    video_init();
+    have_libv4l2 = video_init();
 
-    capBox = CoTaskMemAlloc(sizeof(Capture));
-    if (!capBox)
-        goto error;
+    if (!(device = CoTaskMemAlloc(sizeof(*device))))
+        return NULL;
 
-    /* capBox->vtbl = &defboxVtbl; */
+    InitializeCriticalSection(&device->CritSect);
+    device->CritSect.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": Capture.CritSect");
 
-    InitializeCriticalSection( &capBox->CritSect );
-    capBox->CritSect.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": Capture.CritSect");
-
-    sprintf(device, "/dev/video%i", card);
-    TRACE("opening %s\n", device);
+    sprintf(path, "/dev/video%i", card);
+    TRACE("Opening device %s.\n", path);
 #ifdef O_CLOEXEC
-    if ((capBox->fd = video_open(device, O_RDWR | O_NONBLOCK | O_CLOEXEC)) == -1 && errno == EINVAL)
+    if ((fd = video_open(path, O_RDWR | O_NONBLOCK | O_CLOEXEC)) == -1 && errno == EINVAL)
 #endif
-        capBox->fd = video_open(device, O_RDWR | O_NONBLOCK);
-    if (capBox->fd == -1)
+        fd = video_open(path, O_RDWR | O_NONBLOCK);
+    if (fd == -1)
     {
-        WARN("open failed (%d)\n", errno);
+        WARN("Failed to open video device: %s\n", strerror(errno));
         goto error;
     }
-    fcntl( capBox->fd, F_SETFD, FD_CLOEXEC );  /* in case O_CLOEXEC isn't supported */
+    fcntl(fd, F_SETFD, FD_CLOEXEC);  /* in case O_CLOEXEC isn't supported */
+    device->fd = fd;
 
-    memset(&capa, 0, sizeof(capa));
-
-    if (xioctl(capBox->fd, VIDIOCGCAP, &capa) == -1)
+    if (xioctl(fd, VIDIOC_QUERYCAP, &caps) == -1)
     {
-        WARN("ioctl(VIDIOCGCAP) failed (%d)\n", errno);
-        goto error;
-    }
-
-    if (!(capa.type & VID_TYPE_CAPTURE))
-    {
-        WARN("not a video capture device\n");
+        WARN("Failed to query device capabilities: %s\n", strerror(errno));
         goto error;
     }
 
-    TRACE("%d inputs on %s\n", capa.channels, capa.name );
+#ifdef V4L2_CAP_DEVICE_CAPS
+    if (caps.capabilities & V4L2_CAP_DEVICE_CAPS)
+        caps.capabilities = caps.device_caps;
+#endif
 
-    if (xioctl(capBox->fd, VIDIOCGPICT, &pict) == -1)
+    if (!(caps.capabilities & V4L2_CAP_VIDEO_CAPTURE))
     {
-        ERR("ioctl(VIDIOCGPICT) failed (%d)\n", errno );
+        WARN("Device does not support single-planar video capture.\n");
         goto error;
     }
 
-    TRACE("depth %d palette %d (%s) hue %d color %d contrast %d\n",
-          pict.depth, pict.palette, renderlist_V4l[pict.palette].name,
-          pict.hue, pict.colour, pict.contrast );
-
-    capBox->dbrightness = pict.brightness;
-    capBox->dcolour = pict.colour;
-    capBox->dhue = pict.hue;
-    capBox->dcontrast = pict.contrast;
-
-    if (!renderlist_V4l[pict.palette].renderer)
+    if (!(caps.capabilities & V4L2_CAP_READWRITE))
     {
-        int palet = pict.palette, i;
-
-        TRACE("No renderer available for %s, falling back to defaults\n",
-             renderlist_V4l[pict.palette].name);
-        capBox->renderer = NULL;
-        for (i = 0; fallback_V4l[i] >=0 ; i++)
-        {
-            int n = fallback_V4l[i];
-
-            if (renderlist_V4l[n].renderer == NULL)
-                continue;
-
-            pict.depth = renderlist_V4l[n].depth;
-            pict.palette = n;
-            if (xioctl(capBox->fd, VIDIOCSPICT, &pict) == -1)
-            {
-                TRACE("Could not render with %s (%d)\n",
-                      renderlist_V4l[n].name, n);
-                continue;
-            }
-            TRACE("using renderer %s (%d)\n", 
-                  renderlist_V4l[n].name, n);
-            capBox->renderer = renderlist_V4l[n].renderer;
-            break;
-        }
-
-        if (!capBox->renderer)
-        {
-            ERR("video format %s isn't available\n",
-                 renderlist_V4l[palet].name);
-            goto error;
-        }
-    }
-    else
-    {
-        TRACE("Using the suggested format\n");
-        capBox->renderer = renderlist_V4l[pict.palette].renderer;
-    }
-    memcpy(&capBox->pict, &pict, sizeof(struct video_picture));
-
-    memset(&window, 0, sizeof(window));
-    if (xioctl(capBox->fd, VIDIOCGWIN, &window) == -1)
-    {
-        WARN("VIDIOCGWIN failed (%d)\n", errno);
+        WARN("Device does not support read().\n");
+        if (!have_libv4l2)
+#ifdef SONAME_LIBV4L2
+            ERR_(winediag)("Reading from %s requires libv4l2, but it could not be loaded.\n", path);
+#else
+            ERR_(winediag)("Reading from %s requires libv4l2, but Wine was compiled without libv4l2 support.\n", path);
+#endif
         goto error;
     }
 
-    capBox->height = capBox->outputheight = window.height;
-    capBox->width = capBox->outputwidth = window.width;
-    capBox->swresize = FALSE;
-    capBox->bitDepth = 24;
-    capBox->pOut = pOut;
-    capBox->fps = 3;
-    capBox->stopped = FALSE;
-    capBox->curframe = 0;
-    capBox->iscommitted = FALSE;
+    format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (xioctl(fd, VIDIOC_G_FMT, &format) == -1)
+    {
+        ERR("Failed to get device format: %s\n", strerror(errno));
+        goto error;
+    }
 
-    TRACE("format: %d bits - %d x %d\n", capBox->bitDepth, capBox->width, capBox->height);
+    format.fmt.pix.pixelformat = V4L2_PIX_FMT_BGR24;
+    if (xioctl(fd, VIDIOC_S_FMT, &format) == -1
+            || format.fmt.pix.pixelformat != V4L2_PIX_FMT_BGR24)
+    {
+        ERR("Failed to set pixel format: %s\n", strerror(errno));
+        if (!have_libv4l2)
+            ERR_(winediag)("You may need libv4l2 to use this device.\n");
+        goto error;
+    }
 
-    return capBox;
+    device->outputwidth = device->width = format.fmt.pix.width;
+    device->outputheight = device->height = format.fmt.pix.height;
+    device->swresize = FALSE;
+    device->bitDepth = 24;
+    device->pOut = pOut;
+    device->fps = 3;
+    device->stopped = FALSE;
+    device->iscommitted = FALSE;
+
+    TRACE("Format: %d bpp - %dx%d.\n", device->bitDepth, device->width, device->height);
+
+    return device;
 
 error:
-    if (capBox)
-        qcap_driver_destroy( capBox );
-
+    qcap_driver_destroy(device);
     return NULL;
 }
 
@@ -927,6 +679,11 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
     return E_NOTIMPL
 
 HRESULT qcap_driver_destroy(Capture *capBox)
+{
+    FAIL_WITH_ERR;
+}
+
+HRESULT qcap_driver_check_format(Capture *device, const AM_MEDIA_TYPE *mt)
 {
     FAIL_WITH_ERR;
 }

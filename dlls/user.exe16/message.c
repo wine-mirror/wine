@@ -97,13 +97,12 @@ static LRESULT call_window_proc_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM
 #include "pshpack1.h"
 typedef struct
 {
-    BYTE        popl_eax;        /* popl  %eax (return address) */
-    BYTE        pushl_func;      /* pushl $proc */
+    WORD        popl_eax;        /* popl  %eax (return address) */
+    WORD        pushl_func;      /* pushl $proc */
     WNDPROC     proc;
-    BYTE        pushl_eax;       /* pushl %eax */
+    WORD        pushl_eax;       /* pushl %eax */
     BYTE        ljmp;            /* ljmp relay*/
-    DWORD       relay_offset;    /* __wine_call_wndproc */
-    WORD        relay_sel;
+    FARPROC16   relay;           /* __wine_call_wndproc */
 } WINPROC_THUNK;
 #include "poppack.h"
 
@@ -154,28 +153,22 @@ static WNDPROC16 alloc_win16_thunk( WNDPROC handle )
 
     if (!thunk_array)  /* allocate the array and its selector */
     {
-        LDT_ENTRY entry;
-
         assert( MAX_WINPROCS16 * sizeof(WINPROC_THUNK) <= 0x10000 );
 
-        if (!(thunk_selector = wine_ldt_alloc_entries(1))) return NULL;
-        if (!(thunk_array = VirtualAlloc( NULL, MAX_WINPROCS16 * sizeof(WINPROC_THUNK), MEM_COMMIT,
-                                          PAGE_EXECUTE_READWRITE ))) return NULL;
-        wine_ldt_set_base( &entry, thunk_array );
-        wine_ldt_set_limit( &entry, MAX_WINPROCS16 * sizeof(WINPROC_THUNK) - 1 );
-        wine_ldt_set_flags( &entry, WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
-        wine_ldt_set_entry( thunk_selector, &entry );
+        if (!(thunk_selector = GlobalAlloc16( GMEM_FIXED, MAX_WINPROCS16 * sizeof(WINPROC_THUNK) )))
+            return NULL;
+        PrestoChangoSelector16( thunk_selector, thunk_selector );
+        thunk_array = GlobalLock16( thunk_selector );
         relay = GetProcAddress16( GetModuleHandle16("user"), "__wine_call_wndproc" );
     }
 
     thunk = &thunk_array[index];
-    thunk->popl_eax     = 0x58;   /* popl  %eax */
-    thunk->pushl_func   = 0x68;   /* pushl $proc */
+    thunk->popl_eax     = 0x5866;   /* popl  %eax */
+    thunk->pushl_func   = 0x6866;   /* pushl $proc */
     thunk->proc         = handle;
-    thunk->pushl_eax    = 0x50;   /* pushl %eax */
-    thunk->ljmp         = 0xea;   /* ljmp   relay*/
-    thunk->relay_offset = OFFSETOF(relay);
-    thunk->relay_sel    = SELECTOROF(relay);
+    thunk->pushl_eax    = 0x5066;   /* pushl %eax */
+    thunk->ljmp         = 0xea;     /* ljmp   relay*/
+    thunk->relay        = relay;
     return (WNDPROC16)MAKESEGPTR( thunk_selector, index * sizeof(WINPROC_THUNK) );
 }
 
@@ -250,8 +243,6 @@ static LRESULT call_window_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPA
 
     memset(&context, 0, sizeof(context));
     context.SegDs = context.SegEs = SELECTOROF(NtCurrentTeb()->WOW32Reserved);
-    context.SegFs = wine_get_fs();
-    context.SegGs = wine_get_gs();
     if (!(context.Eax = GetWindowWord( HWND_32(hwnd), GWLP_HINSTANCE ))) context.Eax = context.SegDs;
     context.SegCs = SELECTOROF(func);
     context.Eip   = OFFSETOF(func);

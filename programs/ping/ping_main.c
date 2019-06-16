@@ -19,8 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 #include "winsock2.h"
 #include "ws2tcpip.h"
 #include "iphlpapi.h"
@@ -30,9 +28,6 @@
 #include <string.h>
 #include <icmpapi.h>
 #include <limits.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 
 #include <windows.h>
 
@@ -52,14 +47,14 @@ static void usage(void)
 
 int main(int argc, char** argv)
 {
-    unsigned int n = 4, i = 0, w = 4000, l = 32;
-    int optc, res;
+    unsigned int n = 4, i, w = 4000, l = 32;
+    int res;
     int rec = 0, lost = 0, min = INT_MAX, max = 0;
     WSADATA wsa;
     HANDLE icmp_file;
     unsigned long ipaddr;
     DWORD retval, reply_size;
-    char *send_data, ip[100], *hostname, rtt[16];
+    char *send_data, ip[100], *hostname = NULL, rtt[16];
     void *reply_buffer;
     struct in_addr addr;
     ICMP_ECHO_REPLY *reply;
@@ -72,12 +67,19 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    while ((optc = getopt( argc, argv, "n:w:l:tal:fi:v:r:s:j:k:" )) != -1)
+    for (i = 1; i < argc; i++)
     {
-        switch(optc)
+        if (argv[i][0] == '-' || argv[i][0] == '/')
         {
+            switch (argv[i][1])
+            {
             case 'n':
-                n = atoi(optarg);
+                if (i == argc - 1)
+                {
+                    printf( "Missing value for option %s\n", argv[i] );
+                    exit(1);
+                }
+                n = atoi(argv[++i]);
                 if (n == 0)
                 {
                   printf("Bad value for option -n, valid range is from 1 to 4294967295.\n");
@@ -85,7 +87,12 @@ int main(int argc, char** argv)
                 }
                 break;
             case 'w':
-                w = atoi(optarg);
+                if (i == argc - 1)
+                {
+                    printf( "Missing value for option %s\n", argv[i] );
+                    exit(1);
+                }
+                w = atoi(argv[++i]);
                 if (w == 0)
                 {
                     printf("Bad value for option -w.\n");
@@ -93,7 +100,12 @@ int main(int argc, char** argv)
                 }
                 break;
             case 'l':
-                l = atoi(optarg);
+                if (i == argc - 1)
+                {
+                    printf( "Missing value for option %s\n", argv[i] );
+                    exit(1);
+                }
+                l = atoi(argv[++i]);
                 if (l == 0)
                 {
                     printf("Bad value for option -l.\n");
@@ -107,12 +119,20 @@ int main(int argc, char** argv)
                 usage();
                 WINE_FIXME( "this command currently only supports the -n, -w and -l parameters.\n" );
                 exit(1);
+            }
+        }
+        else
+        {
+            if (hostname)
+            {
+                printf( "Bad argument %s\n", argv[i] );
+                exit(1);
+            }
+            hostname = argv[i];
         }
     }
 
-    if (argv[optind] != NULL)
-        hostname = argv[optind];
-    else
+    if (!hostname)
     {
         printf("Pass a host name.\n");
         return 1;
@@ -155,7 +175,7 @@ int main(int argc, char** argv)
     }
 
     printf("Pinging %s [%s] with %d bytes of data:\n", hostname, ip, l);
-    for (;;)
+    for (i = 0; i < n; i++)
     {
         SetLastError(0);
         retval = IcmpSendEcho(icmp_file, ipaddr, send_data, l,
@@ -184,10 +204,7 @@ int main(int argc, char** argv)
                 puts("PING: transmit failed. General failure.");
             lost++;
         }
-        i++;
-        if (i == n)
-            break;
-        Sleep(1000);
+        if (i < n - 1) Sleep(1000);
     }
 
     printf("\nPing statistics for %s\n", ip);

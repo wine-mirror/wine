@@ -325,7 +325,7 @@ static void test_loadlibraryshim(void)
 
         GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
-        todo_wine ok(StrStrIA(dllpath, "v1.1.4322") != 0, "incorrect fusion.dll path %s\n", dllpath);
+        ok(StrStrIA(dllpath, "v1.1.4322") != 0, "incorrect fusion.dll path %s\n", dllpath);
         ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
@@ -339,7 +339,7 @@ static void test_loadlibraryshim(void)
 
         GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
-        todo_wine ok(StrStrIA(dllpath, "v2.0.50727") != 0, "incorrect fusion.dll path %s\n", dllpath);
+        ok(StrStrIA(dllpath, "v2.0.50727") != 0, "incorrect fusion.dll path %s\n", dllpath);
         ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
@@ -355,7 +355,7 @@ static void test_loadlibraryshim(void)
 
         GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
-        todo_wine ok(StrStrIA(dllpath, "v4.0.30319") != 0, "incorrect fusion.dll path %s\n", dllpath);
+        ok(StrStrIA(dllpath, "v4.0.30319") != 0, "incorrect fusion.dll path %s\n", dllpath);
         ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
@@ -375,7 +375,7 @@ static void test_loadlibraryshim(void)
         GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
         if (latest)
-            todo_wine ok(StrStrIA(dllpath, latestA) != 0, "incorrect fusion.dll path %s\n", dllpath);
+            ok(StrStrIA(dllpath, latestA) != 0, "incorrect fusion.dll path %s\n", dllpath);
         ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);
@@ -388,7 +388,7 @@ static void test_loadlibraryshim(void)
         GetModuleFileNameA(hdll, dllpath, MAX_PATH);
 
         if (latest)
-            todo_wine ok(StrStrIA(dllpath, latestA) != 0, "incorrect fusion.dll path %s\n", dllpath);
+            ok(StrStrIA(dllpath, latestA) != 0, "incorrect fusion.dll path %s\n", dllpath);
         ok(StrStrIA(dllpath, "fusion.dll") != 0, "incorrect fusion.dll path %s\n", dllpath);
 
         FreeLibrary(hdll);

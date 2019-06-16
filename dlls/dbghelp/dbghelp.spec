@@ -83,6 +83,7 @@
 @ stub SymGetFileLineOffsets64
 @ stub SymGetHomeDirectory
 @ stub SymGetHomeDirectoryW
+@ stdcall SymGetExtendedOption(long)
 @ stdcall SymGetLineFromAddr(long long ptr ptr)
 @ stdcall SymGetLineFromAddr64(long int64 ptr ptr)
 @ stdcall SymGetLineFromAddrW64(long int64 ptr ptr)
@@ -153,6 +154,7 @@
 @ stdcall SymSearch(long int64 long long str int64 ptr ptr long)
 @ stdcall SymSearchW(long int64 long long wstr int64 ptr ptr long)
 @ stdcall SymSetContext(long ptr ptr)
+@ stdcall SymSetExtendedOption(long long)
 @ stdcall SymSetHomeDirectory(long str)
 @ stdcall SymSetHomeDirectoryW(long wstr)
 @ stdcall SymSetOptions(long)

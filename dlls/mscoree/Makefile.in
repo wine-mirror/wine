@@ -11,3 +11,5 @@ C_SRCS = \
 	mscoree_main.c
 
 IDL_SRCS = mscoree_classes.idl
+
+metahost_EXTRADEFS = -DINSTALL_DATADIR="\"${datadir}\""

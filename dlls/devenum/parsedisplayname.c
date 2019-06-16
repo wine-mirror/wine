@@ -87,21 +87,21 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(IParseDisplayNa
 
     *ret = NULL;
     if (eaten)
-        *eaten = strlenW(name);
+        *eaten = lstrlenW(name);
 
-    name = strchrW(name, ':') + 1;
+    name = wcschr(name, ':') + 1;
 
-    if (!strncmpW(name, swW, 3))
+    if (!wcsncmp(name, swW, 3))
     {
         type = DEVICE_FILTER;
         name += 3;
     }
-    else if (!strncmpW(name, cmW, 3))
+    else if (!wcsncmp(name, cmW, 3))
     {
         type = DEVICE_CODEC;
         name += 3;
     }
-    else if (!strncmpW(name, dmoW, 4))
+    else if (!wcsncmp(name, dmoW, 4))
     {
         type = DEVICE_DMO;
         name += 4;
@@ -141,12 +141,12 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(IParseDisplayNa
             name += CHARS_IN_GUID;
         }
 
-        if (!(mon->name = CoTaskMemAlloc((strlenW(name) + 1) * sizeof(WCHAR))))
+        if (!(mon->name = CoTaskMemAlloc((lstrlenW(name) + 1) * sizeof(WCHAR))))
         {
             IMoniker_Release(&mon->IMoniker_iface);
             return E_OUTOFMEMORY;
         }
-        strcpyW(mon->name, name);
+        lstrcpyW(mon->name, name);
     }
 
     mon->type = type;

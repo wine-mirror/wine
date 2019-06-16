@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <assert.h>
 
@@ -76,7 +74,7 @@ static PRUnichar *handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *
         return NULL;
 
     ptr = comment+3;
-    while(isspaceW(*ptr))
+    while(iswspace(*ptr))
         ptr++;
 
     if(ptr[0] == 'l' && ptr[1] == 't') {
@@ -97,40 +95,40 @@ static PRUnichar *handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *
         }
     }
 
-    if(!isspaceW(*ptr++))
+    if(!iswspace(*ptr++))
         return NULL;
-    while(isspaceW(*ptr))
+    while(iswspace(*ptr))
         ptr++;
 
     if(ptr[0] != 'I' || ptr[1] != 'E')
         return NULL;
 
     ptr +=2;
-    if(!isspaceW(*ptr++))
+    if(!iswspace(*ptr++))
         return NULL;
-    while(isspaceW(*ptr))
+    while(iswspace(*ptr))
         ptr++;
 
-    if(!isdigitW(*ptr))
+    if(!iswdigit(*ptr))
         return NULL;
-    while(isdigitW(*ptr))
+    while(iswdigit(*ptr))
         majorv = majorv*10 + (*ptr++ - '0');
 
     if(*ptr == '.') {
         ptr++;
-        if(!isdigitW(*ptr))
+        if(!iswdigit(*ptr))
             return NULL;
-        while(isdigitW(*ptr))
+        while(iswdigit(*ptr))
             minorv = minorv*10 + (*ptr++ - '0');
     }
 
-    while(isspaceW(*ptr))
+    while(iswspace(*ptr))
         ptr++;
     if(ptr[0] != ']' || ptr[1] != '>')
         return NULL;
     ptr += 2;
 
-    len = strlenW(ptr);
+    len = lstrlenW(ptr);
     if(len < ARRAY_SIZE(endifW))
         return NULL;
 
@@ -262,8 +260,8 @@ static void parse_complete(HTMLDocumentObj *doc)
 {
     TRACE("(%p)\n", doc);
 
-    if(doc->usermode == EDITMODE)
-        init_editor(&doc->basedoc);
+    if(doc->nscontainer->usermode == EDITMODE)
+        init_editor(doc->basedoc.doc_node);
 
     call_explorer_69(doc);
     if(doc->view_sink)
@@ -271,7 +269,7 @@ static void parse_complete(HTMLDocumentObj *doc)
     call_property_onchanged(&doc->basedoc.cp_container, 1005);
     call_explorer_69(doc);
 
-    if(doc->webbrowser && doc->usermode != EDITMODE && !(doc->basedoc.window->load_flags & BINDING_REFRESH))
+    if(doc->webbrowser && doc->nscontainer->usermode != EDITMODE && !(doc->basedoc.window->load_flags & BINDING_REFRESH))
         IDocObjectService_FireNavigateComplete2(doc->doc_object_service, &doc->basedoc.window->base.IHTMLWindow2_iface, 0);
 
     /* FIXME: IE7 calls EnableModelless(TRUE), EnableModelless(FALSE) and sets interactive state here */
@@ -440,11 +438,11 @@ static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
 
     TRACE("%s\n", debugstr_w(p));
 
-    if(strncmpiW(ie_eqW, p, ARRAY_SIZE(ie_eqW)))
+    if(wcsnicmp(ie_eqW, p, ARRAY_SIZE(ie_eqW)))
         return FALSE;
     p += 3;
 
-    if(!strcmpiW(p, edgeW)) {
+    if(!wcsicmp(p, edgeW)) {
         *r = COMPAT_MODE_IE11;
         return TRUE;
     }
@@ -506,7 +504,7 @@ static void process_meta_element(HTMLDocumentNode *doc, nsIDOMHTMLMetaElement *m
 
         TRACE("%s: %s\n", debugstr_w(http_equiv), debugstr_w(content));
 
-        if(!strcmpiW(http_equiv, x_ua_compatibleW)) {
+        if(!wcsicmp(http_equiv, x_ua_compatibleW)) {
             compat_mode_t document_mode;
             if(parse_ua_compatible(content, &document_mode))
                 set_document_mode(doc, document_mode, TRUE);
@@ -818,6 +816,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
 
     if(This->document_mode == COMPAT_MODE_QUIRKS) {
         nsIDOMDocumentType *nsdoctype;
+
         nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMDocumentType, (void**)&nsdoctype);
         if(NS_SUCCEEDED(nsres)) {
             compat_mode_t mode = COMPAT_MODE_IE7;
@@ -835,7 +834,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
                  * X-UA-Compatible version, allow configuration and default to higher version
                  * (once it's well supported).
                  */
-                hres = IInternetSecurityManager_MapUrlToZone(window->secmgr, window->url, &zone, 0);
+                hres = IInternetSecurityManager_MapUrlToZone(get_security_manager(), window->url, &zone, 0);
                 if(SUCCEEDED(hres) && zone == URLZONE_INTERNET)
                     mode = COMPAT_MODE_IE8;
             }

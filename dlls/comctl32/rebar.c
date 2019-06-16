@@ -85,7 +85,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/unicode.h"
 #include "winuser.h"
 #include "winnls.h"
 #include "commctrl.h"

@@ -2731,7 +2731,7 @@ static void test_depthstenciltest(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     if(pDepthStencil) IDirect3DSurface9_Release(pDepthStencil);
-    if(pDevice) IDirect3D9_Release(pDevice);
+    IDirect3D9_Release(pDevice);
 
     /* Now see if autodepthstencil disable is honored. First, without a format set */
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
@@ -2765,7 +2765,7 @@ static void test_depthstenciltest(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %08x\n", hr);
     ok(state == D3DZB_FALSE, "D3DRS_ZENABLE is %s\n", state == D3DZB_FALSE ? "D3DZB_FALSE" : (state == D3DZB_TRUE ? "D3DZB_TRUE" : "D3DZB_USEW"));
 
-    if(pDevice) IDirect3D9_Release(pDevice);
+    IDirect3D9_Release(pDevice);
 
     /* Next, try EnableAutoDepthStencil FALSE with a depth stencil format set */
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
@@ -2981,6 +2981,11 @@ static void test_draw_primitive(void)
     hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLELIST, 0, 2);
     ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
 
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 2, quad, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, quad, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
     hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 2, quad, sizeof(*quad));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
 
@@ -3008,6 +3013,13 @@ static void test_draw_primitive(void)
     ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
     ok(current_ib == index_buffer, "Unexpected index buffer %p.\n", current_ib);
     IDirect3DIndexBuffer9_Release(current_ib);
+
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
+            indices, D3DFMT_INDEX16, quad, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 0,
+            indices, D3DFMT_INDEX16, quad, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
             indices, D3DFMT_INDEX16, quad, sizeof(*quad));
@@ -3228,7 +3240,8 @@ cleanup:
 
 static void test_set_stream_source(void)
 {
-    IDirect3DVertexBuffer9 *vb;
+    IDirect3DVertexBuffer9 *vb, *current_vb;
+    unsigned int offset, stride;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d9;
     ULONG refcount;
@@ -3261,7 +3274,24 @@ static void test_set_stream_source(void)
     hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 3, 32);
     ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 4, 32);
-    ok(SUCCEEDED(hr), "Failed to set the stream source, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetStreamSource(device, 0, &current_vb, &offset, &stride);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!current_vb, "Got unexpected vb %p.\n", current_vb);
+    ok(offset == 4, "Got unexpected offset %u.\n", offset);
+    ok(stride == 32, "Got unexpected stride %u.\n", stride);
+
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 0, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetStreamSource(device, 0, &current_vb, &offset, &stride);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(current_vb == vb, "Got unexpected vb %p.\n", current_vb);
+    IDirect3DVertexBuffer9_Release(current_vb);
+    ok(!offset, "Got unexpected offset %u.\n", offset);
+    ok(!stride, "Got unexpected stride %u.\n", stride);
 
     /* Try to set the NULL buffer with an offset and stride 0 */
     hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
@@ -7319,12 +7349,20 @@ static void test_mipmap_gen(void)
 
     for (i = 0; i < ARRAY_SIZE(formats); ++i)
     {
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_A8R8G8B8,
+                D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, formats[i]);
+        ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+
         hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
                 D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, formats[i]);
         if (SUCCEEDED(hr))
         {
             /* i.e. there is no difference between the D3D_OK and the
              * D3DOK_NOAUTOGEN cases. */
+            hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, D3DUSAGE_AUTOGENMIPMAP,
+                    formats[i], D3DPOOL_SYSTEMMEM, &texture, 0);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
             hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, D3DUSAGE_AUTOGENMIPMAP,
                     formats[i], D3DPOOL_DEFAULT, &texture, 0);
             ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
@@ -10528,10 +10566,11 @@ cleanup:
 
 static void test_begin_end_state_block(void)
 {
-    IDirect3DStateBlock9 *stateblock;
+    IDirect3DStateBlock9 *stateblock, *stateblock2;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
     ULONG refcount;
+    DWORD value;
     HWND window;
     HRESULT hr;
 
@@ -10546,31 +10585,59 @@ static void test_begin_end_state_block(void)
         return;
     }
 
-    /* Should succeed. */
     hr = IDirect3DDevice9_BeginStateBlock(device);
-    ok(SUCCEEDED(hr), "Failed to begin stateblock, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    /* Calling BeginStateBlock() while recording should return
-     * D3DERR_INVALIDCALL. */
-    hr = IDirect3DDevice9_BeginStateBlock(device);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    /* Should succeed. */
     stateblock = (IDirect3DStateBlock9 *)0xdeadbeef;
     hr = IDirect3DDevice9_EndStateBlock(device, &stateblock);
-    ok(SUCCEEDED(hr), "Failed to end stateblock, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     ok(!!stateblock && stateblock != (IDirect3DStateBlock9 *)0xdeadbeef,
             "Got unexpected stateblock %p.\n", stateblock);
-    IDirect3DStateBlock9_Release(stateblock);
 
-    /* Calling EndStateBlock() while not recording should return
-     * D3DERR_INVALIDCALL. stateblock should not be touched. */
-    stateblock = (IDirect3DStateBlock9 *)0xdeadbeef;
-    hr = IDirect3DDevice9_EndStateBlock(device, &stateblock);
+    stateblock2 = (IDirect3DStateBlock9 *)0xdeadbeef;
+    hr = IDirect3DDevice9_EndStateBlock(device, &stateblock2);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    ok(stateblock == (IDirect3DStateBlock9 *)0xdeadbeef,
-            "Got unexpected stateblock %p.\n", stateblock);
+    ok(stateblock2 == (IDirect3DStateBlock9 *)0xdeadbeef,
+            "Got unexpected stateblock %p.\n", stateblock2);
 
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_LIGHTING, &value);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(value == TRUE, "Got unexpected value %#x.\n", value);
+
+    hr = IDirect3DDevice9_BeginStateBlock(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginStateBlock(device);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateStateBlock(device, D3DSBT_ALL, &stateblock2);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_LIGHTING, &value);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(value == TRUE, "Got unexpected value %#x.\n", value);
+
+    hr = IDirect3DDevice9_EndStateBlock(device, &stateblock2);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DStateBlock9_Apply(stateblock2);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_LIGHTING, &value);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(value == TRUE, "Got unexpected value %#x.\n", value);
+
+    IDirect3DStateBlock9_Release(stateblock);
+    IDirect3DStateBlock9_Release(stateblock2);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     IDirect3D9_Release(d3d);
@@ -11663,11 +11730,6 @@ static void test_swapchain_parameters(void)
 
 static void test_check_device_format(void)
 {
-    static const D3DFORMAT adapter_formats[] =
-    {
-        D3DFMT_A8R8G8B8,
-        D3DFMT_X8R8G8B8,
-    };
     static const D3DFORMAT mipmap_autogen_formats[] =
     {
         D3DFMT_R8G8B8,
@@ -11681,11 +11743,11 @@ static void test_check_device_format(void)
         D3DFMT_A4R4G4B4,
     };
 
-    D3DFORMAT adapter_format, format;
     BOOL render_target_supported;
     D3DDEVTYPE device_type;
-    unsigned int i, j;
+    D3DFORMAT format;
     IDirect3D9 *d3d;
+    unsigned int i;
     HRESULT hr;
 
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -11742,29 +11804,32 @@ static void test_check_device_format(void)
             D3DUSAGE_SOFTWAREPROCESSING, D3DRTYPE_INDEXBUFFER, D3DFMT_INDEX16);
     todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
-    for (i = 0; i  < ARRAY_SIZE(adapter_formats); ++i)
+    hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_A8R8G8B8,
+            0, D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8);
+    ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            0, D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8);
+    ok(hr == D3D_OK || broken(hr == D3DERR_NOTAVAILABLE) /* Testbot Windows <= 7 */,
+            "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(mipmap_autogen_formats); ++i)
     {
-        adapter_format = adapter_formats[i];
+        format = mipmap_autogen_formats[i];
 
-        for (j = 0; j < ARRAY_SIZE(mipmap_autogen_formats); ++j)
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, format);
+        ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+        render_target_supported = hr == D3D_OK;
+
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, format);
+        if (render_target_supported)
         {
-            format = mipmap_autogen_formats[j];
-
-            hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, adapter_format,
-                    D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, format);
-            ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
-            render_target_supported = hr == D3D_OK;
-
-            hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, adapter_format,
-                    D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, format);
-            if (render_target_supported)
-            {
-                ok(hr == D3D_OK || hr == D3DOK_NOAUTOGEN, "Got unexpected hr %#x.\n", hr);
-            }
-            else
-            {
-                ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
-            }
+            ok(hr == D3D_OK || hr == D3DOK_NOAUTOGEN, "Got unexpected hr %#x.\n", hr);
+        }
+        else
+        {
+            ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
         }
     }
 
@@ -13297,6 +13362,82 @@ static void test_vertex_buffer_read_write(void)
     DestroyWindow(window);
 }
 
+static void test_get_display_mode(void)
+{
+    IDirect3DSwapChain9 *swapchain;
+    IDirect3DDevice9 *device;
+    struct device_desc desc;
+    D3DDISPLAYMODE mode;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a D3D device.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDisplayMode(device, 0, &mode);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
+    hr = IDirect3D9_GetAdapterDisplayMode(d3d, D3DADAPTER_DEFAULT, &mode);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
+    hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DSwapChain9_GetDisplayMode(swapchain, &mode);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
+    IDirect3DSwapChain9_Release(swapchain);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    desc.device_window = window;
+    desc.width = 640;
+    desc.height = 480;
+    desc.flags = CREATE_DEVICE_FULLSCREEN;
+    if (!(device = create_device(d3d, window, &desc)))
+    {
+        skip("Failed to create a D3D device.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDisplayMode(device, 0, &mode);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(mode.Width == 640, "Unexpected width %u.\n", mode.Width);
+    ok(mode.Height == 480, "Unexpected width %u.\n", mode.Height);
+    ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
+    hr = IDirect3D9_GetAdapterDisplayMode(d3d, D3DADAPTER_DEFAULT, &mode);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(mode.Width == 640, "Unexpected width %u.\n", mode.Width);
+    ok(mode.Height == 480, "Unexpected width %u.\n", mode.Height);
+    ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
+    hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DSwapChain9_GetDisplayMode(swapchain, &mode);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(mode.Width == 640, "Unexpected width %u.\n", mode.Width);
+    ok(mode.Height == 480, "Unexpected width %u.\n", mode.Height);
+    ok(mode.Format == D3DFMT_X8R8G8B8, "Unexpected format %#x.\n", mode.Format);
+    IDirect3DSwapChain9_Release(swapchain);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -13423,6 +13564,7 @@ START_TEST(device)
     test_resource_access();
     test_multiply_transform();
     test_vertex_buffer_read_write();
+    test_get_display_mode();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }

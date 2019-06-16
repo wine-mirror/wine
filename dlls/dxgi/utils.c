@@ -380,10 +380,24 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
 
 const char *debug_dxgi_mode(const DXGI_MODE_DESC *desc)
 {
+    if (!desc)
+        return "(null)";
+
     return wine_dbg_sprintf("resolution %ux%u, refresh rate %u / %u, "
             "format %s, scanline ordering %#x, scaling %#x",
             desc->Width, desc->Height, desc->RefreshRate.Numerator, desc->RefreshRate.Denominator,
             debug_dxgi_format(desc->Format), desc->ScanlineOrdering, desc->Scaling);
+}
+
+const char *debug_dxgi_mode1(const DXGI_MODE_DESC1 *desc)
+{
+    if (!desc)
+        return "(null)";
+
+    return wine_dbg_sprintf("resolution %ux%u, refresh rate %u / %u, "
+            "format %s, scanline ordering %#x, scaling %#x, stereo %#x",
+            desc->Width, desc->Height, desc->RefreshRate.Numerator, desc->RefreshRate.Denominator,
+            debug_dxgi_format(desc->Format), desc->ScanlineOrdering, desc->Scaling, desc->Stereo);
 }
 
 void dump_feature_levels(const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count)
@@ -453,6 +467,17 @@ void wined3d_display_mode_from_dxgi(struct wined3d_display_mode *wined3d_mode,
     wined3d_mode->refresh_rate = dxgi_rational_to_uint(&mode->RefreshRate);
     wined3d_mode->format_id = wined3dformat_from_dxgi_format(mode->Format);
     wined3d_mode->scanline_ordering = wined3d_scanline_ordering_from_dxgi(mode->ScanlineOrdering);
+}
+
+void wined3d_display_mode_from_dxgi1(struct wined3d_display_mode *wined3d_mode,
+        const DXGI_MODE_DESC1 *mode)
+{
+    wined3d_mode->width = mode->Width;
+    wined3d_mode->height = mode->Height;
+    wined3d_mode->refresh_rate = dxgi_rational_to_uint(&mode->RefreshRate);
+    wined3d_mode->format_id = wined3dformat_from_dxgi_format(mode->Format);
+    wined3d_mode->scanline_ordering = wined3d_scanline_ordering_from_dxgi(mode->ScanlineOrdering);
+    FIXME("Ignoring stereo %#x.\n", mode->Stereo);
 }
 
 DXGI_USAGE dxgi_usage_from_wined3d_bind_flags(unsigned int wined3d_bind_flags)

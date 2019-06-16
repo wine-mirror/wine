@@ -21,7 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
-#ifndef HAVE_ISFINITE
+#if !defined(HAVE_ISFINITE) && !defined(isfinite)
 
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>
@@ -29,14 +29,6 @@
 int isfinite(double x)
 {
   return finite(x);
-}
-
-#elif defined(HAVE_FLOAT_H) && defined(HAVE__FINITE)
-#include <float.h>
-
-int isfinite(double x)
-{
-  return _finite(x);
 }
 
 #else

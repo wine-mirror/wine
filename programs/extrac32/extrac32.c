@@ -19,13 +19,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
 #include <windows.h>
 #include <shellapi.h>
 #include <setupapi.h>
 #include <shlwapi.h>
 #include <shlobj.h>
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(extrac32);
@@ -38,7 +38,7 @@ static void create_target_directory(LPWSTR Target)
     WCHAR dir[MAX_PATH];
     int res;
 
-    strcpyW(dir, Target);
+    lstrcpyW(dir, Target);
     *PathFindFileNameW(dir) = 0; /* Truncate file name */
     if(!PathIsDirectoryW(dir))
     {
@@ -118,7 +118,7 @@ static void copy_file(LPCWSTR source, LPCWSTR destination)
         static const WCHAR overwriteMsg[] = {'O','v','e','r','w','r','i','t','e',' ','"','%','s','"','?',0};
         static const WCHAR titleMsg[] = {'E','x','t','r','a','c','t',0};
         WCHAR msg[MAX_PATH+100];
-        snprintfW(msg, ARRAY_SIZE(msg), overwriteMsg, destination);
+        swprintf(msg, ARRAY_SIZE(msg), overwriteMsg, destination);
         if (MessageBoxW(NULL, msg, titleMsg, MB_YESNO | MB_ICONWARNING) != IDYES)
             return;
     }
@@ -137,9 +137,9 @@ static LPWSTR *get_extrac_args(LPWSTR cmdline, int *pargc)
     BOOL new_arg;
 
     WINE_TRACE("cmdline: %s\n", wine_dbgstr_w(cmdline));
-    str = HeapAlloc(GetProcessHeap(), 0, (strlenW(cmdline) + 1) * sizeof(WCHAR));
+    str = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(cmdline) + 1) * sizeof(WCHAR));
     if(!str) return NULL;
-    strcpyW(str, cmdline);
+    lstrcpyW(str, cmdline);
     argv = HeapAlloc(GetProcessHeap(), 0, (max_argc + 1) * sizeof(LPWSTR));
     if(!argv)
     {
@@ -154,7 +154,7 @@ static LPWSTR *get_extrac_args(LPWSTR cmdline, int *pargc)
     {
         new_arg = FALSE;
         /* Check character */
-        if(isspaceW(*str))          /* white space */
+        if(iswspace(*str))          /* white space */
         {
             if(state == INSIDE_ARG)
             {
@@ -257,7 +257,7 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
                 break;
         }
         /* Get parameters for commands */
-        check = toupperW( argv[i][1] );
+        check = towupper( argv[i][1] );
         switch(check)
         {
             case 'A':

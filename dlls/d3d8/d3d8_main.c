@@ -103,41 +103,49 @@ done:
     return hr;
 }
 
-/***********************************************************************
- *              ValidatePixelShader (D3D8.@)
- *
- * PARAMS
- * toto       result?
- */
-HRESULT WINAPI ValidatePixelShader(DWORD* pixelshader, DWORD* reserved1, BOOL boolean, DWORD* toto)
+HRESULT WINAPI ValidatePixelShader(const DWORD *ps_code,
+        const D3DCAPS8 *caps, BOOL return_error, char **errors)
 {
-  HRESULT ret;
-  static BOOL warned;
+    const char *message = "";
+    SIZE_T message_size;
+    HRESULT hr = E_FAIL;
 
-  if (TRACE_ON(d3d8) || !warned) {
-      FIXME("(%p %p %d %p): stub\n", pixelshader, reserved1, boolean, toto);
-      warned = TRUE;
-  }
+    TRACE("ps_code %p, caps %p, return_error %#x, errors %p.\n",
+            ps_code, caps, return_error, errors);
 
-  if (!pixelshader)
-      return E_FAIL;
+    if (!ps_code)
+        return E_FAIL;
 
-  if (reserved1)
-      return E_FAIL;
-
-  switch(*pixelshader) {
-        case 0xFFFF0100:
-        case 0xFFFF0101:
-        case 0xFFFF0102:
-        case 0xFFFF0103:
-        case 0xFFFF0104:
-            ret=S_OK;
+    switch (*ps_code)
+    {
+        case D3DPS_VERSION(1, 4):
+        case D3DPS_VERSION(1, 3):
+        case D3DPS_VERSION(1, 2):
+        case D3DPS_VERSION(1, 1):
+        case D3DPS_VERSION(1, 0):
             break;
+
         default:
-            WARN("Invalid shader version token %#x.\n", *pixelshader);
-            ret=E_FAIL;
-        }
-  return ret;
+            message = "Unsupported shader version.\n";
+            goto done;
+    }
+
+    if (caps && *ps_code > caps->PixelShaderVersion)
+    {
+        message = "Shader version not supported by caps.\n";
+        goto done;
+    }
+
+    hr = S_OK;
+
+done:
+    if (!return_error)
+        message = "";
+    message_size = strlen(message) + 1;
+    if (errors && (*errors = heap_alloc(message_size)))
+        memcpy(*errors, message, message_size);
+
+    return hr;
 }
 
 void d3d8_resource_cleanup(struct d3d8_resource *resource)

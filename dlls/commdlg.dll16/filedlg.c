@@ -222,8 +222,6 @@ static LRESULT call_hook16( WNDPROC16 hook, HWND hwnd, UINT msg, WPARAM wp, LPAR
 
     memset( &context, 0, sizeof(context) );
     context.SegDs = context.SegEs = SELECTOROF( NtCurrentTeb()->WOW32Reserved );
-    context.SegFs = wine_get_fs();
-    context.SegGs = wine_get_gs();
     context.SegCs = SELECTOROF( hook );
     context.Eip   = OFFSETOF( hook );
     context.Ebp   = OFFSETOF( NtCurrentTeb()->WOW32Reserved ) + FIELD_OFFSET( STACK16FRAME, bp );
@@ -511,8 +509,7 @@ static LPOFNHOOKPROC alloc_hook( LPOFNHOOKPROC16 hook16 )
     SIZE_T size = 0x1000;
     unsigned int i;
 
-    if (!hooks && NtAllocateVirtualMemory( GetCurrentProcess(), (void **)&hooks, 12, &size,
-                                           MEM_COMMIT, PAGE_EXECUTE_READWRITE ))
+    if (!hooks && !(hooks = VirtualAlloc( NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
         return NULL;
 
     for (i = 0; i < count; i++)

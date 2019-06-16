@@ -23,7 +23,6 @@
 %option noinput nounput never-interactive 8bit
 %x quote
 %{
-#include "config.h"
 #include <assert.h>
 #include <stdarg.h>
 

@@ -683,6 +683,13 @@ static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
                              &itemDecoded);
                         if (ret)
                         {
+                            /* Ignore an item that failed to decode but the decoder doesn't want to fail the whole process */
+                            if (!size)
+                            {
+                                ptr += itemEncoded;
+                                continue;
+                            }
+
                             cItems++;
                             if (itemSizes != &itemSize)
                                 itemSizes = CryptMemRealloc(itemSizes,
@@ -5628,6 +5635,25 @@ static BOOL WINAPI CRYPT_AsnDecodePKCSSignerInfo(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL verify_and_copy_certificate(const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+                                        void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded)
+{
+    PCCERT_CONTEXT cert;
+
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING, pbEncoded, cbEncoded);
+    if (!cert)
+    {
+        WARN("CertCreateCertificateContext error %#x\n", GetLastError());
+        *pcbStructInfo = 0;
+        *pcbDecoded = 0;
+        return TRUE;
+    }
+
+    CertFreeCertificateContext(cert);
+
+    return CRYPT_AsnDecodeCopyBytes(pbEncoded, cbEncoded, dwFlags, pvStructInfo, pcbStructInfo, pcbDecoded);
+}
+
 static BOOL CRYPT_AsnDecodeCMSCertEncoded(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
@@ -5637,7 +5663,7 @@ static BOOL CRYPT_AsnDecodeCMSCertEncoded(const BYTE *pbEncoded,
      offsetof(CRYPT_SIGNED_INFO, cCertEncoded),
      offsetof(CRYPT_SIGNED_INFO, rgCertEncoded),
      MEMBERSIZE(CRYPT_SIGNED_INFO, cCertEncoded, cCrlEncoded),
-     CRYPT_AsnDecodeCopyBytes,
+     verify_and_copy_certificate,
      sizeof(CRYPT_DER_BLOB), TRUE, offsetof(CRYPT_DER_BLOB, pbData) };
 
     TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,

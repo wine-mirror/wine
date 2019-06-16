@@ -1,6 +1,7 @@
 MODULE    = winedevice.exe
-APPMODE   = -mwindows -municode
 IMPORTS   = advapi32 ntoskrnl
+
+EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
 
 C_SRCS = \
 	device.c

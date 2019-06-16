@@ -47,7 +47,7 @@ static const struct location_test location_tests[] = {
         "www.winehq.org:80",
         "www.winehq.org",
         "80",
-        "",
+        "/",
         "?search",
         "#hash"
     },
@@ -59,7 +59,7 @@ static const struct location_test location_tests[] = {
         "www.winehq.org:80",
         "www.winehq.org",
         "80",
-        "file",
+        "/file",
         "?search",
         "#hash"
     },
@@ -71,7 +71,7 @@ static const struct location_test location_tests[] = {
         "ftp.winehq.org:21",
         "ftp.winehq.org",
         "21",
-        "",
+        "/",
         NULL,
         NULL
     },
@@ -83,7 +83,7 @@ static const struct location_test location_tests[] = {
         "ftp.winehq.org:21",
         "ftp.winehq.org",
         "21",
-        "file",
+        "/file",
         NULL,
         NULL
     },
@@ -240,7 +240,10 @@ static void test_pathname(IHTMLLocation *loc, const struct location_test *test)
     hres = IHTMLLocation_get_pathname(loc, &str);
     ok(hres == S_OK, "%s: get_pathname failed: 0x%08x\n", test->name, hres);
     if(hres == S_OK)
-        ok(str_eq_wa(str, test->pathname),
+        /* FIXME: We seem to be testing location in a buggy state. Path names do not
+         * include leading slash, while other tests confirm that it should be there */
+        todo_wine_if(*test->pathname == '/')
+        ok(str_eq_wa(str, *test->pathname == '/' ? test->pathname + 1 : test->pathname),
                 "%s: expected retrieved pathname to be L\"%s\", was: %s\n",
                 test->name, test->pathname, wine_dbgstr_w(str));
     SysFreeString(str);

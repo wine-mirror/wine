@@ -1,6 +1,7 @@
 MODULE    = wmic.exe
-APPMODE   = -mconsole -municode
 IMPORTS   = oleaut32 ole32 user32
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = \
 	main.c

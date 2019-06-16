@@ -29,8 +29,6 @@
 #include <AudioToolbox/AudioToolbox.h>
 #undef ULONG
 #undef HRESULT
-
-#undef DPRINTF
 #undef STDMETHODCALLTYPE
 #include "coreaudio.h"
 #include "wine/debug.h"

@@ -2011,6 +2011,11 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
         case S_ALIGN_V1:
             TRACE("S-Align V1\n");
             break;
+        case S_HEAPALLOCSITE:
+            TRACE("heap site: offset=0x%08x at sect_idx 0x%04x, inst_len 0x%08x, index 0x%08x\n",
+                    sym->heap_alloc_site.offset, sym->heap_alloc_site.sect_idx,
+                    sym->heap_alloc_site.inst_len, sym->heap_alloc_site.index);
+            break;
 
         /* the symbols we can safely ignore for now */
         case S_TRAMPOLINE:
@@ -2684,7 +2689,7 @@ static void pdb_process_symbol_imports(const struct process* pcs,
         {
             ptr = (const char*)imp + sizeof(*imp) + strlen(imp->filename);
             if (i >= CV_MAX_MODULES) FIXME("Out of bounds!!!\n");
-            if (!strcasecmp(pdb_lookup->filename, imp->filename))
+            if (!_strnicmp(pdb_lookup->filename, imp->filename, -1))
             {
                 if (module_index != -1) FIXME("Twice the entry\n");
                 else module_index = i;

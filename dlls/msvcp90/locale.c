@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #include "assert.h"
@@ -34,7 +32,7 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "msvcp90.h"
-#include "wine/unicode.h"
+#include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 
@@ -2004,7 +2002,7 @@ int __cdecl _Tolower(int ch, const _Ctypevec *ctype)
         if(!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, str, size, &wide, 1))
             return ch;
 
-        lower = tolowerW(wide);
+        lower = towlower(wide);
         if(lower == wide)
             return ch;
 
@@ -2100,7 +2098,7 @@ int __cdecl _Toupper(int ch, const _Ctypevec *ctype)
         if(!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, str, size, &wide, 1))
             return ch;
 
-        upper = toupperW(wide);
+        upper = towupper(wide);
         if(upper == wide)
             return ch;
 
@@ -2770,7 +2768,7 @@ MSVCP_size_t __cdecl ctype_short__Getcat_old(const locale_facet **facet)
 wchar_t __cdecl _Towlower(wchar_t ch, const _Ctypevec *ctype)
 {
     TRACE("(%d %p)\n", ch, ctype);
-    return tolowerW(ch);
+    return towlower(ch);
 }
 
 ctype_wchar* ctype_wchar_use_facet(const locale *loc)
@@ -2896,7 +2894,7 @@ const wchar_t* __thiscall ctype_wchar_tolower(const ctype_wchar *this,
 wchar_t __cdecl _Towupper(wchar_t ch, const _Ctypevec *ctype)
 {
     TRACE("(%d %p)\n", ch, ctype);
-    return toupperW(ch);
+    return towupper(ch);
 }
 
 /* ?do_toupper@?$ctype@_W@std@@MBE_W_W@Z */
@@ -10650,7 +10648,7 @@ static wchar_t* create_time_get_str(const wchar_t *str)
     wchar_t *ret;
     int len;
 
-    len = strlenW(str)+1;
+    len = lstrlenW(str)+1;
     ret = MSVCRT_operator_new(len * sizeof(wchar_t));
     if(ret)
         memcpy(ret, str, len*sizeof(wchar_t));
@@ -10944,9 +10942,9 @@ static int find_longest_match_wchar(istreambuf_iterator_wchar *iter, const wchar
         match = -1;
         for(p=str+1, i=0; *p; p = (*end ? end+1 : end), i++)
         {
-            end = strchrW(p, ':');
+            end = wcschr(p, ':');
             if (!end)
-                end = p + strlenW(p);
+                end = p + lstrlenW(p);
 
             if (end-p >= len && !memcmp(p, buf, len*sizeof(wchar_t)))
             {
@@ -12665,6 +12663,44 @@ int __cdecl _To_wide(const char *src, wchar_t *dst)
 {
     TRACE("(%s %p)\n", debugstr_a(src), dst);
     return MultiByteToWideChar(CP_ACP, 0, src, -1, dst, MAX_PATH);
+}
+
+MSVCP_size_t __cdecl _Strxfrm(char *dest, char *dest_end, const char *src, const char *src_end, _Collvec *coll)
+{
+    MSVCP_size_t dest_len = dest_end - dest;
+    MSVCP_size_t src_len = src_end - src;
+    _Collvec cv;
+    WCHAR *buf;
+    LCID lcid;
+    int len;
+
+    TRACE("(%p %p %p %p %p)\n", dest, dest_end, src, src_end, coll);
+
+    if (coll) cv = *coll;
+    else getcoll(&cv);
+
+#if _MSVCP_VER < 110
+    lcid = cv.handle;
+#else
+    lcid = LocaleNameToLCID(cv.lc_name, 0);
+#endif
+
+    if (!lcid && !cv.page)
+    {
+        if (src_len > dest_len) return src_len;
+        memcpy(dest, src, src_len);
+        return src_len;
+    }
+
+    len = MultiByteToWideChar(cv.page, MB_ERR_INVALID_CHARS, src, src_len, NULL, 0);
+    if (!len) return 0;
+    buf = heap_alloc(len * sizeof(WCHAR));
+    if (!buf) return 0;
+    MultiByteToWideChar(cv.page, MB_ERR_INVALID_CHARS, src, src_len, buf, len);
+
+    len = LCMapStringW(lcid, LCMAP_SORTKEY, buf, len, (WCHAR*)dest, dest_len);
+    heap_free(buf);
+    return len;
 }
 
 DEFINE_RTTI_DATA0(_Facet_base, 0, ".?AV_Facet_base@std@@")

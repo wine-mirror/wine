@@ -54,6 +54,7 @@ DWORD mshtml_tls = TLS_OUT_OF_INDEXES;
 static HINSTANCE shdoclc = NULL;
 static WCHAR *status_strings[IDS_STATUS_LAST-IDS_STATUS_FIRST+1];
 static IMultiLanguage2 *mlang;
+static IInternetSecurityManager *security_manager;
 static unsigned global_max_compat_mode = COMPAT_MODE_IE11;
 static struct list compat_config = LIST_INIT(compat_config);
 
@@ -118,6 +119,23 @@ BSTR charset_string_from_cp(UINT cp)
     return SysAllocString(info.wszWebCharset);
 }
 
+IInternetSecurityManager *get_security_manager(void)
+{
+    if(!security_manager) {
+        IInternetSecurityManager *manager;
+        HRESULT hres;
+
+        hres = CoInternetCreateSecurityManager(NULL, &manager, 0);
+        if(FAILED(hres))
+            return NULL;
+
+        if(InterlockedCompareExchangePointer((void**)&security_manager, manager, NULL))
+            IInternetSecurityManager_Release(manager);
+    }
+
+    return security_manager;
+}
+
 static BOOL read_compat_mode(HKEY key, compat_mode_t *r)
 {
     WCHAR version[32];
@@ -169,7 +187,7 @@ static BOOL WINAPI load_compat_settings(INIT_ONCE *once, void *param, void **con
             continue;
         }
 
-        name_size = strlenW(key_name) + 1;
+        name_size = lstrlenW(key_name) + 1;
         new_entry = heap_alloc(FIELD_OFFSET(compat_config_t, host[name_size]));
         if(!new_entry)
             continue;
@@ -212,7 +230,7 @@ compat_mode_t get_max_compat_mode(IUri *uri)
     len = SysStringLen(host);
 
     LIST_FOR_EACH_ENTRY(iter, &compat_config, compat_config_t, entry) {
-        iter_len = strlenW(iter->host);
+        iter_len = lstrlenW(iter->host);
         /* If configured host starts with '.', we also match subdomains */
         if((len == iter_len || (iter->host[0] == '.' && len > iter_len))
            && !memcmp(host + len - iter_len, iter->host, iter_len * sizeof(WCHAR))) {
@@ -266,6 +284,8 @@ static void process_detach(void)
         TlsFree(mshtml_tls);
     if(mlang)
         IMultiLanguage2_Release(mlang);
+    if(security_manager)
+        IInternetSecurityManager_Release(security_manager);
 
     free_strings();
 }
@@ -296,7 +316,7 @@ void set_statustext(HTMLDocumentObj* doc, INT id, LPCWSTR arg)
         len = lstrlenW(p) + lstrlenW(arg) - 1;
         buf = heap_alloc(len * sizeof(WCHAR));
 
-        snprintfW(buf, len, p, arg);
+        swprintf(buf, len, p, arg);
 
         p = buf;
     }

@@ -1,7 +1,7 @@
 MODULE    = display.drv16
 IMPORTS   = user32
 
-EXTRADLLFLAGS = -m16
+EXTRADLLFLAGS = -m16 -mno-cygwin
 
 C_SRCS = display.c
 

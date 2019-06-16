@@ -78,7 +78,7 @@ static void test_logpen(void)
 
         /********************** cosmetic pens **********************/
         /* CreatePenIndirect behaviour */
-        lp.lopnStyle = pen[i].style,
+        lp.lopnStyle = pen[i].style;
         lp.lopnWidth.x = pen[i].width;
         lp.lopnWidth.y = 11; /* just in case */
         lp.lopnColor = pen[i].color;

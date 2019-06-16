@@ -1,5 +1,5 @@
 /*
- * Unit tests for DSound Renderer functions
+ * DirectSound renderer filter unit tests
  *
  * Copyright (C) 2010 Maarten Lankhorst for CodeWeavers
  * Copyright (C) 2007 Google (Lei Zhang)
@@ -20,138 +20,480 @@
  */
 
 #define COBJMACROS
-
-#include "wine/test.h"
 #include "dshow.h"
 #include "initguid.h"
 #include "dsound.h"
 #include "amaudio.h"
+#include "wine/test.h"
 
-#define QI_SUCCEED(iface, riid, ppv) hr = IUnknown_QueryInterface(iface, &riid, (LPVOID*)&ppv); \
-    ok(hr == S_OK, "IUnknown_QueryInterface returned %x\n", hr); \
-    ok(ppv != NULL, "Pointer is NULL\n");
+static const WCHAR sink_id[] = {'A','u','d','i','o',' ','I','n','p','u','t',' ','p','i','n',' ','(','r','e','n','d','e','r','e','d',')',0};
 
-#define RELEASE_EXPECT(iface, num) if (iface) { \
-    hr = IUnknown_Release((IUnknown*)iface); \
-    ok(hr == num, "IUnknown_Release should return %d, got %d\n", num, hr); \
+static IBaseFilter *create_dsound_render(void)
+{
+    IBaseFilter *filter = NULL;
+    HRESULT hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    return filter;
 }
 
-static IUnknown *pDSRender = NULL;
-
-static BOOL create_dsound_renderer(void)
+static ULONG get_refcount(void *iface)
 {
-    HRESULT hr;
-
-    hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IUnknown, (LPVOID*)&pDSRender);
-    return (hr == S_OK && pDSRender != NULL);
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
 }
 
-static void release_dsound_renderer(void)
+static HRESULT WINAPI property_bag_QueryInterface(IPropertyBag *iface, REFIID iid, void **out)
 {
-    HRESULT hr;
-
-    hr = IUnknown_Release(pDSRender);
-    ok(hr == 0, "IUnknown_Release failed with %x\n", hr);
-}
-
-static HRESULT WINAPI PB_QueryInterface(IPropertyBag *iface, REFIID riid, void **ppv)
-{
-    ok(0, "Should not be called\n");
-    *ppv = NULL;
+    ok(0, "Unexpected call (iid %s).\n", wine_dbgstr_guid(iid));
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI PB_AddRef(IPropertyBag *iface)
+static ULONG WINAPI property_bag_AddRef(IPropertyBag *iface)
 {
-    ok(0, "Should not be called\n");
+    ok(0, "Unexpected call.\n");
     return 2;
 }
 
-static ULONG WINAPI PB_Release(IPropertyBag *iface)
+static ULONG WINAPI property_bag_Release(IPropertyBag *iface)
 {
-    ok(0, "Should not be called\n");
+    ok(0, "Unexpected call.\n");
     return 1;
 }
 
-static HRESULT WINAPI PB_Read(IPropertyBag *iface, LPCOLESTR name, VARIANT *var, IErrorLog *log)
+static HRESULT WINAPI property_bag_Read(IPropertyBag *iface, const WCHAR *name, VARIANT *var, IErrorLog *log)
 {
-    static const WCHAR dsguid[] = { 'D','S','G','u','i','d', 0 };
-    char temp[50];
-    WideCharToMultiByte(CP_ACP, 0, name, -1, temp, sizeof(temp)-1, NULL, NULL);
-    temp[sizeof(temp)-1] = 0;
-    trace("Trying to read %s, type %u\n", temp, var->n1.n2.vt);
-    if (!lstrcmpW(name, dsguid))
-    {
-        static const WCHAR defaultplayback[] =
-        {
-            '{','D','E','F','0','0','0','0','0','-',
-            '9','C','6','D','-','4','7','E','D','-',
-            'A','A','F','1','-','4','D','D','A','8',
-            'F','2','B','5','C','0','3','}',0
-        };
-        ok(var->n1.n2.vt == VT_BSTR, "Wrong type asked: %u\n", var->n1.n2.vt);
-        var->n1.n2.n3.bstrVal = SysAllocString(defaultplayback);
-        return S_OK;
-    }
-    ok(0, "Unknown property '%s' queried\n", temp);
+    static const WCHAR dsguidW[] = {'D','S','G','u','i','d',0};
+    WCHAR guidstr[39];
+
+    ok(!lstrcmpW(name, dsguidW), "Got unexpected name %s.\n", wine_dbgstr_w(name));
+    ok(V_VT(var) == VT_BSTR, "Got unexpected type %u.\n", V_VT(var));
+    StringFromGUID2(&DSDEVID_DefaultPlayback, guidstr, ARRAY_SIZE(guidstr));
+    V_BSTR(var) = SysAllocString(guidstr);
+    return S_OK;
+}
+
+static HRESULT WINAPI property_bag_Write(IPropertyBag *iface, const WCHAR *name, VARIANT *var)
+{
+    ok(0, "Unexpected call (name %s).\n", wine_dbgstr_w(name));
     return E_FAIL;
 }
 
-static HRESULT WINAPI PB_Write(IPropertyBag *iface, LPCOLESTR name, VARIANT *var)
+static const IPropertyBagVtbl property_bag_vtbl =
 {
-    ok(0, "Should not be called\n");
-    return E_FAIL;
-}
-
-static IPropertyBagVtbl PB_Vtbl =
-{
-    PB_QueryInterface,
-    PB_AddRef,
-    PB_Release,
-    PB_Read,
-    PB_Write
+    property_bag_QueryInterface,
+    property_bag_AddRef,
+    property_bag_Release,
+    property_bag_Read,
+    property_bag_Write,
 };
 
-static void test_query_interface(void)
+static void test_property_bag(void)
 {
+    IPropertyBag property_bag = {&property_bag_vtbl};
+    IPersistPropertyBag *ppb;
     HRESULT hr;
-    IBaseFilter *pBaseFilter = NULL;
-    IBasicAudio *pBasicAudio = NULL;
-    IMediaPosition *pMediaPosition = NULL;
-    IMediaSeeking *pMediaSeeking = NULL;
-    IQualityControl *pQualityControl = NULL;
-    IPersistPropertyBag *ppb = NULL;
-    IDirectSound3DBuffer *ds3dbuf = NULL;
-    IReferenceClock *clock = NULL;
-    IAMDirectSound *pAMDirectSound = NULL;
+    ULONG ref;
 
-    QI_SUCCEED(pDSRender, IID_IBaseFilter, pBaseFilter);
-    RELEASE_EXPECT(pBaseFilter, 1);
-    QI_SUCCEED(pDSRender, IID_IBasicAudio, pBasicAudio);
-    RELEASE_EXPECT(pBasicAudio, 1);
-    QI_SUCCEED(pDSRender, IID_IMediaSeeking, pMediaSeeking);
-    RELEASE_EXPECT(pMediaSeeking, 1);
-    QI_SUCCEED(pDSRender, IID_IReferenceClock, clock);
-    RELEASE_EXPECT(clock, 1);
-    QI_SUCCEED(pDSRender, IID_IAMDirectSound, pAMDirectSound);
-    RELEASE_EXPECT( pAMDirectSound, 1);
-    todo_wine {
-    QI_SUCCEED(pDSRender, IID_IDirectSound3DBuffer, ds3dbuf);
-    RELEASE_EXPECT(ds3dbuf, 1);
-    QI_SUCCEED(pDSRender, IID_IPersistPropertyBag, ppb);
-    if (ppb)
+    hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IPersistPropertyBag, (void **)&ppb);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr != S_OK) return;
+
+    hr = IPersistPropertyBag_InitNew(ppb);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPersistPropertyBag_Load(ppb, &property_bag, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = IPersistPropertyBag_Release(ppb);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+}
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    IBaseFilter *filter = create_dsound_render();
+    IPin *pin;
+
+    check_interface(filter, &IID_IAMDirectSound, TRUE);
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    check_interface(filter, &IID_IBasicAudio, TRUE);
+    todo_wine check_interface(filter, &IID_IDirectSound3DBuffer, TRUE);
+    check_interface(filter, &IID_IMediaFilter, TRUE);
+    check_interface(filter, &IID_IMediaPosition, TRUE);
+    check_interface(filter, &IID_IMediaSeeking, TRUE);
+    check_interface(filter, &IID_IPersist, TRUE);
+    todo_wine check_interface(filter, &IID_IPersistPropertyBag, TRUE);
+    check_interface(filter, &IID_IQualityControl, TRUE);
+    check_interface(filter, &IID_IReferenceClock, TRUE);
+    check_interface(filter, &IID_IUnknown, TRUE);
+
+    check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
+    check_interface(filter, &IID_IBasicVideo, FALSE);
+    check_interface(filter, &IID_IDispatch, FALSE);
+    check_interface(filter, &IID_IKsPropertySet, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+    check_interface(filter, &IID_IQualProp, FALSE);
+    check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    check_interface(pin, &IID_IPin, TRUE);
+    check_interface(pin, &IID_IMemInputPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IAsyncReader, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+    todo_wine check_interface(pin, &IID_IMediaSeeking, FALSE);
+
+    IPin_Release(pin);
+    IBaseFilter_Release(filter);
+}
+
+static const GUID test_iid = {0x33333333};
+static LONG outer_ref = 1;
+
+static HRESULT WINAPI outer_QueryInterface(IUnknown *iface, REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IBaseFilter)
+            || IsEqualGUID(iid, &test_iid))
     {
-        IPropertyBag bag = { &PB_Vtbl };
-        hr = IPersistPropertyBag_Load(ppb, &bag, NULL);
-        ok(hr == S_OK, "Couldn't load default device: %08x\n", hr);
+        *out = (IUnknown *)0xdeadbeef;
+        return S_OK;
     }
-    RELEASE_EXPECT(ppb, 1);
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI outer_AddRef(IUnknown *iface)
+{
+    return InterlockedIncrement(&outer_ref);
+}
+
+static ULONG WINAPI outer_Release(IUnknown *iface)
+{
+    return InterlockedDecrement(&outer_ref);
+}
+
+static const IUnknownVtbl outer_vtbl =
+{
+    outer_QueryInterface,
+    outer_AddRef,
+    outer_Release,
+};
+
+static IUnknown test_outer = {&outer_vtbl};
+
+static void test_aggregation(void)
+{
+    IBaseFilter *filter, *filter2;
+    IUnknown *unk, *unk2;
+    HRESULT hr;
+    ULONG ref;
+
+    filter = (IBaseFilter *)0xdeadbeef;
+    hr = CoCreateInstance(&CLSID_DSoundRender, &test_outer, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(!filter, "Got interface %p.\n", filter);
+
+    hr = CoCreateInstance(&CLSID_DSoundRender, &test_outer, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
+    ref = get_refcount(unk);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+
+    ref = IUnknown_AddRef(unk);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+
+    ref = IUnknown_Release(unk);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
+    IUnknown_Release(unk2);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IBaseFilter, (void **)&filter2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(filter2 == (IBaseFilter *)0xdeadbeef, "Got unexpected IBaseFilter %p.\n", filter2);
+
+    hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
+
+    hr = IBaseFilter_QueryInterface(filter, &test_iid, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
+
+    IBaseFilter_Release(filter);
+    ref = IUnknown_Release(unk);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+}
+
+static void test_enum_pins(void)
+{
+    IBaseFilter *filter = create_dsound_render();
+    IEnumPins *enum1, *enum2;
+    ULONG count, ref;
+    IPin *pins[2];
+    HRESULT hr;
+
+    ref = get_refcount(filter);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+
+    hr = IBaseFilter_EnumPins(filter, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_EnumPins(filter, &enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = get_refcount(filter);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(enum1);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+
+    hr = IEnumPins_Next(enum1, 1, NULL, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = get_refcount(filter);
+todo_wine
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(pins[0]);
+todo_wine
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(enum1);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    IPin_Release(pins[0]);
+    ref = get_refcount(filter);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Next(enum1, 1, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 2, pins, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 2, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Clone(enum1, &enum2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 2);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum2, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IPin_Release(pins[0]);
+
+    IEnumPins_Release(enum2);
+    IEnumPins_Release(enum1);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_find_pin(void)
+{
+    static const WCHAR inW[] = {'I','n',0};
+    static const WCHAR input_pinW[] = {'i','n','p','u','t',' ','p','i','n',0};
+    IBaseFilter *filter = create_dsound_render();
+    IEnumPins *enum_pins;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IBaseFilter_FindPin(filter, inW, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, input_pinW, &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    IEnumPins_Release(enum_pins);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_pin_info(void)
+{
+    IBaseFilter *filter = create_dsound_render();
+    PIN_DIRECTION dir;
+    PIN_INFO info;
+    HRESULT hr;
+    WCHAR *id;
+    ULONG ref;
+    IPin *pin;
+
+    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = get_refcount(filter);
+    todo_wine ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(pin);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
+    ok(!lstrcmpW(info.achName, sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ref = get_refcount(filter);
+    todo_wine ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(pin);
+    todo_wine ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!lstrcmpW(id, sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    hr = IPin_QueryInternalConnections(pin, NULL, NULL);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_basic_audio(void)
+{
+    IBaseFilter *filter = create_dsound_render();
+    LONG balance, volume;
+    ITypeInfo *typeinfo;
+    IBasicAudio *audio;
+    TYPEATTR *typeattr;
+    ULONG ref, count;
+    HRESULT hr;
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IBasicAudio, (void **)&audio);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBasicAudio_get_Balance(audio, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicAudio_get_Balance(audio, &balance);
+    if (hr != VFW_E_MONO_AUDIO_HW)
+    {
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(balance == 0, "Got balance %d.\n", balance);
+
+        hr = IBasicAudio_put_Balance(audio, DSBPAN_LEFT - 1);
+        ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+        hr = IBasicAudio_put_Balance(audio, DSBPAN_LEFT);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = IBasicAudio_get_Balance(audio, &balance);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(balance == DSBPAN_LEFT, "Got balance %d.\n", balance);
     }
-    QI_SUCCEED(pDSRender, IID_IMediaPosition, pMediaPosition);
-    RELEASE_EXPECT(pMediaPosition, 1);
-    QI_SUCCEED(pDSRender, IID_IQualityControl, pQualityControl);
-    RELEASE_EXPECT(pQualityControl, 1);
+
+    hr = IBasicAudio_get_Volume(audio, &volume);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(volume == 0, "Got volume %d.\n", volume);
+
+    hr = IBasicAudio_put_Volume(audio, DSBVOLUME_MIN - 1);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IBasicAudio_put_Volume(audio, DSBVOLUME_MIN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBasicAudio_get_Volume(audio, &volume);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(volume == DSBVOLUME_MIN, "Got volume %d.\n", volume);
+
+    hr = IBasicAudio_GetTypeInfoCount(audio, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+
+    hr = IBasicAudio_GetTypeInfo(audio, 0, 0, &typeinfo);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(typeattr->typekind == TKIND_DISPATCH, "Got kind %u.\n", typeattr->typekind);
+    ok(IsEqualGUID(&typeattr->guid, &IID_IBasicAudio), "Got IID %s.\n", wine_dbgstr_guid(&typeattr->guid));
+    ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+    ITypeInfo_Release(typeinfo);
+
+    IBasicAudio_Release(audio);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static void test_pin(IPin *pin)
@@ -173,18 +515,10 @@ static void test_pin(IPin *pin)
 static void test_basefilter(void)
 {
     IEnumPins *pin_enum = NULL;
-    IBaseFilter *base = NULL;
+    IBaseFilter *base = create_dsound_render();
     IPin *pins[2];
     ULONG ref;
     HRESULT hr;
-
-    IUnknown_QueryInterface(pDSRender, &IID_IBaseFilter, (void **)&base);
-    if (base == NULL)
-    {
-        /* test_query_interface handles this case */
-        skip("No IBaseFilter\n");
-        return;
-    }
 
     hr = IBaseFilter_EnumPins(base, NULL);
     ok(hr == E_POINTER, "hr = %08x and not E_POINTER\n", hr);
@@ -220,14 +554,30 @@ static void test_basefilter(void)
 
 START_TEST(dsoundrender)
 {
+    IBaseFilter *filter;
+    HRESULT hr;
+
     CoInitialize(NULL);
-    if (!create_dsound_renderer())
+
+    hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter);
+    if (hr == VFW_E_NO_AUDIO_HARDWARE)
+    {
+        skip("No audio hardware.\n");
+        CoUninitialize();
         return;
+    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IBaseFilter_Release(filter);
 
-    test_query_interface();
+    test_property_bag();
+    test_interfaces();
+    test_aggregation();
+    test_enum_pins();
+    test_find_pin();
+    test_pin_info();
+    test_basic_audio();
     test_basefilter();
-
-    release_dsound_renderer();
 
     CoUninitialize();
 }

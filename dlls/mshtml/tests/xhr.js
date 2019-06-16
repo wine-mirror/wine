@@ -29,6 +29,7 @@ function test_xhr() {
             next_test();
     }
     var onload_func = xhr.onload = function() {
+        ok(xhr.statusText === "OK", "statusText = " + xhr.statusText);
         if(complete_cnt++)
             next_test();
     };

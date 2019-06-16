@@ -1083,7 +1083,7 @@ static NTSTATUS map_fixed_area( void *base, size_t size, unsigned int vprot )
  * The csVirtual section must be held by caller.
  */
 static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, size_t mask,
-                          int top_down, unsigned int vprot )
+                          int top_down, unsigned int vprot, size_t zero_bits )
 {
     void *ptr;
     NTSTATUS status;
@@ -1100,6 +1100,9 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
     {
         size_t view_size = size + mask + 1;
         struct alloc_area alloc;
+
+        if (zero_bits)
+            FIXME("Unimplemented zero_bits parameter value\n");
 
         alloc.size = size;
         alloc.mask = mask;
@@ -1284,7 +1287,7 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
         if (addr != low_64k)
         {
             if (addr != (void *)-1) munmap( addr, dosmem_size - 0x10000 );
-            return map_view( view, NULL, dosmem_size, 0xffff, 0, vprot );
+            return map_view( view, NULL, dosmem_size, 0xffff, 0, vprot, 0 );
         }
     }
 
@@ -1388,11 +1391,11 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, SIZE_T m
 
     if (base >= (char *)address_space_start)  /* make sure the DOS area remains free */
         status = map_view( &view, base, total_size, mask, FALSE, SEC_IMAGE | SEC_FILE |
-                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY );
+                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY, 0 );
 
     if (status != STATUS_SUCCESS)
         status = map_view( &view, NULL, total_size, mask, FALSE, SEC_IMAGE | SEC_FILE |
-                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY );
+                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY, 0 );
 
     if (status != STATUS_SUCCESS) goto error;
 
@@ -1713,7 +1716,7 @@ NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG zero_bits, S
     get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE );
     vprot |= sec_flags;
     if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
-    res = map_view( &view, *addr_ptr, size, mask, FALSE, vprot );
+    res = map_view( &view, *addr_ptr, size, mask, FALSE, vprot, 0 );
     if (res)
     {
         server_leave_uninterrupted_section( &csVirtual, &sigset );
@@ -1946,7 +1949,7 @@ NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commi
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
     if ((status = map_view( &view, NULL, size + extra_size, 0xffff, 0,
-                            VPROT_READ | VPROT_WRITE | VPROT_COMMITTED )) != STATUS_SUCCESS)
+                            VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, 0 )) != STATUS_SUCCESS)
         goto done;
 
 #ifdef VALGRIND_STACK_REGISTER
@@ -2461,19 +2464,14 @@ void virtual_set_large_address_space(void)
 NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_bits,
                                          SIZE_T *size_ptr, ULONG type, ULONG protect )
 {
-    void *base;
-    unsigned int vprot;
     SIZE_T size = *size_ptr;
-    SIZE_T mask = get_mask( zero_bits );
     NTSTATUS status = STATUS_SUCCESS;
-    BOOL is_dos_memory = FALSE;
-    struct file_view *view;
-    sigset_t sigset;
 
     TRACE("%p %p %08lx %x %08x\n", process, *ret, size, type, protect );
 
     if (!size) return STATUS_INVALID_PARAMETER;
-    if (!mask) return STATUS_INVALID_PARAMETER_3;
+    if (zero_bits > 21 && zero_bits < 32) return STATUS_INVALID_PARAMETER_3;
+    if (!is_win64 && !is_wow64 && zero_bits >= 32) return STATUS_INVALID_PARAMETER_3;
 
     if (process != NtCurrentProcess())
     {
@@ -2498,6 +2496,27 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         }
         return result.virtual_alloc.status;
     }
+
+    return virtual_alloc_aligned( ret, zero_bits, size_ptr, type, protect, 0 );
+}
+
+
+/***********************************************************************
+ *             virtual_alloc_aligned   (NTDLL.@)
+ *
+ * Same as NtAllocateVirtualMemory but with an alignment parameter
+ */
+NTSTATUS virtual_alloc_aligned( PVOID *ret, ULONG zero_bits, SIZE_T *size_ptr,
+                                ULONG type, ULONG protect, ULONG alignment )
+{
+    void *base;
+    unsigned int vprot;
+    SIZE_T size = *size_ptr;
+    SIZE_T mask = get_mask( alignment );
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOL is_dos_memory = FALSE;
+    struct file_view *view;
+    sigset_t sigset;
 
     /* Round parameters to a page boundary */
 
@@ -2550,7 +2569,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
 
             if (vprot & VPROT_WRITECOPY) status = STATUS_INVALID_PAGE_PROTECTION;
             else if (is_dos_memory) status = allocate_dos_memory( &view, vprot );
-            else status = map_view( &view, base, size, mask, type & MEM_TOP_DOWN, vprot );
+            else status = map_view( &view, base, size, mask, type & MEM_TOP_DOWN, vprot, zero_bits );
 
             if (status == STATUS_SUCCESS) base = view->base;
         }
@@ -2756,7 +2775,7 @@ static int get_free_mem_state_callback( void *start, size_t size, void *arg )
     MEMORY_BASIC_INFORMATION *info = arg;
     void *end = (char *)start + size;
 
-    if ((char *)info->BaseAddress + info->RegionSize < (char *)start) return 0;
+    if ((char *)info->BaseAddress + info->RegionSize <= (char *)start) return 0;
 
     if (info->BaseAddress >= end)
     {
@@ -3203,7 +3222,7 @@ void virtual_fill_image_information( const pe_image_info_t *pe_info, SECTION_IMA
     info->DllCharacteristics   = pe_info->dll_charact;
     info->Machine              = pe_info->machine;
     info->ImageContainsCode    = pe_info->contains_code;
-    info->u.ImageFlags         = pe_info->image_flags & ~IMAGE_FLAGS_WineFakeDll;
+    info->u.ImageFlags         = pe_info->image_flags & ~(IMAGE_FLAGS_WineBuiltin|IMAGE_FLAGS_WineFakeDll);
     info->LoaderFlags          = pe_info->loader_flags;
     info->ImageFileSize        = pe_info->file_size;
     info->CheckSum             = pe_info->checksum;

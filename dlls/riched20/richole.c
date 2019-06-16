@@ -1391,6 +1391,16 @@ IRichEditOle_fnGetObject(IRichEditOle *me, LONG iob,
         else
             reobj = cursor.pRun->member.run.reobj;
     }
+    else if (iob == REO_IOB_SELECTION)
+    {
+        ME_Cursor *from, *to;
+
+        ME_GetSelection(This->editor, &from, &to);
+        if (!from->pRun->member.run.reobj)
+            return E_INVALIDARG;
+        else
+            reobj = from->pRun->member.run.reobj;
+    }
     else
     {
         if (iob > IRichEditOle_GetObjectCount(me))
@@ -2016,6 +2026,24 @@ static HRESULT WINAPI ITextRange_fnSetIndex(ITextRange *me, LONG unit, LONG inde
     return E_NOTIMPL;
 }
 
+static void cp2range(ME_TextEditor *editor, LONG *cp1, LONG *cp2)
+{
+    int len = ME_GetTextLength(editor) + 1;
+
+    *cp1 = max(*cp1, 0);
+    *cp2 = max(*cp2, 0);
+    *cp1 = min(*cp1, len);
+    *cp2 = min(*cp2, len);
+    if (*cp1 > *cp2)
+    {
+        int tmp = *cp1;
+        *cp1 = *cp2;
+        *cp2 = tmp;
+    }
+    if (*cp1 == len)
+        *cp1 = *cp2 = len - 1;
+}
+
 static HRESULT WINAPI ITextRange_fnSetRange(ITextRange *me, LONG anchor, LONG active)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
@@ -2025,7 +2053,13 @@ static HRESULT WINAPI ITextRange_fnSetRange(ITextRange *me, LONG anchor, LONG ac
     if (!This->child.reole)
         return CO_E_RELEASED;
 
-    return E_NOTIMPL;
+    cp2range(This->child.reole->editor, &anchor, &active);
+    if (anchor == This->start && active == This->end)
+        return S_FALSE;
+
+    This->start = anchor;
+    This->end = active;
+    return S_OK;
 }
 
 static HRESULT textrange_inrange(LONG start, LONG end, ITextRange *range, LONG *ret)
@@ -2473,6 +2507,10 @@ static HRESULT WINAPI ITextRange_fnScrollIntoView(ITextRange *me, LONG value)
     {
     case tomStart:
         ME_CursorFromCharOfs(editor, This->start, &cursor);
+        ME_GetCursorCoordinates(editor, &cursor, &x, &y, &height);
+        break;
+    case tomEnd:
+        ME_CursorFromCharOfs(editor, This->end, &cursor);
         ME_GetCursorCoordinates(editor, &cursor, &x, &y, &height);
         break;
     default:
@@ -4095,26 +4133,12 @@ static HRESULT WINAPI ITextDocument2Old_fnRange(ITextDocument2Old *iface, LONG c
                                                 ITextRange **ppRange)
 {
     IRichEditOleImpl *This = impl_from_ITextDocument2Old(iface);
-    const int len = ME_GetTextLength(This->editor) + 1;
 
     TRACE("%p %p %d %d\n", This, ppRange, cp1, cp2);
     if (!ppRange)
         return E_INVALIDARG;
 
-    cp1 = max(cp1, 0);
-    cp2 = max(cp2, 0);
-    cp1 = min(cp1, len);
-    cp2 = min(cp2, len);
-    if (cp1 > cp2)
-    {
-        LONG tmp;
-        tmp = cp1;
-        cp1 = cp2;
-        cp2 = tmp;
-    }
-    if (cp1 == len)
-        cp1 = cp2 = len - 1;
-
+    cp2range(This->editor, &cp1, &cp2);
     return CreateITextRange(This, cp1, cp2, ppRange);
 }
 

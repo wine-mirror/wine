@@ -29,7 +29,7 @@ extern "C" {
 #ifdef _USER32_
 #define WINUSERAPI
 #else
-#define WINUSERAPI DECLSPEC_IMPORT
+#define WINUSERAPI DECLSPEC_HIDDEN
 #endif
 
 /* Codepage Constants
@@ -51,7 +51,7 @@ extern "C" {
 #define EXPENTRY CALLBACK
 
 #ifdef UNICODE
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define SZDDESYS_TOPIC          L"System"
 #define SZDDESYS_ITEM_TOPICS    L"Topics"
 #define SZDDESYS_ITEM_SYSITEMS  L"SysItems"
@@ -60,16 +60,7 @@ extern "C" {
 #define SZDDESYS_ITEM_FORMATS   L"Formats"
 #define SZDDESYS_ITEM_HELP      L"Help"
 #define SZDDE_ITEM_ITEMLIST     L"TopicItemList"
-#elif defined(__GNUC__)
-#define SZDDESYS_TOPIC          (const WCHAR []){'S','y','s','t','e','m',0}
-#define SZDDESYS_ITEM_TOPICS    (const WCHAR []){'T','o','p','i','c','s',0}
-#define SZDDESYS_ITEM_SYSITEMS  (const WCHAR []){'S','y','s','I','t','e','m','s',0}
-#define SZDDESYS_ITEM_RTNMSG    (const WCHAR []){'R','e','t','u','r','n','M','e','s','s','a','g','e',0}
-#define SZDDESYS_ITEM_STATUS    (const WCHAR []){'S','t','a','t','u','s',0}
-#define SZDDESYS_ITEM_FORMATS   (const WCHAR []){'F','o','r','m','a','t','s',0}
-#define SZDDESYS_ITEM_HELP      (const WCHAR []){'H','e','l','p',0}
-#define SZDDE_ITEM_ITEMLIST     (const WCHAR []){'T','o','p','i','c','I','t','e','m','L','i','s','t',0}
-#else /* _MSC_VER/__GNUC__ */
+#else /* _MSC_VER/__MINGW32__ */
 static const WCHAR SZDDESYS_TOPIC[] = {'S','y','s','t','e','m',0};
 static const WCHAR SZDDESYS_ITEM_TOPICS[] = {'T','o','p','i','c','s',0};
 static const WCHAR SZDDESYS_ITEM_SYSITEMS[] = {'S','y','s','I','t','e','m','s',0};

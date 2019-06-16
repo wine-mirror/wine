@@ -30,12 +30,25 @@
 # include <sys/stat.h>
 #endif
 
+#define __wine_dbg_get_channel_flags __wine_dbg_get_channel_flags_inline
+#define wine_dbg_sprintf wine_dbg_sprintf_inline
+#define wine_dbg_printf wine_dbg_printf_inline
+#define wine_dbg_log wine_dbg_log_inline
+#define wine_dbgstr_an wine_dbgstr_an_inline
+#define wine_dbgstr_wn wine_dbgstr_wn_inline
 #include "wine/debug.h"
 #include "wine/library.h"
 
-#if defined(__MINGW32__) || defined(_MSC_VER)
-WINE_DECLARE_DEBUG_CHANNEL(pid);
-#endif
+struct __wine_debug_functions
+{
+    char * (*get_temp_buffer)( size_t n );
+    void   (*release_temp_buffer)( char *buffer, size_t n );
+    const char * (*dbgstr_an)( const char * s, int n );
+    const char * (*dbgstr_wn)( const WCHAR *s, int n );
+    int (*dbg_vprintf)( const char *format, va_list args );
+    int (*dbg_vlog)( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
+                     const char *function, const char *format, va_list args );
+};
 
 static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
 
@@ -57,6 +70,7 @@ static int cmp_name( const void *p1, const void *p2 )
 }
 
 /* get the flags to use for a given channel, possibly setting them too in case of lazy init */
+#undef __wine_dbg_get_channel_flags
 unsigned char __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel )
 {
     if (nb_debug_options == -1) debug_init();
@@ -214,6 +228,7 @@ static void debug_init(void)
 }
 
 /* varargs wrapper for funcs.dbg_vprintf */
+#undef wine_dbg_printf
 int wine_dbg_printf( const char *format, ... )
 {
     int ret;
@@ -226,6 +241,7 @@ int wine_dbg_printf( const char *format, ... )
 }
 
 /* printf with temp buffer allocation */
+#undef wine_dbg_sprintf
 const char *wine_dbg_sprintf( const char *format, ... )
 {
     static const int max_size = 200;
@@ -244,6 +260,7 @@ const char *wine_dbg_sprintf( const char *format, ... )
 
 
 /* varargs wrapper for funcs.dbg_vlog */
+#undef wine_dbg_log
 int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
                   const char *func, const char *format, ... )
 {
@@ -406,11 +423,6 @@ static int default_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_ch
 {
     int ret = 0;
 
-#if defined(__MINGW32__) || defined(_MSC_VER)
-    if (TRACE_ON(pid))
-        ret += wine_dbg_printf( "%04x:", GetCurrentProcessId() );
-    ret += wine_dbg_printf( "%04x:", GetCurrentThreadId() );
-#endif
     if (cls < ARRAY_SIZE(debug_classes))
         ret += wine_dbg_printf( "%s:%s:%s ", debug_classes[cls], channel->name, func );
     if (format)
@@ -420,11 +432,13 @@ static int default_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_ch
 
 /* wrappers to use the function pointers */
 
+#undef wine_dbgstr_an
 const char *wine_dbgstr_an( const char * s, int n )
 {
     return funcs.dbgstr_an(s, n);
 }
 
+#undef wine_dbgstr_wn
 const char *wine_dbgstr_wn( const WCHAR *s, int n )
 {
     return funcs.dbgstr_wn(s, n);

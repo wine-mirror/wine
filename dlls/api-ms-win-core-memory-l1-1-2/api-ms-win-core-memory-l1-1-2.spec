@@ -11,7 +11,7 @@
 @ stdcall GetProcessWorkingSetSizeEx(long ptr ptr ptr) kernel32.GetProcessWorkingSetSizeEx
 @ stdcall GetSystemFileCacheSize(ptr ptr ptr) kernel32.GetSystemFileCacheSize
 @ stdcall GetWriteWatch(long ptr long ptr ptr ptr) kernel32.GetWriteWatch
-@ stub MapUserPhysicalPages
+@ stdcall MapUserPhysicalPages(ptr long ptr) kernel32.MapUserPhysicalPages
 @ stdcall MapViewOfFile(long long long long long) kernel32.MapViewOfFile
 @ stdcall MapViewOfFileEx(long long long long long ptr) kernel32.MapViewOfFileEx
 @ stub MapViewOfFileFromApp
@@ -28,7 +28,7 @@
 @ stub UnregisterBadMemoryNotification
 @ stdcall VirtualAlloc(ptr long long long) kernel32.VirtualAlloc
 @ stdcall VirtualAllocEx(long ptr long long long) kernel32.VirtualAllocEx
-@ stub VirtualAllocExNuma
+@ stdcall VirtualAllocExNuma(long ptr long long long long) kernel32.VirtualAllocExNuma
 @ stdcall VirtualFree(ptr long long) kernel32.VirtualFree
 @ stdcall VirtualFreeEx(long ptr long long) kernel32.VirtualFreeEx
 @ stdcall VirtualLock(ptr long) kernel32.VirtualLock

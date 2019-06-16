@@ -33,6 +33,7 @@
 #include "win.h"
 #include "user_private.h"
 #include "wine/unicode.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(msg);

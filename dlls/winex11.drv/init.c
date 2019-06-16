@@ -381,6 +381,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
     NULL,                               /* pGetCharWidth */
+    NULL,                               /* pGetCharWidthInfo */
     X11DRV_GetDeviceCaps,               /* pGetDeviceCaps */
     X11DRV_GetDeviceGammaRamp,          /* pGetDeviceGammaRamp */
     NULL,                               /* pGetFontData */

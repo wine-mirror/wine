@@ -35,6 +35,13 @@
 
 #define FD_SETSIZE 64
 
+struct __ms_timeval
+{
+    long tv_sec;
+    long tv_usec;
+};
+#define timeval __ms_timeval
+
 typedef struct
 {
     unsigned int fd_count;

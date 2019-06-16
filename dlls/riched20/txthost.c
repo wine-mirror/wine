@@ -28,6 +28,7 @@
 #include "richole.h"
 #include "imm.h"
 #include "textserv.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 #include "editstr.h"
 
@@ -105,63 +106,73 @@ static ULONG WINAPI ITextHostImpl_Release(ITextHost *iface)
     return ref;
 }
 
-DECLSPEC_HIDDEN HDC WINAPI ITextHostImpl_TxGetDC(ITextHost *iface)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetDC,4)
+DECLSPEC_HIDDEN HDC __thiscall ITextHostImpl_TxGetDC(ITextHost *iface)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     return GetDC(This->hWnd);
 }
 
-DECLSPEC_HIDDEN INT WINAPI ITextHostImpl_TxReleaseDC(ITextHost *iface, HDC hdc)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxReleaseDC,8)
+DECLSPEC_HIDDEN INT __thiscall ITextHostImpl_TxReleaseDC(ITextHost *iface, HDC hdc)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     return ReleaseDC(This->hWnd, hdc);
 }
 
-DECLSPEC_HIDDEN BOOL WINAPI ITextHostImpl_TxShowScrollBar(ITextHost *iface, INT fnBar, BOOL fShow)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxShowScrollBar,12)
+DECLSPEC_HIDDEN BOOL __thiscall ITextHostImpl_TxShowScrollBar(ITextHost *iface, INT fnBar, BOOL fShow)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     return ShowScrollBar(This->hWnd, fnBar, fShow);
 }
 
-DECLSPEC_HIDDEN BOOL WINAPI ITextHostImpl_TxEnableScrollBar(ITextHost *iface, INT fuSBFlags, INT fuArrowflags)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxEnableScrollBar,12)
+DECLSPEC_HIDDEN BOOL __thiscall ITextHostImpl_TxEnableScrollBar(ITextHost *iface, INT fuSBFlags, INT fuArrowflags)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     return EnableScrollBar(This->hWnd, fuSBFlags, fuArrowflags);
 }
 
-DECLSPEC_HIDDEN BOOL WINAPI ITextHostImpl_TxSetScrollRange(ITextHost *iface, INT fnBar, LONG nMinPos, INT nMaxPos,
-                                           BOOL fRedraw)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetScrollRange,20)
+DECLSPEC_HIDDEN BOOL __thiscall ITextHostImpl_TxSetScrollRange(ITextHost *iface, INT fnBar, LONG nMinPos, INT nMaxPos,
+                                                               BOOL fRedraw)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     return SetScrollRange(This->hWnd, fnBar, nMinPos, nMaxPos, fRedraw);
 }
 
-DECLSPEC_HIDDEN BOOL WINAPI ITextHostImpl_TxSetScrollPos(ITextHost *iface, INT fnBar, INT nPos, BOOL fRedraw)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetScrollPos,16)
+DECLSPEC_HIDDEN BOOL __thiscall ITextHostImpl_TxSetScrollPos(ITextHost *iface, INT fnBar, INT nPos, BOOL fRedraw)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     return SetScrollPos(This->hWnd, fnBar, nPos, fRedraw) != 0;
 }
 
-DECLSPEC_HIDDEN void WINAPI ITextHostImpl_TxInvalidateRect(ITextHost *iface, LPCRECT prc, BOOL fMode)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxInvalidateRect,12)
+DECLSPEC_HIDDEN void __thiscall ITextHostImpl_TxInvalidateRect(ITextHost *iface, LPCRECT prc, BOOL fMode)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     InvalidateRect(This->hWnd, prc, fMode);
 }
 
-DECLSPEC_HIDDEN void WINAPI ITextHostImpl_TxViewChange(ITextHost *iface, BOOL fUpdate)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxViewChange,8)
+DECLSPEC_HIDDEN void __thiscall ITextHostImpl_TxViewChange(ITextHost *iface, BOOL fUpdate)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     if (fUpdate)
         UpdateWindow(This->hWnd);
 }
 
-DECLSPEC_HIDDEN BOOL WINAPI ITextHostImpl_TxCreateCaret(ITextHost *iface, HBITMAP hbmp, INT xWidth, INT yHeight)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxCreateCaret,16)
+DECLSPEC_HIDDEN BOOL __thiscall ITextHostImpl_TxCreateCaret(ITextHost *iface, HBITMAP hbmp, INT xWidth, INT yHeight)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     return CreateCaret(This->hWnd, hbmp, xWidth, yHeight);
 }
 
-DECLSPEC_HIDDEN BOOL WINAPI ITextHostImpl_TxShowCaret(ITextHost *iface, BOOL fShow)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxShowCaret,8)
+DECLSPEC_HIDDEN BOOL __thiscall ITextHostImpl_TxShowCaret(ITextHost *iface, BOOL fShow)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     if (fShow)
@@ -170,34 +181,39 @@ DECLSPEC_HIDDEN BOOL WINAPI ITextHostImpl_TxShowCaret(ITextHost *iface, BOOL fSh
         return HideCaret(This->hWnd);
 }
 
-DECLSPEC_HIDDEN BOOL WINAPI ITextHostImpl_TxSetCaretPos(ITextHost *iface,
-                                        INT x, INT y)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetCaretPos,12)
+DECLSPEC_HIDDEN BOOL __thiscall ITextHostImpl_TxSetCaretPos(ITextHost *iface,
+                                                            INT x, INT y)
 {
     return SetCaretPos(x, y);
 }
 
-DECLSPEC_HIDDEN BOOL WINAPI ITextHostImpl_TxSetTimer(ITextHost *iface, UINT idTimer, UINT uTimeout)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetTimer,12)
+DECLSPEC_HIDDEN BOOL __thiscall ITextHostImpl_TxSetTimer(ITextHost *iface, UINT idTimer, UINT uTimeout)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     return SetTimer(This->hWnd, idTimer, uTimeout, NULL) != 0;
 }
 
-DECLSPEC_HIDDEN void WINAPI ITextHostImpl_TxKillTimer(ITextHost *iface, UINT idTimer)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxKillTimer,8)
+DECLSPEC_HIDDEN void __thiscall ITextHostImpl_TxKillTimer(ITextHost *iface, UINT idTimer)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     KillTimer(This->hWnd, idTimer);
 }
 
-DECLSPEC_HIDDEN void WINAPI ITextHostImpl_TxScrollWindowEx(ITextHost *iface, INT dx, INT dy, LPCRECT lprcScroll,
-                                           LPCRECT lprcClip, HRGN hRgnUpdate, LPRECT lprcUpdate,
-                                           UINT fuScroll)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxScrollWindowEx,32)
+DECLSPEC_HIDDEN void __thiscall ITextHostImpl_TxScrollWindowEx(ITextHost *iface, INT dx, INT dy, LPCRECT lprcScroll,
+                                                               LPCRECT lprcClip, HRGN hRgnUpdate, LPRECT lprcUpdate,
+                                                               UINT fuScroll)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     ScrollWindowEx(This->hWnd, dx, dy, lprcScroll, lprcClip,
                    hRgnUpdate, lprcUpdate, fuScroll);
 }
 
-DECLSPEC_HIDDEN void WINAPI ITextHostImpl_TxSetCapture(ITextHost *iface, BOOL fCapture)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetCapture,8)
+DECLSPEC_HIDDEN void __thiscall ITextHostImpl_TxSetCapture(ITextHost *iface, BOOL fCapture)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     if (fCapture)
@@ -206,54 +222,58 @@ DECLSPEC_HIDDEN void WINAPI ITextHostImpl_TxSetCapture(ITextHost *iface, BOOL fC
         ReleaseCapture();
 }
 
-DECLSPEC_HIDDEN void WINAPI ITextHostImpl_TxSetFocus(ITextHost *iface)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetFocus,4)
+DECLSPEC_HIDDEN void __thiscall ITextHostImpl_TxSetFocus(ITextHost *iface)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     SetFocus(This->hWnd);
 }
 
-DECLSPEC_HIDDEN void WINAPI ITextHostImpl_TxSetCursor(ITextHost *iface,
-                                      HCURSOR hcur,
-                                      BOOL fText)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetCursor,12)
+DECLSPEC_HIDDEN void __thiscall ITextHostImpl_TxSetCursor(ITextHost *iface, HCURSOR hcur, BOOL fText)
 {
     SetCursor(hcur);
 }
 
-DECLSPEC_HIDDEN BOOL WINAPI ITextHostImpl_TxScreenToClient(ITextHost *iface, LPPOINT lppt)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxScreenToClient,8)
+DECLSPEC_HIDDEN BOOL __thiscall ITextHostImpl_TxScreenToClient(ITextHost *iface, LPPOINT lppt)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     return ScreenToClient(This->hWnd, lppt);
 }
 
-DECLSPEC_HIDDEN BOOL WINAPI ITextHostImpl_TxClientToScreen(ITextHost *iface, LPPOINT lppt)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxClientToScreen,8)
+DECLSPEC_HIDDEN BOOL __thiscall ITextHostImpl_TxClientToScreen(ITextHost *iface, LPPOINT lppt)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     return ClientToScreen(This->hWnd, lppt);
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxActivate(ITextHost *iface, LONG *plOldState)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxActivate,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxActivate(ITextHost *iface, LONG *plOldState)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     *plOldState = HandleToLong(SetActiveWindow(This->hWnd));
     return (*plOldState ? S_OK : E_FAIL);
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxDeactivate(ITextHost *iface,
-                                          LONG lNewState)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxDeactivate,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxDeactivate(ITextHost *iface, LONG lNewState)
 {
     HWND ret = SetActiveWindow(LongToHandle(lNewState));
     return (ret ? S_OK : E_FAIL);
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetClientRect(ITextHost *iface, LPRECT prc)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetClientRect,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetClientRect(ITextHost *iface, LPRECT prc)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     int ret = GetClientRect(This->hWnd, prc);
     return (ret ? S_OK : E_FAIL);
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetViewInset(ITextHost *iface,
-                                            LPRECT prc)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetViewInset,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetViewInset(ITextHost *iface, LPRECT prc)
 {
     prc->top = 0;
     prc->left = 0;
@@ -262,41 +282,42 @@ DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetViewInset(ITextHost *iface,
     return S_OK;
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetCharFormat(ITextHost *iface,
-                                             const CHARFORMATW **ppCF)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetCharFormat,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetCharFormat(ITextHost *iface, const CHARFORMATW **ppCF)
 {
     return E_NOTIMPL;
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetParaFormat(ITextHost *iface,
-                                                             const PARAFORMAT **fmt)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetParaFormat,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetParaFormat(ITextHost *iface, const PARAFORMAT **fmt)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     *fmt = (const PARAFORMAT *)&This->para_fmt;
     return S_OK;
 }
 
-DECLSPEC_HIDDEN COLORREF WINAPI ITextHostImpl_TxGetSysColor(ITextHost *iface,
-                                            int nIndex)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetSysColor,8)
+DECLSPEC_HIDDEN COLORREF __thiscall ITextHostImpl_TxGetSysColor(ITextHost *iface, int nIndex)
 {
     return GetSysColor(nIndex);
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetBackStyle(ITextHost *iface,
-                                            TXTBACKSTYLE *pStyle)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetBackStyle,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetBackStyle(ITextHost *iface, TXTBACKSTYLE *pStyle)
 {
     *pStyle = TXTBACK_OPAQUE;
     return S_OK;
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetMaxLength(ITextHost *iface,
-                                            DWORD *pLength)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetMaxLength,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetMaxLength(ITextHost *iface, DWORD *pLength)
 {
     *pLength = INFINITE;
     return S_OK;
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetScrollBars(ITextHost *iface, DWORD *pdwScrollBar)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetScrollBars,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetScrollBars(ITextHost *iface, DWORD *pdwScrollBar)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     ME_TextEditor *editor = (ME_TextEditor*)GetWindowLongPtrW(This->hWnd, 0);
@@ -319,39 +340,40 @@ DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetScrollBars(ITextHost *iface, D
     return S_OK;
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetPasswordChar(ITextHost *iface,
-                                               WCHAR *pch)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetPasswordChar,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetPasswordChar(ITextHost *iface, WCHAR *pch)
 {
     *pch = '*';
     return S_OK;
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetAcceleratorPos(ITextHost *iface,
-                                                 LONG *pch)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetAcceleratorPos,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetAcceleratorPos(ITextHost *iface, LONG *pch)
 {
     *pch = -1;
     return S_OK;
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetExtent(ITextHost *iface,
-                                         LPSIZEL lpExtent)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetExtent,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetExtent(ITextHost *iface, LPSIZEL lpExtent)
 {
     return E_NOTIMPL;
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_OnTxCharFormatChange(ITextHost *iface,
-                                                  const CHARFORMATW *pcf)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_OnTxCharFormatChange,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_OnTxCharFormatChange(ITextHost *iface, const CHARFORMATW *pcf)
 {
     return S_OK;
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_OnTxParaFormatChange(ITextHost *iface,
-                                                  const PARAFORMAT *ppf)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_OnTxParaFormatChange,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_OnTxParaFormatChange(ITextHost *iface, const PARAFORMAT *ppf)
 {
     return S_OK;
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetPropertyBits(ITextHost *iface, DWORD dwMask, DWORD *pdwBits)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetPropertyBits,12)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetPropertyBits(ITextHost *iface, DWORD dwMask, DWORD *pdwBits)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongPtrW(This->hWnd, 0);
@@ -417,7 +439,8 @@ DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetPropertyBits(ITextHost *iface,
     return S_OK;
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxNotify(ITextHost *iface, DWORD iNotify, void *pv)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxNotify,12)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxNotify(ITextHost *iface, DWORD iNotify, void *pv)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     ME_TextEditor *editor = (ME_TextEditor*)GetWindowLongPtrW(This->hWnd, 0);
@@ -475,19 +498,22 @@ DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxNotify(ITextHost *iface, DWORD iN
     return S_OK;
 }
 
-DECLSPEC_HIDDEN HIMC WINAPI ITextHostImpl_TxImmGetContext(ITextHost *iface)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxImmGetContext,4)
+DECLSPEC_HIDDEN HIMC __thiscall ITextHostImpl_TxImmGetContext(ITextHost *iface)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     return ImmGetContext(This->hWnd);
 }
 
-DECLSPEC_HIDDEN void WINAPI ITextHostImpl_TxImmReleaseContext(ITextHost *iface, HIMC himc)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxImmReleaseContext,8)
+DECLSPEC_HIDDEN void __thiscall ITextHostImpl_TxImmReleaseContext(ITextHost *iface, HIMC himc)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     ImmReleaseContext(This->hWnd, himc);
 }
 
-DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetSelectionBarWidth(ITextHost *iface, LONG *lSelBarWidth)
+DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetSelectionBarWidth,8)
+DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetSelectionBarWidth(ITextHost *iface, LONG *lSelBarWidth)
 {
     ITextHostImpl *This = impl_from_ITextHost(iface);
     ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongPtrW(This->hWnd, 0);
@@ -499,67 +525,20 @@ DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetSelectionBarWidth(ITextHost *i
 }
 
 
-#ifdef __i386__  /* thiscall functions are i386-specific */
-
-#define THISCALL(func) (void *) __thiscall_ ## func
-#define DEFINE_THISCALL_WRAPPER(func,args) \
-   extern HRESULT __thiscall_ ## func(void); \
-   __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
-                   "popl %eax\n\t" \
-                   "pushl %ecx\n\t" \
-                   "pushl %eax\n\t" \
-                   "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
-
-#else /* __i386__ */
-
-#define THISCALL(func) func
-#define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
-
-#endif /* __i386__ */
-
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetDC,4)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxReleaseDC,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxShowScrollBar,12)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxEnableScrollBar,12)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetScrollRange,20)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetScrollPos,16)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxInvalidateRect,12)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxViewChange,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxCreateCaret,16)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxShowCaret,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetCaretPos,12)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetTimer,12)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxKillTimer,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxScrollWindowEx,32)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetCapture,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetFocus,4)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetCursor,12)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxScreenToClient,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxClientToScreen,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxActivate,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxDeactivate,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetClientRect,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetViewInset,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetCharFormat,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetParaFormat,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetSysColor,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetBackStyle,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetMaxLength,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetScrollBars,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetPasswordChar,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetAcceleratorPos,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetExtent,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_OnTxCharFormatChange,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_OnTxParaFormatChange,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetPropertyBits,12)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxNotify,12)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxImmGetContext,4)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxImmReleaseContext,8)
-DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetSelectionBarWidth,8)
-
-#ifdef __i386__  /* thiscall functions are i386-specific */
+#if defined(__i386__) && !defined(__MINGW32__)  /* thiscall functions are i386-specific */
 
 #define STDCALL(func) (void *) __stdcall_ ## func
+#ifdef _MSC_VER
+#define DEFINE_STDCALL_WRAPPER(num,func,args) \
+    __declspec(naked) HRESULT __stdcall_##func(void) \
+    { \
+        __asm pop eax \
+        __asm pop ecx \
+        __asm push eax \
+        __asm mov eax, [ecx] \
+        __asm jmp dword ptr [eax + 4*num] \
+    }
+#else /* _MSC_VER */
 #define DEFINE_STDCALL_WRAPPER(num,func,args) \
    extern HRESULT __stdcall_ ## func(void); \
    __ASM_GLOBAL_FUNC(__stdcall_ ## func, \
@@ -568,6 +547,7 @@ DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetSelectionBarWidth,8)
                    "pushl %eax\n\t" \
                    "movl (%ecx), %eax\n\t" \
                    "jmp *(4*(" #num "))(%eax)" )
+#endif /* _MSC_VER */
 
 DEFINE_STDCALL_WRAPPER(3,ITextHostImpl_TxGetDC,4)
 DEFINE_STDCALL_WRAPPER(4,ITextHostImpl_TxReleaseDC,8)

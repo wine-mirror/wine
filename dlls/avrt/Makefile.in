@@ -2,5 +2,7 @@ MODULE    = avrt.dll
 IMPORTLIB = avrt
 IMPORTS   = user32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c

@@ -3,6 +3,8 @@ IMPORTS   = oleaut32 ole32
 
 C_SRCS = \
 	mediadet.c \
+	nullrenderer.c \
+	samplegrabber.c \
 	timeline.c
 
 RC_SRCS = qedit.rc

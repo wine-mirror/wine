@@ -2580,8 +2580,8 @@ static RUNTIME_FUNCTION *lookup_function_info( ULONG64 pc, ULONG64 *base, LDR_MO
     return func;
 }
 
-static DWORD nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
-                                       CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+static DWORD __cdecl nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                               CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)) return ExceptionContinueSearch;
 
@@ -3134,7 +3134,10 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec->ExceptionCode = EXCEPTION_SINGLE_STEP;
         break;
     case TRAP_BRKPT:   /* Breakpoint exception */
-        /* Check if this is actuallly icebp instruction */
+#ifdef SI_KERNEL
+    case SI_KERNEL:
+#endif
+        /* Check if this is actually icebp instruction */
         if (((unsigned char *)rec->ExceptionAddress)[-1] == 0xF1)
         {
             rec->ExceptionCode = EXCEPTION_SINGLE_STEP;
@@ -3260,24 +3263,24 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
  */
 NTSTATUS signal_alloc_thread( TEB **teb )
 {
-    static size_t sigstack_zero_bits;
+    static size_t sigstack_alignment;
     SIZE_T size;
     NTSTATUS status;
 
-    if (!sigstack_zero_bits)
+    if (!sigstack_alignment)
     {
         size_t min_size = teb_size + max( MINSIGSTKSZ, 8192 );
         /* find the first power of two not smaller than min_size */
-        sigstack_zero_bits = 12;
-        while ((1u << sigstack_zero_bits) < min_size) sigstack_zero_bits++;
-        signal_stack_size = (1 << sigstack_zero_bits) - teb_size;
+        sigstack_alignment = 12;
+        while ((1u << sigstack_alignment) < min_size) sigstack_alignment++;
+        signal_stack_size = (1 << sigstack_alignment) - teb_size;
         assert( sizeof(TEB) <= teb_size );
     }
 
-    size = 1 << sigstack_zero_bits;
+    size = 1 << sigstack_alignment;
     *teb = NULL;
-    if (!(status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)teb, sigstack_zero_bits,
-                                            &size, MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE )))
+    if (!(status = virtual_alloc_aligned( (void **)teb, 0, &size, MEM_COMMIT | MEM_TOP_DOWN,
+                                          PAGE_READWRITE, sigstack_alignment )))
     {
         (*teb)->Tib.Self = &(*teb)->Tib;
         (*teb)->Tib.ExceptionList = (void *)~0UL;
@@ -3933,8 +3936,8 @@ struct unwind_exception_frame
  *
  * Handler for exceptions happening while calling an unwind handler.
  */
-static DWORD unwind_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
-                                       CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+static DWORD __cdecl unwind_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                               CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     struct unwind_exception_frame *unwind_frame = (struct unwind_exception_frame *)frame;
     DISPATCHER_CONTEXT *dispatch = (DISPATCHER_CONTEXT *)dispatcher;
@@ -4232,7 +4235,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 
         new_context.Rip = *(ULONG64 *)context->Rsp;
         new_context.Rsp = context->Rsp + sizeof(ULONG64);
-        dispatch.EstablisherFrame = new_context.Rsp;
+        dispatch.EstablisherFrame = context->Rsp;
         dispatch.LanguageHandler = NULL;
 
     unwind_done:

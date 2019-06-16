@@ -34,7 +34,6 @@
 #include "uxtheme.h"
 #include "vssym32.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(updown);
@@ -288,7 +287,7 @@ static BOOL UPDOWN_GetBuddyInt (UPDOWN_INFO *infoPtr)
         *dst = 0;
 
         /* try to convert the number and validate it */
-        newVal = strtolW(txt, &src, infoPtr->Base);
+        newVal = wcstol(txt, &src, infoPtr->Base);
         if(*src || !UPDOWN_InBounds (infoPtr, newVal)) return FALSE;
     }
 

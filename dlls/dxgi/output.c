@@ -34,6 +34,126 @@ static void dxgi_mode_from_wined3d(DXGI_MODE_DESC *mode, const struct wined3d_di
     mode->Scaling = DXGI_MODE_SCALING_UNSPECIFIED; /* FIXME */
 }
 
+static void dxgi_mode1_from_wined3d(DXGI_MODE_DESC1 *mode, const struct wined3d_display_mode *wined3d_mode)
+{
+    mode->Width = wined3d_mode->width;
+    mode->Height = wined3d_mode->height;
+    mode->RefreshRate.Numerator = wined3d_mode->refresh_rate;
+    mode->RefreshRate.Denominator = 1;
+    mode->Format = dxgi_format_from_wined3dformat(wined3d_mode->format_id);
+    mode->ScanlineOrdering = wined3d_mode->scanline_ordering;
+    mode->Scaling = DXGI_MODE_SCALING_UNSPECIFIED; /* FIXME */
+    mode->Stereo = FALSE; /* FIXME */
+}
+
+static HRESULT dxgi_output_find_closest_matching_mode(struct dxgi_output *output,
+        struct wined3d_display_mode *mode, IUnknown *device)
+{
+    struct dxgi_adapter *adapter;
+    struct wined3d *wined3d;
+    HRESULT hr;
+
+    if (!mode->width != !mode->height)
+        return DXGI_ERROR_INVALID_CALL;
+
+    if (mode->format_id == WINED3DFMT_UNKNOWN && !device)
+        return DXGI_ERROR_INVALID_CALL;
+
+    if (mode->format_id == WINED3DFMT_UNKNOWN)
+    {
+        FIXME("Matching formats to device not implemented.\n");
+        return E_NOTIMPL;
+    }
+
+    wined3d_mutex_lock();
+    adapter = output->adapter;
+    wined3d = adapter->factory->wined3d;
+
+    hr = wined3d_find_closest_matching_adapter_mode(wined3d, adapter->ordinal, mode);
+    wined3d_mutex_unlock();
+
+    return hr;
+}
+
+enum dxgi_mode_struct_version
+{
+    DXGI_MODE_STRUCT_VERSION_0,
+    DXGI_MODE_STRUCT_VERSION_1,
+};
+
+static HRESULT dxgi_output_get_display_mode_list(struct dxgi_output *output,
+        DXGI_FORMAT format, unsigned int *mode_count, void *modes,
+        enum dxgi_mode_struct_version struct_version)
+{
+    enum wined3d_format_id wined3d_format;
+    struct wined3d_display_mode mode;
+    unsigned int i, max_count;
+    struct wined3d *wined3d;
+    HRESULT hr;
+
+    if (!mode_count)
+        return DXGI_ERROR_INVALID_CALL;
+
+    if (format == DXGI_FORMAT_UNKNOWN)
+    {
+        *mode_count = 0;
+        return S_OK;
+    }
+
+    wined3d_format = wined3dformat_from_dxgi_format(format);
+
+    wined3d_mutex_lock();
+    wined3d = output->adapter->factory->wined3d;
+    max_count = wined3d_get_adapter_mode_count(wined3d, output->adapter->ordinal,
+            wined3d_format, WINED3D_SCANLINE_ORDERING_UNKNOWN);
+
+    if (!modes)
+    {
+        wined3d_mutex_unlock();
+        *mode_count = max_count;
+        return S_OK;
+    }
+
+    if (max_count > *mode_count)
+    {
+        wined3d_mutex_unlock();
+        return DXGI_ERROR_MORE_DATA;
+    }
+
+    *mode_count = max_count;
+
+    for (i = 0; i < *mode_count; ++i)
+    {
+        if (FAILED(hr = wined3d_enum_adapter_modes(wined3d, output->adapter->ordinal,
+                wined3d_format, WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &mode)))
+        {
+            WARN("Failed to enum adapter mode %u, hr %#x.\n", i, hr);
+            wined3d_mutex_unlock();
+            return hr;
+        }
+
+        switch (struct_version)
+        {
+            case DXGI_MODE_STRUCT_VERSION_0:
+            {
+                DXGI_MODE_DESC *desc = modes;
+                dxgi_mode_from_wined3d(&desc[i], &mode);
+                break;
+            }
+
+            case DXGI_MODE_STRUCT_VERSION_1:
+            {
+                DXGI_MODE_DESC1 *desc = modes;
+                dxgi_mode1_from_wined3d(&desc[i], &mode);
+                break;
+            }
+        }
+    }
+    wined3d_mutex_unlock();
+
+    return S_OK;
+}
+
 static inline struct dxgi_output *impl_from_IDXGIOutput4(IDXGIOutput4 *iface)
 {
     return CONTAINING_RECORD(iface, struct dxgi_output, IDXGIOutput4_iface);
@@ -167,66 +287,15 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc(IDXGIOutput4 *iface, DXGI_O
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput4 *iface,
-        DXGI_FORMAT format, UINT flags, UINT *mode_count, DXGI_MODE_DESC *desc)
+        DXGI_FORMAT format, UINT flags, UINT *mode_count, DXGI_MODE_DESC *modes)
 {
     struct dxgi_output *output = impl_from_IDXGIOutput4(iface);
-    enum wined3d_format_id wined3d_format;
-    unsigned int i, max_count;
-    struct wined3d *wined3d;
 
-    FIXME("iface %p, format %s, flags %#x, mode_count %p, desc %p partial stub!\n",
-            iface, debug_dxgi_format(format), flags, mode_count, desc);
+    FIXME("iface %p, format %s, flags %#x, mode_count %p, modes %p partial stub!\n",
+            iface, debug_dxgi_format(format), flags, mode_count, modes);
 
-    if (!mode_count)
-        return DXGI_ERROR_INVALID_CALL;
-
-    if (format == DXGI_FORMAT_UNKNOWN)
-    {
-        *mode_count = 0;
-        return S_OK;
-    }
-
-    wined3d = output->adapter->factory->wined3d;
-    wined3d_format = wined3dformat_from_dxgi_format(format);
-
-    wined3d_mutex_lock();
-    max_count = wined3d_get_adapter_mode_count(wined3d, output->adapter->ordinal,
-            wined3d_format, WINED3D_SCANLINE_ORDERING_UNKNOWN);
-
-    if (!desc)
-    {
-        wined3d_mutex_unlock();
-        *mode_count = max_count;
-        return S_OK;
-    }
-
-    if (max_count > *mode_count)
-    {
-        wined3d_mutex_unlock();
-        return DXGI_ERROR_MORE_DATA;
-    }
-
-    *mode_count = max_count;
-
-    for (i = 0; i < *mode_count; ++i)
-    {
-        struct wined3d_display_mode mode;
-        HRESULT hr;
-
-        hr = wined3d_enum_adapter_modes(wined3d, output->adapter->ordinal, wined3d_format,
-                WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &mode);
-        if (FAILED(hr))
-        {
-            WARN("EnumAdapterModes failed, hr %#x.\n", hr);
-            wined3d_mutex_unlock();
-            return hr;
-        }
-
-        dxgi_mode_from_wined3d(&desc[i], &mode);
-    }
-    wined3d_mutex_unlock();
-
-    return S_OK;
+    return dxgi_output_get_display_mode_list(output,
+            format, mode_count, modes, DXGI_MODE_STRUCT_VERSION_0);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_FindClosestMatchingMode(IDXGIOutput4 *iface,
@@ -234,33 +303,15 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_FindClosestMatchingMode(IDXGIOutput
 {
     struct dxgi_output *output = impl_from_IDXGIOutput4(iface);
     struct wined3d_display_mode wined3d_mode;
-    struct dxgi_adapter *adapter;
-    struct wined3d *wined3d;
     HRESULT hr;
 
-    TRACE("iface %p, mode %p, closest_match %p, device %p.\n", iface, mode, closest_match, device);
-
-    if ((!mode->Width && mode->Height) || (mode->Width && !mode->Height))
-        return DXGI_ERROR_INVALID_CALL;
-
-    if (mode->Format == DXGI_FORMAT_UNKNOWN && !device)
-        return DXGI_ERROR_INVALID_CALL;
+    TRACE("iface %p, mode %p, closest_match %p, device %p.\n",
+            iface, mode, closest_match, device);
 
     TRACE("Mode: %s.\n", debug_dxgi_mode(mode));
-    if (mode->Format == DXGI_FORMAT_UNKNOWN)
-    {
-        FIXME("Matching formats to device not implemented.\n");
-        return E_NOTIMPL;
-    }
 
-    adapter = output->adapter;
-    wined3d = adapter->factory->wined3d;
-
-    wined3d_mutex_lock();
     wined3d_display_mode_from_dxgi(&wined3d_mode, mode);
-    hr = wined3d_find_closest_matching_adapter_mode(wined3d, adapter->ordinal, &wined3d_mode);
-    wined3d_mutex_unlock();
-
+    hr = dxgi_output_find_closest_matching_mode(output, &wined3d_mode, device);
     if (SUCCEEDED(hr))
     {
         dxgi_mode_from_wined3d(closest_match, &wined3d_mode);
@@ -357,19 +408,36 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetFrameStatistics(IDXGIOutput4 *if
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList1(IDXGIOutput4 *iface,
         DXGI_FORMAT format, UINT flags, UINT *mode_count, DXGI_MODE_DESC1 *modes)
 {
-    FIXME("iface %p, format %#x, flags %#x, mode_count %p, modes %p stub!\n",
-            iface, format, flags, mode_count, modes);
+    struct dxgi_output *output = impl_from_IDXGIOutput4(iface);
 
-    return E_NOTIMPL;
+    FIXME("iface %p, format %s, flags %#x, mode_count %p, modes %p partial stub!\n",
+            iface, debug_dxgi_format(format), flags, mode_count, modes);
+
+    return dxgi_output_get_display_mode_list(output,
+            format, mode_count, modes, DXGI_MODE_STRUCT_VERSION_1);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_FindClosestMatchingMode1(IDXGIOutput4 *iface,
         const DXGI_MODE_DESC1 *mode, DXGI_MODE_DESC1 *closest_match, IUnknown *device)
 {
-    FIXME("iface %p, mode %p, closest_match %p, device %p stub!\n",
+    struct dxgi_output *output = impl_from_IDXGIOutput4(iface);
+    struct wined3d_display_mode wined3d_mode;
+    HRESULT hr;
+
+    TRACE("iface %p, mode %p, closest_match %p, device %p.\n",
             iface, mode, closest_match, device);
 
-    return E_NOTIMPL;
+    TRACE("Mode: %s.\n", debug_dxgi_mode1(mode));
+
+    wined3d_display_mode_from_dxgi1(&wined3d_mode, mode);
+    hr = dxgi_output_find_closest_matching_mode(output, &wined3d_mode, device);
+    if (SUCCEEDED(hr))
+    {
+        dxgi_mode1_from_wined3d(closest_match, &wined3d_mode);
+        TRACE("Returning %s.\n", debug_dxgi_mode1(closest_match));
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplaySurfaceData1(IDXGIOutput4 *iface,

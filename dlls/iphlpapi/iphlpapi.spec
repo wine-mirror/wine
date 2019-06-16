@@ -5,6 +5,7 @@
 @ stdcall AllocateAndGetIpAddrTableFromStack( ptr long long long )
 @ stdcall AllocateAndGetIpForwardTableFromStack( ptr long long long )
 @ stdcall AllocateAndGetIpNetTableFromStack( ptr long long long )
+@ stdcall AllocateAndGetTcpExTableFromStack( ptr long long long long )
 @ stdcall AllocateAndGetTcpTableFromStack( ptr long long long )
 @ stdcall AllocateAndGetUdpTableFromStack( ptr long long long )
 @ stdcall CancelIPChangeNotify( ptr )
@@ -77,7 +78,7 @@
 @ stdcall GetBestInterfaceEx( ptr ptr )
 @ stub GetBestInterfaceFromStack
 @ stdcall GetBestRoute( long long ptr )
-#@ stub GetBestRoute2
+@ stdcall GetBestRoute2( ptr long ptr ptr long ptr ptr )
 @ stub GetBestRouteFromStack
 #@ stub GetCurrentThreadCompartmentId
 @ stdcall GetExtendedTcpTable( ptr ptr long long long long )

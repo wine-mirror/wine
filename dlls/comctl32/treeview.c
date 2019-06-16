@@ -40,9 +40,6 @@
  *   Scroll (instead of repaint) as much as possible.
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <ctype.h>
 #include <stdarg.h>
@@ -61,7 +58,6 @@
 #include "comctl32.h"
 #include "uxtheme.h"
 #include "vssym32.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 #include "wine/heap.h"
@@ -766,7 +762,7 @@ TREEVIEW_UpdateDispInfo(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
 	    if (newText)
 	    {
 		item->pszText = newText;
-		strcpyW(item->pszText, callback.item.pszText);
+		lstrcpyW(item->pszText, callback.item.pszText);
 		item->cchTextMax = len;
 	    }
 	    /* If realloc fails we have nothing to do, but keep original text */
@@ -901,7 +897,7 @@ TREEVIEW_ComputeTextWidth(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item, HDC
 	hOldFont = SelectObject(hdc, TREEVIEW_FontForItem(infoPtr, item));
     }
 
-    GetTextExtentPoint32W(hdc, item->pszText, strlenW(item->pszText), &sz);
+    GetTextExtentPoint32W(hdc, item->pszText, lstrlenW(item->pszText), &sz);
     item->textWidth = sz.cx;
 
     if (hDC == 0)
@@ -2674,7 +2670,7 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
                   debugstr_w(item->pszText), wine_dbgstr_rect(&rcText));
 
 	    /* Draw it */
-	    GetTextExtentPoint32W(hdc, item->pszText, strlenW(item->pszText), &sz);
+	    GetTextExtentPoint32W(hdc, item->pszText, lstrlenW(item->pszText), &sz);
 
 	    align = SetTextAlign(hdc, TA_LEFT | TA_TOP);
 	    ExtTextOutW(hdc, rcText.left + 2, (rcText.top + rcText.bottom - sz.cy) / 2,
@@ -3845,7 +3841,7 @@ TREEVIEW_Command(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 		hOldFont = SelectObject(hdc, hFont);
 	    }
 
-	    if (GetTextExtentPoint32W(hdc, buffer, strlenW(buffer), &sz))
+	    if (GetTextExtentPoint32W(hdc, buffer, lstrlenW(buffer), &sz))
 	    {
 		TEXTMETRICW textMetric;
 
@@ -3925,7 +3921,7 @@ TREEVIEW_EditLabel(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
 
     /* Get string length in pixels */
     if (hItem->pszText)
-        GetTextExtentPoint32W(hdc, hItem->pszText, strlenW(hItem->pszText),
+        GetTextExtentPoint32W(hdc, hItem->pszText, lstrlenW(hItem->pszText),
                         &sz);
     else
         GetTextExtentPoint32A(hdc, "", 0, &sz);
@@ -4041,7 +4037,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
             iLength = len - 1;
         }
 
-        if (strcmpW(newText, editedItem->pszText) != 0)
+        if (lstrcmpW(newText, editedItem->pszText) != 0)
         {
             WCHAR *ptr = heap_realloc(editedItem->pszText, sizeof(WCHAR)*(iLength + 1));
             if (ptr == NULL)
@@ -4057,7 +4053,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
             {
                 editedItem->pszText = ptr;
                 editedItem->cchTextMax = iLength + 1;
-                strcpyW(editedItem->pszText, newText);
+                lstrcpyW(editedItem->pszText, newText);
                 TREEVIEW_ComputeTextWidth(infoPtr, editedItem, 0);
             }
         }
@@ -4417,7 +4413,7 @@ TREEVIEW_CreateDragImage(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     hOldFont = SelectObject(hdc, infoPtr->hFont);
 
     if (dragItem->pszText)
-        GetTextExtentPoint32W(hdc, dragItem->pszText, strlenW(dragItem->pszText),
+        GetTextExtentPoint32W(hdc, dragItem->pszText, lstrlenW(dragItem->pszText),
 			  &size);
     else
         GetTextExtentPoint32A(hdc, "", 0, &size);
@@ -4445,7 +4441,7 @@ TREEVIEW_CreateDragImage(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     SetRect(&rc, cx, 0, size.cx, size.cy);
 
     if (dragItem->pszText)
-        DrawTextW(hdc, dragItem->pszText, strlenW(dragItem->pszText), &rc,
+        DrawTextW(hdc, dragItem->pszText, lstrlenW(dragItem->pszText), &rc,
                   DT_LEFT);
 
     SelectObject(hdc, hOldFont);
@@ -4698,12 +4694,12 @@ static INT TREEVIEW_ProcessLetterKeys(TREEVIEW_INFO *infoPtr, WPARAM charCode, L
         TREEVIEW_GetItemT( infoPtr, &item, TRUE );
 
         /* check for a match */
-        if (strncmpiW(item.pszText,infoPtr->szSearchParam,infoPtr->nSearchParamLength) == 0) {
+        if (wcsnicmp(item.pszText,infoPtr->szSearchParam,infoPtr->nSearchParamLength) == 0) {
             nItem=idx;
             break;
         } else if ( (charCode != 0) && (nItem == NULL) &&
                     (nItem != infoPtr->selectedItem) &&
-                    (strncmpiW(item.pszText,infoPtr->szSearchParam,1) == 0) ) {
+                    (wcsnicmp(item.pszText,infoPtr->szSearchParam,1) == 0) ) {
             /* This would work but we must keep looking for a longer match */
             nItem=idx;
         }
@@ -5031,7 +5027,7 @@ static LRESULT
 TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     short wheelDelta;
-    UINT pulScrollLines = 3;
+    INT pulScrollLines = 3;
 
     if (wParam & (MK_SHIFT | MK_CONTROL))
         return DefWindowProcW(infoPtr->hwnd, WM_MOUSEWHEEL, wParam, lParam);
@@ -5055,8 +5051,8 @@ TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	int maxDy;
 	int lineScroll;
 
-	lineScroll = pulScrollLines * (float)infoPtr->wheelRemainder / WHEEL_DELTA;
-	infoPtr->wheelRemainder -= WHEEL_DELTA * lineScroll / (int)pulScrollLines;
+	lineScroll = pulScrollLines * infoPtr->wheelRemainder / WHEEL_DELTA;
+	infoPtr->wheelRemainder -= WHEEL_DELTA * lineScroll / pulScrollLines;
 
 	newDy = infoPtr->firstVisible->visibleOrder - lineScroll;
 	maxDy = infoPtr->maxVisibleOrder;

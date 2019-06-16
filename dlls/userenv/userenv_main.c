@@ -111,15 +111,13 @@ static void set_registry_variables(WCHAR **env, HKEY hkey, DWORD type, BOOL set_
         if (ret != ERROR_SUCCESS)
             break;
 
-        if (!memicmpW(name, SystemRootW, ARRAY_SIZE(SystemRootW)))
-            continue;
-        if (!memicmpW(name, SystemDriveW, ARRAY_SIZE(SystemDriveW)))
-            continue;
+        if (!strcmpiW(name, SystemRootW)) continue;
+        if (!strcmpiW(name, SystemDriveW)) continue;
 
         RtlInitUnicodeString(&us_name, name);
         us_value.Buffer = value;
         us_value.MaximumLength = sizeof(value);
-        if (!memicmpW(name, PATHW, ARRAY_SIZE(PATHW)) &&
+        if (!strncmpiW(name, PATHW, ARRAY_SIZE(PATHW)) &&
                 !RtlQueryEnvironmentVariable_U(*env, &us_name, &us_value))
         {
             if (!set_path)

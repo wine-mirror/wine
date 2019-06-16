@@ -19,10 +19,7 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #include <stdarg.h>
 

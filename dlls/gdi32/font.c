@@ -3968,3 +3968,27 @@ BOOL WINAPI GdiRealizationInfo(HDC hdc, struct realization_info *info)
 
     return ret;
 }
+
+/*************************************************************
+ *           GetCharWidthInfo    (GDI32.@)
+ *
+ */
+BOOL WINAPI GetCharWidthInfo(HDC hdc, struct char_width_info *info)
+{
+    PHYSDEV dev;
+    BOOL ret;
+    DC *dc;
+
+    dc = get_dc_ptr(hdc);
+    if (!dc) return FALSE;
+    dev = GET_DC_PHYSDEV( dc, pGetCharWidthInfo );
+    ret = dev->funcs->pGetCharWidthInfo( dev, info );
+
+    if (ret)
+    {
+        info->lsb = width_to_LP( dc, info->lsb );
+        info->rsb = width_to_LP( dc, info->rsb );
+    }
+    release_dc_ptr(dc);
+    return ret;
+}

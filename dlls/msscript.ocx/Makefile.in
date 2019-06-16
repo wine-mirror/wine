@@ -3,5 +3,7 @@ RC_SRCS   = msscript.rc
 IDL_SRCS  = msscript.idl
 IMPORTS   = gdi32 user32 ole32 oleaut32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	msscript.c

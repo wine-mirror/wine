@@ -31,6 +31,14 @@ extern "C" {
 
 #include <pshpack8.h>
 
+#ifndef NO_SHLWAPI_HTTP
+
+HRESULT WINAPI GetAcceptLanguagesA(char *buffer, DWORD *buff_len);
+HRESULT WINAPI GetAcceptLanguagesW(WCHAR *buffer, DWORD *buff_len);
+#define GetAcceptLanguages WINELIB_NAME_AW(GetAcceptLanguages)
+
+#endif /* NO_SHLWAPI_HTTP */
+
 #ifndef NO_SHLWAPI_REG
 
 /* Registry functions */

@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-02-19 09:59+0300\n"
+"PO-Revision-Date: 2019-03-28 11:30+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -69,7 +69,7 @@ msgstr "Сведения о поддержке"
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
 #: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
-#: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
+#: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
@@ -85,7 +85,7 @@ msgstr ""
 msgid "Publisher:"
 msgstr "Издатель:"
 
-#: appwiz.rc:81 winefile.rc:166
+#: appwiz.rc:81 winefile.rc:165
 msgid "Version:"
 msgstr "Версия:"
 
@@ -154,8 +154,8 @@ msgstr "&Установить"
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
 #: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
 msgstr "Отмена"
@@ -209,7 +209,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Отсутствует"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
 msgid "Name"
 msgstr "Имя"
 
@@ -330,7 +330,7 @@ msgstr "мин."
 msgid "hours"
 msgstr "ч."
 
-#: comctl32.rc:68 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:156
 msgid "Properties for %s"
 msgstr "Свойства %s"
 
@@ -469,7 +469,7 @@ msgid "Dri&ves:"
 msgstr "&Диски:"
 
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
-#: winefile.rc:173
+#: winefile.rc:172
 msgid "&Read Only"
 msgstr "&Только для чтения"
 
@@ -721,7 +721,7 @@ msgstr "&Свойства"
 msgid "Print to fi&le"
 msgstr "Печать в фай&л"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "&Имя:"
 
@@ -2997,7 +2997,7 @@ msgstr "Размещение"
 msgid "Select a certificate"
 msgstr "Выберите сертификат"
 
-#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
 msgstr "Ещё не реализовано"
 
@@ -3470,7 +3470,7 @@ msgstr ""
 msgid "Delete"
 msgstr "Удалить"
 
-#: inetcpl.rc:90 winefile.rc:115
+#: inetcpl.rc:90 winefile.rc:114
 msgid "Security"
 msgstr "Безопасность"
 
@@ -4164,7 +4164,7 @@ msgstr "Истекло время ожидания семафора.\n"
 msgid "Insufficient buffer.\n"
 msgstr "Недостаточный объём буфера.\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr "Неверное имя.\n"
 
@@ -4957,7 +4957,7 @@ msgid "Too many links.\n"
 msgstr "Слишком много ссылок.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "Требуется более новая версия Windows.\n"
 
 #: winerror.mc:1483
@@ -5736,7 +5736,7 @@ msgstr "Класс не существует.\n"
 msgid "Class has open windows.\n"
 msgstr "С классом связаны открытые окна.\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "Неверный индекс.\n"
 
@@ -6816,6 +6816,428 @@ msgstr "Невозможно отправить почту: не установ�
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr "Отправка почты"
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr "Запрос уже был инициирован.\n"
+
+#: mferror.mc:599
+#, fuzzy
+#| msgid "Object is not initialized.\n"
+msgid "Sink has not been finalized.\n"
+msgstr "Объект не инициализирован.\n"
+
+#: mferror.mc:32
+msgid "Media Foundation platform is not initialized.\n"
+msgstr "Платформа Media Foundation не инициализирована.\n"
+
+#: mferror.mc:39
+msgid "Buffer is too small.\n"
+msgstr "Недостаточный размер буфера.\n"
+
+#: mferror.mc:46
+msgid "Invalid request.\n"
+msgstr "Некорректный запрос.\n"
+
+#: mferror.mc:53
+msgid "Invalid stream number.\n"
+msgstr "Неверный номер потока.\n"
+
+#: mferror.mc:60
+msgid "Invalid media type.\n"
+msgstr "Неверный тип данных.\n"
+
+#: mferror.mc:67
+msgid "No more input is accepted.\n"
+msgstr "Входные данные более не принимаются.\n"
+
+#: mferror.mc:74
+msgid "Object is not initialized.\n"
+msgstr "Объект не инициализирован.\n"
+
+#: mferror.mc:81
+msgid "Representation is not supported.\n"
+msgstr "Представление не поддерживается.\n"
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr "Больше элементов в списке поддерживаемых типов нет.\n"
+
+#: mferror.mc:95
+msgid "Unsupported service.\n"
+msgstr "Сервис не поддерживается.\n"
+
+#: mferror.mc:102
+msgid "Unexpected error.\n"
+msgstr "Неожиданная ошибка.\n"
+
+#: mferror.mc:116
+msgid "Invalid type.\n"
+msgstr "Неверный тип.\n"
+
+#: mferror.mc:123
+msgid "Invalid file format.\n"
+msgstr "Неверный формат файла.\n"
+
+#: mferror.mc:137
+msgid "Invalid timestamp.\n"
+msgstr "Неверная отметка времени.\n"
+
+#: mferror.mc:144
+msgid "Unsupported scheme.\n"
+msgstr "Данная схема URI не поддерживается.\n"
+
+#: mferror.mc:151
+msgid "Unsupported bytestream type.\n"
+msgstr "Данный тип потока данных не поддерживается.\n"
+
+#: mferror.mc:158
+msgid "Unsupported time format.\n"
+msgstr "Данный формат времени не поддерживается.\n"
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr "Не указана отметка времени для сэмпла.\n"
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr "Не указана длительность сэмпла.\n"
+
+#: mferror.mc:179
+msgid "Invalid stream data.\n"
+msgstr "Неверные данные потока.\n"
+
+#: mferror.mc:186
+msgid "Realtime support is not available.\n"
+msgstr "Режим реального времени недоступен.\n"
+
+#: mferror.mc:193
+msgid "Unsupported rate.\n"
+msgstr "Данная скорость воспроизведения не поддерживается.\n"
+
+#: mferror.mc:200
+msgid "Unsupported thinning.\n"
+msgstr "Прореживание потоков не поддерживается.\n"
+
+#: mferror.mc:207
+msgid "Reversing is not supported.\n"
+msgstr "Воспроизведение в обратную сторону не поддерживается.\n"
+
+#: mferror.mc:214
+msgid "Unsupported rate transition.\n"
+msgstr "Смена скорости воспроизведения не поддерживается.\n"
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+#: mferror.mc:228
+msgid "Object or value wasn't found.\n"
+msgstr "Объект или значение не найдено.\n"
+
+#: mferror.mc:235
+msgid "Value is not available.\n"
+msgstr "Значение недоступно.\n"
+
+#: mferror.mc:242
+msgid "Clock is not available.\n"
+msgstr "Часы недоступны.\n"
+
+#: mferror.mc:263
+msgid "Multiple subscribers are not supported.\n"
+msgstr "Не поддерживается более одного подписчика.\n"
+
+#: mferror.mc:270
+msgid "The timer was orphaned.\n"
+msgstr ""
+
+#: mferror.mc:277
+msgid "State transition is pending.\n"
+msgstr "Ожидается смена состояния.\n"
+
+#: mferror.mc:284
+msgid "Unsupported state transition.\n"
+msgstr "Данный смена состояний не поддерживается.\n"
+
+#: mferror.mc:291
+msgid "Unrecoverable error occurred.\n"
+msgstr "Произошла критическая ошибка.\n"
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr "Слишком много буферов задано для сэмпла.\n"
+
+#: mferror.mc:305
+msgid "Sample is not writable.\n"
+msgstr "Невозможно записать сэмпл.\n"
+
+#: mferror.mc:312
+msgid "Key is invalid.\n"
+msgstr "Неверный ключ.\n"
+
+#: mferror.mc:319
+msgid "Bad startup version.\n"
+msgstr "При запуске указана неверная версия.\n"
+
+#: mferror.mc:326
+msgid "Unsupported caption.\n"
+msgstr ""
+
+#: mferror.mc:333
+msgid "Invalid position.\n"
+msgstr "Неверная позиция.\n"
+
+#: mferror.mc:340
+msgid "Attribute is not found.\n"
+msgstr "Атрибут не найден.\n"
+
+#: mferror.mc:347
+msgid "Property type is not allowed.\n"
+msgstr "Некорректный тип свойства.\n"
+
+#: mferror.mc:354
+msgid "Property type is not supported.\n"
+msgstr "Данный тип свойства не поддерживается.\n"
+
+#: mferror.mc:361
+msgid "Property is empty.\n"
+msgstr "Пустое свойство\n"
+
+#: mferror.mc:368
+msgid "Property is not empty.\n"
+msgstr "Непустое свойство.\n"
+
+#: mferror.mc:375
+msgid "Vector property is not allowed.\n"
+msgstr "Векторное свойство недопустимо.\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr "Требуется свойство векторного типа.\n"
+
+#: mferror.mc:389
+msgid "Operation was cancelled.\n"
+msgstr "Операция была отменена.\n"
+
+#: mferror.mc:396
+msgid "Bytestream is not seekable.\n"
+msgstr "Поток не поддерживает произвольный доступ.\n"
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr "Платформа неактивна в безопасном режиме.\n"
+
+#: mferror.mc:410
+msgid "Cannot parse bytestream.\n"
+msgstr "Не удалось распознать поток данных.\n"
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr "Source Resolver вызван с взаимоисключающими флагами.\n"
+
+#: mferror.mc:424
+msgid "Unknown bytestream length.\n"
+msgstr "Неизвестная длина потока.\n"
+
+#: mferror.mc:431
+msgid "Invalid work queue index.\n"
+msgstr "Неверный индекс очереди.\n"
+
+#: mferror.mc:438
+msgid "No events available.\n"
+msgstr "Нет доступных событий.\n"
+
+#: mferror.mc:445
+#, fuzzy
+#| msgid "Unsupported state transition.\n"
+msgid "Invalid media source state transition.\n"
+msgstr "Данный смена состояний не поддерживается.\n"
+
+#: mferror.mc:452
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "End of media stream has been reached.\n"
+msgstr "Реестр был восстановлен.\n"
+
+#: mferror.mc:459
+msgid "Shutdown() was called.\n"
+msgstr "Был вызван метод Shutdown().\n"
+
+#: mferror.mc:466
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "Media stream has no duration set.\n"
+msgstr "Реестр был восстановлен.\n"
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid.\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property wasn't found.\n"
+msgstr "Набор свойств не найден.\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Property is empty.\n"
+msgid "Property is read-only.\n"
+msgstr "Пустое свойство\n"
+
+#: mferror.mc:494
+#, fuzzy
+#| msgid "Property type is not allowed.\n"
+msgid "Property is not allowed.\n"
+msgstr "Некорректный тип свойства.\n"
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is not started.\n"
+msgstr "Ресурс занят.\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Unsupported time format.\n"
+msgid "Unsupported media format.\n"
+msgstr "Данный формат времени не поддерживается.\n"
+
+#: mferror.mc:515
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is in wrong state.\n"
+msgstr "Ресурс занят.\n"
+
+#: mferror.mc:522
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No media streams were selected.\n"
+msgstr "Данные не обнаружены.\n"
+
+#: mferror.mc:529
+#, fuzzy
+#| msgid "Unsupported time format.\n"
+msgid "Unsupported media source characteristics.\n"
+msgstr "Данный формат времени не поддерживается.\n"
+
+#: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr ""
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr ""
+
+#: mferror.mc:550
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "Реестр был восстановлен.\n"
+
+#: mferror.mc:557
+#, fuzzy
+#| msgid "Domain already exists.\n"
+msgid "Stream sink already exists.\n"
+msgstr "Домен уже существует.\n"
+
+#: mferror.mc:564
+#, fuzzy
+#| msgid "Operation was cancelled.\n"
+msgid "Sample allocation was canceled.\n"
+msgstr "Операция была отменена.\n"
+
+#: mferror.mc:571
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Sample allocator is empty.\n"
+msgstr "Каталог не пуст.\n"
+
+#: mferror.mc:578
+#, fuzzy
+#| msgid "Clock state was already set.\n"
+msgid "Sink was already stopped.\n"
+msgstr "Состояние часов уже установлено.\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr ""
+
+#: mferror.mc:592
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No streams were selected for the sink.\n"
+msgstr "Данные не обнаружены.\n"
+
+#: mferror.mc:606
+#, fuzzy
+#| msgid "File name is too long.\n"
+msgid "Metadata was too long.\n"
+msgstr "Слишком длинное имя файла.\n"
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr ""
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr ""
+
+#: mferror.mc:627
+msgid "Optional node is invalid.\n"
+msgstr "Некорректный опциональный элемент.\n"
+
+#: mferror.mc:634
+msgid "Cannot find decryptor.\n"
+msgstr "Не удалось найти модуль расшифровки.\n"
+
+#: mferror.mc:641
+msgid "Codec was not found.\n"
+msgstr "Кодек не найден.\n"
+
+#: mferror.mc:648
+msgid "Cannot connect topology nodes.\n"
+msgstr "Не удалось подключить элементы графа.\n"
+
+#: mferror.mc:655
+msgid "Topology request is not supported.\n"
+msgstr ""
+
+#: mferror.mc:662
+msgid "Invalid topology time attributes.\n"
+msgstr "Заданы неверные временные атрибуты для графа.\n"
+
+#: mferror.mc:669
+msgid "Found loops in topology.\n"
+msgstr "Граф содержит петли.\n"
+
+#: mferror.mc:676
+msgid "Presentation descriptor is missing.\n"
+msgstr "Не задан дескриптор воспроизведения.\n"
+
+#: mferror.mc:683
+msgid "Stream descriptor is missing.\n"
+msgstr "Отсутствует дескриптор потока.\n"
+
+#: mferror.mc:690
+msgid "Stream descriptor is not selected.\n"
+msgstr "Дескриптор потока не выбран.\n"
+
+#: mferror.mc:697
+msgid "Source is missing.\n"
+msgstr "Отсутствует источник.\n"
+
+#: mferror.mc:704
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:711
+msgid "Clock has no time source set.\n"
+msgstr "Не задан источник времени для часов.\n"
+
+#: mferror.mc:718
+msgid "Clock state was already set.\n"
+msgstr "Состояние часов уже установлено.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8600,7 +9022,7 @@ msgid "&Open:"
 msgstr "&Открыть:"
 
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:130
+#: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Обзор..."
 
@@ -8612,7 +9034,7 @@ msgstr "Тип файла:"
 msgid "Location:"
 msgstr "Путь:"
 
-#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+#: shell32.rc:361 shell32.rc:394 winefile.rc:169
 msgid "Size:"
 msgstr "Размер:"
 
@@ -8624,11 +9046,11 @@ msgstr "Дата создания:"
 msgid "Attributes:"
 msgstr "Атрибуты:"
 
-#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+#: shell32.rc:371 shell32.rc:408 winefile.rc:173
 msgid "H&idden"
 msgstr "С&крытый"
 
-#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+#: shell32.rc:372 shell32.rc:409 winefile.rc:174
 msgid "&Archive"
 msgstr "&Архивный"
 
@@ -8648,7 +9070,7 @@ msgstr "Изменён:"
 msgid "Last accessed:"
 msgstr "Открыт:"
 
-#: shell32.rc:138 shell32.rc:142 winefile.rc:108
+#: shell32.rc:138 shell32.rc:142 winefile.rc:107
 msgid "Size"
 msgstr "Размер"
 
@@ -8660,7 +9082,7 @@ msgstr "Тип"
 msgid "Modified"
 msgstr "Изменён"
 
-#: shell32.rc:141 winefile.rc:172 winefile.rc:114
+#: shell32.rc:141 winefile.rc:171 winefile.rc:113
 msgid "Attributes"
 msgstr "Атрибуты"
 
@@ -8688,7 +9110,7 @@ msgstr "Исходное местонахождение"
 msgid "Date deleted"
 msgstr "Время удаления"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Рабочий стол"
@@ -8810,7 +9232,7 @@ msgstr "Program Files (x86)"
 msgid "Contacts"
 msgstr "Контакты"
 
-#: shell32.rc:225 winefile.rc:113
+#: shell32.rc:225 winefile.rc:112
 msgid "Links"
 msgstr "Ссылки"
 
@@ -10612,8 +11034,8 @@ msgstr ""
 
 #: winmm.rc:128
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "Указанный порт MIDI уже используется. Подождите, пока он освободится, и "
 "попробуйте заново."
@@ -10633,10 +11055,10 @@ msgstr "Ошибка указанного порта."
 #: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "Все таймеры мультимедиа используются другими приложениями. Закройте одно из "
-"этих приложений и попробуйте заново."
+"этих приложений и попробуйте ещё раз."
 
 #: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
@@ -11385,8 +11807,8 @@ msgid ""
 "/affinity mask Start the program with the specified affinity mask.\n"
 "/wait          Wait for the started program to finish, then exit with its\n"
 "exit code.\n"
-"/unix          Use a Unix filename and start the file like windows\n"
-"explorer.\n"
+"/unix          Use a Unix filename and start the file like Windows\n"
+"Explorer.\n"
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
@@ -12974,7 +13396,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "Файл «%s» существует. Он не был перезаписан."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr "Группа сохраняется под именем «%s» во избежание перезаписи оригинала."
 
 #: progman.rc:84
@@ -14942,11 +15364,11 @@ msgstr "Настройка дисков"
 
 #: winecfg.rc:233
 msgid ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
+"Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
-"Невозможно соединиться с mount manager! Конфигурация дисков не будет "
-"редактироваться."
+"Не удалось подключиться к mount manager, редактирование конфигурации дисков "
+"недоступно."
 
 #: winecfg.rc:236
 msgid "A&dd..."
@@ -15236,7 +15658,7 @@ msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
+"it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 "Действительно удалить диск C?\n"
 "\n"
@@ -15754,67 +16176,67 @@ msgstr "Окна с&лева направо\tCtrl+F4"
 msgid "&About Wine File Manager"
 msgstr "&О программе"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Select destination"
 msgstr "Выберите путь назначения"
 
-#: winefile.rc:135
+#: winefile.rc:134
 msgid "By File Type"
 msgstr "По типу файлов"
 
-#: winefile.rc:140
+#: winefile.rc:139
 msgid "File type"
 msgstr "Тип файла"
 
-#: winefile.rc:141
+#: winefile.rc:140
 msgid "&Directories"
 msgstr "&Каталоги"
 
-#: winefile.rc:143
+#: winefile.rc:142
 msgid "&Programs"
 msgstr "&Программы"
 
-#: winefile.rc:145
+#: winefile.rc:144
 msgid "Docu&ments"
 msgstr "&Документы"
 
-#: winefile.rc:147
+#: winefile.rc:146
 msgid "&Other files"
 msgstr "Другие &файлы"
 
-#: winefile.rc:149
+#: winefile.rc:148
 msgid "Show Hidden/&System Files"
 msgstr "Показать скрытые/&системные файлы"
 
-#: winefile.rc:160
+#: winefile.rc:159
 msgid "&File Name:"
 msgstr "Имя &файла:"
 
-#: winefile.rc:162
+#: winefile.rc:161
 msgid "Full &Path:"
 msgstr "&Полный путь:"
 
-#: winefile.rc:164
+#: winefile.rc:163
 msgid "Last Change:"
 msgstr "Последнее изменение:"
 
-#: winefile.rc:168
+#: winefile.rc:167
 msgid "Cop&yright:"
 msgstr "Cop&yright:"
 
-#: winefile.rc:176
+#: winefile.rc:175
 msgid "&System"
 msgstr "&Системный"
 
-#: winefile.rc:177
+#: winefile.rc:176
 msgid "&Compressed"
 msgstr "С&жатый"
 
-#: winefile.rc:178
+#: winefile.rc:177
 msgid "Version information"
 msgstr "Информация о версии"
 
-#: winefile.rc:194
+#: winefile.rc:193
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr "S"
@@ -15835,31 +16257,27 @@ msgstr "Файловый менеджер Wine"
 msgid "root fs"
 msgstr "Корневая файловая система"
 
-#: winefile.rc:99
-msgid "unixfs"
-msgstr "Основная файловая система"
-
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Shell"
 msgstr "Shell"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Creation date"
 msgstr "Дата создания"
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Access date"
 msgstr "Дата последнего доступа"
 
-#: winefile.rc:111
+#: winefile.rc:110
 msgid "Modification date"
 msgstr "Дата последнего изменения"
 
-#: winefile.rc:112
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr "Индекс/дескриптор"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr "%1 из %2 свободно"
 
@@ -16532,7 +16950,7 @@ msgid ""
 "\tmore files.\n"
 "[/S]  Copy directories and subdirectories.\n"
 "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-"[/Q]  Do not list names during copy, that is be quiet.\n"
+"[/Q]  Do not list names during copy; that is, be quiet.\n"
 "[/F]  Show full source and destination names during copy.\n"
 "[/L]  Simulate operation, showing names which would be copied.\n"
 "[/W]  Prompts before beginning the copy operation.\n"
@@ -16542,13 +16960,13 @@ msgid ""
 "[/P]  Prompts on each source file before copying.\n"
 "[/N]  Copy using short names.\n"
 "[/U]  Copy only files which already exist in destination.\n"
-"[/R]  Overwrite any read only files.\n"
+"[/R]  Overwrite any read-only files.\n"
 "[/H]  Include hidden and system files in the copy.\n"
 "[/C]  Continue even if an error occurs during the copy.\n"
 "[/A]  Only copy files with archive attribute set.\n"
 "[/M]  Only copy files with archive attribute set, removes the\n"
 "\tarchive attribute.\n"
-"[/K]  Copy file attributes, without this attributes are not preserved.\n"
+"[/K]  Copy file attributes; without this, attributes are not preserved.\n"
 "[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
 "\t\tIf no date is supplied, only copy if destination is older\n"
 "\t\tthan source.\n"

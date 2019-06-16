@@ -30,8 +30,8 @@ typedef unsigned int (__stdcall *_beginthreadex_start_routine_t)(void *);
 uintptr_t __cdecl _beginthread(_beginthread_start_routine_t,unsigned int,void*);
 uintptr_t __cdecl _beginthreadex(void*,unsigned int,_beginthreadex_start_routine_t,void*,unsigned int,unsigned int*);
 intptr_t  __cdecl _cwait(int*,intptr_t,int);
-void      __cdecl _endthread(void);
-void      __cdecl _endthreadex(unsigned int);
+void      __cdecl _endthread(void) DECLSPEC_NORETURN;
+void      __cdecl _endthreadex(unsigned int) DECLSPEC_NORETURN;
 intptr_t  WINAPIV _execl(const char*,const char*,...);
 intptr_t  WINAPIV _execle(const char*,const char*,...);
 intptr_t  WINAPIV _execlp(const char*,const char*,...);
@@ -52,9 +52,9 @@ intptr_t  __cdecl _spawnvpe(int,const char*,const char* const *,const char* cons
 
 void      __cdecl _c_exit(void);
 void      __cdecl _cexit(void);
-void      __cdecl _exit(int);
-void      __cdecl abort(void);
-void      __cdecl exit(int);
+void      __cdecl _exit(int) DECLSPEC_NORETURN;
+void      __cdecl abort(void) DECLSPEC_NORETURN;
+void      __cdecl exit(int) DECLSPEC_NORETURN;
 int       __cdecl system(const char*);
 
 #ifndef _WPROCESS_DEFINED
@@ -94,14 +94,14 @@ int      __cdecl _wsystem(const wchar_t*);
 
 static inline intptr_t cwait(int *status, intptr_t pid, int action) { return _cwait(status, pid, action); }
 static inline int getpid(void) { return _getpid(); }
-static inline intptr_t execv(const char* name, const char* const* argv) { return _execv(name, argv); }
-static inline intptr_t execve(const char* name, const char* const* argv, const char* const* envv) { return _execve(name, argv, envv); }
-static inline intptr_t execvp(const char* name, const char* const* argv) { return _execvp(name, argv); }
-static inline intptr_t execvpe(const char* name, const char* const* argv, const char* const* envv) { return _execvpe(name, argv, envv); }
 static inline intptr_t spawnv(int flags, const char* name, const char* const* argv) { return _spawnv(flags, name, argv); }
 static inline intptr_t spawnve(int flags, const char* name, const char* const* argv, const char* const* envv) { return _spawnve(flags, name, argv, envv); }
 static inline intptr_t spawnvp(int flags, const char* name, const char* const* argv) { return _spawnvp(flags, name, argv); }
 static inline intptr_t spawnvpe(int flags, const char* name, const char* const* argv, const char* const* envv) { return _spawnvpe(flags, name, argv, envv); }
+#define execv   _execv
+#define execve  _execve
+#define execvp  _execvp
+#define execvpe _execvpe
 
 #if defined(__GNUC__) && (__GNUC__ < 4)
 extern intptr_t WINAPIV execl(const char*,const char*,...) __attribute__((alias("_execl")));

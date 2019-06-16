@@ -31,6 +31,10 @@
 #error This file should not be used in Wine tests
 #endif
 
+#ifdef __WINE_USE_MSVCRT
+#error This file should not be used with msvcrt headers
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

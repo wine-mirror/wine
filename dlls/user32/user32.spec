@@ -356,6 +356,7 @@
 @ stdcall GetParent(long)
 @ stdcall GetPhysicalCursorPos(ptr)
 @ stdcall GetPointerDevices(ptr ptr)
+@ stdcall GetPointerType(long ptr)
 @ stdcall GetPriorityClipboardFormat(ptr long)
 @ stdcall GetProcessDefaultLayout(ptr)
 @ stdcall GetProcessDpiAwarenessInternal(long ptr)

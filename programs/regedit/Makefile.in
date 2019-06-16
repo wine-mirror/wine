@@ -1,7 +1,8 @@
 MODULE    = regedit.exe
-APPMODE   = -mwindows -municode -mno-cygwin
 IMPORTS   = advapi32
 DELAYIMPORTS = shlwapi shell32 comdlg32 comctl32 user32 gdi32
+
+EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
 
 C_SRCS = \
 	about.c \

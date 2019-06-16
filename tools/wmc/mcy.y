@@ -254,9 +254,9 @@ cmap	: clan '=' tNUMBER ':' tNUMBER {
 		static const char err_nocp[] = "Codepage %d not builtin; cannot convert\n";
 		if(find_cpxlat($1))
 			xyyerror("Codepage translation already defined for language 0x%x\n", $1);
-		if($3 && $3 != CP_UTF8 && !find_codepage($3))
+		if($3 && !is_valid_codepage($3))
 			xyyerror(err_nocp, $3);
-		if($5 && $5 != CP_UTF8 && !find_codepage($5))
+		if($5 && !is_valid_codepage($5))
 			xyyerror(err_nocp, $5);
 		add_cpxlat($1, $3, $5);
 	}

@@ -90,6 +90,11 @@ struct GSTOutPin {
     SourceSeeking seek;
 };
 
+static inline GSTImpl *impl_from_IBaseFilter(IBaseFilter *iface)
+{
+    return CONTAINING_RECORD(iface, GSTImpl, filter.IBaseFilter_iface);
+}
+
 const char* media_quark_string = "media-sample";
 
 static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
@@ -288,7 +293,7 @@ static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
 static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
 {
     GSTOutPin *pin = gst_pad_get_element_private(pad);
-    GSTImpl *This = (GSTImpl *)pin->pin.pin.pinInfo.pFilter;
+    GSTImpl *This = impl_from_IBaseFilter(pin->pin.pin.pinInfo.pFilter);
     AM_MEDIA_TYPE amt;
     GstStructure *arg;
     const char *typename;
@@ -466,7 +471,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
                 IPin_EndOfStream(pin->pin.pin.pConnectedTo);
             return TRUE;
         case GST_EVENT_FLUSH_START:
-            if (((GSTImpl *)pin->pin.pin.pinInfo.pFilter)->ignore_flush) {
+            if (impl_from_IBaseFilter(pin->pin.pin.pinInfo.pFilter)->ignore_flush) {
                 /* gst-plugins-base prior to 1.7 contains a bug which causes
                  * our sink pins to receive a flush-start event when the
                  * decodebin changes from PAUSED to READY (including
@@ -601,7 +606,7 @@ static DWORD CALLBACK push_data(LPVOID iface)
 static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
     GSTOutPin *pin = gst_pad_get_element_private(pad);
-    GSTImpl *This = (GSTImpl *)pin->pin.pin.pinInfo.pFilter;
+    GSTImpl *This = impl_from_IBaseFilter(pin->pin.pin.pinInfo.pFilter);
     HRESULT hr;
     BYTE *ptr = NULL;
     IMediaSample *sample;
@@ -1093,7 +1098,7 @@ static void unknown_type(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer u
 
 static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTIES *props)
 {
-    GSTImpl *This = (GSTImpl*)pPin->pin.pinInfo.pFilter;
+    GSTImpl *This = impl_from_IBaseFilter(pPin->pin.pinInfo.pFilter);
     int ret, i;
     LONGLONG avail, duration;
     GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE(
@@ -1191,46 +1196,67 @@ static inline GSTOutPin *impl_from_IMediaSeeking( IMediaSeeking *iface )
     return CONTAINING_RECORD(iface, GSTOutPin, seek.IMediaSeeking_iface);
 }
 
-static IPin* WINAPI GST_GetPin(BaseFilter *iface, int pos)
+static IPin *gstdemux_get_pin(BaseFilter *base, unsigned int index)
 {
-    GSTImpl *This = (GSTImpl *)iface;
-    IPin *pin;
+    GSTImpl *filter = impl_from_IBaseFilter(&base->IBaseFilter_iface);
 
-    TRACE("%p: Asking for pos %x\n", This, pos);
-
-    if (pos > This->cStreams || pos < 0)
-        return NULL;
-
-    if (!pos)
-        pin = &This->pInputPin.pin.IPin_iface;
-    else
-        pin = &This->ppPins[pos - 1]->pin.pin.IPin_iface;
-
-    IPin_AddRef(pin);
-    return pin;
+    if (!index)
+        return &filter->pInputPin.pin.IPin_iface;
+    else if (index <= filter->cStreams)
+        return &filter->ppPins[index - 1]->pin.pin.IPin_iface;
+    return NULL;
 }
 
-static LONG WINAPI GST_GetPinCount(BaseFilter *iface)
+static void gstdemux_destroy(BaseFilter *iface)
 {
-    GSTImpl *This = (GSTImpl *)iface;
-    TRACE("%p -> %u\n", This, This->cStreams + 1);
-    return (This->cStreams + 1);
+    GSTImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
+    IPin *connected = NULL;
+    ULONG pinref;
+    HRESULT hr;
+
+    CloseHandle(filter->no_more_pads_event);
+    CloseHandle(filter->push_event);
+
+    /* Don't need to clean up output pins, disconnecting input pin will do that */
+    IPin_ConnectedTo((IPin *)&filter->pInputPin, &connected);
+    if (connected)
+    {
+        hr = IPin_Disconnect(connected);
+        assert(hr == S_OK);
+        IPin_Release(connected);
+        hr = IPin_Disconnect(&filter->pInputPin.pin.IPin_iface);
+        assert(hr == S_OK);
+    }
+    pinref = IPin_Release(&filter->pInputPin.pin.IPin_iface);
+    if (pinref)
+    {
+        /* Valgrind could find this, if I kill it here */
+        ERR("pinref should be null, is %u, destroying anyway\n", pinref);
+        assert((LONG)pinref > 0);
+
+        while (pinref)
+            pinref = IPin_Release(&filter->pInputPin.pin.IPin_iface);
+    }
+    if (filter->bus)
+    {
+        gst_bus_set_sync_handler(filter->bus, NULL, NULL, NULL);
+        gst_object_unref(filter->bus);
+    }
+    strmbase_filter_cleanup(&filter->filter);
+    CoTaskMemFree(filter);
 }
 
 static const BaseFilterFuncTable BaseFuncTable = {
-    GST_GetPin,
-    GST_GetPinCount
+    .filter_get_pin = gstdemux_get_pin,
+    .filter_destroy = gstdemux_destroy,
 };
 
-IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
+IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
 {
-    IUnknown *obj = NULL;
     PIN_INFO *piInput;
     GSTImpl *This;
 
-    TRACE("%p %p\n", pUnkOuter, phr);
-
-    if (!Gstreamer_init())
+    if (!init_gstreamer())
     {
         *phr = E_FAIL;
         return NULL;
@@ -1246,8 +1272,8 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
     }
     memset(This, 0, sizeof(*This));
 
-    obj = (IUnknown*)&This->filter.IBaseFilter_iface;
-    BaseFilter_Init(&This->filter, &GST_Vtbl, &CLSID_Gstreamer_Splitter, (DWORD_PTR)(__FILE__ ": GSTImpl.csFilter"), &BaseFuncTable);
+    strmbase_filter_init(&This->filter, &GST_Vtbl, outer, &CLSID_Gstreamer_Splitter,
+            (DWORD_PTR)(__FILE__ ": GSTImpl.csFilter"), &BaseFuncTable);
 
     This->cStreams = 0;
     This->ppPins = NULL;
@@ -1267,92 +1293,13 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
     ZeroMemory(&This->pInputPin.pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
     *phr = S_OK;
 
-    TRACE("returning %p\n", obj);
-
-    return obj;
-}
-
-static void GST_Destroy(GSTImpl *This)
-{
-    IPin *connected = NULL;
-    ULONG pinref;
-    HRESULT hr;
-
-    TRACE("Destroying %p\n", This);
-
-    CloseHandle(This->no_more_pads_event);
-    CloseHandle(This->push_event);
-
-    /* Don't need to clean up output pins, disconnecting input pin will do that */
-    IPin_ConnectedTo((IPin *)&This->pInputPin, &connected);
-    if (connected) {
-        hr = IPin_Disconnect(connected);
-        assert(hr == S_OK);
-        IPin_Release(connected);
-        hr = IPin_Disconnect(&This->pInputPin.pin.IPin_iface);
-        assert(hr == S_OK);
-    }
-    pinref = IPin_Release(&This->pInputPin.pin.IPin_iface);
-    if (pinref) {
-        /* Valgrind could find this, if I kill it here */
-        ERR("pinref should be null, is %u, destroying anyway\n", pinref);
-        assert((LONG)pinref > 0);
-
-        while (pinref)
-            pinref = IPin_Release(&This->pInputPin.pin.IPin_iface);
-    }
-    if (This->bus) {
-        gst_bus_set_sync_handler(This->bus, NULL, NULL, NULL);
-        gst_object_unref(This->bus);
-    }
-    BaseFilter_Destroy(&This->filter);
-    CoTaskMemFree(This);
-}
-
-static HRESULT WINAPI GST_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID *ppv)
-{
-    GSTImpl *This = (GSTImpl *)iface;
-
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IPersist) ||
-        IsEqualIID(riid, &IID_IMediaFilter) ||
-        IsEqualIID(riid, &IID_IBaseFilter))
-    {
-        *ppv = &This->filter.IBaseFilter_iface;
-    }
-
-    if (*ppv) {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow) &&
-        !IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-        FIXME("No interface for %s!\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI GST_Release(IBaseFilter *iface)
-{
-    GSTImpl *This = (GSTImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->filter.refCount);
-
-    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
-
-    if (!refCount)
-        GST_Destroy(This);
-
-    return refCount;
+    TRACE("Created GStreamer demuxer %p.\n", This);
+    return &This->filter.IUnknown_inner;
 }
 
 static HRESULT WINAPI GST_Stop(IBaseFilter *iface)
 {
-    GSTImpl *This = (GSTImpl *)iface;
+    GSTImpl *This = impl_from_IBaseFilter(iface);
 
     TRACE("(%p)\n", This);
 
@@ -1369,8 +1316,8 @@ static HRESULT WINAPI GST_Stop(IBaseFilter *iface)
 
 static HRESULT WINAPI GST_Pause(IBaseFilter *iface)
 {
+    GSTImpl *This = impl_from_IBaseFilter(iface);
     HRESULT hr = S_OK;
-    GSTImpl *This = (GSTImpl *)iface;
     GstState now;
     GstStateChangeReturn ret;
 
@@ -1396,8 +1343,8 @@ static HRESULT WINAPI GST_Pause(IBaseFilter *iface)
 
 static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 {
+    GSTImpl *This = impl_from_IBaseFilter(iface);
     HRESULT hr = S_OK;
-    GSTImpl *This = (GSTImpl *)iface;
     ULONG i;
     GstState now;
     HRESULT hr_any = VFW_E_NOT_CONNECTED;
@@ -1442,7 +1389,7 @@ static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 
 static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
 {
-    GSTImpl *This = (GSTImpl *)iface;
+    GSTImpl *This = impl_from_IBaseFilter(iface);
     HRESULT hr = S_OK;
     GstState now, pending;
     GstStateChangeReturn ret;
@@ -1471,9 +1418,9 @@ static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout,
 }
 
 static const IBaseFilterVtbl GST_Vtbl = {
-    GST_QueryInterface,
+    BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
-    GST_Release,
+    BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     GST_Stop,
     GST_Pause,
@@ -1712,9 +1659,14 @@ static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl = {
     GST_QualityControl_SetSink
 };
 
+static inline GSTOutPin *impl_source_from_IPin(IPin *iface)
+{
+    return CONTAINING_RECORD(iface, GSTOutPin, pin.pin.IPin_iface);
+}
+
 static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **ppv)
 {
-    GSTOutPin *This = (GSTOutPin *)iface;
+    GSTOutPin *This = impl_source_from_IPin(iface);
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
@@ -1739,7 +1691,7 @@ static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **
 
 static ULONG WINAPI GSTOutPin_Release(IPin *iface)
 {
-    GSTOutPin *This = (GSTOutPin *)iface;
+    GSTOutPin *This = impl_source_from_IPin(iface);
     ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
 
     TRACE("(%p)->() Release from %d\n", This, refCount + 1);
@@ -1782,7 +1734,7 @@ static HRESULT WINAPI GSTOutPin_CheckMediaType(BasePin *base, const AM_MEDIA_TYP
 
 static HRESULT WINAPI GSTOutPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
-    GSTOutPin *This = (GSTOutPin *)iface;
+    GSTOutPin *This = impl_source_from_IPin(&iface->IPin_iface);
 
     TRACE("(%p)->(%i, %p)\n", This, iPosition, pmt);
 
@@ -1799,19 +1751,19 @@ static HRESULT WINAPI GSTOutPin_GetMediaType(BasePin *iface, int iPosition, AM_M
 
 static HRESULT WINAPI GSTOutPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
-    GSTOutPin *This = (GSTOutPin *)iface;
+    GSTOutPin *This = impl_source_from_IPin(&iface->pin.IPin_iface);
     TRACE("(%p)->(%p, %p)\n", This, pAlloc, ppropInputRequest);
     /* Unused */
     return S_OK;
 }
 
-static HRESULT WINAPI GSTOutPin_DecideAllocator(BaseOutputPin *iface, IMemInputPin *pPin, IMemAllocator **pAlloc)
+static HRESULT WINAPI GSTOutPin_DecideAllocator(BaseOutputPin *base, IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
+    GSTOutPin *pin = impl_source_from_IPin(&base->pin.IPin_iface);
+    GSTImpl *GSTfilter = impl_from_IBaseFilter(pin->pin.pin.pinInfo.pFilter);
     HRESULT hr;
-    GSTOutPin *This = (GSTOutPin *)iface;
-    GSTImpl *GSTfilter = (GSTImpl*)This->pin.pin.pinInfo.pFilter;
 
-    TRACE("(%p)->(%p, %p)\n", This, pPin, pAlloc);
+    TRACE("pin %p, peer %p, allocator %p.\n", pin, pPin, pAlloc);
 
     *pAlloc = NULL;
     if (GSTfilter->pInputPin.pAlloc)
@@ -1829,7 +1781,7 @@ static HRESULT WINAPI GSTOutPin_DecideAllocator(BaseOutputPin *iface, IMemInputP
     return hr;
 }
 
-static HRESULT WINAPI GSTOutPin_BreakConnect(BaseOutputPin *This)
+static HRESULT break_source_connection(BaseOutputPin *This)
 {
     HRESULT hr;
 
@@ -1840,7 +1792,9 @@ static HRESULT WINAPI GSTOutPin_BreakConnect(BaseOutputPin *This)
         hr = VFW_E_NOT_CONNECTED;
     else
     {
-        hr = IPin_Disconnect(This->pin.pConnectedTo);
+        hr = IMemAllocator_Decommit(This->pAllocator);
+        if (SUCCEEDED(hr))
+            hr = IPin_Disconnect(This->pin.pConnectedTo);
         IPin_Disconnect((IPin *)This);
     }
     LeaveCriticalSection(This->pin.pCritSec);
@@ -1872,13 +1826,11 @@ static const IPinVtbl GST_OutputPin_Vtbl = {
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     {
         GSTOutPin_CheckMediaType,
-        BaseOutputPinImpl_AttemptConnection,
-        BasePinImpl_GetMediaTypeVersion,
         GSTOutPin_GetMediaType
     },
+    BaseOutputPinImpl_AttemptConnection,
     GSTOutPin_DecideBufferSize,
     GSTOutPin_DecideAllocator,
-    GSTOutPin_BreakConnect
 };
 
 static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt)
@@ -1921,7 +1873,7 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
     This->my_src = This->their_sink = NULL;
 
     for (i = 0; i < This->cStreams; i++) {
-        hr = BaseOutputPinImpl_BreakConnect(&This->ppPins[i]->pin);
+        hr = break_source_connection(&This->ppPins[i]->pin);
         TRACE("Disconnect: %08x\n", hr);
         IPin_Release(&This->ppPins[i]->pin.pin.IPin_iface);
     }
@@ -1935,9 +1887,14 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
     return S_OK;
 }
 
+static inline GSTInPin *impl_sink_from_IPin(IPin *iface)
+{
+    return CONTAINING_RECORD(iface, GSTInPin, pin.IPin_iface);
+}
+
 static ULONG WINAPI GSTInPin_Release(IPin *iface)
 {
-    GSTInPin *This = (GSTInPin*)iface;
+    GSTInPin *This = impl_sink_from_IPin(iface);
     ULONG refCount = InterlockedDecrement(&This->pin.refCount);
 
     TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
@@ -1957,9 +1914,9 @@ static ULONG WINAPI GSTInPin_Release(IPin *iface)
 
 static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
+    GSTInPin *This = impl_sink_from_IPin(iface);
     PIN_DIRECTION pindirReceive;
     HRESULT hr = S_OK;
-    GSTInPin *This = (GSTInPin*)iface;
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, pReceivePin, pmt);
     dump_AM_MEDIA_TYPE(pmt);
@@ -1989,7 +1946,7 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
 
         This->pReader = NULL;
         This->pAlloc = NULL;
-        ResetEvent(((GSTImpl *)This->pin.pinInfo.pFilter)->push_event);
+        ResetEvent(impl_from_IBaseFilter(This->pin.pinInfo.pFilter)->push_event);
         if (SUCCEEDED(hr))
             hr = IPin_QueryInterface(pReceivePin, &IID_IAsyncReader, (LPVOID *)&This->pReader);
         if (SUCCEEDED(hr))
@@ -2012,9 +1969,9 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
             This->pin.pConnectedTo = pReceivePin;
             IPin_AddRef(pReceivePin);
             hr = IMemAllocator_Commit(This->pAlloc);
-            SetEvent(((GSTImpl*)This->pin.pinInfo.pFilter)->push_event);
+            SetEvent(impl_from_IBaseFilter(This->pin.pinInfo.pFilter)->push_event);
         } else {
-            GST_RemoveOutputPins((GSTImpl *)This->pin.pinInfo.pFilter);
+            GST_RemoveOutputPins(impl_from_IBaseFilter(This->pin.pinInfo.pFilter));
             if (This->pReader)
                 IAsyncReader_Release(This->pReader);
             This->pReader = NULL;
@@ -2031,8 +1988,8 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
 
 static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface)
 {
+    GSTInPin *This = impl_sink_from_IPin(iface);
     HRESULT hr;
-    GSTInPin *This = (GSTInPin*)iface;
     FILTER_STATE state;
 
     TRACE("(%p)\n", This);
@@ -2042,7 +1999,7 @@ static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface)
     hr = IBaseFilter_GetState(This->pin.pinInfo.pFilter, INFINITE, &state);
     EnterCriticalSection(This->pin.pCritSec);
     if (This->pin.pConnectedTo) {
-        GSTImpl *Parser = (GSTImpl *)This->pin.pinInfo.pFilter;
+        GSTImpl *Parser = impl_from_IBaseFilter(This->pin.pinInfo.pFilter);
 
         if (SUCCEEDED(hr) && state == State_Stopped) {
             IMemAllocator_Decommit(This->pAlloc);
@@ -2060,7 +2017,7 @@ static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface)
 
 static HRESULT WINAPI GSTInPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt)
 {
-    GSTInPin *This = (GSTInPin*)iface;
+    GSTInPin *This = impl_sink_from_IPin(iface);
 
     TRACE("(%p)->(%p)\n", This, pmt);
     dump_AM_MEDIA_TYPE(pmt);
@@ -2072,44 +2029,35 @@ static HRESULT WINAPI GSTInPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt
 
 static HRESULT WINAPI GSTInPin_EndOfStream(IPin *iface)
 {
-    GSTInPin *pin = (GSTInPin*)iface;
-    GSTImpl *This = (GSTImpl*)pin->pin.pinInfo.pFilter;
-
-    FIXME("Propagate message on %p\n", This);
+    FIXME("iface %p, stub!\n", iface);
     return S_OK;
 }
 
 static HRESULT WINAPI GSTInPin_BeginFlush(IPin *iface)
 {
-    GSTInPin *pin = (GSTInPin*)iface;
-    GSTImpl *This = (GSTImpl*)pin->pin.pinInfo.pFilter;
-
-    FIXME("Propagate message on %p\n", This);
+    FIXME("iface %p, stub!\n", iface);
     return S_OK;
 }
 
 static HRESULT WINAPI GSTInPin_EndFlush(IPin *iface)
 {
-    GSTInPin *pin = (GSTInPin*)iface;
-    GSTImpl *This = (GSTImpl*)pin->pin.pinInfo.pFilter;
-
-    FIXME("Propagate message on %p\n", This);
+    FIXME("iface %p, stub!\n", iface);
     return S_OK;
 }
 
-static HRESULT WINAPI GSTInPin_NewSegment(IPin *iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
+static HRESULT WINAPI GSTInPin_NewSegment(IPin *iface, REFERENCE_TIME start,
+        REFERENCE_TIME stop, double rate)
 {
-    GSTInPin *pin = (GSTInPin*)iface;
-    GSTImpl *This = (GSTImpl*)pin->pin.pinInfo.pFilter;
+    FIXME("iface %p, start %s, stop %s, rate %.16e, stub!\n",
+            iface, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop), rate);
 
-    BasePinImpl_NewSegment(iface, tStart, tStop, dRate);
-    FIXME("Propagate message on %p\n", This);
+    BasePinImpl_NewSegment(iface, start, stop, rate);
     return S_OK;
 }
 
 static HRESULT WINAPI GSTInPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
-    GSTInPin *This = (GSTInPin*)iface;
+    GSTInPin *This = impl_sink_from_IPin(iface);
 
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
 

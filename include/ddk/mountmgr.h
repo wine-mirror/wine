@@ -24,10 +24,7 @@
 #define MOUNTMGRCONTROLTYPE  ((ULONG)'m')
 #define MOUNTDEVCONTROLTYPE  ((ULONG)'M')
 
-#if defined(__GNUC__)
-#define MOUNTMGR_DEVICE_NAME (const WCHAR []){'\\','D','e','v','i','c','e','\\','M','o','u','n','t','P','o','i','n','t','M','a','n','a','g','e','r',0}
-#define MOUNTMGR_DOS_DEVICE_NAME (const WCHAR []){'\\','\\','.','\\','M','o','u','n','t','P','o','i','n','t','M','a','n','a','g','e','r',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define MOUNTMGR_DEVICE_NAME     L"\\Device\\MountPointManager"
 #define MOUNTMGR_DOS_DEVICE_NAME L"\\\\.\\MountPointManager"
 #else

@@ -113,28 +113,22 @@ static inline void DUMPPACKET(WTPACKET packet)
 
 static inline void DUMPCONTEXT(LOGCONTEXTW lc)
 {
-    TRACE("Name: %s, Options: %x, Status: %x, Locks: %x, MsgBase: %x, "
-          "Device: %x, PktRate: %x, "
-          "%x%s, %x%s, %x%s, "
-          "BtnDnMask: %x, BtnUpMask: %x, "
-          "InOrgX: %i, InOrgY: %i, InOrgZ: %i, "
-          "InExtX: %i, InExtY: %i, InExtZ: %i, "
-          "OutOrgX: %i, OutOrgY: %i, OutOrgZ: %i, "
-          "OutExtX: %i, OutExtY: %i, OutExtZ: %i, "
-          "SensX: %i, SensY: %i, SensZ: %i, "
-          "SysMode: %i, "
-          "SysOrgX: %i, SysOrgY: %i, "
-          "SysExtX: %i, SysExtY: %i, "
-          "SysSensX: %i, SysSensY: %i\n",
-          wine_dbgstr_w(lc.lcName), lc.lcOptions, lc.lcStatus, lc.lcLocks, lc.lcMsgBase,
-          lc.lcDevice, lc.lcPktRate, lc.lcPktData, DUMPBITS(lc.lcPktData),
-          lc.lcPktMode, DUMPBITS(lc.lcPktMode), lc.lcMoveMask,
-          DUMPBITS(lc.lcMoveMask), lc.lcBtnDnMask, lc.lcBtnUpMask,
-          lc.lcInOrgX, lc.lcInOrgY, lc.lcInOrgZ, lc.lcInExtX, lc.lcInExtY,
-          lc.lcInExtZ, lc.lcOutOrgX, lc.lcOutOrgY, lc.lcOutOrgZ, lc.lcOutExtX,
-          lc.lcOutExtY, lc.lcOutExtZ, lc.lcSensX, lc.lcSensY, lc.lcSensZ, lc.lcSysMode,
-          lc.lcSysOrgX, lc.lcSysOrgY, lc.lcSysExtX, lc.lcSysExtY, lc.lcSysSensX,
-          lc.lcSysSensY);
+    TRACE("Name: %s, Options: %x, Status: %x, Locks: %x, MsgBase: %x, Device: %x\n",
+            wine_dbgstr_w(lc.lcName), lc.lcOptions, lc.lcStatus, lc.lcLocks, lc.lcMsgBase, lc.lcDevice);
+    TRACE("PktRate %x\n", lc.lcPktRate);
+    TRACE("PktData 0x%04x %s\n", lc.lcPktData, DUMPBITS(lc.lcPktData));
+    TRACE("PktMode 0x%04x %s\n", lc.lcPktMode, DUMPBITS(lc.lcPktMode));
+    TRACE("MovMask 0x%04x %s\n", lc.lcMoveMask, DUMPBITS(lc.lcMoveMask));
+    TRACE("BtnDnMask: %x, BtnUpMask: %x\n", lc.lcBtnDnMask, lc.lcBtnUpMask);
+    TRACE("InOrgX: %i, InOrgY: %i, InOrgZ: %i\n", lc.lcInOrgX, lc.lcInOrgY, lc.lcInOrgZ);
+    TRACE("InExtX: %i, InExtY: %i, InExtZ: %i\n", lc.lcInExtX, lc.lcInExtY, lc.lcInExtZ);
+    TRACE("OutOrgX: %i, OutOrgY: %i, OutOrgZ: %i\n", lc.lcOutOrgX, lc.lcOutOrgY, lc.lcOutOrgZ);
+    TRACE("OutExtX: %i, OutExtY: %i, OutExtZ: %i\n", lc.lcOutExtX, lc.lcOutExtY, lc.lcOutExtZ);
+    TRACE("SensX: %i, SensY: %i, SensZ: %i\n", lc.lcSensX, lc.lcSensY, lc.lcSensZ);
+    TRACE("SysMode: %i\n", lc.lcSysMode);
+    TRACE("SysOrgX: %i, SysOrgY: %i\n", lc.lcSysOrgX, lc.lcSysOrgY);
+    TRACE("SysExtX: %i, SysExtY: %i\n", lc.lcSysExtX, lc.lcSysExtY);
+    TRACE("SysSensX: %i, SysSensY: %i\n", lc.lcSysSensX, lc.lcSysSensY);
 }
 
 
@@ -215,6 +209,7 @@ LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd)
             packet->pkContext = ptr->handle;
 
             /* translate packet data to the context */
+            packet->pkChanged = packet->pkChanged & ptr->context.lcPktData;
 
             /* Scale  as per documentation */
             packet->pkY = ScaleForContext(packet->pkY, ptr->context.lcInOrgY,

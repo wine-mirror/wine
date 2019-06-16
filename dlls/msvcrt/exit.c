@@ -31,15 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 static MSVCRT_purecall_handler purecall_handler = NULL;
 
-typedef struct MSVCRT__onexit_table_t
-{
-    MSVCRT__onexit_t *_first;
-    MSVCRT__onexit_t *_last;
-    MSVCRT__onexit_t *_end;
-} MSVCRT__onexit_table_t;
-
 static MSVCRT__onexit_table_t MSVCRT_atexit_table;
-static MSVCRT__onexit_table_t MSVCRT_quick_exit_table;
 
 typedef void (__stdcall *_tls_callback_type)(void*,ULONG,void*);
 static _tls_callback_type tls_atexit_callback;
@@ -403,6 +395,9 @@ int CDECL MSVCRT_atexit(void (__cdecl *func)(void))
   return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
 }
 
+#if _MSVCR_VER >= 140
+static MSVCRT__onexit_table_t MSVCRT_quick_exit_table;
+
 /*********************************************************************
  *             _crt_at_quick_exit (UCRTBASE.@)
  */
@@ -413,7 +408,7 @@ int CDECL MSVCRT__crt_at_quick_exit(void (__cdecl *func)(void))
 }
 
 /*********************************************************************
- *             quick_exit (MSVCRT.@)
+ *             quick_exit (UCRTBASE.@)
  */
 void CDECL MSVCRT_quick_exit(int exitcode)
 {
@@ -461,6 +456,7 @@ int CDECL MSVCRT__execute_onexit_table(MSVCRT__onexit_table_t *table)
 
     return execute_onexit_table(table);
 }
+#endif
 
 /*********************************************************************
  *		_register_thread_local_exe_atexit_callback (UCRTBASE.@)

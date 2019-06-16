@@ -96,7 +96,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 #ifdef HAVE_IOHIDMANAGERCREATE
 
-static DRIVER_OBJECT *iohid_driver_obj = NULL;
 static IOHIDManagerRef hid_manager;
 static CFRunLoopRef run_loop;
 static HANDLE run_loop_handle;
@@ -286,10 +285,11 @@ static const platform_vtbl iohid_vtbl =
 static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *sender, IOHIDDeviceRef IOHIDDevice)
 {
     DEVICE_OBJECT *device;
-    DWORD vid, pid, version;
+    DWORD vid, pid, version, uid;
     CFStringRef str = NULL;
     WCHAR serial_string[256];
     BOOL is_gamepad = FALSE;
+    WORD input = -1;
 
     TRACE("OS/X IOHID Device Added %p\n", IOHIDDevice);
 
@@ -298,6 +298,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     version = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVersionNumberKey)));
     str = IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDSerialNumberKey));
     if (str) CFStringToWSTR(str, serial_string, ARRAY_SIZE(serial_string));
+    uid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDLocationIDKey)));
 
     if (IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad) ||
        IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick))
@@ -343,8 +344,12 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
             is_gamepad = (axes == 6  && buttons >= 14);
         }
     }
+    if (is_gamepad)
+        input = 0;
 
-    device = bus_create_hid_device(iohid_driver_obj, busidW, vid, pid, version, 0, str?serial_string:NULL, is_gamepad, &GUID_DEVCLASS_IOHID, &iohid_vtbl, sizeof(struct platform_private));
+    device = bus_create_hid_device(busidW, vid, pid, input,
+            version, uid, str?serial_string:NULL, is_gamepad, &GUID_DEVCLASS_IOHID,
+            &iohid_vtbl, sizeof(struct platform_private));
     if (!device)
         ERR("Failed to create device\n");
     else
@@ -394,18 +399,12 @@ static DWORD CALLBACK runloop_thread(void *args)
 
 }
 
-NTSTATUS WINAPI iohid_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
+NTSTATUS iohid_driver_init(void)
 {
-    TRACE("(%p, %s)\n", driver, debugstr_w(registry_path->Buffer));
-
-    iohid_driver_obj = driver;
-    driver->MajorFunction[IRP_MJ_PNP] = common_pnp_dispatch;
-    driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = hid_internal_dispatch;
     hid_manager = IOHIDManagerCreate(kCFAllocatorDefault, 0L);
     if (!(run_loop_handle = CreateThread(NULL, 0, runloop_thread, NULL, 0, NULL)))
     {
         ERR("Failed to initialize IOHID Manager thread\n");
-        iohid_driver_obj = NULL;
         CFRelease(hid_manager);
         return STATUS_UNSUCCESSFUL;
     }
@@ -416,22 +415,19 @@ NTSTATUS WINAPI iohid_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registr
 void iohid_driver_unload( void )
 {
     TRACE("Unloading Driver\n");
-    if (iohid_driver_obj != NULL)
-    {
-        IOHIDManagerUnscheduleFromRunLoop(hid_manager, run_loop, kCFRunLoopDefaultMode);
-        CFRunLoopStop(run_loop);
-        WaitForSingleObject(run_loop_handle, INFINITE);
-        CloseHandle(run_loop_handle);
-        IOHIDManagerRegisterDeviceMatchingCallback(hid_manager, NULL, NULL);
-        IOHIDManagerRegisterDeviceRemovalCallback(hid_manager, NULL, NULL);
-        CFRelease(hid_manager);
-    }
+    IOHIDManagerUnscheduleFromRunLoop(hid_manager, run_loop, kCFRunLoopDefaultMode);
+    CFRunLoopStop(run_loop);
+    WaitForSingleObject(run_loop_handle, INFINITE);
+    CloseHandle(run_loop_handle);
+    IOHIDManagerRegisterDeviceMatchingCallback(hid_manager, NULL, NULL);
+    IOHIDManagerRegisterDeviceRemovalCallback(hid_manager, NULL, NULL);
+    CFRelease(hid_manager);
     TRACE("Driver Unloaded\n");
 }
 
 #else
 
-NTSTATUS WINAPI iohid_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
+NTSTATUS iohid_driver_init(void)
 {
     WARN("IOHID Support not compiled into Wine.\n");
     return STATUS_NOT_IMPLEMENTED;

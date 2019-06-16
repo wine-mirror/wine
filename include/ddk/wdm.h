@@ -153,12 +153,63 @@ typedef struct _KWAIT_BLOCK {
     USHORT WaitType;
 } KWAIT_BLOCK, *PKWAIT_BLOCK, *RESTRICTED_POINTER PRKWAIT_BLOCK;
 
+typedef struct _OWNER_ENTRY
+{
+    ERESOURCE_THREAD OwnerThread;
+    union
+    {
+        struct
+        {
+            ULONG IoPriorityBoosted : 1;
+            ULONG OwnerReferenced : 1;
+            ULONG IoQoSPriorityBoosted : 1;
+            ULONG OwnerCount : 29;
+        };
+        ULONG TableSize;
+    };
+} OWNER_ENTRY, *POWNER_ENTRY;
+
+#define ResourceNeverExclusive       0x0010
+#define ResourceReleaseByOtherThread 0x0020
+#define ResourceOwnedExclusive       0x0080
+
+typedef struct _ERESOURCE
+{
+    LIST_ENTRY SystemResourcesList;
+    OWNER_ENTRY *OwnerTable;
+    SHORT ActiveCount;
+    union
+    {
+        USHORT Flag;
+        struct
+        {
+            UCHAR ReservedLowFlags;
+            UCHAR WaiterPriority;
+        };
+    };
+    KSEMAPHORE *SharedWaiters;
+    KEVENT *ExclusiveWaiters;
+    OWNER_ENTRY OwnerEntry;
+    ULONG ActiveEntries;
+    ULONG ContentionCount;
+    ULONG NumberOfSharedWaiters;
+    ULONG NumberOfExclusiveWaiters;
+#ifdef _WIN64
+    void *Reserved2;
+#endif
+    union
+    {
+        void *Address;
+        ULONG_PTR CreatorBackTraceIndex;
+    };
+    KSPIN_LOCK SpinLock;
+} ERESOURCE, *PERESOURCE;
+
 typedef struct _IO_TIMER *PIO_TIMER;
 typedef struct _IO_TIMER_ROUTINE *PIO_TIMER_ROUTINE;
 typedef struct _ETHREAD *PETHREAD;
 typedef struct _KTHREAD *PKTHREAD, *PRKTHREAD;
 typedef struct _EPROCESS *PEPROCESS;
-typedef struct _ERESOURCE *PERESOURCE;
 typedef struct _IO_WORKITEM *PIO_WORKITEM;
 typedef struct _PAGED_LOOKASIDE_LIST *PPAGED_LOOKASIDE_LIST;
 typedef struct _OBJECT_TYPE *POBJECT_TYPE;
@@ -1409,6 +1460,15 @@ typedef enum _DIRECTORY_NOTIFY_INFORMATION_CLASS {
     DirectoryNotifyExtendedInformation
 } DIRECTORY_NOTIFY_INFORMATION_CLASS, *PDIRECTORY_NOTIFY_INFORMATION_CLASS;
 
+typedef enum _WORK_QUEUE_TYPE {
+    CriticalWorkQueue,
+    DelayedWorkQueue,
+    HyperCriticalWorkQueue,
+    MaximumWorkQueue
+} WORK_QUEUE_TYPE;
+
+typedef void (WINAPI *PIO_WORKITEM_ROUTINE)(PDEVICE_OBJECT,void*);
+
 NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);
 
 #ifdef NONAMELESSUNION
@@ -1433,6 +1493,9 @@ NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);
 # endif
 #endif
 
+#define IoSetCancelRoutine(irp, routine) \
+    ((PDRIVER_CANCEL)InterlockedExchangePointer((void **)&(irp)->CancelRoutine, routine))
+
 static inline void IoSetCompletionRoutine(IRP *irp, PIO_COMPLETION_ROUTINE routine, void *context,
                                           BOOLEAN on_success, BOOLEAN on_error, BOOLEAN on_cancel)
 {
@@ -1443,6 +1506,11 @@ static inline void IoSetCompletionRoutine(IRP *irp, PIO_COMPLETION_ROUTINE routi
     if (on_success) irpsp->Control |= SL_INVOKE_ON_SUCCESS;
     if (on_error)   irpsp->Control |= SL_INVOKE_ON_ERROR;
     if (on_cancel)  irpsp->Control |= SL_INVOKE_ON_CANCEL;
+}
+
+static inline void IoMarkIrpPending(IRP *irp)
+{
+    IoGetCurrentIrpStackLocation(irp)->Control |= SL_PENDING_RETURNED;
 }
 
 #define KernelMode 0
@@ -1460,38 +1528,58 @@ static inline void IoSetCompletionRoutine(IRP *irp, PIO_COMPLETION_ROUTINE routi
 #define SYMBOLIC_LINK_ALL_ACCESS        (STANDARD_RIGHTS_REQUIRED | 0x1)
 
 NTSTATUS  WINAPI DbgQueryDebugFilterState(ULONG, ULONG);
-void      WINAPI ExAcquireFastMutexUnsafe(PFAST_MUTEX);
+void    FASTCALL ExAcquireFastMutexUnsafe(PFAST_MUTEX);
+BOOLEAN   WINAPI ExAcquireResourceExclusiveLite(ERESOURCE*,BOOLEAN);
+BOOLEAN   WINAPI ExAcquireResourceSharedLite(ERESOURCE*,BOOLEAN);
+BOOLEAN   WINAPI ExAcquireSharedStarveExclusive(ERESOURCE*,BOOLEAN);
+BOOLEAN   WINAPI ExAcquireSharedWaitForExclusive(ERESOURCE*,BOOLEAN);
 PVOID     WINAPI ExAllocatePool(POOL_TYPE,SIZE_T);
 PVOID     WINAPI ExAllocatePoolWithQuota(POOL_TYPE,SIZE_T);
 PVOID     WINAPI ExAllocatePoolWithTag(POOL_TYPE,SIZE_T,ULONG);
 PVOID     WINAPI ExAllocatePoolWithQuotaTag(POOL_TYPE,SIZE_T,ULONG);
 void      WINAPI ExDeleteNPagedLookasideList(PNPAGED_LOOKASIDE_LIST);
+NTSTATUS  WINAPI ExDeleteResourceLite(ERESOURCE*);
 void      WINAPI ExFreePool(PVOID);
 void      WINAPI ExFreePoolWithTag(PVOID,ULONG);
+ULONG     WINAPI ExGetExclusiveWaiterCount(ERESOURCE*);
+ULONG     WINAPI ExGetSharedWaiterCount(ERESOURCE*);
 void      WINAPI ExInitializeNPagedLookasideList(PNPAGED_LOOKASIDE_LIST,PALLOCATE_FUNCTION,PFREE_FUNCTION,ULONG,SIZE_T,ULONG,USHORT);
+NTSTATUS  WINAPI ExInitializeResourceLite(ERESOURCE*);
+PSLIST_ENTRY WINAPI ExInterlockedFlushSList(PSLIST_HEADER);
 PSLIST_ENTRY WINAPI ExInterlockedPopEntrySList(PSLIST_HEADER,PKSPIN_LOCK);
 PSLIST_ENTRY WINAPI ExInterlockedPushEntrySList(PSLIST_HEADER,PSLIST_ENTRY,PKSPIN_LOCK);
 LIST_ENTRY * WINAPI ExInterlockedRemoveHeadList(LIST_ENTRY*,KSPIN_LOCK*);
-void      WINAPI ExReleaseFastMutexUnsafe(PFAST_MUTEX);
+BOOLEAN   WINAPI ExIsResourceAcquiredExclusiveLite(ERESOURCE*);
+ULONG     WINAPI ExIsResourceAcquiredSharedLite(ERESOURCE*);
+void    FASTCALL ExReleaseFastMutexUnsafe(PFAST_MUTEX);
+void      WINAPI ExReleaseResourceForThreadLite(ERESOURCE*,ERESOURCE_THREAD);
+ULONG     WINAPI ExSetTimerResolution(ULONG,BOOLEAN);
 
 void      WINAPI IoAcquireCancelSpinLock(KIRQL*);
 NTSTATUS  WINAPI IoAllocateDriverObjectExtension(PDRIVER_OBJECT,PVOID,ULONG,PVOID*);
 PVOID     WINAPI IoAllocateErrorLogEntry(PVOID,UCHAR);
 PIRP      WINAPI IoAllocateIrp(CCHAR,BOOLEAN);
 PMDL      WINAPI IoAllocateMdl(PVOID,ULONG,BOOLEAN,BOOLEAN,IRP*);
+PIO_WORKITEM WINAPI IoAllocateWorkItem(PDEVICE_OBJECT);
+void      WINAPI IoDetachDevice(PDEVICE_OBJECT);
 PDEVICE_OBJECT WINAPI IoAttachDeviceToDeviceStack(PDEVICE_OBJECT,PDEVICE_OBJECT);
+PIRP      WINAPI IoBuildAsynchronousFsdRequest(ULONG,DEVICE_OBJECT*,void*,ULONG,LARGE_INTEGER*,IO_STATUS_BLOCK*);
 PIRP      WINAPI IoBuildDeviceIoControlRequest(ULONG,DEVICE_OBJECT*,PVOID,ULONG,PVOID,ULONG,BOOLEAN,PKEVENT,IO_STATUS_BLOCK*);
 PIRP      WINAPI IoBuildSynchronousFsdRequest(ULONG,DEVICE_OBJECT*,PVOID,ULONG,PLARGE_INTEGER,PKEVENT,IO_STATUS_BLOCK*);
 NTSTATUS  WINAPI IoCallDriver(DEVICE_OBJECT*,IRP*);
+BOOLEAN   WINAPI IoCancelIrp(IRP*);
 VOID      WINAPI IoCompleteRequest(IRP*,UCHAR);
 NTSTATUS  WINAPI IoCreateDevice(DRIVER_OBJECT*,ULONG,UNICODE_STRING*,DEVICE_TYPE,ULONG,BOOLEAN,DEVICE_OBJECT**);
 NTSTATUS  WINAPI IoCreateDriver(UNICODE_STRING*,PDRIVER_INITIALIZE);
 NTSTATUS  WINAPI IoCreateSymbolicLink(UNICODE_STRING*,UNICODE_STRING*);
+PKEVENT   WINAPI IoCreateSynchronizationEvent(UNICODE_STRING*,HANDLE*);
 void      WINAPI IoDeleteDevice(DEVICE_OBJECT*);
 void      WINAPI IoDeleteDriver(DRIVER_OBJECT*);
 NTSTATUS  WINAPI IoDeleteSymbolicLink(UNICODE_STRING*);
 void      WINAPI IoFreeIrp(IRP*);
 void      WINAPI IoFreeMdl(MDL*);
+void      WINAPI IoFreeWorkItem(PIO_WORKITEM);
+DEVICE_OBJECT * WINAPI IoGetAttachedDeviceReference(DEVICE_OBJECT*);
 PEPROCESS WINAPI IoGetCurrentProcess(void);
 NTSTATUS  WINAPI IoGetDeviceInterfaces(const GUID*,PDEVICE_OBJECT,ULONG,PWSTR*);
 NTSTATUS  WINAPI IoGetDeviceObjectPointer(UNICODE_STRING*,ACCESS_MASK,PFILE_OBJECT*,PDEVICE_OBJECT*);
@@ -1501,11 +1589,13 @@ PDEVICE_OBJECT WINAPI IoGetRelatedDeviceObject(PFILE_OBJECT);
 void      WINAPI IoInitializeIrp(IRP*,USHORT,CCHAR);
 VOID      WINAPI IoInitializeRemoveLockEx(PIO_REMOVE_LOCK,ULONG,ULONG,ULONG,ULONG);
 void      WINAPI IoInvalidateDeviceRelations(PDEVICE_OBJECT,DEVICE_RELATION_TYPE);
+void      WINAPI IoQueueWorkItem(PIO_WORKITEM,PIO_WORKITEM_ROUTINE,WORK_QUEUE_TYPE,void*);
 NTSTATUS  WINAPI IoRegisterDeviceInterface(PDEVICE_OBJECT,const GUID*,PUNICODE_STRING,PUNICODE_STRING);
 void      WINAPI IoReleaseCancelSpinLock(KIRQL);
 NTSTATUS  WINAPI IoSetDeviceInterfaceState(UNICODE_STRING*,BOOLEAN);
 NTSTATUS  WINAPI IoWMIRegistrationControl(PDEVICE_OBJECT,ULONG);
 
+void    FASTCALL KeAcquireInStackQueuedSpinLockAtDpcLevel(KSPIN_LOCK*,KLOCK_QUEUE_HANDLE*);
 #ifdef __i386__
 void      WINAPI KeAcquireSpinLock(KSPIN_LOCK*,KIRQL*);
 #else
@@ -1516,6 +1606,7 @@ void      WINAPI KeAcquireSpinLockAtDpcLevel(KSPIN_LOCK*);
 BOOLEAN   WINAPI KeCancelTimer(KTIMER*);
 void      WINAPI KeClearEvent(PRKEVENT);
 NTSTATUS  WINAPI KeDelayExecutionThread(KPROCESSOR_MODE,BOOLEAN,LARGE_INTEGER*);
+void      WINAPI KeEnterCriticalRegion(void);
 PKTHREAD  WINAPI KeGetCurrentThread(void);
 void      WINAPI KeInitializeEvent(PRKEVENT,EVENT_TYPE,BOOLEAN);
 void      WINAPI KeInitializeMutex(PRKMUTEX,ULONG);
@@ -1523,9 +1614,11 @@ void      WINAPI KeInitializeSemaphore(PRKSEMAPHORE,LONG,LONG);
 void      WINAPI KeInitializeSpinLock(KSPIN_LOCK*);
 void      WINAPI KeInitializeTimerEx(PKTIMER,TIMER_TYPE);
 void      WINAPI KeInitializeTimer(KTIMER*);
+void      WINAPI KeLeaveCriticalRegion(void);
 void      WINAPI KeQuerySystemTime(LARGE_INTEGER*);
 void      WINAPI KeQueryTickCount(LARGE_INTEGER*);
 ULONG     WINAPI KeQueryTimeIncrement(void);
+void    FASTCALL KeReleaseInStackQueuedSpinLockFromDpcLevel(KLOCK_QUEUE_HANDLE*);
 LONG      WINAPI KeReleaseMutex(PRKMUTEX,BOOLEAN);
 LONG      WINAPI KeReleaseSemaphore(PRKSEMAPHORE,KPRIORITY,LONG,BOOLEAN);
 void      WINAPI KeReleaseSpinLock(KSPIN_LOCK*,KIRQL);
@@ -1542,11 +1635,13 @@ NTSTATUS  WINAPI KeWaitForSingleObject(void*,KWAIT_REASON,KPROCESSOR_MODE,BOOLEA
 PVOID     WINAPI MmAllocateContiguousMemory(SIZE_T,PHYSICAL_ADDRESS);
 PVOID     WINAPI MmAllocateNonCachedMemory(SIZE_T);
 PMDL      WINAPI MmAllocatePagesForMdl(PHYSICAL_ADDRESS,PHYSICAL_ADDRESS,PHYSICAL_ADDRESS,SIZE_T);
+void      WINAPI MmBuildMdlForNonPagedPool(MDL*);
 void      WINAPI MmFreeNonCachedMemory(PVOID,SIZE_T);
 void *    WINAPI MmGetSystemRoutineAddress(UNICODE_STRING*);
 PVOID     WINAPI MmMapLockedPagesSpecifyCache(PMDL,KPROCESSOR_MODE,MEMORY_CACHING_TYPE,PVOID,ULONG,ULONG);
 MM_SYSTEMSIZE WINAPI MmQuerySystemSize(void);
 void      WINAPI MmProbeAndLockPages(PMDLX, KPROCESSOR_MODE, LOCK_OPERATION);
+void      WINAPI MmUnmapLockedPages(void*, PMDL);
 
 static inline void *MmGetSystemAddressForMdlSafe(MDL *mdl, ULONG priority)
 {
@@ -1570,6 +1665,7 @@ NTSTATUS  WINAPI PsCreateSystemThread(PHANDLE,ULONG,POBJECT_ATTRIBUTES,HANDLE,PC
 #define          PsGetCurrentThread() ((PETHREAD)KeGetCurrentThread())
 HANDLE    WINAPI PsGetCurrentProcessId(void);
 HANDLE    WINAPI PsGetCurrentThreadId(void);
+HANDLE    WINAPI PsGetProcessInheritedFromUniqueProcessId(PEPROCESS);
 BOOLEAN   WINAPI PsGetVersion(ULONG*,ULONG*,ULONG*,UNICODE_STRING*);
 NTSTATUS  WINAPI PsTerminateSystemThread(NTSTATUS);
 

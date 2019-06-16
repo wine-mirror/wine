@@ -9,12 +9,13 @@ SOURCES = \
 	wine.inf.in \
 	wine.man.in \
 	wine.pl.UTF-8.man.in \
-	wine_info.plist.in
+	wine_info.plist.in \
+	winehid.inf.in
 
 PROGRAMS = $(WINELOADER_PROGRAMS)
 INSTALL_LIB = $(WINELOADER_PROGRAMS)
 
-preloader_EXTRADEFS = $(MSVCRTFLAGS)
+preloader_EXTRADEFS = -fno-builtin
 
 wine_OBJS = main.o
 wine_DEPS = $(WINELOADER_DEPENDS)

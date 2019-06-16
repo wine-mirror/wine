@@ -16,7 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 
 #include <stdarg.h>
 
@@ -28,7 +27,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
-#ifdef __i386__
+#if defined(__i386__) && !defined(__MINGW32__)
 
 #define DEFINE_VTBL_WRAPPER(off)            \
     __ASM_GLOBAL_FUNC(vtbl_wrapper_ ## off, \
@@ -91,7 +90,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             return FALSE;    /* prefer native version */
         case DLL_PROCESS_ATTACH:
             init_cxx_funcs();
-            init_lockit();
+            _Init_locks__Init_locks_ctor(NULL);
             init_exception(hinstDLL);
             init_locale(hinstDLL);
             init_io(hinstDLL);
@@ -100,7 +99,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             if (lpvReserved) break;
             free_io();
             free_locale();
-            free_lockit();
+            _Init_locks__Init_locks_dtor(NULL);
             break;
     }
 

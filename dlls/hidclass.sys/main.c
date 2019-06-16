@@ -23,7 +23,6 @@
 #include <stdarg.h>
 #include "hid.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);

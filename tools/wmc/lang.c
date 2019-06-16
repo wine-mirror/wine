@@ -168,7 +168,7 @@ void show_languages(void)
 	printf(" Code  | DOS-cp | WIN-cp |   Language   | Country\n");
 	printf("-------+--------+--------+--------------+---------\n");
 	for(i = 0; i < ARRAY_SIZE(languages); i++)
-		printf("0x%04x | %5d  | %5d   | %-12s | %s\n",
+		printf("0x%04x | %5d  | %5d  | %-12s | %s\n",
 			languages[i].id,
 			languages[i].doscp,
 			languages[i].wincp,
@@ -187,6 +187,41 @@ const language_t *find_language(unsigned id)
 		sizeof(languages[0]), langcmp);
 }
 
+#ifdef _WIN32
+
+static BOOL CALLBACK proc( char *cp )
+{
+    CPINFOEXA info;
+    GetCPInfoExA( atoi(cp), 0, &info );
+    printf("%-5s %s\n", cp, info.CodePageName );
+    return TRUE;
+}
+
+void show_codepages(void)
+{
+    printf("Codepages:\n");
+    EnumSystemCodePagesA( proc, 0 );
+}
+
+int is_valid_codepage(int id)
+{
+    return IsValidCodePage( id );
+}
+
+int wmc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+{
+    return MultiByteToWideChar( codepage, flags, src, srclen, dst, dstlen );
+}
+
+int wmc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
+{
+    return WideCharToMultiByte( codepage, flags, src, srclen, dst, dstlen, NULL, NULL );
+}
+
+#else  /* _WIN32 */
+
+#include "wine/unicode.h"
+
 void show_codepages(void)
 {
 	unsigned i;
@@ -198,7 +233,21 @@ void show_codepages(void)
 	}
 }
 
-const union cptable *find_codepage(int id)
+int is_valid_codepage(int id)
 {
-	return wine_cp_get_table(id);
+    return id == CP_UTF8 || wine_cp_get_table(id);
 }
+
+int wmc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+{
+    if (codepage == CP_UTF8) return wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
+    return wine_cp_mbstowcs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen );
+}
+
+int wmc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen )
+{
+    if (codepage == CP_UTF8) return wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
+    return wine_cp_wcstombs( wine_cp_get_table( codepage ), flags, src, srclen, dst, dstlen, NULL, NULL );
+}
+
+#endif  /* _WIN32 */

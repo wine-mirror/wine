@@ -26,7 +26,6 @@
 
 #include "main.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 static INT Image_String;
 static INT Image_Binary;

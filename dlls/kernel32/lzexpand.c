@@ -46,6 +46,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "lzexpand.h"
 
 #include "wine/unicode.h"
@@ -285,7 +286,7 @@ INT WINAPI GetExpandedNameA( LPSTR in, LPSTR out )
 		if (fnislowercased)
 			head.lastchar=tolower(head.lastchar);
 		else
-			head.lastchar=toupper(head.lastchar);
+			head.lastchar=RtlUpperChar(head.lastchar);
 	}
 
 	/* now look where to replace the last character */

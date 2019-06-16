@@ -1,5 +1,7 @@
 MODULE = msxml2.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = main.c
 
 IDL_SRCS = msxml2_tlb.idl

@@ -720,6 +720,66 @@ static void test_specular_lighting(void)
         {160, 360, 0x00000000},
         {320, 360, 0x00000000},
         {480, 360, 0x00000000},
+    },
+    expected_directional_0[] =
+    {
+        {160, 120, 0x00ffffff},
+        {320, 120, 0x00ffffff},
+        {480, 120, 0x00ffffff},
+        {160, 240, 0x00ffffff},
+        {320, 240, 0x00ffffff},
+        {480, 240, 0x00ffffff},
+        {160, 360, 0x00ffffff},
+        {320, 360, 0x00ffffff},
+        {480, 360, 0x00ffffff},
+    },
+    expected_directional_local_0[] =
+    {
+        {160, 120, 0x00ffffff},
+        {320, 120, 0x00ffffff},
+        {480, 120, 0x00ffffff},
+        {160, 240, 0x00ffffff},
+        {320, 240, 0x00ffffff},
+        {480, 240, 0x00ffffff},
+        {160, 360, 0x00ffffff},
+        {320, 360, 0x00ffffff},
+        {480, 360, 0x00ffffff},
+    },
+    expected_point_0[] =
+    {
+        {160, 120, 0x00aaaaaa},
+        {320, 120, 0x00cccccc},
+        {480, 120, 0x00aaaaaa},
+        {160, 240, 0x00cccccc},
+        {320, 240, 0x00ffffff},
+        {480, 240, 0x00cccccc},
+        {160, 360, 0x00aaaaaa},
+        {320, 360, 0x00cccccc},
+        {480, 360, 0x00aaaaaa},
+    },
+    expected_spot_0[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x002e2e2e},
+        {480, 120, 0x00000000},
+        {160, 240, 0x002e2e2e},
+        {320, 240, 0x00ffffff},
+        {480, 240, 0x002e2e2e},
+        {160, 360, 0x00000000},
+        {320, 360, 0x002e2e2e},
+        {480, 360, 0x00000000},
+    },
+    expected_point_range_0[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00cccccc},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00cccccc},
+        {320, 240, 0x00ffffff},
+        {480, 240, 0x00cccccc},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00cccccc},
+        {480, 360, 0x00000000},
     };
     static const struct
     {
@@ -739,6 +799,13 @@ static void test_specular_lighting(void)
         {&spot, TRUE, 30.0f, expected_spot_local, ARRAY_SIZE(expected_spot_local)},
         {&point_range, FALSE, 30.0f, expected_point_range, ARRAY_SIZE(expected_point_range)},
         {&point_side, TRUE, 0.0f, expected_point_side, ARRAY_SIZE(expected_point_side)},
+        {&directional, FALSE, 0.0f, expected_directional_0, ARRAY_SIZE(expected_directional_0)},
+        {&directional, TRUE, 0.0f, expected_directional_local_0, ARRAY_SIZE(expected_directional_local_0)},
+        {&point, FALSE, 0.0f, expected_point_0, ARRAY_SIZE(expected_point_0)},
+        {&point, TRUE, 0.0f, expected_point_0, ARRAY_SIZE(expected_point_0)},
+        {&spot, FALSE, 0.0f, expected_spot_0, ARRAY_SIZE(expected_spot_0)},
+        {&spot, TRUE, 0.0f, expected_spot_0, ARRAY_SIZE(expected_spot_0)},
+        {&point_range, FALSE, 0.0f, expected_point_range_0, ARRAY_SIZE(expected_point_range_0)},
     };
     IDirect3DDevice8 *device;
     D3DMATERIAL8 material;

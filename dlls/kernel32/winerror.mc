@@ -1473,7 +1473,7 @@ Too many links.
 MessageId=1150
 SymbolicName=ERROR_OLD_WIN_VERSION
 Language=ENU
-Newer windows version needed.
+Newer Windows version needed.
 .
 MessageId=1151
 SymbolicName=ERROR_APP_WRONG_OS

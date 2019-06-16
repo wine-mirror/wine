@@ -312,7 +312,7 @@ static HRESULT WINAPI HTMLImgElement_get_src(IHTMLImgElement *iface, BSTR *p)
     if(NS_SUCCEEDED(nsres)) {
         nsAString_GetData(&src_str, &src);
 
-        if(!strncmpiW(src, blockedW, ARRAY_SIZE(blockedW)-1)) {
+        if(!wcsnicmp(src, blockedW, ARRAY_SIZE(blockedW)-1)) {
             TRACE("returning BLOCKED::\n");
             *p = SysAllocString(blockedW);
             if(!*p)

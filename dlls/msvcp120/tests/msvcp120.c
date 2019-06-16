@@ -169,20 +169,6 @@ static void init_thiscall_thunk(void)
 #define call_func7(func,_this,a,b,c,d,e,f) func(_this,a,b,c,d,e,f)
 #endif /* __i386__ */
 
-static inline float __port_infinity(void)
-{
-    static const unsigned __inf_bytes = 0x7f800000;
-    return *(const float *)&__inf_bytes;
-}
-#define INFINITY __port_infinity()
-
-static inline float __port_nan(void)
-{
-    static const unsigned __nan_bytes = 0x7fc00000;
-    return *(const float *)&__nan_bytes;
-}
-#define NAN __port_nan()
-
 typedef int MSVCRT_long;
 typedef unsigned char MSVCP_bool;
 
@@ -323,6 +309,10 @@ typedef struct
     void *tail;
 } critical_section;
 
+#define MTX_PLAIN 0x1
+#define MTX_TRY 0x2
+#define MTX_TIMED 0x4
+#define MTX_RECURSIVE 0x100
 typedef struct
 {
     DWORD flags;
@@ -335,6 +325,7 @@ static int (__cdecl *p__Mtx_init)(_Mtx_t*, int);
 static void (__cdecl *p__Mtx_destroy)(_Mtx_t*);
 static int (__cdecl *p__Mtx_lock)(_Mtx_t*);
 static int (__cdecl *p__Mtx_unlock)(_Mtx_t*);
+static int (__cdecl *p__Mtx_trylock)(_Mtx_t*);
 
 /* cnd */
 typedef void *_Cnd_t;
@@ -801,6 +792,8 @@ static BOOL init(void)
             "_Mtx_lock");
     SET(p__Mtx_unlock,
             "_Mtx_unlock");
+    SET(p__Mtx_trylock,
+            "_Mtx_trylock");
 
     SET(p__Cnd_init,
             "_Cnd_init");
@@ -1257,9 +1250,7 @@ static void test_tr2_sys__Equivalent(void)
         { "tr2_test_dir/../tr2_test_dir/f1", "tr2_test_dir/f1", 1 }
     };
 
-    memset(current_path, 0, MAX_PATH);
     GetCurrentDirectoryA(MAX_PATH, current_path);
-    memset(temp_path, 0, MAX_PATH);
     GetTempPathA(MAX_PATH, temp_path);
     ok(SetCurrentDirectoryA(temp_path), "SetCurrentDirectoryA to temp_path failed\n");
     CreateDirectoryA("tr2_test_dir", NULL);
@@ -1291,32 +1282,29 @@ static void test_tr2_sys__Equivalent(void)
 
 static void test_tr2_sys__Current_get(void)
 {
+    static const WCHAR backslashW[] = {'\\',0};
     char temp_path[MAX_PATH], current_path[MAX_PATH], origin_path[MAX_PATH];
     char *temp;
     WCHAR temp_path_wchar[MAX_PATH], current_path_wchar[MAX_PATH];
     WCHAR *temp_wchar;
-    memset(origin_path, 0, MAX_PATH);
+
     GetCurrentDirectoryA(MAX_PATH, origin_path);
-    memset(temp_path, 0, MAX_PATH);
     GetTempPathA(MAX_PATH, temp_path);
 
     ok(SetCurrentDirectoryA(temp_path), "SetCurrentDirectoryA to temp_path failed\n");
-    memset(current_path, 0, MAX_PATH);
     temp = p_tr2_sys__Current_get(current_path);
     ok(temp == current_path, "p_tr2_sys__Current_get returned different buffer\n");
-    temp[strlen(temp)] = '\\';
+    strcat(temp, "\\");
     ok(!strcmp(temp_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", temp_path, current_path);
 
     GetTempPathW(MAX_PATH, temp_path_wchar);
     ok(SetCurrentDirectoryW(temp_path_wchar), "SetCurrentDirectoryW to temp_path_wchar failed\n");
-    memset(current_path_wchar, 0, MAX_PATH);
     temp_wchar = p_tr2_sys__Current_get_wchar(current_path_wchar);
     ok(temp_wchar == current_path_wchar, "p_tr2_sys__Current_get_wchar returned different buffer\n");
-    temp_wchar[wcslen(temp_wchar)] = '\\';
+    wcscat(temp_wchar, backslashW);
     ok(!wcscmp(temp_path_wchar, current_path_wchar), "test_tr2_sys__Current_get(): expect: %s, got %s\n", wine_dbgstr_w(temp_path_wchar), wine_dbgstr_w(current_path_wchar));
 
     ok(SetCurrentDirectoryA(origin_path), "SetCurrentDirectoryA to origin_path failed\n");
-    memset(current_path, 0, MAX_PATH);
     temp = p_tr2_sys__Current_get(current_path);
     ok(temp == current_path, "p_tr2_sys__Current_get returned different buffer\n");
     ok(!strcmp(origin_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", origin_path, current_path);
@@ -1327,25 +1315,22 @@ static void test_tr2_sys__Current_set(void)
     char temp_path[MAX_PATH], current_path[MAX_PATH], origin_path[MAX_PATH];
     char *temp;
     WCHAR testW[] = {'.','/',0};
-    memset(temp_path, 0, MAX_PATH);
+
     GetTempPathA(MAX_PATH, temp_path);
-    memset(origin_path, 0, MAX_PATH);
     GetCurrentDirectoryA(MAX_PATH, origin_path);
     temp = p_tr2_sys__Current_get(origin_path);
     ok(temp == origin_path, "p_tr2_sys__Current_get returned different buffer\n");
 
     ok(p_tr2_sys__Current_set(temp_path), "p_tr2_sys__Current_set to temp_path failed\n");
-    memset(current_path, 0, MAX_PATH);
     temp = p_tr2_sys__Current_get(current_path);
     ok(temp == current_path, "p_tr2_sys__Current_get returned different buffer\n");
-    temp[strlen(temp)] = '\\';
+    strcat(temp, "\\");
     ok(!strcmp(temp_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", temp_path, current_path);
 
     ok(p_tr2_sys__Current_set_wchar(testW), "p_tr2_sys__Current_set_wchar to temp_path failed\n");
-    memset(current_path, 0, MAX_PATH);
     temp = p_tr2_sys__Current_get(current_path);
     ok(temp == current_path, "p_tr2_sys__Current_get returned different buffer\n");
-    temp[strlen(temp)] = '\\';
+    strcat(temp, "\\");
     ok(!strcmp(temp_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", temp_path, current_path);
 
     errno = 0xdeadbeef;
@@ -1357,7 +1342,6 @@ static void test_tr2_sys__Current_set(void)
     ok(errno == 0xdeadbeef, "errno = %d\n", errno);
 
     ok(p_tr2_sys__Current_set(origin_path), "p_tr2_sys__Current_set to origin_path failed\n");
-    memset(current_path, 0, MAX_PATH);
     temp = p_tr2_sys__Current_get(current_path);
     ok(temp == current_path, "p_tr2_sys__Current_get returned different buffer\n");
     ok(!strcmp(origin_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", origin_path, current_path);
@@ -1514,9 +1498,7 @@ static void test_tr2_sys__Rename(void)
         { not_existW, invalidW, ERROR_FILE_NOT_FOUND }
     };
 
-    memset(current_path, 0, MAX_PATH);
     GetCurrentDirectoryA(MAX_PATH, current_path);
-    memset(temp_path, 0, MAX_PATH);
     GetTempPathA(MAX_PATH, temp_path);
     ok(SetCurrentDirectoryA(temp_path), "SetCurrentDirectoryA to temp_path failed\n");
     ret = p_tr2_sys__Make_dir("tr2_test_dir");
@@ -1602,9 +1584,8 @@ static void test_tr2_sys__Statvfs(void)
     struct space_info info;
     char current_path[MAX_PATH];
     WCHAR current_path_wchar[MAX_PATH];
-    memset(current_path, 0, MAX_PATH);
+
     p_tr2_sys__Current_get(current_path);
-    memset(current_path_wchar, 0, MAX_PATH);
     p_tr2_sys__Current_get_wchar(current_path_wchar);
 
     p_tr2_sys__Statvfs(&info, current_path);
@@ -1784,7 +1765,6 @@ static void test_tr2_sys__dir_operation(void)
     ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
     CloseHandle(file);
 
-    memset(longer_path, 0, MAX_PATH);
     GetCurrentDirectoryA(MAX_PATH, longer_path);
     strcat(longer_path, "\\tr2_test_dir\\");
     while(lstrlenA(longer_path) < MAX_PATH-1)
@@ -1882,9 +1862,7 @@ static void test_tr2_sys__Link(void)
         { "f1", "not_exist_dir\\f1_link", TRUE, ERROR_PATH_NOT_FOUND }
     };
 
-    memset(current_path, 0, MAX_PATH);
     GetCurrentDirectoryA(MAX_PATH, current_path);
-    memset(temp_path, 0, MAX_PATH);
     GetTempPathA(MAX_PATH, temp_path);
     ok(SetCurrentDirectoryA(temp_path), "SetCurrentDirectoryA to temp_path failed\n");
 
@@ -2436,6 +2414,42 @@ static void test__Pad(void)
 
     call_func1(p__Pad_dtor, &pad);
     CloseHandle(_Pad__Launch_returned);
+}
+
+static void test__Mtx(void)
+{
+#
+    static int flags[] =
+    {
+        0, MTX_PLAIN, MTX_TRY, MTX_TIMED, MTX_RECURSIVE,
+        MTX_PLAIN|MTX_TRY, MTX_PLAIN|MTX_RECURSIVE, MTX_PLAIN|0xbeef
+    };
+    _Mtx_t mtx;
+    int i, r, expect;
+
+    for (i=0; i<ARRAY_SIZE(flags); i++)
+    {
+        if (flags[i] == MTX_PLAIN || flags[i] & MTX_RECURSIVE)
+            expect = 0;
+        else
+            expect = 3;
+
+        r = p__Mtx_init(&mtx, flags[i]);
+        ok(!r, "failed to init mtx (flags %x)\n", flags[i]);
+
+        r = p__Mtx_trylock(&mtx);
+        ok(!r, "_Mtx_trylock returned %x (flags %x)\n", r, flags[i]);
+        r = p__Mtx_trylock(&mtx);
+        ok(r == expect, "_Mtx_trylock returned %x (flags %x)\n", r, flags[i]);
+        if(!r) p__Mtx_unlock(&mtx);
+
+        r = p__Mtx_lock(&mtx);
+        ok(r == expect, "_Mtx_lock returned %x (flags %x)\n", r, flags[i]);
+        if(!r) p__Mtx_unlock(&mtx);
+
+        p__Mtx_unlock(&mtx);
+        p__Mtx_destroy(&mtx);
+    }
 }
 
 static void test_threads__Mtx(void)
@@ -3341,6 +3355,7 @@ START_TEST(msvcp120)
     test_thrd();
     test_cnd();
     test__Pad();
+    test__Mtx();
     test_threads__Mtx();
 
     test_vector_base_v4__Segment_index_of();

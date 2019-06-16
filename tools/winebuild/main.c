@@ -79,7 +79,6 @@ char *input_file_name = NULL;
 char *spec_file_name = NULL;
 FILE *output_file = NULL;
 const char *output_file_name = NULL;
-static const char *output_file_source_name;
 static int fake_module;
 
 struct strarray lib_path = { 0 };
@@ -450,25 +449,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             add_import_dll( optarg, NULL );
             break;
         case 'o':
-            {
-                char *ext = strrchr( optarg, '.' );
-
-                if (unlink( optarg ) == -1 && errno != ENOENT)
-                    fatal_error( "Unable to create output file '%s'\n", optarg );
-                if (ext && !strcmp( ext, ".o" ))
-                {
-                    output_file_source_name = get_temp_file_name( optarg, ".s" );
-                    if (!(output_file = fopen( output_file_source_name, "w" )))
-                        fatal_error( "Unable to create output file '%s'\n", optarg );
-                }
-                else
-                {
-                    if (!(output_file = fopen( optarg, "w" )))
-                        fatal_error( "Unable to create output file '%s'\n", optarg );
-                }
-                output_file_name = xstrdup(optarg);
-                atexit( cleanup );  /* make sure we remove the output file on exit */
-            }
+            if (unlink( optarg ) == -1 && errno != ENOENT)
+                fatal_error( "Unable to create output file '%s'\n", optarg );
+            output_file_name = xstrdup( optarg );
             break;
         case 'r':
             strarray_add( &res_files, xstrdup( optarg ), NULL );
@@ -636,8 +619,8 @@ int main(int argc, char **argv)
     signal( SIGTERM, exit_on_signal );
     signal( SIGINT, exit_on_signal );
 
-    output_file = stdout;
     argv = parse_options( argc, argv, spec );
+    atexit( cleanup );  /* make sure we remove the output file on exit */
 
     switch(exec_mode)
     {
@@ -647,31 +630,30 @@ int main(int argc, char **argv)
         /* fall through */
     case MODE_EXE:
         load_resources( argv, spec );
-        load_import_libs( argv );
         if (spec_file_name && !parse_input_file( spec )) break;
+
         if (fake_module)
         {
             if (spec->type == SPEC_WIN16) output_fake_module16( spec );
             else output_fake_module( spec );
             break;
         }
-        read_undef_symbols( spec, argv );
-        switch (spec->type)
+        if (target_platform != PLATFORM_WINDOWS)
         {
-            case SPEC_WIN16:
-                output_spec16_file( spec );
-                break;
-            case SPEC_WIN32:
-                BuildSpec32File( spec );
-                break;
-            default: assert(0);
+            load_import_libs( argv );
+            read_undef_symbols( spec, argv );
+            resolve_imports( spec );
         }
+        if (spec->type == SPEC_WIN16) output_spec16_file( spec );
+        else output_spec32_file( spec );
         break;
     case MODE_DEF:
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
+        open_output_file();
         output_def_file( spec, 1 );
+        close_output_file();
         break;
     case MODE_IMPLIB:
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
@@ -687,11 +669,6 @@ int main(int argc, char **argv)
         break;
     }
     if (nb_errors) exit(1);
-    if (output_file_name)
-    {
-        if (fclose( output_file ) < 0) fatal_perror( "fclose" );
-        if (output_file_source_name) assemble_file( output_file_source_name, output_file_name );
-        output_file_name = NULL;
-    }
+    output_file_name = NULL;
     return 0;
 }

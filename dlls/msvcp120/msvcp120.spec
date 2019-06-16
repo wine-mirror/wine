@@ -289,9 +289,9 @@
 @ stub -arch=arm ??0_Facet_base@std@@QAA@XZ
 @ stub -arch=i386 ??0_Facet_base@std@@QAE@XZ
 @ stub -arch=win64 ??0_Facet_base@std@@QEAA@XZ
-@ stub -arch=arm ??0_Init_locks@std@@QAA@XZ
-@ stub -arch=i386 ??0_Init_locks@std@@QAE@XZ
-@ stub -arch=win64 ??0_Init_locks@std@@QEAA@XZ
+@ cdecl -arch=arm ??0_Init_locks@std@@QAA@XZ(ptr) _Init_locks_ctor
+@ thiscall -arch=i386 ??0_Init_locks@std@@QAE@XZ(ptr) _Init_locks_ctor
+@ cdecl -arch=win64 ??0_Init_locks@std@@QEAA@XZ(ptr) _Init_locks_ctor
 @ cdecl -arch=arm ??0_Locimp@locale@std@@AAA@ABV012@@Z(ptr ptr) locale__Locimp_copy_ctor
 @ thiscall -arch=i386 ??0_Locimp@locale@std@@AAE@ABV012@@Z(ptr ptr) locale__Locimp_copy_ctor
 @ cdecl -arch=win64 ??0_Locimp@locale@std@@AEAA@AEBV012@@Z(ptr ptr) locale__Locimp_copy_ctor
@@ -484,9 +484,9 @@
 @ stub -arch=arm ??1_Facet_base@std@@UAA@XZ
 @ stub -arch=i386 ??1_Facet_base@std@@UAE@XZ
 @ stub -arch=win64 ??1_Facet_base@std@@UEAA@XZ
-@ stub -arch=arm ??1_Init_locks@std@@QAA@XZ
-@ stub -arch=i386 ??1_Init_locks@std@@QAE@XZ
-@ stub -arch=win64 ??1_Init_locks@std@@QEAA@XZ
+@ cdecl -arch=arm ??1_Init_locks@std@@QAA@XZ(ptr) _Init_locks_dtor
+@ thiscall -arch=i386 ??1_Init_locks@std@@QAE@XZ(ptr) _Init_locks_dtor
+@ cdecl -arch=win64 ??1_Init_locks@std@@QEAA@XZ(ptr) _Init_locks_dtor
 @ cdecl -arch=arm ??1_Locimp@locale@std@@MAA@XZ(ptr) locale__Locimp_dtor
 @ thiscall -arch=i386 ??1_Locimp@locale@std@@MAE@XZ(ptr) locale__Locimp_dtor
 @ cdecl -arch=win64 ??1_Locimp@locale@std@@MEAA@XZ(ptr) locale__Locimp_dtor
@@ -1439,10 +1439,10 @@
 @ cdecl -arch=win64 ?_Init_ctor@Init@ios_base@std@@CAXPEAV123@@Z(ptr) ios_base_Init__Init_ctor
 @ cdecl -arch=win32 ?_Init_dtor@Init@ios_base@std@@CAXPAV123@@Z(ptr) ios_base_Init__Init_dtor
 @ cdecl -arch=win64 ?_Init_dtor@Init@ios_base@std@@CAXPEAV123@@Z(ptr) ios_base_Init__Init_dtor
-@ stub -arch=win32 ?_Init_locks_ctor@_Init_locks@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Init_locks_ctor@_Init_locks@std@@CAXPEAV12@@Z
-@ stub -arch=win32 ?_Init_locks_dtor@_Init_locks@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Init_locks_dtor@_Init_locks@std@@CAXPEAV12@@Z
+@ cdecl -arch=win32 ?_Init_locks_ctor@_Init_locks@std@@CAXPAV12@@Z(ptr) _Init_locks__Init_locks_ctor
+@ cdecl -arch=win64 ?_Init_locks_ctor@_Init_locks@std@@CAXPEAV12@@Z(ptr) _Init_locks__Init_locks_ctor
+@ cdecl -arch=win32 ?_Init_locks_dtor@_Init_locks@std@@CAXPAV12@@Z(ptr) _Init_locks__Init_locks_dtor
+@ cdecl -arch=win64 ?_Init_locks_dtor@_Init_locks@std@@CAXPEAV12@@Z(ptr) _Init_locks__Init_locks_dtor
 @ cdecl -arch=arm ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAAXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z(ptr ptr long ptr ptr ptr) _Concurrent_vector_base_v4__Internal_assign
 @ thiscall -arch=i386 ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAEXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z(ptr ptr long ptr ptr ptr) _Concurrent_vector_base_v4__Internal_assign
 @ cdecl -arch=win64 ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IEAAXAEBV123@_KP6AXPEAX1@ZP6AX2PEBX1@Z5@Z(ptr ptr long ptr ptr ptr) _Concurrent_vector_base_v4__Internal_assign
@@ -1562,10 +1562,10 @@
 @ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_ctor
 @ cdecl -arch=win32 ?_Lockit_ctor@_Lockit@std@@CAXPAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
 @ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
-@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit_init
+@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit__Lockit_ctor_lock
 @ cdecl -arch=win32 ?_Lockit_dtor@_Lockit@std@@CAXPAV12@@Z(ptr) _Lockit__Lockit_dtor
 @ cdecl -arch=win64 ?_Lockit_dtor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_dtor
-@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit_free
+@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit__Lockit_dtor_unlock
 @ cdecl -arch=win32 ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z(str ptr) tr2_sys__Lstat
 @ cdecl -arch=win64 ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z(str ptr) tr2_sys__Lstat
 @ cdecl -arch=win32 ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z(wstr ptr) tr2_sys__Lstat_wchar
@@ -1852,7 +1852,7 @@
 @ cdecl -arch=arm ?clear@ios_base@std@@QAAXI@Z(ptr long) ios_base_clear_unsigned
 @ thiscall -arch=i386 ?clear@ios_base@std@@QAEXI@Z(ptr long) ios_base_clear_unsigned
 @ cdecl -arch=win64 ?clear@ios_base@std@@QEAAXI@Z(ptr long) ios_base_clear_unsigned
-@ extern ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A clog
+@ extern ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A MSVCP_clog
 @ cdecl -arch=arm ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QAAAAV12@ABV12@@Z(ptr ptr) basic_ios_char_copyfmt
 @ thiscall -arch=i386 ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEAAV12@ABV12@@Z(ptr ptr) basic_ios_char_copyfmt
 @ cdecl -arch=win64 ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAAEAV12@AEBV12@@Z(ptr ptr) basic_ios_char_copyfmt
@@ -3801,7 +3801,7 @@
 @ cdecl _Stoulx(ptr ptr long ptr)
 @ stub _Stoxflt
 @ cdecl _Strcoll(ptr ptr ptr ptr ptr)
-@ stub _Strxfrm
+@ cdecl _Strxfrm(ptr ptr ptr ptr ptr)
 @ stub _Thrd_abort
 @ cdecl _Thrd_create(ptr ptr ptr)
 @ cdecl -norelay _Thrd_current()

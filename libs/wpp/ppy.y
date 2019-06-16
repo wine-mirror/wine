@@ -81,9 +81,9 @@
 	if(cv_signed(v1) && cv_signed(v2))		\
 		r.val.sll = v1.val.sll OP v2.val.sll;	\
 	else if(cv_signed(v1) && !cv_signed(v2))	\
-		r.val.sll = v1.val.sll OP (wrc_sll_t) v2.val.ull; \
+		r.val.sll = v1.val.sll OP (__int64) v2.val.ull; \
 	else if(!cv_signed(v1) && cv_signed(v2))	\
-		r.val.sll = (wrc_sll_t) v1.val.ull OP v2.val.sll; \
+		r.val.sll = (__int64) v1.val.ull OP v2.val.sll; \
 	else						\
 		r.val.ull = v1.val.ull OP v2.val.ull;
 
@@ -128,8 +128,8 @@ static int	nmacro_args;
 	unsigned int	uint;
 	long		slong;
 	unsigned long	ulong;
-	wrc_sll_t	sll;
-	wrc_ull_t	ull;
+	__int64		sll;
+	unsigned __int64 ull;
 	int		*iptr;
 	char		*cptr;
 	cval_t		cval;
@@ -539,12 +539,12 @@ static int boolean(cval_t *v)
 {
 	switch(v->type)
 	{
-	case cv_sint:	return v->val.si != (int)0;
-	case cv_uint:	return v->val.ui != (unsigned int)0;
-	case cv_slong:	return v->val.sl != (long)0;
-	case cv_ulong:	return v->val.ul != (unsigned long)0;
-	case cv_sll:	return v->val.sll != (wrc_sll_t)0;
-	case cv_ull:	return v->val.ull != (wrc_ull_t)0;
+	case cv_sint:	return v->val.si != 0;
+	case cv_uint:	return v->val.ui != 0;
+	case cv_slong:	return v->val.sl != 0;
+	case cv_ulong:	return v->val.ul != 0;
+	case cv_sll:	return v->val.sll != 0;
+	case cv_ull:	return v->val.ull != 0;
 	}
 	return 0;
 }

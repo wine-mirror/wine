@@ -1,6 +1,7 @@
 MODULE    = regsvr32.exe
-APPMODE   = -mwindows -municode
 IMPORTS   = ole32 user32
+
+EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
 
 C_SRCS = \
 	regsvr32.c

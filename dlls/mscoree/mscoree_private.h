@@ -45,6 +45,8 @@ extern HRESULT assembly_get_runtime_version(ASSEMBLY *assembly, LPSTR *version) 
 extern HRESULT assembly_get_vtable_fixups(ASSEMBLY *assembly, VTableFixup **fixups, DWORD *count) DECLSPEC_HIDDEN;
 extern HRESULT assembly_get_native_entrypoint(ASSEMBLY *assembly, NativeEntryPointFunc *func) DECLSPEC_HIDDEN;
 
+#define WINE_MONO_VERSION "4.8.3"
+
 /* Mono embedding */
 typedef struct _MonoDomain MonoDomain;
 typedef struct _MonoAssembly MonoAssembly;
@@ -106,6 +108,8 @@ extern HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config
     IStream *config_stream, DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy,
     ICLRRuntimeInfo **result) DECLSPEC_HIDDEN;
 
+extern BOOL get_mono_path(LPWSTR path, BOOL skip_local) DECLSPEC_HIDDEN;
+
 extern HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **result) DECLSPEC_HIDDEN;
 
 extern HRESULT MetaDataDispenser_CreateInstance(IUnknown **ppUnk) DECLSPEC_HIDDEN;
@@ -144,6 +148,7 @@ extern BOOL is_mono_started DECLSPEC_HIDDEN;
 
 extern MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly) DECLSPEC_HIDDEN;
 extern MonoAssembly* (CDECL *mono_assembly_load_from)(MonoImage *image, const char *fname, MonoImageOpenStatus *status) DECLSPEC_HIDDEN;
+extern const char* (CDECL *mono_assembly_name_get_name)(MonoAssemblyName *aname) DECLSPEC_HIDDEN;
 extern MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status) DECLSPEC_HIDDEN;
 extern void (CDECL *mono_callspec_set_assembly)(MonoAssembly *assembly) DECLSPEC_HIDDEN;
 extern MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type) DECLSPEC_HIDDEN;

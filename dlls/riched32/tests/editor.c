@@ -1263,8 +1263,8 @@ static void test_enter(void)
   SendMessageW(hwndRichEdit, WM_CHAR, 'T', 0);
   SendMessageW(hwndRichEdit, WM_CHAR, '\r', 0);
 
-  SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
-  ok(result == 1, "Got %d\n", (int)result);
+  result = SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
+  ok(result == 3, "Got %ld\n", result);
   format_test_result(resultbuf, buf);
   format_test_result(expectedbuf, "T\r\n");
   result = strcmp(resultbuf, expectedbuf);

@@ -20,6 +20,11 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "mfplay.h"
+
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
@@ -33,4 +38,12 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
     }
 
     return TRUE;
+}
+
+HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_CREATION_OPTIONS options,
+        IMFPMediaPlayerCallback *callback, HWND hwnd, IMFPMediaPlayer **player)
+{
+    FIXME("%s, %d, %#x, %p, %p, %p.\n", debugstr_w(url), start_playback, options, callback, hwnd, player);
+
+    return E_NOTIMPL;
 }

@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #define COBJMACROS
 
@@ -30,7 +31,6 @@
 
 #include "resource.h"
 
-#include "wine/unicode.h"
 #include "wine/heap.h"
 #include "wine/list.h"
 
@@ -75,7 +75,7 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
     if(str) {
         DWORD size;
 
-        size = (strlenW(str)+1)*sizeof(WCHAR);
+        size = (lstrlenW(str)+1)*sizeof(WCHAR);
         ret = heap_alloc(size);
         if(ret)
             memcpy(ret, str, size);
@@ -116,6 +116,7 @@ typedef enum {
     JSCLASS_ARRAY,
     JSCLASS_BOOLEAN,
     JSCLASS_DATE,
+    JSCLASS_ENUMERATOR,
     JSCLASS_ERROR,
     JSCLASS_FUNCTION,
     JSCLASS_GLOBAL,
@@ -436,6 +437,7 @@ struct _script_ctx_t {
     jsdisp_t *array_constr;
     jsdisp_t *bool_constr;
     jsdisp_t *date_constr;
+    jsdisp_t *enumerator_constr;
     jsdisp_t *error_constr;
     jsdisp_t *eval_error_constr;
     jsdisp_t *range_error_constr;
@@ -468,6 +470,7 @@ HRESULT create_array_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_bool_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_date_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT init_error_constr(script_ctx_t*,jsdisp_t*) DECLSPEC_HIDDEN;
+HRESULT create_enumerator_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_number_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_object_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_regexp_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
@@ -501,14 +504,6 @@ static inline BOOL is_vclass(vdisp_t *vdisp, jsclass_t class)
 {
     return is_jsdisp(vdisp) && is_class(vdisp->u.jsdisp, class);
 }
-
-#ifndef INT32_MIN
-#define INT32_MIN (-2147483647-1)
-#endif
-
-#ifndef INT32_MAX
-#define INT32_MAX (2147483647)
-#endif
 
 static inline BOOL is_int32(double d)
 {
@@ -558,6 +553,7 @@ static inline DWORD make_grfdex(script_ctx_t *ctx, DWORD flags)
 #define JS_E_VBARRAY_EXPECTED        MAKE_JSERROR(IDS_NOT_VBARRAY)
 #define JS_E_INVALID_DELETE          MAKE_JSERROR(IDS_INVALID_DELETE)
 #define JS_E_JSCRIPT_EXPECTED        MAKE_JSERROR(IDS_JSCRIPT_EXPECTED)
+#define JS_E_ENUMERATOR_EXPECTED     MAKE_JSERROR(IDS_NOT_ENUMERATOR)
 #define JS_E_REGEXP_SYNTAX           MAKE_JSERROR(IDS_REGEXP_SYNTAX_ERROR)
 #define JS_E_INVALID_URI_CODING      MAKE_JSERROR(IDS_URI_INVALID_CODING)
 #define JS_E_INVALID_URI_CHAR        MAKE_JSERROR(IDS_URI_INVALID_CHAR)

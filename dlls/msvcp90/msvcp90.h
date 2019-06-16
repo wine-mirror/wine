@@ -20,6 +20,7 @@
 #include "windef.h"
 #include "cxx.h"
 
+#define CXX_EXCEPTION       0xe06d7363
 #define ALIGNED_SIZE(size, alignment) (((size)+((alignment)-1))/(alignment)*(alignment))
 
 typedef unsigned char MSVCP_bool;
@@ -296,6 +297,14 @@ ctype_char* ctype_char_use_facet(const locale*);
 ctype_wchar* ctype_wchar_use_facet(const locale*);
 ctype_wchar* ctype_short_use_facet(const locale*);
 
+/* class _Init_locks */
+typedef struct {
+    char empty_struct;
+} _Init_locks;
+
+void __cdecl _Init_locks__Init_locks_ctor(_Init_locks*);
+void __cdecl _Init_locks__Init_locks_dtor(_Init_locks*);
+
 /* class _Lockit */
 typedef struct {
 #if _MSVCP_VER >= 70
@@ -311,8 +320,6 @@ typedef struct {
 #define _LOCK_DEBUG 3
 #define _MAX_LOCK 4
 
-void init_lockit(void);
-void free_lockit(void);
 _Lockit* __thiscall _Lockit_ctor_locktype(_Lockit*, int);
 void __thiscall _Lockit_dtor(_Lockit*);
 
@@ -661,9 +668,3 @@ static inline int mbstowcs_wrapper( size_t *ret, wchar_t *wcs, size_t size, cons
 #endif
 
 void free_misc(void);
-
-#if _MSVCP_VER >= 140
-#define UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR      (0x0002)
-int __cdecl __stdio_common_vsprintf(unsigned __int64 options, char *str, size_t len, const char *format,
-                                    _locale_t locale, __ms_va_list valist);
-#endif

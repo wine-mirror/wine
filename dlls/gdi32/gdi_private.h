@@ -294,6 +294,14 @@ struct font_realization_info
     WORD  simulations; /* 0 bit - bold simulation, 1 bit - oblique simulation */
 };
 
+/* Undocumented structure filled in by GetCharWidthInfo */
+struct char_width_info
+{
+    INT lsb;   /* minimum left side bearing */
+    INT rsb;   /* minimum right side bearing */
+    INT unk;   /* unknown */
+};
+
 extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
 extern HANDLE WineEngAddFontMemResourceEx(PVOID, DWORD, PVOID, LPDWORD) DECLSPEC_HIDDEN;
 extern BOOL WineEngCreateScalableFontResource(DWORD, LPCWSTR, LPCWSTR, LPCWSTR) DECLSPEC_HIDDEN;

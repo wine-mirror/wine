@@ -3,6 +3,8 @@ IMPORTS = ucrtbase
 EXTRADEFS = -D_MSVCP_VER=140
 PARENTSRC = ../msvcp90
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	exception.c \
 	ios.c \

@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 
 #include <math.h>
 #include <limits.h>
@@ -113,13 +111,6 @@ static WCHAR int_to_char(int i)
     return 'A'+i-10;
 }
 
-static HRESULT JSGlobal_Enumerator(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -188,7 +179,7 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    call_frame_t *frame;
+    call_frame_t *frame = ctx->call_ctx;
     DWORD exec_flags = EXEC_EVAL;
     bytecode_t *code;
     const WCHAR *src;
@@ -208,11 +199,6 @@ HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned a
         return S_OK;
     }
 
-    if(!(frame = ctx->call_ctx)) {
-        FIXME("No active exec_ctx\n");
-        return E_UNEXPECTED;
-    }
-
     src = jsstr_flatten(get_string(argv[0]));
     if(!src)
         return E_OUTOFMEMORY;
@@ -224,12 +210,12 @@ HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned a
         return throw_syntax_error(ctx, hres, NULL);
     }
 
-    if(frame->flags & EXEC_GLOBAL)
+    if(!frame || (frame->flags & EXEC_GLOBAL))
         exec_flags |= EXEC_GLOBAL;
     if(flags & DISPATCH_JSCRIPT_CALLEREXECSSOURCE)
         exec_flags |= EXEC_RETURN_TO_INTERP;
-    hres = exec_source(ctx, exec_flags, code, &code->global_code, frame->scope,
-            frame->this_obj, NULL, frame->variable_obj, 0, NULL, r);
+    hres = exec_source(ctx, exec_flags, code, &code->global_code, frame ? frame->scope : NULL,
+            frame ? frame->this_obj : NULL, NULL, frame ? frame->variable_obj : ctx->global, 0, NULL, r);
     release_bytecode(code);
     return hres;
 }
@@ -324,7 +310,7 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     if(FAILED(hres))
         return hres;
 
-    while(isspaceW(*ptr))
+    while(iswspace(*ptr))
         ptr++;
 
     switch(*ptr) {
@@ -392,7 +378,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
     if(FAILED(hres))
         return hres;
 
-    while(isspaceW(*str)) str++;
+    while(iswspace(*str)) str++;
 
     if(*str == '+')
         str++;
@@ -401,10 +387,10 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         str++;
     }
 
-    if(isdigitW(*str))
+    if(iswdigit(*str))
         ret_nan = FALSE;
 
-    while(isdigitW(*str)) {
+    while(iswdigit(*str)) {
         hlp = d*10 + *(str++) - '0';
         if(d>MAXLONGLONG/10 || hlp<0) {
             exp++;
@@ -413,17 +399,17 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         else
             d = hlp;
     }
-    while(isdigitW(*str)) {
+    while(iswdigit(*str)) {
         exp++;
         str++;
     }
 
     if(*str == '.') str++;
 
-    if(isdigitW(*str))
+    if(iswdigit(*str))
         ret_nan = FALSE;
 
-    while(isdigitW(*str)) {
+    while(iswdigit(*str)) {
         hlp = d*10 + *(str++) - '0';
         if(d>MAXLONGLONG/10 || hlp<0)
             break;
@@ -431,7 +417,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         d = hlp;
         exp--;
     }
-    while(isdigitW(*str))
+    while(iswdigit(*str))
         str++;
 
     if(*str && !ret_nan && (*str=='e' || *str=='E')) {
@@ -445,7 +431,7 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
             str++;
         }
 
-        while(isdigitW(*str)) {
+        while(iswdigit(*str)) {
             if(e>INT_MAX/10 || (e = e*10 + *str++ - '0')<0)
                 e = INT_MAX;
         }
@@ -472,8 +458,8 @@ static HRESULT JSGlobal_parseFloat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 }
 
 static inline int hex_to_int(const WCHAR wch) {
-    if(toupperW(wch)>='A' && toupperW(wch)<='F') return toupperW(wch)-'A'+10;
-    if(isdigitW(wch)) return wch-'0';
+    if(towupper(wch)>='A' && towupper(wch)<='F') return towupper(wch)-'A'+10;
+    if(iswdigit(wch)) return wch-'0';
     return -1;
 }
 
@@ -942,7 +928,6 @@ static HRESULT JSGlobal_decodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
 
 static const builtin_prop_t JSGlobal_props[] = {
     {CollectGarbageW,            JSGlobal_CollectGarbage,            PROPF_METHOD},
-    {EnumeratorW,                JSGlobal_Enumerator,                PROPF_METHOD|7},
     {_GetObjectW,                JSGlobal_GetObject,                 PROPF_METHOD|2},
     {ScriptEngineW,              JSGlobal_ScriptEngine,              PROPF_METHOD},
     {ScriptEngineBuildVersionW,  JSGlobal_ScriptEngineBuildVersion,  PROPF_METHOD},
@@ -1016,6 +1001,15 @@ static HRESULT init_constructors(script_ctx_t *ctx, jsdisp_t *object_prototype)
 
     hres = jsdisp_define_data_property(ctx->global, DateW, PROPF_WRITABLE,
                                        jsval_obj(ctx->date_constr));
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_enumerator_constr(ctx, object_prototype, &ctx->enumerator_constr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_define_data_property(ctx->global, EnumeratorW, PROPF_WRITABLE,
+                                       jsval_obj(ctx->enumerator_constr));
     if(FAILED(hres))
         return hres;
 

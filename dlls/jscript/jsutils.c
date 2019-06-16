@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 
 #include <math.h>
 #include <assert.h>
@@ -516,7 +514,7 @@ static HRESULT str_to_number(jsstr_t *str, double *ret)
     if(!ptr)
         return E_OUTOFMEMORY;
 
-    while(isspaceW(*ptr))
+    while(iswspace(*ptr))
         ptr++;
 
     if(*ptr == '-') {
@@ -526,9 +524,9 @@ static HRESULT str_to_number(jsstr_t *str, double *ret)
         ptr++;
     }
 
-    if(!strncmpW(ptr, infinityW, ARRAY_SIZE(infinityW))) {
+    if(!wcsncmp(ptr, infinityW, ARRAY_SIZE(infinityW))) {
         ptr += ARRAY_SIZE(infinityW);
-        while(*ptr && isspaceW(*ptr))
+        while(*ptr && iswspace(*ptr))
             ptr++;
 
         if(*ptr)
@@ -551,7 +549,7 @@ static HRESULT str_to_number(jsstr_t *str, double *ret)
         return S_OK;
     }
 
-    while(isdigitW(*ptr))
+    while(iswdigit(*ptr))
         d = d*10 + (*ptr++ - '0');
 
     if(*ptr == 'e' || *ptr == 'E') {
@@ -566,7 +564,7 @@ static HRESULT str_to_number(jsstr_t *str, double *ret)
             ptr++;
         }
 
-        while(isdigitW(*ptr))
+        while(iswdigit(*ptr))
             l = l*10 + (*ptr++ - '0');
         if(eneg)
             l = -l;
@@ -576,13 +574,13 @@ static HRESULT str_to_number(jsstr_t *str, double *ret)
         DOUBLE dec = 0.1;
 
         ptr++;
-        while(isdigitW(*ptr)) {
+        while(iswdigit(*ptr)) {
             d += dec * (*ptr++ - '0');
             dec *= 0.1;
         }
     }
 
-    while(isspaceW(*ptr))
+    while(iswspace(*ptr))
         ptr++;
 
     if(*ptr) {
@@ -892,6 +890,14 @@ HRESULT variant_change_type(script_ctx_t *ctx, VARIANT *dst, VARIANT *src, VARTY
             else
                 V_I2(dst) = i;
         }
+        break;
+    }
+    case VT_UI2: {
+        UINT32 i;
+
+        hres = to_uint32(ctx, val, &i);
+        if(SUCCEEDED(hres))
+            V_UI2(dst) = i;
         break;
     }
     case VT_R8: {

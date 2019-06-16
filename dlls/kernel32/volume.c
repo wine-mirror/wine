@@ -1942,7 +1942,7 @@ BOOL WINAPI GetVolumePathNamesForVolumeNameW(LPCWSTR volumename, LPWSTR volumepa
             linkname = (const WCHAR *)((const char *)link + link->MountPoints[j].SymbolicLinkNameOffset);
 
             if (link->MountPoints[j].SymbolicLinkNameLength == sizeof(dosdevicesW) + 2 * sizeof(WCHAR) &&
-                !memicmpW( linkname, dosdevicesW, ARRAY_SIZE( dosdevicesW )))
+                !strncmpiW( linkname, dosdevicesW, ARRAY_SIZE( dosdevicesW )))
             {
                 len += 4;
                 if (volumepathname && len < buflen)

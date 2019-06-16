@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -33,8 +31,6 @@
 #include "winerror.h"
 #include "objbase.h"
 #include "olectl.h"
-
-#include "wine/unicode.h"
 
 #include "msctf.h"
 #include "msctf_internal.h"
@@ -230,7 +226,7 @@ static void add_userkey( REFCLSID rclsid, LANGID langid,
 
     StringFromGUID2(rclsid, buf, 39);
     StringFromGUID2(guidProfile, buf2, 39);
-    sprintfW(fullkey,szwFullLangfmt,szwSystemTIPKey,buf,szwLngp,langid,buf2);
+    swprintf(fullkey,ARRAY_SIZE(fullkey),szwFullLangfmt,szwSystemTIPKey,buf,szwLngp,langid,buf2);
 
     res = RegCreateKeyExW(HKEY_CURRENT_USER,fullkey, 0, NULL, 0,
                    KEY_READ | KEY_WRITE, NULL, &key, &disposition);
@@ -303,7 +299,7 @@ static HRESULT WINAPI InputProcessorProfiles_Register(
     TRACE("(%p) %s\n",This,debugstr_guid(rclsid));
 
     StringFromGUID2(rclsid, buf, 39);
-    sprintfW(fullkey,szwTipfmt,szwSystemTIPKey,buf);
+    swprintf(fullkey,ARRAY_SIZE(fullkey),szwTipfmt,szwSystemTIPKey,buf);
 
     if (RegCreateKeyExW(HKEY_LOCAL_MACHINE,fullkey, 0, NULL, 0,
                     KEY_READ | KEY_WRITE, NULL, &tipkey, NULL) != ERROR_SUCCESS)
@@ -324,7 +320,7 @@ static HRESULT WINAPI InputProcessorProfiles_Unregister(
     TRACE("(%p) %s\n",This,debugstr_guid(rclsid));
 
     StringFromGUID2(rclsid, buf, 39);
-    sprintfW(fullkey,szwTipfmt,szwSystemTIPKey,buf);
+    swprintf(fullkey,ARRAY_SIZE(fullkey),szwTipfmt,szwSystemTIPKey,buf);
 
     RegDeleteTreeW(HKEY_LOCAL_MACHINE, fullkey);
     RegDeleteTreeW(HKEY_CURRENT_USER, fullkey);
@@ -355,14 +351,14 @@ static HRESULT WINAPI InputProcessorProfiles_AddLanguageProfile(
             debugstr_wn(pchIconFile,cchFile),uIconIndex);
 
     StringFromGUID2(rclsid, buf, 39);
-    sprintfW(fullkey,szwTipfmt,szwSystemTIPKey,buf);
+    swprintf(fullkey,ARRAY_SIZE(fullkey),szwTipfmt,szwSystemTIPKey,buf);
 
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,fullkey, 0, KEY_READ | KEY_WRITE,
                 &tipkey ) != ERROR_SUCCESS)
         return E_FAIL;
 
     StringFromGUID2(guidProfile, buf, 39);
-    sprintfW(fullkey,fmt2,szwLngp,langid,buf);
+    swprintf(fullkey,ARRAY_SIZE(fullkey),fmt2,szwLngp,langid,buf);
 
     res = RegCreateKeyExW(tipkey,fullkey, 0, NULL, 0, KEY_READ | KEY_WRITE,
             NULL, &fmtkey, &disposition);
@@ -421,7 +417,7 @@ static HRESULT WINAPI InputProcessorProfiles_GetDefaultLanguageProfile(
         return E_INVALIDARG;
 
     StringFromGUID2(catid, buf, 39);
-    sprintfW(fullkey, szwDefaultFmt, szwSystemCTFKey, szwAssemblies, langid, buf);
+    swprintf(fullkey, ARRAY_SIZE(fullkey), szwDefaultFmt, szwSystemCTFKey, szwAssemblies, langid, buf);
 
     if (RegOpenKeyExW(HKEY_CURRENT_USER, fullkey, 0, KEY_READ | KEY_WRITE,
                 &hkey ) != ERROR_SUCCESS)
@@ -480,7 +476,7 @@ static HRESULT WINAPI InputProcessorProfiles_SetDefaultLanguageProfile(
         return E_FAIL;
 
     StringFromGUID2(&catid, buf, 39);
-    sprintfW(fullkey, szwDefaultFmt, szwSystemCTFKey, szwAssemblies, langid, buf);
+    swprintf(fullkey, ARRAY_SIZE(fullkey), szwDefaultFmt, szwSystemCTFKey, szwAssemblies, langid, buf);
 
     if (RegCreateKeyExW(HKEY_CURRENT_USER, fullkey, 0, NULL, 0, KEY_READ | KEY_WRITE,
                 NULL, &hkey, NULL ) != ERROR_SUCCESS)
@@ -644,7 +640,7 @@ static HRESULT WINAPI InputProcessorProfiles_EnableLanguageProfile(
 
     StringFromGUID2(rclsid, buf, 39);
     StringFromGUID2(guidProfile, buf2, 39);
-    sprintfW(fullkey,szwFullLangfmt,szwSystemTIPKey,buf,szwLngp,langid,buf2);
+    swprintf(fullkey,ARRAY_SIZE(fullkey),szwFullLangfmt,szwSystemTIPKey,buf,szwLngp,langid,buf2);
 
     res = RegOpenKeyExW(HKEY_CURRENT_USER, fullkey, 0, KEY_READ | KEY_WRITE, &key);
 
@@ -677,7 +673,7 @@ static HRESULT WINAPI InputProcessorProfiles_IsEnabledLanguageProfile(
 
     StringFromGUID2(rclsid, buf, 39);
     StringFromGUID2(guidProfile, buf2, 39);
-    sprintfW(fullkey,szwFullLangfmt,szwSystemTIPKey,buf,szwLngp,langid,buf2);
+    swprintf(fullkey,ARRAY_SIZE(fullkey),szwFullLangfmt,szwSystemTIPKey,buf,szwLngp,langid,buf2);
 
     res = RegOpenKeyExW(HKEY_CURRENT_USER, fullkey, 0, KEY_READ | KEY_WRITE, &key);
 
@@ -721,7 +717,7 @@ static HRESULT WINAPI InputProcessorProfiles_EnableLanguageProfileByDefault(
 
     StringFromGUID2(rclsid, buf, 39);
     StringFromGUID2(guidProfile, buf2, 39);
-    sprintfW(fullkey,szwFullLangfmt,szwSystemTIPKey,buf,szwLngp,langid,buf2);
+    swprintf(fullkey,ARRAY_SIZE(fullkey),szwFullLangfmt,szwSystemTIPKey,buf,szwLngp,langid,buf2);
 
     res = RegOpenKeyExW(HKEY_LOCAL_MACHINE, fullkey, 0, KEY_READ | KEY_WRITE, &key);
 
@@ -1191,7 +1187,7 @@ static INT next_LanguageProfile(EnumTfLanguageProfiles *This, CLSID clsid, TF_LA
 
     if (This->langkey == NULL)
     {
-        sprintfW(fullkey,fmt,This->szwCurrentClsid,szwLngp,This->langid);
+        swprintf(fullkey,ARRAY_SIZE(fullkey),fmt,This->szwCurrentClsid,szwLngp,This->langid);
         res = RegOpenKeyExW(This->tipkey, fullkey, 0, KEY_READ | KEY_WRITE, &This->langkey);
         if (res)
         {
@@ -1315,7 +1311,7 @@ static HRESULT WINAPI EnumTfLanguageProfiles_Clone( IEnumTfLanguageProfiles *ifa
             WCHAR fullkey[168];
             static const WCHAR fmt[] = {'%','s','\\','%','s','\\','0','x','%','0','8','x',0};
 
-            sprintfW(fullkey,fmt,This->szwCurrentClsid,szwLngp,This->langid);
+            swprintf(fullkey,ARRAY_SIZE(fullkey),fmt,This->szwCurrentClsid,szwLngp,This->langid);
             res = RegOpenKeyExW(new_This->tipkey, fullkey, 0, KEY_READ | KEY_WRITE, &This->langkey);
             new_This->lang_index = This->lang_index;
         }

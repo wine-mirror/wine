@@ -20,6 +20,8 @@
  */
 
 #include <stdio.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <windows.h>
 #include "fci.h"
 #include "fdi.h"
@@ -30,16 +32,6 @@
 #define FOLDER_THRESHOLD    900000
 
 static CHAR CURR_DIR[MAX_PATH];
-
-/* avoid including CRT headers */
-#ifndef _O_BINARY
-# define _O_BINARY 0x8000
-#endif
-
-#ifndef _S_IREAD
-# define _S_IREAD  0x0100
-# define _S_IWRITE 0x0080
-#endif
 
 #include <pshpack1.h>
 

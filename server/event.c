@@ -39,6 +39,7 @@
 struct event
 {
     struct object  obj;             /* object header */
+    struct list    kernel_object;   /* list of kernel object pointers */
     int            manual_reset;    /* is it a manual reset event? */
     int            signaled;        /* event has been signaled */
 };
@@ -49,6 +50,7 @@ static int event_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void event_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int event_map_access( struct object *obj, unsigned int access );
 static int event_signal( struct object *obj, unsigned int access);
+static struct list *event_get_kernel_obj_list( struct object *obj );
 
 static const struct object_ops event_ops =
 {
@@ -68,6 +70,7 @@ static const struct object_ops event_ops =
     directory_link_name,       /* link_name */
     default_unlink_name,       /* unlink_name */
     no_open_file,              /* open_file */
+    event_get_kernel_obj_list, /* get_kernel_obj_list */
     no_close_handle,           /* close_handle */
     no_destroy                 /* destroy */
 };
@@ -101,6 +104,7 @@ static const struct object_ops keyed_event_ops =
     directory_link_name,         /* link_name */
     default_unlink_name,         /* unlink_name */
     no_open_file,                /* open_file */
+    no_kernel_obj_list,          /* get_kernel_obj_list */
     no_close_handle,             /* close_handle */
     no_destroy                   /* destroy */
 };
@@ -117,6 +121,7 @@ struct event *create_event( struct object *root, const struct unicode_str *name,
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
+            list_init( &event->kernel_object );
             event->manual_reset = manual_reset;
             event->signaled     = initial_state;
         }
@@ -200,6 +205,12 @@ static int event_signal( struct object *obj, unsigned int access )
     }
     set_event( event );
     return 1;
+}
+
+static struct list *event_get_kernel_obj_list( struct object *obj )
+{
+    struct event *event = (struct event *)obj;
+    return &event->kernel_object;
 }
 
 struct keyed_event *create_keyed_event( struct object *root, const struct unicode_str *name,
@@ -311,6 +322,7 @@ DECL_HANDLER(event_op)
     struct event *event;
 
     if (!(event = get_event_obj( current->process, req->handle, EVENT_MODIFY_STATE ))) return;
+    reply->state = event->signaled;
     switch(req->op)
     {
     case PULSE_EVENT:

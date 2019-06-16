@@ -19,8 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 #include <stdio.h>
 
 #define COBJMACROS
@@ -31,7 +29,6 @@
 #include <shellapi.h>
 #include "exdisp.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "explorer_private.h"
 
@@ -40,11 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 #define DESKTOP_CLASS_ATOM ((LPCWSTR)MAKEINTATOM(32769))
 #define DESKTOP_ALL_ACCESS 0x01ff
 
-#ifdef __APPLE__
 static const WCHAR default_driver[] = {'m','a','c',',','x','1','1',0};
-#else
-static const WCHAR default_driver[] = {'x','1','1',0};
-#endif
 
 static BOOL using_root;
 
@@ -249,10 +242,10 @@ static void do_launch( const struct launcher *launcher )
 
 static WCHAR *append_path( const WCHAR *path, const WCHAR *filename, int len_filename )
 {
-    int len_path = strlenW( path );
+    int len_path = lstrlenW( path );
     WCHAR *ret;
 
-    if (len_filename == -1) len_filename = strlenW( filename );
+    if (len_filename == -1) len_filename = lstrlenW( filename );
     if (!(ret = HeapAlloc( GetProcessHeap(), 0, (len_path + len_filename + 2) * sizeof(WCHAR) )))
         return NULL;
     memcpy( ret, path, len_path * sizeof(WCHAR) );
@@ -314,7 +307,7 @@ static WCHAR *build_title( const WCHAR *filename, int len )
     const WCHAR *p;
     WCHAR *ret;
 
-    if (len == -1) len = strlenW( filename );
+    if (len == -1) len = lstrlenW( filename );
     for (p = filename + len - 1; p >= filename; p--)
     {
         if (*p == '.')
@@ -381,7 +374,7 @@ static BOOL remove_launcher( const WCHAR *folder, const WCHAR *filename, int len
     if (!(path = append_path( folder, filename, len_filename ))) return FALSE;
     for (i = 0; i < nb_launchers; i++)
     {
-        if (!strcmpiW( launchers[i]->path, path ))
+        if (!wcsicmp( launchers[i]->path, path ))
         {
             free_launcher( launchers[i] );
             if (--nb_launchers)
@@ -514,14 +507,14 @@ error:
 static void add_folder( const WCHAR *folder )
 {
     static const WCHAR lnkW[] = {'\\','*','.','l','n','k',0};
-    int len = strlenW( folder ) + strlenW( lnkW );
+    int len = lstrlenW( folder ) + lstrlenW( lnkW );
     WIN32_FIND_DATAW data;
     HANDLE handle;
     WCHAR *glob;
 
     if (!(glob = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return;
-    strcpyW( glob, folder );
-    strcatW( glob, lnkW );
+    lstrcpyW( glob, folder );
+    lstrcatW( glob, lnkW );
 
     if ((handle = FindFirstFileW( glob, &data )) != INVALID_HANDLE_VALUE)
     {
@@ -583,22 +576,6 @@ static void initialize_launchers( HWND hwnd )
     }
 }
 
-/* screen saver handler */
-static BOOL start_screensaver( void )
-{
-    if (using_root)
-    {
-        const char *argv[3] = { "xdg-screensaver", "activate", NULL };
-        int pid = _spawnvp( _P_DETACH, argv[0], argv );
-        if (pid > 0)
-        {
-            WINE_TRACE( "started process %d\n", pid );
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
 static WNDPROC desktop_orig_wndproc;
 
 /* window procedure for the desktop window */
@@ -613,11 +590,9 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
         {
         case SC_CLOSE:
             ExitWindows( 0, 0 );
-            break;
-        case SC_SCREENSAVE:
-            return start_screensaver();
+            return 0;
         }
-        return 0;
+        break;
 
     case WM_CLOSE:
         PostQuitMessage(0);
@@ -686,11 +661,11 @@ static BOOL parse_size( const WCHAR *size, unsigned int *width, unsigned int *he
 {
     WCHAR *end;
 
-    *width = strtoulW( size, &end, 10 );
+    *width = wcstoul( size, &end, 10 );
     if (end == size) return FALSE;
     if (*end != 'x') return FALSE;
     size = end + 1;
-    *height = strtoulW( size, &end, 10 );
+    *height = wcstoul( size, &end, 10 );
     return !*end;
 }
 
@@ -709,7 +684,7 @@ static const WCHAR *get_default_desktop_name(void)
 
     if (desk && GetUserObjectInformationW( desk, UOI_NAME, buffer, ARRAY_SIZE( buffer ), NULL ))
     {
-        if (strcmpiW( buffer, defaultW )) return buffer;
+        if (wcsicmp( buffer, defaultW )) return buffer;
     }
 
     /* @@ Wine registry key: HKCU\Software\Wine\Explorer */
@@ -797,7 +772,7 @@ static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
 
     if (!driver)
     {
-        strcpyW( buffer, default_driver );
+        lstrcpyW( buffer, default_driver );
 
         /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
         if (!RegOpenKeyW( HKEY_CURRENT_USER, driversW, &hkey ))
@@ -812,10 +787,10 @@ static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
     name = buffer;
     while (name)
     {
-        next = strchrW( name, ',' );
+        next = wcschr( name, ',' );
         if (next) *next++ = 0;
 
-        snprintfW( libname, ARRAY_SIZE( libname ), drv_formatW, name );
+        swprintf( libname, ARRAY_SIZE( libname ), drv_formatW, name );
         if ((module = LoadLibraryW( libname )) != 0) break;
         switch (GetLastError())
         {
@@ -838,7 +813,7 @@ static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
         TRACE( "display %s driver %s\n", debugstr_guid(guid), debugstr_w(buffer) );
     }
 
-    sprintfW( key, device_keyW, guid->Data1, guid->Data2, guid->Data3,
+    swprintf( key, ARRAY_SIZE(key), device_keyW, guid->Data1, guid->Data2, guid->Data3,
               guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
               guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
 
@@ -847,7 +822,7 @@ static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
     {
         if (module)
             RegSetValueExW( hkey, graphics_driverW, 0, REG_SZ,
-                            (BYTE *)buffer, (strlenW(buffer) + 1) * sizeof(WCHAR) );
+                            (BYTE *)buffer, (lstrlenW(buffer) + 1) * sizeof(WCHAR) );
         else
             RegSetValueExA( hkey, "DriverError", 0, REG_SZ, (BYTE *)error, strlen(error) + 1 );
         RegCloseKey( hkey );
@@ -884,7 +859,7 @@ static void set_desktop_window_title( HWND hwnd, const WCHAR *name )
         return;
     }
 
-    window_title_len = strlenW(name) * sizeof(WCHAR)
+    window_title_len = lstrlenW(name) * sizeof(WCHAR)
                      + sizeof(desktop_name_separatorW)
                      + sizeof(desktop_nameW);
     window_titleW = HeapAlloc( GetProcessHeap(), 0, window_title_len );
@@ -894,9 +869,9 @@ static void set_desktop_window_title( HWND hwnd, const WCHAR *name )
         return;
     }
 
-    strcpyW( window_titleW, name );
-    strcatW( window_titleW, desktop_name_separatorW );
-    strcatW( window_titleW, desktop_nameW );
+    lstrcpyW( window_titleW, name );
+    lstrcatW( window_titleW, desktop_name_separatorW );
+    lstrcatW( window_titleW, desktop_nameW );
 
     SetWindowTextW( hwnd, window_titleW );
     HeapFree( GetProcessHeap(), 0, window_titleW );
@@ -938,10 +913,10 @@ void manage_desktop( WCHAR *arg )
     {
         arg++;
         name = arg;
-        if ((p = strchrW( arg, ',' )))
+        if ((p = wcschr( arg, ',' )))
         {
             *p++ = 0;
-            if ((driver = strchrW( p, ',' ))) *driver++ = 0;
+            if ((driver = wcschr( p, ',' ))) *driver++ = 0;
         }
         if (!p || !parse_size( p, &width, &height ))
             get_default_desktop_size( name, &width, &height );

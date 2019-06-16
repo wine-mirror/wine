@@ -18,14 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wine/exception.h"
 
-void DECLSPEC_HIDDEN __wine_spec_unimplemented_stub( const char *module, const char *function )
+void DECLSPEC_HIDDEN __cdecl __wine_spec_unimplemented_stub( const char *module, const char *function )
 {
     ULONG_PTR args[2];
 

@@ -1,6 +1,8 @@
 MODULE    = msftedit.dll
 IMPORTS   = uuid riched20
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	msftedit_main.c
 

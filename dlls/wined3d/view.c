@@ -172,6 +172,7 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
     const struct wined3d_format_gl *view_format_gl;
     unsigned int level_idx, layer_idx, layer_count;
     const struct wined3d_gl_info *gl_info;
+    struct wined3d_context_gl *context_gl;
     struct wined3d_context *context;
     GLuint texture_name;
 
@@ -179,6 +180,7 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
     view->target = view_target;
 
     context = context_acquire(texture_gl->t.resource.device, NULL, 0);
+    context_gl = wined3d_context_gl(context);
     gl_info = context->gl_info;
 
     if (!gl_info->supported[ARB_TEXTURE_VIEW])
@@ -188,7 +190,7 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
         return;
     }
 
-    wined3d_texture_prepare_texture(&texture_gl->t, context, FALSE);
+    wined3d_texture_gl_prepare_texture(texture_gl, context_gl, FALSE);
     texture_name = wined3d_texture_gl_get_texture_name(texture_gl, context, FALSE);
 
     level_idx = desc->u.texture.level_idx;
@@ -218,7 +220,7 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
             return;
         }
 
-        context_bind_texture(context, view->target, view->name);
+        wined3d_context_gl_bind_texture(context_gl, view->target, view->name);
         gl_info->gl_ops.gl.p_glTexParameteriv(view->target, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
         gl_info->gl_ops.gl.p_glTexParameteri(view->target, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
         checkGLcall("initialize stencil view");
@@ -226,11 +228,11 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
         context_invalidate_compute_state(context, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
         context_invalidate_state(context, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
     }
-    else if (!is_identity_fixup(view_format->color_fixup) && can_use_texture_swizzle(gl_info, view_format))
+    else if (!is_identity_fixup(view_format->color_fixup) && can_use_texture_swizzle(context->d3d_info, view_format))
     {
         GLint swizzle[4];
 
-        context_bind_texture(context, view->target, view->name);
+        wined3d_context_gl_bind_texture(context_gl, view->target, view->name);
         wined3d_gl_texture_swizzle_from_color_fixup(swizzle, view_format->color_fixup);
         gl_info->gl_ops.gl.p_glTexParameteriv(view->target, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
         checkGLcall("set format swizzle");
@@ -246,6 +248,7 @@ static void create_buffer_texture(struct wined3d_gl_view *view, struct wined3d_c
         struct wined3d_buffer *buffer, const struct wined3d_format *view_format,
         unsigned int offset, unsigned int size)
 {
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_format_gl *view_format_gl;
 
@@ -268,7 +271,7 @@ static void create_buffer_texture(struct wined3d_gl_view *view, struct wined3d_c
     view->target = GL_TEXTURE_BUFFER;
     gl_info->gl_ops.gl.p_glGenTextures(1, &view->name);
 
-    context_bind_texture(context, GL_TEXTURE_BUFFER, view->name);
+    wined3d_context_gl_bind_texture(context_gl, GL_TEXTURE_BUFFER, view->name);
     if (gl_info->supported[ARB_TEXTURE_BUFFER_RANGE])
     {
         GL_EXTCALL(glTexBufferRange(GL_TEXTURE_BUFFER, view_format_gl->internal,
@@ -827,15 +830,16 @@ HRESULT CDECL wined3d_shader_resource_view_create(const struct wined3d_view_desc
 void wined3d_shader_resource_view_gl_bind(struct wined3d_shader_resource_view_gl *view_gl,
         unsigned int unit, struct wined3d_sampler *sampler, struct wined3d_context *context)
 {
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_texture_gl *texture_gl;
 
-    context_active_texture(context, gl_info, unit);
+    wined3d_context_gl_active_texture(context_gl, gl_info, unit);
 
     if (view_gl->gl_view.name)
     {
-        context_bind_texture(context, view_gl->gl_view.target, view_gl->gl_view.name);
-        wined3d_sampler_bind(sampler, unit, NULL, context);
+        wined3d_context_gl_bind_texture(context_gl, view_gl->gl_view.target, view_gl->gl_view.name);
+        wined3d_sampler_bind(sampler, unit, NULL, context_gl);
         return;
     }
 
@@ -846,26 +850,26 @@ void wined3d_shader_resource_view_gl_bind(struct wined3d_shader_resource_view_gl
     }
 
     texture_gl = wined3d_texture_gl(wined3d_texture_from_resource(view_gl->v.resource));
-    wined3d_texture_gl_bind(texture_gl, context, FALSE);
-    wined3d_sampler_bind(sampler, unit, texture_gl, context);
+    wined3d_texture_gl_bind(texture_gl, context_gl, FALSE);
+    wined3d_sampler_bind(sampler, unit, texture_gl, context_gl);
 }
 
 /* Context activation is done by the caller. */
 static void shader_resource_view_gl_bind_and_dirtify(struct wined3d_shader_resource_view_gl *view_gl,
-        struct wined3d_context *context)
+        struct wined3d_context_gl *context_gl)
 {
-    if (context->active_texture < ARRAY_SIZE(context->rev_tex_unit_map))
+    if (context_gl->active_texture < ARRAY_SIZE(context_gl->rev_tex_unit_map))
     {
-        DWORD active_sampler = context->rev_tex_unit_map[context->active_texture];
+        unsigned int active_sampler = context_gl->rev_tex_unit_map[context_gl->active_texture];
         if (active_sampler != WINED3D_UNMAPPED_STAGE)
-            context_invalidate_state(context, STATE_SAMPLER(active_sampler));
+            context_invalidate_state(&context_gl->c, STATE_SAMPLER(active_sampler));
     }
     /* FIXME: Ideally we'd only do this when touching a binding that's used by
      * a shader. */
-    context_invalidate_compute_state(context, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
-    context_invalidate_state(context, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
+    context_invalidate_compute_state(&context_gl->c, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
+    context_invalidate_state(&context_gl->c, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
 
-    context_bind_texture(context, view_gl->gl_view.target, view_gl->gl_view.name);
+    wined3d_context_gl_bind_texture(context_gl, view_gl->gl_view.target, view_gl->gl_view.name);
 }
 
 void shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *view)
@@ -874,6 +878,7 @@ void shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *
     unsigned int i, j, layer_count, level_count, base_level, max_level;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_texture_gl *texture_gl;
+    struct wined3d_context_gl *context_gl;
     struct wined3d_context *context;
     struct gl_texture *gl_tex;
     DWORD location;
@@ -882,6 +887,7 @@ void shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *
     TRACE("view %p.\n", view);
 
     context = context_acquire(view_gl->v.resource->device, NULL, 0);
+    context_gl = wined3d_context_gl(context);
     gl_info = context->gl_info;
     layer_count = view_gl->v.desc.u.texture.layer_count;
     level_count = view_gl->v.desc.u.texture.level_count;
@@ -896,17 +902,17 @@ void shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *
 
     if (view_gl->gl_view.name)
     {
-        shader_resource_view_gl_bind_and_dirtify(view_gl, context);
+        shader_resource_view_gl_bind_and_dirtify(view_gl, context_gl);
     }
     else
     {
-        wined3d_texture_gl_bind_and_dirtify(texture_gl, context, srgb);
+        wined3d_texture_gl_bind_and_dirtify(texture_gl, context_gl, srgb);
         gl_info->gl_ops.gl.p_glTexParameteri(texture_gl->target, GL_TEXTURE_BASE_LEVEL, base_level);
         gl_info->gl_ops.gl.p_glTexParameteri(texture_gl->target, GL_TEXTURE_MAX_LEVEL, max_level);
     }
 
     if (gl_info->supported[ARB_SAMPLER_OBJECTS])
-        GL_EXTCALL(glBindSampler(context->active_texture, 0));
+        GL_EXTCALL(glBindSampler(context_gl->active_texture, 0));
     gl_tex = wined3d_texture_gl_get_gl_texture(texture_gl, srgb);
     if (context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
     {
@@ -1028,6 +1034,7 @@ void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_
 void wined3d_unordered_access_view_clear_uint(struct wined3d_unordered_access_view *view,
         const struct wined3d_uvec4 *clear_value, struct wined3d_context *context)
 {
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_format_gl *format;
     struct wined3d_buffer_gl *buffer_gl;
@@ -1061,7 +1068,7 @@ void wined3d_unordered_access_view_clear_uint(struct wined3d_unordered_access_vi
     wined3d_unordered_access_view_invalidate_location(view, ~WINED3D_LOCATION_BUFFER);
 
     get_buffer_view_range(&buffer_gl->b, &view->desc, &format->f, &offset, &size);
-    context_bind_bo(context, buffer_gl->buffer_type_hint, buffer_gl->buffer_object);
+    wined3d_context_gl_bind_bo(context_gl, buffer_gl->buffer_type_hint, buffer_gl->buffer_object);
     GL_EXTCALL(glClearBufferSubData(buffer_gl->buffer_type_hint, format->internal,
             offset, size, format->format, format->type, clear_value));
     checkGLcall("clear unordered access view");
@@ -1089,6 +1096,7 @@ void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_
         struct wined3d_buffer *buffer, unsigned int offset, struct wined3d_context *context)
 {
     struct wined3d_unordered_access_view_gl *view_gl = wined3d_unordered_access_view_gl(view);
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     struct wined3d_bo_address dst, src;
     DWORD dst_location;
 
@@ -1101,7 +1109,7 @@ void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_
     src.buffer_object = view_gl->counter_bo;
     src.addr = NULL;
 
-    context_copy_bo_address(context, &dst, wined3d_buffer_gl(buffer)->buffer_type_hint,
+    wined3d_context_gl_copy_bo_address(context_gl, &dst, wined3d_buffer_gl(buffer)->buffer_type_hint,
             &src, GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint));
 
     wined3d_buffer_invalidate_location(buffer, ~dst_location);

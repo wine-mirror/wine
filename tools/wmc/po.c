@@ -82,6 +82,8 @@ static const struct
     { LANG_ARMENIAN,       SUBLANG_ARMENIAN_ARMENIA,            "hy_AM" },
     { LANG_ASSAMESE,       SUBLANG_NEUTRAL,                     "as" },
     { LANG_ASSAMESE,       SUBLANG_ASSAMESE_INDIA,              "as_IN" },
+    { LANG_ASTURIAN,       SUBLANG_NEUTRAL,                     "ast" },
+    { LANG_ASTURIAN,       SUBLANG_DEFAULT,                     "ast_ES" },
     { LANG_AZERBAIJANI,    SUBLANG_NEUTRAL,                     "az" },
     { LANG_AZERBAIJANI,    SUBLANG_AZERBAIJANI_AZERBAIJAN_LATIN,"az_AZ@latin" },
     { LANG_AZERBAIJANI,    SUBLANG_AZERBAIJANI_AZERBAIJAN_CYRILLIC, "az_AZ@cyrillic" },
@@ -405,7 +407,7 @@ static char *get_message_context( char **msgid )
 static char *convert_string_utf8( const lanmsg_t *msg )
 {
     char *buffer = xmalloc( msg->len * 4 + 1 );
-    int len = wine_utf8_wcstombs( 0, msg->msg, msg->len, buffer, msg->len * 4 );
+    int len = wmc_wcstombs( CP_UTF8, 0, msg->msg, msg->len, buffer, msg->len * 4 );
     buffer[len] = 0;
     return buffer;
 }
@@ -656,9 +658,9 @@ static lanmsg_t *translate_string( lanmsg_t *str, int lang, int *found )
     new->cp   = 0;  /* FIXME */
     new->file = str->file;
     new->line = str->line;
-    new->len  = wine_utf8_mbstowcs( 0, transl, strlen(transl) + 1, NULL, 0 );
+    new->len  = wmc_mbstowcs( CP_UTF8, 0, transl, strlen(transl) + 1, NULL, 0 );
     new->msg  = xmalloc( new->len * sizeof(WCHAR) );
-    res = wine_utf8_mbstowcs( MB_ERR_INVALID_CHARS, transl, strlen(transl) + 1, new->msg, new->len );
+    res = wmc_mbstowcs( CP_UTF8, MB_ERR_INVALID_CHARS, transl, strlen(transl) + 1, new->msg, new->len );
     if (res == -2)
         error( "Invalid utf-8 character in string '%s'\n", transl );
     free( buffer );

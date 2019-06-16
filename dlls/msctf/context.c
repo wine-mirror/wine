@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -33,8 +31,6 @@
 #include "winerror.h"
 #include "objbase.h"
 #include "olectl.h"
-
-#include "wine/unicode.h"
 
 #include "msctf.h"
 #include "msctf_internal.h"
@@ -852,7 +848,7 @@ static HRESULT WINAPI TextStoreACPSink_OnLockGranted(ITextStoreACPSink *iface,
         /*TODO: implement ITfEditRecord */
         SINK_FOR_EACH(cursor, &This->pTextEditSink, ITfTextEditSink, sink)
         {
-            ITfTextEditSink_OnEndEdit(sink, (ITfContext*) &This->ITfContext_iface, sc, NULL);
+            ITfTextEditSink_OnEndEdit(sink, &This->ITfContext_iface, sc, NULL);
         }
         sinkcookie = remove_Cookie(sc);
     }

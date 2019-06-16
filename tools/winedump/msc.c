@@ -91,7 +91,7 @@ static int full_numeric_leaf(struct full_value* fv, const unsigned short int* le
 
         case LF_USHORT:
             length += 2;
-            fv->v.i = *(const unsigned short*)leaf;
+            fv->v.i = *leaf;
             break;
 
         case LF_LONG:
@@ -825,7 +825,7 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
             int count = *(const unsigned short*)((const char*)type + 4);
             int shift = 0;
             const char* ptr = (const char*)type + 6;
-            const char* desc[] = {"Near", "Far", "Thin", "Disp to outtermost",
+            const char* desc[] = {"Near", "Far", "Thin", "Disp to outermost",
                                   "Pointer to metaclass", "Near32", "Far32"};
             printf("\t%x => VT Shape #%d: ", curr_type, count);
             while (count--)
@@ -1490,7 +1490,7 @@ void codeview_dump_linetab2(const char* linetab, DWORD size, const char* strimag
             break;
         default:
             printf("%sblock end %x\n", pfx, lt2->header);
-            lt2 = (const struct codeview_linetab2*)((const char*)linetab + size);
+            lt2 = (const struct codeview_linetab2*)(linetab + size);
             continue;
         }
         lt2 = codeview_linetab2_next_block(lt2);

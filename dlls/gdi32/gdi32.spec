@@ -80,9 +80,13 @@
 @ stdcall CreateScalableFontResourceA(long str str str)
 @ stdcall CreateScalableFontResourceW(long wstr wstr wstr)
 @ stdcall CreateSolidBrush(long)
+@ stdcall D3DKMTCloseAdapter(ptr)
 @ stdcall D3DKMTCreateDCFromMemory(ptr)
+@ stdcall D3DKMTCreateDevice(ptr)
 @ stdcall D3DKMTDestroyDCFromMemory(ptr)
+@ stdcall D3DKMTDestroyDevice(ptr)
 @ stdcall D3DKMTEscape(ptr)
+@ stdcall D3DKMTOpenAdapterFromGdiDisplayName(ptr)
 @ stdcall D3DKMTOpenAdapterFromHdc(ptr)
 @ stdcall DPtoLP(long ptr long)
 @ stdcall DeleteColorSpace(long)
@@ -250,7 +254,7 @@
 @ stdcall GetCharWidthFloatA(long long long ptr)
 @ stdcall GetCharWidthFloatW(long long long ptr)
 @ stdcall GetCharWidthI(ptr long long ptr ptr)
-# @ stub GetCharWidthInfo
+@ stdcall GetCharWidthInfo(ptr ptr)
 @ stdcall GetCharWidthW(long long long long) GetCharWidth32W
 @ stub GetCharWidthWOW
 @ stdcall GetCharacterPlacementA(long str long long ptr long)

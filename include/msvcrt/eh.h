@@ -40,8 +40,8 @@ terminate_function __cdecl set_terminate(terminate_function func);
 unexpected_function __cdecl set_unexpected(unexpected_function func);
 _se_translator_function __cdecl set_se_translator(_se_translator_function func);
 
-void __cdecl terminate(void);
-void __cdecl unexpected(void);
+void __cdecl terminate(void) DECLSPEC_NORETURN;
+void __cdecl unexpected(void) DECLSPEC_NORETURN;
 
 #include <poppack.h>
 

@@ -532,11 +532,6 @@ static HRESULT WINAPI DirectDrawMediaStreamInputPin_CheckMediaType(BasePin *base
     return S_FALSE;
 }
 
-static LONG WINAPI DirectDrawMediaStreamInputPin_GetMediaTypeVersion(BasePin *base)
-{
-    return 0;
-}
-
 static HRESULT WINAPI DirectDrawMediaStreamInputPin_GetMediaType(BasePin *base, int index, AM_MEDIA_TYPE *media_type)
 {
     DirectDrawMediaStreamInputPin *This = impl_from_DirectDrawMediaStreamInputPin_IPin(&base->IPin_iface);
@@ -591,8 +586,6 @@ static const BaseInputPinFuncTable DirectDrawMediaStreamInputPin_FuncTable =
 {
     {
         DirectDrawMediaStreamInputPin_CheckMediaType,
-        NULL,
-        DirectDrawMediaStreamInputPin_GetMediaTypeVersion,
         DirectDrawMediaStreamInputPin_GetMediaType,
     },
     DirectDrawMediaStreamInputPin_Receive,
@@ -1099,11 +1092,6 @@ static HRESULT WINAPI AudioMediaStreamInputPin_CheckMediaType(BasePin *base, con
     return S_OK;
 }
 
-static LONG WINAPI AudioMediaStreamInputPin_GetMediaTypeVersion(BasePin *base)
-{
-    return 0;
-}
-
 static HRESULT WINAPI AudioMediaStreamInputPin_GetMediaType(BasePin *base, int index, AM_MEDIA_TYPE *media_type)
 {
     AudioMediaStreamInputPin *This = impl_from_AudioMediaStreamInputPin_IPin(&base->IPin_iface);
@@ -1135,8 +1123,6 @@ static const BaseInputPinFuncTable AudioMediaStreamInputPin_FuncTable =
 {
     {
         AudioMediaStreamInputPin_CheckMediaType,
-        NULL,
-        AudioMediaStreamInputPin_GetMediaTypeVersion,
         AudioMediaStreamInputPin_GetMediaType,
     },
     AudioMediaStreamInputPin_Receive,

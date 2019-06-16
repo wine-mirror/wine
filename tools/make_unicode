@@ -23,7 +23,7 @@ use strict;
 
 # base URLs for www.unicode.org files
 my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
-my $UNIDATA = "http://www.unicode.org/Public/11.0.0/ucd";
+my $UNIDATA = "http://www.unicode.org/Public/12.0.0/ucd";
 my $REPORTS = "http://www.unicode.org/reports";
 my $RFCS = "http://www.rfc-editor.org/rfc";
 
@@ -336,6 +336,60 @@ my %directions =
     "PDI" => 15    # Pop Directional Isolate
 );
 
+my %c2_types =
+(
+    "L"   => 1,    # C2_LEFTTORIGHT
+    "R"   => 2,    # C2_RIGHTTOLEFT
+    "AL"  => 2,    # C2_RIGHTTOLEFT
+    "EN"  => 3,    # C2_EUROPENUMBER
+    "ES"  => 4,    # C2_EUROPESEPARATOR
+    "ET"  => 5,    # C2_EUROPETERMINATOR
+    "AN"  => 6,    # C2_ARABICNUMBER
+    "CS"  => 7,    # C2_COMMONSEPARATOR
+    "NSM" => 0,    # C2_NOTAPPLICABLE
+    "BN"  => 0,    # C2_NOTAPPLICABLE
+    "B"   => 8,    # C2_BLOCKSEPARATOR
+    "S"   => 9,    # C2_SEGMENTSEPARATOR
+    "WS"  => 10,   # C2_WHITESPACE
+    "ON"  => 11,   # C2_OTHERNEUTRAL
+    "LRE" => 11,   # C2_OTHERNEUTRAL
+    "LRO" => 11,   # C2_OTHERNEUTRAL
+    "RLE" => 11,   # C2_OTHERNEUTRAL
+    "RLO" => 11,   # C2_OTHERNEUTRAL
+    "PDF" => 11,   # C2_OTHERNEUTRAL
+    "LRI" => 11,   # C2_OTHERNEUTRAL
+    "RLI" => 11,   # C2_OTHERNEUTRAL
+    "FSI" => 11,   # C2_OTHERNEUTRAL
+    "PDI" => 11    # C2_OTHERNEUTRAL
+);
+
+my %bidi_types =
+(
+    "ON"  => 0,    # Other Neutrals
+    "L"   => 1,    # Left-to-Right
+    "R"   => 2,    # Right-to-Left
+    "AN"  => 3,    # Arabic Number
+    "EN"  => 4,    # European Number
+    "AL"  => 5,    # Right-to-Left Arabic
+    "NSM" => 6,    # Non-Spacing Mark
+    "CS"  => 7,    # Common Number Separator
+    "ES"  => 8,    # European Number Separator
+    "ET"  => 9,    # European Number Terminator
+    "BN"  => 10,   # Boundary Neutral
+    "S"   => 11,   # Segment Separator
+    "WS"  => 12,   # Whitespace
+    "B"   => 13,   # Paragraph Separator
+    "RLO" => 14,   # Right-to-Left Override
+    "RLE" => 15,   # Right-to-Left Embedding
+    "LRO" => 16,   # Left-to-Right Override
+    "LRE" => 17,   # Left-to-Right Embedding
+    "PDF" => 18,   # Pop Directional Format
+    "LRI" => 19,   # Left-to-Right Isolate
+    "RLI" => 20,   # Right-to-Left Isolate
+    "FSI" => 21,   # First Strong Isolate
+    "PDI" => 22    # Pop Directional Isolate
+);
+
 my %joining_types =
 (
    "U" => 0,    # Non_Joining
@@ -440,7 +494,7 @@ sub READ_DEFAULTS($)
         die "unknown directionality $bidi" unless defined $directions{$bidi};
 
         $category_table[$src] = $categories{$cat};
-        $direction_table[$src] = $directions{$bidi};
+        $direction_table[$src] = $bidi;
         $joining_table[$src] = $joining_types{"T"} if $cat eq "Mn" || $cat eq "Me" || $cat eq "Cf";
 
         if ($lower ne "")
@@ -844,7 +898,7 @@ sub READ_SORTKEYS_FILE()
 
 ################################################################
 # build the sort keys table
-sub DUMP_SORTKEYS($@)
+sub dump_sortkeys($@)
 {
     my ($filename, @keys) = @_;
 
@@ -868,8 +922,9 @@ sub DUMP_SORTKEYS($@)
     printf OUTPUT "/* Unicode collation element table */\n";
     printf OUTPUT "/* generated from %s */\n", "$REPORTS/$SORTKEYS";
     printf OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
 
-    printf OUTPUT "const unsigned int collation_table[%d] =\n{\n", $ranges*256;
+    printf OUTPUT "const unsigned int DECLSPEC_HIDDEN collation_table[%d] =\n{\n", $ranges*256;
     printf OUTPUT "    /* index */\n";
     printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%08x", 0, @offsets );
 
@@ -1031,8 +1086,7 @@ sub dump_uni2cp_table($$)
 
     # output all the subtables into a single array
 
-    printf OUTPUT "static const unsigned %s uni2cp_low[%d] =\n{\n",
-                  $width == 8 ? "char" : "short", ($index + 1) * 256 - $removed;
+    printf OUTPUT "static const unsigned %s uni2cp_low[] =\n{\n", $width == 8 ? "char" : "short";
 
     my $format = $width == 8 ? "0x%02x" : "0x%04x";
     for (my $i = $index = 0; $i < 257; $i++)
@@ -1272,7 +1326,7 @@ sub dump_indic($)
     print OUTPUT "/* generated from $UNIDATA/IndicSyllabicCategory.txt */\n";
     print OUTPUT "/*       and from $UNIDATA/IndicPositionalCategory.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
 
     dump_two_level_mapping( "indic_syllabic_table", $indic_types{'Other'}, @indic_table );
 
@@ -1337,7 +1391,7 @@ sub dump_linebreak($)
     print OUTPUT "/* Unicode Line Break Properties */\n";
     print OUTPUT "/* generated from $UNIDATA/LineBreak.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
 
     dump_two_level_mapping( "wine_linebreak_table", $break_types{'XX'}, @break_table );
 
@@ -1564,7 +1618,7 @@ sub dump_scripts($)
     print OUTPUT "/* Unicode Script IDs */\n";
     print OUTPUT "/* generated from $UNIDATA/Scripts.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
 
     dump_two_level_mapping( "wine_scripts_table", 0, @scripts_table );
     close OUTPUT;
@@ -1598,8 +1652,8 @@ sub dump_mirroring($)
     print OUTPUT "/* Unicode BiDi mirroring */\n";
     print OUTPUT "/* generated from $UNIDATA/BidiMirroring.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
-    DUMP_CASE_TABLE( "DECLSPEC_HIDDEN wine_mirror_map", @mirror_table );
+    print OUTPUT "#include \"windef.h\"\n\n";
+    dump_case_table( "DECLSPEC_HIDDEN wine_mirror_map", @mirror_table );
     close OUTPUT;
     save_file($filename);
 }
@@ -1635,7 +1689,7 @@ sub dump_bracket($)
     print OUTPUT "/* Unicode Bidirectional Bracket table */\n";
     print OUTPUT "/* generated from $UNIDATA/BidiBrackets.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
 
     dump_two_level_mapping( "bidi_bracket_table", 0, @bracket_table );
 
@@ -1676,7 +1730,7 @@ sub dump_shaping($)
     print OUTPUT "/* Unicode Arabic shaping */\n";
     print OUTPUT "/* generated from $UNIDATA/ArabicShaping.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
 
     dump_two_level_mapping( "wine_shaping_table", 0, @joining_table );
 
@@ -1737,7 +1791,7 @@ sub dump_vertical($)
     print OUTPUT "/* Unicode Vertical Orientation */\n";
     print OUTPUT "/* generated from $UNIDATA/VerticalOrientation.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
 
     dump_two_level_mapping( "vertical_orientation_table", $vertical_types{'R'}, @vertical_table );
 
@@ -1755,11 +1809,11 @@ sub dump_digit_folding($)
     print OUTPUT "/* Unicode digit folding mappings */\n";
     print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
 
-    DUMP_CASE_TABLE( "DECLSPEC_HIDDEN wine_digitmap",  @digitmap_table );
+    dump_case_table( "DECLSPEC_HIDDEN wine_digitmap",  @digitmap_table );
     print OUTPUT "\n";
-    DUMP_CASE_TABLE( "DECLSPEC_HIDDEN wine_compatmap", @compatmap_table );
+    dump_case_table( "DECLSPEC_HIDDEN wine_compatmap", @compatmap_table );
     close OUTPUT;
     save_file($filename);
 }
@@ -1767,7 +1821,7 @@ sub dump_digit_folding($)
 
 ################################################################
 # dump the case mapping tables
-sub DUMP_CASE_MAPPINGS($)
+sub dump_case_mappings($)
 {
     my $filename = shift;
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
@@ -1775,11 +1829,11 @@ sub DUMP_CASE_MAPPINGS($)
     print OUTPUT "/* Unicode case mappings */\n";
     print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
 
-    DUMP_CASE_TABLE( "wine_casemap_lower", @tolower_table );
+    dump_case_table( "wine_casemap_lower", @tolower_table );
     print OUTPUT "\n";
-    DUMP_CASE_TABLE( "wine_casemap_upper", @toupper_table );
+    dump_case_table( "wine_casemap_upper", @toupper_table );
     close OUTPUT;
     save_file($filename);
 }
@@ -1787,7 +1841,7 @@ sub DUMP_CASE_MAPPINGS($)
 
 ################################################################
 # dump a case mapping table
-sub DUMP_CASE_TABLE($@)
+sub dump_case_table($@)
 {
     my ($name,@table) = @_;
 
@@ -2097,7 +2151,7 @@ sub dump_nameprep($)
     print OUTPUT "/* Nameprep algorithm related data */\n";
     print OUTPUT "/* generated from $RFCS/$STRINGPREP */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
 
     dump_two_level_mapping( "nameprep_char_type", 0, @flags_table );
 
@@ -2177,24 +2231,78 @@ sub dump_nameprep($)
     save_file($filename);
 }
 
+
+################################################################
+# dump the GetStringTypeW table
+sub dump_string_type_table($)
+{
+    my $filename = shift;
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    printf "Building $filename\n";
+    printf OUTPUT "/* Unicode wctype table */\n";
+    printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
+    printf OUTPUT "#include \"windef.h\"\n\n";
+
+    my @table = @category_table;
+
+    # add the direction in the high 4 bits of the category
+    for (my $i = 0; $i < 65536; $i++)
+    {
+        $table[$i] |= $c2_types{$direction_table[$i]} << 12 if defined $direction_table[$i];
+    }
+
+    dump_two_level_mapping( "wctype_table", 0, @table );
+
+    close OUTPUT;
+    save_file($filename);
+}
+
+
+################################################################
+# dump the bidi direction table
+sub dump_bidi_dir_table($)
+{
+    my $filename = shift;
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    printf "Building $filename\n";
+    printf OUTPUT "/* Unicode BiDi direction table */\n";
+    printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
+    printf OUTPUT "#include \"windef.h\"\n\n";
+
+    my @table;
+
+    for (my $i = 0; $i < 65536; $i++)
+    {
+        $table[$i] = $bidi_types{$direction_table[$i]} if defined $direction_table[$i];
+    }
+
+    dump_two_level_mapping( "bidi_direction_table", $bidi_types{"L"}, @table );
+
+    close OUTPUT;
+    save_file($filename);
+}
+
+
 ################################################################
 # dump the ctype tables
-sub DUMP_CTYPE_TABLES($)
+sub dump_ctype_tables($)
 {
     my $filename = shift;
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     printf "Building $filename\n";
     printf OUTPUT "/* Unicode ctype tables */\n";
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
-    printf OUTPUT "#include \"wine/unicode.h\"\n\n";
+    printf OUTPUT "#include \"windef.h\"\n\n";
+
+    my @table = @category_table;
 
     # add the direction in the high 4 bits of the category
     for (my $i = 0; $i < 65536; $i++)
     {
-        $category_table[$i] |= $direction_table[$i] << 12 if defined $direction_table[$i];
+        $table[$i] |= $directions{$direction_table[$i]} << 12 if defined $direction_table[$i];
     }
 
-    dump_simple_mapping( "wine_wctype_table", 0, @category_table );
+    dump_simple_mapping( "wine_wctype_table", 0, @table );
 
     close OUTPUT;
     save_file($filename);
@@ -2212,7 +2320,7 @@ sub dump_compose_table($)
     print OUTPUT "/* Unicode char composition */\n";
     print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
 
     my @filled = ();
     foreach my $i (@compose_table)
@@ -2532,7 +2640,7 @@ sub dump_combining_class($)
     print OUTPUT "/* Unicode Combining Classes */\n";
     print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
 
     dump_two_level_mapping( "combining_class_table", 0, @combining_class_table );
     close OUTPUT;
@@ -2767,11 +2875,15 @@ sub REPLACE_IN_FILE($@)
 
 chdir ".." if -f "./make_unicode";
 READ_DEFAULTS( $DEFAULTS );
-DUMP_CASE_MAPPINGS( "libs/wine/casemap.c" );
-DUMP_SORTKEYS( "libs/wine/collation.c", READ_SORTKEYS_FILE() );
+dump_case_mappings( "libs/port/casemap.c" );
+dump_sortkeys( "libs/port/collation.c", READ_SORTKEYS_FILE() );
 dump_compose_table( "libs/port/compose.c" );
 dump_decompose_table( "libs/port/decompose.c" );
-DUMP_CTYPE_TABLES( "libs/wine/wctype.c" );
+dump_ctype_tables( "libs/port/wctype.c" );
+dump_bidi_dir_table( "dlls/gdi32/direction.c" );
+dump_bidi_dir_table( "dlls/usp10/direction.c" );
+dump_bidi_dir_table( "dlls/dwrite/direction.c" );
+dump_string_type_table( "dlls/kernel32/wctype.c" );
 dump_digit_folding( "libs/port/digitmap.c" );
 dump_combining_class( "libs/port/combclass.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );

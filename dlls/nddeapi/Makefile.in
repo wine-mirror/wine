@@ -1,5 +1,7 @@
 MODULE    = nddeapi.dll
 IMPORTLIB = nddeapi
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	nddeapi.c

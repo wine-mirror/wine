@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #define COBJMACROS
 #include "initguid.h"
@@ -37,6 +38,11 @@ static BOOL compare_color(DWORD c1, DWORD c2, unsigned int max_diff)
     if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
         return FALSE;
     return TRUE;
+}
+
+static BOOL equal_luid(LUID a, LUID b)
+{
+    return a.LowPart == b.LowPart && a.HighPart == b.HighPart;
 }
 
 static unsigned int format_size(DXGI_FORMAT format)
@@ -146,6 +152,13 @@ static void print_adapter_info(void)
 
     trace("Adapter: %s, %04x:%04x.\n", wine_dbgstr_w(adapter_desc.Description),
             adapter_desc.VendorId, adapter_desc.DeviceId);
+}
+
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
 }
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
@@ -274,16 +287,23 @@ static ID3D12PipelineState *create_pipeline_state_(unsigned int line, ID3D12Devi
     return pipeline_state;
 }
 
-#define reset_command_list(a, b) reset_command_list_(__LINE__, a, b)
-static void reset_command_list_(unsigned int line,
-        ID3D12GraphicsCommandList *list, ID3D12CommandAllocator *allocator)
+#define create_command_queue(a, b) create_command_queue_(__LINE__, a, b)
+static ID3D12CommandQueue *create_command_queue_(unsigned int line,
+        ID3D12Device *device, D3D12_COMMAND_LIST_TYPE type)
 {
+    D3D12_COMMAND_QUEUE_DESC command_queue_desc;
+    ID3D12CommandQueue *queue;
     HRESULT hr;
 
-    hr = ID3D12CommandAllocator_Reset(allocator);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to reset command allocator, hr %#x.\n", hr);
-    hr = ID3D12GraphicsCommandList_Reset(list, allocator, NULL);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to reset command list, hr %#x.\n", hr);
+    command_queue_desc.Type = type;
+    command_queue_desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+    command_queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    command_queue_desc.NodeMask = 0;
+    hr = ID3D12Device_CreateCommandQueue(device, &command_queue_desc,
+            &IID_ID3D12CommandQueue, (void **)&queue);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create command queue, hr %#x.\n", hr);
+
+    return queue;
 }
 
 struct test_context_desc
@@ -292,19 +312,19 @@ struct test_context_desc
     const D3D12_SHADER_BYTECODE *ps;
 };
 
+#define MAX_FRAME_COUNT 4
+
 struct test_context
 {
     ID3D12Device *device;
 
     ID3D12CommandQueue *queue;
-    ID3D12CommandAllocator *allocator;
-    ID3D12GraphicsCommandList *list;
-
-    D3D12_RESOURCE_DESC render_target_desc;
-    ID3D12Resource *render_target;
+    ID3D12CommandAllocator *allocator[MAX_FRAME_COUNT];
+    ID3D12GraphicsCommandList *list[MAX_FRAME_COUNT];
 
     ID3D12DescriptorHeap *rtv_heap;
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv;
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv[MAX_FRAME_COUNT];
+    ID3D12Resource *render_target[MAX_FRAME_COUNT];
 
     ID3D12RootSignature *root_signature;
     ID3D12PipelineState *pipeline_state;
@@ -313,14 +333,42 @@ struct test_context
     RECT scissor_rect;
 };
 
-#define create_render_target(context, a, b) create_render_target_(__LINE__, context, a, b)
-static void create_render_target_(unsigned int line, struct test_context *context,
-        ID3D12Resource **render_target, const D3D12_CPU_DESCRIPTOR_HANDLE *rtv)
+#define reset_command_list(a, b) reset_command_list_(__LINE__, a, b)
+static void reset_command_list_(unsigned int line, struct test_context *context, unsigned int index)
+{
+    HRESULT hr;
+
+    assert(index < MAX_FRAME_COUNT);
+
+    hr = ID3D12CommandAllocator_Reset(context->allocator[index]);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to reset command allocator, hr %#x.\n", hr);
+    hr = ID3D12GraphicsCommandList_Reset(context->list[index], context->allocator[index], NULL);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to reset command list, hr %#x.\n", hr);
+}
+
+static void destroy_render_targets(struct test_context *context)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(context->render_target); ++i)
+    {
+        if (context->render_target[i])
+        {
+            ID3D12Resource_Release(context->render_target[i]);
+            context->render_target[i] = NULL;
+        }
+    }
+}
+
+#define create_render_target(context) create_render_target_(__LINE__, context)
+static void create_render_target_(unsigned int line, struct test_context *context)
 {
     D3D12_HEAP_PROPERTIES heap_properties;
     D3D12_RESOURCE_DESC resource_desc;
     D3D12_CLEAR_VALUE clear_value;
     HRESULT hr;
+
+    destroy_render_targets(context);
 
     memset(&heap_properties, 0, sizeof(heap_properties));
     heap_properties.Type = D3D12_HEAP_TYPE_DEFAULT;
@@ -344,22 +392,23 @@ static void create_render_target_(unsigned int line, struct test_context *contex
     hr = ID3D12Device_CreateCommittedResource(context->device,
             &heap_properties, D3D12_HEAP_FLAG_NONE, &resource_desc,
             D3D12_RESOURCE_STATE_RENDER_TARGET, &clear_value,
-            &IID_ID3D12Resource, (void **)render_target);
+            &IID_ID3D12Resource, (void **)&context->render_target[0]);
     ok_(__FILE__, line)(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
 
-    context->render_target_desc = resource_desc;
+    set_viewport(&context->viewport, 0.0f, 0.0f, resource_desc.Width, resource_desc.Height, 0.0f, 1.0f);
+    SetRect(&context->scissor_rect, 0, 0, resource_desc.Width, resource_desc.Height);
 
-    if (rtv)
-        ID3D12Device_CreateRenderTargetView(context->device, *render_target, NULL, *rtv);
+    ID3D12Device_CreateRenderTargetView(context->device, context->render_target[0], NULL, context->rtv[0]);
 }
 
 #define init_test_context(a, b) init_test_context_(__LINE__, a, b)
 static BOOL init_test_context_(unsigned int line, struct test_context *context,
         const struct test_context_desc *desc)
 {
-    D3D12_COMMAND_QUEUE_DESC command_queue_desc;
     D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc;
+    unsigned int rtv_size;
     ID3D12Device *device;
+    unsigned int i;
     HRESULT hr;
 
     memset(context, 0, sizeof(*context));
@@ -371,23 +420,23 @@ static BOOL init_test_context_(unsigned int line, struct test_context *context,
     }
     device = context->device;
 
-    command_queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-    command_queue_desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-    command_queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-    command_queue_desc.NodeMask = 0;
-    hr = ID3D12Device_CreateCommandQueue(device, &command_queue_desc,
-            &IID_ID3D12CommandQueue, (void **)&context->queue);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create command queue, hr %#x.\n", hr);
+    context->queue = create_command_queue_(line, device, D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-    hr = ID3D12Device_CreateCommandAllocator(device, D3D12_COMMAND_LIST_TYPE_DIRECT,
-            &IID_ID3D12CommandAllocator, (void **)&context->allocator);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create command allocator, hr %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(context->allocator); ++i)
+    {
+        hr = ID3D12Device_CreateCommandAllocator(device, D3D12_COMMAND_LIST_TYPE_DIRECT,
+                &IID_ID3D12CommandAllocator, (void **)&context->allocator[i]);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to create command allocator %u, hr %#x.\n", i, hr);
+    }
 
-    hr = ID3D12Device_CreateCommandList(device, 0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-            context->allocator, NULL, &IID_ID3D12GraphicsCommandList, (void **)&context->list);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(context->list); ++i)
+    {
+        hr = ID3D12Device_CreateCommandList(device, 0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+                context->allocator[i], NULL, &IID_ID3D12GraphicsCommandList, (void **)&context->list[i]);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to create command list %u, hr %#x.\n", i, hr);
+    }
 
-    rtv_heap_desc.NumDescriptors = 16;
+    rtv_heap_desc.NumDescriptors = MAX_FRAME_COUNT;
     rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     rtv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     rtv_heap_desc.NodeMask = 0;
@@ -395,14 +444,12 @@ static BOOL init_test_context_(unsigned int line, struct test_context *context,
             &IID_ID3D12DescriptorHeap, (void **)&context->rtv_heap);
     ok_(__FILE__, line)(hr == S_OK, "Failed to create descriptor heap, hr %#x.\n", hr);
 
-    context->rtv = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(context->rtv_heap);
-
-    create_render_target_(line, context, &context->render_target, &context->rtv);
-
-    set_viewport(&context->viewport, 0.0f, 0.0f,
-            context->render_target_desc.Width, context->render_target_desc.Height, 0.0f, 1.0f);
-    SetRect(&context->scissor_rect, 0, 0,
-            context->render_target_desc.Width, context->render_target_desc.Height);
+    rtv_size = ID3D12Device_GetDescriptorHandleIncrementSize(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    for (i = 0; i < ARRAY_SIZE(context->rtv); ++i)
+    {
+        context->rtv[i] = ID3D12DescriptorHeap_GetCPUDescriptorHandleForHeapStart(context->rtv_heap);
+        context->rtv[i].ptr += i * rtv_size;
+    }
 
     context->root_signature = create_default_root_signature(device);
 
@@ -410,8 +457,7 @@ static BOOL init_test_context_(unsigned int line, struct test_context *context,
         return TRUE;
 
     context->pipeline_state = create_pipeline_state_(line, device,
-            context->root_signature, context->render_target_desc.Format,
-            desc ? desc->ps : NULL);
+            context->root_signature, DXGI_FORMAT_B8G8R8A8_UNORM, desc ? desc->ps : NULL);
 
     return TRUE;
 }
@@ -419,6 +465,7 @@ static BOOL init_test_context_(unsigned int line, struct test_context *context,
 #define destroy_test_context(context) destroy_test_context_(__LINE__, context)
 static void destroy_test_context_(unsigned int line, struct test_context *context)
 {
+    unsigned int i;
     ULONG refcount;
 
     if (context->pipeline_state)
@@ -428,12 +475,13 @@ static void destroy_test_context_(unsigned int line, struct test_context *contex
 
     if (context->rtv_heap)
         ID3D12DescriptorHeap_Release(context->rtv_heap);
-    if (context->render_target)
-        ID3D12Resource_Release(context->render_target);
+    destroy_render_targets(context);
 
-    ID3D12CommandAllocator_Release(context->allocator);
+    for (i = 0; i < ARRAY_SIZE(context->allocator); ++i)
+        ID3D12CommandAllocator_Release(context->allocator[i]);
     ID3D12CommandQueue_Release(context->queue);
-    ID3D12GraphicsCommandList_Release(context->list);
+    for (i = 0; i < ARRAY_SIZE(context->list); ++i)
+        ID3D12GraphicsCommandList_Release(context->list[i]);
 
     refcount = ID3D12Device_Release(context->device);
     ok_(__FILE__, line)(!refcount, "ID3D12Device has %u references left.\n", (unsigned int)refcount);
@@ -546,14 +594,20 @@ static HWND create_window(DWORD style)
     return CreateWindowA("static", "d3d12_test", style, 0, 0, 256, 256, NULL, NULL, NULL, NULL);
 }
 
-static IDXGISwapChain3 *create_swapchain(ID3D12CommandQueue *queue, HWND window,
-        DXGI_FORMAT format, unsigned int width, unsigned int height)
+static IDXGISwapChain3 *create_swapchain(struct test_context *context, ID3D12CommandQueue *queue,
+        HWND window, unsigned int buffer_count, DXGI_FORMAT format, unsigned int width, unsigned int height)
 {
     IDXGISwapChain1 *swapchain1;
     DXGI_SWAP_CHAIN_DESC1 desc;
     IDXGISwapChain3 *swapchain;
     IDXGIFactory4 *factory;
+    unsigned int i;
     HRESULT hr;
+
+    assert(buffer_count <= MAX_FRAME_COUNT);
+
+    if (context)
+        destroy_render_targets(context);
 
     hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
     ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
@@ -565,7 +619,7 @@ static IDXGISwapChain3 *create_swapchain(ID3D12CommandQueue *queue, HWND window,
     desc.SampleDesc.Count = 1;
     desc.SampleDesc.Quality = 0;
     desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    desc.BufferCount = 2;
+    desc.BufferCount = buffer_count;
     desc.Scaling = DXGI_SCALING_STRETCH;
     desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
@@ -578,6 +632,20 @@ static IDXGISwapChain3 *create_swapchain(ID3D12CommandQueue *queue, HWND window,
     hr = IDXGISwapChain1_QueryInterface(swapchain1, &IID_IDXGISwapChain3, (void **)&swapchain);
     ok(hr == S_OK, "Failed to query IDXGISwapChain3, hr %#x.\n", hr);
     IDXGISwapChain1_Release(swapchain1);
+
+    if (context)
+    {
+        set_viewport(&context->viewport, 0.0f, 0.0f, width, height, 0.0f, 1.0f);
+        SetRect(&context->scissor_rect, 0, 0, width, height);
+
+        for (i = 0; i < buffer_count; ++i)
+        {
+            hr = IDXGISwapChain3_GetBuffer(swapchain, i, &IID_ID3D12Resource, (void **)&context->render_target[i]);
+            ok(hr == S_OK, "Failed to get swapchain buffer %u, hr %#x.\n", i, hr);
+            ID3D12Device_CreateRenderTargetView(context->device, context->render_target[i], NULL, context->rtv[i]);
+        }
+    }
+
     return swapchain;
 }
 
@@ -706,6 +774,21 @@ static void check_sub_resource_uint_(unsigned int line, ID3D12Resource *texture,
     release_resource_readback(&rb);
 }
 
+static void test_ordinals(void)
+{
+    PFN_D3D12_CREATE_DEVICE pfn_D3D12CreateDevice, pfn_101;
+    HMODULE d3d12;
+
+    d3d12 = GetModuleHandleA("d3d12.dll");
+    ok(!!d3d12, "Failed to get module handle.\n");
+
+    pfn_D3D12CreateDevice = (void *)GetProcAddress(d3d12, "D3D12CreateDevice");
+    ok(!!pfn_D3D12CreateDevice, "Failed to get D3D12CreateDevice() proc address.\n");
+
+    pfn_101 = (void *)GetProcAddress(d3d12, (const char *)101);
+    ok(pfn_101 == pfn_D3D12CreateDevice, "Got %p, expected %p.\n", pfn_101, pfn_D3D12CreateDevice);
+}
+
 static void test_interfaces(void)
 {
     D3D12_COMMAND_QUEUE_DESC desc;
@@ -759,6 +842,90 @@ static void test_interfaces(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_create_device(void)
+{
+    DXGI_ADAPTER_DESC adapter_desc;
+    IDXGISwapChain3 *swapchain;
+    ID3D12CommandQueue *queue;
+    LUID adapter_luid, luid;
+    IDXGIFactory4 *factory;
+    IDXGIAdapter *adapter;
+    ID3D12Device *device;
+    IDXGIOutput *output;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    RECT rect;
+    BOOL ret;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+    refcount = ID3D12Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDXGIFactory4_EnumAdapters(factory, 0, &adapter);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    IDXGIFactory4_Release(factory);
+
+    hr = IDXGIAdapter_GetDesc(adapter, &adapter_desc);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    adapter_luid = adapter_desc.AdapterLuid;
+
+    refcount = get_refcount(adapter);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    hr = D3D12CreateDevice((IUnknown *)adapter, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&device);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    refcount = IDXGIAdapter_Release(adapter);
+    ok(refcount >= 1, "Got unexpected refcount %u.\n", refcount);
+    adapter = NULL;
+
+    luid = ID3D12Device_GetAdapterLuid(device);
+    ok(equal_luid(luid, adapter_luid), "Got LUID %08x:%08x, expected %08x:%08x.\n",
+            luid.HighPart, luid.LowPart, adapter_luid.HighPart, adapter_luid.LowPart);
+
+    queue = create_command_queue(device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+    window = create_window(WS_VISIBLE);
+    ret = GetClientRect(window, &rect);
+    ok(ret, "Failed to get client rect.\n");
+    swapchain = create_swapchain(NULL, queue, window, 2, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
+
+    hr = IDXGISwapChain3_GetContainingOutput(swapchain, &output);
+    if (hr != DXGI_ERROR_UNSUPPORTED)
+    {
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDXGIOutput_GetParent(output, &IID_IDXGIAdapter, (void **)&adapter);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        IDXGIOutput_Release(output);
+
+        memset(&adapter_desc, 0, sizeof(adapter_desc));
+        hr = IDXGIAdapter_GetDesc(adapter, &adapter_desc);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        IDXGIAdapter_Release(adapter);
+
+        ok(equal_luid(adapter_desc.AdapterLuid, adapter_luid),
+                "Got LUID %08x:%08x, expected %08x:%08x.\n",
+                adapter_desc.AdapterLuid.HighPart, adapter_desc.AdapterLuid.LowPart,
+                adapter_luid.HighPart, adapter_luid.LowPart);
+    }
+    else
+    {
+        skip("GetContainingOutput() is not supported.\n");
+    }
+
+    refcount = IDXGISwapChain3_Release(swapchain);
+    ok(!refcount, "Swapchain has %u references left.\n", refcount);
+    DestroyWindow(window);
+    ID3D12CommandQueue_Release(queue);
+
+    refcount = ID3D12Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_draw(void)
 {
     static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -768,12 +935,14 @@ static void test_draw(void)
 
     if (!init_test_context(&context, NULL))
         return;
-    command_list = context.list;
+    command_list = context.list[0];
     queue = context.queue;
 
-    ID3D12GraphicsCommandList_ClearRenderTargetView(command_list, context.rtv, white, 0, NULL);
+    create_render_target(&context);
 
-    ID3D12GraphicsCommandList_OMSetRenderTargets(command_list, 1, &context.rtv, FALSE, NULL);
+    ID3D12GraphicsCommandList_ClearRenderTargetView(command_list, context.rtv[0], white, 0, NULL);
+
+    ID3D12GraphicsCommandList_OMSetRenderTargets(command_list, 1, &context.rtv[0], FALSE, NULL);
     ID3D12GraphicsCommandList_SetGraphicsRootSignature(command_list, context.root_signature);
     ID3D12GraphicsCommandList_SetPipelineState(command_list, context.pipeline_state);
     ID3D12GraphicsCommandList_IASetPrimitiveTopology(command_list, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -781,10 +950,10 @@ static void test_draw(void)
     ID3D12GraphicsCommandList_RSSetScissorRects(command_list, 1, &context.scissor_rect);
     ID3D12GraphicsCommandList_DrawInstanced(command_list, 3, 1, 0, 0);
 
-    transition_sub_resource_state(command_list, context.render_target, 0,
+    transition_sub_resource_state(command_list, context.render_target[0], 0,
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
-    check_sub_resource_uint(context.render_target, 0, queue, command_list, 0xff00ff00, 0);
+    check_sub_resource_uint(context.render_target[0], 0, queue, command_list, 0xff00ff00, 0);
 
     destroy_test_context(&context);
 }
@@ -793,6 +962,7 @@ static void test_swapchain_draw(void)
 {
     static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
     ID3D12GraphicsCommandList *command_list;
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv;
     struct test_context_desc desc;
     struct test_context context;
     ID3D12Resource *backbuffer;
@@ -845,31 +1015,29 @@ static void test_swapchain_draw(void)
     if (!init_test_context(&context, &desc))
         return;
     device = context.device;
-    command_list = context.list;
+    command_list = context.list[0];
     queue = context.queue;
 
     window = create_window(WS_VISIBLE);
     ret = GetClientRect(window, &rect);
     ok(ret, "Failed to get client rect.\n");
-    set_viewport(&context.viewport, 0.0f, 0.0f, rect.right, rect.bottom, 0.0f, 1.0f);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         context.pipeline_state = create_pipeline_state(device,
                 context.root_signature, tests[i].format, &ps);
 
-        swapchain = create_swapchain(queue, window, tests[i].format, rect.right, rect.bottom);
+        swapchain = create_swapchain(&context, queue, window, 2, tests[i].format, rect.right, rect.bottom);
         index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain);
-        hr = IDXGISwapChain3_GetBuffer(swapchain, index, &IID_ID3D12Resource, (void **)&backbuffer);
-        ok(hr == S_OK, "Failed to get swapchain buffer %u, hr %#x.\n", index, hr);
-        ID3D12Device_CreateRenderTargetView(device, backbuffer, NULL, context.rtv);
+        backbuffer = context.render_target[index];
+        rtv = context.rtv[index];
 
         transition_sub_resource_state(command_list, backbuffer, 0,
                 D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-        ID3D12GraphicsCommandList_ClearRenderTargetView(command_list, context.rtv, white, 0, NULL);
+        ID3D12GraphicsCommandList_ClearRenderTargetView(command_list, rtv, white, 0, NULL);
 
-        ID3D12GraphicsCommandList_OMSetRenderTargets(command_list, 1, &context.rtv, FALSE, NULL);
+        ID3D12GraphicsCommandList_OMSetRenderTargets(command_list, 1, &rtv, FALSE, NULL);
         ID3D12GraphicsCommandList_SetGraphicsRootSignature(command_list, context.root_signature);
         ID3D12GraphicsCommandList_SetPipelineState(command_list, context.pipeline_state);
         ID3D12GraphicsCommandList_IASetPrimitiveTopology(command_list, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -882,7 +1050,7 @@ static void test_swapchain_draw(void)
                 D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE);
         check_sub_resource_uint(backbuffer, 0, queue, command_list, tests[i].color, 0);
 
-        reset_command_list(command_list, context.allocator);
+        reset_command_list(&context, 0);
         transition_sub_resource_state(command_list, backbuffer, 0,
                 D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
         hr = ID3D12GraphicsCommandList_Close(command_list);
@@ -894,16 +1062,84 @@ static void test_swapchain_draw(void)
 
         wait_queue_idle(device, queue);
 
-        refcount = ID3D12Resource_Release(backbuffer);
-        ok(!refcount, "Backbuffer has %u references left.\n", refcount);
+        destroy_render_targets(&context);
         refcount = IDXGISwapChain3_Release(swapchain);
         ok(!refcount, "Swapchain has %u references left.\n", refcount);
         ID3D12PipelineState_Release(context.pipeline_state);
         context.pipeline_state = NULL;
 
-        reset_command_list(command_list, context.allocator);
+        reset_command_list(&context, 0);
     }
 
+    DestroyWindow(window);
+    destroy_test_context(&context);
+}
+
+static void test_swapchain_refcount(void)
+{
+    const unsigned int buffer_count = 4;
+    struct test_context_desc desc;
+    struct test_context context;
+    IDXGISwapChain3 *swapchain;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    RECT rect;
+    BOOL ret;
+
+    desc.no_pipeline = TRUE;
+    if (!init_test_context(&context, &desc))
+        return;
+
+    window = create_window(WS_VISIBLE);
+    ret = GetClientRect(window, &rect);
+    ok(ret, "Failed to get client rect.\n");
+    swapchain = create_swapchain(&context, context.queue, window,
+            buffer_count, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
+
+    for (i = 0; i < buffer_count; ++i)
+    {
+        refcount = get_refcount(swapchain);
+        todo_wine ok(refcount == 2, "Got refcount %u.\n", refcount);
+        ID3D12Resource_Release(context.render_target[i]);
+        context.render_target[i] = NULL;
+    }
+    refcount = get_refcount(swapchain);
+    ok(refcount == 1, "Got refcount %u.\n", refcount);
+
+    refcount = IDXGISwapChain3_AddRef(swapchain);
+    ok(refcount == 2, "Got refcount %u.\n", refcount);
+    hr = IDXGISwapChain3_GetBuffer(swapchain, 0, &IID_ID3D12Resource, (void **)&context.render_target[0]);
+    ok(hr == S_OK, "Failed to get swapchain buffer, hr %#x.\n", hr);
+    refcount = get_refcount(swapchain);
+    todo_wine ok(refcount == 3, "Got refcount %u.\n", refcount);
+
+    refcount = ID3D12Resource_AddRef(context.render_target[0]);
+    ok(refcount == 2, "Got refcount %u.\n", refcount);
+    refcount = get_refcount(swapchain);
+    todo_wine ok(refcount == 3, "Got refcount %u.\n", refcount);
+
+    hr = IDXGISwapChain3_GetBuffer(swapchain, 1, &IID_ID3D12Resource, (void **)&context.render_target[1]);
+    ok(hr == S_OK, "Failed to get swapchain buffer, hr %#x.\n", hr);
+    refcount = get_refcount(swapchain);
+    todo_wine ok(refcount == 3, "Got refcount %u.\n", refcount);
+
+    ID3D12Resource_Release(context.render_target[0]);
+    ID3D12Resource_Release(context.render_target[0]);
+    context.render_target[0] = NULL;
+    refcount = get_refcount(swapchain);
+    todo_wine ok(refcount == 3, "Got refcount %u.\n", refcount);
+
+    refcount = IDXGISwapChain3_Release(swapchain);
+    todo_wine ok(refcount == 2, "Got refcount %u.\n", refcount);
+    ID3D12Resource_Release(context.render_target[1]);
+    context.render_target[1] = NULL;
+    refcount = get_refcount(swapchain);
+    ok(refcount == 1, "Got refcount %u.\n", refcount);
+
+    refcount = IDXGISwapChain3_Release(swapchain);
+    ok(!refcount, "Swapchain has %u references left.\n", refcount);
     DestroyWindow(window);
     destroy_test_context(&context);
 }
@@ -911,8 +1147,9 @@ static void test_swapchain_draw(void)
 static void test_swapchain_size_mismatch(void)
 {
     static const float green[] = {0.0f, 1.0f, 0.0f, 1.0f};
+    UINT64 frame_fence_value[MAX_FRAME_COUNT] = {0};
     ID3D12GraphicsCommandList *command_list;
-    ID3D12Resource *backbuffers[2];
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv;
     struct test_context_desc desc;
     struct test_context context;
     ID3D12Resource *backbuffer;
@@ -920,6 +1157,8 @@ static void test_swapchain_size_mismatch(void)
     ID3D12CommandQueue *queue;
     unsigned int index, i;
     ID3D12Device *device;
+    ID3D12Fence *fence;
+    UINT64 fence_value;
     ULONG refcount;
     HWND window;
     HRESULT hr;
@@ -930,24 +1169,23 @@ static void test_swapchain_size_mismatch(void)
     if (!init_test_context(&context, &desc))
         return;
     device = context.device;
-    command_list = context.list;
+    command_list = context.list[0];
     queue = context.queue;
 
     window = CreateWindowA("static", "d3d12_test", WS_VISIBLE, 0, 0, 200, 200, NULL, NULL, NULL, NULL);
-    swapchain = create_swapchain(queue, window, DXGI_FORMAT_B8G8R8A8_UNORM, 400, 400);
+    swapchain = create_swapchain(&context, queue, window, 2, DXGI_FORMAT_B8G8R8A8_UNORM, 400, 400);
     index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain);
-    hr = IDXGISwapChain3_GetBuffer(swapchain, index, &IID_ID3D12Resource, (void **)&backbuffer);
-    ok(hr == S_OK, "Failed to get swapchain buffer %u, hr %#x.\n", index, hr);
-    ID3D12Device_CreateRenderTargetView(device, backbuffer, NULL, context.rtv);
+    backbuffer = context.render_target[index];
+    rtv = context.rtv[index];
 
     transition_sub_resource_state(command_list, backbuffer, 0,
             D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    ID3D12GraphicsCommandList_ClearRenderTargetView(command_list, context.rtv, green, 0, NULL);
+    ID3D12GraphicsCommandList_ClearRenderTargetView(command_list, rtv, green, 0, NULL);
     transition_sub_resource_state(command_list, backbuffer, 0,
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE);
     check_sub_resource_uint(backbuffer, 0, queue, command_list, 0xff00ff00, 0);
 
-    reset_command_list(command_list, context.allocator);
+    reset_command_list(&context, 0);
     transition_sub_resource_state(command_list, backbuffer, 0,
             D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
     hr = ID3D12GraphicsCommandList_Close(command_list);
@@ -958,10 +1196,9 @@ static void test_swapchain_size_mismatch(void)
     ok(hr == S_OK, "Failed to present, hr %#x.\n", hr);
 
     wait_queue_idle(device, queue);
-    reset_command_list(command_list, context.allocator);
+    reset_command_list(&context, 0);
 
-    refcount = ID3D12Resource_Release(backbuffer);
-    ok(!refcount, "Backbuffer has %u references left.\n", refcount);
+    destroy_render_targets(&context);
     refcount = IDXGISwapChain3_Release(swapchain);
     ok(!refcount, "Swapchain has %u references left.\n", refcount);
     DestroyWindow(window);
@@ -969,23 +1206,34 @@ static void test_swapchain_size_mismatch(void)
     window = create_window(WS_VISIBLE);
     ret = GetClientRect(window, &rect);
     ok(ret, "Failed to get client rect.\n");
-    swapchain = create_swapchain(queue, window, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
+    swapchain = create_swapchain(&context, queue, window, 4, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
 
-    for (i = 0; i < ARRAY_SIZE(backbuffers); ++i)
+    hr = ID3D12Device_CreateFence(device, 0, D3D12_FENCE_FLAG_NONE, &IID_ID3D12Fence, (void **)&fence);
+    ok(hr == S_OK, "Failed to create fence, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(context.list); ++i)
     {
-        hr = IDXGISwapChain3_GetBuffer(swapchain, i, &IID_ID3D12Resource, (void **)&backbuffers[i]);
-        ok(hr == S_OK, "Failed to get swapchain buffer %u, hr %#x.\n", i, hr);
+        hr = ID3D12GraphicsCommandList_Close(context.list[i]);
+        ok(hr == S_OK, "Failed to close command list %u, hr %#x.\n", i, hr);
     }
 
+    fence_value = 1;
     for (i = 0; i < 20; ++i)
     {
         index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain);
-        ID3D12Device_CreateRenderTargetView(device, backbuffers[index], NULL, context.rtv);
 
-        transition_sub_resource_state(command_list, backbuffers[index], 0,
+        hr = wait_for_fence(fence, frame_fence_value[index]);
+        ok(hr == S_OK, "Failed to wait for fence, hr %#x.\n", hr);
+
+        reset_command_list(&context, index);
+        backbuffer = context.render_target[index];
+        command_list = context.list[index];
+        rtv = context.rtv[index];
+
+        transition_sub_resource_state(command_list, backbuffer, 0,
                 D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        ID3D12GraphicsCommandList_ClearRenderTargetView(command_list, context.rtv, green, 0, NULL);
-        transition_sub_resource_state(command_list, backbuffers[index], 0,
+        ID3D12GraphicsCommandList_ClearRenderTargetView(command_list, rtv, green, 0, NULL);
+        transition_sub_resource_state(command_list, backbuffer, 0,
                 D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
         hr = ID3D12GraphicsCommandList_Close(command_list);
         ok(hr == S_OK, "Failed to close command list, hr %#x.\n", hr);
@@ -994,15 +1242,22 @@ static void test_swapchain_size_mismatch(void)
         hr = IDXGISwapChain3_Present(swapchain, 1, 0);
         ok(hr == S_OK, "Failed to present, hr %#x.\n", hr);
 
-        wait_queue_idle(device, queue);
-        reset_command_list(command_list, context.allocator);
-
         if (i == 6)
+        {
+            wait_queue_idle(device, queue);
             MoveWindow(window, 0, 0, 100, 100, TRUE);
+        }
+
+        frame_fence_value[index] = fence_value;
+        hr = ID3D12CommandQueue_Signal(queue, fence, fence_value);
+        ok(hr == S_OK, "Failed to signal fence, hr %#x.\n", hr);
+        ++fence_value;
     }
 
-    for (i = 0; i < ARRAY_SIZE(backbuffers); ++i)
-        ID3D12Resource_Release(backbuffers[i]);
+    wait_queue_idle(device, queue);
+
+    ID3D12Fence_Release(fence);
+    destroy_render_targets(&context);
     refcount = IDXGISwapChain3_Release(swapchain);
     ok(!refcount, "Swapchain has %u references left.\n", refcount);
     DestroyWindow(window);
@@ -1012,15 +1267,20 @@ static void test_swapchain_size_mismatch(void)
 static void test_swapchain_backbuffer_index(void)
 {
     static const float green[] = {0.0f, 1.0f, 0.0f, 1.0f};
-    unsigned int previous_index, expected_index, index, i;
+    UINT64 frame_fence_value[MAX_FRAME_COUNT] = {0};
     ID3D12GraphicsCommandList *command_list;
-    ID3D12Resource *backbuffers[2];
+    unsigned int expected_index, index, i;
+    const unsigned int buffer_count = 2;
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv;
     struct test_context_desc desc;
     struct test_context context;
+    ID3D12Resource *backbuffer;
     unsigned int sync_interval;
     IDXGISwapChain3 *swapchain;
     ID3D12CommandQueue *queue;
     ID3D12Device *device;
+    ID3D12Fence *fence;
+    UINT64 fence_value;
     ULONG refcount;
     HWND window;
     HRESULT hr;
@@ -1031,33 +1291,43 @@ static void test_swapchain_backbuffer_index(void)
     if (!init_test_context(&context, &desc))
         return;
     device = context.device;
-    command_list = context.list;
     queue = context.queue;
 
     window = create_window(WS_VISIBLE);
     ret = GetClientRect(window, &rect);
     ok(ret, "Failed to get client rect.\n");
-    swapchain = create_swapchain(queue, window, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
+    swapchain = create_swapchain(&context, queue, window,
+            buffer_count, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
 
-    for (i = 0; i < ARRAY_SIZE(backbuffers); ++i)
+    hr = ID3D12Device_CreateFence(device, 0, D3D12_FENCE_FLAG_NONE, &IID_ID3D12Fence, (void **)&fence);
+    ok(hr == S_OK, "Failed to create fence, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(context.list); ++i)
     {
-        hr = IDXGISwapChain3_GetBuffer(swapchain, i, &IID_ID3D12Resource, (void **)&backbuffers[i]);
-        ok(hr == S_OK, "Failed to get swapchain buffer %u, hr %#x.\n", i, hr);
+        hr = ID3D12GraphicsCommandList_Close(context.list[i]);
+        ok(hr == S_OK, "Failed to close command list %u, hr %#x.\n", i, hr);
     }
 
-    previous_index = 1;
+    index = 1;
+    fence_value = 1;
     for (i = 0; i < 20; ++i)
     {
+        expected_index = (index + 1) % buffer_count;
         index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain);
-        ID3D12Device_CreateRenderTargetView(device, backbuffers[index], NULL, context.rtv);
-
-        expected_index = (previous_index + 1) % 2;
         ok(index == expected_index, "Test %u: Got index %u, expected %u.\n", i, index, expected_index);
 
-        transition_sub_resource_state(command_list, backbuffers[index], 0,
+        hr = wait_for_fence(fence, frame_fence_value[index]);
+        ok(hr == S_OK, "Failed to wait for fence, hr %#x.\n", hr);
+
+        reset_command_list(&context, index);
+        backbuffer = context.render_target[index];
+        command_list = context.list[index];
+        rtv = context.rtv[index];
+
+        transition_sub_resource_state(command_list, backbuffer, 0,
                 D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        ID3D12GraphicsCommandList_ClearRenderTargetView(command_list, context.rtv, green, 0, NULL);
-        transition_sub_resource_state(command_list, backbuffers[index], 0,
+        ID3D12GraphicsCommandList_ClearRenderTargetView(command_list, rtv, green, 0, NULL);
+        transition_sub_resource_state(command_list, backbuffer, 0,
                 D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
         hr = ID3D12GraphicsCommandList_Close(command_list);
         ok(hr == S_OK, "Failed to close command list, hr %#x.\n", hr);
@@ -1071,14 +1341,16 @@ static void test_swapchain_backbuffer_index(void)
         hr = IDXGISwapChain3_Present(swapchain, sync_interval, 0);
         ok(hr == S_OK, "Failed to present, hr %#x.\n", hr);
 
-        wait_queue_idle(device, queue);
-        reset_command_list(command_list, context.allocator);
-
-        previous_index = index;
+        frame_fence_value[index] = fence_value;
+        hr = ID3D12CommandQueue_Signal(queue, fence, fence_value);
+        ok(hr == S_OK, "Failed to signal fence, hr %#x.\n", hr);
+        ++fence_value;
     }
 
-    for (i = 0; i < ARRAY_SIZE(backbuffers); ++i)
-        ID3D12Resource_Release(backbuffers[i]);
+    wait_queue_idle(device, queue);
+
+    ID3D12Fence_Release(fence);
+    destroy_render_targets(&context);
     refcount = IDXGISwapChain3_Release(swapchain);
     ok(!refcount, "Swapchain has %u references left.\n", refcount);
     DestroyWindow(window);
@@ -1111,9 +1383,12 @@ START_TEST(d3d12)
 
     print_adapter_info();
 
+    test_ordinals();
     test_interfaces();
+    test_create_device();
     test_draw();
     test_swapchain_draw();
+    test_swapchain_refcount();
     test_swapchain_size_mismatch();
     test_swapchain_backbuffer_index();
 }

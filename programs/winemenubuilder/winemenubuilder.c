@@ -539,7 +539,7 @@ static int populate_module16_icons(struct IconData16 *iconData16, GRPICONDIR *gr
         for (j = 0; j < iconData16->iconResources->count; j++)
         {
             NE_NAMEINFO *iconInfo = (NE_NAMEINFO*)iconPtr;
-            if ((((BYTE*)iconPtr) + sizeof(NE_NAMEINFO)) > (iconData16->fileBytes + iconData16->fileSize))
+            if ((iconPtr + sizeof(NE_NAMEINFO)) > (iconData16->fileBytes + iconData16->fileSize))
             {
                 WINE_WARN("file too small for icon NE_NAMEINFO\n");
                 break;

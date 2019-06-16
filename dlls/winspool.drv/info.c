@@ -102,7 +102,6 @@
 #undef SetRect
 #undef ShowCursor
 #undef UnionRect
-#undef DPRINTF
 #endif
 
 #include "wine/library.h"
@@ -1194,14 +1193,14 @@ static BOOL PRINTCAP_ParseEntry( const char *pent, BOOL isfirst )
         e = s;
         while(isspace(*--e)) *e = '\0';
         TRACE("\t%s\n", debugstr_a(prettyname));
-        if(env_default && !strcasecmp(prettyname, env_default)) set_default = TRUE;
+        if(env_default && !_strnicmp(prettyname, env_default, -1)) set_default = TRUE;
         for(prettyname = s+1; isspace(*prettyname); prettyname++)
             ;
     }
     e = prettyname + strlen(prettyname);
     while(isspace(*--e)) *e = '\0';
     TRACE("\t%s\n", debugstr_a(prettyname));
-    if(env_default && !strcasecmp(prettyname, env_default)) set_default = TRUE;
+    if(env_default && !_strnicmp(prettyname, env_default, -1)) set_default = TRUE;
 
     /* prettyname must fit into the dmDeviceName member of DEVMODE struct,
      * if it is too long, we use it as comment below. */

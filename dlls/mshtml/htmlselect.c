@@ -1190,7 +1190,7 @@ static HRESULT HTMLSelectElement_get_dispid(HTMLDOMNode *iface, BSTR name, DWORD
     const WCHAR *ptr;
     DWORD idx = 0;
 
-    for(ptr = name; *ptr && isdigitW(*ptr); ptr++) {
+    for(ptr = name; *ptr && iswdigit(*ptr); ptr++) {
         idx = idx*10 + (*ptr-'0');
         if(idx > MSHTML_CUSTOM_DISPID_CNT) {
             WARN("too big idx\n");

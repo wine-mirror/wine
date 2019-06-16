@@ -54,15 +54,9 @@ static HRESULT set_frame_doc(HTMLFrameBase *frame, nsIDOMDocument *nsdoc)
         return E_FAIL;
 
     window = mozwindow_to_window(mozwindow);
-    if(!window) {
-        nsIDOMWindow *nswindow;
-        nsres = mozIDOMWindowProxy_QueryInterface(mozwindow, &IID_nsIDOMWindow, (void**)&nswindow);
-        assert(nsres == NS_OK);
-
-        hres = HTMLOuterWindow_Create(frame->element.node.doc->basedoc.doc_obj, nswindow,
+    if(!window && frame->element.node.doc->browser)
+        hres = create_outer_window(frame->element.node.doc->browser, mozwindow,
                 frame->element.node.doc->basedoc.window, &window);
-        nsIDOMWindow_Release(nswindow);
-    }
     mozIDOMWindowProxy_Release(mozwindow);
     if(FAILED(hres))
         return hres;
@@ -349,9 +343,9 @@ static HRESULT WINAPI HTMLFrameBase_get_marginWidth(IHTMLFrameBase *iface, VARIA
         if(*str) {
             BSTR ret;
 
-            end = strstrW(str, pxW);
+            end = wcsstr(str, pxW);
             if(!end)
-                end = str+strlenW(str);
+                end = str+lstrlenW(str);
             ret = SysAllocStringLen(str, end-str);
             if(ret) {
                 V_VT(p) = VT_BSTR;
@@ -416,9 +410,9 @@ static HRESULT WINAPI HTMLFrameBase_get_marginHeight(IHTMLFrameBase *iface, VARI
         if(*str) {
             BSTR ret;
 
-            end = strstrW(str, pxW);
+            end = wcsstr(str, pxW);
             if(!end)
-                end = str+strlenW(str);
+                end = str+lstrlenW(str);
             ret = SysAllocStringLen(str, end-str);
             if(ret) {
                 V_VT(p) = VT_BSTR;
@@ -461,7 +455,7 @@ static HRESULT WINAPI HTMLFrameBase_put_scrolling(IHTMLFrameBase *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!(!strcmpiW(v, yesW) || !strcmpiW(v, noW) || !strcmpiW(v, autoW)))
+    if(!(!wcsicmp(v, yesW) || !wcsicmp(v, noW) || !wcsicmp(v, autoW)))
         return E_INVALIDARG;
 
     if(This->nsframe) {

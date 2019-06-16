@@ -22,7 +22,9 @@
 #define __WINE_WINE_DEBUG_H
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <windef.h>
+#include <winbase.h>
 #ifndef GUID_DEFINED
 #include <guiddef.h>
 #endif
@@ -141,22 +143,11 @@ struct __wine_debug_channel
 
 #endif  /* !__GNUC__ && !__SUNPRO_C */
 
-struct __wine_debug_functions
-{
-    char * (*get_temp_buffer)( size_t n );
-    void   (*release_temp_buffer)( char *buffer, size_t n );
-    const char * (*dbgstr_an)( const char * s, int n );
-    const char * (*dbgstr_wn)( const WCHAR *s, int n );
-    int (*dbg_vprintf)( const char *format, va_list args );
-    int (*dbg_vlog)( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
-                     const char *function, const char *format, va_list args );
-};
-
-extern unsigned char __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel );
-extern int __wine_dbg_set_channel_flags( struct __wine_debug_channel *channel,
-                                         unsigned char set, unsigned char clear );
-extern void __wine_dbg_set_functions( const struct __wine_debug_functions *new_funcs,
-                                      struct __wine_debug_functions *old_funcs, size_t size );
+extern unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel );
+extern const char * __cdecl __wine_dbg_strdup( const char *str );
+extern int __cdecl __wine_dbg_output( const char *str );
+extern int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
+                                      const char *function );
 
 /*
  * Exported definitions and macros
@@ -165,13 +156,153 @@ extern void __wine_dbg_set_functions( const struct __wine_debug_functions *new_f
 /* These functions return a printable version of a string, including
    quotes.  The string will be valid for some time, but not indefinitely
    as strings are re-used.  */
-extern const char *wine_dbgstr_an( const char * s, int n );
-extern const char *wine_dbgstr_wn( const WCHAR *s, int n );
-extern const char *wine_dbg_sprintf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
 
-extern int wine_dbg_printf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
-extern int wine_dbg_log( enum __wine_debug_class cls, struct __wine_debug_channel *ch, const char *func,
-                         const char *format, ... ) __WINE_PRINTF_ATTR(4,5);
+#if (defined(__x86_64__) || defined(__aarch64__)) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
+# define __wine_dbg_cdecl __cdecl
+# define __wine_dbg_va_list __builtin_ms_va_list
+# define __wine_dbg_va_start(list,arg) __builtin_ms_va_start(list,arg)
+# define __wine_dbg_va_end(list) __builtin_ms_va_end(list)
+#else
+# define __wine_dbg_cdecl
+# define __wine_dbg_va_list va_list
+# define __wine_dbg_va_start(list,arg) va_start(list,arg)
+# define __wine_dbg_va_end(list) va_end(list)
+#endif
+
+static const char * __wine_dbg_cdecl wine_dbg_sprintf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
+static inline const char * __wine_dbg_cdecl wine_dbg_sprintf( const char *format, ... )
+{
+    char buffer[200];
+    __wine_dbg_va_list args;
+
+    __wine_dbg_va_start( args, format );
+    vsnprintf( buffer, sizeof(buffer), format, args );
+    __wine_dbg_va_end( args );
+    return __wine_dbg_strdup( buffer );
+}
+
+static int __wine_dbg_cdecl wine_dbg_printf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
+static inline int __wine_dbg_cdecl wine_dbg_printf( const char *format, ... )
+{
+    char buffer[1024];
+    __wine_dbg_va_list args;
+
+    __wine_dbg_va_start( args, format );
+    vsnprintf( buffer, sizeof(buffer), format, args );
+    __wine_dbg_va_end( args );
+    return __wine_dbg_output( buffer );
+}
+
+static int __wine_dbg_cdecl wine_dbg_log( enum __wine_debug_class cls,
+                                          struct __wine_debug_channel *channel, const char *func,
+                                          const char *format, ... ) __WINE_PRINTF_ATTR(4,5);
+static inline int __wine_dbg_cdecl wine_dbg_log( enum __wine_debug_class cls,
+                                                 struct __wine_debug_channel *channel,
+                                                 const char *function, const char *format, ... )
+{
+    char buffer[1024];
+    __wine_dbg_va_list args;
+    int ret;
+
+    if (*format == '\1')  /* special magic to avoid standard prefix */
+    {
+        format++;
+        function = NULL;
+    }
+    if ((ret = __wine_dbg_header( cls, channel, function )) == -1) return ret;
+
+    __wine_dbg_va_start( args, format );
+    vsnprintf( buffer, sizeof(buffer), format, args );
+    __wine_dbg_va_end( args );
+    ret += __wine_dbg_output( buffer );
+    return ret;
+}
+
+static inline const char *wine_dbgstr_an( const char *str, int n )
+{
+    static const char hex[16] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
+    char buffer[300], *dst = buffer;
+
+    if (!str) return "(null)";
+    if (!((ULONG_PTR)str >> 16)) return wine_dbg_sprintf( "#%04x", LOWORD(str) );
+    if (IsBadStringPtrA( str, n )) return "(invalid)";
+    if (n == -1) for (n = 0; str[n]; n++) ;
+    *dst++ = '"';
+    while (n-- > 0 && dst <= buffer + sizeof(buffer) - 9)
+    {
+        unsigned char c = *str++;
+        switch (c)
+        {
+        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
+        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
+        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
+        case '"':  *dst++ = '\\'; *dst++ = '"'; break;
+        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
+        default:
+            if (c < ' ' || c >= 127)
+            {
+                *dst++ = '\\';
+                *dst++ = 'x';
+                *dst++ = hex[(c >> 4) & 0x0f];
+                *dst++ = hex[c & 0x0f];
+            }
+            else *dst++ = c;
+        }
+    }
+    *dst++ = '"';
+    if (n > 0)
+    {
+        *dst++ = '.';
+        *dst++ = '.';
+        *dst++ = '.';
+    }
+    *dst = 0;
+    return __wine_dbg_strdup( buffer );
+}
+
+static inline const char *wine_dbgstr_wn( const WCHAR *str, int n )
+{
+    static const char hex[16] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
+    char buffer[300], *dst = buffer;
+
+    if (!str) return "(null)";
+    if (!((ULONG_PTR)str >> 16)) return wine_dbg_sprintf( "#%04x", LOWORD(str) );
+    if (IsBadStringPtrW( str, n )) return "(invalid)";
+    if (n == -1) for (n = 0; str[n]; n++) ;
+    *dst++ = 'L';
+    *dst++ = '"';
+    while (n-- > 0 && dst <= buffer + sizeof(buffer) - 10)
+    {
+        WCHAR c = *str++;
+        switch (c)
+        {
+        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
+        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
+        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
+        case '"':  *dst++ = '\\'; *dst++ = '"'; break;
+        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
+        default:
+            if (c < ' ' || c >= 127)
+            {
+                *dst++ = '\\';
+                *dst++ = hex[(c >> 12) & 0x0f];
+                *dst++ = hex[(c >> 8) & 0x0f];
+                *dst++ = hex[(c >> 4) & 0x0f];
+                *dst++ = hex[c & 0x0f];
+            }
+            else *dst++ = (char)c;
+        }
+    }
+    *dst++ = '"';
+    if (n > 0)
+    {
+        *dst++ = '.';
+        *dst++ = '.';
+        *dst++ = '.';
+    }
+    *dst = 0;
+    return __wine_dbg_strdup( buffer );
+}
 
 static inline const char *wine_dbgstr_a( const char *s )
 {
@@ -365,7 +496,6 @@ static inline const char *wine_dbgstr_variant( const VARIANT *v )
     static struct __wine_debug_channel __wine_dbch_##ch = { 0xff, #ch }; \
     static struct __wine_debug_channel * const __wine_dbch___default = &__wine_dbch_##ch
 
-#define WINE_DPRINTF               wine_dbg_printf
 #define WINE_MESSAGE               wine_dbg_printf
 
 #ifdef __WINESRC__
@@ -399,7 +529,6 @@ static inline const char *debugstr_variant( const VARIANT *v ) { return wine_dbg
 #define ERR_(ch)                   WINE_ERR_(ch)
 #define ERR_ON(ch)                 WINE_ERR_ON(ch)
 
-#define DPRINTF                    WINE_DPRINTF
 #define MESSAGE                    WINE_MESSAGE
 
 #endif /* __WINESRC__ */

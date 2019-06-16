@@ -44,8 +44,10 @@ UINT NlsAnsiCodePage = 0;
 BYTE NlsMbCodePageTag = 0;
 BYTE NlsMbOemCodePageTag = 0;
 
-static const union cptable *ansi_table;
-static const union cptable *oem_table;
+extern const union cptable cptable_20127;  /* 7-bit ASCII */
+
+static const union cptable *ansi_table = &cptable_20127;
+static const union cptable *oem_table = &cptable_20127;
 static const union cptable* unix_table; /* NULL if UTF8 */
 
 

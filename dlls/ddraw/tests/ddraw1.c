@@ -20,6 +20,7 @@
 #define COBJMACROS
 
 #include "wine/test.h"
+#include "wine/heap.h"
 #include <limits.h>
 #include <math.h>
 #include "ddrawi.h"
@@ -415,6 +416,27 @@ static void emit_tquad_tlist(void **ptr, WORD base_idx)
     *ptr = tri;
 }
 
+static void emit_tri_indices(void **ptr, WORD *indices, unsigned int primitive_count)
+{
+    D3DINSTRUCTION *inst = *ptr;
+    D3DTRIANGLE *tri = (D3DTRIANGLE *)(inst + 1);
+    unsigned int i;
+
+    inst->bOpcode = D3DOP_TRIANGLE;
+    inst->bSize = sizeof(*tri);
+    inst->wCount = primitive_count;
+
+    for (i = 0; i < primitive_count; ++i)
+    {
+        U1(*tri).v1 = indices[i * 3];
+        U2(*tri).v2 = indices[i * 3 + 1];
+        U3(*tri).v3 = indices[i * 3 + 2];
+        tri->wFlags = D3DTRIFLAG_START;
+        ++tri;
+    }
+    *ptr = tri;
+}
+
 static void emit_texture_load(void **ptr, D3DTEXTUREHANDLE dst_texture,
         D3DTEXTUREHANDLE src_texture)
 {
@@ -645,6 +667,26 @@ static IDirect3DMaterial *create_diffuse_material(IDirect3DDevice *device, float
     return create_material(device, &mat);
 }
 
+static IDirect3DMaterial *create_diffuse_and_ambient_material(IDirect3DDevice *device,
+        float r, float g, float b, float a)
+{
+    D3DMATERIAL mat;
+
+    memset(&mat, 0, sizeof(mat));
+    mat.dwSize = sizeof(mat);
+    U1(U(mat).diffuse).r = r;
+    U2(U(mat).diffuse).g = g;
+    U3(U(mat).diffuse).b = b;
+    U4(U(mat).diffuse).a = a;
+
+    U1(U(mat).ambient).r = r;
+    U2(U(mat).ambient).g = g;
+    U3(U(mat).ambient).b = b;
+    U4(U(mat).ambient).a = a;
+
+    return create_material(device, &mat);
+}
+
 static IDirect3DMaterial *create_emissive_material(IDirect3DDevice *device, float r, float g, float b, float a)
 {
     D3DMATERIAL mat;
@@ -655,6 +697,22 @@ static IDirect3DMaterial *create_emissive_material(IDirect3DDevice *device, floa
     U2(U3(mat).emissive).g = g;
     U3(U3(mat).emissive).b = b;
     U4(U3(mat).emissive).a = a;
+
+    return create_material(device, &mat);
+}
+
+static IDirect3DMaterial *create_specular_material(IDirect3DDevice *device,
+        float r, float g, float b, float a, float power)
+{
+    D3DMATERIAL mat;
+
+    memset(&mat, 0, sizeof(mat));
+    mat.dwSize = sizeof(mat);
+    U1(U2(mat).specular).r = r;
+    U2(U2(mat).specular).g = g;
+    U3(U2(mat).specular).b = b;
+    U4(U2(mat).specular).a = a;
+    U4(mat).power = power;
 
     return create_material(device, &mat);
 }
@@ -5874,7 +5932,7 @@ static void test_material(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
         color = get_surface_color(rt, 320, 240);
         if (test_data[i].material)
-            todo_wine ok(compare_color(color, test_data[i].expected_color, 1)
+            ok(compare_color(color, test_data[i].expected_color, 1)
                     /* The Windows 8 testbot appears to return undefined results. */
                     || broken(TRUE),
                     "Got unexpected color 0x%08x, test %u.\n", color, i);
@@ -6023,31 +6081,31 @@ static void test_lighting(void)
     }
     tests[] =
     {
-        {&mat, nquad, 0x000000ff, "Lit quad with light"},
-        {&mat_singular, nquad, 0x000000b4, "Lit quad with singular world matrix"},
-        {&mat_transf, rotatedquad, 0x000000ff, "Lit quad with transformation matrix"},
-        {&mat_nonaffine, translatedquad, 0x000000ff, "Lit quad with non-affine matrix"},
+        {&mat, nquad, 0x000060ff, "Lit quad with light"},
+        {&mat_singular, nquad, 0x00004db4, "Lit quad with singular world matrix"},
+        {&mat_transf, rotatedquad, 0x000060ff, "Lit quad with transformation matrix"},
+        {&mat_nonaffine, translatedquad, 0x000060ff, "Lit quad with non-affine matrix"},
     };
 
-    HWND window;
-    IDirect3D *d3d;
-    IDirect3DDevice *device;
-    IDirectDraw *ddraw;
-    IDirectDrawSurface *rt;
-    IDirect3DViewport *viewport;
-    IDirect3DMaterial *material;
-    IDirect3DLight *light;
+    D3DMATRIXHANDLE world_handle, view_handle, proj_handle;
+    IDirect3DViewport *viewport, *viewport2;
     IDirect3DExecuteBuffer *execute_buffer;
     D3DEXECUTEBUFFERDESC exec_desc;
     D3DMATERIALHANDLE mat_handle;
-    D3DMATRIXHANDLE world_handle, view_handle, proj_handle;
+    IDirect3DMaterial *material;
+    IDirect3DDevice *device;
+    IDirectDrawSurface *rt;
+    IDirect3DLight *light;
     D3DLIGHT light_desc;
-    HRESULT hr;
-    D3DCOLOR color;
-    void *ptr;
+    IDirectDraw *ddraw;
     UINT inst_length;
     ULONG refcount;
     unsigned int i;
+    IDirect3D *d3d;
+    D3DCOLOR color;
+    HWND window;
+    HRESULT hr;
+    void *ptr;
 
     window = create_window();
     ddraw = create_ddraw();
@@ -6061,30 +6119,30 @@ static void test_lighting(void)
     }
 
     hr = IDirect3DDevice_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get D3D interface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     viewport = create_viewport(device, 0, 0, 640, 480);
-    material = create_diffuse_material(device, 1.0f, 1.0f, 1.0f, 1.0f);
+    material = create_diffuse_and_ambient_material(device, 1.0f, 1.0f, 1.0f, 1.0f);
     viewport_set_background(device, viewport, material);
 
     hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
-    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice_CreateMatrix(device, &world_handle);
-    ok(hr == D3D_OK, "Creating a matrix object failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice_SetMatrix(device, world_handle, &mat);
-    ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice_CreateMatrix(device, &view_handle);
-    ok(hr == D3D_OK, "Creating a matrix object failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice_SetMatrix(device, view_handle, &mat);
-    ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice_CreateMatrix(device, &proj_handle);
-    ok(hr == D3D_OK, "Creating a matrix object failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice_SetMatrix(device, proj_handle, &mat);
-    ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&exec_desc, 0, sizeof(exec_desc));
     exec_desc.dwSize = sizeof(exec_desc);
@@ -6093,10 +6151,10 @@ static void test_lighting(void)
     exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
 
     hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
-    ok(SUCCEEDED(hr), "Failed to create execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
-    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     memcpy(exec_desc.lpData, unlitquad, sizeof(unlitquad));
     ptr = ((BYTE *)exec_desc.lpData) + sizeof(unlitquad);
@@ -6113,17 +6171,17 @@ static void test_lighting(void)
     inst_length -= sizeof(unlitquad);
 
     hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
-    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     set_execute_data(execute_buffer, 4, sizeof(unlitquad), inst_length);
     hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
-    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
-    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     memcpy(exec_desc.lpData, litquad, sizeof(litquad));
     ptr = ((BYTE *)exec_desc.lpData) + sizeof(litquad);
@@ -6134,14 +6192,14 @@ static void test_lighting(void)
     inst_length -= sizeof(litquad);
 
     hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
-    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     set_execute_data(execute_buffer, 4, sizeof(litquad), inst_length);
     hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
-    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
-    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     memcpy(exec_desc.lpData, unlitnquad, sizeof(unlitnquad));
     ptr = ((BYTE *)exec_desc.lpData) + sizeof(unlitnquad);
@@ -6152,14 +6210,14 @@ static void test_lighting(void)
     inst_length -= sizeof(unlitnquad);
 
     hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
-    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     set_execute_data(execute_buffer, 4, sizeof(unlitnquad), inst_length);
     hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
-    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
-    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     memcpy(exec_desc.lpData, litnquad, sizeof(litnquad));
     ptr = ((BYTE *)exec_desc.lpData) + sizeof(litnquad);
@@ -6170,14 +6228,14 @@ static void test_lighting(void)
     inst_length -= sizeof(litnquad);
 
     hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
-    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     set_execute_data(execute_buffer, 4, sizeof(litnquad), inst_length);
     hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
-    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     color = get_surface_color(rt, 160, 360);
     ok(color == 0x00ff0000, "Unlit quad without normals has color 0x%08x.\n", color);
@@ -6189,7 +6247,7 @@ static void test_lighting(void)
     ok(color == 0x00ffffff, "Lit quad with normals has color 0x%08x.\n", color);
 
     hr = IDirect3DMaterial_GetHandle(material, device, &mat_handle);
-    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3D_CreateLight(d3d, &light, NULL);
     ok(SUCCEEDED(hr), "Failed to create a light object, hr %#x.\n", hr);
@@ -6197,32 +6255,45 @@ static void test_lighting(void)
     light_desc.dwSize = sizeof(light_desc);
     light_desc.dltType = D3DLIGHT_DIRECTIONAL;
     U1(light_desc.dcvColor).r = 0.0f;
-    U2(light_desc.dcvColor).g = 0.0f;
+    U2(light_desc.dcvColor).g = 0.25f;
     U3(light_desc.dcvColor).b = 1.0f;
     U4(light_desc.dcvColor).a = 1.0f;
     U3(light_desc.dvDirection).z = 1.0f;
     hr = IDirect3DLight_SetLight(light, &light_desc);
-    ok(SUCCEEDED(hr), "Failed to set light, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DViewport_AddLight(viewport, light);
-    ok(SUCCEEDED(hr), "Failed to add a light to the viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DViewport_AddLight(viewport, light);
+    ok(hr == D3DERR_LIGHTHASVIEWPORT, "Got unexpected hr %#x.\n", hr);
+
+    viewport2 = create_viewport(device, 0, 0, 640, 480);
+    hr = IDirect3DViewport_AddLight(viewport2, light);
+    ok(hr == D3DERR_LIGHTHASVIEWPORT, "Got unexpected hr %#x.\n", hr);
+    destroy_viewport(device, viewport2);
+
+    hr = IDirect3DViewport_DeleteLight(viewport, light);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DViewport_AddLight(viewport, light);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = IDirect3DDevice_SetMatrix(device, world_handle, tests[i].world_matrix);
-        ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
-        ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DDevice_BeginScene(device);
-        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
-        ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         memcpy(exec_desc.lpData, tests[i].quad, sizeof(nquad));
         ptr = ((BYTE *)exec_desc.lpData) + sizeof(nquad);
         emit_set_ls(&ptr, D3DLIGHTSTATE_MATERIAL, mat_handle);
+        emit_set_ls(&ptr, D3DLIGHTSTATE_AMBIENT, 0xff002000);
         emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORMLIGHT, 0, 4);
         emit_tquad_tlist(&ptr, 0);
         emit_end(&ptr);
@@ -6230,17 +6301,17 @@ static void test_lighting(void)
         inst_length -= sizeof(nquad);
 
         hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
-        ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         set_execute_data(execute_buffer, 4, sizeof(nquad), inst_length);
         hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
-        ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DDevice_EndScene(device);
-        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         color = get_surface_color(rt, 320, 240);
-        todo_wine ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
+        ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
     }
 
     IDirect3DExecuteBuffer_Release(execute_buffer);
@@ -6248,7 +6319,7 @@ static void test_lighting(void)
     IDirect3DDevice_DeleteMatrix(device, view_handle);
     IDirect3DDevice_DeleteMatrix(device, proj_handle);
     hr = IDirect3DViewport_DeleteLight(viewport, light);
-    ok(SUCCEEDED(hr), "Failed to remove a light from the viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     IDirect3DLight_Release(light);
     destroy_material(material);
     destroy_viewport(device, viewport);
@@ -6259,6 +6330,366 @@ static void test_lighting(void)
     refcount = IDirectDraw_Release(ddraw);
     ok(!refcount, "Ddraw object has %u references left.\n", refcount);
     DestroyWindow(window);
+}
+
+static void test_specular_lighting(void)
+{
+    static const unsigned int vertices_side = 5;
+    const unsigned int indices_count = (vertices_side - 1) * (vertices_side - 1) * 2 * 3;
+    const unsigned int vertex_count = vertices_side * vertices_side;
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    static D3DMATRIX mat =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
+    /* Use of D3DLIGHT2 instead of D3DLIGHT is intentional. Using D3DLIGHT
+     * without dwFlags looks broken on Windows 7: directional light behaves as
+     * if _LOCALVIEWER state is off, point and spot lights do not work at all
+     * and always output zero colours. */
+    static D3DLIGHT2 directional =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_DIRECTIONAL,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {1.0f}},
+    },
+    point =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_POINT,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        100.0f,
+        0.0f,
+        0.0f, 0.0f, 1.0f,
+    },
+    spot =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_SPOT,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {1.0f}},
+        100.0f,
+        1.0f,
+        0.0f, 0.0f, 1.0f,
+        M_PI / 12.0f, M_PI / 3.0f
+    },
+    parallelpoint =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_PARALLELPOINT,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{0.5f}, {0.0f}, {-1.0f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+    },
+    point_side =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_POINT,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{-1.1f}, {0.0f}, {1.1f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        100.0f,
+        0.0f,
+        1.0f, 0.0f, 0.0f,
+    },
+    point_far =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_POINT,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {0.1f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        1.0f,
+        0.0f,
+        1.0f, 0.0f, 0.0f,
+    };
+    static const struct expected_color
+    {
+        unsigned int x, y;
+        D3DCOLOR colour;
+    }
+    expected_directional_local[] =
+    {
+        {160, 120, 0x003c3c3c},
+        {320, 120, 0x00717171},
+        {480, 120, 0x003c3c3c},
+        {160, 240, 0x00717171},
+        {320, 240, 0x00ffffff},
+        {480, 240, 0x00717171},
+        {160, 360, 0x003c3c3c},
+        {320, 360, 0x00717171},
+        {480, 360, 0x003c3c3c},
+    },
+    expected_point_local[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00090909},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00090909},
+        {320, 240, 0x00fafafa},
+        {480, 240, 0x00090909},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00090909},
+        {480, 360, 0x00000000},
+    },
+    expected_spot_local[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00020202},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00020202},
+        {320, 240, 0x00fafafa},
+        {480, 240, 0x00020202},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00020202},
+        {480, 360, 0x00000000},
+    },
+    expected_parallelpoint[] =
+    {
+        {160, 120, 0x00050505},
+        {320, 120, 0x002c2c2c},
+        {480, 120, 0x006e6e6e},
+        {160, 240, 0x00090909},
+        {320, 240, 0x00717171},
+        {480, 240, 0x00ffffff},
+        {160, 360, 0x00050505},
+        {320, 360, 0x002c2c2c},
+        {480, 360, 0x006e6e6e},
+    },
+    expected_point_far[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00000000},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00000000},
+        {320, 240, 0x00ffffff},
+        {480, 240, 0x00000000},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00000000},
+        {480, 360, 0x00000000},
+    },
+    expected_zero[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00000000},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00000000},
+        {320, 240, 0x00000000},
+        {480, 240, 0x00000000},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00000000},
+        {480, 360, 0x00000000},
+    };
+    static const struct
+    {
+        D3DLIGHT2 *light;
+        float specular_power;
+        const struct expected_color *expected;
+        unsigned int expected_count;
+    }
+    tests[] =
+    {
+        {&directional, 30.0f, expected_directional_local, ARRAY_SIZE(expected_directional_local)},
+        {&point, 30.0f, expected_point_local, ARRAY_SIZE(expected_point_local)},
+        {&spot, 30.0f, expected_spot_local, ARRAY_SIZE(expected_spot_local)},
+        {&parallelpoint, 30.0f, expected_parallelpoint, ARRAY_SIZE(expected_parallelpoint)},
+        {&point_side, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&point_far, 1.0f, expected_point_far, ARRAY_SIZE(expected_point_far)},
+        {&directional, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&point, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&spot, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&parallelpoint, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+        {&point_far, 0.0f, expected_zero, ARRAY_SIZE(expected_zero)},
+    };
+
+    D3DMATRIXHANDLE world_handle, view_handle, proj_handle;
+    IDirect3DMaterial *material, *background_material;
+    IDirect3DExecuteBuffer *execute_buffer;
+    D3DEXECUTEBUFFERDESC exec_desc;
+    D3DMATERIALHANDLE mat_handle;
+    IDirect3DViewport *viewport;
+    unsigned int i, j, x, y;
+    IDirect3DDevice *device;
+    IDirectDrawSurface *rt;
+    IDirect3DLight *light;
+    IDirectDraw*ddraw;
+    UINT inst_length;
+    D3DVERTEX *quad;
+    D3DCOLOR colour;
+    IDirect3D *d3d;
+    ULONG refcount;
+    WORD *indices;
+    BOOL is_warp;
+    HWND window;
+    HRESULT hr;
+    void *ptr;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+    is_warp = ddraw_is_warp(ddraw);
+
+    quad = heap_alloc(vertex_count * sizeof(*quad));
+    indices = heap_alloc(indices_count * sizeof(*indices));
+    for (i = 0, y = 0; y < vertices_side; ++y)
+    {
+        for (x = 0; x < vertices_side; ++x)
+        {
+            U1(quad[i]).x = x * 2.0f / (vertices_side - 1) - 1.0f;
+            U2(quad[i]).y = y * 2.0f / (vertices_side - 1) - 1.0f;
+            U3(quad[i]).z = 1.0f;
+            U4(quad[i]).nx = 0.0f;
+            U5(quad[i]).ny = 0.0f;
+            U6(quad[i]).nz = -1.0f;
+            U7(quad[i]).tu = 0.0f;
+            U8(quad[i++]).tv = 0.0f;
+        }
+    }
+    for (i = 0, y = 0; y < (vertices_side - 1); ++y)
+    {
+        for (x = 0; x < (vertices_side - 1); ++x)
+        {
+            indices[i++] = y * vertices_side + x + 1;
+            indices[i++] = y * vertices_side + x;
+            indices[i++] = (y + 1) * vertices_side + x;
+            indices[i++] = y * vertices_side + x + 1;
+            indices[i++] = (y + 1) * vertices_side + x;
+            indices[i++] = (y + 1) * vertices_side + x + 1;
+        }
+    }
+
+    hr = IDirect3DDevice_GetDirect3D(device, &d3d);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    background_material = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
+    viewport_set_background(device, viewport, background_material);
+
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice_CreateMatrix(device, &world_handle);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, world_handle, &mat);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice_CreateMatrix(device, &view_handle);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, view_handle, &mat);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice_CreateMatrix(device, &proj_handle);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, proj_handle, &mat);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+
+    hr = IDirect3D_CreateLight(d3d, &light, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DViewport_AddLight(viewport, light);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 10240;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        tests[i].light->dwFlags = D3DLIGHT_ACTIVE;
+        material = create_specular_material(device, 1.0f, 1.0f, 1.0f, 1.0f, tests[i].specular_power);
+        hr = IDirect3DMaterial_GetHandle(material, device, &mat_handle);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DLight_SetLight(light, (D3DLIGHT *)tests[i].light);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        memcpy(exec_desc.lpData, quad, sizeof(*quad) * vertex_count);
+        ptr = ((BYTE *)exec_desc.lpData) + sizeof(*quad) * vertex_count;
+
+        emit_set_ls(&ptr, D3DLIGHTSTATE_MATERIAL, mat_handle);
+        emit_set_ts(&ptr, D3DTRANSFORMSTATE_WORLD, world_handle);
+        emit_set_ts(&ptr, D3DTRANSFORMSTATE_VIEW, view_handle);
+        emit_set_ts(&ptr, D3DTRANSFORMSTATE_PROJECTION, proj_handle);
+        emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, FALSE);
+        emit_set_rs(&ptr, D3DRENDERSTATE_SPECULARENABLE, TRUE);
+
+        emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORMLIGHT, 0, vertex_count);
+        emit_tri_indices(&ptr, indices, indices_count / 3);
+        emit_end(&ptr);
+        inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+        ok(inst_length <= exec_desc.dwBufferSize, "Execute buffer overflow, size %u.\n", inst_length);
+        inst_length -= sizeof(*quad) * vertex_count;
+
+        hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        set_execute_data(execute_buffer, vertex_count, sizeof(*quad) * vertex_count, inst_length);
+        hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        for (j = 0; j < tests[i].expected_count; ++j)
+        {
+            colour = get_surface_color(rt, tests[i].expected[j].x, tests[i].expected[j].y);
+            ok(compare_color(colour, tests[i].expected[j].colour, 1)
+                    || broken(is_warp && compare_color(colour, 0x00ff0000, 1)),
+                    "Expected colour 0x%08x at location (%u, %u), got 0x%08x, case %u.\n",
+                    tests[i].expected[j].colour, tests[i].expected[j].x,
+                    tests[i].expected[j].y, colour, i);
+        }
+        destroy_material(material);
+    }
+
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+    IDirect3DDevice_DeleteMatrix(device, world_handle);
+    IDirect3DDevice_DeleteMatrix(device, view_handle);
+    IDirect3DDevice_DeleteMatrix(device, proj_handle);
+
+    hr = IDirect3DViewport_DeleteLight(viewport, light);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    IDirect3DLight_Release(light);
+    destroy_material(background_material);
+    destroy_viewport(device, viewport);
+    IDirectDrawSurface_Release(rt);
+    refcount = IDirect3DDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D_Release(d3d);
+    refcount = IDirectDraw_Release(ddraw);
+    ok(!refcount, "Ddraw object has %u references left.\n", refcount);
+    DestroyWindow(window);
+    heap_free(indices);
+    heap_free(quad);
 }
 
 static void test_palette_gdi(void)
@@ -12293,6 +12724,181 @@ static void test_alphatest(void)
     DestroyWindow(window);
 }
 
+static void test_clipper_refcount(void)
+{
+    IDirectDrawSurface *surface;
+    IDirectDrawClipper *clipper, *clipper2;
+    DDSURFACEDESC surface_desc;
+    IDirectDraw *ddraw;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    BOOL changed;
+    const IDirectDrawClipperVtbl *orig_vtbl;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirectDraw_CreateClipper(ddraw, 0, &clipper, NULL);
+    ok(SUCCEEDED(hr), "Failed to create clipper, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)clipper);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    /* Show that clipper validation doesn't somehow happen through per-clipper vtable
+     * pointers. */
+    hr = IDirectDraw_CreateClipper(ddraw, 0, &clipper2, NULL);
+    ok(SUCCEEDED(hr), "Failed to create clipper, hr %#x.\n", hr);
+    ok(clipper->lpVtbl == clipper2->lpVtbl, "Got different clipper vtables %p and %p.\n",
+            clipper->lpVtbl, clipper2->lpVtbl);
+    orig_vtbl = clipper->lpVtbl;
+    IDirectDrawClipper_Release(clipper2);
+
+    /* Surfaces hold a reference to clippers. No surprises there. */
+    hr = IDirectDrawSurface_SetClipper(surface, clipper);
+    ok(SUCCEEDED(hr), "Failed to set clipper, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)clipper);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+
+    hr = IDirectDrawSurface_GetClipper(surface, &clipper2);
+    ok(SUCCEEDED(hr), "Failed to get clipper, hr %#x.\n", hr);
+    ok(clipper == clipper2, "Got clipper %p, expected %p.\n", clipper2, clipper);
+    refcount = IDirectDrawClipper_Release(clipper2);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+
+    hr = IDirectDrawSurface_SetClipper(surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to set clipper, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)clipper);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    hr = IDirectDrawSurface_SetClipper(surface, clipper);
+    ok(SUCCEEDED(hr), "Failed to set clipper, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)clipper);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = IDirectDrawSurface_Release(surface);
+    ok(!refcount, "%u references left.\n", refcount);
+    refcount = get_refcount((IUnknown *)clipper);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    /* SetClipper with an invalid pointer crashes. */
+
+    /* Clipper methods work with a broken vtable, with the exception of Release. */
+    clipper->lpVtbl = (void *)0xdeadbeef;
+    refcount = orig_vtbl->AddRef(clipper);
+    todo_wine ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    refcount = orig_vtbl->Release(clipper);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+    clipper->lpVtbl = orig_vtbl;
+    refcount = orig_vtbl->Release(clipper);
+    todo_wine ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    /* Fix the refcount difference because Wine did not increase the ref in the
+     * AddRef call above. */
+    if (refcount)
+    {
+        refcount = IDirectDrawClipper_Release(clipper);
+        ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    }
+
+    /* Steal the reference and see what happens - releasing the surface works fine.
+     * The clipper is destroyed and not kept alive by a hidden refcount - trying to
+     * release it after the GetClipper call is likely to crash, and certain to crash
+     * if we allocate and zero as much heap memory as we can get. */
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDraw_CreateClipper(ddraw, 0, &clipper, NULL);
+    ok(SUCCEEDED(hr), "Failed to create clipper, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_SetClipper(surface, clipper);
+    ok(SUCCEEDED(hr), "Failed to set clipper, hr %#x.\n", hr);
+
+    IDirectDrawClipper_Release(clipper);
+    IDirectDrawClipper_Release(clipper);
+
+    hr = IDirectDrawSurface_GetClipper(surface, &clipper2);
+    ok(SUCCEEDED(hr), "Failed to get clipper, hr %#x.\n", hr);
+    ok(clipper == clipper2, "Got clipper %p, expected %p.\n", clipper2, clipper);
+
+    /* Show that invoking the Release method does not crash, but don't get the
+     * vtable through the clipper pointer because it is no longer pointing to
+     * valid memory. */
+    refcount = orig_vtbl->Release(clipper);
+    ok(!refcount, "%u references left.\n", refcount);
+
+    refcount = IDirectDrawSurface_Release(surface);
+    ok(!refcount, "%u references left.\n", refcount);
+
+    /* It looks like the protection against invalid thispointers is part of
+     * the IDirectDrawClipper method implementation, not IDirectDrawSurface. */
+    clipper = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 0x1000);
+    ok(!!clipper, "failed to allocate memory\n");
+
+    /* Assigning the vtable to our fake clipper does NOT make a difference on
+     * native - there is a different member of the clipper implementation struct
+     * that is used to determine if a clipper is valid. */
+    clipper->lpVtbl = orig_vtbl;
+
+    refcount = orig_vtbl->AddRef(clipper);
+    todo_wine ok(!refcount, "Got refcount %u.\n", refcount);
+    refcount = orig_vtbl->AddRef((IDirectDrawClipper *)(ULONG_PTR)0xdeadbeef);
+    ok(!refcount, "Got refcount %u.\n", refcount);
+
+    changed = 0x1234;
+    hr = orig_vtbl->IsClipListChanged(clipper, &changed);
+    todo_wine ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(changed == 0x1234, "'changed' changed: %x.\n", changed);
+
+    changed = 0x1234;
+    hr = orig_vtbl->IsClipListChanged((IDirectDrawClipper *)(ULONG_PTR)0xdeadbeef, &changed);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    ok(changed == 0x1234, "'changed' changed: %x.\n", changed);
+
+    /* Nope, we can't initialize our fake clipper. */
+    hr = orig_vtbl->Initialize(clipper, ddraw, 0);
+    todo_wine ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    HeapFree(GetProcessHeap(), 0, clipper);
+
+    refcount = IDirectDraw_Release(ddraw);
+    ok(!refcount, "%u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
+static void test_caps(void)
+{
+    DDCAPS hal_caps, hel_caps;
+    IDirectDraw *ddraw;
+    HRESULT hr;
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+
+    memset(&hal_caps, 0, sizeof(hal_caps));
+    memset(&hel_caps, 0, sizeof(hel_caps));
+    hal_caps.dwSize = sizeof(hal_caps);
+    hel_caps.dwSize = sizeof(hel_caps);
+    hr = IDirectDraw_GetCaps(ddraw, &hal_caps, &hel_caps);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hal_caps.ddsOldCaps.dwCaps == hal_caps.ddsCaps.dwCaps,
+            "Got unexpected caps %#x, expected %#x.\n",
+            hal_caps.ddsOldCaps.dwCaps, hal_caps.ddsCaps.dwCaps);
+    ok(hel_caps.ddsOldCaps.dwCaps == hel_caps.ddsCaps.dwCaps,
+            "Got unexpected caps %#x, expected %#x.\n",
+            hel_caps.ddsOldCaps.dwCaps, hel_caps.ddsCaps.dwCaps);
+
+    IDirectDraw_Release(ddraw);
+}
+
 START_TEST(ddraw1)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -12369,6 +12975,7 @@ START_TEST(ddraw1)
     test_p8_blit();
     test_material();
     test_lighting();
+    test_specular_lighting();
     test_palette_gdi();
     test_palette_alpha();
     test_lost_device();
@@ -12401,4 +13008,6 @@ START_TEST(ddraw1)
     test_killfocus();
     test_gdi_surface();
     test_alphatest();
+    test_clipper_refcount();
+    test_caps();
 }

@@ -31,7 +31,6 @@
 #include "commctrl.h"
 #include "uxtheme.h"
 #include "vssym32.h"
-#include "wine/unicode.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -684,14 +683,14 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
         else if (!(descr->style & LBS_USETABSTOPS))
             ExtTextOutW( hdc, rect->left + 1, rect->top,
                          ETO_OPAQUE | ETO_CLIPPED, rect, item_str,
-                         strlenW(item_str), NULL );
+                         lstrlenW(item_str), NULL );
         else
 	{
 	    /* Output empty string to paint background in the full width. */
             ExtTextOutW( hdc, rect->left + 1, rect->top,
                          ETO_OPAQUE | ETO_CLIPPED, rect, NULL, 0, NULL );
             TabbedTextOutW( hdc, rect->left + 1 , rect->top,
-                            item_str, strlenW(item_str),
+                            item_str, lstrlenW(item_str),
                             descr->nb_tabs, descr->tabs, 0);
 	}
         if (selected)
@@ -857,14 +856,14 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPWSTR buffer, BOOL 
         WCHAR *str = get_item_string(descr, index);
 
         if (!buffer)
-            return strlenW(str);
+            return lstrlenW(str);
 
         TRACE("index %d (0x%04x) %s\n", index, index, debugstr_w(str));
 
         __TRY  /* hide a Delphi bug that passes a read-only buffer */
         {
-            strcpyW(buffer, str);
-            len = strlenW(buffer);
+            lstrcpyW(buffer, str);
+            len = lstrlenW(buffer);
         }
         __EXCEPT_PAGE_FAULT
         {
@@ -1011,7 +1010,7 @@ static INT LISTBOX_FindString( LB_DESCR *descr, INT start, LPCWSTR str, BOOL exa
         else
         {
             /* Special case for drives and directories: ignore prefix */
-            INT len = strlenW(str);
+            INT len = lstrlenW(str);
             WCHAR *item_str;
 
             for (i = 0, index = start; i < descr->nb_items; i++, index++)
@@ -1019,11 +1018,11 @@ static INT LISTBOX_FindString( LB_DESCR *descr, INT start, LPCWSTR str, BOOL exa
                 if (index == descr->nb_items) index = 0;
                 item_str = get_item_string(descr, index);
 
-                if (!strncmpiW(str, item_str, len)) return index;
+                if (!wcsnicmp(str, item_str, len)) return index;
                 if (item_str[0] == '[')
                 {
-                    if (!strncmpiW(str, item_str + 1, len)) return index;
-                    if (item_str[1] == '-' && !strncmpiW(str, item_str + 2, len)) return index;
+                    if (!wcsnicmp(str, item_str + 1, len)) return index;
+                    if (item_str[1] == '-' && !wcsnicmp(str, item_str + 2, len)) return index;
                 }
             }
         }
@@ -1149,6 +1148,7 @@ static LRESULT LISTBOX_Paint( LB_DESCR *descr, HDC hdc )
             rect.right += descr->column_width;
             rect.top = 0;
             col_pos = descr->page_size - 1;
+            if (rect.left >= descr->width) break;
         }
         else
         {
@@ -1688,12 +1688,12 @@ static LRESULT LISTBOX_InsertString( LB_DESCR *descr, INT index, LPCWSTR str )
     {
         static const WCHAR empty_stringW[] = { 0 };
         if (!str) str = empty_stringW;
-        if (!(new_str = HeapAlloc( GetProcessHeap(), 0, (strlenW(str) + 1) * sizeof(WCHAR) )))
+        if (!(new_str = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(str) + 1) * sizeof(WCHAR) )))
         {
             SEND_NOTIFICATION( descr, LBN_ERRSPACE );
             return LB_ERRSPACE;
         }
-        strcpyW(new_str, str);
+        lstrcpyW(new_str, str);
     }
 
     if (index == -1) index = descr->nb_items;
@@ -1880,13 +1880,13 @@ static LRESULT LISTBOX_Directory( LB_DESCR *descr, UINT attrib,
                     static const WCHAR bracketW[]  = { ']',0 };
                     static const WCHAR dotW[] = { '.',0 };
                     if (!(attrib & DDL_DIRECTORY) ||
-                        !strcmpW( entry.cFileName, dotW )) continue;
+                        !lstrcmpW( entry.cFileName, dotW )) continue;
                     buffer[0] = '[';
                     if (!long_names && entry.cAlternateFileName[0])
-                        strcpyW( buffer + 1, entry.cAlternateFileName );
+                        lstrcpyW( buffer + 1, entry.cAlternateFileName );
                     else
-                        strcpyW( buffer + 1, entry.cFileName );
-                    strcatW(buffer, bracketW);
+                        lstrcpyW( buffer + 1, entry.cFileName );
+                    lstrcatW(buffer, bracketW);
                 }
                 else  /* not a directory */
                 {
@@ -1898,9 +1898,9 @@ static LRESULT LISTBOX_Directory( LB_DESCR *descr, UINT attrib,
                         continue;
 #undef ATTRIBS
                     if (!long_names && entry.cAlternateFileName[0])
-                        strcpyW( buffer, entry.cAlternateFileName );
+                        lstrcpyW( buffer, entry.cAlternateFileName );
                     else
-                        strcpyW( buffer, entry.cFileName );
+                        lstrcpyW( buffer, entry.cFileName );
                 }
                 if (!long_names) CharLowerW( buffer );
                 pos = LISTBOX_FindFileStrPos( descr, buffer );
@@ -2068,7 +2068,7 @@ static LRESULT LISTBOX_HandleHScroll( LB_DESCR *descr, WORD scrollReq, WORD pos 
 
 static LRESULT LISTBOX_HandleMouseWheel(LB_DESCR *descr, SHORT delta )
 {
-    UINT pulScrollLines = 3;
+    INT pulScrollLines = 3;
 
     SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
 
@@ -2082,9 +2082,20 @@ static LRESULT LISTBOX_HandleMouseWheel(LB_DESCR *descr, SHORT delta )
     if (descr->wheel_remain && pulScrollLines)
     {
         int cLineScroll;
-        pulScrollLines = min((UINT) descr->page_size, pulScrollLines);
-        cLineScroll = pulScrollLines * (float)descr->wheel_remain / WHEEL_DELTA;
-        descr->wheel_remain -= WHEEL_DELTA * cLineScroll / (int)pulScrollLines;
+        if (descr->style & LBS_MULTICOLUMN)
+        {
+            pulScrollLines = min(descr->width / descr->column_width, pulScrollLines);
+            pulScrollLines = max(1, pulScrollLines);
+            cLineScroll = pulScrollLines * descr->wheel_remain / WHEEL_DELTA;
+            descr->wheel_remain -= WHEEL_DELTA * cLineScroll / pulScrollLines;
+            cLineScroll *= descr->page_size;
+        }
+        else
+        {
+            pulScrollLines = min(descr->page_size, pulScrollLines);
+            cLineScroll = pulScrollLines * descr->wheel_remain / WHEEL_DELTA;
+            descr->wheel_remain -= WHEEL_DELTA * cLineScroll / pulScrollLines;
+        }
         LISTBOX_SetTopItem( descr, descr->top_item - cLineScroll, TRUE );
     }
     return 0;
@@ -2732,7 +2743,7 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
             return LB_ERR;
         }
         if (!HAS_STRINGS(descr)) return sizeof(ULONG_PTR);
-        return strlenW(get_item_string(descr, wParam));
+        return lstrlenW(get_item_string(descr, wParam));
 
     case LB_GETCURSEL:
         if (descr->nb_items == 0)

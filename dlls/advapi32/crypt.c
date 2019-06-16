@@ -523,6 +523,7 @@ BOOL WINAPI CryptAcquireContextW (HCRYPTPROV *phProv, LPCWSTR pszContainer,
 		 */
 		if (dwFlags & CRYPT_DELETEKEYSET)
 		{
+			*phProv = 0;
 			pProv->dwMagic = 0;
 			FreeLibrary(pProv->hModule);
 			CRYPT_Free(provnameA);

@@ -98,11 +98,14 @@ function test_window_props() {
     var v = document.documentMode;
 
     test_exposed("postMessage", true);
+    test_exposed("sessionStorage", true);
+    test_exposed("localStorage", true);
     test_exposed("addEventListener", v >= 9);
     test_exposed("removeEventListener", v >= 9);
     test_exposed("dispatchEvent", v >= 9);
     test_exposed("getSelection", v >= 9);
     test_exposed("onfocusout", v >= 9);
+    test_exposed("getComputedStyle", v >= 9);
     if(v >= 9) /* FIXME: native exposes it in all compat modes */
         test_exposed("performance", true);
 
@@ -152,6 +155,34 @@ function test_style_props() {
     test_exposed("removeProperty", v >= 9);
     test_exposed("background-clip", v >= 9);
 
+    style = document.body.currentStyle;
+
+    test_exposed("zIndex", true);
+    test_exposed("z-index", true);
+    test_exposed("filter", true);
+    test_exposed("pixelTop", false);
+    test_exposed("float", true);
+    test_exposed("css-float", false);
+    test_exposed("style-float", false);
+    test_exposed("setProperty", v >= 9);
+    test_exposed("removeProperty", v >= 9);
+    test_exposed("background-clip", v >= 9);
+
+    if(window.getComputedStyle) {
+        style = window.getComputedStyle(document.body);
+
+        test_exposed("removeAttribute", false);
+        test_exposed("zIndex", true);
+        test_exposed("z-index", true);
+        test_exposed("pixelTop", false);
+        test_exposed("float", true);
+        test_exposed("css-float", false);
+        test_exposed("style-float", false);
+        test_exposed("setProperty", v >= 9);
+        test_exposed("removeProperty", v >= 9);
+        test_exposed("background-clip", v >= 9);
+    }
+
     next_test();
 }
 
@@ -190,6 +221,7 @@ function test_javascript() {
     test_exposed("forEach", Array.prototype, v >= 9);
     test_exposed("indexOf", Array.prototype, v >= 9);
     test_exposed("trim", String.prototype, v >= 9);
+    test_exposed("map", Array.prototype, v >= 9);
 
     /* FIXME: IE8 implements weird semi-functional property descriptors. */
     if(v != 8) {
@@ -197,6 +229,8 @@ function test_javascript() {
         test_exposed("defineProperty", Object, v >= 8);
         test_exposed("defineProperties", Object, v >= 8);
     }
+
+    test_exposed("getPrototypeOf", Object, v >= 9);
 
     test_parses("if(false) { o.default; }", v >= 9);
     test_parses("if(false) { o.with; }", v >= 9);

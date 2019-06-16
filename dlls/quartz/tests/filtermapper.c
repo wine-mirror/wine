@@ -22,13 +22,17 @@
 
 #include "wine/test.h"
 #include "winbase.h"
-#include "initguid.h"
 #include "dshow.h"
 #include "winternl.h"
-
+#include "initguid.h"
 #include "wine/fil_data.h"
 
-DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
 
 /* Helper function, checks if filter with given name was enumerated. */
 static BOOL enum_find_filter(const WCHAR *wszFilterName, IEnumMoniker *pEnum)
@@ -530,96 +534,98 @@ out:
         IFilterMapper2_Release(pMapper);
 }
 
-typedef struct IUnknownImpl
-{
-    IUnknown IUnknown_iface;
-    int AddRef_called;
-    int Release_called;
-} IUnknownImpl;
+static const GUID test_iid = {0x33333333};
+static LONG outer_ref = 1;
 
-static IUnknownImpl *IUnknownImpl_from_iface(IUnknown * iface)
+static HRESULT WINAPI outer_QueryInterface(IUnknown *iface, REFIID iid, void **out)
 {
-    return CONTAINING_RECORD(iface, IUnknownImpl, IUnknown_iface);
-}
-
-static HRESULT WINAPI IUnknownImpl_QueryInterface(IUnknown * iface, REFIID riid, LPVOID * ppv)
-{
-    ok(0, "QueryInterface should not be called for %s\n", wine_dbgstr_guid(riid));
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IFilterMapper3)
+            || IsEqualGUID(iid, &test_iid))
+    {
+        *out = (IUnknown *)0xdeadbeef;
+        return S_OK;
+    }
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(iid));
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IUnknownImpl_AddRef(IUnknown * iface)
+static ULONG WINAPI outer_AddRef(IUnknown *iface)
 {
-    IUnknownImpl *This = IUnknownImpl_from_iface(iface);
-    This->AddRef_called++;
-    return 2;
+    return InterlockedIncrement(&outer_ref);
 }
 
-static ULONG WINAPI IUnknownImpl_Release(IUnknown * iface)
+static ULONG WINAPI outer_Release(IUnknown *iface)
 {
-    IUnknownImpl *This = IUnknownImpl_from_iface(iface);
-    This->Release_called++;
-    return 1;
+    return InterlockedDecrement(&outer_ref);
 }
 
-static CONST_VTBL IUnknownVtbl IUnknownImpl_Vtbl =
+static const IUnknownVtbl outer_vtbl =
 {
-    IUnknownImpl_QueryInterface,
-    IUnknownImpl_AddRef,
-    IUnknownImpl_Release
+    outer_QueryInterface,
+    outer_AddRef,
+    outer_Release,
 };
 
-static void test_aggregate_filter_mapper(void)
+static IUnknown test_outer = {&outer_vtbl};
+
+static void test_aggregation(void)
 {
+    IFilterMapper3 *mapper, *mapper2;
+    IUnknown *unk, *unk2;
     HRESULT hr;
-    IUnknown *pmapper;
-    IUnknown *punk;
-    IUnknownImpl unk_outer = { { &IUnknownImpl_Vtbl }, 0, 0 };
+    ULONG ref;
 
-    hr = CoCreateInstance(&CLSID_FilterMapper2, &unk_outer.IUnknown_iface, CLSCTX_INPROC_SERVER,
-                          &IID_IUnknown, (void **)&pmapper);
-    ok(hr == S_OK, "CoCreateInstance returned %x\n", hr);
-    ok(pmapper != &unk_outer.IUnknown_iface, "pmapper = %p, expected not %p\n", pmapper, &unk_outer.IUnknown_iface);
+    mapper = (IFilterMapper3 *)0xdeadbeef;
+    hr = CoCreateInstance(&CLSID_FilterMapper2, &test_outer, CLSCTX_INPROC_SERVER,
+            &IID_IFilterMapper3, (void **)&mapper);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(!mapper, "Got interface %p.\n", mapper);
 
-    hr = IUnknown_QueryInterface(pmapper, &IID_IUnknown, (void **)&punk);
-    ok(hr == S_OK, "IUnknown_QueryInterface returned %x\n", hr);
-    ok(punk != &unk_outer.IUnknown_iface, "punk = %p, expected not %p\n", punk, &unk_outer.IUnknown_iface);
-    IUnknown_Release(punk);
+    hr = CoCreateInstance(&CLSID_FilterMapper2, &test_outer, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
+    ref = get_refcount(unk);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
 
-    ok(unk_outer.AddRef_called == 0, "IUnknownImpl_AddRef called %d times\n", unk_outer.AddRef_called);
-    ok(unk_outer.Release_called == 0, "IUnknownImpl_Release called %d times\n", unk_outer.Release_called);
-    unk_outer.AddRef_called = 0;
-    unk_outer.Release_called = 0;
+    ref = IUnknown_AddRef(unk);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 
-    hr = IUnknown_QueryInterface(pmapper, &IID_IFilterMapper, (void **)&punk);
-    ok(hr == S_OK, "IUnknown_QueryInterface returned %x\n", hr);
-    ok(punk != &unk_outer.IUnknown_iface, "punk = %p, expected not %p\n", punk, &unk_outer.IUnknown_iface);
-    IUnknown_Release(punk);
+    ref = IUnknown_Release(unk);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 
-    ok(unk_outer.AddRef_called == 1, "IUnknownImpl_AddRef called %d times\n", unk_outer.AddRef_called);
-    ok(unk_outer.Release_called == 1, "IUnknownImpl_Release called %d times\n", unk_outer.Release_called);
-    unk_outer.AddRef_called = 0;
-    unk_outer.Release_called = 0;
+    hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
+    IUnknown_Release(unk2);
 
-    hr = IUnknown_QueryInterface(pmapper, &IID_IFilterMapper2, (void **)&punk);
-    ok(hr == S_OK, "IUnknown_QueryInterface returned %x\n", hr);
-    ok(punk != &unk_outer.IUnknown_iface, "punk = %p, expected not %p\n", punk, &unk_outer.IUnknown_iface);
-    IUnknown_Release(punk);
+    hr = IUnknown_QueryInterface(unk, &IID_IFilterMapper3, (void **)&mapper);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    ok(unk_outer.AddRef_called == 1, "IUnknownImpl_AddRef called %d times\n", unk_outer.AddRef_called);
-    ok(unk_outer.Release_called == 1, "IUnknownImpl_Release called %d times\n", unk_outer.Release_called);
-    unk_outer.AddRef_called = 0;
-    unk_outer.Release_called = 0;
+    hr = IFilterMapper3_QueryInterface(mapper, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
-    hr = IUnknown_QueryInterface(pmapper, &IID_IFilterMapper3, (void **)&punk);
-    ok(hr == S_OK, "IUnknown_QueryInterface returned %x\n", hr);
-    ok(punk != &unk_outer.IUnknown_iface, "punk = %p, expected not %p\n", punk, &unk_outer.IUnknown_iface);
-    IUnknown_Release(punk);
+    hr = IFilterMapper3_QueryInterface(mapper, &IID_IFilterMapper3, (void **)&mapper2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(mapper2 == (IFilterMapper3 *)0xdeadbeef, "Got unexpected IFilterMapper3 %p.\n", mapper2);
 
-    ok(unk_outer.AddRef_called == 1, "IUnknownImpl_AddRef called %d times\n", unk_outer.AddRef_called);
-    ok(unk_outer.Release_called == 1, "IUnknownImpl_Release called %d times\n", unk_outer.Release_called);
+    hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
 
-    IUnknown_Release(pmapper);
+    hr = IFilterMapper3_QueryInterface(mapper, &test_iid, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
+
+    IFilterMapper3_Release(mapper);
+    ref = IUnknown_Release(unk);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 }
 
 START_TEST(filtermapper)
@@ -631,7 +637,7 @@ START_TEST(filtermapper)
     test_ifiltermapper_from_filtergraph();
     test_register_filter_with_null_clsMinorType();
     test_parse_filter_data();
-    test_aggregate_filter_mapper();
+    test_aggregation();
 
     CoUninitialize();
 }

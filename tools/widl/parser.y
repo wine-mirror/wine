@@ -318,7 +318,7 @@ static typelib_t *current_typelib;
 %right '!' '~' CAST PPTR POS NEG ADDRESSOF tSIZEOF
 %left '.' MEMBERPTR '[' ']'
 
-%error-verbose
+%define parse.error verbose
 
 %%
 
@@ -1632,7 +1632,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
         else
           *ptype = type_new_array((*ptype)->name,
                                   type_array_get_element(*ptype), FALSE,
-                                  0, dim, NULL, 0);
+                                  0, dim, NULL, FC_RP);
       }
       else if (is_ptr(*ptype))
         *ptype = type_new_array((*ptype)->name, type_pointer_get_ref(*ptype), TRUE,

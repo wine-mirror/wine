@@ -93,10 +93,10 @@ static range_unit_t string_to_unit(LPCWSTR str)
     static const WCHAR texteditW[] =
         {'t','e','x','t','e','d','i','t',0};
 
-    if(!strcmpiW(str, characterW))  return RU_CHAR;
-    if(!strcmpiW(str, wordW))       return RU_WORD;
-    if(!strcmpiW(str, sentenceW))   return RU_SENTENCE;
-    if(!strcmpiW(str, texteditW))   return RU_TEXTEDIT;
+    if(!wcsicmp(str, characterW))  return RU_CHAR;
+    if(!wcsicmp(str, wordW))       return RU_WORD;
+    if(!wcsicmp(str, sentenceW))   return RU_SENTENCE;
+    if(!wcsicmp(str, texteditW))   return RU_TEXTEDIT;
 
     return RU_UNKNOWN;
 }
@@ -108,10 +108,10 @@ static int string_to_nscmptype(LPCWSTR str)
     static const WCHAR esW[] = {'E','n','d','T','o','S','t','a','r','t',0};
     static const WCHAR eeW[] = {'E','n','d','T','o','E','n','d',0};
 
-    if(!strcmpiW(str, seW))  return NS_START_TO_END;
-    if(!strcmpiW(str, ssW))  return NS_START_TO_START;
-    if(!strcmpiW(str, esW))  return NS_END_TO_START;
-    if(!strcmpiW(str, eeW))  return NS_END_TO_END;
+    if(!wcsicmp(str, seW))  return NS_START_TO_END;
+    if(!wcsicmp(str, ssW))  return NS_START_TO_START;
+    if(!wcsicmp(str, esW))  return NS_END_TO_START;
+    if(!wcsicmp(str, eeW))  return NS_END_TO_END;
 
     return -1;
 }
@@ -349,7 +349,7 @@ static BOOL is_elem_tag(nsIDOMNode *node, LPCWSTR istag)
     nsIDOMElement_Release(elem);
     nsAString_GetData(&tag_str, &tag);
 
-    ret = !strcmpiW(tag, istag);
+    ret = !wcsicmp(tag, istag);
 
     nsAString_Finish(&tag_str);
 
@@ -395,17 +395,17 @@ static void wstrbuf_append_nodetxt(wstrbuf_t *buf, LPCWSTR str, int len)
         buf->buf = heap_realloc(buf->buf, buf->size * sizeof(WCHAR));
     }
 
-    if(buf->len && isspaceW(buf->buf[buf->len-1])) {
-        while(s < str+len && isspaceW(*s))
+    if(buf->len && iswspace(buf->buf[buf->len-1])) {
+        while(s < str+len && iswspace(*s))
             s++;
     }
 
     d = buf->buf+buf->len;
     while(s < str+len) {
-        if(isspaceW(*s)) {
+        if(iswspace(*s)) {
             *d++ = ' ';
             s++;
-            while(s < str+len && isspaceW(*s))
+            while(s < str+len && iswspace(*s))
                 s++;
         }else {
             *d++ = *s++;
@@ -433,7 +433,7 @@ static void wstrbuf_append_node(wstrbuf_t *buf, nsIDOMNode *node, BOOL ignore_te
         nsAString_Init(&data_str, NULL);
         nsIDOMText_GetData(nstext, &data_str);
         nsAString_GetData(&data_str, &data);
-        wstrbuf_append_nodetxt(buf, data, strlenW(data));
+        wstrbuf_append_nodetxt(buf, data, lstrlenW(data));
         nsAString_Finish(&data_str);
 
         nsIDOMText_Release(nstext);
@@ -495,7 +495,7 @@ static void range_to_string(HTMLTxtRange *This, wstrbuf_t *buf)
                 break;
             }
 
-            wstrbuf_append_nodetxt(buf, str+iter.off, strlenW(str+iter.off));
+            wstrbuf_append_nodetxt(buf, str+iter.off, lstrlenW(str+iter.off));
             nsAString_Finish(&nsstr);
         }else {
             nsIDOMNode *node;
@@ -519,9 +519,9 @@ static void range_to_string(HTMLTxtRange *This, wstrbuf_t *buf)
     if(buf->len) {
         WCHAR *p;
 
-        for(p = buf->buf+buf->len-1; p >= buf->buf && isspaceW(*p); p--);
+        for(p = buf->buf+buf->len-1; p >= buf->buf && iswspace(*p); p--);
 
-        p = strchrW(p, '\r');
+        p = wcschr(p, '\r');
         if(p)
             *p = 0;
     }
@@ -571,8 +571,8 @@ static WCHAR move_next_char(rangepoint_t *iter)
             }
 
             c = *p;
-            if(isspaceW(c)) {
-                while(isspaceW(*p))
+            if(iswspace(c)) {
+                while(iswspace(*p))
                     p++;
 
                 if(cspace)
@@ -659,8 +659,8 @@ static WCHAR move_prev_char(rangepoint_t *iter)
             p = str+iter->off-1;
             c = *p;
 
-            if(isspaceW(c)) {
-                while(p > str && isspaceW(*(p-1)))
+            if(iswspace(c)) {
+                while(p > str && iswspace(*(p-1)))
                     p--;
 
                 if(cspace)
@@ -750,14 +750,14 @@ static LONG find_prev_space(rangepoint_t *iter, BOOL first_space)
 
     init_rangepoint(&prev, iter->node, iter->off);
     c = move_prev_char(&prev);
-    if(!c || (first_space && isspaceW(c)))
+    if(!c || (first_space && iswspace(c)))
         return FALSE;
 
     do {
         free_rangepoint(iter);
         init_rangepoint(iter, prev.node, prev.off);
         c = move_prev_char(&prev);
-    }while(c && !isspaceW(c));
+    }while(c && !iswspace(c));
 
     free_rangepoint(&prev);
     return TRUE;
@@ -773,7 +773,7 @@ static BOOL find_word_end(rangepoint_t *iter, BOOL is_collapsed)
         init_rangepoint(&prev_iter, iter->node, iter->off);
         c = move_prev_char(&prev_iter);
         free_rangepoint(&prev_iter);
-        if(isspaceW(c))
+        if(iswspace(c))
             return FALSE;
     }
 
@@ -792,7 +792,7 @@ static BOOL find_word_end(rangepoint_t *iter, BOOL is_collapsed)
             ret = TRUE;
         }
         free_rangepoint(&prev_iter);
-    }while(c && !isspaceW(c));
+    }while(c && !iswspace(c));
 
     return ret;
 }
@@ -805,7 +805,7 @@ static LONG move_by_words(rangepoint_t *iter, LONG cnt)
         WCHAR c;
 
         while(ret < cnt && (c = move_next_char(iter))) {
-            if(isspaceW(c))
+            if(iswspace(c))
                 ret++;
         }
     }else {
@@ -1760,9 +1760,10 @@ HRESULT HTMLTxtRange_Create(HTMLDocumentNode *doc, nsIDOMRange *nsrange, IHTMLTx
 
 void detach_ranges(HTMLDocumentNode *This)
 {
-    HTMLTxtRange *iter;
+    HTMLTxtRange *iter, *next;
 
-    LIST_FOR_EACH_ENTRY(iter, &This->range_list, HTMLTxtRange, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(iter, next, &This->range_list, HTMLTxtRange, entry) {
         iter->doc = NULL;
+        list_remove(&iter->entry);
     }
 }

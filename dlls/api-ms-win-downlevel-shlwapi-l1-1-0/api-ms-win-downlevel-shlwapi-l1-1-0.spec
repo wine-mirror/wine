@@ -78,8 +78,8 @@
 @ stdcall SHRegGetBoolUSValueW(wstr wstr long long) shlwapi.SHRegGetBoolUSValueW
 @ stdcall SHRegGetUSValueA( str str ptr ptr ptr long ptr long ) shlwapi.SHRegGetUSValueA
 @ stdcall SHRegGetUSValueW( wstr wstr ptr ptr ptr long ptr long ) shlwapi.SHRegGetUSValueW
-@ stdcall SHRegOpenUSKeyA( str long long long long ) shlwapi.SHRegOpenUSKeyA
-@ stdcall SHRegOpenUSKeyW( wstr long long long long ) shlwapi.SHRegOpenUSKeyW
+@ stdcall SHRegOpenUSKeyA( str long long ptr long ) shlwapi.SHRegOpenUSKeyA
+@ stdcall SHRegOpenUSKeyW( wstr long long ptr long ) shlwapi.SHRegOpenUSKeyW
 @ stdcall SHRegQueryUSValueA( long str ptr ptr ptr long ptr long ) shlwapi.SHRegQueryUSValueA
 @ stdcall SHRegQueryUSValueW( long wstr ptr ptr ptr long ptr long ) shlwapi.SHRegQueryUSValueW
 @ stdcall SHRegSetUSValueA( str str long ptr long long) shlwapi.SHRegSetUSValueA
@@ -104,10 +104,10 @@
 @ stdcall StrCmpIW(wstr wstr) shlwapi.StrCmpIW
 @ stdcall StrCmpLogicalW(wstr wstr) shlwapi.StrCmpLogicalW
 @ stdcall StrCmpNA(str str long) shlwapi.StrCmpNA
-@ stdcall StrCmpNCA(str ptr long) shlwapi.StrCmpNCA
+@ stdcall StrCmpNCA(str str long) shlwapi.StrCmpNCA
 @ stdcall StrCmpNCW(wstr wstr long) shlwapi.StrCmpNCW
 @ stdcall StrCmpNIA(str str long) shlwapi.StrCmpNIA
-@ stdcall StrCmpNICA(long long long) shlwapi.StrCmpNICA
+@ stdcall StrCmpNICA(str str long) shlwapi.StrCmpNICA
 @ stdcall StrCmpNICW(wstr wstr long) shlwapi.StrCmpNICW
 @ stdcall StrCmpNIW(wstr wstr long) shlwapi.StrCmpNIW
 @ stdcall StrCmpNW(wstr wstr long) shlwapi.StrCmpNW

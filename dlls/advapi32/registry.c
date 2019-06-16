@@ -44,6 +44,7 @@
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
@@ -89,6 +90,26 @@ static const WCHAR * const root_key_names[] =
 static HKEY special_root_keys[ARRAY_SIZE(root_key_names)];
 static BOOL hkcu_cache_disabled;
 
+static CRITICAL_SECTION reg_mui_cs;
+static CRITICAL_SECTION_DEBUG reg_mui_cs_debug =
+{
+    0, 0, &reg_mui_cs,
+    { &reg_mui_cs_debug.ProcessLocksList,
+      &reg_mui_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": reg_mui_cs") }
+};
+static CRITICAL_SECTION reg_mui_cs = { &reg_mui_cs_debug, -1, 0, 0, 0, 0 };
+struct mui_cache_entry {
+    struct list entry;
+    WCHAR *file_name; /* full path name */
+    DWORD index;
+    LCID  locale;
+    WCHAR *text;
+};
+static struct list reg_mui_cache = LIST_INIT(reg_mui_cache); /* MRU */
+static unsigned int reg_mui_cache_count;
+#define REG_MUI_CACHE_SIZE 8
+
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 /* check if value type needs string conversion (Ansi<->Unicode) */
@@ -108,7 +129,7 @@ static BOOL is_wow6432node( const UNICODE_STRING *name )
     static const WCHAR wow6432nodeW[] = {'W','o','w','6','4','3','2','N','o','d','e'};
 
     return (name->Length == sizeof(wow6432nodeW) &&
-            !memicmpW( name->Buffer, wow6432nodeW, ARRAY_SIZE( wow6432nodeW )));
+            !strncmpiW( name->Buffer, wow6432nodeW, ARRAY_SIZE( wow6432nodeW )));
 }
 
 /* open the Wow6432Node subkey of the specified key */
@@ -149,7 +170,7 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
 
         /* don't try to create registry root */
         if (!attr->RootDirectory && len > ARRAY_SIZE( registry_root ) &&
-            !memicmpW( buffer, registry_root, ARRAY_SIZE( registry_root )))
+            !strncmpiW( buffer, registry_root, ARRAY_SIZE( registry_root )))
             i += ARRAY_SIZE( registry_root );
 
         while (i < len && buffer[i] != '\\') i++;
@@ -3112,7 +3133,7 @@ LSTATUS WINAPI RegOpenUserClassesRoot(
  * avoid importing user32, which is higher level than advapi32. Helper for
  * RegLoadMUIString.
  */
-static int load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cMaxChars)
+static INT load_string(HINSTANCE hModule, UINT resId, LPWSTR *pResString)
 {
     HGLOBAL hMemory;
     HRSRC hResource;
@@ -3133,18 +3154,171 @@ static int load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cMa
     /* Strings are length-prefixed. Lowest nibble of resId is an index. */
     idxString = resId & 0xf;
     while (idxString--) pString += *pString + 1;
-
-    /* If no buffer is given, return length of the string. */
-    if (!pwszBuffer) return *pString;
-
-    /* Else copy over the string, respecting the buffer size. */
-    cMaxChars = (*pString < cMaxChars) ? *pString : (cMaxChars - 1);
-    if (cMaxChars >= 0) {
-        memcpy(pwszBuffer, pString+1, cMaxChars * sizeof(WCHAR));
-        pwszBuffer[cMaxChars] = '\0';
+    if (!*pString) {
+        SetLastError(ERROR_NOT_FOUND);
+        return 0;
     }
 
-    return cMaxChars;
+    *pResString = pString + 1;
+    return *pString;
+}
+
+static void dump_mui_cache(void)
+{
+    struct mui_cache_entry *ent;
+
+    TRACE("---------- MUI Cache ----------\n");
+    LIST_FOR_EACH_ENTRY( ent, &reg_mui_cache, struct mui_cache_entry, entry )
+        TRACE("entry=%p, %s,-%u [%#x] => %s\n",
+              ent, wine_dbgstr_w(ent->file_name), ent->index, ent->locale, wine_dbgstr_w(ent->text));
+}
+
+static inline void free_mui_cache_entry(struct mui_cache_entry *ent)
+{
+    heap_free(ent->file_name);
+    heap_free(ent->text);
+    heap_free(ent);
+}
+
+/* critical section must be held */
+static int reg_mui_cache_get(const WCHAR *file_name, UINT index, WCHAR **buffer)
+{
+    struct mui_cache_entry *ent;
+
+    TRACE("(%s %u %p)\n", wine_dbgstr_w(file_name), index, buffer);
+
+    LIST_FOR_EACH_ENTRY(ent, &reg_mui_cache, struct mui_cache_entry, entry)
+    {
+        if (ent->index == index && ent->locale == GetThreadLocale() &&
+            !strcmpiW(ent->file_name, file_name))
+            goto found;
+    }
+    return 0;
+
+found:
+    /* move to the list head */
+    if (list_prev(&reg_mui_cache, &ent->entry)) {
+        list_remove(&ent->entry);
+        list_add_head(&reg_mui_cache, &ent->entry);
+    }
+
+    TRACE("=> %s\n", wine_dbgstr_w(ent->text));
+    *buffer = ent->text;
+    return strlenW(ent->text);
+}
+
+/* critical section must be held */
+static void reg_mui_cache_put(const WCHAR *file_name, UINT index, const WCHAR *buffer, INT size)
+{
+    struct mui_cache_entry *ent;
+    TRACE("(%s %u %s %d)\n", wine_dbgstr_w(file_name), index, wine_dbgstr_wn(buffer, size), size);
+
+    ent = heap_calloc(sizeof(*ent), 1);
+    if (!ent)
+        return;
+    ent->file_name = heap_alloc((strlenW(file_name) + 1) * sizeof(WCHAR));
+    if (!ent->file_name) {
+        free_mui_cache_entry(ent);
+        return;
+    }
+    strcpyW(ent->file_name, file_name);
+    ent->index = index;
+    ent->locale = GetThreadLocale();
+    ent->text = heap_alloc((size + 1) * sizeof(WCHAR));
+    if (!ent->text) {
+        free_mui_cache_entry(ent);
+        return;
+    }
+    memcpy(ent->text, buffer, size * sizeof(WCHAR));
+    ent->text[size] = '\0';
+
+    TRACE("add %p\n", ent);
+    list_add_head(&reg_mui_cache, &ent->entry);
+    if (reg_mui_cache_count > REG_MUI_CACHE_SIZE) {
+        ent = LIST_ENTRY( list_tail( &reg_mui_cache ), struct mui_cache_entry, entry );
+        TRACE("freeing %p\n", ent);
+        list_remove(&ent->entry);
+        free_mui_cache_entry(ent);
+    }
+    else
+        reg_mui_cache_count++;
+
+    if (TRACE_ON(reg))
+        dump_mui_cache();
+    return;
+}
+
+static LONG load_mui_string(const WCHAR *file_name, UINT res_id, WCHAR *buffer, INT max_chars, INT *req_chars, DWORD flags)
+{
+    HMODULE hModule = NULL;
+    WCHAR *string, *full_name;
+    int size;
+    LONG result;
+
+    /* Verify the file existence. i.e. We don't rely on PATH variable */
+    if (GetFileAttributesW(file_name) == INVALID_FILE_ATTRIBUTES)
+        return ERROR_FILE_NOT_FOUND;
+
+    size = GetFullPathNameW(file_name, 0, NULL, NULL);
+    full_name = heap_alloc(size * sizeof(WCHAR));
+    if (!size)
+        return GetLastError();
+    GetFullPathNameW(file_name, size, full_name, NULL);
+
+    EnterCriticalSection(&reg_mui_cs);
+    size = reg_mui_cache_get(full_name, res_id, &string);
+    if (!size) {
+        LeaveCriticalSection(&reg_mui_cs);
+
+        /* Load the file */
+        hModule = LoadLibraryExW(full_name, NULL,
+                                 LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+        if (!hModule)
+            return GetLastError();
+
+        size = load_string(hModule, res_id, &string);
+        if (!size) {
+            result = GetLastError();
+            goto cleanup;
+        }
+
+        EnterCriticalSection(&reg_mui_cs);
+        reg_mui_cache_put(full_name, res_id, string, size);
+        LeaveCriticalSection(&reg_mui_cs);
+    }
+    *req_chars = size + 1;
+
+    /* If no buffer is given, skip copying. */
+    if (!buffer) {
+        result = ERROR_MORE_DATA;
+        goto cleanup;
+    }
+
+    /* Else copy over the string, respecting the buffer size. */
+    if (size < max_chars)
+        max_chars = size;
+    else {
+        if (flags & REG_MUI_STRING_TRUNCATE)
+            max_chars--;
+        else {
+            result = ERROR_MORE_DATA;
+            goto cleanup;
+        }
+    }
+    if (max_chars >= 0) {
+        memcpy(buffer, string, max_chars * sizeof(WCHAR));
+        buffer[max_chars] = '\0';
+    }
+
+    result = ERROR_SUCCESS;
+
+cleanup:
+    if (hModule)
+        FreeLibrary(hModule);
+    else
+        LeaveCriticalSection(&reg_mui_cs);
+    heap_free(full_name);
+    return result;
 }
 
 /******************************************************************************
@@ -3160,16 +3334,12 @@ static int load_string(HINSTANCE hModule, UINT resId, LPWSTR pwszBuffer, INT cMa
  *  pszBuffer  [O] Buffer to store the localized string in. 
  *  cbBuffer   [I] Size of the destination buffer in bytes.
  *  pcbData    [O] Number of bytes written to pszBuffer (optional, may be NULL).
- *  dwFlags    [I] None supported yet.
- *  pszBaseDir [I] Not supported yet.
+ *  dwFlags    [I] Truncate output to fit the buffer if REG_MUI_STRING_TRUNCATE.
+ *  pszBaseDir [I] Base directory of loading path. If NULL, use the current directory.
  *
  * RETURNS
  *  Success: ERROR_SUCCESS,
  *  Failure: nonzero error code from winerror.h
- *
- * NOTES
- *  This is an API of Windows Vista, which wasn't available at the time this code
- *  was written. We have to check for the correct behaviour once it's available. 
  */
 LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer, DWORD cbBuffer,
     LPDWORD pcbData, DWORD dwFlags, LPCWSTR pwszBaseDir)
@@ -3177,19 +3347,16 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
     DWORD dwValueType, cbData;
     LPWSTR pwszTempBuffer = NULL, pwszExpandedBuffer = NULL;
     LONG result;
-        
+
     TRACE("(hKey = %p, pwszValue = %s, pwszBuffer = %p, cbBuffer = %d, pcbData = %p, "
           "dwFlags = %d, pwszBaseDir = %s)\n", hKey, debugstr_w(pwszValue), pwszBuffer,
           cbBuffer, pcbData, dwFlags, debugstr_w(pwszBaseDir));
 
     /* Parameter sanity checks. */
-    if (!hKey || !pwszBuffer)
+    if (!hKey || (!pwszBuffer && cbBuffer) || (cbBuffer % sizeof(WCHAR))
+        || ((dwFlags & REG_MUI_STRING_TRUNCATE) && pcbData)
+        || (dwFlags & ~REG_MUI_STRING_TRUNCATE))
         return ERROR_INVALID_PARAMETER;
-
-    if (pwszBaseDir && *pwszBaseDir) {
-        FIXME("BaseDir parameter not yet supported!\n");
-        return ERROR_INVALID_PARAMETER;
-    }
 
     /* Check for value existence and correctness of its type, allocate a buffer and load it. */
     result = RegQueryValueExW(hKey, pwszValue, NULL, &dwValueType, NULL, &cbData);
@@ -3206,47 +3373,63 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
     result = RegQueryValueExW(hKey, pwszValue, NULL, &dwValueType, (LPBYTE)pwszTempBuffer, &cbData);
     if (result != ERROR_SUCCESS) goto cleanup;
 
-    /* Expand environment variables, if appropriate, or copy the original string over. */
-    if (dwValueType == REG_EXPAND_SZ) {
-        cbData = ExpandEnvironmentStringsW(pwszTempBuffer, NULL, 0) * sizeof(WCHAR);
-        if (!cbData) goto cleanup;
-        pwszExpandedBuffer = heap_alloc(cbData);
-        if (!pwszExpandedBuffer) {
-            result = ERROR_NOT_ENOUGH_MEMORY;
-            goto cleanup;
-        }
-        ExpandEnvironmentStringsW(pwszTempBuffer, pwszExpandedBuffer, cbData);
-    } else {
-        pwszExpandedBuffer = heap_alloc(cbData);
-        memcpy(pwszExpandedBuffer, pwszTempBuffer, cbData);
+    /* '@' is the prefix for resource based string entries. */
+    if (*pwszTempBuffer != '@') {
+        result = ERROR_INVALID_DATA;
+        goto cleanup;
     }
 
-    /* If the value references a resource based string, parse the value and load the string.
-     * Else just copy over the original value. */
-    result = ERROR_SUCCESS;
-    if (*pwszExpandedBuffer != '@') { /* '@' is the prefix for resource based string entries. */
-        lstrcpynW(pwszBuffer, pwszExpandedBuffer, cbBuffer / sizeof(WCHAR));
-    } else {
-        WCHAR *pComma = strrchrW(pwszExpandedBuffer, ',');
+    /* Expand environment variables regardless of the type. */
+    cbData = ExpandEnvironmentStringsW(pwszTempBuffer, NULL, 0) * sizeof(WCHAR);
+    if (!cbData) goto cleanup;
+    pwszExpandedBuffer = heap_alloc(cbData);
+    if (!pwszExpandedBuffer) {
+        result = ERROR_NOT_ENOUGH_MEMORY;
+        goto cleanup;
+    }
+    ExpandEnvironmentStringsW(pwszTempBuffer, pwszExpandedBuffer, cbData / sizeof(WCHAR));
+
+    /* Parse the value and load the string. */
+    {
+        WCHAR *pComma = strrchrW(pwszExpandedBuffer, ','), *pNewBuffer;
+        const WCHAR backslashW[] = {'\\',0};
         UINT uiStringId;
-        HMODULE hModule;
+        DWORD baseDirLen;
+        int reqChars;
 
         /* Format of the expanded value is 'path_to_dll,-resId' */
         if (!pComma || pComma[1] != '-') {
-            result = ERROR_BADKEY;
+            result = ERROR_INVALID_DATA;
             goto cleanup;
         }
- 
+
         uiStringId = atoiW(pComma+2);
         *pComma = '\0';
 
-        hModule = LoadLibraryExW(pwszExpandedBuffer + 1, NULL,
-                                 LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
-        if (!hModule || !load_string(hModule, uiStringId, pwszBuffer, cbBuffer/sizeof(WCHAR)))
-            result = ERROR_BADKEY;
-        FreeLibrary(hModule);
+        /* Build a resource dll path. */
+        baseDirLen = pwszBaseDir ? strlenW(pwszBaseDir) : 0;
+        cbData = (baseDirLen + 1 + strlenW(pwszExpandedBuffer + 1) + 1) * sizeof(WCHAR);
+        pNewBuffer = heap_realloc(pwszTempBuffer, cbData);
+        if (!pNewBuffer) {
+            result = ERROR_NOT_ENOUGH_MEMORY;
+            goto cleanup;
+        }
+        pwszTempBuffer = pNewBuffer;
+        pwszTempBuffer[0] = '\0';
+        if (baseDirLen) {
+            strcpyW(pwszTempBuffer, pwszBaseDir);
+            if (pwszBaseDir[baseDirLen - 1] != '\\')
+                strcatW(pwszTempBuffer, backslashW);
+        }
+        strcatW(pwszTempBuffer, pwszExpandedBuffer + 1);
+
+        /* Load specified string from the file */
+        reqChars = 0;
+        result = load_mui_string(pwszTempBuffer, uiStringId, pwszBuffer, cbBuffer/sizeof(WCHAR), &reqChars, dwFlags);
+        if (pcbData && (result == ERROR_SUCCESS || result == ERROR_MORE_DATA))
+            *pcbData = reqChars * sizeof(WCHAR);
     }
- 
+
 cleanup:
     heap_free(pwszTempBuffer);
     heap_free(pwszExpandedBuffer);
@@ -3256,40 +3439,12 @@ cleanup:
 /******************************************************************************
  * RegLoadMUIStringA [ADVAPI32.@]
  *
- * See RegLoadMUIStringW
+ * Not implemented on native.
  */
 LSTATUS WINAPI RegLoadMUIStringA(HKEY hKey, LPCSTR pszValue, LPSTR pszBuffer, DWORD cbBuffer,
     LPDWORD pcbData, DWORD dwFlags, LPCSTR pszBaseDir)
 {
-    UNICODE_STRING valueW, baseDirW;
-    WCHAR *pwszBuffer;
-    DWORD cbData = cbBuffer * sizeof(WCHAR);
-    LONG result;
-
-    valueW.Buffer = baseDirW.Buffer = pwszBuffer = NULL;
-    if (!RtlCreateUnicodeStringFromAsciiz(&valueW, pszValue) ||
-        !RtlCreateUnicodeStringFromAsciiz(&baseDirW, pszBaseDir) ||
-        !(pwszBuffer = heap_alloc(cbData)))
-    {
-        result = ERROR_NOT_ENOUGH_MEMORY;
-        goto cleanup;
-    }
-
-    result = RegLoadMUIStringW(hKey, valueW.Buffer, pwszBuffer, cbData, NULL, dwFlags, 
-                               baseDirW.Buffer);
- 
-    if (result == ERROR_SUCCESS) {
-        cbData = WideCharToMultiByte(CP_ACP, 0, pwszBuffer, -1, pszBuffer, cbBuffer, NULL, NULL);
-        if (pcbData)
-            *pcbData = cbData;
-    }
-
-cleanup:
-    heap_free(pwszBuffer);
-    RtlFreeUnicodeString(&baseDirW);
-    RtlFreeUnicodeString(&valueW);
- 
-    return result;
+    return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
@@ -3513,4 +3668,98 @@ LONG WINAPI RegDisableReflectionKey(HKEY base)
 {
     FIXME("%p: stub\n", base);
     return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ * RegLoadAppKeyA [ADVAPI32.@]
+ *
+ */
+LSTATUS WINAPI RegLoadAppKeyA(const char *file, HKEY *result, REGSAM sam, DWORD options, DWORD reserved)
+{
+    FIXME("%s %p %u %u %u: stub\n", wine_dbgstr_a(file), result, sam, options, reserved);
+
+    if (!file || reserved)
+        return ERROR_INVALID_PARAMETER;
+
+    *result = (HKEY)0xdeadbeef;
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ * RegLoadAppKeyW [ADVAPI32.@]
+ *
+ */
+LSTATUS WINAPI RegLoadAppKeyW(const WCHAR *file, HKEY *result, REGSAM sam, DWORD options, DWORD reserved)
+{
+    FIXME("%s %p %u %u %u: stub\n", wine_dbgstr_w(file), result, sam, options, reserved);
+
+    if (!file || reserved)
+        return ERROR_INVALID_PARAMETER;
+
+    *result = (HKEY)0xdeadbeef;
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ *           EnumDynamicTimeZoneInformation   (ADVAPI32.@)
+ */
+DWORD WINAPI EnumDynamicTimeZoneInformation(const DWORD index,
+    DYNAMIC_TIME_ZONE_INFORMATION *dtzi)
+{
+    static const WCHAR mui_stdW[] = { 'M','U','I','_','S','t','d',0 };
+    static const WCHAR mui_dltW[] = { 'M','U','I','_','D','l','t',0 };
+    WCHAR keyname[ARRAY_SIZE(dtzi->TimeZoneKeyName)];
+    HKEY time_zones_key, sub_key;
+    WCHAR sysdir[MAX_PATH];
+    LSTATUS ret;
+    DWORD size;
+    struct tz_reg_data
+    {
+        LONG bias;
+        LONG std_bias;
+        LONG dlt_bias;
+        SYSTEMTIME std_date;
+        SYSTEMTIME dlt_date;
+    } tz_data;
+
+    if (!dtzi)
+        return ERROR_INVALID_PARAMETER;
+
+    ret = RegOpenKeyExA( HKEY_LOCAL_MACHINE,
+                "Software\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones", 0,
+                KEY_ENUMERATE_SUB_KEYS|KEY_QUERY_VALUE, &time_zones_key );
+    if (ret) return ret;
+
+    sub_key = NULL;
+    ret = RegEnumKeyW( time_zones_key, index, keyname, ARRAY_SIZE(keyname) );
+    if (ret) goto cleanup;
+
+    ret = RegOpenKeyExW( time_zones_key, keyname, 0, KEY_QUERY_VALUE, &sub_key );
+    if (ret) goto cleanup;
+
+    GetSystemDirectoryW(sysdir, ARRAY_SIZE(sysdir));
+    size = sizeof(dtzi->StandardName);
+    ret = RegLoadMUIStringW( sub_key, mui_stdW, dtzi->StandardName, size, NULL, 0, sysdir );
+    if (ret) goto cleanup;
+
+    size = sizeof(dtzi->DaylightName);
+    ret = RegLoadMUIStringW( sub_key, mui_dltW, dtzi->DaylightName, size, NULL, 0, sysdir );
+    if (ret) goto cleanup;
+
+    size = sizeof(tz_data);
+    ret = RegQueryValueExA( sub_key, "TZI", NULL, NULL, (BYTE*)&tz_data, &size );
+    if (ret) goto cleanup;
+
+    dtzi->Bias = tz_data.bias;
+    dtzi->StandardBias = tz_data.std_bias;
+    dtzi->DaylightBias = tz_data.dlt_bias;
+    memcpy( &dtzi->StandardDate, &tz_data.std_date, sizeof(tz_data.std_date) );
+    memcpy( &dtzi->DaylightDate, &tz_data.dlt_date, sizeof(tz_data.dlt_date) );
+    lstrcpyW( dtzi->TimeZoneKeyName, keyname );
+    dtzi->DynamicDaylightTimeDisabled = FALSE;
+
+cleanup:
+    if (sub_key) RegCloseKey( sub_key );
+    RegCloseKey( time_zones_key );
+    return ret;
 }

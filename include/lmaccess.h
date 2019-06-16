@@ -90,33 +90,25 @@ extern "C" {
     UF_DONT_REQUIRE_PREAUTH |\
     UF_PASSWORD_EXPIRED)
 
-#if defined(__GNUC__)
-# define GROUP_SPECIALGRP_USERS (const WCHAR []){ 'U','S','E','R','S',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define GROUP_SPECIALGRP_USERS         L"USERS"
 #else
 static const WCHAR GROUP_SPECIALGRP_USERS[] = { 'U','S','E','R','S',0 };
 #endif
 
-#if defined(__GNUC__)
-# define GROUP_SPECIALGRP_ADMINS (const WCHAR []){ 'A','D','M','I','N','S',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define GROUP_SPECIALGRP_ADMINS        L"ADMINS"
 #else
 static const WCHAR GROUP_SPECIALGRP_ADMINS[] = { 'A','D','M','I','N','S',0 };
 #endif
 
-#if defined(__GNUC__)
-# define GROUP_SPECIALGRP_GUESTS  (const WCHAR []){ 'G','U','E','S','T','S',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define GROUP_SPECIALGRP_GUESTS        L"GUESTS"
 #else
 static const WCHAR GROUP_SPECIALGRP_GUESTS[] = { 'G','U','E','S','T','S',0 };
 #endif
 
-#if defined(__GNUC__)
-# define GROUP_SPECIALGRP_LOCAL (const WCHAR []){ 'L','O','C','A','L',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define GROUP_SPECIALGRP_LOCAL         L"LOCAL"
 #else
 static const WCHAR GROUP_SPECIALGRP_LOCAL[] = { 'L','O','C','A','L',0 };

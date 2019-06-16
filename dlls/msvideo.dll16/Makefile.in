@@ -1,6 +1,6 @@
 MODULE    = msvideo.dll16
 IMPORTS   = msvfw32 version advapi32 user32
 
-EXTRADLLFLAGS = -m16 -Wb,--main-module,msvfw32.dll
+EXTRADLLFLAGS = -m16 -mno-cygwin -Wb,--main-module,msvfw32.dll
 
 C_SRCS = msvideo16.c

@@ -94,20 +94,22 @@ if [ -z "$program" ]; then
     case $working_path in
         */dlls/*/tests)
           parent_path=`dirname "$working_path"`
-          program=`basename "$parent_path"`_test.exe.so
+          program=`basename "$parent_path"`_test.exe
           ;;
         */dlls/*)
-          program=tests/`basename "$working_path"`_test.exe.so
+          program=tests/`basename "$working_path"`_test.exe
           ;;
         */programs/*/tests)
           parent_path=`dirname "$working_path"`
-          program=`basename "$parent_path"`.exe_test.exe.so
+          program=`basename "$parent_path"`.exe_test.exe
           ;;
         */programs/*)
-          program=tests/`basename "$working_path"`.exe_test.exe.so
+          program=tests/`basename "$working_path"`.exe_test.exe
           ;;
     esac
+    test -f "$program" || program="$program".so
 fi
+
 if [ ! -f "$program" ]; then
     echo "Can't find the test program, use the -p argument to specify one" 1>&2
     usage

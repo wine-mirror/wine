@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <math.h>
 
 #include "windef.h"
 
@@ -47,4 +48,13 @@ void CDECL MSVCRT20__wgetmainargs( int *argc, WCHAR** *wargv, WCHAR** *wenvp,
                                    int expand_wildcards, int new_mode )
 {
     __wgetmainargs( argc, wargv, wenvp, expand_wildcards, &new_mode );
+}
+
+
+/*********************************************************************
+ *      _matherr (MSVCRT20.@)
+ */
+int CDECL MSVCRT20__matherr(struct _exception *e)
+{
+    return 0;
 }

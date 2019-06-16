@@ -677,7 +677,7 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
             {
                 /* Throw away katakana access keys */
                 (*count)--, i++; /* skip the prefix */
-                (*count)--, i++; /* skip the letter */
+                (*count)--; i++; /* skip the letter */
             }
             else
             {

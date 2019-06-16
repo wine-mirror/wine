@@ -946,6 +946,11 @@ todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || hr == S_OK /* win7 */, "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, NULL, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+    if(hr == E_ACCESSDENIED)
+    {
+        skip("Access denied\n");
+        goto no_access;
+    }
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
 
     hr = IRegisteredTask_get_Name(task1, &bstr);
@@ -962,6 +967,7 @@ todo_wine
     hr = ITaskFolder_RegisterTask(folder, NULL, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
+no_access:
     ITaskFolder_Release(folder);
 
     hr = ITaskFolder_DeleteFolder(root, Wine, 0);

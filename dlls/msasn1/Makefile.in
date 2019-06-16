@@ -1,5 +1,7 @@
 MODULE    = msasn1.dll
 IMPORTLIB = msasn1
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c

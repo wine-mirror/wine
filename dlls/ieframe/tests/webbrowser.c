@@ -170,6 +170,8 @@ static const char *current_url;
 static int wb_version, expect_update_commands_enable, set_update_commands_enable;
 static BOOL nav_back_todo, nav_forward_todo; /* FIXME */
 
+#define BUSY_FAIL 2
+
 #define DWL_EXPECT_BEFORE_NAVIGATE  0x01
 #define DWL_FROM_PUT_HREF           0x02
 #define DWL_FROM_GOBACK             0x04
@@ -267,15 +269,26 @@ static void _test_LocationURL(unsigned line, IWebBrowser2 *wb, const char *exurl
     }
 }
 
-#define test_ready_state(ex) _test_ready_state(__LINE__,ex)
-static void _test_ready_state(unsigned line, READYSTATE exstate)
+#define test_ready_state(a,b) _test_ready_state(__LINE__,a,b)
+static void _test_ready_state(unsigned line, READYSTATE exstate, VARIANT_BOOL expect_busy)
 {
     READYSTATE state;
+    VARIANT_BOOL busy;
     HRESULT hres;
 
     hres = IWebBrowser2_get_ReadyState(wb, &state);
     ok_(__FILE__,line)(hres == S_OK, "get_ReadyState failed: %08x\n", hres);
     ok_(__FILE__,line)(state == exstate, "ReadyState = %d, expected %d\n", state, exstate);
+
+    hres = IWebBrowser2_get_Busy(wb, &busy);
+    if(expect_busy != BUSY_FAIL) {
+        ok_(__FILE__,line)(hres == S_OK, "get_ReadyState failed: %08x\n", hres);
+        ok_(__FILE__,line)(busy == expect_busy, "Busy = %x, exoected %x for ready state %d\n",
+                           busy, expect_busy, state);
+    }else {
+        todo_wine
+        ok_(__FILE__,line)(hres == E_FAIL, "get_ReadyState returned: %08x\n", hres);
+    }
 }
 
 #define get_document(u) _get_document(__LINE__,u)
@@ -806,8 +819,10 @@ static void test_navigatecomplete2(DISPPARAMS *dp)
     ok(V_VT(dp->rgvarg+1) == VT_DISPATCH, "V_VT(dp->rgvarg+1) = %d\n", V_VT(dp->rgvarg+1));
     ok(V_DISPATCH(dp->rgvarg+1) == (IDispatch*)wb, "V_DISPATCH=%p, wb=%p\n", V_DISPATCH(dp->rgvarg+1), wb);
 
-    test_ready_state((dwl_flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK|DWL_FROM_GOFORWARD))
-                     ? READYSTATE_COMPLETE : READYSTATE_LOADING);
+    if(dwl_flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK|DWL_FROM_GOFORWARD))
+        test_ready_state(READYSTATE_COMPLETE, VARIANT_TRUE);
+    else
+        test_ready_state(READYSTATE_LOADING, VARIANT_TRUE);
 }
 
 static void test_documentcomplete(DISPPARAMS *dp)
@@ -827,7 +842,7 @@ static void test_documentcomplete(DISPPARAMS *dp)
     ok(V_VT(dp->rgvarg+1) == VT_DISPATCH, "V_VT(dp->rgvarg+1) = %d\n", V_VT(dp->rgvarg+1));
     ok(V_DISPATCH(dp->rgvarg+1) == (IDispatch*)wb, "V_DISPATCH=%p, wb=%p\n", V_DISPATCH(dp->rgvarg+1), wb);
 
-    test_ready_state(READYSTATE_COMPLETE);
+    test_ready_state(READYSTATE_COMPLETE, VARIANT_FALSE);
 }
 
 static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
@@ -869,9 +884,9 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         ok(pDispParams->rgvarg == NULL, "rgvarg=%p, expected NULL\n", pDispParams->rgvarg);
         ok(pDispParams->cArgs == 0, "cArgs=%d, expected 0\n", pDispParams->cArgs);
         if(dwl_flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOFORWARD|DWL_FROM_GOBACK))
-            test_ready_state(READYSTATE_COMPLETE);
+            test_ready_state(READYSTATE_COMPLETE, VARIANT_TRUE);
         else if(!(dwl_flags & DWL_REFRESH)) /* todo_wine */
-            test_ready_state(READYSTATE_LOADING);
+            test_ready_state(READYSTATE_LOADING, VARIANT_TRUE);
         break;
 
     case DISPID_BEFORENAVIGATE2:
@@ -882,7 +897,10 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         test_OnBeforeNavigate(pDispParams->rgvarg+6, pDispParams->rgvarg+5, pDispParams->rgvarg+4,
                               pDispParams->rgvarg+3, pDispParams->rgvarg+2, pDispParams->rgvarg+1,
                               pDispParams->rgvarg);
-        test_ready_state((dwl_flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOFORWARD)) ? READYSTATE_COMPLETE : READYSTATE_LOADING);
+        if(dwl_flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOFORWARD))
+            test_ready_state(READYSTATE_COMPLETE, VARIANT_FALSE);
+        else
+            test_ready_state(READYSTATE_LOADING, VARIANT_FALSE);
         break;
 
     case DISPID_SETSECURELOCKICON:
@@ -943,7 +961,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         ok(pDispParams->rgvarg == NULL, "rgvarg=%p, expected NULL\n", pDispParams->rgvarg);
         ok(pDispParams->cArgs == 0, "cArgs=%d, expected 0\n", pDispParams->cArgs);
         if(use_container_olecmd)
-            test_ready_state(READYSTATE_LOADING);
+            test_ready_state(READYSTATE_LOADING, VARIANT_FALSE);
         break;
 
     case DISPID_ONMENUBAR:
@@ -2744,7 +2762,7 @@ static void test_Navigate2(IWebBrowser2 *webbrowser, const char *nav_url)
     HRESULT hres;
 
     test_LocationURL(webbrowser, is_first_load ? "" : current_url);
-    test_ready_state(is_first_load ? READYSTATE_UNINITIALIZED : READYSTATE_COMPLETE);
+    test_ready_state(is_first_load ? READYSTATE_UNINITIALIZED : READYSTATE_COMPLETE, VARIANT_FALSE);
 
     is_http = !memcmp(nav_url, "http:", 5);
     V_VT(&url) = VT_BSTR;
@@ -2824,7 +2842,7 @@ static void test_Navigate2(IWebBrowser2 *webbrowser, const char *nav_url)
 
     VariantClear(&url);
 
-    test_ready_state(READYSTATE_LOADING);
+    test_ready_state(READYSTATE_LOADING, VARIANT_FALSE);
 }
 
 static void test_QueryStatusWB(IWebBrowser2 *webbrowser, BOOL has_document)
@@ -2922,8 +2940,10 @@ static void test_download(DWORD flags)
     is_downloading = TRUE;
     dwl_flags = flags;
 
-    test_ready_state((flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK|DWL_FROM_GOFORWARD|DWL_REFRESH))
-                     ? READYSTATE_COMPLETE : READYSTATE_LOADING);
+    if(flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK|DWL_FROM_GOFORWARD|DWL_REFRESH))
+        test_ready_state(READYSTATE_COMPLETE, VARIANT_FALSE);
+    else
+        test_ready_state(READYSTATE_LOADING, VARIANT_FALSE);
 
     if(flags & (DWL_EXPECT_BEFORE_NAVIGATE|(is_http ? DWL_FROM_PUT_HREF : 0)|DWL_FROM_GOFORWARD|DWL_REFRESH))
         SET_EXPECT(Invoke_PROPERTYCHANGE);
@@ -3052,7 +3072,7 @@ static void test_download(DWORD flags)
 
     is_downloading = FALSE;
 
-    test_ready_state(READYSTATE_COMPLETE);
+    test_ready_state(READYSTATE_COMPLETE, VARIANT_FALSE);
 
     while(use_container_olecmd && !called_Exec_UPDATECOMMANDS && GetMessageA(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
@@ -3195,7 +3215,7 @@ static void test_put_href(IWebBrowser2 *unk, const char *url)
     SysFreeString(str);
     ok(hres == S_OK, "put_href failed: %08x\n", hres);
 
-    test_ready_state(READYSTATE_COMPLETE);
+    test_ready_state(READYSTATE_COMPLETE, VARIANT_FALSE);
 }
 
 static void test_go_back(IWebBrowser2 *wb, const char *back_url, int back_enable, int forward_enable, int forward_todo)
@@ -3724,7 +3744,7 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
     test_QueryStatusWB(webbrowser, FALSE);
     test_ExecWB(webbrowser, FALSE);
     test_QueryInterface(webbrowser);
-    test_ready_state(READYSTATE_UNINITIALIZED);
+    test_ready_state(READYSTATE_UNINITIALIZED, BUSY_FAIL);
     test_ClassInfo(webbrowser);
     test_EnumVerbs(webbrowser);
     test_LocationURL(webbrowser, "");
@@ -3760,7 +3780,7 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
 
         if(!do_close) {
             trace("Navigate2 http URL...\n");
-            test_ready_state(READYSTATE_COMPLETE);
+            test_ready_state(READYSTATE_COMPLETE, VARIANT_FALSE);
             test_Navigate2(webbrowser, "http://test.winehq.org/tests/hello.html");
             nav_back_todo = TRUE;
             test_download(DWL_EXPECT_BEFORE_NAVIGATE|DWL_HTTP);
@@ -3841,7 +3861,7 @@ static void test_WebBrowserV1(void)
     test_QueryStatusWB(wb, FALSE);
     test_ExecWB(wb, FALSE);
     test_QueryInterface(wb);
-    test_ready_state(READYSTATE_UNINITIALIZED);
+    test_ready_state(READYSTATE_UNINITIALIZED, BUSY_FAIL);
     test_ClassInfo(wb);
     test_EnumVerbs(wb);
 
@@ -4069,7 +4089,7 @@ static void test_SetAdvise(void)
     ok(!flags, "got %08x\n", aspects);
     ok(sink == NULL, "got %p\n", sink);
 
-    hr = IViewObject2_SetAdvise(view, DVASPECT_CONTENT, 0, (IAdviseSink *)&test_sink);
+    hr = IViewObject2_SetAdvise(view, DVASPECT_CONTENT, 0, &test_sink);
     ok(hr == S_OK, "got %08x\n", hr);
 
     aspects = flags = 0xdeadbeef;

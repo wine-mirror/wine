@@ -1,5 +1,6 @@
 MODULE    = winemsibuilder.exe
-APPMODE   = -mconsole -municode
 IMPORTS   = msi ole32
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = main.c

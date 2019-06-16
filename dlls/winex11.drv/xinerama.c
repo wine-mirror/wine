@@ -30,6 +30,8 @@
 #include "wine/library.h"
 #include "x11drv.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
@@ -199,8 +201,148 @@ RECT get_primary_monitor_rect(void)
     return get_primary()->rcMonitor;
 }
 
+static BOOL xinerama_get_gpus( struct x11drv_gpu **new_gpus, int *count )
+{
+    static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
+    struct x11drv_gpu *gpus;
+
+    /* Xinerama has no support for GPU, faking one */
+    gpus = heap_calloc( 1, sizeof(*gpus) );
+    if (!gpus)
+        return FALSE;
+
+    lstrcpyW( gpus[0].name, wine_adapterW );
+
+    *new_gpus = gpus;
+    *count = 1;
+
+    return TRUE;
+}
+
+static void xinerama_free_gpus( struct x11drv_gpu *gpus )
+{
+    heap_free( gpus );
+}
+
+static BOOL xinerama_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new_adapters, int *count )
+{
+    struct x11drv_adapter *adapters = NULL;
+    INT index = 0;
+    INT i, j;
+    INT primary_index;
+    BOOL mirrored;
+
+    if (gpu_id)
+        return FALSE;
+
+    /* Being lazy, actual adapter count may be less */
+    adapters = heap_calloc( nb_monitors, sizeof(*adapters) );
+    if (!adapters)
+        return FALSE;
+
+    primary_index = primary_monitor;
+    if (primary_index >= nb_monitors)
+        primary_index = 0;
+
+    for (i = 0; i < nb_monitors; i++)
+    {
+        mirrored = FALSE;
+        for (j = 0; j < i; j++)
+        {
+            if (EqualRect( &monitors[i].rcMonitor, &monitors[j].rcMonitor) && !IsRectEmpty( &monitors[j].rcMonitor ))
+            {
+                mirrored = TRUE;
+                break;
+            }
+        }
+
+        /* Mirrored monitors share the same adapter */
+        if (mirrored)
+            continue;
+
+        /* Use monitor index as id */
+        adapters[index].id = (ULONG_PTR)i;
+
+        if (i == primary_index)
+            adapters[index].state_flags |= DISPLAY_DEVICE_PRIMARY_DEVICE;
+
+        if (!IsRectEmpty( &monitors[i].rcMonitor ))
+            adapters[index].state_flags |= DISPLAY_DEVICE_ATTACHED_TO_DESKTOP;
+
+        index++;
+    }
+
+    /* Primary adapter has to be first */
+    if (primary_index)
+    {
+        struct x11drv_adapter tmp;
+        tmp = adapters[primary_index];
+        adapters[primary_index] = adapters[0];
+        adapters[0] = tmp;
+    }
+
+    *new_adapters = adapters;
+    *count = index;
+    return TRUE;
+}
+
+static void xinerama_free_adapters( struct x11drv_adapter *adapters )
+{
+    heap_free( adapters );
+}
+
+static BOOL xinerama_get_monitors( ULONG_PTR adapter_id, struct x11drv_monitor **new_monitors, int *count )
+{
+    static const WCHAR generic_nonpnp_monitorW[] = {
+        'G','e','n','e','r','i','c',' ',
+        'N','o','n','-','P','n','P',' ','M','o','n','i','t','o','r',0};
+    struct x11drv_monitor *monitor;
+    INT first = (INT)adapter_id;
+    INT monitor_count = 0;
+    INT index = 0;
+    INT i;
+
+    for (i = first; i < nb_monitors; i++)
+    {
+        if (i == first
+            || (EqualRect( &monitors[i].rcMonitor, &monitors[first].rcMonitor )
+                && !IsRectEmpty( &monitors[first].rcMonitor )))
+            monitor_count++;
+    }
+
+    monitor = heap_calloc( monitor_count, sizeof(*monitor) );
+    if (!monitor)
+        return FALSE;
+
+    for (i = first; i < nb_monitors; i++)
+    {
+        if (i == first
+            || (EqualRect( &monitors[i].rcMonitor, &monitors[first].rcMonitor )
+                && !IsRectEmpty( &monitors[first].rcMonitor )))
+        {
+            lstrcpyW( monitor[index].name, generic_nonpnp_monitorW );
+            /* Xinerama only reports monitors already attached */
+            monitor[index].state_flags = DISPLAY_DEVICE_ATTACHED;
+            if (!IsRectEmpty( &monitors[i].rcMonitor ))
+                monitor[index].state_flags |= DISPLAY_DEVICE_ACTIVE;
+
+            index++;
+        }
+    }
+
+    *new_monitors = monitor;
+    *count = monitor_count;
+    return TRUE;
+}
+
+static void xinerama_free_monitors( struct x11drv_monitor *monitors )
+{
+    heap_free( monitors );
+}
+
 void xinerama_init( unsigned int width, unsigned int height )
 {
+    struct x11drv_display_device_handler handler;
     MONITORINFOEXW *primary;
     int i;
     RECT rect;
@@ -233,6 +375,16 @@ void xinerama_init( unsigned int width, unsigned int height )
                wine_dbgstr_rect(&monitors[i].rcWork),
                (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
     }
+
+    handler.name = "Xinerama";
+    handler.priority = 100;
+    handler.pGetGpus = xinerama_get_gpus;
+    handler.pGetAdapters = xinerama_get_adapters;
+    handler.pGetMonitors = xinerama_get_monitors;
+    handler.pFreeGpus = xinerama_free_gpus;
+    handler.pFreeAdapters = xinerama_free_adapters;
+    handler.pFreeMonitors = xinerama_free_monitors;
+    X11DRV_DisplayDevices_SetHandler( &handler );
 
     TRACE( "virtual size: %s primary: %s\n",
            wine_dbgstr_rect(&virtual_screen_rect), wine_dbgstr_rect(&primary->rcMonitor) );

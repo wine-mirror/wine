@@ -2,6 +2,8 @@ MODULE    = msacm32.dll
 IMPORTLIB = msacm32
 IMPORTS   = winmm user32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	driver.c \
 	filter.c \

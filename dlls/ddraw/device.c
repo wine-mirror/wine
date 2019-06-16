@@ -712,9 +712,13 @@ static HRESULT WINAPI d3d_device1_Execute(IDirect3DDevice *iface,
     if(!buffer)
         return DDERR_INVALIDPARAMS;
 
+    if (FAILED(hr = IDirect3DDevice3_SetCurrentViewport
+            (&device->IDirect3DDevice3_iface, &viewport_impl->IDirect3DViewport3_iface)))
+        return hr;
+
     /* Execute... */
     wined3d_mutex_lock();
-    hr = d3d_execute_buffer_execute(buffer, device, viewport_impl);
+    hr = d3d_execute_buffer_execute(buffer, device);
     wined3d_mutex_unlock();
 
     return hr;
@@ -819,7 +823,9 @@ static HRESULT WINAPI d3d_device3_DeleteViewport(IDirect3DDevice3 *iface, IDirec
 
     if (device->current_viewport == vp)
     {
-        TRACE("Deleting current viewport, unsetting and releasing\n");
+        TRACE("Deleting current viewport, unsetting and releasing.\n");
+
+        viewport_deactivate(vp);
         IDirect3DViewport3_Release(viewport);
         device->current_viewport = NULL;
     }
@@ -1689,48 +1695,42 @@ static HRESULT WINAPI d3d_device1_GetDirect3D(IDirect3DDevice *iface, IDirect3D 
  *  (Is a NULL viewport valid?)
  *
  *****************************************************************************/
-static HRESULT WINAPI d3d_device3_SetCurrentViewport(IDirect3DDevice3 *iface, IDirect3DViewport3 *Direct3DViewport3)
+static HRESULT WINAPI d3d_device3_SetCurrentViewport(IDirect3DDevice3 *iface, IDirect3DViewport3 *viewport)
 {
-    struct d3d_device *This = impl_from_IDirect3DDevice3(iface);
-    struct d3d_viewport *vp = unsafe_impl_from_IDirect3DViewport3(Direct3DViewport3);
+    struct d3d_viewport *vp = unsafe_impl_from_IDirect3DViewport3(viewport);
+    struct d3d_device *device = impl_from_IDirect3DDevice3(iface);
 
-    TRACE("iface %p, viewport %p.\n", iface, Direct3DViewport3);
+    TRACE("iface %p, viewport %p, current_viewport %p.\n", iface, viewport, device->current_viewport);
 
     if (!vp)
     {
-        WARN("Direct3DViewport3 is NULL, returning DDERR_INVALIDPARAMS\n");
+        WARN("Direct3DViewport3 is NULL.\n");
         return DDERR_INVALIDPARAMS;
     }
 
     wined3d_mutex_lock();
     /* Do nothing if the specified viewport is the same as the current one */
-    if (This->current_viewport == vp)
+    if (device->current_viewport == vp)
     {
         wined3d_mutex_unlock();
         return D3D_OK;
     }
 
-    if (vp->active_device != This)
+    if (vp->active_device != device)
     {
-        WARN("Viewport %p active device is %p.\n", vp, vp->active_device);
+        WARN("Viewport %p, active device %p.\n", vp, vp->active_device);
         wined3d_mutex_unlock();
         return DDERR_INVALIDPARAMS;
     }
 
-    /* Release previous viewport and AddRef the new one */
-    if (This->current_viewport)
+    IDirect3DViewport3_AddRef(viewport);
+    if (device->current_viewport)
     {
-        TRACE("ViewportImpl is at %p, interface is at %p\n", This->current_viewport,
-                &This->current_viewport->IDirect3DViewport3_iface);
-        IDirect3DViewport3_Release(&This->current_viewport->IDirect3DViewport3_iface);
+        viewport_deactivate(device->current_viewport);
+        IDirect3DViewport3_Release(&device->current_viewport->IDirect3DViewport3_iface);
     }
-    IDirect3DViewport3_AddRef(Direct3DViewport3);
-
-    /* Set this viewport as the current viewport */
-    This->current_viewport = vp;
-
-    /* Activate this viewport */
-    viewport_activate(This->current_viewport, FALSE);
+    device->current_viewport = vp;
+    viewport_activate(device->current_viewport, FALSE);
 
     wined3d_mutex_unlock();
 
@@ -2760,7 +2760,8 @@ static HRESULT WINAPI d3d_device3_SetRenderState(IDirect3DDevice3 *iface,
 
             if (value == 0)
             {
-                hr = wined3d_device_set_texture(device->wined3d_device, 0, NULL);
+                wined3d_device_set_texture(device->wined3d_device, 0, NULL);
+                hr = D3D_OK;
                 break;
             }
 
@@ -3919,7 +3920,20 @@ static HRESULT WINAPI d3d_device2_SetClipStatus(IDirect3DDevice2 *iface, D3DCLIP
  *****************************************************************************/
 static HRESULT WINAPI d3d_device7_GetClipStatus(IDirect3DDevice7 *iface, D3DCLIPSTATUS *clip_status)
 {
-    FIXME("iface %p, clip_status %p stub!\n", iface, clip_status);
+    struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
+    struct wined3d_viewport vp;
+
+    FIXME("iface %p, clip_status %p stub.\n", iface, clip_status);
+
+    wined3d_device_get_viewports(device->wined3d_device, NULL, &vp);
+    clip_status->minx = vp.x;
+    clip_status->maxx = vp.x + vp.width;
+    clip_status->miny = vp.y;
+    clip_status->maxy = vp.y + vp.height;
+    clip_status->minz = 0.0f;
+    clip_status->maxz = 0.0f;
+    clip_status->dwFlags = D3DCLIPSTATUS_EXTENTS2;
+    clip_status->dwStatus = 0;
 
     return D3D_OK;
 }
@@ -4508,19 +4522,24 @@ static HRESULT WINAPI d3d_device7_DrawIndexedPrimitiveVB_FPUPreserve(IDirect3DDe
 }
 
 static HRESULT WINAPI d3d_device3_DrawIndexedPrimitiveVB(IDirect3DDevice3 *iface,
-        D3DPRIMITIVETYPE PrimitiveType, IDirect3DVertexBuffer *D3DVertexBuf, WORD *Indices,
-        DWORD IndexCount, DWORD Flags)
+        D3DPRIMITIVETYPE primitive_type, IDirect3DVertexBuffer *vertex_buffer,
+        WORD *indices, DWORD index_count, DWORD flags)
 {
+    struct d3d_vertex_buffer *vb =
+            unsafe_impl_from_IDirect3DVertexBuffer7((IDirect3DVertexBuffer7 *)vertex_buffer);
     struct d3d_device *device = impl_from_IDirect3DDevice3(iface);
-    struct d3d_vertex_buffer *vb = unsafe_impl_from_IDirect3DVertexBuffer7((IDirect3DVertexBuffer7 *)D3DVertexBuf);
+    DWORD stride;
 
     TRACE("iface %p, primitive_type %#x, vb %p, indices %p, index_count %u, flags %#x.\n",
-            iface, PrimitiveType, D3DVertexBuf, Indices, IndexCount, Flags);
+            iface, primitive_type, vertex_buffer, indices, index_count, flags);
 
-    setup_lighting(device, vb->fvf, Flags);
+    setup_lighting(device, vb->fvf, flags);
 
-    return IDirect3DDevice7_DrawIndexedPrimitiveVB(&device->IDirect3DDevice7_iface, PrimitiveType,
-            &vb->IDirect3DVertexBuffer7_iface, 0, IndexCount, Indices, IndexCount, Flags);
+    if (!(stride = get_flexible_vertex_size(vb->fvf)))
+        return D3D_OK;
+
+    return IDirect3DDevice7_DrawIndexedPrimitiveVB(&device->IDirect3DDevice7_iface, primitive_type,
+            &vb->IDirect3DVertexBuffer7_iface, 0, vb->size / stride, indices, index_count, flags);
 }
 
 /*****************************************************************************
@@ -4814,7 +4833,6 @@ static HRESULT d3d_device7_SetTexture(IDirect3DDevice7 *iface,
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
     struct ddraw_surface *surf = unsafe_impl_from_IDirectDrawSurface7(texture);
     struct wined3d_texture *wined3d_texture = NULL;
-    HRESULT hr;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, stage, texture);
 
@@ -4822,10 +4840,10 @@ static HRESULT d3d_device7_SetTexture(IDirect3DDevice7 *iface,
         wined3d_texture = surf->wined3d_texture;
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_texture(device->wined3d_device, stage, wined3d_texture);
+    wined3d_device_set_texture(device->wined3d_device, stage, wined3d_texture);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d_device7_SetTexture_FPUSetup(IDirect3DDevice7 *iface,
@@ -5648,7 +5666,14 @@ static HRESULT d3d_device7_BeginStateBlock(IDirect3DDevice7 *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_begin_stateblock(device->wined3d_device);
+    if (device->recording)
+    {
+        wined3d_mutex_unlock();
+        WARN("Trying to begin a stateblock while recording, returning D3DERR_INBEGINSTATEBLOCK.\n");
+        return D3DERR_INBEGINSTATEBLOCK;
+    }
+    if (SUCCEEDED(hr = wined3d_device_begin_stateblock(device->wined3d_device)))
+        device->recording = TRUE;
     wined3d_mutex_unlock();
 
     return hr_ddraw_from_wined3d(hr);
@@ -5700,7 +5725,12 @@ static HRESULT d3d_device7_EndStateBlock(IDirect3DDevice7 *iface, DWORD *statebl
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-
+    if (!device->recording)
+    {
+        wined3d_mutex_unlock();
+        WARN("Trying to end a stateblock, but no stateblock is being recorded.\n");
+        return D3DERR_NOTINBEGINSTATEBLOCK;
+    }
     hr = wined3d_device_end_stateblock(device->wined3d_device, &wined3d_sb);
     if (FAILED(hr))
     {
@@ -5709,6 +5739,7 @@ static HRESULT d3d_device7_EndStateBlock(IDirect3DDevice7 *iface, DWORD *statebl
         *stateblock = 0;
         return hr_ddraw_from_wined3d(hr);
     }
+    device->recording = FALSE;
 
     h = ddraw_allocate_handle(&device->handle_table, wined3d_sb, DDRAW_HANDLE_STATEBLOCK);
     if (h == DDRAW_INVALID_HANDLE)
@@ -5813,6 +5844,12 @@ static HRESULT d3d_device7_ApplyStateBlock(IDirect3DDevice7 *iface, DWORD stateb
     TRACE("iface %p, stateblock %#x.\n", iface, stateblock);
 
     wined3d_mutex_lock();
+    if (device->recording)
+    {
+        wined3d_mutex_unlock();
+        WARN("Trying to apply a stateblock while recording, returning D3DERR_INBEGINSTATEBLOCK.\n");
+        return D3DERR_INBEGINSTATEBLOCK;
+    }
     wined3d_sb = ddraw_get_object(&device->handle_table, stateblock - 1, DDRAW_HANDLE_STATEBLOCK);
     if (!wined3d_sb)
     {
@@ -5867,6 +5904,12 @@ static HRESULT d3d_device7_CaptureStateBlock(IDirect3DDevice7 *iface, DWORD stat
     TRACE("iface %p, stateblock %#x.\n", iface, stateblock);
 
     wined3d_mutex_lock();
+    if (device->recording)
+    {
+        wined3d_mutex_unlock();
+        WARN("Trying to capture a stateblock while recording, returning D3DERR_INBEGINSTATEBLOCK.\n");
+        return D3DERR_INBEGINSTATEBLOCK;
+    }
     wined3d_sb = ddraw_get_object(&device->handle_table, stateblock - 1, DDRAW_HANDLE_STATEBLOCK);
     if (!wined3d_sb)
     {
@@ -5996,6 +6039,13 @@ static HRESULT d3d_device7_CreateStateBlock(IDirect3DDevice7 *iface,
     }
 
     wined3d_mutex_lock();
+
+    if (device->recording)
+    {
+        wined3d_mutex_unlock();
+        WARN("Trying to apply a stateblock while recording, returning D3DERR_INBEGINSTATEBLOCK.\n");
+        return D3DERR_INBEGINSTATEBLOCK;
+    }
 
     /* The D3DSTATEBLOCKTYPE enum is fine here. */
     hr = wined3d_stateblock_create(device->wined3d_device, type, &wined3d_sb);

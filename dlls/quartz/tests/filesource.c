@@ -133,6 +133,100 @@ static void test_interfaces(void)
     IBaseFilter_Release(filter);
 }
 
+static const GUID test_iid = {0x33333333};
+static LONG outer_ref = 1;
+
+static HRESULT WINAPI outer_QueryInterface(IUnknown *iface, REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IBaseFilter)
+            || IsEqualGUID(iid, &test_iid))
+    {
+        *out = (IUnknown *)0xdeadbeef;
+        return S_OK;
+    }
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI outer_AddRef(IUnknown *iface)
+{
+    return InterlockedIncrement(&outer_ref);
+}
+
+static ULONG WINAPI outer_Release(IUnknown *iface)
+{
+    return InterlockedDecrement(&outer_ref);
+}
+
+static const IUnknownVtbl outer_vtbl =
+{
+    outer_QueryInterface,
+    outer_AddRef,
+    outer_Release,
+};
+
+static IUnknown test_outer = {&outer_vtbl};
+
+static void test_aggregation(void)
+{
+    IBaseFilter *filter, *filter2;
+    IUnknown *unk, *unk2;
+    HRESULT hr;
+    ULONG ref;
+
+    filter = (IBaseFilter *)0xdeadbeef;
+    hr = CoCreateInstance(&CLSID_AsyncReader, &test_outer, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(!filter, "Got interface %p.\n", filter);
+
+    hr = CoCreateInstance(&CLSID_AsyncReader, &test_outer, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
+    ref = get_refcount(unk);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+
+    ref = IUnknown_AddRef(unk);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+
+    ref = IUnknown_Release(unk);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
+    IUnknown_Release(unk2);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IBaseFilter, (void **)&filter2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(filter2 == (IBaseFilter *)0xdeadbeef, "Got unexpected IBaseFilter %p.\n", filter2);
+
+    hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
+
+    hr = IBaseFilter_QueryInterface(filter, &test_iid, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
+
+    IBaseFilter_Release(filter);
+    ref = IUnknown_Release(unk);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+}
+
 static void test_file_source_filter(void)
 {
     static const WCHAR prefix[] = {'w','i','n',0};
@@ -971,6 +1065,7 @@ START_TEST(filesource)
     CoInitialize(NULL);
 
     test_interfaces();
+    test_aggregation();
     test_enum_pins();
     test_find_pin();
     test_pin_info();

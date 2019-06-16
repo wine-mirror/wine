@@ -81,7 +81,7 @@ static int monitor_count = 0;
 
 static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *device, DWORD flags)
 {
-    char video_name[16];
+    char video_name[32];
     char video_value[128];
     char buffer[128];
     int number;
@@ -107,7 +107,7 @@ static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *de
     {
         sprintf(video_name, "\\Device\\Video%d", index);
         ls = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "HARDWARE\\DEVICEMAP\\VIDEO", 0, KEY_READ, &hkey);
-        todo_wine ok(!ls, "#%d: failed to open registry, error: %#x\n", index, ls);
+        ok(!ls, "#%d: failed to open registry, error: %#x\n", index, ls);
         if (!ls)
         {
             memset(video_value, 0, sizeof(video_value));
@@ -146,13 +146,13 @@ static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *de
      * by changing the data and rerun EnumDisplayDevices. But it's difficult to find corresponding PCI device on
      * userland. So here we check the expected format instead. */
     if (flags & EDD_GET_DEVICE_INTERFACE_NAME)
-        todo_wine ok(strlen(device->DeviceID) == 0 || /* vista+ */
+        ok(strlen(device->DeviceID) == 0 || /* vista+ */
            sscanf(device->DeviceID, "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X",
                   &vendor_id, &device_id, &subsys_id, &revision_id) == 4, /* XP/2003 ignores EDD_GET_DEVICE_INTERFACE_NAME */
            "#%d: got %s\n", index, device->DeviceID);
     else
     {
-        todo_wine ok(broken(strlen(device->DeviceID) == 0) || /* XP on Testbot returns an empty string, whereas real machine doesn't */
+        ok(broken(strlen(device->DeviceID) == 0) || /* XP on Testbot returns an empty string, whereas real machine doesn't */
            sscanf(device->DeviceID, "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X", &vendor_id, &device_id, &subsys_id,
                   &revision_id) == 4, "#%d: wrong DeviceID %s\n", index, device->DeviceID);
     }
@@ -173,14 +173,14 @@ static void test_enumdisplaydevices_monitor(int adapter_index, int monitor_index
     /* DeviceName */
     lstrcpyA(monitor_name, adapter_name);
     sprintf(monitor_name + strlen(monitor_name), "\\Monitor%d", monitor_index);
-    todo_wine ok(!strcmp(monitor_name, device->DeviceName), "#%d: expect %s, got %s\n", monitor_index, monitor_name, device->DeviceName);
+    ok(!strcmp(monitor_name, device->DeviceName), "#%d: expect %s, got %s\n", monitor_index, monitor_name, device->DeviceName);
 
     /* DeviceString */
     ok(strlen(device->DeviceString) > 0, "#%d: expect DeviceString not empty\n", monitor_index);
 
     /* StateFlags */
     if (adapter_index == 0 && monitor_index == 0)
-        todo_wine ok(device->StateFlags & DISPLAY_DEVICE_ATTACHED, "#%d expect to have a primary monitor attached\n", monitor_index);
+        ok(device->StateFlags & DISPLAY_DEVICE_ATTACHED, "#%d expect to have a primary monitor attached\n", monitor_index);
     else
         ok(device->StateFlags <= (DISPLAY_DEVICE_ATTACHED | DISPLAY_DEVICE_ACTIVE), "#%d wrong state %#x\n", monitor_index,
            device->StateFlags);
@@ -191,26 +191,26 @@ static void test_enumdisplaydevices_monitor(int adapter_index, int monitor_index
     {   /* HKLM\SYSTEM\CurrentControlSet\Enum\DISPLAY\Default_Monitor\4&2abfaa30&0&UID0 GUID_DEVINTERFACE_MONITOR
          *                                                   ^                ^                     ^
          * Expect format                  \\?\DISPLAY#Default_Monitor#4&2abfaa30&0&UID0#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7} */
-        todo_wine ok(strlen(device->DeviceID) == 0 || /* vista ~ win7 */
+        ok(strlen(device->DeviceID) == 0 || /* vista ~ win7 */
             sscanf(device->DeviceID, "\\\\?\\DISPLAY#Default_Monitor#%[^#]#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}", buffer) == 1 || /* win8+ */
             (!lstrcmpiA(buffer, device_id_prefix) &&
              sscanf(device->DeviceID + sizeof(device_id_prefix) - 1, "%04d", &number) == 1), /* XP/2003 ignores EDD_GET_DEVICE_INTERFACE_NAME */
-            "#%d: wrong DeviceID : %s \n", monitor_index, device->DeviceID);
+            "#%d: wrong DeviceID : %s\n", monitor_index, device->DeviceID);
     }
     else
     {
         /* Expect HarewareID value data + Driver value data in HKLM\SYSTEM\CurrentControlSet\Enum\DISPLAY\Default_Monitor\{Instance} */
         /* But we don't know which monitor instance this belongs to, so check format instead */
-        todo_wine ok(!lstrcmpiA(buffer, device_id_prefix), "#%d wrong DeviceID : %s\n", monitor_index, device->DeviceID);
-        todo_wine ok(sscanf(device->DeviceID + sizeof(device_id_prefix) - 1, "%04d", &number) == 1,
-                     "#%d wrong DeviceID : %s\n", monitor_index, device->DeviceID);
+        ok(!lstrcmpiA(buffer, device_id_prefix), "#%d wrong DeviceID : %s\n", monitor_index, device->DeviceID);
+        ok(sscanf(device->DeviceID + sizeof(device_id_prefix) - 1, "%04d", &number) == 1,
+           "#%d wrong DeviceID : %s\n", monitor_index, device->DeviceID);
     }
 
     /* DeviceKey */
     lstrcpynA(buffer, device->DeviceKey, sizeof(device_key_prefix));
-    todo_wine ok(!lstrcmpiA(buffer, device_key_prefix), "#%d: wrong DeviceKey : %s\n", monitor_index, device->DeviceKey);
-    todo_wine ok(sscanf(device->DeviceKey + sizeof(device_key_prefix) - 1, "%04d", &number) == 1,
-                 "#%d wrong DeviceKey : %s\n", monitor_index, device->DeviceKey);
+    ok(!lstrcmpiA(buffer, device_key_prefix), "#%d: wrong DeviceKey : %s\n", monitor_index, device->DeviceKey);
+    ok(sscanf(device->DeviceKey + sizeof(device_key_prefix) - 1, "%04d", &number) == 1,
+       "#%d wrong DeviceKey : %s\n", monitor_index, device->DeviceKey);
 }
 
 static void test_enumdisplaydevices(void)
@@ -235,7 +235,7 @@ static void test_enumdisplaydevices(void)
     /* Doesn't accept \\.\DISPLAY */
     dd.cb = sizeof(dd);
     ret = pEnumDisplayDevicesA("\\\\.\\DISPLAY", 0, &dd, 0);
-    todo_wine ok(!ret, "Expect failure\n");
+    ok(!ret, "Expect failure\n");
 
     /* Enumeration */
     for (flag_index = 0; flag_index < ARRAY_SIZE(flags); flag_index++)

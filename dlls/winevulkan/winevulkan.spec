@@ -3,7 +3,7 @@
 # This file is generated from Vulkan vk.xml file covered
 # by the following copyright and permission notice:
 #
-# Copyright (c) 2015-2018 The Khronos Group Inc.
+# Copyright (c) 2015-2019 The Khronos Group Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -181,9 +181,9 @@
 @ stdcall -private wine_vkGetInstanceProcAddr(ptr str)
 @ stub vkGetPhysicalDeviceDisplayPlanePropertiesKHR
 @ stub vkGetPhysicalDeviceDisplayPropertiesKHR
-@ stub vkGetPhysicalDeviceExternalBufferProperties
-@ stub vkGetPhysicalDeviceExternalFenceProperties
-@ stub vkGetPhysicalDeviceExternalSemaphoreProperties
+@ stdcall -private wine_vkGetPhysicalDeviceExternalBufferProperties(ptr ptr ptr)
+@ stdcall -private wine_vkGetPhysicalDeviceExternalFenceProperties(ptr ptr ptr)
+@ stdcall -private wine_vkGetPhysicalDeviceExternalSemaphoreProperties(ptr ptr ptr)
 @ stdcall -private wine_vkGetPhysicalDeviceFeatures(ptr ptr)
 @ stdcall -private wine_vkGetPhysicalDeviceFeatures2(ptr ptr)
 @ stdcall -private wine_vkGetPhysicalDeviceFormatProperties(ptr long ptr)

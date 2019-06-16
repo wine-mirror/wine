@@ -1,4 +1,6 @@
 MODULE    = mssign32.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	mssign32_main.c

@@ -42,6 +42,7 @@ extern "C" {
 #endif
 
 #define NTAPI __stdcall
+#define FASTCALL __fastcall
 
 #ifndef MIDL_PASS
 # if defined(_MSC_VER)
@@ -160,6 +161,12 @@ extern "C" {
 # define DECLSPEC_HIDDEN __attribute__((visibility ("hidden")))
 #else
 # define DECLSPEC_HIDDEN
+#endif
+
+#if defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 6))) && (defined(__i386__) || defined(__x86_64__))
+#define DECLSPEC_HOTPATCH __attribute__((__ms_hook_prologue__))
+#else
+#define DECLSPEC_HOTPATCH
 #endif
 
 #if defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3)))
@@ -412,10 +419,10 @@ extern "C++" { \
 # define EXTERN_C    extern
 #endif
 
-#define STDMETHODCALLTYPE       __stdcall
-#define STDMETHODVCALLTYPE      __cdecl
-#define STDAPICALLTYPE          __stdcall
-#define STDAPIVCALLTYPE         __cdecl
+#define STDMETHODCALLTYPE       WINAPI
+#define STDMETHODVCALLTYPE      WINAPIV
+#define STDAPICALLTYPE          WINAPI
+#define STDAPIVCALLTYPE         WINAPIV
 
 #define STDAPI                  EXTERN_C HRESULT STDAPICALLTYPE
 #define STDAPI_(type)           EXTERN_C type STDAPICALLTYPE
@@ -1745,8 +1752,11 @@ typedef struct _CONTEXT
     ULONG Padding2[2];              /* 198 */
 } CONTEXT;
 
+typedef PRUNTIME_FUNCTION (CALLBACK *PGET_RUNTIME_FUNCTION_CALLBACK)(DWORD,PVOID);
+
 BOOLEAN CDECL            RtlAddFunctionTable(RUNTIME_FUNCTION*,DWORD,DWORD);
 BOOLEAN CDECL            RtlDeleteFunctionTable(RUNTIME_FUNCTION*);
+BOOLEAN CDECL            RtlInstallFunctionTableCallback(DWORD,DWORD,DWORD,PGET_RUNTIME_FUNCTION_CALLBACK,PVOID,PCWSTR);
 PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry(ULONG_PTR,DWORD*,UNWIND_HISTORY_TABLE*);
 
 #endif /* __arm__ */
@@ -1878,8 +1888,11 @@ typedef struct _CONTEXT
     DWORD64 Wvr[ARM64_MAX_WATCHPOINTS]; /* 380 */
 } CONTEXT;
 
+typedef PRUNTIME_FUNCTION (CALLBACK *PGET_RUNTIME_FUNCTION_CALLBACK)(DWORD64,PVOID);
+
 BOOLEAN CDECL            RtlAddFunctionTable(RUNTIME_FUNCTION*,DWORD,ULONG_PTR);
 BOOLEAN CDECL            RtlDeleteFunctionTable(RUNTIME_FUNCTION*);
+BOOLEAN CDECL            RtlInstallFunctionTableCallback(ULONG_PTR,ULONG_PTR,DWORD,PGET_RUNTIME_FUNCTION_CALLBACK,PVOID,PCWSTR);
 
 #endif /* __aarch64__ */
 
@@ -2413,6 +2426,27 @@ typedef struct _EXCEPTION_RECORD
     ULONG_PTR ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
 } EXCEPTION_RECORD, *PEXCEPTION_RECORD;
 
+typedef struct _EXCEPTION_RECORD32
+{
+    DWORD ExceptionCode;
+    DWORD ExceptionFlags;
+    DWORD ExceptionRecord;
+    DWORD ExceptionAddress;
+    DWORD NumberParameters;
+    DWORD ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+} EXCEPTION_RECORD32, *PEXCEPTION_RECORD32;
+
+typedef struct _EXCEPTION_RECORD64
+{
+    DWORD    ExceptionCode;
+    DWORD    ExceptionFlags;
+    DWORD64  ExceptionRecord;
+    DWORD64  ExceptionAddress;
+    DWORD    NumberParameters;
+    DWORD    __unusedAlignment;
+    DWORD64  ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+} EXCEPTION_RECORD64, *PEXCEPTION_RECORD64;
+
 /*
  * The exception pointers structure passed to exception filters
  * in except() and the UnhandledExceptionFilter().
@@ -2433,8 +2467,8 @@ typedef struct _EXCEPTION_POINTERS
 
 struct _EXCEPTION_REGISTRATION_RECORD;
 
-typedef DWORD (*PEXCEPTION_HANDLER)(PEXCEPTION_RECORD,struct _EXCEPTION_REGISTRATION_RECORD*,
-                                    PCONTEXT,struct _EXCEPTION_REGISTRATION_RECORD **);
+typedef DWORD (CDECL *PEXCEPTION_HANDLER)(PEXCEPTION_RECORD,struct _EXCEPTION_REGISTRATION_RECORD*,
+                                          PCONTEXT,struct _EXCEPTION_REGISTRATION_RECORD **);
 
 typedef struct _EXCEPTION_REGISTRATION_RECORD
 {
@@ -4124,7 +4158,7 @@ typedef struct _ACL_SIZE_INFORMATION
  * Privilege Names
  */
 #ifdef UNICODE
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define SE_CREATE_TOKEN_NAME            L"SeCreateTokenPrivilege"
 #define SE_ASSIGNPRIMARYTOKEN_NAME      L"SeAssignPrimaryTokenPrivilege"
 #define SE_LOCK_MEMORY_NAME             L"SeLockMemoryPrivilege"
@@ -4154,37 +4188,7 @@ typedef struct _ACL_SIZE_INFORMATION
 #define SE_MANAGE_VOLUME_NAME           L"SeManageVolumePrivilege"
 #define SE_IMPERSONATE_NAME             L"SeImpersonatePrivilege"
 #define SE_CREATE_GLOBAL_NAME           L"SeCreateGlobalPrivilege"
-#elif defined(__GNUC__)
-#define SE_CREATE_TOKEN_NAME (const WCHAR []){ 'S','e','C','r','e','a','t','e','T','o','k','e','n','P','r','i','v','i','l','e','g','e',0 }
-#define SE_ASSIGNPRIMARYTOKEN_NAME (const WCHAR []){ 'S','e','A','s','s','i','g','n','P','r','i','m','a','r','y','T','o','k','e','n','P','r','i','v','i','l','e','g','e',0 }
-#define SE_LOCK_MEMORY_NAME (const WCHAR []){ 'S','e','L','o','c','k','M','e','m','o','r','y','P','r','i','v','i','l','e','g','e',0 }
-#define SE_INCREASE_QUOTA_NAME (const WCHAR []){ 'S','e','I','n','c','r','e','a','s','e','Q','u','o','t','a','P','r','i','v','i','l','e','g','e',0 }
-#define SE_UNSOLICITED_INPUT_NAME (const WCHAR []){ 'S','e','U','n','s','o','l','i','c','i','t','e','d','I','n','p','u','t','P','r','i','v','i','l','e','g','e',0 }
-#define SE_MACHINE_ACCOUNT_NAME (const WCHAR []){ 'S','e','M','a','c','h','i','n','e','A','c','c','o','u','n','t','P','r','i','v','i','l','e','g','e',0 }
-#define SE_TCB_NAME (const WCHAR []){ 'S','e','T','c','b','P','r','i','v','i','l','e','g','e',0 }
-#define SE_SECURITY_NAME (const WCHAR []){ 'S','e','S','e','c','u','r','i','t','y','P','r','i','v','i','l','e','g','e',0 }
-#define SE_TAKE_OWNERSHIP_NAME (const WCHAR []){ 'S','e','T','a','k','e','O','w','n','e','r','s','h','i','p','P','r','i','v','i','l','e','g','e',0 }
-#define SE_LOAD_DRIVER_NAME (const WCHAR []){ 'S','e','L','o','a','d','D','r','i','v','e','r','P','r','i','v','i','l','e','g','e',0 }
-#define SE_SYSTEM_PROFILE_NAME (const WCHAR []){ 'S','e','S','y','s','t','e','m','P','r','o','f','i','l','e','P','r','i','v','i','l','e','g','e',0 }
-#define SE_SYSTEMTIME_NAME (const WCHAR []){ 'S','e','S','y','s','t','e','m','t','i','m','e','P','r','i','v','i','l','e','g','e',0 }
-#define SE_PROF_SINGLE_PROCESS_NAME (const WCHAR []){ 'S','e','P','r','o','f','i','l','e','S','i','n','g','l','e','P','r','o','c','e','s','s','P','r','i','v','i','l','e','g','e',0 }
-#define SE_INC_BASE_PRIORITY_NAME (const WCHAR []){ 'S','e','I','n','c','r','e','a','s','e','B','a','s','e','P','r','i','o','r','i','t','y','P','r','i','v','i','l','e','g','e',0 }
-#define SE_CREATE_PAGEFILE_NAME (const WCHAR []){ 'S','e','C','r','e','a','t','e','P','a','g','e','f','i','l','e','P','r','i','v','i','l','e','g','e',0 }
-#define SE_CREATE_PERMANENT_NAME (const WCHAR []){ 'S','e','C','r','e','a','t','e','P','e','r','m','a','n','e','n','t','P','r','i','v','i','l','e','g','e',0 }
-#define SE_BACKUP_NAME (const WCHAR []){ 'S','e','B','a','c','k','u','p','P','r','i','v','i','l','e','g','e',0 }
-#define SE_RESTORE_NAME (const WCHAR []){ 'S','e','R','e','s','t','o','r','e','P','r','i','v','i','l','e','g','e',0 }
-#define SE_SHUTDOWN_NAME (const WCHAR []){ 'S','e','S','h','u','t','d','o','w','n','P','r','i','v','i','l','e','g','e',0 }
-#define SE_DEBUG_NAME (const WCHAR []){ 'S','e','D','e','b','u','g','P','r','i','v','i','l','e','g','e',0 }
-#define SE_AUDIT_NAME (const WCHAR []){ 'S','e','A','u','d','i','t','P','r','i','v','i','l','e','g','e',0 }
-#define SE_SYSTEM_ENVIRONMENT_NAME (const WCHAR []){ 'S','e','S','y','s','t','e','m','E','n','v','i','r','o','n','m','e','n','t','P','r','i','v','i','l','e','g','e',0 }
-#define SE_CHANGE_NOTIFY_NAME (const WCHAR []){ 'S','e','C','h','a','n','g','e','N','o','t','i','f','y','P','r','i','v','i','l','e','g','e',0 }
-#define SE_REMOTE_SHUTDOWN_NAME (const WCHAR []){ 'S','e','R','e','m','o','t','e','S','h','u','t','d','o','w','n','P','r','i','v','i','l','e','g','e',0 }
-#define SE_UNDOCK_NAME (const WCHAR []){ 'S','e','U','n','d','o','c','k','P','r','i','v','i','l','e','g','e',0 }
-#define SE_ENABLE_DELEGATION_NAME (const WCHAR []){ 'S','e','E','n','a','b','l','e','D','e','l','e','g','a','t','i','o','n','P','r','i','v','i','l','e','g','e',0 }
-#define SE_MANAGE_VOLUME_NAME (const WCHAR []){ 'S','e','M','a','n','a','g','e','V','o','l','u','m','e','P','r','i','v','i','l','e','g','e',0 }
-#define SE_IMPERSONATE_NAME (const WCHAR []){ 'S','e','I','m','p','e','r','s','o','n','a','t','e','P','r','i','v','i','l','e','g','e',0 }
-#define SE_CREATE_GLOBAL_NAME (const WCHAR []){ 'S','e','C','r','e','a','t','e','G','l','o','b','a','l','P','r','i','v','i','l','e','g','e',0 }
-#else /* _MSC_VER/__GNUC__ */
+#else /* _MSC_VER/__MINGW32__ */
 static const WCHAR SE_CREATE_TOKEN_NAME[] = { 'S','e','C','r','e','a','t','e','T','o','k','e','n','P','r','i','v','i','l','e','g','e',0 };
 static const WCHAR SE_ASSIGNPRIMARYTOKEN_NAME[] = { 'S','e','A','s','s','i','g','n','P','r','i','m','a','r','y','T','o','k','e','n','P','r','i','v','i','l','e','g','e',0 };
 static const WCHAR SE_LOCK_MEMORY_NAME[] = { 'S','e','L','o','c','k','M','e','m','o','r','y','P','r','i','v','i','l','e','g','e',0 };
@@ -4262,6 +4266,7 @@ static const WCHAR SE_CREATE_GLOBAL_NAME[] = { 'S','e','C','r','e','a','t','e','
 #define SE_PRIVILEGE_ENABLED 		0x00000002
 #define SE_PRIVILEGE_REMOVED		0x00000004
 #define SE_PRIVILEGE_USED_FOR_ACCESS 	0x80000000
+#define SE_PRIVILEGE_VALID_ATTRIBUTES 	0x80000007
 
 #define PRIVILEGE_SET_ALL_NECESSARY     1
 
@@ -4317,6 +4322,19 @@ typedef struct _SID_AND_ATTRIBUTES {
   DWORD Attributes;
 } SID_AND_ATTRIBUTES, *PSID_AND_ATTRIBUTES;
 
+typedef SID_AND_ATTRIBUTES SID_AND_ATTRIBUTES_ARRAY[ANYSIZE_ARRAY];
+typedef SID_AND_ATTRIBUTES_ARRAY *PSID_AND_ATTRIBUTES_ARRAY;
+
+#define SID_HASH_SIZE 32
+
+typedef ULONG_PTR SID_HASH_ENTRY, *PSID_HASH_ENTRY;
+
+typedef struct _SID_AND_ATTRIBUTES_HASH {
+  DWORD SidCount;
+  PSID_AND_ATTRIBUTES SidAttr;
+  SID_HASH_ENTRY Hash[SID_HASH_SIZE];
+} SID_AND_ATTRIBUTES_HASH, *PSID_AND_ATTRIBUTES_HASH;
+
 /* security entities */
 #define SECURITY_NULL_RID                       __MSABI_LONG(0x00000000)
 #define SECURITY_WORLD_RID                      __MSABI_LONG(0x00000000)
@@ -4329,6 +4347,7 @@ typedef struct _SID_AND_ATTRIBUTES {
 
 /* S-1-2 */
 #define SECURITY_LOCAL_SID_AUTHORITY		{0,0,0,0,0,2}
+#define SECURITY_LOCAL_LOGON_RID                __MSABI_LONG(0X00000000)
 
 /* S-1-3 */
 #define SECURITY_CREATOR_SID_AUTHORITY		{0,0,0,0,0,3}
@@ -4363,15 +4382,34 @@ typedef struct _SID_AND_ATTRIBUTES {
 #define SECURITY_LOCAL_SERVICE_RID              __MSABI_LONG(0x00000013)
 #define SECURITY_NETWORK_SERVICE_RID            __MSABI_LONG(0x00000014)
 #define SECURITY_NT_NON_UNIQUE                  __MSABI_LONG(0x00000015)
+#define SECURITY_ENTERPRISE_READONLY_CONTROLLERS_RID __MSABI_LONG(0x00000016)
 #define SECURITY_BUILTIN_DOMAIN_RID             __MSABI_LONG(0x00000020)
+#define SECURITY_WRITE_RESTRICTED_CODE_RID      __MSABI_LONG(0x00000021)
 
 #define SECURITY_PACKAGE_BASE_RID               __MSABI_LONG(0x00000040)
 #define SECURITY_PACKAGE_NTLM_RID               __MSABI_LONG(0x0000000A)
 #define SECURITY_PACKAGE_SCHANNEL_RID           __MSABI_LONG(0x0000000E)
 #define SECURITY_PACKAGE_DIGEST_RID             __MSABI_LONG(0x00000015)
+#define SECURITY_CRED_TYPE_BASE_RID             __MSABI_LONG(0x00000041)
+#define SECURITY_CRED_TYPE_THIS_ORG_CERT_RID    __MSABI_LONG(0x00000001)
+#define SECURITY_MIN_BASE_RID                   __MSABI_LONG(0x00000050)
+#define SECURITY_SERVICE_ID_BASE_RID            __MSABI_LONG(0x00000050)
+#define SECURITY_RESERVED_ID_BASE_RID           __MSABI_LONG(0x00000051)
+#define SECURITY_APPPOOL_ID_BASE_RID            __MSABI_LONG(0x00000052)
+#define SECURITY_VIRTUALSERVER_ID_BASE_RID      __MSABI_LONG(0x00000053)
+#define SECURITY_USERMODEDRIVERHOST_ID_BASE_RID __MSABI_LONG(0x00000054)
+#define SECURITY_CLOUD_INFRASTRUCTURE_SERVICES_ID_BASE_RID __MSABI_LONG(0x00000055)
+#define SECURITY_WMIHOST_ID_BASE_RID            __MSABI_LONG(0x00000056)
+#define SECURITY_TASK_ID_BASE_RID               __MSABI_LONG(0x00000057)
+#define SECURITY_NFS_ID_BASE_RID                __MSABI_LONG(0x00000058)
+#define SECURITY_COM_ID_BASE_RID                __MSABI_LONG(0x00000059)
+#define SECURITY_MAX_BASE_RID                   __MSABI_LONG(0x0000006F)
+#define SECURITY_WINDOWSMOBILE_ID_BASE_RID      __MSABI_LONG(0x00000070)
 #define SECURITY_MAX_ALWAYS_FILTERED            __MSABI_LONG(0x000003E7)
 #define SECURITY_MIN_NEVER_FILTERED             __MSABI_LONG(0x000003E8)
 #define SECURITY_OTHER_ORGANIZATION_RID         __MSABI_LONG(0x000003E8)
+
+#define DOMAIN_GROUP_RID_ENTERPRISE_READONLY_DOMAIN_CONTROLLERS __MSABI_LONG(0x000001F2)
 
 #define FOREST_USER_RID_MAX                     __MSABI_LONG(0x000001F3)
 #define DOMAIN_USER_RID_ADMIN                   __MSABI_LONG(0x000001F4)
@@ -4388,6 +4426,9 @@ typedef struct _SID_AND_ATTRIBUTES {
 #define DOMAIN_GROUP_RID_SCHEMA_ADMINS          __MSABI_LONG(0x00000206)
 #define DOMAIN_GROUP_RID_ENTERPRISE_ADMINS      __MSABI_LONG(0x00000207)
 #define DOMAIN_GROUP_RID_POLICY_ADMINS          __MSABI_LONG(0x00000208)
+#define DOMAIN_GROUP_RID_READONLY_CONTROLLERS   __MSABI_LONG(0x00000209)
+
+#define SECURITY_RESOURCE_MANAGER_AUTHORITY	{0,0,0,0,0,9}
 
 #define SECURITY_APP_PACKAGE_AUTHORITY {0,0,0,0,0,15}
 #define SECURITY_APP_PACKAGE_BASE_RID           __MSABI_LONG(0x000000002)
@@ -4405,9 +4446,13 @@ typedef struct _SID_AND_ATTRIBUTES {
 #define SECURITY_MANDATORY_UNTRUSTED_RID        __MSABI_LONG(0x00000000)
 #define SECURITY_MANDATORY_LOW_RID              __MSABI_LONG(0x00001000)
 #define SECURITY_MANDATORY_MEDIUM_RID           __MSABI_LONG(0x00002000)
+#define SECURITY_MANDATORY_MEDIUM_PLUS_RID      __MSABI_LONG(0x00002100)
 #define SECURITY_MANDATORY_HIGH_RID             __MSABI_LONG(0x00003000)
 #define SECURITY_MANDATORY_SYSTEM_RID           __MSABI_LONG(0x00004000)
 #define SECURITY_MANDATORY_PROTECTED_PROCESS_RID __MSABI_LONG(0x00005000)
+#define SECURITY_MANDATORY_MAXIMUM_USER_RID     SECURITY_MANDATORY_SYSTEM_RID
+
+#define MANDATORY_LEVEL_TO_MANDATORY_RID(ML) (ML * 0x1000)
 
 #define DOMAIN_ALIAS_RID_ADMINS                 __MSABI_LONG(0x00000220)
 #define DOMAIN_ALIAS_RID_USERS                  __MSABI_LONG(0x00000221)
@@ -4431,11 +4476,32 @@ typedef struct _SID_AND_ATTRIBUTES {
 #define DOMAIN_ALIAS_RID_AUTHORIZATIONACCESS    __MSABI_LONG(0x00000230)
 #define DOMAIN_ALIAS_RID_TS_LICENSE_SERVERS     __MSABI_LONG(0x00000231)
 #define DOMAIN_ALIAS_RID_DCOM_USERS             __MSABI_LONG(0x00000232)
+#define DOMAIN_ALIAS_RID_IUSERS                 __MSABI_LONG(0x00000238)
+#define DOMAIN_ALIAS_RID_CRYPTO_OPERATORS       __MSABI_LONG(0x00000239)
+#define DOMAIN_ALIAS_RID_CACHEABLE_PRINCIPALS_GROUP __MSABI_LONG(0x0000023B)
+#define DOMAIN_ALIAS_RID_NON_CACHEABLE_PRINCIPALS_GROUP __MSABI_LONG(0x0000023C)
+#define DOMAIN_ALIAS_RID_EVENT_LOG_READERS_GROUP __MSABI_LONG(0x0000023D)
+#define DOMAIN_ALIAS_RID_CERTSVC_DCOM_ACCESS_GROUP __MSABI_LONG(0x0000023E)
 
 #define SECURITY_SERVER_LOGON_RID		SECURITY_ENTERPRISE_CONTROLLERS_RID
 
 #define SECURITY_PACKAGE_RID_COUNT              __MSABI_LONG(2)
+#define SECURITY_CRED_TYPE_RID_COUNT            __MSABI_LONG(2)
 #define SECURITY_LOGON_IDS_RID_COUNT            __MSABI_LONG(3)
+#define SECURITY_NT_NON_UNIQUE_SUB_AUTH_COUNT   __MSABI_LONG(3)
+#define SECURITY_SERVICE_ID_RID_COUNT           __MSABI_LONG(6)
+#define SECURITY_APPPOOL_ID_RID_COUNT           __MSABI_LONG(6)
+#define SECURITY_VIRTUALSERVER_ID_RID_COUNT     __MSABI_LONG(6)
+#define SECURITY_USERMODEDRIVERHOST_ID_RID_COUNT __MSABI_LONG(6)
+#define SECURITY_CLOUD_INFRASTRUCTURE_SERVICES_ID_RID_COUNT __MSABI_LONG(6)
+#define SECURITY_WMIHOST_ID_RID_COUNT           __MSABI_LONG(6)
+#define SECURITY_VIRTUALACCOUNT_ID_RID_COUNT    __MSABI_LONG(6)
+
+#define SYSTEM_LUID                             { 0x3e7, 0x0 }
+#define ANONYMOUS_LOGON_LUID                    { 0x3e6, 0x0 }
+#define LOCALSERVICE_LUID                       { 0x3e5, 0x0 }
+#define NETWORKSERVICE_LUID                     { 0x3e4, 0x0 }
+#define IUSER_LUID                              { 0x3e3, 0x0 }
 
 typedef enum {
     WinNullSid                                  = 0,
@@ -4772,9 +4838,42 @@ typedef struct _TOKEN_MANDATORY_LABEL {
   SID_AND_ATTRIBUTES Label;
 } TOKEN_MANDATORY_LABEL, * PTOKEN_MANDATORY_LABEL;
 
+#define TOKEN_MANDATORY_POLICY_OFF             0x0
+#define TOKEN_MANDATORY_POLICY_NO_WRITEUP      0x1
+#define TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN 0x2
+#define TOKEN_MANDATORY_POLICY_VALID_MASK      0x3
+
+typedef struct _TOKEN_MANDATORY_POLICY {
+  DWORD Policy;
+} TOKEN_MANDATORY_POLICY, *PTOKEN_MANDATORY_POLICY;
+
 typedef struct _TOKEN_APPCONTAINER_INFORMATION {
   PSID TokenAppContainer;
 } TOKEN_APPCONTAINER_INFORMATION, * PTOKEN_APPCONTAINER_INFORMATION;
+
+#define POLICY_AUDIT_SUBCATEGORY_COUNT 53
+
+typedef struct _TOKEN_AUDIT_POLICY {
+  BYTE PerUserPolicy[((POLICY_AUDIT_SUBCATEGORY_COUNT) >> 1) + 1];
+} TOKEN_AUDIT_POLICY, *PTOKEN_AUDIT_POLICY;
+
+typedef struct _TOKEN_ACCESS_INFORMATION {
+  PSID_AND_ATTRIBUTES_HASH SidHash;
+  PSID_AND_ATTRIBUTES_HASH RestrictedSidHash;
+  PTOKEN_PRIVILEGES Privileges;
+  LUID AuthenticationId;
+  TOKEN_TYPE TokenType;
+  SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+  TOKEN_MANDATORY_POLICY MandatoryPolicy;
+  DWORD Flags;
+} TOKEN_ACCESS_INFORMATION, *PTOKEN_ACCESS_INFORMATION;
+
+typedef struct _TOKEN_CONTROL {
+  LUID TokenId;
+  LUID AuthenticationId;
+  LUID ModifiedId;
+  TOKEN_SOURCE TokenSource;
+} TOKEN_CONTROL, *PTOKEN_CONTROL;
 
 /*
  *	ACLs of NT
@@ -4788,11 +4887,30 @@ typedef struct _ACE_HEADER {
 } ACE_HEADER,*PACE_HEADER;
 
 /* AceType */
-#define	ACCESS_ALLOWED_ACE_TYPE		0
-#define	ACCESS_DENIED_ACE_TYPE		1
-#define	SYSTEM_AUDIT_ACE_TYPE		2
-#define	SYSTEM_ALARM_ACE_TYPE		3
+#define	ACCESS_MIN_MS_ACE_TYPE		0x0
+#define	ACCESS_ALLOWED_ACE_TYPE		0x0
+#define	ACCESS_DENIED_ACE_TYPE		0x1
+#define	SYSTEM_AUDIT_ACE_TYPE		0x2
+#define	SYSTEM_ALARM_ACE_TYPE		0x3
+#define	ACCESS_MAX_MS_V2_ACE_TYPE	0x3
+#define	ACCESS_ALLOWED_COMPOUND_ACE_TYPE 0x4
+#define	ACCESS_MAX_MS_V3_ACE_TYPE	0x4
+#define	ACCESS_MIN_MS_OBJECT_ACE_TYPE	0x5
+#define	ACCESS_ALLOWED_OBJECT_ACE_TYPE	0x5
+#define	ACCESS_DENIED_OBJECT_ACE_TYPE	0x6
+#define	ACCESS_AUDIT_OBJECT_ACE_TYPE	0x7
+#define	ACCESS_ALARM_OBJECT_ACE_TYPE	0x8
+#define	ACCESS_MAX_MS_V4_ACE_TYPE	0x8
+#define	ACCESS_ALLOWED_CALLBACK_ACE_TYPE 0x9
+#define	ACCESS_DENIED_CALLBACK_ACE_TYPE	0xa
+#define	ACCESS_ALLOWED_CALLBACK_OBJECT_ACE_TYPE	0xb
+#define	ACCESS_DENIED_CALLBACK_OBJECT_ACE_TYPE 0xc
+#define	SYSTEM_AUDIT_CALLBACK_ACE_TYPE	0xd
+#define	SYSTEM_ALARM_CALLBACK_ACE_TYPE	0xe
+#define	SYSTEM_AUDIT_CALLBACK_OBJECT_ACE_TYPE 0xf
+#define	SYSTEM_ALARM_CALLBACK_OBJECT_ACE_TYPE 0x10
 #define SYSTEM_MANDATORY_LABEL_ACE_TYPE 0x11
+#define	ACCESS_MAX_MS_V5_ACE_TYPE	0x11
 
 /* inherit AceFlags */
 #define	OBJECT_INHERIT_ACE		0x01
@@ -4843,9 +4961,106 @@ typedef struct _SYSTEM_MANDATORY_LABEL_ACE {
     DWORD       SidStart;
 } SYSTEM_MANDATORY_LABEL_ACE,*PSYSTEM_MANDATORY_LABEL_ACE;
 
+typedef struct _ACCESS_ALLOWED_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} ACCESS_ALLOWED_OBJECT_ACE, *PACCESS_ALLOWED_OBJECT_ACE;
+
+typedef struct _ACCESS_DENIED_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} ACCESS_DENIED_OBJECT_ACE, *PACCESS_DENIED_OBJECT_ACE;
+
+typedef struct _SYSTEM_AUDIT_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} SYSTEM_AUDIT_OBJECT_ACE, *PSYSTEM_AUDIT_OBJECT_ACE;
+
+typedef struct _SYSTEM_ALARM_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} SYSTEM_ALARM_OBJECT_ACE, *PSYSTEM_ALARM_OBJECT_aCE;
+
+typedef struct _ACCESS_ALLOWED_CALLBACK_ACE {
+    ACE_HEADER  Header;
+    DWORD       Mask;
+    DWORD       SidStart;
+} ACCESS_ALLOWED_CALLBACK_ACE,*PACCESS_ALLOWED_CALLBACK_ACE;
+
+typedef struct _ACCESS_DENIED_CALLBACK_ACE {
+    ACE_HEADER  Header;
+    DWORD       Mask;
+    DWORD       SidStart;
+} ACCESS_DENIED_CALLBACK_ACE,*PACCESS_DENIED_CALLBACK_ACE;
+
+typedef struct _SYSTEM_AUDIT_CALLBACK_ACE {
+    ACE_HEADER  Header;
+    DWORD       Mask;
+    DWORD       SidStart;
+} SYSTEM_AUDIT_CALLBACK_ACE,*PSYSTEM_AUDIT_CALLBACK_ACE;
+
+typedef struct _SYSTEM_ALARM_CALLBACK_ACE {
+    ACE_HEADER  Header;
+    DWORD       Mask;
+    DWORD       SidStart;
+} SYSTEM_ALARM_CALLBACK_ACE,*PSYSTEM_ALARM_CALLBACK_ACE;
+
+typedef struct _ACCESS_ALLOWED_CALLBACK_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} ACCESS_ALLOWED_CALLBACK_OBJECT_ACE, *PACCESS_ALLOWED_CALLBACK_OBJECT_ACE;
+
+typedef struct _ACCESS_DENIED_CALLBACK_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} ACCESS_DENIED_CALLBACK_OBJECT_ACE, *PACCESS_DENIED_CALLBACK_OBJECT_ACE;
+
+typedef struct _SYSTEM_AUDIT_CALLBACK_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} SYSTEM_AUDIT_CALLBACK_OBJECT_ACE, *PSYSTEM_AUDIT_CALLBACK_OBJECT_ACE;
+
+typedef struct _SYSTEM_ALARM_CALLBACK_OBJECT_ACE {
+    ACE_HEADER  Header;
+    ACCESS_MASK Mask;
+    DWORD       Flags;
+    GUID        ObjectType;
+    GUID        InheritedObjectType;
+    DWORD       SidStart;
+} SYSTEM_ALARM_CALLBACK_OBJECT_ACE, *PSYSTEM_ALARM_CALLBACK_OBJECT_ACE;
+
 #define SYSTEM_MANDATORY_LABEL_NO_WRITE_UP      0x1
 #define SYSTEM_MANDATORY_LABEL_NO_READ_UP       0x2
 #define SYSTEM_MANDATORY_LABEL_NO_EXECUTE_UP    0x4
+#define SYSTEM_MANDATORY_LABEL_VALID_MASK       0x7
 
 typedef enum tagSID_NAME_USE {
 	SidTypeUser = 1,

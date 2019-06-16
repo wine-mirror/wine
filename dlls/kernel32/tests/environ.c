@@ -554,6 +554,20 @@ static void test_GetComputerNameExW(void)
     HeapFree(GetProcessHeap(), 0, nameW);
 }
 
+static void test_GetEnvironmentStringsW(void)
+{
+    PWCHAR env1;
+    PWCHAR env2;
+
+    env1 = GetEnvironmentStringsW();
+    env2 = GetEnvironmentStringsW();
+    ok(env1 != env2 ||
+       broken(env1 == env2), /* NT <= 5.1 */
+       "should return different copies\n");
+    FreeEnvironmentStringsW(env1);
+    FreeEnvironmentStringsW(env2);
+}
+
 START_TEST(environ)
 {
     init_functionpointers();
@@ -565,4 +579,5 @@ START_TEST(environ)
     test_GetComputerName();
     test_GetComputerNameExA();
     test_GetComputerNameExW();
+    test_GetEnvironmentStringsW();
 }

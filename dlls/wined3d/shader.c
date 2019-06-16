@@ -3229,14 +3229,14 @@ static HRESULT shader_none_alloc(struct wined3d_device *device, const struct win
     if (!(fragment_priv = fragment_pipe->alloc_private(&none_shader_backend, priv)))
     {
         ERR("Failed to initialize fragment pipe.\n");
-        vertex_pipe->vp_free(device);
+        vertex_pipe->vp_free(device, NULL);
         heap_free(priv);
         return E_FAIL;
     }
 
     priv->vertex_pipe = vertex_pipe;
     priv->fragment_pipe = fragment_pipe;
-    fragment_pipe->get_caps(&device->adapter->gl_info, &fragment_caps);
+    fragment_pipe->get_caps(device->adapter, &fragment_caps);
     priv->ffp_proj_control = fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
 
     device->vertex_priv = vertex_priv;
@@ -3246,12 +3246,12 @@ static HRESULT shader_none_alloc(struct wined3d_device *device, const struct win
     return WINED3D_OK;
 }
 
-static void shader_none_free(struct wined3d_device *device)
+static void shader_none_free(struct wined3d_device *device, struct wined3d_context *context)
 {
     struct shader_none_priv *priv = device->shader_priv;
 
-    priv->fragment_pipe->free_private(device);
-    priv->vertex_pipe->vp_free(device);
+    priv->fragment_pipe->free_private(device, context);
+    priv->vertex_pipe->vp_free(device, context);
     heap_free(priv);
 }
 
@@ -3260,20 +3260,10 @@ static BOOL shader_none_allocate_context_data(struct wined3d_context *context)
     return TRUE;
 }
 
-static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
+static void shader_none_get_caps(const struct wined3d_adapter *adapter, struct shader_caps *caps)
 {
     /* Set the shader caps to 0 for the none shader backend */
-    caps->vs_version = 0;
-    caps->hs_version = 0;
-    caps->ds_version = 0;
-    caps->gs_version = 0;
-    caps->ps_version = 0;
-    caps->cs_version = 0;
-    caps->vs_uniform_count = 0;
-    caps->ps_uniform_count = 0;
-    caps->ps_1x_max_value = 0.0f;
-    caps->varying_count = 0;
-    caps->wined3d_caps = 0;
+    memset(caps, 0, sizeof(*caps));
 }
 
 static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)
@@ -3321,9 +3311,9 @@ static unsigned int shader_max_version_from_feature_level(enum wined3d_feature_l
         case WINED3D_FEATURE_LEVEL_10_1:
         case WINED3D_FEATURE_LEVEL_10:
             return 4;
-        case WINED3D_FEATURE_LEVEL_9_SM3:
+        case WINED3D_FEATURE_LEVEL_9_3:
             return 3;
-        case WINED3D_FEATURE_LEVEL_9_SM2:
+        case WINED3D_FEATURE_LEVEL_9_2:
         case WINED3D_FEATURE_LEVEL_9_1:
             return 2;
         default:
@@ -3737,7 +3727,7 @@ static struct wined3d_shader_signature_element *shader_find_signature_element(co
     for (i = 0; i < s->element_count; ++i)
     {
         if (e[i].stream_idx == stream_idx
-                && !strcasecmp(e[i].semantic_name, semantic_name)
+                && !_strnicmp(e[i].semantic_name, semantic_name, -1)
                 && e[i].semantic_idx == semantic_idx)
             return &e[i];
     }
@@ -4035,7 +4025,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
                 args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
                 continue;
             }
-            if (can_use_texture_swizzle(gl_info, texture->resource.format))
+            if (can_use_texture_swizzle(d3d_info, texture->resource.format))
                 args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
             else
                 args->color_fixup[i] = texture->resource.format->color_fixup;

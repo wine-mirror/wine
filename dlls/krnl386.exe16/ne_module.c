@@ -113,34 +113,6 @@ static inline BOOL contains_path( LPCSTR name )
 
 
 /***********************************************************************
- *              NE_strcasecmp
- *
- * locale-independent case conversion for module lookups
- */
-static int NE_strcasecmp( const char *str1, const char *str2 )
-{
-    int ret = 0;
-    for ( ; ; str1++, str2++)
-        if ((ret = RtlUpperChar(*str1) - RtlUpperChar(*str2)) || !*str1) break;
-    return ret;
-}
-
-
-/***********************************************************************
- *              NE_strncasecmp
- *
- * locale-independent case conversion for module lookups
- */
-static int NE_strncasecmp( const char *str1, const char *str2, int len )
-{
-    int ret = 0;
-    for ( ; len > 0; len--, str1++, str2++)
-        if ((ret = RtlUpperChar(*str1) - RtlUpperChar(*str2)) || !*str1) break;
-    return ret;
-}
-
-
-/***********************************************************************
  *           NE_GetPtr
  */
 NE_MODULE *NE_GetPtr( HMODULE16 hModule )
@@ -333,7 +305,7 @@ static void NE_InitResourceHandler( HMODULE16 hModule )
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->ne_rsrctab + 2);
     while(pTypeInfo->type_id)
     {
-        memcpy_unaligned( &pTypeInfo->resloader, &proc, sizeof(FARPROC16) );
+        pTypeInfo->resloader = proc;
         pTypeInfo = (NE_TYPEINFO *)((char*)(pTypeInfo + 1) + pTypeInfo->count * sizeof(NE_NAMEINFO));
     }
 }
@@ -949,6 +921,7 @@ static HMODULE16 NE_DoLoadBuiltinModule( const IMAGE_DOS_HEADER *mz_header, cons
     }
 
     patch_code_segment( pModule );
+    *(void **)mz_header->e_res2 = &wine_ldt_copy;
 
     return hInstance;
 }
@@ -1262,8 +1235,6 @@ DWORD NE_StartTask(void)
         context.SegCs  = GlobalHandleToSel16(pSegTable[SELECTOROF(pModule->ne_csip) - 1].hSeg);
         context.SegDs  = GlobalHandleToSel16(pTask->hInstance);
         context.SegEs  = pTask->hPDB;
-        context.SegFs  = wine_get_fs();
-        context.SegGs  = wine_get_gs();
         context.Eip    = OFFSETOF(pModule->ne_csip);
         context.Ebx    = pModule->ne_stack;
         context.Ecx    = pModule->ne_heap;
@@ -1455,13 +1426,13 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
         if (pModule->ne_flags & NE_FFLAGS_WIN32) continue;
 
         name_table = (BYTE *)pModule + pModule->ne_restab;
-	/* FIXME: the strncasecmp is WRONG. It should not be case insensitive,
+	/* FIXME: the _strnicmp is WRONG. It should not be case insensitive,
 	 * but case sensitive! (Unfortunately Winword 6 and subdlls have
 	 * lowercased module names, but try to load uppercase DLLs, so this
 	 * 'i' compare is just a quickfix until the loader handles that
 	 * correctly. -MM 990705
 	 */
-        if ((*name_table == len) && !NE_strncasecmp(tmpstr, (const char*)name_table+1, len))
+        if ((*name_table == len) && !_strnicmp(tmpstr, (const char*)name_table+1, len))
             return hModule;
     }
 
@@ -1500,7 +1471,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	    loadedfn--;
 	}
 	/* case insensitive compare ... */
-	if (!NE_strcasecmp(loadedfn, s))
+	if (!_strnicmp(loadedfn, s, -1))
 	    return hModule;
     }
     return 0;
@@ -1820,7 +1791,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
             loadedfn--;
         }
         /* case insensitive compare ... */
-        if (!NE_strcasecmp(loadedfn, s))
+        if (!_strnicmp(loadedfn, s, -1))
             return hModule;
     }
     /* If basename (without ext) matches the module name of a module:
@@ -1837,7 +1808,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
         if (pModule->ne_flags & NE_FFLAGS_WIN32) continue;
 
         name_table = (BYTE *)pModule + pModule->ne_restab;
-        if ((*name_table == len) && !NE_strncasecmp(s, (const char*)name_table+1, len))
+        if ((*name_table == len) && !_strnicmp(s, (const char*)name_table+1, len))
             return hModule;
     }
 
@@ -2079,7 +2050,7 @@ void WINAPI MapHInstSL16( CONTEXT *context )
  */
 __ASM_STDCALL_FUNC( MapHInstLS, 0,
                    "pushl %eax\n\t"
-                   "call " __ASM_NAME("MapHModuleLS") __ASM_STDCALL(4) "\n\t"
+                   "call " __ASM_STDCALL("MapHModuleLS",4) "\n\t"
                    "ret" )
 
 /***************************************************************************
@@ -2087,7 +2058,7 @@ __ASM_STDCALL_FUNC( MapHInstLS, 0,
  */
 __ASM_STDCALL_FUNC( MapHInstSL, 0,
                    "pushl %eax\n\t"
-                   "call " __ASM_NAME("MapHModuleSL") __ASM_STDCALL(4) "\n\t"
+                   "call " __ASM_STDCALL("MapHModuleSL",4) "\n\t"
                    "ret" )
 
 /***************************************************************************
@@ -2097,7 +2068,7 @@ __ASM_STDCALL_FUNC( MapHInstLS_PN, 0,
                    "testl %eax,%eax\n\t"
                    "jz 1f\n\t"
                    "pushl %eax\n\t"
-                   "call " __ASM_NAME("MapHModuleLS") __ASM_STDCALL(4) "\n"
+                   "call " __ASM_STDCALL("MapHModuleLS",4) "\n"
                    "1:\tret" )
 
 /***************************************************************************
@@ -2107,5 +2078,5 @@ __ASM_STDCALL_FUNC( MapHInstSL_PN, 0,
                    "andl $0xffff,%eax\n\t"
                    "jz 1f\n\t"
                    "pushl %eax\n\t"
-                   "call " __ASM_NAME("MapHModuleSL") __ASM_STDCALL(4) "\n"
+                   "call " __ASM_STDCALL("MapHModuleSL",4) "\n"
                    "1:\tret" )

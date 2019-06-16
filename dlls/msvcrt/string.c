@@ -362,23 +362,25 @@ static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale
         p++;
 
 #if _MSVCR_VER >= 140
-    if(tolower(p[0]) == 'i' && tolower(p[1]) == 'n' && tolower(p[2]) == 'f') {
+    if(MSVCRT__tolower_l(p[0], locale) == 'i' && MSVCRT__tolower_l(p[1], locale) == 'n'
+            && MSVCRT__tolower_l(p[2], locale) == 'f') {
         if(end)
             *end = (char*) &p[3];
-        if(tolower(p[3]) == 'i' && tolower(p[4]) == 'n' && tolower(p[5]) == 'i' &&
-           tolower(p[6]) == 't' && tolower(p[7]) == 'y' && end)
+        if(MSVCRT__tolower_l(p[3], locale) == 'i' && MSVCRT__tolower_l(p[4], locale) == 'n'
+            && MSVCRT__tolower_l(p[5], locale) == 'i' && MSVCRT__tolower_l(p[6], locale) == 't'
+            && MSVCRT__tolower_l(p[7], locale) == 'y' && end)
             *end = (char*) &p[8];
         return sign*INFINITY;
     }
-    if(tolower(p[0]) == 'n' &&
-       tolower(p[1]) == 'a' &&
-       tolower(p[2]) == 'n') {
+    if(MSVCRT__tolower_l(p[0], locale) == 'n' &&
+       MSVCRT__tolower_l(p[1], locale) == 'a' &&
+       MSVCRT__tolower_l(p[2], locale) == 'n') {
         if(end)
             *end = (char*) &p[3];
         return NAN;
     }
 
-    if(p[0] == '0' && tolower(p[1]) == 'x') {
+    if(p[0] == '0' && MSVCRT__tolower_l(p[1], locale) == 'x') {
         base = 16;
         expcnt = 2;
         p += 2;
@@ -639,7 +641,7 @@ int CDECL MSVCRT__stricoll_l( const char* str1, const char* str2, MSVCRT__locale
         locinfo = locale->locinfo;
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
-        return strcasecmp(str1, str2);
+        return MSVCRT__stricmp(str1, str2);
     return CompareStringA(locinfo->lc_handle[MSVCRT_LC_COLLATE], NORM_IGNORECASE,
             str1, -1, str2, -1)-CSTR_EQUAL;
 }
@@ -692,7 +694,7 @@ int CDECL MSVCRT__strnicoll_l( const char* str1, const char* str2, MSVCRT_size_t
         locinfo = locale->locinfo;
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
-        return strncasecmp(str1, str2, count);
+        return MSVCRT__strnicmp(str1, str2, count);
     return CompareStringA(locinfo->lc_handle[MSVCRT_LC_COLLATE], NORM_IGNORECASE,
             str1, MSVCRT_strnlen(str1, count),
             str2, MSVCRT_strnlen(str2, count))-CSTR_EQUAL;
@@ -963,7 +965,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
     } else if(*nptr == '+')
         nptr++;
 
-    if((base==0 || base==16) && *nptr=='0' && tolower(*(nptr+1))=='x') {
+    if((base==0 || base==16) && *nptr=='0' && MSVCRT__tolower_l(*(nptr+1), locale)=='x') {
         base = 16;
         nptr += 2;
     }
@@ -976,7 +978,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
     }
 
     while(*nptr) {
-        char cur = tolower(*nptr);
+        char cur = MSVCRT__tolower_l(*nptr, locale);
         int v;
 
         if(cur>='0' && cur<='9') {
@@ -1094,11 +1096,11 @@ MSVCRT_long CDECL MSVCRT__atol_l(const char *str, MSVCRT__locale_t locale)
 {
     __int64 ret = MSVCRT_strtoi64_l(str, NULL, 10, locale);
 
-    if(ret > LONG_MAX) {
-        ret = LONG_MAX;
+    if(ret > MSVCRT_LONG_MAX) {
+        ret = MSVCRT_LONG_MAX;
         *MSVCRT__errno() = MSVCRT_ERANGE;
-    } else if(ret < LONG_MIN) {
-        ret = LONG_MIN;
+    } else if(ret < MSVCRT_LONG_MIN) {
+        ret = MSVCRT_LONG_MIN;
         *MSVCRT__errno() = MSVCRT_ERANGE;
     }
     return ret;
@@ -1109,7 +1111,11 @@ MSVCRT_long CDECL MSVCRT__atol_l(const char *str, MSVCRT__locale_t locale)
  */
 MSVCRT_long CDECL MSVCRT_atol(const char *str)
 {
+#if _MSVCR_VER == 0
+    return MSVCRT_atoi(str);
+#else
     return MSVCRT__atol_l(str, NULL);
+#endif
 }
 
 #if _MSVCR_VER>=120
@@ -1211,7 +1217,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
     } else if(*nptr == '+')
         nptr++;
 
-    if((base==0 || base==16) && *nptr=='0' && tolower(*(nptr+1))=='x') {
+    if((base==0 || base==16) && *nptr=='0' && MSVCRT__tolower_l(*(nptr+1), locale)=='x') {
         base = 16;
         nptr += 2;
     }
@@ -1224,7 +1230,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
     }
 
     while(*nptr) {
-        char cur = tolower(*nptr);
+        char cur = MSVCRT__tolower_l(*nptr, locale);
         int v;
 
         if(cur>='0' && cur<='9') {
@@ -1954,7 +1960,6 @@ int __cdecl MSVCRT_strncmp(const char *str1, const char *str2, MSVCRT_size_t len
 int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,
         MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
     int c1, c2;
 
     if(s1==NULL || s2==NULL)
@@ -1962,14 +1967,6 @@ int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,
 
     if(!count)
         return 0;
-
-    if(!locale)
-        locinfo = get_locinfo();
-    else
-        locinfo = locale->locinfo;
-
-    if(!locinfo->lc_handle[MSVCRT_LC_CTYPE])
-        return strncasecmp(s1, s2, count);
 
     do {
         c1 = MSVCRT__tolower_l(*s1++, locale);
@@ -2079,3 +2076,47 @@ MSVCRT_size_t __cdecl MSVCRT___strncnt(const char *str, MSVCRT_size_t size)
 
     return ret;
 }
+
+
+#ifdef _CRTDLL
+/*********************************************************************
+ *		_strdec (CRTDLL.@)
+ */
+char * CDECL _strdec(const char *str1, const char *str2)
+{
+    return (char *)(str2 - 1);
+}
+
+/*********************************************************************
+ *		_strinc (CRTDLL.@)
+ */
+char * CDECL _strinc(const char *str)
+{
+    return (char *)(str + 1);
+}
+
+/*********************************************************************
+ *		_strnextc (CRTDLL.@)
+ */
+unsigned int CDECL _strnextc(const char *str)
+{
+    return (unsigned char)str[0];
+}
+
+/*********************************************************************
+ *		_strninc (CRTDLL.@)
+ */
+char * CDECL _strninc(const char *str, size_t len)
+{
+    return (char *)(str + len);
+}
+
+/*********************************************************************
+ *		_strspnp (CRTDLL.@)
+ */
+char * CDECL _strspnp( const char *str1, const char *str2)
+{
+    str1 += strspn( str1, str2 );
+    return *str1 ? (char*)str1 : NULL;
+}
+#endif

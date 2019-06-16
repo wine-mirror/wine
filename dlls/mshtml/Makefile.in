@@ -3,6 +3,8 @@ IMPORTLIB = mshtml
 IMPORTS   = strmiids uuid urlmon shlwapi shell32 ole32 oleaut32 user32 gdi32 advapi32
 DELAYIMPORTS = wininet inetcomm
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	conpoint.c \
 	dispex.c \
@@ -57,6 +59,7 @@ C_SRCS = \
 	secmgr.c \
 	selection.c \
 	service.c \
+	svg.c \
 	task.c \
 	txtrange.c \
 	view.c \

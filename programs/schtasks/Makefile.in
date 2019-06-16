@@ -1,6 +1,7 @@
 MODULE    = schtasks.exe
-APPMODE   = -mconsole -municode
 IMPORTS   = oleaut32 ole32
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = \
 	schtasks.c

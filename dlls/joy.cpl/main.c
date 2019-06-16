@@ -32,7 +32,6 @@
 #include "ole2.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "joy.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
@@ -137,7 +136,8 @@ static void destroy_joysticks(struct JoystickData *data)
         if (data->joysticks[i].forcefeedback && data->joysticks[i].num_effects > 0)
         {
             for (j = 0; j < data->joysticks[i].num_effects; j++)
-                IDirectInputEffect_Release(data->joysticks[i].effects[j].effect);
+                if (data->joysticks[i].effects[j].effect)
+                    IDirectInputEffect_Release(data->joysticks[i].effects[j].effect);
 
             HeapFree(GetProcessHeap(), 0, data->joysticks[i].effects);
         }
@@ -677,6 +677,8 @@ static DWORD WINAPI ff_input_thread(void *param)
         DWORD flags = DIEP_AXES | DIEP_DIRECTION | DIEP_NORESTART;
         RECT r;
 
+        Sleep(TEST_POLL_TIME);
+
         /* Skip this if we have no effects */
         if (joy->num_effects == 0 || chosen_effect < 0) continue;
 
@@ -701,8 +703,6 @@ static DWORD WINAPI ff_input_thread(void *param)
                 IDirectInputEffect_Start(joy->effects[chosen_effect].effect, 1, 0);
                 break;
             }
-
-        Sleep(TEST_POLL_TIME);
     }
 
     return 0;

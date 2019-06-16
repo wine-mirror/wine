@@ -26,17 +26,14 @@ extern "C" {
 #ifdef _ADVAPI32_
 #define WINADVAPI
 #else
-#define WINADVAPI DECLSPEC_IMPORT
+#define WINADVAPI DECLSPEC_HIDDEN
 #endif
 
 /* Service database names */
 #define SERVICES_ACTIVE_DATABASEA     "ServicesActive"
 #define SERVICES_FAILED_DATABASEA     "ServicesFailed"
 
-#if defined(__GNUC__)
-# define SERVICES_ACTIVE_DATABASEW    (const WCHAR []){ 'S','e','r','v','i','c','e','s','A','c','t','i','v','e',0 }
-# define SERVICES_FAILED_DATABASEW    (const WCHAR []){ 'S','e','r','v','i','c','e','s','F','a','i','l','e','d',0 }
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define SERVICES_ACTIVE_DATABASEW    L"ServicesActive"
 # define SERVICES_FAILED_DATABASEW    L"ServicesFailed"
 #else

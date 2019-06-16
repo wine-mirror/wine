@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include "d3drm_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
@@ -416,17 +413,13 @@ static HRESULT WINAPI d3drm1_CreateMaterial(IDirect3DRM *iface,
 static HRESULT WINAPI d3drm1_CreateDevice(IDirect3DRM *iface,
         DWORD width, DWORD height, IDirect3DRMDevice **device)
 {
-    struct d3drm_device *object;
-    HRESULT hr;
+    TRACE("iface %p, width %u, height %u, device %p.\n", iface, width, height, device);
 
-    FIXME("iface %p, width %u, height %u, device %p partial stub!\n", iface, width, height, device);
+    if (!device)
+        return D3DRMERR_BADVALUE;
+    *device = NULL;
 
-    if (FAILED(hr = d3drm_device_create(&object, iface)))
-        return hr;
-
-    *device = &object->IDirect3DRMDevice_iface;
-
-    return D3DRM_OK;
+    return D3DRMERR_BADDEVICE;
 }
 
 static HRESULT WINAPI d3drm1_CreateDeviceFromSurface(IDirect3DRM *iface, GUID *guid,
@@ -972,18 +965,13 @@ static HRESULT WINAPI d3drm2_CreateMaterial(IDirect3DRM2 *iface,
 static HRESULT WINAPI d3drm2_CreateDevice(IDirect3DRM2 *iface,
         DWORD width, DWORD height, IDirect3DRMDevice2 **device)
 {
-    struct d3drm *d3drm = impl_from_IDirect3DRM2(iface);
-    struct d3drm_device *object;
-    HRESULT hr;
+    TRACE("iface %p, width %u, height %u, device %p.\n", iface, width, height, device);
 
-    FIXME("iface %p, width %u, height %u, device %p partial stub!\n", iface, width, height, device);
+    if (!device)
+        return D3DRMERR_BADVALUE;
+    *device = NULL;
 
-    if (FAILED(hr = d3drm_device_create(&object, &d3drm->IDirect3DRM_iface)))
-        return hr;
-
-    *device = &object->IDirect3DRMDevice2_iface;
-
-    return D3DRM_OK;
+    return D3DRMERR_BADDEVICE;
 }
 
 static HRESULT WINAPI d3drm2_CreateDeviceFromSurface(IDirect3DRM2 *iface, GUID *guid,
@@ -1611,18 +1599,13 @@ static HRESULT WINAPI d3drm3_CreateMaterial(IDirect3DRM3 *iface,
 static HRESULT WINAPI d3drm3_CreateDevice(IDirect3DRM3 *iface,
         DWORD width, DWORD height, IDirect3DRMDevice3 **device)
 {
-    struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
-    struct d3drm_device *object;
-    HRESULT hr;
+    TRACE("iface %p, width %u, height %u, device %p.\n", iface, width, height, device);
 
-    FIXME("iface %p, width %u, height %u, device %p partial stub!\n", iface, width, height, device);
+    if (!device)
+        return D3DRMERR_BADVALUE;
+    *device = NULL;
 
-    if (FAILED(hr = d3drm_device_create(&object, &d3drm->IDirect3DRM_iface)))
-        return hr;
-
-    *device = &object->IDirect3DRMDevice3_iface;
-
-    return D3DRM_OK;
+    return D3DRMERR_BADDEVICE;
 }
 
 static HRESULT WINAPI d3drm3_CreateDeviceFromSurface(IDirect3DRM3 *iface, GUID *guid,

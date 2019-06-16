@@ -57,6 +57,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "devguid.h"
 #include "dinput.h"
 
 #include "dinput_private.h"
@@ -100,7 +101,7 @@ struct JoyDev {
 	GUID guid;
 	GUID guid_product;
 
-        BOOL has_ff;
+        BOOL has_ff, is_joystick;
         int num_effects;
 
 	/* data returned by EVIOCGBIT for caps, EV_ABS, EV_KEY, and EV_FF */
@@ -211,10 +212,7 @@ static void find_joydevs(void)
         }
 
         if (fd == -1)
-        {
-            WARN("Failed to open \"%s\": %d %s\n", buf, errno, strerror(errno));
             continue;
-        }
 
         if (ioctl(fd, EVIOCGBIT(0, sizeof(joydev.evbits)), joydev.evbits) == -1)
         {
@@ -237,14 +235,40 @@ static void find_joydevs(void)
 
         /* A true joystick has at least axis X and Y, and at least 1
          * button. copied from linux/drivers/input/joydev.c */
-        if (!test_bit(joydev.absbits, ABS_X) || !test_bit(joydev.absbits, ABS_Y) ||
+        if (((!test_bit(joydev.absbits, ABS_X) || !test_bit(joydev.absbits, ABS_Y)) &&
+             !test_bit(joydev.absbits, ABS_WHEEL) &&
+             !test_bit(joydev.absbits, ABS_GAS) &&
+             !test_bit(joydev.absbits, ABS_BRAKE)) ||
             !(test_bit(joydev.keybits, BTN_TRIGGER) ||
               test_bit(joydev.keybits, BTN_A) ||
-              test_bit(joydev.keybits, BTN_1)))
+              test_bit(joydev.keybits, BTN_1) ||
+              test_bit(joydev.keybits, BTN_BASE) ||
+              test_bit(joydev.keybits, BTN_GEAR_UP) ||
+              test_bit(joydev.keybits, BTN_GEAR_DOWN)))
         {
             close(fd);
             continue;
         }
+
+        /* in lieu of properly reporting HID usage, detect presence of
+         * "joystick buttons" and report those devices as joysticks instead of
+         * gamepads */
+        joydev.is_joystick =
+            test_bit(joydev.keybits, BTN_TRIGGER) ||
+            test_bit(joydev.keybits, BTN_THUMB) ||
+            test_bit(joydev.keybits, BTN_THUMB2) ||
+            test_bit(joydev.keybits, BTN_TOP) ||
+            test_bit(joydev.keybits, BTN_TOP2) ||
+            test_bit(joydev.keybits, BTN_PINKIE) ||
+            test_bit(joydev.keybits, BTN_BASE) ||
+            test_bit(joydev.keybits, BTN_BASE2) ||
+            test_bit(joydev.keybits, BTN_BASE3) ||
+            test_bit(joydev.keybits, BTN_BASE4) ||
+            test_bit(joydev.keybits, BTN_BASE5) ||
+            test_bit(joydev.keybits, BTN_BASE6) ||
+            test_bit(joydev.keybits, BTN_GEAR_UP) ||
+            test_bit(joydev.keybits, BTN_GEAR_DOWN) ||
+            test_bit(joydev.keybits, BTN_DEAD);
 
         if (!(joydev.device = HeapAlloc(GetProcessHeap(), 0, strlen(buf) + 1)))
         {
@@ -353,11 +377,7 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     lpddi->guidInstance = joydevs[id].guid;
     lpddi->guidProduct  = joydevs[id].guid_product;
     lpddi->guidFFDriver = GUID_NULL;
-
-    if (version >= 0x0800)
-        lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
-    else
-        lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+    lpddi->dwDevType = get_device_type(version, joydevs[id].is_joystick);
 
     /* Assume the joystick as HID if it is attached to USB bus and has a valid VID/PID */
     if (joydevs[id].bus_type == BUS_USB &&
@@ -365,7 +385,7 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     {
         lpddi->dwDevType |= DIDEVTYPE_HID;
         lpddi->wUsagePage = 0x01; /* Desktop */
-        if (lpddi->dwDevType == DI8DEVTYPE_JOYSTICK || lpddi->dwDevType == DIDEVTYPE_JOYSTICK)
+        if (joydevs[id].is_joystick)
             lpddi->wUsage = 0x04; /* Joystick */
         else
             lpddi->wUsage = 0x05; /* Game Pad */
@@ -407,7 +427,7 @@ static HRESULT joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
   }
 
   if (!((dwDevType == 0) ||
-        ((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
+        ((dwDevType == DIDEVTYPE_JOYSTICK) && (version >= 0x0300 && version < 0x0800)) ||
         (((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))))
     return S_FALSE;
 
@@ -432,7 +452,7 @@ static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
   }
 
   if (!((dwDevType == 0) ||
-        ((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
+        ((dwDevType == DIDEVTYPE_JOYSTICK) && (version >= 0x0300 && version < 0x0800)) ||
         (((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))))
     return S_FALSE;
 
@@ -483,14 +503,18 @@ static JoystickImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput, unsig
     /* Count number of available axes - supported Axis & POVs */
     for (i = 0; i < ABS_MAX; i++)
     {
-        if (i < WINE_JOYSTICK_MAX_AXES &&
+        if (idx < WINE_JOYSTICK_MAX_AXES &&
+            i < ABS_HAT0X &&
             test_bit(newDevice->joydev->absbits, i))
         {
             newDevice->generic.device_axis_count++;
             newDevice->dev_axes_to_di[i] = idx;
             newDevice->generic.props[idx].lDevMin = newDevice->joydev->axes[i].minimum;
             newDevice->generic.props[idx].lDevMax = newDevice->joydev->axes[i].maximum;
-            default_axis_map[idx] = i;
+            if (i >= 8 && i <= 10) /* If it's a wheel axis... */
+                default_axis_map[idx] = i - 8; /* ... remap to X/Y/Z */
+            else
+                default_axis_map[idx] = i;
             idx++;
         }
         else
@@ -923,11 +947,6 @@ static HRESULT WINAPI JoystickWImpl_SetProperty(LPDIRECTINPUTDEVICE8W iface, REF
 
   if (IS_DIPROP(rguid)) {
     switch (LOWORD(rguid)) {
-    case (DWORD_PTR)DIPROP_CALIBRATIONMODE: {
-      LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
-      FIXME("DIPROP_CALIBRATIONMODE(%d)\n", pd->dwData);
-      break;
-    }
     case (DWORD_PTR)DIPROP_AUTOCENTER: {
       LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
 
@@ -973,7 +992,7 @@ static HRESULT WINAPI JoystickWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
 {
     JoystickImpl *This = impl_from_IDirectInputDevice8W(iface);
 
-    TRACE("(this=%p,%s,%p)\n", iface, debugstr_guid(rguid), pdiph);
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
 
     if (!IS_DIPROP(rguid)) return DI_OK;
@@ -1013,6 +1032,29 @@ static HRESULT WINAPI JoystickWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
 
         pd->dwData = get_joystick_index(&This->generic.base.guid);
         TRACE("DIPROP_JOYSTICKID(%d)\n", pd->dwData);
+        break;
+    }
+
+    case (DWORD_PTR) DIPROP_GUIDANDPATH:
+    {
+        static const WCHAR formatW[] = {'\\','\\','?','\\','h','i','d','#','v','i','d','_','%','0','4','x','&',
+                                        'p','i','d','_','%','0','4','x','&','%','s','_','%','h','u',0};
+        static const WCHAR miW[] = {'m','i',0};
+        static const WCHAR igW[] = {'i','g',0};
+
+        BOOL is_gamepad;
+        LPDIPROPGUIDANDPATH pd = (LPDIPROPGUIDANDPATH)pdiph;
+        WORD vid = This->joydev->vendor_id;
+        WORD pid = This->joydev->product_id;
+
+        if (!pid || !vid)
+            return DIERR_UNSUPPORTED;
+
+        is_gamepad = is_xinput_device(&This->generic.devcaps, vid, pid);
+        pd->guidClass = GUID_DEVCLASS_HIDCLASS;
+        sprintfW(pd->wszPath, formatW, vid, pid, is_gamepad ? igW : miW, get_joystick_index(&This->generic.base.guid));
+
+        TRACE("DIPROP_GUIDANDPATH(%s, %s): returning fake path\n", debugstr_guid(&pd->guidClass), debugstr_w(pd->wszPath));
         break;
     }
 

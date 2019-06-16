@@ -851,12 +851,9 @@ BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
     if (source && !(sourceW = strdupAtoW( source ))) goto done;
     if (location && !(locationW = strdupAtoW( location ))) goto done;
 
-    if (!(ret = SetupCopyOEMInfW( sourceW, locationW, media_type, style, destW,
-                                  buffer_size, &size, NULL )))
-    {
-        if (required_size) *required_size = size;
-        goto done;
-    }
+    ret = SetupCopyOEMInfW( sourceW, locationW, media_type, style, destW, buffer_size, &size, NULL );
+
+    if (required_size) *required_size = size;
 
     if (dest)
     {
@@ -866,10 +863,7 @@ BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
             if (component) *component = strrchr( dest, '\\' ) + 1;
         }
         else
-        {
             SetLastError( ERROR_INSUFFICIENT_BUFFER );
-            goto done;
-        }
     }
 
 done:
@@ -903,23 +897,80 @@ static int compare_files( HANDLE file1, HANDLE file2 )
     return 0;
 }
 
+static BOOL find_existing_inf(const WCHAR *source, WCHAR *target)
+{
+    static const WCHAR infW[] = {'\\','i','n','f','\\',0};
+    static const WCHAR wildcardW[] = {'*',0};
+
+    LARGE_INTEGER source_file_size, dest_file_size;
+    HANDLE source_file, dest_file;
+    WIN32_FIND_DATAW find_data;
+    HANDLE find_handle;
+
+    source_file = CreateFileW( source, FILE_READ_DATA | FILE_READ_ATTRIBUTES,
+                               FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                               NULL, OPEN_EXISTING, 0, NULL );
+    if (source_file == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    if (!GetFileSizeEx( source_file, &source_file_size ))
+    {
+        CloseHandle( source_file );
+        return FALSE;
+    }
+
+    GetWindowsDirectoryW( target, MAX_PATH );
+    strcatW( target, infW );
+    strcatW( target, wildcardW );
+    if ((find_handle = FindFirstFileW( target, &find_data )) != INVALID_HANDLE_VALUE)
+    {
+        do {
+            GetWindowsDirectoryW( target, MAX_PATH );
+            strcatW( target, infW );
+            strcatW( target, find_data.cFileName );
+            dest_file = CreateFileW( target, FILE_READ_DATA | FILE_READ_ATTRIBUTES,
+                                     FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                     NULL, OPEN_EXISTING, 0, NULL );
+            if (dest_file == INVALID_HANDLE_VALUE)
+                continue;
+
+            if (GetFileSizeEx( dest_file, &dest_file_size )
+                    && dest_file_size.QuadPart == source_file_size.QuadPart
+                    && !compare_files( source_file, dest_file ))
+            {
+                CloseHandle( dest_file );
+                CloseHandle( source_file );
+                FindClose( find_handle );
+                return TRUE;
+            }
+            CloseHandle( dest_file );
+        } while (FindNextFileW( find_handle, &find_data ));
+
+        FindClose( find_handle );
+    }
+
+    CloseHandle( source_file );
+    return FALSE;
+}
+
 /***********************************************************************
  *      SetupCopyOEMInfW  (SETUPAPI.@)
  */
 BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
                               DWORD media_type, DWORD style, PWSTR dest,
-                              DWORD buffer_size, PDWORD required_size, PWSTR *component )
+                              DWORD buffer_size, DWORD *required_size, WCHAR **filepart )
 {
     BOOL ret = FALSE;
     WCHAR target[MAX_PATH], catalog_file[MAX_PATH], *p;
     static const WCHAR inf[] = { '\\','i','n','f','\\',0 };
     static const WCHAR wszVersion[] = { 'V','e','r','s','i','o','n',0 };
     static const WCHAR wszCatalogFile[] = { 'C','a','t','a','l','o','g','F','i','l','e',0 };
+    unsigned int i;
     DWORD size;
     HINF hinf;
 
     TRACE("%s, %s, %d, %d, %p, %d, %p, %p\n", debugstr_w(source), debugstr_w(location),
-          media_type, style, dest, buffer_size, required_size, component);
+          media_type, style, dest, buffer_size, required_size, filepart);
 
     if (!source)
     {
@@ -934,65 +985,35 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
         return FALSE;
     }
 
-    if (!GetWindowsDirectoryW( target, ARRAY_SIZE( target ))) return FALSE;
-
-    strcatW( target, inf );
-    if ((p = strrchrW( source, '\\' )))
-        strcatW( target, p + 1 );
-
-    /* does the file exist already? */
-    if ((GetFileAttributesW( target ) != INVALID_FILE_ATTRIBUTES) &&
-        !(style & SP_COPY_NOOVERWRITE))
+    if (find_existing_inf( source, target ))
     {
-        static const WCHAR oem[] = { 'o','e','m',0 };
-        unsigned int i;
-        LARGE_INTEGER source_file_size;
-        HANDLE source_file;
-
-        source_file = CreateFileW( source, FILE_READ_DATA | FILE_READ_ATTRIBUTES,
-                                   FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                                   NULL, OPEN_EXISTING, 0, NULL );
-        if (source_file == INVALID_HANDLE_VALUE)
-            return FALSE;
-
-        if (!GetFileSizeEx( source_file, &source_file_size ))
+        TRACE("Found existing INF %s.\n", debugstr_w(target));
+        if (style & SP_COPY_NOOVERWRITE)
         {
-            CloseHandle( source_file );
-            return FALSE;
+            SetLastError( ERROR_FILE_EXISTS );
+            ret = FALSE;
         }
+        else
+            ret = TRUE;
+        goto done;
+    }
 
-        p = strrchrW( target, '\\' ) + 1;
-        memcpy( p, oem, sizeof(oem) );
-        p += ARRAY_SIZE( oem ) - 1;
-
-        /* generate OEMnnn.inf ending */
+    GetWindowsDirectoryW( target, ARRAY_SIZE(target) );
+    strcatW( target, inf );
+    strcatW( target, strrchrW( source, '\\' ) + 1 );
+    if (GetFileAttributesW( target ) != INVALID_FILE_ATTRIBUTES)
+    {
         for (i = 0; i < OEM_INDEX_LIMIT; i++)
         {
-            static const WCHAR format[] = { '%','u','.','i','n','f',0 };
-            HANDLE dest_file;
-            LARGE_INTEGER dest_file_size;
+            static const WCHAR formatW[] = {'o','e','m','%','u','.','i','n','f',0};
 
-            wsprintfW( p, format, i );
-            dest_file = CreateFileW( target, FILE_READ_DATA | FILE_READ_ATTRIBUTES,
-                                     FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                                     NULL, OPEN_EXISTING, 0, NULL );
-            /* if we found a file name that doesn't exist then we're done */
-            if (dest_file == INVALID_HANDLE_VALUE)
+            GetWindowsDirectoryW( target, ARRAY_SIZE(target) );
+            strcatW( target, inf );
+            sprintfW( target + strlenW(target), formatW, i );
+
+            if (GetFileAttributesW( target ) == INVALID_FILE_ATTRIBUTES)
                 break;
-            /* now check if the same inf file has already been copied to the inf
-             * directory. if so, use that file and don't create a new one */
-            if (!GetFileSizeEx( dest_file, &dest_file_size ) ||
-                (dest_file_size.QuadPart != source_file_size.QuadPart) ||
-                compare_files( source_file, dest_file ))
-            {
-                CloseHandle( dest_file );
-                continue;
-            }
-            CloseHandle( dest_file );
-            break;
         }
-
-        CloseHandle( source_file );
         if (i == OEM_INDEX_LIMIT)
         {
             SetLastError( ERROR_FILENAME_EXCED_RANGE );
@@ -1040,9 +1061,10 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
     else
         SetupCloseInfFile( hinf );
 
-    if (!(ret = CopyFileW( source, target, (style & SP_COPY_NOOVERWRITE) != 0 )))
+    if (!(ret = CopyFileW( source, target, TRUE )))
         return ret;
 
+done:
     if (style & SP_COPY_DELETESOURCE)
         DeleteFileW( source );
 
@@ -1060,7 +1082,7 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
         }
     }
 
-    if (component) *component = p + 1;
+    if (filepart) *filepart = strrchrW( target, '\\' ) + 1;
     if (required_size) *required_size = size;
     if (ret) SetLastError(ERROR_SUCCESS);
 

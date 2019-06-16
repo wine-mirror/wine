@@ -20,7 +20,6 @@
 
 #include "jscript.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
@@ -94,7 +93,7 @@ static const builtin_prop_t *find_builtin_prop(jsdisp_t *This, const WCHAR *name
     while(min <= max) {
         i = (min+max)/2;
 
-        r = strcmpW(name, This->builtin_info->props[i].name);
+        r = wcscmp(name, This->builtin_info->props[i].name);
         if(!r) {
             /* Skip prop if it's available only in higher compatibility mode. */
             unsigned version = (This->builtin_info->props[i].flags & PROPF_VERSION_MASK)
@@ -122,7 +121,7 @@ static inline unsigned string_hash(const WCHAR *name)
 {
     unsigned h = 0;
     for(; *name; name++)
-        h = (h>>(sizeof(unsigned)*8-4)) ^ (h<<4) ^ tolowerW(*name);
+        h = (h>>(sizeof(unsigned)*8-4)) ^ (h<<4) ^ towlower(*name);
     return h;
 }
 
@@ -204,7 +203,7 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
     bucket = get_props_idx(This, hash);
     pos = This->props[bucket].bucket_head;
     while(pos != 0) {
-        if(!strcmpW(name, This->props[pos].name)) {
+        if(!wcscmp(name, This->props[pos].name)) {
             if(prev != 0) {
                 This->props[prev].bucket_next = This->props[pos].bucket_next;
                 This->props[pos].bucket_next = This->props[bucket].bucket_head;
@@ -240,7 +239,7 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
         const WCHAR *ptr;
         unsigned idx = 0;
 
-        for(ptr = name; isdigitW(*ptr) && idx < 0x10000; ptr++)
+        for(ptr = name; iswdigit(*ptr) && idx < 0x10000; ptr++)
             idx = idx*10 + (*ptr-'0');
         if(!*ptr && idx < This->builtin_info->idx_length(This)) {
             prop = alloc_prop(This, name, PROP_IDX, This->builtin_info->idx_put ? PROPF_WRITABLE : 0);
@@ -1373,7 +1372,7 @@ HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, jsval_t val)
 
     static const WCHAR formatW[] = {'%','d',0};
 
-    sprintfW(buf, formatW, idx);
+    swprintf(buf, ARRAY_SIZE(buf), formatW, idx);
     return jsdisp_propput_name(obj, buf, val);
 }
 
@@ -1451,7 +1450,7 @@ HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, jsval_t *r)
 
     static const WCHAR formatW[] = {'%','d',0};
 
-    sprintfW(name, formatW, idx);
+    swprintf(name, ARRAY_SIZE(name), formatW, idx);
 
     hres = find_prop_name_prot(obj, string_hash(name), name, &prop);
     if(FAILED(hres))
@@ -1520,7 +1519,7 @@ HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
     BOOL b;
     HRESULT hres;
 
-    sprintfW(buf, formatW, idx);
+    swprintf(buf, ARRAY_SIZE(buf), formatW, idx);
 
     hres = find_prop_name(obj, string_hash(buf), buf, &prop);
     if(FAILED(hres) || !prop)

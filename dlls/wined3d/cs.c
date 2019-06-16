@@ -526,9 +526,8 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
 
     swapchain = op->swapchain;
     wined3d_swapchain_set_window(swapchain, op->dst_window_override);
-    wined3d_swapchain_set_swap_interval(swapchain, op->swap_interval);
 
-    swapchain->swapchain_ops->swapchain_present(swapchain, &op->src_rect, &op->dst_rect, op->flags);
+    swapchain->swapchain_ops->swapchain_present(swapchain, &op->src_rect, &op->dst_rect, op->swap_interval, op->flags);
 
     wined3d_resource_release(&swapchain->front_buffer->resource);
     for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
@@ -842,7 +841,6 @@ void wined3d_cs_emit_dispatch_indirect(struct wined3d_cs *cs,
 static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_d3d_info *d3d_info = &cs->device->adapter->d3d_info;
-    const struct wined3d_gl_info *gl_info = &cs->device->adapter->gl_info;
     const struct wined3d_shader *geometry_shader;
     struct wined3d_device *device = cs->device;
     int base_vertex_idx, load_base_vertex_idx;
@@ -855,14 +853,14 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
     {
         const struct wined3d_direct_draw_parameters *direct = &op->parameters.u.direct;
 
-        if (op->parameters.indexed && gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
+        if (op->parameters.indexed && d3d_info->draw_base_vertex_offset)
             base_vertex_idx = direct->base_vertex_idx;
         else if (!op->parameters.indexed)
             base_vertex_idx = direct->start_idx;
     }
 
     /* ARB_draw_indirect always supports a base vertex offset. */
-    if (!op->parameters.indirect && !gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
+    if (!op->parameters.indirect && !d3d_info->draw_base_vertex_offset)
         load_base_vertex_idx = op->parameters.u.direct.base_vertex_idx;
     else
         load_base_vertex_idx = 0;
@@ -1010,12 +1008,12 @@ void wined3d_cs_emit_draw_indirect(struct wined3d_cs *cs, GLenum primitive_type,
 
 static void wined3d_cs_exec_flush(struct wined3d_cs *cs, const void *data)
 {
-    struct wined3d_context *context;
+    struct wined3d_context_gl *context_gl;
 
-    context = context_acquire(cs->device, NULL, 0);
-    if (context->valid)
-        context->gl_info->gl_ops.gl.p_glFlush();
-    context_release(context);
+    context_gl = wined3d_context_gl(context_acquire(cs->device, NULL, 0));
+    if (context_gl->valid)
+        context_gl->c.gl_info->gl_ops.gl.p_glFlush();
+    context_release(&context_gl->c);
 }
 
 void wined3d_cs_emit_flush(struct wined3d_cs *cs)
@@ -1350,7 +1348,6 @@ void wined3d_cs_emit_set_constant_buffer(struct wined3d_cs *cs, enum wined3d_sha
 
 static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
 {
-    const struct wined3d_gl_info *gl_info = &cs->device->adapter->gl_info;
     const struct wined3d_d3d_info *d3d_info = &cs->device->adapter->d3d_info;
     const struct wined3d_cs_set_texture *op = data;
     struct wined3d_texture *prev;
@@ -1371,7 +1368,7 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
 
         if (!prev || wined3d_texture_gl(op->texture)->target != wined3d_texture_gl(prev)->target
                 || (!is_same_fixup(new_format->color_fixup, old_format->color_fixup)
-                && !(can_use_texture_swizzle(gl_info, new_format) && can_use_texture_swizzle(gl_info, old_format)))
+                && !(can_use_texture_swizzle(d3d_info, new_format) && can_use_texture_swizzle(d3d_info, old_format)))
                 || (new_fmt_flags & WINED3DFMT_FLAG_SHADOW) != (old_fmt_flags & WINED3DFMT_FLAG_SHADOW))
             device_invalidate_state(cs->device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
 
@@ -2231,7 +2228,8 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
                 && update_h == wined3d_texture_get_level_height(dst_texture, level)
                 && update_d == wined3d_texture_get_level_depth(dst_texture, level))
         {
-            wined3d_texture_prepare_texture(dst_texture, context, FALSE);
+            wined3d_texture_prepare_location(dst_texture, op->dst_sub_resource_idx,
+                    context, WINED3D_LOCATION_TEXTURE_RGB);
         }
         else if (!wined3d_texture_load_location(dst_texture, op->dst_sub_resource_idx,
                 context, WINED3D_LOCATION_TEXTURE_RGB))
@@ -2245,10 +2243,10 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
         wined3d_texture_get_pitch(src_texture, op->src_sub_resource_idx % src_texture->level_count,
                 &row_pitch, &slice_pitch);
 
-        wined3d_texture_gl_bind_and_dirtify(wined3d_texture_gl(dst_texture), context, FALSE);
-        wined3d_texture_upload_data(dst_texture, op->dst_sub_resource_idx, context,
-                dst_texture->resource.format, &op->src_box, wined3d_const_bo_address(&addr),
-                row_pitch, slice_pitch, op->dst_box.left, op->dst_box.top, op->dst_box.front, FALSE);
+        dst_texture->texture_ops->texture_upload_data(context, wined3d_const_bo_address(&addr),
+                dst_texture->resource.format, &op->src_box, row_pitch, slice_pitch, dst_texture,
+                op->dst_sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB,
+                op->dst_box.left, op->dst_box.top, op->dst_box.front);
         wined3d_texture_validate_location(dst_texture, op->dst_sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
         wined3d_texture_invalidate_location(dst_texture, op->dst_sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
 
@@ -2340,14 +2338,14 @@ static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const voi
     /* Only load the sub-resource for partial updates. */
     if (!box->left && !box->top && !box->front
             && box->right == width && box->bottom == height && box->back == depth)
-        wined3d_texture_prepare_texture(texture, context, FALSE);
+        wined3d_texture_prepare_location(texture, op->sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
     else
         wined3d_texture_load_location(texture, op->sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
-    wined3d_texture_gl_bind_and_dirtify(wined3d_texture_gl(texture), context, FALSE);
 
     wined3d_box_set(&src_box, 0, 0, box->right - box->left, box->bottom - box->top, 0, box->back - box->front);
-    wined3d_texture_upload_data(texture, op->sub_resource_idx, context, texture->resource.format, &src_box,
-            &addr, op->data.row_pitch, op->data.slice_pitch, box->left, box->top, box->front, FALSE);
+    texture->texture_ops->texture_upload_data(context, &addr, texture->resource.format, &src_box,
+            op->data.row_pitch, op->data.slice_pitch, texture, op->sub_resource_idx,
+            WINED3D_LOCATION_TEXTURE_RGB, box->left, box->top, box->front);
 
     wined3d_texture_validate_location(texture, op->sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
     wined3d_texture_invalidate_location(texture, op->sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);

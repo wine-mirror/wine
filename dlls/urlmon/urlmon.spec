@@ -53,6 +53,7 @@
 @ stdcall GetClassFileOrMime(ptr wstr ptr long wstr long ptr)
 @ stub GetClassURL
 @ stub GetComponentIDFromCLSSPEC
+@ stdcall GetIUriPriv(ptr ptr)
 @ stub GetMarkOfTheWeb
 @ stdcall GetSoftwareUpdateInfo(wstr ptr)
 @ stub HlinkGoBack
@@ -77,6 +78,7 @@
 @ stdcall RevokeBindStatusCallback(ptr ptr)
 @ stdcall RevokeFormatEnumerator(ptr ptr)
 @ stub SetSoftwareUpdateAdvertisementState
+@ stdcall ShouldShowIntranetWarningSecband(long)
 @ stub URLDownloadA
 @ stdcall URLDownloadToCacheFileA(ptr str str long long ptr)
 @ stdcall URLDownloadToCacheFileW(ptr wstr wstr long long ptr)
@@ -109,4 +111,5 @@
 423 stdcall @(long long long long) LogSqmUXCommandOffsetInternal
 444 stdcall @(long long long) MapUriToBrowserEmulationState
 445 stdcall @(long long) MapBrowserEmulationModeToUserAgent
+446 stdcall @(long) CoInternetGetBrowserProfile
 455 stdcall @() FlushUrlmonZonesCache

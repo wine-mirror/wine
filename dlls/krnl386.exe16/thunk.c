@@ -431,8 +431,6 @@ void WINAPI __regs_QT_Thunk( CONTEXT *context )
 
     context16 = *context;
 
-    context16.SegFs = wine_get_fs();
-    context16.SegGs = wine_get_gs();
     context16.SegCs = HIWORD(context->Edx);
     context16.Eip   = LOWORD(context->Edx);
     /* point EBP to the STACK16FRAME on the stack
@@ -561,8 +559,6 @@ void WINAPI __regs_FT_Thunk( CONTEXT *context )
 
     context16 = *context;
 
-    context16.SegFs = wine_get_fs();
-    context16.SegGs = wine_get_gs();
     context16.SegCs = HIWORD(callTarget);
     context16.Eip   = LOWORD(callTarget);
     context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
@@ -720,8 +716,6 @@ void WINAPI __regs_Common32ThkLS( CONTEXT *context )
 
     context16 = *context;
 
-    context16.SegFs = wine_get_fs();
-    context16.SegGs = wine_get_gs();
     context16.Edi   = LOWORD(context->Ecx);
     context16.SegCs = HIWORD(context->Eax);
     context16.Eip   = LOWORD(context->Eax);
@@ -779,8 +773,6 @@ void WINAPI __regs_OT_32ThkLSF( CONTEXT *context )
 
     context16 = *context;
 
-    context16.SegFs = wine_get_fs();
-    context16.SegGs = wine_get_gs();
     context16.SegCs = HIWORD(context->Edx);
     context16.Eip   = LOWORD(context->Edx);
     context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
@@ -1011,13 +1003,9 @@ DWORD WINAPIV SSCall(
     DWORD i,ret;
     DWORD *args = ((DWORD *)&fun) + 1;
 
-    if(TRACE_ON(thunk))
-    {
-      DPRINTF("(%d,0x%08x,%p,[",nr,flags,fun);
-      for (i=0;i<nr/4;i++)
-          DPRINTF("0x%08x,",args[i]);
-      DPRINTF("])\n");
-    }
+    TRACE("(%d,0x%08x,%p,[",nr,flags,fun);
+    for (i = 0; i < nr/4; i++) TRACE("0x%08x,",args[i]);
+    TRACE("])\n");
     ret = call_entry_point( fun, nr / sizeof(DWORD), args );
     TRACE(" returning %d ...\n",ret);
     return ret;
@@ -2130,7 +2118,7 @@ __ASM_STDCALL_FUNC( CommonUnimpStub, 0,
                     __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                     "pushl %eax\n\t"
                     __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                    "call " __ASM_NAME("__regs_CommonUnimpStub") __ASM_STDCALL(8) "\n\t"
+                    "call " __ASM_STDCALL("__regs_CommonUnimpStub",8) "\n\t"
                     __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                     "popl %ecx\n\t"
                     __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
@@ -2525,10 +2513,10 @@ DWORD WINAPIV WOW16Call(WORD x, WORD y, WORD z, VA_LIST16 args)
 
         for (i=0;i<x/2;i++) {
                 WORD    a = VA_ARG16(args,WORD);
-                DPRINTF("%04x ",a);
+                FIXME("%04x ",a);
         }
         calladdr = VA_ARG16(args,DWORD);
         stack16_pop( 3*sizeof(WORD) + x + sizeof(DWORD) );
-        DPRINTF(") calling address was 0x%08x\n",calladdr);
+        FIXME(") calling address was 0x%08x\n",calladdr);
         return 0;
 }

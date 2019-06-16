@@ -21,7 +21,7 @@
 #ifndef __WMC_LANG_H
 #define __WMC_LANG_H
 
-#include "wine/unicode.h"
+#include "winnls.h"
 
 typedef struct language {
 	unsigned	id;
@@ -34,6 +34,8 @@ typedef struct language {
 void show_languages(void);
 const language_t *find_language(unsigned id);
 void show_codepages(void);
-const union cptable *find_codepage(int id);
+int is_valid_codepage(int id);
+int wmc_mbstowcs( int codepage, int flags, const char *src, int srclen, WCHAR *dst, int dstlen );
+int wmc_wcstombs( int codepage, int flags, const WCHAR *src, int srclen, char *dst, int dstlen );
 
 #endif

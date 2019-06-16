@@ -124,8 +124,8 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
             button_count = max(button_count, button_caps[i].NotRange.Usage);
     }
     HeapFree(GetProcessHeap(), 0, button_caps);
-    if (button_count < 14)
-        WARN("Too few buttons, Continue\n");
+    if (button_count < 11)
+        WARN("Too few buttons, continuing anyway\n");
     xinput_caps->Gamepad.wButtons = 0xffff;
 
     value_caps_count = caps->NumberInputValueCaps;
@@ -335,8 +335,8 @@ void HID_update_state(xinput_controller* device)
     CHAR *report = private->reports[(private->current_report)%2];
     CHAR *target_report = private->reports[(private->current_report+1)%2];
 
-    USAGE buttons[15];
-    ULONG button_length;
+    USAGE buttons[11];
+    ULONG button_length, hat_value;
     LONG value;
 
     if (!private->enabled)
@@ -361,7 +361,7 @@ void HID_update_state(xinput_controller* device)
     private->current_report = (private->current_report+1)%2;
 
     device->state.dwPacketNumber++;
-    button_length = 15;
+    button_length = ARRAY_SIZE(buttons);
     HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, buttons, &button_length, private->ppd, target_report, private->report_length);
 
     device->state.Gamepad.wButtons = 0;
@@ -375,36 +375,73 @@ void HID_update_state(xinput_controller* device)
             case 4: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_Y; break;
             case 5: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_SHOULDER; break;
             case 6: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_SHOULDER; break;
-            case 7: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_THUMB; break;
-            case 8: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_THUMB; break;
-
-            case 9: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_START; break;
-            case 10: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_BACK; break;
+            case 7: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_BACK; break;
+            case 8: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_START; break;
+            case 9: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_THUMB; break;
+            case 10: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_THUMB; break;
             case 11: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_GUIDE; break;
-            case 12: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP; break;
-            case 13: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN; break;
-            case 14: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT; break;
-            case 15: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT; break;
         }
     }
 
-    HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.sThumbLX = scale_short(value, &private->lx);
+    if(HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, &hat_value,
+                              private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+    {
+        switch(hat_value){
+            /* 8 1 2
+             * 7 0 3
+             * 6 5 4 */
+            case 0:
+                break;
+            case 1:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP;
+                break;
+            case 2:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT;
+                break;
+            case 3:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT;
+                break;
+            case 4:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN;
+                break;
+            case 5:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN;
+                break;
+            case 6:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT;
+                break;
+            case 7:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT;
+                break;
+            case 8:
+                device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT | XINPUT_GAMEPAD_DPAD_UP;
+                break;
+        }
+    }
 
-    HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.sThumbLY = -scale_short(value, &private->ly) - 1;
+    if(HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value,
+                                    private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+        device->state.Gamepad.sThumbLX = scale_short(value, &private->lx);
 
-    HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.sThumbRX = scale_short(value, &private->rx);
+    if(HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value,
+                                    private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+        device->state.Gamepad.sThumbLY = -scale_short(value, &private->ly) - 1;
 
-    HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.sThumbRY = -scale_short(value, &private->ry) - 1;
+    if(HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value,
+                                    private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+        device->state.Gamepad.sThumbRX = scale_short(value, &private->rx);
 
-    HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.bRightTrigger = scale_byte(value, &private->rtrigger);
+    if(HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value,
+                                    private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+        device->state.Gamepad.sThumbRY = -scale_short(value, &private->ry) - 1;
 
-    HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, private->ppd, target_report, private->report_length);
-    device->state.Gamepad.bLeftTrigger = scale_byte(value, &private->ltrigger);
+    if(HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value,
+                                    private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+        device->state.Gamepad.bRightTrigger = scale_byte(value, &private->rtrigger);
+
+    if(HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value,
+                                    private->ppd, target_report, private->report_length) == HIDP_STATUS_SUCCESS)
+        device->state.Gamepad.bLeftTrigger = scale_byte(value, &private->ltrigger);
     LeaveCriticalSection(&private->crit);
 }
 
@@ -432,8 +469,8 @@ DWORD HID_set_state(xinput_controller* device, XINPUT_VIBRATION* state)
             report.report = 0;
             report.pad1[0] = 0x8;
             report.pad1[1] = 0x0;
-            report.left = (BYTE)(state->wLeftMotorSpeed / 255);
-            report.right = (BYTE)(state->wRightMotorSpeed / 255);
+            report.left = (BYTE)(state->wLeftMotorSpeed / 256);
+            report.right = (BYTE)(state->wRightMotorSpeed / 256);
             memset(&report.pad2, 0, sizeof(report.pad2));
 
             EnterCriticalSection(&private->crit);

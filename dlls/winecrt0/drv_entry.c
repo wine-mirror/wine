@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef _WIN32
+
 #include <stdarg.h>
 #include "windef.h"
 #include "winternl.h"
@@ -35,3 +37,5 @@ NTSTATUS DECLSPEC_HIDDEN WINAPI __wine_spec_drv_entry( struct _DRIVER_OBJECT *ob
     return DriverEntry( obj, path );
     /* there is no detach routine so we can't call destructors */
 }
+
+#endif  /* _WIN32 */

@@ -24,6 +24,8 @@
 #include "wine/winbase16.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "wine/asm.h"
+#include "wine/library.h"
 
 #include "pshpack1.h"
 
@@ -308,14 +310,14 @@ static inline DWORD stack32_pop( CONTEXT *context )
                         "leal -(0x2cc+4)(%esp),%esp\n\t"  /* sizeof(CONTEXT) + space for %eax */ \
                         "movl %eax,-4(%ebp)\n\t"                        \
                         "pushl %esp\n\t"             /* context */      \
-                        "call " __ASM_NAME("RtlCaptureContext") __ASM_STDCALL(4) "\n\t" \
+                        "call " __ASM_STDCALL("RtlCaptureContext",4) "\n\t" \
                         "movl -4(%ebp),%eax\n\t"                        \
                         "movl %eax,0xb0(%esp)\n\t"   /* context->Eax */ \
                         "pushl %esp\n\t"             /* context */      \
-                        "call " __ASM_NAME("__regs_") #name __ASM_STDCALL(4) "\n\t" \
+                        "call " __ASM_STDCALL("__regs_" #name,4) "\n\t" \
                         "pushl %esp\n\t"             /* context */      \
                         "pushl $-2\n\t"   /* GetCurrentThread() */      \
-                        "call " __ASM_NAME("NtSetContextThread") __ASM_STDCALL(8) "\n\t" \
+                        "call " __ASM_STDCALL("NtSetContextThread",8) "\n\t" \
                         "ret" ) /* fake ret to make copy protections happy */
 
 #endif  /* __WINE_KERNEL16_PRIVATE_H */

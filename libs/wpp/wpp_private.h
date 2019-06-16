@@ -20,10 +20,6 @@
 #ifndef __WINE_WPP_PRIVATE_H
 #define __WINE_WPP_PRIVATE_H
 
-#ifndef __WINE_CONFIG_H
-# error You must include config.h to use this header
-#endif
-
 #include <stdio.h>
 #include <string.h>
 
@@ -136,25 +132,6 @@ typedef struct
     int seen_junk;         /* Set when junk is seen */
 } include_state_t;
 
-
-/*
- * If the configure says we have long long then we can use it.  Presumably
- * if we have long long then we have strtoull and strtoll too.  If that is
- * not the case we will need to add to the configure tests.
- * If we do not have long long , then we revert to a simple 'long' for now.
- * This should prevent most unexpected things with other compilers than
- * gcc and egcs for now.
- * In the future it should be possible to use another way, like a
- * structure, so that we can emulate the MS compiler.
- */
-#ifdef HAVE_LONG_LONG
-typedef long long wrc_sll_t;
-typedef unsigned long long wrc_ull_t;
-#else
-typedef long wrc_sll_t;
-typedef unsigned long wrc_ull_t;
-#endif
-
 #define SIZE_CHAR	1
 #define SIZE_SHORT	2
 #define SIZE_INT	3
@@ -191,8 +168,8 @@ typedef struct cval {
 		unsigned int	ui;
 		long		sl;
 		unsigned long	ul;
-		wrc_sll_t	sll;
-		wrc_ull_t	ull;
+		__int64		sll;
+		unsigned __int64 ull;
 	} val;
 } cval_t;
 

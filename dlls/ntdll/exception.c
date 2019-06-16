@@ -333,7 +333,7 @@ LONG WINAPI call_unhandled_exception_filter( PEXCEPTION_POINTERS eptr )
  * ntdll-specific implementation to avoid depending on kernel functions.
  * Can be removed once ntdll.spec no longer contains stubs.
  */
-void __wine_spec_unimplemented_stub( const char *module, const char *function )
+void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *function )
 {
     EXCEPTION_RECORD record;
 
@@ -345,4 +345,48 @@ void __wine_spec_unimplemented_stub( const char *module, const char *function )
     record.ExceptionInformation[0] = (ULONG_PTR)module;
     record.ExceptionInformation[1] = (ULONG_PTR)function;
     for (;;) RtlRaiseException( &record );
+}
+
+
+/*************************************************************
+ *            IsBadStringPtrA
+ *
+ * IsBadStringPtrA replacement for ntdll, to catch exception in debug traces.
+ */
+BOOL WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
+{
+    if (!str) return TRUE;
+    __TRY
+    {
+        volatile const char *p = str;
+        while (p != str + max) if (!*p++) break;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return TRUE;
+    }
+    __ENDTRY
+    return FALSE;
+}
+
+
+/*************************************************************
+ *            IsBadStringPtrW
+ *
+ * IsBadStringPtrW replacement for ntdll, to catch exception in debug traces.
+ */
+BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
+{
+    if (!str) return TRUE;
+    __TRY
+    {
+        volatile const WCHAR *p = str;
+        while (p != str + max) if (!*p++) break;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return TRUE;
+    }
+    __ENDTRY
+    return FALSE;
 }

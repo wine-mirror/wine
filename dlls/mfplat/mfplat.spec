@@ -15,21 +15,21 @@
 @ stub GetAMSubtypeFromD3DFormat
 @ stub GetD3DFormatFromMFSubtype
 @ stub LFGetGlobalPool
-@ stub MFAddPeriodicCallback
+@ stdcall MFAddPeriodicCallback(ptr ptr ptr)
 @ stdcall MFAllocateWorkQueue(ptr)
 @ stdcall MFAllocateWorkQueueEx(long ptr)
 @ stub MFAppendCollection
 @ stub MFAverageTimePerFrameToFrameRate
-@ stub MFBeginCreateFile
+@ stdcall MFBeginCreateFile(long long long wstr ptr ptr ptr)
 @ stub MFBeginGetHostByName
 @ stub MFBeginRegisterWorkQueueWithMMCSS
 @ stub MFBeginUnregisterWorkQueueWithMMCSS
 @ stub MFBlockThread
 @ stub MFCalculateBitmapImageSize
-@ stub MFCalculateImageSize
-@ stub MFCancelCreateFile
+@ stdcall MFCalculateImageSize(ptr long long ptr)
+@ stdcall MFCancelCreateFile(ptr)
 @ stdcall MFCancelWorkItem(int64)
-@ stub MFCompareFullToPartialMediaType
+@ stdcall MFCompareFullToPartialMediaType(ptr ptr)
 @ stub MFCompareSockaddrAddresses
 @ stub MFConvertColorInfoFromDXVA
 @ stub MFConvertColorInfoToDXVA
@@ -37,7 +37,7 @@
 @ stub MFConvertToFP16Array
 @ stdcall MFCopyImage(ptr long ptr long long long)
 @ stub MFCreateAMMediaTypeFromMFMediaType
-@ stub MFCreateAlignedMemoryBuffer
+@ stdcall MFCreateAlignedMemoryBuffer(long long ptr)
 @ stdcall MFCreateAsyncResult(ptr ptr ptr ptr)
 @ stdcall MFCreateAttributes(ptr long)
 @ stub MFCreateAudioMediaType
@@ -47,6 +47,7 @@
 @ stub MFCreateLegacyMediaBufferOnMFMediaBuffer
 @ stdcall MFCreateMFByteStreamOnStream(ptr ptr)
 @ stdcall MFCreateMFByteStreamOnStreamEx(ptr ptr)
+@ stdcall MFCreateMFByteStreamWrapper(ptr ptr)
 @ stub MFCreateMFVideoFormatFromMFMediaType
 @ stub MFCreateMediaBufferWrapper
 @ stdcall MFCreateMediaEvent(long ptr long ptr ptr)
@@ -55,13 +56,13 @@
 @ stdcall MFCreateMemoryBuffer(long ptr)
 @ stub MFCreateMemoryStream
 @ stub MFCreatePathFromURL
-@ stub MFCreatePresentationDescriptor
+@ stdcall MFCreatePresentationDescriptor(long ptr ptr)
 @ stdcall MFCreateSample(ptr)
 @ stub MFCreateSocket
 @ stub MFCreateSocketListener
 @ stdcall MFCreateSourceResolver(ptr)
 @ stdcall MFCreateStreamDescriptor(long long ptr ptr)
-@ stub MFCreateSystemTimeSource
+@ stdcall MFCreateSystemTimeSource(ptr)
 @ stub MFCreateSystemUnderlyingClock
 @ stub MFCreateTempFile
 @ stub MFCreateTransformActivate
@@ -73,20 +74,20 @@
 @ stub MFCreateVideoMediaTypeFromSubtype
 @ stub MFCreateVideoMediaTypeFromVideoInfoHeader2
 @ stub MFCreateVideoMediaTypeFromVideoInfoHeader
-@ stub MFCreateWaveFormatExFromMFMediaType
+@ stdcall MFCreateWaveFormatExFromMFMediaType(ptr ptr ptr long)
 @ stub MFDeserializeAttributesFromStream
 @ stub MFDeserializeEvent
 @ stub MFDeserializeMediaTypeFromStream
 @ stub MFDeserializePresentationDescriptor
-@ stub MFEndCreateFile
+@ stdcall MFEndCreateFile(ptr ptr)
 @ stub MFEndGetHostByName
 @ stub MFEndRegisterWorkQueueWithMMCSS
 @ stub MFEndUnregisterWorkQueueWithMMCSS
 @ stub MFFrameRateToAverageTimePerFrame
 @ stub MFFreeAdaptersAddresses
 @ stub MFGetAdaptersAddresses
-@ stub MFGetAttributesAsBlob
-@ stub MFGetAttributesAsBlobSize
+@ stdcall MFGetAttributesAsBlob(ptr ptr long)
+@ stdcall MFGetAttributesAsBlobSize(ptr ptr)
 @ stub MFGetConfigurationDWORD
 @ stub MFGetConfigurationPolicy
 @ stub MFGetConfigurationStore
@@ -100,14 +101,14 @@
 @ stub MFGetSockaddrFromNumericName
 @ stub MFGetStrideForBitmapInfoHeader
 @ stdcall MFGetSystemTime()
-@ stub MFGetTimerPeriodicity
+@ stdcall MFGetTimerPeriodicity(ptr)
 @ stub MFGetUncompressedVideoFormat
 @ stub MFGetWorkQueueMMCSSClass
 @ stub MFGetWorkQueueMMCSSTaskId
 @ stdcall MFHeapAlloc(long long str long long)
 @ stdcall MFHeapFree(ptr)
 @ stub MFInitAMMediaTypeFromMFMediaType
-@ stub MFInitAttributesFromBlob
+@ stdcall MFInitAttributesFromBlob(ptr ptr long)
 @ stub MFInitMediaTypeFromAMMediaType
 @ stub MFInitMediaTypeFromMFVideoFormat
 @ stub MFInitMediaTypeFromMPEG1VideoInfo
@@ -123,9 +124,13 @@
 @ stdcall MFLockWorkQueue(long)
 @ stdcall MFPutWaitingWorkItem(long long ptr ptr)
 @ stdcall MFPutWorkItem(long ptr ptr)
+@ stdcall MFPutWorkItem2(long long ptr ptr)
 @ stdcall MFPutWorkItemEx(long ptr)
+@ stdcall MFPutWorkItemEx2(long long ptr)
 @ stub MFRecordError
-@ stub MFRemovePeriodicCallback
+@ stdcall MFRegisterLocalByteStreamHandler(wstr wstr ptr)
+@ stdcall MFRegisterLocalSchemeHandler(wstr ptr)
+@ stdcall MFRemovePeriodicCallback(long)
 @ stdcall MFScheduleWorkItem(ptr ptr int64 ptr)
 @ stdcall MFScheduleWorkItemEx(ptr int64 ptr)
 @ stub MFSerializeAttributesToStream
@@ -150,9 +155,9 @@
 @ stub MFUnblockThread
 @ stdcall MFUnlockPlatform()
 @ stdcall MFUnlockWorkQueue(long)
-@ stub MFUnwrapMediaType
+@ stdcall MFUnwrapMediaType(ptr ptr)
 @ stub MFValidateMediaTypeSize
-@ stub MFWrapMediaType
+@ stdcall MFWrapMediaType(ptr ptr ptr ptr)
 @ stub MFllMulDiv
 @ stub PropVariantFromStream
 @ stub PropVariantToStream

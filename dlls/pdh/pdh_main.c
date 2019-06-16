@@ -213,7 +213,7 @@ static BOOL is_local_machine( const WCHAR *name, DWORD len )
     DWORD buflen = ARRAY_SIZE(buf);
 
     if (!GetComputerNameW( buf, &buflen )) return FALSE;
-    return len == buflen && !memicmpW( name, buf, buflen );
+    return len == buflen && !strncmpiW( name, buf, buflen );
 }
 
 static BOOL pdh_match_path( LPCWSTR fullpath, LPCWSTR path )

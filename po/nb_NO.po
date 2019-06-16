@@ -69,7 +69,7 @@ msgstr "Støtteinformasjon"
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
 #: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
-#: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
+#: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
@@ -83,7 +83,7 @@ msgstr "Følgende informasjon kan brukes til å få teknisk støtte for %s:"
 msgid "Publisher:"
 msgstr "Utgiver:"
 
-#: appwiz.rc:81 winefile.rc:166
+#: appwiz.rc:81 winefile.rc:165
 msgid "Version:"
 msgstr "Versjon:"
 
@@ -152,8 +152,8 @@ msgstr "&Installer"
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
 #: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
 msgstr "Avbryt"
@@ -206,7 +206,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ikke oppgitt"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
 msgid "Name"
 msgstr "Navn"
 
@@ -327,7 +327,7 @@ msgstr "minutter"
 msgid "hours"
 msgstr "timer"
 
-#: comctl32.rc:68 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:156
 msgid "Properties for %s"
 msgstr "Egenskaper for %s"
 
@@ -466,7 +466,7 @@ msgid "Dri&ves:"
 msgstr "&Stasjoner:"
 
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
-#: winefile.rc:173
+#: winefile.rc:172
 msgid "&Read Only"
 msgstr "Sk&rivebeskyttet"
 
@@ -718,7 +718,7 @@ msgstr "&Egenskaper"
 msgid "Print to fi&le"
 msgstr "Skriv ti&l fil"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "&Navn:"
 
@@ -2996,7 +2996,7 @@ msgstr "Plassering"
 msgid "Select a certificate"
 msgstr "Velg et sertifikat"
 
-#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
 msgstr "Ikke implementert ennå"
 
@@ -3468,7 +3468,7 @@ msgstr ""
 msgid "Delete"
 msgstr "Slett"
 
-#: inetcpl.rc:90 winefile.rc:115
+#: inetcpl.rc:90 winefile.rc:114
 msgid "Security"
 msgstr "Sikkerhet"
 
@@ -4162,7 +4162,7 @@ msgstr "Tidsavbrudd for semafore.\n"
 msgid "Insufficient buffer.\n"
 msgstr "Utilstrekkelig minneandel.\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr "Ugyldig navn.\n"
 
@@ -4955,7 +4955,7 @@ msgid "Too many links.\n"
 msgstr "For mange koblinger.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "Nyere Windows-versjon er nødvendig.\n"
 
 #: winerror.mc:1483
@@ -5734,7 +5734,7 @@ msgstr "Klassen finnes ikke.\n"
 msgid "Class has open windows.\n"
 msgstr "Klassen har åpne vinduer.\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "Ugyldig indeks.\n"
 
@@ -6813,6 +6813,544 @@ msgstr "Klarte ikke sende e-post fordi en MAPI-klient ikke er installert."
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr "Send e-post"
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr ""
+
+#: mferror.mc:599
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Sink has not been finalized.\n"
+msgstr "Fant ikke objekt-UUID'en.\n"
+
+#: mferror.mc:32
+#, fuzzy
+#| msgid "Installation platform not supported.\n"
+msgid "Media Foundation platform is not initialized.\n"
+msgstr "Installasjonsplattformen støttes ikke.\n"
+
+#: mferror.mc:39
+#, fuzzy
+#| msgid "Byte count too small.\n"
+msgid "Buffer is too small.\n"
+msgstr "Antall byte er for lavt.\n"
+
+#: mferror.mc:46
+#, fuzzy
+#| msgid "Invalid query syntax.\n"
+msgid "Invalid request.\n"
+msgstr "Ugyldig syntaks for spørring.\n"
+
+#: mferror.mc:53
+#, fuzzy
+#| msgid "Invalid segment number.\n"
+msgid "Invalid stream number.\n"
+msgstr "Ugyldig segmentnummer.\n"
+
+#: mferror.mc:60
+#, fuzzy
+#| msgid "Invalid data type.\n"
+msgid "Invalid media type.\n"
+msgstr "Ugyldig datatype.\n"
+
+#: mferror.mc:67
+#, fuzzy
+#| msgid "No more entries.\n"
+msgid "No more input is accepted.\n"
+msgstr "Ingen flere oppføringer.\n"
+
+#: mferror.mc:74
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Object is not initialized.\n"
+msgstr "Fant ikke objekt-UUID'en.\n"
+
+#: mferror.mc:81
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Representation is not supported.\n"
+msgstr "Operasjonen støttes ikke.\n"
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr ""
+
+#: mferror.mc:95
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported service.\n"
+msgstr "Typen støttes ikke.\n"
+
+#: mferror.mc:102
+#, fuzzy
+#| msgid "Unexpected network error.\n"
+msgid "Unexpected error.\n"
+msgstr "Uventet nettverksfeil.\n"
+
+#: mferror.mc:116
+#, fuzzy
+#| msgid "Invalid time.\n"
+msgid "Invalid type.\n"
+msgstr "Ugyldig tid.\n"
+
+#: mferror.mc:123
+#, fuzzy
+#| msgid "Invalid pixel format.\n"
+msgid "Invalid file format.\n"
+msgstr "Ugyldig format for bildepunkt.\n"
+
+#: mferror.mc:137
+#, fuzzy
+#| msgid "Invalid time.\n"
+msgid "Invalid timestamp.\n"
+msgstr "Ugyldig tid.\n"
+
+#: mferror.mc:144
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported scheme.\n"
+msgstr "Typen støttes ikke.\n"
+
+#: mferror.mc:151
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported bytestream type.\n"
+msgstr "Typen støttes ikke.\n"
+
+#: mferror.mc:158
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported time format.\n"
+msgstr "Typen støttes ikke.\n"
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:179
+#, fuzzy
+#| msgid "Invalid data.\n"
+msgid "Invalid stream data.\n"
+msgstr "Ugyldig data.\n"
+
+#: mferror.mc:186
+#, fuzzy
+#| msgid "Help not available."
+msgid "Realtime support is not available.\n"
+msgstr "Ingen hjelp er ikke tilgjengelig."
+
+#: mferror.mc:193
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported rate.\n"
+msgstr "Typen støttes ikke.\n"
+
+#: mferror.mc:200
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported thinning.\n"
+msgstr "Typen støttes ikke.\n"
+
+#: mferror.mc:207
+#, fuzzy
+#| msgid "Request not supported.\n"
+msgid "Reversing is not supported.\n"
+msgstr "Forespørselen støttes ikke.\n"
+
+#: mferror.mc:214
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Unsupported rate transition.\n"
+msgstr "Godkjenningsnivået støttes ikke.\n"
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+#: mferror.mc:228
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Object or value wasn't found.\n"
+msgstr "Fant ikke objekt-UUID'en.\n"
+
+#: mferror.mc:235
+#, fuzzy
+#| msgid "Help not available."
+msgid "Value is not available.\n"
+msgstr "Ingen hjelp er ikke tilgjengelig."
+
+#: mferror.mc:242
+#, fuzzy
+#| msgid "Help not available."
+msgid "Clock is not available.\n"
+msgstr "Ingen hjelp er ikke tilgjengelig."
+
+#: mferror.mc:263
+#, fuzzy
+#| msgid "Extended attributes not supported.\n"
+msgid "Multiple subscribers are not supported.\n"
+msgstr "Utvidede egenskaper støttes ikke.\n"
+
+#: mferror.mc:270
+#, fuzzy
+#| msgid "The driver was not enabled."
+msgid "The timer was orphaned.\n"
+msgstr "Driveren ble ikke aktivert."
+
+#: mferror.mc:277
+#, fuzzy
+#| msgid "Character translation table open failed.\n"
+msgid "State transition is pending.\n"
+msgstr "Klarte ikke åpne tabellen for tegnkonvertering.\n"
+
+#: mferror.mc:284
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Unsupported state transition.\n"
+msgstr "Godkjenningsnivået støttes ikke.\n"
+
+#: mferror.mc:291
+#, fuzzy
+#| msgid "An internal error has occurred.\n"
+msgid "Unrecoverable error occurred.\n"
+msgstr "En intern feil har oppstått.\n"
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr ""
+
+#: mferror.mc:305
+#, fuzzy
+#| msgid "Temporary directory not writable.\n"
+msgid "Sample is not writable.\n"
+msgstr "Mappen for midlertidige filer kan ikke skrives til.\n"
+
+#: mferror.mc:312
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Key is invalid.\n"
+msgstr "Stien er ugyldig.\n"
+
+#: mferror.mc:319
+#, fuzzy
+#| msgid "Wrong stub version.\n"
+msgid "Bad startup version.\n"
+msgstr "Feil stub-versjon.\n"
+
+#: mferror.mc:326
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported caption.\n"
+msgstr "Typen støttes ikke.\n"
+
+#: mferror.mc:333
+#, fuzzy
+#| msgid "Invalid workstation.\n"
+msgid "Invalid position.\n"
+msgstr "Ugyldig arbeidsstasjon.\n"
+
+#: mferror.mc:340
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Attribute is not found.\n"
+msgstr "Fant ikke filen.\n"
+
+#: mferror.mc:347
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Property type is not allowed.\n"
+msgstr "Hook-typen er ikke tillat.\n"
+
+#: mferror.mc:354
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Property type is not supported.\n"
+msgstr "Operasjonen støttes ikke.\n"
+
+#: mferror.mc:361
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is empty.\n"
+msgstr "Katalogen er ikke tom.\n"
+
+#: mferror.mc:368
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is not empty.\n"
+msgstr "Katalogen er ikke tom.\n"
+
+#: mferror.mc:375
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Vector property is not allowed.\n"
+msgstr "Hook-typen er ikke tillat.\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr ""
+
+#: mferror.mc:389
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Operation was cancelled.\n"
+msgstr "Operasjonen ble avbrutt av brukeren.\n"
+
+#: mferror.mc:396
+#, fuzzy
+#| msgid "Server not disabled.\n"
+msgid "Bytestream is not seekable.\n"
+msgstr "Tjeneren er ikke deaktivert.\n"
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr ""
+
+#: mferror.mc:410
+#, fuzzy
+#| msgid "Cannot create service thread.\n"
+msgid "Cannot parse bytestream.\n"
+msgstr "Kan ikke opprette tjenestetråd.\n"
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+
+#: mferror.mc:424
+#, fuzzy
+#| msgid "Unknown interface.\n"
+msgid "Unknown bytestream length.\n"
+msgstr "Ukjent grensesnitt.\n"
+
+#: mferror.mc:431
+#, fuzzy
+#| msgid "Invalid index.\n"
+msgid "Invalid work queue index.\n"
+msgstr "Ugyldig indeks.\n"
+
+#: mferror.mc:438
+#, fuzzy
+#| msgid "No logon servers available.\n"
+msgid "No events available.\n"
+msgstr "Ingen påloggingstjenere tilgjengelig.\n"
+
+#: mferror.mc:445
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Invalid media source state transition.\n"
+msgstr "Godkjenningsnivået støttes ikke.\n"
+
+#: mferror.mc:452
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "End of media stream has been reached.\n"
+msgstr "Registeret har blitt gjenopprettet.\n"
+
+#: mferror.mc:459
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:466
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "Media stream has no duration set.\n"
+msgstr "Registeret har blitt gjenopprettet.\n"
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid.\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property wasn't found.\n"
+msgstr "Fant ikke settet av egenskaper.\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is read-only.\n"
+msgstr "Katalogen er ikke tom.\n"
+
+#: mferror.mc:494
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Property is not allowed.\n"
+msgstr "Hook-typen er ikke tillat.\n"
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is not started.\n"
+msgstr "Ressursen er i bruk.\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported media format.\n"
+msgstr "Typen støttes ikke.\n"
+
+#: mferror.mc:515
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is in wrong state.\n"
+msgstr "Ressursen er i bruk.\n"
+
+#: mferror.mc:522
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No media streams were selected.\n"
+msgstr "Ingen data oppdaget.\n"
+
+#: mferror.mc:529
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported media source characteristics.\n"
+msgstr "Typen støttes ikke.\n"
+
+#: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr ""
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr ""
+
+#: mferror.mc:550
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "Registeret har blitt gjenopprettet.\n"
+
+#: mferror.mc:557
+#, fuzzy
+#| msgid "Domain already exists.\n"
+msgid "Stream sink already exists.\n"
+msgstr "Domenet finnes allerede.\n"
+
+#: mferror.mc:564
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Sample allocation was canceled.\n"
+msgstr "Operasjonen ble avbrutt av brukeren.\n"
+
+#: mferror.mc:571
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Sample allocator is empty.\n"
+msgstr "Katalogen er ikke tom.\n"
+
+#: mferror.mc:578
+#, fuzzy
+#| msgid "Class already exists.\n"
+msgid "Sink was already stopped.\n"
+msgstr "Klassen finnes allerede.\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr ""
+
+#: mferror.mc:592
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No streams were selected for the sink.\n"
+msgstr "Ingen data oppdaget.\n"
+
+#: mferror.mc:606
+#, fuzzy
+#| msgid "File name is too long.\n"
+msgid "Metadata was too long.\n"
+msgstr "Filnavnet er for langt.\n"
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr ""
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr ""
+
+#: mferror.mc:627
+#, fuzzy
+#| msgid "Connection invalid.\n"
+msgid "Optional node is invalid.\n"
+msgstr "Tilkoblingen er ugyldig.\n"
+
+#: mferror.mc:634
+#, fuzzy
+#| msgid "Cannot find the printer."
+msgid "Cannot find decryptor.\n"
+msgstr "Kan ikke finne skriveren."
+
+#: mferror.mc:641
+#, fuzzy
+#| msgid "Module not found.\n"
+msgid "Codec was not found.\n"
+msgstr "Fant ikke modulen.\n"
+
+#: mferror.mc:648
+#, fuzzy
+#| msgid "Cannot get call handle.\n"
+msgid "Cannot connect topology nodes.\n"
+msgstr "Kan ikke hente kallreferansen.\n"
+
+#: mferror.mc:655
+#, fuzzy
+#| msgid "Request not supported.\n"
+msgid "Topology request is not supported.\n"
+msgstr "Forespørselen støttes ikke.\n"
+
+#: mferror.mc:662
+#, fuzzy
+#| msgid "Invalid group attributes.\n"
+msgid "Invalid topology time attributes.\n"
+msgstr "Ugyldige innstilliger for gruppen.\n"
+
+#: mferror.mc:669
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:676
+#, fuzzy
+#| msgid "Installation source is missing.\n"
+msgid "Presentation descriptor is missing.\n"
+msgstr "Installasjonskilden mangler.\n"
+
+#: mferror.mc:683
+#, fuzzy
+#| msgid "Index is missing.\n"
+msgid "Stream descriptor is missing.\n"
+msgstr "Indeksen mangler.\n"
+
+#: mferror.mc:690
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Stream descriptor is not selected.\n"
+msgstr "Enheten er ikke koblet til.\n"
+
+#: mferror.mc:697
+#, fuzzy
+#| msgid "Index is missing.\n"
+msgid "Source is missing.\n"
+msgstr "Indeksen mangler.\n"
+
+#: mferror.mc:704
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:711
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:718
+#, fuzzy
+#| msgid "Class already exists.\n"
+msgid "Clock state was already set.\n"
+msgstr "Klassen finnes allerede.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8598,7 +9136,7 @@ msgid "&Open:"
 msgstr "&Åpne:"
 
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:130
+#: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Bla..."
 
@@ -8610,7 +9148,7 @@ msgstr "Filtype:"
 msgid "Location:"
 msgstr "Plassering:"
 
-#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+#: shell32.rc:361 shell32.rc:394 winefile.rc:169
 msgid "Size:"
 msgstr "Størrelse:"
 
@@ -8622,11 +9160,11 @@ msgstr "Dato opprettet:"
 msgid "Attributes:"
 msgstr "Egenskaper:"
 
-#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+#: shell32.rc:371 shell32.rc:408 winefile.rc:173
 msgid "H&idden"
 msgstr "Sk&jult"
 
-#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+#: shell32.rc:372 shell32.rc:409 winefile.rc:174
 msgid "&Archive"
 msgstr "&Arkiv"
 
@@ -8646,7 +9184,7 @@ msgstr "Sist endret:"
 msgid "Last accessed:"
 msgstr "Siste tilgang:"
 
-#: shell32.rc:138 shell32.rc:142 winefile.rc:108
+#: shell32.rc:138 shell32.rc:142 winefile.rc:107
 msgid "Size"
 msgstr "Størrelse"
 
@@ -8658,7 +9196,7 @@ msgstr "Type"
 msgid "Modified"
 msgstr "Endret"
 
-#: shell32.rc:141 winefile.rc:172 winefile.rc:114
+#: shell32.rc:141 winefile.rc:171 winefile.rc:113
 msgid "Attributes"
 msgstr "Egenskaper"
 
@@ -8686,7 +9224,7 @@ msgstr "Opprinnelig plassering"
 msgid "Date deleted"
 msgstr "Dato slettet"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Skrivebord"
@@ -8808,7 +9346,7 @@ msgstr "Programfiler (x86)"
 msgid "Contacts"
 msgstr "Kontakter"
 
-#: shell32.rc:225 winefile.rc:113
+#: shell32.rc:225 winefile.rc:112
 msgid "Links"
 msgstr "Koblinger"
 
@@ -10623,9 +11161,13 @@ msgid ""
 msgstr "Tidsformatet til \"song pointer\" og SMPTE kan ikke brukes sammen."
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "Den oppgitte MIDI-porten er allerede i bruk. Vent til den er ledig og prøv "
 "igjen."
@@ -10643,9 +11185,13 @@ msgid "An error occurred with the specified port."
 msgstr "En feil oppstod med den oppgitte porten."
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "Alle multimediatidtakere brukes av andre programmer. Avslutt ett av disse "
 "programmene og prøv igjen."
@@ -11400,8 +11946,8 @@ msgid ""
 "/affinity mask Start the program with the specified affinity mask.\n"
 "/wait          Wait for the started program to finish, then exit with its\n"
 "exit code.\n"
-"/unix          Use a Unix filename and start the file like windows\n"
-"explorer.\n"
+"/unix          Use a Unix filename and start the file like Windows\n"
+"Explorer.\n"
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
@@ -12986,7 +13532,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "Filen %s fantes allerede, og ble ikke overskrevet."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr "Lagre gruppe som \"%s\" for å unngå å overskrive filer."
 
 #: progman.rc:84
@@ -14964,8 +15510,12 @@ msgid "Drive configuration"
 msgstr "Oppsett av stasjoner"
 
 #: winecfg.rc:233
+#, fuzzy
+#| msgid ""
+#| "Failed to connect to the mount manager, the drive configuration cannot be "
+#| "edited."
 msgid ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
+"Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
 "Klarte ikke koble til monteringsbehandleren; diskstasjonene kan derfor ikke "
@@ -15254,11 +15804,17 @@ msgid "System drive"
 msgstr "Systemstasjon"
 
 #: winecfg.rc:76
+#, fuzzy
+#| msgid ""
+#| "Are you sure you want to delete drive C?\n"
+#| "\n"
+#| "Most Windows applications expect drive C to exist, and will die messily "
+#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
+"it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 "Vil du virkelig fjerne stasjon C?\n"
 "\n"
@@ -15775,67 +16331,67 @@ msgstr "Still &loddrett\tCtrl+F4"
 msgid "&About Wine File Manager"
 msgstr "&Om Wine Filbehandling"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Select destination"
 msgstr "Velg plassering"
 
-#: winefile.rc:135
+#: winefile.rc:134
 msgid "By File Type"
 msgstr "Etter filtype"
 
-#: winefile.rc:140
+#: winefile.rc:139
 msgid "File type"
 msgstr "Filtype"
 
-#: winefile.rc:141
+#: winefile.rc:140
 msgid "&Directories"
 msgstr "&Kataloger"
 
-#: winefile.rc:143
+#: winefile.rc:142
 msgid "&Programs"
 msgstr "&Programmer"
 
-#: winefile.rc:145
+#: winefile.rc:144
 msgid "Docu&ments"
 msgstr "Doku&menter"
 
-#: winefile.rc:147
+#: winefile.rc:146
 msgid "&Other files"
 msgstr "&Andre filer"
 
-#: winefile.rc:149
+#: winefile.rc:148
 msgid "Show Hidden/&System Files"
 msgstr "Vi&s skjulte/systemfiler"
 
-#: winefile.rc:160
+#: winefile.rc:159
 msgid "&File Name:"
 msgstr "&Filnavn:"
 
-#: winefile.rc:162
+#: winefile.rc:161
 msgid "Full &Path:"
 msgstr "F&ull sti:"
 
-#: winefile.rc:164
+#: winefile.rc:163
 msgid "Last Change:"
 msgstr "Sist endret:"
 
-#: winefile.rc:168
+#: winefile.rc:167
 msgid "Cop&yright:"
 msgstr "Oppha&vsrett:"
 
-#: winefile.rc:176
+#: winefile.rc:175
 msgid "&System"
 msgstr "&System"
 
-#: winefile.rc:177
+#: winefile.rc:176
 msgid "&Compressed"
 msgstr "Kompr&imert"
 
-#: winefile.rc:178
+#: winefile.rc:177
 msgid "Version information"
 msgstr "Versjoninformasjon"
 
-#: winefile.rc:194
+#: winefile.rc:193
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr "S"
@@ -15856,31 +16412,27 @@ msgstr "Filbehandling"
 msgid "root fs"
 msgstr "Rotfilsystem"
 
-#: winefile.rc:99
-msgid "unixfs"
-msgstr "Unix-filsystem"
-
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Shell"
 msgstr "Skall"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Creation date"
 msgstr "Dato opprettet"
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Access date"
 msgstr "Sist brukt"
 
-#: winefile.rc:111
+#: winefile.rc:110
 msgid "Modification date"
 msgstr "Sist endret"
 
-#: winefile.rc:112
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr "Indeks/Inode"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr "%1 av %2 ledig"
 
@@ -16541,6 +17093,42 @@ msgid "D"
 msgstr "K"
 
 #: xcopy.rc:81
+#, fuzzy
+#| msgid ""
+#| "XCOPY - Copies source files or directory trees to a destination.\n"
+#| "\n"
+#| "Syntax:\n"
+#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+#| "\n"
+#| "Where:\n"
+#| "\n"
+#| "[/I]  Assume directory if destination does not exist and copying two or\n"
+#| "\tmore files.\n"
+#| "[/S]  Copy directories and subdirectories.\n"
+#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
+#| "[/Q]  Do not list names during copy, that is be quiet.\n"
+#| "[/F]  Show full source and destination names during copy.\n"
+#| "[/L]  Simulate operation, showing names which would be copied.\n"
+#| "[/W]  Prompts before beginning the copy operation.\n"
+#| "[/T]  Creates empty directory structure but does not copy files.\n"
+#| "[/Y]  Suppress prompting when overwriting files.\n"
+#| "[/-Y] Enable prompting when overwriting files.\n"
+#| "[/P]  Prompts on each source file before copying.\n"
+#| "[/N]  Copy using short names.\n"
+#| "[/U]  Copy only files which already exist in destination.\n"
+#| "[/R]  Overwrite any read only files.\n"
+#| "[/H]  Include hidden and system files in the copy.\n"
+#| "[/C]  Continue even if an error occurs during the copy.\n"
+#| "[/A]  Only copy files with archive attribute set.\n"
+#| "[/M]  Only copy files with archive attribute set, removes the\n"
+#| "\tarchive attribute.\n"
+#| "[/K]  Copy file attributes, without this attributes are not preserved.\n"
+#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
+#| "date.\n"
+#| "\t\tIf no date is supplied, only copy if destination is older\n"
+#| "\t\tthan source.\n"
+#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -16554,7 +17142,7 @@ msgid ""
 "\tmore files.\n"
 "[/S]  Copy directories and subdirectories.\n"
 "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-"[/Q]  Do not list names during copy, that is be quiet.\n"
+"[/Q]  Do not list names during copy; that is, be quiet.\n"
 "[/F]  Show full source and destination names during copy.\n"
 "[/L]  Simulate operation, showing names which would be copied.\n"
 "[/W]  Prompts before beginning the copy operation.\n"
@@ -16564,13 +17152,13 @@ msgid ""
 "[/P]  Prompts on each source file before copying.\n"
 "[/N]  Copy using short names.\n"
 "[/U]  Copy only files which already exist in destination.\n"
-"[/R]  Overwrite any read only files.\n"
+"[/R]  Overwrite any read-only files.\n"
 "[/H]  Include hidden and system files in the copy.\n"
 "[/C]  Continue even if an error occurs during the copy.\n"
 "[/A]  Only copy files with archive attribute set.\n"
 "[/M]  Only copy files with archive attribute set, removes the\n"
 "\tarchive attribute.\n"
-"[/K]  Copy file attributes, without this attributes are not preserved.\n"
+"[/K]  Copy file attributes; without this, attributes are not preserved.\n"
 "[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
 "\t\tIf no date is supplied, only copy if destination is older\n"
 "\t\tthan source.\n"

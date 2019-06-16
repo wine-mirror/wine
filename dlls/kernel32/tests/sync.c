@@ -38,6 +38,7 @@ static BOOL   (WINAPI *pInitOnceExecuteOnce)(PINIT_ONCE,PINIT_ONCE_FN,PVOID,LPVO
 static BOOL   (WINAPI *pInitOnceBeginInitialize)(PINIT_ONCE,DWORD,BOOL*,LPVOID*);
 static BOOL   (WINAPI *pInitOnceComplete)(PINIT_ONCE,DWORD,LPVOID);
 
+static BOOL   (WINAPI *pInitializeCriticalSectionEx)(CRITICAL_SECTION*,DWORD,DWORD);
 static VOID   (WINAPI *pInitializeConditionVariable)(PCONDITION_VARIABLE);
 static BOOL   (WINAPI *pSleepConditionVariableCS)(PCONDITION_VARIABLE,PCRITICAL_SECTION,DWORD);
 static BOOL   (WINAPI *pSleepConditionVariableSRW)(PCONDITION_VARIABLE,PSRWLOCK,DWORD,ULONG);
@@ -2636,6 +2637,44 @@ static void test_apc_deadlock(void)
     CloseHandle(pi.hProcess);
 }
 
+static void test_crit_section(void)
+{
+    CRITICAL_SECTION cs;
+    BOOL ret;
+
+    /* Win8+ does not initialize debug info, one has to use RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO
+       to override that. */
+    memset(&cs, 0, sizeof(cs));
+    InitializeCriticalSection(&cs);
+    ok(cs.DebugInfo != NULL, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
+    DeleteCriticalSection(&cs);
+    ok(cs.DebugInfo == NULL, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
+
+    if (!pInitializeCriticalSectionEx)
+    {
+        win_skip("InitializeCriticalSectionEx isn't available, skipping tests.\n");
+        return;
+    }
+
+    memset(&cs, 0, sizeof(cs));
+    ret = pInitializeCriticalSectionEx(&cs, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
+    ok(ret, "Failed to initialize critical section.\n");
+    ok(cs.DebugInfo == (void *)(ULONG_PTR)-1, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
+
+    ret = TryEnterCriticalSection(&cs);
+    ok(ret, "Failed to enter critical section.\n");
+    LeaveCriticalSection(&cs);
+
+    cs.DebugInfo = NULL;
+
+    ret = TryEnterCriticalSection(&cs);
+    ok(ret, "Failed to enter critical section.\n");
+    LeaveCriticalSection(&cs);
+
+    DeleteCriticalSection(&cs);
+    ok(cs.DebugInfo == NULL, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
+}
+
 START_TEST(sync)
 {
     char **argv;
@@ -2652,6 +2691,7 @@ START_TEST(sync)
     pSleepConditionVariableSRW = (void *)GetProcAddress(hdll, "SleepConditionVariableSRW");
     pWakeAllConditionVariable = (void *)GetProcAddress(hdll, "WakeAllConditionVariable");
     pWakeConditionVariable = (void *)GetProcAddress(hdll, "WakeConditionVariable");
+    pInitializeCriticalSectionEx = (void *)GetProcAddress(hdll, "InitializeCriticalSectionEx");
     pInitializeSRWLock = (void *)GetProcAddress(hdll, "InitializeSRWLock");
     pAcquireSRWLockExclusive = (void *)GetProcAddress(hdll, "AcquireSRWLockExclusive");
     pAcquireSRWLockShared = (void *)GetProcAddress(hdll, "AcquireSRWLockShared");
@@ -2694,4 +2734,5 @@ START_TEST(sync)
     test_srwlock_example();
     test_alertable_wait();
     test_apc_deadlock();
+    test_crit_section();
 }

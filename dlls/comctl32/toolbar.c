@@ -76,7 +76,6 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/unicode.h"
 #include "winnls.h"
 #include "commctrl.h"
 #include "comctl32.h"
@@ -1227,7 +1226,7 @@ TOOLBAR_MeasureString(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *btnPtr,
 
 	if(lpText != NULL) {
 	    /* first get size of all the text */
-	    GetTextExtentPoint32W (hdc, lpText, strlenW (lpText), lpSize);
+	    GetTextExtentPoint32W (hdc, lpText, lstrlenW (lpText), lpSize);
 
 	    /* feed above size into the rectangle for DrawText */
             SetRect(&myrect, 0, 0, lpSize->cx, lpSize->cy);
@@ -2957,7 +2956,7 @@ TOOLBAR_AddStringW (TOOLBAR_INFO *infoPtr, HINSTANCE hInstance, LPARAM lParam)
         delimiter = *szString;
         p = szString + 1;
 
-        while ((next_delim = strchrW(p, delimiter)) != NULL) {
+        while ((next_delim = wcschr(p, delimiter)) != NULL) {
             *next_delim = 0;
             if (next_delim + 1 >= szString + len)
             {
@@ -2981,7 +2980,7 @@ TOOLBAR_AddStringW (TOOLBAR_INFO *infoPtr, HINSTANCE hInstance, LPARAM lParam)
 	    return -1;
 	TRACE("adding string(s) from array\n");
 	while (*p) {
-            len = strlenW (p);
+            len = lstrlenW (p);
 
             TRACE("len=%d %s\n", len, debugstr_w(p));
             infoPtr->strings = ReAlloc(infoPtr->strings, sizeof(LPWSTR)*(infoPtr->nNumStrings+1));
@@ -3436,8 +3435,8 @@ TOOLBAR_GetButtonText (const TOOLBAR_INFO *infoPtr, INT Id, LPWSTR lpStr, BOOL i
     {
         if (lpText)
         {
-            ret = strlenW (lpText);
-            if (lpStr) strcpyW (lpStr, lpText);
+            ret = lstrlenW (lpText);
+            if (lpStr) lstrcpyW (lpStr, lpText);
         }
     }
     else
@@ -3848,7 +3847,7 @@ TOOLBAR_MapAccelerator (const TOOLBAR_INFO *infoPtr, WCHAR wAccel, UINT *pIDButt
         if (!(btnPtr->fsStyle & BTNS_NOPREFIX) &&
             !(btnPtr->fsState & TBSTATE_HIDDEN))
         {
-            int iLen = strlenW(wszAccel);
+            int iLen = lstrlenW(wszAccel);
             LPCWSTR lpszStr = TOOLBAR_GetText(infoPtr, btnPtr);
             
             if (!lpszStr)
@@ -3861,7 +3860,7 @@ TOOLBAR_MapAccelerator (const TOOLBAR_INFO *infoPtr, WCHAR wAccel, UINT *pIDButt
                     lpszStr += 2;
                     continue;
                 }
-                if (!strncmpiW(lpszStr, wszAccel, iLen))
+                if (!wcsnicmp(lpszStr, wszAccel, iLen))
                 {
                     *pIDButton = btnPtr->idCommand;
                     return TRUE;
@@ -5141,7 +5140,7 @@ TOOLBAR_GetStringW (const TOOLBAR_INFO *infoPtr, WPARAM wParam, LPWSTR str)
 
     if (iString < infoPtr->nNumStrings)
     {
-        len = min(len, strlenW(infoPtr->strings[iString]));
+        len = min(len, lstrlenW(infoPtr->strings[iString]));
         ret = (len+1)*sizeof(WCHAR);
         if (str)
         {
@@ -6150,7 +6149,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
 
         TRACE("TBN_GETINFOTIPW - got string %s\n", debugstr_w(tbgit.pszText));
 
-        len = strlenW(tbgit.pszText);
+        len = lstrlenW(tbgit.pszText);
         if (len > ARRAY_SIZE(lpnmtdi->szText) - 1)
         {
             /* need to allocate temporary buffer in infoPtr as there
@@ -6214,7 +6213,7 @@ static LRESULT TOOLBAR_TTGetDispInfo (TOOLBAR_INFO *infoPtr, NMTTDISPINFOW *lpnm
         !(infoPtr->buttons[index].fsStyle & BTNS_SHOWTEXT))
     {
         LPWSTR pszText = TOOLBAR_GetText(infoPtr, &infoPtr->buttons[index]);
-        len = pszText ? strlenW(pszText) : 0;
+        len = pszText ? lstrlenW(pszText) : 0;
 
         TRACE("using button hidden text %s\n", debugstr_w(pszText));
 

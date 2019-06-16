@@ -29,7 +29,6 @@
 
 #include "windows.h"
 #include "shellapi.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "explorer_private.h"
 

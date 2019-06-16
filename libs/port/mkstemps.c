@@ -31,16 +31,6 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifdef HAVE_PROCESS_H
-#include <process.h>
-#endif
-
-/* We need to provide a type for gcc_uint64_t.  */
-#ifdef __GNUC__
-__extension__ typedef unsigned long long gcc_uint64_t;
-#else
-typedef unsigned long gcc_uint64_t;
-#endif
 
 #ifndef TMP_MAX
 #define TMP_MAX 16384
@@ -74,10 +64,7 @@ mkstemps (
 {
   static const char letters[]
     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  static gcc_uint64_t value;
-#ifdef HAVE_GETTIMEOFDAY
-  struct timeval tv;
-#endif
+  static unsigned __int64 value;
   char *XXXXXX;
   size_t len;
   int count;
@@ -92,17 +79,18 @@ mkstemps (
 
   XXXXXX = &template[len - 6 - suffix_len];
 
-#ifdef HAVE_GETTIMEOFDAY
-  /* Get some more or less random data.  */
-  gettimeofday (&tv, NULL);
-  value += ((gcc_uint64_t) tv.tv_usec << 16) ^ tv.tv_sec ^ getpid ();
-#else
-  value += getpid ();
+#ifndef _WIN32
+  {
+      struct timeval tv;
+      gettimeofday( &tv, NULL );
+      value += ((unsigned __int64) tv.tv_usec << 16) ^ tv.tv_sec;
+  }
 #endif
+  value += getpid();
 
   for (count = 0; count < TMP_MAX; ++count)
     {
-      gcc_uint64_t v = value;
+      unsigned __int64 v = value;
       int fd;
 
       /* Fill in the random bits.  */
@@ -118,11 +106,7 @@ mkstemps (
       v /= 62;
       XXXXXX[5] = letters[v % 62];
 
-#ifdef VMS
-      fd = open (template, O_RDWR|O_CREAT|O_EXCL, 0600, "fop=tmd");
-#else
       fd = open (template, O_RDWR|O_CREAT|O_EXCL, 0600);
-#endif
       if (fd >= 0)
 	/* The file does not exist.  */
 	return fd;

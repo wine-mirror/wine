@@ -26,6 +26,7 @@
 
 #include <stdarg.h>
 
+#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -473,6 +474,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 #define REX_R   4
 #define REX_W   8
 
+#define MSR_LSTAR   0xc0000082
+
 #define REGMODRM_MOD( regmodrm, rex )   ((regmodrm) >> 6)
 #define REGMODRM_REG( regmodrm, rex )   (((regmodrm) >> 3) & 7) | (((rex) & REX_R) ? 8 : 0)
 #define REGMODRM_RM( regmodrm, rex )    (((regmodrm) & 7) | (((rex) & REX_B) ? 8 : 0))
@@ -583,6 +586,21 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
     /* FIXME: we assume that all segments have a base of 0 */
     return (BYTE *)(base + (index << ss));
 #undef GET_VAL
+}
+
+
+static void fake_syscall_function(void)
+{
+    TRACE("() stub\n");
+}
+
+
+static void update_shared_data(void)
+{
+    struct _KUSER_SHARED_DATA *shared_data  = (struct _KUSER_SHARED_DATA *)wine_user_shared_data;
+
+    shared_data->u.TickCountQuad = GetTickCount64();
+    shared_data->u.TickCount.High2Time = shared_data->u.TickCount.High1Time;
 }
 
 
@@ -757,6 +775,24 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             context->Rip += prefixlen + 3;
             return ExceptionContinueExecution;
         }
+        case 0x32: /* rdmsr */
+        {
+            ULONG reg = context->Rcx;
+            TRACE("rdmsr CR 0x%08x\n", reg);
+            switch (reg)
+            {
+            case MSR_LSTAR:
+            {
+                ULONG_PTR syscall_address = (ULONG_PTR)fake_syscall_function;
+                context->Rdx = (ULONG)(syscall_address >> 32);
+                context->Rax = (ULONG)syscall_address;
+                break;
+            }
+            default: return ExceptionContinueSearch;
+            }
+            context->Rip += prefixlen + 2;
+            return ExceptionContinueExecution;
+        }
         case 0xb6: /* movzx Eb, Gv */
         case 0xb7: /* movzx Ew, Gv */
         {
@@ -768,6 +804,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
             {
                 ULONGLONG temp = 0;
+                update_shared_data();
                 memcpy( &temp, wine_user_shared_data + offset, data_size );
                 store_reg_word( context, instr[2], (BYTE *)&temp, long_op, rex );
                 context->Rip += prefixlen + len + 2;
@@ -788,6 +825,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
 
         if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
         {
+            update_shared_data();
             switch (*instr)
             {
             case 0x8a: store_reg_byte( context, instr[1], wine_user_shared_data + offset, rex ); break;
@@ -809,6 +847,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
 
         if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
         {
+            update_shared_data();
             memcpy( &context->Rax, wine_user_shared_data + offset, data_size );
             context->Rip += prefixlen + len + 1;
             return ExceptionContinueExecution;

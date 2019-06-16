@@ -61,7 +61,6 @@
 #undef CompareString
 #undef GetCurrentThread
 #undef _CDECL
-#undef DPRINTF
 #undef GetCurrentProcess
 #undef AnimatePalette
 #undef EqualRgn
@@ -2568,10 +2567,9 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
 /*************************************************************
  * init_system_links
  */
-static BOOL init_system_links(void)
+static void init_system_links(void)
 {
     HKEY hkey;
-    BOOL ret = FALSE;
     DWORD type, max_val, max_data, val_len, data_len, index;
     WCHAR *value, *data;
     WCHAR *entry, *next;
@@ -2717,7 +2715,6 @@ skip_internal:
         }
     }
     list_add_tail(&system_links, &system_font_link->entry);
-    return ret;
 }
 
 static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
@@ -2878,7 +2875,7 @@ static void load_fontconfig_fonts(void)
         len = strlen( file );
         if(len < 4) continue;
         ext = &file[ len - 3 ];
-        if(strcasecmp(ext, "pfa") && strcasecmp(ext, "pfb"))
+        if(_strnicmp(ext, "pfa", -1) && _strnicmp(ext, "pfb", -1))
             AddFontToList(file, NULL, 0,
                           ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE | ADDFONT_AA_FLAGS(aa_flags) );
     }
@@ -4178,7 +4175,7 @@ static BOOL init_freetype(void)
                        ((FT_Version.minor <<  8) & 0x00ff00) |
                        ((FT_Version.patch      ) & 0x0000ff);
 
-    /* In Freetype < 2.8.1 v40's FT_LOAD_TARGET_MONO has broken advance widths. */
+    /* In FreeType < 2.8.1 v40's FT_LOAD_TARGET_MONO has broken advance widths. */
     if (pFT_Property_Set && FT_SimpleVersion < FT_VERSION_VALUE(2, 8, 1))
     {
         FT_UInt interpreter_version = 35;
@@ -8421,6 +8418,40 @@ static BOOL freetype_GetCharWidth( PHYSDEV dev, UINT firstChar, UINT lastChar, L
 }
 
 /*************************************************************
+ * freetype_GetCharWidthInfo
+ */
+static BOOL freetype_GetCharWidthInfo( PHYSDEV dev, void* ptr )
+{
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
+    struct char_width_info *info = ptr;
+    TT_HoriHeader *pHori;
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetCharWidthInfo );
+        return dev->funcs->pGetCharWidthInfo( dev, ptr );
+    }
+
+    TRACE("%p, %p\n", physdev->font, info);
+
+    if (FT_IS_SCALABLE(physdev->font->ft_face) &&
+        (pHori = pFT_Get_Sfnt_Table(physdev->font->ft_face, ft_sfnt_hhea)))
+    {
+        FT_Fixed em_scale;
+        em_scale = MulDiv(physdev->font->ppem, 1 << 16,
+                          physdev->font->ft_face->units_per_EM);
+        info->lsb = (SHORT)pFT_MulFix(pHori->min_Left_Side_Bearing,  em_scale);
+        info->rsb = (SHORT)pFT_MulFix(pHori->min_Right_Side_Bearing, em_scale);
+    }
+    else
+        info->lsb = info->rsb = 0;
+
+    info->unk = 0;
+
+    return TRUE;
+}
+
+/*************************************************************
  * freetype_GetCharABCWidths
  */
 static BOOL freetype_GetCharABCWidths( PHYSDEV dev, UINT firstChar, UINT lastChar, LPABC buffer )
@@ -9115,6 +9146,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     freetype_GetCharABCWidths,          /* pGetCharABCWidths */
     freetype_GetCharABCWidthsI,         /* pGetCharABCWidthsI */
     freetype_GetCharWidth,              /* pGetCharWidth */
+    freetype_GetCharWidthInfo,          /* pGetCharWidthInfo */
     NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
     freetype_GetFontData,               /* pGetFontData */

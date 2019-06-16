@@ -482,8 +482,9 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
 static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     BOOL tex_used = context->fixed_function_usage_map & (1u << stage);
-    DWORD mapped_stage = context->tex_unit_map[stage];
+    unsigned int mapped_stage = context_gl->tex_unit_map[stage];
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("Setting color op for stage %u.\n", stage);
@@ -500,7 +501,7 @@ static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_s
             FIXME("Attempt to enable unsupported stage!\n");
             return;
         }
-        context_active_texture(context, gl_info, mapped_stage);
+        wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage);
     }
 
     if (context->lowest_disabled_stage > 0)
@@ -578,9 +579,9 @@ static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_s
         BOOL usedBump = !!(context->texShaderBumpMap & 1u << (stage + 1));
         if (usesBump != usedBump)
         {
-            context_active_texture(context, gl_info, mapped_stage + 1);
+            wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage + 1);
             nvts_activate_dimensions(state, stage + 1, context);
-            context_active_texture(context, gl_info, mapped_stage);
+            wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage);
         }
     }
 }
@@ -603,8 +604,11 @@ static void nvrc_resultarg(struct wined3d_context *context, const struct wined3d
 
 static void nvts_texdim(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD sampler = state_id - STATE_SAMPLER(0);
-    DWORD mapped_stage = context->tex_unit_map[sampler];
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    unsigned int sampler, mapped_stage;
+
+    sampler = state_id - STATE_SAMPLER(0);
+    mapped_stage = context_gl->tex_unit_map[sampler];
 
     /* No need to enable / disable anything here for unused samplers. The tex_colorop
     * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop
@@ -622,7 +626,8 @@ static void nvts_texdim(struct wined3d_context *context, const struct wined3d_st
 static void nvts_bumpenvmat(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    DWORD mapped_stage = context->tex_unit_map[stage + 1];
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    unsigned int mapped_stage = context_gl->tex_unit_map[stage + 1];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float mat[2][2];
 
@@ -634,7 +639,7 @@ static void nvts_bumpenvmat(struct wined3d_context *context, const struct wined3
      */
     if (mapped_stage < gl_info->limits.textures)
     {
-        context_active_texture(context, gl_info, mapped_stage);
+        wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage);
 
         /* We can't just pass a pointer to the state to GL due to the
          * different matrix format (column major vs row major). */
@@ -687,8 +692,10 @@ static void nvts_enable(const struct wined3d_gl_info *gl_info, BOOL enable)
     }
 }
 
-static void nvrc_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
+static void nvrc_fragment_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
 {
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+
     caps->wined3d_caps = 0;
     caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP;
 
@@ -754,7 +761,7 @@ static void *nvrc_fragment_alloc(const struct wined3d_shader_backend_ops *shader
 }
 
 /* Context activation is done by the caller. */
-static void nvrc_fragment_free(struct wined3d_device *device) {}
+static void nvrc_fragment_free(struct wined3d_device *device, struct wined3d_context *context) {}
 
 /* Two fixed function pipeline implementations using GL_NV_register_combiners and
  * GL_NV_texture_shader. The nvts_fragment_pipeline assumes that both extensions
@@ -768,7 +775,7 @@ static BOOL nvts_color_fixup_supported(struct color_fixup_desc fixup)
     return is_identity_fixup(fixup);
 }
 
-static const struct StateEntryTemplate nvrc_fragmentstate_template[] =
+static const struct wined3d_state_entry_template nvrc_fragmentstate_template[] =
 {
     { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),        { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),        nvrc_colorop        }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_ARG1),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },

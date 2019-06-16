@@ -30,6 +30,7 @@
 
 #include "msvcrt.h"
 
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -62,24 +63,26 @@ void msvcrt_init_math(void)
 }
 
 /*********************************************************************
- *      _matherr (MSVCRT.@)
+ *      _matherr (CRTDLL.@)
  */
 int CDECL MSVCRT__matherr(struct MSVCRT__exception *e)
 {
-    int ret;
+    return 0;
+}
 
-    if (e)
-        TRACE("(%p = {%d, \"%s\", %g, %g, %g})\n", e, e->type, e->name, e->arg1, e->arg2, e->retval);
-    else
-        TRACE("(null)\n");
+
+static void math_error(int type, const char *name, double arg1, double arg2, double retval)
+{
+    TRACE("(%d, %s, %g, %g, %g)\n", type, debugstr_a(name), arg1, arg2, retval);
 
     if (MSVCRT_default_matherr_func)
     {
-        ret = MSVCRT_default_matherr_func(e);
-        if (ret) return ret;
+        struct MSVCRT__exception exception = {type, (char *)name, arg1, arg2, retval};
+
+        if (MSVCRT_default_matherr_func(&exception)) return;
     }
 
-    switch (e->type)
+    switch (type)
     {
     case _DOMAIN:
         *MSVCRT__errno() = MSVCRT_EDOM;
@@ -94,8 +97,6 @@ int CDECL MSVCRT__matherr(struct MSVCRT__exception *e)
     default:
         ERR("Unhandled math error!\n");
     }
-
-    return 0;
 }
 
 /*********************************************************************
@@ -105,12 +106,6 @@ void CDECL MSVCRT___setusermatherr(MSVCRT_matherr_func func)
 {
     MSVCRT_default_matherr_func = func;
     TRACE("new matherr handler %p\n", func);
-}
-
-static inline void math_error(int type, const char *name, double arg1, double arg2, double retval)
-{
-    struct MSVCRT__exception exception = {type, (char *)name, arg1, arg2, retval};
-    MSVCRT__matherr(&exception);
 }
 
 /*********************************************************************
@@ -163,6 +158,17 @@ float CDECL MSVCRT__nextafterf( float num, float next )
     return nextafterf( num, next );
 }
 
+/*********************************************************************
+ *      _logbf (MSVCRT.@)
+ */
+float CDECL MSVCRT__logbf( float num )
+{
+    float ret = logbf(num);
+    if (isnan(num)) math_error(_DOMAIN, "_logbf", num, 0, ret);
+    else if (!num) math_error(_SING, "_logbf", num, 0, ret);
+    return ret;
+}
+
 #endif
 #if defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
 
@@ -183,17 +189,6 @@ INT CDECL MSVCRT__isnanf( float num )
      * Do the same, as the result may be used in calculations
      */
     return isnan(num) != 0;
-}
-
-/*********************************************************************
- *      _logbf (MSVCRT.@)
- */
-float CDECL MSVCRT__logbf( float num )
-{
-    float ret = logbf(num);
-    if (isnan(num)) math_error(_DOMAIN, "_logbf", num, 0, ret);
-    else if (!num) math_error(_SING, "_logbf", num, 0, ret);
-    return ret;
 }
 
 /*********************************************************************
@@ -390,6 +385,22 @@ float CDECL MSVCRT_fabsf( float x )
 float CDECL MSVCRT_floorf( float x )
 {
   return floorf(x);
+}
+
+/*********************************************************************
+ *      fmaf (MSVCRT.@)
+ */
+float CDECL MSVCRT_fmaf( float x, float y, float z )
+{
+#ifdef HAVE_FMAF
+  float w = fmaf(x, y, z);
+#else
+  float w = x * y + z;
+#endif
+  if ((isinf(x) && y == 0) || (x == 0 && isinf(y))) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (isinf(x) && isinf(z) && x != z) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (isinf(y) && isinf(z) && y != z) *MSVCRT__errno() = MSVCRT_EDOM;
+  return w;
 }
 
 /*********************************************************************
@@ -866,6 +877,22 @@ double CDECL MSVCRT_ceil( double x )
 double CDECL MSVCRT_floor( double x )
 {
   return floor(x);
+}
+
+/*********************************************************************
+ *      fma (MSVCRT.@)
+ */
+double CDECL MSVCRT_fma( double x, double y, double z )
+{
+#ifdef HAVE_FMA
+  double w = fma(x, y, z);
+#else
+  double w = x * y + z;
+#endif
+  if ((isinf(x) && y == 0) || (x == 0 && isinf(y))) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (isinf(x) && isinf(z) && x != z) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (isinf(y) && isinf(z) && y != z) *MSVCRT__errno() = MSVCRT_EDOM;
+  return w;
 }
 
 /*********************************************************************
@@ -3069,7 +3096,10 @@ double CDECL MSVCR120_asinh(double x)
 #ifdef HAVE_ASINH
     return asinh(x);
 #else
-    if (!isfinite(x*x+1)) return log(2) + log(x);
+    if (!isfinite(x*x+1)) {
+      if (x > 0) return log(2) + log(x);
+      else return -log(2) - log(-x);
+    }
     return log(x + sqrt(x*x+1));
 #endif
 }
@@ -3276,6 +3306,44 @@ float CDECL MSVCR120_remainderf(float x, float y)
 LDOUBLE CDECL MSVCR120_remainderl(LDOUBLE x, LDOUBLE y)
 {
     return MSVCR120_remainder(x, y);
+}
+
+/*********************************************************************
+ *      remquo (MSVCR120.@)
+ */
+double CDECL MSVCR120_remquo(double x, double y, int *quo)
+{
+#ifdef HAVE_REMQUO
+    if(!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+    if(isnan(y) || y==0.0) *MSVCRT__errno() = MSVCRT_EDOM;
+    return remquo(x, y, quo);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0;
+#endif
+}
+
+/*********************************************************************
+ *      remquof (MSVCR120.@)
+ */
+float CDECL MSVCR120_remquof(float x, float y, int *quo)
+{
+#ifdef HAVE_REMQUOF
+    if(!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+    if(isnan(y) || y==0.0f) *MSVCRT__errno() = MSVCRT_EDOM;
+    return remquof(x, y, quo);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0f;
+#endif
+}
+
+/*********************************************************************
+ *      remquol (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_remquol(LDOUBLE x, LDOUBLE y, int *quo)
+{
+    return MSVCR120_remquo(x, y, quo);
 }
 
 /*********************************************************************

@@ -226,7 +226,7 @@ struct recorded_instruction
 
 struct shader_arb_ctx_priv
 {
-    char addr_reg[20];
+    char addr_reg[50];
     enum
     {
         /* plain GL_ARB_vertex_program or GL_ARB_fragment_program */
@@ -4476,6 +4476,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
         const struct wined3d_context *context, const struct wined3d_shader *shader,
         struct arb_vs_compile_args *args)
 {
+    const struct wined3d_context_gl *context_gl = wined3d_context_gl_const(context);
     const struct wined3d_device *device = shader->device;
     const struct wined3d_adapter *adapter = device->adapter;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -4518,9 +4519,9 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
             args->clip.boolclip.bools |= (1u << i);
     }
 
-    args->vertex.samplers[0] = context->tex_unit_map[WINED3D_MAX_FRAGMENT_SAMPLERS + 0];
-    args->vertex.samplers[1] = context->tex_unit_map[WINED3D_MAX_FRAGMENT_SAMPLERS + 1];
-    args->vertex.samplers[2] = context->tex_unit_map[WINED3D_MAX_FRAGMENT_SAMPLERS + 2];
+    args->vertex.samplers[0] = context_gl->tex_unit_map[WINED3D_MAX_FRAGMENT_SAMPLERS + 0];
+    args->vertex.samplers[1] = context_gl->tex_unit_map[WINED3D_MAX_FRAGMENT_SAMPLERS + 1];
+    args->vertex.samplers[2] = context_gl->tex_unit_map[WINED3D_MAX_FRAGMENT_SAMPLERS + 2];
     args->vertex.samplers[3] = 0;
 
     /* Skip if unused or local */
@@ -4798,7 +4799,7 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
     if (!(fragment_priv = fragment_pipe->alloc_private(&arb_program_shader_backend, priv)))
     {
         ERR("Failed to initialize fragment pipe.\n");
-        vertex_pipe->vp_free(device);
+        vertex_pipe->vp_free(device, NULL);
         heap_free(priv);
         return E_FAIL;
     }
@@ -4812,7 +4813,7 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
 
     priv->vertex_pipe = vertex_pipe;
     priv->fragment_pipe = fragment_pipe;
-    fragment_pipe->get_caps(&device->adapter->gl_info, &fragment_caps);
+    fragment_pipe->get_caps(device->adapter, &fragment_caps);
     priv->ffp_proj_control = fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
 
     device->vertex_priv = vertex_priv;
@@ -4836,13 +4837,13 @@ static void release_signature(struct wine_rb_entry *entry, void *context)
 }
 
 /* Context activation is done by the caller. */
-static void shader_arb_free(struct wined3d_device *device)
+static void shader_arb_free(struct wined3d_device *device, struct wined3d_context *context)
 {
     struct shader_arb_priv *priv = device->shader_priv;
 
     wine_rb_destroy(&priv->signature_tree, release_signature, NULL);
-    priv->fragment_pipe->free_private(device);
-    priv->vertex_pipe->vp_free(device);
+    priv->fragment_pipe->free_private(device, context);
+    priv->vertex_pipe->vp_free(device, context);
     heap_free(device->shader_priv);
 }
 
@@ -4862,8 +4863,10 @@ static void shader_arb_free_context_data(struct wined3d_context *context)
 
 static void shader_arb_init_context_state(struct wined3d_context *context) {}
 
-static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
+static void shader_arb_get_caps(const struct wined3d_adapter *adapter, struct shader_caps *caps)
 {
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+
     if (gl_info->supported[ARB_VERTEX_PROGRAM])
     {
         DWORD vs_consts;
@@ -5710,30 +5713,34 @@ static void *arbfp_alloc(const struct wined3d_shader_backend_ops *shader_backend
 }
 
 /* Context activation is done by the caller. */
-static void arbfp_free_ffpshader(struct wine_rb_entry *entry, void *context)
+static void arbfp_free_ffpshader(struct wine_rb_entry *entry, void *param)
 {
-    const struct wined3d_gl_info *gl_info = context;
     struct arbfp_ffp_desc *entry_arb = WINE_RB_ENTRY_VALUE(entry, struct arbfp_ffp_desc, parent.entry);
+    struct wined3d_context *context = param;
+    const struct wined3d_gl_info *gl_info;
 
+    gl_info = context->gl_info;
     GL_EXTCALL(glDeleteProgramsARB(1, &entry_arb->shader));
-    checkGLcall("glDeleteProgramsARB(1, &entry_arb->shader)");
+    checkGLcall("delete ffp program");
     heap_free(entry_arb);
 }
 
 /* Context activation is done by the caller. */
-static void arbfp_free(struct wined3d_device *device)
+static void arbfp_free(struct wined3d_device *device, struct wined3d_context *context)
 {
     struct shader_arb_priv *priv = device->fragment_priv;
 
-    wine_rb_destroy(&priv->fragment_shaders, arbfp_free_ffpshader, &device->adapter->gl_info);
+    wine_rb_destroy(&priv->fragment_shaders, arbfp_free_ffpshader, context);
     priv->use_arbfp_fixed_func = FALSE;
 
     if (device->shader_backend != &arb_program_shader_backend)
         heap_free(device->fragment_priv);
 }
 
-static void arbfp_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
+static void arbfp_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
 {
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+
     caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL
             | WINED3D_FRAGMENT_CAP_SRGB_WRITE
             | WINED3D_FRAGMENT_CAP_COLOR_KEY;
@@ -6673,7 +6680,7 @@ static void textransform(struct wined3d_context *context, const struct wined3d_s
         fragment_prog_arbfp(context, state, state_id);
 }
 
-static const struct StateEntryTemplate arbfp_fragmentstate_template[] =
+static const struct wined3d_state_entry_template arbfp_fragmentstate_template[] =
 {
     {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),              { STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),             state_texfactor_arbfp   }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),         { STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),            NULL                    }, WINED3D_GL_EXT_NONE             },
@@ -7339,11 +7346,11 @@ static GLuint gen_p8_shader(const struct wined3d_gl_info *gl_info, const struct 
 }
 
 /* Context activation is done by the caller. */
-static void upload_palette(struct wined3d_arbfp_blitter *blitter,
-        const struct wined3d_texture *texture, struct wined3d_context *context)
+static void arbfp_blitter_upload_palette(struct wined3d_arbfp_blitter *blitter,
+        const struct wined3d_texture_gl *texture_gl, struct wined3d_context_gl *context_gl)
 {
-    const struct wined3d_palette *palette = texture->swapchain ? texture->swapchain->palette : NULL;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_palette *palette = texture_gl->t.swapchain ? texture_gl->t.swapchain->palette : NULL;
+    const struct wined3d_gl_info *gl_info = context_gl->c.gl_info;
 
     if (!blitter->palette_texture)
         gl_info->gl_ops.gl.p_glGenTextures(1, &blitter->palette_texture);
@@ -7372,7 +7379,7 @@ static void upload_palette(struct wined3d_arbfp_blitter *blitter,
     }
 
     /* Switch back to unit 0 in which the 2D texture will be stored. */
-    context_active_texture(context, gl_info, 0);
+    wined3d_context_gl_active_texture(context_gl, gl_info, 0);
 }
 
 /* Context activation is done by the caller. */
@@ -7541,12 +7548,12 @@ static GLuint arbfp_gen_plain_shader(const struct wined3d_gl_info *gl_info, cons
 }
 
 /* Context activation is done by the caller. */
-static HRESULT arbfp_blit_set(struct wined3d_arbfp_blitter *blitter, struct wined3d_context *context,
+static HRESULT arbfp_blit_set(struct wined3d_arbfp_blitter *blitter, struct wined3d_context_gl *context_gl,
         const struct wined3d_texture_gl *texture_gl, unsigned int sub_resource_idx,
         const struct wined3d_color_key *color_key)
 {
+    const struct wined3d_gl_info *gl_info = context_gl->c.gl_info;
     enum complex_fixup fixup;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wine_rb_entry *entry;
     struct arbfp_blit_type type;
     struct arbfp_blit_desc *desc;
@@ -7648,7 +7655,7 @@ err_out:
     }
 
     if (fixup == COMPLEX_FIXUP_P8)
-        upload_palette(blitter, &texture_gl->t, context);
+        arbfp_blitter_upload_palette(blitter, texture_gl, context_gl);
 
     gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
     checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
@@ -7776,6 +7783,7 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
         const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_texture_gl *src_texture_gl = wined3d_texture_gl(src_texture);
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     struct wined3d_device *device = dst_texture->resource.device;
     struct wined3d_texture *staging_texture = NULL;
     struct wined3d_arbfp_blitter *arbfp_blitter;
@@ -7839,6 +7847,7 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
                 src_texture, src_sub_resource_idx, &upload_box);
 
         src_texture = staging_texture;
+        src_texture_gl = wined3d_texture_gl(src_texture);
         src_sub_resource_idx = 0;
     }
     else if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
@@ -7865,12 +7874,12 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
         wined3d_texture_load(src_texture, context, FALSE);
     }
 
-    context_apply_ffp_blit_state(context, device);
+    wined3d_context_gl_apply_ffp_blit_state(context_gl, device);
 
     if (dst_location == WINED3D_LOCATION_DRAWABLE)
     {
         d = *dst_rect;
-        wined3d_texture_translate_drawable_coords(dst_texture, context->win_handle, &d);
+        wined3d_texture_translate_drawable_coords(dst_texture, context_gl->window, &d);
         dst_rect = &d;
     }
 
@@ -7888,10 +7897,10 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
             TRACE("Destination texture %p is offscreen.\n", dst_texture);
             buffer = GL_COLOR_ATTACHMENT0;
         }
-        context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER,
+        wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_DRAW_FRAMEBUFFER,
                 &dst_texture->resource, dst_sub_resource_idx, NULL, 0, dst_location);
-        context_set_draw_buffer(context, buffer);
-        context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
+        wined3d_context_gl_set_draw_buffer(context_gl, buffer);
+        wined3d_context_gl_check_fbo_status(context_gl, GL_DRAW_FRAMEBUFFER);
         context_invalidate_state(context, STATE_FRAMEBUFFER);
     }
 
@@ -7903,7 +7912,7 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
         color_key = &alpha_test_key;
     }
 
-    arbfp_blit_set(arbfp_blitter, context, src_texture_gl, src_sub_resource_idx, color_key);
+    arbfp_blit_set(arbfp_blitter, context_gl, src_texture_gl, src_sub_resource_idx, color_key);
 
     /* Draw a textured quad */
     context_draw_textured_quad(context, src_texture_gl,

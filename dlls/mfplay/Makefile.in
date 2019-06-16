@@ -1,4 +1,6 @@
 MODULE    = mfplay.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	player.c

@@ -20,15 +20,7 @@
  */
 /* FIXME: critical sections */
 
-#define COBJMACROS
-
-#include "dshow.h"
-#include "uuids.h"
-
-#include "wine/debug.h"
-#include "wine/strmbase.h"
-
-#include <assert.h>
+#include "strmbase_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
@@ -40,7 +32,6 @@ typedef struct PassThruImpl {
     ISeekingPassThru ISeekingPassThru_iface;
     IMediaSeeking IMediaSeeking_iface;
     IMediaPosition IMediaPosition_iface;
-    BaseDispatch baseDispatch;
 
     LONG ref;
     IUnknown * outer_unk;
@@ -122,7 +113,6 @@ static ULONG WINAPI SeekInner_Release(IUnknown * iface) {
 
     if (ref == 0)
     {
-        BaseDispatch_Destroy(&This->baseDispatch);
         This->time_cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->time_cs);
         CoTaskMemFree(This);
@@ -268,7 +258,6 @@ HRESULT WINAPI PosPassThru_Construct(IUnknown *pUnkOuter, LPVOID *ppPassThru)
     fimpl->timevalid = FALSE;
     InitializeCriticalSection(&fimpl->time_cs);
     fimpl->time_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PassThruImpl.time_cs");
-    BaseDispatch_Init(&fimpl->baseDispatch, &IID_IMediaPosition);
     return S_OK;
 }
 
@@ -682,40 +671,51 @@ static ULONG WINAPI MediaPositionPassThru_Release(IMediaPosition *iface)
     return SeekOuter_Release(This);
 }
 
-static HRESULT WINAPI MediaPositionPassThru_GetTypeInfoCount(IMediaPosition *iface, UINT*pctinfo)
+static HRESULT WINAPI MediaPositionPassThru_GetTypeInfoCount(IMediaPosition *iface, UINT *count)
 {
-    PassThruImpl *This = impl_from_IMediaPosition(iface);
-
-    return BaseDispatchImpl_GetTypeInfoCount(&This->baseDispatch, pctinfo);
+    TRACE("iface %p, count %p.\n", iface, count);
+    *count = 1;
+    return S_OK;
 }
 
-static HRESULT WINAPI MediaPositionPassThru_GetTypeInfo(IMediaPosition *iface, UINT iTInfo, LCID lcid, ITypeInfo**ppTInfo)
+static HRESULT WINAPI MediaPositionPassThru_GetTypeInfo(IMediaPosition *iface, UINT index,
+        LCID lcid, ITypeInfo **typeinfo)
 {
-    PassThruImpl *This = impl_from_IMediaPosition(iface);
-
-    return BaseDispatchImpl_GetTypeInfo(&This->baseDispatch, &IID_NULL, iTInfo, lcid, ppTInfo);
+    TRACE("iface %p, index %u, lcid %#x, typeinfo %p.\n", iface, index, lcid, typeinfo);
+    return strmbase_get_typeinfo(IMediaPosition_tid, typeinfo);
 }
 
-static HRESULT WINAPI MediaPositionPassThru_GetIDsOfNames(IMediaPosition *iface, REFIID riid, LPOLESTR*rgszNames, UINT cNames, LCID lcid, DISPID*rgDispId)
+static HRESULT WINAPI MediaPositionPassThru_GetIDsOfNames(IMediaPosition *iface, REFIID iid,
+        LPOLESTR *names, UINT count, LCID lcid, DISPID *ids)
 {
-    PassThruImpl *This = impl_from_IMediaPosition(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
-    return BaseDispatchImpl_GetIDsOfNames(&This->baseDispatch, riid, rgszNames, cNames, lcid, rgDispId);
-}
+    TRACE("iface %p, iid %s, names %p, count %u, lcid %#x, ids %p.\n",
+            iface, debugstr_guid(iid), names, count, lcid, ids);
 
-static HRESULT WINAPI MediaPositionPassThru_Invoke(IMediaPosition *iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS*pDispParams, VARIANT*pVarResult, EXCEPINFO*pExepInfo, UINT*puArgErr)
-{
-    PassThruImpl *This = impl_from_IMediaPosition(iface);
-    HRESULT hr = S_OK;
-    ITypeInfo *pTypeInfo;
-
-    hr = BaseDispatchImpl_GetTypeInfo(&This->baseDispatch, riid, 1, lcid, &pTypeInfo);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IMediaPosition_tid, &typeinfo)))
     {
-        hr = ITypeInfo_Invoke(pTypeInfo, &This->IMediaPosition_iface, dispIdMember, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
-        ITypeInfo_Release(pTypeInfo);
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, ids);
+        ITypeInfo_Release(typeinfo);
     }
+    return hr;
+}
 
+static HRESULT WINAPI MediaPositionPassThru_Invoke(IMediaPosition *iface, DISPID id, REFIID iid, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *error_arg)
+{
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("iface %p, id %d, iid %s, lcid %#x, flags %#x, params %p, result %p, excepinfo %p, error_arg %p.\n",
+            iface, id, debugstr_guid(iid), lcid, flags, params, result, excepinfo, error_arg);
+
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IMediaPosition_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, id, flags, params, result, excepinfo, error_arg);
+        ITypeInfo_Release(typeinfo);
+    }
     return hr;
 }
 

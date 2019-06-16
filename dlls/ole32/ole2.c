@@ -2797,6 +2797,25 @@ static inline HRESULT PROPVARIANT_ValidateType(VARTYPE vt)
     case VT_FILETIME|VT_VECTOR:
     case VT_CF|VT_VECTOR:
     case VT_CLSID|VT_VECTOR:
+    case VT_ARRAY|VT_I1:
+    case VT_ARRAY|VT_UI1:
+    case VT_ARRAY|VT_I2:
+    case VT_ARRAY|VT_UI2:
+    case VT_ARRAY|VT_I4:
+    case VT_ARRAY|VT_UI4:
+    case VT_ARRAY|VT_INT:
+    case VT_ARRAY|VT_UINT:
+    case VT_ARRAY|VT_R4:
+    case VT_ARRAY|VT_R8:
+    case VT_ARRAY|VT_CY:
+    case VT_ARRAY|VT_DATE:
+    case VT_ARRAY|VT_BSTR:
+    case VT_ARRAY|VT_BOOL:
+    case VT_ARRAY|VT_DECIMAL:
+    case VT_ARRAY|VT_DISPATCH:
+    case VT_ARRAY|VT_UNKNOWN:
+    case VT_ARRAY|VT_ERROR:
+    case VT_ARRAY|VT_VARIANT:
         return S_OK;
     }
     WARN("Bad type %d\n", vt);
@@ -2908,6 +2927,8 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
                 CoTaskMemFree(pvar->u.capropvar.pElems);
             }
         }
+        else if (pvar->vt & VT_ARRAY)
+            hr = SafeArrayDestroy(pvar->u.parray);
         else
         {
             WARN("Invalid/unsupported type %d\n", pvar->vt);
@@ -3087,6 +3108,11 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
             }
             else
                 CopyMemory(pvarDest->u.capropvar.pElems, pvarSrc->u.capropvar.pElems, len * elemSize);
+        }
+        else if (pvarSrc->vt & VT_ARRAY)
+        {
+            pvarDest->u.uhVal.QuadPart = 0;
+            return SafeArrayCopy(pvarSrc->u.parray, &pvarDest->u.parray);
         }
         else
             WARN("Invalid/unsupported type %d\n", pvarSrc->vt);

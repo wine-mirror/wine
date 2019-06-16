@@ -31,8 +31,6 @@ my @dll_groups =
   "msvcirt",
   "msvcrt40",
   "msvcrt20",
-  "msvcrtd",
-  "crtdll",
  ],
  [
   "msvcrt",
@@ -153,6 +151,14 @@ my @dll_groups =
  [
   "authz",
   "ext-ms-win-authz-context-l1-1-0",
+ ],
+ [
+  "comctl32",
+  "ext-ms-win-shell-comctl32-init-l1-1-0",
+ ],
+ [
+  "comdlg32",
+  "ext-ms-win-shell-comdlg32-l1-1-0",
  ],
  [
   "credui",
@@ -346,6 +352,7 @@ my @dll_groups =
   "api-ms-win-downlevel-shell32-l1-1-0",
   "api-ms-win-shell-shellcom-l1-1-0",
   "api-ms-win-shell-shellfolders-l1-1-0",
+  "ext-ms-win-shell-shell32-l1-2-0",
  ],
  [
   "shlwapi",

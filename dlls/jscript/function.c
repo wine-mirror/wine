@@ -303,7 +303,7 @@ static HRESULT function_to_string(FunctionInstance *function, jsstr_t **ret)
         DWORD name_len;
         WCHAR *ptr;
 
-        name_len = strlenW(function->name);
+        name_len = lstrlenW(function->name);
         str = jsstr_alloc_buf(ARRAY_SIZE(native_prefixW) + ARRAY_SIZE(native_suffixW) + name_len, &ptr);
         if(!str)
             return E_OUTOFMEMORY;

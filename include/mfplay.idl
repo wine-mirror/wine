@@ -1,0 +1,202 @@
+/*
+ * Copyright 2019 Nikolay Sivov for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "unknwn.idl";
+import "propsys.idl";
+import "evr.idl";
+
+typedef [v1_enum] enum _MFP_CREATION_OPTIONS
+{
+    MFP_OPTION_NONE = 0,
+    MFP_OPTION_FREE_THREADED_CALLBACK = 0x1,
+    MFP_OPTION_NO_MMCSS = 0x2,
+    MFP_OPTION_NO_REMOTE_DESKTOP_OPTIMIZATION = 0x4,
+} MFP_CREATION_OPTIONS;
+
+typedef [v1_enum] enum MFP_MEDIAPLAYER_STATE
+{
+    MFP_MEDIAPLAYER_STATE_EMPTY = 0,
+    MFP_MEDIAPLAYER_STATE_STOPPED,
+    MFP_MEDIAPLAYER_STATE_PLAYING,
+    MFP_MEDIAPLAYER_STATE_PAUSED,
+    MFP_MEDIAPLAYER_STATE_SHUTDOWN,
+} MFP_MEDIAPLAYER_STATE;
+
+typedef enum MFP_EVENT_TYPE
+{
+    MFP_EVENT_TYPE_PLAY = 0,
+    MFP_EVENT_TYPE_PAUSE,
+    MFP_EVENT_TYPE_STOP,
+    MFP_EVENT_TYPE_POSITION_SET,
+    MFP_EVENT_TYPE_RATE_SET,
+    MFP_EVENT_TYPE_MEDIAITEM_CREATED,
+    MFP_EVENT_TYPE_MEDIAITEM_SET,
+    MFP_EVENT_TYPE_FRAME_STEP,
+    MFP_EVENT_TYPE_MEDIAITEM_CLEARED,
+    MFP_EVENT_TYPE_MF,
+    MFP_EVENT_TYPE_ERROR,
+    MFP_EVENT_TYPE_PLAYBACK_ENDED,
+    MFP_EVENT_TYPE_ACQUIRE_USER_CREDENTIAL,
+} MFP_EVENT_TYPE;
+
+interface IMFPMediaPlayer;
+interface IMFPMediaItem;
+
+typedef struct MFP_EVENT_HEADER
+{
+    MFP_EVENT_TYPE eEventType;
+    HRESULT hrEvent;
+    IMFPMediaPlayer *pMediaPlayer;
+    MFP_MEDIAPLAYER_STATE eState;
+    IPropertyStore *pPropertyStore;
+} MFP_EVENT_HEADER;
+
+[
+    object,
+    uuid(766c8ffb-5fdb-4fea-a28d-b912996f51bd),
+    local,
+]
+interface IMFPMediaPlayerCallback : IUnknown
+{
+    void OnMediaPlayerEvent([in] MFP_EVENT_HEADER *event_header);
+}
+
+[
+    object,
+    uuid(a714590a-58af-430a-85bf-44f5ec838d85),
+    local,
+]
+interface IMFPMediaPlayer : IUnknown
+{
+    HRESULT Play();
+
+    HRESULT Pause();
+
+    HRESULT Stop();
+
+    HRESULT FrameStep();
+
+    HRESULT SetPosition(
+        [in] REFGUID position_type,
+        [in] const PROPVARIANT *position);
+
+    HRESULT GetPosition(
+        [in] REFGUID position_type,
+        [out] PROPVARIANT *position);
+
+    HRESULT GetDuration(
+        [in] REFGUID position_type,
+        [out] PROPVARIANT *duration);
+
+    HRESULT SetRate(
+        [in] float rate);
+
+    HRESULT GetRate(
+        [out] float *rate);
+
+    HRESULT GetSupportedRates(
+        [in] BOOL forward,
+        [out] float *slowest_rate,
+        [out] float *fastest_rate);
+
+    HRESULT GetState(
+        [out] MFP_MEDIAPLAYER_STATE *state);
+
+    HRESULT CreateMediaItemFromURL(
+        [in] const WCHAR *url,
+        [in] BOOL sync,
+        [in] DWORD_PTR user_data,
+        [out] IMFPMediaItem **item);
+
+    HRESULT CreateMediaItemFromObject(
+        [in] IUnknown *object,
+        [in] BOOL sync,
+        [in] DWORD_PTR user_data,
+        [out] IMFPMediaItem **item);
+
+    HRESULT SetMediaItem(
+        [in] IMFPMediaItem *item);
+
+    HRESULT ClearMediaItem();
+
+    HRESULT GetMediaItem(
+        [out] IMFPMediaItem **item);
+
+    HRESULT GetVolume(
+        [out] float *volume);
+
+    HRESULT SetVolume(
+        [in] float volume);
+
+    HRESULT GetBalance(
+        [out] float *balance);
+
+    HRESULT SetBalance(
+        [in] float balance);
+
+    HRESULT GetMute(
+        [out] BOOL *mute);
+
+    HRESULT SetMute(
+        [in] BOOL mute);
+
+    HRESULT GetNativeVideoSize(
+        [out] SIZE *video,
+        [out] SIZE *arvideo);
+
+    HRESULT GetIdealVideoSize(
+        [out] SIZE *min_size,
+        [out] SIZE *max_size);
+
+    HRESULT SetVideoSourceRect(
+        [in] MFVideoNormalizedRect const *rect);
+
+    HRESULT GetVideoSourceRect(
+        [out] MFVideoNormalizedRect *rect);
+
+    HRESULT SetAspectRatioMode(
+        [in] DWORD mode);
+
+    HRESULT GetAspectRatioMode(
+        [out] DWORD *mode);
+
+    HRESULT GetVideoWindow(
+        [out] HWND *hwnd);
+
+    HRESULT UpdateVideo();
+
+    HRESULT SetBorderColor(
+        [in] COLORREF color);
+
+    HRESULT GetBorderColor(
+        [out] COLORREF *color);
+
+    HRESULT InsertEffect(
+        [in] IUnknown *effect,
+        [in] BOOL optional);
+
+    HRESULT RemoveEffect(
+        [in] IUnknown *effect);
+
+    HRESULT RemoveAllEffects();
+
+    HRESULT Shutdown();
+}
+
+cpp_quote("HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_CREATION_OPTIONS options, ")
+cpp_quote("        IMFPMediaPlayerCallback *callback, HWND hwnd, IMFPMediaPlayer **player);")

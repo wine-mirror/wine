@@ -16,14 +16,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #include "msvcp90.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "wine/debug.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 #define CLASS_IS_SIMPLE_TYPE          1
@@ -956,12 +956,61 @@ typedef struct
     int *ref; /* not binary compatible with native */
 } exception_ptr;
 
+/*********************************************************************
+ * ?__ExceptionPtrCreate@@YAXPAX@Z
+ * ?__ExceptionPtrCreate@@YAXPEAX@Z
+ */
 void __cdecl __ExceptionPtrCreate(exception_ptr *ep)
 {
     TRACE("(%p)\n", ep);
 
     ep->rec = NULL;
     ep->ref = NULL;
+}
+
+#if defined(__i386__) && !defined(__MINGW32__)
+extern void call_dtor(const cxx_exception_type *type, void *func, void *object);
+
+__ASM_GLOBAL_FUNC( call_dtor,
+                   "movl 12(%esp),%ecx\n\t"
+                   "call *8(%esp)\n\t"
+                   "ret" );
+#elif __x86_64__
+static inline void call_dtor(const cxx_exception_type *type, unsigned int dtor, void *object)
+{
+    char *base = RtlPcToFileHeader((void*)type, (void**)&base);
+    void (__cdecl *func)(void*) = (void*)(base + dtor);
+    func(object);
+}
+#else
+#define call_dtor(type, func, object) ((void (__thiscall*)(void*))(func))(object)
+#endif
+
+/*********************************************************************
+ * ?__ExceptionPtrDestroy@@YAXPAX@Z
+ * ?__ExceptionPtrDestroy@@YAXPEAX@Z
+ */
+void __cdecl __ExceptionPtrDestroy(exception_ptr *ep)
+{
+    TRACE("(%p)\n", ep);
+
+    if (!ep->rec)
+        return;
+
+    if (!InterlockedDecrement(ep->ref))
+    {
+        if (ep->rec->ExceptionCode == CXX_EXCEPTION)
+        {
+            const cxx_exception_type *type = (void*)ep->rec->ExceptionInformation[2];
+            void *obj = (void*)ep->rec->ExceptionInformation[1];
+
+            if (type && type->destructor) call_dtor(type, type->destructor, obj);
+            HeapFree(GetProcessHeap(), 0, obj);
+        }
+
+        HeapFree(GetProcessHeap(), 0, ep->rec);
+        HeapFree(GetProcessHeap(), 0, ep->ref);
+    }
 }
 #endif
 

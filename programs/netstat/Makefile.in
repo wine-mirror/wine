@@ -1,6 +1,7 @@
 MODULE    = netstat.exe
-APPMODE   = -mconsole -municode
 IMPORTS   = iphlpapi user32 ws2_32
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = netstat.c
 

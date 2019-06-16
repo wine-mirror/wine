@@ -73,7 +73,7 @@ msgstr "Informoj pri Helpo"
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
 #: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
-#: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
+#: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
@@ -87,7 +87,7 @@ msgstr "La jenaj informoj povas uziĝi por atingi teknikan helpon por %s:"
 msgid "Publisher:"
 msgstr "Eldonisto:"
 
-#: appwiz.rc:81 winefile.rc:166
+#: appwiz.rc:81 winefile.rc:165
 msgid "Version:"
 msgstr "Eldono:"
 
@@ -149,8 +149,8 @@ msgstr "&Instali"
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
 #: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
 msgstr "Rezigni"
@@ -199,7 +199,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ne specifita"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
 msgid "Name"
 msgstr "Nomo"
 
@@ -320,7 +320,7 @@ msgstr ""
 msgid "hours"
 msgstr ""
 
-#: comctl32.rc:68 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:156
 msgid "Properties for %s"
 msgstr "Ecoj laŭ %s"
 
@@ -463,7 +463,7 @@ msgid "Dri&ves:"
 msgstr "&Aparatoj:"
 
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
-#: winefile.rc:173
+#: winefile.rc:172
 msgid "&Read Only"
 msgstr "Nur &legebla"
 
@@ -715,7 +715,7 @@ msgstr "&Ecoj"
 msgid "Print to fi&le"
 msgstr "Eligi al &dosiero"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "&Nomo:"
 
@@ -2924,7 +2924,7 @@ msgstr "Loko"
 msgid "Select a certificate"
 msgstr "&Elekti etosan dosieron"
 
-#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
 msgstr "Ne jam funkcias"
 
@@ -3386,7 +3386,7 @@ msgstr ""
 msgid "Delete"
 msgstr "Forigi"
 
-#: inetcpl.rc:90 winefile.rc:115
+#: inetcpl.rc:90 winefile.rc:114
 msgid "Security"
 msgstr ""
 
@@ -4098,7 +4098,7 @@ msgstr ""
 msgid "Insufficient buffer.\n"
 msgstr "Nesufiĉa bufro.\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr ""
 
@@ -4893,7 +4893,7 @@ msgid "Too many links.\n"
 msgstr ""
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr ""
 
 #: winerror.mc:1483
@@ -5672,7 +5672,7 @@ msgstr "Klaso estas neekzistanta.\n"
 msgid "Class has open windows.\n"
 msgstr "Klaso havas malfermitajn fenestrojn.\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr ""
 
@@ -6757,6 +6757,492 @@ msgstr ""
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr ""
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr ""
+
+# FIXME: Invalid formatting directive
+#: mferror.mc:599
+#, fuzzy
+msgid "Sink has not been finalized.\n"
+msgstr "Mi ne trovis la objektan UUID-on %s.\n"
+
+#: mferror.mc:32
+msgid "Media Foundation platform is not initialized.\n"
+msgstr ""
+
+#: mferror.mc:39
+msgid "Buffer is too small.\n"
+msgstr ""
+
+#: mferror.mc:46
+#, fuzzy
+#| msgid "Invalid query syntax.\n"
+msgid "Invalid request.\n"
+msgstr "Nevalida menda sintakso.\n"
+
+#: mferror.mc:53
+#, fuzzy
+#| msgid "Invalid share name.\n"
+msgid "Invalid stream number.\n"
+msgstr "Nevalida nomo de kunuzata aparato.\n"
+
+#: mferror.mc:60
+#, fuzzy
+#| msgid "Invalid data type.\n"
+msgid "Invalid media type.\n"
+msgstr "Nevalida datumtipo.\n"
+
+#: mferror.mc:67
+msgid "No more input is accepted.\n"
+msgstr ""
+
+# FIXME: Invalid formatting directive
+#: mferror.mc:74
+#, fuzzy
+msgid "Object is not initialized.\n"
+msgstr "Mi ne trovis la objektan UUID-on %s.\n"
+
+#: mferror.mc:81
+msgid "Representation is not supported.\n"
+msgstr ""
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr ""
+
+#: mferror.mc:95
+msgid "Unsupported service.\n"
+msgstr ""
+
+#: mferror.mc:102
+msgid "Unexpected error.\n"
+msgstr ""
+
+#: mferror.mc:116
+#, fuzzy
+#| msgid "Invalid data type.\n"
+msgid "Invalid type.\n"
+msgstr "Nevalida datumtipo.\n"
+
+#: mferror.mc:123
+#, fuzzy
+#| msgid "Invalid number format."
+msgid "Invalid file format.\n"
+msgstr "Malĝusta nombra formato."
+
+#: mferror.mc:137
+#, fuzzy
+#| msgid "Invalid printer state.\n"
+msgid "Invalid timestamp.\n"
+msgstr "Nevalida printila stato.\n"
+
+#: mferror.mc:144
+msgid "Unsupported scheme.\n"
+msgstr ""
+
+#: mferror.mc:151
+msgid "Unsupported bytestream type.\n"
+msgstr ""
+
+#: mferror.mc:158
+msgid "Unsupported time format.\n"
+msgstr ""
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:179
+#, fuzzy
+#| msgid "Invalid share name.\n"
+msgid "Invalid stream data.\n"
+msgstr "Nevalida nomo de kunuzata aparato.\n"
+
+#: mferror.mc:186
+#, fuzzy
+#| msgid "Name service unavailable.\n"
+msgid "Realtime support is not available.\n"
+msgstr "Noma servo ne disponeblas.\n"
+
+#: mferror.mc:193
+msgid "Unsupported rate.\n"
+msgstr ""
+
+#: mferror.mc:200
+msgid "Unsupported thinning.\n"
+msgstr ""
+
+#: mferror.mc:207
+msgid "Reversing is not supported.\n"
+msgstr ""
+
+#: mferror.mc:214
+msgid "Unsupported rate transition.\n"
+msgstr ""
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+# FIXME: Invalid formatting directive
+#: mferror.mc:228
+#, fuzzy
+msgid "Object or value wasn't found.\n"
+msgstr "Mi ne trovis la objektan UUID-on %s.\n"
+
+#: mferror.mc:235
+#, fuzzy
+#| msgid "Name service unavailable.\n"
+msgid "Value is not available.\n"
+msgstr "Noma servo ne disponeblas.\n"
+
+#: mferror.mc:242
+#, fuzzy
+#| msgid "No site name available.\n"
+msgid "Clock is not available.\n"
+msgstr "Neniu eja nomo haveblas.\n"
+
+#: mferror.mc:263
+msgid "Multiple subscribers are not supported.\n"
+msgstr ""
+
+#: mferror.mc:270
+#, fuzzy
+#| msgid "The device door is open.\n"
+msgid "The timer was orphaned.\n"
+msgstr "La printila pordo estas malfermita.\n"
+
+#: mferror.mc:277
+msgid "State transition is pending.\n"
+msgstr ""
+
+#: mferror.mc:284
+msgid "Unsupported state transition.\n"
+msgstr ""
+
+#: mferror.mc:291
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "Unrecoverable error occurred.\n"
+msgstr "Okazis printila eraro."
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr ""
+
+#: mferror.mc:305
+msgid "Sample is not writable.\n"
+msgstr ""
+
+#: mferror.mc:312
+#, fuzzy
+#| msgid "Connection invalid.\n"
+msgid "Key is invalid.\n"
+msgstr "Konekto nevalida.\n"
+
+#: mferror.mc:319
+msgid "Bad startup version.\n"
+msgstr ""
+
+#: mferror.mc:326
+#, fuzzy
+#| msgid "Support Information"
+msgid "Unsupported caption.\n"
+msgstr "Informoj pri Helpo"
+
+#: mferror.mc:333
+#, fuzzy
+#| msgid "Invalid version option.\n"
+msgid "Invalid position.\n"
+msgstr "Nevalida eldono-elekto.\n"
+
+#: mferror.mc:340
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Attribute is not found.\n"
+msgstr "Dosiero ne estis trovita.\n"
+
+#: mferror.mc:347
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property type is not allowed.\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:354
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property type is not supported.\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:361
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property is empty.\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:368
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property is not empty.\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:375
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Vector property is not allowed.\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr ""
+
+#: mferror.mc:389
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Operation was cancelled.\n"
+msgstr "Operacio nuligita de uzanto.\n"
+
+#: mferror.mc:396
+msgid "Bytestream is not seekable.\n"
+msgstr ""
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr ""
+
+#: mferror.mc:410
+#, fuzzy
+#| msgid "Cannot impersonate.\n"
+msgid "Cannot parse bytestream.\n"
+msgstr "Ne eblas trompi.\n"
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+
+#: mferror.mc:424
+#, fuzzy
+#| msgid "Unknown interface.\n"
+msgid "Unknown bytestream length.\n"
+msgstr "Nekonata interfaco.\n"
+
+#: mferror.mc:431
+#, fuzzy
+#| msgid "Invalid query syntax.\n"
+msgid "Invalid work queue index.\n"
+msgstr "Nevalida menda sintakso.\n"
+
+#: mferror.mc:438
+#, fuzzy
+#| msgid "No more data available.\n"
+msgid "No events available.\n"
+msgstr "Neniuj pliaj datumoj haveblas.\n"
+
+#: mferror.mc:445
+#, fuzzy
+#| msgid "Invalid data type.\n"
+msgid "Invalid media source state transition.\n"
+msgstr "Nevalida datumtipo.\n"
+
+#: mferror.mc:452
+msgid "End of media stream has been reached.\n"
+msgstr ""
+
+#: mferror.mc:459
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:466
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Media stream has no duration set.\n"
+msgstr "La aparato ne estas konektita.\n"
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid.\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property wasn't found.\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property is read-only.\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:494
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property is not allowed.\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Media source is not started.\n"
+msgstr "La aparato ne estas konektita.\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Support Information"
+msgid "Unsupported media format.\n"
+msgstr "Informoj pri Helpo"
+
+#: mferror.mc:515
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Media source is in wrong state.\n"
+msgstr "La aparato ne estas konektita.\n"
+
+#: mferror.mc:522
+msgid "No media streams were selected.\n"
+msgstr ""
+
+#: mferror.mc:529
+#, fuzzy
+#| msgid "Support Information"
+msgid "Unsupported media source characteristics.\n"
+msgstr "Informoj pri Helpo"
+
+#: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr ""
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr ""
+
+#: mferror.mc:550
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "La aparato ne estas konektita.\n"
+
+#: mferror.mc:557
+#, fuzzy
+#| msgid "File already exists.\n"
+msgid "Stream sink already exists.\n"
+msgstr "Dosiero jam ekzistas.\n"
+
+#: mferror.mc:564
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Sample allocation was canceled.\n"
+msgstr "Operacio nuligita de uzanto.\n"
+
+#: mferror.mc:571
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Sample allocator is empty.\n"
+msgstr "Ecaro ne estis trovita.\n"
+
+#: mferror.mc:578
+#, fuzzy
+#| msgid "File already exists.\n"
+msgid "Sink was already stopped.\n"
+msgstr "Dosiero jam ekzistas.\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr ""
+
+#: mferror.mc:592
+msgid "No streams were selected for the sink.\n"
+msgstr ""
+
+#: mferror.mc:606
+msgid "Metadata was too long.\n"
+msgstr ""
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr ""
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr ""
+
+#: mferror.mc:627
+#, fuzzy
+#| msgid "Connection invalid.\n"
+msgid "Optional node is invalid.\n"
+msgstr "Konekto nevalida.\n"
+
+#: mferror.mc:634
+#, fuzzy
+#| msgid "Cannot find the printer."
+msgid "Cannot find decryptor.\n"
+msgstr "Mi ne povas trovi la printilon."
+
+#: mferror.mc:641
+#, fuzzy
+#| msgid "Module not found.\n"
+msgid "Codec was not found.\n"
+msgstr "Modulo ne estis trovita.\n"
+
+#: mferror.mc:648
+msgid "Cannot connect topology nodes.\n"
+msgstr ""
+
+#: mferror.mc:655
+msgid "Topology request is not supported.\n"
+msgstr ""
+
+#: mferror.mc:662
+msgid "Invalid topology time attributes.\n"
+msgstr ""
+
+#: mferror.mc:669
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:676
+#, fuzzy
+#| msgid "Installation source is missing.\n"
+msgid "Presentation descriptor is missing.\n"
+msgstr "instala fonto mankas.\n"
+
+#: mferror.mc:683
+#, fuzzy
+#| msgid "Installation source is missing.\n"
+msgid "Stream descriptor is missing.\n"
+msgstr "instala fonto mankas.\n"
+
+#: mferror.mc:690
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Stream descriptor is not selected.\n"
+msgstr "La aparato ne estas konektita.\n"
+
+#: mferror.mc:697
+#, fuzzy
+#| msgid "Installation source is missing.\n"
+msgid "Source is missing.\n"
+msgstr "instala fonto mankas.\n"
+
+#: mferror.mc:704
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:711
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:718
+#, fuzzy
+#| msgid "File already exists.\n"
+msgid "Clock state was already set.\n"
+msgstr "Dosiero jam ekzistas.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8569,7 +9055,7 @@ msgid "&Open:"
 msgstr "&Malfermi:"
 
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:130
+#: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Foliumi..."
 
@@ -8583,7 +9069,7 @@ msgstr "Dosiertipo"
 msgid "Location:"
 msgstr "Loko:"
 
-#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+#: shell32.rc:361 shell32.rc:394 winefile.rc:169
 msgid "Size:"
 msgstr "Grando:"
 
@@ -8599,11 +9085,11 @@ msgstr "Kreado malsukcesis.\n"
 msgid "Attributes:"
 msgstr "&Atributoj:"
 
-#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+#: shell32.rc:371 shell32.rc:408 winefile.rc:173
 msgid "H&idden"
 msgstr ""
 
-#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+#: shell32.rc:372 shell32.rc:409 winefile.rc:174
 msgid "&Archive"
 msgstr ""
 
@@ -8629,7 +9115,7 @@ msgstr "Modifita"
 msgid "Last accessed:"
 msgstr ""
 
-#: shell32.rc:138 shell32.rc:142 winefile.rc:108
+#: shell32.rc:138 shell32.rc:142 winefile.rc:107
 msgid "Size"
 msgstr "Grando"
 
@@ -8641,7 +9127,7 @@ msgstr "Tipo"
 msgid "Modified"
 msgstr "Modifita"
 
-#: shell32.rc:141 winefile.rc:172 winefile.rc:114
+#: shell32.rc:141 winefile.rc:171 winefile.rc:113
 msgid "Attributes"
 msgstr "Atributoj"
 
@@ -8669,7 +9155,7 @@ msgstr "Komenca loko"
 msgid "Date deleted"
 msgstr "Dato forigita"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Labortablo"
@@ -8791,7 +9277,7 @@ msgstr "Programaj dosieroj (x86)"
 msgid "Contacts"
 msgstr "Kontaktoj"
 
-#: shell32.rc:225 winefile.rc:113
+#: shell32.rc:225 winefile.rc:112
 msgid "Links"
 msgstr "Ligiloj"
 
@@ -10516,8 +11002,8 @@ msgstr ""
 
 #: winmm.rc:128
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 
 #: winmm.rc:131
@@ -10533,7 +11019,7 @@ msgstr ""
 #: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 
 #: winmm.rc:132
@@ -11156,8 +11642,8 @@ msgid ""
 "/affinity mask Start the program with the specified affinity mask.\n"
 "/wait          Wait for the started program to finish, then exit with its\n"
 "exit code.\n"
-"/unix          Use a Unix filename and start the file like windows\n"
-"explorer.\n"
+"/unix          Use a Unix filename and start the file like Windows\n"
+"Explorer.\n"
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
@@ -12618,7 +13104,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr ""
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr ""
 
 #: progman.rc:84
@@ -14564,7 +15050,7 @@ msgstr "Wine-agordo"
 
 #: winecfg.rc:233
 msgid ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
+"Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
 
@@ -14862,7 +15348,7 @@ msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
+"it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 
 #: winecfg.rc:77
@@ -15361,67 +15847,67 @@ msgstr "&Vertikale kvadratigi\tStir+A"
 msgid "&About Wine File Manager"
 msgstr "Pri Dosiera Administrilo de Wine"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Select destination"
 msgstr ""
 
-#: winefile.rc:135
+#: winefile.rc:134
 msgid "By File Type"
 msgstr "Laŭ &Dosiertipo"
 
-#: winefile.rc:140
+#: winefile.rc:139
 msgid "File type"
 msgstr "Dosiertipo"
 
-#: winefile.rc:141
+#: winefile.rc:140
 msgid "&Directories"
 msgstr ""
 
-#: winefile.rc:143
+#: winefile.rc:142
 msgid "&Programs"
 msgstr "&Programoj"
 
-#: winefile.rc:145
+#: winefile.rc:144
 msgid "Docu&ments"
 msgstr "Doku&mentoj"
 
-#: winefile.rc:147
+#: winefile.rc:146
 msgid "&Other files"
 msgstr ""
 
-#: winefile.rc:149
+#: winefile.rc:148
 msgid "Show Hidden/&System Files"
 msgstr ""
 
-#: winefile.rc:160
+#: winefile.rc:159
 msgid "&File Name:"
 msgstr "&Dosiernomo:"
 
-#: winefile.rc:162
+#: winefile.rc:161
 msgid "Full &Path:"
 msgstr ""
 
-#: winefile.rc:164
+#: winefile.rc:163
 msgid "Last Change:"
 msgstr ""
 
-#: winefile.rc:168
+#: winefile.rc:167
 msgid "Cop&yright:"
 msgstr "Kop&irajto:"
 
-#: winefile.rc:176
+#: winefile.rc:175
 msgid "&System"
 msgstr "&Sistemo"
 
-#: winefile.rc:177
+#: winefile.rc:176
 msgid "&Compressed"
 msgstr ""
 
-#: winefile.rc:178
+#: winefile.rc:177
 msgid "Version information"
 msgstr "Eldonaj informoj"
 
-#: winefile.rc:194
+#: winefile.rc:193
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr ""
@@ -15442,35 +15928,31 @@ msgstr ""
 msgid "root fs"
 msgstr ""
 
-#: winefile.rc:99
-msgid "unixfs"
-msgstr ""
-
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Shell"
 msgstr ""
 
-#: winefile.rc:109
+#: winefile.rc:108
 #, fuzzy
 #| msgid "Creation failed.\n"
 msgid "Creation date"
 msgstr "Kreado malsukcesis.\n"
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Access date"
 msgstr ""
 
-#: winefile.rc:111
+#: winefile.rc:110
 #, fuzzy
 #| msgid "Certification Path"
 msgid "Modification date"
 msgstr "&Atestila vojo"
 
-#: winefile.rc:112
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr ""
 
@@ -16149,7 +16631,7 @@ msgid ""
 "\tmore files.\n"
 "[/S]  Copy directories and subdirectories.\n"
 "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-"[/Q]  Do not list names during copy, that is be quiet.\n"
+"[/Q]  Do not list names during copy; that is, be quiet.\n"
 "[/F]  Show full source and destination names during copy.\n"
 "[/L]  Simulate operation, showing names which would be copied.\n"
 "[/W]  Prompts before beginning the copy operation.\n"
@@ -16159,13 +16641,13 @@ msgid ""
 "[/P]  Prompts on each source file before copying.\n"
 "[/N]  Copy using short names.\n"
 "[/U]  Copy only files which already exist in destination.\n"
-"[/R]  Overwrite any read only files.\n"
+"[/R]  Overwrite any read-only files.\n"
 "[/H]  Include hidden and system files in the copy.\n"
 "[/C]  Continue even if an error occurs during the copy.\n"
 "[/A]  Only copy files with archive attribute set.\n"
 "[/M]  Only copy files with archive attribute set, removes the\n"
 "\tarchive attribute.\n"
-"[/K]  Copy file attributes, without this attributes are not preserved.\n"
+"[/K]  Copy file attributes; without this, attributes are not preserved.\n"
 "[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
 "\t\tIf no date is supplied, only copy if destination is older\n"
 "\t\tthan source.\n"

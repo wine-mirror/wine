@@ -860,8 +860,26 @@ static inline void *init_handler( const ucontext_t *sigcontext, WORD *fs, WORD *
 static inline void save_fpu( CONTEXT *context )
 {
 #ifdef __GNUC__
+    struct
+    {
+        DWORD ControlWord;
+        DWORD StatusWord;
+        DWORD TagWord;
+        DWORD ErrorOffset;
+        DWORD ErrorSelector;
+        DWORD DataOffset;
+        DWORD DataSelector;
+    }
+    float_status;
+
     context->ContextFlags |= CONTEXT_FLOATING_POINT;
     __asm__ __volatile__( "fnsave %0; fwait" : "=m" (context->FloatSave) );
+
+    /* Reset unmasked exceptions status to avoid firing an exception. */
+    memcpy(&float_status, &context->FloatSave, sizeof(float_status));
+    float_status.StatusWord &= float_status.ControlWord | 0xffffff80;
+
+    __asm__ __volatile__( "fldenv %0" : : "m" (float_status) );
 #endif
 }
 
@@ -2294,25 +2312,25 @@ static void ldt_unlock(void)
  */
 NTSTATUS signal_alloc_thread( TEB **teb )
 {
-    static size_t sigstack_zero_bits;
+    static size_t sigstack_alignment;
     struct x86_thread_data *thread_data;
     SIZE_T size;
     void *addr = NULL;
     NTSTATUS status;
 
-    if (!sigstack_zero_bits)
+    if (!sigstack_alignment)
     {
         size_t min_size = teb_size + max( MINSIGSTKSZ, 8192 );
         /* find the first power of two not smaller than min_size */
-        sigstack_zero_bits = 12;
-        while ((1u << sigstack_zero_bits) < min_size) sigstack_zero_bits++;
-        signal_stack_mask = (1 << sigstack_zero_bits) - 1;
-        signal_stack_size = (1 << sigstack_zero_bits) - teb_size;
+        sigstack_alignment = 12;
+        while ((1u << sigstack_alignment) < min_size) sigstack_alignment++;
+        signal_stack_mask = (1 << sigstack_alignment) - 1;
+        signal_stack_size = (1 << sigstack_alignment) - teb_size;
     }
 
     size = signal_stack_mask + 1;
-    if (!(status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr, sigstack_zero_bits,
-                                            &size, MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE )))
+    if (!(status = virtual_alloc_aligned( &addr, 0, &size, MEM_COMMIT | MEM_TOP_DOWN,
+                                          PAGE_READWRITE, sigstack_alignment )))
     {
         *teb = addr;
         (*teb)->Tib.Self = &(*teb)->Tib;
@@ -2500,7 +2518,7 @@ __ASM_STDCALL_FUNC( RtlUnwind, 16,
                     "pushl %eax\n\t"
                     "leal 4(%esp),%eax\n\t"          /* context */
                     "xchgl %eax,(%esp)\n\t"
-                    "call " __ASM_NAME("RtlCaptureContext") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("RtlCaptureContext",4) "\n\t"
                     "leal 24(%ebp),%eax\n\t"
                     "movl %eax,0xc4(%esp)\n\t"       /* context->Esp */
                     "pushl %esp\n\t"
@@ -2508,7 +2526,7 @@ __ASM_STDCALL_FUNC( RtlUnwind, 16,
                     "pushl 16(%ebp)\n\t"
                     "pushl 12(%ebp)\n\t"
                     "pushl 8(%ebp)\n\t"
-                    "call " __ASM_NAME("__regs_RtlUnwind") __ASM_STDCALL(20) "\n\t"
+                    "call " __ASM_STDCALL("__regs_RtlUnwind",20) "\n\t"
                     "leave\n\t"
                     __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
                     __ASM_CFI(".cfi_same_value %ebp\n\t")
@@ -2559,7 +2577,7 @@ __ASM_STDCALL_FUNC( RtlRaiseException, 4,
                     __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
                     "leal -0x2cc(%esp),%esp\n\t"  /* sizeof(CONTEXT) */
                     "pushl %esp\n\t"              /* context */
-                    "call " __ASM_NAME("RtlCaptureContext") __ASM_STDCALL(4) "\n\t"
+                    "call " __ASM_STDCALL("RtlCaptureContext",4) "\n\t"
                     "movl 4(%ebp),%eax\n\t"       /* return address */
                     "movl 8(%ebp),%ecx\n\t"       /* rec */
                     "movl %eax,12(%ecx)\n\t"      /* rec->ExceptionAddress */

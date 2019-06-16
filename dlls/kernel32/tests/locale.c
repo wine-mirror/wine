@@ -1975,7 +1975,7 @@ static void test_CompareStringA(void)
 
     /* \xB9 character lies between a and b */
     ret = CompareStringA(lcid, 0, "a", 1, "\xB9", 1);
-    todo_wine ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be greater than \'a\'\n");
+    ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be greater than \'a\'\n");
     ret = CompareStringA(lcid, 0, "\xB9", 1, "b", 1);
     ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be smaller than \'b\'\n");
 
@@ -2001,6 +2001,9 @@ static void test_CompareStringW(void)
 {
     static const WCHAR ABC_EE[] = {'A','B','C',0,0xEE};
     static const WCHAR ABC_FF[] = {'A','B','C',0,0xFF};
+    static const WCHAR A_ACUTE_BC[] = {0xc1,'B','C',0};
+    static const WCHAR A_ACUTE_BC_DECOMP[] = {'A',0x301,'B','C',0};
+    static const WCHAR A_NULL_BC[] = {'A',0,'B','C',0};
     WCHAR *str1, *str2;
     SYSTEM_INFO si;
     DWORD old_prot;
@@ -2038,6 +2041,35 @@ static void test_CompareStringW(void)
     ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
     ret = CompareStringW(CP_ACP, 0, ABC_FF, 5, ABC_EE, 5);
     ok(ret == CSTR_GREATER_THAN, "expected CSTR_GREATER_THAN, got %d\n", ret);
+
+    ret = CompareStringW(CP_ACP, 0, ABC_EE, 4, A_ACUTE_BC, 4);
+    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, 0, ABC_EE, 4, A_ACUTE_BC_DECOMP, 5);
+    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, 0, A_ACUTE_BC, 4, A_ACUTE_BC_DECOMP, 5);
+    ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+
+    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, ABC_EE, 3, A_ACUTE_BC, 4);
+    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, ABC_EE, 4, A_ACUTE_BC_DECOMP, 5);
+    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, A_ACUTE_BC, 4, A_ACUTE_BC_DECOMP, 5);
+    ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+
+    ret = CompareStringW(CP_ACP, 0, ABC_EE, 4, A_NULL_BC, 4);
+    ok(ret == CSTR_EQUAL, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, ABC_EE, 4, A_NULL_BC, 4);
+    ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+
+    ret = CompareStringW(CP_ACP, 0, A_NULL_BC, 4, A_ACUTE_BC, 4);
+    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, A_NULL_BC, 4, A_ACUTE_BC, 4);
+    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
+
+    ret = CompareStringW(CP_ACP, 0, A_NULL_BC, 4, A_ACUTE_BC_DECOMP, 5);
+    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, A_NULL_BC, 4, A_ACUTE_BC_DECOMP, 5);
+    todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
 }
 
 struct comparestringex_test {
@@ -2066,7 +2098,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 3 */
       "tr-TR", 0,
-      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 4 */
       "tr-TR", 0,
@@ -2083,7 +2115,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 7 */
       "tr-TR", NORM_IGNORECASE,
-      {'i',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'i',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 8 */
       "tr-TR", NORM_IGNORECASE,
@@ -2091,7 +2123,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 9 */
       "tr-TR", NORM_IGNORECASE,
-      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 10 */
       "tr-TR", NORM_IGNORECASE,
@@ -2116,7 +2148,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 15 */
       "tr-TR", NORM_LINGUISTIC_CASING,
-      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 16 */
       "tr-TR", NORM_LINGUISTIC_CASING,
@@ -2141,7 +2173,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 21 */
       "tr-TR", LINGUISTIC_IGNORECASE,
-      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 22 */
       "tr-TR", LINGUISTIC_IGNORECASE,
@@ -2158,7 +2190,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 25 */
       "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
-      {'i',0},   {0x130,0}, CSTR_EQUAL,        CSTR_LESS_THAN,    FALSE
+      {'i',0},   {0x130,0}, CSTR_EQUAL,        CSTR_LESS_THAN,    TRUE
     },
     { /* 26 */
       "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
@@ -2166,7 +2198,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 27 */
       "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
-      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
      },
     { /* 28 */
       "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
@@ -2191,7 +2223,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 33 */
       "tr-TR", NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE,
-      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 34 */
       "tr-TR", NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE,
@@ -2361,6 +2393,12 @@ static void test_LCMapStringA(void)
     ok(buf2[ret2-1] == 0, "LCMapStringA not null-terminated\n" );
     ok(ret == ret2, "lengths of sort keys must be equal\n");
     ok(!lstrcmpA(buf, buf2), "sort keys must be equal\n");
+
+    /* test we get the same length when no dest buffer is provided */
+    ret2 = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
+                       upper_case, lstrlenA(upper_case), NULL, 0);
+    ok(ret2, "LCMapStringA must succeed\n");
+    ok(ret == ret2, "lengths of sort keys must be equal (%d vs %d)\n", ret, ret2);
 
     /* test LCMAP_SORTKEY | NORM_IGNORECASE */
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY | NORM_IGNORECASE,

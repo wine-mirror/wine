@@ -50,8 +50,6 @@ typedef struct AVIDecImpl
     REFERENCE_TIME late;
 } AVIDecImpl;
 
-static const IBaseFilterVtbl AVIDec_Vtbl;
-
 static inline AVIDecImpl *impl_from_TransformFilter( TransformFilter *iface )
 {
     return CONTAINING_RECORD(iface, AVIDecImpl, tf);
@@ -392,19 +390,15 @@ static const TransformFilterFuncTable AVIDec_FuncsTable = {
     AVIDec_NotifyDrop
 };
 
-HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
+HRESULT AVIDec_create(IUnknown *outer, void **out)
 {
     HRESULT hr;
     AVIDecImpl * This;
 
-    TRACE("(%p, %p)\n", pUnkOuter, ppv);
+    *out = NULL;
 
-    *ppv = NULL;
-
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
-
-    hr = TransformFilter_Construct(&AVIDec_Vtbl, sizeof(AVIDecImpl), &CLSID_AVIDec, &AVIDec_FuncsTable, (IBaseFilter**)&This);
+    hr = strmbase_transform_create(sizeof(AVIDecImpl), outer, &CLSID_AVIDec,
+            &AVIDec_FuncsTable, (IBaseFilter **)&This);
 
     if (FAILED(hr))
         return hr;
@@ -413,26 +407,7 @@ HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This->pBihIn = NULL;
     This->pBihOut = NULL;
 
-    *ppv = &This->tf.filter.IBaseFilter_iface;
+    *out = &This->tf.filter.IUnknown_inner;
 
     return hr;
 }
-
-static const IBaseFilterVtbl AVIDec_Vtbl =
-{
-    TransformFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    TransformFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    TransformFilterImpl_Stop,
-    TransformFilterImpl_Pause,
-    TransformFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};

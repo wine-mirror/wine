@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-21 11:21-0600\n"
-"Last-Translator: Mingcong Bai <jeffbai@aosc.io>\n"
+"PO-Revision-Date: 2019-06-04 19:24-0600\n"
+"Last-Translator: Zixing Liu <liushuyu011@gmail.com>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.1.1\n"
+"X-Generator: Poedit 2.2.1\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: appwiz.rc:58
@@ -65,7 +65,7 @@ msgstr "技术支持信息"
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
 #: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
-#: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
+#: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
@@ -79,7 +79,7 @@ msgstr "%s 技术支持信息："
 msgid "Publisher:"
 msgstr "生产商："
 
-#: appwiz.rc:81 winefile.rc:166
+#: appwiz.rc:81 winefile.rc:165
 msgid "Version:"
 msgstr "版本："
 
@@ -146,8 +146,8 @@ msgstr "安装(&I)"
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
 #: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
 msgstr "取消"
@@ -196,7 +196,7 @@ msgstr "不能运行卸载程序 '%s'。您想把这个卸载条目从注册表�
 msgid "Not specified"
 msgstr "未指定"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
 msgid "Name"
 msgstr "名称"
 
@@ -315,7 +315,7 @@ msgstr "分"
 msgid "hours"
 msgstr "时"
 
-#: comctl32.rc:68 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:156
 msgid "Properties for %s"
 msgstr "属性 %s"
 
@@ -454,7 +454,7 @@ msgid "Dri&ves:"
 msgstr "驱动器(&V)："
 
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
-#: winefile.rc:173
+#: winefile.rc:172
 msgid "&Read Only"
 msgstr "只读(&R)"
 
@@ -706,7 +706,7 @@ msgstr "属性(&P)"
 msgid "Print to fi&le"
 msgstr "打印到文件(&L)"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "名称(&N)："
 
@@ -2943,7 +2943,7 @@ msgstr "位置"
 msgid "Select a certificate"
 msgstr "选择证书"
 
-#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
 msgstr "尚未实现"
 
@@ -3413,7 +3413,7 @@ msgstr ""
 msgid "Delete"
 msgstr "删除"
 
-#: inetcpl.rc:90 winefile.rc:115
+#: inetcpl.rc:90 winefile.rc:114
 msgid "Security"
 msgstr "安全"
 
@@ -4103,7 +4103,7 @@ msgstr "信号量超时。\n"
 msgid "Insufficient buffer.\n"
 msgstr "缓冲区不足。\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr "无效名字。\n"
 
@@ -4896,7 +4896,7 @@ msgid "Too many links.\n"
 msgstr "链接过多。\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "需要更新版本的 Windows。\n"
 
 #: winerror.mc:1483
@@ -5675,7 +5675,7 @@ msgstr "该类不存在。\n"
 msgid "Class has open windows.\n"
 msgstr "类还有窗口开着。\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "无效索引。\n"
 
@@ -6754,6 +6754,390 @@ msgstr "因为您未安装 MAPI 邮件客户端，邮件发送失败。"
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr "发送邮件"
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr "已创建起始请求。\n"
+
+#: mferror.mc:599
+msgid "Sink has not been finalized.\n"
+msgstr "池尚未完成。\n"
+
+#: mferror.mc:32
+msgid "Media Foundation platform is not initialized.\n"
+msgstr "Media Foundation 平台尚未初始化。\n"
+
+#: mferror.mc:39
+msgid "Buffer is too small.\n"
+msgstr "缓冲区太小。\n"
+
+#: mferror.mc:46
+msgid "Invalid request.\n"
+msgstr "请求无效。\n"
+
+#: mferror.mc:53
+msgid "Invalid stream number.\n"
+msgstr "流数量无效。\n"
+
+#: mferror.mc:60
+msgid "Invalid media type.\n"
+msgstr "媒体类型无效。\n"
+
+#: mferror.mc:67
+msgid "No more input is accepted.\n"
+msgstr "不接受更多输入。\n"
+
+#: mferror.mc:74
+msgid "Object is not initialized.\n"
+msgstr "对象未初始化。\n"
+
+#: mferror.mc:81
+msgid "Representation is not supported.\n"
+msgstr "不支持重展示。\n"
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr "建议媒体类型列表中没有其他类型。\n"
+
+#: mferror.mc:95
+msgid "Unsupported service.\n"
+msgstr "不支持的服务。\n"
+
+#: mferror.mc:102
+msgid "Unexpected error.\n"
+msgstr "未知错误。\n"
+
+#: mferror.mc:116
+msgid "Invalid type.\n"
+msgstr "类型无效。\n"
+
+#: mferror.mc:123
+msgid "Invalid file format.\n"
+msgstr "文件格式无效。\n"
+
+#: mferror.mc:137
+msgid "Invalid timestamp.\n"
+msgstr "时间戳无效。\n"
+
+#: mferror.mc:144
+msgid "Unsupported scheme.\n"
+msgstr "不支持的方案。\n"
+
+#: mferror.mc:151
+msgid "Unsupported bytestream type.\n"
+msgstr "不支持的字节流类型。\n"
+
+#: mferror.mc:158
+msgid "Unsupported time format.\n"
+msgstr "不支持的时间格式。\n"
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr "未设置样本时间戳。\n"
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr "未设置样本长度。\n"
+
+#: mferror.mc:179
+msgid "Invalid stream data.\n"
+msgstr "流数据无效。\n"
+
+#: mferror.mc:186
+msgid "Realtime support is not available.\n"
+msgstr "实时支持不可用。\n"
+
+#: mferror.mc:193
+msgid "Unsupported rate.\n"
+msgstr "不支持的频率。\n"
+
+#: mferror.mc:200
+msgid "Unsupported thinning.\n"
+msgstr "不支持的消减类型。\n"
+
+#: mferror.mc:207
+msgid "Reversing is not supported.\n"
+msgstr "不支持反相。\n"
+
+#: mferror.mc:214
+msgid "Unsupported rate transition.\n"
+msgstr "不支持的频率过渡。\n"
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr "预先判断到频率变化。\n"
+
+#: mferror.mc:228
+msgid "Object or value wasn't found.\n"
+msgstr "未找到对象或值。\n"
+
+#: mferror.mc:235
+msgid "Value is not available.\n"
+msgstr "值不可用。\n"
+
+#: mferror.mc:242
+msgid "Clock is not available.\n"
+msgstr "时钟不可用。\n"
+
+#: mferror.mc:263
+msgid "Multiple subscribers are not supported.\n"
+msgstr "不支持多订阅者。\n"
+
+#: mferror.mc:270
+msgid "The timer was orphaned.\n"
+msgstr "计时器被弃用。\n"
+
+#: mferror.mc:277
+msgid "State transition is pending.\n"
+msgstr "正在等待状态过渡。\n"
+
+#: mferror.mc:284
+msgid "Unsupported state transition.\n"
+msgstr "不支持的状态过渡。\n"
+
+#: mferror.mc:291
+msgid "Unrecoverable error occurred.\n"
+msgstr "发生致命错误。\n"
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr "样本包含过多缓冲区。\n"
+
+#: mferror.mc:305
+msgid "Sample is not writable.\n"
+msgstr "样本不可写。\n"
+
+#: mferror.mc:312
+msgid "Key is invalid.\n"
+msgstr "键值无效。\n"
+
+#: mferror.mc:319
+msgid "Bad startup version.\n"
+msgstr "启动版本无效。\n"
+
+#: mferror.mc:326
+msgid "Unsupported caption.\n"
+msgstr "不支持的标注。\n"
+
+#: mferror.mc:333
+msgid "Invalid position.\n"
+msgstr "位置无效。\n"
+
+#: mferror.mc:340
+msgid "Attribute is not found.\n"
+msgstr "未找到属性。\n"
+
+#: mferror.mc:347
+msgid "Property type is not allowed.\n"
+msgstr "不允许填入属性类型。\n"
+
+#: mferror.mc:354
+msgid "Property type is not supported.\n"
+msgstr "不支持属性类型。\n"
+
+#: mferror.mc:361
+msgid "Property is empty.\n"
+msgstr "属性为空。\n"
+
+#: mferror.mc:368
+msgid "Property is not empty.\n"
+msgstr "属性非空。\n"
+
+#: mferror.mc:375
+msgid "Vector property is not allowed.\n"
+msgstr "不允许填入矢量属性。\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr "要求矢量属性。\n"
+
+#: mferror.mc:389
+msgid "Operation was cancelled.\n"
+msgstr "操作被取消。\n"
+
+#: mferror.mc:396
+msgid "Bytestream is not seekable.\n"
+msgstr "字节流不可寻道。\n"
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr "安全模式下平台被禁用。\n"
+
+#: mferror.mc:410
+msgid "Cannot parse bytestream.\n"
+msgstr "无法解析字节流。\n"
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr "互斥参数被传递至来源解析器。\n"
+
+#: mferror.mc:424
+msgid "Unknown bytestream length.\n"
+msgstr "未知字节流长度。\n"
+
+#: mferror.mc:431
+msgid "Invalid work queue index.\n"
+msgstr "工作队列索引无效。\n"
+
+#: mferror.mc:438
+msgid "No events available.\n"
+msgstr "无可用事件。\n"
+
+#: mferror.mc:445
+msgid "Invalid media source state transition.\n"
+msgstr "媒体源状态过渡无效。\n"
+
+#: mferror.mc:452
+msgid "End of media stream has been reached.\n"
+msgstr "到达媒体流结尾。\n"
+
+#: mferror.mc:459
+msgid "Shutdown() was called.\n"
+msgstr "Shutdown() 函数被调用。\n"
+
+#: mferror.mc:466
+msgid "Media stream has no duration set.\n"
+msgstr "未设置媒体流长度。\n"
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid.\n"
+msgstr "媒体格式已知但无效。\n"
+
+#: mferror.mc:480
+msgid "Property wasn't found.\n"
+msgstr "未找到属性。\n"
+
+#: mferror.mc:487
+msgid "Property is read-only.\n"
+msgstr "属性为只读。\n"
+
+#: mferror.mc:494
+msgid "Property is not allowed.\n"
+msgstr "不允许填入属性。\n"
+
+#: mferror.mc:501
+msgid "Media source is not started.\n"
+msgstr "媒体源未启动。\n"
+
+#: mferror.mc:508
+msgid "Unsupported media format.\n"
+msgstr "不支持的媒体格式。\n"
+
+#: mferror.mc:515
+msgid "Media source is in wrong state.\n"
+msgstr "媒体流状态不正确。\n"
+
+#: mferror.mc:522
+msgid "No media streams were selected.\n"
+msgstr "未选中媒体流。\n"
+
+#: mferror.mc:529
+msgid "Unsupported media source characteristics.\n"
+msgstr "不支持的媒体流特性。\n"
+
+#: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr "媒体池被移除。\n"
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr "媒体池不同步。\n"
+
+#: mferror.mc:550
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "媒体池的串流池组不可变。\n"
+
+#: mferror.mc:557
+msgid "Stream sink already exists.\n"
+msgstr "串流池已存在。\n"
+
+#: mferror.mc:564
+msgid "Sample allocation was canceled.\n"
+msgstr "样本分配已取消。\n"
+
+#: mferror.mc:571
+msgid "Sample allocator is empty.\n"
+msgstr "样本分配器为空。\n"
+
+#: mferror.mc:578
+msgid "Sink was already stopped.\n"
+msgstr "池已被停止。\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr "ASF 文件池的比特率未知。\n"
+
+#: mferror.mc:592
+msgid "No streams were selected for the sink.\n"
+msgstr "未为此池选中任何流。\n"
+
+#: mferror.mc:606
+msgid "Metadata was too long.\n"
+msgstr "元数据过长。\n"
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr "池未处理任何样本。\n"
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr "池未包含必要的报头。\n"
+
+#: mferror.mc:627
+msgid "Optional node is invalid.\n"
+msgstr "可选节点无效。\n"
+
+#: mferror.mc:634
+msgid "Cannot find decryptor.\n"
+msgstr "找不到解密器。\n"
+
+#: mferror.mc:641
+msgid "Codec was not found.\n"
+msgstr "未找到编解码器。\n"
+
+#: mferror.mc:648
+msgid "Cannot connect topology nodes.\n"
+msgstr "无法连接拓扑节点。\n"
+
+#: mferror.mc:655
+msgid "Topology request is not supported.\n"
+msgstr "不支持拓扑请求。\n"
+
+#: mferror.mc:662
+msgid "Invalid topology time attributes.\n"
+msgstr "拓扑的时间属性无效。\n"
+
+#: mferror.mc:669
+msgid "Found loops in topology.\n"
+msgstr "拓扑结构中发现循环。\n"
+
+#: mferror.mc:676
+msgid "Presentation descriptor is missing.\n"
+msgstr "展示描述符缺失。\n"
+
+#: mferror.mc:683
+msgid "Stream descriptor is missing.\n"
+msgstr "串流描述符缺失。\n"
+
+#: mferror.mc:690
+msgid "Stream descriptor is not selected.\n"
+msgstr "未选中串流描述符。\n"
+
+#: mferror.mc:697
+msgid "Source is missing.\n"
+msgstr "缺少源。\n"
+
+#: mferror.mc:704
+msgid "Topology loader does not support sink activates.\n"
+msgstr "拓扑加载器不支持输出槽。\n"
+
+#: mferror.mc:711
+msgid "Clock has no time source set.\n"
+msgstr "时钟未设置时间源。\n"
+
+#: mferror.mc:718
+msgid "Clock state was already set.\n"
+msgstr "已设置时钟状态。\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8523,7 +8907,7 @@ msgid "&Open:"
 msgstr "打开(&O)："
 
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:130
+#: winefile.rc:129
 msgid "&Browse..."
 msgstr "浏览(&B)..."
 
@@ -8535,7 +8919,7 @@ msgstr "文件类型："
 msgid "Location:"
 msgstr "位置："
 
-#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+#: shell32.rc:361 shell32.rc:394 winefile.rc:169
 msgid "Size:"
 msgstr "大小："
 
@@ -8547,11 +8931,11 @@ msgstr "创建日期："
 msgid "Attributes:"
 msgstr "属性："
 
-#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+#: shell32.rc:371 shell32.rc:408 winefile.rc:173
 msgid "H&idden"
 msgstr "隐藏(&I)"
 
-#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+#: shell32.rc:372 shell32.rc:409 winefile.rc:174
 msgid "&Archive"
 msgstr "存档(&A)"
 
@@ -8571,7 +8955,7 @@ msgstr "最近修改："
 msgid "Last accessed:"
 msgstr "最近访问："
 
-#: shell32.rc:138 shell32.rc:142 winefile.rc:108
+#: shell32.rc:138 shell32.rc:142 winefile.rc:107
 msgid "Size"
 msgstr "大小"
 
@@ -8583,7 +8967,7 @@ msgstr "类型"
 msgid "Modified"
 msgstr "修改"
 
-#: shell32.rc:141 winefile.rc:172 winefile.rc:114
+#: shell32.rc:141 winefile.rc:171 winefile.rc:113
 msgid "Attributes"
 msgstr "属性"
 
@@ -8611,7 +8995,7 @@ msgstr "原位置"
 msgid "Date deleted"
 msgstr "删除日期"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "桌面"
@@ -8733,7 +9117,7 @@ msgstr "Program Files (x86)"
 msgid "Contacts"
 msgstr "联系人"
 
-#: shell32.rc:225 winefile.rc:113
+#: shell32.rc:225 winefile.rc:112
 msgid "Links"
 msgstr "链接"
 
@@ -10448,8 +10832,8 @@ msgstr "“song pointer”和 SMPTE 时间格式互斥。您不能同时使用�
 
 #: winmm.rc:128
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr "指定的 MIDI 端口正在被使用。请等待它空闲后再试。"
 
 #: winmm.rc:131
@@ -10465,8 +10849,8 @@ msgstr "指定的端口出错。"
 #: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
-msgstr "所有多媒体计时器均正被其他应用程序占用。退出其中一个应用程序后重试。"
+"these applications, and then try again."
+msgstr "所有多媒体计时器均被其他应用程序占用。退出其中一个应用程序后重试。"
 
 #: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
@@ -11192,8 +11576,8 @@ msgid ""
 "/affinity mask Start the program with the specified affinity mask.\n"
 "/wait          Wait for the started program to finish, then exit with its\n"
 "exit code.\n"
-"/unix          Use a Unix filename and start the file like windows\n"
-"explorer.\n"
+"/unix          Use a Unix filename and start the file like Windows\n"
+"Explorer.\n"
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
@@ -12761,7 +13145,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "文件 “%s” 已经存在。不覆盖已有文件。"
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr "将程序组保存为 “%s” 可以避免复盖已有的文件。"
 
 #: progman.rc:84
@@ -14531,7 +14915,7 @@ msgstr "普通 Metafile 阅读器"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "元文件 (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -14699,9 +15083,9 @@ msgstr "驱动器设置"
 
 #: winecfg.rc:233
 msgid ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
+"Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
-msgstr "无法连接到挂载管理器。不能修改驱动器配置。"
+msgstr "无法连接到挂载管理器；不能修改驱动器配置。"
 
 #: winecfg.rc:236
 msgid "A&dd..."
@@ -14990,12 +15374,12 @@ msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
+"it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 "你确定要删除 C 盘吗？\n"
 "\n"
-"大部分 Windows 程序都假定 C 盘存在，在没有它时会死得很难看。如果要继续，请记"
-"得重新建立一个！"
+"大部分 Windows 程序都假定 C 盘存在，如找不到 C 盘可能会导致严重错误。如果要继"
+"续，请重新建立此盘！"
 
 #: winecfg.rc:77
 msgctxt "Drive letter"
@@ -15500,67 +15884,67 @@ msgstr "垂直平铺(&)\tCtrl+F4"
 msgid "&About Wine File Manager"
 msgstr "关于 Wine 文件管理器(&A)"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Select destination"
 msgstr "选择目的地"
 
-#: winefile.rc:135
+#: winefile.rc:134
 msgid "By File Type"
 msgstr "按类型"
 
-#: winefile.rc:140
+#: winefile.rc:139
 msgid "File type"
 msgstr "文件类型"
 
-#: winefile.rc:141
+#: winefile.rc:140
 msgid "&Directories"
 msgstr "目录(&D)"
 
-#: winefile.rc:143
+#: winefile.rc:142
 msgid "&Programs"
 msgstr "程序(&P)"
 
-#: winefile.rc:145
+#: winefile.rc:144
 msgid "Docu&ments"
 msgstr "文档(&M)"
 
-#: winefile.rc:147
+#: winefile.rc:146
 msgid "&Other files"
 msgstr "其他文件(&O)"
 
-#: winefile.rc:149
+#: winefile.rc:148
 msgid "Show Hidden/&System Files"
 msgstr "显示隐藏文件/系统文件(&S)"
 
-#: winefile.rc:160
+#: winefile.rc:159
 msgid "&File Name:"
 msgstr "文件名(&F)："
 
-#: winefile.rc:162
+#: winefile.rc:161
 msgid "Full &Path:"
 msgstr "完整路径(&P)："
 
-#: winefile.rc:164
+#: winefile.rc:163
 msgid "Last Change:"
 msgstr "最后更改："
 
-#: winefile.rc:168
+#: winefile.rc:167
 msgid "Cop&yright:"
 msgstr "版权(&Y)："
 
-#: winefile.rc:176
+#: winefile.rc:175
 msgid "&System"
 msgstr "系统(&S)"
 
-#: winefile.rc:177
+#: winefile.rc:176
 msgid "&Compressed"
 msgstr "已压缩(&C)"
 
-#: winefile.rc:178
+#: winefile.rc:177
 msgid "Version information"
 msgstr "版本信息"
 
-#: winefile.rc:194
+#: winefile.rc:193
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr "S"
@@ -15581,31 +15965,27 @@ msgstr "Wine 文件管理器"
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:99
-msgid "unixfs"
-msgstr "unixfs"
-
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Shell"
 msgstr "Shell"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Creation date"
 msgstr "创建日期"
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Access date"
 msgstr "访问日期"
 
-#: winefile.rc:111
+#: winefile.rc:110
 msgid "Modification date"
 msgstr "修改日期"
 
-#: winefile.rc:112
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr "索引/Inode"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr "%2 中剩余 %1"
 
@@ -16061,8 +16441,6 @@ msgid "Text documents (*.txt)"
 msgstr "文本文件 (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
 msgstr "Unicode 文本文件 (*.txt)"
 
@@ -16277,7 +16655,7 @@ msgid ""
 "\tmore files.\n"
 "[/S]  Copy directories and subdirectories.\n"
 "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-"[/Q]  Do not list names during copy, that is be quiet.\n"
+"[/Q]  Do not list names during copy; that is, be quiet.\n"
 "[/F]  Show full source and destination names during copy.\n"
 "[/L]  Simulate operation, showing names which would be copied.\n"
 "[/W]  Prompts before beginning the copy operation.\n"
@@ -16287,13 +16665,13 @@ msgid ""
 "[/P]  Prompts on each source file before copying.\n"
 "[/N]  Copy using short names.\n"
 "[/U]  Copy only files which already exist in destination.\n"
-"[/R]  Overwrite any read only files.\n"
+"[/R]  Overwrite any read-only files.\n"
 "[/H]  Include hidden and system files in the copy.\n"
 "[/C]  Continue even if an error occurs during the copy.\n"
 "[/A]  Only copy files with archive attribute set.\n"
 "[/M]  Only copy files with archive attribute set, removes the\n"
 "\tarchive attribute.\n"
-"[/K]  Copy file attributes, without this attributes are not preserved.\n"
+"[/K]  Copy file attributes; without this, attributes are not preserved.\n"
 "[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
 "\t\tIf no date is supplied, only copy if destination is older\n"
 "\t\tthan source.\n"
@@ -16301,11 +16679,11 @@ msgid ""
 msgstr ""
 "XCOPY - 将源文件或目录拷贝到目标位置。\n"
 "\n"
-"语法:\n"
+"语法：\n"
 "XCOPY 源 [目标] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U] [/R] [/H]\n"
 "\t     [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
 "\n"
-"说明:\n"
+"说明：\n"
 "[/I] 如果目标位置不存在，并且操作会拷贝两个或更多的文件，就假设目标\n"
 "\t是目录。\n"
 "[/S] 拷贝目录和子目录。\n"

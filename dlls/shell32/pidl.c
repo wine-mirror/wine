@@ -511,7 +511,7 @@ BOOL WINAPI ILIsEqual(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
         _ILSimpleGetText(pidltemp1, szData1, MAX_PATH);
         _ILSimpleGetText(pidltemp2, szData2, MAX_PATH);
 
-        if (strcasecmp( szData1, szData2 ))
+        if (lstrcmpiA( szData1, szData2 ))
             return FALSE;
 
         pidltemp1 = ILGetNext(pidltemp1);
@@ -563,7 +563,7 @@ BOOL WINAPI ILIsParent(LPCITEMIDLIST pidlParent, LPCITEMIDLIST pidlChild, BOOL b
         _ILSimpleGetText(pParent, szData1, MAX_PATH);
         _ILSimpleGetText(pChild, szData2, MAX_PATH);
 
-        if (strcasecmp( szData1, szData2 ))
+        if (lstrcmpiA( szData1, szData2 ))
             return FALSE;
 
         pParent = ILGetNext(pParent);
@@ -630,7 +630,7 @@ LPITEMIDLIST WINAPI ILFindChild(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
             _ILSimpleGetText(pidltemp1, szData1, MAX_PATH);
             _ILSimpleGetText(pidltemp2, szData2, MAX_PATH);
 
-            if (strcasecmp(szData1,szData2))
+            if (lstrcmpiA(szData1,szData2))
                 break;
 
             pidltemp1 = ILGetNext(pidltemp1);

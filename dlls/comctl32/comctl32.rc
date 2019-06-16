@@ -144,6 +144,9 @@ IDB_HIST_SMALL BITMAP idb_hist_small.bmp
 /* @makedep: idb_hist_large.bmp */
 IDB_HIST_LARGE BITMAP idb_hist_large.bmp
 
+/* @makedep: idb_cmdlink.bmp */
+IDB_CMDLINK BITMAP idb_cmdlink.bmp
+
 /* @makedep: idc_copy.cur */
 IDC_COPY CURSOR idc_copy.cur
 

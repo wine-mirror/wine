@@ -18,60 +18,99 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
-
-#include "dshow.h"
-#include "wine/debug.h"
-#include "wine/unicode.h"
-#include "wine/strmbase.h"
-#include "uuids.h"
-#include <assert.h>
+#include "strmbase_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
+
+static inline BaseFilter *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, BaseFilter, IUnknown_inner);
+}
+
+static HRESULT WINAPI filter_inner_QueryInterface(IUnknown *iface, REFIID iid, void **out)
+{
+    BaseFilter *filter = impl_from_IUnknown(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    *out = NULL;
+
+    if (filter->pFuncsTable->filter_query_interface
+            && SUCCEEDED(hr = filter->pFuncsTable->filter_query_interface(filter, iid, out)))
+    {
+        return hr;
+    }
+
+    if (IsEqualIID(iid, &IID_IUnknown))
+        *out = iface;
+    else if (IsEqualIID(iid, &IID_IPersist)
+            || IsEqualIID(iid, &IID_IMediaFilter)
+            || IsEqualIID(iid, &IID_IBaseFilter))
+    {
+        *out = &filter->IBaseFilter_iface;
+    }
+    else
+    {
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI filter_inner_AddRef(IUnknown *iface)
+{
+    BaseFilter *filter = impl_from_IUnknown(iface);
+    ULONG refcount = InterlockedIncrement(&filter->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", filter, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI filter_inner_Release(IUnknown *iface)
+{
+    BaseFilter *filter = impl_from_IUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&filter->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", filter, refcount);
+
+    if (!refcount)
+        filter->pFuncsTable->filter_destroy(filter);
+
+    return refcount;
+}
+
+static const IUnknownVtbl filter_inner_vtbl =
+{
+    filter_inner_QueryInterface,
+    filter_inner_AddRef,
+    filter_inner_Release,
+};
 
 static inline BaseFilter *impl_from_IBaseFilter(IBaseFilter *iface)
 {
     return CONTAINING_RECORD(iface, BaseFilter, IBaseFilter_iface);
 }
 
-HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
+HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter *iface, REFIID iid, void **out)
 {
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPersist) ||
-        IsEqualIID(riid, &IID_IMediaFilter) || IsEqualIID(riid, &IID_IBaseFilter))
-    {
-        *ppv = iface;
-        IBaseFilter_AddRef(iface);
-        return S_OK;
-    }
-
-    return E_NOINTERFACE;
+    BaseFilter *filter = impl_from_IBaseFilter(iface);
+    return IUnknown_QueryInterface(filter->outer_unk, iid, out);
 }
 
-ULONG WINAPI BaseFilterImpl_AddRef(IBaseFilter * iface)
+ULONG WINAPI BaseFilterImpl_AddRef(IBaseFilter *iface)
 {
-    BaseFilter *This = impl_from_IBaseFilter(iface);
-    ULONG refCount = InterlockedIncrement(&This->refCount);
-
-    TRACE("(%p)->() AddRef from %d\n", This, refCount - 1);
-
-    return refCount;
+    BaseFilter *filter = impl_from_IBaseFilter(iface);
+    return IUnknown_AddRef(filter->outer_unk);
 }
 
-ULONG WINAPI BaseFilterImpl_Release(IBaseFilter * iface)
+ULONG WINAPI BaseFilterImpl_Release(IBaseFilter *iface)
 {
-    BaseFilter *This = impl_from_IBaseFilter(iface);
-    ULONG refCount = InterlockedDecrement(&This->refCount);
-
-    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
-
-    if (!refCount)
-        BaseFilter_Destroy(This);
-
-    return refCount;
+    BaseFilter *filter = impl_from_IBaseFilter(iface);
+    return IUnknown_Release(filter->outer_unk);
 }
 
 HRESULT WINAPI BaseFilterImpl_GetClassID(IBaseFilter * iface, CLSID * pClsid)
@@ -132,43 +171,38 @@ HRESULT WINAPI BaseFilterImpl_GetSyncSource(IBaseFilter * iface, IReferenceClock
     return S_OK;
 }
 
-HRESULT WINAPI BaseFilterImpl_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
+HRESULT WINAPI BaseFilterImpl_EnumPins(IBaseFilter *iface, IEnumPins **enum_pins)
 {
-    BaseFilter *This = impl_from_IBaseFilter(iface);
+    BaseFilter *filter = impl_from_IBaseFilter(iface);
 
-    TRACE("(%p)->(%p)\n", iface, ppEnum);
+    TRACE("iface %p, enum_pins %p.\n", iface, enum_pins);
 
-    return EnumPins_Construct(This, This->pFuncsTable->pfnGetPin, This->pFuncsTable->pfnGetPinCount, BaseFilterImpl_GetPinVersion, ppEnum);
+    return enum_pins_create(filter, enum_pins);
 }
 
 HRESULT WINAPI BaseFilterImpl_FindPin(IBaseFilter *iface, const WCHAR *id, IPin **ret)
 {
     BaseFilter *This = impl_from_IBaseFilter(iface);
+    unsigned int i;
     PIN_INFO info;
     HRESULT hr;
     IPin *pin;
-    int i;
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_w(id), ret);
 
-    for (i = 0; i < This->pFuncsTable->pfnGetPinCount(This); ++i)
+    for (i = 0; (pin = This->pFuncsTable->filter_get_pin(This, i)); ++i)
     {
-        pin = This->pFuncsTable->pfnGetPin(This, i);
         hr = IPin_QueryPinInfo(pin, &info);
         if (FAILED(hr))
-        {
-            IPin_Release(pin);
             return hr;
-        }
+
         if (info.pFilter) IBaseFilter_Release(info.pFilter);
 
-        if (!strcmpW(id, info.achName))
+        if (!lstrcmpW(id, info.achName))
         {
-            *ret = pin;
+            IPin_AddRef(*ret = pin);
             return S_OK;
         }
-
-        IPin_Release(pin);
     }
 
     return VFW_E_NOT_FOUND;
@@ -179,7 +213,7 @@ HRESULT WINAPI BaseFilterImpl_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *
     BaseFilter *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)->(%p)\n", This, pInfo);
 
-    strcpyW(pInfo->achName, This->filterInfo.achName);
+    lstrcpyW(pInfo->achName, This->filterInfo.achName);
     pInfo->pGraph = This->filterInfo.pGraph;
 
     if (pInfo->pGraph)
@@ -197,7 +231,7 @@ HRESULT WINAPI BaseFilterImpl_JoinFilterGraph(IBaseFilter * iface, IFilterGraph 
     EnterCriticalSection(&This->csFilter);
     {
         if (pName)
-            strcpyW(This->filterInfo.achName, pName);
+            lstrcpyW(This->filterInfo.achName, pName);
         else
             *This->filterInfo.achName = '\0';
         This->filterInfo.pGraph = pGraph; /* NOTE: do NOT increase ref. count */
@@ -213,37 +247,29 @@ HRESULT WINAPI BaseFilterImpl_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVend
     return E_NOTIMPL;
 }
 
-LONG WINAPI BaseFilterImpl_GetPinVersion(BaseFilter * This)
+VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter *filter)
 {
-    TRACE("(%p)\n", This);
-    return This->pinVersion;
+    InterlockedIncrement(&filter->pin_version);
 }
 
-VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter * This)
+void strmbase_filter_init(BaseFilter *filter, const IBaseFilterVtbl *vtbl, IUnknown *outer,
+        const CLSID *clsid, DWORD_PTR debug_info, const BaseFilterFuncTable *func_table)
 {
-    InterlockedIncrement(&This->pinVersion);
-    TRACE("(%p) -> New pinVersion %i\n", This,This->pinVersion);
+    memset(filter, 0, sizeof(*filter));
+
+    filter->IBaseFilter_iface.lpVtbl = vtbl;
+    filter->IUnknown_inner.lpVtbl = &filter_inner_vtbl;
+    filter->outer_unk = outer ? outer : &filter->IUnknown_inner;
+    filter->refcount = 1;
+
+    InitializeCriticalSection(&filter->csFilter);
+    filter->clsid = *clsid;
+    filter->csFilter.DebugInfo->Spare[0] = debug_info;
+    filter->pin_version = 1;
+    filter->pFuncsTable = func_table;
 }
 
-HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo, const BaseFilterFuncTable* pBaseFuncsTable)
-{
-    This->IBaseFilter_iface.lpVtbl = Vtbl;
-    This->refCount = 1;
-    InitializeCriticalSection(&This->csFilter);
-    This->state = State_Stopped;
-    This->rtStreamStart = 0;
-    This->pClock = NULL;
-    ZeroMemory(&This->filterInfo, sizeof(FILTER_INFO));
-    This->clsid = *pClsid;
-    This->csFilter.DebugInfo->Spare[0] = DebugInfo;
-    This->pinVersion = 1;
-
-    This->pFuncsTable = pBaseFuncsTable;
-
-    return S_OK;
-}
-
-HRESULT WINAPI BaseFilter_Destroy(BaseFilter * This)
+void strmbase_filter_cleanup(BaseFilter *This)
 {
     if (This->pClock)
         IReferenceClock_Release(This->pClock);
@@ -251,6 +277,4 @@ HRESULT WINAPI BaseFilter_Destroy(BaseFilter * This)
     This->IBaseFilter_iface.lpVtbl = NULL;
     This->csFilter.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->csFilter);
-
-    return S_OK;
 }

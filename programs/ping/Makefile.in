@@ -1,6 +1,7 @@
 MODULE    = ping.exe
-APPMODE   = -mconsole
 IMPORTS   = ws2_32 iphlpapi
+
+EXTRADLLFLAGS = -mconsole -mno-cygwin
 
 C_SRCS = \
 	ping_main.c

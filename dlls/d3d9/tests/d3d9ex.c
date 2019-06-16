@@ -2058,20 +2058,21 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
-    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED || broken(hr == D3D_OK), "Got unexpected hr %#x.\n", hr);
 
     ret = SetForegroundWindow(GetDesktopWindow());
     ok(ret, "Failed to set foreground window.\n");
     hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED || hr == S_PRESENT_MODE_CHANGED || broken(hr == D3D_OK),
+            "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
-    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED || hr == S_PRESENT_MODE_CHANGED, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
     ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK || hr == S_PRESENT_MODE_CHANGED, "Got unexpected hr %#x.\n", hr);
 
     ret = SetForegroundWindow(window);
     ok(ret, "Failed to set foreground window.\n");
@@ -2084,7 +2085,7 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
-    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED || hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     desc.width = 1024;
     desc.height = 768;
@@ -2099,7 +2100,7 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
-    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED || hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     desc.flags = 0;
     hr = reset_device(device, &desc);
@@ -2166,24 +2167,24 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
-    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED || hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     ret = SetForegroundWindow(GetDesktopWindow());
     ok(ret, "Failed to set foreground window.\n");
     hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED || broken(hr == D3D_OK), "Got unexpected hr %#x.\n", hr);
     hr = reset_device(device, &desc);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK || broken(hr == S_FALSE), "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK || broken(hr == S_FALSE), "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
-    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED || hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     refcount = IDirect3DDevice9Ex_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -3214,11 +3215,11 @@ static void test_wndproc(void)
 
         if (!(tests[i].create_flags & CREATE_DEVICE_NOWINDOWCHANGES))
         {
-            ok(windowpos.hwnd == device_window && !windowpos.hwndInsertAfter
+            ok(windowpos.hwnd == device_window
                     && !windowpos.x && !windowpos.y && !windowpos.cx && !windowpos.cy
                     && windowpos.flags == (SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE),
-                    "Got unexpected WINDOWPOS hwnd=%p, insertAfter=%p, x=%d, y=%d, cx=%d, cy=%d, flags=%x\n",
-                    windowpos.hwnd, windowpos.hwndInsertAfter, windowpos.x, windowpos.y, windowpos.cx,
+                    "Got unexpected WINDOWPOS hwnd=%p, x=%d, y=%d, cx=%d, cy=%d, flags=%x\n",
+                    windowpos.hwnd, windowpos.x, windowpos.y, windowpos.cx,
                     windowpos.cy, windowpos.flags);
         }
 
@@ -3518,10 +3519,12 @@ static void test_window_style(void)
         }
 
         style = GetWindowLongA(device_window, GWL_STYLE);
-        todo_wine ok(style == device_style, "Expected device window style %#x, got %#x, i=%u.\n",
+        todo_wine ok((style & ~WS_OVERLAPPEDWINDOW) == (device_style & ~WS_OVERLAPPEDWINDOW),
+                "Expected device window style %#x, got %#x, i=%u.\n",
                 device_style, style, i);
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
-        todo_wine ok(style == device_exstyle, "Expected device window extended style %#x, got %#x, i=%u.\n",
+        todo_wine ok((style & ~WS_EX_OVERLAPPEDWINDOW) == (device_exstyle & ~WS_EX_OVERLAPPEDWINDOW),
+                "Expected device window extended style %#x, got %#x, i=%u.\n",
                 device_exstyle, style, i);
 
         style = GetWindowLongA(focus_window, GWL_STYLE);
@@ -3539,7 +3542,8 @@ static void test_window_style(void)
             ok(EqualRect(&r, &fullscreen_rect), "Expected %s, got %s, i=%u.\n",
                     wine_dbgstr_rect(&fullscreen_rect), wine_dbgstr_rect(&r), i);
         GetClientRect(device_window, &r2);
-        todo_wine ok(!EqualRect(&r, &r2), "Client rect and window rect are equal, i=%u.\n", i);
+        if (!(device_style & WS_OVERLAPPEDWINDOW))
+            ok(!EqualRect(&r, &r2), "Client rect and window rect are equal, i=%u.\n", i);
         GetWindowRect(focus_window, &r);
         ok(EqualRect(&r, &focus_rect), "Expected %s, got %s, i=%u.\n",
                 wine_dbgstr_rect(&focus_rect), wine_dbgstr_rect(&r), i);
@@ -3588,11 +3592,14 @@ static void test_window_style(void)
         ok(!!device, "Failed to create a D3D device.\n");
         style = GetWindowLongA(device_window, GWL_STYLE);
         expected_style = device_style | tests[i].create2_style;
-        todo_wine ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
+        todo_wine ok((style & ~WS_OVERLAPPEDWINDOW) == (expected_style & ~WS_OVERLAPPEDWINDOW),
+                "Expected device window style %#x, got %#x, i=%u.\n",
                 expected_style, style, i);
         expected_style = device_exstyle | tests[i].create2_exstyle;
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
-        todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
+        todo_wine_if (tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES)
+        ok((style & ~WS_EX_OVERLAPPEDWINDOW) == (expected_style & ~WS_EX_OVERLAPPEDWINDOW),
+                "Expected device window extended style %#x, got %#x, i=%u.\n",
                 expected_style, style, i);
 
         style = GetWindowLongA(focus_window, GWL_STYLE);
@@ -4139,7 +4146,7 @@ static void test_frame_latency(void)
 
     hr = IDirect3DDevice9Ex_GetMaximumFrameLatency(device, &latency);
     ok(SUCCEEDED(hr), "Failed to get max frame latency, hr %#x.\n", hr);
-    ok(latency == 3, "Unexpected default max frame latency %u.\n", latency);
+    ok(latency == 3 || !latency, "Unexpected default max frame latency %u.\n", latency);
 
     hr = IDirect3DDevice9Ex_SetMaximumFrameLatency(device, 30);
     ok(SUCCEEDED(hr), "Failed to set max frame latency, hr %#x.\n", hr);

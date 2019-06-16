@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -283,7 +281,7 @@ static nsresult NSAPI nsTooltipTextProvider_GetNodeText(nsITooltipTextProvider *
     } while(node);
 
     if(title && *title) {
-        int size = (strlenW(title)+1)*sizeof(PRUnichar);
+        int size = (lstrlenW(title)+1)*sizeof(PRUnichar);
 
         *aText = nsalloc(size);
         memcpy(*aText, title, size);

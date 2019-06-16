@@ -247,7 +247,8 @@ static const char env_environment_dat[] =
     "Var26\t+-MSITESTVAR20\t2[~]\tOne\n"
     "Var27\t+-MSITESTVAR21\t[~];1\tOne\n"
     "Var28\t-MSITESTVAR22\t1\tOne\n"
-    "Var29\t-MSITESTVAR23\t2\tOne\n";
+    "Var29\t-MSITESTVAR23\t2\tOne\n"
+    "Var30\t*MSITESTVAR100\t1\tOne\n";
 
 static const char service_install_dat[] =
     "ServiceInstall\tName\tDisplayName\tServiceType\tStartType\tErrorControl\t"
@@ -440,8 +441,8 @@ static const char pp_install_exec_seq_dat[] =
     "ru_immediate\tREGISTER_USER AND ALLUSERS\t6001\n"
     "ru_deferred\tREGISTER_USER AND ALLUSERS\t6002\n"
     "RegisterProduct\tREGISTER_PRODUCT=1 Or FULL=1\t6100\n"
-    "rp_immediate\tREGISTER_PRODUCT AND ALLUSERS\t6101\n"
-    "rp_deferred\tREGISTER_PRODUCT AND ALLUSERS\t6102\n"
+    "rp_immediate\tREGISTER_PRODUCT AND ALLUSERS AND NOT RP_TEST64\t6101\n"
+    "rp_deferred\tREGISTER_PRODUCT AND ALLUSERS AND NOT RP_TEST64\t6102\n"
     "PublishFeatures\tPUBLISH_FEATURES=1 Or FULL=1\t6300\n"
     "pf_immediate\tPUBLISH_FEATURES AND ALLUSERS\t6301\n"
     "pf_deferred\tPUBLISH_FEATURES AND ALLUSERS\t6302\n"
@@ -2505,9 +2506,9 @@ static void check_reg_str(HKEY prodkey, LPCSTR name, LPCSTR expected, BOOL bcase
     else
     {
         if (bcase)
-            ok_(__FILE__, line)(!lstrcmpA(val, expected), "Expected %s, got %s\n", expected, val);
+            ok_(__FILE__, line)(!lstrcmpA(val, expected), "Expected \"%s\", got \"%s\"\n", expected, val);
         else
-            ok_(__FILE__, line)(!lstrcmpiA(val, expected), "Expected %s, got %s\n", expected, val);
+            ok_(__FILE__, line)(!lstrcmpiA(val, expected), "Expected \"%s\", got \"%s\"\n", expected, val);
     }
 }
 
@@ -2875,6 +2876,123 @@ todo_wine
     res = RegDeleteKeyA(hkey, "");
     ok(!res, "got %d\n", res);
     RegCloseKey(hkey);
+
+    if (is_wow64 || is_64bit)
+    {
+        DeleteFileA(msifile);
+        create_database_template(msifile, pp_tables, ARRAY_SIZE(pp_tables), 200, "x64;1033");
+
+        r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1 ALLUSERS=1 RP_TEST64=1");
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+        ok(delete_pf("msitest", FALSE), "Directory not created\n");
+
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, userugkey, 0, KEY_READ | KEY_WOW64_64KEY, &hkey);
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, uninstall, 0, KEY_READ | KEY_WOW64_32KEY, &hkey);
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_SUCCESS, got %d\n", res);
+
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, uninstall, 0, KEY_READ | KEY_WOW64_64KEY, &hkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+        CHECK_DEL_REG_STR(hkey, "DisplayName", "MSITEST");
+        CHECK_DEL_REG_STR(hkey, "DisplayVersion", "1.1.1");
+        CHECK_DEL_REG_STR(hkey, "InstallDate", date);
+        CHECK_DEL_REG_STR(hkey, "InstallSource", temp);
+        CHECK_DEL_REG_ISTR(hkey, "ModifyPath", "MsiExec.exe /X{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+        CHECK_DEL_REG_STR(hkey, "Publisher", "Wine");
+        CHECK_DEL_REG_STR(hkey, "UninstallString", "MsiExec.exe /X{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+        CHECK_DEL_REG_STR(hkey, "AuthorizedCDFPrefix", NULL);
+        CHECK_DEL_REG_STR(hkey, "Comments", NULL);
+        CHECK_DEL_REG_STR(hkey, "Contact", NULL);
+        CHECK_DEL_REG_STR(hkey, "HelpLink", NULL);
+        CHECK_DEL_REG_STR(hkey, "HelpTelephone", NULL);
+        CHECK_DEL_REG_STR(hkey, "InstallLocation", NULL);
+        CHECK_DEL_REG_DWORD(hkey, "NoModify", 1);
+        CHECK_DEL_REG_STR(hkey, "Readme", NULL);
+        CHECK_DEL_REG_STR(hkey, "Size", NULL);
+        CHECK_DEL_REG_STR(hkey, "URLInfoAbout", NULL);
+        CHECK_DEL_REG_STR(hkey, "URLUpdateInfo", NULL);
+        CHECK_DEL_REG_DWORD(hkey, "Language", 1033);
+        CHECK_DEL_REG_DWORD(hkey, "Version", 0x1010001);
+        CHECK_DEL_REG_DWORD(hkey, "VersionMajor", 1);
+        CHECK_DEL_REG_DWORD(hkey, "VersionMinor", 1);
+        CHECK_DEL_REG_DWORD(hkey, "WindowsInstaller", 1);
+        todo_wine
+        CHECK_DEL_REG_DWORD(hkey, "EstimatedSize", get_estimated_size());
+
+        res = RegDeleteKeyA(hkey, "");
+        ok(!res, "got %d\n", res);
+        RegCloseKey(hkey);
+
+        sprintf(keypath, userdata, "S-1-5-18");
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, KEY_READ | KEY_WOW64_64KEY, &hkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+        res = RegOpenKeyExA(hkey, "InstallProperties", 0, KEY_READ, &props);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+        size = sizeof(path);
+        RegQueryValueExA(props, "LocalPackage", NULL, &type, (LPBYTE)path, &size);
+        DeleteFileA(path);
+        RegDeleteValueA(props, "LocalPackage"); /* LocalPackage is nondeterministic */
+
+        CHECK_DEL_REG_STR(props, "DisplayName", "MSITEST");
+        CHECK_DEL_REG_STR(props, "DisplayVersion", "1.1.1");
+        CHECK_DEL_REG_STR(props, "InstallDate", date);
+        CHECK_DEL_REG_STR(props, "InstallSource", temp);
+        CHECK_DEL_REG_ISTR(props, "ModifyPath", "MsiExec.exe /X{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+        CHECK_DEL_REG_STR(props, "Publisher", "Wine");
+        CHECK_DEL_REG_STR(props, "UninstallString", "MsiExec.exe /X{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+        CHECK_DEL_REG_STR(props, "AuthorizedCDFPrefix", NULL);
+        CHECK_DEL_REG_STR(props, "Comments", NULL);
+        CHECK_DEL_REG_STR(props, "Contact", NULL);
+        CHECK_DEL_REG_STR(props, "HelpLink", NULL);
+        CHECK_DEL_REG_STR(props, "HelpTelephone", NULL);
+        CHECK_DEL_REG_STR(props, "InstallLocation", NULL);
+        CHECK_DEL_REG_DWORD(props, "NoModify", 1);
+        CHECK_DEL_REG_STR(props, "Readme", NULL);
+        CHECK_DEL_REG_STR(props, "Size", NULL);
+        CHECK_DEL_REG_STR(props, "URLInfoAbout", NULL);
+        CHECK_DEL_REG_STR(props, "URLUpdateInfo", NULL);
+        CHECK_DEL_REG_DWORD(props, "Language", 1033);
+        CHECK_DEL_REG_DWORD(props, "Version", 0x1010001);
+        CHECK_DEL_REG_DWORD(props, "VersionMajor", 1);
+        CHECK_DEL_REG_DWORD(props, "VersionMinor", 1);
+        CHECK_DEL_REG_DWORD(props, "WindowsInstaller", 1);
+        todo_wine
+        CHECK_DEL_REG_DWORD(props, "EstimatedSize", get_estimated_size());
+
+        res = RegDeleteKeyA(props, "");
+        ok(!res, "got %d\n", res);
+        RegCloseKey(props);
+
+        res = RegOpenKeyExA(hkey, "Usage", 0, KEY_READ, &usage);
+        todo_wine
+        {
+            ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        }
+
+        res = RegDeleteKeyA(usage, "");
+    todo_wine
+        ok(!res, "got %d\n", res);
+        RegCloseKey(usage);
+        res = RegDeleteKeyA(hkey, "");
+        ok(!res, "got %d\n", res);
+        RegCloseKey(hkey);
+
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, ugkey, 0, KEY_READ | KEY_WOW64_64KEY, &hkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+        CHECK_DEL_REG_STR(hkey, "84A88FD7F6998CE40A22FB59F6B9C2BB", NULL);
+
+        res = RegDeleteKeyA(hkey, "");
+        ok(!res, "got %d\n", res);
+        RegCloseKey(hkey);
+    }
+    else
+        skip("64-bit RegisterProduct tests\n");
 
 error:
     DeleteFileA(msifile);
@@ -3290,7 +3408,7 @@ static void get_owner_company(LPSTR *owner, LPSTR *company)
     if (!*owner || !*company)
     {
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-                            "Software\\Microsoft\\Windows\\CurrentVersion", 0, access, &hkey);
+                            "Software\\Microsoft\\Windows NT\\CurrentVersion", 0, access, &hkey);
         if (res == ERROR_SUCCESS)
         {
             *owner = reg_get_val_str(hkey, "RegisteredOwner");
@@ -3302,7 +3420,7 @@ static void get_owner_company(LPSTR *owner, LPSTR *company)
     if (!*owner || !*company)
     {
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-                            "Software\\Microsoft\\Windows NT\\CurrentVersion", 0, access, &hkey);
+                            "Software\\Microsoft\\Windows\\CurrentVersion", 0, access, &hkey);
         if (res == ERROR_SUCCESS)
         {
             *owner = reg_get_val_str(hkey, "RegisteredOwner");
@@ -4843,7 +4961,7 @@ static void test_envvar(void)
 {
     char buffer[16];
     UINT r, i;
-    HKEY env;
+    HKEY env, env2;
     LONG res;
 
     if (is_process_limited())
@@ -4855,6 +4973,10 @@ static void test_envvar(void)
     create_database(msifile, env_tables, ARRAY_SIZE(env_tables));
 
     res = RegCreateKeyExA(HKEY_CURRENT_USER, "Environment", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &env, NULL);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "System\\CurrentControlSet\\Control\\Session Manager\\Environment",
+                          0, NULL, 0, KEY_ALL_ACCESS, NULL, &env2, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     res = RegSetValueExA(env, "MSITESTVAR1", 0, REG_SZ, (const BYTE *)"0", 2);
@@ -4910,6 +5032,7 @@ static void test_envvar(void)
     CHECK_REG_STR(env, "MSITESTVAR19", "1");
     CHECK_REG_STR(env, "MSITESTVAR20", "1");
     CHECK_REG_STR(env, "MSITESTVAR21", "1");
+    CHECK_REG_STR(env2, "MSITESTVAR100", "1");
 
     res = RegSetValueExA(env, "MSITESTVAR22", 0, REG_SZ, (const BYTE *)"1", 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -4937,11 +5060,15 @@ todo_wine {
         ok(res == ERROR_FILE_NOT_FOUND, "[%d] got %u\n", i, res);
     }
 
+    res = RegDeleteValueA(env2, "MSITESTVAR100");
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
 error:
     RegDeleteValueA(env, "MSITESTVAR1");
     RegDeleteValueA(env, "MSITESTVAR2");
     RegDeleteValueA(env, "MSITESTVAR21");
     RegCloseKey(env);
+    RegCloseKey(env2);
 
     DeleteFileA(msifile);
 }
@@ -5515,7 +5642,7 @@ static void test_register_typelib(void)
     }
 
     /* UnregisterTypeLibraries action fails in 64-bit Windows <= 7 */
-    if (sizeof(void *) == 8)
+    if (sizeof(void *) == 8 && strcmp( winetest_platform, "wine" ))
     {
         win_skip("broken on 64-bit Windows\n");
         return;

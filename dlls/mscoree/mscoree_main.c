@@ -665,16 +665,22 @@ static void parse_msi_version_string(const char *version, int *parts)
     }
 }
 
-static BOOL install_wine_mono(void)
+static int compare_versions(const char *a, const char *b)
 {
-    BOOL is_wow64 = FALSE;
-    HMODULE hmsi;
-    UINT (WINAPI *pMsiEnumRelatedProductsA)(LPCSTR,DWORD,DWORD,LPSTR);
-    UINT (WINAPI *pMsiGetProductInfoA)(LPCSTR,LPCSTR,LPSTR,DWORD*);
-    char versionstringbuf[15];
-    char productcodebuf[39];
-    UINT res;
-    DWORD buffer_size;
+    int a_parts[3], b_parts[3], i;
+
+    parse_msi_version_string(a, a_parts);
+    parse_msi_version_string(b, b_parts);
+
+    for (i=0; i<3; i++)
+        if (a_parts[i] != b_parts[i])
+            return a_parts[i] - b_parts[i];
+
+    return 0;
+}
+
+static BOOL invoke_appwiz(void)
+{
     PROCESS_INFORMATION pi;
     STARTUPINFOW si;
     WCHAR app[MAX_PATH];
@@ -682,12 +688,99 @@ static BOOL install_wine_mono(void)
     LONG len;
     BOOL ret;
 
-    static const char* mono_version = "4.8.0";
-    static const char* mono_upgrade_code = "{DE624609-C6B5-486A-9274-EF0B854F6BC5}";
-
     static const WCHAR controlW[] = {'\\','c','o','n','t','r','o','l','.','e','x','e',0};
     static const WCHAR argsW[] =
         {' ','a','p','p','w','i','z','.','c','p','l',' ','i','n','s','t','a','l','l','_','m','o','n','o',0};
+
+    len = GetSystemDirectoryW(app, MAX_PATH - ARRAY_SIZE(controlW));
+    memcpy(app+len, controlW, sizeof(controlW));
+
+    args = HeapAlloc(GetProcessHeap(), 0, (len*sizeof(WCHAR) + sizeof(controlW) + sizeof(argsW)));
+    if(!args)
+        return FALSE;
+
+    memcpy(args, app, len*sizeof(WCHAR) + sizeof(controlW));
+    memcpy(args + len + ARRAY_SIZE(controlW) - 1, argsW, sizeof(argsW));
+
+    TRACE("starting %s\n", debugstr_w(args));
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    ret = CreateProcessW(app, args, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    HeapFree(GetProcessHeap(), 0, args);
+    if (ret) {
+        CloseHandle(pi.hThread);
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        CloseHandle(pi.hProcess);
+    }
+
+    return ret;
+}
+
+static BOOL get_support_msi(LPCWSTR mono_path, LPWSTR msi_path)
+{
+    static const WCHAR support_msi_relative[] = {'\\','s','u','p','p','o','r','t','\\','w','i','n','e','m','o','n','o','-','s','u','p','p','o','r','t','.','m','s','i',0};
+    UINT (WINAPI *pMsiOpenPackageW)(LPCWSTR,ULONG*);
+    UINT (WINAPI *pMsiGetProductPropertyA)(ULONG,LPCSTR,LPSTR,LPDWORD);
+    UINT (WINAPI *pMsiCloseHandle)(ULONG);
+    HMODULE hmsi = NULL;
+    char versionstringbuf[15];
+    UINT res;
+    DWORD buffer_size;
+    ULONG msiproduct;
+    BOOL ret=FALSE;
+
+    hmsi = GetModuleHandleA("msi");
+
+    strcpyW(msi_path, mono_path);
+    strcatW(msi_path, support_msi_relative);
+
+    pMsiOpenPackageW = (void*)GetProcAddress(hmsi, "MsiOpenPackageW");
+
+    res = pMsiOpenPackageW(msi_path, &msiproduct);
+
+    if (res == ERROR_SUCCESS)
+    {
+        buffer_size = sizeof(versionstringbuf);
+
+        pMsiGetProductPropertyA = (void*)GetProcAddress(hmsi, "MsiGetProductPropertyA");
+
+        res = pMsiGetProductPropertyA(msiproduct, "ProductVersion", versionstringbuf, &buffer_size);
+
+        pMsiCloseHandle = (void*)GetProcAddress(hmsi, "MsiCloseHandle");
+
+        pMsiCloseHandle(msiproduct);
+    }
+
+    if (res == ERROR_SUCCESS) {
+        TRACE("found support msi version %s at %s\n", versionstringbuf, debugstr_w(msi_path));
+
+        if (compare_versions(WINE_MONO_VERSION, versionstringbuf) <= 0)
+        {
+            ret = TRUE;
+        }
+    }
+
+    return ret;
+}
+
+static BOOL install_wine_mono(void)
+{
+    BOOL is_wow64 = FALSE;
+    HMODULE hmsi = NULL;
+    HRESULT initresult = E_FAIL;
+    UINT (WINAPI *pMsiEnumRelatedProductsA)(LPCSTR,DWORD,DWORD,LPSTR);
+    UINT (WINAPI *pMsiGetProductInfoA)(LPCSTR,LPCSTR,LPSTR,DWORD*);
+    UINT (WINAPI *pMsiInstallProductW)(LPCWSTR,LPCWSTR);
+    char versionstringbuf[15];
+    char productcodebuf[39];
+    UINT res;
+    DWORD buffer_size;
+    BOOL ret;
+    WCHAR mono_path[MAX_PATH];
+    WCHAR support_msi_path[MAX_PATH];
+
+    static const char* mono_upgrade_code = "{DE624609-C6B5-486A-9274-EF0B854F6BC5}";
 
     IsWow64Process(GetCurrentProcess(), &is_wow64);
 
@@ -696,6 +789,16 @@ static BOOL install_wine_mono(void)
         TRACE("not installing mono in wow64 process\n");
         return TRUE;
     }
+
+    TRACE("searching for mono runtime\n");
+
+    if (!get_mono_path(mono_path, FALSE))
+    {
+        TRACE("mono runtime not found\n");
+        return invoke_appwiz();
+    }
+
+    TRACE("mono runtime is at %s\n", debugstr_w(mono_path));
 
     hmsi = LoadLibraryA("msi");
 
@@ -722,57 +825,52 @@ static BOOL install_wine_mono(void)
         ERR("MsiEnumRelatedProducts failed, err=%u\n", res);
     }
 
-    FreeLibrary(hmsi);
-
     if (res == ERROR_SUCCESS)
     {
-        int current_version[3], wanted_version[3], i;
+        TRACE("found installed support package %s\n", versionstringbuf);
 
-        TRACE("found installed version %s\n", versionstringbuf);
-
-        parse_msi_version_string(versionstringbuf, current_version);
-        parse_msi_version_string(mono_version, wanted_version);
-
-        for (i=0; i<3; i++)
+        if (compare_versions(WINE_MONO_VERSION, versionstringbuf) <= 0)
         {
-            if (current_version[i] < wanted_version[i])
-                break;
-            else if (current_version[i] > wanted_version[i])
-            {
-                TRACE("installed version is newer than %s, quitting\n", mono_version);
-                return TRUE;
-            }
-        }
-
-        if (i == 3)
-        {
-            TRACE("version %s is already installed, quitting\n", mono_version);
-            return TRUE;
+            TRACE("support package is at least %s, quitting\n", WINE_MONO_VERSION);
+            ret = TRUE;
+            goto end;
         }
     }
 
-    len = GetSystemDirectoryW(app, MAX_PATH - ARRAY_SIZE(controlW));
-    memcpy(app+len, controlW, sizeof(controlW));
+    initresult = CoInitialize(NULL);
 
-    args = HeapAlloc(GetProcessHeap(), 0, (len*sizeof(WCHAR) + sizeof(controlW) + sizeof(argsW)));
-    if(!args)
-        return FALSE;
-
-    memcpy(args, app, len*sizeof(WCHAR) + sizeof(controlW));
-    memcpy(args + len + ARRAY_SIZE(controlW) - 1, argsW, sizeof(argsW));
-
-    TRACE("starting %s\n", debugstr_w(args));
-
-    memset(&si, 0, sizeof(si));
-    si.cb = sizeof(si);
-    ret = CreateProcessW(app, args, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    HeapFree(GetProcessHeap(), 0, args);
-    if (ret) {
-        CloseHandle(pi.hThread);
-        WaitForSingleObject(pi.hProcess, INFINITE);
-        CloseHandle(pi.hProcess);
+    ret = get_support_msi(mono_path, support_msi_path);
+    if (!ret)
+    {
+        /* Try looking outside c:\windows\mono */
+        ret = (get_mono_path(mono_path, TRUE) &&
+            get_support_msi(mono_path, support_msi_path));
     }
 
+    if (ret)
+    {
+        TRACE("installing support msi\n");
+
+        pMsiInstallProductW = (void*)GetProcAddress(hmsi, "MsiInstallProductW");
+
+        res = pMsiInstallProductW(support_msi_path, NULL);
+
+        if (res == ERROR_SUCCESS)
+        {
+            ret = TRUE;
+            goto end;
+        }
+        else
+            ERR("MsiInstallProduct failed, err=%i\n", res);
+    }
+
+    ret = invoke_appwiz();
+
+end:
+    if (hmsi)
+        FreeLibrary(hmsi);
+    if (SUCCEEDED(initresult))
+        CoUninitialize();
     return ret;
 }
 

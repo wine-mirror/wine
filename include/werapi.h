@@ -186,6 +186,8 @@ HRESULT WINAPI WerReportSetUIOption(HREPORT, WER_REPORT_UI, PCWSTR);
 HRESULT WINAPI WerReportSubmit(HREPORT, WER_CONSENT, DWORD, PWER_SUBMIT_RESULT);
 HRESULT WINAPI WerSetFlags(DWORD flags);
 HRESULT WINAPI WerUnregisterMemoryBlock(void *block);
+HRESULT WINAPI WerUnregisterRuntimeExceptionModule(PCWSTR callbackdll, void *context);
+
 
 #ifdef __cplusplus
 }

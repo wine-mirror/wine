@@ -76,7 +76,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
 
   /* If processing a call :label, 'goto' the label in question */
   if (startLabel) {
-    strcpyW(param1, startLabel);
+    lstrcpyW(param1, startLabel);
     WCMD_goto(NULL);
   }
 
@@ -162,7 +162,7 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start,
     while (TRUE) {
 
         /* Absorb repeated word delimiters until we get to the next token (or the end!) */
-        while (*p && (strchrW(delims, *p) != NULL))
+        while (*p && (wcschr(delims, *p) != NULL))
             p++;
         if (*p == '\0') return param;
 
@@ -176,7 +176,7 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start,
         /* Loop character by character, but just need to special case quotes */
         while (*p) {
             /* Once we have found a delimiter, break */
-            if (strchrW(delims, *p) != NULL) break;
+            if (wcschr(delims, *p) != NULL) break;
 
             /* Very odd special case - Seems as if a ( acts as a delimiter which is
                not swallowed but is effective only when it comes between the program
@@ -319,7 +319,7 @@ void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHA
 	} else if (drv)
 		*drv = '\0';
 
-        end = path + strlenW(path);
+        end = path + lstrlenW(path);
 
 	/* search for begin of file extension */
 	for(p=end; p>path && *--p!='\\' && *p!='/'; )
@@ -471,21 +471,21 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
      whereas if you start applying other modifiers to it, you get the filename
      the batch label is in                                                     */
   if (*lastModifier == '0' && modifierLen > 1) {
-    strcpyW(outputparam, context->batchfileW);
+    lstrcpyW(outputparam, context->batchfileW);
   } else if ((*lastModifier >= '0' && *lastModifier <= '9')) {
-    strcpyW(outputparam,
+    lstrcpyW(outputparam,
             WCMD_parameter (context -> command,
                             *lastModifier-'0' + context -> shift_count[*lastModifier-'0'],
                             NULL, FALSE, TRUE));
   } else {
     int foridx = FOR_VAR_IDX(*lastModifier);
-    strcpyW(outputparam, forloopcontext.variable[foridx]);
+    lstrcpyW(outputparam, forloopcontext.variable[foridx]);
   }
 
   /* 1. Handle '~' : Strip surrounding quotes */
   if (outputparam[0]=='"' &&
-      memchrW(firstModifier, '~', modifierLen) != NULL) {
-    int len = strlenW(outputparam);
+      wmemchr(firstModifier, '~', modifierLen) != NULL) {
+    int len = lstrlenW(outputparam);
     if (outputparam[len-1] == '"') {
         outputparam[len-1]=0x00;
         len = len - 1;
@@ -494,11 +494,11 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
   }
 
   /* 2. Handle the special case of a $ */
-  if (memchrW(firstModifier, '$', modifierLen) != NULL) {
+  if (wmemchr(firstModifier, '$', modifierLen) != NULL) {
     /* Special Case: Search envar specified in $[envvar] for outputparam
        Note both $ and : are guaranteed otherwise check above would fail */
-    WCHAR *begin = strchrW(firstModifier, '$') + 1;
-    WCHAR *end   = strchrW(firstModifier, ':');
+    WCHAR *begin = wcschr(firstModifier, '$') + 1;
+    WCHAR *end   = wcschr(firstModifier, ':');
     WCHAR env[MAX_PATH];
     DWORD size;
 
@@ -535,13 +535,13 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
     }
 
     /* 2. Handle 'a' : Output attributes (File doesn't have to exist) */
-    if (memchrW(firstModifier, 'a', modifierLen) != NULL) {
+    if (wmemchr(firstModifier, 'a', modifierLen) != NULL) {
 
       WCHAR defaults[] = {'-','-','-','-','-','-','-','-','-','\0'};
       doneModifier = TRUE;
 
       if (exists) {
-        strcpyW(thisoutput, defaults);
+        lstrcpyW(thisoutput, defaults);
         if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
           thisoutput[0]='d';
         if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
@@ -557,12 +557,12 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
         /* FIXME: What are 6 and 7? */
         if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
           thisoutput[8]='l';
-        strcatW(finaloutput, thisoutput);
+        lstrcatW(finaloutput, thisoutput);
       }
     }
 
     /* 3. Handle 't' : Date+time (File doesn't have to exist) */
-    if (memchrW(firstModifier, 't', modifierLen) != NULL) {
+    if (wmemchr(firstModifier, 't', modifierLen) != NULL) {
 
       SYSTEMTIME systime;
       int datelen;
@@ -570,22 +570,22 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
       doneModifier = TRUE;
 
       if (exists) {
-        if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
+        if (finaloutput[0] != 0x00) lstrcatW(finaloutput, spaceW);
 
         /* Format the time */
         FileTimeToSystemTime(&fileInfo.ftLastWriteTime, &systime);
         GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &systime,
                           NULL, thisoutput, MAX_PATH);
-        strcatW(thisoutput, spaceW);
-        datelen = strlenW(thisoutput);
+        lstrcatW(thisoutput, spaceW);
+        datelen = lstrlenW(thisoutput);
         GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &systime,
                           NULL, (thisoutput+datelen), MAX_PATH-datelen);
-        strcatW(finaloutput, thisoutput);
+        lstrcatW(finaloutput, thisoutput);
       }
     }
 
     /* 4. Handle 'z' : File length (File doesn't have to exist) */
-    if (memchrW(firstModifier, 'z', modifierLen) != NULL) {
+    if (wmemchr(firstModifier, 'z', modifierLen) != NULL) {
       /* FIXME: Output full 64 bit size (sprintf does not support I64 here) */
       ULONG/*64*/ fullsize = /*(fileInfo.nFileSizeHigh << 32) +*/
                                   fileInfo.nFileSizeLow;
@@ -593,33 +593,33 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
 
       doneModifier = TRUE;
       if (exists) {
-        if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
+        if (finaloutput[0] != 0x00) lstrcatW(finaloutput, spaceW);
         wsprintfW(thisoutput, fmt, fullsize);
-        strcatW(finaloutput, thisoutput);
+        lstrcatW(finaloutput, thisoutput);
       }
     }
 
     /* 4. Handle 's' : Use short paths (File doesn't have to exist) */
-    if (memchrW(firstModifier, 's', modifierLen) != NULL) {
-      if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
+    if (wmemchr(firstModifier, 's', modifierLen) != NULL) {
+      if (finaloutput[0] != 0x00) lstrcatW(finaloutput, spaceW);
 
       /* Convert fullfilename's path to a short path - Save filename away as
          only path is valid, name may not exist which causes GetShortPathName
          to fail if it is provided                                            */
       if (filepart) {
-        strcpyW(thisoutput, filepart);
+        lstrcpyW(thisoutput, filepart);
         *filepart = 0x00;
         GetShortPathNameW(fullfilename, fullfilename, ARRAY_SIZE(fullfilename));
-        strcatW(fullfilename, thisoutput);
+        lstrcatW(fullfilename, thisoutput);
       }
     }
 
     /* 5. Handle 'f' : Fully qualified path (File doesn't have to exist) */
     /*      Note this overrides d,p,n,x                                 */
-    if (memchrW(firstModifier, 'f', modifierLen) != NULL) {
+    if (wmemchr(firstModifier, 'f', modifierLen) != NULL) {
       doneModifier = TRUE;
-      if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
-      strcatW(finaloutput, fullfilename);
+      if (finaloutput[0] != 0x00) lstrcatW(finaloutput, spaceW);
+      lstrcatW(finaloutput, fullfilename);
     } else {
 
       WCHAR drive[10];
@@ -633,65 +633,65 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
       WCMD_splitpath(fullfilename, drive, dir, fname, ext);
 
       /* 5. Handle 'd' : Drive Letter */
-      if (memchrW(firstModifier, 'd', modifierLen) != NULL) {
+      if (wmemchr(firstModifier, 'd', modifierLen) != NULL) {
         if (addSpace) {
-          strcatW(finaloutput, spaceW);
+          lstrcatW(finaloutput, spaceW);
           addSpace = FALSE;
         }
 
-        strcatW(finaloutput, drive);
+        lstrcatW(finaloutput, drive);
         doneModifier = TRUE;
         doneFileModifier = TRUE;
       }
 
       /* 6. Handle 'p' : Path */
-      if (memchrW(firstModifier, 'p', modifierLen) != NULL) {
+      if (wmemchr(firstModifier, 'p', modifierLen) != NULL) {
         if (addSpace) {
-          strcatW(finaloutput, spaceW);
+          lstrcatW(finaloutput, spaceW);
           addSpace = FALSE;
         }
 
-        strcatW(finaloutput, dir);
+        lstrcatW(finaloutput, dir);
         doneModifier = TRUE;
         doneFileModifier = TRUE;
       }
 
       /* 7. Handle 'n' : Name */
-      if (memchrW(firstModifier, 'n', modifierLen) != NULL) {
+      if (wmemchr(firstModifier, 'n', modifierLen) != NULL) {
         if (addSpace) {
-          strcatW(finaloutput, spaceW);
+          lstrcatW(finaloutput, spaceW);
           addSpace = FALSE;
         }
 
-        strcatW(finaloutput, fname);
+        lstrcatW(finaloutput, fname);
         doneModifier = TRUE;
         doneFileModifier = TRUE;
       }
 
       /* 8. Handle 'x' : Ext */
-      if (memchrW(firstModifier, 'x', modifierLen) != NULL) {
+      if (wmemchr(firstModifier, 'x', modifierLen) != NULL) {
         if (addSpace) {
-          strcatW(finaloutput, spaceW);
+          lstrcatW(finaloutput, spaceW);
           addSpace = FALSE;
         }
 
-        strcatW(finaloutput, ext);
+        lstrcatW(finaloutput, ext);
         doneModifier = TRUE;
         doneFileModifier = TRUE;
       }
 
       /* If 's' but no other parameter, dump the whole thing */
       if (!doneFileModifier &&
-          memchrW(firstModifier, 's', modifierLen) != NULL) {
+          wmemchr(firstModifier, 's', modifierLen) != NULL) {
         doneModifier = TRUE;
-        if (finaloutput[0] != 0x00) strcatW(finaloutput, spaceW);
-        strcatW(finaloutput, fullfilename);
+        if (finaloutput[0] != 0x00) lstrcatW(finaloutput, spaceW);
+        lstrcatW(finaloutput, fullfilename);
       }
     }
   }
 
   /* If No other modifier processed,  just add in parameter */
-  if (!doneModifier) strcpyW(finaloutput, outputparam);
+  if (!doneModifier) lstrcpyW(finaloutput, outputparam);
 
   /* Finish by inserting the replacement into the string */
   WCMD_strsubstW(*start, lastModifier+1, finaloutput, -1);
@@ -714,7 +714,7 @@ void WCMD_call (WCHAR *command) {
 
     WCHAR gotoLabel[MAX_PATH];
 
-    strcpyW(gotoLabel, param1);
+    lstrcpyW(gotoLabel, param1);
 
     if (context) {
 

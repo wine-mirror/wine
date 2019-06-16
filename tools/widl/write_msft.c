@@ -702,15 +702,15 @@ static void alloc_importinfo(msft_typelib_t *typelib, importinfo_t *importinfo)
 
         guid_idx = ctl2_alloc_guid(typelib, &guid);
 
-        alloc_importfile(typelib, guid_idx, importlib->version&0xffff,
-                         importlib->version>>16, importlib->name);
+        importlib->offset = alloc_importfile(typelib, guid_idx, importlib->version & 0xffff,
+                importlib->version >> 16, importlib->name);
     }
 
     if(importinfo->offset == -1 || !(importinfo->flags & MSFT_IMPINFO_OFFSET_IS_GUID)) {
         MSFT_ImpInfo impinfo;
 
         impinfo.flags = importinfo->flags;
-        impinfo.oImpFile = 0;
+        impinfo.oImpFile = importlib->offset;
 
         if(importinfo->flags & MSFT_IMPINFO_OFFSET_IS_GUID) {
             MSFT_GuidEntry guid;

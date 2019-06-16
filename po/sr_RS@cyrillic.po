@@ -68,7 +68,7 @@ msgstr "Подршка"
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
 #: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
-#: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
+#: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
@@ -82,7 +82,7 @@ msgstr "Следећи подаци се могу користити за доб
 msgid "Publisher:"
 msgstr "Издавач:"
 
-#: appwiz.rc:81 winefile.rc:166
+#: appwiz.rc:81 winefile.rc:165
 msgid "Version:"
 msgstr "Издање:"
 
@@ -151,8 +151,8 @@ msgstr "&Инсталирај"
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
 #: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
 msgstr "Откажи"
@@ -207,7 +207,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Није одређено"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
 #, fuzzy
 msgid "Name"
 msgstr ""
@@ -334,7 +334,7 @@ msgstr ""
 msgid "hours"
 msgstr ""
 
-#: comctl32.rc:68 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:156
 msgid "Properties for %s"
 msgstr "Својства за %s"
 
@@ -478,7 +478,7 @@ msgid "Dri&ves:"
 msgstr "&Јединице:"
 
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
-#: winefile.rc:173
+#: winefile.rc:172
 msgid "&Read Only"
 msgstr "&Само за читање"
 
@@ -732,7 +732,7 @@ msgstr "&Својства"
 msgid "Print to fi&le"
 msgstr "Штампај на &датотеку"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "&Назив:"
 
@@ -2994,7 +2994,7 @@ msgstr "Локација"
 msgid "Select a certificate"
 msgstr "Изабери &све"
 
-#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
 msgstr ""
 
@@ -3498,7 +3498,7 @@ msgstr ""
 msgid "Delete"
 msgstr "&Избриши"
 
-#: inetcpl.rc:90 winefile.rc:115
+#: inetcpl.rc:90 winefile.rc:114
 msgid "Security"
 msgstr ""
 
@@ -4254,7 +4254,7 @@ msgstr ""
 msgid "Insufficient buffer.\n"
 msgstr "Недовољна права.\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 #, fuzzy
 msgid "Invalid name.\n"
 msgstr "Неисправна синтакса.\n"
@@ -5080,7 +5080,7 @@ msgid "Too many links.\n"
 msgstr ""
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr ""
 
 #: winerror.mc:1483
@@ -5923,7 +5923,7 @@ msgstr "Путања не постоји.\n"
 msgid "Class has open windows.\n"
 msgstr "прозор.\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 #, fuzzy
 msgid "Invalid index.\n"
 msgstr "Неисправна синтакса.\n"
@@ -7111,6 +7111,459 @@ msgstr "Слање поруке није успело јер MAPI поштанс
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr "Пошаљи поруку"
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr ""
+
+#: mferror.mc:599
+#, fuzzy
+msgid "Sink has not been finalized.\n"
+msgstr "%s путања није пронађена.\n"
+
+#: mferror.mc:32
+#, fuzzy
+msgid "Media Foundation platform is not initialized.\n"
+msgstr "Начин потврде идентитета није подржан.\n"
+
+#: mferror.mc:39
+msgid "Buffer is too small.\n"
+msgstr ""
+
+#: mferror.mc:46
+#, fuzzy
+msgid "Invalid request.\n"
+msgstr "Неисправна синтакса.\n"
+
+#: mferror.mc:53
+#, fuzzy
+msgid "Invalid stream number.\n"
+msgstr "Неисправан знак у путањи.\n"
+
+#: mferror.mc:60
+#, fuzzy
+msgid "Invalid media type.\n"
+msgstr "Неисправна синтакса.\n"
+
+#: mferror.mc:67
+msgid "No more input is accepted.\n"
+msgstr ""
+
+#: mferror.mc:74
+#, fuzzy
+msgid "Object is not initialized.\n"
+msgstr "%s путања није пронађена.\n"
+
+#: mferror.mc:81
+#, fuzzy
+msgid "Representation is not supported.\n"
+msgstr "Начин потврде идентитета није подржан.\n"
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr ""
+
+#: mferror.mc:95
+msgid "Unsupported service.\n"
+msgstr ""
+
+#: mferror.mc:102
+#, fuzzy
+msgid "Unexpected error.\n"
+msgstr "Грешка у синтакси.\n"
+
+#: mferror.mc:116
+#, fuzzy
+msgid "Invalid type.\n"
+msgstr "Неисправна синтакса.\n"
+
+#: mferror.mc:123
+#, fuzzy
+msgid "Invalid file format.\n"
+msgstr "Неисправна синтакса.\n"
+
+#: mferror.mc:137
+#, fuzzy
+msgid "Invalid timestamp.\n"
+msgstr "Неисправна синтакса.\n"
+
+#: mferror.mc:144
+msgid "Unsupported scheme.\n"
+msgstr ""
+
+#: mferror.mc:151
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Unsupported bytestream type.\n"
+msgstr ""
+"Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
+
+#: mferror.mc:158
+msgid "Unsupported time format.\n"
+msgstr ""
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:179
+#, fuzzy
+msgid "Invalid stream data.\n"
+msgstr "Неисправна синтакса.\n"
+
+#: mferror.mc:186
+#, fuzzy
+msgid "Realtime support is not available.\n"
+msgstr "Недоступно"
+
+#: mferror.mc:193
+msgid "Unsupported rate.\n"
+msgstr ""
+
+#: mferror.mc:200
+msgid "Unsupported thinning.\n"
+msgstr ""
+
+#: mferror.mc:207
+#, fuzzy
+msgid "Reversing is not supported.\n"
+msgstr "Начин потврде идентитета није подржан.\n"
+
+#: mferror.mc:214
+msgid "Unsupported rate transition.\n"
+msgstr ""
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+#: mferror.mc:228
+#, fuzzy
+msgid "Object or value wasn't found.\n"
+msgstr "%s путања није пронађена.\n"
+
+#: mferror.mc:235
+#, fuzzy
+msgid "Value is not available.\n"
+msgstr "Недоступно"
+
+#: mferror.mc:242
+#, fuzzy
+msgid "Clock is not available.\n"
+msgstr "Недоступно"
+
+#: mferror.mc:263
+#, fuzzy
+msgid "Multiple subscribers are not supported.\n"
+msgstr "Начин потврде идентитета није подржан.\n"
+
+#: mferror.mc:270
+#, fuzzy
+msgid "The timer was orphaned.\n"
+msgstr "Улаз на штампачу је отворен; .\n"
+
+#: mferror.mc:277
+msgid "State transition is pending.\n"
+msgstr ""
+
+#: mferror.mc:284
+msgid "Unsupported state transition.\n"
+msgstr ""
+
+#: mferror.mc:291
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "Unrecoverable error occurred.\n"
+msgstr "Дошло је до грешке у штампачу."
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr ""
+
+#: mferror.mc:305
+msgid "Sample is not writable.\n"
+msgstr ""
+
+#: mferror.mc:312
+#, fuzzy
+msgid "Key is invalid.\n"
+msgstr "LAN веза.\n"
+
+#: mferror.mc:319
+msgid "Bad startup version.\n"
+msgstr ""
+
+#: mferror.mc:326
+#, fuzzy
+#| msgid "Support Information"
+msgid "Unsupported caption.\n"
+msgstr "Подршка"
+
+#: mferror.mc:333
+#, fuzzy
+msgid "Invalid position.\n"
+msgstr "Неисправна синтакса.\n"
+
+#: mferror.mc:340
+#, fuzzy
+msgid "Attribute is not found.\n"
+msgstr "Датотека није пронађена.\n"
+
+#: mferror.mc:347
+#, fuzzy
+msgid "Property type is not allowed.\n"
+msgstr "Датотека није пронађена.\n"
+
+#: mferror.mc:354
+#, fuzzy
+msgid "Property type is not supported.\n"
+msgstr "Начин потврде идентитета није подржан.\n"
+
+#: mferror.mc:361
+#, fuzzy
+msgid "Property is empty.\n"
+msgstr "Датотека није пронађена.\n"
+
+#: mferror.mc:368
+#, fuzzy
+msgid "Property is not empty.\n"
+msgstr "Датотека није пронађена.\n"
+
+#: mferror.mc:375
+#, fuzzy
+msgid "Vector property is not allowed.\n"
+msgstr "Датотека није пронађена.\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr ""
+
+#: mferror.mc:389
+#, fuzzy
+msgid "Operation was cancelled.\n"
+msgstr "Инсталациони програми.\n"
+
+#: mferror.mc:396
+msgid "Bytestream is not seekable.\n"
+msgstr ""
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr ""
+
+#: mferror.mc:410
+#, fuzzy
+msgid "Cannot parse bytestream.\n"
+msgstr "Штампач није пронађен."
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+
+#: mferror.mc:424
+#, fuzzy
+msgid "Unknown bytestream length.\n"
+msgstr "Непознат извор.\n"
+
+#: mferror.mc:431
+#, fuzzy
+msgid "Invalid work queue index.\n"
+msgstr "Неисправна синтакса.\n"
+
+#: mferror.mc:438
+#, fuzzy
+msgid "No events available.\n"
+msgstr "Недоступно; .\n"
+
+#: mferror.mc:445
+#, fuzzy
+msgid "Invalid media source state transition.\n"
+msgstr "Неисправна синтакса.\n"
+
+#: mferror.mc:452
+#, fuzzy
+msgid "End of media stream has been reached.\n"
+msgstr "Пронађена је петља.\n"
+
+#: mferror.mc:459
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:466
+#, fuzzy
+msgid "Media stream has no duration set.\n"
+msgstr "Неуспеси ресурса.\n"
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid.\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+msgid "Property wasn't found.\n"
+msgstr "Датотека није пронађена.\n"
+
+#: mferror.mc:487
+#, fuzzy
+msgid "Property is read-only.\n"
+msgstr "Датотека није пронађена.\n"
+
+#: mferror.mc:494
+#, fuzzy
+msgid "Property is not allowed.\n"
+msgstr "Датотека није пронађена.\n"
+
+#: mferror.mc:501
+#, fuzzy
+msgid "Media source is not started.\n"
+msgstr "Неуспеси ресурса.\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Support Information"
+msgid "Unsupported media format.\n"
+msgstr "Подршка"
+
+#: mferror.mc:515
+#, fuzzy
+msgid "Media source is in wrong state.\n"
+msgstr "Неуспеси ресурса.\n"
+
+#: mferror.mc:522
+#, fuzzy
+msgid "No media streams were selected.\n"
+msgstr "Пронађена је петља.\n"
+
+#: mferror.mc:529
+#, fuzzy
+#| msgid "Support Information"
+msgid "Unsupported media source characteristics.\n"
+msgstr "Подршка"
+
+#: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr ""
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr ""
+
+#: mferror.mc:550
+#, fuzzy
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "Неуспеси ресурса.\n"
+
+#: mferror.mc:557
+#, fuzzy
+msgid "Stream sink already exists.\n"
+msgstr "Порт %s већ постоји.\n"
+
+#: mferror.mc:564
+#, fuzzy
+msgid "Sample allocation was canceled.\n"
+msgstr "Инсталациони програми.\n"
+
+#: mferror.mc:571
+#, fuzzy
+msgid "Sample allocator is empty.\n"
+msgstr "Датотека није пронађена.\n"
+
+#: mferror.mc:578
+#, fuzzy
+msgid "Sink was already stopped.\n"
+msgstr "Порт %s већ постоји.\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr ""
+
+#: mferror.mc:592
+#, fuzzy
+msgid "No streams were selected for the sink.\n"
+msgstr "Пронађена је петља.\n"
+
+#: mferror.mc:606
+msgid "Metadata was too long.\n"
+msgstr ""
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr ""
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr ""
+
+#: mferror.mc:627
+#, fuzzy
+msgid "Optional node is invalid.\n"
+msgstr "LAN веза.\n"
+
+#: mferror.mc:634
+#, fuzzy
+#| msgid "Cannot find the printer."
+msgid "Cannot find decryptor.\n"
+msgstr "Штампач није пронађен."
+
+#: mferror.mc:641
+#, fuzzy
+msgid "Codec was not found.\n"
+msgstr "Датотека није пронађена.\n"
+
+#: mferror.mc:648
+msgid "Cannot connect topology nodes.\n"
+msgstr ""
+
+#: mferror.mc:655
+#, fuzzy
+msgid "Topology request is not supported.\n"
+msgstr "Начин потврде идентитета није подржан.\n"
+
+#: mferror.mc:662
+#, fuzzy
+msgid "Invalid topology time attributes.\n"
+msgstr "Неисправна синтакса.\n"
+
+#: mferror.mc:669
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:676
+#, fuzzy
+msgid "Presentation descriptor is missing.\n"
+msgstr "недостаје инсталација.\n"
+
+#: mferror.mc:683
+#, fuzzy
+msgid "Stream descriptor is missing.\n"
+msgstr "недостаје инсталација.\n"
+
+#: mferror.mc:690
+#, fuzzy
+msgid "Stream descriptor is not selected.\n"
+msgstr "Датотека није пронађена.\n"
+
+#: mferror.mc:697
+#, fuzzy
+msgid "Source is missing.\n"
+msgstr "недостаје инсталација.\n"
+
+#: mferror.mc:704
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:711
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:718
+#, fuzzy
+msgid "Clock state was already set.\n"
+msgstr "Порт %s већ постоји.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8990,7 +9443,7 @@ msgid "&Open:"
 msgstr "&Отвори:"
 
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:130
+#: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Разгледај..."
 
@@ -9004,7 +9457,7 @@ msgstr "Датотека"
 msgid "Location:"
 msgstr "Локација"
 
-#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+#: shell32.rc:361 shell32.rc:394 winefile.rc:169
 #, fuzzy
 msgid "Size:"
 msgstr "Величина"
@@ -9020,11 +9473,11 @@ msgstr "&Датум"
 msgid "Attributes:"
 msgstr "&Особине:"
 
-#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+#: shell32.rc:371 shell32.rc:408 winefile.rc:173
 msgid "H&idden"
 msgstr ""
 
-#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+#: shell32.rc:372 shell32.rc:409 winefile.rc:174
 msgid "&Archive"
 msgstr ""
 
@@ -9050,7 +9503,7 @@ msgstr "Измењено"
 msgid "Last accessed:"
 msgstr ""
 
-#: shell32.rc:138 shell32.rc:142 winefile.rc:108
+#: shell32.rc:138 shell32.rc:142 winefile.rc:107
 msgid "Size"
 msgstr "Величина"
 
@@ -9062,7 +9515,7 @@ msgstr "Врста"
 msgid "Modified"
 msgstr "Измењено"
 
-#: shell32.rc:141 winefile.rc:172 winefile.rc:114
+#: shell32.rc:141 winefile.rc:171 winefile.rc:113
 msgid "Attributes"
 msgstr "Особине"
 
@@ -9090,7 +9543,7 @@ msgstr "Оригинална локација"
 msgid "Date deleted"
 msgstr "Датум брисања"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -9216,7 +9669,7 @@ msgstr "Програми (x86)"
 msgid "Contacts"
 msgstr "Контакти"
 
-#: shell32.rc:225 winefile.rc:113
+#: shell32.rc:225 winefile.rc:112
 msgid "Links"
 msgstr "Везе"
 
@@ -10966,8 +11419,8 @@ msgstr ""
 
 #: winmm.rc:128
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 
 #: winmm.rc:131
@@ -10983,7 +11436,7 @@ msgstr ""
 #: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 
 #: winmm.rc:132
@@ -11610,8 +12063,8 @@ msgid ""
 "/affinity mask Start the program with the specified affinity mask.\n"
 "/wait          Wait for the started program to finish, then exit with its\n"
 "exit code.\n"
-"/unix          Use a Unix filename and start the file like windows\n"
-"explorer.\n"
+"/unix          Use a Unix filename and start the file like Windows\n"
+"Explorer.\n"
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
@@ -13147,7 +13600,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr ""
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr ""
 
 #: progman.rc:84
@@ -15143,7 +15596,7 @@ msgstr "Подаци"
 
 #: winecfg.rc:233
 msgid ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
+"Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
 
@@ -15458,7 +15911,7 @@ msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
+"it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 
 #: winecfg.rc:77
@@ -15998,77 +16451,77 @@ msgstr "Изабери &све\tCtrl+A"
 msgid "&About Wine File Manager"
 msgstr "&О Бележници"
 
-#: winefile.rc:122
+#: winefile.rc:121
 #, fuzzy
 msgid "Select destination"
 msgstr "Изабери &све"
 
-#: winefile.rc:135
+#: winefile.rc:134
 #, fuzzy
 msgid "By File Type"
 msgstr "По &врсти"
 
-#: winefile.rc:140
+#: winefile.rc:139
 #, fuzzy
 msgid "File type"
 msgstr "Датотека"
 
-#: winefile.rc:141
+#: winefile.rc:140
 msgid "&Directories"
 msgstr ""
 
-#: winefile.rc:143
+#: winefile.rc:142
 #, fuzzy
 msgid "&Programs"
 msgstr "Програми"
 
-#: winefile.rc:145
+#: winefile.rc:144
 #, fuzzy
 msgid "Docu&ments"
 msgstr "Документи"
 
-#: winefile.rc:147
+#: winefile.rc:146
 msgid "&Other files"
 msgstr ""
 
-#: winefile.rc:149
+#: winefile.rc:148
 msgid "Show Hidden/&System Files"
 msgstr ""
 
-#: winefile.rc:160
+#: winefile.rc:159
 #, fuzzy
 msgid "&File Name:"
 msgstr "&Датотека"
 
-#: winefile.rc:162
+#: winefile.rc:161
 msgid "Full &Path:"
 msgstr ""
 
-#: winefile.rc:164
+#: winefile.rc:163
 msgid "Last Change:"
 msgstr ""
 
-#: winefile.rc:168
+#: winefile.rc:167
 #, fuzzy
 msgid "Cop&yright:"
 msgstr "&Десно:"
 
-#: winefile.rc:176
+#: winefile.rc:175
 #, fuzzy
 msgid "&System"
 msgstr "&Налепи\tCtrl+V"
 
-#: winefile.rc:177
+#: winefile.rc:176
 #, fuzzy
 msgid "&Compressed"
 msgstr "несажето"
 
-#: winefile.rc:178
+#: winefile.rc:177
 #, fuzzy
 msgid "Version information"
 msgstr "Подаци"
 
-#: winefile.rc:194
+#: winefile.rc:193
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr ""
@@ -16089,34 +16542,30 @@ msgstr ""
 msgid "root fs"
 msgstr ""
 
-#: winefile.rc:99
-msgid "unixfs"
-msgstr ""
-
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Shell"
 msgstr ""
 
-#: winefile.rc:109
+#: winefile.rc:108
 #, fuzzy
 msgid "Creation date"
 msgstr "&Датум"
 
-#: winefile.rc:110
+#: winefile.rc:109
 #, fuzzy
 msgid "Access date"
 msgstr "&Датум"
 
-#: winefile.rc:111
+#: winefile.rc:110
 #, fuzzy
 msgid "Modification date"
 msgstr "&Датум"
 
-#: winefile.rc:112
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr ""
 
@@ -16854,7 +17303,7 @@ msgid ""
 "\tmore files.\n"
 "[/S]  Copy directories and subdirectories.\n"
 "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-"[/Q]  Do not list names during copy, that is be quiet.\n"
+"[/Q]  Do not list names during copy; that is, be quiet.\n"
 "[/F]  Show full source and destination names during copy.\n"
 "[/L]  Simulate operation, showing names which would be copied.\n"
 "[/W]  Prompts before beginning the copy operation.\n"
@@ -16864,13 +17313,13 @@ msgid ""
 "[/P]  Prompts on each source file before copying.\n"
 "[/N]  Copy using short names.\n"
 "[/U]  Copy only files which already exist in destination.\n"
-"[/R]  Overwrite any read only files.\n"
+"[/R]  Overwrite any read-only files.\n"
 "[/H]  Include hidden and system files in the copy.\n"
 "[/C]  Continue even if an error occurs during the copy.\n"
 "[/A]  Only copy files with archive attribute set.\n"
 "[/M]  Only copy files with archive attribute set, removes the\n"
 "\tarchive attribute.\n"
-"[/K]  Copy file attributes, without this attributes are not preserved.\n"
+"[/K]  Copy file attributes; without this, attributes are not preserved.\n"
 "[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
 "\t\tIf no date is supplied, only copy if destination is older\n"
 "\t\tthan source.\n"

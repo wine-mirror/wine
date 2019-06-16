@@ -178,38 +178,6 @@ INT WINAPI MulDiv( INT nMultiplicand, INT nMultiplier, INT nDivisor)
     return ret;
 }
 
-
-/******************************************************************************
- *           GetTickCount64       (KERNEL32.@)
- */
-ULONGLONG WINAPI DECLSPEC_HOTPATCH GetTickCount64(void)
-{
-    LARGE_INTEGER counter, frequency;
-
-    NtQueryPerformanceCounter( &counter, &frequency );
-    return counter.QuadPart * 1000 / frequency.QuadPart;
-}
-
-
-/***********************************************************************
- *           GetTickCount       (KERNEL32.@)
- *
- * Get the number of milliseconds the system has been running.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  The current tick count.
- *
- * NOTES
- *  The value returned will wrap around every 2^32 milliseconds.
- */
-DWORD WINAPI DECLSPEC_HOTPATCH GetTickCount(void)
-{
-    return GetTickCount64();
-}
-
 /******************************************************************************
  *           GetSystemRegistryQuota       (KERNEL32.@)
  */

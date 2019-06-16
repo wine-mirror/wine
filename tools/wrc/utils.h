@@ -51,5 +51,6 @@ void free_string( string_t *str );
 int check_valid_utf8( const string_t *str, int codepage );
 int check_unicode_conversion( const string_t *str_a, const string_t *str_w, int codepage );
 int get_language_codepage( unsigned short lang, unsigned short sublang );
+int is_valid_codepage(int cp);
 
 #endif

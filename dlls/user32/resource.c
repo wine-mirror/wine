@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -234,7 +236,7 @@ BOOL WINAPI DestroyAcceleratorTable( HACCEL handle )
 /**********************************************************************
  *	LoadStringW		(USER32.@)
  */
-INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
+INT WINAPI DECLSPEC_HOTPATCH LoadStringW( HINSTANCE instance, UINT resource_id,
                             LPWSTR buffer, INT buflen )
 {
     HGLOBAL hmem;
@@ -289,7 +291,7 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 /**********************************************************************
  *	LoadStringA	(USER32.@)
  */
-INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id, LPSTR buffer, INT buflen )
+INT WINAPI DECLSPEC_HOTPATCH LoadStringA( HINSTANCE instance, UINT resource_id, LPSTR buffer, INT buflen )
 {
     HGLOBAL hmem;
     HRSRC hrsrc;

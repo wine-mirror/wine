@@ -213,7 +213,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
                 if (p[1] & 0x8000)
                 {
                     if (!HIWORD(typeId)) continue;
-                    if (strcasecmp( typeId, (char *)(p + 3) )) continue;
+                    if (_strnicmp( typeId, (char *)(p + 3), -1 )) continue;
                 }
                 else if (HIWORD(typeId) || (((DWORD)typeId & ~0x8000)!= p[1]))
                   continue;
@@ -223,7 +223,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
                 if (p[2] & 0x8000)
                 {
                     if (!HIWORD(resId)) continue;
-                    if (strcasecmp( resId, (char*)(p+3)+strlen((char*)(p+3))+1 )) continue;
+                    if (_strnicmp( resId, (char*)(p+3)+strlen((char*)(p+3))+1, -1 )) continue;
 
                 }
                 else if (HIWORD(resId) || ((LOWORD(resId) & ~0x8000) != p[2]))
@@ -261,7 +261,7 @@ static NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab, NE_TYPEINFO *pTypeInfo, 
             if (!(pTypeInfo->type_id & 0x8000))
             {
                 BYTE *p = pResTab + pTypeInfo->type_id;
-                if ((*p == len) && !strncasecmp( (char*)p+1, str, len ))
+                if ((*p == len) && !_strnicmp( (char*)p+1, str, len ))
                 {
                     TRACE("  Found type '%s'\n", str );
                     return pTypeInfo;
@@ -308,7 +308,7 @@ static NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab, NE_TYPEINFO *pTypeI
         {
             if (pNameInfo->id & 0x8000) continue;
             p = pResTab + pNameInfo->id;
-            if ((*p == len) && !strncasecmp( (char*)p+1, str, len ))
+            if ((*p == len) && !_strnicmp( (char*)p+1, str, len ))
                 return pNameInfo;
         }
     }
@@ -380,8 +380,8 @@ FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, LPCSTR typeId, FARPROC
     {
         if (!(pTypeInfo = NE_FindTypeSection( pResTab, pTypeInfo, typeId )))
             break;
-        memcpy_unaligned( &prevHandler, &pTypeInfo->resloader, sizeof(FARPROC16) );
-        memcpy_unaligned( &pTypeInfo->resloader, &resourceHandler, sizeof(FARPROC16) );
+        prevHandler = pTypeInfo->resloader;
+        pTypeInfo->resloader = resourceHandler;
         pTypeInfo = next_typeinfo(pTypeInfo);
     }
     if (!prevHandler) prevHandler = get_default_res_handler();
@@ -1031,8 +1031,7 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
         }
         else
         {
-            FARPROC16 resloader;
-            memcpy_unaligned( &resloader, &pTypeInfo->resloader, sizeof(FARPROC16) );
+            FARPROC16 resloader = pTypeInfo->resloader;
             if (resloader && resloader != get_default_res_handler())
             {
                 WORD args[3];

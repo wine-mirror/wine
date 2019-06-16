@@ -1112,7 +1112,7 @@ static HRESULT read_xmldecl( struct reader *reader )
     HRESULT hr;
 
     if ((hr = read_more_data( reader, 1, NULL, NULL )) != S_OK) return hr;
-    if (*read_current_ptr( reader ) != '<' || (hr = read_cmp( reader, "<?", 2 ) != S_OK))
+    if (*read_current_ptr( reader ) != '<' || (hr = read_cmp( reader, "<?", 2 )) != S_OK)
     {
         reader->state = READER_STATE_BOF;
         return S_OK;

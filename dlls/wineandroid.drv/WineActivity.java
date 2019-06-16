@@ -326,7 +326,7 @@ public class WineActivity extends Activity
 
     private HashMap<Integer,WineWindow> win_map = new HashMap<Integer,WineWindow>();
 
-    protected class WineWindow extends Object
+    protected class WineWindow
     {
         static protected final int HWND_MESSAGE = 0xfffffffd;
         static protected final int SWP_NOZORDER = 0x04;
@@ -672,6 +672,7 @@ public class WineActivity extends Activity
             return window;
         }
 
+        @Override
         public void onSurfaceTextureAvailable( SurfaceTexture surftex, int width, int height )
         {
             Log.i( LOGTAG, String.format( "onSurfaceTextureAvailable win %08x %dx%d %s",
@@ -679,6 +680,7 @@ public class WineActivity extends Activity
             window.set_surface( surftex, is_client );
         }
 
+        @Override
         public void onSurfaceTextureSizeChanged( SurfaceTexture surftex, int width, int height )
         {
             Log.i( LOGTAG, String.format( "onSurfaceTextureSizeChanged win %08x %dx%d %s",
@@ -686,6 +688,7 @@ public class WineActivity extends Activity
             window.set_surface( surftex, is_client);
         }
 
+        @Override
         public boolean onSurfaceTextureDestroyed( SurfaceTexture surftex )
         {
             Log.i( LOGTAG, String.format( "onSurfaceTextureDestroyed win %08x %s",
@@ -694,6 +697,7 @@ public class WineActivity extends Activity
             return false;  // hold on to the texture since the app may still be using it
         }
 
+        @Override
         public void onSurfaceTextureUpdated(SurfaceTexture surftex)
         {
         }
@@ -704,6 +708,7 @@ public class WineActivity extends Activity
             return current_cursor;
         }
 
+        @Override
         public boolean onGenericMotionEvent( MotionEvent event )
         {
             if (is_client) return false;  // let the whole window handle it
@@ -722,6 +727,7 @@ public class WineActivity extends Activity
             return super.onGenericMotionEvent(event);
         }
 
+        @Override
         public boolean onTouchEvent( MotionEvent event )
         {
             if (is_client) return false;  // let the whole window handle it
@@ -736,6 +742,7 @@ public class WineActivity extends Activity
                                       event.getButtonState(), 0 );
         }
 
+        @Override
         public boolean dispatchKeyEvent( KeyEvent event )
         {
             Log.i( LOGTAG, String.format( "view key event win %08x action %d keycode %d (%s)",

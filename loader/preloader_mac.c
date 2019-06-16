@@ -51,6 +51,7 @@
 #include <mach-o/ldsyms.h>
 #endif
 
+#include "wine/asm.h"
 #include "main.h"
 
 #ifndef LC_MAIN

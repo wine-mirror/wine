@@ -39,6 +39,7 @@
 #include "rpcproxy.h"
 
 #include "wine/exception.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 #include "cpsf.h"
@@ -272,9 +273,22 @@ static const char *debugstr_INTERPRETER_OPT_FLAGS(INTERPRETER_OPT_FLAGS Oi2Flags
 
 #define ARG_FROM_OFFSET(args, offset) ((args) + (offset))
 
-static PFORMAT_STRING client_get_handle(
-    PMIDL_STUB_MESSAGE pStubMsg, const NDR_PROC_HEADER *pProcHeader,
-    PFORMAT_STRING pFormat, handle_t *phBinding)
+static size_t get_handle_desc_size(const NDR_PROC_HEADER *proc_header, PFORMAT_STRING format)
+{
+    if (!proc_header->handle_type)
+    {
+        if (*format == FC_BIND_PRIMITIVE)
+            return sizeof(NDR_EHD_PRIMITIVE);
+        else if (*format == FC_BIND_GENERIC)
+            return sizeof(NDR_EHD_GENERIC);
+        else if (*format == FC_BIND_CONTEXT)
+            return sizeof(NDR_EHD_CONTEXT);
+    }
+    return 0;
+}
+
+static handle_t client_get_handle(const MIDL_STUB_MESSAGE *pStubMsg,
+        const NDR_PROC_HEADER *pProcHeader, const PFORMAT_STRING pFormat)
 {
     /* binding */
     switch (pProcHeader->handle_type)
@@ -290,10 +304,9 @@ static PFORMAT_STRING client_get_handle(
                 TRACE("Explicit primitive handle @ %d\n", pDesc->offset);
 
                 if (pDesc->flag) /* pointer to binding */
-                    *phBinding = **(handle_t **)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
+                    return **(handle_t **)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 else
-                    *phBinding = *(handle_t *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
-                return pFormat + sizeof(NDR_EHD_PRIMITIVE);
+                    return *(handle_t *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
             }
         case FC_BIND_GENERIC: /* explicit generic */
             {
@@ -310,8 +323,7 @@ static PFORMAT_STRING client_get_handle(
                     pArg = ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
                 memcpy(&pObject, pArg, pDesc->flag_and_size & 0xf);
                 pGenPair = &pStubMsg->StubDesc->aGenericBindingRoutinePairs[pDesc->binding_routine_pair_index];
-                *phBinding = pGenPair->pfnBind(pObject);
-                return pFormat + sizeof(NDR_EHD_GENERIC);
+                return pGenPair->pfnBind(pObject);
             }
         case FC_BIND_CONTEXT: /* explicit context */
             {
@@ -326,7 +338,7 @@ static PFORMAT_STRING client_get_handle(
                 else
                     context_handle = *(NDR_CCONTEXT *)ARG_FROM_OFFSET(pStubMsg->StackTop, pDesc->offset);
 
-                if (context_handle) *phBinding = NDRCContextBinding(context_handle);
+                if (context_handle) return NDRCContextBinding(context_handle);
                 else if (pDesc->flags & NDR_CONTEXT_HANDLE_CANNOT_BE_NULL)
                 {
                     ERR("null context handle isn't allowed\n");
@@ -334,7 +346,6 @@ static PFORMAT_STRING client_get_handle(
                     return NULL;
                 }
                 /* FIXME: should we store this structure in stubMsg.pContext? */
-                return pFormat + sizeof(NDR_EHD_CONTEXT);
             }
         default:
             ERR("bad explicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
@@ -347,28 +358,25 @@ static PFORMAT_STRING client_get_handle(
         break;
     case FC_BIND_PRIMITIVE: /* implicit primitive */
         TRACE("Implicit primitive handle\n");
-        *phBinding = *pStubMsg->StubDesc->IMPLICIT_HANDLE_INFO.pPrimitiveHandle;
-        break;
+        return *pStubMsg->StubDesc->IMPLICIT_HANDLE_INFO.pPrimitiveHandle;
     case FC_CALLBACK_HANDLE: /* implicit callback */
         TRACE("FC_CALLBACK_HANDLE\n");
         /* server calls callback procedures only in response to remote call, and most recent
            binding handle is used. Calling back to a client can potentially result in another
            callback with different current handle. */
-        *phBinding = I_RpcGetCurrentCallHandle();
-        break;
+        return I_RpcGetCurrentCallHandle();
     case FC_AUTO_HANDLE: /* implicit auto handle */
         /* strictly speaking, it isn't necessary to set hBinding here
          * since it isn't actually used (hence the automatic in its name),
          * but then why does MIDL generate a valid entry in the
          * MIDL_STUB_DESC for it? */
         TRACE("Implicit auto handle\n");
-        *phBinding = *pStubMsg->StubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle;
-        break;
+        return *pStubMsg->StubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle;
     default:
         ERR("bad implicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
         RpcRaiseException(RPC_X_BAD_STUB_DATA);
     }
-    return pFormat;
+    return NULL;
 }
 
 static void client_free_handle(
@@ -649,13 +657,200 @@ PFORMAT_STRING convert_old_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFo
     return (PFORMAT_STRING)args;
 }
 
+struct ndr_client_call_ctx
+{
+    MIDL_STUB_MESSAGE *stub_msg;
+    INTERPRETER_OPT_FLAGS Oif_flags;
+    INTERPRETER_OPT_FLAGS2 ext_flags;
+    const NDR_PROC_HEADER *proc_header;
+    void *This;
+    PFORMAT_STRING handle_format;
+    handle_t hbinding;
+};
+
+static void CALLBACK ndr_client_call_finally(BOOL normal, void *arg)
+{
+    struct ndr_client_call_ctx *ctx = arg;
+
+    if (ctx->ext_flags.HasNewCorrDesc)
+    {
+        /* free extra correlation package */
+        NdrCorrelationFree(ctx->stub_msg);
+    }
+
+    if (ctx->Oif_flags.HasPipes)
+    {
+        /* NdrPipesDone(...) */
+    }
+
+    /* free the full pointer translation tables */
+    if (ctx->proc_header->Oi_flags & Oi_FULL_PTR_USED)
+        NdrFullPointerXlatFree(ctx->stub_msg->FullPtrXlatTables);
+
+    /* free marshalling buffer */
+    if (ctx->proc_header->Oi_flags & Oi_OBJECT_PROC)
+        NdrProxyFreeBuffer(ctx->This, ctx->stub_msg);
+    else
+    {
+        NdrFreeBuffer(ctx->stub_msg);
+        client_free_handle(ctx->stub_msg, ctx->proc_header, ctx->handle_format, ctx->hbinding);
+    }
+}
+
+/* Helper for ndr_client_call, to factor out the part that may or may not be
+ * guarded by a try/except block. */
+static LONG_PTR do_ndr_client_call( const MIDL_STUB_DESC *stub_desc, const PFORMAT_STRING format,
+        const PFORMAT_STRING handle_format, void **stack_top, void **fpu_stack, MIDL_STUB_MESSAGE *stub_msg,
+        unsigned short procedure_number, unsigned short stack_size, unsigned int number_of_params,
+        INTERPRETER_OPT_FLAGS Oif_flags, INTERPRETER_OPT_FLAGS2 ext_flags, const NDR_PROC_HEADER *proc_header )
+{
+    struct ndr_client_call_ctx finally_ctx;
+    RPC_MESSAGE rpc_msg;
+    handle_t hbinding = NULL;
+    /* the value to return to the client from the remote procedure */
+    LONG_PTR retval = 0;
+    /* the pointer to the object when in OLE mode */
+    void *This = NULL;
+    /* correlation cache */
+    ULONG_PTR NdrCorrCache[256];
+
+    /* create the full pointer translation tables, if requested */
+    if (proc_header->Oi_flags & Oi_FULL_PTR_USED)
+        stub_msg->FullPtrXlatTables = NdrFullPointerXlatInit(0,XLAT_CLIENT);
+
+    if (proc_header->Oi_flags & Oi_OBJECT_PROC)
+    {
+        /* object is always the first argument */
+        This = stack_top[0];
+        NdrProxyInitialize(This, &rpc_msg, stub_msg, stub_desc, procedure_number);
+    }
+
+    finally_ctx.stub_msg = stub_msg;
+    finally_ctx.Oif_flags = Oif_flags;
+    finally_ctx.ext_flags = ext_flags;
+    finally_ctx.proc_header = proc_header;
+    finally_ctx.This = This;
+    finally_ctx.handle_format = handle_format;
+    finally_ctx.hbinding = hbinding;
+
+    __TRY
+    {
+        if (!(proc_header->Oi_flags & Oi_OBJECT_PROC))
+            NdrClientInitializeNew(&rpc_msg, stub_msg, stub_desc, procedure_number);
+
+        stub_msg->StackTop = (unsigned char *)stack_top;
+
+        /* we only need a handle if this isn't an object method */
+        if (!(proc_header->Oi_flags & Oi_OBJECT_PROC))
+        {
+            hbinding = client_get_handle(stub_msg, proc_header, handle_format);
+            if (!hbinding) return 0;
+        }
+
+        stub_msg->BufferLength = 0;
+
+        /* store the RPC flags away */
+        if (proc_header->Oi_flags & Oi_HAS_RPCFLAGS)
+            rpc_msg.RpcFlags = ((const NDR_PROC_HEADER_RPC *)proc_header)->rpc_flags;
+
+        /* use alternate memory allocation routines */
+        if (proc_header->Oi_flags & Oi_RPCSS_ALLOC_USED)
+            NdrRpcSmSetClientToOsf(stub_msg);
+
+        if (Oif_flags.HasPipes)
+        {
+            FIXME("pipes not supported yet\n");
+            RpcRaiseException(RPC_X_WRONG_STUB_VERSION); /* FIXME: remove when implemented */
+            /* init pipes package */
+            /* NdrPipesInitialize(...) */
+        }
+        if (ext_flags.HasNewCorrDesc)
+        {
+            /* initialize extra correlation package */
+            NdrCorrelationInitialize(stub_msg, NdrCorrCache, sizeof(NdrCorrCache), 0);
+            if (ext_flags.Unused & 0x2) /* has range on conformance */
+                stub_msg->CorrDespIncrement = 12;
+        }
+
+        /* order of phases:
+         * 1. INITOUT - zero [out] parameters (proxies only)
+         * 2. CALCSIZE - calculate the buffer size
+         * 3. GETBUFFER - allocate the buffer
+         * 4. MARSHAL - marshal [in] params into the buffer
+         * 5. SENDRECEIVE - send/receive buffer
+         * 6. UNMARSHAL - unmarshal [out] params from buffer
+         * 7. FREE - clear [out] parameters (for proxies, and only on error)
+         */
+
+        /* 1. INITOUT */
+        if (proc_header->Oi_flags & Oi_OBJECT_PROC)
+        {
+            TRACE( "INITOUT\n" );
+            client_do_args(stub_msg, format, STUBLESS_INITOUT, fpu_stack,
+                           number_of_params, (unsigned char *)&retval);
+        }
+
+        /* 2. CALCSIZE */
+        TRACE( "CALCSIZE\n" );
+        client_do_args(stub_msg, format, STUBLESS_CALCSIZE, fpu_stack,
+                       number_of_params, (unsigned char *)&retval);
+
+        /* 3. GETBUFFER */
+        TRACE( "GETBUFFER\n" );
+        if (proc_header->Oi_flags & Oi_OBJECT_PROC)
+            NdrProxyGetBuffer(This, stub_msg);
+        else if (Oif_flags.HasPipes)
+            FIXME("pipes not supported yet\n");
+        else if (proc_header->handle_type == FC_AUTO_HANDLE)
+#if 0
+            NdrNsGetBuffer(stub_msg, stub_msg->BufferLength, hBinding);
+#else
+            FIXME("using auto handle - call NdrNsGetBuffer when it gets implemented\n");
+#endif
+        else
+            NdrGetBuffer(stub_msg, stub_msg->BufferLength, hbinding);
+
+        /* 4. MARSHAL */
+        TRACE( "MARSHAL\n" );
+        client_do_args(stub_msg, format, STUBLESS_MARSHAL, fpu_stack,
+                       number_of_params, (unsigned char *)&retval);
+
+        /* 5. SENDRECEIVE */
+        TRACE( "SENDRECEIVE\n" );
+        if (proc_header->Oi_flags & Oi_OBJECT_PROC)
+            NdrProxySendReceive(This, stub_msg);
+        else if (Oif_flags.HasPipes)
+            /* NdrPipesSendReceive(...) */
+            FIXME("pipes not supported yet\n");
+        else if (proc_header->handle_type == FC_AUTO_HANDLE)
+#if 0
+            NdrNsSendReceive(stub_msg, stub_msg->Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
+#else
+            FIXME("using auto handle - call NdrNsSendReceive when it gets implemented\n");
+#endif
+        else
+            NdrSendReceive(stub_msg, stub_msg->Buffer);
+
+        /* convert strings, floating point values and endianness into our
+         * preferred format */
+        if ((rpc_msg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
+            NdrConvert(stub_msg, format);
+
+        /* 6. UNMARSHAL */
+        TRACE( "UNMARSHAL\n" );
+        client_do_args(stub_msg, format, STUBLESS_UNMARSHAL, fpu_stack,
+                       number_of_params, (unsigned char *)&retval);
+    }
+    __FINALLY_CTX(ndr_client_call_finally, &finally_ctx)
+
+    return retval;
+}
+
 LONG_PTR CDECL DECLSPEC_HIDDEN ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,
                                                 void **stack_top, void **fpu_stack )
 {
     /* pointer to start of stack where arguments start */
-    RPC_MESSAGE rpcMsg;
     MIDL_STUB_MESSAGE stubMsg;
-    handle_t hBinding = NULL;
     /* procedure number */
     unsigned short procedure_number;
     /* size of stack */
@@ -670,11 +865,8 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORM
     const NDR_PROC_HEADER * pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
     /* the value to return to the client from the remote procedure */
     LONG_PTR RetVal = 0;
-    /* the pointer to the object when in OLE mode */
-    void * This = NULL;
     PFORMAT_STRING pHandleFormat;
-    /* correlation cache */
-    ULONG_PTR NdrCorrCache[256];
+    NDR_PARAM_OIF old_args[256];
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
 
@@ -695,32 +887,14 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORM
     }
     TRACE("stack size: 0x%x\n", stack_size);
     TRACE("proc num: %d\n", procedure_number);
-
-    /* create the full pointer translation tables, if requested */
-    if (pProcHeader->Oi_flags & Oi_FULL_PTR_USED)
-        stubMsg.FullPtrXlatTables = NdrFullPointerXlatInit(0,XLAT_CLIENT);
-
-    if (pProcHeader->Oi_flags & Oi_OBJECT_PROC)
-    {
-        /* object is always the first argument */
-        This = stack_top[0];
-        NdrProxyInitialize(This, &rpcMsg, &stubMsg, pStubDesc, procedure_number);
-    }
-    else
-        NdrClientInitializeNew(&rpcMsg, &stubMsg, pStubDesc, procedure_number);
-
     TRACE("Oi_flags = 0x%02x\n", pProcHeader->Oi_flags);
     TRACE("MIDL stub version = 0x%x\n", pStubDesc->MIDLVersion);
 
-    stubMsg.StackTop = (unsigned char *)stack_top;
     pHandleFormat = pFormat;
 
     /* we only need a handle if this isn't an object method */
     if (!(pProcHeader->Oi_flags & Oi_OBJECT_PROC))
-    {
-        pFormat = client_get_handle(&stubMsg, pProcHeader, pHandleFormat, &hBinding);
-        if (!pFormat) goto done;
-    }
+        pFormat += get_handle_desc_size(pProcHeader, pFormat);
 
     if (is_oicf_stubdesc(pStubDesc))  /* -Oicf format */
     {
@@ -758,251 +932,69 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORM
     {
         pFormat = convert_old_args( &stubMsg, pFormat, stack_size,
                                     pProcHeader->Oi_flags & Oi_OBJECT_PROC,
-                                    /* reuse the correlation cache, it's not needed for v1 format */
-                                    NdrCorrCache, sizeof(NdrCorrCache), &number_of_params );
+                                    old_args, sizeof(old_args), &number_of_params );
     }
 
-    stubMsg.BufferLength = 0;
-
-    /* store the RPC flags away */
-    if (pProcHeader->Oi_flags & Oi_HAS_RPCFLAGS)
-        rpcMsg.RpcFlags = ((const NDR_PROC_HEADER_RPC *)pProcHeader)->rpc_flags;
-
-    /* use alternate memory allocation routines */
-    if (pProcHeader->Oi_flags & Oi_RPCSS_ALLOC_USED)
-        NdrRpcSmSetClientToOsf(&stubMsg);
-
-    if (Oif_flags.HasPipes)
+    if (pProcHeader->Oi_flags & Oi_OBJECT_PROC)
     {
-        FIXME("pipes not supported yet\n");
-        RpcRaiseException(RPC_X_WRONG_STUB_VERSION); /* FIXME: remove when implemented */
-        /* init pipes package */
-        /* NdrPipesInitialize(...) */
-    }
-    if (ext_flags.HasNewCorrDesc)
-    {
-        /* initialize extra correlation package */
-        NdrCorrelationInitialize(&stubMsg, NdrCorrCache, sizeof(NdrCorrCache), 0);
-        if (ext_flags.Unused & 0x2) /* has range on conformance */
-            stubMsg.CorrDespIncrement = 12;
-    }
-
-    /* order of phases:
-     * 1. INITOUT - zero [out] parameters (proxies only)
-     * 2. CALCSIZE - calculate the buffer size
-     * 3. GETBUFFER - allocate the buffer
-     * 4. MARSHAL - marshal [in] params into the buffer
-     * 5. SENDRECEIVE - send/receive buffer
-     * 6. UNMARSHAL - unmarshal [out] params from buffer
-     * 7. FREE - clear [out] parameters (for proxies, and only on error)
-     */
-    if ((pProcHeader->Oi_flags & Oi_OBJECT_PROC) ||
-        (pProcHeader->Oi_flags & Oi_HAS_COMM_OR_FAULT))
-    {
-        /* 1. INITOUT */
-        if (pProcHeader->Oi_flags & Oi_OBJECT_PROC)
-        {
-            TRACE( "INITOUT\n" );
-            client_do_args(&stubMsg, pFormat, STUBLESS_INITOUT, fpu_stack,
-                           number_of_params, (unsigned char *)&RetVal);
-        }
-
         __TRY
         {
-            /* 2. CALCSIZE */
-            TRACE( "CALCSIZE\n" );
-            client_do_args(&stubMsg, pFormat, STUBLESS_CALCSIZE, fpu_stack,
-                           number_of_params, (unsigned char *)&RetVal);
-
-            /* 3. GETBUFFER */
-            TRACE( "GETBUFFER\n" );
-            if (pProcHeader->Oi_flags & Oi_OBJECT_PROC)
-            {
-                /* allocate the buffer */
-                NdrProxyGetBuffer(This, &stubMsg);
-            }
-            else
-            {
-                /* allocate the buffer */
-                if (Oif_flags.HasPipes)
-                    /* NdrGetPipeBuffer(...) */
-                    FIXME("pipes not supported yet\n");
-                else
-                {
-                    if (pProcHeader->handle_type == FC_AUTO_HANDLE)
-#if 0
-                        NdrNsGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
-#else
-                    FIXME("using auto handle - call NdrNsGetBuffer when it gets implemented\n");
-#endif
-                    else
-                        NdrGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
-                }
-            }
-
-            /* 4. MARSHAL */
-            TRACE( "MARSHAL\n" );
-            client_do_args(&stubMsg, pFormat, STUBLESS_MARSHAL, fpu_stack,
-                           number_of_params, (unsigned char *)&RetVal);
-
-            /* 5. SENDRECEIVE */
-            TRACE( "SENDRECEIVE\n" );
-            if (pProcHeader->Oi_flags & Oi_OBJECT_PROC)
-            {
-                /* send the [in] params and receive the [out] and [retval]
-                 * params */
-                NdrProxySendReceive(This, &stubMsg);
-            }
-            else
-            {
-                /* send the [in] params and receive the [out] and [retval]
-                 * params */
-                if (Oif_flags.HasPipes)
-                    /* NdrPipesSendReceive(...) */
-                    FIXME("pipes not supported yet\n");
-                else
-                {
-                    if (pProcHeader->handle_type == FC_AUTO_HANDLE)
-#if 0
-                        NdrNsSendReceive(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
-#else
-                    FIXME("using auto handle - call NdrNsSendReceive when it gets implemented\n");
-#endif
-                    else
-                        NdrSendReceive(&stubMsg, stubMsg.Buffer);
-                }
-            }
-
-            /* convert strings, floating point values and endianness into our
-             * preferred format */
-            if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
-                NdrConvert(&stubMsg, pFormat);
-
-            /* 6. UNMARSHAL */
-            TRACE( "UNMARSHAL\n" );
-            client_do_args(&stubMsg, pFormat, STUBLESS_UNMARSHAL, fpu_stack,
-                           number_of_params, (unsigned char *)&RetVal);
+            RetVal = do_ndr_client_call(pStubDesc, pFormat, pHandleFormat,
+                    stack_top, fpu_stack, &stubMsg, procedure_number, stack_size,
+                    number_of_params, Oif_flags, ext_flags, pProcHeader);
         }
         __EXCEPT_ALL
         {
-            if (pProcHeader->Oi_flags & Oi_OBJECT_PROC)
-            {
-                /* 7. FREE */
-                TRACE( "FREE\n" );
-                client_do_args(&stubMsg, pFormat, STUBLESS_FREE, fpu_stack,
-                               number_of_params, (unsigned char *)&RetVal);
-                RetVal = NdrProxyErrorHandler(GetExceptionCode());
-            }
+            /* 7. FREE */
+            TRACE( "FREE\n" );
+            client_do_args(&stubMsg, pFormat, STUBLESS_FREE, fpu_stack,
+                           number_of_params, (unsigned char *)&RetVal);
+            RetVal = NdrProxyErrorHandler(GetExceptionCode());
+        }
+        __ENDTRY
+    }
+    else if (pProcHeader->Oi_flags & Oi_HAS_COMM_OR_FAULT)
+    {
+        __TRY
+        {
+            RetVal = do_ndr_client_call(pStubDesc, pFormat, pHandleFormat,
+                    stack_top, fpu_stack, &stubMsg, procedure_number, stack_size,
+                    number_of_params, Oif_flags, ext_flags, pProcHeader);
+        }
+        __EXCEPT_ALL
+        {
+            const COMM_FAULT_OFFSETS *comm_fault_offsets = &pStubDesc->CommFaultOffsets[procedure_number];
+            ULONG *comm_status;
+            ULONG *fault_status;
+
+            TRACE("comm_fault_offsets = {0x%hx, 0x%hx}\n", comm_fault_offsets->CommOffset, comm_fault_offsets->FaultOffset);
+
+            if (comm_fault_offsets->CommOffset == -1)
+                comm_status = (ULONG *)&RetVal;
+            else if (comm_fault_offsets->CommOffset >= 0)
+                comm_status = *(ULONG **)ARG_FROM_OFFSET(stubMsg.StackTop, comm_fault_offsets->CommOffset);
             else
-            {
-                const COMM_FAULT_OFFSETS *comm_fault_offsets = &pStubDesc->CommFaultOffsets[procedure_number];
-                ULONG *comm_status;
-                ULONG *fault_status;
+                comm_status = NULL;
 
-                TRACE("comm_fault_offsets = {0x%hx, 0x%hx}\n", comm_fault_offsets->CommOffset, comm_fault_offsets->FaultOffset);
+            if (comm_fault_offsets->FaultOffset == -1)
+                fault_status = (ULONG *)&RetVal;
+            else if (comm_fault_offsets->FaultOffset >= 0)
+                fault_status = *(ULONG **)ARG_FROM_OFFSET(stubMsg.StackTop, comm_fault_offsets->FaultOffset);
+            else
+                fault_status = NULL;
 
-                if (comm_fault_offsets->CommOffset == -1)
-                    comm_status = (ULONG *)&RetVal;
-                else if (comm_fault_offsets->CommOffset >= 0)
-                    comm_status = *(ULONG **)ARG_FROM_OFFSET(stubMsg.StackTop, comm_fault_offsets->CommOffset);
-                else
-                    comm_status = NULL;
-
-                if (comm_fault_offsets->FaultOffset == -1)
-                    fault_status = (ULONG *)&RetVal;
-                else if (comm_fault_offsets->FaultOffset >= 0)
-                    fault_status = *(ULONG **)ARG_FROM_OFFSET(stubMsg.StackTop, comm_fault_offsets->FaultOffset);
-                else
-                    fault_status = NULL;
-
-                NdrMapCommAndFaultStatus(&stubMsg, comm_status, fault_status,
-                                         GetExceptionCode());
-            }
+            NdrMapCommAndFaultStatus(&stubMsg, comm_status, fault_status,
+                                     GetExceptionCode());
         }
         __ENDTRY
     }
     else
     {
-        /* 2. CALCSIZE */
-        TRACE( "CALCSIZE\n" );
-        client_do_args(&stubMsg, pFormat, STUBLESS_CALCSIZE, fpu_stack,
-                       number_of_params, (unsigned char *)&RetVal);
-
-        /* 3. GETBUFFER */
-        TRACE( "GETBUFFER\n" );
-        if (Oif_flags.HasPipes)
-            /* NdrGetPipeBuffer(...) */
-            FIXME("pipes not supported yet\n");
-        else
-        {
-            if (pProcHeader->handle_type == FC_AUTO_HANDLE)
-#if 0
-                NdrNsGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
-#else
-            FIXME("using auto handle - call NdrNsGetBuffer when it gets implemented\n");
-#endif
-            else
-                NdrGetBuffer(&stubMsg, stubMsg.BufferLength, hBinding);
-        }
-
-        /* 4. MARSHAL */
-        TRACE( "MARSHAL\n" );
-        client_do_args(&stubMsg, pFormat, STUBLESS_MARSHAL, fpu_stack,
-                       number_of_params, (unsigned char *)&RetVal);
-
-        /* 5. SENDRECEIVE */
-        TRACE( "SENDRECEIVE\n" );
-        if (Oif_flags.HasPipes)
-            /* NdrPipesSendReceive(...) */
-            FIXME("pipes not supported yet\n");
-        else
-        {
-            if (pProcHeader->handle_type == FC_AUTO_HANDLE)
-#if 0
-                NdrNsSendReceive(&stubMsg, stubMsg.Buffer, pStubDesc->IMPLICIT_HANDLE_INFO.pAutoHandle);
-#else
-            FIXME("using auto handle - call NdrNsSendReceive when it gets implemented\n");
-#endif
-            else
-                NdrSendReceive(&stubMsg, stubMsg.Buffer);
-        }
-
-        /* convert strings, floating point values and endianness into our
-         * preferred format */
-        if ((rpcMsg.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)
-            NdrConvert(&stubMsg, pFormat);
-
-        /* 6. UNMARSHAL */
-        TRACE( "UNMARSHAL\n" );
-        client_do_args(&stubMsg, pFormat, STUBLESS_UNMARSHAL, fpu_stack,
-                       number_of_params, (unsigned char *)&RetVal);
+        RetVal = do_ndr_client_call(pStubDesc, pFormat, pHandleFormat,
+                stack_top, fpu_stack, &stubMsg, procedure_number, stack_size,
+                number_of_params, Oif_flags, ext_flags, pProcHeader);
     }
 
-    if (ext_flags.HasNewCorrDesc)
-    {
-        /* free extra correlation package */
-        NdrCorrelationFree(&stubMsg);
-    }
-
-    if (Oif_flags.HasPipes)
-    {
-        /* NdrPipesDone(...) */
-    }
-
-    /* free the full pointer translation tables */
-    if (pProcHeader->Oi_flags & Oi_FULL_PTR_USED)
-        NdrFullPointerXlatFree(stubMsg.FullPtrXlatTables);
-
-    /* free marshalling buffer */
-    if (pProcHeader->Oi_flags & Oi_OBJECT_PROC)
-        NdrProxyFreeBuffer(This, &stubMsg);
-    else
-    {
-        NdrFreeBuffer(&stubMsg);
-        client_free_handle(&stubMsg, pProcHeader, pHandleFormat, hBinding);
-    }
-
-done:
     TRACE("RetVal = 0x%lx\n", RetVal);
     return RetVal;
 }
@@ -1557,6 +1549,14 @@ void WINAPI NdrServerCall( PRPC_MESSAGE msg )
     NdrStubCall( NULL, NULL, msg, &phase );
 }
 
+/***********************************************************************
+ *            NdrServerCallAll [RPCRT4.@]
+ */
+void WINAPI NdrServerCallAll( PRPC_MESSAGE msg )
+{
+    FIXME("%p stub\n", msg);
+}
+
 struct async_call_data
 {
     MIDL_STUB_MESSAGE *pStubMsg;
@@ -1646,8 +1646,9 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr_async_client_call( PMIDL_STUB_DESC pStubDesc,
     pAsync->StubInfo = async_call_data;
     async_call_data->pHandleFormat = pFormat;
 
-    pFormat = client_get_handle(pStubMsg, pProcHeader, async_call_data->pHandleFormat, &async_call_data->hBinding);
-    if (!pFormat) goto done;
+    pFormat += get_handle_desc_size(pProcHeader, pFormat);
+    async_call_data->hBinding = client_get_handle(pStubMsg, pProcHeader, async_call_data->pHandleFormat);
+    if (!async_call_data->hBinding) goto done;
 
     if (is_oicf_stubdesc(pStubDesc))
     {

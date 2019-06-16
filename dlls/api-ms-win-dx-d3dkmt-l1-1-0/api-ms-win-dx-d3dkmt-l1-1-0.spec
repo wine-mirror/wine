@@ -6,13 +6,13 @@
 @ stub D3DKMTCheckOcclusion
 @ stub D3DKMTCheckSharedResourceAccess
 @ stub D3DKMTCheckVidPnExclusiveOwnership
-@ stub D3DKMTCloseAdapter
+@ stdcall D3DKMTCloseAdapter(ptr) gdi32.D3DKMTCloseAdapter
 @ stub D3DKMTConfigureSharedResource
 @ stub D3DKMTCreateAllocation
 @ stub D3DKMTCreateAllocation2
 @ stub D3DKMTCreateContext
 @ stdcall D3DKMTCreateDCFromMemory(ptr) gdi32.D3DKMTCreateDCFromMemory
-@ stub D3DKMTCreateDevice
+@ stdcall D3DKMTCreateDevice(ptr) gdi32.D3DKMTCreateDevice
 @ stub D3DKMTCreateKeyedMutex
 @ stub D3DKMTCreateKeyedMutex2
 @ stub D3DKMTCreateOutputDupl
@@ -22,7 +22,7 @@
 @ stub D3DKMTDestroyAllocation
 @ stub D3DKMTDestroyContext
 @ stdcall D3DKMTDestroyDCFromMemory(ptr) gdi32.D3DKMTDestroyDCFromMemory
-@ stub D3DKMTDestroyDevice
+@ stdcall D3DKMTDestroyDevice(ptr) gdi32.D3DKMTDestroyDevice
 @ stub D3DKMTDestroyKeyedMutex
 @ stub D3DKMTDestroyOutputDupl
 @ stub D3DKMTDestroyOverlay
@@ -46,7 +46,7 @@
 @ stub D3DKMTLock
 @ stub D3DKMTOfferAllocations
 @ stub D3DKMTOpenAdapterFromDeviceName
-@ stub D3DKMTOpenAdapterFromGdiDisplayName
+@ stdcall D3DKMTOpenAdapterFromGdiDisplayName(ptr) gdi32.D3DKMTOpenAdapterFromGdiDisplayName
 @ stdcall D3DKMTOpenAdapterFromHdc(ptr) gdi32.D3DKMTOpenAdapterFromHdc
 @ stub D3DKMTOpenKeyedMutex
 @ stub D3DKMTOpenKeyedMutex2

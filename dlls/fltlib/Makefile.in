@@ -1,5 +1,7 @@
 MODULE    = fltlib.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	fltlib.c
 

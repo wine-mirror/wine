@@ -49,7 +49,6 @@ struct quartz_vmr
     BaseControlWindow baseControlWindow;
     BaseControlVideo baseControlVideo;
 
-    IUnknown IUnknown_inner;
     IAMCertifiedOutputProtection IAMCertifiedOutputProtection_iface;
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IVMRFilterConfig IVMRFilterConfig_iface;
@@ -72,9 +71,6 @@ struct quartz_vmr
      */
     VMR9Mode mode;
     BITMAPINFOHEADER bmiheader;
-    IUnknown * outer_unk;
-    BOOL bUnkOuterValid;
-    BOOL bAggregatable;
 
     HMODULE hD3d9;
 
@@ -94,29 +90,14 @@ struct quartz_vmr
     LONG VideoHeight;
 };
 
-static inline struct quartz_vmr *impl_from_inner_IUnknown(IUnknown *iface)
-{
-    return CONTAINING_RECORD(iface, struct quartz_vmr, IUnknown_inner);
-}
-
 static inline struct quartz_vmr *impl_from_BaseWindow(BaseWindow *wnd)
 {
     return CONTAINING_RECORD(wnd, struct quartz_vmr, baseControlWindow.baseWindow);
 }
 
-static inline struct quartz_vmr *impl_from_IVideoWindow(IVideoWindow *iface)
-{
-    return CONTAINING_RECORD(iface, struct quartz_vmr, baseControlWindow.IVideoWindow_iface);
-}
-
 static inline struct quartz_vmr *impl_from_BaseControlVideo(BaseControlVideo *cvid)
 {
     return CONTAINING_RECORD(cvid, struct quartz_vmr, baseControlVideo);
-}
-
-static inline struct quartz_vmr *impl_from_IBasicVideo(IBasicVideo *iface)
-{
-    return CONTAINING_RECORD(iface, struct quartz_vmr, baseControlVideo.IBasicVideo_iface);
 }
 
 static inline struct quartz_vmr *impl_from_IAMCertifiedOutputProtection(IAMCertifiedOutputProtection *iface)
@@ -206,6 +187,11 @@ static inline VMR9DefaultAllocatorPresenterImpl *impl_from_IVMRSurfaceAllocatorE
 
 static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *parent, LPVOID * ppv);
 
+static inline struct quartz_vmr *impl_from_IBaseFilter(IBaseFilter *iface)
+{
+    return CONTAINING_RECORD(iface, struct quartz_vmr, renderer.filter.IBaseFilter_iface);
+}
+
 static DWORD VMR9_SendSampleData(struct quartz_vmr *This, VMR9PresentationInfo *info, LPBYTE data,
                                  DWORD size)
 {
@@ -286,7 +272,7 @@ static DWORD VMR9_SendSampleData(struct quartz_vmr *This, VMR9PresentationInfo *
 
 static HRESULT WINAPI VMR9_DoRenderSample(BaseRenderer *iface, IMediaSample * pSample)
 {
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
+    struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
     LPBYTE pbSrcStream = NULL;
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
@@ -351,7 +337,7 @@ static HRESULT WINAPI VMR9_DoRenderSample(BaseRenderer *iface, IMediaSample * pS
 
 static HRESULT WINAPI VMR9_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TYPE * pmt)
 {
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
+    struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
     if (!IsEqualIID(&pmt->majortype, &MEDIATYPE_Video) || !pmt->pbFormat)
         return S_FALSE;
@@ -445,7 +431,7 @@ static HRESULT VMR9_maybe_init(struct quartz_vmr *This, BOOL force)
 
 static VOID WINAPI VMR9_OnStartStreaming(BaseRenderer* iface)
 {
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
+    struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
     TRACE("(%p)\n", This);
 
@@ -463,7 +449,7 @@ static VOID WINAPI VMR9_OnStartStreaming(BaseRenderer* iface)
 
 static VOID WINAPI VMR9_OnStopStreaming(BaseRenderer* iface)
 {
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
+    struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
     TRACE("(%p)\n", This);
 
@@ -481,7 +467,7 @@ static HRESULT WINAPI VMR9_ShouldDrawSampleNow(BaseRenderer *This, IMediaSample 
 
 static HRESULT WINAPI VMR9_CompleteConnect(BaseRenderer *This, IPin *pReceivePin)
 {
-    struct quartz_vmr *pVMR9 = (struct quartz_vmr*)This;
+    struct quartz_vmr *pVMR9 = impl_from_IBaseFilter(&This->filter.IBaseFilter_iface);
     HRESULT hr;
 
     TRACE("(%p)\n", This);
@@ -495,7 +481,7 @@ static HRESULT WINAPI VMR9_CompleteConnect(BaseRenderer *This, IPin *pReceivePin
 
 static HRESULT WINAPI VMR9_BreakConnect(BaseRenderer *This)
 {
-    struct quartz_vmr *pVMR9 = (struct quartz_vmr*)This;
+    struct quartz_vmr *pVMR9 = impl_from_IBaseFilter(&This->filter.IBaseFilter_iface);
     HRESULT hr = S_OK;
 
     if (!pVMR9->mode)
@@ -512,6 +498,64 @@ static HRESULT WINAPI VMR9_BreakConnect(BaseRenderer *This)
         pVMR9->num_surfaces = 0;
     }
     return hr;
+}
+
+static void vmr_destroy(BaseRenderer *iface)
+{
+    struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
+
+    BaseControlWindow_Destroy(&filter->baseControlWindow);
+
+    if (filter->allocator)
+        IVMRSurfaceAllocatorEx9_Release(filter->allocator);
+    if (filter->presenter)
+        IVMRImagePresenter9_Release(filter->presenter);
+
+    filter->num_surfaces = 0;
+    if (filter->allocator_d3d9_dev)
+    {
+        IDirect3DDevice9_Release(filter->allocator_d3d9_dev);
+        filter->allocator_d3d9_dev = NULL;
+    }
+
+    FreeLibrary(filter->hD3d9);
+    strmbase_renderer_cleanup(&filter->renderer);
+    CoTaskMemFree(filter);
+}
+
+static HRESULT vmr_query_interface(BaseRenderer *iface, REFIID iid, void **out)
+{
+    struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
+
+    if (IsEqualGUID(iid, &IID_IVideoWindow))
+        *out = &filter->baseControlWindow.IVideoWindow_iface;
+    else if (IsEqualGUID(iid, &IID_IBasicVideo))
+        *out = &filter->baseControlVideo.IBasicVideo_iface;
+    else if (IsEqualGUID(iid, &IID_IAMCertifiedOutputProtection))
+        *out = &filter->IAMCertifiedOutputProtection_iface;
+    else if (IsEqualGUID(iid, &IID_IAMFilterMiscFlags))
+        *out = &filter->IAMFilterMiscFlags_iface;
+    else if (IsEqualGUID(iid, &IID_IVMRFilterConfig))
+        *out = &filter->IVMRFilterConfig_iface;
+    else if (IsEqualGUID(iid, &IID_IVMRFilterConfig9))
+        *out = &filter->IVMRFilterConfig9_iface;
+    else if (IsEqualGUID(iid, &IID_IVMRMonitorConfig))
+        *out = &filter->IVMRMonitorConfig_iface;
+    else if (IsEqualGUID(iid, &IID_IVMRMonitorConfig9))
+        *out = &filter->IVMRMonitorConfig9_iface;
+    else if (IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorNotify) && filter->mode == (VMR9Mode)VMRMode_Renderless)
+        *out = &filter->IVMRSurfaceAllocatorNotify_iface;
+    else if (IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorNotify9) && filter->mode == VMR9Mode_Renderless)
+        *out = &filter->IVMRSurfaceAllocatorNotify9_iface;
+    else if (IsEqualGUID(iid, &IID_IVMRWindowlessControl) && filter->mode == (VMR9Mode)VMRMode_Windowless)
+        *out = &filter->IVMRWindowlessControl_iface;
+    else if (IsEqualGUID(iid, &IID_IVMRWindowlessControl9) && filter->mode == VMR9Mode_Windowless)
+        *out = &filter->IVMRWindowlessControl9_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static const BaseRendererFuncTable BaseFuncTable = {
@@ -534,6 +578,8 @@ static const BaseRendererFuncTable BaseFuncTable = {
     NULL,
     NULL,
     NULL,
+    vmr_destroy,
+    vmr_query_interface,
 };
 
 static LPWSTR WINAPI VMR9_GetClassWindowStyles(BaseWindow *This, DWORD *pClassStyles, DWORD *pWindowStyles, DWORD *pWindowStylesEx)
@@ -739,194 +785,11 @@ static const BaseControlVideoFuncTable renderer_BaseControlVideoFuncTable = {
     VMR9_SetTargetRect
 };
 
-static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LPVOID * ppv)
-{
-    struct quartz_vmr *This = impl_from_inner_IUnknown(iface);
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
-
-    if (This->bAggregatable)
-        This->bUnkOuterValid = TRUE;
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = &This->IUnknown_inner;
-    else if (IsEqualIID(riid, &IID_IVideoWindow))
-        *ppv = &This->baseControlWindow.IVideoWindow_iface;
-    else if (IsEqualIID(riid, &IID_IBasicVideo))
-        *ppv = &This->baseControlVideo.IBasicVideo_iface;
-    else if (IsEqualIID(riid, &IID_IAMCertifiedOutputProtection))
-        *ppv = &This->IAMCertifiedOutputProtection_iface;
-    else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-        *ppv = &This->IAMFilterMiscFlags_iface;
-    else if (IsEqualIID(riid, &IID_IVMRFilterConfig))
-        *ppv = &This->IVMRFilterConfig_iface;
-    else if (IsEqualIID(riid, &IID_IVMRFilterConfig9))
-        *ppv = &This->IVMRFilterConfig9_iface;
-    else if (IsEqualIID(riid, &IID_IVMRMonitorConfig))
-        *ppv = &This->IVMRMonitorConfig_iface;
-    else if (IsEqualIID(riid, &IID_IVMRMonitorConfig9))
-        *ppv = &This->IVMRMonitorConfig9_iface;
-    else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocatorNotify) && This->mode == (VMR9Mode)VMRMode_Renderless)
-        *ppv = &This->IVMRSurfaceAllocatorNotify_iface;
-    else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocatorNotify9) && This->mode == VMR9Mode_Renderless)
-        *ppv = &This->IVMRSurfaceAllocatorNotify9_iface;
-    else if (IsEqualIID(riid, &IID_IVMRWindowlessControl) && This->mode == (VMR9Mode)VMRMode_Windowless)
-        *ppv = &This->IVMRWindowlessControl_iface;
-    else if (IsEqualIID(riid, &IID_IVMRWindowlessControl9) && This->mode == VMR9Mode_Windowless)
-        *ppv = &This->IVMRWindowlessControl9_iface;
-    else
-    {
-        HRESULT hr;
-        hr = BaseRendererImpl_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
-        if (SUCCEEDED(hr))
-            return hr;
-    }
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    else if (IsEqualIID(riid, &IID_IBasicVideo2))
-        FIXME("No interface for IID_IBasicVideo2\n");
-    else if (IsEqualIID(riid, &IID_IVMRWindowlessControl9))
-        ;
-    else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocatorNotify9))
-        ;
-    else if (IsEqualIID(riid, &IID_IMediaPosition))
-        FIXME("No interface for IID_IMediaPosition\n");
-    else if (IsEqualIID(riid, &IID_IQualProp))
-        FIXME("No interface for IID_IQualProp\n");
-    else if (IsEqualIID(riid, &IID_IVMRAspectRatioControl9))
-        FIXME("No interface for IID_IVMRAspectRatioControl9\n");
-    else if (IsEqualIID(riid, &IID_IVMRDeinterlaceControl9))
-        FIXME("No interface for IID_IVMRDeinterlaceControl9\n");
-    else if (IsEqualIID(riid, &IID_IVMRMixerBitmap9))
-        FIXME("No interface for IID_IVMRMixerBitmap9\n");
-    else if (IsEqualIID(riid, &IID_IVMRMixerControl9))
-        FIXME("No interface for IID_IVMRMixerControl9\n");
-    else
-        FIXME("No interface for %s\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI VMR9Inner_AddRef(IUnknown * iface)
-{
-    struct quartz_vmr *This = impl_from_inner_IUnknown(iface);
-    ULONG refCount = BaseFilterImpl_AddRef(&This->renderer.filter.IBaseFilter_iface);
-
-    TRACE("(%p/%p)->() AddRef from %d\n", This, iface, refCount - 1);
-
-    return refCount;
-}
-
-static ULONG WINAPI VMR9Inner_Release(IUnknown * iface)
-{
-    struct quartz_vmr *This = impl_from_inner_IUnknown(iface);
-    ULONG refCount = BaseRendererImpl_Release(&This->renderer.filter.IBaseFilter_iface);
-
-    TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
-
-    if (!refCount)
-    {
-        TRACE("Destroying\n");
-        BaseControlWindow_Destroy(&This->baseControlWindow);
-        FreeLibrary(This->hD3d9);
-
-        if (This->allocator)
-            IVMRSurfaceAllocatorEx9_Release(This->allocator);
-        if (This->presenter)
-            IVMRImagePresenter9_Release(This->presenter);
-
-        This->num_surfaces = 0;
-        if (This->allocator_d3d9_dev)
-        {
-            IDirect3DDevice9_Release(This->allocator_d3d9_dev);
-            This->allocator_d3d9_dev = NULL;
-        }
-
-        CoTaskMemFree(This);
-    }
-    return refCount;
-}
-
-static const IUnknownVtbl IInner_VTable =
-{
-    VMR9Inner_QueryInterface,
-    VMR9Inner_AddRef,
-    VMR9Inner_Release
-};
-
-static HRESULT WINAPI VMR9_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
-{
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
-
-    if (This->bAggregatable)
-        This->bUnkOuterValid = TRUE;
-
-    if (This->outer_unk)
-    {
-        if (This->bAggregatable)
-            return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
-
-        if (IsEqualIID(riid, &IID_IUnknown))
-        {
-            HRESULT hr;
-
-            IUnknown_AddRef(&This->IUnknown_inner);
-            hr = IUnknown_QueryInterface(&This->IUnknown_inner, riid, ppv);
-            IUnknown_Release(&This->IUnknown_inner);
-            This->bAggregatable = TRUE;
-            return hr;
-        }
-
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    return IUnknown_QueryInterface(&This->IUnknown_inner, riid, ppv);
-}
-
-static ULONG WINAPI VMR9_AddRef(IBaseFilter * iface)
-{
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
-    LONG ret;
-
-    if (This->outer_unk && This->bUnkOuterValid)
-        ret = IUnknown_AddRef(This->outer_unk);
-    else
-        ret = IUnknown_AddRef(&This->IUnknown_inner);
-
-    TRACE("(%p)->AddRef from %d\n", iface, ret - 1);
-
-    return ret;
-}
-
-static ULONG WINAPI VMR9_Release(IBaseFilter * iface)
-{
-    struct quartz_vmr *This = (struct quartz_vmr*)iface;
-    LONG ret;
-
-    if (This->outer_unk && This->bUnkOuterValid)
-        ret = IUnknown_Release(This->outer_unk);
-    else
-        ret = IUnknown_Release(&This->IUnknown_inner);
-
-    TRACE("(%p)->Release from %d\n", iface, ret + 1);
-
-    if (ret)
-        return ret;
-    return 0;
-}
-
 static const IBaseFilterVtbl VMR_Vtbl =
 {
-    VMR9_QueryInterface,
-    VMR9_AddRef,
-    VMR9_Release,
+    BaseFilterImpl_QueryInterface,
+    BaseFilterImpl_AddRef,
+    BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     BaseRendererImpl_Stop,
     BaseRendererImpl_Pause,
@@ -935,45 +798,17 @@ static const IBaseFilterVtbl VMR_Vtbl =
     BaseRendererImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    BaseRendererImpl_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo
 };
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI Videowindow_QueryInterface(IVideoWindow *iface, REFIID riid, LPVOID*ppvObj)
-{
-    struct quartz_vmr *This = impl_from_IVideoWindow(iface);
-
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
-
-    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppvObj);
-}
-
-static ULONG WINAPI Videowindow_AddRef(IVideoWindow *iface)
-{
-    struct quartz_vmr *This = impl_from_IVideoWindow(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI Videowindow_Release(IVideoWindow *iface)
-{
-    struct quartz_vmr *This = impl_from_IVideoWindow(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
-}
-
 static const IVideoWindowVtbl IVideoWindow_VTable =
 {
-    Videowindow_QueryInterface,
-    Videowindow_AddRef,
-    Videowindow_Release,
+    BaseControlWindowImpl_QueryInterface,
+    BaseControlWindowImpl_AddRef,
+    BaseControlWindowImpl_Release,
     BaseControlWindowImpl_GetTypeInfoCount,
     BaseControlWindowImpl_GetTypeInfo,
     BaseControlWindowImpl_GetIDsOfNames,
@@ -1019,94 +854,23 @@ static const IVideoWindowVtbl IVideoWindow_VTable =
     BaseControlWindowImpl_IsCursorHidden
 };
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI Basicvideo_QueryInterface(IBasicVideo *iface, REFIID riid, LPVOID * ppvObj)
-{
-    struct quartz_vmr *This = impl_from_IBasicVideo(iface);
-
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
-
-    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppvObj);
-}
-
-static ULONG WINAPI Basicvideo_AddRef(IBasicVideo *iface)
-{
-    struct quartz_vmr *This = impl_from_IBasicVideo(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI Basicvideo_Release(IBasicVideo *iface)
-{
-    struct quartz_vmr *This = impl_from_IBasicVideo(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
-}
-
-static const IBasicVideoVtbl IBasicVideo_VTable =
-{
-    Basicvideo_QueryInterface,
-    Basicvideo_AddRef,
-    Basicvideo_Release,
-    BaseControlVideoImpl_GetTypeInfoCount,
-    BaseControlVideoImpl_GetTypeInfo,
-    BaseControlVideoImpl_GetIDsOfNames,
-    BaseControlVideoImpl_Invoke,
-    BaseControlVideoImpl_get_AvgTimePerFrame,
-    BaseControlVideoImpl_get_BitRate,
-    BaseControlVideoImpl_get_BitErrorRate,
-    BaseControlVideoImpl_get_VideoWidth,
-    BaseControlVideoImpl_get_VideoHeight,
-    BaseControlVideoImpl_put_SourceLeft,
-    BaseControlVideoImpl_get_SourceLeft,
-    BaseControlVideoImpl_put_SourceWidth,
-    BaseControlVideoImpl_get_SourceWidth,
-    BaseControlVideoImpl_put_SourceTop,
-    BaseControlVideoImpl_get_SourceTop,
-    BaseControlVideoImpl_put_SourceHeight,
-    BaseControlVideoImpl_get_SourceHeight,
-    BaseControlVideoImpl_put_DestinationLeft,
-    BaseControlVideoImpl_get_DestinationLeft,
-    BaseControlVideoImpl_put_DestinationWidth,
-    BaseControlVideoImpl_get_DestinationWidth,
-    BaseControlVideoImpl_put_DestinationTop,
-    BaseControlVideoImpl_get_DestinationTop,
-    BaseControlVideoImpl_put_DestinationHeight,
-    BaseControlVideoImpl_get_DestinationHeight,
-    BaseControlVideoImpl_SetSourcePosition,
-    BaseControlVideoImpl_GetSourcePosition,
-    BaseControlVideoImpl_SetDefaultSourcePosition,
-    BaseControlVideoImpl_SetDestinationPosition,
-    BaseControlVideoImpl_GetDestinationPosition,
-    BaseControlVideoImpl_SetDefaultDestinationPosition,
-    BaseControlVideoImpl_GetVideoSize,
-    BaseControlVideoImpl_GetVideoPaletteEntries,
-    BaseControlVideoImpl_GetCurrentImage,
-    BaseControlVideoImpl_IsUsingDefaultSource,
-    BaseControlVideoImpl_IsUsingDefaultDestination
-};
-
 static HRESULT WINAPI AMCertifiedOutputProtection_QueryInterface(IAMCertifiedOutputProtection *iface,
                                                                  REFIID riid, void **ppv)
 {
     struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
-    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI AMCertifiedOutputProtection_AddRef(IAMCertifiedOutputProtection *iface)
 {
     struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
-    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_AddRef(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI AMCertifiedOutputProtection_Release(IAMCertifiedOutputProtection *iface)
 {
     struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
-    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_Release(This->renderer.filter.outer_unk);
 }
 
 static HRESULT WINAPI AMCertifiedOutputProtection_KeyExchange(IAMCertifiedOutputProtection *iface,
@@ -1160,17 +924,17 @@ static const IAMCertifiedOutputProtectionVtbl IAMCertifiedOutputProtection_Vtbl 
 
 static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid, void **ppv) {
     struct quartz_vmr *This = impl_from_IAMFilterMiscFlags(iface);
-    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI AMFilterMiscFlags_AddRef(IAMFilterMiscFlags *iface) {
     struct quartz_vmr *This = impl_from_IAMFilterMiscFlags(iface);
-    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_AddRef(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI AMFilterMiscFlags_Release(IAMFilterMiscFlags *iface) {
     struct quartz_vmr *This = impl_from_IAMFilterMiscFlags(iface);
-    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_Release(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI AMFilterMiscFlags_GetMiscFlags(IAMFilterMiscFlags *iface) {
@@ -1188,19 +952,19 @@ static HRESULT WINAPI VMR7FilterConfig_QueryInterface(IVMRFilterConfig *iface, R
                                                       void** ppv)
 {
     struct quartz_vmr *This = impl_from_IVMRFilterConfig(iface);
-    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI VMR7FilterConfig_AddRef(IVMRFilterConfig *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRFilterConfig(iface);
-    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_AddRef(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI VMR7FilterConfig_Release(IVMRFilterConfig *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRFilterConfig(iface);
-    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_Release(This->renderer.filter.outer_unk);
 }
 
 static HRESULT WINAPI VMR7FilterConfig_SetImageCompositor(IVMRFilterConfig *iface,
@@ -1246,10 +1010,11 @@ static HRESULT WINAPI VMR7FilterConfig_GetRenderingPrefs(IVMRFilterConfig *iface
 
 static HRESULT WINAPI VMR7FilterConfig_SetRenderingMode(IVMRFilterConfig *iface, DWORD mode)
 {
-    struct quartz_vmr *This = impl_from_IVMRFilterConfig(iface);
+    struct quartz_vmr *filter = impl_from_IVMRFilterConfig(iface);
 
-    FIXME("(%p/%p)->(%u) stub\n", iface, This, mode);
-    return E_NOTIMPL;
+    TRACE("iface %p, mode %#x.\n", iface, mode);
+
+    return IVMRFilterConfig9_SetRenderingMode(&filter->IVMRFilterConfig9_iface, mode);
 }
 
 static HRESULT WINAPI VMR7FilterConfig_GetRenderingMode(IVMRFilterConfig *iface, DWORD *mode)
@@ -1360,19 +1125,19 @@ static HRESULT WINAPI VMR7MonitorConfig_QueryInterface(IVMRMonitorConfig *iface,
                                                        LPVOID * ppv)
 {
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig(iface);
-    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI VMR7MonitorConfig_AddRef(IVMRMonitorConfig *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig(iface);
-    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_AddRef(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI VMR7MonitorConfig_Release(IVMRMonitorConfig *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig(iface);
-    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_Release(This->renderer.filter.outer_unk);
 }
 
 static HRESULT WINAPI VMR7MonitorConfig_SetMonitor(IVMRMonitorConfig *iface, const VMRGUID *pGUID)
@@ -1467,19 +1232,19 @@ static HRESULT WINAPI VMR9MonitorConfig_QueryInterface(IVMRMonitorConfig9 *iface
                                                        LPVOID * ppv)
 {
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig9(iface);
-    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI VMR9MonitorConfig_AddRef(IVMRMonitorConfig9 *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig9(iface);
-    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_AddRef(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI VMR9MonitorConfig_Release(IVMRMonitorConfig9 *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig9(iface);
-    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_Release(This->renderer.filter.outer_unk);
 }
 
 static HRESULT WINAPI VMR9MonitorConfig_SetMonitor(IVMRMonitorConfig9 *iface, UINT uDev)
@@ -1566,19 +1331,19 @@ static const IVMRMonitorConfig9Vtbl VMR9_MonitorConfig_Vtbl =
 static HRESULT WINAPI VMR9FilterConfig_QueryInterface(IVMRFilterConfig9 *iface, REFIID riid, LPVOID * ppv)
 {
     struct quartz_vmr *This = impl_from_IVMRFilterConfig9(iface);
-    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI VMR9FilterConfig_AddRef(IVMRFilterConfig9 *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRFilterConfig9(iface);
-    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_AddRef(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI VMR9FilterConfig_Release(IVMRFilterConfig9 *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRFilterConfig9(iface);
-    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_Release(This->renderer.filter.outer_unk);
 }
 
 static HRESULT WINAPI VMR9FilterConfig_SetImageCompositor(IVMRFilterConfig9 *iface, IVMRImageCompositor9 *compositor)
@@ -1709,19 +1474,19 @@ static HRESULT WINAPI VMR7WindowlessControl_QueryInterface(IVMRWindowlessControl
                                                            LPVOID * ppv)
 {
     struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
-    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI VMR7WindowlessControl_AddRef(IVMRWindowlessControl *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
-    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_AddRef(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI VMR7WindowlessControl_Release(IVMRWindowlessControl *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
-    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_Release(This->renderer.filter.outer_unk);
 }
 
 static HRESULT WINAPI VMR7WindowlessControl_GetNativeVideoSize(IVMRWindowlessControl *iface,
@@ -1824,13 +1589,13 @@ static HRESULT WINAPI VMR7WindowlessControl_SetAspectRatioMode(IVMRWindowlessCon
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI VMR7WindowlessControl_SetVideoClippingWindow(IVMRWindowlessControl *iface,
-                                                                   HWND hwnd)
+static HRESULT WINAPI VMR7WindowlessControl_SetVideoClippingWindow(IVMRWindowlessControl *iface, HWND window)
 {
-    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+    struct quartz_vmr *filter = impl_from_IVMRWindowlessControl(iface);
 
-    FIXME("(%p/%p)->(...) stub\n", iface, This);
-    return E_NOTIMPL;
+    TRACE("iface %p, window %p.\n", iface, window);
+
+    return IVMRWindowlessControl9_SetVideoClippingWindow(&filter->IVMRWindowlessControl9_iface, window);
 }
 
 static HRESULT WINAPI VMR7WindowlessControl_RepaintVideo(IVMRWindowlessControl *iface,
@@ -1918,19 +1683,19 @@ static const IVMRWindowlessControlVtbl VMR7_WindowlessControl_Vtbl =
 static HRESULT WINAPI VMR9WindowlessControl_QueryInterface(IVMRWindowlessControl9 *iface, REFIID riid, LPVOID * ppv)
 {
     struct quartz_vmr *This = impl_from_IVMRWindowlessControl9(iface);
-    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI VMR9WindowlessControl_AddRef(IVMRWindowlessControl9 *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRWindowlessControl9(iface);
-    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_AddRef(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI VMR9WindowlessControl_Release(IVMRWindowlessControl9 *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRWindowlessControl9(iface);
-    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_Release(This->renderer.filter.outer_unk);
 }
 
 static HRESULT WINAPI VMR9WindowlessControl_GetNativeVideoSize(IVMRWindowlessControl9 *iface, LONG *width, LONG *height, LONG *arwidth, LONG *arheight)
@@ -2124,19 +1889,19 @@ static HRESULT WINAPI VMR7SurfaceAllocatorNotify_QueryInterface(IVMRSurfaceAlloc
                                                                 REFIID riid, LPVOID * ppv)
 {
     struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify(iface);
-    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI VMR7SurfaceAllocatorNotify_AddRef(IVMRSurfaceAllocatorNotify *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify(iface);
-    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_AddRef(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI VMR7SurfaceAllocatorNotify_Release(IVMRSurfaceAllocatorNotify *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify(iface);
-    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_Release(This->renderer.filter.outer_unk);
 }
 
 static HRESULT WINAPI VMR7SurfaceAllocatorNotify_AdviseSurfaceAllocator(IVMRSurfaceAllocatorNotify *iface,
@@ -2209,19 +1974,19 @@ static const IVMRSurfaceAllocatorNotifyVtbl VMR7_SurfaceAllocatorNotify_Vtbl =
 static HRESULT WINAPI VMR9SurfaceAllocatorNotify_QueryInterface(IVMRSurfaceAllocatorNotify9 *iface, REFIID riid, LPVOID * ppv)
 {
     struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
-    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppv);
 }
 
 static ULONG WINAPI VMR9SurfaceAllocatorNotify_AddRef(IVMRSurfaceAllocatorNotify9 *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
-    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_AddRef(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI VMR9SurfaceAllocatorNotify_Release(IVMRSurfaceAllocatorNotify9 *iface)
 {
     struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
-    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_Release(This->renderer.filter.outer_unk);
 }
 
 static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AdviseSurfaceAllocator(IVMRSurfaceAllocatorNotify9 *iface, DWORD_PTR id, IVMRSurfaceAllocator9 *alloc)
@@ -2366,14 +2131,14 @@ static const IVMRSurfaceAllocatorNotify9Vtbl VMR9_SurfaceAllocatorNotify_Vtbl =
     VMR9SurfaceAllocatorNotify_NotifyEvent
 };
 
-static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
+static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
 {
+    static const WCHAR sink_name[] = {'V','M','R',' ','I','n','p','u','t','0',0};
+
     HRESULT hr;
     struct quartz_vmr* pVMR;
 
-    TRACE("(%p, %p)\n", outer_unk, ppv);
-
-    *ppv = NULL;
+    *out = NULL;
 
     pVMR = CoTaskMemAlloc(sizeof(struct quartz_vmr));
 
@@ -2385,10 +2150,6 @@ static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
         return VFW_E_DDRAW_CAPS_NOT_SUITABLE;
     }
 
-    pVMR->outer_unk = outer_unk;
-    pVMR->bUnkOuterValid = FALSE;
-    pVMR->bAggregatable = FALSE;
-    pVMR->IUnknown_inner.lpVtbl = &IInner_VTable;
     pVMR->IAMCertifiedOutputProtection_iface.lpVtbl = &IAMCertifiedOutputProtection_Vtbl;
     pVMR->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
 
@@ -2409,11 +2170,13 @@ static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
     pVMR->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
 
     if (IsEqualGUID(clsid, &CLSID_VideoMixingRenderer))
-        hr = BaseRenderer_Init(&pVMR->renderer, &VMR_Vtbl, outer_unk, &CLSID_VideoMixingRenderer,
-                               (DWORD_PTR)(__FILE__ ": VMR7Impl.csFilter"), &BaseFuncTable);
+        hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, outer,
+                &CLSID_VideoMixingRenderer, sink_name,
+                (DWORD_PTR)(__FILE__ ": VMR7Impl.csFilter"), &BaseFuncTable);
     else
-        hr = BaseRenderer_Init(&pVMR->renderer, &VMR_Vtbl, outer_unk, &CLSID_VideoMixingRenderer9,
-                               (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
+        hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, outer,
+                &CLSID_VideoMixingRenderer9, sink_name,
+                (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
 
     if (FAILED(hr))
         goto fail;
@@ -2424,20 +2187,20 @@ static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
     if (FAILED(hr))
         goto fail;
 
-    hr = BaseControlVideo_Init(&pVMR->baseControlVideo, &IBasicVideo_VTable, &pVMR->renderer.filter,
-                               &pVMR->renderer.filter.csFilter, &pVMR->renderer.pInputPin->pin,
-                               &renderer_BaseControlVideoFuncTable);
+    hr = strmbase_video_init(&pVMR->baseControlVideo, &pVMR->renderer.filter,
+            &pVMR->renderer.filter.csFilter, &pVMR->renderer.pInputPin->pin,
+            &renderer_BaseControlVideoFuncTable);
     if (FAILED(hr))
         goto fail;
 
-    *ppv = (LPVOID)pVMR;
+    *out = &pVMR->renderer.filter.IUnknown_inner;
     ZeroMemory(&pVMR->source_rect, sizeof(RECT));
     ZeroMemory(&pVMR->target_rect, sizeof(RECT));
     TRACE("Created at %p\n", pVMR);
     return hr;
 
 fail:
-    BaseRendererImpl_Release(&pVMR->renderer.filter.IBaseFilter_iface);
+    strmbase_renderer_cleanup(&pVMR->renderer);
     FreeLibrary(pVMR->hD3d9);
     CoTaskMemFree(pVMR);
     return hr;
@@ -2454,16 +2217,14 @@ HRESULT VMR9Impl_create(IUnknown *outer_unk, LPVOID *ppv)
 }
 
 
-static HRESULT WINAPI VMR9_ImagePresenter_QueryInterface(IVMRImagePresenter9 *iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI VMR9_ImagePresenter_QueryInterface(IVMRImagePresenter9 *iface, REFIID riid, void **ppv)
 {
     VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRImagePresenter9(iface);
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)&(This->IVMRImagePresenter9_iface);
-    else if (IsEqualIID(riid, &IID_IVMRImagePresenter9))
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IVMRImagePresenter9))
         *ppv = &This->IVMRImagePresenter9_iface;
     else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocatorEx9))
         *ppv = &This->IVMRSurfaceAllocatorEx9_iface;

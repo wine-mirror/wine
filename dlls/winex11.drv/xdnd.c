@@ -254,6 +254,38 @@ void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event )
         XFree(xdndtypes);
 }
 
+/* Recursively searches for a window on given coordinates in a drag&drop specific manner.
+ *
+ * Don't use WindowFromPoint instead, because it omits the STATIC and transparent
+ * windows, but they can be a valid drop targets if have WS_EX_ACCEPTFILES set.
+ */
+static HWND window_from_point_dnd(HWND hwnd, POINT point)
+{
+    HWND child;
+    ScreenToClient(hwnd, &point);
+    while ((child = ChildWindowFromPointEx(hwnd, point, CWP_SKIPDISABLED | CWP_SKIPINVISIBLE)) && child != hwnd)
+    {
+       MapWindowPoints(hwnd, child, &point, 1);
+       hwnd = child;
+    }
+
+    return hwnd;
+}
+
+/* Returns the first window down the hierarchy that has WS_EX_ACCEPTFILES set or
+ * returns NULL, if such window does not exists.
+ */
+static HWND window_accepting_files(HWND hwnd)
+{
+    while (hwnd && !(GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_ACCEPTFILES))
+        /* MUST to be GetParent, not GetAncestor, because the owner window
+         * (with WS_EX_ACCEPTFILES) of a window with WS_POPUP is a valid
+         * drop target. GetParent works exactly this way!
+         */
+        hwnd = GetParent(hwnd);
+    return hwnd;
+}
+
 /**************************************************************************
  * X11DRV_XDND_PositionEvent
  *
@@ -270,7 +302,7 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
     HRESULT hr;
 
     XDNDxy = root_to_virtual_screen( event->data.l[2] >> 16, event->data.l[2] & 0xFFFF );
-    targetWindow = WindowFromPoint(XDNDxy);
+    targetWindow = window_from_point_dnd(hWnd, XDNDxy);
 
     pointl.x = XDNDxy.x;
     pointl.y = XDNDxy.y;
@@ -334,11 +366,15 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
 
     if (XDNDAccepted)
         accept = 1;
-    else if ((GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) &&
-            X11DRV_XDND_HasHDROP())
+    else
     {
-        accept = 1;
-        effect = DROPEFFECT_COPY;
+        /* fallback search for window able to accept these files. */
+
+        if (window_accepting_files(targetWindow) && X11DRV_XDND_HasHDROP())
+        {
+            accept = 1;
+            effect = DROPEFFECT_COPY;
+        }
     }
 
     TRACE("actionRequested(%ld) accept(%d) chosen(0x%x) at x(%d),y(%d)\n",
@@ -423,10 +459,12 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
     {
         /* Only send WM_DROPFILES if Drop didn't succeed or DROPEFFECT_NONE was set.
          * Doing both causes winamp to duplicate the dropped files (#29081) */
-        if ((GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) &&
-                X11DRV_XDND_HasHDROP())
+
+        HWND hwnd_drop = window_accepting_files(window_from_point_dnd(hWnd, XDNDxy));
+
+        if (hwnd_drop && X11DRV_XDND_HasHDROP())
         {
-            HRESULT hr = X11DRV_XDND_SendDropFiles( hWnd );
+            HRESULT hr = X11DRV_XDND_SendDropFiles(hwnd_drop);
             if (SUCCEEDED(hr))
             {
                 accept = 1;

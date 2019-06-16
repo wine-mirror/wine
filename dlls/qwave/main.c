@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 Louis Lenders
+ * Copyright 2019 Vijay Kiran Kamuju
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "qos2.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qwave);
@@ -38,4 +40,14 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, LPVOID lpv)
         break;
     }
     return TRUE;
+}
+
+BOOL WINAPI QOSCreateHandle(PQOS_VERSION version, PHANDLE handle)
+{
+    FIXME("%p %p stub!\n", version, handle);
+    if (!version || !((version->MajorVersion == 1) && (version->MinorVersion == 0)) || !handle)
+        SetLastError(ERROR_INVALID_PARAMETER);
+    else
+        SetLastError(ERROR_SERVICE_ALREADY_RUNNING);
+    return FALSE;
 }

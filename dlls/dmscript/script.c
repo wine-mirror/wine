@@ -18,12 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+#include <stdio.h>
 
 #include "dmscript_private.h"
 #include "dmobject.h"
@@ -313,7 +309,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 								    WideCharToMultiByte(CP_ACP, 0, This->pwzSource, -1, str, count, NULL, NULL);
 								    str[count-1] = '\n';
 								    TRACE("source:\n");
-								    write( 2, str, count );
+								    fwrite( str, 1, count, stderr );
 								    HeapFree(GetProcessHeap(), 0, str);
 								}
 								break;

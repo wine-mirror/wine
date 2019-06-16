@@ -1559,8 +1559,7 @@ cleanup:
     if(hbmDst)
         DeleteObject(hbmDst);
 
-    if(hdcDst)
-        DeleteDC(hdcDst);
+    DeleteDC(hdcDst);
 
     if(hbmMask)
         DeleteObject(hbmMask);

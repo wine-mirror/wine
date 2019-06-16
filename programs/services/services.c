@@ -21,13 +21,13 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <assert.h>
 #include <windows.h>
 #include <winsvc.h>
 #include <rpc.h>
 #include <userenv.h>
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "svcctl.h"
 
@@ -192,10 +192,10 @@ static DWORD load_service_config(HKEY hKey, struct service_entry *entry)
     WINE_TRACE("Service account name = %s\n", wine_dbgstr_w(entry->config.lpServiceStartName) );
     WINE_TRACE("Display name         = %s\n", wine_dbgstr_w(entry->config.lpDisplayName) );
     WINE_TRACE("Service dependencies : %s\n", entry->dependOnServices[0] ? "" : "(none)");
-    for (wptr = entry->dependOnServices; *wptr; wptr += strlenW(wptr) + 1)
+    for (wptr = entry->dependOnServices; *wptr; wptr += lstrlenW(wptr) + 1)
         WINE_TRACE("    * %s\n", wine_dbgstr_w(wptr));
     WINE_TRACE("Group dependencies   : %s\n", entry->dependOnGroups[0] ? "" : "(none)");
-    for (wptr = entry->dependOnGroups; *wptr; wptr += strlenW(wptr) + 1)
+    for (wptr = entry->dependOnGroups; *wptr; wptr += lstrlenW(wptr) + 1)
         WINE_TRACE("    * %s\n", wine_dbgstr_w(wptr));
 
     return ERROR_SUCCESS;
@@ -213,7 +213,7 @@ static DWORD reg_set_string_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string)
         return ERROR_SUCCESS;
     }
 
-    return RegSetValueExW(hKey, value_name, 0, REG_SZ, (const BYTE*)string, sizeof(WCHAR)*(strlenW(string) + 1));
+    return RegSetValueExW(hKey, value_name, 0, REG_SZ, (const BYTE*)string, sizeof(WCHAR)*(lstrlenW(string) + 1));
 }
 
 static DWORD reg_set_multisz_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string)
@@ -231,7 +231,7 @@ static DWORD reg_set_multisz_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string
     }
 
     ptr = string;
-    while (*ptr) ptr += strlenW(ptr) + 1;
+    while (*ptr) ptr += lstrlenW(ptr) + 1;
     return RegSetValueExW(hKey, value_name, 0, REG_MULTI_SZ, (const BYTE*)string, sizeof(WCHAR)*(ptr - string + 1));
 }
 
@@ -322,7 +322,7 @@ static void scmdatabase_remove_service(struct scmdatabase *db, struct service_en
     service->entry.next = service->entry.prev = NULL;
 }
 
-static int compare_tags(const void *a, const void *b)
+static int __cdecl compare_tags(const void *a, const void *b)
 {
     struct service_entry *service_a = *(struct service_entry **)a;
     struct service_entry *service_b = *(struct service_entry **)b;
@@ -405,7 +405,7 @@ static void scmdatabase_wait_terminate(struct scmdatabase *db)
 
 BOOL validate_service_name(LPCWSTR name)
 {
-    return (name && name[0] && !strchrW(name, '/') && !strchrW(name, '\\'));
+    return (name && name[0] && !wcschr(name, '/') && !wcschr(name, '\\'));
 }
 
 BOOL validate_service_config(struct service_entry *entry)
@@ -427,7 +427,7 @@ BOOL validate_service_config(struct service_entry *entry)
     case SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS:
     case SERVICE_WIN32_SHARE_PROCESS | SERVICE_INTERACTIVE_PROCESS:
         /* These can be only run as LocalSystem */
-        if (entry->config.lpServiceStartName && strcmpiW(entry->config.lpServiceStartName, SZ_LOCAL_SYSTEM) != 0)
+        if (entry->config.lpServiceStartName && wcsicmp(entry->config.lpServiceStartName, SZ_LOCAL_SYSTEM) != 0)
         {
             WINE_ERR("Service %s is interactive but has a start name\n", wine_dbgstr_w(entry->name));
             return FALSE;
@@ -466,7 +466,7 @@ struct service_entry *scmdatabase_find_service(struct scmdatabase *db, LPCWSTR n
 
     LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
     {
-        if (strcmpiW(name, service->name) == 0)
+        if (wcsicmp(name, service->name) == 0)
             return service;
     }
 
@@ -479,7 +479,7 @@ struct service_entry *scmdatabase_find_service_by_displayname(struct scmdatabase
 
     LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
     {
-        if (service->config.lpDisplayName && strcmpiW(name, service->config.lpDisplayName) == 0)
+        if (service->config.lpDisplayName && wcsicmp(name, service->config.lpDisplayName) == 0)
             return service;
     }
 
@@ -667,7 +667,7 @@ static LPWSTR service_get_pipe_name(void)
 {
     static const WCHAR format[] = { '\\','\\','.','\\','p','i','p','e','\\',
         'n','e','t','\\','N','t','C','o','n','t','r','o','l','P','i','p','e','%','u',0};
-    static WCHAR name[ARRAY_SIZE(format) + 10]; /* strlenW("4294967295") */
+    static WCHAR name[ARRAY_SIZE(format) + 10]; /* lstrlenW("4294967295") */
     static DWORD service_current = 0;
     DWORD len, value = -1;
     LONG ret;
@@ -680,7 +680,7 @@ static LPWSTR service_get_pipe_name(void)
         service_current = max(service_current, value + 1);
     RegSetValueExW(service_current_key, NULL, 0, REG_DWORD,
         (BYTE *)&service_current, sizeof(service_current));
-    sprintfW(name, format, service_current);
+    swprintf(name, ARRAY_SIZE(name), format, service_current);
     service_current++;
     return name;
 }
@@ -702,22 +702,22 @@ static DWORD get_service_binary_path(const struct service_entry *service_entry, 
         DWORD len;
 
         GetSystemDirectoryW( system_dir, MAX_PATH );
-        len = strlenW( system_dir );
+        len = lstrlenW( system_dir );
 
-        if (strncmpiW( system_dir, *path, len ))
+        if (wcsnicmp( system_dir, *path, len ))
             return ERROR_SUCCESS;
 
         GetSystemWow64DirectoryW( system_dir, MAX_PATH );
 
-        redirected = HeapAlloc( GetProcessHeap(), 0, (strlenW( *path ) + strlenW( system_dir ))*sizeof(WCHAR));
+        redirected = HeapAlloc( GetProcessHeap(), 0, (lstrlenW( *path ) + lstrlenW( system_dir ))*sizeof(WCHAR));
         if (!redirected)
         {
             HeapFree( GetProcessHeap(), 0, *path );
             return ERROR_NOT_ENOUGH_SERVER_MEMORY;
         }
 
-        strcpyW( redirected, system_dir );
-        strcatW( redirected, &(*path)[len] );
+        lstrcpyW( redirected, system_dir );
+        lstrcatW( redirected, &(*path)[len] );
         HeapFree( GetProcessHeap(), 0, *path );
         *path = redirected;
         TRACE("redirected to %s\n", debugstr_w(redirected));
@@ -741,11 +741,11 @@ static DWORD get_winedevice_binary_path(struct service_entry *service_entry, WCH
 
     GetSystemDirectoryW(system_dir, MAX_PATH);
     HeapFree(GetProcessHeap(), 0, *path);
-    if (!(*path = HeapAlloc(GetProcessHeap(), 0, strlenW(system_dir) * sizeof(WCHAR) + sizeof(winedeviceW))))
+    if (!(*path = HeapAlloc(GetProcessHeap(), 0, lstrlenW(system_dir) * sizeof(WCHAR) + sizeof(winedeviceW))))
        return ERROR_NOT_ENOUGH_SERVER_MEMORY;
 
-    strcpyW(*path, system_dir);
-    strcatW(*path, winedeviceW);
+    lstrcpyW(*path, system_dir);
+    lstrcatW(*path, winedeviceW);
     return ERROR_SUCCESS;
 }
 
@@ -764,10 +764,10 @@ static struct process_entry *get_winedevice_process(struct service_entry *servic
 
         if (winedevice_entry->is_wow64 != is_wow64) continue;
         if (!winedevice_entry->config.lpBinaryPathName) continue;
-        if (strcmpW(winedevice_entry->config.lpBinaryPathName, path)) continue;
+        if (lstrcmpW(winedevice_entry->config.lpBinaryPathName, path)) continue;
 
         if (!winedevice_entry->config.lpLoadOrderGroup) continue;
-        if (strcmpW(winedevice_entry->config.lpLoadOrderGroup, service_entry->config.lpLoadOrderGroup)) continue;
+        if (lstrcmpW(winedevice_entry->config.lpLoadOrderGroup, service_entry->config.lpLoadOrderGroup)) continue;
 
         return grab_process(winedevice_entry->process);
     }
@@ -779,14 +779,14 @@ static DWORD add_winedevice_service(const struct service_entry *service, WCHAR *
                                     struct service_entry **entry)
 {
     static const WCHAR format[] = {'W','i','n','e','d','e','v','i','c','e','%','u',0};
-    static WCHAR name[ARRAY_SIZE(format) + 10]; /* strlenW("4294967295") */
+    static WCHAR name[ARRAY_SIZE(format) + 10]; /* lstrlenW("4294967295") */
     static DWORD current = 0;
     struct scmdatabase *db = service->db;
     DWORD err;
 
     for (;;)
     {
-        sprintfW(name, format, ++current);
+        swprintf(name, ARRAY_SIZE(name), format, ++current);
         if (!scmdatabase_find_service(db, name)) break;
     }
 
@@ -1026,21 +1026,21 @@ static DWORD process_send_start_message(struct process_entry *process, BOOL shar
         }
     }
 
-    len = strlenW(name) + 1;
+    len = lstrlenW(name) + 1;
     for (i = 0; i < argc; i++)
-        len += strlenW(argv[i])+1;
+        len += lstrlenW(argv[i])+1;
     len = (len + 1) * sizeof(WCHAR);
 
     if (!(str = HeapAlloc(GetProcessHeap(), 0, len)))
         return ERROR_NOT_ENOUGH_SERVER_MEMORY;
 
     p = str;
-    strcpyW(p, name);
-    p += strlenW(name) + 1;
+    lstrcpyW(p, name);
+    p += lstrlenW(name) + 1;
     for (i = 0; i < argc; i++)
     {
-        strcpyW(p, argv[i]);
-        p += strlenW(p) + 1;
+        lstrcpyW(p, argv[i]);
+        p += lstrlenW(p) + 1;
     }
     *p = 0;
 
@@ -1069,10 +1069,13 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
         if (err != ERROR_SUCCESS)
         {
             service_lock(service);
-            service->status.dwCurrentState = SERVICE_STOPPED;
-            service->process = NULL;
-            if (!--process->use_count) process_terminate(process);
-            release_process(process);
+            if (service->process)
+            {
+                service->status.dwCurrentState = SERVICE_STOPPED;
+                service->process = NULL;
+                if (!--process->use_count) process_terminate(process);
+                release_process(process);
+            }
             service_unlock(service);
         }
 
@@ -1120,12 +1123,12 @@ static void load_registry_parameters(void)
 
     count = sizeof(buffer);
     if (!RegQueryValueExW( key, pipetimeoutW, NULL, &type, (BYTE *)buffer, &count ) &&
-        type == REG_SZ && (val = atoiW( buffer )))
+        type == REG_SZ && (val = wcstol( buffer, NULL, 10 )))
         service_pipe_timeout = val;
 
     count = sizeof(buffer);
     if (!RegQueryValueExW( key, killtimeoutW, NULL, &type, (BYTE *)buffer, &count ) &&
-        type == REG_SZ && (val = atoiW( buffer )))
+        type == REG_SZ && (val = wcstol( buffer, NULL, 10 )))
         service_kill_timeout = val;
 
     RegCloseKey( key );

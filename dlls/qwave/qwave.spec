@@ -3,7 +3,7 @@
 @ stub QOSAddSocketToFlow
 @ stub QOSCancel
 @ stub QOSCloseHandle
-@ stub QOSCreateHandle
+@ stdcall QOSCreateHandle(ptr ptr)
 @ stub QOSEnumerateFlows
 @ stub QOSNotifyFlow
 @ stub QOSQueryFlow

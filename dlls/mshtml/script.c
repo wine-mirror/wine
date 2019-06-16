@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <assert.h>
 
@@ -359,7 +357,7 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
 
     *ppiunkItem = NULL;
 
-    if(strcmpW(pstrName, windowW))
+    if(wcscmp(pstrName, windowW))
         return DISP_E_MEMBERNOTFOUND;
 
     if(!This->window)
@@ -506,10 +504,10 @@ static HRESULT WINAPI ActiveScriptSiteWindow_GetWindow(IActiveScriptSiteWindow *
 
     TRACE("(%p)->(%p)\n", This, phwnd);
 
-    if(!This->window || !This->window->base.outer_window || !This->window->base.outer_window->doc_obj)
+    if(!This->window || !This->window->base.outer_window)
         return E_UNEXPECTED;
 
-    *phwnd = This->window->base.outer_window->doc_obj->hwnd;
+    *phwnd = This->window->base.outer_window->browser->doc->hwnd;
     return S_OK;
 }
 
@@ -1054,7 +1052,7 @@ HRESULT load_script(HTMLScriptElement *script_elem, const WCHAR *src, BOOL async
 
     static const WCHAR wine_schemaW[] = {'w','i','n','e',':'};
 
-    if(strlenW(src) > ARRAY_SIZE(wine_schemaW) && !memcmp(src, wine_schemaW, sizeof(wine_schemaW)))
+    if(lstrlenW(src) > ARRAY_SIZE(wine_schemaW) && !memcmp(src, wine_schemaW, sizeof(wine_schemaW)))
         src += ARRAY_SIZE(wine_schemaW);
 
     TRACE("(%p %s %x)\n", script_elem, debugstr_w(src), async);
@@ -1179,9 +1177,9 @@ static BOOL get_guid_from_type(LPCWSTR type, GUID *guid)
         {'t','e','x','t','/','v','b','s','c','r','i','p','t',0};
 
     /* FIXME: Handle more types */
-    if(!strcmpiW(type, text_javascriptW) || !strcmpiW(type, text_jscriptW)) {
+    if(!wcsicmp(type, text_javascriptW) || !wcsicmp(type, text_jscriptW)) {
         *guid = CLSID_JScript;
-    }else if(!strcmpiW(type, text_vbscriptW)) {
+    }else if(!wcsicmp(type, text_vbscriptW)) {
         *guid = CLSID_VBScript;
     }else {
         FIXME("Unknown type %s\n", debugstr_w(type));
@@ -1269,8 +1267,7 @@ static ScriptHost *get_elem_script_host(HTMLInnerWindow *window, HTMLScriptEleme
         return NULL;
     }
 
-    if(IsEqualGUID(&CLSID_JScript, &guid)
-       && (!window->base.outer_window || window->base.outer_window->scriptmode != SCRIPTMODE_ACTIVESCRIPT)) {
+    if(IsEqualGUID(&CLSID_JScript, &guid) && (!window->doc->browser || window->doc->browser->script_mode != SCRIPTMODE_ACTIVESCRIPT)) {
         TRACE("Ignoring JScript\n");
         return NULL;
     }
@@ -1315,7 +1312,7 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
 
     TRACE("%s\n", debugstr_w(text));
 
-    for(ptr = text; isalnumW(*ptr); ptr++);
+    for(ptr = text; iswalnum(*ptr); ptr++);
     if(*ptr == ':') {
         LPWSTR language;
         BOOL b;
@@ -1343,7 +1340,7 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
     }
 
     if(IsEqualGUID(&CLSID_JScript, &guid)
-       && (!window->base.outer_window || window->base.outer_window->scriptmode != SCRIPTMODE_ACTIVESCRIPT)) {
+       && (!window->doc->browser || window->doc->browser->script_mode != SCRIPTMODE_ACTIVESCRIPT)) {
         TRACE("Ignoring JScript\n");
         return NULL;
     }
@@ -1434,10 +1431,10 @@ static EventTarget *find_event_target(HTMLDocumentNode *doc, HTMLScriptElement *
     nsAString_GetData(&target_id_str, &target_id);
     if(!*target_id) {
         FIXME("Empty for attribute\n");
-    }else if(!strcmpW(target_id, documentW)) {
+    }else if(!wcscmp(target_id, documentW)) {
         event_target = &doc->node.event_target;
         htmldoc_addref(&doc->basedoc);
-    }else if(!strcmpW(target_id, windowW)) {
+    }else if(!wcscmp(target_id, windowW)) {
         if(doc->window) {
             event_target = &doc->window->event_target;
             IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
@@ -1461,7 +1458,7 @@ static BOOL parse_event_str(WCHAR *event, const WCHAR **args)
 
     TRACE("%s\n", debugstr_w(event));
 
-    for(ptr = event; isalnumW(*ptr); ptr++);
+    for(ptr = event; iswalnum(*ptr); ptr++);
     if(!*ptr) {
         *args = NULL;
         return TRUE;
@@ -1472,7 +1469,7 @@ static BOOL parse_event_str(WCHAR *event, const WCHAR **args)
 
     *ptr++ = 0;
     *args = ptr;
-    while(isalnumW(*ptr) || isspaceW(*ptr) || *ptr == ',')
+    while(iswalnum(*ptr) || iswspace(*ptr) || *ptr == ',')
         ptr++;
 
     if(*ptr != ')')
@@ -1670,27 +1667,44 @@ static BOOL is_jscript_available(void)
     return available;
 }
 
-void set_script_mode(HTMLOuterWindow *window, SCRIPTMODE mode)
+static BOOL use_gecko_script(IUri *uri)
+{
+    BSTR display_uri;
+    DWORD zone;
+    HRESULT hres;
+
+    hres = IUri_GetDisplayUri(uri, &display_uri);
+    if(FAILED(hres))
+        return FALSE;
+
+    hres = IInternetSecurityManager_MapUrlToZone(get_security_manager(), display_uri, &zone, 0);
+    SysFreeString(display_uri);
+    if(FAILED(hres)) {
+        WARN("Could not map %s to zone: %08x\n", debugstr_w(display_uri), hres);
+        return TRUE;
+    }
+
+    TRACE("zone %d\n", zone);
+    return zone == URLZONE_UNTRUSTED;
+}
+
+void update_browser_script_mode(GeckoBrowser *browser, IUri *uri)
 {
     nsIWebBrowserSetup *setup;
     nsresult nsres;
 
-    if(mode == SCRIPTMODE_ACTIVESCRIPT && !is_jscript_available()) {
+    if(!is_jscript_available()) {
         TRACE("jscript.dll not available\n");
-        window->scriptmode = SCRIPTMODE_GECKO;
+        browser->script_mode = SCRIPTMODE_GECKO;
         return;
     }
 
-    window->scriptmode = mode;
+    browser->script_mode = use_gecko_script(uri) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT;
 
-    if(!window->doc_obj->nscontainer || !window->doc_obj->nscontainer->webbrowser)
-        return;
-
-    nsres = nsIWebBrowser_QueryInterface(window->doc_obj->nscontainer->webbrowser,
-            &IID_nsIWebBrowserSetup, (void**)&setup);
+    nsres = nsIWebBrowser_QueryInterface(browser->webbrowser, &IID_nsIWebBrowserSetup, (void**)&setup);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIWebBrowserSetup_SetProperty(setup, SETUP_ALLOW_JAVASCRIPT,
-                window->scriptmode == SCRIPTMODE_GECKO);
+                browser->script_mode == SCRIPTMODE_GECKO);
 
         if(NS_SUCCEEDED(nsres))
             nsres = nsIWebBrowserSetup_SetProperty(setup, SETUP_DISABLE_NOSCRIPT, TRUE);

@@ -90,7 +90,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 static struct udev *udev_context = NULL;
-static DRIVER_OBJECT *udev_driver_obj = NULL;
 static DWORD disable_hidraw = 0;
 static DWORD disable_input = 0;
 
@@ -197,6 +196,7 @@ struct wine_input_private {
     int report_descriptor_size;
     BYTE *report_descriptor;
 
+    int button_start;
     BYTE button_map[KEY_MAX];
     BYTE rel_map[HID_REL_MAX];
     BYTE hat_map[8];
@@ -276,6 +276,22 @@ static const BYTE* what_am_I(struct udev_device *dev)
     return Unknown;
 }
 
+static void set_button_value(int index, int value, BYTE* buffer)
+{
+    int bindex = index / 8;
+    int b = index % 8;
+    BYTE mask;
+
+    mask = 1<<b;
+    if (value)
+        buffer[bindex] = buffer[bindex] | mask;
+    else
+    {
+        mask = ~mask;
+        buffer[bindex] = buffer[bindex] & mask;
+    }
+}
+
 static void set_abs_axis_value(struct wine_input_private *ext, int code, int value)
 {
     int index;
@@ -286,32 +302,35 @@ static void set_abs_axis_value(struct wine_input_private *ext, int code, int val
         ext->hat_values[index] = value;
         if ((code - ABS_HAT0X) % 2)
             index--;
+        /* 8 1 2
+         * 7 0 3
+         * 6 5 4 */
         if (ext->hat_values[index] == 0)
         {
             if (ext->hat_values[index+1] == 0)
-                value = 8;
-            else if (ext->hat_values[index+1] < 0)
                 value = 0;
+            else if (ext->hat_values[index+1] < 0)
+                value = 1;
             else
-                value = 4;
+                value = 5;
         }
         else if (ext->hat_values[index] > 0)
         {
             if (ext->hat_values[index+1] == 0)
-                value = 2;
-            else if (ext->hat_values[index+1] < 0)
-                value = 1;
-            else
                 value = 3;
+            else if (ext->hat_values[index+1] < 0)
+                value = 2;
+            else
+                value = 4;
         }
         else
         {
             if (ext->hat_values[index+1] == 0)
-                value = 6;
-            else if (ext->hat_values[index+1] < 0)
                 value = 7;
+            else if (ext->hat_values[index+1] < 0)
+                value = 8;
             else
-                value = 5;
+                value = 6;
         }
         ext->current_report_buffer[ext->hat_map[index]] = value;
     }
@@ -403,16 +422,6 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
     descript_size = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
     report_size = 0;
 
-    /* For now lump all buttons just into incremental usages, Ignore Keys */
-    button_count = count_buttons(ext->base.device_fd, ext->button_map);
-    if (button_count)
-    {
-        descript_size += sizeof(REPORT_BUTTONS);
-        if (button_count % 8)
-            descript_size += sizeof(REPORT_PADDING);
-        report_size = (button_count + 7) / 8;
-    }
-
     abs_count = 0;
     memset(abs_pages, 0, sizeof(abs_pages));
     for (i = 0; i < HID_ABS_MAX; i++)
@@ -422,11 +431,6 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             abs_pages[ABS_TO_HID_MAP[i][0]][abs_pages[ABS_TO_HID_MAP[i][0]][0]] = i;
 
             ioctl(ext->base.device_fd, EVIOCGABS(i), &(ext->abs_map[i]));
-            if (abs_pages[ABS_TO_HID_MAP[i][0]][0] == 1)
-            {
-                descript_size += sizeof(REPORT_AXIS_HEADER);
-                descript_size += sizeof(REPORT_ABS_AXIS_TAIL);
-            }
         }
     /* Skip page 0, aka HID_USAGE_PAGE_UNDEFINED */
     for (i = 1; i < TOP_ABS_PAGE; i++)
@@ -441,6 +445,8 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             }
             abs_count++;
         }
+    descript_size += sizeof(REPORT_AXIS_HEADER) * abs_count;
+    descript_size += sizeof(REPORT_ABS_AXIS_TAIL) * abs_count;
 
     rel_count = 0;
     memset(rel_pages, 0, sizeof(rel_pages));
@@ -449,11 +455,6 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
         {
             rel_pages[REL_TO_HID_MAP[i][0]][0]++;
             rel_pages[REL_TO_HID_MAP[i][0]][rel_pages[REL_TO_HID_MAP[i][0]][0]] = i;
-            if (rel_pages[REL_TO_HID_MAP[i][0]][0] == 1)
-            {
-                descript_size += sizeof(REPORT_AXIS_HEADER);
-                descript_size += sizeof(REPORT_REL_AXIS_TAIL);
-            }
         }
     /* Skip page 0, aka HID_USAGE_PAGE_UNDEFINED */
     for (i = 1; i < TOP_REL_PAGE; i++)
@@ -468,6 +469,19 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             }
             rel_count++;
         }
+    descript_size += sizeof(REPORT_AXIS_HEADER) * rel_count;
+    descript_size += sizeof(REPORT_REL_AXIS_TAIL) * rel_count;
+
+    /* For now lump all buttons just into incremental usages, Ignore Keys */
+    ext->button_start = report_size;
+    button_count = count_buttons(ext->base.device_fd, ext->button_map);
+    if (button_count)
+    {
+        descript_size += sizeof(REPORT_BUTTONS);
+        if (button_count % 8)
+            descript_size += sizeof(REPORT_PADDING);
+        report_size += (button_count + 7) / 8;
+    }
 
     hat_count = 0;
     for (i = ABS_HAT0X; i <=ABS_HAT3X; i+=2)
@@ -479,6 +493,8 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
             report_size++;
             hat_count++;
         }
+    if (hat_count > 0)
+        descript_size += sizeof(REPORT_HATSWITCH);
 
     TRACE("Report Descriptor will be %i bytes\n", descript_size);
     TRACE("Report will be %i bytes\n", report_size);
@@ -495,15 +511,6 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
     report_ptr[IDX_HEADER_PAGE] = device_usage[0];
     report_ptr[IDX_HEADER_USAGE] = device_usage[1];
     report_ptr += sizeof(REPORT_HEADER);
-    if (button_count)
-    {
-        report_ptr = add_button_block(report_ptr, 1, button_count);
-        if (button_count % 8)
-        {
-            BYTE padding = 8 - (button_count % 8);
-            report_ptr = add_padding_block(report_ptr, padding);
-        }
-    }
     if (abs_count)
     {
         for (i = 1; i < TOP_ABS_PAGE; i++)
@@ -530,6 +537,15 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
                     usages[j] = REL_TO_HID_MAP[rel_pages[i][j+1]][1];
                 report_ptr = add_axis_block(report_ptr, rel_pages[i][0], i, usages, FALSE, NULL);
             }
+        }
+    }
+    if (button_count)
+    {
+        report_ptr = add_button_block(report_ptr, 1, button_count);
+        if (button_count % 8)
+        {
+            BYTE padding = 8 - (button_count % 8);
+            report_ptr = add_padding_block(report_ptr, padding);
         }
     }
     if (hat_count)
@@ -596,7 +612,7 @@ static BOOL set_report_from_event(struct wine_input_private *ext, struct input_e
             return FALSE;
 #endif
         case EV_KEY:
-            set_button_value(ext->button_map[ie->code], ie->value, ext->current_report_buffer);
+            set_button_value(ext->button_start + ext->button_map[ie->code], ie->value, ext->current_report_buffer);
             return FALSE;
         case EV_ABS:
             set_abs_axis_value(ext, ie->code, ie->value);
@@ -674,23 +690,23 @@ static NTSTATUS hidraw_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer,
 
 static NTSTATUS hidraw_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
 {
-    struct udev_device *hiddev;
+    struct udev_device *usbdev;
     struct platform_private *private = impl_from_DEVICE_OBJECT(device);
     WCHAR *str = NULL;
 
-    hiddev = udev_device_get_parent_with_subsystem_devtype(private->udev_device, "hid", NULL);
-    if (hiddev)
+    usbdev = udev_device_get_parent_with_subsystem_devtype(private->udev_device, "usb", "usb_device");
+    if (usbdev)
     {
         switch (index)
         {
             case HID_STRING_ID_IPRODUCT:
-                str = get_sysattr_string(hiddev, "product");
+                str = get_sysattr_string(usbdev, "product");
                 break;
             case HID_STRING_ID_IMANUFACTURER:
-                str = get_sysattr_string(hiddev, "manufacturer");
+                str = get_sysattr_string(usbdev, "manufacturer");
                 break;
             case HID_STRING_ID_ISERIALNUMBER:
-                str = get_sysattr_string(hiddev, "serial");
+                str = get_sysattr_string(usbdev, "serial");
                 break;
             default:
                 ERR("Unhandled string index %08x\n", index);
@@ -765,7 +781,7 @@ static DWORD CALLBACK device_report_thread(void *args)
             break;
         size = read(plfds[0].fd, report_buffer, sizeof(report_buffer));
         if (size == -1)
-            TRACE_(hid_report)("Read failed. Likely an unplugged device\n");
+            TRACE_(hid_report)("Read failed. Likely an unplugged device %d %s\n", errno, strerror(errno));
         else if (size == 0)
             TRACE_(hid_report)("Failed to read report\n");
         else
@@ -802,7 +818,7 @@ static NTSTATUS begin_report_processing(DEVICE_OBJECT *device)
 static NTSTATUS hidraw_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
 {
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
-    ssize_t rc;
+    int rc;
 
     if (id != 0)
         rc = write(ext->device_fd, report, length);
@@ -827,6 +843,7 @@ static NTSTATUS hidraw_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *
     }
     else
     {
+        TRACE("write failed: %d %d %s\n", rc, errno, strerror(errno));
         *written = 0;
         return STATUS_UNSUCCESSFUL;
     }
@@ -847,6 +864,7 @@ static NTSTATUS hidraw_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE 
     }
     else
     {
+        TRACE_(hid_report)("ioctl(HIDIOCGFEATURE(%d)) failed: %d %s\n", length, errno, strerror(errno));
         *read = 0;
         return STATUS_UNSUCCESSFUL;
     }
@@ -887,6 +905,7 @@ static NTSTATUS hidraw_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE 
     }
     else
     {
+        TRACE_(hid_report)("ioctl(HIDIOCSFEATURE(%d)) failed: %d %s\n", length, errno, strerror(errno));
         *written = 0;
         return STATUS_UNSUCCESSFUL;
     }
@@ -1044,7 +1063,7 @@ static int check_same_device(DEVICE_OBJECT *device, void* context)
 }
 
 static int parse_uevent_info(const char *uevent, DWORD *vendor_id,
-                             DWORD *product_id, WCHAR **serial_number)
+                             DWORD *product_id, WORD *input, WCHAR **serial_number)
 {
     DWORD bus_type;
     char *tmp;
@@ -1086,9 +1105,15 @@ static int parse_uevent_info(const char *uevent, DWORD *vendor_id,
             /* The caller has to free the serial number */
             if (*value)
             {
-                *serial_number = (WCHAR*)strdupAtoW(value);
+                *serial_number = strdupAtoW(value);
                 found_serial = 1;
             }
+        }
+        else if (strcmp(key, "HID_PHYS") == 0)
+        {
+            const char *input_no = strstr(value, "input");
+            if (input_no)
+                *input = atoi(input_no+5 );
         }
 
 next_line:
@@ -1108,6 +1133,7 @@ static void try_add_device(struct udev_device *dev)
     const char *devnode;
     WCHAR *serial = NULL;
     BOOL is_gamepad = FALSE;
+    WORD input = -1;
     int fd;
     static const CHAR *base_serial = "0000";
 
@@ -1142,7 +1168,7 @@ static void try_add_device(struct udev_device *dev)
         }
 #endif
         parse_uevent_info(udev_device_get_sysattr_value(hiddev, "uevent"),
-                          &vid, &pid, &serial);
+                          &vid, &pid, &input, &serial);
         if (serial == NULL)
             serial = strdupAtoW(base_serial);
     }
@@ -1178,6 +1204,8 @@ static void try_add_device(struct udev_device *dev)
         is_gamepad = (axes == 6  && buttons >= 14);
     }
 #endif
+    if (input == (WORD)-1 && is_gamepad)
+        input = 0;
 
 
     TRACE("Found udev device %s (vid %04x, pid %04x, version %u, serial %s)\n",
@@ -1185,13 +1213,13 @@ static void try_add_device(struct udev_device *dev)
 
     if (strcmp(subsystem, "hidraw") == 0)
     {
-        device = bus_create_hid_device(udev_driver_obj, hidraw_busidW, vid, pid, version, 0, serial, is_gamepad,
+        device = bus_create_hid_device(hidraw_busidW, vid, pid, input, version, 0, serial, is_gamepad,
                                        &GUID_DEVCLASS_HIDRAW, &hidraw_vtbl, sizeof(struct platform_private));
     }
 #ifdef HAS_PROPER_INPUT_HEADER
     else if (strcmp(subsystem, "input") == 0)
     {
-        device = bus_create_hid_device(udev_driver_obj, lnxev_busidW, vid, pid, version, 0, serial, is_gamepad,
+        device = bus_create_hid_device(lnxev_busidW, vid, pid, input, version, 0, serial, is_gamepad,
                                        &GUID_DEVCLASS_LINUXEVENT, &lnxev_vtbl, sizeof(struct wine_input_private));
     }
 #endif
@@ -1423,7 +1451,7 @@ void udev_driver_unload( void )
     TRACE("Unload Driver\n");
 }
 
-NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
+NTSTATUS udev_driver_init(void)
 {
     HANDLE events[2];
     DWORD result;
@@ -1432,24 +1460,18 @@ NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry
     static const WCHAR input_disabledW[] = {'D','i','s','a','b','l','e','I','n','p','u','t',0};
     static const UNICODE_STRING input_disabled = {sizeof(input_disabledW) - sizeof(WCHAR), sizeof(input_disabledW), (WCHAR*)input_disabledW};
 
-    TRACE("(%p, %s)\n", driver, debugstr_w(registry_path->Buffer));
-
     if (!(udev_context = udev_new()))
     {
         ERR("Can't create udev object\n");
         return STATUS_UNSUCCESSFUL;
     }
 
-    udev_driver_obj = driver;
-    driver->MajorFunction[IRP_MJ_PNP] = common_pnp_dispatch;
-    driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = hid_internal_dispatch;
-
-    disable_hidraw = check_bus_option(registry_path, &hidraw_disabled, 0);
+    disable_hidraw = check_bus_option(&hidraw_disabled, 0);
     if (disable_hidraw)
         TRACE("UDEV hidraw devices disabled in registry\n");
 
 #ifdef HAS_PROPER_INPUT_HEADER
-    disable_input = check_bus_option(registry_path, &input_disabled, 0);
+    disable_input = check_bus_option(&input_disabled, 0);
     if (disable_input)
         TRACE("UDEV input devices disabled in registry\n");
 #endif
@@ -1475,13 +1497,12 @@ error:
     ERR("Failed to initialize udev device thread\n");
     udev_unref(udev_context);
     udev_context = NULL;
-    udev_driver_obj = NULL;
     return STATUS_UNSUCCESSFUL;
 }
 
 #else
 
-NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
+NTSTATUS udev_driver_init(void)
 {
     WARN("Wine was compiled without UDEV support\n");
     return STATUS_NOT_IMPLEMENTED;

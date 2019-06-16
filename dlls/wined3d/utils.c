@@ -633,6 +633,7 @@ static const struct wined3d_format_vertex_info format_vertex_info[] =
     {WINED3DFMT_R16G16B16A16_FLOAT, WINED3D_FFP_EMIT_FLOAT16_4, GL_HALF_FLOAT, ARB_HALF_FLOAT_VERTEX},
     {WINED3DFMT_R8G8B8A8_SNORM,     WINED3D_FFP_EMIT_INVALID,   GL_BYTE},
     {WINED3DFMT_R8G8B8A8_SINT,      WINED3D_FFP_EMIT_INVALID,   GL_BYTE},
+    {WINED3DFMT_R8G8_UNORM,         WINED3D_FFP_EMIT_INVALID,   GL_UNSIGNED_BYTE},
     {WINED3DFMT_R16G16B16A16_UINT,  WINED3D_FFP_EMIT_INVALID,   GL_UNSIGNED_SHORT},
     {WINED3DFMT_R8_UNORM,           WINED3D_FFP_EMIT_INVALID,   GL_UNSIGNED_BYTE},
     {WINED3DFMT_R8_UINT,            WINED3D_FFP_EMIT_INVALID,   GL_UNSIGNED_BYTE},
@@ -1937,6 +1938,11 @@ static struct wined3d_format_gl *wined3d_format_gl_mutable(struct wined3d_format
     return CONTAINING_RECORD(format, struct wined3d_format_gl, f);
 }
 
+static struct wined3d_format_vk *wined3d_format_vk_mutable(struct wined3d_format *format)
+{
+    return CONTAINING_RECORD(format, struct wined3d_format_vk, f);
+}
+
 static struct wined3d_format *get_format_by_idx(const struct wined3d_adapter *adapter, int fmt_idx)
 {
     return (struct wined3d_format *)((BYTE *)adapter->formats + fmt_idx * adapter->format_size);
@@ -3137,8 +3143,8 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
     unsigned int i, j;
     BOOL srgb_write;
 
-    adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);
-    adapter->shader_backend->shader_get_caps(gl_info, &shader_caps);
+    adapter->fragment_pipe->get_caps(adapter, &fragment_caps);
+    adapter->shader_backend->shader_get_caps(adapter, &shader_caps);
     srgb_write = (fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_SRGB_WRITE)
             && (shader_caps.wined3d_caps & WINED3D_SHADER_CAP_SRGB_WRITE);
 
@@ -3195,6 +3201,9 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
             format->srgb_internal = format->internal;
             format_clear_flag(&format->f, WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
         }
+
+        if (!gl_info->supported[ARB_SHADOW] && (format->f.flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_SHADOW))
+            format_clear_flag(&format->f, WINED3DFMT_FLAG_TEXTURE);
 
         query_internal_format(adapter, format, &format_texture_info[i], gl_info, srgb_write, FALSE);
 
@@ -4052,6 +4061,161 @@ BOOL wined3d_adapter_gl_init_format_info(struct wined3d_adapter *adapter, struct
     init_format_filter_info(adapter, gl_info);
     init_format_gen_mipmap_info(adapter, gl_info);
     init_format_depth_bias_scale(adapter, ctx);
+
+    if (!init_typeless_formats(adapter)) goto fail;
+
+    return TRUE;
+
+fail:
+    heap_free(adapter->formats);
+    adapter->formats = NULL;
+    return FALSE;
+}
+
+static void init_vulkan_format_info(struct wined3d_format_vk *format,
+        const struct wined3d_vk_info *vk_info, VkPhysicalDevice vk_physical_device)
+{
+    static const struct
+    {
+        enum wined3d_format_id id;
+        VkFormat vk_format;
+    }
+    vulkan_formats[] =
+    {
+        {WINED3DFMT_R32G32B32A32_FLOAT,    VK_FORMAT_R32G32B32A32_SFLOAT,     },
+        {WINED3DFMT_R32G32B32A32_UINT,     VK_FORMAT_R32G32B32A32_UINT,       },
+        {WINED3DFMT_R32G32B32A32_SINT,     VK_FORMAT_R32G32B32A32_SINT,       },
+        {WINED3DFMT_R32G32B32_FLOAT,       VK_FORMAT_R32G32B32_SFLOAT,        },
+        {WINED3DFMT_R32G32B32_UINT,        VK_FORMAT_R32G32B32_UINT,          },
+        {WINED3DFMT_R32G32B32_SINT,        VK_FORMAT_R32G32B32_SINT,          },
+        {WINED3DFMT_R16G16B16A16_FLOAT,    VK_FORMAT_R16G16B16A16_SFLOAT,     },
+        {WINED3DFMT_R16G16B16A16_UNORM,    VK_FORMAT_R16G16B16A16_UNORM,      },
+        {WINED3DFMT_R16G16B16A16_UINT,     VK_FORMAT_R16G16B16A16_UINT,       },
+        {WINED3DFMT_R16G16B16A16_SNORM,    VK_FORMAT_R16G16B16A16_SNORM,      },
+        {WINED3DFMT_R16G16B16A16_SINT,     VK_FORMAT_R16G16B16A16_SINT,       },
+        {WINED3DFMT_R32G32_FLOAT,          VK_FORMAT_R32G32_SFLOAT,           },
+        {WINED3DFMT_R32G32_UINT,           VK_FORMAT_R32G32_UINT,             },
+        {WINED3DFMT_R32G32_SINT,           VK_FORMAT_R32G32_SINT,             },
+        {WINED3DFMT_R10G10B10A2_UNORM,     VK_FORMAT_A2B10G10R10_UNORM_PACK32,},
+        {WINED3DFMT_R11G11B10_FLOAT,       VK_FORMAT_B10G11R11_UFLOAT_PACK32, },
+        {WINED3DFMT_R8G8_UNORM,            VK_FORMAT_R8G8_UNORM,              },
+        {WINED3DFMT_R8G8_UINT,             VK_FORMAT_R8G8_UINT,               },
+        {WINED3DFMT_R8G8_SNORM,            VK_FORMAT_R8G8_SNORM,              },
+        {WINED3DFMT_R8G8_SINT,             VK_FORMAT_R8G8_SINT,               },
+        {WINED3DFMT_R8G8B8A8_UNORM,        VK_FORMAT_R8G8B8A8_UNORM,          },
+        {WINED3DFMT_R8G8B8A8_UNORM_SRGB,   VK_FORMAT_R8G8B8A8_SRGB,           },
+        {WINED3DFMT_R8G8B8A8_UINT,         VK_FORMAT_R8G8B8A8_UINT,           },
+        {WINED3DFMT_R8G8B8A8_SNORM,        VK_FORMAT_R8G8B8A8_SNORM,          },
+        {WINED3DFMT_R8G8B8A8_SINT,         VK_FORMAT_R8G8B8A8_SINT,           },
+        {WINED3DFMT_R16G16_FLOAT,          VK_FORMAT_R16G16_SFLOAT,           },
+        {WINED3DFMT_R16G16_UNORM,          VK_FORMAT_R16G16_UNORM,            },
+        {WINED3DFMT_R16G16_UINT,           VK_FORMAT_R16G16_UINT,             },
+        {WINED3DFMT_R16G16_SNORM,          VK_FORMAT_R16G16_SNORM,            },
+        {WINED3DFMT_R16G16_SINT,           VK_FORMAT_R16G16_SINT,             },
+        {WINED3DFMT_D32_FLOAT,             VK_FORMAT_D32_SFLOAT,              },
+        {WINED3DFMT_R32_FLOAT,             VK_FORMAT_R32_SFLOAT,              },
+        {WINED3DFMT_R32_UINT,              VK_FORMAT_R32_UINT,                },
+        {WINED3DFMT_R32_SINT,              VK_FORMAT_R32_SINT,                },
+        {WINED3DFMT_R16_FLOAT,             VK_FORMAT_R16_SFLOAT,              },
+        {WINED3DFMT_D16_UNORM,             VK_FORMAT_D16_UNORM,               },
+        {WINED3DFMT_R16_UNORM,             VK_FORMAT_R16_UNORM,               },
+        {WINED3DFMT_R16_UINT,              VK_FORMAT_R16_UINT,                },
+        {WINED3DFMT_R16_SNORM,             VK_FORMAT_R16_SNORM,               },
+        {WINED3DFMT_R16_SINT,              VK_FORMAT_R16_SINT,                },
+        {WINED3DFMT_R8_UNORM,              VK_FORMAT_R8_UNORM,                },
+        {WINED3DFMT_R8_UINT,               VK_FORMAT_R8_UINT,                 },
+        {WINED3DFMT_R8_SNORM,              VK_FORMAT_R8_SNORM,                },
+        {WINED3DFMT_R8_SINT,               VK_FORMAT_R8_SINT,                 },
+        {WINED3DFMT_A8_UNORM,              VK_FORMAT_R8_UNORM,                },
+        {WINED3DFMT_B8G8R8A8_UNORM,        VK_FORMAT_B8G8R8A8_UNORM,          },
+        {WINED3DFMT_B8G8R8A8_UNORM_SRGB,   VK_FORMAT_B8G8R8A8_SRGB,           },
+        {WINED3DFMT_BC1_UNORM,             VK_FORMAT_BC1_RGBA_UNORM_BLOCK,    },
+        {WINED3DFMT_BC1_UNORM_SRGB,        VK_FORMAT_BC1_RGBA_SRGB_BLOCK,     },
+        {WINED3DFMT_BC2_UNORM,             VK_FORMAT_BC2_UNORM_BLOCK,         },
+        {WINED3DFMT_BC2_UNORM_SRGB,        VK_FORMAT_BC2_SRGB_BLOCK,          },
+        {WINED3DFMT_BC3_UNORM,             VK_FORMAT_BC3_UNORM_BLOCK,         },
+        {WINED3DFMT_BC3_UNORM_SRGB,        VK_FORMAT_BC3_SRGB_BLOCK,          },
+        {WINED3DFMT_BC4_UNORM,             VK_FORMAT_BC4_UNORM_BLOCK,         },
+        {WINED3DFMT_BC4_SNORM,             VK_FORMAT_BC4_SNORM_BLOCK,         },
+        {WINED3DFMT_BC5_UNORM,             VK_FORMAT_BC5_UNORM_BLOCK,         },
+        {WINED3DFMT_BC5_SNORM,             VK_FORMAT_BC5_SNORM_BLOCK,         },
+        {WINED3DFMT_BC6H_UF16,             VK_FORMAT_BC6H_UFLOAT_BLOCK,       },
+        {WINED3DFMT_BC6H_SF16,             VK_FORMAT_BC6H_SFLOAT_BLOCK,       },
+        {WINED3DFMT_BC7_UNORM,             VK_FORMAT_BC7_UNORM_BLOCK,         },
+        {WINED3DFMT_BC7_UNORM_SRGB,        VK_FORMAT_BC7_SRGB_BLOCK,          },
+    };
+    VkFormat vk_format = VK_FORMAT_UNDEFINED;
+    VkFormatFeatureFlags texture_flags;
+    VkFormatProperties properties;
+    unsigned int flags;
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(vulkan_formats); ++i)
+    {
+        if (vulkan_formats[i].id == format->f.id)
+        {
+            vk_format = vulkan_formats[i].vk_format;
+            break;
+        }
+    }
+    if (!vk_format)
+    {
+        WARN("Unsupported format %s.\n", debug_d3dformat(format->f.id));
+        return;
+    }
+
+    format->vk_format = vk_format;
+
+    VK_CALL(vkGetPhysicalDeviceFormatProperties(vk_physical_device, vk_format, &properties));
+
+    if (properties.bufferFeatures & VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT)
+        format->f.flags[WINED3D_GL_RES_TYPE_BUFFER] |= WINED3DFMT_FLAG_VERTEX_ATTRIBUTE;
+    if (properties.bufferFeatures & VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT)
+        format->f.flags[WINED3D_GL_RES_TYPE_BUFFER] |= WINED3DFMT_FLAG_TEXTURE;
+
+    flags = 0;
+    texture_flags = properties.linearTilingFeatures | properties.optimalTilingFeatures;
+    if (texture_flags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT)
+    {
+        flags |= WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_VTF;
+    }
+    if (texture_flags & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT)
+    {
+        flags |= WINED3DFMT_FLAG_RENDERTARGET;
+    }
+    if (texture_flags & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT)
+    {
+        flags |= WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING;
+    }
+    if (texture_flags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)
+    {
+        flags |= WINED3DFMT_FLAG_FILTERING;
+    }
+
+    format->f.flags[WINED3D_GL_RES_TYPE_TEX_1D] |= flags;
+    format->f.flags[WINED3D_GL_RES_TYPE_TEX_2D] |= flags;
+    format->f.flags[WINED3D_GL_RES_TYPE_TEX_3D] |= flags;
+    format->f.flags[WINED3D_GL_RES_TYPE_TEX_CUBE] |= flags;
+}
+
+BOOL wined3d_adapter_vk_init_format_info(struct wined3d_adapter_vk *adapter_vk,
+        const struct wined3d_vk_info *vk_info)
+{
+    VkPhysicalDevice vk_physical_device = adapter_vk->physical_device;
+    struct wined3d_adapter *adapter = &adapter_vk->a;
+    struct wined3d_format_vk *format;
+    unsigned int i;
+
+    if (!wined3d_adapter_init_format_info(adapter, sizeof(*format)))
+        return FALSE;
+
+    for (i = 0; i < WINED3D_FORMAT_COUNT; ++i)
+    {
+        format = wined3d_format_vk_mutable(get_format_by_idx(adapter, i));
+
+        if (format->f.id)
+            init_vulkan_format_info(format, vk_info, vk_physical_device);
+    }
 
     if (!init_typeless_formats(adapter)) goto fail;
 
@@ -5097,6 +5261,45 @@ const char *debug_glerror(GLenum error) {
     }
 }
 
+const char *wined3d_debug_vkresult(VkResult vr)
+{
+    switch (vr)
+    {
+#define WINED3D_TO_STR(x) case x: return #x
+        WINED3D_TO_STR(VK_ERROR_INVALID_DEVICE_ADDRESS_EXT);
+        WINED3D_TO_STR(VK_ERROR_NOT_PERMITTED_EXT);
+        WINED3D_TO_STR(VK_ERROR_FRAGMENTATION_EXT);
+        WINED3D_TO_STR(VK_ERROR_INVALID_EXTERNAL_HANDLE);
+        WINED3D_TO_STR(VK_ERROR_OUT_OF_POOL_MEMORY);
+        WINED3D_TO_STR(VK_ERROR_INVALID_SHADER_NV);
+        WINED3D_TO_STR(VK_ERROR_OUT_OF_DATE_KHR);
+        WINED3D_TO_STR(VK_ERROR_NATIVE_WINDOW_IN_USE_KHR);
+        WINED3D_TO_STR(VK_ERROR_SURFACE_LOST_KHR);
+        WINED3D_TO_STR(VK_ERROR_FRAGMENTED_POOL);
+        WINED3D_TO_STR(VK_ERROR_FORMAT_NOT_SUPPORTED);
+        WINED3D_TO_STR(VK_ERROR_TOO_MANY_OBJECTS);
+        WINED3D_TO_STR(VK_ERROR_INCOMPATIBLE_DRIVER);
+        WINED3D_TO_STR(VK_ERROR_FEATURE_NOT_PRESENT);
+        WINED3D_TO_STR(VK_ERROR_EXTENSION_NOT_PRESENT);
+        WINED3D_TO_STR(VK_ERROR_LAYER_NOT_PRESENT);
+        WINED3D_TO_STR(VK_ERROR_MEMORY_MAP_FAILED);
+        WINED3D_TO_STR(VK_ERROR_DEVICE_LOST);
+        WINED3D_TO_STR(VK_ERROR_INITIALIZATION_FAILED);
+        WINED3D_TO_STR(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+        WINED3D_TO_STR(VK_ERROR_OUT_OF_HOST_MEMORY);
+        WINED3D_TO_STR(VK_SUCCESS);
+        WINED3D_TO_STR(VK_NOT_READY);
+        WINED3D_TO_STR(VK_TIMEOUT);
+        WINED3D_TO_STR(VK_EVENT_SET);
+        WINED3D_TO_STR(VK_EVENT_RESET);
+        WINED3D_TO_STR(VK_INCOMPLETE);
+        WINED3D_TO_STR(VK_SUBOPTIMAL_KHR);
+#undef WINED3D_TO_STR
+        default:
+            return wine_dbg_sprintf("unrecognised(%d)", vr);
+    }
+}
+
 static const char *debug_fixup_channel_source(enum fixup_channel_source source)
 {
     switch(source)
@@ -5267,9 +5470,8 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
 }
 
 /* Setup this textures matrix according to the texture flags. */
-static void compute_texture_matrix(const struct wined3d_gl_info *gl_info, const struct wined3d_matrix *matrix,
-        DWORD flags, BOOL calculated_coords, BOOL transformed, enum wined3d_format_id format_id,
-        BOOL ffp_proj_control, struct wined3d_matrix *out_matrix)
+static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t flags, BOOL calculated_coords,
+        BOOL transformed, enum wined3d_format_id format_id, BOOL ffp_proj_control, struct wined3d_matrix *out_matrix)
 {
     struct wined3d_matrix mat;
 
@@ -5383,13 +5585,12 @@ void get_texture_matrix(const struct wined3d_context *context, const struct wine
         unsigned int tex, struct wined3d_matrix *mat)
 {
     const struct wined3d_device *device = context->device;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     BOOL generated = (state->texture_states[tex][WINED3D_TSS_TEXCOORD_INDEX] & 0xffff0000)
             != WINED3DTSS_TCI_PASSTHRU;
     unsigned int coord_idx = min(state->texture_states[tex][WINED3D_TSS_TEXCOORD_INDEX & 0x0000ffff],
             WINED3D_MAX_TEXTURES - 1);
 
-    compute_texture_matrix(gl_info, &state->transforms[WINED3D_TS_TEXTURE0 + tex],
+    compute_texture_matrix(&state->transforms[WINED3D_TS_TEXTURE0 + tex],
             state->texture_states[tex][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS],
             generated, context->last_was_rhw,
             context->stream_info.use_map & (1u << (WINED3D_FFP_TEXCOORD0 + coord_idx))
@@ -5671,7 +5872,6 @@ void wined3d_format_get_float_color_key(const struct wined3d_format *format,
     }
 }
 
-/* DirectDraw stuff */
 enum wined3d_format_id pixelformat_for_depth(DWORD depth)
 {
     switch (depth)
@@ -5786,7 +5986,7 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
 
         if ((texture = state->textures[i]))
         {
-            if (can_use_texture_swizzle(gl_info, texture->resource.format))
+            if (can_use_texture_swizzle(d3d_info, texture->resource.format))
                 settings->op[i].color_fixup = COLOR_FIXUP_IDENTITY;
             else
                 settings->op[i].color_fixup = texture->resource.format->color_fixup;
@@ -6152,8 +6352,8 @@ void texture_activate_dimensions(struct wined3d_texture *texture, const struct w
 /* Context activation is done by the caller (state handler). */
 void sampler_texdim(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD sampler = state_id - STATE_SAMPLER(0);
-    DWORD mapped_stage = context->tex_unit_map[sampler];
+    unsigned int sampler = state_id - STATE_SAMPLER(0);
+    unsigned int mapped_stage = wined3d_context_gl(context)->tex_unit_map[sampler];
 
     /* No need to enable / disable anything here for unused samplers. The
      * tex_colorop handler takes care. Also no action is needed with pixel
@@ -6176,19 +6376,10 @@ int wined3d_ffp_frag_program_key_compare(const void *key, const struct wine_rb_e
     return memcmp(ka, kb, sizeof(*ka));
 }
 
-static enum wined3d_material_color_source validate_material_colour_source(WORD use_map,
-        enum wined3d_material_color_source source)
-{
-    if (source == WINED3D_MCS_COLOR1 && use_map & (1u << WINED3D_FFP_DIFFUSE))
-        return source;
-    if (source == WINED3D_MCS_COLOR2 && use_map & (1u << WINED3D_FFP_SPECULAR))
-        return source;
-    return WINED3D_MCS_MATERIAL;
-}
-
 void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
         const struct wined3d_state *state, struct wined3d_ffp_vs_settings *settings)
 {
+    enum wined3d_material_color_source diffuse_source, emissive_source, ambient_source, specular_source;
     const struct wined3d_stream_info *si = &context->stream_info;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
@@ -6250,24 +6441,12 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
     settings->point_size = state->gl_primitive_type == GL_POINTS;
     settings->per_vertex_point_size = !!(si->use_map & 1u << WINED3D_FFP_PSIZE);
 
-    if (state->render_states[WINED3D_RS_COLORVERTEX])
-    {
-        settings->diffuse_source = validate_material_colour_source(si->use_map,
-                state->render_states[WINED3D_RS_DIFFUSEMATERIALSOURCE]);
-        settings->emissive_source = validate_material_colour_source(si->use_map,
-                state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE]);
-        settings->ambient_source = validate_material_colour_source(si->use_map,
-                state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE]);
-        settings->specular_source = validate_material_colour_source(si->use_map,
-                state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE]);
-    }
-    else
-    {
-        settings->diffuse_source = WINED3D_MCS_MATERIAL;
-        settings->emissive_source = WINED3D_MCS_MATERIAL;
-        settings->ambient_source = WINED3D_MCS_MATERIAL;
-        settings->specular_source = WINED3D_MCS_MATERIAL;
-    }
+    wined3d_get_material_colour_source(&diffuse_source, &emissive_source,
+            &ambient_source, &specular_source, state, si);
+    settings->diffuse_source = diffuse_source;
+    settings->emissive_source = emissive_source;
+    settings->ambient_source = ambient_source;
+    settings->specular_source = specular_source;
 
     for (i = 0; i < WINED3D_MAX_TEXTURES; ++i)
     {
@@ -6381,8 +6560,8 @@ const char *wined3d_debug_feature_level(enum wined3d_feature_level level)
         LEVEL_TO_STR(WINED3D_FEATURE_LEVEL_7);
         LEVEL_TO_STR(WINED3D_FEATURE_LEVEL_8);
         LEVEL_TO_STR(WINED3D_FEATURE_LEVEL_9_1);
-        LEVEL_TO_STR(WINED3D_FEATURE_LEVEL_9_SM2);
-        LEVEL_TO_STR(WINED3D_FEATURE_LEVEL_9_SM3);
+        LEVEL_TO_STR(WINED3D_FEATURE_LEVEL_9_2);
+        LEVEL_TO_STR(WINED3D_FEATURE_LEVEL_9_3);
         LEVEL_TO_STR(WINED3D_FEATURE_LEVEL_10);
         LEVEL_TO_STR(WINED3D_FEATURE_LEVEL_10_1);
         LEVEL_TO_STR(WINED3D_FEATURE_LEVEL_11);
@@ -6520,4 +6699,298 @@ BOOL wined3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE
     *elements = new_elements;
     *capacity = new_capacity;
     return TRUE;
+}
+
+static void swap_rows(float **a, float **b)
+{
+    float *tmp = *a;
+
+    *a = *b;
+    *b = tmp;
+}
+
+BOOL invert_matrix(struct wined3d_matrix *out, const struct wined3d_matrix *m)
+{
+    float wtmp[4][8];
+    float m0, m1, m2, m3, s;
+    float *r0, *r1, *r2, *r3;
+
+    r0 = wtmp[0];
+    r1 = wtmp[1];
+    r2 = wtmp[2];
+    r3 = wtmp[3];
+
+    r0[0] = m->_11;
+    r0[1] = m->_12;
+    r0[2] = m->_13;
+    r0[3] = m->_14;
+    r0[4] = 1.0f;
+    r0[5] = r0[6] = r0[7] = 0.0f;
+
+    r1[0] = m->_21;
+    r1[1] = m->_22;
+    r1[2] = m->_23;
+    r1[3] = m->_24;
+    r1[5] = 1.0f;
+    r1[4] = r1[6] = r1[7] = 0.0f;
+
+    r2[0] = m->_31;
+    r2[1] = m->_32;
+    r2[2] = m->_33;
+    r2[3] = m->_34;
+    r2[6] = 1.0f;
+    r2[4] = r2[5] = r2[7] = 0.0f;
+
+    r3[0] = m->_41;
+    r3[1] = m->_42;
+    r3[2] = m->_43;
+    r3[3] = m->_44;
+    r3[7] = 1.0f;
+    r3[4] = r3[5] = r3[6] = 0.0f;
+
+    /* Choose pivot - or die. */
+    if (fabsf(r3[0]) > fabsf(r2[0]))
+        swap_rows(&r3, &r2);
+    if (fabsf(r2[0]) > fabsf(r1[0]))
+        swap_rows(&r2, &r1);
+    if (fabsf(r1[0]) > fabsf(r0[0]))
+        swap_rows(&r1, &r0);
+    if (r0[0] == 0.0f)
+        return FALSE;
+
+    /* Eliminate first variable. */
+    m1 = r1[0] / r0[0]; m2 = r2[0] / r0[0]; m3 = r3[0] / r0[0];
+    s = r0[1]; r1[1] -= m1 * s; r2[1] -= m2 * s; r3[1] -= m3 * s;
+    s = r0[2]; r1[2] -= m1 * s; r2[2] -= m2 * s; r3[2] -= m3 * s;
+    s = r0[3]; r1[3] -= m1 * s; r2[3] -= m2 * s; r3[3] -= m3 * s;
+    s = r0[4];
+    if (s != 0.0f)
+    {
+        r1[4] -= m1 * s;
+        r2[4] -= m2 * s;
+        r3[4] -= m3 * s;
+    }
+    s = r0[5];
+    if (s != 0.0f)
+    {
+        r1[5] -= m1 * s;
+        r2[5] -= m2 * s;
+        r3[5] -= m3 * s;
+    }
+    s = r0[6];
+    if (s != 0.0f)
+    {
+        r1[6] -= m1 * s;
+        r2[6] -= m2 * s;
+        r3[6] -= m3 * s;
+    }
+    s = r0[7];
+    if (s != 0.0f)
+    {
+        r1[7] -= m1 * s;
+        r2[7] -= m2 * s;
+        r3[7] -= m3 * s;
+    }
+
+    /* Choose pivot - or die. */
+    if (fabsf(r3[1]) > fabsf(r2[1]))
+        swap_rows(&r3, &r2);
+    if (fabsf(r2[1]) > fabsf(r1[1]))
+        swap_rows(&r2, &r1);
+    if (r1[1] == 0.0f)
+        return FALSE;
+
+    /* Eliminate second variable. */
+    m2 = r2[1] / r1[1]; m3 = r3[1] / r1[1];
+    r2[2] -= m2 * r1[2]; r3[2] -= m3 * r1[2];
+    r2[3] -= m2 * r1[3]; r3[3] -= m3 * r1[3];
+    s = r1[4];
+    if (s != 0.0f)
+    {
+        r2[4] -= m2 * s;
+        r3[4] -= m3 * s;
+    }
+    s = r1[5];
+    if (s != 0.0f)
+    {
+        r2[5] -= m2 * s;
+        r3[5] -= m3 * s;
+    }
+    s = r1[6];
+    if (s != 0.0f)
+    {
+        r2[6] -= m2 * s;
+        r3[6] -= m3 * s;
+    }
+    s = r1[7];
+    if (s != 0.0f)
+    {
+        r2[7] -= m2 * s;
+        r3[7] -= m3 * s;
+    }
+
+    /* Choose pivot - or die. */
+    if (fabsf(r3[2]) > fabsf(r2[2]))
+        swap_rows(&r3, &r2);
+    if (r2[2] == 0.0f)
+        return FALSE;
+
+    /* Eliminate third variable. */
+    m3 = r3[2] / r2[2];
+    r3[3] -= m3 * r2[3];
+    r3[4] -= m3 * r2[4];
+    r3[5] -= m3 * r2[5];
+    r3[6] -= m3 * r2[6];
+    r3[7] -= m3 * r2[7];
+
+    /* Last check. */
+    if (r3[3] == 0.0f)
+        return FALSE;
+
+    /* Back substitute row 3. */
+    s = 1.0f / r3[3];
+    r3[4] *= s;
+    r3[5] *= s;
+    r3[6] *= s;
+    r3[7] *= s;
+
+    /* Back substitute row 2. */
+    m2 = r2[3];
+    s = 1.0f / r2[2];
+    r2[4] = s * (r2[4] - r3[4] * m2);
+    r2[5] = s * (r2[5] - r3[5] * m2);
+    r2[6] = s * (r2[6] - r3[6] * m2);
+    r2[7] = s * (r2[7] - r3[7] * m2);
+    m1 = r1[3];
+    r1[4] -= r3[4] * m1;
+    r1[5] -= r3[5] * m1;
+    r1[6] -= r3[6] * m1;
+    r1[7] -= r3[7] * m1;
+    m0 = r0[3];
+    r0[4] -= r3[4] * m0;
+    r0[5] -= r3[5] * m0;
+    r0[6] -= r3[6] * m0;
+    r0[7] -= r3[7] * m0;
+
+    /* Back substitute row 1. */
+    m1 = r1[2];
+    s = 1.0f / r1[1];
+    r1[4] = s * (r1[4] - r2[4] * m1);
+    r1[5] = s * (r1[5] - r2[5] * m1);
+    r1[6] = s * (r1[6] - r2[6] * m1);
+    r1[7] = s * (r1[7] - r2[7] * m1);
+    m0 = r0[2];
+    r0[4] -= r2[4] * m0;
+    r0[5] -= r2[5] * m0;
+    r0[6] -= r2[6] * m0;
+    r0[7] -= r2[7] * m0;
+
+    /* Back substitute row 0. */
+    m0 = r0[1];
+    s = 1.0f / r0[0];
+    r0[4] = s * (r0[4] - r1[4] * m0);
+    r0[5] = s * (r0[5] - r1[5] * m0);
+    r0[6] = s * (r0[6] - r1[6] * m0);
+    r0[7] = s * (r0[7] - r1[7] * m0);
+
+    out->_11 = r0[4];
+    out->_12 = r0[5];
+    out->_13 = r0[6];
+    out->_14 = r0[7];
+    out->_21 = r1[4];
+    out->_22 = r1[5];
+    out->_23 = r1[6];
+    out->_24 = r1[7];
+    out->_31 = r2[4];
+    out->_32 = r2[5];
+    out->_33 = r2[6];
+    out->_34 = r2[7];
+    out->_41 = r3[4];
+    out->_42 = r3[5];
+    out->_43 = r3[6];
+    out->_44 = r3[7];
+
+    return TRUE;
+}
+
+/* Taken and adapted from Mesa. */
+static BOOL invert_matrix_3d(struct wined3d_matrix *out, const struct wined3d_matrix *in)
+{
+    float pos, neg, t, det;
+    struct wined3d_matrix temp;
+
+    /* Calculate the determinant of upper left 3x3 submatrix and
+     * determine if the matrix is singular. */
+    pos = neg = 0.0f;
+    t =  in->_11 * in->_22 * in->_33;
+    if (t >= 0.0f)
+        pos += t;
+    else
+        neg += t;
+
+    t =  in->_21 * in->_32 * in->_13;
+    if (t >= 0.0f)
+        pos += t;
+    else
+        neg += t;
+    t =  in->_31 * in->_12 * in->_23;
+    if (t >= 0.0f)
+        pos += t;
+    else
+        neg += t;
+
+    t = -in->_31 * in->_22 * in->_13;
+    if (t >= 0.0f)
+        pos += t;
+    else
+        neg += t;
+    t = -in->_21 * in->_12 * in->_33;
+    if (t >= 0.0f)
+        pos += t;
+    else
+        neg += t;
+
+    t = -in->_11 * in->_32 * in->_23;
+    if (t >= 0.0f)
+        pos += t;
+    else
+        neg += t;
+
+    det = pos + neg;
+
+    if (fabsf(det) < 1e-25f)
+        return FALSE;
+
+    det = 1.0f / det;
+    temp._11 =  (in->_22 * in->_33 - in->_32 * in->_23) * det;
+    temp._12 = -(in->_12 * in->_33 - in->_32 * in->_13) * det;
+    temp._13 =  (in->_12 * in->_23 - in->_22 * in->_13) * det;
+    temp._21 = -(in->_21 * in->_33 - in->_31 * in->_23) * det;
+    temp._22 =  (in->_11 * in->_33 - in->_31 * in->_13) * det;
+    temp._23 = -(in->_11 * in->_23 - in->_21 * in->_13) * det;
+    temp._31 =  (in->_21 * in->_32 - in->_31 * in->_22) * det;
+    temp._32 = -(in->_11 * in->_32 - in->_31 * in->_12) * det;
+    temp._33 =  (in->_11 * in->_22 - in->_21 * in->_12) * det;
+
+    *out = temp;
+    return TRUE;
+}
+
+void compute_normal_matrix(float *normal_matrix, BOOL legacy_lighting,
+        const struct wined3d_matrix *modelview)
+{
+    struct wined3d_matrix mv;
+    unsigned int i, j;
+
+    mv = *modelview;
+    if (legacy_lighting)
+        invert_matrix_3d(&mv, &mv);
+    else
+        invert_matrix(&mv, &mv);
+    /* Tests show that singular modelview matrices are used unchanged as normal
+     * matrices on D3D3 and older. There seems to be no clearly consistent
+     * behavior on newer D3D versions so always follow older ddraw behavior. */
+    for (i = 0; i < 3; ++i)
+        for (j = 0; j < 3; ++j)
+            normal_matrix[i * 3 + j] = (&mv._11)[j * 4 + i];
 }

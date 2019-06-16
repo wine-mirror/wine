@@ -44,6 +44,6 @@ void connect_scripts(HTMLInnerWindow*) DECLSPEC_HIDDEN;
 void doc_insert_script(HTMLInnerWindow*,HTMLScriptElement*,BOOL) DECLSPEC_HIDDEN;
 IDispatch *script_parse_event(HTMLInnerWindow*,LPCWSTR) DECLSPEC_HIDDEN;
 HRESULT exec_script(HTMLInnerWindow*,const WCHAR*,const WCHAR*,VARIANT*) DECLSPEC_HIDDEN;
-void set_script_mode(HTMLOuterWindow*,SCRIPTMODE) DECLSPEC_HIDDEN;
+void update_browser_script_mode(GeckoBrowser*,IUri*) DECLSPEC_HIDDEN;
 BOOL find_global_prop(HTMLInnerWindow*,BSTR,DWORD,ScriptHost**,DISPID*) DECLSPEC_HIDDEN;
 IDispatch *get_script_disp(ScriptHost*) DECLSPEC_HIDDEN;

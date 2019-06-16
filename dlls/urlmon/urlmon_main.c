@@ -811,6 +811,16 @@ int WINAPI MapBrowserEmulationModeToUserAgent(DWORD unk1, DWORD unk2)
 }
 
 /***********************************************************************
+ *           CoInternetGetBrowserProfile (URLMON.446)
+ *    Undocumented, added in IE8
+ */
+HRESULT WINAPI CoInternetGetBrowserProfile(DWORD unk)
+{
+    FIXME("%x: stub\n", unk);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *           FlushUrlmonZonesCache (URLMON.455)
  *    Undocumented, added in IE8
  */
@@ -827,4 +837,26 @@ HRESULT WINAPI RegisterMediaTypes(UINT types, LPCSTR *szTypes, CLIPFORMAT *cfTyp
 {
    FIXME("stub: %u %p %p\n", types, szTypes, cfTypes);
    return E_INVALIDARG;
+}
+
+/***********************************************************************
+ *            ShouldShowIntranetWarningSecband
+ *    Undocumented, added in IE7
+ */
+BOOL WINAPI ShouldShowIntranetWarningSecband(DWORD unk)
+{
+    FIXME("%x: stub\n", unk);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GetIUriPriv (urlmon.@)
+ *
+ * Not documented.
+ */
+HRESULT WINAPI GetIUriPriv(IUri *uri, void **p)
+{
+    FIXME("(%p,%p): stub\n", uri, p);
+    *p = NULL;
+    return E_NOTIMPL;
 }

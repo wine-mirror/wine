@@ -37,7 +37,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
 #include "wine/winbase16.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rundll32);
@@ -123,7 +122,7 @@ static void *get_entry_point32( HMODULE module, LPCWSTR entry, BOOL *unicode )
     /* determine if the entry point is an ordinal */
     if (entry[0] == '#')
     {
-        INT_PTR ordinal = atoiW( entry + 1 );
+        INT_PTR ordinal = wcstol( entry + 1, NULL, 10 );
         if (ordinal <= 0)
             return NULL;
 
@@ -265,7 +264,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
     if (!szDllName || *szDllName==0)
         goto CLEANUP;
     WINE_TRACE("DllName=%s\n",wine_dbgstr_w(szDllName));
-    if ((szEntryPoint = strchrW(szDllName, ',' )))
+    if ((szEntryPoint = wcschr(szDllName, ',' )))
         *szEntryPoint++=0;
     else
         szEntryPoint = get_next_arg(&szCmdLine);

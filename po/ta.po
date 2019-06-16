@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-02-19 03:44+0530\n"
+"PO-Revision-Date: 2019-03-29 20:31+0530\n"
 "Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
 "Language-Team: Tamil\n"
 "Language: ta\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 18.12.2\n"
+"X-Generator: Lokalize 18.12.3\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: appwiz.rc:58
@@ -38,20 +38,20 @@ msgstr ""
 
 #: appwiz.rc:67
 msgid "&Support Information"
-msgstr ""
+msgstr "ஆதரவு தகவல் (&S)"
 
 #: appwiz.rc:68 regedit.rc:133 regedit.rc:232
 msgid "&Modify..."
-msgstr ""
+msgstr "திருத்து... (&M)"
 
 #: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
 #: winecfg.rc:237 wordpad.rc:256
 msgid "&Remove"
-msgstr ""
+msgstr "அகற்று (&R)"
 
 #: appwiz.rc:75
 msgid "Support Information"
-msgstr ""
+msgstr "ஆதரவு தகவல்"
 
 #: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
 #: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:388 comdlg32.rc:422
@@ -65,7 +65,7 @@ msgstr ""
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
 #: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
-#: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
+#: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
@@ -77,19 +77,19 @@ msgstr ""
 
 #: appwiz.rc:80
 msgid "Publisher:"
-msgstr ""
+msgstr "வெளியீட்டாளர்:"
 
-#: appwiz.rc:81 winefile.rc:166
+#: appwiz.rc:81 winefile.rc:165
 msgid "Version:"
-msgstr ""
+msgstr "பதிப்பு:"
 
 #: appwiz.rc:82
 msgid "Contact:"
-msgstr ""
+msgstr "தொடர்பு:"
 
 #: appwiz.rc:83
 msgid "Support Information:"
-msgstr ""
+msgstr "ஆதரவு தகவல்:"
 
 #: appwiz.rc:84
 msgid "Support Telephone:"
@@ -97,7 +97,7 @@ msgstr ""
 
 #: appwiz.rc:85
 msgid "Readme:"
-msgstr ""
+msgstr "பயனர் உதவி:"
 
 #: appwiz.rc:86
 msgid "Product Updates:"
@@ -141,8 +141,8 @@ msgstr "நிறுவு"
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
 #: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
 msgstr "ரத்து"
@@ -186,30 +186,30 @@ msgstr ""
 msgid "Not specified"
 msgstr ""
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
 msgid "Name"
 msgstr "பெயர்"
 
 #: appwiz.rc:39
 msgid "Publisher"
-msgstr ""
+msgstr "வெளியீட்டாளர்"
 
 #: appwiz.rc:40 cryptui.rc:54
 msgid "Version"
-msgstr ""
+msgstr "பதிப்பு"
 
 #: appwiz.rc:41
 msgid "Installation programs"
-msgstr ""
+msgstr "நிறுவல் நிரல்கள்"
 
 #: appwiz.rc:42
 msgid "Programs (*.exe)"
-msgstr ""
+msgstr "நிரல்கள் (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
 #: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:43 winhlp32.rc:90
 msgid "All files (*.*)"
-msgstr ""
+msgstr "அனைத்து கோப்புகள் (*.*)"
 
 #: appwiz.rc:46
 msgid "&Modify/Remove"
@@ -217,11 +217,11 @@ msgstr ""
 
 #: appwiz.rc:51
 msgid "Downloading..."
-msgstr ""
+msgstr "பதிவிறக்குகிறது..."
 
 #: appwiz.rc:52
 msgid "Installing..."
-msgstr ""
+msgstr "நிறுவுகிறது..."
 
 #: appwiz.rc:53
 msgid ""
@@ -239,7 +239,7 @@ msgstr ""
 
 #: avifil32.rc:48 wordpad.rc:76
 msgid "&Options..."
-msgstr ""
+msgstr "விருப்பங்கள்... (&O)"
 
 #: avifil32.rc:49
 msgid "&Interleave every"
@@ -255,11 +255,11 @@ msgstr ""
 
 #: avifil32.rc:30
 msgid "Waveform: %s"
-msgstr ""
+msgstr "அலைவடிவம்: %s"
 
 #: avifil32.rc:31
 msgid "Waveform"
-msgstr ""
+msgstr "அலைவடிவம்"
 
 #: avifil32.rc:32
 msgid "All multimedia files"
@@ -267,11 +267,11 @@ msgstr ""
 
 #: avifil32.rc:34
 msgid "video"
-msgstr ""
+msgstr "காணொளி"
 
 #: avifil32.rc:35
 msgid "audio"
-msgstr ""
+msgstr "ஆடியோ"
 
 #: avifil32.rc:36
 msgid "Wine AVI-default-filehandler"
@@ -295,17 +295,17 @@ msgstr ""
 
 #: browseui.rc:31
 msgid "seconds"
-msgstr ""
+msgstr "விநாடிகள்"
 
 #: browseui.rc:32
 msgid "minutes"
-msgstr ""
+msgstr "நிமிடங்கள்"
 
 #: browseui.rc:33
 msgid "hours"
-msgstr ""
+msgstr "மணி"
 
-#: comctl32.rc:68 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:156
 msgid "Properties for %s"
 msgstr ""
 
@@ -315,7 +315,7 @@ msgstr ""
 
 #: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:307 user32.rc:88
 msgid "Help"
-msgstr ""
+msgstr "உதவி"
 
 #: comctl32.rc:81
 msgid "Wizard"
@@ -331,7 +331,7 @@ msgstr ""
 
 #: comctl32.rc:86
 msgid "Finish"
-msgstr ""
+msgstr "முடிப்பு"
 
 #: comctl32.rc:97
 msgid "Customize Toolbar"
@@ -340,11 +340,11 @@ msgstr ""
 #: comctl32.rc:100 comctl32.rc:57 cryptui.rc:356 ieframe.rc:43 oleview.rc:83
 #: oleview.rc:187 oleview.rc:200 oleview.rc:212 taskmgr.rc:139
 msgid "&Close"
-msgstr ""
+msgstr "மூடு (&C)"
 
 #: comctl32.rc:101
 msgid "R&eset"
-msgstr ""
+msgstr "மீட்டமை (&E)"
 
 #: comctl32.rc:102 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
 #: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:390 comdlg32.rc:424
@@ -354,7 +354,7 @@ msgstr ""
 #: progman.rc:160 progman.rc:184 progman.rc:202 progman.rc:219 regedit.rc:77
 #: taskmgr.rc:87 winefile.rc:82 winemine.rc:53 winhlp32.rc:57 wordpad.rc:102
 msgid "&Help"
-msgstr ""
+msgstr "உதவி (&H)"
 
 #: comctl32.rc:103
 msgid "Move &Up"
@@ -370,11 +370,11 @@ msgstr ""
 
 #: comctl32.rc:107
 msgid "&Add ->"
-msgstr ""
+msgstr "சேர் (&A) ->"
 
 #: comctl32.rc:108
 msgid "<- &Remove"
-msgstr ""
+msgstr "<- அகற்று (&R)"
 
 #: comctl32.rc:109
 msgid "&Toolbar buttons:"
@@ -382,7 +382,7 @@ msgstr ""
 
 #: comctl32.rc:42
 msgid "Separator"
-msgstr ""
+msgstr "பிரிப்பான்"
 
 #: comctl32.rc:47 progman.rc:81
 msgctxt "hotkey"
@@ -391,11 +391,11 @@ msgstr ""
 
 #: comctl32.rc:52 shell32.rc:309 shlwapi.rc:46 user32.rc:79
 msgid "&Yes"
-msgstr ""
+msgstr "ஆம் (&Y)"
 
 #: comctl32.rc:53 shell32.rc:311 shlwapi.rc:47 user32.rc:80
 msgid "&No"
-msgstr ""
+msgstr "இல்லை (&N)"
 
 #: comctl32.rc:54 user32.rc:82
 msgid "&Retry"
@@ -412,11 +412,11 @@ msgstr ""
 #: comctl32.rc:31 cryptui.rc:235 regedit.rc:286 taskmgr.rc:434 winedbg.rc:61
 #: winedbg.rc:76 wordpad.rc:180
 msgid "Close"
-msgstr ""
+msgstr "மூடு"
 
 #: comctl32.rc:36
 msgid "Today:"
-msgstr ""
+msgstr "இன்று:"
 
 #: comctl32.rc:37
 msgid "Go to today"
@@ -425,7 +425,7 @@ msgstr ""
 #: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:460 comdlg32.rc:485
 #: comdlg32.rc:512 shell32.rc:167 oleview.rc:101
 msgid "Open"
-msgstr ""
+msgstr "திற"
 
 #: comdlg32.rc:160 comdlg32.rc:182
 msgid "File &Name:"
@@ -444,17 +444,17 @@ msgid "Dri&ves:"
 msgstr ""
 
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
-#: winefile.rc:173
+#: winefile.rc:172
 msgid "&Read Only"
 msgstr ""
 
 #: comdlg32.rc:179
 msgid "Save As..."
-msgstr ""
+msgstr "இவ்வாறு சேமி..."
 
 #: comdlg32.rc:192 comdlg32.rc:145
 msgid "Save As"
-msgstr ""
+msgstr "இவ்வாறு சேமி"
 
 #: comdlg32.rc:201 comdlg32.rc:210 comdlg32.rc:356 comdlg32.rc:54 hhctrl.rc:49
 #: wordpad.rc:173
@@ -551,11 +551,11 @@ msgstr ""
 
 #: comdlg32.rc:250 wineconsole.rc:85
 msgid "Font"
-msgstr ""
+msgstr "எழுத்துரு"
 
 #: comdlg32.rc:253
 msgid "&Font:"
-msgstr ""
+msgstr "எழுத்துரு (&F):"
 
 #: comdlg32.rc:256
 msgid "Font St&yle:"
@@ -579,7 +579,7 @@ msgstr ""
 
 #: comdlg32.rc:269 winecfg.rc:292
 msgid "&Color:"
-msgstr ""
+msgstr "நிறம் (&C):"
 
 #: comdlg32.rc:272
 msgid "Sample"
@@ -591,7 +591,7 @@ msgstr ""
 
 #: comdlg32.rc:282
 msgid "Color"
-msgstr ""
+msgstr "நிறம்"
 
 #: comdlg32.rc:285
 msgid "&Basic Colors:"
@@ -607,15 +607,15 @@ msgstr ""
 
 #: comdlg32.rc:288
 msgid "&Red:"
-msgstr ""
+msgstr "சிவப்பு (&R):"
 
 #: comdlg32.rc:290
 msgid "&Green:"
-msgstr ""
+msgstr "பச்சை (&G):"
 
 #: comdlg32.rc:292
 msgid "&Blue:"
-msgstr ""
+msgstr "நீல (&B):"
 
 #: comdlg32.rc:294
 msgid "&Hue:"
@@ -696,7 +696,7 @@ msgstr ""
 msgid "Print to fi&le"
 msgstr ""
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "பெயர் (&N):"
 
@@ -810,7 +810,7 @@ msgstr ""
 
 #: comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:522 shdoclc.rc:127 shell32.rc:99
 msgid "&Open"
-msgstr ""
+msgstr "திற (&O)"
 
 #: comdlg32.rc:515
 msgid "File name:"
@@ -900,67 +900,67 @@ msgstr ""
 
 #: comdlg32.rc:121 wordpad.rc:125
 msgid "Black"
-msgstr ""
+msgstr "கருப்பு"
 
 #: comdlg32.rc:122 wordpad.rc:126
 msgid "Maroon"
-msgstr ""
+msgstr "மெரூன்"
 
 #: comdlg32.rc:123 wordpad.rc:127
 msgid "Green"
-msgstr ""
+msgstr "பச்சை"
 
 #: comdlg32.rc:124 wordpad.rc:128
 msgid "Olive"
-msgstr ""
+msgstr "ஆலிவ்நிறம்"
 
 #: comdlg32.rc:125 wordpad.rc:129
 msgid "Navy"
-msgstr ""
+msgstr "கடல் நீலம்"
 
 #: comdlg32.rc:126 wordpad.rc:130
 msgid "Purple"
-msgstr ""
+msgstr "ஊதா"
 
 #: comdlg32.rc:127 wordpad.rc:131
 msgid "Teal"
-msgstr ""
+msgstr "பசும்நீலம்"
 
 #: comdlg32.rc:128 wordpad.rc:132
 msgid "Gray"
-msgstr ""
+msgstr "சாம்பல்"
 
 #: comdlg32.rc:129 wordpad.rc:133
 msgid "Silver"
-msgstr ""
+msgstr "வெள்ளி"
 
 #: comdlg32.rc:130 wordpad.rc:134
 msgid "Red"
-msgstr ""
+msgstr "சிவப்பு"
 
 #: comdlg32.rc:131 wordpad.rc:135
 msgid "Lime"
-msgstr ""
+msgstr "எலுமிச்சை"
 
 #: comdlg32.rc:132 wordpad.rc:136
 msgid "Yellow"
-msgstr ""
+msgstr "மஞ்சள்"
 
 #: comdlg32.rc:133 wordpad.rc:137
 msgid "Blue"
-msgstr ""
+msgstr "நீல"
 
 #: comdlg32.rc:134 wordpad.rc:138
 msgid "Fuchsia"
-msgstr ""
+msgstr "ஆழ்ந்த சிவப்பு"
 
 #: comdlg32.rc:135 wordpad.rc:139
 msgid "Aqua"
-msgstr ""
+msgstr "நீர் வண்ணம்"
 
 #: comdlg32.rc:136 wordpad.rc:140
 msgid "White"
-msgstr ""
+msgstr "வெள்ளை"
 
 #: comdlg32.rc:56
 msgid "Unreadable Entry"
@@ -1028,7 +1028,7 @@ msgstr ""
 
 #: comdlg32.rc:142 ieframe.rc:35
 msgid "&Save"
-msgstr ""
+msgstr "சேமி (&S)"
 
 #: comdlg32.rc:143
 msgid "Save &in:"
@@ -1036,7 +1036,7 @@ msgstr ""
 
 #: comdlg32.rc:144
 msgid "Save"
-msgstr ""
+msgstr "சேமி"
 
 #: comdlg32.rc:146
 msgid "Open File"
@@ -1060,7 +1060,7 @@ msgstr ""
 
 #: comdlg32.rc:85
 msgid "Error; "
-msgstr ""
+msgstr "பிழை; "
 
 #: comdlg32.rc:86
 msgid "Pending deletion; "
@@ -1436,7 +1436,7 @@ msgstr ""
 
 #: crypt32.rc:84
 msgid "CA Version"
-msgstr ""
+msgstr "CA பதிப்பு"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
@@ -1959,11 +1959,11 @@ msgstr ""
 
 #: crypt32.rc:222 cryptui.rc:166 oleaut32.rc:32 wininet.rc:83 ipconfig.rc:47
 msgid "Yes"
-msgstr ""
+msgstr "ஆம்"
 
 #: crypt32.rc:223 cryptui.rc:167 oleaut32.rc:33 wininet.rc:84 ipconfig.rc:48
 msgid "No"
-msgstr ""
+msgstr "இல்லை"
 
 #: crypt32.rc:224
 msgid "Digital Signature"
@@ -2584,7 +2584,7 @@ msgstr ""
 
 #: cryptui.rc:82
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 செய்திகள் (*.spc; *.p7b)"
 
 #: cryptui.rc:84
 msgid "Please select a file."
@@ -2628,7 +2628,7 @@ msgstr ""
 
 #: cryptui.rc:96
 msgid "CMS/PKCS #7 Message"
-msgstr ""
+msgstr "CMS/PKCS #7 செய்தி"
 
 #: cryptui.rc:97
 msgid "Personal Information Exchange"
@@ -2644,7 +2644,7 @@ msgstr ""
 
 #: cryptui.rc:101
 msgid "Arial"
-msgstr ""
+msgstr "Arial"
 
 #: cryptui.rc:103
 msgid "<Advanced Purposes>"
@@ -2814,7 +2814,7 @@ msgstr ""
 
 #: cryptui.rc:160
 msgid "CMS/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 செய்திகள் (*.p7b)"
 
 #: cryptui.rc:161
 msgid "Personal Information Exchange (*.pfx)"
@@ -2882,7 +2882,7 @@ msgstr ""
 msgid "Select a certificate"
 msgstr ""
 
-#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
 msgstr ""
 
@@ -3166,7 +3166,7 @@ msgstr ""
 
 #: iccvid.rc:28 iccvid.rc:29
 msgid "Cinepak Video codec"
-msgstr ""
+msgstr "Cinepak வீடியோ கோடெக்"
 
 #: ieframe.rc:28 shell32.rc:114 notepad.rc:29 oleview.rc:30 oleview.rc:80
 #: progman.rc:32 taskmgr.rc:35 view.rc:31 winefile.rc:28 winhlp32.rc:31
@@ -3184,7 +3184,7 @@ msgstr ""
 
 #: ieframe.rc:34 view.rc:33 winhlp32.rc:32
 msgid "&Open..."
-msgstr ""
+msgstr "திற... (&O)"
 
 #: ieframe.rc:36 notepad.rc:33 wordpad.rc:34
 msgid "Save &as..."
@@ -3236,7 +3236,7 @@ msgstr ""
 
 #: ieframe.rc:94
 msgid "Open:"
-msgstr ""
+msgstr "திற:"
 
 #: ieframe.rc:70
 msgctxt "home page"
@@ -3342,7 +3342,7 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: inetcpl.rc:90 winefile.rc:115
+#: inetcpl.rc:90 winefile.rc:114
 msgid "Security"
 msgstr ""
 
@@ -3358,7 +3358,7 @@ msgstr ""
 
 #: inetcpl.rc:115
 msgid "Publishers..."
-msgstr ""
+msgstr "வெளியீட்டாளர்கள்..."
 
 #: inetcpl.rc:123
 msgid "Connections"
@@ -4030,7 +4030,7 @@ msgstr ""
 msgid "Insufficient buffer.\n"
 msgstr ""
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr ""
 
@@ -4823,7 +4823,7 @@ msgid "Too many links.\n"
 msgstr ""
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr ""
 
 #: winerror.mc:1483
@@ -5602,7 +5602,7 @@ msgstr ""
 msgid "Class has open windows.\n"
 msgstr ""
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr ""
 
@@ -6682,6 +6682,390 @@ msgstr ""
 msgid "Send Mail"
 msgstr ""
 
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr ""
+
+#: mferror.mc:599
+msgid "Sink has not been finalized.\n"
+msgstr ""
+
+#: mferror.mc:32
+msgid "Media Foundation platform is not initialized.\n"
+msgstr ""
+
+#: mferror.mc:39
+msgid "Buffer is too small.\n"
+msgstr ""
+
+#: mferror.mc:46
+msgid "Invalid request.\n"
+msgstr ""
+
+#: mferror.mc:53
+msgid "Invalid stream number.\n"
+msgstr ""
+
+#: mferror.mc:60
+msgid "Invalid media type.\n"
+msgstr ""
+
+#: mferror.mc:67
+msgid "No more input is accepted.\n"
+msgstr ""
+
+#: mferror.mc:74
+msgid "Object is not initialized.\n"
+msgstr ""
+
+#: mferror.mc:81
+msgid "Representation is not supported.\n"
+msgstr ""
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr ""
+
+#: mferror.mc:95
+msgid "Unsupported service.\n"
+msgstr ""
+
+#: mferror.mc:102
+msgid "Unexpected error.\n"
+msgstr ""
+
+#: mferror.mc:116
+msgid "Invalid type.\n"
+msgstr ""
+
+#: mferror.mc:123
+msgid "Invalid file format.\n"
+msgstr ""
+
+#: mferror.mc:137
+msgid "Invalid timestamp.\n"
+msgstr ""
+
+#: mferror.mc:144
+msgid "Unsupported scheme.\n"
+msgstr ""
+
+#: mferror.mc:151
+msgid "Unsupported bytestream type.\n"
+msgstr ""
+
+#: mferror.mc:158
+msgid "Unsupported time format.\n"
+msgstr ""
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:179
+msgid "Invalid stream data.\n"
+msgstr ""
+
+#: mferror.mc:186
+msgid "Realtime support is not available.\n"
+msgstr ""
+
+#: mferror.mc:193
+msgid "Unsupported rate.\n"
+msgstr ""
+
+#: mferror.mc:200
+msgid "Unsupported thinning.\n"
+msgstr ""
+
+#: mferror.mc:207
+msgid "Reversing is not supported.\n"
+msgstr ""
+
+#: mferror.mc:214
+msgid "Unsupported rate transition.\n"
+msgstr ""
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+#: mferror.mc:228
+msgid "Object or value wasn't found.\n"
+msgstr ""
+
+#: mferror.mc:235
+msgid "Value is not available.\n"
+msgstr ""
+
+#: mferror.mc:242
+msgid "Clock is not available.\n"
+msgstr ""
+
+#: mferror.mc:263
+msgid "Multiple subscribers are not supported.\n"
+msgstr ""
+
+#: mferror.mc:270
+msgid "The timer was orphaned.\n"
+msgstr ""
+
+#: mferror.mc:277
+msgid "State transition is pending.\n"
+msgstr ""
+
+#: mferror.mc:284
+msgid "Unsupported state transition.\n"
+msgstr ""
+
+#: mferror.mc:291
+msgid "Unrecoverable error occurred.\n"
+msgstr ""
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr ""
+
+#: mferror.mc:305
+msgid "Sample is not writable.\n"
+msgstr ""
+
+#: mferror.mc:312
+msgid "Key is invalid.\n"
+msgstr ""
+
+#: mferror.mc:319
+msgid "Bad startup version.\n"
+msgstr ""
+
+#: mferror.mc:326
+msgid "Unsupported caption.\n"
+msgstr ""
+
+#: mferror.mc:333
+msgid "Invalid position.\n"
+msgstr ""
+
+#: mferror.mc:340
+msgid "Attribute is not found.\n"
+msgstr ""
+
+#: mferror.mc:347
+msgid "Property type is not allowed.\n"
+msgstr ""
+
+#: mferror.mc:354
+msgid "Property type is not supported.\n"
+msgstr ""
+
+#: mferror.mc:361
+msgid "Property is empty.\n"
+msgstr ""
+
+#: mferror.mc:368
+msgid "Property is not empty.\n"
+msgstr ""
+
+#: mferror.mc:375
+msgid "Vector property is not allowed.\n"
+msgstr ""
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr ""
+
+#: mferror.mc:389
+msgid "Operation was cancelled.\n"
+msgstr ""
+
+#: mferror.mc:396
+msgid "Bytestream is not seekable.\n"
+msgstr ""
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr ""
+
+#: mferror.mc:410
+msgid "Cannot parse bytestream.\n"
+msgstr ""
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+
+#: mferror.mc:424
+msgid "Unknown bytestream length.\n"
+msgstr ""
+
+#: mferror.mc:431
+msgid "Invalid work queue index.\n"
+msgstr ""
+
+#: mferror.mc:438
+msgid "No events available.\n"
+msgstr ""
+
+#: mferror.mc:445
+msgid "Invalid media source state transition.\n"
+msgstr ""
+
+#: mferror.mc:452
+msgid "End of media stream has been reached.\n"
+msgstr ""
+
+#: mferror.mc:459
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:466
+msgid "Media stream has no duration set.\n"
+msgstr ""
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid.\n"
+msgstr ""
+
+#: mferror.mc:480
+msgid "Property wasn't found.\n"
+msgstr ""
+
+#: mferror.mc:487
+msgid "Property is read-only.\n"
+msgstr ""
+
+#: mferror.mc:494
+msgid "Property is not allowed.\n"
+msgstr ""
+
+#: mferror.mc:501
+msgid "Media source is not started.\n"
+msgstr ""
+
+#: mferror.mc:508
+msgid "Unsupported media format.\n"
+msgstr ""
+
+#: mferror.mc:515
+msgid "Media source is in wrong state.\n"
+msgstr ""
+
+#: mferror.mc:522
+msgid "No media streams were selected.\n"
+msgstr ""
+
+#: mferror.mc:529
+msgid "Unsupported media source characteristics.\n"
+msgstr ""
+
+#: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr ""
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr ""
+
+#: mferror.mc:550
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr ""
+
+#: mferror.mc:557
+msgid "Stream sink already exists.\n"
+msgstr ""
+
+#: mferror.mc:564
+msgid "Sample allocation was canceled.\n"
+msgstr ""
+
+#: mferror.mc:571
+msgid "Sample allocator is empty.\n"
+msgstr ""
+
+#: mferror.mc:578
+msgid "Sink was already stopped.\n"
+msgstr ""
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr ""
+
+#: mferror.mc:592
+msgid "No streams were selected for the sink.\n"
+msgstr ""
+
+#: mferror.mc:606
+msgid "Metadata was too long.\n"
+msgstr ""
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr ""
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr ""
+
+#: mferror.mc:627
+msgid "Optional node is invalid.\n"
+msgstr ""
+
+#: mferror.mc:634
+msgid "Cannot find decryptor.\n"
+msgstr ""
+
+#: mferror.mc:641
+msgid "Codec was not found.\n"
+msgstr ""
+
+#: mferror.mc:648
+msgid "Cannot connect topology nodes.\n"
+msgstr ""
+
+#: mferror.mc:655
+msgid "Topology request is not supported.\n"
+msgstr ""
+
+#: mferror.mc:662
+msgid "Invalid topology time attributes.\n"
+msgstr ""
+
+#: mferror.mc:669
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:676
+msgid "Presentation descriptor is missing.\n"
+msgstr ""
+
+#: mferror.mc:683
+msgid "Stream descriptor is missing.\n"
+msgstr ""
+
+#: mferror.mc:690
+msgid "Stream descriptor is not selected.\n"
+msgstr ""
+
+#: mferror.mc:697
+msgid "Source is missing.\n"
+msgstr ""
+
+#: mferror.mc:704
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:711
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:718
+msgid "Clock state was already set.\n"
+msgstr ""
+
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
 msgstr ""
@@ -6716,7 +7100,7 @@ msgstr ""
 
 #: msacm32.rc:39 winedbg.rc:77
 msgid "&Save As..."
-msgstr ""
+msgstr "இவ்வாறு சேமி... (&S)"
 
 #: msacm32.rc:42
 msgid "&Format:"
@@ -7147,7 +7531,7 @@ msgstr ""
 
 #: msi.rc:183 msi.rc:204
 msgid "Font: [1]"
-msgstr ""
+msgstr "எழுத்துரு: [1]"
 
 #: msi.rc:184 msi.rc:205
 msgid "MIME Content Type: [1], Extension: [2]"
@@ -7252,13 +7636,15 @@ msgstr ""
 
 #: msrle32.rc:31
 msgid "Wine MS-RLE video codec"
-msgstr ""
+msgstr "Wine MS-RLE வீடியோ கோடெக்"
 
 #: msrle32.rc:32
 msgid ""
 "Wine MS-RLE video codec\n"
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
+"Wine MS-RLE வீடியோ கோடெக்\n"
+"Copyright 2002 by Michael Guennewig"
 
 #: msvfw32.rc:33
 msgid "Video Compression"
@@ -7298,7 +7684,7 @@ msgstr ""
 
 #: msvidc32.rc:29
 msgid "Wine Video 1 video codec"
-msgstr ""
+msgstr "Wine வீடியோ 1 வீடியோ கோடெக்"
 
 #: oleacc.rc:31
 msgid "unknown object"
@@ -8409,7 +8795,7 @@ msgid "&Open:"
 msgstr ""
 
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:130
+#: winefile.rc:129
 msgid "&Browse..."
 msgstr ""
 
@@ -8421,7 +8807,7 @@ msgstr ""
 msgid "Location:"
 msgstr ""
 
-#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+#: shell32.rc:361 shell32.rc:394 winefile.rc:169
 msgid "Size:"
 msgstr ""
 
@@ -8433,11 +8819,11 @@ msgstr ""
 msgid "Attributes:"
 msgstr ""
 
-#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+#: shell32.rc:371 shell32.rc:408 winefile.rc:173
 msgid "H&idden"
 msgstr ""
 
-#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+#: shell32.rc:372 shell32.rc:409 winefile.rc:174
 msgid "&Archive"
 msgstr ""
 
@@ -8457,7 +8843,7 @@ msgstr ""
 msgid "Last accessed:"
 msgstr ""
 
-#: shell32.rc:138 shell32.rc:142 winefile.rc:108
+#: shell32.rc:138 shell32.rc:142 winefile.rc:107
 msgid "Size"
 msgstr ""
 
@@ -8469,7 +8855,7 @@ msgstr ""
 msgid "Modified"
 msgstr ""
 
-#: shell32.rc:141 winefile.rc:172 winefile.rc:114
+#: shell32.rc:141 winefile.rc:171 winefile.rc:113
 msgid "Attributes"
 msgstr ""
 
@@ -8497,7 +8883,7 @@ msgstr ""
 msgid "Date deleted"
 msgstr ""
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr ""
@@ -8581,7 +8967,7 @@ msgstr ""
 
 #: shell32.rc:215
 msgid "Program Files"
-msgstr ""
+msgstr "நிரல் கோப்புகள்"
 
 #: shell32.rc:217
 msgid "My Pictures"
@@ -8613,13 +8999,13 @@ msgstr ""
 
 #: shell32.rc:216
 msgid "Program Files (x86)"
-msgstr ""
+msgstr "நிரல் கோப்புகள் (x86)"
 
 #: shell32.rc:224
 msgid "Contacts"
 msgstr ""
 
-#: shell32.rc:225 winefile.rc:113
+#: shell32.rc:225 winefile.rc:112
 msgid "Links"
 msgstr ""
 
@@ -10294,8 +10680,8 @@ msgstr ""
 
 #: winmm.rc:128
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 
 #: winmm.rc:131
@@ -10311,7 +10697,7 @@ msgstr ""
 #: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 
 #: winmm.rc:132
@@ -10658,7 +11044,7 @@ msgstr ""
 
 #: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
-msgstr ""
+msgstr "எழுத்துரு... (&F)"
 
 #: clock.rc:37
 msgid "&Without Titlebar"
@@ -10930,8 +11316,8 @@ msgid ""
 "/affinity mask Start the program with the specified affinity mask.\n"
 "/wait          Wait for the started program to finish, then exit with its\n"
 "exit code.\n"
-"/unix          Use a Unix filename and start the file like windows\n"
-"explorer.\n"
+"/unix          Use a Unix filename and start the file like Windows\n"
+"Explorer.\n"
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
@@ -11810,15 +12196,15 @@ msgstr ""
 
 #: notepad.rc:85
 msgid "Unicode (UTF-16)"
-msgstr ""
+msgstr "யூனிகோட் (UTF-16)"
 
 #: notepad.rc:86
 msgid "Unicode (UTF-16 big-endian)"
-msgstr ""
+msgstr "யூனிகோட் (UTF-16 big-endian)"
 
 #: notepad.rc:87
 msgid "Unicode (UTF-8)"
-msgstr ""
+msgstr "யூனிகோட் (UTF-8)"
 
 #: notepad.rc:94
 msgid ""
@@ -11916,7 +12302,7 @@ msgstr ""
 
 #: oleview.rc:82
 msgid "&Save as..."
-msgstr ""
+msgstr "இவ்வாறு சேமி... (&S)"
 
 #: oleview.rc:87
 msgid "&Group by type kind"
@@ -12356,7 +12742,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr ""
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr ""
 
 #: progman.rc:84
@@ -14113,7 +14499,7 @@ msgstr ""
 
 #: winecfg.rc:161
 msgid "&Windows Version:"
-msgstr ""
+msgstr "&Windows பதிப்பு:"
 
 #: winecfg.rc:169
 msgid "Window settings"
@@ -14208,7 +14594,7 @@ msgstr ""
 
 #: winecfg.rc:233
 msgid ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
+"Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
 
@@ -14494,7 +14880,7 @@ msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
+"it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 
 #: winecfg.rc:77
@@ -14691,7 +15077,7 @@ msgstr ""
 
 #: wineconsole.rc:88
 msgid "&Font"
-msgstr ""
+msgstr "எழுத்துரு (&F)"
 
 #: wineconsole.rc:90
 msgid "&Color"
@@ -14978,67 +15364,67 @@ msgstr ""
 msgid "&About Wine File Manager"
 msgstr ""
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Select destination"
 msgstr ""
 
-#: winefile.rc:135
+#: winefile.rc:134
 msgid "By File Type"
 msgstr ""
 
-#: winefile.rc:140
+#: winefile.rc:139
 msgid "File type"
 msgstr ""
 
-#: winefile.rc:141
+#: winefile.rc:140
 msgid "&Directories"
 msgstr ""
 
-#: winefile.rc:143
+#: winefile.rc:142
 msgid "&Programs"
 msgstr ""
 
-#: winefile.rc:145
+#: winefile.rc:144
 msgid "Docu&ments"
 msgstr ""
 
-#: winefile.rc:147
+#: winefile.rc:146
 msgid "&Other files"
 msgstr ""
 
-#: winefile.rc:149
+#: winefile.rc:148
 msgid "Show Hidden/&System Files"
 msgstr ""
 
-#: winefile.rc:160
+#: winefile.rc:159
 msgid "&File Name:"
 msgstr ""
 
-#: winefile.rc:162
+#: winefile.rc:161
 msgid "Full &Path:"
 msgstr ""
 
-#: winefile.rc:164
+#: winefile.rc:163
 msgid "Last Change:"
 msgstr ""
 
-#: winefile.rc:168
+#: winefile.rc:167
 msgid "Cop&yright:"
-msgstr ""
+msgstr "பதிப்புரிமை (&Y):"
 
-#: winefile.rc:176
+#: winefile.rc:175
 msgid "&System"
 msgstr ""
 
-#: winefile.rc:177
+#: winefile.rc:176
 msgid "&Compressed"
 msgstr ""
 
-#: winefile.rc:178
+#: winefile.rc:177
 msgid "Version information"
 msgstr ""
 
-#: winefile.rc:194
+#: winefile.rc:193
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr ""
@@ -15059,31 +15445,27 @@ msgstr ""
 msgid "root fs"
 msgstr ""
 
-#: winefile.rc:99
-msgid "unixfs"
-msgstr ""
-
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Shell"
 msgstr ""
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Creation date"
 msgstr ""
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Access date"
 msgstr ""
 
-#: winefile.rc:111
+#: winefile.rc:110
 msgid "Modification date"
 msgstr ""
 
-#: winefile.rc:112
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr ""
 
@@ -15177,7 +15559,7 @@ msgstr ""
 
 #: winemine.rc:30
 msgid "WineMine"
-msgstr ""
+msgstr "WineMine"
 
 #: winemine.rc:31
 msgid "Nobody"
@@ -15185,7 +15567,7 @@ msgstr ""
 
 #: winemine.rc:32
 msgid "Copyright 2000 Joshua Thielen"
-msgstr ""
+msgstr "Copyright 2000 Joshua Thielen"
 
 #: winhlp32.rc:35
 msgid "Printer &setup..."
@@ -15249,7 +15631,7 @@ msgstr ""
 
 #: winhlp32.rc:81
 msgid "Wine Help"
-msgstr ""
+msgstr "Wine உதவி"
 
 #: winhlp32.rc:86
 msgid "Error while reading the help file `%s'"
@@ -15750,7 +16132,7 @@ msgid ""
 "\tmore files.\n"
 "[/S]  Copy directories and subdirectories.\n"
 "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-"[/Q]  Do not list names during copy, that is be quiet.\n"
+"[/Q]  Do not list names during copy; that is, be quiet.\n"
 "[/F]  Show full source and destination names during copy.\n"
 "[/L]  Simulate operation, showing names which would be copied.\n"
 "[/W]  Prompts before beginning the copy operation.\n"
@@ -15760,13 +16142,13 @@ msgid ""
 "[/P]  Prompts on each source file before copying.\n"
 "[/N]  Copy using short names.\n"
 "[/U]  Copy only files which already exist in destination.\n"
-"[/R]  Overwrite any read only files.\n"
+"[/R]  Overwrite any read-only files.\n"
 "[/H]  Include hidden and system files in the copy.\n"
 "[/C]  Continue even if an error occurs during the copy.\n"
 "[/A]  Only copy files with archive attribute set.\n"
 "[/M]  Only copy files with archive attribute set, removes the\n"
 "\tarchive attribute.\n"
-"[/K]  Copy file attributes, without this attributes are not preserved.\n"
+"[/K]  Copy file attributes; without this, attributes are not preserved.\n"
 "[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
 "\t\tIf no date is supplied, only copy if destination is older\n"
 "\t\tthan source.\n"

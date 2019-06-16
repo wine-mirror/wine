@@ -1,8 +1,8 @@
 @ stdcall AreFileApisANSI() kernel32.AreFileApisANSI
 @ stub FindFirstFileNameW
-@ stub FindFirstStreamW
+@ stdcall FindFirstStreamW(wstr long ptr long) kernel32.FindFirstStreamW
 @ stub FindNextFileNameW
-@ stub FindNextStreamW
+@ stdcall FindNextStreamW(long ptr) kernel32.FindNextStreamW
 @ stdcall GetTempFileNameA(str str long ptr) kernel32.GetTempFileNameA
 @ stdcall GetTempPathA(long ptr) kernel32.GetTempPathA
 @ stdcall GetVolumeInformationA(str ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationA

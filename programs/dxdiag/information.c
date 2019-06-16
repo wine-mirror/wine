@@ -23,8 +23,6 @@
 #include <dxdiag.h>
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
-
 #include "dxdiag_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
@@ -69,10 +67,10 @@ static BOOL property_to_string(IDxDiagContainer *container, const WCHAR *propert
         {
             WCHAR *bstr = V_BSTR(&var);
 
-            *output = HeapAlloc(GetProcessHeap(), 0, (strlenW(bstr) + 1) * sizeof(WCHAR));
+            *output = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(bstr) + 1) * sizeof(WCHAR));
             if (*output)
             {
-                strcpyW(*output, bstr);
+                lstrcpyW(*output, bstr);
                 ret = TRUE;
             }
         }

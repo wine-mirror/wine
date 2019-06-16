@@ -19,12 +19,14 @@ C_SRCS = \
 	exit.c \
 	file.c \
 	heap.c \
+	iob.c \
 	locale.c \
 	lock.c \
 	main.c \
 	math.c \
 	mbcs.c \
 	misc.c \
+	onexit.c \
 	process.c \
 	scanf.c \
 	scheduler.c \

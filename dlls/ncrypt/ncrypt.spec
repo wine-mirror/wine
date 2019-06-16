@@ -7,12 +7,12 @@
 @ stdcall BCryptCreateHash(ptr ptr ptr long ptr long long) bcrypt.BCryptCreateHash
 @ stdcall BCryptDecrypt(ptr ptr long ptr ptr long ptr long ptr long) bcrypt.BCryptDecrypt
 @ stub BCryptDeleteContext
-@ stub BCryptDeriveKey
+@ stdcall BCryptDeriveKey(ptr wstr ptr ptr long ptr long) bcrypt.BCryptDeriveKey
 @ stub BCryptDeriveKeyCapi
 @ stdcall BCryptDeriveKeyPBKDF2(ptr ptr long ptr long int64 ptr long long) bcrypt.BCryptDeriveKeyPBKDF2
 @ stdcall BCryptDestroyHash(ptr) bcrypt.BCryptDestroyHash
 @ stdcall BCryptDestroyKey(ptr) bcrypt.BCryptDestroyKey
-@ stub BCryptDestroySecret
+@ stdcall BCryptDestroySecret(ptr) bcrypt.BCryptDestroySecret
 @ stdcall BCryptDuplicateHash(ptr ptr ptr long long) bcrypt.BCryptDuplicateHash
 @ stdcall BCryptDuplicateKey(ptr ptr ptr long long) bcrypt.BCryptDuplicateKey
 @ stdcall BCryptEncrypt(ptr ptr long ptr ptr long ptr long ptr long) bcrypt.BCryptEncrypt
@@ -46,7 +46,7 @@
 @ stdcall BCryptRemoveContextFunction(long wstr long wstr) bcrypt.BCryptRemoveContextFunction
 @ stdcall BCryptRemoveContextFunctionProvider(long wstr long wstr wstr) bcrypt.BCryptRemoveContextFunctionProvider
 @ stub BCryptResolveProviders
-@ stub BCryptSecretAgreement
+@ stdcall BCryptSecretAgreement(ptr ptr ptr long) bcrypt.BCryptSecretAgreement
 @ stub BCryptSetAuditingInterface
 @ stub BCryptSetContextFunctionProperty
 @ stdcall BCryptSetProperty(ptr wstr ptr long long) bcrypt.BCryptSetProperty

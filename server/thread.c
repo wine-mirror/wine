@@ -120,6 +120,7 @@ static const struct object_ops thread_apc_ops =
     no_link_name,               /* link_name */
     NULL,                       /* unlink_name */
     no_open_file,               /* open_file */
+    no_kernel_obj_list,         /* get_kernel_obj_list */
     no_close_handle,            /* close_handle */
     thread_apc_destroy          /* destroy */
 };
@@ -132,6 +133,7 @@ static struct object_type *thread_get_type( struct object *obj );
 static int thread_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int thread_map_access( struct object *obj, unsigned int access );
 static void thread_poll_event( struct fd *fd, int event );
+static struct list *thread_get_kernel_obj_list( struct object *obj );
 static void destroy_thread( struct object *obj );
 
 static const struct object_ops thread_ops =
@@ -152,6 +154,7 @@ static const struct object_ops thread_ops =
     no_link_name,               /* link_name */
     NULL,                       /* unlink_name */
     no_open_file,               /* open_file */
+    thread_get_kernel_obj_list, /* get_kernel_obj_list */
     no_close_handle,            /* close_handle */
     destroy_thread              /* destroy */
 };
@@ -207,6 +210,7 @@ static inline void init_thread_structure( struct thread *thread )
     list_init( &thread->mutex_list );
     list_init( &thread->system_apc );
     list_init( &thread->user_apc );
+    list_init( &thread->kernel_object );
 
     for (i = 0; i < MAX_INFLIGHT_FDS; i++)
         thread->inflight[i].server = thread->inflight[i].client = -1;
@@ -300,6 +304,12 @@ static void thread_poll_event( struct fd *fd, int event )
     else if (event & POLLIN) read_request( thread );
     else if (event & POLLOUT) write_reply( thread );
     release_object( thread );
+}
+
+static struct list *thread_get_kernel_obj_list( struct object *obj )
+{
+    struct thread *thread = (struct thread *)obj;
+    return &thread->kernel_object;
 }
 
 /* cleanup everything that is no longer needed by a dead thread */
@@ -560,7 +570,7 @@ void stop_thread_if_suspended( struct thread *thread )
 }
 
 /* suspend a thread */
-static int suspend_thread( struct thread *thread )
+int suspend_thread( struct thread *thread )
 {
     int old_count = thread->suspend;
     if (thread->suspend < MAXIMUM_SUSPEND_COUNT)
@@ -572,7 +582,7 @@ static int suspend_thread( struct thread *thread )
 }
 
 /* resume a thread */
-static int resume_thread( struct thread *thread )
+int resume_thread( struct thread *thread )
 {
     int old_count = thread->suspend;
     if (thread->suspend > 0)

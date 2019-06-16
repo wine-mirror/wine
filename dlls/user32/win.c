@@ -31,6 +31,7 @@
 #include "winver.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
+#include "wine/asm.h"
 #include "win.h"
 #include "user_private.h"
 #include "controls.h"
@@ -742,7 +743,7 @@ HWND WIN_GetFullHandle( HWND hwnd )
  *
  * Change the owner of a window.
  */
-HWND WIN_SetOwner( HWND hwnd, HWND owner )
+static HWND WIN_SetOwner( HWND hwnd, HWND owner )
 {
     WND *win = WIN_GetPtr( hwnd );
     HWND ret = 0;

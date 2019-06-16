@@ -376,7 +376,7 @@ static unsigned long xstrtoul(const char *nptr, char **endptr, int base)
         yy_pop_state();
         while (*p < '0' || *p > '9') p++;
         current_codepage = strtol( p, NULL, 10 );
-        if (current_codepage != CP_UTF8 && !wine_cp_get_table( current_codepage ))
+        if (!is_valid_codepage( current_codepage ))
         {
             parser_error("Codepage %d not supported", current_codepage);
             current_codepage = 0;

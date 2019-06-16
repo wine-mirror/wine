@@ -376,6 +376,11 @@ DECL_HANDLER(create_device_manager);
 DECL_HANDLER(create_device);
 DECL_HANDLER(delete_device);
 DECL_HANDLER(get_next_device_request);
+DECL_HANDLER(get_kernel_object_ptr);
+DECL_HANDLER(set_kernel_object_ptr);
+DECL_HANDLER(grab_kernel_object);
+DECL_HANDLER(release_kernel_object);
+DECL_HANDLER(get_kernel_object_handle);
 DECL_HANDLER(make_process_system);
 DECL_HANDLER(get_token_statistics);
 DECL_HANDLER(create_completion);
@@ -403,6 +408,8 @@ DECL_HANDLER(process_in_job);
 DECL_HANDLER(set_job_limits);
 DECL_HANDLER(set_job_completion_port);
 DECL_HANDLER(terminate_job);
+DECL_HANDLER(suspend_process);
+DECL_HANDLER(resume_process);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -673,6 +680,11 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_device,
     (req_handler)req_delete_device,
     (req_handler)req_get_next_device_request,
+    (req_handler)req_get_kernel_object_ptr,
+    (req_handler)req_set_kernel_object_ptr,
+    (req_handler)req_grab_kernel_object,
+    (req_handler)req_release_kernel_object,
+    (req_handler)req_get_kernel_object_handle,
     (req_handler)req_make_process_system,
     (req_handler)req_get_token_statistics,
     (req_handler)req_create_completion,
@@ -700,6 +712,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_job_limits,
     (req_handler)req_set_job_completion_port,
     (req_handler)req_terminate_job,
+    (req_handler)req_suspend_process,
+    (req_handler)req_resume_process,
 };
 
 C_ASSERT( sizeof(affinity_t) == 8 );
@@ -717,7 +731,7 @@ C_ASSERT( sizeof(file_pos_t) == 8 );
 C_ASSERT( sizeof(hw_input_t) == 32 );
 C_ASSERT( sizeof(int) == 4 );
 C_ASSERT( sizeof(ioctl_code_t) == 4 );
-C_ASSERT( sizeof(irp_params_t) == 24 );
+C_ASSERT( sizeof(irp_params_t) == 32 );
 C_ASSERT( sizeof(lparam_t) == 8 );
 C_ASSERT( sizeof(luid_t) == 8 );
 C_ASSERT( sizeof(mem_size_t) == 8 );
@@ -931,6 +945,8 @@ C_ASSERT( sizeof(struct create_event_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct event_op_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct event_op_request, op) == 16 );
 C_ASSERT( sizeof(struct event_op_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct event_op_reply, state) == 8 );
+C_ASSERT( sizeof(struct event_op_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct query_event_request, handle) == 12 );
 C_ASSERT( sizeof(struct query_event_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct query_event_reply, manual_reset) == 8 );
@@ -1640,8 +1656,7 @@ C_ASSERT( sizeof(struct ioctl_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_irp_result_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_irp_result_request, status) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_irp_result_request, size) == 20 );
-C_ASSERT( FIELD_OFFSET(struct set_irp_result_request, file_ptr) == 24 );
-C_ASSERT( sizeof(struct set_irp_result_request) == 32 );
+C_ASSERT( sizeof(struct set_irp_result_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct create_named_pipe_request, access) == 12 );
 C_ASSERT( FIELD_OFFSET(struct create_named_pipe_request, options) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_named_pipe_request, sharing) == 20 );
@@ -2262,27 +2277,45 @@ C_ASSERT( FIELD_OFFSET(struct create_device_manager_request, attributes) == 16 )
 C_ASSERT( sizeof(struct create_device_manager_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct create_device_manager_reply, handle) == 8 );
 C_ASSERT( sizeof(struct create_device_manager_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct create_device_request, access) == 12 );
-C_ASSERT( FIELD_OFFSET(struct create_device_request, attributes) == 16 );
-C_ASSERT( FIELD_OFFSET(struct create_device_request, rootdir) == 20 );
-C_ASSERT( FIELD_OFFSET(struct create_device_request, user_ptr) == 24 );
-C_ASSERT( FIELD_OFFSET(struct create_device_request, manager) == 32 );
-C_ASSERT( sizeof(struct create_device_request) == 40 );
-C_ASSERT( FIELD_OFFSET(struct create_device_reply, handle) == 8 );
-C_ASSERT( sizeof(struct create_device_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct delete_device_request, handle) == 12 );
-C_ASSERT( sizeof(struct delete_device_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct create_device_request, rootdir) == 12 );
+C_ASSERT( FIELD_OFFSET(struct create_device_request, user_ptr) == 16 );
+C_ASSERT( FIELD_OFFSET(struct create_device_request, manager) == 24 );
+C_ASSERT( sizeof(struct create_device_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct delete_device_request, manager) == 12 );
+C_ASSERT( FIELD_OFFSET(struct delete_device_request, device) == 16 );
+C_ASSERT( sizeof(struct delete_device_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct get_next_device_request_request, manager) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_next_device_request_request, prev) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_next_device_request_request, status) == 20 );
-C_ASSERT( sizeof(struct get_next_device_request_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_next_device_request_request, user_ptr) == 24 );
+C_ASSERT( sizeof(struct get_next_device_request_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, params) == 8 );
-C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, next) == 32 );
-C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, client_pid) == 36 );
-C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, client_tid) == 40 );
-C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, in_size) == 44 );
-C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, out_size) == 48 );
-C_ASSERT( sizeof(struct get_next_device_request_reply) == 56 );
+C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, next) == 40 );
+C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, client_tid) == 44 );
+C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, client_thread) == 48 );
+C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, in_size) == 56 );
+C_ASSERT( sizeof(struct get_next_device_request_reply) == 64 );
+C_ASSERT( FIELD_OFFSET(struct get_kernel_object_ptr_request, manager) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_kernel_object_ptr_request, handle) == 16 );
+C_ASSERT( sizeof(struct get_kernel_object_ptr_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_kernel_object_ptr_reply, user_ptr) == 8 );
+C_ASSERT( sizeof(struct get_kernel_object_ptr_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct set_kernel_object_ptr_request, manager) == 12 );
+C_ASSERT( FIELD_OFFSET(struct set_kernel_object_ptr_request, handle) == 16 );
+C_ASSERT( FIELD_OFFSET(struct set_kernel_object_ptr_request, user_ptr) == 24 );
+C_ASSERT( sizeof(struct set_kernel_object_ptr_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct grab_kernel_object_request, manager) == 12 );
+C_ASSERT( FIELD_OFFSET(struct grab_kernel_object_request, user_ptr) == 16 );
+C_ASSERT( sizeof(struct grab_kernel_object_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct release_kernel_object_request, manager) == 12 );
+C_ASSERT( FIELD_OFFSET(struct release_kernel_object_request, user_ptr) == 16 );
+C_ASSERT( sizeof(struct release_kernel_object_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_kernel_object_handle_request, manager) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_kernel_object_handle_request, user_ptr) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_kernel_object_handle_request, access) == 24 );
+C_ASSERT( sizeof(struct get_kernel_object_handle_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct get_kernel_object_handle_reply, handle) == 8 );
+C_ASSERT( sizeof(struct get_kernel_object_handle_reply) == 16 );
 C_ASSERT( sizeof(struct make_process_system_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct make_process_system_reply, event) == 8 );
 C_ASSERT( sizeof(struct make_process_system_reply) == 16 );
@@ -2406,6 +2439,10 @@ C_ASSERT( sizeof(struct set_job_completion_port_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct terminate_job_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct terminate_job_request, status) == 16 );
 C_ASSERT( sizeof(struct terminate_job_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct suspend_process_request, handle) == 12 );
+C_ASSERT( sizeof(struct suspend_process_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct resume_process_request, handle) == 12 );
+C_ASSERT( sizeof(struct resume_process_request) == 16 );
 
 #endif  /* WANT_REQUEST_HANDLERS */
 

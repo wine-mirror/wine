@@ -3,7 +3,7 @@
 # This file is generated from Vulkan vk.xml file covered
 # by the following copyright and permission notice:
 #
-# Copyright (c) 2015-2018 The Khronos Group Inc.
+# Copyright (c) 2015-2019 The Khronos Group Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -178,9 +178,9 @@
 @ stdcall vkGetInstanceProcAddr(ptr str) winevulkan.wine_vkGetInstanceProcAddr
 @ stub vkGetPhysicalDeviceDisplayPlanePropertiesKHR
 @ stub vkGetPhysicalDeviceDisplayPropertiesKHR
-@ stub vkGetPhysicalDeviceExternalBufferProperties
-@ stub vkGetPhysicalDeviceExternalFenceProperties
-@ stub vkGetPhysicalDeviceExternalSemaphoreProperties
+@ stdcall vkGetPhysicalDeviceExternalBufferProperties(ptr ptr ptr) winevulkan.wine_vkGetPhysicalDeviceExternalBufferProperties
+@ stdcall vkGetPhysicalDeviceExternalFenceProperties(ptr ptr ptr) winevulkan.wine_vkGetPhysicalDeviceExternalFenceProperties
+@ stdcall vkGetPhysicalDeviceExternalSemaphoreProperties(ptr ptr ptr) winevulkan.wine_vkGetPhysicalDeviceExternalSemaphoreProperties
 @ stdcall vkGetPhysicalDeviceFeatures(ptr ptr) winevulkan.wine_vkGetPhysicalDeviceFeatures
 @ stdcall vkGetPhysicalDeviceFeatures2(ptr ptr) winevulkan.wine_vkGetPhysicalDeviceFeatures2
 @ stdcall vkGetPhysicalDeviceFormatProperties(ptr long ptr) winevulkan.wine_vkGetPhysicalDeviceFormatProperties

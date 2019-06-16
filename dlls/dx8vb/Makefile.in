@@ -1,6 +1,8 @@
 MODULE    = dx8vb.dll
 IMPORTS   = uuid ole32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c
 

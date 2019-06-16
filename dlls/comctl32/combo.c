@@ -32,7 +32,6 @@
 #include "uxtheme.h"
 #include "vssym32.h"
 #include "commctrl.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 
@@ -1020,7 +1019,7 @@ static void CBDropDown( LPHEADCOMBO lphc )
         else
         {
             if (nItems > lphc->visibleItems)
-            nItems = lphc->visibleItems;
+                nItems = lphc->visibleItems;
             nDroppedHeight = nItems * nIHeight + COMBO_YBORDERSIZE();
         }
    }

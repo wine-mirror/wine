@@ -227,7 +227,6 @@ static void test_string_buffer(void)
 
     /* Test creation of an empty buffer */
     ok(pWindowsPreallocateStringBuffer(0, &ptr, &buf) == S_OK, "Failed to preallocate string buffer\n");
-    ok(buf == NULL, "Empty string buffer isn't a null string\n");
     ok(ptr != NULL, "Empty string didn't return a buffer pointer\n");
     ok(pWindowsPromoteStringBuffer(buf, &str) == S_OK, "Failed to promote string buffer\n");
     ok(str == NULL, "Empty string isn't a null string\n");

@@ -25,14 +25,19 @@
 #include <string.h>
 #include <sys/types.h>
 
+#define WINE_UNICODE_INLINE  /* nothing */
 #include "wine/unicode.h"
 #include "wine/library.h"
+#include "wine/asm.h"
 
 /* functions from libwine_port that are also exported from libwine for backwards compatibility,
  * on platforms that require it */
 #ifndef __ANDROID__
 const void *libwine_port_functions[] =
 {
+    strtolW,
+    vsnprintfW,
+    wine_compare_string,
     wine_cp_enum_table,
     wine_cp_get_table,
     wine_cp_mbstowcs,

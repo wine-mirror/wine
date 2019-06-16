@@ -417,6 +417,7 @@ static void msvcrt_set_fd(ioinfo *fdinfo, HANDLE hand, int flag)
   fdinfo->lookahead[2] = '\n';
   fdinfo->exflag &= EF_CRIT_INIT;
 
+  if (hand == MSVCRT_NO_CONSOLE) hand = 0;
   switch (fdinfo-MSVCRT___pioinfo[0])
   {
   case 0: SetStdHandle(STD_INPUT_HANDLE,  hand); break;
@@ -779,13 +780,14 @@ static int msvcrt_int_to_base32_w(int num, MSVCRT_wchar_t *str)
 }
 
 /*********************************************************************
- *		__iob_func(MSVCRT.@)
+ *		__p__iob  (MSVCRT.@)
  */
-MSVCRT_FILE * CDECL MSVCRT___iob_func(void)
+MSVCRT_FILE * CDECL __p__iob(void)
 {
  return &MSVCRT__iob[0];
 }
 
+#if _MSVCR_VER >= 140
 /*********************************************************************
  *		__acrt_iob_func(UCRTBASE.@)
  */
@@ -793,6 +795,7 @@ MSVCRT_FILE * CDECL MSVCRT___acrt_iob_func(unsigned idx)
 {
  return &MSVCRT__iob[idx];
 }
+#endif
 
 /*********************************************************************
  *		_access (MSVCRT.@)
@@ -3007,7 +3010,7 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
 		 as a drive letter
   */
   if (isalpha(*path)&& (*(path+1)==':'))
-    buf->st_dev = buf->st_rdev = toupper(*path) - 'A'; /* drive num */
+    buf->st_dev = buf->st_rdev = MSVCRT__toupper_l(*path, NULL) - 'A'; /* drive num */
   else
     buf->st_dev = buf->st_rdev = MSVCRT__getdrive() - 1;
 
@@ -3020,8 +3023,9 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
     /* executable? */
     if (plen > 6 && path[plen-4] == '.')  /* shortest exe: "\x.exe" */
     {
-      unsigned int ext = tolower(path[plen-1]) | (tolower(path[plen-2]) << 8) |
-                                 (tolower(path[plen-3]) << 16);
+      unsigned int ext = MSVCRT__tolower_l(path[plen-1], NULL) |
+          (MSVCRT__tolower_l(path[plen-2], NULL) << 8) |
+          (MSVCRT__tolower_l(path[plen-3], NULL) << 16);
       if (ext == EXE || ext == BAT || ext == CMD || ext == COM)
           mode |= ALL_S_IEXEC;
     }
@@ -3157,8 +3161,8 @@ int CDECL MSVCRT__wstat64(const MSVCRT_wchar_t* path, struct MSVCRT__stat64 * bu
   memset(buf,0,sizeof(struct MSVCRT__stat64));
 
   /* FIXME: rdev isn't drive num, despite what the docs says-what is it? */
-  if (MSVCRT_iswalpha(*path))
-    buf->st_dev = buf->st_rdev = toupperW(*path - 'A'); /* drive num */
+  if (MSVCRT_iswalpha(*path) && path[1] == ':')
+    buf->st_dev = buf->st_rdev = toupperW(*path) - 'A'; /* drive num */
   else
     buf->st_dev = buf->st_rdev = MSVCRT__getdrive() - 1;
 

@@ -3161,57 +3161,57 @@ static void test_StretchBlt(void)
     DeleteObject(hBrush);
 
     /* Top-down to top-down tests */
-    srcBuffer[0] = 0xCAFED00D, srcBuffer[1] = 0xFEEDFACE;
-    srcBuffer[16] = 0xFEDCBA98, srcBuffer[17] = 0x76543210;
+    srcBuffer[0] = 0xCAFED00D; srcBuffer[1] = 0xFEEDFACE;
+    srcBuffer[16] = 0xFEDCBA98; srcBuffer[17] = 0x76543210;
 
     memset( expected, 0, get_dib_image_size( &biDst ) );
-    expected[0] = 0xCAFED00D, expected[1] = 0xFEEDFACE;
-    expected[16] = 0xFEDCBA98, expected[17] = 0x76543210;
+    expected[0] = 0xCAFED00D; expected[1] = 0xFEEDFACE;
+    expected[16] = 0xFEDCBA98; expected[17] = 0x76543210;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
-    expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
-    expected[16] = 0x00000000, expected[17] = 0x00000000;
+    expected[0] = 0xCAFED00D; expected[1] = 0x00000000;
+    expected[16] = 0x00000000; expected[17] = 0x00000000;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 1, 1, 0, 0, 1, 1, expected, __LINE__);
 
-    expected[0] = 0xCAFED00D, expected[1] = 0xCAFED00D;
-    expected[16] = 0xCAFED00D, expected[17] = 0xCAFED00D;
+    expected[0] = 0xCAFED00D; expected[1] = 0xCAFED00D;
+    expected[16] = 0xCAFED00D; expected[17] = 0xCAFED00D;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 0, 0, 1, 1, expected, __LINE__);
 
     /* This is an example of the dst width (height) == 1 exception, explored below */
-    expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
-    expected[16] = 0x00000000, expected[17] = 0x00000000;
+    expected[0] = 0xCAFED00D; expected[1] = 0x00000000;
+    expected[16] = 0x00000000; expected[17] = 0x00000000;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 1, 1, 0, 0, 2, 2, expected, __LINE__);
 
-    expected[0] = 0x76543210, expected[1] = 0xFEDCBA98;
-    expected[16] = 0xFEEDFACE, expected[17] = 0xCAFED00D;
+    expected[0] = 0x76543210; expected[1] = 0xFEDCBA98;
+    expected[16] = 0xFEEDFACE; expected[17] = 0xCAFED00D;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
-    expected[0] = 0x76543210, expected[1] = 0xFEDCBA98;
-    expected[16] = 0xFEEDFACE, expected[17] = 0xCAFED00D;
+    expected[0] = 0x76543210; expected[1] = 0xFEDCBA98;
+    expected[16] = 0xFEEDFACE; expected[17] = 0xCAFED00D;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              1, 1, -2, -2, 0, 0, 2, 2, expected, __LINE__);
 
-    expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
-    expected[16] = 0x00000000, expected[17] = 0x00000000;
+    expected[0] = 0xCAFED00D; expected[1] = 0x00000000;
+    expected[16] = 0x00000000; expected[17] = 0x00000000;
     todo_wine check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                                        1, 1, -2, -2, 1, 1, -2, -2, expected, __LINE__);
 
-    expected[0] = 0x00000000, expected[1] = 0x00000000;
-    expected[16] = 0x00000000, expected[17] = 0xCAFED00D, expected[18] = 0xFEEDFACE;
-    expected[32] = 0x00000000, expected[33] = 0xFEDCBA98, expected[34] = 0x76543210;
+    expected[0] = 0x00000000; expected[1] = 0x00000000;
+    expected[16] = 0x00000000; expected[17] = 0xCAFED00D; expected[18] = 0xFEEDFACE;
+    expected[32] = 0x00000000; expected[33] = 0xFEDCBA98; expected[34] = 0x76543210;
 
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              1, 1, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
     /* when dst width is 1 merge src width - 1 pixels */
     memset( srcBuffer, 0, get_dib_image_size( &biSrc ) );
-    srcBuffer[0] = 0x0000ff00, srcBuffer[1] = 0x0000f0f0, srcBuffer[2] = 0x0000cccc, srcBuffer[3] = 0x0000aaaa;
-    srcBuffer[16] = 0xFEDCBA98, srcBuffer[17] = 0x76543210;
+    srcBuffer[0] = 0x0000ff00; srcBuffer[1] = 0x0000f0f0; srcBuffer[2] = 0x0000cccc; srcBuffer[3] = 0x0000aaaa;
+    srcBuffer[16] = 0xFEDCBA98; srcBuffer[17] = 0x76543210;
 
     memset( expected, 0, get_dib_image_size( &biDst ) );
     expected[0] = srcBuffer[0];
@@ -3232,7 +3232,7 @@ static void test_StretchBlt(void)
                              0, 0, 1, 1, 2, 0, -2, 1, expected, __LINE__);
 
     /* when dst width > 1 behaviour reverts to what one would expect */
-    expected[0] = srcBuffer[0] & srcBuffer[1], expected[1] = srcBuffer[2] & srcBuffer[3];
+    expected[0] = srcBuffer[0] & srcBuffer[1]; expected[1] = srcBuffer[2] & srcBuffer[3];
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 1, 0, 0, 4, 1, expected, __LINE__);
 
@@ -3254,21 +3254,21 @@ static void test_StretchBlt(void)
 
     /* the destination rectangle doesn't fit in the device area */
     memset( expected, 0, get_dib_image_size( &biDst ) );
-    expected[17] = 0x76543210, expected[18] = 0xfedcba98;
-    expected[32] = 0x0000cccc, expected[33] = 0x0000f0f0, expected[34] = 0x0000ff00;
+    expected[17] = 0x76543210; expected[18] = 0xfedcba98;
+    expected[32] = 0x0000cccc; expected[33] = 0x0000f0f0; expected[34] = 0x0000ff00;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              2, 2, -8, -8, 0, 0, 8, 8, expected, __LINE__);
 
     /* the source rectangle doesn't fit in the device area */
     memset( expected, 0, get_dib_image_size( &biDst ) );
-    expected[102] = 0x76543210, expected[103] = 0xfedcba98;
-    expected[117] = 0x0000cccc, expected[118] = 0x0000f0f0, expected[119] = 0x0000ff00;
+    expected[102] = 0x76543210; expected[103] = 0xfedcba98;
+    expected[117] = 0x0000cccc; expected[118] = 0x0000f0f0; expected[119] = 0x0000ff00;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 8, 8, 2, 2, -8, -8, expected, __LINE__);
 
     memset( expected, 0, get_dib_image_size( &biDst ) );
-    expected[85] = 0x76543210, expected[86] = 0xfedcba98;
-    expected[99] = 0x0000aaaa, expected[100] = 0x0000cccc, expected[101] = 0x0000f0f0, expected[102] = 0x0000ff00;
+    expected[85] = 0x76543210; expected[86] = 0xfedcba98;
+    expected[99] = 0x0000aaaa; expected[100] = 0x0000cccc; expected[101] = 0x0000f0f0; expected[102] = 0x0000ff00;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              8, 8, -18, -18, 0, 0, 18, 18, expected, __LINE__);
 
@@ -3277,8 +3277,8 @@ static void test_StretchBlt(void)
 
     /* Top-down to bottom-up tests */
     memset( srcBuffer, 0, get_dib_image_size( &biSrc ) );
-    srcBuffer[0] = 0xCAFED00D, srcBuffer[1] = 0xFEEDFACE;
-    srcBuffer[16] = 0xFEDCBA98, srcBuffer[17] = 0x76543210;
+    srcBuffer[0] = 0xCAFED00D; srcBuffer[1] = 0xFEEDFACE;
+    srcBuffer[16] = 0xFEDCBA98; srcBuffer[17] = 0x76543210;
 
     biDst.bmiHeader.biHeight = 16;
     bmpDst = CreateDIBSection(hdcScreen, &biDst, DIB_RGB_COLORS, (void**)&dstBuffer,
@@ -3287,13 +3287,13 @@ static void test_StretchBlt(void)
 
     memset( expected, 0, get_dib_image_size( &biDst ) );
 
-    expected[224] = 0xFEDCBA98, expected[225] = 0x76543210;
-    expected[240] = 0xCAFED00D, expected[241] = 0xFEEDFACE;
+    expected[224] = 0xFEDCBA98; expected[225] = 0x76543210;
+    expected[240] = 0xCAFED00D; expected[241] = 0xFEEDFACE;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
-    expected[224] = 0xFEEDFACE, expected[225] = 0xCAFED00D;
-    expected[240] = 0x76543210, expected[241] = 0xFEDCBA98;
+    expected[224] = 0xFEEDFACE; expected[225] = 0xCAFED00D;
+    expected[240] = 0x76543210; expected[241] = 0xFEDCBA98;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
@@ -3304,19 +3304,19 @@ static void test_StretchBlt(void)
     biSrc.bmiHeader.biHeight = 16;
     bmpSrc = CreateDIBSection(hdcScreen, &biSrc, DIB_RGB_COLORS, (void**)&srcBuffer,
         NULL, 0);
-    srcBuffer[224] = 0xCAFED00D, srcBuffer[225] = 0xFEEDFACE;
-    srcBuffer[240] = 0xFEDCBA98, srcBuffer[241] = 0x76543210;
+    srcBuffer[224] = 0xCAFED00D; srcBuffer[225] = 0xFEEDFACE;
+    srcBuffer[240] = 0xFEDCBA98; srcBuffer[241] = 0x76543210;
     oldSrc = SelectObject(hdcSrc, bmpSrc);
 
     memset( expected, 0, get_dib_image_size( &biDst ) );
 
-    expected[224] = 0xCAFED00D, expected[225] = 0xFEEDFACE;
-    expected[240] = 0xFEDCBA98, expected[241] = 0x76543210;
+    expected[224] = 0xCAFED00D; expected[225] = 0xFEEDFACE;
+    expected[240] = 0xFEDCBA98; expected[241] = 0x76543210;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
-    expected[224] = 0x76543210, expected[225] = 0xFEDCBA98;
-    expected[240] = 0xFEEDFACE, expected[241] = 0xCAFED00D;
+    expected[224] = 0x76543210; expected[225] = 0xFEDCBA98;
+    expected[240] = 0xFEEDFACE; expected[241] = 0xCAFED00D;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
@@ -3330,13 +3330,13 @@ static void test_StretchBlt(void)
     oldDst = SelectObject(hdcDst, bmpDst);
 
     memset( expected, 0, get_dib_image_size( &biDst ) );
-    expected[0] = 0xFEDCBA98, expected[1] = 0x76543210;
-    expected[16] = 0xCAFED00D, expected[17] = 0xFEEDFACE;
+    expected[0] = 0xFEDCBA98; expected[1] = 0x76543210;
+    expected[16] = 0xCAFED00D; expected[17] = 0xFEEDFACE;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
-    expected[0] = 0xFEEDFACE, expected[1] = 0xCAFED00D;
-    expected[16] = 0x76543210, expected[17] = 0xFEDCBA98;
+    expected[0] = 0xFEEDFACE; expected[1] = 0xCAFED00D;
+    expected[16] = 0x76543210; expected[17] = 0xFEDCBA98;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
@@ -3349,26 +3349,26 @@ static void test_StretchBlt(void)
     oldSrc = SelectObject(hdcSrc, bmpSrc);
 
     memset( expected, 0, get_dib_image_size( &biDst ) );
-    expected[0] = 0xFEEDFACE, expected[1] = 0xCAFED00D;
-    expected[2] = 0x76543210, expected[3] = 0xFEDCBA98;
+    expected[0] = 0xFEEDFACE; expected[1] = 0xCAFED00D;
+    expected[2] = 0x76543210; expected[3] = 0xFEDCBA98;
     memcpy(dstBuffer, expected, 4 * sizeof(*dstBuffer));
     StretchBlt(hdcSrc, 0, 0, 4, 1, hdcDst, 0, 0, 4, 1, SRCCOPY );
     memset(dstBuffer, 0x55, 4 * sizeof(*dstBuffer));
     StretchBlt(hdcDst, 0, 0, 4, 1, hdcSrc, 0, 0, 4, 1, SRCCOPY );
-    expected[0] = 0x00EDFACE, expected[1] = 0x00FED00D;
-    expected[2] = 0x00543210, expected[3] = 0x00DCBA98;
+    expected[0] = 0x00EDFACE; expected[1] = 0x00FED00D;
+    expected[2] = 0x00543210; expected[3] = 0x00DCBA98;
     ok(!memcmp(dstBuffer, expected, 16),
        "StretchBlt expected { %08X, %08X, %08X, %08X } got { %08X, %08X, %08X, %08X }\n",
         expected[0], expected[1], expected[2], expected[3],
         dstBuffer[0], dstBuffer[1], dstBuffer[2], dstBuffer[3] );
 
-    expected[0] = 0xFEEDFACE, expected[1] = 0xCAFED00D;
-    expected[2] = 0x76543210, expected[3] = 0xFEDCBA98;
+    expected[0] = 0xFEEDFACE; expected[1] = 0xCAFED00D;
+    expected[2] = 0x76543210; expected[3] = 0xFEDCBA98;
     memcpy(srcBuffer, expected, 4 * sizeof(*dstBuffer));
     memset(dstBuffer, 0x55, 4 * sizeof(*dstBuffer));
     StretchBlt(hdcDst, 0, 0, 4, 1, hdcSrc, 0, 0, 4, 1, SRCCOPY );
-    expected[0] = 0x00EDFACE, expected[1] = 0x00D00DFE;
-    expected[2] = 0x0010CAFE, expected[3] = 0x00765432;
+    expected[0] = 0x00EDFACE; expected[1] = 0x00D00DFE;
+    expected[2] = 0x0010CAFE; expected[3] = 0x00765432;
     ok(!memcmp(dstBuffer, expected, 16),
        "StretchBlt expected { %08X, %08X, %08X, %08X } got { %08X, %08X, %08X, %08X }\n",
         expected[0], expected[1], expected[2], expected[3],
@@ -3530,71 +3530,71 @@ static void test_StretchDIBits(void)
     DeleteObject(hBrush);
 
     /* Top-down destination tests */
-    srcBuffer[0] = 0xCAFED00D, srcBuffer[1] = 0xFEEDFACE;
-    srcBuffer[2] = 0xFEDCBA98, srcBuffer[3] = 0x76543210;
+    srcBuffer[0] = 0xCAFED00D; srcBuffer[1] = 0xFEEDFACE;
+    srcBuffer[2] = 0xFEDCBA98; srcBuffer[3] = 0x76543210;
 
-    expected[0] = 0xCAFED00D, expected[1] = 0xFEEDFACE;
-    expected[2] = 0xFEDCBA98, expected[3] = 0x76543210;
+    expected[0] = 0xCAFED00D; expected[1] = 0xFEEDFACE;
+    expected[2] = 0xFEDCBA98; expected[3] = 0x76543210;
     ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                       0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
     ok( ret == 2, "got ret %d\n", ret );
 
-    expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
-    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    expected[0] = 0xCAFED00D; expected[1] = 0x00000000;
+    expected[2] = 0x00000000; expected[3] = 0x00000000;
     ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                       0, 0, 1, 1, 0, 0, 1, 1, expected, __LINE__);
     todo_wine ok( ret == 1, "got ret %d\n", ret );
 
-    expected[0] = 0xFEDCBA98, expected[1] = 0xFEDCBA98;
-    expected[2] = 0xFEDCBA98, expected[3] = 0xFEDCBA98;
+    expected[0] = 0xFEDCBA98; expected[1] = 0xFEDCBA98;
+    expected[2] = 0xFEDCBA98; expected[3] = 0xFEDCBA98;
     ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                       0, 0, 2, 2, 0, 0, 1, 1, expected, __LINE__);
     ok( ret == 2, "got ret %d\n", ret );
 
-    expected[0] = 0x42441000, expected[1] = 0x00000000;
-    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    expected[0] = 0x42441000; expected[1] = 0x00000000;
+    expected[2] = 0x00000000; expected[3] = 0x00000000;
     ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                       0, 0, 1, 1, 0, 0, 2, 2, expected, __LINE__);
     ok( ret == 2, "got ret %d\n", ret );
 
-    expected[0] = 0x00000000, expected[1] = 0x00000000;
-    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    expected[0] = 0x00000000; expected[1] = 0x00000000;
+    expected[2] = 0x00000000; expected[3] = 0x00000000;
     ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                       0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
     ok( ret == 0, "got ret %d\n", ret );
 
-    expected[0] = 0x00000000, expected[1] = 0x00000000;
-    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    expected[0] = 0x00000000; expected[1] = 0x00000000;
+    expected[2] = 0x00000000; expected[3] = 0x00000000;
     ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                       0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
     ok( ret == 0, "got ret %d\n", ret );
 
-    expected[0] = 0x00000000, expected[1] = 0x00000000;
-    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    expected[0] = 0x00000000; expected[1] = 0x00000000;
+    expected[2] = 0x00000000; expected[3] = 0x00000000;
     ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                       1, 1, -2, -2, 1, 1, -2, -2, expected, __LINE__);
     ok( ret == 0, "got ret %d\n", ret );
 
-    expected[0] = 0x00000000, expected[1] = 0x00000000;
-    expected[2] = 0x00000000, expected[3] = 0xCAFED00D;
+    expected[0] = 0x00000000; expected[1] = 0x00000000;
+    expected[2] = 0x00000000; expected[3] = 0xCAFED00D;
     ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                       1, 1, 2, 2, 0, 0, 2, 2, expected, __LINE__);
     ok( ret == 2, "got ret %d\n", ret );
 
-    expected[0] = 0x00000000, expected[1] = 0x00000000;
-    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    expected[0] = 0x00000000; expected[1] = 0x00000000;
+    expected[2] = 0x00000000; expected[3] = 0x00000000;
     ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                       2, 2, 4, 4, 0, 0, 2, 2, expected, __LINE__);
     ok( ret == 2, "got ret %d\n", ret );
 
-    expected[0] = 0x00000000, expected[1] = 0x00000000;
-    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    expected[0] = 0x00000000; expected[1] = 0x00000000;
+    expected[2] = 0x00000000; expected[3] = 0x00000000;
     ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                       -4, -4, 4, 4, 0, 0, 4, 4, expected, __LINE__);
     ok( ret == 2, "got ret %d\n", ret );
 
-    expected[0] = 0x00000000, expected[1] = 0x00000000;
-    expected[2] = 0xFEEDFACE, expected[3] = 0x00000000;
+    expected[0] = 0x00000000; expected[1] = 0x00000000;
+    expected[2] = 0xFEEDFACE; expected[3] = 0x00000000;
     ret = check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                       1, 1, -2, -2, 1, 1, 2, 2, expected, __LINE__);
     ok( ret == 2, "got ret %d\n", ret );
@@ -3608,8 +3608,8 @@ static void test_StretchDIBits(void)
         NULL, 0);
     oldDst = SelectObject(hdcDst, bmpDst);
 
-    expected[0] = 0xFEDCBA98, expected[1] = 0x76543210;
-    expected[2] = 0xCAFED00D, expected[3] = 0xFEEDFACE;
+    expected[0] = 0xFEDCBA98; expected[1] = 0x76543210;
+    expected[2] = 0xCAFED00D; expected[3] = 0xFEEDFACE;
     check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                 0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 

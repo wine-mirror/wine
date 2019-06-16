@@ -156,12 +156,10 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
     output( "\tandl $0xfff8, %%edx\n" );
     output( "\tshrl $1, %%edx\n" );
     if (UsePIC)
-    {
-        output( "\taddl wine_ldt_copy_ptr-1b(%%ecx),%%edx\n" );
-        output( "\tmovl (%%edx), %%edx\n" );
-    }
+        output( "\taddl .Lwine_ldt_copy_ptr-1b(%%ecx),%%edx\n" );
     else
-        output( "\tmovl %s(%%edx), %%edx\n", asm_name("wine_ldt_copy") );
+        output( "\taddl .Lwine_ldt_copy_ptr,%%edx\n" );
+    output( "\tmovl (%%edx), %%edx\n" );
     output( "\tmovzwl %%sp, %%ebp\n" );
     output( "\tleal %d(%%ebp,%%edx), %%edx\n", reg_func ? 0 : -4 );
 
@@ -492,10 +490,6 @@ static void BuildCallTo16Core( int reg_func )
         output( "\tpushw 0x98(%%edx)\n");  /* SegDs */
         output( "\tpushl 0x94(%%edx)\n");  /* SegEs */
         output( "\tpopl %%es\n" );
-        output( "\tpushl 0x90(%%edx)\n");  /* SegFs */
-        output( "\tpopl %%fs\n" );
-        output( "\tpushl 0x8c(%%edx)\n");  /* SegGs */
-        output( "\tpopl %%gs\n" );
         output( "\tmovl 0xb4(%%edx),%%ebp\n");  /* Ebp */
         output( "\tmovl 0xa0(%%edx),%%esi\n");  /* Esi */
         output( "\tmovl 0x9c(%%edx),%%edi\n");  /* Edi */

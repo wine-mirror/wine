@@ -81,3 +81,12 @@ HRESULT WINAPI WerUnregisterMemoryBlock(void *block)
     FIXME("(%p) stub\n", block);
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ * WerUnregisterRuntimeExceptionModule (KERNEL32.@)
+ */
+HRESULT WINAPI WerUnregisterRuntimeExceptionModule(PCWSTR callbackdll, PVOID context)
+{
+    FIXME("(%s, %p) stub!\n", debugstr_w(callbackdll), context);
+    return S_OK;
+}

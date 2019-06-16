@@ -1300,8 +1300,8 @@ typedef enum D3D12_COLOR_WRITE_ENABLE
     D3D12_COLOR_WRITE_ENABLE_GREEN = 0x2,
     D3D12_COLOR_WRITE_ENABLE_BLUE = 0x4,
     D3D12_COLOR_WRITE_ENABLE_ALPHA = 0x8,
-    D3D12_COLOR_WRITE_ENABLE_ALL = (D3D12_COLOR_WRITE_ENABLE_RED\
-            | D3D12_COLOR_WRITE_ENABLE_GREEN | D3D12_COLOR_WRITE_ENABLE_BLUE\
+    D3D12_COLOR_WRITE_ENABLE_ALL = (D3D12_COLOR_WRITE_ENABLE_RED
+            | D3D12_COLOR_WRITE_ENABLE_GREEN | D3D12_COLOR_WRITE_ENABLE_BLUE
             | D3D12_COLOR_WRITE_ENABLE_ALPHA),
 } D3D12_COLOR_WRITE_ENABLE;
 
@@ -2180,3 +2180,6 @@ typedef HRESULT (__stdcall *PFN_D3D12_CREATE_DEVICE)(IUnknown *adapter,
 typedef HRESULT (__stdcall *PFN_D3D12_GET_DEBUG_INTERFACE)(REFIID iid, void **debug);
 
 [local] HRESULT __stdcall D3D12GetDebugInterface(REFIID iid, void **debug);
+
+[local] HRESULT __stdcall D3D12EnableExperimentalFeatures(UINT feature_count,
+        const IID *iids, void *configurations, UINT *configurations_sizes);

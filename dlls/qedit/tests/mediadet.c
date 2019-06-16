@@ -30,46 +30,106 @@
 #include "control.h"
 #include "rc.h"
 
-/* Outer IUnknown for COM aggregation tests */
-struct unk_impl {
-    IUnknown IUnknown_iface;
-    LONG ref;
-    IUnknown *inner_unk;
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
+static const GUID test_iid = {0x33333333};
+static LONG outer_ref = 1;
+
+static HRESULT WINAPI outer_QueryInterface(IUnknown *iface, REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IMediaDet)
+            || IsEqualGUID(iid, &test_iid))
+    {
+        *out = (IUnknown *)0xdeadbeef;
+        return S_OK;
+    }
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI outer_AddRef(IUnknown *iface)
+{
+    return InterlockedIncrement(&outer_ref);
+}
+
+static ULONG WINAPI outer_Release(IUnknown *iface)
+{
+    return InterlockedDecrement(&outer_ref);
+}
+
+static const IUnknownVtbl outer_vtbl =
+{
+    outer_QueryInterface,
+    outer_AddRef,
+    outer_Release,
 };
 
-static inline struct unk_impl *impl_from_IUnknown(IUnknown *iface)
+static IUnknown test_outer = {&outer_vtbl};
+
+static void test_aggregation(void)
 {
-    return CONTAINING_RECORD(iface, struct unk_impl, IUnknown_iface);
+    IMediaDet *detector, *detector2;
+    IUnknown *unk, *unk2;
+    HRESULT hr;
+    ULONG ref;
+
+    detector = (IMediaDet *)0xdeadbeef;
+    hr = CoCreateInstance(&CLSID_MediaDet, &test_outer, CLSCTX_INPROC_SERVER,
+            &IID_IMediaDet, (void **)&detector);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(!detector, "Got interface %p.\n", detector);
+
+    hr = CoCreateInstance(&CLSID_MediaDet, &test_outer, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
+    ref = get_refcount(unk);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+
+    ref = IUnknown_AddRef(unk);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+
+    ref = IUnknown_Release(unk);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
+    IUnknown_Release(unk2);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IMediaDet, (void **)&detector);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaDet_QueryInterface(detector, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
+
+    hr = IMediaDet_QueryInterface(detector, &IID_IMediaDet, (void **)&detector2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(detector2 == (IMediaDet *)0xdeadbeef, "Got unexpected IMediaDet %p.\n", detector2);
+
+    hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
+
+    hr = IMediaDet_QueryInterface(detector, &test_iid, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
+
+    IMediaDet_Release(detector);
+    ref = IUnknown_Release(unk);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 }
-
-static HRESULT WINAPI unk_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
-{
-    struct unk_impl *This = impl_from_IUnknown(iface);
-
-    return IUnknown_QueryInterface(This->inner_unk, riid, ppv);
-}
-
-static ULONG WINAPI unk_AddRef(IUnknown *iface)
-{
-    struct unk_impl *This = impl_from_IUnknown(iface);
-
-    return InterlockedIncrement(&This->ref);
-}
-
-static ULONG WINAPI unk_Release(IUnknown *iface)
-{
-    struct unk_impl *This = impl_from_IUnknown(iface);
-
-    return InterlockedDecrement(&This->ref);
-}
-
-static const IUnknownVtbl unk_vtbl =
-{
-    unk_QueryInterface,
-    unk_AddRef,
-    unk_Release
-};
-
 
 static WCHAR test_avi_filename[MAX_PATH];
 static WCHAR test_sound_avi_filename[MAX_PATH];
@@ -131,9 +191,7 @@ static BOOL init_tests(void)
 static void test_mediadet(void)
 {
     HRESULT hr;
-    struct unk_impl unk_obj = {{&unk_vtbl}, 19, NULL};
     IMediaDet *pM = NULL;
-    ULONG refcount;
     BSTR filename = NULL;
     LONG nstrms = 0;
     LONG strm;
@@ -141,22 +199,6 @@ static void test_mediadet(void)
     double fps;
     int flags;
     int i;
-
-    /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_MediaDet, &unk_obj.IUnknown_iface, CLSCTX_INPROC_SERVER,
-            &IID_IUnknown, (void**)&unk_obj.inner_unk);
-    ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
-
-    hr = IUnknown_QueryInterface(unk_obj.inner_unk, &IID_IMediaDet, (void**)&pM);
-    ok(hr == S_OK, "QueryInterface for IID_IMediaDet failed: %08x\n", hr);
-    refcount = IMediaDet_AddRef(pM);
-    ok(refcount == unk_obj.ref, "MediaDet just pretends to support COM aggregation\n");
-    refcount = IMediaDet_Release(pM);
-    ok(refcount == unk_obj.ref, "MediaDet just pretends to support COM aggregation\n");
-    refcount = IMediaDet_Release(pM);
-    ok(refcount == 19, "Refcount should be back at 19 but is %u\n", refcount);
-
-    IUnknown_Release(unk_obj.inner_unk);
 
     /* test.avi has one video stream.  */
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
@@ -523,69 +565,25 @@ static ISampleGrabberCB my_sg_cb = { &sgcb_vt };
 
 static void test_samplegrabber(void)
 {
-    struct unk_impl unk_obj = {{&unk_vtbl}, 19, NULL};
     ISampleGrabber *sg;
     IBaseFilter *bf;
-    IMediaFilter *mf;
-    IPersist *persist;
-    IUnknown *unk;
     IPin *pin;
     IMemInputPin *inpin;
     IEnumPins *pins;
-    ULONG refcount;
     HRESULT hr;
     FILTER_STATE fstate;
-
-    /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_SampleGrabber, &unk_obj.IUnknown_iface, CLSCTX_INPROC_SERVER,
-            &IID_IUnknown, (void**)&unk_obj.inner_unk);
-    ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
-
-    hr = IUnknown_QueryInterface(unk_obj.inner_unk, &IID_ISampleGrabber, (void**)&sg);
-    ok(hr == S_OK, "QueryInterface for IID_ISampleGrabber failed: %08x\n", hr);
-    refcount = ISampleGrabber_AddRef(sg);
-    ok(refcount == unk_obj.ref, "SampleGrabber just pretends to support COM aggregation\n");
-    refcount = ISampleGrabber_Release(sg);
-    ok(refcount == unk_obj.ref, "SampleGrabber just pretends to support COM aggregation\n");
-    refcount = ISampleGrabber_Release(sg);
-    ok(refcount == 19, "Refcount should be back at 19 but is %u\n", refcount);
-    IUnknown_Release(unk_obj.inner_unk);
 
     /* Invalid RIID */
     hr = CoCreateInstance(&CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, &IID_IClassFactory,
             (void**)&sg);
     ok(hr == E_NOINTERFACE, "SampleGrabber create failed: %08x, expected E_NOINTERFACE\n", hr);
 
-    /* Same refcount for all SampleGrabber interfaces */
     hr = CoCreateInstance(&CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, &IID_ISampleGrabber,
             (void**)&sg);
     ok(hr == S_OK, "SampleGrabber create failed: %08x, expected S_OK\n", hr);
-    refcount = ISampleGrabber_AddRef(sg);
-    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
 
     hr = ISampleGrabber_QueryInterface(sg, &IID_IBaseFilter, (void**)&bf);
     ok(hr == S_OK, "QueryInterface for IID_IBaseFilter failed: %08x\n", hr);
-    refcount = IBaseFilter_AddRef(bf);
-    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
-    refcount = IBaseFilter_Release(bf);
-
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IMediaFilter, (void**)&mf);
-    ok(hr == S_OK, "QueryInterface for IID_IMediaFilter failed: %08x\n", hr);
-    refcount = IMediaFilter_AddRef(mf);
-    ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
-    refcount = IMediaFilter_Release(mf);
-
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IPersist, (void**)&persist);
-    ok(hr == S_OK, "QueryInterface for IID_IPersist failed: %08x\n", hr);
-    refcount = IPersist_AddRef(persist);
-    ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
-    refcount = IPersist_Release(persist);
-
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
-    refcount = IUnknown_AddRef(unk);
-    ok(refcount == 7, "refcount == %u, expected 7\n", refcount);
-    refcount = IUnknown_Release(unk);
 
     hr = ISampleGrabber_SetCallback(sg, &my_sg_cb, 0);
     ok(hr == S_OK, "SetCallback failed: %08x\n", hr);
@@ -611,18 +609,6 @@ static void test_samplegrabber(void)
 
     IMemInputPin_Release(inpin);
     IPin_Release(pin);
-
-    /* Interfaces that native does not support */
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IMediaPosition, (void**)&unk);
-    todo_wine ok(hr == E_NOINTERFACE, "QueryInterface for IID_IMediaPosition failed: %08x\n", hr);
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IMediaSeeking, (void**)&unk);
-    todo_wine ok(hr == E_NOINTERFACE, "QueryInterface for IID_IMediaSeeking failed: %08x\n", hr);
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IMemInputPin, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IMemInputPin failed: %08x\n", hr);
-    hr = ISampleGrabber_QueryInterface(sg, &IID_IQualityControl, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IQualityControl failed: %08x\n", hr);
-    hr = ISampleGrabber_QueryInterface(sg, &IID_ISeekingPassThru, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "QueryInterface for IID_ISeekingPassThru failed: %08x\n", hr);
 
     while (ISampleGrabber_Release(sg));
 }
@@ -661,6 +647,9 @@ static void test_COM_sg_enumpins(void)
 
 START_TEST(mediadet)
 {
+    IMediaDet *detector;
+    HRESULT hr;
+
     if (!init_tests())
     {
         skip("Couldn't initialize tests!\n");
@@ -668,8 +657,20 @@ START_TEST(mediadet)
     }
 
     CoInitialize(NULL);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMediaDet, (void **)&detector)))
+    {
+        /* qedit.dll does not exist on 2003. */
+        win_skip("Failed to create media detector object, hr %#x.\n", hr);
+        return;
+    }
+    IMediaDet_Release(detector);
+
+    test_aggregation();
     test_mediadet();
     test_samplegrabber();
     test_COM_sg_enumpins();
+
     CoUninitialize();
 }

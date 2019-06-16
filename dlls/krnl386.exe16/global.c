@@ -109,20 +109,6 @@ static GLOBALARENA *GLOBAL_GetArena( WORD sel, WORD selcount )
     return pGlobalArena + (sel >> __AHSHIFT);
 }
 
-void debug_handles(void)
-{
-    int printed=0;
-    int i;
-    for (i = globalArenaSize-1 ; i>=0 ; i--) {
-	if (pGlobalArena[i].size!=0 && (pGlobalArena[i].handle & 0x8000)){
-	    printed=1;
-	    DPRINTF("0x%08x, ",pGlobalArena[i].handle);
-	}
-    }
-    if (printed)
-	DPRINTF("\n");
-}
-
 
 /***********************************************************************
  *           GLOBAL_CreateBlock

@@ -87,7 +87,7 @@
 @ cdecl _wcsnicoll(wstr wstr long) ucrtbase._wcsnicoll
 @ cdecl _wcsnicoll_l(wstr wstr long ptr) ucrtbase._wcsnicoll_l
 @ cdecl _wcsnset(wstr long long) ucrtbase._wcsnset
-@ stub _wcsnset_s
+@ cdecl _wcsnset_s(wstr long long long) ucrtbase._wcsnset_s
 @ cdecl _wcsrev(wstr) ucrtbase._wcsrev
 @ cdecl _wcsset(wstr long) ucrtbase._wcsset
 @ cdecl _wcsset_s(wstr long long) ucrtbase._wcsset_s
@@ -151,7 +151,7 @@
 @ cdecl strxfrm(ptr str long) ucrtbase.strxfrm
 @ cdecl tolower(long) ucrtbase.tolower
 @ cdecl toupper(long) ucrtbase.toupper
-@ stub towctrans
+@ cdecl towctrans(long long) ucrtbase.towctrans
 @ cdecl towlower(long) ucrtbase.towlower
 @ cdecl towupper(long) ucrtbase.towupper
 @ cdecl wcscat(wstr wstr) ucrtbase.wcscat

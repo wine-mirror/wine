@@ -18,7 +18,6 @@
 
 #include <windows.h>
 #include <lm.h>
-#include <wine/unicode.h>
 #include <wine/debug.h>
 
 #include "resources.h"

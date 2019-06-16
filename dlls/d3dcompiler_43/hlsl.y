@@ -903,7 +903,7 @@ static const struct hlsl_ir_function_decl *get_overloaded_func(struct wine_rb_tr
 %}
 
 %locations
-%error-verbose
+%define parse.error verbose
 %expect 1
 
 %union

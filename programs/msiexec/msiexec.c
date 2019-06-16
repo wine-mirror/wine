@@ -29,7 +29,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 #include "initguid.h"
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
@@ -92,7 +91,7 @@ static void ShowUsage(int ExitCode)
         *msi_res = 0;
         LoadStringW(hmsi, 10, msi_res, len + 1);
 
-        sprintfW(msiexec_help, msi_res, msiexec_version);
+        swprintf(msiexec_help, len + 1 + ARRAY_SIZE(msiexec_version), msi_res, msiexec_version);
         MsiMessageBoxW(0, msiexec_help, NULL, 0, GetUserDefaultLangID(), 0);
     }
     HeapFree(GetProcessHeap(), 0, msi_res);
@@ -153,7 +152,7 @@ static LPWSTR build_properties(struct string_list *property_list)
 	p = ret;
 	for(list = property_list; list; list = list->next)
 	{
-		value = strchrW(list->str,'=');
+		value = wcschr(list->str,'=');
 		if(!value)
 			continue;
 		len = value - list->str;
@@ -164,7 +163,7 @@ static LPWSTR build_properties(struct string_list *property_list)
 
 		/* check if the value contains spaces and maybe quote it */
 		value++;
-		needs_quote = strchrW(value,' ') ? 1 : 0;
+		needs_quote = wcschr(value,' ') ? 1 : 0;
 		if(needs_quote)
 			*p++ = '"';
 		len = lstrlenW(value);
@@ -397,19 +396,20 @@ static DWORD DoUnregServer(void)
     return ret;
 }
 
-extern UINT CDECL __wine_msi_call_dll_function(GUID *guid);
+extern UINT CDECL __wine_msi_call_dll_function(DWORD client_pid, const GUID *guid);
+
+static DWORD client_pid;
 
 static DWORD CALLBACK custom_action_thread(void *arg)
 {
     GUID guid = *(GUID *)arg;
     heap_free(arg);
-    return __wine_msi_call_dll_function(&guid);
+    return __wine_msi_call_dll_function(client_pid, &guid);
 }
 
 static int custom_action_server(const WCHAR *arg)
 {
     static const WCHAR pipe_name[] = {'\\','\\','.','\\','p','i','p','e','\\','m','s','i','c','a','_','%','x','_','%','d',0};
-    DWORD client_pid = atoiW(arg);
     GUID guid, *thread_guid;
     DWORD64 thread64;
     WCHAR buffer[24];
@@ -419,13 +419,13 @@ static int custom_action_server(const WCHAR *arg)
 
     TRACE("%s\n", debugstr_w(arg));
 
-    if (!client_pid)
+    if (!(client_pid = wcstol(arg, NULL, 10)))
     {
         ERR("Invalid parameter %s\n", debugstr_w(arg));
         return 1;
     }
 
-    sprintfW(buffer, pipe_name, client_pid, sizeof(void *) * 8);
+    swprintf(buffer, ARRAY_SIZE(buffer), pipe_name, client_pid, sizeof(void *) * 8);
     pipe = CreateFileW(buffer, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
     if (pipe == INVALID_HANDLE_VALUE)
     {

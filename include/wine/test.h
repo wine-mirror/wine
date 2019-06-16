@@ -46,6 +46,15 @@
 #define INVALID_SET_FILE_POINTER (~0u)
 #endif
 
+#ifdef _MSC_VER
+# ifndef INFINITY
+#  define INFINITY ((float)HUGE_VAL)
+# endif
+# ifndef NAN
+#  define NAN (INFINITY * 0.0f)
+# endif
+#endif
+
 /* debug level */
 extern int winetest_debug;
 
@@ -511,7 +520,7 @@ const char *wine_dbgstr_wn( const WCHAR *str, int n )
         case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
         default:
             if (c >= ' ' && c <= 126)
-                *dst++ = c;
+                *dst++ = (char)c;
             else
             {
                 *dst++ = '\\';

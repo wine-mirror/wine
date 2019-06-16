@@ -241,8 +241,8 @@
 @ stub fdiml
 @ cdecl floor(double) ucrtbase.floor
 @ cdecl -arch=arm,x86_64,arm64 floorf(float) ucrtbase.floorf
-@ stub fma
-@ stub fmaf
+@ cdecl fma(double double double) ucrtbase.fma
+@ cdecl -arch=arm,x86_64,arm64 fmaf(float float float) ucrtbase.fmaf
 @ stub fmal
 @ cdecl fmax(double double) ucrtbase.fmax
 @ cdecl fmaxf(float float) ucrtbase.fmaxf
@@ -276,9 +276,9 @@
 @ cdecl log2(double) ucrtbase.log2
 @ cdecl log2f(float) ucrtbase.log2f
 @ cdecl log2l(double) ucrtbase.log2l
-@ stub logb
-@ stub logbf
-@ stub logbl
+@ cdecl logb(double) ucrtbase.logb
+@ cdecl logbf(float) ucrtbase.logbf
+@ cdecl logbl(double) ucrtbase.logbl
 @ cdecl -arch=arm,x86_64,arm64 logf(float) ucrtbase.logf
 @ cdecl lrint(double) ucrtbase.lrint
 @ cdecl lrintf(float) ucrtbase.lrintf
@@ -308,9 +308,9 @@
 @ cdecl remainder(double double) ucrtbase.remainder
 @ cdecl remainderf(float float) ucrtbase.remainderf
 @ cdecl remainderl(double double) ucrtbase.remainderl
-@ stub remquo
-@ stub remquof
-@ stub remquol
+@ cdecl remquo(double double ptr) ucrtbase.remquo
+@ cdecl remquof(float float ptr) ucrtbase.remquof
+@ cdecl remquol(double double ptr) ucrtbase.remquol
 @ cdecl rint(double) ucrtbase.rint
 @ cdecl rintf(float) ucrtbase.rintf
 @ cdecl rintl(double) ucrtbase.rintl

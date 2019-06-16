@@ -45,8 +45,6 @@
 #include "wine/library.h"
 #include "wine/list.h"
 
-#ifdef HAVE_MMAP
-
 struct reserved_area
 {
     struct list entry;
@@ -55,7 +53,9 @@ struct reserved_area
 };
 
 static struct list reserved_areas = LIST_INIT(reserved_areas);
+#ifndef __APPLE__
 static const unsigned int granularity_mask = 0xffff;  /* reserved areas have 64k granularity */
+#endif
 
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
@@ -165,23 +165,29 @@ static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
 #elif defined(__APPLE__)
 
 #include <mach/mach_init.h>
-#include <mach/vm_map.h>
+#include <mach/mach_vm.h>
 
 /*
- * On Darwin, we can use the Mach call vm_allocate to allocate
- * anonymous memory at the specified address, and then use mmap with
- * MAP_FIXED to replace the mapping.
+ * On Darwin, we can use the Mach call mach_vm_map to allocate
+ * anonymous memory at the specified address and then, if necessary, use
+ * mmap with MAP_FIXED to replace the mapping.
  */
 static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
                            int fildes, off_t off)
 {
-    vm_address_t result = (vm_address_t)addr;
+    mach_vm_address_t result = (mach_vm_address_t)addr;
+    int vm_flags = VM_FLAGS_FIXED;
 
-    if (!vm_allocate(mach_task_self(),&result,len,0))
+    if (flags & MAP_NOCACHE)
+        vm_flags |= VM_FLAGS_NO_CACHE;
+    if (!mach_vm_map( mach_task_self(), &result, len, 0, vm_flags, MEMORY_OBJECT_NULL,
+                      0, 0, prot, VM_PROT_ALL, VM_INHERIT_COPY ))
     {
-        if (mmap( (void *)result, len, prot, flags | MAP_FIXED, fildes, off ) != MAP_FAILED)
+        flags |= MAP_FIXED;
+        if (((flags & ~(MAP_NORESERVE | MAP_NOCACHE)) == (MAP_ANON | MAP_FIXED | MAP_PRIVATE)) ||
+            mmap( (void *)result, len, prot, flags, fildes, off ) != MAP_FAILED)
             return 1;
-        vm_deallocate(mach_task_self(),result,len);
+        mach_vm_deallocate(mach_task_self(),result,len);
     }
     return 0;
 }
@@ -221,6 +227,70 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
     return mmap( start, size, prot, flags, get_fdzero(), 0 );
 }
 
+
+#ifdef __APPLE__
+
+/***********************************************************************
+ *           reserve_area
+ *
+ * Reserve as much memory as possible in the given area.
+ */
+static inline void reserve_area( void *addr, void *end )
+{
+#ifdef __i386__
+    static const mach_vm_address_t max_address = VM_MAX_ADDRESS;
+#else
+    static const mach_vm_address_t max_address = MACH_VM_MAX_ADDRESS;
+#endif
+    mach_vm_address_t address = (mach_vm_address_t)addr;
+    mach_vm_address_t end_address = (mach_vm_address_t)end;
+
+    if (!end_address || max_address < end_address)
+        end_address = max_address;
+
+    while (address < end_address)
+    {
+        mach_vm_address_t hole_address = address;
+        kern_return_t ret;
+        mach_vm_size_t size;
+        vm_region_basic_info_data_64_t info;
+        mach_msg_type_number_t count = VM_REGION_BASIC_INFO_COUNT_64;
+        mach_port_t dummy_object_name = MACH_PORT_NULL;
+
+        /* find the mapped region at or above the current address. */
+        ret = mach_vm_region(mach_task_self(), &address, &size, VM_REGION_BASIC_INFO_64,
+                             (vm_region_info_t)&info, &count, &dummy_object_name);
+        if (ret != KERN_SUCCESS)
+        {
+            address = max_address;
+            size = 0;
+        }
+
+        if (end_address < address)
+            address = end_address;
+        if (hole_address < address)
+        {
+            /* found a hole, attempt to reserve it. */
+            size_t hole_size = address - hole_address;
+            mach_vm_address_t alloc_address = hole_address;
+
+            ret = mach_vm_map( mach_task_self(), &alloc_address, hole_size, 0, VM_FLAGS_FIXED,
+                               MEMORY_OBJECT_NULL, 0, 0, PROT_NONE, VM_PROT_ALL, VM_INHERIT_COPY );
+            if (!ret)
+                wine_mmap_add_reserved_area( (void*)hole_address, hole_size );
+            else if (ret == KERN_NO_SPACE)
+            {
+                /* something filled (part of) the hole before we could.
+                   go back and look again. */
+                address = hole_address;
+                continue;
+            }
+        }
+        address += size;
+    }
+}
+
+#else
 
 /***********************************************************************
  *		mmap_reserve
@@ -291,6 +361,7 @@ static inline void reserve_area( void *addr, void *end )
 #endif
 }
 
+#endif /* __APPLE__ */
 
 #ifdef __i386__
 /***********************************************************************
@@ -348,8 +419,10 @@ void mmap_init(void)
 #ifdef __i386__
     struct reserved_area *area;
     struct list *ptr;
+#ifndef __APPLE__
     char stack;
     char * const stack_ptr = &stack;
+#endif
     char *user_space_limit = (char *)0x7ffe0000;
 
     reserve_malloc_space( 8 * 1024 * 1024 );
@@ -373,6 +446,7 @@ void mmap_init(void)
         }
     }
 
+#ifndef __APPLE__
     if (stack_ptr >= user_space_limit)
     {
         char *end = 0;
@@ -386,7 +460,9 @@ void mmap_init(void)
 #endif
         reserve_area( base, end );
     }
-    else reserve_area( user_space_limit, 0 );
+    else
+#endif
+        reserve_area( user_space_limit, 0 );
 
     /* reserve the DOS area if not already done */
 
@@ -606,11 +682,3 @@ int wine_mmap_enum_reserved_areas( int (*enum_func)(void *base, size_t size, voi
     }
     return ret;
 }
-
-#else /* HAVE_MMAP */
-
-void mmap_init(void)
-{
-}
-
-#endif

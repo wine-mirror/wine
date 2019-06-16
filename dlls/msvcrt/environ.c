@@ -38,7 +38,7 @@ char * CDECL MSVCRT_getenv(const char *name)
     {
         char *str = *environ;
         char *pos = strchr(str,'=');
-        if (pos && ((pos - str) == length) && !strncasecmp(str,name,length))
+        if (pos && ((pos - str) == length) && !MSVCRT__strnicmp(str,name,length))
         {
             TRACE("(%s): got %s\n", debugstr_a(name), debugstr_a(pos + 1));
             return pos + 1;
@@ -309,4 +309,20 @@ int CDECL _wgetenv_s(MSVCRT_size_t *pReturnValue, MSVCRT_wchar_t *buffer, MSVCRT
     }
     strcpyW(buffer, e);
     return 0;
+}
+
+/*********************************************************************
+ *		_get_environ (MSVCRT.@)
+ */
+void CDECL MSVCRT__get_environ(char ***ptr)
+{
+    *ptr = MSVCRT__environ;
+}
+
+/*********************************************************************
+ *		_get_wenviron (MSVCRT.@)
+ */
+void CDECL MSVCRT__get_wenviron(MSVCRT_wchar_t ***ptr)
+{
+    *ptr = MSVCRT__wenviron;
 }

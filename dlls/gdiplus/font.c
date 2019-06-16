@@ -25,7 +25,6 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL (gdiplus);
 
@@ -507,7 +506,7 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics, LOGFONTW
     lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
     lf->lfQuality = DEFAULT_QUALITY;
     lf->lfPitchAndFamily = 0;
-    strcpyW(lf->lfFaceName, font->family->FamilyName);
+    lstrcpyW(lf->lfFaceName, font->family->FamilyName);
 
     TRACE("=> %s,%d\n", debugstr_w(lf->lfFaceName), lf->lfHeight);
 
@@ -710,7 +709,7 @@ static GpStatus find_installed_font(const WCHAR *name, struct font_metrics *fm)
     {
         HFONT hfont, old_font;
 
-        strcpyW(fm->facename, lf.lfFaceName);
+        lstrcpyW(fm->facename, lf.lfFaceName);
 
         hfont = CreateFontIndirectW(&lf);
         old_font = SelectObject(hdc, hfont);
@@ -1632,7 +1631,7 @@ static INT CALLBACK add_font_proc(const LOGFONTW *lfw, const TEXTMETRICW *ntm,
     if (lfw->lfFaceName[0] == '@')
         return 1;
 
-    if (fonts->count && strcmpiW(lfw->lfFaceName, fonts->FontFamilies[fonts->count-1]->FamilyName) == 0)
+    if (fonts->count && wcsicmp(lfw->lfFaceName, fonts->FontFamilies[fonts->count-1]->FamilyName) == 0)
         return 1;
 
     if (fonts->allocated == fonts->count)
@@ -1664,7 +1663,7 @@ static INT CALLBACK add_font_proc(const LOGFONTW *lfw, const TEXTMETRICW *ntm,
     /* skip duplicates */
     for (i=0; i<fonts->count; i++)
     {
-        if (strcmpiW(family->FamilyName, fonts->FontFamilies[i]->FamilyName) == 0)
+        if (wcsicmp(family->FamilyName, fonts->FontFamilies[i]->FamilyName) == 0)
         {
             GdipDeleteFontFamily(family);
             return 1;

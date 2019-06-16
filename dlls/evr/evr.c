@@ -35,145 +35,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(evr);
 typedef struct
 {
     BaseFilter filter;
-
-    IUnknown IUnknown_inner;
 } evr_filter;
-
-static inline evr_filter *impl_from_inner_IUnknown(IUnknown *iface)
-{
-    return CONTAINING_RECORD(iface, evr_filter, IUnknown_inner);
-}
-
-static HRESULT WINAPI inner_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
-{
-    evr_filter *This = impl_from_inner_IUnknown(iface);
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-     if (IsEqualIID(riid, &IID_IUnknown))
-         *ppv = &This->IUnknown_inner;
-
-     else if (IsEqualIID(riid, &IID_IAMCertifiedOutputProtection))
-         FIXME("No interface for IID_IAMCertifiedOutputProtection\n");
-     else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-         FIXME("No interface for IID_IAMFilterMiscFlags\n");
-     else if (IsEqualIID(riid, &IID_IBaseFilter))
-         *ppv =&This->filter.IBaseFilter_iface;
-     else if (IsEqualIID(riid, &IID_IMediaFilter))
-         *ppv =&This->filter.IBaseFilter_iface;
-     else if (IsEqualIID(riid, &IID_IPersist))
-         *ppv =&This->filter.IBaseFilter_iface;
-     else if (IsEqualIID(riid, &IID_IKsPropertySet))
-         FIXME("No interface for IID_IKsPropertySet\n");
-     else if (IsEqualIID(riid, &IID_IMediaEventSink))
-         FIXME("No interface for IID_IMediaEventSink\n");
-     else if (IsEqualIID(riid, &IID_IMediaSeeking))
-         FIXME("No interface for IID_IMediaSeeking\n");
-     else if (IsEqualIID(riid, &IID_IQualityControl))
-         FIXME("No interface for IID_IQualityControl\n");
-     else if (IsEqualIID(riid, &IID_IQualProp))
-         FIXME("No interface for IID_IQualProp\n");
-
-     else if (IsEqualIID(riid, &IID_IEVRFilterConfig))
-         FIXME("No interface for IID_IEVRFilterConfig\n");
-     else if (IsEqualIID(riid, &IID_IMFGetService))
-         FIXME("No interface for IID_IMFGetService\n");
-     else if (IsEqualIID(riid, &IID_IMFVideoPositionMapper))
-         FIXME("No interface for IID_IMFVideoPositionMapper\n");
-     else if (IsEqualIID(riid, &IID_IMFVideoRenderer))
-         FIXME("No interface for IID_IMFVideoRenderer\n");
-
-     else if (IsEqualIID(riid, &IID_IMemInputPin))
-         FIXME("No interface for IID_IMemInputPin\n");
-     else if (IsEqualIID(riid, &IID_IPin))
-         FIXME("No interface for IID_IPin\n");
-     else if (IsEqualIID(riid, &IID_IQualityControl))
-         FIXME("No interface for IID_IQualityControl\n");
-
-     else if (IsEqualIID(riid, &IID_IDirectXVideoMemoryConfiguration))
-         FIXME("No interface for IID_IDirectXVideoMemoryConfiguration\n");
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    FIXME("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI inner_AddRef(IUnknown *iface)
-{
-    evr_filter *This = impl_from_inner_IUnknown(iface);
-    ULONG ref = BaseFilterImpl_AddRef(&This->filter.IBaseFilter_iface);
-
-    TRACE("(%p, %p)->(): new ref %d\n", iface, This, ref);
-
-    return ref;
-}
-
-static ULONG WINAPI inner_Release(IUnknown *iface)
-{
-    evr_filter *This = impl_from_inner_IUnknown(iface);
-    ULONG ref = BaseFilterImpl_Release(&This->filter.IBaseFilter_iface);
-
-    TRACE("(%p, %p)->(): new ref %d\n", iface, This, ref);
-
-    if (!ref)
-        CoTaskMemFree(This);
-
-    return ref;
-}
-
-static const IUnknownVtbl evr_inner_vtbl =
-{
-    inner_QueryInterface,
-    inner_AddRef,
-    inner_Release
-};
-
-static inline evr_filter *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    return CONTAINING_RECORD(iface, evr_filter, filter);
-}
-
-static HRESULT WINAPI filter_QueryInterface(IBaseFilter *iface, REFIID riid, void **ppv)
-{
-    evr_filter *This = impl_from_IBaseFilter(iface);
-    return IUnknown_QueryInterface(&This->IUnknown_inner, riid, ppv);
-}
-
-static ULONG WINAPI filter_AddRef(IBaseFilter *iface)
-{
-    evr_filter *This = impl_from_IBaseFilter(iface);
-    LONG ret;
-
-    ret = IUnknown_AddRef(&This->IUnknown_inner);
-
-    TRACE("(%p)->AddRef from %d\n", iface, ret - 1);
-
-    return ret;
-}
-
-static ULONG WINAPI filter_Release(IBaseFilter *iface)
-{
-    evr_filter *This = impl_from_IBaseFilter(iface);
-    LONG ret;
-
-    ret = IUnknown_Release(&This->IUnknown_inner);
-
-    TRACE("(%p)->Release from %d\n", iface, ret + 1);
-
-    return ret;
-}
 
 static const IBaseFilterVtbl basefilter_vtbl =
 {
-    filter_QueryInterface,
-    filter_AddRef,
-    filter_Release,
+    BaseFilterImpl_QueryInterface,
+    BaseFilterImpl_AddRef,
+    BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     BaseRendererImpl_Stop,
     BaseRendererImpl_Pause,
@@ -182,54 +50,51 @@ static const IBaseFilterVtbl basefilter_vtbl =
     BaseRendererImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    BaseRendererImpl_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo
 };
 
-static IPin* WINAPI filter_GetPin(BaseFilter *iface, int position)
+static inline evr_filter *impl_from_BaseFilter(BaseFilter *iface)
 {
-    FIXME("(%p, %d): stub!\n", iface, position);
+    return CONTAINING_RECORD(iface, evr_filter, filter);
+}
+
+static IPin *evr_get_pin(BaseFilter *iface, unsigned int index)
+{
+    FIXME("iface %p, index %u, stub!\n", iface, index);
     return NULL;
 }
 
-static LONG WINAPI filter_GetPinCount(BaseFilter *iface)
+static void evr_destroy(BaseFilter *iface)
 {
-    FIXME("(%p): stub!\n", iface);
-    return 0;
+    evr_filter *filter = impl_from_BaseFilter(iface);
+
+    strmbase_filter_cleanup(&filter->filter);
+    CoTaskMemFree(filter);
 }
 
 static const BaseFilterFuncTable basefilter_functable =
 {
-    filter_GetPin,
-    filter_GetPinCount,
+    .filter_get_pin = evr_get_pin,
+    .filter_destroy = evr_destroy,
 };
 
-HRESULT evr_filter_create(IUnknown *outer_unk, void **ppv)
+HRESULT evr_filter_create(IUnknown *outer, void **out)
 {
     evr_filter *object;
 
-    TRACE("(%p, %p)\n", outer_unk, ppv);
-
-    *ppv = NULL;
-
-    if(outer_unk != NULL)
-    {
-        FIXME("Aggregation yet unsupported!\n");
-        return E_NOINTERFACE;
-    }
+    *out = NULL;
 
     object = CoTaskMemAlloc(sizeof(evr_filter));
     if (!object)
         return E_OUTOFMEMORY;
 
-    BaseFilter_Init(&object->filter, &basefilter_vtbl, &CLSID_EnhancedVideoRenderer,
+    strmbase_filter_init(&object->filter, &basefilter_vtbl, outer, &CLSID_EnhancedVideoRenderer,
                     (DWORD_PTR)(__FILE__ ": EVR.csFilter"), &basefilter_functable);
 
-    object->IUnknown_inner.lpVtbl = &evr_inner_vtbl;
-
-    *ppv = &object->IUnknown_inner;
+    *out = &object->filter.IUnknown_inner;
 
     return S_OK;
 }

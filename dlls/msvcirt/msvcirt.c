@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -332,7 +331,7 @@ struct {
 struct {
     ostream os;
     ios vbase;
-} cout = { { 0 } }, cerr = { { 0 } }, clog = { { 0 } };
+} cout = { { 0 } }, cerr = { { 0 } }, MSVCP_clog = { { 0 } };
 
 
 /* ??0streambuf@@IAE@PADH@Z */
@@ -4455,16 +4454,16 @@ void __cdecl ios_sync_with_stdio(void)
         if ((new_buf = MSVCRT_operator_new(sizeof(stdiobuf)))) {
             stdiobuf_file_ctor(new_buf, stderr);
             stdiobuf_setrwbuf(new_buf, 0, 512);
-            ostream_assign_sb(&clog.os, &new_buf->base);
+            ostream_assign_sb(&MSVCP_clog.os, &new_buf->base);
         } else
-            ostream_assign_sb(&clog.os, NULL);
-        clog.vbase.delbuf = 1;
-        ios_setf(&clog.vbase, FLAGS_stdio);
+            ostream_assign_sb(&MSVCP_clog.os, NULL);
+        MSVCP_clog.vbase.delbuf = 1;
+        ios_setf(&MSVCP_clog.vbase, FLAGS_stdio);
     }
 }
 
 
-#ifdef __i386__
+#if defined(__i386__) && !defined(__MINGW32__)
 
 #define DEFINE_VTBL_WRAPPER(off)            \
     __ASM_GLOBAL_FUNC(vtbl_wrapper_ ## off, \
@@ -4555,10 +4554,10 @@ static void init_io(void *base)
 
     if ((fb = MSVCRT_operator_new(sizeof(filebuf)))) {
         filebuf_fd_ctor(fb, 2);
-        ostream_withassign_sb_ctor(&clog.os, &fb->base, TRUE);
+        ostream_withassign_sb_ctor(&MSVCP_clog.os, &fb->base, TRUE);
     } else
-        ostream_withassign_sb_ctor(&clog.os, NULL, TRUE);
-    Iostream_init_ios_ctor(NULL, &clog.vbase, 0);
+        ostream_withassign_sb_ctor(&MSVCP_clog.os, NULL, TRUE);
+    Iostream_init_ios_ctor(NULL, &MSVCP_clog.vbase, 0);
 }
 
 static void free_io(void)
@@ -4567,7 +4566,7 @@ static void free_io(void)
     istream_vbase_dtor(&cin.is);
     ostream_vbase_dtor(&cout.os);
     ostream_vbase_dtor(&cerr.os);
-    ostream_vbase_dtor(&clog.os);
+    ostream_vbase_dtor(&MSVCP_clog.os);
 }
 
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )

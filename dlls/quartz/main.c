@@ -74,7 +74,6 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_AviSplitter, AVISplitter_create },
     { &CLSID_MPEG1Splitter, MPEGSplitter_create },
     { &CLSID_VideoRenderer, VideoRenderer_create },
-    { &CLSID_NullRenderer, NullRenderer_create },
     { &CLSID_VideoMixingRenderer, VMR7Impl_create },
     { &CLSID_VideoMixingRenderer9, VMR9Impl_create },
     { &CLSID_VideoRendererDefault, VideoRendererDefault_create },
@@ -314,7 +313,13 @@ DWORD WINAPI AMGetErrorTextA(HRESULT hr, LPSTR buffer, DWORD maxlen)
         return 0;
 
     res = AMGetErrorTextW(hr, errorW, ARRAY_SIZE(errorW));
-    return WideCharToMultiByte(CP_ACP, 0, errorW, res, buffer, maxlen, 0, 0);
+    if (!res)
+        return 0;
+
+    res = WideCharToMultiByte(CP_ACP, 0, errorW, -1, NULL, 0, 0, 0);
+    if (res > maxlen || !res)
+        return 0;
+    return WideCharToMultiByte(CP_ACP, 0, errorW, -1, buffer, maxlen, 0, 0) - 1;
 }
 
 /***********************************************************************

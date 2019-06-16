@@ -25,6 +25,7 @@ typedef struct _Capture Capture;
 
 Capture *qcap_driver_init(IPin*,USHORT) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_destroy(Capture*) DECLSPEC_HIDDEN;
+HRESULT qcap_driver_check_format(Capture*,const AM_MEDIA_TYPE*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_set_format(Capture*,AM_MEDIA_TYPE*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_get_format(const Capture*,AM_MEDIA_TYPE**) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_get_prop_range(Capture*,VideoProcAmpProperty,LONG*,LONG*,LONG*,LONG*,LONG*) DECLSPEC_HIDDEN;

@@ -59,7 +59,6 @@ DEFINE_EXPECT(ReceiveConnection);
 DEFINE_EXPECT(GetAllocatorRequirements);
 DEFINE_EXPECT(NotifyAllocator);
 DEFINE_EXPECT(Reconnect);
-DEFINE_EXPECT(Read_FccHandler);
 DEFINE_EXPECT(MediaSeeking_GetPositions);
 DEFINE_EXPECT(MemAllocator_GetProperties);
 DEFINE_EXPECT(MemInputPin_QueryInterface_IStream);
@@ -73,28 +72,6 @@ DEFINE_EXPECT(MediaSample_GetPointer);
 DEFINE_EXPECT(MediaSample_GetActualDataLength);
 DEFINE_EXPECT(MediaSample_GetSize);
 DEFINE_EXPECT(MediaSample_GetMediaTime);
-
-static int strcmp_wa(LPCWSTR strw, const char *stra)
-{
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return lstrcmpA(stra, buf);
-}
-
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    if(!str)
-        return NULL;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len-1);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
 
 typedef enum {
     SOURCE_FILTER,
@@ -1154,46 +1131,6 @@ static void init_test_filter(test_filter *This, PIN_DIRECTION dir, filter_type t
     This->filter_type = type;
 }
 
-static void test_AviMux_QueryInterface(void)
-{
-    IUnknown *avimux, *unk;
-    HRESULT hr;
-
-    hr = CoCreateInstance(&CLSID_AviDest, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&avimux);
-    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG),
-            "couldn't create AVI Mux filter, hr = %08x\n", hr);
-    if(hr != S_OK) {
-        win_skip("AVI Mux filter is not registered\n");
-        return;
-    }
-
-    hr = IUnknown_QueryInterface(avimux, &IID_IBaseFilter, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface(IID_IBaseFilter) failed: %x\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IUnknown_QueryInterface(avimux, &IID_IConfigAviMux, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface(IID_IConfigAviMux) failed: %x\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IUnknown_QueryInterface(avimux, &IID_IConfigInterleaving, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface(IID_IConfigInterleaving) failed: %x\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IUnknown_QueryInterface(avimux, &IID_IMediaSeeking, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface(IID_IMediaSeeking) failed: %x\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IUnknown_QueryInterface(avimux, &IID_IPersistMediaPropertyBag, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface(IID_IPersistMediaPropertyBag) failed: %x\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IUnknown_QueryInterface(avimux, &IID_ISpecifyPropertyPages, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface(IID_ISpecifyPropertyPages) failed: %x\n", hr);
-    IUnknown_Release(unk);
-
-    IUnknown_Release(avimux);
-}
-
 static HRESULT WINAPI MemAllocator_QueryInterface(IMemAllocator *iface, REFIID riid, void **ppvObject)
 {
     if(IsEqualIID(riid, &IID_IUnknown)) {
@@ -1737,119 +1674,6 @@ static void test_AviMux(char *arg)
     ok(ref == 0, "IStream was not destroyed (%d)\n", ref);
 }
 
-static HRESULT WINAPI PropertyBag_QueryInterface(IPropertyBag *iface, REFIID riid, void **ppv)
-{
-    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IPropertyBag, riid)) {
-        *ppv = iface;
-        return S_OK;
-    }
-
-    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
-    *ppv = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI PropertyBag_AddRef(IPropertyBag *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI PropertyBag_Release(IPropertyBag *iface)
-{
-    return 1;
-}
-
-static HRESULT WINAPI PropertyBag_Read(IPropertyBag *iface, LPCOLESTR pszPropName, VARIANT *pVar, IErrorLog *pErrorLog)
-{
-    ok(!pErrorLog, "pErrorLog = %p\n", pErrorLog);
-
-    if(!strcmp_wa(pszPropName, "FccHandler")) {
-        CHECK_EXPECT(Read_FccHandler);
-        V_VT(pVar) = VT_BSTR;
-        V_BSTR(pVar) = a2bstr("mrle");
-        return S_OK;
-    }
-
-    ok(0, "unexpected call: %s\n", wine_dbgstr_w(pszPropName));
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI PropertyBag_Write(IPropertyBag *iface, LPCOLESTR pszPropName, VARIANT *pVar)
-{
-    ok(0, "unexpected call: %s\n", wine_dbgstr_w(pszPropName));
-    return E_NOTIMPL;
-}
-
-static const IPropertyBagVtbl PropertyBagVtbl = {
-    PropertyBag_QueryInterface,
-    PropertyBag_AddRef,
-    PropertyBag_Release,
-    PropertyBag_Read,
-    PropertyBag_Write
-};
-
-static IPropertyBag PropertyBag = { &PropertyBagVtbl };
-
-static void test_AviCo(void)
-{
-    IPersistPropertyBag *persist_bag;
-    IPin *pin, *in_pin, *out_pin;
-    IEnumPins *enum_pins;
-    IBaseFilter *avico;
-    PIN_INFO pin_info;
-    HRESULT hres;
-
-    static const WCHAR inputW[] = {'I','n','p','u','t',0};
-    static const WCHAR outputW[] = {'O','u','t','p','u','t',0};
-
-    hres = CoCreateInstance(&CLSID_AVICo, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&avico);
-    if(hres == REGDB_E_CLASSNOTREG || hres == CLASS_E_CLASSNOTAVAILABLE) {
-        win_skip("CLSID_AVICo not registered/available\n");
-        return;
-    }
-    ok(hres == S_OK, "Could not create CLSID_AVICo class: %08x\n", hres);
-
-    hres = IBaseFilter_QueryInterface(avico, &IID_IPin, (void**)&pin);
-    ok(hres == E_NOINTERFACE, "QueryInterface(IID_IPin) returned: %08x\n", hres);
-
-    hres = IBaseFilter_QueryInterface(avico, &IID_IPersistPropertyBag, (void**)&persist_bag);
-    ok(hres == S_OK, "QueryInterface(IID_IPersistPropertyBag) returned: %08x\n", hres);
-
-    SET_EXPECT(Read_FccHandler);
-    hres = IPersistPropertyBag_Load(persist_bag, &PropertyBag, NULL);
-    ok(hres == S_OK, "Load failed: %08x\n", hres);
-    CHECK_CALLED(Read_FccHandler);
-
-    IPersistPropertyBag_Release(persist_bag);
-
-    hres = IBaseFilter_EnumPins(avico, &enum_pins);
-    ok(hres == S_OK, "EnumPins failed: %08x\n", hres);
-
-    hres = IEnumPins_Next(enum_pins, 1, &in_pin, NULL);
-    ok(hres == S_OK, "Next failed: %08x\n", hres);
-
-    hres = IPin_QueryPinInfo(in_pin, &pin_info);
-    ok(hres == S_OK, "QueryPinInfo failed: %08x\n", hres);
-    ok(pin_info.pFilter == avico, "pin_info.pFilter != avico\n");
-    ok(pin_info.dir == PINDIR_INPUT, "pin_info.dir = %d\n", pin_info.dir);
-    ok(!lstrcmpW(pin_info.achName, inputW), "pin_info.achName = %s\n", wine_dbgstr_w(pin_info.achName));
-
-    hres = IEnumPins_Next(enum_pins, 1, &out_pin, NULL);
-    ok(hres == S_OK, "Next failed: %08x\n", hres);
-
-    hres = IPin_QueryPinInfo(out_pin, &pin_info);
-    ok(hres == S_OK, "QueryPinInfo failed: %08x\n", hres);
-    ok(pin_info.pFilter == avico, "pin_info.pFilter != avico\n");
-    ok(pin_info.dir == PINDIR_OUTPUT, "pin_info.dir = %d\n", pin_info.dir);
-    ok(!lstrcmpW(pin_info.achName, outputW), "pin_info.achName = %s\n", wine_dbgstr_w(pin_info.achName));
-
-    IEnumPins_Release(enum_pins);
-
-    IPin_Release(in_pin);
-    IPin_Release(out_pin);
-    IBaseFilter_Release(avico);
-}
-
 /* Outer IUnknown for COM aggregation tests */
 struct unk_impl {
     IUnknown IUnknown_iface;
@@ -1907,9 +1731,9 @@ static void test_COM_vfwcapture(void)
     /* COM aggregation */
     hr = CoCreateInstance(&CLSID_VfwCapture, &unk_obj.IUnknown_iface, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&unk_obj.inner_unk);
-    if (hr == REGDB_E_CLASSNOTREG)
+    if ((hr == REGDB_E_CLASSNOTREG) || (hr == CLASS_E_CLASSNOTAVAILABLE))
     {
-        win_skip("CLSID_VfwCapture not registered\n");
+        win_skip("CLSID_VfwCapture not supported (0x%x)\n", hr);
         return;
     }
     ok(hr == S_OK, "VfwCapture create failed: %08x\n", hr);
@@ -2003,9 +1827,7 @@ START_TEST(qcap)
 
         arg_c = winetest_get_mainargs(&arg_v);
 
-        test_AviMux_QueryInterface();
         test_AviMux(arg_c>2 ? arg_v[2] : NULL);
-        test_AviCo();
         test_COM_vfwcapture();
 
         CoUninitialize();

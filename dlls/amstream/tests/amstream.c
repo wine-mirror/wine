@@ -29,6 +29,10 @@
 #include "ks.h"
 #include "ksmedia.h"
 
+static const WCHAR primary_video_sink_id[] = {'I','{','A','3','5','F','F','5','6','A',
+        '-','9','F','D','A','-','1','1','D','0','-','8','F','D','F',
+        '-','0','0','C','0','4','F','D','9','1','8','9','D','}',0};
+
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 {
@@ -46,8 +50,9 @@ static IDirectDrawSurface7* pdds7;
 static IAMMultiMediaStream *create_ammultimediastream(void)
 {
     IAMMultiMediaStream *stream = NULL;
-    CoCreateInstance(&CLSID_AMMultiMediaStream, NULL, CLSCTX_INPROC_SERVER, &IID_IAMMultiMediaStream,
-        (void**)&stream);
+    HRESULT hr = CoCreateInstance(&CLSID_AMMultiMediaStream, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IAMMultiMediaStream, (void **)&stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     return stream;
 }
 
@@ -93,6 +98,119 @@ static void release_directdraw(void)
 {
     IDirectDrawSurface7_Release(pdds7);
     IDirectDraw7_Release(pdd7);
+}
+
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IMediaStreamFilter *filter;
+    IMediaStream *stream;
+    HRESULT hr;
+    ULONG ref;
+
+    /* FIXME: This call should not be necessary. */
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(mmstream, &IID_IAMMultiMediaStream, TRUE);
+    check_interface(mmstream, &IID_IMultiMediaStream, TRUE);
+    check_interface(mmstream, &IID_IUnknown, TRUE);
+
+    check_interface(mmstream, &IID_IAMMediaStream, FALSE);
+    check_interface(mmstream, &IID_IAMMediaTypeStream, FALSE);
+    check_interface(mmstream, &IID_IAudioMediaStream, FALSE);
+    check_interface(mmstream, &IID_IBaseFilter, FALSE);
+    check_interface(mmstream, &IID_IDirectDrawMediaStream, FALSE);
+    check_interface(mmstream, &IID_IMediaFilter, FALSE);
+    check_interface(mmstream, &IID_IMediaStream, FALSE);
+    check_interface(mmstream, &IID_IMediaStreamFilter, FALSE);
+    check_interface(mmstream, &IID_IPin, FALSE);
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    check_interface(filter, &IID_IMediaFilter, TRUE);
+    check_interface(filter, &IID_IMediaStreamFilter, TRUE);
+    check_interface(filter, &IID_IPersist, TRUE);
+    check_interface(filter, &IID_IUnknown, TRUE);
+
+    check_interface(filter, &IID_IAMMediaStream, FALSE);
+    check_interface(filter, &IID_IAMMediaTypeStream, FALSE);
+    check_interface(filter, &IID_IAMMultiMediaStream, FALSE);
+    check_interface(filter, &IID_IAudioMediaStream, FALSE);
+    check_interface(filter, &IID_IDirectDrawMediaStream, FALSE);
+    check_interface(filter, &IID_IMediaStream, FALSE);
+    check_interface(filter, &IID_IMultiMediaStream, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+
+    IMediaStreamFilter_Release(filter);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(stream, &IID_IAMMediaStream, TRUE);
+    check_interface(stream, &IID_IAudioMediaStream, TRUE);
+    check_interface(stream, &IID_IMediaStream, TRUE);
+    check_interface(stream, &IID_IPin, TRUE);
+    check_interface(stream, &IID_IUnknown, TRUE);
+
+    check_interface(stream, &IID_IAMMediaTypeStream, FALSE);
+    check_interface(stream, &IID_IAMMultiMediaStream, FALSE);
+    check_interface(stream, &IID_IBaseFilter, FALSE);
+    check_interface(stream, &IID_IDirectDrawMediaStream, FALSE);
+    check_interface(stream, &IID_IMediaFilter, FALSE);
+    check_interface(stream, &IID_IMediaStreamFilter, FALSE);
+    check_interface(stream, &IID_IMultiMediaStream, FALSE);
+    check_interface(stream, &IID_IPersist, FALSE);
+
+    IMediaStream_Release(stream);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(stream, &IID_IAMMediaStream, TRUE);
+    check_interface(stream, &IID_IDirectDrawMediaStream, TRUE);
+    check_interface(stream, &IID_IMediaStream, TRUE);
+    check_interface(stream, &IID_IPin, TRUE);
+    check_interface(stream, &IID_IUnknown, TRUE);
+
+    check_interface(stream, &IID_IAMMediaTypeStream, FALSE);
+    check_interface(stream, &IID_IAMMultiMediaStream, FALSE);
+    check_interface(stream, &IID_IAudioMediaStream, FALSE);
+    check_interface(stream, &IID_IBaseFilter, FALSE);
+    check_interface(stream, &IID_IDirectDraw, FALSE);
+    check_interface(stream, &IID_IMediaFilter, FALSE);
+    check_interface(stream, &IID_IMediaStreamFilter, FALSE);
+    check_interface(stream, &IID_IMultiMediaStream, FALSE);
+    check_interface(stream, &IID_IPersist, FALSE);
+
+    IMediaStream_Release(stream);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %u.\n", ref);
 }
 
 static void test_openfile(void)
@@ -508,6 +626,226 @@ static void test_media_streams(void)
     IAMMultiMediaStream_Release(pams);
 }
 
+static void test_enum_pins(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IMediaStreamFilter *filter;
+    IEnumPins *enum1, *enum2;
+    IMediaStream *stream;
+    IPin *pins[3], *pin;
+    ULONG ref, count;
+    HRESULT hr;
+
+    /* FIXME: This call should not be necessary. */
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = get_refcount(filter);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+
+    hr = IMediaStreamFilter_EnumPins(filter, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_EnumPins(filter, &enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = get_refcount(filter);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(enum1);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+
+    hr = IEnumPins_Next(enum1, 1, NULL, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 0);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Reset() isn't enough; we have to call EnumPins() again to see the updated
+     * pin count. */
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumPins_Release(enum1);
+
+    hr = IMediaStreamFilter_EnumPins(filter, &enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = get_refcount(filter);
+    todo_wine ok(ref == 4, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(enum1);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(pin);
+    todo_wine ok(ref == 4, "Got unexpected refcount %d.\n", ref);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pins[0] == pin, "Expected pin %p, got %p.\n", pin, pins[0]);
+    ref = get_refcount(filter);
+    todo_wine ok(ref == 4, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(enum1);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(pin);
+    todo_wine ok(ref == 5, "Got unexpected refcount %d.\n", ref);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    ok(pins[0] == pin, "Expected pin %p, got %p.\n", pin, pins[0]);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 2, pins, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 2, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    ok(pins[0] == pin, "Expected pin %p, got %p.\n", pin, pins[0]);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Clone(enum1, &enum2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum2, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pins[0] == pin, "Expected pin %p, got %p.\n", pin, pins[0]);
+    IPin_Release(pins[0]);
+
+    IEnumPins_Release(enum2);
+    IEnumPins_Release(enum1);
+
+    IMediaStreamFilter_Release(filter);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IMediaStream_Release(stream);
+    ref = IPin_Release(pin);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_find_pin(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IMediaStreamFilter *filter;
+    IMediaStream *stream;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+
+    /* FIXME: This call should not be necessary. */
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_FindPin(filter, primary_video_sink_id, &pin2);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_FindPin(filter, primary_video_sink_id, &pin2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin2 == pin, "Expected pin %p, got %p.\n", pin, pin2);
+
+    IPin_Release(pin2);
+    IPin_Release(pin);
+    IMediaStreamFilter_Release(filter);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_pin_info(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IMediaStreamFilter *filter;
+    IMediaStream *stream;
+    PIN_DIRECTION dir;
+    ULONG ref, count;
+    PIN_INFO info;
+    HRESULT hr;
+    WCHAR *id;
+    IPin *pin;
+
+    /* FIXME: This call should not be necessary. */
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(info.pFilter == (IBaseFilter *)filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
+    ok(!lstrcmpW(info.achName, primary_video_sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!lstrcmpW(id, primary_video_sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    hr = IPin_QueryInternalConnections(pin, NULL, &count);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    IPin_Release(pin);
+    IMediaStreamFilter_Release(filter);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_IDirectDrawStreamSample(void)
 {
     DDSURFACEDESC desc = { sizeof(desc) };
@@ -878,7 +1216,11 @@ START_TEST(amstream)
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
+    test_interfaces();
     test_media_streams();
+    test_enum_pins();
+    test_find_pin();
+    test_pin_info();
     test_IDirectDrawStreamSample();
 
     file = CreateFileW(filenameW, 0, 0, NULL, OPEN_EXISTING, 0, NULL);

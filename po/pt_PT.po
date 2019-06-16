@@ -79,7 +79,7 @@ msgstr "Informação de Suporte"
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
 #: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
-#: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
+#: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
@@ -94,7 +94,7 @@ msgstr ""
 msgid "Publisher:"
 msgstr "Editor:"
 
-#: appwiz.rc:81 winefile.rc:166
+#: appwiz.rc:81 winefile.rc:165
 msgid "Version:"
 msgstr "Versão:"
 
@@ -163,8 +163,8 @@ msgstr "&Instalar"
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
 #: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
 msgstr "Cancelar"
@@ -219,7 +219,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Não especificado"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
 msgid "Name"
 msgstr "Nome"
 
@@ -342,7 +342,7 @@ msgstr ""
 msgid "hours"
 msgstr ""
 
-#: comctl32.rc:68 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:156
 msgid "Properties for %s"
 msgstr "Propriedades de %s"
 
@@ -485,7 +485,7 @@ msgid "Dri&ves:"
 msgstr "Con&troladores:"
 
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
-#: winefile.rc:173
+#: winefile.rc:172
 msgid "&Read Only"
 msgstr "&Apenas de leitura"
 
@@ -737,7 +737,7 @@ msgstr "&Propriedades"
 msgid "Print to fi&le"
 msgstr "Para &ficheiro"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "&Nome:"
 
@@ -3027,7 +3027,7 @@ msgstr "Localização"
 msgid "Select a certificate"
 msgstr "Seleccione o Depósito de Certificados"
 
-#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
 msgstr "Ainda não implementado"
 
@@ -3498,7 +3498,7 @@ msgstr ""
 msgid "Delete"
 msgstr "Apagar"
 
-#: inetcpl.rc:90 winefile.rc:115
+#: inetcpl.rc:90 winefile.rc:114
 msgid "Security"
 msgstr "Segurança"
 
@@ -4202,7 +4202,7 @@ msgstr "Tempo limite do semáforo.\n"
 msgid "Insufficient buffer.\n"
 msgstr "Buffer insuficiente.\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr "Nome inválido.\n"
 
@@ -4995,7 +4995,7 @@ msgid "Too many links.\n"
 msgstr "Demasiadas ligações.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "Versão de Windows mais recente necessária.\n"
 
 #: winerror.mc:1483
@@ -5774,7 +5774,7 @@ msgstr "Classe inexistente.\n"
 msgid "Class has open windows.\n"
 msgstr "A classe tem janelas abertas.\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "Índice inválido.\n"
 
@@ -6857,6 +6857,544 @@ msgstr ""
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr "Enviar Correio"
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr ""
+
+#: mferror.mc:599
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Sink has not been finalized.\n"
+msgstr "UUID do objecto não encontrado.\n"
+
+#: mferror.mc:32
+#, fuzzy
+#| msgid "Installation platform not supported.\n"
+msgid "Media Foundation platform is not initialized.\n"
+msgstr "Plataforma de instalação não suportada.\n"
+
+#: mferror.mc:39
+#, fuzzy
+#| msgid "Byte count too small.\n"
+msgid "Buffer is too small.\n"
+msgstr "Contagem de bytes muito pequena.\n"
+
+#: mferror.mc:46
+#, fuzzy
+#| msgid "Invalid query syntax.\n"
+msgid "Invalid request.\n"
+msgstr "Sintaxe de consulta inválida.\n"
+
+#: mferror.mc:53
+#, fuzzy
+#| msgid "Invalid segment number.\n"
+msgid "Invalid stream number.\n"
+msgstr "Número de segmento inválido.\n"
+
+#: mferror.mc:60
+#, fuzzy
+#| msgid "Invalid data type.\n"
+msgid "Invalid media type.\n"
+msgstr "Tipo de dados inválido.\n"
+
+#: mferror.mc:67
+#, fuzzy
+#| msgid "No more entries.\n"
+msgid "No more input is accepted.\n"
+msgstr "Sem mais entradas.\n"
+
+#: mferror.mc:74
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Object is not initialized.\n"
+msgstr "UUID do objecto não encontrado.\n"
+
+#: mferror.mc:81
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Representation is not supported.\n"
+msgstr "Operação não suportada.\n"
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr ""
+
+#: mferror.mc:95
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported service.\n"
+msgstr "Tipo não suportado.\n"
+
+#: mferror.mc:102
+#, fuzzy
+#| msgid "Unexpected network error.\n"
+msgid "Unexpected error.\n"
+msgstr "Erro de rede inesperado.\n"
+
+#: mferror.mc:116
+#, fuzzy
+#| msgid "Invalid time.\n"
+msgid "Invalid type.\n"
+msgstr "Tempo inválido.\n"
+
+#: mferror.mc:123
+#, fuzzy
+#| msgid "Invalid pixel format.\n"
+msgid "Invalid file format.\n"
+msgstr "Formato de pixel inválido.\n"
+
+#: mferror.mc:137
+#, fuzzy
+#| msgid "Invalid time.\n"
+msgid "Invalid timestamp.\n"
+msgstr "Tempo inválido.\n"
+
+#: mferror.mc:144
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported scheme.\n"
+msgstr "Tipo não suportado.\n"
+
+#: mferror.mc:151
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported bytestream type.\n"
+msgstr "Tipo não suportado.\n"
+
+#: mferror.mc:158
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported time format.\n"
+msgstr "Tipo não suportado.\n"
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:179
+#, fuzzy
+#| msgid "Invalid data.\n"
+msgid "Invalid stream data.\n"
+msgstr "Dados inválidos.\n"
+
+#: mferror.mc:186
+#, fuzzy
+#| msgid "Help not available."
+msgid "Realtime support is not available.\n"
+msgstr "Ajuda não disponível."
+
+#: mferror.mc:193
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported rate.\n"
+msgstr "Tipo não suportado.\n"
+
+#: mferror.mc:200
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported thinning.\n"
+msgstr "Tipo não suportado.\n"
+
+#: mferror.mc:207
+#, fuzzy
+#| msgid "Request not supported.\n"
+msgid "Reversing is not supported.\n"
+msgstr "Pedido não suportado.\n"
+
+#: mferror.mc:214
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Unsupported rate transition.\n"
+msgstr "Nível de autorização não suportado.\n"
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+#: mferror.mc:228
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Object or value wasn't found.\n"
+msgstr "UUID do objecto não encontrado.\n"
+
+#: mferror.mc:235
+#, fuzzy
+#| msgid "Help not available."
+msgid "Value is not available.\n"
+msgstr "Ajuda não disponível."
+
+#: mferror.mc:242
+#, fuzzy
+#| msgid "Help not available."
+msgid "Clock is not available.\n"
+msgstr "Ajuda não disponível."
+
+#: mferror.mc:263
+#, fuzzy
+#| msgid "Extended attributes not supported.\n"
+msgid "Multiple subscribers are not supported.\n"
+msgstr "Atributos extendidos não suportados.\n"
+
+#: mferror.mc:270
+#, fuzzy
+#| msgid "The driver was not enabled."
+msgid "The timer was orphaned.\n"
+msgstr "O controlador não foi activado."
+
+#: mferror.mc:277
+#, fuzzy
+#| msgid "Character translation table open failed.\n"
+msgid "State transition is pending.\n"
+msgstr "Abertura da tabela de tradução de caracteres falhou.\n"
+
+#: mferror.mc:284
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Unsupported state transition.\n"
+msgstr "Nível de autorização não suportado.\n"
+
+#: mferror.mc:291
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "Unrecoverable error occurred.\n"
+msgstr "Ocorreu um erro de impressão."
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr ""
+
+#: mferror.mc:305
+#, fuzzy
+#| msgid "Temporary directory not writable.\n"
+msgid "Sample is not writable.\n"
+msgstr "A pasta temporária não pode ser escrita.\n"
+
+#: mferror.mc:312
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Key is invalid.\n"
+msgstr "Caminho inválido.\n"
+
+#: mferror.mc:319
+#, fuzzy
+#| msgid "Wrong stub version.\n"
+msgid "Bad startup version.\n"
+msgstr "Versão stub errada.\n"
+
+#: mferror.mc:326
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported caption.\n"
+msgstr "Tipo não suportado.\n"
+
+#: mferror.mc:333
+#, fuzzy
+#| msgid "Invalid workstation.\n"
+msgid "Invalid position.\n"
+msgstr "Estação de trabalho inválida.\n"
+
+#: mferror.mc:340
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Attribute is not found.\n"
+msgstr "Ficheiro não encontrado.\n"
+
+#: mferror.mc:347
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Property type is not allowed.\n"
+msgstr "Tipo de gancho não permitido.\n"
+
+#: mferror.mc:354
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Property type is not supported.\n"
+msgstr "Operação não suportada.\n"
+
+#: mferror.mc:361
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is empty.\n"
+msgstr "A pasta não está vazia.\n"
+
+#: mferror.mc:368
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is not empty.\n"
+msgstr "A pasta não está vazia.\n"
+
+#: mferror.mc:375
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Vector property is not allowed.\n"
+msgstr "Tipo de gancho não permitido.\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr ""
+
+#: mferror.mc:389
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Operation was cancelled.\n"
+msgstr "Operação cancelada pelo utilizador.\n"
+
+#: mferror.mc:396
+#, fuzzy
+#| msgid "Server not disabled.\n"
+msgid "Bytestream is not seekable.\n"
+msgstr "Servidor não desligado.\n"
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr ""
+
+#: mferror.mc:410
+#, fuzzy
+#| msgid "Cannot create service thread.\n"
+msgid "Cannot parse bytestream.\n"
+msgstr "Não consegue criar thread de serviço.\n"
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+
+#: mferror.mc:424
+#, fuzzy
+#| msgid "Unknown interface.\n"
+msgid "Unknown bytestream length.\n"
+msgstr "Interface desconhecida.\n"
+
+#: mferror.mc:431
+#, fuzzy
+#| msgid "Invalid index.\n"
+msgid "Invalid work queue index.\n"
+msgstr "Índice inválido.\n"
+
+#: mferror.mc:438
+#, fuzzy
+#| msgid "No logon servers available.\n"
+msgid "No events available.\n"
+msgstr "Nenhum servidor de ligação disponível.\n"
+
+#: mferror.mc:445
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Invalid media source state transition.\n"
+msgstr "Nível de autorização não suportado.\n"
+
+#: mferror.mc:452
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "End of media stream has been reached.\n"
+msgstr "O Registo foi recuperado.\n"
+
+#: mferror.mc:459
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:466
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "Media stream has no duration set.\n"
+msgstr "O Registo foi recuperado.\n"
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid.\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property wasn't found.\n"
+msgstr "Conjunto de propriedades não encontrado.\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is read-only.\n"
+msgstr "A pasta não está vazia.\n"
+
+#: mferror.mc:494
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Property is not allowed.\n"
+msgstr "Tipo de gancho não permitido.\n"
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is not started.\n"
+msgstr "Recurso em uso.\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported media format.\n"
+msgstr "Tipo não suportado.\n"
+
+#: mferror.mc:515
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is in wrong state.\n"
+msgstr "Recurso em uso.\n"
+
+#: mferror.mc:522
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No media streams were selected.\n"
+msgstr "Sem dados detectados.\n"
+
+#: mferror.mc:529
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported media source characteristics.\n"
+msgstr "Tipo não suportado.\n"
+
+#: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr ""
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr ""
+
+#: mferror.mc:550
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "O Registo foi recuperado.\n"
+
+#: mferror.mc:557
+#, fuzzy
+#| msgid "Domain already exists.\n"
+msgid "Stream sink already exists.\n"
+msgstr "Domínio já existe.\n"
+
+#: mferror.mc:564
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Sample allocation was canceled.\n"
+msgstr "Operação cancelada pelo utilizador.\n"
+
+#: mferror.mc:571
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Sample allocator is empty.\n"
+msgstr "A pasta não está vazia.\n"
+
+#: mferror.mc:578
+#, fuzzy
+#| msgid "Class already exists.\n"
+msgid "Sink was already stopped.\n"
+msgstr "Classe já existente.\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr ""
+
+#: mferror.mc:592
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No streams were selected for the sink.\n"
+msgstr "Sem dados detectados.\n"
+
+#: mferror.mc:606
+#, fuzzy
+#| msgid "File name is too long.\n"
+msgid "Metadata was too long.\n"
+msgstr "Nome de ficheiro é muito comprido.\n"
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr ""
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr ""
+
+#: mferror.mc:627
+#, fuzzy
+#| msgid "Connection invalid.\n"
+msgid "Optional node is invalid.\n"
+msgstr "Ligação inválida.\n"
+
+#: mferror.mc:634
+#, fuzzy
+#| msgid "Cannot find the printer."
+msgid "Cannot find decryptor.\n"
+msgstr "Não é possível encontrar uma impressora."
+
+#: mferror.mc:641
+#, fuzzy
+#| msgid "Module not found.\n"
+msgid "Codec was not found.\n"
+msgstr "Módulo não encontrado.\n"
+
+#: mferror.mc:648
+#, fuzzy
+#| msgid "Cannot get call handle.\n"
+msgid "Cannot connect topology nodes.\n"
+msgstr "Não consegue obter descritor da chamada.\n"
+
+#: mferror.mc:655
+#, fuzzy
+#| msgid "Request not supported.\n"
+msgid "Topology request is not supported.\n"
+msgstr "Pedido não suportado.\n"
+
+#: mferror.mc:662
+#, fuzzy
+#| msgid "Invalid group attributes.\n"
+msgid "Invalid topology time attributes.\n"
+msgstr "Atributos de grupo inválidos.\n"
+
+#: mferror.mc:669
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:676
+#, fuzzy
+#| msgid "Installation source is missing.\n"
+msgid "Presentation descriptor is missing.\n"
+msgstr "Origem de instalação em falta.\n"
+
+#: mferror.mc:683
+#, fuzzy
+#| msgid "Index is missing.\n"
+msgid "Stream descriptor is missing.\n"
+msgstr "Índice em falta.\n"
+
+#: mferror.mc:690
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Stream descriptor is not selected.\n"
+msgstr "O dispositivo está ligado.\n"
+
+#: mferror.mc:697
+#, fuzzy
+#| msgid "Index is missing.\n"
+msgid "Source is missing.\n"
+msgstr "Índice em falta.\n"
+
+#: mferror.mc:704
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:711
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:718
+#, fuzzy
+#| msgid "Class already exists.\n"
+msgid "Clock state was already set.\n"
+msgstr "Classe já existente.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8616,7 +9154,7 @@ msgid "&Open:"
 msgstr "&Abrir:"
 
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:130
+#: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Procurar..."
 
@@ -8630,7 +9168,7 @@ msgstr "Tipo de ficheiro"
 msgid "Location:"
 msgstr "Localização:"
 
-#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+#: shell32.rc:361 shell32.rc:394 winefile.rc:169
 msgid "Size:"
 msgstr "Tamanho:"
 
@@ -8646,11 +9184,11 @@ msgstr "Data de criação"
 msgid "Attributes:"
 msgstr "&Atributos:"
 
-#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+#: shell32.rc:371 shell32.rc:408 winefile.rc:173
 msgid "H&idden"
 msgstr "&Oculto"
 
-#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+#: shell32.rc:372 shell32.rc:409 winefile.rc:174
 msgid "&Archive"
 msgstr "Ar&quivo"
 
@@ -8678,7 +9216,7 @@ msgstr "Modificado"
 msgid "Last accessed:"
 msgstr "Última alteração:"
 
-#: shell32.rc:138 shell32.rc:142 winefile.rc:108
+#: shell32.rc:138 shell32.rc:142 winefile.rc:107
 msgid "Size"
 msgstr "Tamanho"
 
@@ -8690,7 +9228,7 @@ msgstr "Tipo"
 msgid "Modified"
 msgstr "Modificado"
 
-#: shell32.rc:141 winefile.rc:172 winefile.rc:114
+#: shell32.rc:141 winefile.rc:171 winefile.rc:113
 msgid "Attributes"
 msgstr "Atributos"
 
@@ -8718,7 +9256,7 @@ msgstr "Localização original"
 msgid "Date deleted"
 msgstr "Data de exclusão"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Área de trabalho"
@@ -8840,7 +9378,7 @@ msgstr "Programas (x86)"
 msgid "Contacts"
 msgstr "Contatos"
 
-#: shell32.rc:225 winefile.rc:113
+#: shell32.rc:225 winefile.rc:112
 msgid "Links"
 msgstr "Ligações"
 
@@ -10696,9 +11234,13 @@ msgstr ""
 "pode usá-los juntos."
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "O porto MIDI indicado já está em uso. Aguarde até que esteja livre, e tente "
 "novamente."
@@ -10716,9 +11258,13 @@ msgid "An error occurred with the specified port."
 msgstr "Ocorreu um erro no porto indicado."
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "Todos os temporizadores de multimédia estão a ser usados por outras "
 "aplicações. Feche uma dessas aplicações, então tente novamente."
@@ -11469,8 +12015,8 @@ msgid ""
 "/affinity mask Start the program with the specified affinity mask.\n"
 "/wait          Wait for the started program to finish, then exit with its\n"
 "exit code.\n"
-"/unix          Use a Unix filename and start the file like windows\n"
-"explorer.\n"
+"/unix          Use a Unix filename and start the file like Windows\n"
+"Explorer.\n"
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
@@ -13052,7 +13598,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "Ficheiro '%s' existe. Não sobreescrever."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr ""
 "Gravar grupo como '%s' para prevenir a sobreescrita dos ficheiros originais."
 
@@ -15025,8 +15571,12 @@ msgid "Drive configuration"
 msgstr "Configuração de unidades"
 
 #: winecfg.rc:233
+#, fuzzy
+#| msgid ""
+#| "Failed to connect to the mount manager, the drive configuration cannot be "
+#| "edited."
 msgid ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
+"Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
 "Falhou a ligação ao gestor de unidades, a configuração da unidade não pode "
@@ -15316,11 +15866,17 @@ msgid "System drive"
 msgstr "Unidade do sistema"
 
 #: winecfg.rc:76
+#, fuzzy
+#| msgid ""
+#| "Are you sure you want to delete drive C?\n"
+#| "\n"
+#| "Most Windows applications expect drive C to exist, and will die messily "
+#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
+"it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 "Tem certeza que deseja apaga a unidade C?\n"
 "\n"
@@ -15834,67 +16390,67 @@ msgstr "Lado a lado &verticalmente\tCtrl+F4"
 msgid "&About Wine File Manager"
 msgstr "&Acerca do Gestor de Ficheiros do Wine"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Select destination"
 msgstr "Seleccionar destino"
 
-#: winefile.rc:135
+#: winefile.rc:134
 msgid "By File Type"
 msgstr "Por tipo de ficheiro"
 
-#: winefile.rc:140
+#: winefile.rc:139
 msgid "File type"
 msgstr "Tipo de ficheiro"
 
-#: winefile.rc:141
+#: winefile.rc:140
 msgid "&Directories"
 msgstr "P&astas"
 
-#: winefile.rc:143
+#: winefile.rc:142
 msgid "&Programs"
 msgstr "&Programas"
 
-#: winefile.rc:145
+#: winefile.rc:144
 msgid "Docu&ments"
 msgstr "Do&cumentos"
 
-#: winefile.rc:147
+#: winefile.rc:146
 msgid "&Other files"
 msgstr "&Outros ficheiros"
 
-#: winefile.rc:149
+#: winefile.rc:148
 msgid "Show Hidden/&System Files"
 msgstr "&Mostrar ficheiros ocultos/sistema"
 
-#: winefile.rc:160
+#: winefile.rc:159
 msgid "&File Name:"
 msgstr "&Nome do ficheiro:"
 
-#: winefile.rc:162
+#: winefile.rc:161
 msgid "Full &Path:"
 msgstr "&Localização Completa:"
 
-#: winefile.rc:164
+#: winefile.rc:163
 msgid "Last Change:"
 msgstr "Última alteração:"
 
-#: winefile.rc:168
+#: winefile.rc:167
 msgid "Cop&yright:"
 msgstr "Direitos de autor:"
 
-#: winefile.rc:176
+#: winefile.rc:175
 msgid "&System"
 msgstr "&Sistema"
 
-#: winefile.rc:177
+#: winefile.rc:176
 msgid "&Compressed"
 msgstr "&Comprimido"
 
-#: winefile.rc:178
+#: winefile.rc:177
 msgid "Version information"
 msgstr "Informação de versão"
 
-#: winefile.rc:194
+#: winefile.rc:193
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr ""
@@ -15915,31 +16471,27 @@ msgstr "Gestor de Ficheiros do Wine"
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:99
-msgid "unixfs"
-msgstr "unixfs"
-
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Shell"
 msgstr "Linha de comandos"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Creation date"
 msgstr "Data de criação"
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Access date"
 msgstr "Data de acesso"
 
-#: winefile.rc:111
+#: winefile.rc:110
 msgid "Modification date"
 msgstr "Data de modificação"
 
-#: winefile.rc:112
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr "Índice/Inode"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr "%1 de %2 livre"
 
@@ -16649,7 +17201,7 @@ msgid ""
 "\tmore files.\n"
 "[/S]  Copy directories and subdirectories.\n"
 "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-"[/Q]  Do not list names during copy, that is be quiet.\n"
+"[/Q]  Do not list names during copy; that is, be quiet.\n"
 "[/F]  Show full source and destination names during copy.\n"
 "[/L]  Simulate operation, showing names which would be copied.\n"
 "[/W]  Prompts before beginning the copy operation.\n"
@@ -16659,13 +17211,13 @@ msgid ""
 "[/P]  Prompts on each source file before copying.\n"
 "[/N]  Copy using short names.\n"
 "[/U]  Copy only files which already exist in destination.\n"
-"[/R]  Overwrite any read only files.\n"
+"[/R]  Overwrite any read-only files.\n"
 "[/H]  Include hidden and system files in the copy.\n"
 "[/C]  Continue even if an error occurs during the copy.\n"
 "[/A]  Only copy files with archive attribute set.\n"
 "[/M]  Only copy files with archive attribute set, removes the\n"
 "\tarchive attribute.\n"
-"[/K]  Copy file attributes, without this attributes are not preserved.\n"
+"[/K]  Copy file attributes; without this, attributes are not preserved.\n"
 "[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
 "\t\tIf no date is supplied, only copy if destination is older\n"
 "\t\tthan source.\n"

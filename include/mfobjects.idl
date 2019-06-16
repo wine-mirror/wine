@@ -270,6 +270,8 @@ typedef enum _MFVideoTransferMatrix {
     MFVideoTransferMatrix_BT709        = 1,
     MFVideoTransferMatrix_BT601        = 2,
     MFVideoTransferMatrix_SMPTE240M    = 3,
+    MFVideoTransferMatrix_BT2020_10    = 4,
+    MFVideoTransferMatrix_BT2020_12    = 5,
     MFVideoTransferMatrix_Last,
     MFVideoTransferMatrix_ForceDWORD   = 0x7fffffff
 } MFVideoTransferMatrix;
@@ -553,6 +555,8 @@ interface IMFMediaEvent : IMFAttributes
     HRESULT GetValue([out] PROPVARIANT *pvValue);
 }
 
+cpp_quote("#define MF_EVENT_FLAG_NO_WAIT 0x00000001")
+
 [
     object,
     uuid(2cd0bd52-bcd5-4b89-b62c-eadc0c031e7d)
@@ -611,6 +615,7 @@ cpp_quote("#define MFBYTESTREAM_IS_DIRECTORY               0x00000080")
 cpp_quote("#define MFBYTESTREAM_HAS_SLOW_SEEK              0x00000100")
 cpp_quote("#define MFBYTESTREAM_IS_PARTIALLY_DOWNLOADED    0x00000200")
 cpp_quote("#define MFBYTESTREAM_SHARE_WRITE                0x00000400")
+cpp_quote("#define MFBYTESTREAM_DOES_NOT_USE_NETWORK       0x00000800")
 
 cpp_quote("#define MFBYTESTREAM_SEEK_FLAG_CANCEL_PENDING_IO  0x00000001")
 
@@ -640,6 +645,23 @@ typedef enum  {
     MF_FILEFLAGS_NOBUFFERING           = 0x00000001,
     MF_FILEFLAGS_ALLOW_WRITE_SHARING   = 0x00000002
 } MF_FILE_FLAGS;
+
+[
+    object,
+    uuid(8feed468-6f7e-440d-869a-49bdd283ad0d),
+]
+interface IMFSampleOutputStream : IUnknown
+{
+    HRESULT BeginWriteSample(
+            [in] IMFSample *sample,
+            [in] IMFAsyncCallback *callback,
+            [in] IUnknown *state);
+
+    HRESULT EndWriteSample(
+            [in] IMFAsyncResult *result);
+
+    HRESULT Close();
+}
 
 [
     object,

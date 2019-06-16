@@ -63,7 +63,9 @@ static void process_dump( struct object *obj, int verbose );
 static struct object_type *process_get_type( struct object *obj );
 static int process_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int process_map_access( struct object *obj, unsigned int access );
+static struct security_descriptor *process_get_sd( struct object *obj );
 static void process_poll_event( struct fd *fd, int event );
+static struct list *process_get_kernel_obj_list( struct object *obj );
 static void process_destroy( struct object *obj );
 static void terminate_process( struct process *process, struct thread *skip, int exit_code );
 
@@ -79,12 +81,13 @@ static const struct object_ops process_ops =
     no_signal,                   /* signal */
     no_get_fd,                   /* get_fd */
     process_map_access,          /* map_access */
-    default_get_sd,              /* get_sd */
+    process_get_sd,              /* get_sd */
     default_set_sd,              /* set_sd */
     no_lookup_name,              /* lookup_name */
     no_link_name,                /* link_name */
     NULL,                        /* unlink_name */
     no_open_file,                /* open_file */
+    process_get_kernel_obj_list, /* get_kernel_obj_list */
     no_close_handle,             /* close_handle */
     process_destroy              /* destroy */
 };
@@ -134,6 +137,7 @@ static const struct object_ops startup_info_ops =
     no_link_name,                  /* link_name */
     NULL,                          /* unlink_name */
     no_open_file,                  /* open_file */
+    no_kernel_obj_list,            /* get_kernel_obj_list */
     no_close_handle,               /* close_handle */
     startup_info_destroy           /* destroy */
 };
@@ -177,6 +181,7 @@ static const struct object_ops job_ops =
     directory_link_name,           /* link_name */
     default_unlink_name,           /* unlink_name */
     no_open_file,                  /* open_file */
+    no_kernel_obj_list,            /* get_kernel_obj_list */
     job_close_handle,              /* close_handle */
     job_destroy                    /* destroy */
 };
@@ -523,6 +528,7 @@ struct process *create_process( int fd, struct process *parent, int inherit_all,
     process->trace_data      = 0;
     process->rawinput_mouse  = NULL;
     process->rawinput_kbd    = NULL;
+    list_init( &process->kernel_object );
     list_init( &process->thread_list );
     list_init( &process->locks );
     list_init( &process->asyncs );
@@ -656,6 +662,59 @@ static unsigned int process_map_access( struct object *obj, unsigned int access 
     if (access & PROCESS_SET_INFORMATION) access |= PROCESS_SET_LIMITED_INFORMATION;
 
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
+static struct list *process_get_kernel_obj_list( struct object *obj )
+{
+    struct process *process = (struct process *)obj;
+    return &process->kernel_object;
+}
+
+static struct security_descriptor *process_get_sd( struct object *obj )
+{
+    static struct security_descriptor *process_default_sd;
+
+    if (obj->sd) return obj->sd;
+
+    if (!process_default_sd)
+    {
+        size_t users_sid_len = security_sid_len( security_domain_users_sid );
+        size_t admins_sid_len = security_sid_len( security_builtin_admins_sid );
+        size_t dacl_len = sizeof(ACL) + 2 * offsetof( ACCESS_ALLOWED_ACE, SidStart )
+                          + users_sid_len + admins_sid_len;
+        ACCESS_ALLOWED_ACE *aaa;
+        ACL *dacl;
+
+        process_default_sd = mem_alloc( sizeof(*process_default_sd) + admins_sid_len + users_sid_len
+                                    + dacl_len );
+        process_default_sd->control   = SE_DACL_PRESENT;
+        process_default_sd->owner_len = admins_sid_len;
+        process_default_sd->group_len = users_sid_len;
+        process_default_sd->sacl_len  = 0;
+        process_default_sd->dacl_len  = dacl_len;
+        memcpy( process_default_sd + 1, security_builtin_admins_sid, admins_sid_len );
+        memcpy( (char *)(process_default_sd + 1) + admins_sid_len, security_domain_users_sid, users_sid_len );
+
+        dacl = (ACL *)((char *)(process_default_sd + 1) + admins_sid_len + users_sid_len);
+        dacl->AclRevision = ACL_REVISION;
+        dacl->Sbz1 = 0;
+        dacl->AclSize = dacl_len;
+        dacl->AceCount = 2;
+        dacl->Sbz2 = 0;
+        aaa = (ACCESS_ALLOWED_ACE *)(dacl + 1);
+        aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+        aaa->Header.AceFlags = INHERIT_ONLY_ACE | CONTAINER_INHERIT_ACE;
+        aaa->Header.AceSize = offsetof( ACCESS_ALLOWED_ACE, SidStart ) + users_sid_len;
+        aaa->Mask = GENERIC_READ;
+        memcpy( &aaa->SidStart, security_domain_users_sid, users_sid_len );
+        aaa = (ACCESS_ALLOWED_ACE *)((char *)aaa + aaa->Header.AceSize);
+        aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+        aaa->Header.AceFlags = 0;
+        aaa->Header.AceSize = offsetof( ACCESS_ALLOWED_ACE, SidStart ) + admins_sid_len;
+        aaa->Mask = PROCESS_ALL_ACCESS;
+        memcpy( &aaa->SidStart, security_builtin_admins_sid, admins_sid_len );
+    }
+    return process_default_sd;
 }
 
 static void process_poll_event( struct fd *fd, int event )
@@ -1701,4 +1760,42 @@ DECL_HANDLER(set_job_completion_port)
         set_error( STATUS_INVALID_PARAMETER );
 
     release_object( job );
+}
+
+/* Suspend a process */
+DECL_HANDLER(suspend_process)
+{
+    struct process *process;
+
+    if ((process = get_process_from_handle( req->handle, PROCESS_SUSPEND_RESUME )))
+    {
+        struct list *ptr, *next;
+
+        LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
+        {
+            struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
+            suspend_thread( thread );
+        }
+
+        release_object( process );
+    }
+}
+
+/* Resume a process */
+DECL_HANDLER(resume_process)
+{
+    struct process *process;
+
+    if ((process = get_process_from_handle( req->handle, PROCESS_SUSPEND_RESUME )))
+    {
+        struct list *ptr, *next;
+
+        LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
+        {
+            struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
+            resume_thread( thread );
+        }
+
+        release_object( process );
+    }
 }

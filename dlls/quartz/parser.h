@@ -30,7 +30,6 @@ struct ParserImpl
 {
     BaseFilter filter;
 
-    PFN_CLEANUP fnCleanup;
     PFN_DISCONNECT fnDisconnect;
 
     PullPin * pInputPin;
@@ -53,29 +52,22 @@ typedef struct Parser_OutputPin
 
 extern HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, const AM_MEDIA_TYPE * amt);
 
-HRESULT Parser_Create(ParserImpl *parser, const IBaseFilterVtbl *vtbl,
-        const CLSID *clsid, const WCHAR *sink_name, PFN_PROCESS_SAMPLE,
-        PFN_QUERY_ACCEPT, PFN_PRE_CONNECT, PFN_CLEANUP, PFN_DISCONNECT,
+HRESULT Parser_Create(ParserImpl *parser, const IBaseFilterVtbl *vtbl, IUnknown *outer,
+        const CLSID *clsid, const BaseFilterFuncTable *func_table, const WCHAR *sink_name,
+        PFN_PROCESS_SAMPLE, PFN_QUERY_ACCEPT, PFN_PRE_CONNECT, PFN_CLEANUP, PFN_DISCONNECT,
         REQUESTPROC, STOPPROCESSPROC, SourceSeeking_ChangeStop,
         SourceSeeking_ChangeStart, SourceSeeking_ChangeRate) DECLSPEC_HIDDEN;
 
 /* Override the _Release function and call this when releasing */
 extern void Parser_Destroy(ParserImpl *This);
 
-extern HRESULT WINAPI Parser_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
-extern ULONG WINAPI Parser_AddRef(IBaseFilter * iface);
-extern ULONG WINAPI Parser_Release(IBaseFilter * iface);
-extern HRESULT WINAPI Parser_GetClassID(IBaseFilter * iface, CLSID * pClsid);
 extern HRESULT WINAPI Parser_Stop(IBaseFilter * iface);
 extern HRESULT WINAPI Parser_Pause(IBaseFilter * iface);
 extern HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart);
 extern HRESULT WINAPI Parser_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState);
 extern HRESULT WINAPI Parser_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock);
-extern HRESULT WINAPI Parser_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock);
-extern HRESULT WINAPI Parser_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum);
-extern HRESULT WINAPI Parser_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo);
-extern HRESULT WINAPI Parser_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName);
-extern HRESULT WINAPI Parser_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo);
+
+IPin *parser_get_pin(BaseFilter *iface, unsigned int index) DECLSPEC_HIDDEN;
 
 /* COM helpers */
 static inline Parser_OutputPin *unsafe_impl_Parser_OutputPin_from_IPin( IPin *iface )

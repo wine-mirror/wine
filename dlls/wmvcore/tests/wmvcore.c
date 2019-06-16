@@ -219,10 +219,10 @@ static void test_wmsyncreader_interfaces(void)
     IWMLanguageList       *langlist;
 
     hr = WMCreateSyncReader( NULL, 0, &reader );
-    todo_wine ok(hr == S_OK, "WMCreateSyncReader failed 0x%08x\n", hr);
+    ok(hr == S_OK, "WMCreateSyncReader failed 0x%08x\n", hr);
     if(FAILED(hr))
     {
-        skip("Failed to create IWMSyncReader\n");
+        win_skip("Failed to create IWMSyncReader\n");
         return;
     }
 

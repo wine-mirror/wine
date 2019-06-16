@@ -61,10 +61,13 @@ typedef struct
     BOOL enabled;
     UINT enum_strs_num;
     WCHAR **enum_strs;
+    WCHAR **listbox_strs;
     HWND hwndEdit;
     HWND hwndListBox;
+    HWND hwndListBoxOwner;
     WNDPROC wpOrigEditProc;
     WNDPROC wpOrigLBoxProc;
+    WNDPROC wpOrigLBoxOwnerProc;
     WCHAR *txtbackup;
     WCHAR *quickComplete;
     IEnumString *enumstr;
@@ -283,7 +286,7 @@ static void free_enum_strs(IAutoCompleteImpl *ac)
 
 static void hide_listbox(IAutoCompleteImpl *ac, HWND hwnd, BOOL reset)
 {
-    ShowWindow(hwnd, SW_HIDE);
+    ShowWindow(ac->hwndListBoxOwner, SW_HIDE);
     SendMessageW(hwnd, LB_RESETCONTENT, 0, 0);
     if (reset) free_enum_strs(ac);
 }
@@ -294,14 +297,68 @@ static void show_listbox(IAutoCompleteImpl *ac)
     UINT cnt, width, height;
 
     GetWindowRect(ac->hwndEdit, &r);
-    SendMessageW(ac->hwndListBox, LB_CARETOFF, 0, 0);
 
     /* Windows XP displays 7 lines at most, then it uses a scroll bar */
     cnt    = SendMessageW(ac->hwndListBox, LB_GETCOUNT, 0, 0);
     height = SendMessageW(ac->hwndListBox, LB_GETITEMHEIGHT, 0, 0) * min(cnt + 1, 7);
     width = r.right - r.left;
 
-    SetWindowPos(ac->hwndListBox, HWND_TOP, r.left, r.bottom + 1, width, height, SWP_SHOWWINDOW);
+    SetWindowPos(ac->hwndListBoxOwner, HWND_TOP, r.left, r.bottom + 1, width, height,
+                 SWP_SHOWWINDOW | SWP_NOACTIVATE);
+}
+
+static void set_listbox_font(IAutoCompleteImpl *ac, HFONT font)
+{
+    /* We have to calculate the item height manually due to owner-drawn */
+    HFONT old_font = NULL;
+    UINT height = 16;
+    HDC hdc;
+
+    if ((hdc = GetDCEx(ac->hwndListBox, 0, DCX_CACHE)))
+    {
+        TEXTMETRICW metrics;
+        if (font) old_font = SelectObject(hdc, font);
+        if (GetTextMetricsW(hdc, &metrics))
+            height = metrics.tmHeight;
+        if (old_font) SelectObject(hdc, old_font);
+        ReleaseDC(ac->hwndListBox, hdc);
+    }
+    SendMessageW(ac->hwndListBox, WM_SETFONT, (WPARAM)font, FALSE);
+    SendMessageW(ac->hwndListBox, LB_SETITEMHEIGHT, 0, height);
+}
+
+static BOOL draw_listbox_item(IAutoCompleteImpl *ac, DRAWITEMSTRUCT *info, UINT id)
+{
+    COLORREF old_text, old_bk;
+    HDC hdc = info->hDC;
+    UINT state;
+    WCHAR *str;
+
+    if (info->CtlType != ODT_LISTBOX || info->CtlID != id ||
+        id != (UINT)GetWindowLongPtrW(ac->hwndListBox, GWLP_ID))
+        return FALSE;
+
+    if ((INT)info->itemID < 0 || info->itemAction == ODA_FOCUS)
+        return TRUE;
+
+    state = info->itemState;
+    if (state & ODS_SELECTED)
+    {
+        old_bk = SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
+        old_text = SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+    }
+
+    str = ac->listbox_strs[info->itemID];
+    ExtTextOutW(hdc, info->rcItem.left + 1, info->rcItem.top,
+                ETO_OPAQUE | ETO_CLIPPED, &info->rcItem, str,
+                strlenW(str), NULL);
+
+    if (state & ODS_SELECTED)
+    {
+        SetBkColor(hdc, old_bk);
+        SetTextColor(hdc, old_text);
+    }
+    return TRUE;
 }
 
 static size_t format_quick_complete(WCHAR *dst, const WCHAR *qc, const WCHAR *str, size_t str_len)
@@ -337,21 +394,16 @@ static BOOL select_item_with_return_key(IAutoCompleteImpl *ac, HWND hwnd)
     if (!(ac->options & ACO_AUTOSUGGEST))
         return FALSE;
 
-    if (IsWindowVisible(hwndListBox))
+    if (IsWindowVisible(ac->hwndListBoxOwner))
     {
         INT sel = SendMessageW(hwndListBox, LB_GETCURSEL, 0, 0);
         if (sel >= 0)
         {
-            UINT len = SendMessageW(hwndListBox, LB_GETTEXTLEN, sel, 0);
-            if ((text = heap_alloc((len + 1) * sizeof(WCHAR))))
-            {
-                len = SendMessageW(hwndListBox, LB_GETTEXT, sel, (LPARAM)text);
-                set_text_and_selection(ac, hwnd, text, 0, len);
-                hide_listbox(ac, hwndListBox, TRUE);
-                ac->no_fwd_char = '\r';  /* RETURN char */
-                heap_free(text);
-                return TRUE;
-            }
+            text = ac->listbox_strs[sel];
+            set_text_and_selection(ac, hwnd, text, 0, strlenW(text));
+            hide_listbox(ac, hwndListBox, TRUE);
+            ac->no_fwd_char = '\r';  /* RETURN char */
+            return TRUE;
         }
     }
     hide_listbox(ac, hwndListBox, TRUE);
@@ -360,6 +412,9 @@ static BOOL select_item_with_return_key(IAutoCompleteImpl *ac, HWND hwnd)
 
 static LRESULT change_selection(IAutoCompleteImpl *ac, HWND hwnd, UINT key)
 {
+    WCHAR *msg;
+    UINT len;
+
     INT count = SendMessageW(ac->hwndListBox, LB_GETCOUNT, 0, 0);
     INT sel = SendMessageW(ac->hwndListBox, LB_GETCURSEL, 0, 0);
     if (key == VK_PRIOR || key == VK_NEXT)
@@ -400,21 +455,11 @@ static LRESULT change_selection(IAutoCompleteImpl *ac, HWND hwnd, UINT key)
         sel = ((sel + 1) >= count) ? -1 : sel + 1;
 
     SendMessageW(ac->hwndListBox, LB_SETCURSEL, sel, 0);
-    if (sel >= 0)
-    {
-        WCHAR *msg;
-        UINT len = SendMessageW(ac->hwndListBox, LB_GETTEXTLEN, sel, 0);
-        if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
-            return 0;
-        len = SendMessageW(ac->hwndListBox, LB_GETTEXT, sel, (LPARAM)msg);
-        set_text_and_selection(ac, hwnd, msg, len, len);
-        heap_free(msg);
-    }
-    else
-    {
-        UINT len = strlenW(ac->txtbackup);
-        set_text_and_selection(ac, hwnd, ac->txtbackup, len, len);
-    }
+
+    msg = (sel >= 0) ? ac->listbox_strs[sel] : ac->txtbackup;
+    len = strlenW(msg);
+    set_text_and_selection(ac, hwnd, msg, len, len);
+
     return 0;
 }
 
@@ -538,9 +583,9 @@ static BOOL display_matching_strs(IAutoCompleteImpl *ac, WCHAR *text, UINT len,
 
     SendMessageW(ac->hwndListBox, WM_SETREDRAW, FALSE, 0);
     SendMessageW(ac->hwndListBox, LB_RESETCONTENT, 0, 0);
-    SendMessageW(ac->hwndListBox, LB_INITSTORAGE, end - start, 0);
-    for (; start < end; start++)
-        SendMessageW(ac->hwndListBox, LB_INSERTSTRING, -1, (LPARAM)str[start]);
+
+    ac->listbox_strs = str + start;
+    SendMessageW(ac->hwndListBox, LB_SETCOUNT, end - start, 0);
 
     show_listbox(ac);
     SendMessageW(ac->hwndListBox, WM_SETREDRAW, TRUE, 0);
@@ -579,7 +624,11 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
 
     size = len + 1;
     if (!(text = heap_alloc(size * sizeof(WCHAR))))
+    {
+        /* Reset the listbox to prevent potential crash from ResetEnumerator */
+        SendMessageW(ac->hwndListBox, LB_RESETCONTENT, 0, 0);
         return;
+    }
     len = SendMessageW(hwnd, WM_GETTEXT, size, (LPARAM)text);
     if (len + 1 != size)
         text = heap_realloc(text, (len + 1) * sizeof(WCHAR));
@@ -611,8 +660,8 @@ static void destroy_autocomplete_object(IAutoCompleteImpl *ac)
 {
     ac->hwndEdit = NULL;
     free_enum_strs(ac);
-    if (ac->hwndListBox)
-        DestroyWindow(ac->hwndListBox);
+    if (ac->hwndListBoxOwner)
+        DestroyWindow(ac->hwndListBoxOwner);
     IAutoComplete2_Release(&ac->IAutoComplete2_iface);
 }
 
@@ -626,7 +675,7 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
     {
         case VK_ESCAPE:
             /* When pressing ESC, Windows hides the auto-suggest listbox, if visible */
-            if ((ac->options & ACO_AUTOSUGGEST) && IsWindowVisible(ac->hwndListBox))
+            if ((ac->options & ACO_AUTOSUGGEST) && IsWindowVisible(ac->hwndListBoxOwner))
             {
                 hide_listbox(ac, ac->hwndListBox, FALSE);
                 ac->no_fwd_char = 0x1B;  /* ESC char */
@@ -665,7 +714,7 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
             break;
         case VK_TAB:
             if ((ac->options & (ACO_AUTOSUGGEST | ACO_USETAB)) == (ACO_AUTOSUGGEST | ACO_USETAB)
-                && IsWindowVisible(ac->hwndListBox) && !(GetKeyState(VK_CONTROL) & 0x8000))
+                && IsWindowVisible(ac->hwndListBoxOwner) && !(GetKeyState(VK_CONTROL) & 0x8000))
             {
                 ac->no_fwd_char = '\t';
                 return change_selection(ac, hwnd, wParam);
@@ -683,7 +732,7 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
             if (!(ac->options & ACO_AUTOSUGGEST))
                 break;
 
-            if (!IsWindowVisible(ac->hwndListBox))
+            if (!IsWindowVisible(ac->hwndListBoxOwner))
             {
                 if (ac->options & ACO_UPDOWNKEYDROPSLIST)
                 {
@@ -724,7 +773,9 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
         case WM_KILLFOCUS:
             if (This->options & ACO_AUTOSUGGEST)
             {
-                if ((HWND)wParam == This->hwndListBox) break;
+                if (This->hwndListBoxOwner == (HWND)wParam ||
+                    This->hwndListBoxOwner == GetAncestor((HWND)wParam, GA_PARENT))
+                    break;
                 hide_listbox(This, This->hwndListBox, FALSE);
             }
 
@@ -736,7 +787,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             WINDOWPOS *pos = (WINDOWPOS*)lParam;
 
             if ((pos->flags & (SWP_NOMOVE | SWP_NOSIZE)) != (SWP_NOMOVE | SWP_NOSIZE) &&
-                This->hwndListBox && IsWindowVisible(This->hwndListBox))
+                This->hwndListBoxOwner && IsWindowVisible(This->hwndListBoxOwner))
                 show_listbox(This);
             break;
         }
@@ -771,12 +822,12 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                                           ? autoappend_flag_yes : autoappend_flag_no);
             return ret;
         case WM_MOUSEWHEEL:
-            if ((This->options & ACO_AUTOSUGGEST) && IsWindowVisible(This->hwndListBox))
+            if ((This->options & ACO_AUTOSUGGEST) && IsWindowVisible(This->hwndListBoxOwner))
                 return SendMessageW(This->hwndListBox, WM_MOUSEWHEEL, wParam, lParam);
             break;
         case WM_SETFONT:
             if (This->hwndListBox)
-                SendMessageW(This->hwndListBox, WM_SETFONT, wParam, lParam);
+                set_listbox_font(This, (HFONT)wParam);
             break;
         case WM_DESTROY:
         {
@@ -795,52 +846,82 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 {
     IAutoCompleteImpl *This = (IAutoCompleteImpl *)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
     WCHAR *msg;
-    int sel, len;
+    INT sel;
 
     switch (uMsg) {
+        case WM_MOUSEACTIVATE:
+            return MA_NOACTIVATE;
         case WM_MOUSEMOVE:
             sel = SendMessageW(hwnd, LB_ITEMFROMPOINT, 0, lParam);
             SendMessageW(hwnd, LB_SETCURSEL, sel, 0);
-            break;
+            return 0;
         case WM_LBUTTONDOWN:
             sel = SendMessageW(hwnd, LB_GETCURSEL, 0, 0);
             if (sel < 0)
-                break;
-            len = SendMessageW(hwnd, LB_GETTEXTLEN, sel, 0);
-            if (!(msg = heap_alloc((len + 1) * sizeof(WCHAR))))
-                break;
-            len = SendMessageW(hwnd, LB_GETTEXT, sel, (LPARAM)msg);
-            set_text_and_selection(This, This->hwndEdit, msg, 0, len);
+                return 0;
+            msg = This->listbox_strs[sel];
+            set_text_and_selection(This, This->hwndEdit, msg, 0, strlenW(msg));
             hide_listbox(This, hwnd, TRUE);
-            heap_free(msg);
-            break;
-        default:
-            return CallWindowProcW(This->wpOrigLBoxProc, hwnd, uMsg, wParam, lParam);
+            return 0;
     }
-    return 0;
+    return CallWindowProcW(This->wpOrigLBoxProc, hwnd, uMsg, wParam, lParam);
+}
+
+static LRESULT APIENTRY ACLBoxOwnerSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    IAutoCompleteImpl *This = (IAutoCompleteImpl*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+
+    switch (uMsg)
+    {
+        case WM_MOUSEACTIVATE:
+            return MA_NOACTIVATE;
+        case WM_DRAWITEM:
+            if (draw_listbox_item(This, (DRAWITEMSTRUCT*)lParam, wParam))
+                return TRUE;
+            break;
+        case WM_SIZE:
+            SetWindowPos(This->hwndListBox, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam),
+                         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER | SWP_DEFERERASE);
+            break;
+    }
+    return CallWindowProcW(This->wpOrigLBoxOwnerProc, hwnd, uMsg, wParam, lParam);
 }
 
 static void create_listbox(IAutoCompleteImpl *This)
 {
+    This->hwndListBoxOwner = CreateWindowExW(WS_EX_NOACTIVATE, WC_STATICW, NULL,
+                                             WS_BORDER | WS_POPUP | WS_CLIPCHILDREN,
+                                             0, 0, 0, 0, NULL, NULL, shell32_hInstance, NULL);
+    if (!This->hwndListBoxOwner)
+    {
+        This->options &= ~ACO_AUTOSUGGEST;
+        return;
+    }
+
     /* FIXME : The listbox should be resizable with the mouse. WS_THICKFRAME looks ugly */
-    This->hwndListBox = CreateWindowExW(0, WC_LISTBOXW, NULL,
-                                    WS_BORDER | WS_CHILD | WS_VSCROLL | LBS_HASSTRINGS | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
-                                    0, 0, 0, 0, GetParent(This->hwndEdit), NULL, shell32_hInstance, NULL);
+    This->hwndListBox = CreateWindowExW(WS_EX_NOACTIVATE, WC_LISTBOXW, NULL,
+                                        WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NODATA | LBS_OWNERDRAWFIXED | LBS_NOINTEGRALHEIGHT,
+                                        0, 0, 0, 0, This->hwndListBoxOwner, NULL, shell32_hInstance, NULL);
 
     if (This->hwndListBox) {
         HFONT edit_font;
 
         This->wpOrigLBoxProc = (WNDPROC) SetWindowLongPtrW( This->hwndListBox, GWLP_WNDPROC, (LONG_PTR) ACLBoxSubclassProc);
         SetWindowLongPtrW( This->hwndListBox, GWLP_USERDATA, (LONG_PTR)This);
-        SetParent(This->hwndListBox, HWND_DESKTOP);
+
+        This->wpOrigLBoxOwnerProc = (WNDPROC)SetWindowLongPtrW(This->hwndListBoxOwner, GWLP_WNDPROC, (LONG_PTR)ACLBoxOwnerSubclassProc);
+        SetWindowLongPtrW(This->hwndListBoxOwner, GWLP_USERDATA, (LONG_PTR)This);
 
         /* Use the same font as the edit control, as it gets destroyed before it anyway */
         edit_font = (HFONT)SendMessageW(This->hwndEdit, WM_GETFONT, 0, 0);
         if (edit_font)
-            SendMessageW(This->hwndListBox, WM_SETFONT, (WPARAM)edit_font, FALSE);
+            set_listbox_font(This, edit_font);
+        return;
     }
-    else
-        This->options &= ~ACO_AUTOSUGGEST;
+
+    DestroyWindow(This->hwndListBoxOwner);
+    This->hwndListBoxOwner = NULL;
+    This->options &= ~ACO_AUTOSUGGEST;
 }
 
 /**************************************************************************
@@ -923,13 +1004,12 @@ static HRESULT WINAPI IAutoComplete2_fnEnable(
     BOOL fEnable)
 {
     IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
-    HRESULT hr = S_OK;
 
     TRACE("(%p)->(%s)\n", This, (fEnable)?"true":"false");
 
     This->enabled = fEnable;
 
-    return hr;
+    return S_OK;
 }
 
 /******************************************************************************
@@ -1063,13 +1143,12 @@ static HRESULT WINAPI IAutoComplete2_fnGetOptions(
     DWORD *pdwFlag)
 {
     IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
-    HRESULT hr = S_OK;
 
     TRACE("(%p) -> (%p)\n", This, pdwFlag);
 
     *pdwFlag = This->options;
 
-    return hr;
+    return S_OK;
 }
 
 /**************************************************************************
@@ -1150,7 +1229,7 @@ static HRESULT WINAPI IAutoCompleteDropDown_fnGetDropDownStatus(
 
     TRACE("(%p) -> (%p, %p)\n", This, pdwFlags, ppwszString);
 
-    dropped = IsWindowVisible(This->hwndListBox);
+    dropped = IsWindowVisible(This->hwndListBoxOwner);
 
     if (pdwFlags)
         *pdwFlags = (dropped ? ACDD_VISIBLE : 0);
@@ -1162,11 +1241,12 @@ static HRESULT WINAPI IAutoCompleteDropDown_fnGetDropDownStatus(
             sel = SendMessageW(This->hwndListBox, LB_GETCURSEL, 0, 0);
             if (sel >= 0)
             {
-                DWORD len;
+                WCHAR *str = This->listbox_strs[sel];
+                size_t size = (strlenW(str) + 1) * sizeof(*str);
 
-                len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, 0);
-                *ppwszString = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
-                SendMessageW(This->hwndListBox, LB_GETTEXT, sel, (LPARAM)*ppwszString);
+                if (!(*ppwszString = CoTaskMemAlloc(size)))
+                    return E_OUTOFMEMORY;
+                memcpy(*ppwszString, str, size);
             }
             else
                 *ppwszString = NULL;
@@ -1191,7 +1271,7 @@ static HRESULT WINAPI IAutoCompleteDropDown_fnResetEnumerator(
     if (This->hwndEdit)
     {
         free_enum_strs(This);
-        if ((This->options & ACO_AUTOSUGGEST) && IsWindowVisible(This->hwndListBox))
+        if ((This->options & ACO_AUTOSUGGEST) && IsWindowVisible(This->hwndListBoxOwner))
             autocomplete_text(This, This->hwndEdit, autoappend_flag_displayempty);
     }
     return S_OK;

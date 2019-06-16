@@ -100,6 +100,16 @@ extern "C" {
 # endif
 #endif /* __cdecl */
 
+#ifndef __fastcall
+# ifndef _MSC_VER
+#  define __fastcall __stdcall
+# endif
+#endif
+
+#ifndef __thiscall
+# define __thiscall __stdcall
+#endif
+
 #ifndef __ms_va_list
 # if (defined(__x86_64__) || defined(__aarch64__)) && defined (__GNUC__)
 #  define __ms_va_list __builtin_ms_va_list

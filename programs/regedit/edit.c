@@ -29,7 +29,6 @@
 #include <shlwapi.h>
 
 #include "wine/heap.h"
-#include "wine/unicode.h"
 #include "main.h"
 
 static const WCHAR* editValueName;
@@ -283,7 +282,9 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
         }
     } else if ( type == REG_DWORD ) {
         static const WCHAR x[] = {'%','x',0};
-        wsprintfW(stringValueData, x, *((DWORD*)stringValueData));
+        DWORD value = *((DWORD*)stringValueData);
+        stringValueData = heap_xrealloc(stringValueData, 64);
+        wsprintfW(stringValueData, x, value);
 	if (DialogBoxW(0, MAKEINTRESOURCEW(IDD_EDIT_DWORD), hwnd, modify_dlgproc) == IDOK) {
 	    DWORD val;
 	    CHAR* valueA = GetMultiByteString(stringValueData);
@@ -529,7 +530,7 @@ BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName)
 
     if (!keyPath || !newName) return FALSE;
 
-    if (!strrchrW(keyPath, '\\')) {
+    if (!wcsrchr(keyPath, '\\')) {
 	parentKey = hRootKey;
 	srcSubKey = keyPath;
     } else {
@@ -537,7 +538,7 @@ BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName)
 
 	parentPath = heap_xalloc((lstrlenW(keyPath) + 1) * sizeof(WCHAR));
 	lstrcpyW(parentPath, keyPath);
-	srcSubKey_copy = strrchrW(parentPath, '\\');
+	srcSubKey_copy = wcsrchr(parentPath, '\\');
 	*srcSubKey_copy = 0;
 	srcSubKey = srcSubKey_copy + 1;
 	lRet = RegOpenKeyExW(hRootKey, parentPath, 0, KEY_READ | KEY_CREATE_SUB_KEY, &parentKey);

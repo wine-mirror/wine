@@ -59,6 +59,13 @@ static inline void small_pause(void)
 #endif
 }
 
+static void *no_debug_info_marker = (void *)(ULONG_PTR)-1;
+
+static BOOL crit_section_has_debuginfo(const RTL_CRITICAL_SECTION *crit)
+{
+    return crit->DebugInfo != NULL && crit->DebugInfo != no_debug_info_marker;
+}
+
 #ifdef __linux__
 
 static int wait_op = 128; /*FUTEX_WAIT|FUTEX_PRIVATE_FLAG*/
@@ -226,7 +233,7 @@ static inline NTSTATUS wait_semaphore( RTL_CRITICAL_SECTION *crit, int timeout )
     NTSTATUS ret;
 
     /* debug info is cleared by MakeCriticalSectionGlobal */
-    if (!crit->DebugInfo || ((ret = fast_wait( crit, timeout )) == STATUS_NOT_IMPLEMENTED))
+    if (!crit_section_has_debuginfo( crit ) || ((ret = fast_wait( crit, timeout )) == STATUS_NOT_IMPLEMENTED))
     {
         HANDLE sem = get_semaphore( crit );
         LARGE_INTEGER time;
@@ -321,20 +328,21 @@ NTSTATUS WINAPI RtlInitializeCriticalSectionEx( RTL_CRITICAL_SECTION *crit, ULON
      * so (e.g.) MakeCriticalSectionGlobal() doesn't free it using HeapFree().
      */
     if (flags & RTL_CRITICAL_SECTION_FLAG_NO_DEBUG_INFO)
-        crit->DebugInfo = NULL;
+        crit->DebugInfo = no_debug_info_marker;
     else
-        crit->DebugInfo = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(RTL_CRITICAL_SECTION_DEBUG));
-
-    if (crit->DebugInfo)
     {
-        crit->DebugInfo->Type = 0;
-        crit->DebugInfo->CreatorBackTraceIndex = 0;
-        crit->DebugInfo->CriticalSection = crit;
-        crit->DebugInfo->ProcessLocksList.Blink = &(crit->DebugInfo->ProcessLocksList);
-        crit->DebugInfo->ProcessLocksList.Flink = &(crit->DebugInfo->ProcessLocksList);
-        crit->DebugInfo->EntryCount = 0;
-        crit->DebugInfo->ContentionCount = 0;
-        memset( crit->DebugInfo->Spare, 0, sizeof(crit->DebugInfo->Spare) );
+        crit->DebugInfo = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(RTL_CRITICAL_SECTION_DEBUG));
+        if (crit->DebugInfo)
+        {
+            crit->DebugInfo->Type = 0;
+            crit->DebugInfo->CreatorBackTraceIndex = 0;
+            crit->DebugInfo->CriticalSection = crit;
+            crit->DebugInfo->ProcessLocksList.Blink = &(crit->DebugInfo->ProcessLocksList);
+            crit->DebugInfo->ProcessLocksList.Flink = &(crit->DebugInfo->ProcessLocksList);
+            crit->DebugInfo->EntryCount = 0;
+            crit->DebugInfo->ContentionCount = 0;
+            memset( crit->DebugInfo->Spare, 0, sizeof(crit->DebugInfo->Spare) );
+        }
     }
     crit->LockCount      = -1;
     crit->RecursionCount = 0;
@@ -396,7 +404,7 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
     crit->LockCount      = -1;
     crit->RecursionCount = 0;
     crit->OwningThread   = 0;
-    if (crit->DebugInfo)
+    if (crit_section_has_debuginfo( crit ))
     {
         /* only free the ones we made in here */
         if (!crit->DebugInfo->Spare[0])
@@ -454,7 +462,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         if ( status == STATUS_TIMEOUT )
         {
             const char *name = NULL;
-            if (crit->DebugInfo) name = (char *)crit->DebugInfo->Spare[0];
+            if (crit_section_has_debuginfo( crit )) name = (char *)crit->DebugInfo->Spare[0];
             if (!name) name = "?";
             ERR( "section %p %s wait timed out in thread %04x, blocked by %04x, retrying (60 sec)\n",
                  crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
@@ -472,7 +480,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         if (status == STATUS_WAIT_0) break;
 
         /* Throw exception only for Wine internal locks */
-        if ((!crit->DebugInfo) || (!crit->DebugInfo->Spare[0])) continue;
+        if (!crit_section_has_debuginfo( crit ) || !crit->DebugInfo->Spare[0]) continue;
 
         /* only throw deadlock exception if configured timeout is reached */
         if (timeout > 0) continue;
@@ -485,7 +493,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         rec.ExceptionInformation[0] = (ULONG_PTR)crit;
         RtlRaiseException( &rec );
     }
-    if (crit->DebugInfo) crit->DebugInfo->ContentionCount++;
+    if (crit_section_has_debuginfo( crit )) crit->DebugInfo->ContentionCount++;
     return STATUS_SUCCESS;
 }
 
@@ -518,7 +526,7 @@ NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
     NTSTATUS ret;
 
     /* debug info is cleared by MakeCriticalSectionGlobal */
-    if (!crit->DebugInfo || ((ret = fast_wake( crit )) == STATUS_NOT_IMPLEMENTED))
+    if (!crit_section_has_debuginfo( crit ) || ((ret = fast_wake( crit )) == STATUS_NOT_IMPLEMENTED))
     {
         HANDLE sem = get_semaphore( crit );
         ret = NtReleaseSemaphore( sem, 1, NULL );

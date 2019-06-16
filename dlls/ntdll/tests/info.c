@@ -39,6 +39,8 @@ static ULONG    (WINAPI * pNtGetCurrentProcessorNumber)(void);
 static BOOL     (WINAPI * pIsWow64Process)(HANDLE, PBOOL);
 static BOOL     (WINAPI * pGetLogicalProcessorInformationEx)(LOGICAL_PROCESSOR_RELATIONSHIP,SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*,DWORD*);
 static DEP_SYSTEM_POLICY_TYPE (WINAPI * pGetSystemDEPPolicy)(void);
+static NTSTATUS (WINAPI * pNtOpenThread)(HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *, const CLIENT_ID *);
+static NTSTATUS (WINAPI * pNtQueryObject)(HANDLE, OBJECT_INFORMATION_CLASS, void *, ULONG, ULONG *);
 
 static BOOL is_wow64;
 
@@ -59,12 +61,6 @@ static DWORD one_before_last_pid = 0;
 #define ACPI 0x41435049
 #define FIRM 0x4649524D
 #define RSMB 0x52534D42
-
-#ifdef linux
-static const int firmware_todo = 0;
-#else
-static const int firmware_todo = 1;
-#endif
 
 static BOOL InitFunctionPtrs(void)
 {
@@ -90,6 +86,8 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtCreateSection);
     NTDLL_GET_PROC(NtMapViewOfSection);
     NTDLL_GET_PROC(NtUnmapViewOfSection);
+    NTDLL_GET_PROC(NtOpenThread);
+    NTDLL_GET_PROC(NtQueryObject);
 
     /* not present before XP */
     pNtGetCurrentProcessorNumber = (void *) GetProcAddress(hntdll, "NtGetCurrentProcessorNumber");
@@ -873,7 +871,6 @@ static void test_query_firmware(void)
     sfti->Action = SystemFirmwareTable_Get;
 
     status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, min_sfti_len, &len1);
-todo_wine_if(firmware_todo)
     ok(status == STATUS_BUFFER_TOO_SMALL, "Expected STATUS_BUFFER_TOO_SMALL, got %08x\n", status);
     ok(len1 >= min_sfti_len, "Expected length >= %u, got %u\n", min_sfti_len, len1);
     ok(sfti->TableBufferLength == len1 - min_sfti_len,
@@ -883,7 +880,6 @@ todo_wine_if(firmware_todo)
     ok(!!sfti, "Failed to allocate memory\n");
 
     status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, len1, &len2);
-todo_wine_if(firmware_todo)
     ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok(len2 == len1, "Expected length %u, got %u\n", len1, len2);
     ok(sfti->TableBufferLength == len1 - min_sfti_len,
@@ -2255,6 +2251,61 @@ static void test_query_data_alignment(void)
     ok(value == 64, "Expected 64, got %u\n", value);
 }
 
+static void test_thread_lookup(void)
+{
+    OBJECT_BASIC_INFORMATION obj_info;
+    THREAD_BASIC_INFORMATION info;
+    OBJECT_ATTRIBUTES attr;
+    CLIENT_ID cid;
+    HANDLE handle;
+    NTSTATUS status;
+
+    InitializeObjectAttributes( &attr, NULL, 0, NULL, NULL );
+    cid.UniqueProcess = ULongToHandle(GetCurrentProcessId());
+    cid.UniqueThread = ULongToHandle(GetCurrentThreadId());
+    status = pNtOpenThread(&handle, THREAD_QUERY_INFORMATION, &attr, &cid);
+    ok(!status, "NtOpenThread returned %#x\n", status);
+
+    status = pNtQueryObject(handle, ObjectBasicInformation, &obj_info, sizeof(obj_info), NULL);
+    ok(!status, "NtQueryObject returned: %#x\n", status);
+    ok(obj_info.GrantedAccess == (THREAD_QUERY_LIMITED_INFORMATION | THREAD_QUERY_INFORMATION)
+       || broken(obj_info.GrantedAccess == THREAD_QUERY_INFORMATION), /* winxp */
+       "GrantedAccess = %x\n", obj_info.GrantedAccess);
+
+    status = pNtQueryInformationThread(handle, ThreadBasicInformation, &info, sizeof(info), NULL);
+    ok(!status, "NtQueryInformationThread returned %#x\n", status);
+    ok(info.ClientId.UniqueProcess == ULongToHandle(GetCurrentProcessId()),
+       "UniqueProcess = %p expected %x\n", info.ClientId.UniqueProcess, GetCurrentProcessId());
+    ok(info.ClientId.UniqueThread == ULongToHandle(GetCurrentThreadId()),
+       "UniqueThread = %p expected %x\n", info.ClientId.UniqueThread, GetCurrentThreadId());
+    pNtClose(handle);
+
+    cid.UniqueProcess = 0;
+    cid.UniqueThread = ULongToHandle(GetCurrentThreadId());
+    status = pNtOpenThread(&handle, THREAD_QUERY_INFORMATION, &attr, &cid);
+    ok(!status, "NtOpenThread returned %#x\n", status);
+    status = pNtQueryInformationThread(handle, ThreadBasicInformation, &info, sizeof(info), NULL);
+    ok(!status, "NtQueryInformationThread returned %#x\n", status);
+    ok(info.ClientId.UniqueProcess == ULongToHandle(GetCurrentProcessId()),
+       "UniqueProcess = %p expected %x\n", info.ClientId.UniqueProcess, GetCurrentProcessId());
+    ok(info.ClientId.UniqueThread == ULongToHandle(GetCurrentThreadId()),
+       "UniqueThread = %p expected %x\n", info.ClientId.UniqueThread, GetCurrentThreadId());
+    pNtClose(handle);
+
+    cid.UniqueProcess = ULongToHandle(0xdeadbeef);
+    cid.UniqueThread = ULongToHandle(GetCurrentThreadId());
+    status = pNtOpenThread(&handle, THREAD_QUERY_INFORMATION, &attr, &cid);
+    todo_wine
+    ok(status == STATUS_INVALID_CID, "NtOpenThread returned %#x\n", status);
+    if (!status) pNtClose(handle);
+
+    cid.UniqueProcess = 0;
+    cid.UniqueThread = ULongToHandle(0xdeadbeef);
+    status = pNtOpenThread(&handle, THREAD_QUERY_INFORMATION, &attr, &cid);
+    ok(status == STATUS_INVALID_CID || broken(status == STATUS_INVALID_PARAMETER) /* winxp */,
+       "NtOpenThread returned %#x\n", status);
+}
+
 START_TEST(info)
 {
     char **argv;
@@ -2398,4 +2449,6 @@ START_TEST(info)
 
     trace("Starting test_query_data_alignment()\n");
     test_query_data_alignment();
+
+    test_thread_lookup();
 }

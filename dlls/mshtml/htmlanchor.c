@@ -74,18 +74,18 @@ HTMLOuterWindow *get_target_window(HTMLOuterWindow *window, nsAString *target_st
     nsAString_GetData(target_str, &target);
     TRACE("%s\n", debugstr_w(target));
 
-    if(!*target || !strcmpiW(target, _selfW)) {
+    if(!*target || !wcsicmp(target, _selfW)) {
         IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
         return window;
     }
 
-    if(!strcmpiW(target, _topW)) {
+    if(!wcsicmp(target, _topW)) {
         get_top_window(window, &top_window);
         IHTMLWindow2_AddRef(&top_window->base.IHTMLWindow2_iface);
         return top_window;
     }
 
-    if(!strcmpiW(target, _parentW)) {
+    if(!wcsicmp(target, _parentW)) {
         if(!window->parent) {
             WARN("Window has no parent, treat as self\n");
             IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
@@ -172,6 +172,27 @@ HRESULT handle_link_click_event(HTMLElement *element, nsAString *href_str, nsASt
     nsAString_Finish(href_str);
     nsAString_Finish(target_str);
     return hres;
+}
+
+static IUri *get_anchor_uri(HTMLAnchorElement *anchor)
+{
+    nsAString href_str;
+    IUri *uri = NULL;
+    nsresult nsres;
+
+    nsAString_Init(&href_str, NULL);
+    nsres = nsIDOMHTMLAnchorElement_GetHref(anchor->nsanchor, &href_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *href;
+
+        nsAString_GetData(&href_str, &href);
+        create_uri(href, 0, &uri);
+    }else {
+        ERR("GetHref failed: %08x\n", nsres);
+    }
+
+    nsAString_Finish(&href_str);
+    return uri;
 }
 
 static inline HTMLAnchorElement *impl_from_IHTMLAnchorElement(IHTMLAnchorElement *iface)
@@ -419,8 +440,15 @@ static HRESULT WINAPI HTMLAnchorElement_put_host(IHTMLAnchorElement *iface, BSTR
 static HRESULT WINAPI HTMLAnchorElement_get_host(IHTMLAnchorElement *iface, BSTR *p)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    /* FIXME: IE always appends port number, even if it's implicit default number */
+    nsAString_InitDepend(&str, NULL);
+    nsres = nsIDOMHTMLAnchorElement_GetHost(This->nsanchor, &str);
+    return return_nsstr(nsres, &str, p);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_hostname(IHTMLAnchorElement *iface, BSTR v)
@@ -481,8 +509,37 @@ static HRESULT WINAPI HTMLAnchorElement_put_protocol(IHTMLAnchorElement *iface, 
 static HRESULT WINAPI HTMLAnchorElement_get_protocol(IHTMLAnchorElement *iface, BSTR *p)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    BSTR scheme;
+    size_t len;
+    IUri *uri;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    uri = get_anchor_uri(This);
+    if(!uri) {
+        WARN("Could not create IUri\n");
+        *p = NULL;
+        return S_OK;
+    }
+
+    hres = IUri_GetSchemeName(uri, &scheme);
+    IUri_Release(uri);
+    if(FAILED(hres))
+        return hres;
+
+    len = SysStringLen(scheme);
+    if(len) {
+        *p = SysAllocStringLen(scheme, len + 1);
+        if(*p)
+            (*p)[len] = ':';
+        else
+            hres = E_OUTOFMEMORY;
+    }else {
+        *p = NULL;
+    }
+    SysFreeString(scheme);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_search(IHTMLAnchorElement *iface, BSTR v)

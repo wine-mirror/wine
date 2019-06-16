@@ -26,17 +26,22 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "ddrawgdi.h"
 #include "wine/winbase16.h"
 #include "winuser.h"
 #include "winternl.h"
+#include "ddk/d3dkmthk.h"
 
 #include "gdi_private.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(driver);
 
@@ -47,8 +52,24 @@ struct graphics_driver
     const struct gdi_dc_funcs *funcs;
 };
 
+struct d3dkmt_adapter
+{
+    D3DKMT_HANDLE handle;               /* Kernel mode graphics adapter handle */
+    INT ordinal;                        /* Graphics adapter ordinal */
+    struct list entry;                  /* List entry */
+};
+
+struct d3dkmt_device
+{
+    D3DKMT_HANDLE handle;               /* Kernel mode graphics device handle*/
+    struct list entry;                  /* List entry */
+};
+
 static struct list drivers = LIST_INIT( drivers );
 static struct graphics_driver *display_driver;
+
+static struct list d3dkmt_adapters = LIST_INIT( d3dkmt_adapters );
+static struct list d3dkmt_devices = LIST_INIT( d3dkmt_devices );
 
 const struct gdi_dc_funcs *font_driver = NULL;
 
@@ -302,6 +323,11 @@ static BOOL nulldrv_GetCharABCWidthsI( PHYSDEV dev, UINT first, UINT count, WORD
 }
 
 static BOOL nulldrv_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffer )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_GetCharWidthInfo( PHYSDEV dev, void *info )
 {
     return FALSE;
 }
@@ -752,6 +778,7 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_GetCharABCWidths,           /* pGetCharABCWidths */
     nulldrv_GetCharABCWidthsI,          /* pGetCharABCWidthsI */
     nulldrv_GetCharWidth,               /* pGetCharWidth */
+    nulldrv_GetCharWidthInfo,           /* pGetCharWidthInfo */
     nulldrv_GetDeviceCaps,              /* pGetDeviceCaps */
     nulldrv_GetDeviceGammaRamp,         /* pGetDeviceGammaRamp */
     nulldrv_GetFontData,                /* pGetFontData */
@@ -1252,4 +1279,147 @@ NTSTATUS WINAPI D3DKMTEscape( const void *pData )
 {
     FIXME("(%p): stub\n", pData);
     return STATUS_NO_MEMORY;
+}
+
+/******************************************************************************
+ *		D3DKMTCloseAdapter [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTCloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
+{
+    NTSTATUS status = STATUS_INVALID_PARAMETER;
+    struct d3dkmt_adapter *adapter;
+
+    TRACE("(%p)\n", desc);
+
+    if (!desc || !desc->hAdapter)
+        return STATUS_INVALID_PARAMETER;
+
+    EnterCriticalSection( &driver_section );
+    LIST_FOR_EACH_ENTRY( adapter, &d3dkmt_adapters, struct d3dkmt_adapter, entry )
+    {
+        if (adapter->handle == desc->hAdapter)
+        {
+            list_remove( &adapter->entry );
+            heap_free( adapter );
+            status = STATUS_SUCCESS;
+            break;
+        }
+    }
+    LeaveCriticalSection( &driver_section );
+
+    return status;
+}
+
+/******************************************************************************
+ *		D3DKMTOpenAdapterFromGdiDisplayName [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *desc )
+{
+    static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
+    static D3DKMT_HANDLE handle_start = 0;
+    struct d3dkmt_adapter *adapter;
+
+    TRACE("(%p) semi-stub\n", desc);
+
+    if (!desc)
+        return STATUS_UNSUCCESSFUL;
+
+    /* FIXME: Support multiple monitors */
+    if (lstrcmpiW( desc->DeviceName, display1W ))
+    {
+        FIXME("%s is unsupported\n", wine_dbgstr_w( desc->DeviceName ));
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    adapter = heap_alloc( sizeof( *adapter ) );
+    if (!adapter)
+        return STATUS_NO_MEMORY;
+
+    EnterCriticalSection( &driver_section );
+    /* D3DKMT_HANDLE is UINT, so we can't use pointer as handle */
+    adapter->handle = ++handle_start;
+    adapter->ordinal = 0;
+    list_add_tail( &d3dkmt_adapters, &adapter->entry );
+    LeaveCriticalSection( &driver_section );
+
+    desc->hAdapter = handle_start;
+    /* FIXME: Support AdapterLuid */
+    desc->AdapterLuid.LowPart = 0;
+    desc->AdapterLuid.HighPart = 0;
+    desc->VidPnSourceId = 0;
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *		D3DKMTCreateDevice [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTCreateDevice( D3DKMT_CREATEDEVICE *desc )
+{
+    static D3DKMT_HANDLE handle_start = 0;
+    struct d3dkmt_adapter *adapter;
+    struct d3dkmt_device *device;
+    BOOL found = FALSE;
+
+    TRACE("(%p)\n", desc);
+
+    if (!desc)
+        return STATUS_INVALID_PARAMETER;
+
+    EnterCriticalSection( &driver_section );
+    LIST_FOR_EACH_ENTRY( adapter, &d3dkmt_adapters, struct d3dkmt_adapter, entry )
+    {
+        if (adapter->handle == desc->hAdapter)
+        {
+            found = TRUE;
+            break;
+        }
+    }
+    LeaveCriticalSection( &driver_section );
+
+    if (!found)
+        return STATUS_INVALID_PARAMETER;
+
+    if (desc->Flags.LegacyMode || desc->Flags.RequestVSync || desc->Flags.DisableGpuTimeout)
+        FIXME("Flags unsupported.\n");
+
+    device = heap_alloc_zero( sizeof( *device ) );
+    if (!device)
+        return STATUS_NO_MEMORY;
+
+    EnterCriticalSection( &driver_section );
+    device->handle = ++handle_start;
+    list_add_tail( &d3dkmt_devices, &device->entry );
+    LeaveCriticalSection( &driver_section );
+
+    desc->hDevice = device->handle;
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *		D3DKMTDestroyDevice [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
+{
+    NTSTATUS status = STATUS_INVALID_PARAMETER;
+    struct d3dkmt_device *device;
+
+    TRACE("(%p)\n", desc);
+
+    if (!desc || !desc->hDevice)
+        return STATUS_INVALID_PARAMETER;
+
+    EnterCriticalSection( &driver_section );
+    LIST_FOR_EACH_ENTRY( device, &d3dkmt_devices, struct d3dkmt_device, entry )
+    {
+        if (device->handle == desc->hDevice)
+        {
+            list_remove( &device->entry );
+            heap_free( device );
+            status = STATUS_SUCCESS;
+            break;
+        }
+    }
+    LeaveCriticalSection( &driver_section );
+
+    return status;
 }

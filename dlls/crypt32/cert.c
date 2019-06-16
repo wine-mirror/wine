@@ -2151,7 +2151,7 @@ static BOOL find_matching_rdn_attr(DWORD dwFlags, const CERT_NAME_INFO *name,
                      name->rgRDN[i].rgRDNAttr[j].Value.cbData)
                         match = FALSE;
                     else if (dwFlags & CERT_CASE_INSENSITIVE_IS_RDN_ATTRS_FLAG)
-                        match = !strncasecmp(nameStr, attrStr,
+                        match = !_strnicmp(nameStr, attrStr,
                          attr->Value.cbData);
                     else
                         match = !strncmp(nameStr, attrStr, attr->Value.cbData);

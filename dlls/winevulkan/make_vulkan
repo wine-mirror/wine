@@ -64,8 +64,8 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.1.94"
-WINE_VK_VERSION = (1, 0)
+VK_XML_VERSION = "1.1.104"
+WINE_VK_VERSION = (1, 1)
 
 # Filenames to create.
 WINE_VULKAN_H = "../../include/wine/vulkan.h"
@@ -83,40 +83,45 @@ WINE_VULKAN_THUNKS_H = "vulkan_thunks.h"
 EXT_BASE = 1000000000
 EXT_BLOCK_SIZE = 1000
 
-# In general instance extensions can't be automatically generated
-# and need custom wrappers due to e.g. win32 / X11 specific code.
-# List of supported instance extensions.
-SUPPORTED_INSTANCE_EXTENSIONS = [
-    "VK_KHR_device_group_creation",
-    "VK_KHR_get_physical_device_properties2",
-    "VK_KHR_surface",
-    "VK_KHR_win32_surface",
-]
-
 BLACKLISTED_EXTENSIONS = [
-    "VK_AMD_memory_overallocation_behavior",
+    # Instance extensions
+    "VK_EXT_debug_report",
     # Handling of VK_EXT_debug_report requires some consideration. The win32
     # loader already provides it for us and it is somewhat usable. If we add
     # plumbing down to the native layer, we will get each message twice as we
     # use 2 loaders (win32+native), but we may get output from the driver.
     # In any case callback conversion is required.
-    "VK_EXT_calibrated_timestamps",
-    "VK_EXT_debug_report",
-    "VK_EXT_display_control", # Requires VK_EXT_display_surface_counter
-    "VK_EXT_external_memory_dma_buf", # Linux specific
-    "VK_EXT_hdr_metadata", # Needs WSI work.
-    "VK_EXT_image_drm_format_modifier",
-    "VK_GOOGLE_display_timing",
+    "VK_EXT_debug_utils",
+    "VK_EXT_validation_features",
+    "VK_EXT_validation_flags",
     "VK_KHR_display", # Needs WSI work.
-    "VK_KHR_external_fence",
-    "VK_KHR_external_fence_fd",
+    "VK_KHR_get_surface_capabilities2",
+    "VK_KHR_surface_protected_capabilities",
+
+    # Device extensions
+    "VK_AMD_display_native_hdr",
+    "VK_EXT_calibrated_timestamps",
+    "VK_EXT_display_control", # Requires VK_EXT_display_surface_counter
+    "VK_EXT_full_screen_exclusive",
+    "VK_EXT_hdr_metadata", # Needs WSI work.
+    "VK_EXT_pipeline_creation_feedback",
+    "VK_GOOGLE_display_timing",
     "VK_KHR_external_fence_win32",
-    "VK_KHR_external_memory",
-    "VK_KHR_external_semaphore",
+    "VK_KHR_external_memory_win32",
+    "VK_KHR_external_semaphore_win32",
     # Relates to external_semaphore and needs type conversions in bitflags.
-    "VK_KHR_external_semaphore_capabilities",
     "VK_KHR_shared_presentable_image", # Needs WSI work.
     "VK_KHR_win32_keyed_mutex",
+
+    # Extensions for other platforms
+    "VK_EXT_external_memory_dma_buf",
+    "VK_EXT_image_drm_format_modifier",
+    "VK_KHR_external_fence_fd",
+    "VK_KHR_external_memory_fd",
+    "VK_KHR_external_semaphore_fd",
+
+    # Deprecated extensions
+    "VK_NV_external_memory_capabilities",
     "VK_NV_external_memory_win32",
 ]
 
@@ -154,8 +159,12 @@ FUNCTION_OVERRIDES = {
     "vkCreateDevice" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkDestroyInstance" : {"dispatch" : False, "driver" : True, "thunk" : False },
     "vkEnumerateDeviceExtensionProperties" : {"dispatch" : True, "driver" : False, "thunk" : False},
-    "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : False},
     "vkEnumeratePhysicalDeviceGroups" : {"dispatch" : True, "driver" : False, "thunk" : False},
+    "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : False},
+    "vkGetPhysicalDeviceExternalBufferProperties" : {"dispatch" : False, "driver" : False, "thunk" : False},
+    "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False, "driver" : False, "thunk" : False},
+    "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : False, "driver" : False, "thunk" : False},
+    "vkGetPhysicalDeviceImageFormatProperties2" : {"dispatch" : True, "driver" : False, "thunk" : True, "private_thunk" : True},
 
     # Device functions
     "vkAllocateCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
@@ -186,6 +195,16 @@ FUNCTION_OVERRIDES = {
     "vkGetSwapchainImagesKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkQueuePresentKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
 
+    # VK_KHR_external_fence_capabilities
+    "vkGetPhysicalDeviceExternalFencePropertiesKHR" : {"dispatch" : False, "driver" : False, "thunk" : False},
+
+    # VK_KHR_external_memory_capabilities
+    "vkGetPhysicalDeviceExternalBufferPropertiesKHR" : {"dispatch" : False, "driver" : False, "thunk" : False},
+    "vkGetPhysicalDeviceImageFormatProperties2KHR" : {"dispatch" : True, "driver" : False, "thunk" : True, "private_thunk" : True},
+
+    # VK_KHR_external_semaphore_capabilities
+    "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR" : {"dispatch" : False, "driver" : False, "thunk" : False},
+
     # VK_KHR_device_group_creation
     "vkEnumeratePhysicalDeviceGroupsKHR" : {"dispatch" : True, "driver" : False, "thunk" : False},
 
@@ -193,6 +212,11 @@ FUNCTION_OVERRIDES = {
     "vkGetDeviceGroupSurfacePresentModesKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkGetPhysicalDevicePresentRectanglesKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
 }
+
+STRUCT_CHAIN_CONVERSIONS = [
+    "VkDeviceCreateInfo",
+    "VkInstanceCreateInfo",
+]
 
 
 class Direction(Enum):
@@ -274,7 +298,7 @@ class VkDefine(object):
         # - VK_API_VERSION is a messy, deprecated constant and we don't want generate code for it.
         # - AHardwareBuffer/ANativeWindow are forard declarations for Android types, which leaked
         #   into the define region.
-        if name in ["VK_API_VERSION", "AHardwareBuffer", "ANativeWindow"]:
+        if name in ["VK_API_VERSION", "AHardwareBuffer", "ANativeWindow", "CAMetalLayer"]:
             return VkDefine(name, None)
 
         # The body of the define is basically unstructured C code. It is not meant for easy parsing.
@@ -405,9 +429,12 @@ class VkFunction(object):
 
         # For some functions we need some extra metadata from FUNCTION_OVERRIDES.
         func_info = FUNCTION_OVERRIDES.get(self.name, None)
-        self.dispatch = func_info["dispatch"] if func_info is not None else True
-        self.driver = func_info["driver"] if func_info is not None else False
-        self.thunk_needed = func_info["thunk"] if func_info is not None else True
+        self.dispatch = func_info["dispatch"] if func_info else True
+        self.driver = func_info["driver"] if func_info else False
+        self.thunk_needed = func_info["thunk"] if func_info else True
+        self.private_thunk = func_info["private_thunk"] if func_info and "private_thunk" in func_info else False
+        if self.private_thunk:
+            self.thunk_needed = True
 
         # Required is set while parsing which APIs and types are required
         # and is used by the code generation.
@@ -518,6 +545,9 @@ class VkFunction(object):
     def needs_thunk(self):
         return self.thunk_needed
 
+    def needs_private_thunk(self):
+        return self.private_thunk
+
     def pfn(self, prefix="p", call_conv=None, conv=False):
         """ Create function pointer. """
 
@@ -575,7 +605,10 @@ class VkFunction(object):
         return proto
 
     def body(self):
-        body = "    {0}".format(self.trace())
+        body = ""
+
+        if not self.needs_private_thunk():
+            body += "    {0}".format(self.trace())
 
         params = ", ".join([p.variable(conv=False) for p in self.params])
 
@@ -604,7 +637,8 @@ class VkFunction(object):
             else:
                 body += "    {0}_host {1}_host;\n".format(p.type, p.name)
 
-        body += "    {0}\n".format(self.trace())
+        if not self.needs_private_thunk():
+            body += "    {0}\n".format(self.trace())
 
         # Call any win_to_host conversion calls.
         for p in self.params:
@@ -876,7 +910,7 @@ class VkHandle(object):
 
 class VkMember(object):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
-            dyn_array_len=None, optional=False):
+            dyn_array_len=None, optional=False, values=None):
         self.const = const
         self.struct_fwd_decl = struct_fwd_decl
         self.name = name
@@ -886,6 +920,7 @@ class VkMember(object):
         self.array_len = array_len
         self.dyn_array_len = dyn_array_len
         self.optional = optional
+        self.values = values
 
     def __eq__(self, other):
         """ Compare member based on name against a string.
@@ -894,10 +929,7 @@ class VkMember(object):
         if certain members exist.
         """
 
-        if self.name == other:
-            return True
-
-        return False
+        return self.name == other
 
     def __repr__(self):
         return "{0} {1} {2} {3} {4} {5} {6}".format(self.const, self.struct_fwd_decl, self.type, self.pointer,
@@ -915,6 +947,8 @@ class VkMember(object):
         member_type = None
         pointer = None
         array_len = None
+
+        values = member.get("values")
 
         if member.text:
             if "const" in member.text:
@@ -957,7 +991,7 @@ class VkMember(object):
                 array_len = name_elem.tail.strip("[]")
 
         return VkMember(const=const, struct_fwd_decl=struct_fwd_decl, _type=member_type, pointer=pointer, name=name_elem.text,
-                array_len=array_len, dyn_array_len=dyn_array_len, optional=optional)
+                array_len=array_len, dyn_array_len=dyn_array_len, optional=optional, values=values)
 
     def copy(self, input, output, direction):
         """ Helper method for use by conversion logic to generate a C-code statement to copy this member. """
@@ -1703,10 +1737,7 @@ class ConversionFunction(object):
         self._set_name()
 
     def __eq__(self, other):
-        if self.name != other.name:
-            return False
-
-        return True
+        return self.name == other.name
 
     def _generate_array_conversion_func(self):
         """ Helper function for generating a conversion function for array structs. """
@@ -1838,10 +1869,7 @@ class FreeFunction(object):
             self.name = "free_{0}".format(self.type)
 
     def __eq__(self, other):
-        if self.name == other.name:
-            return True
-
-        return False
+        return self.name == other.name
 
     def _generate_array_free_func(self):
         """ Helper function for cleaning up temporary buffers required for array conversions. """
@@ -1903,12 +1931,119 @@ class FreeFunction(object):
             return self._generate_free_func()
 
 
+class StructChainConversionFunction(object):
+    def __init__(self, direction, struct):
+        self.direction = direction
+        self.struct = struct
+        self.type = struct.name
+
+        self.name = "convert_{0}_struct_chain".format(self.type)
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def prototype(self, postfix=""):
+        return "VkResult {0}(const void *pNext, {1} *out_struct) {2}".format(self.name, self.type, postfix).strip()
+
+    def definition(self):
+        body = self.prototype()
+        body += "\n{\n"
+
+        body += "    VkBaseOutStructure *out_header = (VkBaseOutStructure *)out_struct;\n";
+        body += "    const VkBaseInStructure *in_header;\n\n";
+
+        body += "    out_header->pNext = NULL;\n\n"
+
+        body += "    for (in_header = pNext; in_header; in_header = in_header->pNext)\n"
+        body += "    {\n"
+        body += "        switch (in_header->sType)\n"
+        body += "        {\n"
+
+        # Ignore to not confuse host loader.
+        body += "        case VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO:\n"
+        body += "        case VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO:\n"
+        body += "            break;\n\n"
+
+        for e in self.struct.struct_extensions:
+            if not e.required:
+                continue
+
+            stype = next(x for x in e.members if x.name == "sType")
+
+            body += "        case {0}:\n".format(stype.values)
+            body += "        {\n"
+
+            body += "            const {0} *in = (const {0} *)in_header;\n".format(e.name)
+            body += "            {0} *out;\n\n".format(e.name)
+
+            body += "            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;\n\n"
+
+            for m in e:
+                if m.name == "pNext":
+                    body += "            out->pNext = NULL;\n"
+                else:
+                    body += "            " + m.copy("in->", "out->", self.direction)
+
+            body += "\n            out_header->pNext = (VkBaseOutStructure *)out;\n"
+            body += "            out_header = out_header->pNext;\n"
+            body += "            break;\n"
+            body += "        }\n\n"
+
+        body += "        default:\n"
+        body += "            FIXME(\"Application requested a linked structure of type %u.\\n\", in_header->sType);\n"
+
+        body += "        }\n"
+        body += "    }\n\n"
+
+        body += "    return VK_SUCCESS;\n"
+
+        if any(x for x in self.struct.struct_extensions if x.required):
+            body += "\nout_of_memory:\n"
+            body += "    free_{0}_struct_chain(out_struct);\n".format(self.type)
+            body += "    return VK_ERROR_OUT_OF_HOST_MEMORY;\n"
+
+        body += "}\n\n"
+        return body
+
+class FreeStructChainFunction(object):
+    def __init__(self, struct):
+        self.struct = struct
+        self.type = struct.name
+
+        self.name = "free_{0}_struct_chain".format(self.type)
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def prototype(self, postfix=""):
+        return "void {0}({1} *s) {2}".format(self.name, self.type, postfix).strip()
+
+    def definition(self):
+        body = self.prototype()
+        body += "\n{\n"
+
+        body += "    VkBaseOutStructure *header = (void *)s->pNext;\n\n";
+
+        body += "    while (header)\n"
+        body += "    {\n"
+        body += "        void *prev = header;\n"
+        body += "        header = header->pNext;\n"
+        body += "        heap_free(prev);\n"
+        body += "    }\n\n"
+
+        body += "    s->pNext = NULL;\n"
+
+        body += "}\n\n"
+        return body
+
+
 class VkGenerator(object):
     def __init__(self, registry):
         self.registry = registry
 
         # Build a list conversion functions for struct conversion.
         self.conversions = []
+        self.struct_chain_conversions = []
         self.host_structs = []
         for func in self.registry.funcs.values():
             if not func.is_required():
@@ -1929,6 +2064,11 @@ class VkGenerator(object):
                 # e.g. array vs non-array. Just make sure we pull in each struct once.
                 if not any(s.name == conv.struct.name for s in self.host_structs):
                     self.host_structs.append(conv.struct)
+
+        for struct in self.registry.structs:
+            if struct.name in STRUCT_CHAIN_CONVERSIONS:
+                self.struct_chain_conversions.append(StructChainConversionFunction(Direction.INPUT, struct))
+                self.struct_chain_conversions.append(FreeStructChainFunction(struct))
 
     def _generate_copyright(self, f, spec_file=False):
         f.write("# " if spec_file else "/* ")
@@ -1955,6 +2095,9 @@ class VkGenerator(object):
             f.write(conv.definition())
         f.write("#endif /* USE_STRUCT_CONVERSION */\n\n")
 
+        for conv in self.struct_chain_conversions:
+            f.write(conv.definition())
+
         # Create thunks for instance and device functions.
         # Global functions don't go through the thunks.
         for vk_func in self.registry.funcs.values():
@@ -1968,9 +2111,13 @@ class VkGenerator(object):
                 continue
 
             # Exports symbols for Core functions.
-            if not vk_func.is_core_func():
+            if not vk_func.is_core_func() and not vk_func.needs_private_thunk():
                 f.write("static ")
-            f.write(vk_func.thunk(prefix=prefix, call_conv="WINAPI"))
+
+            if vk_func.needs_private_thunk():
+                f.write(vk_func.thunk(prefix="thunk_"))
+            else:
+                f.write(vk_func.thunk(prefix=prefix, call_conv="WINAPI"))
 
         f.write("static const struct vulkan_func vk_device_dispatch_table[] =\n{\n")
         for vk_func in self.registry.device_funcs:
@@ -2067,7 +2214,9 @@ class VkGenerator(object):
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")
         for vk_func in self.registry.funcs.values():
-            if not vk_func.is_required() or vk_func.is_global_func() or vk_func.needs_thunk():
+            if not vk_func.is_required() or vk_func.is_global_func():
+                continue
+            if vk_func.needs_thunk() and not vk_func.needs_private_thunk():
                 continue
 
             if vk_func.is_core_func():
@@ -2076,8 +2225,18 @@ class VkGenerator(object):
                 f.write("{0};\n".format(vk_func.prototype("WINAPI", prefix="wine_", postfix="DECLSPEC_HIDDEN")))
         f.write("\n")
 
+        f.write("/* Private thunks */\n")
+        for vk_func in self.registry.funcs.values():
+            if vk_func.needs_private_thunk():
+                f.write("{0};\n".format(vk_func.prototype(prefix="thunk_", postfix="DECLSPEC_HIDDEN")))
+        f.write("\n")
+
         for struct in self.host_structs:
             f.write(struct.definition(align=False, conv=True, postfix="_host"))
+        f.write("\n")
+
+        for func in self.struct_chain_conversions:
+            f.write(func.prototype(postfix="DECLSPEC_HIDDEN") + ";\n")
         f.write("\n")
 
         f.write("/* For use by vkDevice and children */\n")
@@ -2392,6 +2551,11 @@ class VkRegistry(object):
         version = tuple(map(int, version.group('major', 'minor')))
         return version <= WINE_VK_VERSION
 
+    def _is_extension_supported(self, extension):
+        # We disable some extensions as either we haven't implemented
+        # support yet or because they are for platforms other than win32.
+        return extension not in BLACKLISTED_EXTENSIONS
+
     def _mark_command_required(self, command):
         """ Helper function to mark a certain command and the datatypes it needs as required."""
         def mark_bitmask_dependencies(bitmask, types):
@@ -2578,15 +2742,12 @@ class VkRegistry(object):
                 LOGGER.debug("Skipping experimental extension: {0}".format(ext_name))
                 continue
 
-            # Instance extensions often require a custom implementation, so filter.
-            ext_type = ext.attrib["type"]
-            if ext_type == "instance" and not ext_name in SUPPORTED_INSTANCE_EXTENSIONS:
-                LOGGER.debug("Skipping instance extension: {0}".format(ext_name))
-                continue
+            platform = ext.attrib.get("platform")
+            if platform and platform != "win32":
+                LOGGER.debug("Skipping extensions {0} for platform {1}".format(ext_name, platform))
+                continue;
 
-            # We disable some extensions as either we haven't implemented
-            # support yet or because they are for platforms other than win32.
-            if ext_name in BLACKLISTED_EXTENSIONS:
+            if not self._is_extension_supported(ext_name):
                 LOGGER.debug("Skipping blacklisted extension: {0}".format(ext_name))
                 continue
             elif "requires" in ext.attrib:
@@ -2616,6 +2777,10 @@ class VkRegistry(object):
                 if feature and not self._is_feature_supported(feature):
                     continue
 
+                required_extension = require.attrib.get("extension")
+                if required_extension and not self._is_extension_supported(required_extension):
+                    continue
+
                 # Pull in any commands we need. We infer types to pull in from the command
                 # as well.
                 for command in require.findall("command"):
@@ -2623,7 +2788,7 @@ class VkRegistry(object):
                     self._mark_command_required(cmd_name)
 
             # Store a list with extensions.
-            ext_info = {"name" : ext_name, "type" : ext_type}
+            ext_info = {"name" : ext_name, "type" : ext.attrib["type"]}
             extensions.append(ext_info)
 
         # Sort in alphabetical order.

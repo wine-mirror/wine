@@ -207,64 +207,48 @@ static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
     return queues;
 }
 
-static VkDeviceGroupDeviceCreateInfo *convert_VkDeviceGroupDeviceCreateInfo(const void *src)
+static void wine_vk_device_free_create_info(VkDeviceCreateInfo *create_info)
 {
-    const VkDeviceGroupDeviceCreateInfo *in = src;
-    VkDeviceGroupDeviceCreateInfo *out;
-    VkPhysicalDevice *physical_devices;
-    unsigned int i;
+    VkDeviceGroupDeviceCreateInfo *group_info;
 
-    if (!(out = heap_alloc(sizeof(*out))))
-        return NULL;
-
-    *out = *in;
-    if (!(physical_devices = heap_calloc(in->physicalDeviceCount, sizeof(*physical_devices))))
+    if ((group_info = wine_vk_find_struct(create_info, DEVICE_GROUP_DEVICE_CREATE_INFO)))
     {
-        heap_free(out);
-        return NULL;
+        heap_free((void *)group_info->pPhysicalDevices);
     }
-    for (i = 0; i < in->physicalDeviceCount; ++i)
-        physical_devices[i] = in->pPhysicalDevices[i]->phys_dev;
-    out->pPhysicalDevices = physical_devices;
 
-    return out;
+    free_VkDeviceCreateInfo_struct_chain(create_info);
 }
 
 static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src,
         VkDeviceCreateInfo *dst)
 {
+    VkDeviceGroupDeviceCreateInfo *group_info;
     unsigned int i;
+    VkResult res;
 
     *dst = *src;
 
-    /* Application and loader can pass in a chain of extensions through pNext.
-     * We can't blindly pass these through as often these contain callbacks or
-     * they can even be pass structures for loader / ICD internal use.
-     */
-    if (src->pNext)
+    if ((res = convert_VkDeviceCreateInfo_struct_chain(src->pNext, dst)) < 0)
     {
-        const VkBaseInStructure *header;
+        WARN("Failed to convert VkDeviceCreateInfo pNext chain, res=%d.\n", res);
+        return res;
+    }
 
-        dst->pNext = NULL;
-        for (header = src->pNext; header; header = header->pNext)
+    /* FIXME: convert_VkDeviceCreateInfo_struct_chain() should unwrap handles for us. */
+    if ((group_info = wine_vk_find_struct(dst, DEVICE_GROUP_DEVICE_CREATE_INFO)))
+    {
+        VkPhysicalDevice *physical_devices;
+
+        if (!(physical_devices = heap_calloc(group_info->physicalDeviceCount, sizeof(*physical_devices))))
         {
-            switch (header->sType)
-            {
-                case VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO:
-                    /* Used for loader to ICD communication. Ignore to not confuse
-                     * host loader.
-                     */
-                    break;
-
-                case VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO:
-                    if (!(dst->pNext = convert_VkDeviceGroupDeviceCreateInfo(header)))
-                        return VK_ERROR_OUT_OF_HOST_MEMORY;
-                    break;
-
-                default:
-                    FIXME("Application requested a linked structure of type %#x.\n", header->sType);
-            }
+            free_VkDeviceCreateInfo_struct_chain(dst);
+            return VK_ERROR_OUT_OF_HOST_MEMORY;
         }
+        for (i = 0; i < group_info->physicalDeviceCount; ++i)
+        {
+            physical_devices[i] = group_info->pPhysicalDevices[i]->phys_dev;
+        }
+        group_info->pPhysicalDevices = physical_devices;
     }
 
     /* Should be filtered out by loader as ICDs don't support layers. */
@@ -279,24 +263,12 @@ static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src
         if (!wine_vk_device_extension_supported(extension_name))
         {
             WARN("Extension %s is not supported.\n", debugstr_a(extension_name));
+            wine_vk_device_free_create_info(dst);
             return VK_ERROR_EXTENSION_NOT_PRESENT;
         }
     }
 
     return VK_SUCCESS;
-}
-
-static void wine_vk_device_free_create_info(VkDeviceCreateInfo *create_info)
-{
-    VkDeviceGroupDeviceCreateInfo *group_info;
-
-    if ((group_info = wine_vk_find_struct(create_info, DEVICE_GROUP_DEVICE_CREATE_INFO)))
-    {
-        heap_free((void *)group_info->pPhysicalDevices);
-        heap_free(group_info);
-    }
-
-    create_info->pNext = NULL;
 }
 
 /* Helper function used for freeing a device structure. This function supports full
@@ -352,36 +324,15 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
         VkInstanceCreateInfo *dst)
 {
     unsigned int i;
+    VkResult res;
 
     *dst = *src;
 
-    /* Application and loader can pass in a chain of extensions through pNext.
-     * We can't blindly pass these through as often these contain callbacks or
-     * they can even be pass structures for loader / ICD internal use. For now
-     * we ignore everything in pNext chain, but we print FIXMEs.
-     */
-    if (src->pNext)
+    if ((res = convert_VkInstanceCreateInfo_struct_chain(src->pNext, dst)) < 0)
     {
-        const VkBaseInStructure *header;
-
-        for (header = src->pNext; header; header = header->pNext)
-        {
-            switch (header->sType)
-            {
-                case VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO:
-                    /* Can be used to register new dispatchable object types
-                     * to the loader. We should ignore it as it will confuse the
-                     * host its loader.
-                     */
-                    break;
-
-                default:
-                    FIXME("Application requested a linked structure of type %#x.\n", header->sType);
-            }
-        }
+        WARN("Failed to convert VkInstanceCreateInfo pNext chain, res=%d.\n", res);
+        return res;
     }
-    /* For now don't support anything. */
-    dst->pNext = NULL;
 
     /* ICDs don't support any layers, so nothing to copy. Modern versions of the loader
      * filter this data out as well.
@@ -397,6 +348,7 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
         if (!wine_vk_instance_extension_supported(extension_name))
         {
             WARN("Extension %s is not supported.\n", debugstr_a(extension_name));
+            free_VkInstanceCreateInfo_struct_chain(dst);
             return VK_ERROR_EXTENSION_NOT_PRESENT;
         }
     }
@@ -620,21 +572,15 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
 
     res = wine_vk_device_convert_create_info(create_info, &create_info_host);
     if (res != VK_SUCCESS)
-    {
-        if (res != VK_ERROR_EXTENSION_NOT_PRESENT)
-            ERR("Failed to convert VkDeviceCreateInfo, res=%d.\n", res);
-        wine_vk_device_free(object);
-        return res;
-    }
+        goto fail;
 
     res = phys_dev->instance->funcs.p_vkCreateDevice(phys_dev->phys_dev,
             &create_info_host, NULL /* allocator */, &object->device);
     wine_vk_device_free_create_info(&create_info_host);
     if (res != VK_SUCCESS)
     {
-        ERR("Failed to create device.\n");
-        wine_vk_device_free(object);
-        return res;
+        WARN("Failed to create device, res=%d.\n", res);
+        goto fail;
     }
 
     /* Just load all function pointers we are aware off. The loader takes care of filtering.
@@ -644,7 +590,7 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
 #define USE_VK_FUNC(name) \
     object->funcs.p_##name = (void *)vk_funcs->p_vkGetDeviceProcAddr(object->device, #name); \
     if (object->funcs.p_##name == NULL) \
-        TRACE("Not found %s\n", #name);
+        TRACE("Not found '%s'.\n", #name);
     ALL_VK_DEVICE_FUNCS()
 #undef USE_VK_FUNC
 
@@ -654,13 +600,12 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
     phys_dev->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyProperties(phys_dev->phys_dev,
             &max_queue_families, NULL);
     object->max_queue_families = max_queue_families;
-    TRACE("Max queue families: %u\n", object->max_queue_families);
+    TRACE("Max queue families: %u.\n", object->max_queue_families);
 
-    object->queues = heap_calloc(max_queue_families, sizeof(*object->queues));
-    if (!object->queues)
+    if (!(object->queues = heap_calloc(max_queue_families, sizeof(*object->queues))))
     {
-        wine_vk_device_free(object);
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
+        res = VK_ERROR_OUT_OF_HOST_MEMORY;
+        goto fail;
     }
 
     for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
@@ -669,15 +614,13 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
         uint32_t family_index = create_info_host.pQueueCreateInfos[i].queueFamilyIndex;
         uint32_t queue_count = create_info_host.pQueueCreateInfos[i].queueCount;
 
-        TRACE("queueFamilyIndex %u, queueCount %u\n", family_index, queue_count);
+        TRACE("Queue family index %u, queue count %u.\n", family_index, queue_count);
 
-        object->queues[family_index] = wine_vk_device_alloc_queues(object, family_index,
-                queue_count, flags);
-        if (!object->queues[family_index])
+        if (!(object->queues[family_index] = wine_vk_device_alloc_queues(object, family_index, queue_count, flags)))
         {
-            ERR("Failed to allocate memory for queues\n");
-            wine_vk_device_free(object);
-            return VK_ERROR_OUT_OF_HOST_MEMORY;
+            ERR("Failed to allocate memory for queues.\n");
+            res = VK_ERROR_OUT_OF_HOST_MEMORY;
+            goto fail;
         }
     }
 
@@ -686,6 +629,10 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
     *device = object;
     TRACE("Created device %p (native device %p).\n", object, object->device);
     return VK_SUCCESS;
+
+fail:
+    wine_vk_device_free(object);
+    return res;
 }
 
 VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
@@ -716,6 +663,7 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     }
 
     res = vk_funcs->p_vkCreateInstance(&create_info_host, NULL /* allocator */, &object->instance);
+    free_VkInstanceCreateInfo_struct_chain(&create_info_host);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create instance, res=%d\n", res);
@@ -996,7 +944,7 @@ void WINAPI wine_vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *in
     TRACE("%p, %p, %p\n", device, info, queue);
 
     if ((chain = info->pNext))
-        FIXME("Ignoring a linked structure of type %#x.\n", chain->sType);
+        FIXME("Ignoring a linked structure of type %u.\n", chain->sType);
 
     matching_queue = &device->queues[info->queueFamilyIndex][info->queueIndex];
     if (matching_queue->flags != info->flags)
@@ -1219,6 +1167,98 @@ VkResult WINAPI wine_vkEnumeratePhysicalDeviceGroupsKHR(VkInstance instance,
     TRACE("%p, %p, %p\n", instance, count, properties);
     return wine_vk_enumerate_physical_device_groups(instance,
             instance->funcs.p_vkEnumeratePhysicalDeviceGroupsKHR, count, properties);
+}
+
+void WINAPI wine_vkGetPhysicalDeviceExternalFenceProperties(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceExternalFenceInfo *fence_info, VkExternalFenceProperties *properties)
+{
+    TRACE("%p, %p, %p\n", phys_dev, fence_info, properties);
+    properties->exportFromImportedHandleTypes = 0;
+    properties->compatibleHandleTypes = 0;
+    properties->externalFenceFeatures = 0;
+}
+
+void WINAPI wine_vkGetPhysicalDeviceExternalFencePropertiesKHR(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceExternalFenceInfo *fence_info, VkExternalFenceProperties *properties)
+{
+    TRACE("%p, %p, %p\n", phys_dev, fence_info, properties);
+    properties->exportFromImportedHandleTypes = 0;
+    properties->compatibleHandleTypes = 0;
+    properties->externalFenceFeatures = 0;
+}
+
+void WINAPI wine_vkGetPhysicalDeviceExternalBufferProperties(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceExternalBufferInfo *buffer_info, VkExternalBufferProperties *properties)
+{
+    TRACE("%p, %p, %p\n", phys_dev, buffer_info, properties);
+    memset(&properties->externalMemoryProperties, 0, sizeof(properties->externalMemoryProperties));
+}
+
+void WINAPI wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceExternalBufferInfo *buffer_info, VkExternalBufferProperties *properties)
+{
+    TRACE("%p, %p, %p\n", phys_dev, buffer_info, properties);
+    memset(&properties->externalMemoryProperties, 0, sizeof(properties->externalMemoryProperties));
+}
+
+VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceImageFormatInfo2 *format_info, VkImageFormatProperties2 *properties)
+{
+    VkExternalImageFormatProperties *external_image_properties;
+    VkResult res;
+
+    TRACE("%p, %p, %p\n", phys_dev, format_info, properties);
+
+    res = thunk_vkGetPhysicalDeviceImageFormatProperties2(phys_dev, format_info, properties);
+
+    if ((external_image_properties = wine_vk_find_struct(properties, EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
+    {
+        VkExternalMemoryProperties *p = &external_image_properties->externalMemoryProperties;
+        p->externalMemoryFeatures = 0;
+        p->exportFromImportedHandleTypes = 0;
+        p->compatibleHandleTypes = 0;
+    }
+
+    return res;
+}
+
+VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceImageFormatInfo2 *format_info, VkImageFormatProperties2 *properties)
+{
+    VkExternalImageFormatProperties *external_image_properties;
+    VkResult res;
+
+    TRACE("%p, %p, %p\n", phys_dev, format_info, properties);
+
+    res = thunk_vkGetPhysicalDeviceImageFormatProperties2KHR(phys_dev, format_info, properties);
+
+    if ((external_image_properties = wine_vk_find_struct(properties, EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
+    {
+        VkExternalMemoryProperties *p = &external_image_properties->externalMemoryProperties;
+        p->externalMemoryFeatures = 0;
+        p->exportFromImportedHandleTypes = 0;
+        p->compatibleHandleTypes = 0;
+    }
+
+    return res;
+}
+
+void WINAPI wine_vkGetPhysicalDeviceExternalSemaphoreProperties(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceExternalSemaphoreInfo *semaphore_info, VkExternalSemaphoreProperties *properties)
+{
+    TRACE("%p, %p, %p\n", phys_dev, semaphore_info, properties);
+    properties->exportFromImportedHandleTypes = 0;
+    properties->compatibleHandleTypes = 0;
+    properties->externalSemaphoreFeatures = 0;
+}
+
+void WINAPI wine_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceExternalSemaphoreInfo *semaphore_info, VkExternalSemaphoreProperties *properties)
+{
+    TRACE("%p, %p, %p\n", phys_dev, semaphore_info, properties);
+    properties->exportFromImportedHandleTypes = 0;
+    properties->compatibleHandleTypes = 0;
+    properties->externalSemaphoreFeatures = 0;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)

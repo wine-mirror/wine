@@ -267,6 +267,7 @@ static int           proximity_out_type;
 static HWND          hwndTabletDefault;
 static WTPACKET      gMsgPacket;
 static DWORD         gSerial;
+static WTPACKET      last_packet;
 
 /* Reference: http://www.wacomeng.com/devsupport/ibmpc/gddevpc.html
  *
@@ -716,6 +717,11 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
                                     gSysDevice.ORIENTATION[1].axUnits = TU_CIRCLE;
                                     gSysDevice.ORIENTATION[1].axResolution
                                                                 = CASTFIX32(3600);
+                                    gSysDevice.ORIENTATION[2].axMin = 0;
+                                    gSysDevice.ORIENTATION[2].axMax = 3600;
+                                    gSysDevice.ORIENTATION[2].axUnits = TU_CIRCLE;
+                                    gSysDevice.ORIENTATION[2].axResolution
+                                                                = CASTFIX32(3600);
                                     Axis++;
                                 }
                             }
@@ -839,6 +845,40 @@ static int cursor_from_device(DWORD deviceid, LPWTI_CURSORS_INFO *cursorp)
     return -1;
 }
 
+static DWORD get_changed_state( WTPACKET *pkt)
+{
+    DWORD change = 0;
+
+    if (pkt->pkX != last_packet.pkX)
+        change |= PK_X;
+    if (pkt->pkY != last_packet.pkY)
+        change |= PK_Y;
+    if (pkt->pkZ != last_packet.pkZ)
+        change |= PK_Z;
+    if (pkt->pkSerialNumber != last_packet.pkSerialNumber)
+        change |= PK_SERIAL_NUMBER;
+    if (pkt->pkTime != last_packet.pkTime)
+        change |= PK_TIME;
+    if (pkt->pkNormalPressure != last_packet.pkNormalPressure)
+        change |= PK_NORMAL_PRESSURE;
+    if (pkt->pkTangentPressure != last_packet.pkTangentPressure)
+        change |= PK_TANGENT_PRESSURE;
+    if (pkt->pkCursor != last_packet.pkCursor)
+        change |= PK_CURSOR;
+    if (pkt->pkButtons != last_packet.pkButtons)
+        change |= PK_BUTTONS;
+    if (pkt->pkOrientation.orAzimuth   != last_packet.pkOrientation.orAzimuth  ||
+         pkt->pkOrientation.orAltitude != last_packet.pkOrientation.orAltitude ||
+         pkt->pkOrientation.orTwist    != last_packet.pkOrientation.orTwist)
+        change |= PK_ORIENTATION;
+    if (pkt->pkRotation.roPitch != last_packet.pkRotation.roPitch ||
+         pkt->pkRotation.roRoll != last_packet.pkRotation.roRoll  ||
+         pkt->pkRotation.roYaw  != last_packet.pkRotation.roYaw)
+        change |= PK_ROTATION;
+
+    return change;
+}
+
 static BOOL motion_event( HWND hwnd, XEvent *event )
 {
     XDeviceMotionEvent *motion = (XDeviceMotionEvent *)event;
@@ -865,7 +905,9 @@ static BOOL motion_event( HWND hwnd, XEvent *event )
                                            * (gMsgPacket.pkStatus & TPS_INVERT?-1:1));
     gMsgPacket.pkNormalPressure = motion->axis_data[2];
     gMsgPacket.pkButtons = get_button_state(curnum);
+    gMsgPacket.pkChanged = get_changed_state(&gMsgPacket);
     SendMessageW(hwndTabletDefault,WT_PACKET,gMsgPacket.pkSerialNumber,(LPARAM)hwnd);
+    last_packet = gMsgPacket;
     return TRUE;
 }
 
@@ -895,7 +937,9 @@ static BOOL button_event( HWND hwnd, XEvent *event )
                                            * (gMsgPacket.pkStatus & TPS_INVERT?-1:1));
     gMsgPacket.pkNormalPressure = button->axis_data[2];
     gMsgPacket.pkButtons = get_button_state(curnum);
+    gMsgPacket.pkChanged = get_changed_state(&gMsgPacket);
     SendMessageW(hwndTabletDefault,WT_PACKET,gMsgPacket.pkSerialNumber,(LPARAM)hwnd);
+    last_packet = gMsgPacket;
     return TRUE;
 }
 

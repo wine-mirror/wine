@@ -36,15 +36,15 @@ static const BYTE REPORT_BUTTONS[] = {
     0x29, 0x03, /* USAGE_MAXIMUM (Button 3) */
     0x15, 0x00, /* LOGICAL_MINIMUM (0) */
     0x25, 0x01, /* LOGICAL_MAXIMUM (1) */
-    0x35, 0x00, /* LOGICAL_MINIMUM (0) */
-    0x45, 0x01, /* LOGICAL_MAXIMUM (1) */
+    0x35, 0x00, /* PHYSICAL_MINIMUM (0) */
+    0x45, 0x01, /* PHYSICAL_MAXIMUM (1) */
     0x95, 0x03, /* REPORT_COUNT (3) */
     0x75, 0x01, /* REPORT_SIZE (1) */
     0x81, 0x02, /* INPUT (Data,Var,Abs) */
 };
 #define IDX_BUTTON_MIN_USAGE 3
 #define IDX_BUTTON_MAX_USAGE 5
-#define IDX_BUTTON_COUNT 11
+#define IDX_BUTTON_COUNT 15
 
 static const BYTE REPORT_PADDING[] = {
     0x95, 0x03, /* REPORT_COUNT (3) */
@@ -75,11 +75,11 @@ static const BYTE REPORT_REL_AXIS_TAIL[] = {
 static const BYTE REPORT_HATSWITCH[] = {
     0x05, 0x01,  /* USAGE_PAGE (Generic Desktop) */
     0x09, 0x39,  /* USAGE (Hatswitch) */
-    0x15, 0x00,  /* LOGICAL_MINIMUM (0) */
+    0x15, 0x01,  /* LOGICAL_MINIMUM (1) */
     0x25, 0x08,  /* LOGICAL_MAXIMUM (0x08) */
     0x35, 0x00,  /* PHYSICAL_MINIMUM (0) */
     0x45, 0x08,  /* PHYSICAL_MAXIMUM (8) */
-    0x75, 0x08,  /* REPORT_SIZE (8) */
+    0x75, 0x04,  /* REPORT_SIZE (4) */
     0x95, 0x01,  /* REPORT_COUNT (1) */
     0x81, 0x02,  /* INPUT (Data,Var,Abs) */
 };
@@ -112,20 +112,4 @@ static inline BYTE *add_hatswitch(BYTE *report_ptr, INT count)
     memcpy(report_ptr, REPORT_HATSWITCH, sizeof(REPORT_HATSWITCH));
     report_ptr[IDX_HATSWITCH_COUNT] = count;
     return report_ptr + sizeof(REPORT_HATSWITCH);
-}
-
-static inline void set_button_value(int index, int value, BYTE* buffer)
-{
-    int bindex = index / 8;
-    int b = index % 8;
-    BYTE mask;
-
-    mask = 1<<b;
-    if (value)
-        buffer[bindex] = buffer[bindex] | mask;
-    else
-    {
-        mask = ~mask;
-        buffer[bindex] = buffer[bindex] & mask;
-    }
 }

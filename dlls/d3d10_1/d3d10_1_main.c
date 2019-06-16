@@ -17,8 +17,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
 #include "wine/debug.h"
 
 #define COBJMACROS

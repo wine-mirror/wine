@@ -936,14 +936,24 @@ static void *get_readback_data(struct resource_readback *rb,
     return (BYTE *)rb->map_desc.pData + z * rb->map_desc.DepthPitch + y * rb->map_desc.RowPitch + x * byte_width;
 }
 
-static BYTE get_readback_byte(struct resource_readback *rb, unsigned int x, unsigned int y, unsigned int z)
+static BYTE get_readback_u8(struct resource_readback *rb, unsigned int x, unsigned int y, unsigned int z)
 {
     return *(BYTE *)get_readback_data(rb, x, y, z, sizeof(BYTE));
 }
 
-static DWORD get_readback_color(struct resource_readback *rb, unsigned int x, unsigned int y, unsigned int z)
+static WORD get_readback_u16(struct resource_readback *rb, unsigned int x, unsigned int y, unsigned int z)
+{
+    return *(WORD *)get_readback_data(rb, x, y, z, sizeof(WORD));
+}
+
+static DWORD get_readback_u32(struct resource_readback *rb, unsigned int x, unsigned int y, unsigned int z)
 {
     return *(DWORD *)get_readback_data(rb, x, y, z, sizeof(DWORD));
+}
+
+static DWORD get_readback_color(struct resource_readback *rb, unsigned int x, unsigned int y, unsigned int z)
+{
+    return get_readback_u32(rb, x, y, z);
 }
 
 static float get_readback_float(struct resource_readback *rb, unsigned int x, unsigned int y)
@@ -980,12 +990,12 @@ static DWORD get_texture_color(ID3D11Texture2D *texture, unsigned int x, unsigne
     return color;
 }
 
-#define check_readback_data_byte(a, b, c, d) check_readback_data_byte_(__LINE__, a, b, c, d)
-static void check_readback_data_byte_(unsigned int line, struct resource_readback *rb,
+#define check_readback_data_u8(a, b, c, d) check_readback_data_u8_(__LINE__, a, b, c, d)
+static void check_readback_data_u8_(unsigned int line, struct resource_readback *rb,
         const RECT *rect, BYTE expected_value, BYTE max_diff)
 {
     unsigned int x = 0, y = 0, z = 0;
-    BOOL all_match = TRUE;
+    BOOL all_match = FALSE;
     RECT default_rect;
     BYTE value = 0;
 
@@ -1001,21 +1011,87 @@ static void check_readback_data_byte_(unsigned int line, struct resource_readbac
         {
             for (x = rect->left; x < rect->right; ++x)
             {
-                value = get_readback_byte(rb, x, y, z);
-                if (!compare_color(value, expected_value, max_diff))
-                {
-                    all_match = FALSE;
-                    break;
-                }
+                value = get_readback_u8(rb, x, y, z);
+                if (abs((int)value - (int)expected_value) > max_diff)
+                    goto done;
             }
-            if (!all_match)
-                break;
         }
-        if (!all_match)
-            break;
     }
+    all_match = TRUE;
+
+done:
     ok_(__FILE__, line)(all_match,
             "Got 0x%02x, expected 0x%02x at (%u, %u, %u), sub-resource %u.\n",
+            value, expected_value, x, y, z, rb->sub_resource_idx);
+}
+
+#define check_readback_data_u16(a, b, c, d) check_readback_data_u16_(__LINE__, a, b, c, d)
+static void check_readback_data_u16_(unsigned int line, struct resource_readback *rb,
+        const RECT *rect, WORD expected_value, BYTE max_diff)
+{
+    unsigned int x = 0, y = 0, z = 0;
+    BOOL all_match = FALSE;
+    RECT default_rect;
+    WORD value = 0;
+
+    if (!rect)
+    {
+        SetRect(&default_rect, 0, 0, rb->width, rb->height);
+        rect = &default_rect;
+    }
+
+    for (z = 0; z < rb->depth; ++z)
+    {
+        for (y = rect->top; y < rect->bottom; ++y)
+        {
+            for (x = rect->left; x < rect->right; ++x)
+            {
+                value = get_readback_u16(rb, x, y, z);
+                if (abs((int)value - (int)expected_value) > max_diff)
+                    goto done;
+            }
+        }
+    }
+    all_match = TRUE;
+
+done:
+    ok_(__FILE__, line)(all_match,
+            "Got 0x%04x, expected 0x%04x at (%u, %u, %u), sub-resource %u.\n",
+            value, expected_value, x, y, z, rb->sub_resource_idx);
+}
+
+#define check_readback_data_u24(a, b, c, d, e) check_readback_data_u24_(__LINE__, a, b, c, d, e)
+static void check_readback_data_u24_(unsigned int line, struct resource_readback *rb,
+        const RECT *rect, unsigned int shift, DWORD expected_value, BYTE max_diff)
+{
+    unsigned int x = 0, y = 0, z = 0;
+    BOOL all_match = FALSE;
+    RECT default_rect;
+    DWORD value = 0;
+
+    if (!rect)
+    {
+        SetRect(&default_rect, 0, 0, rb->width, rb->height);
+        rect = &default_rect;
+    }
+
+    for (z = 0; z < rb->depth; ++z)
+    {
+        for (y = rect->top; y < rect->bottom; ++y)
+        {
+            for (x = rect->left; x < rect->right; ++x)
+            {
+                value = get_readback_u32(rb, x, y, z) >> shift;
+                if (abs((int)value - (int)expected_value) > max_diff)
+                    goto done;
+            }
+        }
+    }
+    all_match = TRUE;
+
+done:
+    ok_(__FILE__, line)(all_match,
+            "Got 0x%06x, expected 0x%06x at (%u, %u, %u), sub-resource %u.\n",
             value, expected_value, x, y, z, rb->sub_resource_idx);
 }
 
@@ -1024,7 +1100,7 @@ static void check_readback_data_color_(unsigned int line, struct resource_readba
         const RECT *rect, DWORD expected_color, BYTE max_diff)
 {
     unsigned int x = 0, y = 0, z = 0;
-    BOOL all_match = TRUE;
+    BOOL all_match = FALSE;
     RECT default_rect;
     DWORD color = 0;
 
@@ -1042,17 +1118,13 @@ static void check_readback_data_color_(unsigned int line, struct resource_readba
             {
                 color = get_readback_color(rb, x, y, z);
                 if (!compare_color(color, expected_color, max_diff))
-                {
-                    all_match = FALSE;
-                    break;
-                }
+                    goto done;
             }
-            if (!all_match)
-                break;
         }
-        if (!all_match)
-            break;
     }
+    all_match = TRUE;
+
+done:
     ok_(__FILE__, line)(all_match,
             "Got 0x%08x, expected 0x%08x at (%u, %u, %u), sub-resource %u.\n",
             color, expected_color, x, y, z, rb->sub_resource_idx);
@@ -2080,7 +2152,10 @@ static void test_get_immediate_context(void)
 {
     ID3D11DeviceContext *immediate_context, *previous_immediate_context;
     ULONG expected_refcount, refcount;
+    ID3D11Multithread *multithread;
     ID3D11Device *device;
+    BOOL enabled;
+    HRESULT hr;
 
     if (!(device = create_device(NULL)))
     {
@@ -2109,6 +2184,82 @@ static void test_get_immediate_context(void)
     refcount = ID3D11DeviceContext_Release(immediate_context);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
 
+    ID3D11Device_GetImmediateContext(device, &immediate_context);
+    expected_refcount = get_refcount(immediate_context) + 1;
+    hr = ID3D11DeviceContext_QueryInterface(immediate_context, &IID_ID3D11Multithread, (void **)&multithread);
+    if (hr == E_NOINTERFACE)
+    {
+        win_skip("ID3D11Multithread is not supported.\n");
+        goto done;
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    refcount = get_refcount(immediate_context);
+    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+
+    expected_refcount = refcount;
+    refcount = get_refcount(multithread);
+    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+
+    enabled = ID3D11Multithread_GetMultithreadProtected(multithread);
+    todo_wine ok(!enabled, "Multithread protection is %#x.\n", enabled);
+
+    ID3D11Multithread_Release(multithread);
+
+done:
+    refcount = ID3D11DeviceContext_Release(immediate_context);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
+static void test_create_deferred_context(void)
+{
+    ULONG refcount, expected_refcount;
+    struct device_desc device_desc;
+    ID3D11DeviceContext *context;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    device_desc.feature_level = NULL;
+    device_desc.flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
+    if (!(device = create_device(&device_desc)))
+    {
+        skip("Failed to create single-threaded device.\n");
+        return;
+    }
+
+    hr = ID3D11Device_CreateDeferredContext(device, 0, &context);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Failed to create deferred context, hr %#x.\n", hr);
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    expected_refcount = get_refcount(device) + 1;
+    hr = ID3D11Device_CreateDeferredContext(device, 0, &context);
+    todo_wine ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    if (FAILED(hr))
+        goto done;
+    refcount = get_refcount(device);
+    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+    refcount = get_refcount(context);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    check_interface(context, &IID_IUnknown, TRUE, FALSE);
+    check_interface(context, &IID_ID3D11DeviceChild, TRUE, FALSE);
+    check_interface(context, &IID_ID3D11DeviceContext, TRUE, FALSE);
+    check_interface(context, &IID_ID3D11Multithread, FALSE, FALSE);
+
+    refcount = ID3D11DeviceContext_Release(context);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+done:
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
@@ -14239,6 +14390,7 @@ static void test_clear_buffer_unordered_access_view(void)
     unsigned int i, x;
     ULONG refcount;
     HRESULT hr;
+    RECT rect;
 
     static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
     static const struct uvec4 fe_uvec4 = {0xfefefefe, 0xfefefefe, 0xfefefefe, 0xfefefefe};
@@ -14325,10 +14477,10 @@ static void test_clear_buffer_unordered_access_view(void)
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     buffer_desc.StructureByteStride = 4;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
 
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, NULL, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_UNKNOWN;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -14336,28 +14488,23 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 4;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
         uvec4 = uvec4_data[i];
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, &uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            DWORD data = get_readback_color(&rb, x, 0, 0);
-            ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
-        }
+        SetRect(&rect, 0, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        check_readback_data_color(&rb, &rect, uvec4.x, 0);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, &fe_uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            DWORD data = get_readback_color(&rb, x, 0, 0);
-            uvec4 = x < U(uav_desc).Buffer.NumElements ? fe_uvec4 : uvec4_data[i];
-            ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
-        }
+        SetRect(&rect, 0, 0, U(uav_desc).Buffer.NumElements, 1);
+        check_readback_data_color(&rb, &rect, fe_uvec4.x, 0);
+        SetRect(&rect, U(uav_desc).Buffer.NumElements, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        check_readback_data_color(&rb, &rect, uvec4.x, 0);
         release_resource_readback(&rb);
     }
 
@@ -14368,7 +14515,7 @@ static void test_clear_buffer_unordered_access_view(void)
     /* Raw buffer views */
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -14376,32 +14523,27 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 16;
     U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
     U(uav_desc).Buffer.FirstElement = 8;
     U(uav_desc).Buffer.NumElements = 8;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
         uvec4 = uvec4_data[i];
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, &uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            DWORD data = get_readback_color(&rb, x, 0, 0);
-            ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
-        }
+        SetRect(&rect, 0, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        check_readback_data_color(&rb, &rect, uvec4.x, 0);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, &fe_uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            DWORD data = get_readback_color(&rb, x, 0, 0);
-            uvec4 = U(uav_desc).Buffer.FirstElement <= x ? fe_uvec4 : uvec4_data[i];
-            ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
-        }
+        SetRect(&rect, 0, 0, U(uav_desc).Buffer.FirstElement, 1);
+        check_readback_data_color(&rb, &rect, uvec4.x, 0);
+        SetRect(&rect, U(uav_desc).Buffer.FirstElement, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        check_readback_data_color(&rb, &rect, fe_uvec4.x, 0);
         release_resource_readback(&rb);
     }
 
@@ -14412,7 +14554,7 @@ static void test_clear_buffer_unordered_access_view(void)
     /* Typed buffer views */
     buffer_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_R32_SINT;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -14420,32 +14562,27 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 16;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
     U(uav_desc).Buffer.FirstElement = 9;
     U(uav_desc).Buffer.NumElements = 7;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
         uvec4 = uvec4_data[i];
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, &uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            DWORD data = get_readback_color(&rb, x, 0, 0);
-            ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
-        }
+        SetRect(&rect, 0, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        check_readback_data_color(&rb, &rect, uvec4.x, 0);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, &fe_uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            DWORD data = get_readback_color(&rb, x, 0, 0);
-            uvec4 = U(uav_desc).Buffer.FirstElement <= x ? fe_uvec4 : uvec4_data[i];
-            ok(data == uvec4.x, "Got unexpected value %#x at %u.\n", data, x);
-        }
+        SetRect(&rect, 0, 0, U(uav_desc).Buffer.FirstElement, 1);
+        check_readback_data_color(&rb, &rect, uvec4.x, 0);
+        SetRect(&rect, U(uav_desc).Buffer.FirstElement, 0, buffer_desc.ByteWidth / sizeof(uvec4.x), 1);
+        check_readback_data_color(&rb, &rect, fe_uvec4.x, 0);
         release_resource_readback(&rb);
     }
 
@@ -14458,39 +14595,44 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 4;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
     U(uav_desc).Buffer.FirstElement = 2;
     U(uav_desc).Buffer.NumElements = 2;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
+        const struct uvec4 *data = NULL;
+        BOOL all_match;
+
         uvec4 = uvec4_data[i];
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, &uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4); ++x)
+        for (x = 0, all_match = TRUE; x < buffer_desc.ByteWidth / sizeof(uvec4); ++x)
         {
-            const struct uvec4 *data = get_readback_uvec4(&rb, x, 0);
             const struct uvec4 broken_result = {uvec4.x, uvec4.x, uvec4.x, uvec4.x}; /* Intel */
-            ok(compare_uvec4(data, &uvec4) || broken(compare_uvec4(data, &broken_result)),
-                    "Got {%#x, %#x, %#x, %#x}, expected {%#x, %#x, %#x, %#x} at %u.\n",
-                    data->x, data->y, data->z, data->w, uvec4.x, uvec4.y, uvec4.z, uvec4.w, i);
+            data = get_readback_uvec4(&rb, x, 0);
+            if (!(compare_uvec4(data, &uvec4) || broken(compare_uvec4(data, &broken_result))))
+                all_match = FALSE;
         }
+        ok(all_match, "Got {%#x, %#x, %#x, %#x}, expected {%#x, %#x, %#x, %#x} at %u.\n",
+                data->x, data->y, data->z, data->w, uvec4.x, uvec4.y, uvec4.z, uvec4.w, x);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, &fe_uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4); ++x)
+        for (x = 0, all_match = TRUE; x < buffer_desc.ByteWidth / sizeof(uvec4); ++x)
         {
-            const struct uvec4 *data = get_readback_uvec4(&rb, x, 0);
             struct uvec4 broken_result;
+            data = get_readback_uvec4(&rb, x, 0);
             uvec4 = U(uav_desc).Buffer.FirstElement <= x ? fe_uvec4 : uvec4_data[i];
             broken_result.x = broken_result.y = broken_result.z = broken_result.w = uvec4.x;
-            ok(compare_uvec4(data, &uvec4) || broken(compare_uvec4(data, &broken_result)),
-                    "Got {%#x, %#x, %#x, %#x}, expected {%#x, %#x, %#x, %#x} at %u.\n",
-                    data->x, data->y, data->z, data->w, uvec4.x, uvec4.y, uvec4.z, uvec4.w, i);
+            if (!(compare_uvec4(data, &uvec4) || broken(compare_uvec4(data, &broken_result))))
+                all_match = FALSE;
         }
+        ok(all_match, "Got {%#x, %#x, %#x, %#x}, expected {%#x, %#x, %#x, %#x} at %u.\n",
+                data->x, data->y, data->z, data->w, uvec4.x, uvec4.y, uvec4.z, uvec4.w, x);
         release_resource_readback(&rb);
     }
 
@@ -14505,28 +14647,27 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 16;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
     U(uav_desc).Buffer.FirstElement = 8;
     U(uav_desc).Buffer.NumElements = 8;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
         uvec4 = uvec4_data[i];
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, &uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-            todo_wine check_rgba_sint8(get_readback_color(&rb, x, 0, 0), &uvec4);
+        todo_wine check_rgba_sint8(get_readback_color(&rb, 0, 0, 0), &uvec4);
+        todo_wine check_rgba_sint8(get_readback_color(&rb, 7, 0, 0), &uvec4);
+        todo_wine check_rgba_sint8(get_readback_color(&rb, 15, 0, 0), &uvec4);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, &fe_uvec4.x);
         get_buffer_readback(buffer, &rb);
-        for (x = 0; x < buffer_desc.ByteWidth / sizeof(uvec4.x); ++x)
-        {
-            uvec4 = U(uav_desc).Buffer.FirstElement <= x ? fe_uvec4 : uvec4_data[i];
-            todo_wine check_rgba_sint8(get_readback_color(&rb, x, 0, 0), &uvec4);
-        }
+        todo_wine check_rgba_sint8(get_readback_color(&rb, 0, 0, 0), &uvec4);
+        todo_wine check_rgba_sint8(get_readback_color(&rb, U(uav_desc).Buffer.FirstElement - 1, 0, 0), &uvec4);
+        todo_wine check_rgba_sint8(get_readback_color(&rb, U(uav_desc).Buffer.FirstElement, 0, 0), &fe_uvec4);
         release_resource_readback(&rb);
     }
 
@@ -16341,6 +16482,7 @@ static void test_create_input_layout(void)
         DXGI_FORMAT_R32_SINT,
         DXGI_FORMAT_R16_UINT,
         DXGI_FORMAT_R16_SINT,
+        DXGI_FORMAT_R8G8_UNORM,
         DXGI_FORMAT_R8_UINT,
         DXGI_FORMAT_R8_SINT,
     };
@@ -16357,7 +16499,7 @@ static void test_create_input_layout(void)
         layout_desc->Format = vertex_formats[i];
         hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
                 vs_code, sizeof(vs_code), &input_layout);
-        ok(SUCCEEDED(hr), "Failed to create input layout for format %#x, hr %#x.\n",
+        ok(hr == S_OK, "Failed to create input layout for format %#x, hr %#x.\n",
                 vertex_formats[i], hr);
         refcount = get_refcount(device);
         ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n",
@@ -18283,7 +18425,7 @@ static void check_format_support(const unsigned int *format_support, D3D_FEATURE
     }
 }
 
-static void test_required_format_support(const D3D_FEATURE_LEVEL feature_level)
+static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
 {
     unsigned int format_support[DXGI_FORMAT_B4G4R4A4_UNORM + 1];
     struct device_desc device_desc;
@@ -18319,6 +18461,37 @@ static void test_required_format_support(const D3D_FEATURE_LEVEL feature_level)
         ok(hr == S_OK || (hr == E_FAIL && !format_support[format]),
                 "Got unexpected result for format %#x: hr %#x, format_support %#x.\n",
                 format, hr, format_support[format]);
+    }
+
+    for (format = DXGI_FORMAT_UNKNOWN; format <= DXGI_FORMAT_B4G4R4A4_UNORM; ++format)
+    {
+        if (feature_level < D3D_FEATURE_LEVEL_10_0)
+        {
+            /* SHADER_SAMPLE_COMPARISON is never advertised as supported on feature level 9. */
+            ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_SHADER_SAMPLE_COMPARISON),
+                    "Unexpected SHADER_SAMPLE_COMPARISON for format %#x, feature level %#x.\n",
+                    format, feature_level);
+        }
+        if (feature_level < D3D_FEATURE_LEVEL_10_1)
+        {
+            ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_SHADER_GATHER),
+                    "Unexpected SHADER_GATHER for format %#x, feature level %#x.\n",
+                    format, feature_level);
+            ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_SHADER_GATHER_COMPARISON),
+                    "Unexpected SHADER_GATHER_COMPARISON for format %#x, feature level %#x.\n",
+                    format, feature_level);
+        }
+    }
+
+    ok(format_support[DXGI_FORMAT_R8G8B8A8_UNORM] & D3D11_FORMAT_SUPPORT_SHADER_SAMPLE,
+            "SHADER_SAMPLE is not supported for R8G8B8A8_UNORM.\n");
+    todo_wine
+    ok(!(format_support[DXGI_FORMAT_R32G32B32A32_UINT] & D3D11_FORMAT_SUPPORT_SHADER_SAMPLE),
+            "SHADER_SAMPLE is supported for R32G32B32A32_UINT.\n");
+    if (feature_level >= D3D_FEATURE_LEVEL_10_0)
+    {
+        ok(format_support[DXGI_FORMAT_R32G32B32A32_UINT] & D3D11_FORMAT_SUPPORT_SHADER_LOAD,
+                "SHADER_LOAD is not supported for R32G32B32A32_UINT.\n");
     }
 
     check_format_support(format_support, feature_level,
@@ -25413,10 +25586,10 @@ static void test_depth_bias(void)
     struct resource_readback rb;
     ID3D11DepthStencilView *dsv;
     unsigned int expected_value;
-    unsigned int x, y, i, j, k;
     ID3D11RasterizerState *rs;
     ID3D11Texture2D *texture;
     unsigned int format_idx;
+    unsigned int y, i, j, k;
     unsigned int shift = 0;
     ID3D11Device *device;
     float *depth_values;
@@ -25513,14 +25686,7 @@ static void test_depth_bias(void)
                 break;
             case DXGI_FORMAT_D16_UNORM:
                 get_texture_readback(texture, 0, &rb);
-                for (y = 0; y < texture_desc.Height; ++y)
-                {
-                    for (x = 0; x < texture_desc.Width; ++x)
-                    {
-                        u16 = get_readback_data(&rb, x, y, 0, sizeof(*u16));
-                        ok(*u16 == 0xffff, "Got unexpected value %#x.\n", *u16);
-                    }
-                }
+                check_readback_data_u16(&rb, NULL, 0xffffu, 0);
                 release_resource_readback(&rb);
                 break;
             default:
@@ -25564,19 +25730,7 @@ static void test_depth_bias(void)
                             depth = min(max(0.0f, quads[i].z + bias), 1.0f);
 
                             get_texture_readback(texture, 0, &rb);
-                            for (y = 0; y < texture_desc.Height; ++y)
-                            {
-                                expected_value = depth * 16777215.0f + 0.5f;
-                                for (x = 0; x < texture_desc.Width; ++x)
-                                {
-                                    u32 = get_readback_data(&rb, x, y, 0, sizeof(*u32));
-                                    u32_value = *u32 >> shift;
-                                    ok(abs(u32_value - expected_value) <= 1,
-                                            "Got value %#x (%.8e), expected %#x (%.8e).\n",
-                                            u32_value, u32_value / 16777215.0f,
-                                            expected_value, expected_value / 16777215.0f);
-                                }
-                            }
+                            check_readback_data_u24(&rb, NULL, shift, depth * 16777215.0f + 0.5f, 1);
                             release_resource_readback(&rb);
                             break;
                         case DXGI_FORMAT_D16_UNORM:
@@ -25585,17 +25739,7 @@ static void test_depth_bias(void)
                             depth = min(max(0.0f, quads[i].z + bias), 1.0f);
 
                             get_texture_readback(texture, 0, &rb);
-                            for (y = 0; y < texture_desc.Height; ++y)
-                            {
-                                expected_value = depth * 65535.0f + 0.5f;
-                                for (x = 0; x < texture_desc.Width; ++x)
-                                {
-                                    u16 = get_readback_data(&rb, x, y, 0, sizeof(*u16));
-                                    ok(abs(*u16 - expected_value) <= 1,
-                                            "Got value %#x (%.8e), expected %#x (%.8e).\n",
-                                            *u16, *u16 / 65535.0f, expected_value, expected_value / 65535.0f);
-                                }
-                            }
+                            check_readback_data_u16(&rb, NULL, depth * 65535.0f + 0.5f, 1);
                             release_resource_readback(&rb);
                             break;
                         default:
@@ -25647,6 +25791,7 @@ static void test_depth_bias(void)
 
                 for (k = 0; k < ARRAY_SIZE(bias_clamp_tests); ++k)
                 {
+                    BOOL all_match = TRUE;
                     rasterizer_desc.DepthBiasClamp = bias_clamp_tests[k];
                     ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rs);
                     ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
@@ -25657,21 +25802,23 @@ static void test_depth_bias(void)
                     m = quad_slopes[i] / texture_desc.Height;
                     bias = clamp_depth_bias(rasterizer_desc.SlopeScaledDepthBias * m, rasterizer_desc.DepthBiasClamp);
                     get_texture_readback(texture, 0, &rb);
-                    for (y = 0; y < texture_desc.Height; ++y)
+                    for (y = 0; y < texture_desc.Height && all_match; ++y)
                     {
                         depth = min(max(0.0f, depth_values[y] + bias), 1.0f);
                         switch (format)
                         {
                             case DXGI_FORMAT_D32_FLOAT:
                                 data = get_readback_float(&rb, 0, y);
-                                ok(compare_float(data, depth, 64),
+                                all_match = compare_float(data, depth, 64);
+                                ok(all_match,
                                         "Got depth %.8e, expected %.8e.\n", data, depth);
                                 break;
                             case DXGI_FORMAT_D24_UNORM_S8_UINT:
                                 u32 = get_readback_data(&rb, 0, y, 0, sizeof(*u32));
                                 u32_value = *u32 >> shift;
                                 expected_value = depth * 16777215.0f + 0.5f;
-                                ok(abs(u32_value - expected_value) <= 3,
+                                all_match = abs(u32_value - expected_value) <= 3;
+                                ok(all_match,
                                         "Got value %#x (%.8e), expected %#x (%.8e).\n",
                                         u32_value, u32_value / 16777215.0f,
                                         expected_value, expected_value / 16777215.0f);
@@ -25679,7 +25826,8 @@ static void test_depth_bias(void)
                             case DXGI_FORMAT_D16_UNORM:
                                 u16 = get_readback_data(&rb, 0, y, 0, sizeof(*u16));
                                 expected_value = depth * 65535.0f + 0.5f;
-                                ok(abs(*u16 - expected_value) <= 1,
+                                all_match = abs(*u16 - expected_value) <= 1;
+                                ok(all_match,
                                         "Got value %#x (%.8e), expected %#x (%.8e).\n",
                                         *u16, *u16 / 65535.0f, expected_value, expected_value / 65535.0f);
                                 break;
@@ -29006,7 +29154,7 @@ static void test_render_a8(void)
         ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
         draw_quad(&test_context);
         get_texture_readback(texture, 0, &rb);
-        check_readback_data_byte(&rb, NULL, 0xff, 0);
+        check_readback_data_u8(&rb, NULL, 0xff, 0);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, black);
@@ -29147,6 +29295,8 @@ START_TEST(d3d11)
     unsigned int argc, i;
     char **argv;
 
+    use_mt = !getenv("WINETEST_NO_MT_D3D");
+
     argc = winetest_get_mainargs(&argv);
     for (i = 2; i < argc; ++i)
     {
@@ -29165,6 +29315,7 @@ START_TEST(d3d11)
     queue_test(test_create_device);
     queue_for_each_feature_level(test_device_interfaces);
     queue_test(test_get_immediate_context);
+    queue_test(test_create_deferred_context);
     queue_test(test_create_texture1d);
     queue_test(test_texture1d_interfaces);
     queue_test(test_create_texture2d);
@@ -29245,7 +29396,7 @@ START_TEST(d3d11)
     queue_test(test_index_buffer_offset);
     queue_test(test_face_culling);
     queue_test(test_line_antialiasing_blending);
-    queue_for_each_feature_level(test_required_format_support);
+    queue_for_each_feature_level(test_format_support);
     queue_for_each_9_x_feature_level(test_fl9_draw);
     queue_test(test_ddy);
     queue_test(test_shader_input_registers_limits);

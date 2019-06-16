@@ -488,7 +488,7 @@
 # @ stub FindFirstFileTransactedW
 @ stdcall FindFirstFileW(wstr ptr)
 # @ stub FindFirstStreamTransactedW
-# @ stub FindFirstStreamW
+@ stdcall FindFirstStreamW(wstr long ptr long)
 @ stdcall FindFirstVolumeA(ptr long)
 @ stdcall FindFirstVolumeMountPointA(str ptr long)
 @ stdcall FindFirstVolumeMountPointW(wstr ptr long)
@@ -497,7 +497,7 @@
 @ stdcall FindNextFileA(long ptr)
 # @ stub FindNextFileNameW
 @ stdcall FindNextFileW(long ptr)
-# @ stub FindNextStreamW
+@ stdcall FindNextStreamW(long ptr)
 @ stdcall FindNextVolumeA(long ptr long)
 @ stub FindNextVolumeMountPointA
 @ stub FindNextVolumeMountPointW
@@ -742,16 +742,16 @@
 # @ stub GetNLSVersionEx
 # @ stub GetNumaAvailableMemory
 @ stdcall GetNumaAvailableMemoryNode(long ptr)
-# @ stub GetNumaAvailableMemoryNodeEx
+@ stdcall GetNumaAvailableMemoryNodeEx(long ptr)
 @ stdcall GetNumaHighestNodeNumber(ptr)
 # @ stub GetNumaNodeNumberFromHandle
 @ stdcall GetNumaNodeProcessorMask(long ptr)
 @ stdcall GetNumaNodeProcessorMaskEx(long ptr)
 # @ stub GetNumaProcessorMap
 @ stdcall GetNumaProcessorNode(long ptr)
-# @ stub GetNumaProcessorNodeEx
-# @ stub GetNumaProximityNode
-# @ stub GetNumaProximityNodeEx
+@ stdcall GetNumaProcessorNodeEx(ptr ptr)
+@ stdcall GetNumaProximityNode(long ptr)
+@ stdcall GetNumaProximityNodeEx(long ptr)
 @ stdcall GetNumberFormatA(long long str ptr ptr long)
 @ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long)
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long)
@@ -786,7 +786,7 @@
 @ stdcall GetProcessIdOfThread(long)
 @ stdcall GetProcessIoCounters(long ptr)
 @ stdcall GetProcessMitigationPolicy(long long ptr long)
-# @ stub GetProcessPreferredUILanguages
+@ stdcall GetProcessPreferredUILanguages(long ptr ptr ptr)
 @ stdcall GetProcessPriorityBoost(long ptr)
 @ stdcall GetProcessShutdownParameters(ptr ptr)
 # @ stub GetProcessorSystemCycleTime
@@ -832,7 +832,7 @@
 @ stdcall GetSystemRegistryQuota(ptr ptr)
 @ stdcall GetSystemTime(ptr)
 @ stdcall GetSystemTimeAdjustment(ptr ptr ptr)
-@ stdcall GetSystemTimeAsFileTime(ptr)
+@ stdcall GetSystemTimeAsFileTime(ptr) ntdll.NtQuerySystemTime
 @ stdcall GetSystemTimePreciseAsFileTime(ptr)
 @ stdcall GetSystemTimes(ptr ptr ptr)
 @ stdcall GetSystemWindowsDirectoryA(ptr long)
@@ -1018,7 +1018,7 @@
 @ stdcall K32GetProcessImageFileNameW(long ptr long)
 @ stdcall K32GetProcessMemoryInfo(long ptr long)
 @ stdcall K32GetWsChanges(long ptr long)
-# @ stub K32GetWsChangesEx
+@ stdcall K32GetWsChangesEx(long ptr ptr)
 @ stdcall K32InitializeProcessForWsWatch(long)
 @ stdcall K32QueryWorkingSet(long ptr long)
 @ stdcall K32QueryWorkingSetEx(long ptr long)
@@ -1076,7 +1076,7 @@
 @ stdcall -i386 -private MapLS(ptr) krnl386.exe16.MapLS
 @ stdcall -i386 -private MapSL(long) krnl386.exe16.MapSL
 @ stdcall -i386 -private MapSLFix(long) krnl386.exe16.MapSLFix
-# @ stub MapUserPhysicalPages
+@ stdcall MapUserPhysicalPages(ptr long ptr)
 # @ stub MapUserPhysicalPagesScatter
 @ stdcall MapViewOfFile(long long long long long)
 @ stdcall MapViewOfFileEx(long long long long long ptr)
@@ -1292,7 +1292,7 @@
 @ stdcall -arch=x86_64 RtlCopyMemory(ptr ptr long) ntdll.RtlCopyMemory
 @ cdecl -arch=arm,arm64,x86_64 RtlDeleteFunctionTable(ptr) ntdll.RtlDeleteFunctionTable
 @ stdcall RtlFillMemory(ptr long long) ntdll.RtlFillMemory
-@ cdecl -arch=x86_64 RtlInstallFunctionTableCallback(long long long ptr ptr ptr) ntdll.RtlInstallFunctionTableCallback
+@ cdecl -arch=arm,arm64,x86_64 RtlInstallFunctionTableCallback(long long long ptr ptr ptr) ntdll.RtlInstallFunctionTableCallback
 @ stdcall -arch=arm,x86_64 RtlLookupFunctionEntry(long ptr ptr) ntdll.RtlLookupFunctionEntry
 @ stdcall RtlMoveMemory(ptr ptr long) ntdll.RtlMoveMemory
 @ stdcall -arch=x86_64,arm,arm64 RtlPcToFileHeader(ptr ptr) ntdll.RtlPcToFileHeader
@@ -1429,7 +1429,7 @@
 @ stdcall SetProcessAffinityUpdateMode(long long)
 @ stdcall SetProcessDEPPolicy(long)
 @ stdcall SetProcessMitigationPolicy(long ptr long)
-# @ stub SetProcessPreferredUILanguages
+@ stdcall SetProcessPreferredUILanguages(long ptr ptr)
 @ stdcall SetProcessPriorityBoost(long long)
 @ stdcall SetProcessShutdownParameters(long long)
 # @ stub SetProcessUserModeExceptionPolicy
@@ -1559,7 +1559,7 @@
 @ stdcall VerifyVersionInfoW(long long int64)
 @ stdcall VirtualAlloc(ptr long long long)
 @ stdcall VirtualAllocEx(long ptr long long long)
-# @ stub VirtualAllocExNuma
+@ stdcall VirtualAllocExNuma(long ptr long long long long)
 @ stub VirtualBufferExceptionHandler
 @ stdcall VirtualFree(ptr long long)
 @ stdcall VirtualFreeEx(long ptr long long)
@@ -1591,7 +1591,7 @@
 @ stdcall WerSetFlags(long)
 # @ stub WerUnregisterFile
 @ stdcall WerUnregisterMemoryBlock(ptr)
-# @ stub WerUnregisterRuntimeExceptionModule
+@ stdcall WerUnregisterRuntimeExceptionModule(wstr ptr)
 # @ stub WerpCleanupMessageMapping
 # @ stub WerpInitiateRemoteRecovery
 # @ stub WerpNotifyLoadStringResource

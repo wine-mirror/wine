@@ -852,6 +852,16 @@ static void test_css_style_declaration(IHTMLCSSStyleDeclaration *css_style)
     test_var_bstr(&v, "0");
     VariantClear(&v);
 
+    V_VT(&v) = VT_R8;
+    V_R8(&v) = 0.5;
+    hres = IHTMLCSSStyleDeclaration_put_opacity(css_style, v);
+    ok(hres == S_OK, "put_opacity failed: %08x\n", hres);
+
+    hres = IHTMLCSSStyleDeclaration_get_opacity(css_style, &v);
+    ok(hres == S_OK, "get_opacity failed: %08x\n", hres);
+    test_var_bstr(&v, "0.5");
+    VariantClear(&v);
+
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("1");
     hres = IHTMLCSSStyleDeclaration_put_opacity(css_style, v);
@@ -918,6 +928,22 @@ static void test_body_style(IHTMLStyle *style)
         ok(!strcmp_wa(V_BSTR(&v), "6px"), "V_BSTR(marginRight) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     else
         ok(!V_BSTR(&v), "mariginRight = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("5");
+    hres = IHTMLStyle_put_marginRight(style, v);
+    ok(hres == S_OK, "put_marginRight failed: %08x\n", hres);
+
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLStyle_get_marginRight(style, &v);
+    ok(hres == S_OK, "get_marginRight failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(marginRight) = %d\n", V_VT(&v));
+    if(compat_mode < COMPAT_IE9)
+        ok(!strcmp_wa(V_BSTR(&v), "5px"), "V_BSTR(marginRight) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    else
+        ok(!V_BSTR(&v), "mariginRight = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
     if(css_style) {
         V_VT(&v) = VT_NULL;
@@ -925,7 +951,7 @@ static void test_body_style(IHTMLStyle *style)
         ok(hres == S_OK, "get_marginRight failed: %08x\n", hres);
         ok(V_VT(&v) == VT_BSTR, "V_VT(marginRight) = %d\n", V_VT(&v));
         if(compat_mode < COMPAT_IE9)
-            ok(!strcmp_wa(V_BSTR(&v), "6px"), "V_BSTR(marginRight) = %s\n",
+            ok(!strcmp_wa(V_BSTR(&v), "5px"), "V_BSTR(marginRight) = %s\n",
                wine_dbgstr_w(V_BSTR(&v)));
         else
             ok(!V_BSTR(&v), "mariginRight = %s\n", wine_dbgstr_w(V_BSTR(&v)));

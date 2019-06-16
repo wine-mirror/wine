@@ -1,4 +1,6 @@
 MODULE    = msvcm80.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	msvcm_main.c

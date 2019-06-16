@@ -18,13 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "hid.h"
-#include "wine/unicode.h"
 #include "winreg.h"
 #include "winuser.h"
 #include "setupapi.h"
@@ -50,7 +47,7 @@ NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRAT
     NTSTATUS status;
     BASE_DEVICE_EXTENSION *ext;
 
-    sprintfW(dev_name, device_name_fmtW, driver->DriverObject, native_device);
+    swprintf(dev_name, ARRAY_SIZE(dev_name), device_name_fmtW, driver->DriverObject, native_device);
     RtlInitUnicodeString( &nameW, dev_name );
 
     TRACE("Create base hid device %s\n", debugstr_w(dev_name));
@@ -78,6 +75,8 @@ NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRAT
 
 NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
 {
+    static const WCHAR backslashW[] = {'\\',0};
+    WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
     SP_DEVINFO_DATA Data;
     UNICODE_STRING nameW;
     NTSTATUS status;
@@ -90,26 +89,28 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
 
     RtlInitUnicodeString( &nameW, ext->device_name);
 
-    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_HIDCLASS, NULL, NULL, DIGCF_DEVICEINTERFACE);
-    if (!devinfo)
+    lstrcpyW(device_instance_id, ext->device_id);
+    lstrcatW(device_instance_id, backslashW);
+    lstrcatW(device_instance_id, ext->instance_id);
+
+    devinfo = SetupDiCreateDeviceInfoList(&GUID_DEVCLASS_HIDCLASS, NULL);
+    if (devinfo == INVALID_HANDLE_VALUE)
     {
         FIXME( "failed to get ClassDevs %x\n", GetLastError());
         return STATUS_UNSUCCESSFUL;
     }
     Data.cbSize = sizeof(Data);
-    if (!SetupDiCreateDeviceInfoW(devinfo, ext->instance_id, &GUID_DEVCLASS_HIDCLASS, NULL, NULL, DICD_INHERIT_CLASSDRVS, &Data))
+    if (SetupDiCreateDeviceInfoW(devinfo, device_instance_id, &GUID_DEVCLASS_HIDCLASS, NULL, NULL, DICD_INHERIT_CLASSDRVS, &Data))
     {
-        if (GetLastError() == ERROR_DEVINST_ALREADY_EXISTS)
+        if (!SetupDiRegisterDeviceInfo(devinfo, &Data, 0, NULL, NULL, NULL))
         {
-            SetupDiDestroyDeviceInfoList(devinfo);
-            return STATUS_SUCCESS;
+            FIXME( "failed to register device info %x\n", GetLastError());
+            goto error;
         }
-        FIXME( "failed to Create Device Info %x\n", GetLastError());
-        goto error;
     }
-    if (!SetupDiRegisterDeviceInfo( devinfo, &Data, 0, NULL, NULL, NULL ))
+    else if (GetLastError() != ERROR_DEVINST_ALREADY_EXISTS)
     {
-        FIXME( "failed to Register Device Info %x\n", GetLastError());
+        FIXME( "failed to create device info %x\n", GetLastError());
         goto error;
     }
     SetupDiDestroyDeviceInfoList(devinfo);
@@ -128,10 +129,54 @@ error:
     return STATUS_UNSUCCESSFUL;
 }
 
-void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device)
+static IRP *pop_irp_from_queue(BASE_DEVICE_EXTENSION *ext)
+{
+    LIST_ENTRY *entry;
+    KIRQL old_irql;
+    IRP *irp = NULL;
+
+    KeAcquireSpinLock(&ext->irp_queue_lock, &old_irql);
+
+    while (!irp && (entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
+    {
+        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
+        if (!IoSetCancelRoutine(irp, NULL))
+        {
+            /* cancel routine is already cleared, meaning that it was called. let it handle completion. */
+            InitializeListHead(&irp->Tail.Overlay.s.ListEntry);
+            irp = NULL;
+        }
+    }
+
+    KeReleaseSpinLock(&ext->irp_queue_lock, old_irql);
+    return irp;
+}
+
+static void WINAPI read_cancel_routine(DEVICE_OBJECT *device, IRP *irp)
 {
     BASE_DEVICE_EXTENSION *ext;
-    LIST_ENTRY *entry;
+    KIRQL old_irql;
+
+    TRACE("cancel %p IRP on device %p\n", irp, device);
+
+    ext = device->DeviceExtension;
+
+    IoReleaseCancelSpinLock(irp->CancelIrql);
+
+    KeAcquireSpinLock(&ext->irp_queue_lock, &old_irql);
+
+    RemoveEntryList(&irp->Tail.Overlay.s.ListEntry);
+
+    KeReleaseSpinLock(&ext->irp_queue_lock, old_irql);
+
+    irp->IoStatus.u.Status = STATUS_CANCELLED;
+    irp->IoStatus.Information = 0;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
+
+void HID_DeleteDevice(DEVICE_OBJECT *device)
+{
+    BASE_DEVICE_EXTENSION *ext;
     IRP *irp;
 
     ext = device->DeviceExtension;
@@ -147,13 +192,10 @@ void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device
     if (ext->ring_buffer)
         RingBuffer_Destroy(ext->ring_buffer);
 
-    entry = RemoveHeadList(&ext->irp_queue);
-    while(entry != &ext->irp_queue)
+    while((irp = pop_irp_from_queue(ext)))
     {
-        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
         irp->IoStatus.u.Status = STATUS_DEVICE_REMOVED;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
-        entry = RemoveHeadList(&ext->irp_queue);
     }
 
     TRACE("Delete device(%p) %s\n", device, debugstr_w(ext->device_name));
@@ -191,7 +233,6 @@ static NTSTATUS copy_packet_into_buffer(HID_XFER_PACKET *packet, BYTE* buffer, U
 
 static void HID_Device_processQueue(DEVICE_OBJECT *device)
 {
-    LIST_ENTRY *entry;
     IRP *irp;
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     UINT buffer_size = RingBuffer_GetBufferSize(ext->ring_buffer);
@@ -199,11 +240,9 @@ static void HID_Device_processQueue(DEVICE_OBJECT *device)
 
     packet = HeapAlloc(GetProcessHeap(), 0, buffer_size);
 
-    entry = RemoveHeadList(&ext->irp_queue);
-    while(entry != &ext->irp_queue)
+    while((irp = pop_irp_from_queue(ext)))
     {
         int ptr;
-        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
         ptr = PtrToUlong( irp->Tail.Overlay.OriginalFileObject->FsContext );
 
         RingBuffer_Read(ext->ring_buffer, ptr, packet, &buffer_size);
@@ -224,7 +263,6 @@ static void HID_Device_processQueue(DEVICE_OBJECT *device)
             irp->IoStatus.u.Status = STATUS_UNSUCCESSFUL;
         }
         IoCompleteRequest( irp, IO_NO_INCREMENT );
-        entry = RemoveHeadList(&ext->irp_queue);
     }
     HeapFree(GetProcessHeap(), 0, packet);
 }
@@ -317,7 +355,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
             if (!exit_now && irp->IoStatus.u.Status == STATUS_SUCCESS)
             {
                 packet->reportBufferLen = irp->IoStatus.Information;
-                if (ext->preparseData->InputReports[0].reportID)
+                if (ext->preparseData->reports[0].reportID)
                     packet->reportId = packet->reportBuffer[0];
                 else
                     packet->reportId = 0;
@@ -446,7 +484,9 @@ static NTSTATUS HID_get_feature(DEVICE_OBJECT *device, IRP *irp)
 static NTSTATUS HID_set_to_device(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     HID_XFER_PACKET packet;
+    ULONG max_len;
     NTSTATUS rc;
 
     TRACE_(hid_report)("Device %p Buffer length %i Buffer %p\n", device, irpsp->Parameters.DeviceIoControl.InputBufferLength, irp->AssociatedIrp.SystemBuffer);
@@ -455,12 +495,23 @@ static NTSTATUS HID_set_to_device(DEVICE_OBJECT *device, IRP *irp)
     {
         packet.reportBuffer = &((BYTE*)irp->AssociatedIrp.SystemBuffer)[1];
         packet.reportBufferLen = irpsp->Parameters.DeviceIoControl.InputBufferLength - 1;
+        if (irpsp->Parameters.DeviceIoControl.IoControlCode == IOCTL_HID_SET_FEATURE)
+            max_len = ext->preparseData->caps.FeatureReportByteLength;
+        else
+            max_len = ext->preparseData->caps.OutputReportByteLength;
     }
     else
     {
         packet.reportBuffer = irp->AssociatedIrp.SystemBuffer;
         packet.reportBufferLen = irpsp->Parameters.DeviceIoControl.InputBufferLength;
+        if (irpsp->Parameters.DeviceIoControl.IoControlCode == IOCTL_HID_SET_FEATURE)
+            max_len = (ext->preparseData->reports[ext->preparseData->reportIdx[HidP_Feature][packet.reportId]].bitSize + 7) / 8;
+        else
+            max_len = (ext->preparseData->reports[ext->preparseData->reportIdx[HidP_Output][packet.reportId]].bitSize + 7) / 8;
     }
+    if (packet.reportBufferLen > max_len)
+        packet.reportBufferLen = max_len;
+
     TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet.reportId, packet.reportBufferLen, packet.reportBuffer);
 
     rc = call_minidriver(irpsp->Parameters.DeviceIoControl.IoControlCode,
@@ -554,7 +605,7 @@ NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
             packet = HeapAlloc(GetProcessHeap(), 0, packet_size);
 
-            if (extension->preparseData->InputReports[0].reportID)
+            if (extension->preparseData->reports[0].reportID)
                 packet->reportId = buffer[0];
             else
                 packet->reportId = 0;
@@ -658,8 +709,24 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
         BASE_DEVICE_EXTENSION *extension = device->DeviceExtension;
         if (extension->poll_interval)
         {
+            KIRQL old_irql;
             TRACE_(hid_report)("Queue irp\n");
+
+            KeAcquireSpinLock(&ext->irp_queue_lock, &old_irql);
+
+            IoSetCancelRoutine(irp, read_cancel_routine);
+            if (irp->Cancel && !IoSetCancelRoutine(irp, NULL))
+            {
+                /* IRP was canceled before we set cancel routine */
+                InitializeListHead(&irp->Tail.Overlay.s.ListEntry);
+                KeReleaseSpinLock(&ext->irp_queue_lock, old_irql);
+                return STATUS_CANCELLED;
+            }
+
             InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.s.ListEntry);
+            IoMarkIrpPending(irp);
+
+            KeReleaseSpinLock(&ext->irp_queue_lock, old_irql);
             rc = STATUS_PENDING;
         }
         else
@@ -688,7 +755,9 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
 NTSTATUS WINAPI HID_Device_write(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     HID_XFER_PACKET packet;
+    ULONG max_len;
     NTSTATUS rc;
 
     irp->IoStatus.Information = 0;
@@ -699,12 +768,17 @@ NTSTATUS WINAPI HID_Device_write(DEVICE_OBJECT *device, IRP *irp)
     {
         packet.reportBuffer = &((BYTE*)irp->AssociatedIrp.SystemBuffer)[1];
         packet.reportBufferLen = irpsp->Parameters.Write.Length - 1;
+        max_len = ext->preparseData->caps.OutputReportByteLength;
     }
     else
     {
         packet.reportBuffer = irp->AssociatedIrp.SystemBuffer;
         packet.reportBufferLen = irpsp->Parameters.Write.Length;
+        max_len = (ext->preparseData->reports[ext->preparseData->reportIdx[HidP_Output][packet.reportId]].bitSize + 7) / 8;
     }
+    if (packet.reportBufferLen > max_len)
+        packet.reportBufferLen = max_len;
+
     TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet.reportId, packet.reportBufferLen, packet.reportBuffer);
 
     rc = call_minidriver(IOCTL_HID_WRITE_REPORT, device, NULL, 0, &packet, sizeof(packet));

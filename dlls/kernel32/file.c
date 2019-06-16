@@ -1521,7 +1521,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         static const WCHAR conW[] = {'C','O','N'};
 
         if (LOWORD(dosdev) == sizeof(conW) &&
-            !memicmpW( filename + HIWORD(dosdev)/sizeof(WCHAR), conW, ARRAY_SIZE( conW )))
+            !strncmpiW( filename + HIWORD(dosdev)/sizeof(WCHAR), conW, ARRAY_SIZE( conW )))
         {
             switch (access & (GENERIC_READ|GENERIC_WRITE))
             {
@@ -1746,6 +1746,7 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
     NTSTATUS status;
     IO_STATUS_BLOCK io;
     OBJECT_ATTRIBUTES attr;
+    FILE_BASIC_INFORMATION info;
 
     TRACE("%s %s %s 0x%08x %p %p\n", debugstr_w(lpReplacedFileName),
           debugstr_w(lpReplacementFileName), debugstr_w(lpBackupFileName),
@@ -1772,7 +1773,7 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    /* Open the "replaced" file for reading and writing */
+    /* Open the "replaced" file for reading */
     if (!(RtlDosPathNameToNtPathName_U(lpReplacedFileName, &nt_replaced_name, NULL, NULL)))
     {
         error = ERROR_PATH_NOT_FOUND;
@@ -1780,7 +1781,7 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
     }
     replaced_flags = lpBackupFileName ? FILE_OPEN : FILE_OPEN_IF;
     attr.ObjectName = &nt_replaced_name;
-    status = NtOpenFile(&hReplaced, GENERIC_READ|GENERIC_WRITE|DELETE|SYNCHRONIZE,
+    status = NtOpenFile(&hReplaced, GENERIC_READ|DELETE|SYNCHRONIZE,
                         &attr, &io,
                         FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
                         FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE);
@@ -1793,6 +1794,20 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
             error = ERROR_FILE_NOT_FOUND;
         else
             error = ERROR_UNABLE_TO_REMOVE_REPLACED;
+        goto fail;
+    }
+
+    /* Replacement should fail if replaced is READ_ONLY */
+    status = NtQueryInformationFile(hReplaced, &io, &info, sizeof(info), FileBasicInformation);
+    if (status != STATUS_SUCCESS)
+    {
+        error = RtlNtStatusToDosError(status);
+        goto fail;
+    }
+
+    if (info.FileAttributes & FILE_ATTRIBUTE_READONLY)
+    {
+        error = ERROR_ACCESS_DENIED;
         goto fail;
     }
 
@@ -2236,7 +2251,7 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
 /*************************************************************************
  *           FindClose   (KERNEL32.@)
  */
-BOOL WINAPI FindClose( HANDLE handle )
+BOOL WINAPI DECLSPEC_HOTPATCH FindClose( HANDLE handle )
 {
     FIND_FIRST_INFO *info = handle;
 
@@ -2346,6 +2361,28 @@ BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
     FILE_name_WtoA( dataW.cAlternateFileName, -1, data->cAlternateFileName,
                     sizeof(data->cAlternateFileName) );
     return TRUE;
+}
+
+/**************************************************************************
+ *           FindFirstStreamW   (KERNEL32.@)
+ */
+HANDLE WINAPI FindFirstStreamW(LPCWSTR filename, STREAM_INFO_LEVELS infolevel, void *data, DWORD flags)
+{
+    FIXME("(%s, %d, %p, %x): stub!\n", debugstr_w(filename), infolevel, data, flags);
+
+    SetLastError(ERROR_HANDLE_EOF);
+    return INVALID_HANDLE_VALUE;
+}
+
+/**************************************************************************
+ *           FindNextStreamW   (KERNEL32.@)
+ */
+BOOL WINAPI FindNextStreamW(HANDLE handle, void *data)
+{
+    FIXME("(%p, %p): stub!\n", handle, data);
+
+    SetLastError(ERROR_HANDLE_EOF);
+    return FALSE;
 }
 
 

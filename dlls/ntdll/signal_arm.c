@@ -142,13 +142,25 @@ struct UNWIND_INFO
  *
  * Get the trap code for a signal.
  */
-static inline enum arm_trap_code get_trap_code( const ucontext_t *sigcontext )
+static inline enum arm_trap_code get_trap_code( int signal, const ucontext_t *sigcontext )
 {
 #ifdef TRAP_sig
-    return TRAP_sig(sigcontext);
-#else
-    return TRAP_ARM_UNKNOWN;  /* unknown trap code */
+    enum arm_trap_code trap = TRAP_sig(sigcontext);
+    if (trap)
+        return trap;
 #endif
+
+    switch (signal)
+    {
+    case SIGILL:
+        return TRAP_ARM_PRIVINFLT;
+    case SIGSEGV:
+        return TRAP_ARM_PAGEFLT;
+    case SIGBUS:
+        return TRAP_ARM_ALIGNFLT;
+    default:
+        return TRAP_ARM_UNKNOWN;
+    }
 }
 
 /***********************************************************************
@@ -283,9 +295,12 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
 void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context );
 __ASM_GLOBAL_FUNC( set_cpu_context,
                    ".arm\n\t"
-                   "ldr r1, [r0, #0x44]\n\t"  /* context->Cpsr */
-                   "msr CPSR_f, r1\n\t"
+                   "ldr r2, [r0, #0x44]\n\t"  /* context->Cpsr */
+                   "tst r2, #0x20\n\t"        /* thumb? */
                    "ldr r1, [r0, #0x40]\n\t"  /* context->Pc */
+                   "orrne r1, r1, #1\n\t"     /* Adjust PC according to thumb */
+                   "biceq r1, r1, #1\n\t"     /* Adjust PC according to arm */
+                   "msr CPSR_f, r2\n\t"
                    "ldr lr, [r0, #0x3c]\n\t"  /* context->Lr */
                    "ldr sp, [r0, #0x38]\n\t"  /* context->Sp */
                    "push {r1}\n\t"
@@ -715,7 +730,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     ucontext_t *context = ucontext;
 
     /* check for page fault inside the thread stack */
-    if (get_trap_code(context) == TRAP_ARM_PAGEFLT &&
+    if (get_trap_code(signal, context) == TRAP_ARM_PAGEFLT &&
         (char *)info->si_addr >= (char *)NtCurrentTeb()->DeallocationStack &&
         (char *)info->si_addr < (char *)NtCurrentTeb()->Tib.StackBase &&
         virtual_handle_stack_fault( info->si_addr ))
@@ -732,7 +747,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     rec = setup_exception( context, raise_segv_exception );
     if (rec->ExceptionCode == EXCEPTION_STACK_OVERFLOW) return;
 
-    switch(get_trap_code(context))
+    switch(get_trap_code(signal, context))
     {
     case TRAP_ARM_PRIVINFLT:   /* Invalid opcode exception */
         rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
@@ -753,7 +768,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         rec->ExceptionInformation[1] = 0xffffffff;
         break;
     default:
-        ERR("Got unexpected trap %d\n", get_trap_code(context));
+        ERR("Got unexpected trap %d\n", get_trap_code(signal, context));
         rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
@@ -952,22 +967,22 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
  */
 NTSTATUS signal_alloc_thread( TEB **teb )
 {
-    static size_t sigstack_zero_bits;
+    static size_t sigstack_alignment;
     SIZE_T size;
     NTSTATUS status;
 
-    if (!sigstack_zero_bits)
+    if (!sigstack_alignment)
     {
         size_t min_size = page_size;
         /* find the first power of two not smaller than min_size */
-        while ((1u << sigstack_zero_bits) < min_size) sigstack_zero_bits++;
+        while ((1u << sigstack_alignment) < min_size) sigstack_alignment++;
         assert( sizeof(TEB) <= min_size );
     }
 
-    size = 1 << sigstack_zero_bits;
+    size = 1 << sigstack_alignment;
     *teb = NULL;
-    if (!(status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)teb, sigstack_zero_bits,
-                                            &size, MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE )))
+    if (!(status = virtual_alloc_aligned( (void **)teb, 0, &size, MEM_COMMIT | MEM_TOP_DOWN,
+                                          PAGE_READWRITE, sigstack_alignment )))
     {
         (*teb)->Tib.Self = &(*teb)->Tib;
         (*teb)->Tib.ExceptionList = (void *)~0UL;
@@ -1055,6 +1070,16 @@ void signal_init_process(void)
 BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD addr )
 {
     FIXME( "%p %u %x: stub\n", table, count, addr );
+    return TRUE;
+}
+
+/**********************************************************************
+ *              RtlInstallFunctionTableCallback   (NTDLL.@)
+ */
+BOOLEAN CDECL RtlInstallFunctionTableCallback( DWORD table, DWORD base, DWORD length,
+                                               PGET_RUNTIME_FUNCTION_CALLBACK callback, PVOID context, PCWSTR dll )
+{
+    FIXME( "%x %x %d %p %p %s: stub\n", table, base, length, callback, context, wine_dbgstr_w(dll) );
     return TRUE;
 }
 

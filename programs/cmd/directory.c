@@ -59,7 +59,7 @@ static WCHAR * WCMD_strrev (WCHAR *buff) {
   int r, i;
   WCHAR b;
 
-  r = strlenW (buff);
+  r = lstrlenW (buff);
   for (i=0; i<r/2; i++) {
     b = buff[i];
     buff[i] = buff[r-i-1];
@@ -101,7 +101,7 @@ static WCHAR * WCMD_filesize64 (ULONGLONG n) {
  *
  * Sort based on the /O options supplied on the command line
  */
-static int WCMD_dir_sort (const void *a, const void *b)
+static int __cdecl WCMD_dir_sort (const void *a, const void *b)
 {
   const WIN32_FIND_DATAW *filea = (const WIN32_FIND_DATAW *)a;
   const WIN32_FIND_DATAW *fileb = (const WIN32_FIND_DATAW *)b;
@@ -221,7 +221,7 @@ static void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
         /* Convert to a username */
         if (LookupAccountSidW(NULL, pSID, name, &nameLen, domain, &domainLen, &nameuse)) {
             static const WCHAR fmt[]  = {'%','s','%','c','%','s','\0'};
-            snprintfW(owner, ownerlen, fmt, domain, '\\', name);
+            swprintf(owner, ownerlen, fmt, domain, '\\', name);
         }
         heap_free(secBuffer);
     }
@@ -274,12 +274,12 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
      mirrors what windows does                                            */
   parms = inputparms;
   fd = heap_xalloc(sizeof(WIN32_FIND_DATAW));
-  while (parms && strcmpW(inputparms->dirName, parms->dirName) == 0) {
+  while (parms && lstrcmpW(inputparms->dirName, parms->dirName) == 0) {
     concurrentDirs++;
 
     /* Work out the full path + filename */
-    strcpyW(real_path, parms->dirName);
-    strcatW(real_path, parms->fileName);
+    lstrcpyW(real_path, parms->dirName);
+    lstrcatW(real_path, parms->fileName);
 
     /* Load all files into an in memory structure */
     WINE_TRACE("Looking for matches to '%s'\n", wine_dbgstr_w(real_path));
@@ -293,7 +293,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
         /* Keep running track of longest filename for wide output */
         if (wide || orderByCol) {
-           int tmpLen = strlenW(fd[entry_count-1].cFileName) + 3;
+           int tmpLen = lstrlenW(fd[entry_count-1].cFileName) + 3;
            if (fd[entry_count-1].dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) tmpLen = tmpLen + 2;
            if (tmpLen > widest) widest = tmpLen;
         }
@@ -310,8 +310,8 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
     }
 
     /* Work out the actual current directory name without a trailing \ */
-    strcpyW(real_path, parms->dirName);
-    real_path[strlenW(parms->dirName)-1] = 0x00;
+    lstrcpyW(real_path, parms->dirName);
+    real_path[lstrlenW(parms->dirName)-1] = 0x00;
 
     /* Output the results */
     if (!bare) {
@@ -337,7 +337,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
     /* Work out the number of columns */
     WINE_TRACE("%d entries, maxwidth=%d, widest=%d\n", entry_count, max_width, widest);
     if (wide || orderByCol) {
-      numCols = max(1, (int)max_width / widest);
+      numCols = max(1, max_width / widest);
       numRows = entry_count / numCols;
       if (entry_count % numCols) numRows++;
     } else {
@@ -368,8 +368,8 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
       /* /Q gets file ownership information */
       if (usernames) {
-          strcpyW (string, inputparms->dirName);
-          strcatW (string, fd[i].cFileName);
+          lstrcpyW (string, inputparms->dirName);
+          lstrcatW (string, fd[i].cFileName);
           WCMD_getfileowner(string, username, ARRAY_SIZE(username));
       }
 
@@ -391,11 +391,11 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
             static const WCHAR fmt[] = {'[','%','1',']','\0'};
             WCMD_output (fmt, fd[i].cFileName);
             dir_count++;
-            tmp_width = tmp_width + strlenW(fd[i].cFileName) + 2;
+            tmp_width = tmp_width + lstrlenW(fd[i].cFileName) + 2;
         } else {
             static const WCHAR fmt[] = {'%','1','\0'};
             WCMD_output (fmt, fd[i].cFileName);
-            tmp_width = tmp_width + strlenW(fd[i].cFileName) ;
+            tmp_width = tmp_width + lstrlenW(fd[i].cFileName) ;
             file_count++;
             file_size.u.LowPart = fd[i].nFileSizeLow;
             file_size.u.HighPart = fd[i].nFileSizeHigh;
@@ -419,8 +419,8 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
            if (usernames) WCMD_output (fmt3, username);
            WCMD_output(fmt4,fd[i].cFileName);
         } else {
-           if (!((strcmpW(fd[i].cFileName, dotW) == 0) ||
-                 (strcmpW(fd[i].cFileName, dotdotW) == 0))) {
+           if (!((lstrcmpW(fd[i].cFileName, dotW) == 0) ||
+                 (lstrcmpW(fd[i].cFileName, dotdotW) == 0))) {
               WCMD_output (fmt5, recurse?inputparms->dirName:nullW, fd[i].cFileName);
            } else {
               addNewLine = FALSE;
@@ -484,16 +484,16 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
     WIN32_FIND_DATAW finddata;
 
     /* Build path to search */
-    strcpyW(string, inputparms->dirName);
-    strcatW(string, starW);
+    lstrcpyW(string, inputparms->dirName);
+    lstrcatW(string, starW);
 
     WINE_TRACE("Recursive, looking for '%s'\n", wine_dbgstr_w(string));
     hff = FindFirstFileW(string, &finddata);
     if (hff != INVALID_HANDLE_VALUE) {
       do {
         if ((finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-            (strcmpW(finddata.cFileName, dotdotW) != 0) &&
-            (strcmpW(finddata.cFileName, dotW) != 0)) {
+            (lstrcmpW(finddata.cFileName, dotdotW) != 0) &&
+            (lstrcmpW(finddata.cFileName, dotW) != 0)) {
 
           DIRECTORY_STACK *thisDir;
           int              dirsToCopy = concurrentDirs;
@@ -504,9 +504,9 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
             dirsToCopy--;
 
             /* Work out search parameter in sub dir */
-            strcpyW (string, inputparms->dirName);
-            strcatW (string, finddata.cFileName);
-            strcatW (string, slashW);
+            lstrcpyW (string, inputparms->dirName);
+            lstrcatW (string, finddata.cFileName);
+            lstrcatW (string, slashW);
             WINE_TRACE("Recursive, Adding to search list '%s'\n", wine_dbgstr_w(string));
 
             /* Allocate memory, add to list */
@@ -613,8 +613,8 @@ void WCMD_directory (WCHAR *args)
   if (GetEnvironmentVariableW(dircmdW, string, ARRAY_SIZE(string))) {
     p = string;
     while ( (*p = toupper(*p)) ) ++p;
-    strcatW(string,quals);
-    strcpyW(quals, string);
+    lstrcatW(string,quals);
+    lstrcpyW(quals, string);
   }
 
   byte_total = 0;
@@ -789,7 +789,7 @@ void WCMD_directory (WCHAR *args)
   argno         = 0;
   argN          = args;
   GetCurrentDirectoryW(MAX_PATH, cwd);
-  strcatW(cwd, slashW);
+  lstrcatW(cwd, slashW);
 
   /* Loop through all args, calculating full effective directory */
   fullParms = NULL;
@@ -801,7 +801,7 @@ void WCMD_directory (WCHAR *args)
 
       WINE_TRACE("Found parm '%s'\n", wine_dbgstr_w(thisArg));
       if (thisArg[1] == ':' && thisArg[2] == '\\') {
-        strcpyW(fullname, thisArg);
+        lstrcpyW(fullname, thisArg);
       } else if (thisArg[1] == ':' && thisArg[2] != '\\') {
         WCHAR envvar[4];
         static const WCHAR envFmt[] = {'=','%','c',':','\0'};
@@ -810,14 +810,14 @@ void WCMD_directory (WCHAR *args)
           static const WCHAR noEnvFmt[] = {'%','c',':','\0'};
           wsprintfW(fullname, noEnvFmt, thisArg[0]);
         }
-        strcatW(fullname, slashW);
-        strcatW(fullname, &thisArg[2]);
+        lstrcatW(fullname, slashW);
+        lstrcatW(fullname, &thisArg[2]);
       } else if (thisArg[0] == '\\') {
         memcpy(fullname, cwd, 2 * sizeof(WCHAR));
-        strcpyW(fullname+2, thisArg);
+        lstrcpyW(fullname+2, thisArg);
       } else {
-        strcpyW(fullname, cwd);
-        strcatW(fullname, thisArg);
+        lstrcpyW(fullname, cwd);
+        lstrcatW(fullname, thisArg);
       }
       WINE_TRACE("Using location '%s'\n", wine_dbgstr_w(fullname));
 
@@ -828,16 +828,16 @@ void WCMD_directory (WCHAR *args)
        *  path references a directory, we need to list the *contents* of that
        *  directory not the directory file itself.
        */
-      if ((strchrW(path, '*') == NULL) && (strchrW(path, '%') == NULL)) {
+      if ((wcschr(path, '*') == NULL) && (wcschr(path, '%') == NULL)) {
         status = GetFileAttributesW(path);
         if ((status != INVALID_FILE_ATTRIBUTES) && (status & FILE_ATTRIBUTE_DIRECTORY)) {
-          if (!ends_with_backslash( path )) strcatW( path, slashW );
-          strcatW (path, starW);
+          if (!ends_with_backslash( path )) lstrcatW( path, slashW );
+          lstrcatW (path, starW);
         }
       } else {
         /* Special case wildcard search with no extension (ie parameters ending in '.') as
            GetFullPathName strips off the additional '.'                                  */
-        if (fullname[strlenW(fullname)-1] == '.') strcatW(path, dotW);
+        if (fullname[lstrlenW(fullname)-1] == '.') lstrcatW(path, dotW);
       }
 
       WINE_TRACE("Using path '%s'\n", wine_dbgstr_w(path));
@@ -853,13 +853,13 @@ void WCMD_directory (WCHAR *args)
                  wine_dbgstr_w(drive), wine_dbgstr_w(dir),
                  wine_dbgstr_w(fname), wine_dbgstr_w(ext));
 
-      thisEntry->dirName = heap_xalloc(sizeof(WCHAR) * (strlenW(drive)+strlenW(dir)+1));
-      strcpyW(thisEntry->dirName, drive);
-      strcatW(thisEntry->dirName, dir);
+      thisEntry->dirName = heap_xalloc(sizeof(WCHAR) * (lstrlenW(drive)+lstrlenW(dir)+1));
+      lstrcpyW(thisEntry->dirName, drive);
+      lstrcatW(thisEntry->dirName, dir);
 
-      thisEntry->fileName = heap_xalloc(sizeof(WCHAR) * (strlenW(fname)+strlenW(ext)+1));
-      strcpyW(thisEntry->fileName, fname);
-      strcatW(thisEntry->fileName, ext);
+      thisEntry->fileName = heap_xalloc(sizeof(WCHAR) * (lstrlenW(fname)+lstrlenW(ext)+1));
+      lstrcpyW(thisEntry->fileName, fname);
+      lstrcatW(thisEntry->fileName, ext);
 
     }
   }

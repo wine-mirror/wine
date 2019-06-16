@@ -43,6 +43,7 @@ struct import_func
     const char *name;
     const char *export_name;
     int         ordinal;
+    int         hint;
 };
 
 struct import
@@ -332,7 +333,8 @@ struct import *add_static_import_dll( const char *name )
 }
 
 /* add a function to the list of imports from a given dll */
-static void add_import_func( struct import *imp, const char *name, const char *export_name, int ordinal )
+static void add_import_func( struct import *imp, const char *name, const char *export_name,
+                             int ordinal, int hint )
 {
     if (imp->nb_imports == imp->max_imports)
     {
@@ -343,6 +345,7 @@ static void add_import_func( struct import *imp, const char *name, const char *e
     imp->imports[imp->nb_imports].name = name;
     imp->imports[imp->nb_imports].export_name = export_name;
     imp->imports[imp->nb_imports].ordinal = ordinal;
+    imp->imports[imp->nb_imports].hint = hint;
     imp->nb_imports++;
 }
 
@@ -361,9 +364,9 @@ static void add_undef_import( const char *name, int is_ordinal )
 
     import = add_static_import_dll( dll_name );
     if (is_ordinal)
-        add_import_func( import, NULL, xstrdup( p ), ordinal );
+        add_import_func( import, NULL, xstrdup( p ), ordinal, 0 );
     else
-        add_import_func( import, xstrdup( p ), NULL, ordinal );
+        add_import_func( import, xstrdup( p ), NULL, ordinal, 0 );
 }
 
 /* get the default entry point for a given spec file */
@@ -489,22 +492,20 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
     char *as_file, *obj_file;
     int i;
     unsigned int j;
-    FILE *f;
 
-    as_file = get_temp_file_name( output_file_name, ".s" );
-    if (!(f = fopen( as_file, "w" ))) fatal_error( "Cannot create %s\n", as_file );
-    fprintf( f, "\t.data\n" );
+    as_file = open_temp_output_file( ".s" );
+    output( "\t.data\n" );
 
     for (i = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *odp = &spec->entry_points[i];
         if (odp->type == TYPE_STUB || odp->type == TYPE_ABS || odp->type == TYPE_VARIABLE) continue;
         if (odp->flags & FLAG_FORWARD) continue;
-        fprintf( f, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(odp->link_name) );
+        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( get_link_name( odp )));
     }
     for (j = 0; j < extra_ld_symbols.count; j++)
-        fprintf( f, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(extra_ld_symbols.str[j]) );
-    fclose( f );
+        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(extra_ld_symbols.str[j]) );
+    fclose( output_file );
 
     obj_file = get_temp_file_name( output_file_name, ".o" );
     assemble_file( as_file, obj_file );
@@ -547,6 +548,8 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
     name = ldcombine_files( spec, argv );
 
     cmd = strmake( "%s -u %s", prog, name );
+    if (verbose)
+        fprintf( stderr, "%s\n", cmd );
     if (!(f = popen( cmd, "r" )))
         fatal_error( "Cannot execute '%s'\n", cmd );
 
@@ -589,7 +592,7 @@ void resolve_dll_imports( DLLSPEC *spec, struct list *list )
                 else
                 {
                     add_import_func( imp, (odp->flags & FLAG_NONAME) ? NULL : odp->name,
-                                     odp->export_name, odp->ordinal );
+                                     odp->export_name, odp->ordinal, odp->hint );
                     remove_name( &undef_symbols, j-- );
                 }
             }
@@ -724,14 +727,11 @@ static void output_immediate_imports(void)
     j = 0;
     LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
     {
-        output( "\t.long .L__wine_spec_import_data_names+%d-.L__wine_spec_rva_base\n",  /* OriginalFirstThunk */
-                 j * get_ptr_size() );
+        output_rva( ".L__wine_spec_import_data_names + %d", j * get_ptr_size() ); /* OriginalFirstThunk */
         output( "\t.long 0\n" );     /* TimeDateStamp */
         output( "\t.long 0\n" );     /* ForwarderChain */
-        output( "\t.long .L__wine_spec_import_name_%s-.L__wine_spec_rva_base\n", /* Name */
-                 import->c_name );
-        output( "\t.long .L__wine_spec_import_data_ptrs+%d-.L__wine_spec_rva_base\n",  /* FirstThunk */
-                 j * get_ptr_size() );
+        output_rva( ".L__wine_spec_import_name_%s", import->c_name ); /* Name */
+        output_rva( ".L__wine_spec_import_data_ptrs + %d", j * get_ptr_size() );  /* FirstThunk */
         j += import->nb_imports + 1;
     }
     output( "\t.long 0\n" );     /* OriginalFirstThunk */
@@ -774,7 +774,7 @@ static void output_immediate_imports(void)
             if (!func->name) continue;
             output( "\t.align %d\n", get_alignment(2) );
             output( ".L__wine_spec_import_data_%s_%s:\n", import->c_name, func->name );
-            output( "\t.short %d\n", func->ordinal );
+            output( "\t.short %d\n", func->hint );
             output( "\t%s \"%s\"\n", get_asm_string_keyword(), func->name );
         }
     }
@@ -1189,14 +1189,14 @@ static void output_external_link_imports( DLLSPEC *spec )
 void output_stubs( DLLSPEC *spec )
 {
     const char *name, *exp_name;
-    int i, count;
+    int i;
 
     if (!has_stubs( spec )) return;
 
     output( "\n/* stub functions */\n\n" );
     output( "\t.text\n" );
 
-    for (i = count = 0; i < spec->nb_entry_points; i++)
+    for (i = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *odp = &spec->entry_points[i];
         if (odp->type != TYPE_STUB) continue;
@@ -1233,7 +1233,6 @@ void output_stubs( DLLSPEC *spec )
                 {
                     output( "\tleal .L%s_string-1b(%%eax),%%ecx\n", name );
                     output( "\tmovl %%ecx,4(%%esp)\n" );
-                    count++;
                 }
                 else
                     output( "\tmovl $%d,4(%%esp)\n", odp->ordinal );
@@ -1243,10 +1242,7 @@ void output_stubs( DLLSPEC *spec )
             else
             {
                 if (exp_name)
-                {
                     output( "\tmovl $.L%s_string,4(%%esp)\n", name );
-                    count++;
-                }
                 else
                     output( "\tmovl $%d,4(%%esp)\n", odp->ordinal );
                 output( "\tmovl $.L__wine_spec_file_name,(%%esp)\n" );
@@ -1254,16 +1250,13 @@ void output_stubs( DLLSPEC *spec )
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
             break;
         case CPU_x86_64:
-            output( "\tsubq $8,%%rsp\n" );
+            output( "\tsubq $0x28,%%rsp\n" );
             output_cfi( ".cfi_adjust_cfa_offset 8" );
-            output( "\tleaq .L__wine_spec_file_name(%%rip),%%rdi\n" );
+            output( "\tleaq .L__wine_spec_file_name(%%rip),%%rcx\n" );
             if (exp_name)
-            {
-                output( "leaq .L%s_string(%%rip),%%rsi\n", name );
-                count++;
-            }
+                output( "leaq .L%s_string(%%rip),%%rdx\n", name );
             else
-                output( "\tmovq $%d,%%rsi\n", odp->ordinal );
+                output( "\tmovq $%d,%%rdx\n", odp->ordinal );
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
             break;
         case CPU_ARM:
@@ -1271,24 +1264,19 @@ void output_stubs( DLLSPEC *spec )
             output( "\tadd r0,PC\n");
             output( "\tldr r1,2f+4\n");
             output( "1:" );
-            if (exp_name)
-            {
-                output( "\tadd r1,PC\n");
-                count++;
-            }
+            if (exp_name) output( "\tadd r1,PC\n");
             output( "\tbl %s\n", asm_name("__wine_spec_unimplemented_stub") );
             output( "2:\t.long .L__wine_spec_file_name-1b\n" );
             if (exp_name) output( "\t.long .L%s_string-2b\n", name );
             else output( "\t.long %u\n", odp->ordinal );
             break;
         case CPU_ARM64:
-            output( "\tadrp x0, %s\n", asm_name("__wine_spec_file_name") );
-            output( "\tadd x0, x0, #:lo12:%s\n", asm_name("__wine_spec_file_name") );
+            output( "\tadrp x0, .L__wine_spec_file_name\n" );
+            output( "\tadd x0, x0, #:lo12:.L__wine_spec_file_name\n" );
             if (exp_name)
             {
                 output( "\tadrp x1, .L%s_string\n", name );
                 output( "\tadd x1, x1, #:lo12:.L%s_string\n", name );
-                count++;
             }
             else
                 output( "\tmov x1, %u\n", odp->ordinal );
@@ -1303,20 +1291,19 @@ void output_stubs( DLLSPEC *spec )
         output_function_size( name );
     }
 
-    if (count)
+    output( "\t%s\n", get_asm_string_section() );
+    output( ".L__wine_spec_file_name:\n" );
+    output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
+    for (i = 0; i < spec->nb_entry_points; i++)
     {
-        output( "\t%s\n", get_asm_string_section() );
-        for (i = 0; i < spec->nb_entry_points; i++)
+        ORDDEF *odp = &spec->entry_points[i];
+        if (odp->type != TYPE_STUB) continue;
+        exp_name = odp->name ? odp->name : odp->export_name;
+        if (exp_name)
         {
-            ORDDEF *odp = &spec->entry_points[i];
-            if (odp->type != TYPE_STUB) continue;
-            exp_name = odp->name ? odp->name : odp->export_name;
-            if (exp_name)
-            {
-                name = get_stub_name( odp, spec );
-                output( ".L%s_string:\n", name );
-                output( "\t%s \"%s\"\n", get_asm_string_keyword(), exp_name );
-            }
+            name = get_stub_name( odp, spec );
+            output( ".L%s_string:\n", name );
+            output( "\t%s \"%s\"\n", get_asm_string_keyword(), exp_name );
         }
     }
 }
@@ -1324,6 +1311,7 @@ void output_stubs( DLLSPEC *spec )
 /* output the import and delayed import tables of a Win32 module */
 void output_imports( DLLSPEC *spec )
 {
+    if (target_platform == PLATFORM_WINDOWS) return;
     output_immediate_imports();
     output_delayed_imports( spec );
     output_immediate_import_thunks();
@@ -1332,13 +1320,12 @@ void output_imports( DLLSPEC *spec )
 }
 
 /* create a new asm temp file */
-static void new_output_as_file( const char *prefix )
+static void new_output_as_file(void)
 {
-    char *name = get_temp_file_name( prefix, ".s" );
+    char *name;
 
     if (output_file) fclose( output_file );
-    if (!(output_file = fopen( name, "w" )))
-        fatal_error( "Unable to create output file '%s'\n", name );
+    name = open_temp_output_file( ".s" );
     strarray_add( &as_files, name, NULL );
 }
 
@@ -1381,13 +1368,9 @@ static void build_windows_import_lib( DLLSPEC *spec )
     char *def_file;
     const char *as_flags, *m_flag;
 
-    def_file = get_temp_file_name( output_file_name, ".def" );
-    fclose( output_file );
-    if (!(output_file = fopen( def_file, "w" )))
-        fatal_error( "Unable to create output file '%s'\n", def_file );
+    def_file = open_temp_output_file( ".def" );
     output_def_file( spec, 0 );
     fclose( output_file );
-    output_file = NULL;
 
     args = find_tool( "dlltool", NULL );
     switch (target_cpu)
@@ -1404,7 +1387,8 @@ static void build_windows_import_lib( DLLSPEC *spec )
             m_flag = NULL;
             break;
     }
-    strarray_add( &args, "-k", "-l", output_file_name, "-d", def_file, NULL );
+    strarray_add( &args, "-k", strendswith( output_file_name, ".delay.a" ) ? "-y" : "-l",
+                  output_file_name, "-d", def_file, NULL );
     if (m_flag)
         strarray_add( &args, "-m", m_flag, as_flags, NULL );
     spawn( args );
@@ -1444,7 +1428,7 @@ static void build_unix_import_lib( DLLSPEC *spec )
         case TYPE_CDECL:
         case TYPE_STDCALL:
             prefix = (!odp->name || (odp->flags & FLAG_ORDINAL)) ? import_ord_prefix : import_func_prefix;
-            new_output_as_file( spec->file_name );
+            new_output_as_file();
             output( "\t.text\n" );
             output( "\n\t.align %d\n", get_alignment( get_ptr_size() ));
             output( "\t%s\n", func_declaration( name ) );
@@ -1463,7 +1447,7 @@ static void build_unix_import_lib( DLLSPEC *spec )
 
     if (!as_files.count)  /* create a dummy file to avoid empty import libraries */
     {
-        new_output_as_file( spec->file_name );
+        new_output_as_file();
         output( "\t.text\n" );
     }
 
@@ -1484,5 +1468,4 @@ void output_import_lib( DLLSPEC *spec, char **argv )
         build_unix_import_lib( spec );
         build_library( output_file_name, argv, 1 );
     }
-    output_file_name = NULL;
 }

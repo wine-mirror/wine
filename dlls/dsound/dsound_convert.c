@@ -34,8 +34,6 @@
  * Sound is LITTLE endian
  */
 
-#include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
 #include <math.h>
@@ -216,39 +214,84 @@ void put_stereo2surround51(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD c
 
 void put_surround512stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
 {
-    /* based on pulseaudio's downmix algorithm */
+    /* based on analyzing a recording of a dsound downmix */
     switch(channel){
 
-    case 4: /* back left */
-        value *= 0.056f; /* (1/9) / (sum of left volumes) */
+    case 4: /* surround left */
+        value *= 0.24f;
         dsb->put_aux(dsb, pos, 0, value);
         break;
 
     case 0: /* front left */
-        value *= 0.503f; /* 1 / (sum of left volumes) */
+        value *= 1.0f;
         dsb->put_aux(dsb, pos, 0, value);
         break;
 
-    case 5: /* back right */
-        value *= 0.056f; /* (1/9) / (sum of right volumes) */
+    case 5: /* surround right */
+        value *= 0.24f;
         dsb->put_aux(dsb, pos, 1, value);
         break;
 
     case 1: /* front right */
-        value *= 0.503f; /* 1 / (sum of right volumes) */
+        value *= 1.0f;
         dsb->put_aux(dsb, pos, 1, value);
         break;
 
-    case 2: /* front centre */
-        value *= 0.252f; /* 0.5 / (sum of left/right volumes) */
+    case 2: /* centre */
+        value *= 0.7;
         dsb->put_aux(dsb, pos, 0, value);
         dsb->put_aux(dsb, pos, 1, value);
         break;
 
-    case 3: /* LFE */
-        value *= 0.189f; /* 0.375 / (sum of left/right volumes) */
+    case 3:
+        /* LFE is totally ignored in dsound when downmixing to 2 channels */
+        break;
+    }
+}
+
+void put_surround712stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    /* based on analyzing a recording of a dsound downmix */
+    switch(channel){
+
+    case 6: /* back left */
+        value *= 0.24f;
+        dsb->put_aux(dsb, pos, 0, value);
+        break;
+
+    case 4: /* surround left */
+        value *= 0.24f;
+        dsb->put_aux(dsb, pos, 0, value);
+        break;
+
+    case 0: /* front left */
+        value *= 1.0f;
+        dsb->put_aux(dsb, pos, 0, value);
+        break;
+
+    case 7: /* back right */
+        value *= 0.24f;
+        dsb->put_aux(dsb, pos, 1, value);
+        break;
+
+    case 5: /* surround right */
+        value *= 0.24f;
+        dsb->put_aux(dsb, pos, 1, value);
+        break;
+
+    case 1: /* front right */
+        value *= 1.0f;
+        dsb->put_aux(dsb, pos, 1, value);
+        break;
+
+    case 2: /* centre */
+        value *= 0.7;
         dsb->put_aux(dsb, pos, 0, value);
         dsb->put_aux(dsb, pos, 1, value);
+        break;
+
+    case 3:
+        /* LFE is totally ignored in dsound when downmixing to 2 channels */
         break;
     }
 }

@@ -1055,26 +1055,6 @@ const WCHAR *PARSER_get_inf_filename( HINF hinf )
     return file->filename;
 }
 
-
-/***********************************************************************
- *            PARSER_get_src_root
- *
- * Retrieve the source directory of an inf file.
- */
-WCHAR *PARSER_get_src_root( HINF hinf )
-{
-    unsigned int len;
-    const WCHAR *dir = get_inf_dir( hinf, &len );
-    WCHAR *ret = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) );
-    if (ret)
-    {
-        memcpy( ret, dir, len * sizeof(WCHAR) );
-        ret[len] = 0;
-    }
-    return ret;
-}
-
-
 /***********************************************************************
  *            PARSER_get_dest_dir
  *
@@ -1873,13 +1853,8 @@ BOOL WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buffer,
         }
         buffer[i - index] = value;
     }
-    if (TRACE_ON(setupapi))
-    {
-        TRACE( "%p/%p/%d/%d index %d returning",
-               context->Inf, context->CurrentInf, context->Section, context->Line, index );
-        for (i = index; i < line->nb_fields; i++) TRACE( " %02x", buffer[i - index] );
-        TRACE( "\n" );
-    }
+    TRACE( "%p/%p/%d/%d index %d\n",
+           context->Inf, context->CurrentInf, context->Section, context->Line, index );
     return TRUE;
 }
 

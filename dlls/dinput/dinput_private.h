@@ -71,7 +71,7 @@ extern const struct dinput_device joystick_linux_device DECLSPEC_HIDDEN;
 extern const struct dinput_device joystick_linuxinput_device DECLSPEC_HIDDEN;
 extern const struct dinput_device joystick_osx_device DECLSPEC_HIDDEN;
 
-extern void check_dinput_hooks(LPDIRECTINPUTDEVICE8W) DECLSPEC_HIDDEN;
+extern void check_dinput_hooks(LPDIRECTINPUTDEVICE8W, BOOL) DECLSPEC_HIDDEN;
 extern void check_dinput_events(void) DECLSPEC_HIDDEN;
 typedef int (*DI_EVENT_PROC)(LPDIRECTINPUTDEVICE8A, WPARAM, LPARAM);
 
@@ -81,6 +81,7 @@ extern void _copy_diactionformatWtoA(LPDIACTIONFORMATA, LPDIACTIONFORMATW) DECLS
 extern HRESULT _configure_devices(IDirectInput8W *iface, LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSW lpdiCDParams, DWORD dwFlags, LPVOID pvRefData) DECLSPEC_HIDDEN;
 
 extern WCHAR* get_mapping_path(const WCHAR *device, const WCHAR *username) DECLSPEC_HIDDEN;
+extern DWORD get_device_type(DWORD version, BOOL is_joystick) DECLSPEC_HIDDEN;
 
 #define IS_DIPROP(x)    (((ULONG_PTR)(x) >> 16) == 0)
 

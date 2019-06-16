@@ -1,6 +1,7 @@
 MODULE    = write.exe
-APPMODE   = -mwindows
 IMPORTS   = user32 gdi32
+
+EXTRADLLFLAGS = -mwindows -mno-cygwin
 
 C_SRCS = write.c
 

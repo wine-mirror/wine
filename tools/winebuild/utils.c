@@ -33,9 +33,6 @@
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
 
 #include "build.h"
 
@@ -47,6 +44,7 @@
 
 static struct strarray tmp_files;
 static struct strarray empty_strarray;
+static const char *output_file_source_name;
 
 static const struct
 {
@@ -448,6 +446,9 @@ struct strarray get_ld_command(void)
         case PLATFORM_FREEBSD:
             strarray_add( &args, "-m", (force_pointer_size == 8) ? "elf_x86_64_fbsd" : "elf_i386_fbsd", NULL );
             break;
+        case PLATFORM_WINDOWS:
+            strarray_add( &args, "-m", (force_pointer_size == 8) ? "i386pep" : "i386pe", NULL );
+            break;
         default:
             switch(target_cpu)
             {
@@ -461,6 +462,10 @@ struct strarray get_ld_command(void)
             break;
         }
     }
+
+    if (target_cpu == CPU_ARM && target_platform != PLATFORM_WINDOWS)
+        strarray_add( &args, "--no-wchar-size-warning", NULL );
+
     return args;
 }
 
@@ -536,18 +541,13 @@ void init_input_buffer( const char *file )
 {
     int fd;
     struct stat st;
+    unsigned char *buffer;
 
     if ((fd = open( file, O_RDONLY | O_BINARY )) == -1) fatal_perror( "Cannot open %s", file );
     if ((fstat( fd, &st ) == -1)) fatal_perror( "Cannot stat %s", file );
     if (!st.st_size) fatal_error( "%s is an empty file\n", file );
-#ifdef	HAVE_MMAP
-    if ((input_buffer = mmap( NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0 )) == (void*)-1)
-#endif
-    {
-        unsigned char *buffer = xmalloc( st.st_size );
-        if (read( fd, buffer, st.st_size ) != st.st_size) fatal_error( "Cannot read %s\n", file );
-        input_buffer = buffer;
-    }
+    input_buffer = buffer = xmalloc( st.st_size );
+    if (read( fd, buffer, st.st_size ) != st.st_size) fatal_error( "Cannot read %s\n", file );
     close( fd );
     input_buffer_filename = xstrdup( file );
     input_buffer_size = st.st_size;
@@ -564,8 +564,10 @@ void init_output_buffer(void)
 
 void flush_output_buffer(void)
 {
+    open_output_file();
     if (fwrite( output_buffer, 1, output_buffer_pos, output_file ) != output_buffer_pos)
         fatal_error( "Error writing to %s\n", output_file_name );
+    close_output_file();
     free( output_buffer );
 }
 
@@ -724,6 +726,47 @@ void close_input_file( FILE *file )
 
 
 /*******************************************************************
+ *         open_output_file
+ */
+void open_output_file(void)
+{
+    if (output_file_name)
+    {
+        if (strendswith( output_file_name, ".o" ))
+            output_file_source_name = open_temp_output_file( ".s" );
+        else
+            if (!(output_file = fopen( output_file_name, "w" )))
+                fatal_error( "Unable to create output file '%s'\n", output_file_name );
+    }
+    else output_file = stdout;
+}
+
+
+/*******************************************************************
+ *         close_output_file
+ */
+void close_output_file(void)
+{
+    if (!output_file || !output_file_name) return;
+    if (fclose( output_file ) < 0) fatal_perror( "fclose" );
+    if (output_file_source_name) assemble_file( output_file_source_name, output_file_name );
+    output_file = NULL;
+}
+
+
+/*******************************************************************
+ *         open_temp_output_file
+ */
+char *open_temp_output_file( const char *suffix )
+{
+    char *tmp_file = get_temp_file_name( output_file_name, suffix );
+    if (!(output_file = fopen( tmp_file, "w" )))
+        fatal_error( "Unable to create output file '%s'\n", tmp_file );
+    return tmp_file;
+}
+
+
+/*******************************************************************
  *         remove_stdcall_decoration
  *
  * Remove a possible @xx suffix from a function name.
@@ -848,6 +891,51 @@ const char *get_stub_name( const ORDDEF *odp, const DLLSPEC *spec )
     }
     buffer = strmake( "__wine_stub_%s_%d", make_c_identifier(spec->file_name), odp->ordinal );
     return buffer;
+}
+
+/* return the stdcall-decorated name for an entry point */
+const char *get_link_name( const ORDDEF *odp )
+{
+    static char *buffer;
+    char *ret;
+
+    if (target_cpu != CPU_x86) return odp->link_name;
+
+    switch (odp->type)
+    {
+    case TYPE_STDCALL:
+        if (target_platform == PLATFORM_WINDOWS)
+        {
+            if (odp->flags & FLAG_THISCALL) return odp->link_name;
+            if (odp->flags & FLAG_FASTCALL) ret = strmake( "@%s@%u", odp->link_name, get_args_size( odp ));
+            else if (!kill_at) ret = strmake( "%s@%u", odp->link_name, get_args_size( odp ));
+            else return odp->link_name;
+        }
+        else
+        {
+            if (odp->flags & FLAG_THISCALL) ret = strmake( "__thiscall_%s", odp->link_name );
+            else if (odp->flags & FLAG_FASTCALL) ret = strmake( "__fastcall_%s", odp->link_name );
+            else return odp->link_name;
+        }
+        break;
+
+    case TYPE_PASCAL:
+        if (target_platform == PLATFORM_WINDOWS && !kill_at)
+        {
+            int args = get_args_size( odp );
+            if (odp->flags & FLAG_REGISTER) args += get_ptr_size();  /* context argument */
+            ret = strmake( "%s@%u", odp->link_name, args );
+        }
+        else return odp->link_name;
+        break;
+
+    default:
+        return odp->link_name;
+    }
+
+    free( buffer );
+    buffer = ret;
+    return ret;
 }
 
 /* parse a cpu name and return the corresponding value */
@@ -980,8 +1068,11 @@ const char *asm_name( const char *sym )
 
     switch (target_platform)
     {
-    case PLATFORM_APPLE:
     case PLATFORM_WINDOWS:
+        if (target_cpu != CPU_x86) return sym;
+        if (sym[0] == '@') return sym;  /* fastcall */
+        /* fall through */
+    case PLATFORM_APPLE:
         if (sym[0] == '.' && sym[1] == 'L') return sym;
         free( buffer );
         buffer = strmake( "_%s", sym );
@@ -1002,7 +1093,7 @@ const char *func_declaration( const char *func )
         return "";
     case PLATFORM_WINDOWS:
         free( buffer );
-        buffer = strmake( ".def _%s; .scl 2; .type 32; .endef", func );
+        buffer = strmake( ".def %s%s; .scl 2; .type 32; .endef", target_cpu == CPU_x86 ? "_" : "", func );
         break;
     default:
         free( buffer );
@@ -1048,6 +1139,28 @@ void output_cfi( const char *format, ... )
     va_end( valist );
 }
 
+/* output an RVA pointer */
+void output_rva( const char *format, ... )
+{
+    va_list valist;
+
+    va_start( valist, format );
+    switch (target_platform)
+    {
+    case PLATFORM_WINDOWS:
+        output( "\t.rva " );
+        vfprintf( output_file, format, valist );
+        fputc( '\n', output_file );
+        break;
+    default:
+        output( "\t.long " );
+        vfprintf( output_file, format, valist );
+        output( " - .L__wine_spec_rva_base\n" );
+        break;
+    }
+    va_end( valist );
+}
+
 /* output the GNU note for non-exec stack */
 void output_gnu_stack_note(void)
 {
@@ -1083,7 +1196,8 @@ const char *asm_globl( const char *func )
         buffer = strmake( "\t.globl _%s\n\t.private_extern _%s\n_%s:", func, func, func );
         break;
     case PLATFORM_WINDOWS:
-        buffer = strmake( "\t.globl _%s\n_%s:", func, func );
+        buffer = strmake( "\t.globl %s%s\n%s%s:", target_cpu == CPU_x86 ? "_" : "", func,
+                          target_cpu == CPU_x86 ? "_" : "", func );
         break;
     default:
         buffer = strmake( "\t.globl %s\n\t.hidden %s\n%s:", func, func, func );
@@ -1114,12 +1228,32 @@ const char *get_asm_string_keyword(void)
     }
 }
 
+const char *get_asm_export_section(void)
+{
+    switch (target_platform)
+    {
+    case PLATFORM_APPLE:   return ".data";
+    case PLATFORM_WINDOWS: return ".section .edata";
+    default:               return ".section .data";
+    }
+}
+
 const char *get_asm_rodata_section(void)
 {
     switch (target_platform)
     {
     case PLATFORM_APPLE: return ".const";
     default:             return ".section .rodata";
+    }
+}
+
+const char *get_asm_rsrc_section(void)
+{
+    switch (target_platform)
+    {
+    case PLATFORM_APPLE:   return ".data";
+    case PLATFORM_WINDOWS: return ".section .rsrc";
+    default:               return ".section .data";
     }
 }
 

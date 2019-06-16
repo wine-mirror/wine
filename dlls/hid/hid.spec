@@ -1,10 +1,10 @@
-@ stub HidD_FlushQueue
+@ stdcall HidD_FlushQueue(ptr)
 @ stdcall HidD_FreePreparsedData(ptr)
 @ stdcall HidD_GetAttributes(long ptr)
 @ stub HidD_GetConfiguration
 @ stdcall HidD_GetFeature(long ptr long)
 @ stdcall HidD_GetHidGuid(ptr)
-@ stub HidD_GetIndexedString
+@ stdcall HidD_GetIndexedString(ptr long ptr long)
 @ stdcall HidD_GetInputReport(long ptr long)
 @ stdcall HidD_GetManufacturerString(long ptr long)
 @ stub HidD_GetMsGenreDescriptor
@@ -38,7 +38,7 @@
 @ stub HidP_SetScaledUsageValue
 @ stdcall HidP_SetUsageValue(long long long long long ptr ptr long)
 @ stub HidP_SetUsageValueArray
-@ stub HidP_SetUsages
+@ stdcall HidP_SetUsages(long long long ptr ptr ptr ptr long)
 @ stdcall HidP_TranslateUsagesToI8042ScanCodes(ptr long long ptr ptr ptr)
 @ stub HidP_UnsetUsages
 @ stub HidP_UsageListDifference

@@ -1,6 +1,8 @@
 MODULE    = combase.dll
 IMPORTS   = advapi32 ole32 uuid
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	roapi.c \
 	string.c

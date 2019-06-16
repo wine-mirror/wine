@@ -1,7 +1,8 @@
 MODULE    = uninstaller.exe
-APPMODE   = -mconsole -municode
 IMPORTS   = advapi32
 DELAYIMPORTS = shlwapi shell32 user32 gdi32
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = \
 	main.c

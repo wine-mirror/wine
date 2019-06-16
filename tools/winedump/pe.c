@@ -98,16 +98,20 @@ static const IMAGE_NT_HEADERS32 *get_nt_header( void )
     return PRD(dos->e_lfanew, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
 }
 
-static BOOL is_fake_dll( void )
+void print_fake_dll( void )
 {
+    static const char builtin_signature[] = "Wine builtin DLL";
     static const char fakedll_signature[] = "Wine placeholder DLL";
     const IMAGE_DOS_HEADER *dos;
 
-    dos = PRD(0, sizeof(*dos) + sizeof(fakedll_signature));
-
-    if (dos && dos->e_lfanew >= sizeof(*dos) + sizeof(fakedll_signature) &&
-        !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) return TRUE;
-    return FALSE;
+    dos = PRD(0, sizeof(*dos) + 32);
+    if (dos && dos->e_lfanew >= sizeof(*dos) + 32)
+    {
+        if (!memcmp( dos + 1, builtin_signature, sizeof(builtin_signature) ))
+            printf( "*** This is a Wine builtin DLL ***\n\n" );
+        else if (!memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) ))
+            printf( "*** This is a Wine fake DLL ***\n\n" );
+    }
 }
 
 static const void *get_dir_and_size(unsigned int idx, unsigned int *size)
@@ -1193,14 +1197,14 @@ static void dump_image_thunk_data64(const IMAGE_THUNK_DATA64 *il, DWORD thunk_rv
     for (; il->u1.Ordinal; il++, thunk_rva += sizeof(LONGLONG))
     {
         if (IMAGE_SNAP_BY_ORDINAL64(il->u1.Ordinal))
-            printf("  %4u  <by ordinal>\n", (DWORD)IMAGE_ORDINAL64(il->u1.Ordinal));
+            printf("  %08x  %4u  <by ordinal>\n", thunk_rva, (DWORD)IMAGE_ORDINAL64(il->u1.Ordinal));
         else
         {
             iibn = RVA((DWORD)il->u1.AddressOfData, sizeof(DWORD));
             if (!iibn)
                 printf("Can't grab import by name info, skipping to next ordinal\n");
             else
-                printf("  %4u  %s %x\n", iibn->Hint, iibn->Name, thunk_rva);
+                printf("  %08x  %4u  %s\n", thunk_rva, iibn->Hint, iibn->Name);
         }
     }
 }
@@ -1211,14 +1215,14 @@ static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il, int offset, DW
     for (; il->u1.Ordinal; il++, thunk_rva += sizeof(DWORD))
     {
         if (IMAGE_SNAP_BY_ORDINAL32(il->u1.Ordinal))
-            printf("  %4u  <by ordinal>\n", IMAGE_ORDINAL32(il->u1.Ordinal));
+            printf("  %08x  %4u  <by ordinal>\n", thunk_rva, IMAGE_ORDINAL32(il->u1.Ordinal));
         else
         {
             iibn = RVA((DWORD)il->u1.AddressOfData - offset, sizeof(DWORD));
             if (!iibn)
                 printf("Can't grab import by name info, skipping to next ordinal\n");
             else
-                printf("  %4u  %s %x\n", iibn->Hint, iibn->Name, thunk_rva);
+                printf("  %08x  %4u  %s\n", thunk_rva, iibn->Hint, iibn->Name);
         }
     }
 }
@@ -1245,7 +1249,7 @@ static	void	dump_dir_imported_functions(void)
 	printf("  ForwarderChain:  %08X\n", importDesc->ForwarderChain);
 	printf("  First thunk RVA: %08X\n", (DWORD)importDesc->FirstThunk);
 
-	printf("  Ordn  Name\n");
+	printf("   Thunk    Ordn  Name\n");
 
 	il = (importDesc->u.OriginalFirstThunk != 0) ?
 	    RVA((DWORD)importDesc->u.OriginalFirstThunk, sizeof(DWORD)) :
@@ -1335,7 +1339,7 @@ static void dump_dir_delay_imported_functions(void)
         printf("  TimeDateStamp:   %08X (%s)\n",
                importDesc->TimeDateStamp, get_time_str(importDesc->TimeDateStamp));
 
-        printf("  Ordn  Name\n");
+        printf("   Thunk    Ordn  Name\n");
 
         il = RVA(importDesc->ImportNameTableRVA - offset, sizeof(DWORD));
 
@@ -1948,7 +1952,7 @@ void pe_dump(void)
     int	all = (globals.dumpsect != NULL) && strcmp(globals.dumpsect, "ALL") == 0;
 
     PE_nt_headers = get_nt_header();
-    if (is_fake_dll()) printf( "*** This is a Wine fake DLL ***\n\n" );
+    print_fake_dll();
 
     if (globals.do_dumpheader)
     {

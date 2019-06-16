@@ -378,9 +378,7 @@ enum GLYPHFONTSIZINGTYPE {
 #define TMT_ATLASRECT 8002
 
 /* LINK class */
-#if defined(__GNUC__)
-#define VSCLASS_LINK (const WCHAR []){'L','I','N','K',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define VSCLASS_LINK L"LINK"
 #else
 static const WCHAR VSCLASS_LINK[] = {'L','I','N','K',0};
@@ -396,9 +394,7 @@ enum HYPERLINKSTATES {
 };
 
 /* EMPTYMARKUP class */
-#if defined(__GNUC__)
-#define VSCLASS_EMPTYMARKUP (const WCHAR []){'E','M','P','T','Y','M','A','R','K','U','P',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define VSCLASS_EMPTYMARKUP L"EMPTYMARKUP"
 #else
 static const WCHAR VSCLASS_EMPTYMARKUP[] = {'E','M','P','T','Y','M','A','R','K','U','P',0};
@@ -414,9 +410,7 @@ enum MARKUPTEXTSTATES {
 };
 
 /* STATIC class */
-#if defined(__GNUC__)
-#define VSCLASS_STATIC (const WCHAR []){'S','T','A','T','I','C',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define VSCLASS_STATIC L"STATIC"
 #else
 static const WCHAR VSCLASS_STATIC[] = {'S','T','A','T','I','C',0};
@@ -427,9 +421,7 @@ enum STATICPARTS {
 };
 
 /* PAGE class */
-#if defined(__GNUC__)
-#define VSCLASS_PAGE (const WCHAR []){'P','A','G','E',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define VSCLASS_PAGE L"PAGE"
 #else
 static const WCHAR VSCLASS_PAGE[] = {'P','A','G','E',0};
@@ -443,9 +435,7 @@ enum PAGEPARTS {
 };
 
 /* MONTHCAL class */
-#if defined(__GNUC__)
-#define VSCLASS_MONTHCAL (const WCHAR []){'M','O','N','T','H','C','A','L',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define VSCLASS_MONTHCAL L"MONTHCAL"
 #else
 static const WCHAR VSCLASS_MONTHCAL[] = {'M','O','N','T','H','C','A','L',0};
@@ -514,9 +504,7 @@ enum NAVPREVSTATES {
 };
 
 /* CLOCK class */
-#if defined(__GNUC__)
-#define VSCLASS_CLOCK (const WCHAR []){'C','L','O','C','K',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define VSCLASS_CLOCK L"CLOCK"
 #else
 static const WCHAR VSCLASS_CLOCK[] = {'C','L','O','C','K',0};
@@ -531,9 +519,7 @@ enum CLOCKSTATES {
 };
 
 /* TRAYNOTIFY class */
-#if defined(__GNUC__)
-#define VSCLASS_TRAYNOTIFY (const WCHAR []){'T','R','A','Y','N','O','T','I','F','Y',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define VSCLASS_TRAYNOTIFY L"TRAYNOTIFY"
 #else
 static const WCHAR VSCLASS_TRAYNOTIFY[] = {'T','R','A','Y','N','O','T','I','F','Y',0};
@@ -545,9 +531,7 @@ enum TRAYNOTIFYPARTS {
 };
 
 /* TASKBAR class */
-#if defined(__GNUC__)
-#define VSCLASS_TASKBAR (const WCHAR []){'T','A','S','K','B','A','R',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define VSCLASS_TASKBAR L"TASKBAR"
 #else
 static const WCHAR VSCLASS_TASKBAR[] = {'T','A','S','K','B','A','R',0};
@@ -565,9 +549,7 @@ enum TASKBARPARTS {
 };
 
 /* TASKBAND class */
-#if defined(__GNUC__)
-#define VSCLASS_TASKBAND (const WCHAR []){'T','A','S','K','B','A','N','D',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define VSCLASS_TASKBAND L"TASKBAND"
 #else
 static const WCHAR VSCLASS_TASKBAND[] = {'T','A','S','K','B','A','N','D',0};
@@ -580,9 +562,7 @@ enum TASKBANDPARTS {
 };
 
 /* STARTPANEL class */
-#if defined(__GNUC__)
-#define VSCLASS_STARTPANEL (const WCHAR []){'S','T','A','R','T','P','A','N','E','L',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define VSCLASS_STARTPANEL L"STARTPANEL"
 #else
 static const WCHAR VSCLASS_STARTPANEL[] = {'S','T','A','R','T','P','A','N','E','L',0};
@@ -653,9 +633,7 @@ enum LOGOFFBUTTONSSTATES {
 };
 
 /* MENUBAND class */
-#if defined(__GNUC__)
-#define VSCLASS_MENUBAND (const WCHAR []){'M','E','N','U','B','A','N','D',0}
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #define VSCLASS_MENUBAND L"MENUBAND"
 #else
 static const WCHAR VSCLASS_MENUBAND[] = {'M','E','N','U','B','A','N','D',0};

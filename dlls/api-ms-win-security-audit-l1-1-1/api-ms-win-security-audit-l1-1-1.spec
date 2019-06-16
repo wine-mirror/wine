@@ -8,7 +8,7 @@
 @ stub AuditQueryGlobalSaclW
 @ stub AuditQueryPerUserPolicy
 @ stub AuditQuerySecurity
-@ stub AuditQuerySystemPolicy
+@ stdcall AuditQuerySystemPolicy(ptr long ptr) advapi32.AuditQuerySystemPolicy
 @ stub AuditSetGlobalSaclW
 @ stub AuditSetPerUserPolicy
 @ stub AuditSetSecurity

@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
@@ -270,7 +268,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     if(This->doc_obj->client) {
         IOleClientSite_Release(This->doc_obj->client);
         This->doc_obj->client = NULL;
-        This->doc_obj->usermode = UNKNOWN_USERMODE;
+        This->doc_obj->nscontainer->usermode = UNKNOWN_USERMODE;
     }
 
     if(This->doc_obj->client_cmdtrg) {
@@ -433,7 +431,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
                 OLECMDEXECOPT_DONTPROMPTUSER, &var, NULL);
     }
 
-    if(This->doc_obj->usermode == UNKNOWN_USERMODE)
+    if(This->doc_obj->nscontainer->usermode == UNKNOWN_USERMODE)
         IOleControl_OnAmbientPropertyChange(&This->IOleControl_iface, DISPID_AMBIENT_USERMODE);
 
     IOleControl_OnAmbientPropertyChange(&This->IOleControl_iface,
@@ -886,10 +884,10 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
 
         if(V_VT(&res) == VT_BOOL) {
             if(V_BOOL(&res)) {
-                This->doc_obj->usermode = BROWSEMODE;
+                This->doc_obj->nscontainer->usermode = BROWSEMODE;
             }else {
                 FIXME("edit mode is not supported\n");
-                This->doc_obj->usermode = EDITMODE;
+                This->doc_obj->nscontainer->usermode = EDITMODE;
             }
         }else {
             FIXME("usermode=%s\n", debugstr_variant(&res));
@@ -1171,11 +1169,18 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_UIDeactivate(IOleInPlaceObjectW
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_SetObjectRects(IOleInPlaceObjectWindowless *iface,
-        LPCRECT lprcPosRect, LPCRECT lprcClipRect)
+        const RECT *pos, const RECT *clip)
 {
     HTMLDocument *This = impl_from_IOleInPlaceObjectWindowless(iface);
-    FIXME("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
-    return E_NOTIMPL;
+    RECT r;
+
+    TRACE("(%p)->(%s %s)\n", This, wine_dbgstr_rect(pos), wine_dbgstr_rect(clip));
+
+    if(clip && !EqualRect(clip, pos))
+        FIXME("Ignoring clip rect %s\n", wine_dbgstr_rect(clip));
+
+    r = *pos;
+    return IOleDocumentView_SetRect(&This->doc_obj->IOleDocumentView_iface, &r);
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_ReactivateAndUndo(IOleInPlaceObjectWindowless *iface)

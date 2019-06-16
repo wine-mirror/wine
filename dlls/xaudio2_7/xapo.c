@@ -337,7 +337,7 @@ static inline HRESULT get_fapo_from_clsid(REFCLSID clsid, FAPO **fapo)
             XAudio_Internal_Realloc
         );
 #endif
-    ERR("Invalid XAPO CLSID!");
+    ERR("Invalid XAPO CLSID!\n");
     return E_INVALIDARG;
 }
 

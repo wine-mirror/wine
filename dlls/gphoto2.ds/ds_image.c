@@ -192,7 +192,7 @@ static TW_UINT16 _get_image_and_startup_jpeg(void) {
     activeDS.jd.err = pjpeg_std_error(&activeDS.jerr);
     /* jpeg_create_decompress is a macro that expands to jpeg_CreateDecompress - see jpeglib.h
      * jpeg_create_decompress(&jd); */
-    pjpeg_CreateDecompress(&activeDS.jd, JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_decompress_struct));
+    pjpeg_CreateDecompress(&activeDS.jd, JPEG_LIB_VERSION, sizeof(struct jpeg_decompress_struct));
     activeDS.jd.src = &activeDS.xjsm;
     ret=pjpeg_read_header(&activeDS.jd,TRUE);
     activeDS.jd.out_color_space = JCS_RGB;
@@ -610,7 +610,7 @@ _get_gphoto2_file_as_DIB(
     jd.err = pjpeg_std_error(&jerr);
     /* jpeg_create_decompress is a macro that expands to jpeg_CreateDecompress - see jpeglib.h
      * jpeg_create_decompress(&jd); */
-    pjpeg_CreateDecompress(&jd, JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_decompress_struct));
+    pjpeg_CreateDecompress(&jd, JPEG_LIB_VERSION, sizeof(struct jpeg_decompress_struct));
     jd.src = &xjsm;
     ret=pjpeg_read_header(&jd,TRUE);
     jd.out_color_space = JCS_RGB;

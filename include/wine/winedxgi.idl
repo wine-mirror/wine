@@ -51,11 +51,6 @@ interface IWineDXGIDevice : IDXGIDevice2
         [in] IUnknown *outer,
         [out] void **surface
     );
-    HRESULT create_swapchain(
-        [in] struct wined3d_swapchain_desc *desc,
-        [in] BOOL implicit,
-        [out] struct wined3d_swapchain **wined3d_swapchain
-    );
 }
 
 [
@@ -68,6 +63,17 @@ interface IWineDXGIDeviceParent : IUnknown
     struct wined3d_device_parent *get_wined3d_device_parent();
 }
 
+struct wine_dxgi_adapter_info
+{
+    GUID driver_uuid;
+    GUID device_uuid;
+
+    DWORD vendor_id;
+    DWORD device_id;
+
+    LUID luid;
+};
+
 [
     object,
     local,
@@ -75,6 +81,7 @@ interface IWineDXGIDeviceParent : IUnknown
 ]
 interface IWineDXGIAdapter : IDXGIAdapter4
 {
+    HRESULT get_adapter_info([out] struct wine_dxgi_adapter_info *info);
 }
 
 [

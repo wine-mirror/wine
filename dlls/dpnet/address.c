@@ -19,7 +19,6 @@
  *
  */
 
-#include "config.h"
 
 #include <stdarg.h>
 
@@ -30,7 +29,6 @@
 #include "winuser.h"
 #include "objbase.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "dpnet_private.h"
@@ -417,7 +415,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetComponentByIndex(IDirectPlay8Ad
 
     entry = This->components[dwComponentID];
 
-    namesize = strlenW(entry->name);
+    namesize = lstrlenW(entry->name);
     if(*pdwBufferSize < entry->size || *pdwNameLen < namesize)
     {
         WARN("Buffer too small\n");
@@ -493,7 +491,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
             }
             break;
         case DPNA_DATATYPE_STRING:
-            if (((strlenW((WCHAR*)lpvData)+1)*sizeof(WCHAR)) != dwDataSize)
+            if (((lstrlenW((WCHAR*)lpvData)+1)*sizeof(WCHAR)) != dwDataSize)
             {
                 WARN("Invalid STRING size, returning DPNERR_INVALIDPARAM\n");
                 return DPNERR_INVALIDPARAM;

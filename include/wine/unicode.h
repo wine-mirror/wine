@@ -31,16 +31,12 @@
 #error This file should not be used in Wine tests
 #endif
 
-#ifdef __cplusplus
-extern "C" {
+#ifdef __WINE_USE_MSVCRT
+#error This file should not be used with msvcrt headers
 #endif
 
-#ifndef WINE_UNICODE_API
-# if defined(_MSC_VER) || defined(__MINGW32__)
-#  define WINE_UNICODE_API DECLSPEC_IMPORT
-# else
-#  define WINE_UNICODE_API
-# endif
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #ifndef WINE_UNICODE_INLINE
@@ -124,13 +120,13 @@ WINE_UNICODE_INLINE int wine_is_dbcs_leadbyte( const union cptable *table, unsig
 
 WINE_UNICODE_INLINE WCHAR tolowerW( WCHAR ch )
 {
-    extern WINE_UNICODE_API const WCHAR wine_casemap_lower[];
+    extern const WCHAR wine_casemap_lower[];
     return ch + wine_casemap_lower[wine_casemap_lower[ch >> 8] + (ch & 0xff)];
 }
 
 WINE_UNICODE_INLINE WCHAR toupperW( WCHAR ch )
 {
-    extern WINE_UNICODE_API const WCHAR wine_casemap_upper[];
+    extern const WCHAR wine_casemap_upper[];
     return ch + wine_casemap_upper[wine_casemap_upper[ch >> 8] + (ch & 0xff)];
 }
 
@@ -138,7 +134,7 @@ WINE_UNICODE_INLINE WCHAR toupperW( WCHAR ch )
 /* and the C2_* type in the high 4 bits */
 WINE_UNICODE_INLINE unsigned short get_char_typeW( WCHAR ch )
 {
-    extern WINE_UNICODE_API const unsigned short wine_wctype_table[];
+    extern const unsigned short wine_wctype_table[];
     return wine_wctype_table[wine_wctype_table[ch >> 8] + (ch & 0xff)];
 }
 

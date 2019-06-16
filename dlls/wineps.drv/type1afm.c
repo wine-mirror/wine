@@ -48,6 +48,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "winnls.h"
+#include "winternl.h"
 #include "psdrv.h"
 #include "wine/debug.h"
 
@@ -464,7 +465,7 @@ static BOOL ReadFixedPitch(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 	return TRUE;
     }
 
-    if (strcasecmp(sz, "false") == 0)
+    if (_strnicmp(sz, "false", -1) == 0)
     {
     	afm->IsFixedPitch = FALSE;
 	*p_found = TRUE;
@@ -472,7 +473,7 @@ static BOOL ReadFixedPitch(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 	return TRUE;
     }
 
-    if (strcasecmp(sz, "true") == 0)
+    if (_strnicmp(sz, "true", -1) == 0)
     {
     	afm->IsFixedPitch = TRUE;
 	*p_found = TRUE;
@@ -1142,7 +1143,7 @@ static BOOL ReadAFMDir(LPCSTR dirname)
     	CHAR	*file_extension = strchr(dent->d_name, '.');
 	int 	fn_len;
 
-	if (file_extension == NULL || strcasecmp(file_extension, ".afm") != 0)
+	if (file_extension == NULL || _strnicmp(file_extension, ".afm", -1) != 0)
 	    continue;
 
 	fn_len = snprintf(filename, 256, "%s/%s", dirname, dent->d_name);

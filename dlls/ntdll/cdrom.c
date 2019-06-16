@@ -28,9 +28,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-#ifdef HAVE_IO_H
-# include <io.h>
-#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif

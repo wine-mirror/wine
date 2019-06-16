@@ -4884,7 +4884,7 @@ static void test_draw_text_layout(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
 todo_wine
-    ok(hr == D2DERR_WRONG_FACTORY, "EndDraw failure expected, hr %#x.\n", hr);
+    ok(hr == D2DERR_WRONG_FACTORY, "Unexpected hr %#x.\n", hr);
 
     /* Effect is d2d resource, but not a brush. */
     set_rect(&rect, 0.0f, 0.0f, 10.0f, 10.0f);
@@ -4903,7 +4903,7 @@ todo_wine
     ID2D1RenderTarget_DrawTextLayout(rt, origin, text_layout, (ID2D1Brush*)brush, D2D1_DRAW_TEXT_OPTIONS_NONE);
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
-    ok(hr == S_OK, "EndDraw failure expected, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(antialias_mode_tests); ++i)
     {
@@ -6576,12 +6576,14 @@ todo_wine
     ok(SUCCEEDED(hr), "GetDC() was expected to succeed, hr %#x.\n", hr);
     ok(dc != NULL, "Expected NULL dc, got %p.\n", dc);
     ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
-    ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
 
     ID2D1RenderTarget_BeginDraw(rt);
     set_color(&color, 1.0f, 0.0f, 0.0f, 1.0f);
     ID2D1RenderTarget_Clear(rt, &color);
-    ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
 
     match = compare_wic_bitmap(wic_bitmap, "54034063dbc1c1bb61cb60ec57e4498678dc2b13");
     ok(match, "Bitmap does not match.\n");
@@ -6596,7 +6598,8 @@ todo_wine
     FillRect(dc, &rect, GetStockObject(BLACK_BRUSH));
     ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
 
-    ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
 
     match = compare_wic_bitmap(wic_bitmap, "60cacbf3d72e1e7834203da608037b1bf83b40e8");
     ok(match, "Bitmap does not match.\n");
@@ -8047,6 +8050,8 @@ START_TEST(d2d1)
 {
     unsigned int argc, i;
     char **argv;
+
+    use_mt = !getenv("WINETEST_NO_MT_D3D");
 
     argc = winetest_get_mainargs(&argv);
     for (i = 2; i < argc; ++i)

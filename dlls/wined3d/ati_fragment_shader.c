@@ -1010,13 +1010,14 @@ static void atifs_stage_constant(struct wined3d_context *context, const struct w
 
 static void set_tex_op_atifs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_device *device = context->device;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     struct atifs_context_private_data *ctx_priv = context->fragment_pipe_data;
     const struct atifs_ffp_desc *desc, *last_shader = ctx_priv->last_shader;
-    struct ffp_frag_settings settings;
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_device *device = context->device;
     struct atifs_private_data *priv = device->fragment_priv;
+    struct ffp_frag_settings settings;
     DWORD mapped_stage;
     unsigned int i;
 
@@ -1051,10 +1052,10 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
      */
     for (i = 0; i < desc->num_textures_used; ++i)
     {
-        mapped_stage = context->tex_unit_map[i];
+        mapped_stage = context_gl->tex_unit_map[i];
         if (mapped_stage != WINED3D_UNMAPPED_STAGE)
         {
-            context_active_texture(context, gl_info, mapped_stage);
+            wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage);
             texture_activate_dimensions(state->textures[i], gl_info);
         }
     }
@@ -1099,7 +1100,8 @@ static void atifs_srgbwriteenable(struct wined3d_context *context, const struct 
         WARN("sRGB writes are not supported by this fragment pipe.\n");
 }
 
-static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
+static const struct wined3d_state_entry_template atifs_fragmentstate_template[] =
+{
     {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),              { STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),             atifs_tfactor           }, WINED3D_GL_EXT_NONE             },
     {STATE_RENDER(WINED3D_RS_ALPHAFUNC),                  { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           NULL                    }, WINED3D_GL_EXT_NONE             },
     {STATE_RENDER(WINED3D_RS_ALPHAREF),                   { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           NULL                    }, WINED3D_GL_EXT_NONE             },
@@ -1262,7 +1264,7 @@ static void atifs_enable(const struct wined3d_gl_info *gl_info, BOOL enable)
     }
 }
 
-static void atifs_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
+static void atifs_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
 {
     caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
     caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP               |
@@ -1328,22 +1330,24 @@ static void *atifs_alloc(const struct wined3d_shader_backend_ops *shader_backend
 }
 
 /* Context activation is done by the caller. */
-static void atifs_free_ffpshader(struct wine_rb_entry *entry, void *cb_ctx)
+static void atifs_free_ffpshader(struct wine_rb_entry *entry, void *param)
 {
-    const struct wined3d_gl_info *gl_info = cb_ctx;
     struct atifs_ffp_desc *entry_ati = WINE_RB_ENTRY_VALUE(entry, struct atifs_ffp_desc, parent.entry);
+    struct wined3d_context *context = param;
+    const struct wined3d_gl_info *gl_info;
 
+    gl_info = context->gl_info;
     GL_EXTCALL(glDeleteFragmentShaderATI(entry_ati->shader));
     checkGLcall("glDeleteFragmentShaderATI(entry->shader)");
     heap_free(entry_ati);
 }
 
 /* Context activation is done by the caller. */
-static void atifs_free(struct wined3d_device *device)
+static void atifs_free(struct wined3d_device *device, struct wined3d_context *context)
 {
     struct atifs_private_data *priv = device->fragment_priv;
 
-    wine_rb_destroy(&priv->fragment_shaders, atifs_free_ffpshader, &device->adapter->gl_info);
+    wine_rb_destroy(&priv->fragment_shaders, atifs_free_ffpshader, context);
 
     heap_free(priv);
     device->fragment_priv = NULL;

@@ -1717,7 +1717,7 @@ void __cdecl __ExceptionPtrCreate(exception_ptr *ep)
     ep->ref = NULL;
 }
 
-#ifdef __i386__
+#if defined(__i386__) && !defined(__MINGW32__)
 extern void call_dtor(const cxx_exception_type *type, void *func, void *object);
 
 __ASM_GLOBAL_FUNC( call_dtor,
@@ -1732,7 +1732,7 @@ static inline void call_dtor(const cxx_exception_type *type, unsigned int dtor, 
     func(object);
 }
 #else
-#define call_dtor(type, func, object) ((void (__cdecl*)(void*))(func))(object)
+#define call_dtor(type, func, object) ((void (__thiscall*)(void*))(func))(object)
 #endif
 
 /*********************************************************************

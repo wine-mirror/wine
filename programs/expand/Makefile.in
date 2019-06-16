@@ -1,5 +1,6 @@
 MODULE    = expand.exe
-APPMODE   = -mconsole
 IMPORTS   = setupapi
+
+EXTRADLLFLAGS = -mconsole -mno-cygwin
 
 C_SRCS = expand.c

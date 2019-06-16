@@ -239,6 +239,8 @@ static const struct
     { LANG_ARMENIAN,       SUBLANG_ARMENIAN_ARMENIA,            "hy_AM" },
     { LANG_ASSAMESE,       SUBLANG_NEUTRAL,                     "as" },
     { LANG_ASSAMESE,       SUBLANG_ASSAMESE_INDIA,              "as_IN" },
+    { LANG_ASTURIAN,       SUBLANG_NEUTRAL,                     "ast" },
+    { LANG_ASTURIAN,       SUBLANG_DEFAULT,                     "ast_ES" },
     { LANG_AZERBAIJANI,    SUBLANG_NEUTRAL,                     "az" },
     { LANG_AZERBAIJANI,    SUBLANG_AZERBAIJANI_AZERBAIJAN_LATIN,"az_AZ@latin" },
     { LANG_AZERBAIJANI,    SUBLANG_AZERBAIJANI_AZERBAIJAN_CYRILLIC, "az_AZ@cyrillic" },
@@ -555,14 +557,12 @@ static void po_xerror2( int severity, po_message_t message1,
 
 static const struct po_xerror_handler po_xerror_handler = { po_xerror, po_xerror2 };
 
-static char *convert_string_utf8( const string_t *str, int codepage )
+static string_t *convert_string_utf8( const string_t *str, int codepage )
 {
-    string_t *newstr = convert_string( str, str_unicode, codepage );
-    char *buffer = xmalloc( newstr->size * 4 + 1 );
-    int len = wine_utf8_wcstombs( 0, newstr->str.wstr, newstr->size, buffer, newstr->size * 4 );
-    buffer[len] = 0;
-    free_string( newstr );
-    return buffer;
+    string_t *wstr = convert_string( str, str_unicode, codepage );
+    string_t *ustr = convert_string( wstr, str_char, CP_UTF8 );
+    free_string( wstr );
+    return ustr;
 }
 
 static po_message_t find_message( po_file_t po, const char *msgid, const char *msgctxt,
@@ -589,7 +589,8 @@ static void add_po_string( po_file_t po, const string_t *msgid, const string_t *
     po_message_t msg;
     po_message_iterator_t iterator;
     int codepage;
-    char *id, *id_buffer, *context, *str = NULL, *str_buffer = NULL;
+    string_t *str_buffer = NULL;
+    char *id, *id_buffer, *context, *str = NULL;
 
     if (!msgid->size) return;
 
@@ -607,7 +608,8 @@ static void add_po_string( po_file_t po, const string_t *msgid, const string_t *
         if (lang) codepage = get_language_codepage( lang->id, lang->sub );
         else codepage = get_language_codepage( 0, 0 );
         assert( codepage != -1 );
-        str_buffer = str = convert_string_utf8( msgstr, codepage );
+        str_buffer = convert_string_utf8( msgstr, codepage );
+        str = str_buffer->str.cstr;
         if (is_english( lang )) get_message_context( &str );
     }
     if (!(msg = find_message( po, id, context, &iterator )))
@@ -621,7 +623,7 @@ static void add_po_string( po_file_t po, const string_t *msgid, const string_t *
     if (msgid->loc.file) po_message_add_filepos( msg, msgid->loc.file, msgid->loc.line );
     po_message_iterator_free( iterator );
     free( id_buffer );
-    free( str_buffer );
+    if (str_buffer) free_string( str_buffer );
 }
 
 struct po_file_lang
@@ -1208,9 +1210,8 @@ static const char *get_msgstr( const char *msgid, const char *context, int *foun
 
 static string_t *translate_string( string_t *str, int *found )
 {
-    string_t *new;
+    string_t ustr, *new;
     const char *transl;
-    int res;
     char *buffer, *msgid, *context;
 
     if (!str->size || !(buffer = convert_msgid_ascii( str, 0 )))
@@ -1220,14 +1221,12 @@ static string_t *translate_string( string_t *str, int *found )
     context = get_message_context( &msgid );
     transl = get_msgstr( msgid, context, found );
 
-    new = xmalloc( sizeof(*new) );
-    new->type = str_unicode;
-    new->size = wine_utf8_mbstowcs( 0, transl, strlen(transl), NULL, 0 );
-    new->str.wstr = xmalloc( (new->size+1) * sizeof(WCHAR) );
-    res = wine_utf8_mbstowcs( MB_ERR_INVALID_CHARS, transl, strlen(transl), new->str.wstr, new->size );
-    if (res == -2)
-        error( "Invalid utf-8 character in string '%s'\n", transl );
-    new->str.wstr[new->size] = 0;
+    ustr.type = str_char;
+    ustr.size = strlen( transl );
+    ustr.str.cstr = (char *)transl;
+    ustr.loc = str->loc;
+
+    new = convert_string( &ustr, str_unicode, CP_UTF8 );
     free( buffer );
     return new;
 }

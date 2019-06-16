@@ -68,8 +68,6 @@ static void CALLBACK SYSTEM_TimerTick( LPVOID arg, DWORD low, DWORD high )
             SYS_Timers[i].ticks += SYS_Timers[i].rate;
 
             memset( &context, 0, sizeof(context) );
-            context.SegFs = wine_get_fs();
-            context.SegGs = wine_get_gs();
             context.SegCs = SELECTOROF( proc );
             context.Eip   = OFFSETOF( proc );
             context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME, bp);

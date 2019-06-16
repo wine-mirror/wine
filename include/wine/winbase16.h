@@ -24,7 +24,6 @@
 #include <winbase.h>
 #include <winnls.h>
 #include <wine/windef16.h>
-#include <wine/library.h>
 
 #include <pshpack1.h>
 

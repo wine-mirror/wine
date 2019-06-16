@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <stdio.h>
+#include <math.h>
 #include <float.h>
 #include <io.h>
 #include <sys/stat.h>
@@ -57,12 +58,17 @@
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
-static inline float __port_infinity(void)
+static inline double __port_min_pos_double(void)
 {
-    static const unsigned __inf_bytes = 0x7f800000;
-    return *(const float *)&__inf_bytes;
+    static const UINT64 __min_pos_double = 0x10000000000000;
+    return *(const double *)&__min_pos_double;
 }
-#define INFINITY __port_infinity()
+
+static inline double __port_max_double(void)
+{
+    static const UINT64 __max_double = 0x7FEFFFFFFFFFFFFF;
+    return *(const double *)&__max_double;
+}
 
 #define M_PI_2 1.57079632679489661923
 
@@ -750,6 +756,30 @@ static void test_math_errors(void)
     const struct {
         char func[16];
         double a;
+        double b;
+        double c;
+        int error;
+        int exception;
+    } tests3d[] = {
+        /* 0 * inf --> EDOM */
+        {"fma", INFINITY, 0, 0, EDOM, -1},
+        {"fma", 0, INFINITY, 0, EDOM, -1},
+        /* inf - inf -> EDOM */
+        {"fma", INFINITY, 1, -INFINITY, EDOM, -1},
+        {"fma", -INFINITY, 1, INFINITY, EDOM, -1},
+        {"fma", 1, INFINITY, -INFINITY, EDOM, -1},
+        {"fma", 1, -INFINITY, INFINITY, EDOM, -1},
+        /* NaN */
+        {"fma", NAN, 0, 0, -1, -1},
+        {"fma", 0, NAN, 0, -1, -1},
+        {"fma", 0, 0, NAN, -1, -1},
+        /* over/underflow */
+        {"fma", __port_max_double(), __port_max_double(), __port_max_double(), -1, -1},
+        {"fma", __port_min_pos_double(), __port_min_pos_double(), 1, -1, -1},
+    };
+    const struct {
+        char func[16];
+        double a;
         long b;
         int error;
         int exception;
@@ -770,6 +800,7 @@ static void test_math_errors(void)
     };
     double (CDECL *p_funcd)(double);
     double (CDECL *p_func2d)(double, double);
+    double (CDECL *p_func3d)(double, double, double);
     double (CDECL *p_funcdl)(double, long);
     int i;
 
@@ -806,6 +837,22 @@ static void test_math_errors(void)
            "%s(%f, %f) got exception arg1 %f\n", tests2d[i].func, tests2d[i].a, tests2d[i].b, exception.arg1);
         ok(exception.arg2 == tests2d[i].b,
            "%s(%f, %f) got exception arg2 %f\n", tests2d[i].func, tests2d[i].a, tests2d[i].b, exception.arg2);
+    }
+
+    for(i = 0; i < ARRAY_SIZE(tests3d); i++) {
+        p_func3d = (void*)GetProcAddress(module, tests3d[i].func);
+        *p_errno() = -1;
+        exception.type = -1;
+        p_func3d(tests3d[i].a, tests3d[i].b, tests3d[i].c);
+        ok(*p_errno() == tests3d[i].error,
+           "%s(%f, %f, %f) got errno %d\n", tests3d[i].func, tests3d[i].a, tests3d[i].b, tests3d[i].c, *p_errno());
+        ok(exception.type == tests3d[i].exception,
+           "%s(%f, %f, %f) got exception type %d\n", tests3d[i].func, tests3d[i].a, tests3d[i].b, tests3d[i].c, exception.type);
+        if(exception.type == -1) continue;
+        ok(exception.arg1 == tests3d[i].a,
+           "%s(%f, %f, %f) got exception arg1 %f\n", tests3d[i].func, tests3d[i].a, tests3d[i].b, tests3d[i].c, exception.arg1);
+        ok(exception.arg2 == tests3d[i].b,
+           "%s(%f, %f, %f) got exception arg2 %f\n", tests3d[i].func, tests3d[i].a, tests3d[i].b, tests3d[i].c, exception.arg2);
     }
 
     for(i = 0; i < ARRAY_SIZE(testsdl); i++) {

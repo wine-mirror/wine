@@ -3,6 +3,8 @@ MODULE = d3dx11_42.dll
 IMPORTS = d3dcompiler
 PARENTSRC = ../d3dx11_43
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	async.c \
 	main.c \

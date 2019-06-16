@@ -458,22 +458,26 @@ static void test_sbheap(void)
 
 static void test_calloc(void)
 {
+    /* use function pointer to bypass gcc builtin */
+    void *(__cdecl *p_calloc)(size_t, size_t);
     void *ptr;
 
-    ptr = calloc(1, 0);
+    p_calloc = (void *)GetProcAddress( GetModuleHandleA("msvcrt.dll"), "calloc");
+
+    ptr = p_calloc(1, 0);
     ok(ptr != NULL, "got %p\n", ptr);
     free(ptr);
 
-    ptr = calloc(0, 0);
+    ptr = p_calloc(0, 0);
     ok(ptr != NULL, "got %p\n", ptr);
     free(ptr);
 
-    ptr = calloc(0, 1);
+    ptr = p_calloc(0, 1);
     ok(ptr != NULL, "got %p\n", ptr);
     free(ptr);
 
     errno = 0;
-    ptr = calloc(~(size_t)0 / 2, ~(size_t)0 / 2);
+    ptr = p_calloc(~(size_t)0 / 2, ~(size_t)0 / 2);
     ok(ptr == NULL || broken(ptr != NULL) /* winxp sp0 */, "got %p\n", ptr);
     ok(errno == ENOMEM || broken(errno == 0) /* winxp, win2k3 */, "got errno %d\n", errno);
     free(ptr);

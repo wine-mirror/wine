@@ -34,7 +34,6 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "localspl_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(localspl);
@@ -222,9 +221,9 @@ static BOOL apd_copyfile( WCHAR *pathname, WCHAR *file_part, apd_data_t *apd )
     else
     {
         srcname = apd->src;
-        strcatW( srcname, file_part );
+        lstrcatW( srcname, file_part );
     }
-    strcatW( apd->dst, file_part );
+    lstrcatW( apd->dst, file_part );
 
     TRACE("%s => %s\n", debugstr_w(srcname), debugstr_w(apd->dst));
 
@@ -260,7 +259,7 @@ static LONG copy_servername_from_name(LPCWSTR name, LPWSTR target)
 
     server = &name[2];
     /* skip over both backslash, find separator '\' */
-    ptr = strchrW(server, '\\');
+    ptr = wcschr(server, '\\');
     serverlen = (ptr) ? ptr - server : lstrlenW(server);
 
     /* servername is empty */
@@ -277,7 +276,7 @@ static LONG copy_servername_from_name(LPCWSTR name, LPWSTR target)
 
     len = ARRAY_SIZE(buffer);
     if (GetComputerNameW(buffer, &len)) {
-        if ((serverlen == len) && (strncmpiW(server, buffer, len) == 0)) {
+        if ((serverlen == len) && (wcsnicmp(server, buffer, len) == 0)) {
             /* The requested Servername is our computername */
             return 0;
         }
@@ -296,7 +295,7 @@ static LPCWSTR get_basename_from_name(LPCWSTR name)
     if (name == NULL)  return NULL;
     if ((name[0] == '\\') && (name[1] == '\\')) {
         /* skip over the servername and search for the following '\'  */
-        name = strchrW(&name[2], '\\');
+        name = wcschr(&name[2], '\\');
         if ((name) && (name[1])) {
             /* found a separator ('\') followed by a name:
                skip over the separator and return the rest */
@@ -1197,7 +1196,7 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
     }
     if (printername) {
         len = ARRAY_SIZE(XcvMonitorW) - 1;
-        if (strncmpW(printername, XcvMonitorW, len) == 0) {
+        if (wcsncmp(printername, XcvMonitorW, len) == 0) {
             /* OpenPrinter(",XcvMonitor ", ...) detected */
             TRACE(",XcvMonitor: %s\n", debugstr_w(&printername[len]));
             printer->pm = monitor_load(&printername[len], NULL);
@@ -1211,7 +1210,7 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
         else
         {
             len = ARRAY_SIZE(XcvPortW) - 1;
-            if (strncmpW( printername, XcvPortW, len) == 0) {
+            if (wcsncmp( printername, XcvPortW, len) == 0) {
                 /* OpenPrinter(",XcvPort ", ...) detected */
                 TRACE(",XcvPort: %s\n", debugstr_w(&printername[len]));
                 printer->pm = monitor_load_by_port(&printername[len]);
@@ -1272,7 +1271,7 @@ end:
 
 static inline WCHAR *get_file_part( WCHAR *name )
 {
-    WCHAR *ptr = strrchrW( name, '\\' );
+    WCHAR *ptr = wcsrchr( name, '\\' );
     if (ptr) return ptr + 1;
     return name;
 }
@@ -1364,22 +1363,22 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
                    sizeof(DWORD));
 
     file = get_file_part( di.pDriverPath );
-    RegSetValueExW( hdrv, driverW, 0, REG_SZ, (LPBYTE)file, (strlenW( file ) + 1) * sizeof(WCHAR) );
+    RegSetValueExW( hdrv, driverW, 0, REG_SZ, (LPBYTE)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
     apd_copyfile( di.pDriverPath, file, &apd );
 
     file = get_file_part( di.pDataFile );
-    RegSetValueExW( hdrv, data_fileW, 0, REG_SZ, (LPBYTE)file, (strlenW( file ) + 1) * sizeof(WCHAR) );
+    RegSetValueExW( hdrv, data_fileW, 0, REG_SZ, (LPBYTE)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
     apd_copyfile( di.pDataFile, file, &apd );
 
     file = get_file_part( di.pConfigFile );
-    RegSetValueExW( hdrv, configuration_fileW, 0, REG_SZ, (LPBYTE)file, (strlenW( file ) + 1) * sizeof(WCHAR) );
+    RegSetValueExW( hdrv, configuration_fileW, 0, REG_SZ, (LPBYTE)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
     apd_copyfile( di.pConfigFile, file, &apd );
 
     /* settings for level 3 */
     if (di.pHelpFile)
     {
         file = get_file_part( di.pHelpFile );
-        RegSetValueExW( hdrv, help_fileW, 0, REG_SZ, (LPBYTE)file, (strlenW( file ) + 1) * sizeof(WCHAR) );
+        RegSetValueExW( hdrv, help_fileW, 0, REG_SZ, (LPBYTE)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
         apd_copyfile( di.pHelpFile, file, &apd );
     }
     else
@@ -1390,10 +1389,10 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
         WCHAR *reg, *reg_ptr, *in_ptr;
         reg = reg_ptr = HeapAlloc( GetProcessHeap(), 0, multi_sz_lenW( di.pDependentFiles ) );
 
-        for (in_ptr = di.pDependentFiles; *in_ptr; in_ptr += strlenW( in_ptr ) + 1)
+        for (in_ptr = di.pDependentFiles; *in_ptr; in_ptr += lstrlenW( in_ptr ) + 1)
         {
             file = get_file_part( in_ptr );
-            len = strlenW( file ) + 1;
+            len = lstrlenW( file ) + 1;
             memcpy( reg_ptr, file, len * sizeof(WCHAR) );
             reg_ptr += len;
             apd_copyfile( in_ptr, file, &apd );

@@ -60,8 +60,8 @@ static HRESULT WINAPI dddo_QueryInterface(IDataObject* iface, REFIID riid, LPVOI
 
     if (IsEqualIID(riid, &IID_IUnknown) || (IsEqualIID(riid, &IID_IDataObject)))
     {
-        *ppvObj = This;
-        IUnknown_AddRef((IUnknown*)This);
+        *ppvObj = iface;
+        IDataObject_AddRef(iface);
         return S_OK;
     }
 

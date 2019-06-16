@@ -76,7 +76,6 @@ static UINT WM_MSIME_RECONVERT;
 static UINT WM_MSIME_QUERYPOSITION;
 static UINT WM_MSIME_DOCUMENTFEED;
 
-
 static HIMC RealIMC(HIMC hIMC)
 {
     if (hIMC == FROM_MACDRV)
@@ -144,8 +143,8 @@ static int updateField(DWORD origLen, DWORD origOffset, DWORD currentOffset,
 
 static HIMCC updateCompStr(HIMCC old, LPCWSTR compstr, DWORD len, DWORD *flags)
 {
-    /* we need to make sure the CompStr, CompClaus and CompAttr fields are all
-     * set and correct */
+    /* We need to make sure the CompStr, CompClause and CompAttr fields are all
+     * set and correct. */
     int needed_size;
     HIMCC   rc;
     LPBYTE newdata = NULL;
@@ -631,6 +630,10 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
     {
         LPIMEPRIVATE myPrivate;
         myPrivate = ImmLockIMCC(lpIMC->hPrivate);
+        if (myPrivate->bInComposition)
+            GenerateIMEMessage(hIMC, WM_IME_ENDCOMPOSITION, 0, 0);
+        if (myPrivate->bInternalState)
+            ImmSetOpenStatus(RealIMC(FROM_MACDRV), FALSE);
         myPrivate->bInComposition = FALSE;
         myPrivate->bInternalState = FALSE;
         myPrivate->textfont = NULL;
@@ -840,6 +843,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 
                     TRACE("NI_COMPOSITIONSTR: CPS_CANCEL\n");
 
+                    macdrv_clear_ime_text();
                     if (lpIMC->hCompStr)
                         ImmDestroyIMCC(lpIMC->hCompStr);
 
@@ -901,6 +905,7 @@ static BOOL IME_SetCompositionString(void* hIMC, DWORD dwIndex, LPCVOID lpComp, 
     DWORD flags = 0;
     WCHAR wParam  = 0;
     LPIMEPRIVATE myPrivate;
+    BOOL sendMessage = TRUE;
 
     TRACE("(%p, %d, %p, %d):\n", hIMC, dwIndex, lpComp, dwCompLen);
 
@@ -943,28 +948,29 @@ static BOOL IME_SetCompositionString(void* hIMC, DWORD dwIndex, LPCVOID lpComp, 
 
             wParam = ((const WCHAR*)lpComp)[0];
             flags |= GCS_COMPCLAUSE | GCS_COMPATTR | GCS_DELTASTART;
+
+            if (cursor_valid)
+            {
+                LPCOMPOSITIONSTRING compstr;
+                compstr = ImmLockIMCC(lpIMC->hCompStr);
+                compstr->dwCursorPos = cursor_pos;
+                ImmUnlockIMCC(lpIMC->hCompStr);
+                flags |= GCS_CURSORPOS;
+            }
         }
         else
         {
-            newCompStr = updateCompStr(lpIMC->hCompStr, NULL, 0, &flags);
-            ImmDestroyIMCC(lpIMC->hCompStr);
-            lpIMC->hCompStr = newCompStr;
-        }
-
-        if (cursor_valid)
-        {
-            LPCOMPOSITIONSTRING compstr;
-            compstr = ImmLockIMCC(lpIMC->hCompStr);
-            compstr->dwCursorPos = cursor_pos;
-            ImmUnlockIMCC(lpIMC->hCompStr);
-            flags |= GCS_CURSORPOS;
+            NotifyIME(hIMC, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
+            sendMessage = FALSE;
         }
 
     }
 
-    GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, wParam, flags);
-    ImmUnlockIMCC(lpIMC->hPrivate);
-    UnlockRealIMC(hIMC);
+    if (sendMessage) {
+        GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, wParam, flags);
+        ImmUnlockIMCC(lpIMC->hPrivate);
+        UnlockRealIMC(hIMC);
+    }
 
     return TRUE;
 }

@@ -77,6 +77,13 @@ function test_textContent() {
     ok(div.textContent === "", "div.textContent = " + div.textContent);
     ok(div.childNodes.length === 0, "div.childNodes.length = " + div.childNodes.length);
 
+    div.textContent = null;
+    ok(div.textContent === "", "div.textContent = " + div.textContent);
+    div.textContent = 11;
+    ok(div.textContent === "11", "div.textContent = " + div.textContent);
+    div.textContent = 10.5;
+    ok(div.textContent === "10.5", "div.textContent = " + div.textContent);
+
     ok(document.textContent === null, "document.textContent = " + document.textContent);
 
     next_test();
@@ -119,6 +126,46 @@ function test_iframe() {
     });
 }
 
+function test_iframe_location() {
+    document.body.innerHTML = '<iframe src="emptyfile"></iframe>'
+    var iframe = document.body.firstChild;
+
+    iframe.onload = function() {
+        ok(iframe.contentWindow.location.pathname === "/emptyfile",
+           "path = " + iframe.contentWindow.location.pathname);
+        iframe.onload = function () {
+            ok(iframe.contentWindow.location.pathname === "/empty/file",
+               "path = " + iframe.contentWindow.location.pathname);
+            next_test();
+        }
+        iframe.src = "empty/file";
+    }
+}
+
+function test_anchor() {
+    var iframe = document.body.firstChild;
+    var anchor = document.createElement("a");
+
+    var anchor_tests = [
+        { href: "http://www.winehq.org:123/about", protocol: "http:", host: "www.winehq.org:123" },
+        { href: "https://www.winehq.org:123/about", protocol: "https:", host: "www.winehq.org:123" },
+        { href: "about:blank", protocol: "about:", host: "" },
+        { href: "file:///c:/dir/file.html", protocol: "file:", host: "" },
+        { href: "http://www.winehq.org/about", protocol: "http:", host: "www.winehq.org:80", todo_host: true },
+        { href: "https://www.winehq.org/about", protocol: "https:", host: "www.winehq.org:443", todo_host: true },
+    ];
+
+    for(var i in anchor_tests) {
+        var t = anchor_tests[i];
+        anchor.href = t.href;
+        ok(anchor.protocol === t.protocol, "anchor(" + t.href + ").protocol = " + anchor.protocol);
+        todo_wine_if("todo_host" in t).
+        ok(anchor.host === t.host, "anchor(" + t.href + ").host = " + anchor.host);
+    }
+
+    next_test();
+}
+
 function test_getElementsByClassName() {
     var elems;
 
@@ -144,6 +191,29 @@ function test_getElementsByClassName() {
     next_test();
 }
 
+function test_createElementNS() {
+    var svg_ns = "http://www.w3.org/2000/svg";
+    var elem;
+
+    elem = document.createElementNS(null, "test");
+    ok(elem.tagName === "test", "elem.tagName = " + elem.tagName);
+    ok(elem.namespaceURI === null, "elem.namespaceURI = " + elem.namespaceURI);
+
+    elem = document.createElementNS(svg_ns, "test");
+    ok(elem.tagName === "test", "elem.tagName = " + elem.tagName);
+    ok(elem.namespaceURI === svg_ns, "elem.namespaceURI = " + elem.namespaceURI);
+
+    elem = document.createElementNS(svg_ns, "svg");
+    ok(elem.tagName === "svg", "elem.tagName = " + elem.tagName);
+    ok(elem.namespaceURI === svg_ns, "elem.namespaceURI = " + elem.namespaceURI);
+
+    elem = document.createElementNS("test", "svg");
+    ok(elem.tagName === "svg", "elem.tagName = " + elem.tagName);
+    ok(elem.namespaceURI === "test", "elem.namespaceURI = " + elem.namespaceURI);
+
+    next_test();
+}
+
 function test_query_selector() {
     document.body.innerHTML = '<div class="class1">'
         + '<div class="class1"></div>'
@@ -153,11 +223,19 @@ function test_query_selector() {
 
     var e = document.querySelector("nomatch");
     ok(e === null, "e = " + e);
+    e = document.body.querySelector("nomatch");
+    ok(e === null, "e = " + e);
 
     e = document.querySelector(".class1");
     ok(e.tagName === "DIV", "e.tagName = " + e.tagName);
+    e = document.body.querySelector(".class1");
+    ok(e.tagName === "DIV", "e.tagName = " + e.tagName);
+    ok(e.msMatchesSelector(".class1") === true, "msMatchesSelector returned " + e.msMatchesSelector(".class1"));
+    ok(e.msMatchesSelector(".class2") === false, "msMatchesSelector returned " + e.msMatchesSelector(".class2"));
 
     e = document.querySelector("a");
+    ok(e.tagName === "A", "e.tagName = " + e.tagName);
+    e = document.body.querySelector("a");
     ok(e.tagName === "A", "e.tagName = " + e.tagName);
 
     next_test();
@@ -187,6 +265,23 @@ function test_compare_position() {
     next_test();
 }
 
+function test_rects() {
+    document.body.innerHTML = '<div>test</div>';
+    var elem = document.body.firstChild;
+    var rects = elem.getClientRects();
+    var rect = elem.getBoundingClientRect();
+
+    ok(rects.length === 1, "rect.length = " + rects.length);
+    ok(rects[0].top === rect.top, "rects[0].top = " + rects[0].top + " rect.top = " + rect.top);
+    ok(rects[0].bottom === rect.bottom, "rects[0].bottom = " + rects[0].bottom + " rect.bottom = " + rect.bottom);
+
+    elem = document.createElement("style");
+    rects = elem.getClientRects();
+    ok(rects.length === 0, "rect.length = " + rects.length);
+
+    next_test();
+}
+
 function test_document_owner() {
     var node;
 
@@ -209,11 +304,19 @@ function test_document_owner() {
 }
 
 function test_style_properties() {
-    var style = document.body.style;
+    document.body.innerHTML = '<div>test</div><svg></svg>';
+    var elem = document.body.firstChild;
+    var style = elem.style;
+    var current_style = elem.currentStyle;
+    var computed_style = window.getComputedStyle(elem);
     var val;
 
     style.cssFloat = "left";
     ok(style.cssFloat === "left", "cssFloat = " + style.cssFloat);
+    ok(style.getPropertyValue("float") === "left",
+       'style.getPropertyValue("float") = ' + style.getPropertyValue("float"));
+    ok(style.getPropertyValue("cssFloat") === "",
+       'style.getPropertyValue("cssFloat") = ' + style.getPropertyValue("cssFloat"));
 
     val = style.removeProperty("float");
     ok(val === "left", "removeProperty() returned " + val);
@@ -238,7 +341,90 @@ function test_style_properties() {
     style["z-index"] = 1;
     ok(style.zIndex === 1, "zIndex = " + style.zIndex);
     ok(style["z-index"] === 1, "z-index = " + style["z-index"]);
+    ok(style.getPropertyValue("z-index") === "1",
+       'style.getPropertyValue("x-index") = ' + style.getPropertyValue("z-index"));
+    ok(style.getPropertyValue("zIndex") === "",
+       'style.getPropertyValue("xIndex") = ' + style.getPropertyValue("zIndex"));
 
+    style.setProperty("border-width", "5px");
+    ok(style.borderWidth === "5px", "style.borderWidth = " + style.borderWidth);
+
+    try {
+        style.setProperty("border-width", 6);
+        ok(style.borderWidth === "5px", "style.borderWidth = " + style.borderWidth);
+    }catch(e) {
+        win_skip("skipping setProperty tests on too old IE version");
+        next_test();
+        return;
+    }
+
+    style.setProperty("border-width", "7px", "test");
+    ok(style.borderWidth === "5px", "style.borderWidth = " + style.borderWidth);
+
+    style.setProperty("border-width", "6px", "");
+    ok(style.borderWidth === "6px", "style.borderWidth = " + style.borderWidth);
+
+    style.setProperty("border-width", "7px", "important");
+    ok(style.borderWidth === "7px", "style.borderWidth = " + style.borderWidth);
+
+    style.setProperty("border-width", "8px", undefined);
+    ok(style.borderWidth === "7px", "style.borderWidth = " + style.borderWidth);
+
+    style.clip = "rect(1px 1px 10px 10px)";
+    ok(style.clip === "rect(1px, 1px, 10px, 10px)", "style.clip = " + style.clip);
+    ok(current_style.clip === "rect(1px, 1px, 10px, 10px)",
+       "current_style.clip = " + current_style.clip);
+    ok(computed_style.clip === "rect(1px, 1px, 10px, 10px)",
+       "computed_style.clip = " + current_style.clip);
+
+    style.zIndex = 2;
+    ok(current_style.zIndex === 2, "current_style.zIndex = " + current_style.zIndex);
+    ok(computed_style.zIndex === 2, "computed_style.zIndex = " + computed_style.zIndex);
+
+    try {
+        current_style.zIndex = 1;
+        ok(false, "expected exception");
+    }catch(e) {}
+
+    try {
+        computed_style.zIndex = 1;
+        ok(false, "expected exception");
+    }catch(e) {}
+
+    elem = elem.nextSibling;
+    computed_style = window.getComputedStyle(elem);
+
+    elem.style.zIndex = 4;
+    ok(computed_style.zIndex === 4, "computed_style.zIndex = " + computed_style.zIndex);
+
+    window.getComputedStyle(elem, null);
+
+    next_test();
+}
+
+function test_stylesheets() {
+    document.body.innerHTML = '<style>.div { margin-right: 1px; }</style>';
+
+    ok(document.styleSheets.length === 1, "document.styleSheets.length = " + document.styleSheets.length);
+
+    var stylesheet = document.styleSheets.item(0);
+    ok(stylesheet.rules.length === 1, "stylesheet.rules.length = " + stylesheet.rules.length);
+    ok(typeof(stylesheet.rules.item(0)) === "object",
+       "typeof(stylesheet.rules.item(0)) = " + typeof(stylesheet.rules.item(0)));
+
+    try {
+        stylesheet.rules.item(1);
+        ok(false, "expected exception");
+    }catch(e) {}
+
+    next_test();
+}
+
+function test_storage() {
+    ok(typeof(window.sessionStorage) === "object",
+       "typeof(window.sessionStorage) = " + typeof(window.sessionStorage));
+    ok(typeof(window.localStorage) === "object",
+       "typeof(window.localStorage) = " + typeof(window.localStorage));
     next_test();
 }
 
@@ -247,10 +433,16 @@ var tests = [
     test_textContent,
     test_ElementTraversal,
     test_getElementsByClassName,
+    test_createElementNS,
     test_head,
     test_iframe,
+    test_iframe_location,
+    test_anchor,
     test_query_selector,
     test_compare_position,
+    test_rects,
     test_document_owner,
-    test_style_properties
+    test_style_properties,
+    test_stylesheets,
+    test_storage
 ];

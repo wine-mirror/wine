@@ -23,16 +23,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
-
-#include "dshow.h"
-#include "wine/strmbase.h"
 #include "strmbase_private.h"
-
-#include "uuids.h"
-#include "wine/debug.h"
-
-#include <assert.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase_qc);
 
@@ -128,7 +119,7 @@ HRESULT WINAPI QualityControlImpl_SetSink(IQualityControl *iface, IQualityContro
 #define UPDATE_RUNNING_AVG(avg,val)   DO_RUNNING_AVG(avg,val,8)
 
 /* the windows for these running averages are experimentally obtained.
- * possitive values get averaged more while negative values use a small
+ * positive values get averaged more while negative values use a small
  * window so we can react faster to badness. */
 #define UPDATE_RUNNING_AVG_P(avg,val) DO_RUNNING_AVG(avg,val,16)
 #define UPDATE_RUNNING_AVG_N(avg,val) DO_RUNNING_AVG(avg,val,4)

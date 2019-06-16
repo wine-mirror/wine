@@ -16,28 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* Copied from dlls/msvcrt/cxx.h */
-#undef __thiscall
-#ifdef __i386__  /* thiscall functions are i386-specific */
-
-#define THISCALL(func) __thiscall_ ## func
-#define THISCALL_NAME(func) __ASM_NAME("__thiscall_" #func)
-#define __thiscall __stdcall
-#define DEFINE_THISCALL_WRAPPER(func,args) \
-    extern void THISCALL(func)(void); \
-    __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
-                      "popl %eax\n\t" \
-                      "pushl %ecx\n\t" \
-                      "pushl %eax\n\t" \
-                      "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
-#else /* __i386__ */
-
-#define THISCALL(func) func
-#define THISCALL_NAME(func) __ASM_NAME(#func)
-#define __thiscall __cdecl
-#define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
-
-#endif /* __i386__ */
+#include "wine/asm.h"
 
 #ifdef _WIN64
 
@@ -45,7 +24,7 @@
 
 #define __ASM_VTABLE(name,funcs) \
     __asm__(".data\n" \
-            "\t.align 8\n" \
+            "\t.balign 8\n" \
             "\t.quad " __ASM_NAME(#name "_rtti") "\n" \
             "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
             __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
@@ -57,7 +36,7 @@
 
 #define __ASM_VTABLE(name,funcs) \
     __asm__(".data\n" \
-            "\t.align 4\n" \
+            "\t.balign 4\n" \
             "\t.long " __ASM_NAME(#name "_rtti") "\n" \
             "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
             __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
@@ -284,7 +263,7 @@ static void init_ ## type ## _cxx(char *base) \
 #define DEFINE_CXX_DATA4(name, cl1, cl2, cl3, cl4, dtor) \
     DEFINE_CXX_DATA(name, 4, cl1, cl2, cl3, cl4, dtor)
 
-#ifdef __i386__
+#if defined(__i386__) && !defined(__MINGW32__)
 
 #define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (WINAPI*)type)&vtbl_wrapper_##off)args
 
@@ -306,7 +285,7 @@ extern void *vtbl_wrapper_56;
 
 #else
 
-#define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (__cdecl***)type)this)[0][off/4]args
+#define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (__thiscall***)type)this)[0][off/4]args
 
 #endif
 

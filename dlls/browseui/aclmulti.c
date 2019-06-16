@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -37,7 +35,6 @@
 #include "shlobj.h"
 
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 #include "browseui.h"
 

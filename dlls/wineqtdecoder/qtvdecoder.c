@@ -67,7 +67,6 @@
 #undef CompareString
 #undef GetCurrentThread
 #undef _CDECL
-#undef DPRINTF
 #undef GetCurrentProcess
 #undef AnimatePalette
 #undef EqualRgn
@@ -103,7 +102,6 @@
 
 #undef ULONG
 #undef HRESULT
-#undef DPRINTF
 #undef STDMETHODCALLTYPE
 
 #define COBJMACROS
@@ -155,8 +153,6 @@ static inline QTVDecoderImpl *impl_from_TransformFilter( TransformFilter *iface 
 {
     return CONTAINING_RECORD(iface, QTVDecoderImpl, tf.filter);
 }
-
-static const IBaseFilterVtbl QTVDecoder_Vtbl;
 
 static void trackingCallback(
                     void *decompressionTrackingRefCon,
@@ -522,22 +518,15 @@ static const TransformFilterFuncTable QTVDecoder_FuncsTable = {
     NULL
 };
 
-IUnknown * CALLBACK QTVDecoder_create(IUnknown * pUnkOuter, HRESULT* phr)
+IUnknown * CALLBACK QTVDecoder_create(IUnknown *outer, HRESULT* phr)
 {
     HRESULT hr;
     QTVDecoderImpl * This;
 
-    TRACE("(%p, %p)\n", pUnkOuter, phr);
-
     *phr = S_OK;
 
-    if (pUnkOuter)
-    {
-        *phr = CLASS_E_NOAGGREGATION;
-        return NULL;
-    }
-
-    hr = TransformFilter_Construct(&QTVDecoder_Vtbl, sizeof(QTVDecoderImpl), &CLSID_QTVDecoder, &QTVDecoder_FuncsTable, (IBaseFilter**)&This);
+    hr = strmbase_transform_create(sizeof(QTVDecoderImpl), outer, &CLSID_QTVDecoder,
+            &QTVDecoder_FuncsTable, (IBaseFilter **)&This);
 
     if (FAILED(hr))
     {
@@ -546,24 +535,5 @@ IUnknown * CALLBACK QTVDecoder_create(IUnknown * pUnkOuter, HRESULT* phr)
     }
 
     *phr = hr;
-    return (IUnknown*)This;
+    return &This->tf.filter.IUnknown_inner;
 }
-
-static const IBaseFilterVtbl QTVDecoder_Vtbl =
-{
-    TransformFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    TransformFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    TransformFilterImpl_Stop,
-    TransformFilterImpl_Pause,
-    TransformFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};

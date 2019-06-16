@@ -11,6 +11,7 @@ SOURCES = \
 	advpub.h \
 	af_irda.h \
 	amaudio.h \
+	amsi.idl \
 	amstream.idl \
 	amvideo.idl \
 	appcompatapi.h \
@@ -142,6 +143,7 @@ SOURCES = \
 	dbccmd.idl \
 	dbcses.idl \
 	dbdsad.idl \
+	dbgeng.h \
 	dbghelp.h \
 	dbinit.idl \
 	dbprop.idl \
@@ -249,6 +251,7 @@ SOURCES = \
 	dxgicommon.idl \
 	dxgiformat.idl \
 	dxgitype.idl \
+	dxva.h \
 	dxva2api.idl \
 	dyngraph.idl \
 	endpointvolume.idl \
@@ -368,6 +371,7 @@ SOURCES = \
 	mferror.h \
 	mfidl.idl \
 	mfobjects.idl \
+	mfplay.idl \
 	mfreadwrite.idl \
 	mftransform.idl \
 	midles.h \
@@ -420,6 +424,7 @@ SOURCES = \
 	msvcrt/fcntl.h \
 	msvcrt/float.h \
 	msvcrt/fpieee.h \
+	msvcrt/inttypes.h \
 	msvcrt/io.h \
 	msvcrt/limits.h \
 	msvcrt/locale.h \
@@ -434,6 +439,7 @@ SOURCES = \
 	msvcrt/share.h \
 	msvcrt/signal.h \
 	msvcrt/stddef.h \
+	msvcrt/stdint.h \
 	msvcrt/stdio.h \
 	msvcrt/stdlib.h \
 	msvcrt/string.h \
@@ -465,6 +471,7 @@ SOURCES = \
 	netfw.idl \
 	netioapi.h \
 	netlistmgr.idl \
+	newdev.h \
 	nldef.h \
 	npapi.h \
 	nserror.h \
@@ -616,6 +623,7 @@ SOURCES = \
 	tcpmib.h \
 	textserv.h \
 	textstor.idl \
+	timezoneapi.h \
 	tlhelp32.h \
 	tlogstg.idl \
 	tmschema.h \
@@ -681,7 +689,6 @@ SOURCES = \
 	wine/itss.idl \
 	wine/library.h \
 	wine/svcctl.idl \
-	wine/unicode.h \
 	wine/winedxgi.idl \
 	winerror.h \
 	winevt.h \

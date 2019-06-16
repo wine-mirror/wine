@@ -163,7 +163,6 @@ void thread_init(void)
     LARGE_INTEGER now;
     NTSTATUS status;
     struct ntdll_thread_data *thread_data;
-    static struct debug_info debug_info;  /* debug info for initial thread */
 
     virtual_init();
 
@@ -185,8 +184,7 @@ void thread_init(void)
 
     addr = NULL;
     size = sizeof(*peb);
-    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 1, &size,
-                             MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE );
+    virtual_alloc_aligned( &addr, 0, &size, MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE, 1 );
     peb = addr;
 
     peb->FastPebLock        = &peb_lock;
@@ -231,13 +229,9 @@ void thread_init(void)
     thread_data->reply_fd   = -1;
     thread_data->wait_fd[0] = -1;
     thread_data->wait_fd[1] = -1;
-    thread_data->debug_info = &debug_info;
 
     signal_init_thread( teb );
     virtual_init_threading();
-
-    debug_info.str_pos = debug_info.strings;
-    debug_info.out_pos = debug_info.output;
     debug_init();
 
     /* setup the server connection */
@@ -296,7 +290,7 @@ static void free_thread_data( TEB *teb )
 void abort_thread( int status )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) _exit( status );
+    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) _exit( get_unix_exit_code( status ));
     signal_exit_thread( status );
 }
 
@@ -337,7 +331,7 @@ void WINAPI RtlExitUserThread( ULONG status )
     {
         LdrShutdownProcess();
         pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-        signal_exit_process( status );
+        signal_exit_process( get_unix_exit_code( status ));
     }
 
     LdrShutdownThread();
@@ -372,8 +366,7 @@ static void start_thread( struct startup_info *info )
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     struct debug_info debug_info;
 
-    debug_info.str_pos = debug_info.strings;
-    debug_info.out_pos = debug_info.output;
+    debug_info.str_pos = debug_info.out_pos = 0;
     thread_data->debug_info = &debug_info;
     thread_data->pthread_id = pthread_self();
 

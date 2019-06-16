@@ -1,6 +1,8 @@
 MODULE    = browseui.dll
 IMPORTS   = uuid ole32 comctl32 user32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	aclmulti.c \
 	aclsource.c \

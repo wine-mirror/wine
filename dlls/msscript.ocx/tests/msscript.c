@@ -1356,6 +1356,137 @@ static void test_State(void)
     IScriptControl_Release(sc);
 }
 
+static BSTR a2bstr(const char *str)
+{
+    BSTR ret;
+    int len;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = SysAllocStringLen(NULL, len - 1);
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
+}
+
+#define CHECK_ERROR(sc,exp_num) _check_error(sc, exp_num, __LINE__)
+static void _check_error(IScriptControl *sc, LONG exp_num, int line)
+{
+    IScriptError *script_err;
+    LONG error_num;
+    HRESULT hr;
+
+    hr = IScriptControl_get_Error(sc, &script_err);
+    ok_(__FILE__,line)(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        error_num = 0xdeadbeef;
+        hr = IScriptError_get_Number(script_err, &error_num);
+        ok_(__FILE__,line)(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.", hr);
+        ok_(__FILE__,line)(error_num == exp_num, "got wrong error number: %d, expected %d.\n",
+                           error_num, exp_num);
+        IScriptError_Release(script_err);
+    }
+}
+
+static void test_IScriptControl_Eval(void)
+{
+    IScriptControl *sc;
+    HRESULT hr;
+    BSTR script_str, language, expected_string;
+    VARIANT var;
+    ScriptControlStates state;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                          &IID_IScriptControl, (void **)&sc);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+    hr = IScriptControl_Eval(sc, NULL, NULL);
+    ok(hr == E_POINTER, "IScriptControl_Eval returned: 0x%08x.\n", hr);
+
+    script_str = a2bstr("1 + 1");
+    hr = IScriptControl_Eval(sc, script_str, NULL);
+    ok(hr == E_POINTER, "IScriptControl_Eval returned: 0x%08x.\n", hr);
+    SysFreeString(script_str);
+
+    V_VT(&var) = VT_NULL;
+    V_I4(&var) = 0xdeadbeef;
+    hr = IScriptControl_Eval(sc, NULL, &var);
+    ok(hr == E_FAIL, "IScriptControl_Eval returned: 0x%08x.\n", hr);
+    ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
+       V_VT(&var), V_I4(&var));
+    todo_wine CHECK_ERROR(sc, 0);
+
+    script_str = a2bstr("1 + 1");
+    V_VT(&var) = VT_NULL;
+    V_I4(&var) = 0xdeadbeef;
+    hr = IScriptControl_Eval(sc, script_str, &var);
+    ok(hr == E_FAIL, "IScriptControl_Eval returned: 0x%08x.\n", hr);
+    ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
+       V_VT(&var), V_I4(&var));
+    SysFreeString(script_str);
+
+    language = a2bstr("jscript");
+    hr = IScriptControl_put_Language(sc, language);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    hr = IScriptControl_get_State(sc, &state);
+    ok(hr == S_OK, "IScriptControl_get_State failed: 0x%08x.\n", hr);
+    ok(state == Initialized, "got wrong state: %d\n", state);
+    SysFreeString(language);
+    script_str = a2bstr("var1 = 1 + 1");
+    V_VT(&var) = VT_NULL;
+    V_I4(&var) = 0xdeadbeef;
+    hr = IScriptControl_Eval(sc, script_str, &var);
+    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 2), "V_VT(var) = %d, V_I4(var) = %d.\n",
+       V_VT(&var), V_I4(&var));
+    hr = IScriptControl_get_State(sc, &state);
+    ok(hr == S_OK, "IScriptControl_get_State failed: 0x%08x.\n", hr);
+    ok(state == Initialized, "got wrong state: %d\n", state);
+    SysFreeString(script_str);
+
+    script_str = a2bstr("var2 = 10 + var1");
+    V_VT(&var) = VT_NULL;
+    V_I4(&var) = 0xdeadbeef;
+    hr = IScriptControl_Eval(sc, script_str, &var);
+    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 12), "V_VT(var) = %d, V_I4(var) = %d.\n",
+       V_VT(&var), V_I4(&var));
+    SysFreeString(script_str);
+
+    script_str = a2bstr("invalid syntax");
+    V_VT(&var) = VT_NULL;
+    V_I4(&var) = 0xdeadbeef;
+    hr = IScriptControl_Eval(sc, script_str, &var);
+    todo_wine ok(hr == 0x800a03ec, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+    ok(V_VT(&var) == VT_EMPTY, "V_VT(var) = %d\n", V_VT(&var));
+    ok(V_I4(&var) == 0xdeadbeef || broken(V_I4(&var) == 0) /* after Win8 */,
+       "V_I4(var) = %d.\n", V_I4(&var));
+    SysFreeString(script_str);
+    todo_wine CHECK_ERROR(sc, 1004);
+
+    script_str = a2bstr("var2 = var1 + var2");
+    V_VT(&var) = VT_NULL;
+    V_I4(&var) = 0xdeadbeef;
+    hr = IScriptControl_Eval(sc, script_str, &var);
+    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 14), "V_VT(var) = %d, V_I4(var) = %d.\n",
+       V_VT(&var), V_I4(&var));
+    SysFreeString(script_str);
+
+    script_str = a2bstr("\"Hello\"");
+    V_VT(&var) = VT_NULL;
+    V_I4(&var) = 0xdeadbeef;
+    hr = IScriptControl_Eval(sc, script_str, &var);
+    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+    expected_string = a2bstr("Hello");
+    ok((V_VT(&var) == VT_BSTR) && (!lstrcmpW(V_BSTR(&var), expected_string)),
+       "V_VT(var) = %d, V_BSTR(var) = %s.\n", V_VT(&var), wine_dbgstr_w(V_BSTR(&var)));
+    SysFreeString(expected_string);
+    SysFreeString(script_str);
+
+    IScriptControl_Release(sc);
+}
+
 START_TEST(msscript)
 {
     IUnknown *unk;
@@ -1385,6 +1516,7 @@ START_TEST(msscript)
     test_AllowUI();
     test_UseSafeSubset();
     test_State();
+    test_IScriptControl_Eval();
 
     CoUninitialize();
 }

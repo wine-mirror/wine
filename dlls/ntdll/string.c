@@ -218,6 +218,15 @@ void * __cdecl _memccpy( void *dst, const void *src, int c, size_t n )
 
 
 /*********************************************************************
+ *                  tolower   (NTDLL.@)
+ */
+int __cdecl NTDLL_tolower( int c )
+{
+    return (char)c >= 'A' && (char)c <= 'Z' ? c - 'A' + 'a' : c;
+}
+
+
+/*********************************************************************
  *                  _memicmp   (NTDLL.@)
  *
  * Compare two blocks of memory as strings, ignoring case.
@@ -240,11 +249,35 @@ INT __cdecl _memicmp( LPCSTR s1, LPCSTR s2, DWORD len )
     int ret = 0;
     while (len--)
     {
-        if ((ret = tolower(*s1) - tolower(*s2))) break;
+        if ((ret = NTDLL_tolower(*s1) - NTDLL_tolower(*s2))) break;
         s1++;
         s2++;
     }
     return ret;
+}
+
+
+/*********************************************************************
+ *                  _strnicmp   (NTDLL.@)
+ */
+int __cdecl _strnicmp( LPCSTR str1, LPCSTR str2, size_t n )
+{
+    int l1, l2;
+
+    while (n--)
+    {
+        l1 = (unsigned char)NTDLL_tolower(*str1);
+        l2 = (unsigned char)NTDLL_tolower(*str2);
+        if (l1 != l2)
+        {
+            if (sizeof(void *) > sizeof(int)) return l1 - l2;
+            return l1 - l2 > 0 ? 1 : -1;
+        }
+        if (!l1) return 0;
+        str1++;
+        str2++;
+    }
+    return 0;
 }
 
 
@@ -254,16 +287,7 @@ INT __cdecl _memicmp( LPCSTR s1, LPCSTR s2, DWORD len )
  */
 int __cdecl _stricmp( LPCSTR str1, LPCSTR str2 )
 {
-    return strcasecmp( str1, str2 );
-}
-
-
-/*********************************************************************
- *                  _strnicmp   (NTDLL.@)
- */
-int __cdecl _strnicmp( LPCSTR str1, LPCSTR str2, size_t n )
-{
-    return strncasecmp( str1, str2, n );
+    return _strnicmp( str1, str2, -1 );
 }
 
 
@@ -282,7 +306,7 @@ int __cdecl _strnicmp( LPCSTR str1, LPCSTR str2, size_t n )
 LPSTR __cdecl _strupr( LPSTR str )
 {
     LPSTR ret = str;
-    for ( ; *str; str++) *str = toupper(*str);
+    for ( ; *str; str++) *str = RtlUpperChar(*str);
     return ret;
 }
 
@@ -302,17 +326,8 @@ LPSTR __cdecl _strupr( LPSTR str )
 LPSTR __cdecl _strlwr( LPSTR str )
 {
     LPSTR ret = str;
-    for ( ; *str; str++) *str = tolower(*str);
+    for ( ; *str; str++) *str = NTDLL_tolower(*str);
     return ret;
-}
-
-
-/*********************************************************************
- *                  tolower   (NTDLL.@)
- */
-int __cdecl NTDLL_tolower( int c )
-{
-    return tolower( c );
 }
 
 
@@ -321,7 +336,17 @@ int __cdecl NTDLL_tolower( int c )
  */
 int __cdecl NTDLL_toupper( int c )
 {
-    return toupper( c );
+    char str[2], *p = str;
+    WCHAR wc;
+    DWORD len;
+
+    str[0] = c;
+    str[1] = c >> 8;
+    wc = RtlAnsiCharToUnicodeChar( &p );
+    wc = RtlUpcaseUnicodeChar( wc );
+    RtlUnicodeToMultiByteN( str, sizeof(str), &len, &wc, sizeof(wc) );
+    if (len == 2) return ((unsigned char)str[0] << 8) + (unsigned char)str[1];
+    return (unsigned char)str[0];
 }
 
 

@@ -2628,6 +2628,12 @@ static int WS2_send( int fd, struct ws2_async *wsa, int flags )
 
     while ((ret = sendmsg(fd, &hdr, flags)) == -1)
     {
+        if (errno == EISCONN)
+        {
+            hdr.msg_name = 0;
+            hdr.msg_namelen = 0;
+            continue;
+        }
         if (errno != EINTR)
             return -1;
     }
@@ -6503,7 +6509,7 @@ struct WS_protoent* WINAPI WS_getprotobyname(const char* name)
         unsigned int i;
         for (i = 0; i < ARRAY_SIZE(protocols); i++)
         {
-            if (strcasecmp( protocols[i].names[0], name )) continue;
+            if (_strnicmp( protocols[i].names[0], name, -1 )) continue;
             retval = WS_create_pe( protocols[i].names[0], (char **)protocols[i].names + 1,
                                    protocols[i].prot );
             break;

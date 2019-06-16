@@ -58,7 +58,7 @@ Where:\n\
 \tmore files.\n\
 [/S]  Copy directories and subdirectories.\n\
 [/E]  Copy directories and subdirectories, including any empty ones.\n\
-[/Q]  Do not list names during copy, that is be quiet.\n\
+[/Q]  Do not list names during copy; that is, be quiet.\n\
 [/F]  Show full source and destination names during copy.\n\
 [/L]  Simulate operation, showing names which would be copied.\n\
 [/W]  Prompts before beginning the copy operation.\n\
@@ -68,13 +68,13 @@ Where:\n\
 [/P]  Prompts on each source file before copying.\n\
 [/N]  Copy using short names.\n\
 [/U]  Copy only files which already exist in destination.\n\
-[/R]  Overwrite any read only files.\n\
+[/R]  Overwrite any read-only files.\n\
 [/H]  Include hidden and system files in the copy.\n\
 [/C]  Continue even if an error occurs during the copy.\n\
 [/A]  Only copy files with archive attribute set.\n\
 [/M]  Only copy files with archive attribute set, removes the\n\
 \tarchive attribute.\n\
-[/K]  Copy file attributes, without this attributes are not preserved.\n\
+[/K]  Copy file attributes; without this, attributes are not preserved.\n\
 [/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n\
 \t\tIf no date is supplied, only copy if destination is older\n\
 \t\tthan source.\n\n"

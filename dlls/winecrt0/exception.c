@@ -18,48 +18,60 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <stdarg.h>
 #include "winternl.h"
 #include "wine/exception.h"
+#include "wine/asm.h"
 
-#if defined(__x86_64__) && defined(__ASM_GLOBAL_FUNC)
-extern void __wine_unwind_trampoline(void);
-/* we need an extra call to make sure the stack is correctly aligned */
-__ASM_GLOBAL_FUNC( __wine_unwind_trampoline, "callq *%rax" );
-#endif
-
-/* wrapper for RtlUnwind since it clobbers registers on Windows */
-void __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record,
-                        void (*target)(void) )
-{
 #if defined(__GNUC__) && defined(__i386__)
-    int dummy1, dummy2, dummy3, dummy4;
-    __asm__ __volatile__("pushl %%ebp\n\t"
-                         "pushl %%ebx\n\t"
-                         "pushl $0\n\t"
-                         "pushl %3\n\t"
-                         "pushl %2\n\t"
-                         "pushl %1\n\t"
-                         "call *%0\n\t"
-                         "popl %%ebx\n\t"
-                         "popl %%ebp"
-                         : "=a" (dummy1), "=S" (dummy2), "=D" (dummy3), "=c" (dummy4)
-                         : "0" (RtlUnwind), "1" (frame), "2" (target), "3" (record)
-                         : "edx", "memory" );
-#elif defined(__x86_64__) && defined(__ASM_GLOBAL_FUNC)
-    RtlUnwind( frame, __wine_unwind_trampoline, record, target );
+
+__ASM_GLOBAL_FUNC( __wine_rtl_unwind,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "subl $8,%esp\n\t"
+                   "pushl $0\n\t"       /* retval */
+                   "pushl 12(%ebp)\n\t" /* record */
+                   "pushl 16(%ebp)\n\t" /* target */
+                   "pushl 8(%ebp)\n\t"  /* frame */
+                   "call " __ASM_STDCALL("RtlUnwind",16) "\n\t"
+                   "call *16(%ebp)" )
+
+#elif defined(__GNUC__) && defined(__x86_64__)
+
+__ASM_GLOBAL_FUNC( __wine_rtl_unwind,
+                   "pushq %rbp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
+                   "movq %rsp,%rbp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
+                   "subq $0x20,%rsp\n\t"
+                   "movq %r8,%r9\n\t"  /* retval = final target */
+                   "movq %rdx,%r8\n\t" /* record */
+                   "leaq __wine_unwind_trampoline(%rip),%rdx\n\t"  /* target = trampoline */
+                   "call " __ASM_NAME("RtlUnwind") "\n"
+                   "__wine_unwind_trampoline:\n\t"
+                   /* we need an extra call to make sure the stack is correctly aligned */
+                   "callq *%rax" )
+
 #else
+
+void __cdecl __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record,
+                                void (*target)(void) )
+{
     RtlUnwind( frame, target, record, 0 );
-#endif
     for (;;) target();
 }
+
+#endif
 
 static void DECLSPEC_NORETURN unwind_target(void)
 {
     __WINE_FRAME *wine_frame = (__WINE_FRAME *)__wine_get_frame();
     __wine_pop_frame( &wine_frame->frame );
-    siglongjmp( wine_frame->jmp, 1 );
+    for (;;) wine_frame->longjmp( wine_frame->jmp, 1 );
 }
 
 static void DECLSPEC_NORETURN unwind_frame( EXCEPTION_RECORD *record,
@@ -74,10 +86,10 @@ static void DECLSPEC_NORETURN unwind_frame( EXCEPTION_RECORD *record,
     __wine_rtl_unwind( frame, record, unwind_target );
 }
 
-DWORD __wine_exception_handler( EXCEPTION_RECORD *record,
-                                EXCEPTION_REGISTRATION_RECORD *frame,
-                                CONTEXT *context,
-                                EXCEPTION_REGISTRATION_RECORD **pdispatcher )
+DWORD __cdecl __wine_exception_handler( EXCEPTION_RECORD *record,
+                                        EXCEPTION_REGISTRATION_RECORD *frame,
+                                        CONTEXT *context,
+                                        EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
     __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
     EXCEPTION_POINTERS ptrs;
@@ -99,10 +111,10 @@ DWORD __wine_exception_handler( EXCEPTION_RECORD *record,
     unwind_frame( record, frame );
 }
 
-DWORD __wine_exception_ctx_handler( EXCEPTION_RECORD *record,
-                                    EXCEPTION_REGISTRATION_RECORD *frame,
-                                    CONTEXT *context,
-                                    EXCEPTION_REGISTRATION_RECORD **pdispatcher )
+DWORD __cdecl __wine_exception_ctx_handler( EXCEPTION_RECORD *record,
+                                            EXCEPTION_REGISTRATION_RECORD *frame,
+                                            CONTEXT *context,
+                                            EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
     __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
     EXCEPTION_POINTERS ptrs;
@@ -124,10 +136,10 @@ DWORD __wine_exception_ctx_handler( EXCEPTION_RECORD *record,
     unwind_frame( record, frame );
 }
 
-DWORD __wine_exception_handler_page_fault( EXCEPTION_RECORD *record,
-                                           EXCEPTION_REGISTRATION_RECORD *frame,
-                                           CONTEXT *context,
-                                           EXCEPTION_REGISTRATION_RECORD **pdispatcher )
+DWORD __cdecl __wine_exception_handler_page_fault( EXCEPTION_RECORD *record,
+                                                   EXCEPTION_REGISTRATION_RECORD *frame,
+                                                   CONTEXT *context,
+                                                   EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
     if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
         return ExceptionContinueSearch;
@@ -136,20 +148,20 @@ DWORD __wine_exception_handler_page_fault( EXCEPTION_RECORD *record,
     unwind_frame( record, frame );
 }
 
-DWORD __wine_exception_handler_all( EXCEPTION_RECORD *record,
-                                    EXCEPTION_REGISTRATION_RECORD *frame,
-                                    CONTEXT *context,
-                                    EXCEPTION_REGISTRATION_RECORD **pdispatcher )
+DWORD __cdecl __wine_exception_handler_all( EXCEPTION_RECORD *record,
+                                            EXCEPTION_REGISTRATION_RECORD *frame,
+                                            CONTEXT *context,
+                                            EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
     if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
         return ExceptionContinueSearch;
     unwind_frame( record, frame );
 }
 
-DWORD __wine_finally_handler( EXCEPTION_RECORD *record,
-                              EXCEPTION_REGISTRATION_RECORD *frame,
-                              CONTEXT *context,
-                              EXCEPTION_REGISTRATION_RECORD **pdispatcher )
+DWORD __cdecl __wine_finally_handler( EXCEPTION_RECORD *record,
+                                      EXCEPTION_REGISTRATION_RECORD *frame,
+                                      CONTEXT *context,
+                                      EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
     if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
     {
@@ -159,10 +171,10 @@ DWORD __wine_finally_handler( EXCEPTION_RECORD *record,
     return ExceptionContinueSearch;
 }
 
-DWORD __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
-                                  EXCEPTION_REGISTRATION_RECORD *frame,
-                                  CONTEXT *context,
-                                  EXCEPTION_REGISTRATION_RECORD **pdispatcher )
+DWORD __cdecl __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
+                                          EXCEPTION_REGISTRATION_RECORD *frame,
+                                          CONTEXT *context,
+                                          EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
     if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
     {

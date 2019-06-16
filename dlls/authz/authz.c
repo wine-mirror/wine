@@ -59,6 +59,15 @@ BOOL WINAPI AuthzInitializeResourceManager(DWORD flags, PFN_AUTHZ_DYNAMIC_ACCESS
     return FALSE;
 }
 
+/***********************************************************************
+ *              AuthzFreeResourceManager (AUTHZ.@)
+ */
+BOOL WINAPI AuthzFreeResourceManager(AUTHZ_RESOURCE_MANAGER_HANDLE handle)
+{
+    FIXME("%p\n", handle);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
 
 /***********************************************************************
  *              AuthzInstallSecurityEventSource (AUTHZ.@)

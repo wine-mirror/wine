@@ -276,6 +276,10 @@ static inline void strcpynAtoW( WCHAR *dst, const char *src, size_t n )
     if (n) *dst = 0;
 }
 
+extern const unsigned short wctype_table[] DECLSPEC_HIDDEN;
+extern const unsigned short nameprep_char_type[] DECLSPEC_HIDDEN;
+extern const WCHAR nameprep_mapping[] DECLSPEC_HIDDEN;
+
 static inline unsigned short get_table_entry( const unsigned short *table, WCHAR ch )
 {
     return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
@@ -339,7 +343,7 @@ static const union cptable *get_codepage_table( unsigned int codepage )
 static int charset_cmp( const void *name, const void *entry )
 {
     const struct charset_entry *charset = entry;
-    return strcasecmp( name, charset->charset_name );
+    return _strnicmp( name, charset->charset_name, -1 );
 }
 
 /***********************************************************************
@@ -1282,6 +1286,15 @@ static BOOL get_dummy_preferred_ui_language( DWORD flags, ULONG *count, WCHAR *b
 }
 
 /***********************************************************************
+ *             GetProcessPreferredUILanguages (KERNEL32.@)
+ */
+BOOL WINAPI GetProcessPreferredUILanguages( DWORD flags, ULONG *count, WCHAR *buf, ULONG *size )
+{
+    FIXME( "%08x, %p, %p %p\n", flags, count, buf, size );
+    return get_dummy_preferred_ui_language( flags, count, buf, size );
+}
+
+/***********************************************************************
  *             GetSystemPreferredUILanguages (KERNEL32.@)
  */
 BOOL WINAPI GetSystemPreferredUILanguages(DWORD flags, ULONG* count, WCHAR* buffer, ULONG* size)
@@ -1303,6 +1316,15 @@ BOOL WINAPI GetSystemPreferredUILanguages(DWORD flags, ULONG* count, WCHAR* buff
     }
 
     return get_dummy_preferred_ui_language( flags, count, buffer, size );
+}
+
+/***********************************************************************
+ *              SetProcessPreferredUILanguages (KERNEL32.@)
+ */
+BOOL WINAPI SetProcessPreferredUILanguages( DWORD flags, PCZZWSTR buffer, PULONG count )
+{
+    FIXME("%u, %p, %p\n", flags, buffer, count );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -3059,26 +3081,6 @@ DWORD WINAPI VerLanguageNameW( DWORD wLang, LPWSTR szLang, DWORD nSize )
  */
 BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype )
 {
-    static const unsigned char type2_map[16] =
-    {
-        C2_NOTAPPLICABLE,      /* unassigned */
-        C2_LEFTTORIGHT,        /* L */
-        C2_RIGHTTOLEFT,        /* R */
-        C2_EUROPENUMBER,       /* EN */
-        C2_EUROPESEPARATOR,    /* ES */
-        C2_EUROPETERMINATOR,   /* ET */
-        C2_ARABICNUMBER,       /* AN */
-        C2_COMMONSEPARATOR,    /* CS */
-        C2_BLOCKSEPARATOR,     /* B */
-        C2_SEGMENTSEPARATOR,   /* S */
-        C2_WHITESPACE,         /* WS */
-        C2_OTHERNEUTRAL,       /* ON */
-        C2_RIGHTTOLEFT,        /* AL */
-        C2_NOTAPPLICABLE,      /* NSM */
-        C2_NOTAPPLICABLE,      /* BN */
-        C2_OTHERNEUTRAL        /* LRE, LRO, RLE, RLO, PDF */
-    };
-
     if (!src)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -3089,10 +3091,10 @@ BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype 
     switch(type)
     {
     case CT_CTYPE1:
-        while (count--) *chartype++ = get_char_typeW( *src++ ) & 0xfff;
+        while (count--) *chartype++ = get_table_entry( wctype_table, *src++ ) & 0xfff;
         break;
     case CT_CTYPE2:
-        while (count--) *chartype++ = type2_map[get_char_typeW( *src++ ) >> 12];
+        while (count--) *chartype++ = get_table_entry( wctype_table, *src++ ) >> 12;
         break;
     case CT_CTYPE3:
     {
@@ -3102,7 +3104,7 @@ BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype 
             int c = *src;
             WORD type1, type3 = 0; /* C3_NOTAPPLICABLE */
 
-            type1 = get_char_typeW( *src++ ) & 0xfff;
+            type1 = get_table_entry( wctype_table, *src++ ) & 0xfff;
             /* try to construct type3 from type1 */
             if(type1 & C1_SPACE) type3 |= C3_SYMBOL;
             if(type1 & C1_ALPHA) type3 |= C3_ALPHA;
@@ -3539,7 +3541,7 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
                  * and skips white space and punctuation characters for
                  * NORM_IGNORESYMBOLS.
                  */
-                if (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE))
+                if (get_table_entry( wctype_table, wch ) & (C1_PUNCT | C1_SPACE))
                     continue;
                 len++;
             }
@@ -3585,7 +3587,7 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
         for (len = dstlen, dst_ptr = dst; srclen && len; src++, srclen--)
         {
             WCHAR wch = *src;
-            if ((flags & NORM_IGNORESYMBOLS) && (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE)))
+            if ((flags & NORM_IGNORESYMBOLS) && (get_table_entry( wctype_table, wch ) & (C1_PUNCT | C1_SPACE)))
                 continue;
             *dst_ptr++ = wch;
             len--;
@@ -5600,8 +5602,6 @@ INT WINAPI IdnToNameprepUnicode(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cch
         BIDI_L     = 0x8
     };
 
-    extern const unsigned short nameprep_char_type[] DECLSPEC_HIDDEN;
-    extern const WCHAR nameprep_mapping[] DECLSPEC_HIDDEN;
     const WCHAR *ptr;
     WORD flags;
     WCHAR buf[64], *map_str, norm_str[64], ch;
@@ -5807,8 +5807,6 @@ INT WINAPI IdnToNameprepUnicode(DWORD dwFlags, LPCWSTR lpUnicodeCharStr, INT cch
 INT WINAPI IdnToUnicode(DWORD dwFlags, LPCWSTR lpASCIICharStr, INT cchASCIIChar,
                         LPWSTR lpUnicodeCharStr, INT cchUnicodeChar)
 {
-    extern const unsigned short nameprep_char_type[];
-
     INT i, label_start, label_end, out_label, out = 0;
     WCHAR ch;
 

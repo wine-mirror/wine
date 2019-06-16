@@ -26,6 +26,8 @@
 #include "msvcrt.h"
 #include "wine/debug.h"
 #include "ntsecapi.h"
+#include "windows.h"
+#include "wine/asm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -517,8 +519,8 @@ int CDECL MSVCR110__crtGetShowWindowMode(void)
     STARTUPINFOW si;
 
     GetStartupInfoW(&si);
-    TRACE("window=%d\n", si.wShowWindow);
-    return si.wShowWindow;
+    TRACE("flags=%x window=%d\n", si.dwFlags, si.wShowWindow);
+    return si.dwFlags & STARTF_USESHOWWINDOW ? si.wShowWindow : SW_SHOWDEFAULT;
 }
 
 /*********************************************************************

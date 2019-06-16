@@ -241,13 +241,14 @@ struct localizedpair {
     WCHAR *string;
 };
 
-struct localizedstrings {
+struct localizedstrings
+{
     IDWriteLocalizedStrings IDWriteLocalizedStrings_iface;
-    LONG ref;
+    LONG refcount;
 
     struct localizedpair *data;
-    UINT32 count;
-    UINT32 alloc;
+    size_t size;
+    size_t count;
 };
 
 static inline struct localizedstrings *impl_from_IDWriteLocalizedStrings(IDWriteLocalizedStrings *iface)
@@ -275,54 +276,61 @@ static HRESULT WINAPI localizedstrings_QueryInterface(IDWriteLocalizedStrings *i
 
 static ULONG WINAPI localizedstrings_AddRef(IDWriteLocalizedStrings *iface)
 {
-    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
-    return ref;
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
+    ULONG refcount = InterlockedIncrement(&strings->refcount);
+
+    TRACE("%p, refcount %d.\n", iface, refcount);
+
+    return refcount;
 }
 
 static ULONG WINAPI localizedstrings_Release(IDWriteLocalizedStrings *iface)
 {
-    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
+    ULONG refcount = InterlockedDecrement(&strings->refcount);
+    size_t i;
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %d.\n", iface, refcount);
 
-    if (!ref) {
-        unsigned int i;
-
-        for (i = 0; i < This->count; i++) {
-            heap_free(This->data[i].locale);
-            heap_free(This->data[i].string);
+    if (!refcount)
+    {
+        for (i = 0; i < strings->count; ++i)
+        {
+            heap_free(strings->data[i].locale);
+            heap_free(strings->data[i].string);
         }
 
-        heap_free(This->data);
-        heap_free(This);
+        heap_free(strings->data);
+        heap_free(strings);
     }
 
-    return ref;
+    return refcount;
 }
 
 static UINT32 WINAPI localizedstrings_GetCount(IDWriteLocalizedStrings *iface)
 {
-    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-    TRACE("(%p)\n", This);
-    return This->count;
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
+
+    TRACE("%p.\n", iface);
+
+    return strings->count;
 }
 
 static HRESULT WINAPI localizedstrings_FindLocaleName(IDWriteLocalizedStrings *iface,
     WCHAR const *locale_name, UINT32 *index, BOOL *exists)
 {
-    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-    UINT32 i;
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
+    size_t i;
 
-    TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(locale_name), index, exists);
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_w(locale_name), index, exists);
 
     *exists = FALSE;
     *index = ~0;
 
-    for (i = 0; i < This->count; i++) {
-        if (!strcmpiW(This->data[i].locale, locale_name)) {
+    for (i = 0; i < strings->count; ++i)
+    {
+        if (!strcmpiW(strings->data[i].locale, locale_name))
+        {
             *exists = TRUE;
             *index = i;
             break;
@@ -334,16 +342,17 @@ static HRESULT WINAPI localizedstrings_FindLocaleName(IDWriteLocalizedStrings *i
 
 static HRESULT WINAPI localizedstrings_GetLocaleNameLength(IDWriteLocalizedStrings *iface, UINT32 index, UINT32 *length)
 {
-    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
 
-    TRACE("(%p)->(%u %p)\n", This, index, length);
+    TRACE("%p, %u, %p.\n", iface, index, length);
 
-    if (index >= This->count) {
+    if (index >= strings->count)
+    {
         *length = (UINT32)-1;
         return E_FAIL;
     }
 
-    *length = strlenW(This->data[index].locale);
+    *length = strlenW(strings->data[index].locale);
     return S_OK;
 }
 
@@ -416,58 +425,45 @@ static const IDWriteLocalizedStringsVtbl localizedstringsvtbl = {
 
 HRESULT create_localizedstrings(IDWriteLocalizedStrings **strings)
 {
-    struct localizedstrings *This;
+    struct localizedstrings *object;
 
     *strings = NULL;
 
-    This = heap_alloc(sizeof(struct localizedstrings));
-    if (!This) return E_OUTOFMEMORY;
-
-    This->IDWriteLocalizedStrings_iface.lpVtbl = &localizedstringsvtbl;
-    This->ref = 1;
-    This->count = 0;
-    This->data = heap_alloc_zero(sizeof(struct localizedpair));
-    if (!This->data) {
-        heap_free(This);
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
         return E_OUTOFMEMORY;
-    }
-    This->alloc = 1;
 
-    *strings = &This->IDWriteLocalizedStrings_iface;
+    object->IDWriteLocalizedStrings_iface.lpVtbl = &localizedstringsvtbl;
+    object->refcount = 1;
+
+    *strings = &object->IDWriteLocalizedStrings_iface;
 
     return S_OK;
 }
 
 HRESULT add_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *locale, const WCHAR *string)
 {
-    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-    UINT32 i;
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
+    size_t i, count = strings->count;
 
     /* make sure there's no duplicates */
-    for (i = 0; i < This->count; i++)
-        if (!strcmpW(This->data[i].locale, locale))
+    for (i = 0; i < count; i++)
+        if (!strcmpW(strings->data[i].locale, locale))
             return S_OK;
 
-    if (This->count == This->alloc) {
-        void *ptr;
+    if (!dwrite_array_reserve((void **)&strings->data, &strings->size, strings->count + 1, sizeof(*strings->data)))
+        return E_OUTOFMEMORY;
 
-        ptr = heap_realloc(This->data, 2*This->alloc*sizeof(struct localizedpair));
-        if (!ptr)
-            return E_OUTOFMEMORY;
-
-        This->alloc *= 2;
-        This->data = ptr;
-    }
-
-    This->data[This->count].locale = heap_strdupW(locale);
-    This->data[This->count].string = heap_strdupW(string);
-    if (!This->data[This->count].locale || !This->data[This->count].string) {
-        heap_free(This->data[This->count].locale);
-        heap_free(This->data[This->count].string);
+    strings->data[count].locale = heap_strdupW(locale);
+    strings->data[count].string = heap_strdupW(string);
+    if (!strings->data[count].locale || !strings->data[count].string)
+    {
+        heap_free(strings->data[count].locale);
+        heap_free(strings->data[count].string);
         return E_OUTOFMEMORY;
     }
 
-    This->count++;
+    strings->count++;
 
     return S_OK;
 }
@@ -475,7 +471,7 @@ HRESULT add_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *locale,
 HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedStrings **ret)
 {
     struct localizedstrings *strings, *strings_clone;
-    int i;
+    size_t i;
 
     *ret = NULL;
 
@@ -483,24 +479,26 @@ HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedSt
         return S_FALSE;
 
     strings = impl_from_IDWriteLocalizedStrings(iface);
-    strings_clone = heap_alloc(sizeof(*strings_clone));
+    strings_clone = heap_alloc_zero(sizeof(*strings_clone));
     if (!strings_clone)
         return E_OUTOFMEMORY;
 
-    strings_clone->IDWriteLocalizedStrings_iface.lpVtbl = &localizedstringsvtbl;
-    strings_clone->ref = 1;
-    strings_clone->count = strings->count;
-    strings_clone->data = heap_calloc(strings_clone->count, sizeof(*strings_clone->data));
-    if (!strings_clone->data) {
+    if (!dwrite_array_reserve((void **)&strings_clone->data, &strings_clone->size, strings->count,
+            sizeof(*strings_clone->data)))
+    {
         heap_free(strings_clone);
         return E_OUTOFMEMORY;
     }
-    for (i = 0; i < strings_clone->count; i++)
+
+    strings_clone->IDWriteLocalizedStrings_iface.lpVtbl = &localizedstringsvtbl;
+    strings_clone->refcount = 1;
+    strings_clone->count = strings->count;
+
+    for (i = 0; i < strings_clone->count; ++i)
     {
         strings_clone->data[i].locale = heap_strdupW(strings->data[i].locale);
         strings_clone->data[i].string = heap_strdupW(strings->data[i].string);
     }
-    strings_clone->alloc = strings_clone->count;
 
     *ret = &strings_clone->IDWriteLocalizedStrings_iface;
 

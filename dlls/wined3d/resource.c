@@ -481,17 +481,15 @@ BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource)
 
 void wined3d_resource_update_draw_binding(struct wined3d_resource *resource)
 {
+    const struct wined3d_d3d_info *d3d_info = &resource->device->adapter->d3d_info;
+
     if (!wined3d_resource_is_offscreen(resource) || wined3d_settings.offscreen_rendering_mode != ORM_FBO)
     {
         resource->draw_binding = WINED3D_LOCATION_DRAWABLE;
     }
     else if (resource->multisample_type)
     {
-        const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
-        if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
-            resource->draw_binding = WINED3D_LOCATION_TEXTURE_RGB;
-        else
-            resource->draw_binding = WINED3D_LOCATION_RB_MULTISAMPLE;
+        resource->draw_binding = d3d_info->multisample_draw_location;
     }
     else if (resource->gl_type == WINED3D_GL_RES_TYPE_RB)
     {
@@ -510,4 +508,36 @@ const struct wined3d_format *wined3d_resource_get_decompress_format(const struct
             && !(adapter->d3d_info.wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL))
         return wined3d_get_format(adapter, WINED3DFMT_B8G8R8A8_UNORM_SRGB, resource->bind_flags);
     return wined3d_get_format(adapter, WINED3DFMT_B8G8R8A8_UNORM, resource->bind_flags);
+}
+
+unsigned int wined3d_resource_get_sample_count(const struct wined3d_resource *resource)
+{
+    const struct wined3d_format *format = resource->format;
+
+    /* TODO: NVIDIA expose their Coverage Sample Anti-Aliasing (CSAA)
+     * feature through type == MULTISAMPLE_XX and quality != 0. This could
+     * be mapped to GL_NV_framebuffer_multisample_coverage.
+     *
+     * AMD have a similar feature called Enhanced Quality Anti-Aliasing
+     * (EQAA), but it does not have an equivalent OpenGL extension. */
+
+    /* We advertise as many WINED3D_MULTISAMPLE_NON_MASKABLE quality
+     * levels as the count of advertised multisample types for the texture
+     * format. */
+    if (resource->multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE)
+    {
+        unsigned int i, count = 0;
+
+        for (i = 0; i < sizeof(format->multisample_types) * CHAR_BIT; ++i)
+        {
+            if (format->multisample_types & 1u << i)
+            {
+                if (resource->multisample_quality == count++)
+                    break;
+            }
+        }
+        return i + 1;
+    }
+
+    return resource->multisample_type;
 }

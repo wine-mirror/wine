@@ -38,6 +38,7 @@
 #include "wine/exception.h"
 #include "wine/library.h"
 #include "wine/server.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 #include "kernel_private.h"
@@ -142,7 +143,7 @@ HANDLE WINAPI OpenThread( DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwTh
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    cid.UniqueProcess = 0; /* FIXME */
+    cid.UniqueProcess = 0;
     cid.UniqueThread = ULongToHandle(dwThreadId);
     status = NtOpenThread( &handle, dwDesiredAccess, &attr, &cid );
     if (status)

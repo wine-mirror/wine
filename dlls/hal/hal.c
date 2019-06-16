@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 
 #include "ntstatus.h"
@@ -30,64 +27,53 @@
 #include "winternl.h"
 #include "excpt.h"
 #include "ddk/ntddk.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 
 #ifdef __i386__
-#define DEFINE_FASTCALL1_WRAPPER(func) \
-    __ASM_STDCALL_FUNC( __fastcall_ ## func, 4, \
-                       "popl %eax\n\t" \
-                       "pushl %ecx\n\t" \
-                       "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME(#func) __ASM_STDCALL(4) )
-#define DEFINE_FASTCALL_WRAPPER(func,args) \
-    __ASM_STDCALL_FUNC( __fastcall_ ## func, args, \
-                       "popl %eax\n\t" \
-                       "pushl %edx\n\t" \
-                       "pushl %ecx\n\t" \
-                       "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
-#else
-#define DEFINE_FASTCALL1_WRAPPER(func) /* nothing */
-#define DEFINE_FASTCALL_WRAPPER(func,args) /* nothing */
-#endif
 
-#ifdef __i386__
+#ifndef _WIN32
 
-extern void * WINAPI call_fastcall_func1( void *func, const void *a );
-__ASM_STDCALL_FUNC( call_fastcall_func1, 8,
+extern void * WINAPI wrap_fastcall_func1( void *func, const void *a );
+__ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
                    "popl %ecx\n\t"
                    "popl %eax\n\t"
                    "xchgl (%esp),%ecx\n\t"
                    "jmp *%eax" );
-
-extern void * WINAPI call_fastcall_func2( void *func, const void *a, const void *b );
-__ASM_STDCALL_FUNC( call_fastcall_func2, 12,
+extern void * WINAPI wrap_fastcall_func2( void *func, const void *a, const void *b );
+__ASM_STDCALL_FUNC( wrap_fastcall_func2, 12,
                    "popl %edx\n\t"
                    "popl %eax\n\t"
                    "popl %ecx\n\t"
                    "xchgl (%esp),%edx\n\t"
                    "jmp *%eax" );
 
-extern void WINAPI ExAcquireFastMutexUnsafe( FAST_MUTEX * );
+#define call_fastcall_func1(func,a) wrap_fastcall_func1(func,a)
+#define call_fastcall_func2(func,a,b) wrap_fastcall_func2(func,a,b)
+
+#else  /* _WIN32 */
+
+#define call_fastcall_func1(func,a) func(a)
+#define call_fastcall_func2(func,a,b) func(a,b)
+
+#endif  /* _WIN32 */
 
 DEFINE_FASTCALL1_WRAPPER( ExAcquireFastMutex )
-void WINAPI ExAcquireFastMutex( FAST_MUTEX *mutex )
+void FASTCALL ExAcquireFastMutex( FAST_MUTEX *mutex )
 {
     call_fastcall_func1( ExAcquireFastMutexUnsafe, mutex );
 }
 
-extern void WINAPI ExReleaseFastMutexUnsafe( FAST_MUTEX * );
-
 DEFINE_FASTCALL1_WRAPPER( ExReleaseFastMutex )
-void WINAPI ExReleaseFastMutex( FAST_MUTEX *mutex )
+void FASTCALL ExReleaseFastMutex( FAST_MUTEX *mutex )
 {
     call_fastcall_func1( ExReleaseFastMutexUnsafe, mutex );
 }
 
 DEFINE_FASTCALL1_WRAPPER( ExTryToAcquireFastMutex )
-BOOLEAN WINAPI ExTryToAcquireFastMutex( FAST_MUTEX *mutex )
+BOOLEAN FASTCALL ExTryToAcquireFastMutex( FAST_MUTEX *mutex )
 {
     TRACE("mutex %p.\n", mutex);
 
@@ -95,7 +81,7 @@ BOOLEAN WINAPI ExTryToAcquireFastMutex( FAST_MUTEX *mutex )
 }
 
 DEFINE_FASTCALL1_WRAPPER( KfAcquireSpinLock )
-KIRQL WINAPI KfAcquireSpinLock( KSPIN_LOCK *lock )
+KIRQL FASTCALL KfAcquireSpinLock( KSPIN_LOCK *lock )
 {
     KIRQL irql;
     KeAcquireSpinLock( lock, &irql );
@@ -110,7 +96,7 @@ void WINAPI KeAcquireSpinLock( KSPIN_LOCK *lock, KIRQL *irql )
 }
 
 DEFINE_FASTCALL_WRAPPER( KfReleaseSpinLock, 8 )
-void WINAPI KfReleaseSpinLock( KSPIN_LOCK *lock, KIRQL irql )
+void FASTCALL KfReleaseSpinLock( KSPIN_LOCK *lock, KIRQL irql )
 {
     KeReleaseSpinLock( lock, irql );
 }
@@ -121,18 +107,14 @@ void WINAPI KeReleaseSpinLock( KSPIN_LOCK *lock, KIRQL irql )
     KeReleaseSpinLockFromDpcLevel( lock );
 }
 
-extern void WINAPI KeAcquireInStackQueuedSpinLockAtDpcLevel( KSPIN_LOCK *, KLOCK_QUEUE_HANDLE * );
-
 DEFINE_FASTCALL_WRAPPER( KeAcquireInStackQueuedSpinLock, 8 )
-void WINAPI KeAcquireInStackQueuedSpinLock( KSPIN_LOCK *lock, KLOCK_QUEUE_HANDLE *queue )
+void FASTCALL KeAcquireInStackQueuedSpinLock( KSPIN_LOCK *lock, KLOCK_QUEUE_HANDLE *queue )
 {
     call_fastcall_func2( KeAcquireInStackQueuedSpinLockAtDpcLevel, lock, queue );
 }
 
-extern void WINAPI KeReleaseInStackQueuedSpinLockFromDpcLevel( KLOCK_QUEUE_HANDLE * );
-
 DEFINE_FASTCALL1_WRAPPER( KeReleaseInStackQueuedSpinLock )
-void WINAPI KeReleaseInStackQueuedSpinLock( KLOCK_QUEUE_HANDLE *queue )
+void FASTCALL KeReleaseInStackQueuedSpinLock( KLOCK_QUEUE_HANDLE *queue )
 {
     call_fastcall_func1( KeReleaseInStackQueuedSpinLockFromDpcLevel, queue );
 }
@@ -141,13 +123,13 @@ void WINAPI KeReleaseInStackQueuedSpinLock( KLOCK_QUEUE_HANDLE *queue )
 #if defined(__i386__) || defined(__arm__) || defined(__aarch64__)
 
 DEFINE_FASTCALL1_WRAPPER( KfLowerIrql )
-VOID WINAPI KfLowerIrql(KIRQL NewIrql)
+VOID FASTCALL KfLowerIrql(KIRQL NewIrql)
 {
     FIXME( "(%u) stub!\n", NewIrql );
 }
 
 DEFINE_FASTCALL1_WRAPPER( KfRaiseIrql )
-KIRQL WINAPI KfRaiseIrql(KIRQL NewIrql)
+KIRQL FASTCALL KfRaiseIrql(KIRQL NewIrql)
 {
     FIXME( "(%u) stub!\n", NewIrql );
 

@@ -52,6 +52,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
 
 extern const unsigned short bidi_bracket_table[] DECLSPEC_HIDDEN;
+extern const unsigned short bidi_direction_table[] DECLSPEC_HIDDEN;
 
 #define ASSERT(x) do { if (!(x)) FIXME("assert failed: %s\n", #x); } while(0)
 #define MAX_DEPTH 125
@@ -151,49 +152,10 @@ static inline void bidi_dump_types(const char* header, const UINT8 *types, UINT3
 /* Convert the libwine information to the direction enum */
 static void bidi_classify(const WCHAR *string, UINT8 *chartype, UINT32 count)
 {
-    static const enum directions dir_map[16] =
-    {
-        L,  /* unassigned defaults to L */
-        L,
-        R,
-        EN,
-        ES,
-        ET,
-        AN,
-        CS,
-        B,
-        S,
-        WS,
-        ON,
-        AL,
-        NSM,
-        BN,
-        PDF  /* also LRE, LRO, RLE, RLO */
-    };
-
     UINT32 i;
 
-    for (i = 0; i < count; ++i) {
-        chartype[i] = dir_map[get_char_typeW(string[i]) >> 12];
-
-        switch (chartype[i]) {
-        case ES:
-            break;
-        case PDF:
-            switch (string[i]) {
-            case 0x202a: chartype[i] = LRE; break;
-            case 0x202b: chartype[i] = RLE; break;
-            case 0x202c: chartype[i] = PDF; break;
-            case 0x202d: chartype[i] = LRO; break;
-            case 0x202e: chartype[i] = RLO; break;
-            case 0x2066: chartype[i] = LRI; break;
-            case 0x2067: chartype[i] = RLI; break;
-            case 0x2068: chartype[i] = FSI; break;
-            case 0x2069: chartype[i] = PDI; break;
-            }
-            break;
-        }
-    }
+    for (i = 0; i < count; ++i)
+        chartype[i] = get_table_entry( bidi_direction_table, string[i] );
 }
 
 WCHAR bidi_get_mirrored_char(WCHAR ch)

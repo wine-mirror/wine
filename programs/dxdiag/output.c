@@ -26,8 +26,6 @@
 #include <stdio.h>
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
-
 #include "dxdiag_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
@@ -98,7 +96,7 @@ static BOOL output_text_header(HANDLE hFile, const char *caption)
 
 static BOOL output_text_field(HANDLE hFile, const char *field_name, DWORD field_width, const WCHAR *value)
 {
-    DWORD value_lenW = strlenW(value);
+    DWORD value_lenW = lstrlenW(value);
     DWORD value_lenA = WideCharToMultiByte(CP_ACP, 0, value, value_lenW, NULL, 0, NULL, NULL);
     DWORD total_len = field_width + sizeof(": ") - 1 + value_lenA + sizeof(crlf);
     char sprintf_fmt[1 + 10 + 3 + 1];

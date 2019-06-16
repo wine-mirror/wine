@@ -1,5 +1,6 @@
 MODULE    = wmplayer.exe
-APPMODE   = -mwindows -municode
+
+EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
 
 RC_SRCS = version.rc
 

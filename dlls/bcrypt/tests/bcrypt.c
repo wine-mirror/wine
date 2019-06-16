@@ -221,7 +221,9 @@ struct hash_test
     const char *alg;
     unsigned hash_size;
     const char *hash;
+    const char *hash2;
     const char *hmac_hash;
+    const char *hmac_hash2;
 };
 
 static void test_hash(const struct hash_test *test)
@@ -269,6 +271,35 @@ static void test_hash(const struct hash_test *test)
     ret = pBCryptDestroyHash(hash);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
+    hash = NULL;
+    len = sizeof(buf);
+    ret = pBCryptCreateHash(alg, &hash, buf, len, NULL, 0, BCRYPT_HASH_REUSABLE_FLAG);
+    ok(ret == STATUS_SUCCESS || broken(ret == STATUS_INVALID_PARAMETER) /* < win8 */, "got %08x\n", ret);
+    if (ret == STATUS_SUCCESS)
+    {
+        ret = pBCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+        memset(hash_buf, 0, sizeof(hash_buf));
+        ret = pBCryptFinishHash(hash, hash_buf, test->hash_size, 0);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+        format_hash( hash_buf, test->hash_size, str );
+        ok(!strcmp(str, test->hash), "got %s\n", str);
+
+        /* reuse it */
+        ret = pBCryptHashData(hash, (UCHAR *)"tset", sizeof("tset"), 0);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+        memset(hash_buf, 0, sizeof(hash_buf));
+        ret = pBCryptFinishHash(hash, hash_buf, test->hash_size, 0);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+        format_hash( hash_buf, test->hash_size, str );
+        ok(!strcmp(str, test->hash2), "got %s\n", str);
+
+        ret = pBCryptDestroyHash(hash);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    }
+
     ret = pBCryptCloseAlgorithmProvider(alg, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
@@ -298,6 +329,35 @@ static void test_hash(const struct hash_test *test)
     ret = pBCryptDestroyHash(hash);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
+    hash = NULL;
+    len = sizeof(buf_hmac);
+    ret = pBCryptCreateHash(alg, &hash, buf_hmac, len, (UCHAR *)"key", sizeof("key"), BCRYPT_HASH_REUSABLE_FLAG);
+    ok(ret == STATUS_SUCCESS || broken(ret == STATUS_INVALID_PARAMETER) /* < win8 */, "got %08x\n", ret);
+    if (ret == STATUS_SUCCESS)
+    {
+        ret = pBCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+        memset(hmac_hash, 0, sizeof(hmac_hash));
+        ret = pBCryptFinishHash(hash, hmac_hash, test->hash_size, 0);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+        format_hash( hmac_hash, test->hash_size, str );
+        ok(!strcmp(str, test->hmac_hash), "got %s\n", str);
+
+        /* reuse it */
+        ret = pBCryptHashData(hash, (UCHAR *)"tset", sizeof("tset"), 0);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+        memset(hmac_hash, 0, sizeof(hmac_hash));
+        ret = pBCryptFinishHash(hash, hmac_hash, test->hash_size, 0);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+        format_hash( hmac_hash, test->hash_size, str );
+        ok(!strcmp(str, test->hmac_hash2), "got %s\n", str);
+
+        ret = pBCryptDestroyHash(hash);
+        ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    }
+
     ret = pBCryptDestroyHash(hash);
     ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
 
@@ -310,52 +370,57 @@ static void test_hash(const struct hash_test *test)
 
 static void test_hashes(void)
 {
-    static const struct hash_test tests[] = {
-        {
-            "SHA1",
-            20,
-            "961fa64958818f767707072755d7018dcd278e94",
-            "2472cf65d0e090618d769d3e46f0d9446cf212da"
+    static const struct hash_test tests[] =
+    {
+        { "SHA1", 20,
+        "961fa64958818f767707072755d7018dcd278e94",
+        "9314f62ff64197143c91fc86de37e9ae776a3fb8",
+        "2472cf65d0e090618d769d3e46f0d9446cf212da",
+        "b2d2ba8cfd714d474cf0d9622cc5d15e1f53d53f",
         },
-        {
-            "SHA256",
-            32,
-            "ceb73749c899693706ede1e30c9929b3fd5dd926163831c2fb8bd41e6efb1126",
-            "34c1aa473a4468a91d06e7cdbc75bc4f93b830ccfc2a47ffd74e8e6ed29e4c72"
+        { "SHA256", 32,
+        "ceb73749c899693706ede1e30c9929b3fd5dd926163831c2fb8bd41e6efb1126",
+        "ea0938c118a7b15954f41b85195f2b42aec3a9429c63f593cfa65c137ffaa986",
+        "34c1aa473a4468a91d06e7cdbc75bc4f93b830ccfc2a47ffd74e8e6ed29e4c72",
+        "55feb7052060bd99e33f36eb0982c7f4856eb6a84fbefe19a1afd9faafc3af6f",
         },
-        {
-            "SHA384",
-            48,
-            "62b21e90c9022b101671ba1f808f8631a8149f0f12904055839a35c1ca78ae53"
-            "63eed1e743a692d70e0504b0cfd12ef9",
-            "4b3e6d6ff2da121790ab7e7b9247583e3a7eed2db5bd4dabc680303b1608f37d"
-            "fdc836d96a704c03283bc05b4f6c5eb8"
+        { "SHA384", 48,
+        "62b21e90c9022b101671ba1f808f8631a8149f0f12904055839a35c1ca78ae53"
+        "63eed1e743a692d70e0504b0cfd12ef9",
+        "724db7c0bbc51ef1ac3fc793083fc54c0e5c423faec9b11378c01c236b19aaaf"
+        "a45177ad055feaf003968cc40ece44c7",
+        "4b3e6d6ff2da121790ab7e7b9247583e3a7eed2db5bd4dabc680303b1608f37d"
+        "fdc836d96a704c03283bc05b4f6c5eb8",
+        "03e1818e5c165a0e54619e513acb06c393e1a6cb0ddbb4036b5f29617b334642"
+        "e6e0be8b214d8508595b17a8c4b4e7db",
         },
-        {
-            "SHA512",
-            64,
-            "d55ced17163bf5386f2cd9ff21d6fd7fe576a915065c24744d09cfae4ec84ee1"
-            "ef6ef11bfbc5acce3639bab725b50a1fe2c204f8c820d6d7db0df0ecbc49c5ca",
-            "415fb6b10018ca03b38a1b1399c42ac0be5e8aceddb9a73103f5e543bf2d888f"
-            "2eecf91373941f9315dd730a77937fa92444450fbece86f409d9cb5ec48c6513"
+        { "SHA512", 64,
+        "d55ced17163bf5386f2cd9ff21d6fd7fe576a915065c24744d09cfae4ec84ee1"
+        "ef6ef11bfbc5acce3639bab725b50a1fe2c204f8c820d6d7db0df0ecbc49c5ca",
+        "7752d707b54d2b00e7d1c09120d189475b0fd2e31ebb988cf0a01fc8492ddc0b"
+        "3ca9c9ca61d9d7d1fb65ca7665e87f043c1d5bc9f786f8345e951c2d91ac594f",
+        "415fb6b10018ca03b38a1b1399c42ac0be5e8aceddb9a73103f5e543bf2d888f"
+        "2eecf91373941f9315dd730a77937fa92444450fbece86f409d9cb5ec48c6513",
+        "1487bcecba46ae677622fa499e4cb2f0fdf92f6f3427cba76382d537a06e49c3"
+        "3e70a2fc1fc730092bf21128c3704cc6387f6dfbf7e2f9f315bbb894505a1205",
         },
-        {
-            "MD2",
-            16,
-            "1bb33606ba908912a84221109d29cd7e",
-            "7f05b0638d77f4a27f3a9c4d353cd648"
+        { "MD2", 16,
+        "1bb33606ba908912a84221109d29cd7e",
+        "b9a6ad9323b17e2d0cd389dddd6ef78a",
+        "7f05b0638d77f4a27f3a9c4d353cd648",
+        "05980873e6bfdd05dd7b30078de7e42a",
         },
-        {
-            "MD4",
-            16,
-            "74b5db93c0b41e36ca7074338fc0b637",
-            "bc2e8ac4d8248ed21b8d26227a30ea3a"
+        { "MD4", 16,
+        "74b5db93c0b41e36ca7074338fc0b637",
+        "a14a9ff2059a8c28f47b01e6bc48a1bf",
+        "bc2e8ac4d8248ed21b8d26227a30ea3a",
+        "b609db0eb4b8669db74f2c20099701e4",
         },
-        {
-            "MD5",
-            16,
-            "e2a3e68d23ce348b8f68b3079de3d4c9",
-            "7bda029b93fa8d817fcc9e13d6bdf092"
+        { "MD5", 16,
+        "e2a3e68d23ce348b8f68b3079de3d4c9",
+        "bcdd7ca574342aa9db0e212348eacb16",
+        "7bda029b93fa8d817fcc9e13d6bdf092",
+        "dd636ab8e9592c5088e57c37d44c5bb3",
         }
     };
     unsigned i;

@@ -18,14 +18,12 @@
 
 #define WIN32_LEAN_AND_MEAN
 
-#include "wine/debug.h"
-#include "wine/unicode.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <windows.h>
 #include <winsvc.h>
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sc);
 
@@ -70,23 +68,23 @@ static BOOL parse_create_params( int argc, const WCHAR *argv[], struct create_pa
 
     for (i = 0; i < argc; i++)
     {
-        if (!strcmpiW( argv[i], displaynameW ) && i < argc - 1) cp->displayname = argv[i + 1];
-        if (!strcmpiW( argv[i], binpathW ) && i < argc - 1) cp->binpath = argv[i + 1];
-        if (!strcmpiW( argv[i], groupW ) && i < argc - 1) cp->group = argv[i + 1];
-        if (!strcmpiW( argv[i], dependW ) && i < argc - 1) cp->depend = argv[i + 1];
-        if (!strcmpiW( argv[i], objW ) && i < argc - 1) cp->obj = argv[i + 1];
-        if (!strcmpiW( argv[i], passwordW ) && i < argc - 1) cp->password = argv[i + 1];
+        if (!wcsicmp( argv[i], displaynameW ) && i < argc - 1) cp->displayname = argv[i + 1];
+        if (!wcsicmp( argv[i], binpathW ) && i < argc - 1) cp->binpath = argv[i + 1];
+        if (!wcsicmp( argv[i], groupW ) && i < argc - 1) cp->group = argv[i + 1];
+        if (!wcsicmp( argv[i], dependW ) && i < argc - 1) cp->depend = argv[i + 1];
+        if (!wcsicmp( argv[i], objW ) && i < argc - 1) cp->obj = argv[i + 1];
+        if (!wcsicmp( argv[i], passwordW ) && i < argc - 1) cp->password = argv[i + 1];
 
-        if (!strcmpiW( argv[i], tagW ) && i < argc - 1)
+        if (!wcsicmp( argv[i], tagW ) && i < argc - 1)
         {
             static const WCHAR yesW[] = {'y','e','s',0};
-            if (!strcmpiW( argv[i], yesW ))
+            if (!wcsicmp( argv[i], yesW ))
             {
                 WINE_FIXME("tag argument not supported\n");
                 cp->tag = TRUE;
             }
         }
-        if (!strcmpiW( argv[i], typeW ) && i < argc - 1)
+        if (!wcsicmp( argv[i], typeW ) && i < argc - 1)
         {
             static const WCHAR ownW[] = {'o','w','n',0};
             static const WCHAR shareW[] = {'s','h','a','r','e',0};
@@ -95,14 +93,14 @@ static BOOL parse_create_params( int argc, const WCHAR *argv[], struct create_pa
             static const WCHAR recW[] = {'r','e','c',0};
             static const WCHAR interactW[] = {'i','n','t','e','r','a','c','t',0};
 
-            if (!strcmpiW( argv[i + 1], ownW )) cp->type = SERVICE_WIN32_OWN_PROCESS;
-            if (!strcmpiW( argv[i + 1], shareW )) cp->type = SERVICE_WIN32_SHARE_PROCESS;
-            if (!strcmpiW( argv[i + 1], kernelW )) cp->type = SERVICE_KERNEL_DRIVER;
-            if (!strcmpiW( argv[i + 1], filesysW )) cp->type = SERVICE_FILE_SYSTEM_DRIVER;
-            if (!strcmpiW( argv[i + 1], recW )) cp->type = SERVICE_RECOGNIZER_DRIVER;
-            if (!strcmpiW( argv[i + 1], interactW )) cp->type |= SERVICE_INTERACTIVE_PROCESS;
+            if (!wcsicmp( argv[i + 1], ownW )) cp->type = SERVICE_WIN32_OWN_PROCESS;
+            if (!wcsicmp( argv[i + 1], shareW )) cp->type = SERVICE_WIN32_SHARE_PROCESS;
+            if (!wcsicmp( argv[i + 1], kernelW )) cp->type = SERVICE_KERNEL_DRIVER;
+            if (!wcsicmp( argv[i + 1], filesysW )) cp->type = SERVICE_FILE_SYSTEM_DRIVER;
+            if (!wcsicmp( argv[i + 1], recW )) cp->type = SERVICE_RECOGNIZER_DRIVER;
+            if (!wcsicmp( argv[i + 1], interactW )) cp->type |= SERVICE_INTERACTIVE_PROCESS;
         }
-        if (!strcmpiW( argv[i], startW ) && i < argc - 1)
+        if (!wcsicmp( argv[i], startW ) && i < argc - 1)
         {
             static const WCHAR bootW[] = {'b','o','o','t',0};
             static const WCHAR systemW[] = {'s','y','s','t','e','m',0};
@@ -110,23 +108,23 @@ static BOOL parse_create_params( int argc, const WCHAR *argv[], struct create_pa
             static const WCHAR demandW[] = {'d','e','m','a','n','d',0};
             static const WCHAR disabledW[] = {'d','i','s','a','b','l','e','d',0};
 
-            if (!strcmpiW( argv[i + 1], bootW )) cp->start = SERVICE_BOOT_START;
-            if (!strcmpiW( argv[i + 1], systemW )) cp->start = SERVICE_SYSTEM_START;
-            if (!strcmpiW( argv[i + 1], autoW )) cp->start = SERVICE_AUTO_START;
-            if (!strcmpiW( argv[i + 1], demandW )) cp->start = SERVICE_DEMAND_START;
-            if (!strcmpiW( argv[i + 1], disabledW )) cp->start = SERVICE_DISABLED;
+            if (!wcsicmp( argv[i + 1], bootW )) cp->start = SERVICE_BOOT_START;
+            if (!wcsicmp( argv[i + 1], systemW )) cp->start = SERVICE_SYSTEM_START;
+            if (!wcsicmp( argv[i + 1], autoW )) cp->start = SERVICE_AUTO_START;
+            if (!wcsicmp( argv[i + 1], demandW )) cp->start = SERVICE_DEMAND_START;
+            if (!wcsicmp( argv[i + 1], disabledW )) cp->start = SERVICE_DISABLED;
         }
-        if (!strcmpiW( argv[i], errorW ) && i < argc - 1)
+        if (!wcsicmp( argv[i], errorW ) && i < argc - 1)
         {
             static const WCHAR normalW[] = {'n','o','r','m','a','l',0};
             static const WCHAR severeW[] = {'s','e','v','e','r','e',0};
             static const WCHAR criticalW[] = {'c','r','i','t','i','c','a','l',0};
             static const WCHAR ignoreW[] = {'i','g','n','o','r','e',0};
 
-            if (!strcmpiW( argv[i + 1], normalW )) cp->error = SERVICE_ERROR_NORMAL;
-            if (!strcmpiW( argv[i + 1], severeW )) cp->error = SERVICE_ERROR_SEVERE;
-            if (!strcmpiW( argv[i + 1], criticalW )) cp->error = SERVICE_ERROR_CRITICAL;
-            if (!strcmpiW( argv[i + 1], ignoreW )) cp->error = SERVICE_ERROR_IGNORE;
+            if (!wcsicmp( argv[i + 1], normalW )) cp->error = SERVICE_ERROR_NORMAL;
+            if (!wcsicmp( argv[i + 1], severeW )) cp->error = SERVICE_ERROR_SEVERE;
+            if (!wcsicmp( argv[i + 1], criticalW )) cp->error = SERVICE_ERROR_CRITICAL;
+            if (!wcsicmp( argv[i + 1], ignoreW )) cp->error = SERVICE_ERROR_IGNORE;
         }
     }
     if (!cp->binpath) return FALSE;
@@ -141,10 +139,10 @@ static BOOL parse_failure_actions( const WCHAR *arg, SERVICE_FAILURE_ACTIONSW *f
     unsigned int i, count;
     WCHAR *actions, *p;
 
-    actions = HeapAlloc( GetProcessHeap(), 0, (strlenW( arg ) + 1) * sizeof(WCHAR) );
+    actions = HeapAlloc( GetProcessHeap(), 0, (lstrlenW( arg ) + 1) * sizeof(WCHAR) );
     if (!actions) return FALSE;
 
-    strcpyW( actions, arg );
+    lstrcpyW( actions, arg );
     for (p = actions, count = 0; *p; p++)
     {
         if (*p == '/')
@@ -166,14 +164,14 @@ static BOOL parse_failure_actions( const WCHAR *arg, SERVICE_FAILURE_ACTIONSW *f
     p = actions;
     for (i = 0; i < count; i++)
     {
-        if (!strcmpiW( p, runW )) fa->lpsaActions[i].Type = SC_ACTION_RUN_COMMAND;
-        else if (!strcmpiW( p, restartW )) fa->lpsaActions[i].Type = SC_ACTION_RESTART;
-        else if (!strcmpiW( p, rebootW )) fa->lpsaActions[i].Type = SC_ACTION_REBOOT;
+        if (!wcsicmp( p, runW )) fa->lpsaActions[i].Type = SC_ACTION_RUN_COMMAND;
+        else if (!wcsicmp( p, restartW )) fa->lpsaActions[i].Type = SC_ACTION_RESTART;
+        else if (!wcsicmp( p, rebootW )) fa->lpsaActions[i].Type = SC_ACTION_REBOOT;
         else fa->lpsaActions[i].Type = SC_ACTION_NONE;
 
-        p += strlenW( p ) + 1;
-        fa->lpsaActions[i].Delay = atoiW( p );
-        p += strlenW( p ) + 1;
+        p += lstrlenW( p ) + 1;
+        fa->lpsaActions[i].Delay = wcstol( p, NULL, 10 );
+        p += lstrlenW( p ) + 1;
     }
 
     HeapFree( GetProcessHeap(), 0, actions );
@@ -196,10 +194,10 @@ static BOOL parse_failure_params( int argc, const WCHAR *argv[], SERVICE_FAILURE
 
     for (i = 0; i < argc; i++)
     {
-        if (!strcmpiW( argv[i], resetW ) && i < argc - 1) fa->dwResetPeriod = atoiW( argv[i + 1] );
-        if (!strcmpiW( argv[i], rebootW ) && i < argc - 1) fa->lpRebootMsg = (WCHAR *)argv[i + 1];
-        if (!strcmpiW( argv[i], commandW ) && i < argc - 1) fa->lpCommand = (WCHAR *)argv[i + 1];
-        if (!strcmpiW( argv[i], actionsW ))
+        if (!wcsicmp( argv[i], resetW ) && i < argc - 1) fa->dwResetPeriod = wcstol( argv[i + 1], NULL, 10 );
+        if (!wcsicmp( argv[i], rebootW ) && i < argc - 1) fa->lpRebootMsg = (WCHAR *)argv[i + 1];
+        if (!wcsicmp( argv[i], commandW ) && i < argc - 1) fa->lpCommand = (WCHAR *)argv[i + 1];
+        if (!wcsicmp( argv[i], actionsW ))
         {
             if (i == argc - 1) return FALSE;
             if (!parse_failure_actions( argv[i + 1], fa )) return FALSE;
@@ -241,7 +239,7 @@ int wmain( int argc, const WCHAR *argv[] )
         return 1;
     }
 
-    if (!strcmpiW( argv[1], createW ))
+    if (!wcsicmp( argv[1], createW ))
     {
         struct create_params cp;
 
@@ -266,7 +264,7 @@ int wmain( int argc, const WCHAR *argv[] )
         }
         else WINE_TRACE("failed to create service %u\n", GetLastError());
     }
-    else if (!strcmpiW( argv[1], descriptionW ))
+    else if (!wcsicmp( argv[1], descriptionW ))
     {
         service = OpenServiceW( manager, argv[2], SERVICE_CHANGE_CONFIG );
         if (service)
@@ -279,7 +277,7 @@ int wmain( int argc, const WCHAR *argv[] )
         }
         else WINE_TRACE("failed to open service %u\n", GetLastError());
     }
-    else if (!strcmpiW( argv[1], failureW ))
+    else if (!wcsicmp( argv[1], failureW ))
     {
         service = OpenServiceW( manager, argv[2], SERVICE_CHANGE_CONFIG );
         if (service)
@@ -297,7 +295,7 @@ int wmain( int argc, const WCHAR *argv[] )
         }
         else WINE_TRACE("failed to open service %u\n", GetLastError());
     }
-    else if (!strcmpiW( argv[1], deleteW ))
+    else if (!wcsicmp( argv[1], deleteW ))
     {
         service = OpenServiceW( manager, argv[2], DELETE );
         if (service)
@@ -308,7 +306,7 @@ int wmain( int argc, const WCHAR *argv[] )
         }
         else WINE_TRACE("failed to open service %u\n", GetLastError());
     }
-    else if (!strcmpiW( argv[1], startW ))
+    else if (!wcsicmp( argv[1], startW ))
     {
         service = OpenServiceW( manager, argv[2], SERVICE_START );
         if (service)
@@ -319,7 +317,7 @@ int wmain( int argc, const WCHAR *argv[] )
         }
         else WINE_TRACE("failed to open service %u\n", GetLastError());
     }
-    else if (!strcmpiW( argv[1], stopW ))
+    else if (!wcsicmp( argv[1], stopW ))
     {
         service = OpenServiceW( manager, argv[2], SERVICE_STOP );
         if (service)

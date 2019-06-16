@@ -30,8 +30,17 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "dshow.h"
+#include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/strmbase.h"
 #include "wine/list.h"
+
+static inline const char *debugstr_fourcc(DWORD fourcc)
+{
+    if (!fourcc) return "''";
+    return wine_dbg_sprintf("'%c%c%c%c'", (char)(fourcc), (char)(fourcc >> 8),
+            (char)(fourcc >> 16), (char)(fourcc >> 24));
+}
 
 /* see IAsyncReader::Request on MSDN for the explanation of this */
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
@@ -50,7 +59,6 @@ HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
-HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT VideoRendererDefault_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT QUARTZ_CreateSystemClock(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;

@@ -850,7 +850,7 @@ static void symt_get_length(struct module* module, const struct symt* symt, ULON
     *size = 0x1000; /* arbitrary value */
 }
 
-/* neede by symt_find_nearest */
+/* needed by symt_find_nearest */
 static int symt_get_best_at(struct module* module, int idx_sorttab)
 {
     ULONG64 ref_addr;
@@ -870,7 +870,7 @@ static int symt_get_best_at(struct module* module, int idx_sorttab)
                    !cmp_sorttab_addr(module, idx_sorttab + 1, ref_addr))
                 idx_sorttab++;
         }
-        /* if no better symbol fond restore original */
+        /* if no better symbol was found restore the original */
         if (module->addr_sorttab[idx_sorttab]->symt.tag == SymTagPublicSymbol)
             idx_sorttab = idx_sorttab_orig;
     }
@@ -1062,7 +1062,7 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR Mask,
         }
         /* not found in PE modules, retry on the ELF ones
          */
-        if (!pair.requested && (dbghelp_options & SYMOPT_WINE_WITH_NATIVE_MODULES))
+        if (!pair.requested && dbghelp_opt_native)
         {
             for (pair.requested = pair.pcs->lmodules; pair.requested; pair.requested = pair.requested->next)
             {
@@ -1393,7 +1393,7 @@ BOOL WINAPI SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol)
     }
     /* not found in PE modules, retry on the ELF ones
      */
-    if (dbghelp_options & SYMOPT_WINE_WITH_NATIVE_MODULES)
+    if (dbghelp_opt_native)
     {
         for (module = pcs->lmodules; module; module = module->next)
         {

@@ -27,7 +27,6 @@
 #include <windows.h>
 #include <commctrl.h>
 
-#include "wine/unicode.h"
 #include "taskmgr.h"
 
 typedef struct
@@ -147,13 +146,13 @@ static void AddOrUpdateHwnd(HWND hWnd, WCHAR *wszTitle, HICON hIcon, BOOL bHung)
     {
         /* Check to see if anything needs updating */
         if ((pAPLI->hIcon != hIcon) ||
-            (strcmpW(pAPLI->wszTitle, wszTitle) != 0) ||
+            (lstrcmpW(pAPLI->wszTitle, wszTitle) != 0) ||
             (pAPLI->bHung != bHung))
         {
             /* Update the structure */
             pAPLI->hIcon = hIcon;
             pAPLI->bHung = bHung;
-            strcpyW(pAPLI->wszTitle, wszTitle);
+            lstrcpyW(pAPLI->wszTitle, wszTitle);
 
             /* Update the image list */
             ImageList_ReplaceIcon(hImageListLarge, item.iItem, hIcon);
@@ -174,7 +173,7 @@ static void AddOrUpdateHwnd(HWND hWnd, WCHAR *wszTitle, HICON hIcon, BOOL bHung)
         pAPLI->hWnd = hWnd;
         pAPLI->hIcon = hIcon;
         pAPLI->bHung = bHung;
-        strcpyW(pAPLI->wszTitle, wszTitle);
+        lstrcpyW(pAPLI->wszTitle, wszTitle);
 
         /* Add the item to the list */
         memset(&item, 0, sizeof(LV_ITEMW));
@@ -198,7 +197,7 @@ static void AddOrUpdateHwnd(HWND hWnd, WCHAR *wszTitle, HICON hIcon, BOOL bHung)
 
         pAPLI = (LPAPPLICATION_PAGE_LIST_ITEM)item.lParam;
         if (!IsWindow(pAPLI->hWnd)||
-            (strlenW(pAPLI->wszTitle) <= 0) ||
+            (lstrlenW(pAPLI->wszTitle) <= 0) ||
             !IsWindowVisible(pAPLI->hWnd) ||
             (GetParent(pAPLI->hWnd) != NULL) ||
             (GetWindow(pAPLI->hWnd, GW_OWNER) != NULL) ||
@@ -402,7 +401,7 @@ static int CALLBACK ApplicationPageCompareFunc(LPARAM lParam1, LPARAM lParam2, L
         Param1 = (LPAPPLICATION_PAGE_LIST_ITEM)lParam2;
         Param2 = (LPAPPLICATION_PAGE_LIST_ITEM)lParam1;
     }
-    return strcmpW(Param1->wszTitle, Param2->wszTitle);
+    return lstrcmpW(Param1->wszTitle, Param2->wszTitle);
 }
 
 static void ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam)

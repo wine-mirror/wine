@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
@@ -213,12 +211,12 @@ static HRESULT WINAPI HTMLDocument_Invoke(IHTMLDocument2 *iface, DISPID dispIdMe
 static HRESULT WINAPI HTMLDocument_get_Script(IHTMLDocument2 *iface, IDispatch **p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = (IDispatch*)&This->window->base.IHTMLWindow2_iface;
-    IDispatch_AddRef(*p);
-    return S_OK;
+    hres = IHTMLDocument7_get_parentWindow(&This->IHTMLDocument7_iface, (IHTMLWindow2**)p);
+    return hres == S_OK && !*p ? E_PENDING : hres;
 }
 
 static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCollection **p)
@@ -583,7 +581,7 @@ static HRESULT WINAPI HTMLDocument_put_designMode(IHTMLDocument2 *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(strcmpiW(v, onW)) {
+    if(wcsicmp(v, onW)) {
         FIXME("Unsupported arg %s\n", debugstr_w(v));
         return E_NOTIMPL;
     }
@@ -745,12 +743,12 @@ static HRESULT WINAPI HTMLDocument_get_referrer(IHTMLDocument2 *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLDocument_get_location(IHTMLDocument2 *iface, IHTMLLocation **p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument2(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument2(iface)->doc_node;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->doc_node->nsdoc) {
-        WARN("NULL nsdoc\n");
+    if(!This->nsdoc || !This->window) {
+        WARN("NULL window\n");
         return E_UNEXPECTED;
     }
 
@@ -1094,7 +1092,7 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
         return E_NOTIMPL;
     }
 
-    if(!url || strcmpW(url, text_htmlW) || V_VT(&name) != VT_ERROR
+    if(!url || wcscmp(url, text_htmlW) || V_VT(&name) != VT_ERROR
        || V_VT(&features) != VT_ERROR || V_VT(&replace) != VT_ERROR)
         FIXME("unsupported args\n");
 
@@ -1192,7 +1190,7 @@ static BOOL cmdid_from_string(const WCHAR *str, OLECMDID *cmdid)
     int i;
 
     for(i = 0; i < ARRAY_SIZE(command_names); i++) {
-        if(!strcmpiW(command_names[i].name, str)) {
+        if(!wcsicmp(command_names[i].name, str)) {
             *cmdid = command_names[i].id;
             return TRUE;
         }
@@ -1627,10 +1625,12 @@ static HRESULT WINAPI HTMLDocument_elementFromPoint(IHTMLDocument2 *iface, LONG 
 static HRESULT WINAPI HTMLDocument_get_parentWindow(IHTMLDocument2 *iface, IHTMLWindow2 **p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return IHTMLDocument7_get_defaultView(&This->IHTMLDocument7_iface, p);
+    hres = IHTMLDocument7_get_defaultView(&This->IHTMLDocument7_iface, p);
+    return hres == S_OK && !*p ? E_FAIL : hres;
 }
 
 static HRESULT WINAPI HTMLDocument_get_styleSheets(IHTMLDocument2 *iface,
@@ -2360,7 +2360,7 @@ static HRESULT WINAPI HTMLDocument3_getElementsByName(IHTMLDocument3 *iface, BST
     selector = heap_alloc(2*SysStringLen(v)*sizeof(WCHAR) + sizeof(formatW));
     if(!selector)
         return E_OUTOFMEMORY;
-    sprintfW(selector, formatW, v, v);
+    swprintf(selector, 2*SysStringLen(v) + ARRAY_SIZE(formatW), formatW, v, v);
 
     /*
      * NOTE: IE getElementsByName implementation differs from Gecko. It searches both name and id attributes.
@@ -2427,7 +2427,7 @@ static HRESULT WINAPI HTMLDocument3_getElementsByTagName(IHTMLDocument3 *iface, 
         if(v) {
             const WCHAR *ptr;
             for(ptr=v; *ptr; ptr++) {
-                if(!isalnumW(*ptr)) {
+                if(!iswalnum(*ptr)) {
                     FIXME("Unsupported invalid tag %s\n", debugstr_w(v));
                     return E_NOTIMPL;
                 }
@@ -2821,7 +2821,7 @@ static HRESULT WINAPI HTMLDocument5_get_implementation(IHTMLDocument5 *iface, IH
     if(!doc_node->dom_implementation) {
         HRESULT hres;
 
-        hres = create_dom_implementation(&doc_node->dom_implementation);
+        hres = create_dom_implementation(doc_node, &doc_node->dom_implementation);
         if(FAILED(hres))
             return hres;
     }
@@ -3248,12 +3248,16 @@ static HRESULT WINAPI HTMLDocument7_Invoke(IHTMLDocument7 *iface, DISPID dispIdM
 
 static HRESULT WINAPI HTMLDocument7_get_defaultView(IHTMLDocument7 *iface, IHTMLWindow2 **p)
 {
-    HTMLDocument *This = impl_from_IHTMLDocument7(iface);
+    HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface)->doc_node;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = &This->window->base.IHTMLWindow2_iface;
-    IHTMLWindow2_AddRef(*p);
+    if(This->window && This->window->base.outer_window) {
+        *p = &This->window->base.outer_window->base.IHTMLWindow2_iface;
+        IHTMLWindow2_AddRef(*p);
+    }else {
+        *p = NULL;
+    }
     return S_OK;
 }
 
@@ -3282,8 +3286,39 @@ static HRESULT WINAPI HTMLDocument7_getElementsByTagNameNS(IHTMLDocument7 *iface
 static HRESULT WINAPI HTMLDocument7_createElementNS(IHTMLDocument7 *iface, VARIANT *pvarNS, BSTR bstrTag, IHTMLElement **newElem)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_variant(pvarNS), debugstr_w(bstrTag), newElem);
-    return E_NOTIMPL;
+    nsIDOMElement *dom_element;
+    HTMLElement *element;
+    nsAString ns, tag;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_variant(pvarNS), debugstr_w(bstrTag), newElem);
+
+    if(!This->doc_node->nsdoc) {
+        FIXME("NULL nsdoc\n");
+        return E_FAIL;
+    }
+
+    if(pvarNS && V_VT(pvarNS) != VT_NULL && V_VT(pvarNS) != VT_BSTR)
+        FIXME("Unsupported namespace %s\n", debugstr_variant(pvarNS));
+
+    nsAString_InitDepend(&ns, pvarNS && V_VT(pvarNS) == VT_BSTR ? V_BSTR(pvarNS) : NULL);
+    nsAString_InitDepend(&tag, bstrTag);
+    nsres = nsIDOMHTMLDocument_CreateElementNS(This->doc_node->nsdoc, &ns, &tag, &dom_element);
+    nsAString_Finish(&ns);
+    nsAString_Finish(&tag);
+    if(NS_FAILED(nsres)) {
+        WARN("CreateElementNS failed: %08x\n", nsres);
+        return map_nsresult(nsres);
+    }
+
+    hres = HTMLElement_Create(This->doc_node, (nsIDOMNode*)dom_element, FALSE, &element);
+    nsIDOMElement_Release(dom_element);
+    if(FAILED(hres))
+        return hres;
+
+    *newElem = &element->IHTMLElement_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument7_createAttributeNS(IHTMLDocument7 *iface, VARIANT *pvarNS,
@@ -4474,7 +4509,7 @@ static HRESULT dispid_from_elem_name(HTMLDocumentNode *This, BSTR name, DISPID *
         return DISP_E_UNKNOWNNAME;
 
     for(i=0; i < This->elem_vars_cnt; i++) {
-        if(!strcmpW(name, This->elem_vars[i])) {
+        if(!wcscmp(name, This->elem_vars[i])) {
             *dispid = MSHTML_DISPID_CUSTOM_MIN+i;
             return S_OK;
         }
@@ -4725,6 +4760,351 @@ static const IProvideMultipleClassInfoVtbl ProvideMultipleClassInfoVtbl = {
     ProvideMultipleClassInfo_GetInfoOfIndex
 };
 
+/**********************************************************
+ * IMarkupServices implementation
+ */
+static inline HTMLDocument *impl_from_IMarkupServices(IMarkupServices *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IMarkupServices_iface);
+}
+
+static HRESULT WINAPI MarkupServices_QueryInterface(IMarkupServices *iface, REFIID riid, void **ppvObject)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    return htmldoc_query_interface(This, riid, ppvObject);
+}
+
+static ULONG WINAPI MarkupServices_AddRef(IMarkupServices *iface)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    return htmldoc_addref(This);
+}
+
+static ULONG WINAPI MarkupServices_Release(IMarkupServices *iface)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    return htmldoc_release(This);
+}
+
+static HRESULT WINAPI MarkupServices_CreateMarkupPointer(IMarkupServices *iface, IMarkupPointer **ppPointer)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%p)\n", This, ppPointer);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_CreateMarkupContainer(IMarkupServices *iface, IMarkupContainer **ppMarkupContainer)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%p)\n", This, ppMarkupContainer);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_CreateElement(IMarkupServices *iface,
+    ELEMENT_TAG_ID tagID, OLECHAR *pchAttributes, IHTMLElement **ppElement)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%d,%s,%p)\n", This, tagID, debugstr_w(pchAttributes), ppElement);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_CloneElement(IMarkupServices *iface,
+    IHTMLElement *pElemCloneThis, IHTMLElement **ppElementTheClone)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%p,%p)\n", This, pElemCloneThis, ppElementTheClone);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_InsertElement(IMarkupServices *iface,
+    IHTMLElement *pElementInsert, IMarkupPointer *pPointerStart,
+    IMarkupPointer *pPointerFinish)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%p,%p,%p)\n", This, pElementInsert, pPointerStart, pPointerFinish);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_RemoveElement(IMarkupServices *iface, IHTMLElement *pElementRemove)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%p)\n", This, pElementRemove);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_Remove(IMarkupServices *iface,
+    IMarkupPointer *pPointerStart, IMarkupPointer *pPointerFinish)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%p,%p)\n", This, pPointerStart, pPointerFinish);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_Copy(IMarkupServices *iface,
+    IMarkupPointer *pPointerSourceStart, IMarkupPointer *pPointerSourceFinish,
+    IMarkupPointer *pPointerTarget)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%p,%p,%p)\n", This, pPointerSourceStart, pPointerSourceFinish, pPointerTarget);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_Move(IMarkupServices *iface,
+    IMarkupPointer *pPointerSourceStart, IMarkupPointer *pPointerSourceFinish,
+    IMarkupPointer *pPointerTarget)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%p,%p,%p)\n", This, pPointerSourceStart, pPointerSourceFinish, pPointerTarget);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_InsertText(IMarkupServices *iface,
+    OLECHAR *pchText, LONG cch, IMarkupPointer *pPointerTarget)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%s,%x,%p)\n", This, debugstr_w(pchText), cch, pPointerTarget);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_ParseString(IMarkupServices *iface,
+    OLECHAR *pchHTML, DWORD dwFlags, IMarkupContainer **ppContainerResult,
+    IMarkupPointer *pPointerStart, IMarkupPointer *pPointerFinish)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%s,%x,%p,%p,%p)\n", This, debugstr_w(pchHTML), dwFlags, ppContainerResult, pPointerStart, pPointerFinish);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_ParseGlobal(IMarkupServices *iface,
+    HGLOBAL hglobalHTML, DWORD dwFlags, IMarkupContainer **ppContainerResult,
+    IMarkupPointer *pPointerStart, IMarkupPointer *pPointerFinish)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%s,%x,%p,%p,%p)\n", This, debugstr_w(hglobalHTML), dwFlags, ppContainerResult, pPointerStart, pPointerFinish);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_IsScopedElement(IMarkupServices *iface,
+    IHTMLElement *pElement, BOOL *pfScoped)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%p,%p)\n", This, pElement, pfScoped);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_GetElementTagId(IMarkupServices *iface,
+    IHTMLElement *pElement, ELEMENT_TAG_ID *ptagId)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%p,%p)\n", This, pElement, ptagId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_GetTagIDForName(IMarkupServices *iface,
+    BSTR bstrName, ELEMENT_TAG_ID *ptagId)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%s,%p)\n", This, debugstr_w(bstrName), ptagId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_GetNameForTagID(IMarkupServices *iface,
+    ELEMENT_TAG_ID tagId, BSTR *pbstrName)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%d,%p)\n", This, tagId, pbstrName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_MovePointersToRange(IMarkupServices *iface,
+    IHTMLTxtRange *pIRange, IMarkupPointer *pPointerStart, IMarkupPointer *pPointerFinish)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%p,%p,%p)\n", This, pIRange, pPointerStart, pPointerFinish);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_MoveRangeToPointers(IMarkupServices *iface,
+    IMarkupPointer *pPointerStart, IMarkupPointer *pPointerFinish, IHTMLTxtRange *pIRange)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%p,%p,%p)\n", This, pPointerStart, pPointerFinish, pIRange);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_BeginUndoUnit(IMarkupServices *iface, OLECHAR *pchTitle)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(pchTitle));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MarkupServices_EndUndoUnit(IMarkupServices *iface)
+{
+    HTMLDocument *This = impl_from_IMarkupServices(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static const IMarkupServicesVtbl MarkupServicesVtbl = {
+    MarkupServices_QueryInterface,
+    MarkupServices_AddRef,
+    MarkupServices_Release,
+    MarkupServices_CreateMarkupPointer,
+    MarkupServices_CreateMarkupContainer,
+    MarkupServices_CreateElement,
+    MarkupServices_CloneElement,
+    MarkupServices_InsertElement,
+    MarkupServices_RemoveElement,
+    MarkupServices_Remove,
+    MarkupServices_Copy,
+    MarkupServices_Move,
+    MarkupServices_InsertText,
+    MarkupServices_ParseString,
+    MarkupServices_ParseGlobal,
+    MarkupServices_IsScopedElement,
+    MarkupServices_GetElementTagId,
+    MarkupServices_GetTagIDForName,
+    MarkupServices_GetNameForTagID,
+    MarkupServices_MovePointersToRange,
+    MarkupServices_MoveRangeToPointers,
+    MarkupServices_BeginUndoUnit,
+    MarkupServices_EndUndoUnit
+};
+
+/**********************************************************
+ * IMarkupContainer implementation
+ */
+static inline HTMLDocument *impl_from_IMarkupContainer(IMarkupContainer *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IMarkupContainer_iface);
+}
+
+static HRESULT WINAPI MarkupContainer_QueryInterface(IMarkupContainer *iface, REFIID riid, void **ppvObject)
+{
+    HTMLDocument *This = impl_from_IMarkupContainer(iface);
+    return htmldoc_query_interface(This, riid, ppvObject);
+}
+
+static ULONG WINAPI MarkupContainer_AddRef(IMarkupContainer *iface)
+{
+    HTMLDocument *This = impl_from_IMarkupContainer(iface);
+    return htmldoc_addref(This);
+}
+
+static ULONG WINAPI MarkupContainer_Release(IMarkupContainer *iface)
+{
+    HTMLDocument *This = impl_from_IMarkupContainer(iface);
+    return htmldoc_release(This);
+}
+
+static HRESULT WINAPI MarkupContainer_OwningDoc(IMarkupContainer *iface, IHTMLDocument2 **ppDoc)
+{
+    HTMLDocument *This = impl_from_IMarkupContainer(iface);
+    FIXME("(%p)->(%p)\n", This, ppDoc);
+    return E_NOTIMPL;
+}
+
+static const IMarkupContainerVtbl MarkupContainerVtbl = {
+    MarkupContainer_QueryInterface,
+    MarkupContainer_AddRef,
+    MarkupContainer_Release,
+    MarkupContainer_OwningDoc
+};
+
+/**********************************************************
+ * IDisplayServices implementation
+ */
+static inline HTMLDocument *impl_from_IDisplayServices(IDisplayServices *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IDisplayServices_iface);
+}
+
+static HRESULT WINAPI DisplayServices_QueryInterface(IDisplayServices *iface, REFIID riid, void **ppvObject)
+{
+    HTMLDocument *This = impl_from_IDisplayServices(iface);
+    return htmldoc_query_interface(This, riid, ppvObject);
+}
+
+static ULONG WINAPI DisplayServices_AddRef(IDisplayServices *iface)
+{
+    HTMLDocument *This = impl_from_IDisplayServices(iface);
+    return htmldoc_addref(This);
+}
+
+static ULONG WINAPI DisplayServices_Release(IDisplayServices *iface)
+{
+    HTMLDocument *This = impl_from_IDisplayServices(iface);
+    return htmldoc_release(This);
+}
+
+static HRESULT WINAPI DisplayServices_CreateDisplayPointer(IDisplayServices *iface, IDisplayPointer **ppDispPointer)
+{
+    HTMLDocument *This = impl_from_IDisplayServices(iface);
+    FIXME("(%p)->(%p)\n", This, ppDispPointer);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DisplayServices_TransformRect(IDisplayServices *iface,
+    RECT *pRect, COORD_SYSTEM eSource, COORD_SYSTEM eDestination, IHTMLElement *pIElement)
+{
+    HTMLDocument *This = impl_from_IDisplayServices(iface);
+    FIXME("(%p)->(%s,%d,%d,%p)\n", This, wine_dbgstr_rect(pRect), eSource, eDestination, pIElement);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DisplayServices_TransformPoint(IDisplayServices *iface,
+    POINT *pPoint, COORD_SYSTEM eSource, COORD_SYSTEM eDestination, IHTMLElement *pIElement)
+{
+    HTMLDocument *This = impl_from_IDisplayServices(iface);
+    FIXME("(%p)->(%s,%d,%d,%p)\n", This, wine_dbgstr_point(pPoint), eSource, eDestination, pIElement);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DisplayServices_GetCaret(IDisplayServices *iface, IHTMLCaret **ppCaret)
+{
+    HTMLDocument *This = impl_from_IDisplayServices(iface);
+    FIXME("(%p)->(%p)\n", This, ppCaret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DisplayServices_GetComputedStyle(IDisplayServices *iface,
+    IMarkupPointer *pPointer, IHTMLComputedStyle **ppComputedStyle)
+{
+    HTMLDocument *This = impl_from_IDisplayServices(iface);
+    FIXME("(%p)->(%p,%p)\n", This, pPointer, ppComputedStyle);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DisplayServices_ScrollRectIntoView(IDisplayServices *iface,
+    IHTMLElement *pIElement, RECT rect)
+{
+    HTMLDocument *This = impl_from_IDisplayServices(iface);
+    FIXME("(%p)->(%p,%s)\n", This, pIElement, wine_dbgstr_rect(&rect));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DisplayServices_HasFlowLayout(IDisplayServices *iface,
+    IHTMLElement *pIElement, BOOL *pfHasFlowLayout)
+{
+    HTMLDocument *This = impl_from_IDisplayServices(iface);
+    FIXME("(%p)->(%p,%p)\n", This, pIElement, pfHasFlowLayout);
+    return E_NOTIMPL;
+}
+
+static const IDisplayServicesVtbl DisplayServicesVtbl = {
+    DisplayServices_QueryInterface,
+    DisplayServices_AddRef,
+    DisplayServices_Release,
+    DisplayServices_CreateDisplayPointer,
+    DisplayServices_TransformRect,
+    DisplayServices_TransformPoint,
+    DisplayServices_GetCaret,
+    DisplayServices_GetComputedStyle,
+    DisplayServices_ScrollRectIntoView,
+    DisplayServices_HasFlowLayout
+};
+
 static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -4803,6 +5183,12 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IProvideMultipleClassInfo_iface;
     else if(IsEqualGUID(&IID_IProvideMultipleClassInfo, riid))
         *ppv = &This->IProvideMultipleClassInfo_iface;
+    else if(IsEqualGUID(&IID_IMarkupServices, riid))
+        *ppv = &This->IMarkupServices_iface;
+    else if(IsEqualGUID(&IID_IMarkupContainer, riid))
+        *ppv = &This->IMarkupContainer_iface;
+    else if(IsEqualGUID(&IID_IDisplayServices, riid))
+        *ppv = &This->IDisplayServices_iface;
     else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
         FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppv);
         *ppv = NULL;
@@ -4850,6 +5236,9 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
     doc->IDocumentEvent_iface.lpVtbl = &DocumentEventVtbl;
     doc->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
     doc->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
+    doc->IMarkupServices_iface.lpVtbl = &MarkupServicesVtbl;
+    doc->IMarkupContainer_iface.lpVtbl = &MarkupContainerVtbl;
+    doc->IDisplayServices_iface.lpVtbl = &DisplayServicesVtbl;
 
     doc->outer_unk = outer;
     doc->dispex = dispex;
@@ -4885,30 +5274,51 @@ static HRESULT HTMLDocumentNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return S_OK;
 }
 
+void detach_document_node(HTMLDocumentNode *doc)
+{
+    unsigned i;
+
+    while(!list_empty(&doc->plugin_hosts))
+        detach_plugin_host(LIST_ENTRY(list_head(&doc->plugin_hosts), PluginHost, entry));
+
+    if(doc->dom_implementation) {
+        detach_dom_implementation(doc->dom_implementation);
+        IHTMLDOMImplementation_Release(doc->dom_implementation);
+        doc->dom_implementation = NULL;
+    }
+
+    detach_events(doc);
+    detach_selection(doc);
+    detach_ranges(doc);
+
+    for(i=0; i < doc->elem_vars_cnt; i++)
+        heap_free(doc->elem_vars[i]);
+    heap_free(doc->elem_vars);
+    doc->elem_vars_cnt = doc->elem_vars_size = 0;
+    doc->elem_vars = NULL;
+
+    if(doc->catmgr) {
+        ICatInformation_Release(doc->catmgr);
+        doc->catmgr = NULL;
+    }
+
+    if(!doc->nsdoc && doc->window) {
+        /* document fragments own reference to inner window */
+        IHTMLWindow2_Release(&doc->window->base.IHTMLWindow2_iface);
+        doc->window = NULL;
+    }
+
+    if(doc->browser) {
+        list_remove(&doc->browser_entry);
+        doc->browser = NULL;
+    }
+}
+
 static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
 {
     HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
-    unsigned i;
 
-    for(i=0; i < This->elem_vars_cnt; i++)
-        heap_free(This->elem_vars[i]);
-    heap_free(This->elem_vars);
-
-    detach_events(This);
-    if(This->catmgr)
-        ICatInformation_Release(This->catmgr);
-
-    detach_selection(This);
-    detach_ranges(This);
-
-    while(!list_empty(&This->plugin_hosts))
-        detach_plugin_host(LIST_ENTRY(list_head(&This->plugin_hosts), PluginHost, entry));
-
-    if(!This->nsdoc && This->window) {
-        /* document fragments own reference to inner window */
-        IHTMLWindow2_Release(&This->window->base.IHTMLWindow2_iface);
-        This->window = NULL;
-    }
+    TRACE("(%p)\n", This);
 
     heap_free(This->event_vector);
     ConnectionPointContainer_Destroy(&This->basedoc.cp_container);
@@ -4937,6 +5347,7 @@ static void HTMLDocumentNode_unlink(HTMLDOMNode *iface)
         nsIDOMHTMLDocument *nsdoc = This->nsdoc;
 
         release_document_mutation(This);
+        detach_document_node(This);
         This->nsdoc = NULL;
         nsIDOMHTMLDocument_Release(nsdoc);
         This->window = NULL;
@@ -5141,7 +5552,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     doc->ref = 1;
     doc->basedoc.doc_node = doc;
     doc->basedoc.doc_obj = doc_obj;
-    doc->basedoc.window = window->base.outer_window;
+    doc->basedoc.window = window ? window->base.outer_window : NULL;
     doc->window = window;
 
     init_doc(&doc->basedoc, (IUnknown*)&doc->node.IHTMLDOMNode_iface,
@@ -5155,24 +5566,23 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     return doc;
 }
 
-HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_obj, HTMLInnerWindow *window, HTMLDocumentNode **ret)
+HRESULT create_document_node(nsIDOMHTMLDocument *nsdoc, GeckoBrowser *browser, HTMLInnerWindow *window,
+                             compat_mode_t parent_mode, HTMLDocumentNode **ret)
 {
+    HTMLDocumentObj *doc_obj = browser->doc;
     HTMLDocumentNode *doc;
 
     doc = alloc_doc_node(doc_obj, window);
     if(!doc)
         return E_OUTOFMEMORY;
 
-    if(window->base.outer_window->parent) {
-        compat_mode_t parent_mode = window->base.outer_window->parent->base.inner_window->doc->document_mode;
-        TRACE("parent mode %u\n", parent_mode);
-        if(parent_mode >= COMPAT_MODE_IE9) {
-            doc->document_mode = parent_mode;
-            lock_document_mode(doc);
-        }
+    if(parent_mode >= COMPAT_MODE_IE9) {
+        TRACE("using parent mode %u\n", parent_mode);
+        doc->document_mode = parent_mode;
+        lock_document_mode(doc);
     }
 
-    if(!doc_obj->basedoc.window || window->base.outer_window == doc_obj->basedoc.window)
+    if(!doc_obj->basedoc.window || (window && is_main_content_window(window->base.outer_window)))
         doc->basedoc.cp_container.forward_container = &doc_obj->basedoc.cp_container;
 
     HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc, &HTMLDocumentNode_dispex);
@@ -5184,6 +5594,22 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     doc_init_events(doc);
 
     doc->node.vtbl = &HTMLDocumentNodeImplVtbl;
+
+    list_add_head(&browser->document_nodes, &doc->browser_entry);
+    doc->browser = browser;
+
+    if(browser->usermode == EDITMODE) {
+        nsAString mode_str;
+        nsresult nsres;
+
+        static const PRUnichar onW[] = {'o','n',0};
+
+        nsAString_InitDepend(&mode_str, onW);
+        nsres = nsIDOMHTMLDocument_SetDesignMode(doc->nsdoc, &mode_str);
+        nsAString_Finish(&mode_str);
+        if(NS_FAILED(nsres))
+            ERR("SetDesignMode failed: %08x\n", nsres);
+    }
 
     *ret = doc;
     return S_OK;
@@ -5228,7 +5654,7 @@ HRESULT get_document_node(nsIDOMDocument *dom_document, HTMLDocumentNode **ret)
 
 static inline HTMLDocumentObj *impl_from_IUnknown(IUnknown *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLDocumentObj, IUnknown_outer);
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, IUnknown_inner);
 }
 
 static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
@@ -5238,7 +5664,7 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
     TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IUnknown_outer;
+        *ppv = &This->IUnknown_inner;
     }else if(htmldoc_qi(&This->basedoc, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
@@ -5283,19 +5709,12 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
     TRACE("(%p) ref = %u\n", This, ref);
 
     if(!ref) {
-        nsIDOMWindowUtils *window_utils = NULL;
-
-        if(This->basedoc.window && This->basedoc.window->nswindow)
-            get_nsinterface((nsISupports*)This->basedoc.window->nswindow, &IID_nsIDOMWindowUtils, (void**)&window_utils);
-
         if(This->basedoc.doc_node) {
             This->basedoc.doc_node->basedoc.doc_obj = NULL;
             htmldoc_release(&This->basedoc.doc_node->basedoc);
         }
-        if(This->basedoc.window) {
-            This->basedoc.window->doc_obj = NULL;
+        if(This->basedoc.window)
             IHTMLWindow2_Release(&This->basedoc.window->base.IHTMLWindow2_iface);
-        }
         if(This->advise_holder)
             IOleAdviseHolder_Release(This->advise_holder);
 
@@ -5325,14 +5744,8 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
         release_dispex(&This->dispex);
 
         if(This->nscontainer)
-            NSContainer_Release(This->nscontainer);
+            detach_gecko_browser(This->nscontainer);
         heap_free(This);
-
-        /* Force cycle collection */
-        if(window_utils) {
-            nsIDOMWindowUtils_CycleCollect(window_utils, NULL, 0);
-            nsIDOMWindowUtils_Release(window_utils);
-        }
     }
 
     return ref;
@@ -5426,10 +5839,7 @@ static dispex_static_data_t HTMLDocumentObj_dispex = {
 
 static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID riid, void **ppv)
 {
-    mozIDOMWindowProxy *mozwindow;
     HTMLDocumentObj *doc;
-    nsIDOMWindow *nswindow = NULL;
-    nsresult nsres;
     HRESULT hres;
 
     if(outer && !IsEqualGUID(&IID_IUnknown, riid)) {
@@ -5437,26 +5847,29 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
         return E_INVALIDARG;
     }
 
+    /* ensure that security manager is initialized */
+    if(!get_security_manager())
+        return E_OUTOFMEMORY;
+
     doc = heap_alloc_zero(sizeof(HTMLDocumentObj));
     if(!doc)
         return E_OUTOFMEMORY;
 
     doc->ref = 1;
-    doc->IUnknown_outer.lpVtbl = &HTMLDocumentObjVtbl;
+    doc->IUnknown_inner.lpVtbl = &HTMLDocumentObjVtbl;
     doc->ICustomDoc_iface.lpVtbl = &CustomDocVtbl;
 
     init_dispex(&doc->dispex, (IUnknown*)&doc->ICustomDoc_iface, &HTMLDocumentObj_dispex);
-    init_doc(&doc->basedoc, outer ? outer : &doc->IUnknown_outer, &doc->dispex.IDispatchEx_iface);
+    init_doc(&doc->basedoc, outer ? outer : &doc->IUnknown_inner, &doc->dispex.IDispatchEx_iface);
     TargetContainer_Init(doc);
     doc->basedoc.doc_obj = doc;
     doc->is_mhtml = is_mhtml;
 
-    doc->usermode = UNKNOWN_USERMODE;
     doc->task_magic = get_task_target_magic();
 
     HTMLDocument_View_Init(doc);
 
-    hres = create_nscontainer(doc, &doc->nscontainer);
+    hres = create_gecko_browser(doc, &doc->nscontainer);
     if(FAILED(hres)) {
         ERR("Failed to init Gecko, returning CLASS_E_CLASSNOTAVAILABLE\n");
         htmldoc_release(&doc->basedoc);
@@ -5464,7 +5877,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     }
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &doc->IUnknown_outer;
+        *ppv = &doc->IUnknown_inner;
     }else {
         hres = htmldoc_query_interface(&doc->basedoc, riid, ppv);
         htmldoc_release(&doc->basedoc);
@@ -5472,21 +5885,8 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
             return hres;
     }
 
-    nsres = nsIWebBrowser_GetContentDOMWindow(doc->nscontainer->webbrowser, &mozwindow);
-    if(NS_FAILED(nsres))
-        ERR("GetContentDOMWindow failed: %08x\n", nsres);
-
-    nsres = mozIDOMWindowProxy_QueryInterface(mozwindow, &IID_nsIDOMWindow, (void**)&nswindow);
-    mozIDOMWindowProxy_Release(mozwindow);
-    assert(nsres == NS_OK);
-
-    hres = HTMLOuterWindow_Create(doc, nswindow, NULL /* FIXME */, &doc->basedoc.window);
-    if(nswindow)
-        nsIDOMWindow_Release(nswindow);
-    if(FAILED(hres)) {
-        htmldoc_release(&doc->basedoc);
-        return hres;
-    }
+    doc->basedoc.window = doc->nscontainer->content_window;
+    IHTMLWindow2_AddRef(&doc->basedoc.window->base.IHTMLWindow2_iface);
 
     if(!doc->basedoc.doc_node && doc->basedoc.window->base.inner_window->doc) {
         doc->basedoc.doc_node = doc->basedoc.window->base.inner_window->doc;

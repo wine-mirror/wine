@@ -1553,6 +1553,27 @@ HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_fonttable *cmap, un
     return *count > max_count ? E_NOT_SUFFICIENT_BUFFER : S_OK;
 }
 
+void opentype_get_font_typo_metrics(struct file_stream_desc *stream_desc, unsigned int *ascent, unsigned int *descent)
+{
+    const TT_OS2_V2 *data;
+    unsigned int size;
+    void *context;
+
+    opentype_get_font_table(stream_desc, MS_OS2_TAG, (const void **)&data, &context, &size, NULL);
+
+    *ascent = *descent = 0;
+
+    if (size >= FIELD_OFFSET(TT_OS2_V2, sTypoLineGap))
+    {
+        SHORT value = GET_BE_WORD(data->sTypoDescender);
+        *ascent = GET_BE_WORD(data->sTypoAscender);
+        *descent = value < 0 ? -value : 0;
+    }
+
+    if (data)
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, context);
+}
+
 void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT_METRICS1 *metrics, DWRITE_CARET_METRICS *caret)
 {
     void *os2_context, *head_context, *post_context, *hhea_context;

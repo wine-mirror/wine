@@ -274,7 +274,8 @@
 @ stdcall NdrSendReceive(ptr ptr)
 @ stdcall NdrServerCall2(ptr)
 @ stdcall NdrServerCall(ptr)
-@ stdcall NdrServerContextMarshall(ptr ptr long)
+@ stdcall NdrServerCallAll(ptr)
+@ stdcall NdrServerContextMarshall(ptr ptr ptr)
 @ stdcall NdrServerContextNewMarshall(ptr ptr ptr ptr) # wxp
 @ stdcall NdrServerContextNewUnmarshall(ptr ptr) # wxp
 @ stdcall NdrServerContextUnmarshall(ptr)

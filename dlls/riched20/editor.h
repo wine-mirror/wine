@@ -152,9 +152,10 @@ void ME_SetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *mod) DECLSPEC_
 void ME_SetCursorToStart(ME_TextEditor *editor, ME_Cursor *cursor) DECLSPEC_HIDDEN;
 int ME_SetSelection(ME_TextEditor *editor, int from, int to) DECLSPEC_HIDDEN;
 BOOL ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs) DECLSPEC_HIDDEN;
-void ME_HideCaret(ME_TextEditor *ed) DECLSPEC_HIDDEN;
-void ME_ShowCaret(ME_TextEditor *ed) DECLSPEC_HIDDEN;
-void ME_MoveCaret(ME_TextEditor *ed) DECLSPEC_HIDDEN;
+void hide_caret(ME_TextEditor *ed) DECLSPEC_HIDDEN;
+void show_caret(ME_TextEditor *ed) DECLSPEC_HIDDEN;
+void update_caret(ME_TextEditor *ed) DECLSPEC_HIDDEN;
+void create_caret(ME_TextEditor *ed) DECLSPEC_HIDDEN;
 BOOL ME_CharFromPos(ME_TextEditor *editor, int x, int y, ME_Cursor *cursor, BOOL *isExact) DECLSPEC_HIDDEN;
 void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum) DECLSPEC_HIDDEN;
 void ME_MouseMove(ME_TextEditor *editor, int x, int y) DECLSPEC_HIDDEN;
@@ -276,7 +277,7 @@ void ME_InitTableDef(ME_TextEditor *editor, struct RTFTable *tableDef) DECLSPEC_
 
 /* txthost.c */
 ITextHost *ME_CreateTextHost(HWND hwnd, CREATESTRUCTW *cs, BOOL bEmulateVersion10) DECLSPEC_HIDDEN;
-#ifdef __i386__ /* Use wrappers to perform thiscall on i386 */
+#if defined(__i386__) && !defined(__MINGW32__)  /* Use wrappers to perform thiscall on i386 */
 #define TXTHOST_VTABLE(This) (&itextHostStdcallVtbl)
 #else /* __i386__ */
 #define TXTHOST_VTABLE(This) (This)->lpVtbl

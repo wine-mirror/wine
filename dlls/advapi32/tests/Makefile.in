@@ -13,3 +13,5 @@ C_SRCS = \
 	registry.c \
 	security.c \
 	service.c
+
+RC_SRCS = rsrc.rc

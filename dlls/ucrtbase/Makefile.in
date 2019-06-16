@@ -26,6 +26,7 @@ C_SRCS = \
 	math.c \
 	mbcs.c \
 	misc.c \
+	printf.c \
 	process.c \
 	scanf.c \
 	string.c \

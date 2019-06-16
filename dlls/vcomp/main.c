@@ -32,6 +32,7 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "wine/asm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vcomp);
 

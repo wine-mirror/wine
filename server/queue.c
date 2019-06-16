@@ -181,6 +181,7 @@ static const struct object_ops msg_queue_ops =
     no_link_name,              /* link_name */
     NULL,                      /* unlink_name */
     no_open_file,              /* open_file */
+    no_kernel_obj_list,        /* get_kernel_obj_list */
     no_close_handle,           /* close_handle */
     msg_queue_destroy          /* destroy */
 };
@@ -216,6 +217,7 @@ static const struct object_ops thread_input_ops =
     no_link_name,                 /* link_name */
     NULL,                         /* unlink_name */
     no_open_file,                 /* open_file */
+    no_kernel_obj_list,           /* get_kernel_obj_list */
     no_close_handle,              /* close_handle */
     thread_input_destroy          /* destroy */
 };

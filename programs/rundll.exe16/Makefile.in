@@ -1,4 +1,5 @@
 MODULE    = rundll.exe16
-APPMODE   = -m16
+
+EXTRADLLFLAGS = -mconsole -m16 -mno-cygwin
 
 C_SRCS = rundll.c

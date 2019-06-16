@@ -1200,19 +1200,19 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             while (isspace(*value)) value++;
             if ((s = strchr(value,'\n')))
                 *s='\0';
-            if (!strcasecmp(line, "CPU architecture"))
+            if (!_stricmp(line, "CPU architecture"))
             {
                 if (isdigit(value[0]))
                     info->Level = atoi(value);
                 continue;
             }
-            if (!strcasecmp(line, "CPU revision"))
+            if (!_stricmp(line, "CPU revision"))
             {
                 if (isdigit(value[0]))
                     info->Revision = atoi(value);
                 continue;
             }
-            if (!strcasecmp(line, "features"))
+            if (!_stricmp(line, "features"))
             {
                 if (strstr(value, "vfpv3"))
                     user_shared_data->ProcessorFeatures[PF_ARM_VFP_32_REGISTERS_AVAILABLE] = TRUE;
@@ -1268,19 +1268,19 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             while (isspace(*value)) value++;
             if ((s = strchr(value,'\n')))
                 *s='\0';
-            if (!strcasecmp(line, "CPU architecture"))
+            if (!_stricmp(line, "CPU architecture"))
             {
                 if (isdigit(value[0]))
                     info->Level = atoi(value);
                 continue;
             }
-            if (!strcasecmp(line, "CPU revision"))
+            if (!_stricmp(line, "CPU revision"))
             {
                 if (isdigit(value[0]))
                     info->Revision = atoi(value);
                 continue;
             }
-            if (!strcasecmp(line, "Features"))
+            if (!_stricmp(line, "Features"))
             {
                 if (strstr(value, "crc32"))
                     user_shared_data->ProcessorFeatures[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE] = TRUE;
@@ -2319,6 +2319,37 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 spi.IdleTime.QuadPart = ++idle;
             }
 
+            if ((fp = fopen("/proc/meminfo", "r")))
+            {
+                unsigned long long totalram, freeram, totalswap, freeswap;
+                char line[64];
+                while (fgets(line, sizeof(line), fp))
+                {
+                   if(sscanf(line, "MemTotal: %llu kB", &totalram) == 1)
+                   {
+                       totalram *= 1024;
+                   }
+                   else if(sscanf(line, "MemFree: %llu kB", &freeram) == 1)
+                   {
+                       freeram *= 1024;
+                   }
+                   else if(sscanf(line, "SwapTotal: %llu kB", &totalswap) == 1)
+                   {
+                       totalswap *= 1024;
+                   }
+                   else if(sscanf(line, "SwapFree: %llu kB", &freeswap) == 1)
+                   {
+                       freeswap *= 1024;
+                       break;
+                   }
+                }
+                fclose(fp);
+
+                spi.AvailablePages      = freeram / page_size;
+                spi.TotalCommittedPages = (totalram + totalswap - freeram - freeswap) / page_size;
+                spi.TotalCommitLimit    = (totalram + totalswap) / page_size;
+            }
+
             if (Length >= len)
             {
                 if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
@@ -2927,7 +2958,7 @@ static ULONG mhz_from_cpuinfo(void)
             while ((s >= line) && isspace(*s)) s--;
             *(s + 1) = '\0';
             value++;
-            if (!strcasecmp(line, "cpu MHz")) {
+            if (!_stricmp(line, "cpu MHz")) {
                 sscanf(value, " %lf", &cmz);
                 break;
             }

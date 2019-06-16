@@ -2,6 +2,8 @@ MODULE    = d3dxof.dll
 IMPORTLIB = d3dxof
 IMPORTS   = dxguid uuid ole32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	d3dxof.c \
 	main.c \

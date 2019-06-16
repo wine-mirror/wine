@@ -21,7 +21,7 @@
 @ stub GetNLSVersion
 @ stub GetNLSVersionEx
 @ stdcall GetOEMCP() kernel32.GetOEMCP
-@ stub GetProcessPreferredUILanguages
+@ stdcall GetProcessPreferredUILanguages(long ptr ptr ptr) kernel32.GetProcessPreferredUILanguages
 @ stdcall GetSystemDefaultLCID() kernel32.GetSystemDefaultLCID
 @ stdcall GetSystemDefaultLangID() kernel32.GetSystemDefaultLangID
 @ stdcall GetSystemPreferredUILanguages(long ptr ptr ptr) kernel32.GetSystemPreferredUILanguages
@@ -51,7 +51,7 @@
 @ stdcall ResolveLocaleName(wstr ptr long) kernel32.ResolveLocaleName
 @ stdcall SetCalendarInfoW(long long long wstr) kernel32.SetCalendarInfoW
 @ stdcall SetLocaleInfoW(long long wstr) kernel32.SetLocaleInfoW
-@ stub SetProcessPreferredUILanguages
+@ stdcall SetProcessPreferredUILanguages(long ptr ptr) kernel32.SetProcessPreferredUILanguages
 @ stdcall SetThreadLocale(long) kernel32.SetThreadLocale
 @ stdcall SetThreadPreferredUILanguages(long ptr ptr) kernel32.SetThreadPreferredUILanguages
 @ stdcall SetThreadUILanguage(long) kernel32.SetThreadUILanguage

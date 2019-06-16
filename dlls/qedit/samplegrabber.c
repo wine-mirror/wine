@@ -33,7 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 
-static const WCHAR vendor_name[] = { 'W', 'i', 'n', 'e', 0 };
 static const WCHAR pin_in_name[] = { 'I', 'n', 0 };
 static const WCHAR pin_out_name[] = { 'O', 'u', 't', 0 };
 
@@ -212,12 +211,10 @@ static inline SG_Pin *impl_from_IPin(IPin *iface)
 
 /* Sample Grabber filter implementation */
 typedef struct _SG_Impl {
-    IUnknown IUnknown_inner;
     BaseFilter filter;
     ISampleGrabber ISampleGrabber_iface;
     /* IMediaSeeking and IMediaPosition are implemented by ISeekingPassThru */
     IUnknown* seekthru_unk;
-    IUnknown *outer_unk;
     AM_MEDIA_TYPE mtype;
     SG_Pin pin_in;
     SG_Pin pin_out;
@@ -236,11 +233,6 @@ enum {
     OneShot_Wait,
     OneShot_Past,
 };
-
-static inline SG_Impl *impl_from_IUnknown(IUnknown *iface)
-{
-    return CONTAINING_RECORD(iface, SG_Impl, IUnknown_inner);
-}
 
 static inline SG_Impl *impl_from_BaseFilter(BaseFilter *iface)
 {
@@ -281,91 +273,43 @@ static void SampleGrabber_cleanup(SG_Impl *This)
         IUnknown_Release(This->seekthru_unk);
 }
 
-/* SampleGrabber inner IUnknown */
-static HRESULT WINAPI SampleGrabber_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+static IPin *sample_grabber_get_pin(BaseFilter *iface, unsigned int index)
 {
-    SG_Impl *This = impl_from_IUnknown(iface);
+    SG_Impl *filter = impl_from_BaseFilter(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    if (index == 0)
+        return &filter->pin_in.IPin_iface;
+    else if (index == 1)
+        return &filter->pin_out.IPin_iface;
+    return NULL;
+}
 
-    *ppv = NULL;
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = &This->IUnknown_inner;
-    else if (IsEqualIID(riid, &IID_IPersist) || IsEqualIID(riid, &IID_IMediaFilter) ||
-        IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = &This->filter.IBaseFilter_iface;
-    else if (IsEqualIID(riid, &IID_ISampleGrabber))
-        *ppv = &This->ISampleGrabber_iface;
-    else if (IsEqualIID(riid, &IID_IMediaPosition))
-        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
+static void sample_grabber_destroy(BaseFilter *iface)
+{
+    SG_Impl *filter = impl_from_BaseFilter(iface);
+
+    SampleGrabber_cleanup(filter);
+    strmbase_filter_cleanup(&filter->filter);
+    CoTaskMemFree(filter);
+}
+
+static HRESULT sample_grabber_query_interface(BaseFilter *iface, REFIID iid, void **out)
+{
+    SG_Impl *filter = impl_from_BaseFilter(iface);
+
+    if (IsEqualGUID(iid, &IID_ISampleGrabber))
+        *out = &filter->ISampleGrabber_iface;
     else
-        WARN("(%p, %s,%p): not found\n", This, debugstr_guid(riid), ppv);
-
-    if (!*ppv)
         return E_NOINTERFACE;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
+    IUnknown_AddRef((IUnknown *)*out);
     return S_OK;
 }
 
-static ULONG WINAPI SampleGrabber_AddRef(IUnknown *iface)
-{
-    SG_Impl *This = impl_from_IUnknown(iface);
-    ULONG ref = BaseFilterImpl_AddRef(&This->filter.IBaseFilter_iface);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    return ref;
-}
-
-static ULONG WINAPI SampleGrabber_Release(IUnknown *iface)
-{
-    SG_Impl *This = impl_from_IUnknown(iface);
-    ULONG ref = BaseFilterImpl_Release(&This->filter.IBaseFilter_iface);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    if (ref == 0)
-    {
-        SampleGrabber_cleanup(This);
-        CoTaskMemFree(This);
-    }
-    return ref;
-}
-
-static const IUnknownVtbl samplegrabber_vtbl =
-{
-    SampleGrabber_QueryInterface,
-    SampleGrabber_AddRef,
-    SampleGrabber_Release,
-};
-
-static IPin *WINAPI SampleGrabber_GetPin(BaseFilter *iface, int pos)
-{
-    SG_Impl *This = impl_from_BaseFilter(iface);
-    IPin *pin;
-
-    if (pos == 0)
-        pin = &This->pin_in.IPin_iface;
-    else if (pos == 1)
-        pin = &This->pin_out.IPin_iface;
-    else
-        return NULL;
-
-    IPin_AddRef(pin);
-    return pin;
-}
-
-static LONG WINAPI SampleGrabber_GetPinCount(BaseFilter *iface)
-{
-    return 2;
-}
-
 static const BaseFilterFuncTable basefunc_vtbl = {
-    SampleGrabber_GetPin,
-    SampleGrabber_GetPinCount
+    .filter_get_pin = sample_grabber_get_pin,
+    .filter_destroy = sample_grabber_destroy,
+    .filter_query_interface = sample_grabber_query_interface,
 };
 
 /* Helper that buffers data and/or calls installed sample callbacks */
@@ -426,33 +370,6 @@ static void SampleGrabber_callback(SG_Impl *This, IMediaSample *sample)
     }
 }
 
-
-/* SampleGrabber implementation of IBaseFilter interface */
-
-/* IUnknown */
-static HRESULT WINAPI
-SampleGrabber_IBaseFilter_QueryInterface(IBaseFilter *iface, REFIID riid, void **ppv)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
-}
-
-/* IUnknown */
-static ULONG WINAPI
-SampleGrabber_IBaseFilter_AddRef(IBaseFilter *iface)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    return IUnknown_AddRef(This->outer_unk);
-}
-
-/* IUnknown */
-static ULONG WINAPI
-SampleGrabber_IBaseFilter_Release(IBaseFilter *iface)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    return IUnknown_Release(This->outer_unk);
-}
-
 /* IMediaFilter */
 static HRESULT WINAPI
 SampleGrabber_IBaseFilter_Stop(IBaseFilter *iface)
@@ -485,30 +402,6 @@ SampleGrabber_IBaseFilter_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 
 /* IBaseFilter */
 static HRESULT WINAPI
-SampleGrabber_IBaseFilter_FindPin(IBaseFilter *iface, LPCWSTR id, IPin **pin)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_w(id), pin);
-    if (!id || !pin)
-        return E_POINTER;
-    if (!lstrcmpiW(id,pin_in_name))
-    {
-        *pin = &This->pin_in.IPin_iface;
-        IPin_AddRef(*pin);
-        return S_OK;
-    }
-    else if (!lstrcmpiW(id,pin_out_name))
-    {
-        *pin = &This->pin_out.IPin_iface;
-        IPin_AddRef(*pin);
-        return S_OK;
-    }
-    *pin = NULL;
-    return VFW_E_NOT_FOUND;
-}
-
-/* IBaseFilter */
-static HRESULT WINAPI
 SampleGrabber_IBaseFilter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *graph, LPCWSTR name)
 {
     SG_Impl *This = impl_from_IBaseFilter(iface);
@@ -521,19 +414,6 @@ SampleGrabber_IBaseFilter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *grap
     return S_OK;
 }
 
-/* IBaseFilter */
-static HRESULT WINAPI
-SampleGrabber_IBaseFilter_QueryVendorInfo(IBaseFilter *iface, LPWSTR *vendor)
-{
-    TRACE("(%p)\n", vendor);
-    if (!vendor)
-        return E_POINTER;
-    *vendor = CoTaskMemAlloc(sizeof(vendor_name));
-    CopyMemory(*vendor, vendor_name, sizeof(vendor_name));
-    return S_OK;
-}
-
-
 /* SampleGrabber implementation of ISampleGrabber interface */
 
 /* IUnknown */
@@ -541,7 +421,7 @@ static HRESULT WINAPI
 SampleGrabber_ISampleGrabber_QueryInterface(ISampleGrabber *iface, REFIID riid, void **ppv)
 {
     SG_Impl *This = impl_from_ISampleGrabber(iface);
-    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
+    return IUnknown_QueryInterface(This->filter.outer_unk, riid, ppv);
 }
 
 /* IUnknown */
@@ -549,7 +429,7 @@ static ULONG WINAPI
 SampleGrabber_ISampleGrabber_AddRef(ISampleGrabber *iface)
 {
     SG_Impl *This = impl_from_ISampleGrabber(iface);
-    return IUnknown_AddRef(This->outer_unk);
+    return IUnknown_AddRef(This->filter.outer_unk);
 }
 
 /* IUnknown */
@@ -557,7 +437,7 @@ static ULONG WINAPI
 SampleGrabber_ISampleGrabber_Release(ISampleGrabber *iface)
 {
     SG_Impl *This = impl_from_ISampleGrabber(iface);
-    return IUnknown_Release(This->outer_unk);
+    return IUnknown_Release(This->filter.outer_unk);
 }
 
 /* ISampleGrabber */
@@ -682,31 +562,22 @@ SampleGrabber_ISampleGrabber_SetCallback(ISampleGrabber *iface, ISampleGrabberCB
     return S_OK;
 }
 
-
-/* SampleGrabber implementation of IMemInputPin interface */
-
-/* IUnknown */
-static HRESULT WINAPI
-SampleGrabber_IMemInputPin_QueryInterface(IMemInputPin *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI SampleGrabber_IMemInputPin_QueryInterface(IMemInputPin *iface, REFIID iid, void **out)
 {
-    SG_Impl *This = impl_from_IMemInputPin(iface);
-    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
+    SG_Impl *filter = impl_from_IMemInputPin(iface);
+    return IPin_QueryInterface(&filter->pin_in.IPin_iface, iid, out);
 }
 
-/* IUnknown */
-static ULONG WINAPI
-SampleGrabber_IMemInputPin_AddRef(IMemInputPin *iface)
+static ULONG WINAPI SampleGrabber_IMemInputPin_AddRef(IMemInputPin *iface)
 {
-    SG_Impl *This = impl_from_IMemInputPin(iface);
-    return IUnknown_AddRef(This->outer_unk);
+    SG_Impl *filter = impl_from_IMemInputPin(iface);
+    return IPin_AddRef(&filter->pin_in.IPin_iface);
 }
 
-/* IUnknown */
-static ULONG WINAPI
-SampleGrabber_IMemInputPin_Release(IMemInputPin *iface)
+static ULONG WINAPI SampleGrabber_IMemInputPin_Release(IMemInputPin *iface)
 {
-    SG_Impl *This = impl_from_IMemInputPin(iface);
-    return IUnknown_Release(This->outer_unk);
+    SG_Impl *filter = impl_from_IMemInputPin(iface);
+    return IPin_Release(&filter->pin_in.IPin_iface);
 }
 
 /* IMemInputPin */
@@ -798,8 +669,30 @@ SampleGrabber_IMemInputPin_ReceiveCanBlock(IMemInputPin *iface)
     return This->memOutput ? IMemInputPin_ReceiveCanBlock(This->memOutput) : S_OK;
 }
 
+static HRESULT WINAPI sample_grabber_sink_QueryInterface(IPin *iface, REFIID iid, void **out)
+{
+    SG_Pin *pin = impl_from_IPin(iface);
 
-/* SampleGrabber member pin implementation */
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IPin))
+    {
+        *out = iface;
+    }
+    else if (IsEqualGUID(iid, &IID_IMemInputPin))
+    {
+        *out = &pin->sg->IMemInputPin_iface;
+    }
+    else
+    {
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
 
 /* IUnknown */
 static ULONG WINAPI
@@ -815,31 +708,6 @@ SampleGrabber_IPin_Release(IPin *iface)
 {
     SG_Pin *This = impl_from_IPin(iface);
     return ISampleGrabber_Release(&This->sg->ISampleGrabber_iface);
-}
-
-/* IUnknown */
-static HRESULT WINAPI
-SampleGrabber_IPin_QueryInterface(IPin *iface, REFIID riid, void **ppv)
-{
-    SG_Pin *This = impl_from_IPin(iface);
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPin))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IMemInputPin))
-        *ppv = &This->sg->IMemInputPin_iface;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        return IUnknown_QueryInterface(&This->sg->IUnknown_inner, riid, ppv);
-    else if (IsEqualIID(riid, &IID_IMediaPosition))
-        return IUnknown_QueryInterface(&This->sg->IUnknown_inner, riid, ppv);
-    else {
-        WARN("(%p, %s,%p): not found\n", This, debugstr_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
 }
 
 /* IPin - input pin */
@@ -1160,9 +1028,9 @@ SampleGrabber_IPin_NewSegment(IPin *iface, REFERENCE_TIME tStart, REFERENCE_TIME
 
 static const IBaseFilterVtbl IBaseFilter_VTable =
 {
-    SampleGrabber_IBaseFilter_QueryInterface,
-    SampleGrabber_IBaseFilter_AddRef,
-    SampleGrabber_IBaseFilter_Release,
+    BaseFilterImpl_QueryInterface,
+    BaseFilterImpl_AddRef,
+    BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     SampleGrabber_IBaseFilter_Stop,
     SampleGrabber_IBaseFilter_Pause,
@@ -1171,10 +1039,10 @@ static const IBaseFilterVtbl IBaseFilter_VTable =
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    SampleGrabber_IBaseFilter_FindPin,
+    BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     SampleGrabber_IBaseFilter_JoinFilterGraph,
-    SampleGrabber_IBaseFilter_QueryVendorInfo,
+    BaseFilterImpl_QueryVendorInfo,
 };
 
 static const ISampleGrabberVtbl ISampleGrabber_VTable =
@@ -1206,7 +1074,7 @@ static const IMemInputPinVtbl IMemInputPin_VTable =
 
 static const IPinVtbl IPin_In_VTable =
 {
-    SampleGrabber_IPin_QueryInterface,
+    sample_grabber_sink_QueryInterface,
     SampleGrabber_IPin_AddRef,
     SampleGrabber_IPin_Release,
     SampleGrabber_In_IPin_Connect,
@@ -1226,9 +1094,34 @@ static const IPinVtbl IPin_In_VTable =
     SampleGrabber_IPin_NewSegment,
 };
 
+static HRESULT WINAPI sample_grabber_source_QueryInterface(IPin *iface, REFIID iid, void **out)
+{
+    SG_Pin *pin = impl_from_IPin(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IPin))
+    {
+        *out = iface;
+    }
+    else if (IsEqualGUID(iid, &IID_IMediaPosition) || IsEqualGUID(iid, &IID_IMediaSeeking))
+    {
+        return IUnknown_QueryInterface(pin->sg->seekthru_unk, iid, out);
+    }
+    else
+    {
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static const IPinVtbl IPin_Out_VTable =
 {
-    SampleGrabber_IPin_QueryInterface,
+    sample_grabber_source_QueryInterface,
     SampleGrabber_IPin_AddRef,
     SampleGrabber_IPin_Release,
     SampleGrabber_Out_IPin_Connect,
@@ -1248,24 +1141,21 @@ static const IPinVtbl IPin_Out_VTable =
     SampleGrabber_IPin_NewSegment,
 };
 
-HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppv)
+HRESULT SampleGrabber_create(IUnknown *outer, void **out)
 {
     SG_Impl* obj = NULL;
     ISeekingPassThru *passthru;
     HRESULT hr;
 
-    TRACE("(%p,%p)\n", pUnkOuter, ppv);
-
     obj = CoTaskMemAlloc(sizeof(SG_Impl));
     if (NULL == obj) {
-        *ppv = NULL;
+        *out = NULL;
         return E_OUTOFMEMORY;
     }
     ZeroMemory(obj, sizeof(SG_Impl));
 
-    BaseFilter_Init(&obj->filter, &IBaseFilter_VTable, &CLSID_SampleGrabber,
+    strmbase_filter_init(&obj->filter, &IBaseFilter_VTable, outer, &CLSID_SampleGrabber,
             (DWORD_PTR)(__FILE__ ": SG_Impl.csFilter"), &basefunc_vtbl);
-    obj->IUnknown_inner.lpVtbl = &samplegrabber_vtbl;
     obj->ISampleGrabber_iface.lpVtbl = &ISampleGrabber_VTable;
     obj->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
     obj->pin_in.IPin_iface.lpVtbl = &IPin_In_VTable;
@@ -1289,19 +1179,14 @@ HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppv)
     obj->bufferLen = -1;
     obj->bufferData = NULL;
 
-    if (pUnkOuter)
-        obj->outer_unk = pUnkOuter;
-    else
-        obj->outer_unk = &obj->IUnknown_inner;
-
-    hr = CoCreateInstance(&CLSID_SeekingPassThru, &obj->IUnknown_inner, CLSCTX_INPROC_SERVER,
-                          &IID_IUnknown, (void**)&obj->seekthru_unk);
+    hr = CoCreateInstance(&CLSID_SeekingPassThru, &obj->filter.IUnknown_inner,
+            CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&obj->seekthru_unk);
     if(hr)
         return hr;
     IUnknown_QueryInterface(obj->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
     ISeekingPassThru_Init(passthru, FALSE, &obj->pin_in.IPin_iface);
     ISeekingPassThru_Release(passthru);
 
-    *ppv = &obj->IUnknown_inner;
+    *out = &obj->filter.IUnknown_inner;
     return S_OK;
 }

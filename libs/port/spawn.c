@@ -21,7 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
-#ifndef HAVE__SPAWNVP
+#if !defined(HAVE__SPAWNVP) && !defined(_WIN32)
 
 #include <errno.h>
 #include <signal.h>

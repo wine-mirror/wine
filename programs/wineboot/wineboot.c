@@ -75,6 +75,7 @@
 #include <wine/svcctl.h>
 #include <wine/unicode.h>
 #include <wine/library.h>
+#include <wine/asm.h>
 #include <wine/debug.h>
 
 #include <shlobj.h>
@@ -90,6 +91,7 @@ extern BOOL shutdown_all_desktops( BOOL force );
 extern void kill_processes( BOOL kill_desktop );
 
 static WCHAR windowsdir[MAX_PATH];
+static const BOOL is_64bit = sizeof(void *) > sizeof(int);
 
 /* retrieve the (unix) path to the wine.inf file */
 static char *get_wine_inf_path(void)
@@ -765,6 +767,70 @@ static DWORD runCmd(LPWSTR cmdline, LPCWSTR dir, BOOL wait, BOOL minimized)
     return exit_code;
 }
 
+static void process_run_key( HKEY key, const WCHAR *keyname, BOOL delete, BOOL synchronous )
+{
+    HKEY runkey;
+    LONG res;
+    DWORD disp, i, max_cmdline = 0, max_value = 0;
+    WCHAR *cmdline = NULL, *value = NULL;
+
+    if (RegCreateKeyExW( key, keyname, 0, NULL, 0, delete ? KEY_ALL_ACCESS : KEY_READ, NULL, &runkey, &disp ))
+        return;
+
+    if (disp == REG_CREATED_NEW_KEY)
+        goto end;
+
+    if (RegQueryInfoKeyW( runkey, NULL, NULL, NULL, NULL, NULL, NULL, &i, &max_value, &max_cmdline, NULL, NULL ))
+        goto end;
+
+    if (!i)
+    {
+        WINE_TRACE( "No commands to execute.\n" );
+        goto end;
+    }
+    if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, max_cmdline )))
+    {
+        WINE_ERR( "Couldn't allocate memory for the commands to be executed.\n" );
+        goto end;
+    }
+    if (!(value = HeapAlloc( GetProcessHeap(), 0, ++max_value * sizeof(*value) )))
+    {
+        WINE_ERR( "Couldn't allocate memory for the value names.\n" );
+        goto end;
+    }
+
+    while (i)
+    {
+        DWORD len = max_value, len_data = max_cmdline, type;
+
+        if ((res = RegEnumValueW( runkey, --i, value, &len, 0, &type, (BYTE *)cmdline, &len_data )))
+        {
+            WINE_ERR( "Couldn't read value %u (%d).\n", i, res );
+            continue;
+        }
+        if (delete && (res = RegDeleteValueW( runkey, value )))
+        {
+            WINE_ERR( "Couldn't delete value %u (%d). Running command anyways.\n", i, res );
+        }
+        if (type != REG_SZ)
+        {
+            WINE_ERR( "Incorrect type of value %u (%u).\n", i, type );
+            continue;
+        }
+        if (runCmd( cmdline, NULL, synchronous, FALSE ) == INVALID_RUNCMD_RETURN)
+        {
+            WINE_ERR( "Error running cmd %s (%u).\n", wine_dbgstr_w(cmdline), GetLastError() );
+        }
+        WINE_TRACE( "Done processing cmd %u.\n", i );
+    }
+
+end:
+    HeapFree( GetProcessHeap(), 0, value );
+    HeapFree( GetProcessHeap(), 0, cmdline );
+    RegCloseKey( runkey );
+    WINE_TRACE( "Done.\n" );
+}
+
 /*
  * Process a "Run" type registry key.
  * hkRoot is the HKEY from which "Software\Microsoft\Windows\CurrentVersion" is
@@ -774,110 +840,36 @@ static DWORD runCmd(LPWSTR cmdline, LPCWSTR dir, BOOL wait, BOOL minimized)
  * bSynchronous tells whether we should wait for the prog to complete before
  *      going on to the next prog.
  */
-static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
-        BOOL bSynchronous )
+static void ProcessRunKeys( HKEY root, const WCHAR *keyname, BOOL delete, BOOL synchronous )
 {
-    static const WCHAR WINKEY_NAME[]={'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
-        'C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
-    HKEY hkWin, hkRun;
-    DWORD res, dispos;
-    DWORD i, nMaxCmdLine=0, nMaxValue=0;
-    WCHAR *szCmdLine=NULL;
-    WCHAR *szValue=NULL;
+    static const WCHAR keypathW[] =
+        {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
+    HKEY key;
 
-    if (hkRoot==HKEY_LOCAL_MACHINE)
-        WINE_TRACE("processing %s entries under HKLM\n",wine_dbgstr_w(szKeyName) );
+    if (root == HKEY_LOCAL_MACHINE)
+    {
+        WINE_TRACE( "Processing %s entries under HKLM.\n", wine_dbgstr_w(keyname) );
+        if (!RegCreateKeyExW( root, keypathW, 0, NULL, 0, KEY_READ, NULL, &key, NULL ))
+        {
+            process_run_key( key, keyname, delete, synchronous );
+            RegCloseKey( key );
+        }
+        if (is_64bit && !RegCreateKeyExW( root, keypathW, 0, NULL, 0, KEY_READ|KEY_WOW64_32KEY, NULL, &key, NULL ))
+        {
+            process_run_key( key, keyname, delete, synchronous );
+            RegCloseKey( key );
+        }
+    }
     else
-        WINE_TRACE("processing %s entries under HKCU\n",wine_dbgstr_w(szKeyName) );
-
-    if (RegCreateKeyExW( hkRoot, WINKEY_NAME, 0, NULL, 0, KEY_READ, NULL, &hkWin, NULL ) != ERROR_SUCCESS)
-        return TRUE;
-
-    if ((res = RegCreateKeyExW( hkWin, szKeyName, 0, NULL, 0, bDelete ? KEY_ALL_ACCESS : KEY_READ,
-                                NULL, &hkRun, &dispos )) != ERROR_SUCCESS)
     {
-        RegCloseKey( hkWin );
-        return TRUE;
-    }
-    RegCloseKey( hkWin );
-    if (dispos == REG_CREATED_NEW_KEY) goto end;
-
-    if( (res=RegQueryInfoKeyW( hkRun, NULL, NULL, NULL, NULL, NULL, NULL, &i, &nMaxValue,
-                    &nMaxCmdLine, NULL, NULL ))!=ERROR_SUCCESS )
-        goto end;
-
-    if( i==0 )
-    {
-        WINE_TRACE("No commands to execute.\n");
-
-        res=ERROR_SUCCESS;
-        goto end;
-    }
-    
-    if( (szCmdLine=HeapAlloc(GetProcessHeap(),0,nMaxCmdLine))==NULL )
-    {
-        WINE_ERR("Couldn't allocate memory for the commands to be executed\n");
-
-        res=ERROR_NOT_ENOUGH_MEMORY;
-        goto end;
-    }
-
-    if( (szValue=HeapAlloc(GetProcessHeap(),0,(++nMaxValue)*sizeof(*szValue)))==NULL )
-    {
-        WINE_ERR("Couldn't allocate memory for the value names\n");
-
-        res=ERROR_NOT_ENOUGH_MEMORY;
-        goto end;
-    }
-    
-    while( i>0 )
-    {
-        DWORD nValLength=nMaxValue, nDataLength=nMaxCmdLine;
-        DWORD type;
-
-        --i;
-
-        if( (res=RegEnumValueW( hkRun, i, szValue, &nValLength, 0, &type,
-                        (LPBYTE)szCmdLine, &nDataLength ))!=ERROR_SUCCESS )
+        WINE_TRACE( "Processing %s entries under HKCU.\n", wine_dbgstr_w(keyname) );
+        if (!RegCreateKeyExW( root, keypathW, 0, NULL, 0, KEY_READ, NULL, &key, NULL ))
         {
-            WINE_ERR("Couldn't read in value %d - %d\n", i, res );
-
-            continue;
+            process_run_key( key, keyname, delete, synchronous );
+            RegCloseKey( key );
         }
-
-        if( bDelete && (res=RegDeleteValueW( hkRun, szValue ))!=ERROR_SUCCESS )
-        {
-            WINE_ERR("Couldn't delete value - %d, %d. Running command anyways.\n", i, res );
-        }
-        
-        if( type!=REG_SZ )
-        {
-            WINE_ERR("Incorrect type of value #%d (%d)\n", i, type );
-
-            continue;
-        }
-
-        if( (res=runCmd(szCmdLine, NULL, bSynchronous, FALSE ))==INVALID_RUNCMD_RETURN )
-        {
-            WINE_ERR("Error running cmd %s (%d)\n", wine_dbgstr_w(szCmdLine), GetLastError() );
-        }
-
-        WINE_TRACE("Done processing cmd #%d\n", i);
     }
-
-    res=ERROR_SUCCESS;
-
-end:
-    HeapFree( GetProcessHeap(), 0, szValue );
-    HeapFree( GetProcessHeap(), 0, szCmdLine );
-
-    if( hkRun!=NULL )
-        RegCloseKey( hkRun );
-
-    WINE_TRACE("done\n");
-
-    return res==ERROR_SUCCESS;
 }
 
 /*
@@ -1263,7 +1255,7 @@ static const struct option long_options[] =
     { NULL,          0, 0, 0 }
 };
 
-int main( int argc, char *argv[] )
+int __cdecl main( int argc, char *argv[] )
 {
     static const WCHAR RunW[] = {'R','u','n',0};
     static const WCHAR RunOnceW[] = {'R','u','n','O','n','c','e',0};

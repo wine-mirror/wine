@@ -66,7 +66,7 @@ msgstr "技術支援資訊"
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
 #: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
-#: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
+#: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
@@ -80,7 +80,7 @@ msgstr "%s 技術支援資訊："
 msgid "Publisher:"
 msgstr "生產商："
 
-#: appwiz.rc:81 winefile.rc:166
+#: appwiz.rc:81 winefile.rc:165
 msgid "Version:"
 msgstr "版本："
 
@@ -147,8 +147,8 @@ msgstr "安裝(&I)"
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
 #: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
 msgstr "取消"
@@ -197,7 +197,7 @@ msgstr "無法執行移除程式 %s。 您想將這個移除程式從註冊表�
 msgid "Not specified"
 msgstr "未指定"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
 msgid "Name"
 msgstr "名稱"
 
@@ -318,7 +318,7 @@ msgstr ""
 msgid "hours"
 msgstr ""
 
-#: comctl32.rc:68 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:156
 msgid "Properties for %s"
 msgstr "屬性 %s"
 
@@ -461,7 +461,7 @@ msgid "Dri&ves:"
 msgstr "磁碟機(&V)："
 
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
-#: winefile.rc:173
+#: winefile.rc:172
 msgid "&Read Only"
 msgstr "唯讀(&R)"
 
@@ -713,7 +713,7 @@ msgstr "屬性(&P)"
 msgid "Print to fi&le"
 msgstr "列印至檔案(&L)"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "名稱(&N)："
 
@@ -2969,7 +2969,7 @@ msgstr "位置"
 msgid "Select a certificate"
 msgstr "選取憑證儲存處"
 
-#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
 msgstr "尚未實作"
 
@@ -3441,7 +3441,7 @@ msgstr ""
 msgid "Delete"
 msgstr "刪除"
 
-#: inetcpl.rc:90 winefile.rc:115
+#: inetcpl.rc:90 winefile.rc:114
 msgid "Security"
 msgstr "安全性"
 
@@ -4149,7 +4149,7 @@ msgstr "號誌逾時。\n"
 msgid "Insufficient buffer.\n"
 msgstr "緩衝區不足。\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr "無效的名稱。\n"
 
@@ -4944,7 +4944,7 @@ msgid "Too many links.\n"
 msgstr "太多鏈結。\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "需要較新 Windows 版本。\n"
 
 #: winerror.mc:1483
@@ -5723,7 +5723,7 @@ msgstr "類別不存在。\n"
 msgid "Class has open windows.\n"
 msgstr "類別已開啟多個視窗。\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "無效的索引。\n"
 
@@ -6808,6 +6808,544 @@ msgstr "由於您沒有安裝一個 MAPI 郵件客戶端，郵件發送已失敗
 #: mapi32.rc:32
 msgid "Send Mail"
 msgstr "傳送郵件"
+
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr ""
+
+#: mferror.mc:599
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Sink has not been finalized.\n"
+msgstr "找不到物件 UUID。\n"
+
+#: mferror.mc:32
+#, fuzzy
+#| msgid "Installation platform not supported.\n"
+msgid "Media Foundation platform is not initialized.\n"
+msgstr "不受支援的安裝平臺。\n"
+
+#: mferror.mc:39
+#, fuzzy
+#| msgid "Byte count too small.\n"
+msgid "Buffer is too small.\n"
+msgstr "位元組數量太小。\n"
+
+#: mferror.mc:46
+#, fuzzy
+#| msgid "Invalid query syntax.\n"
+msgid "Invalid request.\n"
+msgstr "無效的查詢語法。\n"
+
+#: mferror.mc:53
+#, fuzzy
+#| msgid "Invalid segment number.\n"
+msgid "Invalid stream number.\n"
+msgstr "無效的資料段編號。\n"
+
+#: mferror.mc:60
+#, fuzzy
+#| msgid "Invalid data type.\n"
+msgid "Invalid media type.\n"
+msgstr "無效的資料類型。\n"
+
+#: mferror.mc:67
+#, fuzzy
+#| msgid "No more entries.\n"
+msgid "No more input is accepted.\n"
+msgstr "已無更多條目。\n"
+
+#: mferror.mc:74
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Object is not initialized.\n"
+msgstr "找不到物件 UUID。\n"
+
+#: mferror.mc:81
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Representation is not supported.\n"
+msgstr "操作不受支援。\n"
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr ""
+
+#: mferror.mc:95
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported service.\n"
+msgstr "不受支援的型態。\n"
+
+#: mferror.mc:102
+#, fuzzy
+#| msgid "Unexpected network error.\n"
+msgid "Unexpected error.\n"
+msgstr "未預期的網路錯誤。\n"
+
+#: mferror.mc:116
+#, fuzzy
+#| msgid "Invalid time.\n"
+msgid "Invalid type.\n"
+msgstr "無效的時間。\n"
+
+#: mferror.mc:123
+#, fuzzy
+#| msgid "Invalid pixel format.\n"
+msgid "Invalid file format.\n"
+msgstr "無效的像素格式。\n"
+
+#: mferror.mc:137
+#, fuzzy
+#| msgid "Invalid time.\n"
+msgid "Invalid timestamp.\n"
+msgstr "無效的時間。\n"
+
+#: mferror.mc:144
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported scheme.\n"
+msgstr "不受支援的型態。\n"
+
+#: mferror.mc:151
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported bytestream type.\n"
+msgstr "不受支援的型態。\n"
+
+#: mferror.mc:158
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported time format.\n"
+msgstr "不受支援的型態。\n"
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr ""
+
+#: mferror.mc:179
+#, fuzzy
+#| msgid "Invalid data.\n"
+msgid "Invalid stream data.\n"
+msgstr "無效的資料。\n"
+
+#: mferror.mc:186
+#, fuzzy
+#| msgid "Help not available."
+msgid "Realtime support is not available.\n"
+msgstr "沒有可用的說明資訊。"
+
+#: mferror.mc:193
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported rate.\n"
+msgstr "不受支援的型態。\n"
+
+#: mferror.mc:200
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported thinning.\n"
+msgstr "不受支援的型態。\n"
+
+#: mferror.mc:207
+#, fuzzy
+#| msgid "Request not supported.\n"
+msgid "Reversing is not supported.\n"
+msgstr "要求不受支援。\n"
+
+#: mferror.mc:214
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Unsupported rate transition.\n"
+msgstr "不受支援的授權等級。\n"
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr ""
+
+#: mferror.mc:228
+#, fuzzy
+#| msgid "Object UUID not found.\n"
+msgid "Object or value wasn't found.\n"
+msgstr "找不到物件 UUID。\n"
+
+#: mferror.mc:235
+#, fuzzy
+#| msgid "Help not available."
+msgid "Value is not available.\n"
+msgstr "沒有可用的說明資訊。"
+
+#: mferror.mc:242
+#, fuzzy
+#| msgid "Help not available."
+msgid "Clock is not available.\n"
+msgstr "沒有可用的說明資訊。"
+
+#: mferror.mc:263
+#, fuzzy
+#| msgid "Extended attributes not supported.\n"
+msgid "Multiple subscribers are not supported.\n"
+msgstr "不支援進階屬性。\n"
+
+#: mferror.mc:270
+#, fuzzy
+#| msgid "The driver was not enabled."
+msgid "The timer was orphaned.\n"
+msgstr "驅動程式未被啟用。"
+
+#: mferror.mc:277
+#, fuzzy
+#| msgid "Character translation table open failed.\n"
+msgid "State transition is pending.\n"
+msgstr "開啟字元翻譯表格時失敗。\n"
+
+#: mferror.mc:284
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Unsupported state transition.\n"
+msgstr "不受支援的授權等級。\n"
+
+#: mferror.mc:291
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "Unrecoverable error occurred.\n"
+msgstr "印表機發生錯誤。"
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr ""
+
+#: mferror.mc:305
+#, fuzzy
+#| msgid "Temporary directory not writable.\n"
+msgid "Sample is not writable.\n"
+msgstr "無法寫入暫存資料夾。\n"
+
+#: mferror.mc:312
+#, fuzzy
+#| msgid "Path is invalid.\n"
+msgid "Key is invalid.\n"
+msgstr "路徑無效。\n"
+
+#: mferror.mc:319
+#, fuzzy
+#| msgid "Wrong stub version.\n"
+msgid "Bad startup version.\n"
+msgstr "錯誤的殘餘版本。\n"
+
+#: mferror.mc:326
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported caption.\n"
+msgstr "不受支援的型態。\n"
+
+#: mferror.mc:333
+#, fuzzy
+#| msgid "Invalid workstation.\n"
+msgid "Invalid position.\n"
+msgstr "無效的工作站。\n"
+
+#: mferror.mc:340
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Attribute is not found.\n"
+msgstr "找不到檔案。\n"
+
+#: mferror.mc:347
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Property type is not allowed.\n"
+msgstr "不允許攔截型態。\n"
+
+#: mferror.mc:354
+#, fuzzy
+#| msgid "Operation not supported.\n"
+msgid "Property type is not supported.\n"
+msgstr "操作不受支援。\n"
+
+#: mferror.mc:361
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is empty.\n"
+msgstr "目錄不是空的。\n"
+
+#: mferror.mc:368
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is not empty.\n"
+msgstr "目錄不是空的。\n"
+
+#: mferror.mc:375
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Vector property is not allowed.\n"
+msgstr "不允許攔截型態。\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr ""
+
+#: mferror.mc:389
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Operation was cancelled.\n"
+msgstr "作業被使用者取消。\n"
+
+#: mferror.mc:396
+#, fuzzy
+#| msgid "Server not disabled.\n"
+msgid "Bytestream is not seekable.\n"
+msgstr "伺服器未停用。\n"
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr ""
+
+#: mferror.mc:410
+#, fuzzy
+#| msgid "Cannot create service thread.\n"
+msgid "Cannot parse bytestream.\n"
+msgstr "無法建立服務執行緒。\n"
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+
+#: mferror.mc:424
+#, fuzzy
+#| msgid "Unknown interface.\n"
+msgid "Unknown bytestream length.\n"
+msgstr "未知的介面。\n"
+
+#: mferror.mc:431
+#, fuzzy
+#| msgid "Invalid index.\n"
+msgid "Invalid work queue index.\n"
+msgstr "無效的索引。\n"
+
+#: mferror.mc:438
+#, fuzzy
+#| msgid "No logon servers available.\n"
+msgid "No events available.\n"
+msgstr "沒有可用的登錄伺服器。\n"
+
+#: mferror.mc:445
+#, fuzzy
+#| msgid "Unsupported authorization level.\n"
+msgid "Invalid media source state transition.\n"
+msgstr "不受支援的授權等級。\n"
+
+#: mferror.mc:452
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "End of media stream has been reached.\n"
+msgstr "註冊表已復原。\n"
+
+#: mferror.mc:459
+msgid "Shutdown() was called.\n"
+msgstr ""
+
+#: mferror.mc:466
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "Media stream has no duration set.\n"
+msgstr "註冊表已復原。\n"
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid.\n"
+msgstr ""
+
+#: mferror.mc:480
+#, fuzzy
+#| msgid "Property set not found.\n"
+msgid "Property wasn't found.\n"
+msgstr "找不到屬性集。\n"
+
+#: mferror.mc:487
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Property is read-only.\n"
+msgstr "目錄不是空的。\n"
+
+#: mferror.mc:494
+#, fuzzy
+#| msgid "Hook type not allowed.\n"
+msgid "Property is not allowed.\n"
+msgstr "不允許攔截型態。\n"
+
+#: mferror.mc:501
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is not started.\n"
+msgstr "資源使用中。\n"
+
+#: mferror.mc:508
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported media format.\n"
+msgstr "不受支援的型態。\n"
+
+#: mferror.mc:515
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Media source is in wrong state.\n"
+msgstr "資源使用中。\n"
+
+#: mferror.mc:522
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No media streams were selected.\n"
+msgstr "偵測不到資料。\n"
+
+#: mferror.mc:529
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Unsupported media source characteristics.\n"
+msgstr "不受支援的型態。\n"
+
+#: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr ""
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr ""
+
+#: mferror.mc:550
+#, fuzzy
+#| msgid "Registry has been recovered.\n"
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "註冊表已復原。\n"
+
+#: mferror.mc:557
+#, fuzzy
+#| msgid "Domain already exists.\n"
+msgid "Stream sink already exists.\n"
+msgstr "網域已經存在。\n"
+
+#: mferror.mc:564
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Sample allocation was canceled.\n"
+msgstr "作業被使用者取消。\n"
+
+#: mferror.mc:571
+#, fuzzy
+#| msgid "Directory is not empty.\n"
+msgid "Sample allocator is empty.\n"
+msgstr "目錄不是空的。\n"
+
+#: mferror.mc:578
+#, fuzzy
+#| msgid "Class already exists.\n"
+msgid "Sink was already stopped.\n"
+msgstr "類別已存在。\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr ""
+
+#: mferror.mc:592
+#, fuzzy
+#| msgid "No data detected.\n"
+msgid "No streams were selected for the sink.\n"
+msgstr "偵測不到資料。\n"
+
+#: mferror.mc:606
+#, fuzzy
+#| msgid "File name is too long.\n"
+msgid "Metadata was too long.\n"
+msgstr "檔案名稱過長。\n"
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr ""
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr ""
+
+#: mferror.mc:627
+#, fuzzy
+#| msgid "Connection invalid.\n"
+msgid "Optional node is invalid.\n"
+msgstr "連線無效。\n"
+
+#: mferror.mc:634
+#, fuzzy
+#| msgid "Cannot find the printer."
+msgid "Cannot find decryptor.\n"
+msgstr "找不到印表機。"
+
+#: mferror.mc:641
+#, fuzzy
+#| msgid "Module not found.\n"
+msgid "Codec was not found.\n"
+msgstr "找不到模組。\n"
+
+#: mferror.mc:648
+#, fuzzy
+#| msgid "Cannot get call handle.\n"
+msgid "Cannot connect topology nodes.\n"
+msgstr "無法提取呼叫控柄。\n"
+
+#: mferror.mc:655
+#, fuzzy
+#| msgid "Request not supported.\n"
+msgid "Topology request is not supported.\n"
+msgstr "要求不受支援。\n"
+
+#: mferror.mc:662
+#, fuzzy
+#| msgid "Invalid group attributes.\n"
+msgid "Invalid topology time attributes.\n"
+msgstr "無效的群組屬性。\n"
+
+#: mferror.mc:669
+msgid "Found loops in topology.\n"
+msgstr ""
+
+#: mferror.mc:676
+#, fuzzy
+#| msgid "Installation source is missing.\n"
+msgid "Presentation descriptor is missing.\n"
+msgstr "本功能的安裝來源不存在。\n"
+
+#: mferror.mc:683
+#, fuzzy
+#| msgid "Index is missing.\n"
+msgid "Stream descriptor is missing.\n"
+msgstr "索引遺失。\n"
+
+#: mferror.mc:690
+#, fuzzy
+#| msgid "The device is not connected.\n"
+msgid "Stream descriptor is not selected.\n"
+msgstr "裝置未連接。\n"
+
+#: mferror.mc:697
+#, fuzzy
+#| msgid "Index is missing.\n"
+msgid "Source is missing.\n"
+msgstr "索引遺失。\n"
+
+#: mferror.mc:704
+msgid "Topology loader does not support sink activates.\n"
+msgstr ""
+
+#: mferror.mc:711
+msgid "Clock has no time source set.\n"
+msgstr ""
+
+#: mferror.mc:718
+#, fuzzy
+#| msgid "Class already exists.\n"
+msgid "Clock state was already set.\n"
+msgstr "類別已存在。\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8699,7 +9237,7 @@ msgid "&Open:"
 msgstr "開啟(&O):"
 
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:130
+#: winefile.rc:129
 msgid "&Browse..."
 msgstr "瀏覽(&B)..."
 
@@ -8713,7 +9251,7 @@ msgstr "檔案類型"
 msgid "Location:"
 msgstr "位址："
 
-#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+#: shell32.rc:361 shell32.rc:394 winefile.rc:169
 msgid "Size:"
 msgstr "大小："
 
@@ -8729,11 +9267,11 @@ msgstr "建立日期"
 msgid "Attributes:"
 msgstr "屬性(&A):"
 
-#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+#: shell32.rc:371 shell32.rc:408 winefile.rc:173
 msgid "H&idden"
 msgstr "隱藏(&I)"
 
-#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+#: shell32.rc:372 shell32.rc:409 winefile.rc:174
 msgid "&Archive"
 msgstr "保存(&A)"
 
@@ -8761,7 +9299,7 @@ msgstr "已修改"
 msgid "Last accessed:"
 msgstr "最後修改："
 
-#: shell32.rc:138 shell32.rc:142 winefile.rc:108
+#: shell32.rc:138 shell32.rc:142 winefile.rc:107
 msgid "Size"
 msgstr "大小"
 
@@ -8773,7 +9311,7 @@ msgstr "類型"
 msgid "Modified"
 msgstr "已修改"
 
-#: shell32.rc:141 winefile.rc:172 winefile.rc:114
+#: shell32.rc:141 winefile.rc:171 winefile.rc:113
 msgid "Attributes"
 msgstr "屬性"
 
@@ -8801,7 +9339,7 @@ msgstr "原來的位置"
 msgid "Date deleted"
 msgstr "日期已刪除"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "桌面"
@@ -8923,7 +9461,7 @@ msgstr "程式檔案 (x86)"
 msgid "Contacts"
 msgstr "聯絡人"
 
-#: shell32.rc:225 winefile.rc:113
+#: shell32.rc:225 winefile.rc:112
 msgid "Links"
 msgstr "連結"
 
@@ -10712,9 +11250,13 @@ msgid ""
 msgstr "「歌曲指標」的時間格式和 SMPTE 彼此互斥。您無法一起使用它們。"
 
 #: winmm.rc:128
+#, fuzzy
+#| msgid ""
+#| "The specified MIDI port is already in use. Wait until it is free; then "
+#| "try again."
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr "指定的 MIDI 通訊埠已在使用中。等到它可用時；然後再試一次。"
 
 #: winmm.rc:131
@@ -10730,9 +11272,13 @@ msgid "An error occurred with the specified port."
 msgstr "指定的通訊埠發生了錯誤。"
 
 #: winmm.rc:133
+#, fuzzy
+#| msgid ""
+#| "All multimedia timers are being used by other applications. Quit one of "
+#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "所有多媒體計時器正被其他應用程式使用中。離開其中某一個應用程式；然後再試一"
 "次。"
@@ -11609,7 +12155,7 @@ msgstr ""
 #| "/affinity mask Start the program with the specified affinity mask.\n"
 #| "/wait        Wait for the started program to finish, then exit with its "
 #| "exit code.\n"
-#| "/unix        Use a Unix filename and start the file like windows "
+#| "/unix        Use a Unix filename and start the file like Windows "
 #| "explorer.\n"
 #| "/ProgIDOpen  Open a document using the specified progID.\n"
 #| "/?           Display this help and exit.\n"
@@ -11637,8 +12183,8 @@ msgid ""
 "/affinity mask Start the program with the specified affinity mask.\n"
 "/wait          Wait for the started program to finish, then exit with its\n"
 "exit code.\n"
-"/unix          Use a Unix filename and start the file like windows\n"
-"explorer.\n"
+"/unix          Use a Unix filename and start the file like Windows\n"
+"Explorer.\n"
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
@@ -13296,7 +13842,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "檔案 %s 已經存在。不覆蓋已有檔案。"
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr "將程式組儲存為 %s 可以避免復蓋已有的檔案。"
 
 #: progman.rc:84
@@ -15291,8 +15837,12 @@ msgid "Drive configuration"
 msgstr "Wine 設定"
 
 #: winecfg.rc:233
+#, fuzzy
+#| msgid ""
+#| "Failed to connect to the mount manager, the drive configuration cannot be "
+#| "edited."
 msgid ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
+"Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr "連線到掛載管理員時失敗，無法編輯磁碟組態。"
 
@@ -15584,11 +16134,17 @@ msgid "System drive"
 msgstr "系統儲存裝置"
 
 #: winecfg.rc:76
+#, fuzzy
+#| msgid ""
+#| "Are you sure you want to delete drive C?\n"
+#| "\n"
+#| "Most Windows applications expect drive C to exist, and will die messily "
+#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
+"it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 "您確定要刪除 C 槽嗎？\n"
 "\n"
@@ -16112,67 +16668,67 @@ msgstr "垂直排列(&V)\tCtrl+F4"
 msgid "&About Wine File Manager"
 msgstr "關於 Wine 檔案管理員(&A)"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Select destination"
 msgstr "選擇目的地"
 
-#: winefile.rc:135
+#: winefile.rc:134
 msgid "By File Type"
 msgstr "依類型"
 
-#: winefile.rc:140
+#: winefile.rc:139
 msgid "File type"
 msgstr "檔案類型"
 
-#: winefile.rc:141
+#: winefile.rc:140
 msgid "&Directories"
 msgstr "目錄(&D)"
 
-#: winefile.rc:143
+#: winefile.rc:142
 msgid "&Programs"
 msgstr "程式(&P)"
 
-#: winefile.rc:145
+#: winefile.rc:144
 msgid "Docu&ments"
 msgstr "我的文件(&M)"
 
-#: winefile.rc:147
+#: winefile.rc:146
 msgid "&Other files"
 msgstr "其他檔案(&O)"
 
-#: winefile.rc:149
+#: winefile.rc:148
 msgid "Show Hidden/&System Files"
 msgstr "顯示隱藏或系統檔(&S)"
 
-#: winefile.rc:160
+#: winefile.rc:159
 msgid "&File Name:"
 msgstr "檔案名稱(&F)："
 
-#: winefile.rc:162
+#: winefile.rc:161
 msgid "Full &Path:"
 msgstr "完整路徑(&P)："
 
-#: winefile.rc:164
+#: winefile.rc:163
 msgid "Last Change:"
 msgstr "最後修改："
 
-#: winefile.rc:168
+#: winefile.rc:167
 msgid "Cop&yright:"
 msgstr "著作權(&Y)："
 
-#: winefile.rc:176
+#: winefile.rc:175
 msgid "&System"
 msgstr "系統(&S)"
 
-#: winefile.rc:177
+#: winefile.rc:176
 msgid "&Compressed"
 msgstr "壓縮(&C)"
 
-#: winefile.rc:178
+#: winefile.rc:177
 msgid "Version information"
 msgstr "版本資訊"
 
-#: winefile.rc:194
+#: winefile.rc:193
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr "S"
@@ -16193,31 +16749,27 @@ msgstr "Wine 檔案管理員"
 msgid "root fs"
 msgstr "根檔案系統"
 
-#: winefile.rc:99
-msgid "unixfs"
-msgstr "unixfs"
-
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Shell"
 msgstr "命令殼"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Creation date"
 msgstr "建立日期"
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Access date"
 msgstr "存取日期"
 
-#: winefile.rc:111
+#: winefile.rc:110
 msgid "Modification date"
 msgstr "變更日期"
 
-#: winefile.rc:112
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr "索引/Inode"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr "%2 中剩下 %1"
 
@@ -16932,7 +17484,7 @@ msgid ""
 "\tmore files.\n"
 "[/S]  Copy directories and subdirectories.\n"
 "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-"[/Q]  Do not list names during copy, that is be quiet.\n"
+"[/Q]  Do not list names during copy; that is, be quiet.\n"
 "[/F]  Show full source and destination names during copy.\n"
 "[/L]  Simulate operation, showing names which would be copied.\n"
 "[/W]  Prompts before beginning the copy operation.\n"
@@ -16942,13 +17494,13 @@ msgid ""
 "[/P]  Prompts on each source file before copying.\n"
 "[/N]  Copy using short names.\n"
 "[/U]  Copy only files which already exist in destination.\n"
-"[/R]  Overwrite any read only files.\n"
+"[/R]  Overwrite any read-only files.\n"
 "[/H]  Include hidden and system files in the copy.\n"
 "[/C]  Continue even if an error occurs during the copy.\n"
 "[/A]  Only copy files with archive attribute set.\n"
 "[/M]  Only copy files with archive attribute set, removes the\n"
 "\tarchive attribute.\n"
-"[/K]  Copy file attributes, without this attributes are not preserved.\n"
+"[/K]  Copy file attributes; without this, attributes are not preserved.\n"
 "[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
 "\t\tIf no date is supplied, only copy if destination is older\n"
 "\t\tthan source.\n"

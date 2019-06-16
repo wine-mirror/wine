@@ -31,7 +31,6 @@
 #include "uuids.h"
 
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 #define DS_MAX_CHANNELS 6
 
@@ -179,6 +178,7 @@ void put_stereo2quad(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel
 void put_mono2surround51(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 void put_stereo2surround51(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 void put_surround512stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
+void put_surround712stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 void put_quad2stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 
 HRESULT secondarybuffer_create(DirectSoundDevice *device, const DSBUFFERDESC *dsbd,
@@ -271,7 +271,7 @@ static inline WCHAR *strdupW( const WCHAR *str )
     WCHAR *ret;
 
     if (!str) return NULL;
-    size = (strlenW( str ) + 1) * sizeof(WCHAR);
+    size = (lstrlenW( str ) + 1) * sizeof(WCHAR);
     ret = HeapAlloc( GetProcessHeap(), 0, size );
     if (ret) memcpy( ret, str, size );
     return ret;

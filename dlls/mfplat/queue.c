@@ -19,12 +19,9 @@
 #include <stdarg.h>
 
 #define COBJMACROS
-
-#include "mfapi.h"
-#include "mferror.h"
+#define NONAMELESSUNION
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 #include "mfplat_private.h"
@@ -39,9 +36,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 static LONG next_item_key;
 
+static MFWORKITEM_KEY get_item_key(DWORD mask, DWORD key)
+{
+    return ((MFWORKITEM_KEY)mask << 32) | key;
+}
+
 static MFWORKITEM_KEY generate_item_key(DWORD mask)
 {
-    return ((MFWORKITEM_KEY)mask << 32) | InterlockedIncrement(&next_item_key);
+    return get_item_key(mask, InterlockedIncrement(&next_item_key));
 }
 
 struct work_item
@@ -58,10 +60,17 @@ struct work_item
     } u;
 };
 
+static const TP_CALLBACK_PRIORITY priorities[] =
+{
+    TP_CALLBACK_PRIORITY_HIGH,
+    TP_CALLBACK_PRIORITY_NORMAL,
+    TP_CALLBACK_PRIORITY_LOW,
+};
+
 struct queue
 {
     TP_POOL *pool;
-    TP_CALLBACK_ENVIRON env;
+    TP_CALLBACK_ENVIRON_V3 envs[ARRAY_SIZE(priorities)];
     CRITICAL_SECTION cs;
     struct list pending_items;
 };
@@ -159,13 +168,23 @@ static void release_work_item(struct work_item *item)
 
 static void init_work_queue(MFASYNC_WORKQUEUE_TYPE queue_type, struct queue *queue)
 {
-    unsigned int max_thread;
+    TP_CALLBACK_ENVIRON_V3 env;
+    unsigned int max_thread, i;
 
     queue->pool = CreateThreadpool(NULL);
-    queue->env.Version = 1;
-    queue->env.Pool = queue->pool;
-    queue->env.CleanupGroup = CreateThreadpoolCleanupGroup();
-    queue->env.CleanupGroupCancelCallback = standard_queue_cleanup_callback;
+
+    memset(&env, 0, sizeof(env));
+    env.Version = 3;
+    env.Size = sizeof(env);
+    env.Pool = queue->pool;
+    env.CleanupGroup = CreateThreadpoolCleanupGroup();
+    env.CleanupGroupCancelCallback = standard_queue_cleanup_callback;
+    env.CallbackPriority = TP_CALLBACK_PRIORITY_NORMAL;
+    for (i = 0; i < ARRAY_SIZE(queue->envs); ++i)
+    {
+        queue->envs[i] = env;
+        queue->envs[i].CallbackPriority = priorities[i];
+    }
     list_init(&queue->pending_items);
     InitializeCriticalSection(&queue->cs);
 
@@ -183,6 +202,8 @@ static HRESULT grab_queue(DWORD queue_id, struct queue **ret)
     struct queue *queue = get_system_queue(queue_id);
     MFASYNC_WORKQUEUE_TYPE queue_type;
     struct queue_handle *entry;
+
+    *ret = NULL;
 
     if (!system_queues[SYS_QUEUE_STANDARD].pool)
         return MF_E_SHUTDOWN;
@@ -261,7 +282,7 @@ static void shutdown_queue(struct queue *queue)
     if (!queue->pool)
         return;
 
-    CloseThreadpoolCleanupGroupMembers(queue->env.CleanupGroup, TRUE, NULL);
+    CloseThreadpoolCleanupGroupMembers(queue->envs[0].CleanupGroup, TRUE, NULL);
     CloseThreadpool(queue->pool);
     queue->pool = NULL;
 
@@ -315,9 +336,10 @@ void shutdown_system_queues(void)
     LeaveCriticalSection(&queues_section);
 }
 
-static void grab_work_item(struct work_item *item)
+static struct work_item *grab_work_item(struct work_item *item)
 {
     InterlockedIncrement(&item->refcount);
+    return item;
 }
 
 static void CALLBACK standard_queue_worker(TP_CALLBACK_INSTANCE *instance, void *context, TP_WORK *work)
@@ -332,15 +354,23 @@ static void CALLBACK standard_queue_worker(TP_CALLBACK_INSTANCE *instance, void 
     release_work_item(item);
 }
 
-static HRESULT queue_submit_item(struct queue *queue, IMFAsyncResult *result)
+static HRESULT queue_submit_item(struct queue *queue, LONG priority, IMFAsyncResult *result)
 {
+    TP_CALLBACK_PRIORITY callback_priority;
     struct work_item *item;
     TP_WORK *work_object;
 
     if (!(item = alloc_work_item(queue, result)))
         return E_OUTOFMEMORY;
 
-    work_object = CreateThreadpoolWork(standard_queue_worker, item, &queue->env);
+    if (priority == 0)
+        callback_priority = TP_CALLBACK_PRIORITY_NORMAL;
+    else if (priority < 0)
+        callback_priority = TP_CALLBACK_PRIORITY_LOW;
+    else
+        callback_priority = TP_CALLBACK_PRIORITY_HIGH;
+    work_object = CreateThreadpoolWork(standard_queue_worker, item,
+            (TP_CALLBACK_ENVIRON *)&queue->envs[callback_priority]);
     SubmitThreadpoolWork(work_object);
 
     TRACE("dispatched %p.\n", result);
@@ -348,7 +378,7 @@ static HRESULT queue_submit_item(struct queue *queue, IMFAsyncResult *result)
     return S_OK;
 }
 
-static HRESULT queue_put_work_item(DWORD queue_id, IMFAsyncResult *result)
+static HRESULT queue_put_work_item(DWORD queue_id, LONG priority, IMFAsyncResult *result)
 {
     struct queue *queue;
     HRESULT hr;
@@ -356,7 +386,7 @@ static HRESULT queue_put_work_item(DWORD queue_id, IMFAsyncResult *result)
     if (FAILED(hr = grab_queue(queue_id, &queue)))
         return hr;
 
-    hr = queue_submit_item(queue, result);
+    hr = queue_submit_item(queue, priority, result);
 
     return hr;
 }
@@ -373,7 +403,7 @@ static HRESULT invoke_async_callback(IMFAsyncResult *result)
     if (FAILED(lock_user_queue(queue)))
         queue = MFASYNC_CALLBACK_QUEUE_STANDARD;
 
-    hr = queue_put_work_item(queue, result);
+    hr = queue_put_work_item(queue, 0, result);
 
     unlock_user_queue(queue);
 
@@ -442,6 +472,15 @@ static void CALLBACK scheduled_item_cancelable_callback(TP_CALLBACK_INSTANCE *in
     release_work_item(item);
 }
 
+static void CALLBACK periodic_item_callback(TP_CALLBACK_INSTANCE *instance, void *context, TP_TIMER *timer)
+{
+    struct work_item *item = grab_work_item(context);
+
+    invoke_async_callback(item->result);
+
+    release_work_item(item);
+}
+
 static void queue_mark_item_pending(DWORD mask, struct work_item *item, MFWORKITEM_KEY *key)
 {
     *key = generate_item_key(mask);
@@ -470,7 +509,8 @@ static HRESULT queue_submit_wait(struct queue *queue, HANDLE event, LONG priorit
     else
         callback = waiting_item_callback;
 
-    item->u.wait_object = CreateThreadpoolWait(callback, item, &queue->env);
+    item->u.wait_object = CreateThreadpoolWait(callback, item,
+            (TP_CALLBACK_ENVIRON *)&queue->envs[TP_CALLBACK_PRIORITY_NORMAL]);
     SetThreadpoolWait(item->u.wait_object, event, NULL);
 
     TRACE("dispatched %p.\n", result);
@@ -478,7 +518,8 @@ static HRESULT queue_submit_wait(struct queue *queue, HANDLE event, LONG priorit
     return S_OK;
 }
 
-static HRESULT queue_submit_timer(struct queue *queue, IMFAsyncResult *result, INT64 timeout, MFWORKITEM_KEY *key)
+static HRESULT queue_submit_timer(struct queue *queue, IMFAsyncResult *result, INT64 timeout, DWORD period,
+        MFWORKITEM_KEY *key)
 {
     PTP_TIMER_CALLBACK callback;
     struct work_item *item;
@@ -491,17 +532,20 @@ static HRESULT queue_submit_timer(struct queue *queue, IMFAsyncResult *result, I
     if (key)
     {
         queue_mark_item_pending(SCHEDULED_ITEM_KEY_MASK, item, key);
-        callback = scheduled_item_cancelable_callback;
     }
+
+    if (period)
+        callback = periodic_item_callback;
     else
-        callback = scheduled_item_callback;
+        callback = key ? scheduled_item_cancelable_callback : scheduled_item_callback;
 
     t.QuadPart = timeout * 1000 * 10;
     filetime.dwLowDateTime = t.u.LowPart;
     filetime.dwHighDateTime = t.u.HighPart;
 
-    item->u.timer_object = CreateThreadpoolTimer(callback, item, &queue->env);
-    SetThreadpoolTimer(item->u.timer_object, &filetime, 0, 0);
+    item->u.timer_object = CreateThreadpoolTimer(callback, item,
+            (TP_CALLBACK_ENVIRON *)&queue->envs[TP_CALLBACK_PRIORITY_NORMAL]);
+    SetThreadpoolTimer(item->u.timer_object, &filetime, period, 0);
 
     TRACE("dispatched %p.\n", result);
 
@@ -561,6 +605,8 @@ static HRESULT alloc_user_queue(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue_
     else
     {
         LeaveCriticalSection(&queues_section);
+        heap_free(queue);
+        WARN("Out of user queue handles.\n");
         return E_OUTOFMEMORY;
     }
 
@@ -631,6 +677,8 @@ static ULONG WINAPI async_result_Release(IMFAsyncResult *iface)
             IUnknown_Release(result->object);
         if (result->state)
             IUnknown_Release(result->state);
+        if (result->result.hEvent)
+            CloseHandle(result->result.hEvent);
         heap_free(result);
 
         MFUnlockPlatform();
@@ -805,7 +853,27 @@ HRESULT WINAPI MFPutWorkItem(DWORD queue, IMFAsyncCallback *callback, IUnknown *
     if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
         return hr;
 
-    hr = queue_put_work_item(queue, result);
+    hr = queue_put_work_item(queue, 0, result);
+
+    IMFAsyncResult_Release(result);
+
+    return hr;
+}
+
+/***********************************************************************
+ *      MFPutWorkItem2 (mfplat.@)
+ */
+HRESULT WINAPI MFPutWorkItem2(DWORD queue, LONG priority, IMFAsyncCallback *callback, IUnknown *state)
+{
+    IMFAsyncResult *result;
+    HRESULT hr;
+
+    TRACE("%#x, %d, %p, %p.\n", queue, priority, callback, state);
+
+    if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
+        return hr;
+
+    hr = queue_put_work_item(queue, priority, result);
 
     IMFAsyncResult_Release(result);
 
@@ -819,7 +887,17 @@ HRESULT WINAPI MFPutWorkItemEx(DWORD queue, IMFAsyncResult *result)
 {
     TRACE("%#x, %p\n", queue, result);
 
-    return queue_put_work_item(queue, result);
+    return queue_put_work_item(queue, 0, result);
+}
+
+/***********************************************************************
+ *      MFPutWorkItemEx2 (mfplat.@)
+ */
+HRESULT WINAPI MFPutWorkItemEx2(DWORD queue, LONG priority, IMFAsyncResult *result)
+{
+    TRACE("%#x, %d, %p\n", queue, priority, result);
+
+    return queue_put_work_item(queue, priority, result);
 }
 
 /***********************************************************************
@@ -842,7 +920,7 @@ static HRESULT schedule_work_item(IMFAsyncResult *result, INT64 timeout, MFWORKI
 
     TRACE("%p, %s, %p.\n", result, wine_dbgstr_longlong(timeout), key);
 
-    hr = queue_submit_timer(queue, result, timeout, key);
+    hr = queue_submit_timer(queue, result, timeout, 0, key);
 
     return hr;
 }
@@ -911,4 +989,167 @@ HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key)
     hr = queue_cancel_item(queue, key);
 
     return hr;
+}
+
+static DWORD get_timer_period(void)
+{
+    return 10;
+}
+
+/***********************************************************************
+ *      MFGetTimerPeriodicity (mfplat.@)
+ */
+HRESULT WINAPI MFGetTimerPeriodicity(DWORD *period)
+{
+    TRACE("%p.\n", period);
+
+    *period = get_timer_period();
+
+    return S_OK;
+}
+
+struct periodic_callback
+{
+    IMFAsyncCallback IMFAsyncCallback_iface;
+    LONG refcount;
+    MFPERIODICCALLBACK callback;
+};
+
+static struct periodic_callback *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct periodic_callback, IMFAsyncCallback_iface);
+}
+
+static HRESULT WINAPI periodic_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI periodic_callback_AddRef(IMFAsyncCallback *iface)
+{
+    struct periodic_callback *callback = impl_from_IMFAsyncCallback(iface);
+    ULONG refcount = InterlockedIncrement(&callback->refcount);
+
+    TRACE("%p, %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI periodic_callback_Release(IMFAsyncCallback *iface)
+{
+    struct periodic_callback *callback = impl_from_IMFAsyncCallback(iface);
+    ULONG refcount = InterlockedDecrement(&callback->refcount);
+
+    TRACE("%p, %u.\n", iface, refcount);
+
+    if (!refcount)
+        heap_free(callback);
+
+    return refcount;
+}
+
+static HRESULT WINAPI periodic_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI periodic_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct periodic_callback *callback = impl_from_IMFAsyncCallback(iface);
+    IUnknown *context = NULL;
+
+    if (FAILED(IMFAsyncResult_GetObject(result, &context)))
+        WARN("Expected object to be set for result object.\n");
+
+    callback->callback(context);
+
+    if (context)
+        IUnknown_Release(context);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl periodic_callback_vtbl =
+{
+    periodic_callback_QueryInterface,
+    periodic_callback_AddRef,
+    periodic_callback_Release,
+    periodic_callback_GetParameters,
+    periodic_callback_Invoke,
+};
+
+static HRESULT create_periodic_callback_obj(MFPERIODICCALLBACK callback, IMFAsyncCallback **out)
+{
+    struct periodic_callback *object;
+
+    object = heap_alloc(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFAsyncCallback_iface.lpVtbl = &periodic_callback_vtbl;
+    object->refcount = 1;
+    object->callback = callback;
+
+    *out = &object->IMFAsyncCallback_iface;
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MFAddPeriodicCallback (mfplat.@)
+ */
+HRESULT WINAPI MFAddPeriodicCallback(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key)
+{
+    IMFAsyncCallback *periodic_callback;
+    MFWORKITEM_KEY workitem_key;
+    IMFAsyncResult *result;
+    struct queue *queue;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p.\n", callback, context, key);
+
+    if (FAILED(hr = grab_queue(MFASYNC_CALLBACK_QUEUE_TIMER, &queue)))
+        return hr;
+
+    if (FAILED(hr = create_periodic_callback_obj(callback, &periodic_callback)))
+        return hr;
+
+    hr = create_async_result(context, periodic_callback, NULL, &result);
+    IMFAsyncCallback_Release(periodic_callback);
+    if (FAILED(hr))
+        return hr;
+
+    hr = queue_submit_timer(queue, result, 0, get_timer_period(), key ? &workitem_key : NULL);
+
+    IMFAsyncResult_Release(result);
+
+    if (key)
+        *key = workitem_key;
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MFRemovePeriodicCallback (mfplat.@)
+ */
+HRESULT WINAPI MFRemovePeriodicCallback(DWORD key)
+{
+    struct queue *queue;
+    HRESULT hr;
+
+    TRACE("%#x.\n", key);
+
+    if (FAILED(hr = grab_queue(MFASYNC_CALLBACK_QUEUE_TIMER, &queue)))
+        return hr;
+
+    return queue_cancel_item(queue, get_item_key(SCHEDULED_ITEM_KEY_MASK, key));
 }

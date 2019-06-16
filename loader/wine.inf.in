@@ -30,12 +30,11 @@ signature="$CHICAGO$"
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
-CopyFiles=@l_intl.nls
+CopyFiles=l_intl_section, inf_section
 AddReg=\
     Classes,\
     ContentIndex,\
     ControlClass,\
-    CriticalDevice,\
     CurrentVersion,\
     Debugger,\
     DirectX,\
@@ -55,12 +54,11 @@ AddReg=\
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
-CopyFiles=@l_intl.nls
+CopyFiles=l_intl_section, inf_section
 AddReg=\
     Classes,\
     ContentIndex,\
     ControlClass,\
-    CriticalDevice,\
     CurrentVersion,\
     Debugger,\
     DirectX,\
@@ -82,12 +80,11 @@ RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin64,FakeDlls
 WinePreInstall=Wow64
 UpdateInis=SystemIni
-CopyFiles=@l_intl.nls
+CopyFiles=l_intl_section, inf_section
 AddReg=\
     Classes,\
     ContentIndex,\
     ControlClass,\
-    CriticalDevice,\
     CurrentVersion,\
     CurrentVersionWow64,\
     Debugger,\
@@ -108,7 +105,7 @@ AddReg=\
 [Wow64Install]
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDllsWow64
-CopyFiles=@l_intl.nls
+CopyFiles=l_intl_section
 AddReg=\
     CurrentVersion,\
     CurrentVersionWow64,\
@@ -134,7 +131,6 @@ AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=WineBus,0,WineBusService
-AddService=WineHID,0,WineHIDService
 AddService=Winmgmt,0,WinmgmtService
 
 [DefaultInstall.NT.Services]
@@ -151,7 +147,6 @@ AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=WineBus,0,WineBusService
-AddService=WineHID,0,WineHIDService
 AddService=Winmgmt,0,WinmgmtService
 
 [DefaultInstall.ntamd64.Services]
@@ -168,7 +163,6 @@ AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=WineBus,0,WineBusService
-AddService=WineHID,0,WineHIDService
 AddService=Winmgmt,0,WinmgmtService
 
 [Strings]
@@ -471,12 +465,6 @@ HKLM,System\CurrentControlSet\Control\Class\{6bdd1fc6-810f-11d0-bec7-08002be2092
 HKLM,System\CurrentControlSet\Control\Class\{6bdd1fc6-810f-11d0-bec7-08002be2092f},"Class",,"Image"
 HKLM,System\CurrentControlSet\Control\Class\{745a17a0-74d3-11d0-b6fe-00a0c90f57da},,,"Human Interface Devices"
 HKLM,System\CurrentControlSet\Control\Class\{745a17a0-74d3-11d0-b6fe-00a0c90f57da},"Class",,"HIDClass"
-
-[CriticalDevice]
-HKLM,System\CurrentControlSet\Control\CriticalDeviceDatabase\HIDRAW,"Service",,"WineHID"
-HKLM,System\CurrentControlSet\Control\CriticalDeviceDatabase\IOHID,"Service",,"WineHID"
-HKLM,System\CurrentControlSet\Control\CriticalDeviceDatabase\LNXEV,"Service",,"WineHID"
-HKLM,System\CurrentControlSet\Control\CriticalDeviceDatabase\SDLJOY,"Service",,"WineHID"
 
 [CurrentVersion]
 HKCU,%CurrentVersion%\Run,,16
@@ -2554,6 +2542,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,iexplore.exe
 11,,winetest.exe,-
 12,,fltmgr.sys,-
+12,,ksecdd.sys,-
 12,,mountmgr.sys,-
 12,,ndis.sys,-
 12,,tdi.sys,-
@@ -2602,6 +2591,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,notepad.exe
 11,,winetest.exe,-
 12,,fltmgr.sys
+12,,ksecdd.sys
 12,,mountmgr.sys
 12,,ndis.sys
 12,,tdi.sys
@@ -3480,15 +3470,6 @@ ServiceType=1
 StartType=2
 ErrorControl=1
 
-[WineHIDService]
-Description="Wine HID Minidriver"
-DisplayName="Wine HID"
-ServiceBinary="%12%\winehid.sys"
-LoadOrderGroup="WinePlugPlay"
-ServiceType=1
-StartType=3
-ErrorControl=1
-
 [SpoolerService]
 AddReg=SpoolerServiceKeys
 Description="Loads files to memory for later printing"
@@ -3699,3 +3680,13 @@ HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-Shanghai-EnableGame",0x1
 HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-Solitaire-EnableGame",0x10001,0x00000001
 HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-SpiderSolitaire-EnableGame",0x10001,0x00000001
 HKLM,Software\Wine\LicenseInformation,"Shell-PremiumInBoxGames-Chess-EnableGame",0x10001,0x00000001
+
+[DestinationDirs]
+l_intl_section = 11
+inf_section = 17
+
+[l_intl_section]
+l_intl.nls
+
+[inf_section]
+winehid.inf

@@ -21,7 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
-#ifndef HAVE_ISNAN
+#if !defined(HAVE_ISNAN) && !defined(isnan)
 
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>
@@ -29,14 +29,6 @@
 int isnan(double x)
 {
   return isnand(x);
-}
-
-#elif defined(HAVE_FLOAT_H) && defined(HAVE__ISNAN)
-#include <float.h>
-
-int isnan(double x)
-{
-  return _isnan(x);
 }
 
 #else

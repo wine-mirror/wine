@@ -1603,14 +1603,14 @@ static KERNEL_DIRENT *start_vfat_ioctl( int fd )
         SIZE_T size = 2 * sizeof(*de) + page_size;
         void *addr = NULL;
 
-        if (NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 1, &size, MEM_RESERVE, PAGE_READWRITE ))
+        if (virtual_alloc_aligned( &addr, 0, &size, MEM_RESERVE, PAGE_READWRITE, 1 ))
             return NULL;
         /* commit only the size needed for the dir entries */
         /* this leaves an extra unaccessible page, which should make the kernel */
         /* fail with -EFAULT before it stomps all over our memory */
         de = addr;
         size = 2 * sizeof(*de);
-        NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 1, &size, MEM_COMMIT, PAGE_READWRITE );
+        virtual_alloc_aligned( &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE, 1 );
     }
 
     /* set d_reclen to 65535 to work around an AFS kernel bug */
@@ -1933,7 +1933,7 @@ static NTSTATUS get_cached_dir_data( HANDLE handle, struct dir_data **data_ret, 
  *  NtQueryDirectoryFile	[NTDLL.@]
  *  ZwQueryDirectoryFile	[NTDLL.@]
  */
-NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
+NTSTATUS WINAPI DECLSPEC_HOTPATCH NtQueryDirectoryFile( HANDLE handle, HANDLE event,
                                       PIO_APC_ROUTINE apc_routine, PVOID apc_context,
                                       PIO_STATUS_BLOCK io,
                                       PVOID buffer, ULONG length,
@@ -2101,7 +2101,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                     {
                         ret = ntdll_umbstowcs( 0, kde[1].d_name, strlen(kde[1].d_name),
                                                buffer, MAX_DIR_ENTRY_LEN );
-                        if (ret == length && !memicmpW( buffer, name, length))
+                        if (ret == length && !strncmpiW( buffer, name, length))
                         {
                             strcpy( unix_name + pos, kde[1].d_name );
                             RtlLeaveCriticalSection( &dir_section );
@@ -2111,7 +2111,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                     }
                     ret = ntdll_umbstowcs( 0, kde[0].d_name, strlen(kde[0].d_name),
                                            buffer, MAX_DIR_ENTRY_LEN );
-                    if (ret == length && !memicmpW( buffer, name, length))
+                    if (ret == length && !strncmpiW( buffer, name, length))
                     {
                         strcpy( unix_name + pos,
                                 kde[1].d_name[0] ? kde[1].d_name : kde[0].d_name );
@@ -2145,7 +2145,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     while ((de = readdir( dir )))
     {
         ret = ntdll_umbstowcs( 0, de->d_name, strlen(de->d_name), buffer, MAX_DIR_ENTRY_LEN );
-        if (ret == length && !memicmpW( buffer, name, length ))
+        if (ret == length && !strncmpiW( buffer, name, length ))
         {
             strcpy( unix_name + pos, de->d_name );
             closedir( dir );
@@ -2159,7 +2159,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
         {
             WCHAR short_nameW[12];
             ret = hash_short_file_name( &str, short_nameW );
-            if (ret == length && !memicmpW( short_nameW, name, length ))
+            if (ret == length && !strncmpiW( short_nameW, name, length ))
             {
                 strcpy( unix_name + pos, de->d_name );
                 closedir( dir );
@@ -2468,7 +2468,7 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
         return ARRAY_SIZE( nt_prefixW );
 
     if (name->Length >= sizeof(dosdev_prefixW) &&
-        !memicmpW( name->Buffer, dosdev_prefixW, ARRAY_SIZE( dosdev_prefixW )))
+        !strncmpiW( name->Buffer, dosdev_prefixW, ARRAY_SIZE( dosdev_prefixW )))
         return ARRAY_SIZE( dosdev_prefixW );
 
     return 0;
@@ -2638,7 +2638,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
         char *p;
         unix_name[pos + ret] = 0;
         for (p = unix_name + pos ; *p; p++) if (*p == '\\') *p = '/';
-        if (!redirect || (!strstr( unix_name, "/windows/") && strncmp( unix_name, "windows/", 8 )))
+        if (!name_len || !redirect || (!strstr( unix_name, "/windows/") && strncmp( unix_name, "windows/", 8 )))
         {
             if (!stat( unix_name, &st ))
             {

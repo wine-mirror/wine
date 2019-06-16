@@ -16,9 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -119,7 +118,7 @@ static nsrefcnt NSAPI nsDOMEventListener_Release(nsIDOMEventListener *iface)
     return release_listener(This->This);
 }
 
-static BOOL is_doc_child_focus(NSContainer *nscontainer)
+static BOOL is_doc_child_focus(GeckoBrowser *nscontainer)
 {
     HWND hwnd;
 
@@ -173,17 +172,15 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
 {
     nsEventListener *This = impl_from_nsIDOMEventListener(iface);
     HTMLDocumentNode *doc = This->This->doc;
-    HTMLDocumentObj *doc_obj;
 
-    if(!doc)
+    if(!doc || !doc->browser)
         return NS_ERROR_FAILURE;
-    doc_obj = doc->basedoc.doc_obj;
 
     TRACE("(%p)->(%p)\n", doc, event);
 
-    update_doc(doc_obj, UPDATE_UI);
-    if(doc_obj->usermode == EDITMODE)
-        handle_edit_event(&doc_obj->basedoc, event);
+    update_doc(doc->browser->doc, UPDATE_UI);
+    if(doc->browser->usermode == EDITMODE)
+        handle_edit_event(doc, event);
 
     return NS_OK;
 }
@@ -198,8 +195,8 @@ static void handle_docobj_load(HTMLDocumentObj *doc)
         doc->nscontainer->editor_controller = NULL;
     }
 
-    if(doc->usermode == EDITMODE)
-        handle_edit_load(&doc->basedoc);
+    if(doc->nscontainer->usermode == EDITMODE)
+        setup_editor_controller(doc->nscontainer);
 
     if(doc->client) {
         hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
@@ -262,7 +259,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         update_title(doc_obj);
     }
 
-    if(doc_obj && doc_obj->usermode!=EDITMODE && doc_obj->doc_object_service
+    if(doc_obj && doc_obj->nscontainer->usermode != EDITMODE && doc_obj->doc_object_service
        && !(doc->basedoc.window->load_flags & BINDING_REFRESH))
         IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service,
                 &doc->basedoc.window->base.IHTMLWindow2_iface, 0);
@@ -386,18 +383,29 @@ static void init_listener(nsEventListener *This, nsDocumentEventListener *listen
     This->This = listener;
 }
 
+static nsIDOMEventTarget *get_default_document_target(HTMLDocumentNode *doc)
+{
+    nsIDOMEventTarget *target;
+    nsISupports *target_iface;
+    nsresult nsres;
+
+    target_iface = doc->window ? (nsISupports*)doc->basedoc.window->nswindow : (nsISupports*)doc->nsdoc;
+    nsres = nsISupports_QueryInterface(target_iface, &IID_nsIDOMEventTarget, (void**)&target);
+    return NS_SUCCEEDED(nsres) ? target : NULL;
+}
+
 void add_nsevent_listener(HTMLDocumentNode *doc, nsIDOMNode *nsnode, LPCWSTR type)
 {
     nsIDOMEventTarget *target;
     nsresult nsres;
 
-    if(nsnode)
+    if(nsnode) {
         nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMEventTarget, (void**)&target);
-    else
-        nsres = nsIDOMWindow_QueryInterface(doc->basedoc.window->nswindow, &IID_nsIDOMEventTarget, (void**)&target);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMEventTarget interface: %08x\n", nsres);
-        return;
+        assert(nsres == NS_OK);
+    }else {
+        target = get_default_document_target(doc);
+        if(!target)
+            return;
     }
 
     init_event(target, type, &doc->nsevent_listener->htmlevent_listener.nsIDOMEventListener_iface,
@@ -411,14 +419,9 @@ static void detach_nslistener(HTMLDocumentNode *doc, const WCHAR *type, nsEventL
     nsAString type_str;
     nsresult nsres;
 
-    if(!doc->basedoc.window)
+    target = get_default_document_target(doc);
+    if(!target)
         return;
-
-    nsres = nsIDOMWindow_QueryInterface(doc->basedoc.window->nswindow, &IID_nsIDOMEventTarget, (void**)&target);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMEventTarget interface: %08x\n", nsres);
-        return;
-    }
 
     nsAString_InitDepend(&type_str, type);
     nsres = nsIDOMEventTarget_RemoveEventListener(target, &type_str,
@@ -457,7 +460,6 @@ void init_nsevents(HTMLDocumentNode *doc)
 {
     nsDocumentEventListener *listener;
     nsIDOMEventTarget *target;
-    nsresult nsres;
 
     listener = heap_alloc(sizeof(nsDocumentEventListener));
     if(!listener)
@@ -476,11 +478,9 @@ void init_nsevents(HTMLDocumentNode *doc)
 
     doc->nsevent_listener = listener;
 
-    nsres = nsIDOMWindow_QueryInterface(doc->basedoc.window->nswindow, &IID_nsIDOMEventTarget, (void**)&target);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMEventTarget interface: %08x\n", nsres);
+    target = get_default_document_target(doc);
+    if(!target)
         return;
-    }
 
     init_event(target, blurW,     &listener->blur_listener.nsIDOMEventListener_iface,     TRUE);
     init_event(target, focusW,    &listener->focus_listener.nsIDOMEventListener_iface,    TRUE);

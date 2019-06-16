@@ -38,6 +38,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winternl.h"
 #include "mmsystem.h"
 #include "winemm.h"
 
@@ -1054,7 +1055,7 @@ FOURCC WINAPI mmioStringToFOURCCA(LPCSTR sz, UINT uFlags)
 
     for (i = 0; i < 4 && sz[i]; i++) {
 	if (uFlags & MMIO_TOUPPER) {
-	    cc[i] = toupper(sz[i]);
+	    cc[i] = RtlUpperChar(sz[i]);
 	} else {
 	    cc[i] = sz[i];
 	}

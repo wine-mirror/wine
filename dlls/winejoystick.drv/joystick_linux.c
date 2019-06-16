@@ -38,7 +38,7 @@
 #include "config.h"
 #include "wine/port.h"
 
-#ifdef HAVE_LINUX_JOYSTICK_H
+#ifdef HAVE_LINUX_22_JOYSTICK_API
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -174,11 +174,7 @@ static	int	JSTCK_OpenDevice(WINE_JSTCK* jstick)
       return -1;
     last_attempt = now;
 
-#ifdef HAVE_LINUX_22_JOYSTICK_API
     flags = O_RDONLY | O_NONBLOCK;
-#else
-    flags = O_RDONLY;
-#endif
 
     /* The first joystick may not be at /dev/input/js0, find the correct
      * first or second device. For example the driver for XBOX 360 wireless
@@ -203,10 +199,9 @@ static	int	JSTCK_OpenDevice(WINE_JSTCK* jstick)
         close(fd);
     }
 
-#ifdef HAVE_LINUX_22_JOYSTICK_API
     if (jstick->dev > 0)
         ioctl(jstick->dev, JSIOCGAXMAP, jstick->axesMap);
-#endif
+
     return jstick->dev;
 }
 
@@ -217,21 +212,16 @@ static	int	JSTCK_OpenDevice(WINE_JSTCK* jstick)
 LRESULT driver_joyGetDevCaps(DWORD_PTR dwDevID, LPJOYCAPSW lpCaps, DWORD dwSize)
 {
     WINE_JSTCK*	jstck;
-#ifdef HAVE_LINUX_22_JOYSTICK_API
     int		dev;
     char	nrOfAxes;
     char	nrOfButtons;
     char	identString[MAXPNAMELEN];
     int		i;
     int		driverVersion;
-#else
-static const WCHAR ini[] = {'W','i','n','e',' ','J','o','y','s','t','i','c','k',' ','D','r','i','v','e','r',0};
-#endif
 
     if ((jstck = JSTCK_drvGet(dwDevID)) == NULL)
 	return MMSYSERR_NODRIVER;
 
-#ifdef HAVE_LINUX_22_JOYSTICK_API
     if ((dev = JSTCK_OpenDevice(jstck)) < 0) return JOYERR_PARMS;
     ioctl(dev, JSIOCGAXES, &nrOfAxes);
     ioctl(dev, JSIOCGBUTTONS, &nrOfButtons);
@@ -280,10 +270,13 @@ static const WCHAR ini[] = {'W','i','n','e',' ','J','o','y','s','t','i','c','k',
 	    switch (jstck->axesMap[i]) {
 	    case 0: /* X */
 	    case 1: /* Y */
+	    case 8: /* Wheel */
+	    case 9: /* Gas */
 		lpCaps->wNumAxes++;
 		break;
 	    case 2: /* Z */
 	    case 6: /* Throttle */
+	    case 10: /* Brake */
 		lpCaps->wNumAxes++;
 		lpCaps->wCaps |= JOYCAPS_HASZ;
 		break;
@@ -310,33 +303,6 @@ static const WCHAR ini[] = {'W','i','n','e',' ','J','o','y','s','t','i','c','k',
 	    }
 	}
     }
-#else
-    lpCaps->wMid = MM_MICROSOFT;
-    lpCaps->wPid = MM_PC_JOYSTICK;
-    strcpyW(lpCaps->szPname, ini); /* joystick product name */
-    lpCaps->wXmin = 0;
-    lpCaps->wXmax = 0xFFFF;
-    lpCaps->wYmin = 0;
-    lpCaps->wYmax = 0xFFFF;
-    lpCaps->wZmin = 0;
-    lpCaps->wZmax = 0;
-    lpCaps->wNumButtons = 2;
-    if (dwSize == sizeof(JOYCAPSW)) {
-	/* complete 95 structure */
-	lpCaps->wRmin = 0;
-	lpCaps->wRmax = 0;
-	lpCaps->wUmin = 0;
-	lpCaps->wUmax = 0;
-	lpCaps->wVmin = 0;
-	lpCaps->wVmax = 0;
-	lpCaps->wCaps = 0;
-	lpCaps->wMaxAxes = 2;
-	lpCaps->wNumAxes = 2;
-	lpCaps->wMaxButtons = 4;
-	lpCaps->szRegKey[0] = 0;
-	lpCaps->szOEMVxD[0] = 0;
-    }
-#endif
 
     return JOYERR_NOERROR;
 }
@@ -348,30 +314,27 @@ LRESULT driver_joyGetPosEx(DWORD_PTR dwDevID, LPJOYINFOEX lpInfo)
 {
     WINE_JSTCK*		jstck;
     int			dev;
-#ifdef HAVE_LINUX_22_JOYSTICK_API
     struct js_event 	ev;
-#else
-    struct js_status 	js;
-    int    		dev_stat;
-#endif
 
     if ((jstck = JSTCK_drvGet(dwDevID)) == NULL)
 	return MMSYSERR_NODRIVER;
 
     if ((dev = JSTCK_OpenDevice(jstck)) < 0) return JOYERR_PARMS;
 
-#ifdef HAVE_LINUX_22_JOYSTICK_API
     while ((read(dev, &ev, sizeof(struct js_event))) > 0) {
 	if (ev.type == (JS_EVENT_AXIS)) {
 	    switch (jstck->axesMap[ev.number]) {
 	    case 0: /* X */
+	    case 8: /* Wheel */
 		jstck->x = ev.value;
 		break;
 	    case 1: /* Y */
+	    case 9: /* Gas */
 		jstck->y = ev.value;
 		break;
 	    case 2: /* Z */
 	    case 6: /* Throttle */
+	    case 10: /* Brake */
 		jstck->z = ev.value;
 		break;
 	    case 5: /* Rz */
@@ -466,21 +429,6 @@ LRESULT driver_joyGetPosEx(DWORD_PTR dwDevID, LPJOYINFOEX lpInfo)
 	else
 	    lpInfo->dwPOV = JOY_POVCENTERED; /* Center */
     }
-
-#else
-    dev_stat = read(dev, &js, sizeof(js));
-    if (dev_stat != sizeof(js)) {
-	return JOYERR_UNPLUGGED; /* FIXME: perhaps wrong, but what should I return else ? */
-    }
-    js.x = js.x<<8;
-    js.y = js.y<<8;
-    if (lpInfo->dwFlags & JOY_RETURNX)
-	lpInfo->dwXpos = js.x;   /* FIXME: perhaps multiply it somehow ? */
-    if (lpInfo->dwFlags & JOY_RETURNY)
-	lpInfo->dwYpos = js.y;
-    if (lpInfo->dwFlags & JOY_RETURNBUTTONS)
-	lpInfo->dwButtons = js.buttons;
-#endif
 
     TRACE("x: %d, y: %d, z: %d, r: %d, u: %d, v: %d, buttons: 0x%04x, flags: 0x%04x (fd %d)\n",
 	  lpInfo->dwXpos, lpInfo->dwYpos, lpInfo->dwZpos,

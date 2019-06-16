@@ -83,7 +83,6 @@
 #undef SetRect
 #undef ShowCursor
 #undef UnionRect
-#undef DPRINTF
 
 #include <pthread.h>
 
@@ -580,5 +579,7 @@ extern macdrv_status_item macdrv_create_status_item(macdrv_event_queue q) DECLSP
 extern void macdrv_destroy_status_item(macdrv_status_item s) DECLSPEC_HIDDEN;
 extern void macdrv_set_status_item_image(macdrv_status_item s, CGImageRef cgimage) DECLSPEC_HIDDEN;
 extern void macdrv_set_status_item_tooltip(macdrv_status_item s, CFStringRef cftip) DECLSPEC_HIDDEN;
+
+extern void macdrv_clear_ime_text(void) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_MACDRV_COCOA_H */

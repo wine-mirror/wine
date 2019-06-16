@@ -340,13 +340,13 @@ static void HEAP_Dump( HEAP *heap )
     SUBHEAP *subheap;
     char *ptr;
 
-    DPRINTF( "Heap: %p\n", heap );
-    DPRINTF( "Next: %p  Sub-heaps:", LIST_ENTRY( heap->entry.next, HEAP, entry ) );
-    LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry ) DPRINTF( " %p", subheap );
+    TRACE( "Heap: %p\n", heap );
+    TRACE( "Next: %p  Sub-heaps:", LIST_ENTRY( heap->entry.next, HEAP, entry ) );
+    LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry ) TRACE( " %p", subheap );
 
-    DPRINTF( "\nFree lists:\n Block   Stat   Size    Id\n" );
+    TRACE( "\nFree lists:\n Block   Stat   Size    Id\n" );
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
-        DPRINTF( "%p free %08lx prev=%p next=%p\n",
+        TRACE( "%p free %08lx prev=%p next=%p\n",
                  &heap->freeList[i].arena, i < HEAP_NB_SMALL_FREE_LISTS ?
                  HEAP_MIN_ARENA_SIZE + i * ALIGNMENT : HEAP_freeListSizes[i - HEAP_NB_SMALL_FREE_LISTS],
                  LIST_ENTRY( heap->freeList[i].arena.entry.prev, ARENA_FREE, entry ),
@@ -355,17 +355,17 @@ static void HEAP_Dump( HEAP *heap )
     LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
     {
         SIZE_T freeSize = 0, usedSize = 0, arenaSize = subheap->headerSize;
-        DPRINTF( "\n\nSub-heap %p: base=%p size=%08lx committed=%08lx\n",
+        TRACE( "\n\nSub-heap %p: base=%p size=%08lx committed=%08lx\n",
                  subheap, subheap->base, subheap->size, subheap->commitSize );
 
-        DPRINTF( "\n Block    Arena   Stat   Size    Id\n" );
+        TRACE( "\n Block    Arena   Stat   Size    Id\n" );
         ptr = (char *)subheap->base + subheap->headerSize;
         while (ptr < (char *)subheap->base + subheap->size)
         {
             if (*(DWORD *)ptr & ARENA_FLAG_FREE)
             {
                 ARENA_FREE *pArena = (ARENA_FREE *)ptr;
-                DPRINTF( "%p %08x free %08x prev=%p next=%p\n",
+                TRACE( "%p %08x free %08x prev=%p next=%p\n",
                          pArena, pArena->magic,
                          pArena->size & ARENA_SIZE_MASK,
                          LIST_ENTRY( pArena->entry.prev, ARENA_FREE, entry ),
@@ -377,7 +377,7 @@ static void HEAP_Dump( HEAP *heap )
             else if (*(DWORD *)ptr & ARENA_FLAG_PREV_FREE)
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                DPRINTF( "%p %08x Used %08x back=%p\n",
+                TRACE( "%p %08x Used %08x back=%p\n",
                         pArena, pArena->magic, pArena->size & ARENA_SIZE_MASK, *((ARENA_FREE **)pArena - 1) );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_INUSE);
@@ -386,7 +386,7 @@ static void HEAP_Dump( HEAP *heap )
             else
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                DPRINTF( "%p %08x %s %08x\n",
+                TRACE( "%p %08x %s %08x\n",
                          pArena, pArena->magic, pArena->magic == ARENA_INUSE_MAGIC ? "used" : "pend",
                          pArena->size & ARENA_SIZE_MASK );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
@@ -394,7 +394,7 @@ static void HEAP_Dump( HEAP *heap )
                 usedSize += pArena->size & ARENA_SIZE_MASK;
             }
         }
-        DPRINTF( "\nTotal: Size=%08lx Committed=%08lx Free=%08lx Used=%08lx Arenas=%08lx (%ld%%)\n\n",
+        TRACE( "\nTotal: Size=%08lx Committed=%08lx Free=%08lx Used=%08lx Arenas=%08lx (%ld%%)\n\n",
 	      subheap->size, subheap->commitSize, freeSize, usedSize,
 	      arenaSize, (arenaSize * 100) / subheap->size );
     }
@@ -726,8 +726,7 @@ static void *allocate_large_block( HEAP *heap, DWORD flags, SIZE_T size )
     LPVOID address = NULL;
 
     if (block_size < size) return NULL;  /* overflow */
-    if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 5,
-                                 &block_size, MEM_COMMIT, get_protection_type( flags ) ))
+    if (virtual_alloc_aligned( &address, 0, &block_size, MEM_COMMIT, get_protection_type( flags ), 5 ))
     {
         WARN("Could not allocate block for %08lx bytes\n", size );
         return NULL;
@@ -1521,7 +1520,7 @@ void heap_set_debug_flags( HANDLE handle )
         void *ptr = NULL;
         SIZE_T size = MAX_FREE_PENDING * sizeof(*heap->pending_free);
 
-        if (!NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 4, &size, MEM_COMMIT, PAGE_READWRITE ))
+        if (!virtual_alloc_aligned( &ptr, 0, &size, MEM_COMMIT, PAGE_READWRITE, 4 ))
         {
             heap->pending_free = ptr;
             heap->pending_pos = 0;

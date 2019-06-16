@@ -22,14 +22,9 @@
  */
 
 #define WIN32_LEAN_AND_MEAN
-
-#include "config.h"
-#include "wine/port.h"
-
 #include <windows.h>
 #include <ole2.h>
 #include "regsvr32.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(regsvr32);
@@ -195,7 +190,7 @@ static WCHAR *parse_command_line(WCHAR *command_line)
 {
     if (command_line[0] == ':' && command_line[1])
     {
-        int len = strlenW(command_line);
+        int len = lstrlenW(command_line);
 
         command_line++;
         len--;
@@ -246,7 +241,7 @@ int wmain(int argc, WCHAR* argv[])
             if (argv[i][2] && argv[i][2] != ':')
                 continue;
 
-            switch (tolowerW(argv[i][1]))
+            switch (towlower(argv[i][1]))
             {
             case 'u':
                 Unregister = TRUE;

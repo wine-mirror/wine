@@ -126,6 +126,7 @@ struct ACImpl {
     UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
     UINT32 wri_offs_frames; /* where to write fresh data in local_buffer */
     UINT32 hidden_frames;   /* ALSA reserve to ensure continuous rendering */
+    UINT32 vol_adjusted_frames; /* Frames we've already adjusted the volume of but didn't write yet */
     UINT32 data_in_alsa_frames;
 
     HANDLE timer;
@@ -803,8 +804,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
         return E_UNEXPECTED;
     }
 
-    hr = CoCreateFreeThreadedMarshaler((IUnknown *)&This->IAudioClient_iface,
-        (IUnknown **)&This->pUnkFTMarshal);
+    hr = CoCreateFreeThreadedMarshaler((IUnknown *)&This->IAudioClient_iface, &This->pUnkFTMarshal);
     if (FAILED(hr)) {
         HeapFree(GetProcessHeap(), 0, This);
         return hr;
@@ -1971,18 +1971,135 @@ static BYTE *remap_channels(ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames)
     return This->remapping_buf;
 }
 
+static void adjust_buffer_volume(const ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames, BOOL mute)
+{
+    float vol[ARRAY_SIZE(This->alsa_channel_map)];
+    BOOL adjust = FALSE;
+    UINT32 i, channels;
+    BYTE *end;
+
+    if (This->vol_adjusted_frames >= frames)
+        return;
+    channels = This->fmt->nChannels;
+
+    if (mute)
+    {
+        int err = snd_pcm_format_set_silence(This->alsa_format, buf, frames * channels);
+        if (err < 0)
+            WARN("Setting buffer to silence failed: %d (%s)\n", err, snd_strerror(err));
+        return;
+    }
+
+    /* Adjust the buffer based on the volume for each channel */
+    for (i = 0; i < channels; i++)
+        vol[i] = This->vols[i] * This->session->master_vol;
+    for (i = 0; i < min(channels, This->session->channel_count); i++)
+    {
+        vol[i] *= This->session->channel_vols[i];
+        adjust |= vol[i] != 1.0f;
+    }
+    while (i < channels) adjust |= vol[i++] != 1.0f;
+    if (!adjust) return;
+
+    /* Skip the frames we've already adjusted before */
+    end = buf + frames * This->fmt->nBlockAlign;
+    buf += This->vol_adjusted_frames * This->fmt->nBlockAlign;
+
+    switch (This->alsa_format)
+    {
+#ifndef WORDS_BIGENDIAN
+#define PROCESS_BUFFER(type) do         \
+{                                       \
+    type *p = (type*)buf;               \
+    do                                  \
+    {                                   \
+        for (i = 0; i < channels; i++)  \
+            p[i] = p[i] * vol[i];       \
+        p += i;                         \
+    } while ((BYTE*)p != end);          \
+} while (0)
+    case SND_PCM_FORMAT_S16_LE:
+        PROCESS_BUFFER(INT16);
+        break;
+    case SND_PCM_FORMAT_S32_LE:
+        PROCESS_BUFFER(INT32);
+        break;
+    case SND_PCM_FORMAT_FLOAT_LE:
+        PROCESS_BUFFER(float);
+        break;
+    case SND_PCM_FORMAT_FLOAT64_LE:
+        PROCESS_BUFFER(double);
+        break;
+#undef PROCESS_BUFFER
+    case SND_PCM_FORMAT_S20_3LE:
+    case SND_PCM_FORMAT_S24_3LE:
+    {
+        /* Do it 12 bytes at a time until it is no longer possible */
+        UINT32 *q = (UINT32*)buf, mask = ~0xff;
+        BYTE *p;
+
+        /* After we adjust the volume, we need to mask out low bits */
+        if (This->alsa_format == SND_PCM_FORMAT_S20_3LE)
+            mask = ~0x0fff;
+
+        i = 0;
+        while (end - (BYTE*)q >= 12)
+        {
+            UINT32 v[4], k;
+            v[0] = q[0] << 8;
+            v[1] = q[1] << 16 | (q[0] >> 16 & ~0xff);
+            v[2] = q[2] << 24 | (q[1] >> 8  & ~0xff);
+            v[3] = q[2] & ~0xff;
+            for (k = 0; k < 4; k++)
+            {
+                v[k] = (INT32)((INT32)v[k] * vol[i]);
+                v[k] &= mask;
+                if (++i == channels) i = 0;
+            }
+            *q++ = v[0] >> 8  | v[1] << 16;
+            *q++ = v[1] >> 16 | v[2] << 8;
+            *q++ = v[2] >> 24 | v[3];
+        }
+        p = (BYTE*)q;
+        while (p != end)
+        {
+            UINT32 v = (INT32)((INT32)(p[0] << 8 | p[1] << 16 | p[2] << 24) * vol[i]);
+            v &= mask;
+            *p++ = v >> 8  & 0xff;
+            *p++ = v >> 16 & 0xff;
+            *p++ = v >> 24;
+            if (++i == channels) i = 0;
+        }
+        break;
+    }
+#endif
+    case SND_PCM_FORMAT_U8:
+    {
+        UINT8 *p = (UINT8*)buf;
+        do
+        {
+            for (i = 0; i < channels; i++)
+                p[i] = (int)((p[i] - 128) * vol[i]) + 128;
+            p += i;
+        } while ((BYTE*)p != end);
+        break;
+    }
+    default:
+        TRACE("Unhandled format %i, not adjusting volume.\n", This->alsa_format);
+        break;
+    }
+}
+
 static snd_pcm_sframes_t alsa_write_best_effort(ACImpl *This, BYTE *buf,
         snd_pcm_uframes_t frames, BOOL mute)
 {
     snd_pcm_sframes_t written;
 
-    if(mute){
-        int err;
-        if((err = snd_pcm_format_set_silence(This->alsa_format, buf,
-                        frames * This->fmt->nChannels)) < 0)
-            WARN("Setting buffer to silence failed: %d (%s)\n", err,
-                    snd_strerror(err));
-    }
+    adjust_buffer_volume(This, buf, frames, mute);
+
+    /* Mark the frames we've already adjusted */
+    if (This->vol_adjusted_frames < frames)
+        This->vol_adjusted_frames = frames;
 
     buf = remap_channels(This, buf, frames);
 
@@ -2006,6 +2123,8 @@ static snd_pcm_sframes_t alsa_write_best_effort(ACImpl *This, BYTE *buf,
         written = snd_pcm_writei(This->pcm_handle, buf, frames);
     }
 
+    if (written > 0)
+        This->vol_adjusted_frames -= written;
     return written;
 }
 
@@ -2103,7 +2222,10 @@ static void alsa_write_data(ACImpl *This)
     /* Add a lead-in when starting with too few frames to ensure
      * continuous rendering.  Additional benefit: Force ALSA to start. */
     if(This->data_in_alsa_frames == 0 && This->held_frames < This->alsa_period_frames)
+    {
         alsa_write_best_effort(This, This->silence_buf, This->alsa_period_frames - This->held_frames, FALSE);
+        This->vol_adjusted_frames = 0;
+    }
 
     if(This->started)
         max_copy_frames = data_not_in_alsa(This);

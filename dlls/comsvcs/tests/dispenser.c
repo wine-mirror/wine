@@ -70,7 +70,7 @@ static HRESULT WINAPI driver_QueryInterface(IDispenserDriver *iface, REFIID riid
         return S_OK;
     }
 
-    ok(0, "Unknown iterface %s\n", wine_dbgstr_guid(riid));
+    ok(0, "Unknown interface %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 

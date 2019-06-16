@@ -1,3 +1,5 @@
 MODULE = mgmtapi.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = mgmtapi.c

@@ -55,6 +55,8 @@ static const char * const nop_sequence[4] =
     ".byte 0x8d,0x74,0x26,0x00,0x8d,0x74,0x26,0x00" /* lea 0x00(%esi),%esi; lea 0x00(%esi),%esi */
 };
 
+static const char fakedll_signature[] = "Wine placeholder DLL";
+
 static inline int is_function( const ORDDEF *odp )
 {
     if (odp->flags & FLAG_EXPORT32) return 0;
@@ -355,11 +357,11 @@ static void output_call16_function( ORDDEF *odp )
         if (UsePIC)
         {
             output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-            output( "1:\tmovl wine_ldt_copy_ptr-1b(%%eax),%%esi\n" );
+            output( "1:\tmovl .Lwine_ldt_copy_ptr-1b(%%eax),%%esi\n" );
             needs_get_pc_thunk = 1;
         }
         else
-            output( "\tmovl $%s,%%esi\n", asm_name("wine_ldt_copy") );
+            output( "\tmovl .Lwine_ldt_copy_ptr,%%esi\n" );
     }
 
     /* preserve 16-byte stack alignment */
@@ -565,7 +567,7 @@ static void output_module16( DLLSPEC *spec )
 
     output( "\n/* module data */\n\n" );
     output( "\t.data\n" );
-    output( "\t.align %d\n", get_alignment(4) );
+    output( "\t.align %d\n", get_alignment(16) );
     output( ".L__wine_spec_dos_header:\n" );
     output( "\t.short 0x5a4d\n" );                                         /* e_magic */
     output( "\t.short 0\n" );                                              /* e_cblp */
@@ -584,9 +586,12 @@ static void output_module16( DLLSPEC *spec )
     output( "\t.short 0,0,0,0\n" );                                        /* e_res */
     output( "\t.short 0\n" );                                              /* e_oemid */
     output( "\t.short 0\n" );                                              /* e_oeminfo */
-    output( "\t.short 0,0,0,0,0,0,0,0,0,0\n" );                            /* e_res2 */
+    output( ".Lwine_ldt_copy_ptr:\n" );                        /* e_res2, used for private data */
+    output( "\t.long .L__wine_spec_ne_header_end-.L__wine_spec_dos_header,0,0,0,0\n" );
     output( "\t.long .L__wine_spec_ne_header-.L__wine_spec_dos_header\n" );/* e_lfanew */
 
+    output( "\t%s \"%s\"\n", get_asm_string_keyword(), fakedll_signature );
+    output( "\t.align %d\n", get_alignment(16) );
     output( ".L__wine_spec_ne_header:\n" );
     output( "\t.short 0x454e\n" );                                         /* ne_magic */
     output( "\t.byte 0\n" );                                               /* ne_ver */
@@ -755,7 +760,7 @@ static void output_module16( DLLSPEC *spec )
         output( ".L__wine_%s_%u:\n", spec->c_name, i );
         output( "\tpushw %%bp\n" );
         output( "\tpushl $%s\n",
-                 asm_name( odp->type == TYPE_STUB ? get_stub_name( odp, spec ) : odp->link_name ));
+                asm_name( odp->type == TYPE_STUB ? get_stub_name( odp, spec ) : get_link_name( odp )));
         output( "\tcallw .L__wine_spec_callfrom16_%s\n", get_callfrom16_name( odp ) );
     }
     output( ".L__wine_spec_code_segment_end:\n" );
@@ -784,6 +789,7 @@ static void output_module16( DLLSPEC *spec )
         output_res16_data( spec );
     }
 
+    output( ".L__wine_spec_ne_header_end:\n" );
     output( "\t.byte 0\n" );  /* make sure the last symbol points to something */
 
     /* relay functions */
@@ -794,9 +800,6 @@ static void output_module16( DLLSPEC *spec )
         output( "\n/* relay functions */\n\n" );
         output( "\t.text\n" );
         for ( i = 0; i < nb_funcs; i++ ) output_call16_function( typelist[i] );
-        output( "\t.data\n" );
-        output( "wine_ldt_copy_ptr:\n" );
-        output( "\t.long %s\n", asm_name("wine_ldt_copy") );
     }
 
     free( typelist );
@@ -812,10 +815,10 @@ void output_spec16_file( DLLSPEC *spec16 )
 {
     DLLSPEC *spec32 = alloc_dll_spec();
 
-    resolve_imports( spec16 );
     add_16bit_exports( spec32, spec16 );
 
     needs_get_pc_thunk = 0;
+    open_output_file();
     output_standard_file_header();
     output_module( spec32 );
     output_module16( spec16 );
@@ -831,6 +834,7 @@ void output_spec16_file( DLLSPEC *spec16 )
         output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec16->main_module );
     }
     output_gnu_stack_note();
+    close_output_file();
     free_dll_spec( spec32 );
 }
 
@@ -843,7 +847,6 @@ void output_fake_module16( DLLSPEC *spec )
 {
     static const unsigned char code_segment[] = { 0x90, 0xc3 };
     static const unsigned char data_segment[16] = { 0 };
-    static const char fakedll_signature[] = "Wine placeholder DLL";
     const unsigned int cseg = 2;
     const unsigned int lfanew = (0x40 + sizeof(fakedll_signature) + 15) & ~15;
     const unsigned int segtab = lfanew + 0x40;

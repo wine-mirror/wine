@@ -281,15 +281,15 @@ static void     get_file_name(char* buf)
  *		static void     childPrintf
  *
  */
-static void WINETEST_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fmt, ...)
+static void WINAPIV WINETEST_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fmt, ...)
 {
-    va_list     valist;
+    __ms_va_list valist;
     char        buffer[1024+4*MAX_LISTED_ENV_VAR];
     DWORD       w;
 
-    va_start(valist, fmt);
+    __ms_va_start(valist, fmt);
     vsprintf(buffer, fmt, valist);
-    va_end(valist);
+    __ms_va_end(valist);
     WriteFile(h, buffer, strlen(buffer), &w, NULL);
 }
 
@@ -896,7 +896,7 @@ static void test_CommandLine(void)
 
     /* the basics */
     get_file_name(resfile);
-    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\" \"C:\\Program Files\\my nice app.exe\"", selfname, resfile);
+    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\" \"C:\\Program Files\\my nice app.exe\" \"\"\"\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
@@ -905,9 +905,10 @@ static void test_CommandLine(void)
     CloseHandle(info.hThread);
     CloseHandle(info.hProcess);
 
-    okChildInt("Arguments", "argcA", 5);
+    okChildInt("Arguments", "argcA", 6);
     okChildString("Arguments", "argvA4", "C:\\Program Files\\my nice app.exe");
-    okChildString("Arguments", "argvA5", NULL);
+    okChildString("Arguments", "argvA5", "\"");
+    okChildString("Arguments", "argvA6", NULL);
     okChildString("Arguments", "CommandLineA", buffer);
     release_memory();
     DeleteFileA(resfile);

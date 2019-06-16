@@ -6,6 +6,7 @@ DELAYIMPORTS = setupapi user32
 C_SRCS = \
 	instr.c \
 	ntoskrnl.c \
+	pnp.c \
 	sync.c
 
 RC_SRCS = ntoskrnl.rc

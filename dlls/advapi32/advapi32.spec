@@ -51,7 +51,7 @@
 # @ stub AuditQueryGlobalSaclW
 # @ stub AuditQueryPerUserPolicy
 # @ stub AuditQuerySecurity
-# @ stub AuditQuerySystemPolicy
+@ stdcall AuditQuerySystemPolicy(ptr long ptr)
 # @ stub AuditSetGlobalSaclA
 # @ stub AuditSetGlobalSaclW
 # @ stub AuditSetPerUserPolicy
@@ -272,7 +272,7 @@
 # @ stub EncryptionDisable
 @ stdcall EnumDependentServicesA(long long ptr long ptr ptr)
 @ stdcall EnumDependentServicesW(long long ptr long ptr ptr)
-# @ stub EnumDynamicTimeZoneInformation
+@ stdcall EnumDynamicTimeZoneInformation(long ptr) EnumDynamicTimeZoneInformation
 @ stub EnumServiceGroupA
 @ stub EnumServiceGroupW
 @ stdcall EnumServicesStatusA (long long long ptr long ptr ptr ptr)
@@ -405,8 +405,8 @@
 @ stdcall InitializeAcl(ptr long long)
 @ stdcall InitializeSecurityDescriptor(ptr long)
 @ stdcall InitializeSid(ptr ptr long)
-# @ stub InitiateShutdownA
-# @ stub InitiateShutdownW
+@ stdcall InitiateShutdownA(str str long long long)
+@ stdcall InitiateShutdownW(wstr wstr long long long)
 @ stdcall InitiateSystemShutdownA(str str long long long)
 @ stdcall InitiateSystemShutdownExA(str str long long long long)
 @ stdcall InitiateSystemShutdownExW(wstr wstr long long long long)
@@ -430,6 +430,8 @@
 @ stdcall LookupAccountNameA(str str ptr ptr ptr ptr ptr)
 @ stdcall LookupAccountNameW(wstr wstr ptr ptr ptr ptr ptr)
 @ stdcall LookupAccountSidA(ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall LookupAccountSidLocalA(ptr ptr ptr ptr ptr ptr)
+@ stdcall LookupAccountSidLocalW(ptr ptr ptr ptr ptr ptr)
 @ stdcall LookupAccountSidW(ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall LookupPrivilegeDisplayNameA(str str str ptr ptr)
 @ stdcall LookupPrivilegeDisplayNameW(wstr wstr wstr ptr ptr)
@@ -648,8 +650,8 @@
 @ stdcall RegGetKeySecurity(long long ptr ptr)
 @ stdcall RegGetValueA(long str str long ptr ptr ptr)
 @ stdcall RegGetValueW(long wstr wstr long ptr ptr ptr)
-# @ stub RegLoadAppKeyA
-# @ stub RegLoadAppKeyW
+@ stdcall RegLoadAppKeyA(str ptr long long long)
+@ stdcall RegLoadAppKeyW(wstr ptr long long long)
 @ stdcall RegLoadKeyA(long str str)
 @ stdcall RegLoadKeyW(long wstr wstr)
 @ stdcall RegLoadMUIStringA(long str str long ptr long str)
@@ -717,7 +719,7 @@
 @ stdcall SaferCreateLevel(long long long ptr ptr)
 # @ stub SaferGetLevelInformation
 @ stdcall SaferGetPolicyInformation(long long long ptr ptr ptr)
-# @ stub SaferIdentifyLevel
+@ stdcall SaferIdentifyLevel(long ptr ptr ptr)
 # @ stub SaferRecordEventLogEntry
 @ stdcall SaferSetLevelInformation(ptr long ptr long)
 # @ stub SaferSetPolicyInformation

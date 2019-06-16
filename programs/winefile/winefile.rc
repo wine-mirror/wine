@@ -95,7 +95,6 @@ STRINGTABLE
     IDS_WINEFILE            "Wine File Manager"
     IDS_ERROR               "Error"
     IDS_ROOT_FS             "root fs"
-    IDS_UNIXFS              "unixfs"
     IDS_DESKTOP             "#msgctxt#display name#Desktop"
     IDS_SHELL               "Shell"
     IDS_NO_IMPL             "Not yet implemented"

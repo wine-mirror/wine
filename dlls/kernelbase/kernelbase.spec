@@ -109,20 +109,20 @@
 @ stdcall CancelWaitableTimer(long) kernel32.CancelWaitableTimer
 # @ stub CeipIsOptedIn
 @ stdcall ChangeTimerQueueTimer(ptr ptr long long) kernel32.ChangeTimerQueueTimer
-@ stdcall CharLowerA(str) user32.CharLowerA
-@ stdcall CharLowerBuffA(str long) user32.CharLowerBuffA
-@ stdcall CharLowerBuffW(wstr long) user32.CharLowerBuffW
-@ stdcall CharLowerW(wstr) user32.CharLowerW
-@ stdcall CharNextA(str) user32.CharNextA
-@ stdcall CharNextExA(long str long) user32.CharNextExA
-@ stdcall CharNextW(wstr) user32.CharNextW
-@ stdcall CharPrevA(str str) user32.CharPrevA
-@ stdcall CharPrevExA(long str str long) user32.CharPrevExA
-@ stdcall CharPrevW(wstr wstr) user32.CharPrevW
-@ stdcall CharUpperA(str) user32.CharUpperA
-@ stdcall CharUpperBuffA(str long) user32.CharUpperBuffA
-@ stdcall CharUpperBuffW(wstr long) user32.CharUpperBuffW
-@ stdcall CharUpperW(wstr) user32.CharUpperW
+@ stdcall CharLowerA(str)
+@ stdcall CharLowerBuffA(str long)
+@ stdcall CharLowerBuffW(wstr long)
+@ stdcall CharLowerW(wstr)
+@ stdcall CharNextA(str)
+@ stdcall CharNextExA(long str long)
+@ stdcall CharNextW(wstr)
+@ stdcall CharPrevA(str str)
+@ stdcall CharPrevExA(long str str long)
+@ stdcall CharPrevW(wstr wstr)
+@ stdcall CharUpperA(str)
+@ stdcall CharUpperBuffA(str long)
+@ stdcall CharUpperBuffW(wstr long)
+@ stdcall CharUpperW(wstr)
 # @ stub CheckAllowDecryptedRemoteDestinationPolicy
 @ stub CheckGroupPolicyEnabled
 # @ stub CheckIfStateChangeNotificationExists
@@ -130,8 +130,8 @@
 # @ stub CheckTokenCapability
 @ stdcall CheckTokenMembership(long ptr ptr) advapi32.CheckTokenMembership
 # @ stub CheckTokenMembershipEx
-@ stdcall ChrCmpIA(long long) shlwapi.ChrCmpIA
-@ stdcall ChrCmpIW(long long) shlwapi.ChrCmpIW
+@ stdcall ChrCmpIA(long long)
+@ stdcall ChrCmpIW(long long)
 @ stdcall ClearCommBreak(long) kernel32.ClearCommBreak
 @ stdcall ClearCommError(long ptr ptr) kernel32.ClearCommError
 # @ stub CloseGlobalizationUserSettingsKey
@@ -297,7 +297,7 @@
 @ stdcall EnumDateFormatsExW(ptr long long) kernel32.EnumDateFormatsExW
 @ stdcall EnumDateFormatsW(ptr long long) kernel32.EnumDateFormatsW
 # @ stub EnumDeviceDrivers
-# @ stub EnumDynamicTimeZoneInformation
+@ stdcall EnumDynamicTimeZoneInformation(long ptr) advapi32.EnumDynamicTimeZoneInformation
 @ stdcall EnumLanguageGroupLocalesW(ptr long long ptr) kernel32.EnumLanguageGroupLocalesW
 # @ stub EnumPageFilesA
 # @ stub EnumPageFilesW
@@ -360,7 +360,7 @@
 # @ stub FindFirstFileNameW
 @ stdcall FindFirstFileW(wstr ptr) kernel32.FindFirstFileW
 @ stdcall FindFirstFreeAce(ptr ptr) advapi32.FindFirstFreeAce
-# @ stub FindFirstStreamW
+@ stdcall FindFirstStreamW(wstr long ptr long) kernel32.FindFirstStreamW
 @ stdcall FindFirstVolumeW(ptr long) kernel32.FindFirstVolumeW
 @ stub FindNLSString
 @ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long) kernel32.FindNLSStringEx
@@ -368,7 +368,7 @@
 @ stdcall FindNextFileA(long ptr) kernel32.FindNextFileA
 # @ stub FindNextFileNameW
 @ stdcall FindNextFileW(long ptr) kernel32.FindNextFileW
-# @ stub FindNextStreamW
+@ stdcall FindNextStreamW(long ptr) kernel32.FindNextStreamW
 @ stdcall FindNextVolumeW(long ptr long) kernel32.FindNextVolumeW
 # @ stub FindPackagesByPackageFamily
 @ stdcall FindResourceExW(long wstr wstr long) kernel32.FindResourceExW
@@ -403,8 +403,8 @@
 @ stdcall GenerateConsoleCtrlEvent(long long) kernel32.GenerateConsoleCtrlEvent
 # @ stub GenerateGPNotificationInternal
 @ stdcall GetACP() kernel32.GetACP
-@ stdcall GetAcceptLanguagesA(ptr ptr) shlwapi.GetAcceptLanguagesA
-@ stdcall GetAcceptLanguagesW(ptr ptr) shlwapi.GetAcceptLanguagesW
+@ stdcall GetAcceptLanguagesA(ptr ptr)
+@ stdcall GetAcceptLanguagesW(ptr ptr)
 @ stdcall GetAce(ptr long ptr) advapi32.GetAce
 @ stdcall GetAclInformation(ptr ptr long long) advapi32.GetAclInformation
 # @ stub GetAdjustObjectAttributesForPrivateNamespaceRoutine
@@ -576,7 +576,8 @@
 # @ stub GetNextFgPolicyRefreshInfoInternal
 @ stdcall GetNumaHighestNodeNumber(ptr) kernel32.GetNumaHighestNodeNumber
 @ stdcall GetNumaNodeProcessorMaskEx(long ptr) kernel32.GetNumaNodeProcessorMaskEx
-# @ stub GetNumaProximityNodeEx
+@ stdcall GetNumaProximityNode(long ptr) kernel32.GetNumaProximityNode
+@ stdcall GetNumaProximityNodeEx(long ptr) kernel32.GetNumaProximityNodeEx
 @ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long) kernel32.GetNumberFormatEx
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long) kernel32.GetNumberFormatW
 @ stdcall GetNumberOfConsoleInputEvents(long ptr) kernel32.GetNumberOfConsoleInputEvents
@@ -632,7 +633,7 @@
 # @ stub GetProcessInformation
 # @ stub GetProcessMemoryInfo
 @ stdcall GetProcessMitigationPolicy(long long ptr long) kernel32.GetProcessMitigationPolicy
-@ stub GetProcessPreferredUILanguages
+@ stdcall GetProcessPreferredUILanguages(long ptr ptr ptr) kernel32.GetProcessPreferredUILanguages
 @ stdcall GetProcessPriorityBoost(long ptr) kernel32.GetProcessPriorityBoost
 @ stdcall GetProcessShutdownParameters(ptr ptr) kernel32.GetProcessShutdownParameters
 @ stdcall GetProcessTimes(long ptr ptr ptr ptr) kernel32.GetProcessTimes
@@ -770,7 +771,7 @@
 @ stdcall GlobalMemoryStatusEx(ptr) kernel32.GlobalMemoryStatusEx
 # @ stub GuardCheckLongJumpTarget
 # @ stub HasPolicyForegroundProcessingCompletedInternal
-@ stdcall HashData(ptr long ptr long) shlwapi.HashData
+@ stdcall HashData(ptr long ptr long)
 @ stdcall HeapAlloc(long long long) kernel32.HeapAlloc
 @ stdcall HeapCompact(long long) kernel32.HeapCompact
 @ stdcall HeapCreate(long long long) kernel32.HeapCreate
@@ -838,21 +839,21 @@
 # @ stub InternetTimeToSystemTimeW
 # @ stub InvalidateAppModelVersionCache
 @ stub InvalidateTzSpecificCache
-@ stdcall IsCharAlphaA(long) user32.IsCharAlphaA
-@ stdcall IsCharAlphaNumericA(long) user32.IsCharAlphaNumericA
-@ stdcall IsCharAlphaNumericW(long) user32.IsCharAlphaNumericW
-@ stdcall IsCharAlphaW(long) user32.IsCharAlphaW
-@ stdcall IsCharBlankW(long) shlwapi.IsCharBlankW
-@ stdcall IsCharCntrlW(ptr) shlwapi.IsCharCntrlW
-@ stdcall IsCharDigitW(long) shlwapi.IsCharDigitW
-@ stdcall IsCharLowerA(long) user32.IsCharLowerA
-@ stdcall IsCharLowerW(long) user32.IsCharLowerW
-@ stdcall IsCharPunctW(long) shlwapi.IsCharPunctW
-@ stdcall IsCharSpaceA(long) shlwapi.IsCharSpaceA
-@ stdcall IsCharSpaceW(long) shlwapi.IsCharSpaceW
-@ stdcall IsCharUpperA(long) user32.IsCharUpperA
-@ stdcall IsCharUpperW(long) user32.IsCharUpperW
-@ stdcall IsCharXDigitW(long) shlwapi.IsCharXDigitW
+@ stdcall IsCharAlphaA(long)
+@ stdcall IsCharAlphaNumericA(long)
+@ stdcall IsCharAlphaNumericW(long)
+@ stdcall IsCharAlphaW(long)
+@ stdcall IsCharBlankW(long)
+@ stdcall IsCharCntrlW(long)
+@ stdcall IsCharDigitW(long)
+@ stdcall IsCharLowerA(long)
+@ stdcall IsCharLowerW(long)
+@ stdcall IsCharPunctW(long)
+@ stdcall IsCharSpaceA(long)
+@ stdcall IsCharSpaceW(long)
+@ stdcall IsCharUpperA(long)
+@ stdcall IsCharUpperW(long)
+@ stdcall IsCharXDigitW(long)
 @ stdcall IsDBCSLeadByte(long) kernel32.IsDBCSLeadByte
 @ stdcall IsDBCSLeadByteEx(long long) kernel32.IsDBCSLeadByteEx
 @ stdcall IsDebuggerPresent() kernel32.IsDebuggerPresent
@@ -860,7 +861,7 @@
 # @ stub IsDeveloperModePolicyApplied
 # @ stub IsEnclaveTypeSupported
 # @ stub IsGlobalizationUserSettingsKeyRedirected
-@ stdcall IsInternetESCEnabled() shlwapi.IsInternetESCEnabled
+@ stdcall IsInternetESCEnabled()
 @ stub IsNLSDefinedString
 @ stdcall IsNormalizedString(long wstr long) kernel32.IsNormalizedString
 # @ stub IsProcessCritical
@@ -908,7 +909,7 @@
 @ stdcall K32GetProcessImageFileNameW(long ptr long) kernel32.K32GetProcessImageFileNameW
 @ stdcall K32GetProcessMemoryInfo(long ptr long) kernel32.K32GetProcessMemoryInfo
 @ stdcall K32GetWsChanges(long ptr long) kernel32.K32GetWsChanges
-# @ stub K32GetWsChangesEx
+@ stdcall K32GetWsChangesEx(long ptr ptr) kernel32.K32GetWsChangesEx
 @ stdcall K32InitializeProcessForWsWatch(long) kernel32.K32InitializeProcessForWsWatch
 @ stdcall K32QueryWorkingSet(long ptr long) kernel32.K32QueryWorkingSet
 @ stdcall K32QueryWorkingSetEx(long ptr long) kernel32.K32QueryWorkingSetEx
@@ -928,10 +929,10 @@
 @ stdcall LoadLibraryW(wstr) kernel32.LoadLibraryW
 # @ stub LoadPackagedLibrary
 @ stdcall LoadResource(long long) kernel32.LoadResource
-@ stdcall LoadStringA(long long ptr long) user32.LoadStringA
+@ stdcall LoadStringA(long long ptr long)
 @ stub LoadStringBaseExW
 @ stub LoadStringByReference
-@ stdcall LoadStringW(long long ptr long) user32.LoadStringW
+@ stdcall LoadStringW(long long ptr long)
 @ stdcall LocalAlloc(long long) kernel32.LocalAlloc
 @ stdcall LocalFileTimeToFileTime(ptr ptr) kernel32.LocalFileTimeToFileTime
 @ stdcall LocalFree(long) kernel32.LocalFree
@@ -948,7 +949,7 @@
 @ stdcall MakeSelfRelativeSD(ptr ptr ptr) advapi32.MakeSelfRelativeSD
 @ stdcall MapGenericMask(ptr ptr) advapi32.MapGenericMask
 # @ stub MapPredefinedHandleInternal
-# @ stub MapUserPhysicalPages
+@ stdcall MapUserPhysicalPages(ptr long ptr) kernel32.MapUserPhysicalPages
 @ stdcall MapViewOfFile(long long long long long) kernel32.MapViewOfFile
 @ stdcall MapViewOfFileEx(long long long long long ptr) kernel32.MapViewOfFileEx
 @ stub MapViewOfFileExNuma
@@ -1017,18 +1018,18 @@
 # @ stub PackageSidFromFamilyName
 # @ stub PackageSidFromProductId
 # @ stub ParseApplicationUserModelId
-@ stdcall ParseURLA(str ptr) shlwapi.ParseURLA
-@ stdcall ParseURLW(wstr ptr) shlwapi.ParseURLW
-@ stdcall PathAddBackslashA(str) shlwapi.PathAddBackslashA
-@ stdcall PathAddBackslashW(wstr) shlwapi.PathAddBackslashW
-@ stdcall PathAddExtensionA(str str) shlwapi.PathAddExtensionA
-@ stdcall PathAddExtensionW(wstr wstr) shlwapi.PathAddExtensionW
+@ stdcall ParseURLA(str ptr)
+@ stdcall ParseURLW(wstr ptr)
+@ stdcall PathAddBackslashA(str)
+@ stdcall PathAddBackslashW(wstr)
+@ stdcall PathAddExtensionA(str str)
+@ stdcall PathAddExtensionW(wstr wstr)
 @ stdcall PathAllocCanonicalize(wstr long ptr)
 @ stdcall PathAllocCombine(wstr wstr long ptr)
-@ stdcall PathAppendA(str str) shlwapi.PathAppendA
-@ stdcall PathAppendW(wstr wstr) shlwapi.PathAppendW
-@ stdcall PathCanonicalizeA(ptr str) shlwapi.PathCanonicalizeA
-@ stdcall PathCanonicalizeW(ptr wstr) shlwapi.PathCanonicalizeW
+@ stdcall PathAppendA(str str)
+@ stdcall PathAppendW(wstr wstr)
+@ stdcall PathCanonicalizeA(ptr str)
+@ stdcall PathCanonicalizeW(ptr wstr)
 @ stdcall PathCchAddBackslash(wstr long)
 @ stdcall PathCchAddBackslashEx(wstr long ptr ptr)
 @ stdcall PathCchAddExtension(wstr long wstr)
@@ -1048,82 +1049,82 @@
 @ stdcall PathCchSkipRoot(wstr ptr)
 @ stdcall PathCchStripPrefix(wstr long)
 @ stdcall PathCchStripToRoot(wstr long)
-@ stdcall PathCombineA(ptr str str) shlwapi.PathCombineA
-@ stdcall PathCombineW(ptr wstr wstr) shlwapi.PathCombineW
-@ stdcall PathCommonPrefixA(str str ptr) shlwapi.PathCommonPrefixA
-@ stdcall PathCommonPrefixW(wstr wstr ptr) shlwapi.PathCommonPrefixW
-@ stdcall PathCreateFromUrlA(str ptr ptr long) shlwapi.PathCreateFromUrlA
-@ stdcall PathCreateFromUrlAlloc(wstr ptr long) shlwapi.PathCreateFromUrlAlloc
-@ stdcall PathCreateFromUrlW(wstr ptr ptr long) shlwapi.PathCreateFromUrlW
-@ stdcall PathFileExistsA(str) shlwapi.PathFileExistsA
-@ stdcall PathFileExistsW(wstr) shlwapi.PathFileExistsW
-@ stdcall PathFindExtensionA(str) shlwapi.PathFindExtensionA
-@ stdcall PathFindExtensionW(wstr) shlwapi.PathFindExtensionW
-@ stdcall PathFindFileNameA(str) shlwapi.PathFindFileNameA
-@ stdcall PathFindFileNameW(wstr) shlwapi.PathFindFileNameW
-@ stdcall PathFindNextComponentA(str) shlwapi.PathFindNextComponentA
-@ stdcall PathFindNextComponentW(wstr) shlwapi.PathFindNextComponentW
-@ stdcall PathGetArgsA(str) shlwapi.PathGetArgsA
-@ stdcall PathGetArgsW(wstr) shlwapi.PathGetArgsW
-@ stdcall PathGetCharTypeA(long) shlwapi.PathGetCharTypeA
-@ stdcall PathGetCharTypeW(long) shlwapi.PathGetCharTypeW
-@ stdcall PathGetDriveNumberA(str) shlwapi.PathGetDriveNumberA
-@ stdcall PathGetDriveNumberW(wstr) shlwapi.PathGetDriveNumberW
-@ stdcall PathIsFileSpecA(str) shlwapi.PathIsFileSpecA
-@ stdcall PathIsFileSpecW(wstr) shlwapi.PathIsFileSpecW
-@ stdcall PathIsLFNFileSpecA(str) shlwapi.PathIsLFNFileSpecA
-@ stdcall PathIsLFNFileSpecW(wstr) shlwapi.PathIsLFNFileSpecW
-@ stdcall PathIsPrefixA(str str) shlwapi.PathIsPrefixA
-@ stdcall PathIsPrefixW(wstr wstr) shlwapi.PathIsPrefixW
-@ stdcall PathIsRelativeA(str) shlwapi.PathIsRelativeA
-@ stdcall PathIsRelativeW(wstr) shlwapi.PathIsRelativeW
-@ stdcall PathIsRootA(str) shlwapi.PathIsRootA
-@ stdcall PathIsRootW(wstr) shlwapi.PathIsRootW
-@ stdcall PathIsSameRootA(str str) shlwapi.PathIsSameRootA
-@ stdcall PathIsSameRootW(wstr wstr) shlwapi.PathIsSameRootW
-@ stdcall PathIsUNCA(str) shlwapi.PathIsUNCA
+@ stdcall PathCombineA(ptr str str)
+@ stdcall PathCombineW(ptr wstr wstr)
+@ stdcall PathCommonPrefixA(str str ptr)
+@ stdcall PathCommonPrefixW(wstr wstr ptr)
+@ stdcall PathCreateFromUrlA(str ptr ptr long)
+@ stdcall PathCreateFromUrlAlloc(wstr ptr long)
+@ stdcall PathCreateFromUrlW(wstr ptr ptr long)
+@ stdcall PathFileExistsA(str)
+@ stdcall PathFileExistsW(wstr)
+@ stdcall PathFindExtensionA(str)
+@ stdcall PathFindExtensionW(wstr)
+@ stdcall PathFindFileNameA(str)
+@ stdcall PathFindFileNameW(wstr)
+@ stdcall PathFindNextComponentA(str)
+@ stdcall PathFindNextComponentW(wstr)
+@ stdcall PathGetArgsA(str)
+@ stdcall PathGetArgsW(wstr)
+@ stdcall PathGetCharTypeA(long)
+@ stdcall PathGetCharTypeW(long)
+@ stdcall PathGetDriveNumberA(str)
+@ stdcall PathGetDriveNumberW(wstr)
+@ stdcall PathIsFileSpecA(str)
+@ stdcall PathIsFileSpecW(wstr)
+@ stdcall PathIsLFNFileSpecA(str)
+@ stdcall PathIsLFNFileSpecW(wstr)
+@ stdcall PathIsPrefixA(str str)
+@ stdcall PathIsPrefixW(wstr wstr)
+@ stdcall PathIsRelativeA(str)
+@ stdcall PathIsRelativeW(wstr)
+@ stdcall PathIsRootA(str)
+@ stdcall PathIsRootW(wstr)
+@ stdcall PathIsSameRootA(str str)
+@ stdcall PathIsSameRootW(wstr wstr)
+@ stdcall PathIsUNCA(str)
 @ stdcall PathIsUNCEx(wstr ptr)
-@ stdcall PathIsUNCServerA(str) shlwapi.PathIsUNCServerA
-@ stdcall PathIsUNCServerShareA(str) shlwapi.PathIsUNCServerShareA
-@ stdcall PathIsUNCServerShareW(wstr) shlwapi.PathIsUNCServerShareW
-@ stdcall PathIsUNCServerW(wstr) shlwapi.PathIsUNCServerW
-@ stdcall PathIsUNCW(wstr) shlwapi.PathIsUNCW
-@ stdcall PathIsURLA(str) shlwapi.PathIsURLA
-@ stdcall PathIsURLW(wstr) shlwapi.PathIsURLW
-@ stdcall PathIsValidCharA(long long) shlwapi.PathIsValidCharA
-@ stdcall PathIsValidCharW(long long) shlwapi.PathIsValidCharW
-@ stdcall PathMatchSpecA(str str) shlwapi.PathMatchSpecA
+@ stdcall PathIsUNCServerA(str)
+@ stdcall PathIsUNCServerShareA(str)
+@ stdcall PathIsUNCServerShareW(wstr)
+@ stdcall PathIsUNCServerW(wstr)
+@ stdcall PathIsUNCW(wstr)
+@ stdcall PathIsURLA(str)
+@ stdcall PathIsURLW(wstr)
+@ stdcall PathIsValidCharA(long long)
+@ stdcall PathIsValidCharW(long long)
+@ stdcall PathMatchSpecA(str str)
 # @ stub PathMatchSpecExA
 # @ stub PathMatchSpecExW
-@ stdcall PathMatchSpecW(wstr wstr) shlwapi.PathMatchSpecW
-@ stdcall PathParseIconLocationA(str) shlwapi.PathParseIconLocationA
-@ stdcall PathParseIconLocationW(wstr) shlwapi.PathParseIconLocationW
-@ stdcall PathQuoteSpacesA(str) shlwapi.PathQuoteSpacesA
-@ stdcall PathQuoteSpacesW(wstr) shlwapi.PathQuoteSpacesW
-@ stdcall PathRelativePathToA(ptr str long str long) shlwapi.PathRelativePathToA
-@ stdcall PathRelativePathToW(ptr wstr long wstr long) shlwapi.PathRelativePathToW
-@ stdcall PathRemoveBackslashA(str) shlwapi.PathRemoveBackslashA
-@ stdcall PathRemoveBackslashW(wstr) shlwapi.PathRemoveBackslashW
-@ stdcall PathRemoveBlanksA(str) shlwapi.PathRemoveBlanksA
-@ stdcall PathRemoveBlanksW(wstr) shlwapi.PathRemoveBlanksW
-@ stdcall PathRemoveExtensionA(str) shlwapi.PathRemoveExtensionA
-@ stdcall PathRemoveExtensionW(wstr) shlwapi.PathRemoveExtensionW
-@ stdcall PathRemoveFileSpecA(str) shlwapi.PathRemoveFileSpecA
-@ stdcall PathRemoveFileSpecW(wstr) shlwapi.PathRemoveFileSpecW
-@ stdcall PathRenameExtensionA(str str) shlwapi.PathRenameExtensionA
-@ stdcall PathRenameExtensionW(wstr wstr) shlwapi.PathRenameExtensionW
-@ stdcall PathSearchAndQualifyA(str ptr long) shlwapi.PathSearchAndQualifyA
-@ stdcall PathSearchAndQualifyW(wstr ptr long) shlwapi.PathSearchAndQualifyW
-@ stdcall PathSkipRootA(str) shlwapi.PathSkipRootA
-@ stdcall PathSkipRootW(wstr) shlwapi.PathSkipRootW
-@ stdcall PathStripPathA(str) shlwapi.PathStripPathA
-@ stdcall PathStripPathW(wstr) shlwapi.PathStripPathW
-@ stdcall PathStripToRootA(str) shlwapi.PathStripToRootA
-@ stdcall PathStripToRootW(wstr) shlwapi.PathStripToRootW
-@ stdcall PathUnExpandEnvStringsA(str ptr long) shlwapi.PathUnExpandEnvStringsA
-@ stdcall PathUnExpandEnvStringsW(wstr ptr long) shlwapi.PathUnExpandEnvStringsW
-@ stdcall PathUnquoteSpacesA(str) shlwapi.PathUnquoteSpacesA
-@ stdcall PathUnquoteSpacesW(wstr) shlwapi.PathUnquoteSpacesW
+@ stdcall PathMatchSpecW(wstr wstr)
+@ stdcall PathParseIconLocationA(str)
+@ stdcall PathParseIconLocationW(wstr)
+@ stdcall PathQuoteSpacesA(str)
+@ stdcall PathQuoteSpacesW(wstr)
+@ stdcall PathRelativePathToA(ptr str long str long)
+@ stdcall PathRelativePathToW(ptr wstr long wstr long)
+@ stdcall PathRemoveBackslashA(str)
+@ stdcall PathRemoveBackslashW(wstr)
+@ stdcall PathRemoveBlanksA(str)
+@ stdcall PathRemoveBlanksW(wstr)
+@ stdcall PathRemoveExtensionA(str)
+@ stdcall PathRemoveExtensionW(wstr)
+@ stdcall PathRemoveFileSpecA(str)
+@ stdcall PathRemoveFileSpecW(wstr)
+@ stdcall PathRenameExtensionA(str str)
+@ stdcall PathRenameExtensionW(wstr wstr)
+@ stdcall PathSearchAndQualifyA(str ptr long)
+@ stdcall PathSearchAndQualifyW(wstr ptr long)
+@ stdcall PathSkipRootA(str)
+@ stdcall PathSkipRootW(wstr)
+@ stdcall PathStripPathA(str)
+@ stdcall PathStripPathW(wstr)
+@ stdcall PathStripToRootA(str)
+@ stdcall PathStripToRootW(wstr)
+@ stdcall PathUnExpandEnvStringsA(str ptr long)
+@ stdcall PathUnExpandEnvStringsW(wstr ptr long)
+@ stdcall PathUnquoteSpacesA(str)
+@ stdcall PathUnquoteSpacesW(wstr)
 # @ stub PcwAddQueryItem
 # @ stub PcwClearCounterSetSecurity
 # @ stub PcwCollectData
@@ -1190,7 +1191,7 @@
 # @ stub PublishStateChangeNotification
 @ stdcall PulseEvent(long) kernel32.PulseEvent
 @ stdcall PurgeComm(long long) kernel32.PurgeComm
-@ stdcall QISearch(long long long long) shlwapi.QISearch
+@ stdcall QISearch(ptr ptr ptr ptr)
 @ stdcall QueryActCtxSettingsW(long ptr wstr wstr ptr long ptr) kernel32.QueryActCtxSettingsW
 @ stdcall QueryActCtxW(long ptr ptr long ptr long ptr) kernel32.QueryActCtxW
 @ stdcall QueryDepthSList(ptr) kernel32.QueryDepthSList
@@ -1288,8 +1289,8 @@
 # @ stub RegKrnResetAppKeyLoaded
 # @ stub RegKrnSetDllHasThreadStateGlobal
 # @ stub RegKrnSetTermsrvRegistryExtensionFlags
-# @ stub RegLoadAppKeyA
-# @ stub RegLoadAppKeyW
+@ stdcall RegLoadAppKeyA(str ptr long long long) advapi32.RegLoadAppKeyA
+@ stdcall RegLoadAppKeyW(wstr ptr long long long) advapi32.RegLoadAppKeyW
 @ stdcall -private RegLoadKeyA(long str str) kernel32.RegLoadKeyA
 @ stdcall -private RegLoadKeyW(long wstr wstr) kernel32.RegLoadKeyW
 @ stdcall -private RegLoadMUIStringA(long str str long ptr long str) kernel32.RegLoadMUIStringA
@@ -1353,34 +1354,34 @@
 # @ stub SHCoCreateInstance
 @ stdcall SHExpandEnvironmentStringsA(str ptr long) kernel32.ExpandEnvironmentStringsA
 @ stdcall SHExpandEnvironmentStringsW(wstr ptr long) kernel32.ExpandEnvironmentStringsW
-@ stdcall SHLoadIndirectString(wstr ptr long ptr) shlwapi.SHLoadIndirectString
+@ stdcall SHLoadIndirectString(wstr ptr long ptr)
 # @ stub SHLoadIndirectStringInternal
-@ stdcall SHRegCloseUSKey(ptr) shlwapi.SHRegCloseUSKey
-@ stdcall SHRegCreateUSKeyA(str long long ptr long) shlwapi.SHRegCreateUSKeyA
-@ stdcall SHRegCreateUSKeyW(wstr long long ptr long) shlwapi.SHRegCreateUSKeyW
-@ stdcall SHRegDeleteEmptyUSKeyA(long str long) shlwapi.SHRegDeleteEmptyUSKeyA
-@ stdcall SHRegDeleteEmptyUSKeyW(long wstr long) shlwapi.SHRegDeleteEmptyUSKeyW
-@ stdcall SHRegDeleteUSValueA(long str long) shlwapi.SHRegDeleteUSValueA
-@ stdcall SHRegDeleteUSValueW(long wstr long) shlwapi.SHRegDeleteUSValueW
-@ stdcall SHRegEnumUSKeyA(long long str ptr long) shlwapi.SHRegEnumUSKeyA
-@ stdcall SHRegEnumUSKeyW(long long wstr ptr long) shlwapi.SHRegEnumUSKeyW
-@ stdcall SHRegEnumUSValueA(long long ptr ptr ptr ptr ptr long) shlwapi.SHRegEnumUSValueA
-@ stdcall SHRegEnumUSValueW(long long ptr ptr ptr ptr ptr long) shlwapi.SHRegEnumUSValueW
-@ stdcall SHRegGetBoolUSValueA(str str long long) shlwapi.SHRegGetBoolUSValueA
-@ stdcall SHRegGetBoolUSValueW(wstr wstr long long) shlwapi.SHRegGetBoolUSValueW
-@ stdcall SHRegGetUSValueA( str str ptr ptr ptr long ptr long ) shlwapi.SHRegGetUSValueA
-@ stdcall SHRegGetUSValueW( wstr wstr ptr ptr ptr long ptr long ) shlwapi.SHRegGetUSValueW
-@ stdcall SHRegOpenUSKeyA( str long long long long ) shlwapi.SHRegOpenUSKeyA
-@ stdcall SHRegOpenUSKeyW( wstr long long long long ) shlwapi.SHRegOpenUSKeyW
-@ stdcall SHRegQueryInfoUSKeyA( long ptr ptr ptr ptr long ) shlwapi.SHRegQueryInfoUSKeyA
-@ stdcall SHRegQueryInfoUSKeyW( long ptr ptr ptr ptr long ) shlwapi.SHRegQueryInfoUSKeyW
-@ stdcall SHRegQueryUSValueA( long str ptr ptr ptr long ptr long ) shlwapi.SHRegQueryUSValueA
-@ stdcall SHRegQueryUSValueW( long wstr ptr ptr ptr long ptr long ) shlwapi.SHRegQueryUSValueW
-@ stdcall SHRegSetUSValueA( str str long ptr long long) shlwapi.SHRegSetUSValueA
-@ stdcall SHRegSetUSValueW( wstr wstr long ptr long long) shlwapi.SHRegSetUSValueW
-@ stdcall SHRegWriteUSValueA(long str long ptr long long) shlwapi.SHRegWriteUSValueA
-@ stdcall SHRegWriteUSValueW(long wstr long ptr long long) shlwapi.SHRegWriteUSValueW
-@ stdcall SHTruncateString(str long) shlwapi.SHTruncateString
+@ stdcall SHRegCloseUSKey(ptr)
+@ stdcall SHRegCreateUSKeyA(str long long ptr long)
+@ stdcall SHRegCreateUSKeyW(wstr long long ptr long)
+@ stdcall SHRegDeleteEmptyUSKeyA(long str long)
+@ stdcall SHRegDeleteEmptyUSKeyW(long wstr long)
+@ stdcall SHRegDeleteUSValueA(long str long)
+@ stdcall SHRegDeleteUSValueW(long wstr long)
+@ stdcall SHRegEnumUSKeyA(long long str ptr long)
+@ stdcall SHRegEnumUSKeyW(long long wstr ptr long)
+@ stdcall SHRegEnumUSValueA(long long ptr ptr ptr ptr ptr long)
+@ stdcall SHRegEnumUSValueW(long long ptr ptr ptr ptr ptr long)
+@ stdcall SHRegGetBoolUSValueA(str str long long)
+@ stdcall SHRegGetBoolUSValueW(wstr wstr long long)
+@ stdcall SHRegGetUSValueA(str str ptr ptr ptr long ptr long)
+@ stdcall SHRegGetUSValueW(wstr wstr ptr ptr ptr long ptr long)
+@ stdcall SHRegOpenUSKeyA(str long long ptr long)
+@ stdcall SHRegOpenUSKeyW(wstr long long ptr long)
+@ stdcall SHRegQueryInfoUSKeyA(long ptr ptr ptr ptr long)
+@ stdcall SHRegQueryInfoUSKeyW(long ptr ptr ptr ptr long)
+@ stdcall SHRegQueryUSValueA(long str ptr ptr ptr long ptr long)
+@ stdcall SHRegQueryUSValueW(long wstr ptr ptr ptr long ptr long)
+@ stdcall SHRegSetUSValueA(str str long ptr long long)
+@ stdcall SHRegSetUSValueW(wstr wstr long ptr long long)
+@ stdcall SHRegWriteUSValueA(long str long ptr long long)
+@ stdcall SHRegWriteUSValueW(long wstr long ptr long long)
+@ stdcall SHTruncateString(str long)
 # @ stub SaveAlternatePackageRootPath
 # @ stub SaveStateRootFolderPath
 @ stdcall ScrollConsoleScreenBufferA(long ptr ptr ptr ptr) kernel32.ScrollConsoleScreenBufferA
@@ -1457,7 +1458,7 @@
 # @ stub SetProcessGroupAffinity
 # @ stub SetProcessInformation
 @ stdcall SetProcessMitigationPolicy(long ptr long) kernel32.SetProcessMitigationPolicy
-# @ stub SetProcessPreferredUILanguages
+@ stdcall SetProcessPreferredUILanguages(long ptr ptr) kernel32.SetProcessPreferredUILanguages
 @ stdcall SetProcessPriorityBoost(long long) kernel32.SetProcessPriorityBoost
 @ stdcall SetProcessShutdownParameters(long long) kernel32.SetProcessShutdownParameters
 # @ stub SetProcessValidCallTargets
@@ -1524,66 +1525,66 @@
 # @ stub StmReduceSize
 # @ stub StmReserve
 # @ stub StmWrite
-@ stdcall StrCSpnA(str str) shlwapi.StrCSpnA
-@ stdcall StrCSpnIA(str str) shlwapi.StrCSpnIA
-@ stdcall StrCSpnIW(wstr wstr) shlwapi.StrCSpnIW
-@ stdcall StrCSpnW(wstr wstr) shlwapi.StrCSpnW
-@ stdcall StrCatBuffA(str str long) shlwapi.StrCatBuffA
-@ stdcall StrCatBuffW(wstr wstr long) shlwapi.StrCatBuffW
-@ stdcall StrCatChainW(ptr long long wstr) shlwapi.StrCatChainW
-@ stdcall StrChrA(str long) shlwapi.StrChrA
+@ stdcall StrCSpnA(str str)
+@ stdcall StrCSpnIA(str str)
+@ stdcall StrCSpnIW(wstr wstr)
+@ stdcall StrCSpnW(wstr wstr)
+@ stdcall StrCatBuffA(str str long)
+@ stdcall StrCatBuffW(wstr wstr long)
+@ stdcall StrCatChainW(ptr long long wstr)
+@ stdcall StrChrA(str long)
 # @ stub StrChrA_MB
-@ stdcall StrChrIA(str long) shlwapi.StrChrIA
-@ stdcall StrChrIW(wstr long) shlwapi.StrChrIW
+@ stdcall StrChrIA(str long)
+@ stdcall StrChrIW(wstr long)
 # @ stub StrChrNIW
-@ stdcall StrChrNW(wstr long long) shlwapi.StrChrNW
-@ stdcall StrChrW(wstr long) shlwapi.StrChrW
-@ stdcall StrCmpCA(str str) shlwapi.StrCmpCA
-@ stdcall StrCmpCW(wstr wstr) shlwapi.StrCmpCW
-@ stdcall StrCmpICA(str str) shlwapi.StrCmpICA
-@ stdcall StrCmpICW(wstr wstr) shlwapi.StrCmpICW
-@ stdcall StrCmpIW(wstr wstr) shlwapi.StrCmpIW
-@ stdcall StrCmpLogicalW(wstr wstr) shlwapi.StrCmpLogicalW
-@ stdcall StrCmpNA(str str long) shlwapi.StrCmpNA
-@ stdcall StrCmpNCA(str ptr long) shlwapi.StrCmpNCA
-@ stdcall StrCmpNCW(wstr wstr long) shlwapi.StrCmpNCW
-@ stdcall StrCmpNIA(str str long) shlwapi.StrCmpNIA
-@ stdcall StrCmpNICA(long long long) shlwapi.StrCmpNICA
-@ stdcall StrCmpNICW(wstr wstr long) shlwapi.StrCmpNICW
-@ stdcall StrCmpNIW(wstr wstr long) shlwapi.StrCmpNIW
-@ stdcall StrCmpNW(wstr wstr long) shlwapi.StrCmpNW
-@ stdcall StrCmpW(wstr wstr) shlwapi.StrCmpW
-@ stdcall StrCpyNW(ptr wstr long) shlwapi.StrCpyNW
-@ stdcall StrCpyNXA(ptr str long) shlwapi.StrCpyNXA
-@ stdcall StrCpyNXW(ptr wstr long) shlwapi.StrCpyNXW
-@ stdcall StrDupA(str) shlwapi.StrDupA
-@ stdcall StrDupW(wstr) shlwapi.StrDupW
-@ stdcall StrIsIntlEqualA(long str str long) shlwapi.StrIsIntlEqualA
-@ stdcall StrIsIntlEqualW(long wstr wstr long) shlwapi.StrIsIntlEqualW
-@ stdcall StrPBrkA(str str) shlwapi.StrPBrkA
-@ stdcall StrPBrkW(wstr wstr) shlwapi.StrPBrkW
-@ stdcall StrRChrA(str str long) shlwapi.StrRChrA
-@ stdcall StrRChrIA(str str long) shlwapi.StrRChrIA
-@ stdcall StrRChrIW(wstr wstr long) shlwapi.StrRChrIW
-@ stdcall StrRChrW(wstr wstr long) shlwapi.StrRChrW
-@ stdcall StrRStrIA(str str str) shlwapi.StrRStrIA
-@ stdcall StrRStrIW(wstr wstr wstr) shlwapi.StrRStrIW
-@ stdcall StrSpnA(str str) shlwapi.StrSpnA
-@ stdcall StrSpnW(wstr wstr) shlwapi.StrSpnW
-@ stdcall StrStrA(str str) shlwapi.StrStrA
-@ stdcall StrStrIA(str str) shlwapi.StrStrIA
-@ stdcall StrStrIW(wstr wstr) shlwapi.StrStrIW
-@ stdcall StrStrNIW(wstr wstr long) shlwapi.StrStrNIW
-@ stdcall StrStrNW(wstr wstr long) shlwapi.StrStrNW
-@ stdcall StrStrW(wstr wstr) shlwapi.StrStrW
-@ stdcall StrToInt64ExA(str long ptr) shlwapi.StrToInt64ExA
-@ stdcall StrToInt64ExW(wstr long ptr) shlwapi.StrToInt64ExW
-@ stdcall StrToIntA(str) shlwapi.StrToIntA
-@ stdcall StrToIntExA(str long ptr) shlwapi.StrToIntExA
-@ stdcall StrToIntExW(wstr long ptr) shlwapi.StrToIntExW
-@ stdcall StrToIntW(wstr) shlwapi.StrToIntW
-@ stdcall StrTrimA(str str) shlwapi.StrTrimA
-@ stdcall StrTrimW(wstr wstr) shlwapi.StrTrimW
+@ stdcall StrChrNW(wstr long long)
+@ stdcall StrChrW(wstr long)
+@ stdcall StrCmpCA(str str)
+@ stdcall StrCmpCW(wstr wstr)
+@ stdcall StrCmpICA(str str)
+@ stdcall StrCmpICW(wstr wstr)
+@ stdcall StrCmpIW(wstr wstr)
+@ stdcall StrCmpLogicalW(wstr wstr)
+@ stdcall StrCmpNA(str str long)
+@ stdcall StrCmpNCA(str str long)
+@ stdcall StrCmpNCW(wstr wstr long)
+@ stdcall StrCmpNIA(str str long)
+@ stdcall StrCmpNICA(str str long)
+@ stdcall StrCmpNICW(wstr wstr long)
+@ stdcall StrCmpNIW(wstr wstr long)
+@ stdcall StrCmpNW(wstr wstr long)
+@ stdcall StrCmpW(wstr wstr)
+@ stdcall StrCpyNW(ptr wstr long)
+@ stdcall StrCpyNXA(ptr str long)
+@ stdcall StrCpyNXW(ptr wstr long)
+@ stdcall StrDupA(str)
+@ stdcall StrDupW(wstr)
+@ stdcall StrIsIntlEqualA(long str str long)
+@ stdcall StrIsIntlEqualW(long wstr wstr long)
+@ stdcall StrPBrkA(str str)
+@ stdcall StrPBrkW(wstr wstr)
+@ stdcall StrRChrA(str str long)
+@ stdcall StrRChrIA(str str long)
+@ stdcall StrRChrIW(wstr wstr long)
+@ stdcall StrRChrW(wstr wstr long)
+@ stdcall StrRStrIA(str str str)
+@ stdcall StrRStrIW(wstr wstr wstr)
+@ stdcall StrSpnA(str str)
+@ stdcall StrSpnW(wstr wstr)
+@ stdcall StrStrA(str str)
+@ stdcall StrStrIA(str str)
+@ stdcall StrStrIW(wstr wstr)
+@ stdcall StrStrNIW(wstr wstr long)
+@ stdcall StrStrNW(wstr wstr long)
+@ stdcall StrStrW(wstr wstr)
+@ stdcall StrToInt64ExA(str long ptr)
+@ stdcall StrToInt64ExW(wstr long ptr)
+@ stdcall StrToIntA(str)
+@ stdcall StrToIntExA(str long ptr)
+@ stdcall StrToIntExW(wstr long ptr)
+@ stdcall StrToIntW(wstr)
+@ stdcall StrTrimA(str str)
+@ stdcall StrTrimW(wstr wstr)
 @ stdcall SubmitThreadpoolWork(ptr) kernel32.SubmitThreadpoolWork
 # @ stub SubscribeEdpEnabledStateChange
 # @ stub SubscribeStateChangeNotification
@@ -1627,33 +1628,33 @@
 # @ stub UpdatePackageStatus
 # @ stub UpdatePackageStatusForUser
 @ stdcall UpdateProcThreadAttribute(ptr long long ptr long ptr ptr) kernel32.UpdateProcThreadAttribute
-@ stdcall UrlApplySchemeA(str ptr ptr long) shlwapi.UrlApplySchemeA
-@ stdcall UrlApplySchemeW(wstr ptr ptr long) shlwapi.UrlApplySchemeW
-@ stdcall UrlCanonicalizeA(str ptr ptr long) shlwapi.UrlCanonicalizeA
-@ stdcall UrlCanonicalizeW(wstr ptr ptr long) shlwapi.UrlCanonicalizeW
-@ stdcall UrlCombineA(str str ptr ptr long) shlwapi.UrlCombineA
-@ stdcall UrlCombineW(wstr wstr ptr ptr long) shlwapi.UrlCombineW
-@ stdcall UrlCompareA(str str long) shlwapi.UrlCompareA
-@ stdcall UrlCompareW(wstr wstr long) shlwapi.UrlCompareW
-@ stdcall UrlCreateFromPathA(str ptr ptr long) shlwapi.UrlCreateFromPathA
-@ stdcall UrlCreateFromPathW(wstr ptr ptr long) shlwapi.UrlCreateFromPathW
-@ stdcall UrlEscapeA(str ptr ptr long) shlwapi.UrlEscapeA
-@ stdcall UrlEscapeW(wstr ptr ptr long) shlwapi.UrlEscapeW
-@ stdcall UrlFixupW(wstr wstr long) shlwapi.UrlFixupW
-@ stdcall UrlGetLocationA(str) shlwapi.UrlGetLocationA
-@ stdcall UrlGetLocationW(wstr) shlwapi.UrlGetLocationW
-@ stdcall UrlGetPartA(str ptr ptr long long) shlwapi.UrlGetPartA
-@ stdcall UrlGetPartW(wstr ptr ptr long long) shlwapi.UrlGetPartW
-@ stdcall UrlHashA(str ptr long) shlwapi.UrlHashA
-@ stdcall UrlHashW(wstr ptr long) shlwapi.UrlHashW
-@ stdcall UrlIsA(str long) shlwapi.UrlIsA
-@ stdcall UrlIsNoHistoryA(str) shlwapi.UrlIsNoHistoryA
-@ stdcall UrlIsNoHistoryW(wstr) shlwapi.UrlIsNoHistoryW
-@ stdcall UrlIsOpaqueA(str) shlwapi.UrlIsOpaqueA
-@ stdcall UrlIsOpaqueW(wstr) shlwapi.UrlIsOpaqueW
-@ stdcall UrlIsW(wstr long) shlwapi.UrlIsW
-@ stdcall UrlUnescapeA(str ptr ptr long) shlwapi.UrlUnescapeA
-@ stdcall UrlUnescapeW(wstr ptr ptr long) shlwapi.UrlUnescapeW
+@ stdcall UrlApplySchemeA(str ptr ptr long)
+@ stdcall UrlApplySchemeW(wstr ptr ptr long)
+@ stdcall UrlCanonicalizeA(str ptr ptr long)
+@ stdcall UrlCanonicalizeW(wstr ptr ptr long)
+@ stdcall UrlCombineA(str str ptr ptr long)
+@ stdcall UrlCombineW(wstr wstr ptr ptr long)
+@ stdcall UrlCompareA(str str long)
+@ stdcall UrlCompareW(wstr wstr long)
+@ stdcall UrlCreateFromPathA(str ptr ptr long)
+@ stdcall UrlCreateFromPathW(wstr ptr ptr long)
+@ stdcall UrlEscapeA(str ptr ptr long)
+@ stdcall UrlEscapeW(wstr ptr ptr long)
+@ stdcall UrlFixupW(wstr wstr long)
+@ stdcall UrlGetLocationA(str)
+@ stdcall UrlGetLocationW(wstr)
+@ stdcall UrlGetPartA(str ptr ptr long long)
+@ stdcall UrlGetPartW(wstr ptr ptr long long)
+@ stdcall UrlHashA(str ptr long)
+@ stdcall UrlHashW(wstr ptr long)
+@ stdcall UrlIsA(str long)
+@ stdcall UrlIsNoHistoryA(str)
+@ stdcall UrlIsNoHistoryW(wstr)
+@ stdcall UrlIsOpaqueA(str)
+@ stdcall UrlIsOpaqueW(wstr)
+@ stdcall UrlIsW(wstr long)
+@ stdcall UrlUnescapeA(str ptr ptr long)
+@ stdcall UrlUnescapeW(wstr ptr ptr long)
 @ stdcall VerFindFileA(long str str str ptr ptr ptr ptr) version.VerFindFileA
 @ stdcall VerFindFileW(long wstr wstr wstr ptr ptr ptr ptr) version.VerFindFileW
 @ stdcall VerLanguageNameA(long str long) kernel32.VerLanguageNameA
@@ -1669,7 +1670,7 @@
 # @ stub VerifyScripts
 @ stdcall VirtualAlloc(ptr long long long) kernel32.VirtualAlloc
 @ stdcall VirtualAllocEx(long ptr long long long) kernel32.VirtualAllocEx
-@ stub VirtualAllocExNuma
+@ stdcall VirtualAllocExNuma(long ptr long long long long) kernel32.VirtualAllocExNuma
 # @ stub VirtualAllocFromApp
 @ stdcall VirtualFree(ptr long long) kernel32.VirtualFree
 @ stdcall VirtualFreeEx(long ptr long long) kernel32.VirtualFreeEx
@@ -1708,7 +1709,7 @@
 @ stdcall WerSetFlags(long) kernel32.WerSetFlags
 # @ stub WerUnregisterFile
 @ stdcall WerUnregisterMemoryBlock(ptr) kernel32.WerUnregisterMemoryBlock
-# @ stub WerUnregisterRuntimeExceptionModule
+@ stdcall WerUnregisterRuntimeExceptionModule(wstr ptr) kernel32.WerUnregisterRuntimeExceptionModule
 # @ stub WerpNotifyLoadStringResource
 # @ stub WerpNotifyUseStringResource
 @ stdcall WideCharToMultiByte(long long wstr long ptr long ptr ptr) kernel32.WideCharToMultiByte

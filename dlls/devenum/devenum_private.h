@@ -40,10 +40,6 @@
 #include "olectl.h"
 #include "uuids.h"
 
-#ifndef RC_INVOKED
-#include "wine/unicode.h"
-#endif
-
 /**********************************************************************
  * Dll lifetime tracking declaration for devenum.dll
  */

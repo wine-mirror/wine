@@ -35,7 +35,6 @@
 #include "commctrl.h"
 
 #include "wine/heap.h"
-#include "wine/unicode.h"
 #include "main.h"
 
 /* spaces dividing hex and ASCII */
@@ -95,7 +94,7 @@ static LPWSTR HexEdit_GetLineText(int offset, BYTE *pData, LONG cbData, LONG pad
     for (i = 0; i < cbData; i++)
     {
         /* (C1_ALPHA|C1_BLANK|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER) */
-        if (isprintW(pData[offset + i]))
+        if (iswprint(pData[offset + i]))
             lpszLine[6 + cbData * 3 + pad * 3 + DIV_SPACES + i] = pData[offset + i];
         else
             lpszLine[6 + cbData * 3 + pad * 3 + DIV_SPACES + i] = '.';
@@ -340,34 +339,6 @@ HexEdit_Destroy (HEXEDIT_INFO *infoPtr)
     SetWindowLongPtrW(hwnd, 0, 0);
     return 0;
 }
-
-
-static inline LRESULT
-HexEdit_EraseBackground (HEXEDIT_INFO *infoPtr, HDC hdc)
-{
-    HBRUSH hBrush, hSolidBrush = NULL;
-    RECT   rc;
-
-    if (GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & WS_DISABLED)
-        hBrush = hSolidBrush = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
-    else
-    {
-        hBrush = (HBRUSH)SendMessageW(GetParent(infoPtr->hwndSelf), WM_CTLCOLOREDIT,
-                                      (WPARAM)hdc, (LPARAM)infoPtr->hwndSelf);
-        if (!hBrush)
-            hBrush = hSolidBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
-    }
-
-    GetClientRect (infoPtr->hwndSelf, &rc);
-
-    FillRect (hdc, &rc, hBrush);
-
-    if (hSolidBrush)
-        DeleteObject(hSolidBrush);
-
-    return -1;
-}
-
 
 static inline LRESULT
 HexEdit_GetFont (HEXEDIT_INFO *infoPtr)
@@ -626,9 +597,6 @@ HexEdit_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 	    return HexEdit_Destroy (infoPtr);
 
-	case WM_ERASEBKGND:
-	    return HexEdit_EraseBackground (infoPtr, (HDC)wParam);
-
 	case WM_GETDLGCODE:
 	    return DLGC_WANTCHARS | DLGC_WANTARROWS;
 
@@ -675,8 +643,8 @@ void HexEdit_Register(void)
     wndClass.lpfnWndProc   = HexEdit_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(HEXEDIT_INFO *);
-    wndClass.hCursor       = NULL;
-    wndClass.hbrBackground = NULL;
+    wndClass.hCursor       = LoadCursorW(0, (const WCHAR *)IDC_IBEAM);
+    wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszClassName = szHexEditClass;
 
     RegisterClassW(&wndClass);

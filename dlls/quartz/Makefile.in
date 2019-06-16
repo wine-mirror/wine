@@ -1,6 +1,6 @@
 MODULE    = quartz.dll
 IMPORTLIB = quartz
-IMPORTS   = strmiids dxguid strmbase uuid dsound msacm32 msvfw32 ole32 oleaut32 shlwapi rpcrt4 user32 gdi32 advapi32
+IMPORTS   = strmiids dxguid strmbase uuid dsound msacm32 msvfw32 ole32 oleaut32 rpcrt4 user32 gdi32 advapi32
 
 C_SRCS = \
 	acmwrapper.c \
@@ -16,7 +16,6 @@ C_SRCS = \
 	main.c \
 	memallocator.c \
 	mpegsplit.c \
-	nullrenderer.c \
 	parser.c \
 	pin.c \
 	regsvr.c \
@@ -25,7 +24,7 @@ C_SRCS = \
 	vmr9.c \
 	waveparser.c
 
-RC_SRCS = version.rc
+RC_SRCS = quartz.rc
 
 IDL_SRCS = \
 	control_tlb.idl \

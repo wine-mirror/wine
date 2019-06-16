@@ -32,8 +32,11 @@ static const UINT Y = 0;
 static const UINT WIDTH = 200;
 static const UINT HEIGHT = 200;
 
+static LOGCONTEXTA glogContext;
+
 static HCTX (WINAPI *pWTOpenA)(HWND, LPLOGCONTEXTA, BOOL);
 static BOOL (WINAPI *pWTClose)(HCTX);
+static UINT (WINAPI *pWTInfoA)(UINT, UINT, void*);
 
 static HMODULE load_functions(void)
 {
@@ -50,6 +53,7 @@ static HMODULE load_functions(void)
     }
 
     if (GET_PROC(WTOpenA) &&
+        GET_PROC(WTInfoA) &&
         GET_PROC(WTClose) )
     {
         return hWintab;
@@ -135,6 +139,72 @@ static void test_WTOpenContextValidation(void)
     wintab_destroy_window(defaultWindow);
 }
 
+static void test_WTInfoA(void)
+{
+    char name[LCNAMELEN];
+    UINT ret;
+    AXIS value;
+    AXIS orientation[3];
+
+    glogContext.lcOptions |= CXO_SYSTEM;
+
+    ret = pWTInfoA(WTI_DEFSYSCTX, 0, &glogContext);
+    if(!ret)
+    {
+        skip("No tablet connected\n");
+        return;
+    }
+    ok(ret == sizeof( LOGCONTEXTA ), "incorrect size\n" );
+    ok(glogContext.lcOptions & CXO_SYSTEM, "Wrong options 0x%08x\n", glogContext.lcOptions);
+
+    ret = pWTInfoA( WTI_DEVICES, DVC_NAME, name );
+    trace("DVC_NAME %s\n", name);
+
+    ret = pWTInfoA( WTI_DEVICES, DVC_HARDWARE, name );
+    trace("DVC_HARDWARE %s\n", name);
+
+    ret = pWTInfoA( WTI_DEVICES, DVC_X, &value );
+    ok(ret == sizeof( AXIS ), "Wrong DVC_X size %d\n", ret);
+    trace("DVC_X %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+
+    ret = pWTInfoA( WTI_DEVICES, DVC_Y, &value );
+    ok(ret == sizeof( AXIS ), "Wrong DVC_Y size %d\n", ret);
+    trace("DVC_Y %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+
+    ret = pWTInfoA( WTI_DEVICES, DVC_Z, &value );
+    if(ret)
+        trace("DVC_Z %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+    else
+        trace("DVC_Z not supported\n");
+
+    ret = pWTInfoA( WTI_DEVICES, DVC_NPRESSURE, &value );
+    ok(ret == sizeof( AXIS ), "Wrong DVC_NPRESSURE, size %d\n", ret);
+    trace("DVC_NPRESSURE %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+
+    ret = pWTInfoA( WTI_DEVICES, DVC_TPRESSURE, &value );
+    if(ret)
+        trace("DVC_TPRESSURE %d, %d, %d\n", value.axMin, value.axMax, value.axUnits);
+    else
+        trace("DVC_TPRESSURE not supported\n");
+
+    ret = pWTInfoA( WTI_DEVICES, DVC_ORIENTATION, &orientation );
+    ok(ret == sizeof( AXIS )*3, "Wrong DVC_ORIENTATION, size %d\n", ret);
+    trace("DVC_ORIENTATION0 %d, %d, %d\n", orientation[0].axMin, orientation[0].axMax, orientation[0].axUnits);
+    trace("DVC_ORIENTATION1 %d, %d, %d\n", orientation[1].axMin, orientation[1].axMax, orientation[1].axUnits);
+    trace("DVC_ORIENTATION2 %d, %d, %d\n", orientation[2].axMin, orientation[2].axMax, orientation[2].axUnits);
+
+    ret = pWTInfoA( WTI_DEVICES, DVC_ROTATION, &orientation );
+    if(ret)
+    {
+        trace("DVC_ROTATION0 %d, %d, %d\n", orientation[0].axMin, orientation[0].axMax, orientation[0].axUnits);
+        trace("DVC_ROTATION1 %d, %d, %d\n", orientation[1].axMin, orientation[1].axMax, orientation[1].axUnits);
+        trace("DVC_ROTATION2 %d, %d, %d\n", orientation[2].axMin, orientation[2].axMax, orientation[2].axUnits);
+    }
+    else
+        trace("DVC_ROTATION not supported\n");
+
+}
+
 START_TEST(context)
 {
     HMODULE hWintab = load_functions();
@@ -146,6 +216,7 @@ START_TEST(context)
     }
 
     test_WTOpenContextValidation();
+    test_WTInfoA();
 
     FreeLibrary(hWintab);
 }

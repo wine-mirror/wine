@@ -18,11 +18,13 @@
 
 #include <stdarg.h>
 #include "windef.h"
+#include "initguid.h"
 #include "virtdisk.h"
 #include "wine/heap.h"
 #include "wine/test.h"
 
 static DWORD (WINAPI *pGetStorageDependencyInformation)(HANDLE,GET_STORAGE_DEPENDENCY_FLAG,ULONG,STORAGE_DEPENDENCY_INFO*,ULONG*);
+static DWORD (WINAPI *pOpenVirtualDisk)(PVIRTUAL_STORAGE_TYPE,PCWSTR,VIRTUAL_DISK_ACCESS_MASK,OPEN_VIRTUAL_DISK_FLAG,POPEN_VIRTUAL_DISK_PARAMETERS,PHANDLE);
 
 static void test_GetStorageDependencyInformation(void)
 {
@@ -47,6 +49,38 @@ static void test_GetStorageDependencyInformation(void)
     CloseHandle(handle);
 }
 
+static void test_OpenVirtualDisk(void)
+{
+    DWORD ret;
+    HANDLE handle;
+    VIRTUAL_STORAGE_TYPE stgtype;
+    OPEN_VIRTUAL_DISK_PARAMETERS param;
+    static const WCHAR vdisk[] = {'t','e','s','t','.','v','h','d',0};
+
+    ret = pOpenVirtualDisk(NULL, NULL, VIRTUAL_DISK_ACCESS_NONE, OPEN_VIRTUAL_DISK_FLAG_NO_PARENTS, NULL, &handle);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+
+    stgtype.DeviceId = VIRTUAL_STORAGE_TYPE_DEVICE_UNKNOWN;
+    stgtype.VendorId = VIRTUAL_STORAGE_TYPE_VENDOR_UNKNOWN;
+    ret = pOpenVirtualDisk(&stgtype, NULL, VIRTUAL_DISK_ACCESS_NONE, OPEN_VIRTUAL_DISK_FLAG_NO_PARENTS, NULL, &handle);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+
+    param.Version = OPEN_VIRTUAL_DISK_VERSION_3;
+    ret = pOpenVirtualDisk(&stgtype, vdisk, VIRTUAL_DISK_ACCESS_NONE, OPEN_VIRTUAL_DISK_FLAG_NO_PARENTS, &param, &handle);
+    ok((ret == ERROR_INVALID_PARAMETER) || (ret == ERROR_FILE_NOT_FOUND), "Expected ERROR_INVALID_PARAMETER or ERROR_FILE_NOT_FOUND (>= Win 10), got %d\n", ret);
+
+    param.Version = OPEN_VIRTUAL_DISK_VERSION_2;
+    ret = pOpenVirtualDisk(&stgtype, vdisk, VIRTUAL_DISK_ACCESS_NONE, OPEN_VIRTUAL_DISK_FLAG_NO_PARENTS, &param, &handle);
+    ok((ret == ERROR_INVALID_PARAMETER) || (ret == ERROR_FILE_NOT_FOUND), "Expected ERROR_INVALID_PARAMETER or ERROR_FILE_NOT_FOUND (>= Win 8), got %d\n", ret);
+
+    param.Version = OPEN_VIRTUAL_DISK_VERSION_1;
+    ret = pOpenVirtualDisk(&stgtype, vdisk, 0xffffff, OPEN_VIRTUAL_DISK_FLAG_NO_PARENTS, &param, &handle);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+
+    ret = pOpenVirtualDisk(&stgtype, vdisk, VIRTUAL_DISK_ACCESS_NONE, OPEN_VIRTUAL_DISK_FLAG_NONE, &param, &handle);
+    todo_wine ok(ret == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", ret);
+}
+
 START_TEST(virtdisk)
 {
     HMODULE module = LoadLibraryA("virtdisk.dll");
@@ -57,8 +91,15 @@ START_TEST(virtdisk)
     }
 
     pGetStorageDependencyInformation = (void *)GetProcAddress( module, "GetStorageDependencyInformation" );
+    pOpenVirtualDisk = (void *)GetProcAddress( module, "OpenVirtualDisk" );
+
     if (pGetStorageDependencyInformation)
         test_GetStorageDependencyInformation();
     else
         win_skip("GetStorageDependencyInformation is not available\n");
+
+    if (pOpenVirtualDisk)
+        test_OpenVirtualDisk();
+    else
+        win_skip("OpenVirtualDisk is not available\n");
 }

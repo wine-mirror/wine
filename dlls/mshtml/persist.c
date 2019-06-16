@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -56,21 +54,6 @@ typedef struct {
     BOOL set_download;
     LPOLESTR url;
 } download_proc_task_t;
-
-static BOOL use_gecko_script(HTMLOuterWindow *window)
-{
-    DWORD zone;
-    HRESULT hres;
-
-    hres = IInternetSecurityManager_MapUrlToZone(window->secmgr, window->url, &zone, 0);
-    if(FAILED(hres)) {
-        WARN("Could not map %s to zone: %08x\n", debugstr_w(window->url), hres);
-        return TRUE;
-    }
-
-    TRACE("zone %d\n", zone);
-    return zone == URLZONE_UNTRUSTED;
-}
 
 static void notify_travellog_update(HTMLDocumentObj *doc)
 {
@@ -130,9 +113,9 @@ void set_current_mon(HTMLOuterWindow *This, IMoniker *mon, DWORD flags)
     HRESULT hres;
 
     if(This->mon) {
-        if(This->doc_obj && !(flags & (BINDING_REPLACE|BINDING_REFRESH))) {
-            if(This == This->doc_obj->basedoc.window)
-                notify_travellog_update(This->doc_obj);
+        if(This->browser && !(flags & (BINDING_REPLACE|BINDING_REFRESH))) {
+            if(is_main_content_window(This))
+                notify_travellog_update(This->browser->doc);
             else
                 TRACE("Skipping travellog update for frame navigation.\n");
         }
@@ -179,7 +162,9 @@ void set_current_mon(HTMLOuterWindow *This, IMoniker *mon, DWORD flags)
     set_current_uri(This, uri);
     if(uri)
         IUri_Release(uri);
-    set_script_mode(This, use_gecko_script(This) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
+
+    if(is_main_content_window(This))
+        update_browser_script_mode(This->browser, uri);
 }
 
 HRESULT create_uri(const WCHAR *uri_str, DWORD flags, IUri **uri)
@@ -243,7 +228,7 @@ static void set_progress_proc(task_t *_task)
         IOleCommandTarget_Release(olecmd);
     }
 
-    if(doc->usermode == EDITMODE && doc->hostui) {
+    if(doc->nscontainer->usermode == EDITMODE && doc->hostui) {
         DOCHOSTUIINFO hostinfo;
 
         memset(&hostinfo, 0, sizeof(DOCHOSTUIINFO));
@@ -364,8 +349,8 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
     IUri *uri;
     HRESULT hres;
 
-    if(window->doc_obj && window->doc_obj->basedoc.window == window)
-        doc_obj = window->doc_obj;
+    if(is_main_content_window(window))
+        doc_obj = window->browser->doc;
 
     hres = IMoniker_GetDisplayName(mon, pibc, NULL, &url);
     if(FAILED(hres)) {
@@ -387,7 +372,7 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
 
     set_ready_state(window, READYSTATE_LOADING);
 
-    hres = create_doc_uri(window, uri, &nsuri);
+    hres = create_doc_uri(uri, &nsuri);
     if(!nav_uri)
         IUri_Release(uri);
     if(SUCCEEDED(hres)) {
@@ -449,8 +434,8 @@ static void notif_readystate(HTMLOuterWindow *window)
 
     window->readystate_pending = FALSE;
 
-    if(window->doc_obj && window->doc_obj->basedoc.window == window)
-        call_property_onchanged(&window->doc_obj->basedoc.cp_container, DISPID_READYSTATE);
+    if(is_main_content_window(window))
+        call_property_onchanged(&window->browser->doc->basedoc.cp_container, DISPID_READYSTATE);
 
     hres = create_document_event(window->base.inner_window->doc, EVENTID_READYSTATECHANGE, &event);
     if(SUCCEEDED(hres)) {
@@ -897,10 +882,7 @@ static HRESULT WINAPI PersistStreamInit_IsDirty(IPersistStreamInit *iface)
 
     TRACE("(%p)\n", This);
 
-    if(This->doc_obj->usermode == EDITMODE)
-        return editor_is_dirty(This);
-
-    return S_FALSE;
+    return browser_is_dirty(This->doc_obj->nscontainer);
 }
 
 static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, IStream *pStm)
@@ -947,7 +929,7 @@ static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, IStream 
     heap_free(str);
 
     if(fClearDirty)
-        set_dirty(This, VARIANT_FALSE);
+        set_dirty(This->doc_obj->nscontainer, VARIANT_FALSE);
 
     return S_OK;
 }

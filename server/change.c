@@ -35,6 +35,9 @@
 #ifdef HAVE_POLL_H
 # include <poll.h>
 #endif
+#ifdef HAVE_SYS_INOTIFY_H
+#include <sys/inotify.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -64,56 +67,6 @@
 #endif
 
 /* inotify support */
-
-#ifdef HAVE_SYS_INOTIFY_H
-#include <sys/inotify.h>
-#define USE_INOTIFY
-#elif defined(__linux__) && defined(__i386__)
-
-#define SYS_inotify_init	291
-#define SYS_inotify_add_watch	292
-#define SYS_inotify_rm_watch	293
-
-struct inotify_event {
-    int           wd;
-    unsigned int  mask;
-    unsigned int  cookie;
-    unsigned int  len;
-    char          name[1];
-};
-
-#define IN_ACCESS        0x00000001
-#define IN_MODIFY        0x00000002
-#define IN_ATTRIB        0x00000004
-#define IN_CLOSE_WRITE   0x00000008
-#define IN_CLOSE_NOWRITE 0x00000010
-#define IN_OPEN          0x00000020
-#define IN_MOVED_FROM    0x00000040
-#define IN_MOVED_TO      0x00000080
-#define IN_CREATE        0x00000100
-#define IN_DELETE        0x00000200
-#define IN_DELETE_SELF   0x00000400
-
-#define IN_ISDIR         0x40000000
-
-static inline int inotify_init( void )
-{
-    return syscall( SYS_inotify_init );
-}
-
-static inline int inotify_add_watch( int fd, const char *name, unsigned int mask )
-{
-    return syscall( SYS_inotify_add_watch, fd, name, mask );
-}
-
-static inline int inotify_rm_watch( int fd, int wd )
-{
-    return syscall( SYS_inotify_rm_watch, fd, wd );
-}
-
-#define USE_INOTIFY
-
-#endif
 
 struct inode;
 
@@ -172,6 +125,7 @@ static const struct object_ops dir_ops =
     no_link_name,             /* link_name */
     NULL,                     /* unlink_name */
     no_open_file,             /* open_file */
+    no_kernel_obj_list,       /* get_kernel_obj_list */
     dir_close_handle,         /* close_handle */
     dir_destroy               /* destroy */
 };
@@ -520,7 +474,7 @@ static enum server_fd_type dir_get_fd_type( struct fd *fd )
     return FD_TYPE_DIR;
 }
 
-#ifdef USE_INOTIFY
+#ifdef HAVE_SYS_INOTIFY_H
 
 #define HASH_SIZE 31
 
@@ -1174,7 +1128,7 @@ static int dir_add_to_existing_notify( struct dir *dir )
     return 0;
 }
 
-#endif  /* USE_INOTIFY */
+#endif  /* HAVE_SYS_INOTIFY_H */
 
 struct object *create_dir_obj( struct fd *fd, unsigned int access, mode_t mode )
 {

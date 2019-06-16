@@ -366,7 +366,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     struct sgv_data             sgv;
     int		                i;
     char                        buffer[512];
-    DWORD                       opt;
+    BOOL                        opt;
     IMAGEHLP_STACK_FRAME        ihsf;
 
     if (strlen(name) + 4 > sizeof(buffer))
@@ -394,7 +394,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     /* this is a wine specific options to return also ELF modules in the
      * enumeration
      */
-    SymSetOptions((opt = SymGetOptions()) | 0x40000000);
+    opt = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
     SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv);
 
     if (!sgv.num)
@@ -419,7 +419,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
             SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv);
         }
     }
-    SymSetOptions(opt);
+    SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
 
     /* now grab local symbols */
     if (stack_get_current_frame(&ihsf) && sgv.num < NUMDBGV)
@@ -655,10 +655,10 @@ BOOL symbol_get_line(const char* filename, const char* name,
     /* this is a wine specific options to return also ELF modules in the
      * enumeration
      */
-    SymSetOptions((opt = SymGetOptions()) | 0x40000000);
+    opt = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
     if (!SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv))
     {
-        SymSetOptions(opt);
+        SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
         return FALSE;
     }
 
@@ -668,11 +668,11 @@ BOOL symbol_get_line(const char* filename, const char* name,
         strcpy(&buffer[3], name);
         if (!SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv))
         {
-            SymSetOptions(opt);
+            SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
             return FALSE;
         }
     }
-    SymSetOptions(opt);
+    SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
 
     for (i = 0; i < sgv.num; i++)
     {
@@ -795,7 +795,7 @@ static BOOL CALLBACK symbols_info_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
 void symbol_info(const char* str)
 {
     char        buffer[512];
-    DWORD       opt;
+    BOOL        opt;
 
     if (strlen(str) + 3 >= sizeof(buffer))
     {
@@ -808,7 +808,7 @@ void symbol_info(const char* str)
     /* this is a wine specific options to return also ELF modules in the
      * enumeration
      */
-    SymSetOptions((opt = SymGetOptions()) | 0x40000000);
+    opt = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
     SymEnumSymbols(dbg_curr_process->handle, 0, buffer, symbols_info_cb, NULL);
-    SymSetOptions(opt);
+    SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
 }

@@ -80,7 +80,7 @@ static HRESULT return_nscstr(nsresult nsres, nsACString *nscstr, BSTR *p)
 
     if(*str) {
         len = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
-        *p = SysAllocStringLen(NULL, len);
+        *p = SysAllocStringLen(NULL, len - 1);
         if(!*p) {
             nsACString_Finish(nscstr);
             return E_OUTOFMEMORY;
@@ -759,7 +759,7 @@ static HRESULT HTMLXMLHttpRequest_get_dispid(DispatchEx *dispex, BSTR name, DWOR
     static const WCHAR onloadW[] = {'o','n','l','o','a','d',0};
 
     /* onload event handler property is supported, but not exposed by any interface. We implement as a custom property. */
-    if(!strcmpW(onloadW, name)) {
+    if(!wcscmp(onloadW, name)) {
         *dispid = MSHTML_DISPID_HTMLXMLHTTPREQUEST_ONLOAD;
         return S_OK;
     }

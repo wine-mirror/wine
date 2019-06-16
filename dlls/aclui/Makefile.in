@@ -1,4 +1,6 @@
 MODULE    = aclui.dll
 IMPORTLIB = aclui
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = aclui_main.c

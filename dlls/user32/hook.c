@@ -77,6 +77,7 @@
 #include "user_private.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 #include "winternl.h"
 

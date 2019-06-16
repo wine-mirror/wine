@@ -43,6 +43,7 @@
 #include "user_private.h"
 #include "wine/gdi_driver.h"
 #include "wine/unicode.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(system);

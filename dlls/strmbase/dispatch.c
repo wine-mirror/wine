@@ -1,7 +1,7 @@
 /*
- * Generic Implementation of IDispatch for strmbase classes
+ * ITypeInfo cache for IDispatch
  *
- * Copyright 2012 Aric Stewart, CodeWeavers
+ * Copyright 2019 Zebediah Figura
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,60 +18,53 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
+#include "strmbase_private.h"
 
-#include "dshow.h"
-#include "wine/unicode.h"
-#include "wine/strmbase.h"
-#include "uuids.h"
-#include "vfwmsgs.h"
-#include <assert.h>
+WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
-HRESULT WINAPI BaseDispatch_Init(BaseDispatch *This, REFIID riid)
+static ITypeLib *control_typelib;
+static ITypeInfo *control_typeinfo[last_tid];
+
+static REFIID control_tid_id[] =
 {
-    ITypeLib *pTypeLib;
+    &IID_IBasicAudio,
+    &IID_IBasicVideo,
+    &IID_IMediaControl,
+    &IID_IMediaEvent,
+    &IID_IMediaPosition,
+    &IID_IVideoWindow,
+};
+
+HRESULT strmbase_get_typeinfo(enum strmbase_type_id tid, ITypeInfo **ret)
+{
     HRESULT hr;
 
-    This->pTypeInfo = NULL;
-    hr = LoadRegTypeLib(&LIBID_QuartzTypeLib, 1, 0, LOCALE_SYSTEM_DEFAULT, &pTypeLib);
-    if (SUCCEEDED(hr))
+    if (!control_typelib)
     {
-        hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, riid, &This->pTypeInfo);
-        ITypeLib_Release(pTypeLib);
+        ITypeLib *typelib;
+
+        hr = LoadRegTypeLib(&LIBID_QuartzTypeLib, 1, 0, LOCALE_SYSTEM_DEFAULT, &typelib);
+        if (FAILED(hr))
+        {
+            ERR("Failed to load typelib, hr %#x.\n", hr);
+            return hr;
+        }
+        if (InterlockedCompareExchangePointer((void **)&control_typelib, typelib, NULL))
+            ITypeLib_Release(typelib);
     }
-    return hr;
-}
-
-HRESULT WINAPI BaseDispatch_Destroy(BaseDispatch *This)
-{
-    if (This->pTypeInfo)
-        ITypeInfo_Release(This->pTypeInfo);
-    return S_OK;
-}
-
-HRESULT WINAPI BaseDispatchImpl_GetIDsOfNames(BaseDispatch *This, REFIID riid, OLECHAR **rgszNames, UINT cNames, LCID lcid, DISPID *rgdispid)
-{
-    if (This->pTypeInfo)
-        return ITypeInfo_GetIDsOfNames(This->pTypeInfo, rgszNames, cNames, rgdispid);
-    return E_NOTIMPL;
-}
-
-HRESULT WINAPI BaseDispatchImpl_GetTypeInfo(BaseDispatch *This, REFIID riid, UINT itinfo, LCID lcid, ITypeInfo **pptinfo)
-{
-    if (This->pTypeInfo)
+    if (!control_typeinfo[tid])
     {
-        ITypeInfo_AddRef(This->pTypeInfo);
-        *pptinfo = This->pTypeInfo;
-        return S_OK;
-    }
-    return E_NOTIMPL;
-}
+        ITypeInfo *typeinfo;
 
-HRESULT WINAPI BaseDispatchImpl_GetTypeInfoCount(BaseDispatch *This, UINT *pctinfo)
-{
-    if (This->pTypeInfo)
-        *pctinfo = 1;
-    else
-        *pctinfo = 0;
+        hr = ITypeLib_GetTypeInfoOfGuid(control_typelib, control_tid_id[tid], &typeinfo);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get type info for %s, hr %#x.\n", debugstr_guid(control_tid_id[tid]), hr);
+            return hr;
+        }
+        if (InterlockedCompareExchangePointer((void **)(control_typeinfo + tid), typeinfo, NULL))
+            ITypeInfo_Release(typeinfo);
+    }
+    ITypeInfo_AddRef(*ret = control_typeinfo[tid]);
     return S_OK;
 }

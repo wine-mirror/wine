@@ -26,7 +26,6 @@
 #include <CoreServices/CoreServices.h>
 #undef GetCurrentThread
 #undef LoadResource
-#undef DPRINTF
 #endif
 
 #include "windef.h"
@@ -36,6 +35,7 @@
 #include "ws2tcpip.h"
 #include "winhttp.h"
 #include "winreg.h"
+#include "winternl.h"
 #define COBJMACROS
 #include "ole2.h"
 #include "dispex.h"
@@ -1331,7 +1331,7 @@ static BOOL is_domain_suffix( const char *domain, const char *suffix )
     int len_domain = strlen( domain ), len_suffix = strlen( suffix );
 
     if (len_suffix > len_domain) return FALSE;
-    if (!strcasecmp( domain + len_domain - len_suffix, suffix )) return TRUE;
+    if (!_strnicmp( domain + len_domain - len_suffix, suffix, -1 )) return TRUE;
     return FALSE;
 }
 
@@ -1737,7 +1737,7 @@ static BOOL parse_script_result( const char *result, WINHTTP_PROXY_INFO *info )
     p = result;
     while (*p == ' ') p++;
     len = strlen( p );
-    if (len >= 5 && !strncasecmp( p, "PROXY", sizeof("PROXY") - 1 ))
+    if (len >= 5 && !_strnicmp( p, "PROXY", sizeof("PROXY") - 1 ))
     {
         p += 5;
         while (*p == ' ') p++;

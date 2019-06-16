@@ -28,7 +28,6 @@
 #include "hlink.h"
 
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 extern HRESULT HLink_Constructor(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 extern HRESULT HLinkBrowseContext_Constructor(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
@@ -40,7 +39,7 @@ static inline LPWSTR hlink_strdupW(LPCWSTR str)
     if(str) {
         DWORD size;
 
-        size = (strlenW(str)+1)*sizeof(WCHAR);
+        size = (lstrlenW(str)+1)*sizeof(WCHAR);
         ret = heap_alloc(size);
         memcpy(ret, str, size);
     }
@@ -55,7 +54,7 @@ static inline LPWSTR hlink_co_strdupW(LPCWSTR str)
     if(str) {
         DWORD size;
 
-        size = (strlenW(str)+1)*sizeof(WCHAR);
+        size = (lstrlenW(str)+1)*sizeof(WCHAR);
         ret = CoTaskMemAlloc(size);
         memcpy(ret, str, size);
     }

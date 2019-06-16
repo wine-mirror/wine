@@ -271,7 +271,7 @@ DWORD PSDRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
     }
 
     dst_x = dst->visrect.left;
-    dst_y = dst->visrect.top,
+    dst_y = dst->visrect.top;
     dst_width = dst->visrect.right - dst->visrect.left;
     dst_height = dst->visrect.bottom - dst->visrect.top;
     if (src->width * dst->width < 0)

@@ -441,7 +441,7 @@ void output_resources( DLLSPEC *spec )
     /* output the resource directories */
 
     output( "\n/* resources */\n\n" );
-    output( "\t.data\n" );
+    output( "\t%s\n", get_asm_rsrc_section() );
     output( "\t.align %d\n", get_alignment(get_ptr_size()) );
     output( ".L__wine_spec_resources:\n" );
 
@@ -476,8 +476,10 @@ void output_resources( DLLSPEC *spec )
     /* dump the resource data entries */
 
     for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
-        output( "\t.long .L__wine_spec_res_%d-.L__wine_spec_rva_base,%u,0,0\n",
-                i, res->data_size );
+    {
+        output_rva( ".L__wine_spec_res_%d", i );
+        output( "\t.long %u,0,0\n", res->data_size );
+    }
 
     /* dump the name strings */
 
@@ -496,9 +498,12 @@ void output_resources( DLLSPEC *spec )
         output( ".L__wine_spec_res_%d:\n", i );
         dump_res_data( res );
     }
-    output( ".L__wine_spec_resources_end:\n" );
-    output( "\t.byte 0\n" );
 
+    if (target_platform != PLATFORM_WINDOWS)
+    {
+        output( ".L__wine_spec_resources_end:\n" );
+        output( "\t.byte 0\n" );
+    }
     free_resource_tree( tree );
 }
 
@@ -698,6 +703,4 @@ void output_res_o_file( DLLSPEC *spec )
     if (format)
         strarray_add( &args, "-F", format, NULL );
     spawn( args );
-
-    output_file_name = NULL;  /* so we don't try to assemble it */
 }

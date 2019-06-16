@@ -25,20 +25,6 @@
 #include "msvcrt.h"
 #include <process.h>
 
-static inline float __port_infinity(void)
-{
-    static const unsigned __inf_bytes = 0x7f800000;
-    return *(const float *)&__inf_bytes;
-}
-#define INFINITY __port_infinity()
-
-static inline float __port_nan(void)
-{
-    static const unsigned __nan_bytes = 0x7fc00000;
-    return *(const float *)&__nan_bytes;
-}
-#define NAN __port_nan()
-
 static inline BOOL almost_equal(double d1, double d2) {
     if(d1-d2>-1e-30 && d1-d2<1e-30)
         return TRUE;

@@ -137,7 +137,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
 
     if (This->type == DEVICE_DMO)
     {
-        if (!strcmpW(pszPropName, FriendlyNameW))
+        if (!lstrcmpW(pszPropName, FriendlyNameW))
         {
             res = DMOGetName(&This->clsid, name);
             if (SUCCEEDED(res))
@@ -346,25 +346,25 @@ static HRESULT create_PropertyBag(MediaCatMoniker *mon, IPropertyBag **ppBag)
         rpb->clsid = mon->clsid;
     else if (rpb->type == DEVICE_FILTER)
     {
-        strcpyW(rpb->path, clsidW);
-        strcatW(rpb->path, backslashW);
+        lstrcpyW(rpb->path, clsidW);
+        lstrcatW(rpb->path, backslashW);
         if (mon->has_class)
         {
-            StringFromGUID2(&mon->class, rpb->path + strlenW(rpb->path), CHARS_IN_GUID);
-            strcatW(rpb->path, instanceW);
-            strcatW(rpb->path, backslashW);
+            StringFromGUID2(&mon->class, rpb->path + lstrlenW(rpb->path), CHARS_IN_GUID);
+            lstrcatW(rpb->path, instanceW);
+            lstrcatW(rpb->path, backslashW);
         }
-        strcatW(rpb->path, mon->name);
+        lstrcatW(rpb->path, mon->name);
     }
     else if (rpb->type == DEVICE_CODEC)
     {
-        strcpyW(rpb->path, wszActiveMovieKey);
+        lstrcpyW(rpb->path, wszActiveMovieKey);
         if (mon->has_class)
         {
-            StringFromGUID2(&mon->class, rpb->path + strlenW(rpb->path), CHARS_IN_GUID);
-            strcatW(rpb->path, backslashW);
+            StringFromGUID2(&mon->class, rpb->path + lstrlenW(rpb->path), CHARS_IN_GUID);
+            lstrcatW(rpb->path, backslashW);
         }
-        strcatW(rpb->path, mon->name);
+        lstrcatW(rpb->path, mon->name);
     }
 
     *ppBag = &rpb->IPropertyBag_iface;
@@ -705,33 +705,33 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_GetDisplayName(IMoniker *iface, I
 
     if (This->type == DEVICE_DMO)
     {
-        buffer = CoTaskMemAlloc((strlenW(deviceW) + strlenW(dmoW)
+        buffer = CoTaskMemAlloc((lstrlenW(deviceW) + lstrlenW(dmoW)
                                  + 2 * CHARS_IN_GUID + 1) * sizeof(WCHAR));
         if (!buffer) return E_OUTOFMEMORY;
 
-        strcpyW(buffer, deviceW);
-        strcatW(buffer, dmoW);
-        StringFromGUID2(&This->clsid, buffer + strlenW(buffer), CHARS_IN_GUID);
-        StringFromGUID2(&This->class, buffer + strlenW(buffer), CHARS_IN_GUID);
+        lstrcpyW(buffer, deviceW);
+        lstrcatW(buffer, dmoW);
+        StringFromGUID2(&This->clsid, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+        StringFromGUID2(&This->class, buffer + lstrlenW(buffer), CHARS_IN_GUID);
     }
     else
     {
-        buffer = CoTaskMemAlloc((strlenW(deviceW) + 3 + (This->has_class ? CHARS_IN_GUID : 0)
-                                 + strlenW(This->name) + 1) * sizeof(WCHAR));
+        buffer = CoTaskMemAlloc((lstrlenW(deviceW) + 3 + (This->has_class ? CHARS_IN_GUID : 0)
+                                 + lstrlenW(This->name) + 1) * sizeof(WCHAR));
         if (!buffer) return E_OUTOFMEMORY;
 
-        strcpyW(buffer, deviceW);
+        lstrcpyW(buffer, deviceW);
         if (This->type == DEVICE_FILTER)
-            strcatW(buffer, swW);
+            lstrcatW(buffer, swW);
         else if (This->type == DEVICE_CODEC)
-            strcatW(buffer, cmW);
+            lstrcatW(buffer, cmW);
 
         if (This->has_class)
         {
-            StringFromGUID2(&This->class, buffer + strlenW(buffer), CHARS_IN_GUID);
-            strcatW(buffer, backslashW);
+            StringFromGUID2(&This->class, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+            lstrcatW(buffer, backslashW);
         }
-        strcatW(buffer, This->name);
+        lstrcatW(buffer, This->name);
     }
 
     *ppszDisplayName = buffer;
@@ -899,12 +899,12 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(IEnumMoniker *iface, ULONG celt,
 
             pMoniker->type = DEVICE_FILTER;
 
-            if (!(pMoniker->name = CoTaskMemAlloc((strlenW(buffer) + 1) * sizeof(WCHAR))))
+            if (!(pMoniker->name = CoTaskMemAlloc((lstrlenW(buffer) + 1) * sizeof(WCHAR))))
             {
                 IMoniker_Release(&pMoniker->IMoniker_iface);
                 return E_OUTOFMEMORY;
             }
-            strcpyW(pMoniker->name, buffer);
+            lstrcpyW(pMoniker->name, buffer);
         }
         /* then try codecs */
         else if (!(res = RegEnumKeyW(This->cm_key, This->cm_index, buffer, ARRAY_SIZE(buffer))))
@@ -919,12 +919,12 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Next(IEnumMoniker *iface, ULONG celt,
 
             pMoniker->type = DEVICE_CODEC;
 
-            if (!(pMoniker->name = CoTaskMemAlloc((strlenW(buffer) + 1) * sizeof(WCHAR))))
+            if (!(pMoniker->name = CoTaskMemAlloc((lstrlenW(buffer) + 1) * sizeof(WCHAR))))
             {
                 IMoniker_Release(&pMoniker->IMoniker_iface);
                 return E_OUTOFMEMORY;
             }
-            strcpyW(pMoniker->name, buffer);
+            lstrcpyW(pMoniker->name, buffer);
         }
         else
             break;
@@ -1026,15 +1026,15 @@ HRESULT create_EnumMoniker(REFCLSID class, IEnumMoniker **ppEnumMoniker)
     pEnumMoniker->cm_index = 0;
     pEnumMoniker->class = *class;
 
-    strcpyW(buffer, clsidW);
-    strcatW(buffer, backslashW);
-    StringFromGUID2(class, buffer + strlenW(buffer), CHARS_IN_GUID);
-    strcatW(buffer, instanceW);
+    lstrcpyW(buffer, clsidW);
+    lstrcatW(buffer, backslashW);
+    StringFromGUID2(class, buffer + lstrlenW(buffer), CHARS_IN_GUID);
+    lstrcatW(buffer, instanceW);
     if (RegOpenKeyExW(HKEY_CLASSES_ROOT, buffer, 0, KEY_ENUMERATE_SUB_KEYS, &pEnumMoniker->sw_key))
         pEnumMoniker->sw_key = NULL;
 
-    strcpyW(buffer, wszActiveMovieKey);
-    StringFromGUID2(class, buffer + strlenW(buffer), CHARS_IN_GUID);
+    lstrcpyW(buffer, wszActiveMovieKey);
+    StringFromGUID2(class, buffer + lstrlenW(buffer), CHARS_IN_GUID);
     if (RegOpenKeyExW(HKEY_CURRENT_USER, buffer, 0, KEY_ENUMERATE_SUB_KEYS, &pEnumMoniker->cm_key))
         pEnumMoniker->cm_key = NULL;
 

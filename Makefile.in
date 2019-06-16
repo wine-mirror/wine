@@ -5,7 +5,6 @@
 # distclean:       also remove all files created by configure
 # test:            run tests
 # testclean:       clean test results to force running all tests again
-# crosstest:       build tests as native windows applications (requires MinGW)
 # install-lib:     install libraries needed to run applications
 # install-dev:     install development environment
 # install:         install everything
@@ -42,9 +41,10 @@ CFLAGS          = @CFLAGS@
 CPPFLAGS        = @CPPFLAGS@
 CROSSCFLAGS     = @CROSSCFLAGS@
 EXTRACFLAGS     = @EXTRACFLAGS@
-MSVCRTFLAGS     = @BUILTINFLAG@
+EXTRACROSSCFLAGS= @EXTRACROSSCFLAGS@
+MSVCRTFLAGS     = @MSVCRTFLAGS@
 TARGETFLAGS     = @TARGETFLAGS@
-UNWINDFLAGS     = @UNWINDFLAGS@
+LDDLLFLAGS      = @LDDLLFLAGS@
 LDEXECFLAGS     = @LDEXECFLAGS@
 LIBS            = @LIBS@
 BISON           = @BISON@
@@ -80,7 +80,6 @@ WINELOADER_DEPENDS  = @WINELOADER_DEPENDS@
 WINELOADER_LDFLAGS  = @WINELOADER_LDFLAGS@
 WINEPRELOADER_LDFLAGS = @WINEPRELOADER_LDFLAGS@
 LIBWINE_SHAREDLIB   = @LIBWINE_SHAREDLIB@
-LIBWINE_IMPORTLIB   = @LIBWINE_IMPORTLIB@
 LIBWINE_LDFLAGS     = @LIBWINE_LDFLAGS@
 LIBWINE_DEPENDS     = @LIBWINE_DEPENDS@
 DISABLED_SUBDIRS    = @DISABLED_SUBDIRS@

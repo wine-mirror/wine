@@ -2,6 +2,8 @@ MODULE    = inetcomm.dll
 IMPORTLIB = inetcomm
 IMPORTS   = uuid urlmon propsys oleaut32 ole32 ws2_32 user32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	imaptransport.c \
 	inetcomm_main.c \

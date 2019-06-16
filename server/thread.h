@@ -89,6 +89,7 @@ struct thread
     timeout_t              creation_time; /* Thread creation time */
     timeout_t              exit_time;     /* Thread exit time */
     struct token          *token;         /* security token associated with this thread */
+    struct list            kernel_object; /* list of kernel object pointers */
 };
 
 struct thread_snapshot
@@ -130,6 +131,8 @@ extern struct token *thread_get_impersonation_token( struct thread *thread );
 extern int set_thread_affinity( struct thread *thread, affinity_t affinity );
 extern int is_cpu_supported( enum cpu_type cpu );
 extern unsigned int get_supported_cpu_mask(void);
+extern int suspend_thread( struct thread *thread );
+extern int resume_thread( struct thread *thread );
 
 /* ptrace functions */
 

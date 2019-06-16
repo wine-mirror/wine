@@ -2,6 +2,8 @@ MODULE    = inetcpl.cpl
 IMPORTS   = comctl32 shlwapi user32 advapi32
 DELAYIMPORTS = cryptui wininet ole32 urlmon shell32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	connections.c \
 	content.c \

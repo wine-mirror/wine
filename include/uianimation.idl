@@ -20,9 +20,18 @@ import "unknwn.idl";
 
 interface IUIAnimationStoryboard;
 interface IUIAnimationVariable;
+interface IUIAnimationManager;
+interface IUIAnimationPriorityComparison;
+interface IUIAnimationTransitionFactory;
+interface IUIAnimationInterpolator;
+interface IUIAnimationManagerEventHandler;
+interface IUIAnimationTransition;
+interface IUIAnimationTransitionLibrary;
 
 typedef DOUBLE UI_ANIMATION_SECONDS;
 typedef struct { int _; } *UI_ANIMATION_KEYFRAME;
+
+const UI_ANIMATION_SECONDS UI_ANIMATION_SECONDS_EVENTUALLY = -1.0;
 
 typedef enum
 {
@@ -75,6 +84,34 @@ typedef enum
     UI_ANIMATION_IDLE_BEHAVIOR_CONTINUE,
     UI_ANIMATION_IDLE_BEHAVIOR_DISABLE,
 } UI_ANIMATION_IDLE_BEHAVIOR;
+
+typedef [v1_enum] enum
+{
+    UI_ANIMATION_MODE_DISABLED,
+    UI_ANIMATION_MODE_SYSTEM_DEFAULT,
+    UI_ANIMATION_MODE_ENABLED
+} UI_ANIMATION_MODE;
+
+typedef [v1_enum] enum
+{
+    UI_ANIMATION_PRIORITY_EFFECT_FAILURE,
+    UI_ANIMATION_PRIORITY_EFFECT_DELAY
+} UI_ANIMATION_PRIORITY_EFFECT;
+
+typedef [v1_enum] enum
+{
+    UI_ANIMATION_DEPENDENCY_NONE = 0,
+    UI_ANIMATION_DEPENDENCY_INTERMEDIATE_VALUES = 0x1,
+    UI_ANIMATION_DEPENDENCY_FINAL_VALUE = 0x2,
+    UI_ANIMATION_DEPENDENCY_FINAL_VELOCITY = 0x4,
+    UI_ANIMATION_DEPENDENCY_DURATION = 0x8
+} UI_ANIMATION_DEPENDENCIES;
+
+typedef [v1_enum] enum
+{
+    UI_ANIMATION_SLOPE_INCREASING,
+    UI_ANIMATION_SLOPE_DECREASING
+} UI_ANIMATION_SLOPE;
 
 [
     local,
@@ -335,6 +372,212 @@ interface IUIAnimationTimer : IUnknown
 }
 
 [
+    local,
+    object,
+    uuid(9169896c-ac8d-4e7d-94e5-67fa4dc2f2e8),
+    pointer_default(unique)
+]
+interface IUIAnimationManager : IUnknown
+{
+    HRESULT CreateAnimationVariable(
+        [in] UI_ANIMATION_SECONDS initialvalue,
+        [out, retval] IUIAnimationVariable **variable);
+
+    HRESULT ScheduleTransition(
+        [in] IUIAnimationVariable *variable,
+        [in] IUIAnimationTransition *transition,
+        [in] UI_ANIMATION_SECONDS timenow);
+
+    HRESULT CreateStoryboard(
+        [out, retval] IUIAnimationStoryboard **storyboard);
+
+    HRESULT FinishAllStoryboards(
+        [in] UI_ANIMATION_SECONDS deadline);
+
+    HRESULT AbandonAllStoryboards();
+
+    HRESULT Update(
+        [in] UI_ANIMATION_SECONDS timenow,
+        [out, defaultvalue(0)] UI_ANIMATION_UPDATE_RESULT *updateresult);
+
+    HRESULT GetVariableFromTag(
+        [in] IUnknown * object,
+        [in] UINT32 id,
+        [out, retval] IUIAnimationVariable **variable);
+
+    HRESULT GetStoryboardFromTag(
+        [in] IUnknown * object,
+        [in] UINT32 id,
+        [out, retval] IUIAnimationStoryboard **storyboard);
+
+    HRESULT GetStatus(
+        [out, retval] UI_ANIMATION_MANAGER_STATUS *status);
+
+    HRESULT SetAnimationMode(
+        [in] UI_ANIMATION_MODE mode);
+
+    HRESULT Pause();
+
+    HRESULT Resume();
+
+    HRESULT SetManagerEventHandler(
+        [in] IUIAnimationManagerEventHandler *handler);
+
+    HRESULT SetCancelPriorityComparison(
+        [in] IUIAnimationPriorityComparison *comparison);
+
+    HRESULT SetTrimPriorityComparison(
+        [in] IUIAnimationPriorityComparison *comparison);
+
+    HRESULT SetCompressPriorityComparison(
+        [in] IUIAnimationPriorityComparison *comparison);
+
+    HRESULT SetConcludePriorityComparison(
+        [in] IUIAnimationPriorityComparison *comparison);
+
+    HRESULT SetDefaultLongestAcceptableDelay(
+        [in] UI_ANIMATION_SECONDS delay);
+
+    HRESULT Shutdown();
+}
+
+[
+    local,
+    object,
+    uuid(83fa9b74-5f86-4618-bc6a-a2fac19b3f44),
+    pointer_default(unique)
+]
+interface IUIAnimationPriorityComparison : IUnknown
+{
+    HRESULT HasPriority(
+        [in] IUIAnimationStoryboard *scheduledboard,
+        [in] IUIAnimationStoryboard *newboard,
+        [in] UI_ANIMATION_PRIORITY_EFFECT effect);
+}
+
+[
+    local,
+    object,
+    uuid(fcd91e03-3e3b-45ad-bbb1-6dfc8153743d),
+    pointer_default(unique)
+]
+interface IUIAnimationTransitionFactory : IUnknown
+{
+    HRESULT CreateTransition(
+        [in] IUIAnimationInterpolator *interpolator,
+        [out, retval] IUIAnimationTransition **transition);
+}
+
+[
+    local,
+    object,
+    uuid(7815cbba-ddf7-478c-a46c-7b6c738b7978),
+    pointer_default(unique)
+]
+interface IUIAnimationInterpolator : IUnknown
+{
+    HRESULT SetInitialValueAndVelocity(
+        [in] double initialvalue,
+        [in] double initialvelocity);
+
+    HRESULT SetDuration(
+        [in] UI_ANIMATION_SECONDS duration);
+
+    HRESULT GetDuration(
+        [out, retval] UI_ANIMATION_SECONDS *duration);
+
+    HRESULT GetFinalValue(
+        [out, retval] double *value);
+
+    HRESULT InterpolateValue(
+        [in] UI_ANIMATION_SECONDS offset,
+        [out, retval] double *value);
+
+    HRESULT InterpolateVelocity(
+        [in] UI_ANIMATION_SECONDS offset,
+        [out, retval] double *velocity);
+
+    HRESULT GetDependencies(
+        [out] UI_ANIMATION_DEPENDENCIES *initialvaluedependencies,
+        [out] UI_ANIMATION_DEPENDENCIES *initialvelocitydependencies,
+        [out] UI_ANIMATION_DEPENDENCIES *durationdependencies);
+}
+
+[
+    local,
+    object,
+    uuid(ca5a14b1-d24f-48b8-8fe4-c78169ba954e),
+    pointer_default(unique)
+]
+interface IUIAnimationTransitionLibrary : IUnknown
+{
+    HRESULT CreateInstantaneousTransition(
+        [in] double finalvalue,
+        [out, retval] IUIAnimationTransition **transition);
+
+    HRESULT CreateConstantTransition(
+        [in] UI_ANIMATION_SECONDS duration,
+        [out, retval] IUIAnimationTransition **transition);
+
+    HRESULT CreateDiscreteTransition(
+        [in] UI_ANIMATION_SECONDS delay,
+        [in] double finalvalue,
+        [in] UI_ANIMATION_SECONDS hold,
+        [out, retval] IUIAnimationTransition **transition);
+
+    HRESULT CreateLinearTransition(
+        [in] UI_ANIMATION_SECONDS duration,
+        [in] double finalvalue,
+        [out, retval] IUIAnimationTransition **transition);
+
+    HRESULT CreateLinearTransitionFromSpeed(
+        [in] double speed,
+        [in] double finalvalue,
+        [out, retval] IUIAnimationTransition **transition);
+
+    HRESULT CreateSinusoidalTransitionFromVelocity(
+        [in] UI_ANIMATION_SECONDS duration,
+        [in] UI_ANIMATION_SECONDS period,
+        [out, retval] IUIAnimationTransition **transition);
+
+    HRESULT CreateSinusoidalTransitionFromRange(
+        [in] UI_ANIMATION_SECONDS duration,
+        [in] double minimumvalue,
+        [in] double maximumvalue,
+        [in] UI_ANIMATION_SECONDS period,
+        [in] UI_ANIMATION_SLOPE slope,
+        [out, retval] IUIAnimationTransition **transition);
+
+  HRESULT CreateAccelerateDecelerateTransition(
+        [in] UI_ANIMATION_SECONDS duration,
+        [in] double finalvalue,
+        [in] double accelerationratio,
+        [in] double decelerationratio,
+        [out, retval] IUIAnimationTransition **transition);
+
+    HRESULT CreateReversalTransition(
+        [in] UI_ANIMATION_SECONDS duration,
+        [out, retval] IUIAnimationTransition **transition);
+
+    HRESULT CreateCubicTransition(
+        [in] UI_ANIMATION_SECONDS duration,
+        [in] double finalvalue,
+        [in] double finalvelocity,
+        [out, retval] IUIAnimationTransition **transition);
+
+    HRESULT CreateSmoothStopTransition(
+        [in] UI_ANIMATION_SECONDS maximumduration,
+        [in] double finalvalue,
+        [out, retval] IUIAnimationTransition **transition);
+
+    HRESULT CreateParabolicTransitionFromAcceleration(
+        [in] UI_ANIMATION_SECONDS finalvalue,
+        [in] double finalvelocity,
+        [in] double acceleration,
+        [out, retval] IUIAnimationTransition **transition);
+}
+
+[
     uuid(44ca24db-1a92-4149-bab5-fb14d64b401e),
     version(1.0)
 ]
@@ -346,5 +589,29 @@ library UIAnimation
     coclass UIAnimationTimer
     {
         [default] interface IUIAnimationTimer;
+    }
+
+    [
+        uuid(4c1fc63a-695c-47e8-a339-1a194be3d0b8)
+    ]
+    coclass UIAnimationManager
+    {
+        [default] interface IUIAnimationManager;
+    }
+
+    [
+        uuid(8a9b1cdd-fcd7-419c-8b44-42fd17db1887)
+    ]
+    coclass UIAnimationTransitionFactory
+    {
+        [default] interface IUIAnimationTransitionFactory;
+    }
+
+    [
+        uuid(1d6322ad-aa85-4ef5-a828-86d71067d145)
+    ]
+    coclass UIAnimationTransitionLibrary
+    {
+        [default] interface IUIAnimationTransitionLibrary;
     }
 }

@@ -196,7 +196,6 @@ static HRESULT WINAPI BaseMemAllocator_SetProperties(IMemAllocator * iface, ALLO
 static HRESULT WINAPI BaseMemAllocator_GetProperties(IMemAllocator * iface, ALLOCATOR_PROPERTIES *pProps)
 {
     BaseMemAllocator *This = impl_from_IMemAllocator(iface);
-    HRESULT hr = S_OK;
 
     TRACE("(%p)->(%p)\n", This, pProps);
 
@@ -206,7 +205,7 @@ static HRESULT WINAPI BaseMemAllocator_GetProperties(IMemAllocator * iface, ALLO
     }
     LeaveCriticalSection(This->pCritSect);
 
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI BaseMemAllocator_Commit(IMemAllocator * iface)

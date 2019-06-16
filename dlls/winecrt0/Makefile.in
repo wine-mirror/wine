@@ -1,6 +1,7 @@
 MODULE    = libwinecrt0.a
 
 C_SRCS = \
+	debug.c \
 	delay_load.c \
 	dll_entry.c \
 	dll_main.c \

@@ -168,11 +168,14 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case IDC_ABT_TITLE_TEXT:
             /* set the title to a wine color */
             SetTextColor((HDC)wParam, 0x0000007F);
+            SetBkColor((HDC)wParam, GetSysColor(COLOR_WINDOW));
+            return (INT_PTR)GetSysColorBrush(COLOR_WINDOW);
         case IDC_ABT_PANEL_TEXT:
         case IDC_ABT_LICENSE_TEXT:
         case IDC_ABT_WEB_LINK:
+            SetTextColor((HDC)wParam, GetSysColor(COLOR_WINDOWTEXT));
             SetBkColor((HDC)wParam, GetSysColor(COLOR_WINDOW));
-            return (INT_PTR)CreateSolidBrush(GetSysColor(COLOR_WINDOW));
+            return (INT_PTR)GetSysColorBrush(COLOR_WINDOW);
         }
         break;
     }

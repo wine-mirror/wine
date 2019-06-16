@@ -354,7 +354,7 @@ static inline void FUNC_NAME(pf_fixup_exponent)(char *buf, BOOL three_digit_exp)
 {
     char* tmp = buf;
 
-    while(tmp[0] && toupper(tmp[0])!='E')
+    while(tmp[0] && MSVCRT__toupper_l(tmp[0], NULL)!='E')
         tmp++;
 
     if(tmp[0] && (tmp[1]=='+' || tmp[1]=='-') &&
@@ -664,10 +664,10 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                     sprintf(tmp, nan_str);
                 if (strchr("EFG", flags.Format))
                     for(i=0; tmp[i]; i++)
-                        tmp[i] = toupper(tmp[i]);
+                        tmp[i] = MSVCRT__toupper_l(tmp[i], NULL);
             } else {
                 sprintf(tmp, float_fmt, val);
-                if(toupper(flags.Format)=='E' || toupper(flags.Format)=='G')
+                if(MSVCRT__toupper_l(flags.Format, NULL)=='E' || MSVCRT__toupper_l(flags.Format, NULL)=='G')
                     FUNC_NAME(pf_fixup_exponent)(tmp, three_digit_exp);
             }
 

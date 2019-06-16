@@ -88,7 +88,7 @@ NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
         self = !ret && reply->self;
     }
     SERVER_END_REQ;
-    if (self && handle) _exit( exit_code );
+    if (self && handle) _exit( get_unix_exit_code( exit_code ));
     return ret;
 }
 
@@ -763,8 +763,16 @@ NTSTATUS  WINAPI NtOpenProcess(PHANDLE handle, ACCESS_MASK access,
  */
 NTSTATUS WINAPI NtResumeProcess( HANDLE handle )
 {
-    FIXME("stub: %p\n", handle);
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS ret;
+
+    SERVER_START_REQ( resume_process )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 /******************************************************************************
@@ -773,8 +781,16 @@ NTSTATUS WINAPI NtResumeProcess( HANDLE handle )
  */
 NTSTATUS WINAPI NtSuspendProcess( HANDLE handle )
 {
-    FIXME("stub: %p\n", handle);
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS ret;
+
+    SERVER_START_REQ( suspend_process )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 
@@ -815,9 +831,13 @@ static char **build_argv( const UNICODE_STRING *cmdlineW, int reserved )
         else if (*s == '\\') bcount++;  /* '\', count them */
         else if ((*s == '"') && ((bcount & 1) == 0))
         {
-            /* unescaped '"' */
-            in_quotes = !in_quotes;
-            bcount = 0;
+            if (in_quotes && s[1] == '"') s++;
+            else
+            {
+                /* unescaped '"' */
+                in_quotes = !in_quotes;
+                bcount = 0;
+            }
         }
         else bcount = 0; /* a regular character */
         s++;
@@ -864,7 +884,12 @@ static char **build_argv( const UNICODE_STRING *cmdlineW, int reserved )
                  */
                 d -= bcount/2;
                 s++;
-                in_quotes = !in_quotes;
+                if (in_quotes && *s == '"')
+                {
+                    *d++ = '"';
+                    s++;
+                }
+                else in_quotes = !in_quotes;
             }
             else
             {
@@ -1009,6 +1034,26 @@ static const char *get_alternate_loader( char **ret_env )
 
 
 /***********************************************************************
+ *           set_stdio_fd
+ */
+static void set_stdio_fd( int stdin_fd, int stdout_fd )
+{
+    int fd = -1;
+
+    if (stdin_fd == -1 || stdout_fd == -1)
+    {
+        fd = open( "/dev/null", O_RDWR );
+        if (stdin_fd == -1) stdin_fd = fd;
+        if (stdout_fd == -1) stdout_fd = fd;
+    }
+
+    dup2( stdin_fd, 0 );
+    dup2( stdout_fd, 1 );
+    if (fd != -1) close( fd );
+}
+
+
+/***********************************************************************
  *           spawn_loader
  */
 static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
@@ -1041,21 +1086,10 @@ static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int soc
                 params->ConsoleHandle == (HANDLE)1 /* KERNEL32_CONSOLE_ALLOC */ ||
                 (params->hStdInput == INVALID_HANDLE_VALUE && params->hStdOutput == INVALID_HANDLE_VALUE))
             {
-                int fd = open( "/dev/null", O_RDWR );
                 setsid();
-                /* close stdin and stdout */
-                if (fd != -1)
-                {
-                    dup2( fd, 0 );
-                    dup2( fd, 1 );
-                    close( fd );
-                }
+                set_stdio_fd( -1, -1 );  /* close stdin and stdout */
             }
-            else
-            {
-                if (stdin_fd != -1) dup2( stdin_fd, 0 );
-                if (stdout_fd != -1) dup2( stdout_fd, 1 );
-            }
+            else set_stdio_fd( stdin_fd, stdout_fd );
 
             if (stdin_fd != -1) close( stdin_fd );
             if (stdout_fd != -1) close( stdout_fd );

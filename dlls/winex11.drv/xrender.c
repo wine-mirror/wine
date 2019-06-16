@@ -800,7 +800,7 @@ static UINT get_xft_aa_flags( const LOGFONTW *lf )
         if (!(value = XGetDefault( gdi_display, "Xft", "antialias" ))) break;
         TRACE( "got antialias '%s'\n", value );
         if (tolower(value[0]) == 'f' || tolower(value[0]) == 'n' ||
-            value[0] == '0' || !strcasecmp( value, "off" ))
+            value[0] == '0' || !_strnicmp( value, "off", -1 ))
         {
             ret = GGO_BITMAP;
             break;
@@ -2194,6 +2194,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
     NULL,                               /* pGetCharWidth */
+    NULL,                               /* pGetCharWidthInfo */
     NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
     NULL,                               /* pGetFontData */

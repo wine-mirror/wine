@@ -60,6 +60,7 @@ static const struct object_creation_info object_creation[] =
 {
     { &CLSID_AMTimeline, AMTimeline_create },
     { &CLSID_MediaDet, MediaDet_create },
+    { &CLSID_NullRenderer, NullRenderer_create },
     { &CLSID_SampleGrabber, SampleGrabber_create },
 };
 
@@ -106,7 +107,7 @@ static HRESULT WINAPI DSCF_CreateInstance(IClassFactory *iface, IUnknown *pOuter
 
     *ppobj = NULL;
     if (pOuter && !IsEqualGUID(&IID_IUnknown, riid))
-        return E_INVALIDARG;
+        return E_NOINTERFACE;
 
     hres = This->pfnCreateInstance(pOuter, (LPVOID *) &punk);
     if (SUCCEEDED(hres)) {

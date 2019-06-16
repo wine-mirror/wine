@@ -32,6 +32,7 @@ static int (WINAPI *pGetCalendarInfoW)(LCID,CALID,CALTYPE,LPWSTR,int,LPDWORD);
 static DWORD (WINAPI *pGetDynamicTimeZoneInformation)(DYNAMIC_TIME_ZONE_INFORMATION*);
 static void (WINAPI *pGetSystemTimePreciseAsFileTime)(LPFILETIME);
 static BOOL (WINAPI *pGetTimeZoneInformationForYear)(USHORT, PDYNAMIC_TIME_ZONE_INFORMATION, LPTIME_ZONE_INFORMATION);
+static ULONG (WINAPI *pNtGetTickCount)(void);
 
 #define SECSPERMIN         60
 #define SECSPERDAY        86400
@@ -773,6 +774,20 @@ static ULONGLONG get_longlong_time(FILETIME *time)
     return uli.QuadPart;
 }
 
+static void test_GetSystemTimeAsFileTime(void)
+{
+    LARGE_INTEGER t1, t2, t3;
+    FILETIME ft;
+
+    NtQuerySystemTime( &t1 );
+    GetSystemTimeAsFileTime( &ft );
+    NtQuerySystemTime( &t3 );
+    t2.QuadPart = get_longlong_time( &ft );
+
+    ok(t1.QuadPart <= t2.QuadPart, "out of order %s %s\n", wine_dbgstr_longlong(t1.QuadPart), wine_dbgstr_longlong(t2.QuadPart));
+    ok(t2.QuadPart <= t3.QuadPart, "out of order %s %s\n", wine_dbgstr_longlong(t2.QuadPart), wine_dbgstr_longlong(t3.QuadPart));
+}
+
 static void test_GetSystemTimePreciseAsFileTime(void)
 {
     FILETIME ft;
@@ -990,9 +1005,32 @@ static void test_GetTimeZoneInformationForYear(void)
        "GetTimeZoneInformationForYear err %u\n", GetLastError());
 }
 
+static void test_GetTickCount(void)
+{
+    DWORD t1, t2, t3;
+    int i = 0;
+
+    if (!pNtGetTickCount)
+    {
+        win_skip("NtGetTickCount not implemented\n");
+        return;
+    }
+
+    do
+    {
+        t1 = pNtGetTickCount();
+        t2 = GetTickCount();
+        t3 = pNtGetTickCount();
+    } while(t3 < t1 && i++ < 1); /* allow for wrap, but only once */
+
+    ok(t1 <= t2, "out of order %d %d\n", t1, t2);
+    ok(t2 <= t3, "out of order %d %d\n", t2, t3);
+}
+
 START_TEST(time)
 {
     HMODULE hKernel = GetModuleHandleA("kernel32");
+    HMODULE hntdll = GetModuleHandleA("ntdll");
     pTzSpecificLocalTimeToSystemTime = (void *)GetProcAddress(hKernel, "TzSpecificLocalTimeToSystemTime");
     pSystemTimeToTzSpecificLocalTime = (void *)GetProcAddress( hKernel, "SystemTimeToTzSpecificLocalTime");
     pGetSystemTimes = (void *)GetProcAddress( hKernel, "GetSystemTimes");
@@ -1001,6 +1039,7 @@ START_TEST(time)
     pGetDynamicTimeZoneInformation = (void *)GetProcAddress(hKernel, "GetDynamicTimeZoneInformation");
     pGetSystemTimePreciseAsFileTime = (void *)GetProcAddress(hKernel, "GetSystemTimePreciseAsFileTime");
     pGetTimeZoneInformationForYear = (void *)GetProcAddress(hKernel, "GetTimeZoneInformationForYear");
+    pNtGetTickCount = (void *)GetProcAddress(hntdll, "NtGetTickCount");
 
     test_conversions();
     test_invalid_arg();
@@ -1012,6 +1051,8 @@ START_TEST(time)
     test_FileTimeToDosDateTime();
     test_GetCalendarInfo();
     test_GetDynamicTimeZoneInformation();
+    test_GetSystemTimeAsFileTime();
     test_GetSystemTimePreciseAsFileTime();
     test_GetTimeZoneInformationForYear();
+    test_GetTickCount();
 }

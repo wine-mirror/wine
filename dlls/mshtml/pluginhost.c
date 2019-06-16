@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <assert.h>
 
@@ -66,7 +64,7 @@ static param_prop_t *find_prop(PropertyBag *prop_bag, const WCHAR *name)
     param_prop_t *iter;
 
     LIST_FOR_EACH_ENTRY(iter, &prop_bag->props, param_prop_t, entry) {
-        if(!strcmpiW(iter->name, name))
+        if(!wcsicmp(iter->name, name))
             return iter;
     }
 
@@ -2269,11 +2267,11 @@ static BOOL parse_classid(const PRUnichar *classid, CLSID *clsid)
 
     static const PRUnichar clsidW[] = {'c','l','s','i','d',':'};
 
-    if(strncmpiW(classid, clsidW, ARRAY_SIZE(clsidW)))
+    if(wcsnicmp(classid, clsidW, ARRAY_SIZE(clsidW)))
         return FALSE;
 
     ptr = classid + ARRAY_SIZE(clsidW);
-    len = strlenW(ptr);
+    len = lstrlenW(ptr);
 
     if(len == 38) {
         hres = CLSIDFromString(ptr, clsid);

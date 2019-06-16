@@ -619,7 +619,7 @@ static void test_NtQueryDirectoryFile(void)
     ok( filename[0] == '.' && filename[1] == '.', "incorrect long file name: %s\n",
         wine_dbgstr_wn(next->FileName, next->FileNameLength/sizeof(WCHAR)));
 
-    data_size = fbdi->NextEntryOffset + offsetof( FILE_BOTH_DIRECTORY_INFORMATION, FileName[1] ),
+    data_size = fbdi->NextEntryOffset + offsetof( FILE_BOTH_DIRECTORY_INFORMATION, FileName[1] );
     memset( data, 0x55, data_size );
     U(io).Status = 0xdeadbeef;
     U(io).Information = 0xdeadbeef;
@@ -636,7 +636,7 @@ static void test_NtQueryDirectoryFile(void)
     next = (FILE_BOTH_DIRECTORY_INFORMATION *)&fbdi->FileName[1];
     ok( next->NextEntryOffset == 0x55555555, "wrong offset %x\n",  next->NextEntryOffset );
 
-    data_size = fbdi->NextEntryOffset + offsetof( FILE_BOTH_DIRECTORY_INFORMATION, FileName[2] ),
+    data_size = fbdi->NextEntryOffset + offsetof( FILE_BOTH_DIRECTORY_INFORMATION, FileName[2] );
     memset( data, 0x55, data_size );
     U(io).Status = 0xdeadbeef;
     U(io).Information = 0xdeadbeef;

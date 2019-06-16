@@ -31,8 +31,10 @@ static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
 static VOID     (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
 static NTSTATUS (WINAPI *pNtCreateEvent) ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES, BOOLEAN, BOOLEAN);
 static NTSTATUS (WINAPI *pNtOpenEvent)   ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES);
-static NTSTATUS (WINAPI *pNtPulseEvent)  ( HANDLE, PULONG );
+static NTSTATUS (WINAPI *pNtPulseEvent)  ( HANDLE, PLONG );
 static NTSTATUS (WINAPI *pNtQueryEvent)  ( HANDLE, EVENT_INFORMATION_CLASS, PVOID, ULONG, PULONG );
+static NTSTATUS (WINAPI *pNtResetEvent)  ( HANDLE, LONG* );
+static NTSTATUS (WINAPI *pNtSetEvent)    ( HANDLE, LONG* );
 static NTSTATUS (WINAPI *pNtCreateJobObject)( PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES );
 static NTSTATUS (WINAPI *pNtOpenJobObject)( PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES );
 static NTSTATUS (WINAPI *pNtCreateKey)( PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, ULONG,
@@ -1333,6 +1335,8 @@ static void _test_object_type(unsigned line, HANDLE handle, const char *expected
     ok_(__FILE__,line)( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR), "unexpected len %u\n", len );
     ok_(__FILE__,line)( str->Length == expect.Length && !memcmp( str->Buffer, expect.Buffer, expect.Length ),
                         "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+
+    pRtlFreeUnicodeString( &expect );
 }
 
 static void test_query_object(void)
@@ -1605,6 +1609,7 @@ static void test_event(void)
 {
     HANDLE Event;
     HANDLE Event2;
+    LONG prev_state = 0xdeadbeef;
     NTSTATUS status;
     UNICODE_STRING str;
     OBJECT_ATTRIBUTES attr;
@@ -1617,8 +1622,9 @@ static void test_event(void)
     status = pNtCreateEvent(&Event, GENERIC_ALL, &attr, 1, 0);
     ok( status == STATUS_SUCCESS, "NtCreateEvent failed %08x\n", status );
 
-    status = pNtPulseEvent(Event, NULL);
+    status = pNtPulseEvent(Event, &prev_state);
     ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08x\n", status );
+    ok( !prev_state, "prev_state = %x\n", prev_state );
 
     status = pNtQueryEvent(Event, EventBasicInformation, &info, sizeof(info), NULL);
     ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08x\n", status );
@@ -1629,13 +1635,42 @@ static void test_event(void)
     ok( status == STATUS_SUCCESS, "NtOpenEvent failed %08x\n", status );
 
     pNtClose(Event);
+    Event = Event2;
 
-    status = pNtQueryEvent(Event2, EventBasicInformation, &info, sizeof(info), NULL);
+    status = pNtQueryEvent(Event, EventBasicInformation, &info, sizeof(info), NULL);
     ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08x\n", status );
     ok( info.EventType == 1 && info.EventState == 0,
         "NtQueryEvent failed, expected 1 0, got %d %d\n", info.EventType, info.EventState );
 
-    pNtClose(Event2);
+    status = pNtSetEvent( Event, &prev_state );
+    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
+    ok( !prev_state, "prev_state = %x\n", prev_state );
+
+    status = pNtSetEvent( Event, &prev_state );
+    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
+    ok( prev_state == 1, "prev_state = %x\n", prev_state );
+
+    status = pNtResetEvent( Event, &prev_state );
+    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
+    ok( prev_state == 1, "prev_state = %x\n", prev_state );
+
+    status = pNtResetEvent( Event, &prev_state );
+    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
+    ok( !prev_state, "prev_state = %x\n", prev_state );
+
+    status = pNtPulseEvent( Event, &prev_state );
+    ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08x\n", status );
+    ok( !prev_state, "prev_state = %x\n", prev_state );
+
+    status = pNtSetEvent( Event, &prev_state );
+    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
+    ok( !prev_state, "prev_state = %x\n", prev_state );
+
+    status = pNtPulseEvent( Event, &prev_state );
+    ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08x\n", status );
+    ok( prev_state == 1, "prev_state = %x\n", prev_state );
+
+    pNtClose(Event);
 }
 
 static const WCHAR keyed_nameW[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',
@@ -2139,6 +2174,8 @@ START_TEST(om)
     pNtOpenEvent            = (void *)GetProcAddress(hntdll, "NtOpenEvent");
     pNtQueryEvent           = (void *)GetProcAddress(hntdll, "NtQueryEvent");
     pNtPulseEvent           = (void *)GetProcAddress(hntdll, "NtPulseEvent");
+    pNtResetEvent           = (void *)GetProcAddress(hntdll, "NtResetEvent");
+    pNtSetEvent             = (void *)GetProcAddress(hntdll, "NtSetEvent");
     pNtOpenMutant           = (void *)GetProcAddress(hntdll, "NtOpenMutant");
     pNtQueryMutant          = (void *)GetProcAddress(hntdll, "NtQueryMutant");
     pNtReleaseMutant        = (void *)GetProcAddress(hntdll, "NtReleaseMutant");

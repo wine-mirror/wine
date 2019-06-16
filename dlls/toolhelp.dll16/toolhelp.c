@@ -638,15 +638,12 @@ void WINAPI TerminateApp16(HTASK16 hTask, WORD wFlags)
  */
 DWORD WINAPI MemoryRead16( WORD sel, DWORD offset, void *buffer, DWORD count )
 {
-    LDT_ENTRY entry;
-    DWORD limit;
+    char *base = (char *)GetSelectorBase( sel );
+    DWORD limit = GetSelectorLimit16( sel );
 
-    wine_ldt_get_entry( sel, &entry );
-    if (wine_ldt_is_empty( &entry )) return 0;
-    limit = wine_ldt_get_limit( &entry );
     if (offset > limit) return 0;
     if (offset + count > limit + 1) count = limit + 1 - offset;
-    memcpy( buffer, (char *)wine_ldt_get_base(&entry) + offset, count );
+    memcpy( buffer, base + offset, count );
     return count;
 }
 
@@ -656,15 +653,12 @@ DWORD WINAPI MemoryRead16( WORD sel, DWORD offset, void *buffer, DWORD count )
  */
 DWORD WINAPI MemoryWrite16( WORD sel, DWORD offset, void *buffer, DWORD count )
 {
-    LDT_ENTRY entry;
-    DWORD limit;
+    char *base = (char *)GetSelectorBase( sel );
+    DWORD limit = GetSelectorLimit16( sel );
 
-    wine_ldt_get_entry( sel, &entry );
-    if (wine_ldt_is_empty( &entry )) return 0;
-    limit = wine_ldt_get_limit( &entry );
     if (offset > limit) return 0;
     if (offset + count > limit) count = limit + 1 - offset;
-    memcpy( (char *)wine_ldt_get_base(&entry) + offset, buffer, count );
+    memcpy( base + offset, buffer, count );
     return count;
 }
 

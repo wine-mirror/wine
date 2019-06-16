@@ -19,29 +19,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifdef __WINE__
-#include "config.h"
-#include "wine/port.h"
-
-/* for unix filesystem function calls */
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
-#endif
-
 #define COBJMACROS
 
+#include <assert.h>
+#include <stdio.h>
 #include "winefile.h"
 #include "resource.h"
-#include "wine/unicode.h"
-
-#ifndef _MAX_PATH
-#define _MAX_DRIVE          3
-#define _MAX_FNAME          256
-#define _MAX_DIR            _MAX_FNAME
-#define _MAX_EXT            _MAX_FNAME
-#define _MAX_PATH           260
-#endif
 
 #ifdef NONAMELESSUNION
 #define	UNION_MEMBER(x) DUMMYUNIONNAME.x
@@ -62,7 +45,6 @@ static const WCHAR reg_logfont[] = { 'l','o','g','f','o','n','t','\0'};
 
 enum ENTRY_TYPE {
 	ET_WINDOWS,
-	ET_UNIX,
 	ET_SHELL
 };
 
@@ -464,167 +446,6 @@ static Entry* read_tree_win(Root* root, LPCWSTR path, SORT_ORDER sortOrder, HWND
 }
 
 
-#ifdef __WINE__
-
-static BOOL time_to_filetime(time_t t, FILETIME* ftime)
-{
-	struct tm* tm = gmtime(&t);
-	SYSTEMTIME stime;
-
-	if (!tm)
-		return FALSE;
-
-	stime.wYear = tm->tm_year+1900;
-	stime.wMonth = tm->tm_mon+1;
-	/*	stime.wDayOfWeek */
-	stime.wDay = tm->tm_mday;
-	stime.wHour = tm->tm_hour;
-	stime.wMinute = tm->tm_min;
-	stime.wSecond = tm->tm_sec;
-	stime.wMilliseconds = 0;
-
-	return SystemTimeToFileTime(&stime, ftime);
-}
-
-static void read_directory_unix(Entry* dir, LPCWSTR path)
-{
-	Entry* first_entry = NULL;
-	Entry* last = NULL;
-	Entry* entry;
-	DIR* pdir;
-
-	int level = dir->level + 1;
-	char cpath[MAX_PATH];
-
-	WideCharToMultiByte(CP_UNIXCP, 0, path, -1, cpath, MAX_PATH, NULL, NULL);
-	pdir = opendir(cpath);
-
-	if (pdir) {
-		struct stat st;
-		struct dirent* ent;
-		char buffer[MAX_PATH], *p;
-		const char* s;
-
-		for(p=buffer,s=cpath; *s; )
-			*p++ = *s++;
-
-		if (p==buffer || p[-1]!='/')
-			*p++ = '/';
-
-		while((ent=readdir(pdir))) {
-			entry = alloc_entry();
-
-			if (!first_entry)
-				first_entry = entry;
-
-			if (last)
-				last->next = entry;
-
-			entry->etype = ET_UNIX;
-
-			strcpy(p, ent->d_name);
-			MultiByteToWideChar(CP_UNIXCP, 0, p, -1, entry->data.cFileName, MAX_PATH);
-
-			if (!stat(buffer, &st)) {
-				entry->data.dwFileAttributes = p[0]=='.'? FILE_ATTRIBUTE_HIDDEN: 0;
-
-				if (S_ISDIR(st.st_mode))
-					entry->data.dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
-
-				entry->data.nFileSizeLow = st.st_size & 0xFFFFFFFF;
-				entry->data.nFileSizeHigh = st.st_size >> 32;
-
-				memset(&entry->data.ftCreationTime, 0, sizeof(FILETIME));
-				time_to_filetime(st.st_atime, &entry->data.ftLastAccessTime);
-				time_to_filetime(st.st_mtime, &entry->data.ftLastWriteTime);
-
-				entry->bhfi.nFileIndexLow = ent->d_ino;
-				entry->bhfi.nFileIndexHigh = 0;
-
-				entry->bhfi.nNumberOfLinks = st.st_nlink;
-
-				entry->bhfi_valid = TRUE;
-			} else {
-				entry->data.nFileSizeLow = 0;
-				entry->data.nFileSizeHigh = 0;
-				entry->bhfi_valid = FALSE;
-			}
-
-			entry->down = NULL;
-			entry->up = dir;
-			entry->expanded = FALSE;
-			entry->scanned = FALSE;
-			entry->level = level;
-
-			last = entry;
-		}
-
-		if (last)
-			last->next = NULL;
-
-		closedir(pdir);
-	}
-
-	dir->down = first_entry;
-	dir->scanned = TRUE;
-}
-
-static Entry* find_entry_unix(Entry* dir, LPCWSTR name)
-{
-	Entry* entry;
-
-	for(entry=dir->down; entry; entry=entry->next) {
-		LPCWSTR p = name;
-		LPCWSTR q = entry->data.cFileName;
-
-		do {
-			if (!*p || *p == '/')
-				return entry;
-		} while(*p++ == *q++);
-	}
-
-	return 0;
-}
-
-static Entry* read_tree_unix(Root* root, LPCWSTR path, SORT_ORDER sortOrder, HWND hwnd)
-{
-	WCHAR buffer[MAX_PATH];
-	Entry* entry = &root->entry;
-	LPCWSTR s = path;
-	PWSTR d = buffer;
-
-	HCURSOR old_cursor = SetCursor(LoadCursorW(0, (LPCWSTR)IDC_WAIT));
-
-	entry->etype = ET_UNIX;
-
-	while(entry) {
-		while(*s && *s != '/')
-			*d++ = *s++;
-
-		while(*s == '/')
-			s++;
-
-		*d++ = '/';
-		*d = '\0';
-
-		read_directory(entry, buffer, sortOrder, hwnd);
-
-		if (entry->down)
-			entry->expanded = TRUE;
-
-		if (!*s)
-			break;
-
-		entry = find_entry_unix(entry, s);
-	}
-
-	SetCursor(old_cursor);
-
-	return entry;
-}
-
-#endif /* __WINE__ */
-
 static void free_strret(STRRET* str)
 {
 	if (str->uType == STRRET_WSTR)
@@ -739,7 +560,7 @@ static HICON extract_icon(IShellFolder* folder, LPCITEMIDLIST pidl)
 {
 	IExtractIconW* pExtract;
 
-	if (SUCCEEDED(IShellFolder_GetUIObjectOf(folder, 0, 1, (LPCITEMIDLIST*)&pidl, &IID_IExtractIconW, 0, (LPVOID*)&pExtract))) {
+	if (SUCCEEDED(IShellFolder_GetUIObjectOf(folder, 0, 1, &pidl, &IID_IExtractIconW, 0, (void**)&pExtract))) {
 		WCHAR path[_MAX_PATH];
 		unsigned flags;
 		HICON hicon;
@@ -1034,7 +855,7 @@ static int compareType(const WIN32_FIND_DATAW* fd1, const WIN32_FIND_DATAW* fd2)
 }
 
 
-static int compareName(const void* arg1, const void* arg2)
+static int __cdecl compareName(const void* arg1, const void* arg2)
 {
 	const WIN32_FIND_DATAW* fd1 = &(*(const Entry* const*)arg1)->data;
 	const WIN32_FIND_DATAW* fd2 = &(*(const Entry* const*)arg2)->data;
@@ -1046,7 +867,7 @@ static int compareName(const void* arg1, const void* arg2)
 	return lstrcmpiW(fd1->cFileName, fd2->cFileName);
 }
 
-static int compareExt(const void* arg1, const void* arg2)
+static int __cdecl compareExt(const void* arg1, const void* arg2)
 {
 	const WIN32_FIND_DATAW* fd1 = &(*(const Entry* const*)arg1)->data;
 	const WIN32_FIND_DATAW* fd2 = &(*(const Entry* const*)arg2)->data;
@@ -1059,8 +880,8 @@ static int compareExt(const void* arg1, const void* arg2)
 	name1 = fd1->cFileName;
 	name2 = fd2->cFileName;
 
-	ext1 = strrchrW(name1, '.');
-	ext2 = strrchrW(name2, '.');
+	ext1 = wcsrchr(name1, '.');
+	ext2 = wcsrchr(name2, '.');
 
 	if (ext1)
 		ext1++;
@@ -1079,7 +900,7 @@ static int compareExt(const void* arg1, const void* arg2)
 	return lstrcmpiW(name1, name2);
 }
 
-static int compareSize(const void* arg1, const void* arg2)
+static int __cdecl compareSize(const void* arg1, const void* arg2)
 {
 	const WIN32_FIND_DATAW* fd1 = &(*(const Entry* const*)arg1)->data;
 	const WIN32_FIND_DATAW* fd2 = &(*(const Entry* const*)arg2)->data;
@@ -1100,7 +921,7 @@ static int compareSize(const void* arg1, const void* arg2)
 	return cmp<0? -1: cmp>0? 1: 0;
 }
 
-static int compareDate(const void* arg1, const void* arg2)
+static int __cdecl compareDate(const void* arg1, const void* arg2)
 {
 	const WIN32_FIND_DATAW* fd1 = &(*(const Entry* const*)arg1)->data;
 	const WIN32_FIND_DATAW* fd2 = &(*(const Entry* const*)arg2)->data;
@@ -1113,7 +934,7 @@ static int compareDate(const void* arg1, const void* arg2)
 }
 
 
-static int (*sortFunctions[])(const void* arg1, const void* arg2) = {
+static int (CDECL *sortFunctions[])(const void* arg1, const void* arg2) = {
 	compareName,	/* SORT_NAME */
 	compareExt,		/* SORT_EXT */
 	compareSize,	/* SORT_SIZE */
@@ -1181,30 +1002,6 @@ static void read_directory(Entry* dir, LPCWSTR path, SORT_ORDER sortOrder, HWND 
 		}
 	}
 	else
-#ifdef __WINE__
-	if (dir->etype == ET_UNIX)
-	{
-		read_directory_unix(dir, path);
-
-		if (Globals.prescan_node) {
-			s = path;
-			d = buffer;
-
-			while(*s)
-				*d++ = *s++;
-
-			*d++ = '/';
-
-			for(entry=dir->down; entry; entry=entry->next)
-				if (entry->data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-					lstrcpyW(d, entry->data.cFileName);
-					read_directory_unix(entry, buffer);
-					SortDirectory(entry, sortOrder);
-				}
-		}
-	}
-	else
-#endif
 	{
 		read_directory_win(dir, path);
 
@@ -1232,9 +1029,6 @@ static void read_directory(Entry* dir, LPCWSTR path, SORT_ORDER sortOrder, HWND 
 
 static Entry* read_tree(Root* root, LPCWSTR path, LPITEMIDLIST pidl, LPWSTR drv, SORT_ORDER sortOrder, HWND hwnd)
 {
-#ifdef __WINE__
-	static const WCHAR sSlash[] = {'/', '\0'};
-#endif
 	static const WCHAR sBackslash[] = {'\\', '\0'};
 
 	if (pidl)
@@ -1249,23 +1043,6 @@ static Entry* read_tree(Root* root, LPCWSTR path, LPITEMIDLIST pidl, LPWSTR drv,
 
 		return read_tree_shell(root, pidl, sortOrder, hwnd);
 	}
-	else
-#ifdef __WINE__
-	if (*path == '/')
-	{
-		/* read unix file system tree */
-		root->drive_type = GetDriveTypeW(path);
-
-		lstrcatW(drv, sSlash);
-		load_string(root->volname, ARRAY_SIZE(root->volname), IDS_ROOT_FS);
-		root->fs_flags = 0;
-		load_string(root->fs, ARRAY_SIZE(root->fs), IDS_UNIXFS);
-
-		lstrcpyW(root->path, sSlash);
-
-		return read_tree_unix(root, path, sortOrder, hwnd);
-	}
-#endif
 
 	 /* read WIN32 file system tree */
        root->drive_type = GetDriveTypeW(path);
@@ -1324,7 +1101,7 @@ static ChildWnd* alloc_child_window(LPCWSTR path, LPITEMIDLIST pidl, HWND hwnd)
 
 	if (path)
 	{
-		int pathlen = strlenW(path);
+		int pathlen = lstrlenW(path);
 		const WCHAR *npath = path;
 
 		if (path[0] == '"' && path[pathlen - 1] == '"')
@@ -1415,11 +1192,7 @@ static void get_path(Entry* dir, PWSTR path)
 					memmove(path+l+1, path, len*sizeof(WCHAR));
 					memcpy(path+1, name, l*sizeof(WCHAR));
 					len += l+1;
-
-					if (entry->etype == ET_UNIX)
-						path[0] = '/';
-					else
-                                                path[0] = '\\';
+                                        path[0] = '\\';
 				}
 
 				entry = entry->up;
@@ -1431,13 +1204,7 @@ static void get_path(Entry* dir, PWSTR path)
 			}
 		}
 
-		if (!level) {
-			if (entry->etype == ET_UNIX)
-				path[len++] = '/';
-			else
-				path[len++] = '\\';
-		}
-
+		if (!level) path[len++] = '\\';
 		path[len] = '\0';
 	}
 }
@@ -1786,7 +1553,7 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCWSTR st
 					VS_FIXEDFILEINFO* pFixedFileInfo = (VS_FIXEDFILEINFO*)pVal;
                                         WCHAR buffer[BUFFER_LEN];
 
-                                        sprintfW(buffer, sFmt,
+                                        swprintf(buffer, ARRAY_SIZE(buffer), sFmt,
                                                  HIWORD(pFixedFileInfo->dwFileVersionMS), LOWORD(pFixedFileInfo->dwFileVersionMS),
                                                  HIWORD(pFixedFileInfo->dwFileVersionLS), LOWORD(pFixedFileInfo->dwFileVersionLS));
 
@@ -2217,23 +1984,6 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					CheckMenuItem(Globals.hMenuOptions, cmd, toggle_fullscreen(hwnd)?MF_CHECKED:0);
 					break;
 
-#ifdef __WINE__
-				case ID_DRIVE_UNIX_FS: {
-					WCHAR path[MAX_PATH];
-					char cpath[MAX_PATH];
-					ChildWnd* child;
-
-					if (activate_fs_window(RS(b1,IDS_UNIXFS)))
-						break;
-
-					getcwd(cpath, MAX_PATH);
-					MultiByteToWideChar(CP_UNIXCP, 0, cpath, -1, path, MAX_PATH);
-					child = alloc_child_window(path, NULL, hwnd);
-
-					if (!create_child_window(child))
-						HeapFree(GetProcessHeap(), 0, child);
-					break;}
-#endif
 				case ID_DRIVE_SHELL_NS: {
 					WCHAR path[MAX_PATH];
 					ChildWnd* child;
@@ -2857,7 +2607,7 @@ static BOOL is_registered_type(LPCWSTR ext)
 
 static enum FILE_TYPE get_file_type(LPCWSTR filename)
 {
-	LPCWSTR ext = strrchrW(filename, '.');
+	LPCWSTR ext = wcsrchr(filename, '.');
 	if (!ext)
 		ext = sEmpty;
 
@@ -3418,17 +3168,6 @@ static void create_drive_bar(void)
 				IDW_DRIVEBAR, 2, Globals.hInstance, IDB_DRIVEBAR, &drivebarBtn,
 				0, 16, 13, 16, 13, sizeof(TBBUTTON));
 
-#ifdef __WINE__
-	/* insert unix file system button */
-	b1[0] = '/';
-	b1[1] = '\0';
-	b1[2] = '\0';
-	SendMessageW(Globals.hdrivebar, TB_ADDSTRINGW, 0, (LPARAM)b1);
-
-	drivebarBtn.idCommand = ID_DRIVE_UNIX_FS;
-	SendMessageW(Globals.hdrivebar, TB_INSERTBUTTONW, btn++, (LPARAM)&drivebarBtn);
-	drivebarBtn.iString++;
-#endif
 	/* insert shell namespace button */
 	load_string(b1, ARRAY_SIZE(b1), IDS_SHELL);
 	b1[lstrlenW(b1)+1] = '\0';
@@ -3637,7 +3376,6 @@ static void update_view_menu(ChildWnd* child)
 
 static BOOL is_directory(LPCWSTR target)
 {
-	/*TODO correctly handle UNIX paths */
 	DWORD target_attr = GetFileAttributesW(target);
 
 	if (target_attr == INVALID_FILE_ATTRIBUTES)
@@ -3774,7 +3512,7 @@ static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParen
 static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
 	ChildWnd* child = (ChildWnd*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
-	ASSERT(child);
+	assert(child);
 
 	switch(nmsg) {
 		case WM_DRAWITEM: {
@@ -4104,7 +3842,7 @@ static LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM 
 {
 	ChildWnd* child = (ChildWnd*)GetWindowLongPtrW(GetParent(hwnd), GWLP_USERDATA);
 	Pane* pane = (Pane*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
-	ASSERT(child);
+	assert(child);
 
 	switch(nmsg) {
 		case WM_HSCROLL:
@@ -4210,7 +3948,7 @@ static void InitInstance(HINSTANCE hinstance)
 }
 
 
-static BOOL show_frame(HWND hwndParent, int cmdshow, LPCWSTR path)
+static BOOL show_frame(HWND hwndParent, int cmdshow, LPWSTR path)
 {
 	static const WCHAR sMDICLIENT[] = {'M','D','I','C','L','I','E','N','T','\0'};
 
@@ -4279,12 +4017,8 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCWSTR path)
 
 	ShowWindow(Globals.hMainWnd, cmdshow);
 
-#ifndef __WINE__
 	 /* Shell Namespace as default: */
 	child = alloc_child_window(path, get_path_pidl(path,Globals.hMainWnd), Globals.hMainWnd);
-#else
-	child = alloc_child_window(path, NULL, Globals.hMainWnd);
-#endif
 
 	child->pos.showCmd = SW_SHOWMAXIMIZED;
 	child->pos.rcNormalPosition.left = 0;

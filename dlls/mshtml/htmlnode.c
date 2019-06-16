@@ -373,7 +373,7 @@ static HRESULT HTMLDOMChildrenCollection_get_dispid(DispatchEx *dispex, BSTR nam
     DWORD idx=0;
     UINT32 len = 0;
 
-    for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
+    for(ptr = name; *ptr && iswdigit(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
     if(*ptr)
         return DISP_E_UNKNOWNNAME;
@@ -1227,8 +1227,14 @@ static HRESULT WINAPI HTMLDOMNode3_get_localName(IHTMLDOMNode3 *iface, VARIANT *
 static HRESULT WINAPI HTMLDOMNode3_get_namespaceURI(IHTMLDOMNode3 *iface, VARIANT *p)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode3(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_InitDepend(&nsstr, NULL);
+    nsres = nsIDOMNode_GetNamespaceURI(This->nsnode, &nsstr);
+    return return_nsstr_variant(nsres, &nsstr, p);
 }
 
 static HRESULT WINAPI HTMLDOMNode3_put_textContent(IHTMLDOMNode3 *iface, VARIANT v)
@@ -1239,12 +1245,7 @@ static HRESULT WINAPI HTMLDOMNode3_put_textContent(IHTMLDOMNode3 *iface, VARIANT
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    if(V_VT(&v) != VT_BSTR) {
-        FIXME("unsupported argument %s\n", debugstr_variant(&v));
-        return E_NOTIMPL;
-    }
-
-    nsAString_Init(&nsstr, V_BSTR(&v));
+    variant_to_nsstr(&v, FALSE, &nsstr);
     nsres = nsIDOMNode_SetTextContent(This->nsnode, &nsstr);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {
@@ -1573,9 +1574,9 @@ static nsresult NSAPI HTMLDOMNode_unlink(void *p)
     }
 
     if(This->doc && &This->doc->node != This) {
-        HTMLDocument *doc = &This->doc->basedoc;
+        HTMLDocumentNode *doc = This->doc;
         This->doc = NULL;
-        htmldoc_release(doc);
+        htmldoc_release(&doc->basedoc);
     }else {
         This->doc = NULL;
     }

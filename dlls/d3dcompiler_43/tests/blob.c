@@ -35,6 +35,7 @@
 
 static HRESULT (WINAPI *pD3DCreateBlob)(SIZE_T, ID3DBlob **);
 static HRESULT (WINAPI *pD3DGetBlobPart)(const void *, SIZE_T, D3D_BLOB_PART, UINT, ID3DBlob **);
+static HRESULT (WINAPI *pD3DReadFileToBlob)(const WCHAR *, ID3DBlob **);
 static HRESULT (WINAPI *pD3DStripShader)(const void *, SIZE_T, UINT, ID3DBlob **);
 
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
@@ -740,7 +741,7 @@ static void test_get_blob_part2(void)
     ok(!refcount, "ID3DBlob has %u references left\n", refcount);
 }
 
-static BOOL load_d3dcompiler(void)
+static BOOL load_d3dcompiler_43(void)
 {
     HMODULE module;
 
@@ -752,15 +753,134 @@ static BOOL load_d3dcompiler(void)
     return TRUE;
 }
 
-START_TEST(blob)
+static BOOL load_d3dcompiler_47(void)
 {
-    if (!load_d3dcompiler())
+    HMODULE module;
+
+    if (!(module = LoadLibraryA("d3dcompiler_47.dll")))
+        return FALSE;
+
+    pD3DReadFileToBlob = (void *)GetProcAddress(module, "D3DReadFileToBlob");
+    return TRUE;
+}
+
+static BOOL create_file(WCHAR *filename, const DWORD *data, DWORD data_size)
+{
+    static WCHAR temp_dir[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+
+    if (!temp_dir[0])
+        GetTempPathW(ARRAY_SIZE(temp_dir), temp_dir);
+    GetTempFileNameW(temp_dir, NULL, 0, filename);
+    file = CreateFileW(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    if (file == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    if (data)
     {
-        win_skip("Could not load d3dcompiler_43.dll\n");
-        return;
+        WriteFile(file, data, data_size, &written, NULL);
+        if (written != data_size)
+        {
+            CloseHandle(file);
+            DeleteFileW(filename);
+            return FALSE;
+        }
+    }
+    CloseHandle(file);
+    return TRUE;
+}
+
+/* test_cso_data - fxc.exe file.hlsl /Fo file.cso */
+static const DWORD test_cso_data[] =
+{
+#if 0
+    struct PSInput
+    {
+        float4 value : SV_POSITION;
+    };
+
+    PSInput main(float4 position : POSITION)
+    {
+        PSInput result;
+        result.value = position;
+        return result;
+    }
+#endif
+    0xfffe0200, 0x0014fffe, 0x42415443, 0x0000001c, 0x00000023, 0xfffe0200, 0x00000000, 0x00000000,
+    0x00000100, 0x0000001c, 0x325f7376, 0x4d00305f, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820,
+    0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x30312072, 0xab00312e, 0x0200001f, 0x80000000,
+    0x900f0000, 0x02000001, 0xc00f0000, 0x90e40000, 0x0000ffff
+};
+
+static void test_D3DReadFileToBlob(void)
+{
+    WCHAR filename[MAX_PATH] = {'n','o','n','e','x','i','s','t','e','n','t',0};
+    ID3DBlob *blob = NULL;
+    SIZE_T data_size;
+    DWORD *data;
+    HRESULT hr;
+
+    hr = pD3DReadFileToBlob(filename, NULL);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Got unexpected hr %#x.\n", hr);
+
+    hr = pD3DReadFileToBlob(filename, &blob);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Got unexpected hr %#x.\n", hr);
+
+    if (0)
+    {
+        /* Crashes on Windows. */
+        create_file(filename, test_cso_data, ARRAY_SIZE(test_cso_data));
+        pD3DReadFileToBlob(filename, NULL);
+        DeleteFileW(filename);
     }
 
-    test_create_blob();
-    test_get_blob_part();
-    test_get_blob_part2();
+    if (!create_file(filename, NULL, 0))
+    {
+        win_skip("File creation failed.\n");
+        return;
+    }
+    hr = pD3DReadFileToBlob(filename, &blob);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    data_size = ID3D10Blob_GetBufferSize(blob);
+    ok(!data_size, "Got unexpected data size.\n");
+    DeleteFileW(filename);
+    ID3D10Blob_Release(blob);
+
+    if (!create_file(filename, test_cso_data, ARRAY_SIZE(test_cso_data)))
+    {
+        win_skip("File creation failed.\n");
+        return;
+    }
+    hr = pD3DReadFileToBlob(filename, &blob);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    data_size = ID3D10Blob_GetBufferSize(blob);
+    ok(data_size == ARRAY_SIZE(test_cso_data), "Got unexpected data size.\n");
+    data = ID3D10Blob_GetBufferPointer(blob);
+    ok(!memcmp(data, test_cso_data, ARRAY_SIZE(test_cso_data)), "Got unexpected data.\n");
+    DeleteFileW(filename);
+    ID3D10Blob_Release(blob);
+}
+
+START_TEST(blob)
+{
+    if (load_d3dcompiler_43())
+    {
+        test_create_blob();
+        test_get_blob_part();
+        test_get_blob_part2();
+    }
+    else
+    {
+        win_skip("Could not load d3dcompiler_43.dll\n");
+    }
+
+    if (load_d3dcompiler_47())
+    {
+        test_D3DReadFileToBlob();
+    }
+    else
+    {
+        win_skip("Could not load d3dcompiler_47.dll.\n");
+    }
 }

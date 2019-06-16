@@ -278,7 +278,7 @@ HRESULT WINAPI WerReportCreate(PCWSTR eventtype, WER_REPORT_TYPE reporttype, PWE
     }
 
     if (phandle)  *phandle = NULL;
-    if (!eventtype || !eventtype[0] || !phandle) {
+    if (!eventtype || !eventtype[0] || !phandle || (reporttype >= WerReportInvalid)) {
         return E_INVALIDARG;
     }
 

@@ -24,7 +24,6 @@
 #include <windows.h>
 #include <winsvc.h>
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "services.h"
 
@@ -37,11 +36,11 @@ LPWSTR strdupW(LPCWSTR str)
 
     if (str == NULL)
         return NULL;
-    len = strlenW(str);
+    len = lstrlenW(str);
     buf = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(len+1));
     if (buf == NULL)
         return NULL;
-    strcpyW(buf, str);
+    lstrcpyW(buf, str);
     return buf;
 }
 
@@ -150,7 +149,7 @@ DWORD load_reg_dword(HKEY hKey, LPCWSTR szValue, DWORD *output)
             return ERROR_SUCCESS;
         goto failed;
     }
-    if (type != REG_DWORD || size != sizeof(DWORD))
+    if ((type != REG_DWORD && type != REG_BINARY) || size != sizeof(DWORD))
     {
         err = ERROR_INVALID_DATATYPE;
         goto failed;

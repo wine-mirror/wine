@@ -52,7 +52,6 @@ static const char * const builtin_only[] =
     "dbghelp",
     "ddraw",
     "gdi32",
-    "glu32",
     "gphoto2.ds",
     "icmp",
     "iphlpapi",

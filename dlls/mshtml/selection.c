@@ -364,9 +364,10 @@ HRESULT HTMLSelectionObject_Create(HTMLDocumentNode *doc, nsISelection *nsselect
 
 void detach_selection(HTMLDocumentNode *This)
 {
-    HTMLSelectionObject *iter;
+    HTMLSelectionObject *iter, *next;
 
-    LIST_FOR_EACH_ENTRY(iter, &This->selection_list, HTMLSelectionObject, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(iter, next, &This->selection_list, HTMLSelectionObject, entry) {
         iter->doc = NULL;
+        list_remove(&iter->entry);
     }
 }

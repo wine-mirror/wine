@@ -1,6 +1,8 @@
 MODULE    = dmsynth.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	dmsynth_main.c \
 	synth.c \

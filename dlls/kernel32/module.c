@@ -41,6 +41,7 @@
 
 #include "wine/exception.h"
 #include "wine/list.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -940,10 +941,19 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
     const DWORD unsupported_flags = (LOAD_IGNORE_CODE_AUTHZ_LEVEL |
                                      LOAD_LIBRARY_REQUIRE_SIGNED_TARGET);
 
-    if (!(flags & load_library_search_flags)) flags |= default_search_flags;
-
     if( flags & unsupported_flags)
         FIXME("unsupported flag(s) used (flags: 0x%08x)\n", flags);
+
+    if (flags & LOAD_WITH_ALTERED_SEARCH_PATH)
+    {
+        if (flags & load_library_search_flags)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        if (default_search_flags) flags |= default_search_flags | LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR;
+    }
+    else if (!(flags & load_library_search_flags)) flags |= default_search_flags;
 
     if (flags & load_library_search_flags)
         load_path = get_dll_load_path_search_flags( libname->Buffer, flags );
@@ -1102,6 +1112,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary(HINSTANCE hLibModule)
 
     if ((ULONG_PTR)hLibModule & 3) /* this is a datafile module */
     {
+        void *ptr = (void *)((ULONG_PTR)hLibModule & ~3);
+        if (!RtlImageNtHeader( ptr ))
+        {
+            SetLastError( ERROR_BAD_EXE_FORMAT );
+            return FALSE;
+        }
         if ((ULONG_PTR)hLibModule & 1)
         {
             struct exclusive_datafile *file;
@@ -1119,7 +1135,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary(HINSTANCE hLibModule)
             }
             LdrUnlockLoaderLock( 0, magic );
         }
-        return UnmapViewOfFile( (void *)((ULONG_PTR)hLibModule & ~3) );
+        return UnmapViewOfFile( ptr );
     }
 
     if ((nts = LdrUnloadDll( hLibModule )) == STATUS_SUCCESS) retv = TRUE;

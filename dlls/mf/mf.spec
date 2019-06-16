@@ -2,10 +2,10 @@
 @ stub ConvertPropVariant
 @ stub CopyPropertyStore
 @ stub CreateNamedPropertyStore
-@ stub DllCanUnloadNow
-@ stub DllGetClassObject
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllCanUnloadNow()
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub ExtractPropVariant
 @ stub MFCreate3GPMediaSink
 @ stub MFCreateASFByteStreamPlugin
@@ -23,8 +23,8 @@
 @ stub MFCreateASFStreamingMediaSinkActivate
 @ stub MFCreateAggregateSource
 @ stub MFCreateAppSourceProxy
-@ stub MFCreateAudioRenderer
-@ stub MFCreateAudioRendererActivate
+@ stdcall MFCreateAudioRenderer(ptr ptr)
+@ stdcall MFCreateAudioRendererActivate(ptr)
 @ stub MFCreateByteCacheFile
 @ stub MFCreateCacheManager
 @ stub MFCreateCredentialCache
@@ -45,13 +45,13 @@
 @ stub MFCreatePMPHost
 @ stub MFCreatePMPMediaSession
 @ stub MFCreatePMPServer
-@ stub MFCreatePresentationClock
+@ stdcall MFCreatePresentationClock(ptr)
 @ stub MFCreatePresentationDescriptorFromASFProfile
 @ stub MFCreateProxyLocator
 @ stub MFCreateRemoteDesktopPlugin
 @ stub MFCreateSAMIByteStreamPlugin
 @ stub MFCreateSampleCopierMFT
-@ stub MFCreateSampleGrabberSinkActivate
+@ stdcall MFCreateSampleGrabberSinkActivate(ptr ptr ptr)
 @ stub MFCreateSecureHttpSchemePlugin
 @ stub MFCreateSequencerSegmentOffset
 @ stdcall MFCreateSequencerSource(ptr ptr)
@@ -70,7 +70,7 @@
 @ stub MFCreateVideoRendererActivate
 @ stub MFCreateWMAEncoderActivate
 @ stub MFCreateWMVEncoderActivate
-@ stub MFEnumDeviceSources
+@ stdcall MFEnumDeviceSources(ptr ptr ptr)
 @ stub MFGetMultipleServiceProviders
 @ stdcall MFGetService(ptr ptr ptr ptr)
 @ stdcall MFGetSupportedMimeTypes(ptr)
@@ -78,6 +78,6 @@
 @ stub MFGetTopoNodeCurrentType
 @ stub MFReadSequencerSegmentOffset
 @ stub MFRequireProtectedEnvironment
-@ stub MFShutdownObject
+@ stdcall MFShutdownObject(ptr)
 @ stub MFTranscodeGetAudioOutputAvailableTypes
 @ stub MergePropertyStore

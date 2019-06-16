@@ -289,9 +289,9 @@
 @ stub -arch=arm ??0_Facet_base@std@@QAA@XZ
 @ stub -arch=i386 ??0_Facet_base@std@@QAE@XZ
 @ stub -arch=win64 ??0_Facet_base@std@@QEAA@XZ
-@ stub -arch=arm ??0_Init_locks@std@@QAA@XZ
-@ stub -arch=i386 ??0_Init_locks@std@@QAE@XZ
-@ stub -arch=win64 ??0_Init_locks@std@@QEAA@XZ
+@ cdecl -arch=arm ??0_Init_locks@std@@QAA@XZ(ptr) msvcp120.??0_Init_locks@std@@QAA@XZ
+@ thiscall -arch=i386 ??0_Init_locks@std@@QAE@XZ(ptr) msvcp120.??0_Init_locks@std@@QAE@XZ
+@ cdecl -arch=win64 ??0_Init_locks@std@@QEAA@XZ(ptr) msvcp120.??0_Init_locks@std@@QEAA@XZ
 @ cdecl -arch=arm ??0_Locimp@locale@std@@AAA@ABV012@@Z(ptr ptr) msvcp120.??0_Locimp@locale@std@@AAA@ABV012@@Z
 @ thiscall -arch=i386 ??0_Locimp@locale@std@@AAE@ABV012@@Z(ptr ptr) msvcp120.??0_Locimp@locale@std@@AAE@ABV012@@Z
 @ cdecl -arch=win64 ??0_Locimp@locale@std@@AEAA@AEBV012@@Z(ptr ptr) msvcp120.??0_Locimp@locale@std@@AEAA@AEBV012@@Z
@@ -484,9 +484,9 @@
 @ stub -arch=arm ??1_Facet_base@std@@UAA@XZ
 @ stub -arch=i386 ??1_Facet_base@std@@UAE@XZ
 @ stub -arch=win64 ??1_Facet_base@std@@UEAA@XZ
-@ stub -arch=arm ??1_Init_locks@std@@QAA@XZ
-@ stub -arch=i386 ??1_Init_locks@std@@QAE@XZ
-@ stub -arch=win64 ??1_Init_locks@std@@QEAA@XZ
+@ cdecl -arch=arm ??1_Init_locks@std@@QAA@XZ(ptr) msvcp120.??1_Init_locks@std@@QAA@XZ
+@ thiscall -arch=i386 ??1_Init_locks@std@@QAE@XZ(ptr) msvcp120.??1_Init_locks@std@@QAE@XZ
+@ cdecl -arch=win64 ??1_Init_locks@std@@QEAA@XZ(ptr) msvcp120.??1_Init_locks@std@@QEAA@XZ
 @ cdecl -arch=arm ??1_Locimp@locale@std@@MAA@XZ(ptr) msvcp120.??1_Locimp@locale@std@@MAA@XZ
 @ thiscall -arch=i386 ??1_Locimp@locale@std@@MAE@XZ(ptr) msvcp120.??1_Locimp@locale@std@@MAE@XZ
 @ cdecl -arch=win64 ??1_Locimp@locale@std@@MEAA@XZ(ptr) msvcp120.??1_Locimp@locale@std@@MEAA@XZ
@@ -1439,10 +1439,10 @@
 @ cdecl -arch=win64 ?_Init_ctor@Init@ios_base@std@@CAXPEAV123@@Z(ptr) msvcp120.?_Init_ctor@Init@ios_base@std@@CAXPEAV123@@Z
 @ cdecl -arch=win32 ?_Init_dtor@Init@ios_base@std@@CAXPAV123@@Z(ptr) msvcp120.?_Init_dtor@Init@ios_base@std@@CAXPAV123@@Z
 @ cdecl -arch=win64 ?_Init_dtor@Init@ios_base@std@@CAXPEAV123@@Z(ptr) msvcp120.?_Init_dtor@Init@ios_base@std@@CAXPEAV123@@Z
-@ stub -arch=win32 ?_Init_locks_ctor@_Init_locks@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Init_locks_ctor@_Init_locks@std@@CAXPEAV12@@Z
-@ stub -arch=win32 ?_Init_locks_dtor@_Init_locks@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Init_locks_dtor@_Init_locks@std@@CAXPEAV12@@Z
+@ cdecl -arch=win32 ?_Init_locks_ctor@_Init_locks@std@@CAXPAV12@@Z(ptr) msvcp120.?_Init_locks_ctor@_Init_locks@std@@CAXPAV12@@Z
+@ cdecl -arch=win64 ?_Init_locks_ctor@_Init_locks@std@@CAXPEAV12@@Z(ptr) msvcp120.?_Init_locks_ctor@_Init_locks@std@@CAXPEAV12@@Z
+@ cdecl -arch=win32 ?_Init_locks_dtor@_Init_locks@std@@CAXPAV12@@Z(ptr) msvcp120.?_Init_locks_dtor@_Init_locks@std@@CAXPAV12@@Z
+@ cdecl -arch=win64 ?_Init_locks_dtor@_Init_locks@std@@CAXPEAV12@@Z(ptr) msvcp120.?_Init_locks_dtor@_Init_locks@std@@CAXPEAV12@@Z
 @ cdecl -arch=arm ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAAXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z(ptr ptr long ptr ptr ptr) msvcp120.?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAAXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z
 @ thiscall -arch=i386 ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAEXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z(ptr ptr long ptr ptr ptr) msvcp120.?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IAEXABV123@IP6AXPAXI@ZP6AX1PBXI@Z4@Z
 @ cdecl -arch=win64 ?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IEAAXAEBV123@_KP6AXPEAX1@ZP6AX2PEBX1@Z5@Z(ptr ptr long ptr ptr ptr) msvcp120.?_Internal_assign@_Concurrent_vector_base_v4@details@Concurrency@@IEAAXAEBV123@_KP6AXPEAX1@ZP6AX2PEBX1@Z5@Z
@@ -3801,7 +3801,7 @@
 @ cdecl _Stoulx(ptr ptr long ptr) msvcp120._Stoulx
 @ stub _Stoxflt
 @ cdecl _Strcoll(ptr ptr ptr ptr ptr) msvcp120._Strcoll
-@ stub _Strxfrm
+@ cdecl _Strxfrm(ptr ptr ptr ptr ptr) msvcp120._Strxfrm
 @ stub _Thrd_abort
 @ cdecl _Thrd_create(ptr ptr ptr) msvcp120._Thrd_create
 @ cdecl -norelay _Thrd_current() msvcp120._Thrd_current

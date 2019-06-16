@@ -1,4 +1,6 @@
 MODULE    = ctl3d32.dll
 IMPORTS   = user32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = ctl3d32.c

@@ -19,11 +19,14 @@
 #ifndef __WINE_QOS2_H__
 #define __WINE_QOS2_H__
 
+#include <ws2tcpip.h>
+#include <mstcpip.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef UINT32 QOS_FLOWID;
+typedef ULONG QOS_FLOWID, *PQOS_FLOWID;
 
 typedef enum _QOS_SHAPING {
     QOSShapeOnly,
@@ -92,6 +95,27 @@ typedef struct _QOS_VERSION {
     USHORT MajorVersion;
     USHORT MinorVersion;
 } QOS_VERSION, *PQOS_VERSION;
+
+#define QOS_OUTGOING_DEFAULT_MINIMUM_BANDWIDTH  0xFFFFFFFF
+
+#define QOS_QUERYFLOW_FRESH     0x00000001
+#define QOS_NON_ADAPTIVE_FLOW   0x00000002
+
+BOOL WINAPI QOSAddSocketToFlow(HANDLE handle, SOCKET socket, PSOCKADDR addr,
+                               QOS_TRAFFIC_TYPE traffictype, DWORD flags, PQOS_FLOWID flowid);
+BOOL WINAPI QOSCancel(HANDLE handle, LPOVERLAPPED overlap);
+BOOL WINAPI QOSCloseHandle(HANDLE handle);
+BOOL WINAPI QOSCreateHandle(PQOS_VERSION version, PHANDLE handle);
+BOOL WINAPI QOSEnumerateFlows(HANDLE handle, PULONG size, PVOID buffer);
+BOOL WINAPI QOSNotifyFlow(HANDLE handle, QOS_FLOWID flowid, QOS_NOTIFY_FLOW op, PULONG size,
+                          PVOID buffer, DWORD flags, LPOVERLAPPED overlap);
+BOOL WINAPI QOSQueryFlow(HANDLE handle, QOS_FLOWID flowid, QOS_QUERY_FLOW op, PULONG size,
+                         PVOID buffer, DWORD flags, LPOVERLAPPED overlap);
+BOOL WINAPI QOSRemoveSocketFromFlow(HANDLE handle, SOCKET socket, QOS_FLOWID flowid, DWORD flags);
+BOOL WINAPI QOSSetFlow(HANDLE handle, QOS_FLOWID flowid, QOS_SET_FLOW op, ULONG size,
+                       PVOID buffer, DWORD flags, LPOVERLAPPED overlap);
+BOOL WINAPI QOSStartTrackingClient(HANDLE handle, PSOCKADDR addr, DWORD flags);
+BOOL WINAPI QOSStopTrackingClient(HANDLE handle, PSOCKADDR addr, DWORD flags);
 
 #ifdef __cplusplus
 }

@@ -37,6 +37,44 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+struct wined3d_matrix_3x3
+{
+    float _11, _12, _13;
+    float _21, _22, _23;
+    float _31, _32, _33;
+};
+
+struct light_transformed
+{
+    struct wined3d_color diffuse, specular, ambient;
+    struct wined3d_vec4 position;
+    struct wined3d_vec3 direction;
+    float range, falloff, c_att, l_att, q_att, cos_htheta, cos_hphi;
+};
+
+struct lights_settings
+{
+    struct light_transformed lights[WINED3D_MAX_SOFTWARE_ACTIVE_LIGHTS];
+    struct wined3d_color ambient_light;
+    struct wined3d_matrix modelview_matrix;
+    struct wined3d_matrix_3x3 normal_matrix;
+    struct wined3d_vec4 position_transformed;
+
+    float fog_start, fog_end, fog_density;
+
+    uint32_t point_light_count          : 8;
+    uint32_t spot_light_count           : 8;
+    uint32_t directional_light_count    : 8;
+    uint32_t parallel_point_light_count : 8;
+    uint32_t lighting                   : 1;
+    uint32_t legacy_lighting            : 1;
+    uint32_t normalise                  : 1;
+    uint32_t localviewer                : 1;
+    uint32_t fog_coord_mode             : 2;
+    uint32_t fog_mode                   : 2;
+    uint32_t padding                    : 24;
+};
+
 /* Define the default light parameters as specified by MSDN. */
 const struct wined3d_light WINED3D_default_light =
 {
@@ -149,14 +187,31 @@ BOOL device_context_add(struct wined3d_device *device, struct wined3d_context *c
 
     TRACE("Adding context %p.\n", context);
 
+    if (!device->shader_backend->shader_allocate_context_data(context))
+    {
+        ERR("Failed to allocate shader backend context data.\n");
+        return FALSE;
+    }
+    device->shader_backend->shader_init_context_state(context);
+
+    if (!device->adapter->fragment_pipe->allocate_context_data(context))
+    {
+        ERR("Failed to allocate fragment pipeline context data.\n");
+        device->shader_backend->shader_free_context_data(context);
+        return FALSE;
+    }
+
     if (!(new_array = heap_realloc(device->contexts, sizeof(*new_array) * (device->context_count + 1))))
     {
         ERR("Failed to grow the context array.\n");
+        device->adapter->fragment_pipe->free_context_data(context);
+        device->shader_backend->shader_free_context_data(context);
         return FALSE;
     }
 
     new_array[device->context_count++] = context;
     device->contexts = new_array;
+
     return TRUE;
 }
 
@@ -167,6 +222,9 @@ void device_context_remove(struct wined3d_device *device, struct wined3d_context
     UINT i;
 
     TRACE("Removing context %p.\n", context);
+
+    device->adapter->fragment_pipe->free_context_data(context);
+    device->shader_backend->shader_free_context_data(context);
 
     for (i = 0; i < device->context_count; ++i)
     {
@@ -230,6 +288,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     const struct wined3d_state *state = &device->cs->state;
     struct wined3d_texture *depth_stencil = NULL;
     const struct wined3d_gl_info *gl_info;
+    struct wined3d_context_gl *context_gl;
     struct wined3d_texture *target = NULL;
     UINT drawable_width, drawable_height;
     struct wined3d_color corrected_color;
@@ -247,11 +306,12 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     {
         context = context_acquire(device, NULL, 0);
     }
+    context_gl = wined3d_context_gl(context);
 
     if (dsv && dsv->resource->type != WINED3D_RTYPE_BUFFER)
         depth_stencil = texture_from_resource(dsv->resource);
 
-    if (!context->valid)
+    if (!context_gl->valid)
     {
         context_release(context);
         WARN("Invalid context, skipping clear.\n");
@@ -315,7 +375,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         }
     }
 
-    if (!context_apply_clear_state(context, state, rt_count, fb))
+    if (!wined3d_context_gl_apply_clear_state(context_gl, state, rt_count, fb))
     {
         context_release(context);
         WARN("Failed to apply clear state, skipping clear.\n");
@@ -476,6 +536,54 @@ static void device_leftover_sampler(struct wine_rb_entry *entry, void *context)
     ERR("Leftover sampler %p.\n", sampler);
 }
 
+void wined3d_device_cleanup(struct wined3d_device *device)
+{
+    unsigned int i;
+
+    if (device->swapchain_count)
+        wined3d_device_uninit_3d(device);
+
+    wined3d_stateblock_state_cleanup(&device->stateblock_state);
+
+    wined3d_cs_destroy(device->cs);
+
+    if (device->recording && wined3d_stateblock_decref(device->recording))
+        ERR("Something's still holding the recording stateblock.\n");
+    device->recording = NULL;
+
+    state_cleanup(&device->state);
+
+    for (i = 0; i < ARRAY_SIZE(device->multistate_funcs); ++i)
+    {
+        heap_free(device->multistate_funcs[i]);
+        device->multistate_funcs[i] = NULL;
+    }
+
+    if (!list_empty(&device->resources))
+    {
+        struct wined3d_resource *resource;
+
+        ERR("Device released with resources still bound.\n");
+
+        LIST_FOR_EACH_ENTRY(resource, &device->resources, struct wined3d_resource, resource_list_entry)
+        {
+            ERR("Leftover resource %p with type %s (%#x).\n",
+                    resource, debug_d3dresourcetype(resource->type), resource->type);
+        }
+    }
+
+    if (device->contexts)
+        ERR("Context array not freed!\n");
+    if (device->hardwareCursor)
+        DestroyCursor(device->hardwareCursor);
+    device->hardwareCursor = 0;
+
+    wine_rb_destroy(&device->samplers, device_leftover_sampler, NULL);
+
+    wined3d_decref(device->wined3d);
+    device->wined3d = NULL;
+}
+
 ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
 {
     ULONG refcount = InterlockedDecrement(&device->ref);
@@ -484,49 +592,8 @@ ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
 
     if (!refcount)
     {
-        UINT i;
-
-        wined3d_stateblock_state_cleanup(&device->stateblock_state);
-
-        wined3d_cs_destroy(device->cs);
-
-        if (device->recording && wined3d_stateblock_decref(device->recording))
-            ERR("Something's still holding the recording stateblock.\n");
-        device->recording = NULL;
-
-        state_cleanup(&device->state);
-
-        for (i = 0; i < ARRAY_SIZE(device->multistate_funcs); ++i)
-        {
-            heap_free(device->multistate_funcs[i]);
-            device->multistate_funcs[i] = NULL;
-        }
-
-        if (!list_empty(&device->resources))
-        {
-            struct wined3d_resource *resource;
-
-            ERR("Device released with resources still bound.\n");
-
-            LIST_FOR_EACH_ENTRY(resource, &device->resources, struct wined3d_resource, resource_list_entry)
-            {
-                ERR("Leftover resource %p with type %s (%#x).\n",
-                        resource, debug_d3dresourcetype(resource->type), resource->type);
-            }
-        }
-
-        if (device->contexts)
-            ERR("Context array not freed!\n");
-        if (device->hardwareCursor)
-            DestroyCursor(device->hardwareCursor);
-        device->hardwareCursor = 0;
-
-        wine_rb_destroy(&device->samplers, device_leftover_sampler, NULL);
-
-        wined3d_decref(device->wined3d);
-        device->wined3d = NULL;
-        heap_free(wined3d_device_gl(device));
-        TRACE("Freed device %p.\n", device);
+        device->adapter->adapter_ops->adapter_destroy_device(device);
+        TRACE("Destroyed device %p.\n", device);
     }
 
     return refcount;
@@ -610,11 +677,12 @@ out:
 }
 
 /* Context activation is done by the caller. */
-static void create_dummy_textures(struct wined3d_device *device, struct wined3d_context *context)
+static void wined3d_device_gl_create_dummy_textures(struct wined3d_device_gl *device_gl,
+        struct wined3d_context_gl *context_gl)
 {
-    struct wined3d_dummy_textures *textures = &wined3d_device_gl(device)->dummy_textures;
-    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_dummy_textures *textures = &device_gl->dummy_textures;
+    const struct wined3d_d3d_info *d3d_info = context_gl->c.d3d_info;
+    const struct wined3d_gl_info *gl_info = context_gl->c.gl_info;
     unsigned int i;
     DWORD color;
 
@@ -627,7 +695,7 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
      * OpenGL will only allow that when a valid texture is bound.
      * We emulate this by creating dummy textures and binding them
      * to each texture stage when the currently set D3D texture is NULL. */
-    context_active_texture(context, gl_info, 0);
+    wined3d_context_gl_active_texture(context_gl, gl_info, 0);
 
     gl_info->gl_ops.gl.p_glGenTextures(1, &textures->tex_1d);
     TRACE("Dummy 1D texture given name %u.\n", textures->tex_1d);
@@ -740,7 +808,7 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
 
     checkGLcall("create dummy textures");
 
-    context_bind_dummy_textures(context);
+    wined3d_context_gl_bind_dummy_textures(context_gl);
 }
 
 /* Context activation is done by the caller. */
@@ -982,7 +1050,7 @@ static void device_init_swapchain_state(struct wined3d_device *device, struct wi
     wined3d_device_set_depth_stencil_view(device, ds_enable ? device->auto_depth_stencil_view : NULL);
 }
 
-static void wined3d_device_delete_opengl_contexts_cs(void *object)
+void wined3d_device_delete_opengl_contexts_cs(void *object)
 {
     struct wined3d_resource *resource, *cursor;
     struct wined3d_device *device = object;
@@ -1002,7 +1070,7 @@ static void wined3d_device_delete_opengl_contexts_cs(void *object)
 
     context = context_acquire(device, NULL, 0);
     device->blitter->ops->blitter_destroy(device->blitter, context);
-    device->shader_backend->shader_free_private(device);
+    device->shader_backend->shader_free_private(device, context);
     destroy_dummy_textures(device, context);
     destroy_default_samplers(device, context);
     context_release(context);
@@ -1012,19 +1080,14 @@ static void wined3d_device_delete_opengl_contexts_cs(void *object)
         if (device->contexts[0]->swapchain)
             swapchain_destroy_contexts(device->contexts[0]->swapchain);
         else
-            context_destroy(device, device->contexts[0]);
+            wined3d_context_gl_destroy(wined3d_context_gl(device->contexts[0]));
     }
 }
 
-static void wined3d_device_delete_opengl_contexts(struct wined3d_device *device)
-{
-    wined3d_cs_destroy_object(device->cs, wined3d_device_delete_opengl_contexts_cs, device);
-    wined3d_cs_finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
-}
-
-static void wined3d_device_create_primary_opengl_context_cs(void *object)
+void wined3d_device_create_primary_opengl_context_cs(void *object)
 {
     struct wined3d_device *device = object;
+    struct wined3d_context_gl *context_gl;
     struct wined3d_swapchain *swapchain;
     struct wined3d_context *context;
     struct wined3d_texture *target;
@@ -1040,7 +1103,7 @@ static void wined3d_device_create_primary_opengl_context_cs(void *object)
     if (!(device->blitter = wined3d_cpu_blitter_create()))
     {
         ERR("Failed to create CPU blitter.\n");
-        device->shader_backend->shader_free_private(device);
+        device->shader_backend->shader_free_private(device, NULL);
         return;
     }
     wined3d_ffp_blitter_create(&device->blitter, &device->adapter->gl_info);
@@ -1052,47 +1115,25 @@ static void wined3d_device_create_primary_opengl_context_cs(void *object)
     swapchain = device->swapchains[0];
     target = swapchain->back_buffers ? swapchain->back_buffers[0] : swapchain->front_buffer;
     context = context_acquire(device, target, 0);
-    create_dummy_textures(device, context);
+    context_gl = wined3d_context_gl(context);
+    wined3d_device_gl_create_dummy_textures(wined3d_device_gl(device), context_gl);
     create_default_samplers(device, context);
     context_release(context);
 }
 
-static HRESULT wined3d_device_create_primary_opengl_context(struct wined3d_device *device)
-{
-    wined3d_cs_init_object(device->cs, wined3d_device_create_primary_opengl_context_cs, device);
-    wined3d_cs_finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
-    if (!device->swapchains[0]->num_contexts)
-        return E_FAIL;
-
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
-        struct wined3d_swapchain_desc *swapchain_desc)
+HRESULT wined3d_device_set_implicit_swapchain(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
 {
     static const struct wined3d_color black = {0.0f, 0.0f, 0.0f, 0.0f};
-    struct wined3d_swapchain *swapchain = NULL;
+    const struct wined3d_swapchain_desc *swapchain_desc;
     DWORD clear_flags = 0;
     HRESULT hr;
 
-    TRACE("device %p, swapchain_desc %p.\n", device, swapchain_desc);
+    TRACE("device %p, swapchain %p.\n", device, swapchain);
 
     if (device->d3d_initialized)
         return WINED3DERR_INVALIDCALL;
-    if (device->wined3d->flags & WINED3D_NO3D)
-        return WINED3DERR_INVALIDCALL;
 
-    memset(device->fb.render_targets, 0, sizeof(device->fb.render_targets));
-
-    /* Setup the implicit swapchain. This also initializes a context. */
-    TRACE("Creating implicit swapchain.\n");
-    if (FAILED(hr = device->device_parent->ops->create_swapchain(device->device_parent,
-            swapchain_desc, &swapchain)))
-    {
-        WARN("Failed to create implicit swapchain.\n");
-        goto err_out;
-    }
-
+    swapchain_desc = &swapchain->desc;
     if (swapchain_desc->backbuffer_count && swapchain_desc->backbuffer_bind_flags & WINED3D_BIND_RENDER_TARGET)
     {
         struct wined3d_resource *back_buffer = &swapchain->back_buffers[0]->resource;
@@ -1108,27 +1149,28 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
                 NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
         {
             ERR("Failed to create rendertarget view, hr %#x.\n", hr);
-            goto err_out;
+            return hr;
         }
     }
 
     device->swapchain_count = 1;
     if (!(device->swapchains = heap_calloc(device->swapchain_count, sizeof(*device->swapchains))))
     {
-        ERR("Out of memory!\n");
+        ERR("Failed to allocate swapchain array.\n");
+        hr = E_OUTOFMEMORY;
         goto err_out;
     }
     device->swapchains[0] = swapchain;
 
-    if (FAILED(hr = wined3d_device_create_primary_opengl_context(device)))
+    memset(device->fb.render_targets, 0, sizeof(device->fb.render_targets));
+    if (FAILED(hr = device->adapter->adapter_ops->adapter_init_3d(device)))
         goto err_out;
-    device_init_swapchain_state(device, swapchain);
 
-    device->contexts[0]->last_was_rhw = 0;
+    device_init_swapchain_state(device, swapchain);
 
     TRACE("All defaults now set up.\n");
 
-    /* Clear the screen */
+    /* Clear the screen. */
     if (device->back_buffer_view)
         clear_flags |= WINED3DCLEAR_TARGET;
     if (swapchain_desc->enable_auto_depth_stencil)
@@ -1136,61 +1178,21 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     if (clear_flags)
         wined3d_device_clear(device, 0, NULL, clear_flags, &black, 1.0f, 0);
 
-    device->d3d_initialized = TRUE;
-
     if (wined3d_settings.logo)
         device_load_logo(device, wined3d_settings.logo);
+
     return WINED3D_OK;
 
 err_out:
     heap_free(device->swapchains);
+    device->swapchains = NULL;
     device->swapchain_count = 0;
     if (device->back_buffer_view)
+    {
         wined3d_rendertarget_view_decref(device->back_buffer_view);
-    if (swapchain)
-        wined3d_swapchain_decref(swapchain);
-
-    return hr;
-}
-
-HRESULT CDECL wined3d_device_init_gdi(struct wined3d_device *device,
-        struct wined3d_swapchain_desc *swapchain_desc)
-{
-    struct wined3d_swapchain *swapchain = NULL;
-    HRESULT hr;
-
-    TRACE("device %p, swapchain_desc %p.\n", device, swapchain_desc);
-
-    /* Setup the implicit swapchain */
-    TRACE("Creating implicit swapchain\n");
-    hr = device->device_parent->ops->create_swapchain(device->device_parent,
-            swapchain_desc, &swapchain);
-    if (FAILED(hr))
-    {
-        WARN("Failed to create implicit swapchain\n");
-        goto err_out;
+        device->back_buffer_view = NULL;
     }
 
-    device->swapchain_count = 1;
-    if (!(device->swapchains = heap_calloc(device->swapchain_count, sizeof(*device->swapchains))))
-    {
-        ERR("Out of memory!\n");
-        goto err_out;
-    }
-    device->swapchains[0] = swapchain;
-
-    if (!(device->blitter = wined3d_cpu_blitter_create()))
-    {
-        ERR("Failed to create CPU blitter.\n");
-        heap_free(device->swapchains);
-        device->swapchain_count = 0;
-        goto err_out;
-    }
-
-    return WINED3D_OK;
-
-err_out:
-    wined3d_swapchain_decref(swapchain);
     return hr;
 }
 
@@ -1201,90 +1203,72 @@ static void device_free_sampler(struct wine_rb_entry *entry, void *context)
     wined3d_sampler_decref(sampler);
 }
 
-HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
+void wined3d_device_uninit_3d(struct wined3d_device *device)
 {
+    BOOL no3d = device->wined3d->flags & WINED3D_NO3D;
+    struct wined3d_rendertarget_view *view;
+    struct wined3d_texture *texture;
     unsigned int i;
 
     TRACE("device %p.\n", device);
 
-    if (!device->d3d_initialized)
-        return WINED3DERR_INVALIDCALL;
+    if (!device->d3d_initialized && !no3d)
+    {
+        ERR("Called while 3D support was not initialised.\n");
+        return;
+    }
 
     wined3d_cs_finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
 
-    if (device->logo_texture)
-        wined3d_texture_decref(device->logo_texture);
-    if (device->cursor_texture)
-        wined3d_texture_decref(device->cursor_texture);
+    device->swapchain_count = 0;
+
+    if ((texture = device->logo_texture))
+    {
+        device->logo_texture = NULL;
+        wined3d_texture_decref(texture);
+    }
+
+    if ((texture = device->cursor_texture))
+    {
+        device->cursor_texture = NULL;
+        wined3d_texture_decref(texture);
+    }
 
     state_unbind_resources(&device->state);
+    for (i = 0; i < device->adapter->d3d_info.limits.max_rt_count; ++i)
+    {
+        wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
+    }
 
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
 
-    wined3d_device_delete_opengl_contexts(device);
+    device->adapter->adapter_ops->adapter_uninit_3d(device);
 
-    if (device->fb.depth_stencil)
+    if ((view = device->fb.depth_stencil))
     {
-        struct wined3d_rendertarget_view *view = device->fb.depth_stencil;
-
         TRACE("Releasing depth/stencil view %p.\n", view);
 
         device->fb.depth_stencil = NULL;
         wined3d_rendertarget_view_decref(view);
     }
 
-    if (device->auto_depth_stencil_view)
+    if ((view = device->auto_depth_stencil_view))
     {
-        struct wined3d_rendertarget_view *view = device->auto_depth_stencil_view;
-
         device->auto_depth_stencil_view = NULL;
         if (wined3d_rendertarget_view_decref(view))
             ERR("Something's still holding the auto depth/stencil view (%p).\n", view);
     }
 
-    for (i = 0; i < device->adapter->d3d_info.limits.max_rt_count; ++i)
+    if ((view = device->back_buffer_view))
     {
-        wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
-    }
-    if (device->back_buffer_view)
-    {
-        wined3d_rendertarget_view_decref(device->back_buffer_view);
         device->back_buffer_view = NULL;
-    }
-
-    for (i = 0; i < device->swapchain_count; ++i)
-    {
-        TRACE("Releasing the implicit swapchain %u.\n", i);
-        if (wined3d_swapchain_decref(device->swapchains[i]))
-            FIXME("Something's still holding the implicit swapchain.\n");
+        wined3d_rendertarget_view_decref(view);
     }
 
     heap_free(device->swapchains);
     device->swapchains = NULL;
-    device->swapchain_count = 0;
 
     device->d3d_initialized = FALSE;
-
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_device_uninit_gdi(struct wined3d_device *device)
-{
-    unsigned int i;
-
-    device->blitter->ops->blitter_destroy(device->blitter, NULL);
-
-    for (i = 0; i < device->swapchain_count; ++i)
-    {
-        TRACE("Releasing the implicit swapchain %u.\n", i);
-        if (wined3d_swapchain_decref(device->swapchains[i]))
-            FIXME("Something's still holding the implicit swapchain.\n");
-    }
-
-    heap_free(device->swapchains);
-    device->swapchains = NULL;
-    device->swapchain_count = 0;
-    return WINED3D_OK;
 }
 
 /* Enables thread safety in the wined3d device and its resources. Called by DirectDraw
@@ -1388,6 +1372,7 @@ HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UI
         wined3d_buffer_decref(device->update_stateblock_state->streams[stream_idx].buffer);
     device->update_stateblock_state->streams[stream_idx].buffer = buffer;
     device->update_stateblock_state->streams[stream_idx].stride = stride;
+    device->update_stateblock_state->streams[stream_idx].offset = offset;
 
     if (device->recording)
     {
@@ -3128,34 +3113,544 @@ static unsigned int wined3d_get_flexible_vertex_size(DWORD fvf)
     return size;
 }
 
+static void wined3d_format_get_colour(const struct wined3d_format *format,
+        const void *data, struct wined3d_color *colour)
+{
+    float *output = &colour->r;
+    const uint32_t *u32_data;
+    const uint16_t *u16_data;
+    const float *f32_data;
+    unsigned int i;
+
+    static const struct wined3d_color default_colour = {0.0f, 0.0f, 0.0f, 1.0f};
+    static unsigned int warned;
+
+    switch (format->id)
+    {
+        case WINED3DFMT_B8G8R8A8_UNORM:
+            u32_data = data;
+            wined3d_color_from_d3dcolor(colour, *u32_data);
+            break;
+
+        case WINED3DFMT_R8G8B8A8_UNORM:
+            u32_data = data;
+            colour->r = (*u32_data & 0xffu) / 255.0f;
+            colour->g = ((*u32_data >> 8) & 0xffu) / 255.0f;
+            colour->b = ((*u32_data >> 16) & 0xffu) / 255.0f;
+            colour->a = ((*u32_data >> 24) & 0xffu) / 255.0f;
+            break;
+
+        case WINED3DFMT_R16G16_UNORM:
+        case WINED3DFMT_R16G16B16A16_UNORM:
+            u16_data = data;
+            *colour = default_colour;
+            for (i = 0; i < format->component_count; ++i)
+                output[i] = u16_data[i] / 65535.0f;
+            break;
+
+        case WINED3DFMT_R32_FLOAT:
+        case WINED3DFMT_R32G32_FLOAT:
+        case WINED3DFMT_R32G32B32_FLOAT:
+        case WINED3DFMT_R32G32B32A32_FLOAT:
+            f32_data = data;
+            *colour = default_colour;
+            for (i = 0; i < format->component_count; ++i)
+                output[i] = f32_data[i];
+            break;
+
+        default:
+            *colour = default_colour;
+            if (!warned++)
+                FIXME("Unhandled colour format conversion, format %s.\n", debug_d3dformat(format->id));
+            break;
+    }
+}
+
+static void wined3d_colour_from_mcs(struct wined3d_color *colour, enum wined3d_material_color_source mcs,
+        const struct wined3d_color *material_colour, unsigned int index,
+        const struct wined3d_stream_info *stream_info)
+{
+    const struct wined3d_stream_info_element *element = NULL;
+
+    switch (mcs)
+    {
+        case WINED3D_MCS_MATERIAL:
+            *colour = *material_colour;
+            return;
+
+        case WINED3D_MCS_COLOR1:
+            if (!(stream_info->use_map & (1u << WINED3D_FFP_DIFFUSE)))
+            {
+                colour->r = colour->g = colour->b = colour->a = 1.0f;
+                return;
+            }
+            element = &stream_info->elements[WINED3D_FFP_DIFFUSE];
+            break;
+
+        case WINED3D_MCS_COLOR2:
+            if (!(stream_info->use_map & (1u << WINED3D_FFP_SPECULAR)))
+            {
+                colour->r = colour->g = colour->b = colour->a = 0.0f;
+                return;
+            }
+            element = &stream_info->elements[WINED3D_FFP_SPECULAR];
+            break;
+
+        default:
+            colour->r = colour->g = colour->b = colour->a = 0.0f;
+            ERR("Invalid material colour source %#x.\n", mcs);
+            return;
+    }
+
+    wined3d_format_get_colour(element->format, &element->data.addr[index * element->stride], colour);
+}
+
+static float wined3d_clamp(float value, float min_value, float max_value)
+{
+    return value < min_value ? min_value : value > max_value ? max_value : value;
+}
+
+static float wined3d_vec3_dot(const struct wined3d_vec3 *v0, const struct wined3d_vec3 *v1)
+{
+    return v0->x * v1->x + v0->y * v1->y + v0->z * v1->z;
+}
+
+static void wined3d_vec3_subtract(struct wined3d_vec3 *v0, const struct wined3d_vec3 *v1)
+{
+    v0->x -= v1->x;
+    v0->y -= v1->y;
+    v0->z -= v1->z;
+}
+
+static void wined3d_vec3_scale(struct wined3d_vec3 *v, float s)
+{
+    v->x *= s;
+    v->y *= s;
+    v->z *= s;
+}
+
+static void wined3d_vec3_normalise(struct wined3d_vec3 *v)
+{
+    float rnorm = 1.0f / sqrtf(wined3d_vec3_dot(v, v));
+
+    if (isfinite(rnorm))
+        wined3d_vec3_scale(v, rnorm);
+}
+
+static void wined3d_vec3_transform(struct wined3d_vec3 *dst,
+        const struct wined3d_vec3 *v, const struct wined3d_matrix_3x3 *m)
+{
+    struct wined3d_vec3 tmp;
+
+    tmp.x = v->x * m->_11 + v->y * m->_21 + v->z * m->_31;
+    tmp.y = v->x * m->_12 + v->y * m->_22 + v->z * m->_32;
+    tmp.z = v->x * m->_13 + v->y * m->_23 + v->z * m->_33;
+
+    *dst = tmp;
+}
+
+static void wined3d_color_clamp(struct wined3d_color *dst, const struct wined3d_color *src,
+        float min_value, float max_value)
+{
+    dst->r = wined3d_clamp(src->r, min_value, max_value);
+    dst->g = wined3d_clamp(src->g, min_value, max_value);
+    dst->b = wined3d_clamp(src->b, min_value, max_value);
+    dst->a = wined3d_clamp(src->a, min_value, max_value);
+}
+
+static void wined3d_color_rgb_mul_add(struct wined3d_color *dst, const struct wined3d_color *src, float c)
+{
+    dst->r += src->r * c;
+    dst->g += src->g * c;
+    dst->b += src->b * c;
+}
+
+static void init_transformed_lights(struct lights_settings *ls,
+        const struct wined3d_state *state, BOOL legacy_lighting, BOOL compute_lighting)
+{
+    const struct wined3d_light_info *lights[WINED3D_MAX_SOFTWARE_ACTIVE_LIGHTS];
+    const struct wined3d_light_info *light_info;
+    struct light_transformed *light;
+    struct wined3d_vec4 vec4;
+    unsigned int light_count;
+    unsigned int i, index;
+
+    memset(ls, 0, sizeof(*ls));
+
+    ls->lighting = !!compute_lighting;
+    ls->fog_mode = state->render_states[WINED3D_RS_FOGVERTEXMODE];
+    ls->fog_coord_mode = state->render_states[WINED3D_RS_RANGEFOGENABLE]
+            ? WINED3D_FFP_VS_FOG_RANGE : WINED3D_FFP_VS_FOG_DEPTH;
+    ls->fog_start = wined3d_get_float_state(state, WINED3D_RS_FOGSTART);
+    ls->fog_end = wined3d_get_float_state(state, WINED3D_RS_FOGEND);
+    ls->fog_density = wined3d_get_float_state(state, WINED3D_RS_FOGDENSITY);
+
+    if (ls->fog_mode == WINED3D_FOG_NONE && !compute_lighting)
+        return;
+
+    multiply_matrix(&ls->modelview_matrix, &state->transforms[WINED3D_TS_VIEW],
+            &state->transforms[WINED3D_TS_WORLD_MATRIX(0)]);
+
+    if (!compute_lighting)
+        return;
+
+    compute_normal_matrix(&ls->normal_matrix._11, legacy_lighting, &ls->modelview_matrix);
+
+    wined3d_color_from_d3dcolor(&ls->ambient_light, state->render_states[WINED3D_RS_AMBIENT]);
+    ls->legacy_lighting = !!legacy_lighting;
+    ls->normalise = !!state->render_states[WINED3D_RS_NORMALIZENORMALS];
+    ls->localviewer = !!state->render_states[WINED3D_RS_LOCALVIEWER];
+
+    for (i = 0, index = 0; i < LIGHTMAP_SIZE && index < ARRAY_SIZE(lights); ++i)
+    {
+        LIST_FOR_EACH_ENTRY(light_info, &state->light_state.light_map[i], struct wined3d_light_info, entry)
+        {
+            if (!light_info->enabled)
+                continue;
+
+            switch (light_info->OriginalParms.type)
+            {
+                case WINED3D_LIGHT_DIRECTIONAL:
+                    ++ls->directional_light_count;
+                    break;
+
+                case WINED3D_LIGHT_POINT:
+                    ++ls->point_light_count;
+                    break;
+
+                case WINED3D_LIGHT_SPOT:
+                    ++ls->spot_light_count;
+                    break;
+
+                case WINED3D_LIGHT_PARALLELPOINT:
+                    ++ls->parallel_point_light_count;
+                    break;
+
+                default:
+                    FIXME("Unhandled light type %#x.\n", light_info->OriginalParms.type);
+                    continue;
+            }
+            lights[index++] = light_info;
+            if (index == WINED3D_MAX_SOFTWARE_ACTIVE_LIGHTS)
+                break;
+        }
+    }
+
+    light_count = index;
+    for (i = 0, index = 0; i < light_count; ++i)
+    {
+        light_info = lights[i];
+        if (light_info->OriginalParms.type != WINED3D_LIGHT_DIRECTIONAL)
+            continue;
+
+        light = &ls->lights[index];
+        wined3d_vec4_transform(&vec4, &light_info->direction, &state->transforms[WINED3D_TS_VIEW]);
+        light->direction = *(struct wined3d_vec3 *)&vec4;
+        wined3d_vec3_normalise(&light->direction);
+
+        light->diffuse = light_info->OriginalParms.diffuse;
+        light->ambient = light_info->OriginalParms.ambient;
+        light->specular = light_info->OriginalParms.specular;
+        ++index;
+    }
+
+    for (i = 0; i < light_count; ++i)
+    {
+        light_info = lights[i];
+        if (light_info->OriginalParms.type != WINED3D_LIGHT_POINT)
+            continue;
+
+        light = &ls->lights[index];
+
+        wined3d_vec4_transform(&light->position, &light_info->position, &state->transforms[WINED3D_TS_VIEW]);
+        light->range = light_info->OriginalParms.range;
+        light->c_att = light_info->OriginalParms.attenuation0;
+        light->l_att = light_info->OriginalParms.attenuation1;
+        light->q_att = light_info->OriginalParms.attenuation2;
+
+        light->diffuse = light_info->OriginalParms.diffuse;
+        light->ambient = light_info->OriginalParms.ambient;
+        light->specular = light_info->OriginalParms.specular;
+        ++index;
+    }
+
+    for (i = 0; i < light_count; ++i)
+    {
+        light_info = lights[i];
+        if (light_info->OriginalParms.type != WINED3D_LIGHT_SPOT)
+            continue;
+
+        light = &ls->lights[index];
+
+        wined3d_vec4_transform(&light->position, &light_info->position, &state->transforms[WINED3D_TS_VIEW]);
+        wined3d_vec4_transform(&vec4, &light_info->direction, &state->transforms[WINED3D_TS_VIEW]);
+        light->direction = *(struct wined3d_vec3 *)&vec4;
+        wined3d_vec3_normalise(&light->direction);
+        light->range = light_info->OriginalParms.range;
+        light->falloff = light_info->OriginalParms.falloff;
+        light->c_att = light_info->OriginalParms.attenuation0;
+        light->l_att = light_info->OriginalParms.attenuation1;
+        light->q_att = light_info->OriginalParms.attenuation2;
+        light->cos_htheta = cosf(light_info->OriginalParms.theta / 2.0f);
+        light->cos_hphi = cosf(light_info->OriginalParms.phi / 2.0f);
+
+        light->diffuse = light_info->OriginalParms.diffuse;
+        light->ambient = light_info->OriginalParms.ambient;
+        light->specular = light_info->OriginalParms.specular;
+        ++index;
+    }
+
+    for (i = 0; i < light_count; ++i)
+    {
+        light_info = lights[i];
+        if (light_info->OriginalParms.type != WINED3D_LIGHT_PARALLELPOINT)
+            continue;
+
+        light = &ls->lights[index];
+
+        wined3d_vec4_transform(&vec4, &light_info->position, &state->transforms[WINED3D_TS_VIEW]);
+        *(struct wined3d_vec3 *)&light->position = *(struct wined3d_vec3 *)&vec4;
+        wined3d_vec3_normalise((struct wined3d_vec3 *)&light->position);
+        light->diffuse = light_info->OriginalParms.diffuse;
+        light->ambient = light_info->OriginalParms.ambient;
+        light->specular = light_info->OriginalParms.specular;
+        ++index;
+    }
+}
+
+static void update_light_diffuse_specular(struct wined3d_color *diffuse, struct wined3d_color *specular,
+        const struct wined3d_vec3 *dir, float att, float material_shininess,
+        const struct wined3d_vec3 *normal_transformed,
+        const struct wined3d_vec3 *position_transformed_normalised,
+        const struct light_transformed *light, const struct lights_settings *ls)
+{
+    struct wined3d_vec3 vec3;
+    float t, c;
+
+    c = wined3d_clamp(wined3d_vec3_dot(dir, normal_transformed), 0.0f, 1.0f);
+    wined3d_color_rgb_mul_add(diffuse, &light->diffuse, c * att);
+
+    vec3 = *dir;
+    if (ls->localviewer)
+        wined3d_vec3_subtract(&vec3, position_transformed_normalised);
+    else
+        vec3.z -= 1.0f;
+    wined3d_vec3_normalise(&vec3);
+    t = wined3d_vec3_dot(normal_transformed, &vec3);
+    if (t > 0.0f && (!ls->legacy_lighting || material_shininess > 0.0f)
+            && wined3d_vec3_dot(dir, normal_transformed) > 0.0f)
+        wined3d_color_rgb_mul_add(specular, &light->specular, att * powf(t, material_shininess));
+}
+
+static void light_set_vertex_data(struct lights_settings *ls,
+        const struct wined3d_vec4 *position)
+{
+    if (ls->fog_mode == WINED3D_FOG_NONE && !ls->lighting)
+        return;
+
+    wined3d_vec4_transform(&ls->position_transformed, position, &ls->modelview_matrix);
+    wined3d_vec3_scale((struct wined3d_vec3 *)&ls->position_transformed, 1.0f / ls->position_transformed.w);
+}
+
+static void compute_light(struct wined3d_color *ambient, struct wined3d_color *diffuse,
+        struct wined3d_color *specular, struct lights_settings *ls, const struct wined3d_vec3 *normal,
+        float material_shininess)
+{
+    struct wined3d_vec3 position_transformed_normalised;
+    struct wined3d_vec3 normal_transformed = {0.0f};
+    const struct light_transformed *light;
+    struct wined3d_vec3 dir, dst;
+    unsigned int i, index;
+    float att;
+
+    position_transformed_normalised = *(const struct wined3d_vec3 *)&ls->position_transformed;
+    wined3d_vec3_normalise(&position_transformed_normalised);
+
+    if (normal)
+    {
+        wined3d_vec3_transform(&normal_transformed, normal, &ls->normal_matrix);
+        if (ls->normalise)
+            wined3d_vec3_normalise(&normal_transformed);
+    }
+
+    diffuse->r = diffuse->g = diffuse->b = diffuse->a = 0.0f;
+    *specular = *diffuse;
+    *ambient = ls->ambient_light;
+
+    index = 0;
+    for (i = 0; i < ls->directional_light_count; ++i, ++index)
+    {
+        light = &ls->lights[index];
+
+        wined3d_color_rgb_mul_add(ambient, &light->ambient, 1.0f);
+        if (normal)
+            update_light_diffuse_specular(diffuse, specular, &light->direction, 1.0f, material_shininess,
+                    &normal_transformed, &position_transformed_normalised, light, ls);
+    }
+
+    for (i = 0; i < ls->point_light_count; ++i, ++index)
+    {
+        light = &ls->lights[index];
+        dir.x = light->position.x - ls->position_transformed.x;
+        dir.y = light->position.y - ls->position_transformed.y;
+        dir.z = light->position.z - ls->position_transformed.z;
+
+        dst.z = wined3d_vec3_dot(&dir, &dir);
+        dst.y = sqrtf(dst.z);
+        dst.x = 1.0f;
+        if (ls->legacy_lighting)
+        {
+            dst.y = (light->range - dst.y) / light->range;
+            if (!(dst.y > 0.0f))
+                continue;
+            dst.z = dst.y * dst.y;
+        }
+        else
+        {
+            if (!(dst.y <= light->range))
+                continue;
+        }
+        att = dst.x * light->c_att + dst.y * light->l_att + dst.z * light->q_att;
+        if (!ls->legacy_lighting)
+            att = 1.0f / att;
+
+        wined3d_color_rgb_mul_add(ambient, &light->ambient, att);
+        if (normal)
+        {
+            wined3d_vec3_normalise(&dir);
+            update_light_diffuse_specular(diffuse, specular, &dir, att, material_shininess,
+                    &normal_transformed, &position_transformed_normalised, light, ls);
+        }
+    }
+
+    for (i = 0; i < ls->spot_light_count; ++i, ++index)
+    {
+        float t;
+
+        light = &ls->lights[index];
+
+        dir.x = light->position.x - ls->position_transformed.x;
+        dir.y = light->position.y - ls->position_transformed.y;
+        dir.z = light->position.z - ls->position_transformed.z;
+
+        dst.z = wined3d_vec3_dot(&dir, &dir);
+        dst.y = sqrtf(dst.z);
+        dst.x = 1.0f;
+
+        if (ls->legacy_lighting)
+        {
+            dst.y = (light->range - dst.y) / light->range;
+            if (!(dst.y > 0.0f))
+                continue;
+            dst.z = dst.y * dst.y;
+        }
+        else
+        {
+            if (!(dst.y <= light->range))
+                continue;
+        }
+        wined3d_vec3_normalise(&dir);
+        t = -wined3d_vec3_dot(&dir, &light->direction);
+        if (t > light->cos_htheta)
+            att = 1.0f;
+        else if (t <= light->cos_hphi)
+            att = 0.0f;
+        else
+            att = powf((t - light->cos_hphi) / (light->cos_htheta - light->cos_hphi), light->falloff);
+
+        t = dst.x * light->c_att + dst.y * light->l_att + dst.z * light->q_att;
+        if (ls->legacy_lighting)
+            att *= t;
+        else
+            att /= t;
+
+        wined3d_color_rgb_mul_add(ambient, &light->ambient, att);
+
+        if (normal)
+            update_light_diffuse_specular(diffuse, specular, &dir, att, material_shininess,
+                    &normal_transformed, &position_transformed_normalised, light, ls);
+    }
+
+    for (i = 0; i < ls->parallel_point_light_count; ++i, ++index)
+    {
+        light = &ls->lights[index];
+
+        wined3d_color_rgb_mul_add(ambient, &light->ambient, 1.0f);
+        if (normal)
+            update_light_diffuse_specular(diffuse, specular, (const struct wined3d_vec3 *)&light->position,
+                    1.0f, material_shininess, &normal_transformed, &position_transformed_normalised, light, ls);
+    }
+}
+
+static float wined3d_calculate_fog_factor(float fog_coord, const struct lights_settings *ls)
+{
+    switch (ls->fog_mode)
+    {
+        case WINED3D_FOG_NONE:
+            return fog_coord;
+        case WINED3D_FOG_LINEAR:
+            return (ls->fog_end - fog_coord) / (ls->fog_end - ls->fog_start);
+        case WINED3D_FOG_EXP:
+            return expf(-fog_coord * ls->fog_density);
+        case WINED3D_FOG_EXP2:
+            return expf(-fog_coord * fog_coord * ls->fog_density * ls->fog_density);
+    }
+}
+
+static void update_fog_factor(float *fog_factor, struct lights_settings *ls)
+{
+    float fog_coord;
+
+    if (ls->fog_mode == WINED3D_FOG_NONE)
+        return;
+
+    switch (ls->fog_coord_mode)
+    {
+        case WINED3D_FFP_VS_FOG_RANGE:
+            fog_coord = sqrtf(wined3d_vec3_dot((const struct wined3d_vec3 *)&ls->position_transformed,
+                    (const struct wined3d_vec3 *)&ls->position_transformed));
+            break;
+
+        case WINED3D_FFP_VS_FOG_DEPTH:
+            fog_coord = fabsf(ls->position_transformed.z);
+            break;
+
+        default:
+            ERR("Unhandled fog coordinate mode %#x.\n", ls->fog_coord_mode);
+            return;
+    }
+    *fog_factor = wined3d_calculate_fog_factor(fog_coord, ls);
+}
+
 /* Context activation is done by the caller. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT process_vertices_strided(const struct wined3d_device *device, DWORD dwDestIndex, DWORD dwCount,
         const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, DWORD flags, DWORD dst_fvf)
 {
+    enum wined3d_material_color_source diffuse_source, specular_source, ambient_source, emissive_source;
+    const struct wined3d_color *material_specular_state_colour;
     struct wined3d_matrix mat, proj_mat, view_mat, world_mat;
+    const struct wined3d_state *state = &device->state;
+    const struct wined3d_format *output_colour_format;
+    static const struct wined3d_color black;
     struct wined3d_map_desc map_desc;
     struct wined3d_box box = {0};
     struct wined3d_viewport vp;
+    unsigned int texture_count;
+    struct lights_settings ls;
     unsigned int vertex_size;
+    BOOL do_clip, lighting;
     unsigned int i;
     BYTE *dest_ptr;
-    BOOL doClip;
-    DWORD numTextures;
     HRESULT hr;
-
-    if (stream_info->use_map & (1u << WINED3D_FFP_NORMAL))
-    {
-        WARN(" lighting state not saved yet... Some strange stuff may happen !\n");
-    }
 
     if (!(stream_info->use_map & (1u << WINED3D_FFP_POSITION)))
     {
-        ERR("Source has no position mask\n");
+        ERR("Source has no position mask.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (device->state.render_states[WINED3D_RS_CLIPPING])
+    if (state->render_states[WINED3D_RS_CLIPPING])
     {
         static BOOL warned = FALSE;
         /*
@@ -3164,16 +3659,17 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
          * so disable clipping for now.
          * (The graphics in Half-Life are broken, and my processvertices
          *  test crashes with IDirect3DDevice3)
-        doClip = TRUE;
+        do_clip = TRUE;
          */
-        doClip = FALSE;
-        if(!warned) {
+        do_clip = FALSE;
+        if (!warned)
+        {
            warned = TRUE;
            FIXME("Clipping is broken and disabled for now\n");
         }
     }
     else
-        doClip = FALSE;
+        do_clip = FALSE;
 
     vertex_size = wined3d_get_flexible_vertex_size(dst_fvf);
     box.left = dwDestIndex * vertex_size;
@@ -3215,16 +3711,36 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     multiply_matrix(&mat,&view_mat,&world_mat);
     multiply_matrix(&mat,&proj_mat,&mat);
 
-    numTextures = (dst_fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
+    texture_count = (dst_fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
 
-    for (i = 0; i < dwCount; i+= 1) {
+    lighting = state->render_states[WINED3D_RS_LIGHTING]
+            && (dst_fvf & (WINED3DFVF_DIFFUSE | WINED3DFVF_SPECULAR));
+    wined3d_get_material_colour_source(&diffuse_source, &emissive_source,
+            &ambient_source, &specular_source, state, stream_info);
+    output_colour_format = wined3d_get_format(device->adapter, WINED3DFMT_B8G8R8A8_UNORM, 0);
+    material_specular_state_colour = state->render_states[WINED3D_RS_SPECULARENABLE]
+            ? &state->material.specular : &black;
+    init_transformed_lights(&ls, state, device->adapter->d3d_info.wined3d_creation_flags
+            & WINED3D_LEGACY_FFP_LIGHTING, lighting);
+
+    for (i = 0; i < dwCount; ++i)
+    {
+        const struct wined3d_stream_info_element *position_element = &stream_info->elements[WINED3D_FFP_POSITION];
+        const float *p = (const float *)&position_element->data.addr[i * position_element->stride];
+        struct wined3d_color ambient, diffuse, specular;
+        struct wined3d_vec4 position;
         unsigned int tex_index;
+
+        position.x = p[0];
+        position.y = p[1];
+        position.z = p[2];
+        position.w = 1.0f;
+
+        light_set_vertex_data(&ls, &position);
 
         if ( ((dst_fvf & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZ ) ||
              ((dst_fvf & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW ) ) {
             /* The position first */
-            const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_POSITION];
-            const float *p = (const float *)(element->data.addr + i * element->stride);
             float x, y, z, rhw;
             TRACE("In: ( %06.2f %06.2f %06.2f )\n", p[0], p[1], p[2]);
 
@@ -3253,11 +3769,9 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
              *
              */
 
-            if( !doClip ||
-                ( (-rhw -eps < x) && (-rhw -eps < y) && ( -eps < z) &&
-                  (x <= rhw + eps) && (y <= rhw + eps ) && (z <= rhw + eps) &&
-                  ( rhw > eps ) ) ) {
-
+            if (!do_clip || (-rhw - eps < x && -rhw - eps < y && -eps < z && x <= rhw + eps
+                    && y <= rhw + eps && z <= rhw + eps && rhw > eps))
+            {
                 /* "Normal" viewport transformation (not clipped)
                  * 1) The values are divided by rhw
                  * 2) The y axis is negative, so multiply it with -1
@@ -3332,52 +3846,80 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
             copy_and_next(dest_ptr, normal, 3 * sizeof(float));
         }
 
-        if (dst_fvf & WINED3DFVF_DIFFUSE)
+        if (lighting)
         {
-            const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_DIFFUSE];
-            const DWORD *color_d = (const DWORD *)(element->data.addr + i * element->stride);
-            if (!(stream_info->use_map & (1u << WINED3D_FFP_DIFFUSE)))
+            const struct wined3d_stream_info_element *element;
+            struct wined3d_vec3 *normal;
+
+            if (stream_info->use_map & (1u << WINED3D_FFP_NORMAL))
             {
-                static BOOL warned = FALSE;
-
-                if(!warned) {
-                    ERR("No diffuse color in source, but destination has one\n");
-                    warned = TRUE;
-                }
-
-                *( (DWORD *) dest_ptr) = 0xffffffff;
-                dest_ptr += sizeof(DWORD);
+                element = &stream_info->elements[WINED3D_FFP_NORMAL];
+                normal = (struct wined3d_vec3 *)&element->data.addr[i * element->stride];
             }
             else
             {
-                copy_and_next(dest_ptr, color_d, sizeof(DWORD));
+                normal = NULL;
             }
+            compute_light(&ambient, &diffuse, &specular, &ls, normal,
+                    state->render_states[WINED3D_RS_SPECULARENABLE] ? state->material.power : 0.0f);
+        }
+
+        if (dst_fvf & WINED3DFVF_DIFFUSE)
+        {
+            struct wined3d_color material_diffuse, material_ambient, material_emissive, diffuse_colour;
+
+            wined3d_colour_from_mcs(&material_diffuse, diffuse_source,
+                    &state->material.diffuse, i, stream_info);
+
+            if (lighting)
+            {
+                wined3d_colour_from_mcs(&material_ambient, ambient_source,
+                        &state->material.ambient, i, stream_info);
+                wined3d_colour_from_mcs(&material_emissive, emissive_source,
+                        &state->material.emissive, i, stream_info);
+
+                diffuse_colour.r = ambient.r * material_ambient.r
+                        + diffuse.r * material_diffuse.r + material_emissive.r;
+                diffuse_colour.g = ambient.g * material_ambient.g
+                        + diffuse.g * material_diffuse.g + material_emissive.g;
+                diffuse_colour.b = ambient.b * material_ambient.b
+                        + diffuse.b * material_diffuse.b + material_emissive.b;
+                diffuse_colour.a = material_diffuse.a;
+            }
+            else
+            {
+                diffuse_colour = material_diffuse;
+            }
+            wined3d_color_clamp(&diffuse_colour, &diffuse_colour, 0.0f, 1.0f);
+            *((DWORD *)dest_ptr) = wined3d_format_convert_from_float(output_colour_format, &diffuse_colour);
+            dest_ptr += sizeof(DWORD);
         }
 
         if (dst_fvf & WINED3DFVF_SPECULAR)
         {
-            /* What's the color value in the feedback buffer? */
-            const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_SPECULAR];
-            const DWORD *color_s = (const DWORD *)(element->data.addr + i * element->stride);
-            if (!(stream_info->use_map & (1u << WINED3D_FFP_SPECULAR)))
+            struct wined3d_color material_specular, specular_colour;
+
+            wined3d_colour_from_mcs(&material_specular, specular_source,
+                    material_specular_state_colour, i, stream_info);
+
+            if (lighting)
             {
-                static BOOL warned = FALSE;
-
-                if(!warned) {
-                    ERR("No specular color in source, but destination has one\n");
-                    warned = TRUE;
-                }
-
-                *(DWORD *)dest_ptr = 0xff000000;
-                dest_ptr += sizeof(DWORD);
+                specular_colour.r = specular.r * material_specular.r;
+                specular_colour.g = specular.g * material_specular.g;
+                specular_colour.b = specular.b * material_specular.b;
+                specular_colour.a = ls.legacy_lighting ? 0.0f : material_specular.a;
             }
             else
             {
-                copy_and_next(dest_ptr, color_s, sizeof(DWORD));
+                specular_colour = material_specular;
             }
+            update_fog_factor(&specular_colour.a, &ls);
+            wined3d_color_clamp(&specular_colour, &specular_colour, 0.0f, 1.0f);
+            *((DWORD *)dest_ptr) = wined3d_format_convert_from_float(output_colour_format, &specular_colour);
+            dest_ptr += sizeof(DWORD);
         }
 
-        for (tex_index = 0; tex_index < numTextures; ++tex_index)
+        for (tex_index = 0; tex_index < texture_count; ++tex_index)
         {
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_TEXCOORD0 + tex_index];
             const float *tex_coord = (const float *)(element->data.addr + i * element->stride);
@@ -3422,7 +3964,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
 
     vs = state->shader[WINED3D_SHADER_TYPE_VERTEX];
     state->shader[WINED3D_SHADER_TYPE_VERTEX] = NULL;
-    wined3d_stream_info_from_declaration(&stream_info, state, &device->adapter->gl_info, &device->adapter->d3d_info);
+    wined3d_stream_info_from_declaration(&stream_info, state, &device->adapter->d3d_info);
     state->shader[WINED3D_SHADER_TYPE_VERTEX] = vs;
 
     /* We can't convert FROM a VBO, and vertex buffers used to source into
@@ -3533,7 +4075,7 @@ DWORD CDECL wined3d_device_get_texture_stage_state(const struct wined3d_device *
     return device->state.texture_states[stage][state];
 }
 
-HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
+void CDECL wined3d_device_set_texture(struct wined3d_device *device,
         UINT stage, struct wined3d_texture *texture)
 {
     struct wined3d_texture *prev;
@@ -3547,7 +4089,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     if (stage >= ARRAY_SIZE(device->state.textures))
     {
         WARN("Ignoring invalid stage %u.\n", stage);
-        return WINED3D_OK;
+        return;
     }
 
     if (texture)
@@ -3559,7 +4101,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     if (device->recording)
     {
         device->recording->changed.textures |= 1u << stage;
-        return WINED3D_OK;
+        return;
     }
 
     prev = device->state.textures[stage];
@@ -3568,7 +4110,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     if (texture == prev)
     {
         TRACE("App is setting the same texture again, nothing to do.\n");
-        return WINED3D_OK;
+        return;
     }
 
     TRACE("Setting new texture to %p.\n", texture);
@@ -3580,7 +4122,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     if (prev)
         wined3d_texture_decref(prev);
 
-    return WINED3D_OK;
+    return;
 }
 
 struct wined3d_texture * CDECL wined3d_device_get_texture(const struct wined3d_device *device, UINT stage)
@@ -3877,7 +4419,6 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     unsigned int src_size, dst_size, src_skip_levels = 0;
     unsigned int src_level_count, dst_level_count;
     unsigned int layer_count, level_count, i, j;
-    unsigned int width, height, depth;
     enum wined3d_resource_type type;
     struct wined3d_box box;
 
@@ -3948,11 +4489,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     /* Update every surface level of the texture. */
     for (i = 0; i < level_count; ++i)
     {
-        width = wined3d_texture_get_level_width(dst_texture, i);
-        height = wined3d_texture_get_level_height(dst_texture, i);
-        depth = wined3d_texture_get_level_depth(dst_texture, i);
-        wined3d_box_set(&box, 0, 0, width, height, 0, depth);
-
+        wined3d_texture_get_level_box(dst_texture, i, &box);
         for (j = 0; j < layer_count; ++j)
         {
             wined3d_cs_emit_blt_sub_resource(device->cs,
@@ -4177,10 +4714,7 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
 
     for (i = 0; i < dst_texture->level_count; ++i)
     {
-        wined3d_box_set(&box, 0, 0,
-                wined3d_texture_get_level_width(dst_texture, i),
-                wined3d_texture_get_level_height(dst_texture, i),
-                0, wined3d_texture_get_level_depth(dst_texture, i));
+        wined3d_texture_get_level_box(dst_texture, i, &box);
         for (j = 0; j < dst_texture->layer_count; ++j)
         {
             unsigned int idx = j * dst_texture->level_count + i;
@@ -4868,6 +5402,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     struct wined3d_resource *resource, *cursor;
+    struct wined3d_rendertarget_view *view;
     struct wined3d_swapchain *swapchain;
     struct wined3d_view_desc view_desc;
     BOOL backbuffer_resized;
@@ -5002,10 +5537,10 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
     }
 
-    if (device->auto_depth_stencil_view)
+    if ((view = device->auto_depth_stencil_view))
     {
-        wined3d_rendertarget_view_decref(device->auto_depth_stencil_view);
         device->auto_depth_stencil_view = NULL;
+        wined3d_rendertarget_view_decref(view);
     }
     if (swapchain->desc.enable_auto_depth_stencil)
     {
@@ -5051,10 +5586,10 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         wined3d_device_set_depth_stencil_view(device, device->auto_depth_stencil_view);
     }
 
-    if (device->back_buffer_view)
+    if ((view = device->back_buffer_view))
     {
-        wined3d_rendertarget_view_decref(device->back_buffer_view);
         device->back_buffer_view = NULL;
+        wined3d_rendertarget_view_decref(view);
     }
     if (swapchain->desc.backbuffer_count && swapchain->desc.backbuffer_bind_flags & WINED3D_BIND_RENDER_TARGET)
     {
@@ -5088,7 +5623,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         state_cleanup(&device->state);
 
         if (device->d3d_initialized)
-            wined3d_device_delete_opengl_contexts(device);
+            device->adapter->adapter_ops->adapter_uninit_3d(device);
 
         memset(&device->state, 0, sizeof(device->state));
         state_init(&device->state, &device->fb, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);
@@ -5100,9 +5635,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         if (wined3d_settings.logo)
             device_load_logo(device, wined3d_settings.logo);
     }
-    else if (device->back_buffer_view)
+    else if ((view = device->back_buffer_view))
     {
-        struct wined3d_rendertarget_view *view = device->back_buffer_view;
         struct wined3d_state *state = &device->state;
 
         wined3d_device_set_rendertarget_view(device, 0, view, FALSE);
@@ -5120,11 +5654,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         wined3d_cs_emit_set_scissor_rects(device->cs, 1, state->scissor_rects);
     }
 
-    if (device->d3d_initialized)
-    {
-        if (reset_state)
-            hr = wined3d_device_create_primary_opengl_context(device);
-    }
+    if (device->d3d_initialized && reset_state)
+        hr = device->adapter->adapter_ops->adapter_init_3d(device);
 
     /* All done. There is no need to reload resources or shaders, this will happen automatically on the
      * first use
@@ -5317,12 +5848,12 @@ static BOOL wined3d_select_feature_level(const struct wined3d_adapter *adapter,
     return FALSE;
 }
 
-HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
-        UINT adapter_idx, enum wined3d_device_type device_type, HWND focus_window, DWORD flags,
+HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined3d,
+        unsigned int adapter_idx, enum wined3d_device_type device_type, HWND focus_window, unsigned int flags,
         BYTE surface_alignment, const enum wined3d_feature_level *levels, unsigned int level_count,
         struct wined3d_device_parent *device_parent)
 {
-    struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
+    struct wined3d_adapter *adapter = wined3d->adapters[adapter_idx];
     const struct wined3d_vertex_pipe_ops *vertex_pipeline;
     const struct fragment_pipeline *fragment_pipeline;
     unsigned int i;
@@ -5357,8 +5888,8 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     wine_rb_init(&device->samplers, wined3d_sampler_compare);
 
     if (vertex_pipeline->vp_states && fragment_pipeline->states
-            && FAILED(hr = compile_state_table(device->StateTable, device->multistate_funcs,
-            &adapter->gl_info, &adapter->d3d_info, vertex_pipeline,
+            && FAILED(hr = compile_state_table(device->state_table, device->multistate_funcs,
+            &adapter->d3d_info, adapter->gl_info.supported, vertex_pipeline,
             fragment_pipeline, misc_state_template)))
     {
         ERR("Failed to compile state table, hr %#x.\n", hr);
@@ -5396,11 +5927,9 @@ err:
 
 void device_invalidate_state(const struct wined3d_device *device, DWORD state)
 {
-    DWORD rep = device->StateTable[state].representative;
+    DWORD rep = device->state_table[state].representative;
     struct wined3d_context *context;
-    DWORD idx;
-    BYTE shift;
-    UINT i;
+    unsigned int i, idx, shift;
 
     wined3d_from_cs(device->cs);
 
@@ -5414,7 +5943,7 @@ void device_invalidate_state(const struct wined3d_device *device, DWORD state)
     for (i = 0; i < device->context_count; ++i)
     {
         context = device->contexts[i];
-        if(isStateDirty(context, rep)) continue;
+        if (isStateDirty(context, rep)) continue;
 
         context->dirtyArray[context->numDirtyEntries++] = rep;
         idx = rep / (sizeof(*context->isStateDirty) * CHAR_BIT);

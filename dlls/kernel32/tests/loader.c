@@ -627,13 +627,13 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
         {
             if (!has_code && is_win64)
             {
-                ok( mod != NULL || want_32bit || broken(il_only), /* <= win7 */
-                    "%u: loading failed err %u\n", line, GetLastError() );
+                ok_(__FILE__,line)( mod != NULL || want_32bit || broken(il_only), /* <= win7 */
+                    "loading failed err %u\n", GetLastError() );
             }
             else
             {
-                ok( !mod, "%u: loading succeeded\n", line );
-                ok( GetLastError() == ERROR_BAD_EXE_FORMAT, "%u: wrong error %u\n", line, GetLastError() );
+                ok_(__FILE__, line)( !mod, "loading succeeded\n" );
+                ok_(__FILE__, line)( GetLastError() == ERROR_BAD_EXE_FORMAT, "wrong error %u\n", GetLastError() );
             }
         }
         else
@@ -1153,6 +1153,11 @@ static void test_Loader(void)
     }
     ((IMAGE_OS2_HEADER *)&nt_header)->ne_exetyp = ((IMAGE_OS2_HEADER *)&nt_header_template)->ne_exetyp;
 
+    dos_header.e_lfanew = 0x98760000;
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
+    ok( status == STATUS_INVALID_IMAGE_PROTECT, "NtCreateSection error %08x\n", status );
+
+    dos_header.e_lfanew = sizeof(dos_header);
     nt_header.Signature = 0xdeadbeef;
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_PROTECT, "NtCreateSection error %08x\n", status );

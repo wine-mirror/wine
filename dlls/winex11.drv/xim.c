@@ -28,6 +28,7 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "winnls.h"
+#include "winternl.h"
 #include "x11drv.h"
 #include "imm.h"
 #include "wine/debug.h"
@@ -293,11 +294,11 @@ void X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen)
  */
 BOOL X11DRV_InitXIM( const char *input_style )
 {
-    if (!strcasecmp(input_style, "offthespot"))
+    if (!_strnicmp(input_style, "offthespot", -1))
         ximStyleRequest = STYLE_OFFTHESPOT;
-    else if (!strcasecmp(input_style, "overthespot"))
+    else if (!_strnicmp(input_style, "overthespot", -1))
         ximStyleRequest = STYLE_OVERTHESPOT;
-    else if (!strcasecmp(input_style, "root"))
+    else if (!_strnicmp(input_style, "root", -1))
         ximStyleRequest = STYLE_ROOT;
 
     if (!XSupportsLocale())

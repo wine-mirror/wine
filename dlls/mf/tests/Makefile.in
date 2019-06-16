@@ -1,5 +1,7 @@
 TESTDLL   = mf.dll
-IMPORTS   = mf mfplat
+IMPORTS   = mf mfplat mfuuid ole32
 
 C_SRCS = \
 	mf.c
+
+RC_SRCS = resource.rc

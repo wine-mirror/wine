@@ -1,5 +1,6 @@
 MODULE    = cabarc.exe
-APPMODE   = -mconsole -municode
 IMPORTS   = cabinet
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = cabarc.c

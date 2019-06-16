@@ -2,10 +2,9 @@
 
 #ifndef __WINE_CONFIG_H
 #define __WINE_CONFIG_H
-#ifndef WINE_CROSSTEST
-
-/* Define to a function attribute for Microsoft hotpatch assembly prefix. */
-#undef DECLSPEC_HOTPATCH
+#ifdef WINE_CROSS_PE
+#error config.h should not be used when cross-compiling
+#endif
 
 /* Define to the file extension for executables. */
 #undef EXEEXT
@@ -19,9 +18,6 @@
 /* Define to 1 if you have the <alias.h> header file. */
 #undef HAVE_ALIAS_H
 
-/* Define to 1 if you have the <alsa/asoundlib.h> header file. */
-#undef HAVE_ALSA_ASOUNDLIB_H
-
 /* Define to 1 if you have the <AL/al.h> header file. */
 #undef HAVE_AL_AL_H
 
@@ -34,9 +30,6 @@
 
 /* Define to 1 if you have the <arpa/nameser.h> header file. */
 #undef HAVE_ARPA_NAMESER_H
-
-/* Define to 1 if you have the `asctime_r' function. */
-#undef HAVE_ASCTIME_R
 
 /* Define to 1 if you have the `asinh' function. */
 #undef HAVE_ASINH
@@ -80,9 +73,6 @@
 /* Define to 1 if you have the `cbrtf' function. */
 #undef HAVE_CBRTF
 
-/* Define to 1 if you have the `chsize' function. */
-#undef HAVE_CHSIZE
-
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
@@ -106,12 +96,6 @@
 
 /* Define to 1 if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
-
-/* Define if you have the daylight variable */
-#undef HAVE_DAYLIGHT
-
-/* Define to 1 if you have the <direct.h> header file. */
-#undef HAVE_DIRECT_H
 
 /* Define to 1 if you have the <dirent.h> header file. */
 #undef HAVE_DIRENT_H
@@ -162,8 +146,14 @@
 /* Define to 1 if you have the `expm1f' function. */
 #undef HAVE_EXPM1F
 
+/* Define to 1 if you have the `F3DAudioInitialize8' function. */
+#undef HAVE_F3DAUDIOINITIALIZE8
+
 /* Define to 1 if you have the `fallocate' function. */
 #undef HAVE_FALLOCATE
+
+/* Define to 1 if you have the `FAudio_CommitOperationSet' function. */
+#undef HAVE_FAUDIO_COMMITOPERATIONSET
 
 /* Define to 1 if you have the <FAudio.h> header file. */
 #undef HAVE_FAUDIO_H
@@ -176,6 +166,12 @@
 
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
+
+/* Define to 1 if you have the `fma' function. */
+#undef HAVE_FMA
+
+/* Define to 1 if you have the `fmaf' function. */
+#undef HAVE_FMAF
 
 /* Define to 1 if you have the `fnmatch' function. */
 #undef HAVE_FNMATCH
@@ -209,9 +205,6 @@
 
 /* Define to 1 if you have the <ft2build.h> header file. */
 #undef HAVE_FT2BUILD_H
-
-/* Define to 1 if you have the `ftruncate' function. */
-#undef HAVE_FTRUNCATE
 
 /* Define to 1 if the system has the type `FT_TrueTypeEngineType'. */
 #undef HAVE_FT_TRUETYPEENGINETYPE
@@ -255,20 +248,11 @@
 /* Define to 1 if you have the `getprotobynumber' function. */
 #undef HAVE_GETPROTOBYNUMBER
 
-/* Define to 1 if you have the `getpwuid' function. */
-#undef HAVE_GETPWUID
-
 /* Define to 1 if you have the `getservbyport' function. */
 #undef HAVE_GETSERVBYPORT
 
 /* Define to 1 if you have the <gettext-po.h> header file. */
 #undef HAVE_GETTEXT_PO_H
-
-/* Define to 1 if you have the `gettimeofday' function. */
-#undef HAVE_GETTIMEOFDAY
-
-/* Define to 1 if you have the `getuid' function. */
-#undef HAVE_GETUID
 
 /* Define to 1 if you have the `gnutls_cipher_init' function. */
 #undef HAVE_GNUTLS_CIPHER_INIT
@@ -335,9 +319,6 @@
 
 /* Define to 1 if you have the <IOKit/IOKitLib.h> header file. */
 #undef HAVE_IOKIT_IOKITLIB_H
-
-/* Define to 1 if you have the <io.h> header file. */
-#undef HAVE_IO_H
 
 /* Define to 1 if you have the `isfinite' function. */
 #undef HAVE_ISFINITE
@@ -441,9 +422,6 @@
 /* Define to 1 if you have the <libunwind.h> header file. */
 #undef HAVE_LIBUNWIND_H
 
-/* Define to 1 if you have the <libv4l1.h> header file. */
-#undef HAVE_LIBV4L1_H
-
 /* Define if you have the libxml2 library */
 #undef HAVE_LIBXML2
 
@@ -531,9 +509,6 @@
 /* Define to 1 if you have the <linux/videodev2.h> header file. */
 #undef HAVE_LINUX_VIDEODEV2_H
 
-/* Define to 1 if you have the <linux/videodev.h> header file. */
-#undef HAVE_LINUX_VIDEODEV_H
-
 /* Define to 1 if you have the `llrint' function. */
 #undef HAVE_LLRINT
 
@@ -557,9 +532,6 @@
 
 /* Define to 1 if you have the `log2f' function. */
 #undef HAVE_LOG2F
-
-/* Define to 1 if the system has the type `long long'. */
-#undef HAVE_LONG_LONG
 
 /* Define to 1 if you have the `lrint' function. */
 #undef HAVE_LRINT
@@ -603,23 +575,14 @@
 /* Define to 1 if you have the <mach-o/nlist.h> header file. */
 #undef HAVE_MACH_O_NLIST_H
 
-/* Define to 1 if you have the `memmove' function. */
-#undef HAVE_MEMMOVE
-
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
 /* Define to 1 if you have the <Metal/Metal.h> header file. */
 #undef HAVE_METAL_METAL_H
 
-/* Define to 1 if you have the `mmap' function. */
-#undef HAVE_MMAP
-
 /* Define to 1 if you have the <mntent.h> header file. */
 #undef HAVE_MNTENT_H
-
-/* Define to 1 if the system has the type `mode_t'. */
-#undef HAVE_MODE_T
 
 /* Define to 1 if you have the `mousemask' function. */
 #undef HAVE_MOUSEMASK
@@ -711,12 +674,6 @@
 /* Define to 1 if `_msg_ptr' is a member of `ns_msg'. */
 #undef HAVE_NS_MSG__MSG_PTR
 
-/* Define to 1 if the system has the type `off_t'. */
-#undef HAVE_OFF_T
-
-/* Define if mkdir takes only one argument */
-#undef HAVE_ONE_ARG_MKDIR
-
 /* Define to 1 if OpenAL is available */
 #undef HAVE_OPENAL
 
@@ -732,12 +689,6 @@
 /* Define to 1 if you have the <pcap/pcap.h> header file. */
 #undef HAVE_PCAP_PCAP_H
 
-/* Define to 1 if you have the `pclose' function. */
-#undef HAVE_PCLOSE
-
-/* Define to 1 if the system has the type `pid_t'. */
-#undef HAVE_PID_T
-
 /* Define to 1 if you have the `pipe2' function. */
 #undef HAVE_PIPE2
 
@@ -749,9 +700,6 @@
 
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
-
-/* Define to 1 if you have the `popen' function. */
-#undef HAVE_POPEN
 
 /* Define to 1 if you have the `port_create' function. */
 #undef HAVE_PORT_CREATE
@@ -771,26 +719,11 @@
 /* Define to 1 if you have the `pread' function. */
 #undef HAVE_PREAD
 
-/* Define to 1 if you have the <process.h> header file. */
-#undef HAVE_PROCESS_H
-
 /* Define to 1 if you have the `proc_pidinfo' function. */
 #undef HAVE_PROC_PIDINFO
 
-/* Define to 1 if you have the `pthread_attr_get_np' function. */
-#undef HAVE_PTHREAD_ATTR_GET_NP
-
-/* Define to 1 if you have the `pthread_getattr_np' function. */
-#undef HAVE_PTHREAD_GETATTR_NP
-
 /* Define to 1 if you have the `pthread_getthreadid_np' function. */
 #undef HAVE_PTHREAD_GETTHREADID_NP
-
-/* Define to 1 if you have the `pthread_get_stackaddr_np' function. */
-#undef HAVE_PTHREAD_GET_STACKADDR_NP
-
-/* Define to 1 if you have the `pthread_get_stacksize_np' function. */
-#undef HAVE_PTHREAD_GET_STACKSIZE_NP
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
@@ -821,6 +754,12 @@
 
 /* Define to 1 if you have the `remainderf' function. */
 #undef HAVE_REMAINDERF
+
+/* Define to 1 if you have the `remquo' function. */
+#undef HAVE_REMQUO
+
+/* Define to 1 if you have the `remquof' function. */
+#undef HAVE_REMQUOF
 
 /* Define to 1 if the system has the type `request_sense'. */
 #undef HAVE_REQUEST_SENSE
@@ -873,17 +812,11 @@
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT
 
-/* Define to 1 if you have the `sendmsg' function. */
-#undef HAVE_SENDMSG
-
 /* Define to 1 if you have the `setproctitle' function. */
 #undef HAVE_SETPROCTITLE
 
 /* Define to 1 if you have the `setprogname' function. */
 #undef HAVE_SETPROGNAME
-
-/* Define to 1 if you have the `setrlimit' function. */
-#undef HAVE_SETRLIMIT
 
 /* Define to 1 if you have the `settimeofday' function. */
 #undef HAVE_SETTIMEOFDAY
@@ -894,9 +827,6 @@
 /* Define if sigaddset is supported */
 #undef HAVE_SIGADDSET
 
-/* Define to 1 if you have the `sigaltstack' function. */
-#undef HAVE_SIGALTSTACK
-
 /* Define to 1 if `si_fd' is a member of `siginfo_t'. */
 #undef HAVE_SIGINFO_T_SI_FD
 
@@ -905,18 +835,6 @@
 
 /* Define to 1 if the system has the type `sigset_t'. */
 #undef HAVE_SIGSET_T
-
-/* Define to 1 if the system has the type `size_t'. */
-#undef HAVE_SIZE_T
-
-/* Define to 1 if you have the `snprintf' function. */
-#undef HAVE_SNPRINTF
-
-/* Define to 1 if you have the `socketpair' function. */
-#undef HAVE_SOCKETPAIR
-
-/* Define to 1 if the system has the type `ssize_t'. */
-#undef HAVE_SSIZE_T
 
 /* Define to 1 if you have the `SSLCopyPeerCertificates' function. */
 #undef HAVE_SSLCOPYPEERCERTIFICATES
@@ -936,23 +854,11 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
-/* Define to 1 if you have the `strcasecmp' function. */
-#undef HAVE_STRCASECMP
-
-/* Define to 1 if you have the `strdup' function. */
-#undef HAVE_STRDUP
-
-/* Define to 1 if you have the `strerror' function. */
-#undef HAVE_STRERROR
-
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
-
-/* Define to 1 if you have the `strncasecmp' function. */
-#undef HAVE_STRNCASECMP
 
 /* Define to 1 if you have the `strnlen' function. */
 #undef HAVE_STRNLEN
@@ -962,12 +868,6 @@
 
 /* Define to 1 if you have the `strtold' function. */
 #undef HAVE_STRTOLD
-
-/* Define to 1 if you have the `strtoll' function. */
-#undef HAVE_STRTOLL
-
-/* Define to 1 if you have the `strtoull' function. */
-#undef HAVE_STRTOULL
 
 /* Define to 1 if `d_reclen' is a member of `struct dirent'. */
 #undef HAVE_STRUCT_DIRENT_D_RECLEN
@@ -1103,9 +1003,6 @@
 
 /* Define to 1 if you have the `sysinfo' function. */
 #undef HAVE_SYSINFO
-
-/* Define to 1 if you have the <sys/asoundlib.h> header file. */
-#undef HAVE_SYS_ASOUNDLIB_H
 
 /* Define to 1 if you have the <sys/attr.h> header file. */
 #undef HAVE_SYS_ATTR_H
@@ -1278,9 +1175,6 @@
 /* Define to 1 if you have the `timegm' function. */
 #undef HAVE_TIMEGM
 
-/* Define if you have the timezone variable */
-#undef HAVE_TIMEZONE
-
 /* Define to 1 if you have the `trunc' function. */
 #undef HAVE_TRUNC
 
@@ -1304,9 +1198,6 @@
 
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 #undef HAVE_VALGRIND_VALGRIND_H
-
-/* Define to 1 if you have the `vsnprintf' function. */
-#undef HAVE_VSNPRINTF
 
 /* Define to 1 if you have the <X11/extensions/shape.h> header file. */
 #undef HAVE_X11_EXTENSIONS_SHAPE_H
@@ -1404,41 +1295,8 @@
 /* Define to 1 if you have the <zlib.h> header file. */
 #undef HAVE_ZLIB_H
 
-/* Define to 1 if you have the `_finite' function. */
-#undef HAVE__FINITE
-
-/* Define to 1 if you have the `_isnan' function. */
-#undef HAVE__ISNAN
-
-/* Define to 1 if you have the `_pclose' function. */
-#undef HAVE__PCLOSE
-
-/* Define to 1 if you have the `_popen' function. */
-#undef HAVE__POPEN
-
-/* Define to 1 if you have the `_snprintf' function. */
-#undef HAVE__SNPRINTF
-
 /* Define to 1 if you have the `_spawnvp' function. */
 #undef HAVE__SPAWNVP
-
-/* Define to 1 if you have the `_strdup' function. */
-#undef HAVE__STRDUP
-
-/* Define to 1 if you have the `_stricmp' function. */
-#undef HAVE__STRICMP
-
-/* Define to 1 if you have the `_strnicmp' function. */
-#undef HAVE__STRNICMP
-
-/* Define to 1 if you have the `_strtoi64' function. */
-#undef HAVE__STRTOI64
-
-/* Define to 1 if you have the `_strtoui64' function. */
-#undef HAVE__STRTOUI64
-
-/* Define to 1 if you have the `_vsnprintf' function. */
-#undef HAVE__VSNPRINTF
 
 /* Define to 1 if you have the `__builtin_clz' built-in function. */
 #undef HAVE___BUILTIN_CLZ
@@ -1563,8 +1421,8 @@
 /* Define to the soname of the libtiff library. */
 #undef SONAME_LIBTIFF
 
-/* Define to the soname of the libv4l1 library. */
-#undef SONAME_LIBV4L1
+/* Define to the soname of the libv4l2 library. */
+#undef SONAME_LIBV4L2
 
 /* Define to the soname of the libvkd3d library. */
 #undef SONAME_LIBVKD3D
@@ -1625,34 +1483,10 @@
 /* Define for large files, on AIX-style hosts. */
 #undef _LARGE_FILES
 
-/* Define to a macro to output a .cfi assembly pseudo-op */
-#undef __ASM_CFI
-
-/* Define to a macro to define an assembly function */
-#undef __ASM_DEFINE_FUNC
-
-/* Define to a macro to generate an assembly function directive */
-#undef __ASM_FUNC
-
-/* Define to a macro to generate an assembly function with C calling
-   convention */
-#undef __ASM_GLOBAL_FUNC
-
-/* Define to a macro to generate an assembly name from a C symbol */
-#undef __ASM_NAME
-
-/* Define to a macro to generate an stdcall suffix */
-#undef __ASM_STDCALL
-
-/* Define to a macro to generate an assembly function with stdcall calling
-   convention */
-#undef __ASM_STDCALL_FUNC
-
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
 #undef inline
 #endif
 
-#endif /* WINE_CROSSTEST */
 #endif /* __WINE_CONFIG_H */

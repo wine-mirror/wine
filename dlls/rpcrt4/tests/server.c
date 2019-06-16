@@ -27,7 +27,7 @@
 #include <netfw.h>
 #include "wine/test.h"
 #include "server.h"
-#define SKIP_STRUCT_DECLS
+#define SKIP_TYPE_DECLS
 #include "server_interp.h"
 #include "server_defines.h"
 

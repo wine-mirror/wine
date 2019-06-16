@@ -378,7 +378,7 @@ static void pf_fixup_exponent( char *buf )
 {
     char* tmp = buf;
 
-    while (tmp[0] && toupper(tmp[0]) != 'E')
+    while (tmp[0] && NTDLL_tolower(tmp[0]) != 'e')
         tmp++;
 
     if (tmp[0] && (tmp[1] == '+' || tmp[1] == '-') &&
@@ -637,7 +637,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
             if( pf_is_double_format( flags.Format ) )
             {
                 sprintf( x, fmt, va_arg(valist, double) );
-                if (toupper(flags.Format) == 'E' || toupper(flags.Format) == 'G')
+                if (NTDLL_tolower(flags.Format) == 'e' || NTDLL_tolower(flags.Format) == 'g')
                     pf_fixup_exponent( x );
             }
             else

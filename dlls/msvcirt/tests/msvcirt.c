@@ -18,6 +18,7 @@
 
 #include <fcntl.h>
 #include <float.h>
+#include <math.h>
 #include <io.h>
 #include <stdio.h>
 #include <windef.h>
@@ -179,20 +180,6 @@ typedef struct {
 typedef struct {
     exception e;
 } logic_error;
-
-static inline float __port_infinity(void)
-{
-    static const unsigned __inf_bytes = 0x7f800000;
-    return *(const float *)&__inf_bytes;
-}
-#define INFINITY __port_infinity()
-
-static inline float __port_nan(void)
-{
-    static const unsigned __nan_bytes = 0x7fc00000;
-    return *(const float *)&__nan_bytes;
-}
-#define NAN __port_nan()
 
 #undef __thiscall
 #ifdef __i386__

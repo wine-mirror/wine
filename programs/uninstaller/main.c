@@ -46,7 +46,6 @@ static WCHAR *sFilter;
 
 static int FetchUninstallInformation(void);
 static void UninstallProgram(void);
-static int cmp_by_name(const void *a, const void *b);
 
 static const WCHAR DisplayNameW[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
 static const WCHAR PathUninstallW[] = {
@@ -165,6 +164,31 @@ int wmain(int argc, WCHAR *argv[])
     static const WCHAR listW[] = { '-','-','l','i','s','t',0 };
     static const WCHAR removeW[] = { '-','-','r','e','m','o','v','e',0 };
     int i = 1;
+    BOOL is_wow64;
+
+    if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
+    {
+        STARTUPINFOW si;
+        PROCESS_INFORMATION pi;
+        WCHAR filename[MAX_PATH];
+        void *redir;
+        DWORD exit_code;
+
+        memset( &si, 0, sizeof(si) );
+        si.cb = sizeof(si);
+        GetModuleFileNameW( 0, filename, MAX_PATH );
+
+        Wow64DisableWow64FsRedirection( &redir );
+        if (CreateProcessW( filename, GetCommandLineW(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
+        {
+            WINE_TRACE( "restarting %s\n", wine_dbgstr_w(filename) );
+            WaitForSingleObject( pi.hProcess, INFINITE );
+            GetExitCodeProcess( pi.hProcess, &exit_code );
+            ExitProcess( exit_code );
+        }
+        else WINE_ERR( "failed to restart 64-bit %s, err %d\n", wine_dbgstr_w(filename), GetLastError() );
+        Wow64RevertWow64FsRedirection( redir );
+    }
 
     while( i<argc )
     {
@@ -208,7 +232,7 @@ int wmain(int argc, WCHAR *argv[])
 /**
  * Used to sort entries by name.
  */
-static int cmp_by_name(const void *a, const void *b)
+static int __cdecl cmp_by_name(const void *a, const void *b)
 {
     return lstrcmpiW(((const uninst_entry *)a)->descr, ((const uninst_entry *)b)->descr);
 }

@@ -33,7 +33,6 @@
 #include "query.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msidb);
 
@@ -218,8 +217,28 @@ static UINT STREAMS_insert_row(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row
 
 static UINT STREAMS_delete_row(struct tagMSIVIEW *view, UINT row)
 {
-    FIXME("(%p %d): stub!\n", view, row);
-    return ERROR_SUCCESS;
+    MSIDATABASE *db = ((MSISTREAMSVIEW *)view)->db;
+    UINT i, num_rows = db->num_streams - 1;
+    const WCHAR *name;
+    WCHAR *encname;
+    HRESULT hr;
+
+    TRACE("(%p %d)\n", view, row);
+
+    if (!db->num_streams || row > num_rows)
+        return ERROR_FUNCTION_FAILED;
+
+    name = msi_string_lookup( db->strings, db->streams[row].str_index, NULL );
+    if (!(encname = encode_streamname( FALSE, name ))) return ERROR_OUTOFMEMORY;
+    IStream_Release( db->streams[row].stream );
+
+    for (i = row; i < num_rows; i++)
+        db->streams[i] = db->streams[i + 1];
+    db->num_streams = num_rows;
+
+    hr = IStorage_DestroyElement( db->storage, encname );
+    msi_free( encname );
+    return FAILED( hr ) ? ERROR_FUNCTION_FAILED : ERROR_SUCCESS;
 }
 
 static UINT STREAMS_execute(struct tagMSIVIEW *view, MSIRECORD *record)
@@ -317,12 +336,15 @@ static UINT STREAMS_modify(struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRE
         r = streams_modify_update(view, rec);
         break;
 
+    case MSIMODIFY_DELETE:
+        r = STREAMS_delete_row(view, row - 1);
+        break;
+
     case MSIMODIFY_VALIDATE_NEW:
     case MSIMODIFY_INSERT_TEMPORARY:
     case MSIMODIFY_REFRESH:
     case MSIMODIFY_REPLACE:
     case MSIMODIFY_MERGE:
-    case MSIMODIFY_DELETE:
     case MSIMODIFY_VALIDATE:
     case MSIMODIFY_VALIDATE_FIELD:
     case MSIMODIFY_VALIDATE_DELETE:
@@ -592,7 +614,10 @@ UINT msi_commit_streams( MSIDATABASE *db )
     for (i = 0; i < db->num_streams; i++)
     {
         name = msi_string_lookup( db->strings, db->streams[i].str_index, NULL );
+        if (!wcscmp( name, szSumInfo )) continue;
+
         if (!(encname = encode_streamname( FALSE, name ))) return ERROR_OUTOFMEMORY;
+        TRACE("saving stream %s as %s\n", debugstr_w(name), debugstr_w(encname));
 
         hr = IStorage_CreateStream( db->storage, encname, STGM_WRITE|STGM_SHARE_EXCLUSIVE, 0, 0, &stream );
         if (SUCCEEDED( hr ))

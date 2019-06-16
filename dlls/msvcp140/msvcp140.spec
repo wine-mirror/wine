@@ -310,9 +310,9 @@
 @ stub -arch=i386 ??0_Facet_base@std@@QAE@XZ
 @ stub -arch=win64 ??0_Facet_base@std@@QEAA@AEBV01@@Z
 @ stub -arch=win64 ??0_Facet_base@std@@QEAA@XZ
-@ stub -arch=arm ??0_Init_locks@std@@QAA@XZ
-@ stub -arch=i386 ??0_Init_locks@std@@QAE@XZ
-@ stub -arch=win64 ??0_Init_locks@std@@QEAA@XZ
+@ cdecl -arch=arm ??0_Init_locks@std@@QAA@XZ(ptr) _Init_locks_ctor
+@ thiscall -arch=i386 ??0_Init_locks@std@@QAE@XZ(ptr) _Init_locks_ctor
+@ cdecl -arch=win64 ??0_Init_locks@std@@QEAA@XZ(ptr) _Init_locks_ctor
 @ cdecl -arch=arm ??0_Locimp@locale@std@@AAA@ABV012@@Z(ptr ptr) locale__Locimp_copy_ctor
 @ cdecl -arch=arm ??0_Locimp@locale@std@@AAA@_N@Z(ptr long) locale__Locimp_ctor_transparent
 @ thiscall -arch=i386 ??0_Locimp@locale@std@@AAE@ABV012@@Z(ptr ptr) locale__Locimp_copy_ctor
@@ -484,9 +484,9 @@
 @ stub -arch=arm ??1_Facet_base@std@@UAA@XZ
 @ stub -arch=i386 ??1_Facet_base@std@@UAE@XZ
 @ stub -arch=win64 ??1_Facet_base@std@@UEAA@XZ
-@ stub -arch=arm ??1_Init_locks@std@@QAA@XZ
-@ stub -arch=i386 ??1_Init_locks@std@@QAE@XZ
-@ stub -arch=win64 ??1_Init_locks@std@@QEAA@XZ
+@ cdecl -arch=arm ??1_Init_locks@std@@QAA@XZ(ptr) _Init_locks_dtor
+@ thiscall -arch=i386 ??1_Init_locks@std@@QAE@XZ(ptr) _Init_locks_dtor
+@ cdecl -arch=win64 ??1_Init_locks@std@@QEAA@XZ(ptr) _Init_locks_dtor
 @ cdecl -arch=arm ??1_Locimp@locale@std@@MAA@XZ(ptr) locale__Locimp_dtor
 @ thiscall -arch=i386 ??1_Locimp@locale@std@@MAE@XZ(ptr) locale__Locimp_dtor
 @ cdecl -arch=win64 ??1_Locimp@locale@std@@MEAA@XZ(ptr) locale__Locimp_dtor
@@ -1421,10 +1421,10 @@
 @ cdecl -arch=win64 ?_Init_ctor@Init@ios_base@std@@CAXPEAV123@@Z(ptr) ios_base_Init__Init_ctor
 @ cdecl -arch=win32 ?_Init_dtor@Init@ios_base@std@@CAXPAV123@@Z(ptr) ios_base_Init__Init_dtor
 @ cdecl -arch=win64 ?_Init_dtor@Init@ios_base@std@@CAXPEAV123@@Z(ptr) ios_base_Init__Init_dtor
-@ stub -arch=win32 ?_Init_locks_ctor@_Init_locks@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Init_locks_ctor@_Init_locks@std@@CAXPEAV12@@Z
-@ stub -arch=win32 ?_Init_locks_dtor@_Init_locks@std@@CAXPAV12@@Z
-@ stub -arch=win64 ?_Init_locks_dtor@_Init_locks@std@@CAXPEAV12@@Z
+@ cdecl -arch=win32 ?_Init_locks_ctor@_Init_locks@std@@CAXPAV12@@Z(ptr) _Init_locks__Init_locks_ctor
+@ cdecl -arch=win64 ?_Init_locks_ctor@_Init_locks@std@@CAXPEAV12@@Z(ptr) _Init_locks__Init_locks_ctor
+@ cdecl -arch=win32 ?_Init_locks_dtor@_Init_locks@std@@CAXPAV12@@Z(ptr) _Init_locks__Init_locks_dtor
+@ cdecl -arch=win64 ?_Init_locks_dtor@_Init_locks@std@@CAXPEAV12@@Z(ptr) _Init_locks__Init_locks_dtor
 @ cdecl -arch=win32 ?_Ios_base_dtor@ios_base@std@@CAXPAV12@@Z(ptr) ios_base_Ios_base_dtor
 @ cdecl -arch=win64 ?_Ios_base_dtor@ios_base@std@@CAXPEAV12@@Z(ptr) ios_base_Ios_base_dtor
 @ cdecl -arch=arm ?_Ipfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QAA_N_N@Z(ptr long) basic_istream_char__Ipfx
@@ -1471,10 +1471,10 @@
 @ cdecl -arch=win32 ?_Lockit_ctor@_Lockit@std@@CAXPAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
 @ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_ctor
 @ cdecl -arch=win64 ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@H@Z(ptr long) _Lockit__Lockit_ctor_locktype
-@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit_init
+@ cdecl ?_Lockit_ctor@_Lockit@std@@SAXH@Z(long) _Lockit__Lockit_ctor_lock
 @ cdecl -arch=win32 ?_Lockit_dtor@_Lockit@std@@CAXPAV12@@Z(ptr) _Lockit__Lockit_dtor
 @ cdecl -arch=win64 ?_Lockit_dtor@_Lockit@std@@CAXPEAV12@@Z(ptr) _Lockit__Lockit_dtor
-@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit_free
+@ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) _Lockit__Lockit_dtor_unlock
 @ cdecl -arch=arm ?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QAAXXZ(ptr) _TaskEventLogger__LogCancelTask
 @ thiscall -arch=i386 ?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QAEXXZ(ptr) _TaskEventLogger__LogCancelTask
 @ cdecl -arch=win64 ?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QEAAXXZ(ptr) _TaskEventLogger__LogCancelTask
@@ -1701,8 +1701,8 @@
 @ cdecl -arch=win64 ?__ExceptionPtrCreate@@YAXPEAX@Z(ptr) __ExceptionPtrCreate
 @ cdecl -arch=win32 ?__ExceptionPtrCurrentException@@YAXPAX@Z(ptr) msvcr120.?__ExceptionPtrCurrentException@@YAXPAX@Z
 @ cdecl -arch=win64 ?__ExceptionPtrCurrentException@@YAXPEAX@Z(ptr) msvcr120.?__ExceptionPtrCurrentException@@YAXPEAX@Z
-@ cdecl -arch=win32 ?__ExceptionPtrDestroy@@YAXPAX@Z(ptr) msvcr120.?__ExceptionPtrDestroy@@YAXPAX@Z
-@ cdecl -arch=win64 ?__ExceptionPtrDestroy@@YAXPEAX@Z(ptr) msvcr120.?__ExceptionPtrDestroy@@YAXPEAX@Z
+@ cdecl -arch=win32 ?__ExceptionPtrDestroy@@YAXPAX@Z(ptr) __ExceptionPtrDestroy
+@ cdecl -arch=win64 ?__ExceptionPtrDestroy@@YAXPEAX@Z(ptr) __ExceptionPtrDestroy
 @ cdecl -arch=win32 ?__ExceptionPtrRethrow@@YAXPBX@Z(ptr) msvcr120.?__ExceptionPtrRethrow@@YAXPBX@Z
 @ cdecl -arch=win64 ?__ExceptionPtrRethrow@@YAXPEBX@Z(ptr) msvcr120.?__ExceptionPtrRethrow@@YAXPEBX@Z
 @ stub -arch=win32 ?__ExceptionPtrSwap@@YAXPAX0@Z
@@ -1757,7 +1757,7 @@
 @ cdecl -arch=win64 ?clear@ios_base@std@@QEAAXH@Z(ptr long) ios_base_clear
 @ cdecl -arch=win64 ?clear@ios_base@std@@QEAAXH_N@Z(ptr long long) ios_base_clear_reraise
 @ cdecl -arch=win64 ?clear@ios_base@std@@QEAAXI@Z(ptr long) ios_base_clear_unsigned
-@ extern ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A clog
+@ extern ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A MSVCP_clog
 @ cdecl -arch=arm ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QAAAAV12@ABV12@@Z(ptr ptr) basic_ios_char_copyfmt
 @ thiscall -arch=i386 ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEAAV12@ABV12@@Z(ptr ptr) basic_ios_char_copyfmt
 @ cdecl -arch=win64 ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAAEAV12@AEBV12@@Z(ptr ptr) basic_ios_char_copyfmt
@@ -3695,7 +3695,7 @@
 @ cdecl _Read_dir(ptr ptr ptr) tr2_sys__Read_dir_wchar
 @ cdecl _Remove_dir(wstr) tr2_sys__Remove_dir_wchar
 @ cdecl _Rename(wstr wstr) tr2_sys__Rename_wchar
-@ stub _Resize
+@ cdecl _Resize(wstr int64)
 @ cdecl _Set_last_write_time(wstr int64)
 @ stub _Sinh
 @ extern _Snan _Snan
@@ -3715,7 +3715,7 @@
 @ cdecl -ret64 _Stoullx(ptr ptr long ptr) _Stoullx
 @ cdecl _Stoulx(ptr ptr long ptr) _Stoulx
 @ cdecl _Strcoll(ptr ptr ptr ptr ptr) _Strcoll
-@ stub _Strxfrm
+@ cdecl _Strxfrm(ptr ptr ptr ptr ptr)
 @ cdecl _Symlink(wstr wstr) tr2_sys__Symlink_wchar
 @ stub _Symlink_get
 @ cdecl _Temp_get(ptr)

@@ -28,6 +28,7 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "wine/server.h"
+#include "wine/asm.h"
 
 #define MAX_NT_PATH_LENGTH 277
 
@@ -167,6 +168,8 @@ extern NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_S
                                            UINT disposition ) DECLSPEC_HIDDEN;
 
 /* virtual memory */
+extern NTSTATUS virtual_alloc_aligned( PVOID *ret, ULONG zero_bits, SIZE_T *size_ptr,
+                                       ULONG type, ULONG protect, ULONG alignment ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG zero_bits, SIZE_T commit_size,
                                      const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG protect,
                                      pe_image_info_t *image_info ) DECLSPEC_HIDDEN;
@@ -221,10 +224,10 @@ extern enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRIN
 
 struct debug_info
 {
-    char *str_pos;       /* current position in strings buffer */
-    char *out_pos;       /* current position in output buffer */
-    char  strings[1024]; /* buffer for temporary strings */
-    char  output[1024];  /* current output line */
+    unsigned int str_pos;       /* current position in strings buffer */
+    unsigned int out_pos;       /* current position in output buffer */
+    char         strings[1024]; /* buffer for temporary strings */
+    char         output[1024];  /* current output line */
 };
 
 /* thread private data, stored in NtCurrentTeb()->GdiTebBatch */
@@ -246,6 +249,13 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
     return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
 }
 
+static inline int get_unix_exit_code( NTSTATUS status )
+{
+    /* prevent a nonzero exit code to end up truncated to zero in unix */
+    if (status && !(status & 0xff)) return 1;
+    return status;
+}
+
 extern mode_t FILE_umask DECLSPEC_HIDDEN;
 extern HANDLE keyed_event DECLSPEC_HIDDEN;
 extern SYSTEM_CPU_INFORMATION cpu_info DECLSPEC_HIDDEN;
@@ -257,4 +267,7 @@ extern SYSTEM_CPU_INFORMATION cpu_info DECLSPEC_HIDDEN;
 NTSTATUS WINAPI RtlHashUnicodeString(PCUNICODE_STRING,BOOLEAN,ULONG,ULONG*);
 void     WINAPI LdrInitializeThunk(CONTEXT*,void**,ULONG_PTR,ULONG_PTR);
 
+/* string functions */
+int __cdecl NTDLL_tolower( int c );
+int __cdecl _stricmp( LPCSTR str1, LPCSTR str2 );
 #endif

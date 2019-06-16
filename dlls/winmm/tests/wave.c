@@ -665,8 +665,7 @@ static void wave_out_test_deviceOut(int device, double duration, int headers, in
        (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
        "waveOutOpen(%s): format=%dx%2dx%d flags=%x(%s) rc=%s\n",
        dev_name(device),pwfx->nSamplesPerSec,pwfx->wBitsPerSample,
-       pwfx->nChannels,CALLBACK_EVENT|flags,
-       wave_open_flags(CALLBACK_EVENT|flags),wave_out_error(rc));
+       pwfx->nChannels,flags,wave_open_flags(flags),wave_out_error(rc));
     if ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
        (flags & WAVE_FORMAT_DIRECT) && (pcaps->dwFormats & format))
         trace(" Reason: The device lists this format as supported in its "

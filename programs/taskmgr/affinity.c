@@ -5,6 +5,7 @@
  *
  *  Copyright (C) 1999 - 2001  Brian Palmer  <brianp@reactos.org>
  *  Copyright (C) 2008  Vladimir Pankratov
+ *  Copyright (C) 2019  Isira Seneviratne
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,7 +29,6 @@
 #include <commctrl.h>
 #include <winnt.h>
 
-#include "wine/unicode.h"
 #include "taskmgr.h"
 #include "perfdata.h"
 
@@ -42,6 +42,7 @@ AffinityDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     DWORD_PTR dwProcessAffinityMask = 0;
     DWORD_PTR dwSystemAffinityMask = 0;
     WCHAR     wstrErrorText[256];
+    int       i;
 
     switch (message) {
     case WM_INITDIALOG:
@@ -60,140 +61,18 @@ AffinityDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         /*
          * Enable a checkbox for each processor present in the system
          */
-        if (dwSystemAffinityMask & 0x00000001)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU0), TRUE);
-        if (dwSystemAffinityMask & 0x00000002)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU1), TRUE);
-        if (dwSystemAffinityMask & 0x00000004)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU2), TRUE);
-        if (dwSystemAffinityMask & 0x00000008)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU3), TRUE);
-        if (dwSystemAffinityMask & 0x00000010)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU4), TRUE);
-        if (dwSystemAffinityMask & 0x00000020)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU5), TRUE);
-        if (dwSystemAffinityMask & 0x00000040)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU6), TRUE);
-        if (dwSystemAffinityMask & 0x00000080)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU7), TRUE);
-        if (dwSystemAffinityMask & 0x00000100)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU8), TRUE);
-        if (dwSystemAffinityMask & 0x00000200)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU9), TRUE);
-        if (dwSystemAffinityMask & 0x00000400)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU10), TRUE);
-        if (dwSystemAffinityMask & 0x00000800)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU11), TRUE);
-        if (dwSystemAffinityMask & 0x00001000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU12), TRUE);
-        if (dwSystemAffinityMask & 0x00002000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU13), TRUE);
-        if (dwSystemAffinityMask & 0x00004000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU14), TRUE);
-        if (dwSystemAffinityMask & 0x00008000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU15), TRUE);
-        if (dwSystemAffinityMask & 0x00010000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU16), TRUE);
-        if (dwSystemAffinityMask & 0x00020000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU17), TRUE);
-        if (dwSystemAffinityMask & 0x00040000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU18), TRUE);
-        if (dwSystemAffinityMask & 0x00080000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU19), TRUE);
-        if (dwSystemAffinityMask & 0x00100000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU20), TRUE);
-        if (dwSystemAffinityMask & 0x00200000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU21), TRUE);
-        if (dwSystemAffinityMask & 0x00400000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU22), TRUE);
-        if (dwSystemAffinityMask & 0x00800000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU23), TRUE);
-        if (dwSystemAffinityMask & 0x01000000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU24), TRUE);
-        if (dwSystemAffinityMask & 0x02000000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU25), TRUE);
-        if (dwSystemAffinityMask & 0x04000000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU26), TRUE);
-        if (dwSystemAffinityMask & 0x08000000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU27), TRUE);
-        if (dwSystemAffinityMask & 0x10000000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU28), TRUE);
-        if (dwSystemAffinityMask & 0x20000000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU29), TRUE);
-        if (dwSystemAffinityMask & 0x40000000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU30), TRUE);
-        if (dwSystemAffinityMask & 0x80000000)
-            EnableWindow(GetDlgItem(hDlg, IDC_CPU31), TRUE);
+        for (i = 0; i < 32; i++)
+            if (dwSystemAffinityMask & (1 << i))
+                EnableWindow(GetDlgItem(hDlg, IDC_CPU0 + i), TRUE);
 
 
         /*
          * Check each checkbox that the current process
          * has affinity with
          */
-        if (dwProcessAffinityMask & 0x00000001)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU0), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00000002)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU1), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00000004)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU2), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00000008)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU3), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00000010)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU4), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00000020)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU5), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00000040)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU6), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00000080)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU7), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00000100)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU8), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00000200)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU9), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00000400)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU10), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00000800)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU11), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00001000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU12), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00002000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU13), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00004000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU14), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00008000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU15), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00010000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU16), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00020000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU17), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00040000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU18), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00080000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU19), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00100000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU20), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00200000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU21), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00400000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU22), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x00800000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU23), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x01000000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU24), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x02000000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU25), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x04000000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU26), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x08000000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU27), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x10000000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU28), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x20000000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU29), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x40000000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU30), BM_SETCHECK, BST_CHECKED, 0);
-        if (dwProcessAffinityMask & 0x80000000)
-            SendMessageW(GetDlgItem(hDlg, IDC_CPU31), BM_SETCHECK, BST_CHECKED, 0);
+        for (i = 0; i < 32; i++)
+            if (dwProcessAffinityMask & (1 << i))
+                SendMessageW(GetDlgItem(hDlg, IDC_CPU0 + i), BM_SETCHECK, BST_CHECKED, 0);
 
         return TRUE;
 
@@ -217,70 +96,9 @@ AffinityDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
              * First we have to create a mask out of each
              * checkbox that the user checked.
              */
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU0), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00000001;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU1), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00000002;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU2), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00000004;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU3), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00000008;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU4), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00000010;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU5), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00000020;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU6), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00000040;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU7), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00000080;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU8), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00000100;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU9), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00000200;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU10), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00000400;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU11), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00000800;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU12), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00001000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU13), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00002000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU14), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00004000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU15), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00008000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU16), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00010000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU17), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00020000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU18), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00040000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU19), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00080000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU20), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00100000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU21), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00200000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU22), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00400000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU23), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x00800000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU24), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x01000000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU25), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x02000000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU26), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x04000000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU27), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x08000000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU28), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x10000000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU29), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x20000000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU30), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x40000000;
-            if (SendMessageW(GetDlgItem(hDlg, IDC_CPU31), BM_GETCHECK, 0, 0))
-                dwProcessAffinityMask |= 0x80000000;
+            for (i = 0; i < 32; i++)
+                if (SendMessageW(GetDlgItem(hDlg, IDC_CPU0 + i), BM_GETCHECK, 0, 0))
+                    dwProcessAffinityMask |= (1 << i);
 
             /*
              * Make sure they are giving the process affinity

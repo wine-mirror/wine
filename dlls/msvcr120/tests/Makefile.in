@@ -1,5 +1,4 @@
 TESTDLL   = msvcr120.dll
-APPMODE   = -mno-cygwin
 
 C_SRCS = \
 	msvcr120.c

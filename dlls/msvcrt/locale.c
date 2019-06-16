@@ -97,7 +97,7 @@ static void remap_synonym(char *name)
   unsigned int i;
   for (i = 0; i < ARRAY_SIZE(_country_synonyms); i += 2)
   {
-    if (!strcasecmp(_country_synonyms[i],name))
+    if (!MSVCRT__stricmp(_country_synonyms[i],name))
     {
       TRACE(":Mapping synonym %s to %s\n",name,_country_synonyms[i+1]);
       strcpy(name, _country_synonyms[i+1]);
@@ -140,9 +140,9 @@ static int compare_info(LCID lcid, DWORD flags, char* buff, const char* cmp, BOO
   /* Partial matches are only allowed on language/country names */
   len = strlen(cmp);
   if(exact || len<=3)
-    return !strcasecmp(cmp, buff);
+    return !MSVCRT__stricmp(cmp, buff);
   else
-    return !strncasecmp(cmp, buff, len);
+    return !MSVCRT__strnicmp(cmp, buff, len);
 }
 
 static BOOL CALLBACK
@@ -264,7 +264,7 @@ LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *s
     if(!search.search_country[0] && !search.search_codepage[0])
         remap_synonym(search.search_language);
 
-    if(!strcasecmp(search.search_country, "China"))
+    if(!MSVCRT__stricmp(search.search_country, "China"))
         strcpy(search.search_country, "People's Republic of China");
 
     EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
@@ -291,10 +291,10 @@ LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *s
                 memcpy(search.found_codepage,search.search_codepage,MAX_ELEM_LEN);
             else {
                 /* Special codepage values: OEM & ANSI */
-                if (!strcasecmp(search.search_codepage,"OCP")) {
+                if (!MSVCRT__stricmp(search.search_codepage,"OCP")) {
                     GetLocaleInfoA(lcid, LOCALE_IDEFAULTCODEPAGE,
                             search.found_codepage, MAX_ELEM_LEN);
-                } else if (!strcasecmp(search.search_codepage,"ACP")) {
+                } else if (!MSVCRT__stricmp(search.search_codepage,"ACP")) {
                     GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE,
                             search.found_codepage, MAX_ELEM_LEN);
                 } else
@@ -2069,3 +2069,30 @@ BOOL msvcrt_init_locale(void)
     _setmbcp(_MB_CP_ANSI);
     return TRUE;
 }
+
+#if _MSVCR_VER >= 120
+/*********************************************************************
+ *      wctrans (MSVCR120.@)
+ */
+MSVCRT_wctrans_t CDECL MSVCR120_wctrans(const char *property)
+{
+    static const char str_tolower[] = "tolower";
+    static const char str_toupper[] = "toupper";
+
+    if(!strcmp(property, str_tolower))
+        return 2;
+    if(!strcmp(property, str_toupper))
+        return 1;
+    return 0;
+}
+
+/*********************************************************************
+ *      towctrans (MSVCR120.@)
+ */
+MSVCRT_wint_t CDECL MSVCR120_towctrans(MSVCRT_wint_t c, MSVCRT_wctrans_t category)
+{
+    if(category == 1)
+        return MSVCRT__towupper_l(c, NULL);
+    return MSVCRT__towlower_l(c, NULL);
+}
+#endif

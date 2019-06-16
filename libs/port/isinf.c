@@ -21,7 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
-#ifndef HAVE_ISINF
+#if !defined(HAVE_ISINF) && !defined(isinf)
 
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>
@@ -29,14 +29,6 @@
 int isinf(double x)
 {
   return (!(finite(x) || isnand(x)));
-}
-
-#elif defined(HAVE_FLOAT_H) && defined(HAVE__ISNAN) && defined(HAVE__FINITE)
-#include <float.h>
-
-int isinf(double x)
-{
-  return (!(_finite(x) || _isnan(x)));
 }
 
 #else

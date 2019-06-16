@@ -1,6 +1,8 @@
 MODULE    = hnetcfg.dll
 IMPORTS   = oleaut32 ole32 advapi32 mpr uuid
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	apps.c \
 	hnetcfg.c \

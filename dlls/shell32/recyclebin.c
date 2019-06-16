@@ -431,8 +431,7 @@ static HRESULT WINAPI RecycleBin_EnumObjects(IShellFolder2 *iface, HWND hwnd, SH
     return S_OK;
 
 failed:
-    if (list)
-        IEnumIDList_Release(&list->IEnumIDList_iface);
+    IEnumIDList_Release(&list->IEnumIDList_iface);
     for (; i<pidls_count; i++)
         ILFree(pidls[i]);
     SHFree(pidls);

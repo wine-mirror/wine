@@ -51,6 +51,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
+static const char builtin_signature[] = "Wine builtin DLL";
 static const char fakedll_signature[] = "Wine placeholder DLL";
 
 static const unsigned int file_alignment = 512;
@@ -189,16 +190,61 @@ failed:
     return FALSE;
 }
 
+static int is_valid_ptr( const void *data, SIZE_T size, const void *ptr, SIZE_T ptr_size )
+{
+    if (ptr < data) return 0;
+    if ((char *)ptr - (char *)data >= size) return 0;
+    return (size - ((char *)ptr - (char *)data) >= ptr_size);
+}
+
+/* extract the 16-bit NE dll from a PE builtin */
+static void extract_16bit_image( IMAGE_NT_HEADERS *nt, void **data, SIZE_T *size )
+{
+    DWORD exp_size, *size_ptr;
+    IMAGE_DOS_HEADER *dos;
+    IMAGE_EXPORT_DIRECTORY *exports;
+    IMAGE_SECTION_HEADER *section = NULL;
+    WORD *ordinals;
+    DWORD *names, *functions;
+    int i;
+
+    exports = RtlImageDirectoryEntryToData( *data, FALSE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
+    if (!is_valid_ptr( *data, *size, exports, exp_size )) return;
+    ordinals = RtlImageRvaToVa( nt, *data, exports->AddressOfNameOrdinals, &section );
+    names = RtlImageRvaToVa( nt, *data, exports->AddressOfNames, &section );
+    functions = RtlImageRvaToVa( nt, *data, exports->AddressOfFunctions, &section );
+    if (!is_valid_ptr( *data, *size, ordinals, exports->NumberOfNames * sizeof(*ordinals) )) return;
+    if (!is_valid_ptr( *data, *size, names, exports->NumberOfNames * sizeof(*names) )) return;
+
+    for (i = 0; i < exports->NumberOfNames; i++)
+    {
+        char *ename = RtlImageRvaToVa( nt, *data, names[i], &section );
+        if (strcmp( ename, "__wine_spec_dos_header" )) continue;
+        if (ordinals[i] >= exports->NumberOfFunctions) return;
+        if (!is_valid_ptr( *data, *size, functions, sizeof(*functions) )) return;
+        if (!functions[ordinals[i]]) return;
+        dos = RtlImageRvaToVa( nt, *data, functions[ordinals[i]], NULL );
+        if (!is_valid_ptr( *data, *size, dos, sizeof(*dos) )) return;
+        if (dos->e_magic != IMAGE_DOS_SIGNATURE) return;
+        size_ptr = (DWORD *)dos->e_res2;
+        *size = min( *size_ptr, *size - ((const char *)dos - (const char *)*data) );
+        *size_ptr = 0;
+        *data = dos;
+        break;
+    }
+}
+
 /* read in the contents of a file into the global file buffer */
 /* return 1 on success, 0 on nonexistent file, -1 on other error */
-static int read_file( const char *name, void **data, SIZE_T *size )
+static int read_file( const char *name, void **data, SIZE_T *size, BOOL expect_builtin )
 {
     struct stat st;
     int fd, ret = -1;
     size_t header_size;
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
-    const size_t min_size = sizeof(*dos) + sizeof(fakedll_signature) +
+    const char *signature = expect_builtin ? builtin_signature : fakedll_signature;
+    const size_t min_size = sizeof(*dos) + 32 +
         FIELD_OFFSET( IMAGE_NT_HEADERS, OptionalHeader.MajorLinkerVersion );
 
     if ((fd = open( name, O_RDONLY | O_BINARY )) == -1) return 0;
@@ -220,8 +266,8 @@ static int read_file( const char *name, void **data, SIZE_T *size )
     if (pread( fd, file_buffer, header_size, 0 ) != header_size) goto done;
     dos = file_buffer;
     if (dos->e_magic != IMAGE_DOS_SIGNATURE) goto done;
-    if (dos->e_lfanew < sizeof(fakedll_signature)) goto done;
-    if (memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) goto done;
+    if (dos->e_lfanew < strlen(signature) + 1) goto done;
+    if (memcmp( dos + 1, signature, strlen(signature) + 1 )) goto done;
     if (dos->e_lfanew + FIELD_OFFSET(IMAGE_NT_HEADERS,OptionalHeader.MajorLinkerVersion) > header_size)
         goto done;
     nt = (IMAGE_NT_HEADERS *)((char *)file_buffer + dos->e_lfanew);
@@ -236,6 +282,8 @@ static int read_file( const char *name, void **data, SIZE_T *size )
                st.st_size - header_size, header_size ) == st.st_size - header_size)
     {
         *data = file_buffer;
+        if (strlen(name) > 2 && !strcmp( name + strlen(name) - 2, "16" ))
+            extract_16bit_image( nt, data, size );
         ret = 1;
     }
 done:
@@ -354,14 +402,15 @@ static BOOL is_fake_dll( HANDLE h )
 {
     IMAGE_DOS_HEADER *dos;
     DWORD size;
-    BYTE buffer[sizeof(*dos) + sizeof(fakedll_signature)];
+    BYTE buffer[sizeof(*dos) + 32];
 
     if (!ReadFile( h, buffer, sizeof(buffer), &size, NULL ) || size != sizeof(buffer))
         return FALSE;
     dos = (IMAGE_DOS_HEADER *)buffer;
     if (dos->e_magic != IMAGE_DOS_SIGNATURE) return FALSE;
     if (dos->e_lfanew < size) return FALSE;
-    return !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) );
+    return (!memcmp( dos + 1, builtin_signature, sizeof(builtin_signature) ) ||
+            !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) ));
 }
 
 /* create directories leading to a given file */
@@ -417,33 +466,39 @@ static void *load_fake_dll( const WCHAR *name, SIZE_T *size )
 
     if (build_dir)
     {
-        strcpy( file + pos + len + 1, ".fake" );
-
         /* try as a dll */
         ptr = file + pos;
         namelen = len + 1;
+        file[pos + len + 1] = 0;
         if (namelen > 4 && !memcmp( ptr + namelen - 4, ".dll", 4 )) namelen -= 4;
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/dlls", sizeof("/dlls") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        if ((res = read_file( ptr, &data, size ))) goto done;
+        if ((res = read_file( ptr, &data, size, TRUE ))) goto done;
+        strcpy( file + pos + len + 1, ".fake" );
+        if ((res = read_file( ptr, &data, size, FALSE ))) goto done;
 
         /* now as a program */
         ptr = file + pos;
         namelen = len + 1;
+        file[pos + len + 1] = 0;
         if (namelen > 4 && !memcmp( ptr + namelen - 4, ".exe", 4 )) namelen -= 4;
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/programs", sizeof("/programs") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        if ((res = read_file( ptr, &data, size ))) goto done;
+        if ((res = read_file( ptr, &data, size, TRUE ))) goto done;
+        strcpy( file + pos + len + 1, ".fake" );
+        if ((res = read_file( ptr, &data, size, FALSE ))) goto done;
     }
 
     file[pos + len + 1] = 0;
     for (i = 0; (path = wine_dll_enum_load_path( i )); i++)
     {
+        ptr = prepend( file + pos, path, strlen(path) );
+        if ((res = read_file( ptr, &data, size, TRUE ))) break;
         ptr = prepend( file + pos, "/fakedlls", sizeof("/fakedlls") - 1 );
         ptr = prepend( ptr, path, strlen(path) );
-        if ((res = read_file( ptr, &data, size ))) break;
+        if ((res = read_file( ptr, &data, size, FALSE ))) break;
     }
 
 done:
@@ -842,7 +897,7 @@ static void register_fake_dll( const WCHAR *name, const void *data, size_t size 
 }
 
 /* copy a fake dll file to the dest directory */
-static void install_fake_dll( WCHAR *dest, char *file, const char *ext )
+static int install_fake_dll( WCHAR *dest, char *file, const char *ext, BOOL expect_builtin )
 {
     int ret;
     SIZE_T size;
@@ -852,8 +907,8 @@ static void install_fake_dll( WCHAR *dest, char *file, const char *ext )
     char *name = strrchr( file, '/' ) + 1;
     char *end = name + strlen(name);
 
-    if (ext) strcpy( end, ext );
-    if (!(ret = read_file( file, &data, &size ))) return;
+    strcpy( end, ext );
+    if (!(ret = read_file( file, &data, &size, expect_builtin ))) return 0;
 
     if (end > name + 2 && !strncmp( end - 2, "16", 2 )) end -= 2;  /* remove "16" suffix */
     dll_name_AtoW( destname, name, end - name );
@@ -875,10 +930,11 @@ static void install_fake_dll( WCHAR *dest, char *file, const char *ext )
         }
     }
     *destname = 0;  /* restore it for next file */
+    return ret;
 }
 
 /* find and install all fake dlls in a given lib directory */
-static void install_lib_dir( WCHAR *dest, char *file, const char *default_ext )
+static void install_lib_dir( WCHAR *dest, char *file, const char *default_ext, BOOL expect_builtin )
 {
     DIR *dir;
     struct dirent *de;
@@ -898,9 +954,10 @@ static void install_lib_dir( WCHAR *dest, char *file, const char *default_ext )
             strcat( name, "/" );
             strcat( name, de->d_name );
             if (!strchr( de->d_name, '.' )) strcat( name, default_ext );
-            install_fake_dll( dest, file, ".fake" );
+            if (!install_fake_dll( dest, file, "", expect_builtin ))
+                install_fake_dll( dest, file, ".fake", FALSE );
         }
-        else install_fake_dll( dest, file, NULL );
+        else install_fake_dll( dest, file, "", expect_builtin );
     }
     closedir( dir );
 }
@@ -931,16 +988,18 @@ static BOOL create_wildcard_dlls( const WCHAR *dirname )
     {
         strcpy( file, build_dir );
         strcat( file, "/dlls" );
-        install_lib_dir( dest, file, ".dll" );
+        install_lib_dir( dest, file, ".dll", TRUE );
         strcpy( file, build_dir );
         strcat( file, "/programs" );
-        install_lib_dir( dest, file, ".exe" );
+        install_lib_dir( dest, file, ".exe", TRUE );
     }
     for (i = 0; (path = wine_dll_enum_load_path( i )); i++)
     {
         strcpy( file, path );
+        install_lib_dir( dest, file, NULL, TRUE );
+        strcpy( file, path );
         strcat( file, "/fakedlls" );
-        install_lib_dir( dest, file, NULL );
+        install_lib_dir( dest, file, NULL, FALSE );
     }
     HeapFree( GetProcessHeap(), 0, file );
     HeapFree( GetProcessHeap(), 0, dest );

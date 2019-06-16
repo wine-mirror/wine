@@ -46,23 +46,32 @@ static inline struct d3d_device *device_from_immediate_ID3D11DeviceContext1(ID3D
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_QueryInterface(ID3D11DeviceContext1 *iface,
-        REFIID riid, void **out)
+        REFIID iid, void **out)
 {
-    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
 
-    if (IsEqualGUID(riid, &IID_ID3D11DeviceContext1)
-            || IsEqualGUID(riid, &IID_ID3D11DeviceContext)
-            || IsEqualGUID(riid, &IID_ID3D11DeviceChild)
-            || IsEqualGUID(riid, &IID_IUnknown))
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID3D11DeviceContext1)
+            || IsEqualGUID(iid, &IID_ID3D11DeviceContext)
+            || IsEqualGUID(iid, &IID_ID3D11DeviceChild)
+            || IsEqualGUID(iid, &IID_IUnknown))
     {
-        ID3D11DeviceContext1_AddRef(iface);
-        *out = iface;
-        return S_OK;
+        *out = &context->ID3D11DeviceContext1_iface;
+    }
+    else if (IsEqualGUID(iid, &IID_ID3D11Multithread))
+    {
+        *out = &context->ID3D11Multithread_iface;
+    }
+    else
+    {
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        *out = NULL;
+        return E_NOINTERFACE;
     }
 
-    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
-    *out = NULL;
-    return E_NOINTERFACE;
+    ID3D11DeviceContext1_AddRef(iface);
+    return S_OK;
 }
 
 static ULONG STDMETHODCALLTYPE d3d11_immediate_context_AddRef(ID3D11DeviceContext1 *iface)
@@ -2061,6 +2070,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetScissorRects(ID3D11De
     if (!rect_count)
         return;
 
+    actual_count = *rect_count;
+
     wined3d_mutex_lock();
     wined3d_device_get_scissor_rects(device->wined3d_device, &actual_count, rects);
     wined3d_mutex_unlock();
@@ -2778,9 +2789,85 @@ static const struct ID3D11DeviceContext1Vtbl d3d11_immediate_context_vtbl =
     d3d11_immediate_context_DiscardView1,
 };
 
+/* ID3D11Multithread methods */
+
+static inline struct d3d11_immediate_context *impl_from_ID3D11Multithread(ID3D11Multithread *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d11_immediate_context, ID3D11Multithread_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_multithread_QueryInterface(ID3D11Multithread *iface,
+        REFIID iid, void **out)
+{
+    struct d3d11_immediate_context *context = impl_from_ID3D11Multithread(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    return d3d11_immediate_context_QueryInterface(&context->ID3D11DeviceContext1_iface, iid, out);
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_multithread_AddRef(ID3D11Multithread *iface)
+{
+    struct d3d11_immediate_context *context = impl_from_ID3D11Multithread(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d3d11_immediate_context_AddRef(&context->ID3D11DeviceContext1_iface);
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_multithread_Release(ID3D11Multithread *iface)
+{
+    struct d3d11_immediate_context *context = impl_from_ID3D11Multithread(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d3d11_immediate_context_Release(&context->ID3D11DeviceContext1_iface);
+}
+
+static void STDMETHODCALLTYPE d3d11_multithread_Enter(ID3D11Multithread *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_lock();
+}
+
+static void STDMETHODCALLTYPE d3d11_multithread_Leave(ID3D11Multithread *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_unlock();
+}
+
+static BOOL STDMETHODCALLTYPE d3d11_multithread_SetMultithreadProtected(
+        ID3D11Multithread *iface, BOOL enable)
+{
+    FIXME("iface %p, enable %#x stub!\n", iface, enable);
+
+    return TRUE;
+}
+
+static BOOL STDMETHODCALLTYPE d3d11_multithread_GetMultithreadProtected(ID3D11Multithread *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return TRUE;
+}
+
+static const struct ID3D11MultithreadVtbl d3d11_multithread_vtbl =
+{
+    d3d11_multithread_QueryInterface,
+    d3d11_multithread_AddRef,
+    d3d11_multithread_Release,
+    d3d11_multithread_Enter,
+    d3d11_multithread_Leave,
+    d3d11_multithread_SetMultithreadProtected,
+    d3d11_multithread_GetMultithreadProtected,
+};
+
 static void d3d11_immediate_context_init(struct d3d11_immediate_context *context, struct d3d_device *device)
 {
     context->ID3D11DeviceContext1_iface.lpVtbl = &d3d11_immediate_context_vtbl;
+    context->ID3D11Multithread_iface.lpVtbl = &d3d11_multithread_vtbl;
     context->refcount = 1;
 
     ID3D11Device2_AddRef(&device->ID3D11Device2_iface);
@@ -2795,10 +2882,10 @@ static void d3d11_immediate_context_destroy(struct d3d11_immediate_context *cont
 
 /* ID3D11Device methods */
 
-static HRESULT STDMETHODCALLTYPE d3d11_device_QueryInterface(ID3D11Device2 *iface, REFIID riid, void **out)
+static HRESULT STDMETHODCALLTYPE d3d11_device_QueryInterface(ID3D11Device2 *iface, REFIID iid, void **out)
 {
     struct d3d_device *device = impl_from_ID3D11Device2(iface);
-    return IUnknown_QueryInterface(device->outer_unk, riid, out);
+    return IUnknown_QueryInterface(device->outer_unk, iid, out);
 }
 
 static ULONG STDMETHODCALLTYPE d3d11_device_AddRef(ID3D11Device2 *iface)
@@ -3277,10 +3364,10 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeferredContext(ID3D11Device
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d11_device_OpenSharedResource(ID3D11Device2 *iface, HANDLE resource, REFIID riid,
+static HRESULT STDMETHODCALLTYPE d3d11_device_OpenSharedResource(ID3D11Device2 *iface, HANDLE resource, REFIID iid,
         void **out)
 {
-    FIXME("iface %p, resource %p, riid %s, out %p stub!\n", iface, resource, debugstr_guid(riid), out);
+    FIXME("iface %p, resource %p, iid %s, out %p stub!\n", iface, resource, debugstr_guid(iid), out);
 
     return E_NOTIMPL;
 }
@@ -3291,6 +3378,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
     struct d3d_device *device = impl_from_ID3D11Device2(iface);
     struct wined3d_device_creation_parameters params;
     enum wined3d_format_id wined3d_format;
+    D3D_FEATURE_LEVEL feature_level;
     struct wined3d *wined3d;
     unsigned int i;
 
@@ -3302,6 +3390,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
     }
     flag_mapping[] =
     {
+        {WINED3D_RTYPE_TEXTURE_1D, WINED3D_BIND_SHADER_RESOURCE, D3D11_FORMAT_SUPPORT_TEXTURE1D},
         {WINED3D_RTYPE_TEXTURE_2D, WINED3D_BIND_SHADER_RESOURCE, D3D11_FORMAT_SUPPORT_TEXTURE2D},
         {WINED3D_RTYPE_TEXTURE_3D, WINED3D_BIND_SHADER_RESOURCE, D3D11_FORMAT_SUPPORT_TEXTURE3D},
         {WINED3D_RTYPE_NONE,       WINED3D_BIND_RENDER_TARGET,   D3D11_FORMAT_SUPPORT_RENDER_TARGET},
@@ -3322,6 +3411,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
     *format_support = 0;
 
     wined3d_mutex_lock();
+    feature_level = device->feature_level;
     wined3d = wined3d_device_get_wined3d(device->wined3d_device);
     wined3d_device_get_creation_parameters(device->wined3d_device, &params);
     for (i = 0; i < ARRAY_SIZE(flag_mapping); ++i)
@@ -3340,6 +3430,25 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
         *format_support |= flag_mapping[i].flag;
     }
     wined3d_mutex_unlock();
+
+    if (*format_support & (D3D11_FORMAT_SUPPORT_TEXTURE1D
+            | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D))
+    {
+        *format_support |= D3D11_FORMAT_SUPPORT_SHADER_LOAD;
+        *format_support |= D3D11_FORMAT_SUPPORT_SHADER_SAMPLE;
+
+        if (feature_level >= D3D_FEATURE_LEVEL_10_1)
+            *format_support |= D3D11_FORMAT_SUPPORT_SHADER_GATHER;
+
+        if (*format_support & D3D11_FORMAT_SUPPORT_DEPTH_STENCIL)
+        {
+            if (feature_level >= D3D_FEATURE_LEVEL_10_0)
+                *format_support |= D3D11_FORMAT_SUPPORT_SHADER_SAMPLE_COMPARISON;
+
+            if (feature_level >= D3D_FEATURE_LEVEL_10_1)
+                *format_support |= D3D11_FORMAT_SUPPORT_SHADER_GATHER_COMPARISON;
+        }
+    }
 
     return S_OK;
 }
@@ -3695,18 +3804,18 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeviceContextState(ID3D11Dev
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_OpenSharedResource1(ID3D11Device2 *iface, HANDLE handle,
-        REFIID riid, void **resource)
+        REFIID iid, void **resource)
 {
-    FIXME("iface %p, handle %p, riid %s, resource %p stub!\n", iface, handle, debugstr_guid(riid), resource);
+    FIXME("iface %p, handle %p, iid %s, resource %p stub!\n", iface, handle, debugstr_guid(iid), resource);
 
     return E_NOTIMPL;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_OpenSharedResourceByName(ID3D11Device2 *iface, const WCHAR *name,
-        DWORD access, REFIID riid, void **resource)
+        DWORD access, REFIID iid, void **resource)
 {
-    FIXME("iface %p, name %s, access %#x, riid %s, resource %p stub!\n", iface, debugstr_w(name), access,
-            debugstr_guid(riid), resource);
+    FIXME("iface %p, name %s, access %#x, iid %s, resource %p stub!\n", iface, debugstr_w(name), access,
+            debugstr_guid(iid), resource);
 
     return E_NOTIMPL;
 }
@@ -3888,11 +3997,11 @@ static ULONG STDMETHODCALLTYPE d3d_device_inner_Release(IUnknown *iface)
 
 /* IUnknown methods */
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_QueryInterface(ID3D10Device1 *iface, REFIID riid,
-        void **ppv)
+static HRESULT STDMETHODCALLTYPE d3d10_device_QueryInterface(ID3D10Device1 *iface, REFIID iid,
+        void **out)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    return IUnknown_QueryInterface(device->outer_unk, riid, ppv);
+    return IUnknown_QueryInterface(device->outer_unk, iid, out);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_device_AddRef(ID3D10Device1 *iface)
@@ -5111,6 +5220,8 @@ static void STDMETHODCALLTYPE d3d10_device_RSGetScissorRects(ID3D10Device1 *ifac
     if (!rect_count)
         return;
 
+    actual_count = *rect_count;
+
     wined3d_mutex_lock();
     wined3d_device_get_scissor_rects(device->wined3d_device, &actual_count, rects);
     wined3d_mutex_unlock();
@@ -5944,9 +6055,9 @@ static void STDMETHODCALLTYPE d3d10_multithread_Leave(ID3D10Multithread *iface)
     wined3d_mutex_unlock();
 }
 
-static BOOL STDMETHODCALLTYPE d3d10_multithread_SetMultithreadProtected(ID3D10Multithread *iface, BOOL protect)
+static BOOL STDMETHODCALLTYPE d3d10_multithread_SetMultithreadProtected(ID3D10Multithread *iface, BOOL enable)
 {
-    FIXME("iface %p, protect %#x stub!\n", iface, protect);
+    FIXME("iface %p, enable %#x stub!\n", iface, enable);
 
     return TRUE;
 }
@@ -5977,10 +6088,10 @@ static inline struct d3d_device *device_from_dxgi_device_parent(IWineDXGIDeviceP
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_parent_QueryInterface(IWineDXGIDeviceParent *iface,
-        REFIID riid, void **ppv)
+        REFIID iid, void **out)
 {
     struct d3d_device *device = device_from_dxgi_device_parent(iface);
-    return IUnknown_QueryInterface(device->outer_unk, riid, ppv);
+    return IUnknown_QueryInterface(device->outer_unk, iid, out);
 }
 
 static ULONG STDMETHODCALLTYPE dxgi_device_parent_AddRef(IWineDXGIDeviceParent *iface)
@@ -6105,33 +6216,6 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     return S_OK;
 }
 
-static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent *device_parent,
-        struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **swapchain)
-{
-    struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
-    IWineDXGIDevice *wine_device;
-    HRESULT hr;
-
-    TRACE("device_parent %p, desc %p, swapchain %p.\n", device_parent, desc, swapchain);
-
-    if (FAILED(hr = d3d11_device_QueryInterface(&device->ID3D11Device2_iface,
-            &IID_IWineDXGIDevice, (void **)&wine_device)))
-    {
-        ERR("Device should implement IWineDXGIDevice.\n");
-        return E_FAIL;
-    }
-
-    hr = IWineDXGIDevice_create_swapchain(wine_device, desc, TRUE, swapchain);
-    IWineDXGIDevice_Release(wine_device);
-    if (FAILED(hr))
-    {
-        ERR("Failed to create DXGI swapchain, returning %#x\n", hr);
-        return hr;
-    }
-
-    return S_OK;
-}
-
 static const struct wined3d_device_parent_ops d3d_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
@@ -6139,7 +6223,6 @@ static const struct wined3d_device_parent_ops d3d_wined3d_device_parent_ops =
     device_parent_activate,
     device_parent_texture_sub_resource_created,
     device_parent_create_swapchain_texture,
-    device_parent_create_swapchain,
 };
 
 static int d3d_sampler_state_compare(const void *key, const struct wine_rb_entry *entry)

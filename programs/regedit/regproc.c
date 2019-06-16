@@ -27,7 +27,6 @@
 #include <io.h>
 #include <windows.h>
 #include <commctrl.h>
-#include <wine/unicode.h>
 #include <wine/debug.h>
 #include <wine/heap.h>
 #include "main.h"
@@ -243,7 +242,7 @@ static BOOL convert_hex_to_dword(WCHAR *str, DWORD *dw)
     if (!*str) goto error;
 
     p = str;
-    while (isxdigitW(*p))
+    while (iswxdigit(*p))
     {
         count++;
         p++;
@@ -255,7 +254,7 @@ static BOOL convert_hex_to_dword(WCHAR *str, DWORD *dw)
     if (*p && *p != ';') goto error;
 
     *end = 0;
-    *dw = strtoulW(str, &end, 16);
+    *dw = wcstoul(str, &end, 16);
     return TRUE;
 
 error:
@@ -288,7 +287,7 @@ static BOOL convert_hex_csv_to_hex(struct parser *parser, WCHAR **str)
         WCHAR *end;
         unsigned long wc;
 
-        wc = strtoulW(s, &end, 16);
+        wc = wcstoul(s, &end, 16);
         if (wc > 0xff) return FALSE;
 
         if (s == end && wc == 0)
@@ -350,7 +349,7 @@ static BOOL parse_data_type(struct parser *parser, WCHAR **line)
 
     for (ptr = data_types; ptr->tag; ptr++)
     {
-        if (strncmpW(ptr->tag, *line, ptr->len))
+        if (wcsncmp(ptr->tag, *line, ptr->len))
             continue;
 
         parser->parse_type = ptr->parse_type;
@@ -362,7 +361,7 @@ static BOOL parse_data_type(struct parser *parser, WCHAR **line)
             WCHAR *end;
             DWORD val;
 
-            if (!**line || tolowerW((*line)[1]) == 'x')
+            if (!**line || towlower((*line)[1]) == 'x')
                 return FALSE;
 
             /* "hex(xx):" is special */
@@ -434,13 +433,13 @@ static HKEY parse_key_name(WCHAR *key_name, WCHAR **key_path)
 
     if (!key_name) return 0;
 
-    *key_path = strchrW(key_name, '\\');
+    *key_path = wcschr(key_name, '\\');
     if (*key_path) (*key_path)++;
 
     for (i = 0; i < ARRAY_SIZE(reg_class_keys); i++)
     {
         int len = lstrlenW(reg_class_namesW[i]);
-        if (!strncmpiW(key_name, reg_class_namesW[i], len) &&
+        if (!wcsnicmp(key_name, reg_class_namesW[i], len) &&
            (key_name[len] == 0 || key_name[len] == '\\'))
         {
             return reg_class_keys[i];
@@ -552,13 +551,13 @@ static enum reg_versions parse_file_header(const WCHAR *s)
 
     while (*s == ' ' || *s == '\t') s++;
 
-    if (!strcmpW(s, header_31))
+    if (!lstrcmpW(s, header_31))
         return REG_VERSION_31;
 
-    if (!strcmpW(s, header_40))
+    if (!lstrcmpW(s, header_40))
         return REG_VERSION_40;
 
-    if (!strcmpW(s, header_50))
+    if (!lstrcmpW(s, header_50))
         return REG_VERSION_50;
 
     /* The Windows version accepts registry file headers beginning with "REGEDIT" and ending
@@ -566,7 +565,7 @@ static enum reg_versions parse_file_header(const WCHAR *s)
      * "REGEDIT 4", "REGEDIT9" and "REGEDIT4FOO" are all treated as valid file headers.
      * In all such cases, however, the contents of the registry file are not imported.
      */
-    if (!strncmpW(s, header_31, 7)) /* "REGEDIT" without NUL */
+    if (!wcsncmp(s, header_31, 7)) /* "REGEDIT" without NUL */
         return REG_VERSION_FUZZY;
 
     return REG_VERSION_INVALID;
@@ -618,11 +617,11 @@ static WCHAR *parse_win31_line_state(struct parser *parser, WCHAR *pos)
     if (!(line = get_line(parser->file)))
         return NULL;
 
-    if (strncmpW(line, hkcr, ARRAY_SIZE(hkcr)))
+    if (wcsncmp(line, hkcr, ARRAY_SIZE(hkcr)))
         return line;
 
     /* get key name */
-    while (line[key_end] && !isspaceW(line[key_end])) key_end++;
+    while (line[key_end] && !iswspace(line[key_end])) key_end++;
 
     value = line + key_end;
     while (*value == ' ' || *value == '\t') value++;
@@ -684,7 +683,7 @@ static WCHAR *key_name_state(struct parser *parser, WCHAR *pos)
 {
     WCHAR *p = pos, *key_end;
 
-    if (*p == ' ' || *p == '\t' || !(key_end = strrchrW(p, ']')))
+    if (*p == ' ' || *p == '\t' || !(key_end = wcsrchr(p, ']')))
         goto done;
 
     *key_end = 0;
@@ -761,7 +760,7 @@ static WCHAR *data_start_state(struct parser *parser, WCHAR *pos)
     while (*p == ' ' || *p == '\t') p++;
 
     /* trim trailing whitespace */
-    len = strlenW(p);
+    len = lstrlenW(p);
     while (len > 0 && (p[len - 1] == ' ' || p[len - 1] == '\t')) len--;
     p[len] = 0;
 
@@ -926,7 +925,7 @@ static WCHAR *hex_multiline_state(struct parser *parser, WCHAR *pos)
     while (*line == ' ' || *line == '\t') line++;
     if (!*line || *line == ';') return line;
 
-    if (!isxdigitW(*line)) goto invalid;
+    if (!iswxdigit(*line)) goto invalid;
 
     set_state(parser, HEX_DATA);
     return line;
@@ -1040,11 +1039,11 @@ static WCHAR *get_lineW(FILE *fp)
     while (next)
     {
         static const WCHAR line_endings[] = {'\r','\n',0};
-        WCHAR *p = strpbrkW(line, line_endings);
+        WCHAR *p = wcspbrk(line, line_endings);
         if (!p)
         {
             size_t len, count;
-            len = strlenW(next);
+            len = lstrlenW(next);
             memmove(buf, next, (len + 1) * sizeof(WCHAR));
             if (size - len < 3)
             {
@@ -1217,7 +1216,7 @@ static size_t export_value_name(FILE *fp, WCHAR *name, size_t len, BOOL unicode)
     {
         WCHAR *str = REGPROC_escape_string(name, len, &line_len);
         WCHAR *buf = heap_xalloc((line_len + 4) * sizeof(WCHAR));
-        line_len = sprintfW(buf, quoted_fmt, str);
+        line_len = swprintf(buf, line_len + 4, quoted_fmt, str);
         REGPROC_write_line(fp, buf, unicode);
         heap_free(buf);
         heap_free(str);
@@ -1241,7 +1240,7 @@ static void export_string_data(WCHAR **buf, WCHAR *data, size_t size)
         len = size / sizeof(WCHAR) - 1;
     str = REGPROC_escape_string(data, len, &line_len);
     *buf = heap_xalloc((line_len + 3) * sizeof(WCHAR));
-    sprintfW(*buf, fmt, str);
+    swprintf(*buf, line_len + 3, fmt, str);
     heap_free(str);
 }
 
@@ -1250,7 +1249,7 @@ static void export_dword_data(WCHAR **buf, DWORD *data)
     static const WCHAR fmt[] = {'d','w','o','r','d',':','%','0','8','x',0};
 
     *buf = heap_xalloc(15 * sizeof(WCHAR));
-    sprintfW(*buf, fmt, *data);
+    swprintf(*buf, 15, fmt, *data);
 }
 
 static size_t export_hex_data_type(FILE *fp, DWORD type, BOOL unicode)
@@ -1267,7 +1266,7 @@ static size_t export_hex_data_type(FILE *fp, DWORD type, BOOL unicode)
     else
     {
         WCHAR *buf = heap_xalloc(15 * sizeof(WCHAR));
-        line_len = sprintfW(buf, hexp_fmt, type);
+        line_len = swprintf(buf, 15, hexp_fmt, type);
         REGPROC_write_line(fp, buf, unicode);
         heap_free(buf);
     }
@@ -1296,7 +1295,7 @@ static void export_hex_data(FILE *fp, WCHAR **buf, DWORD type, DWORD line_len,
 
     for (i = 0, pos = 0; i < size; i++)
     {
-        pos += sprintfW(*buf + pos, fmt, ((BYTE *)data)[i]);
+        pos += swprintf(*buf + pos, 3, fmt, ((BYTE *)data)[i]);
         if (i == num_commas) break;
         (*buf)[pos++] = ',';
         (*buf)[pos] = 0;
@@ -1361,7 +1360,7 @@ static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name,
     static const WCHAR fmt[] = {'%','s','\\','%','s',0};
 
     subkey_path = heap_xalloc((path_len + subkey_len + 2) * sizeof(WCHAR));
-    sprintfW(subkey_path, fmt, path, subkey_name);
+    swprintf(subkey_path, path_len + subkey_len + 2, fmt, path, subkey_name);
 
     return subkey_path;
 }
@@ -1372,7 +1371,7 @@ static void export_key_name(FILE *fp, WCHAR *name, BOOL unicode)
     WCHAR *buf;
 
     buf = heap_xalloc((lstrlenW(name) + 7) * sizeof(WCHAR));
-    sprintfW(buf, fmt, name);
+    swprintf(buf, lstrlenW(name) + 7, fmt, name);
     REGPROC_write_line(fp, buf, unicode);
     heap_free(buf);
 }
@@ -1457,7 +1456,7 @@ static FILE *REGPROC_open_export_file(WCHAR *file_name, BOOL unicode)
     FILE *file;
     static const WCHAR hyphen[] = {'-',0};
 
-    if (!strcmpW(file_name, hyphen))
+    if (!lstrcmpW(file_name, hyphen))
     {
         file = stdout;
         _setmode(_fileno(file), _O_BINARY);

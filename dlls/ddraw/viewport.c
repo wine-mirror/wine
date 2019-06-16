@@ -112,6 +112,77 @@ void viewport_activate(struct d3d_viewport *This, BOOL ignore_lights)
     IDirect3DDevice7_SetViewport(&This->active_device->IDirect3DDevice7_iface, &vp);
 }
 
+void viewport_deactivate(struct d3d_viewport *viewport)
+{
+    struct d3d_light *light;
+
+    LIST_FOR_EACH_ENTRY(light, &viewport->light_list, struct d3d_light, entry)
+    {
+        light_deactivate(light);
+    }
+}
+
+void viewport_alloc_active_light_index(struct d3d_light *light)
+{
+    struct d3d_viewport *vp = light->active_viewport;
+    unsigned int i;
+    DWORD map;
+
+    TRACE("vp %p, light %p, index %u, active_lights_count %u.\n",
+            vp, light, light->active_light_index, vp->active_lights_count);
+
+    if (light->active_light_index)
+        return;
+
+    if (vp->active_lights_count >= DDRAW_MAX_ACTIVE_LIGHTS)
+    {
+        struct d3d_light *l;
+
+        LIST_FOR_EACH_ENTRY(l, &vp->light_list, struct d3d_light, entry)
+        {
+            if (l->active_light_index)
+            {
+                WARN("Too many active lights, viewport %p, light %p, deactivating %p.\n", vp, light, l);
+                light_deactivate(l);
+
+                /* Recycle active lights in a FIFO way. */
+                list_remove(&light->entry);
+                list_add_tail(&vp->light_list, &light->entry);
+                break;
+            }
+        }
+    }
+    map = vp->map_lights;
+    assert(vp->active_lights_count < DDRAW_MAX_ACTIVE_LIGHTS && map != ~0u);
+
+    i = 0;
+    while (map & 1)
+    {
+        map >>= 1;
+        ++i;
+    }
+    light->active_light_index = i + 1;
+    ++vp->active_lights_count;
+    vp->map_lights |= 1u << i;
+}
+
+void viewport_free_active_light_index(struct d3d_light *light)
+{
+    struct d3d_viewport *vp = light->active_viewport;
+
+    TRACE("vp %p, light %p, index %u, active_lights_count %u, map_lights %#x.\n",
+            vp, light, light->active_light_index, vp->active_lights_count, vp->map_lights);
+
+    if (!light->active_light_index)
+        return;
+
+    assert(vp->map_lights & (1u << (light->active_light_index - 1)));
+
+    --vp->active_lights_count;
+    vp->map_lights &= ~(1u << (light->active_light_index - 1));
+    light->active_light_index = 0;
+}
+
 /*****************************************************************************
  * _dump_D3DVIEWPORT, _dump_D3DVIEWPORT2
  *
@@ -743,47 +814,29 @@ static HRESULT WINAPI d3d_viewport_Clear(IDirect3DViewport3 *iface,
  *  DDERR_INVALIDPARAMS if there are 8 lights or more
  *
  *****************************************************************************/
-static HRESULT WINAPI d3d_viewport_AddLight(IDirect3DViewport3 *iface, IDirect3DLight *lpDirect3DLight)
+static HRESULT WINAPI d3d_viewport_AddLight(IDirect3DViewport3 *viewport, IDirect3DLight *light)
 {
-    struct d3d_viewport *This = impl_from_IDirect3DViewport3(iface);
-    struct d3d_light *light_impl = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
-    DWORD i = 0;
-    DWORD map = This->map_lights;
+    struct d3d_light *light_impl = unsafe_impl_from_IDirect3DLight(light);
+    struct d3d_viewport *vp = impl_from_IDirect3DViewport3(viewport);
 
-    TRACE("iface %p, light %p.\n", iface, lpDirect3DLight);
+    TRACE("viewport %p, light %p.\n", viewport, light);
 
     wined3d_mutex_lock();
 
-    if (This->num_lights >= 8)
+    if (light_impl->active_viewport)
     {
         wined3d_mutex_unlock();
-        return DDERR_INVALIDPARAMS;
+        WARN("Light %p is active in viewport %p.\n", light_impl, light_impl->active_viewport);
+        return D3DERR_LIGHTHASVIEWPORT;
     }
 
-    /* Find a light number and update both light and viewports objects accordingly */
-    while (map & 1)
-    {
-        map >>= 1;
-        ++i;
-    }
-    light_impl->dwLightIndex = i;
-    This->num_lights++;
-    This->map_lights |= 1<<i;
+    light_impl->active_viewport = vp;
 
     /* Add the light in the 'linked' chain */
-    list_add_head(&This->light_list, &light_impl->entry);
-    IDirect3DLight_AddRef(lpDirect3DLight);
+    list_add_tail(&vp->light_list, &light_impl->entry);
+    IDirect3DLight_AddRef(light);
 
-    /* Attach the light to the viewport */
-    light_impl->active_viewport = This;
-
-    /* If active, activate the light */
-    if (This->active_device && light_impl->light.dwFlags & D3DLIGHT_ACTIVE)
-    {
-        /* Disable the flag so that light_activate actually does its job. */
-        light_impl->light.dwFlags &= ~D3DLIGHT_ACTIVE;
-        light_activate(light_impl);
-    }
+    light_activate(light_impl);
 
     wined3d_mutex_unlock();
 
@@ -823,8 +876,6 @@ static HRESULT WINAPI d3d_viewport_DeleteLight(IDirect3DViewport3 *iface, IDirec
     list_remove(&l->entry);
     l->active_viewport = NULL;
     IDirect3DLight_Release(lpDirect3DLight);
-    --viewport->num_lights;
-    viewport->map_lights &= ~(1 << l->dwLightIndex);
 
     wined3d_mutex_unlock();
 

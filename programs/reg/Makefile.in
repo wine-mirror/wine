@@ -1,7 +1,8 @@
 MODULE    = reg.exe
-APPMODE   = -mconsole -municode -mno-cygwin
 IMPORTS   = advapi32
 DELAYIMPORTS = user32
+
+EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = \
 	export.c \

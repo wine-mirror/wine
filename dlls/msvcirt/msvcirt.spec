@@ -423,7 +423,7 @@
 @ extern ?cin@@3Vistream_withassign@@A cin
 @ thiscall -arch=win32 ?clear@ios@@QAEXH@Z(ptr long) ios_clear
 @ cdecl -arch=win64 ?clear@ios@@QEAAXH@Z(ptr long) ios_clear
-@ extern ?clog@@3Vostream_withassign@@A clog
+@ extern ?clog@@3Vostream_withassign@@A MSVCP_clog
 @ thiscall -arch=win32 ?close@filebuf@@QAEPAV1@XZ(ptr) filebuf_close
 @ cdecl -arch=win64 ?close@filebuf@@QEAAPEAV1@XZ(ptr) filebuf_close
 @ stub -arch=win32 ?close@fstream@@QAEXXZ  # void __thiscall fstream::close(void)

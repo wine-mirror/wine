@@ -737,7 +737,7 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR 
     {
         /* get a "random" unique number and try to create the file */
         HANDLE handle;
-        UINT num = GetTickCount() & 0xffff;
+        UINT num = NtGetTickCount() & 0xffff;
         static UINT last;
 
         /* avoid using the same name twice in a short interval */
@@ -1991,8 +1991,7 @@ BOOL WINAPI NeedCurrentDirectoryForExePathW( LPCWSTR name )
                                      'I','n','E','x','e','P','a','t','h',0};
     WCHAR env_val;
 
-    /* MSDN mentions some 'registry location'. We do not use registry. */
-    FIXME("(%s): partial stub\n", debugstr_w(name));
+    TRACE("(%s)\n", debugstr_w(name));
 
     if (strchrW(name, '\\'))
         return TRUE;

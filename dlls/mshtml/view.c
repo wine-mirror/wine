@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -66,7 +64,7 @@ static void paint_document(HTMLDocumentObj *This)
     EndPaint(This->hwnd, &ps);
 }
 
-static void activate_gecko(NSContainer *This)
+static void activate_gecko(GeckoBrowser *This)
 {
     TRACE("(%p) %p\n", This, This->window);
 
@@ -502,8 +500,8 @@ static HRESULT WINAPI OleDocumentView_SetRect(IOleDocumentView *iface, LPRECT pr
         GetClientRect(This->hwnd, &rect);
         if(!EqualRect(prcView, &rect)) {
             InvalidateRect(This->hwnd, NULL, TRUE);
-            SetWindowPos(This->hwnd, NULL, prcView->left, prcView->top, prcView->right,
-                    prcView->bottom, SWP_NOZORDER | SWP_NOACTIVATE);
+            SetWindowPos(This->hwnd, NULL, prcView->left, prcView->top, prcView->right - prcView->left,
+                    prcView->bottom - prcView->top, SWP_NOZORDER | SWP_NOACTIVATE);
         }
     }
     
@@ -520,6 +518,7 @@ static HRESULT WINAPI OleDocumentView_GetRect(IOleDocumentView *iface, LPRECT pr
         return E_INVALIDARG;
 
     GetClientRect(This->hwnd, prcView);
+    MapWindowPoints(This->hwnd, GetParent(This->hwnd), (POINT*)prcView, 2);
     return S_OK;
 }
 
@@ -633,7 +632,7 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
 
         if(This->hostui) {
             hres = IDocHostUIHandler_ShowUI(This->hostui,
-                    This->usermode == EDITMODE ? DOCHOSTUITYPE_AUTHOR : DOCHOSTUITYPE_BROWSE,
+                    This->nscontainer->usermode == EDITMODE ? DOCHOSTUITYPE_AUTHOR : DOCHOSTUITYPE_BROWSE,
                     &This->basedoc.IOleInPlaceActiveObject_iface, &This->basedoc.IOleCommandTarget_iface,
                     This->frame, This->ip_window);
             if(FAILED(hres))

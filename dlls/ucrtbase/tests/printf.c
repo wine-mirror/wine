@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -65,20 +66,6 @@ DEFINE_EXPECT(invalid_parameter_handler);
 #define UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS           (0x0004)
 #define UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY      (0x0008)
 #define UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS     (0x0010)
-
-static inline float __port_infinity(void)
-{
-    static const unsigned __inf_bytes = 0x7f800000;
-    return *(const float *)&__inf_bytes;
-}
-#define INFINITY __port_infinity()
-
-static inline float __port_nan(void)
-{
-    static const unsigned __nan_bytes = 0x7fc00000;
-    return *(const float *)&__nan_bytes;
-}
-#define NAN __port_nan()
 
 static inline float __port_ind(void)
 {

@@ -147,6 +147,7 @@ static inline char* strupr(char* str) { return _strupr(str); }
 static inline wchar_t* wcsdup(const wchar_t* str) { return _wcsdup(str); }
 static inline int wcsicoll(const wchar_t* str1, const wchar_t* str2) { return _wcsicoll(str1, str2); }
 static inline wchar_t* wcslwr(wchar_t* str) { return _wcslwr(str); }
+static inline int wcsicmp(const wchar_t* s1, const wchar_t* s2) { return _wcsicmp(s1, s2); }
 static inline int wcsnicmp(const wchar_t* str1, const wchar_t* str2, size_t n) { return _wcsnicmp(str1, str2, n); }
 static inline wchar_t* wcsnset(wchar_t* str, wchar_t c, size_t n) { return _wcsnset(str, c, n); }
 static inline wchar_t* wcsrev(wchar_t* str) { return _wcsrev(str); }

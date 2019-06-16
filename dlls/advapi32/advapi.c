@@ -268,6 +268,24 @@ BOOL WINAPI InitiateSystemShutdownW( LPWSTR lpMachineName, LPWSTR lpMessage, DWO
                                       SHTDN_REASON_MAJOR_LEGACY_API );
 }
 
+/***********************************************************************
+ *     InitiateShutdownA [ADVAPI32.@]
+ */
+DWORD WINAPI InitiateShutdownA(char *name, char *message, DWORD seconds, DWORD flags, DWORD reason)
+{
+    FIXME("%s, %s, %d, %d, %d stub\n", debugstr_a(name), debugstr_a(message), seconds, flags, reason);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *     InitiateShutdownW [ADVAPI32.@]
+ */
+DWORD WINAPI InitiateShutdownW(WCHAR *name, WCHAR *message, DWORD seconds, DWORD flags, DWORD reason)
+{
+    FIXME("%s, %s, %d, %d, %d stub\n", debugstr_w(name), debugstr_w(message), seconds, flags, reason);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 BOOL WINAPI LogonUserA( LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
                         DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken )
 {

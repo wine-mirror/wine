@@ -18,6 +18,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef __WINE_STRMBASE_PRIVATE_H
+#define __WINE_STRMBASE_PRIVATE_H
+
+#include <assert.h>
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+#define COBJMACROS
+#include "dshow.h"
+#include "uuids.h"
+#include "wine/debug.h"
+#include "wine/heap.h"
+#include "wine/list.h"
+#include "wine/strmbase.h"
+#include "wine/unicode.h"
+
 /* Quality Control */
 typedef struct QualityControlImpl {
     IQualityControl IQualityControl_iface;
@@ -48,3 +63,11 @@ HRESULT QualityControlRender_WaitFor(QualityControlImpl *This, IMediaSample *sam
 void QualityControlRender_DoQOS(QualityControlImpl *priv);
 void QualityControlRender_BeginRender(QualityControlImpl *This);
 void QualityControlRender_EndRender(QualityControlImpl *This);
+
+HRESULT enum_pins_create(BaseFilter *base, IEnumPins **enum_pins);
+
+HRESULT WINAPI RendererPosPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start);
+HRESULT WINAPI RendererPosPassThru_ResetMediaTime(IUnknown *iface);
+HRESULT WINAPI RendererPosPassThru_EOS(IUnknown *iface);
+
+#endif /* __WINE_STRMBASE_PRIVATE_H */

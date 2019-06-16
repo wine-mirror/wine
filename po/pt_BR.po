@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-01-04 22:18-0200\n"
+"PO-Revision-Date: 2019-06-08 18:19-0300\n"
 "Last-Translator: Roberto Augusto Pungartnik <rpungartnik@gmail.com>\n"
 "Language-Team: Portuguese (Brazil)\n"
 "Language: pt_BR\n"
@@ -69,7 +69,7 @@ msgstr "Informação de Suporte"
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
 #: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
-#: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
+#: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
@@ -84,7 +84,7 @@ msgstr ""
 msgid "Publisher:"
 msgstr "Editor:"
 
-#: appwiz.rc:81 winefile.rc:166
+#: appwiz.rc:81 winefile.rc:165
 msgid "Version:"
 msgstr "Versão:"
 
@@ -153,8 +153,8 @@ msgstr "&Instalar"
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
 #: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:129 winefile.rc:152
-#: winefile.rc:182 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
+#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
 msgstr "Cancelar"
@@ -209,7 +209,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Não especificado"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:106
 msgid "Name"
 msgstr "Nome"
 
@@ -330,7 +330,7 @@ msgstr "minutos"
 msgid "hours"
 msgstr "horas"
 
-#: comctl32.rc:68 winefile.rc:157
+#: comctl32.rc:68 winefile.rc:156
 msgid "Properties for %s"
 msgstr "Propriedades de %s"
 
@@ -469,7 +469,7 @@ msgid "Dri&ves:"
 msgstr "&Unidades:"
 
 #: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
-#: winefile.rc:173
+#: winefile.rc:172
 msgid "&Read Only"
 msgstr "&Apenas leitura"
 
@@ -721,7 +721,7 @@ msgstr "&Propriedades"
 msgid "Print to fi&le"
 msgstr "Para arqui&vo"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:138
+#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "&Nome:"
 
@@ -3003,7 +3003,7 @@ msgstr "Localização"
 msgid "Select a certificate"
 msgstr "Selecione um Certificado"
 
-#: cryptui.rc:181 winefile.rc:102 winhlp32.rc:110 winhlp32.rc:85
+#: cryptui.rc:181 winefile.rc:101 winhlp32.rc:110 winhlp32.rc:85
 msgid "Not yet implemented"
 msgstr "Ainda não implementado"
 
@@ -3475,7 +3475,7 @@ msgstr ""
 msgid "Delete"
 msgstr "Excluir"
 
-#: inetcpl.rc:90 winefile.rc:115
+#: inetcpl.rc:90 winefile.rc:114
 msgid "Security"
 msgstr "Segurança"
 
@@ -3681,7 +3681,7 @@ msgstr "Caractere inválido"
 
 #: jscript.rc:43
 msgid "Unterminated string constant"
-msgstr "String constante não terminada"
+msgstr "Cadeia constante não terminada"
 
 #: jscript.rc:44
 msgid "'return' statement outside of function"
@@ -4171,7 +4171,7 @@ msgstr "Tempo limite do semáforo.\n"
 msgid "Insufficient buffer.\n"
 msgstr "Buffer insuficiente.\n"
 
-#: winerror.mc:483
+#: winerror.mc:483 mferror.mc:109
 msgid "Invalid name.\n"
 msgstr "Nome inválido.\n"
 
@@ -4964,7 +4964,7 @@ msgid "Too many links.\n"
 msgstr "Demasiados links.\n"
 
 #: winerror.mc:1478
-msgid "Newer windows version needed.\n"
+msgid "Newer Windows version needed.\n"
 msgstr "É necessária uma versão de Windows mais recente.\n"
 
 #: winerror.mc:1483
@@ -5743,7 +5743,7 @@ msgstr "Classe inexistente.\n"
 msgid "Class has open windows.\n"
 msgstr "A classe tem janelas abertas.\n"
 
-#: winerror.mc:2463
+#: winerror.mc:2463 mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "Índice inválido.\n"
 
@@ -6826,6 +6826,391 @@ msgstr ""
 msgid "Send Mail"
 msgstr "Enviar E-mail"
 
+#: mferror.mc:249 mferror.mc:256
+msgid "Begin request has already been made.\n"
+msgstr "Requisição inicial já foi feita.\n"
+
+#: mferror.mc:599
+msgid "Sink has not been finalized.\n"
+msgstr "Coletor não foi finalizado.\n"
+
+#: mferror.mc:32
+msgid "Media Foundation platform is not initialized.\n"
+msgstr "Plataforma de Mídias não inicializada.\n"
+
+#: mferror.mc:39
+msgid "Buffer is too small.\n"
+msgstr "Buffer muito pequeno.\n"
+
+#: mferror.mc:46
+msgid "Invalid request.\n"
+msgstr "Requisição inválida.\n"
+
+#: mferror.mc:53
+msgid "Invalid stream number.\n"
+msgstr "Número de segmento inválido.\n"
+
+#: mferror.mc:60
+msgid "Invalid media type.\n"
+msgstr "Tipo de mídia inválido.\n"
+
+#: mferror.mc:67
+msgid "No more input is accepted.\n"
+msgstr "Entradas não são mais aceitas.\n"
+
+#: mferror.mc:74
+msgid "Object is not initialized.\n"
+msgstr "Objeto não inicializado.\n"
+
+#: mferror.mc:81
+msgid "Representation is not supported.\n"
+msgstr "Representação não suportada.\n"
+
+#: mferror.mc:88
+msgid "No more types in the list of suggested media types.\n"
+msgstr "Nenhum tipo restante na lista de tipos de mídia.\n"
+
+#: mferror.mc:95
+msgid "Unsupported service.\n"
+msgstr "Serviço não suportado.\n"
+
+#: mferror.mc:102
+msgid "Unexpected error.\n"
+msgstr "Erro inesperado.\n"
+
+#: mferror.mc:116
+msgid "Invalid type.\n"
+msgstr "Tipo inválido.\n"
+
+#: mferror.mc:123
+msgid "Invalid file format.\n"
+msgstr "Formato de arquivo inválido.\n"
+
+#: mferror.mc:137
+msgid "Invalid timestamp.\n"
+msgstr "Tempo inválido.\n"
+
+#: mferror.mc:144
+msgid "Unsupported scheme.\n"
+msgstr "Esquema não suportado.\n"
+
+#: mferror.mc:151
+msgid "Unsupported bytestream type.\n"
+msgstr "Tipo não suportado.\n"
+
+#: mferror.mc:158
+msgid "Unsupported time format.\n"
+msgstr "Formato de tempo não suportado.\n"
+
+#: mferror.mc:165
+msgid "Timestamp is not set for the sample.\n"
+msgstr "Registro de tempo não setado para o exemplo.\n"
+
+#: mferror.mc:172
+msgid "No duration set for the sample.\n"
+msgstr "Sem duração setada para o exemplo.\n"
+
+#: mferror.mc:179
+msgid "Invalid stream data.\n"
+msgstr "Dados inválidos.\n"
+
+#: mferror.mc:186
+msgid "Realtime support is not available.\n"
+msgstr "Suporte em tempo real não disponível.\n"
+
+#: mferror.mc:193
+msgid "Unsupported rate.\n"
+msgstr "Taxa não suportado.\n"
+
+#: mferror.mc:200
+msgid "Unsupported thinning.\n"
+msgstr "Tipo não suportado.\n"
+
+#: mferror.mc:207
+msgid "Reversing is not supported.\n"
+msgstr "Reversão não suportado.\n"
+
+#: mferror.mc:214
+msgid "Unsupported rate transition.\n"
+msgstr "Taxa de transmissão não suportada.\n"
+
+#: mferror.mc:221
+msgid "Rate change was preempted.\n"
+msgstr "Mudança de taxa foi preterida.\n"
+
+#: mferror.mc:228
+msgid "Object or value wasn't found.\n"
+msgstr "Objeto ou valor não encontrado.\n"
+
+#: mferror.mc:235
+msgid "Value is not available.\n"
+msgstr "Valor não disponível.\n"
+
+#: mferror.mc:242
+msgid "Clock is not available.\n"
+msgstr "Relógio não disponível.\n"
+
+#: mferror.mc:263
+msgid "Multiple subscribers are not supported.\n"
+msgstr "Múltiplos assistentes não suportados.\n"
+
+#: mferror.mc:270
+msgid "The timer was orphaned.\n"
+msgstr "O timer está órfão.\n"
+
+#: mferror.mc:277
+msgid "State transition is pending.\n"
+msgstr "Transição de estado pendente.\n"
+
+#: mferror.mc:284
+msgid "Unsupported state transition.\n"
+msgstr "Troca de estado não suportado.\n"
+
+#: mferror.mc:291
+msgid "Unrecoverable error occurred.\n"
+msgstr "Ocorreu um erro irrecuperável.\n"
+
+#: mferror.mc:298
+msgid "Sample has too many buffers.\n"
+msgstr "O Sample tem muitos buffers.\n"
+
+#: mferror.mc:305
+msgid "Sample is not writable.\n"
+msgstr "Exemplo não é gravável.\n"
+
+#: mferror.mc:312
+msgid "Key is invalid.\n"
+msgstr "Chave inválida.\n"
+
+#: mferror.mc:319
+msgid "Bad startup version.\n"
+msgstr "Versão de inicio errada.\n"
+
+#: mferror.mc:326
+msgid "Unsupported caption.\n"
+msgstr "Tipo não suportado.\n"
+
+#: mferror.mc:333
+msgid "Invalid position.\n"
+msgstr "Posição inválida.\n"
+
+#: mferror.mc:340
+msgid "Attribute is not found.\n"
+msgstr "Atributo não encontrado.\n"
+
+#: mferror.mc:347
+msgid "Property type is not allowed.\n"
+msgstr "Tipo de propriedade não permitido.\n"
+
+#: mferror.mc:354
+msgid "Property type is not supported.\n"
+msgstr "Tipo de propriedade não suportada.\n"
+
+#: mferror.mc:361
+msgid "Property is empty.\n"
+msgstr "Propriedade está vazia.\n"
+
+#: mferror.mc:368
+msgid "Property is not empty.\n"
+msgstr "Propriedade não está vazia.\n"
+
+#: mferror.mc:375
+msgid "Vector property is not allowed.\n"
+msgstr "Vetor de Propriedade não permitido.\n"
+
+#: mferror.mc:382
+msgid "Vector property is required.\n"
+msgstr "Propriedade do vetor necessária.\n"
+
+#: mferror.mc:389
+msgid "Operation was cancelled.\n"
+msgstr "Operação cancelada.\n"
+
+#: mferror.mc:396
+msgid "Bytestream is not seekable.\n"
+msgstr "Bytestream não é pesquisável.\n"
+
+#: mferror.mc:403
+msgid "Platform is disabled in safe mode.\n"
+msgstr "Plataforma é desabilitada em modo de segurança.\n"
+
+#: mferror.mc:410
+msgid "Cannot parse bytestream.\n"
+msgstr "Bytestream não pode ser interpretada.\n"
+
+#: mferror.mc:417
+msgid "Mutually exclusive flags passed to source resolver.\n"
+msgstr ""
+"Parâmetros mutuamente excludentes passados para o resolvedor de origem.\n"
+
+#: mferror.mc:424
+msgid "Unknown bytestream length.\n"
+msgstr "Tamanho do bytestream desconhecido.\n"
+
+#: mferror.mc:431
+msgid "Invalid work queue index.\n"
+msgstr "Índice da fila de trabalho inválido.\n"
+
+#: mferror.mc:438
+msgid "No events available.\n"
+msgstr "Nenhum evento disponível.\n"
+
+#: mferror.mc:445
+msgid "Invalid media source state transition.\n"
+msgstr "Transição de estado de mídia inválido.\n"
+
+#: mferror.mc:452
+msgid "End of media stream has been reached.\n"
+msgstr "Fim da mídia.\n"
+
+#: mferror.mc:459
+msgid "Shutdown() was called.\n"
+msgstr "Desligar() foi chamado.\n"
+
+#: mferror.mc:466
+msgid "Media stream has no duration set.\n"
+msgstr "Stream de mídia não tem duração definida.\n"
+
+#: mferror.mc:473
+msgid "Media format was recognized but is invalid.\n"
+msgstr "Tipo da mídia foi reconhecido mas é inválido.\n"
+
+#: mferror.mc:480
+msgid "Property wasn't found.\n"
+msgstr "Propriedade não encontrada.\n"
+
+#: mferror.mc:487
+msgid "Property is read-only.\n"
+msgstr "Propriedade apenas de leitura.\n"
+
+#: mferror.mc:494
+msgid "Property is not allowed.\n"
+msgstr "Propriedade não permitida.\n"
+
+#: mferror.mc:501
+msgid "Media source is not started.\n"
+msgstr "Entrada de mídia não iniciado.\n"
+
+#: mferror.mc:508
+msgid "Unsupported media format.\n"
+msgstr "Tipo de mídia não suportado.\n"
+
+#: mferror.mc:515
+msgid "Media source is in wrong state.\n"
+msgstr "Entrada de mídia está em estado errado.\n"
+
+#: mferror.mc:522
+msgid "No media streams were selected.\n"
+msgstr "Nenhum stream de mídia selecionado.\n"
+
+#: mferror.mc:529
+msgid "Unsupported media source characteristics.\n"
+msgstr "Característica de media não suportado.\n"
+
+#: mferror.mc:536
+msgid "Stream sink was removed.\n"
+msgstr "Coletor de fluxo foi removido.\n"
+
+#: mferror.mc:543
+msgid "Stream sinks are out of sync.\n"
+msgstr "Coletor de fluxo fora de sincronismo.\n"
+
+#: mferror.mc:550
+msgid "Media sink stream sinks set is fixed.\n"
+msgstr "O conjunto de coletores de fluxo de coletor de mídia é fixo.\n"
+
+#: mferror.mc:557
+msgid "Stream sink already exists.\n"
+msgstr "Coletor de stream já existe.\n"
+
+#: mferror.mc:564
+msgid "Sample allocation was canceled.\n"
+msgstr "A alocação de amostra foi cancelada.\n"
+
+#: mferror.mc:571
+msgid "Sample allocator is empty.\n"
+msgstr "Alocador de amostra está vazio.\n"
+
+#: mferror.mc:578
+msgid "Sink was already stopped.\n"
+msgstr "Coletor já esta parado.\n"
+
+#: mferror.mc:585
+msgid "Bitrate was unknown for ASF file sink.\n"
+msgstr "Taxa de bits é desconhecida para o coletor de arquivos ASF.\n"
+
+#: mferror.mc:592
+msgid "No streams were selected for the sink.\n"
+msgstr "Nenhum stream foi selecionado para o coletor.\n"
+
+#: mferror.mc:606
+msgid "Metadata was too long.\n"
+msgstr "Metadado é muito longo.\n"
+
+#: mferror.mc:613
+msgid "No samples were processed by the sink.\n"
+msgstr "Nenhum sample foi processado pelo coletor.\n"
+
+#: mferror.mc:620
+msgid "Sink was not provided with required headers.\n"
+msgstr "Coletor não recebeu o cabeçalho necessário.\n"
+
+#: mferror.mc:627
+msgid "Optional node is invalid.\n"
+msgstr "Ponto opcional inválido.\n"
+
+#: mferror.mc:634
+msgid "Cannot find decryptor.\n"
+msgstr "Descritor não encontrado.\n"
+
+#: mferror.mc:641
+msgid "Codec was not found.\n"
+msgstr "Encoder não encontrado.\n"
+
+#: mferror.mc:648
+msgid "Cannot connect topology nodes.\n"
+msgstr "Não é possível conectar aos nós da topologia.\n"
+
+#: mferror.mc:655
+msgid "Topology request is not supported.\n"
+msgstr "Pedido de topologia não suportado.\n"
+
+#: mferror.mc:662
+msgid "Invalid topology time attributes.\n"
+msgstr "Atributo de topologia de tempo inválido.\n"
+
+#: mferror.mc:669
+msgid "Found loops in topology.\n"
+msgstr "Encontrado loops na topologia.\n"
+
+#: mferror.mc:676
+msgid "Presentation descriptor is missing.\n"
+msgstr "A descrição da apresentação está faltando.\n"
+
+#: mferror.mc:683
+msgid "Stream descriptor is missing.\n"
+msgstr "O descritor de stream está faltando.\n"
+
+#: mferror.mc:690
+msgid "Stream descriptor is not selected.\n"
+msgstr "O descritor de stream não está selecionado.\n"
+
+#: mferror.mc:697
+msgid "Source is missing.\n"
+msgstr "Origem está faltando.\n"
+
+#: mferror.mc:704
+msgid "Topology loader does not support sink activates.\n"
+msgstr "Carregador de topologia não suporta ativação do coletor.\n"
+
+#: mferror.mc:711
+msgid "Clock has no time source set.\n"
+msgstr "Relógio não tem origem de tempo configurada.\n"
+
+#: mferror.mc:718
+msgid "Clock state was already set.\n"
+msgstr "Estado do relógio já foi configurado.\n"
+
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
 msgstr "Entre a senha da rede"
@@ -6946,7 +7331,7 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
-"Windows Installer %s\n"
+"Instalador do Windows %s\n"
 "\n"
 "Modo de usar:\n"
 "msiexec comando {parâmetro requisitado} [parâmetro opcional]\n"
@@ -8612,7 +8997,7 @@ msgid "&Open:"
 msgstr "&Abrir:"
 
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:130
+#: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Procurar..."
 
@@ -8624,7 +9009,7 @@ msgstr "Tipo de arquivo:"
 msgid "Location:"
 msgstr "Localização:"
 
-#: shell32.rc:361 shell32.rc:394 winefile.rc:170
+#: shell32.rc:361 shell32.rc:394 winefile.rc:169
 msgid "Size:"
 msgstr "Tamanho:"
 
@@ -8636,11 +9021,11 @@ msgstr "Data de criação:"
 msgid "Attributes:"
 msgstr "Atributos:"
 
-#: shell32.rc:371 shell32.rc:408 winefile.rc:174
+#: shell32.rc:371 shell32.rc:408 winefile.rc:173
 msgid "H&idden"
 msgstr "&Oculto"
 
-#: shell32.rc:372 shell32.rc:409 winefile.rc:175
+#: shell32.rc:372 shell32.rc:409 winefile.rc:174
 msgid "&Archive"
 msgstr "Ar&quivo"
 
@@ -8660,7 +9045,7 @@ msgstr "Modificado:"
 msgid "Last accessed:"
 msgstr "Última Alteração:"
 
-#: shell32.rc:138 shell32.rc:142 winefile.rc:108
+#: shell32.rc:138 shell32.rc:142 winefile.rc:107
 msgid "Size"
 msgstr "Tamanho"
 
@@ -8672,7 +9057,7 @@ msgstr "Tipo"
 msgid "Modified"
 msgstr "Modificado"
 
-#: shell32.rc:141 winefile.rc:172 winefile.rc:114
+#: shell32.rc:141 winefile.rc:171 winefile.rc:113
 msgid "Attributes"
 msgstr "Atributos"
 
@@ -8700,7 +9085,7 @@ msgstr "Localização original"
 msgid "Date deleted"
 msgstr "Data de exclusão"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Área de Trabalho"
@@ -8822,7 +9207,7 @@ msgstr "Arquivos de programas (x86)"
 msgid "Contacts"
 msgstr "Contatos"
 
-#: shell32.rc:225 winefile.rc:113
+#: shell32.rc:225 winefile.rc:112
 msgid "Links"
 msgstr "Atalhos"
 
@@ -9141,19 +9526,19 @@ msgstr "Horário de verão da Europa Central"
 
 #: tzres.rc:118
 msgid "Iran Standard Time"
-msgstr "Hora padrão do Iran"
+msgstr "Hora padrão do Irã"
 
 #: tzres.rc:119
 msgid "Iran Daylight Time"
-msgstr "Horário de verão do Iran"
+msgstr "Horário de verão do Irã"
 
 #: tzres.rc:150
 msgid "Namibia Standard Time"
-msgstr "Hora padrão da Nanibia"
+msgstr "Hora padrão da Namíbia"
 
 #: tzres.rc:151
 msgid "Namibia Daylight Time"
-msgstr "Horário de verão da Nanibia"
+msgstr "Horário de verão da Namíbia"
 
 #: tzres.rc:200
 msgid "Tonga Standard Time"
@@ -9245,11 +9630,11 @@ msgstr "Horário de verão de Samoa"
 
 #: tzres.rc:124
 msgid "Kaliningrad Standard Time"
-msgstr "Hora padrão de kalingrado"
+msgstr "Hora padrão de Kaliningrado"
 
 #: tzres.rc:125
 msgid "Kaliningrad Daylight Time"
-msgstr "Horário de verão de Kalingrado"
+msgstr "Horário de verão de Kaliningrado"
 
 #: tzres.rc:166
 msgid "Pacific Standard Time (Mexico)"
@@ -9269,11 +9654,11 @@ msgstr "Horário de verão do Oriente Médio"
 
 #: tzres.rc:198
 msgid "Tokyo Standard Time"
-msgstr "Hora padrão de Tokyo"
+msgstr "Hora padrão de Tóquio"
 
 #: tzres.rc:199
 msgid "Tokyo Daylight Time"
-msgstr "Horário de verão Tokyo"
+msgstr "Horário de verão Tóquio"
 
 #: tzres.rc:130
 msgid "Line Islands Standard Time"
@@ -9289,7 +9674,7 @@ msgstr "Hora padrão da Jordânia"
 
 #: tzres.rc:123
 msgid "Jordan Daylight Time"
-msgstr "Horário de verão da Jordania"
+msgstr "Horário de verão da Jordânia"
 
 #: tzres.rc:78
 msgid "Central Standard Time"
@@ -9393,11 +9778,11 @@ msgstr "Horário de verão Oeste da Europa"
 
 #: tzres.rc:138
 msgid "Montevideo Standard Time"
-msgstr "Hora padrão de Montevidéo"
+msgstr "Hora padrão de Montevidéu"
 
 #: tzres.rc:139
 msgid "Montevideo Daylight Time"
-msgstr "Horário de verão de Montevidéo"
+msgstr "Horário de verão de Montevidéu"
 
 #: tzres.rc:168
 msgid "Pakistan Standard Time"
@@ -9409,11 +9794,11 @@ msgstr "Horário de verão do Paquistão"
 
 #: tzres.rc:62
 msgid "Caucasus Standard Time"
-msgstr "Hora padrão do Caucaso"
+msgstr "Hora padrão do Cáucaso"
 
 #: tzres.rc:63
 msgid "Caucasus Daylight Time"
-msgstr "Horário de verão do Caucaso"
+msgstr "Horário de verão do Cáucaso"
 
 #: tzres.rc:46
 msgid "AUS Eastern Standard Time"
@@ -9509,7 +9894,7 @@ msgstr "Hora padrão da Austrália"
 
 #: tzres.rc:65
 msgid "Cen. Australia Daylight Time"
-msgstr "Horário de verão da Australia Central"
+msgstr "Horário de verão da Austrália Central"
 
 #: tzres.rc:190
 msgid "Sri Lanka Standard Time"
@@ -9517,7 +9902,7 @@ msgstr "Hora padrão do Sri Lanka"
 
 #: tzres.rc:191
 msgid "Sri Lanka Daylight Time"
-msgstr "Horário de verão do Sri lanka"
+msgstr "Horário de verão do Sri Lanka"
 
 #: tzres.rc:30
 msgid "Afghanistan Standard Time"
@@ -9529,15 +9914,15 @@ msgstr "Horário de verão do Afeganistão"
 
 #: tzres.rc:226
 msgid "Yakutsk Standard Time"
-msgstr "Hora padrão de Yakutsk"
+msgstr "Hora padrão de Iacutusque"
 
 #: tzres.rc:227
 msgid "Yakutsk Daylight Time"
-msgstr "Horário de verão de Yakutsk"
+msgstr "Horário de verão de Iacutusque"
 
 #: tzres.rc:176
 msgid "SA Eastern Standard Time"
-msgstr "Hora padrão do Leste da SA"
+msgstr "Hora padrão do Leste da América do Sul"
 
 #: tzres.rc:177
 msgid "SA Eastern Daylight Time"
@@ -9553,15 +9938,15 @@ msgstr "Horário de verão Árabe"
 
 #: tzres.rc:36
 msgid "Arabian Standard Time"
-msgstr "Hora padrão da Arábia Saudia"
+msgstr "Hora padrão da Arábia Saudita"
 
 #: tzres.rc:37
 msgid "Arabian Daylight Time"
-msgstr "Horário de verão da Arábia"
+msgstr "Horário de verão da Arábia Saudita"
 
 #: tzres.rc:174
 msgid "Russian Standard Time"
-msgstr "Hora padrão da Russia"
+msgstr "Hora padrão da Rússia"
 
 #: tzres.rc:175
 msgid "Russian Daylight Time"
@@ -9577,11 +9962,11 @@ msgstr "Horário de verão da România"
 
 #: tzres.rc:98
 msgid "Ekaterinburg Standard Time"
-msgstr "Hora padrão de Ekaterinbugo"
+msgstr "Hora padrão de Ecaterimburgo"
 
 #: tzres.rc:99
 msgid "Ekaterinburg Daylight Time"
-msgstr "Horário de verão de Ekaterinburgo"
+msgstr "Horário de verão de Ecaterimburgo"
 
 #: tzres.rc:192
 msgid "Syria Standard Time"
@@ -9633,7 +10018,7 @@ msgstr "Horário de verão de Bangladesh"
 
 #: tzres.rc:178
 msgid "SA Pacific Standard Time"
-msgstr "Hora padrão do Pacífico da SA"
+msgstr "Hora padrão do Pacífico da América do Sul"
 
 #: tzres.rc:179
 msgid "SA Pacific Daylight Time"
@@ -9653,7 +10038,7 @@ msgstr "Hora padrão do Alasca"
 
 #: tzres.rc:33
 msgid "Alaskan Daylight Time"
-msgstr "Horário de verão do Alaska"
+msgstr "Horário de verão do Alasca"
 
 #: tzres.rc:170
 msgid "Paraguay Standard Time"
@@ -9697,7 +10082,7 @@ msgstr "Horário de verão da Venezuela"
 
 #: tzres.rc:114
 msgid "Hawaiian Standard Time"
-msgstr "Hora padrão do Avai"
+msgstr "Hora padrão do Avaí"
 
 #: tzres.rc:115
 msgid "Hawaiian Daylight Time"
@@ -9729,7 +10114,7 @@ msgstr "Horário de verão Brasil Central"
 
 #: tzres.rc:56
 msgid "Belarus Standard Time"
-msgstr "Hora padrão de Belárus"
+msgstr "Hora padrão de Belarus"
 
 #: tzres.rc:57
 msgid "Belarus Daylight Time"
@@ -9737,7 +10122,7 @@ msgstr "Horário de verão de Belarus"
 
 #: tzres.rc:180
 msgid "SA Western Standard Time"
-msgstr "Hora padrão do Oeste da SA"
+msgstr "Hora padrão do Oeste da América do Sul"
 
 #: tzres.rc:181
 msgid "SA Western Daylight Time"
@@ -9745,11 +10130,11 @@ msgstr "Horário de verão do Oeste da América do Sul"
 
 #: tzres.rc:108
 msgid "Greenland Standard Time"
-msgstr "Hora padrão da Groelândia"
+msgstr "Hora padrão da Groenlândia"
 
 #: tzres.rc:109
 msgid "Greenland Daylight Time"
-msgstr "Horário de verão da Groelândia"
+msgstr "Horário de verão da Groenlândia"
 
 #: tzres.rc:92
 msgid "Easter Island Standard Time"
@@ -9793,11 +10178,11 @@ msgstr "Horário de verão de Singapura"
 
 #: tzres.rc:126
 msgid "Korea Standard Time"
-msgstr "Hora padrão da Koreia"
+msgstr "Hora padrão da Coréia"
 
 #: tzres.rc:127
 msgid "Korea Daylight Time"
-msgstr "Horário de verão da Koreia"
+msgstr "Horário de verão da Coréia"
 
 #: tzres.rc:86
 msgid "E. Africa Standard Time"
@@ -9817,7 +10202,7 @@ msgstr "Horário de verão FLE"
 
 #: tzres.rc:90
 msgid "E. South America Standard Time"
-msgstr "Hora padrão de Brasilia"
+msgstr "Hora padrão de Brasília"
 
 #: tzres.rc:91
 msgid "E. South America Daylight Time"
@@ -10079,7 +10464,7 @@ msgid ""
 "The operation was canceled, usually because the handle on which the request "
 "was operating was closed before the operation completed.\n"
 msgstr ""
-"A operação foi cancelada, normalmente isto ocorre porque o handle onde a "
+"A operação foi cancelada, normalmente isto ocorre porque o canal onde a "
 "requisição foi feita foi fechado antes da operação ser concluída.\n"
 
 #: winineterror.mc:61
@@ -10654,8 +11039,8 @@ msgstr ""
 
 #: winmm.rc:128
 msgid ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
+"The specified MIDI port is already in use. Wait until it is free, and then "
+"try again."
 msgstr ""
 "A porta MIDI especificada já esta em uso. Aguarde até que esteja livre, e "
 "tente novamente."
@@ -10675,10 +11060,10 @@ msgstr "Um erro ocorreu com a porta especificada."
 #: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
+"these applications, and then try again."
 msgstr ""
 "Todos os temporizadores de multimídia estão sendo utilizados por outros "
-"aplicativos. Feche um destes aplicativos e tente novamente."
+"aplicativos. Feche um destes aplicativos, e tente novamente."
 
 #: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
@@ -11434,8 +11819,8 @@ msgid ""
 "/affinity mask Start the program with the specified affinity mask.\n"
 "/wait          Wait for the started program to finish, then exit with its\n"
 "exit code.\n"
-"/unix          Use a Unix filename and start the file like windows\n"
-"explorer.\n"
+"/unix          Use a Unix filename and start the file like Windows\n"
+"Explorer.\n"
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
@@ -13031,7 +13416,7 @@ msgid "File `%s' exists. Not overwritten."
 msgstr "Arquivo '%s' existe. Não foi sobrescrito."
 
 #: progman.rc:80
-msgid "Save group as `%s to prevent overwriting original files."
+msgid "Save group as `%s' to prevent overwriting original files."
 msgstr ""
 "Salvar grupo como '%s' para prevenir a sobrescrita dos arquivos originais."
 
@@ -13543,7 +13928,7 @@ msgstr ""
 "Exemplos de uso:\n"
 "  regedit \"importar.reg\"\n"
 "  regedit /E \"exportar.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Caminho\"\n"
 
 #: regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
@@ -13751,7 +14136,7 @@ msgstr "Tem certeza que deseja excluir o valor do registro selecionado?"
 
 #: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
-msgstr "Busca completa. A seqüência '%1' não foi encontrada."
+msgstr "Busca completa. A sequência '%1' não foi encontrada."
 
 #: regedit.rc:211
 msgid "Are you sure you want to delete these values?"
@@ -14851,7 +15236,7 @@ msgstr "Visualizador de Metafiles Regulares"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "Arquivos de Metadados (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -15024,10 +15409,10 @@ msgstr "Configuração de unidades"
 
 #: winecfg.rc:233
 msgid ""
-"Failed to connect to the mount manager, the drive configuration cannot be "
+"Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
-"Falha de conexão com o gerenciador de montagem, a configuração da unidade "
+"Falha de conexão com o gerenciador de montagem; a configuração da unidade "
 "não pôde ser alterada."
 
 #: winecfg.rc:236
@@ -15318,7 +15703,7 @@ msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
+"it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 "Tem certeza que deseja excluir a unidade C?\n"
 "\n"
@@ -15835,67 +16220,67 @@ msgstr "Organizar &Verticalmente\tCtrl+F4"
 msgid "&About Wine File Manager"
 msgstr "&Sobre o Gerenciador de Arquivos do Wine"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Select destination"
 msgstr "Selecionar destino"
 
-#: winefile.rc:135
+#: winefile.rc:134
 msgid "By File Type"
 msgstr "Por Tipo de Arquivo"
 
-#: winefile.rc:140
+#: winefile.rc:139
 msgid "File type"
 msgstr "Tipo de arquivo"
 
-#: winefile.rc:141
+#: winefile.rc:140
 msgid "&Directories"
 msgstr "&Diretórios"
 
-#: winefile.rc:143
+#: winefile.rc:142
 msgid "&Programs"
 msgstr "&Programas"
 
-#: winefile.rc:145
+#: winefile.rc:144
 msgid "Docu&ments"
 msgstr "Do&cumentos"
 
-#: winefile.rc:147
+#: winefile.rc:146
 msgid "&Other files"
 msgstr "&Outros arquivos"
 
-#: winefile.rc:149
+#: winefile.rc:148
 msgid "Show Hidden/&System Files"
 msgstr "&Mostrar Arquivos Ocultos/Sistema"
 
-#: winefile.rc:160
+#: winefile.rc:159
 msgid "&File Name:"
 msgstr "&Nome do Arquivo:"
 
-#: winefile.rc:162
+#: winefile.rc:161
 msgid "Full &Path:"
 msgstr "&Caminho Completa:"
 
-#: winefile.rc:164
+#: winefile.rc:163
 msgid "Last Change:"
 msgstr "Última Alteração:"
 
-#: winefile.rc:168
+#: winefile.rc:167
 msgid "Cop&yright:"
 msgstr "Direitos de Autor:"
 
-#: winefile.rc:176
+#: winefile.rc:175
 msgid "&System"
 msgstr "&Sistema"
 
-#: winefile.rc:177
+#: winefile.rc:176
 msgid "&Compressed"
 msgstr "&Comprimido"
 
-#: winefile.rc:178
+#: winefile.rc:177
 msgid "Version information"
 msgstr "Informação de versão"
 
-#: winefile.rc:194
+#: winefile.rc:193
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr "S"
@@ -15916,31 +16301,27 @@ msgstr "Gerenciador de Arquivos do Wine"
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:99
-msgid "unixfs"
-msgstr "unixfs"
-
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Shell"
 msgstr "Linha de comandos"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Creation date"
 msgstr "Data de criação"
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Access date"
 msgstr "Data de acesso"
 
-#: winefile.rc:111
+#: winefile.rc:110
 msgid "Modification date"
 msgstr "Data de modificação"
 
-#: winefile.rc:112
+#: winefile.rc:111
 msgid "Index/Inode"
 msgstr "Índice/Inode"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "%1 of %2 free"
 msgstr "%1 de %2 livre"
 
@@ -16397,8 +16778,6 @@ msgid "Text documents (*.txt)"
 msgstr "Documentos de texto (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
 msgstr "Documentos de texto Unicode (*.txt)"
 
@@ -16616,7 +16995,7 @@ msgid ""
 "\tmore files.\n"
 "[/S]  Copy directories and subdirectories.\n"
 "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-"[/Q]  Do not list names during copy, that is be quiet.\n"
+"[/Q]  Do not list names during copy; that is, be quiet.\n"
 "[/F]  Show full source and destination names during copy.\n"
 "[/L]  Simulate operation, showing names which would be copied.\n"
 "[/W]  Prompts before beginning the copy operation.\n"
@@ -16626,13 +17005,13 @@ msgid ""
 "[/P]  Prompts on each source file before copying.\n"
 "[/N]  Copy using short names.\n"
 "[/U]  Copy only files which already exist in destination.\n"
-"[/R]  Overwrite any read only files.\n"
+"[/R]  Overwrite any read-only files.\n"
 "[/H]  Include hidden and system files in the copy.\n"
 "[/C]  Continue even if an error occurs during the copy.\n"
 "[/A]  Only copy files with archive attribute set.\n"
 "[/M]  Only copy files with archive attribute set, removes the\n"
 "\tarchive attribute.\n"
-"[/K]  Copy file attributes, without this attributes are not preserved.\n"
+"[/K]  Copy file attributes; without this, attributes are not preserved.\n"
 "[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
 "\t\tIf no date is supplied, only copy if destination is older\n"
 "\t\tthan source.\n"
@@ -16666,6 +17045,8 @@ msgstr ""
 "[/A]  Copiar apenas arquivos com atributo de arquivo.\n"
 "[/M]  Copiar apenas arquivos com atributo de arquivo, removendo\n"
 "\to atributo de arquivo.\n"
+"[/K]  Copia os atributos do arquivo; sem isto, os attributos nao são "
+"preservados.\n"
 "[/D | /D:m-d-y] Copiar novos arquivos ou os alterados após a data "
 "fornecida.\n"
 "\t\tSe nenhuma data for fornecida, apenas copiar se o destino\n"

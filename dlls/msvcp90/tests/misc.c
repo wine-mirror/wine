@@ -27,20 +27,6 @@
 #include <winbase.h>
 #include "wine/test.h"
 
-static inline float __port_infinity(void)
-{
-        static const unsigned __inf_bytes = 0x7f800000;
-            return *(const float *)&__inf_bytes;
-}
-#define INFINITY __port_infinity()
-
-static inline float __port_nan(void)
-{
-        static const unsigned __nan_bytes = 0x7fc00000;
-            return *(const float *)&__nan_bytes;
-}
-#define NAN __port_nan()
-
 static inline float __port_ind(void)
 {
         static const unsigned __ind_bytes = 0xffc00000;
@@ -119,6 +105,7 @@ static /*MSVCP__Collvec*/ULONGLONG (__cdecl *p__Getcoll)(void);
 static wctrans_t (__cdecl *p_wctrans)(const char*);
 static wint_t (__cdecl *p_towctrans)(wint_t, wctrans_t);
 static void (__cdecl *p_locale__Locimp__Locimp_Addfac)(locale__Locimp*,locale_facet*,size_t);
+static size_t (__cdecl *p__Strxfrm)(char*, char*, const char*, const char*, const MSVCP__Collvec*);
 
 #undef __thiscall
 #ifdef __i386__
@@ -262,6 +249,7 @@ static BOOL init(void)
     SET(p__Getcoll, "_Getcoll");
     SET(p_wctrans, "wctrans");
     SET(p_towctrans, "towctrans");
+    SET(p__Strxfrm, "_Strxfrm");
     SET(basic_ostringstream_char_vbtable, "??_8?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@");
 
     SET(p_std_Ctraits_float__Isnan, "?_Isnan@?$_Ctraits@M@std@@SA_NM@Z");
@@ -1102,6 +1090,26 @@ static void test_raise_handler(void)
     *p_Raise_handler = NULL;
 }
 
+static void test__Strxfrm(void)
+{
+    const char in[] = "abc";
+
+    MSVCP__Collvec coll;
+    char out[64];
+    size_t ret;
+
+    memset(&coll, 0, sizeof(coll));
+
+    out[0] = 'z';
+    ret = p__Strxfrm(out, out + 1, in, in + 2, &coll);
+    ok(ret == 2, "ret = %d\n", (int)ret);
+    ok(out[0] == 'z', "out[0] = %x\n", out[0]);
+
+    ret = p__Strxfrm(out, out + sizeof(out), in, in + 4, &coll);
+    ok(ret == 4, "ret = %d\n", (int)ret);
+    ok(!strcmp(in, out), "out = %s\n", out);
+}
+
 START_TEST(misc)
 {
     if(!init())
@@ -1122,6 +1130,7 @@ START_TEST(misc)
     test_vbtable_size_exports();
     test_locale__Locimp__Locimp_Addfac();
     test_raise_handler();
+    test__Strxfrm();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 
