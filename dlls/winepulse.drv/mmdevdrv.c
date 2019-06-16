@@ -384,9 +384,9 @@ static void pulse_probe_settings(int render, WAVEFORMATEXTENSIBLE *fmt) {
     ss.channels = map.channels;
 
     attr.maxlength = -1;
-    attr.tlength = -1;
-    attr.minreq = attr.fragsize = pa_frame_size(&ss);
-    attr.prebuf = 0;
+    attr.minreq = -1;
+    attr.tlength = attr.fragsize = pa_usec_to_bytes(1000, &ss);
+    attr.prebuf = -1;
 
     stream = pa_stream_new(pulse_ctx, "format test stream", &ss, &map);
     if (stream)
@@ -395,9 +395,9 @@ static void pulse_probe_settings(int render, WAVEFORMATEXTENSIBLE *fmt) {
         ret = -1;
     else if (render)
         ret = pa_stream_connect_playback(stream, NULL, &attr,
-        PA_STREAM_START_CORKED|PA_STREAM_FIX_RATE|PA_STREAM_FIX_CHANNELS|PA_STREAM_EARLY_REQUESTS, NULL, NULL);
+        PA_STREAM_START_CORKED|PA_STREAM_FIX_RATE|PA_STREAM_FIX_CHANNELS|PA_STREAM_EARLY_REQUESTS|PA_STREAM_ADJUST_LATENCY, NULL, NULL);
     else
-        ret = pa_stream_connect_record(stream, NULL, &attr, PA_STREAM_START_CORKED|PA_STREAM_FIX_RATE|PA_STREAM_FIX_CHANNELS|PA_STREAM_EARLY_REQUESTS);
+        ret = pa_stream_connect_record(stream, NULL, &attr, PA_STREAM_START_CORKED|PA_STREAM_FIX_RATE|PA_STREAM_FIX_CHANNELS|PA_STREAM_EARLY_REQUESTS|PA_STREAM_ADJUST_LATENCY);
     if (ret >= 0) {
         while (pa_mainloop_iterate(pulse_ml, 1, &ret) >= 0 &&
                 pa_stream_get_state(stream) == PA_STREAM_CREATING)
@@ -1396,6 +1396,20 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         /* Uh oh, really low latency requested.. */
         if (duration <= 2 * period)
             period /= 2;
+
+        const char *duration_env = getenv("STAGING_AUDIO_DURATION");
+        if(duration_env) {
+            int val = atoi(duration_env);
+            duration = val;
+            printf("Set audio duration to %d (STAGING_AUDIO_DURATION).\n", val);
+        }
+
+        const char *period_env = getenv("STAGING_AUDIO_PERIOD");
+        if(duration_env) {
+            int val = atoi(period_env);
+            period = val;
+            printf("Set audio period to %d (STAGING_AUDIO_PERIOD).\n", val);
+        }
     }
     period_bytes = pa_frame_size(&This->ss) * MulDiv(period, This->ss.rate, 10000000);
 
