@@ -411,8 +411,8 @@ static void fill_joystick_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, DWORD ver
     lpddi->guidInstance = lpddiW.guidInstance;
     lpddi->guidProduct = lpddiW.guidProduct;
     lpddi->dwDevType = lpddiW.dwDevType;
-    strcpy(lpddi->tszInstanceName, joydevs[id].name);
-    strcpy(lpddi->tszProductName,  joydevs[id].name);
+    lstrcpynA(lpddi->tszInstanceName, joydevs[id].name, MAX_PATH);
+    lstrcpynA(lpddi->tszProductName,  joydevs[id].name, MAX_PATH);
     lpddi->guidFFDriver = lpddiW.guidFFDriver;
     lpddi->wUsagePage = lpddiW.wUsagePage;
     lpddi->wUsage = lpddiW.wUsage;

@@ -700,7 +700,7 @@ HRESULT WINAPI JoystickAGenericImpl_GetDeviceInfo(
     /* we only support traditional joysticks for now */
     pdidi->dwDevType = This->devcaps.dwDevType;
     snprintf(pdidi->tszInstanceName, MAX_PATH, "Joystick %d", index);
-    strcpy(pdidi->tszProductName, This->name);
+    lstrcpynA(pdidi->tszProductName, This->name, MAX_PATH);
     if (pdidi->dwSize > sizeof(DIDEVICEINSTANCE_DX3A)) {
         pdidi->guidFFDriver = GUID_NULL;
         pdidi->wUsagePage = 0;
