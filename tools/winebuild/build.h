@@ -38,6 +38,8 @@
 #define min(a,b)   (((a) < (b)) ? (a) : (b))
 #endif
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
 typedef enum
 {
     TYPE_VARIABLE,     /* variable */
