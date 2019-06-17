@@ -30,7 +30,6 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "sqlext.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 
@@ -317,7 +316,7 @@ static BOOL write_config_value(const WCHAR *driver, const WCHAR *args)
         {
             WCHAR *divider, *value;
 
-            name = heap_alloc( (strlenW(args) + 1) * sizeof(WCHAR));
+            name = heap_alloc( (lstrlenW(args) + 1) * sizeof(WCHAR));
             if(!name)
             {
                 push_error(ODBC_ERROR_OUT_OF_MEM, odbc_error_out_of_mem);
@@ -325,7 +324,7 @@ static BOOL write_config_value(const WCHAR *driver, const WCHAR *args)
             }
             lstrcpyW(name, args);
 
-            divider = strchrW(name,'=');
+            divider = wcschr(name,'=');
             if(!divider)
             {
                 push_error(ODBC_ERROR_INVALID_KEYWORD_VALUE, odbc_error_invalid_keyword);
@@ -337,7 +336,7 @@ static BOOL write_config_value(const WCHAR *driver, const WCHAR *args)
 
             TRACE("Write pair: %s = %s\n", debugstr_w(name), debugstr_w(value));
             if(RegSetValueExW(hkeydriver, name, 0, REG_SZ, (BYTE*)value,
-                               (strlenW(value)+1) * sizeof(WCHAR)) != ERROR_SUCCESS)
+                               (lstrlenW(value)+1) * sizeof(WCHAR)) != ERROR_SUCCESS)
                 ERR("Failed to write registry installed key\n");
             heap_free(name);
 
@@ -860,7 +859,7 @@ static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, cons
 
             for (; *p; p += lstrlenW(p) + 1)
             {
-                WCHAR *divider = strchrW(p,'=');
+                WCHAR *divider = wcschr(p,'=');
 
                 if (divider)
                 {
@@ -1519,7 +1518,7 @@ BOOL WINAPI SQLValidDSNW(LPCWSTR lpszDSN)
     clear_errors();
     TRACE("%s\n", debugstr_w(lpszDSN));
 
-    if(strlenW(lpszDSN) > SQL_MAX_DSN_LENGTH || strpbrkW(lpszDSN, invalid) != NULL)
+    if(lstrlenW(lpszDSN) > SQL_MAX_DSN_LENGTH || wcspbrk(lpszDSN, invalid) != NULL)
     {
         return FALSE;
     }
