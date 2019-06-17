@@ -10162,11 +10162,11 @@ msgstr "Horário de verão da Mauritânia"
 
 #: tzres.rc:214
 msgid "Vladivostok Standard Time"
-msgstr "Hora padrão de Vladivostok"
+msgstr "Hora padrão de Vladivostoque"
 
 #: tzres.rc:215
 msgid "Vladivostok Daylight Time"
-msgstr "Horário de verão de Vladivostok"
+msgstr "Horário de verão de Vladivostoque"
 
 #: tzres.rc:186
 msgid "Singapore Standard Time"
@@ -10178,11 +10178,11 @@ msgstr "Horário de verão de Singapura"
 
 #: tzres.rc:126
 msgid "Korea Standard Time"
-msgstr "Hora padrão da Coréia"
+msgstr "Hora padrão da Coreia"
 
 #: tzres.rc:127
 msgid "Korea Daylight Time"
-msgstr "Horário de verão da Coréia"
+msgstr "Horário de verão da Coreia"
 
 #: tzres.rc:86
 msgid "E. Africa Standard Time"
@@ -11973,9 +11973,9 @@ msgstr ""
 "abertura estão definidos atualmente.\n"
 "Se usado apenas com um tipo de arquivo, exibe o comando de abertura\n"
 "associado, se houver.\n"
-"Se não for especificado nenhum comando de abertura após o sinal de\n"
-"igualdade, remove o comando de abertura associado ao tipo de arquivo\n"
-"especificado.\n"
+"Se não for especificado nenhum comando de abertura após o sinal de "
+"igualdade,\n"
+"remove o comando de abertura associado ao tipo de arquivo especificado.\n"
 
 #: cmd.rc:303
 msgid "MORE displays output of files or piped input in pages.\n"
@@ -15485,7 +15485,7 @@ msgstr "Configuração dos alto-falantes"
 
 #: winecfg.rc:280
 msgid "Speakers:"
-msgstr "Auto-falantes:"
+msgstr "Alto-falantes:"
 
 #: winecfg.rc:288
 msgid "Appearance"
@@ -16299,7 +16299,7 @@ msgstr "Gerenciador de Arquivos do Wine"
 
 #: winefile.rc:98
 msgid "root fs"
-msgstr "root fs"
+msgstr "Sistema de arquivos Raiz"
 
 #: winefile.rc:100
 msgid "Shell"
@@ -17045,7 +17045,7 @@ msgstr ""
 "[/A]  Copiar apenas arquivos com atributo de arquivo.\n"
 "[/M]  Copiar apenas arquivos com atributo de arquivo, removendo\n"
 "\to atributo de arquivo.\n"
-"[/K]  Copia os atributos do arquivo; sem isto, os attributos nao são "
+"[/K]  Copia os atributos do arquivo; sem isto, os atributos nao são "
 "preservados.\n"
 "[/D | /D:m-d-y] Copiar novos arquivos ou os alterados após a data "
 "fornecida.\n"
