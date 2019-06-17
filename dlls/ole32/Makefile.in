@@ -4,6 +4,8 @@ IMPORTS   = uuid advapi32 user32 gdi32 rpcrt4
 DELAYIMPORTS = oleaut32
 EXTRADEFS = -D_OLE32_
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	antimoniker.c \
 	bindctx.c \

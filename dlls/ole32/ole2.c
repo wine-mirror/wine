@@ -23,8 +23,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -44,7 +42,6 @@
 #include "ole2.h"
 #include "ole2ver.h"
 
-#include "wine/unicode.h"
 #include "compobj_private.h"
 #include "olestd.h"
 #include "wine/list.h"
@@ -697,7 +694,7 @@ HRESULT WINAPI OleRegGetUserType(REFCLSID clsid, DWORD form, LPOLESTR *usertype)
   {
     HKEY auxkey;
 
-    sprintfW(auxkeynameW, auxusertypeW, form);
+    swprintf(auxkeynameW, ARRAY_SIZE(auxkeynameW), auxusertypeW, form);
     if (COM_OpenKeyForCLSID(clsid, auxkeynameW, KEY_READ, &auxkey) == S_OK)
     {
       if (!RegQueryValueExW(auxkey, emptyW, NULL, &valuetype, NULL, &valuelen) && valuelen)
@@ -883,7 +880,7 @@ HRESULT WINAPI OleRegGetMiscStatus(
   /*
    * Open the key specific to the requested aspect.
    */
-  sprintfW(keyName, dfmtW, dwAspect);
+  swprintf(keyName, ARRAY_SIZE(keyName), dfmtW, dwAspect);
 
   result = open_classes_key(miscStatusKey, keyName, KEY_READ, &aspectKey);
   if (result == ERROR_SUCCESS)
@@ -1002,7 +999,7 @@ static HRESULT WINAPI EnumOLEVERB_Next(
         }
 
         TRACE("verb string: %s\n", debugstr_w(pwszOLEVERB));
-        pwszMenuFlags = strchrW(pwszOLEVERB, ',');
+        pwszMenuFlags = wcschr(pwszOLEVERB, ',');
         if (!pwszMenuFlags)
         {
             hr = OLEOBJ_E_INVALIDVERB;
@@ -1012,7 +1009,7 @@ static HRESULT WINAPI EnumOLEVERB_Next(
         /* nul terminate the name string and advance to first character */
         *pwszMenuFlags = '\0';
         pwszMenuFlags++;
-        pwszAttribs = strchrW(pwszMenuFlags, ',');
+        pwszAttribs = wcschr(pwszMenuFlags, ',');
         if (!pwszAttribs)
         {
             hr = OLEOBJ_E_INVALIDVERB;
@@ -1024,10 +1021,10 @@ static HRESULT WINAPI EnumOLEVERB_Next(
         pwszAttribs++;
 
         /* fill out structure for this verb */
-        rgelt->lVerb = atolW(wszSubKey);
+        rgelt->lVerb = wcstol(wszSubKey, NULL, 10);
         rgelt->lpszVerbName = pwszOLEVERB; /* user should free */
-        rgelt->fuFlags = atolW(pwszMenuFlags);
-        rgelt->grfAttribs = atolW(pwszAttribs);
+        rgelt->fuFlags = wcstol(pwszMenuFlags, NULL, 10);
+        rgelt->grfAttribs = wcstol(pwszAttribs, NULL, 10);
 
         if (pceltFetched)
             (*pceltFetched)++;
@@ -2409,7 +2406,7 @@ static void OLEUTL_ReadRegistryDWORDValue(
       case REG_EXPAND_SZ:
       case REG_MULTI_SZ:
       case REG_SZ:
-	*pdwValue = (DWORD)strtoulW(buffer, NULL, 10);
+	*pdwValue = wcstoul(buffer, NULL, 10);
 	break;
     }
   }
@@ -2601,7 +2598,7 @@ HRESULT WINAPI OleSetAutoConvert(REFCLSID clsidOld, REFCLSID clsidNew)
     if (FAILED(res))
         goto done;
     StringFromGUID2(clsidNew, szClsidNew, CHARS_IN_GUID);
-    if (RegSetValueW(hkey, wszAutoConvertTo, REG_SZ, szClsidNew, (strlenW(szClsidNew)+1) * sizeof(WCHAR)))
+    if (RegSetValueW(hkey, wszAutoConvertTo, REG_SZ, szClsidNew, (lstrlenW(szClsidNew)+1) * sizeof(WCHAR)))
     {
         res = REGDB_E_WRITEREGDB;
 	goto done;

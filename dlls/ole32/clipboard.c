@@ -1363,7 +1363,7 @@ static inline BOOL string_off_equal(const DVTARGETDEVICE *t1, WORD off1, const D
     str1 = (const WCHAR*)((const char*)t1 + off1);
     str2 = (const WCHAR*)((const char*)t2 + off2);
 
-    return !lstrcmpW(str1, str2);
+    return !wcscmp(str1, str2);
 }
 
 static inline BOOL td_equal(const DVTARGETDEVICE *t1, const DVTARGETDEVICE *t2)

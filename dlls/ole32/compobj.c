@@ -36,8 +36,6 @@
  *
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -65,7 +63,6 @@
 #include "compobj_private.h"
 #include "moniker.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -490,7 +487,7 @@ static OpenDll *COMPOBJ_DllList_Get(LPCWSTR library_name)
     EnterCriticalSection(&csOpenDllList);
     LIST_FOR_EACH_ENTRY(ptr, &openDllList, OpenDll, entry)
     {
-        if (!strcmpiW(library_name, ptr->library_name) &&
+        if (!wcsicmp(library_name, ptr->library_name) &&
             (InterlockedIncrement(&ptr->refs) != 1) /* entry is being destroy if == 1 */)
         {
             ret = ptr;
@@ -548,7 +545,7 @@ static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret)
     }
     else
     {
-        len = strlenW(library_name);
+        len = lstrlenW(library_name);
         entry = HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
         if (entry)
             entry->library_name = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
@@ -1343,7 +1340,7 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
     BOOL found = FALSE;
     struct apartment_loaded_dll *apartment_loaded_dll;
 
-    if (!strcmpiW(dllpath, wszOle32))
+    if (!wcsicmp(dllpath, wszOle32))
     {
         /* we don't need to control the lifetime of this dll, so use the local
          * implementation of DllGetClassObject directly */
@@ -1359,7 +1356,7 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
     EnterCriticalSection(&apt->cs);
 
     LIST_FOR_EACH_ENTRY(apartment_loaded_dll, &apt->loaded_dlls, struct apartment_loaded_dll, entry)
-        if (!strcmpiW(dllpath, apartment_loaded_dll->dll->library_name))
+        if (!wcsicmp(dllpath, apartment_loaded_dll->dll->library_name))
         {
             TRACE("found %s already loaded\n", debugstr_w(dllpath));
             found = TRUE;
@@ -1422,9 +1419,9 @@ static BOOL get_object_dll_path(const struct class_reg_data *regdata, WCHAR *dst
               if (dstlen <= ExpandEnvironmentStringsW(src, dst, dstlen)) ret = ERROR_MORE_DATA;
             } else {
               const WCHAR *quote_start;
-              quote_start = strchrW(src, '\"');
+              quote_start = wcschr(src, '\"');
               if (quote_start) {
-                const WCHAR *quote_end = strchrW(quote_start + 1, '\"');
+                const WCHAR *quote_end = wcschr(quote_start + 1, '\"');
                 if (quote_end) {
                   memmove(src, quote_start + 1,
                           (quote_end - quote_start - 1) * sizeof(WCHAR));
@@ -2260,10 +2257,10 @@ static HRESULT clsid_from_string_reg(LPCOLESTR progid, CLSID *clsid)
     WCHAR *buf;
 
     memset(clsid, 0, sizeof(*clsid));
-    buf = HeapAlloc( GetProcessHeap(),0,(strlenW(progid)+8) * sizeof(WCHAR) );
+    buf = HeapAlloc( GetProcessHeap(),0,(lstrlenW(progid)+8) * sizeof(WCHAR) );
     if (!buf) return E_OUTOFMEMORY;
-    strcpyW( buf, progid );
-    strcatW( buf, clsidW );
+    lstrcpyW( buf, progid );
+    lstrcatW( buf, clsidW );
     if (open_classes_key(HKEY_CLASSES_ROOT, buf, MAXIMUM_ALLOWED, &xhkey))
     {
         HeapFree(GetProcessHeap(),0,buf);
@@ -2346,7 +2343,7 @@ HRESULT WINAPI IIDFromString(LPCOLESTR s, IID *iid)
   }
 
   /* length mismatch is a special case */
-  if (strlenW(s) + 1 != CHARS_IN_GUID)
+  if (lstrlenW(s) + 1 != CHARS_IN_GUID)
       return E_INVALIDARG;
 
   if (s[0] != '{')
@@ -2402,7 +2399,7 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax)
                                      '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',
                                      '%','0','2','X','%','0','2','X','}',0 };
     if (!id || cmax < CHARS_IN_GUID) return 0;
-    sprintfW( str, formatW, id->Data1, id->Data2, id->Data3,
+    swprintf( str, CHARS_IN_GUID, formatW, id->Data1, id->Data2, id->Data3,
               id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
               id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
     return CHARS_IN_GUID;
@@ -2416,8 +2413,8 @@ HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY
     LONG res;
     HKEY key;
 
-    strcpyW(path, wszCLSIDSlash);
-    StringFromGUID2(clsid, path + strlenW(wszCLSIDSlash), CHARS_IN_GUID);
+    lstrcpyW(path, wszCLSIDSlash);
+    StringFromGUID2(clsid, path + lstrlenW(wszCLSIDSlash), CHARS_IN_GUID);
     res = open_classes_key(HKEY_CLASSES_ROOT, path, keyname ? KEY_READ : access, &key);
     if (res == ERROR_FILE_NOT_FOUND)
         return REGDB_E_CLASSNOTREG;
@@ -2466,8 +2463,8 @@ HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey
     else if (res != ERROR_SUCCESS || type!=REG_SZ)
         return REGDB_E_READREGDB;
 
-    strcpyW(keyname, szAppIdKey);
-    strcatW(keyname, buf);
+    lstrcpyW(keyname, szAppIdKey);
+    lstrcatW(keyname, buf);
     res = open_classes_key(HKEY_CLASSES_ROOT, keyname, access, subkey);
     if (res == ERROR_FILE_NOT_FOUND)
         return REGDB_E_KEYMISSING;
@@ -2697,9 +2694,9 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     }
 
     /* Interface\\{string form of riid}\\ProxyStubClsid32 */
-    strcpyW(path, wszInterface);
+    lstrcpyW(path, wszInterface);
     StringFromGUID2(riid, path + ARRAY_SIZE(wszInterface) - 1, CHARS_IN_GUID);
-    strcpyW(path + ARRAY_SIZE(wszInterface) - 1 + CHARS_IN_GUID - 1, wszPSC);
+    lstrcpyW(path + ARRAY_SIZE(wszInterface) - 1 + CHARS_IN_GUID - 1, wszPSC);
 
     hr = get_ps_clsid_from_registry(path, 0, pclsid);
     if (FAILED(hr) && (opposite == KEY_WOW64_32KEY ||
@@ -2966,7 +2963,7 @@ static enum comclass_threadingmodel get_threading_model(const struct class_reg_d
         static const WCHAR wszApartment[] = {'A','p','a','r','t','m','e','n','t',0};
         static const WCHAR wszFree[] = {'F','r','e','e',0};
         static const WCHAR wszBoth[] = {'B','o','t','h',0};
-        WCHAR threading_model[10 /* strlenW(L"apartment")+1 */];
+        WCHAR threading_model[10 /* lstrlenW(L"apartment")+1 */];
         DWORD dwLength = sizeof(threading_model);
         DWORD keytype;
         DWORD ret;
@@ -2975,9 +2972,9 @@ static enum comclass_threadingmodel get_threading_model(const struct class_reg_d
         if ((ret != ERROR_SUCCESS) || (keytype != REG_SZ))
             threading_model[0] = '\0';
 
-        if (!strcmpiW(threading_model, wszApartment)) return ThreadingModel_Apartment;
-        if (!strcmpiW(threading_model, wszFree)) return ThreadingModel_Free;
-        if (!strcmpiW(threading_model, wszBoth)) return ThreadingModel_Both;
+        if (!wcsicmp(threading_model, wszApartment)) return ThreadingModel_Apartment;
+        if (!wcsicmp(threading_model, wszFree)) return ThreadingModel_Free;
+        if (!wcsicmp(threading_model, wszBoth)) return ThreadingModel_Both;
 
         /* there's not specific handling for this case */
         if (threading_model[0]) return ThreadingModel_Neutral;
@@ -5146,7 +5143,7 @@ HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
         if (get_object_dll_path(&regdata, dllpath, ARRAY_SIZE(dllpath)))
         {
             static const WCHAR wszOle32[] = {'o','l','e','3','2','.','d','l','l',0};
-            if (!strcmpiW(dllpath, wszOle32))
+            if (!wcsicmp(dllpath, wszOle32))
             {
                 RegCloseKey(hkey);
                 return HandlerCF_Create(rclsid, riid, ppv);
