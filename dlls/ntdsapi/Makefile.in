@@ -2,5 +2,7 @@ MODULE    = ntdsapi.dll
 IMPORTLIB = ntdsapi
 IMPORTS   = user32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	ntdsapi.c
