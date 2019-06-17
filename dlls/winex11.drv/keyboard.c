@@ -1212,13 +1212,12 @@ BOOL X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     BOOL changed = FALSE;
     struct {
         WORD vkey;
-        BOOL pressed;
-    } modifiers[6]; /* VK_LSHIFT through VK_RMENU are contiguous */
-    BOOL lwin_pressed = FALSE, rwin_pressed = FALSE;
+        WORD pressed;
+    } keys[256];
 
     if (!get_async_key_state( keystate )) return FALSE;
 
-    memset(modifiers, 0, sizeof(modifiers));
+    memset(keys, 0, sizeof(keys));
 
     EnterCriticalSection( &kbd_section );
 
@@ -1229,57 +1228,25 @@ BOOL X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     {
         for (j = 0; j < 8; j++)
         {
-            int m;
-
             vkey = keyc2vkey[(i * 8) + j];
 
-            switch(vkey & 0xff)
-            {
-            case VK_LMENU:
-            case VK_RMENU:
-            case VK_LCONTROL:
-            case VK_RCONTROL:
-            case VK_LSHIFT:
-            case VK_RSHIFT:
-                m = (vkey & 0xff) - VK_LSHIFT;
-                /* Take the vkey from the first keycode we encounter for this modifier */
-                if (!modifiers[m].vkey) modifiers[m].vkey = vkey;
-                if (event->xkeymap.key_vector[i] & (1<<j)) modifiers[m].pressed = TRUE;
-                break;
-            case VK_LWIN:
-                if (event->xkeymap.key_vector[i] & (1<<j)) lwin_pressed = TRUE;
-                break;
-            case VK_RWIN:
-                if (event->xkeymap.key_vector[i] & (1<<j)) rwin_pressed = TRUE;
-                break;
-            }
+            /* If multiple keys map to the same vkey, we want to report it as
+             * pressed iff any of them are pressed. */
+            if (!keys[vkey & 0xff].vkey) keys[vkey & 0xff].vkey = vkey;
+            if (event->xkeymap.key_vector[i] & (1<<j)) keys[vkey & 0xff].pressed = TRUE;
         }
     }
 
-    for (vkey = VK_LSHIFT; vkey <= VK_RMENU; vkey++)
+    for (vkey = 1; vkey <= 0xff; vkey++)
     {
-        int m = vkey - VK_LSHIFT;
-        if (modifiers[m].vkey && !(keystate[vkey] & 0x80) != !modifiers[m].pressed)
+        if (keys[vkey].vkey && !(keystate[vkey] & 0x80) != !keys[vkey].pressed)
         {
             TRACE( "Adjusting state for vkey %#.2x. State before %#.2x\n",
-                   modifiers[m].vkey, keystate[vkey]);
+                   keys[vkey].vkey, keystate[vkey]);
 
-            update_key_state( keystate, vkey, modifiers[m].pressed );
+            update_key_state( keystate, vkey, keys[vkey].pressed );
             changed = TRUE;
         }
-    }
-
-    if (!(keystate[VK_LWIN] & 0x80) != !lwin_pressed)
-    {
-        TRACE( "Adjusting state for VK_LWIN. State before %#.2x\n", keystate[VK_LWIN]);
-        update_key_state( keystate, VK_LWIN, lwin_pressed );
-        changed = TRUE;
-    }
-    if (!(keystate[VK_RWIN] & 0x80) != !rwin_pressed)
-    {
-        TRACE( "Adjusting state for VK_RWIN. State before %#.2x\n", keystate[VK_RWIN]);
-        update_key_state( keystate, VK_RWIN, rwin_pressed );
-        changed = TRUE;
     }
 
     LeaveCriticalSection( &kbd_section );
