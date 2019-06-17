@@ -2118,7 +2118,7 @@ LSTATUS WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
                           DWORD dwFlags, LPDWORD pdwType, PVOID pvData,
                           LPDWORD pcbData )
 {
-    DWORD dwType, cbData = pcbData ? *pcbData : 0;
+    DWORD dwType, cbData = (pvData && pcbData) ? *pcbData : 0;
     PVOID pvBuf = NULL;
     LONG ret;
 
@@ -2214,7 +2214,7 @@ LSTATUS WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
                           DWORD dwFlags, LPDWORD pdwType, PVOID pvData, 
                           LPDWORD pcbData )
 {
-    DWORD dwType, cbData = pcbData ? *pcbData : 0;
+    DWORD dwType, cbData = (pvData && pcbData) ? *pcbData : 0;
     PVOID pvBuf = NULL;
     LONG ret;
 
