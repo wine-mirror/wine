@@ -21,6 +21,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -63,13 +64,11 @@ void WINAPI ObfReferenceObject( void *obj );
 
 NTSTATUS WINAPI ZwQueryInformationProcess(HANDLE,PROCESSINFOCLASS,void*,ULONG,ULONG*);
 
-extern int CDECL _vsnprintf(char *str, size_t len, const char *format, __ms_va_list argptr);
-
 static void kvprintf(const char *format, __ms_va_list ap)
 {
     static char buffer[512];
     IO_STATUS_BLOCK io;
-    int len = _vsnprintf(buffer, sizeof(buffer), format, ap);
+    int len = vsnprintf(buffer, sizeof(buffer), format, ap);
     ZwWriteFile(okfile, NULL, NULL, NULL, &io, buffer, len, NULL, NULL);
 }
 
@@ -191,28 +190,6 @@ static int broken(int condition)
 #define todo_wine               todo_if(running_under_wine)
 #define todo_wine_if(is_todo)   todo_if((is_todo) && running_under_wine)
 #define win_skip(...)           win_skip_(__FILE__, __LINE__, __VA_ARGS__)
-
-static unsigned int strlenW( const WCHAR *str )
-{
-    const WCHAR *s = str;
-    while (*s) s++;
-    return s - str;
-}
-
-static void *kmemcpy(void *dest, const void *src, SIZE_T n)
-{
-    const char *s = src;
-    char *d = dest;
-    while (n--) *d++ = *s++;
-    return dest;
-}
-
-static void *kmemset(void *dest, int c, SIZE_T n)
-{
-    unsigned char *d = dest;
-    while (n--) *d++ = (unsigned char)c;
-    return dest;
-}
 
 static void *get_proc_address(const char *name)
 {
@@ -1041,10 +1018,10 @@ static void test_ob_reference(const WCHAR *test_path)
     status = ZwCreateEvent(&event_handle, SYNCHRONIZE, &attr, NotificationEvent, TRUE);
     ok(!status, "ZwCreateEvent failed: %#x\n", status);
 
-    len = strlenW(test_path);
+    len = wcslen(test_path);
     tmp_path = ExAllocatePool(PagedPool, len * sizeof(WCHAR) + sizeof(tmpW));
-    kmemcpy(tmp_path, test_path, len * sizeof(WCHAR));
-    kmemcpy(tmp_path + len, tmpW, sizeof(tmpW));
+    memcpy(tmp_path, test_path, len * sizeof(WCHAR));
+    memcpy(tmp_path + len, tmpW, sizeof(tmpW));
 
     RtlInitUnicodeString(&pathU, tmp_path);
     attr.ObjectName = &pathU;
@@ -1226,7 +1203,7 @@ static void test_resource(void)
     BOOLEAN ret;
     HANDLE thread, thread2;
 
-    kmemset(&resource, 0xcc, sizeof(resource));
+    memset(&resource, 0xcc, sizeof(resource));
 
     status = ExInitializeResourceLite(&resource);
     ok(status == STATUS_SUCCESS, "got status %#x\n", status);
@@ -1613,7 +1590,7 @@ static NTSTATUS test_basic_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *
     if (length < sizeof(teststr))
         return STATUS_BUFFER_TOO_SMALL;
 
-    kmemcpy(buffer, teststr, sizeof(teststr));
+    memcpy(buffer, teststr, sizeof(teststr));
     *info = sizeof(teststr);
 
     return STATUS_SUCCESS;

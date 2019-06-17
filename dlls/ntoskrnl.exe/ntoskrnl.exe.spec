@@ -1426,94 +1426,94 @@
 @ cdecl -private -arch=i386 _CIsin() msvcrt._CIsin
 @ cdecl -private -arch=i386 _CIsqrt() msvcrt._CIsqrt
 @ cdecl -private _abnormal_termination() msvcrt._abnormal_termination
-@ stdcall -private -arch=i386 -ret64 _alldiv(int64 int64)
-@ stdcall -private -arch=i386 -norelay _alldvrm(int64 int64)
-@ stdcall -private -arch=i386 -ret64 _allmul(int64 int64)
-@ stdcall -private -arch=i386 -norelay _alloca_probe()
-@ stdcall -private -arch=i386 -ret64 _allrem(int64 int64)
-@ stdcall -private -arch=i386 -ret64 _allshl(int64 long)
-@ stdcall -private -arch=i386 -ret64 _allshr(int64 long)
-@ stdcall -private -arch=i386 -ret64 _aulldiv(int64 int64)
-@ stdcall -private -arch=i386 -norelay _aulldvrm(int64 int64)
-@ stdcall -private -arch=i386 -ret64 _aullrem(int64 int64)
-@ stdcall -private -arch=i386 -ret64 _aullshr(int64 long)
-@ stdcall -private -arch=i386 -norelay _chkstk()
-@ cdecl -private -arch=i386 _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
-@ cdecl -private -arch=i386 _except_handler3(ptr ptr ptr ptr) msvcrt._except_handler3
-@ cdecl -private -arch=i386 _global_unwind2(ptr) msvcrt._global_unwind2
-@ cdecl -private _itoa(long ptr long) msvcrt._itoa
-@ cdecl -private _itow(long ptr long) msvcrt._itow
-@ cdecl -private -arch=x86_64 _local_unwind(ptr ptr) msvcrt._local_unwind
-@ cdecl -private -arch=i386 _local_unwind2(ptr long) msvcrt._local_unwind2
-@ cdecl -private _purecall() msvcrt._purecall
-@ varargs -private _snprintf(ptr long str) msvcrt._snprintf
-@ varargs -private _snwprintf(ptr long wstr) msvcrt._snwprintf
-@ cdecl -private _stricmp(str str) NTOSKRNL__stricmp
-@ cdecl -private _strlwr(str) msvcrt._strlwr
-@ cdecl -private _strnicmp(str str long) NTOSKRNL__strnicmp
-@ cdecl -private _strnset(str long long) msvcrt._strnset
-@ cdecl -private _strrev(str) msvcrt._strrev
-@ cdecl -private _strset(str long) msvcrt._strset
-@ cdecl -private _strupr(str) msvcrt._strupr
+@ stdcall -arch=i386 -ret64 _alldiv(int64 int64)
+@ stdcall -arch=i386 -norelay _alldvrm(int64 int64)
+@ stdcall -arch=i386 -ret64 _allmul(int64 int64)
+@ stdcall -arch=i386 -norelay _alloca_probe()
+@ stdcall -arch=i386 -ret64 _allrem(int64 int64)
+@ stdcall -arch=i386 -ret64 _allshl(int64 long)
+@ stdcall -arch=i386 -ret64 _allshr(int64 long)
+@ stdcall -arch=i386 -ret64 _aulldiv(int64 int64)
+@ stdcall -arch=i386 -norelay _aulldvrm(int64 int64)
+@ stdcall -arch=i386 -ret64 _aullrem(int64 int64)
+@ stdcall -arch=i386 -ret64 _aullshr(int64 long)
+@ stdcall -arch=i386 -norelay _chkstk()
+@ cdecl -arch=i386 _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
+@ cdecl -arch=i386 _except_handler3(ptr ptr ptr ptr) msvcrt._except_handler3
+@ cdecl -arch=i386 _global_unwind2(ptr) msvcrt._global_unwind2
+@ cdecl _itoa(long ptr long) msvcrt._itoa
+@ cdecl _itow(long ptr long) msvcrt._itow
+@ cdecl -arch=x86_64 _local_unwind(ptr ptr) msvcrt._local_unwind
+@ cdecl -arch=i386 _local_unwind2(ptr long) msvcrt._local_unwind2
+@ cdecl _purecall() msvcrt._purecall
+@ varargs _snprintf(ptr long str) msvcrt._snprintf
+@ varargs _snwprintf(ptr long wstr) msvcrt._snwprintf
+@ cdecl _stricmp(str str) NTOSKRNL__stricmp
+@ cdecl _strlwr(str) msvcrt._strlwr
+@ cdecl _strnicmp(str str long) NTOSKRNL__strnicmp
+@ cdecl _strnset(str long long) msvcrt._strnset
+@ cdecl _strrev(str) msvcrt._strrev
+@ cdecl _strset(str long) msvcrt._strset
+@ cdecl _strupr(str) msvcrt._strupr
 @ cdecl _vsnprintf(ptr long str ptr) msvcrt._vsnprintf
-@ cdecl -private _vsnwprintf(ptr long wstr ptr) msvcrt._vsnwprintf
-@ cdecl -private _wcsicmp(wstr wstr) msvcrt._wcsicmp
-@ cdecl -private _wcslwr(wstr) msvcrt._wcslwr
-@ cdecl -private _wcsnicmp(wstr wstr long) NTOSKRNL__wcsnicmp
-@ cdecl -private _wcsnset(wstr long long) msvcrt._wcsnset
-@ cdecl -private _wcsrev(wstr) msvcrt._wcsrev
-@ cdecl -private _wcsupr(wstr) msvcrt._wcsupr
-@ cdecl -private atoi(str) msvcrt.atoi
-@ cdecl -private atol(str) msvcrt.atol
-@ cdecl -private isdigit(long) msvcrt.isdigit
-@ cdecl -private islower(long) msvcrt.islower
-@ cdecl -private isprint(long) msvcrt.isprint
-@ cdecl -private isspace(long) msvcrt.isspace
-@ cdecl -private isupper(long) msvcrt.isupper
-@ cdecl -private isxdigit(long) msvcrt.isxdigit
-@ cdecl -private mbstowcs(ptr str long) msvcrt.mbstowcs
-@ cdecl -private mbtowc(ptr str long) msvcrt.mbtowc
-@ cdecl -private memchr(ptr long long) msvcrt.memchr
-@ cdecl -private memcpy(ptr ptr long) NTOSKRNL_memcpy
-@ cdecl -private memmove(ptr ptr long) msvcrt.memmove
-@ cdecl -private memset(ptr long long) NTOSKRNL_memset
-@ cdecl -private qsort(ptr long long ptr) msvcrt.qsort
-@ cdecl -private rand() msvcrt.rand
-@ varargs -private sprintf(ptr str) msvcrt.sprintf
-@ cdecl -private srand(long) msvcrt.srand
-@ cdecl -private strcat(str str) msvcrt.strcat
-@ cdecl -private strchr(str long) msvcrt.strchr
-@ cdecl -private strcmp(str str) msvcrt.strcmp
-@ cdecl -private strcpy(ptr str) msvcrt.strcpy
-@ cdecl -private strlen(str) msvcrt.strlen
-@ cdecl -private strncat(str str long) msvcrt.strncat
-@ cdecl -private strncmp(str str long) msvcrt.strncmp
-@ cdecl -private strncpy(ptr str long) msvcrt.strncpy
-@ cdecl -private strrchr(str long) msvcrt.strrchr
-@ cdecl -private strspn(str str) msvcrt.strspn
-@ cdecl -private strstr(str str) msvcrt.strstr
-@ varargs -private swprintf(ptr wstr) msvcrt.swprintf
-@ cdecl -private tolower(long) msvcrt.tolower
-@ cdecl -private toupper(long) msvcrt.toupper
-@ cdecl -private towlower(long) msvcrt.towlower
-@ cdecl -private towupper(long) msvcrt.towupper
+@ cdecl _vsnwprintf(ptr long wstr ptr) msvcrt._vsnwprintf
+@ cdecl _wcsicmp(wstr wstr) msvcrt._wcsicmp
+@ cdecl _wcslwr(wstr) msvcrt._wcslwr
+@ cdecl _wcsnicmp(wstr wstr long) NTOSKRNL__wcsnicmp
+@ cdecl _wcsnset(wstr long long) msvcrt._wcsnset
+@ cdecl _wcsrev(wstr) msvcrt._wcsrev
+@ cdecl _wcsupr(wstr) msvcrt._wcsupr
+@ cdecl atoi(str) msvcrt.atoi
+@ cdecl atol(str) msvcrt.atol
+@ cdecl isdigit(long) msvcrt.isdigit
+@ cdecl islower(long) msvcrt.islower
+@ cdecl isprint(long) msvcrt.isprint
+@ cdecl isspace(long) msvcrt.isspace
+@ cdecl isupper(long) msvcrt.isupper
+@ cdecl isxdigit(long) msvcrt.isxdigit
+@ cdecl mbstowcs(ptr str long) msvcrt.mbstowcs
+@ cdecl mbtowc(ptr str long) msvcrt.mbtowc
+@ cdecl memchr(ptr long long) msvcrt.memchr
+@ cdecl memcpy(ptr ptr long) NTOSKRNL_memcpy
+@ cdecl memmove(ptr ptr long) msvcrt.memmove
+@ cdecl memset(ptr long long) NTOSKRNL_memset
+@ cdecl qsort(ptr long long ptr) msvcrt.qsort
+@ cdecl rand() msvcrt.rand
+@ varargs sprintf(ptr str) msvcrt.sprintf
+@ cdecl srand(long) msvcrt.srand
+@ cdecl strcat(str str) msvcrt.strcat
+@ cdecl strchr(str long) msvcrt.strchr
+@ cdecl strcmp(str str) msvcrt.strcmp
+@ cdecl strcpy(ptr str) msvcrt.strcpy
+@ cdecl strlen(str) msvcrt.strlen
+@ cdecl strncat(str str long) msvcrt.strncat
+@ cdecl strncmp(str str long) msvcrt.strncmp
+@ cdecl strncpy(ptr str long) msvcrt.strncpy
+@ cdecl strrchr(str long) msvcrt.strrchr
+@ cdecl strspn(str str) msvcrt.strspn
+@ cdecl strstr(str str) msvcrt.strstr
+@ varargs swprintf(ptr wstr) msvcrt.swprintf
+@ cdecl tolower(long) msvcrt.tolower
+@ cdecl toupper(long) msvcrt.toupper
+@ cdecl towlower(long) msvcrt.towlower
+@ cdecl towupper(long) msvcrt.towupper
 @ stdcall vDbgPrintEx(long long str ptr)
 @ stdcall vDbgPrintExWithPrefix(str long long str ptr)
-@ cdecl -private vsprintf(ptr str ptr) msvcrt.vsprintf
-@ cdecl -private wcscat(wstr wstr) msvcrt.wcscat
-@ cdecl -private wcschr(wstr long) msvcrt.wcschr
-@ cdecl -private wcscmp(wstr wstr) msvcrt.wcscmp
-@ cdecl -private wcscpy(ptr wstr) msvcrt.wcscpy
-@ cdecl -private wcscspn(wstr wstr) msvcrt.wcscspn
-@ cdecl -private wcslen(wstr) msvcrt.wcslen
-@ cdecl -private wcsncat(wstr wstr long) msvcrt.wcsncat
-@ cdecl -private wcsncmp(wstr wstr long) NTOSKRNL_wcsncmp
-@ cdecl -private wcsncpy(ptr wstr long) msvcrt.wcsncpy
-@ cdecl -private wcsrchr(wstr long) msvcrt.wcsrchr
-@ cdecl -private wcsspn(wstr wstr) msvcrt.wcsspn
-@ cdecl -private wcsstr(wstr wstr) msvcrt.wcsstr
-@ cdecl -private wcstombs(ptr ptr long) msvcrt.wcstombs
-@ cdecl -private wctomb(ptr long) msvcrt.wctomb
+@ cdecl vsprintf(ptr str ptr) msvcrt.vsprintf
+@ cdecl wcscat(wstr wstr) msvcrt.wcscat
+@ cdecl wcschr(wstr long) msvcrt.wcschr
+@ cdecl wcscmp(wstr wstr) msvcrt.wcscmp
+@ cdecl wcscpy(ptr wstr) msvcrt.wcscpy
+@ cdecl wcscspn(wstr wstr) msvcrt.wcscspn
+@ cdecl wcslen(wstr) msvcrt.wcslen
+@ cdecl wcsncat(wstr wstr long) msvcrt.wcsncat
+@ cdecl wcsncmp(wstr wstr long) NTOSKRNL_wcsncmp
+@ cdecl wcsncpy(ptr wstr long) msvcrt.wcsncpy
+@ cdecl wcsrchr(wstr long) msvcrt.wcsrchr
+@ cdecl wcsspn(wstr wstr) msvcrt.wcsspn
+@ cdecl wcsstr(wstr wstr) msvcrt.wcsstr
+@ cdecl wcstombs(ptr ptr long) msvcrt.wcstombs
+@ cdecl wctomb(ptr long) msvcrt.wctomb
 
 ################################################################
 # Wine internal extensions
