@@ -17,14 +17,14 @@
 @ stdcall BCryptEncrypt(ptr ptr long ptr ptr long ptr long ptr long)
 @ stdcall BCryptEnumAlgorithms(long ptr ptr long)
 @ stub BCryptEnumContextFunctionProviders
-@ stub BCryptEnumContextFunctions
+@ stdcall BCryptEnumContextFunctions(long wstr long ptr ptr)
 @ stub BCryptEnumContexts
 @ stub BCryptEnumProviders
 @ stub BCryptEnumRegisteredProviders
 @ stdcall BCryptExportKey(ptr ptr wstr ptr long ptr long)
 @ stdcall BCryptFinalizeKeyPair(ptr long)
 @ stdcall BCryptFinishHash(ptr ptr long long)
-@ stub BCryptFreeBuffer
+@ stdcall BCryptFreeBuffer(ptr)
 @ stdcall BCryptGenRandom(ptr ptr long long)
 @ stdcall BCryptGenerateKeyPair(ptr ptr long long)
 @ stdcall BCryptGenerateSymmetricKey(ptr ptr ptr long ptr long long)

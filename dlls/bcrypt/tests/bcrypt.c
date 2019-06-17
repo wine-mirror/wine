@@ -23,6 +23,7 @@
 #define WIN32_NO_STATUS
 #include <windows.h>
 #include <bcrypt.h>
+#include <ncrypt.h>
 
 #include "wine/test.h"
 
@@ -39,9 +40,11 @@ static NTSTATUS (WINAPI *pBCryptDuplicateHash)(BCRYPT_HASH_HANDLE, BCRYPT_HASH_H
 static NTSTATUS (WINAPI *pBCryptDuplicateKey)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE *, UCHAR *, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptEncrypt)(BCRYPT_KEY_HANDLE, PUCHAR, ULONG, VOID *, PUCHAR, ULONG, PUCHAR, ULONG,
                                          ULONG *, ULONG);
+static NTSTATUS (WINAPI *pBCryptEnumContextFunctions)(ULONG, const WCHAR *, ULONG, ULONG *, CRYPT_CONTEXT_FUNCTIONS **);
 static NTSTATUS (WINAPI *pBCryptExportKey)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG *, ULONG);
 static NTSTATUS (WINAPI *pBCryptFinalizeKeyPair)(BCRYPT_KEY_HANDLE, ULONG);
 static NTSTATUS (WINAPI *pBCryptFinishHash)(BCRYPT_HASH_HANDLE, PUCHAR, ULONG, ULONG);
+static void     (WINAPI *pBCryptFreeBuffer)(void *);
 static NTSTATUS (WINAPI *pBCryptGenerateKeyPair)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HANDLE *, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptGenerateSymmetricKey)(BCRYPT_ALG_HANDLE, BCRYPT_KEY_HANDLE *, PUCHAR, ULONG,
                                                       PUCHAR, ULONG, ULONG);
@@ -1896,6 +1899,19 @@ static void test_ECDH(void)
     pBCryptCloseAlgorithmProvider(alg, 0);
 }
 
+static void test_BCryptEnumContextFunctions(void)
+{
+    static const WCHAR sslW[] = {'S','S','L',0};
+    CRYPT_CONTEXT_FUNCTIONS *buffer;
+    NTSTATUS status;
+    ULONG buflen;
+
+    buffer = NULL;
+    status = pBCryptEnumContextFunctions( CRYPT_LOCAL, sslW, NCRYPT_SCHANNEL_INTERFACE, &buflen, &buffer );
+    todo_wine ok( status == STATUS_SUCCESS, "got %08x\n", status);
+    if (status == STATUS_SUCCESS) pBCryptFreeBuffer( buffer );
+}
+
 START_TEST(bcrypt)
 {
     HMODULE module;
@@ -1916,9 +1932,11 @@ START_TEST(bcrypt)
     pBCryptDuplicateHash = (void *)GetProcAddress(module, "BCryptDuplicateHash");
     pBCryptDuplicateKey = (void *)GetProcAddress(module, "BCryptDuplicateKey");
     pBCryptEncrypt = (void *)GetProcAddress(module, "BCryptEncrypt");
+    pBCryptEnumContextFunctions = (void *)GetProcAddress(module, "BCryptEnumContextFunctions");
     pBCryptExportKey = (void *)GetProcAddress(module, "BCryptExportKey");
     pBCryptFinalizeKeyPair = (void *)GetProcAddress(module, "BCryptFinalizeKeyPair");
     pBCryptFinishHash = (void *)GetProcAddress(module, "BCryptFinishHash");
+    pBCryptFreeBuffer = (void *)GetProcAddress(module, "BCryptFreeBuffer");
     pBCryptGenerateKeyPair = (void *)GetProcAddress(module, "BCryptGenerateKeyPair");
     pBCryptGenerateSymmetricKey = (void *)GetProcAddress(module, "BCryptGenerateSymmetricKey");
     pBCryptGenRandom = (void *)GetProcAddress(module, "BCryptGenRandom");
@@ -1946,6 +1964,7 @@ START_TEST(bcrypt)
     test_ECDSA();
     test_RSA();
     test_ECDH();
+    test_BCryptEnumContextFunctions();
 
     FreeLibrary(module);
 }
