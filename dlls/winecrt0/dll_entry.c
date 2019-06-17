@@ -18,7 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _WIN32
+#if 0
+#pragma makedep unix
+#endif
 
 #include <stdarg.h>
 #include "windef.h"
@@ -45,5 +47,3 @@ BOOL WINAPI DECLSPEC_HIDDEN __wine_spec_dll_entry( HINSTANCE inst, DWORD reason,
 
     return ret;
 }
-
-#endif  /* _WIN32 */

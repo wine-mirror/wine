@@ -18,7 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _WIN32
+#if 0
+#pragma makedep unix
+#endif
 
 #include <stdarg.h>
 #include "windef.h"
@@ -42,5 +44,3 @@ void DECLSPEC_HIDDEN __wine_spec_init_ctor(void)
     if (__wine_spec_init_state == NO_INIT_DONE) __wine_spec_init();
     __wine_spec_init_state = CONSTRUCTORS_DONE;
 }
-
-#endif  /* _WIN32 */
