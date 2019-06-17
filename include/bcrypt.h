@@ -76,6 +76,7 @@ typedef LONG NTSTATUS;
 #define BCRYPT_MD5_ALGORITHM        L"MD5"
 #define BCRYPT_RNG_ALGORITHM        L"RNG"
 #define BCRYPT_RSA_ALGORITHM        L"RSA"
+#define BCRYPT_RSA_SIGN_ALGORITHM   L"RSA_SIGN"
 #define BCRYPT_SHA1_ALGORITHM       L"SHA1"
 #define BCRYPT_SHA256_ALGORITHM     L"SHA256"
 #define BCRYPT_SHA384_ALGORITHM     L"SHA384"
@@ -129,6 +130,7 @@ static const WCHAR BCRYPT_MD4_ALGORITHM[] = {'M','D','4',0};
 static const WCHAR BCRYPT_MD5_ALGORITHM[] = {'M','D','5',0};
 static const WCHAR BCRYPT_RNG_ALGORITHM[] = {'R','N','G',0};
 static const WCHAR BCRYPT_RSA_ALGORITHM[] = {'R','S','A',0};
+static const WCHAR BCRYPT_RSA_SIGN_ALGORITHM[] = {'R','S','A','_','S','I','G','N',0};
 static const WCHAR BCRYPT_SHA1_ALGORITHM[] = {'S','H','A','1',0};
 static const WCHAR BCRYPT_SHA256_ALGORITHM[] = {'S','H','A','2','5','6',0};
 static const WCHAR BCRYPT_SHA384_ALGORITHM[] = {'S','H','A','3','8','4',0};
