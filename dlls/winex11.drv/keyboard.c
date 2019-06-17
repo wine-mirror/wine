@@ -1288,8 +1288,6 @@ BOOL X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     update_key_state( keystate, VK_CONTROL, (keystate[VK_LCONTROL] | keystate[VK_RCONTROL]) & 0x80 );
     update_key_state( keystate, VK_MENU, (keystate[VK_LMENU] | keystate[VK_RMENU]) & 0x80 );
     update_key_state( keystate, VK_SHIFT, (keystate[VK_LSHIFT] | keystate[VK_RSHIFT]) & 0x80 );
-    update_key_state( keystate, VK_LWIN, keystate[VK_LWIN] & 0x80 );
-    update_key_state( keystate, VK_RWIN, keystate[VK_RWIN] & 0x80 );
     set_async_key_state( keystate );
     return TRUE;
 }
