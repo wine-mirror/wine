@@ -539,10 +539,8 @@ todo_wine
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
-todo_wine
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pins[0]);
-todo_wine
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(enum1);
     ok(ref == 1, "Got unexpected refcount %d.\n", ref);
@@ -624,7 +622,6 @@ static void test_find_pin(void)
     hr = IBaseFilter_FindPin(filter, source_id, &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
-todo_wine
     ok(ref == 2, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
     ok(ref == 2, "Got unexpected refcount %d.\n", ref);
@@ -662,7 +659,6 @@ static void test_pin_info(void)
     hr = IBaseFilter_FindPin(filter, source_id, &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
-todo_wine
     ok(ref == 2, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
     ok(ref == 2, "Got unexpected refcount %d.\n", ref);
@@ -673,10 +669,8 @@ todo_wine
     ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
     ok(!lstrcmpW(info.achName, source_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
     ref = get_refcount(filter);
-todo_wine
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
-todo_wine
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     IBaseFilter_Release(info.pFilter);
 

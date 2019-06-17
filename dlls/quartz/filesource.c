@@ -50,6 +50,37 @@ static const AM_MEDIA_TYPE default_mt =
     NULL
 };
 
+typedef struct DATAREQUEST
+{
+    IMediaSample *pSample;
+    DWORD_PTR dwUserData;
+    OVERLAPPED ovl;
+} DATAREQUEST;
+
+typedef struct FileAsyncReader
+{
+    BaseOutputPin pin;
+    IAsyncReader IAsyncReader_iface;
+
+    ALLOCATOR_PROPERTIES allocProps;
+    HANDLE hFile;
+    BOOL bFlushing;
+    /* Why would you need more? Every sample has its own handle */
+    LONG queued_number;
+    LONG samples;
+    LONG oldest_sample;
+    CRITICAL_SECTION csList;
+    DATAREQUEST *sample_list;
+
+    /* Have a handle for every sample, and then one more as flushing handle */
+    HANDLE *handle_list;
+} FileAsyncReader;
+
+static inline FileAsyncReader *impl_from_IPin(IPin *iface)
+{
+    return CONTAINING_RECORD(iface, FileAsyncReader, pin.pin.IPin_iface);
+}
+
 typedef struct AsyncReader
 {
     BaseFilter filter;
@@ -407,14 +438,28 @@ static void async_reader_destroy(BaseFilter *iface)
 
     if (filter->pOutputPin)
     {
+        FileAsyncReader *pin = impl_from_IPin(filter->pOutputPin);
+        unsigned int i;
         IPin *peer;
+
         if (SUCCEEDED(IPin_ConnectedTo(filter->pOutputPin, &peer)))
         {
             IPin_Disconnect(peer);
             IPin_Release(peer);
         }
         IPin_Disconnect(filter->pOutputPin);
-        IPin_Release(filter->pOutputPin);
+
+        CoTaskMemFree(pin->sample_list);
+        if (pin->handle_list)
+        {
+            for (i = 0; i <= pin->samples; ++i)
+                CloseHandle(pin->handle_list[i]);
+            CoTaskMemFree(pin->handle_list);
+        }
+        CloseHandle(pin->hFile);
+        pin->csList.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&pin->csList);
+        BaseOutputPin_Destroy(&pin->pin);
     }
     CoTaskMemFree(filter->pszFileName);
     if (filter->pmt)
@@ -658,39 +703,6 @@ static const IFileSourceFilterVtbl FileSource_Vtbl =
     FileSource_GetCurFile
 };
 
-
-/* the dwUserData passed back to user */
-typedef struct DATAREQUEST
-{
-    IMediaSample * pSample; /* sample passed to us by user */
-    DWORD_PTR dwUserData; /* user data passed to us */
-    OVERLAPPED ovl; /* our overlapped structure */
-} DATAREQUEST;
-
-typedef struct FileAsyncReader
-{
-    BaseOutputPin pin;
-    IAsyncReader IAsyncReader_iface;
-
-    ALLOCATOR_PROPERTIES allocProps;
-    HANDLE hFile;
-    BOOL bFlushing;
-    /* Why would you need more? Every sample has its own handle */
-    LONG queued_number;
-    LONG samples;
-    LONG oldest_sample;
-    CRITICAL_SECTION csList; /* critical section to prevent concurrency issues */
-    DATAREQUEST *sample_list;
-
-    /* Have a handle for every sample, and then one more as flushing handle */
-    HANDLE *handle_list;
-} FileAsyncReader;
-
-static inline FileAsyncReader *impl_from_IPin(IPin *iface)
-{
-    return CONTAINING_RECORD(iface, FileAsyncReader, pin.pin.IPin_iface);
-}
-
 static inline FileAsyncReader *impl_from_BasePin(BasePin *iface)
 {
     return CONTAINING_RECORD(iface, FileAsyncReader, pin.pin);
@@ -765,36 +777,22 @@ static HRESULT WINAPI FileAsyncReaderPin_QueryInterface(IPin * iface, REFIID rii
     return E_NOINTERFACE;
 }
 
+static ULONG WINAPI FileAsyncReaderPin_AddRef(IPin *iface)
+{
+    FileAsyncReader *pin = impl_from_IPin(iface);
+    return IBaseFilter_AddRef(pin->pin.pin.pinInfo.pFilter);
+}
+
 static ULONG WINAPI FileAsyncReaderPin_Release(IPin * iface)
 {
-    FileAsyncReader *This = impl_from_IPin(iface);
-    ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
-    int x;
-
-    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
-
-    if (!refCount)
-    {
-        CoTaskMemFree(This->sample_list);
-        if (This->handle_list)
-        {
-            for (x = 0; x <= This->samples; ++x)
-                CloseHandle(This->handle_list[x]);
-            CoTaskMemFree(This->handle_list);
-        }
-        CloseHandle(This->hFile);
-        This->csList.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&This->csList);
-        BaseOutputPin_Destroy(&This->pin);
-        return 0;
-    }
-    return refCount;
+    FileAsyncReader *pin = impl_from_IPin(iface);
+    return IBaseFilter_Release(pin->pin.pin.pinInfo.pFilter);
 }
 
 static const IPinVtbl FileAsyncReaderPin_Vtbl = 
 {
     FileAsyncReaderPin_QueryInterface,
-    BasePinImpl_AddRef,
+    FileAsyncReaderPin_AddRef,
     FileAsyncReaderPin_Release,
     BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
