@@ -106,6 +106,7 @@ HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInf
                           SAMPLEPROC_PULL pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept,
                           CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, STOPPROCESSPROC pDone,
                           LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
+void PullPin_destroy(PullPin *pin) DECLSPEC_HIDDEN;
 
 /**************************/
 /*** Pin Implementation ***/
@@ -114,7 +115,8 @@ HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInf
 HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI PullPin_Disconnect(IPin * iface);
 HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);
-ULONG   WINAPI PullPin_Release(IPin * iface);
+ULONG WINAPI PullPin_AddRef(IPin *iface) DECLSPEC_HIDDEN;
+ULONG WINAPI PullPin_Release(IPin *iface) DECLSPEC_HIDDEN;
 HRESULT WINAPI PullPin_EndOfStream(IPin * iface);
 HRESULT WINAPI PullPin_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI PullPin_BeginFlush(IPin * iface);

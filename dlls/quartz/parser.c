@@ -155,7 +155,6 @@ ULONG WINAPI Parser_AddRef(IBaseFilter * iface)
 void Parser_Destroy(ParserImpl *This)
 {
     IPin *connected = NULL;
-    ULONG pinref;
     HRESULT hr;
 
     PullPin_WaitForStateChange(This->pInputPin, INFINITE);
@@ -170,16 +169,8 @@ void Parser_Destroy(ParserImpl *This)
         hr = IPin_Disconnect(&This->pInputPin->pin.IPin_iface);
         assert(hr == S_OK);
     }
-    pinref = IPin_Release(&This->pInputPin->pin.IPin_iface);
-    if (pinref)
-    {
-        /* Valgrind could find this, if I kill it here */
-        ERR("pinref should be null, is %u, destroying anyway\n", pinref);
-        assert((LONG)pinref > 0);
 
-        while (pinref)
-            pinref = IPin_Release(&This->pInputPin->pin.IPin_iface);
-    }
+    PullPin_destroy(This->pInputPin);
 
     CoTaskMemFree(This->ppPins);
     strmbase_filter_cleanup(&This->filter);
@@ -734,7 +725,7 @@ static HRESULT WINAPI Parser_PullPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes
 static const IPinVtbl Parser_InputPin_Vtbl =
 {
     Parser_PullPin_QueryInterface,
-    BasePinImpl_AddRef,
+    PullPin_AddRef,
     PullPin_Release,
     BaseInputPinImpl_Connect,
     Parser_PullPin_ReceiveConnection,

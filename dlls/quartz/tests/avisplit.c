@@ -296,10 +296,8 @@ static void test_enum_pins(void)
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
-todo_wine
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pins[0]);
-todo_wine
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(enum1);
     ok(ref == 1, "Got unexpected refcount %d.\n", ref);
@@ -487,7 +485,6 @@ static void test_pin_info(void)
     ref = get_refcount(filter);
     ok(ref == expect_ref + 1, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
-todo_wine
     ok(ref == expect_ref + 1, "Got unexpected refcount %d.\n", ref);
     IBaseFilter_Release(info.pFilter);
 
