@@ -47,9 +47,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -68,7 +65,6 @@
 #include "winternl.h"
 #include "lzexpand.h"
 
-#include "wine/unicode.h"
 #include "objbase.h"
 #include "typelib.h"
 #include "wine/debug.h"
@@ -183,7 +179,7 @@ static BOOL find_typelib_key( REFGUID guid, WORD *wMaj, WORD *wMin )
     HKEY hkey;
 
     memcpy( buffer, typelibW, sizeof(typelibW) );
-    StringFromGUID2( guid, buffer + strlenW(buffer), 40 );
+    StringFromGUID2( guid, buffer + lstrlenW(buffer), 40 );
 
     if (RegOpenKeyExW( HKEY_CLASSES_ROOT, buffer, 0, KEY_READ, &hkey ) != ERROR_SUCCESS)
         return FALSE;
@@ -247,8 +243,8 @@ static WCHAR *get_typelib_key( REFGUID guid, WORD wMaj, WORD wMin, WCHAR *buffer
     static const WCHAR VersionFormatW[] = {'\\','%','x','.','%','x',0};
 
     memcpy( buffer, TypelibW, sizeof(TypelibW) );
-    StringFromGUID2( guid, buffer + strlenW(buffer), 40 );
-    sprintfW( buffer + strlenW(buffer), VersionFormatW, wMaj, wMin );
+    StringFromGUID2( guid, buffer + lstrlenW(buffer), 40 );
+    swprintf( buffer + lstrlenW(buffer), 20, VersionFormatW, wMaj, wMin );
     return buffer;
 }
 
@@ -259,7 +255,7 @@ static WCHAR *get_interface_key( REFGUID guid, WCHAR *buffer )
     static const WCHAR InterfaceW[] = {'I','n','t','e','r','f','a','c','e','\\',0};
 
     memcpy( buffer, InterfaceW, sizeof(InterfaceW) );
-    StringFromGUID2( guid, buffer + strlenW(buffer), 40 );
+    StringFromGUID2( guid, buffer + lstrlenW(buffer), 40 );
     return buffer;
 }
 
@@ -272,12 +268,12 @@ static WCHAR *get_lcid_subkey( LCID lcid, SYSKIND syskind, WCHAR *buffer )
     static const WCHAR win32W[] = {'w','i','n','3','2',0};
     static const WCHAR win64W[] = {'w','i','n','6','4',0};
 
-    sprintfW( buffer, LcidFormatW, lcid );
+    swprintf( buffer, 16, LcidFormatW, lcid );
     switch(syskind)
     {
-    case SYS_WIN16: strcatW( buffer, win16W ); break;
-    case SYS_WIN32: strcatW( buffer, win32W ); break;
-    case SYS_WIN64: strcatW( buffer, win64W ); break;
+    case SYS_WIN16: lstrcatW( buffer, win16W ); break;
+    case SYS_WIN32: lstrcatW( buffer, win32W ); break;
+    case SYS_WIN64: lstrcatW( buffer, win64W ); break;
     default:
         TRACE("Typelib is for unsupported syskind %i\n", syskind);
         return NULL;
@@ -599,7 +595,7 @@ static void TLB_register_interface(TLIBATTR *libattr, LPOLESTR name, TYPEATTR *t
 
         if (name)
             RegSetValueExW(key, NULL, 0, REG_SZ,
-                           (BYTE *)name, (strlenW(name)+1) * sizeof(OLECHAR));
+                           (BYTE *)name, (lstrlenW(name)+1) * sizeof(OLECHAR));
 
         if (RegCreateKeyExW(key, ProxyStubClsidW, 0, NULL, 0,
             KEY_WRITE | flag, NULL, &subKey, NULL) == ERROR_SUCCESS) {
@@ -624,10 +620,10 @@ static void TLB_register_interface(TLIBATTR *libattr, LPOLESTR name, TYPEATTR *t
 
             StringFromGUID2(&libattr->guid, buffer, 40);
             RegSetValueExW(subKey, NULL, 0, REG_SZ,
-                           (BYTE *)buffer, (strlenW(buffer)+1) * sizeof(WCHAR));
-            sprintfW(buffer, fmtver, libattr->wMajorVerNum, libattr->wMinorVerNum);
+                           (BYTE *)buffer, (lstrlenW(buffer)+1) * sizeof(WCHAR));
+            swprintf(buffer, ARRAY_SIZE(buffer), fmtver, libattr->wMajorVerNum, libattr->wMinorVerNum);
             RegSetValueExW(subKey, VersionW, 0, REG_SZ,
-                           (BYTE*)buffer, (strlenW(buffer)+1) * sizeof(WCHAR));
+                           (BYTE*)buffer, (lstrlenW(buffer)+1) * sizeof(WCHAR));
             RegCloseKey(subKey);
         }
 
@@ -715,9 +711,9 @@ HRESULT WINAPI RegisterTypeLib(
             /* FIXME: is %u correct? */
             static const WCHAR formatW[] = {'%','u',0};
             WCHAR buf[20];
-            sprintfW(buf, formatW, attr->wLibFlags);
+            swprintf(buf, ARRAY_SIZE(buf), formatW, attr->wLibFlags);
             if (RegSetValueExW(subKey, NULL, 0, REG_SZ,
-                               (BYTE *)buf, (strlenW(buf) + 1)*sizeof(WCHAR) ) != ERROR_SUCCESS)
+                               (BYTE *)buf, (lstrlenW(buf) + 1)*sizeof(WCHAR) ) != ERROR_SUCCESS)
                 res = E_FAIL;
 
             RegCloseKey(subKey);
@@ -737,7 +733,7 @@ HRESULT WINAPI RegisterTypeLib(
                if we just opened an existing key, we leave the helpdir alone */
             if ((disposition == REG_CREATED_NEW_KEY) && (szHelpDir == NULL)) {
                 szHelpDir = SysAllocString(szFullPath);
-                pIndexStr = strrchrW(szHelpDir, '\\');
+                pIndexStr = wcsrchr(szHelpDir, '\\');
                 if (pIndexStr) {
                     *pIndexStr = 0;
                 }
@@ -975,7 +971,7 @@ enddeleteloop:
     /* Now, delete the type library path subkey */
     get_lcid_subkey( lcid, syskind, subKeyName );
     RegDeleteKeyW(key, subKeyName);
-    *strrchrW( subKeyName, '\\' ) = 0;  /* remove last path component */
+    *wcsrchr( subKeyName, '\\' ) = 0;  /* remove last path component */
     RegDeleteKeyW(key, subKeyName);
 
     /* check if there is anything besides the FLAGS/HELPDIR keys.
@@ -987,8 +983,8 @@ enddeleteloop:
         tmpLength = ARRAY_SIZE(subKeyName);
 
         /* if its not FLAGS or HELPDIR, then we must keep the rest of the key */
-        if (!strcmpW(subKeyName, FLAGSW)) continue;
-        if (!strcmpW(subKeyName, HELPDIRW)) continue;
+        if (!wcscmp(subKeyName, FLAGSW)) continue;
+        if (!wcscmp(subKeyName, HELPDIRW)) continue;
         deleteOtherStuff = FALSE;
         break;
     }
@@ -1001,7 +997,7 @@ enddeleteloop:
         key = NULL;
 
         RegDeleteKeyW(HKEY_CLASSES_ROOT, keyName);
-        *strrchrW( keyName, '\\' ) = 0;  /* remove last path component */
+        *wcsrchr( keyName, '\\' ) = 0;  /* remove last path component */
         RegDeleteKeyW(HKEY_CLASSES_ROOT, keyName);
     }
 
@@ -1890,7 +1886,7 @@ static TLBString *TLB_append_str(struct list *string_list, BSTR new_str)
         return NULL;
 
     LIST_FOR_EACH_ENTRY(str, string_list, TLBString, entry) {
-        if (strcmpW(str->str, new_str) == 0)
+        if (wcscmp(str->str, new_str) == 0)
             return str;
     }
 
@@ -3297,11 +3293,11 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
 
     *ppTypeLib = NULL;
 
-    index_str = strrchrW(pszFileName, '\\');
+    index_str = wcsrchr(pszFileName, '\\');
     if(index_str && *++index_str != '\0')
     {
         LPWSTR end_ptr;
-        LONG idx = strtolW(index_str, &end_ptr, 10);
+        LONG idx = wcstol(index_str, &end_ptr, 10);
         if(*end_ptr == '\0')
         {
             int str_len = index_str - pszFileName - 1;
@@ -3314,7 +3310,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
 
     if(!SearchPathW(NULL, file, NULL, cchPath, pszPath, NULL))
     {
-        if(strchrW(file, '\\'))
+        if(wcschr(file, '\\'))
         {
             lstrcpyW(pszPath, file);
         }
@@ -3322,7 +3318,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
         {
             int len = GetSystemDirectoryW(pszPath, cchPath);
             pszPath[len] = '\\';
-            memcpy(pszPath + len + 1, file, (strlenW(file) + 1) * sizeof(WCHAR));
+            memcpy(pszPath + len + 1, file, (lstrlenW(file) + 1) * sizeof(WCHAR));
         }
     }
 
@@ -3360,7 +3356,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
     EnterCriticalSection(&cache_section);
     LIST_FOR_EACH_ENTRY(entry, &tlb_cache, ITypeLibImpl, entry)
     {
-        if (!strcmpiW(entry->path, pszPath) && entry->index == index)
+        if (!wcsicmp(entry->path, pszPath) && entry->index == index)
         {
             TRACE("cache hit\n");
             *ppTypeLib = &entry->ITypeLib2_iface;
@@ -3402,7 +3398,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
 	ITypeLibImpl *impl = impl_from_ITypeLib2(*ppTypeLib);
 
 	TRACE("adding to cache\n");
-	impl->path = heap_alloc((strlenW(pszPath)+1) * sizeof(WCHAR));
+	impl->path = heap_alloc((lstrlenW(pszPath)+1) * sizeof(WCHAR));
 	lstrcpyW(impl->path, pszPath);
 	/* We should really canonicalise the path here. */
         impl->index = index;
@@ -5381,7 +5377,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
         if ((pTypeInfo->typeattr.typekind == TKIND_ENUM) ||
             (pTypeInfo->typeattr.typekind == TKIND_MODULE))
         {
-            if (pTypeInfo->Name && !strcmpW(pTypeInfo->Name->str, szName))
+            if (pTypeInfo->Name && !wcscmp(pTypeInfo->Name->str, szName))
             {
                 *pDescKind = DESCKIND_TYPECOMP;
                 pBindPtr->lptcomp = &pTypeInfo->ITypeComp_iface;
@@ -6027,7 +6023,7 @@ static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
     SIZE_T size = sizeof(*src);
     HRESULT hr;
 
-    if (src->lpstrSchema) size += (strlenW(src->lpstrSchema) + 1) * sizeof(WCHAR);
+    if (src->lpstrSchema) size += (lstrlenW(src->lpstrSchema) + 1) * sizeof(WCHAR);
     if (src->varkind == VAR_CONST)
         size += sizeof(VARIANT);
     size += TLB_SizeElemDesc(&src->elemdescVar);
@@ -6041,7 +6037,7 @@ static HRESULT TLB_AllocAndInitVarDesc( const VARDESC *src, VARDESC **dest_ptr )
     {
         int len;
         dest->lpstrSchema = (LPOLESTR)buffer;
-        len = strlenW(src->lpstrSchema);
+        len = lstrlenW(src->lpstrSchema);
         memcpy(dest->lpstrSchema, src->lpstrSchema, (len + 1) * sizeof(WCHAR));
         buffer += (len + 1) * sizeof(WCHAR);
     }
@@ -7763,7 +7759,7 @@ static BOOL CALLBACK search_res_tlb(HMODULE hModule, LPCWSTR lpszType, LPWSTR lp
     if (!(len = GetModuleFileNameW(hModule, szPath, MAX_PATH)))
         return TRUE;
 
-    if (snprintfW(szPath + len, ARRAY_SIZE(szPath) - len, formatW, LOWORD(lpszName)) < 0)
+    if (swprintf(szPath + len, ARRAY_SIZE(szPath) - len, formatW, LOWORD(lpszName)) < 0)
         return TRUE;
 
     ret = LoadTypeLibEx(szPath, REGKIND_NONE, &pTLib);
@@ -9080,7 +9076,7 @@ static HRESULT WMSFT_compile_strings(ITypeLibImpl *This,
     LIST_FOR_EACH_ENTRY(str, &This->string_list, TLBString, entry) {
         int size;
 
-        size = WideCharToMultiByte(CP_ACP, 0, str->str, strlenW(str->str), NULL, 0, NULL, NULL);
+        size = WideCharToMultiByte(CP_ACP, 0, str->str, lstrlenW(str->str), NULL, 0, NULL, NULL);
         if (size == 0)
             return E_UNEXPECTED;
 
@@ -9103,7 +9099,7 @@ static HRESULT WMSFT_compile_strings(ITypeLibImpl *This,
     LIST_FOR_EACH_ENTRY(str, &This->string_list, TLBString, entry) {
         int size;
 
-        size = WideCharToMultiByte(CP_ACP, 0, str->str, strlenW(str->str),
+        size = WideCharToMultiByte(CP_ACP, 0, str->str, lstrlenW(str->str),
                 data + sizeof(INT16), file->string_seg.len - last_offs - sizeof(INT16), NULL, NULL);
         if (size == 0) {
             heap_free(file->string_seg.data);
@@ -9138,7 +9134,7 @@ static HRESULT WMSFT_compile_names(ITypeLibImpl *This,
     LIST_FOR_EACH_ENTRY(str, &This->name_list, TLBString, entry) {
         int size;
 
-        size = strlenW(str->str);
+        size = lstrlenW(str->str);
         file->header.nametablechars += size;
         file->header.nametablecount++;
 
@@ -9167,7 +9163,7 @@ static HRESULT WMSFT_compile_names(ITypeLibImpl *This,
         int size, hash;
         MSFT_NameIntro *intro = (MSFT_NameIntro*)data;
 
-        size = WideCharToMultiByte(CP_ACP, 0, str->str, strlenW(str->str),
+        size = WideCharToMultiByte(CP_ACP, 0, str->str, lstrlenW(str->str),
                 data + sizeof(MSFT_NameIntro),
                 file->name_seg.len - last_offs - sizeof(MSFT_NameIntro), NULL, NULL);
         if (size == 0) {
@@ -9932,12 +9928,12 @@ static void WMSFT_compile_impfile(ITypeLibImpl *This, WMSFT_TLBFile *file)
         int size = 0;
 
         if(implib->name){
-            WCHAR *path = strrchrW(implib->name, '\\');
+            WCHAR *path = wcsrchr(implib->name, '\\');
             if(path)
                 ++path;
             else
                 path = implib->name;
-            size = WideCharToMultiByte(CP_ACP, 0, path, strlenW(path), NULL, 0, NULL, NULL);
+            size = WideCharToMultiByte(CP_ACP, 0, path, lstrlenW(path), NULL, 0, NULL, NULL);
             if (size == 0)
                 ERR("failed to convert wide string: %s\n", debugstr_w(path));
         }
@@ -9964,12 +9960,12 @@ static void WMSFT_compile_impfile(ITypeLibImpl *This, WMSFT_TLBFile *file)
         data += sizeof(WMSFT_ImpFile);
 
         if(implib->name){
-            WCHAR *path= strrchrW(implib->name, '\\');
+            WCHAR *path= wcsrchr(implib->name, '\\');
             if(path)
                 ++path;
             else
                 path = implib->name;
-            strlen = WideCharToMultiByte(CP_ACP, 0, path, strlenW(path),
+            strlen = WideCharToMultiByte(CP_ACP, 0, path, lstrlenW(path),
                     data + sizeof(INT16), file->impfile_seg.len - last_offs - sizeof(INT16), NULL, NULL);
             if (strlen == 0)
                 ERR("failed to convert wide string: %s\n", debugstr_w(path));
@@ -10912,7 +10908,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(ICreateTypeInfo2 *
 
     for(i = 0; i < This->typeattr.cFuncs; ++i) {
         TLBFuncDesc *iter = &This->funcdescs[i];
-        if (iter->Name && !strcmpW(TLB_get_bstr(iter->Name), *names)) {
+        if (iter->Name && !wcscmp(TLB_get_bstr(iter->Name), *names)) {
             if (iter->funcdesc.invkind & (INVOKE_PROPERTYPUT | INVOKE_PROPERTYPUTREF | INVOKE_PROPERTYGET) &&
                     func_desc->funcdesc.invkind & (INVOKE_PROPERTYPUT | INVOKE_PROPERTYPUTREF | INVOKE_PROPERTYGET) &&
                     func_desc->funcdesc.invkind != iter->funcdesc.invkind)

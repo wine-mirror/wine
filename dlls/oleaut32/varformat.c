@@ -25,8 +25,6 @@
  *  Please submit a test case if you find a difference.
  */
 
-#include "config.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -34,7 +32,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wine/unicode.h"
 #include "winerror.h"
 #include "variant.h"
 #include "wine/debug.h"
@@ -438,9 +435,9 @@ static const NAMED_FORMAT VARIANT_NamedFormats[] =
 };
 typedef const NAMED_FORMAT *LPCNAMED_FORMAT;
 
-static int FormatCompareFn(const void *l, const void *r)
+static int __cdecl FormatCompareFn(const void *l, const void *r)
 {
-  return strcmpiW(((LPCNAMED_FORMAT)l)->name, ((LPCNAMED_FORMAT)r)->name);
+  return wcsicmp(((LPCNAMED_FORMAT)l)->name, ((LPCNAMED_FORMAT)r)->name);
 }
 
 static inline const BYTE *VARIANT_GetNamedFormat(LPCWSTR lpszFormat)
@@ -763,7 +760,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
       TRACE("time sep\n");
     }
     else if ((*pFormat == 'a' || *pFormat == 'A') &&
-              !strncmpiW(pFormat, szAMPM, ARRAY_SIZE(szAMPM)))
+              !wcsnicmp(pFormat, szAMPM, ARRAY_SIZE(szAMPM)))
     {
       /* Date formats: System AM/PM designation
        * Other formats: Literal
@@ -772,7 +769,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
       header->type = FMT_TYPE_DATE;
       NEED_SPACE(sizeof(BYTE));
       pFormat += ARRAY_SIZE(szAMPM);
-      if (!strncmpW(pFormat, szampm, ARRAY_SIZE(szampm)))
+      if (!wcsncmp(pFormat, szampm, ARRAY_SIZE(szampm)))
         *pOut++ = FMT_DATE_AMPM_SYS2;
       else
         *pOut++ = FMT_DATE_AMPM_SYS1;
@@ -810,7 +807,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
         *pLastHours = *pLastHours + 2;
       TRACE("A/P\n");
     }
-    else if (*pFormat == 'a' && !strncmpW(pFormat, szamSlashpm, ARRAY_SIZE(szamSlashpm)))
+    else if (*pFormat == 'a' && !wcsncmp(pFormat, szamSlashpm, ARRAY_SIZE(szamSlashpm)))
     {
       /* Date formats: lowercase AM or PM designation
        * Other formats: Literal
@@ -824,7 +821,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
         *pLastHours = *pLastHours + 2;
       TRACE("AM/PM\n");
     }
-    else if (*pFormat == 'A' && !strncmpW(pFormat, szAMSlashPM, ARRAY_SIZE(szAMSlashPM)))
+    else if (*pFormat == 'A' && !wcsncmp(pFormat, szAMSlashPM, ARRAY_SIZE(szAMSlashPM)))
     {
       /* Date formats: Uppercase AM or PM designation
        * Other formats: Literal
@@ -986,7 +983,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
       fmt_state &= ~FMT_STATE_OPEN_COPY;
     }
     else if ((*pFormat == 't' || *pFormat == 'T') &&
-              !strncmpiW(pFormat, szTTTTT, ARRAY_SIZE(szTTTTT)))
+              !wcsnicmp(pFormat, szTTTTT, ARRAY_SIZE(szTTTTT)))
     {
       /* Date formats: System time specifier
        * Other formats: Literal
@@ -1376,7 +1373,7 @@ VARIANT_FormatNumber_Bool:
         hRes = VarBstrFromBool(V_BOOL(&vBool), lcid, boolFlag, &boolStr);
         if (SUCCEEDED(hRes))
         {
-          strcpyW(pBuff, boolStr);
+          lstrcpyW(pBuff, boolStr);
           SysFreeString(boolStr);
           while (*pBuff)
             pBuff++;
@@ -1418,13 +1415,13 @@ VARIANT_FormatNumber_Bool:
       if (exponent < 0)
       {
         *pBuff++ = '-';
-        sprintfW(pBuff, szPercentZeroStar_d, pToken[1], -exponent);
+        swprintf(pBuff, ARRAY_SIZE(buff) - (pBuff - buff), szPercentZeroStar_d, pToken[1], -exponent);
       }
       else
       {
         if (*pToken == FMT_NUM_EXP_POS_L || *pToken == FMT_NUM_EXP_POS_U)
           *pBuff++ = '+';
-        sprintfW(pBuff, szPercentZeroStar_d, pToken[1], exponent);
+        swprintf(pBuff, ARRAY_SIZE(buff) - (pBuff - buff), szPercentZeroStar_d, pToken[1], exponent);
       }
       while (*pBuff)
         pBuff++;
@@ -1897,7 +1894,7 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
     }
     else if (szPrintFmt)
     {
-      sprintfW(pBuff, szPrintFmt, dwVal);
+      swprintf(pBuff, ARRAY_SIZE(buff) - (pBuff - buff), szPrintFmt, dwVal);
       while (*pBuff)
         pBuff++;
     }
@@ -1956,7 +1953,7 @@ static HRESULT VARIANT_FormatString(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   pSrc = V_BSTR(&vStr);
   if ((strHeader->flags & (FMT_FLAG_LT|FMT_FLAG_GT)) == FMT_FLAG_GT)
     bUpper = TRUE;
-  blanks_first = strHeader->copy_chars - strlenW(pSrc);
+  blanks_first = strHeader->copy_chars - lstrlenW(pSrc);
   pToken = (const BYTE*)strHeader + sizeof(FMT_DATE_HEADER);
 
   while (*pToken != FMT_GEN_END)
@@ -1997,9 +1994,9 @@ static HRESULT VARIANT_FormatString(LPVARIANT pVarIn, LPOLESTR lpszFormat,
       while (dwCount > 0 && *pSrc)
       {
         if (bUpper)
-          *pBuff++ = toupperW(*pSrc);
+          *pBuff++ = towupper(*pSrc);
         else
-          *pBuff++ = tolowerW(*pSrc);
+          *pBuff++ = towlower(*pSrc);
         dwCount--;
         pSrc++;
       }
@@ -2025,9 +2022,9 @@ VARIANT_FormatString_Exit:
   while (*pSrc)
   {
     if (bUpper)
-      *pBuff++ = toupperW(*pSrc);
+      *pBuff++ = towupper(*pSrc);
     else
-      *pBuff++ = tolowerW(*pSrc);
+      *pBuff++ = towlower(*pSrc);
     pSrc++;
   }
   VariantClear(&vStr);
@@ -2380,12 +2377,12 @@ HRESULT WINAPI VarFormatPercent(LPVARIANT pVarIn, INT nDigits, INT nLeading, INT
 
       if (SUCCEEDED(hRet))
       {
-        DWORD dwLen = strlenW(*pbstrOut);
+        DWORD dwLen = lstrlenW(*pbstrOut);
         BOOL bBracket = (*pbstrOut)[dwLen] == ')';
 
         dwLen -= bBracket;
         memcpy(buff, *pbstrOut, dwLen * sizeof(WCHAR));
-        strcpyW(buff + dwLen, bBracket ? szPercentBracket : szPercent);
+        lstrcpyW(buff + dwLen, bBracket ? szPercentBracket : szPercent);
         SysFreeString(*pbstrOut);
         *pbstrOut = SysAllocString(buff);
         if (!*pbstrOut)

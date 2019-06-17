@@ -25,8 +25,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -37,7 +35,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wine/unicode.h"
 #include "winerror.h"
 #include "variant.h"
 #include "resource.h"
@@ -1635,14 +1632,14 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
   /* First consume all the leading symbols and space from the string */
   while (1)
   {
-    if (pNumprs->dwInFlags & NUMPRS_LEADING_WHITE && isspaceW(*lpszStr))
+    if (pNumprs->dwInFlags & NUMPRS_LEADING_WHITE && iswspace(*lpszStr))
     {
       pNumprs->dwOutFlags |= NUMPRS_LEADING_WHITE;
       do
       {
         cchUsed++;
         lpszStr++;
-      } while (isspaceW(*lpszStr));
+      } while (iswspace(*lpszStr));
     }
     else if (pNumprs->dwInFlags & NUMPRS_LEADING_PLUS &&
              *lpszStr == chars.cPositiveSymbol &&
@@ -1717,14 +1714,14 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
 
   while (*lpszStr)
   {
-    if (isdigitW(*lpszStr))
+    if (iswdigit(*lpszStr))
     {
       if (dwState & B_PROCESSING_EXPONENT)
       {
         int exponentSize = 0;
         if (dwState & B_EXPONENT_START)
         {
-          if (!isdigitW(*lpszStr))
+          if (!iswdigit(*lpszStr))
             break; /* No exponent digits - invalid */
           while (*lpszStr == '0')
           {
@@ -1734,7 +1731,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
           }
         }
 
-        while (isdigitW(*lpszStr))
+        while (iswdigit(*lpszStr))
         {
           exponentSize *= 10;
           exponentSize += *lpszStr - '0';
@@ -1906,14 +1903,14 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
   /* Consume any trailing symbols and space */
   while (1)
   {
-    if ((pNumprs->dwInFlags & NUMPRS_TRAILING_WHITE) && isspaceW(*lpszStr))
+    if ((pNumprs->dwInFlags & NUMPRS_TRAILING_WHITE) && iswspace(*lpszStr))
     {
       pNumprs->dwOutFlags |= NUMPRS_TRAILING_WHITE;
       do
       {
         cchUsed++;
         lpszStr++;
-      } while (isspaceW(*lpszStr));
+      } while (iswspace(*lpszStr));
     }
     else if (pNumprs->dwInFlags & NUMPRS_TRAILING_PLUS &&
              !(pNumprs->dwOutFlags & NUMPRS_LEADING_PLUS) &&

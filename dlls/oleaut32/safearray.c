@@ -31,8 +31,6 @@
  *  0x10: SAFEARRAYBOUNDS[0...]
  */
 
-#include "config.h"
-
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
