@@ -845,6 +845,7 @@ static strarray *get_winebuild_args(struct options *opts)
         strarray_add( spec_args, "--target" );
         strarray_add( spec_args, opts->target );
     }
+    if (!opts->use_msvcrt) strarray_add( spec_args, "-munix" );
     if (opts->unwind_tables) strarray_add( spec_args, "-fasynchronous-unwind-tables" );
     else strarray_add( spec_args, "-fno-asynchronous-unwind-tables" );
     return spec_args;

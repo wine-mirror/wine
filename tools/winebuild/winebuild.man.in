@@ -160,6 +160,10 @@ Generate respectively 16-bit, 32-bit or 64-bit code.
 .BI \-marm,\ \-mthumb,\ \-march= option ,\ \-mcpu= option ,\ \-mfpu= option ,\ \-mfloat-abi= option
 Set code generation options for the assembler.
 .TP
+.B \-munix
+Build a library that imports standard functions from the Unix C
+library instead of the Windows runtime.
+.TP
 .BI \-M,\ --main-module= module
 When building a 16-bit dll, set the name of its 32-bit counterpart to
 \fImodule\fR. This is used to enforce that the load order for the
