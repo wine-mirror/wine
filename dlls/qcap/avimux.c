@@ -40,22 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 #define ALIGN(x) ((x+1)/2*2)
 
 typedef struct {
-    BaseOutputPin pin;
-    IQualityControl IQualityControl_iface;
-
-    int cur_stream;
-    LONGLONG cur_time;
-
-    int buf_pos;
-    BYTE buf[65536];
-
-    int movi_off;
-    int out_pos;
-    int size;
-    IStream *stream;
-} AviMuxOut;
-
-typedef struct {
     BaseInputPin pin;
     IAMStreamControl IAMStreamControl_iface;
     IPropertyBag IPropertyBag_iface;
@@ -97,7 +81,9 @@ typedef struct {
     REFERENCE_TIME interleave;
     REFERENCE_TIME preroll;
 
-    AviMuxOut *out;
+    BaseOutputPin source;
+    IQualityControl IQualityControl_iface;
+
     int input_pin_no;
     AviMuxIn *in[MAX_PIN_NO-1];
 
@@ -107,6 +93,17 @@ typedef struct {
     int idx1_entries;
     int idx1_size;
     AVIINDEXENTRY *idx1;
+
+    int cur_stream;
+    LONGLONG cur_time;
+
+    int buf_pos;
+    BYTE buf[65536];
+
+    int movi_off;
+    int out_pos;
+    int size;
+    IStream *stream;
 } AviMux;
 
 static HRESULT create_input_pin(AviMux*);
@@ -121,7 +118,7 @@ static IPin *avi_mux_get_pin(BaseFilter *iface, unsigned int index)
     AviMux *filter = impl_from_BaseFilter(iface);
 
     if (!index)
-        return &filter->out->pin.pin.IPin_iface;
+        return &filter->source.pin.IPin_iface;
     else if (index <= filter->input_pin_no)
         return &filter->in[index - 1]->pin.pin.IPin_iface;
     return NULL;
@@ -132,7 +129,7 @@ static void avi_mux_destroy(BaseFilter *iface)
     AviMux *filter = impl_from_BaseFilter(iface);
     int i;
 
-    BaseOutputPinImpl_Release(&filter->out->pin.pin.IPin_iface);
+    strmbase_source_cleanup(&filter->source);
 
     for (i = 0; i < filter->input_pin_no; ++i)
     {
@@ -187,16 +184,16 @@ static HRESULT out_flush(AviMux *This)
     ULONG written;
     HRESULT hr;
 
-    if(!This->out->buf_pos)
+    if(!This->buf_pos)
         return S_OK;
 
-    hr = IStream_Write(This->out->stream, This->out->buf, This->out->buf_pos, &written);
+    hr = IStream_Write(This->stream, This->buf, This->buf_pos, &written);
     if(FAILED(hr))
         return hr;
-    if(written != This->out->buf_pos)
+    if (written != This->buf_pos)
         return E_FAIL;
 
-    This->out->buf_pos = 0;
+    This->buf_pos = 0;
     return S_OK;
 }
 
@@ -210,13 +207,13 @@ static HRESULT out_seek(AviMux *This, int pos)
         return hr;
 
     li.QuadPart = pos;
-    hr = IStream_Seek(This->out->stream, li, STREAM_SEEK_SET, NULL);
+    hr = IStream_Seek(This->stream, li, STREAM_SEEK_SET, NULL);
     if(FAILED(hr))
         return hr;
 
-    This->out->out_pos = pos;
-    if(This->out->out_pos > This->out->size)
-        This->out->size = This->out->out_pos;
+    This->out_pos = pos;
+    if(This->out_pos > This->size)
+        This->size = This->out_pos;
     return hr;
 }
 
@@ -226,18 +223,18 @@ static HRESULT out_write(AviMux *This, const void *data, int size)
     HRESULT hr;
 
     while(1) {
-        if(size > sizeof(This->out->buf)-This->out->buf_pos)
-            chunk_size = sizeof(This->out->buf)-This->out->buf_pos;
+        if (size > sizeof(This->buf) - This->buf_pos)
+            chunk_size = sizeof(This->buf) - This->buf_pos;
         else
             chunk_size = size;
 
-        memcpy(This->out->buf + This->out->buf_pos, data, chunk_size);
+        memcpy(This->buf + This->buf_pos, data, chunk_size);
         size -= chunk_size;
         data = (const BYTE*)data + chunk_size;
-        This->out->buf_pos += chunk_size;
-        This->out->out_pos += chunk_size;
-        if(This->out->out_pos > This->out->size)
-            This->out->size = This->out->out_pos;
+        This->buf_pos += chunk_size;
+        This->out_pos += chunk_size;
+        if (This->out_pos > This->size)
+            This->size = This->out_pos;
 
         if(!size)
             break;
@@ -278,7 +275,7 @@ static HRESULT flush_queue(AviMux *avimux, AviMuxIn *avimuxin, BOOL closing)
     DWORD flags;
     HRESULT hr;
 
-    if(avimux->out->cur_stream != avimuxin->stream_id)
+    if (avimux->cur_stream != avimuxin->stream_id)
         return S_OK;
 
     while(avimuxin->samples_head) {
@@ -301,17 +298,18 @@ static HRESULT flush_queue(AviMux *avimux, AviMuxIn *avimuxin, BOOL closing)
         if(IMediaSample_IsSyncPoint(sample) == S_OK)
             flags |= AM_SAMPLE_SPLICEPOINT;
 
-        if(avimuxin->stream_time + (closing ? 0 : avimuxin->strh.dwScale) > avimux->out->cur_time &&
-                !(flags & AM_SAMPLE_TIMEDISCONTINUITY)) {
+        if (avimuxin->stream_time + (closing ? 0 : avimuxin->strh.dwScale) > avimux->cur_time
+                && !(flags & AM_SAMPLE_TIMEDISCONTINUITY))
+        {
             if(closing)
                 break;
 
-            avimux->out->cur_stream++;
-            if(avimux->out->cur_stream >= avimux->input_pin_no-1) {
-                avimux->out->cur_time += avimux->interleave;
-                avimux->out->cur_stream = 0;
+            avimux->cur_stream++;
+            if(avimux->cur_stream >= avimux->input_pin_no-1) {
+                avimux->cur_time += avimux->interleave;
+                avimux->cur_stream = 0;
             }
-            avimuxin = avimux->in[avimux->out->cur_stream];
+            avimuxin = avimux->in[avimux->cur_stream];
             continue;
         }
 
@@ -333,8 +331,8 @@ static HRESULT flush_queue(AviMux *avimux, AviMuxIn *avimuxin, BOOL closing)
             avimuxin->ix->nEntriesInUse = 0;
             avimuxin->ix->qwBaseOffset = 0;
 
-            avimuxin->ix_off = avimux->out->size;
-            avimux->out->size += sizeof(avimuxin->ix_data);
+            avimuxin->ix_off = avimux->size;
+            avimux->size += sizeof(avimuxin->ix_data);
         }
 
         if(*head_prev == avimuxin->samples_head)
@@ -346,11 +344,11 @@ static HRESULT flush_queue(AviMux *avimux, AviMuxIn *avimuxin, BOOL closing)
         avimuxin->strh.dwLength++;
         if(!(flags & AM_SAMPLE_TIMEDISCONTINUITY)) {
             if(!avimuxin->ix->qwBaseOffset)
-                avimuxin->ix->qwBaseOffset = avimux->out->size;
-            avimuxin->ix->aIndex[avimuxin->ix->nEntriesInUse].dwOffset = avimux->out->size
-                + sizeof(RIFFCHUNK) - avimuxin->ix->qwBaseOffset;
+                avimuxin->ix->qwBaseOffset = avimux->size;
+            avimuxin->ix->aIndex[avimuxin->ix->nEntriesInUse].dwOffset =
+                    avimux->size + sizeof(RIFFCHUNK) - avimuxin->ix->qwBaseOffset;
 
-            hr = out_seek(avimux, avimux->out->size);
+            hr = out_seek(avimux, avimux->size);
             if(FAILED(hr)) {
                 IMediaSample_Release(sample);
                 return hr;
@@ -365,7 +363,7 @@ static HRESULT flush_queue(AviMux *avimux, AviMuxIn *avimuxin, BOOL closing)
         rf.cb = size;
         hr = idx1_add_entry(avimux, rf.fcc, flags & AM_SAMPLE_SPLICEPOINT ? AVIIF_KEYFRAME : 0,
                 flags & AM_SAMPLE_TIMEDISCONTINUITY ?
-                avimux->idx1[avimux->idx1_entries-1].dwChunkOffset : avimux->out->size, size);
+                avimux->idx1[avimux->idx1_entries-1].dwChunkOffset : avimux->size, size);
         if(FAILED(hr)) {
             IMediaSample_Release(sample);
             return hr;
@@ -432,26 +430,27 @@ static HRESULT WINAPI AviMux_Stop(IBaseFilter *iface)
     if(This->filter.state == State_Stopped)
         return S_OK;
 
-    if(This->out->stream) {
+    if (This->stream)
+    {
         AVIEXTHEADER dmlh;
         RIFFCHUNK rc;
         RIFFLIST rl;
         int idx1_off, empty_stream;
 
-        empty_stream = This->out->cur_stream;
+        empty_stream = This->cur_stream;
         for(i=empty_stream+1; ; i++) {
             if(i >= This->input_pin_no-1)
                 i = 0;
             if(i == empty_stream)
                 break;
 
-            This->out->cur_stream = i;
-            hr = flush_queue(This, This->in[This->out->cur_stream], TRUE);
+            This->cur_stream = i;
+            hr = flush_queue(This, This->in[This->cur_stream], TRUE);
             if(FAILED(hr))
                 return hr;
         }
 
-        idx1_off = This->out->size;
+        idx1_off = This->size;
         rc.fcc = ckidAVIOLDINDEX;
         rc.cb = This->idx1_entries * sizeof(*This->idx1);
         hr = out_write(This, &rc, sizeof(rc));
@@ -495,14 +494,14 @@ static HRESULT WINAPI AviMux_Stop(IBaseFilter *iface)
             return hr;
 
         rl.fcc = FCC('R','I','F','F');
-        rl.cb = This->out->size-sizeof(RIFFCHUNK)-2*sizeof(int);
+        rl.cb = This->size - sizeof(RIFFCHUNK) - 2 * sizeof(int);
         rl.fccListType = FCC('A','V','I',' ');
         hr = out_write(This, &rl, sizeof(rl));
         if(FAILED(hr))
             return hr;
 
         rl.fcc = FCC('L','I','S','T');
-        rl.cb = This->out->movi_off - sizeof(RIFFLIST) - sizeof(RIFFCHUNK);
+        rl.cb = This->movi_off - sizeof(RIFFLIST) - sizeof(RIFFCHUNK);
         rl.fccListType = FCC('h','d','r','l');
         hr = out_write(This, &rl, sizeof(rl));
         if(FAILED(hr))
@@ -550,13 +549,13 @@ static HRESULT WINAPI AviMux_Stop(IBaseFilter *iface)
         dmlh.dwGrandFrames = This->in[0]->strh.dwLength;
         hr = out_write(This, &dmlh, sizeof(dmlh));
 
-        rl.cb = idx1_off - This->out->movi_off - sizeof(RIFFCHUNK);
+        rl.cb = idx1_off - This->movi_off - sizeof(RIFFCHUNK);
         rl.fccListType = FCC('m','o','v','i');
         out_write(This, &rl, sizeof(rl));
         out_flush(This);
 
-        IStream_Release(This->out->stream);
-        This->out->stream = NULL;
+        IStream_Release(This->stream);
+        This->stream = NULL;
     }
 
     This->filter.state = State_Stopped;
@@ -611,9 +610,10 @@ static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
         IMediaSeeking_Release(ms);
     }
 
-    if(This->out->pin.pMemInputPin) {
-        hr = IMemInputPin_QueryInterface(This->out->pin.pMemInputPin,
-                &IID_IStream, (void**)&This->out->stream);
+    if (This->source.pMemInputPin)
+    {
+        hr = IMemInputPin_QueryInterface(This->source.pMemInputPin,
+                &IID_IStream, (void **)&This->stream);
         if(FAILED(hr))
             return hr;
     }
@@ -626,7 +626,7 @@ static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
             return E_OUTOFMEMORY;
     }
 
-    This->out->size = 3*sizeof(RIFFLIST) + sizeof(AVIMAINHEADER) + sizeof(AVIEXTHEADER);
+    This->size = 3*sizeof(RIFFLIST) + sizeof(AVIMAINHEADER) + sizeof(AVIEXTHEADER);
     This->start = -1;
     This->stop = -1;
     memset(&This->avih, 0, sizeof(This->avih));
@@ -635,34 +635,35 @@ static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
             continue;
 
         This->avih.dwStreams++;
-        This->out->size += sizeof(RIFFLIST) + sizeof(AVISTREAMHEADER) + sizeof(RIFFCHUNK)
-            + This->in[i]->strf->cb + sizeof(This->in[i]->indx_data);
+        This->size += sizeof(RIFFLIST) + sizeof(AVISTREAMHEADER) + sizeof(RIFFCHUNK)
+                + This->in[i]->strf->cb + sizeof(This->in[i]->indx_data);
 
         This->in[i]->strh.dwScale = MulDiv(This->in[i]->avg_time_per_frame, This->interleave, 10000000);
         This->in[i]->strh.dwRate = This->interleave;
 
         hr = IMemAllocator_Commit(This->in[i]->pin.pAllocator);
         if(FAILED(hr)) {
-            if(This->out->stream) {
-                IStream_Release(This->out->stream);
-                This->out->stream = NULL;
+            if (This->stream)
+            {
+                IStream_Release(This->stream);
+                This->stream = NULL;
             }
             return hr;
         }
     }
 
-    This->out->movi_off = This->out->size;
-    This->out->size += sizeof(RIFFLIST);
+    This->movi_off = This->size;
+    This->size += sizeof(RIFFLIST);
 
-    idx1_add_entry(This, FCC('7','F','x','x'), 0, This->out->movi_off+sizeof(RIFFLIST), 0);
+    idx1_add_entry(This, FCC('7','F','x','x'), 0, This->movi_off + sizeof(RIFFLIST), 0);
 
     stream_id = 0;
     for(i=0; i<This->input_pin_no; i++) {
         if(!This->in[i]->pin.pin.pConnectedTo)
             continue;
 
-        This->in[i]->ix_off = This->out->size;
-        This->out->size += sizeof(This->in[i]->ix_data);
+        This->in[i]->ix_off = This->size;
+        This->size += sizeof(This->in[i]->ix_data);
         This->in[i]->ix->fcc = FCC('i','x','0'+stream_id/10,'0'+stream_id%10);
         This->in[i]->ix->cb = sizeof(This->in[i]->ix_data) - sizeof(RIFFCHUNK);
         This->in[i]->ix->wLongsPerEntry = 2;
@@ -680,8 +681,8 @@ static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
         This->in[i]->stream_id = stream_id++;
     }
 
-    This->out->buf_pos = 0;
-    This->out->out_pos = 0;
+    This->buf_pos = 0;
+    This->out_pos = 0;
 
     This->avih.fcc = ckidMAINAVIHEADER;
     This->avih.cb = sizeof(AVIMAINHEADER) - sizeof(RIFFCHUNK);
@@ -813,9 +814,9 @@ static HRESULT WINAPI ConfigInterleaving_put_Mode(
         return E_INVALIDARG;
 
     if(This->mode != mode) {
-        if(This->out->pin.pin.pConnectedTo) {
+        if(This->source.pin.pConnectedTo) {
             HRESULT hr = IFilterGraph_Reconnect(This->filter.filterInfo.pGraph,
-                    &This->out->pin.pin.IPin_iface);
+                    &This->source.pin.IPin_iface);
             if(FAILED(hr))
                 return hr;
         }
@@ -1229,12 +1230,9 @@ static const BaseOutputPinFuncTable AviMuxOut_BaseOutputFuncTable = {
     AviMuxOut_DecideAllocator,
 };
 
-static inline AviMux* impl_from_out_IPin(IPin *iface)
+static inline AviMux *impl_from_out_IPin(IPin *iface)
 {
-    BasePin *bp = CONTAINING_RECORD(iface, BasePin, IPin_iface);
-    IBaseFilter *bf = bp->pinInfo.pFilter;
-
-    return impl_from_IBaseFilter(bf);
+    return CONTAINING_RECORD(iface, AviMux, source.pin.IPin_iface);
 }
 
 static HRESULT WINAPI AviMuxOut_QueryInterface(IPin *iface, REFIID riid, void **ppv)
@@ -1246,7 +1244,7 @@ static HRESULT WINAPI AviMuxOut_QueryInterface(IPin *iface, REFIID riid, void **
     if(IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPin))
         *ppv = iface;
     else if(IsEqualIID(riid, &IID_IQualityControl))
-        *ppv = &This->out->IQualityControl_iface;
+        *ppv = &This->IQualityControl_iface;
     else {
         FIXME("no interface for %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -1431,15 +1429,14 @@ static const IPinVtbl AviMuxOut_PinVtbl = {
 
 static inline AviMux* impl_from_out_IQualityControl(IQualityControl *iface)
 {
-    AviMuxOut *amo = CONTAINING_RECORD(iface, AviMuxOut, IQualityControl_iface);
-    return impl_from_IBaseFilter(amo->pin.pin.pinInfo.pFilter);
+    return CONTAINING_RECORD(iface, AviMux, IQualityControl_iface);
 }
 
 static HRESULT WINAPI AviMuxOut_QualityControl_QueryInterface(
         IQualityControl *iface, REFIID riid, void **ppv)
 {
     AviMux *This = impl_from_out_IQualityControl(iface);
-    return IPin_QueryInterface(&This->out->pin.pin.IPin_iface, riid, ppv);
+    return IPin_QueryInterface(&This->source.pin.IPin_iface, riid, ppv);
 }
 
 static ULONG WINAPI AviMuxOut_QualityControl_AddRef(IQualityControl *iface)
@@ -2084,10 +2081,10 @@ static HRESULT WINAPI AviMuxIn_MemInputPin_ReceiveCanBlock(IMemInputPin *iface)
 
     TRACE("(%p:%s)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName));
 
-    if(!This->out->pin.pMemInputPin)
+    if(!This->source.pMemInputPin)
         return S_FALSE;
 
-    hr = IMemInputPin_ReceiveCanBlock(This->out->pin.pMemInputPin);
+    hr = IMemInputPin_ReceiveCanBlock(This->source.pMemInputPin);
     return hr != S_FALSE ? S_OK : S_FALSE;
 }
 
@@ -2289,22 +2286,16 @@ IUnknown * WINAPI QCAP_createAVIMux(IUnknown *outer, HRESULT *phr)
     info.dir = PINDIR_OUTPUT;
     info.pFilter = &avimux->filter.IBaseFilter_iface;
     lstrcpyW(info.achName, output_name);
-    hr = BaseOutputPin_Construct(&AviMuxOut_PinVtbl, sizeof(AviMuxOut), &info,
-            &AviMuxOut_BaseOutputFuncTable, &avimux->filter.csFilter, (IPin**)&avimux->out);
-    if(FAILED(hr)) {
-        strmbase_filter_cleanup(&avimux->filter);
-        HeapFree(GetProcessHeap(), 0, avimux);
-        *phr = hr;
-        return NULL;
-    }
-    avimux->out->IQualityControl_iface.lpVtbl = &AviMuxOut_QualityControlVtbl;
-    avimux->out->cur_stream = 0;
-    avimux->out->cur_time = 0;
-    avimux->out->stream = NULL;
+    strmbase_source_init(&avimux->source, &AviMuxOut_PinVtbl, &info,
+            &AviMuxOut_BaseOutputFuncTable, &avimux->filter.csFilter);
+    avimux->IQualityControl_iface.lpVtbl = &AviMuxOut_QualityControlVtbl;
+    avimux->cur_stream = 0;
+    avimux->cur_time = 0;
+    avimux->stream = NULL;
 
     hr = create_input_pin(avimux);
     if(FAILED(hr)) {
-        BaseOutputPinImpl_Release(&avimux->out->pin.pin.IPin_iface);
+        strmbase_source_cleanup(&avimux->source);
         strmbase_filter_cleanup(&avimux->filter);
         HeapFree(GetProcessHeap(), 0, avimux);
         *phr = hr;
