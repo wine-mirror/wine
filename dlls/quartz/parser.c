@@ -383,26 +383,27 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
     return hr;
 }
 
-static HRESULT WINAPI break_connection(IPin *iface)
+static void free_source_pin(IPin *iface)
 {
     Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(iface);
-    HRESULT hr;
 
-    if (!pin->pin.pin.pConnectedTo || !pin->pin.pMemInputPin)
-        hr = VFW_E_NOT_CONNECTED;
-    else
+    if (pin->pin.pin.pConnectedTo)
     {
-        hr = IPin_Disconnect(pin->pin.pin.pConnectedTo);
+        IPin_Disconnect(pin->pin.pin.pConnectedTo);
         IPin_Disconnect(iface);
     }
 
-    return hr;
+    FreeMediaType(pin->pmt);
+    CoTaskMemFree(pin->pmt);
+    FreeMediaType(&pin->pin.pin.mtCurrent);
+    if (pin->pin.pAllocator)
+        IMemAllocator_Release(pin->pin.pAllocator);
+    CoTaskMemFree(pin);
 }
 
 static HRESULT Parser_RemoveOutputPins(ParserImpl * This)
 {
     /* NOTE: should be in critical section when calling this function */
-    HRESULT hr;
     ULONG i;
     IPin ** ppOldPins = This->ppPins;
 
@@ -413,11 +414,7 @@ static HRESULT Parser_RemoveOutputPins(ParserImpl * This)
     memcpy(This->ppPins, ppOldPins, sizeof(IPin *) * 1);
 
     for (i = 0; i < This->cStreams; i++)
-    {
-        hr = break_connection(ppOldPins[i + 1]);
-        TRACE("Disconnect: %08x\n", hr);
-        IPin_Release(ppOldPins[i + 1]);
-    }
+        free_source_pin(ppOldPins[i + 1]);
 
     BaseFilterImpl_IncrementPinVersion(&This->filter);
     This->cStreams = 0;
@@ -567,24 +564,16 @@ static HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid,
     return E_NOINTERFACE;
 }
 
+static ULONG WINAPI Parser_OutputPin_AddRef(IPin *iface)
+{
+    Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(iface);
+    return IBaseFilter_AddRef(pin->pin.pin.pinInfo.pFilter);
+}
+
 static ULONG WINAPI Parser_OutputPin_Release(IPin * iface)
 {
-    Parser_OutputPin *This = unsafe_impl_Parser_OutputPin_from_IPin(iface);
-    ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
-    
-    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
-
-    if (!refCount)
-    {
-        FreeMediaType(This->pmt);
-        CoTaskMemFree(This->pmt);
-        FreeMediaType(&This->pin.pin.mtCurrent);
-        if (This->pin.pAllocator)
-            IMemAllocator_Release(This->pin.pAllocator);
-        CoTaskMemFree(This);
-        return 0;
-    }
-    return refCount;
+    Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(iface);
+    return IBaseFilter_Release(pin->pin.pin.pinInfo.pFilter);
 }
 
 static HRESULT WINAPI Parser_OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
@@ -612,7 +601,7 @@ static HRESULT WINAPI Parser_OutputPin_CheckMediaType(BasePin *pin, const AM_MED
 static const IPinVtbl Parser_OutputPin_Vtbl = 
 {
     Parser_OutputPin_QueryInterface,
-    BasePinImpl_AddRef,
+    Parser_OutputPin_AddRef,
     Parser_OutputPin_Release,
     Parser_OutputPin_Connect,
     BaseOutputPinImpl_ReceiveConnection,
