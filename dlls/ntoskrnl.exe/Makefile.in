@@ -3,6 +3,8 @@ IMPORTLIB = ntoskrnl
 IMPORTS   = advapi32 hal
 DELAYIMPORTS = setupapi user32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	instr.c \
 	ntoskrnl.c \

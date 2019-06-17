@@ -40,7 +40,6 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/rbtree.h"
-#include "wine/unicode.h"
 
 #include "ntoskrnl_private.h"
 
@@ -223,7 +222,7 @@ static NTSTATUS get_device_instance_id( DEVICE_OBJECT *device, WCHAR *buffer )
         return status;
     }
 
-    strcpyW( buffer, id );
+    lstrcpyW( buffer, id );
     ExFreePool( id );
 
     if ((status = get_device_id( device, BusQueryInstanceID, &id )))
@@ -232,8 +231,8 @@ static NTSTATUS get_device_instance_id( DEVICE_OBJECT *device, WCHAR *buffer )
         return status;
     }
 
-    strcatW( buffer, backslashW );
-    strcatW( buffer, id );
+    lstrcatW( buffer, backslashW );
+    lstrcatW( buffer, id );
     ExFreePool( id );
 
     TRACE("Returning ID %s.\n", debugstr_w(buffer));
@@ -277,8 +276,8 @@ static void load_function_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINF
         return;
     }
 
-    strcpyW( buffer, servicesW );
-    strcatW( buffer, driver );
+    lstrcpyW( buffer, servicesW );
+    lstrcatW( buffer, driver );
     RtlInitUnicodeString( &string, buffer );
     status = ZwLoadDriver( &string );
     if (status != STATUS_SUCCESS && status != STATUS_IMAGE_ALREADY_LOADED)
@@ -287,8 +286,8 @@ static void load_function_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINF
         return;
     }
 
-    strcpyW( buffer, driverW );
-    strcatW( buffer, driver );
+    lstrcpyW( buffer, driverW );
+    lstrcatW( buffer, driver );
     RtlInitUnicodeString( &string, buffer );
     if (ObReferenceObjectByName( &string, OBJ_CASE_INSENSITIVE, NULL,
                                  0, NULL, KernelMode, NULL, (void **)&driver_obj ) != STATUS_SUCCESS)
@@ -313,7 +312,7 @@ static void load_function_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINF
 static size_t sizeof_multiszW( const WCHAR *str )
 {
     const WCHAR *p;
-    for (p = str; *p; p += strlenW(p) + 1);
+    for (p = str; *p; p += lstrlenW(p) + 1);
     return p + 1 - str;
 }
 
@@ -483,11 +482,11 @@ NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROP
                 break;
             }
 
-            struprW( id );
-            ptr = strchrW( id, '\\' );
+            wcsupr( id );
+            ptr = wcschr( id, '\\' );
             if (ptr) *ptr = 0;
 
-            *needed = sizeof(WCHAR) * (strlenW(id) + 1);
+            *needed = sizeof(WCHAR) * (lstrlenW(id) + 1);
             if (length >= *needed)
                 memcpy( buffer, id, *needed );
             else
@@ -604,26 +603,28 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
     if (enable && iface->enabled)
         return STATUS_OBJECT_NAME_EXISTS;
 
-    refstr = memrchrW(name->Buffer + 4, '\\', namelen - 4);
+    for (p = name->Buffer + 4, refstr = NULL; p < name->Buffer + namelen; p++)
+        if (*p == '\\') refstr = p;
+    if (!refstr) refstr = p;
 
-    if (!guid_from_string( (refstr ? refstr : name->Buffer + namelen) - 38, &class ))
+    if (!guid_from_string( refstr - 38, &class ))
         return STATUS_INVALID_PARAMETER;
 
-    len = strlenW(DeviceClassesW) + 38 + 1 + namelen + 2 + 1;
+    len = lstrlenW(DeviceClassesW) + 38 + 1 + namelen + 2 + 1;
 
     if (!(path = heap_alloc( len * sizeof(WCHAR) )))
         return STATUS_NO_MEMORY;
 
-    strcpyW( path, DeviceClassesW );
-    lstrcpynW( path + strlenW( path ), (refstr ? refstr : name->Buffer + namelen) - 38, 39 );
-    strcatW( path, slashW );
-    p = path + strlenW( path );
-    lstrcpynW( path + strlenW( path ), name->Buffer, (refstr ? (refstr - name->Buffer) : namelen) + 1 );
+    lstrcpyW( path, DeviceClassesW );
+    lstrcpynW( path + lstrlenW( path ), refstr - 38, 39 );
+    lstrcatW( path, slashW );
+    p = path + lstrlenW( path );
+    lstrcpynW( path + lstrlenW( path ), name->Buffer, (refstr - name->Buffer) + 1 );
     p[0] = p[1] = p[3] = '#';
-    strcatW( path, slashW );
-    strcatW( path, hashW );
-    if (refstr)
-        lstrcpynW( path + strlenW( path ), refstr, name->Buffer + namelen - refstr + 1 );
+    lstrcatW( path, slashW );
+    lstrcatW( path, hashW );
+    if (refstr < name->Buffer + namelen)
+        lstrcpynW( path + lstrlenW( path ), refstr, name->Buffer + namelen - refstr + 1 );
 
     attr.Length = sizeof(attr);
     attr.ObjectName = &string;

@@ -21,9 +21,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <assert.h>
 
@@ -44,7 +41,6 @@
 #include "ddk/ntddk.h"
 #include "ddk/ntifs.h"
 #include "ddk/wdm.h"
-#include "wine/unicode.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -301,7 +297,7 @@ NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret
             for (i = 0; i < ARRAY_SIZE(known_types); i++)
             {
                 type = *known_types[i];
-                if (!RtlCompareUnicodeStrings( type->name, strlenW(type->name), type_info->TypeName.Buffer,
+                if (!RtlCompareUnicodeStrings( type->name, lstrlenW(type->name), type_info->TypeName.Buffer,
                                                type_info->TypeName.Length / sizeof(WCHAR), FALSE ))
                     break;
             }
@@ -312,7 +308,7 @@ NTSTATUS kernel_object_from_handle( HANDLE handle, POBJECT_TYPE type, void **ret
                 return STATUS_INVALID_HANDLE;
             }
         }
-        else if (RtlCompareUnicodeStrings( type->name, strlenW(type->name), type_info->TypeName.Buffer,
+        else if (RtlCompareUnicodeStrings( type->name, lstrlenW(type->name), type_info->TypeName.Buffer,
                                            type_info->TypeName.Length / sizeof(WCHAR), FALSE) )
         {
             LeaveCriticalSection( &handle_map_cs );
@@ -1337,18 +1333,18 @@ static void build_driver_keypath( const WCHAR *name, UNICODE_STRING *keypath )
     WCHAR *str;
 
     /* Check what prefix is present */
-    if (strncmpW( name, servicesW, strlenW(servicesW) ) == 0)
+    if (wcsncmp( name, servicesW, lstrlenW(servicesW) ) == 0)
     {
         FIXME( "Driver name %s is malformed as the keypath\n", debugstr_w(name) );
         RtlCreateUnicodeString( keypath, name );
         return;
     }
-    if (strncmpW( name, driverW, strlenW(driverW) ) == 0)
-        name += strlenW(driverW);
+    if (wcsncmp( name, driverW, lstrlenW(driverW) ) == 0)
+        name += lstrlenW(driverW);
     else
         FIXME( "Driver name %s does not properly begin with \\Driver\\\n", debugstr_w(name) );
 
-    str = HeapAlloc( GetProcessHeap(), 0, sizeof(servicesW) + strlenW(name)*sizeof(WCHAR));
+    str = HeapAlloc( GetProcessHeap(), 0, sizeof(servicesW) + lstrlenW(name)*sizeof(WCHAR));
     lstrcpyW( str, servicesW );
     lstrcatW( str, name );
     RtlInitUnicodeString( keypath, str );
@@ -1488,13 +1484,13 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
     {
         do
         {
-            sprintfW( autoW, auto_format, auto_idx++ );
+            swprintf( autoW, ARRAY_SIZE(autoW), auto_format, auto_idx++ );
             SERVER_START_REQ( create_device )
             {
                 req->rootdir    = 0;
                 req->manager    = wine_server_obj_handle( manager );
                 req->user_ptr   = wine_server_client_ptr( device );
-                wine_server_add_data( req, autoW, strlenW(autoW) * sizeof(WCHAR) );
+                wine_server_add_data( req, autoW, lstrlenW(autoW) * sizeof(WCHAR) );
                 status = wine_server_call( req );
             }
             SERVER_END_REQ;
@@ -2793,7 +2789,7 @@ BOOLEAN WINAPI PsGetVersion(ULONG *major, ULONG *minor, ULONG *build, UNICODE_ST
     if (version)
     {
 #if 0  /* FIXME: GameGuard passes an uninitialized pointer in version->Buffer */
-        size_t len = min( strlenW(info.szCSDVersion)*sizeof(WCHAR), version->MaximumLength );
+        size_t len = min( lstrlenW(info.szCSDVersion)*sizeof(WCHAR), version->MaximumLength );
         memcpy( version->Buffer, info.szCSDVersion, len );
         if (len < version->MaximumLength) version->Buffer[len / sizeof(WCHAR)] = 0;
         version->Length = len;
@@ -3220,7 +3216,7 @@ static NTSTATUS open_driver( const UNICODE_STRING *service_name, SC_HANDLE *serv
     memcpy( name, service_name->Buffer, service_name->Length );
     name[ service_name->Length / sizeof(WCHAR) ] = 0;
 
-    if (strncmpW( name, servicesW, strlenW(servicesW) ))
+    if (wcsncmp( name, servicesW, lstrlenW(servicesW) ))
     {
         FIXME( "service name %s is not a keypath\n", debugstr_us(service_name) );
         RtlFreeHeap( GetProcessHeap(), 0, name );
@@ -3234,7 +3230,7 @@ static NTSTATUS open_driver( const UNICODE_STRING *service_name, SC_HANDLE *serv
         return STATUS_NOT_SUPPORTED;
     }
 
-    *service = OpenServiceW( manager_handle, name + strlenW(servicesW),
+    *service = OpenServiceW( manager_handle, name + lstrlenW(servicesW),
                              SERVICE_QUERY_CONFIG | SERVICE_SET_STATUS );
     RtlFreeHeap( GetProcessHeap(), 0, name );
     CloseServiceHandle( manager_handle );
@@ -3467,20 +3463,20 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
             return NULL;
         }
 
-        if (!strncmpiW( path, systemrootW, 12 ))
+        if (!wcsnicmp( path, systemrootW, 12 ))
         {
             WCHAR buffer[MAX_PATH];
 
             GetWindowsDirectoryW(buffer, MAX_PATH);
 
-            str = HeapAlloc(GetProcessHeap(), 0, (size -11 + strlenW(buffer))
+            str = HeapAlloc(GetProcessHeap(), 0, (size -11 + lstrlenW(buffer))
                                                         * sizeof(WCHAR));
             lstrcpyW(str, buffer);
             lstrcatW(str, path + 11);
             HeapFree( GetProcessHeap(), 0, path );
             path = str;
         }
-        else if (!strncmpW( path, ntprefixW, 4 ))
+        else if (!wcsncmp( path, ntprefixW, 4 ))
             str = path + 4;
         else
             str = path;
@@ -3491,7 +3487,7 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
         WCHAR buffer[MAX_PATH];
         GetSystemDirectoryW(buffer, MAX_PATH);
         path = HeapAlloc(GetProcessHeap(),0,
-          (strlenW(buffer) + strlenW(driversW) + strlenW(driver_name) + strlenW(postfixW) + 1)
+          (lstrlenW(buffer) + lstrlenW(driversW) + lstrlenW(driver_name) + lstrlenW(postfixW) + 1)
           *sizeof(WCHAR));
         lstrcpyW(path, buffer);
         lstrcatW(path, driversW);
@@ -3518,7 +3514,7 @@ static NTSTATUS WINAPI init_driver( DRIVER_OBJECT *driver_object, UNICODE_STRING
     HMODULE module;
 
     /* Retrieve driver name from the keyname */
-    driver_name = strrchrW( keyname->Buffer, '\\' );
+    driver_name = wcsrchr( keyname->Buffer, '\\' );
     driver_name++;
 
     module = load_driver( driver_name, keyname );
@@ -3554,12 +3550,12 @@ static BOOLEAN get_drv_name( UNICODE_STRING *drv_name, const UNICODE_STRING *ser
     static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
     WCHAR *str;
 
-    if (!(str = heap_alloc( sizeof(driverW) + service_name->Length - strlenW(servicesW)*sizeof(WCHAR) )))
+    if (!(str = heap_alloc( sizeof(driverW) + service_name->Length - lstrlenW(servicesW)*sizeof(WCHAR) )))
         return FALSE;
 
     lstrcpyW( str, driverW );
-    lstrcpynW( str + strlenW(driverW), service_name->Buffer + strlenW(servicesW),
-            service_name->Length/sizeof(WCHAR) - strlenW(servicesW) + 1 );
+    lstrcpynW( str + lstrlenW(driverW), service_name->Buffer + lstrlenW(servicesW),
+            service_name->Length/sizeof(WCHAR) - lstrlenW(servicesW) + 1 );
     RtlInitUnicodeString( drv_name, str );
     return TRUE;
 }
@@ -3663,58 +3659,6 @@ PKEVENT WINAPI IoCreateNotificationEvent(UNICODE_STRING *name, HANDLE *handle)
 {
     FIXME( "stub: %s %p\n", debugstr_us(name), handle );
     return NULL;
-}
-
-
-/*********************************************************************
- *                  memcpy   (NTOSKRNL.@)
- *
- * NOTES
- *  Behaves like memmove.
- */
-void * __cdecl NTOSKRNL_memcpy( void *dst, const void *src, size_t n )
-{
-    return memmove( dst, src, n );
-}
-
-/*********************************************************************
- *                  memset   (NTOSKRNL.@)
- */
-void * __cdecl NTOSKRNL_memset( void *dst, int c, size_t n )
-{
-    return memset( dst, c, n );
-}
-
-/*********************************************************************
- *                  _stricmp   (NTOSKRNL.@)
- */
-int __cdecl NTOSKRNL__stricmp( LPCSTR str1, LPCSTR str2 )
-{
-    return _strnicmp( str1, str2, -1 );
-}
-
-/*********************************************************************
- *                  _strnicmp   (NTOSKRNL.@)
- */
-int __cdecl NTOSKRNL__strnicmp( LPCSTR str1, LPCSTR str2, size_t n )
-{
-    return _strnicmp( str1, str2, n );
-}
-
-/*********************************************************************
- *           _wcsnicmp    (NTOSKRNL.@)
- */
-INT __cdecl NTOSKRNL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, INT n )
-{
-    return strncmpiW( str1, str2, n );
-}
-
-/*********************************************************************
- *           wcsncmp    (NTOSKRNL.@)
- */
-INT __cdecl NTOSKRNL_wcsncmp( LPCWSTR str1, LPCWSTR str2, INT n )
-{
-    return strncmpW( str1, str2, n );
 }
 
 
