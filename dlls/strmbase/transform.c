@@ -153,8 +153,10 @@ static void transform_destroy(BaseFilter *iface)
             IPin_Release(peer);
         }
         IPin_Disconnect(filter->ppPins[i]);
-        IPin_Release(filter->ppPins[i]);
     }
+
+    BaseInputPin_Destroy(impl_BaseInputPin_from_IPin(filter->ppPins[0]));
+    BaseOutputPin_Destroy(impl_BaseOutputPin_from_IPin(filter->ppPins[1]));
 
     CoTaskMemFree(filter->ppPins);
 
@@ -379,7 +381,17 @@ HRESULT WINAPI TransformFilterImpl_Notify(TransformFilter *iface, IBaseFilter *s
     return QualityControlImpl_Notify((IQualityControl*)iface->qcimpl, sender, qm);
 }
 
-/** IBaseFilter implementation **/
+static ULONG WINAPI TransformFilter_InputPin_AddRef(IPin *iface)
+{
+    BaseInputPin *pin = impl_BaseInputPin_from_IPin(iface);
+    return IBaseFilter_AddRef(pin->pin.pinInfo.pFilter);
+}
+
+static ULONG WINAPI TransformFilter_InputPin_Release(IPin *iface)
+{
+    BaseInputPin *pin = impl_BaseInputPin_from_IPin(iface);
+    return IBaseFilter_Release(pin->pin.pinInfo.pFilter);
+}
 
 static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
 {
@@ -504,8 +516,8 @@ static HRESULT WINAPI TransformFilter_InputPin_NewSegment(IPin * iface, REFERENC
 static const IPinVtbl TransformFilter_InputPin_Vtbl =
 {
     BaseInputPinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BaseInputPinImpl_Release,
+    TransformFilter_InputPin_AddRef,
+    TransformFilter_InputPin_Release,
     BaseInputPinImpl_Connect,
     TransformFilter_InputPin_ReceiveConnection,
     TransformFilter_InputPin_Disconnect,
@@ -543,11 +555,23 @@ static HRESULT WINAPI transform_source_QueryInterface(IPin *iface, REFIID iid, v
     return S_OK;
 }
 
+static ULONG WINAPI transform_source_AddRef(IPin *iface)
+{
+    BaseOutputPin *pin = impl_BaseOutputPin_from_IPin(iface);
+    return IBaseFilter_AddRef(pin->pin.pinInfo.pFilter);
+}
+
+static ULONG WINAPI transform_source_Release(IPin *iface)
+{
+    BaseOutputPin *pin = impl_BaseOutputPin_from_IPin(iface);
+    return IBaseFilter_Release(pin->pin.pinInfo.pFilter);
+}
+
 static const IPinVtbl TransformFilter_OutputPin_Vtbl =
 {
     transform_source_QueryInterface,
-    BasePinImpl_AddRef,
-    BaseOutputPinImpl_Release,
+    transform_source_AddRef,
+    transform_source_Release,
     BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
     BaseOutputPinImpl_Disconnect,
