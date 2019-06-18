@@ -97,6 +97,11 @@ typedef struct VfwPinImpl
     VfwCapture *parent;
 } VfwPinImpl;
 
+static inline VfwPinImpl *impl_from_IPin(IPin *iface)
+{
+    return CONTAINING_RECORD(iface, VfwPinImpl, pin.pin.IPin_iface);
+}
+
 static IPin *vfw_capture_get_pin(BaseFilter *iface, unsigned int index)
 {
     VfwCapture *This = impl_from_BaseFilter(iface);
@@ -125,7 +130,7 @@ static void vfw_capture_destroy(BaseFilter *iface)
         IPin_Disconnect(filter->pOutputPin);
         IPin_Release(peer);
     }
-    IPin_Release(filter->pOutputPin);
+    BaseOutputPin_Destroy(&impl_from_IPin(filter->pOutputPin)->pin);
     strmbase_filter_cleanup(&filter->filter);
     CoTaskMemFree(filter);
     ObjectRefCount(FALSE);
@@ -648,11 +653,6 @@ VfwPin_Construct( IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec,
     return hr;
 }
 
-static inline VfwPinImpl *impl_from_IPin(IPin *iface)
-{
-    return CONTAINING_RECORD(iface, VfwPinImpl, pin.pin.IPin_iface);
-}
-
 static HRESULT WINAPI VfwPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
     VfwPinImpl *This = impl_from_IPin(iface);
@@ -677,20 +677,17 @@ static HRESULT WINAPI VfwPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * 
     return E_NOINTERFACE;
 }
 
+static ULONG WINAPI VfwPin_AddRef(IPin *iface)
+{
+    VfwPinImpl *pin = impl_from_IPin(iface);
+    return IBaseFilter_AddRef(pin->pin.pin.pinInfo.pFilter);
+}
+
 static ULONG WINAPI
 VfwPin_Release(IPin * iface)
 {
-   VfwPinImpl *This = impl_from_IPin(iface);
-   ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
-
-   TRACE("() -> new refcount: %u\n", refCount);
-
-   if (!refCount)
-   {
-      BaseOutputPin_Destroy(&This->pin);
-      ObjectRefCount(FALSE);
-   }
-   return refCount;
+    VfwPinImpl *pin = impl_from_IPin(iface);
+    return IBaseFilter_Release(pin->pin.pin.pinInfo.pFilter);
 }
 
 static HRESULT WINAPI
@@ -719,7 +716,7 @@ VfwPin_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)
 static const IPinVtbl VfwPin_Vtbl =
 {
     VfwPin_QueryInterface,
-    BasePinImpl_AddRef,
+    VfwPin_AddRef,
     VfwPin_Release,
     BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
