@@ -9689,13 +9689,13 @@ static void test_texturemapblend(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     color = get_surface_color(rt, 5, 5);
-    todo_wine ok(compare_color(color, 0x000000ff, 2), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x000000ff, 2), "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 400, 5);
     ok(compare_color(color, 0x000000ff, 2), "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 5, 245);
     ok(compare_color(color, 0x00000080, 2), "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 400, 245);
-    todo_wine ok(compare_color(color, 0x00000080, 2), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00000080, 2), "Got unexpected color 0x%08x.\n", color);
 
     /* Turn legacy texture blending on again. */
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_TEXTUREMAPBLEND, D3DTBLEND_ADD);
