@@ -7014,6 +7014,7 @@ static void test_dom_implementation(IHTMLDocument2 *doc)
         IHTMLDocument7 *new_document;
         IHTMLLocation *location;
         IHTMLWindow2 *window;
+        VARIANT v;
         IDispatch *disp;
 
         test_disp((IUnknown*)dom_implementation, &DIID_DispHTMLDOMImplementation, NULL, "[object]");
@@ -7044,6 +7045,12 @@ static void test_dom_implementation(IHTMLDocument2 *doc)
 
         hres = IHTMLDocument2_get_location(new_document2, &location);
         ok(hres == E_UNEXPECTED, "get_location returned: %08x\n", hres);
+
+        memset(&v, 0xcc, sizeof(v));
+        hres = IHTMLDocument7_get_onmsthumbnailclick(new_document, &v);
+        ok(hres == S_OK, "get_onmsthumbnailclick returned: %08x\n", hres);
+        ok(V_VT(&v) == VT_NULL, "got %u\n", V_VT(&v));
+        ok((DWORD)(DWORD_PTR)V_DISPATCH(&v) == 0xcccccccc, "got %p\n", V_DISPATCH(&v));
 
         IHTMLDocument2_Release(new_document2);
         IHTMLDocument7_Release(new_document);
