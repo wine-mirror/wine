@@ -69,6 +69,7 @@ BOOLEAN WINAPI HidD_GetAttributes(HANDLE HidDeviceObject, PHIDD_ATTRIBUTES Attr)
 
     if (ret)
     {
+        Attr->Size = sizeof(HIDD_ATTRIBUTES);
         Attr->VendorID = info.VendorID;
         Attr->ProductID = info.ProductID;
         Attr->VersionNumber = info.VersionNumber;
