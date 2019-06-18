@@ -256,8 +256,10 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
     HRESULT hres;
 
     hres = ITypeInfo_GetDocumentation(dti, desc->memid, &name, NULL, NULL, NULL);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        WARN("GetDocumentation failed: %08x\n", hres);
         return;
+    }
 
     for(info = data->funcs; info < data->funcs+data->func_cnt; info++) {
         if(info->id == desc->memid || !wcscmp(info->name, name)) {
@@ -268,6 +270,8 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
             break;
         }
     }
+
+    TRACE("adding %s...\n", debugstr_w(name));
 
     if(info == data->funcs+data->func_cnt) {
         if(data->func_cnt == data->func_size)
@@ -414,7 +418,6 @@ static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp
         }
 
         if(!hook || hook->invoke) {
-            TRACE("adding...\n");
             add_func_info(data, tid, funcdesc, disp_typeinfo ? disp_typeinfo : typeinfo,
                           hook ? hook->invoke : NULL);
         }
