@@ -1688,41 +1688,16 @@ static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **
     return E_NOINTERFACE;
 }
 
+static ULONG WINAPI GSTOutPin_AddRef(IPin *iface)
+{
+    GSTOutPin *pin = impl_source_from_IPin(iface);
+    return IBaseFilter_AddRef(pin->pin.pin.pinInfo.pFilter);
+}
+
 static ULONG WINAPI GSTOutPin_Release(IPin *iface)
 {
-    GSTOutPin *This = impl_source_from_IPin(iface);
-    ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
-
-    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
-
-    mark_wine_thread();
-
-    if (!refCount) {
-        if (This->their_src) {
-            if (This->flipfilter) {
-                gst_pad_unlink(This->their_src, This->flip_sink);
-                gst_pad_unlink(This->flip_src, This->my_sink);
-                gst_object_unref(This->flip_src);
-                gst_object_unref(This->flip_sink);
-                This->flipfilter = NULL;
-                This->flip_src = This->flip_sink = NULL;
-            } else
-                gst_pad_unlink(This->their_src, This->my_sink);
-            gst_object_unref(This->their_src);
-        }
-        gst_object_unref(This->my_sink);
-        CloseHandle(This->caps_event);
-        DeleteMediaType(This->pmt);
-        FreeMediaType(&This->pin.pin.mtCurrent);
-        gst_segment_free(This->segment);
-        if(This->gstpool)
-            gst_object_unref(This->gstpool);
-        if (This->pin.pAllocator)
-            IMemAllocator_Release(This->pin.pAllocator);
-        CoTaskMemFree(This);
-        return 0;
-    }
-    return refCount;
+    GSTOutPin *pin = impl_source_from_IPin(iface);
+    return IBaseFilter_Release(pin->pin.pin.pinInfo.pFilter);
 }
 
 static HRESULT WINAPI GSTOutPin_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *amt)
@@ -1780,30 +1755,47 @@ static HRESULT WINAPI GSTOutPin_DecideAllocator(BaseOutputPin *base, IMemInputPi
     return hr;
 }
 
-static HRESULT break_source_connection(BaseOutputPin *This)
+static void free_source_pin(GSTOutPin *pin)
 {
-    HRESULT hr;
-
-    TRACE("(%p)->()\n", This);
-
-    EnterCriticalSection(This->pin.pCritSec);
-    if (!This->pin.pConnectedTo || !This->pMemInputPin)
-        hr = VFW_E_NOT_CONNECTED;
-    else
+    EnterCriticalSection(pin->pin.pin.pCritSec);
+    if (pin->pin.pin.pConnectedTo)
     {
-        hr = IMemAllocator_Decommit(This->pAllocator);
-        if (SUCCEEDED(hr))
-            hr = IPin_Disconnect(This->pin.pConnectedTo);
-        IPin_Disconnect((IPin *)This);
+        if (SUCCEEDED(IMemAllocator_Decommit(pin->pin.pAllocator)))
+            IPin_Disconnect(pin->pin.pin.pConnectedTo);
+        IPin_Disconnect(&pin->pin.pin.IPin_iface);
     }
-    LeaveCriticalSection(This->pin.pCritSec);
+    LeaveCriticalSection(pin->pin.pin.pCritSec);
 
-    return hr;
+    if (pin->their_src)
+    {
+        if (pin->flipfilter)
+        {
+            gst_pad_unlink(pin->their_src, pin->flip_sink);
+            gst_pad_unlink(pin->flip_src, pin->my_sink);
+            gst_object_unref(pin->flip_src);
+            gst_object_unref(pin->flip_sink);
+            pin->flipfilter = NULL;
+            pin->flip_src = pin->flip_sink = NULL;
+        }
+        else
+            gst_pad_unlink(pin->their_src, pin->my_sink);
+        gst_object_unref(pin->their_src);
+    }
+    gst_object_unref(pin->my_sink);
+    CloseHandle(pin->caps_event);
+    DeleteMediaType(pin->pmt);
+    FreeMediaType(&pin->pin.pin.mtCurrent);
+    gst_segment_free(pin->segment);
+    if (pin->gstpool)
+        gst_object_unref(pin->gstpool);
+    if (pin->pin.pAllocator)
+        IMemAllocator_Release(pin->pin.pAllocator);
+    CoTaskMemFree(pin);
 }
 
 static const IPinVtbl GST_OutputPin_Vtbl = {
     GSTOutPin_QueryInterface,
-    BasePinImpl_AddRef,
+    GSTOutPin_AddRef,
     GSTOutPin_Release,
     BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
@@ -1857,7 +1849,6 @@ static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDI
 
 static HRESULT GST_RemoveOutputPins(GSTImpl *This)
 {
-    HRESULT hr;
     ULONG i;
 
     TRACE("(%p)\n", This);
@@ -1871,11 +1862,9 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
     gst_object_unref(This->their_sink);
     This->my_src = This->their_sink = NULL;
 
-    for (i = 0; i < This->cStreams; i++) {
-        hr = break_source_connection(&This->ppPins[i]->pin);
-        TRACE("Disconnect: %08x\n", hr);
-        IPin_Release(&This->ppPins[i]->pin.pin.IPin_iface);
-    }
+    for (i = 0; i < This->cStreams; ++i)
+        free_source_pin(This->ppPins[i]);
+
     This->cStreams = 0;
     CoTaskMemFree(This->ppPins);
     This->ppPins = NULL;
