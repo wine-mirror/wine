@@ -225,7 +225,6 @@ static void qt_splitter_destroy(BaseFilter *iface)
 {
     QTSplitter *filter = impl_from_BaseFilter(iface);
     IPin *peer = NULL;
-    ULONG pinref;
 
     EnterCriticalSection(&filter->csReceive);
     /* Don't need to clean up output pins, disconnecting input pin will do that */
@@ -235,15 +234,15 @@ static void qt_splitter_destroy(BaseFilter *iface)
         IPin_Disconnect(peer);
         IPin_Release(peer);
     }
-    pinref = IPin_Release(&filter->pInputPin.pin.IPin_iface);
-    if (pinref)
-    {
-        ERR("pinref should be null, is %u, destroying anyway\n", pinref);
-        assert((LONG)pinref > 0);
 
-        while (pinref)
-            pinref = IPin_Release(&filter->pInputPin.pin.IPin_iface);
-    }
+    FreeMediaType(&filter->pInputPin.pin.mtCurrent);
+    if (filter->pInputPin.pAlloc)
+        IMemAllocator_Release(filter->pInputPin.pAlloc);
+    filter->pInputPin.pAlloc = NULL;
+    if (filter->pInputPin.pReader)
+        IAsyncReader_Release(filter->pInputPin.pReader);
+    filter->pInputPin.pReader = NULL;
+    filter->pInputPin.pin.IPin_iface.lpVtbl = NULL;
 
     if (filter->pQTMovie)
     {
@@ -833,26 +832,16 @@ static inline QTInPin *impl_from_IPin( IPin *iface )
     return CONTAINING_RECORD(iface, QTInPin, pin.IPin_iface);
 }
 
+static ULONG WINAPI QTInPin_AddRef(IPin *iface)
+{
+    QTInPin *pin = impl_from_IPin(iface);
+    return IBaseFilter_AddRef(pin->pin.pinInfo.pFilter);
+}
+
 static ULONG WINAPI QTInPin_Release(IPin *iface)
 {
-    QTInPin *This = impl_from_IPin(iface);
-    ULONG refCount = InterlockedDecrement(&This->pin.refCount);
-
-    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
-    if (!refCount)
-    {
-        FreeMediaType(&This->pin.mtCurrent);
-        if (This->pAlloc)
-            IMemAllocator_Release(This->pAlloc);
-        This->pAlloc = NULL;
-        if (This->pReader)
-            IAsyncReader_Release(This->pReader);
-        This->pReader = NULL;
-        This->pin.IPin_iface.lpVtbl = NULL;
-        return 0;
-    }
-    else
-        return refCount;
+    QTInPin *pin = impl_from_IPin(iface);
+    return IBaseFilter_Release(pin->pin.pinInfo.pFilter);
 }
 
 static HRESULT QT_Process_Video_Track(QTSplitter* filter, Track trk)
@@ -1288,7 +1277,7 @@ static HRESULT WINAPI QTInPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **ppEn
 
 static const IPinVtbl QT_InputPin_Vtbl = {
     QTInPin_QueryInterface,
-    BasePinImpl_AddRef,
+    QTInPin_AddRef,
     QTInPin_Release,
     BaseInputPinImpl_Connect,
     QTInPin_ReceiveConnection,
