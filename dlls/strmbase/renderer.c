@@ -45,6 +45,18 @@ static const IQualityControlVtbl Renderer_QualityControl_Vtbl = {
     QualityControlImpl_SetSink
 };
 
+static ULONG WINAPI BaseRenderer_InputPin_AddRef(IPin *iface)
+{
+    BaseInputPin *pin = impl_BaseInputPin_from_IPin(iface);
+    return IBaseFilter_AddRef(pin->pin.pinInfo.pFilter);
+}
+
+static ULONG WINAPI BaseRenderer_InputPin_Release(IPin *iface)
+{
+    BaseInputPin *pin = impl_BaseInputPin_from_IPin(iface);
+    return IBaseFilter_Release(pin->pin.pinInfo.pFilter);
+}
+
 static HRESULT WINAPI BaseRenderer_InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
     BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
@@ -164,8 +176,8 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndFlush(IPin * iface)
 static const IPinVtbl BaseRenderer_InputPin_Vtbl =
 {
     BaseInputPinImpl_QueryInterface,
-    BasePinImpl_AddRef,
-    BaseInputPinImpl_Release,
+    BaseRenderer_InputPin_AddRef,
+    BaseRenderer_InputPin_Release,
     BaseInputPinImpl_Connect,
     BaseRenderer_InputPin_ReceiveConnection,
     BaseRenderer_InputPin_Disconnect,
@@ -298,7 +310,7 @@ void strmbase_renderer_cleanup(BaseRenderer *filter)
         IPin_Release(peer);
     }
     IPin_Disconnect(&filter->pInputPin->pin.IPin_iface);
-    IPin_Release(&filter->pInputPin->pin.IPin_iface);
+    BaseInputPin_Destroy(filter->pInputPin);
 
     if (filter->pPosition)
         IUnknown_Release(filter->pPosition);
