@@ -1,5 +1,5 @@
 MODULE    = olesvr.dll16
 IMPORTS   = gdi32
-EXTRADLLFLAGS = -m16 -Wb,--main-module,olesvr32.dll
+EXTRADLLFLAGS = -m16 -mno-cygwin -Wb,--main-module,olesvr32.dll
 
 C_SRCS = olesvr.c
