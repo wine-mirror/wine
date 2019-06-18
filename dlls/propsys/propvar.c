@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -37,7 +35,6 @@
 #include "strsafe.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(propsys);
 
@@ -124,7 +121,7 @@ static HRESULT PROPVAR_ConvertNumber(REFPROPVARIANT pv, int dest_bits,
     case VT_BSTR:
     {
         WCHAR *end;
-        *res = strtolW(pv->u.pwszVal, &end, 0);
+        *res = wcstol(pv->u.pwszVal, &end, 0);
         if (pv->u.pwszVal == end)
             return DISP_E_TYPEMISMATCH;
         src_signed = *res < 0;
@@ -587,7 +584,7 @@ static void PROPVAR_GUIDToWSTR(REFGUID guid, WCHAR *str)
         '-','%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','%','0','2','X',
         '%','0','2','X','%','0','2','X','%','0','2','X','}',0};
 
-    sprintfW(str, format, guid->Data1, guid->Data2, guid->Data3,
+    swprintf(str, 39, format, guid->Data1, guid->Data2, guid->Data3,
             guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
             guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 }
@@ -764,7 +761,7 @@ HRESULT WINAPI PropVariantToGUID(const PROPVARIANT *ppropvar, GUID *guid)
     case VT_BSTR:
         return PROPVAR_WCHARToGUID(ppropvar->u.bstrVal, SysStringLen(ppropvar->u.bstrVal), guid);
     case VT_LPWSTR:
-        return PROPVAR_WCHARToGUID(ppropvar->u.pwszVal, strlenW(ppropvar->u.pwszVal), guid);
+        return PROPVAR_WCHARToGUID(ppropvar->u.pwszVal, lstrlenW(ppropvar->u.pwszVal), guid);
     case VT_CLSID:
         memcpy(guid, ppropvar->u.puuid, sizeof(*ppropvar->u.puuid));
         return S_OK;
