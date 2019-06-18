@@ -31,7 +31,6 @@
 
 #include "oledb_private.h"
 
-#include "wine/unicode.h"
 #include "wine/heap.h"
 #include "wine/list.h"
 

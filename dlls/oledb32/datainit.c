@@ -31,7 +31,6 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
@@ -299,11 +298,11 @@ struct mode_propval
     DWORD value;
 };
 
-static int dbmodeprop_compare(const void *a, const void *b)
+static int __cdecl dbmodeprop_compare(const void *a, const void *b)
 {
     const WCHAR *src = a;
     const struct mode_propval *propval = b;
-    return strcmpiW(src, propval->name);
+    return wcsicmp(src, propval->name);
 }
 
 static HRESULT convert_dbproperty_mode(const WCHAR *src, VARIANT *dest)
@@ -447,7 +446,7 @@ static HRESULT parse_init_string(const WCHAR *initstring, struct dbprops *props)
     props->count = 0;
 
     start = initstring;
-    while (start && (eq = strchrW(start, '=')))
+    while (start && (eq = wcschr(start, '=')))
     {
         static const WCHAR providerW[] = {'P','r','o','v','i','d','e','r',0};
         WCHAR *delim, quote;
@@ -462,10 +461,10 @@ static HRESULT parse_init_string(const WCHAR *initstring, struct dbprops *props)
         {
             /* for quoted value string, skip opening mark, look for terminating one */
             eq++;
-            delim = strchrW(eq, quote);
+            delim = wcschr(eq, quote);
         }
         else
-            delim = strchrW(eq, ';');
+            delim = wcschr(eq, ';');
 
         if (delim)
             value = SysAllocStringLen(eq, delim - eq);
@@ -482,7 +481,7 @@ static HRESULT parse_init_string(const WCHAR *initstring, struct dbprops *props)
         }
         start = delim;
 
-        if (!strcmpiW(name, providerW))
+        if (!wcsicmp(name, providerW))
         {
             SysFreeString(name);
             SysFreeString(value);
@@ -519,7 +518,7 @@ static const struct dbproperty *get_known_dprop_descr(BSTR name)
 
         n = (min+max)/2;
 
-        r = strcmpiW(dbproperties[n].name, name);
+        r = wcsicmp(dbproperties[n].name, name);
         if (!r)
             break;
 
@@ -565,9 +564,9 @@ static HRESULT get_dbpropset_from_proplist(struct dbprops *props, DBPROPSET **pr
             /* provider specific property is always VT_BSTR */
             len = SysStringLen(pair->name) + SysStringLen(pair->value) + 1 /* for '=' */;
             str = SysAllocStringLen(NULL, len);
-            strcpyW(str, pair->name);
-            strcatW(str, eqW);
-            strcatW(str, pair->value);
+            lstrcpyW(str, pair->name);
+            lstrcatW(str, eqW);
+            lstrcatW(str, pair->value);
 
             (*propset)->cProperties++;
             (*propset)->guidPropertySet = DBPROPSET_DBINIT;
@@ -624,9 +623,9 @@ static inline WCHAR *strdupW(const WCHAR *src)
 {
     WCHAR *dest;
     if (!src) return NULL;
-    dest = heap_alloc((strlenW(src)+1)*sizeof(WCHAR));
+    dest = heap_alloc((lstrlenW(src)+1)*sizeof(WCHAR));
     if (dest)
-        strcpyW(dest, src);
+        lstrcpyW(dest, src);
     return dest;
 }
 
@@ -635,7 +634,7 @@ static WCHAR *strstriW(const WCHAR *str, const WCHAR *sub)
     LPWSTR strlower, sublower, r;
     strlower = CharLowerW(strdupW(str));
     sublower = CharLowerW(strdupW(sub));
-    r = strstrW(strlower, sublower);
+    r = wcsstr(strlower, sublower);
     if (r)
         r = (LPWSTR)str + (r - strlower);
     heap_free(strlower);
@@ -818,7 +817,7 @@ static void write_propvalue_str(WCHAR *str, DBPROP *prop)
 
     if (V_VT(v) == VT_BSTR)
     {
-        strcatW(str, V_BSTR(v));
+        lstrcatW(str, V_BSTR(v));
         return;
     }
 
@@ -826,7 +825,7 @@ static void write_propvalue_str(WCHAR *str, DBPROP *prop)
     hr = VariantChangeType(&vstr, v, VARIANT_ALPHABOOL, VT_BSTR);
     if (hr == S_OK)
     {
-        strcatW(str, V_BSTR(&vstr));
+        lstrcatW(str, V_BSTR(&vstr));
         VariantClear(&vstr);
     }
 }
@@ -917,14 +916,14 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     IDBProperties_Release(props);
 
     /* check if we need to skip password */
-    len = strlenW(progid) + strlenW(provW) + 1; /* including ';' */
+    len = lstrlenW(progid) + lstrlenW(provW) + 1; /* including ';' */
     for (i = 0; i < count; i++)
     {
         WCHAR *descr = get_propinfo_descr(&propset->rgProperties[i], propinfoset);
         if (descr)
         {
             /* include '=' and ';' */
-            len += strlenW(descr) + 2;
+            len += lstrlenW(descr) + 2;
             len += get_propvalue_length(&propset->rgProperties[i]);
         }
 
@@ -938,9 +937,9 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     *init_string[0] = 0;
 
     /* provider name */
-    strcatW(*init_string, provW);
-    strcatW(*init_string, progid);
-    strcatW(*init_string, colW);
+    lstrcatW(*init_string, provW);
+    lstrcatW(*init_string, progid);
+    lstrcatW(*init_string, colW);
     CoTaskMemFree(progid);
 
     for (i = 0; i < count; i++)
@@ -953,10 +952,10 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
         if (descr)
         {
             static const WCHAR eqW[] = {'=',0};
-            strcatW(*init_string, descr);
-            strcatW(*init_string, eqW);
+            lstrcatW(*init_string, descr);
+            lstrcatW(*init_string, eqW);
             write_propvalue_str(*init_string, &propset->rgProperties[i]);
-            strcatW(*init_string, colW);
+            lstrcatW(*init_string, colW);
         }
     }
 
