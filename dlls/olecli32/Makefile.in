@@ -2,5 +2,7 @@ MODULE    = olecli32.dll
 IMPORTLIB = olecli32
 IMPORTS   = ole32 gdi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	olecli_main.c
