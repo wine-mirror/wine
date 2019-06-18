@@ -3950,10 +3950,13 @@ static const struct writer_characters_t writer_characters[] = {
 static void test_mxwriter_characters(void)
 {
     static const WCHAR chardataW[] = {'T','E','S','T','C','H','A','R','D','A','T','A',' ','.',0};
+    static const WCHAR embedded_nullbytes[] = {'a',0,'b',0,0,0,'c',0};
     const struct writer_characters_t *table = writer_characters;
+    IVBSAXContentHandler *vb_content;
     ISAXContentHandler *content;
     IMXWriter *writer;
     VARIANT dest;
+    BSTR str;
     HRESULT hr;
     int i = 0;
 
@@ -3962,6 +3965,9 @@ static void test_mxwriter_characters(void)
     EXPECT_HR(hr, S_OK);
 
     hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_IVBSAXContentHandler, (void**)&vb_content);
     EXPECT_HR(hr, S_OK);
 
     hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
@@ -3976,6 +3982,10 @@ static void test_mxwriter_characters(void)
     hr = ISAXContentHandler_characters(content, chardataW, 0);
     EXPECT_HR(hr, S_OK);
 
+    str = _bstr_("VbChars");
+    hr = IVBSAXContentHandler_characters(vb_content, &str);
+    EXPECT_HR(hr, S_OK);
+
     hr = ISAXContentHandler_characters(content, chardataW, ARRAY_SIZE(chardataW) - 1);
     EXPECT_HR(hr, S_OK);
 
@@ -3983,13 +3993,14 @@ static void test_mxwriter_characters(void)
     hr = IMXWriter_get_output(writer, &dest);
     EXPECT_HR(hr, S_OK);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-    ok(!lstrcmpW(_bstr_("TESTCHARDATA ."), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    ok(!lstrcmpW(_bstr_("VbCharsTESTCHARDATA ."), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
     hr = ISAXContentHandler_endDocument(content);
     EXPECT_HR(hr, S_OK);
 
     ISAXContentHandler_Release(content);
+    IVBSAXContentHandler_Release(vb_content);
     IMXWriter_Release(writer);
 
     /* try empty characters data to see if element is closed */
@@ -4023,6 +4034,65 @@ static void test_mxwriter_characters(void)
     VariantClear(&dest);
 
     ISAXContentHandler_Release(content);
+    IMXWriter_Release(writer);
+
+    /* test embedded null bytes */
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startDocument(content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_characters(content, embedded_nullbytes, ARRAY_SIZE(embedded_nullbytes));
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(SysStringLen(V_BSTR(&dest)) == ARRAY_SIZE(embedded_nullbytes), "unexpected len %d\n", SysStringLen(V_BSTR(&dest)));
+    ok(!memcmp(V_BSTR(&dest), embedded_nullbytes, ARRAY_SIZE(embedded_nullbytes)),
+       "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    ISAXContentHandler_Release(content);
+    IMXWriter_Release(writer);
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_IVBSAXContentHandler, (void**)&vb_content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IVBSAXContentHandler_startDocument(vb_content);
+    EXPECT_HR(hr, S_OK);
+
+    str = SysAllocStringLen(embedded_nullbytes, ARRAY_SIZE(embedded_nullbytes));
+    hr = IVBSAXContentHandler_characters(vb_content, &str);
+    EXPECT_HR(hr, S_OK);
+    SysFreeString(str);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(SysStringLen(V_BSTR(&dest)) == ARRAY_SIZE(embedded_nullbytes), "unexpected len %d\n", SysStringLen(V_BSTR(&dest)));
+    ok(!memcmp(V_BSTR(&dest), embedded_nullbytes, ARRAY_SIZE(embedded_nullbytes)),
+       "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    IVBSAXContentHandler_Release(vb_content);
     IMXWriter_Release(writer);
 
     /* batch tests */
