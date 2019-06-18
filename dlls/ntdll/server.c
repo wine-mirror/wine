@@ -312,7 +312,7 @@ unsigned int server_call_unlocked( void *req_ptr )
  *|     }
  *|     SERVER_END_REQ;
  */
-unsigned int wine_server_call( void *req_ptr )
+unsigned int CDECL wine_server_call( void *req_ptr )
 {
     sigset_t old_set;
     unsigned int ret;
