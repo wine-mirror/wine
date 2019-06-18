@@ -1286,7 +1286,7 @@
 @ cdecl _seterrormode(long)
 @ cdecl -arch=i386,x86_64,arm,arm64 -norelay _setjmp(ptr) MSVCRT__setjmp
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) MSVCRT__setjmp3
-@ cdecl -arch=x86_64,arm -norelay _setjmpex(ptr ptr) MSVCRT__setjmpex
+@ cdecl -arch=x86_64,arm -norelay _setjmpex(ptr ptr) __wine_setjmpex
 @ cdecl _setmaxstdio(long) MSVCRT__setmaxstdio
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long) MSVCRT__setmode

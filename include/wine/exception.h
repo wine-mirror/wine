@@ -92,17 +92,25 @@ extern "C" {
 
 #else  /* USE_COMPILER_EXCEPTIONS */
 
-#if defined(__MINGW32__) || defined(__CYGWIN__) || defined(__WINE_SETJMP_H)
-#define sigjmp_buf jmp_buf
-static inline void siglongjmp( sigjmp_buf buf, int val ) { longjmp( buf, val ); }
-# ifdef _WIN64
-int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) _setjmpex(jmp_buf,void*);
-#  define sigsetjmp(buf,sigs) _setjmpex(buf,CONTAINING_RECORD(buf,__WINE_FRAME,jmp))
-# else
-#  define sigsetjmp(buf,sigs) setjmp(buf)
-# endif
+/* jmp_buf definition that should be compatible with the one in msvcrt/setjmp.h */
+
+#if defined(__MINGW32__) || defined(__WINE_SETJMP_H)
+typedef _JUMP_BUFFER __wine_jmp_buf;
+#elif defined(__i386__)
+typedef struct { int reg[16]; } __wine_jmp_buf;
+#elif defined(__x86_64__)
+typedef struct { DECLSPEC_ALIGN(16) struct { unsigned __int64 Part[2]; } reg[16]; } __wine_jmp_buf;
+#elif defined(__arm__)
+typedef struct { int reg[28]; } __wine_jmp_buf;
+#elif defined(__aarch64__)
+typedef struct { __int64 reg[24]; } __wine_jmp_buf;
+#else
+typedef struct { int reg; } __wine_jmp_buf;
 #endif
 
+extern int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) __wine_setjmpex( __wine_jmp_buf *buf,
+                                                   EXCEPTION_REGISTRATION_RECORD *frame ) DECLSPEC_HIDDEN;
+extern void __cdecl __wine_longjmp( __wine_jmp_buf *buf, int retval ) DECLSPEC_HIDDEN DECLSPEC_NORETURN;
 extern void __cdecl __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record,
                                        void (*target)(void) ) DECLSPEC_HIDDEN DECLSPEC_NORETURN;
 extern DWORD __cdecl __wine_exception_handler( EXCEPTION_RECORD *record,
@@ -144,8 +152,7 @@ extern DWORD __cdecl __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
          } else { \
              __f.frame.Handler = __wine_exception_handler; \
              __f.u.filter = (func); \
-             __f.longjmp = siglongjmp; \
-             if (sigsetjmp( __f.jmp, 0 )) { \
+             if (__wine_setjmpex( &__f.jmp, &__f.frame )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
 
@@ -157,8 +164,7 @@ extern DWORD __cdecl __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
              __f.frame.Handler = __wine_exception_ctx_handler; \
              __f.u.filter_ctx = (func); \
              __f.ctx = context; \
-             __f.longjmp = siglongjmp; \
-             if (sigsetjmp( __f.jmp, 0 )) { \
+             if (__wine_setjmpex( &__f.jmp, &__f.frame )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
 
@@ -169,20 +175,18 @@ extern DWORD __cdecl __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
              break; \
          } else { \
              __f.frame.Handler = __wine_exception_handler_page_fault; \
-             __f.longjmp = siglongjmp; \
-             if (sigsetjmp( __f.jmp, 0 )) { \
+             if (__wine_setjmpex( &__f.jmp, &__f.frame )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
 
-/* convenience handler for all exception */
+/* convenience handler for all exceptions */
 #define __EXCEPT_ALL \
              } while(0); \
              __wine_pop_frame( &__f.frame ); \
              break; \
          } else { \
              __f.frame.Handler = __wine_exception_handler_all; \
-             __f.longjmp = siglongjmp; \
-             if (sigsetjmp( __f.jmp, 0 )) { \
+             if (__wine_setjmpex( &__f.jmp, &__f.frame )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
 
@@ -245,8 +249,7 @@ typedef struct __tagWINE_FRAME
         __WINE_FINALLY_CTX finally_func_ctx;
     } u;
     void *ctx;
-    sigjmp_buf jmp;
-    void (*longjmp)(sigjmp_buf,int);
+    __wine_jmp_buf jmp;
     /* hack to make GetExceptionCode() work in handler */
     DWORD ExceptionCode;
     const struct __tagWINE_FRAME *ExceptionRecord;

@@ -134,65 +134,7 @@ unsigned int CDECL __CxxQueryExceptionSize(void)
  */
 __ASM_GLOBAL_FUNC(MSVCRT__setjmp,
                   "mov r1, #0\n\t"  /* frame */
-                  "b " __ASM_NAME("MSVCRT__setjmpex"));
-
-/*******************************************************************
- *		_setjmpex (MSVCRT.@)
- */
-__ASM_GLOBAL_FUNC(MSVCRT__setjmpex,
-                  "str r1, [r0]\n\t"              /* jmp_buf->Frame */
-                  "str r4, [r0, #0x4]\n\t"        /* jmp_buf->R4 */
-                  "str r5, [r0, #0x8]\n\t"        /* jmp_buf->R5 */
-                  "str r6, [r0, #0xc]\n\t"        /* jmp_buf->R6 */
-                  "str r7, [r0, #0x10]\n\t"       /* jmp_buf->R7 */
-                  "str r8, [r0, #0x14]\n\t"       /* jmp_buf->R8 */
-                  "str r9, [r0, #0x18]\n\t"       /* jmp_buf->R9 */
-                  "str r10, [r0, #0x1c]\n\t"      /* jmp_buf->R10 */
-                  "str r11, [r0, #0x20]\n\t"      /* jmp_buf->R11 */
-                  "str sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
-                  "str lr, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
-#ifndef __SOFTFP__
-                  "vmrs r2, fpscr\n\t"
-                  "str r2, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
-                  "vstr d8,  [r0, #0x30]\n\t"     /* jmp_buf->D[0] */
-                  "vstr d9,  [r0, #0x38]\n\t"     /* jmp_buf->D[1] */
-                  "vstr d10, [r0, #0x40]\n\t"     /* jmp_buf->D[2] */
-                  "vstr d11, [r0, #0x48]\n\t"     /* jmp_buf->D[3] */
-                  "vstr d12, [r0, #0x50]\n\t"     /* jmp_buf->D[4] */
-                  "vstr d13, [r0, #0x58]\n\t"     /* jmp_buf->D[5] */
-                  "vstr d14, [r0, #0x60]\n\t"     /* jmp_buf->D[6] */
-                  "vstr d15, [r0, #0x68]\n\t"     /* jmp_buf->D[7] */
-#endif
-                  "mov r0, #0\n\t"
-                  "bx lr");
-
-
-extern void DECLSPEC_NORETURN CDECL longjmp_set_regs(struct MSVCRT___JUMP_BUFFER *jmp, int retval);
-__ASM_GLOBAL_FUNC(longjmp_set_regs,
-                  "ldr r4, [r0, #0x4]\n\t"        /* jmp_buf->R4 */
-                  "ldr r5, [r0, #0x8]\n\t"        /* jmp_buf->R5 */
-                  "ldr r6, [r0, #0xc]\n\t"        /* jmp_buf->R6 */
-                  "ldr r7, [r0, #0x10]\n\t"       /* jmp_buf->R7 */
-                  "ldr r8, [r0, #0x14]\n\t"       /* jmp_buf->R8 */
-                  "ldr r9, [r0, #0x18]\n\t"       /* jmp_buf->R9 */
-                  "ldr r10, [r0, #0x1c]\n\t"      /* jmp_buf->R10 */
-                  "ldr r11, [r0, #0x20]\n\t"      /* jmp_buf->R11 */
-                  "ldr sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
-                  "ldr r2, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
-#ifndef __SOFTFP__
-                  "ldr r3, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
-                  "vmsr fpscr, r3\n\t"
-                  "vldr d8,  [r0, #0x30]\n\t"     /* jmp_buf->D[0] */
-                  "vldr d9,  [r0, #0x38]\n\t"     /* jmp_buf->D[1] */
-                  "vldr d10, [r0, #0x40]\n\t"     /* jmp_buf->D[2] */
-                  "vldr d11, [r0, #0x48]\n\t"     /* jmp_buf->D[3] */
-                  "vldr d12, [r0, #0x50]\n\t"     /* jmp_buf->D[4] */
-                  "vldr d13, [r0, #0x58]\n\t"     /* jmp_buf->D[5] */
-                  "vldr d14, [r0, #0x60]\n\t"     /* jmp_buf->D[6] */
-                  "vldr d15, [r0, #0x68]\n\t"     /* jmp_buf->D[7] */
-#endif
-                  "mov r0, r1\n\t"                /* retval */
-                  "bx r2");
+                  "b " __ASM_NAME("__wine_setjmpex"));
 
 /*******************************************************************
  *		longjmp (MSVCRT.@)
@@ -212,7 +154,7 @@ void __cdecl MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval)
         rec.ExceptionInformation[0] = (DWORD_PTR)jmp;
         RtlUnwind((void *)jmp->Frame, (void *)jmp->Pc, &rec, IntToPtr(retval));
     }
-    longjmp_set_regs(jmp, retval);
+    __wine_longjmp( (__wine_jmp_buf *)jmp, retval );
 }
 
 /*********************************************************************

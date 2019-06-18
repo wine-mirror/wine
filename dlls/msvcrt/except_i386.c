@@ -1023,25 +1023,6 @@ typedef void (__stdcall *MSVCRT_unwind_function)(const struct MSVCRT___JUMP_BUFF
                        "movl %eax,20(%ecx)\n\t"  /* jmp_buf.Eip */  \
                        "jmp " __ASM_NAME("__regs_") # name )
 
-/* restore the registers from the jmp buf upon longjmp */
-extern void DECLSPEC_NORETURN longjmp_set_regs( struct MSVCRT___JUMP_BUFFER *jmp, int retval );
-__ASM_GLOBAL_FUNC( longjmp_set_regs,
-                   "movl 4(%esp),%ecx\n\t"   /* jmp_buf */
-                   "movl 8(%esp),%eax\n\t"   /* retval */
-                   "movl 0(%ecx),%ebp\n\t"   /* jmp_buf.Ebp */
-                   "movl 4(%ecx),%ebx\n\t"   /* jmp_buf.Ebx */
-                   "movl 8(%ecx),%edi\n\t"   /* jmp_buf.Edi */
-                   "movl 12(%ecx),%esi\n\t"  /* jmp_buf.Esi */
-                   "movl 16(%ecx),%esp\n\t"  /* jmp_buf.Esp */
-                   "addl $4,%esp\n\t"        /* get rid of return address */
-                   "jmp *20(%ecx)\n\t"       /* jmp_buf.Eip */ )
-
-/*
- * The signatures of the setjmp/longjmp functions do not match that
- * declared in the setjmp header so they don't follow the regular naming
- * convention to avoid conflicts.
- */
-
 /*******************************************************************
  *		_setjmp (MSVCRT.@)
  */
@@ -1126,7 +1107,7 @@ void CDECL MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval)
     if (!retval)
         retval = 1;
 
-    longjmp_set_regs( jmp, retval );
+    __wine_longjmp( (__wine_jmp_buf *)jmp, retval );
 }
 
 /*********************************************************************

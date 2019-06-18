@@ -5041,7 +5041,7 @@ void write_exceptions( FILE *file )
     fprintf( file, "    EXCEPTION_REGISTRATION_RECORD frame; \\\n");
     fprintf( file, "    __filter_func                 filter; \\\n");
     fprintf( file, "    __finally_func                finally; \\\n");
-    fprintf( file, "    sigjmp_buf                    jmp; \\\n");
+    fprintf( file, "    __wine_jmp_buf                jmp; \\\n");
     fprintf( file, "    DWORD                         code; \\\n");
     fprintf( file, "    unsigned char                 abnormal_termination; \\\n");
     fprintf( file, "    unsigned char                 filter_level; \\\n");
@@ -5061,7 +5061,7 @@ void write_exceptions( FILE *file )
     fprintf( file, "        __wine_pop_frame( &exc_frame->frame );\n");
     fprintf( file, "    }\n");
     fprintf( file, "    exc_frame->filter_level = 0;\n");
-    fprintf( file, "    siglongjmp( exc_frame->jmp, 1 );\n");
+    fprintf( file, "    __wine_longjmp( &exc_frame->jmp, 1 );\n");
     fprintf( file, "}\n");
     fprintf( file, "\n");
     fprintf( file, "static DWORD __cdecl __widl_exception_handler( EXCEPTION_RECORD *record,\n");
@@ -5087,7 +5087,7 @@ void write_exceptions( FILE *file )
     fprintf( file, "}\n");
     fprintf( file, "\n");
     fprintf( file, "#define RpcTryExcept \\\n");
-    fprintf( file, "    if (!sigsetjmp( __frame->jmp, 0 )) \\\n");
+    fprintf( file, "    if (!__wine_setjmpex( &__frame->jmp, &__frame->frame )) \\\n");
     fprintf( file, "    { \\\n");
     fprintf( file, "        if (!__frame->finally_level) \\\n" );
     fprintf( file, "            __wine_push_frame( &__frame->frame ); \\\n");
