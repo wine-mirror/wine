@@ -9500,6 +9500,7 @@ static void test_texturemapblend(void)
     DDSURFACEDESC2 surface_desc;
     IDirect3DTexture2 *texture;
     IDirect3DDevice3 *device;
+    DWORD texturemapblend;
     IDirectDraw4 *ddraw;
     IDirect3D3 *d3d;
     DDCOLORKEY ckey;
@@ -9556,6 +9557,10 @@ static void test_texturemapblend(void)
     viewport = create_viewport(device, 0, 0, 640, 480);
     hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_GetRenderState(device, D3DRENDERSTATE_TEXTUREMAPBLEND, &texturemapblend);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(texturemapblend == D3DTBLEND_MODULATE, "Got unexpected texture map blend %#x.\n", texturemapblend);
 
     /* Test alpha with DDPF_ALPHAPIXELS texture - should be taken from texture
      * alpha channel.
