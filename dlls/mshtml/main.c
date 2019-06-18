@@ -705,6 +705,7 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IDispatch);
     X(IID_IDispatchEx);
     X(IID_IDispatchJS);
+    X(IID_IDisplayServices);
     X(IID_UndocumentedScriptIface);
     X(IID_IEnumConnections);
     X(IID_IEnumVARIANT);
@@ -719,6 +720,8 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IInternetProtocol);
     X(IID_IInternetProtocolRoot);
     X(IID_IManagedObject);
+    X(IID_IMarkupContainer);
+    X(IID_IMarkupServices);
     X(IID_IMarshal);
     X(IID_IMonikerProp);
     X(IID_IObjectIdentity);
