@@ -1211,7 +1211,6 @@ static void gstdemux_destroy(BaseFilter *iface)
 {
     GSTImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
     IPin *connected = NULL;
-    ULONG pinref;
     HRESULT hr;
 
     CloseHandle(filter->no_more_pads_event);
@@ -1227,16 +1226,16 @@ static void gstdemux_destroy(BaseFilter *iface)
         hr = IPin_Disconnect(&filter->pInputPin.pin.IPin_iface);
         assert(hr == S_OK);
     }
-    pinref = IPin_Release(&filter->pInputPin.pin.IPin_iface);
-    if (pinref)
-    {
-        /* Valgrind could find this, if I kill it here */
-        ERR("pinref should be null, is %u, destroying anyway\n", pinref);
-        assert((LONG)pinref > 0);
 
-        while (pinref)
-            pinref = IPin_Release(&filter->pInputPin.pin.IPin_iface);
-    }
+    FreeMediaType(&filter->pInputPin.pin.mtCurrent);
+    if (filter->pInputPin.pAlloc)
+        IMemAllocator_Release(filter->pInputPin.pAlloc);
+    filter->pInputPin.pAlloc = NULL;
+    if (filter->pInputPin.pReader)
+        IAsyncReader_Release(filter->pInputPin.pReader);
+    filter->pInputPin.pReader = NULL;
+    filter->pInputPin.pin.IPin_iface.lpVtbl = NULL;
+
     if (filter->bus)
     {
         gst_bus_set_sync_handler(filter->bus, NULL, NULL, NULL);
@@ -1892,24 +1891,16 @@ static inline GSTInPin *impl_sink_from_IPin(IPin *iface)
     return CONTAINING_RECORD(iface, GSTInPin, pin.IPin_iface);
 }
 
+static ULONG WINAPI GSTInPin_AddRef(IPin *iface)
+{
+    GSTInPin *pin = impl_sink_from_IPin(iface);
+    return IBaseFilter_AddRef(pin->pin.pinInfo.pFilter);
+}
+
 static ULONG WINAPI GSTInPin_Release(IPin *iface)
 {
-    GSTInPin *This = impl_sink_from_IPin(iface);
-    ULONG refCount = InterlockedDecrement(&This->pin.refCount);
-
-    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
-    if (!refCount) {
-        FreeMediaType(&This->pin.mtCurrent);
-        if (This->pAlloc)
-            IMemAllocator_Release(This->pAlloc);
-        This->pAlloc = NULL;
-        if (This->pReader)
-            IAsyncReader_Release(This->pReader);
-        This->pReader = NULL;
-        This->pin.IPin_iface.lpVtbl = NULL;
-        return 0;
-    } else
-        return refCount;
+    GSTInPin *pin = impl_sink_from_IPin(iface);
+    return IBaseFilter_Release(pin->pin.pinInfo.pFilter);
 }
 
 static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
@@ -2094,7 +2085,7 @@ static HRESULT WINAPI GSTInPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **ppE
 
 static const IPinVtbl GST_InputPin_Vtbl = {
     GSTInPin_QueryInterface,
-    BasePinImpl_AddRef,
+    GSTInPin_AddRef,
     GSTInPin_Release,
     BaseInputPinImpl_Connect,
     GSTInPin_ReceiveConnection,
