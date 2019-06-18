@@ -18,6 +18,7 @@
 
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -28,7 +29,6 @@
 #include "winternl.h"
 #include "powrprof.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(powrprof);
 
@@ -178,7 +178,7 @@ BOOLEAN WINAPI GetPwrDiskSpindownRange(PUINT RangeMax, PUINT RangeMin)
       TRACE("Using default: 3600\n");
       *RangeMax = 3600;
    } else {
-      *RangeMax = atoiW((LPCWSTR)lpValue);
+      *RangeMax = wcstol((LPCWSTR)lpValue, NULL, 10);
    }
 
    cbValue = sizeof(lpValue);
@@ -189,7 +189,7 @@ BOOLEAN WINAPI GetPwrDiskSpindownRange(PUINT RangeMax, PUINT RangeMin)
       TRACE("Using default: 3\n");
       *RangeMin = 3;
    } else {
-      *RangeMin = atoiW((LPCWSTR)lpValue);
+      *RangeMin = wcstol((LPCWSTR)lpValue, NULL, 10);
    }
 
    RegCloseKey(hKey);
