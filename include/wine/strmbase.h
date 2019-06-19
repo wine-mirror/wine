@@ -31,7 +31,6 @@ void WINAPI DeleteMediaType(AM_MEDIA_TYPE * pMediaType);
 typedef struct BasePin
 {
 	IPin IPin_iface;
-	LONG refCount;
 	LPCRITICAL_SECTION pCritSec;
 	PIN_INFO pinInfo;
 	IPin * pConnectedTo;
@@ -103,7 +102,8 @@ typedef struct BaseInputPinFuncTable {
 /* Base Pin */
 HRESULT WINAPI BasePinImpl_GetMediaType(BasePin *This, int iPosition, AM_MEDIA_TYPE *pmt);
 LONG WINAPI BasePinImpl_GetMediaTypeVersion(BasePin *This);
-ULONG WINAPI BasePinImpl_AddRef(IPin * iface);
+ULONG WINAPI BasePinImpl_AddRef(IPin *iface);
+ULONG WINAPI BasePinImpl_Release(IPin *iface);
 HRESULT WINAPI BasePinImpl_Disconnect(IPin * iface);
 HRESULT WINAPI BasePinImpl_ConnectedTo(IPin * iface, IPin ** ppPin);
 HRESULT WINAPI BasePinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt);
@@ -117,7 +117,6 @@ HRESULT WINAPI BasePinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFER
 
 /* Base Output Pin */
 HRESULT WINAPI BaseOutputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);
-ULONG WINAPI BaseOutputPinImpl_Release(IPin * iface);
 HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI BaseOutputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI BaseOutputPinImpl_Disconnect(IPin * iface);
@@ -141,7 +140,6 @@ void strmbase_source_init(BaseOutputPin *pin, const IPinVtbl *vtbl, const PIN_IN
 
 /* Base Input Pin */
 HRESULT WINAPI BaseInputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);
-ULONG   WINAPI BaseInputPinImpl_Release(IPin * iface);
 HRESULT WINAPI BaseInputPinImpl_Connect(IPin * iface, IPin * pConnector, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI BaseInputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI BaseInputPinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);

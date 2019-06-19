@@ -174,7 +174,6 @@ static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO *info,
 {
     /* Common attributes */
     pPinImpl->pin.IPin_iface.lpVtbl = PullPin_Vtbl;
-    pPinImpl->pin.refCount = 1;
     pPinImpl->pin.pConnectedTo = NULL;
     pPinImpl->pin.pCritSec = pCritSec;
     /* avoid copying uninitialized data */

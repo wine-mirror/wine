@@ -318,7 +318,6 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
     piInput->pFilter = &This->filter.IBaseFilter_iface;
     lstrcpynW(piInput->achName, wcsInputPinName, ARRAY_SIZE(piInput->achName));
     This->pInputPin.pin.IPin_iface.lpVtbl = &QT_InputPin_Vtbl;
-    This->pInputPin.pin.refCount = 1;
     This->pInputPin.pin.pConnectedTo = NULL;
     This->pInputPin.pin.pCritSec = &This->filter.csFilter;
 

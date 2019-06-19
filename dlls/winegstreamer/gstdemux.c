@@ -1286,7 +1286,6 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     piInput->pFilter = &This->filter.IBaseFilter_iface;
     lstrcpynW(piInput->achName, wcsInputPinName, ARRAY_SIZE(piInput->achName));
     This->pInputPin.pin.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
-    This->pInputPin.pin.refCount = 1;
     This->pInputPin.pin.pConnectedTo = NULL;
     This->pInputPin.pin.pCritSec = &This->filter.csFilter;
     ZeroMemory(&This->pInputPin.pin.mtCurrent, sizeof(AM_MEDIA_TYPE));

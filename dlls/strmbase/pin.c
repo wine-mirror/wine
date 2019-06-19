@@ -173,14 +173,16 @@ LONG WINAPI BasePinImpl_GetMediaTypeVersion(BasePin *iface)
     return 1;
 }
 
-ULONG WINAPI BasePinImpl_AddRef(IPin * iface)
+ULONG WINAPI BasePinImpl_AddRef(IPin *iface)
 {
-    BasePin *This = impl_from_IPin(iface);
-    ULONG refCount = InterlockedIncrement(&This->refCount);
+    BasePin *pin = impl_from_IPin(iface);
+    return IBaseFilter_AddRef(pin->pinInfo.pFilter);
+}
 
-    TRACE("(%p)->() AddRef from %d\n", iface, refCount - 1);
-
-    return refCount;
+ULONG WINAPI BasePinImpl_Release(IPin *iface)
+{
+    BasePin *pin = impl_from_IPin(iface);
+    return IBaseFilter_Release(pin->pinInfo.pFilter);
 }
 
 HRESULT WINAPI BasePinImpl_Disconnect(IPin * iface)
@@ -377,19 +379,6 @@ HRESULT WINAPI BaseOutputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOI
     FIXME("No interface for %s!\n", debugstr_guid(riid));
 
     return E_NOINTERFACE;
-}
-
-ULONG WINAPI BaseOutputPinImpl_Release(IPin * iface)
-{
-    BaseOutputPin *This = impl_BaseOutputPin_from_IPin(iface);
-    ULONG refCount = InterlockedDecrement(&This->pin.refCount);
-
-    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
-
-    if (!refCount)
-        BaseOutputPin_Destroy(This);
-
-    return refCount;
 }
 
 HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
@@ -733,7 +722,6 @@ static void strmbase_pin_init(BasePin *pin, const IPinVtbl *vtbl,
 {
     memset(pin, 0, sizeof(*pin));
     pin->IPin_iface.lpVtbl = vtbl;
-    pin->refCount = 1;
     pin->pCritSec = cs;
     pin->dRate = 1.0;
     Copy_PinInfo(&pin->pinInfo, info);
@@ -823,19 +811,6 @@ HRESULT WINAPI BaseInputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID
     FIXME("No interface for %s!\n", debugstr_guid(riid));
 
     return E_NOINTERFACE;
-}
-
-ULONG WINAPI BaseInputPinImpl_Release(IPin * iface)
-{
-    BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
-    ULONG refCount = InterlockedDecrement(&This->pin.refCount);
-
-    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
-
-    if (!refCount)
-        BaseInputPin_Destroy(This);
-
-    return refCount;
 }
 
 HRESULT WINAPI BaseInputPinImpl_Connect(IPin *iface, IPin *pin, const AM_MEDIA_TYPE *pmt)
