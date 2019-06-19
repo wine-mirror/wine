@@ -225,7 +225,7 @@ static void set_target( const char *target )
     /* get the OS part */
 
     target_platform = PLATFORM_UNSPECIFIED;  /* default value */
-    for (i = 0; i < sizeof(platform_names)/sizeof(platform_names[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(platform_names); i++)
     {
         if (!strncmp( platform_names[i].name, platform, strlen(platform_names[i].name) ))
         {

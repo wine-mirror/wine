@@ -943,7 +943,7 @@ int get_cpu_from_name( const char *name )
 {
     unsigned int i;
 
-    for (i = 0; i < sizeof(cpu_names)/sizeof(cpu_names[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(cpu_names); i++)
         if (!strcmp( cpu_names[i].name, name )) return cpu_names[i].cpu;
     return -1;
 }
