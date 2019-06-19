@@ -155,6 +155,17 @@ static void d3drm_matrix_set_rotation(struct d3drm_matrix *matrix, D3DVECTOR *ax
     matrix->_44 = 1.0f;
 }
 
+static void d3drm_vector_transform_affine(D3DVECTOR *dst, const D3DVECTOR *v, const struct d3drm_matrix *m)
+{
+    D3DVECTOR tmp;
+
+    tmp.u1.x = v->u1.x * m->_11 + v->u2.y * m->_21 + v->u3.z * m->_31 + m->_41;
+    tmp.u2.y = v->u1.x * m->_12 + v->u2.y * m->_22 + v->u3.z * m->_32 + m->_42;
+    tmp.u3.z = v->u1.x * m->_13 + v->u2.y * m->_23 + v->u3.z * m->_33 + m->_43;
+
+    *dst = tmp;
+}
+
 static HRESULT WINAPI d3drm_frame_array_QueryInterface(IDirect3DRMFrameArray *iface, REFIID riid, void **out)
 {
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
@@ -2592,23 +2603,35 @@ static HRESULT WINAPI d3drm_frame1_SetZbufferMode(IDirect3DRMFrame *iface, D3DRM
 
 static HRESULT WINAPI d3drm_frame3_Transform(IDirect3DRMFrame3 *iface, D3DVECTOR *d, D3DVECTOR *s)
 {
-    FIXME("iface %p, d %p, s %p stub!\n", iface, d, s);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, d %p, s %p.\n", iface, d, s);
+
+    d3drm_vector_transform_affine(d, s, &frame->transform);
+    while ((frame = frame->parent))
+    {
+        d3drm_vector_transform_affine(d, d, &frame->transform);
+    }
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_frame2_Transform(IDirect3DRMFrame2 *iface, D3DVECTOR *d, D3DVECTOR *s)
 {
-    FIXME("iface %p, d %p, s %p stub!\n", iface, d, s);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, d %p, s %p.\n", iface, d, s);
+
+    return d3drm_frame3_Transform(&frame->IDirect3DRMFrame3_iface, d, s);
 }
 
 static HRESULT WINAPI d3drm_frame1_Transform(IDirect3DRMFrame *iface, D3DVECTOR *d, D3DVECTOR *s)
 {
-    FIXME("iface %p, d %p, s %p stub!\n", iface, d, s);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, d %p, s %p.\n", iface, d, s);
+
+    return d3drm_frame3_Transform(&frame->IDirect3DRMFrame3_iface, d, s);
 }
 
 static HRESULT WINAPI d3drm_frame2_AddMoveCallback2(IDirect3DRMFrame2 *iface,
