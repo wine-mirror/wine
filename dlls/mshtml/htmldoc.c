@@ -4828,12 +4828,13 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
 }
 
 static cp_static_data_t HTMLDocumentEvents_data = { HTMLDocumentEvents_tid, HTMLDocument_on_advise };
+static cp_static_data_t HTMLDocumentEvents2_data = { HTMLDocumentEvents2_tid, HTMLDocument_on_advise, TRUE };
 
 static const cpc_entry_t HTMLDocument_cpc[] = {
     {&IID_IDispatch, &HTMLDocumentEvents_data},
     {&IID_IPropertyNotifySink},
     {&DIID_HTMLDocumentEvents, &HTMLDocumentEvents_data},
-    {&DIID_HTMLDocumentEvents2},
+    {&DIID_HTMLDocumentEvents2, &HTMLDocumentEvents2_data},
     {NULL}
 };
 

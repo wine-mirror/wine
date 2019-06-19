@@ -129,6 +129,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispHTMLWindow2) \
     XDIID(DispHTMLXMLHttpRequest) \
     XDIID(HTMLDocumentEvents) \
+    XDIID(HTMLDocumentEvents2) \
     XDIID(HTMLElementEvents2) \
     XIID(IDOMEvent) \
     XIID(IDOMKeyboardEvent) \
