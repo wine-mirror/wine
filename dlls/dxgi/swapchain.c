@@ -385,18 +385,18 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_SetFullscreen
     swapchain_desc.windowed = !fullscreen;
     hr = wined3d_swapchain_set_fullscreen(swapchain->wined3d_swapchain, &swapchain_desc, NULL);
     wined3d_mutex_unlock();
-
-    if (SUCCEEDED(hr))
+    if (FAILED(hr))
     {
-        if (swapchain->target)
-            IDXGIOutput_Release(swapchain->target);
-        swapchain->target = target;
-        return S_OK;
+        if (target)
+            IDXGIOutput_Release(target);
+        return DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
     }
 
-    if (target)
-        IDXGIOutput_Release(target);
-    return hr;
+    if (swapchain->target)
+        IDXGIOutput_Release(swapchain->target);
+    swapchain->target = target;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetFullscreenState(IDXGISwapChain1 *iface,
