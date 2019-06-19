@@ -5064,7 +5064,7 @@ static void test_window_association(void)
     refcount = IDXGIAdapter_Release(adapter);
 
     hr = IDXGIFactory_GetWindowAssociation(factory, NULL);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
     for (i = 0; i <= DXGI_MWA_VALID; ++i)
     {
@@ -5080,11 +5080,11 @@ static void test_window_association(void)
 
         hwnd = (HWND)0xdeadbeef;
         hr = IDXGIFactory_GetWindowAssociation(factory, &hwnd);
-        todo_wine ok(hr == S_OK, "Got unexpected hr %#x for flags %#x.\n", hr, i);
+        ok(hr == S_OK, "Got unexpected hr %#x for flags %#x.\n", hr, i);
         /* Apparently GetWindowAssociation() always returns NULL, even when
          * MakeWindowAssociation() and GetWindowAssociation() are both
          * successfully called. */
-        todo_wine ok(!hwnd, "Expect null associated window.\n");
+        ok(!hwnd, "Expect null associated window.\n");
     }
 
     hr = IDXGIFactory_MakeWindowAssociation(factory, swapchain_desc.OutputWindow, DXGI_MWA_VALID + 1);

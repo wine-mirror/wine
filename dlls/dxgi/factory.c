@@ -181,9 +181,15 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IWineDXGIFac
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IWineDXGIFactory *iface, HWND *window)
 {
-    FIXME("iface %p, window %p stub!\n", iface, window);
+    TRACE("iface %p, window %p.\n", iface, window);
 
-    return E_NOTIMPL;
+    if (!window)
+        return DXGI_ERROR_INVALID_CALL;
+
+    /* The tests show that this always returns NULL for some unknown reason. */
+    *window = NULL;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *iface,
