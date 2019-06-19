@@ -2292,7 +2292,7 @@ static void test_set_fullscreen(void)
     hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
-    todo_wine ok(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, "Got unexpected hr %#x.\n", hr);
     hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     refcount = IDXGISwapChain_Release(swapchain);
@@ -2310,7 +2310,7 @@ static void test_set_fullscreen(void)
     hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
-    todo_wine ok(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, "Got unexpected hr %#x.\n", hr);
     hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     refcount = IDXGISwapChain_Release(swapchain);
