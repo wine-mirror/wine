@@ -23,9 +23,6 @@
  *  - Some types of binding handles
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>

@@ -42,7 +42,6 @@
 #include "rpcndr.h"
 #include "ndrtypes.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -1871,7 +1870,7 @@ static inline void array_compute_and_size_conformance(
     else
     {
       TRACE("string=%s\n", debugstr_w((LPCWSTR)pMemory));
-      pStubMsg->ActualCount = strlenW((LPCWSTR)pMemory)+1;
+      pStubMsg->ActualCount = lstrlenW((LPCWSTR)pMemory)+1;
     }
 
     if (pFormat[1] == FC_STRING_SIZED)
@@ -1994,7 +1993,7 @@ static inline void array_compute_and_write_conformance(
     else
     {
       TRACE("string=%s\n", debugstr_w((LPCWSTR)pMemory));
-      pStubMsg->ActualCount = strlenW((LPCWSTR)pMemory)+1;
+      pStubMsg->ActualCount = lstrlenW((LPCWSTR)pMemory)+1;
     }
     if (pFormat[1] == FC_STRING_SIZED)
       pFormat = ComputeConformance(pStubMsg, pMemory, pFormat + 2, 0);

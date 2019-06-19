@@ -39,7 +39,6 @@
 #include "wininet.h"
 #include "winternl.h"
 #include "winioctl.h"
-#include "wine/unicode.h"
 
 #include "rpc.h"
 #include "rpcndr.h"
@@ -1912,38 +1911,38 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
     }
 
     for (option = httpc->common.NetworkOptions; option;
-         option = (strchrW(option, ',') ? strchrW(option, ',')+1 : NULL))
+         option = (wcschr(option, ',') ? wcschr(option, ',')+1 : NULL))
     {
         static const WCHAR wszRpcProxy[] = {'R','p','c','P','r','o','x','y','=',0};
         static const WCHAR wszHttpProxy[] = {'H','t','t','p','P','r','o','x','y','=',0};
 
-        if (!strncmpiW(option, wszRpcProxy, ARRAY_SIZE(wszRpcProxy)-1))
+        if (!wcsnicmp(option, wszRpcProxy, ARRAY_SIZE(wszRpcProxy)-1))
         {
             const WCHAR *value_start = option + ARRAY_SIZE(wszRpcProxy)-1;
             const WCHAR *value_end;
             const WCHAR *p;
 
-            value_end = strchrW(option, ',');
+            value_end = wcschr(option, ',');
             if (!value_end)
-                value_end = value_start + strlenW(value_start);
+                value_end = value_start + lstrlenW(value_start);
             for (p = value_start; p < value_end; p++)
                 if (*p == ':')
                 {
-                    port = atoiW(p+1);
+                    port = wcstol(p+1, NULL, 10);
                     value_end = p;
                     break;
                 }
             TRACE("RpcProxy value is %s\n", debugstr_wn(value_start, value_end-value_start));
             servername = RPCRT4_strndupW(value_start, value_end-value_start);
         }
-        else if (!strncmpiW(option, wszHttpProxy, ARRAY_SIZE(wszHttpProxy)-1))
+        else if (!wcsnicmp(option, wszHttpProxy, ARRAY_SIZE(wszHttpProxy)-1))
         {
             const WCHAR *value_start = option + ARRAY_SIZE(wszHttpProxy)-1;
             const WCHAR *value_end;
 
-            value_end = strchrW(option, ',');
+            value_end = wcschr(option, ',');
             if (!value_end)
-                value_end = value_start + strlenW(value_start);
+                value_end = value_start + lstrlenW(value_start);
             TRACE("HttpProxy value is %s\n", debugstr_wn(value_start, value_end-value_start));
             proxy = RPCRT4_strndupW(value_start, value_end-value_start);
         }
@@ -2068,7 +2067,7 @@ static RPC_STATUS insert_content_length_header(HINTERNET request, DWORD len)
         {'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','u','\r','\n',0};
     WCHAR header[ARRAY_SIZE(fmtW) + 10];
 
-    sprintfW(header, fmtW, len);
+    swprintf(header, ARRAY_SIZE(header), fmtW, len);
     if ((HttpAddRequestHeadersW(request, header, -1, HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD))) return RPC_S_OK;
     return RPC_S_SERVER_UNAVAILABLE;
 }
@@ -2407,7 +2406,7 @@ static DWORD auth_scheme_from_header( const WCHAR *header )
     unsigned int i;
     for (i = 0; i < ARRAY_SIZE(auth_schemes); i++)
     {
-        if (!strncmpiW( header, auth_schemes[i].str, auth_schemes[i].len ) &&
+        if (!wcsnicmp( header, auth_schemes[i].str, auth_schemes[i].len ) &&
             (header[auth_schemes[i].len] == ' ' || !header[auth_schemes[i].len])) return auth_schemes[i].scheme;
     }
     return 0;
@@ -2474,7 +2473,7 @@ static RPC_STATUS do_authorization(HINTERNET request, SEC_WCHAR *servername,
 
         if (creds->AuthnSchemes[0] == RPC_C_HTTP_AUTHN_SCHEME_NTLM) scheme = ntlmW;
         else scheme = negotiateW;
-        scheme_len = strlenW( scheme );
+        scheme_len = lstrlenW( scheme );
 
         if (!*auth_ptr)
         {
@@ -2511,7 +2510,7 @@ static RPC_STATUS do_authorization(HINTERNET request, SEC_WCHAR *servername,
         p = auth_value + scheme_len;
         if (!first && *p == ' ')
         {
-            int len = strlenW(++p);
+            int len = lstrlenW(++p);
             in.cbBuffer = decode_base64(p, len, NULL);
             if (!(in.pvBuffer = HeapAlloc(GetProcessHeap(), 0, in.cbBuffer))) break;
             decode_base64(p, len, in.pvBuffer);
@@ -2779,8 +2778,8 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
     memcpy(url, wszRpcProxyPrefix, sizeof(wszRpcProxyPrefix));
     MultiByteToWideChar(CP_ACP, 0, Connection->NetworkAddr, -1, url+ARRAY_SIZE(wszRpcProxyPrefix)-1,
                         strlen(Connection->NetworkAddr)+1);
-    strcatW(url, wszColon);
-    MultiByteToWideChar(CP_ACP, 0, Connection->Endpoint, -1, url+strlenW(url), strlen(Connection->Endpoint)+1);
+    lstrcatW(url, wszColon);
+    MultiByteToWideChar(CP_ACP, 0, Connection->Endpoint, -1, url+lstrlenW(url), strlen(Connection->Endpoint)+1);
 
     secure = is_secure(httpc);
     credentials = has_credentials(httpc);
