@@ -58,6 +58,32 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     return TRUE;
 }
 
+#define expect_matrix(m, m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34, m41, m42, m43, m44, u) \
+        expect_matrix_(__LINE__, m, m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34, m41, m42, m43, m44, u)
+static void expect_matrix_(unsigned int line, D3DRMMATRIX4D m,
+        float m11, float m12, float m13, float m14, float m21, float m22, float m23, float m24,
+        float m31, float m32, float m33, float m34, float m41, float m42, float m43, float m44,
+        unsigned int ulps)
+{
+    BOOL equal = compare_float(m[0][0], m11, ulps) && compare_float(m[0][1], m12, ulps)
+            && compare_float(m[0][2], m13, ulps) && compare_float(m[0][3], m14, ulps)
+            && compare_float(m[1][0], m21, ulps) && compare_float(m[1][1], m22, ulps)
+            && compare_float(m[1][2], m23, ulps) && compare_float(m[1][3], m24, ulps)
+            && compare_float(m[2][0], m31, ulps) && compare_float(m[2][1], m32, ulps)
+            && compare_float(m[2][2], m33, ulps) && compare_float(m[2][3], m34, ulps)
+            && compare_float(m[3][0], m41, ulps) && compare_float(m[3][1], m42, ulps)
+            && compare_float(m[3][2], m43, ulps) && compare_float(m[3][3], m44, ulps);
+
+    ok_(__FILE__, line)(equal,
+            "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e, "
+            "%.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e}, "
+            "expected {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e, "
+            "%.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+            m[0][0], m[0][1], m[0][2], m[0][3], m[1][0], m[1][1], m[1][2], m[1][3],
+            m[2][0], m[2][1], m[2][2], m[2][3], m[3][0], m[3][1], m[3][2], m[3][3],
+            m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34, m41, m42, m43, m44);
+}
+
 #define check_vector(a, b, c, d, e) check_vector_(__LINE__, a, b, c, d, e)
 static void check_vector_(unsigned int line, const D3DVECTOR *v, float x, float y, float z, unsigned int ulps)
 {
@@ -81,6 +107,21 @@ static D3DRMMATRIX4D identity = {
     { 0.0f, 0.0f, 1.0f, 0.0f },
     { 0.0f, 0.0f, 0.0f, 1.0f }
 };
+
+static void frame_set_transform(IDirect3DRMFrame *frame,
+        float m11, float m12, float m13, float m14, float m21, float m22, float m23, float m24,
+        float m31, float m32, float m33, float m34, float m41, float m42, float m43, float m44)
+{
+    D3DRMMATRIX4D matrix =
+    {
+        {m11, m12, m13, m14},
+        {m21, m22, m23, m24},
+        {m31, m32, m33, m34},
+        {m41, m42, m43, m44},
+    };
+
+    IDirect3DRMFrame_AddTransform(frame, D3DRMCOMBINE_REPLACE, matrix);
+}
 
 static HWND create_window(void)
 {
@@ -2711,20 +2752,74 @@ cleanup:
 
 static void test_frame_transform(void)
 {
-    HRESULT hr;
-    IDirect3DRM *d3drm;
+    D3DRMMATRIX4D matrix, add_matrix;
     IDirect3DRMFrame *frame;
-    D3DRMMATRIX4D matrix;
+    IDirect3DRM *d3drm;
+    HRESULT hr;
 
     hr = Direct3DRMCreate(&d3drm);
-    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DRM_CreateFrame(d3drm, NULL, &frame);
-    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DRMFrame_GetTransform(frame, matrix);
-    ok(hr == D3DRM_OK, "IDirect3DRMFrame_GetTransform returned hr = %x\n", hr);
-    ok(!memcmp(matrix, identity, sizeof(D3DRMMATRIX4D)), "Returned matrix is not identity\n");
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    expect_matrix(matrix,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f, 0);
+
+    memcpy(add_matrix, identity, sizeof(add_matrix));
+    add_matrix[3][0] = 3.0f;
+    add_matrix[3][1] = 3.0f;
+    add_matrix[3][2] = 3.0f;
+
+    frame_set_transform(frame,
+            2.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 2.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+    hr = IDirect3DRMFrame_AddTransform(frame, D3DRMCOMBINE_REPLACE, add_matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMFrame_GetTransform(frame, matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    expect_matrix(matrix,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            3.0f, 3.0f, 3.0f, 1.0f, 1);
+
+    frame_set_transform(frame,
+            2.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 2.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+    hr = IDirect3DRMFrame_AddTransform(frame, D3DRMCOMBINE_BEFORE, add_matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMFrame_GetTransform(frame, matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    expect_matrix(matrix,
+            2.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 2.0f, 0.0f,
+            6.0f, 6.0f, 6.0f, 1.0f, 1);
+
+    frame_set_transform(frame,
+            2.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 2.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+    hr = IDirect3DRMFrame_AddTransform(frame, D3DRMCOMBINE_AFTER, add_matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMFrame_GetTransform(frame, matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    expect_matrix(matrix,
+            2.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 2.0f, 0.0f,
+            3.0f, 3.0f, 3.0f, 1.0f, 1);
 
     IDirect3DRMFrame_Release(frame);
     IDirect3DRM_Release(d3drm);

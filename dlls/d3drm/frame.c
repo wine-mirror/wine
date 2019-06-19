@@ -97,6 +97,34 @@ static inline struct d3drm_animation *impl_from_IDirect3DRMAnimation2(IDirect3DR
     return CONTAINING_RECORD(iface, struct d3drm_animation, IDirect3DRMAnimation2_iface);
 }
 
+static void d3drm_matrix_multiply_affine(struct d3drm_matrix *dst,
+        const struct d3drm_matrix *src1, const struct d3drm_matrix *src2)
+{
+    struct d3drm_matrix tmp;
+
+    tmp._11 = src1->_11 * src2->_11 + src1->_12 * src2->_21 + src1->_13 * src2->_31;
+    tmp._12 = src1->_11 * src2->_12 + src1->_12 * src2->_22 + src1->_13 * src2->_32;
+    tmp._13 = src1->_11 * src2->_13 + src1->_12 * src2->_23 + src1->_13 * src2->_33;
+    tmp._14 = 0.0f;
+
+    tmp._21 = src1->_21 * src2->_11 + src1->_22 * src2->_21 + src1->_23 * src2->_31;
+    tmp._22 = src1->_21 * src2->_12 + src1->_22 * src2->_22 + src1->_23 * src2->_32;
+    tmp._23 = src1->_21 * src2->_13 + src1->_22 * src2->_23 + src1->_23 * src2->_33;
+    tmp._24 = 0.0f;
+
+    tmp._31 = src1->_31 * src2->_11 + src1->_32 * src2->_21 + src1->_33 * src2->_31;
+    tmp._32 = src1->_31 * src2->_12 + src1->_32 * src2->_22 + src1->_33 * src2->_32;
+    tmp._33 = src1->_31 * src2->_13 + src1->_32 * src2->_23 + src1->_33 * src2->_33;
+    tmp._34 = 0.0f;
+
+    tmp._41 = src1->_41 * src2->_11 + src1->_42 * src2->_21 + src1->_43 * src2->_31 + src2->_41;
+    tmp._42 = src1->_41 * src2->_12 + src1->_42 * src2->_22 + src1->_43 * src2->_32 + src2->_42;
+    tmp._43 = src1->_41 * src2->_13 + src1->_42 * src2->_23 + src1->_43 * src2->_33 + src2->_43;
+    tmp._44 = 1.0f;
+
+    *dst = tmp;
+}
+
 static HRESULT WINAPI d3drm_frame_array_QueryInterface(IDirect3DRMFrameArray *iface, REFIID riid, void **out)
 {
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
@@ -953,15 +981,15 @@ static HRESULT WINAPI d3drm_frame3_AddTransform(IDirect3DRMFrame3 *iface,
             break;
 
         case D3DRMCOMBINE_BEFORE:
-            FIXME("D3DRMCOMBINE_BEFORE not supported yet\n");
+            d3drm_matrix_multiply_affine(&frame->transform, m, &frame->transform);
             break;
 
         case D3DRMCOMBINE_AFTER:
-            FIXME("D3DRMCOMBINE_AFTER not supported yet\n");
+            d3drm_matrix_multiply_affine(&frame->transform, &frame->transform, m);
             break;
 
         default:
-            WARN("Unknown Combine Type %u\n", type);
+            FIXME("Unhandled type %#x.\n", type);
             return D3DRMERR_BADVALUE;
     }
 
