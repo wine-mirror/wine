@@ -323,18 +323,6 @@ static HRESULT WINAPI AVICompressorIn_QueryInterface(IPin *iface, REFIID riid, v
     return BaseInputPinImpl_QueryInterface(iface, riid, ppv);
 }
 
-static ULONG WINAPI AVICompressorIn_AddRef(IPin *iface)
-{
-    AVICompressor *This = impl_from_IPin(iface);
-    return IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI AVICompressorIn_Release(IPin *iface)
-{
-    AVICompressor *This = impl_from_IPin(iface);
-    return IBaseFilter_Release(&This->filter.IBaseFilter_iface);
-}
-
 static HRESULT WINAPI AVICompressorIn_ReceiveConnection(IPin *iface,
         IPin *pConnector, const AM_MEDIA_TYPE *pmt)
 {
@@ -372,8 +360,8 @@ static HRESULT WINAPI AVICompressorIn_Disconnect(IPin *iface)
 
 static const IPinVtbl AVICompressorInputPinVtbl = {
     AVICompressorIn_QueryInterface,
-    AVICompressorIn_AddRef,
-    AVICompressorIn_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     BaseInputPinImpl_Connect,
     AVICompressorIn_ReceiveConnection,
     AVICompressorIn_Disconnect,
@@ -524,22 +512,10 @@ static HRESULT WINAPI AVICompressorOut_QueryInterface(IPin *iface, REFIID riid, 
     return BaseInputPinImpl_QueryInterface(iface, riid, ppv);
 }
 
-static ULONG WINAPI AVICompressorOut_AddRef(IPin *iface)
-{
-    AVICompressor *This = impl_from_IPin(iface);
-    return IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI AVICompressorOut_Release(IPin *iface)
-{
-    AVICompressor *This = impl_from_IPin(iface);
-    return IBaseFilter_Release(&This->filter.IBaseFilter_iface);
-}
-
 static const IPinVtbl AVICompressorOutputPinVtbl = {
     AVICompressorOut_QueryInterface,
-    AVICompressorOut_AddRef,
-    AVICompressorOut_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
     BaseOutputPinImpl_Disconnect,

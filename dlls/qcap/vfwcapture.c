@@ -677,19 +677,6 @@ static HRESULT WINAPI VfwPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI VfwPin_AddRef(IPin *iface)
-{
-    VfwPinImpl *pin = impl_from_IPin(iface);
-    return IBaseFilter_AddRef(pin->pin.pin.pinInfo.pFilter);
-}
-
-static ULONG WINAPI
-VfwPin_Release(IPin * iface)
-{
-    VfwPinImpl *pin = impl_from_IPin(iface);
-    return IBaseFilter_Release(pin->pin.pin.pinInfo.pFilter);
-}
-
 static HRESULT WINAPI
 VfwPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
@@ -716,8 +703,8 @@ VfwPin_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)
 static const IPinVtbl VfwPin_Vtbl =
 {
     VfwPin_QueryInterface,
-    VfwPin_AddRef,
-    VfwPin_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
     BaseOutputPinImpl_Disconnect,

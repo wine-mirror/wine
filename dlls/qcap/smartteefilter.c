@@ -146,23 +146,10 @@ static const BaseFilterFuncTable SmartTeeFilterFuncs = {
     .filter_destroy = smart_tee_destroy,
 };
 
-static ULONG WINAPI SmartTeeFilterInput_AddRef(IPin *iface)
-{
-    SmartTeeFilter *This = impl_from_IPin(iface);
-    return IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI SmartTeeFilterInput_Release(IPin *iface)
-{
-    SmartTeeFilter *This = impl_from_IPin(iface);
-    return IBaseFilter_Release(&This->filter.IBaseFilter_iface);
-}
-
-
 static const IPinVtbl SmartTeeFilterInputVtbl = {
     BaseInputPinImpl_QueryInterface,
-    SmartTeeFilterInput_AddRef,
-    SmartTeeFilterInput_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     BaseInputPinImpl_Connect,
     BaseInputPinImpl_ReceiveConnection,
     BasePinImpl_Disconnect,
@@ -340,18 +327,6 @@ static const BaseInputPinFuncTable SmartTeeFilterInputFuncs = {
     SmartTeeFilterInput_Receive
 };
 
-static ULONG WINAPI SmartTeeFilterCapture_AddRef(IPin *iface)
-{
-    SmartTeeFilter *This = impl_from_IPin(iface);
-    return IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI SmartTeeFilterCapture_Release(IPin *iface)
-{
-    SmartTeeFilter *This = impl_from_IPin(iface);
-    return IBaseFilter_Release(&This->filter.IBaseFilter_iface);
-}
-
 static HRESULT WINAPI SmartTeeFilterCapture_EnumMediaTypes(IPin *iface, IEnumMediaTypes **ppEnum)
 {
     SmartTeeFilter *This = impl_from_IPin(iface);
@@ -368,8 +343,8 @@ static HRESULT WINAPI SmartTeeFilterCapture_EnumMediaTypes(IPin *iface, IEnumMed
 
 static const IPinVtbl SmartTeeFilterCaptureVtbl = {
     BaseOutputPinImpl_QueryInterface,
-    SmartTeeFilterCapture_AddRef,
-    SmartTeeFilterCapture_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
     BaseOutputPinImpl_Disconnect,
@@ -423,18 +398,6 @@ static const BaseOutputPinFuncTable SmartTeeFilterCaptureFuncs = {
     SmartTeeFilterCapture_DecideAllocator,
 };
 
-static ULONG WINAPI SmartTeeFilterPreview_AddRef(IPin *iface)
-{
-    SmartTeeFilter *This = impl_from_IPin(iface);
-    return IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI SmartTeeFilterPreview_Release(IPin *iface)
-{
-    SmartTeeFilter *This = impl_from_IPin(iface);
-    return IBaseFilter_Release(&This->filter.IBaseFilter_iface);
-}
-
 static HRESULT WINAPI SmartTeeFilterPreview_EnumMediaTypes(IPin *iface, IEnumMediaTypes **ppEnum)
 {
     SmartTeeFilter *This = impl_from_IPin(iface);
@@ -451,8 +414,8 @@ static HRESULT WINAPI SmartTeeFilterPreview_EnumMediaTypes(IPin *iface, IEnumMed
 
 static const IPinVtbl SmartTeeFilterPreviewVtbl = {
     BaseOutputPinImpl_QueryInterface,
-    SmartTeeFilterPreview_AddRef,
-    SmartTeeFilterPreview_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
     BaseOutputPinImpl_Disconnect,

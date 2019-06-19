@@ -1255,18 +1255,6 @@ static HRESULT WINAPI AviMuxOut_QueryInterface(IPin *iface, REFIID riid, void **
     return S_OK;
 }
 
-static ULONG WINAPI AviMuxOut_AddRef(IPin *iface)
-{
-    AviMux *This = impl_from_out_IPin(iface);
-    return IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI AviMuxOut_Release(IPin *iface)
-{
-    AviMux *This = impl_from_out_IPin(iface);
-    return IBaseFilter_Release(&This->filter.IBaseFilter_iface);
-}
-
 static HRESULT WINAPI AviMuxOut_Connect(IPin *iface,
         IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
@@ -1408,8 +1396,8 @@ static HRESULT WINAPI AviMuxOut_NewSegment(IPin *iface, REFERENCE_TIME tStart,
 
 static const IPinVtbl AviMuxOut_PinVtbl = {
     AviMuxOut_QueryInterface,
-    AviMuxOut_AddRef,
-    AviMuxOut_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     AviMuxOut_Connect,
     AviMuxOut_ReceiveConnection,
     AviMuxOut_Disconnect,
@@ -1655,18 +1643,6 @@ static HRESULT WINAPI AviMuxIn_QueryInterface(IPin *iface, REFIID riid, void **p
     return S_OK;
 }
 
-static ULONG WINAPI AviMuxIn_AddRef(IPin *iface)
-{
-    AviMux *This = impl_from_in_IPin(iface);
-    return IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI AviMuxIn_Release(IPin *iface)
-{
-    AviMux *This = impl_from_in_IPin(iface);
-    return IBaseFilter_Release(&This->filter.IBaseFilter_iface);
-}
-
 static HRESULT WINAPI AviMuxIn_Connect(IPin *iface,
         IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
@@ -1876,8 +1852,8 @@ static HRESULT WINAPI AviMuxIn_NewSegment(IPin *iface, REFERENCE_TIME tStart,
 
 static const IPinVtbl AviMuxIn_PinVtbl = {
     AviMuxIn_QueryInterface,
-    AviMuxIn_AddRef,
-    AviMuxIn_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     AviMuxIn_Connect,
     AviMuxIn_ReceiveConnection,
     AviMuxIn_Disconnect,
