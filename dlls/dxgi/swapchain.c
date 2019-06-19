@@ -388,7 +388,6 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_SetFullscreen
 
     if (SUCCEEDED(hr))
     {
-        swapchain->fullscreen = fullscreen;
         if (swapchain->target)
             IDXGIOutput_Release(swapchain->target);
         swapchain->target = target;
@@ -404,11 +403,17 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetFullscreenState(IDXGISwapCha
         BOOL *fullscreen, IDXGIOutput **target)
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
+    struct wined3d_swapchain_desc swapchain_desc;
 
     TRACE("iface %p, fullscreen %p, target %p.\n", iface, fullscreen, target);
 
     if (fullscreen)
-        *fullscreen = swapchain->fullscreen;
+    {
+        wined3d_mutex_lock();
+        wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &swapchain_desc);
+        wined3d_mutex_unlock();
+        *fullscreen = !swapchain_desc.windowed;
+    }
 
     if (target)
     {
@@ -781,6 +786,7 @@ static const struct wined3d_parent_ops d3d11_swapchain_wined3d_parent_ops =
 HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_device *device,
         struct wined3d_swapchain_desc *desc)
 {
+    BOOL fullscreen;
     HRESULT hr;
 
     /* A reference to the implicit swapchain is held by the wined3d device. In
@@ -813,7 +819,7 @@ HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_devi
     if (!desc->windowed && (!desc->backbuffer_width || !desc->backbuffer_height))
         FIXME("Fullscreen swapchain with back buffer width/height equal to 0 not supported properly.\n");
 
-    swapchain->fullscreen = !desc->windowed;
+    fullscreen = !desc->windowed;
     desc->windowed = TRUE;
     if (FAILED(hr = wined3d_swapchain_create(device->wined3d_device, desc, swapchain,
             &d3d11_swapchain_wined3d_parent_ops, &swapchain->wined3d_swapchain)))
@@ -823,7 +829,7 @@ HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_devi
     }
 
     swapchain->target = NULL;
-    if (swapchain->fullscreen)
+    if (fullscreen)
     {
         desc->windowed = FALSE;
         if (FAILED(hr = wined3d_swapchain_set_fullscreen(swapchain->wined3d_swapchain,

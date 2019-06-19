@@ -173,7 +173,6 @@ struct d3d11_swapchain
     IWineDXGIDevice *device;
     IDXGIFactory *factory;
 
-    BOOL fullscreen;
     IDXGIOutput *target;
 };
 
