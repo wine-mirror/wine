@@ -2304,6 +2304,7 @@ static NTSTATUS open_builtin_file( char *name, WINE_MODREF **pwm, void **module,
     {
         WARN( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_a(name) );
         NtUnmapViewOfSection( NtCurrentProcess(), *module );
+        *module = NULL;
         status = STATUS_DLL_NOT_FOUND;
     }
 
@@ -2318,6 +2319,8 @@ static NTSTATUS open_builtin_file( char *name, WINE_MODREF **pwm, void **module,
         {
             if ((*so_name = RtlAllocateHeap( GetProcessHeap(), 0, strlen(name) + 1 )))
                 strcpy( *so_name, name );
+            NtUnmapViewOfSection( NtCurrentProcess(), *module );
+            *module = NULL;
             status = STATUS_SUCCESS;
         }
         else status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
@@ -2505,7 +2508,7 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
     if (status == STATUS_DLL_NOT_FOUND && *module_ptr)
     {
         /* builtin not found, load the module we got previously */
-        TRACE( "loading %s from PE builtin %s\n", debugstr_w(name), debugstr_us(nt_name) );
+        TRACE( "loading %s from PE file %s\n", debugstr_w(name), debugstr_us(nt_name) );
         return load_native_dll( load_path, nt_name, module_ptr, &image_info, flags, pwm, &st );
     }
     if (status) return status;
