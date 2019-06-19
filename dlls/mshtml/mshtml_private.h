@@ -136,6 +136,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispSVGSVGElement) \
     XDIID(DispSVGTSpanElement) \
     XDIID(HTMLDocumentEvents) \
+    XDIID(HTMLDocumentEvents2) \
     XDIID(HTMLElementEvents2) \
     XIID(IDOMCustomEvent) \
     XIID(IDOMEvent) \

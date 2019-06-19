@@ -2412,6 +2412,8 @@ static HRESULT call_cp_func(IDispatch *disp, DISPID dispid, IHTMLEventObj *event
     ULONG argerr;
     EXCEPINFO ei;
 
+    TRACE("%p,%d,%p,%p\n", disp, dispid, event_obj, retv);
+
     if(event_obj) {
         V_VT(&event_arg) = VT_DISPATCH;
         V_DISPATCH(&event_arg) = (IDispatch*)event_obj;
