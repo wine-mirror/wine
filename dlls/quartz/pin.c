@@ -381,18 +381,6 @@ void PullPin_destroy(PullPin *pin)
     CoTaskMemFree(pin);
 }
 
-ULONG WINAPI PullPin_AddRef(IPin *iface)
-{
-    PullPin *pin = impl_PullPin_from_IPin(iface);
-    return IBaseFilter_AddRef(pin->pin.pinInfo.pFilter);
-}
-
-ULONG WINAPI PullPin_Release(IPin *iface)
-{
-    PullPin *pin = impl_PullPin_from_IPin(iface);
-    return IBaseFilter_Release(pin->pin.pinInfo.pFilter);
-}
-
 static void PullPin_Flush(PullPin *This)
 {
     IMediaSample *pSample;

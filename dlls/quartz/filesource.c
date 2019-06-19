@@ -777,23 +777,11 @@ static HRESULT WINAPI FileAsyncReaderPin_QueryInterface(IPin * iface, REFIID rii
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI FileAsyncReaderPin_AddRef(IPin *iface)
-{
-    FileAsyncReader *pin = impl_from_IPin(iface);
-    return IBaseFilter_AddRef(pin->pin.pin.pinInfo.pFilter);
-}
-
-static ULONG WINAPI FileAsyncReaderPin_Release(IPin * iface)
-{
-    FileAsyncReader *pin = impl_from_IPin(iface);
-    return IBaseFilter_Release(pin->pin.pin.pinInfo.pFilter);
-}
-
 static const IPinVtbl FileAsyncReaderPin_Vtbl = 
 {
     FileAsyncReaderPin_QueryInterface,
-    FileAsyncReaderPin_AddRef,
-    FileAsyncReaderPin_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
     BasePinImpl_Disconnect,

@@ -564,18 +564,6 @@ static HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid,
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI Parser_OutputPin_AddRef(IPin *iface)
-{
-    Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(iface);
-    return IBaseFilter_AddRef(pin->pin.pin.pinInfo.pFilter);
-}
-
-static ULONG WINAPI Parser_OutputPin_Release(IPin * iface)
-{
-    Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(iface);
-    return IBaseFilter_Release(pin->pin.pin.pinInfo.pFilter);
-}
-
 static HRESULT WINAPI Parser_OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
     Parser_OutputPin *This = unsafe_impl_Parser_OutputPin_from_IPin(iface);
@@ -601,8 +589,8 @@ static HRESULT WINAPI Parser_OutputPin_CheckMediaType(BasePin *pin, const AM_MED
 static const IPinVtbl Parser_OutputPin_Vtbl = 
 {
     Parser_OutputPin_QueryInterface,
-    Parser_OutputPin_AddRef,
-    Parser_OutputPin_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     Parser_OutputPin_Connect,
     BaseOutputPinImpl_ReceiveConnection,
     BaseOutputPinImpl_Disconnect,
@@ -714,8 +702,8 @@ static HRESULT WINAPI Parser_PullPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes
 static const IPinVtbl Parser_InputPin_Vtbl =
 {
     Parser_PullPin_QueryInterface,
-    PullPin_AddRef,
-    PullPin_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     BaseInputPinImpl_Connect,
     Parser_PullPin_ReceiveConnection,
     Parser_PullPin_Disconnect,

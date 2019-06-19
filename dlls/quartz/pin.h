@@ -115,8 +115,6 @@ void PullPin_destroy(PullPin *pin) DECLSPEC_HIDDEN;
 HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI PullPin_Disconnect(IPin * iface);
 HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);
-ULONG WINAPI PullPin_AddRef(IPin *iface) DECLSPEC_HIDDEN;
-ULONG WINAPI PullPin_Release(IPin *iface) DECLSPEC_HIDDEN;
 HRESULT WINAPI PullPin_EndOfStream(IPin * iface);
 HRESULT WINAPI PullPin_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI PullPin_BeginFlush(IPin * iface);
