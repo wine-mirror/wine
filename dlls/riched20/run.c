@@ -862,7 +862,7 @@ void ME_GetCharFormat(ME_TextEditor *editor, const ME_Cursor *from,
     {
       if (!(tmp.dwMask & CFM_FACE))
         pFmt->dwMask &= ~CFM_FACE;
-      else if (lstrcmpW(pFmt->szFaceName, tmp.szFaceName) ||
+      else if (wcscmp(pFmt->szFaceName, tmp.szFaceName) ||
           pFmt->bPitchAndFamily != tmp.bPitchAndFamily)
         pFmt->dwMask &= ~CFM_FACE;
     }

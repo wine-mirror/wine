@@ -352,7 +352,7 @@ static BOOL ME_IsFontEqual(const LOGFONTW *p1, const LOGFONTW *p2)
 {
   if (memcmp(p1, p2, sizeof(LOGFONTW)-sizeof(p1->lfFaceName)))
     return FALSE;
-  if (lstrcmpW(p1->lfFaceName, p2->lfFaceName))
+  if (wcscmp(p1->lfFaceName, p2->lfFaceName))
     return FALSE;
   return TRUE;
 }

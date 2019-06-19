@@ -372,7 +372,7 @@ static inline BOOL is_equal_textfont_prop_value(enum textfont_prop_id propid, te
     case FONT_WEIGHT:
         return left->l == right->l;
     case FONT_NAME:
-        return !strcmpW(left->str, right->str);
+        return !wcscmp(left->str, right->str);
     case FONT_POSITION:
     case FONT_SIZE:
     case FONT_SPACING:
@@ -1688,7 +1688,7 @@ static HRESULT WINAPI ITextRange_fnSetText(ITextRange *me, BSTR str)
     }
 
     /* it's safer not to rely on stored BSTR length */
-    len = strlenW(str);
+    len = lstrlenW(str);
     cursor = editor->pCursors[0];
     ME_CursorFromCharOfs(editor, This->start, &editor->pCursors[0]);
     style = ME_GetInsertStyle(editor, 0);
@@ -4537,7 +4537,7 @@ static HRESULT WINAPI ITextSelection_fnSetText(ITextSelection *me, BSTR str)
         return CO_E_RELEASED;
 
     editor = This->reOle->editor;
-    len = strlenW(str);
+    len = lstrlenW(str);
     ME_GetSelectionOfs(editor, &from, &to);
     ME_ReplaceSel(editor, FALSE, str, len);
 

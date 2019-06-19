@@ -19,7 +19,6 @@
  */
 
 #include "editstr.h"
-#include "wine/unicode.h"
 
 struct _RTF_Info;
 
@@ -105,7 +104,7 @@ static inline int ME_IsWSpace(WCHAR ch)
 
 static inline int ME_CharCompare(WCHAR a, WCHAR b, int caseSensitive)
 {
-  return caseSensitive ? (a == b) : (toupperW(a) == toupperW(b));
+  return caseSensitive ? (a == b) : (towupper(a) == towupper(b));
 }
 
 /* note: those two really return the first matching offset (starting from EOS)+1 

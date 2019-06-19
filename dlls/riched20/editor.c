@@ -1926,7 +1926,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     
       while (pCurItem && ME_CharCompare( *get_text( &pCurItem->member.run, nCurStart + nMatched ), text[nMatched], (flags & FR_MATCHCASE)))
       {
-        if ((flags & FR_WHOLEWORD) && isalnumW(wLastChar))
+        if ((flags & FR_WHOLEWORD) && iswalnum(wLastChar))
           break;
 
         nMatched++;
@@ -1950,7 +1950,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
             else
               wNextChar = ' ';
 
-            if (isalnumW(wNextChar))
+            if (iswalnum(wNextChar))
               break;
           }
 
@@ -2010,7 +2010,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       while (pCurItem && ME_CharCompare( *get_text( &pCurItem->member.run, nCurEnd - nMatched - 1 ),
                                          text[nLen - nMatched - 1], (flags & FR_MATCHCASE) ))
       {
-        if ((flags & FR_WHOLEWORD) && isalnumW(wLastChar))
+        if ((flags & FR_WHOLEWORD) && iswalnum(wLastChar))
           break;
 
         nMatched++;
@@ -2036,7 +2036,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
             else
               wPrevChar = ' ';
 
-            if (isalnumW(wPrevChar))
+            if (iswalnum(wPrevChar))
               break;
           }
 
@@ -5284,7 +5284,7 @@ LRESULT WINAPI REExtendedRegisterClass(void)
   return result;
 }
 
-static int wchar_comp( const void *key, const void *elem )
+static int __cdecl wchar_comp( const void *key, const void *elem )
 {
     return *(const WCHAR *)key - *(const WCHAR *)elem;
 }
@@ -5333,7 +5333,7 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor,
       while (cursor.nOffset < run_len)
       {
         c = str[cursor.nOffset];
-        if (!isspaceW( c ) && !isurlneutral( c ))
+        if (!iswspace( c ) && !isurlneutral( c ))
         {
           *candidate_min = cursor;
           candidateStarted = TRUE;
@@ -5353,7 +5353,7 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor,
       while (cursor.nOffset < run_len)
       {
         c = str[cursor.nOffset];
-        if (isspaceW( c ))
+        if (iswspace( c ))
         {
           if (quoted && c != '\r')
           {
