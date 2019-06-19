@@ -1078,25 +1078,72 @@ static HRESULT WINAPI d3drm_frame1_AddTranslation(IDirect3DRMFrame *iface,
 static HRESULT WINAPI d3drm_frame3_AddScale(IDirect3DRMFrame3 *iface,
         D3DRMCOMBINETYPE type, D3DVALUE sx, D3DVALUE sy, D3DVALUE sz)
 {
-    FIXME("iface %p, type %#x, sx %.8e, sy %.8e, sz %.8e stub!\n", iface, type, sx, sy, sz);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, type %#x, sx %.8e, sy %.8e, sz %.8e.\n", iface, type, sx, sy, sz);
+
+    switch (type)
+    {
+        case D3DRMCOMBINE_REPLACE:
+            frame->transform = identity;
+            frame->transform._11 = sx;
+            frame->transform._22 = sy;
+            frame->transform._33 = sz;
+            break;
+
+        case D3DRMCOMBINE_BEFORE:
+            frame->transform._11 *= sx;
+            frame->transform._12 *= sx;
+            frame->transform._13 *= sx;
+            frame->transform._21 *= sy;
+            frame->transform._22 *= sy;
+            frame->transform._23 *= sy;
+            frame->transform._31 *= sz;
+            frame->transform._32 *= sz;
+            frame->transform._33 *= sz;
+            break;
+
+        case D3DRMCOMBINE_AFTER:
+            frame->transform._11 *= sx;
+            frame->transform._12 *= sy;
+            frame->transform._13 *= sz;
+            frame->transform._21 *= sx;
+            frame->transform._22 *= sy;
+            frame->transform._23 *= sz;
+            frame->transform._31 *= sx;
+            frame->transform._32 *= sy;
+            frame->transform._33 *= sz;
+            frame->transform._41 *= sx;
+            frame->transform._42 *= sy;
+            frame->transform._43 *= sz;
+            break;
+
+        default:
+            FIXME("Unhandled type %#x.\n", type);
+            return D3DRMERR_BADVALUE;
+    }
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_frame2_AddScale(IDirect3DRMFrame2 *iface,
         D3DRMCOMBINETYPE type, D3DVALUE sx, D3DVALUE sy, D3DVALUE sz)
 {
-    FIXME("iface %p, type %#x, sx %.8e, sy %.8e, sz %.8e stub!\n", iface, type, sx, sy, sz);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, type %#x, sx %.8e, sy %.8e, sz %.8e.\n", iface, type, sx, sy, sz);
+
+    return d3drm_frame3_AddScale(&frame->IDirect3DRMFrame3_iface, type, sx, sy, sz);
 }
 
 static HRESULT WINAPI d3drm_frame1_AddScale(IDirect3DRMFrame *iface,
         D3DRMCOMBINETYPE type, D3DVALUE sx, D3DVALUE sy, D3DVALUE sz)
 {
-    FIXME("iface %p, type %#x, sx %.8e, sy %.8e, sz %.8e stub!\n", iface, type, sx, sy, sz);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, type %#x, sx %.8e, sy %.8e, sz %.8e.\n", iface, type, sx, sy, sz);
+
+    return d3drm_frame3_AddScale(&frame->IDirect3DRMFrame3_iface, type, sx, sy, sz);
 }
 
 static HRESULT WINAPI d3drm_frame3_AddRotation(IDirect3DRMFrame3 *iface,

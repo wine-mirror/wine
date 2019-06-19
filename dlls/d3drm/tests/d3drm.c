@@ -2870,6 +2870,51 @@ static void test_frame_transform(void)
             0.0f, 0.0f, 2.0f, 0.0f,
             3.0f, 3.0f, 3.0f, 1.0f, 1);
 
+    frame_set_transform(frame,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            3.0f, 3.0f, 3.0f, 1.0f);
+    hr = IDirect3DRMFrame_AddScale(frame, D3DRMCOMBINE_REPLACE, 2.0f, 2.0f, 2.0f);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMFrame_GetTransform(frame, matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    expect_matrix(matrix,
+            2.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 2.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f, 1);
+
+    frame_set_transform(frame,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            3.0f, 3.0f, 3.0f, 1.0f);
+    hr = IDirect3DRMFrame_AddScale(frame, D3DRMCOMBINE_BEFORE, 2.0f, 2.0f, 2.0f);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMFrame_GetTransform(frame, matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    expect_matrix(matrix,
+            2.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 2.0f, 0.0f,
+            3.0f, 3.0f, 3.0f, 1.0f, 1);
+
+    frame_set_transform(frame,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            3.0f, 3.0f, 3.0f, 1.0f);
+    hr = IDirect3DRMFrame_AddScale(frame, D3DRMCOMBINE_AFTER, 2.0f, 2.0f, 2.0f);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMFrame_GetTransform(frame, matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    expect_matrix(matrix,
+            2.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 2.0f, 0.0f,
+            6.0f, 6.0f, 6.0f, 1.0f, 1);
+
     IDirect3DRMFrame_Release(frame);
     IDirect3DRM_Release(d3drm);
 }
