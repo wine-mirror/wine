@@ -1,5 +1,7 @@
 MODULE    = rasdlg.dll
 IMPORTLIB = rasdlg
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	rasdlg_main.c
