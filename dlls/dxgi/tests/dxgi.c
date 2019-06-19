@@ -4685,7 +4685,6 @@ static void test_swapchain_window_messages(void)
     hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     flush_events();
-    todo_wine
     ok(!expect_messages->message, "Expected message %#x.\n", expect_messages->message);
     expect_messages = NULL;
 
@@ -4717,7 +4716,6 @@ static void test_swapchain_window_messages(void)
     hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     flush_events();
-    todo_wine
     ok(!expect_messages->message, "Expected message %#x.\n", expect_messages->message);
     expect_messages = NULL;
 

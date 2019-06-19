@@ -1474,15 +1474,6 @@ HRESULT CDECL wined3d_swapchain_set_fullscreen(struct wined3d_swapchain *swapcha
         if (swapchain->desc.windowed)
         {
             /* Switch from windowed to fullscreen */
-            HWND focus_window = device->create_parms.focus_window;
-            if (!focus_window)
-                focus_window = swapchain->device_window;
-            if (FAILED(hr = wined3d_device_acquire_focus_window(device, focus_window)))
-            {
-                ERR("Failed to acquire focus window, hr %#x.\n", hr);
-                return hr;
-            }
-
             wined3d_device_setup_fullscreen_window(device, swapchain->device_window, width, height);
         }
         else
@@ -1505,7 +1496,6 @@ HRESULT CDECL wined3d_swapchain_set_fullscreen(struct wined3d_swapchain *swapcha
         if (swapchain->desc.flags & WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT)
             window_rect = &swapchain->original_window_rect;
         wined3d_device_restore_fullscreen_window(device, swapchain->device_window, window_rect);
-        wined3d_device_release_focus_window(device);
     }
 
     swapchain->desc.windowed = swapchain_desc->windowed;
