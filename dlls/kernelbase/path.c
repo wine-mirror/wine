@@ -1518,21 +1518,20 @@ LPSTR WINAPI PathCombineA(char *dst, const char *dir, const char *file)
     if (!dst)
         return NULL;
 
-    dst[0] = 0;
-
     if (!dir && !file)
-        return NULL;
+        goto fail;
 
     if (dir && !MultiByteToWideChar(CP_ACP, 0, dir, -1, dirW, ARRAY_SIZE(dirW)))
-        return NULL;
+        goto fail;
 
     if (file && !MultiByteToWideChar(CP_ACP, 0, file, -1, fileW, ARRAY_SIZE(fileW)))
-        return NULL;
+        goto fail;
 
     if (PathCombineW(dstW, dir ? dirW : NULL, file ? fileW : NULL))
         if (WideCharToMultiByte(CP_ACP, 0, dstW, -1, dst, MAX_PATH, 0, 0))
             return dst;
-
+fail:
+    dst[0] = 0;
     return NULL;
 }
 
@@ -1945,7 +1944,7 @@ void WINAPI PathRemoveExtensionA(char *path)
         return;
 
     path = PathFindExtensionA(path);
-    if (path && !*path)
+    if (path && *path)
         *path = '\0';
 }
 
@@ -1957,7 +1956,7 @@ void WINAPI PathRemoveExtensionW(WCHAR *path)
         return;
 
     path = PathFindExtensionW(path);
-    if (path && !*path)
+    if (path && *path)
         *path = '\0';
 }
 
@@ -3924,7 +3923,7 @@ static HRESULT url_guess_scheme(const WCHAR *url, WCHAR *out, DWORD *out_len)
     BOOL j;
 
     MultiByteToWideChar(CP_ACP, 0,
-            "Software\\Microsoft\\Windows\\CurrentVersion\\URL\\Prefixes", 1, reg_path, MAX_PATH);
+            "Software\\Microsoft\\Windows\\CurrentVersion\\URL\\Prefixes", -1, reg_path, MAX_PATH);
     RegOpenKeyExW(HKEY_LOCAL_MACHINE, reg_path, 0, 1, &newkey);
     index = 0;
     while (value_len = data_len = MAX_PATH,
