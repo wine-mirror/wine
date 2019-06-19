@@ -1,5 +1,7 @@
 MODULE    = query.dll
 IMPORTS   = uuid
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	query_main.c
