@@ -174,7 +174,21 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IWineDXGIFactory *ifa
 static HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IWineDXGIFactory *iface,
         HWND window, UINT flags)
 {
-    FIXME("iface %p, window %p, flags %#x stub!\n", iface, window, flags);
+    struct dxgi_factory *factory = impl_from_IWineDXGIFactory(iface);
+
+    TRACE("iface %p, window %p, flags %#x.\n", iface, window, flags);
+
+    if (flags > DXGI_MWA_VALID)
+        return DXGI_ERROR_INVALID_CALL;
+
+    if (!window)
+    {
+        wined3d_unregister_windows(factory->wined3d);
+        return S_OK;
+    }
+
+    if (!wined3d_register_window(factory->wined3d, window, NULL, flags))
+        return E_FAIL;
 
     return S_OK;
 }

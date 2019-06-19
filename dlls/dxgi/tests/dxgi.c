@@ -5086,7 +5086,7 @@ static void test_window_association(void)
     }
 
     hr = IDXGIFactory_MakeWindowAssociation(factory, swapchain_desc.OutputWindow, DXGI_MWA_VALID + 1);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
     /* Alt+Enter tests. */
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
@@ -5134,10 +5134,9 @@ static void test_window_association(void)
             flush_events();
             hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
             ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
-            todo_wine_if(tests[i].expect_fullscreen)
-                ok(fullscreen == tests[i].expect_fullscreen
-                        || broken(tests[i].broken_d3d10 && fullscreen),
-                        "Test %u: Got unexpected fullscreen %#x.\n", i, fullscreen);
+            ok(fullscreen == tests[i].expect_fullscreen
+                    || broken(tests[i].broken_d3d10 && fullscreen),
+                    "Test %u: Got unexpected fullscreen %#x.\n", i, fullscreen);
 
             wndproc = GetWindowLongPtrW(swapchain_desc.OutputWindow, GWLP_WNDPROC);
             ok(wndproc == original_wndproc, "Text %u: Got unexpected wndproc %#lx, expected %#lx.\n",
