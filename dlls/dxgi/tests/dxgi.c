@@ -4985,6 +4985,185 @@ done:
     ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
+static void test_window_association(void)
+{
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    LONG_PTR original_wndproc, wndproc;
+    IDXGIFactory *factory, *factory2;
+    IDXGISwapChain *swapchain;
+    IDXGIAdapter *adapter;
+    IDXGIDevice *device;
+    HWND hwnd, hwnd2;
+    BOOL fullscreen;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    static const struct
+    {
+        UINT flag;
+        BOOL expect_fullscreen;
+        BOOL broken_d3d10;
+    }
+    tests[] =
+    {
+        /* There are two reasons why VK_TAB and VK_ESC are not tested here:
+         *
+         * - Posting them to the window doesn't exit fullscreen like
+         *   Alt+Enter does. Alt+Tab and Alt+Esc are handled somewhere else.
+         *   E.g., not calling IDXGISwapChain::Present() will break Alt+Tab
+         *   and Alt+Esc while Alt+Enter will still function.
+         *
+         * - Posting them hangs the posting thread. Another thread that keeps
+         *   sending input is needed to avoid the hang. The hang is not
+         *   because of flush_events(). */
+        {0, TRUE},
+        {0, FALSE},
+        {DXGI_MWA_NO_WINDOW_CHANGES, FALSE},
+        {DXGI_MWA_NO_WINDOW_CHANGES, FALSE},
+        {DXGI_MWA_NO_ALT_ENTER, FALSE, TRUE},
+        {DXGI_MWA_NO_ALT_ENTER, FALSE},
+        {DXGI_MWA_NO_PRINT_SCREEN, TRUE},
+        {DXGI_MWA_NO_PRINT_SCREEN, FALSE},
+        {0, TRUE},
+        {0, FALSE}
+    };
+
+    if (!(device = create_device(0)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    swapchain_desc.BufferDesc.Width = 640;
+    swapchain_desc.BufferDesc.Height = 480;
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 1;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = 1;
+    swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = 0;
+
+    original_wndproc = GetWindowLongPtrW(swapchain_desc.OutputWindow, GWLP_WNDPROC);
+
+    hwnd2 = CreateWindowA("static", "dxgi_test2", 0, 0, 0, 400, 200, 0, 0, 0, 0);
+    hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory2);
+    ok(hr == S_OK, "Failed to create DXGI factory, hr %#x.\n", hr);
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    refcount = IDXGIAdapter_Release(adapter);
+
+    hr = IDXGIFactory_GetWindowAssociation(factory, NULL);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i <= DXGI_MWA_VALID; ++i)
+    {
+        hr = IDXGIFactory_MakeWindowAssociation(factory, NULL, i);
+        ok(hr == S_OK, "Got unexpected hr %#x for flags %#x.\n", hr, i);
+
+        hr = IDXGIFactory_MakeWindowAssociation(factory, swapchain_desc.OutputWindow, i);
+        ok(hr == S_OK, "Got unexpected hr %#x for flags %#x.\n", hr, i);
+
+        wndproc = GetWindowLongPtrW(swapchain_desc.OutputWindow, GWLP_WNDPROC);
+        ok(wndproc == original_wndproc, "Got unexpected wndproc %#lx, expected %#lx for flags %#x.\n",
+                wndproc, original_wndproc, i);
+
+        hwnd = (HWND)0xdeadbeef;
+        hr = IDXGIFactory_GetWindowAssociation(factory, &hwnd);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#x for flags %#x.\n", hr, i);
+        /* Apparently GetWindowAssociation() always returns NULL, even when
+         * MakeWindowAssociation() and GetWindowAssociation() are both
+         * successfully called. */
+        todo_wine ok(!hwnd, "Expect null associated window.\n");
+    }
+
+    hr = IDXGIFactory_MakeWindowAssociation(factory, swapchain_desc.OutputWindow, DXGI_MWA_VALID + 1);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    /* Alt+Enter tests. */
+    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    wndproc = GetWindowLongPtrW(swapchain_desc.OutputWindow, GWLP_WNDPROC);
+    ok(wndproc == original_wndproc, "Got unexpected wndproc %#lx, expected %#lx.\n", wndproc, original_wndproc);
+
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+    ok(hr == S_OK || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
+            || broken(hr == DXGI_ERROR_UNSUPPORTED) /* Windows 7 testbot */,
+            "Got unexpected hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Could not change fullscreen state.\n");
+    }
+    else
+    {
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+        for (i = 0; i < ARRAY_SIZE(tests); ++i)
+        {
+            /* First associate a window with the opposite flags. */
+            hr = IDXGIFactory_MakeWindowAssociation(factory, hwnd2, ~tests[i].flag & DXGI_MWA_VALID);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+            /* Associate the current test window. */
+            hwnd = tests[i].flag ? swapchain_desc.OutputWindow : NULL;
+            hr = IDXGIFactory_MakeWindowAssociation(factory, hwnd, tests[i].flag);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+            /* Associating a new test window doesn't override the old window. */
+            hr = IDXGIFactory_MakeWindowAssociation(factory, hwnd2, ~tests[i].flag & DXGI_MWA_VALID);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+            /* Associations with a different factory don't affect the existing
+             * association. */
+            hr = IDXGIFactory_MakeWindowAssociation(factory2, hwnd, ~tests[i].flag & DXGI_MWA_VALID);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+            /* Post synthesized Alt + VK_RETURN WM_SYSKEYDOWN. */
+            PostMessageA(swapchain_desc.OutputWindow, WM_SYSKEYDOWN, VK_RETURN,
+                    (MapVirtualKeyA(VK_RETURN, MAPVK_VK_TO_VSC) << 16) | 0x20000001);
+            flush_events();
+            hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            todo_wine_if(tests[i].expect_fullscreen)
+                ok(fullscreen == tests[i].expect_fullscreen
+                        || broken(tests[i].broken_d3d10 && fullscreen),
+                        "Test %u: Got unexpected fullscreen %#x.\n", i, fullscreen);
+
+            wndproc = GetWindowLongPtrW(swapchain_desc.OutputWindow, GWLP_WNDPROC);
+            ok(wndproc == original_wndproc, "Text %u: Got unexpected wndproc %#lx, expected %#lx.\n",
+                    i, wndproc, original_wndproc);
+        }
+    }
+
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    refcount = IDXGIFactory_Release(factory2);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
+    DestroyWindow(hwnd2);
+
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+    DestroyWindow(swapchain_desc.OutputWindow);
+
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
+}
+
 static void run_on_d3d10(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 {
     IDXGIDevice *device;
@@ -5084,6 +5263,7 @@ START_TEST(dxgi)
     test_swapchain_parameters();
     test_swapchain_window_messages();
     test_swapchain_window_styles();
+    test_window_association();
     run_on_d3d10(test_swapchain_resize);
     run_on_d3d10(test_swapchain_present);
     run_on_d3d10(test_swapchain_backbuffer_index);
