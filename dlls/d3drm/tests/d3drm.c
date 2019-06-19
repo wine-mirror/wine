@@ -2821,6 +2821,10 @@ static void test_frame_transform(void)
             0.0f, 0.0f, 2.0f, 0.0f,
             3.0f, 3.0f, 3.0f, 1.0f, 1);
 
+    add_matrix[3][3] = 2.0f;
+    hr = IDirect3DRMFrame_AddTransform(frame, D3DRMCOMBINE_REPLACE, add_matrix);
+    ok(hr == D3DRMERR_BADVALUE, "Got unexpected hr %#x.\n", hr);
+
     IDirect3DRMFrame_Release(frame);
     IDirect3DRM_Release(d3drm);
 }

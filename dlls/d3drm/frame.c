@@ -974,6 +974,9 @@ static HRESULT WINAPI d3drm_frame3_AddTransform(IDirect3DRMFrame3 *iface,
 
     TRACE("iface %p, type %#x, matrix %p.\n", iface, type, matrix);
 
+    if (m->_14 != 0.0f || m->_24 != 0.0f || m->_34 != 0.0f || m->_44 != 1.0f)
+        return D3DRMERR_BADVALUE;
+
     switch (type)
     {
         case D3DRMCOMBINE_REPLACE:
