@@ -22,10 +22,12 @@
 #include <limits.h>
 
 #define COBJMACROS
+#define _USE_MATH_DEFINES
 #include <d3d.h>
 #include <initguid.h>
 #include <d3drm.h>
 #include <d3drmwin.h>
+#include <math.h>
 
 #include "wine/test.h"
 
@@ -121,6 +123,20 @@ static void frame_set_transform(IDirect3DRMFrame *frame,
     };
 
     IDirect3DRMFrame_AddTransform(frame, D3DRMCOMBINE_REPLACE, matrix);
+}
+
+static void matrix_sanitise(D3DRMMATRIX4D m)
+{
+    unsigned int i, j;
+
+    for (i = 0; i < 4; ++i)
+    {
+        for (j = 0; j < 4; ++j)
+        {
+            if (m[i][j] > -1e-7f && m[i][j] < 1e-7f)
+                m[i][j] = 0.0f;
+        }
+    }
 }
 
 static HWND create_window(void)
@@ -2914,6 +2930,75 @@ static void test_frame_transform(void)
             0.0f, 2.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 2.0f, 0.0f,
             6.0f, 6.0f, 6.0f, 1.0f, 1);
+
+    frame_set_transform(frame,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            3.0f, 3.0f, 3.0f, 1.0f);
+    hr = IDirect3DRMFrame_AddRotation(frame, D3DRMCOMBINE_REPLACE, 1.0f, 0.0f, 0.0f, M_PI_2);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMFrame_GetTransform(frame, matrix);
+    matrix_sanitise(matrix);
+    expect_matrix(matrix,
+            1.0f,  0.0f, 0.0f, 0.0f,
+            0.0f,  0.0f, 1.0f, 0.0f,
+            0.0f, -1.0f, 0.0f, 0.0f,
+            0.0f,  0.0f, 0.0f, 1.0f, 1);
+
+    frame_set_transform(frame,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            3.0f, 3.0f, 3.0f, 1.0f);
+    hr = IDirect3DRMFrame_AddRotation(frame, D3DRMCOMBINE_BEFORE, 1.0f, 0.0f, 0.0f, M_PI_2);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMFrame_GetTransform(frame, matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    matrix_sanitise(matrix);
+    expect_matrix(matrix,
+            1.0f,  0.0f, 0.0f, 0.0f,
+            0.0f,  0.0f, 1.0f, 0.0f,
+            0.0f, -1.0f, 0.0f, 0.0f,
+            3.0f,  3.0f, 3.0f, 1.0f, 1);
+
+    frame_set_transform(frame,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            3.0f, 3.0f, 3.0f, 1.0f);
+    hr = IDirect3DRMFrame_AddRotation(frame, D3DRMCOMBINE_AFTER, 1.0f, 0.0f, 0.0f, M_PI_2);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMFrame_GetTransform(frame, matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    matrix_sanitise(matrix);
+    expect_matrix(matrix,
+            1.0f,  0.0f, 0.0f, 0.0f,
+            0.0f,  0.0f, 1.0f, 0.0f,
+            0.0f, -1.0f, 0.0f, 0.0f,
+            3.0f, -3.0f, 3.0f, 1.0f, 1);
+
+    hr = IDirect3DRMFrame_AddRotation(frame, D3DRMCOMBINE_REPLACE, 0.0f, 0.0f, 1.0f, M_PI_2);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMFrame_GetTransform(frame, matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    matrix_sanitise(matrix);
+    expect_matrix(matrix,
+             0.0f, 1.0f, 0.0f, 0.0f,
+            -1.0f, 0.0f, 0.0f, 0.0f,
+             0.0f, 0.0f, 1.0f, 0.0f,
+             0.0f, 0.0f, 0.0f, 1.0f, 1);
+
+    hr = IDirect3DRMFrame_AddRotation(frame, D3DRMCOMBINE_REPLACE, 0.0f, 0.0f, 0.0f, M_PI_2);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMFrame_GetTransform(frame, matrix);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    matrix_sanitise(matrix);
+    expect_matrix(matrix,
+            1.0f,  0.0f, 0.0f, 0.0f,
+            0.0f,  0.0f, 1.0f, 0.0f,
+            0.0f, -1.0f, 0.0f, 0.0f,
+            0.0f,  0.0f, 0.0f, 1.0f, 1);
 
     IDirect3DRMFrame_Release(frame);
     IDirect3DRM_Release(d3drm);

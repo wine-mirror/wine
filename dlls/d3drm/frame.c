@@ -125,6 +125,36 @@ static void d3drm_matrix_multiply_affine(struct d3drm_matrix *dst,
     *dst = tmp;
 }
 
+static void d3drm_matrix_set_rotation(struct d3drm_matrix *matrix, D3DVECTOR *axis, float theta)
+{
+    float sin_theta, cos_theta, vers_theta;
+
+    D3DRMVectorNormalize(axis);
+    sin_theta = sinf(theta);
+    cos_theta = cosf(theta);
+    vers_theta = 1.0f - cos_theta;
+
+    matrix->_11 = vers_theta * axis->u1.x * axis->u1.x + cos_theta;
+    matrix->_21 = vers_theta * axis->u1.x * axis->u2.y - sin_theta * axis->u3.z;
+    matrix->_31 = vers_theta * axis->u1.x * axis->u3.z + sin_theta * axis->u2.y;
+    matrix->_41 = 0.0f;
+
+    matrix->_12 = vers_theta * axis->u2.y * axis->u1.x + sin_theta * axis->u3.z;
+    matrix->_22 = vers_theta * axis->u2.y * axis->u2.y + cos_theta;
+    matrix->_32 = vers_theta * axis->u2.y * axis->u3.z - sin_theta * axis->u1.x;
+    matrix->_42 = 0.0f;
+
+    matrix->_13 = vers_theta * axis->u3.z * axis->u1.x - sin_theta * axis->u2.y;
+    matrix->_23 = vers_theta * axis->u3.z * axis->u2.y + sin_theta * axis->u1.x;
+    matrix->_33 = vers_theta * axis->u3.z * axis->u3.z + cos_theta;
+    matrix->_43 = 0.0f;
+
+    matrix->_14 = 0.0f;
+    matrix->_24 = 0.0f;
+    matrix->_34 = 0.0f;
+    matrix->_44 = 1.0f;
+}
+
 static HRESULT WINAPI d3drm_frame_array_QueryInterface(IDirect3DRMFrameArray *iface, REFIID riid, void **out)
 {
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
@@ -1149,26 +1179,58 @@ static HRESULT WINAPI d3drm_frame1_AddScale(IDirect3DRMFrame *iface,
 static HRESULT WINAPI d3drm_frame3_AddRotation(IDirect3DRMFrame3 *iface,
         D3DRMCOMBINETYPE type, D3DVALUE x, D3DVALUE y, D3DVALUE z, D3DVALUE theta)
 {
-    FIXME("iface %p, type %#x, x %.8e, y %.8e, z %.8e, theta %.8e stub!\n",
-            iface, type, x, y, z, theta);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_matrix m;
+    D3DVECTOR axis;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, type %#x, x %.8e, y %.8e, z %.8e, theta %.8e.\n", iface, type, x, y, z, theta);
+
+    axis.u1.x = x;
+    axis.u2.y = y;
+    axis.u3.z = z;
+
+    switch (type)
+    {
+        case D3DRMCOMBINE_REPLACE:
+            d3drm_matrix_set_rotation(&frame->transform, &axis, theta);
+            break;
+
+        case D3DRMCOMBINE_BEFORE:
+            d3drm_matrix_set_rotation(&m, &axis, theta);
+            d3drm_matrix_multiply_affine(&frame->transform, &m, &frame->transform);
+            break;
+
+        case D3DRMCOMBINE_AFTER:
+            d3drm_matrix_set_rotation(&m, &axis, theta);
+            d3drm_matrix_multiply_affine(&frame->transform, &frame->transform, &m);
+            break;
+
+        default:
+            FIXME("Unhandled type %#x.\n", type);
+            return D3DRMERR_BADVALUE;
+    }
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_frame2_AddRotation(IDirect3DRMFrame2 *iface,
         D3DRMCOMBINETYPE type, D3DVALUE x, D3DVALUE y, D3DVALUE z, D3DVALUE theta)
 {
-    FIXME("iface %p, type %#x, x %.8e, y %.8e, z %.8e, theta %.8e stub!\n", iface, type, x, y, z, theta);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, type %#x, x %.8e, y %.8e, z %.8e, theta %.8e.\n", iface, type, x, y, z, theta);
+
+    return d3drm_frame3_AddRotation(&frame->IDirect3DRMFrame3_iface, type, x, y, z, theta);
 }
 
 static HRESULT WINAPI d3drm_frame1_AddRotation(IDirect3DRMFrame *iface,
         D3DRMCOMBINETYPE type, D3DVALUE x, D3DVALUE y, D3DVALUE z, D3DVALUE theta)
 {
-    FIXME("iface %p, type %#x, x %.8e, y %.8e, z %.8e, theta %.8e stub!\n", iface, type, x, y, z, theta);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, type %#x, x %.8e, y %.8e, z %.8e, theta %.8e.\n", iface, type, x, y, z, theta);
+
+    return d3drm_frame3_AddRotation(&frame->IDirect3DRMFrame3_iface, type, x, y, z, theta);
 }
 
 static HRESULT WINAPI d3drm_frame3_AddVisual(IDirect3DRMFrame3 *iface, IUnknown *visual)
