@@ -1082,11 +1082,12 @@ static NTSTATUS map_fixed_area( void *base, size_t size, unsigned int vprot )
  * Create a view and mmap the corresponding memory area.
  * The csVirtual section must be held by caller.
  */
-static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, size_t mask,
+static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, size_t alignment,
                           int top_down, unsigned int vprot, size_t zero_bits )
 {
     void *ptr;
     NTSTATUS status;
+    size_t mask = get_mask( alignment );
 
     if (base)
     {
@@ -1287,7 +1288,7 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
         if (addr != low_64k)
         {
             if (addr != (void *)-1) munmap( addr, dosmem_size - 0x10000 );
-            return map_view( view, NULL, dosmem_size, 0xffff, 0, vprot, 0 );
+            return map_view( view, NULL, dosmem_size, 0, FALSE, vprot, 0 );
         }
     }
 
@@ -1390,11 +1391,11 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, SIZE_T z
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
     if (base >= (char *)address_space_start)  /* make sure the DOS area remains free */
-        status = map_view( &view, base, total_size, get_mask( 0 ), FALSE, SEC_IMAGE | SEC_FILE |
+        status = map_view( &view, base, total_size, 0, FALSE, SEC_IMAGE | SEC_FILE |
                            VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY, zero_bits );
 
     if (status != STATUS_SUCCESS)
-        status = map_view( &view, NULL, total_size, get_mask( 0 ), FALSE, SEC_IMAGE | SEC_FILE |
+        status = map_view( &view, NULL, total_size, 0, FALSE, SEC_IMAGE | SEC_FILE |
                            VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY, zero_bits );
 
     if (status != STATUS_SUCCESS) goto error;
@@ -1717,7 +1718,7 @@ NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG zero_bits, S
     get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE );
     vprot |= sec_flags;
     if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
-    res = map_view( &view, *addr_ptr, size, get_mask( 0 ), FALSE, vprot, zero_bits );
+    res = map_view( &view, *addr_ptr, size, 0, FALSE, vprot, zero_bits );
     if (res)
     {
         server_leave_uninterrupted_section( &csVirtual, &sigset );
@@ -1949,7 +1950,7 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, SIZE_T reserve_size, SI
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    if ((status = map_view( &view, NULL, size + extra_size, 0xffff, 0,
+    if ((status = map_view( &view, NULL, size + extra_size, 0, FALSE,
                             VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, 0 )) != STATUS_SUCCESS)
         goto done;
 
@@ -2551,7 +2552,6 @@ NTSTATUS virtual_alloc_aligned( PVOID *ret, ULONG zero_bits, SIZE_T *size_ptr,
     void *base;
     unsigned int vprot;
     SIZE_T size = *size_ptr;
-    SIZE_T mask = get_mask( alignment );
     NTSTATUS status = STATUS_SUCCESS;
     BOOL is_dos_memory = FALSE;
     struct file_view *view;
@@ -2564,7 +2564,7 @@ NTSTATUS virtual_alloc_aligned( PVOID *ret, ULONG zero_bits, SIZE_T *size_ptr,
     if (*ret)
     {
         if (type & MEM_RESERVE) /* Round down to 64k boundary */
-            base = ROUND_ADDR( *ret, mask );
+            base = ROUND_ADDR( *ret, get_mask( alignment ) );
         else
             base = ROUND_ADDR( *ret, page_mask );
         size = (((UINT_PTR)*ret + size + page_mask) & ~page_mask) - (UINT_PTR)base;
@@ -2608,7 +2608,7 @@ NTSTATUS virtual_alloc_aligned( PVOID *ret, ULONG zero_bits, SIZE_T *size_ptr,
 
             if (vprot & VPROT_WRITECOPY) status = STATUS_INVALID_PAGE_PROTECTION;
             else if (is_dos_memory) status = allocate_dos_memory( &view, vprot );
-            else status = map_view( &view, base, size, mask, type & MEM_TOP_DOWN, vprot, zero_bits );
+            else status = map_view( &view, base, size, alignment, type & MEM_TOP_DOWN, vprot, zero_bits );
 
             if (status == STATUS_SUCCESS) base = view->base;
         }
