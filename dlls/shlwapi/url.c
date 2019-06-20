@@ -2382,53 +2382,6 @@ HRESULT WINAPI UrlGetPartW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut,
 }
 
 /*************************************************************************
- * PathIsURLA	[SHLWAPI.@]
- *
- * Check if the given path is a Url.
- *
- * PARAMS
- *  lpszPath [I] Path to check.
- *
- * RETURNS
- *  TRUE  if lpszPath is a Url.
- *  FALSE if lpszPath is NULL or not a Url.
- */
-BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
-{
-    PARSEDURLA base;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_a(lpstrPath));
-
-    if (!lpstrPath || !*lpstrPath) return FALSE;
-
-    /* get protocol        */
-    base.cbSize = sizeof(base);
-    hres = ParseURLA(lpstrPath, &base);
-    return hres == S_OK && (base.nScheme != URL_SCHEME_INVALID);
-}
-
-/*************************************************************************
- * PathIsURLW	[SHLWAPI.@]
- *
- * See PathIsURLA.
- */
-BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
-{
-    PARSEDURLW base;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_w(lpstrPath));
-
-    if (!lpstrPath || !*lpstrPath) return FALSE;
-
-    /* get protocol        */
-    base.cbSize = sizeof(base);
-    hres = ParseURLW(lpstrPath, &base);
-    return hres == S_OK && (base.nScheme != URL_SCHEME_INVALID);
-}
-
-/*************************************************************************
  *      UrlCreateFromPathA  	[SHLWAPI.@]
  * 
  * See UrlCreateFromPathW
