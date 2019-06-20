@@ -18,7 +18,6 @@
 
 #define COBJMACROS
 
-#include "config.h"
 #include <stdarg.h>
 #include <limits.h>
 
@@ -32,7 +31,6 @@
 #include "scrrun_private.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
@@ -205,8 +203,8 @@ static inline BOOL is_dir_data(const WIN32_FIND_DATAW *data)
     static const WCHAR dotW[] = {'.',0};
 
     return (data->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-            strcmpW(data->cFileName, dotdotW) &&
-            strcmpW(data->cFileName, dotW);
+            wcscmp(data->cFileName, dotdotW) &&
+            wcscmp(data->cFileName, dotW);
 }
 
 static inline BOOL is_file_data(const WIN32_FIND_DATAW *data)
@@ -219,10 +217,10 @@ static BSTR get_full_path(BSTR path, const WIN32_FIND_DATAW *data)
     int len = SysStringLen(path);
     WCHAR buffW[MAX_PATH];
 
-    strcpyW(buffW, path);
+    lstrcpyW(buffW, path);
     if (path[len-1] != '\\')
-        strcatW(buffW, bsW);
-    strcatW(buffW, data->cFileName);
+        lstrcatW(buffW, bsW);
+    lstrcatW(buffW, data->cFileName);
 
     return SysAllocString(buffW);
 }
@@ -1165,11 +1163,11 @@ static HANDLE start_enumeration(const WCHAR *path, WIN32_FIND_DATAW *data, BOOL 
     int len;
     HANDLE handle;
 
-    strcpyW(pathW, path);
-    len = strlenW(pathW);
+    lstrcpyW(pathW, path);
+    len = lstrlenW(pathW);
     if (len && pathW[len-1] != '\\')
-        strcatW(pathW, bsW);
-    strcatW(pathW, allW);
+        lstrcatW(pathW, bsW);
+    lstrcatW(pathW, allW);
     handle = FindFirstFileW(pathW, data);
     if (handle == INVALID_HANDLE_VALUE) return 0;
 
@@ -1738,8 +1736,8 @@ static HRESULT WINAPI foldercoll_get_Count(IFolderCollection *iface, LONG *count
 
     *count = 0;
 
-    strcpyW(pathW, This->path);
-    strcatW(pathW, allW);
+    lstrcpyW(pathW, This->path);
+    lstrcatW(pathW, allW);
     handle = FindFirstFileW(pathW, &data);
     if (handle == INVALID_HANDLE_VALUE)
         return HRESULT_FROM_WIN32(GetLastError());
@@ -1933,8 +1931,8 @@ static HRESULT WINAPI filecoll_get_Count(IFileCollection *iface, LONG *count)
 
     *count = 0;
 
-    strcpyW(pathW, This->path);
-    strcatW(pathW, allW);
+    lstrcpyW(pathW, This->path);
+    lstrcatW(pathW, allW);
     handle = FindFirstFileW(pathW, &data);
     if (handle == INVALID_HANDLE_VALUE)
         return HRESULT_FROM_WIN32(GetLastError());
@@ -2287,7 +2285,7 @@ static HRESULT WINAPI folder_get_Name(IFolder *iface, BSTR *name)
 
     *name = NULL;
 
-    ptr = strrchrW(This->path, '\\');
+    ptr = wcsrchr(This->path, '\\');
     if (ptr)
     {
         *name = SysAllocString(ptr+1);
@@ -2637,7 +2635,7 @@ static HRESULT WINAPI file_get_Name(IFile *iface, BSTR *name)
 
     *name = NULL;
 
-    ptr = strrchrW(This->path, '\\');
+    ptr = wcsrchr(This->path, '\\');
     if (ptr)
     {
         *name = SysAllocString(ptr+1);
@@ -3031,9 +3029,9 @@ static HRESULT WINAPI filesys_BuildPath(IFileSystem3 *iface, BSTR Path,
             ret = SysAllocStringLen(NULL, path_len + name_len);
             if (ret)
             {
-                strcpyW(ret, Path);
+                lstrcpyW(ret, Path);
                 ret[path_len] = 0;
-                strcatW(ret, Name);
+                lstrcatW(ret, Name);
             }
         }
         else if (Path[path_len-1] != '\\' && Name[0] != '\\')
@@ -3041,10 +3039,10 @@ static HRESULT WINAPI filesys_BuildPath(IFileSystem3 *iface, BSTR Path,
             ret = SysAllocStringLen(NULL, path_len + name_len + 1);
             if (ret)
             {
-                strcpyW(ret, Path);
+                lstrcpyW(ret, Path);
                 if (Path[path_len-1] != ':')
-                    strcatW(ret, bsW);
-                strcatW(ret, Name);
+                    lstrcatW(ret, bsW);
+                lstrcatW(ret, Name);
             }
         }
         else
@@ -3052,8 +3050,8 @@ static HRESULT WINAPI filesys_BuildPath(IFileSystem3 *iface, BSTR Path,
             ret = SysAllocStringLen(NULL, path_len + name_len);
             if (ret)
             {
-                strcpyW(ret, Path);
-                strcatW(ret, Name);
+                lstrcpyW(ret, Path);
+                lstrcatW(ret, Name);
             }
         }
     }
@@ -3077,7 +3075,7 @@ static HRESULT WINAPI filesys_GetDriveName(IFileSystem3 *iface, BSTR path, BSTR 
 
     *drive = NULL;
 
-    if (path && strlenW(path) > 1 && path[1] == ':')
+    if (path && lstrlenW(path) > 1 && path[1] == ':')
         *drive = SysAllocStringLen(path, 2);
 
     return S_OK;
@@ -3147,7 +3145,7 @@ static HRESULT WINAPI filesys_GetFileName(IFileSystem3 *iface, BSTR Path,
         return S_OK;
     }
 
-    for(end=strlenW(Path)-1; end>=0; end--)
+    for(end=lstrlenW(Path)-1; end>=0; end--)
         if(Path[end]!='/' && Path[end]!='\\')
             break;
 
@@ -3182,7 +3180,7 @@ static HRESULT WINAPI filesys_GetBaseName(IFileSystem3 *iface, BSTR Path,
         return S_OK;
     }
 
-    for(end=strlenW(Path)-1; end>=0; end--)
+    for(end=lstrlenW(Path)-1; end>=0; end--)
         if(Path[end]!='/' && Path[end]!='\\')
             break;
 
@@ -3252,7 +3250,7 @@ static HRESULT WINAPI filesys_GetAbsolutePathName(IFileSystem3 *iface, BSTR Path
     if(!len)
         return E_FAIL;
 
-    buf[0] = toupperW(buf[0]);
+    buf[0] = towupper(buf[0]);
     if(len>3 && buf[len-1] == '\\')
         buf[--len] = 0;
 
@@ -3266,7 +3264,7 @@ static HRESULT WINAPI filesys_GetAbsolutePathName(IFileSystem3 *iface, BSTR Path
         if(fh == INVALID_HANDLE_VALUE)
             break;
 
-        exp_len = strlenW(fdata.cFileName);
+        exp_len = lstrlenW(fdata.cFileName);
         if(exp_len == i-beg)
             memcpy(buf+beg, fdata.cFileName, exp_len*sizeof(WCHAR));
         FindClose(fh);
@@ -3297,7 +3295,7 @@ static HRESULT WINAPI filesys_GetTempName(IFileSystem3 *iface, BSTR *pbstrResult
 
     if(!RtlGenRandom(&random, sizeof(random)))
         return E_FAIL;
-    sprintfW(*pbstrResult, fmt, random & 0xfffff);
+    swprintf(*pbstrResult, 12, fmt, random & 0xfffff);
     return S_OK;
 }
 
@@ -3314,7 +3312,7 @@ static HRESULT WINAPI filesys_DriveExists(IFileSystem3 *iface, BSTR DriveSpec,
     len = SysStringLen(DriveSpec);
 
     if (len >= 1) {
-        driveletter = toupperW(DriveSpec[0]);
+        driveletter = towupper(DriveSpec[0]);
         if (driveletter >= 'A' && driveletter <= 'Z'
                 && (len < 2 || DriveSpec[1] == ':')
                 && (len < 3 || DriveSpec[2] == '\\')) {
@@ -3372,7 +3370,7 @@ static HRESULT WINAPI filesys_GetDrive(IFileSystem3 *iface, BSTR DriveSpec,
     if (!len)
         return E_INVALIDARG;
     else if (len <= 3) {
-        driveletter = toupperW(DriveSpec[0]);
+        driveletter = towupper(DriveSpec[0]);
         if (driveletter < 'A' || driveletter > 'Z'
                 || (len >= 2 && DriveSpec[1] != ':')
                 || (len == 3 && DriveSpec[2] != '\\'))
@@ -3489,7 +3487,7 @@ static inline HRESULT delete_file(const WCHAR *file, DWORD file_len, VARIANT_BOO
         if(ffd.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE))
             continue;
 
-        name_len = strlenW(ffd.cFileName);
+        name_len = lstrlenW(ffd.cFileName);
         if(len+name_len+1 >= MAX_PATH) {
             FindClose(f);
             return E_FAIL;
@@ -3551,7 +3549,7 @@ static HRESULT delete_folder(const WCHAR *folder, DWORD folder_len, VARIANT_BOOL
                     (ffd.cFileName[1]=='.' && ffd.cFileName[2]==0)))
             continue;
 
-        name_len = strlenW(ffd.cFileName);
+        name_len = lstrlenW(ffd.cFileName);
         if(len+name_len+3 >= MAX_PATH) {
             FindClose(f);
             return E_FAIL;
@@ -3667,7 +3665,7 @@ static inline HRESULT copy_file(const WCHAR *source, DWORD source_len,
         if(ffd.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE))
             continue;
 
-        name_len = strlenW(ffd.cFileName);
+        name_len = lstrlenW(ffd.cFileName);
         if(src_len+name_len+1>=MAX_PATH || dst_len+name_len+1>=MAX_PATH) {
             FindClose(f);
             return E_FAIL;
@@ -3769,7 +3767,7 @@ static HRESULT copy_folder(const WCHAR *source, DWORD source_len, const WCHAR *d
                     (ffd.cFileName[1]=='.' && ffd.cFileName[2]==0)))
             continue;
 
-        name_len = strlenW(ffd.cFileName);
+        name_len = lstrlenW(ffd.cFileName);
         if(dst_len+name_len>=MAX_PATH || src_len+name_len+2>=MAX_PATH) {
             FindClose(f);
             return E_FAIL;
@@ -3895,7 +3893,7 @@ static void get_versionstring(VS_FIXEDFILEINFO *info, WCHAR *ver)
     c = (WORD)((version >> 16) & 0xffff);
     d = (WORD)( version & 0xffff);
 
-    sprintfW(ver, fmtW, a, b, c, d);
+    swprintf(ver, 30, fmtW, a, b, c, d);
 }
 
 static HRESULT WINAPI filesys_GetFileVersion(IFileSystem3 *iface, BSTR name, BSTR *version)
