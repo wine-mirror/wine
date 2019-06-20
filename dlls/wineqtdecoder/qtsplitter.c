@@ -823,18 +823,6 @@ static inline QTInPin *impl_from_IPin( IPin *iface )
     return CONTAINING_RECORD(iface, QTInPin, pin.IPin_iface);
 }
 
-static ULONG WINAPI QTInPin_AddRef(IPin *iface)
-{
-    QTInPin *pin = impl_from_IPin(iface);
-    return IBaseFilter_AddRef(pin->pin.pinInfo.pFilter);
-}
-
-static ULONG WINAPI QTInPin_Release(IPin *iface)
-{
-    QTInPin *pin = impl_from_IPin(iface);
-    return IBaseFilter_Release(pin->pin.pinInfo.pFilter);
-}
-
 static HRESULT QT_Process_Video_Track(QTSplitter* filter, Track trk)
 {
     AM_MEDIA_TYPE amt;
@@ -1268,8 +1256,8 @@ static HRESULT WINAPI QTInPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **ppEn
 
 static const IPinVtbl QT_InputPin_Vtbl = {
     QTInPin_QueryInterface,
-    QTInPin_AddRef,
-    QTInPin_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     BaseInputPinImpl_Connect,
     QTInPin_ReceiveConnection,
     QTInPin_Disconnect,
@@ -1331,18 +1319,6 @@ static HRESULT WINAPI QTOutPin_QueryInterface(IPin *iface, REFIID riid, void **p
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI QTOutPin_AddRef(IPin *iface)
-{
-    QTOutPin *pin = impl_QTOutPin_from_IPin(iface);
-    return IBaseFilter_AddRef(pin->pin.pin.pinInfo.pFilter);
-}
-
-static ULONG WINAPI QTOutPin_Release(IPin *iface)
-{
-    QTOutPin *pin = impl_QTOutPin_from_IPin(iface);
-    return IBaseFilter_Release(pin->pin.pin.pinInfo.pFilter);
-}
-
 static HRESULT WINAPI QTOutPin_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *amt)
 {
     FIXME("(%p) stub\n", base);
@@ -1391,8 +1367,8 @@ static HRESULT WINAPI QTOutPin_DecideAllocator(BaseOutputPin *iface, IMemInputPi
 
 static const IPinVtbl QT_OutputPin_Vtbl = {
     QTOutPin_QueryInterface,
-    QTOutPin_AddRef,
-    QTOutPin_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
     BaseOutputPinImpl_Disconnect,
