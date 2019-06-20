@@ -1687,18 +1687,6 @@ static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI GSTOutPin_AddRef(IPin *iface)
-{
-    GSTOutPin *pin = impl_source_from_IPin(iface);
-    return IBaseFilter_AddRef(pin->pin.pin.pinInfo.pFilter);
-}
-
-static ULONG WINAPI GSTOutPin_Release(IPin *iface)
-{
-    GSTOutPin *pin = impl_source_from_IPin(iface);
-    return IBaseFilter_Release(pin->pin.pin.pinInfo.pFilter);
-}
-
 static HRESULT WINAPI GSTOutPin_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *amt)
 {
     FIXME("(%p) stub\n", base);
@@ -1794,8 +1782,8 @@ static void free_source_pin(GSTOutPin *pin)
 
 static const IPinVtbl GST_OutputPin_Vtbl = {
     GSTOutPin_QueryInterface,
-    GSTOutPin_AddRef,
-    GSTOutPin_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     BaseOutputPinImpl_Connect,
     BaseOutputPinImpl_ReceiveConnection,
     BaseOutputPinImpl_Disconnect,
@@ -1877,18 +1865,6 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
 static inline GSTInPin *impl_sink_from_IPin(IPin *iface)
 {
     return CONTAINING_RECORD(iface, GSTInPin, pin.IPin_iface);
-}
-
-static ULONG WINAPI GSTInPin_AddRef(IPin *iface)
-{
-    GSTInPin *pin = impl_sink_from_IPin(iface);
-    return IBaseFilter_AddRef(pin->pin.pinInfo.pFilter);
-}
-
-static ULONG WINAPI GSTInPin_Release(IPin *iface)
-{
-    GSTInPin *pin = impl_sink_from_IPin(iface);
-    return IBaseFilter_Release(pin->pin.pinInfo.pFilter);
 }
 
 static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
@@ -2073,8 +2049,8 @@ static HRESULT WINAPI GSTInPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **ppE
 
 static const IPinVtbl GST_InputPin_Vtbl = {
     GSTInPin_QueryInterface,
-    GSTInPin_AddRef,
-    GSTInPin_Release,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
     BaseInputPinImpl_Connect,
     GSTInPin_ReceiveConnection,
     GSTInPin_Disconnect,
