@@ -73,6 +73,20 @@ static HANDLE create_target_process(const char *arg)
     return pi.hProcess;
 }
 
+static UINT_PTR get_zero_bits(UINT_PTR p)
+{
+    UINT_PTR z = 0;
+
+#ifdef _WIN64
+    if (p >= 0xffffffff)
+        return (~(UINT_PTR)0) >> get_zero_bits(p >> 32);
+#endif
+
+    if (p == 0) return 32;
+    while ((p >> (31 - z)) != 1) z++;
+    return z;
+}
+
 static void test_VirtualAllocEx(void)
 {
     const unsigned int alloc_size = 1<<15;
@@ -1260,24 +1274,12 @@ static void test_NtMapViewOfSection(void)
     ok( result == sizeof(buffer), "ReadProcessMemory didn't read all data (%lx)\n", result );
     ok( !memcmp( buffer, data, sizeof(buffer) ), "Wrong data read\n" );
 
-    /* for some unknown reason NtMapViewOfSection fails with STATUS_NO_MEMORY when zero_bits != 0 ? */
     ptr2 = NULL;
     size = 0;
     offset.QuadPart = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 12, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    todo_wine
-    ok( status == STATUS_NO_MEMORY, "NtMapViewOfSection returned %x\n", status );
-    if (status == STATUS_SUCCESS)
-    {
-        status = pNtUnmapViewOfSection( hProcess, ptr2 );
-        ok( !status, "NtUnmapViewOfSection failed status %x\n", status );
-    }
-
-    ptr2 = NULL;
-    size = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 16, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    todo_wine
-    ok( status == STATUS_NO_MEMORY, "NtMapViewOfSection returned %x\n", status );
+    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 1, 0, &offset, &size, 1, 0, PAGE_READWRITE );
+    ok( status == STATUS_SUCCESS || status == STATUS_NO_MEMORY,
+        "NtMapViewOfSection returned %x\n", status );
     if (status == STATUS_SUCCESS)
     {
         status = pNtUnmapViewOfSection( hProcess, ptr2 );
@@ -1288,12 +1290,8 @@ static void test_NtMapViewOfSection(void)
     ptr2 = NULL;
     size = 0;
     status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 22, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
-    if (status == STATUS_SUCCESS)
-    {
-        status = pNtUnmapViewOfSection( hProcess, ptr2 );
-        ok( !status, "NtUnmapViewOfSection failed status %x\n", status );
-    }
+    ok( status == STATUS_INVALID_PARAMETER_4 || status == STATUS_INVALID_PARAMETER,
+        "NtMapViewOfSection returned %x\n", status );
 
     /* mapping at the same page conflicts */
     ptr2 = ptr;
@@ -1323,30 +1321,20 @@ static void test_NtMapViewOfSection(void)
     status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE );
     ok( status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %x\n", status );
 
-    /* zero_bits != 0 is not allowed when an address is set */
+    /* when an address is passed, it has to satisfy the provided number of zero bits */
     ptr2 = (char *)ptr + 0x1000;
     size = 0;
     offset.QuadPart = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 12, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
+    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, get_zero_bits(((UINT_PTR)ptr2) >> 1), 0, &offset, &size, 1, 0, PAGE_READWRITE );
+    ok( status == STATUS_INVALID_PARAMETER_4 || status == STATUS_INVALID_PARAMETER,
+        "NtMapViewOfSection returned %x\n", status );
 
     ptr2 = (char *)ptr + 0x1000;
     size = 0;
     offset.QuadPart = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 16, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
-
-    ptr2 = (char *)ptr + 0x1001;
-    size = 0;
-    offset.QuadPart = 0;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 16, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
-
-    ptr2 = (char *)ptr + 0x1000;
-    size = 0;
-    offset.QuadPart = 1;
-    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 16, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
+    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, get_zero_bits((UINT_PTR)ptr2), 0, &offset, &size, 1, 0, PAGE_READWRITE );
+    todo_wine
+    ok( status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %x\n", status );
 
     if (sizeof(void *) == sizeof(int) && (!pIsWow64Process ||
         !pIsWow64Process( GetCurrentProcess(), &is_wow64 ) || !is_wow64))
@@ -1409,7 +1397,8 @@ static void test_NtMapViewOfSection(void)
         status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset,
                                       &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE );
         todo_wine
-        ok( status == STATUS_INVALID_PARAMETER_9, "NtMapViewOfSection returned %x\n", status );
+        ok( status == STATUS_INVALID_PARAMETER_9 || status == STATUS_INVALID_PARAMETER,
+            "NtMapViewOfSection returned %x\n", status );
     }
 
     status = pNtUnmapViewOfSection( hProcess, ptr );
