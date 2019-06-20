@@ -3300,12 +3300,10 @@ static void test_two_dlls_at_same_time(void)
     if (!fill_sxs_info(&dll_2, "2", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE))
         goto cleanup;
 
-    todo_wine
     ok(dll_1.module != dll_2.module, "Libraries are the same\n");
     dll_1.get_path(path1, sizeof(path1));
     ok(strcmp(path1, dll_1.path_dll) == 0, "Got '%s', expected '%s'\n", path1, dll_1.path_dll);
     dll_2.get_path(path2, sizeof(path2));
-    todo_wine
     ok(strcmp(path2, dll_2.path_dll) == 0, "Got '%s', expected '%s'\n", path2, dll_2.path_dll);
 
 cleanup:
@@ -3338,10 +3336,8 @@ static void test_one_sxs_and_one_local_1(void)
     if (!fill_sxs_info(&dll, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE))
         goto cleanup;
 
-    todo_wine
     ok(dll.module != module, "Libraries are the same\n");
     dll.get_path(path1, sizeof(path1));
-    todo_wine
     ok(strcmp(path1, dll.path_dll) == 0, "Got '%s', expected '%s'\n", path1, dll.path_dll);
     get_path(path2, sizeof(path2));
     ok(strcmp(path2, path_dll_local) == 0, "Got '%s', expected '%s'\n", path2, path_dll_local);
@@ -3417,7 +3413,6 @@ static void test_one_with_sxs_and_GetModuleHandleA(void)
     ok(success, "ActivateActCtx failed: %d\n", GetLastError());
 
     module_temp = GetModuleHandleA("sxs_dll.dll");
-    todo_wine
     ok (module_temp == 0, "Expected 0, got %p\n", module_temp);
 
     DeactivateActCtx(0, dll.cookie);
