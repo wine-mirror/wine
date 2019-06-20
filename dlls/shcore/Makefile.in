@@ -1,5 +1,7 @@
 MODULE    = shcore.dll
 IMPORTS   = user32 gdi32 ole32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c

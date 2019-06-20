@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -33,7 +32,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shcore);
 
@@ -389,12 +387,12 @@ WCHAR** WINAPI CommandLineToArgvW(const WCHAR *cmdline, int *numargs)
      * with it. This way the caller can make a single LocalFree() call to free
      * both, as per MSDN.
      */
-    argv = LocalAlloc(LMEM_FIXED, (argc + 1) * sizeof(WCHAR *) + (strlenW(cmdline) + 1) * sizeof(WCHAR));
+    argv = LocalAlloc(LMEM_FIXED, (argc + 1) * sizeof(WCHAR *) + (lstrlenW(cmdline) + 1) * sizeof(WCHAR));
     if (!argv)
         return NULL;
 
     /* --- Then split and copy the arguments */
-    argv[0] = d = strcpyW((WCHAR *)(argv + argc + 1), cmdline);
+    argv[0] = d = lstrcpyW((WCHAR *)(argv + argc + 1), cmdline);
     argc = 1;
     /* The first argument, the executable path, follows special rules */
     if (*d == '"')
@@ -1005,7 +1003,7 @@ static HRESULT WINAPI filestream_Stat(IStream *iface, STATSTG *statstg, DWORD fl
         statstg->pwcsName = NULL;
     else
     {
-        int len = strlenW(stream->u.file.path);
+        int len = lstrlenW(stream->u.file.path);
         if ((statstg->pwcsName = CoTaskMemAlloc((len + 1) * sizeof(WCHAR))))
             memcpy(statstg->pwcsName, stream->u.file.path, (len + 1) * sizeof(WCHAR));
     }
@@ -1116,7 +1114,7 @@ HRESULT WINAPI SHCreateStreamOnFileEx(const WCHAR *path, DWORD mode, DWORD attri
     stream->u.file.handle = hFile;
     stream->u.file.mode = mode;
 
-    len = strlenW(path);
+    len = lstrlenW(path);
     stream->u.file.path = heap_alloc((len + 1) * sizeof(WCHAR));
     memcpy(stream->u.file.path, path, (len + 1) * sizeof(WCHAR));
 
@@ -1651,7 +1649,7 @@ HRESULT WINAPI SHStrDupW(const WCHAR *src, WCHAR **dest)
     if (!src)
         return E_INVALIDARG;
 
-    len = (strlenW(src) + 1) * sizeof(WCHAR);
+    len = (lstrlenW(src) + 1) * sizeof(WCHAR);
     *dest = CoTaskMemAlloc(len);
     if (!*dest)
         return E_OUTOFMEMORY;
@@ -1741,7 +1739,7 @@ DWORD WINAPI SHUnicodeToUnicode(const WCHAR *src, WCHAR *dest, int dest_len)
         return 0;
 
     lstrcpynW(dest, src, dest_len);
-    ret = strlenW(dest);
+    ret = lstrlenW(dest);
 
     return src[ret] ? 0 : ret + 1;
 }
@@ -2077,7 +2075,7 @@ DWORD WINAPI SHQueryValueExW(HKEY hkey, const WCHAR *name, DWORD *reserved, DWOR
         }
         else
         {
-            length = (strlenW(buff) + 1) * sizeof(WCHAR);
+            length = (lstrlenW(buff) + 1) * sizeof(WCHAR);
             value = heap_alloc(length);
             memcpy(value, buff, length);
             length = ExpandEnvironmentStringsW(value, buff, *buff_len / sizeof(WCHAR));
@@ -2208,7 +2206,7 @@ int WINAPI SHRegGetIntW(HKEY hkey, const WCHAR *value, int default_value)
         return default_value;
 
     if (*buff >= '0' && *buff <= '9')
-        return atoiW(buff);
+        return wcstol(buff, NULL, 10);
 
     return default_value;
 }
