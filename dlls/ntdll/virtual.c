@@ -409,12 +409,12 @@ static struct file_view *VIRTUAL_FindView( const void *addr, size_t size )
 /***********************************************************************
  *           get_mask
  */
-static inline UINT_PTR get_mask( ULONG zero_bits )
+static inline UINT_PTR get_mask( ULONG alignment )
 {
-    if (!zero_bits) return 0xffff;  /* allocations are aligned to 64K by default */
-    if (zero_bits < page_shift) zero_bits = page_shift;
-    if (zero_bits > 21) return 0;
-    return (1 << zero_bits) - 1;
+    if (!alignment) return 0xffff;  /* allocations are aligned to 64K by default */
+    if (alignment < page_shift) alignment = page_shift;
+    if (alignment > 21) return 0;
+    return (1 << alignment) - 1;
 }
 
 
@@ -1360,7 +1360,7 @@ static NTSTATUS map_pe_header( void *ptr, size_t size, int fd, BOOL *removable )
  *
  * Map an executable (PE format) image into memory.
  */
-static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, SIZE_T mask,
+static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, SIZE_T zero_bits,
                            pe_image_info_t *image_info, int shared_fd, BOOL removable, PVOID *addr_ptr )
 {
     IMAGE_DOS_HEADER *dos;
@@ -1390,12 +1390,12 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, SIZE_T m
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
     if (base >= (char *)address_space_start)  /* make sure the DOS area remains free */
-        status = map_view( &view, base, total_size, mask, FALSE, SEC_IMAGE | SEC_FILE |
-                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY, 0 );
+        status = map_view( &view, base, total_size, get_mask( 0 ), FALSE, SEC_IMAGE | SEC_FILE |
+                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY, zero_bits );
 
     if (status != STATUS_SUCCESS)
-        status = map_view( &view, NULL, total_size, mask, FALSE, SEC_IMAGE | SEC_FILE |
-                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY, 0 );
+        status = map_view( &view, NULL, total_size, get_mask( 0 ), FALSE, SEC_IMAGE | SEC_FILE |
+                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY, zero_bits );
 
     if (status != STATUS_SUCCESS) goto error;
 
@@ -1617,7 +1617,7 @@ NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG zero_bits, S
     NTSTATUS res;
     mem_size_t full_size;
     ACCESS_MASK access;
-    SIZE_T size, mask = get_mask( zero_bits );
+    SIZE_T size;
     int unix_handle = -1, needs_close;
     unsigned int vprot, sec_flags;
     struct file_view *view;
@@ -1672,14 +1672,15 @@ NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG zero_bits, S
 
             if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
                                            &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
-            res = map_image( handle, access, unix_handle, mask, image_info,
+            res = map_image( handle, access, unix_handle, zero_bits, image_info,
                              shared_fd, needs_close, addr_ptr );
             if (shared_needs_close) close( shared_fd );
             close_handle( shared_file );
         }
         else
         {
-            res = map_image( handle, access, unix_handle, mask, image_info, -1, needs_close, addr_ptr );
+            res = map_image( handle, access, unix_handle, zero_bits, image_info,
+                             -1, needs_close, addr_ptr );
         }
         if (needs_close) close( unix_handle );
         if (res >= 0) *size_ptr = image_info->map_size;
@@ -1716,7 +1717,7 @@ NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG zero_bits, S
     get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE );
     vprot |= sec_flags;
     if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
-    res = map_view( &view, *addr_ptr, size, mask, FALSE, vprot, 0 );
+    res = map_view( &view, *addr_ptr, size, get_mask( 0 ), FALSE, vprot, zero_bits );
     if (res)
     {
         server_leave_uninterrupted_section( &csVirtual, &sigset );
@@ -3136,7 +3137,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
                                     SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect )
 {
     NTSTATUS res;
-    SIZE_T mask = get_mask( zero_bits );
+    SIZE_T mask = get_mask( 0 );
     pe_image_info_t image_info;
     LARGE_INTEGER offset;
 
@@ -3146,8 +3147,17 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
           handle, process, *addr_ptr, offset.u.HighPart, offset.u.LowPart, *size_ptr, protect );
 
     /* Check parameters */
+    if (zero_bits > 21 && zero_bits < 32)
+        return STATUS_INVALID_PARAMETER_4;
+    if (!is_win64 && !is_wow64 && zero_bits >= 32)
+        return STATUS_INVALID_PARAMETER_4;
 
-    if ((*addr_ptr && zero_bits) || !mask)
+    /* If both addr_ptr and zero_bits are passed, they have match */
+    if (*addr_ptr && zero_bits && zero_bits < 32 &&
+        (((UINT_PTR)*addr_ptr) >> (32 - zero_bits)))
+        return STATUS_INVALID_PARAMETER_4;
+    if (*addr_ptr && zero_bits >= 32 &&
+        (((UINT_PTR)*addr_ptr) & ~zero_bits))
         return STATUS_INVALID_PARAMETER_4;
 
 #ifndef _WIN64

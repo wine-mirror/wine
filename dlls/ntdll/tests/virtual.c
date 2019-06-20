@@ -367,7 +367,6 @@ static void test_NtMapViewOfSection(void)
     }
     else
     {
-        todo_wine
         ok(status == STATUS_SUCCESS || status == STATUS_NO_MEMORY,
            "NtMapViewOfSection returned %08x\n", status);
         if (status == STATUS_SUCCESS)
@@ -423,7 +422,6 @@ static void test_NtMapViewOfSection(void)
     offset.QuadPart = 0;
     zero_bits = get_zero_bits((UINT_PTR)ptr2);
     status = NtMapViewOfSection(mapping, process, &ptr2, zero_bits, 0, &offset, &size, 1, 0, PAGE_READWRITE);
-    todo_wine
     ok(status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %08x\n", status);
 
     if (sizeof(void *) == sizeof(int) && (!pIsWow64Process ||
