@@ -32,7 +32,7 @@ static NTSTATUS (WINAPI *pRtlCreateUserStack)(SIZE_T, SIZE_T, ULONG, SIZE_T, SIZ
 static NTSTATUS (WINAPI *pRtlFreeUserStack)(void *);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
-static void test_AllocateVirtualMemory(void)
+static void test_NtAllocateVirtualMemory(void)
 {
     void *addr1, *addr2;
     NTSTATUS status;
@@ -60,18 +60,12 @@ static void test_AllocateVirtualMemory(void)
     status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr2, 12, &size,
                                      MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     ok(status == STATUS_CONFLICTING_ADDRESSES, "NtAllocateVirtualMemory returned %08x\n", status);
-    if (status == STATUS_SUCCESS)
-    {
-        size = 0;
-        status = NtFreeVirtualMemory(NtCurrentProcess(), &addr2, &size, MEM_RELEASE);
-        ok(status == STATUS_SUCCESS, "NtFreeVirtualMemory return %08x, addr2: %p\n", status, addr2);
-    }
 
     /* 1 zero bits should zero 63-31 upper bits */
     size = 0x1000;
     addr2 = NULL;
     zero_bits = 1;
-    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr2, 1, &size,
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr2, zero_bits, &size,
                                      MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
     ok(status == STATUS_SUCCESS || status == STATUS_NO_MEMORY ||
        broken(status == STATUS_INVALID_PARAMETER_3) /* winxp */,
@@ -250,6 +244,6 @@ START_TEST(virtual)
     trace("system page size %#x\n", sbi.PageSize);
     page_size = sbi.PageSize;
 
-    test_AllocateVirtualMemory();
+    test_NtAllocateVirtualMemory();
     test_RtlCreateUserStack();
 }
