@@ -46,17 +46,17 @@ static WCHAR *get_full_name(const WCHAR *path, WCHAR **relative_path)
     int len;
 
     len = GetSystemDirectoryW(NULL, 0);
-    len += strlenW(tasksW) + strlenW(path);
+    len += lstrlenW(tasksW) + lstrlenW(path);
 
     target = heap_alloc(len * sizeof(WCHAR));
     if (target)
     {
         GetSystemDirectoryW(target, len);
-        strcatW(target, tasksW);
+        lstrcatW(target, tasksW);
         if (relative_path)
-            *relative_path = target + strlenW(target) - 1;
+            *relative_path = target + lstrlenW(target) - 1;
         while (*path == '\\') path++;
-        strcatW(target, path);
+        lstrcatW(target, path);
     }
     return target;
 }
@@ -70,12 +70,12 @@ static HRESULT create_directory(const WCHAR *path)
     WCHAR *new_path;
     int len;
 
-    new_path = heap_alloc((strlenW(path) + 1) * sizeof(WCHAR));
+    new_path = heap_alloc((lstrlenW(path) + 1) * sizeof(WCHAR));
     if (!new_path) return E_OUTOFMEMORY;
 
-    strcpyW(new_path, path);
+    lstrcpyW(new_path, path);
 
-    len = strlenW(new_path);
+    len = lstrlenW(new_path);
     while (len && new_path[len - 1] == '\\')
     {
         new_path[len - 1] = 0;
@@ -87,7 +87,7 @@ static HRESULT create_directory(const WCHAR *path)
         WCHAR *slash;
         DWORD last_error = GetLastError();
 
-        if (last_error != ERROR_PATH_NOT_FOUND || !(slash = strrchrW(new_path, '\\')))
+        if (last_error != ERROR_PATH_NOT_FOUND || !(slash = wcsrchr(new_path, '\\')))
         {
             hr = HRESULT_FROM_WIN32(last_error);
             break;
@@ -184,10 +184,10 @@ HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD fl
         full_name = get_full_name(path, &relative_path);
         if (!full_name) return E_OUTOFMEMORY;
 
-        if (strchrW(path, '\\') || strchrW(path, '/'))
+        if (wcschr(path, '\\') || wcschr(path, '/'))
         {
-            WCHAR *p = strrchrW(full_name, '/');
-            if (!p) p = strrchrW(full_name, '\\');
+            WCHAR *p = wcsrchr(full_name, '/');
+            if (!p) p = wcsrchr(full_name, '\\');
             *p = 0;
             hr = create_directory(full_name);
             if (hr != S_OK && hr != HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS))
@@ -410,14 +410,14 @@ HRESULT __cdecl SchRpcEnumFolders(const WCHAR *path, DWORD flags, DWORD *start_i
     full_name = get_full_name(path, NULL);
     if (!full_name) return E_OUTOFMEMORY;
 
-    if (strlenW(full_name) + 2 > MAX_PATH)
+    if (lstrlenW(full_name) + 2 > MAX_PATH)
     {
         heap_free(full_name);
         return HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
     }
 
-    strcpyW(pathW, full_name);
-    strcatW(pathW, allW);
+    lstrcpyW(pathW, full_name);
+    lstrcatW(pathW, allW);
 
     heap_free(full_name);
 
@@ -518,14 +518,14 @@ HRESULT __cdecl SchRpcEnumTasks(const WCHAR *path, DWORD flags, DWORD *start_ind
     full_name = get_full_name(path, NULL);
     if (!full_name) return E_OUTOFMEMORY;
 
-    if (strlenW(full_name) + 2 > MAX_PATH)
+    if (lstrlenW(full_name) + 2 > MAX_PATH)
     {
         heap_free(full_name);
         return HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
     }
 
-    strcpyW(pathW, full_name);
-    strcatW(pathW, allW);
+    lstrcpyW(pathW, full_name);
+    lstrcatW(pathW, allW);
 
     heap_free(full_name);
 

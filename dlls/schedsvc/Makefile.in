@@ -1,6 +1,8 @@
 MODULE    = schedsvc.dll
 IMPORTS   = rpcrt4 advapi32 ole32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	atsvc.c \
 	schedsvc.c \
