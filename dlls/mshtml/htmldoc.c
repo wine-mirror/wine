@@ -678,15 +678,67 @@ static HRESULT WINAPI HTMLDocument_get_alinkColor(IHTMLDocument2 *iface, VARIANT
 static HRESULT WINAPI HTMLDocument_put_bgColor(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    IHTMLElement *element = NULL;
+    IHTMLBodyElement *body;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    hr = IHTMLDocument2_get_body(iface, &element);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get body (0x%08x)\n", hr);
+        return hr;
+    }
+
+    if(!element)
+    {
+        FIXME("Empty body element.\n");
+        return hr;
+    }
+
+    hr = IHTMLElement_QueryInterface(element, &IID_IHTMLBodyElement, (void**)&body);
+    if (SUCCEEDED(hr))
+    {
+        hr = IHTMLBodyElement_put_bgColor(body, v);
+        IHTMLBodyElement_Release(body);
+    }
+    IHTMLElement_Release(element);
+
+    return hr;
 }
 
 static HRESULT WINAPI HTMLDocument_get_bgColor(IHTMLDocument2 *iface, VARIANT *p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    IHTMLElement *element = NULL;
+    IHTMLBodyElement *body;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    hr = IHTMLDocument2_get_body(iface, &element);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get body (0x%08x)\n", hr);
+        return hr;
+    }
+
+    if(!element)
+    {
+        FIXME("Empty body element.\n");
+        return hr;
+    }
+
+    hr = IHTMLElement_QueryInterface(element, &IID_IHTMLBodyElement, (void**)&body);
+    if (SUCCEEDED(hr))
+    {
+        hr = IHTMLBodyElement_get_bgColor(body, p);
+        IHTMLBodyElement_Release(body);
+    }
+    IHTMLElement_Release(element);
+
+    return hr;
 }
 
 static HRESULT WINAPI HTMLDocument_put_fgColor(IHTMLDocument2 *iface, VARIANT v)

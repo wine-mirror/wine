@@ -6708,7 +6708,7 @@ static void _set_body_scroll(unsigned line, IHTMLBodyElement *body, const char *
     _test_body_scroll(line, body, val);
 }
 
-static void test_body_funs(IHTMLBodyElement *body)
+static void test_body_funs(IHTMLBodyElement *body, IHTMLDocument2 *doc)
 {
     VARIANT vbg, vDefaultbg;
     HRESULT hres;
@@ -6725,6 +6725,36 @@ static void test_body_funs(IHTMLBodyElement *body)
     VariantClear(&vbg);
 
     hres = IHTMLBodyElement_get_bgColor(body, &vbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
+    ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
+    VariantClear(&vbg);
+
+    hres = IHTMLDocument2_get_bgColor(doc, &vbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
+    ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
+    VariantClear(&vbg);
+
+    /* Restore Original */
+    hres = IHTMLBodyElement_put_bgColor(body, vDefaultbg);
+    ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
+    VariantClear(&vDefaultbg);
+
+    /* Set via IHTMLDocument2 */
+    V_VT(&vbg) = VT_BSTR;
+    V_BSTR(&vbg) = a2bstr("red");
+    hres = IHTMLDocument2_put_bgColor(doc, vbg);
+    ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
+    VariantClear(&vbg);
+
+    hres = IHTMLBodyElement_get_bgColor(body, &vbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
+    ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
+    VariantClear(&vbg);
+
+    hres = IHTMLDocument2_get_bgColor(doc, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
     ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
@@ -7161,7 +7191,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLBodyElement, (void**)&body);
     ok(hres == S_OK, "Could not get IHTMBodyElement: %08x\n", hres);
     test_default_body(body);
-    test_body_funs(body);
+    test_body_funs(body, doc);
     IHTMLBodyElement_Release(body);
 
     test_elem_set_outertext_fail(elem);
