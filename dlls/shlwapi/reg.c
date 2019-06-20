@@ -28,7 +28,6 @@
 #include "wine/debug.h"
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -667,7 +666,7 @@ BOOL WINAPI RegisterMIMETypeForExtensionW(LPCWSTR lpszSubKey, LPCWSTR lpszValue)
   }
 
   return !SHSetValueW(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeW,
-                      REG_SZ, lpszValue, strlenW(lpszValue));
+                      REG_SZ, lpszValue, lstrlenW(lpszValue));
 }
 
 /*************************************************************************
@@ -743,7 +742,7 @@ BOOL WINAPI GetMIMETypeSubKeyW(LPCWSTR lpszType, LPWSTR lpszBuffer, DWORD dwLen)
 
   if (dwLen > dwLenMimeDbContent && lpszType && lpszBuffer)
   {
-    DWORD dwStrLen = strlenW(lpszType);
+    DWORD dwStrLen = lstrlenW(lpszType);
 
     if (dwStrLen < dwLen - dwLenMimeDbContent)
     {
@@ -818,7 +817,7 @@ BOOL WINAPI MIME_GetExtensionW(LPCWSTR lpszType, LPWSTR lpExt, INT iLen)
       lpExt[1])
   {
     if (lpExt[1] == '.')
-      memmove(lpExt, lpExt + 1, (strlenW(lpExt + 1) + 1) * sizeof(WCHAR));
+      memmove(lpExt, lpExt + 1, (lstrlenW(lpExt + 1) + 1) * sizeof(WCHAR));
     else
       *lpExt = '.'; /* Supply a '.' */
     bRet = TRUE;
@@ -1006,7 +1005,7 @@ HRESULT WINAPI SHRegGetCLSIDKeyW(REFGUID guid, LPCWSTR lpszValue, BOOL bUseHKCU,
   if(lpszValue)
   {
     szKey[ARRAY_SIZE(szClassIdKey) + 39] = '\\';
-    strcpyW(szKey + ARRAY_SIZE(szClassIdKey) + 40, lpszValue); /* Append value name */
+    lstrcpyW(szKey + ARRAY_SIZE(szClassIdKey) + 40, lpszValue); /* Append value name */
   }
 
   hkey = bUseHKCU ? HKEY_CURRENT_USER : HKEY_CLASSES_ROOT;

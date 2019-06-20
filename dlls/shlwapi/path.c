@@ -19,14 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "wine/unicode.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -272,7 +268,7 @@ static BOOL SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
      return FALSE;
   if (PathFileExistsDefExtW(buff, dwWhich))
   {
-    strcpyW(lpszFile, buff);
+    lstrcpyW(lpszFile, buff);
     return TRUE;
   }
   GetWindowsDirectoryW(buff, MAX_PATH);
@@ -280,7 +276,7 @@ static BOOL SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
     return FALSE;
   if (PathFileExistsDefExtW(buff, dwWhich))
   {
-    strcpyW(lpszFile, buff);
+    lstrcpyW(lpszFile, buff);
     return TRUE;
   }
   GetWindowsDirectoryW(buff, MAX_PATH);
@@ -288,7 +284,7 @@ static BOOL SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
     return FALSE;
   if (PathFileExistsDefExtW(buff, dwWhich))
   {
-    strcpyW(lpszFile, buff);
+    lstrcpyW(lpszFile, buff);
     return TRUE;
   }
   /* Try dirs listed in %PATH% */
@@ -322,7 +318,7 @@ static BOOL SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
     }
     if (PathFileExistsDefExtW(buff, dwWhich))
     {
-      strcpyW(lpszFile, buff);
+      lstrcpyW(lpszFile, buff);
       HeapFree(GetProcessHeap(), 0, lpszPATH);
       return TRUE;
     }
@@ -407,7 +403,7 @@ BOOL WINAPI PathFindOnPathExW(LPWSTR lpszFile,LPCWSTR *lppszOtherDirs,DWORD dwWh
       PathCombineW(buff, *lpszOtherPath, lpszFile);
       if (PathFileExistsDefExtW(buff, dwWhich))
       {
-        strcpyW(lpszFile, buff);
+        lstrcpyW(lpszFile, buff);
         return TRUE;
       }
       lpszOtherPath++;
@@ -521,7 +517,7 @@ BOOL WINAPI PathCompactPathExW(LPWSTR lpszDest, LPCWSTR lpszPath,
   if (cchMax < 2)
     return TRUE;
 
-  dwLen = strlenW(lpszPath) + 1;
+  dwLen = lstrlenW(lpszPath) + 1;
 
   if (dwLen < cchMax)
   {
@@ -547,7 +543,7 @@ BOOL WINAPI PathCompactPathExW(LPWSTR lpszDest, LPCWSTR lpszPath,
     /* Compact the file name with ellipses at the end */
     cchMax -= 4;
     memcpy(lpszDest, lpszFile, cchMax * sizeof(WCHAR));
-    strcpyW(lpszDest + cchMax, szEllipses);
+    lstrcpyW(lpszDest + cchMax, szEllipses);
     return TRUE;
   }
   /* We have a root in the path */
@@ -564,7 +560,7 @@ BOOL WINAPI PathCompactPathExW(LPWSTR lpszDest, LPCWSTR lpszPath,
       *lpszDest = '\0';
       return TRUE;
     }
-    strcpyW(lpszDest, szEllipses);
+    lstrcpyW(lpszDest, szEllipses);
     lpszDest += 3;
     cchMax -= 4;
     *lpszDest++ = *lpszFile++;
@@ -577,15 +573,15 @@ BOOL WINAPI PathCompactPathExW(LPWSTR lpszDest, LPCWSTR lpszPath,
     }
     cchMax -= 4;
     memcpy(lpszDest, lpszFile, cchMax * sizeof(WCHAR));
-    strcpyW(lpszDest + cchMax, szEllipses);
+    lstrcpyW(lpszDest + cchMax, szEllipses);
     return TRUE;
   }
 
   /* Only the root needs to be Compacted */
   dwLen = cchMax - dwFileLen - 3;
   memcpy(lpszDest, lpszPath, dwLen * sizeof(WCHAR));
-  strcpyW(lpszDest + dwLen, szEllipses);
-  strcpyW(lpszDest + dwLen + 3, lpszFile);
+  lstrcpyW(lpszDest + dwLen, szEllipses);
+  lstrcpyW(lpszDest + dwLen + 3, lpszFile);
   return TRUE;
 }
 
@@ -761,7 +757,7 @@ BOOL WINAPI PathIsContentTypeW(LPCWSTR lpszPath, LPCWSTR lpszContentType)
   if (lpszPath && (szExt = PathFindExtensionW(lpszPath)) && *szExt &&
       !SHGetValueW(HKEY_CLASSES_ROOT, szExt, szContentType,
                    REG_NONE, szBuff, &dwDummy) &&
-      !strcmpiW(lpszContentType, szBuff))
+      !wcsicmp(lpszContentType, szBuff))
   {
     return TRUE;
   }
@@ -869,14 +865,14 @@ BOOL WINAPI PathMakePrettyW(LPWSTR lpszPath)
   {
     do
     {
-      if (islowerW(*pszIter))
+      if (iswlower(*pszIter))
         return FALSE; /* Not DOS path */
       pszIter++;
     } while (*pszIter);
     pszIter = lpszPath + 1;
     while (*pszIter)
     {
-      *pszIter = tolowerW(*pszIter);
+      *pszIter = towlower(*pszIter);
       pszIter++;
     }
   }
@@ -936,7 +932,7 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
     hdc = hDC = GetDC(0);
 
   /* Get the length of the whole path */
-  dwLen = strlenW(lpszPath);
+  dwLen = lstrlenW(lpszPath);
   GetTextExtentPointW(hDC, lpszPath, dwLen, &size);
 
   if ((UINT)size.cx > dx)
@@ -952,7 +948,7 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
     GetTextExtentPointW(hDC, szEllipses, 3, &size);
     dwEllipsesLen = size.cx;
     /* Get the size of the file name */
-    GetTextExtentPointW(hDC, sFile, strlenW(sFile), &size);
+    GetTextExtentPointW(hDC, sFile, lstrlenW(sFile), &size);
     dwPathLen = size.cx;
 
     if (sFile != lpszPath)
@@ -986,14 +982,14 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
       {
         if (bEllipses)
         {
-          strcpyW(sPath, szEllipses);
-          strcpyW(sPath+3, buff);
+          lstrcpyW(sPath, szEllipses);
+          lstrcpyW(sPath+3, buff);
         }
         bRet = TRUE;
         goto end;
       }
-      strcpyW(lpszPath, szEllipses);
-      strcpyW(lpszPath+3, buff);
+      lstrcpyW(lpszPath, szEllipses);
+      lstrcpyW(lpszPath+3, buff);
       bRet = FALSE;
       goto end;
     }
@@ -1001,7 +997,7 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
     /* Trim the path by adding ellipses to the end, e.g:
      * A very long file name.txt ==> A very...
      */
-    dwLen = strlenW(lpszPath);
+    dwLen = lstrlenW(lpszPath);
 
     if (dwLen > MAX_PATH - 3)
       dwLen =  MAX_PATH - 3;
@@ -1030,8 +1026,8 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
    }
    else
    {
-     strcpyW(buff + dwLen, szEllipses);
-     strcpyW(lpszPath, buff);
+     lstrcpyW(buff + dwLen, szEllipses);
+     lstrcpyW(lpszPath, buff);
     }
   }
 
@@ -1109,11 +1105,11 @@ BOOL WINAPI PathMakeSystemFolderW(LPCWSTR lpszPath)
 
   /* If the directory is already a system directory, don't do anything */
   GetSystemDirectoryW(buff, MAX_PATH);
-  if (!strcmpW(buff, lpszPath))
+  if (!wcscmp(buff, lpszPath))
     return TRUE;
 
   GetWindowsDirectoryW(buff, MAX_PATH);
-  if (!strcmpW(buff, lpszPath))
+  if (!wcscmp(buff, lpszPath))
     return TRUE;
 
   /* "UseSystemForSystemFolders" Tells Win what attributes to use */
@@ -1342,11 +1338,11 @@ BOOL WINAPI PathIsDirectoryEmptyW(LPCWSTR lpszPath)
 
   lstrcpynW(szSearch, lpszPath, MAX_PATH);
   PathAddBackslashW(szSearch);
-  dwLen = strlenW(szSearch);
+  dwLen = lstrlenW(szSearch);
   if (dwLen > MAX_PATH - 4)
     return FALSE;
 
-  strcpyW(szSearch + dwLen, szAllFiles);
+  lstrcpyW(szSearch + dwLen, szAllFiles);
   hfind = FindFirstFileW(szSearch, &find_data);
   if (hfind == INVALID_HANDLE_VALUE)
     return FALSE;
@@ -1428,14 +1424,14 @@ LPCWSTR WINAPI PathFindSuffixArrayW(LPCWSTR lpszSuffix, LPCWSTR *lppszArray, int
 
   if (lpszSuffix && lppszArray && dwCount > 0)
   {
-    dwLen = strlenW(lpszSuffix);
+    dwLen = lstrlenW(lpszSuffix);
 
     while (dwRet < dwCount)
     {
-      size_t dwCompareLen = strlenW(*lppszArray);
+      size_t dwCompareLen = lstrlenW(*lppszArray);
       if (dwCompareLen < dwLen)
       {
-        if (!strcmpW(lpszSuffix + dwLen - dwCompareLen, *lppszArray))
+        if (!wcscmp(lpszSuffix + dwLen - dwCompareLen, *lppszArray))
           return *lppszArray; /* Found */
       }
       dwRet++;
@@ -1504,7 +1500,7 @@ VOID WINAPI PathUndecorateW(LPWSTR lpszPath)
       if (*lpszSkip == '[')
         lpszSkip++; /* [] (no number) */
       else
-        while (lpszSkip > lpszPath && isdigitW(lpszSkip[-1]))
+        while (lpszSkip > lpszPath && iswdigit(lpszSkip[-1]))
           lpszSkip--;
       if (lpszSkip > lpszPath && lpszSkip[-1] == '[' && lpszSkip[-2] != '\\')
       {
@@ -1565,12 +1561,12 @@ HRESULT WINAPI SHGetWebFolderFilePathW(LPCWSTR lpszFile, LPWSTR lpszPath, DWORD 
   if (dwLen > 0 && lpszPath[dwLen-1] == '\\')
     dwLen--;
 
-  dwFileLen = strlenW(lpszFile);
+  dwFileLen = lstrlenW(lpszFile);
 
   if (dwLen + dwFileLen + ARRAY_SIZE(szWeb) >= dwPathLen)
     return E_FAIL; /* lpszPath too short */
 
-  strcpyW(lpszPath+dwLen, szWeb);
+  lstrcpyW(lpszPath+dwLen, szWeb);
   dwLen += ARRAY_SIZE(szWeb);
   dwPathLen = dwPathLen - dwLen; /* Remaining space */
 
@@ -1583,14 +1579,14 @@ HRESULT WINAPI SHGetWebFolderFilePathW(LPCWSTR lpszFile, LPWSTR lpszPath, DWORD 
     {
       /* Use localised content in the users UI language if present */
       wsprintfW(lpszPath + dwLen, szWebMui, lidUser);
-      strcpyW(lpszPath + dwLen + ARRAY_SIZE(szWebMui), lpszFile);
+      lstrcpyW(lpszPath + dwLen + ARRAY_SIZE(szWebMui), lpszFile);
       if (PathFileExistsW(lpszPath))
         return S_OK;
     }
   }
 
   /* Fall back to OS default installed content */
-  strcpyW(lpszPath + dwLen, lpszFile);
+  lstrcpyW(lpszPath + dwLen, lpszFile);
   if (PathFileExistsW(lpszPath))
     return S_OK;
   return E_FAIL;

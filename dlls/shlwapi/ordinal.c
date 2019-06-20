@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -47,7 +44,6 @@
 #include "commdlg.h"
 #include "mlang.h"
 #include "mshtmhst.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 
@@ -501,11 +497,11 @@ INT WINAPI SHStringFromGUIDW(REFGUID guid, LPWSTR lpszDest, INT cchMax)
 
   TRACE("(%s,%p,%d)\n", debugstr_guid(guid), lpszDest, cchMax);
 
-  sprintfW(xguid, wszFormat, guid->Data1, guid->Data2, guid->Data3,
+  swprintf(xguid, ARRAY_SIZE(xguid), wszFormat, guid->Data1, guid->Data2, guid->Data3,
           guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
           guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 
-  iLen = strlenW(xguid) + 1;
+  iLen = lstrlenW(xguid) + 1;
 
   if (iLen > cchMax)
     return 0;
@@ -602,7 +598,7 @@ BOOL WINAPI SHAboutInfoW(LPWSTR lpszDest, DWORD dwDestLen)
   dwLen = 30;
   if (!SHGetValueW(HKEY_LOCAL_MACHINE, szIEKey, szVersion, &dwType, buff, &dwLen))
   {
-    DWORD dwStrLen = strlenW(buff);
+    DWORD dwStrLen = lstrlenW(buff);
     dwLen = 30 - dwStrLen;
     SHGetValueW(HKEY_LOCAL_MACHINE, szIEKey,
                 szCustomized, &dwType, buff+dwStrLen, &dwLen);
@@ -2756,13 +2752,13 @@ DWORD WINAPI SHGetIniStringW(LPCWSTR appName, LPCWSTR keyName, LPWSTR out,
 
     ret = GetPrivateProfileStringW(appName, keyName, NULL, buf, outLen, filename);
     if(ret)
-        strcpyW(out, buf);
+        lstrcpyW(out, buf);
     else
         *out = 0;
 
     HeapFree(GetProcessHeap(), 0, buf);
 
-    return strlenW(out);
+    return lstrlenW(out);
 }
 
 /*************************************************************************
@@ -3106,9 +3102,9 @@ HMODULE WINAPI MLLoadLibraryW(LPCWSTR new_mod, HMODULE inst_hwnd, DWORD dwCrossC
     len = GetModuleFileNameW(inst_hwnd, mod_path, ARRAY_SIZE(mod_path));
     if (!len || len >= ARRAY_SIZE(mod_path)) return NULL;
 
-    ptr = strrchrW(mod_path, '\\');
+    ptr = wcsrchr(mod_path, '\\');
     if (ptr) {
-	strcpyW(ptr+1, new_mod);
+	lstrcpyW(ptr+1, new_mod);
 	TRACE("loading %s\n", debugstr_w(mod_path));
 	return LoadLibraryW(mod_path);
     }
@@ -4669,7 +4665,7 @@ DWORD WINAPI SHGetObjectCompatFlags(IUnknown *pUnk, const CLSID *clsid)
     }
 
     StringFromCLSID(clsid, &clsid_str);
-    sprintfW(strW, compatpathW, clsid_str);
+    swprintf(strW, ARRAY_SIZE(strW), compatpathW, clsid_str);
     CoTaskMemFree(clsid_str);
 
     ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, strW, &key);
@@ -4687,7 +4683,7 @@ DWORD WINAPI SHGetObjectCompatFlags(IUnknown *pUnk, const CLSID *clsid)
 
         while (right >= left) {
             x = (left + right) / 2;
-            res = strcmpW(strW, objcompat_table[x].name);
+            res = wcscmp(strW, objcompat_table[x].name);
             if (res == 0)
             {
                 ret |= objcompat_table[x].value;

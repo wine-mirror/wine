@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -39,7 +36,6 @@
 #include "shlobj.h"
 #include "mlang.h"
 #include "ddeml.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "resource.h"
@@ -133,7 +129,7 @@ static int FormatDouble(double value, int decimals, LPWSTR pszBuf, int cchBuf)
   NUMBERFMTW fmt;
   WCHAR decimal[8], thousand[8];
   
-  snprintfW(buf, 64, flfmt, value);
+  swprintf(buf, 64, flfmt, value);
 
   FillNumberFmt(&fmt, decimal, ARRAY_SIZE(decimal), thousand, ARRAY_SIZE(thousand));
   fmt.NumDigits = decimals;
@@ -157,7 +153,7 @@ LPWSTR WINAPI StrCatW(LPWSTR lpszStr, LPCWSTR lpszSrc)
   TRACE("(%s,%s)\n", debugstr_w(lpszStr), debugstr_w(lpszSrc));
 
   if (lpszStr && lpszSrc)
-    strcatW(lpszStr, lpszSrc);
+    lstrcatW(lpszStr, lpszSrc);
   return lpszStr;
 }
 
@@ -178,7 +174,7 @@ LPWSTR WINAPI StrCpyW(LPWSTR lpszStr, LPCWSTR lpszSrc)
   TRACE("(%p,%s)\n", lpszStr, debugstr_w(lpszSrc));
 
   if (lpszStr && lpszSrc)
-    strcpyW(lpszStr, lpszSrc);
+    lstrcpyW(lpszStr, lpszSrc);
   return lpszStr;
 }
 
@@ -269,7 +265,7 @@ HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, 
         size_t dst_len;
         if (!src->u.pOleStr)
             return E_FAIL;
-        dst_len = strlenW(src->u.pOleStr);
+        dst_len = lstrlenW(src->u.pOleStr);
         memcpy(dest, src->u.pOleStr, min(dst_len, len-1) * sizeof(WCHAR));
         dest[min(dst_len, len-1)] = 0;
         CoTaskMemFree(src->u.pOleStr);
@@ -536,7 +532,7 @@ LPWSTR WINAPI StrNCatW(LPWSTR lpszStr, LPCWSTR lpszCat, INT cchMax)
     return NULL;
   }
 
-  StrCpyNW(lpszStr + strlenW(lpszStr), lpszCat, cchMax);
+  StrCpyNW(lpszStr + lstrlenW(lpszStr), lpszCat, cchMax);
   return lpszRet;
 }
 
@@ -718,7 +714,7 @@ static int SHLWAPI_WriteTimeClass(LPWSTR lpszOut, DWORD dwValue,
   iDigits = SHLWAPI_FormatSignificant(szOut + 1, iDigits);
   *szOut = ' ';
   LoadStringW(shlwapi_hInstance, uClassStringId, szBuff + 32, 32);
-  strcatW(lpszOut, szOut);
+  lstrcatW(lpszOut, szOut);
   return iDigits;
 }
 
@@ -812,7 +808,7 @@ INT WINAPI StrFromTimeIntervalW(LPWSTR lpszStr, UINT cchMax, DWORD dwMS,
       SHLWAPI_WriteTimeClass(szCopy, dwMS, IDS_TIME_INTERVAL_SECONDS, iDigits);
 
     lstrcpynW(lpszStr, szCopy, cchMax);
-    iRet = strlenW(lpszStr);
+    iRet = lstrlenW(lpszStr);
   }
   return iRet;
 }
@@ -883,7 +879,7 @@ LPWSTR WINAPI StrFormatByteSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
   {
     WCHAR wszBytesFormat[64];
     LoadStringW(shlwapi_hInstance, IDS_BYTES_FORMAT, wszBytesFormat, 64);
-    snprintfW(lpszDest, cchMax, wszBytesFormat, (int)llBytes);
+    swprintf(lpszDest, cchMax, wszBytesFormat, (int)llBytes);
     return lpszDest;
   }
 
@@ -1014,7 +1010,7 @@ WCHAR WINAPI SHStripMneumonicW(LPCWSTR lpszStr)
       if (*lpszTmp != '&')
         ch =  *lpszTmp;
 
-      memmove( lpszIter, lpszTmp, (strlenW(lpszTmp) + 1) * sizeof(WCHAR) );
+      memmove( lpszIter, lpszTmp, (lstrlenW(lpszTmp) + 1) * sizeof(WCHAR) );
     }
   }
 
@@ -1099,7 +1095,7 @@ DWORD WINAPI SHUnicodeToAnsiCP(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr, 
 
   *lpDstStr = '\0';
 
-  len = strlenW(lpSrcStr) + 1;
+  len = lstrlenW(lpSrcStr) + 1;
 
   switch (CodePage)
   {
@@ -1228,5 +1224,5 @@ BOOL WINAPI DoesStringRoundTripW(LPCWSTR lpSrcStr, LPSTR lpDst, INT iLen)
 
     SHUnicodeToAnsi(lpSrcStr, lpDst, iLen);
     SHAnsiToUnicode(lpDst, szBuff, MAX_PATH);
-    return !strcmpW(lpSrcStr, szBuff);
+    return !wcscmp(lpSrcStr, szBuff);
 }

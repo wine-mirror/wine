@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
@@ -27,7 +25,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winerror.h"
-#include "wine/unicode.h"
 #include "wininet.h"
 #include "winreg.h"
 #include "winternl.h"
@@ -136,7 +133,7 @@ HRESULT WINAPI MLBuildResURLW(LPCWSTR lpszLibName, HMODULE hMod, DWORD dwFlags,
       len = GetModuleFileNameW(hMod, szBuff, ARRAY_SIZE(szBuff));
       if (len && len < ARRAY_SIZE(szBuff))
       {
-        DWORD dwPathLen = strlenW(szBuff) + 1;
+        DWORD dwPathLen = lstrlenW(szBuff) + 1;
 
         if (dwDestLen >= dwPathLen)
         {
@@ -145,7 +142,7 @@ HRESULT WINAPI MLBuildResURLW(LPCWSTR lpszLibName, HMODULE hMod, DWORD dwFlags,
           dwDestLen -= dwPathLen;
           memcpy(lpszDest + szResLen, szBuff, dwPathLen * sizeof(WCHAR));
 
-          dwResLen = strlenW(lpszRes) + 1;
+          dwResLen = lstrlenW(lpszRes) + 1;
           if (dwDestLen >= dwResLen + 1)
           {
             lpszDest[szResLen + dwPathLen-1] = '/';

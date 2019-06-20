@@ -23,9 +23,6 @@
  * B) Want to use a substandard API to tune its performance.
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
