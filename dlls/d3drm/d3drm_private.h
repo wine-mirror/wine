@@ -33,6 +33,19 @@
 #include "wine/heap.h"
 #include "wine/list.h"
 
+struct d3drm_matrix
+{
+    float _11, _12, _13, _14;
+    float _21, _22, _23, _24;
+    float _31, _32, _33, _34;
+    float _41, _42, _43, _44;
+};
+
+static inline struct d3drm_matrix *d3drm_matrix(D3DRMMATRIX4D m)
+{
+    return (struct d3drm_matrix *)m;
+}
+
 struct d3drm_object
 {
     LONG ref;
@@ -71,7 +84,7 @@ struct d3drm_frame
     SIZE_T nb_lights;
     SIZE_T lights_size;
     IDirect3DRMLight **lights;
-    D3DRMMATRIX4D transform;
+    struct d3drm_matrix transform;
     D3DCOLOR scenebackground;
     DWORD traversal_options;
 };

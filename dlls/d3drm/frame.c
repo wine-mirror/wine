@@ -23,11 +23,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
-static D3DRMMATRIX4D identity = {
-    { 1.0f, 0.0f, 0.0f, 0.0f },
-    { 0.0f, 1.0f, 0.0f, 0.0f },
-    { 0.0f, 0.0f, 1.0f, 0.0f },
-    { 0.0f, 0.0f, 0.0f, 1.0f }
+static const struct d3drm_matrix identity =
+{
+    1.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 1.0f,
 };
 
 struct d3drm_frame_array
@@ -941,13 +942,14 @@ static HRESULT WINAPI d3drm_frame3_AddTransform(IDirect3DRMFrame3 *iface,
         D3DRMCOMBINETYPE type, D3DRMMATRIX4D matrix)
 {
     struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
+    const struct d3drm_matrix *m = d3drm_matrix(matrix);
 
     TRACE("iface %p, type %#x, matrix %p.\n", iface, type, matrix);
 
     switch (type)
     {
         case D3DRMCOMBINE_REPLACE:
-            memcpy(frame->transform, matrix, sizeof(D3DRMMATRIX4D));
+            frame->transform = *m;
             break;
 
         case D3DRMCOMBINE_BEFORE:
@@ -1415,13 +1417,14 @@ static HRESULT WINAPI d3drm_frame3_GetTransform(IDirect3DRMFrame3 *iface,
         IDirect3DRMFrame3 *reference, D3DRMMATRIX4D matrix)
 {
     struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_matrix *m = d3drm_matrix(matrix);
 
     TRACE("iface %p, reference %p, matrix %p.\n", iface, reference, matrix);
 
     if (reference)
-        FIXME("Specifying a frame as the root of the scene different from the current root frame is not supported yet\n");
+        FIXME("Ignoring reference frame %p.\n", reference);
 
-    memcpy(matrix, frame->transform, sizeof(D3DRMMATRIX4D));
+    *m = frame->transform;
 
     return D3DRM_OK;
 }
@@ -1429,10 +1432,11 @@ static HRESULT WINAPI d3drm_frame3_GetTransform(IDirect3DRMFrame3 *iface,
 static HRESULT WINAPI d3drm_frame2_GetTransform(IDirect3DRMFrame2 *iface, D3DRMMATRIX4D matrix)
 {
     struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
+    struct d3drm_matrix *m = d3drm_matrix(matrix);
 
     TRACE("iface %p, matrix %p.\n", iface, matrix);
 
-    memcpy(matrix, frame->transform, sizeof(D3DRMMATRIX4D));
+    *m = frame->transform;
 
     return D3DRM_OK;
 }
@@ -2950,7 +2954,7 @@ HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, I
 
     d3drm_object_init(&object->obj, classname);
 
-    memcpy(object->transform, identity, sizeof(D3DRMMATRIX4D));
+    object->transform = identity;
 
     if (parent_frame)
     {
