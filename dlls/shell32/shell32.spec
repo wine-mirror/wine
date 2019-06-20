@@ -453,32 +453,32 @@
 @ stdcall Shell_NotifyIconA(long ptr)
 @ stdcall Shell_NotifyIconW(long ptr)
 @ stdcall Shell_NotifyIconGetRect(ptr ptr)
-@ stdcall StrChrA(str long) shlwapi.StrChrA
-@ stdcall StrChrIA(str long) shlwapi.StrChrIA
-@ stdcall StrChrIW(wstr long) shlwapi.StrChrIW
-@ stdcall StrChrW(wstr long) shlwapi.StrChrW
-@ stdcall StrCmpNA(str str long) shlwapi.StrCmpNA
-@ stdcall StrCmpNIA(str str long) shlwapi.StrCmpNIA
-@ stdcall StrCmpNIW(wstr wstr long) shlwapi.StrCmpNIW
-@ stdcall StrCmpNW(wstr wstr long) shlwapi.StrCmpNW
-@ stdcall StrCpyNA (ptr str long) kernel32.lstrcpynA
-@ stdcall StrCpyNW(ptr wstr long) shlwapi.StrCpyNW
-@ stdcall StrNCmpA(str str long) shlwapi.StrCmpNA
-@ stdcall StrNCmpIA(str str long) shlwapi.StrCmpNIA
-@ stdcall StrNCmpIW(wstr wstr long) shlwapi.StrCmpNIW
-@ stdcall StrNCmpW(wstr wstr long) shlwapi.StrCmpNW
-@ stdcall StrNCpyA (ptr str long) kernel32.lstrcpynA
-@ stdcall StrNCpyW(ptr wstr long) shlwapi.StrCpyNW
-@ stdcall StrRChrA(str str long) shlwapi.StrRChrA
-@ stdcall StrRChrIA(str str long) shlwapi.StrRChrIA
-@ stdcall StrRChrIW(wstr wstr long) shlwapi.StrRChrIW
-@ stdcall StrRChrW(wstr wstr long) shlwapi.StrRChrW
-@ stub StrRStrA
-@ stdcall StrRStrIA(str str str) shlwapi.StrRStrIA
-@ stdcall StrRStrIW(wstr wstr wstr) shlwapi.StrRStrIW
-@ stub StrRStrW
-@ stdcall StrStrA(str str) shlwapi.StrStrA
-@ stdcall StrStrIA(str str) shlwapi.StrStrIA
-@ stdcall StrStrIW(wstr wstr) shlwapi.StrStrIW
-@ stdcall StrStrW(wstr wstr) shlwapi.StrStrW
+@ stdcall -private StrChrA(str long) shlwapi.StrChrA
+@ stdcall -private StrChrIA(str long) shlwapi.StrChrIA
+@ stdcall -private StrChrIW(wstr long) shlwapi.StrChrIW
+@ stdcall -private StrChrW(wstr long) shlwapi.StrChrW
+@ stdcall -private StrCmpNA(str str long) shlwapi.StrCmpNA
+@ stdcall -private StrCmpNIA(str str long) shlwapi.StrCmpNIA
+@ stdcall -private StrCmpNIW(wstr wstr long) shlwapi.StrCmpNIW
+@ stdcall -private StrCmpNW(wstr wstr long) shlwapi.StrCmpNW
+@ stdcall -private StrCpyNA (ptr str long) kernel32.lstrcpynA
+@ stdcall -private StrCpyNW(ptr wstr long) shlwapi.StrCpyNW
+@ stdcall -private StrNCmpA(str str long) shlwapi.StrCmpNA
+@ stdcall -private StrNCmpIA(str str long) shlwapi.StrCmpNIA
+@ stdcall -private StrNCmpIW(wstr wstr long) shlwapi.StrCmpNIW
+@ stdcall -private StrNCmpW(wstr wstr long) shlwapi.StrCmpNW
+@ stdcall -private StrNCpyA (ptr str long) kernel32.lstrcpynA
+@ stdcall -private StrNCpyW(ptr wstr long) shlwapi.StrCpyNW
+@ stdcall -private StrRChrA(str str long) shlwapi.StrRChrA
+@ stdcall -private StrRChrIA(str str long) shlwapi.StrRChrIA
+@ stdcall -private StrRChrIW(wstr wstr long) shlwapi.StrRChrIW
+@ stdcall -private StrRChrW(wstr wstr long) shlwapi.StrRChrW
+@ stub -private StrRStrA
+@ stdcall -private StrRStrIA(str str str) shlwapi.StrRStrIA
+@ stdcall -private StrRStrIW(wstr wstr wstr) shlwapi.StrRStrIW
+@ stub -private StrRStrW
+@ stdcall -private StrStrA(str str) shlwapi.StrStrA
+@ stdcall -private StrStrIA(str str) shlwapi.StrStrIA
+@ stdcall -private StrStrIW(wstr wstr) shlwapi.StrStrIW
+@ stdcall -private StrStrW(wstr wstr) shlwapi.StrStrW
 @ stdcall WOWShellExecute(long str str str str long ptr)
