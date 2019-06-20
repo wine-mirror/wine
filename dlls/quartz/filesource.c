@@ -1251,7 +1251,7 @@ static HRESULT WINAPI FileAsyncReader_BeginFlush(IAsyncReader * iface)
     EnterCriticalSection(&filter->sample_cs);
 
     filter->flushing = TRUE;
-    CancelIo(filter->file);
+    CancelIoEx(filter->file, NULL);
     SetEvent(filter->handle_list[filter->samples]);
 
     LeaveCriticalSection(&filter->sample_cs);
