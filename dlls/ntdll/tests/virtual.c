@@ -32,6 +32,38 @@ static NTSTATUS (WINAPI *pRtlCreateUserStack)(SIZE_T, SIZE_T, ULONG, SIZE_T, SIZ
 static NTSTATUS (WINAPI *pRtlFreeUserStack)(void *);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
+static HANDLE create_target_process(const char *arg)
+{
+    char **argv;
+    char cmdline[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    BOOL ret;
+    STARTUPINFOA si = { 0 };
+    si.cb = sizeof(si);
+
+    winetest_get_mainargs(&argv);
+    sprintf(cmdline, "%s %s %s", argv[0], argv[1], arg);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "error: %u\n", GetLastError());
+    ret = CloseHandle(pi.hThread);
+    ok(ret, "error %u\n", GetLastError());
+    return pi.hProcess;
+}
+
+static UINT_PTR get_zero_bits(UINT_PTR p)
+{
+    UINT_PTR z = 0;
+
+#ifdef _WIN64
+    if (p >= 0xffffffff)
+        return (~(UINT_PTR)0) >> get_zero_bits(p >> 32);
+#endif
+
+    if (p == 0) return 32;
+    while ((p >> (31 - z)) != 1) z++;
+    return z;
+}
+
 static void test_NtAllocateVirtualMemory(void)
 {
     void *addr1, *addr2;
@@ -228,10 +260,204 @@ static void test_RtlCreateUserStack(void)
     ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
 }
 
+static void test_NtMapViewOfSection(void)
+{
+    static const char testfile[] = "testfile.xxx";
+    static const char data[] = "test data for NtMapViewOfSection";
+    char buffer[sizeof(data)];
+    HANDLE file, mapping, process;
+    void *ptr, *ptr2;
+    BOOL is_wow64, ret;
+    DWORD status, written;
+    SIZE_T size, result;
+    LARGE_INTEGER offset;
+    ULONG zero_bits;
+
+    file = CreateFileA(testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create test file\n");
+    WriteFile(file, data, sizeof(data), &written, NULL);
+    SetFilePointer(file, 4096, NULL, FILE_BEGIN);
+    SetEndOfFile(file);
+
+    /* read/write mapping */
+
+    mapping = CreateFileMappingA(file, NULL, PAGE_READWRITE, 0, 4096, NULL);
+    ok(mapping != 0, "CreateFileMapping failed\n");
+
+    process = create_target_process("sleep");
+    ok(process != NULL, "Can't start process\n");
+
+    ptr = NULL;
+    size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection(mapping, process, &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+    ok(status == STATUS_SUCCESS, "NtMapViewOfSection returned %08x\n", status);
+    ok(!((ULONG_PTR)ptr & 0xffff), "returned memory %p is not aligned to 64k\n", ptr);
+
+    ret = ReadProcessMemory(process, ptr, buffer, sizeof(buffer), &result);
+    ok(ret, "ReadProcessMemory failed\n");
+    ok(result == sizeof(buffer), "ReadProcessMemory didn't read all data (%lx)\n", result);
+    ok(!memcmp(buffer, data, sizeof(buffer)), "Wrong data read\n");
+
+    ptr2 = NULL;
+    size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection(mapping, process, &ptr2, 1, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+    ok(status == STATUS_SUCCESS || status == STATUS_NO_MEMORY,
+       "NtMapViewOfSection returned %08x\n", status);
+    if (status == STATUS_SUCCESS)
+    {
+        status = NtUnmapViewOfSection(process, ptr2);
+        ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08x\n", status);
+    }
+
+    /* 22 zero bits isn't acceptable */
+    ptr2 = NULL;
+    size = 0;
+    status = NtMapViewOfSection(mapping, process, &ptr2, 22, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+    ok(status == STATUS_INVALID_PARAMETER_4 || status == STATUS_INVALID_PARAMETER,
+       "NtMapViewOfSection returned %08x\n", status);
+
+    /* mapping at the same page conflicts */
+    ptr2 = ptr;
+    size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+    ok(status == STATUS_CONFLICTING_ADDRESSES, "NtMapViewOfSection returned %08x\n", status);
+
+    /* offset has to be aligned */
+    ptr2 = ptr;
+    size = 0;
+    offset.QuadPart = 1;
+    status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+    ok(status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %08x\n", status);
+
+    /* ptr has to be aligned */
+    ptr2 = (char *)ptr + 42;
+    size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+    ok(status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %08x\n", status);
+
+    /* still not 64k aligned */
+    ptr2 = (char *)ptr + 0x1000;
+    size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+    ok(status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %08x\n", status);
+
+    /* when an address is passed, it has to satisfy the provided number of zero bits */
+    ptr2 = (char *)ptr + 0x1000;
+    size = 0;
+    offset.QuadPart = 0;
+    zero_bits = get_zero_bits(((UINT_PTR)ptr2) >> 1);
+    status = NtMapViewOfSection(mapping, process, &ptr2, zero_bits, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+    ok(status == STATUS_INVALID_PARAMETER_4 || status == STATUS_INVALID_PARAMETER,
+       "NtMapViewOfSection returned %08x\n", status);
+
+    ptr2 = (char *)ptr + 0x1000;
+    size = 0;
+    offset.QuadPart = 0;
+    zero_bits = get_zero_bits((UINT_PTR)ptr2);
+    status = NtMapViewOfSection(mapping, process, &ptr2, zero_bits, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+    todo_wine
+    ok(status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %08x\n", status);
+
+    if (sizeof(void *) == sizeof(int) && (!pIsWow64Process ||
+        !pIsWow64Process(NtCurrentProcess(), &is_wow64) || !is_wow64))
+    {
+        /* new memory region conflicts with previous mapping */
+        ptr2 = ptr;
+        size = 0;
+        offset.QuadPart = 0;
+        status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset,
+                                    &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE);
+        ok(status == STATUS_CONFLICTING_ADDRESSES, "NtMapViewOfSection returned %08x\n", status);
+
+        ptr2 = (char *)ptr + 42;
+        size = 0;
+        offset.QuadPart = 0;
+        status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset,
+                                    &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE);
+        ok(status == STATUS_CONFLICTING_ADDRESSES, "NtMapViewOfSection returned %08x\n", status);
+
+        /* in contrary to regular NtMapViewOfSection, only 4kb align is enforced */
+        ptr2 = (char *)ptr + 0x1000;
+        size = 0;
+        offset.QuadPart = 0;
+        status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset,
+                                    &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE);
+        ok(status == STATUS_SUCCESS, "NtMapViewOfSection returned %08x\n", status);
+        ok((char *)ptr2 == (char *)ptr + 0x1000,
+           "expected address %p, got %p\n", (char *)ptr + 0x1000, ptr2);
+        status = NtUnmapViewOfSection(process, ptr2);
+        ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08x\n", status);
+
+        /* the address is rounded down if not on a page boundary */
+        ptr2 = (char *)ptr + 0x1001;
+        size = 0;
+        offset.QuadPart = 0;
+        status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset,
+                                    &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE);
+        ok(status == STATUS_SUCCESS, "NtMapViewOfSection returned %08x\n", status);
+        ok((char *)ptr2 == (char *)ptr + 0x1000,
+           "expected address %p, got %p\n", (char *)ptr + 0x1000, ptr2);
+        status = NtUnmapViewOfSection(process, ptr2);
+        ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08x\n", status);
+
+        ptr2 = (char *)ptr + 0x2000;
+        size = 0;
+        offset.QuadPart = 0;
+        status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset,
+                                    &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE);
+        ok(status == STATUS_SUCCESS, "NtMapViewOfSection returned %08x\n", status);
+        ok((char *)ptr2 == (char *)ptr + 0x2000,
+           "expected address %p, got %p\n", (char *)ptr + 0x2000, ptr2);
+        status = NtUnmapViewOfSection(process, ptr2);
+        ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08x\n", status);
+    }
+    else
+    {
+        ptr2 = (char *)ptr + 0x1000;
+        size = 0;
+        offset.QuadPart = 0;
+        status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset,
+                                    &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE);
+        todo_wine
+        ok(status == STATUS_INVALID_PARAMETER_9 || status == STATUS_INVALID_PARAMETER,
+           "NtMapViewOfSection returned %08x\n", status);
+    }
+
+    status = NtUnmapViewOfSection(process, ptr);
+    ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08x\n", status);
+
+    NtClose(mapping);
+
+    CloseHandle(file);
+    DeleteFileA(testfile);
+
+    TerminateProcess(process, 0);
+    CloseHandle(process);
+}
+
 START_TEST(virtual)
 {
     SYSTEM_BASIC_INFORMATION sbi;
     HMODULE mod;
+
+    int argc;
+    char **argv;
+    argc = winetest_get_mainargs(&argv);
+
+    if (argc >= 3)
+    {
+        if (!strcmp(argv[2], "sleep"))
+        {
+            Sleep(5000); /* spawned process runs for at most 5 seconds */
+            return;
+        }
+        return;
+    }
 
     mod = GetModuleHandleA("kernel32.dll");
     pIsWow64Process = (void *)GetProcAddress(mod, "IsWow64Process");
@@ -246,4 +472,5 @@ START_TEST(virtual)
 
     test_NtAllocateVirtualMemory();
     test_RtlCreateUserStack();
+    test_NtMapViewOfSection();
 }
