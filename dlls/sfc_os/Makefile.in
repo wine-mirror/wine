@@ -1,4 +1,6 @@
 MODULE    = sfc_os.dll
 IMPORTLIB = sfc_os
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = sfc_os.c
