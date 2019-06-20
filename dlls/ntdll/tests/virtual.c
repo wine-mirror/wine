@@ -299,24 +299,87 @@ static void test_NtMapViewOfSection(void)
     ok(result == sizeof(buffer), "ReadProcessMemory didn't read all data (%lx)\n", result);
     ok(!memcmp(buffer, data, sizeof(buffer)), "Wrong data read\n");
 
+    /* 1 zero bits should zero 63-31 upper bits */
     ptr2 = NULL;
     size = 0;
+    zero_bits = 1;
     offset.QuadPart = 0;
-    status = NtMapViewOfSection(mapping, process, &ptr2, 1, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+    status = NtMapViewOfSection(mapping, process, &ptr2, zero_bits, 0, &offset, &size, 1, 0, PAGE_READWRITE);
     ok(status == STATUS_SUCCESS || status == STATUS_NO_MEMORY,
        "NtMapViewOfSection returned %08x\n", status);
     if (status == STATUS_SUCCESS)
     {
+        todo_wine_if((UINT_PTR)ptr2 >> (32 - zero_bits))
+        ok(((UINT_PTR)ptr2 >> (32 - zero_bits)) == 0,
+           "NtMapViewOfSection returned address: %p\n", ptr2);
+
         status = NtUnmapViewOfSection(process, ptr2);
         ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08x\n", status);
     }
 
-    /* 22 zero bits isn't acceptable */
+    for (zero_bits = 2; zero_bits <= 20; zero_bits++)
+    {
+        ptr2 = NULL;
+        size = 0;
+        offset.QuadPart = 0;
+        status = NtMapViewOfSection(mapping, process, &ptr2, zero_bits, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+        ok(status == STATUS_SUCCESS || status == STATUS_NO_MEMORY,
+           "NtMapViewOfSection with %d zero_bits returned %08x\n", zero_bits, status);
+        if (status == STATUS_SUCCESS)
+        {
+            todo_wine_if((UINT_PTR)ptr2 >> (32 - zero_bits))
+            ok(((UINT_PTR)ptr2 >> (32 - zero_bits)) == 0,
+               "NtMapViewOfSection with %d zero_bits returned address %p\n", zero_bits, ptr2);
+
+            status = NtUnmapViewOfSection(process, ptr2);
+            ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08x\n", status);
+        }
+    }
+
+    /* 21 zero bits never succeeds */
     ptr2 = NULL;
     size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection(mapping, process, &ptr2, 21, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+    todo_wine
+    ok(status == STATUS_NO_MEMORY || status == STATUS_INVALID_PARAMETER,
+       "NtMapViewOfSection returned %08x\n", status);
+
+    /* 22 zero bits is invalid */
+    ptr2 = NULL;
+    size = 0;
+    offset.QuadPart = 0;
     status = NtMapViewOfSection(mapping, process, &ptr2, 22, 0, &offset, &size, 1, 0, PAGE_READWRITE);
     ok(status == STATUS_INVALID_PARAMETER_4 || status == STATUS_INVALID_PARAMETER,
        "NtMapViewOfSection returned %08x\n", status);
+
+    /* zero bits > 31 should be considered as bitmask on 64bit and WoW64 */
+    ptr2 = NULL;
+    size = 0;
+    zero_bits = 0x1fffffff;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection(mapping, process, &ptr2, zero_bits, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+
+    if (sizeof(void *) == sizeof(int) && (!pIsWow64Process ||
+        !pIsWow64Process(NtCurrentProcess(), &is_wow64) || !is_wow64))
+    {
+        ok(status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %08x\n", status);
+    }
+    else
+    {
+        todo_wine
+        ok(status == STATUS_SUCCESS || status == STATUS_NO_MEMORY,
+           "NtMapViewOfSection returned %08x\n", status);
+        if (status == STATUS_SUCCESS)
+        {
+            todo_wine_if((UINT_PTR)ptr2 & ~zero_bits)
+            ok(((UINT_PTR)ptr2 & ~zero_bits) == 0,
+               "NtMapViewOfSection returned address %p\n", ptr2);
+
+            status = NtUnmapViewOfSection(process, ptr2);
+            ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08x\n", status);
+        }
+    }
 
     /* mapping at the same page conflicts */
     ptr2 = ptr;
