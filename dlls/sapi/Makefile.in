@@ -1,6 +1,8 @@
 MODULE    = sapi.dll
 IMPORTS   = uuid ole32 user32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c \
 	token.c

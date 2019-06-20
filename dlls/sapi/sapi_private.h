@@ -19,7 +19,6 @@
  */
 
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 HRESULT data_key_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 HRESULT token_category_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
@@ -32,7 +31,7 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
 
     if (str)
     {
-        size = (strlenW( str ) + 1) * sizeof(WCHAR);
+        size = (lstrlenW( str ) + 1) * sizeof(WCHAR);
         ret = heap_alloc( size );
         if (ret) memcpy( ret, str, size );
     }
