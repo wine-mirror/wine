@@ -29338,7 +29338,7 @@ static void test_desktop_window(void)
     swapchain_desc.Flags = 0;
 
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
-    todo_wine ok(hr == S_OK || broken(hr == DXGI_ERROR_INVALID_CALL) /* Not available on all Windows versions. */,
+    ok(hr == S_OK || broken(hr == DXGI_ERROR_INVALID_CALL) /* Not available on all Windows versions. */,
             "Failed to create swapchain, hr %#x.\n", hr);
     IDXGIFactory_Release(factory);
     if (FAILED(hr))

@@ -25813,12 +25813,7 @@ static void test_desktop_window(void)
     DestroyWindow(window);
 
     device = create_device(d3d, GetDesktopWindow(), GetDesktopWindow(), TRUE);
-    todo_wine ok(!!device, "Failed to create a D3D device.\n");
-    if (!device)
-    {
-        IDirect3D9_Release(d3d);
-        return;
-    }
+    ok(!!device, "Failed to create a D3D device.\n");
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 1.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
