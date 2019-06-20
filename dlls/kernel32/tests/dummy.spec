@@ -1,1 +1,1 @@
-# nothing here
+@ stdcall get_path(ptr long)

@@ -504,6 +504,38 @@ static const char settings_manifest3[] =
 "   </asmv3:application>"
 "</assembly>";
 
+static const char two_dll_manifest_dll[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v3\" manifestVersion=\"1.0\">"
+"  <assemblyIdentity type=\"win32\" name=\"sxs_dll\" version=\"1.0.0.0\" processorArchitecture=\"x86\" publicKeyToken=\"0000000000000000\"/>"
+"  <file name=\"sxs_dll.dll\"></file>"
+"</assembly>";
+
+static const char two_dll_manifest_exe[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"  <dependency>"
+"    <dependentAssembly>"
+"      <assemblyIdentity type=\"win32\" name=\"sxs_dll\" version=\"1.0.0.0\" processorArchitecture=\"x86\" publicKeyToken=\"0000000000000000\" language=\"*\"/>"
+"    </dependentAssembly>"
+"  </dependency>"
+"</assembly>";
+
+static const char builtin_dll_manifest[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"   <dependency>"
+"     <dependentAssembly>"
+"       <assemblyIdentity"
+"           type=\"win32\""
+"           name=\"microsoft.vc90.crt\""
+"           version=\"9.0.20718.0\""
+"           processorArchitecture=\"*\""
+"           publicKeyToken=\"1fc8b3b9a1e18e3b\""
+"           language=\"*\""
+"       />"
+"   </dependentAssembly>"
+"   </dependency>"
+"</assembly>";
+
+
 DEFINE_GUID(VISTA_COMPAT_GUID,      0xe2011457, 0x1546, 0x43c5, 0xa5, 0xfe, 0x00, 0x8d, 0xee, 0xe3, 0xd3, 0xf0);
 DEFINE_GUID(WIN7_COMPAT_GUID,       0x35138b9a, 0x5d96, 0x4fbd, 0x8e, 0x2d, 0xa2, 0x44, 0x02, 0x25, 0xf9, 0x3a);
 DEFINE_GUID(WIN8_COMPAT_GUID,       0x4a2f28e3, 0x53b9, 0x4441, 0xba, 0x9c, 0xd6, 0x9d, 0x4a, 0x4a, 0x6e, 0x38);
@@ -3171,6 +3203,347 @@ static void test_settings(void)
     pReleaseActCtx(handle);
 }
 
+
+typedef struct
+{
+    char path_tmp[MAX_PATH];
+    char path_dll[MAX_PATH];
+    char path_manifest_exe[MAX_PATH];
+    char path_manifest_dll[MAX_PATH];
+    ACTCTXA context;
+    ULONG_PTR cookie;
+    HANDLE handle_context;
+    HMODULE module;
+    void (WINAPI *get_path)(char *buffer, int buffer_size);
+} sxs_info;
+
+static BOOL fill_sxs_info(sxs_info *info, const char *temp, const char *path_dll, const char *exe_manifest, const char *dll_manifest, BOOL do_load)
+{
+    BOOL success;
+
+    GetTempPathA(MAX_PATH, info->path_tmp);
+    strcat(info->path_tmp, temp);
+    strcat(info->path_tmp, "\\");
+    CreateDirectoryA(info->path_tmp, NULL);
+
+    sprintf(info->path_dll, "%s%s", info->path_tmp, "sxs_dll.dll");
+    extract_resource(path_dll, "TESTDLL", info->path_dll);
+
+    sprintf(info->path_manifest_exe, "%s%s", info->path_tmp, "exe.manifest");
+    create_manifest_file(info->path_manifest_exe, exe_manifest, -1, NULL, NULL);
+
+    sprintf(info->path_manifest_dll, "%s%s", info->path_tmp, "sxs_dll.manifest");
+    create_manifest_file(info->path_manifest_dll, dll_manifest, -1, NULL, NULL);
+
+    info->context.cbSize = sizeof(ACTCTXA);
+    info->context.lpSource = info->path_manifest_exe;
+    info->context.lpAssemblyDirectory = info->path_tmp;
+    info->context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
+
+    info->handle_context = CreateActCtxA(&info->context);
+    ok((info->handle_context != NULL && info->handle_context != INVALID_HANDLE_VALUE )
+            || broken(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX), /* XP doesn't support manifests outside of PE files */
+            "CreateActCtxA failed: %d\n", GetLastError());
+    if (GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX)
+    {
+        skip("Failed to create activation context.\n");
+        return FALSE;
+    }
+
+    if (do_load)
+    {
+        success = ActivateActCtx(info->handle_context, &info->cookie);
+        ok(success, "ActivateActCtx failed: %d\n", GetLastError());
+
+        info->module = LoadLibraryA("sxs_dll.dll");
+        ok(info->module != NULL, "LoadLibrary failed\n");
+
+        info->get_path = (void *)GetProcAddress(info->module, "get_path");
+        ok(info->get_path != NULL, "GetProcAddress failed\n");
+
+        DeactivateActCtx(0, info->cookie);
+    }
+    return TRUE;
+}
+
+static void clean_sxs_info(sxs_info *info)
+{
+    if (info->handle_context)
+        ReleaseActCtx(info->handle_context);
+    if (*info->path_dll)
+        ok(DeleteFileA(info->path_dll), "DeleteFileA failed for %s: %d\n", info->path_dll, GetLastError());
+    if (*info->path_manifest_exe)
+        ok(DeleteFileA(info->path_manifest_exe), "DeleteFileA failed for %s: %d\n", info->path_manifest_exe, GetLastError());
+    if (*info->path_manifest_dll)
+        ok(DeleteFileA(info->path_manifest_dll), "DeleteFileA failed for %s: %d\n", info->path_manifest_dll, GetLastError());
+    if (*info->path_tmp)
+        ok(RemoveDirectoryA(info->path_tmp), "RemoveDirectoryA failed for %s: %d\n", info->path_tmp, GetLastError());
+}
+
+static void get_application_directory(char *buffer, int buffer_size)
+{
+    char *end;
+    GetModuleFileNameA(NULL, buffer, buffer_size);
+    end = strrchr(buffer, '\\');
+    end[1] = 0;
+}
+
+/* Test loading two sxs dlls at the same time */
+static void test_two_dlls_at_same_time(void)
+{
+    sxs_info dll_1;
+    sxs_info dll_2;
+    char path1[MAX_PATH], path2[MAX_PATH];
+
+    if (!fill_sxs_info(&dll_1, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE))
+        goto cleanup;
+    if (!fill_sxs_info(&dll_2, "2", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE))
+        goto cleanup;
+
+    todo_wine
+    ok(dll_1.module != dll_2.module, "Libraries are the same\n");
+    dll_1.get_path(path1, sizeof(path1));
+    ok(strcmp(path1, dll_1.path_dll) == 0, "Got '%s', expected '%s'\n", path1, dll_1.path_dll);
+    dll_2.get_path(path2, sizeof(path2));
+    todo_wine
+    ok(strcmp(path2, dll_2.path_dll) == 0, "Got '%s', expected '%s'\n", path2, dll_2.path_dll);
+
+cleanup:
+    if (dll_1.module)
+        FreeLibrary(dll_1.module);
+    if (dll_2.module)
+        FreeLibrary(dll_2.module);
+    clean_sxs_info(&dll_1);
+    clean_sxs_info(&dll_2);
+}
+
+/* Test loading a normal dll and then a sxs dll with the same name */
+static void test_one_sxs_and_one_local_1(void)
+{
+    sxs_info dll;
+    char path_dll_local[MAX_PATH];
+    char path_application[MAX_PATH];
+    HMODULE module = NULL;
+    char path1[MAX_PATH], path2[MAX_PATH];
+    void (WINAPI *get_path)(char *buffer, int buffer_size);
+
+    get_application_directory(path_application, sizeof(path_application));
+
+    sprintf(path_dll_local, "%s%s", path_application, "sxs_dll.dll");
+    extract_resource("dummy.dll", "TESTDLL", path_dll_local);
+
+    module = LoadLibraryA(path_dll_local);
+    get_path = (void *)GetProcAddress(module, "get_path");
+
+    if (!fill_sxs_info(&dll, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE))
+        goto cleanup;
+
+    todo_wine
+    ok(dll.module != module, "Libraries are the same\n");
+    dll.get_path(path1, sizeof(path1));
+    todo_wine
+    ok(strcmp(path1, dll.path_dll) == 0, "Got '%s', expected '%s'\n", path1, dll.path_dll);
+    get_path(path2, sizeof(path2));
+    ok(strcmp(path2, path_dll_local) == 0, "Got '%s', expected '%s'\n", path2, path_dll_local);
+
+cleanup:
+    if (module)
+        FreeLibrary(module);
+    if (dll.module)
+        FreeLibrary(dll.module);
+    if (*path_dll_local)
+        ok(DeleteFileA(path_dll_local), "DeleteFileA failed for %s: %d\n", path_dll_local, GetLastError());
+    clean_sxs_info(&dll);
+}
+
+/* Test if sxs dll has priority over normal dll */
+static void test_one_sxs_and_one_local_2(void)
+{
+    sxs_info dll;
+    char path_dll_local[MAX_PATH];
+    char path_application[MAX_PATH];
+    HMODULE module = NULL;
+    char path1[MAX_PATH], path2[MAX_PATH];
+    void (WINAPI *get_path)(char *buffer, int buffer_size);
+
+    get_application_directory(path_application, sizeof(path_application));
+
+    sprintf(path_dll_local, "%s%s", path_application, "sxs_dll.dll");
+    extract_resource("dummy.dll", "TESTDLL", path_dll_local);
+
+    if (!fill_sxs_info(&dll, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE))
+        goto cleanup;
+
+    module = LoadLibraryA(path_dll_local);
+    get_path = (void *)GetProcAddress(module, "get_path");
+
+    ok(dll.module != module, "Libraries are the same\n");
+    dll.get_path(path1, sizeof(path1));
+    ok(strcmp(path1, dll.path_dll) == 0, "Got '%s', expected '%s'\n", path1, dll.path_dll);
+    get_path(path2, sizeof(path2));
+    ok(strcmp(path2, path_dll_local) == 0, "Got '%s', expected '%s'\n", path2, path_dll_local);
+
+cleanup:
+    if (module)
+        FreeLibrary(module);
+    if (dll.module)
+        FreeLibrary(dll.module);
+    if (*path_dll_local)
+        ok(DeleteFileA(path_dll_local), "DeleteFileA failed for %s: %d\n", path_dll_local, GetLastError());
+    clean_sxs_info(&dll);
+}
+
+
+/* Test if we can get a module handle from loaded normal dll while context is active */
+static void test_one_with_sxs_and_GetModuleHandleA(void)
+{
+    sxs_info dll;
+    char path_dll_local[MAX_PATH];
+    char path_tmp[MAX_PATH];
+    HMODULE module = NULL, module_temp;
+    BOOL success;
+
+    GetTempPathA(sizeof(path_tmp), path_tmp);
+
+    sprintf(path_dll_local, "%s%s", path_tmp, "sxs_dll.dll");
+    extract_resource("dummy.dll", "TESTDLL", path_dll_local);
+
+    module = LoadLibraryA(path_dll_local);
+
+    if (!fill_sxs_info(&dll, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, FALSE))
+       goto cleanup;
+
+    success = ActivateActCtx(dll.handle_context, &dll.cookie);
+    ok(success, "ActivateActCtx failed: %d\n", GetLastError());
+
+    module_temp = GetModuleHandleA("sxs_dll.dll");
+    todo_wine
+    ok (module_temp == 0, "Expected 0, got %p\n", module_temp);
+
+    DeactivateActCtx(0, dll.cookie);
+
+cleanup:
+    if (module)
+        FreeLibrary(module);
+    if (dll.module)
+        FreeLibrary(dll.module);
+    if (*path_dll_local)
+        ok(DeleteFileA(path_dll_local), "DeleteFileA failed for %s: %d\n", path_dll_local, GetLastError());
+    clean_sxs_info(&dll);
+}
+
+static void test_builtin_sxs(void)
+{
+    char path_manifest[MAX_PATH];
+    char path_tmp[MAX_PATH];
+    HMODULE module_msvcp = 0, module_msvcr = 0;
+    char path_msvcp[MAX_PATH], path_msvcr[MAX_PATH];
+    ACTCTXA context;
+    ULONG_PTR cookie;
+    HANDLE handle_context;
+    BOOL success;
+    static const char *expected_path = "C:\\Windows\\WinSxS";
+
+    GetTempPathA(sizeof(path_tmp), path_tmp);
+
+    sprintf(path_manifest, "%s%s", path_tmp, "exe.manifest");
+    create_manifest_file(path_manifest, builtin_dll_manifest, -1, NULL, NULL);
+
+    context.cbSize = sizeof(ACTCTXA);
+    context.lpSource = path_manifest;
+    context.lpAssemblyDirectory = path_tmp;
+    context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
+
+    handle_context = CreateActCtxA(&context);
+    ok((handle_context != NULL && handle_context != INVALID_HANDLE_VALUE )
+        || broken(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX), /* XP doesn't support manifests outside of PE files */
+        "CreateActCtxA failed: %d\n", GetLastError());
+    if (GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX)
+    {
+        skip("Failed to create activation context.\n");
+        goto cleanup;
+    }
+
+
+    success = ActivateActCtx(handle_context, &cookie);
+    ok(success, "ActivateActCtx failed: %d\n", GetLastError());
+
+    module_msvcp = LoadLibraryA("msvcp90.dll");
+    ok (module_msvcp != 0 || broken(module_msvcp == 0), "LoadLibraryA failed, %d\n", GetLastError());
+    module_msvcr = LoadLibraryA("msvcr90.dll");
+    ok (module_msvcr != 0 || broken(module_msvcr == 0), "LoadLibraryA failed, %d\n", GetLastError());
+    if (!module_msvcp || !module_msvcr)
+    {
+        skip("Failed to find msvcp90 or msvcr90.\n");
+        goto cleanup;
+    }
+
+    GetModuleFileNameA(module_msvcp, path_msvcp, sizeof(path_msvcp));
+    GetModuleFileNameA(module_msvcr, path_msvcr, sizeof(path_msvcr));
+    ok(strnicmp(expected_path, path_msvcp, strlen(expected_path)) == 0, "Expected path to start with %s, got %s\n", expected_path, path_msvcp);
+    todo_wine
+    ok(strnicmp(expected_path, path_msvcr, strlen(expected_path)) == 0, "Expected path to start with %s, got %s\n", expected_path, path_msvcr);
+
+    DeactivateActCtx(0, cookie);
+
+cleanup:
+    if (module_msvcp)
+        FreeLibrary(module_msvcp);
+    if (module_msvcr)
+        FreeLibrary(module_msvcr);
+    if (*path_manifest)
+        ok(DeleteFileA(path_manifest), "DeleteFileA failed for %s: %d\n", path_manifest, GetLastError());
+}
+
+static void run_sxs_test(int run)
+{
+    switch(run)
+    {
+    case 1:
+        test_two_dlls_at_same_time();
+        break;
+    case 2:
+        test_one_sxs_and_one_local_1();
+        break;
+    case 3:
+        test_one_sxs_and_one_local_2();
+        break;
+    case 4:
+        test_one_with_sxs_and_GetModuleHandleA();
+        break;
+    case 5:
+       test_builtin_sxs();
+       break;
+    }
+}
+
+static void run_child_process_two_dll(int run)
+{
+    char cmdline[MAX_PATH];
+    char exe[MAX_PATH];
+    char **argv;
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si = { 0 };
+    BOOL ret;
+
+    winetest_get_mainargs( &argv );
+
+    if (strstr(argv[0], ".exe"))
+        sprintf(exe, "%s", argv[0]);
+    else
+        sprintf(exe, "%s.exe", argv[0]);
+    sprintf(cmdline, "\"%s\" %s two_dll %d", argv[0], argv[1], run);
+
+    si.cb = sizeof(si);
+    ret = CreateProcessA(exe, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "Could not create process: %u\n", GetLastError());
+
+    winetest_wait_child_process( pi.hProcess );
+
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+}
+
 START_TEST(actctx)
 {
     int argc;
@@ -3190,6 +3563,13 @@ START_TEST(actctx)
         return;
     }
 
+    if (argc > 2 && !strcmp(argv[2], "two_dll"))
+    {
+        int run = atoi(argv[3]);
+        run_sxs_test(run);
+        return;
+    }
+
     test_actctx();
     test_create_fail();
     test_CreateActCtx();
@@ -3198,4 +3578,9 @@ START_TEST(actctx)
     run_child_process();
     test_compatibility();
     test_settings();
+    run_child_process_two_dll(1);
+    run_child_process_two_dll(2);
+    run_child_process_two_dll(3);
+    run_child_process_two_dll(4);
+    run_child_process_two_dll(5);
 }
