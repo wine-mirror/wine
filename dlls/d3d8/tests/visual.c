@@ -11001,6 +11001,50 @@ done:
     DestroyWindow(window);
 }
 
+static void test_desktop_window(void)
+{
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+    IDirect3DDevice8_Release(device);
+    DestroyWindow(window);
+
+    device = create_device(d3d, GetDesktopWindow(), GetDesktopWindow(), TRUE);
+    todo_wine ok(!!device, "Failed to create a D3D device.\n");
+    if (!device)
+    {
+        IDirect3D8_Release(d3d);
+        return;
+    }
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    color = getPixelColor(device, 1, 1);
+    ok(color == 0x00ff0000, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    IDirect3D8_Release(d3d);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
@@ -11077,4 +11121,5 @@ START_TEST(visual)
     test_color_vertex();
     test_sysmem_draw();
     test_alphatest();
+    test_desktop_window();
 }
