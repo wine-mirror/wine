@@ -25,7 +25,6 @@
 #include "wincred.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sspicli);
 
@@ -45,9 +44,9 @@ SECURITY_STATUS SEC_ENTRY SspiEncodeStringsAsAuthIdentity(
 
     if (!username && !domainname && !creds) return SEC_E_INVALID_TOKEN;
 
-    if (username) len_username = strlenW( username );
-    if (domainname) len_domainname = strlenW( domainname );
-    if (creds) len_password = strlenW( creds );
+    if (username) len_username = lstrlenW( username );
+    if (domainname) len_domainname = lstrlenW( domainname );
+    if (creds) len_password = lstrlenW( creds );
 
     size = sizeof(*id);
     if (username) size += (len_username + 1) * sizeof(WCHAR);
@@ -101,8 +100,8 @@ static inline WCHAR *strdupW( const WCHAR *src )
 {
     WCHAR *dst;
     if (!src) return NULL;
-    if ((dst = HeapAlloc( GetProcessHeap(), 0, (strlenW( src ) + 1) * sizeof(WCHAR) )))
-        strcpyW( dst, src );
+    if ((dst = HeapAlloc( GetProcessHeap(), 0, (lstrlenW( src ) + 1) * sizeof(WCHAR) )))
+        lstrcpyW( dst, src );
     return dst;
 }
 
