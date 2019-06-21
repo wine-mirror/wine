@@ -29,7 +29,6 @@
 #include "sti.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sti);
 
@@ -149,11 +148,11 @@ static HRESULT WINAPI stillimagew_RegisterLaunchApplication(IStillImageW *iface,
     ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, registeredAppsLaunchPath, &registeredAppsKey);
     if (ret == ERROR_SUCCESS)
     {
-        WCHAR *value = HeapAlloc(GetProcessHeap(), 0,
-            (lstrlenW(pwszCommandLine) + 1 + lstrlenW(commandLineSuffix) + 1) * sizeof(WCHAR));
+        size_t len = lstrlenW(pwszCommandLine) + 1 + lstrlenW(commandLineSuffix) + 1;
+        WCHAR *value = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         if (value)
         {
-            sprintfW(value, format, pwszCommandLine, commandLineSuffix);
+            swprintf(value, len, format, pwszCommandLine, commandLineSuffix);
             ret = RegSetValueExW(registeredAppsKey, pwszAppName, 0,
                 REG_SZ, (BYTE*)value, (lstrlenW(value)+1)*sizeof(WCHAR));
             if (ret != ERROR_SUCCESS)
