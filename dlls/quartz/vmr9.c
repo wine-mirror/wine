@@ -204,7 +204,7 @@ static DWORD VMR9_SendSampleData(struct quartz_vmr *This, VMR9PresentationInfo *
 
     TRACE("%p %p %d\n", This, data, size);
 
-    amt = &This->renderer.pInputPin->pin.mtCurrent;
+    amt = &This->renderer.sink.pin.mtCurrent;
 
     if (IsEqualIID(&amt->formattype, &FORMAT_VideoInfo))
     {
@@ -381,7 +381,7 @@ static HRESULT VMR9_maybe_init(struct quartz_vmr *This, BOOL force)
     HRESULT hr;
 
     TRACE("my mode: %u, my window: %p, my last window: %p\n", This->mode, This->baseControlWindow.baseWindow.hWnd, This->hWndClippingWindow);
-    if (This->baseControlWindow.baseWindow.hWnd || !This->renderer.pInputPin->pin.pConnectedTo)
+    if (This->baseControlWindow.baseWindow.hWnd || !This->renderer.sink.pin.pConnectedTo)
         return S_OK;
 
     if (This->mode == VMR9Mode_Windowless && !This->hWndClippingWindow)
@@ -486,7 +486,7 @@ static HRESULT WINAPI VMR9_BreakConnect(BaseRenderer *This)
 
     if (!pVMR9->mode)
         return S_FALSE;
-     if (This->pInputPin->pin.pConnectedTo && pVMR9->allocator && pVMR9->presenter)
+     if (This->sink.pin.pConnectedTo && pVMR9->allocator && pVMR9->presenter)
     {
         if (pVMR9->renderer.filter.state != State_Stopped)
         {
@@ -635,9 +635,9 @@ static HRESULT WINAPI VMR9_GetSourceRect(BaseControlVideo* This, RECT *pSourceRe
 static HRESULT WINAPI VMR9_GetStaticImage(BaseControlVideo* This, LONG *pBufferSize, LONG *pDIBImage)
 {
     struct quartz_vmr* pVMR9 = impl_from_BaseControlVideo(This);
+    AM_MEDIA_TYPE *amt = &pVMR9->renderer.sink.pin.mtCurrent;
     BITMAPINFOHEADER *bmiHeader;
     LONG needed_size;
-    AM_MEDIA_TYPE *amt = &pVMR9->renderer.pInputPin->pin.mtCurrent;
     char *ptr;
 
     FIXME("(%p/%p)->(%p, %p): partial stub\n", pVMR9, This, pBufferSize, pDIBImage);
@@ -705,7 +705,7 @@ static VIDEOINFOHEADER* WINAPI VMR9_GetVideoFormat(BaseControlVideo* This)
 
     TRACE("(%p/%p)\n", pVMR9, This);
 
-    pmt = &pVMR9->renderer.pInputPin->pin.mtCurrent;
+    pmt = &pVMR9->renderer.sink.pin.mtCurrent;
     if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)) {
         return (VIDEOINFOHEADER*)pmt->pbFormat;
     } else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2)) {
@@ -2181,14 +2181,14 @@ static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
     if (FAILED(hr))
         goto fail;
 
-    hr = BaseControlWindow_Init(&pVMR->baseControlWindow, &IVideoWindow_VTable, &pVMR->renderer.filter,
-                                &pVMR->renderer.filter.csFilter, &pVMR->renderer.pInputPin->pin,
-                                &renderer_BaseWindowFuncTable);
+    hr = BaseControlWindow_Init(&pVMR->baseControlWindow, &IVideoWindow_VTable,
+            &pVMR->renderer.filter, &pVMR->renderer.filter.csFilter,
+            &pVMR->renderer.sink.pin, &renderer_BaseWindowFuncTable);
     if (FAILED(hr))
         goto fail;
 
     hr = strmbase_video_init(&pVMR->baseControlVideo, &pVMR->renderer.filter,
-            &pVMR->renderer.filter.csFilter, &pVMR->renderer.pInputPin->pin,
+            &pVMR->renderer.filter.csFilter, &pVMR->renderer.sink.pin,
             &renderer_BaseControlVideoFuncTable);
     if (FAILED(hr))
         goto fail;

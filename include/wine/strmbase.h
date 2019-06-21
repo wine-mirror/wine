@@ -534,7 +534,7 @@ typedef struct BaseRendererTag
 {
 	BaseFilter filter;
 
-	BaseInputPin *pInputPin;
+	BaseInputPin sink;
 	IUnknown *pPosition;
 	CRITICAL_SECTION csRenderLock;
 	HANDLE evComplete;

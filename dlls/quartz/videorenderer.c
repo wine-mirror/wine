@@ -201,7 +201,7 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
 
     TRACE("(%p)->(%p, %d)\n", This, data, size);
 
-    hr = IPin_ConnectionMediaType(&This->renderer.pInputPin->pin.IPin_iface, &amt);
+    hr = IPin_ConnectionMediaType(&This->renderer.sink.pin.IPin_iface, &amt);
     if (FAILED(hr)) {
         ERR("Unable to retrieve media type\n");
         return hr;
@@ -424,7 +424,8 @@ static VOID WINAPI VideoRenderer_OnStartStreaming(BaseRenderer* iface)
 
     TRACE("(%p)\n", This);
 
-    if (This->renderer.pInputPin->pin.pConnectedTo && (This->renderer.filter.state == State_Stopped || !This->renderer.pInputPin->end_of_stream))
+    if (This->renderer.sink.pin.pConnectedTo
+        && (This->renderer.filter.state == State_Stopped || !This->renderer.sink.end_of_stream))
     {
         if (This->renderer.filter.state == State_Stopped)
         {
@@ -511,9 +512,9 @@ static HRESULT WINAPI VideoRenderer_GetSourceRect(BaseControlVideo* iface, RECT 
 static HRESULT WINAPI VideoRenderer_GetStaticImage(BaseControlVideo* iface, LONG *pBufferSize, LONG *pDIBImage)
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
+    AM_MEDIA_TYPE *amt = &This->renderer.sink.pin.mtCurrent;
     BITMAPINFOHEADER *bmiHeader;
     LONG needed_size;
-    AM_MEDIA_TYPE *amt = &This->renderer.pInputPin->pin.mtCurrent;
     char *ptr;
 
     FIXME("(%p/%p)->(%p, %p): partial stub\n", This, iface, pBufferSize, pDIBImage);
@@ -581,7 +582,7 @@ static VIDEOINFOHEADER* WINAPI VideoRenderer_GetVideoFormat(BaseControlVideo* if
 
     TRACE("(%p/%p)\n", This, iface);
 
-    pmt = &This->renderer.pInputPin->pin.mtCurrent;
+    pmt = &This->renderer.sink.pin.mtCurrent;
     if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)) {
         return (VIDEOINFOHEADER*)pmt->pbFormat;
     } else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2)) {
@@ -674,7 +675,7 @@ static HRESULT WINAPI VideoRenderer_Pause(IBaseFilter * iface)
     {
         if (This->renderer.filter.state == State_Stopped)
         {
-            This->renderer.pInputPin->end_of_stream = 0;
+            This->renderer.sink.end_of_stream = 0;
             ResetEvent(This->hEvent);
             VideoRenderer_AutoShowWindow(This);
         }
@@ -824,13 +825,13 @@ HRESULT VideoRenderer_create(IUnknown *outer, void **out)
 
     hr = BaseControlWindow_Init(&pVideoRenderer->baseControlWindow, &IVideoWindow_VTable,
             &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.filter.csFilter,
-            &pVideoRenderer->renderer.pInputPin->pin, &renderer_BaseWindowFuncTable);
+            &pVideoRenderer->renderer.sink.pin, &renderer_BaseWindowFuncTable);
     if (FAILED(hr))
         goto fail;
 
     hr = strmbase_video_init(&pVideoRenderer->baseControlVideo,
             &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.filter.csFilter,
-            &pVideoRenderer->renderer.pInputPin->pin, &renderer_BaseControlVideoFuncTable);
+            &pVideoRenderer->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
     if (FAILED(hr))
         goto fail;
 
