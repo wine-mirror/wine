@@ -1,5 +1,6 @@
 MODULE    = version.dll
 IMPORTLIB = version
+IMPORTS   = kernelbase
 
 C_SRCS = \
 	version.c

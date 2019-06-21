@@ -515,15 +515,15 @@
 @ stdcall GetFileSizeEx(long ptr) kernel32.GetFileSizeEx
 @ stdcall GetFileTime(long ptr ptr ptr) kernel32.GetFileTime
 @ stdcall GetFileType(long) kernel32.GetFileType
-@ stdcall GetFileVersionInfoA(str long long ptr) version.GetFileVersionInfoA
+@ stdcall GetFileVersionInfoA(str long long ptr)
 # @ stub GetFileVersionInfoByHandle
-@ stdcall GetFileVersionInfoExA(long str long long ptr) version.GetFileVersionInfoExA
-@ stdcall GetFileVersionInfoExW(long wstr long long ptr) version.GetFileVersionInfoExW
-@ stdcall GetFileVersionInfoSizeA(str ptr) version.GetFileVersionInfoSizeA
-@ stdcall GetFileVersionInfoSizeExA(long str ptr) version.GetFileVersionInfoSizeExA
-@ stdcall GetFileVersionInfoSizeExW(long wstr ptr) version.GetFileVersionInfoSizeExW
-@ stdcall GetFileVersionInfoSizeW(wstr ptr) version.GetFileVersionInfoSizeW
-@ stdcall GetFileVersionInfoW(wstr long long ptr) version.GetFileVersionInfoW
+@ stdcall GetFileVersionInfoExA(long str long long ptr)
+@ stdcall GetFileVersionInfoExW(long wstr long long ptr)
+@ stdcall GetFileVersionInfoSizeA(str ptr)
+@ stdcall GetFileVersionInfoSizeExA(long str ptr)
+@ stdcall GetFileVersionInfoSizeExW(long wstr ptr)
+@ stdcall GetFileVersionInfoSizeW(wstr ptr)
+@ stdcall GetFileVersionInfoW(wstr long long ptr)
 @ stdcall GetFinalPathNameByHandleA(long ptr long long) kernel32.GetFinalPathNameByHandleA
 @ stdcall GetFinalPathNameByHandleW(long ptr long long) kernel32.GetFinalPathNameByHandleW
 @ stdcall GetFullPathNameA(str long ptr ptr) kernel32.GetFullPathNameA
@@ -1655,12 +1655,12 @@
 @ stdcall UrlIsW(wstr long)
 @ stdcall UrlUnescapeA(str ptr ptr long)
 @ stdcall UrlUnescapeW(wstr ptr ptr long)
-@ stdcall VerFindFileA(long str str str ptr ptr ptr ptr) version.VerFindFileA
-@ stdcall VerFindFileW(long wstr wstr wstr ptr ptr ptr ptr) version.VerFindFileW
+@ stdcall VerFindFileA(long str str str ptr ptr ptr ptr)
+@ stdcall VerFindFileW(long wstr wstr wstr ptr ptr ptr ptr)
 @ stdcall VerLanguageNameA(long str long) kernel32.VerLanguageNameA
 @ stdcall VerLanguageNameW(long wstr long) kernel32.VerLanguageNameW
-@ stdcall VerQueryValueA(ptr str ptr ptr) version.VerQueryValueA
-@ stdcall VerQueryValueW(ptr wstr ptr ptr) version.VerQueryValueW
+@ stdcall VerQueryValueA(ptr str ptr ptr)
+@ stdcall VerQueryValueW(ptr wstr ptr ptr)
 @ stdcall -ret64 VerSetConditionMask(long long long long) kernel32.VerSetConditionMask
 # @ stub VerifyApplicationUserModelId
 # @ stub VerifyPackageFamilyName
