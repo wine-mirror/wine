@@ -2266,6 +2266,15 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         *(DWORD*)buffer = flags;
         return ERROR_SUCCESS;
     }
+    case INTERNET_OPTION_ERROR_MASK:
+        TRACE("INTERNET_OPTION_ERROR_MASK\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *(ULONG*)buffer = hdr->ErrorMask;
+        *size = sizeof(ULONG);
+        return ERROR_SUCCESS;
     }
 
     return INET_QueryOption(hdr, option, buffer, size, unicode);
