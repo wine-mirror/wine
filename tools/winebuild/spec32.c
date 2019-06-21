@@ -379,9 +379,11 @@ static void output_relay_debug( DLLSPEC *spec )
 void output_exports( DLLSPEC *spec )
 {
     int i, fwd_size = 0;
+    int needs_imports = 0;
     int needs_relay = has_relays( spec );
     int nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
     const char *func_ptr = (target_platform == PLATFORM_WINDOWS) ? ".rva" : get_asm_ptr_keyword();
+    const char *name;
 
     if (!nr_exports) return;
 
@@ -429,6 +431,13 @@ void output_exports( DLLSPEC *spec )
             {
                 output( "\t%s .L__wine_spec_forwards+%u\n", func_ptr, fwd_size );
                 fwd_size += strlen(odp->link_name) + 1;
+            }
+            else if ((odp->flags & FLAG_IMPORT) && (target_cpu == CPU_x86 || target_cpu == CPU_x86_64))
+            {
+                name = odp->name ? odp->name : odp->export_name;
+                if (name) output( "\t%s %s_%s\n", func_ptr, asm_name("__wine_spec_imp"), name );
+                else output( "\t%s %s_%u\n", func_ptr, asm_name("__wine_spec_imp"), i );
+                needs_imports = 1;
             }
             else if (odp->flags & FLAG_EXT_LINK)
             {
@@ -503,32 +512,75 @@ void output_exports( DLLSPEC *spec )
 
     /* output relays */
 
-    if (target_platform == PLATFORM_WINDOWS)
+    if (needs_relay)
     {
-        if (!needs_relay) return;
-        output( "\t.data\n" );
-        output( "\t.align %d\n", get_alignment(get_ptr_size()) );
-    }
-    else
-    {
-        output( "\t.align %d\n", get_alignment(get_ptr_size()) );
-        output( ".L__wine_spec_exports_end:\n" );
-        if (!needs_relay)
+        if (target_platform == PLATFORM_WINDOWS)
         {
-            output( "\t%s 0\n", get_asm_ptr_keyword() );
-            return;
+            output( "\t.data\n" );
+            output( "\t.align %d\n", get_alignment(get_ptr_size()) );
         }
+        else
+        {
+            output( "\t.align %d\n", get_alignment(get_ptr_size()) );
+            output( ".L__wine_spec_exports_end:\n" );
+        }
+
+        output( ".L__wine_spec_relay_descr:\n" );
+        output( "\t%s 0xdeb90002\n", get_asm_ptr_keyword() );  /* magic */
+        output( "\t%s 0\n", get_asm_ptr_keyword() );           /* relay func */
+        output( "\t%s 0\n", get_asm_ptr_keyword() );           /* private data */
+        output( "\t%s __wine_spec_relay_entry_points\n", get_asm_ptr_keyword() );
+        output( "\t%s .L__wine_spec_relay_entry_point_offsets\n", get_asm_ptr_keyword() );
+        output( "\t%s .L__wine_spec_relay_args_string\n", get_asm_ptr_keyword() );
+
+        output_relay_debug( spec );
+    }
+    else if (target_platform != PLATFORM_WINDOWS)
+    {
+            output( "\t.align %d\n", get_alignment(get_ptr_size()) );
+            output( ".L__wine_spec_exports_end:\n" );
+            output( "\t%s 0\n", get_asm_ptr_keyword() );
     }
 
-    output( ".L__wine_spec_relay_descr:\n" );
-    output( "\t%s 0xdeb90002\n", get_asm_ptr_keyword() );  /* magic */
-    output( "\t%s 0\n", get_asm_ptr_keyword() );           /* relay func */
-    output( "\t%s 0\n", get_asm_ptr_keyword() );           /* private data */
-    output( "\t%s __wine_spec_relay_entry_points\n", get_asm_ptr_keyword() );
-    output( "\t%s .L__wine_spec_relay_entry_point_offsets\n", get_asm_ptr_keyword() );
-    output( "\t%s .L__wine_spec_relay_args_string\n", get_asm_ptr_keyword() );
+    /* output import thunks */
 
-    output_relay_debug( spec );
+    if (!needs_imports) return;
+    output( "\t.text\n" );
+    for (i = spec->base; i <= spec->limit; i++)
+    {
+        ORDDEF *odp = spec->ordinals[i];
+        if (!odp) continue;
+        if (!(odp->flags & FLAG_IMPORT)) continue;
+
+        name = odp->name ? odp->name : odp->export_name;
+
+        output( "\t.align %d\n", get_alignment(4) );
+        output( "\t.long 0x90909090,0x90909090\n" );
+        if (name) output( "%s_%s:\n", asm_name("__wine_spec_imp"), name );
+        else output( "%s_%u:\n", asm_name("__wine_spec_imp"), i );
+        output_cfi( ".cfi_startproc" );
+
+        switch (target_cpu)
+        {
+        case CPU_x86:
+            output( "\t.byte 0x8b,0xff,0x55,0x8b,0xec,0x5d\n" );  /* hotpatch prolog */
+            if (UsePIC)
+            {
+                output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
+                output( "1:\tjmp *__imp_%s-1b(%%eax)\n", asm_name( get_link_name( odp )));
+                needs_get_pc_thunk = 1;
+            }
+            else output( "\tjmp *__imp_%s\n", asm_name( get_link_name( odp )));
+            break;
+        case CPU_x86_64:
+            output( "\t.byte 0x48\n" );  /* hotpatch prolog */
+            output( "\tjmp *__imp_%s(%%rip)\n", asm_name( get_link_name( odp )));
+            break;
+        default:
+            assert(0);
+        }
+        output_cfi( ".cfi_endproc" );
+    }
 }
 
 

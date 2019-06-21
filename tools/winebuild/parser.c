@@ -70,6 +70,7 @@ static const char * const FlagNames[] =
     "ordinal",     /* FLAG_ORDINAL */
     "thiscall",    /* FLAG_THISCALL */
     "fastcall",    /* FLAG_FASTCALL */
+    "import",      /* FLAG_IMPORT */
     NULL
 };
 

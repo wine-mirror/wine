@@ -168,21 +168,22 @@ struct strarray
 };
 
 /* entry point flags */
-#define FLAG_NORELAY   0x01  /* don't use relay debugging for this function */
-#define FLAG_NONAME    0x02  /* don't export function by name */
-#define FLAG_RET16     0x04  /* function returns a 16-bit value */
-#define FLAG_RET64     0x08  /* function returns a 64-bit value */
-#define FLAG_REGISTER  0x10  /* use register calling convention */
-#define FLAG_PRIVATE   0x20  /* function is private (cannot be imported) */
-#define FLAG_ORDINAL   0x40  /* function should be imported by ordinal */
-#define FLAG_THISCALL  0x80  /* use thiscall calling convention */
-#define FLAG_FASTCALL  0x100 /* use fastcall calling convention */
+#define FLAG_NORELAY   0x0001  /* don't use relay debugging for this function */
+#define FLAG_NONAME    0x0002  /* don't export function by name */
+#define FLAG_RET16     0x0004  /* function returns a 16-bit value */
+#define FLAG_RET64     0x0008  /* function returns a 64-bit value */
+#define FLAG_REGISTER  0x0010  /* use register calling convention */
+#define FLAG_PRIVATE   0x0020  /* function is private (cannot be imported) */
+#define FLAG_ORDINAL   0x0040  /* function should be imported by ordinal */
+#define FLAG_THISCALL  0x0080  /* use thiscall calling convention */
+#define FLAG_FASTCALL  0x0100  /* use fastcall calling convention */
+#define FLAG_IMPORT    0x0200  /* export is imported from another module */
 
-#define FLAG_FORWARD   0x200  /* function is a forwarded name */
-#define FLAG_EXT_LINK  0x400  /* function links to an external symbol */
-#define FLAG_EXPORT32  0x800  /* 32-bit export in 16-bit spec file */
+#define FLAG_FORWARD   0x1000  /* function is a forwarded name */
+#define FLAG_EXT_LINK  0x2000  /* function links to an external symbol */
+#define FLAG_EXPORT32  0x4000  /* 32-bit export in 16-bit spec file */
 
-#define FLAG_CPU(cpu)  (0x01000 << (cpu))
+#define FLAG_CPU(cpu)  (0x10000 << (cpu))
 #define FLAG_CPU_MASK  (FLAG_CPU(CPU_LAST + 1) - FLAG_CPU(0))
 #define FLAG_CPU_WIN64 (FLAG_CPU(CPU_x86_64) | FLAG_CPU(CPU_ARM64))
 #define FLAG_CPU_WIN32 (FLAG_CPU_MASK & ~FLAG_CPU_WIN64)

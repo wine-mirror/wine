@@ -591,6 +591,7 @@ sub update_spec_file($)
             $flags = $parent{flags};
             $flags =~ s/-ordinal\s*// if $descr{ordinal} eq "@";
             $flags =~ s/-noname\s*// if $descr{ordinal} eq "@";
+            $flags =~ s/-import\s*//;
             if ($descr{flags} =~ /-private/)  # preserve -private flag
             {
                 $flags = "-private " . $flags unless $flags =~ /-private/;

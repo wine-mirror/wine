@@ -315,6 +315,13 @@ The function uses the
 calling convention (first two parameters in %ecx/%edx registers on
 i386).
 .TP
+.B -import
+The function is imported from another module. This can be used instead
+of a
+.I forward
+specification when an application expects to find the function's
+implementation inside the dll.
+.TP
 .RE
 .BI -arch= cpu\fR[\fB,\fIcpu\fR]
 The entry point is only available on the specified CPU

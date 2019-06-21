@@ -838,6 +838,11 @@ static void output_immediate_imports(void)
             for (j = 0; j < import->nb_imports; j++)
             {
                 struct import_func *func = &import->imports[j];
+                if (i)
+                {
+                    if (func->name) output( "__imp_%s:\n", asm_name( func->name ));
+                    else if (func->export_name) output( "__imp_%s:\n", asm_name( func->export_name ));
+                }
                 if (func->name)
                     output( "\t%s .L__wine_spec_import_data_%s_%s-.L__wine_spec_rva_base\n",
                             get_asm_ptr_keyword(), import->c_name, func->name );
