@@ -28,7 +28,6 @@
 #include "winsxs.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "sxs_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sxs);
@@ -143,22 +142,22 @@ static HRESULT WINAPI name_GetDisplayName(
 
     if (!buflen || flags) return E_INVALIDARG;
 
-    len = strlenW( name->name ) + 1;
-    if (name->arch)    len += strlenW( archW ) + strlenW( name->arch ) + 4;
-    if (name->token)   len += strlenW( tokenW ) + strlenW( name->token ) + 4;
-    if (name->type)    len += strlenW( typeW ) + strlenW( name->type ) + 4;
-    if (name->version) len += strlenW( versionW ) + strlenW( version ) + 4;
+    len = lstrlenW( name->name ) + 1;
+    if (name->arch)    len += lstrlenW( archW ) + lstrlenW( name->arch ) + 4;
+    if (name->token)   len += lstrlenW( tokenW ) + lstrlenW( name->token ) + 4;
+    if (name->type)    len += lstrlenW( typeW ) + lstrlenW( name->type ) + 4;
+    if (name->version) len += lstrlenW( versionW ) + lstrlenW( version ) + 4;
     if (len > *buflen)
     {
         *buflen = len;
         return HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER );
     }
-    strcpyW( buffer, name->name );
-    len = strlenW( buffer );
-    if (name->arch)    len += sprintfW( buffer + len, fmtW, archW, name->arch );
-    if (name->token)   len += sprintfW( buffer + len, fmtW, tokenW, name->token );
-    if (name->type)    len += sprintfW( buffer + len, fmtW, typeW, name->type );
-    if (name->version) len += sprintfW( buffer + len, fmtW, versionW, name->version );
+    lstrcpyW( buffer, name->name );
+    len = lstrlenW( buffer );
+    if (name->arch)    len += swprintf( buffer + len, *buflen - len, fmtW, archW, name->arch );
+    if (name->token)   len += swprintf( buffer + len, *buflen - len, fmtW, tokenW, name->token );
+    if (name->type)    len += swprintf( buffer + len, *buflen - len, fmtW, typeW, name->type );
+    if (name->version) len += swprintf( buffer + len, *buflen - len, fmtW, versionW, name->version );
     return S_OK;
 }
 
@@ -211,13 +210,13 @@ static HRESULT WINAPI name_GetName(
     if (!buflen || !buffer) return E_INVALIDARG;
 
     name = get_name_attribute( iface, NAME_ATTR_ID_NAME );
-    len = strlenW( name ) + 1;
+    len = lstrlenW( name ) + 1;
     if (len > *buflen)
     {
         *buflen = len;
         return HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER );
     }
-    strcpyW( buffer, name );
+    lstrcpyW( buffer, name );
     *buflen = len + 3;
     return S_OK;
 }
@@ -232,9 +231,9 @@ static HRESULT parse_version( WCHAR *version, DWORD *high, DWORD *low )
     for (i = 0, p = version; i < 4; i++)
     {
         if (!*p) break;
-        q = strchrW( p, '.' );
+        q = wcschr( p, '.' );
         if (q) *q = 0;
-        ver[i] = atolW( p );
+        ver[i] = wcstol( p, NULL, 10 );
         if (!q && i < 3) break;
         p = q + 1;
     }
