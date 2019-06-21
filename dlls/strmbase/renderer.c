@@ -97,7 +97,6 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndOfStream(IPin * iface)
     EnterCriticalSection(&pFilter->csRenderLock);
     EnterCriticalSection(&pFilter->filter.csFilter);
     hr = BaseInputPinImpl_EndOfStream(iface);
-    EnterCriticalSection(This->pin.pCritSec);
     if (SUCCEEDED(hr))
     {
         if (pFilter->pFuncsTable->pfnEndOfStream)
@@ -105,7 +104,6 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndOfStream(IPin * iface)
         else
             hr = BaseRendererImpl_EndOfStream(pFilter);
     }
-    LeaveCriticalSection(This->pin.pCritSec);
     LeaveCriticalSection(&pFilter->filter.csFilter);
     LeaveCriticalSection(&pFilter->csRenderLock);
     return hr;
@@ -121,7 +119,6 @@ static HRESULT WINAPI BaseRenderer_InputPin_BeginFlush(IPin * iface)
 
     EnterCriticalSection(&pFilter->csRenderLock);
     EnterCriticalSection(&pFilter->filter.csFilter);
-    EnterCriticalSection(This->pin.pCritSec);
     hr = BaseInputPinImpl_BeginFlush(iface);
     if (SUCCEEDED(hr))
     {
@@ -130,7 +127,6 @@ static HRESULT WINAPI BaseRenderer_InputPin_BeginFlush(IPin * iface)
         else
             hr = BaseRendererImpl_BeginFlush(pFilter);
     }
-    LeaveCriticalSection(This->pin.pCritSec);
     LeaveCriticalSection(&pFilter->filter.csFilter);
     LeaveCriticalSection(&pFilter->csRenderLock);
     return hr;
@@ -146,7 +142,6 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndFlush(IPin * iface)
 
     EnterCriticalSection(&pFilter->csRenderLock);
     EnterCriticalSection(&pFilter->filter.csFilter);
-    EnterCriticalSection(This->pin.pCritSec);
     hr = BaseInputPinImpl_EndFlush(iface);
     if (SUCCEEDED(hr))
     {
@@ -155,7 +150,6 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndFlush(IPin * iface)
         else
             hr = BaseRendererImpl_EndFlush(pFilter);
     }
-    LeaveCriticalSection(This->pin.pCritSec);
     LeaveCriticalSection(&pFilter->filter.csFilter);
     LeaveCriticalSection(&pFilter->csRenderLock);
     return hr;
