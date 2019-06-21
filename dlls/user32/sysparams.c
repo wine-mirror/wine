@@ -1753,8 +1753,11 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
               get_entry( &entry_MENULOGFONT, 0, &lpnm->lfMenuFont ) &&
               get_entry( &entry_STATUSLOGFONT, 0, &lpnm->lfStatusFont ) &&
               get_entry( &entry_MESSAGELOGFONT, 0, &lpnm->lfMessageFont );
-        lpnm->iBorderWidth += padded_border;
-        if (ret && lpnm->cbSize == sizeof(NONCLIENTMETRICSW)) lpnm->iPaddedBorderWidth = 0;
+        if (ret)
+        {
+            lpnm->iBorderWidth += padded_border;
+            if (lpnm->cbSize == sizeof(NONCLIENTMETRICSW)) lpnm->iPaddedBorderWidth = 0;
+        }
         normalize_nonclientmetrics( lpnm );
         break;
     }
