@@ -59,7 +59,6 @@ static inline ACMWrapperImpl *impl_from_TransformFilter( TransformFilter *iface 
 static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSample)
 {
     ACMWrapperImpl* This = impl_from_TransformFilter(tf);
-    AM_MEDIA_TYPE amt;
     IMediaSample* pOutSample = NULL;
     DWORD cbDstStream, cbSrcStream;
     LPBYTE pbDstStream;
@@ -103,20 +102,12 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
 
     TRACE("Sample data ptr = %p, size = %d\n", pbSrcStream, cbSrcStream);
 
-    hr = IPin_ConnectionMediaType(This->tf.ppPins[0], &amt);
-    if (FAILED(hr))
-    {
-        ERR("Unable to retrieve media type\n");
-        LeaveCriticalSection(&This->tf.csReceive);
-        return hr;
-    }
-
     ash.pbSrc = pbSrcStream;
     ash.cbSrcLength = cbSrcStream;
 
     while(hr == S_OK && ash.cbSrcLength)
     {
-        hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
+        hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->tf.source, &pOutSample, NULL, NULL, 0);
         if (FAILED(hr))
         {
             ERR("Unable to get delivery buffer (%x)\n", hr);
@@ -216,7 +207,7 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
         TRACE("Sample stop time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
 
         LeaveCriticalSection(&This->tf.csReceive);
-        hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
+        hr = BaseOutputPinImpl_Deliver(&This->tf.source, pOutSample);
         EnterCriticalSection(&This->tf.csReceive);
 
         if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {

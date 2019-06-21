@@ -168,7 +168,7 @@ GstFlowReturn got_data(GstPad *pad, GstObject *parent, GstBuffer *buf)
 
         gst_buffer_map(buf, &info, GST_MAP_READ);
 
-        hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin*)This->tf.ppPins[1], &sample, NULL, NULL, 0);
+        hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->tf.source, &sample, NULL, NULL, 0);
         if (FAILED(hr)) {
             ERR("Could not get output buffer: %08x\n", hr);
             return GST_FLOW_FLUSHING;
@@ -205,7 +205,7 @@ GstFlowReturn got_data(GstPad *pad, GstObject *parent, GstBuffer *buf)
     IMediaSample_SetSyncPoint(sample, !GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DELTA_UNIT));
     IMediaSample_SetActualDataLength(sample, gst_buffer_get_size(buf));
 
-    hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], sample);
+    hr = BaseOutputPinImpl_Deliver(&This->tf.source, sample);
     IMediaSample_Release(sample);
     gst_buffer_unref(buf);
     if (FAILED(hr))

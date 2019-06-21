@@ -206,16 +206,17 @@ HRESULT WINAPI EnumMediaTypes_Construct(BasePin *iface, BasePin_GetMediaType enu
 /* Transform Filter */
 typedef struct TransformFilter
 {
-	BaseFilter filter;
+    BaseFilter filter;
+    BaseOutputPin source;
+    BaseInputPin sink;
 
-	IPin **ppPins;
-	AM_MEDIA_TYPE pmt;
-	CRITICAL_SECTION csReceive;
+    AM_MEDIA_TYPE pmt;
+    CRITICAL_SECTION csReceive;
 
-	const struct TransformFilterFuncTable * pFuncsTable;
-	struct QualityControlImpl *qcimpl;
-        /* IMediaSeeking and IMediaPosition are implemented by ISeekingPassThru */
-        IUnknown *seekthru_unk;
+    const struct TransformFilterFuncTable * pFuncsTable;
+    struct QualityControlImpl *qcimpl;
+    /* IMediaSeeking and IMediaPosition are implemented by ISeekingPassThru */
+    IUnknown *seekthru_unk;
 } TransformFilter;
 
 typedef HRESULT (WINAPI *TransformFilter_DecideBufferSize) (TransformFilter *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest);

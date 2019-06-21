@@ -105,7 +105,6 @@ static int AVIDec_DropSample(AVIDecImpl *This, REFERENCE_TIME tStart) {
 static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
 {
     AVIDecImpl* This = impl_from_TransformFilter(tf);
-    AM_MEDIA_TYPE amt;
     HRESULT hr;
     DWORD res;
     IMediaSample* pOutSample = NULL;
@@ -128,16 +127,10 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
 
     TRACE("Sample data ptr = %p, size = %d\n", pbSrcStream, cbSrcStream);
 
-    hr = IPin_ConnectionMediaType(This->tf.ppPins[0], &amt);
-    if (FAILED(hr)) {
-        ERR("Unable to retrieve media type\n");
-        goto error;
-    }
-
     /* Update input size to match sample size */
     This->pBihIn->biSizeImage = cbSrcStream;
 
-    hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
+    hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->tf.source, &pOutSample, NULL, NULL, 0);
     if (FAILED(hr)) {
         ERR("Unable to get delivery buffer (%x)\n", hr);
         goto error;
@@ -195,7 +188,7 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
         IMediaSample_SetMediaTime(pOutSample, NULL, NULL);
 
     LeaveCriticalSection(&This->tf.csReceive);
-    hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
+    hr = BaseOutputPinImpl_Deliver(&This->tf.source, pOutSample);
     EnterCriticalSection(&This->tf.csReceive);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);

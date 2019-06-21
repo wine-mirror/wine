@@ -185,7 +185,7 @@ static void trackingCallback(
     }
 
     EnterCriticalSection(&This->tf.csReceive);
-    hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
+    hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->tf.source, &pOutSample, NULL, NULL, 0);
     if (FAILED(hr)) {
         ERR("Unable to get delivery buffer (%x)\n", hr);
         goto error;
@@ -236,7 +236,7 @@ static void trackingCallback(
     }
 
     LeaveCriticalSection(&This->tf.csReceive);
-    hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
+    hr = BaseOutputPinImpl_Deliver(&This->tf.source, pOutSample);
     EnterCriticalSection(&This->tf.csReceive);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);
