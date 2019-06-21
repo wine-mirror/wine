@@ -103,9 +103,9 @@ static void notify_thread(struct system_clock *clock)
 {
     if (!InterlockedCompareExchange(&clock->thread_created, TRUE, FALSE))
     {
-        clock->thread = CreateThread(NULL, 0, SystemClockAdviseThread, clock, 0, NULL);
         clock->notify_event = CreateEventW(NULL, FALSE, FALSE, NULL);
         clock->stop_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+        clock->thread = CreateThread(NULL, 0, SystemClockAdviseThread, clock, 0, NULL);
     }
     SetEvent(clock->notify_event);
 }
