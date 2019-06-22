@@ -9506,6 +9506,7 @@ static void test_texturemapblend(void)
     DDCOLORKEY ckey;
     D3DCOLOR color;
     ULONG refcount;
+    DWORD value;
     HWND window;
     DDBLTFX fx;
     HRESULT hr;
@@ -9548,19 +9549,23 @@ static void test_texturemapblend(void)
     }
 
     hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
-    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_GetRenderTarget(device, &rt);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     viewport = create_viewport(device, 0, 0, 640, 480);
     hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
-    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_GetRenderState(device, D3DRENDERSTATE_TEXTUREMAPBLEND, &texturemapblend);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     ok(texturemapblend == D3DTBLEND_MODULATE, "Got unexpected texture map blend %#x.\n", texturemapblend);
+
+    hr = IDirect3DDevice3_GetTextureStageState(device, 0, D3DTSS_ALPHAOP, &value);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(value == D3DTOP_SELECTARG1, "Got unexpected D3DTSS_ALPHAOP value %#x.\n", value);
 
     /* Test alpha with DDPF_ALPHAPIXELS texture - should be taken from texture
      * alpha channel.
@@ -9582,15 +9587,29 @@ static void test_texturemapblend(void)
     U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
     U5(U4(surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0xff000000;
     hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
-    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDrawSurface4_QueryInterface(surface, &IID_IDirect3DTexture2, (void **)&texture);
-    ok(SUCCEEDED(hr), "Failed to get texture interface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTexture(device, 0, texture);
-    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_GetTextureStageState(device, 0, D3DTSS_ALPHAOP, &value);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(value == D3DTOP_SELECTARG1, "Got unexpected D3DTSS_ALPHAOP value %#x.\n", value);
+
+    hr = IDirect3DDevice3_SetTexture(device, 0, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_GetTextureStageState(device, 0, D3DTSS_ALPHAOP, &value);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(value == D3DTOP_SELECTARG1, "Got unexpected D3DTSS_ALPHAOP value %#x.\n", value);
+
+    hr = IDirect3DDevice3_SetTexture(device, 0, texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DViewport3_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
-    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
@@ -9615,8 +9634,12 @@ static void test_texturemapblend(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+#if 0
+    /* Disable the call to test that the device has this state by default. */
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_TEXTUREMAPBLEND, D3DTBLEND_MODULATE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+#endif
 
     /* Texture stage state does not change so legacy texture blending stays enabled. */
     hr = IDirect3DDevice3_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_MODULATE);
@@ -9727,7 +9750,7 @@ static void test_texturemapblend(void)
     ok(compare_color(color, 0x000000ff, 2), "Got unexpected color 0x%08x.\n", color);
 
     hr = IDirect3DDevice3_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     IDirect3DTexture2_Release(texture);
     refcount = IDirectDrawSurface4_Release(surface);
     ok(!refcount, "Surface not properly released, refcount %u.\n", refcount);
@@ -9748,33 +9771,37 @@ static void test_texturemapblend(void)
     U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
 
     hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
-    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDrawSurface4_QueryInterface(surface, &IID_IDirect3DTexture2, (void **)&texture);
-    ok(SUCCEEDED(hr), "Failed to get texture interface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_SetTexture(device, 0, texture);
-    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_GetTextureStageState(device, 0, D3DTSS_ALPHAOP, &value);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(value == D3DTOP_SELECTARG2, "Got unexpected D3DTSS_ALPHAOP value %#x.\n", value);
 
     hr = IDirect3DViewport3_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
-    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     U5(fx).dwFillColor = 0xff0000ff;
     hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-    ok(SUCCEEDED(hr), "Failed to clear texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     U5(fx).dwFillColor = 0x800000ff;
     hr = IDirectDrawSurface4_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-    ok(SUCCEEDED(hr), "Failed to clear texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
             D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1, &test1_quads[0], 4, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
             D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1, &test1_quads[4], 4, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice3_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     color = get_surface_color(rt, 5, 5);
     ok(compare_color(color, 0x000000ff, 2), "Got unexpected color 0x%08x.\n", color);
