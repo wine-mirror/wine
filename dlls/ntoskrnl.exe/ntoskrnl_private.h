@@ -76,6 +76,7 @@ extern POBJECT_TYPE SeTokenObjectType;
 
 void ObReferenceObject( void *obj ) DECLSPEC_HIDDEN;
 
+void pnp_manager_enumerate_root_devices( const WCHAR *driver_name ) DECLSPEC_HIDDEN;
 void pnp_manager_start(void) DECLSPEC_HIDDEN;
 void pnp_manager_stop(void) DECLSPEC_HIDDEN;
 

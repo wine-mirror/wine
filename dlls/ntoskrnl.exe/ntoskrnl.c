@@ -3648,6 +3648,8 @@ NTSTATUS WINAPI ZwLoadDriver( const UNICODE_STRING *service_name )
     driver = WINE_RB_ENTRY_VALUE( entry, struct wine_driver, entry );
     driver->service_handle = service_handle;
 
+    pnp_manager_enumerate_root_devices( service_name->Buffer + wcslen( servicesW ) );
+
     set_service_status( service_handle, SERVICE_RUNNING,
                         SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN );
     return STATUS_SUCCESS;
