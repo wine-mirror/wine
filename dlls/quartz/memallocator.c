@@ -493,6 +493,13 @@ static ULONG WINAPI StdMediaSample2_Release(IMediaSample2 * iface)
 
     if (!ref)
     {
+        if (This->props.pMediaType)
+            DeleteMediaType(This->props.pMediaType);
+        This->props.pMediaType = NULL;
+        This->props.dwSampleFlags = 0;
+        This->tMediaStart = INVALID_MEDIA_TIME;
+        This->tMediaEnd = 0;
+
         if (This->pParent)
             IMemAllocator_ReleaseBuffer(This->pParent, (IMediaSample *)iface);
         else

@@ -234,13 +234,13 @@ static void test_sample_time(void)
     start = 0xdeadbeef;
     end = 0xdeadf00d;
     hr = IMediaSample_GetTime(sample, &start, &end);
-    todo_wine ok(hr == VFW_E_SAMPLE_TIME_NOT_SET, "Got hr %#x.\n", hr);
-    todo_wine ok(start == 0xdeadbeef, "Got start %s.\n", wine_dbgstr_longlong(start));
-    todo_wine ok(end == 0xdeadf00d, "Got end %s.\n", wine_dbgstr_longlong(end));
+    ok(hr == VFW_E_SAMPLE_TIME_NOT_SET, "Got hr %#x.\n", hr);
+    ok(start == 0xdeadbeef, "Got start %s.\n", wine_dbgstr_longlong(start));
+    ok(end == 0xdeadf00d, "Got end %s.\n", wine_dbgstr_longlong(end));
 
     hr = IMediaSample2_GetProperties(sample2, sizeof(props), (BYTE *)&props);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(!props.dwSampleFlags, "Got flags %#x.\n", props.dwSampleFlags);
+    ok(!props.dwSampleFlags, "Got flags %#x.\n", props.dwSampleFlags);
 
     start = 0x123;
     end = 0x321;
@@ -248,7 +248,7 @@ static void test_sample_time(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSample_GetTime(sample, &start, &end);
-    todo_wine ok(hr == VFW_E_SAMPLE_TIME_NOT_SET, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_SAMPLE_TIME_NOT_SET, "Got hr %#x.\n", hr);
 
     IMediaSample2_Release(sample2);
     IMediaSample_Release(sample);
@@ -320,9 +320,9 @@ static void test_media_time(void)
     start = 0xdeadbeef;
     end = 0xdeadf00d;
     hr = IMediaSample_GetMediaTime(sample, &start, &end);
-    todo_wine ok(hr == VFW_E_MEDIA_TIME_NOT_SET, "Got hr %#x.\n", hr);
-    todo_wine ok(start == 0xdeadbeef, "Got start %s.\n", wine_dbgstr_longlong(start));
-    todo_wine ok(end == 0xdeadf00d, "Got end %s.\n", wine_dbgstr_longlong(end));
+    ok(hr == VFW_E_MEDIA_TIME_NOT_SET, "Got hr %#x.\n", hr);
+    ok(start == 0xdeadbeef, "Got start %s.\n", wine_dbgstr_longlong(start));
+    ok(end == 0xdeadf00d, "Got end %s.\n", wine_dbgstr_longlong(end));
 
     start = 0x123;
     end = 0x321;
@@ -330,7 +330,7 @@ static void test_media_time(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSample_GetMediaTime(sample, &start, &end);
-    todo_wine ok(hr == VFW_E_MEDIA_TIME_NOT_SET, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_MEDIA_TIME_NOT_SET, "Got hr %#x.\n", hr);
 
     start = 0x123;
     end = 0x321;
@@ -343,7 +343,7 @@ static void test_media_time(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSample_GetMediaTime(sample, &start, &end);
-    todo_wine ok(hr == VFW_E_MEDIA_TIME_NOT_SET, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_MEDIA_TIME_NOT_SET, "Got hr %#x.\n", hr);
 
     IMediaSample_Release(sample);
     IMemAllocator_Release(allocator);
@@ -548,11 +548,11 @@ static void test_sample_properties(void)
     hr = IMediaSample2_GetProperties(sample2, sizeof(props), (BYTE *)&props);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!props.dwTypeSpecificFlags, "Got type-specific flags %#x.\n", props.dwTypeSpecificFlags);
-    todo_wine ok(!props.dwSampleFlags, "Got flags %#x.\n", props.dwSampleFlags);
+    ok(!props.dwSampleFlags, "Got flags %#x.\n", props.dwSampleFlags);
     ok(props.lActual == 123, "Got actual length %d.\n", props.lActual);
     ok(!props.tStart, "Got sample start %s.\n", wine_dbgstr_longlong(props.tStart));
     ok(!props.dwStreamId, "Got stream ID %#x.\n", props.dwStreamId);
-    todo_wine ok(!props.pMediaType, "Got media type %p.\n", props.pMediaType);
+    ok(!props.pMediaType, "Got media type %p.\n", props.pMediaType);
     ok(props.cbBuffer == 65536, "Got buffer length %d.\n", props.cbBuffer);
 
     IMediaSample2_Release(sample2);
