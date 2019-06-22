@@ -87,11 +87,6 @@ static inline AsyncReader *impl_from_BaseFilter(BaseFilter *iface)
     return CONTAINING_RECORD(iface, AsyncReader, filter);
 }
 
-static inline AsyncReader *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    return CONTAINING_RECORD(iface, AsyncReader, filter.IBaseFilter_iface);
-}
-
 static inline AsyncReader *impl_from_IFileSourceFilter(IFileSourceFilter *iface)
 {
     return CONTAINING_RECORD(iface, AsyncReader, IFileSourceFilter_iface);
@@ -500,50 +495,15 @@ HRESULT AsyncReader_create(IUnknown *outer, void **out)
     return S_OK;
 }
 
-/** IMediaFilter methods **/
-
-static HRESULT WINAPI AsyncReader_Stop(IBaseFilter * iface)
-{
-    AsyncReader *This = impl_from_IBaseFilter(iface);
-
-    TRACE("%p->()\n", This);
-
-    This->filter.state = State_Stopped;
-    
-    return S_OK;
-}
-
-static HRESULT WINAPI AsyncReader_Pause(IBaseFilter * iface)
-{
-    AsyncReader *This = impl_from_IBaseFilter(iface);
-
-    TRACE("%p->()\n", This);
-
-    This->filter.state = State_Paused;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AsyncReader_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
-{
-    AsyncReader *This = impl_from_IBaseFilter(iface);
-
-    TRACE("%p->(%s)\n", This, wine_dbgstr_longlong(tStart));
-
-    This->filter.state = State_Running;
-
-    return S_OK;
-}
-
 static const IBaseFilterVtbl AsyncReader_Vtbl =
 {
     BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
-    AsyncReader_Stop,
-    AsyncReader_Pause,
-    AsyncReader_Run,
+    BaseFilterImpl_Stop,
+    BaseFilterImpl_Pause,
+    BaseFilterImpl_Run,
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
@@ -697,12 +657,12 @@ static inline AsyncReader *impl_from_IAsyncReader(IAsyncReader *iface)
     return CONTAINING_RECORD(iface, AsyncReader, IAsyncReader_iface);
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_CheckMediaType(BasePin *pin, const AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI FileAsyncReaderPin_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE *pmt)
 {
-    AM_MEDIA_TYPE *pmt_filter = impl_from_IBaseFilter(pin->pinInfo.pFilter)->pmt;
+    AsyncReader *filter = impl_from_BasePin(iface);
 
-    if (IsEqualGUID(&pmt->majortype, &pmt_filter->majortype) &&
-        IsEqualGUID(&pmt->subtype, &pmt_filter->subtype))
+    if (IsEqualGUID(&pmt->majortype, &filter->pmt->majortype) &&
+        IsEqualGUID(&pmt->subtype, &filter->pmt->subtype))
         return S_OK;
 
     return S_FALSE;
