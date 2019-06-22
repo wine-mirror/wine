@@ -245,7 +245,7 @@ static void test_sample_time(void)
 
     hr = IMediaSample2_GetProperties(sample2, sizeof(props), (BYTE *)&props);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(!props.dwSampleFlags, "Got flags %#x.\n", props.dwSampleFlags);
+    ok(!props.dwSampleFlags, "Got flags %#x.\n", props.dwSampleFlags);
 
     start = 0x123;
     end = 0x321;

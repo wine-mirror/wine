@@ -560,27 +560,27 @@ static HRESULT WINAPI StdMediaSample2_GetTime(IMediaSample2 * iface, REFERENCE_T
     return hr;
 }
 
-static HRESULT WINAPI StdMediaSample2_SetTime(IMediaSample2 * iface, REFERENCE_TIME * pStart, REFERENCE_TIME * pEnd)
+static HRESULT WINAPI StdMediaSample2_SetTime(IMediaSample2 *iface, REFERENCE_TIME *start, REFERENCE_TIME *end)
 {
-    StdMediaSample2 *This = impl_from_IMediaSample2(iface);
+    StdMediaSample2 *sample = impl_from_IMediaSample2(iface);
 
-    TRACE("(%p)->(%p, %p)\n", iface, pStart, pEnd);
+    TRACE("iface %p, start %p, end %p.\n", iface, start, end);
 
-    if (pStart)
+    if (start)
     {
-        This->props.tStart = *pStart;
-        This->props.dwSampleFlags |= AM_SAMPLE_TIMEVALID;
+        sample->props.tStart = *start;
+        sample->props.dwSampleFlags |= AM_SAMPLE_TIMEVALID;
+
+        if (end)
+        {
+            sample->props.tStop = *end;
+            sample->props.dwSampleFlags |= AM_SAMPLE_STOPVALID;
+        }
+        else
+            sample->props.dwSampleFlags &= ~AM_SAMPLE_STOPVALID;
     }
     else
-        This->props.dwSampleFlags &= ~AM_SAMPLE_TIMEVALID;
-
-    if (pEnd)
-    {
-        This->props.tStop = *pEnd;
-        This->props.dwSampleFlags |= AM_SAMPLE_STOPVALID;
-    }
-    else
-        This->props.dwSampleFlags &= ~AM_SAMPLE_STOPVALID;
+        sample->props.dwSampleFlags &= ~(AM_SAMPLE_TIMEVALID | AM_SAMPLE_STOPVALID);
 
     return S_OK;
 }
