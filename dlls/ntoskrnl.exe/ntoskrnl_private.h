@@ -76,6 +76,9 @@ extern POBJECT_TYPE SeTokenObjectType;
 
 void ObReferenceObject( void *obj ) DECLSPEC_HIDDEN;
 
+void pnp_manager_start(void) DECLSPEC_HIDDEN;
+void pnp_manager_stop(void) DECLSPEC_HIDDEN;
+
 static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
                                   '\\','M','a','c','h','i','n','e',
                                   '\\','S','y','s','t','e','m',

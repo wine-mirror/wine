@@ -3,6 +3,7 @@
  *
  * Copyright 2016 Sebastian Lackner
  * Copyright 2016 Aric Stewart for CodeWeavers
+ * Copyright 2019 Zebediah Figura
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -750,4 +751,39 @@ POWER_STATE WINAPI PoSetPowerState( DEVICE_OBJECT *device, POWER_STATE_TYPE type
 {
     FIXME("device %p, type %u, state %u, stub!\n", device, type, state.DeviceState);
     return state;
+}
+
+static DRIVER_OBJECT *pnp_manager;
+
+static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
+
+    TRACE("device %p, irp %p, minor function %#x.\n", device, irp, stack->MinorFunction);
+
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return irp->IoStatus.u.Status;
+}
+
+static NTSTATUS WINAPI pnp_manager_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *keypath )
+{
+    pnp_manager = driver;
+    driver->MajorFunction[IRP_MJ_PNP] = pnp_manager_device_pnp;
+    return STATUS_SUCCESS;
+}
+
+void pnp_manager_start(void)
+{
+    static const WCHAR driver_nameW[] = {'\\','D','r','i','v','e','r','\\','P','n','p','M','a','n','a','g','e','r',0};
+    UNICODE_STRING driver_nameU;
+    NTSTATUS status;
+
+    RtlInitUnicodeString( &driver_nameU, driver_nameW );
+    if ((status = IoCreateDriver( &driver_nameU, pnp_manager_driver_entry )))
+        ERR("Failed to create PnP manager driver, status %#x.\n", status);
+}
+
+void pnp_manager_stop(void)
+{
+    IoDeleteDriver( pnp_manager );
 }
