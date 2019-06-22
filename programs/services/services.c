@@ -27,6 +27,7 @@
 #include <winsvc.h>
 #include <rpc.h>
 #include <userenv.h>
+#include <setupapi.h>
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -423,17 +424,41 @@ static BOOL schedule_delayed_autostart(struct service_entry **services, unsigned
     return TRUE;
 }
 
+static BOOL is_root_pnp_service(const struct service_entry *service, HDEVINFO set)
+{
+    SP_DEVINFO_DATA device = {sizeof(device)};
+    WCHAR name[MAX_SERVICE_NAME];
+    unsigned int i;
+
+    for (i = 0; SetupDiEnumDeviceInfo(set, i, &device); ++i)
+    {
+        if (SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_SERVICE, NULL,
+                                              (BYTE *)name, sizeof(name), NULL)
+                && !wcsicmp(name, service->name))
+        {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static void scmdatabase_autostart_services(struct scmdatabase *db)
 {
+    static const WCHAR rootW[] = {'R','O','O','T',0};
     struct service_entry **services_list;
     unsigned int i = 0;
     unsigned int size = 32;
     unsigned int delayed_cnt = 0;
     struct service_entry *service;
+    HDEVINFO set;
 
     services_list = HeapAlloc(GetProcessHeap(), 0, size * sizeof(services_list[0]));
     if (!services_list)
         return;
+
+    if ((set = SetupDiGetClassDevsW( NULL, rootW, NULL, DIGCF_ALLCLASSES )) == INVALID_HANDLE_VALUE)
+        WINE_ERR("Failed to enumerate devices, error %#x.\n", GetLastError());
 
     scmdatabase_lock(db);
 
@@ -441,7 +466,8 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
     {
         if (service->config.dwStartType == SERVICE_BOOT_START ||
             service->config.dwStartType == SERVICE_SYSTEM_START ||
-            service->config.dwStartType == SERVICE_AUTO_START)
+            service->config.dwStartType == SERVICE_AUTO_START ||
+            (set != INVALID_HANDLE_VALUE && is_root_pnp_service(set, service)))
         {
             if (i+1 >= size)
             {
@@ -482,6 +508,7 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
 
     if (!delayed_cnt || !schedule_delayed_autostart(services_list, delayed_cnt))
         heap_free(services_list);
+    SetupDiDestroyDeviceInfoList(set);
 }
 
 static void scmdatabase_wait_terminate(struct scmdatabase *db)

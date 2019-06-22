@@ -1,5 +1,5 @@
 MODULE    = services.exe
-IMPORTS   = rpcrt4 advapi32 userenv
+IMPORTS   = rpcrt4 advapi32 userenv setupapi
 
 EXTRADLLFLAGS = -mconsole -mno-cygwin
 
