@@ -184,6 +184,9 @@ typedef struct BaseFilterFuncTable
 HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
 ULONG WINAPI BaseFilterImpl_AddRef(IBaseFilter * iface);
 ULONG WINAPI BaseFilterImpl_Release(IBaseFilter * iface);
+HRESULT WINAPI BaseFilterImpl_Stop(IBaseFilter *iface);
+HRESULT WINAPI BaseFilterImpl_Pause(IBaseFilter *iface);
+HRESULT WINAPI BaseFilterImpl_Run(IBaseFilter *iface, REFERENCE_TIME start);
 HRESULT WINAPI BaseFilterImpl_GetClassID(IBaseFilter * iface, CLSID * pClsid);
 HRESULT WINAPI BaseFilterImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState );
 HRESULT WINAPI BaseFilterImpl_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock);

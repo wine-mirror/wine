@@ -123,6 +123,45 @@ HRESULT WINAPI BaseFilterImpl_GetClassID(IBaseFilter * iface, CLSID * pClsid)
     return S_OK;
 }
 
+HRESULT WINAPI BaseFilterImpl_Stop(IBaseFilter *iface)
+{
+    BaseFilter *filter = impl_from_IBaseFilter(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    EnterCriticalSection(&filter->csFilter);
+    filter->state = State_Stopped;
+    LeaveCriticalSection(&filter->csFilter);
+
+    return S_OK;
+}
+
+HRESULT WINAPI BaseFilterImpl_Pause(IBaseFilter *iface)
+{
+    BaseFilter *filter = impl_from_IBaseFilter(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    EnterCriticalSection(&filter->csFilter);
+    filter->state = State_Paused;
+    LeaveCriticalSection(&filter->csFilter);
+
+    return S_OK;
+}
+
+HRESULT WINAPI BaseFilterImpl_Run(IBaseFilter *iface, REFERENCE_TIME start)
+{
+    BaseFilter *filter = impl_from_IBaseFilter(iface);
+
+    TRACE("iface %p, start %s.\n", iface, wine_dbgstr_longlong(start));
+
+    EnterCriticalSection(&filter->csFilter);
+    filter->state = State_Running;
+    LeaveCriticalSection(&filter->csFilter);
+
+    return S_OK;
+}
+
 HRESULT WINAPI BaseFilterImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState )
 {
     BaseFilter *This = impl_from_IBaseFilter(iface);
