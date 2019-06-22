@@ -1,8 +1,8 @@
 EXTRADEFS = -D_SETUPAPI_
 MODULE    = setupapi.dll
 IMPORTLIB = setupapi
-IMPORTS   = uuid user32 version advapi32 rpcrt4
-DELAYIMPORTS = shell32 wintrust ole32 winspool comdlg32
+IMPORTS   = uuid version advapi32 rpcrt4
+DELAYIMPORTS = shell32 wintrust ole32 winspool comdlg32 user32
 
 C_SRCS = \
 	devinst.c \
