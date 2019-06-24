@@ -1,5 +1,7 @@
 MODULE    = updspapi.dll
 IMPORTS   = setupapi
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	main.c
