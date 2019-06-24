@@ -2193,8 +2193,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
     TRACE("-- %s (%u) (bytes read: %d)\n", res == ERROR_SUCCESS ? "TRUE": "FALSE", res,
           pdwNumOfBytesRead ? *pdwNumOfBytesRead : -1);
 
-    if(res != ERROR_SUCCESS)
-        SetLastError(res);
+    SetLastError(res);
     return res == ERROR_SUCCESS;
 }
 

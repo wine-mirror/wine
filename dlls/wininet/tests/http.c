@@ -987,7 +987,10 @@ static void InternetReadFile_chunked_test(void)
         {
             char *buffer = HeapAlloc(GetProcessHeap(),0,length+1);
 
+            SetLastError(0xdeadbeef);
             res = InternetReadFile(hor,buffer,length,&got);
+            ok(GetLastError() == 0 ||
+                broken(GetLastError() == 0xdeadbeef /* XP/W2K3 */), "Last Error not reset %u\n", GetLastError());
 
             buffer[got]=0;
             trace("ReadFile -> %i %i\n",res,got);
@@ -1000,8 +1003,11 @@ static void InternetReadFile_chunked_test(void)
         if (length == 0)
         {
             got = 0xdeadbeef;
+            SetLastError(0xdeadbeef);
             res = InternetReadFile( hor, buffer, 1, &got );
             ok( res, "InternetReadFile failed: %u\n", GetLastError() );
+            ok(GetLastError() == 0 ||
+                broken(GetLastError() == 0xdeadbeef /* XP/W2K3 */), "Last Error not reset %u\n", GetLastError());
             ok( !got, "got %u\n", got );
             break;
         }
