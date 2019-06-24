@@ -17,11 +17,15 @@
  */
 
 #include <assert.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #define COBJMACROS
 #include "initguid.h"
 #include "dxgi1_6.h"
 #include "d3d11.h"
 #include "d3d12.h"
+#include "winternl.h"
+#include "ddk/d3dkmthk.h"
 #include "wine/heap.h"
 #include "wine/test.h"
 
@@ -35,6 +39,10 @@ static DEVMODEW registry_mode;
 
 static HRESULT (WINAPI *pCreateDXGIFactory1)(REFIID iid, void **factory);
 static HRESULT (WINAPI *pCreateDXGIFactory2)(UINT flags, REFIID iid, void **factory);
+
+static NTSTATUS (WINAPI *pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc);
+static NTSTATUS (WINAPI *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER *desc);
+static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *desc);
 
 static PFN_D3D12_CREATE_DEVICE pD3D12CreateDevice;
 static PFN_D3D12_GET_DEBUG_INTERFACE pD3D12GetDebugInterface;
@@ -492,6 +500,27 @@ static void wait_fullscreen_state_(unsigned int line, IDXGISwapChain *swapchain,
             "Got unexpected state %#x, expected %#x.\n", state, expected);
 }
 
+#define wait_vidpn_exclusive_ownership(a, b, c) wait_vidpn_exclusive_ownership_(__LINE__, a, b, c)
+static void wait_vidpn_exclusive_ownership_(unsigned int line,
+        const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc, NTSTATUS expected, BOOL todo)
+{
+    static const unsigned int wait_timeout = 2000;
+    static const unsigned int wait_step = 100;
+    unsigned int total_time = 0;
+    NTSTATUS status;
+
+    while (total_time < wait_timeout)
+    {
+        status = pD3DKMTCheckVidPnExclusiveOwnership(desc);
+        if (status == expected)
+            break;
+        Sleep(wait_step);
+        total_time += wait_step;
+    }
+    todo_wine_if(todo) ok_(__FILE__, line)(status == expected,
+            "Got unexpected status %#x, expected %#x.\n", status, expected);
+}
+
 static IDXGIAdapter *create_adapter(void)
 {
     IDXGIFactory4 *factory4;
@@ -680,6 +709,39 @@ static void get_factory_(unsigned int line, IUnknown *device, BOOL is_d3d12, IDX
         ok_(__FILE__, line)(hr == S_OK, "Failed to get parent, hr %#x.\n", hr);
         IDXGIAdapter_Release(adapter);
     }
+}
+
+#define get_adapter(a, b) get_adapter_(__LINE__, a, b)
+static IDXGIAdapter *get_adapter_(unsigned int line, IUnknown *device, BOOL is_d3d12)
+{
+    IDXGIAdapter *adapter = NULL;
+    ID3D12Device *d3d12_device;
+    IDXGIFactory4 *factory4;
+    IDXGIFactory *factory;
+    HRESULT hr;
+    LUID luid;
+
+    if (is_d3d12)
+    {
+        get_factory_(line, device, is_d3d12, &factory);
+        hr = ID3D12CommandQueue_GetDevice((ID3D12CommandQueue *)device, &IID_ID3D12Device, (void **)&d3d12_device);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        luid = ID3D12Device_GetAdapterLuid(d3d12_device);
+        ID3D12Device_Release(d3d12_device);
+        hr = IDXGIFactory_QueryInterface(factory, &IID_IDXGIFactory4, (void **)&factory4);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDXGIFactory4_EnumAdapterByLuid(factory4, luid, &IID_IDXGIAdapter, (void **)&adapter);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        IDXGIFactory4_Release(factory4);
+        IDXGIFactory_Release(factory);
+    }
+    else
+    {
+        hr = IDXGIDevice_GetAdapter((IDXGIDevice *)device, &adapter);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    }
+
+    return adapter;
 }
 
 static void test_adapter_desc(void)
@@ -5416,6 +5478,148 @@ static void test_window_association(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
+static void test_output_ownership(IUnknown *device, BOOL is_d3d12)
+{
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_gdi_desc;
+    D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP check_ownership_desc;
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    DXGI_OUTPUT_DESC output_desc;
+    IDXGISwapChain *swapchain;
+    IDXGIFactory *factory;
+    IDXGIAdapter *adapter;
+    IDXGIOutput *output;
+    BOOL fullscreen;
+    NTSTATUS status;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!pD3DKMTCheckVidPnExclusiveOwnership
+            || pD3DKMTCheckVidPnExclusiveOwnership(NULL) == STATUS_PROCEDURE_NOT_FOUND)
+    {
+        skip("D3DKMTCheckVidPnExclusiveOwnership() is unavailable.\n");
+        return;
+    }
+
+    get_factory(device, is_d3d12, &factory);
+    adapter = get_adapter(device, is_d3d12);
+    ok(!!adapter, "Failed to get adapter.\n");
+
+    hr = IDXGIAdapter_EnumOutputs(adapter, 0, &output);
+    IDXGIAdapter_Release(adapter);
+    if (hr == DXGI_ERROR_NOT_FOUND)
+    {
+        skip("Adapter doesn't have any outputs.\n");
+        IDXGIFactory_Release(factory);
+        return;
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDXGIOutput_GetDesc(output, &output_desc);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    lstrcpyW(open_adapter_gdi_desc.DeviceName, output_desc.DeviceName);
+    status = pD3DKMTOpenAdapterFromGdiDisplayName(&open_adapter_gdi_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+
+    check_ownership_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    check_ownership_desc.VidPnSourceId = open_adapter_gdi_desc.VidPnSourceId;
+    wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS, FALSE);
+
+    swapchain_desc.BufferDesc.Width = 800;
+    swapchain_desc.BufferDesc.Height = 600;
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 1;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = is_d3d12 ? 2 : 1;
+    swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, NULL, NULL, NULL, NULL);
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.SwapEffect = is_d3d12 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = 0;
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Swapchain in fullscreen mode. */
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, output);
+    /* DXGI_ERROR_NOT_CURRENTLY_AVAILABLE on some machines.
+     * DXGI_ERROR_UNSUPPORTED on the Windows 7 testbot. */
+    if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE || broken(hr == DXGI_ERROR_UNSUPPORTED))
+    {
+        skip("Failed to change fullscreen state.\n");
+        goto done;
+    }
+    todo_wine_if(is_d3d12) ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    fullscreen = FALSE;
+    hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
+    todo_wine_if(is_d3d12) ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine_if(is_d3d12) ok(fullscreen, "Got unexpected fullscreen state.\n");
+    if (is_d3d12)
+        wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS, FALSE);
+    else
+        wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_GRAPHICS_PRESENT_OCCLUDED, TRUE);
+    hr = IDXGIOutput_TakeOwnership(output, device, FALSE);
+    todo_wine ok(hr == (is_d3d12 ? E_NOINTERFACE : E_INVALIDARG), "Got unexpected hr %#x.\n", hr);
+    hr = IDXGIOutput_TakeOwnership(output, device, TRUE);
+    todo_wine ok(hr == (is_d3d12 ? E_NOINTERFACE : S_OK), "Got unexpected hr %#x.\n", hr);
+    IDXGIOutput_ReleaseOwnership(output);
+    wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS, FALSE);
+
+    /* IDXGIOutput_TakeOwnership always returns E_NOINTERFACE for d3d12. Tests
+     * finished. */
+    if (is_d3d12)
+        goto done;
+
+    hr = IDXGIOutput_TakeOwnership(output, device, FALSE);
+    todo_wine ok(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, "Got unexpected hr %#x.\n", hr);
+    IDXGIOutput_ReleaseOwnership(output);
+
+    hr = IDXGIOutput_TakeOwnership(output, device, TRUE);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    /* Note that the "exclusive" parameter to IDXGIOutput_TakeOwnership()
+     * seems to behave opposite to what's described by MSDN. */
+    wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_GRAPHICS_PRESENT_OCCLUDED, TRUE);
+    hr = IDXGIOutput_TakeOwnership(output, device, FALSE);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    IDXGIOutput_ReleaseOwnership(output);
+
+    /* Swapchain in windowed mode. */
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    fullscreen = TRUE;
+    hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!fullscreen, "Unexpected fullscreen state.\n");
+    wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS, FALSE);
+
+    hr = IDXGIOutput_TakeOwnership(output, device, FALSE);
+    todo_wine ok(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDXGIOutput_TakeOwnership(output, device, TRUE);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_GRAPHICS_PRESENT_OCCLUDED, TRUE);
+    IDXGIOutput_ReleaseOwnership(output);
+    wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS, FALSE);
+
+done:
+    IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+    wait_device_idle(device);
+
+    IDXGIOutput_Release(output);
+    IDXGISwapChain_Release(swapchain);
+    DestroyWindow(swapchain_desc.OutputWindow);
+    refcount = IDXGIFactory_Release(factory);
+    ok(refcount == !is_d3d12, "Got unexpected refcount %u.\n", refcount);
+
+    close_adapter_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
+    status = pD3DKMTCloseAdapter(&close_adapter_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+}
+
 static void run_on_d3d10(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 {
     IDXGIDevice *device;
@@ -5459,7 +5663,7 @@ static void run_on_d3d12(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 
 START_TEST(dxgi)
 {
-    HMODULE dxgi_module, d3d12_module;
+    HMODULE dxgi_module, d3d12_module, gdi32_module;
     BOOL enable_debug_layer = FALSE;
     unsigned int argc, i;
     ID3D12Debug *debug;
@@ -5468,6 +5672,11 @@ START_TEST(dxgi)
     dxgi_module = GetModuleHandleA("dxgi.dll");
     pCreateDXGIFactory1 = (void *)GetProcAddress(dxgi_module, "CreateDXGIFactory1");
     pCreateDXGIFactory2 = (void *)GetProcAddress(dxgi_module, "CreateDXGIFactory2");
+
+    gdi32_module = GetModuleHandleA("gdi32.dll");
+    pD3DKMTCheckVidPnExclusiveOwnership = (void *)GetProcAddress(gdi32_module, "D3DKMTCheckVidPnExclusiveOwnership");
+    pD3DKMTCloseAdapter = (void *)GetProcAddress(gdi32_module, "D3DKMTCloseAdapter");
+    pD3DKMTOpenAdapterFromGdiDisplayName = (void *)GetProcAddress(gdi32_module, "D3DKMTOpenAdapterFromGdiDisplayName");
 
     registry_mode.dmSize = sizeof(registry_mode);
     ok(EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &registry_mode), "Failed to get display mode.\n");
@@ -5520,6 +5729,7 @@ START_TEST(dxgi)
     run_on_d3d10(test_swapchain_present);
     run_on_d3d10(test_swapchain_backbuffer_index);
     run_on_d3d10(test_swapchain_formats);
+    run_on_d3d10(test_output_ownership);
 
     if (!(d3d12_module = LoadLibraryA("d3d12.dll")))
     {
@@ -5540,6 +5750,7 @@ START_TEST(dxgi)
     run_on_d3d12(test_swapchain_present);
     run_on_d3d12(test_swapchain_backbuffer_index);
     run_on_d3d12(test_swapchain_formats);
+    run_on_d3d12(test_output_ownership);
 
     FreeLibrary(d3d12_module);
 }
