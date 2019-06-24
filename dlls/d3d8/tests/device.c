@@ -8261,6 +8261,16 @@ static void test_check_device_format(void)
             D3DUSAGE_SOFTWAREPROCESSING, D3DRTYPE_INDEXBUFFER, D3DFMT_INDEX16);
     todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
+    hr = IDirect3D8_CheckDepthStencilMatch(d3d, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DFMT_A8R8G8B8, D3DFMT_D32);
+    todo_wine ok(hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL /* Windows 10 */),
+            "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3D8_CheckDepthStencilMatch(d3d, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DFMT_R5G6B5, D3DFMT_D32);
+    todo_wine ok(hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL /* Windows 10 */),
+            "Got unexpected hr %#x.\n", hr);
+
     IDirect3D8_Release(d3d);
 }
 
