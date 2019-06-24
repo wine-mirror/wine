@@ -722,8 +722,11 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
 
     length = sizeof(buffer)-2;
     memset(buffer, 0x77, sizeof(buffer));
+    SetLastError(0xdeadbeef);
     res = HttpQueryInfoA(hor,HTTP_QUERY_RAW_HEADERS,buffer,&length,0x0);
     ok(res, "HttpQueryInfoA(HTTP_QUERY_RAW_HEADERS) failed with error %d\n", GetLastError());
+    ok(GetLastError() == 0 ||
+                broken(GetLastError() == 0xdeadbeef /* XP/W2K3 */), "Last Error not reset %u\n", GetLastError());
     /* show that the function writes data past the length returned */
     ok(buffer[length-2], "Expected any header character, got 0x00\n");
     ok(!buffer[length-1], "Expected 0x00, got %02X\n", buffer[length-1]);
