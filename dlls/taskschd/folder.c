@@ -28,7 +28,6 @@
 #include "schrpc.h"
 #include "taskschd_private.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
@@ -122,7 +121,7 @@ static HRESULT WINAPI TaskFolder_get_Name(ITaskFolder *iface, BSTR *name)
 
     if (!name) return E_POINTER;
 
-    p_name = strrchrW(folder->path, '\\');
+    p_name = wcsrchr(folder->path, '\\');
     if (!p_name)
         p_name = folder->path;
     else
@@ -208,9 +207,9 @@ WCHAR *get_full_path(const WCHAR *parent, const WCHAR *path)
     WCHAR *folder_path;
     int len = 0;
 
-    if (path) len = strlenW(path);
+    if (path) len = lstrlenW(path);
 
-    if (parent) len += strlenW(parent);
+    if (parent) len += lstrlenW(parent);
 
     /* +1 if parent is not '\' terminated */
     folder_path = heap_alloc((len + 2) * sizeof(WCHAR));
@@ -219,21 +218,21 @@ WCHAR *get_full_path(const WCHAR *parent, const WCHAR *path)
     folder_path[0] = 0;
 
     if (parent)
-        strcpyW(folder_path, parent);
+        lstrcpyW(folder_path, parent);
 
     if (path && *path)
     {
-        len = strlenW(folder_path);
+        len = lstrlenW(folder_path);
         if (!len || folder_path[len - 1] != '\\')
-            strcatW(folder_path, bslash);
+            lstrcatW(folder_path, bslash);
 
         while (*path == '\\') path++;
-        strcatW(folder_path, path);
+        lstrcatW(folder_path, path);
     }
 
-    len = strlenW(folder_path);
+    len = lstrlenW(folder_path);
     if (!len)
-        strcatW(folder_path, bslash);
+        lstrcatW(folder_path, bslash);
 
     return folder_path;
 }
@@ -416,7 +415,7 @@ HRESULT TaskFolder_create(const WCHAR *parent, const WCHAR *path, ITaskFolder **
 
     if (path)
     {
-        int len = strlenW(path);
+        int len = lstrlenW(path);
         if (len && path[len - 1] == '\\') return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
     }
 

@@ -28,7 +28,6 @@
 #include "schrpc.h"
 #include "taskschd_private.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
@@ -124,7 +123,7 @@ static HRESULT WINAPI regtask_get_Name(IRegisteredTask *iface, BSTR *name)
 
     if (!name) return E_POINTER;
 
-    p_name = strrchrW(regtask->path, '\\');
+    p_name = wcsrchr(regtask->path, '\\');
     if (!p_name)
         p_name = regtask->path;
     else
