@@ -312,7 +312,7 @@ static HRESULT WINAPI FileProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
 
     file_handle = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL,
             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if(file_handle == INVALID_HANDLE_VALUE && (ptr = strrchrW(path, '#'))) {
+    if(file_handle == INVALID_HANDLE_VALUE && (ptr = wcsrchr(path, '#'))) {
         /* If path contains fragment part, try without it. */
         *ptr = 0;
         file_handle = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL,
@@ -333,7 +333,7 @@ static HRESULT WINAPI FileProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
     hres = IUri_GetExtension(pUri, &ext);
     if(SUCCEEDED(hres)) {
         if(hres == S_OK && *ext) {
-            if((ptr = strchrW(ext, '#')))
+            if((ptr = wcschr(ext, '#')))
                 *ptr = 0;
             hres = find_mime_from_ext(ext, &mime);
             if(SUCCEEDED(hres)) {

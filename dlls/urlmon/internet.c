@@ -156,7 +156,7 @@ static HRESULT parse_schema(LPCWSTR url, DWORD flags, LPWSTR result, DWORD size,
     if(flags)
         ERR("wrong flags\n");
     
-    ptr = strchrW(url, ':');
+    ptr = wcschr(url, ':');
     if(ptr)
         len = ptr-url;
 
@@ -594,7 +594,7 @@ static HRESULT load_process_feature(INTERNETFEATURELIST feature)
         return E_UNEXPECTED;
     }
 
-    process_name = strrchrW(module_name, '\\');
+    process_name = wcsrchr(module_name, '\\');
     if(!process_name) {
         ERR("Invalid module file name: %s\n", debugstr_w(module_name));
         return E_UNEXPECTED;
