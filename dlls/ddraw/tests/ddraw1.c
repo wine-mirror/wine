@@ -12903,9 +12903,7 @@ static void test_d32_support(void)
 {
     IDirectDrawSurface *surface;
     DDSURFACEDESC surface_desc;
-    IDirect3DDevice *device;
     IDirectDraw *ddraw;
-    BOOL hw = FALSE;
     ULONG refcount;
     HWND window;
     HRESULT hr;
@@ -12913,12 +12911,6 @@ static void test_d32_support(void)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if ((device = create_device(ddraw, window, DDSCL_NORMAL)))
-    {
-        IDirect3DDevice_Release(device);
-        hw = TRUE;
-    }
-
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
@@ -12939,7 +12931,7 @@ static void test_d32_support(void)
     ok((surface_desc.dwFlags & DDSD_ZBUFFERBITDEPTH), "Got unexpected flags %#x.\n", surface_desc.dwFlags);
     ok(U2(surface_desc).dwZBufferBitDepth == 32,
             "Got unexpected dwZBufferBitDepth %u.\n", U2(surface_desc).dwZBufferBitDepth);
-    todo_wine_if(hw) ok(!(surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY),
+    ok(!(surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY),
             "Got unexpected surface caps %#x.\n", surface_desc.ddsCaps.dwCaps);
     IDirectDrawSurface_Release(surface);
 
