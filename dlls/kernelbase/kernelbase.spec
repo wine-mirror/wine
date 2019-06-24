@@ -327,16 +327,16 @@
 @ stdcall EqualPrefixSid(ptr ptr) advapi32.EqualPrefixSid
 @ stdcall EqualSid(ptr ptr) advapi32.EqualSid
 @ stdcall EscapeCommFunction(long long) kernel32.EscapeCommFunction
-@ stdcall EventActivityIdControl(long ptr) advapi32.EventActivityIdControl
-@ stdcall EventEnabled(int64 ptr) advapi32.EventEnabled
-@ stdcall EventProviderEnabled(int64 long int64) advapi32.EventProviderEnabled
-@ stdcall EventRegister(ptr ptr ptr ptr) advapi32.EventRegister
-@ stdcall EventSetInformation(int64 long ptr long) advapi32.EventSetInformation
-@ stdcall EventUnregister(int64) advapi32.EventUnregister
-@ stdcall EventWrite(int64 ptr long ptr) advapi32.EventWrite
+@ stdcall EventActivityIdControl(long ptr) ntdll.EtwEventActivityIdControl
+@ stdcall EventEnabled(int64 ptr) ntdll.EtwEventEnabled
+@ stdcall EventProviderEnabled(int64 long int64) ntdll.EtwEventProviderEnabled
+@ stdcall EventRegister(ptr ptr ptr ptr) ntdll.EtwEventRegister
+@ stdcall EventSetInformation(int64 long ptr long) ntdll.EtwEventSetInformation
+@ stdcall EventUnregister(int64) ntdll.EtwEventUnregister
+@ stdcall EventWrite(int64 ptr long ptr) ntdll.EtwEventWrite
 # @ stub EventWriteEx
 # @ stub EventWriteString
-@ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) advapi32.EventWriteTransfer
+@ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) ntdll.EtwEventWriteTransfer
 @ stdcall ExitProcess(long) kernel32.ExitProcess
 @ stdcall ExitThread(long) kernel32.ExitThread
 @ stdcall ExpandEnvironmentStringsA(str ptr long) kernel32.ExpandEnvironmentStringsA
@@ -734,9 +734,9 @@
 @ stdcall GetTimeZoneInformation(ptr) kernel32.GetTimeZoneInformation
 @ stdcall GetTimeZoneInformationForYear(long ptr ptr) kernel32.GetTimeZoneInformationForYear
 @ stdcall GetTokenInformation(long long ptr long ptr) advapi32.GetTokenInformation
-@ stdcall GetTraceEnableFlags(int64) advapi32.GetTraceEnableFlags
-@ stdcall GetTraceEnableLevel(int64) advapi32.GetTraceEnableLevel
-@ stdcall -ret64 GetTraceLoggerHandle(ptr) advapi32.GetTraceLoggerHandle
+@ stdcall GetTraceEnableFlags(int64) ntdll.EtwGetTraceEnableFlags
+@ stdcall GetTraceEnableLevel(int64) ntdll.EtwGetTraceEnableLevel
+@ stdcall -ret64 GetTraceLoggerHandle(ptr) ntdll.EtwGetTraceLoggerHandle
 @ stub GetUILanguageInfo
 # @ stub GetUnicodeStringToEightBitSizeRoutine
 # @ stub GetUnicodeStringToEightBitStringRoutine
@@ -1321,7 +1321,7 @@
 # @ stub RegisterGPNotificationInternal
 # @ stub RegisterStateChangeNotification
 # @ stub RegisterStateLock
-@ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr) advapi32.RegisterTraceGuidsW
+@ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr) ntdll.EtwRegisterTraceGuidsW
 @ stdcall RegisterWaitForSingleObjectEx(long ptr ptr long long) kernel32.RegisterWaitForSingleObjectEx
 @ stdcall ReleaseActCtx(ptr) kernel32.ReleaseActCtx
 @ stdcall ReleaseMutex(long) kernel32.ReleaseMutex
@@ -1601,9 +1601,9 @@
 @ stdcall TlsFree(long) kernel32.TlsFree
 @ stdcall TlsGetValue(long) kernel32.TlsGetValue
 @ stdcall TlsSetValue(long ptr) kernel32.TlsSetValue
-@ stdcall TraceEvent(int64 ptr) advapi32.TraceEvent
-@ varargs TraceMessage(int64 long ptr long) advapi32.TraceMessage
-@ stdcall TraceMessageVa(int64 long ptr long ptr) advapi32.TraceMessageVa
+@ stdcall TraceEvent(int64 ptr) ntdll.EtwLogTraceEvent
+@ varargs TraceMessage(int64 long ptr long) ntdll.EtwTraceMessage
+@ stdcall TraceMessageVa(int64 long ptr long ptr) ntdll.EtwTraceMessageVa
 @ stdcall TransactNamedPipe(long ptr long ptr long ptr ptr) kernel32.TransactNamedPipe
 @ stdcall TransmitCommChar(long long) kernel32.TransmitCommChar
 @ stdcall TryAcquireSRWLockExclusive(ptr) kernel32.TryAcquireSRWLockExclusive
@@ -1621,7 +1621,7 @@
 # @ stub UnregisterGPNotificationInternal
 # @ stub UnregisterStateChangeNotification
 # @ stub UnregisterStateLock
-@ stdcall UnregisterTraceGuids(int64) advapi32.UnregisterTraceGuids
+@ stdcall UnregisterTraceGuids(int64) ntdll.EtwUnregisterTraceGuids
 @ stdcall UnregisterWaitEx(long long) kernel32.UnregisterWaitEx
 # @ stub UnsubscribeEdpEnabledStateChange
 # @ stub UnsubscribeStateChangeNotification

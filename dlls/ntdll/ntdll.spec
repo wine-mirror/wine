@@ -42,13 +42,22 @@
 # @ stub DbgUiStopDebugging
 @ stub DbgUiWaitStateChange
 @ stdcall DbgUserBreakPoint()
+@ stdcall EtwEventActivityIdControl(long ptr)
 @ stdcall EtwEventEnabled(int64 ptr)
+@ stdcall EtwEventProviderEnabled(int64 long int64)
 @ stdcall EtwEventRegister(ptr ptr ptr ptr)
 @ stdcall EtwEventSetInformation(int64 long ptr long)
 @ stdcall EtwEventUnregister(int64)
 @ stdcall EtwEventWrite(int64 ptr long ptr)
+@ stdcall EtwEventWriteTransfer(int64 ptr ptr ptr long ptr)
+@ stdcall EtwGetTraceEnableFlags(int64)
+@ stdcall EtwGetTraceEnableLevel(int64)
+@ stdcall -ret64 EtwGetTraceLoggerHandle(ptr)
+@ stdcall EtwLogTraceEvent(int64 ptr)
 @ stdcall EtwRegisterTraceGuidsA(ptr ptr ptr long ptr str str ptr)
 @ stdcall EtwRegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr)
+@ varargs EtwTraceMessage(int64 long ptr long)
+@ stdcall EtwTraceMessageVa(int64 long ptr long ptr)
 @ stdcall EtwUnregisterTraceGuids(int64)
 # @ stub KiFastSystemCall
 # @ stub KiFastSystemCallRet

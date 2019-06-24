@@ -287,9 +287,9 @@
 # @ stub EventAccessControl
 # @ stub EventAccessQuery
 # @ stub EventAccessRemove
-@ stdcall EventActivityIdControl(long ptr)
+@ stdcall EventActivityIdControl(long ptr) ntdll.EtwEventActivityIdControl
 @ stdcall EventEnabled(int64 ptr) ntdll.EtwEventEnabled
-@ stdcall EventProviderEnabled(int64 long int64)
+@ stdcall EventProviderEnabled(int64 long int64) ntdll.EtwEventProviderEnabled
 @ stdcall EventRegister(ptr ptr ptr ptr) ntdll.EtwEventRegister
 @ stdcall EventSetInformation(int64 long ptr long) ntdll.EtwEventSetInformation
 @ stdcall EventUnregister(int64) ntdll.EtwEventUnregister
@@ -298,7 +298,7 @@
 # @ stub EventWriteEx
 # @ stub EventWriteStartScenario
 # @ stub EventWriteString
-@ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr)
+@ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) ntdll.EtwEventWriteTransfer
 @ stdcall FileEncryptionStatusA(str ptr)
 @ stdcall FileEncryptionStatusW(wstr ptr)
 @ stdcall FindFirstFreeAce(ptr ptr)
@@ -372,9 +372,9 @@
 # @ stub GetStringConditionFromBinary
 # @ stub GetThreadWaitChain
 @ stdcall GetTokenInformation(long long ptr long ptr)
-@ stdcall GetTraceEnableFlags(int64)
-@ stdcall GetTraceEnableLevel(int64)
-@ stdcall -ret64 GetTraceLoggerHandle(ptr)
+@ stdcall GetTraceEnableFlags(int64) ntdll.EtwGetTraceEnableFlags
+@ stdcall GetTraceEnableLevel(int64) ntdll.EtwGetTraceEnableLevel
+@ stdcall -ret64 GetTraceLoggerHandle(ptr) ntdll.EtwGetTraceLoggerHandle
 @ stdcall GetTrusteeFormA(ptr)
 @ stdcall GetTrusteeFormW(ptr)
 @ stdcall GetTrusteeNameA(ptr)
@@ -815,10 +815,10 @@
 @ stdcall SystemFunction036(ptr long) # RtlGenRandom
 @ stdcall SystemFunction040(ptr long long) # RtlEncryptMemory
 @ stdcall SystemFunction041(ptr long long) # RtlDecryptMemory
-@ stdcall TraceEvent(int64 ptr)
+@ stdcall TraceEvent(int64 ptr) ntdll.EtwLogTraceEvent
 @ stub TraceEventInstance
-@ varargs TraceMessage(int64 long ptr long)
-@ stdcall TraceMessageVa(int64 long ptr long ptr)
+@ varargs TraceMessage(int64 long ptr long) ntdll.EtwTraceMessage
+@ stdcall TraceMessageVa(int64 long ptr long ptr) ntdll.EtwTraceMessageVa
 # @ stub TraceQueryInformation
 @ stdcall TraceSetInformation(int64 long ptr long)
 # @ stub TreeResetNamedSecurityInfoA

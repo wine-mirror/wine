@@ -313,7 +313,6 @@ my @dll_groups =
   "user32",
   "shlwapi",
   "version",
-  "kernelbase",
   "api-ms-win-core-bem-l1-1-0",
  ],
  [
