@@ -4073,8 +4073,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         /* Minimised window. */
         ShowWindow(swapchain_desc.OutputWindow, SW_MINIMIZE);
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
-        todo_wine_if(!is_d3d12) ok(hr == (is_d3d12 ? S_OK : DXGI_STATUS_OCCLUDED),
-                "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == (is_d3d12 ? S_OK : DXGI_STATUS_OCCLUDED), "Test %u: Got unexpected hr %#x.\n", i, hr);
         ShowWindow(swapchain_desc.OutputWindow, SW_NORMAL);
 
         /* Hidden window. */

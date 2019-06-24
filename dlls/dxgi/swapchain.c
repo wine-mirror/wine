@@ -306,6 +306,9 @@ static HRESULT d3d11_swapchain_present(struct d3d11_swapchain *swapchain,
         return DXGI_ERROR_INVALID_CALL;
     }
 
+    if (IsIconic(d3d11_swapchain_get_hwnd(swapchain)))
+        return DXGI_STATUS_OCCLUDED;
+
     if (flags & ~DXGI_PRESENT_TEST)
         FIXME("Unimplemented flags %#x.\n", flags);
     if (flags & DXGI_PRESENT_TEST)
