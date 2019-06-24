@@ -701,6 +701,21 @@ void release_display_dc( HDC hdc )
     LeaveCriticalSection( &display_dc_section );
 }
 
+static HANDLE get_display_device_init_mutex( void )
+{
+    static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
+    HANDLE mutex = CreateMutexW( NULL, FALSE, init_mutexW );
+
+    WaitForSingleObject( mutex, INFINITE );
+    return mutex;
+}
+
+static void release_display_device_init_mutex( HANDLE mutex )
+{
+    ReleaseMutex( mutex );
+    CloseHandle( mutex );
+}
+
 /* map value from system dpi to standard 96 dpi for storing in the registry */
 static int map_from_system_dpi( int val )
 {
@@ -3871,6 +3886,7 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
     WCHAR bufferW[1024];
     LONG adapter_index;
     WCHAR *next_charW;
+    HANDLE mutex;
     DWORD size;
     DWORD type;
     HKEY hkey;
@@ -3878,13 +3894,15 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
 
     TRACE("%s %d %p %#x\n", debugstr_w( device ), index, info, flags);
 
+    mutex = get_display_device_init_mutex();
+
     /* Find adapter */
     if (!device)
     {
         sprintfW( key_nameW, VIDEO_VALUE_FMT, index );
         size = sizeof(bufferW);
         if (RegGetValueW( HKEY_LOCAL_MACHINE, VIDEO_KEY, key_nameW, RRF_RT_REG_SZ, NULL, bufferW, &size ))
-            return FALSE;
+            goto done;
 
         /* DeviceKey */
         if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceKey) + sizeof(info->DeviceKey))
@@ -3900,13 +3918,13 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
         size = sizeof(info->DeviceString);
         if (RegGetValueW( HKEY_LOCAL_MACHINE, key_nameW, DRIVER_DESC, RRF_RT_REG_SZ, NULL,
                           info->DeviceString, &size ))
-            return FALSE;
+            goto done;
 
         /* StateFlags */
         size = sizeof(info->StateFlags);
         if (RegGetValueW( HKEY_CURRENT_CONFIG, key_nameW, STATE_FLAGS, RRF_RT_REG_DWORD, NULL,
                           &info->StateFlags, &size ))
-            return FALSE;
+            goto done;
 
         /* DeviceID */
         if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceID) + sizeof(info->DeviceID))
@@ -3918,7 +3936,7 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
                 size = sizeof(bufferW);
                 if (RegGetValueW( HKEY_CURRENT_CONFIG, key_nameW, GPU_ID, RRF_RT_REG_SZ | RRF_ZEROONFAILURE, NULL,
                                   bufferW, &size ))
-                    return FALSE;
+                    goto done;
                 set = SetupDiCreateDeviceInfoList( &GUID_DEVCLASS_DISPLAY, NULL );
                 if (!SetupDiOpenDeviceInfoW( set, bufferW, NULL, 0, &device_data )
                     || !SetupDiGetDeviceRegistryPropertyW( set, &device_data, SPDRP_HARDWAREID, NULL, (BYTE *)bufferW,
@@ -3933,14 +3951,14 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
     {
         /* Check adapter name */
         if (strncmpiW( device, DISPLAY, ARRAY_SIZE(DISPLAY) ))
-            return FALSE;
+            goto done;
 
         adapter_index = strtolW( device + ARRAY_SIZE(DISPLAY), NULL, 10 );
         sprintfW( key_nameW, VIDEO_VALUE_FMT, adapter_index - 1 );
 
         size = sizeof(bufferW);
         if (RegGetValueW( HKEY_LOCAL_MACHINE, VIDEO_KEY, key_nameW, RRF_RT_REG_SZ, NULL, bufferW, &size ))
-            return FALSE;
+            goto done;
 
         /* DeviceName */
         sprintfW( info->DeviceName, MONITOR_FMT, adapter_index, index );
@@ -3952,7 +3970,7 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
 
         size = sizeof(instanceW);
         if (RegGetValueW( HKEY_CURRENT_CONFIG, key_nameW, bufferW, RRF_RT_REG_SZ, NULL, instanceW, &size ))
-            return FALSE;
+            goto done;
 
         set = SetupDiCreateDeviceInfoList( &GUID_DEVCLASS_MONITOR, NULL );
         if (!SetupDiOpenDeviceInfoW( set, instanceW, NULL, 0, &device_data ))
@@ -4016,6 +4034,7 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
 
     ret = TRUE;
 done:
+    release_display_device_init_mutex( mutex );
     SetupDiDestroyDeviceInfoList( set );
     if (ret)
         return ret;
