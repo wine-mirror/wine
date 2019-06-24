@@ -16289,6 +16289,62 @@ static void test_caps(void)
     IDirectDraw7_Release(ddraw);
 }
 
+static void test_d32_support(void)
+{
+    IDirectDrawSurface7 *surface;
+    DDSURFACEDESC2 surface_desc;
+    IDirect3DDevice7 *device;
+    IDirectDraw7 *ddraw;
+    BOOL hw = FALSE;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if ((device = create_device(window, DDSCL_NORMAL)))
+    {
+        IDirect3DDevice7_Release(device);
+        hw = TRUE;
+    }
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
+    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    U1(U4(surface_desc).ddpfPixelFormat).dwZBufferBitDepth = 32;
+    U3(U4(surface_desc).ddpfPixelFormat).dwZBitMask = 0xffffffff;
+    surface_desc.dwWidth = 64;
+    surface_desc.dwHeight = 64;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &surface_desc);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    ok((surface_desc.dwFlags & DDSD_PIXELFORMAT), "Got unexpected flags %#x.\n", surface_desc.dwFlags);
+    ok(U4(surface_desc).ddpfPixelFormat.dwFlags & DDPF_ZBUFFER,
+            "Got unexpected format flags %#x.\n", U4(surface_desc).ddpfPixelFormat.dwFlags);
+    ok(U1(U4(surface_desc).ddpfPixelFormat).dwZBufferBitDepth == 32,
+            "Got unexpected dwZBufferBitDepth %u.\n", U1(U4(surface_desc).ddpfPixelFormat).dwZBufferBitDepth);
+    ok(U3(U4(surface_desc).ddpfPixelFormat).dwZBitMask == 0xffffffff,
+            "Got unexpected Z mask 0x%08x.\n", U3(U4(surface_desc).ddpfPixelFormat).dwZBitMask);
+    todo_wine_if(hw) ok(!(surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY),
+            "Got unexpected surface caps %#x.\n", surface_desc.ddsCaps.dwCaps);
+    IDirectDrawSurface7_Release(surface);
+
+    refcount = IDirectDraw7_Release(ddraw);
+    ok(!refcount, "%u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     DDDEVICEIDENTIFIER2 identifier;
@@ -16436,4 +16492,5 @@ START_TEST(ddraw7)
     test_clipper_refcount();
     test_begin_end_state_block();
     test_caps();
+    test_d32_support();
 }
