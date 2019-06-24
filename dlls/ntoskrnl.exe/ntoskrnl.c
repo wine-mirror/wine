@@ -2020,29 +2020,6 @@ NTSTATUS WINAPI ExCreateCallback(PCALLBACK_OBJECT *obj, POBJECT_ATTRIBUTES attr,
 
 
 /***********************************************************************
- *           ExDeleteNPagedLookasideList   (NTOSKRNL.EXE.@)
- */
-void WINAPI ExDeleteNPagedLookasideList( PNPAGED_LOOKASIDE_LIST lookaside )
-{
-    void *entry;
-
-    TRACE("(%p)\n", lookaside);
-
-    while ((entry = RtlInterlockedPopEntrySList(&lookaside->L.u.ListHead)))
-        lookaside->L.u5.FreeEx(entry, (LOOKASIDE_LIST_EX*)lookaside);
-}
-
-
-/***********************************************************************
- *           ExDeletePagedLookasideList  (NTOSKRNL.EXE.@)
- */
-void WINAPI ExDeletePagedLookasideList( PPAGED_LOOKASIDE_LIST lookaside )
-{
-    FIXME("(%p) stub\n", lookaside);
-}
-
-
-/***********************************************************************
  *           ExFreePool   (NTOSKRNL.EXE.@)
  */
 void WINAPI ExFreePool( void *ptr )
@@ -2110,6 +2087,32 @@ void WINAPI ExInitializePagedLookasideList(PPAGED_LOOKASIDE_LIST lookaside,
 {
     TRACE( "%p, %p, %p, %u, %lu, %u, %u\n", lookaside, allocate, free, flags, size, tag, depth );
     initialize_lookaside_list( &lookaside->L, allocate, free, PagedPool | flags, size, tag );
+}
+
+static void delete_lookaside_list( GENERAL_LOOKASIDE *lookaside )
+{
+    void *entry;
+    while ((entry = RtlInterlockedPopEntrySList(&lookaside->u.ListHead)))
+        lookaside->u5.FreeEx(entry, (LOOKASIDE_LIST_EX*)lookaside);
+}
+
+/***********************************************************************
+ *           ExDeleteNPagedLookasideList   (NTOSKRNL.EXE.@)
+ */
+void WINAPI ExDeleteNPagedLookasideList( PNPAGED_LOOKASIDE_LIST lookaside )
+{
+    TRACE( "%p\n", lookaside );
+    delete_lookaside_list( &lookaside->L );
+}
+
+
+/***********************************************************************
+ *           ExDeletePagedLookasideList  (NTOSKRNL.EXE.@)
+ */
+void WINAPI ExDeletePagedLookasideList( PPAGED_LOOKASIDE_LIST lookaside )
+{
+    TRACE( "%p\n", lookaside );
+    delete_lookaside_list( &lookaside->L );
 }
 
 /***********************************************************************
