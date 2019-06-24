@@ -2,6 +2,8 @@ MODULE    = tapi32.dll
 IMPORTLIB = tapi32
 IMPORTS   = advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	assisted.c \
 	line.c \
