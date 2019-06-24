@@ -357,7 +357,7 @@ struct table *grab_table( const WCHAR *name )
 
     LIST_FOR_EACH_ENTRY( table, table_list, struct table, entry )
     {
-        if (!strcmpiW( table->name, name ))
+        if (name && !strcmpiW( table->name, name ))
         {
             TRACE("returning %p\n", table);
             return addref_table( table );

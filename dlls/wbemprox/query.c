@@ -30,17 +30,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
-HRESULT create_view( const struct property *proplist, const WCHAR *class,
-                     const struct expr *cond, struct view **ret )
+HRESULT create_view( const WCHAR *path, const struct keyword *keywordlist, const WCHAR *class,
+                     const struct property *proplist, const struct expr *cond, struct view **ret )
 {
-    struct view *view = heap_alloc( sizeof(struct view) );
+    struct view *view = heap_alloc_zero( sizeof(*view) );
 
     if (!view) return E_OUTOFMEMORY;
-    view->proplist = proplist;
-    view->table    = grab_table( class );
-    view->cond     = cond;
-    view->result   = NULL;
-    view->count    = 0;
+    view->path        = path;
+    view->keywordlist = keywordlist;
+    view->proplist    = proplist;
+    view->table       = grab_table( class );
+    view->cond        = cond;
     *ret = view;
     return S_OK;
 }

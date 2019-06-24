@@ -156,14 +156,37 @@ static void test_select( IWbemServices *services )
 static void test_associators( IWbemServices *services )
 {
     static const WCHAR query1[] =
-        {'A','S','S','O','C','I','A','T','O','R','S',' ','O','F',' ','{','W','i','n','3','2','_',
+        {'A','S','S','O','C','I','A','T','O','R','S',' ',' ','O','F','{','W','i','n','3','2','_',
          'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','D','=','"','C',':','"','}',0};
     static const WCHAR query2[] =
         {'A','S','S','O','C','I','A','T','O','R','S',' ','O','F',' ','{','W','i','n','3','2','_',
          'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','D','=','"','C',':','"','}',' ',
-         'W','H','E','R','E',' ','A','s','s','o','c','C','l','a','s','s',' ','=',' ','W','i','n','3','2','_',
+         'W','H','E','R','E',' ','A','s','s','o','c','C','l','a','s','s','=','W','i','n','3','2','_',
          'L','o','g','i','c','a','l','D','i','s','k','T','o','P','a','r','t','i','t','i','o','n',0};
-    static const WCHAR *test[] = { query1, query2 };
+    static const WCHAR query3[] =
+        {'A','S','S','O','C','I','A','T','O','R','S',' ',' ','O','F',' ','{','W','i','n','3','2','_',
+         'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','D','}',0};
+    static const WCHAR query4[] =
+        {'A','S','S','O','C','I','A','T','O','R','S',' ',' ','O','F',' ','{','W','i','n','3','2','_',
+         'D','i','s','k','D','r','i','v','e','.','D','e','v','i','c','e','I','D','=',
+         '\'','\\','\\','.','\\','P','H','Y','S','I','C','A','L','D','R','I','V','E','0','\'','}',0};
+    static const WCHAR query5[] =
+        {'A','S','S','O','C','I','A','T','O','R','S',' ','O','F',' ','{','W','i','n','3','2','_',
+         'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','D','=','"','C',':','"','}',' ',
+         'W','H','E','R','E',' ','A','s','s','o','c','C','l','a','s','s','=','W','i','n','3','2','_',
+         'L','o','g','i','c','a','l','D','i','s','k','T','o','P','a','r','t','i','t','i','o','n',' ',
+         'C','l','a','s','s','D','e','f','s','O','n','l','y',0};
+    static const WCHAR query6[] =
+        {'A','S','S','O','C','I','A','T','O','R','S',' ','O','F',' ','{','W','i','n','3','2','_',
+         'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','D','=','"','C',':','"','}',' ',
+         'W','H','E','R','E',' ','C','l','a','s','s','D','e','f','s','O','n','l','y',0};
+    static const WCHAR query7[] =
+        {'A','S','S','O','C','I','A','T','O','R','S',' ','O','F',' ','{','W','i','n','3','2','_',
+         'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','D','=','"','C',':','"','}',' ',
+         'W','H','E','R','E',' ','C','l','a','s','s','D','e','f','s','O','n','l','y',' ',
+         'A','s','s','o','c','C','l','a','s','s',' ','=',' ','W','i','n','3','2','_',
+         'L','o','g','i','c','a','l','D','i','s','k','T','o','P','a','r','t','i','t','i','o','n',0};
+    static const WCHAR *test[] = { query1, query2, query3, query4, query5, query6, query7 };
     HRESULT hr;
     IEnumWbemClassObject *result;
     UINT i;
@@ -171,7 +194,7 @@ static void test_associators( IWbemServices *services )
     for (i = 0; i < ARRAY_SIZE( test ); i++)
     {
         hr = exec_query( services, test[i], &result );
-        todo_wine ok( hr == S_OK, "query %u failed: %08x\n", i, hr );
+        ok( hr == S_OK, "query %u failed: %08x\n", i, hr );
         if (result) IEnumWbemClassObject_Release( result );
     }
 }
