@@ -3481,7 +3481,6 @@ static void test_builtin_sxs(void)
     GetModuleFileNameA(module_msvcp, path_msvcp, sizeof(path_msvcp));
     GetModuleFileNameA(module_msvcr, path_msvcr, sizeof(path_msvcr));
     ok(strnicmp(expected_path, path_msvcp, strlen(expected_path)) == 0, "Expected path to start with %s, got %s\n", expected_path, path_msvcp);
-    todo_wine
     ok(strnicmp(expected_path, path_msvcr, strlen(expected_path)) == 0, "Expected path to start with %s, got %s\n", expected_path, path_msvcr);
 
     DeactivateActCtx(0, cookie);

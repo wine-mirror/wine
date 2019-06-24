@@ -2427,7 +2427,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     }
 
     info.load_path = load_path;
-    info.filename  = so_name ? NULL : nt_name;
+    info.filename  = nt_name;
     info.status    = STATUS_SUCCESS;
     info.wm        = NULL;
 
@@ -2528,7 +2528,9 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
         return load_native_dll( load_path, nt_name, module_ptr, &image_info, flags, pwm, &st );
     }
 
-    return load_so_dll( load_path, nt_name, so_name, pwm );
+    status = load_so_dll( load_path, nt_name, so_name, pwm );
+    RtlFreeHeap( GetProcessHeap(), 0, so_name );
+    return status;
 }
 
 
