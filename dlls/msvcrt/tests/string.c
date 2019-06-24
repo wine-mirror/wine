@@ -1020,6 +1020,11 @@ static void test_wcscpy_s(void)
     ok(ret == 0, "expected 0 got %d\n", ret);
     ok(lstrcmpW(szDest, szLongText) == 0, "szDest != szLongText\n");
 
+    /* dest == source */
+    ret = p_wcscpy_s(szDest, 18, szDest);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    ok(lstrcmpW(szDest, szLongText) == 0, "szDest != szLongText\n");
+
     /* Copy smaller buffer size */
     errno = EBADF;
     szDest[0] = 'A';
