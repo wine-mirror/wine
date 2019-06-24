@@ -107,6 +107,9 @@
 @ stdcall LdrUnlockLoaderLock(long long)
 @ stdcall LdrUnregisterDllNotification(ptr)
 @ stub LdrVerifyImageMatchesChecksum
+@ stdcall MD4Final(ptr)
+@ stdcall MD4Init(ptr)
+@ stdcall MD4Update(ptr ptr long)
 @ extern NlsAnsiCodePage
 @ extern NlsMbCodePageTag
 @ extern NlsMbOemCodePageTag

@@ -509,9 +509,9 @@
 @ stdcall LsaSetTrustedDomainInformation(ptr ptr long ptr)
 @ stdcall LsaStorePrivateData(ptr ptr ptr)
 @ stdcall LsaUnregisterPolicyChangeNotification(long long)
-@ stdcall MD4Final(ptr)
-@ stdcall MD4Init(ptr)
-@ stdcall MD4Update(ptr ptr long)
+@ stdcall MD4Final(ptr) ntdll.MD4Final
+@ stdcall MD4Init(ptr) ntdll.MD4Init
+@ stdcall MD4Update(ptr ptr long) ntdll.MD4Update
 @ stdcall MD5Final(ptr)
 @ stdcall MD5Init(ptr)
 @ stdcall MD5Update(ptr ptr long)
