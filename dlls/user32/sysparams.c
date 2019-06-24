@@ -34,10 +34,14 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "winreg.h"
 #include "wine/wingdi16.h"
 #include "winerror.h"
 
+#include "initguid.h"
+#include "devguid.h"
+#include "setupapi.h"
 #include "controls.h"
 #include "win.h"
 #include "user_private.h"
@@ -244,6 +248,56 @@ static const WCHAR No[] =    {'N','o',0};
 static const WCHAR CSu[] =   {'%','u',0};
 static const WCHAR CSd[] =   {'%','d',0};
 static const WCHAR CSrgb[] = {'%','u',' ','%','u',' ','%','u',0};
+
+/* Wine specific monitor properties */
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_STATEFLAGS, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 2);
+
+/* Strings for monitor functions */
+static const WCHAR DEFAULT_ADAPTER_NAME[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
+static const WCHAR DEFAULT_MONITOR_NAME[] = {'\\','\\','.','\\',
+                                             'D','I','S','P','L','A','Y','1','\\',
+                                             'M','o','n','i','t','o','r','0',0};
+static const WCHAR DEFAULT_ADAPTER_STRING[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
+static const WCHAR DEFAULT_MONITOR_STRING[] = {'G','e','n','e','r','i','c',' ','N','o','n','-','P','n','P',' ','M','o','n','i','t','o','r',0};
+static const WCHAR DEFAULT_ADAPTER_ID[] = {'P','C','I','\\',
+                                           'V','E','N','_','0','0','0','0','&',
+                                           'D','E','V','_','0','0','0','0','&',
+                                           'S','U','B','S','Y','S','_','0','0','0','0','0','0','0','0','&',
+                                           'R','E','V','_','0','0',0};
+static const WCHAR DEFAULT_MONITOR_ID[] = {'M','O','N','I','T','O','R','\\',
+                                           'D','e','f','a','u','l','t','_','M','o','n','i','t','o','r','\\',
+                                           '{','4','d','3','6','e','9','6','e','-','e','3','2','5','-','1','1','c','e','-',
+                                           'b','f','c','1','-','0','8','0','0','2','b','e','1','0','3','1','8','}',
+                                           '\\','0','0','0','0',0};
+static const WCHAR DEFAULT_MONITOR_INTERFACE_ID[] = {'\\','\\','\?','\\',
+                                                     'D','I','S','P','L','A','Y','#','D','e','f','a','u','l','t','_','M','o','n','i','t','o','r','#',
+                                                     '4','&','1','7','f','0','f','f','5','4','&','0','&','U','I','D','0','#',
+                                                     '{','e','6','f','0','7','b','5','f','-','e','e','9','7','-','4','a','9','0','-',
+                                                     'b','0','7','6','-','3','3','f','5','7','b','f','4','e','a','a','7','}',0};
+static const WCHAR BACKSLASH[] = {'\\',0};
+static const WCHAR DRIVER_DESC[] = {'D','r','i','v','e','r','D','e','s','c',0};
+static const WCHAR STATE_FLAGS[] = {'S','t','a','t','e','F','l','a','g','s',0};
+static const WCHAR GPU_ID[] = {'G','P','U','I','D',0};
+static const WCHAR DISPLAY[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};
+static const WCHAR MONITOR_ID_VALUE_FMT[] = {'M','o','n','i','t','o','r','I','D','%','d',0};
+static const WCHAR VIDEO_KEY[] = {'H','A','R','D','W','A','R','E','\\',
+                                  'D','E','V','I','C','E','M','A','P','\\',
+                                  'V','I','D','E','O','\\',0};
+static const WCHAR NT_CLASS[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                 'M','a','c','h','i','n','e','\\',
+                                 'S','y','s','t','e','m','\\',
+                                 'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                 'C','o','n','t','r','o','l','\\',
+                                 'C','l','a','s','s','\\',0};
+static const WCHAR ADAPTER_FMT[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','%','d',0};
+static const WCHAR MONITOR_FMT[] = {'\\','\\','.','\\',
+                                    'D','I','S','P','L','A','Y','%','d','\\',
+                                    'M','o','n','i','t','o','r','%','d',0};
+static const WCHAR VIDEO_VALUE_FMT[] = {'\\','D','e','v','i','c','e','\\',
+                                        'V','i','d','e','o','%','d',0};
+static const WCHAR MONITOR_INTERFACE_PREFIX[] = {'\\','\\','\?','\\',0};
+static const WCHAR GUID_DEVINTERFACE_MONITOR[] = {'#','{','e','6','f','0','7','b','5','f','-','e','e','9','7','-',
+                                                  '4','a','9','0','-','b','0','7','6','-','3','3','f','5','7','b','f','4','e','a','a','7','}',0};
 
 static HDC display_dc;
 static CRITICAL_SECTION display_dc_section;
@@ -3772,6 +3826,250 @@ BOOL WINAPI EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPA
     return USER_Driver->pEnumDisplayMonitors( 0, NULL, enum_mon_callback, (LPARAM)&data );
 }
 
+/***********************************************************************
+ *		EnumDisplayDevicesA (USER32.@)
+ */
+BOOL WINAPI EnumDisplayDevicesA( LPCSTR device, DWORD index, DISPLAY_DEVICEA *info, DWORD flags )
+{
+    UNICODE_STRING deviceW;
+    DISPLAY_DEVICEW ddW;
+    BOOL ret;
+
+    if (device)
+        RtlCreateUnicodeStringFromAsciiz( &deviceW, device );
+    else
+        deviceW.Buffer = NULL;
+
+    ddW.cb = sizeof(ddW);
+    ret = EnumDisplayDevicesW( deviceW.Buffer, index, &ddW, flags );
+    RtlFreeUnicodeString( &deviceW );
+
+    if (!ret)
+        return ret;
+
+    WideCharToMultiByte( CP_ACP, 0, ddW.DeviceName, -1, info->DeviceName, sizeof(info->DeviceName), NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, ddW.DeviceString, -1, info->DeviceString, sizeof(info->DeviceString), NULL, NULL );
+    info->StateFlags = ddW.StateFlags;
+
+    if (info->cb >= offsetof(DISPLAY_DEVICEA, DeviceID) + sizeof(info->DeviceID))
+        WideCharToMultiByte( CP_ACP, 0, ddW.DeviceID, -1, info->DeviceID, sizeof(info->DeviceID), NULL, NULL );
+    if (info->cb >= offsetof(DISPLAY_DEVICEA, DeviceKey) + sizeof(info->DeviceKey))
+        WideCharToMultiByte( CP_ACP, 0, ddW.DeviceKey, -1, info->DeviceKey, sizeof(info->DeviceKey), NULL, NULL );
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *		EnumDisplayDevicesW (USER32.@)
+ */
+BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *info, DWORD flags )
+{
+    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
+    HDEVINFO set = INVALID_HANDLE_VALUE;
+    WCHAR key_nameW[MAX_PATH];
+    WCHAR instanceW[MAX_PATH];
+    WCHAR bufferW[1024];
+    LONG adapter_index;
+    WCHAR *next_charW;
+    DWORD size;
+    DWORD type;
+    HKEY hkey;
+    BOOL ret = FALSE;
+
+    TRACE("%s %d %p %#x\n", debugstr_w( device ), index, info, flags);
+
+    /* Find adapter */
+    if (!device)
+    {
+        sprintfW( key_nameW, VIDEO_VALUE_FMT, index );
+        size = sizeof(bufferW);
+        if (RegGetValueW( HKEY_LOCAL_MACHINE, VIDEO_KEY, key_nameW, RRF_RT_REG_SZ, NULL, bufferW, &size ))
+            return FALSE;
+
+        /* DeviceKey */
+        if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceKey) + sizeof(info->DeviceKey))
+            lstrcpyW( info->DeviceKey, bufferW );
+
+        /* DeviceName */
+        sprintfW( info->DeviceName, ADAPTER_FMT, index + 1 );
+
+        /* Strip \Registry\Machine\ */
+        lstrcpyW( key_nameW, bufferW + 18 );
+
+        /* DeviceString */
+        size = sizeof(info->DeviceString);
+        if (RegGetValueW( HKEY_LOCAL_MACHINE, key_nameW, DRIVER_DESC, RRF_RT_REG_SZ, NULL,
+                          info->DeviceString, &size ))
+            return FALSE;
+
+        /* StateFlags */
+        size = sizeof(info->StateFlags);
+        if (RegGetValueW( HKEY_CURRENT_CONFIG, key_nameW, STATE_FLAGS, RRF_RT_REG_DWORD, NULL,
+                          &info->StateFlags, &size ))
+            return FALSE;
+
+        /* DeviceID */
+        if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceID) + sizeof(info->DeviceID))
+        {
+            if (flags & EDD_GET_DEVICE_INTERFACE_NAME)
+                info->DeviceID[0] = 0;
+            else
+            {
+                size = sizeof(bufferW);
+                if (RegGetValueW( HKEY_CURRENT_CONFIG, key_nameW, GPU_ID, RRF_RT_REG_SZ | RRF_ZEROONFAILURE, NULL,
+                                  bufferW, &size ))
+                    return FALSE;
+                set = SetupDiCreateDeviceInfoList( &GUID_DEVCLASS_DISPLAY, NULL );
+                if (!SetupDiOpenDeviceInfoW( set, bufferW, NULL, 0, &device_data )
+                    || !SetupDiGetDeviceRegistryPropertyW( set, &device_data, SPDRP_HARDWAREID, NULL, (BYTE *)bufferW,
+                                                           sizeof(bufferW), NULL ))
+                    goto done;
+                lstrcpyW( info->DeviceID, bufferW );
+            }
+        }
+    }
+    /* Find monitor */
+    else
+    {
+        /* Check adapter name */
+        if (strncmpiW( device, DISPLAY, ARRAY_SIZE(DISPLAY) ))
+            return FALSE;
+
+        adapter_index = strtolW( device + ARRAY_SIZE(DISPLAY), NULL, 10 );
+        sprintfW( key_nameW, VIDEO_VALUE_FMT, adapter_index - 1 );
+
+        size = sizeof(bufferW);
+        if (RegGetValueW( HKEY_LOCAL_MACHINE, VIDEO_KEY, key_nameW, RRF_RT_REG_SZ, NULL, bufferW, &size ))
+            return FALSE;
+
+        /* DeviceName */
+        sprintfW( info->DeviceName, MONITOR_FMT, adapter_index, index );
+
+        /* Get monitor instance */
+        /* Strip \Registry\Machine\ first */
+        lstrcpyW( key_nameW, bufferW + 18 );
+        sprintfW( bufferW, MONITOR_ID_VALUE_FMT, index );
+
+        size = sizeof(instanceW);
+        if (RegGetValueW( HKEY_CURRENT_CONFIG, key_nameW, bufferW, RRF_RT_REG_SZ, NULL, instanceW, &size ))
+            return FALSE;
+
+        set = SetupDiCreateDeviceInfoList( &GUID_DEVCLASS_MONITOR, NULL );
+        if (!SetupDiOpenDeviceInfoW( set, instanceW, NULL, 0, &device_data ))
+            goto done;
+
+        /* StateFlags */
+        if (!SetupDiGetDevicePropertyW( set, &device_data, &WINE_DEVPROPKEY_MONITOR_STATEFLAGS, &type,
+                                        (BYTE *)&info->StateFlags, sizeof(info->StateFlags), NULL, 0 ))
+            goto done;
+
+        /* DeviceString */
+        if (!SetupDiGetDeviceRegistryPropertyW( set, &device_data, SPDRP_DEVICEDESC, NULL,
+                                                (BYTE *)info->DeviceString,
+                                                sizeof(info->DeviceString), NULL ))
+            goto done;
+
+        /* DeviceKey */
+        if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceKey) + sizeof(info->DeviceKey))
+        {
+            if (!SetupDiGetDeviceRegistryPropertyW( set, &device_data, SPDRP_DRIVER, NULL, (BYTE *)bufferW,
+                                                    sizeof(bufferW), NULL ))
+                goto done;
+
+            lstrcpyW( info->DeviceKey, NT_CLASS );
+            lstrcatW( info->DeviceKey, bufferW );
+        }
+
+        /* DeviceID */
+        if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceID) + sizeof(info->DeviceID))
+        {
+            if (flags & EDD_GET_DEVICE_INTERFACE_NAME)
+            {
+                lstrcpyW( info->DeviceID, MONITOR_INTERFACE_PREFIX );
+                lstrcatW( info->DeviceID, instanceW );
+                lstrcatW( info->DeviceID, GUID_DEVINTERFACE_MONITOR );
+                /* Replace '\\' with '#' after prefix */
+                for (next_charW = info->DeviceID + strlenW( MONITOR_INTERFACE_PREFIX ); *next_charW;
+                     next_charW++)
+                {
+                    if (*next_charW == '\\')
+                        *next_charW = '#';
+                }
+            }
+            else
+            {
+                if (!SetupDiGetDeviceRegistryPropertyW( set, &device_data, SPDRP_HARDWAREID, NULL, (BYTE *)bufferW,
+                                                        sizeof(bufferW), NULL ))
+                    goto done;
+
+                lstrcpyW( info->DeviceID, bufferW );
+                lstrcatW( info->DeviceID, BACKSLASH );
+
+                if (!SetupDiGetDeviceRegistryPropertyW( set, &device_data, SPDRP_DRIVER, NULL, (BYTE *)bufferW,
+                                                        sizeof(bufferW), NULL ))
+                    goto done;
+
+                lstrcatW( info->DeviceID, bufferW );
+            }
+        }
+    }
+
+    ret = TRUE;
+done:
+    SetupDiDestroyDeviceInfoList( set );
+    if (ret)
+        return ret;
+
+    /* Fallback to report at least one adapter and monitor, if user driver didn't initialize display device registry */
+    if (index)
+        return FALSE;
+
+    /* If user driver did initialize the registry, then exit */
+    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, VIDEO_KEY, &hkey ))
+    {
+        RegCloseKey( hkey );
+        return FALSE;
+    }
+    WARN("Reporting fallback display devices\n");
+
+    /* Adapter */
+    if (!device)
+    {
+        memcpy( info->DeviceName, DEFAULT_ADAPTER_NAME, sizeof(DEFAULT_ADAPTER_NAME) );
+        memcpy( info->DeviceString, DEFAULT_ADAPTER_STRING, sizeof(DEFAULT_ADAPTER_STRING) );
+        info->StateFlags =
+            DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE;
+        if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceID) + sizeof(info->DeviceID))
+        {
+            if (flags & EDD_GET_DEVICE_INTERFACE_NAME)
+                info->DeviceID[0] = 0;
+            else
+                memcpy( info->DeviceID, DEFAULT_ADAPTER_ID, sizeof(DEFAULT_ADAPTER_ID) );
+        }
+    }
+    /* Monitor */
+    else
+    {
+        if (lstrcmpiW( DEFAULT_ADAPTER_NAME, device ))
+            return FALSE;
+
+        memcpy( info->DeviceName, DEFAULT_MONITOR_NAME, sizeof(DEFAULT_MONITOR_NAME) );
+        memcpy( info->DeviceString, DEFAULT_MONITOR_STRING, sizeof(DEFAULT_MONITOR_STRING) );
+        info->StateFlags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED;
+        if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceID) + sizeof(info->DeviceID))
+        {
+            if (flags & EDD_GET_DEVICE_INTERFACE_NAME)
+                memcpy( info->DeviceID, DEFAULT_MONITOR_INTERFACE_ID, sizeof(DEFAULT_MONITOR_INTERFACE_ID) );
+            else
+                memcpy( info->DeviceID, DEFAULT_MONITOR_ID, sizeof(DEFAULT_MONITOR_ID) );
+        }
+    }
+
+    if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceKey) + sizeof(info->DeviceKey))
+        info->DeviceKey[0] = 0;
+
+    return TRUE;
+}
 
 /**********************************************************************
  *              GetAutoRotationState [USER32.@]
