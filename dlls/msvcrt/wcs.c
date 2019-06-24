@@ -2041,16 +2041,21 @@ INT CDECL MSVCRT_wcscpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, con
     if(!MSVCRT_CHECK_PMT(wcDest)) return MSVCRT_EINVAL;
     if(!MSVCRT_CHECK_PMT(numElement)) return MSVCRT_EINVAL;
 
-    wcDest[0] = 0;
-
-    if(!MSVCRT_CHECK_PMT(wcSrc)) return MSVCRT_EINVAL;
+    if(!MSVCRT_CHECK_PMT(wcSrc))
+    {
+        wcDest[0] = 0;
+        return MSVCRT_EINVAL;
+    }
 
     size = strlenW(wcSrc) + 1;
 
     if(!MSVCRT_CHECK_PMT_ERR(size <= numElement, MSVCRT_ERANGE))
+    {
+        wcDest[0] = 0;
         return MSVCRT_ERANGE;
+    }
 
-    memcpy( wcDest, wcSrc, size*sizeof(WCHAR) );
+    memmove( wcDest, wcSrc, size*sizeof(WCHAR) );
 
     return 0;
 }
