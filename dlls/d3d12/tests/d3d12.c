@@ -1404,12 +1404,12 @@ static void test_desktop_window(void)
     swapchain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapchain_desc.Flags = 0;
     hr = IDXGIFactory4_CreateSwapChainForHwnd(factory, (IUnknown *)queue, window, &swapchain_desc, NULL, NULL, &swapchain);
-    todo_wine ok(hr == E_ACCESSDENIED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_ACCESSDENIED, "Got unexpected hr %#x.\n", hr);
 
     swapchain_desc.Width = rect.right;
     swapchain_desc.Height = rect.bottom;
     hr = IDXGIFactory4_CreateSwapChainForHwnd(factory, (IUnknown *)queue, window, &swapchain_desc, NULL, NULL, &swapchain);
-    todo_wine ok(hr == E_ACCESSDENIED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_ACCESSDENIED, "Got unexpected hr %#x.\n", hr);
 
     IDXGIFactory4_Release(factory);
     destroy_test_context(&context);

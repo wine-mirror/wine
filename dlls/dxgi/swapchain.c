@@ -2683,6 +2683,12 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     VkResult vr;
     HRESULT hr;
 
+    if (window == GetDesktopWindow())
+    {
+        WARN("D3D12 swapchain cannot be created on desktop window.\n");
+        return E_ACCESSDENIED;
+    }
+
     swapchain->IDXGISwapChain3_iface.lpVtbl = &d3d12_swapchain_vtbl;
     swapchain->refcount = 1;
 
