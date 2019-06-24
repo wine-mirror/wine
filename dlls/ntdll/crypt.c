@@ -1,6 +1,5 @@
 /*
  * Copyright 2004 Filip Navara
- * Based on public domain SHA code by Steve Reid <steve@edmweb.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,7 +19,10 @@
 #include <stdarg.h>
 #include "windef.h"
 
-/* SHA Context Structure Declaration */
+/* SHA1 algorithm
+ *
+ * Based on public domain SHA code by Steve Reid <steve@edmweb.com>
+ */
 
 typedef struct {
    ULONG Unknown[6];
@@ -28,8 +30,6 @@ typedef struct {
    ULONG Count[2];
    UCHAR Buffer[64];
 } SHA_CTX, *PSHA_CTX;
-
-/* SHA1 Helper Macros */
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 /* FIXME: This definition of DWORD2BE is little endian specific! */
@@ -98,7 +98,7 @@ static void SHA1Transform(ULONG State[5], UCHAR Buffer[64])
 
 
 /******************************************************************************
- * A_SHAInit [ADVAPI32.@]
+ * A_SHAInit (ntdll.@)
  *
  * Initialize a SHA context structure.
  *
@@ -108,8 +108,7 @@ static void SHA1Transform(ULONG State[5], UCHAR Buffer[64])
  * RETURNS
  *  Nothing
  */
-VOID WINAPI
-A_SHAInit(PSHA_CTX Context)
+void WINAPI A_SHAInit(PSHA_CTX Context)
 {
    /* SHA1 initialization constants */
    Context->State[0] = 0x67452301;
@@ -122,7 +121,7 @@ A_SHAInit(PSHA_CTX Context)
 }
 
 /******************************************************************************
- * A_SHAUpdate [ADVAPI32.@]
+ * A_SHAUpdate (ntdll.@)
  *
  * Update a SHA context with a hashed data from supplied buffer.
  *
@@ -134,8 +133,7 @@ A_SHAInit(PSHA_CTX Context)
  * RETURNS
  *  Nothing
  */
-VOID WINAPI
-A_SHAUpdate(PSHA_CTX Context, const unsigned char *Buffer, UINT BufferSize)
+void WINAPI A_SHAUpdate(PSHA_CTX Context, const unsigned char *Buffer, UINT BufferSize)
 {
    ULONG BufferContentSize;
 
@@ -166,7 +164,7 @@ A_SHAUpdate(PSHA_CTX Context, const unsigned char *Buffer, UINT BufferSize)
 }
 
 /******************************************************************************
- * A_SHAFinal [ADVAPI32.@]
+ * A_SHAFinal (ntdll.@)
  *
  * Finalize SHA context and return the resulting hash.
  *
@@ -177,8 +175,7 @@ A_SHAUpdate(PSHA_CTX Context, const unsigned char *Buffer, UINT BufferSize)
  * RETURNS
  *  Nothing
  */
-VOID WINAPI
-A_SHAFinal(PSHA_CTX Context, PULONG Result)
+void WINAPI A_SHAFinal(PSHA_CTX Context, PULONG Result)
 {
    INT Pad, Index;
    UCHAR Buffer[72];

@@ -10,6 +10,7 @@ C_SRCS = \
 	atom.c \
 	cdrom.c \
 	critsection.c \
+	crypt.c \
 	debugbuffer.c \
 	debugtools.c \
 	directory.c \

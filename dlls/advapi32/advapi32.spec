@@ -1,7 +1,7 @@
 # 1000 stub ADVAPI32_1000
-@ stdcall A_SHAFinal(ptr ptr)
-@ stdcall A_SHAInit(ptr)
-@ stdcall A_SHAUpdate(ptr ptr long)
+@ stdcall A_SHAFinal(ptr ptr) ntdll.A_SHAFinal
+@ stdcall A_SHAInit(ptr) ntdll.A_SHAInit
+@ stdcall A_SHAUpdate(ptr ptr long) ntdll.A_SHAUpdate
 @ stdcall AbortSystemShutdownA(ptr)
 @ stdcall AbortSystemShutdownW(ptr)
 @ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr)

@@ -3,6 +3,9 @@
 #if you change a Nt.. function DON'T FORGET to change the
 #Zw one too.
 
+@ stdcall A_SHAFinal(ptr ptr)
+@ stdcall A_SHAInit(ptr)
+@ stdcall A_SHAUpdate(ptr ptr long)
 @ stdcall ApiSetQueryApiSetPresence(ptr ptr)
 @ stub CsrAllocateCaptureBuffer
 @ stub CsrAllocateCapturePointer
