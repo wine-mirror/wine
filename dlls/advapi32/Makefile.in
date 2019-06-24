@@ -11,7 +11,6 @@ C_SRCS = \
 	crypt_arc4.c \
 	crypt_des.c \
 	crypt_lmhash.c \
-	crypt_md5.c \
 	eventlog.c \
 	lsa.c \
 	perf.c \

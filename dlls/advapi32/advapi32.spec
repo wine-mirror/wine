@@ -512,9 +512,9 @@
 @ stdcall MD4Final(ptr) ntdll.MD4Final
 @ stdcall MD4Init(ptr) ntdll.MD4Init
 @ stdcall MD4Update(ptr ptr long) ntdll.MD4Update
-@ stdcall MD5Final(ptr)
-@ stdcall MD5Init(ptr)
-@ stdcall MD5Update(ptr ptr long)
+@ stdcall MD5Final(ptr) ntdll.MD5Final
+@ stdcall MD5Init(ptr) ntdll.MD5Init
+@ stdcall MD5Update(ptr ptr long) ntdll.MD5Update
 # @ stub MIDL_user_free_Ext
 # @ stub MSChapSrvChangePassword
 # @ stub MSChapSrvChangePassword2
