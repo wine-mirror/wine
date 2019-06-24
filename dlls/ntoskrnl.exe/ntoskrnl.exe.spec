@@ -408,7 +408,7 @@
 @ stub IoGetRequestorProcess
 @ stub IoGetRequestorProcessId
 @ stub IoGetRequestorSessionId
-@ stub IoGetStackLimits
+@ stdcall IoGetStackLimits(ptr ptr)
 @ stub IoGetTopLevelIrp
 @ stdcall IoInitializeIrp(ptr long long)
 @ stdcall IoInitializeRemoveLockEx(ptr long long long long)

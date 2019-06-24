@@ -1689,6 +1689,18 @@ PCONFIGURATION_INFORMATION WINAPI IoGetConfigurationInformation(void)
     return &configuration_information;
 }
 
+/***********************************************************************
+ *           IoGetStackLimits    (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoGetStackLimits(ULONG_PTR *low, ULONG_PTR *high)
+{
+    TEB *teb = NtCurrentTeb();
+
+    TRACE( "%p %p\n", low, high );
+
+    *low  = (DWORD_PTR)teb->Tib.StackLimit;
+    *high = (DWORD_PTR)teb->Tib.StackBase;
+}
 
 /***********************************************************************
  *           IoIsWdmVersionAvailable     (NTOSKRNL.EXE.@)

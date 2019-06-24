@@ -1436,6 +1436,16 @@ static void test_lookup_thread(void)
        "PsLookupThreadByThreadId returned %#x\n", status);
 }
 
+static void test_stack_limits(void)
+{
+    ULONG_PTR low = 0, high = 0;
+
+    IoGetStackLimits(&low, &high);
+    ok(low, "low = 0\n");
+    ok(low < high, "low >= high\n");
+    ok(low < (ULONG_PTR)&low && (ULONG_PTR)&low < high, "stack variable is not in stack limits\n");
+}
+
 static void test_IoAttachDeviceToDeviceStack(void)
 {
     DEVICE_OBJECT *dev1, *dev2, *dev3, *ret;
@@ -1503,6 +1513,7 @@ static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
     test_critical_region(FALSE);
     test_call_driver(device);
     test_cancel_irp(device);
+    test_stack_limits();
 
     /* print process report */
     if (winetest_debug)
