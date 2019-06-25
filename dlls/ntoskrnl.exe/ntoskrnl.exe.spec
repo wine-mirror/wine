@@ -525,8 +525,8 @@
 @ stub KeAddSystemServiceTable
 @ stdcall KeAreApcsDisabled()
 @ stub KeAttachProcess
-@ stub KeBugCheck
-@ stub KeBugCheckEx
+@ stdcall KeBugCheck(long)
+@ stdcall KeBugCheckEx(long long long long long)
 @ stdcall KeCancelTimer(ptr)
 @ stub KeCapturePersistentThreadState
 @ stdcall KeClearEvent(ptr)

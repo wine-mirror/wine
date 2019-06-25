@@ -3182,6 +3182,23 @@ BOOLEAN WINAPI KeAreApcsDisabled(void)
 }
 
 /***********************************************************************
+ *           KeBugCheck    (NTOSKRNL.@)
+ */
+void WINAPI KeBugCheck(ULONG code)
+{
+    KeBugCheckEx(code, 0, 0, 0, 0);
+}
+
+/***********************************************************************
+ *           KeBugCheckEx    (NTOSKRNL.@)
+ */
+void WINAPI KeBugCheckEx(ULONG code, ULONG_PTR param1, ULONG_PTR param2, ULONG_PTR param3, ULONG_PTR param4)
+{
+    ERR( "%x %lx %lx %lx %lx\n", code, param1, param2, param3, param4 );
+    ExitProcess( code );
+}
+
+/***********************************************************************
  *           ProbeForRead   (NTOSKRNL.EXE.@)
  */
 void WINAPI ProbeForRead(void *address, SIZE_T length, ULONG alignment)
