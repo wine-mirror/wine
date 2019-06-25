@@ -487,7 +487,7 @@ static void test_sample_properties(void)
     ok(!mt, "Got media type %p.\n", mt);
 
     hr = IMediaSample_SetMediaType(sample, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     mt = (AM_MEDIA_TYPE *)0xdeadbeef;
     hr = IMediaSample_GetMediaType(sample, &mt);
@@ -513,7 +513,7 @@ static void test_sample_properties(void)
     ok(!memcmp(props.pMediaType, &expect_mt, sizeof(AM_MEDIA_TYPE)), "Media types didn't match.\n");
 
     hr = IMediaSample_SetMediaType(sample, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     mt = (AM_MEDIA_TYPE *)0xdeadbeef;
     hr = IMediaSample_GetMediaType(sample, &mt);
