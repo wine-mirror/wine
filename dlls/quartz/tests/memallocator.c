@@ -379,7 +379,7 @@ static void test_media_time(void)
     {
         start = 0x123;
         hr = IMediaSample_SetMediaTime(sample, &start, NULL);
-        todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     }
 
     end = 0x321;

@@ -734,21 +734,20 @@ static HRESULT WINAPI StdMediaSample2_GetMediaTime(IMediaSample2 * iface, LONGLO
     return S_OK;
 }
 
-static HRESULT WINAPI StdMediaSample2_SetMediaTime(IMediaSample2 * iface, LONGLONG * pStart, LONGLONG * pEnd)
+static HRESULT WINAPI StdMediaSample2_SetMediaTime(IMediaSample2 *iface, LONGLONG *start, LONGLONG *end)
 {
-    StdMediaSample2 *This = impl_from_IMediaSample2(iface);
+    StdMediaSample2 *sample = impl_from_IMediaSample2(iface);
 
-    TRACE("(%p)->(%p, %p)\n", iface, pStart, pEnd);
+    TRACE("sample %p, start %p, end %p.\n", iface, start, end);
 
-    if (pStart)
-        This->tMediaStart = *pStart;
+    if (start)
+    {
+        if (!end) return E_POINTER;
+        sample->tMediaStart = *start;
+        sample->tMediaEnd = *end;
+    }
     else
-        This->tMediaStart = INVALID_MEDIA_TIME;
-
-    if (pEnd)
-        This->tMediaEnd = *pEnd;
-    else
-        This->tMediaEnd = 0;
+        sample->tMediaStart = INVALID_MEDIA_TIME;
 
     return S_OK;
 }
