@@ -3687,6 +3687,68 @@ static void test_cache_read_gzipped(int port)
     InternetCloseHandle(con);
     InternetCloseHandle(ses);
 
+    /* Decompression doesn't work while reading from cache */
+    test_cache_gzip = 0;
+    sprintf(cache_url, cache_url_fmt, port, get_gzip);
+    DeleteUrlCacheEntryA(cache_url);
+
+    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL,"InternetOpen failed with error %u\n", GetLastError());
+
+    ret = TRUE;
+    ret = InternetSetOptionA(ses, INTERNET_OPTION_HTTP_DECODING, &ret, sizeof(ret));
+    ok(ret, "InternetSetOption(INTERNET_OPTION_HTTP_DECODING) failed: %d\n", GetLastError());
+
+    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed with error %u\n", GetLastError());
+
+    req = HttpOpenRequestA(con, NULL, get_gzip, NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequestA(req, "Accept-Encoding: gzip", -1, NULL, 0);
+    ok(ret, "HttpSendRequest failed with error %u\n", GetLastError());
+    size = 0;
+    while(InternetReadFile(req, buf+size, sizeof(buf)-1-size, &read) && read)
+        size += read;
+    ok(size == 10, "read %d bytes of data\n", size);
+    buf[size] = 0;
+    ok(!strncmp(buf, content, size), "incorrect page content: %s\n", buf);
+    InternetCloseHandle(req);
+
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+
+    /* Decompression doesn't work while reading from cache */
+    test_cache_gzip = 0;
+    sprintf(cache_url, cache_url_fmt, port, get_gzip);
+    DeleteUrlCacheEntryA(cache_url);
+
+    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL,"InternetOpen failed with error %u\n", GetLastError());
+
+    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed with error %u\n", GetLastError());
+
+    ret = TRUE;
+    ret = InternetSetOptionA(con, INTERNET_OPTION_HTTP_DECODING, &ret, sizeof(ret));
+    ok(ret, "InternetSetOption(INTERNET_OPTION_HTTP_DECODING) failed: %d\n", GetLastError());
+
+    req = HttpOpenRequestA(con, NULL, get_gzip, NULL, NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequestA(req, "Accept-Encoding: gzip", -1, NULL, 0);
+    ok(ret, "HttpSendRequest failed with error %u\n", GetLastError());
+    size = 0;
+    while(InternetReadFile(req, buf+size, sizeof(buf)-1-size, &read) && read)
+        size += read;
+    ok(size == 10, "read %d bytes of data\n", size);
+    buf[size] = 0;
+    ok(!strncmp(buf, content, size), "incorrect page content: %s\n", buf);
+    InternetCloseHandle(req);
+
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+
     DeleteUrlCacheEntryA(cache_url);
 }
 

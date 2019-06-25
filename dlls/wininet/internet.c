@@ -2866,9 +2866,18 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 	 FIXME("Option INTERNET_OPTION_DISABLE_AUTODIAL; STUB\n");
 	 break;
     case INTERNET_OPTION_HTTP_DECODING:
-        FIXME("INTERNET_OPTION_HTTP_DECODING; STUB\n");
-        SetLastError(ERROR_INTERNET_INVALID_OPTION);
-        ret = FALSE;
+        if (!lpwhh)
+        {
+            SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+            return FALSE;
+        }
+        if (!lpBuffer || dwBufferLength != sizeof(BOOL))
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            ret = FALSE;
+        }
+        else
+            lpwhh->decoding = *(BOOL *)lpBuffer;
         break;
     case INTERNET_OPTION_COOKIES_3RD_PARTY:
         FIXME("INTERNET_OPTION_COOKIES_3RD_PARTY; STUB\n");
