@@ -1464,6 +1464,17 @@ HRESULT WINAPI MFCreateSinkWriterFromMediaSink(IMFMediaSink *sink, IMFAttributes
     return create_sink_writer_from_sink(sink, attributes, &IID_IMFSinkWriter, (void **)writer);
 }
 
+/***********************************************************************
+ *      MFCreateSinkWriterFromURL (mfreadwrite.@)
+ */
+HRESULT WINAPI MFCreateSinkWriterFromURL(const WCHAR *url, IMFByteStream *bytestream, IMFAttributes *attributes,
+        IMFSinkWriter **writer)
+{
+    FIXME("%s, %p, %p, %p.\n", debugstr_w(url), bytestream, attributes, writer);
+
+    return E_NOTIMPL;
+}
+
 static HRESULT create_source_reader_from_object(IUnknown *unk, IMFAttributes *attributes, REFIID riid, void **out)
 {
     IMFMediaSource *source = NULL;

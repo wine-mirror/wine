@@ -185,6 +185,8 @@ interface IMFReadWriteClassFactory : IUnknown
 
 cpp_quote( "HRESULT WINAPI MFCreateSinkWriterFromMediaSink(IMFMediaSink *sink, IMFAttributes *attributes," )
 cpp_quote( "        IMFSinkWriter **writer);" )
+cpp_quote( "HRESULT WINAPI MFCreateSinkWriterFromURL(const WCHAR *url, IMFByteStream *bytestream," )
+cpp_quote( "        IMFAttributes *attributes, IMFSinkWriter **writer);" )
 cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromByteStream(IMFByteStream *stream, IMFAttributes *attributes," )
 cpp_quote( "                                                  IMFSourceReader **reader);" )
 cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAttributes *attributes," )
