@@ -1,6 +1,6 @@
 MODULE    = ver.dll16
 IMPORTS   = version lz32
 
-EXTRADLLFLAGS = -m16 -Wb,--main-module,version.dll
+EXTRADLLFLAGS = -m16 -mno-cygwin -Wb,--main-module,version.dll
 
 C_SRCS = version.c
