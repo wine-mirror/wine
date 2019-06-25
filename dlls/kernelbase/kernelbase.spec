@@ -262,7 +262,7 @@
 @ stdcall DeleteVolumeMountPointW(wstr) kernel32.DeleteVolumeMountPointW
 @ stdcall DestroyPrivateObjectSecurity(ptr) advapi32.DestroyPrivateObjectSecurity
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr) kernel32.DeviceIoControl
-# @ stub DisablePredefinedHandleTableInternal
+@ stdcall DisablePredefinedHandleTableInternal(long)
 @ stdcall DisableThreadLibraryCalls(long) kernel32.DisableThreadLibraryCalls
 @ stdcall DisassociateCurrentThreadFromCallback(ptr) kernel32.DisassociateCurrentThreadFromCallback
 # @ stub DiscardVirtualMemory
@@ -297,7 +297,7 @@
 @ stdcall EnumDateFormatsExW(ptr long long) kernel32.EnumDateFormatsExW
 @ stdcall EnumDateFormatsW(ptr long long) kernel32.EnumDateFormatsW
 # @ stub EnumDeviceDrivers
-@ stdcall EnumDynamicTimeZoneInformation(long ptr) advapi32.EnumDynamicTimeZoneInformation
+@ stdcall EnumDynamicTimeZoneInformation(long ptr)
 @ stdcall EnumLanguageGroupLocalesW(ptr long long ptr) kernel32.EnumLanguageGroupLocalesW
 # @ stub EnumPageFilesA
 # @ stub EnumPageFilesW
@@ -1256,31 +1256,31 @@
 # @ stub ReclaimVirtualMemory
 # @ stub RefreshPolicyExInternal
 # @ stub RefreshPolicyInternal
-@ stdcall -private RegCloseKey(long) kernel32.RegCloseKey
-@ stdcall RegCopyTreeW(long wstr long) advapi32.RegCopyTreeW
-@ stdcall -private RegCreateKeyExA(long str long ptr long long ptr ptr ptr) kernel32.RegCreateKeyExA
+@ stdcall RegCloseKey(long)
+@ stdcall RegCopyTreeW(long wstr long)
+@ stdcall RegCreateKeyExA(long str long ptr long long ptr ptr ptr)
 # @ stub RegCreateKeyExInternalA
 # @ stub RegCreateKeyExInternalW
-@ stdcall -private RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr) kernel32.RegCreateKeyExW
-@ stdcall -private RegDeleteKeyExA(long str long long) kernel32.RegDeleteKeyExA
+@ stdcall RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr)
+@ stdcall RegDeleteKeyExA(long str long long)
 # @ stub RegDeleteKeyExInternalA
 # @ stub RegDeleteKeyExInternalW
-@ stdcall -private RegDeleteKeyExW(long wstr long long) kernel32.RegDeleteKeyExW
-@ stdcall RegDeleteKeyValueA(long str str) advapi32.RegDeleteKeyValueA
-@ stdcall RegDeleteKeyValueW(long wstr wstr) advapi32.RegDeleteKeyValueW
-@ stdcall -private RegDeleteTreeA(long str) kernel32.RegDeleteTreeA
-@ stdcall -private RegDeleteTreeW(long wstr) kernel32.RegDeleteTreeW
-@ stdcall -private RegDeleteValueA(long str) kernel32.RegDeleteValueA
-@ stdcall -private RegDeleteValueW(long wstr) kernel32.RegDeleteValueW
+@ stdcall RegDeleteKeyExW(long wstr long long)
+@ stdcall RegDeleteKeyValueA(long str str)
+@ stdcall RegDeleteKeyValueW(long wstr wstr)
+@ stdcall RegDeleteTreeA(long str)
+@ stdcall RegDeleteTreeW(long wstr)
+@ stdcall RegDeleteValueA(long str)
+@ stdcall RegDeleteValueW(long wstr)
 # @ stub RegDisablePredefinedCacheEx
-@ stdcall -private RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr) kernel32.RegEnumKeyExA
-@ stdcall -private RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr) kernel32.RegEnumKeyExW
-@ stdcall -private RegEnumValueA(long long ptr ptr ptr ptr ptr ptr) kernel32.RegEnumValueA
-@ stdcall -private RegEnumValueW(long long ptr ptr ptr ptr ptr ptr) kernel32.RegEnumValueW
-@ stdcall -private RegFlushKey(long) kernel32.RegFlushKey
-@ stdcall -private RegGetKeySecurity(long long ptr ptr) kernel32.RegGetKeySecurity
-@ stdcall -private RegGetValueA(long str str long ptr ptr ptr) kernel32.RegGetValueA
-@ stdcall -private RegGetValueW(long wstr wstr long ptr ptr ptr) kernel32.RegGetValueW
+@ stdcall RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr)
+@ stdcall RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr)
+@ stdcall RegEnumValueA(long long ptr ptr ptr ptr ptr ptr)
+@ stdcall RegEnumValueW(long long ptr ptr ptr ptr ptr ptr)
+@ stdcall RegFlushKey(long)
+@ stdcall RegGetKeySecurity(long long ptr ptr)
+@ stdcall RegGetValueA(long str str long ptr ptr ptr)
+@ stdcall RegGetValueW(long wstr wstr long ptr ptr ptr)
 # @ stub RegKrnGetAppKeyEventAddressInternal
 # @ stub RegKrnGetAppKeyLoaded
 # @ stub RegKrnGetClassesEnumTableAddressInternal
@@ -1289,34 +1289,34 @@
 # @ stub RegKrnResetAppKeyLoaded
 # @ stub RegKrnSetDllHasThreadStateGlobal
 # @ stub RegKrnSetTermsrvRegistryExtensionFlags
-@ stdcall RegLoadAppKeyA(str ptr long long long) advapi32.RegLoadAppKeyA
-@ stdcall RegLoadAppKeyW(wstr ptr long long long) advapi32.RegLoadAppKeyW
-@ stdcall -private RegLoadKeyA(long str str) kernel32.RegLoadKeyA
-@ stdcall -private RegLoadKeyW(long wstr wstr) kernel32.RegLoadKeyW
-@ stdcall -private RegLoadMUIStringA(long str str long ptr long str) kernel32.RegLoadMUIStringA
-@ stdcall -private RegLoadMUIStringW(long wstr wstr long ptr long wstr) kernel32.RegLoadMUIStringW
-@ stdcall -private RegNotifyChangeKeyValue(long long long long long) kernel32.RegNotifyChangeKeyValue
-@ stdcall -private RegOpenCurrentUser(long ptr) kernel32.RegOpenCurrentUser
-@ stdcall -private RegOpenKeyExA(long str long long ptr) kernel32.RegOpenKeyExA
+@ stdcall RegLoadAppKeyA(str ptr long long long)
+@ stdcall RegLoadAppKeyW(wstr ptr long long long)
+@ stdcall RegLoadKeyA(long str str)
+@ stdcall RegLoadKeyW(long wstr wstr)
+@ stdcall RegLoadMUIStringA(long str str long ptr long str)
+@ stdcall RegLoadMUIStringW(long wstr wstr long ptr long wstr)
+@ stdcall RegNotifyChangeKeyValue(long long long long long)
+@ stdcall RegOpenCurrentUser(long ptr)
+@ stdcall RegOpenKeyExA(long str long long ptr)
 # @ stub RegOpenKeyExInternalA
 # @ stub RegOpenKeyExInternalW
-@ stdcall -private RegOpenKeyExW(long wstr long long ptr) kernel32.RegOpenKeyExW
-@ stdcall -private RegOpenUserClassesRoot(ptr long long ptr) kernel32.RegOpenUserClassesRoot
-@ stdcall -private RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) kernel32.RegQueryInfoKeyA
-@ stdcall -private RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) kernel32.RegQueryInfoKeyW
-@ stdcall -private RegQueryValueExA(long str ptr ptr ptr ptr) kernel32.RegQueryValueExA
-@ stdcall -private RegQueryValueExW(long wstr ptr ptr ptr ptr) kernel32.RegQueryValueExW
-@ stdcall -private RegRestoreKeyA(long str long) kernel32.RegRestoreKeyA
-@ stdcall -private RegRestoreKeyW(long wstr long) kernel32.RegRestoreKeyW
-@ stdcall RegSaveKeyExA(long str ptr long) advapi32.RegSaveKeyExA
-@ stdcall RegSaveKeyExW(long wstr ptr long) advapi32.RegSaveKeyExW
-@ stdcall -private RegSetKeySecurity(long long ptr) kernel32.RegSetKeySecurity
-@ stdcall RegSetKeyValueA(long str str long ptr long) advapi32.RegSetKeyValueA
-@ stdcall RegSetKeyValueW(long wstr wstr long ptr long) advapi32.RegSetKeyValueW
-@ stdcall -private RegSetValueExA(long str long long ptr long) kernel32.RegSetValueExA
-@ stdcall -private RegSetValueExW(long wstr long long ptr long) kernel32.RegSetValueExW
-@ stdcall -private RegUnLoadKeyA(long str) kernel32.RegUnLoadKeyA
-@ stdcall -private RegUnLoadKeyW(long wstr) kernel32.RegUnLoadKeyW
+@ stdcall RegOpenKeyExW(long wstr long long ptr)
+@ stdcall RegOpenUserClassesRoot(ptr long long ptr)
+@ stdcall RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall RegQueryValueExA(long str ptr ptr ptr ptr)
+@ stdcall RegQueryValueExW(long wstr ptr ptr ptr ptr)
+@ stdcall RegRestoreKeyA(long str long)
+@ stdcall RegRestoreKeyW(long wstr long)
+@ stdcall RegSaveKeyExA(long str ptr long)
+@ stdcall RegSaveKeyExW(long wstr ptr long)
+@ stdcall RegSetKeySecurity(long long ptr)
+@ stdcall RegSetKeyValueA(long str str long ptr long)
+@ stdcall RegSetKeyValueW(long wstr wstr long ptr long)
+@ stdcall RegSetValueExA(long str long long ptr long)
+@ stdcall RegSetValueExW(long wstr long long ptr long)
+@ stdcall RegUnLoadKeyA(long str)
+@ stdcall RegUnLoadKeyW(long wstr)
 # @ stub RegisterBadMemoryNotification
 # @ stub RegisterGPNotificationInternal
 # @ stub RegisterStateChangeNotification
@@ -1331,7 +1331,7 @@
 @ stdcall ReleaseSemaphore(long long ptr) kernel32.ReleaseSemaphore
 @ stdcall ReleaseSemaphoreWhenCallbackReturns(ptr long long) kernel32.ReleaseSemaphoreWhenCallbackReturns
 # @ stub ReleaseStateLock
-# @ stub RemapPredefinedHandleInternal
+@ stdcall RemapPredefinedHandleInternal(long long)
 @ stdcall RemoveDirectoryA(str) kernel32.RemoveDirectoryA
 @ stdcall RemoveDirectoryW(wstr) kernel32.RemoveDirectoryW
 @ stdcall RemoveDllDirectory(ptr) kernel32.RemoveDllDirectory

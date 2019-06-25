@@ -267,7 +267,7 @@ HRESULT WINAPI GetAcceptLanguagesW(WCHAR *langbuf, DWORD *buflen)
     len = mystrlen * sizeof(WCHAR);
     mystr = heap_alloc(len);
     mystr[0] = 0;
-    RegOpenKeyW(HKEY_CURRENT_USER, keyW, &mykey);
+    RegOpenKeyExW(HKEY_CURRENT_USER, keyW, 0, KEY_QUERY_VALUE, &mykey);
     lres = RegQueryValueExW(mykey, valueW, 0, &mytype, (PBYTE)mystr, &len);
     RegCloseKey(mykey);
     len = lstrlenW(mystr);

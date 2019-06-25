@@ -104,6 +104,9 @@ WINADVAPI LSTATUS   WINAPI RegCloseKey(HKEY);
 WINADVAPI LSTATUS   WINAPI RegConnectRegistryA(LPCSTR,HKEY,PHKEY);
 WINADVAPI LSTATUS   WINAPI RegConnectRegistryW(LPCWSTR,HKEY,PHKEY);
 #define                    RegConnectRegistry WINELIB_NAME_AW(RegConnectRegistry)
+WINADVAPI LSTATUS   WINAPI RegCopyTreeA(HKEY,const char*,HKEY);
+WINADVAPI LSTATUS   WINAPI RegCopyTreeW(HKEY,const WCHAR*,HKEY);
+#define                    RegCopyTree WINELIB_NAME_AW(RegCopyTree)
 WINADVAPI LSTATUS   WINAPI RegCreateKeyA(HKEY,LPCSTR,PHKEY);
 WINADVAPI LSTATUS   WINAPI RegCreateKeyW(HKEY,LPCWSTR,PHKEY);
 #define                    RegCreateKey WINELIB_NAME_AW(RegCreateKey)
