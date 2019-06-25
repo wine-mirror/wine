@@ -252,6 +252,8 @@ static const WCHAR CSrgb[] = {'%','u',' ','%','u',' ','%','u',0};
 /* Wine specific monitor properties */
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_STATEFLAGS, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 2);
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCMONITOR, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 3);
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCWORK, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 4);
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 5);
 
 #define NULLDRV_DEFAULT_HMONITOR ((HMONITOR)(UINT_PTR)(0x10000 + 1))
 
@@ -3718,6 +3720,58 @@ HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
     /* retrieve the primary */
     SetRect( &rect, 0, 0, 1, 1 );
     return MonitorFromRect( &rect, dwFlags );
+}
+
+BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, MONITORINFO *info )
+{
+    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
+    WCHAR adapter_name[CCHDEVICENAME];
+    HDEVINFO devinfo;
+    DWORD error = 0;
+    HANDLE mutex;
+    DWORD type;
+    BOOL ret;
+
+    TRACE("(%p, %p)\n", handle, info);
+
+    /* Fallback to report one monitor */
+    if (handle == NULLDRV_DEFAULT_HMONITOR)
+    {
+        RECT default_rect = {0, 0, 640, 480};
+        info->rcMonitor = default_rect;
+        info->rcWork = default_rect;
+        info->dwFlags = MONITORINFOF_PRIMARY;
+        if (info->cbSize >= sizeof(MONITORINFOEXW))
+            lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, DEFAULT_ADAPTER_NAME );
+        return TRUE;
+    }
+
+    /* Use SetupAPI to get monitors */
+    mutex = get_display_device_init_mutex();
+    devinfo = SetupDiGetClassDevsW( &GUID_DEVCLASS_MONITOR, NULL, NULL, 0 );
+    if (SetupDiEnumDeviceInfo(devinfo, (DWORD)(UINT_PTR)handle - 1, &device_data))
+    {
+        SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type,
+                                   (BYTE *)&info->rcMonitor, sizeof(info->rcMonitor), NULL, 0 );
+        SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCWORK, &type,
+                                   (BYTE *)&info->rcWork, sizeof(info->rcWork), NULL, 0 );
+        SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, &type,
+                                   (BYTE *)adapter_name, sizeof(adapter_name), NULL, 0 );
+        info->dwFlags = !lstrcmpW( DEFAULT_ADAPTER_NAME, adapter_name ) ? MONITORINFOF_PRIMARY : 0;
+        if (info->cbSize >= sizeof(MONITORINFOEXW))
+            lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, adapter_name );
+        ret = TRUE;
+    }
+    else
+    {
+        error = ERROR_INVALID_MONITOR_HANDLE;
+        ret = FALSE;
+    }
+    SetupDiDestroyDeviceInfoList( devinfo );
+    release_display_device_init_mutex( mutex );
+    if (error)
+        SetLastError( ERROR_INVALID_MONITOR_HANDLE );
+    return ret;
 }
 
 /***********************************************************************

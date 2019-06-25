@@ -197,8 +197,6 @@ void USER_unload_driver(void)
  * These are fallbacks for entry points that are not implemented in the real driver.
  */
 
-#define NULLDRV_DEFAULT_HMONITOR ((HMONITOR)(UINT_PTR)(0x10000 + 1))
-
 static HKL CDECL nulldrv_ActivateKeyboardLayout( HKL layout, UINT flags )
 {
     return 0;
@@ -357,27 +355,6 @@ static LONG CDECL nulldrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode
 static BOOL CDECL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
 {
     return FALSE;
-}
-
-static BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
-{
-    RECT r = {0, 0, 640, 480};
-    static const WCHAR device[] = {'W','i','n','D','i','s','c',0};
-
-    TRACE("(%p, %p)\n", handle, info);
-
-    if (handle != NULLDRV_DEFAULT_HMONITOR)
-    {
-        SetLastError(ERROR_INVALID_MONITOR_HANDLE);
-        return FALSE;
-    }
-
-    info->rcMonitor = r;
-    info->rcWork = r;
-    info->dwFlags = MONITORINFOF_PRIMARY;
-    if (info->cbSize >= sizeof(MONITORINFOEXW))
-        lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, device );
-    return TRUE;
 }
 
 static BOOL CDECL nulldrv_CreateDesktopWindow( HWND hwnd )

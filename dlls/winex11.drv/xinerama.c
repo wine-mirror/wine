@@ -57,18 +57,6 @@ static inline MONITORINFOEXW *get_primary(void)
     return &monitors[idx];
 }
 
-static inline HMONITOR index_to_monitor( int index )
-{
-    return (HMONITOR)(UINT_PTR)(index + 1);
-}
-
-static inline int monitor_to_index( HMONITOR handle )
-{
-    UINT_PTR index = (UINT_PTR)handle;
-    if (index < 1 || index > nb_monitors) return -1;
-    return index - 1;
-}
-
 static void query_work_area( RECT *rc_work )
 {
     Atom type;
@@ -154,8 +142,6 @@ static int query_screens(void)
             monitors[i].dwFlags          = 0;
             if (!IntersectRect( &monitors[i].rcWork, &rc_work, &monitors[i].rcMonitor ))
                 monitors[i].rcWork = monitors[i].rcMonitor;
-            /* FIXME: using the same device name for all monitors for now */
-            lstrcpyW( monitors[i].szDevice, default_monitor.szDevice );
         }
 
         get_primary()->dwFlags |= MONITORINFOF_PRIMARY;
@@ -322,6 +308,7 @@ static BOOL xinerama_get_monitors( ULONG_PTR adapter_id, struct x11drv_monitor *
         {
             lstrcpyW( monitor[index].name, generic_nonpnp_monitorW );
             monitor[index].rc_monitor = monitors[i].rcMonitor;
+            monitor[index].rc_work = monitors[i].rcWork;
             /* Xinerama only reports monitors already attached */
             monitor[index].state_flags = DISPLAY_DEVICE_ATTACHED;
             if (!IsRectEmpty( &monitors[i].rcMonitor ))
@@ -371,8 +358,8 @@ void xinerama_init( unsigned int width, unsigned int height )
         OffsetRect( &monitors[i].rcMonitor, rect.left, rect.top );
         OffsetRect( &monitors[i].rcWork, rect.left, rect.top );
         UnionRect( &virtual_screen_rect, &virtual_screen_rect, &monitors[i].rcMonitor );
-        TRACE( "monitor %p: %s work %s%s\n",
-               index_to_monitor(i), wine_dbgstr_rect(&monitors[i].rcMonitor),
+        TRACE( "monitor 0x%x: %s work %s%s\n",
+               i, wine_dbgstr_rect(&monitors[i].rcMonitor),
                wine_dbgstr_rect(&monitors[i].rcWork),
                (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
     }
@@ -389,25 +376,4 @@ void xinerama_init( unsigned int width, unsigned int height )
 
     TRACE( "virtual size: %s primary: %s\n",
            wine_dbgstr_rect(&virtual_screen_rect), wine_dbgstr_rect(&primary->rcMonitor) );
-}
-
-
-/***********************************************************************
- *		X11DRV_GetMonitorInfo  (X11DRV.@)
- */
-BOOL CDECL X11DRV_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
-{
-    int i = monitor_to_index( handle );
-
-    if (i == -1)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
-    info->rcMonitor = monitors[i].rcMonitor;
-    info->rcWork = monitors[i].rcWork;
-    info->dwFlags = monitors[i].dwFlags;
-    if (info->cbSize >= sizeof(MONITORINFOEXW))
-        lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, monitors[i].szDevice );
-    return TRUE;
 }
