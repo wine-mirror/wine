@@ -1,6 +1,6 @@
 MODULE    = kernelbase.dll
 IMPORTLIB = kernelbase
-IMPORTS   = uuid advapi32 ntdll winecrt0 kernel32
+IMPORTS   = uuid ntdll winecrt0 kernel32
 EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -mno-cygwin
 
 C_SRCS = \

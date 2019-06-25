@@ -443,3 +443,355 @@ BOOL WINAPI IsWellKnownSid( PSID sid, WELL_KNOWN_SID_TYPE type )
 
     return FALSE;
 }
+
+
+/******************************************************************************
+ * Token functions
+ ******************************************************************************/
+
+
+/******************************************************************************
+ * AdjustTokenGroups    (kernelbase.@)
+ */
+BOOL WINAPI AdjustTokenGroups( HANDLE token, BOOL reset, PTOKEN_GROUPS new,
+                               DWORD len, PTOKEN_GROUPS prev, PDWORD ret_len )
+{
+    return set_ntstatus( NtAdjustGroupsToken( token, reset, new, len, prev, ret_len ));
+}
+
+/******************************************************************************
+ * AdjustTokenPrivileges    (kernelbase.@)
+ */
+BOOL WINAPI AdjustTokenPrivileges( HANDLE token, BOOL disable, PTOKEN_PRIVILEGES new, DWORD len,
+                                   PTOKEN_PRIVILEGES prev, PDWORD ret_len )
+{
+    NTSTATUS status;
+
+    TRACE("(%p %d %p %d %p %p)\n", token, disable, new, len, prev, ret_len );
+
+    status = NtAdjustPrivilegesToken( token, disable, new, len, prev, ret_len );
+    SetLastError( RtlNtStatusToDosError( status ));
+    return (status == STATUS_SUCCESS) || (status == STATUS_NOT_ALL_ASSIGNED);
+}
+
+/******************************************************************************
+ * CheckTokenMembership    (kernelbase.@)
+ */
+BOOL WINAPI CheckTokenMembership( HANDLE token, PSID sid_to_check, PBOOL is_member )
+{
+    PTOKEN_GROUPS token_groups = NULL;
+    HANDLE thread_token = NULL;
+    DWORD size, i;
+    BOOL ret;
+
+    TRACE("(%p %s %p)\n", token, debugstr_sid(sid_to_check), is_member);
+
+    *is_member = FALSE;
+
+    if (!token)
+    {
+        if (!OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, TRUE, &thread_token))
+        {
+            HANDLE process_token;
+            ret = OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE, &process_token);
+            if (!ret)
+                goto exit;
+            ret = DuplicateTokenEx(process_token, TOKEN_QUERY, NULL, SecurityImpersonation,
+                                   TokenImpersonation, &thread_token);
+            CloseHandle(process_token);
+            if (!ret)
+                goto exit;
+        }
+        token = thread_token;
+    }
+    else
+    {
+        TOKEN_TYPE type;
+
+        ret = GetTokenInformation(token, TokenType, &type, sizeof(TOKEN_TYPE), &size);
+        if (!ret) goto exit;
+
+        if (type == TokenPrimary)
+        {
+            SetLastError(ERROR_NO_IMPERSONATION_TOKEN);
+            return FALSE;
+        }
+    }
+
+    ret = GetTokenInformation(token, TokenGroups, NULL, 0, &size);
+    if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        goto exit;
+
+    token_groups = heap_alloc(size);
+    if (!token_groups)
+    {
+        ret = FALSE;
+        goto exit;
+    }
+
+    ret = GetTokenInformation(token, TokenGroups, token_groups, size, &size);
+    if (!ret)
+        goto exit;
+
+    for (i = 0; i < token_groups->GroupCount; i++)
+    {
+        TRACE("Groups[%d]: {0x%x, %s}\n", i,
+            token_groups->Groups[i].Attributes,
+            debugstr_sid(token_groups->Groups[i].Sid));
+        if ((token_groups->Groups[i].Attributes & SE_GROUP_ENABLED) &&
+            EqualSid(sid_to_check, token_groups->Groups[i].Sid))
+        {
+            *is_member = TRUE;
+            TRACE("sid enabled and found in token\n");
+            break;
+        }
+    }
+
+exit:
+    heap_free(token_groups);
+    if (thread_token != NULL) CloseHandle(thread_token);
+    return ret;
+}
+
+/*************************************************************************
+ * CreateRestrictedToken    (kernelbase.@)
+ */
+BOOL WINAPI CreateRestrictedToken( HANDLE token, DWORD flags,
+                                   DWORD disable_count, PSID_AND_ATTRIBUTES disable_sids,
+                                   DWORD delete_count, PLUID_AND_ATTRIBUTES delete_privs,
+                                   DWORD restrict_count, PSID_AND_ATTRIBUTES restrict_sids, PHANDLE ret )
+{
+    TOKEN_TYPE type;
+    SECURITY_IMPERSONATION_LEVEL level = SecurityAnonymous;
+    DWORD size;
+
+    FIXME("(%p, 0x%x, %u, %p, %u, %p, %u, %p, %p): stub\n",
+          token, flags, disable_count, disable_sids, delete_count, delete_privs,
+          restrict_count, restrict_sids, ret );
+
+    size = sizeof(type);
+    if (!GetTokenInformation( token, TokenType, &type, size, &size )) return FALSE;
+    if (type == TokenImpersonation)
+    {
+        size = sizeof(level);
+        if (!GetTokenInformation( token, TokenImpersonationLevel, &level, size, &size ))
+            return FALSE;
+    }
+    return DuplicateTokenEx( token, MAXIMUM_ALLOWED, NULL, level, type, ret );
+}
+
+/******************************************************************************
+ * DuplicateToken    (kernelbase.@)
+ */
+BOOL WINAPI DuplicateToken( HANDLE token, SECURITY_IMPERSONATION_LEVEL level, PHANDLE ret )
+{
+    return DuplicateTokenEx( token, TOKEN_IMPERSONATE|TOKEN_QUERY, NULL, level, TokenImpersonation, ret );
+}
+
+/******************************************************************************
+ * DuplicateTokenEx    (kernelbase.@)
+ */
+BOOL WINAPI DuplicateTokenEx( HANDLE token, DWORD access, LPSECURITY_ATTRIBUTES sa,
+                              SECURITY_IMPERSONATION_LEVEL level, TOKEN_TYPE type, PHANDLE ret )
+{
+    OBJECT_ATTRIBUTES attr;
+
+    TRACE("%p 0x%08x 0x%08x 0x%08x %p\n", token, access, level, type, ret );
+
+    InitializeObjectAttributes( &attr, NULL, (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0,
+                                NULL, sa ? sa->lpSecurityDescriptor : NULL );
+    return set_ntstatus( NtDuplicateToken( token, access, &attr, level, type, ret ));
+}
+
+/******************************************************************************
+ * GetTokenInformation    (kernelbase.@)
+ */
+BOOL WINAPI GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS class,
+                                 LPVOID info, DWORD len, LPDWORD retlen )
+{
+    TRACE("(%p, %s, %p, %d, %p):\n",
+          token,
+          (class == TokenUser) ? "TokenUser" :
+          (class == TokenGroups) ? "TokenGroups" :
+          (class == TokenPrivileges) ? "TokenPrivileges" :
+          (class == TokenOwner) ? "TokenOwner" :
+          (class == TokenPrimaryGroup) ? "TokenPrimaryGroup" :
+          (class == TokenDefaultDacl) ? "TokenDefaultDacl" :
+          (class == TokenSource) ? "TokenSource" :
+          (class == TokenType) ? "TokenType" :
+          (class == TokenImpersonationLevel) ? "TokenImpersonationLevel" :
+          (class == TokenStatistics) ? "TokenStatistics" :
+          (class == TokenRestrictedSids) ? "TokenRestrictedSids" :
+          (class == TokenSessionId) ? "TokenSessionId" :
+          (class == TokenGroupsAndPrivileges) ? "TokenGroupsAndPrivileges" :
+          (class == TokenSessionReference) ? "TokenSessionReference" :
+          (class == TokenSandBoxInert) ? "TokenSandBoxInert" :
+          "Unknown",
+          info, len, retlen);
+
+    return set_ntstatus( NtQueryInformationToken( token, class, info, len, retlen ));
+}
+
+/******************************************************************************
+ * ImpersonateAnonymousToken    (kernelbase.@)
+ */
+BOOL WINAPI ImpersonateAnonymousToken( HANDLE thread )
+{
+    TRACE("(%p)\n", thread);
+    return set_ntstatus( NtImpersonateAnonymousToken( thread ) );
+}
+
+/******************************************************************************
+ * ImpersonateLoggedOnUser    (kernelbase.@)
+ */
+BOOL WINAPI ImpersonateLoggedOnUser( HANDLE token )
+{
+    DWORD size;
+    BOOL ret;
+    HANDLE dup;
+    TOKEN_TYPE type;
+    static BOOL warn = TRUE;
+
+    if (warn)
+    {
+        FIXME( "(%p)\n", token );
+        warn = FALSE;
+    }
+    if (!GetTokenInformation( token, TokenType, &type, sizeof(type), &size )) return FALSE;
+
+    if (type == TokenPrimary)
+    {
+        if (!DuplicateToken( token, SecurityImpersonation, &dup )) return FALSE;
+        ret = SetThreadToken( NULL, dup );
+        NtClose( dup );
+    }
+    else ret = SetThreadToken( NULL, token );
+
+    return ret;
+}
+
+/******************************************************************************
+ * ImpersonateNamedPipeClient    (kernelbase.@)
+ */
+BOOL WINAPI ImpersonateNamedPipeClient( HANDLE pipe )
+{
+    IO_STATUS_BLOCK io_block;
+
+    return set_ntstatus( NtFsControlFile( pipe, NULL, NULL, NULL, &io_block,
+                                          FSCTL_PIPE_IMPERSONATE, NULL, 0, NULL, 0 ));
+}
+
+/******************************************************************************
+ * ImpersonateSelf    (kernelbase.@)
+ */
+BOOL WINAPI ImpersonateSelf( SECURITY_IMPERSONATION_LEVEL level )
+{
+    return set_ntstatus( RtlImpersonateSelf( level ) );
+}
+
+/******************************************************************************
+ * IsTokenRestricted    (kernelbase.@)
+ */
+BOOL WINAPI IsTokenRestricted( HANDLE token )
+{
+    TOKEN_GROUPS *groups;
+    DWORD size;
+    NTSTATUS status;
+    BOOL restricted;
+
+    TRACE("(%p)\n", token);
+
+    status = NtQueryInformationToken(token, TokenRestrictedSids, NULL, 0, &size);
+    if (status != STATUS_BUFFER_TOO_SMALL) return set_ntstatus(status);
+
+    groups = heap_alloc(size);
+    if (!groups)
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+
+    status = NtQueryInformationToken(token, TokenRestrictedSids, groups, size, &size);
+    if (status != STATUS_SUCCESS)
+    {
+        heap_free(groups);
+        return set_ntstatus(status);
+    }
+
+    restricted = groups->GroupCount > 0;
+    heap_free(groups);
+
+    return restricted;
+}
+
+/******************************************************************************
+ * OpenProcessToken    (kernelbase.@)
+ */
+BOOL WINAPI OpenProcessToken( HANDLE process, DWORD access, HANDLE *handle )
+{
+    return set_ntstatus( NtOpenProcessToken( process, access, handle ));
+}
+
+/******************************************************************************
+ * OpenThreadToken    (kernelbase.@)
+ */
+BOOL WINAPI OpenThreadToken( HANDLE thread, DWORD access, BOOL self, HANDLE *handle )
+{
+    return set_ntstatus( NtOpenThreadToken( thread, access, self, handle ));
+}
+
+/******************************************************************************
+ * PrivilegeCheck    (kernelbase.@)
+ */
+BOOL WINAPI PrivilegeCheck( HANDLE token, PPRIVILEGE_SET privs, LPBOOL result )
+{
+    BOOLEAN res;
+    BOOL ret = set_ntstatus( NtPrivilegeCheck( token, privs, &res ));
+    if (ret) *result = res;
+    return ret;
+}
+
+/******************************************************************************
+ * RevertToSelf    (kernelbase.@)
+ */
+BOOL WINAPI RevertToSelf(void)
+{
+    return SetThreadToken( NULL, 0 );
+}
+
+/*************************************************************************
+ * SetThreadToken    (kernelbase.@)
+ */
+BOOL WINAPI SetThreadToken( PHANDLE thread, HANDLE token )
+{
+    return set_ntstatus( NtSetInformationThread( thread ? *thread : GetCurrentThread(),
+                                                 ThreadImpersonationToken, &token, sizeof(token) ));
+}
+
+/******************************************************************************
+ * SetTokenInformation    (kernelbase.@)
+ */
+BOOL WINAPI SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS class, LPVOID info, DWORD len )
+{
+    TRACE("(%p, %s, %p, %d)\n",
+          token,
+          (class == TokenUser) ? "TokenUser" :
+          (class == TokenGroups) ? "TokenGroups" :
+          (class == TokenPrivileges) ? "TokenPrivileges" :
+          (class == TokenOwner) ? "TokenOwner" :
+          (class == TokenPrimaryGroup) ? "TokenPrimaryGroup" :
+          (class == TokenDefaultDacl) ? "TokenDefaultDacl" :
+          (class == TokenSource) ? "TokenSource" :
+          (class == TokenType) ? "TokenType" :
+          (class == TokenImpersonationLevel) ? "TokenImpersonationLevel" :
+          (class == TokenStatistics) ? "TokenStatistics" :
+          (class == TokenRestrictedSids) ? "TokenRestrictedSids" :
+          (class == TokenSessionId) ? "TokenSessionId" :
+          (class == TokenGroupsAndPrivileges) ? "TokenGroupsAndPrivileges" :
+          (class == TokenSessionReference) ? "TokenSessionReference" :
+          (class == TokenSandBoxInert) ? "TokenSandBoxInert" :
+          "Unknown",
+          info, len);
+
+    return set_ntstatus( NtSetInformationToken( token, class, info, len ));
+}

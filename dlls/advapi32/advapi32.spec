@@ -29,8 +29,8 @@
 @ stdcall AddMandatoryAce(ptr long long long ptr)
 # @ stub AddUsersToEncryptedFile
 # @ stub AddUsersToEncryptedFileEx
-@ stdcall AdjustTokenGroups(long long ptr long ptr ptr)
-@ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr)
+@ stdcall -import AdjustTokenGroups(long long ptr long ptr ptr)
+@ stdcall -import AdjustTokenPrivileges(long long ptr long ptr ptr)
 @ stdcall -import AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
 @ stdcall -import AllocateLocallyUniqueId(ptr)
 @ stdcall AreAllAccessesGranted(long long)
@@ -94,7 +94,7 @@
 @ stdcall ChangeServiceConfigA(long long long long wstr str ptr str str str str)
 @ stdcall ChangeServiceConfigW(long long long long wstr wstr ptr wstr wstr wstr wstr)
 # @ stub CheckForHiberboot
-@ stdcall CheckTokenMembership(long ptr ptr)
+@ stdcall -import CheckTokenMembership(long ptr ptr)
 @ stdcall ClearEventLogA (long str)
 @ stdcall ClearEventLogW (long wstr)
 # @ stub CloseCodeAuthzLevel
@@ -142,7 +142,7 @@
 @ stdcall CreateProcessAsUserW(long wstr wstr ptr ptr long long ptr wstr ptr ptr) kernel32.CreateProcessAsUserW
 @ stdcall CreateProcessWithLogonW(wstr wstr wstr long wstr wstr long ptr wstr ptr ptr)
 @ stdcall CreateProcessWithTokenW(long long wstr wstr long ptr wstr ptr ptr)
-@ stdcall CreateRestrictedToken(long long long ptr long ptr long ptr ptr)
+@ stdcall -import CreateRestrictedToken(long long long ptr long ptr long ptr ptr)
 @ stdcall CreateServiceA(long str str long long long long str str ptr str str str)
 @ stdcall CreateServiceW(long wstr wstr long long long long wstr wstr ptr wstr wstr wstr)
 # @ stub CreateTraceInstanceId
@@ -239,8 +239,8 @@
 @ stdcall DeregisterEventSource(long)
 @ stdcall DestroyPrivateObjectSecurity(ptr)
 # @ stub DuplicateEncryptionInfoFile
-@ stdcall DuplicateToken(long long ptr)
-@ stdcall DuplicateTokenEx(long long ptr long long ptr)
+@ stdcall -import DuplicateToken(long long ptr)
+@ stdcall -import DuplicateTokenEx(long long ptr long long ptr)
 # @ stub ElfBackupEventLogFileA
 # @ stub ElfBackupEventLogFileW
 # @ stub ElfChangeNotify
@@ -371,7 +371,7 @@
 @ stub GetSiteSidFromToken
 # @ stub GetStringConditionFromBinary
 # @ stub GetThreadWaitChain
-@ stdcall GetTokenInformation(long long ptr long ptr)
+@ stdcall -import GetTokenInformation(long long ptr long ptr)
 @ stdcall GetTraceEnableFlags(int64) ntdll.EtwGetTraceEnableFlags
 @ stdcall GetTraceEnableLevel(int64) ntdll.EtwGetTraceEnableLevel
 @ stdcall -ret64 GetTraceLoggerHandle(ptr) ntdll.EtwGetTraceLoggerHandle
@@ -398,10 +398,10 @@
 # @ stub I_ScSetServiceBitsW
 # @ stub I_ScValidatePnPService
 # @ stub IdentifyCodeAuthzLevelW
-@ stdcall ImpersonateAnonymousToken(long)
-@ stdcall ImpersonateLoggedOnUser(long)
-@ stdcall ImpersonateNamedPipeClient(long)
-@ stdcall ImpersonateSelf(long)
+@ stdcall -import ImpersonateAnonymousToken(long)
+@ stdcall -import ImpersonateLoggedOnUser(long)
+@ stdcall -import ImpersonateNamedPipeClient(long)
+@ stdcall -import ImpersonateSelf(long)
 @ stdcall InitializeAcl(ptr long long)
 @ stdcall InitializeSecurityDescriptor(ptr long)
 @ stdcall -import InitializeSid(ptr ptr long)
@@ -414,7 +414,7 @@
 @ stub InstallApplication
 @ stub IsProcessRestricted
 @ stdcall IsTextUnicode(ptr long ptr)
-@ stdcall IsTokenRestricted(long)
+@ stdcall -import IsTokenRestricted(long)
 # @ stub IsTokenUntrusted
 @ stdcall IsValidAcl(ptr)
 # @ stub IsValidRelativeSecurityDescriptor
@@ -542,12 +542,12 @@
 @ stdcall OpenEncryptedFileRawW(wstr long ptr)
 @ stdcall OpenEventLogA (str str)
 @ stdcall OpenEventLogW (wstr wstr)
-@ stdcall OpenProcessToken(long long ptr)
+@ stdcall -import OpenProcessToken(long long ptr)
 @ stdcall OpenSCManagerA(str str long)
 @ stdcall OpenSCManagerW(wstr wstr long)
 @ stdcall OpenServiceA(long str long)
 @ stdcall OpenServiceW(long wstr long)
-@ stdcall OpenThreadToken(long long long ptr)
+@ stdcall -import OpenThreadToken(long long long ptr)
 # @ stub OpenThreadWaitChainSession
 @ stdcall -ret64 OpenTraceA(ptr)
 @ stdcall -ret64 OpenTraceW(ptr)
@@ -582,7 +582,7 @@
 @ stdcall PerfStartProvider(ptr ptr ptr)
 @ stdcall PerfStartProviderEx(ptr ptr ptr)
 @ stdcall PerfStopProvider(long)
-@ stdcall PrivilegeCheck(ptr ptr ptr)
+@ stdcall -import PrivilegeCheck(ptr ptr ptr)
 @ stdcall PrivilegedServiceAuditAlarmA(str str long ptr long)
 @ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)
 # @ stub ProcessIdleTasks
@@ -712,7 +712,7 @@
 # @ stub RemoveUsersFromEncryptedFile
 @ stdcall ReportEventA(long long long long ptr long long ptr ptr)
 @ stdcall ReportEventW(long long long long ptr long long ptr ptr)
-@ stdcall RevertToSelf()
+@ stdcall -import RevertToSelf()
 # @ stub SafeBaseRegGetKeySecurity
 @ stdcall SaferCloseLevel(ptr)
 @ stdcall SaferComputeTokenFromLevel(ptr ptr ptr long ptr)
@@ -763,8 +763,8 @@
 @ stdcall SetServiceBits(long long long long)
 @ stdcall SetServiceObjectSecurity(long long ptr)
 @ stdcall SetServiceStatus(long ptr)
-@ stdcall SetThreadToken (ptr ptr)
-@ stdcall SetTokenInformation (long long ptr long)
+@ stdcall -import SetThreadToken(ptr ptr)
+@ stdcall -import SetTokenInformation(long long ptr long)
 # @ stub SetTraceCallback
 # @ stub SetUserFileEncryptionKey
 # @ stub SetUserFileEncryptionKeyEx

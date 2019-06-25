@@ -27,8 +27,8 @@
 # @ stub AddScopedPolicyIDAce
 @ stdcall AddVectoredContinueHandler(long ptr) kernel32.AddVectoredContinueHandler
 @ stdcall AddVectoredExceptionHandler(long ptr) kernel32.AddVectoredExceptionHandler
-@ stdcall AdjustTokenGroups(long long ptr long ptr ptr) advapi32.AdjustTokenGroups
-@ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr) advapi32.AdjustTokenPrivileges
+@ stdcall AdjustTokenGroups(long long ptr long ptr ptr)
+@ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr)
 @ stdcall AllocConsole() kernel32.AllocConsole
 @ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
 @ stdcall AllocateLocallyUniqueId(ptr)
@@ -128,7 +128,7 @@
 # @ stub CheckIfStateChangeNotificationExists
 @ stdcall CheckRemoteDebuggerPresent(long ptr) kernel32.CheckRemoteDebuggerPresent
 # @ stub CheckTokenCapability
-@ stdcall CheckTokenMembership(long ptr ptr) advapi32.CheckTokenMembership
+@ stdcall CheckTokenMembership(long ptr ptr)
 # @ stub CheckTokenMembershipEx
 @ stdcall ChrCmpIA(long long)
 @ stdcall ChrCmpIW(long long)
@@ -213,7 +213,7 @@
 @ stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr) kernel32.CreateProcessW
 @ stdcall CreateRemoteThread(long ptr long ptr long long ptr) kernel32.CreateRemoteThread
 @ stdcall CreateRemoteThreadEx(long ptr long ptr ptr long ptr ptr) kernel32.CreateRemoteThreadEx
-@ stdcall CreateRestrictedToken(long long long ptr long ptr long ptr ptr) advapi32.CreateRestrictedToken
+@ stdcall CreateRestrictedToken(long long long ptr long ptr long ptr ptr)
 @ stdcall CreateSemaphoreExW(ptr long long wstr long long) kernel32.CreateSemaphoreExW
 @ stdcall CreateSemaphoreW(ptr long long wstr) kernel32.CreateSemaphoreW
 # @ stub CreateStateAtom
@@ -281,8 +281,8 @@
 # @ stub DsWriteNgcKeyW
 @ stdcall DuplicateHandle(long long long ptr long long long) kernel32.DuplicateHandle
 # @ stub DuplicateStateContainerHandle
-@ stdcall DuplicateToken(long long ptr) advapi32.DuplicateToken
-@ stdcall DuplicateTokenEx(long long ptr long long ptr) advapi32.DuplicateTokenEx
+@ stdcall DuplicateToken(long long ptr)
+@ stdcall DuplicateTokenEx(long long ptr long long ptr)
 # @ stub EmptyWorkingSet
 @ stdcall EncodePointer(ptr) kernel32.EncodePointer
 # @ stub EncodeRemotePointer
@@ -733,7 +733,7 @@
 @ stdcall GetTimeFormatW(long long ptr wstr ptr long) kernel32.GetTimeFormatW
 @ stdcall GetTimeZoneInformation(ptr) kernel32.GetTimeZoneInformation
 @ stdcall GetTimeZoneInformationForYear(long ptr ptr) kernel32.GetTimeZoneInformationForYear
-@ stdcall GetTokenInformation(long long ptr long ptr) advapi32.GetTokenInformation
+@ stdcall GetTokenInformation(long long ptr long ptr)
 @ stdcall GetTraceEnableFlags(int64) ntdll.EtwGetTraceEnableFlags
 @ stdcall GetTraceEnableLevel(int64) ntdll.EtwGetTraceEnableLevel
 @ stdcall -ret64 GetTraceLoggerHandle(ptr) ntdll.EtwGetTraceLoggerHandle
@@ -789,10 +789,10 @@
 @ stdcall IdnToAscii(long wstr long ptr long) kernel32.IdnToAscii
 @ stdcall IdnToNameprepUnicode(long wstr long ptr long) kernel32.IdnToNameprepUnicode
 @ stdcall IdnToUnicode(long wstr long ptr long) kernel32.IdnToUnicode
-@ stdcall ImpersonateAnonymousToken(long) advapi32.ImpersonateAnonymousToken
-@ stdcall ImpersonateLoggedOnUser(long) advapi32.ImpersonateLoggedOnUser
-@ stdcall ImpersonateNamedPipeClient(long) advapi32.ImpersonateNamedPipeClient
-@ stdcall ImpersonateSelf(long) advapi32.ImpersonateSelf
+@ stdcall ImpersonateAnonymousToken(long)
+@ stdcall ImpersonateLoggedOnUser(long)
+@ stdcall ImpersonateNamedPipeClient(long)
+@ stdcall ImpersonateSelf(long)
 # @ stub IncrementPackageStatusVersion
 @ stdcall InitOnceBeginInitialize(ptr long ptr ptr) kernel32.InitOnceBeginInitialize
 @ stdcall InitOnceComplete(ptr long ptr) kernel32.InitOnceComplete
@@ -873,7 +873,7 @@
 @ stdcall IsThreadAFiber() kernel32.IsThreadAFiber
 @ stdcall IsThreadpoolTimerSet(ptr) kernel32.IsThreadpoolTimerSet
 # @ stub IsTimeZoneRedirectionEnabled
-@ stdcall IsTokenRestricted(long) advapi32.IsTokenRestricted
+@ stdcall IsTokenRestricted(long)
 @ stdcall IsValidAcl(ptr) advapi32.IsValidAcl
 @ stdcall IsValidCodePage(long) kernel32.IsValidCodePage
 @ stdcall IsValidLanguageGroup(long long) kernel32.IsValidLanguageGroup
@@ -992,7 +992,7 @@
 # @ stub OpenPackageInfoByFullNameForUser
 # @ stub OpenPrivateNamespaceW
 @ stdcall OpenProcess(long long long) kernel32.OpenProcess
-@ stdcall OpenProcessToken(long long ptr) advapi32.OpenProcessToken
+@ stdcall OpenProcessToken(long long ptr)
 @ stub OpenRegKey
 @ stdcall OpenSemaphoreW(long long wstr) kernel32.OpenSemaphoreW
 # @ stub OpenState
@@ -1001,7 +1001,7 @@
 # @ stub OpenStateExplicitForUserSid
 # @ stub OpenStateExplicitForUserSidString
 @ stdcall OpenThread(long long long) kernel32.OpenThread
-@ stdcall OpenThreadToken(long long long ptr) advapi32.OpenThreadToken
+@ stdcall OpenThreadToken(long long long ptr)
 @ stdcall OpenWaitableTimerW(long long wstr) kernel32.OpenWaitableTimerW
 @ stdcall OutputDebugStringA(str) kernel32.OutputDebugStringA
 @ stdcall OutputDebugStringW(wstr) kernel32.OutputDebugStringW
@@ -1163,7 +1163,7 @@
 @ stdcall PostQueuedCompletionStatus(long long ptr ptr) kernel32.PostQueuedCompletionStatus
 # @ stub PrefetchVirtualMemory
 @ stub PrivCopyFileExW
-@ stdcall PrivilegeCheck(ptr ptr ptr) advapi32.PrivilegeCheck
+@ stdcall PrivilegeCheck(ptr ptr ptr)
 @ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long) advapi32.PrivilegedServiceAuditAlarmW
 @ stdcall ProcessIdToSessionId(long ptr) kernel32.ProcessIdToSessionId
 # @ stub ProductIdFromPackageFamilyName
@@ -1349,7 +1349,7 @@
 @ stdcall ResolveLocaleName(wstr ptr long) kernel32.ResolveLocaleName
 @ stdcall RestoreLastError(long) kernel32.RestoreLastError
 @ stdcall ResumeThread(long) kernel32.ResumeThread
-@ stdcall RevertToSelf() advapi32.RevertToSelf
+@ stdcall RevertToSelf()
 # @ stub RsopLoggingEnabledInternal
 # @ stub SHCoCreateInstance
 @ stdcall SHExpandEnvironmentStringsA(str ptr long) kernel32.ExpandEnvironmentStringsA
@@ -1491,7 +1491,7 @@
 @ stdcall SetThreadPriorityBoost(long long) kernel32.SetThreadPriorityBoost
 # @ stub SetThreadSelectedCpuSets
 @ stdcall SetThreadStackGuarantee(ptr) kernel32.SetThreadStackGuarantee
-@ stdcall SetThreadToken(ptr ptr) advapi32.SetThreadToken
+@ stdcall SetThreadToken(ptr ptr)
 @ stdcall SetThreadUILanguage(long) kernel32.SetThreadUILanguage
 @ stub SetThreadpoolStackInformation
 @ stdcall SetThreadpoolThreadMaximum(ptr long) kernel32.SetThreadpoolThreadMaximum
@@ -1501,7 +1501,7 @@
 @ stdcall SetThreadpoolWait(ptr long ptr) kernel32.SetThreadpoolWait
 # @ stub SetThreadpoolWaitEx
 @ stdcall SetTimeZoneInformation(ptr) kernel32.SetTimeZoneInformation
-@ stdcall SetTokenInformation(long long ptr long) advapi32.SetTokenInformation
+@ stdcall SetTokenInformation(long long ptr long)
 @ stdcall SetUnhandledExceptionFilter(ptr) kernel32.SetUnhandledExceptionFilter
 @ stdcall SetUserGeoID(long) kernel32.SetUserGeoID
 @ stdcall SetWaitableTimer(long ptr long ptr ptr long) kernel32.SetWaitableTimer
