@@ -1,4 +1,6 @@
 MODULE    = vdhcp.vxd
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	vdhcp.c
