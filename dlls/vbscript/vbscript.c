@@ -105,7 +105,7 @@ IDispatch *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned flag
     HRESULT hres;
 
     LIST_FOR_EACH_ENTRY(item, &ctx->named_items, named_item_t, entry) {
-        if((item->flags & flags) == flags && !strcmpiW(item->name, name)) {
+        if((item->flags & flags) == flags && !wcsicmp(item->name, name)) {
             if(!item->disp) {
                 IUnknown *unk;
 

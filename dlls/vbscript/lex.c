@@ -16,11 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <limits.h>
+#include <math.h>
 
 #include "vbscript.h"
 #include "parse.h"
@@ -153,7 +151,7 @@ static const struct {
 
 static inline BOOL is_identifier_char(WCHAR c)
 {
-    return isalnumW(c) || c == '_';
+    return iswalnum(c) || c == '_';
 }
 
 static int check_keyword(parser_ctx_t *ctx, const WCHAR *word, const WCHAR **lval)
@@ -163,7 +161,7 @@ static int check_keyword(parser_ctx_t *ctx, const WCHAR *word, const WCHAR **lva
     WCHAR c;
 
     while(p1 < ctx->end && *p2) {
-        c = tolowerW(*p1);
+        c = towlower(*p1);
         if(c != *p2)
             return c - *p2;
         p1++;
@@ -271,7 +269,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
     if(*ctx->ptr == '0' && !('0' <= ctx->ptr[1] && ctx->ptr[1] <= '9') && ctx->ptr[1] != '.')
         return *ctx->ptr++;
 
-    while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+    while(ctx->ptr < ctx->end && iswdigit(*ctx->ptr)) {
         hlp = d*10 + *(ctx->ptr++) - '0';
         if(d>MAXLONGLONG/10 || hlp<0) {
             exp++;
@@ -280,7 +278,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
         else
             d = hlp;
     }
-    while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+    while(ctx->ptr < ctx->end && iswdigit(*ctx->ptr)) {
         exp++;
         ctx->ptr++;
     }
@@ -289,7 +287,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
         use_int = FALSE;
         ctx->ptr++;
 
-        while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+        while(ctx->ptr < ctx->end && iswdigit(*ctx->ptr)) {
             hlp = d*10 + *(ctx->ptr++) - '0';
             if(d>MAXLONGLONG/10 || hlp<0)
                 break;
@@ -297,7 +295,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
             d = hlp;
             exp--;
         }
-        while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
+        while(ctx->ptr < ctx->end && iswdigit(*ctx->ptr))
             ctx->ptr++;
     }
 
@@ -309,7 +307,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
             sign = -1;
         }
 
-        if(!isdigitW(*ctx->ptr)) {
+        if(!iswdigit(*ctx->ptr)) {
             FIXME("Invalid numeric literal\n");
             return 0;
         }
@@ -320,7 +318,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
             e = e*10 + *(ctx->ptr++) - '0';
             if(sign == -1 && -e+exp < -(INT_MAX/100)) {
                 /* The literal will be rounded to 0 anyway. */
-                while(isdigitW(*ctx->ptr))
+                while(iswdigit(*ctx->ptr))
                     ctx->ptr++;
                 *(double*)ret = 0;
                 return tDouble;
@@ -330,7 +328,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
                 FIXME("Invalid numeric literal\n");
                 return 0;
             }
-        } while(isdigitW(*ctx->ptr));
+        } while(iswdigit(*ctx->ptr));
 
         exp += sign*e;
     }
@@ -391,7 +389,7 @@ static void skip_spaces(parser_ctx_t *ctx)
 static int comment_line(parser_ctx_t *ctx)
 {
     static const WCHAR newlineW[] = {'\n','\r',0};
-    ctx->ptr = strpbrkW(ctx->ptr, newlineW);
+    ctx->ptr = wcspbrk(ctx->ptr, newlineW);
     if(ctx->ptr)
         ctx->ptr++;
     else
@@ -412,7 +410,7 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
     if('0' <= c && c <= '9')
         return parse_numeric_literal(ctx, lval);
 
-    if(isalphaW(c)) {
+    if(iswalpha(c)) {
         int ret = check_keywords(ctx, lval);
         if(!ret)
             return parse_identifier(ctx, lval);

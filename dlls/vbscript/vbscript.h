@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <stdint.h>
 
 #define COBJMACROS
 
@@ -31,7 +32,6 @@
 
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 typedef struct {
     void **blocks;
@@ -378,14 +378,6 @@ TID_LIST
 HRESULT get_typeinfo(tid_t,ITypeInfo**) DECLSPEC_HIDDEN;
 void release_regexp_typelib(void) DECLSPEC_HIDDEN;
 
-#ifndef INT32_MIN
-#define INT32_MIN (-2147483647-1)
-#endif
-
-#ifndef INT32_MAX
-#define INT32_MAX (2147483647)
-#endif
-
 static inline BOOL is_int32(double d)
 {
     return INT32_MIN <= d && d <= INT32_MAX && (double)(int)d == d;
@@ -441,7 +433,7 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
     if(str) {
         DWORD size;
 
-        size = (strlenW(str)+1)*sizeof(WCHAR);
+        size = (lstrlenW(str)+1)*sizeof(WCHAR);
         ret = heap_alloc(size);
         if(ret)
             memcpy(ret, str, size);

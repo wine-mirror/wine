@@ -47,7 +47,7 @@ static BOOL get_func_id(vbdisp_t *This, const WCHAR *name, vbdisp_invoke_type_t 
                 continue;
         }
 
-        if(!strcmpiW(This->desc->funcs[i].name, name)) {
+        if(!wcsicmp(This->desc->funcs[i].name, name)) {
             *id = i;
             return TRUE;
         }
@@ -67,7 +67,7 @@ HRESULT vbdisp_get_id(vbdisp_t *This, BSTR name, vbdisp_invoke_type_t invoke_typ
         if(!search_private && !This->desc->props[i].is_public)
             continue;
 
-        if(!strcmpiW(This->desc->props[i].name, name)) {
+        if(!wcsicmp(This->desc->props[i].name, name)) {
             *id = i + This->desc->func_cnt;
             return S_OK;
         }
@@ -823,14 +823,14 @@ static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
         return E_UNEXPECTED;
 
     for(ident = This->ident_map; ident < This->ident_map+This->ident_map_cnt; ident++) {
-        if(!strcmpiW(ident->name, bstrName)) {
+        if(!wcsicmp(ident->name, bstrName)) {
             *pid = ident_to_id(This, ident);
             return S_OK;
         }
     }
 
     for(var = This->ctx->global_vars; var; var = var->next) {
-        if(!strcmpiW(var->name, bstrName)) {
+        if(!wcsicmp(var->name, bstrName)) {
             ident = add_ident(This, var->name);
             if(!ident)
                 return E_OUTOFMEMORY;
@@ -843,7 +843,7 @@ static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     }
 
     for(func = This->ctx->global_funcs; func; func = func->next) {
-        if(!strcmpiW(func->name, bstrName)) {
+        if(!wcsicmp(func->name, bstrName)) {
             ident = add_ident(This, func->name);
             if(!ident)
                 return E_OUTOFMEMORY;

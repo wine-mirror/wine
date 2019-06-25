@@ -329,7 +329,7 @@ static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, unsigned type, BSTR o
         if(orig_title && *orig_title) {
             WCHAR *ptr;
 
-            title = title_buf = heap_alloc(sizeof(vbscriptW) + (strlenW(orig_title)+2)*sizeof(WCHAR));
+            title = title_buf = heap_alloc(sizeof(vbscriptW) + (lstrlenW(orig_title)+2)*sizeof(WCHAR));
             if(!title)
                 return E_OUTOFMEMORY;
 
@@ -338,7 +338,7 @@ static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, unsigned type, BSTR o
 
             *ptr++ = ':';
             *ptr++ = ' ';
-            strcpyW(ptr, orig_title);
+            lstrcpyW(ptr, orig_title);
         }else {
             title = vbscriptW;
         }
@@ -1094,7 +1094,7 @@ static HRESULT Global_StrComp(vbdisp_t *This, VARIANT *args, unsigned args_cnt, 
         return hres;
     }
 
-    ret = mode ? strcmpiW(left, right) : strcmpW(left, right);
+    ret = mode ? wcsicmp(left, right) : wcscmp(left, right);
     val = ret < 0 ? -1 : (ret > 0 ? 1 : 0);
 
     SysFreeString(left);
@@ -1123,7 +1123,7 @@ static HRESULT Global_LCase(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
         WCHAR *ptr;
 
         for(ptr = str; *ptr; ptr++)
-            *ptr = tolowerW(*ptr);
+            *ptr = towlower(*ptr);
 
         V_VT(res) = VT_BSTR;
         V_BSTR(res) = str;
@@ -1154,7 +1154,7 @@ static HRESULT Global_UCase(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
         WCHAR *ptr;
 
         for(ptr = str; *ptr; ptr++)
-            *ptr = toupperW(*ptr);
+            *ptr = towupper(*ptr);
 
         V_VT(res) = VT_BSTR;
         V_BSTR(res) = str;
@@ -1181,7 +1181,7 @@ static HRESULT Global_LTrim(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
         str = conv_str;
     }
 
-    for(ptr = str; *ptr && isspaceW(*ptr); ptr++);
+    for(ptr = str; *ptr && iswspace(*ptr); ptr++);
 
     str = SysAllocString(ptr);
     SysFreeString(conv_str);
@@ -1208,7 +1208,7 @@ static HRESULT Global_RTrim(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
         str = conv_str;
     }
 
-    for(ptr = str+SysStringLen(str); ptr-1 > str && isspaceW(*(ptr-1)); ptr--);
+    for(ptr = str+SysStringLen(str); ptr-1 > str && iswspace(*(ptr-1)); ptr--);
 
     str = SysAllocStringLen(str, ptr-str);
     SysFreeString(conv_str);
@@ -1235,8 +1235,8 @@ static HRESULT Global_Trim(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
         str = conv_str;
     }
 
-    for(begin_ptr = str; *begin_ptr && isspaceW(*begin_ptr); begin_ptr++);
-    for(end_ptr = str+SysStringLen(str); end_ptr-1 > begin_ptr && isspaceW(*(end_ptr-1)); end_ptr--);
+    for(begin_ptr = str; *begin_ptr && iswspace(*begin_ptr); begin_ptr++);
+    for(end_ptr = str+SysStringLen(str); end_ptr-1 > begin_ptr && iswspace(*(end_ptr-1)); end_ptr--);
 
     str = SysAllocStringLen(begin_ptr, end_ptr-begin_ptr);
     SysFreeString(conv_str);
@@ -1342,7 +1342,7 @@ static HRESULT Global_InStr(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VA
     if(start < SysStringLen(str1)) {
         WCHAR *ptr;
 
-        ptr = strstrW(str1+start, str2);
+        ptr = wcsstr(str1+start, str2);
         ret = ptr ? ptr-str1+1 : 0;
     }else {
         ret = 0;

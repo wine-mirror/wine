@@ -136,7 +136,7 @@ static WCHAR *compiler_alloc_string(vbscode_t *vbscode, const WCHAR *str)
     size_t size;
     WCHAR *ret;
 
-    size = (strlenW(str)+1)*sizeof(WCHAR);
+    size = (lstrlenW(str)+1)*sizeof(WCHAR);
     ret = compiler_alloc(vbscode, size);
     if(ret)
         memcpy(ret, str, size);
@@ -380,7 +380,7 @@ static expression_t *lookup_const_decls(compile_ctx_t *ctx, const WCHAR *name, B
     const_decl_t *decl;
 
     for(decl = ctx->const_decls; decl; decl = decl->next) {
-        if(!strcmpiW(decl->name, name))
+        if(!wcsicmp(decl->name, name))
             return decl->value_expr;
     }
 
@@ -388,7 +388,7 @@ static expression_t *lookup_const_decls(compile_ctx_t *ctx, const WCHAR *name, B
         return NULL;
 
     for(decl = ctx->global_consts; decl; decl = decl->next) {
-        if(!strcmpiW(decl->name, name))
+        if(!wcsicmp(decl->name, name))
             return decl->value_expr;
     }
 
@@ -994,7 +994,7 @@ static BOOL lookup_dim_decls(compile_ctx_t *ctx, const WCHAR *name)
     dim_decl_t *dim_decl;
 
     for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
-        if(!strcmpiW(dim_decl->name, name))
+        if(!wcsicmp(dim_decl->name, name))
             return TRUE;
     }
 
@@ -1006,7 +1006,7 @@ static BOOL lookup_args_name(compile_ctx_t *ctx, const WCHAR *name)
     unsigned i;
 
     for(i = 0; i < ctx->func->arg_cnt; i++) {
-        if(!strcmpiW(ctx->func->args[i].name, name))
+        if(!wcsicmp(ctx->func->args[i].name, name))
             return TRUE;
     }
 
@@ -1444,7 +1444,7 @@ static BOOL lookup_funcs_name(compile_ctx_t *ctx, const WCHAR *name)
     function_t *iter;
 
     for(iter = ctx->funcs; iter; iter = iter->next) {
-        if(!strcmpiW(iter->name, name))
+        if(!wcsicmp(iter->name, name))
             return TRUE;
     }
 
@@ -1511,7 +1511,7 @@ static BOOL lookup_class_name(compile_ctx_t *ctx, const WCHAR *name)
     class_desc_t *iter;
 
     for(iter = ctx->classes; iter; iter = iter->next) {
-        if(!strcmpiW(iter->name, name))
+        if(!wcsicmp(iter->name, name))
             return TRUE;
     }
 
@@ -1563,7 +1563,7 @@ static BOOL lookup_class_funcs(class_desc_t *class_desc, const WCHAR *name)
     unsigned i;
 
     for(i=0; i < class_desc->func_cnt; i++) {
-        if(class_desc->funcs[i].name && !strcmpiW(class_desc->funcs[i].name, name))
+        if(class_desc->funcs[i].name && !wcsicmp(class_desc->funcs[i].name, name))
             return TRUE;
     }
 
@@ -1619,14 +1619,14 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
             }
         }
 
-        if(!strcmpiW(class_initializeW, func_decl->name)) {
+        if(!wcsicmp(class_initializeW, func_decl->name)) {
             if(func_decl->type != FUNC_SUB) {
                 FIXME("class initializer is not sub\n");
                 return E_FAIL;
             }
 
             class_desc->class_initialize_id = i;
-        }else  if(!strcmpiW(class_terminateW, func_decl->name)) {
+        }else  if(!wcsicmp(class_terminateW, func_decl->name)) {
             if(func_decl->type != FUNC_SUB) {
                 FIXME("class terminator is not sub\n");
                 return E_FAIL;
@@ -1690,17 +1690,17 @@ static BOOL lookup_script_identifier(script_ctx_t *script, const WCHAR *identifi
     function_t *func;
 
     for(var = script->global_vars; var; var = var->next) {
-        if(!strcmpiW(var->name, identifier))
+        if(!wcsicmp(var->name, identifier))
             return TRUE;
     }
 
     for(func = script->global_funcs; func; func = func->next) {
-        if(!strcmpiW(func->name, identifier))
+        if(!wcsicmp(func->name, identifier))
             return TRUE;
     }
 
     for(class = script->classes; class; class = class->next) {
-        if(!strcmpiW(class->name, identifier))
+        if(!wcsicmp(class->name, identifier))
             return TRUE;
     }
 

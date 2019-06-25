@@ -936,7 +936,7 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
     function_decl_t *iter;
 
     for(iter = class_decl->funcs; iter; iter = iter->next) {
-        if(!strcmpiW(iter->name, decl->name)) {
+        if(!wcsicmp(iter->name, decl->name)) {
             if(decl->type == FUNC_SUB || decl->type == FUNC_FUNCTION) {
                 FIXME("Redefinition of %s::%s\n", debugstr_w(class_decl->name), debugstr_w(decl->name));
                 ctx->hres = E_FAIL;
@@ -1029,7 +1029,7 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
     static const WCHAR html_delimiterW[] = {'<','/','s','c','r','i','p','t','>',0};
 
     ctx->code = ctx->ptr = code;
-    ctx->end = ctx->code + strlenW(ctx->code);
+    ctx->end = ctx->code + lstrlenW(ctx->code);
 
     heap_pool_init(&ctx->heap);
 
@@ -1041,7 +1041,7 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
     ctx->stats = ctx->stats_tail = NULL;
     ctx->class_decls = NULL;
     ctx->option_explicit = FALSE;
-    ctx->is_html = delimiter && !strcmpiW(delimiter, html_delimiterW);
+    ctx->is_html = delimiter && !wcsicmp(delimiter, html_delimiterW);
 
     parser_parse(ctx);
 

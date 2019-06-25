@@ -83,7 +83,7 @@ typedef struct {
 static BOOL lookup_dynamic_vars(dynamic_var_t *var, const WCHAR *name, ref_t *ref)
 {
     while(var) {
-        if(!strcmpiW(var->name, name)) {
+        if(!wcsicmp(var->name, name)) {
             ref->type = var->is_const ? REF_CONST : REF_VAR;
             ref->u.v = &var->v;
             return TRUE;
@@ -108,14 +108,14 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
 
     if(invoke_type == VBDISP_LET
             && (ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET || ctx->func->type == FUNC_DEFGET)
-            && !strcmpiW(name, ctx->func->name)) {
+            && !wcsicmp(name, ctx->func->name)) {
         ref->type = REF_VAR;
         ref->u.v = &ctx->ret_val;
         return S_OK;
     }
 
     for(i=0; i < ctx->func->var_cnt; i++) {
-        if(!strcmpiW(ctx->func->vars[i].name, name)) {
+        if(!wcsicmp(ctx->func->vars[i].name, name)) {
             ref->type = REF_VAR;
             ref->u.v = ctx->vars+i;
             return TRUE;
@@ -123,7 +123,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     }
 
     for(i=0; i < ctx->func->arg_cnt; i++) {
-        if(!strcmpiW(ctx->func->args[i].name, name)) {
+        if(!wcsicmp(ctx->func->args[i].name, name)) {
             ref->type = REF_VAR;
             ref->u.v = ctx->args+i;
             return S_OK;
@@ -137,7 +137,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         if(ctx->vbthis) {
             /* FIXME: Bind such identifier while generating bytecode. */
             for(i=0; i < ctx->vbthis->desc->prop_cnt; i++) {
-                if(!strcmpiW(ctx->vbthis->desc->props[i].name, name)) {
+                if(!wcsicmp(ctx->vbthis->desc->props[i].name, name)) {
                     ref->type = REF_VAR;
                     ref->u.v = ctx->vbthis->props+i;
                     return S_OK;
@@ -168,14 +168,14 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         return S_OK;
 
     for(func = ctx->script->global_funcs; func; func = func->next) {
-        if(!strcmpiW(func->name, name)) {
+        if(!wcsicmp(func->name, name)) {
             ref->type = REF_FUNC;
             ref->u.f = func;
             return S_OK;
         }
     }
 
-    if(!strcmpiW(name, errW)) {
+    if(!wcsicmp(name, errW)) {
         ref->type = REF_OBJ;
         ref->u.obj = (IDispatch*)&ctx->script->err_obj->IDispatchEx_iface;
         return S_OK;
@@ -226,7 +226,7 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
     if(!new_var)
         return E_OUTOFMEMORY;
 
-    size = (strlenW(name)+1)*sizeof(WCHAR);
+    size = (lstrlenW(name)+1)*sizeof(WCHAR);
     str = heap_pool_alloc(heap, size);
     if(!str)
         return E_OUTOFMEMORY;
@@ -988,7 +988,7 @@ static HRESULT interp_new(exec_ctx_t *ctx)
 
     TRACE("%s\n", debugstr_w(arg));
 
-    if(!strcmpiW(arg, regexpW)) {
+    if(!wcsicmp(arg, regexpW)) {
         V_VT(&v) = VT_DISPATCH;
         hres = create_regexp(&V_DISPATCH(&v));
         if(FAILED(hres))
@@ -998,7 +998,7 @@ static HRESULT interp_new(exec_ctx_t *ctx)
     }
 
     for(class_desc = ctx->script->classes; class_desc; class_desc = class_desc->next) {
-        if(!strcmpiW(class_desc->name, arg))
+        if(!wcsicmp(class_desc->name, arg))
             break;
     }
     if(!class_desc) {
