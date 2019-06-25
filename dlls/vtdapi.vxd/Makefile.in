@@ -1,4 +1,6 @@
 MODULE    = vtdapi.vxd
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	vtdapi.c
