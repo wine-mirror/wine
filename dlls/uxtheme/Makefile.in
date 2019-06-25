@@ -3,6 +3,8 @@ IMPORTLIB = uxtheme
 IMPORTS   = user32 gdi32 advapi32
 DELAYIMPORTS = msimg32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	buffer.c \
 	draw.c \
