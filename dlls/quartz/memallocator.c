@@ -40,6 +40,7 @@ typedef struct StdMediaSample2
     struct list listentry;
     LONGLONG tMediaStart;
     LONGLONG tMediaEnd;
+    BOOL media_time_valid;
 } StdMediaSample2;
 
 typedef struct BaseMemAllocator
@@ -73,8 +74,6 @@ static const IMediaSample2Vtbl StdMediaSample2_VTable;
 static inline StdMediaSample2 *unsafe_impl_from_IMediaSample(IMediaSample * iface);
 
 #define AM_SAMPLE2_PROP_SIZE_WRITABLE FIELD_OFFSET(AM_SAMPLE2_PROPERTIES, pbBuffer)
-
-#define INVALID_MEDIA_TIME (((ULONGLONG)0x7fffffff << 32) | 0xffffffff)
 
 static HRESULT BaseMemAllocator_Init(HRESULT (* fnAlloc)(IMemAllocator *),
                                      HRESULT (* fnFree)(IMemAllocator *),
@@ -435,8 +434,7 @@ static HRESULT StdMediaSample2_Construct(BYTE * pbBuffer, LONG cbBuffer, IMemAll
     (*ppSample)->props.cbData = sizeof(AM_SAMPLE2_PROPERTIES);
     (*ppSample)->props.cbBuffer = (*ppSample)->props.lActual = cbBuffer;
     (*ppSample)->props.pbBuffer = pbBuffer;
-    (*ppSample)->tMediaStart = INVALID_MEDIA_TIME;
-    (*ppSample)->tMediaEnd = 0;
+    (*ppSample)->media_time_valid = FALSE;
 
     return S_OK;
 }
@@ -496,8 +494,7 @@ static ULONG WINAPI StdMediaSample2_Release(IMediaSample2 * iface)
             DeleteMediaType(This->props.pMediaType);
         This->props.pMediaType = NULL;
         This->props.dwSampleFlags = 0;
-        This->tMediaStart = INVALID_MEDIA_TIME;
-        This->tMediaEnd = 0;
+        This->media_time_valid = FALSE;
 
         if (This->pParent)
             IMemAllocator_ReleaseBuffer(This->pParent, (IMediaSample *)iface);
@@ -725,7 +722,7 @@ static HRESULT WINAPI StdMediaSample2_GetMediaTime(IMediaSample2 * iface, LONGLO
 
     TRACE("(%p)->(%p, %p)\n", iface, pStart, pEnd);
 
-    if (This->tMediaStart == INVALID_MEDIA_TIME)
+    if (!This->media_time_valid)
         return VFW_E_MEDIA_TIME_NOT_SET;
 
     *pStart = This->tMediaStart;
@@ -745,9 +742,10 @@ static HRESULT WINAPI StdMediaSample2_SetMediaTime(IMediaSample2 *iface, LONGLON
         if (!end) return E_POINTER;
         sample->tMediaStart = *start;
         sample->tMediaEnd = *end;
+        sample->media_time_valid = TRUE;
     }
     else
-        sample->tMediaStart = INVALID_MEDIA_TIME;
+        sample->media_time_valid = FALSE;
 
     return S_OK;
 }
