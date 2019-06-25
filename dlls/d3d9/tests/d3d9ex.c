@@ -3932,7 +3932,7 @@ static void test_format_unknown(void)
     iface = (void *)0xdeadbeef;
     hr = IDirect3DDevice9Ex_CreateRenderTargetEx(device, 64, 64,
             D3DFMT_UNKNOWN, D3DMULTISAMPLE_NONE, 0, FALSE, (IDirect3DSurface9 **)&iface, NULL, 0);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
     ok(!iface, "Got unexpected iface %p.\n", iface);
 
     iface = (void *)0xdeadbeef;
@@ -4372,8 +4372,7 @@ static void test_resource_access(void)
                 case SURFACE_RT_EX:
                     hr = IDirect3DDevice9Ex_CreateRenderTargetEx(device, 16, 16, format, D3DMULTISAMPLE_NONE,
                             0, tests[j].pool != D3DPOOL_DEFAULT, &surface, NULL, tests[j].usage);
-                    todo_wine
-                        ok(hr == (tests[j].format == FORMAT_COLOUR && !tests[j].usage ? D3D_OK : D3DERR_INVALIDCALL),
+                    ok(hr == (tests[j].format == FORMAT_COLOUR && !tests[j].usage ? D3D_OK : D3DERR_INVALIDCALL),
                                 "Test %s %u: Got unexpected hr %#x.\n", surface_types[i].name, j, hr);
                     if (FAILED(hr))
                         continue;
