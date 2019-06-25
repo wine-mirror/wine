@@ -4,10 +4,10 @@
 @ stdcall A_SHAUpdate(ptr ptr long) ntdll.A_SHAUpdate
 @ stdcall AbortSystemShutdownA(ptr)
 @ stdcall AbortSystemShutdownW(ptr)
-@ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr)
+@ stdcall -import AccessCheck(ptr long long ptr ptr ptr ptr ptr)
 @ stdcall AccessCheckAndAuditAlarmA(str ptr str str ptr long ptr long ptr ptr ptr)
-@ stdcall AccessCheckAndAuditAlarmW(wstr ptr wstr wstr ptr long ptr long ptr ptr ptr)
-@ stdcall AccessCheckByType(ptr ptr long long ptr long ptr ptr ptr ptr ptr)
+@ stdcall -import AccessCheckAndAuditAlarmW(wstr ptr wstr wstr ptr long ptr long ptr ptr ptr)
+@ stdcall -import AccessCheckByType(ptr ptr long long ptr long ptr ptr ptr ptr ptr)
 # @ stub AccessCheckByTypeAndAuditAlarmA
 # @ stub AccessCheckByTypeAndAuditAlarmW
 # @ stub AccessCheckByTypeResultList
@@ -15,26 +15,26 @@
 # @ stub AccessCheckByTypeResultListAndAuditAlarmByHandleA
 # @ stub AccessCheckByTypeResultListAndAuditAlarmByHandleW
 # @ stub AccessCheckByTypeResultListAndAuditAlarmW
-@ stdcall AddAccessAllowedAce (ptr long long ptr)
-@ stdcall AddAccessAllowedAceEx (ptr long long long ptr)
-@ stdcall AddAccessAllowedObjectAce(ptr long long long ptr ptr ptr)
-@ stdcall AddAccessDeniedAce(ptr long long ptr)
-@ stdcall AddAccessDeniedAceEx(ptr long long long ptr)
-@ stdcall AddAccessDeniedObjectAce(ptr long long long ptr ptr ptr)
-@ stdcall AddAce(ptr long long ptr long)
-@ stdcall AddAuditAccessAce(ptr long long ptr long long)
-@ stdcall AddAuditAccessAceEx(ptr long long long ptr long long)
-@ stdcall AddAuditAccessObjectAce(ptr long long long ptr ptr ptr long long)
+@ stdcall -import AddAccessAllowedAce (ptr long long ptr)
+@ stdcall -import AddAccessAllowedAceEx (ptr long long long ptr)
+@ stdcall -import AddAccessAllowedObjectAce(ptr long long long ptr ptr ptr)
+@ stdcall -import AddAccessDeniedAce(ptr long long ptr)
+@ stdcall -import AddAccessDeniedAceEx(ptr long long long ptr)
+@ stdcall -import AddAccessDeniedObjectAce(ptr long long long ptr ptr ptr)
+@ stdcall -import AddAce(ptr long long ptr long)
+@ stdcall -import AddAuditAccessAce(ptr long long ptr long long)
+@ stdcall -import AddAuditAccessAceEx(ptr long long long ptr long long)
+@ stdcall -import AddAuditAccessObjectAce(ptr long long long ptr ptr ptr long long)
 # @ stub AddConditionalAce
-@ stdcall AddMandatoryAce(ptr long long long ptr)
+@ stdcall -import AddMandatoryAce(ptr long long long ptr)
 # @ stub AddUsersToEncryptedFile
 # @ stub AddUsersToEncryptedFileEx
 @ stdcall -import AdjustTokenGroups(long long ptr long ptr ptr)
 @ stdcall -import AdjustTokenPrivileges(long long ptr long ptr ptr)
 @ stdcall -import AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
 @ stdcall -import AllocateLocallyUniqueId(ptr)
-@ stdcall AreAllAccessesGranted(long long)
-@ stdcall AreAnyAccessesGranted(long long)
+@ stdcall -import AreAllAccessesGranted(long long)
+@ stdcall -import AreAnyAccessesGranted(long long)
 # @ stub AuditComputeEffectivePolicyBySid
 # @ stub AuditComputeEffectivePolicyByToken
 # @ stub AuditEnumerateCategories
@@ -234,7 +234,7 @@
 # @ stub CveEventWrite
 @ stdcall DecryptFileA(str long)
 @ stdcall DecryptFileW(wstr long)
-@ stdcall DeleteAce(ptr long)
+@ stdcall -import DeleteAce(ptr long)
 @ stdcall DeleteService(long)
 @ stdcall DeregisterEventSource(long)
 @ stdcall -import DestroyPrivateObjectSecurity(ptr)
@@ -301,7 +301,7 @@
 @ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) ntdll.EtwEventWriteTransfer
 @ stdcall FileEncryptionStatusA(str ptr)
 @ stdcall FileEncryptionStatusW(wstr ptr)
-@ stdcall FindFirstFreeAce(ptr ptr)
+@ stdcall -import FindFirstFreeAce(ptr ptr)
 # @ stub FlushEfsCache
 @ stdcall FlushTraceA(int64 str ptr)
 @ stdcall FlushTraceW(int64 wstr ptr)
@@ -312,8 +312,8 @@
 @ stdcall -import FreeSid(ptr)
 # @ stub GetAccessPermissionsForObjectA
 # @ stub GetAccessPermissionsForObjectW
-@ stdcall GetAce(ptr long ptr)
-@ stdcall GetAclInformation(ptr ptr long long)
+@ stdcall -import GetAce(ptr long ptr)
+@ stdcall -import GetAclInformation(ptr ptr long long)
 @ stdcall GetAuditedPermissionsFromAclA(ptr ptr ptr ptr)
 @ stdcall GetAuditedPermissionsFromAclW(ptr ptr ptr ptr)
 @ stdcall GetCurrentHwProfileA(ptr)
@@ -402,7 +402,7 @@
 @ stdcall -import ImpersonateLoggedOnUser(long)
 @ stdcall -import ImpersonateNamedPipeClient(long)
 @ stdcall -import ImpersonateSelf(long)
-@ stdcall InitializeAcl(ptr long long)
+@ stdcall -import InitializeAcl(ptr long long)
 @ stdcall -import InitializeSecurityDescriptor(ptr long)
 @ stdcall -import InitializeSid(ptr ptr long)
 @ stdcall InitiateShutdownA(str str long long long)
@@ -416,7 +416,7 @@
 @ stdcall IsTextUnicode(ptr long ptr)
 @ stdcall -import IsTokenRestricted(long)
 # @ stub IsTokenUntrusted
-@ stdcall IsValidAcl(ptr)
+@ stdcall -import IsValidAcl(ptr)
 # @ stub IsValidRelativeSecurityDescriptor
 @ stdcall -import IsValidSecurityDescriptor(ptr)
 @ stdcall -import IsValidSid(ptr)
@@ -521,7 +521,7 @@
 @ stdcall -import MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 # @ stub MakeAbsoluteSD2
 @ stdcall -import MakeSelfRelativeSD(ptr ptr ptr)
-@ stdcall MapGenericMask(ptr ptr)
+@ stdcall -import MapGenericMask(ptr ptr)
 @ stdcall NotifyBootConfigStatus(long)
 @ stdcall NotifyChangeEventLog (long long)
 # @ stub NotifyServiceStatusChange
@@ -529,13 +529,13 @@
 @ stdcall NotifyServiceStatusChangeW(ptr long ptr)
 # @ stub NpGetUserName
 @ stdcall ObjectCloseAuditAlarmA(str ptr long)
-@ stdcall ObjectCloseAuditAlarmW(wstr ptr long)
+@ stdcall -import ObjectCloseAuditAlarmW(wstr ptr long)
 # @ stub ObjectDeleteAuditAlarmA
-@ stdcall ObjectDeleteAuditAlarmW(wstr ptr long)
+@ stdcall -import ObjectDeleteAuditAlarmW(wstr ptr long)
 @ stdcall ObjectOpenAuditAlarmA(str ptr str str ptr long long long ptr long long ptr)
-@ stdcall ObjectOpenAuditAlarmW(wstr ptr wstr wstr ptr long long long ptr long long ptr)
+@ stdcall -import ObjectOpenAuditAlarmW(wstr ptr wstr wstr ptr long long long ptr long long ptr)
 @ stdcall ObjectPrivilegeAuditAlarmA(str ptr long long ptr long)
-@ stdcall ObjectPrivilegeAuditAlarmW(wstr ptr long long ptr long)
+@ stdcall -import ObjectPrivilegeAuditAlarmW(wstr ptr long long ptr long)
 @ stdcall OpenBackupEventLogA (str str)
 @ stdcall OpenBackupEventLogW (wstr wstr)
 @ stdcall OpenEncryptedFileRawA(str long ptr)
@@ -584,7 +584,7 @@
 @ stdcall PerfStopProvider(long)
 @ stdcall -import PrivilegeCheck(ptr ptr ptr)
 @ stdcall PrivilegedServiceAuditAlarmA(str str long ptr long)
-@ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)
+@ stdcall -import PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)
 # @ stub ProcessIdleTasks
 # @ stub ProcessIdleTasksW
 @ stdcall ProcessTrace(ptr long ptr ptr)
@@ -731,7 +731,7 @@
 # @ stub SaferiRecordEventLogEntry
 # @ stub SaferiReplaceProcessThreadTokens
 # @ stub SaferiSearchMatchingHashRules
-@ stdcall SetAclInformation(ptr ptr long long)
+@ stdcall -import SetAclInformation(ptr ptr long long)
 # @ stub SetEncryptedFileMetadata
 # @ stub SetEntriesInAccessListA
 # @ stub SetEntriesInAccessListW

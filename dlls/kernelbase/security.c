@@ -1196,3 +1196,275 @@ BOOL WINAPI SetSecurityDescriptorSacl ( PSECURITY_DESCRIPTOR descr, BOOL present
 {
     return set_ntstatus( RtlSetSaclSecurityDescriptor( descr, present, sacl, defaulted ));
 }
+
+
+/******************************************************************************
+ * Access control functions
+ ******************************************************************************/
+
+
+/******************************************************************************
+ * AccessCheck    (kernelbase.@)
+ */
+BOOL WINAPI AccessCheck( PSECURITY_DESCRIPTOR descr, HANDLE token, DWORD access, PGENERIC_MAPPING mapping,
+                         PPRIVILEGE_SET priv, LPDWORD priv_len, LPDWORD granted, LPBOOL status )
+{
+    NTSTATUS access_status;
+    BOOL ret = set_ntstatus( NtAccessCheck( descr, token, access, mapping, priv, priv_len,
+                                            granted, &access_status ));
+    if (ret) *status = set_ntstatus( access_status );
+    return ret;
+}
+
+/******************************************************************************
+ * AccessCheckAndAuditAlarmW    (kernelbase.@)
+ */
+BOOL WINAPI AccessCheckAndAuditAlarmW( LPCWSTR subsystem, LPVOID id, LPWSTR type_name,
+                                       LPWSTR name, PSECURITY_DESCRIPTOR descr, DWORD access,
+                                       PGENERIC_MAPPING mapping, BOOL creation,
+                                       LPDWORD granted, LPBOOL status, LPBOOL on_close )
+{
+    FIXME( "stub (%s,%p,%s,%s,%p,%08x,%p,%x,%p,%p,%p)\n", debugstr_w(subsystem),
+           id, debugstr_w(type_name), debugstr_w(name), descr, access, mapping,
+           creation, granted, status, on_close );
+    return TRUE;
+}
+
+/******************************************************************************
+ * AccessCheckByType    (kernelbase.@)
+ */
+BOOL WINAPI AccessCheckByType( PSECURITY_DESCRIPTOR descr, PSID sid, HANDLE token, DWORD access,
+                               POBJECT_TYPE_LIST types, DWORD types_len, PGENERIC_MAPPING mapping,
+                               PPRIVILEGE_SET priv, LPDWORD priv_len, LPDWORD granted, LPBOOL status )
+{
+    FIXME("stub\n");
+    *status = TRUE;
+    return !*status;
+}
+
+/******************************************************************************
+ * AddAccessAllowedAce    (kernelbase.@)
+ */
+BOOL WINAPI AddAccessAllowedAce( PACL acl, DWORD rev, DWORD access, PSID sid )
+{
+    return set_ntstatus( RtlAddAccessAllowedAce( acl, rev, access, sid ));
+}
+
+/******************************************************************************
+ * AddAccessAllowedAceEx    (kernelbase.@)
+ */
+BOOL WINAPI AddAccessAllowedAceEx( PACL acl, DWORD rev, DWORD flags, DWORD access, PSID sid )
+{
+    return set_ntstatus( RtlAddAccessAllowedAceEx( acl, rev, flags, access, sid ));
+}
+
+/******************************************************************************
+ * AddAccessAllowedObjectAce    (kernelbase.@)
+ */
+BOOL WINAPI AddAccessAllowedObjectAce( PACL acl, DWORD rev, DWORD flags, DWORD access,
+                                       GUID *type, GUID *inherit, PSID sid )
+{
+    return set_ntstatus( RtlAddAccessAllowedObjectAce( acl, rev, flags, access, type, inherit, sid ));
+}
+
+/******************************************************************************
+ * AddAccessDeniedAce    (kernelbase.@)
+ */
+BOOL WINAPI AddAccessDeniedAce( PACL acl, DWORD rev, DWORD access, PSID sid )
+{
+    return set_ntstatus( RtlAddAccessDeniedAce( acl, rev, access, sid ));
+}
+
+/******************************************************************************
+ * AddAccessDeniedAceEx    (kernelbase.@)
+ */
+BOOL WINAPI AddAccessDeniedAceEx( PACL acl, DWORD rev, DWORD flags, DWORD access, PSID sid )
+{
+    return set_ntstatus( RtlAddAccessDeniedAceEx( acl, rev, flags, access, sid ));
+}
+
+/******************************************************************************
+ * AddAccessDeniedObjectAce    (kernelbase.@)
+ */
+BOOL WINAPI AddAccessDeniedObjectAce( PACL acl, DWORD rev, DWORD flags, DWORD access,
+                                      GUID *type, GUID *inherit, PSID sid )
+{
+    return set_ntstatus( RtlAddAccessDeniedObjectAce( acl, rev, flags, access, type, inherit, sid ));
+}
+
+/******************************************************************************
+ * AddAce    (kernelbase.@)
+ */
+BOOL WINAPI AddAce( PACL acl, DWORD rev, DWORD index, LPVOID list, DWORD len )
+{
+    return set_ntstatus( RtlAddAce( acl, rev, index, list, len ));
+}
+
+/******************************************************************************
+ * AddAuditAccessAce    (kernelbase.@)
+ */
+BOOL WINAPI AddAuditAccessAce( PACL acl, DWORD rev, DWORD access, PSID sid, BOOL success, BOOL failure )
+{
+    return set_ntstatus( RtlAddAuditAccessAce( acl, rev, access, sid, success, failure ));
+}
+
+/******************************************************************************
+ * AddAuditAccessAceEx    (kernelbase.@)
+ */
+BOOL WINAPI AddAuditAccessAceEx( PACL acl, DWORD rev, DWORD flags, DWORD access,
+                                 PSID sid, BOOL success, BOOL failure )
+{
+    return set_ntstatus( RtlAddAuditAccessAceEx( acl, rev, flags, access, sid, success, failure ));
+}
+
+/******************************************************************************
+ * AddAuditAccessObjectAce    (kernelbase.@)
+ */
+BOOL WINAPI AddAuditAccessObjectAce( PACL acl, DWORD rev, DWORD flags, DWORD access,
+                                     GUID *type, GUID *inherit, PSID sid, BOOL success, BOOL failure )
+{
+    return set_ntstatus( RtlAddAuditAccessObjectAce( acl, rev, flags, access,
+                                                     type, inherit, sid, success, failure ));
+}
+
+/******************************************************************************
+ * AddMandatoryAce    (kernelbase.@)
+ */
+BOOL WINAPI AddMandatoryAce( PACL acl, DWORD rev, DWORD flags, DWORD policy, PSID sid )
+{
+    return set_ntstatus( RtlAddMandatoryAce( acl, rev, flags, policy,
+                                             SYSTEM_MANDATORY_LABEL_ACE_TYPE, sid ));
+}
+
+/******************************************************************************
+ * AreAllAccessesGranted    (kernelbase.@)
+ */
+BOOL WINAPI AreAllAccessesGranted( DWORD granted, DWORD desired )
+{
+    return RtlAreAllAccessesGranted( granted, desired );
+}
+
+/******************************************************************************
+ * AreAnyAccessesGranted    (kernelbase.@)
+ */
+BOOL WINAPI AreAnyAccessesGranted( DWORD granted, DWORD desired )
+{
+    return RtlAreAnyAccessesGranted( granted, desired );
+}
+
+/******************************************************************************
+ * DeleteAce    (kernelbase.@)
+ */
+BOOL WINAPI DeleteAce( PACL acl, DWORD index )
+{
+    return set_ntstatus( RtlDeleteAce( acl, index ));
+}
+
+/******************************************************************************
+ * FindFirstFreeAce    (kernelbase.@)
+ */
+BOOL WINAPI FindFirstFreeAce( PACL acl, LPVOID *ace)
+{
+    return RtlFirstFreeAce( acl, (PACE_HEADER *)ace );
+}
+
+/******************************************************************************
+ * GetAce    (kernelbase.@)
+ */
+BOOL WINAPI GetAce( PACL acl, DWORD index, LPVOID *ace )
+{
+    return set_ntstatus( RtlGetAce( acl, index, ace ));
+}
+
+/******************************************************************************
+ * GetAclInformation    (kernelbase.@)
+ */
+BOOL WINAPI GetAclInformation( PACL acl, LPVOID info, DWORD len, ACL_INFORMATION_CLASS class )
+{
+    return set_ntstatus( RtlQueryInformationAcl( acl, info, len, class ));
+}
+
+/*************************************************************************
+ * InitializeAcl    (kernelbase.@)
+ */
+BOOL WINAPI InitializeAcl( PACL acl, DWORD size, DWORD rev )
+{
+    return set_ntstatus( RtlCreateAcl( acl, size, rev ));
+}
+
+/******************************************************************************
+ * IsValidAcl    (kernelbase.@)
+ */
+BOOL WINAPI IsValidAcl( PACL acl )
+{
+    return RtlValidAcl( acl );
+}
+
+/******************************************************************************
+ * MapGenericMask    (kernelbase.@)
+ */
+void WINAPI MapGenericMask( PDWORD access, PGENERIC_MAPPING mapping )
+{
+    RtlMapGenericMask( access, mapping );
+}
+
+/******************************************************************************
+ * ObjectCloseAuditAlarmW    (kernelbase.@)
+ */
+BOOL WINAPI ObjectCloseAuditAlarmW( LPCWSTR subsystem, LPVOID id, BOOL on_close )
+{
+    FIXME( "stub (%s,%p,%x)\n", debugstr_w(subsystem), id, on_close );
+    return TRUE;
+}
+
+/******************************************************************************
+ * ObjectDeleteAuditAlarmW    (kernelbase.@)
+ */
+BOOL WINAPI ObjectDeleteAuditAlarmW( LPCWSTR subsystem, LPVOID id, BOOL on_close )
+{
+    FIXME( "stub (%s,%p,%x)\n", debugstr_w(subsystem), id, on_close );
+    return TRUE;
+}
+
+/******************************************************************************
+ * ObjectOpenAuditAlarmW    (kernelbase.@)
+ */
+BOOL WINAPI ObjectOpenAuditAlarmW( LPCWSTR subsystem, LPVOID id, LPWSTR type, LPWSTR name,
+                                   PSECURITY_DESCRIPTOR descr, HANDLE token, DWORD desired,
+                                   DWORD granted, PPRIVILEGE_SET privs, BOOL creation,
+                                   BOOL access, LPBOOL on_close )
+{
+    FIXME( "stub (%s,%p,%s,%s,%p,%p,0x%08x,0x%08x,%p,%x,%x,%p)\n", debugstr_w(subsystem),
+           id, debugstr_w(type), debugstr_w(name), descr, token, desired, granted,
+           privs, creation, access, on_close );
+    return TRUE;
+}
+
+/******************************************************************************
+ * ObjectPrivilegeAuditAlarmW    (kernelbase.@)
+ */
+BOOL WINAPI ObjectPrivilegeAuditAlarmW( LPCWSTR subsystem, LPVOID id, HANDLE token,
+                                        DWORD desired, PPRIVILEGE_SET privs, BOOL granted )
+{
+    FIXME( "stub (%s,%p,%p,0x%08x,%p,%x)\n", debugstr_w(subsystem), id, token, desired, privs, granted );
+    return TRUE;
+}
+
+/******************************************************************************
+ * PrivilegedServiceAuditAlarmW    (kernelbase.@)
+ */
+BOOL WINAPI PrivilegedServiceAuditAlarmW( LPCWSTR subsystem, LPCWSTR service, HANDLE token,
+                                          PPRIVILEGE_SET privs, BOOL granted )
+{
+    FIXME( "stub %s,%s,%p,%p,%x)\n", debugstr_w(subsystem), debugstr_w(service), token, privs, granted );
+    return TRUE;
+}
+
+/******************************************************************************
+ * SetAclInformation    (kernelbase.@)
+ */
+BOOL WINAPI SetAclInformation( PACL acl, LPVOID info, DWORD len, ACL_INFORMATION_CLASS class )
+{
+    FIXME( "%p %p 0x%08x 0x%08x - stub\n", acl, info, len, class );
+    return TRUE;
+}

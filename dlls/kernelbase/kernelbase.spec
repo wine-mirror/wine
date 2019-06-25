@@ -1,6 +1,6 @@
-@ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr) advapi32.AccessCheck
-@ stdcall AccessCheckAndAuditAlarmW(wstr ptr wstr wstr ptr long ptr long ptr ptr ptr) advapi32.AccessCheckAndAuditAlarmW
-@ stdcall AccessCheckByType(ptr ptr long long ptr long ptr ptr ptr ptr ptr) advapi32.AccessCheckByType
+@ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr)
+@ stdcall AccessCheckAndAuditAlarmW(wstr ptr wstr wstr ptr long ptr long ptr ptr ptr)
+@ stdcall AccessCheckByType(ptr ptr long long ptr long ptr ptr ptr ptr ptr)
 @ stub AccessCheckByTypeAndAuditAlarmW
 @ stub AccessCheckByTypeResultList
 @ stub AccessCheckByTypeResultListAndAuditAlarmByHandleW
@@ -9,18 +9,18 @@
 @ stdcall AcquireSRWLockShared(ptr) kernel32.AcquireSRWLockShared
 # @ stub AcquireStateLock
 @ stdcall ActivateActCtx(ptr ptr) kernel32.ActivateActCtx
-@ stdcall AddAccessAllowedAce(ptr long long ptr) advapi32.AddAccessAllowedAce
-@ stdcall AddAccessAllowedAceEx(ptr long long long ptr) advapi32.AddAccessAllowedAceEx
-@ stdcall AddAccessAllowedObjectAce(ptr long long long ptr ptr ptr) advapi32.AddAccessAllowedObjectAce
-@ stdcall AddAccessDeniedAce(ptr long long ptr) advapi32.AddAccessDeniedAce
-@ stdcall AddAccessDeniedAceEx(ptr long long long ptr) advapi32.AddAccessDeniedAceEx
-@ stdcall AddAccessDeniedObjectAce(ptr long long long ptr ptr ptr) advapi32.AddAccessDeniedObjectAce
-@ stdcall AddAce(ptr long long ptr long) advapi32.AddAce
-@ stdcall AddAuditAccessAce(ptr long long ptr long long) advapi32.AddAuditAccessAce
-@ stdcall AddAuditAccessAceEx(ptr long long long ptr long long) advapi32.AddAuditAccessAceEx
-@ stdcall AddAuditAccessObjectAce(ptr long long long ptr ptr ptr long long) advapi32.AddAuditAccessObjectAce
+@ stdcall AddAccessAllowedAce(ptr long long ptr)
+@ stdcall AddAccessAllowedAceEx(ptr long long long ptr)
+@ stdcall AddAccessAllowedObjectAce(ptr long long long ptr ptr ptr)
+@ stdcall AddAccessDeniedAce(ptr long long ptr)
+@ stdcall AddAccessDeniedAceEx(ptr long long long ptr)
+@ stdcall AddAccessDeniedObjectAce(ptr long long long ptr ptr ptr)
+@ stdcall AddAce(ptr long long ptr long)
+@ stdcall AddAuditAccessAce(ptr long long ptr long long)
+@ stdcall AddAuditAccessAceEx(ptr long long long ptr long long)
+@ stdcall AddAuditAccessObjectAce(ptr long long long ptr ptr ptr long long)
 @ stdcall AddDllDirectory(wstr) kernel32.AddDllDirectory
-@ stdcall AddMandatoryAce(ptr long long long ptr) advapi32.AddMandatoryAce
+@ stdcall AddMandatoryAce(ptr long long long ptr)
 @ stdcall AddRefActCtx(ptr) kernel32.AddRefActCtx
 # @ stub AddResourceAttributeAce
 # @ stub AddSIDToBoundaryDescriptor
@@ -62,8 +62,8 @@
 # @ stub AppXReleaseAppXContext
 # @ stub AppXUpdatePackageCapabilities
 # @ stub ApplicationUserModelIdFromProductId
-@ stdcall AreAllAccessesGranted(long long) advapi32.AreAllAccessesGranted
-@ stdcall AreAnyAccessesGranted(long long) advapi32.AreAnyAccessesGranted
+@ stdcall AreAllAccessesGranted(long long)
+@ stdcall AreAnyAccessesGranted(long long)
 @ stdcall AreFileApisANSI() kernel32.AreFileApisANSI
 # @ stub AreThereVisibleLogoffScriptsInternal
 # @ stub AreThereVisibleShutdownScriptsInternal
@@ -246,7 +246,7 @@
 @ stdcall DefineDosDeviceW(long wstr wstr) kernel32.DefineDosDeviceW
 @ stdcall DelayLoadFailureHook(str str) kernel32.DelayLoadFailureHook
 # @ stub DelayLoadFailureHookLookup
-@ stdcall DeleteAce(ptr long) advapi32.DeleteAce
+@ stdcall DeleteAce(ptr long)
 # @ stub DeleteBoundaryDescriptor
 @ stdcall DeleteCriticalSection(ptr) kernel32.DeleteCriticalSection
 @ stdcall DeleteFiber(ptr) kernel32.DeleteFiber
@@ -359,7 +359,7 @@
 @ stdcall FindFirstFileExW(wstr long ptr long ptr long) kernel32.FindFirstFileExW
 # @ stub FindFirstFileNameW
 @ stdcall FindFirstFileW(wstr ptr) kernel32.FindFirstFileW
-@ stdcall FindFirstFreeAce(ptr ptr) advapi32.FindFirstFreeAce
+@ stdcall FindFirstFreeAce(ptr ptr)
 @ stdcall FindFirstStreamW(wstr long ptr long) kernel32.FindFirstStreamW
 @ stdcall FindFirstVolumeW(ptr long) kernel32.FindFirstVolumeW
 @ stub FindNLSString
@@ -405,8 +405,8 @@
 @ stdcall GetACP() kernel32.GetACP
 @ stdcall GetAcceptLanguagesA(ptr ptr)
 @ stdcall GetAcceptLanguagesW(ptr ptr)
-@ stdcall GetAce(ptr long ptr) advapi32.GetAce
-@ stdcall GetAclInformation(ptr ptr long long) advapi32.GetAclInformation
+@ stdcall GetAce(ptr long ptr)
+@ stdcall GetAclInformation(ptr ptr long long)
 # @ stub GetAdjustObjectAttributesForPrivateNamespaceRoutine
 # @ stub GetAlternatePackageRoots
 # @ stub GetAppContainerAce
@@ -798,7 +798,7 @@
 @ stdcall InitOnceComplete(ptr long ptr) kernel32.InitOnceComplete
 @ stdcall InitOnceExecuteOnce(ptr ptr ptr ptr) kernel32.InitOnceExecuteOnce
 @ stdcall InitOnceInitialize(ptr) kernel32.InitOnceInitialize
-@ stdcall InitializeAcl(ptr long long) advapi32.InitializeAcl
+@ stdcall InitializeAcl(ptr long long)
 @ stdcall InitializeConditionVariable(ptr) kernel32.InitializeConditionVariable
 # @ stub InitializeContext
 @ stdcall InitializeCriticalSection(ptr) kernel32.InitializeCriticalSection
@@ -874,7 +874,7 @@
 @ stdcall IsThreadpoolTimerSet(ptr) kernel32.IsThreadpoolTimerSet
 # @ stub IsTimeZoneRedirectionEnabled
 @ stdcall IsTokenRestricted(long)
-@ stdcall IsValidAcl(ptr) advapi32.IsValidAcl
+@ stdcall IsValidAcl(ptr)
 @ stdcall IsValidCodePage(long) kernel32.IsValidCodePage
 @ stdcall IsValidLanguageGroup(long long) kernel32.IsValidLanguageGroup
 @ stdcall IsValidLocale(long long) kernel32.IsValidLocale
@@ -947,7 +947,7 @@
 @ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub MakeAbsoluteSD2
 @ stdcall MakeSelfRelativeSD(ptr ptr ptr)
-@ stdcall MapGenericMask(ptr ptr) advapi32.MapGenericMask
+@ stdcall MapGenericMask(ptr ptr)
 # @ stub MapPredefinedHandleInternal
 @ stdcall MapUserPhysicalPages(ptr long ptr) kernel32.MapUserPhysicalPages
 @ stdcall MapViewOfFile(long long long long long) kernel32.MapViewOfFile
@@ -976,10 +976,10 @@
 @ stdcall NormalizeString(long wstr long ptr long) kernel32.NormalizeString
 @ stub NotifyMountMgr
 @ stub NotifyRedirectedStringChange
-@ stdcall ObjectCloseAuditAlarmW(wstr ptr long) advapi32.ObjectCloseAuditAlarmW
-@ stdcall ObjectDeleteAuditAlarmW(wstr ptr long) advapi32.ObjectDeleteAuditAlarmW
-@ stdcall ObjectOpenAuditAlarmW(wstr ptr wstr wstr ptr long long long ptr long long ptr) advapi32.ObjectOpenAuditAlarmW
-@ stdcall ObjectPrivilegeAuditAlarmW(wstr ptr long long ptr long) advapi32.ObjectPrivilegeAuditAlarmW
+@ stdcall ObjectCloseAuditAlarmW(wstr ptr long)
+@ stdcall ObjectDeleteAuditAlarmW(wstr ptr long)
+@ stdcall ObjectOpenAuditAlarmW(wstr ptr wstr wstr ptr long long long ptr long long ptr)
+@ stdcall ObjectPrivilegeAuditAlarmW(wstr ptr long long ptr long)
 # @ stub OfferVirtualMemory
 @ stdcall OpenEventA(long long str) kernel32.OpenEventA
 @ stdcall OpenEventW(long long wstr) kernel32.OpenEventW
@@ -1164,7 +1164,7 @@
 # @ stub PrefetchVirtualMemory
 @ stub PrivCopyFileExW
 @ stdcall PrivilegeCheck(ptr ptr ptr)
-@ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long) advapi32.PrivilegedServiceAuditAlarmW
+@ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)
 @ stdcall ProcessIdToSessionId(long ptr) kernel32.ProcessIdToSessionId
 # @ stub ProductIdFromPackageFamilyName
 # @ stub PsmCreateKey
@@ -1388,7 +1388,7 @@
 @ stdcall ScrollConsoleScreenBufferW(long ptr ptr ptr ptr) kernel32.ScrollConsoleScreenBufferW
 @ stdcall SearchPathA(str str str long ptr ptr) kernel32.SearchPathA
 @ stdcall SearchPathW(wstr wstr wstr long ptr ptr) kernel32.SearchPathW
-@ stdcall SetAclInformation(ptr ptr long long) advapi32.SetAclInformation
+@ stdcall SetAclInformation(ptr ptr long long)
 # @ stub SetCachedSigningLevel
 @ stdcall SetCalendarInfoW(long long long wstr) kernel32.SetCalendarInfoW
 # @ stub SetClientDynamicTimeZoneInformation

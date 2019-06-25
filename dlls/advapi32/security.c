@@ -390,14 +390,6 @@ const char * debugstr_sid(PSID sid)
     return "(too-big)";
 }
 
-/* set last error code from NT status and get the proper boolean return value */
-/* used for functions that are a simple wrapper around the corresponding ntdll API */
-static inline BOOL set_ntstatus( NTSTATUS status )
-{
-    if (status) SetLastError( RtlNtStatusToDosError( status ));
-    return !status;
-}
-
 /* helper function for SE_FILE_OBJECT objects in [Get|Set]NamedSecurityInfo */
 static inline DWORD get_security_file( LPCWSTR full_file_name, DWORD access, HANDLE *file )
 {
@@ -692,168 +684,6 @@ done:
     return ret;
 } 
 
-
-/*	##############################
-	######	ACL FUNCTIONS	######
-	##############################
-*/
-
-/*************************************************************************
- * InitializeAcl [ADVAPI32.@]
- */
-BOOL WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
-{
-    return set_ntstatus( RtlCreateAcl(acl, size, rev));
-}
-
-/******************************************************************************
- *  AddAccessAllowedAce [ADVAPI32.@]
- */
-BOOL WINAPI AddAccessAllowedAce(
-        IN OUT PACL pAcl,
-        IN DWORD dwAceRevision,
-        IN DWORD AccessMask,
-        IN PSID pSid)
-{
-    return set_ntstatus(RtlAddAccessAllowedAce(pAcl, dwAceRevision, AccessMask, pSid));
-}
-
-/******************************************************************************
- *  AddAccessAllowedAceEx [ADVAPI32.@]
- */
-BOOL WINAPI AddAccessAllowedAceEx(
-        IN OUT PACL pAcl,
-        IN DWORD dwAceRevision,
-	IN DWORD AceFlags,
-        IN DWORD AccessMask,
-        IN PSID pSid)
-{
-    return set_ntstatus(RtlAddAccessAllowedAceEx(pAcl, dwAceRevision, AceFlags, AccessMask, pSid));
-}
-
-/******************************************************************************
- *  AddAccessAllowedObjectAce [ADVAPI32.@]
- */
-BOOL WINAPI AddAccessAllowedObjectAce(
-        IN OUT PACL pAcl,
-        IN DWORD dwAceRevision,
-        IN DWORD dwAceFlags,
-        IN DWORD dwAccessMask,
-        IN GUID* pObjectTypeGuid,
-        IN GUID* pInheritedObjectTypeGuid,
-        IN PSID pSid)
-{
-    return set_ntstatus(RtlAddAccessAllowedObjectAce(pAcl, dwAceRevision, dwAceFlags, dwAccessMask,
-                        pObjectTypeGuid, pInheritedObjectTypeGuid, pSid));
-}
-
-/******************************************************************************
- *  AddAccessDeniedAce [ADVAPI32.@]
- */
-BOOL WINAPI AddAccessDeniedAce(
-        IN OUT PACL pAcl,
-        IN DWORD dwAceRevision,
-        IN DWORD AccessMask,
-        IN PSID pSid)
-{
-    return set_ntstatus(RtlAddAccessDeniedAce(pAcl, dwAceRevision, AccessMask, pSid));
-}
-
-/******************************************************************************
- *  AddAccessDeniedAceEx [ADVAPI32.@]
- */
-BOOL WINAPI AddAccessDeniedAceEx(
-        IN OUT PACL pAcl,
-        IN DWORD dwAceRevision,
-	IN DWORD AceFlags,
-        IN DWORD AccessMask,
-        IN PSID pSid)
-{
-    return set_ntstatus(RtlAddAccessDeniedAceEx(pAcl, dwAceRevision, AceFlags, AccessMask, pSid));
-}
-
-/******************************************************************************
- *  AddAccessDeniedObjectAce [ADVAPI32.@]
- */
-BOOL WINAPI AddAccessDeniedObjectAce(
-    IN OUT PACL pAcl,
-    IN DWORD dwAceRevision,
-    IN DWORD dwAceFlags,
-    IN DWORD dwAccessMask,
-    IN GUID* pObjectTypeGuid,
-    IN GUID* pInheritedObjectTypeGuid,
-    IN PSID pSid)
-{
-    return set_ntstatus( RtlAddAccessDeniedObjectAce(pAcl, dwAceRevision, dwAceFlags, dwAccessMask,
-                         pObjectTypeGuid, pInheritedObjectTypeGuid, pSid) );
-}
-
-/******************************************************************************
- *  AddAce [ADVAPI32.@]
- */
-BOOL WINAPI AddAce(
-        IN OUT PACL pAcl,
-        IN DWORD dwAceRevision,
-        IN DWORD dwStartingAceIndex,
-        LPVOID pAceList,
-        DWORD nAceListLength)
-{
-    return set_ntstatus(RtlAddAce(pAcl, dwAceRevision, dwStartingAceIndex, pAceList, nAceListLength));
-}
-
-/******************************************************************************
- *  AddMandatoryAce [ADVAPI32.@]
- */
-BOOL WINAPI AddMandatoryAce(ACL *acl, DWORD ace_revision, DWORD ace_flags, DWORD mandatory_policy, PSID label_sid)
-{
-    return set_ntstatus(RtlAddMandatoryAce(acl, ace_revision, ace_flags, mandatory_policy,
-                                           SYSTEM_MANDATORY_LABEL_ACE_TYPE, label_sid));
-}
-
-/******************************************************************************
- * DeleteAce [ADVAPI32.@]
- */
-BOOL WINAPI DeleteAce(PACL pAcl, DWORD dwAceIndex)
-{
-    return set_ntstatus(RtlDeleteAce(pAcl, dwAceIndex));
-}
-
-/******************************************************************************
- *  FindFirstFreeAce [ADVAPI32.@]
- */
-BOOL WINAPI FindFirstFreeAce(IN PACL pAcl, LPVOID * pAce)
-{
-	return RtlFirstFreeAce(pAcl, (PACE_HEADER *)pAce);
-}
-
-/******************************************************************************
- * GetAce [ADVAPI32.@]
- */
-BOOL WINAPI GetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
-{
-    return set_ntstatus(RtlGetAce(pAcl, dwAceIndex, pAce));
-}
-
-/******************************************************************************
- * GetAclInformation [ADVAPI32.@]
- */
-BOOL WINAPI GetAclInformation(
-  PACL pAcl,
-  LPVOID pAclInformation,
-  DWORD nAclInformationLength,
-  ACL_INFORMATION_CLASS dwAclInformationClass)
-{
-    return set_ntstatus(RtlQueryInformationAcl(pAcl, pAclInformation,
-                                               nAclInformationLength, dwAclInformationClass));
-}
-
-/******************************************************************************
- *  IsValidAcl [ADVAPI32.@]
- */
-BOOL WINAPI IsValidAcl(IN PACL pAcl)
-{
-	return RtlValidAcl(pAcl);
-}
 
 static const WCHAR SE_CREATE_TOKEN_NAME_W[] =
  { 'S','e','C','r','e','a','t','e','T','o','k','e','n','P','r','i','v','i','l','e','g','e',0 };
@@ -1520,120 +1350,6 @@ NotifyBootConfigStatus( BOOL x1 )
 }
 
 /******************************************************************************
- * AccessCheck [ADVAPI32.@]
- */
-BOOL WINAPI
-AccessCheck(
-	PSECURITY_DESCRIPTOR SecurityDescriptor,
-	HANDLE ClientToken,
-	DWORD DesiredAccess,
-	PGENERIC_MAPPING GenericMapping,
-	PPRIVILEGE_SET PrivilegeSet,
-	LPDWORD PrivilegeSetLength,
-	LPDWORD GrantedAccess,
-	LPBOOL AccessStatus)
-{
-    NTSTATUS access_status;
-    BOOL ret = set_ntstatus( NtAccessCheck(SecurityDescriptor, ClientToken, DesiredAccess,
-                                           GenericMapping, PrivilegeSet, PrivilegeSetLength,
-                                           GrantedAccess, &access_status) );
-    if (ret) *AccessStatus = set_ntstatus( access_status );
-    return ret;
-}
-
-
-/******************************************************************************
- * AccessCheckByType [ADVAPI32.@]
- */
-BOOL WINAPI AccessCheckByType(
-    PSECURITY_DESCRIPTOR pSecurityDescriptor, 
-    PSID PrincipalSelfSid,
-    HANDLE ClientToken, 
-    DWORD DesiredAccess, 
-    POBJECT_TYPE_LIST ObjectTypeList,
-    DWORD ObjectTypeListLength,
-    PGENERIC_MAPPING GenericMapping,
-    PPRIVILEGE_SET PrivilegeSet,
-    LPDWORD PrivilegeSetLength, 
-    LPDWORD GrantedAccess,
-    LPBOOL AccessStatus)
-{
-	FIXME("stub\n");
-
-	*AccessStatus = TRUE;
-
-	return !*AccessStatus;
-}
-
-/******************************************************************************
- * MapGenericMask [ADVAPI32.@]
- *
- * Maps generic access rights into specific access rights according to the
- * supplied mapping.
- *
- * PARAMS
- *  AccessMask     [I/O] Access rights.
- *  GenericMapping [I] The mapping between generic and specific rights.
- *
- * RETURNS
- *  Nothing.
- */
-VOID WINAPI MapGenericMask( PDWORD AccessMask, PGENERIC_MAPPING GenericMapping )
-{
-    RtlMapGenericMask( AccessMask, GenericMapping );
-}
-
-
-/******************************************************************************
- *  AddAuditAccessAce [ADVAPI32.@]
- */
-BOOL WINAPI AddAuditAccessAce(
-    IN OUT PACL pAcl, 
-    IN DWORD dwAceRevision, 
-    IN DWORD dwAccessMask, 
-    IN PSID pSid, 
-    IN BOOL bAuditSuccess, 
-    IN BOOL bAuditFailure) 
-{
-    return set_ntstatus( RtlAddAuditAccessAce(pAcl, dwAceRevision, dwAccessMask, pSid, 
-                                              bAuditSuccess, bAuditFailure) ); 
-}
-
-/******************************************************************************
- *  AddAuditAccessAceEx [ADVAPI32.@]
- */
-BOOL WINAPI AddAuditAccessAceEx(
-    IN OUT PACL pAcl,
-    IN DWORD dwAceRevision,
-    IN DWORD dwAceFlags,
-    IN DWORD dwAccessMask,
-    IN PSID pSid,
-    IN BOOL bAuditSuccess,
-    IN BOOL bAuditFailure)
-{
-    return set_ntstatus( RtlAddAuditAccessAceEx(pAcl, dwAceRevision, dwAceFlags, dwAccessMask, pSid,
-                                              bAuditSuccess, bAuditFailure) );
-}
-
-/******************************************************************************
- *  AddAuditAccessObjectAce [ADVAPI32.@]
- */
-BOOL WINAPI AddAuditAccessObjectAce(
-    IN OUT PACL pAcl,
-    IN DWORD dwAceRevision,
-    IN DWORD dwAceFlags,
-    IN DWORD dwAccessMask,
-    IN GUID* pObjectTypeGuid,
-    IN GUID* pInheritedObjectTypeGuid,
-    IN PSID pSid,
-    IN BOOL bAuditSuccess,
-    IN BOOL bAuditFailure)
-{
-    return set_ntstatus( RtlAddAuditAccessObjectAce(pAcl, dwAceRevision, dwAceFlags, dwAccessMask,
-           pObjectTypeGuid, pInheritedObjectTypeGuid, pSid, bAuditSuccess, bAuditFailure) );
-}
-
-/******************************************************************************
  * LookupAccountNameA [ADVAPI32.@]
  */
 BOOL WINAPI
@@ -2005,38 +1721,9 @@ BOOL WINAPI AccessCheckAndAuditAlarmA(LPCSTR Subsystem, LPVOID HandleId, LPSTR O
 	return TRUE;
 }
 
-/******************************************************************************
- * AccessCheckAndAuditAlarmW [ADVAPI32.@]
- */
-BOOL WINAPI AccessCheckAndAuditAlarmW(LPCWSTR Subsystem, LPVOID HandleId, LPWSTR ObjectTypeName,
-  LPWSTR ObjectName, PSECURITY_DESCRIPTOR SecurityDescriptor, DWORD DesiredAccess,
-  PGENERIC_MAPPING GenericMapping, BOOL ObjectCreation, LPDWORD GrantedAccess,
-  LPBOOL AccessStatus, LPBOOL pfGenerateOnClose)
-{
-	FIXME("stub (%s,%p,%s,%s,%p,%08x,%p,%x,%p,%p,%p)\n", debugstr_w(Subsystem),
-		HandleId, debugstr_w(ObjectTypeName), debugstr_w(ObjectName),
-		SecurityDescriptor, DesiredAccess, GenericMapping,
-		ObjectCreation, GrantedAccess, AccessStatus, pfGenerateOnClose);
-	return TRUE;
-}
-
 BOOL WINAPI ObjectCloseAuditAlarmA(LPCSTR SubsystemName, LPVOID HandleId, BOOL GenerateOnClose)
 {
     FIXME("stub (%s,%p,%x)\n", debugstr_a(SubsystemName), HandleId, GenerateOnClose);
-
-    return TRUE;
-}
-
-BOOL WINAPI ObjectCloseAuditAlarmW(LPCWSTR SubsystemName, LPVOID HandleId, BOOL GenerateOnClose)
-{
-    FIXME("stub (%s,%p,%x)\n", debugstr_w(SubsystemName), HandleId, GenerateOnClose);
-
-    return TRUE;
-}
-
-BOOL WINAPI ObjectDeleteAuditAlarmW(LPCWSTR SubsystemName, LPVOID HandleId, BOOL GenerateOnClose)
-{
-    FIXME("stub (%s,%p,%x)\n", debugstr_w(SubsystemName), HandleId, GenerateOnClose);
 
     return TRUE;
 }
@@ -2054,19 +1741,6 @@ BOOL WINAPI ObjectOpenAuditAlarmA(LPCSTR SubsystemName, LPVOID HandleId, LPSTR O
     return TRUE;
 }
 
-BOOL WINAPI ObjectOpenAuditAlarmW(LPCWSTR SubsystemName, LPVOID HandleId, LPWSTR ObjectTypeName,
-  LPWSTR ObjectName, PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE ClientToken, DWORD DesiredAccess,
-  DWORD GrantedAccess, PPRIVILEGE_SET Privileges, BOOL ObjectCreation, BOOL AccessGranted,
-  LPBOOL GenerateOnClose)
-{
-    FIXME("stub (%s,%p,%s,%s,%p,%p,0x%08x,0x%08x,%p,%x,%x,%p)\n", debugstr_w(SubsystemName),
-        HandleId, debugstr_w(ObjectTypeName), debugstr_w(ObjectName), pSecurityDescriptor,
-        ClientToken, DesiredAccess, GrantedAccess, Privileges, ObjectCreation, AccessGranted,
-        GenerateOnClose);
-
-    return TRUE;
-}
-
 BOOL WINAPI ObjectPrivilegeAuditAlarmA( LPCSTR SubsystemName, LPVOID HandleId, HANDLE ClientToken,
   DWORD DesiredAccess, PPRIVILEGE_SET Privileges, BOOL AccessGranted)
 {
@@ -2076,28 +1750,10 @@ BOOL WINAPI ObjectPrivilegeAuditAlarmA( LPCSTR SubsystemName, LPVOID HandleId, H
     return TRUE;
 }
 
-BOOL WINAPI ObjectPrivilegeAuditAlarmW( LPCWSTR SubsystemName, LPVOID HandleId, HANDLE ClientToken,
-  DWORD DesiredAccess, PPRIVILEGE_SET Privileges, BOOL AccessGranted)
-{
-    FIXME("stub (%s,%p,%p,0x%08x,%p,%x)\n", debugstr_w(SubsystemName), HandleId, ClientToken,
-          DesiredAccess, Privileges, AccessGranted);
-
-    return TRUE;
-}
-
 BOOL WINAPI PrivilegedServiceAuditAlarmA( LPCSTR SubsystemName, LPCSTR ServiceName, HANDLE ClientToken,
                                    PPRIVILEGE_SET Privileges, BOOL AccessGranted)
 {
     FIXME("stub (%s,%s,%p,%p,%x)\n", debugstr_a(SubsystemName), debugstr_a(ServiceName),
-          ClientToken, Privileges, AccessGranted);
-
-    return TRUE;
-}
-
-BOOL WINAPI PrivilegedServiceAuditAlarmW( LPCWSTR SubsystemName, LPCWSTR ServiceName, HANDLE ClientToken,
-                                   PPRIVILEGE_SET Privileges, BOOL AccessGranted)
-{
-    FIXME("stub %s,%s,%p,%p,%x)\n", debugstr_w(SubsystemName), debugstr_w(ServiceName),
           ClientToken, Privileges, AccessGranted);
 
     return TRUE;
@@ -2571,16 +2227,6 @@ TRUSTEE_TYPE WINAPI GetTrusteeTypeW(PTRUSTEEW pTrustee)
     return pTrustee->TrusteeType; 
 } 
  
-BOOL WINAPI SetAclInformation( PACL pAcl, LPVOID pAclInformation,
-                               DWORD nAclInformationLength,
-                               ACL_INFORMATION_CLASS dwAclInformationClass )
-{
-    FIXME("%p %p 0x%08x 0x%08x - stub\n", pAcl, pAclInformation,
-          nAclInformationLength, dwAclInformationClass);
-
-    return TRUE;
-}
-
 static DWORD trustee_name_A_to_W(TRUSTEE_FORM form, char *trustee_nameA, WCHAR **ptrustee_nameW)
 {
     switch (form)
@@ -2991,31 +2637,6 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
     heap_free( wstr );
 
     return r;
-}
-
-BOOL WINAPI AreAllAccessesGranted( DWORD GrantedAccess, DWORD DesiredAccess )
-{
-    return RtlAreAllAccessesGranted( GrantedAccess, DesiredAccess );
-}
-
-/******************************************************************************
- * AreAnyAccessesGranted [ADVAPI32.@]
- *
- * Determines whether or not any of a set of specified access permissions have
- * been granted or not.
- *
- * PARAMS
- *   GrantedAccess [I] The permissions that have been granted.
- *   DesiredAccess [I] The permissions that you want to have.
- *
- * RETURNS
- *   Nonzero if any of the permissions have been granted, zero if none of the
- *   permissions have been granted.
- */
-
-BOOL WINAPI AreAnyAccessesGranted( DWORD GrantedAccess, DWORD DesiredAccess )
-{
-    return RtlAreAnyAccessesGranted( GrantedAccess, DesiredAccess );
 }
 
 /******************************************************************************
