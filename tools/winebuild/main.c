@@ -369,6 +369,15 @@ static void set_exec_mode( enum exec_mode_values mode )
     exec_mode = mode;
 }
 
+/* get the default entry point for a given spec file */
+static const char *get_default_entry_point( const DLLSPEC *spec )
+{
+    if (spec->characteristics & IMAGE_FILE_DLL) return "__wine_spec_dll_entry";
+    if (spec->subsystem == IMAGE_SUBSYSTEM_NATIVE) return "__wine_spec_drv_entry";
+    if (spec->type == SPEC_WIN16) return "__wine_spec_exe16_entry";
+    return "__wine_spec_exe_entry";
+}
+
 /* parse options from the argv array and remove all the recognized ones */
 static char **parse_options( int argc, char **argv, DLLSPEC *spec )
 {
@@ -633,6 +642,7 @@ int main(int argc, char **argv)
     case MODE_EXE:
         load_resources( argv, spec );
         if (spec_file_name && !parse_input_file( spec )) break;
+        if (!spec->init_func) spec->init_func = xstrdup( get_default_entry_point( spec ));
 
         if (fake_module)
         {

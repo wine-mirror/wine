@@ -456,15 +456,6 @@ static void add_undef_import( const char *name, int is_ordinal )
         add_import_func( import, xstrdup( p ), NULL, ordinal, 0 );
 }
 
-/* get the default entry point for a given spec file */
-static const char *get_default_entry_point( const DLLSPEC *spec )
-{
-    if (spec->characteristics & IMAGE_FILE_DLL) return "__wine_spec_dll_entry";
-    if (spec->subsystem == IMAGE_SUBSYSTEM_NATIVE) return "__wine_spec_drv_entry";
-    if (spec->type == SPEC_WIN16) return "__wine_spec_exe16_entry";
-    return "__wine_spec_exe_entry";
-}
-
 /* check if the spec file exports any stubs */
 static int has_stubs( const DLLSPEC *spec )
 {
@@ -480,7 +471,6 @@ static int has_stubs( const DLLSPEC *spec )
 /* add the extra undefined symbols that will be contained in the generated spec file itself */
 static void add_extra_undef_symbols( DLLSPEC *spec )
 {
-    if (!spec->init_func) spec->init_func = xstrdup( get_default_entry_point(spec) );
     add_extra_ld_symbol( spec->init_func );
     if (has_stubs( spec )) add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
     if (delayed_imports.count) add_extra_ld_symbol( "__wine_spec_delay_load" );
