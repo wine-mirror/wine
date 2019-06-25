@@ -156,8 +156,6 @@ static const WELLKNOWNRID WellKnownRids[] = {
 };
 
 
-static SID const sidWorld = { SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY} , { SECURITY_WORLD_RID } };
-
 typedef struct _AccountSid {
     WELL_KNOWN_SID_TYPE type;
     LPCWSTR account;
@@ -462,24 +460,6 @@ static inline DWORD get_security_regkey( LPWSTR full_key_name, DWORD access, HAN
     return RegOpenKeyExW( hParent, p+1, 0, access, (HKEY *)key );
 }
 
-#define	WINE_SIZE_OF_WORLD_ACCESS_ACL	(sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) + sizeof(sidWorld) - sizeof(DWORD))
-
-static void GetWorldAccessACL(PACL pACL)
-{
-    PACCESS_ALLOWED_ACE pACE = (PACCESS_ALLOWED_ACE) (pACL + 1);
-
-    pACL->AclRevision = ACL_REVISION;
-    pACL->Sbz1 = 0;
-    pACL->AclSize = WINE_SIZE_OF_WORLD_ACCESS_ACL;
-    pACL->AceCount = 1;
-    pACL->Sbz2 = 0;
-
-    pACE->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-    pACE->Header.AceFlags = CONTAINER_INHERIT_ACE;
-    pACE->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE) + sizeof(sidWorld) - sizeof(DWORD);
-    pACE->Mask = 0xf3ffffff; /* Everything except reserved bits */
-    memcpy(&pACE->SidStart, &sidWorld, sizeof(sidWorld));
-}
 
 /************************************************************
  *                ADVAPI_IsLocalComputer
@@ -711,277 +691,6 @@ done:
     LocalFree( desc.Dacl );
     return ret;
 } 
-
-/******************************************************************************
- * InitializeSecurityDescriptor [ADVAPI32.@]
- *
- * PARAMS
- *   pDescr   []
- *   revision []
- */
-BOOL WINAPI
-InitializeSecurityDescriptor( PSECURITY_DESCRIPTOR pDescr, DWORD revision )
-{
-	return set_ntstatus( RtlCreateSecurityDescriptor(pDescr, revision ));
-}
-
-
-/******************************************************************************
- * MakeAbsoluteSD [ADVAPI32.@]
- */
-BOOL WINAPI MakeAbsoluteSD (
-        IN PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
-	OUT PSECURITY_DESCRIPTOR pAbsoluteSecurityDescriptor,
-	OUT LPDWORD lpdwAbsoluteSecurityDescriptorSize,
-	OUT PACL pDacl,
-	OUT LPDWORD lpdwDaclSize,
-	OUT PACL pSacl,
-	OUT LPDWORD lpdwSaclSize,
-	OUT PSID pOwner,
-	OUT LPDWORD lpdwOwnerSize,
-	OUT PSID pPrimaryGroup,
-	OUT LPDWORD lpdwPrimaryGroupSize)
-{
-    return set_ntstatus( RtlSelfRelativeToAbsoluteSD(pSelfRelativeSecurityDescriptor,
-                                                     pAbsoluteSecurityDescriptor,
-                                                     lpdwAbsoluteSecurityDescriptorSize,
-                                                     pDacl, lpdwDaclSize, pSacl, lpdwSaclSize,
-                                                     pOwner, lpdwOwnerSize,
-                                                     pPrimaryGroup, lpdwPrimaryGroupSize));
-}
-
-/******************************************************************************
- * GetKernelObjectSecurity [ADVAPI32.@]
- */
-BOOL WINAPI GetKernelObjectSecurity(
-        HANDLE Handle,
-        SECURITY_INFORMATION RequestedInformation,
-        PSECURITY_DESCRIPTOR pSecurityDescriptor,
-        DWORD nLength,
-        LPDWORD lpnLengthNeeded )
-{
-    TRACE("(%p,0x%08x,%p,0x%08x,%p)\n", Handle, RequestedInformation,
-          pSecurityDescriptor, nLength, lpnLengthNeeded);
-
-    return set_ntstatus( NtQuerySecurityObject(Handle, RequestedInformation, pSecurityDescriptor,
-                                               nLength, lpnLengthNeeded ));
-}
-
-/******************************************************************************
- * GetPrivateObjectSecurity [ADVAPI32.@]
- */
-BOOL WINAPI GetPrivateObjectSecurity(
-        PSECURITY_DESCRIPTOR ObjectDescriptor,
-        SECURITY_INFORMATION SecurityInformation,
-        PSECURITY_DESCRIPTOR ResultantDescriptor,
-        DWORD DescriptorLength,
-        PDWORD ReturnLength )
-{
-    SECURITY_DESCRIPTOR desc;
-    BOOL defaulted, present;
-    PACL pacl;
-    PSID psid;
-
-    TRACE("(%p,0x%08x,%p,0x%08x,%p)\n", ObjectDescriptor, SecurityInformation,
-          ResultantDescriptor, DescriptorLength, ReturnLength);
-
-    if (!InitializeSecurityDescriptor(&desc, SECURITY_DESCRIPTOR_REVISION))
-        return FALSE;
-
-    if (SecurityInformation & OWNER_SECURITY_INFORMATION)
-    {
-        if (!GetSecurityDescriptorOwner(ObjectDescriptor, &psid, &defaulted))
-            return FALSE;
-        SetSecurityDescriptorOwner(&desc, psid, defaulted);
-    }
-
-    if (SecurityInformation & GROUP_SECURITY_INFORMATION)
-    {
-        if (!GetSecurityDescriptorGroup(ObjectDescriptor, &psid, &defaulted))
-            return FALSE;
-        SetSecurityDescriptorGroup(&desc, psid, defaulted);
-    }
-
-    if (SecurityInformation & DACL_SECURITY_INFORMATION)
-    {
-        if (!GetSecurityDescriptorDacl(ObjectDescriptor, &present, &pacl, &defaulted))
-            return FALSE;
-        SetSecurityDescriptorDacl(&desc, present, pacl, defaulted);
-    }
-
-    if (SecurityInformation & SACL_SECURITY_INFORMATION)
-    {
-        if (!GetSecurityDescriptorSacl(ObjectDescriptor, &present, &pacl, &defaulted))
-            return FALSE;
-        SetSecurityDescriptorSacl(&desc, present, pacl, defaulted);
-    }
-
-    *ReturnLength = DescriptorLength;
-    return MakeSelfRelativeSD(&desc, ResultantDescriptor, ReturnLength);
-}
-
-/******************************************************************************
- * GetSecurityDescriptorLength [ADVAPI32.@]
- */
-DWORD WINAPI GetSecurityDescriptorLength( PSECURITY_DESCRIPTOR pDescr)
-{
-	return RtlLengthSecurityDescriptor(pDescr);
-}
-
-/******************************************************************************
- * GetSecurityDescriptorOwner [ADVAPI32.@]
- *
- * PARAMS
- *   pOwner            []
- *   lpbOwnerDefaulted []
- */
-BOOL WINAPI
-GetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR pDescr, PSID *pOwner,
-			    LPBOOL lpbOwnerDefaulted )
-{
-    BOOLEAN defaulted;
-    BOOL ret = set_ntstatus( RtlGetOwnerSecurityDescriptor( pDescr, pOwner, &defaulted ));
-    *lpbOwnerDefaulted = defaulted;
-    return ret;
-}
-
-/******************************************************************************
- * SetSecurityDescriptorOwner [ADVAPI32.@]
- *
- * PARAMS
- */
-BOOL WINAPI SetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR pSecurityDescriptor,
-				   PSID pOwner, BOOL bOwnerDefaulted)
-{
-    return set_ntstatus( RtlSetOwnerSecurityDescriptor(pSecurityDescriptor, pOwner, bOwnerDefaulted));
-}
-/******************************************************************************
- * GetSecurityDescriptorGroup			[ADVAPI32.@]
- */
-BOOL WINAPI GetSecurityDescriptorGroup(
-	PSECURITY_DESCRIPTOR SecurityDescriptor,
-	PSID *Group,
-	LPBOOL GroupDefaulted)
-{
-    BOOLEAN defaulted;
-    BOOL ret = set_ntstatus( RtlGetGroupSecurityDescriptor(SecurityDescriptor, Group, &defaulted ));
-    *GroupDefaulted = defaulted;
-    return ret;
-}
-/******************************************************************************
- * SetSecurityDescriptorGroup [ADVAPI32.@]
- */
-BOOL WINAPI SetSecurityDescriptorGroup ( PSECURITY_DESCRIPTOR SecurityDescriptor,
-					   PSID Group, BOOL GroupDefaulted)
-{
-    return set_ntstatus( RtlSetGroupSecurityDescriptor( SecurityDescriptor, Group, GroupDefaulted));
-}
-
-/******************************************************************************
- * IsValidSecurityDescriptor [ADVAPI32.@]
- *
- * PARAMS
- *   lpsecdesc []
- */
-BOOL WINAPI
-IsValidSecurityDescriptor( PSECURITY_DESCRIPTOR SecurityDescriptor )
-{
-    return set_ntstatus( RtlValidSecurityDescriptor(SecurityDescriptor));
-}
-
-/******************************************************************************
- *  GetSecurityDescriptorDacl			[ADVAPI32.@]
- */
-BOOL WINAPI GetSecurityDescriptorDacl(
-	IN PSECURITY_DESCRIPTOR pSecurityDescriptor,
-	OUT LPBOOL lpbDaclPresent,
-	OUT PACL *pDacl,
-	OUT LPBOOL lpbDaclDefaulted)
-{
-    BOOLEAN present, defaulted;
-    BOOL ret = set_ntstatus( RtlGetDaclSecurityDescriptor(pSecurityDescriptor, &present, pDacl, &defaulted));
-    *lpbDaclPresent = present;
-    *lpbDaclDefaulted = defaulted;
-    return ret;
-}
-
-/******************************************************************************
- *  SetSecurityDescriptorDacl			[ADVAPI32.@]
- */
-BOOL WINAPI
-SetSecurityDescriptorDacl (
-	PSECURITY_DESCRIPTOR lpsd,
-	BOOL daclpresent,
-	PACL dacl,
-	BOOL dacldefaulted )
-{
-    return set_ntstatus( RtlSetDaclSecurityDescriptor (lpsd, daclpresent, dacl, dacldefaulted ) );
-}
-/******************************************************************************
- *  GetSecurityDescriptorSacl			[ADVAPI32.@]
- */
-BOOL WINAPI GetSecurityDescriptorSacl(
-	IN PSECURITY_DESCRIPTOR lpsd,
-	OUT LPBOOL lpbSaclPresent,
-	OUT PACL *pSacl,
-	OUT LPBOOL lpbSaclDefaulted)
-{
-    BOOLEAN present, defaulted;
-    BOOL ret = set_ntstatus( RtlGetSaclSecurityDescriptor(lpsd, &present, pSacl, &defaulted) );
-    *lpbSaclPresent = present;
-    *lpbSaclDefaulted = defaulted;
-    return ret;
-}
-
-/**************************************************************************
- * SetSecurityDescriptorSacl			[ADVAPI32.@]
- */
-BOOL WINAPI SetSecurityDescriptorSacl (
-	PSECURITY_DESCRIPTOR lpsd,
-	BOOL saclpresent,
-	PACL lpsacl,
-	BOOL sacldefaulted)
-{
-    return set_ntstatus (RtlSetSaclSecurityDescriptor(lpsd, saclpresent, lpsacl, sacldefaulted));
-}
-/******************************************************************************
- * MakeSelfRelativeSD [ADVAPI32.@]
- *
- * PARAMS
- *   lpabssecdesc  []
- *   lpselfsecdesc []
- *   lpbuflen      []
- */
-BOOL WINAPI
-MakeSelfRelativeSD(
-	IN PSECURITY_DESCRIPTOR pAbsoluteSecurityDescriptor,
-	IN PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
-	IN OUT LPDWORD lpdwBufferLength)
-{
-    return set_ntstatus( RtlMakeSelfRelativeSD( pAbsoluteSecurityDescriptor,
-                                                pSelfRelativeSecurityDescriptor, lpdwBufferLength));
-}
-
-/******************************************************************************
- * GetSecurityDescriptorControl			[ADVAPI32.@]
- */
-
-BOOL WINAPI GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescriptor,
-		 PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision)
-{
-    return set_ntstatus( RtlGetControlSecurityDescriptor(pSecurityDescriptor,pControl,lpdwRevision));
-}
-
-/******************************************************************************
- * SetSecurityDescriptorControl			[ADVAPI32.@]
- */
-BOOL WINAPI SetSecurityDescriptorControl( PSECURITY_DESCRIPTOR pSecurityDescriptor,
-  SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
-  SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet )
-{
-    return set_ntstatus( RtlSetControlSecurityDescriptor(
-        pSecurityDescriptor, ControlBitsOfInterest, ControlBitsToSet ) );
-}
 
 
 /*	##############################
@@ -1486,45 +1195,6 @@ GetFileSecurityA( LPCSTR lpFileName,
 }
 
 /******************************************************************************
- * GetFileSecurityW [ADVAPI32.@]
- *
- * See GetFileSecurityA.
- */
-BOOL WINAPI
-GetFileSecurityW( LPCWSTR lpFileName,
-                    SECURITY_INFORMATION RequestedInformation,
-                    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-                    DWORD nLength, LPDWORD lpnLengthNeeded )
-{
-    HANDLE hfile;
-    NTSTATUS status;
-    DWORD access = 0, err;
-
-    TRACE("(%s,%d,%p,%d,%p)\n", debugstr_w(lpFileName),
-          RequestedInformation, pSecurityDescriptor,
-          nLength, lpnLengthNeeded);
-
-    if (RequestedInformation & (OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|
-                                DACL_SECURITY_INFORMATION))
-        access |= READ_CONTROL;
-    if (RequestedInformation & SACL_SECURITY_INFORMATION)
-        access |= ACCESS_SYSTEM_SECURITY;
-
-    err = get_security_file( lpFileName, access, &hfile);
-    if (err)
-    {
-        SetLastError(err);
-        return FALSE;
-    }
-
-    status = NtQuerySecurityObject( hfile, RequestedInformation, pSecurityDescriptor,
-                                    nLength, lpnLengthNeeded );
-    CloseHandle( hfile );
-    return set_ntstatus( status );
-}
-
-
-/******************************************************************************
  * LookupAccountSidA [ADVAPI32.@]
  */
 BOOL WINAPI
@@ -1807,52 +1477,6 @@ BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
 }
 
 /******************************************************************************
- * SetFileSecurityW [ADVAPI32.@]
- *
- * Sets the security of a file or directory.
- *
- * PARAMS
- *   lpFileName           []
- *   RequestedInformation []
- *   pSecurityDescriptor  []
- *
- * RETURNS
- *  Success: TRUE.
- *  Failure: FALSE.
- */
-BOOL WINAPI
-SetFileSecurityW( LPCWSTR lpFileName,
-                    SECURITY_INFORMATION RequestedInformation,
-                    PSECURITY_DESCRIPTOR pSecurityDescriptor )
-{
-    HANDLE file;
-    DWORD access = 0, err;
-    NTSTATUS status;
-
-    TRACE("(%s, 0x%x, %p)\n", debugstr_w(lpFileName), RequestedInformation,
-          pSecurityDescriptor );
-
-    if (RequestedInformation & OWNER_SECURITY_INFORMATION ||
-        RequestedInformation & GROUP_SECURITY_INFORMATION)
-        access |= WRITE_OWNER;
-    if (RequestedInformation & SACL_SECURITY_INFORMATION)
-        access |= ACCESS_SYSTEM_SECURITY;
-    if (RequestedInformation & DACL_SECURITY_INFORMATION)
-        access |= WRITE_DAC;
-
-    err = get_security_file( lpFileName, access, &file);
-    if (err)
-    {
-        SetLastError(err);
-        return FALSE;
-    }
-
-    status = NtSetSecurityObject( file, RequestedInformation, pSecurityDescriptor );
-    CloseHandle( file );
-    return set_ntstatus( status );
-}
-
-/******************************************************************************
  * QueryWindows31FilesMigration [ADVAPI32.@]
  *
  * PARAMS
@@ -1957,17 +1581,6 @@ BOOL WINAPI AccessCheckByType(
 VOID WINAPI MapGenericMask( PDWORD AccessMask, PGENERIC_MAPPING GenericMapping )
 {
     RtlMapGenericMask( AccessMask, GenericMapping );
-}
-
-/*************************************************************************
- * SetKernelObjectSecurity [ADVAPI32.@]
- */
-BOOL WINAPI SetKernelObjectSecurity (
-	IN HANDLE Handle,
-	IN SECURITY_INFORMATION SecurityInformation,
-	IN PSECURITY_DESCRIPTOR SecurityDescriptor )
-{
-    return set_ntstatus (NtSetSecurityObject (Handle, SecurityInformation, SecurityDescriptor));
 }
 
 
@@ -3380,18 +2993,6 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
     return r;
 }
 
-BOOL WINAPI SetPrivateObjectSecurity( SECURITY_INFORMATION SecurityInformation,
-    PSECURITY_DESCRIPTOR ModificationDescriptor,
-    PSECURITY_DESCRIPTOR* ObjectsSecurityDescriptor,
-    PGENERIC_MAPPING GenericMapping,
-    HANDLE Token )
-{
-    FIXME("0x%08x %p %p %p %p - stub\n", SecurityInformation, ModificationDescriptor,
-          ObjectsSecurityDescriptor, GenericMapping, Token);
-
-    return TRUE;
-}
-
 BOOL WINAPI AreAllAccessesGranted( DWORD GrantedAccess, DWORD DesiredAccess )
 {
     return RtlAreAllAccessesGranted( GrantedAccess, DesiredAccess );
@@ -4649,88 +4250,6 @@ BOOL WINAPI ConvertSidToStringSidA(PSID pSid, LPSTR *pstr)
 
     *pstr = str;
 
-    return TRUE;
-}
-
-BOOL WINAPI ConvertToAutoInheritPrivateObjectSecurity(
-        PSECURITY_DESCRIPTOR pdesc,
-        PSECURITY_DESCRIPTOR cdesc,
-        PSECURITY_DESCRIPTOR* ndesc,
-        GUID* objtype,
-        BOOL isdir,
-        PGENERIC_MAPPING genmap )
-{
-    FIXME("%p %p %p %p %d %p - stub\n", pdesc, cdesc, ndesc, objtype, isdir, genmap);
-
-    return FALSE;
-}
-
-BOOL WINAPI CreatePrivateObjectSecurityEx(
-    PSECURITY_DESCRIPTOR parent, PSECURITY_DESCRIPTOR creator, PSECURITY_DESCRIPTOR *out,
-    GUID *objtype, BOOL is_directory, ULONG flags, HANDLE token, PGENERIC_MAPPING mapping)
-{
-    SECURITY_DESCRIPTOR_RELATIVE *relative;
-    DWORD needed, offset;
-    BYTE *buffer;
-
-    FIXME("%p %p %p %p %d %u %p %p - returns fake SECURITY_DESCRIPTOR\n", parent, creator, out,
-          objtype, is_directory, flags, token, mapping);
-
-    needed = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
-    needed += sizeof(sidWorld);
-    needed += sizeof(sidWorld);
-    needed += WINE_SIZE_OF_WORLD_ACCESS_ACL;
-    needed += WINE_SIZE_OF_WORLD_ACCESS_ACL;
-
-    if (!(buffer = heap_alloc( needed ))) return FALSE;
-    relative = (SECURITY_DESCRIPTOR_RELATIVE *)buffer;
-    if (!InitializeSecurityDescriptor( relative, SECURITY_DESCRIPTOR_REVISION ))
-    {
-        heap_free( buffer );
-        return FALSE;
-    }
-    relative->Control |= SE_SELF_RELATIVE;
-    offset = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
-
-    memcpy( buffer + offset, &sidWorld, sizeof(sidWorld) );
-    relative->Owner = offset;
-    offset += sizeof(sidWorld);
-
-    memcpy( buffer + offset, &sidWorld, sizeof(sidWorld) );
-    relative->Group = offset;
-    offset += sizeof(sidWorld);
-
-    GetWorldAccessACL( (ACL *)(buffer + offset) );
-    relative->Dacl = offset;
-    offset += WINE_SIZE_OF_WORLD_ACCESS_ACL;
-
-    GetWorldAccessACL( (ACL *)(buffer + offset) );
-    relative->Sacl = offset;
-
-    *out = relative;
-    return TRUE;
-}
-
-BOOL WINAPI CreatePrivateObjectSecurity(
-    PSECURITY_DESCRIPTOR parent, PSECURITY_DESCRIPTOR creator, PSECURITY_DESCRIPTOR *out,
-    BOOL is_container, HANDLE token, PGENERIC_MAPPING mapping)
-{
-    return CreatePrivateObjectSecurityEx(parent, creator, out, NULL, is_container, 0, token, mapping);
-}
-
-BOOL WINAPI CreatePrivateObjectSecurityWithMultipleInheritance(
-    PSECURITY_DESCRIPTOR parent, PSECURITY_DESCRIPTOR creator, PSECURITY_DESCRIPTOR *out,
-    GUID **types, ULONG count, BOOL is_container, ULONG flags, HANDLE token, PGENERIC_MAPPING mapping)
-{
-    FIXME(": semi-stub\n");
-    return CreatePrivateObjectSecurityEx(parent, creator, out, NULL, is_container, flags, token, mapping);
-}
-
-BOOL WINAPI DestroyPrivateObjectSecurity( PSECURITY_DESCRIPTOR* ObjectDescriptor )
-{
-    FIXME("%p - stub\n", ObjectDescriptor);
-
-    heap_free( *ObjectDescriptor );
     return TRUE;
 }
 

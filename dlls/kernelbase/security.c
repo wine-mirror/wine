@@ -138,6 +138,45 @@ static const WELLKNOWNRID WellKnownRids[] =
     { WinAccountRasAndIasServersSid, DOMAIN_ALIAS_RID_RAS_SERVERS },
 };
 
+static const SID world_sid = { SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY} , { SECURITY_WORLD_RID } };
+static const DWORD world_access_acl_size = sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) + sizeof(world_sid) - sizeof(DWORD);
+
+static void get_world_access_acl( PACL acl )
+{
+    PACCESS_ALLOWED_ACE ace = (PACCESS_ALLOWED_ACE)(acl + 1);
+
+    acl->AclRevision = ACL_REVISION;
+    acl->Sbz1 = 0;
+    acl->AclSize = world_access_acl_size;
+    acl->AceCount = 1;
+    acl->Sbz2 = 0;
+    ace->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+    ace->Header.AceFlags = CONTAINER_INHERIT_ACE;
+    ace->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE) + sizeof(world_sid) - sizeof(DWORD);
+    ace->Mask = 0xf3ffffff; /* Everything except reserved bits */
+    memcpy( &ace->SidStart, &world_sid, sizeof(world_sid) );
+}
+
+
+static NTSTATUS open_file( LPCWSTR name, DWORD access, HANDLE *file )
+{
+    UNICODE_STRING file_nameW;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    if ((status = RtlDosPathNameToNtPathName_U_WithStatus( name, &file_nameW, NULL, NULL ))) return status;
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &file_nameW;
+    attr.SecurityDescriptor = NULL;
+    status = NtCreateFile( file, access|SYNCHRONIZE, &attr, &io, NULL, FILE_FLAG_BACKUP_SEMANTICS,
+                           FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_OPEN,
+                           FILE_OPEN_FOR_BACKUP_INTENT, NULL, 0 );
+    RtlFreeUnicodeString( &file_nameW );
+    return status;
+}
 
 static const char *debugstr_sid( PSID sid )
 {
@@ -794,4 +833,366 @@ BOOL WINAPI SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS class, LP
           info, len);
 
     return set_ntstatus( NtSetInformationToken( token, class, info, len ));
+}
+
+
+/******************************************************************************
+ * Security descriptor functions
+ ******************************************************************************/
+
+
+/******************************************************************************
+ * ConvertToAutoInheritPrivateObjectSecurity    (kernelbase.@)
+ */
+BOOL WINAPI ConvertToAutoInheritPrivateObjectSecurity( PSECURITY_DESCRIPTOR parent,
+                                                       PSECURITY_DESCRIPTOR current,
+                                                       PSECURITY_DESCRIPTOR *descr,
+                                                       GUID *type, BOOL is_dir,
+                                                       PGENERIC_MAPPING mapping )
+{
+    FIXME("%p %p %p %p %d %p - stub\n", parent, current, descr, type, is_dir, mapping );
+    return FALSE;
+}
+
+/******************************************************************************
+ * CreatePrivateObjectSecurity    (kernelbase.@)
+ */
+BOOL WINAPI CreatePrivateObjectSecurity( PSECURITY_DESCRIPTOR parent, PSECURITY_DESCRIPTOR creator,
+                                         PSECURITY_DESCRIPTOR *descr, BOOL is_container, HANDLE token,
+                                         PGENERIC_MAPPING mapping )
+{
+    return CreatePrivateObjectSecurityEx( parent, creator, descr, NULL, is_container, 0, token, mapping );
+}
+
+/******************************************************************************
+ * CreatePrivateObjectSecurityEx    (kernelbase.@)
+ */
+BOOL WINAPI CreatePrivateObjectSecurityEx( PSECURITY_DESCRIPTOR parent, PSECURITY_DESCRIPTOR creator,
+                                           PSECURITY_DESCRIPTOR *descr, GUID *type, BOOL is_container,
+                                           ULONG flags, HANDLE token, PGENERIC_MAPPING mapping )
+{
+    SECURITY_DESCRIPTOR_RELATIVE *relative;
+    DWORD needed, offset;
+    BYTE *buffer;
+
+    FIXME( "%p %p %p %p %d %u %p %p - returns fake SECURITY_DESCRIPTOR\n",
+           parent, creator, descr, type, is_container, flags, token, mapping );
+
+    needed = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+    needed += sizeof(world_sid);
+    needed += sizeof(world_sid);
+    needed += world_access_acl_size;
+    needed += world_access_acl_size;
+
+    if (!(buffer = heap_alloc( needed ))) return FALSE;
+    relative = (SECURITY_DESCRIPTOR_RELATIVE *)buffer;
+    if (!InitializeSecurityDescriptor( relative, SECURITY_DESCRIPTOR_REVISION ))
+    {
+        heap_free( buffer );
+        return FALSE;
+    }
+    relative->Control |= SE_SELF_RELATIVE;
+    offset = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+
+    memcpy( buffer + offset, &world_sid, sizeof(world_sid) );
+    relative->Owner = offset;
+    offset += sizeof(world_sid);
+
+    memcpy( buffer + offset, &world_sid, sizeof(world_sid) );
+    relative->Group = offset;
+    offset += sizeof(world_sid);
+
+    get_world_access_acl( (ACL *)(buffer + offset) );
+    relative->Dacl = offset;
+    offset += world_access_acl_size;
+
+    get_world_access_acl( (ACL *)(buffer + offset) );
+    relative->Sacl = offset;
+
+    *descr = relative;
+    return TRUE;
+}
+
+/******************************************************************************
+ * CreatePrivateObjectSecurityWithMultipleInheritance    (kernelbase.@)
+ */
+BOOL WINAPI CreatePrivateObjectSecurityWithMultipleInheritance( PSECURITY_DESCRIPTOR parent,
+                                                                PSECURITY_DESCRIPTOR creator,
+                                                                PSECURITY_DESCRIPTOR *descr,
+                                                                GUID **types, ULONG count,
+                                                                BOOL is_container, ULONG flags,
+                                                                HANDLE token, PGENERIC_MAPPING mapping )
+{
+    FIXME(": semi-stub\n");
+    return CreatePrivateObjectSecurityEx( parent, creator, descr, NULL, is_container,
+                                          flags, token, mapping );
+}
+
+/******************************************************************************
+ * DestroyPrivateObjectSecurity    (kernelbase.@)
+ */
+BOOL WINAPI DestroyPrivateObjectSecurity( PSECURITY_DESCRIPTOR *descr )
+{
+    FIXME("%p - stub\n", descr);
+    heap_free( *descr );
+    return TRUE;
+}
+
+/******************************************************************************
+ * GetFileSecurityW    (kernelbase.@)
+ */
+BOOL WINAPI GetFileSecurityW( LPCWSTR name, SECURITY_INFORMATION info,
+                              PSECURITY_DESCRIPTOR descr, DWORD len, LPDWORD ret_len )
+{
+    HANDLE file;
+    NTSTATUS status;
+    DWORD access = 0;
+
+    TRACE( "(%s,%d,%p,%d,%p)\n", debugstr_w(name), info, descr, len, ret_len );
+
+    if (info & (OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION))
+        access |= READ_CONTROL;
+    if (info & SACL_SECURITY_INFORMATION)
+        access |= ACCESS_SYSTEM_SECURITY;
+
+    if (!(status = open_file( name, access, &file )))
+    {
+        status = NtQuerySecurityObject( file, info, descr, len, ret_len );
+        NtClose( file );
+    }
+    return set_ntstatus( status );
+}
+
+/******************************************************************************
+ * GetKernelObjectSecurity    (kernelbase.@)
+ */
+BOOL WINAPI GetKernelObjectSecurity( HANDLE handle, SECURITY_INFORMATION info,
+                                     PSECURITY_DESCRIPTOR descr, DWORD len, LPDWORD ret_len )
+{
+    return set_ntstatus( NtQuerySecurityObject( handle, info, descr, len, ret_len ));
+}
+
+/******************************************************************************
+ * GetPrivateObjectSecurity    (kernelbase.@)
+ */
+BOOL WINAPI GetPrivateObjectSecurity( PSECURITY_DESCRIPTOR obj_descr, SECURITY_INFORMATION info,
+                                      PSECURITY_DESCRIPTOR ret_descr, DWORD len, PDWORD ret_len )
+{
+    SECURITY_DESCRIPTOR desc;
+    BOOL defaulted, present;
+    PACL pacl;
+    PSID psid;
+
+    TRACE("(%p,0x%08x,%p,0x%08x,%p)\n", obj_descr, info, ret_descr, len, ret_len );
+
+    if (!InitializeSecurityDescriptor(&desc, SECURITY_DESCRIPTOR_REVISION)) return FALSE;
+
+    if (info & OWNER_SECURITY_INFORMATION)
+    {
+        if (!GetSecurityDescriptorOwner(obj_descr, &psid, &defaulted)) return FALSE;
+        SetSecurityDescriptorOwner(&desc, psid, defaulted);
+    }
+    if (info & GROUP_SECURITY_INFORMATION)
+    {
+        if (!GetSecurityDescriptorGroup(obj_descr, &psid, &defaulted)) return FALSE;
+        SetSecurityDescriptorGroup(&desc, psid, defaulted);
+    }
+    if (info & DACL_SECURITY_INFORMATION)
+    {
+        if (!GetSecurityDescriptorDacl(obj_descr, &present, &pacl, &defaulted)) return FALSE;
+        SetSecurityDescriptorDacl(&desc, present, pacl, defaulted);
+    }
+    if (info & SACL_SECURITY_INFORMATION)
+    {
+        if (!GetSecurityDescriptorSacl(obj_descr, &present, &pacl, &defaulted)) return FALSE;
+        SetSecurityDescriptorSacl(&desc, present, pacl, defaulted);
+    }
+
+    *ret_len = len;
+    return MakeSelfRelativeSD(&desc, ret_descr, ret_len);
+}
+
+/******************************************************************************
+ * GetSecurityDescriptorControl    (kernelbase.@)
+ */
+BOOL WINAPI GetSecurityDescriptorControl( PSECURITY_DESCRIPTOR descr, PSECURITY_DESCRIPTOR_CONTROL control,
+                                          LPDWORD revision)
+{
+    return set_ntstatus( RtlGetControlSecurityDescriptor( descr, control, revision ));
+}
+
+/******************************************************************************
+ *  GetSecurityDescriptorDacl    (kernelbase.@)
+ */
+BOOL WINAPI GetSecurityDescriptorDacl( PSECURITY_DESCRIPTOR descr, LPBOOL dacl_present, PACL *dacl,
+                                       LPBOOL dacl_defaulted )
+{
+    BOOLEAN present, defaulted;
+    BOOL ret = set_ntstatus( RtlGetDaclSecurityDescriptor( descr, &present, dacl, &defaulted ));
+    *dacl_present = present;
+    *dacl_defaulted = defaulted;
+    return ret;
+}
+
+/******************************************************************************
+ * GetSecurityDescriptorGroup    (kernelbase.@)
+ */
+BOOL WINAPI GetSecurityDescriptorGroup( PSECURITY_DESCRIPTOR descr, PSID *group, LPBOOL group_defaulted )
+{
+    BOOLEAN defaulted;
+    BOOL ret = set_ntstatus( RtlGetGroupSecurityDescriptor( descr, group, &defaulted ));
+    *group_defaulted = defaulted;
+    return ret;
+}
+
+/******************************************************************************
+ * GetSecurityDescriptorLength    (kernelbase.@)
+ */
+DWORD WINAPI GetSecurityDescriptorLength( PSECURITY_DESCRIPTOR descr )
+{
+    return RtlLengthSecurityDescriptor( descr );
+}
+
+/******************************************************************************
+ * GetSecurityDescriptorOwner    (kernelbase.@)
+ */
+BOOL WINAPI GetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR descr, PSID *owner, LPBOOL owner_defaulted )
+{
+    BOOLEAN defaulted;
+    BOOL ret = set_ntstatus( RtlGetOwnerSecurityDescriptor( descr, owner, &defaulted ));
+    *owner_defaulted = defaulted;
+    return ret;
+}
+
+/******************************************************************************
+ *  GetSecurityDescriptorSacl    (kernelbase.@)
+ */
+BOOL WINAPI GetSecurityDescriptorSacl( PSECURITY_DESCRIPTOR descr, LPBOOL sacl_present, PACL *sacl,
+                                       LPBOOL sacl_defaulted )
+{
+    BOOLEAN present, defaulted;
+    BOOL ret = set_ntstatus( RtlGetSaclSecurityDescriptor( descr, &present, sacl, &defaulted ));
+    *sacl_present = present;
+    *sacl_defaulted = defaulted;
+    return ret;
+}
+
+/******************************************************************************
+ * InitializeSecurityDescriptor    (kernelbase.@)
+ */
+BOOL WINAPI InitializeSecurityDescriptor( PSECURITY_DESCRIPTOR descr, DWORD revision )
+{
+    return set_ntstatus( RtlCreateSecurityDescriptor( descr, revision ));
+}
+
+/******************************************************************************
+ * IsValidSecurityDescriptor    (kernelbase.@)
+ */
+BOOL WINAPI IsValidSecurityDescriptor( PSECURITY_DESCRIPTOR descr )
+{
+    return set_ntstatus( RtlValidSecurityDescriptor( descr ));
+}
+
+/******************************************************************************
+ * MakeAbsoluteSD    (kernelbase.@)
+ */
+BOOL WINAPI MakeAbsoluteSD ( PSECURITY_DESCRIPTOR rel_descr, PSECURITY_DESCRIPTOR abs_descr,
+                             LPDWORD abs_size, PACL dacl, LPDWORD dacl_size, PACL sacl, LPDWORD sacl_size,
+                             PSID owner, LPDWORD owner_size, PSID group, LPDWORD group_size )
+{
+    return set_ntstatus( RtlSelfRelativeToAbsoluteSD( rel_descr, abs_descr, abs_size,
+                                                      dacl, dacl_size, sacl, sacl_size,
+                                                      owner, owner_size, group, group_size ));
+}
+
+/******************************************************************************
+ * MakeSelfRelativeSD    (kernelbase.@)
+ */
+BOOL WINAPI MakeSelfRelativeSD( PSECURITY_DESCRIPTOR abs_descr, PSECURITY_DESCRIPTOR rel_descr,
+                                LPDWORD len )
+{
+    return set_ntstatus( RtlMakeSelfRelativeSD( abs_descr, rel_descr, len ));
+}
+
+/******************************************************************************
+ * SetFileSecurityW    (kernelbase.@)
+ */
+BOOL WINAPI SetFileSecurityW( LPCWSTR name, SECURITY_INFORMATION info, PSECURITY_DESCRIPTOR descr )
+{
+    HANDLE file;
+    DWORD access = 0;
+    NTSTATUS status;
+
+    TRACE( "(%s, 0x%x, %p)\n", debugstr_w(name), info, descr );
+
+    if (info & (OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION)) access |= WRITE_OWNER;
+    if (info & SACL_SECURITY_INFORMATION) access |= ACCESS_SYSTEM_SECURITY;
+    if (info & DACL_SECURITY_INFORMATION) access |= WRITE_DAC;
+
+    if (!(status = open_file( name, access, &file )))
+    {
+        status = NtSetSecurityObject( file, info, descr );
+        NtClose( file );
+    }
+    return set_ntstatus( status );
+}
+
+/*************************************************************************
+ * SetKernelObjectSecurity    (kernelbase.@)
+ */
+BOOL WINAPI SetKernelObjectSecurity( HANDLE handle, SECURITY_INFORMATION info, PSECURITY_DESCRIPTOR descr )
+{
+    return set_ntstatus( NtSetSecurityObject( handle, info, descr ));
+}
+
+/*************************************************************************
+ * SetPrivateObjectSecurity    (kernelbase.@)
+ */
+BOOL WINAPI SetPrivateObjectSecurity( SECURITY_INFORMATION info, PSECURITY_DESCRIPTOR descr,
+                                      PSECURITY_DESCRIPTOR *obj_descr, PGENERIC_MAPPING mapping,
+                                      HANDLE token )
+{
+    FIXME( "0x%08x %p %p %p %p - stub\n", info, descr, obj_descr, mapping, token );
+    return TRUE;
+}
+
+/******************************************************************************
+ * SetSecurityDescriptorControl    (kernelbase.@)
+ */
+BOOL WINAPI SetSecurityDescriptorControl( PSECURITY_DESCRIPTOR descr, SECURITY_DESCRIPTOR_CONTROL mask,
+                                          SECURITY_DESCRIPTOR_CONTROL set )
+{
+    return set_ntstatus( RtlSetControlSecurityDescriptor( descr, mask, set ));
+}
+
+/******************************************************************************
+ *  SetSecurityDescriptorDacl    (kernelbase.@)
+ */
+BOOL WINAPI SetSecurityDescriptorDacl( PSECURITY_DESCRIPTOR descr, BOOL present, PACL dacl, BOOL defaulted )
+{
+    return set_ntstatus( RtlSetDaclSecurityDescriptor( descr, present, dacl, defaulted ));
+}
+
+/******************************************************************************
+ * SetSecurityDescriptorGroup    (kernelbase.@)
+ */
+BOOL WINAPI SetSecurityDescriptorGroup( PSECURITY_DESCRIPTOR descr, PSID group, BOOL defaulted )
+{
+    return set_ntstatus( RtlSetGroupSecurityDescriptor( descr, group, defaulted ));
+}
+
+/******************************************************************************
+ * SetSecurityDescriptorOwner    (kernelbase.@)
+ */
+BOOL WINAPI SetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR descr, PSID owner, BOOL defaulted )
+{
+    return set_ntstatus( RtlSetOwnerSecurityDescriptor( descr, owner, defaulted ));
+}
+
+/**************************************************************************
+ * SetSecurityDescriptorSacl    (kernelbase.@)
+ */
+BOOL WINAPI SetSecurityDescriptorSacl ( PSECURITY_DESCRIPTOR descr, BOOL present, PACL sacl, BOOL defaulted )
+{
+    return set_ntstatus( RtlSetSaclSecurityDescriptor( descr, present, sacl, defaulted ));
 }

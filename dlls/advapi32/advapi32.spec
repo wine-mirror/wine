@@ -131,12 +131,12 @@
 @ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorW(wstr long ptr ptr)
 @ stdcall ConvertStringSidToSidA(ptr ptr)
 @ stdcall ConvertStringSidToSidW(ptr ptr)
-@ stdcall ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr)
+@ stdcall -import ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr)
 @ stdcall -import CopySid(long ptr ptr)
 # @ stub CreateCodeAuthzLevel
-@ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr)
-@ stdcall CreatePrivateObjectSecurityEx(ptr ptr ptr ptr long long long ptr)
-@ stdcall CreatePrivateObjectSecurityWithMultipleInheritance(ptr ptr ptr ptr long long long long ptr)
+@ stdcall -import CreatePrivateObjectSecurity(ptr ptr ptr long long ptr)
+@ stdcall -import CreatePrivateObjectSecurityEx(ptr ptr ptr ptr long long long ptr)
+@ stdcall -import CreatePrivateObjectSecurityWithMultipleInheritance(ptr ptr ptr ptr long long long long ptr)
 @ stdcall CreateProcessAsUserA(long str str ptr ptr long long ptr str ptr ptr) kernel32.CreateProcessAsUserA
 # @ stub CreateProcessAsUserSecure
 @ stdcall CreateProcessAsUserW(long wstr wstr ptr ptr long long ptr wstr ptr ptr) kernel32.CreateProcessAsUserW
@@ -237,7 +237,7 @@
 @ stdcall DeleteAce(ptr long)
 @ stdcall DeleteService(long)
 @ stdcall DeregisterEventSource(long)
-@ stdcall DestroyPrivateObjectSecurity(ptr)
+@ stdcall -import DestroyPrivateObjectSecurity(ptr)
 # @ stub DuplicateEncryptionInfoFile
 @ stdcall -import DuplicateToken(long long ptr)
 @ stdcall -import DuplicateTokenEx(long long ptr long long ptr)
@@ -326,12 +326,12 @@
 @ stdcall GetExplicitEntriesFromAclA(ptr ptr ptr)
 @ stdcall GetExplicitEntriesFromAclW(ptr ptr ptr)
 @ stdcall GetFileSecurityA(str long ptr long ptr)
-@ stdcall GetFileSecurityW(wstr long ptr long ptr)
+@ stdcall -import GetFileSecurityW(wstr long ptr long ptr)
 # @ stub GetInformationCodeAuthzLevelW
 # @ stub GetInformationCodeAuthzPolicyW
 # @ stub GetInheritanceSourceA
 # @ stub GetInheritanceSourceW
-@ stdcall GetKernelObjectSecurity(long long ptr long ptr)
+@ stdcall -import GetKernelObjectSecurity(long long ptr long ptr)
 @ stdcall -import GetLengthSid(ptr)
 # @ stub GetLocalManagedApplicationData
 # @ stub GetLocalManagedApplications
@@ -349,14 +349,14 @@
 @ stdcall GetNumberOfEventLogRecords (long ptr)
 @ stdcall GetOldestEventLogRecord (long ptr)
 # @ stub GetOverlappedAccessResults
-@ stdcall GetPrivateObjectSecurity(ptr long ptr long ptr)
-@ stdcall GetSecurityDescriptorControl (ptr ptr ptr)
-@ stdcall GetSecurityDescriptorDacl (ptr ptr ptr ptr)
-@ stdcall GetSecurityDescriptorGroup(ptr ptr ptr)
-@ stdcall GetSecurityDescriptorLength(ptr)
-@ stdcall GetSecurityDescriptorOwner(ptr ptr ptr)
+@ stdcall -import GetPrivateObjectSecurity(ptr long ptr long ptr)
+@ stdcall -import GetSecurityDescriptorControl (ptr ptr ptr)
+@ stdcall -import GetSecurityDescriptorDacl (ptr ptr ptr ptr)
+@ stdcall -import GetSecurityDescriptorGroup(ptr ptr ptr)
+@ stdcall -import GetSecurityDescriptorLength(ptr)
+@ stdcall -import GetSecurityDescriptorOwner(ptr ptr ptr)
 # @ stub GetSecurityDescriptorRMControl
-@ stdcall GetSecurityDescriptorSacl (ptr ptr ptr ptr)
+@ stdcall -import GetSecurityDescriptorSacl (ptr ptr ptr ptr)
 @ stdcall GetSecurityInfo (long long long ptr ptr ptr ptr ptr)
 @ stdcall GetSecurityInfoExA (long long long str str ptr ptr ptr ptr)
 @ stdcall GetSecurityInfoExW (long long long wstr wstr ptr ptr ptr ptr)
@@ -403,7 +403,7 @@
 @ stdcall -import ImpersonateNamedPipeClient(long)
 @ stdcall -import ImpersonateSelf(long)
 @ stdcall InitializeAcl(ptr long long)
-@ stdcall InitializeSecurityDescriptor(ptr long)
+@ stdcall -import InitializeSecurityDescriptor(ptr long)
 @ stdcall -import InitializeSid(ptr ptr long)
 @ stdcall InitiateShutdownA(str str long long long)
 @ stdcall InitiateShutdownW(wstr wstr long long long)
@@ -418,7 +418,7 @@
 # @ stub IsTokenUntrusted
 @ stdcall IsValidAcl(ptr)
 # @ stub IsValidRelativeSecurityDescriptor
-@ stdcall IsValidSecurityDescriptor(ptr)
+@ stdcall -import IsValidSecurityDescriptor(ptr)
 @ stdcall -import IsValidSid(ptr)
 @ stdcall -import IsWellKnownSid(ptr long)
 @ stdcall LockServiceDatabase(ptr)
@@ -518,9 +518,9 @@
 # @ stub MIDL_user_free_Ext
 # @ stub MSChapSrvChangePassword
 # @ stub MSChapSrvChangePassword2
-@ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall -import MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 # @ stub MakeAbsoluteSD2
-@ stdcall MakeSelfRelativeSD(ptr ptr ptr)
+@ stdcall -import MakeSelfRelativeSD(ptr ptr ptr)
 @ stdcall MapGenericMask(ptr ptr)
 @ stdcall NotifyBootConfigStatus(long)
 @ stdcall NotifyChangeEventLog (long long)
@@ -740,23 +740,23 @@
 # @ stub SetEntriesInAuditListA
 # @ stub SetEntriesInAuditListW
 @ stdcall SetFileSecurityA(str long ptr )
-@ stdcall SetFileSecurityW(wstr long ptr)
+@ stdcall -import SetFileSecurityW(wstr long ptr)
 # @ stub SetInformationCodeAuthzLevelW
 # @ stub SetInformationCodeAuthzPolicyW
-@ stdcall SetKernelObjectSecurity(long long ptr)
+@ stdcall -import SetKernelObjectSecurity(long long ptr)
 @ stdcall SetNamedSecurityInfoA(str long long ptr ptr ptr ptr)
 # @ stub SetNamedSecurityInfoExA
 # @ stub SetNamedSecurityInfoExW
 @ stdcall SetNamedSecurityInfoW(wstr long long ptr ptr ptr ptr)
-@ stdcall SetPrivateObjectSecurity(long ptr ptr ptr long)
+@ stdcall -import SetPrivateObjectSecurity(long ptr ptr ptr long)
 # @ stub SetPrivateObjectSecurityEx
 # @ stub SetSecurityAccessMask
-@ stdcall SetSecurityDescriptorControl(ptr long long)
-@ stdcall SetSecurityDescriptorDacl(ptr long ptr long)
-@ stdcall SetSecurityDescriptorGroup (ptr ptr long)
-@ stdcall SetSecurityDescriptorOwner (ptr ptr long)
+@ stdcall -import SetSecurityDescriptorControl(ptr long long)
+@ stdcall -import SetSecurityDescriptorDacl(ptr long ptr long)
+@ stdcall -import SetSecurityDescriptorGroup (ptr ptr long)
+@ stdcall -import SetSecurityDescriptorOwner (ptr ptr long)
 # @ stub SetSecurityDescriptorRMControl
-@ stdcall SetSecurityDescriptorSacl(ptr long ptr long)
+@ stdcall -import SetSecurityDescriptorSacl(ptr long ptr long)
 @ stdcall SetSecurityInfo (long long long ptr ptr ptr ptr)
 # @ stub SetSecurityInfoExA
 # @ stub SetSecurityInfoExW

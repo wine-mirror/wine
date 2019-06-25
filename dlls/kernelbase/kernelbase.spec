@@ -163,7 +163,7 @@
 @ stdcall ConvertFiberToThread() kernel32.ConvertFiberToThread
 @ stdcall ConvertThreadToFiber(ptr) kernel32.ConvertThreadToFiber
 @ stdcall ConvertThreadToFiberEx(ptr long) kernel32.ConvertThreadToFiberEx
-@ stdcall ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr) advapi32.ConvertToAutoInheritPrivateObjectSecurity
+@ stdcall ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr)
 # @ stub CopyContext
 # @ stub CopyFile2
 @ stdcall CopyFileExW(wstr wstr ptr ptr ptr long) kernel32.CopyFileExW
@@ -202,9 +202,9 @@
 @ stdcall CreateNamedPipeW(wstr long long long long long long ptr) kernel32.CreateNamedPipeW
 @ stdcall CreatePipe(ptr ptr ptr long) kernel32.CreatePipe
 # @ stub CreatePrivateNamespaceW
-@ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr) advapi32.CreatePrivateObjectSecurity
-@ stdcall CreatePrivateObjectSecurityEx(ptr ptr ptr ptr long long long ptr) advapi32.CreatePrivateObjectSecurityEx
-@ stdcall CreatePrivateObjectSecurityWithMultipleInheritance(ptr ptr ptr ptr long long long long ptr) advapi32.CreatePrivateObjectSecurityWithMultipleInheritance
+@ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr)
+@ stdcall CreatePrivateObjectSecurityEx(ptr ptr ptr ptr long long long ptr)
+@ stdcall CreatePrivateObjectSecurityWithMultipleInheritance(ptr ptr ptr ptr long long long long ptr)
 @ stdcall CreateProcessA(str str ptr ptr long long ptr str ptr ptr) kernel32.CreateProcessA
 @ stdcall CreateProcessAsUserA(long str str ptr ptr long long ptr str ptr ptr) kernel32.CreateProcessAsUserA
 @ stdcall CreateProcessAsUserW(long wstr wstr ptr ptr long long ptr wstr ptr ptr) kernel32.CreateProcessAsUserW
@@ -260,7 +260,7 @@
 @ stdcall DeleteTimerQueueEx(long long) kernel32.DeleteTimerQueueEx
 @ stdcall DeleteTimerQueueTimer(long long long) kernel32.DeleteTimerQueueTimer
 @ stdcall DeleteVolumeMountPointW(wstr) kernel32.DeleteVolumeMountPointW
-@ stdcall DestroyPrivateObjectSecurity(ptr) advapi32.DestroyPrivateObjectSecurity
+@ stdcall DestroyPrivateObjectSecurity(ptr)
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr) kernel32.DeviceIoControl
 @ stdcall DisablePredefinedHandleTableInternal(long)
 @ stdcall DisableThreadLibraryCalls(long) kernel32.DisableThreadLibraryCalls
@@ -510,7 +510,7 @@
 @ stdcall GetFileInformationByHandleEx(long long ptr long) kernel32.GetFileInformationByHandleEx
 @ stdcall GetFileMUIInfo(long wstr ptr ptr) kernel32.GetFileMUIInfo
 @ stdcall GetFileMUIPath(long wstr wstr ptr ptr ptr ptr) kernel32.GetFileMUIPath
-@ stdcall GetFileSecurityW(wstr long ptr long ptr) advapi32.GetFileSecurityW
+@ stdcall GetFileSecurityW(wstr long ptr long ptr)
 @ stdcall GetFileSize(long ptr) kernel32.GetFileSize
 @ stdcall GetFileSizeEx(long ptr) kernel32.GetFileSizeEx
 @ stdcall GetFileTime(long ptr ptr ptr) kernel32.GetFileTime
@@ -535,7 +535,7 @@
 # @ stub GetHivePath
 # @ stub GetIntegratedDisplaySize
 # @ stub GetIsEdpEnabled
-@ stdcall GetKernelObjectSecurity(long long ptr long ptr) advapi32.GetKernelObjectSecurity
+@ stdcall GetKernelObjectSecurity(long long ptr long ptr)
 @ stdcall GetLargePageMinimum() kernel32.GetLargePageMinimum
 @ stdcall GetLargestConsoleWindowSize(long) kernel32.GetLargestConsoleWindowSize
 @ stdcall GetLastError() kernel32.GetLastError
@@ -618,7 +618,7 @@
 @ stdcall GetPhysicallyInstalledSystemMemory(ptr) kernel32.GetPhysicallyInstalledSystemMemory
 # @ stub GetPreviousFgPolicyRefreshInfoInternal
 @ stdcall GetPriorityClass(long) kernel32.GetPriorityClass
-@ stdcall GetPrivateObjectSecurity(ptr long ptr long ptr) advapi32.GetPrivateObjectSecurity
+@ stdcall GetPrivateObjectSecurity(ptr long ptr long ptr)
 @ stdcall GetProcAddress(long str) kernel32.GetProcAddress
 # @ stub GetProcAddressForCaller
 # @ stub GetProcessDefaultCpuSets
@@ -649,13 +649,13 @@
 @ stdcall GetQueuedCompletionStatusEx(ptr ptr long ptr long long) kernel32.GetQueuedCompletionStatusEx
 # @ stub GetRegistryExtensionFlags
 # @ stub GetRoamingLastObservedChangeTime
-@ stdcall GetSecurityDescriptorControl(ptr ptr ptr) advapi32.GetSecurityDescriptorControl
-@ stdcall GetSecurityDescriptorDacl(ptr ptr ptr ptr) advapi32.GetSecurityDescriptorDacl
-@ stdcall GetSecurityDescriptorGroup(ptr ptr ptr) advapi32.GetSecurityDescriptorGroup
-@ stdcall GetSecurityDescriptorLength(ptr) advapi32.GetSecurityDescriptorLength
-@ stdcall GetSecurityDescriptorOwner(ptr ptr ptr) advapi32.GetSecurityDescriptorOwner
+@ stdcall GetSecurityDescriptorControl(ptr ptr ptr)
+@ stdcall GetSecurityDescriptorDacl(ptr ptr ptr ptr)
+@ stdcall GetSecurityDescriptorGroup(ptr ptr ptr)
+@ stdcall GetSecurityDescriptorLength(ptr)
+@ stdcall GetSecurityDescriptorOwner(ptr ptr ptr)
 @ stub GetSecurityDescriptorRMControl
-@ stdcall GetSecurityDescriptorSacl(ptr ptr ptr ptr) advapi32.GetSecurityDescriptorSacl
+@ stdcall GetSecurityDescriptorSacl(ptr ptr ptr ptr)
 # @ stub GetSerializedAtomBytes
 # @ stub GetSharedLocalFolder
 @ stdcall GetShortPathNameW(wstr ptr long) kernel32.GetShortPathNameW
@@ -809,7 +809,7 @@
 # @ stub InitializeProcessForWsWatch
 @ stdcall InitializeSListHead(ptr) kernel32.InitializeSListHead
 @ stdcall InitializeSRWLock(ptr) kernel32.InitializeSRWLock
-@ stdcall InitializeSecurityDescriptor(ptr long) advapi32.InitializeSecurityDescriptor
+@ stdcall InitializeSecurityDescriptor(ptr long)
 @ stdcall InitializeSid(ptr ptr long)
 # @ stub InitializeSynchronizationBarrier
 # @ stub InstallELAMCertificateInfo
@@ -881,7 +881,7 @@
 @ stdcall IsValidLocaleName(wstr) kernel32.IsValidLocaleName
 # @ stub IsValidNLSVersion
 @ stub IsValidRelativeSecurityDescriptor
-@ stdcall IsValidSecurityDescriptor(ptr) advapi32.IsValidSecurityDescriptor
+@ stdcall IsValidSecurityDescriptor(ptr)
 @ stdcall IsValidSid(ptr)
 @ stdcall IsWellKnownSid(ptr long)
 @ stdcall IsWow64Process(ptr ptr) kernel32.IsWow64Process
@@ -944,9 +944,9 @@
 @ stdcall LockFile(long long long long long) kernel32.LockFile
 @ stdcall LockFileEx(long long long long long ptr) kernel32.LockFileEx
 @ stdcall LockResource(long) kernel32.LockResource
-@ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) advapi32.MakeAbsoluteSD
+@ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub MakeAbsoluteSD2
-@ stdcall MakeSelfRelativeSD(ptr ptr ptr) advapi32.MakeSelfRelativeSD
+@ stdcall MakeSelfRelativeSD(ptr ptr ptr)
 @ stdcall MapGenericMask(ptr ptr) advapi32.MapGenericMask
 # @ stub MapPredefinedHandleInternal
 @ stdcall MapUserPhysicalPages(ptr long ptr) kernel32.MapUserPhysicalPages
@@ -1437,21 +1437,21 @@
 # @ stub SetFileIoOverlappedRange
 @ stdcall SetFilePointer(long long ptr long) kernel32.SetFilePointer
 @ stdcall SetFilePointerEx(long int64 ptr long) kernel32.SetFilePointerEx
-@ stdcall SetFileSecurityW(wstr long ptr) advapi32.SetFileSecurityW
+@ stdcall SetFileSecurityW(wstr long ptr)
 @ stdcall SetFileTime(long ptr ptr ptr) kernel32.SetFileTime
 @ stdcall SetFileValidData(ptr int64) kernel32.SetFileValidData
 @ stdcall SetHandleCount(long) kernel32.SetHandleCount
 @ stdcall SetHandleInformation(long long long) kernel32.SetHandleInformation
 # @ stub SetIsDeveloperModeEnabled
 # @ stub SetIsSideloadingEnabled
-@ stdcall SetKernelObjectSecurity(long long ptr) advapi32.SetKernelObjectSecurity
+@ stdcall SetKernelObjectSecurity(long long ptr)
 @ stub SetLastConsoleEventActive
 @ stdcall SetLastError(long) kernel32.SetLastError
 @ stdcall SetLocalTime(ptr) kernel32.SetLocalTime
 @ stdcall SetLocaleInfoW(long long wstr) kernel32.SetLocaleInfoW
 @ stdcall SetNamedPipeHandleState(long ptr ptr ptr) kernel32.SetNamedPipeHandleState
 @ stdcall SetPriorityClass(long long) kernel32.SetPriorityClass
-@ stdcall SetPrivateObjectSecurity(long ptr ptr ptr long) advapi32.SetPrivateObjectSecurity
+@ stdcall SetPrivateObjectSecurity(long ptr ptr ptr long)
 @ stub SetPrivateObjectSecurityEx
 @ stdcall SetProcessAffinityUpdateMode(long long) kernel32.SetProcessAffinityUpdateMode
 # @ stub SetProcessDefaultCpuSets
@@ -1466,12 +1466,12 @@
 # @ stub SetProtectedPolicy
 # @ stub SetRoamingLastObservedChangeTime
 @ stub SetSecurityAccessMask
-@ stdcall SetSecurityDescriptorControl(ptr long long) advapi32.SetSecurityDescriptorControl
-@ stdcall SetSecurityDescriptorDacl(ptr long ptr long) advapi32.SetSecurityDescriptorDacl
-@ stdcall SetSecurityDescriptorGroup(ptr ptr long) advapi32.SetSecurityDescriptorGroup
-@ stdcall SetSecurityDescriptorOwner(ptr ptr long) advapi32.SetSecurityDescriptorOwner
+@ stdcall SetSecurityDescriptorControl(ptr long long)
+@ stdcall SetSecurityDescriptorDacl(ptr long ptr long)
+@ stdcall SetSecurityDescriptorGroup(ptr ptr long)
+@ stdcall SetSecurityDescriptorOwner(ptr ptr long)
 @ stub SetSecurityDescriptorRMControl
-@ stdcall SetSecurityDescriptorSacl(ptr long ptr long) advapi32.SetSecurityDescriptorSacl
+@ stdcall SetSecurityDescriptorSacl(ptr long ptr long)
 # @ stub SetStateVersion
 @ stdcall SetStdHandle(long long) kernel32.SetStdHandle
 @ stub SetStdHandleEx
