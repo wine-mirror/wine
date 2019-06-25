@@ -251,6 +251,9 @@ static const WCHAR CSrgb[] = {'%','u',' ','%','u',' ','%','u',0};
 
 /* Wine specific monitor properties */
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_STATEFLAGS, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 2);
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCMONITOR, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 3);
+
+#define NULLDRV_DEFAULT_HMONITOR ((HMONITOR)(UINT_PTR)(0x10000 + 1))
 
 /* Strings for monitor functions */
 static const WCHAR DEFAULT_ADAPTER_NAME[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
@@ -3813,6 +3816,61 @@ static BOOL CALLBACK enum_mon_callback( HMONITOR monitor, HDC hdc, LPRECT rect, 
 #else
     return data->proc( monitor, data->hdc, &monrect, data->lparam );
 #endif
+}
+
+BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp )
+{
+    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
+    USEROBJECTFLAGS flags;
+    HWINSTA winstation;
+    BOOL success = FALSE;
+    HDEVINFO devinfo;
+    RECT monitor_rect;
+    DWORD state_flags;
+    HANDLE mutex;
+    DWORD type;
+    DWORD i = 0;
+
+    TRACE("(%p, %p, %p, 0x%lx)\n", hdc, rect, proc, lp);
+
+    /* Use SetupAPI to get monitors only if window station has visible display surfaces */
+    winstation = GetProcessWindowStation();
+    if (GetUserObjectInformationA( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL ) && (flags.dwFlags & WSF_VISIBLE))
+    {
+        mutex = get_display_device_init_mutex();
+        devinfo = SetupDiGetClassDevsW( &GUID_DEVCLASS_MONITOR, NULL, NULL, 0 );
+        while (SetupDiEnumDeviceInfo( devinfo, i++, &device_data ))
+        {
+            /* Inactive monitors don't get enumerated */
+            if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_STATEFLAGS, &type,
+                                            (BYTE *)&state_flags, sizeof(state_flags), NULL, 0 )
+                || !(state_flags & DISPLAY_DEVICE_ACTIVE))
+                continue;
+
+            if (SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type,
+                                           (BYTE *)&monitor_rect, sizeof(monitor_rect), NULL, 0 ))
+            {
+                if (!proc( (HMONITOR)(UINT_PTR)i, hdc, &monitor_rect, lp ))
+                {
+                    SetupDiDestroyDeviceInfoList( devinfo );
+                    release_display_device_init_mutex( mutex );
+                    return FALSE;
+                }
+                success = TRUE;
+            }
+        }
+        SetupDiDestroyDeviceInfoList( devinfo );
+        release_display_device_init_mutex( mutex );
+    }
+
+    /* Fallback to report one monitor if using SetupAPI failed */
+    if (!success)
+    {
+        RECT default_rect = {0, 0, 640, 480};
+        if (!proc( NULLDRV_DEFAULT_HMONITOR, hdc, &default_rect, lp ))
+            return FALSE;
+    }
+    return TRUE;
 }
 
 /***********************************************************************

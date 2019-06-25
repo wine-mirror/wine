@@ -354,16 +354,6 @@ static LONG CDECL nulldrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode
     return DISP_CHANGE_FAILED;
 }
 
-static BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
-{
-    RECT r = {0, 0, 640, 480};
-
-    TRACE("(%p, %p, %p, 0x%lx)\n", hdc, rect, proc, lp);
-
-    proc(NULLDRV_DEFAULT_HMONITOR, hdc, &r, lp);
-    return TRUE;
-}
-
 static BOOL CDECL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
 {
     return FALSE;

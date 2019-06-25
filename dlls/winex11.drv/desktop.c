@@ -304,6 +304,7 @@ void X11DRV_resize_desktop( unsigned int width, unsigned int height )
     resize_data.old_virtual_rect = get_virtual_screen_rect();
 
     xinerama_init( width, height );
+    X11DRV_DisplayDevices_Init( TRUE );
     resize_data.new_virtual_rect = get_virtual_screen_rect();
 
     if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId())

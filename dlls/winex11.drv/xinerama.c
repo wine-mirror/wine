@@ -321,6 +321,7 @@ static BOOL xinerama_get_monitors( ULONG_PTR adapter_id, struct x11drv_monitor *
                 && !IsRectEmpty( &monitors[first].rcMonitor )))
         {
             lstrcpyW( monitor[index].name, generic_nonpnp_monitorW );
+            monitor[index].rc_monitor = monitors[i].rcMonitor;
             /* Xinerama only reports monitors already attached */
             monitor[index].state_flags = DISPLAY_DEVICE_ATTACHED;
             if (!IsRectEmpty( &monitors[i].rcMonitor ))
@@ -408,19 +409,5 @@ BOOL CDECL X11DRV_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
     info->dwFlags = monitors[i].dwFlags;
     if (info->cbSize >= sizeof(MONITORINFOEXW))
         lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, monitors[i].szDevice );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *		X11DRV_EnumDisplayMonitors  (X11DRV.@)
- */
-BOOL CDECL X11DRV_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
-{
-    int i;
-
-    for (i = 0; i < nb_monitors; i++)
-        if (!proc( index_to_monitor(i), 0, &monitors[i].rcMonitor, lp )) return FALSE;
-
     return TRUE;
 }
