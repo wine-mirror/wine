@@ -7,5 +7,6 @@ C_SRCS = \
 	main.c \
 	path.c \
 	registry.c \
+	security.c \
 	string.c \
 	version.c

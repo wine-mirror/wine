@@ -31,8 +31,8 @@
 # @ stub AddUsersToEncryptedFileEx
 @ stdcall AdjustTokenGroups(long long ptr long ptr ptr)
 @ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr)
-@ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
-@ stdcall AllocateLocallyUniqueId(ptr)
+@ stdcall -import AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
+@ stdcall -import AllocateLocallyUniqueId(ptr)
 @ stdcall AreAllAccessesGranted(long long)
 @ stdcall AreAnyAccessesGranted(long long)
 # @ stub AuditComputeEffectivePolicyBySid
@@ -132,7 +132,7 @@
 @ stdcall ConvertStringSidToSidA(ptr ptr)
 @ stdcall ConvertStringSidToSidW(ptr ptr)
 @ stdcall ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr)
-@ stdcall CopySid(long ptr ptr)
+@ stdcall -import CopySid(long ptr ptr)
 # @ stub CreateCodeAuthzLevel
 @ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr)
 @ stdcall CreatePrivateObjectSecurityEx(ptr ptr ptr ptr long long long ptr)
@@ -146,7 +146,7 @@
 @ stdcall CreateServiceA(long str str long long long long str str ptr str str str)
 @ stdcall CreateServiceW(long wstr wstr long long long long wstr wstr ptr wstr wstr wstr)
 # @ stub CreateTraceInstanceId
-@ stdcall CreateWellKnownSid(long ptr ptr ptr)
+@ stdcall -import CreateWellKnownSid(long ptr ptr ptr)
 # @ stub CredBackupCredentials
 @ stdcall CredDeleteA(str long long)
 @ stdcall CredDeleteW(wstr long long)
@@ -282,8 +282,8 @@
 @ stdcall EnumerateTraceGuids(ptr long ptr)
 # @ stub EnumerateTraceGuidsEx
 # @ stub EqualDomainSid
-@ stdcall EqualPrefixSid(ptr ptr)
-@ stdcall EqualSid(ptr ptr)
+@ stdcall -import EqualPrefixSid(ptr ptr)
+@ stdcall -import EqualSid(ptr ptr)
 # @ stub EventAccessControl
 # @ stub EventAccessQuery
 # @ stub EventAccessRemove
@@ -309,7 +309,7 @@
 # @ stub FreeEncryptedFileMetadata
 # @ stub FreeEncryptionCertificateHashList
 # @ stub FreeInheritedFromArray
-@ stdcall FreeSid(ptr)
+@ stdcall -import FreeSid(ptr)
 # @ stub GetAccessPermissionsForObjectA
 # @ stub GetAccessPermissionsForObjectW
 @ stdcall GetAce(ptr long ptr)
@@ -332,7 +332,7 @@
 # @ stub GetInheritanceSourceA
 # @ stub GetInheritanceSourceW
 @ stdcall GetKernelObjectSecurity(long long ptr long ptr)
-@ stdcall GetLengthSid(ptr)
+@ stdcall -import GetLengthSid(ptr)
 # @ stub GetLocalManagedApplicationData
 # @ stub GetLocalManagedApplications
 # @ stub GetManagedApplicationCategories
@@ -364,10 +364,10 @@
 @ stdcall GetServiceDisplayNameW(ptr wstr ptr ptr)
 @ stdcall GetServiceKeyNameA(long str ptr ptr)
 @ stdcall GetServiceKeyNameW(long wstr ptr ptr)
-@ stdcall GetSidIdentifierAuthority(ptr)
-@ stdcall GetSidLengthRequired(long)
-@ stdcall GetSidSubAuthority(ptr long)
-@ stdcall GetSidSubAuthorityCount(ptr)
+@ stdcall -import GetSidIdentifierAuthority(ptr)
+@ stdcall -import GetSidLengthRequired(long)
+@ stdcall -import GetSidSubAuthority(ptr long)
+@ stdcall -import GetSidSubAuthorityCount(ptr)
 @ stub GetSiteSidFromToken
 # @ stub GetStringConditionFromBinary
 # @ stub GetThreadWaitChain
@@ -383,7 +383,7 @@
 @ stdcall GetTrusteeTypeW(ptr)
 @ stdcall GetUserNameA(ptr ptr)
 @ stdcall GetUserNameW(ptr ptr)
-@ stdcall GetWindowsAccountDomainSid(ptr ptr ptr)
+@ stdcall -import GetWindowsAccountDomainSid(ptr ptr ptr)
 # @ stub I_QueryTagInformation
 # @ stub I_ScGetCurrentGroupStateW
 # @ stub I_ScIsSecurityProcess
@@ -404,7 +404,7 @@
 @ stdcall ImpersonateSelf(long)
 @ stdcall InitializeAcl(ptr long long)
 @ stdcall InitializeSecurityDescriptor(ptr long)
-@ stdcall InitializeSid(ptr ptr long)
+@ stdcall -import InitializeSid(ptr ptr long)
 @ stdcall InitiateShutdownA(str str long long long)
 @ stdcall InitiateShutdownW(wstr wstr long long long)
 @ stdcall InitiateSystemShutdownA(str str long long long)
@@ -419,8 +419,8 @@
 @ stdcall IsValidAcl(ptr)
 # @ stub IsValidRelativeSecurityDescriptor
 @ stdcall IsValidSecurityDescriptor(ptr)
-@ stdcall IsValidSid(ptr)
-@ stdcall IsWellKnownSid(ptr long)
+@ stdcall -import IsValidSid(ptr)
+@ stdcall -import IsWellKnownSid(ptr long)
 @ stdcall LockServiceDatabase(ptr)
 @ stdcall LogonUserA(str str str long long ptr)
 # @ stub LogonUserExA

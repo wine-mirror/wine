@@ -30,8 +30,8 @@
 @ stdcall AdjustTokenGroups(long long ptr long ptr ptr) advapi32.AdjustTokenGroups
 @ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr) advapi32.AdjustTokenPrivileges
 @ stdcall AllocConsole() kernel32.AllocConsole
-@ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr) advapi32.AllocateAndInitializeSid
-@ stdcall AllocateLocallyUniqueId(ptr) advapi32.AllocateLocallyUniqueId
+@ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
+@ stdcall AllocateLocallyUniqueId(ptr)
 @ stdcall AllocateUserPhysicalPages(long ptr ptr) kernel32.AllocateUserPhysicalPages
 # @ stub AllocateUserPhysicalPagesNuma
 # @ stub AppContainerDeriveSidFromMoniker
@@ -169,7 +169,7 @@
 @ stdcall CopyFileExW(wstr wstr ptr ptr ptr long) kernel32.CopyFileExW
 @ stdcall CopyFileW(wstr wstr long) kernel32.CopyFileW
 # @ stub -arch=x86_64 CopyMemoryNonTemporal
-@ stdcall CopySid(long ptr ptr) advapi32.CopySid
+@ stdcall CopySid(long ptr ptr)
 # @ stub CouldMultiUserAppsBehaviorBePossibleForPackage
 @ stdcall CreateActCtxW(ptr) kernel32.CreateActCtxW
 # @ stub CreateAppContainerToken
@@ -233,7 +233,7 @@
 @ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long) kernel32.CreateTimerQueueTimer
 @ stdcall CreateWaitableTimerExW(ptr wstr long long) kernel32.CreateWaitableTimerExW
 @ stdcall CreateWaitableTimerW(ptr long wstr) kernel32.CreateWaitableTimerW
-@ stdcall CreateWellKnownSid(long ptr ptr ptr) advapi32.CreateWellKnownSid
+@ stdcall CreateWellKnownSid(long ptr ptr ptr)
 # @ stub CtrlRoutine
 # @ stub CveEventWrite
 @ stdcall DeactivateActCtx(long long) kernel32.DeactivateActCtx
@@ -324,8 +324,8 @@
 # @ stub EnumerateStateAtomValues
 # @ stub EnumerateStateContainerItems
 @ stub EqualDomainSid
-@ stdcall EqualPrefixSid(ptr ptr) advapi32.EqualPrefixSid
-@ stdcall EqualSid(ptr ptr) advapi32.EqualSid
+@ stdcall EqualPrefixSid(ptr ptr)
+@ stdcall EqualSid(ptr ptr)
 @ stdcall EscapeCommFunction(long long) kernel32.EscapeCommFunction
 @ stdcall EventActivityIdControl(long ptr) ntdll.EtwEventActivityIdControl
 @ stdcall EventEnabled(int64 ptr) ntdll.EtwEventEnabled
@@ -398,7 +398,7 @@
 @ stdcall FreeLibraryAndExitThread(long long) kernel32.FreeLibraryAndExitThread
 @ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) kernel32.FreeLibraryWhenCallbackReturns
 @ stdcall FreeResource(long) kernel32.FreeResource
-@ stdcall FreeSid(ptr) advapi32.FreeSid
+@ stdcall FreeSid(ptr)
 @ stdcall FreeUserPhysicalPages(long ptr ptr) kernel32.FreeUserPhysicalPages
 @ stdcall GenerateConsoleCtrlEvent(long long) kernel32.GenerateConsoleCtrlEvent
 # @ stub GenerateGPNotificationInternal
@@ -539,7 +539,7 @@
 @ stdcall GetLargePageMinimum() kernel32.GetLargePageMinimum
 @ stdcall GetLargestConsoleWindowSize(long) kernel32.GetLargestConsoleWindowSize
 @ stdcall GetLastError() kernel32.GetLastError
-@ stdcall GetLengthSid(ptr) advapi32.GetLengthSid
+@ stdcall GetLengthSid(ptr)
 @ stdcall GetLocalTime(ptr) kernel32.GetLocalTime
 @ stdcall GetLocaleInfoA(long long ptr long) kernel32.GetLocaleInfoA
 @ stdcall GetLocaleInfoEx(wstr long ptr long) kernel32.GetLocaleInfoEx
@@ -659,10 +659,10 @@
 # @ stub GetSerializedAtomBytes
 # @ stub GetSharedLocalFolder
 @ stdcall GetShortPathNameW(wstr ptr long) kernel32.GetShortPathNameW
-@ stdcall GetSidIdentifierAuthority(ptr) advapi32.GetSidIdentifierAuthority
-@ stdcall GetSidLengthRequired(long) advapi32.GetSidLengthRequired
-@ stdcall GetSidSubAuthority(ptr long) advapi32.GetSidSubAuthority
-@ stdcall GetSidSubAuthorityCount(ptr) advapi32.GetSidSubAuthorityCount
+@ stdcall GetSidIdentifierAuthority(ptr)
+@ stdcall GetSidLengthRequired(long)
+@ stdcall GetSidSubAuthority(ptr long)
+@ stdcall GetSidSubAuthorityCount(ptr)
 # @ stub GetStagedPackageOrigin
 # @ stub GetStagedPackagePathByFullName
 @ stdcall GetStartupInfoW(ptr) kernel32.GetStartupInfoW
@@ -759,7 +759,7 @@
 @ stdcall GetVolumeNameForVolumeMountPointW(wstr ptr long) kernel32.GetVolumeNameForVolumeMountPointW
 @ stdcall GetVolumePathNameW(wstr ptr long) kernel32.GetVolumePathNameW
 @ stdcall GetVolumePathNamesForVolumeNameW(wstr ptr long ptr) kernel32.GetVolumePathNamesForVolumeNameW
-@ stdcall GetWindowsAccountDomainSid(ptr ptr ptr) advapi32.GetWindowsAccountDomainSid
+@ stdcall GetWindowsAccountDomainSid(ptr ptr ptr)
 @ stdcall GetWindowsDirectoryA(ptr long) kernel32.GetWindowsDirectoryA
 @ stdcall GetWindowsDirectoryW(ptr long) kernel32.GetWindowsDirectoryW
 @ stdcall GetWriteWatch(long ptr long ptr ptr ptr) kernel32.GetWriteWatch
@@ -810,7 +810,7 @@
 @ stdcall InitializeSListHead(ptr) kernel32.InitializeSListHead
 @ stdcall InitializeSRWLock(ptr) kernel32.InitializeSRWLock
 @ stdcall InitializeSecurityDescriptor(ptr long) advapi32.InitializeSecurityDescriptor
-@ stdcall InitializeSid(ptr ptr long) advapi32.InitializeSid
+@ stdcall InitializeSid(ptr ptr long)
 # @ stub InitializeSynchronizationBarrier
 # @ stub InstallELAMCertificateInfo
 @ stdcall -arch=i386 InterlockedCompareExchange(ptr long long) kernel32.InterlockedCompareExchange
@@ -882,8 +882,8 @@
 # @ stub IsValidNLSVersion
 @ stub IsValidRelativeSecurityDescriptor
 @ stdcall IsValidSecurityDescriptor(ptr) advapi32.IsValidSecurityDescriptor
-@ stdcall IsValidSid(ptr) advapi32.IsValidSid
-@ stdcall IsWellKnownSid(ptr long) advapi32.IsWellKnownSid
+@ stdcall IsValidSid(ptr)
+@ stdcall IsWellKnownSid(ptr long)
 @ stdcall IsWow64Process(ptr ptr) kernel32.IsWow64Process
 # @ stub IsWow64Process2
 @ stdcall K32EmptyWorkingSet(long) kernel32.K32EmptyWorkingSet
