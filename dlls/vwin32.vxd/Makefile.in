@@ -1,5 +1,7 @@
 MODULE    = vwin32.vxd
 IMPORTS   = kernel
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	vwin32.c
