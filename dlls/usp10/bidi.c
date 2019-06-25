@@ -41,8 +41,6 @@
  * has been modified.
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include "windef.h"
@@ -640,7 +638,7 @@ typedef struct tagBracketPair
     int end;
 } BracketPair;
 
-static int compr(const void *a, const void* b)
+static int __cdecl compr(const void *a, const void* b)
 {
     return ((BracketPair*)a)->start - ((BracketPair*)b)->start;
 }
