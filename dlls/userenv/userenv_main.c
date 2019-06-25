@@ -32,7 +32,6 @@
 #include "userenv.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL( userenv );
 
@@ -98,7 +97,7 @@ static void set_registry_variables(WCHAR **env, HKEY hkey, DWORD type, BOOL set_
 {
     static const WCHAR SystemRootW[] = {'S','y','s','t','e','m','R','o','o','t',0};
     static const WCHAR SystemDriveW[] = {'S','y','s','t','e','m','D','r','i','v','e',0};
-    static const WCHAR PATHW[] = {'P','A','T','H'};
+    static const WCHAR PATHW[] = {'P','A','T','H',0};
 
     UNICODE_STRING us_name, us_value;
     WCHAR name[1024], value[1024];
@@ -111,19 +110,19 @@ static void set_registry_variables(WCHAR **env, HKEY hkey, DWORD type, BOOL set_
         if (ret != ERROR_SUCCESS)
             break;
 
-        if (!strcmpiW(name, SystemRootW)) continue;
-        if (!strcmpiW(name, SystemDriveW)) continue;
+        if (!wcsicmp(name, SystemRootW)) continue;
+        if (!wcsicmp(name, SystemDriveW)) continue;
 
         RtlInitUnicodeString(&us_name, name);
         us_value.Buffer = value;
         us_value.MaximumLength = sizeof(value);
-        if (!strncmpiW(name, PATHW, ARRAY_SIZE(PATHW)) &&
+        if (!wcsnicmp(name, PATHW, ARRAY_SIZE(PATHW)) &&
                 !RtlQueryEnvironmentVariable_U(*env, &us_name, &us_value))
         {
             if (!set_path)
                 continue;
 
-            size = strlenW(value)+1;
+            size = lstrlenW(value)+1;
             if (!get_reg_value(*env, hkey, name, value+size,
                         sizeof(value)-size*sizeof(WCHAR)))
                 continue;
@@ -314,7 +313,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
     {
         if (get_reg_value(env, hkey, ProfilesDirectoryW, profiles_dir, MAX_PATH-sizeof(WCHAR)))
         {
-            len = strlenW(profiles_dir);
+            len = lstrlenW(profiles_dir);
             if (profiles_dir[len-1] != '\\')
             {
                 profiles_dir[len++] = '\\';
@@ -350,7 +349,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
     {
         if (profiles_dir[0])
         {
-            len = strlenW(profiles_dir);
+            len = lstrlenW(profiles_dir);
             if (len*sizeof(WCHAR)+sizeof(DefaultW) < sizeof(buf))
             {
                 memcpy(buf, profiles_dir, len*sizeof(WCHAR));
@@ -382,7 +381,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
             return FALSE;
         }
 
-        len = strlenW(profiles_dir);
+        len = lstrlenW(profiles_dir);
         memcpy(buf, profiles_dir, len*sizeof(WCHAR));
 
         size = UNICODE_STRING_MAX_CHARS-len;
@@ -402,7 +401,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
         }
 
         HeapFree(GetProcessHeap(), 0, token_user);
-        strcpyW(buf, sidW);
+        lstrcpyW(buf, sidW);
         LocalFree(sidW);
     }
 
@@ -541,9 +540,9 @@ BOOL WINAPI GetUserProfileDirectoryW( HANDLE hToken, LPWSTR lpProfileDir,
         *lpcchSize = len;
         goto done;
     }
-    strcpyW( lpProfileDir, dirW );
-    strcatW( lpProfileDir, slashW );
-    strcatW( lpProfileDir, userW );
+    lstrcpyW( lpProfileDir, dirW );
+    lstrcatW( lpProfileDir, slashW );
+    lstrcatW( lpProfileDir, userW );
     *lpcchSize = len;
     ret = TRUE;
 
