@@ -1,7 +1,7 @@
 MODULE    = usbd.sys
 IMPORTLIB = usbd
 IMPORTS   = ntoskrnl
-EXTRADLLFLAGS = -Wl,--subsystem,native
+EXTRADLLFLAGS = -mno-cygwin -Wl,--subsystem,native
 
 C_SRCS = \
 	usbd.c
