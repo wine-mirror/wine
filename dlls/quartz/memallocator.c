@@ -685,8 +685,15 @@ static HRESULT WINAPI StdMediaSample2_SetMediaType(IMediaSample2 * iface, AM_MED
         DeleteMediaType(This->props.pMediaType);
         This->props.pMediaType = NULL;
     }
+
     if (!pMediaType)
+    {
+        This->props.dwSampleFlags &= ~AM_SAMPLE_TYPECHANGED;
         return S_OK;
+    }
+
+    This->props.dwSampleFlags |= AM_SAMPLE_TYPECHANGED;
+
     if (!(This->props.pMediaType = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
         return E_OUTOFMEMORY;
 

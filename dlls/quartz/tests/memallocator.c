@@ -509,7 +509,7 @@ static void test_sample_properties(void)
 
     hr = IMediaSample2_GetProperties(sample2, sizeof(props), (BYTE *)&props);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(props.dwSampleFlags == AM_SAMPLE_TYPECHANGED, "Got flags %#x.\n", props.dwSampleFlags);
+    ok(props.dwSampleFlags == AM_SAMPLE_TYPECHANGED, "Got flags %#x.\n", props.dwSampleFlags);
     ok(!memcmp(props.pMediaType, &expect_mt, sizeof(AM_MEDIA_TYPE)), "Media types didn't match.\n");
 
     hr = IMediaSample_SetMediaType(sample, NULL);
