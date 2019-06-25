@@ -555,11 +555,11 @@
 # @ stub OperationStart
 # @ stub PerfAddCounters
 # @ stub PerfCloseQueryHandle
-@ stdcall PerfCreateInstance(long ptr wstr long)
+@ stdcall -import PerfCreateInstance(long ptr wstr long)
 # @ stub PerfDecrementULongCounterValue
 # @ stub PerfDecrementULongLongCounterValue
 # @ stub PerfDeleteCounters
-@ stdcall PerfDeleteInstance(long ptr)
+@ stdcall -import PerfDeleteInstance(long ptr)
 # @ stub PerfEnumerateCounterSet
 # @ stub PerfEnumerateCounterSetInstances
 # @ stub PerfIncrementULongCounterValue
@@ -575,13 +575,13 @@
 # @ stub PerfRegQueryInfoKey
 # @ stub PerfRegQueryValue
 # @ stub PerfRegSetValue
-@ stdcall PerfSetCounterRefValue(long ptr long ptr)
-@ stdcall PerfSetCounterSetInfo(long ptr long)
+@ stdcall -import PerfSetCounterRefValue(long ptr long ptr)
+@ stdcall -import PerfSetCounterSetInfo(long ptr long)
 # @ stub PerfSetULongCounterValue
 # @ stub PerfSetULongLongCounterValue
-@ stdcall PerfStartProvider(ptr ptr ptr)
-@ stdcall PerfStartProviderEx(ptr ptr ptr)
-@ stdcall PerfStopProvider(long)
+@ stdcall -import PerfStartProvider(ptr ptr ptr)
+@ stdcall -import PerfStartProviderEx(ptr ptr ptr)
+@ stdcall -import PerfStopProvider(long)
 @ stdcall -import PrivilegeCheck(ptr ptr ptr)
 @ stdcall PrivilegedServiceAuditAlarmA(str str long ptr long)
 @ stdcall -import PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)

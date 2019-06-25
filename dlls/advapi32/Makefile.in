@@ -14,7 +14,6 @@ C_SRCS = \
 	crypt_lmhash.c \
 	eventlog.c \
 	lsa.c \
-	perf.c \
 	registry.c \
 	security.c \
 	service.c \
