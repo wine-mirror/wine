@@ -23451,6 +23451,19 @@ interface IDocumentSelector : IDispatch
         [out, retval] IHTMLDOMChildrenCollection **pel);
 }
 
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104af-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IDocumentRange : IDispatch
+{
+    [id(DISPID_IDOCUMENTRANGE_CREATERANGE)]
+    HRESULT createRange(
+        [out, retval] IHTMLDOMRange **ppIHTMLDOMRange);
+}
+
 /*****************************************************************************
  *    DispHTMLDocument dispinterface
  */
@@ -24058,6 +24071,9 @@ methods:
 
     [id(DISPID_IDOCUMENTSELECTOR_QUERYSELECTORALL)]
     IHTMLDOMChildrenCollection *querySelectorAll([in] BSTR v);
+
+    [id(DISPID_IDOCUMENTRANGE_CREATERANGE)]
+    IHTMLDOMRange *createRange();
 }
 
 /*****************************************************************************

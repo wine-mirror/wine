@@ -5159,6 +5159,85 @@ static const IDisplayServicesVtbl DisplayServicesVtbl = {
     DisplayServices_HasFlowLayout
 };
 
+/**********************************************************
+ * IDocumentRange implementation
+ */
+static inline HTMLDocument *impl_from_IDocumentRange(IDocumentRange *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IDocumentRange_iface);
+}
+
+static HRESULT WINAPI DocumentRange_QueryInterface(IDocumentRange *iface, REFIID riid, void **ppv)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return htmldoc_query_interface(This, riid, ppv);
+}
+
+static ULONG WINAPI DocumentRange_AddRef(IDocumentRange *iface)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return htmldoc_addref(This);
+}
+
+static ULONG WINAPI DocumentRange_Release(IDocumentRange *iface)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return htmldoc_release(This);
+}
+
+static HRESULT WINAPI DocumentRange_GetTypeInfoCount(IDocumentRange *iface, UINT *pctinfo)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return IDispatchEx_GetTypeInfoCount(&This->IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI DocumentRange_GetTypeInfo(IDocumentRange *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return IDispatchEx_GetTypeInfo(&This->IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI DocumentRange_GetIDsOfNames(IDocumentRange *iface, REFIID riid, LPOLESTR *rgszNames, UINT cNames,
+    LCID lcid, DISPID *rgDispId)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return IDispatchEx_GetIDsOfNames(&This->IDispatchEx_iface, riid, rgszNames, cNames, lcid,
+            rgDispId);
+}
+
+static HRESULT WINAPI DocumentRange_Invoke(IDocumentRange *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+    WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+
+    return IDispatchEx_Invoke(&This->IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI DocumentRange_createRange(IDocumentRange *iface, IHTMLDOMRange **p)
+{
+    HTMLDocument *This = impl_from_IDocumentRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const IDocumentRangeVtbl DocumentRangeVtbl = {
+    DocumentRange_QueryInterface,
+    DocumentRange_AddRef,
+    DocumentRange_Release,
+    DocumentRange_GetTypeInfoCount,
+    DocumentRange_GetTypeInfo,
+    DocumentRange_GetIDsOfNames,
+    DocumentRange_Invoke,
+    DocumentRange_createRange,
+};
+
 static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -5243,6 +5322,8 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IMarkupContainer_iface;
     else if(IsEqualGUID(&IID_IDisplayServices, riid))
         *ppv = &This->IDisplayServices_iface;
+    else if(IsEqualGUID(&IID_IDocumentRange, riid))
+        *ppv = &This->IDocumentRange_iface;
     else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
         FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppv);
         *ppv = NULL;
@@ -5294,6 +5375,7 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
     doc->IMarkupServices_iface.lpVtbl = &MarkupServicesVtbl;
     doc->IMarkupContainer_iface.lpVtbl = &MarkupContainerVtbl;
     doc->IDisplayServices_iface.lpVtbl = &DisplayServicesVtbl;
+    doc->IDocumentRange_iface.lpVtbl = &DocumentRangeVtbl;
 
     doc->outer_unk = outer;
     doc->dispex = dispex;

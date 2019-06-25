@@ -144,6 +144,7 @@ typedef struct EventTarget EventTarget;
     XIID(IDOMMouseEvent) \
     XIID(IDOMUIEvent) \
     XIID(IDocumentEvent) \
+    XIID(IDocumentRange) \
     XIID(IDocumentSelector) \
     XIID(IElementSelector) \
     XIID(IElementTraversal) \
@@ -626,6 +627,7 @@ struct HTMLDocument {
     IMarkupServices             IMarkupServices_iface;
     IMarkupContainer            IMarkupContainer_iface;
     IDisplayServices            IDisplayServices_iface;
+    IDocumentRange              IDocumentRange_iface;
 
     IUnknown *outer_unk;
     IDispatchEx *dispex;
