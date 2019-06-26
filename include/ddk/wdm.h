@@ -1671,6 +1671,8 @@ NTSTATUS  WINAPI ObReferenceObjectByPointer(void*,ACCESS_MASK,POBJECT_TYPE,KPROC
 void      WINAPI ObUnRegisterCallbacks(void*);
 
 POWER_STATE WINAPI PoSetPowerState(PDEVICE_OBJECT,POWER_STATE_TYPE,POWER_STATE);
+void      WINAPI PoStartNextPowerIrp(IRP*);
+
 NTSTATUS  WINAPI PsCreateSystemThread(PHANDLE,ULONG,POBJECT_ATTRIBUTES,HANDLE,PCLIENT_ID,PKSTART_ROUTINE,PVOID);
 #define          PsGetCurrentProcess() IoGetCurrentProcess()
 #define          PsGetCurrentThread() ((PETHREAD)KeGetCurrentThread())

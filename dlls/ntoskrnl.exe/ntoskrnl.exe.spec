@@ -853,7 +853,7 @@
 @ stdcall PoSetPowerState(ptr long long)
 @ stub PoSetSystemState
 @ stub PoShutdownBugCheck
-@ stub PoStartNextPowerIrp
+@ stdcall PoStartNextPowerIrp(ptr)
 @ stub PoUnregisterSystemState
 @ stdcall ProbeForRead(ptr long long)
 @ stdcall ProbeForWrite(ptr long long)

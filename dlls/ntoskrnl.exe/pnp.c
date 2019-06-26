@@ -760,6 +760,14 @@ POWER_STATE WINAPI PoSetPowerState( DEVICE_OBJECT *device, POWER_STATE_TYPE type
     return state;
 }
 
+/*****************************************************
+ *           PoStartNextPowerIrp   (NTOSKRNL.EXE.@)
+ */
+void WINAPI PoStartNextPowerIrp( IRP *irp )
+{
+    FIXME("irp %p, stub!\n", irp);
+}
+
 static DRIVER_OBJECT *pnp_manager;
 
 struct root_pnp_device
