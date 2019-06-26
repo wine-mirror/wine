@@ -1809,7 +1809,7 @@ static void test_COM_vfwcapture(void)
 
     /* Unsupported interfaces */
     hr = IBaseFilter_QueryInterface(bf, &IID_IAMStreamConfig, (void**)&unk);
-    todo_wine ok(hr == E_NOINTERFACE, "QueryInterface for IID_IAMStreamConfig failed: %08x\n", hr);
+    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IAMStreamConfig failed: %08x\n", hr);
     hr = IBaseFilter_QueryInterface(bf, &IID_IAMVideoProcAmp, (void**)&unk);
     todo_wine ok(hr == E_NOINTERFACE, "QueryInterface for IID_IAMVideoProcAmp failed: %08x\n", hr);
     hr = IBaseFilter_QueryInterface(bf, &IID_IOverlayNotify, (void**)&unk);

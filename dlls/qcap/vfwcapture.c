@@ -125,8 +125,6 @@ static HRESULT vfw_capture_query_interface(BaseFilter *iface, REFIID iid, void *
 
     if (IsEqualGUID(iid, &IID_IPersistPropertyBag))
         *out = &filter->IPersistPropertyBag_iface;
-    else if (IsEqualGUID(iid, &IID_IAMStreamConfig))
-        *out = &filter->IAMStreamConfig_iface;
     else if (IsEqualGUID(iid, &IID_IAMVideoProcAmp))
         *out = &filter->IAMVideoProcAmp_iface;
     else
@@ -187,26 +185,22 @@ static const IBaseFilterVtbl VfwCapture_Vtbl =
 };
 
 /* AMStreamConfig interface, we only need to implement {G,S}etFormat */
-static HRESULT WINAPI AMStreamConfig_QueryInterface(IAMStreamConfig *iface, REFIID riid,
-        void **ret_iface)
+static HRESULT WINAPI AMStreamConfig_QueryInterface(IAMStreamConfig *iface, REFIID iid, void **out)
 {
-    VfwCapture *This = impl_from_IAMStreamConfig(iface);
-
-    return IUnknown_QueryInterface(This->filter.outer_unk, riid, ret_iface);
+    VfwCapture *filter = impl_from_IAMStreamConfig(iface);
+    return IPin_QueryInterface(&filter->source.pin.IPin_iface, iid, out);
 }
 
-static ULONG WINAPI AMStreamConfig_AddRef( IAMStreamConfig * iface )
+static ULONG WINAPI AMStreamConfig_AddRef(IAMStreamConfig *iface)
 {
-    VfwCapture *This = impl_from_IAMStreamConfig(iface);
-
-    return IUnknown_AddRef(This->filter.outer_unk);
+    VfwCapture *filter = impl_from_IAMStreamConfig(iface);
+    return IPin_AddRef(&filter->source.pin.IPin_iface);
 }
 
-static ULONG WINAPI AMStreamConfig_Release( IAMStreamConfig * iface )
+static ULONG WINAPI AMStreamConfig_Release(IAMStreamConfig *iface)
 {
-    VfwCapture *This = impl_from_IAMStreamConfig(iface);
-
-    return IUnknown_Release(This->filter.outer_unk);
+    VfwCapture *filter = impl_from_IAMStreamConfig(iface);
+    return IPin_Release(&filter->source.pin.IPin_iface);
 }
 
 static HRESULT WINAPI
@@ -580,7 +574,7 @@ static HRESULT WINAPI VfwPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * 
     else if (IsEqualIID(riid, &IID_IKsPropertySet))
         *ppv = &filter->IKsPropertySet_iface;
     else if (IsEqualIID(riid, &IID_IAMStreamConfig))
-        return IUnknown_QueryInterface(&filter->filter.IBaseFilter_iface, riid, ppv);
+        *ppv = &filter->IAMStreamConfig_iface;
 
     if (*ppv)
     {
