@@ -1,4 +1,6 @@
 MODULE    = wdscore.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	wdscore_main.c
