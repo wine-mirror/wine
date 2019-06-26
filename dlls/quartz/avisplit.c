@@ -137,7 +137,7 @@ static HRESULT AVISplitter_SendEndOfFile(AVISplitterImpl *This, DWORD streamnumb
 
     TRACE("End of file reached\n");
 
-    hr = IPin_ConnectedTo(This->Parser.ppPins[streamnumber+1], &ppin);
+    hr = IPin_ConnectedTo(This->Parser.ppPins[streamnumber], &ppin);
     if (SUCCEEDED(hr))
     {
         hr = IPin_EndOfStream(ppin);
@@ -297,7 +297,7 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
 
 static HRESULT AVISplitter_Receive(AVISplitterImpl *This, IMediaSample *sample, DWORD streamnumber)
 {
-    Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[1+streamnumber]);
+    Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[streamnumber]);
     HRESULT hr;
     LONGLONG start, stop, rtstart, rtstop;
     StreamData *stream = &This->streams[streamnumber];
@@ -571,7 +571,7 @@ static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, AVISTDINDEX **ind
     if (!pIndex)
         return E_OUTOFMEMORY;
 
-    IAsyncReader_SyncRead((impl_PullPin_from_IPin(This->Parser.ppPins[0]))->pReader, qwOffset, cb, (BYTE *)pIndex);
+    IAsyncReader_SyncRead(This->Parser.pInputPin->pReader, qwOffset, cb, (BYTE *)pIndex);
     rest = cb - sizeof(AVISUPERINDEX) + sizeof(RIFFCHUNK) + sizeof(pIndex->aIndex);
 
     TRACE("FOURCC: %s\n", debugstr_an((char *)&pIndex->fcc, 4));
@@ -1292,7 +1292,7 @@ static HRESULT WINAPI AVISplitter_seek(IMediaSeeking *iface)
     EnterCriticalSection(&This->Parser.filter.csFilter);
     for (x = 0; x < This->Parser.cStreams; ++x)
     {
-        Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[1+x]);
+        Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[x]);
         StreamData *stream = This->streams + x;
         LONGLONG wanted_frames;
         DWORD last_keyframe = 0, last_keyframeidx = 0, preroll = 0;

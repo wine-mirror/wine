@@ -168,7 +168,7 @@ static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
 
 static HRESULT FillBuffer(MPEGSplitterImpl *This, IMediaSample *pCurrentSample)
 {
-    Parser_OutputPin * pOutputPin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[1]);
+    Parser_OutputPin * pOutputPin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[0]);
     LONGLONG length = 0;
     LONGLONG pos = BYTES_FROM_MEDIATIME(This->Parser.pInputPin->rtNext);
     LONGLONG time = This->position, rtstop, rtstart;
@@ -322,7 +322,7 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample,
         {
             IPin* ppin;
 
-            hr = IPin_ConnectedTo(This->Parser.ppPins[i+1], &ppin);
+            hr = IPin_ConnectedTo(This->Parser.ppPins[i], &ppin);
             if (SUCCEEDED(hr))
             {
                 hr = IPin_EndOfStream(ppin);
