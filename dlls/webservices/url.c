@@ -20,13 +20,13 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winuser.h"
 #include "webservices.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "webservices_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
@@ -39,19 +39,19 @@ static const WCHAR netpipe[] = {'n','e','t','.','p','i','p','e'};
 
 static WS_URL_SCHEME_TYPE scheme_type( const WCHAR *str, ULONG len )
 {
-    if (len == ARRAY_SIZE( http ) && !strncmpiW( str, http, ARRAY_SIZE( http )))
+    if (len == ARRAY_SIZE( http ) && !wcsnicmp( str, http, ARRAY_SIZE( http )))
         return WS_URL_HTTP_SCHEME_TYPE;
 
-    if (len == ARRAY_SIZE( https ) && !strncmpiW( str, https, ARRAY_SIZE( https )))
+    if (len == ARRAY_SIZE( https ) && !wcsnicmp( str, https, ARRAY_SIZE( https )))
         return WS_URL_HTTPS_SCHEME_TYPE;
 
-    if (len == ARRAY_SIZE( nettcp ) && !strncmpiW( str, nettcp, ARRAY_SIZE( nettcp )))
+    if (len == ARRAY_SIZE( nettcp ) && !wcsnicmp( str, nettcp, ARRAY_SIZE( nettcp )))
         return WS_URL_NETTCP_SCHEME_TYPE;
 
-    if (len == ARRAY_SIZE( soapudp ) && !strncmpiW( str, soapudp, ARRAY_SIZE( soapudp )))
+    if (len == ARRAY_SIZE( soapudp ) && !wcsnicmp( str, soapudp, ARRAY_SIZE( soapudp )))
         return WS_URL_SOAPUDP_SCHEME_TYPE;
 
-    if (len == ARRAY_SIZE( netpipe ) && !strncmpiW( str, netpipe, ARRAY_SIZE( netpipe )))
+    if (len == ARRAY_SIZE( netpipe ) && !wcsnicmp( str, netpipe, ARRAY_SIZE( netpipe )))
         return WS_URL_NETPIPE_SCHEME_TYPE;
 
     return ~0u;
@@ -107,7 +107,7 @@ static WCHAR *url_decode( WCHAR *str, ULONG len, WS_HEAP *heap, ULONG *ret_len )
     for (i = 0; i < len; i++, p++)
     {
         if ((len - i) < 3) break;
-        if (p[0] == '%' && isxdigitW( p[1] ) && isxdigitW( p[2] ))
+        if (p[0] == '%' && iswxdigit( p[1] ) && iswxdigit( p[2] ))
         {
             decode = TRUE;
             if (url_decode_byte( p[1], p[2] ) > 159)
@@ -125,7 +125,7 @@ static WCHAR *url_decode( WCHAR *str, ULONG len, WS_HEAP *heap, ULONG *ret_len )
         p = str;
         while (len)
         {
-            if (len >= 3 && p[0] == '%' && isxdigitW( p[1] ) && isxdigitW( p[2] ))
+            if (len >= 3 && p[0] == '%' && iswxdigit( p[1] ) && iswxdigit( p[2] ))
             {
                 *q++ = url_decode_byte( p[1], p[2] );
                 p += 3;
@@ -214,7 +214,7 @@ HRESULT WINAPI WsDecodeUrl( const WS_STRING *str, ULONG flags, WS_HEAP *heap, WS
     if (len && *q == ':')
     {
         p = ++q; len--;
-        while (len && isdigitW( *q ))
+        while (len && iswdigit( *q ))
         {
             if ((port = port * 10 + *q - '0') > 65535) goto done;
             q++; len--;
@@ -481,7 +481,7 @@ HRESULT WINAPI WsEncodeUrl( const WS_URL *base, ULONG flags, WS_HEAP *heap, WS_S
     {
         q = url->portAsString.chars;
         len = url->portAsString.length;
-        while (len && isdigitW( *q ))
+        while (len && iswdigit( *q ))
         {
             if ((port = port * 10 + *q - '0') > 65535)
             {
@@ -501,7 +501,7 @@ HRESULT WINAPI WsEncodeUrl( const WS_URL *base, ULONG flags, WS_HEAP *heap, WS_S
     if (port)
     {
         WCHAR buf[7];
-        len = sprintfW( buf, fmtW, port );
+        len = swprintf( buf, ARRAY_SIZE(buf), fmtW, port );
         memcpy( p, buf, len * sizeof(WCHAR) );
         p += len;
     }

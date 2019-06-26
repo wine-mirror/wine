@@ -27,7 +27,6 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "webservices_private.h"
 #include "sock.h"
 
@@ -253,11 +252,9 @@ static struct channel *alloc_channel(void)
     InitializeCriticalSection( &ret->cs );
     InitializeCriticalSection( &ret->send_q.cs );
     InitializeCriticalSection( &ret->recv_q.cs );
-#ifndef __MINGW32__
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": channel.cs");
     ret->send_q.cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": channel.send_q.cs");
     ret->recv_q.cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": channel.recv_q.cs");
-#endif
 
     prop_init( channel_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
@@ -342,11 +339,9 @@ static void free_channel( struct channel *channel )
 
     heap_free( channel->read_buf );
 
-#ifndef __MINGW32__
     channel->send_q.cs.DebugInfo->Spare[0] = 0;
     channel->recv_q.cs.DebugInfo->Spare[0] = 0;
     channel->cs.DebugInfo->Spare[0] = 0;
-#endif
     DeleteCriticalSection( &channel->send_q.cs );
     DeleteCriticalSection( &channel->recv_q.cs );
     DeleteCriticalSection( &channel->cs );
@@ -836,8 +831,8 @@ static HRESULT connect_channel_http( struct channel *channel )
     }
     else
     {
-        strcpyW( channel->u.http.path, uc.lpszUrlPath );
-        if (uc.dwExtraInfoLength) strcatW( channel->u.http.path, uc.lpszExtraInfo );
+        lstrcpyW( channel->u.http.path, uc.lpszUrlPath );
+        if (uc.dwExtraInfoLength) lstrcatW( channel->u.http.path, uc.lpszExtraInfo );
     }
 
     channel->u.http.flags = WINHTTP_FLAG_REFRESH;

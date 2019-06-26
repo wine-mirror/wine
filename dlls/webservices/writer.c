@@ -16,7 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -24,13 +23,13 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winuser.h"
 #include "webservices.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "webservices_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
@@ -110,9 +109,7 @@ static struct writer *alloc_writer(void)
 
     ret->magic      = WRITER_MAGIC;
     InitializeCriticalSection( &ret->cs );
-#ifndef __MINGW32__
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": writer.cs");
-#endif
 
     prop_init( writer_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
@@ -126,9 +123,7 @@ static void free_writer( struct writer *writer )
     WsFreeHeap( writer->output_heap );
     heap_free( writer->stream_buf );
 
-#ifndef __MINGW32__
     writer->cs.DebugInfo->Spare[0] = 0;
-#endif
     DeleteCriticalSection( &writer->cs );
     heap_free( writer );
 }
@@ -905,10 +900,9 @@ static ULONG format_uint64( const UINT64 *ptr, unsigned char *buf )
 
 static ULONG format_double( const double *ptr, unsigned char *buf )
 {
-#ifdef HAVE_POWL
-    static const long double precision = 0.0000000000000001;
+    static const double precision = 0.0000000000000001;
     unsigned char *p = buf;
-    long double val = *ptr;
+    double val = *ptr;
     int neg, mag, mag2, use_exp;
 
     if (isnan( val ))
@@ -938,12 +932,12 @@ static ULONG format_double( const double *ptr, unsigned char *buf )
         val = -val;
     }
 
-    mag = log10l( val );
+    mag = log10( val );
     use_exp = (mag >= 15 || (neg && mag >= 1) || mag <= -1);
     if (use_exp)
     {
         if (mag < 0) mag -= 1;
-        val = val / powl( 10.0, mag );
+        val = val / pow( 10.0, mag );
         mag2 = mag;
         mag = 0;
     }
@@ -951,10 +945,10 @@ static ULONG format_double( const double *ptr, unsigned char *buf )
 
     while (val > precision || mag >= 0)
     {
-        long double weight = powl( 10.0, mag );
+        double weight = pow( 10.0, mag );
         if (weight > 0 && !isinf( weight ))
         {
-            int digit = floorl( val / weight );
+            int digit = floor( val / weight );
             val -= digit * weight;
             *(p++) = '0' + digit;
         }
@@ -988,10 +982,6 @@ static ULONG format_double( const double *ptr, unsigned char *buf )
     }
 
     return p - buf;
-#else
-    FIXME( "powl not found at build time\n" );
-    return 0;
-#endif
 }
 
 static inline int year_size( int year )
@@ -3505,7 +3495,7 @@ static HRESULT write_type_wsz( struct writer *writer, WS_TYPE_MAPPING mapping,
     if (!option || option == WS_WRITE_REQUIRED_VALUE || option == WS_WRITE_NILLABLE_VALUE) return E_INVALIDARG;
     if ((hr = get_value_ptr( option, value, size, 0, (const void **)&ptr )) != S_OK) return hr;
     if (option == WS_WRITE_NILLABLE_POINTER && !ptr) return write_add_nil_attribute( writer );
-    if (!(len = strlenW( ptr ))) return S_OK;
+    if (!(len = lstrlenW( ptr ))) return S_OK;
 
     utf16.text.textType = WS_XML_TEXT_TYPE_UTF16;
     utf16.bytes         = (BYTE *)ptr;

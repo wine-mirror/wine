@@ -63,9 +63,7 @@ static struct proxy *alloc_proxy(void)
 
     ret->magic      = PROXY_MAGIC;
     InitializeCriticalSection( &ret->cs );
-#ifndef __MINGW32__
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": proxy.cs");
-#endif
 
     prop_init( proxy_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
@@ -83,9 +81,7 @@ static void free_proxy( struct proxy *proxy )
     reset_proxy( proxy );
     WsFreeChannel( proxy->channel );
 
-#ifndef __MINGW32__
     proxy->cs.DebugInfo->Spare[0] = 0;
-#endif
     DeleteCriticalSection( &proxy->cs );
     heap_free( proxy );
 }

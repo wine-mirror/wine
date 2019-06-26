@@ -25,7 +25,6 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "webservices_private.h"
 #include "sock.h"
 
@@ -139,9 +138,7 @@ static struct listener *alloc_listener(void)
         return NULL;
     }
     InitializeCriticalSection( &ret->cs );
-#ifndef __MINGW32__
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": listener.cs");
-#endif
 
     prop_init( listener_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
@@ -177,9 +174,7 @@ static void free_listener( struct listener *listener )
     CloseHandle( listener->wait );
     CloseHandle( listener->cancel );
 
-#ifndef __MINGW32__
     listener->cs.DebugInfo->Spare[0] = 0;
-#endif
     DeleteCriticalSection( &listener->cs );
     heap_free( listener );
 }
@@ -296,7 +291,7 @@ HRESULT resolve_hostname( const WCHAR *host, USHORT port, struct sockaddr *addr,
     hints.ai_family = AF_INET;
 
     *addr_len = 0;
-    sprintfW( service, fmtW, port );
+    swprintf( service, ARRAY_SIZE(service), fmtW, port );
     if (GetAddrInfoW( host, service, &hints, &res )) return HRESULT_FROM_WIN32( WSAGetLastError() );
 
     info = res;
