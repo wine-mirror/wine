@@ -782,6 +782,7 @@ static struct wine_rb_tree root_pnp_devices = { root_pnp_devices_rb_compare };
 static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
+    struct root_pnp_device *root_device = device->DeviceExtension;
 
     TRACE("device %p, irp %p, minor function %#x.\n", device, irp, stack->MinorFunction);
 
@@ -793,6 +794,49 @@ static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
         /* Nothing to do. */
         irp->IoStatus.u.Status = STATUS_SUCCESS;
         break;
+    case IRP_MN_QUERY_ID:
+    {
+        BUS_QUERY_ID_TYPE type = stack->Parameters.QueryId.IdType;
+        WCHAR *id, *p;
+
+        TRACE("Received IRP_MN_QUERY_ID, type %#x.\n", type);
+
+        switch (type)
+        {
+        case BusQueryDeviceID:
+            p = wcsrchr( root_device->id, '\\' );
+            if ((id = ExAllocatePool( NonPagedPool, (p - root_device->id + 1) * sizeof(WCHAR) )))
+            {
+                memcpy( id, root_device->id, (p - root_device->id) * sizeof(WCHAR) );
+                id[p - root_device->id] = 0;
+                irp->IoStatus.Information = (ULONG_PTR)id;
+                irp->IoStatus.u.Status = STATUS_SUCCESS;
+            }
+            else
+            {
+                irp->IoStatus.Information = 0;
+                irp->IoStatus.u.Status = STATUS_NO_MEMORY;
+            }
+            break;
+        case BusQueryInstanceID:
+            p = wcsrchr( root_device->id, '\\' );
+            if ((id = ExAllocatePool( NonPagedPool, (wcslen( p + 1 ) + 1) * sizeof(WCHAR) )))
+            {
+                wcscpy( id, p + 1 );
+                irp->IoStatus.Information = (ULONG_PTR)id;
+                irp->IoStatus.u.Status = STATUS_SUCCESS;
+            }
+            else
+            {
+                irp->IoStatus.Information = 0;
+                irp->IoStatus.u.Status = STATUS_NO_MEMORY;
+            }
+            break;
+        default:
+            FIXME("Unhandled IRP_MN_QUERY_ID type %#x.\n", type);
+        }
+        break;
+    }
     default:
         FIXME("Unhandled PnP request %#x.\n", stack->MinorFunction);
     }
