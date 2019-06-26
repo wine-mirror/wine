@@ -629,12 +629,12 @@
 @ stdcall GetCurrentPackageFamilyName(ptr ptr)
 @ stdcall GetCurrentPackageFullName(ptr ptr)
 @ stdcall GetCurrentPackageId(ptr ptr)
-@ stdcall -norelay GetCurrentProcess()
-@ stdcall -norelay GetCurrentProcessId()
+@ stdcall -norelay GetCurrentProcess() KERNEL32_GetCurrentProcess
+@ stdcall -norelay GetCurrentProcessId() KERNEL32_GetCurrentProcessId
 @ stdcall GetCurrentProcessorNumber() ntdll.NtGetCurrentProcessorNumber
 @ stdcall GetCurrentProcessorNumberEx(ptr) ntdll.RtlGetCurrentProcessorNumberEx
-@ stdcall -norelay GetCurrentThread()
-@ stdcall -norelay GetCurrentThreadId()
+@ stdcall -norelay GetCurrentThread() KERNEL32_GetCurrentThread
+@ stdcall -norelay GetCurrentThreadId() KERNEL32_GetCurrentThreadId
 @ stdcall GetCurrentThreadStackLimits(ptr ptr)
 @ stdcall -arch=x86_64 GetCurrentUmsThread()
 @ stdcall GetDateFormatA(long long ptr str ptr long)
@@ -700,7 +700,7 @@
 @ stub -i386 GetLSCallbackTemplate
 @ stdcall GetLargePageMinimum()
 @ stdcall GetLargestConsoleWindowSize(long)
-@ stdcall GetLastError()
+@ stdcall GetLastError() KERNEL32_GetLastError
 @ stub GetLinguistLangSize
 @ stdcall GetLocalTime(ptr)
 @ stdcall GetLocaleInfoA(long long ptr long)
@@ -780,7 +780,7 @@
 @ stdcall GetProcessFlags(long)
 # @ stub GetProcessGroupAffinity
 @ stdcall GetProcessHandleCount(long ptr)
-@ stdcall -norelay GetProcessHeap()
+@ stdcall -norelay GetProcessHeap() KERNEL32_GetProcessHeap
 @ stdcall GetProcessHeaps(long ptr)
 @ stdcall GetProcessId(long)
 @ stdcall GetProcessIdOfThread(long)
@@ -1414,7 +1414,7 @@
 @ stdcall SetHandleInformation(long long long)
 @ stdcall SetInformationJobObject(long long ptr long)
 @ stub SetLastConsoleEventActive
-@ stdcall SetLastError(long)
+@ stdcall SetLastError(long) KERNEL32_SetLastError
 # @ stub SetLocalPrimaryComputerNameA
 # @ stub SetLocalPrimaryComputerNameW
 @ stdcall SetLocalTime(ptr)

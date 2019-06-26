@@ -2106,10 +2106,8 @@ WINBASEAPI UINT        WINAPI GetCurrentDirectoryW(UINT,LPWSTR);
 WINADVAPI  BOOL        WINAPI GetCurrentHwProfileA(LPHW_PROFILE_INFOA);
 WINADVAPI  BOOL        WINAPI GetCurrentHwProfileW(LPHW_PROFILE_INFOW);
 #define                       GetCurrentHwProfile WINELIB_NAME_AW(GetCurrentHwProfile)
-WINBASEAPI HANDLE      WINAPI GetCurrentProcess(void);
 WINBASEAPI DWORD       WINAPI GetCurrentProcessorNumber(void);
 WINBASEAPI VOID        WINAPI GetCurrentProcessorNumberEx(PPROCESSOR_NUMBER);
-WINBASEAPI HANDLE      WINAPI GetCurrentThread(void);
 #define                       GetCurrentTime() GetTickCount()
 WINBASEAPI PUMS_CONTEXT WINAPI GetCurrentUmsThread(void);
 WINBASEAPI BOOL        WINAPI GetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,LPDWORD);
@@ -3076,112 +3074,69 @@ static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 
 #endif  /* __i386__ */
 
-/* A few optimizations for gcc */
+#ifdef __WINESRC__
 
-#if defined(__GNUC__) && !defined(__MINGW32__) && (defined(__i386__) || defined(__x86_64__)) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
-
-static FORCEINLINE DWORD WINAPI GetLastError(void)
+static FORCEINLINE HANDLE WINAPI GetCurrentProcess(void)
 {
-    DWORD ret;
-#ifdef __x86_64__
-#ifdef __APPLE__
-    DWORD* teb;
-    __asm__ __volatile__( ".byte 0x65\n\tmovq 0x30,%0" : "=r" (teb) );
-    ret = teb[0x68 / sizeof(DWORD)];
-#else
-    __asm__ __volatile__( ".byte 0x65\n\tmovl 0x68,%0" : "=r" (ret) );
-#endif
-#else
-    __asm__ __volatile__( ".byte 0x64\n\tmovl 0x34,%0" : "=r" (ret) );
-#endif
-    return ret;
+    return (HANDLE)~(ULONG_PTR)0;
 }
 
 static FORCEINLINE DWORD WINAPI GetCurrentProcessId(void)
 {
-    DWORD ret;
-#ifdef __x86_64__
-#ifdef __APPLE__
-    DWORD* teb;
-    __asm__ __volatile__( ".byte 0x65\n\tmovq 0x30,%0" : "=r" (teb) );
-    ret = teb[0x40 / sizeof(DWORD)];
-#else
-    __asm__ __volatile__( ".byte 0x65\n\tmovl 0x40,%0" : "=r" (ret) );
-#endif
-#else
-    __asm__ __volatile__( ".byte 0x64\n\tmovl 0x20,%0" : "=r" (ret) );
-#endif
-    return ret;
+    return HandleToULong( ((HANDLE *)NtCurrentTeb())[8] );
+}
+
+static FORCEINLINE HANDLE WINAPI GetCurrentThread(void)
+{
+    return (HANDLE)~(ULONG_PTR)1;
 }
 
 static FORCEINLINE DWORD WINAPI GetCurrentThreadId(void)
 {
-    DWORD ret;
-#ifdef __x86_64__
-#ifdef __APPLE__
-    DWORD* teb;
-    __asm__ __volatile__( ".byte 0x65\n\tmovq 0x30,%0" : "=r" (teb) );
-    ret = teb[0x48 / sizeof(DWORD)];
-#else
-    __asm__ __volatile__( ".byte 0x65\n\tmovl 0x48,%0" : "=r" (ret) );
-#endif
-#else
-    __asm__ __volatile__( ".byte 0x64\n\tmovl 0x24,%0" : "=r" (ret) );
-#endif
-    return ret;
+    return HandleToULong( ((HANDLE *)NtCurrentTeb())[9] );
 }
 
-static FORCEINLINE void WINAPI SetLastError( DWORD err )
+static FORCEINLINE DWORD WINAPI GetLastError(void)
 {
-#ifdef __x86_64__
-#ifdef __APPLE__
-    DWORD* teb;
-    __asm__ __volatile__( ".byte 0x65\n\tmovq 0x30,%0" : "=r" (teb) );
-    teb[0x68 / sizeof(DWORD)] = err;
-#else
-    __asm__ __volatile__( ".byte 0x65\n\tmovl %0,0x68" : : "r" (err) : "memory" );
-#endif
-#else
-    __asm__ __volatile__( ".byte 0x64\n\tmovl %0,0x34" : : "r" (err) : "memory" );
-#endif
+    return *(DWORD *)((void **)NtCurrentTeb() + 13);
 }
 
 static FORCEINLINE HANDLE WINAPI GetProcessHeap(void)
 {
-    HANDLE *pdb;
-#ifdef __x86_64__
-#ifdef __APPLE__
-    HANDLE** teb;
-    __asm__ __volatile__( ".byte 0x65\n\tmovq 0x30,%0" : "=r" (teb) );
-    pdb = teb[0x60 / sizeof(HANDLE*)];
-#else
-    __asm__ __volatile__( ".byte 0x65\n\tmovq 0x60,%0" : "=r" (pdb) );
-#endif
-    return pdb[0x30 / sizeof(HANDLE)];  /* get dword at offset 0x30 in pdb */
-#else
-    __asm__ __volatile__( ".byte 0x64\n\tmovl 0x30,%0" : "=r" (pdb) );
-    return pdb[0x18 / sizeof(HANDLE)];  /* get dword at offset 0x18 in pdb */
-#endif
+    return ((HANDLE **)NtCurrentTeb())[12][6];
 }
 
-#else  /* __GNUC__ */
+static FORCEINLINE void WINAPI SetLastError( DWORD err )
+{
+    *(DWORD *)((void **)NtCurrentTeb() + 13) = err;
+}
 
+#else  /* __WINESRC__ */
+
+WINBASEAPI HANDLE      WINAPI GetCurrentProcess(void);
 WINBASEAPI DWORD       WINAPI GetCurrentProcessId(void);
+WINBASEAPI HANDLE      WINAPI GetCurrentThread(void);
 WINBASEAPI DWORD       WINAPI GetCurrentThreadId(void);
 WINBASEAPI DWORD       WINAPI GetLastError(void);
 WINBASEAPI HANDLE      WINAPI GetProcessHeap(void);
 WINBASEAPI VOID        WINAPI SetLastError(DWORD);
 
-#endif  /* __GNUC__ */
+#endif  /* __WINESRC__ */
 
-#ifdef __WINESRC__
-#define GetCurrentProcess() ((HANDLE)~(ULONG_PTR)0)
-#define GetCurrentThread()  ((HANDLE)~(ULONG_PTR)1)
-#endif
+static FORCEINLINE HANDLE WINAPI GetCurrentProcessToken(void)
+{
+    return (HANDLE)~(ULONG_PTR)3;
+}
 
-#define GetCurrentProcessToken()            ((HANDLE)~(ULONG_PTR)3)
-#define GetCurrentThreadToken()             ((HANDLE)~(ULONG_PTR)4)
-#define GetCurrentThreadEffectiveToken()    ((HANDLE)~(ULONG_PTR)5)
+static FORCEINLINE HANDLE WINAPI GetCurrentThreadToken(void)
+{
+    return (HANDLE)~(ULONG_PTR)4;
+}
+
+static FORCEINLINE HANDLE WINAPI GetCurrentThreadEffectiveToken(void)
+{
+    return (HANDLE)~(ULONG_PTR)5;
+}
 
 /* WinMain(entry point) must be declared in winbase.h. */
 /* If this is not declared, we cannot compile many sources written with C++. */

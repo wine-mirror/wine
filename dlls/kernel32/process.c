@@ -4258,8 +4258,7 @@ BOOL WINAPI IsWow64Process(HANDLE hProcess, PBOOL Wow64Process)
  * RETURNS
  *  A handle representing the current process.
  */
-#undef GetCurrentProcess
-HANDLE WINAPI GetCurrentProcess(void)
+HANDLE WINAPI KERNEL32_GetCurrentProcess(void)
 {
     return (HANDLE)~(ULONG_PTR)0;
 }
