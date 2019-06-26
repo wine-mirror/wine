@@ -1,4 +1,6 @@
 MODULE    = w32skrnl.dll
 IMPORTS   = kernel
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = w32skernel.c
