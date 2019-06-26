@@ -17,8 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -27,7 +25,6 @@
 #include "werapi.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wer);
@@ -97,7 +94,7 @@ HRESULT WINAPI WerAddExcludedApplication(PCWSTR exeName, BOOL allUsers)
     if (!exeName || !exeName[0])
         return E_INVALIDARG;
 
-    bs = strrchrW(exeName, '\\');
+    bs = wcsrchr(exeName, '\\');
     if (bs) {
         bs++;   /* skip the backslash */
         if (!bs[0]) {
@@ -138,7 +135,7 @@ HRESULT WINAPI WerRemoveExcludedApplication(PCWSTR exeName, BOOL allUsers)
     if (!exeName || !exeName[0])
         return E_INVALIDARG;
 
-    bs = strrchrW(exeName, '\\');
+    bs = wcsrchr(exeName, '\\');
     if (bs) {
         bs++;   /* skip the backslash */
         if (!bs[0]) {
