@@ -1,4 +1,4 @@
 MODULE    = windebug.dll16
-EXTRADLLFLAGS = -m16
+EXTRADLLFLAGS = -m16 -mno-cygwin
 
 C_SRCS = windebug.c
