@@ -2680,9 +2680,11 @@ static LONG load_mui_string(const WCHAR *file_name, UINT res_id, WCHAR *buffer, 
         return ERROR_FILE_NOT_FOUND;
 
     size = GetFullPathNameW(file_name, 0, NULL, NULL);
-    full_name = heap_alloc(size * sizeof(WCHAR));
     if (!size)
         return GetLastError();
+    full_name = heap_alloc(size * sizeof(WCHAR));
+    if (!full_name)
+        return ERROR_NOT_ENOUGH_MEMORY;
     GetFullPathNameW(file_name, size, full_name, NULL);
 
     EnterCriticalSection(&reg_mui_cs);
