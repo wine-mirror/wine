@@ -1354,11 +1354,11 @@ static HRESULT WINAPI VMR9FilterConfig_SetImageCompositor(IVMRFilterConfig9 *ifa
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI VMR9FilterConfig_SetNumberOfStreams(IVMRFilterConfig9 *iface, DWORD max)
+static HRESULT WINAPI VMR9FilterConfig_SetNumberOfStreams(IVMRFilterConfig9 *iface, DWORD count)
 {
-    struct quartz_vmr *This = impl_from_IVMRFilterConfig9(iface);
-
-    FIXME("(%p/%p)->(%u) stub\n", iface, This, max);
+    FIXME("iface %p, count %u, stub!\n", iface, count);
+    if (count == 1)
+        return S_OK;
     return E_NOTIMPL;
 }
 
