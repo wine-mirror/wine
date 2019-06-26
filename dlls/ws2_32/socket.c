@@ -7098,7 +7098,7 @@ end:
  *		GetAddrInfoExW		(WS2_32.@)
  */
 int WINAPI GetAddrInfoExW(const WCHAR *name, const WCHAR *servname, DWORD namespace, GUID *namespace_id,
-        const ADDRINFOEXW *hints, ADDRINFOEXW **result, struct timeval *timeout, OVERLAPPED *overlapped,
+        const ADDRINFOEXW *hints, ADDRINFOEXW **result, struct WS_timeval *timeout, OVERLAPPED *overlapped,
         LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine, HANDLE *handle)
 {
     int ret;
