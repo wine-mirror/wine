@@ -102,7 +102,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR
         return S_OK;
     }
 
-    pOutputPin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[0]);
+    pOutputPin = This->Parser.sources[0];
 
     if (SUCCEEDED(hr))
         hr = IMemAllocator_GetBuffer(pin->pAlloc, &newsample, NULL, NULL, 0);
@@ -161,7 +161,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR
 
             TRACE("Send End Of Stream to output pin %u\n", i);
 
-            hr = IPin_ConnectedTo(This->Parser.ppPins[i], &ppin);
+            hr = IPin_ConnectedTo(&This->Parser.sources[i]->pin.pin.IPin_iface, &ppin);
             if (SUCCEEDED(hr))
             {
                 hr = IPin_EndOfStream(ppin);
@@ -196,8 +196,8 @@ static HRESULT WINAPI WAVEParserImpl_seek(IMediaSeeking *iface)
 {
     WAVEParserImpl *This = impl_from_IMediaSeeking(iface);
     PullPin *pPin = This->Parser.pInputPin;
-    IPin *victim = NULL;
     LONGLONG newpos, curpos, endpos, bytepos;
+    IPin *peer;
 
     newpos = This->Parser.sourceSeeking.llCurrent;
     curpos = bytepos_to_duration(This, pPin->rtCurrent);
@@ -225,15 +225,12 @@ static HRESULT WINAPI WAVEParserImpl_seek(IMediaSeeking *iface)
 
     /* Make sure this is done while stopped, BeginFlush takes care of this */
     EnterCriticalSection(&This->Parser.filter.csFilter);
-    IPin_ConnectedTo(This->Parser.ppPins[0], &victim);
-    if (victim)
-    {
-        IPin_NewSegment(victim, newpos, endpos, pPin->dRate);
-        IPin_Release(victim);
-    }
+
+    if ((peer = This->Parser.sources[0]->pin.pin.pConnectedTo))
+        IPin_NewSegment(peer, newpos, endpos, pPin->dRate);
 
     pPin->rtStart = pPin->rtCurrent = bytepos;
-    unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[0])->dwSamplesProcessed = 0;
+    This->Parser.sources[0]->dwSamplesProcessed = 0;
     LeaveCriticalSection(&This->Parser.filter.csFilter);
 
     TRACE("Done flushing\n");
@@ -364,7 +361,6 @@ static HRESULT WAVEParser_first_request(LPVOID iface)
         LONGLONG rtSampleStart = pin->rtNext;
         /* Add 4 for the next header, which should hopefully work */
         LONGLONG rtSampleStop = rtSampleStart + MEDIATIME_FROM_BYTES(IMediaSample_GetSize(sample));
-        Parser_OutputPin *outpin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[0]);
 
         if (rtSampleStop > pin->rtStop)
             rtSampleStop = MEDIATIME_FROM_BYTES(ALIGNUP(BYTES_FROM_MEDIATIME(pin->rtStop), pin->cbAlign));
@@ -375,7 +371,7 @@ static HRESULT WAVEParser_first_request(LPVOID iface)
         pin->rtNext = rtSampleStop;
 
         IMediaSample_SetPreroll(sample, FALSE);
-        if (!outpin->dwSamplesProcessed++)
+        if (!This->Parser.sources[0]->dwSamplesProcessed++)
             IMediaSample_SetDiscontinuity(sample, TRUE);
         else
             IMediaSample_SetDiscontinuity(sample, FALSE);

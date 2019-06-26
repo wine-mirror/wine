@@ -26,18 +26,6 @@ typedef HRESULT (*PFN_PRE_CONNECT) (IPin * iface, IPin * pConnectPin, ALLOCATOR_
 typedef HRESULT (*PFN_CLEANUP) (LPVOID iface);
 typedef HRESULT (*PFN_DISCONNECT) (LPVOID iface);
 
-struct ParserImpl
-{
-    BaseFilter filter;
-
-    PFN_DISCONNECT fnDisconnect;
-
-    PullPin * pInputPin;
-    IPin ** ppPins;
-    ULONG cStreams;
-    SourceSeeking sourceSeeking;
-};
-
 typedef struct Parser_OutputPin
 {
     BaseOutputPin pin;
@@ -49,6 +37,18 @@ typedef struct Parser_OutputPin
     IMemAllocator *alloc;
     BOOL readonly;
 } Parser_OutputPin;
+
+struct ParserImpl
+{
+    BaseFilter filter;
+
+    PFN_DISCONNECT fnDisconnect;
+
+    PullPin *pInputPin;
+    Parser_OutputPin **sources;
+    ULONG cStreams;
+    SourceSeeking sourceSeeking;
+};
 
 extern HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, const AM_MEDIA_TYPE * amt);
 

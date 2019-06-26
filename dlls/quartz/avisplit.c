@@ -130,20 +130,14 @@ static inline AVISplitterImpl *impl_from_IBaseFilter(IBaseFilter *iface)
  * != S_OK occurs. This means that any error is fatal to processing.
  */
 
-static HRESULT AVISplitter_SendEndOfFile(AVISplitterImpl *This, DWORD streamnumber)
+static HRESULT AVISplitter_SendEndOfFile(AVISplitterImpl *filter, DWORD index)
 {
-    IPin* ppin = NULL;
-    HRESULT hr;
+    IPin *peer;
 
     TRACE("End of file reached\n");
 
-    hr = IPin_ConnectedTo(This->Parser.ppPins[streamnumber], &ppin);
-    if (SUCCEEDED(hr))
-    {
-        hr = IPin_EndOfStream(ppin);
-        IPin_Release(ppin);
-    }
-    TRACE("--> %x\n", hr);
+    if ((peer = filter->Parser.sources[index]->pin.pin.pConnectedTo))
+        IPin_EndOfStream(peer);
 
     /* Force the pullpin thread to stop */
     return S_FALSE;
@@ -297,7 +291,7 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
 
 static HRESULT AVISplitter_Receive(AVISplitterImpl *This, IMediaSample *sample, DWORD streamnumber)
 {
-    Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[streamnumber]);
+    Parser_OutputPin *pin = This->Parser.sources[streamnumber];
     HRESULT hr;
     LONGLONG start, stop, rtstart, rtstop;
     StreamData *stream = &This->streams[streamnumber];
@@ -1292,7 +1286,7 @@ static HRESULT WINAPI AVISplitter_seek(IMediaSeeking *iface)
     EnterCriticalSection(&This->Parser.filter.csFilter);
     for (x = 0; x < This->Parser.cStreams; ++x)
     {
-        Parser_OutputPin *pin = unsafe_impl_Parser_OutputPin_from_IPin(This->Parser.ppPins[x]);
+        Parser_OutputPin *pin = This->Parser.sources[x];
         StreamData *stream = This->streams + x;
         LONGLONG wanted_frames;
         DWORD last_keyframe = 0, last_keyframeidx = 0, preroll = 0;
