@@ -785,6 +785,18 @@ static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
 
     TRACE("device %p, irp %p, minor function %#x.\n", device, irp, stack->MinorFunction);
 
+    switch (stack->MinorFunction)
+    {
+    case IRP_MN_START_DEVICE:
+    case IRP_MN_SURPRISE_REMOVAL:
+    case IRP_MN_REMOVE_DEVICE:
+        /* Nothing to do. */
+        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        break;
+    default:
+        FIXME("Unhandled PnP request %#x.\n", stack->MinorFunction);
+    }
+
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return irp->IoStatus.u.Status;
 }
