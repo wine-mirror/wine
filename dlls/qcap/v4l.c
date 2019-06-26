@@ -60,8 +60,8 @@
 #include "wine/debug.h"
 #include "wine/library.h"
 
-#include "capture.h"
 #include "qcap_main.h"
+#include "capture.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
@@ -101,7 +101,7 @@ struct _Capture
 
     CRITICAL_SECTION CritSect;
 
-    IPin *pOut;
+    BaseOutputPin *pin;
     int fd, mmap;
     BOOL iscommitted, stopped;
 
@@ -409,7 +409,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
         EnterCriticalSection(&capBox->CritSect);
         if (capBox->stopped)
             break;
-        hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin *)capBox->pOut, &pSample, NULL, NULL, 0);
+        hr = BaseOutputPinImpl_GetDeliveryBuffer(capBox->pin, &pSample, NULL, NULL, 0);
         if (SUCCEEDED(hr))
         {
             int len;
@@ -435,7 +435,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
             }
 
             Resize(capBox, pTarget, image_data);
-            hr = BaseOutputPinImpl_Deliver((BaseOutputPin *)capBox->pOut, pSample);
+            hr = BaseOutputPinImpl_Deliver(capBox->pin, pSample);
             TRACE("%p -> Frame %u: %x\n", capBox, ++framecount, hr);
             IMediaSample_Release(pSample);
         }
@@ -473,7 +473,6 @@ HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
         if (!capBox->iscommitted)
         {
             ALLOCATOR_PROPERTIES ap, actual;
-            BaseOutputPin *out;
 
             capBox->iscommitted = TRUE;
 
@@ -486,12 +485,10 @@ HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
             ap.cbAlign = 1;
             ap.cbPrefix = 0;
 
-            out = (BaseOutputPin *)capBox->pOut;
-
-            hr = IMemAllocator_SetProperties(out->pAllocator, &ap, &actual);
+            hr = IMemAllocator_SetProperties(capBox->pin->pAllocator, &ap, &actual);
 
             if (SUCCEEDED(hr))
-                hr = IMemAllocator_Commit(out->pAllocator);
+                hr = IMemAllocator_Commit(capBox->pin->pAllocator);
 
             TRACE("Committing allocator: %x\n", hr);
         }
@@ -549,14 +546,11 @@ HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
         capBox->thread = 0;
         if (capBox->iscommitted)
         {
-            BaseOutputPin *out;
             HRESULT hr;
 
             capBox->iscommitted = FALSE;
 
-            out = (BaseOutputPin*)capBox->pOut;
-
-            hr = IMemAllocator_Decommit(out->pAllocator);
+            hr = IMemAllocator_Decommit(capBox->pin->pAllocator);
 
             if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
                 WARN("Decommitting allocator: %x\n", hr);
@@ -568,7 +562,7 @@ HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
     return S_OK;
 }
 
-Capture * qcap_driver_init( IPin *pOut, USHORT card )
+Capture * qcap_driver_init(BaseOutputPin *pin, USHORT card)
 {
     struct v4l2_capability caps = {{0}};
     struct v4l2_format format = {0};
@@ -649,7 +643,7 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
     device->outputheight = device->height = format.fmt.pix.height;
     device->swresize = FALSE;
     device->bitDepth = 24;
-    device->pOut = pOut;
+    device->pin = pin;
     device->fps = 3;
     device->stopped = FALSE;
     device->iscommitted = FALSE;
@@ -665,7 +659,7 @@ error:
 
 #else
 
-Capture * qcap_driver_init( IPin *pOut, USHORT card )
+Capture * qcap_driver_init(BaseOutputPin *pin, USHORT card)
 {
     static const char msg[] =
         "The v4l headers were not available at compile time,\n"
