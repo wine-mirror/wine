@@ -768,6 +768,15 @@ void WINAPI PoStartNextPowerIrp( IRP *irp )
     FIXME("irp %p, stub!\n", irp);
 }
 
+/*****************************************************
+ *           PoCallDriver   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PoCallDriver( DEVICE_OBJECT *device, IRP *irp )
+{
+    TRACE("device %p, irp %p.\n", device, irp);
+    return IoCallDriver( device, irp );
+}
+
 static DRIVER_OBJECT *pnp_manager;
 
 struct root_pnp_device

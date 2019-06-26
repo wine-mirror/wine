@@ -841,7 +841,7 @@
 @ stub PfxInitialize
 @ stub PfxInsertPrefix
 @ stub PfxRemovePrefix
-@ stub PoCallDriver
+@ stdcall PoCallDriver(ptr ptr)
 @ stub PoCancelDeviceNotify
 @ stub PoQueueShutdownWorkItem
 @ stub PoRegisterDeviceForIdleDetection
