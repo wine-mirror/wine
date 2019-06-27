@@ -20,7 +20,6 @@
 
 #include "windows.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 #include "ole2.h"
 #include "dshow.h"
 #include "wmp.h"
@@ -121,7 +120,7 @@ static inline WCHAR *heap_strdupW(const WCHAR *str)
     WCHAR *ret;
 
     if(str) {
-        size_t size = strlenW(str)+1;
+        size_t size = lstrlenW(str)+1;
         ret = heap_alloc(size*sizeof(WCHAR));
         if(ret)
             memcpy(ret, str, size*sizeof(WCHAR));

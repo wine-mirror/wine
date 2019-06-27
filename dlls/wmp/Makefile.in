@@ -1,6 +1,8 @@
 MODULE    = wmp.dll
 IMPORTS   = oleaut32 ole32 user32 gdi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	events.c \
 	oleobj.c \

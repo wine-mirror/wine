@@ -1435,7 +1435,7 @@ static HRESULT WINAPI WMPControls_get_isAvailable(IWMPControls *iface, BSTR bstr
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrItem), pIsAvailable);
     if (!This->filter_graph) {
         *pIsAvailable = VARIANT_FALSE;
-    } else if (strcmpW(currentPosition, bstrItem) == 0) {
+    } else if (wcscmp(currentPosition, bstrItem) == 0) {
         DWORD capabilities;
         IMediaSeeking_GetCapabilities(This->media_seeking, &capabilities);
         *pIsAvailable = (capabilities & AM_SEEKING_CanSeekAbsolute) ?
