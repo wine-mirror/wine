@@ -55,34 +55,6 @@ static inline BOOL is_version_nt(void)
     return !(GetVersion() & 0x80000000);
 }
 
-/* returns directory handle to \\BaseNamedObjects */
-static HANDLE get_BaseNamedObjects_handle(void)
-{
-    static HANDLE handle = NULL;
-    static const WCHAR basenameW[] = {'\\','S','e','s','s','i','o','n','s','\\','%','u',
-                                      '\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',0};
-    WCHAR buffer[64];
-    UNICODE_STRING str;
-    OBJECT_ATTRIBUTES attr;
-
-    if (!handle)
-    {
-        HANDLE dir;
-
-        sprintfW( buffer, basenameW, NtCurrentTeb()->Peb->SessionId );
-        RtlInitUnicodeString( &str, buffer );
-        InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
-        NtOpenDirectoryObject(&dir, DIRECTORY_CREATE_OBJECT|DIRECTORY_TRAVERSE,
-                              &attr);
-        if (InterlockedCompareExchangePointer( &handle, dir, 0 ) != 0)
-        {
-            /* someone beat us here... */
-            CloseHandle( dir );
-        }
-    }
-    return handle;
-}
-
 static void get_create_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nameW,
                                           SECURITY_ATTRIBUTES *sa, const WCHAR *name )
 {
@@ -96,21 +68,23 @@ static void get_create_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRIN
     {
         RtlInitUnicodeString( nameW, name );
         attr->ObjectName = nameW;
-        attr->RootDirectory = get_BaseNamedObjects_handle();
+        BaseGetNamedObjectDirectory( &attr->RootDirectory );
     }
 }
 
 static BOOL get_open_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nameW,
                                         BOOL inherit, const WCHAR *name )
 {
+    HANDLE dir;
+
     if (!name)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
     RtlInitUnicodeString( nameW, name );
-    InitializeObjectAttributes( attr, nameW, inherit ? OBJ_INHERIT : 0,
-                                get_BaseNamedObjects_handle(), NULL );
+    BaseGetNamedObjectDirectory( &dir );
+    InitializeObjectAttributes( attr, nameW, inherit ? OBJ_INHERIT : 0, dir, NULL );
     return TRUE;
 }
 
@@ -441,165 +415,6 @@ void WINAPI ReinitializeCriticalSection( CRITICAL_SECTION *crit )
 void WINAPI UninitializeCriticalSection( CRITICAL_SECTION *crit )
 {
     RtlDeleteCriticalSection( crit );
-}
-
-
-/***********************************************************************
- *           CreateEventA    (KERNEL32.@)
- */
-HANDLE WINAPI DECLSPEC_HOTPATCH CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
-                                              BOOL initial_state, LPCSTR name )
-{
-    DWORD flags = 0;
-
-    if (manual_reset) flags |= CREATE_EVENT_MANUAL_RESET;
-    if (initial_state) flags |= CREATE_EVENT_INITIAL_SET;
-    return CreateEventExA( sa, name, flags, EVENT_ALL_ACCESS );
-}
-
-
-/***********************************************************************
- *           CreateEventW    (KERNEL32.@)
- */
-HANDLE WINAPI DECLSPEC_HOTPATCH CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
-                                              BOOL initial_state, LPCWSTR name )
-{
-    DWORD flags = 0;
-
-    if (manual_reset) flags |= CREATE_EVENT_MANUAL_RESET;
-    if (initial_state) flags |= CREATE_EVENT_INITIAL_SET;
-    return CreateEventExW( sa, name, flags, EVENT_ALL_ACCESS );
-}
-
-
-/***********************************************************************
- *           CreateEventExA    (KERNEL32.@)
- */
-HANDLE WINAPI DECLSPEC_HOTPATCH CreateEventExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWORD flags, DWORD access )
-{
-    WCHAR buffer[MAX_PATH];
-
-    if (!name) return CreateEventExW( sa, NULL, flags, access );
-
-    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
-    return CreateEventExW( sa, buffer, flags, access );
-}
-
-
-/***********************************************************************
- *           CreateEventExW    (KERNEL32.@)
- */
-HANDLE WINAPI DECLSPEC_HOTPATCH CreateEventExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags, DWORD access )
-{
-    HANDLE ret = 0;
-    UNICODE_STRING nameW;
-    OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
-
-    /* one buggy program needs this
-     * ("Van Dale Groot woordenboek der Nederlandse taal")
-     */
-    if (sa && IsBadReadPtr(sa,sizeof(SECURITY_ATTRIBUTES)))
-    {
-        ERR("Bad security attributes pointer %p\n",sa);
-        SetLastError( ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-
-    get_create_object_attributes( &attr, &nameW, sa, name );
-
-    status = NtCreateEvent( &ret, access, &attr,
-                            (flags & CREATE_EVENT_MANUAL_RESET) ? NotificationEvent : SynchronizationEvent,
-                            (flags & CREATE_EVENT_INITIAL_SET) != 0 );
-    if (status == STATUS_OBJECT_NAME_EXISTS)
-        SetLastError( ERROR_ALREADY_EXISTS );
-    else
-        SetLastError( RtlNtStatusToDosError(status) );
-    return ret;
-}
-
-
-/***********************************************************************
- *           OpenEventA    (KERNEL32.@)
- */
-HANDLE WINAPI DECLSPEC_HOTPATCH OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
-{
-    WCHAR buffer[MAX_PATH];
-
-    if (!name) return OpenEventW( access, inherit, NULL );
-
-    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
-    return OpenEventW( access, inherit, buffer );
-}
-
-
-/***********************************************************************
- *           OpenEventW    (KERNEL32.@)
- */
-HANDLE WINAPI DECLSPEC_HOTPATCH OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
-{
-    HANDLE ret;
-    UNICODE_STRING nameW;
-    OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
-
-    if (!is_version_nt()) access = EVENT_ALL_ACCESS;
-
-    if (!get_open_object_attributes( &attr, &nameW, inherit, name )) return 0;
-
-    status = NtOpenEvent( &ret, access, &attr );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return 0;
-    }
-    return ret;
-}
-
-/***********************************************************************
- *           PulseEvent    (KERNEL32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH PulseEvent( HANDLE handle )
-{
-    NTSTATUS status;
-
-    if ((status = NtPulseEvent( handle, NULL )))
-        SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
-
-/***********************************************************************
- *           SetEvent    (KERNEL32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH SetEvent( HANDLE handle )
-{
-    NTSTATUS status;
-
-    if ((status = NtSetEvent( handle, NULL )))
-        SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
-
-/***********************************************************************
- *           ResetEvent    (KERNEL32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH ResetEvent( HANDLE handle )
-{
-    NTSTATUS status;
-
-    if ((status = NtResetEvent( handle, NULL )))
-        SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
 }
 
 

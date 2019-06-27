@@ -9,4 +9,5 @@ C_SRCS = \
 	registry.c \
 	security.c \
 	string.c \
+	sync.c \
 	version.c

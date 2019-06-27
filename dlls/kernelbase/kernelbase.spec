@@ -77,7 +77,7 @@
 @ stdcall BaseFlushAppcompatCache() kernel32.BaseFlushAppcompatCache
 # @ stub BaseFormatObjectAttributes
 # @ stub BaseFreeAppCompatDataForProcess
-# @ stub BaseGetNamedObjectDirectory
+@ stdcall BaseGetNamedObjectDirectory(ptr)
 @ stub BaseGetProcessDllPath
 @ stub BaseGetProcessExePath
 @ stub BaseInitAppcompatCacheSupport
@@ -179,10 +179,10 @@
 @ stdcall CreateDirectoryExW(wstr wstr ptr) kernel32.CreateDirectoryExW
 @ stdcall CreateDirectoryW(wstr ptr) kernel32.CreateDirectoryW
 # @ stub CreateEnclave
-@ stdcall CreateEventA(ptr long long str) kernel32.CreateEventA
-@ stdcall CreateEventExA(ptr str long long) kernel32.CreateEventExA
-@ stdcall CreateEventExW(ptr wstr long long) kernel32.CreateEventExW
-@ stdcall CreateEventW(ptr long long wstr) kernel32.CreateEventW
+@ stdcall CreateEventA(ptr long long str)
+@ stdcall CreateEventExA(ptr str long long)
+@ stdcall CreateEventExW(ptr wstr long long)
+@ stdcall CreateEventW(ptr long long wstr)
 @ stdcall CreateFiber(long ptr ptr) kernel32.CreateFiber
 @ stdcall CreateFiberEx(long long long ptr ptr) kernel32.CreateFiberEx
 @ stdcall CreateFile2(wstr long long long ptr) kernel32.CreateFile2
@@ -981,8 +981,8 @@
 @ stdcall ObjectOpenAuditAlarmW(wstr ptr wstr wstr ptr long long long ptr long long ptr)
 @ stdcall ObjectPrivilegeAuditAlarmW(wstr ptr long long ptr long)
 # @ stub OfferVirtualMemory
-@ stdcall OpenEventA(long long str) kernel32.OpenEventA
-@ stdcall OpenEventW(long long wstr) kernel32.OpenEventW
+@ stdcall OpenEventA(long long str)
+@ stdcall OpenEventW(long long wstr)
 @ stdcall OpenFileById(long ptr long long ptr long) kernel32.OpenFileById
 # @ stub OpenFileMappingFromApp
 @ stdcall OpenFileMappingW(long long wstr) kernel32.OpenFileMappingW
@@ -1189,7 +1189,7 @@
 # @ stub PssWalkMarkerSetPosition
 # @ stub PssWalkSnapshot
 # @ stub PublishStateChangeNotification
-@ stdcall PulseEvent(long) kernel32.PulseEvent
+@ stdcall PulseEvent(long)
 @ stdcall PurgeComm(long long) kernel32.PurgeComm
 @ stdcall QISearch(ptr ptr ptr ptr)
 @ stdcall QueryActCtxSettingsW(long ptr wstr wstr ptr long ptr) kernel32.QueryActCtxSettingsW
@@ -1341,7 +1341,7 @@
 @ stdcall RemoveVectoredExceptionHandler(ptr) kernel32.RemoveVectoredExceptionHandler
 # @ stub ReplaceFileExInternal
 @ stdcall ReplaceFileW(wstr wstr wstr long ptr ptr) kernel32.ReplaceFileW
-@ stdcall ResetEvent(long) kernel32.ResetEvent
+@ stdcall ResetEvent(long)
 # @ stub ResetState
 @ stdcall ResetWriteWatch(ptr long) kernel32.ResetWriteWatch
 @ stdcall ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) kernel32.ResolveDelayLoadedAPI
@@ -1427,7 +1427,7 @@
 @ stdcall SetEnvironmentVariableA(str str) kernel32.SetEnvironmentVariableA
 @ stdcall SetEnvironmentVariableW(wstr wstr) kernel32.SetEnvironmentVariableW
 @ stdcall SetErrorMode(long) kernel32.SetErrorMode
-@ stdcall SetEvent(long) kernel32.SetEvent
+@ stdcall SetEvent(long)
 @ stdcall SetEventWhenCallbackReturns(ptr long) kernel32.SetEventWhenCallbackReturns
 @ stdcall SetFileApisToANSI() kernel32.SetFileApisToANSI
 @ stdcall SetFileApisToOEM() kernel32.SetFileApisToOEM

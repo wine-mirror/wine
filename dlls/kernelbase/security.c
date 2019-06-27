@@ -30,6 +30,7 @@
 #include "winternl.h"
 #include "winioctl.h"
 
+#include "kernelbase.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 
@@ -226,12 +227,6 @@ static const char *debugstr_sid( PSID sid )
                                 psid->SubAuthority[6], psid->SubAuthority[7]);
     }
     return "(too-big)";
-}
-
-static BOOL set_ntstatus( NTSTATUS status )
-{
-    if (status) SetLastError( RtlNtStatusToDosError( status ));
-    return !status;
 }
 
 /******************************************************************************

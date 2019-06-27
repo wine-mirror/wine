@@ -23,6 +23,7 @@
 
 #include "wine/server.h"
 
+NTSTATUS WINAPI BaseGetNamedObjectDirectory( HANDLE *dir );
 HANDLE  WINAPI OpenConsoleW(LPCWSTR, DWORD, BOOL, DWORD);
 BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
 HANDLE  WINAPI DuplicateConsoleHandle(HANDLE, DWORD, BOOL, DWORD);

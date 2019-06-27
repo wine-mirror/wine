@@ -175,7 +175,7 @@
 # @ stub BaseFormatObjectAttributes
 # @ stub BaseFormatTimeOut
 # @ stub BaseGenerateAppCompatData
-# @ stub BaseGetNamedObjectDirectory
+@ stdcall -import BaseGetNamedObjectDirectory(ptr)
 @ stub BaseInitAppcompatCache
 @ stub BaseInitAppcompatCacheSupport
 # @ stub BaseIsAppcompatInfrastructureDisabled
@@ -274,10 +274,10 @@
 # @ stub CreateDirectoryTransactedA
 # @ stub CreateDirectoryTransactedW
 @ stdcall CreateDirectoryW(wstr ptr)
-@ stdcall CreateEventA(ptr long long str)
-@ stdcall CreateEventExA(ptr str long long)
-@ stdcall CreateEventExW(ptr wstr long long)
-@ stdcall CreateEventW(ptr long long wstr)
+@ stdcall -import CreateEventA(ptr long long str)
+@ stdcall -import CreateEventExA(ptr str long long)
+@ stdcall -import CreateEventExW(ptr wstr long long)
+@ stdcall -import CreateEventW(ptr long long wstr)
 @ stdcall CreateFiber(long ptr ptr)
 @ stdcall CreateFiberEx(long long long ptr ptr)
 @ stdcall CreateFile2(wstr long long long ptr)
@@ -1112,8 +1112,8 @@
 # @ stub NumaVirtualQueryNode
 @ stdcall OpenConsoleW(wstr long long long)
 @ stub OpenDataFile
-@ stdcall OpenEventA(long long str)
-@ stdcall OpenEventW(long long wstr)
+@ stdcall -import OpenEventA(long long str)
+@ stdcall -import OpenEventW(long long wstr)
 @ stdcall OpenFile(str ptr long)
 @ stdcall OpenFileById(long ptr long long ptr long)
 @ stdcall OpenFileMappingA(long long str)
@@ -1153,7 +1153,7 @@
 @ stdcall Process32Next (ptr ptr)
 @ stdcall Process32NextW (ptr ptr)
 @ stdcall ProcessIdToSessionId(long ptr)
-@ stdcall PulseEvent(long)
+@ stdcall -import PulseEvent(long)
 @ stdcall PurgeComm(long long)
 @ stdcall -i386 -private -norelay QT_Thunk() krnl386.exe16.QT_Thunk
 @ stdcall QueryActCtxSettingsW(long ptr wstr wstr ptr long ptr)
@@ -1279,7 +1279,7 @@
 # @ stub ReplacePartitionUnit
 @ stdcall RequestDeviceWakeup(long)
 @ stdcall RequestWakeupLatency(long)
-@ stdcall ResetEvent(long)
+@ stdcall -import ResetEvent(long)
 @ stdcall ResetWriteWatch(ptr long)
 @ stdcall ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) ntdll.LdrResolveDelayLoadedAPI
 @ stdcall ResolveLocaleName(wstr ptr long)
@@ -1389,7 +1389,7 @@
 @ stdcall SetEnvironmentVariableA(str str)
 @ stdcall SetEnvironmentVariableW(wstr wstr)
 @ stdcall SetErrorMode(long)
-@ stdcall SetEvent(long)
+@ stdcall -import SetEvent(long)
 @ stdcall SetEventWhenCallbackReturns(ptr long) ntdll.TpCallbackSetEventOnCompletion
 @ stdcall SetFileApisToANSI()
 @ stdcall SetFileApisToOEM()
