@@ -2,6 +2,8 @@ MODULE    = wmvcore.dll
 IMPORTLIB = wmvcore
 IMPORTS   = kernel32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	reader.c \
 	wmvcore_main.c \
