@@ -214,8 +214,8 @@
 @ stdcall CreateRemoteThread(long ptr long ptr long long ptr) kernel32.CreateRemoteThread
 @ stdcall CreateRemoteThreadEx(long ptr long ptr ptr long ptr ptr) kernel32.CreateRemoteThreadEx
 @ stdcall CreateRestrictedToken(long long long ptr long ptr long ptr ptr)
-@ stdcall CreateSemaphoreExW(ptr long long wstr long long) kernel32.CreateSemaphoreExW
-@ stdcall CreateSemaphoreW(ptr long long wstr) kernel32.CreateSemaphoreW
+@ stdcall CreateSemaphoreExW(ptr long long wstr long long)
+@ stdcall CreateSemaphoreW(ptr long long wstr)
 # @ stub CreateStateAtom
 # @ stub CreateStateChangeNotification
 # @ stub CreateStateContainer
@@ -994,7 +994,7 @@
 @ stdcall OpenProcess(long long long) kernel32.OpenProcess
 @ stdcall OpenProcessToken(long long ptr)
 @ stub OpenRegKey
-@ stdcall OpenSemaphoreW(long long wstr) kernel32.OpenSemaphoreW
+@ stdcall OpenSemaphoreW(long long wstr)
 # @ stub OpenState
 # @ stub OpenStateAtom
 # @ stub OpenStateExplicit
@@ -1328,7 +1328,7 @@
 @ stdcall ReleaseMutexWhenCallbackReturns(ptr long) kernel32.ReleaseMutexWhenCallbackReturns
 @ stdcall ReleaseSRWLockExclusive(ptr) kernel32.ReleaseSRWLockExclusive
 @ stdcall ReleaseSRWLockShared(ptr) kernel32.ReleaseSRWLockShared
-@ stdcall ReleaseSemaphore(long long ptr) kernel32.ReleaseSemaphore
+@ stdcall ReleaseSemaphore(long long ptr)
 @ stdcall ReleaseSemaphoreWhenCallbackReturns(ptr long long) kernel32.ReleaseSemaphoreWhenCallbackReturns
 # @ stub ReleaseStateLock
 @ stdcall RemapPredefinedHandleInternal(long long)

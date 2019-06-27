@@ -320,8 +320,8 @@
 @ stdcall CreateRemoteThreadEx(long ptr long ptr ptr long ptr ptr)
 @ stdcall CreateSemaphoreA(ptr long long str)
 @ stdcall CreateSemaphoreExA(ptr long long str long long)
-@ stdcall CreateSemaphoreExW(ptr long long wstr long long)
-@ stdcall CreateSemaphoreW(ptr long long wstr)
+@ stdcall -import CreateSemaphoreExW(ptr long long wstr long long)
+@ stdcall -import CreateSemaphoreW(ptr long long wstr)
 @ stdcall CreateSocketHandle()
 @ stdcall CreateSymbolicLinkA(str str long)
 # @ stub CreateSymbolicLinkTransactedA
@@ -1128,7 +1128,7 @@
 # @ stub OpenProcessToken
 @ stdcall OpenProfileUserMapping()
 @ stdcall OpenSemaphoreA(long long str)
-@ stdcall OpenSemaphoreW(long long wstr)
+@ stdcall -import OpenSemaphoreW(long long wstr)
 @ stdcall OpenThread(long long long)
 # @ stub OpenThreadToken
 @ stdcall -i386 OpenVxDHandle(long)
@@ -1258,7 +1258,7 @@
 @ stdcall ReleaseActCtx(ptr)
 @ stdcall -import ReleaseMutex(long)
 @ stdcall ReleaseMutexWhenCallbackReturns(ptr long) ntdll.TpCallbackReleaseMutexOnCompletion
-@ stdcall ReleaseSemaphore(long long ptr)
+@ stdcall -import ReleaseSemaphore(long long ptr)
 @ stdcall ReleaseSemaphoreWhenCallbackReturns(ptr long long) ntdll.TpCallbackReleaseSemaphoreOnCompletion
 @ stdcall ReleaseSRWLockExclusive(ptr) ntdll.RtlReleaseSRWLockExclusive
 @ stdcall ReleaseSRWLockShared(ptr) ntdll.RtlReleaseSRWLockShared

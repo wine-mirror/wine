@@ -453,15 +453,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG 
 
 
 /***********************************************************************
- *           CreateSemaphoreW   (KERNEL32.@)
- */
-HANDLE WINAPI DECLSPEC_HOTPATCH CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCWSTR name )
-{
-    return CreateSemaphoreExW( sa, initial, max, name, 0, SEMAPHORE_ALL_ACCESS );
-}
-
-
-/***********************************************************************
  *           CreateSemaphoreExA   (KERNEL32.@)
  */
 HANDLE WINAPI DECLSPEC_HOTPATCH CreateSemaphoreExA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
@@ -481,28 +472,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateSemaphoreExA( SECURITY_ATTRIBUTES *sa, LON
 
 
 /***********************************************************************
- *           CreateSemaphoreExW   (KERNEL32.@)
- */
-HANDLE WINAPI DECLSPEC_HOTPATCH CreateSemaphoreExW( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
-                                                    LPCWSTR name, DWORD flags, DWORD access )
-{
-    HANDLE ret = 0;
-    UNICODE_STRING nameW;
-    OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
-
-    get_create_object_attributes( &attr, &nameW, sa, name );
-
-    status = NtCreateSemaphore( &ret, access, &attr, initial, max );
-    if (status == STATUS_OBJECT_NAME_EXISTS)
-        SetLastError( ERROR_ALREADY_EXISTS );
-    else
-        SetLastError( RtlNtStatusToDosError(status) );
-    return ret;
-}
-
-
-/***********************************************************************
  *           OpenSemaphoreA   (KERNEL32.@)
  */
 HANDLE WINAPI DECLSPEC_HOTPATCH OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
@@ -517,41 +486,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH OpenSemaphoreA( DWORD access, BOOL inherit, LPCS
         return 0;
     }
     return OpenSemaphoreW( access, inherit, buffer );
-}
-
-
-/***********************************************************************
- *           OpenSemaphoreW   (KERNEL32.@)
- */
-HANDLE WINAPI DECLSPEC_HOTPATCH OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
-{
-    HANDLE ret;
-    UNICODE_STRING nameW;
-    OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
-
-    if (!is_version_nt()) access = SEMAPHORE_ALL_ACCESS;
-
-    if (!get_open_object_attributes( &attr, &nameW, inherit, name )) return 0;
-
-    status = NtOpenSemaphore( &ret, access, &attr );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return 0;
-    }
-    return ret;
-}
-
-
-/***********************************************************************
- *           ReleaseSemaphore   (KERNEL32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH ReleaseSemaphore( HANDLE handle, LONG count, LONG *previous )
-{
-    NTSTATUS status = NtReleaseSemaphore( handle, count, (PULONG)previous );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
 }
 
 
