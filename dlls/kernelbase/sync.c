@@ -592,3 +592,28 @@ BOOL WINAPI DECLSPEC_HOTPATCH DeleteTimerQueueTimer( HANDLE queue, HANDLE timer,
 {
     return set_ntstatus( RtlDeleteTimer( queue, timer, event ));
 }
+
+
+/***********************************************************************
+ * Critical sections
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *           InitializeCriticalSectionAndSpinCount   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH InitializeCriticalSectionAndSpinCount( CRITICAL_SECTION *crit, DWORD count )
+{
+    return !RtlInitializeCriticalSectionAndSpinCount( crit, count );
+}
+
+/***********************************************************************
+ *           InitializeCriticalSectionEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH InitializeCriticalSectionEx( CRITICAL_SECTION *crit, DWORD spincount,
+                                                           DWORD flags )
+{
+    NTSTATUS ret = RtlInitializeCriticalSectionEx( crit, spincount, flags );
+    if (ret) RtlRaiseStatus( ret );
+    return !ret;
+}

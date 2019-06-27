@@ -802,8 +802,8 @@
 @ stdcall InitializeConditionVariable(ptr) kernel32.InitializeConditionVariable
 # @ stub InitializeContext
 @ stdcall InitializeCriticalSection(ptr) kernel32.InitializeCriticalSection
-@ stdcall InitializeCriticalSectionAndSpinCount(ptr long) kernel32.InitializeCriticalSectionAndSpinCount
-@ stdcall InitializeCriticalSectionEx(ptr long long) kernel32.InitializeCriticalSectionEx
+@ stdcall InitializeCriticalSectionAndSpinCount(ptr long)
+@ stdcall InitializeCriticalSectionEx(ptr long long)
 # @ stub InitializeEnclave
 @ stdcall InitializeProcThreadAttributeList(ptr long long ptr) kernel32.InitializeProcThreadAttributeList
 # @ stub InitializeProcessForWsWatch

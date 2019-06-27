@@ -946,9 +946,9 @@
 @ stdcall InitOnceInitialize(ptr) ntdll.RtlRunOnceInitialize
 @ stdcall InitializeConditionVariable(ptr) ntdll.RtlInitializeConditionVariable
 # @ stub InitializeContext
-@ stdcall InitializeCriticalSection(ptr)
-@ stdcall InitializeCriticalSectionAndSpinCount(ptr long)
-@ stdcall InitializeCriticalSectionEx(ptr long long)
+@ stdcall InitializeCriticalSection(ptr) ntdll.RtlInitializeCriticalSection
+@ stdcall -import InitializeCriticalSectionAndSpinCount(ptr long)
+@ stdcall -import InitializeCriticalSectionEx(ptr long long)
 @ stdcall InitializeProcThreadAttributeList(ptr long long ptr)
 @ stdcall InitializeSListHead(ptr) ntdll.RtlInitializeSListHead
 @ stdcall InitializeSRWLock(ptr) ntdll.RtlInitializeSRWLock

@@ -308,67 +308,6 @@ DWORD WINAPI SignalObjectAndWait( HANDLE hObjectToSignal, HANDLE hObjectToWaitOn
 }
 
 /***********************************************************************
- *           InitializeCriticalSection   (KERNEL32.@)
- *
- * Initialise a critical section before use.
- *
- * PARAMS
- *  crit [O] Critical section to initialise.
- *
- * RETURNS
- *  Nothing. If the function fails an exception is raised.
- */
-void WINAPI InitializeCriticalSection( CRITICAL_SECTION *crit )
-{
-    InitializeCriticalSectionEx( crit, 0, 0 );
-}
-
-/***********************************************************************
- *           InitializeCriticalSectionAndSpinCount   (KERNEL32.@)
- *
- * Initialise a critical section with a spin count.
- *
- * PARAMS
- *  crit      [O] Critical section to initialise.
- *  spincount [I] Number of times to spin upon contention.
- *
- * RETURNS
- *  Success: TRUE.
- *  Failure: Nothing. If the function fails an exception is raised.
- *
- * NOTES
- *  spincount is ignored on uni-processor systems.
- */
-BOOL WINAPI InitializeCriticalSectionAndSpinCount( CRITICAL_SECTION *crit, DWORD spincount )
-{
-    return InitializeCriticalSectionEx( crit, spincount, 0 );
-}
-
-/***********************************************************************
- *           InitializeCriticalSectionEx   (KERNEL32.@)
- *
- * Initialise a critical section with a spin count and flags.
- *
- * PARAMS
- *  crit      [O] Critical section to initialise.
- *  spincount [I] Number of times to spin upon contention.
- *  flags     [I] CRITICAL_SECTION_ flags from winbase.h.
- *
- * RETURNS
- *  Success: TRUE.
- *  Failure: Nothing. If the function fails an exception is raised.
- *
- * NOTES
- *  spincount is ignored on uni-processor systems.
- */
-BOOL WINAPI InitializeCriticalSectionEx( CRITICAL_SECTION *crit, DWORD spincount, DWORD flags )
-{
-    NTSTATUS ret = RtlInitializeCriticalSectionEx( crit, spincount, flags );
-    if (ret) RtlRaiseStatus( ret );
-    return !ret;
-}
-
-/***********************************************************************
  *           MakeCriticalSectionGlobal   (KERNEL32.@)
  */
 void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )
