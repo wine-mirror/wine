@@ -263,3 +263,103 @@ BOOL WINAPI DECLSPEC_HOTPATCH ResetEvent( HANDLE handle )
 {
     return set_ntstatus( NtResetEvent( handle, NULL ));
 }
+
+
+/***********************************************************************
+ * Mutexes
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *           CreateMutexA   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
+{
+    return CreateMutexExA( sa, name, owner ? CREATE_MUTEX_INITIAL_OWNER : 0, MUTEX_ALL_ACCESS );
+}
+
+
+/***********************************************************************
+ *           CreateMutexW   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
+{
+    return CreateMutexExW( sa, name, owner ? CREATE_MUTEX_INITIAL_OWNER : 0, MUTEX_ALL_ACCESS );
+}
+
+
+/***********************************************************************
+ *           CreateMutexExA   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateMutexExA( SECURITY_ATTRIBUTES *sa, LPCSTR name,
+                                                DWORD flags, DWORD access )
+{
+    ANSI_STRING nameA;
+    NTSTATUS status;
+
+    if (!name) return CreateMutexExW( sa, NULL, flags, access );
+
+    RtlInitAnsiString( &nameA, name );
+    status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString, &nameA, FALSE );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    return CreateMutexExW( sa, NtCurrentTeb()->StaticUnicodeString.Buffer, flags, access );
+}
+
+
+/***********************************************************************
+ *           CreateMutexExW   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateMutexExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name,
+                                                DWORD flags, DWORD access )
+{
+    HANDLE ret = 0;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    get_create_object_attributes( &attr, &nameW, sa, name );
+
+    status = NtCreateMutant( &ret, access, &attr, (flags & CREATE_MUTEX_INITIAL_OWNER) != 0 );
+    if (status == STATUS_OBJECT_NAME_EXISTS)
+        SetLastError( ERROR_ALREADY_EXISTS );
+    else
+        SetLastError( RtlNtStatusToDosError(status) );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           OpenMutexW   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
+{
+    HANDLE ret;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    if (!is_version_nt()) access = MUTEX_ALL_ACCESS;
+
+    if (!get_open_object_attributes( &attr, &nameW, inherit, name )) return 0;
+
+    status = NtOpenMutant( &ret, access, &attr );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           ReleaseMutex   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH ReleaseMutex( HANDLE handle )
+{
+    return set_ntstatus( NtReleaseMutant( handle, NULL ));
+}

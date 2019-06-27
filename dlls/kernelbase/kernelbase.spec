@@ -195,10 +195,10 @@
 @ stdcall CreateHardLinkW(wstr wstr ptr) kernel32.CreateHardLinkW
 @ stdcall CreateIoCompletionPort(long long long long) kernel32.CreateIoCompletionPort
 @ stdcall CreateMemoryResourceNotification(long) kernel32.CreateMemoryResourceNotification
-@ stdcall CreateMutexA(ptr long str) kernel32.CreateMutexA
-@ stdcall CreateMutexExA(ptr str long long) kernel32.CreateMutexExA
-@ stdcall CreateMutexExW(ptr wstr long long) kernel32.CreateMutexExW
-@ stdcall CreateMutexW(ptr long wstr) kernel32.CreateMutexW
+@ stdcall CreateMutexA(ptr long str)
+@ stdcall CreateMutexExA(ptr str long long)
+@ stdcall CreateMutexExW(ptr wstr long long)
+@ stdcall CreateMutexW(ptr long wstr)
 @ stdcall CreateNamedPipeW(wstr long long long long long long ptr) kernel32.CreateNamedPipeW
 @ stdcall CreatePipe(ptr ptr ptr long) kernel32.CreatePipe
 # @ stub CreatePrivateNamespaceW
@@ -987,7 +987,7 @@
 # @ stub OpenFileMappingFromApp
 @ stdcall OpenFileMappingW(long long wstr) kernel32.OpenFileMappingW
 # @ stub OpenGlobalizationUserSettingsKey
-@ stdcall OpenMutexW(long long wstr) kernel32.OpenMutexW
+@ stdcall OpenMutexW(long long wstr)
 # @ stub OpenPackageInfoByFullName
 # @ stub OpenPackageInfoByFullNameForUser
 # @ stub OpenPrivateNamespaceW
@@ -1324,7 +1324,7 @@
 @ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr) ntdll.EtwRegisterTraceGuidsW
 @ stdcall RegisterWaitForSingleObjectEx(long ptr ptr long long) kernel32.RegisterWaitForSingleObjectEx
 @ stdcall ReleaseActCtx(ptr) kernel32.ReleaseActCtx
-@ stdcall ReleaseMutex(long) kernel32.ReleaseMutex
+@ stdcall ReleaseMutex(long)
 @ stdcall ReleaseMutexWhenCallbackReturns(ptr long) kernel32.ReleaseMutexWhenCallbackReturns
 @ stdcall ReleaseSRWLockExclusive(ptr) kernel32.ReleaseSRWLockExclusive
 @ stdcall ReleaseSRWLockShared(ptr) kernel32.ReleaseSRWLockShared

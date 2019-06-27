@@ -299,10 +299,10 @@
 @ stdcall CreateMailslotA(str long long ptr)
 @ stdcall CreateMailslotW(wstr long long ptr)
 @ stdcall CreateMemoryResourceNotification(long)
-@ stdcall CreateMutexA(ptr long str)
-@ stdcall CreateMutexExA(ptr str long long)
-@ stdcall CreateMutexExW(ptr wstr long long)
-@ stdcall CreateMutexW(ptr long wstr)
+@ stdcall -import CreateMutexA(ptr long str)
+@ stdcall -import CreateMutexExA(ptr str long long)
+@ stdcall -import CreateMutexExW(ptr wstr long long)
+@ stdcall -import CreateMutexW(ptr long wstr)
 @ stdcall CreateNamedPipeA(str long long long long long long ptr)
 @ stdcall CreateNamedPipeW(wstr long long long long long long ptr)
 # @ stub CreateNlsSecurityDescriptor
@@ -1121,7 +1121,7 @@
 @ stdcall OpenJobObjectA(long long str)
 @ stdcall OpenJobObjectW(long long wstr)
 @ stdcall OpenMutexA(long long str)
-@ stdcall OpenMutexW(long long wstr)
+@ stdcall -import OpenMutexW(long long wstr)
 # @ stub OpenPrivateNamespaceA
 # @ stub OpenPrivateNamespaceW
 @ stdcall OpenProcess(long long long)
@@ -1256,7 +1256,7 @@
 @ stub RegisterWowExec
 @ stdcall ReinitializeCriticalSection(ptr)
 @ stdcall ReleaseActCtx(ptr)
-@ stdcall ReleaseMutex(long)
+@ stdcall -import ReleaseMutex(long)
 @ stdcall ReleaseMutexWhenCallbackReturns(ptr long) ntdll.TpCallbackReleaseMutexOnCompletion
 @ stdcall ReleaseSemaphore(long long ptr)
 @ stdcall ReleaseSemaphoreWhenCallbackReturns(ptr long long) ntdll.TpCallbackReleaseSemaphoreOnCompletion
