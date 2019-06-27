@@ -31,6 +31,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winsvc.h"
 #include "setupapi.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -4694,9 +4695,12 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     static const WCHAR dothwW[] = {'.','H','W',0};
     static const WCHAR dotservicesW[] = {'.','S','e','r','v','i','c','e','s',0};
     static const WCHAR addserviceW[] = {'A','d','d','S','e','r','v','i','c','e',0};
+    static const WCHAR rootW[] = {'r','o','o','t','\\',0};
     WCHAR section[LINE_LEN], section_ext[LINE_LEN], subsection[LINE_LEN], inf_path[MAX_PATH], *extptr, *filepart;
+    WCHAR svc_name[LINE_LEN];
     UINT install_flags = SPINST_ALL;
     HKEY driver_key, device_key;
+    SC_HANDLE manager, service;
     struct device *device;
     struct driver *driver;
     void *callback_ctx;
@@ -4757,6 +4761,7 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     strcatW(subsection, dotservicesW);
     SetupInstallServicesFromInfSectionW(hinf, subsection, 0);
 
+    svc_name[0] = 0;
     if (SetupFindFirstLineW(hinf, subsection, addserviceW, &ctx))
     {
         do
@@ -4765,7 +4770,6 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 
             if (SetupGetIntField(&ctx, 2, &flags) && (flags & SPSVCINST_ASSOCSERVICE))
             {
-                WCHAR svc_name[LINE_LEN];
                 if (SetupGetStringFieldW(&ctx, 1, svc_name, ARRAY_SIZE(svc_name), NULL) && svc_name[0])
                     RegSetValueExW(device->key, Service, 0, REG_SZ, (BYTE *)svc_name, strlenW(svc_name) * sizeof(WCHAR));
                 break;
@@ -4786,5 +4790,23 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 
     RegCloseKey(device_key);
     RegCloseKey(driver_key);
+
+    if (!strncmpiW(device->instanceId, rootW, strlenW(rootW)) && svc_name[0]
+            && (manager = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT)))
+    {
+        if ((service = OpenServiceW(manager, svc_name, SERVICE_START)))
+        {
+            if (!StartServiceW(service, 0, NULL) && GetLastError() != ERROR_SERVICE_ALREADY_RUNNING)
+            {
+                ERR("Failed to start service %s for device %s, error %u.\n",
+                        debugstr_w(svc_name), debugstr_w(device->instanceId), GetLastError());
+            }
+            CloseServiceHandle(service);
+        }
+        else
+            ERR("Failed to open service %s for device %s.\n", debugstr_w(svc_name), debugstr_w(device->instanceId));
+        CloseServiceHandle(manager);
+    }
+
     return TRUE;
 }
