@@ -682,40 +682,6 @@ HANDLE WINAPI OpenWaitableTimerA( DWORD access, BOOL inherit, LPCSTR name )
 
 
 /***********************************************************************
- *           CreateTimerQueue  (KERNEL32.@)
- */
-HANDLE WINAPI CreateTimerQueue(void)
-{
-    HANDLE q;
-    NTSTATUS status = RtlCreateTimerQueue(&q);
-
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return NULL;
-    }
-
-    return q;
-}
-
-
-/***********************************************************************
- *           DeleteTimerQueueEx  (KERNEL32.@)
- */
-BOOL WINAPI DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
-{
-    NTSTATUS status = RtlDeleteTimerQueueEx(TimerQueue, CompletionEvent);
-
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-/***********************************************************************
  *           DeleteTimerQueue  (KERNEL32.@)
  */
 BOOL WINAPI DeleteTimerQueue(HANDLE TimerQueue)
@@ -724,81 +690,13 @@ BOOL WINAPI DeleteTimerQueue(HANDLE TimerQueue)
 }
 
 /***********************************************************************
- *           CreateTimerQueueTimer  (KERNEL32.@)
- *
- * Creates a timer-queue timer. This timer expires at the specified due
- * time (in ms), then after every specified period (in ms). When the timer
- * expires, the callback function is called.
- *
- * RETURNS
- *   nonzero on success or zero on failure
- */
-BOOL WINAPI CreateTimerQueueTimer( PHANDLE phNewTimer, HANDLE TimerQueue,
-                                   WAITORTIMERCALLBACK Callback, PVOID Parameter,
-                                   DWORD DueTime, DWORD Period, ULONG Flags )
-{
-    NTSTATUS status = RtlCreateTimer(phNewTimer, TimerQueue, Callback,
-                                     Parameter, DueTime, Period, Flags);
-
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-/***********************************************************************
- *           ChangeTimerQueueTimer  (KERNEL32.@)
- *
- * Changes the times at which the timer expires.
- *
- * RETURNS
- *   nonzero on success or zero on failure
- */
-BOOL WINAPI ChangeTimerQueueTimer( HANDLE TimerQueue, HANDLE Timer,
-                                   ULONG DueTime, ULONG Period )
-{
-    NTSTATUS status = RtlUpdateTimer(TimerQueue, Timer, DueTime, Period);
-
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-/***********************************************************************
  *           CancelTimerQueueTimer    (KERNEL32.@)
  */
 BOOL WINAPI CancelTimerQueueTimer(HANDLE queue, HANDLE timer)
 {
-    FIXME("stub: %p %p\n", queue, timer);
-    return FALSE;
+    return DeleteTimerQueueTimer( queue, timer, NULL );
 }
 
-/***********************************************************************
- *           DeleteTimerQueueTimer  (KERNEL32.@)
- *
- * Cancels a timer-queue timer.
- *
- * RETURNS
- *   nonzero on success or zero on failure
- */
-BOOL WINAPI DeleteTimerQueueTimer( HANDLE TimerQueue, HANDLE Timer,
-                                   HANDLE CompletionEvent )
-{
-    NTSTATUS status = RtlDeleteTimer(TimerQueue, Timer, CompletionEvent);
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
-}
 
 
 /*

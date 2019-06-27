@@ -108,7 +108,7 @@
 @ stub CancelThreadpoolIo
 @ stdcall CancelWaitableTimer(long)
 # @ stub CeipIsOptedIn
-@ stdcall ChangeTimerQueueTimer(ptr ptr long long) kernel32.ChangeTimerQueueTimer
+@ stdcall ChangeTimerQueueTimer(ptr ptr long long)
 @ stdcall CharLowerA(str)
 @ stdcall CharLowerBuffA(str long)
 @ stdcall CharLowerBuffW(wstr long)
@@ -229,8 +229,8 @@
 @ stdcall CreateThreadpoolTimer(ptr ptr ptr) kernel32.CreateThreadpoolTimer
 @ stdcall CreateThreadpoolWait(ptr ptr ptr) kernel32.CreateThreadpoolWait
 @ stdcall CreateThreadpoolWork(ptr ptr ptr) kernel32.CreateThreadpoolWork
-@ stdcall CreateTimerQueue() kernel32.CreateTimerQueue
-@ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long) kernel32.CreateTimerQueueTimer
+@ stdcall CreateTimerQueue()
+@ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long)
 @ stdcall CreateWaitableTimerExW(ptr wstr long long)
 @ stdcall CreateWaitableTimerW(ptr long wstr)
 @ stdcall CreateWellKnownSid(long ptr ptr ptr)
@@ -257,8 +257,8 @@
 # @ stub DeleteStateContainer
 # @ stub DeleteStateContainerValue
 # @ stub DeleteSynchronizationBarrier
-@ stdcall DeleteTimerQueueEx(long long) kernel32.DeleteTimerQueueEx
-@ stdcall DeleteTimerQueueTimer(long long long) kernel32.DeleteTimerQueueTimer
+@ stdcall DeleteTimerQueueEx(long long)
+@ stdcall DeleteTimerQueueTimer(long long long)
 @ stdcall DeleteVolumeMountPointW(wstr) kernel32.DeleteVolumeMountPointW
 @ stdcall DestroyPrivateObjectSecurity(ptr)
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr) kernel32.DeviceIoControl

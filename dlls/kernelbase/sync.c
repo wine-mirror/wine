@@ -531,3 +531,64 @@ BOOL WINAPI DECLSPEC_HOTPATCH CancelWaitableTimer( HANDLE handle )
 {
     return set_ntstatus( NtCancelTimer( handle, NULL ));
 }
+
+
+/***********************************************************************
+ * Timer queues
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *           CreateTimerQueue  (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateTimerQueue(void)
+{
+    HANDLE q;
+    NTSTATUS status = RtlCreateTimerQueue( &q );
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError( status ));
+        return NULL;
+    }
+    return q;
+}
+
+
+/***********************************************************************
+ *           CreateTimerQueueTimer  (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateTimerQueueTimer( PHANDLE timer, HANDLE queue,
+                                                     WAITORTIMERCALLBACK callback, PVOID arg,
+                                                     DWORD when, DWORD period, ULONG flags )
+{
+    return set_ntstatus( RtlCreateTimer( timer, queue, callback, arg, when, period, flags ));
+}
+
+
+/***********************************************************************
+ *           ChangeTimerQueueTimer  (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH ChangeTimerQueueTimer( HANDLE queue, HANDLE timer,
+                                                     ULONG when, ULONG period )
+{
+    return set_ntstatus( RtlUpdateTimer( queue, timer, when, period ));
+}
+
+
+/***********************************************************************
+ *           DeleteTimerQueueEx  (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH DeleteTimerQueueEx( HANDLE queue, HANDLE event )
+{
+    return set_ntstatus( RtlDeleteTimerQueueEx( queue, event ));
+}
+
+
+/***********************************************************************
+ *           DeleteTimerQueueTimer  (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH DeleteTimerQueueTimer( HANDLE queue, HANDLE timer, HANDLE event )
+{
+    return set_ntstatus( RtlDeleteTimer( queue, timer, event ));
+}

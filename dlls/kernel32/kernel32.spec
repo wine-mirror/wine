@@ -213,7 +213,7 @@
 # @ stub CancelThreadpoolIo
 @ stdcall CancelTimerQueueTimer(ptr ptr)
 @ stdcall -import CancelWaitableTimer(long)
-@ stdcall ChangeTimerQueueTimer(ptr ptr long long)
+@ stdcall -import ChangeTimerQueueTimer(ptr ptr long long)
 # @ stub CheckElevation
 # @ stub CheckElevationEnabled
 # @ stub CheckForReadOnlyResource
@@ -335,8 +335,8 @@
 @ stdcall CreateThreadpoolTimer(ptr ptr ptr)
 @ stdcall CreateThreadpoolWait(ptr ptr ptr)
 @ stdcall CreateThreadpoolWork(ptr ptr ptr)
-@ stdcall CreateTimerQueue ()
-@ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long)
+@ stdcall -import CreateTimerQueue()
+@ stdcall -import CreateTimerQueueTimer(ptr long ptr ptr long long long)
 @ stdcall CreateToolhelp32Snapshot(long long)
 @ stdcall -arch=x86_64 CreateUmsCompletionList(ptr)
 @ stdcall -arch=x86_64 CreateUmsThreadContext(ptr)
@@ -369,8 +369,8 @@
 # @ stub DisableThreadProfiling
 @ stdcall DisassociateCurrentThreadFromCallback(ptr) ntdll.TpDisassociateCallback
 @ stdcall DeleteTimerQueue(long)
-@ stdcall DeleteTimerQueueEx (long long)
-@ stdcall DeleteTimerQueueTimer(long long long)
+@ stdcall -import DeleteTimerQueueEx(long long)
+@ stdcall -import DeleteTimerQueueTimer(long long long)
 @ stdcall -arch=x86_64 DeleteUmsCompletionList(ptr)
 @ stdcall -arch=x86_64 DeleteUmsThreadContext(ptr)
 @ stdcall DeleteVolumeMountPointA(str)
