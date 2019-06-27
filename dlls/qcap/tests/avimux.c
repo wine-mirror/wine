@@ -434,6 +434,128 @@ static void test_pin_info(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_media_types(void)
+{
+    IBaseFilter *filter = create_avi_mux();
+    AM_MEDIA_TYPE mt = {}, *pmt;
+    VIDEOINFOHEADER vih = {};
+    IEnumMediaTypes *enummt;
+    WAVEFORMATEX wfx = {};
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    IBaseFilter_FindPin(filter, source_id, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Stream), "Got major type %s\n",
+            wine_dbgstr_guid(&pmt->majortype));
+    ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_Avi), "Got subtype %s\n",
+            wine_dbgstr_guid(&pmt->subtype));
+    ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+    ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+    ok(pmt->lSampleSize == 1, "Got sample size %u.\n", pmt->lSampleSize);
+    ok(IsEqualGUID(&pmt->formattype, &GUID_NULL), "Got format type %s.\n",
+            wine_dbgstr_guid(&pmt->formattype));
+    ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+    ok(!pmt->cbFormat, "Got format size %u.\n", pmt->cbFormat);
+    ok(!pmt->pbFormat, "Got format block %u.\n", pmt->cbFormat);
+
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    pmt->bFixedSizeSamples = FALSE;
+    pmt->bTemporalCompression = TRUE;
+    pmt->lSampleSize = 123;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    pmt->majortype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    pmt->majortype = MEDIATYPE_Video;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->majortype = MEDIATYPE_Stream;
+
+    pmt->subtype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    pmt->subtype = MEDIASUBTYPE_RGB8;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    pmt->subtype = MEDIASUBTYPE_Avi;
+
+    CoTaskMemFree(pmt);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, sink0_id, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+
+    mt.majortype = MEDIATYPE_Audio;
+    mt.formattype = FORMAT_WaveFormatEx;
+    mt.cbFormat = sizeof(wfx);
+    mt.pbFormat = (BYTE *)&wfx;
+    wfx.nBlockAlign = 1;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.subtype = MEDIASUBTYPE_RGB8;
+    mt.bFixedSizeSamples = TRUE;
+    mt.bTemporalCompression = TRUE;
+    mt.lSampleSize = 123;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.majortype = MEDIATYPE_Video;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.majortype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.majortype = MEDIATYPE_Interleaved;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    mt.majortype = MEDIATYPE_Video;
+    mt.formattype = FORMAT_VideoInfo;
+    mt.cbFormat = sizeof(vih);
+    mt.pbFormat = (BYTE *)&vih;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.majortype = MEDIATYPE_Audio;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.majortype = GUID_NULL;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.majortype = MEDIATYPE_Interleaved;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IPin_Release(pin);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_seeking(void)
 {
     IBaseFilter *filter = create_avi_mux();
@@ -577,6 +699,7 @@ START_TEST(avimux)
     test_enum_pins();
     test_find_pin();
     test_pin_info();
+    test_media_types();
     test_seeking();
 
     CoUninitialize();
