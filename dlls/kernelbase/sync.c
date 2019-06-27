@@ -757,3 +757,112 @@ BOOL WINAPI DECLSPEC_HOTPATCH SleepConditionVariableSRW( RTL_CONDITION_VARIABLE 
     return set_ntstatus( RtlSleepConditionVariableSRW( variable, lock,
                                                        get_nt_timeout( &time, timeout ), flags ));
 }
+
+
+/***********************************************************************
+ * I/O completions
+ ***********************************************************************/
+
+
+/******************************************************************************
+ *		CreateIoCompletionPort   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateIoCompletionPort( HANDLE handle, HANDLE port,
+                                                        ULONG_PTR key, DWORD threads )
+{
+    FILE_COMPLETION_INFORMATION info;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+    HANDLE ret = port;
+
+    TRACE( "(%p, %p, %08lx, %08x)\n", handle, port, key, threads );
+
+    if (!port)
+    {
+        if ((status = NtCreateIoCompletion( &ret, IO_COMPLETION_ALL_ACCESS, NULL, threads )))
+        {
+            SetLastError( RtlNtStatusToDosError(status) );
+            return 0;
+        }
+    }
+    else if (handle == INVALID_HANDLE_VALUE)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        info.CompletionPort = ret;
+        info.CompletionKey = key;
+        if ((status = NtSetInformationFile( handle, &iosb, &info, sizeof(info), FileCompletionInformation )))
+        {
+            if (!port) CloseHandle( ret );
+            SetLastError( RtlNtStatusToDosError(status) );
+            return 0;
+        }
+    }
+    return ret;
+}
+
+
+/******************************************************************************
+ *		GetQueuedCompletionStatus   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetQueuedCompletionStatus( HANDLE port, LPDWORD count, PULONG_PTR key,
+                                                         LPOVERLAPPED *overlapped, DWORD timeout )
+{
+    NTSTATUS status;
+    IO_STATUS_BLOCK iosb;
+    LARGE_INTEGER wait_time;
+
+    TRACE( "(%p,%p,%p,%p,%d)\n", port, count, key, overlapped, timeout );
+
+    *overlapped = NULL;
+    status = NtRemoveIoCompletion( port, key, (PULONG_PTR)overlapped, &iosb,
+                                   get_nt_timeout( &wait_time, timeout ) );
+    if (status == STATUS_SUCCESS)
+    {
+        *count = iosb.Information;
+        if (iosb.u.Status >= 0) return TRUE;
+        SetLastError( RtlNtStatusToDosError(iosb.u.Status) );
+        return FALSE;
+    }
+
+    if (status == STATUS_TIMEOUT) SetLastError( WAIT_TIMEOUT );
+    else SetLastError( RtlNtStatusToDosError(status) );
+    return FALSE;
+}
+
+/******************************************************************************
+ *              GetQueuedCompletionStatusEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetQueuedCompletionStatusEx( HANDLE port, OVERLAPPED_ENTRY *entries,
+                                                           ULONG count, ULONG *written,
+                                                           DWORD timeout, BOOL alertable )
+{
+    LARGE_INTEGER time;
+    NTSTATUS ret;
+
+    TRACE( "%p %p %u %p %u %u\n", port, entries, count, written, timeout, alertable );
+
+    ret = NtRemoveIoCompletionEx( port, (FILE_IO_COMPLETION_INFORMATION *)entries, count,
+                                  written, get_nt_timeout( &time, timeout ), alertable );
+    if (ret == STATUS_SUCCESS) return TRUE;
+    else if (ret == STATUS_TIMEOUT) SetLastError( WAIT_TIMEOUT );
+    else if (ret == STATUS_USER_APC) SetLastError( WAIT_IO_COMPLETION );
+    else SetLastError( RtlNtStatusToDosError(ret) );
+    return FALSE;
+}
+
+
+/******************************************************************************
+ *		PostQueuedCompletionStatus   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH PostQueuedCompletionStatus( HANDLE port, DWORD count,
+                                                          ULONG_PTR key, LPOVERLAPPED overlapped )
+{
+    TRACE( "%p %d %08lx %p\n", port, count, key, overlapped );
+
+    return set_ntstatus( NtSetIoCompletion( port, key, (ULONG_PTR)overlapped, STATUS_SUCCESS, count ));
+}

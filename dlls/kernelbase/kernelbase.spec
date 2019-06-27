@@ -193,7 +193,7 @@
 @ stdcall CreateFileW(wstr long long ptr long long long) kernel32.CreateFileW
 @ stdcall CreateHardLinkA(str str ptr) kernel32.CreateHardLinkA
 @ stdcall CreateHardLinkW(wstr wstr ptr) kernel32.CreateHardLinkW
-@ stdcall CreateIoCompletionPort(long long long long) kernel32.CreateIoCompletionPort
+@ stdcall CreateIoCompletionPort(long long long long)
 @ stdcall CreateMemoryResourceNotification(long) kernel32.CreateMemoryResourceNotification
 @ stdcall CreateMutexA(ptr long str)
 @ stdcall CreateMutexExA(ptr str long long)
@@ -645,8 +645,8 @@
 @ stub GetPtrCalDataArray
 # @ stub GetPublisherCacheFolder
 # @ stub GetPublisherRootFolder
-@ stdcall GetQueuedCompletionStatus(long ptr ptr ptr long) kernel32.GetQueuedCompletionStatus
-@ stdcall GetQueuedCompletionStatusEx(ptr ptr long ptr long long) kernel32.GetQueuedCompletionStatusEx
+@ stdcall GetQueuedCompletionStatus(long ptr ptr ptr long)
+@ stdcall GetQueuedCompletionStatusEx(ptr ptr long ptr long long)
 # @ stub GetRegistryExtensionFlags
 # @ stub GetRoamingLastObservedChangeTime
 @ stdcall GetSecurityDescriptorControl(ptr ptr ptr)
@@ -1160,7 +1160,7 @@
 @ stdcall PerfStartProviderEx(ptr ptr ptr)
 @ stdcall PerfStopProvider(long)
 # @ stub PoolPerAppKeyStateInternal
-@ stdcall PostQueuedCompletionStatus(long long ptr ptr) kernel32.PostQueuedCompletionStatus
+@ stdcall PostQueuedCompletionStatus(long long ptr ptr)
 # @ stub PrefetchVirtualMemory
 @ stub PrivCopyFileExW
 @ stdcall PrivilegeCheck(ptr ptr ptr)

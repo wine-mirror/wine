@@ -291,7 +291,7 @@
 @ stdcall CreateHardLinkTransactedA(str str ptr ptr)
 @ stdcall CreateHardLinkTransactedW(wstr wstr ptr ptr)
 @ stdcall CreateHardLinkW(wstr wstr ptr)
-@ stdcall CreateIoCompletionPort(long long long long)
+@ stdcall -import CreateIoCompletionPort(long long long long)
 @ stdcall CreateJobObjectA(ptr str)
 @ stdcall CreateJobObjectW(ptr wstr)
 # @ stub CreateJobSet
@@ -803,8 +803,8 @@
 @ stdcall GetProfileSectionW(wstr ptr long)
 @ stdcall GetProfileStringA(str str str ptr long)
 @ stdcall GetProfileStringW(wstr wstr wstr ptr long)
-@ stdcall GetQueuedCompletionStatus(long ptr ptr ptr long)
-@ stdcall GetQueuedCompletionStatusEx(ptr ptr long ptr long long)
+@ stdcall -import GetQueuedCompletionStatus(long ptr ptr ptr long)
+@ stdcall -import GetQueuedCompletionStatusEx(ptr ptr long ptr long long)
 @ stub -i386 GetSLCallbackTarget
 @ stub -i386 GetSLCallbackTemplate
 @ stdcall GetShortPathNameA(str ptr long)
@@ -1139,7 +1139,7 @@
 @ stdcall PeekConsoleInputA(ptr ptr long ptr)
 @ stdcall PeekConsoleInputW(ptr ptr long ptr)
 @ stdcall PeekNamedPipe(long ptr long ptr ptr ptr)
-@ stdcall PostQueuedCompletionStatus(long long ptr ptr)
+@ stdcall -import PostQueuedCompletionStatus(long long ptr ptr)
 @ stdcall PowerClearRequest(long long)
 @ stdcall PowerCreateRequest(ptr)
 @ stdcall PowerSetRequest(long long)
