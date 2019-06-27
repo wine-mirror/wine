@@ -308,43 +308,29 @@ BOOL WINAPI ChrCmpIA(WORD ch1, WORD ch2)
     return char_compare(ch1, ch2, NORM_IGNORECASE);
 }
 
-static BOOL WINAPI ChrCmpA(WORD ch1, WORD ch2)
-{
-    return char_compare(ch1, ch2, 0);
-}
-
 BOOL WINAPI ChrCmpIW(WCHAR ch1, WCHAR ch2)
 {
     return CompareStringW(GetThreadLocale(), NORM_IGNORECASE, &ch1, 1, &ch2, 1) - CSTR_EQUAL;
 }
 
-static char * strstr_helper(const char *str, const char *search,
-        INT (WINAPI *cmp_func)(const char *, const char *, int))
+char * WINAPI StrStrA(const char *str, const char *search)
 {
     const char *end;
     size_t len;
 
-    if (!str || !search || !*search)
-        return NULL;
+    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(search));
+
+    if (!str || !search || !*search) return NULL;
 
     len = strlen(search);
     end = str + strlen(str);
 
     while (str + len <= end)
     {
-        if (!cmp_func(str, search, len))
-            return (char *)str;
+        if (!StrCmpNA(str, search, len)) return (char *)str;
         str = CharNextA(str);
     }
-
     return NULL;
-}
-
-char * WINAPI StrStrA(const char *str, const char *search)
-{
-    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(search));
-
-    return strstr_helper(str, search, StrCmpNA);
 }
 
 WCHAR * WINAPI StrStrW(const WCHAR *str, const WCHAR *search)
@@ -465,9 +451,22 @@ WCHAR * WINAPI StrCpyNW(WCHAR *dst, const WCHAR *src, int count)
 
 char * WINAPI StrStrIA(const char *str, const char *search)
 {
+    const char *end;
+    size_t len;
+
     TRACE("%s, %s\n", wine_dbgstr_a(str), debugstr_a(search));
 
-    return strstr_helper(str, search, StrCmpNIA);
+    if (!str || !search || !*search) return NULL;
+
+    len = strlen(search);
+    end = str + strlen(str);
+
+    while (str + len <= end)
+    {
+        if (!StrCmpNIA(str, search, len)) return (char *)str;
+        str = CharNextA(str);
+    }
+    return NULL;
 }
 
 WCHAR * WINAPI StrStrIW(const WCHAR *str, const WCHAR *search)
@@ -493,33 +492,20 @@ WCHAR * WINAPI StrStrIW(const WCHAR *str, const WCHAR *search)
     return NULL;
 }
 
-static int strspn_helper(const char *str, const char *match, char * (WINAPI *func)(const char *, WORD), BOOL invert)
+int WINAPI StrSpnA(const char *str, const char *match)
 {
     const char *ptr = str;
 
-    if (!str || !*str || !match)
-        return 0;
+    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(match));
+
+    if (!str || !match) return 0;
 
     while (*ptr)
     {
-        const char *test = func(match, *ptr);
-
-        if (!invert && !test)
-            break;
-        if (invert && test)
-            break;
-
+        if (!StrChrA(match, *ptr)) break;
         ptr = CharNextA(ptr);
-    };
-
+    }
     return ptr - str;
-}
-
-int WINAPI StrSpnA(const char *str, const char *match)
-{
-    TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(match));
-
-    return strspn_helper(str, match, StrChrA, FALSE);
 }
 
 int WINAPI StrSpnW(const WCHAR *str, const WCHAR *match)
@@ -530,9 +516,18 @@ int WINAPI StrSpnW(const WCHAR *str, const WCHAR *match)
 
 int WINAPI StrCSpnA(const char *str, const char *match)
 {
+    const char *ptr = str;
+
     TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(match));
 
-    return strspn_helper(str, match, StrChrA, TRUE);
+    if (!str || !match) return 0;
+
+    while (*ptr)
+    {
+        if (StrChrA(match, *ptr)) break;
+        ptr = CharNextA(ptr);
+    }
+    return ptr - str;
 }
 
 int WINAPI StrCSpnW(const WCHAR *str, const WCHAR *match)
@@ -545,9 +540,18 @@ int WINAPI StrCSpnW(const WCHAR *str, const WCHAR *match)
 
 int WINAPI StrCSpnIA(const char *str, const char *match)
 {
+    const char *ptr = str;
+
     TRACE("%s, %s\n", wine_dbgstr_a(str), wine_dbgstr_a(match));
 
-    return strspn_helper(str, match, StrChrIA, TRUE);
+    if (!str || !match) return 0;
+
+    while (*ptr)
+    {
+        if (StrChrIA(match, *ptr)) break;
+        ptr = CharNextA(ptr);
+    }
+    return ptr - str;
 }
 
 int WINAPI StrCSpnIW(const WCHAR *str, const WCHAR *match)
@@ -568,34 +572,21 @@ int WINAPI StrCSpnIW(const WCHAR *str, const WCHAR *match)
     return ptr - str;
 }
 
-static LPSTR strrchra_helper(const char *str, const char *end, WORD ch, BOOL (WINAPI *cmp_func)(WORD, WORD))
-{
-    const char *ret = NULL;
-    WORD ch2;
-
-    if (!str)
-        return NULL;
-
-    if (!end)
-        end = str + lstrlenA(str);
-
-    while (*str && str <= end)
-    {
-        ch2 = IsDBCSLeadByte(*str) ? *str << 8 | str[1] : *str;
-
-        if (!cmp_func(ch, ch2))
-            ret = str;
-        str = CharNextA(str);
-    }
-
-    return (char *)ret;
-}
-
 char * WINAPI StrRChrA(const char *str, const char *end, WORD ch)
 {
+    const char *ret = NULL;
+
     TRACE("%s, %s, %#x\n", wine_dbgstr_a(str), wine_dbgstr_a(end), ch);
 
-    return strrchra_helper(str, end, ch, ChrCmpA);
+    if (!str) return NULL;
+    if (!end) end = str + lstrlenA(str);
+    while (*str && str <= end)
+    {
+        WORD ch2 = IsDBCSLeadByte(*str) ? *str << 8 | str[1] : *str;
+        if (!char_compare(ch, ch2, 0)) ret = str;
+        str = CharNextA(str);
+    }
+    return (char *)ret;
 }
 
 WCHAR * WINAPI StrRChrW(const WCHAR *str, const WCHAR *end, WORD ch)
@@ -614,9 +605,20 @@ WCHAR * WINAPI StrRChrW(const WCHAR *str, const WCHAR *end, WORD ch)
 
 char * WINAPI StrRChrIA(const char *str, const char *end, WORD ch)
 {
+    const char *ret = NULL;
+
     TRACE("%s, %s, %#x\n", wine_dbgstr_a(str), wine_dbgstr_a(end), ch);
 
-    return strrchra_helper(str, end, ch, ChrCmpIA);
+    if (!str) return NULL;
+    if (!end) end = str + lstrlenA(str);
+
+    while (*str && str <= end)
+    {
+        WORD ch2 = IsDBCSLeadByte(*str) ? *str << 8 | str[1] : *str;
+        if (!ChrCmpIA(ch, ch2)) ret = str;
+        str = CharNextA(str);
+    }
+    return (char *)ret;
 }
 
 WCHAR * WINAPI StrRChrIW(const WCHAR *str, const WCHAR *end, WORD ch)
