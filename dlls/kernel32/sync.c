@@ -1875,39 +1875,3 @@ __ASM_STDCALL_FUNC(InterlockedDecrement, 4,
                   "ret $4")
 
 #endif  /* __i386__ */
-
-/***********************************************************************
- *           SleepConditionVariableCS   (KERNEL32.@)
- */
-BOOL WINAPI SleepConditionVariableCS( CONDITION_VARIABLE *variable, CRITICAL_SECTION *crit, DWORD timeout )
-{
-    NTSTATUS status;
-    LARGE_INTEGER time;
-
-    status = RtlSleepConditionVariableCS( variable, crit, get_nt_timeout( &time, timeout ) );
-
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
-}
-
-/***********************************************************************
- *           SleepConditionVariableSRW   (KERNEL32.@)
- */
-BOOL WINAPI SleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, RTL_SRWLOCK *lock, DWORD timeout, ULONG flags )
-{
-    NTSTATUS status;
-    LARGE_INTEGER time;
-
-    status = RtlSleepConditionVariableSRW( variable, lock, get_nt_timeout( &time, timeout ), flags );
-
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
-}

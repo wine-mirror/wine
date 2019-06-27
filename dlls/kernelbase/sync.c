@@ -45,6 +45,14 @@ static inline BOOL is_version_nt(void)
     return !(GetVersion() & 0x80000000);
 }
 
+/* helper for kernel32->ntdll timeout format conversion */
+static inline LARGE_INTEGER *get_nt_timeout( LARGE_INTEGER *time, DWORD timeout )
+{
+    if (timeout == INFINITE) return NULL;
+    time->QuadPart = (ULONGLONG)timeout * -10000;
+    return time;
+}
+
 
 /***********************************************************************
  *              BaseGetNamedObjectDirectory  (kernelbase.@)
@@ -718,4 +726,34 @@ HANDLE WINAPI DECLSPEC_HOTPATCH OpenFileMappingW( DWORD access, BOOL inherit, LP
         return 0;
     }
     return ret;
+}
+
+
+/***********************************************************************
+ * Condition variables
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *           SleepConditionVariableCS   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SleepConditionVariableCS( CONDITION_VARIABLE *variable,
+                                                        CRITICAL_SECTION *crit, DWORD timeout )
+{
+    LARGE_INTEGER time;
+
+    return set_ntstatus( RtlSleepConditionVariableCS( variable, crit, get_nt_timeout( &time, timeout )));
+}
+
+
+/***********************************************************************
+ *           SleepConditionVariableSRW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable,
+                                                         RTL_SRWLOCK *lock, DWORD timeout, ULONG flags )
+{
+    LARGE_INTEGER time;
+
+    return set_ntstatus( RtlSleepConditionVariableSRW( variable, lock,
+                                                       get_nt_timeout( &time, timeout ), flags ));
 }

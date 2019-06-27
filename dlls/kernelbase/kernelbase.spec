@@ -1512,8 +1512,8 @@
 @ stdcall SignalObjectAndWait(long long long long) kernel32.SignalObjectAndWait
 @ stdcall SizeofResource(long long) kernel32.SizeofResource
 @ stdcall Sleep(long) kernel32.Sleep
-@ stdcall SleepConditionVariableCS(ptr ptr long) kernel32.SleepConditionVariableCS
-@ stdcall SleepConditionVariableSRW(ptr ptr long long) kernel32.SleepConditionVariableSRW
+@ stdcall SleepConditionVariableCS(ptr ptr long)
+@ stdcall SleepConditionVariableSRW(ptr ptr long long)
 @ stdcall SleepEx(long long) kernel32.SleepEx
 @ stub SpecialMBToWC
 @ stub StartThreadpoolIo

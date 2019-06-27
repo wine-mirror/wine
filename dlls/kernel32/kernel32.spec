@@ -1482,8 +1482,8 @@
 @ stdcall SignalObjectAndWait(long long long long)
 @ stdcall SizeofResource(long long)
 @ stdcall Sleep(long)
-@ stdcall SleepConditionVariableCS(ptr ptr long)
-@ stdcall SleepConditionVariableSRW(ptr ptr long long)
+@ stdcall -import SleepConditionVariableCS(ptr ptr long)
+@ stdcall -import SleepConditionVariableSRW(ptr ptr long long)
 @ stdcall SleepEx(long long)
 # @ stub SortCloseHandle
 # @ stub SortGetHandle
