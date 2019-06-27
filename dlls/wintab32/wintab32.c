@@ -29,7 +29,6 @@
 #define NOFIX32
 #include "wintab.h"
 #include "wintab_internal.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintab32);
@@ -94,8 +93,8 @@ static HMODULE load_graphics_driver(void)
 
     if (!guid_atom) return 0;
     memcpy( key, key_pathW, sizeof(key_pathW) );
-    if (!GlobalGetAtomNameW( guid_atom, key + strlenW(key), 40 )) return 0;
-    strcatW( key, displayW );
+    if (!GlobalGetAtomNameW( guid_atom, key + lstrlenW(key), 40 )) return 0;
+    lstrcatW( key, displayW );
     if (RegOpenKeyW( HKEY_LOCAL_MACHINE, key, &hkey )) return 0;
     size = sizeof(path);
     if (!RegQueryValueExW( hkey, driverW, NULL, NULL, (BYTE *)path, &size )) ret = LoadLibraryW( path );
