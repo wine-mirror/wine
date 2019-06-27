@@ -617,3 +617,105 @@ BOOL WINAPI DECLSPEC_HOTPATCH InitializeCriticalSectionEx( CRITICAL_SECTION *cri
     if (ret) RtlRaiseStatus( ret );
     return !ret;
 }
+
+
+/***********************************************************************
+ * File mappings
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *             CreateFileMappingW   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileMappingW( HANDLE file, LPSECURITY_ATTRIBUTES sa, DWORD protect,
+                                                    DWORD size_high, DWORD size_low, LPCWSTR name )
+{
+    static const int sec_flags = (SEC_FILE | SEC_IMAGE | SEC_RESERVE | SEC_COMMIT |
+                                  SEC_NOCACHE | SEC_WRITECOMBINE | SEC_LARGE_PAGES);
+    HANDLE ret;
+    NTSTATUS status;
+    DWORD access, sec_type;
+    LARGE_INTEGER size;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+
+    sec_type = protect & sec_flags;
+    protect &= ~sec_flags;
+    if (!sec_type) sec_type = SEC_COMMIT;
+
+    /* Win9x compatibility */
+    if (!protect && !is_version_nt()) protect = PAGE_READONLY;
+
+    switch(protect)
+    {
+    case PAGE_READONLY:
+    case PAGE_WRITECOPY:
+        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ;
+        break;
+    case PAGE_READWRITE:
+        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE;
+        break;
+    case PAGE_EXECUTE_READ:
+    case PAGE_EXECUTE_WRITECOPY:
+        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_EXECUTE;
+        break;
+    case PAGE_EXECUTE_READWRITE:
+        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE;
+        break;
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    size.u.LowPart  = size_low;
+    size.u.HighPart = size_high;
+
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        file = 0;
+        if (!size.QuadPart)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+
+    get_create_object_attributes( &attr, &nameW, sa, name );
+
+    status = NtCreateSection( &ret, access, &attr, &size, protect, sec_type, file );
+    if (status == STATUS_OBJECT_NAME_EXISTS)
+        SetLastError( ERROR_ALREADY_EXISTS );
+    else
+        SetLastError( RtlNtStatusToDosError(status) );
+    return ret;
+}
+
+
+/***********************************************************************
+ *             OpenFileMappingW   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HANDLE ret;
+    NTSTATUS status;
+
+    if (!get_open_object_attributes( &attr, &nameW, inherit, name )) return 0;
+
+    if (access == FILE_MAP_COPY) access = SECTION_MAP_READ;
+
+    if (!is_version_nt())
+    {
+        /* win9x doesn't do access checks, so try with full access first */
+        if (!NtOpenSection( &ret, access | SECTION_MAP_READ | SECTION_MAP_WRITE, &attr )) return ret;
+    }
+
+    status = NtOpenSection( &ret, access, &attr );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
+    }
+    return ret;
+}

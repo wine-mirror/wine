@@ -189,7 +189,7 @@
 @ stdcall CreateFileA(str long long ptr long long long) kernel32.CreateFileA
 # @ stub CreateFileMappingFromApp
 @ stub CreateFileMappingNumaW
-@ stdcall CreateFileMappingW(long ptr long long long wstr) kernel32.CreateFileMappingW
+@ stdcall CreateFileMappingW(long ptr long long long wstr)
 @ stdcall CreateFileW(wstr long long ptr long long long) kernel32.CreateFileW
 @ stdcall CreateHardLinkA(str str ptr) kernel32.CreateHardLinkA
 @ stdcall CreateHardLinkW(wstr wstr ptr) kernel32.CreateHardLinkW
@@ -985,7 +985,7 @@
 @ stdcall OpenEventW(long long wstr)
 @ stdcall OpenFileById(long ptr long long ptr long) kernel32.OpenFileById
 # @ stub OpenFileMappingFromApp
-@ stdcall OpenFileMappingW(long long wstr) kernel32.OpenFileMappingW
+@ stdcall OpenFileMappingW(long long wstr)
 # @ stub OpenGlobalizationUserSettingsKey
 @ stdcall OpenMutexW(long long wstr)
 # @ stub OpenPackageInfoByFullName

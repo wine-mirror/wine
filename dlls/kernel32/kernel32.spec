@@ -285,7 +285,7 @@
 @ stdcall CreateFileMappingA(long ptr long long long str)
 # @ stub CreateFileMappingNumaA
 # @ stub CreateFileMappingNumaW
-@ stdcall CreateFileMappingW(long ptr long long long wstr)
+@ stdcall -import CreateFileMappingW(long ptr long long long wstr)
 @ stdcall CreateFileW(wstr long long ptr long long long)
 @ stdcall CreateHardLinkA(str str ptr)
 @ stdcall CreateHardLinkTransactedA(str str ptr ptr)
@@ -1117,7 +1117,7 @@
 @ stdcall OpenFile(str ptr long)
 @ stdcall OpenFileById(long ptr long long ptr long)
 @ stdcall OpenFileMappingA(long long str)
-@ stdcall OpenFileMappingW(long long wstr)
+@ stdcall -import OpenFileMappingW(long long wstr)
 @ stdcall OpenJobObjectA(long long str)
 @ stdcall OpenJobObjectW(long long wstr)
 @ stdcall OpenMutexA(long long str)
