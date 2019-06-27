@@ -2,6 +2,8 @@ MODULE    = xinput1_1.dll
 PARENTSRC = ../xinput1_3
 DELAYIMPORTS = hid setupapi
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	hid.c \
 	xinput_main.c
