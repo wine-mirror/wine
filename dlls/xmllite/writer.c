@@ -32,7 +32,6 @@
 
 #include "wine/debug.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xmllite);
 
@@ -181,19 +180,19 @@ static struct element *alloc_element(xmlwriter *writer, const WCHAR *prefix, con
     ret = writer_alloc(writer, sizeof(*ret));
     if (!ret) return ret;
 
-    len = prefix ? strlenW(prefix) + 1 /* ':' */ : 0;
-    len += strlenW(local);
+    len = prefix ? lstrlenW(prefix) + 1 /* ':' */ : 0;
+    len += lstrlenW(local);
 
     ret->qname = writer_alloc(writer, (len + 1)*sizeof(WCHAR));
     ret->len = len;
     if (prefix) {
         static const WCHAR colonW[] = {':',0};
-        strcpyW(ret->qname, prefix);
-        strcatW(ret->qname, colonW);
+        lstrcpyW(ret->qname, prefix);
+        lstrcatW(ret->qname, colonW);
     }
     else
         ret->qname[0] = 0;
-    strcatW(ret->qname, local);
+    lstrcatW(ret->qname, local);
     list_init(&ret->ns);
 
     return ret;
@@ -250,7 +249,7 @@ static WCHAR *writer_strndupW(const xmlwriter *writer, const WCHAR *str, int len
         return NULL;
 
     if (len == -1)
-        len = strlenW(str);
+        len = lstrlenW(str);
 
     size = (len + 1) * sizeof(WCHAR);
     ret = writer_alloc(writer, size);
@@ -302,7 +301,7 @@ static struct ns *writer_find_ns_current(const xmlwriter *writer, const WCHAR *p
 
     LIST_FOR_EACH_ENTRY(ns, &element->ns, struct ns, entry)
     {
-        if (!strcmpW(uri, ns->uri) && !strcmpW(prefix, ns->prefix))
+        if (!wcscmp(uri, ns->uri) && !wcscmp(prefix, ns->prefix))
             return ns;
     }
 
@@ -324,14 +323,14 @@ static struct ns *writer_find_ns(const xmlwriter *writer, const WCHAR *prefix, c
             if (!uri)
             {
                 if (!ns->prefix) continue;
-                if (!strcmpW(ns->prefix, prefix))
+                if (!wcscmp(ns->prefix, prefix))
                     return ns;
             }
-            else if (!strcmpW(uri, ns->uri))
+            else if (!wcscmp(uri, ns->uri))
             {
                 if (prefix && !*prefix)
                     return NULL;
-                if (!prefix || !strcmpW(prefix, ns->prefix))
+                if (!prefix || !wcscmp(prefix, ns->prefix))
                     return ns;
             }
         }
@@ -459,7 +458,7 @@ static HRESULT write_output_buffer(xmlwriteroutput *output, const WCHAR *data, i
 
     if (buffer->codepage == 1200) {
         /* For UTF-16 encoding just copy. */
-        length = len == -1 ? strlenW(data) : len;
+        length = len == -1 ? lstrlenW(data) : len;
         if (length) {
             length *= sizeof(WCHAR);
 
@@ -875,7 +874,7 @@ static BOOL is_valid_xml_space_value(const WCHAR *value)
     if (!value)
         return FALSE;
 
-    return !strcmpW(value, preserveW) || !strcmpW(value, defaultW);
+    return !wcscmp(value, preserveW) || !wcscmp(value, defaultW);
 }
 
 static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR prefix,
@@ -907,7 +906,7 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     }
 
     /* Prefix "xmlns" */
-    is_xmlns_prefix = prefix && !strcmpW(prefix, xmlnsW);
+    is_xmlns_prefix = prefix && !wcscmp(prefix, xmlnsW);
     if (is_xmlns_prefix && is_empty_string(uri) && is_empty_string(local))
         return WR_E_NSPREFIXDECLARED;
 
@@ -921,7 +920,7 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     if (FAILED(hr = is_valid_ncname(local, &local_len)))
         return hr;
 
-    is_xmlns_local = !strcmpW(local, xmlnsW);
+    is_xmlns_local = !wcscmp(local, xmlnsW);
 
     /* Trivial case, no prefix. */
     if (prefix_len == 0 && is_empty_string(uri))
@@ -931,10 +930,10 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     }
 
     /* Predefined "xml" prefix. */
-    if (prefix_len && !strcmpW(prefix, xmlW))
+    if (prefix_len && !wcscmp(prefix, xmlW))
     {
         /* Valid "space" value is enforced. */
-        if (!strcmpW(local, spaceattrW) && !is_valid_xml_space_value(value))
+        if (!wcscmp(local, spaceattrW) && !is_valid_xml_space_value(value))
             return WR_E_INVALIDXMLSPACE;
 
         /* Redefinition is not allowed. */
@@ -946,7 +945,7 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
         return S_OK;
     }
 
-    if (is_xmlns_prefix || (prefix_len == 0 && uri && !strcmpW(uri, xmlnsuriW)))
+    if (is_xmlns_prefix || (prefix_len == 0 && uri && !wcscmp(uri, xmlnsuriW)))
     {
         if (prefix_len && !is_empty_string(uri))
             return WR_E_XMLNSPREFIXDECLARATION;
@@ -1021,7 +1020,7 @@ static HRESULT WINAPI xmlwriter_WriteCData(IXmlWriter *iface, LPCWSTR data)
         ;
     }
 
-    len = data ? strlenW(data) : 0;
+    len = data ? lstrlenW(data) : 0;
 
     write_node_indent(This);
     if (!len)
@@ -1029,7 +1028,7 @@ static HRESULT WINAPI xmlwriter_WriteCData(IXmlWriter *iface, LPCWSTR data)
     else {
         static const WCHAR cdatacloseW[] = {']',']','>',0};
         while (len) {
-            const WCHAR *str = strstrW(data, cdatacloseW);
+            const WCHAR *str = wcsstr(data, cdatacloseW);
             if (str) {
                 str += 2;
                 write_cdata_section(This->output, data, str - data);
@@ -1069,7 +1068,7 @@ static HRESULT WINAPI xmlwriter_WriteCharEntity(IXmlWriter *iface, WCHAR ch)
         ;
     }
 
-    sprintfW(bufW, fmtW, ch);
+    swprintf(bufW, ARRAY_SIZE(bufW), fmtW, ch);
     write_output_buffer(This->output, bufW, -1);
 
     return S_OK;
@@ -1123,7 +1122,7 @@ static HRESULT WINAPI xmlwriter_WriteComment(IXmlWriter *iface, LPCWSTR comment)
     write_node_indent(This);
     write_output_buffer(This->output, copenW, ARRAY_SIZE(copenW));
     if (comment) {
-        int len = strlenW(comment), i;
+        int len = lstrlenW(comment), i;
 
         /* Make sure there's no two hyphen sequences in a string, space is used as a separator to produce compliant
            comment string */
@@ -1250,7 +1249,7 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
     if (!ns && !is_empty_string(prefix) && is_empty_string(uri))
         return WR_E_NSPREFIXWITHEMPTYNSURI;
 
-    if (uri && !strcmpW(uri, xmlnsuriW))
+    if (uri && !wcscmp(uri, xmlnsuriW))
     {
         if (!prefix)
             return WR_E_XMLNSPREFIXDECLARATION;
@@ -1517,7 +1516,7 @@ static HRESULT WINAPI xmlwriter_WriteProcessingInstruction(IXmlWriter *iface, LP
     case XmlWriterState_InvalidEncoding:
         return MX_E_ENCODING;
     case XmlWriterState_DocStarted:
-        if (!strcmpW(name, xmlW))
+        if (!wcscmp(name, xmlW))
             return WR_E_INVALIDACTION;
         break;
     case XmlWriterState_ElemStarted:
@@ -1535,7 +1534,7 @@ static HRESULT WINAPI xmlwriter_WriteProcessingInstruction(IXmlWriter *iface, LP
     write_output_buffer(This->output, text, -1);
     write_output_buffer(This->output, closepiW, ARRAY_SIZE(closepiW));
 
-    if (!strcmpW(name, xmlW))
+    if (!wcscmp(name, xmlW))
         This->state = XmlWriterState_PIDocStarted;
 
     return S_OK;
@@ -1674,7 +1673,7 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
     if (FAILED(hr = is_valid_ncname(local_name, &local_len)))
         return hr;
 
-    if (uri && !strcmpW(uri, xmlnsuriW))
+    if (uri && !wcscmp(uri, xmlnsuriW))
     {
         if (!prefix)
             return WR_E_XMLNSPREFIXDECLARATION;
@@ -1953,7 +1952,7 @@ static HRESULT create_writer_output(IUnknown *stream, IMalloc *imalloc, xml_enco
     }
 
     if (encoding_name) {
-        unsigned int size = (strlenW(encoding_name) + 1) * sizeof(WCHAR);
+        unsigned int size = (lstrlenW(encoding_name) + 1) * sizeof(WCHAR);
         writeroutput->encoding_name = writeroutput_alloc(writeroutput, size);
         memcpy(writeroutput->encoding_name, encoding_name, size);
     }

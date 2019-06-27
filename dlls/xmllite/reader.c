@@ -32,7 +32,6 @@
 
 #include "wine/debug.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xmllite);
 
@@ -387,7 +386,7 @@ static inline WCHAR *readerinput_strdupW(xmlreaderinput *input, const WCHAR *str
     if(str) {
         DWORD size;
 
-        size = (strlenW(str)+1)*sizeof(WCHAR);
+        size = (lstrlenW(str)+1)*sizeof(WCHAR);
         ret = readerinput_alloc(input, size);
         if (ret) memcpy(ret, str, size);
     }
@@ -756,9 +755,9 @@ xml_encoding parse_encoding_name(const WCHAR *name, int len)
         n = (min+max)/2;
 
         if (len != -1)
-            c = strncmpiW(xml_encoding_map[n].name, name, len);
+            c = wcsnicmp(xml_encoding_map[n].name, name, len);
         else
-            c = strcmpiW(xml_encoding_map[n].name, name);
+            c = wcsicmp(xml_encoding_map[n].name, name);
         if (!c)
             return xml_encoding_map[n].enc;
 
@@ -1848,7 +1847,7 @@ static HRESULT reader_parse_externalid(xmlreader *reader)
         hr = reader_parse_pub_literal(reader, &pub);
         if (FAILED(hr)) return hr;
 
-        reader_init_cstrvalue(publicW, strlenW(publicW), &name);
+        reader_init_cstrvalue(publicW, lstrlenW(publicW), &name);
         hr = reader_add_attr(reader, NULL, &name, NULL, &pub, &position, 0);
         if (FAILED(hr)) return hr;
 
@@ -1859,7 +1858,7 @@ static HRESULT reader_parse_externalid(xmlreader *reader)
         hr = reader_parse_sys_literal(reader, &sys);
         if (FAILED(hr)) return S_OK;
 
-        reader_init_cstrvalue(systemW, strlenW(systemW), &name);
+        reader_init_cstrvalue(systemW, lstrlenW(systemW), &name);
         hr = reader_add_attr(reader, NULL, &name, NULL, &sys, &position, 0);
         if (FAILED(hr)) return hr;
 
@@ -1873,7 +1872,7 @@ static HRESULT reader_parse_externalid(xmlreader *reader)
         hr = reader_parse_sys_literal(reader, &sys);
         if (FAILED(hr)) return hr;
 
-        reader_init_cstrvalue(systemW, strlenW(systemW), &name);
+        reader_init_cstrvalue(systemW, lstrlenW(systemW), &name);
         return reader_add_attr(reader, NULL, &name, NULL, &sys, &position, 0);
     }
 
@@ -3081,8 +3080,8 @@ static HRESULT WINAPI xmlreader_MoveToAttributeByName(IXmlReader* iface,
     if (!namespace_uri)
         namespace_uri = emptyW;
 
-    target_name_len = strlenW(local_name);
-    target_uri_len = strlenW(namespace_uri);
+    target_name_len = lstrlenW(local_name);
+    target_uri_len = lstrlenW(namespace_uri);
 
     LIST_FOR_EACH_ENTRY(attr, &This->attrs, struct attribute, entry)
     {
@@ -3093,7 +3092,7 @@ static HRESULT WINAPI xmlreader_MoveToAttributeByName(IXmlReader* iface,
         reader_get_attribute_ns_uri(This, attr, &uri, &uri_len);
 
         if (name_len == target_name_len && uri_len == target_uri_len &&
-                !strcmpW(name, local_name) && !strcmpW(uri, namespace_uri))
+                !wcscmp(name, local_name) && !wcscmp(uri, namespace_uri))
         {
             reader_set_current_attribute(This, attr);
             return S_OK;
