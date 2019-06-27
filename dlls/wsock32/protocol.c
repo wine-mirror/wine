@@ -19,20 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define USE_WS_PREFIX
-
-#include "config.h"
-
 #include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -40,7 +27,6 @@
 #include "nspapi.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
@@ -49,13 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winsock);
  */
 UINT WINAPI WSOCK32_inet_network(const char *cp)
 {
-#ifdef HAVE_INET_NETWORK
-    return inet_network(cp);
-#elif defined(HAVE_INET_ADDR)
     return ntohl( inet_addr( cp ) );
-#else
-    return 0;
-#endif
 }
 
 /*****************************************************************************
@@ -63,11 +43,8 @@ UINT WINAPI WSOCK32_inet_network(const char *cp)
  */
 struct netent * WINAPI WSOCK32_getnetbyname(const char *name)
 {
-#ifdef HAVE_GETNETBYNAME
-    return getnetbyname(name);
-#else
+    ERR( "%s: not supported\n", debugstr_a(name) );
     return NULL;
-#endif
 }
 
 static DWORD map_service(DWORD wsaflags)
