@@ -106,7 +106,7 @@
 @ stdcall CancelIoEx(long ptr) kernel32.CancelIoEx
 @ stdcall CancelSynchronousIo(long) kernel32.CancelSynchronousIo
 @ stub CancelThreadpoolIo
-@ stdcall CancelWaitableTimer(long) kernel32.CancelWaitableTimer
+@ stdcall CancelWaitableTimer(long)
 # @ stub CeipIsOptedIn
 @ stdcall ChangeTimerQueueTimer(ptr ptr long long) kernel32.ChangeTimerQueueTimer
 @ stdcall CharLowerA(str)
@@ -231,8 +231,8 @@
 @ stdcall CreateThreadpoolWork(ptr ptr ptr) kernel32.CreateThreadpoolWork
 @ stdcall CreateTimerQueue() kernel32.CreateTimerQueue
 @ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long) kernel32.CreateTimerQueueTimer
-@ stdcall CreateWaitableTimerExW(ptr wstr long long) kernel32.CreateWaitableTimerExW
-@ stdcall CreateWaitableTimerW(ptr long wstr) kernel32.CreateWaitableTimerW
+@ stdcall CreateWaitableTimerExW(ptr wstr long long)
+@ stdcall CreateWaitableTimerW(ptr long wstr)
 @ stdcall CreateWellKnownSid(long ptr ptr ptr)
 # @ stub CtrlRoutine
 # @ stub CveEventWrite
@@ -1002,7 +1002,7 @@
 # @ stub OpenStateExplicitForUserSidString
 @ stdcall OpenThread(long long long) kernel32.OpenThread
 @ stdcall OpenThreadToken(long long long ptr)
-@ stdcall OpenWaitableTimerW(long long wstr) kernel32.OpenWaitableTimerW
+@ stdcall OpenWaitableTimerW(long long wstr)
 @ stdcall OutputDebugStringA(str) kernel32.OutputDebugStringA
 @ stdcall OutputDebugStringW(wstr) kernel32.OutputDebugStringW
 # @ stub OverrideRoamingDataModificationTimesInRange
@@ -1504,8 +1504,8 @@
 @ stdcall SetTokenInformation(long long ptr long)
 @ stdcall SetUnhandledExceptionFilter(ptr) kernel32.SetUnhandledExceptionFilter
 @ stdcall SetUserGeoID(long) kernel32.SetUserGeoID
-@ stdcall SetWaitableTimer(long ptr long ptr ptr long) kernel32.SetWaitableTimer
-@ stdcall SetWaitableTimerEx(long ptr long ptr ptr ptr long) kernel32.SetWaitableTimerEx
+@ stdcall SetWaitableTimer(long ptr long ptr ptr long)
+@ stdcall SetWaitableTimerEx(long ptr long ptr ptr ptr long)
 # @ stub SetXStateFeaturesMask
 @ stdcall SetupComm(long long long) kernel32.SetupComm
 # @ stub SharedLocalIsEnabled

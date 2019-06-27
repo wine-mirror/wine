@@ -646,16 +646,6 @@ HANDLE WINAPI CreateWaitableTimerA( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCSTR
 
 
 /***********************************************************************
- *           CreateWaitableTimerW    (KERNEL32.@)
- */
-HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWSTR name )
-{
-    return CreateWaitableTimerExW( sa, name, manual ? CREATE_WAITABLE_TIMER_MANUAL_RESET : 0,
-                                   TIMER_ALL_ACCESS );
-}
-
-
-/***********************************************************************
  *           CreateWaitableTimerExA    (KERNEL32.@)
  */
 HANDLE WINAPI CreateWaitableTimerExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWORD flags, DWORD access )
@@ -674,28 +664,6 @@ HANDLE WINAPI CreateWaitableTimerExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWOR
 
 
 /***********************************************************************
- *           CreateWaitableTimerExW    (KERNEL32.@)
- */
-HANDLE WINAPI CreateWaitableTimerExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags, DWORD access )
-{
-    HANDLE handle;
-    NTSTATUS status;
-    UNICODE_STRING nameW;
-    OBJECT_ATTRIBUTES attr;
-
-    get_create_object_attributes( &attr, &nameW, sa, name );
-
-    status = NtCreateTimer( &handle, access, &attr,
-                 (flags & CREATE_WAITABLE_TIMER_MANUAL_RESET) ? NotificationTimer : SynchronizationTimer );
-    if (status == STATUS_OBJECT_NAME_EXISTS)
-        SetLastError( ERROR_ALREADY_EXISTS );
-    else
-        SetLastError( RtlNtStatusToDosError(status) );
-    return handle;
-}
-
-
-/***********************************************************************
  *           OpenWaitableTimerA    (KERNEL32.@)
  */
 HANDLE WINAPI OpenWaitableTimerA( DWORD access, BOOL inherit, LPCSTR name )
@@ -710,79 +678,6 @@ HANDLE WINAPI OpenWaitableTimerA( DWORD access, BOOL inherit, LPCSTR name )
         return 0;
     }
     return OpenWaitableTimerW( access, inherit, buffer );
-}
-
-
-/***********************************************************************
- *           OpenWaitableTimerW    (KERNEL32.@)
- */
-HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
-{
-    HANDLE handle;
-    UNICODE_STRING nameW;
-    OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
-
-    if (!is_version_nt()) access = TIMER_ALL_ACCESS;
-
-    if (!get_open_object_attributes( &attr, &nameW, inherit, name )) return 0;
-
-    status = NtOpenTimer(&handle, access, &attr);
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return 0;
-    }
-    return handle;
-}
-
-
-/***********************************************************************
- *           SetWaitableTimer    (KERNEL32.@)
- */
-BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG period,
-                              PTIMERAPCROUTINE callback, LPVOID arg, BOOL resume )
-{
-    NTSTATUS status = NtSetTimer(handle, when, (PTIMER_APC_ROUTINE)callback,
-                                 arg, resume, period, NULL);
-
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        if (status != STATUS_TIMER_RESUME_IGNORED) return FALSE;
-    }
-    return TRUE;
-}
-
-/***********************************************************************
- *           SetWaitableTimerEx    (KERNEL32.@)
- */
-BOOL WINAPI SetWaitableTimerEx( HANDLE handle, const LARGE_INTEGER *when, LONG period,
-                              PTIMERAPCROUTINE callback, LPVOID arg, REASON_CONTEXT *context, ULONG tolerabledelay )
-{
-    static int once;
-    if (!once++)
-    {
-        FIXME("(%p, %p, %d, %p, %p, %p, %d) semi-stub\n",
-              handle, when, period, callback, arg, context, tolerabledelay);
-    }
-    return SetWaitableTimer(handle, when, period, callback, arg, FALSE);
-}
-
-/***********************************************************************
- *           CancelWaitableTimer    (KERNEL32.@)
- */
-BOOL WINAPI CancelWaitableTimer( HANDLE handle )
-{
-    NTSTATUS status;
-
-    status = NtCancelTimer(handle, NULL);
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
 }
 
 

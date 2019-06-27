@@ -212,7 +212,7 @@
 @ stdcall CancelSynchronousIo(long)
 # @ stub CancelThreadpoolIo
 @ stdcall CancelTimerQueueTimer(ptr ptr)
-@ stdcall CancelWaitableTimer(long)
+@ stdcall -import CancelWaitableTimer(long)
 @ stdcall ChangeTimerQueueTimer(ptr ptr long long)
 # @ stub CheckElevation
 # @ stub CheckElevationEnabled
@@ -343,8 +343,8 @@
 @ stub CreateVirtualBuffer
 @ stdcall CreateWaitableTimerA(ptr long str)
 @ stdcall CreateWaitableTimerExA(ptr str long long)
-@ stdcall CreateWaitableTimerExW(ptr wstr long long)
-@ stdcall CreateWaitableTimerW(ptr long wstr)
+@ stdcall -import CreateWaitableTimerExW(ptr wstr long long)
+@ stdcall -import CreateWaitableTimerW(ptr long wstr)
 # @ stub CtrlRoutine
 @ stdcall DeactivateActCtx(long long)
 @ stdcall DebugActiveProcess(long)
@@ -1133,7 +1133,7 @@
 # @ stub OpenThreadToken
 @ stdcall -i386 OpenVxDHandle(long)
 @ stdcall OpenWaitableTimerA(long long str)
-@ stdcall OpenWaitableTimerW(long long wstr)
+@ stdcall -import OpenWaitableTimerW(long long wstr)
 @ stdcall OutputDebugStringA(str)
 @ stdcall OutputDebugStringW(wstr)
 @ stdcall PeekConsoleInputA(ptr ptr long ptr)
@@ -1474,8 +1474,8 @@
 @ stdcall SetVolumeLabelW(wstr wstr)
 @ stdcall SetVolumeMountPointA(str str)
 @ stdcall SetVolumeMountPointW(wstr wstr)
-@ stdcall SetWaitableTimer(long ptr long ptr ptr long)
-@ stdcall SetWaitableTimerEx(long ptr long ptr ptr ptr long)
+@ stdcall -import SetWaitableTimer(long ptr long ptr ptr long)
+@ stdcall -import SetWaitableTimerEx(long ptr long ptr ptr ptr long)
 # @ stub SetXStateFeaturesMask
 @ stdcall SetupComm(long long long)
 @ stub ShowConsoleCursor

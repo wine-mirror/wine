@@ -433,3 +433,101 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReleaseSemaphore( HANDLE handle, LONG count, LONG 
 {
     return set_ntstatus( NtReleaseSemaphore( handle, count, (PULONG)previous ));
 }
+
+
+/***********************************************************************
+ * Waitable timers
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *           CreateWaitableTimerW    (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWSTR name )
+{
+    return CreateWaitableTimerExW( sa, name, manual ? CREATE_WAITABLE_TIMER_MANUAL_RESET : 0,
+                                   TIMER_ALL_ACCESS );
+}
+
+
+/***********************************************************************
+ *           CreateWaitableTimerExW    (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateWaitableTimerExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name,
+                                                        DWORD flags, DWORD access )
+{
+    HANDLE handle;
+    NTSTATUS status;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+
+    get_create_object_attributes( &attr, &nameW, sa, name );
+
+    status = NtCreateTimer( &handle, access, &attr,
+                 (flags & CREATE_WAITABLE_TIMER_MANUAL_RESET) ? NotificationTimer : SynchronizationTimer );
+    if (status == STATUS_OBJECT_NAME_EXISTS)
+        SetLastError( ERROR_ALREADY_EXISTS );
+    else
+        SetLastError( RtlNtStatusToDosError(status) );
+    return handle;
+}
+
+
+/***********************************************************************
+ *           OpenWaitableTimerW    (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
+{
+    HANDLE handle;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    if (!is_version_nt()) access = TIMER_ALL_ACCESS;
+
+    if (!get_open_object_attributes( &attr, &nameW, inherit, name )) return 0;
+
+    status = NtOpenTimer( &handle, access, &attr );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
+    }
+    return handle;
+}
+
+
+/***********************************************************************
+ *           SetWaitableTimer    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG period,
+                                                PTIMERAPCROUTINE callback, LPVOID arg, BOOL resume )
+{
+    NTSTATUS status = NtSetTimer( handle, when, (PTIMER_APC_ROUTINE)callback,
+                                  arg, resume, period, NULL );
+    return set_ntstatus( status ) || status == STATUS_TIMER_RESUME_IGNORED;
+}
+
+
+/***********************************************************************
+ *           SetWaitableTimerEx    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetWaitableTimerEx( HANDLE handle, const LARGE_INTEGER *when, LONG period,
+                                                  PTIMERAPCROUTINE callback, LPVOID arg,
+                                                  REASON_CONTEXT *context, ULONG tolerabledelay )
+{
+    static int once;
+    if (!once++) FIXME( "(%p, %p, %d, %p, %p, %p, %d) semi-stub\n",
+                        handle, when, period, callback, arg, context, tolerabledelay );
+
+    return SetWaitableTimer( handle, when, period, callback, arg, FALSE );
+}
+
+
+/***********************************************************************
+ *           CancelWaitableTimer    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CancelWaitableTimer( HANDLE handle )
+{
+    return set_ntstatus( NtCancelTimer( handle, NULL ));
+}
