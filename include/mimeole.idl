@@ -496,12 +496,116 @@ library MIMEOLE
     }
 
     [
+        uuid(c558834d-7f86-11d0-8252-00c04fd85ab4),
+        object
+    ]
+    interface IMimeEnumHeaderRows : IUnknown
+    {
+        typedef struct tagENUMHEADERROW
+        {
+            HHEADERROW   hRow;
+            LPSTR        pszHeader;
+            LPSTR        pszData;
+            ULONG        cchData;
+            DWORD_PTR    dwReserved;
+        } ENUMHEADERROW, *LPENUMHEADERROW;
+
+        HRESULT Next(
+            [in]     ULONG           fetch,
+            [in,out] LPENUMHEADERROW row,
+            [out]    ULONG           *fetched);
+
+        HRESULT Skip(
+            [in] ULONG items);
+
+        HRESULT Reset(void);
+
+        HRESULT Clone(
+            [out] IMimeEnumHeaderRows **rows);
+
+        HRESULT Count(
+            [out] ULONG *pcItems);
+    }
+
+    [
         uuid(fd853cd1-7f86-11d0-8252-00c04fd85ab4),
         object
     ]
     interface IMimeHeaderTable : IPersistStream
     {
-        /* FIXME: fill this in */
+        typedef struct tagFINDHEADER
+        {
+            LPCSTR pszHeader;
+            DWORD  dwReserved;
+        } FINDHEADER, *LPFINDHEADER;
+
+        typedef struct tagHEADERROWINFO
+        {
+            DWORD dwRowNumber;
+            ULONG cboffStart;
+            ULONG cboffColon;
+            ULONG cboffEnd;
+        } HEADERROWINFO, *LPHEADERROWINFO;
+
+        typedef enum tagHEADERTABLEFLAGS
+        {
+            HTF_NAMEINDATA      = 0x00000001,
+            HTF_ENUMHANDLESONLY = 0x00000002
+        } HEADERTABLEFLAGS;
+
+        HRESULT FindFirstRow(
+            [in]  LPFINDHEADER header,
+            [out] LPHHEADERROW row);
+
+        HRESULT FindNextRow(
+            [in]  LPFINDHEADER header,
+            [out] LPHHEADERROW row);
+
+        HRESULT CountRows(
+            [in]  const char *header,
+            [out] ULONG *rows);
+
+        HRESULT AppendRow(
+            [in]  const char   *header,
+            [in]  DWORD        flags,
+            [in]  const char   *data,
+            [in]  ULONG        count,
+            [out] LPHHEADERROW row);
+
+        HRESULT DeleteRow(
+            [in] HHEADERROW row);
+
+        HRESULT GetRowData(
+            [in]  HHEADERROW row,
+            [in]  DWORD      flags,
+            [out] char       **data,
+            [out] ULONG      *len);
+
+        HRESULT SetRowData(
+            [in] HHEADERROW row,
+            [in] DWORD      flags,
+            [in] const char *data,
+            [in] ULONG      len);
+
+        HRESULT GetRowInfo(
+            [in]     HHEADERROW      row,
+            [in,out] LPHEADERROWINFO info);
+
+        HRESULT SetRowNumber(
+            [in] HHEADERROW row,
+            [in] DWORD      number);
+
+        HRESULT EnumRows(
+            [in]  const char          *header,
+            [in]  DWORD               flags,
+            [out] IMimeEnumHeaderRows **rows);
+
+        HRESULT Clone(
+            [out] IMimeHeaderTable **table);
+
+        HRESULT BindToObject(
+            [in] REFIID              riid,
+            [out, iid_is(riid)] void *object);
     }
 
     [
@@ -1253,24 +1357,6 @@ cpp_quote("#endif")
     ]
     interface IMimeMessageParts : IUnknown
     {
-        /* FIXME: fill this in */
-    }
-
-    [
-        uuid(c558834d-7f86-11d0-8252-00c04fd85ab4),
-        object
-    ]
-    interface IMimeEnumHeaderRows : IUnknown
-    {
-        typedef struct tagENUMHEADERROW
-        {
-            HHEADERROW   hRow;
-            LPSTR        pszHeader;
-            LPSTR        pszData;
-            ULONG        cchData;
-            DWORD_PTR    dwReserved;
-        } ENUMHEADERROW, *LPENUMHEADERROW;
-
         /* FIXME: fill this in */
     }
 
