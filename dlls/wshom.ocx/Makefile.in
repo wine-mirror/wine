@@ -1,6 +1,8 @@
 MODULE    = wshom.ocx
 IMPORTS   = uuid oleaut32 ole32 shell32 user32 advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	shell.c \
 	wshom_main.c
