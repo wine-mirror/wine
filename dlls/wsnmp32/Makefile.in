@@ -1,4 +1,6 @@
 MODULE    = wsnmp32.dll
 IMPORTLIB = wsnmp32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = wsnmp32.c
