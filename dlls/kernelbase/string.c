@@ -65,6 +65,130 @@ static BOOL char_compare(WORD ch1, WORD ch2, DWORD flags)
     return CompareStringA(GetThreadLocale(), flags, str1, -1, str2, -1) - CSTR_EQUAL;
 }
 
+int WINAPI lstrcmpA( LPCSTR str1, LPCSTR str2 )
+{
+    if (!str1 && !str2) return 0;
+    if (!str1) return -1;
+    if (!str2) return 1;
+    return CompareStringA( GetThreadLocale(), LOCALE_USE_CP_ACP, str1, -1, str2, -1 ) - 2;
+}
+
+int WINAPI lstrcmpW(LPCWSTR str1, LPCWSTR str2)
+{
+    if (!str1 && !str2) return 0;
+    if (!str1) return -1;
+    if (!str2) return 1;
+    return CompareStringW( GetThreadLocale(), 0, str1, -1, str2, -1 ) - 2;
+}
+
+int WINAPI lstrcmpiA(LPCSTR str1, LPCSTR str2)
+{
+    if (!str1 && !str2) return 0;
+    if (!str1) return -1;
+    if (!str2) return 1;
+    return CompareStringA( GetThreadLocale(), NORM_IGNORECASE|LOCALE_USE_CP_ACP, str1, -1, str2, -1 ) - 2;
+}
+
+int WINAPI lstrcmpiW(LPCWSTR str1, LPCWSTR str2)
+{
+    if (!str1 && !str2) return 0;
+    if (!str1) return -1;
+    if (!str2) return 1;
+    return CompareStringW( GetThreadLocale(), NORM_IGNORECASE, str1, -1, str2, -1 ) - 2;
+}
+
+LPSTR WINAPI KERNELBASE_lstrcpynA( LPSTR dst, LPCSTR src, INT n )
+{
+    /* Note: this function differs from the UNIX strncpy, it _always_ writes
+     * a terminating \0.
+     *
+     * Note: n is an INT but Windows treats it as unsigned, and will happily
+     * copy a gazillion chars if n is negative.
+     */
+    __TRY
+    {
+        LPSTR d = dst;
+        LPCSTR s = src;
+        UINT count = n;
+
+        while ((count > 1) && *s)
+        {
+            count--;
+            *d++ = *s++;
+        }
+        if (count) *d = 0;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return dst;
+}
+
+LPWSTR WINAPI KERNELBASE_lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
+{
+    /* Note: this function differs from the UNIX strncpy, it _always_ writes
+     * a terminating \0
+     *
+     * Note: n is an INT but Windows treats it as unsigned, and will happily
+     * copy a gazillion chars if n is negative.
+     */
+    __TRY
+    {
+        LPWSTR d = dst;
+        LPCWSTR s = src;
+        UINT count = n;
+
+        while ((count > 1) && *s)
+        {
+            count--;
+            *d++ = *s++;
+        }
+        if (count) *d = 0;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return dst;
+}
+
+INT WINAPI KERNELBASE_lstrlenA( LPCSTR str )
+{
+    INT ret;
+    __TRY
+    {
+        ret = strlen(str);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return ret;
+}
+
+INT WINAPI KERNELBASE_lstrlenW( LPCWSTR str )
+{
+    INT ret;
+    __TRY
+    {
+        ret = wcslen(str);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return ret;
+}
+
 DWORD WINAPI StrCmpCA(const char *str, const char *cmp)
 {
     return lstrcmpA(str, cmp);

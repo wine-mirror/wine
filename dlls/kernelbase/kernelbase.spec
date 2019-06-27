@@ -1756,17 +1756,17 @@
 # @ stub exit
 # @ stub hgets
 # @ stub hwprintf
-@ stdcall lstrcmp(str str) kernel32.lstrcmp
-@ stdcall lstrcmpA(str str) kernel32.lstrcmpA
-@ stdcall lstrcmpW(wstr wstr) kernel32.lstrcmpW
-@ stdcall lstrcmpi(str str) kernel32.lstrcmpi
-@ stdcall lstrcmpiA(str str) kernel32.lstrcmpiA
-@ stdcall lstrcmpiW(wstr wstr) kernel32.lstrcmpiW
-@ stdcall lstrcpyn(ptr str long) kernel32.lstrcpyn
-@ stdcall lstrcpynA(ptr str long) kernel32.lstrcpynA
-@ stdcall lstrcpynW(ptr wstr long) kernel32.lstrcpynW
-@ stdcall lstrlen(str) kernel32.lstrlen
-@ stdcall lstrlenA(str) kernel32.lstrlenA
-@ stdcall lstrlenW(wstr) kernel32.lstrlenW
+@ stdcall lstrcmp(str str) lstrcmpA
+@ stdcall lstrcmpA(str str)
+@ stdcall lstrcmpW(wstr wstr)
+@ stdcall lstrcmpi(str str) lstrcmpiA
+@ stdcall lstrcmpiA(str str)
+@ stdcall lstrcmpiW(wstr wstr)
+@ stdcall lstrcpyn(ptr str long) KERNELBASE_lstrcpynA
+@ stdcall lstrcpynA(ptr str long) KERNELBASE_lstrcpynA
+@ stdcall lstrcpynW(ptr wstr long) KERNELBASE_lstrcpynW
+@ stdcall lstrlen(str) KERNELBASE_lstrlenA
+@ stdcall lstrlenA(str) KERNELBASE_lstrlenA
+@ stdcall lstrlenW(wstr) KERNELBASE_lstrlenW
 # @ stub time
 # @ stub wprintf

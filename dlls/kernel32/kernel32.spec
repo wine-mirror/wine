@@ -1651,21 +1651,21 @@
 @ stdcall lstrcat(str str) lstrcatA
 @ stdcall lstrcatA(str str)
 @ stdcall lstrcatW(wstr wstr)
-@ stdcall lstrcmp(str str) lstrcmpA
-@ stdcall lstrcmpA(str str)
-@ stdcall lstrcmpW(wstr wstr)
-@ stdcall lstrcmpi(str str) lstrcmpiA
-@ stdcall lstrcmpiA(str str)
-@ stdcall lstrcmpiW(wstr wstr)
+@ stdcall -import lstrcmp(str str)
+@ stdcall -import lstrcmpA(str str)
+@ stdcall -import lstrcmpW(wstr wstr)
+@ stdcall -import lstrcmpi(str str)
+@ stdcall -import lstrcmpiA(str str)
+@ stdcall -import lstrcmpiW(wstr wstr)
 @ stdcall lstrcpy(ptr str) lstrcpyA
 @ stdcall lstrcpyA(ptr str)
 @ stdcall lstrcpyW(ptr wstr)
-@ stdcall lstrcpyn(ptr str long) lstrcpynA
-@ stdcall lstrcpynA(ptr str long)
-@ stdcall lstrcpynW(ptr wstr long)
-@ stdcall lstrlen(str) lstrlenA
-@ stdcall lstrlenA(str)
-@ stdcall lstrlenW(wstr)
+@ stdcall -import lstrcpyn(ptr str long)
+@ stdcall -import lstrcpynA(ptr str long)
+@ stdcall -import lstrcpynW(ptr wstr long)
+@ stdcall -import lstrlen(str)
+@ stdcall -import lstrlenA(str)
+@ stdcall -import lstrlenW(wstr)
 
 ################################################################
 # Wine internal extensions
