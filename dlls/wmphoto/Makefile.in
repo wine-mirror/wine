@@ -1,5 +1,7 @@
 MODULE = wmphoto.dll
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = main.c
 
 IDL_SRCS = wmphoto.idl
