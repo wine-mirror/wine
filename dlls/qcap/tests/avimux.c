@@ -62,6 +62,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 static void test_interfaces(void)
 {
     IBaseFilter *filter = create_avi_mux();
+    IPin *pin;
 
     check_interface(filter, &IID_IBaseFilter, TRUE);
     check_interface(filter, &IID_IConfigAviMux, TRUE);
@@ -84,6 +85,34 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IQualProp, FALSE);
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
+
+    IBaseFilter_FindPin(filter, source_id, &pin);
+
+    check_interface(pin, &IID_IPin, TRUE);
+    check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IAsyncReader, FALSE);
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, sink0_id, &pin);
+
+    check_interface(pin, &IID_IAMStreamControl, TRUE);
+    check_interface(pin, &IID_IMemInputPin, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    check_interface(pin, &IID_IPropertyBag, TRUE);
+    check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IUnknown, TRUE);
+
+    check_interface(pin, &IID_IKsPropertySet, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
+    check_interface(pin, &IID_IMediaPosition, FALSE);
+
+    IPin_Release(pin);
 
     IBaseFilter_Release(filter);
 }
