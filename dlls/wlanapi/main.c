@@ -26,8 +26,6 @@
  * that the program calls WlanGetAvailableNetworkList or WlanGetNetworkBssList.
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #include "windef.h"
