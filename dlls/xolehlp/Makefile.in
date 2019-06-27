@@ -1,4 +1,6 @@
 MODULE    = xolehlp.dll
 IMPORTS   = adsiid uuid
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = xolehlp.c

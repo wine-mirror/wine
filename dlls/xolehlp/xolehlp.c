@@ -23,7 +23,6 @@
 #include "transact.h"
 #include "initguid.h"
 #include "txdtc.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xolehlp);
@@ -662,8 +661,8 @@ static BOOL is_local_machineW( const WCHAR *server )
     WCHAR buffer[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD len = ARRAY_SIZE( buffer );
 
-    if (!server || !strcmpW( server, dotW )) return TRUE;
-    if (GetComputerNameW( buffer, &len ) && !strcmpiW( server, buffer )) return TRUE;
+    if (!server || !wcscmp( server, dotW )) return TRUE;
+    if (GetComputerNameW( buffer, &len ) && !wcsicmp( server, buffer )) return TRUE;
     return FALSE;
 }
 
