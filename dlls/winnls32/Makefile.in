@@ -1,5 +1,7 @@
 MODULE    = winnls32.dll
 IMPORTLIB = winnls32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	winnls.c
