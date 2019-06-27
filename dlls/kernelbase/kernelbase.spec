@@ -100,7 +100,7 @@
 @ stub BemFreeContract
 @ stub BemFreeReference
 # @ stub CLOSE_LOCAL_HANDLE_INTERNAL
-@ stdcall CallNamedPipeW(wstr ptr long ptr long ptr long) kernel32.CallNamedPipeW
+@ stdcall CallNamedPipeW(wstr ptr long ptr long ptr long)
 @ stdcall CallbackMayRunLong(ptr) kernel32.CallbackMayRunLong
 @ stdcall CancelIo(long) kernel32.CancelIo
 @ stdcall CancelIoEx(long ptr) kernel32.CancelIoEx
@@ -157,7 +157,7 @@
 @ stdcall CompareStringEx(wstr long wstr long wstr long ptr ptr long) kernel32.CompareStringEx
 @ stdcall CompareStringOrdinal(wstr long wstr long long) kernel32.CompareStringOrdinal
 @ stdcall CompareStringW(long long wstr long wstr long) kernel32.CompareStringW
-@ stdcall ConnectNamedPipe(long ptr) kernel32.ConnectNamedPipe
+@ stdcall ConnectNamedPipe(long ptr)
 @ stdcall ContinueDebugEvent(long long long) kernel32.ContinueDebugEvent
 @ stdcall ConvertDefaultLocale(long) kernel32.ConvertDefaultLocale
 @ stdcall ConvertFiberToThread() kernel32.ConvertFiberToThread
@@ -199,7 +199,7 @@
 @ stdcall CreateMutexExA(ptr str long long)
 @ stdcall CreateMutexExW(ptr wstr long long)
 @ stdcall CreateMutexW(ptr long wstr)
-@ stdcall CreateNamedPipeW(wstr long long long long long long ptr) kernel32.CreateNamedPipeW
+@ stdcall CreateNamedPipeW(wstr long long long long long long ptr)
 @ stdcall CreatePipe(ptr ptr ptr long) kernel32.CreatePipe
 # @ stub CreatePrivateNamespaceW
 @ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr)
@@ -266,7 +266,7 @@
 @ stdcall DisableThreadLibraryCalls(long) kernel32.DisableThreadLibraryCalls
 @ stdcall DisassociateCurrentThreadFromCallback(ptr) kernel32.DisassociateCurrentThreadFromCallback
 # @ stub DiscardVirtualMemory
-@ stdcall DisconnectNamedPipe(long) kernel32.DisconnectNamedPipe
+@ stdcall DisconnectNamedPipe(long)
 # @ stub DnsHostnameToComputerNameExW
 # @ stub DsBindWithSpnExW
 # @ stub DsCrackNamesW
@@ -571,7 +571,7 @@
 @ stub GetNamedPipeAttribute
 @ stub GetNamedPipeClientComputerNameW
 @ stdcall GetNamedPipeHandleStateW(long ptr ptr ptr ptr wstr long) kernel32.GetNamedPipeHandleStateW
-@ stdcall GetNamedPipeInfo(long ptr ptr ptr ptr) kernel32.GetNamedPipeInfo
+@ stdcall GetNamedPipeInfo(long ptr ptr ptr ptr)
 @ stdcall GetNativeSystemInfo(ptr) kernel32.GetNativeSystemInfo
 # @ stub GetNextFgPolicyRefreshInfoInternal
 @ stdcall GetNumaHighestNodeNumber(ptr) kernel32.GetNumaHighestNodeNumber
@@ -1144,7 +1144,7 @@
 # @ stub PcwSetQueryItemUserData
 @ stdcall PeekConsoleInputA(ptr ptr long ptr) kernel32.PeekConsoleInputA
 @ stdcall PeekConsoleInputW(ptr ptr long ptr) kernel32.PeekConsoleInputW
-@ stdcall PeekNamedPipe(long ptr long ptr ptr ptr) kernel32.PeekNamedPipe
+@ stdcall PeekNamedPipe(long ptr long ptr ptr ptr)
 @ stdcall PerfCreateInstance(long ptr wstr long)
 # @ stub PerfDecrementULongCounterValue
 # @ stub PerfDecrementULongLongCounterValue
@@ -1449,7 +1449,7 @@
 @ stdcall SetLastError(long) kernel32.SetLastError
 @ stdcall SetLocalTime(ptr) kernel32.SetLocalTime
 @ stdcall SetLocaleInfoW(long long wstr) kernel32.SetLocaleInfoW
-@ stdcall SetNamedPipeHandleState(long ptr ptr ptr) kernel32.SetNamedPipeHandleState
+@ stdcall SetNamedPipeHandleState(long ptr ptr ptr)
 @ stdcall SetPriorityClass(long long) kernel32.SetPriorityClass
 @ stdcall SetPrivateObjectSecurity(long ptr ptr ptr long)
 @ stub SetPrivateObjectSecurityEx
@@ -1604,7 +1604,7 @@
 @ stdcall TraceEvent(int64 ptr) ntdll.EtwLogTraceEvent
 @ varargs TraceMessage(int64 long ptr long) ntdll.EtwTraceMessage
 @ stdcall TraceMessageVa(int64 long ptr long ptr) ntdll.EtwTraceMessageVa
-@ stdcall TransactNamedPipe(long ptr long ptr long ptr ptr) kernel32.TransactNamedPipe
+@ stdcall TransactNamedPipe(long ptr long ptr long ptr ptr)
 @ stdcall TransmitCommChar(long long) kernel32.TransmitCommChar
 @ stdcall TryAcquireSRWLockExclusive(ptr) kernel32.TryAcquireSRWLockExclusive
 @ stdcall TryAcquireSRWLockShared(ptr) kernel32.TryAcquireSRWLockShared
@@ -1696,7 +1696,7 @@
 @ stdcall WaitForThreadpoolWaitCallbacks(ptr long) kernel32.WaitForThreadpoolWaitCallbacks
 @ stdcall WaitForThreadpoolWorkCallbacks(ptr long) kernel32.WaitForThreadpoolWorkCallbacks
 # @ stub WaitForUserPolicyForegroundProcessingInternal
-@ stdcall WaitNamedPipeW(wstr long) kernel32.WaitNamedPipeW
+@ stdcall WaitNamedPipeW(wstr long)
 @ stdcall WaitOnAddress(ptr ptr long long)
 @ stdcall WakeAllConditionVariable(ptr) kernel32.WakeAllConditionVariable
 @ stdcall WakeByAddressAll(ptr) ntdll.RtlWakeAddressAll

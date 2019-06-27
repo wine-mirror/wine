@@ -866,3 +866,363 @@ BOOL WINAPI DECLSPEC_HOTPATCH PostQueuedCompletionStatus( HANDLE port, DWORD cou
 
     return set_ntstatus( NtSetIoCompletion( port, key, (ULONG_PTR)overlapped, STATUS_SUCCESS, count ));
 }
+
+
+/***********************************************************************
+ * Named pipes
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *           CallNamedPipeW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CallNamedPipeW( LPCWSTR name, LPVOID input, DWORD in_size,
+                                              LPVOID output, DWORD out_size,
+                                              LPDWORD read_size, DWORD timeout )
+{
+    HANDLE pipe;
+    BOOL ret;
+    DWORD mode;
+
+    TRACE( "%s %p %d %p %d %p %d\n", debugstr_w(name),
+           input, in_size, output, out_size, read_size, timeout );
+
+    pipe = CreateFileW( name, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
+    if (pipe == INVALID_HANDLE_VALUE)
+    {
+        if (!WaitNamedPipeW( name, timeout )) return FALSE;
+        pipe = CreateFileW( name, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
+        if (pipe == INVALID_HANDLE_VALUE) return FALSE;
+    }
+
+    mode = PIPE_READMODE_MESSAGE;
+    ret = SetNamedPipeHandleState( pipe, &mode, NULL, NULL );
+    if (ret) ret = TransactNamedPipe( pipe, input, in_size, output, out_size, read_size, NULL );
+    CloseHandle( pipe );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           ConnectNamedPipe   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH ConnectNamedPipe( HANDLE pipe, LPOVERLAPPED overlapped )
+{
+    NTSTATUS status;
+    IO_STATUS_BLOCK status_block;
+    LPVOID cvalue = NULL;
+
+    TRACE( "(%p,%p)\n", pipe, overlapped );
+
+    if (overlapped)
+    {
+        overlapped->Internal = STATUS_PENDING;
+        overlapped->InternalHigh = 0;
+        if (((ULONG_PTR)overlapped->hEvent & 1) == 0) cvalue = overlapped;
+    }
+
+    status = NtFsControlFile( pipe, overlapped ? overlapped->hEvent : NULL, NULL, cvalue,
+                              overlapped ? (IO_STATUS_BLOCK *)overlapped : &status_block,
+                              FSCTL_PIPE_LISTEN, NULL, 0, NULL, 0 );
+    if (status == STATUS_PENDING && !overlapped)
+    {
+        WaitForSingleObject( pipe, INFINITE );
+        status = status_block.u.Status;
+    }
+    return set_ntstatus( status );
+}
+
+/***********************************************************************
+ *           CreateNamedPipeW   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateNamedPipeW( LPCWSTR name, DWORD open_mode, DWORD pipe_mode,
+                                                  DWORD instances, DWORD out_buff, DWORD in_buff,
+                                                  DWORD timeout, LPSECURITY_ATTRIBUTES sa )
+{
+    HANDLE handle;
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    DWORD access, options, sharing;
+    BOOLEAN pipe_type, read_mode, non_block;
+    NTSTATUS status;
+    IO_STATUS_BLOCK iosb;
+    LARGE_INTEGER time;
+
+    TRACE( "(%s, %#08x, %#08x, %d, %d, %d, %d, %p)\n", debugstr_w(name),
+           open_mode, pipe_mode, instances, out_buff, in_buff, timeout, sa );
+
+    if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return INVALID_HANDLE_VALUE;
+    }
+    if (nt_name.Length >= MAX_PATH * sizeof(WCHAR) )
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        RtlFreeUnicodeString( &nt_name );
+        return INVALID_HANDLE_VALUE;
+    }
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = &nt_name;
+    attr.Attributes               = OBJ_CASE_INSENSITIVE | ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
+    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    switch (open_mode & 3)
+    {
+    case PIPE_ACCESS_INBOUND:
+        sharing = FILE_SHARE_WRITE;
+        access  = GENERIC_READ;
+        break;
+    case PIPE_ACCESS_OUTBOUND:
+        sharing = FILE_SHARE_READ;
+        access  = GENERIC_WRITE;
+        break;
+    case PIPE_ACCESS_DUPLEX:
+        sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
+        access  = GENERIC_READ | GENERIC_WRITE;
+        break;
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return INVALID_HANDLE_VALUE;
+    }
+    access |= SYNCHRONIZE;
+    options = 0;
+    if (open_mode & WRITE_DAC) access |= WRITE_DAC;
+    if (open_mode & WRITE_OWNER) access |= WRITE_OWNER;
+    if (open_mode & ACCESS_SYSTEM_SECURITY) access |= ACCESS_SYSTEM_SECURITY;
+    if (open_mode & FILE_FLAG_WRITE_THROUGH) options |= FILE_WRITE_THROUGH;
+    if (!(open_mode & FILE_FLAG_OVERLAPPED)) options |= FILE_SYNCHRONOUS_IO_NONALERT;
+    pipe_type = (pipe_mode & PIPE_TYPE_MESSAGE) != 0;
+    read_mode = (pipe_mode & PIPE_READMODE_MESSAGE) != 0;
+    non_block = (pipe_mode & PIPE_NOWAIT) != 0;
+    if (instances >= PIPE_UNLIMITED_INSTANCES) instances = ~0U;
+
+    time.QuadPart = (ULONGLONG)timeout * -10000;
+    SetLastError( 0 );
+    status = NtCreateNamedPipeFile( &handle, access, &attr, &iosb, sharing,
+                                    FILE_OVERWRITE_IF, options, pipe_type,
+                                    read_mode, non_block, instances, in_buff, out_buff, &time );
+    RtlFreeUnicodeString( &nt_name );
+    if (status)
+    {
+        handle = INVALID_HANDLE_VALUE;
+        SetLastError( RtlNtStatusToDosError(status) );
+    }
+    return handle;
+}
+
+
+/***********************************************************************
+ *           DisconnectNamedPipe   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH DisconnectNamedPipe( HANDLE pipe )
+{
+    IO_STATUS_BLOCK io_block;
+
+    TRACE( "(%p)\n", pipe );
+    return set_ntstatus( NtFsControlFile( pipe, 0, NULL, NULL, &io_block,
+                                          FSCTL_PIPE_DISCONNECT, NULL, 0, NULL, 0 ));
+}
+
+
+/***********************************************************************
+ *           GetNamedPipeInfo   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetNamedPipeInfo( HANDLE pipe, LPDWORD flags, LPDWORD out_size,
+                                                LPDWORD in_size, LPDWORD instances )
+{
+    FILE_PIPE_LOCAL_INFORMATION info;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+
+    status = NtQueryInformationFile( pipe, &iosb, &info, sizeof(info), FilePipeLocalInformation );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    if (flags)
+    {
+        *flags = (info.NamedPipeEnd & FILE_PIPE_SERVER_END) ? PIPE_SERVER_END : PIPE_CLIENT_END;
+        *flags |= (info.NamedPipeType & FILE_PIPE_TYPE_MESSAGE) ? PIPE_TYPE_MESSAGE : PIPE_TYPE_BYTE;
+    }
+    if (out_size) *out_size = info.OutboundQuota;
+    if (in_size) *in_size = info.InboundQuota;
+    if (instances) *instances = info.MaximumInstances;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           PeekNamedPipe   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH PeekNamedPipe( HANDLE pipe, LPVOID out_buffer, DWORD size,
+                                             LPDWORD read_size, LPDWORD avail, LPDWORD message )
+{
+    FILE_PIPE_PEEK_BUFFER local_buffer;
+    FILE_PIPE_PEEK_BUFFER *buffer = &local_buffer;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    if (size && !(buffer = HeapAlloc( GetProcessHeap(), 0,
+                                      FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data[size] ))))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+
+    status = NtFsControlFile( pipe, 0, NULL, NULL, &io, FSCTL_PIPE_PEEK, NULL, 0,
+                              buffer, FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data[size] ) );
+    if (status == STATUS_BUFFER_OVERFLOW) status = STATUS_SUCCESS;
+    if (!status)
+    {
+        ULONG count = io.Information - FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data );
+        if (avail) *avail = buffer->ReadDataAvailable;
+        if (read_size) *read_size = count;
+        if (message) *message = buffer->MessageLength - count;
+        if (out_buffer) memcpy( out_buffer, buffer->Data, count );
+    }
+    else SetLastError( RtlNtStatusToDosError(status) );
+
+    if (buffer != &local_buffer) HeapFree( GetProcessHeap(), 0, buffer );
+    return !status;
+}
+
+
+/***********************************************************************
+ *           SetNamedPipeHandleState  (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetNamedPipeHandleState( HANDLE pipe, LPDWORD mode,
+                                                       LPDWORD count, LPDWORD timeout )
+{
+    FILE_PIPE_INFORMATION info;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    /* should be a fixme, but this function is called a lot by the RPC
+     * runtime, and it slows down InstallShield a fair bit. */
+    WARN( "semi-stub: %p %p/%d %p %p\n", pipe, mode, mode ? *mode : 0, count, timeout );
+
+    if (mode)
+    {
+        if (*mode & ~(PIPE_READMODE_MESSAGE | PIPE_NOWAIT)) status = STATUS_INVALID_PARAMETER;
+        else
+        {
+            info.CompletionMode = (*mode & PIPE_NOWAIT) ?
+                FILE_PIPE_COMPLETE_OPERATION : FILE_PIPE_QUEUE_OPERATION;
+            info.ReadMode = (*mode & PIPE_READMODE_MESSAGE) ?
+                FILE_PIPE_MESSAGE_MODE : FILE_PIPE_BYTE_STREAM_MODE;
+            status = NtSetInformationFile( pipe, &iosb, &info, sizeof(info), FilePipeInformation );
+        }
+    }
+    return set_ntstatus( status );
+}
+
+/***********************************************************************
+ *           TransactNamedPipe   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH TransactNamedPipe( HANDLE handle, LPVOID write_buf, DWORD write_size,
+                                                 LPVOID read_buf, DWORD read_size, LPDWORD bytes_read,
+                                                 LPOVERLAPPED overlapped)
+{
+    IO_STATUS_BLOCK default_iosb, *iosb = &default_iosb;
+    HANDLE event = NULL;
+    void *cvalue = NULL;
+    NTSTATUS status;
+
+    TRACE( "%p %p %u %p %u %p %p\n", handle,
+           write_buf, write_size, read_buf, read_size, bytes_read, overlapped );
+
+    if (overlapped)
+    {
+        event = overlapped->hEvent;
+        iosb = (IO_STATUS_BLOCK *)overlapped;
+        if (((ULONG_PTR)event & 1) == 0) cvalue = overlapped;
+    }
+    else
+    {
+        iosb->Information = 0;
+    }
+
+    status = NtFsControlFile( handle, event, NULL, cvalue, iosb, FSCTL_PIPE_TRANSCEIVE,
+                              write_buf, write_size, read_buf, read_size );
+    if (status == STATUS_PENDING && !overlapped)
+    {
+        WaitForSingleObject(handle, INFINITE);
+        status = iosb->u.Status;
+    }
+
+    if (bytes_read) *bytes_read = overlapped && status ? 0 : iosb->Information;
+    return set_ntstatus( status );
+}
+
+
+/***********************************************************************
+ *           WaitNamedPipeW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH WaitNamedPipeW( LPCWSTR name, DWORD timeout )
+{
+    static const WCHAR leadin[] = {'\\','?','?','\\','P','I','P','E','\\'};
+    NTSTATUS status;
+    UNICODE_STRING nt_name, pipe_dev_name;
+    FILE_PIPE_WAIT_FOR_BUFFER *pipe_wait;
+    IO_STATUS_BLOCK iosb;
+    OBJECT_ATTRIBUTES attr;
+    ULONG wait_size;
+    HANDLE pipe_dev;
+
+    TRACE( "%s 0x%08x\n", debugstr_w(name), timeout );
+
+    if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL )) return FALSE;
+
+    if (nt_name.Length >= MAX_PATH * sizeof(WCHAR) ||
+        nt_name.Length < sizeof(leadin) ||
+        wcsnicmp( nt_name.Buffer, leadin, ARRAY_SIZE( leadin )) != 0)
+    {
+        RtlFreeUnicodeString( &nt_name );
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
+
+    wait_size = sizeof(*pipe_wait) + nt_name.Length - sizeof(leadin) - sizeof(WCHAR);
+    if (!(pipe_wait = HeapAlloc( GetProcessHeap(), 0,  wait_size)))
+    {
+        RtlFreeUnicodeString( &nt_name );
+        SetLastError( ERROR_OUTOFMEMORY );
+        return FALSE;
+    }
+
+    pipe_dev_name.Buffer = nt_name.Buffer;
+    pipe_dev_name.Length = sizeof(leadin);
+    pipe_dev_name.MaximumLength = sizeof(leadin);
+    InitializeObjectAttributes( &attr,&pipe_dev_name, OBJ_CASE_INSENSITIVE, NULL, NULL );
+    status = NtOpenFile( &pipe_dev, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr,
+                         &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         FILE_SYNCHRONOUS_IO_NONALERT);
+    if (status != STATUS_SUCCESS)
+    {
+        HeapFree( GetProcessHeap(), 0, pipe_wait );
+        RtlFreeUnicodeString( &nt_name );
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
+
+    pipe_wait->TimeoutSpecified = !(timeout == NMPWAIT_USE_DEFAULT_WAIT);
+    if (timeout == NMPWAIT_WAIT_FOREVER)
+        pipe_wait->Timeout.QuadPart = ((ULONGLONG)0x7fffffff << 32) | 0xffffffff;
+    else
+        pipe_wait->Timeout.QuadPart = (ULONGLONG)timeout * -10000;
+    pipe_wait->NameLength = nt_name.Length - sizeof(leadin);
+    memcpy( pipe_wait->Name, nt_name.Buffer + ARRAY_SIZE( leadin ), pipe_wait->NameLength );
+    RtlFreeUnicodeString( &nt_name );
+
+    status = NtFsControlFile( pipe_dev, NULL, NULL, NULL, &iosb, FSCTL_PIPE_WAIT,
+                              pipe_wait, wait_size, NULL, 0 );
+
+    HeapFree( GetProcessHeap(), 0, pipe_wait );
+    NtClose( pipe_dev );
+    return set_ntstatus( status );
+}

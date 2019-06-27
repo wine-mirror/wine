@@ -205,7 +205,7 @@
 @ stdcall BuildCommDCBW(wstr ptr)
 @ stdcall CallbackMayRunLong(ptr)
 @ stdcall CallNamedPipeA(str ptr long ptr long ptr long)
-@ stdcall CallNamedPipeW(wstr ptr long ptr long ptr long)
+@ stdcall -import CallNamedPipeW(wstr ptr long ptr long ptr long)
 @ stub CancelDeviceWakeupRequest
 @ stdcall CancelIo(long)
 @ stdcall CancelIoEx(long ptr)
@@ -243,7 +243,7 @@
 @ stdcall CompareStringW(long long wstr long wstr long)
 @ stdcall CompareStringEx(wstr long wstr long wstr long ptr ptr long)
 @ stdcall CompareStringOrdinal(wstr long wstr long long)
-@ stdcall ConnectNamedPipe(long ptr)
+@ stdcall -import ConnectNamedPipe(long ptr)
 @ stub ConsoleMenuControl
 @ stub ConsoleSubst
 @ stdcall ContinueDebugEvent(long long long)
@@ -304,7 +304,7 @@
 @ stdcall -import CreateMutexExW(ptr wstr long long)
 @ stdcall -import CreateMutexW(ptr long wstr)
 @ stdcall CreateNamedPipeA(str long long long long long long ptr)
-@ stdcall CreateNamedPipeW(wstr long long long long long long ptr)
+@ stdcall -import CreateNamedPipeW(wstr long long long long long long ptr)
 # @ stub CreateNlsSecurityDescriptor
 @ stdcall CreatePipe(ptr ptr ptr long)
 # @ stub CreatePrivateNamespaceA
@@ -378,7 +378,7 @@
 @ stdcall -arch=x86_64 DequeueUmsCompletionListItems(ptr long ptr)
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr)
 @ stdcall DisableThreadLibraryCalls(long)
-@ stdcall DisconnectNamedPipe(long)
+@ stdcall -import DisconnectNamedPipe(long)
 @ stdcall DnsHostnameToComputerNameA (str ptr ptr)
 @ stdcall DnsHostnameToComputerNameW (wstr ptr ptr)
 @ stdcall DosDateTimeToFileTime(long long ptr)
@@ -731,7 +731,7 @@
 @ stdcall GetNamedPipeClientSessionId(long ptr)
 @ stdcall GetNamedPipeHandleStateA(long ptr ptr ptr ptr str long)
 @ stdcall GetNamedPipeHandleStateW(long ptr ptr ptr ptr wstr long)
-@ stdcall GetNamedPipeInfo(long ptr ptr ptr ptr)
+@ stdcall -import GetNamedPipeInfo(long ptr ptr ptr ptr)
 @ stdcall GetNamedPipeServerProcessId(long ptr)
 @ stdcall GetNamedPipeServerSessionId(long ptr)
 @ stdcall GetNativeSystemInfo(ptr)
@@ -1138,7 +1138,7 @@
 @ stdcall OutputDebugStringW(wstr)
 @ stdcall PeekConsoleInputA(ptr ptr long ptr)
 @ stdcall PeekConsoleInputW(ptr ptr long ptr)
-@ stdcall PeekNamedPipe(long ptr long ptr ptr ptr)
+@ stdcall -import PeekNamedPipe(long ptr long ptr ptr ptr)
 @ stdcall -import PostQueuedCompletionStatus(long long ptr ptr)
 @ stdcall PowerClearRequest(long long)
 @ stdcall PowerCreateRequest(ptr)
@@ -1423,7 +1423,7 @@
 @ stdcall SetMailslotInfo(long long)
 @ stub SetMessageWaitingIndicator
 # @ stub SetNamedPipeAttribute
-@ stdcall SetNamedPipeHandleState(long ptr ptr ptr)
+@ stdcall -import SetNamedPipeHandleState(long ptr ptr ptr)
 @ stdcall SetPriorityClass(long long)
 @ stdcall SetProcessAffinityMask(long long)
 @ stdcall SetProcessAffinityUpdateMode(long long)
@@ -1509,7 +1509,7 @@
 @ stdcall TlsGetValue(long)
 @ stdcall TlsSetValue(long ptr)
 @ stdcall Toolhelp32ReadProcessMemory(long ptr ptr long ptr)
-@ stdcall TransactNamedPipe(long ptr long ptr long ptr ptr)
+@ stdcall -import TransactNamedPipe(long ptr long ptr long ptr ptr)
 @ stdcall TransmitCommChar(long long)
 @ stub TrimVirtualBuffer
 @ stdcall TryAcquireSRWLockExclusive(ptr) ntdll.RtlTryAcquireSRWLockExclusive
@@ -1581,7 +1581,7 @@
 @ stdcall WaitForThreadpoolWaitCallbacks(ptr long) ntdll.TpWaitForWait
 @ stdcall WaitForThreadpoolWorkCallbacks(ptr long) ntdll.TpWaitForWork
 @ stdcall WaitNamedPipeA (str long)
-@ stdcall WaitNamedPipeW (wstr long)
+@ stdcall -import WaitNamedPipeW (wstr long)
 @ stdcall WakeAllConditionVariable(ptr) ntdll.RtlWakeAllConditionVariable
 @ stdcall WakeConditionVariable(ptr) ntdll.RtlWakeConditionVariable
 # @ stub WerGetFlags
