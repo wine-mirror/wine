@@ -202,6 +202,7 @@ void HID_DeleteDevice(DEVICE_OBJECT *device)
     HeapFree(GetProcessHeap(), 0, ext->device_name);
     RtlFreeUnicodeString(&ext->link_name);
 
+    IoDetachDevice(ext->deviceExtension.NextDeviceObject);
     IoDeleteDevice(device);
 }
 
