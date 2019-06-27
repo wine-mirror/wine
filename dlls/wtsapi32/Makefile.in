@@ -2,5 +2,7 @@ MODULE    = wtsapi32.dll
 IMPORTLIB = wtsapi32
 IMPORTS   = advapi32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	wtsapi32.c
