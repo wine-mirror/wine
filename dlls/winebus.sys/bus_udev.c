@@ -880,7 +880,7 @@ static NTSTATUS hidraw_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE 
     int rc;
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
     BYTE *feature_buffer;
-    BYTE buffer[1024];
+    BYTE buffer[8192];
 
     if (id == 0)
     {
