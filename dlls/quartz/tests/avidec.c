@@ -468,7 +468,7 @@ static void test_media_types(void)
 {
     IBaseFilter *filter = create_avi_dec();
     AM_MEDIA_TYPE mt = {{0}}, *pmt;
-    VIDEOINFOHEADER vih = {0};
+    VIDEOINFOHEADER vih = {{0}};
     IEnumMediaTypes *enummt;
     HRESULT hr;
     ULONG ref;
@@ -543,6 +543,81 @@ static void test_media_types(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_enum_media_types(void)
+{
+    IBaseFilter *filter = create_avi_dec();
+    IEnumMediaTypes *enum1, *enum2;
+    AM_MEDIA_TYPE *mts[1];
+    ULONG ref, count;
+    HRESULT hr;
+    IPin *pin;
+
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Clone(enum1, &enum2);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum2, 1, mts, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enum1);
+    IEnumMediaTypes_Release(enum2);
+    IPin_Release(pin);
+
+    IBaseFilter_FindPin(filter, source_id, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Clone(enum1, &enum2);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum2, 1, mts, NULL);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enum1);
+    IEnumMediaTypes_Release(enum2);
+    IPin_Release(pin);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(avidec)
 {
     BOOL ret;
@@ -558,6 +633,7 @@ START_TEST(avidec)
     test_find_pin();
     test_pin_info();
     test_media_types();
+    test_enum_media_types();
 
     CoUninitialize();
 
