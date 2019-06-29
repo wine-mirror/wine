@@ -172,44 +172,35 @@ static ULONG WINAPI IEnumMediaTypesImpl_Release(IEnumMediaTypes * iface)
     return ref;
 }
 
-static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes * iface, ULONG cMediaTypes, AM_MEDIA_TYPE ** ppMediaTypes, ULONG * pcFetched)
+static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes *iface,
+        ULONG count, AM_MEDIA_TYPE **mts, ULONG *ret_count)
 {
-    ULONG cFetched;
-    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
+    IEnumMediaTypesImpl *enummt = impl_from_IEnumMediaTypes(iface);
+    ULONG i;
 
-    TRACE("(%p)->(%u, %p, %p)\n", iface, cMediaTypes, ppMediaTypes, pcFetched);
+    TRACE("iface %p, count %u, mts %p, ret_count %p.\n", iface, count, mts, ret_count);
 
-    cFetched = min(This->count, This->uIndex + cMediaTypes) - This->uIndex;
-
-    if (This->currentVersion != This->mediaVersionFunction(This->basePin))
+    if (enummt->currentVersion != enummt->mediaVersionFunction(enummt->basePin))
         return VFW_E_ENUM_OUT_OF_SYNC;
 
-    TRACE("Next uIndex: %u, cFetched: %u\n", This->uIndex, cFetched);
-
-    if (cFetched > 0)
+    for (i = 0; i < count && enummt->uIndex + i < enummt->count; i++)
     {
-        ULONG i;
-        for (i = 0; i < cFetched; i++)
+        if (!(mts[i] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE)))
+                || FAILED(enummt->enumMediaFunction(enummt->basePin, enummt->uIndex + i, mts[i])))
         {
-            if (!(ppMediaTypes[i] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE)))
-                    || FAILED(This->enumMediaFunction(This->basePin, This->uIndex + i, ppMediaTypes[i])))
-            {
-                while (i--)
-                    DeleteMediaType(ppMediaTypes[i]);
-                *pcFetched = 0;
-                return E_OUTOFMEMORY;
-            }
+            while (i--)
+                DeleteMediaType(mts[i]);
+            *ret_count = 0;
+            return E_OUTOFMEMORY;
         }
     }
 
-    if ((cMediaTypes != 1) || pcFetched)
-        *pcFetched = cFetched;
+    if ((count != 1) || ret_count)
+        *ret_count = i;
 
-    This->uIndex += cFetched;
+    enummt->uIndex += i;
 
-    if (cFetched != cMediaTypes)
-        return S_FALSE;
-    return S_OK;
+    return i == count ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI IEnumMediaTypesImpl_Skip(IEnumMediaTypes * iface, ULONG cMediaTypes)
