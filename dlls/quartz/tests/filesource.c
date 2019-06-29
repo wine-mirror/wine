@@ -1159,19 +1159,19 @@ static void test_enum_media_types(void)
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Skip(enum1, 1);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Reset(enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Skip(enum1, 2);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Skip(enum1, 1);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum2, 1, mts, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

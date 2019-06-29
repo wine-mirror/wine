@@ -203,21 +203,18 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes *iface,
     return i == count ? S_OK : S_FALSE;
 }
 
-static HRESULT WINAPI IEnumMediaTypesImpl_Skip(IEnumMediaTypes * iface, ULONG cMediaTypes)
+static HRESULT WINAPI IEnumMediaTypesImpl_Skip(IEnumMediaTypes *iface, ULONG count)
 {
-    IEnumMediaTypesImpl *This = impl_from_IEnumMediaTypes(iface);
+    IEnumMediaTypesImpl *enummt = impl_from_IEnumMediaTypes(iface);
 
-    TRACE("(%p)->(%u)\n", iface, cMediaTypes);
+    TRACE("iface %p, count %u.\n", iface, count);
 
-    if (This->currentVersion != This->mediaVersionFunction(This->basePin))
+    if (enummt->currentVersion != enummt->mediaVersionFunction(enummt->basePin))
         return VFW_E_ENUM_OUT_OF_SYNC;
 
-    if (This->uIndex + cMediaTypes < This->count)
-    {
-        This->uIndex += cMediaTypes;
-        return S_OK;
-    }
-    return S_FALSE;
+    enummt->uIndex += count;
+
+    return enummt->uIndex > enummt->count ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI IEnumMediaTypesImpl_Reset(IEnumMediaTypes * iface)

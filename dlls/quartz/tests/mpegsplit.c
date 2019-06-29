@@ -876,7 +876,7 @@ static void test_enum_media_types(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Clone(enum1, &enum2);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Skip(enum1, 5);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
@@ -979,7 +979,7 @@ static void test_enum_media_types(void)
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum2, 1, mts, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
