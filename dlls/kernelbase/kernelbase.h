@@ -24,6 +24,11 @@
 #include "windef.h"
 #include "winbase.h"
 
+static inline BOOL is_console_handle(HANDLE h)
+{
+    return h != INVALID_HANDLE_VALUE && ((UINT_PTR)h & 3) == 3;
+}
+
 static inline BOOL set_ntstatus( NTSTATUS status )
 {
     if (status) SetLastError( RtlNtStatusToDosError( status ));

@@ -1322,7 +1322,7 @@
 # @ stub RegisterStateChangeNotification
 # @ stub RegisterStateLock
 @ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr) ntdll.EtwRegisterTraceGuidsW
-@ stdcall RegisterWaitForSingleObjectEx(long ptr ptr long long) kernel32.RegisterWaitForSingleObjectEx
+@ stdcall RegisterWaitForSingleObjectEx(long ptr ptr long long)
 @ stdcall ReleaseActCtx(ptr) kernel32.ReleaseActCtx
 @ stdcall ReleaseMutex(long)
 @ stdcall ReleaseMutexWhenCallbackReturns(ptr long) kernel32.ReleaseMutexWhenCallbackReturns
@@ -1509,12 +1509,12 @@
 # @ stub SetXStateFeaturesMask
 @ stdcall SetupComm(long long long) kernel32.SetupComm
 # @ stub SharedLocalIsEnabled
-@ stdcall SignalObjectAndWait(long long long long) kernel32.SignalObjectAndWait
+@ stdcall SignalObjectAndWait(long long long long)
 @ stdcall SizeofResource(long long) kernel32.SizeofResource
-@ stdcall Sleep(long) kernel32.Sleep
+@ stdcall Sleep(long)
 @ stdcall SleepConditionVariableCS(ptr ptr long)
 @ stdcall SleepConditionVariableSRW(ptr ptr long long)
-@ stdcall SleepEx(long long) kernel32.SleepEx
+@ stdcall SleepEx(long long)
 @ stub SpecialMBToWC
 @ stub StartThreadpoolIo
 # @ stub StmAlignSize
@@ -1622,7 +1622,7 @@
 # @ stub UnregisterStateChangeNotification
 # @ stub UnregisterStateLock
 @ stdcall UnregisterTraceGuids(int64) ntdll.EtwUnregisterTraceGuids
-@ stdcall UnregisterWaitEx(long long) kernel32.UnregisterWaitEx
+@ stdcall UnregisterWaitEx(long long)
 # @ stub UnsubscribeEdpEnabledStateChange
 # @ stub UnsubscribeStateChangeNotification
 # @ stub UpdatePackageStatus
@@ -1687,10 +1687,10 @@
 @ stdcall WaitForDebugEvent(ptr long) kernel32.WaitForDebugEvent
 # @ stub WaitForDebugEventEx
 # @ stub WaitForMachinePolicyForegroundProcessingInternal
-@ stdcall WaitForMultipleObjects(long ptr long long) kernel32.WaitForMultipleObjects
-@ stdcall WaitForMultipleObjectsEx(long ptr long long long) kernel32.WaitForMultipleObjectsEx
-@ stdcall WaitForSingleObject(long long) kernel32.WaitForSingleObject
-@ stdcall WaitForSingleObjectEx(long long long) kernel32.WaitForSingleObjectEx
+@ stdcall WaitForMultipleObjects(long ptr long long)
+@ stdcall WaitForMultipleObjectsEx(long ptr long long long)
+@ stdcall WaitForSingleObject(long long)
+@ stdcall WaitForSingleObjectEx(long long long)
 @ stub WaitForThreadpoolIoCallbacks
 @ stdcall WaitForThreadpoolTimerCallbacks(ptr long) kernel32.WaitForThreadpoolTimerCallbacks
 @ stdcall WaitForThreadpoolWaitCallbacks(ptr long) kernel32.WaitForThreadpoolWaitCallbacks

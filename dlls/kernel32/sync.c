@@ -34,6 +34,7 @@
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
+#include "wincon.h"
 #include "winerror.h"
 #include "winnls.h"
 #include "winternl.h"
@@ -97,28 +98,6 @@ static inline PLARGE_INTEGER get_nt_timeout( PLARGE_INTEGER pTime, DWORD timeout
 }
 
 /***********************************************************************
- *              Sleep  (KERNEL32.@)
- */
-VOID WINAPI DECLSPEC_HOTPATCH Sleep( DWORD timeout )
-{
-    SleepEx( timeout, FALSE );
-}
-
-/******************************************************************************
- *              SleepEx   (KERNEL32.@)
- */
-DWORD WINAPI SleepEx( DWORD timeout, BOOL alertable )
-{
-    NTSTATUS status;
-    LARGE_INTEGER time;
-
-    status = NtDelayExecution( alertable, get_nt_timeout( &time, timeout ) );
-    if (status == STATUS_USER_APC) return WAIT_IO_COMPLETION;
-    return 0;
-}
-
-
-/***********************************************************************
  *		SwitchToThread (KERNEL32.@)
  */
 BOOL WINAPI SwitchToThread(void)
@@ -126,34 +105,6 @@ BOOL WINAPI SwitchToThread(void)
     return (NtYieldExecution() != STATUS_NO_YIELD_PERFORMED);
 }
 
-
-/***********************************************************************
- *           WaitForSingleObject   (KERNEL32.@)
- */
-DWORD WINAPI WaitForSingleObject( HANDLE handle, DWORD timeout )
-{
-    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, FALSE );
-}
-
-
-/***********************************************************************
- *           WaitForSingleObjectEx   (KERNEL32.@)
- */
-DWORD WINAPI WaitForSingleObjectEx( HANDLE handle, DWORD timeout,
-                                    BOOL alertable )
-{
-    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, alertable );
-}
-
-
-/***********************************************************************
- *           WaitForMultipleObjects   (KERNEL32.@)
- */
-DWORD WINAPI WaitForMultipleObjects( DWORD count, const HANDLE *handles,
-                                     BOOL wait_all, DWORD timeout )
-{
-    return WaitForMultipleObjectsEx( count, handles, wait_all, timeout, FALSE );
-}
 
 static HANDLE normalize_handle_if_console(HANDLE handle)
 {
@@ -172,38 +123,6 @@ static HANDLE normalize_handle_if_console(HANDLE handle)
     }
     return handle;
 }
-
-/***********************************************************************
- *           WaitForMultipleObjectsEx   (KERNEL32.@)
- */
-DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
-                                       BOOL wait_all, DWORD timeout,
-                                       BOOL alertable )
-{
-    NTSTATUS status;
-    HANDLE hloc[MAXIMUM_WAIT_OBJECTS];
-    LARGE_INTEGER time;
-    unsigned int i;
-
-    if (count > MAXIMUM_WAIT_OBJECTS)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return WAIT_FAILED;
-    }
-    for (i = 0; i < count; i++)
-        hloc[i] = normalize_handle_if_console(handles[i]);
-
-    status = NtWaitForMultipleObjects( count, hloc, !wait_all, alertable,
-                                       get_nt_timeout( &time, timeout ) );
-
-    if (HIWORD(status))  /* is it an error code? */
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        status = WAIT_FAILED;
-    }
-    return status;
-}
-
 
 /***********************************************************************
  *           RegisterWaitForSingleObject   (KERNEL32.@)
@@ -228,29 +147,6 @@ BOOL WINAPI RegisterWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject,
 }
 
 /***********************************************************************
- *           RegisterWaitForSingleObjectEx   (KERNEL32.@)
- */
-HANDLE WINAPI RegisterWaitForSingleObjectEx( HANDLE hObject, 
-                WAITORTIMERCALLBACK Callback, PVOID Context,
-                ULONG dwMilliseconds, ULONG dwFlags ) 
-{
-    NTSTATUS status;
-    HANDLE hNewWaitObject;
-
-    TRACE("%p %p %p %d %d\n",
-          hObject,Callback,Context,dwMilliseconds,dwFlags);
-
-    hObject = normalize_handle_if_console(hObject);
-    status = RtlRegisterWait( &hNewWaitObject, hObject, Callback, Context, dwMilliseconds, dwFlags );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return NULL;
-    }
-    return hNewWaitObject;
-}
-
-/***********************************************************************
  *           UnregisterWait   (KERNEL32.@)
  */
 BOOL WINAPI UnregisterWait( HANDLE WaitHandle ) 
@@ -266,45 +162,6 @@ BOOL WINAPI UnregisterWait( HANDLE WaitHandle )
         return FALSE;
     }
     return TRUE;
-}
-
-/***********************************************************************
- *           UnregisterWaitEx   (KERNEL32.@)
- */
-BOOL WINAPI UnregisterWaitEx( HANDLE WaitHandle, HANDLE CompletionEvent ) 
-{
-    NTSTATUS status;
-
-    TRACE("%p %p\n",WaitHandle, CompletionEvent);
-
-    status = RtlDeregisterWaitEx( WaitHandle, CompletionEvent );
-    if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
-/***********************************************************************
- *           SignalObjectAndWait  (KERNEL32.@)
- *
- * Makes it possible to atomically signal any of the synchronization
- * objects (semaphore, mutex, event) and wait on another.
- */
-DWORD WINAPI SignalObjectAndWait( HANDLE hObjectToSignal, HANDLE hObjectToWaitOn,
-                                  DWORD dwMilliseconds, BOOL bAlertable )
-{
-    NTSTATUS status;
-    LARGE_INTEGER timeout;
-
-    TRACE("%p %p %d %d\n", hObjectToSignal,
-          hObjectToWaitOn, dwMilliseconds, bAlertable);
-
-    status = NtSignalAndWaitForSingleObject( hObjectToSignal, hObjectToWaitOn, bAlertable,
-                                             get_nt_timeout( &timeout, dwMilliseconds ) );
-    if (HIWORD(status))
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        status = WAIT_FAILED;
-    }
-    return status;
 }
 
 /***********************************************************************

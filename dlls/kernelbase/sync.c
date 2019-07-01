@@ -27,6 +27,7 @@
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
+#include "wincon.h"
 #include "winerror.h"
 #include "winnls.h"
 #include "winternl.h"
@@ -116,6 +117,162 @@ static BOOL get_open_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRING 
     BaseGetNamedObjectDirectory( &dir );
     InitializeObjectAttributes( attr, nameW, inherit ? OBJ_INHERIT : 0, dir, NULL );
     return TRUE;
+}
+
+
+/***********************************************************************
+ * Waits
+ ***********************************************************************/
+
+
+static HANDLE normalize_handle_if_console( HANDLE handle )
+{
+    if ((handle == (HANDLE)STD_INPUT_HANDLE) ||
+        (handle == (HANDLE)STD_OUTPUT_HANDLE) ||
+        (handle == (HANDLE)STD_ERROR_HANDLE))
+        handle = GetStdHandle( HandleToULong(handle) );
+
+    /* even screen buffer console handles are waitable, and are
+     * handled as a handle to the console itself
+     */
+    if (is_console_handle( handle ) && VerifyConsoleIoHandle( handle ))
+        handle = GetConsoleInputWaitHandle();
+
+    return handle;
+}
+
+
+/***********************************************************************
+ *           RegisterWaitForSingleObjectEx   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH RegisterWaitForSingleObjectEx( HANDLE handle, WAITORTIMERCALLBACK callback,
+                                                               PVOID context, ULONG timeout, ULONG flags )
+{
+    NTSTATUS status;
+    HANDLE ret;
+
+    TRACE( "%p %p %p %d %d\n", handle, callback, context, timeout, flags );
+
+    handle = normalize_handle_if_console( handle );
+    status = RtlRegisterWait( &ret, handle, callback, context, timeout, flags );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return NULL;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SignalObjectAndWait  (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH SignalObjectAndWait( HANDLE signal, HANDLE wait,
+                                                    DWORD timeout, BOOL alertable )
+{
+    NTSTATUS status;
+    LARGE_INTEGER time;
+
+    TRACE( "%p %p %d %d\n", signal, wait, timeout, alertable );
+
+    status = NtSignalAndWaitForSingleObject( signal, wait, alertable, get_nt_timeout( &time, timeout ) );
+    if (HIWORD(status))
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        status = WAIT_FAILED;
+    }
+    return status;
+}
+
+
+/***********************************************************************
+ *              Sleep  (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH Sleep( DWORD timeout )
+{
+    LARGE_INTEGER time;
+
+    NtDelayExecution( FALSE, get_nt_timeout( &time, timeout ) );
+}
+
+
+/******************************************************************************
+ *              SleepEx   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH SleepEx( DWORD timeout, BOOL alertable )
+{
+    NTSTATUS status;
+    LARGE_INTEGER time;
+
+    status = NtDelayExecution( alertable, get_nt_timeout( &time, timeout ) );
+    if (status == STATUS_USER_APC) return WAIT_IO_COMPLETION;
+    return 0;
+}
+
+
+/***********************************************************************
+ *           UnregisterWaitEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH UnregisterWaitEx( HANDLE handle, HANDLE event )
+{
+    return set_ntstatus( RtlDeregisterWaitEx( handle, event ));
+}
+
+
+/***********************************************************************
+ *           WaitForSingleObject   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH WaitForSingleObject( HANDLE handle, DWORD timeout )
+{
+    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, FALSE );
+}
+
+
+/***********************************************************************
+ *           WaitForSingleObjectEx   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH WaitForSingleObjectEx( HANDLE handle, DWORD timeout, BOOL alertable )
+{
+    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, alertable );
+}
+
+
+/***********************************************************************
+ *           WaitForMultipleObjects   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH WaitForMultipleObjects( DWORD count, const HANDLE *handles,
+                                                       BOOL wait_all, DWORD timeout )
+{
+    return WaitForMultipleObjectsEx( count, handles, wait_all, timeout, FALSE );
+}
+
+
+/***********************************************************************
+ *           WaitForMultipleObjectsEx   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
+                                                         BOOL wait_all, DWORD timeout, BOOL alertable )
+{
+    NTSTATUS status;
+    HANDLE hloc[MAXIMUM_WAIT_OBJECTS];
+    LARGE_INTEGER time;
+    unsigned int i;
+
+    if (count > MAXIMUM_WAIT_OBJECTS)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return WAIT_FAILED;
+    }
+    for (i = 0; i < count; i++) hloc[i] = normalize_handle_if_console( handles[i] );
+
+    status = NtWaitForMultipleObjects( count, hloc, !wait_all, alertable,
+                                       get_nt_timeout( &time, timeout ) );
+    if (HIWORD(status))  /* is it an error code? */
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        status = WAIT_FAILED;
+    }
+    return status;
 }
 
 

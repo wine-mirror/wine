@@ -24,11 +24,6 @@
 #include "wine/server.h"
 
 NTSTATUS WINAPI BaseGetNamedObjectDirectory( HANDLE *dir );
-HANDLE  WINAPI OpenConsoleW(LPCWSTR, DWORD, BOOL, DWORD);
-BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
-HANDLE  WINAPI DuplicateConsoleHandle(HANDLE, DWORD, BOOL, DWORD);
-BOOL    WINAPI CloseConsoleHandle(HANDLE handle);
-HANDLE  WINAPI GetConsoleInputWaitHandle(void);
 BOOL           CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params) DECLSPEC_HIDDEN;
 BOOL           CONSOLE_Exit(void) DECLSPEC_HIDDEN;
 

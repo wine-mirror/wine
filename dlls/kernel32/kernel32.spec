@@ -1251,7 +1251,7 @@
 @ stub RegisterSysMsgHandler
 @ stub RegisterWaitForInputIdle
 @ stdcall RegisterWaitForSingleObject(ptr long ptr ptr long long)
-@ stdcall RegisterWaitForSingleObjectEx(long ptr ptr long long)
+@ stdcall -import RegisterWaitForSingleObjectEx(long ptr ptr long long)
 @ stub RegisterWowBaseHandlers
 @ stub RegisterWowExec
 @ stdcall ReinitializeCriticalSection(ptr)
@@ -1479,12 +1479,12 @@
 # @ stub SetXStateFeaturesMask
 @ stdcall SetupComm(long long long)
 @ stub ShowConsoleCursor
-@ stdcall SignalObjectAndWait(long long long long)
+@ stdcall -import SignalObjectAndWait(long long long long)
 @ stdcall SizeofResource(long long)
-@ stdcall Sleep(long)
+@ stdcall -import Sleep(long)
 @ stdcall -import SleepConditionVariableCS(ptr ptr long)
 @ stdcall -import SleepConditionVariableSRW(ptr ptr long long)
-@ stdcall SleepEx(long long)
+@ stdcall -import SleepEx(long long)
 # @ stub SortCloseHandle
 # @ stub SortGetHandle
 # @ stub StartThreadpoolIo
@@ -1541,7 +1541,7 @@
 @ stdcall UnregisterApplicationRestart()
 # @ stub UnregisterConsoleIME
 @ stdcall UnregisterWait(long)
-@ stdcall UnregisterWaitEx(long long)
+@ stdcall -import UnregisterWaitEx(long long)
 # @ stub UpdateCalendarDayOfWeek
 @ stdcall UpdateProcThreadAttribute(ptr long long ptr long ptr ptr)
 @ stdcall UpdateResourceA(long str str long ptr long)
@@ -1572,10 +1572,10 @@
 @ stdcall WTSGetActiveConsoleSessionId()
 @ stdcall WaitCommEvent(long ptr ptr)
 @ stdcall WaitForDebugEvent(ptr long)
-@ stdcall WaitForMultipleObjects(long ptr long long)
-@ stdcall WaitForMultipleObjectsEx(long ptr long long long)
-@ stdcall WaitForSingleObject(long long)
-@ stdcall WaitForSingleObjectEx(long long long)
+@ stdcall -import WaitForMultipleObjects(long ptr long long)
+@ stdcall -import WaitForMultipleObjectsEx(long ptr long long long)
+@ stdcall -import WaitForSingleObject(long long)
+@ stdcall -import WaitForSingleObjectEx(long long long)
 # @ stub WaitForThreadpoolIoCallbacks
 @ stdcall WaitForThreadpoolTimerCallbacks(ptr long) ntdll.TpWaitForTimer
 @ stdcall WaitForThreadpoolWaitCallbacks(ptr long) ntdll.TpWaitForWait

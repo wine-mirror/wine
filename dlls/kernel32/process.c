@@ -55,6 +55,8 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
+#include "winbase.h"
+#include "wincon.h"
 #include "kernel_private.h"
 #include "psapi.h"
 #include "wine/exception.h"
