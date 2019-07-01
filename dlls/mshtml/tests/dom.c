@@ -62,10 +62,6 @@ static const char doc_blank_ie9[] =
     "</html>";
 
 static const char doc_str1[] = "<html><body>test</body></html>";
-static const char range_test_str[] =
-    "<html><body>test \na<font size=\"2\">bc\t123<br /> it's\r\n  \t</font>text<br /></body></html>";
-static const char range_test2_str[] =
-    "<html><body>abc<hr />123<br /><hr />def</body></html>";
 static const char elem_test_str[] =
     "<html><head><title>test</title><style id=\"styleid\">.body { margin-right: 0px; }</style>"
     "<meta id=\"metaid\" name=\"meta name\" http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"
@@ -5675,6 +5671,8 @@ static void test_txtrange(IHTMLDocument2 *doc)
     IHTMLElement *body;
     HRESULT hres;
 
+    set_body_html(doc, "test \na<font size=\"2\">bc\t123<br /> it's\r\n  \t</font>text<br />");
+
     body_range = test_create_body_range(doc);
 
     test_disp((IUnknown*)body_range, &IID_IHTMLTxtRange, NULL, "[object]");
@@ -5914,11 +5912,7 @@ static void test_txtrange(IHTMLDocument2 *doc)
     IHTMLTxtRange_Release(body_range);
     IHTMLElement_Release(body);
 
-}
-
-static void test_txtrange2(IHTMLDocument2 *doc)
-{
-    IHTMLTxtRange *range;
+    set_body_html(doc, "<html><body>abc<hr />123<br /><hr />def</body></html>");
 
     range = test_create_body_range(doc);
 
@@ -11066,8 +11060,7 @@ START_TEST(dom)
 
     run_domtest(doc_str1, test_doc_elem);
     run_domtest(doc_str1, test_get_set_attr);
-    run_domtest(range_test_str, test_txtrange);
-    run_domtest(range_test2_str, test_txtrange2);
+    run_domtest(doc_blank, test_txtrange);
     if (winetest_interactive || ! is_ie_hardened()) {
         run_domtest(elem_test_str, test_elems);
         run_domtest(elem_test2_str, test_elems2);
