@@ -567,11 +567,16 @@ static const elem_type_info_t elem_type_infos[] = {
     {"tspan",     tspan_iids,       NULL}
 };
 
+static int strncmp_wa(LPCWSTR strw, const char *stra, size_t len)
+{
+    WCHAR buf[512];
+    size_t wlen = MultiByteToWideChar(CP_ACP, 0, stra, len, buf, sizeof(buf));
+    return wlen == len && memcmp(strw, buf, len * sizeof(WCHAR));
+}
+
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
-    CHAR buf[512];
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
-    return lstrcmpA(stra, buf);
+    return strncmp_wa(strw, stra, strlen(stra));
 }
 
 static BOOL is_prefix_wa(const WCHAR *strw, const char *prefix)
@@ -2033,12 +2038,16 @@ static IHTMLFormElement *_get_textarea_form(unsigned line, IUnknown *unk)
 static void _test_comment_text(unsigned line, IUnknown *unk, const char *extext)
 {
     IHTMLCommentElement *comment = _get_comment_iface(__LINE__,unk);
+    const char *p;
     BSTR text;
     HRESULT hres;
 
     hres = IHTMLCommentElement_get_text(comment, &text);
     ok_(__FILE__,line)(hres == S_OK, "get_text failed: %08x\n", hres);
-    ok_(__FILE__,line)(!strcmp_wa(text, extext), "text = \"%s\", expected \"%s\"\n", wine_dbgstr_w(text), extext);
+    if((p = strstr(extext, "-->")) && SysStringLen(text) == p - extext) /* Some IEs drop comment ending */
+        ok_(__FILE__,line)(!strncmp_wa(text, extext, p - extext), "text = \"%s\", expected \"%s\"\n", wine_dbgstr_w(text), extext);
+    else
+        ok_(__FILE__,line)(!strcmp_wa(text, extext), "text = \"%s\", expected \"%s\"\n", wine_dbgstr_w(text), extext);
 
     IHTMLCommentElement_Release(comment);
     SysFreeString(text);
@@ -3050,12 +3059,17 @@ static void _test_elem_set_outerhtml(unsigned line, IUnknown *unk, const char *o
 static void _test_elem_outerhtml(unsigned line, IUnknown *unk, const char *outer_html)
 {
     IHTMLElement *elem = _get_elem_iface(line, unk);
+    const char *p;
     BSTR html;
     HRESULT hres;
 
     hres = IHTMLElement_get_outerHTML(elem, &html);
     ok_(__FILE__,line)(hres == S_OK, "get_outerHTML failed: %08x\n", hres);
-    ok_(__FILE__,line)(!strcmp_wa(html, outer_html), "outerHTML = '%s', expected '%s'\n", wine_dbgstr_w(html), outer_html);
+    if((p = strstr(outer_html, "-->")) && !p[3] && SysStringLen(html) == p - outer_html) /* Some IEs drop comment ending */
+        ok_(__FILE__,line)(!strncmp_wa(html, outer_html, p - outer_html), "text = \"%s\", expected \"%s\"\n",
+                           wine_dbgstr_w(html), outer_html);
+    else
+        ok_(__FILE__,line)(!strcmp_wa(html, outer_html), "outerHTML = '%s', expected '%s'\n", wine_dbgstr_w(html), outer_html);
 
     IHTMLElement_Release(elem);
     SysFreeString(html);
