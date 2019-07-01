@@ -21,7 +21,12 @@ function guard(f) {
         try {
             f();
         }catch(e) {
-            ok(false, "Got exception " + ("message" in e ? e.message : e));
+            var msg = "Got exception ";
+            if(e && typeof(e) == "object" && "message")
+                msg += e.msg;
+            else
+                msg += e;
+            ok(false, msg);
         }
     };
 }
