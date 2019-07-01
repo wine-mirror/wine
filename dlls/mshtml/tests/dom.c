@@ -5092,6 +5092,14 @@ static IHTMLElement *_doc_get_body(unsigned line, IHTMLDocument2 *doc)
     return elem;
 }
 
+static void set_body_html(IHTMLDocument2 *doc, const char *html)
+{
+    IHTMLElement *body;
+    body = doc_get_body(doc);
+    test_elem_set_innerhtml((IUnknown*)body, html);
+    IHTMLElement_Release(body);
+}
+
 #define test_create_elem(d,t) _test_create_elem(__LINE__,d,t)
 static IHTMLElement *_test_create_elem(unsigned line, IHTMLDocument2 *doc, const char *tag)
 {
@@ -9453,16 +9461,12 @@ static IHTMLElementCollection *_doc_get_elems_by_name(unsigned line, IHTMLDocume
 static void test_elem_names(IHTMLDocument2 *doc)
 {
     IHTMLElementCollection *col;
-    IHTMLElement *body;
     LONG len;
     HRESULT hres;
 
     static const elem_type_t test1_types[] = {ET_INPUT, ET_A, ET_DIV};
 
-    body = doc_get_body(doc);
-
-    test_elem_set_innerhtml((IUnknown*)body,
-            "<input name=\"test\"><a name=\"test\"></a><a name=\"xxx\"></a><div id=\"test\"></div>");
+    set_body_html(doc, "<input name=\"test\"><a name=\"test\"></a><a name=\"xxx\"></a><div id=\"test\"></div>");
     col = doc_get_elems_by_name(doc, "test");
     test_elem_collection((IUnknown*)col, test1_types, ARRAY_SIZE(test1_types));
     IHTMLElementCollection_Release(col);
@@ -9477,8 +9481,6 @@ static void test_elem_names(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_length failed: %08x\n", hres);
     todo_wine ok(len == 1, "len = %d\n", len);
     IHTMLElementCollection_Release(col);
-
-    IHTMLElement_Release(body);
 }
 
 static void test_elems2(IHTMLDocument2 *doc)
@@ -9714,17 +9716,15 @@ static void test_svg_element(IHTMLDocument2 *doc, IHTMLElement *parent)
 
 static void test_dom_elements(IHTMLDocument2 *doc)
 {
-    IHTMLElement *body, *div;
+    IHTMLElement *div;
 
-    body = doc_get_body(doc);
-    test_elem_set_innerhtml((IUnknown*)body, "<div id=\"parentdiv\"></div>");
+    set_body_html(doc, "<div id=\"parentdiv\"></div>");
     div = get_doc_elem_by_id(doc, "parentdiv");
 
     test_textarea_element(doc, div);
     test_form_element(doc, div);
     test_svg_element(doc, div);
 
-    IHTMLElement_Release(body);
     IHTMLElement_Release(div);
 }
 
