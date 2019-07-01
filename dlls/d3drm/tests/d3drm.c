@@ -6342,10 +6342,12 @@ static void test_viewport_clear1(void)
     ret_color = IDirect3DRMFrame_GetSceneBackground(camera1);
     ok(ret_color == 0xff00ff00, "Expected scene color returned == 0xff00ff00, got %#x.\n", ret_color);
 
+    CHECK_REFCOUNT(frame1, 1);
     hr = IDirect3DRMViewport_Clear(viewport1);
     ok(SUCCEEDED(hr), "Cannot clear viewport (hr = %#x).\n", hr);
     ret_color = get_surface_color(surface, 320, 240);
     ok(compare_color(ret_color, 0x00ffffff, 1), "Got unexpected color 0x%08x.\n", ret_color);
+    CHECK_REFCOUNT(frame1, 1);
 
     hr = IDirect3DRMFrame_SetSceneBackgroundRGB(frame1, 0.0f, 0.0f, 1.0f);
     ok(SUCCEEDED(hr), "Cannot set scene background RGB (hr = %#x)\n", hr);
@@ -6545,10 +6547,12 @@ static void test_viewport_clear2(void)
     ret_color = IDirect3DRMFrame3_GetSceneBackground(camera3);
     ok(ret_color == 0xff00ff00, "Expected scene color returned == 0xff00ff00, got %#x.\n", ret_color);
 
+    CHECK_REFCOUNT(frame3, 1);
     hr = IDirect3DRMViewport2_Clear(viewport2, D3DRMCLEAR_ALL);
     ok(SUCCEEDED(hr), "Cannot clear viewport (hr = %#x).\n", hr);
     ret_color = get_surface_color(surface, 320, 240);
     ok(compare_color(ret_color, 0x00ffffff, 1), "Got unexpected color 0x%08x.\n", ret_color);
+    CHECK_REFCOUNT(frame3, 1);
 
     hr = IDirect3DRMViewport2_GetDirect3DViewport(viewport2, &d3d_viewport);
     ok(SUCCEEDED(hr), "Cannot get IDirect3DViewport interface (hr = %#x).\n", hr);
