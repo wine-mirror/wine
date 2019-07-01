@@ -50,6 +50,15 @@ typedef struct {
 } HTMLTxtRange;
 
 typedef struct {
+    DispatchEx dispex;
+    IHTMLDOMRange IHTMLDOMRange_iface;
+
+    LONG ref;
+
+    nsIDOMRange *nsrange;
+} HTMLDOMRange;
+
+typedef struct {
     WCHAR *buf;
     DWORD len;
     DWORD size;
@@ -1755,6 +1764,346 @@ HRESULT HTMLTxtRange_Create(HTMLDocumentNode *doc, nsIDOMRange *nsrange, IHTMLTx
     list_add_head(&doc->range_list, &ret->entry);
 
     *p = &ret->IHTMLTxtRange_iface;
+    return S_OK;
+}
+
+static inline HTMLDOMRange *impl_from_IHTMLDOMRange(IHTMLDOMRange *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDOMRange, IHTMLDOMRange_iface);
+}
+
+static HRESULT WINAPI HTMLDOMRange_QueryInterface(IHTMLDOMRange *iface, REFIID riid, void **ppv)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = &This->IHTMLDOMRange_iface;
+    }else if(IsEqualGUID(&IID_IHTMLDOMRange, riid)) {
+        *ppv = &This->IHTMLDOMRange_iface;
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        *ppv = NULL;
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI HTMLDOMRange_AddRef(IHTMLDOMRange *iface)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI HTMLDOMRange_Release(IHTMLDOMRange *iface)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        if(This->nsrange)
+            nsIDOMRange_Release(This->nsrange);
+        release_dispex(&This->dispex);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI HTMLDOMRange_GetTypeInfoCount(IHTMLDOMRange *iface, UINT *pctinfo)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLDOMRange_GetTypeInfo(IHTMLDOMRange *iface, UINT iTInfo,
+                                               LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLDOMRange_GetIDsOfNames(IHTMLDOMRange *iface, REFIID riid,
+                                                 LPOLESTR *rgszNames, UINT cNames,
+                                                 LCID lcid, DISPID *rgDispId)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames,
+            cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLDOMRange_Invoke(IHTMLDOMRange *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid,
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLDOMRange_get_startContainer(IHTMLDOMRange *iface, IHTMLDOMNode **p)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_get_startOffset(IHTMLDOMRange *iface, LONG *p)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_get_endContainer(IHTMLDOMRange *iface, IHTMLDOMNode **p)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_get_endOffset(IHTMLDOMRange *iface, LONG *p)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_get_collapsed(IHTMLDOMRange *iface, VARIANT_BOOL *p)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_get_commonAncestorContainer(IHTMLDOMRange *iface, IHTMLDOMNode **p)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_setStart(IHTMLDOMRange *iface, IDispatch *node, LONG offset)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p, %d)\n", This, node, offset);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_setEnd(IHTMLDOMRange *iface, IDispatch *node, LONG offset)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p, %d)\n", This, node, offset);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_setStartBefore(IHTMLDOMRange *iface, IDispatch *node)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_setStartAfter(IHTMLDOMRange *iface, IDispatch *node)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_setEndBefore(IHTMLDOMRange *iface, IDispatch *node)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_setEndAfter(IHTMLDOMRange *iface, IDispatch *node)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_collapse(IHTMLDOMRange *iface, VARIANT_BOOL tostart)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%x)\n", This, tostart);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_selectNode(IHTMLDOMRange *iface, IDispatch *node)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_selectNodeContents(IHTMLDOMRange *iface, IDispatch *node)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_compareBoundaryPoints(IHTMLDOMRange *iface, short how,
+    IDispatch *src_range, LONG *result)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%x, %p, %p)\n", This, how, src_range, result);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_deleteContents(IHTMLDOMRange *iface)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_extractContents(IHTMLDOMRange *iface, IDispatch **p)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_cloneContents(IHTMLDOMRange *iface, IDispatch **p)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_insertNode(IHTMLDOMRange *iface, IDispatch *node)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_surroundContents(IHTMLDOMRange *iface, IDispatch *parent)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, parent);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_cloneRange(IHTMLDOMRange *iface, IHTMLDOMRange **p)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_toString(IHTMLDOMRange *iface, BSTR *p)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_detach(IHTMLDOMRange *iface)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_getClientRects(IHTMLDOMRange *iface, IHTMLRectCollection **p)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMRange_getBoundingClientRect(IHTMLDOMRange *iface, IHTMLRect **p)
+{
+    HTMLDOMRange *This = impl_from_IHTMLDOMRange(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const IHTMLDOMRangeVtbl HTMLDOMRangeVtbl = {
+    HTMLDOMRange_QueryInterface,
+    HTMLDOMRange_AddRef,
+    HTMLDOMRange_Release,
+    HTMLDOMRange_GetTypeInfoCount,
+    HTMLDOMRange_GetTypeInfo,
+    HTMLDOMRange_GetIDsOfNames,
+    HTMLDOMRange_Invoke,
+    HTMLDOMRange_get_startContainer,
+    HTMLDOMRange_get_startOffset,
+    HTMLDOMRange_get_endContainer,
+    HTMLDOMRange_get_endOffset,
+    HTMLDOMRange_get_collapsed,
+    HTMLDOMRange_get_commonAncestorContainer,
+    HTMLDOMRange_setStart,
+    HTMLDOMRange_setEnd,
+    HTMLDOMRange_setStartBefore,
+    HTMLDOMRange_setStartAfter,
+    HTMLDOMRange_setEndBefore,
+    HTMLDOMRange_setEndAfter,
+    HTMLDOMRange_collapse,
+    HTMLDOMRange_selectNode,
+    HTMLDOMRange_selectNodeContents,
+    HTMLDOMRange_compareBoundaryPoints,
+    HTMLDOMRange_deleteContents,
+    HTMLDOMRange_extractContents,
+    HTMLDOMRange_cloneContents,
+    HTMLDOMRange_insertNode,
+    HTMLDOMRange_surroundContents,
+    HTMLDOMRange_cloneRange,
+    HTMLDOMRange_toString,
+    HTMLDOMRange_detach,
+    HTMLDOMRange_getClientRects,
+    HTMLDOMRange_getBoundingClientRect,
+};
+
+static const tid_t HTMLDOMRange_iface_tids[] = {
+    IHTMLDOMRange_tid,
+    0
+};
+
+static dispex_static_data_t HTMLDOMRange_dispex = {
+    NULL,
+    DispHTMLDOMRange_tid,
+    HTMLDOMRange_iface_tids
+};
+
+HRESULT HTMLDOMRange_Create(nsIDOMRange *nsrange, IHTMLDOMRange **p)
+{
+    HTMLDOMRange *ret;
+
+    ret = heap_alloc(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLDOMRange_iface, &HTMLDOMRange_dispex);
+
+    ret->IHTMLDOMRange_iface.lpVtbl = &HTMLDOMRangeVtbl;
+    ret->ref = 1;
+
+    if(nsrange)
+        nsIDOMRange_AddRef(nsrange);
+    ret->nsrange = nsrange;
+
+    *p = &ret->IHTMLDOMRange_iface;
     return S_OK;
 }
 

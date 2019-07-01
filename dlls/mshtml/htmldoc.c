@@ -5223,8 +5223,22 @@ static HRESULT WINAPI DocumentRange_Invoke(IDocumentRange *iface, DISPID dispIdM
 static HRESULT WINAPI DocumentRange_createRange(IDocumentRange *iface, IHTMLDOMRange **p)
 {
     HTMLDocument *This = impl_from_IDocumentRange(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMRange *nsrange;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->doc_node->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
+
+    if(NS_FAILED(nsIDOMHTMLDocument_CreateRange(This->doc_node->nsdoc, &nsrange)))
+        return E_FAIL;
+
+    hres = HTMLDOMRange_Create(nsrange, p);
+    nsIDOMRange_Release(nsrange);
+    return hres;
 }
 
 static const IDocumentRangeVtbl DocumentRangeVtbl = {

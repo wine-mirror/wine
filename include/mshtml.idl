@@ -420,6 +420,7 @@ interface ILineInfo;
 interface IMarkupPointer;
 interface IMarkupContainer;
 interface ISVGSVGElement;
+interface IHTMLDOMRange;
 
 /*****************************************************************************
  *    IHTMLCSSStyleDeclaration interface
@@ -12203,6 +12204,93 @@ interface IHTMLTxtRange : IDispatch
     HRESULT execCommandShowHelp(
         [in] BSTR cmdID,
         [retval, out] VARIANT_BOOL *pfRet);
+}
+
+[
+    hidden,
+    uuid(3050f5a3-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLDOMRange
+{
+properties:
+methods:
+    [propget, id(DISPID_IHTMLDOMRANGE_STARTCONTAINER)]
+    IHTMLDOMNode *startContainer();
+
+    [propget, id(DISPID_IHTMLDOMRANGE_STARTOFFSET)]
+    long startOffset();
+
+    [propget, id(DISPID_IHTMLDOMRANGE_ENDCONTAINER)]
+    IHTMLDOMNode *endContainer();
+
+    [propget, id(DISPID_IHTMLDOMRANGE_ENDOFFSET)]
+    long endOffset();
+
+    [propget, id(DISPID_IHTMLDOMRANGE_COLLAPSED)]
+    VARIANT_BOOL collapsed();
+
+    [propget, id(DISPID_IHTMLDOMRANGE_COMMONANCESTORCONTAINER)]
+    IHTMLDOMNode *commonAncestorContainer();
+
+    [id(DISPID_IHTMLDOMRANGE_SETSTART)]
+    void setStart([in] IDispatch *node ,[in] long offset);
+
+    [id(DISPID_IHTMLDOMRANGE_SETEND)]
+    void setEnd([in] IDispatch *node, [in] long offset);
+
+    [id(DISPID_IHTMLDOMRANGE_SETSTARTBEFORE)]
+    void setStartBefore([in] IDispatch *node);
+
+    [id(DISPID_IHTMLDOMRANGE_SETSTARTAFTER)]
+    void setStartAfter([in] IDispatch *node);
+
+    [id(DISPID_IHTMLDOMRANGE_SETENDBEFORE)]
+    void setEndBefore([in] IDispatch *node);
+
+    [id(DISPID_IHTMLDOMRANGE_SETENDAFTER)]
+    void setEndAfter([in] IDispatch *node);
+
+    [id(DISPID_IHTMLDOMRANGE_COLLAPSE)]
+    void collapse([in] VARIANT_BOOL tostart);
+
+    [id(DISPID_IHTMLDOMRANGE_SELECTNODE)]
+    void selectNode([in] IDispatch *node);
+
+    [id(DISPID_IHTMLDOMRANGE_SELECTNODECONTENTS)]
+    void selectNodeContents([in] IDispatch *node);
+
+    [id(DISPID_IHTMLDOMRANGE_COMPAREBOUNDARYPOINTS)]
+    long compareBoundaryPoints([in] short how, [in] IDispatch *src_range);
+
+    [id(DISPID_IHTMLDOMRANGE_DELETECONTENTS)]
+    void deleteContents();
+
+    [id(DISPID_IHTMLDOMRANGE_EXTRACTCONTENTS)]
+    IDispatch *extractContents();
+
+    [id(DISPID_IHTMLDOMRANGE_CLONECONTENTS)]
+    IDispatch *cloneContents();
+
+    [id(DISPID_IHTMLDOMRANGE_INSERTNODE)]
+    void insertNode([in] IDispatch *node);
+
+    [id(DISPID_IHTMLDOMRANGE_SURROUNDCONTENTS)]
+    void surroundContents([in] IDispatch *parent);
+
+    [id(DISPID_IHTMLDOMRANGE_CLONERANGE)]
+    IHTMLDOMRange *cloneRange();
+
+    [id(DISPID_IHTMLDOMRANGE_TOSTRING)]
+    BSTR toString();
+
+    [id(DISPID_IHTMLDOMRANGE_DETACH)]
+    void detach();
+
+    [id(DISPID_IHTMLDOMRANGE_GETCLIENTRECTS)]
+    IHTMLRectCollection *getClientRects();
+
+    [id(DISPID_IHTMLDOMRANGE_GETBOUNDINGCLIENTRECT)]
+    IHTMLRect *getBoundingClientRect();
 }
 
 /*****************************************************************************

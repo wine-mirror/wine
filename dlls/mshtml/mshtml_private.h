@@ -95,6 +95,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispHTMLDocument) \
     XDIID(DispHTMLDOMAttribute) \
     XDIID(DispHTMLDOMImplementation) \
+    XDIID(DispHTMLDOMRange) \
     XDIID(DispHTMLDOMTextNode) \
     XDIID(DispHTMLElementCollection) \
     XDIID(DispHTMLEmbed) \
@@ -178,6 +179,7 @@ typedef struct EventTarget EventTarget;
     XIID(IHTMLDOMNode) \
     XIID(IHTMLDOMNode2) \
     XIID(IHTMLDOMNode3) \
+    XIID(IHTMLDOMRange) \
     XIID(IHTMLDOMTextNode) \
     XIID(IHTMLDOMTextNode2) \
     XIID(IHTMLElement) \
@@ -1008,6 +1010,7 @@ HRESULT HTMLSelectionObject_Create(HTMLDocumentNode*,nsISelection*,IHTMLSelectio
 HRESULT HTMLTxtRange_Create(HTMLDocumentNode*,nsIDOMRange*,IHTMLTxtRange**) DECLSPEC_HIDDEN;
 IHTMLStyleSheet *HTMLStyleSheet_Create(nsIDOMStyleSheet*) DECLSPEC_HIDDEN;
 IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetList*) DECLSPEC_HIDDEN;
+HRESULT HTMLDOMRange_Create(nsIDOMRange*,IHTMLDOMRange**) DECLSPEC_HIDDEN;
 
 void detach_document_node(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void detach_selection(HTMLDocumentNode*) DECLSPEC_HIDDEN;

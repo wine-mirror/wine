@@ -55,13 +55,13 @@ C_SRCS = \
 	persist.c \
 	pluginhost.c \
 	protocol.c \
+	range.c \
 	script.c \
 	secmgr.c \
 	selection.c \
 	service.c \
 	svg.c \
 	task.c \
-	txtrange.c \
 	view.c \
 	xmlhttprequest.c
 

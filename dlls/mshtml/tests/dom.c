@@ -5938,6 +5938,31 @@ static void test_txtrange(IHTMLDocument2 *doc)
     IHTMLTxtRange_Release(range);
 }
 
+static void test_range(IHTMLDocument2 *doc)
+{
+    if(is_ie9plus) {
+        IDocumentRange *doc_range;
+        IHTMLDOMRange *range;
+        HRESULT hres;
+
+        hres = IHTMLDocument2_QueryInterface(doc, &IID_IDocumentRange, (void **)&doc_range);
+        ok(hres == S_OK, "Failed to get IDocumentRange: %08x\n", hres);
+        if (FAILED(hres))
+            return;
+
+        hres = IDocumentRange_createRange(doc_range, &range);
+        ok(hres == S_OK, "Failed to create range, %08x\n", hres);
+
+        test_disp((IUnknown *)range, &DIID_DispHTMLDOMRange, NULL, NULL);
+
+        IHTMLDOMRange_Release(range);
+
+        IDocumentRange_Release(doc_range);
+    }
+
+    test_txtrange(doc);
+}
+
 #define test_compatmode(a,b) _test_compatmode(__LINE__,a,b)
 static void _test_compatmode(unsigned  line, IHTMLDocument2 *doc2, const char *excompat)
 {
@@ -11060,7 +11085,7 @@ START_TEST(dom)
 
     run_domtest(doc_str1, test_doc_elem);
     run_domtest(doc_str1, test_get_set_attr);
-    run_domtest(doc_blank, test_txtrange);
+    run_domtest(doc_blank, test_range);
     if (winetest_interactive || ! is_ie_hardened()) {
         run_domtest(elem_test_str, test_elems);
         run_domtest(elem_test2_str, test_elems2);
