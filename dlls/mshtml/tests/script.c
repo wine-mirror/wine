@@ -3405,7 +3405,7 @@ static void run_from_path(const char *path, const char *opt)
 
     strcat(buf, path);
     if(opt)
-        strcat(buf, opt);
+        sprintf(buf + strlen(buf), "?%s", opt);
     url = a2bstr(buf);
     hres = CreateURLMoniker(NULL, url, &mon);
     SysFreeString(url);
@@ -3437,7 +3437,7 @@ static void run_script_as_http_with_mode(const char *script, const char *opt, co
             document_mode ? "\">" : "",
             script);
 
-    run_from_path("/index.html", opt);
+    run_from_path("/index.html", opt ? opt : script);
 }
 
 static void init_protocol_handler(void)
@@ -3481,15 +3481,15 @@ static void run_js_tests(void)
     run_script_as_http_with_mode("navigation.js", NULL, NULL);
     run_script_as_http_with_mode("navigation.js", NULL, "11");
 
-    run_script_as_http_with_mode("documentmode.js", "?0", NULL);
-    run_script_as_http_with_mode("documentmode.js", "?5", "5");
-    run_script_as_http_with_mode("documentmode.js", "?5", "6");
-    run_script_as_http_with_mode("documentmode.js", "?7", "7");
-    run_script_as_http_with_mode("documentmode.js", "?8", "8");
-    run_script_as_http_with_mode("documentmode.js", "?9", "9");
-    run_script_as_http_with_mode("documentmode.js", "?10", "10");
-    run_script_as_http_with_mode("documentmode.js", "?11", "11");
-    run_script_as_http_with_mode("documentmode.js", "?11", "edge");
+    run_script_as_http_with_mode("documentmode.js", "0", NULL);
+    run_script_as_http_with_mode("documentmode.js", "5", "5");
+    run_script_as_http_with_mode("documentmode.js", "5", "6");
+    run_script_as_http_with_mode("documentmode.js", "7", "7");
+    run_script_as_http_with_mode("documentmode.js", "8", "8");
+    run_script_as_http_with_mode("documentmode.js", "9", "9");
+    run_script_as_http_with_mode("documentmode.js", "10", "10");
+    run_script_as_http_with_mode("documentmode.js", "11", "11");
+    run_script_as_http_with_mode("documentmode.js", "11", "edge");
 
     run_script_as_http_with_mode("asyncscriptload.js", NULL, "9");
 }

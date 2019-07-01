@@ -42,11 +42,11 @@ function run_tests() {
 }
 
 function ok(b,m) {
-    return external.ok(b, m);
+    return external.ok(b, format_message(m));
 }
 
 function trace(m) {
-    external.trace(m);
+    external.trace(format_message(m));
 }
 
 function win_skip(m) {
@@ -59,10 +59,19 @@ function reportSuccess() {
 
 var todo_wine = {
     ok: function(b,m) {
-        return external.todo_wine_ok(b,m);
+        return external.todo_wine_ok(b, format_message(m));
     }
 };
 
 function todo_wine_if(expr) {
     return expr ? todo_wine : { ok: ok };
+}
+
+var file_prefix = document.location.pathname;
+if(document.location.search)
+    file_prefix += document.location.search;
+file_prefix += ": ";
+
+function format_message(msg) {
+    return file_prefix + msg;
 }
