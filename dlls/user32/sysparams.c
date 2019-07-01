@@ -305,6 +305,19 @@ static const WCHAR MONITOR_INTERFACE_PREFIX[] = {'\\','\\','\?','\\',0};
 static const WCHAR GUID_DEVINTERFACE_MONITOR[] = {'#','{','e','6','f','0','7','b','5','f','-','e','e','9','7','-',
                                                   '4','a','9','0','-','b','0','7','6','-','3','3','f','5','7','b','f','4','e','a','a','7','}',0};
 
+/* Cached monitor information */
+static MONITORINFOEXW *monitors;
+static UINT monitor_count;
+static FILETIME last_query_monitors_time;
+static CRITICAL_SECTION monitors_section;
+static CRITICAL_SECTION_DEBUG monitors_critsect_debug =
+{
+    0, 0, &monitors_section,
+    { &monitors_critsect_debug.ProcessLocksList, &monitors_critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": monitors_section") }
+};
+static CRITICAL_SECTION monitors_section = { &monitors_critsect_debug, -1 , 0, 0, 0, 0 };
+
 static HDC display_dc;
 static CRITICAL_SECTION display_dc_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -328,6 +341,7 @@ static DPI_AWARENESS dpi_awareness;
 static DPI_AWARENESS default_awareness = DPI_AWARENESS_UNAWARE;
 
 static HKEY volatile_base_key;
+static HKEY video_key;
 
 union sysparam_all_entry;
 
@@ -3723,15 +3737,85 @@ HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
     return MonitorFromRect( &rect, dwFlags );
 }
 
-BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, MONITORINFO *info )
+/* Return FALSE on failure and TRUE on success */
+static BOOL update_monitor_cache(void)
 {
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
-    WCHAR adapter_name[CCHDEVICENAME];
-    HDEVINFO devinfo;
-    DWORD error = 0;
-    HANDLE mutex;
+    HDEVINFO devinfo = INVALID_HANDLE_VALUE;
+    MONITORINFOEXW *monitor_array;
+    FILETIME filetime = {0};
+    DWORD device_count = 0;
+    HANDLE mutex = NULL;
+    DWORD state_flags;
+    BOOL ret = FALSE;
+    DWORD i = 0;
     DWORD type;
-    BOOL ret;
+
+    /* Update monitor cache from SetupAPI if it's outdated */
+    if (!video_key && RegOpenKeyW( HKEY_LOCAL_MACHINE, VIDEO_KEY, &video_key ))
+        return FALSE;
+    if (RegQueryInfoKeyW( video_key, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &filetime ))
+        return FALSE;
+    if (CompareFileTime( &filetime, &last_query_monitors_time ) < 1)
+        return TRUE;
+
+    mutex = get_display_device_init_mutex();
+    EnterCriticalSection( &monitors_section );
+    devinfo = SetupDiGetClassDevsW( &GUID_DEVCLASS_MONITOR, DISPLAY, NULL, DIGCF_PRESENT );
+
+    while (SetupDiEnumDeviceInfo( devinfo, i++, &device_data ))
+    {
+        /* Inactive monitors don't get enumerated */
+        if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_STATEFLAGS, &type,
+                                        (BYTE *)&state_flags, sizeof(DWORD), NULL, 0 ))
+            goto fail;
+        if (state_flags & DISPLAY_DEVICE_ACTIVE)
+            device_count++;
+    }
+
+    if (device_count && monitor_count < device_count)
+    {
+        monitor_array = heap_alloc( device_count * sizeof(*monitor_array) );
+        if (!monitor_array)
+            goto fail;
+        heap_free( monitors );
+        monitors = monitor_array;
+    }
+
+    for (i = 0, monitor_count = 0; SetupDiEnumDeviceInfo( devinfo, i, &device_data ); i++)
+    {
+        if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_STATEFLAGS, &type,
+                                        (BYTE *)&state_flags, sizeof(DWORD), NULL, 0 ))
+            goto fail;
+        if (!(state_flags & DISPLAY_DEVICE_ACTIVE))
+            continue;
+        if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type,
+                                        (BYTE *)&monitors[monitor_count].rcMonitor, sizeof(RECT), NULL, 0 ))
+            goto fail;
+        if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCWORK, &type,
+                                        (BYTE *)&monitors[monitor_count].rcWork, sizeof(RECT), NULL, 0 ))
+            goto fail;
+        if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, &type,
+                                        (BYTE *)monitors[monitor_count].szDevice, CCHDEVICENAME * sizeof(WCHAR), NULL, 0))
+            goto fail;
+        monitors[monitor_count].dwFlags =
+            !lstrcmpW( DEFAULT_ADAPTER_NAME, monitors[monitor_count].szDevice ) ? MONITORINFOF_PRIMARY : 0;
+
+        monitor_count++;
+    }
+
+    last_query_monitors_time = filetime;
+    ret = TRUE;
+fail:
+    SetupDiDestroyDeviceInfoList( devinfo );
+    LeaveCriticalSection( &monitors_section );
+    release_display_device_init_mutex( mutex );
+    return ret;
+}
+
+BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, MONITORINFO *info )
+{
+    UINT index = (UINT_PTR)handle - 1;
 
     TRACE("(%p, %p)\n", handle, info);
 
@@ -3747,32 +3831,26 @@ BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, MONITORINFO *info )
         return TRUE;
     }
 
-    /* Use SetupAPI to get monitors */
-    mutex = get_display_device_init_mutex();
-    devinfo = SetupDiGetClassDevsW( &GUID_DEVCLASS_MONITOR, DISPLAY, NULL, DIGCF_PRESENT );
-    if (SetupDiEnumDeviceInfo(devinfo, (DWORD)(UINT_PTR)handle - 1, &device_data))
+    if (!update_monitor_cache())
+        return FALSE;
+
+    EnterCriticalSection( &monitors_section );
+    if (index < monitor_count)
     {
-        SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type,
-                                   (BYTE *)&info->rcMonitor, sizeof(info->rcMonitor), NULL, 0 );
-        SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCWORK, &type,
-                                   (BYTE *)&info->rcWork, sizeof(info->rcWork), NULL, 0 );
-        SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, &type,
-                                   (BYTE *)adapter_name, sizeof(adapter_name), NULL, 0 );
-        info->dwFlags = !lstrcmpW( DEFAULT_ADAPTER_NAME, adapter_name ) ? MONITORINFOF_PRIMARY : 0;
+        info->rcMonitor = monitors[index].rcMonitor;
+        info->rcWork = monitors[index].rcWork;
+        info->dwFlags = monitors[index].dwFlags;
         if (info->cbSize >= sizeof(MONITORINFOEXW))
-            lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, adapter_name );
-        ret = TRUE;
+            lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, monitors[index].szDevice );
+        LeaveCriticalSection( &monitors_section );
+        return TRUE;
     }
     else
     {
-        error = ERROR_INVALID_MONITOR_HANDLE;
-        ret = FALSE;
-    }
-    SetupDiDestroyDeviceInfoList( devinfo );
-    release_display_device_init_mutex( mutex );
-    if (error)
+        LeaveCriticalSection( &monitors_section );
         SetLastError( ERROR_INVALID_MONITOR_HANDLE );
-    return ret;
+        return FALSE;
+    }
 }
 
 /***********************************************************************
@@ -3875,56 +3953,29 @@ static BOOL CALLBACK enum_mon_callback( HMONITOR monitor, HDC hdc, LPRECT rect, 
 
 BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp )
 {
-    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
-    USEROBJECTFLAGS flags;
-    HWINSTA winstation;
-    BOOL success = FALSE;
-    HDEVINFO devinfo;
-    RECT monitor_rect;
-    DWORD state_flags;
-    HANDLE mutex;
-    DWORD type;
-    DWORD i = 0;
+    RECT default_rect = {0, 0, 640, 480};
+    DWORD i;
 
     TRACE("(%p, %p, %p, 0x%lx)\n", hdc, rect, proc, lp);
 
-    /* Use SetupAPI to get monitors only if window station has visible display surfaces */
-    winstation = GetProcessWindowStation();
-    if (GetUserObjectInformationA( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL ) && (flags.dwFlags & WSF_VISIBLE))
+    if (update_monitor_cache())
     {
-        mutex = get_display_device_init_mutex();
-        devinfo = SetupDiGetClassDevsW( &GUID_DEVCLASS_MONITOR, DISPLAY, NULL, DIGCF_PRESENT );
-        while (SetupDiEnumDeviceInfo( devinfo, i++, &device_data ))
+        EnterCriticalSection( &monitors_section );
+        for (i = 0; i < monitor_count; i++)
         {
-            /* Inactive monitors don't get enumerated */
-            if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_STATEFLAGS, &type,
-                                            (BYTE *)&state_flags, sizeof(state_flags), NULL, 0 )
-                || !(state_flags & DISPLAY_DEVICE_ACTIVE))
-                continue;
-
-            if (SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type,
-                                           (BYTE *)&monitor_rect, sizeof(monitor_rect), NULL, 0 ))
+            if (!proc( (HMONITOR)(UINT_PTR)(i + 1), hdc, &monitors[i].rcMonitor, lp ))
             {
-                if (!proc( (HMONITOR)(UINT_PTR)i, hdc, &monitor_rect, lp ))
-                {
-                    SetupDiDestroyDeviceInfoList( devinfo );
-                    release_display_device_init_mutex( mutex );
-                    return FALSE;
-                }
-                success = TRUE;
+                LeaveCriticalSection( &monitors_section );
+                return FALSE;
             }
         }
-        SetupDiDestroyDeviceInfoList( devinfo );
-        release_display_device_init_mutex( mutex );
+        LeaveCriticalSection( &monitors_section );
+        return TRUE;
     }
 
     /* Fallback to report one monitor if using SetupAPI failed */
-    if (!success)
-    {
-        RECT default_rect = {0, 0, 640, 480};
-        if (!proc( NULLDRV_DEFAULT_HMONITOR, hdc, &default_rect, lp ))
-            return FALSE;
-    }
+    if (!proc( NULLDRV_DEFAULT_HMONITOR, hdc, &default_rect, lp ))
+        return FALSE;
     return TRUE;
 }
 
