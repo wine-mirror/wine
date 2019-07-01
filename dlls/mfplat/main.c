@@ -641,6 +641,7 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_MT_AUDIO_BLOCK_ALIGNMENT),
         X(MF_PD_PMPHOST_CONTEXT),
         X(MF_PD_APP_CONTEXT),
+        X(MF_PD_DURATION),
         X(MF_PD_TOTAL_FILE_SIZE),
         X(MF_PD_AUDIO_ENCODING_BITRATE),
         X(MF_PD_VIDEO_ENCODING_BITRATE),
