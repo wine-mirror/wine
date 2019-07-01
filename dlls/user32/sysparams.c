@@ -283,7 +283,8 @@ static const WCHAR BACKSLASH[] = {'\\',0};
 static const WCHAR DRIVER_DESC[] = {'D','r','i','v','e','r','D','e','s','c',0};
 static const WCHAR STATE_FLAGS[] = {'S','t','a','t','e','F','l','a','g','s',0};
 static const WCHAR GPU_ID[] = {'G','P','U','I','D',0};
-static const WCHAR DISPLAY[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};
+static const WCHAR DISPLAY[] = {'D','I','S','P','L','A','Y',0};
+static const WCHAR ADAPTER_PREFIX[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};
 static const WCHAR MONITOR_ID_VALUE_FMT[] = {'M','o','n','i','t','o','r','I','D','%','d',0};
 static const WCHAR VIDEO_KEY[] = {'H','A','R','D','W','A','R','E','\\',
                                   'D','E','V','I','C','E','M','A','P','\\',
@@ -3748,7 +3749,7 @@ BOOL CDECL nulldrv_GetMonitorInfo( HMONITOR handle, MONITORINFO *info )
 
     /* Use SetupAPI to get monitors */
     mutex = get_display_device_init_mutex();
-    devinfo = SetupDiGetClassDevsW( &GUID_DEVCLASS_MONITOR, NULL, NULL, 0 );
+    devinfo = SetupDiGetClassDevsW( &GUID_DEVCLASS_MONITOR, DISPLAY, NULL, DIGCF_PRESENT );
     if (SetupDiEnumDeviceInfo(devinfo, (DWORD)(UINT_PTR)handle - 1, &device_data))
     {
         SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type,
@@ -3892,7 +3893,7 @@ BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC pro
     if (GetUserObjectInformationA( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL ) && (flags.dwFlags & WSF_VISIBLE))
     {
         mutex = get_display_device_init_mutex();
-        devinfo = SetupDiGetClassDevsW( &GUID_DEVCLASS_MONITOR, NULL, NULL, 0 );
+        devinfo = SetupDiGetClassDevsW( &GUID_DEVCLASS_MONITOR, DISPLAY, NULL, DIGCF_PRESENT );
         while (SetupDiEnumDeviceInfo( devinfo, i++, &device_data ))
         {
             /* Inactive monitors don't get enumerated */
@@ -4062,10 +4063,10 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
     else
     {
         /* Check adapter name */
-        if (strncmpiW( device, DISPLAY, ARRAY_SIZE(DISPLAY) ))
+        if (strncmpiW( device, ADAPTER_PREFIX, ARRAY_SIZE(ADAPTER_PREFIX) ))
             goto done;
 
-        adapter_index = strtolW( device + ARRAY_SIZE(DISPLAY), NULL, 10 );
+        adapter_index = strtolW( device + ARRAY_SIZE(ADAPTER_PREFIX), NULL, 10 );
         sprintfW( key_nameW, VIDEO_VALUE_FMT, adapter_index - 1 );
 
         size = sizeof(bufferW);
