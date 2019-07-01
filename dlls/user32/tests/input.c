@@ -76,7 +76,6 @@ static struct {
     BOOL sendinput_broken;
 } key_status;
 
-static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 static BOOL (WINAPI *pGetCurrentInputMessageSource)( INPUT_MESSAGE_SOURCE *source );
 static BOOL (WINAPI *pGetPointerType)(UINT32, POINTER_INPUT_TYPE*);
 static int (WINAPI *pGetMouseMovePointsEx) (UINT, LPMOUSEMOVEPOINT, LPMOUSEMOVEPOINT, int, DWORD);
@@ -163,7 +162,6 @@ static void init_function_pointers(void)
     if (!(p ## func = (void*)GetProcAddress(hdll, #func))) \
       trace("GetProcAddress(%s) failed\n", #func)
 
-    GET_PROC(SendInput);
     GET_PROC(GetCurrentInputMessageSource);
     GET_PROC(GetMouseMovePointsEx);
     GET_PROC(GetPointerType);
@@ -249,7 +247,7 @@ static BOOL do_test( HWND hwnd, int seqnr, const KEV td[] )
     for( kmctr = 0; kmctr < MAXKEYEVENTS && expmsg[kmctr].message; kmctr++)
         ;
     ok( evtctr <= MAXKEYEVENTS, "evtctr is above MAXKEYEVENTS\n" );
-    if( evtctr != pSendInput(evtctr, &inputs[0], sizeof(INPUT)))
+    if( evtctr != SendInput(evtctr, &inputs[0], sizeof(INPUT)))
        ok (FALSE, "SendInput failed to send some events\n");
     i = 0;
     if (winetest_debug > 1)
@@ -954,7 +952,7 @@ static void test_Input_blackbox(void)
         i.u.ki.wScan = ii+1 /* useful for debugging */;
         i.u.ki.dwFlags = sendinput_test[ii].dwFlags;
         i.u.ki.wVk = sendinput_test[ii].wVk;
-        pSendInput(1, (INPUT*)&i, sizeof(TEST_INPUT));
+        SendInput(1, (INPUT*)&i, sizeof(TEST_INPUT));
         empty_message_queue();
         GetKeyboardState(ks2);
         compare_and_check(ii, ks1, ks2, &sendinput_test[ii], foreground);
@@ -997,7 +995,7 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
     inputs[0].u.ki.dwFlags = KEYEVENTF_UNICODE;
 
     reset_key_status();
-    pSendInput(1, (INPUT*)inputs, sizeof(INPUT));
+    SendInput(1, (INPUT*)inputs, sizeof(INPUT));
     while(PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)){
         if(msg.message == WM_KEYDOWN && msg.wParam == VK_PACKET){
             TranslateMessage(&msg);
@@ -1019,7 +1017,7 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
     inputs[1].u.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
 
     reset_key_status();
-    pSendInput(1, (INPUT*)(inputs+1), sizeof(INPUT));
+    SendInput(1, (INPUT*)(inputs+1), sizeof(INPUT));
     while(PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)){
         if(msg.message == WM_KEYDOWN && msg.wParam == VK_PACKET){
             TranslateMessage(&msg);
@@ -1045,7 +1043,7 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
 
     reset_key_status();
     key_status.expect_alt = TRUE;
-    pSendInput(2, (INPUT*)inputs, sizeof(INPUT));
+    SendInput(2, (INPUT*)inputs, sizeof(INPUT));
     while(PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)){
         if(msg.message == WM_SYSKEYDOWN && msg.wParam == VK_PACKET){
             TranslateMessage(&msg);
@@ -1072,7 +1070,7 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
 
     reset_key_status();
     key_status.expect_alt = TRUE;
-    pSendInput(2, (INPUT*)inputs, sizeof(INPUT));
+    SendInput(2, (INPUT*)inputs, sizeof(INPUT));
     while(PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)){
         if(msg.message == WM_SYSKEYDOWN && msg.wParam == VK_PACKET){
             TranslateMessage(&msg);
@@ -2758,7 +2756,7 @@ static void test_input_message_source(void)
     SendMessageA( hwnd, WM_KEYDOWN, 0, 0 );
     SendMessageA( hwnd, WM_MOUSEMOVE, 0, 0 );
 
-    pSendInput( 2, (INPUT *)inputs, sizeof(INPUT) );
+    SendInput( 2, (INPUT *)inputs, sizeof(INPUT) );
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
     {
         expect_src.deviceType = IMDT_KEYBOARD;
@@ -2834,15 +2832,10 @@ START_TEST(input)
     init_function_pointers();
     GetCursorPos( &pos );
 
-    if (pSendInput)
-    {
-        test_Input_blackbox();
-        test_Input_whitebox();
-        test_Input_unicode();
-        test_Input_mouse();
-    }
-    else win_skip("SendInput is not available\n");
-
+    test_Input_blackbox();
+    test_Input_whitebox();
+    test_Input_unicode();
+    test_Input_mouse();
     test_keynames();
     test_mouse_ll_hook();
     test_key_map();
