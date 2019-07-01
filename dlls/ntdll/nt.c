@@ -36,6 +36,9 @@
 #ifdef HAVE_MACH_MACHINE_H
 # include <mach/machine.h>
 #endif
+#ifdef HAVE_IOKIT_IOKITLIB_H
+# include <IOKit/IOKitLib.h>
+#endif
 
 #include <ctype.h>
 #include <string.h>
@@ -2218,6 +2221,80 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
     }
 }
 
+#elif defined(__APPLE__)
+static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len, ULONG *required_len)
+{
+    switch (sfti->ProviderSignature)
+    {
+    case RSMB:
+    {
+        io_service_t service;
+        CFDataRef data;
+        const UInt8 *ptr;
+        CFIndex len;
+        struct smbios_prologue *prologue;
+        BYTE major_version = 2, minor_version = 0;
+
+        if (!(service = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("AppleSMBIOS"))))
+        {
+            WARN("can't find AppleSMBIOS service\n");
+            return STATUS_NO_MEMORY;
+        }
+
+        if (!(data = IORegistryEntryCreateCFProperty(service, CFSTR("SMBIOS-EPS"), kCFAllocatorDefault, 0)))
+        {
+            WARN("can't find SMBIOS entry point\n");
+            IOObjectRelease(service);
+            return STATUS_NO_MEMORY;
+        }
+
+        len = CFDataGetLength(data);
+        ptr = CFDataGetBytePtr(data);
+        if (len >= 8 && !memcmp(ptr, "_SM_", 4))
+        {
+            major_version = ptr[6];
+            minor_version = ptr[7];
+        }
+        CFRelease(data);
+
+        if (!(data = IORegistryEntryCreateCFProperty(service, CFSTR("SMBIOS"), kCFAllocatorDefault, 0)))
+        {
+            WARN("can't find SMBIOS table\n");
+            IOObjectRelease(service);
+            return STATUS_NO_MEMORY;
+        }
+
+        len = CFDataGetLength(data);
+        ptr = CFDataGetBytePtr(data);
+        sfti->TableBufferLength = sizeof(*prologue) + len;
+        *required_len = sfti->TableBufferLength + FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer);
+        if (available_len < *required_len)
+        {
+            CFRelease(data);
+            IOObjectRelease(service);
+            return STATUS_BUFFER_TOO_SMALL;
+        }
+
+        prologue = (struct smbios_prologue *)sfti->TableBuffer;
+        prologue->calling_method = 0;
+        prologue->major_version = major_version;
+        prologue->minor_version = minor_version;
+        prologue->revision = 0;
+        prologue->length = sfti->TableBufferLength - sizeof(*prologue);
+
+        memcpy(sfti->TableBuffer + sizeof(*prologue), ptr, len);
+
+        CFRelease(data);
+        IOObjectRelease(service);
+        return STATUS_SUCCESS;
+    }
+    default:
+    {
+        FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION provider %08x\n", sfti->ProviderSignature);
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    }
+}
 #else
 
 static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len, ULONG *required_len)
