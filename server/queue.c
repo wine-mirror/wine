@@ -1803,7 +1803,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
     msg->lparam    = (input->kbd.scan << 16) | 1u; /* repeat count */
     if (origin == IMO_INJECTED) msg_data->flags = LLKHF_INJECTED;
 
-    if (input->kbd.flags & KEYEVENTF_UNICODE)
+    if (input->kbd.flags & KEYEVENTF_UNICODE && !vkey)
     {
         msg->wparam = VK_PACKET;
     }

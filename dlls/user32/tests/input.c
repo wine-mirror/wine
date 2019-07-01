@@ -1105,10 +1105,8 @@ static void test_unicode_keys(HWND hwnd, HHOOK hook)
 
     if (!key_status.sendinput_broken)
     {
-    todo_wine {
         ok(key_status.last_key_down == 0x51, "Unexpected key down %#x.\n", key_status.last_key_down);
         ok(key_status.last_key_up == 0x51, "Unexpected key up %#x.\n", key_status.last_key_up);
-    }
         if (hook)
             todo_wine
             ok(key_status.last_hook_up == 0x23, "Unexpected hook message %#x.\n", key_status.last_hook_up);
