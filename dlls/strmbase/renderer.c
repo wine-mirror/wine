@@ -460,7 +460,6 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
             This->pFuncsTable->pfnOnStartStreaming(This);
         if (This->filter.state == State_Stopped)
             BaseRendererImpl_ClearPendingSample(This);
-        SetEvent(This->RenderEvent);
         This->filter.state = State_Running;
     }
 out:
