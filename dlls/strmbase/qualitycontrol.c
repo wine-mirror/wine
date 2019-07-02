@@ -171,46 +171,6 @@ static BOOL QualityControlRender_IsLate(QualityControlImpl *This, REFERENCE_TIME
     return FALSE;
 }
 
-HRESULT QualityControlRender_WaitFor(QualityControlImpl *This, IMediaSample *sample, HANDLE ev)
-{
-    REFERENCE_TIME start = -1, stop = -1, jitter = 0;
-
-    TRACE("%p %p %p\n", This, sample, ev);
-
-    This->current_rstart = This->current_rstop = -1;
-    This->current_jitter = 0;
-    if (!This->clock || FAILED(IMediaSample_GetTime(sample, &start, &stop)))
-        return S_OK;
-
-    if (start >= 0) {
-        REFERENCE_TIME now;
-        IReferenceClock_GetTime(This->clock, &now);
-        now -= This->clockstart;
-
-        jitter = now - start;
-        if (jitter <= -10000) {
-            DWORD_PTR cookie;
-            IReferenceClock_AdviseTime(This->clock, This->clockstart, start, (HEVENT)ev, &cookie);
-            WaitForSingleObject(ev, INFINITE);
-            IReferenceClock_Unadvise(This->clock, cookie);
-        }
-    }
-    else
-        start = stop = -1;
-    This->current_rstart = start;
-    This->current_rstop = stop > start ? stop : start;
-    This->current_jitter = jitter;
-    This->is_dropped = QualityControlRender_IsLate(This, jitter, start, stop);
-    TRACE("Dropped: %i %i %i %i\n", This->is_dropped, (int)(start/10000), (int)(stop/10000), (int)(jitter / 10000));
-    if (This->is_dropped) {
-        This->dropped++;
-        if (!This->qos_handled)
-            return S_FALSE;
-    } else
-        This->rendered++;
-    return S_OK;
-}
-
 void QualityControlRender_DoQOS(QualityControlImpl *priv)
 {
     REFERENCE_TIME start, stop, jitter, pt, entered, left, duration;
@@ -324,11 +284,30 @@ void QualityControlRender_DoQOS(QualityControlImpl *priv)
 }
 
 
-void QualityControlRender_BeginRender(QualityControlImpl *This)
+void QualityControlRender_BeginRender(QualityControlImpl *This, REFERENCE_TIME start, REFERENCE_TIME stop)
 {
-    TRACE("%p\n", This);
-
     This->start = -1;
+
+    This->current_rstart = start;
+    This->current_rstop = max(stop, start);
+
+    if (start >= 0)
+    {
+        REFERENCE_TIME now;
+        IReferenceClock_GetTime(This->clock, &now);
+        This->current_jitter = (now - This->clockstart) - start;
+    }
+    else
+        This->current_jitter = 0;
+
+    /* FIXME: This isn't correct; we don't drop samples, nor should. */
+    This->is_dropped = QualityControlRender_IsLate(This, This->current_jitter, start, stop);
+    TRACE("Dropped: %i %i %i %i\n", This->is_dropped, (int)(start/10000),
+            (int)(stop/10000), (int)(This->current_jitter / 10000));
+    if (This->is_dropped)
+        This->dropped++;
+    else
+        This->rendered++;
 
     if (!This->clock)
         return;

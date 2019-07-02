@@ -59,9 +59,8 @@ HRESULT WINAPI QualityControlImpl_SetSink(IQualityControl *iface, IQualityContro
 
 void QualityControlRender_Start(QualityControlImpl *This, REFERENCE_TIME tStart);
 void QualityControlRender_SetClock(QualityControlImpl *This, IReferenceClock *clock);
-HRESULT QualityControlRender_WaitFor(QualityControlImpl *This, IMediaSample *sample, HANDLE ev);
 void QualityControlRender_DoQOS(QualityControlImpl *priv);
-void QualityControlRender_BeginRender(QualityControlImpl *This);
+void QualityControlRender_BeginRender(QualityControlImpl *This, REFERENCE_TIME start, REFERENCE_TIME stop);
 void QualityControlRender_EndRender(QualityControlImpl *This);
 
 HRESULT enum_pins_create(BaseFilter *base, IEnumPins **enum_pins);

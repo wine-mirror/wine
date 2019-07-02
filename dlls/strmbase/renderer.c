@@ -345,7 +345,7 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
     }
 
     /* Wait for render Time */
-    if (SUCCEEDED(IMediaSample_GetTime(pSample, &start, &stop)))
+    if (This->filter.pClock && SUCCEEDED(IMediaSample_GetTime(pSample, &start, &stop)))
     {
         hr = S_FALSE;
         RendererPosPassThru_RegisterMediaTime(This->pPosition, start);
@@ -356,12 +356,26 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
             ;/* Do not wait: drop through */
         else if (hr == S_FALSE)
         {
+            REFERENCE_TIME now;
+            DWORD_PTR cookie;
+
             if (This->pFuncsTable->pfnOnWaitStart)
                 This->pFuncsTable->pfnOnWaitStart(This);
 
-            LeaveCriticalSection(&This->csRenderLock);
-            hr = QualityControlRender_WaitFor(This->qcimpl, pSample, This->RenderEvent);
-            EnterCriticalSection(&This->csRenderLock);
+            IReferenceClock_GetTime(This->filter.pClock, &now);
+
+            if (now - This->filter.rtStreamStart - start <= -10000)
+            {
+                IReferenceClock_AdviseTime(This->filter.pClock, This->filter.rtStreamStart,
+                        start, (HEVENT)This->RenderEvent, &cookie);
+
+                LeaveCriticalSection(&This->csRenderLock);
+
+                WaitForSingleObject(This->RenderEvent, INFINITE);
+                IReferenceClock_Unadvise(This->filter.pClock, cookie);
+
+                EnterCriticalSection(&This->csRenderLock);
+            }
 
             if (This->pFuncsTable->pfnOnWaitEnd)
                 This->pFuncsTable->pfnOnWaitEnd(This);
@@ -373,10 +387,12 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
             return S_OK;
         }
     }
+    else
+        start = stop = -1;
 
     if (SUCCEEDED(hr))
     {
-        QualityControlRender_BeginRender(This->qcimpl);
+        QualityControlRender_BeginRender(This->qcimpl, start, stop);
         hr = This->pFuncsTable->pfnDoRenderSample(This, pSample);
         QualityControlRender_EndRender(This->qcimpl);
     }
