@@ -540,7 +540,9 @@ typedef struct BaseRendererTag
 	BaseInputPin sink;
 	IUnknown *pPosition;
 	CRITICAL_SECTION csRenderLock;
-	HANDLE evComplete;
+    /* Signaled when the filter has completed a state change. The filter waits
+     * for this event in IBaseFilter::GetState(). */
+	HANDLE state_event;
 	HANDLE RenderEvent;
 	IMediaSample *pMediaSample;
 

@@ -727,7 +727,7 @@ static HRESULT WINAPI DSoundRender_Pause(IBaseFilter * iface)
         if (This->renderer.filter.state == State_Stopped)
         {
             if (This->renderer.sink.pin.pConnectedTo)
-                ResetEvent(This->renderer.evComplete);
+                ResetEvent(This->renderer.state_event);
             This->renderer.sink.end_of_stream = 0;
         }
 

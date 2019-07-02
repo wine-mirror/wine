@@ -51,7 +51,6 @@ typedef struct VideoRendererImpl
 
     DWORD ThreadID;
     HANDLE hEvent;
-/* hEvent == evComplete? */
     BOOL ThreadResult;
     RECT SourceRect;
     RECT DestRect;

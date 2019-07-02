@@ -266,7 +266,7 @@ HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtb
 
     InitializeCriticalSection(&filter->csRenderLock);
     filter->csRenderLock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": BaseRenderer.csRenderLock");
-    filter->evComplete = CreateEventW(NULL, TRUE, TRUE, NULL);
+    filter->state_event = CreateEventW(NULL, TRUE, TRUE, NULL);
     filter->RenderEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     filter->pMediaSample = NULL;
 
@@ -290,7 +290,7 @@ void strmbase_renderer_cleanup(BaseRenderer *filter)
     DeleteCriticalSection(&filter->csRenderLock);
 
     BaseRendererImpl_ClearPendingSample(filter);
-    CloseHandle(filter->evComplete);
+    CloseHandle(filter->state_event);
     CloseHandle(filter->RenderEvent);
     QualityControlImpl_Destroy(filter->qcimpl);
     strmbase_filter_cleanup(&filter->filter);
@@ -341,7 +341,7 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
         if (This->pFuncsTable->pfnOnReceiveFirstSample)
             This->pFuncsTable->pfnOnReceiveFirstSample(This, pSample);
 
-        SetEvent(This->evComplete);
+        SetEvent(This->state_event);
     }
 
     /* Wait for render Time */
@@ -401,7 +401,7 @@ HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface)
         if (This->pFuncsTable->pfnOnStopStreaming)
             This->pFuncsTable->pfnOnStopStreaming(This);
         This->filter.state = State_Stopped;
-        SetEvent(This->evComplete);
+        SetEvent(This->state_event);
         SetEvent(This->RenderEvent);
     }
     LeaveCriticalSection(&This->csRenderLock);
@@ -420,7 +420,7 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     if (This->filter.state == State_Running)
         goto out;
 
-    SetEvent(This->evComplete);
+    SetEvent(This->state_event);
 
     if (This->sink.pin.pConnectedTo)
     {
@@ -466,7 +466,7 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
             if (This->filter.state == State_Stopped)
             {
                 if (This->sink.pin.pConnectedTo)
-                    ResetEvent(This->evComplete);
+                    ResetEvent(This->state_event);
                 This->sink.end_of_stream = FALSE;
             }
             else if (This->pFuncsTable->pfnOnStopStreaming)
@@ -503,7 +503,7 @@ HRESULT WINAPI BaseRendererImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsT
 
     TRACE("(%p)->(%d, %p)\n", This, dwMilliSecsTimeout, pState);
 
-    if (WaitForSingleObject(This->evComplete, dwMilliSecsTimeout) == WAIT_TIMEOUT)
+    if (WaitForSingleObject(This->state_event, dwMilliSecsTimeout) == WAIT_TIMEOUT)
         hr = VFW_S_STATE_INTERMEDIATE;
     else
         hr = S_OK;
@@ -531,7 +531,7 @@ HRESULT WINAPI BaseRendererImpl_EndOfStream(BaseRenderer* iface)
         }
     }
     RendererPosPassThru_EOS(iface->pPosition);
-    SetEvent(iface->evComplete);
+    SetEvent(iface->state_event);
 
     return hr;
 }
