@@ -20,24 +20,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <errno.h>
 #include <time.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-#include <sys/poll.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -74,7 +59,7 @@ static CRITICAL_SECTION TIME_cbcrst = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static    HANDLE                TIME_hMMTimer;
 static    BOOL                  TIME_TimeToDie = TRUE;
-static    int                   TIME_fdWake[2] = { -1, -1 };
+static    CONDITION_VARIABLE    TIME_cv;
 
 /* link timer at the appropriate spot in the list */
 static inline void link_timer( WINE_TIMERENTRY *timer )
@@ -115,8 +100,6 @@ static inline void link_timer( WINE_TIMERENTRY *timer )
  */
 #define MMSYSTIME_MININTERVAL (1)
 #define MMSYSTIME_MAXINTERVAL (65535)
-
-#ifdef HAVE_POLL
 
 /**************************************************************************
  *           TIME_MMSysTimeCallback
@@ -195,12 +178,8 @@ static int TIME_MMSysTimeCallback(void)
  */
 static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 {
-    int sleep_time, ret;
-    char readme[16];
-    struct pollfd pfd;
-
-    pfd.fd = TIME_fdWake[0];
-    pfd.events = POLLIN;
+    int sleep_time;
+    BOOL ret;
 
     TRACE("Starting main winmm thread\n");
 
@@ -214,20 +193,12 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
         if (sleep_time == 0)
             continue;
 
-        LeaveCriticalSection(&WINMM_cs);
-        ret = poll(&pfd, 1, sleep_time);
-        EnterCriticalSection(&WINMM_cs);
-
-        if (ret < 0)
+        ret = SleepConditionVariableCS(&TIME_cv, &WINMM_cs, sleep_time);
+        if (!ret && GetLastError() != ERROR_TIMEOUT)
         {
-            if (errno != EINTR && errno != EAGAIN)
-            {
-                ERR("Unexpected error in poll: %s(%d)\n", strerror(errno), errno);
-                break;
-            }
+            ERR("Unexpected error in poll: %s(%d)\n", strerror(errno), errno);
+            break;
          }
-
-        while (ret > 0) ret = read(TIME_fdWake[0], readme, sizeof(readme));
     }
     CloseHandle(TIME_hMMTimer);
     TIME_hMMTimer = NULL;
@@ -242,34 +213,14 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
  */
 static void TIME_MMTimeStart(void)
 {
+    HMODULE mod;
     TIME_TimeToDie = 0;
+    if (TIME_hMMTimer) return;
 
-    if (TIME_fdWake[0] < 0) {
-        if (pipe(TIME_fdWake) < 0) {
-            TIME_fdWake[0] = TIME_fdWake[1] = -1;
-            ERR("Cannot create pipe: %s\n", strerror(errno));
-        } else {
-            fcntl(TIME_fdWake[0], F_SETFL, O_NONBLOCK);
-            fcntl(TIME_fdWake[1], F_SETFL, O_NONBLOCK);
-        }
-    }
-
-    if (!TIME_hMMTimer) {
-        HMODULE mod;
-        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)TIME_MMSysTimeThread, &mod);
-        TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, mod, 0, NULL);
-        SetThreadPriority(TIME_hMMTimer, THREAD_PRIORITY_TIME_CRITICAL);
-    }
+    GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)TIME_MMSysTimeThread, &mod);
+    TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, mod, 0, NULL);
+    SetThreadPriority(TIME_hMMTimer, THREAD_PRIORITY_TIME_CRITICAL);
 }
-
-#else  /* HAVE_POLL */
-
-static void TIME_MMTimeStart(void)
-{
-    FIXME( "not starting system thread\n" );
-}
-
-#endif  /* HAVE_POLL */
 
 /**************************************************************************
  * 				TIME_MMTimeStop
@@ -282,8 +233,6 @@ void	TIME_MMTimeStop(void)
             ERR("Timer still active?!\n");
             CloseHandle(TIME_hMMTimer);
         }
-        close(TIME_fdWake[0]);
-        close(TIME_fdWake[1]);
         DeleteCriticalSection(&TIME_cbcrst);
     }
 }
@@ -312,7 +261,6 @@ MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
     WORD 		wNewID = 0;
     LPWINE_TIMERENTRY	lpNewTimer;
     LPWINE_TIMERENTRY	lpTimer;
-    const char c = 'c';
 
     TRACE("(%u, %u, %p, %08lX, %04X);\n", wDelay, wResol, lpFunc, dwUser, wFlags);
 
@@ -346,7 +294,7 @@ MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
     LeaveCriticalSection(&WINMM_cs);
 
     /* Wake the service thread in case there is work to be done */
-    write(TIME_fdWake[1], &c, sizeof(c));
+    WakeConditionVariable(&TIME_cv);
 
     TRACE("=> %u\n", wNewID + 1);
 
@@ -373,9 +321,8 @@ MMRESULT WINAPI timeKillEvent(UINT wID)
 	}
     }
     if (list_empty(&timer_list)) {
-        char c = 'q';
         TIME_TimeToDie = 1;
-        write(TIME_fdWake[1], &c, sizeof(c));
+        WakeConditionVariable(&TIME_cv);
     }
     LeaveCriticalSection(&WINMM_cs);
 
