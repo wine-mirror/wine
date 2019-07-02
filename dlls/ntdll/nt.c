@@ -79,10 +79,14 @@ struct smbios_prologue {
     DWORD length;
 };
 
-struct smbios_bios {
+struct smbios_header {
     BYTE type;
     BYTE length;
     WORD handle;
+};
+
+struct smbios_bios {
+    struct smbios_header hdr;
     BYTE vendor;
     BYTE version;
     WORD start;
@@ -92,9 +96,7 @@ struct smbios_bios {
 };
 
 struct smbios_system {
-    BYTE type;
-    BYTE length;
-    WORD handle;
+    struct smbios_header hdr;
     BYTE vendor;
     BYTE product;
     BYTE version;
@@ -102,9 +104,7 @@ struct smbios_system {
 };
 
 struct smbios_board {
-    BYTE type;
-    BYTE length;
-    WORD handle;
+    struct smbios_header hdr;
     BYTE vendor;
     BYTE product;
     BYTE version;
@@ -112,9 +112,7 @@ struct smbios_board {
 };
 
 struct smbios_chassis {
-    BYTE type;
-    BYTE length;
-    WORD handle;
+    struct smbios_header hdr;
     BYTE vendor;
     BYTE shape;
     BYTE version;
@@ -2139,9 +2137,9 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
 
             string_count = 0;
             bios = (struct smbios_bios*)buffer;
-            bios->type = 0;
-            bios->length = sizeof(struct smbios_bios);
-            bios->handle = 0;
+            bios->hdr.type = 0;
+            bios->hdr.length = sizeof(struct smbios_bios);
+            bios->hdr.handle = 0;
             bios->vendor = bios_vendor_len ? ++string_count : 0;
             bios->version = bios_version_len ? ++string_count : 0;
             bios->start = 0;
@@ -2158,9 +2156,9 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
 
             string_count = 0;
             system = (struct smbios_system*)buffer;
-            system->type = 1;
-            system->length = sizeof(struct smbios_system);
-            system->handle = 0;
+            system->hdr.type = 1;
+            system->hdr.length = sizeof(struct smbios_system);
+            system->hdr.handle = 0;
             system->vendor = system_vendor_len ? ++string_count : 0;
             system->product = system_product_len ? ++string_count : 0;
             system->version = system_version_len ? ++string_count : 0;
@@ -2176,9 +2174,9 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
 
             string_count = 0;
             board = (struct smbios_board*)buffer;
-            board->type = 2;
-            board->length = sizeof(struct smbios_board);
-            board->handle = 0;
+            board->hdr.type = 2;
+            board->hdr.length = sizeof(struct smbios_board);
+            board->hdr.handle = 0;
             board->vendor = board_vendor_len ? ++string_count : 0;
             board->product = board_product_len ? ++string_count : 0;
             board->version = board_version_len ? ++string_count : 0;
@@ -2194,9 +2192,9 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
 
             string_count = 0;
             chassis = (struct smbios_chassis*)buffer;
-            chassis->type = 3;
-            chassis->length = sizeof(struct smbios_chassis);
-            chassis->handle = 0;
+            chassis->hdr.type = 3;
+            chassis->hdr.length = sizeof(struct smbios_chassis);
+            chassis->hdr.handle = 0;
             chassis->vendor = chassis_vendor_len ? ++string_count : 0;
             chassis->shape = 0x2; /* unknown */
             chassis->version = chassis_version_len ? ++string_count : 0;
