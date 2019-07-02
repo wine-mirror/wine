@@ -17,9 +17,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #define NONAMELESSUNION
 #include "d3d11_private.h"
 
