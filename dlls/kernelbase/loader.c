@@ -577,3 +577,133 @@ DWORD WINAPI DECLSPEC_HOTPATCH SizeofResource( HINSTANCE module, HRSRC rsrc )
     if (!rsrc) return 0;
     return ((IMAGE_RESOURCE_DATA_ENTRY *)rsrc)->Size;
 }
+
+
+/***********************************************************************
+ * Activation contexts
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *          ActivateActCtx    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH ActivateActCtx( HANDLE context, ULONG_PTR *cookie )
+{
+    return set_ntstatus( RtlActivateActivationContext( 0, context, cookie ));
+}
+
+
+/***********************************************************************
+ *          AddRefActCtx    (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH AddRefActCtx( HANDLE context )
+{
+    RtlAddRefActivationContext( context );
+}
+
+
+/***********************************************************************
+ *          CreateActCtxW    (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateActCtxW( PCACTCTXW ctx )
+{
+    NTSTATUS status;
+    HANDLE context;
+
+    TRACE( "%p %08x\n", ctx, ctx ? ctx->dwFlags : 0 );
+
+    if ((status = RtlCreateActivationContext( &context, ctx )))
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return INVALID_HANDLE_VALUE;
+    }
+    return context;
+}
+
+
+/***********************************************************************
+ *          DeactivateActCtx    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH DeactivateActCtx( DWORD flags, ULONG_PTR cookie )
+{
+    RtlDeactivateActivationContext( flags, cookie );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *          FindActCtxSectionGuid    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH FindActCtxSectionGuid( DWORD flags, const GUID *ext_guid, ULONG id,
+                                                     const GUID *guid, PACTCTX_SECTION_KEYED_DATA info )
+{
+    return set_ntstatus( RtlFindActivationContextSectionGuid( flags, ext_guid, id, guid, info ));
+}
+
+
+/***********************************************************************
+ *          FindActCtxSectionStringW    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH FindActCtxSectionStringW( DWORD flags, const GUID *ext_guid, ULONG id,
+                                                        LPCWSTR str, PACTCTX_SECTION_KEYED_DATA info )
+{
+    UNICODE_STRING us;
+
+    if (!info)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    RtlInitUnicodeString( &us, str );
+    return set_ntstatus( RtlFindActivationContextSectionString( flags, ext_guid, id, &us, info ));
+}
+
+
+/***********************************************************************
+ *          GetCurrentActCtx    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetCurrentActCtx( HANDLE *pcontext )
+{
+    return set_ntstatus( RtlGetActiveActivationContext( pcontext ));
+}
+
+
+/***********************************************************************
+ *          QueryActCtxSettingsW    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH QueryActCtxSettingsW( DWORD flags, HANDLE ctx, const WCHAR *ns,
+                                                    const WCHAR *settings, WCHAR *buffer, SIZE_T size,
+                                                    SIZE_T *written )
+{
+    return set_ntstatus( RtlQueryActivationContextApplicationSettings( flags, ctx, ns, settings,
+                                                                       buffer, size, written ));
+}
+
+
+/***********************************************************************
+ *          QueryActCtxW    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH QueryActCtxW( DWORD flags, HANDLE context, PVOID inst, ULONG class,
+                                            PVOID buffer, SIZE_T size, SIZE_T *written )
+{
+    return set_ntstatus( RtlQueryInformationActivationContext( flags, context, inst, class,
+                                                               buffer, size, written ));
+}
+
+
+/***********************************************************************
+ *          ReleaseActCtx    (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH ReleaseActCtx( HANDLE context )
+{
+    RtlReleaseActivationContext( context );
+}
+
+
+/***********************************************************************
+ *          ZombifyActCtx    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH ZombifyActCtx( HANDLE context )
+{
+    return set_ntstatus( RtlZombifyActivationContext( context ));
+}

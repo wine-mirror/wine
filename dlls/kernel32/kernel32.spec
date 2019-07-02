@@ -135,7 +135,7 @@
 
 @ stdcall AcquireSRWLockExclusive(ptr) ntdll.RtlAcquireSRWLockExclusive
 @ stdcall AcquireSRWLockShared(ptr) ntdll.RtlAcquireSRWLockShared
-@ stdcall ActivateActCtx(ptr ptr)
+@ stdcall -import ActivateActCtx(ptr ptr)
 @ stdcall AddAtomA(str)
 @ stdcall AddAtomW(wstr)
 @ stdcall AddConsoleAliasA(str str str)
@@ -144,7 +144,7 @@
 # @ stub AddIntegrityLabelToBoundaryDescriptor
 # @ stub AddLocalAlternateComputerNameA
 # @ stub AddLocalAlternateComputerNameW
-@ stdcall AddRefActCtx(ptr)
+@ stdcall -import AddRefActCtx(ptr)
 # @ stub AddSIDToBoundaryDescriptor
 # @ stub AddSecureMemoryCacheCallback
 @ stdcall AddVectoredContinueHandler(long ptr) ntdll.RtlAddVectoredContinueHandler
@@ -264,7 +264,7 @@
 @ stdcall CopyFileW(wstr wstr long)
 @ stdcall CopyLZFile(long long) LZCopy
 @ stdcall CreateActCtxA(ptr)
-@ stdcall CreateActCtxW(ptr)
+@ stdcall -import CreateActCtxW(ptr)
 # @ stub CreateBoundaryDescriptorA
 # @ stub CreateBoundaryDescriptorW
 @ stdcall CreateConsoleScreenBuffer(long long ptr long ptr)
@@ -346,7 +346,7 @@
 @ stdcall -import CreateWaitableTimerExW(ptr wstr long long)
 @ stdcall -import CreateWaitableTimerW(ptr long wstr)
 # @ stub CtrlRoutine
-@ stdcall DeactivateActCtx(long long)
+@ stdcall -import DeactivateActCtx(long long)
 @ stdcall DebugActiveProcess(long)
 @ stdcall DebugActiveProcessStop(long)
 @ stdcall DebugBreak()
@@ -470,9 +470,9 @@
 @ stdcall FillConsoleOutputAttribute(long long long long ptr)
 @ stdcall FillConsoleOutputCharacterA(long long long long ptr)
 @ stdcall FillConsoleOutputCharacterW(long long long long ptr)
-@ stdcall FindActCtxSectionGuid(long ptr long ptr ptr)
+@ stdcall -import FindActCtxSectionGuid(long ptr long ptr ptr)
 @ stdcall FindActCtxSectionStringA(long ptr long str ptr)
-@ stdcall FindActCtxSectionStringW(long ptr long wstr ptr)
+@ stdcall -import FindActCtxSectionStringW(long ptr long wstr ptr)
 @ stdcall FindAtomA(str)
 @ stdcall FindAtomW(wstr)
 @ stdcall FindClose(long)
@@ -621,7 +621,7 @@
 @ stdcall GetCurrencyFormatA(long long str ptr ptr long)
 @ stdcall GetCurrencyFormatEx(wstr long wstr ptr ptr long)
 @ stdcall GetCurrencyFormatW(long long wstr ptr ptr long)
-@ stdcall GetCurrentActCtx(ptr)
+@ stdcall -import GetCurrentActCtx(ptr)
 @ stdcall GetCurrentConsoleFont(long long ptr)
 # @ stub GetCurrentConsoleFontEx
 @ stdcall GetCurrentDirectoryA(long ptr)
@@ -1156,8 +1156,8 @@
 @ stdcall -import PulseEvent(long)
 @ stdcall PurgeComm(long long)
 @ stdcall -i386 -private -norelay QT_Thunk() krnl386.exe16.QT_Thunk
-@ stdcall QueryActCtxSettingsW(long ptr wstr wstr ptr long ptr)
-@ stdcall QueryActCtxW(long ptr ptr long ptr long ptr)
+@ stdcall -import QueryActCtxSettingsW(long ptr wstr wstr ptr long ptr)
+@ stdcall -import QueryActCtxW(long ptr ptr long ptr long ptr)
 @ stdcall QueryDepthSList(ptr) ntdll.RtlQueryDepthSList
 @ stdcall QueryDosDeviceA(str ptr long)
 @ stdcall QueryDosDeviceW(wstr ptr long)
@@ -1255,7 +1255,7 @@
 @ stub RegisterWowBaseHandlers
 @ stub RegisterWowExec
 @ stdcall ReinitializeCriticalSection(ptr)
-@ stdcall ReleaseActCtx(ptr)
+@ stdcall -import ReleaseActCtx(ptr)
 @ stdcall -import ReleaseMutex(long)
 @ stdcall ReleaseMutexWhenCallbackReturns(ptr long) ntdll.TpCallbackReleaseMutexOnCompletion
 @ stdcall -import ReleaseSemaphore(long long ptr)
@@ -1633,7 +1633,7 @@
 @ stdcall WriteProfileStringA(str str str)
 @ stdcall WriteProfileStringW(wstr wstr wstr)
 @ stdcall WriteTapemark(ptr long long long)
-@ stdcall ZombifyActCtx(ptr)
+@ stdcall -import ZombifyActCtx(ptr)
 @ stdcall -arch=x86_64 -private __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
 @ stdcall -arch=arm,x86_64 -private -norelay __chkstk() ntdll.__chkstk
 @ stub _DebugOut

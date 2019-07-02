@@ -8,7 +8,7 @@
 @ stdcall AcquireSRWLockExclusive(ptr) ntdll.RtlAcquireSRWLockExclusive
 @ stdcall AcquireSRWLockShared(ptr) ntdll.RtlAcquireSRWLockShared
 # @ stub AcquireStateLock
-@ stdcall ActivateActCtx(ptr ptr) kernel32.ActivateActCtx
+@ stdcall ActivateActCtx(ptr ptr)
 @ stdcall AddAccessAllowedAce(ptr long long ptr)
 @ stdcall AddAccessAllowedAceEx(ptr long long long ptr)
 @ stdcall AddAccessAllowedObjectAce(ptr long long long ptr ptr ptr)
@@ -21,7 +21,7 @@
 @ stdcall AddAuditAccessObjectAce(ptr long long long ptr ptr ptr long long)
 @ stdcall AddDllDirectory(wstr) kernel32.AddDllDirectory
 @ stdcall AddMandatoryAce(ptr long long long ptr)
-@ stdcall AddRefActCtx(ptr) kernel32.AddRefActCtx
+@ stdcall AddRefActCtx(ptr)
 # @ stub AddResourceAttributeAce
 # @ stub AddSIDToBoundaryDescriptor
 # @ stub AddScopedPolicyIDAce
@@ -171,7 +171,7 @@
 # @ stub -arch=x86_64 CopyMemoryNonTemporal
 @ stdcall CopySid(long ptr ptr)
 # @ stub CouldMultiUserAppsBehaviorBePossibleForPackage
-@ stdcall CreateActCtxW(ptr) kernel32.CreateActCtxW
+@ stdcall CreateActCtxW(ptr)
 # @ stub CreateAppContainerToken
 # @ stub CreateBoundaryDescriptorW
 @ stdcall CreateConsoleScreenBuffer(long long ptr long ptr) kernel32.CreateConsoleScreenBuffer
@@ -236,7 +236,7 @@
 @ stdcall CreateWellKnownSid(long ptr ptr ptr)
 # @ stub CtrlRoutine
 # @ stub CveEventWrite
-@ stdcall DeactivateActCtx(long long) kernel32.DeactivateActCtx
+@ stdcall DeactivateActCtx(long long)
 @ stdcall DebugActiveProcess(long) kernel32.DebugActiveProcess
 @ stdcall DebugActiveProcessStop(long) kernel32.DebugActiveProcessStop
 @ stdcall DebugBreak() kernel32.DebugBreak
@@ -348,8 +348,8 @@
 @ stdcall FillConsoleOutputAttribute(long long long long ptr) kernel32.FillConsoleOutputAttribute
 @ stdcall FillConsoleOutputCharacterA(long long long long ptr) kernel32.FillConsoleOutputCharacterA
 @ stdcall FillConsoleOutputCharacterW(long long long long ptr) kernel32.FillConsoleOutputCharacterW
-@ stdcall FindActCtxSectionGuid(long ptr long ptr ptr) kernel32.FindActCtxSectionGuid
-@ stdcall FindActCtxSectionStringW(long ptr long wstr ptr) kernel32.FindActCtxSectionStringW
+@ stdcall FindActCtxSectionGuid(long ptr long ptr ptr)
+@ stdcall FindActCtxSectionStringW(long ptr long wstr ptr)
 @ stdcall FindClose(long) kernel32.FindClose
 @ stdcall FindCloseChangeNotification(long) kernel32.FindCloseChangeNotification
 @ stdcall FindFirstChangeNotificationA(str long long) kernel32.FindFirstChangeNotificationA
@@ -450,7 +450,7 @@
 @ stdcall GetConsoleTitleW(ptr long) kernel32.GetConsoleTitleW
 @ stdcall GetCurrencyFormatEx(wstr long wstr ptr ptr long) kernel32.GetCurrencyFormatEx
 @ stdcall GetCurrencyFormatW(long long wstr ptr ptr long) kernel32.GetCurrencyFormatW
-@ stdcall GetCurrentActCtx(ptr) kernel32.GetCurrentActCtx
+@ stdcall GetCurrentActCtx(ptr)
 # @ stub GetCurrentApplicationUserModelId
 @ stdcall GetCurrentDirectoryA(long ptr) kernel32.GetCurrentDirectoryA
 @ stdcall GetCurrentDirectoryW(long ptr) kernel32.GetCurrentDirectoryW
@@ -1192,8 +1192,8 @@
 @ stdcall PulseEvent(long)
 @ stdcall PurgeComm(long long) kernel32.PurgeComm
 @ stdcall QISearch(ptr ptr ptr ptr)
-@ stdcall QueryActCtxSettingsW(long ptr wstr wstr ptr long ptr) kernel32.QueryActCtxSettingsW
-@ stdcall QueryActCtxW(long ptr ptr long ptr long ptr) kernel32.QueryActCtxW
+@ stdcall QueryActCtxSettingsW(long ptr wstr wstr ptr long ptr)
+@ stdcall QueryActCtxW(long ptr ptr long ptr long ptr)
 @ stdcall QueryDepthSList(ptr) ntdll.RtlQueryDepthSList
 @ stdcall QueryDosDeviceW(wstr ptr long) kernel32.QueryDosDeviceW
 @ stdcall QueryFullProcessImageNameA(ptr long ptr ptr) kernel32.QueryFullProcessImageNameA
@@ -1323,7 +1323,7 @@
 # @ stub RegisterStateLock
 @ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr) ntdll.EtwRegisterTraceGuidsW
 @ stdcall RegisterWaitForSingleObjectEx(long ptr ptr long long)
-@ stdcall ReleaseActCtx(ptr) kernel32.ReleaseActCtx
+@ stdcall ReleaseActCtx(ptr)
 @ stdcall ReleaseMutex(long)
 @ stdcall ReleaseMutexWhenCallbackReturns(ptr long) ntdll.TpCallbackReleaseMutexOnCompletion
 @ stdcall ReleaseSRWLockExclusive(ptr) ntdll.RtlReleaseSRWLockExclusive
@@ -1732,7 +1732,7 @@
 @ stdcall WriteProcessMemory(long ptr ptr long ptr) kernel32.WriteProcessMemory
 # @ stub WriteStateAtomValue
 # @ stub WriteStateContainerValue
-@ stdcall ZombifyActCtx(ptr) kernel32.ZombifyActCtx
+@ stdcall ZombifyActCtx(ptr)
 # @ stub _AddMUIStringToCache
 # @ stub _GetMUIStringFromCache
 # @ stub _OpenMuiStringCache
