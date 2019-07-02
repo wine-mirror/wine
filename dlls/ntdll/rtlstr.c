@@ -63,7 +63,6 @@ void CDECL __wine_init_codepages( const union cptable *ansi, const union cptable
     oem_table = oem;
     unix_table = ucp;
     NlsAnsiCodePage = ansi->info.codepage;
-    init_directories();
 }
 
 int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int dstlen)

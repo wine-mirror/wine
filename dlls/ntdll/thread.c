@@ -245,6 +245,7 @@ void thread_init(void)
         exit(1);
     }
 
+    init_directories();
     init_user_process_params( info_size );
 
     /* initialize time values in user_shared_data */

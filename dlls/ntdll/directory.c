@@ -2191,80 +2191,27 @@ static const WCHAR driversetcW[] = {'s','y','s','t','e','m','3','2','\\','d','r'
 static const WCHAR logfilesW[] = {'s','y','s','t','e','m','3','2','\\','l','o','g','f','i','l','e','s',0};
 static const WCHAR spoolW[] = {'s','y','s','t','e','m','3','2','\\','s','p','o','o','l',0};
 static const WCHAR system32W[] = {'s','y','s','t','e','m','3','2',0};
-static const WCHAR syswow64W[] = {'s','y','s','w','o','w','6','4',0};
 static const WCHAR sysnativeW[] = {'s','y','s','n','a','t','i','v','e',0};
 static const WCHAR regeditW[] = {'r','e','g','e','d','i','t','.','e','x','e',0};
-static const WCHAR wow_regeditW[] = {'s','y','s','w','o','w','6','4','\\','r','e','g','e','d','i','t','.','e','x','e',0};
 
 static struct
 {
     const WCHAR *source;
-    const WCHAR *dos_target;
     const char *unix_target;
 } redirects[] =
 {
-    { catrootW, NULL, NULL },
-    { catroot2W, NULL, NULL },
-    { driversstoreW, NULL, NULL },
-    { driversetcW, NULL, NULL },
-    { logfilesW, NULL, NULL },
-    { spoolW, NULL, NULL },
-    { system32W, syswow64W, NULL },
-    { sysnativeW, system32W, NULL },
-    { regeditW, wow_regeditW, NULL }
+    { catrootW, NULL },
+    { catroot2W, NULL },
+    { driversstoreW, NULL },
+    { driversetcW, NULL },
+    { logfilesW, NULL },
+    { spoolW, NULL },
+    { system32W, "syswow64" },
+    { sysnativeW, "system32" },
+    { regeditW, "syswow64/regedit.exe" }
 };
 
 static unsigned int nb_redirects;
-
-
-/***********************************************************************
- *           get_redirect_target
- *
- * Find the target unix name for a redirected dir.
- */
-static const char *get_redirect_target( const char *windows_dir, const WCHAR *name )
-{
-    int used_default, len, pos, win_len = strlen( windows_dir );
-    char *unix_name, *unix_target = NULL;
-    NTSTATUS status;
-
-    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, win_len + MAX_DIR_ENTRY_LEN + 2 )))
-        return NULL;
-    memcpy( unix_name, windows_dir, win_len );
-    pos = win_len;
-
-    while (*name)
-    {
-        const WCHAR *end, *next;
-
-        for (end = name; *end; end++) if (IS_SEPARATOR(*end)) break;
-        for (next = end; *next; next++) if (!IS_SEPARATOR(*next)) break;
-
-        status = find_file_in_dir( unix_name, pos, name, end - name, FALSE, NULL );
-        if (status == STATUS_OBJECT_PATH_NOT_FOUND && !*next)  /* not finding last element is ok */
-        {
-            len = ntdll_wcstoumbs( 0, name, end - name, unix_name + pos + 1,
-                                   MAX_DIR_ENTRY_LEN - (pos - win_len), NULL, &used_default );
-            if (len > 0 && !used_default)
-            {
-                unix_name[pos] = '/';
-                pos += len + 1;
-                unix_name[pos] = 0;
-                break;
-            }
-        }
-        if (status) goto done;
-        pos += strlen( unix_name + pos );
-        name = next;
-    }
-
-    if ((unix_target = RtlAllocateHeap( GetProcessHeap(), 0, pos - win_len )))
-        memcpy( unix_target, unix_name + win_len + 1, pos - win_len );
-
-done:
-    RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-    return unix_target;
-}
 
 
 /***********************************************************************
@@ -2276,7 +2223,6 @@ static void init_redirects(void)
     const char *config_dir = wine_get_config_dir();
     char *dir;
     struct stat st;
-    unsigned int i;
 
     if (!(dir = RtlAllocateHeap( GetProcessHeap(), 0, strlen(config_dir) + sizeof(windows_dir) ))) return;
     strcpy( dir, config_dir );
@@ -2286,12 +2232,6 @@ static void init_redirects(void)
         windir.dev = st.st_dev;
         windir.ino = st.st_ino;
         nb_redirects = ARRAY_SIZE( redirects );
-        for (i = 0; i < nb_redirects; i++)
-        {
-            if (!redirects[i].dos_target) continue;
-            redirects[i].unix_target = get_redirect_target( dir, redirects[i].dos_target );
-            TRACE( "%s -> %s\n", debugstr_w(redirects[i].source), redirects[i].unix_target );
-        }
     }
     else ERR( "%s: %s\n", dir, strerror(errno) );
     RtlFreeHeap( GetProcessHeap(), 0, dir );
