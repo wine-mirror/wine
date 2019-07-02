@@ -215,6 +215,9 @@ NTSTATUS PNP_RemoveDevice(minidriver *minidriver, DEVICE_OBJECT *device, IRP *ir
         return rc;
     }
 
+    if (ext->is_mouse)
+        IoSetDeviceInterfaceState(&ext->mouse_link_name, FALSE);
+
     if (irp)
         rc = minidriver->PNPDispatch(device, irp);
     HID_DeleteDevice(device);
@@ -294,6 +297,8 @@ NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
             rc = minidriver->PNPDispatch(device, irp);
 
             IoSetDeviceInterfaceState(&ext->link_name, TRUE);
+            if (ext->is_mouse)
+                IoSetDeviceInterfaceState(&ext->mouse_link_name, TRUE);
             return rc;
         }
         case IRP_MN_REMOVE_DEVICE:

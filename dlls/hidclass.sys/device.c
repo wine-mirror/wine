@@ -33,6 +33,7 @@
 
 #include "initguid.h"
 #include "devguid.h"
+#include "ntddmou.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
@@ -120,6 +121,14 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
     {
         FIXME( "failed to register device interface %x\n", status );
         return status;
+    }
+
+    /* FIXME: This should probably be done in mouhid.sys. */
+    if (ext->preparseData->caps.UsagePage == HID_USAGE_PAGE_GENERIC
+            && ext->preparseData->caps.Usage == HID_USAGE_GENERIC_MOUSE)
+    {
+        if (!IoRegisterDeviceInterface(device, &GUID_DEVINTERFACE_MOUSE, NULL, &ext->mouse_link_name))
+            ext->is_mouse = TRUE;
     }
 
     return STATUS_SUCCESS;
