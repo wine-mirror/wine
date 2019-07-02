@@ -207,11 +207,6 @@ static inline struct d2d_device_context *impl_from_ID2D1DeviceContext(ID2D1Devic
     return CONTAINING_RECORD(iface, struct d2d_device_context, ID2D1DeviceContext_iface);
 }
 
-static inline struct d2d_device_context *impl_from_ID2D1RenderTarget(ID2D1RenderTarget *iface)
-{
-    return CONTAINING_RECORD(iface, struct d2d_device_context, ID2D1DeviceContext_iface);
-}
-
 static HRESULT STDMETHODCALLTYPE d2d_device_context_inner_QueryInterface(IUnknown *iface, REFIID iid, void **out)
 {
     struct d2d_device_context *context = impl_from_IUnknown(iface);
