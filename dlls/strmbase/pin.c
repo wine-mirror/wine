@@ -347,11 +347,6 @@ static inline BaseOutputPin *impl_BaseOutputPin_from_IPin( IPin *iface )
     return CONTAINING_RECORD(iface, BaseOutputPin, pin.IPin_iface);
 }
 
-static inline BaseOutputPin *impl_BaseOutputPin_from_BasePin( BasePin *iface )
-{
-    return CONTAINING_RECORD(iface, BaseOutputPin, pin);
-}
-
 HRESULT WINAPI BaseOutputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
     BaseOutputPin *This = impl_BaseOutputPin_from_IPin(iface);
