@@ -535,21 +535,26 @@ HRESULT WINAPI BaseControlVideo_Destroy(BaseControlVideo *pControlVideo);
 /* BaseRenderer Filter */
 typedef struct BaseRendererTag
 {
-	BaseFilter filter;
+    BaseFilter filter;
 
-	BaseInputPin sink;
-	IUnknown *pPosition;
-	CRITICAL_SECTION csRenderLock;
+    BaseInputPin sink;
+    IUnknown *pPosition;
+    CRITICAL_SECTION csRenderLock;
     /* Signaled when the filter has completed a state change. The filter waits
      * for this event in IBaseFilter::GetState(). */
-	HANDLE state_event;
-	HANDLE RenderEvent;
-	IMediaSample *pMediaSample;
+    HANDLE state_event;
+    /* Signaled when the sample presentation time occurs. The streaming thread
+     * waits for this event in Receive() if applicable. */
+    HANDLE advise_event;
+    /* Signaled when a flush or state change occurs, i.e. anything that needs
+     * to immediately unblock the streaming thread. */
+    HANDLE flush_event;
+    IMediaSample *pMediaSample;
 
-	IQualityControl *pQSink;
-	struct QualityControlImpl *qcimpl;
+    IQualityControl *pQSink;
+    struct QualityControlImpl *qcimpl;
 
-	const struct BaseRendererFuncTable * pFuncsTable;
+    const struct BaseRendererFuncTable *pFuncsTable;
 } BaseRenderer;
 
 typedef HRESULT (WINAPI *BaseRenderer_CheckMediaType)(BaseRenderer *This, const AM_MEDIA_TYPE *pmt);

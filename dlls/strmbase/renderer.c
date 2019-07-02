@@ -267,7 +267,8 @@ HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtb
     InitializeCriticalSection(&filter->csRenderLock);
     filter->csRenderLock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": BaseRenderer.csRenderLock");
     filter->state_event = CreateEventW(NULL, TRUE, TRUE, NULL);
-    filter->RenderEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    filter->advise_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    filter->flush_event = CreateEventW(NULL, TRUE, TRUE, NULL);
     filter->pMediaSample = NULL;
 
     QualityControlImpl_Create(&filter->sink.pin.IPin_iface, &filter->filter.IBaseFilter_iface, &filter->qcimpl);
@@ -291,7 +292,8 @@ void strmbase_renderer_cleanup(BaseRenderer *filter)
 
     BaseRendererImpl_ClearPendingSample(filter);
     CloseHandle(filter->state_event);
-    CloseHandle(filter->RenderEvent);
+    CloseHandle(filter->advise_event);
+    CloseHandle(filter->flush_event);
     QualityControlImpl_Destroy(filter->qcimpl);
     strmbase_filter_cleanup(&filter->filter);
 }
@@ -366,12 +368,14 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
 
             if (now - This->filter.rtStreamStart - start <= -10000)
             {
+                HANDLE handles[2] = {This->advise_event, This->flush_event};
+
                 IReferenceClock_AdviseTime(This->filter.pClock, This->filter.rtStreamStart,
-                        start, (HEVENT)This->RenderEvent, &cookie);
+                        start, (HEVENT)This->advise_event, &cookie);
 
                 LeaveCriticalSection(&This->csRenderLock);
 
-                WaitForSingleObject(This->RenderEvent, INFINITE);
+                WaitForMultipleObjects(2, handles, FALSE, INFINITE);
                 IReferenceClock_Unadvise(This->filter.pClock, cookie);
 
                 EnterCriticalSection(&This->csRenderLock);
@@ -418,7 +422,7 @@ HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface)
             This->pFuncsTable->pfnOnStopStreaming(This);
         This->filter.state = State_Stopped;
         SetEvent(This->state_event);
-        SetEvent(This->RenderEvent);
+        SetEvent(This->flush_event);
     }
     LeaveCriticalSection(&This->csRenderLock);
 
@@ -489,7 +493,7 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
 
             if (This->filter.state == State_Stopped)
                 BaseRendererImpl_ClearPendingSample(This);
-            ResetEvent(This->RenderEvent);
+            ResetEvent(This->flush_event);
             This->filter.state = State_Paused;
         }
     }
@@ -555,7 +559,7 @@ HRESULT WINAPI BaseRendererImpl_BeginFlush(BaseRenderer* iface)
 {
     TRACE("(%p)\n", iface);
     BaseRendererImpl_ClearPendingSample(iface);
-    SetEvent(iface->RenderEvent);
+    SetEvent(iface->flush_event);
     return S_OK;
 }
 
@@ -564,7 +568,7 @@ HRESULT WINAPI BaseRendererImpl_EndFlush(BaseRenderer* iface)
     TRACE("(%p)\n", iface);
     QualityControlRender_Start(iface->qcimpl, iface->filter.rtStreamStart);
     RendererPosPassThru_ResetMediaTime(iface->pPosition);
-    ResetEvent(iface->RenderEvent);
+    ResetEvent(iface->flush_event);
     return S_OK;
 }
 

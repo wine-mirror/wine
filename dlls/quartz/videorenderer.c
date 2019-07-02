@@ -679,7 +679,7 @@ static HRESULT WINAPI VideoRenderer_Pause(IBaseFilter * iface)
             VideoRenderer_AutoShowWindow(This);
         }
 
-        ResetEvent(This->renderer.RenderEvent);
+        ResetEvent(This->renderer.flush_event);
         This->renderer.filter.state = State_Paused;
     }
     LeaveCriticalSection(&This->renderer.csRenderLock);
