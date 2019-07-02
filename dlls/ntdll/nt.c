@@ -101,6 +101,7 @@ struct smbios_system {
     BYTE product;
     BYTE version;
     BYTE serial;
+    BYTE uuid[16];
 };
 
 struct smbios_board {
@@ -2064,6 +2065,45 @@ static size_t get_smbios_string(const char *path, char *str, size_t size)
     return len;
 }
 
+static void get_system_uuid( GUID *uuid )
+{
+    static const unsigned char hex[] =
+    {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,        /* 0x00 */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,        /* 0x10 */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,        /* 0x20 */
+        0,1,2,3,4,5,6,7,8,9,0,0,0,0,0,0,        /* 0x30 */
+        0,10,11,12,13,14,15,0,0,0,0,0,0,0,0,0,  /* 0x40 */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,        /* 0x50 */
+        0,10,11,12,13,14,15                     /* 0x60 */
+    };
+    int fd;
+
+    memset( uuid, 0xff, sizeof(*uuid) );
+    if ((fd = open( "/var/lib/dbus/machine-id", O_RDONLY )) != -1)
+    {
+        unsigned char buf[32], *p = buf;
+        if (read( fd, buf, sizeof(buf) ) == sizeof(buf))
+        {
+            uuid->Data1 = hex[p[6]] << 28 | hex[p[7]] << 24 | hex[p[4]] << 20 | hex[p[5]] << 16 |
+                          hex[p[2]] << 12 | hex[p[3]] << 8  | hex[p[0]] << 4  | hex[p[1]];
+
+            uuid->Data2 = hex[p[10]] << 12 | hex[p[11]] << 8 | hex[p[8]]  << 4 | hex[p[9]];
+            uuid->Data3 = hex[p[14]] << 12 | hex[p[15]] << 8 | hex[p[12]] << 4 | hex[p[13]];
+
+            uuid->Data4[0] = hex[p[16]] << 4 | hex[p[17]];
+            uuid->Data4[1] = hex[p[18]] << 4 | hex[p[19]];
+            uuid->Data4[2] = hex[p[20]] << 4 | hex[p[21]];
+            uuid->Data4[3] = hex[p[22]] << 4 | hex[p[23]];
+            uuid->Data4[4] = hex[p[24]] << 4 | hex[p[25]];
+            uuid->Data4[5] = hex[p[26]] << 4 | hex[p[27]];
+            uuid->Data4[6] = hex[p[28]] << 4 | hex[p[29]];
+            uuid->Data4[7] = hex[p[30]] << 4 | hex[p[31]];
+        }
+        close( fd );
+    }
+}
+
 static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len, ULONG *required_len)
 {
     switch (sfti->ProviderSignature)
@@ -2163,6 +2203,7 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             system->product = system_product_len ? ++string_count : 0;
             system->version = system_version_len ? ++string_count : 0;
             system->serial = system_serial_len ? ++string_count : 0;
+            get_system_uuid( (GUID *)system->uuid );
             buffer += sizeof(struct smbios_system);
 
             copy_smbios_string(&buffer, system_vendor, system_vendor_len);
