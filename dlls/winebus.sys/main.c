@@ -33,13 +33,16 @@
 #include "setupapi.h"
 #include "cfgmgr32.h"
 #include "winioctl.h"
+#include "hidusage.h"
 #include "ddk/wdm.h"
 #include "ddk/hidport.h"
+#include "ddk/hidtypes.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
 
 #include "bus.h"
+#include "controller.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
@@ -65,6 +68,8 @@ static const WORD PID_XBOX_CONTROLLERS[] =  {
 };
 
 static DRIVER_OBJECT *driver_obj;
+
+static DEVICE_OBJECT *mouse_obj;
 
 HANDLE driver_key;
 
@@ -767,6 +772,76 @@ static void WINAPI driver_unload(DRIVER_OBJECT *driver)
     NtClose(driver_key);
 }
 
+static NTSTATUS mouse_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *ret_length)
+{
+    TRACE("buffer %p, length %u.\n", buffer, length);
+
+    *ret_length = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
+    if (length < sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL))
+        return STATUS_BUFFER_TOO_SMALL;
+
+    memcpy(buffer, REPORT_HEADER, sizeof(REPORT_HEADER));
+    memcpy(buffer + sizeof(REPORT_HEADER), REPORT_TAIL, sizeof(REPORT_TAIL));
+    buffer[IDX_HEADER_PAGE] = HID_USAGE_PAGE_GENERIC;
+    buffer[IDX_HEADER_USAGE] = HID_USAGE_GENERIC_MOUSE;
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS mouse_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
+{
+    static const WCHAR nameW[] = {'W','i','n','e',' ','H','I','D',' ','m','o','u','s','e',0};
+    if (index != HID_STRING_ID_IPRODUCT)
+        return STATUS_NOT_IMPLEMENTED;
+    if (length < ARRAY_SIZE(nameW))
+        return STATUS_BUFFER_TOO_SMALL;
+    strcpyW(buffer, nameW);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS mouse_begin_report_processing(DEVICE_OBJECT *device)
+{
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS mouse_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+{
+    FIXME("id %u, stub!\n", id);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS mouse_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+{
+    FIXME("id %u, stub!\n", id);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS mouse_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+{
+    FIXME("id %u, stub!\n", id);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static const platform_vtbl mouse_vtbl =
+{
+    .get_reportdescriptor = mouse_get_reportdescriptor,
+    .get_string = mouse_get_string,
+    .begin_report_processing = mouse_begin_report_processing,
+    .set_output_report = mouse_set_output_report,
+    .get_feature_report = mouse_get_feature_report,
+    .set_feature_report = mouse_set_feature_report,
+};
+
+static void mouse_device_create(void)
+{
+    static const GUID wine_mouse_class = {0xdfe2580e,0x52fd,0x453d,{0xa2,0xc1,0x33,0x81,0xf2,0x32,0x68,0x4c}};
+    static const WCHAR busidW[] = {'W','I','N','E','M','O','U','S','E',0};
+
+    mouse_obj = bus_create_hid_device(busidW, 0, 0, -1, 0, 0, busidW, FALSE,
+            &wine_mouse_class, &mouse_vtbl, 0);
+    IoInvalidateDeviceRelations(mouse_obj, BusRelations);
+}
+
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
     static const WCHAR SDL_enabledW[] = {'E','n','a','b','l','e',' ','S','D','L',0};
@@ -787,6 +862,8 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     driver->MajorFunction[IRP_MJ_PNP] = common_pnp_dispatch;
     driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = hid_internal_dispatch;
     driver->DriverUnload = driver_unload;
+
+    mouse_device_create();
 
     if (check_bus_option(&SDL_enabled, 1))
     {
