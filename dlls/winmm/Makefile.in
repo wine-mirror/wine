@@ -3,6 +3,8 @@ MODULE    = winmm.dll
 IMPORTLIB = winmm
 IMPORTS   = uuid user32 advapi32 ole32 msacm32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	driver.c \
 	joystick.c \
