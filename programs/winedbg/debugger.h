@@ -235,8 +235,8 @@ struct dbg_process
     const WCHAR*		imageName;
     struct list           	threads;
     struct backend_cpu*         be_cpu;
-    BOOL                        continue_on_first_exception : 1,
-                                active_debuggee : 1;
+    HANDLE                      event_on_first_exception;
+    BOOL                        active_debuggee;
     struct dbg_breakpoint       bp[MAX_BREAKPOINTS];
     unsigned                    next_bp;
     struct dbg_delayed_bp*      delayed_bp;

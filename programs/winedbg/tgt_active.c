@@ -334,9 +334,11 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
                    de->dwProcessId, de->dwThreadId,
                    de->u.Exception.ExceptionRecord.ExceptionCode);
 
-        if (dbg_curr_process->continue_on_first_exception)
+        if (dbg_curr_process->event_on_first_exception)
         {
-            dbg_curr_process->continue_on_first_exception = FALSE;
+            SetEvent(dbg_curr_process->event_on_first_exception);
+            CloseHandle(dbg_curr_process->event_on_first_exception);
+            dbg_curr_process->event_on_first_exception = NULL;
             if (!DBG_IVAR(BreakOnAttach)) break;
         }
         if (dbg_fetch_context())
@@ -788,13 +790,7 @@ enum dbg_start  dbg_active_attach(int argc, char* argv[])
             SetEvent((HANDLE)evt);
             return start_error_init;
         }
-        dbg_curr_process->continue_on_first_exception = TRUE;
-        if (!SetEvent((HANDLE)evt))
-        {
-            WINE_ERR("Invalid event handle: %lx\n", evt);
-            return start_error_init;
-        }
-        CloseHandle((HANDLE)evt);
+        dbg_curr_process->event_on_first_exception = (HANDLE)evt;
     }
     else return start_error_parse;
 
