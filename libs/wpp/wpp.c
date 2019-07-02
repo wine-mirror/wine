@@ -197,7 +197,7 @@ int wpp_parse( const char *input, FILE *output )
     add_special_defines();
 
     if (!input) pp_status.file = stdin;
-    else if (!(pp_status.file = wpp_callbacks->open(input, 1)))
+    else if (!(pp_status.file = fopen(input, "rt")))
     {
         ppy_error("Could not open %s\n", input);
         del_special_defines();
@@ -217,7 +217,7 @@ int wpp_parse( const char *input, FILE *output )
 
     if (input)
     {
-	wpp_callbacks->close(pp_status.file);
+	fclose(pp_status.file);
 	free(pp_status.input);
     }
     /* Clean if_stack, it could remain dirty on errors */
@@ -226,10 +226,4 @@ int wpp_parse( const char *input, FILE *output )
     del_cmdline_defines();
     pp_pop_define_state();
     return ret;
-}
-
-
-void wpp_set_callbacks( const struct wpp_callbacks *callbacks )
-{
-    wpp_callbacks = callbacks;
 }
