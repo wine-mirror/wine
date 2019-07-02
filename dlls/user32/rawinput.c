@@ -85,20 +85,73 @@ static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int 
     return TRUE;
 }
 
+static struct hid_device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
+{
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
+    struct hid_device *device;
+    HANDLE file;
+    WCHAR *path;
+    DWORD size;
+
+    SetupDiGetDeviceInterfaceDetailW(set, iface, NULL, 0, &size, NULL);
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+    {
+        ERR("Failed to get device path, error %#x.\n", GetLastError());
+        return FALSE;
+    }
+    if (!(detail = heap_alloc(size)))
+    {
+        ERR("Failed to allocate memory.\n");
+        return FALSE;
+    }
+    detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
+    SetupDiGetDeviceInterfaceDetailW(set, iface, detail, size, NULL, NULL);
+
+    TRACE("Found HID device %s.\n", debugstr_w(detail->DevicePath));
+
+    if (!(path = heap_strdupW(detail->DevicePath)))
+    {
+        ERR("Failed to allocate memory.\n");
+        heap_free(detail);
+        return NULL;
+    }
+    heap_free(detail);
+
+    file = CreateFileW(path, GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        ERR("Failed to open device file %s, error %u.\n", debugstr_w(path), GetLastError());
+        heap_free(path);
+        return NULL;
+    }
+
+    if (!array_reserve((void **)&hid_devices, &hid_devices_max, hid_devices_count + 1, sizeof(*hid_devices)))
+    {
+        ERR("Failed to allocate memory.\n");
+        CloseHandle(file);
+        heap_free(path);
+        return NULL;
+    }
+
+    device = &hid_devices[hid_devices_count++];
+    device->path = path;
+    device->file = file;
+
+    return device;
+}
+
 static void find_hid_devices(void)
 {
     static ULONGLONG last_check;
 
     SP_DEVICE_INTERFACE_DATA iface = { sizeof(iface) };
-    SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
-    DWORD detail_size, needed;
+    struct hid_device *device;
     HIDD_ATTRIBUTES attr;
-    DWORD idx, didx;
     HIDP_CAPS caps;
     GUID hid_guid;
     HDEVINFO set;
-    HANDLE file;
-    WCHAR *path;
+    DWORD idx;
 
     if (GetTickCount64() - last_check < 2000)
         return;
@@ -108,87 +161,40 @@ static void find_hid_devices(void)
 
     set = SetupDiGetClassDevsW(&hid_guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
 
-    detail_size = sizeof(*detail) + (MAX_PATH * sizeof(WCHAR));
-    if (!(detail = heap_alloc(detail_size)))
-        return;
-    detail->cbSize = sizeof(*detail);
-
     EnterCriticalSection(&hid_devices_cs);
 
     /* destroy previous list */
-    for (didx = 0; didx < hid_devices_count; ++didx)
+    for (idx = 0; idx < hid_devices_count; ++idx)
     {
-        CloseHandle(hid_devices[didx].file);
-        heap_free(hid_devices[didx].path);
+        CloseHandle(hid_devices[idx].file);
+        heap_free(hid_devices[idx].path);
     }
 
-    didx = 0;
+    hid_devices_count = 0;
     for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &hid_guid, idx, &iface); ++idx)
     {
-        if (!SetupDiGetDeviceInterfaceDetailW(set, &iface, detail, detail_size, &needed, NULL))
-        {
-            if (!(detail = heap_realloc(detail, needed)))
-            {
-                ERR("Failed to allocate memory.\n");
-                goto done;
-            }
-            detail_size = needed;
-
-            SetupDiGetDeviceInterfaceDetailW(set, &iface, detail, detail_size, NULL, NULL);
-        }
-
-        if (!(path = heap_strdupW(detail->DevicePath)))
-        {
-            ERR("Failed to allocate memory.\n");
-            goto done;
-        }
-
-        file = CreateFileW(path, GENERIC_READ | GENERIC_WRITE,
-                FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
-        if (file == INVALID_HANDLE_VALUE)
-        {
-            ERR("Failed to open device file %s, error %u.\n", debugstr_w(path), GetLastError());
-            heap_free(path);
+        if (!(device = add_device(set, &iface)))
             continue;
-        }
-
-        if (!array_reserve((void **)&hid_devices, &hid_devices_max, didx + 1, sizeof(*hid_devices)))
-        {
-            ERR("Failed to allocate memory.\n");
-            CloseHandle(file);
-            heap_free(path);
-            goto done;
-        }
-
-        TRACE("Found HID device %s.\n", debugstr_w(path));
-
-        hid_devices[didx].path = path;
-        hid_devices[didx].file = file;
 
         attr.Size = sizeof(HIDD_ATTRIBUTES);
-        if (!HidD_GetAttributes(file, &attr))
-            WARN_(rawinput)("Failed to get attributes.\n");
-        hid_devices[didx].info.dwVendorId = attr.VendorID;
-        hid_devices[didx].info.dwProductId = attr.ProductID;
-        hid_devices[didx].info.dwVersionNumber = attr.VersionNumber;
+        if (!HidD_GetAttributes(device->file, &attr))
+            WARN("Failed to get attributes.\n");
+        device->info.dwVendorId = attr.VendorID;
+        device->info.dwProductId = attr.ProductID;
+        device->info.dwVersionNumber = attr.VersionNumber;
 
-        if (!HidD_GetPreparsedData(file, &hid_devices[didx].data))
-            WARN_(rawinput)("Failed to get preparsed data.\n");
+        if (!HidD_GetPreparsedData(device->file, &device->data))
+            WARN("Failed to get preparsed data.\n");
 
-        if (!HidP_GetCaps(hid_devices[didx].data, &caps))
-            WARN_(rawinput)("Failed to get caps.\n");
+        if (!HidP_GetCaps(device->data, &caps))
+            WARN("Failed to get caps.\n");
 
-        hid_devices[didx].info.usUsagePage = caps.UsagePage;
-        hid_devices[didx].info.usUsage = caps.Usage;
-
-        didx++;
+        device->info.usUsagePage = caps.UsagePage;
+        device->info.usUsage = caps.Usage;
     }
-    hid_devices_count = didx;
 
-done:
     LeaveCriticalSection(&hid_devices_cs);
     SetupDiDestroyDeviceInfoList(set);
-    heap_free(detail);
 }
 
 /***********************************************************************
