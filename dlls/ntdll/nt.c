@@ -2093,7 +2093,7 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             bios_version_len = get_smbios_string("/sys/class/dmi/id/bios_version", S(bios_version));
             bios_date_len = get_smbios_string("/sys/class/dmi/id/bios_date", S(bios_date));
             system_vendor_len = get_smbios_string("/sys/class/dmi/id/sys_vendor", S(system_vendor));
-            system_product_len = get_smbios_string("/sys/class/dmi/id/product", S(system_product));
+            system_product_len = get_smbios_string("/sys/class/dmi/id/product_name", S(system_product));
             system_version_len = get_smbios_string("/sys/class/dmi/id/product_version", S(system_version));
             system_serial_len = get_smbios_string("/sys/class/dmi/id/product_serial", S(system_serial));
             board_vendor_len = get_smbios_string("/sys/class/dmi/id/board_vendor", S(board_vendor));
