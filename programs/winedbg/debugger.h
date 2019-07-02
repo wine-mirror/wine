@@ -431,7 +431,7 @@ extern enum dbg_start   dbg_active_launch(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_auto(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_minidump(int argc, char* argv[]);
 extern void             dbg_active_wait_for_first_exception(void);
-extern BOOL             dbg_attach_debuggee(DWORD pid, BOOL cofe);
+extern BOOL             dbg_attach_debuggee(DWORD pid);
 
   /* tgt_minidump.c */
 extern void             minidump_write(const char*, const EXCEPTION_RECORD*);

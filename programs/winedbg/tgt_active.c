@@ -71,7 +71,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de);
  * wfe is set to TRUE if dbg_attach_debuggee should also proceed with all debug events
  * until the first exception is received (aka: attach to an already running process)
  */
-BOOL dbg_attach_debuggee(DWORD pid, BOOL cofe)
+BOOL dbg_attach_debuggee(DWORD pid)
 {
     if (!(dbg_curr_process = dbg_add_process(&be_process_active_io, pid, 0))) return FALSE;
 
@@ -81,7 +81,6 @@ BOOL dbg_attach_debuggee(DWORD pid, BOOL cofe)
         dbg_del_process(dbg_curr_process);
 	return FALSE;
     }
-    dbg_curr_process->continue_on_first_exception = cofe;
 
     SetEnvironmentVariableA("DBGHELP_NOLIVE", NULL);
 
@@ -776,19 +775,20 @@ enum dbg_start  dbg_active_attach(int argc, char* argv[])
     /* try the form <myself> pid */
     if (argc == 1 && str2int(argv[0], &pid) && pid != 0)
     {
-        if (!dbg_attach_debuggee(pid, FALSE))
+        if (!dbg_attach_debuggee(pid))
             return start_error_init;
     }
     /* try the form <myself> pid evt (Win32 JIT debugger) */
     else if (argc == 2 && str2int(argv[0], &pid) && pid != 0 &&
              str2int(argv[1], &evt) && evt != 0)
     {
-        if (!dbg_attach_debuggee(pid, TRUE))
+        if (!dbg_attach_debuggee(pid))
         {
             /* don't care about result */
             SetEvent((HANDLE)evt);
             return start_error_init;
         }
+        dbg_curr_process->continue_on_first_exception = TRUE;
         if (!SetEvent((HANDLE)evt))
         {
             WINE_ERR("Invalid event handle: %lx\n", evt);
