@@ -18,9 +18,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include "initguid.h"
 #include "d3dcompiler_private.h"
 #include "winternl.h"

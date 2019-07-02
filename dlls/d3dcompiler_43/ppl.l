@@ -155,17 +155,7 @@ ul	[uUlL]|[uUlL][lL]|[lL][uU]|[lL][lL][uU]|[uU][lL][lL]|[lL][uU][lL]
 #include <errno.h>
 #include <limits.h>
 
-#ifndef LLONG_MAX
-# define LLONG_MAX  ((__int64)0x7fffffff << 32 | 0xffffffff)
-# define LLONG_MIN  (-LLONG_MAX - 1)
-#endif
-#ifndef ULLONG_MAX
-# define ULLONG_MAX ((__int64)0xffffffff << 32 | 0xffffffff)
-#endif
-
-#ifndef HAVE_UNISTD_H
 #define YY_NO_UNISTD_H
-#endif
 
 #include "wpp_private.h"
 #include "ppy.tab.h"
@@ -295,9 +285,9 @@ includelogicentry_t *pp_includelogiclist = NULL;
 
 #define BUFFERINITIALCAPACITY 256
 
-void pp_writestring(const char *format, ...)
+void __cdecl pp_writestring(const char *format, ...)
 {
-	va_list valist;
+	__ms_va_list valist;
 	int len;
 	static char *buffer;
 	static int buffercapacity;
@@ -311,10 +301,10 @@ void pp_writestring(const char *format, ...)
 		buffercapacity = BUFFERINITIALCAPACITY;
 	}
 
-	va_start(valist, format);
+	__ms_va_start(valist, format);
 	len = vsnprintf(buffer, buffercapacity,
 			format, valist);
-	va_end(valist);
+	__ms_va_end(valist);
         /* If the string is longer than buffersize, vsnprintf returns
          * the string length with glibc >= 2.1, -1 with glibc < 2.1 */
 	while(len > buffercapacity || len < 0)
@@ -326,15 +316,12 @@ void pp_writestring(const char *format, ...)
 
 		new_buffer = pp_xrealloc(buffer, buffercapacity);
 		if(new_buffer == NULL)
-		{
-			va_end(valist);
 			return;
-		}
 		buffer = new_buffer;
-		va_start(valist, format);
+		__ms_va_start(valist, format);
 		len = vsnprintf(buffer, buffercapacity,
 				format, valist);
-		va_end(valist);
+		__ms_va_end(valist);
 	}
 
 	wpp_write(buffer, len);

@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 %{
-#include "config.h"
 #include "wine/debug.h"
 
 #include <stdio.h>
@@ -35,13 +34,13 @@ struct hlsl_parse_ctx hlsl_ctx;
 struct YYLTYPE;
 static void set_location(struct source_location *loc, const struct YYLTYPE *l);
 
-void hlsl_message(const char *fmt, ...)
+void __cdecl hlsl_message(const char *fmt, ...)
 {
-    va_list args;
+    __ms_va_list args;
 
-    va_start(args, fmt);
+    __ms_va_start(args, fmt);
     compilation_message(&hlsl_ctx.messages, fmt, args);
-    va_end(args);
+    __ms_va_end(args);
 }
 
 static const char *hlsl_get_error_level_name(enum hlsl_error_level level)
@@ -55,18 +54,18 @@ static const char *hlsl_get_error_level_name(enum hlsl_error_level level)
     return names[level];
 }
 
-void hlsl_report_message(const char *filename, DWORD line, DWORD column,
+void __cdecl hlsl_report_message(const char *filename, DWORD line, DWORD column,
         enum hlsl_error_level level, const char *fmt, ...)
 {
-    va_list args;
+    __ms_va_list args;
     char *string = NULL;
     int rc, size = 0;
 
     while (1)
     {
-        va_start(args, fmt);
+        __ms_va_start(args, fmt);
         rc = vsnprintf(string, size, fmt, args);
-        va_end(args);
+        __ms_va_end(args);
 
         if (rc >= 0 && rc < size)
             break;

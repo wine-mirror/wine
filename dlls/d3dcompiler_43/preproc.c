@@ -16,9 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <ctype.h>
 #include <fcntl.h>
@@ -26,9 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #include "wpp_private.h"
 
@@ -441,13 +435,13 @@ int pp_get_if_depth(void)
 	return if_stack_idx;
 }
 
-void pp_internal_error(const char *file, int line, const char *s, ...)
+void __cdecl pp_internal_error(const char *file, int line, const char *s, ...)
 {
-	va_list ap;
-	va_start(ap, s);
+	__ms_va_list ap;
+	__ms_va_start(ap, s);
 	fprintf(stderr, "Internal error (please report) %s %d: ", file, line);
 	vfprintf(stderr, s, ap);
 	fprintf(stderr, "\n");
-	va_end(ap);
+	__ms_va_end(ap);
 	exit(3);
 }
