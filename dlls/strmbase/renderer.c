@@ -267,7 +267,6 @@ HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtb
     InitializeCriticalSection(&filter->csRenderLock);
     filter->csRenderLock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": BaseRenderer.csRenderLock");
     filter->evComplete = CreateEventW(NULL, TRUE, TRUE, NULL);
-    filter->ThreadSignal = CreateEventW(NULL, TRUE, TRUE, NULL);
     filter->RenderEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     filter->pMediaSample = NULL;
 
@@ -292,7 +291,6 @@ void strmbase_renderer_cleanup(BaseRenderer *filter)
 
     BaseRendererImpl_ClearPendingSample(filter);
     CloseHandle(filter->evComplete);
-    CloseHandle(filter->ThreadSignal);
     CloseHandle(filter->RenderEvent);
     QualityControlImpl_Destroy(filter->qcimpl);
     strmbase_filter_cleanup(&filter->filter);
@@ -404,7 +402,6 @@ HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface)
             This->pFuncsTable->pfnOnStopStreaming(This);
         This->filter.state = State_Stopped;
         SetEvent(This->evComplete);
-        SetEvent(This->ThreadSignal);
         SetEvent(This->RenderEvent);
     }
     LeaveCriticalSection(&This->csRenderLock);
@@ -424,7 +421,6 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
         goto out;
 
     SetEvent(This->evComplete);
-    ResetEvent(This->ThreadSignal);
 
     if (This->sink.pin.pConnectedTo)
     {
@@ -482,7 +478,6 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
             This->filter.state = State_Paused;
         }
     }
-    ResetEvent(This->ThreadSignal);
     LeaveCriticalSection(&This->csRenderLock);
 
     return S_OK;
@@ -545,7 +540,6 @@ HRESULT WINAPI BaseRendererImpl_BeginFlush(BaseRenderer* iface)
 {
     TRACE("(%p)\n", iface);
     BaseRendererImpl_ClearPendingSample(iface);
-    SetEvent(iface->ThreadSignal);
     SetEvent(iface->RenderEvent);
     return S_OK;
 }
@@ -555,7 +549,6 @@ HRESULT WINAPI BaseRendererImpl_EndFlush(BaseRenderer* iface)
     TRACE("(%p)\n", iface);
     QualityControlRender_Start(iface->qcimpl, iface->filter.rtStreamStart);
     RendererPosPassThru_ResetMediaTime(iface->pPosition);
-    ResetEvent(iface->ThreadSignal);
     ResetEvent(iface->RenderEvent);
     return S_OK;
 }

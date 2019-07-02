@@ -541,7 +541,6 @@ typedef struct BaseRendererTag
 	IUnknown *pPosition;
 	CRITICAL_SECTION csRenderLock;
 	HANDLE evComplete;
-	HANDLE ThreadSignal;
 	HANDLE RenderEvent;
 	IMediaSample *pMediaSample;
 

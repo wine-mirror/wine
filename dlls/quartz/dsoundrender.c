@@ -738,7 +738,6 @@ static HRESULT WINAPI DSoundRender_Pause(IBaseFilter * iface)
         ResetEvent(This->blocked);
         ResetEvent(This->renderer.RenderEvent);
     }
-    ResetEvent(This->renderer.ThreadSignal);
     LeaveCriticalSection(&This->renderer.csRenderLock);
 
     return hr;
