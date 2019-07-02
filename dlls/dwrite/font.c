@@ -5123,11 +5123,6 @@ static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnal
     return S_OK;
 }
 
-static inline int get_dib_stride( int width, int bpp )
-{
-    return ((width * bpp + 31) >> 3) & ~3;
-}
-
 static inline BYTE *get_pixel_ptr(BYTE *ptr, DWRITE_TEXTURE_TYPE type, const RECT *runbounds, const RECT *bounds)
 {
     if (type == DWRITE_TEXTURE_CLEARTYPE_3x1)

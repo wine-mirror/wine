@@ -1394,14 +1394,6 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     return hr;
 }
 
-static inline FLOAT get_cluster_advance(const FLOAT *advances, UINT32 start, UINT32 end)
-{
-    FLOAT advance = 0.0f;
-    for (; start < end; start++)
-        advance += advances[start];
-    return advance;
-}
-
 static HRESULT apply_cluster_spacing(float leading_spacing, float trailing_spacing, float min_advance_width,
         unsigned int start, unsigned int end, float const *advances, DWRITE_GLYPH_OFFSET const *offsets,
         DWRITE_SHAPING_GLYPH_PROPERTIES const *glyph_props, float *modified_advances,
