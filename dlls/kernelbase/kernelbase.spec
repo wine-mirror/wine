@@ -304,13 +304,13 @@
 # @ stub EnumProcessModules
 # @ stub EnumProcessModulesEx
 # @ stub EnumProcesses
-@ stdcall EnumResourceLanguagesExA(long str str ptr long long long) kernel32.EnumResourceLanguagesExA
-@ stdcall EnumResourceLanguagesExW(long wstr wstr ptr long long long) kernel32.EnumResourceLanguagesExW
-# @ stub EnumResourceNamesExA
-# @ stub EnumResourceNamesExW
-@ stdcall EnumResourceNamesW(long wstr ptr long) kernel32.EnumResourceNamesW
-# @ stub EnumResourceTypesExA
-# @ stub EnumResourceTypesExW
+@ stdcall EnumResourceLanguagesExA(long str str ptr long long long)
+@ stdcall EnumResourceLanguagesExW(long wstr wstr ptr long long long)
+@ stdcall EnumResourceNamesExA(long str ptr long long long)
+@ stdcall EnumResourceNamesExW(long wstr ptr long long long)
+@ stdcall EnumResourceNamesW(long wstr ptr long)
+@ stdcall EnumResourceTypesExA(long ptr long long long)
+@ stdcall EnumResourceTypesExW(long ptr long long long)
 @ stdcall EnumSystemCodePagesW(ptr long) kernel32.EnumSystemCodePagesW
 # @ stub EnumSystemFirmwareTables
 @ stdcall EnumSystemGeoID(long long ptr) kernel32.EnumSystemGeoID
@@ -371,8 +371,8 @@
 @ stdcall FindNextStreamW(long ptr) kernel32.FindNextStreamW
 @ stdcall FindNextVolumeW(long ptr long) kernel32.FindNextVolumeW
 # @ stub FindPackagesByPackageFamily
-@ stdcall FindResourceExW(long wstr wstr long) kernel32.FindResourceExW
-@ stdcall FindResourceW(long wstr wstr) kernel32.FindResourceW
+@ stdcall FindResourceExW(long wstr wstr long)
+@ stdcall FindResourceW(long wstr wstr)
 @ stdcall FindStringOrdinal(long wstr long wstr long long) kernel32.FindStringOrdinal
 @ stdcall FindVolumeClose(ptr) kernel32.FindVolumeClose
 @ stdcall FlsAlloc(ptr) kernel32.FlsAlloc
@@ -397,7 +397,7 @@
 @ stdcall FreeLibrary(long) kernel32.FreeLibrary
 @ stdcall FreeLibraryAndExitThread(long long) kernel32.FreeLibraryAndExitThread
 @ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) ntdll.TpCallbackUnloadDllOnCompletion
-@ stdcall FreeResource(long) kernel32.FreeResource
+@ stdcall FreeResource(long)
 @ stdcall FreeSid(ptr)
 @ stdcall FreeUserPhysicalPages(long ptr ptr) kernel32.FreeUserPhysicalPages
 @ stdcall GenerateConsoleCtrlEvent(long long) kernel32.GenerateConsoleCtrlEvent
@@ -928,7 +928,7 @@
 @ stdcall LoadLibraryExW(wstr long long) kernel32.LoadLibraryExW
 @ stdcall LoadLibraryW(wstr) kernel32.LoadLibraryW
 # @ stub LoadPackagedLibrary
-@ stdcall LoadResource(long long) kernel32.LoadResource
+@ stdcall LoadResource(long long)
 @ stdcall LoadStringA(long long ptr long)
 @ stub LoadStringBaseExW
 @ stub LoadStringByReference
@@ -943,7 +943,7 @@
 # @ stub LocateXStateFeature
 @ stdcall LockFile(long long long long long) kernel32.LockFile
 @ stdcall LockFileEx(long long long long long ptr) kernel32.LockFileEx
-@ stdcall LockResource(long) kernel32.LockResource
+@ stdcall LockResource(long)
 @ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub MakeAbsoluteSD2
 @ stdcall MakeSelfRelativeSD(ptr ptr ptr)
@@ -1510,7 +1510,7 @@
 @ stdcall SetupComm(long long long) kernel32.SetupComm
 # @ stub SharedLocalIsEnabled
 @ stdcall SignalObjectAndWait(long long long long)
-@ stdcall SizeofResource(long long) kernel32.SizeofResource
+@ stdcall SizeofResource(long long)
 @ stdcall Sleep(long)
 @ stdcall SleepConditionVariableCS(ptr ptr long)
 @ stdcall SleepConditionVariableSRW(ptr ptr long long)

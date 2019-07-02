@@ -405,16 +405,16 @@
 @ stdcall EnumLanguageGroupLocalesA(ptr long long ptr)
 @ stdcall EnumLanguageGroupLocalesW(ptr long long ptr)
 @ stdcall EnumResourceLanguagesA(long str str ptr long)
-@ stdcall EnumResourceLanguagesExA(long str str ptr long long long)
-@ stdcall EnumResourceLanguagesExW(long wstr wstr ptr long long long)
+@ stdcall -import EnumResourceLanguagesExA(long str str ptr long long long)
+@ stdcall -import EnumResourceLanguagesExW(long wstr wstr ptr long long long)
 @ stdcall EnumResourceLanguagesW(long wstr wstr ptr long)
 @ stdcall EnumResourceNamesA(long str ptr long)
-# @ stub EnumResourceNamesExA
-# @ stub EnumResourceNamesExW
-@ stdcall EnumResourceNamesW(long wstr ptr long)
+@ stdcall -import EnumResourceNamesExA(long str ptr long long long)
+@ stdcall -import EnumResourceNamesExW(long wstr ptr long long long)
+@ stdcall -import EnumResourceNamesW(long wstr ptr long)
 @ stdcall EnumResourceTypesA(long ptr long)
-# @ stub EnumResourceTypesExA
-# @ stub EnumResourceTypesExW
+@ stdcall -import EnumResourceTypesExA(long ptr long long long)
+@ stdcall -import EnumResourceTypesExW(long ptr long long long)
 @ stdcall EnumResourceTypesW(long ptr long)
 @ stdcall EnumSystemCodePagesA(ptr long)
 @ stdcall EnumSystemCodePagesW(ptr long)
@@ -506,8 +506,8 @@
 @ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long)
 @ stdcall FindResourceA(long str str)
 @ stdcall FindResourceExA(long str str long)
-@ stdcall FindResourceExW(long wstr wstr long)
-@ stdcall FindResourceW(long wstr wstr)
+@ stdcall -import FindResourceExW(long wstr wstr long)
+@ stdcall -import FindResourceW(long wstr wstr)
 @ stdcall FindStringOrdinal(long wstr long wstr long long)
 @ stdcall FindVolumeClose(ptr)
 @ stdcall FindVolumeMountPointClose(ptr)
@@ -531,7 +531,7 @@
 @ stdcall FreeLibrary(long)
 @ stdcall FreeLibraryAndExitThread(long long)
 @ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) ntdll.TpCallbackUnloadDllOnCompletion
-@ stdcall FreeResource(long)
+@ stdcall -import FreeResource(long)
 @ stdcall -i386 -private FreeSLCallback(long) krnl386.exe16.FreeSLCallback
 @ stdcall FreeUserPhysicalPages(long ptr ptr)
 @ stub FreeVirtualBuffer
@@ -1047,7 +1047,7 @@
 @ stdcall LoadLibraryExW(wstr long long)
 @ stdcall LoadLibraryW(wstr)
 @ stdcall LoadModule(str ptr)
-@ stdcall LoadResource(long long)
+@ stdcall -import LoadResource(long long)
 # @ stub LoadStringBaseExW
 # @ stub LoadStringBaseW
 @ stdcall LocalAlloc(long long)
@@ -1065,7 +1065,7 @@
 # @ stub LocateXStateFeature
 @ stdcall LockFile(long long long long long)
 @ stdcall LockFileEx(long long long long long ptr)
-@ stdcall LockResource(long)
+@ stdcall -import LockResource(long)
 @ stdcall MakeCriticalSectionGlobal(ptr)
 @ stdcall -i386 -private -norelay MapHInstLS() krnl386.exe16.MapHInstLS
 @ stdcall -i386 -private -norelay MapHInstLS_PN() krnl386.exe16.MapHInstLS_PN
@@ -1480,7 +1480,7 @@
 @ stdcall SetupComm(long long long)
 @ stub ShowConsoleCursor
 @ stdcall -import SignalObjectAndWait(long long long long)
-@ stdcall SizeofResource(long long)
+@ stdcall -import SizeofResource(long long)
 @ stdcall -import Sleep(long)
 @ stdcall -import SleepConditionVariableCS(ptr ptr long)
 @ stdcall -import SleepConditionVariableSRW(ptr ptr long long)

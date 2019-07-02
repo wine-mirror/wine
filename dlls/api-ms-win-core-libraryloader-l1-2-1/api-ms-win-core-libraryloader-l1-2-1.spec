@@ -2,10 +2,10 @@
 @ stdcall DisableThreadLibraryCalls(long) kernel32.DisableThreadLibraryCalls
 @ stdcall EnumResourceLanguagesExA(long str str ptr long long long) kernel32.EnumResourceLanguagesExA
 @ stdcall EnumResourceLanguagesExW(long wstr wstr ptr long long long) kernel32.EnumResourceLanguagesExW
-@ stub EnumResourceNamesExA
-@ stub EnumResourceNamesExW
-@ stub EnumResourceTypesExA
-@ stub EnumResourceTypesExW
+@ stdcall EnumResourceNamesExA(long str ptr long long long) kernel32.EnumResourceNamesExA
+@ stdcall EnumResourceNamesExW(long wstr ptr long long long) kernel32.EnumResourceNamesExW
+@ stdcall EnumResourceTypesExA(long ptr long long long) kernel32.EnumResourceTypesExA
+@ stdcall EnumResourceTypesExW(long ptr long long long) kernel32.EnumResourceTypesExW
 @ stdcall FindResourceExW(long wstr wstr long) kernel32.FindResourceExW
 @ stdcall FindResourceW(long wstr wstr) kernel32.FindResourceW
 @ stdcall FindStringOrdinal(long wstr long wstr long long) kernel32.FindStringOrdinal
