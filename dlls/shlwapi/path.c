@@ -54,21 +54,6 @@ static  fnpIsNetDrive pIsNetDrive;
 
 HRESULT WINAPI SHGetWebFolderFilePathW(LPCWSTR,LPWSTR,DWORD);
 
-static inline WCHAR* heap_strdupAtoW(LPCSTR str)
-{
-    WCHAR *ret = NULL;
-
-    if (str)
-    {
-        DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-        ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        if (ret)
-            MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-    }
-
-    return ret;
-}
-
 /*************************************************************************
  * PathBuildRootA    [SHLWAPI.@]
  *
