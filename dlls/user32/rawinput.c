@@ -58,6 +58,33 @@ static CRITICAL_SECTION_DEBUG hid_devices_cs_debug =
 };
 static CRITICAL_SECTION hid_devices_cs = { &hid_devices_cs_debug, -1, 0, 0, 0, 0 };
 
+static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int count, unsigned int size)
+{
+    unsigned int new_capacity, max_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~(SIZE_T)0 / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(4, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = max_capacity;
+
+    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+        return FALSE;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+
+    return TRUE;
+}
+
 static void find_hid_devices(void)
 {
     static ULONGLONG last_check;
@@ -125,26 +152,12 @@ static void find_hid_devices(void)
             continue;
         }
 
-        if (didx >= hid_devices_max)
+        if (!array_reserve((void **)&hid_devices, &hid_devices_max, didx + 1, sizeof(*hid_devices)))
         {
-            if (hid_devices)
-            {
-                hid_devices_max *= 2;
-                hid_devices = heap_realloc(hid_devices,
-                    hid_devices_max * sizeof(hid_devices[0]));
-            }
-            else
-            {
-                hid_devices_max = 8;
-                hid_devices = heap_alloc(hid_devices_max * sizeof(hid_devices[0]));
-            }
-            if (!hid_devices)
-            {
-                ERR("Failed to allocate memory.\n");
-                CloseHandle(file);
-                heap_free(path);
-                goto done;
-            }
+            ERR("Failed to allocate memory.\n");
+            CloseHandle(file);
+            heap_free(path);
+            goto done;
         }
 
         TRACE("Found HID device %s.\n", debugstr_w(path));
