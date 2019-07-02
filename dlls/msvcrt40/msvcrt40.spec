@@ -1253,7 +1253,7 @@
 @ cdecl _unlink(str) msvcrt._unlink
 @ cdecl _unloaddll(long) msvcrt._unloaddll
 @ cdecl _utime(str ptr) msvcrt._utime
-@ cdecl _vsnprintf(ptr long str ptr) msvcrt._vsnprintf
+@ cdecl -norelay _vsnprintf(ptr long str ptr) msvcrt._vsnprintf
 @ cdecl _vsnwprintf(ptr long wstr ptr) msvcrt._vsnwprintf
 @ cdecl _waccess(wstr long) msvcrt._waccess
 @ cdecl _wasctime(ptr) msvcrt._wasctime
