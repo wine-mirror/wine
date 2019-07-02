@@ -5,8 +5,8 @@
 @ stub AccessCheckByTypeResultList
 @ stub AccessCheckByTypeResultListAndAuditAlarmByHandleW
 @ stub AccessCheckByTypeResultListAndAuditAlarmW
-@ stdcall AcquireSRWLockExclusive(ptr) kernel32.AcquireSRWLockExclusive
-@ stdcall AcquireSRWLockShared(ptr) kernel32.AcquireSRWLockShared
+@ stdcall AcquireSRWLockExclusive(ptr) ntdll.RtlAcquireSRWLockExclusive
+@ stdcall AcquireSRWLockShared(ptr) ntdll.RtlAcquireSRWLockShared
 # @ stub AcquireStateLock
 @ stdcall ActivateActCtx(ptr ptr) kernel32.ActivateActCtx
 @ stdcall AddAccessAllowedAce(ptr long long ptr)
@@ -25,8 +25,8 @@
 # @ stub AddResourceAttributeAce
 # @ stub AddSIDToBoundaryDescriptor
 # @ stub AddScopedPolicyIDAce
-@ stdcall AddVectoredContinueHandler(long ptr) kernel32.AddVectoredContinueHandler
-@ stdcall AddVectoredExceptionHandler(long ptr) kernel32.AddVectoredExceptionHandler
+@ stdcall AddVectoredContinueHandler(long ptr) ntdll.RtlAddVectoredContinueHandler
+@ stdcall AddVectoredExceptionHandler(long ptr) ntdll.RtlAddVectoredExceptionHandler
 @ stdcall AdjustTokenGroups(long long ptr long ptr ptr)
 @ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr)
 @ stdcall AllocConsole() kernel32.AllocConsole
@@ -143,13 +143,13 @@
 # @ stub CloseStateChangeNotification
 # @ stub CloseStateContainer
 # @ stub CloseStateLock
-@ stdcall CloseThreadpool(ptr) kernel32.CloseThreadpool
-@ stdcall CloseThreadpoolCleanupGroup(ptr) kernel32.CloseThreadpoolCleanupGroup
-@ stdcall CloseThreadpoolCleanupGroupMembers(ptr long ptr) kernel32.CloseThreadpoolCleanupGroupMembers
+@ stdcall CloseThreadpool(ptr) ntdll.TpReleasePool
+@ stdcall CloseThreadpoolCleanupGroup(ptr) ntdll.TpReleaseCleanupGroup
+@ stdcall CloseThreadpoolCleanupGroupMembers(ptr long ptr) ntdll.TpReleaseCleanupGroupMembers
 @ stub CloseThreadpoolIo
-@ stdcall CloseThreadpoolTimer(ptr) kernel32.CloseThreadpoolTimer
-@ stdcall CloseThreadpoolWait(ptr) kernel32.CloseThreadpoolWait
-@ stdcall CloseThreadpoolWork(ptr) kernel32.CloseThreadpoolWork
+@ stdcall CloseThreadpoolTimer(ptr) ntdll.TpReleaseTimer
+@ stdcall CloseThreadpoolWait(ptr) ntdll.TpReleaseWait
+@ stdcall CloseThreadpoolWork(ptr) ntdll.TpReleaseWork
 # @ stub CommitStateAtom
 @ stdcall CompareFileTime(ptr ptr) kernel32.CompareFileTime
 # @ stub CompareObjectHandles
@@ -240,15 +240,15 @@
 @ stdcall DebugActiveProcess(long) kernel32.DebugActiveProcess
 @ stdcall DebugActiveProcessStop(long) kernel32.DebugActiveProcessStop
 @ stdcall DebugBreak() kernel32.DebugBreak
-@ stdcall DecodePointer(ptr) kernel32.DecodePointer
+@ stdcall DecodePointer(ptr) ntdll.RtlDecodePointer
 # @ stub DecodeRemotePointer
-@ stdcall DecodeSystemPointer(ptr) kernel32.DecodeSystemPointer
+@ stdcall DecodeSystemPointer(ptr) ntdll.RtlDecodeSystemPointer
 @ stdcall DefineDosDeviceW(long wstr wstr) kernel32.DefineDosDeviceW
 @ stdcall DelayLoadFailureHook(str str) kernel32.DelayLoadFailureHook
 # @ stub DelayLoadFailureHookLookup
 @ stdcall DeleteAce(ptr long)
 # @ stub DeleteBoundaryDescriptor
-@ stdcall DeleteCriticalSection(ptr) kernel32.DeleteCriticalSection
+@ stdcall DeleteCriticalSection(ptr) ntdll.RtlDeleteCriticalSection
 @ stdcall DeleteFiber(ptr) kernel32.DeleteFiber
 @ stdcall DeleteFileA(str) kernel32.DeleteFileA
 @ stdcall DeleteFileW(wstr) kernel32.DeleteFileW
@@ -264,7 +264,7 @@
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr) kernel32.DeviceIoControl
 @ stdcall DisablePredefinedHandleTableInternal(long)
 @ stdcall DisableThreadLibraryCalls(long) kernel32.DisableThreadLibraryCalls
-@ stdcall DisassociateCurrentThreadFromCallback(ptr) kernel32.DisassociateCurrentThreadFromCallback
+@ stdcall DisassociateCurrentThreadFromCallback(ptr) ntdll.TpDisassociateCallback
 # @ stub DiscardVirtualMemory
 @ stdcall DisconnectNamedPipe(long)
 # @ stub DnsHostnameToComputerNameExW
@@ -284,11 +284,11 @@
 @ stdcall DuplicateToken(long long ptr)
 @ stdcall DuplicateTokenEx(long long ptr long long ptr)
 # @ stub EmptyWorkingSet
-@ stdcall EncodePointer(ptr) kernel32.EncodePointer
+@ stdcall EncodePointer(ptr) ntdll.RtlEncodePointer
 # @ stub EncodeRemotePointer
-@ stdcall EncodeSystemPointer(ptr) kernel32.EncodeSystemPointer
+@ stdcall EncodeSystemPointer(ptr) ntdll.RtlEncodeSystemPointer
 # @ stub EnterCriticalPolicySectionInternal
-@ stdcall EnterCriticalSection(ptr) kernel32.EnterCriticalSection
+@ stdcall EnterCriticalSection(ptr) ntdll.RtlEnterCriticalSection
 # @ stub EnterSynchronizationBarrier
 @ stdcall EnumCalendarInfoExEx(ptr wstr long wstr long long) kernel32.EnumCalendarInfoExEx
 @ stdcall EnumCalendarInfoExW(ptr long long long) kernel32.EnumCalendarInfoExW
@@ -337,8 +337,8 @@
 # @ stub EventWriteEx
 # @ stub EventWriteString
 @ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) ntdll.EtwEventWriteTransfer
-@ stdcall ExitProcess(long) kernel32.ExitProcess
-@ stdcall ExitThread(long) kernel32.ExitThread
+@ stdcall ExitProcess(long) ntdll.RtlExitUserProcess
+@ stdcall ExitThread(long) ntdll.RtlExitUserThread
 @ stdcall ExpandEnvironmentStringsA(str ptr long) kernel32.ExpandEnvironmentStringsA
 @ stdcall ExpandEnvironmentStringsW(wstr ptr long) kernel32.ExpandEnvironmentStringsW
 @ stdcall FatalAppExitA(long str) kernel32.FatalAppExitA
@@ -396,7 +396,7 @@
 # @ stub FreeGPOListInternalW
 @ stdcall FreeLibrary(long) kernel32.FreeLibrary
 @ stdcall FreeLibraryAndExitThread(long long) kernel32.FreeLibraryAndExitThread
-@ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) kernel32.FreeLibraryWhenCallbackReturns
+@ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) ntdll.TpCallbackUnloadDllOnCompletion
 @ stdcall FreeResource(long) kernel32.FreeResource
 @ stdcall FreeSid(ptr)
 @ stdcall FreeUserPhysicalPages(long ptr ptr) kernel32.FreeUserPhysicalPages
@@ -466,8 +466,8 @@
 # @ stub GetCurrentPackageSecurityContext
 @ stdcall -norelay GetCurrentProcess() kernel32.GetCurrentProcess
 @ stdcall -norelay GetCurrentProcessId() kernel32.GetCurrentProcessId
-@ stdcall GetCurrentProcessorNumber() kernel32.GetCurrentProcessorNumber
-@ stdcall GetCurrentProcessorNumberEx(ptr) kernel32.GetCurrentProcessorNumberEx
+@ stdcall GetCurrentProcessorNumber() ntdll.NtGetCurrentProcessorNumber
+@ stdcall GetCurrentProcessorNumberEx(ptr) ntdll.RtlGetCurrentProcessorNumberEx
 # @ stub GetCurrentTargetPlatformContext
 @ stdcall -norelay GetCurrentThread() kernel32.GetCurrentThread
 @ stdcall -norelay GetCurrentThreadId() kernel32.GetCurrentThreadId
@@ -772,16 +772,16 @@
 # @ stub GuardCheckLongJumpTarget
 # @ stub HasPolicyForegroundProcessingCompletedInternal
 @ stdcall HashData(ptr long ptr long)
-@ stdcall HeapAlloc(long long long) kernel32.HeapAlloc
+@ stdcall HeapAlloc(long long long) ntdll.RtlAllocateHeap
 @ stdcall HeapCompact(long long) kernel32.HeapCompact
 @ stdcall HeapCreate(long long long) kernel32.HeapCreate
 @ stdcall HeapDestroy(long) kernel32.HeapDestroy
-@ stdcall HeapFree(long long ptr) kernel32.HeapFree
+@ stdcall HeapFree(long long ptr) ntdll.RtlFreeHeap
 @ stdcall HeapLock(long) kernel32.HeapLock
 @ stdcall HeapQueryInformation(long long ptr long ptr) kernel32.HeapQueryInformation
-@ stdcall HeapReAlloc(long long ptr long) kernel32.HeapReAlloc
+@ stdcall HeapReAlloc(long long ptr long) ntdll.RtlReAllocateHeap
 @ stdcall HeapSetInformation(ptr long ptr long) kernel32.HeapSetInformation
-@ stdcall HeapSize(long long ptr) kernel32.HeapSize
+@ stdcall HeapSize(long long ptr) ntdll.RtlSizeHeap
 @ stub HeapSummary
 @ stdcall HeapUnlock(long) kernel32.HeapUnlock
 @ stdcall HeapValidate(long long ptr) kernel32.HeapValidate
@@ -797,33 +797,33 @@
 @ stdcall InitOnceBeginInitialize(ptr long ptr ptr) kernel32.InitOnceBeginInitialize
 @ stdcall InitOnceComplete(ptr long ptr) kernel32.InitOnceComplete
 @ stdcall InitOnceExecuteOnce(ptr ptr ptr ptr) kernel32.InitOnceExecuteOnce
-@ stdcall InitOnceInitialize(ptr) kernel32.InitOnceInitialize
+@ stdcall InitOnceInitialize(ptr) ntdll.RtlRunOnceInitialize
 @ stdcall InitializeAcl(ptr long long)
-@ stdcall InitializeConditionVariable(ptr) kernel32.InitializeConditionVariable
+@ stdcall InitializeConditionVariable(ptr) ntdll.RtlInitializeConditionVariable
 # @ stub InitializeContext
-@ stdcall InitializeCriticalSection(ptr) kernel32.InitializeCriticalSection
+@ stdcall InitializeCriticalSection(ptr) ntdll.RtlInitializeCriticalSection
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long)
 @ stdcall InitializeCriticalSectionEx(ptr long long)
 # @ stub InitializeEnclave
 @ stdcall InitializeProcThreadAttributeList(ptr long long ptr) kernel32.InitializeProcThreadAttributeList
 # @ stub InitializeProcessForWsWatch
-@ stdcall InitializeSListHead(ptr) kernel32.InitializeSListHead
-@ stdcall InitializeSRWLock(ptr) kernel32.InitializeSRWLock
+@ stdcall InitializeSListHead(ptr) ntdll.RtlInitializeSListHead
+@ stdcall InitializeSRWLock(ptr) ntdll.RtlInitializeSRWLock
 @ stdcall InitializeSecurityDescriptor(ptr long)
 @ stdcall InitializeSid(ptr ptr long)
 # @ stub InitializeSynchronizationBarrier
 # @ stub InstallELAMCertificateInfo
 @ stdcall -arch=i386 InterlockedCompareExchange(ptr long long) kernel32.InterlockedCompareExchange
-@ stdcall -arch=i386 -ret64 InterlockedCompareExchange64(ptr int64 int64) kernel32.InterlockedCompareExchange64
+@ stdcall -arch=i386 -ret64 InterlockedCompareExchange64(ptr int64 int64) ntdll.RtlInterlockedCompareExchange64
 @ stdcall -arch=i386 InterlockedDecrement(ptr) kernel32.InterlockedDecrement
 @ stdcall -arch=i386 InterlockedExchange(ptr long) kernel32.InterlockedExchange
 @ stdcall -arch=i386 InterlockedExchangeAdd(ptr long ) kernel32.InterlockedExchangeAdd
-@ stdcall InterlockedFlushSList(ptr) kernel32.InterlockedFlushSList
+@ stdcall InterlockedFlushSList(ptr) ntdll.RtlInterlockedFlushSList
 @ stdcall -arch=i386 InterlockedIncrement(ptr) kernel32.InterlockedIncrement
-@ stdcall InterlockedPopEntrySList(ptr) kernel32.InterlockedPopEntrySList
-@ stdcall InterlockedPushEntrySList(ptr ptr) kernel32.InterlockedPushEntrySList
-@ stdcall -fastcall InterlockedPushListSList(ptr ptr ptr long) kernel32.InterlockedPushListSList
-@ stdcall InterlockedPushListSListEx(ptr ptr ptr long) kernel32.InterlockedPushListSListEx
+@ stdcall InterlockedPopEntrySList(ptr) ntdll.RtlInterlockedPopEntrySList
+@ stdcall InterlockedPushEntrySList(ptr ptr) ntdll.RtlInterlockedPushEntrySList
+@ stdcall -fastcall InterlockedPushListSList(ptr ptr ptr long) ntdll.RtlInterlockedPushListSList
+@ stdcall InterlockedPushListSListEx(ptr ptr ptr long) ntdll.RtlInterlockedPushListSListEx
 @ stub InternalLcidToName
 @ stub Internal_EnumCalendarInfo
 @ stub Internal_EnumDateFormats
@@ -871,7 +871,7 @@
 # @ stub IsSideloadingPolicyApplied
 # @ stub IsSyncForegroundPolicyRefresh
 @ stdcall IsThreadAFiber() kernel32.IsThreadAFiber
-@ stdcall IsThreadpoolTimerSet(ptr) kernel32.IsThreadpoolTimerSet
+@ stdcall IsThreadpoolTimerSet(ptr) ntdll.TpIsTimerSet
 # @ stub IsTimeZoneRedirectionEnabled
 @ stdcall IsTokenRestricted(long)
 @ stdcall IsValidAcl(ptr)
@@ -919,8 +919,8 @@
 @ stdcall LCMapStringEx(wstr long wstr long ptr long ptr ptr long) kernel32.LCMapStringEx
 @ stdcall LCMapStringW(long long wstr long ptr long) kernel32.LCMapStringW
 # @ stub LeaveCriticalPolicySectionInternal
-@ stdcall LeaveCriticalSection(ptr) kernel32.LeaveCriticalSection
-@ stdcall LeaveCriticalSectionWhenCallbackReturns(ptr ptr) kernel32.LeaveCriticalSectionWhenCallbackReturns
+@ stdcall LeaveCriticalSection(ptr) ntdll.RtlLeaveCriticalSection
+@ stdcall LeaveCriticalSectionWhenCallbackReturns(ptr ptr) ntdll.TpCallbackLeaveCriticalSectionOnCompletion
 # @ stub LoadAppInitDlls
 # @ stub LoadEnclaveData
 @ stdcall LoadLibraryA(str) kernel32.LoadLibraryA
@@ -1194,7 +1194,7 @@
 @ stdcall QISearch(ptr ptr ptr ptr)
 @ stdcall QueryActCtxSettingsW(long ptr wstr wstr ptr long ptr) kernel32.QueryActCtxSettingsW
 @ stdcall QueryActCtxW(long ptr ptr long ptr long ptr) kernel32.QueryActCtxW
-@ stdcall QueryDepthSList(ptr) kernel32.QueryDepthSList
+@ stdcall QueryDepthSList(ptr) ntdll.RtlQueryDepthSList
 @ stdcall QueryDosDeviceW(wstr ptr long) kernel32.QueryDosDeviceW
 @ stdcall QueryFullProcessImageNameA(ptr long ptr ptr) kernel32.QueryFullProcessImageNameA
 @ stdcall QueryFullProcessImageNameW(ptr long ptr ptr) kernel32.QueryFullProcessImageNameW
@@ -1325,11 +1325,11 @@
 @ stdcall RegisterWaitForSingleObjectEx(long ptr ptr long long)
 @ stdcall ReleaseActCtx(ptr) kernel32.ReleaseActCtx
 @ stdcall ReleaseMutex(long)
-@ stdcall ReleaseMutexWhenCallbackReturns(ptr long) kernel32.ReleaseMutexWhenCallbackReturns
-@ stdcall ReleaseSRWLockExclusive(ptr) kernel32.ReleaseSRWLockExclusive
-@ stdcall ReleaseSRWLockShared(ptr) kernel32.ReleaseSRWLockShared
+@ stdcall ReleaseMutexWhenCallbackReturns(ptr long) ntdll.TpCallbackReleaseMutexOnCompletion
+@ stdcall ReleaseSRWLockExclusive(ptr) ntdll.RtlReleaseSRWLockExclusive
+@ stdcall ReleaseSRWLockShared(ptr) ntdll.RtlReleaseSRWLockShared
 @ stdcall ReleaseSemaphore(long long ptr)
-@ stdcall ReleaseSemaphoreWhenCallbackReturns(ptr long long) kernel32.ReleaseSemaphoreWhenCallbackReturns
+@ stdcall ReleaseSemaphoreWhenCallbackReturns(ptr long long) ntdll.TpCallbackReleaseSemaphoreOnCompletion
 # @ stub ReleaseStateLock
 @ stdcall RemapPredefinedHandleInternal(long long)
 @ stdcall RemoveDirectoryA(str) kernel32.RemoveDirectoryA
@@ -1337,8 +1337,8 @@
 @ stdcall RemoveDllDirectory(ptr) kernel32.RemoveDllDirectory
 # @ stub RemovePackageStatus
 # @ stub RemovePackageStatusForUser
-@ stdcall RemoveVectoredContinueHandler(ptr) kernel32.RemoveVectoredContinueHandler
-@ stdcall RemoveVectoredExceptionHandler(ptr) kernel32.RemoveVectoredExceptionHandler
+@ stdcall RemoveVectoredContinueHandler(ptr) ntdll.RtlRemoveVectoredContinueHandler
+@ stdcall RemoveVectoredExceptionHandler(ptr) ntdll.RtlRemoveVectoredExceptionHandler
 # @ stub ReplaceFileExInternal
 @ stdcall ReplaceFileW(wstr wstr wstr long ptr ptr) kernel32.ReplaceFileW
 @ stdcall ResetEvent(long)
@@ -1347,7 +1347,7 @@
 @ stdcall ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) kernel32.ResolveDelayLoadedAPI
 # @ stub ResolveDelayLoadsFromDll
 @ stdcall ResolveLocaleName(wstr ptr long) kernel32.ResolveLocaleName
-@ stdcall RestoreLastError(long) kernel32.RestoreLastError
+@ stdcall RestoreLastError(long) ntdll.RtlRestoreLastWin32Error
 @ stdcall ResumeThread(long) kernel32.ResumeThread
 @ stdcall RevertToSelf()
 # @ stub RsopLoggingEnabledInternal
@@ -1417,7 +1417,7 @@
 @ stdcall SetConsoleTextAttribute(long long) kernel32.SetConsoleTextAttribute
 @ stdcall SetConsoleTitleW(wstr) kernel32.SetConsoleTitleW
 @ stdcall SetConsoleWindowInfo(long long ptr) kernel32.SetConsoleWindowInfo
-@ stdcall SetCriticalSectionSpinCount(ptr long) kernel32.SetCriticalSectionSpinCount
+@ stdcall SetCriticalSectionSpinCount(ptr long) ntdll.RtlSetCriticalSectionSpinCount
 @ stdcall SetCurrentDirectoryA(str) kernel32.SetCurrentDirectoryA
 @ stdcall SetCurrentDirectoryW(wstr) kernel32.SetCurrentDirectoryW
 @ stdcall SetDefaultDllDirectories(long) kernel32.SetDefaultDllDirectories
@@ -1428,7 +1428,7 @@
 @ stdcall SetEnvironmentVariableW(wstr wstr) kernel32.SetEnvironmentVariableW
 @ stdcall SetErrorMode(long) kernel32.SetErrorMode
 @ stdcall SetEvent(long)
-@ stdcall SetEventWhenCallbackReturns(ptr long) kernel32.SetEventWhenCallbackReturns
+@ stdcall SetEventWhenCallbackReturns(ptr long) ntdll.TpCallbackSetEventOnCompletion
 @ stdcall SetFileApisToANSI() kernel32.SetFileApisToANSI
 @ stdcall SetFileApisToOEM() kernel32.SetFileApisToOEM
 @ stdcall SetFileAttributesA(str long) kernel32.SetFileAttributesA
@@ -1446,7 +1446,7 @@
 # @ stub SetIsSideloadingEnabled
 @ stdcall SetKernelObjectSecurity(long long ptr)
 @ stub SetLastConsoleEventActive
-@ stdcall SetLastError(long) kernel32.SetLastError
+@ stdcall SetLastError(long) ntdll.RtlSetLastWin32Error
 @ stdcall SetLocalTime(ptr) kernel32.SetLocalTime
 @ stdcall SetLocaleInfoW(long long wstr) kernel32.SetLocaleInfoW
 @ stdcall SetNamedPipeHandleState(long ptr ptr ptr)
@@ -1494,11 +1494,11 @@
 @ stdcall SetThreadToken(ptr ptr)
 @ stdcall SetThreadUILanguage(long) kernel32.SetThreadUILanguage
 @ stub SetThreadpoolStackInformation
-@ stdcall SetThreadpoolThreadMaximum(ptr long) kernel32.SetThreadpoolThreadMaximum
-@ stdcall SetThreadpoolThreadMinimum(ptr long) kernel32.SetThreadpoolThreadMinimum
-@ stdcall SetThreadpoolTimer(ptr ptr long long) kernel32.SetThreadpoolTimer
+@ stdcall SetThreadpoolThreadMaximum(ptr long) ntdll.TpSetPoolMaxThreads
+@ stdcall SetThreadpoolThreadMinimum(ptr long) ntdll.TpSetPoolMinThreads
+@ stdcall SetThreadpoolTimer(ptr ptr long long) ntdll.TpSetTimer
 # @ stub SetThreadpoolTimerEx
-@ stdcall SetThreadpoolWait(ptr long ptr) kernel32.SetThreadpoolWait
+@ stdcall SetThreadpoolWait(ptr long ptr) ntdll.TpSetWait
 # @ stub SetThreadpoolWaitEx
 @ stdcall SetTimeZoneInformation(ptr) kernel32.SetTimeZoneInformation
 @ stdcall SetTokenInformation(long long ptr long)
@@ -1585,7 +1585,7 @@
 @ stdcall StrToIntW(wstr)
 @ stdcall StrTrimA(str str)
 @ stdcall StrTrimW(wstr wstr)
-@ stdcall SubmitThreadpoolWork(ptr) kernel32.SubmitThreadpoolWork
+@ stdcall SubmitThreadpoolWork(ptr) ntdll.TpPostWork
 # @ stub SubscribeEdpEnabledStateChange
 # @ stub SubscribeStateChangeNotification
 @ stdcall SuspendThread(long) kernel32.SuspendThread
@@ -1606,9 +1606,9 @@
 @ stdcall TraceMessageVa(int64 long ptr long ptr) ntdll.EtwTraceMessageVa
 @ stdcall TransactNamedPipe(long ptr long ptr long ptr ptr)
 @ stdcall TransmitCommChar(long long) kernel32.TransmitCommChar
-@ stdcall TryAcquireSRWLockExclusive(ptr) kernel32.TryAcquireSRWLockExclusive
-@ stdcall TryAcquireSRWLockShared(ptr) kernel32.TryAcquireSRWLockShared
-@ stdcall TryEnterCriticalSection(ptr) kernel32.TryEnterCriticalSection
+@ stdcall TryAcquireSRWLockExclusive(ptr) ntdll.RtlTryAcquireSRWLockExclusive
+@ stdcall TryAcquireSRWLockShared(ptr) ntdll.RtlTryAcquireSRWLockShared
+@ stdcall TryEnterCriticalSection(ptr) ntdll.RtlTryEnterCriticalSection
 @ stdcall TrySubmitThreadpoolCallback(ptr ptr ptr) kernel32.TrySubmitThreadpoolCallback
 @ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr) kernel32.TzSpecificLocalTimeToSystemTime
 @ stub TzSpecificLocalTimeToSystemTimeEx
@@ -1661,7 +1661,7 @@
 @ stdcall VerLanguageNameW(long wstr long) kernel32.VerLanguageNameW
 @ stdcall VerQueryValueA(ptr str ptr ptr)
 @ stdcall VerQueryValueW(ptr wstr ptr ptr)
-@ stdcall -ret64 VerSetConditionMask(long long long long) kernel32.VerSetConditionMask
+@ stdcall -ret64 VerSetConditionMask(long long long long) ntdll.VerSetConditionMask
 # @ stub VerifyApplicationUserModelId
 # @ stub VerifyPackageFamilyName
 # @ stub VerifyPackageFullName
@@ -1692,16 +1692,16 @@
 @ stdcall WaitForSingleObject(long long)
 @ stdcall WaitForSingleObjectEx(long long long)
 @ stub WaitForThreadpoolIoCallbacks
-@ stdcall WaitForThreadpoolTimerCallbacks(ptr long) kernel32.WaitForThreadpoolTimerCallbacks
-@ stdcall WaitForThreadpoolWaitCallbacks(ptr long) kernel32.WaitForThreadpoolWaitCallbacks
-@ stdcall WaitForThreadpoolWorkCallbacks(ptr long) kernel32.WaitForThreadpoolWorkCallbacks
+@ stdcall WaitForThreadpoolTimerCallbacks(ptr long) ntdll.TpWaitForTimer
+@ stdcall WaitForThreadpoolWaitCallbacks(ptr long) ntdll.TpWaitForWait
+@ stdcall WaitForThreadpoolWorkCallbacks(ptr long) ntdll.TpWaitForWork
 # @ stub WaitForUserPolicyForegroundProcessingInternal
 @ stdcall WaitNamedPipeW(wstr long)
 @ stdcall WaitOnAddress(ptr ptr long long)
-@ stdcall WakeAllConditionVariable(ptr) kernel32.WakeAllConditionVariable
+@ stdcall WakeAllConditionVariable(ptr) ntdll.RtlWakeAllConditionVariable
 @ stdcall WakeByAddressAll(ptr) ntdll.RtlWakeAddressAll
 @ stdcall WakeByAddressSingle(ptr) ntdll.RtlWakeAddressSingle
-@ stdcall WakeConditionVariable(ptr) kernel32.WakeConditionVariable
+@ stdcall WakeConditionVariable(ptr) ntdll.RtlWakeConditionVariable
 # @ stub WerGetFlags
 @ stdcall WerRegisterFile(wstr long long) kernel32.WerRegisterFile
 @ stdcall WerRegisterMemoryBlock(ptr long) kernel32.WerRegisterMemoryBlock
