@@ -1625,6 +1625,7 @@ static void test_GetRawInputDeviceList(void)
         char nameA[128];
         UINT sz, len;
         RID_DEVICE_INFO info;
+        HANDLE file;
 
         /* get required buffer size */
         name[0] = '\0';
@@ -1664,6 +1665,14 @@ static void test_GetRawInputDeviceList(void)
         ok(ret == sizeof(info), "GetRawInputDeviceInfo gave wrong return: %d\n", err);
         ok(sz == sizeof(info), "GetRawInputDeviceInfo set wrong size\n");
         ok(info.dwType == devices[i].dwType, "GetRawInputDeviceInfo set wrong type: 0x%x\n", info.dwType);
+
+        /* setupapi returns an NT device path, but CreateFile() < Vista can't
+         * understand that; so use the \\?\ prefix instead */
+        name[1] = '\\';
+        file = CreateFileW(name, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+        todo_wine_if(info.dwType != RIM_TYPEHID)
+            ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u\n", wine_dbgstr_w(name), GetLastError());
+        CloseHandle(file);
     }
 
     /* check if variable changes from larger to smaller value */
