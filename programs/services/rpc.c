@@ -831,7 +831,9 @@ static void fill_status_process(SERVICE_STATUS_PROCESS *status, struct service_e
 {
     struct process_entry *process = service->process;
     memcpy(status, &service->status, sizeof(service->status));
-    status->dwProcessId     = process ? process->process_id : 0;
+    status->dwProcessId = 0;
+    if (process && !(service->status.dwServiceType & SERVICE_DRIVER))
+        status->dwProcessId = process->process_id;
     status->dwServiceFlags  = 0;
 }
 
