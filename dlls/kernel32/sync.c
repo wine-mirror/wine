@@ -50,12 +50,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(sync);
 
-/* check if current version is NT or Win95 */
-static inline BOOL is_version_nt(void)
-{
-    return !(GetVersion() & 0x80000000);
-}
-
 static void get_create_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *nameW,
                                           SECURITY_ATTRIBUTES *sa, const WCHAR *name )
 {
@@ -87,14 +81,6 @@ static BOOL get_open_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRING 
     BaseGetNamedObjectDirectory( &dir );
     InitializeObjectAttributes( attr, nameW, inherit ? OBJ_INHERIT : 0, dir, NULL );
     return TRUE;
-}
-
-/* helper for kernel32->ntdll timeout format conversion */
-static inline PLARGE_INTEGER get_nt_timeout( PLARGE_INTEGER pTime, DWORD timeout )
-{
-    if (timeout == INFINITE) return NULL;
-    pTime->QuadPart = (ULONGLONG)timeout * -10000;
-    return pTime;
 }
 
 /***********************************************************************
