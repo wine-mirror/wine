@@ -429,7 +429,7 @@ static HRESULT VMR9_maybe_init(struct quartz_vmr *This, BOOL force)
     return hr;
 }
 
-static VOID WINAPI VMR9_OnStartStreaming(BaseRenderer* iface)
+static void vmr_start_stream(BaseRenderer *iface)
 {
     struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
@@ -562,7 +562,7 @@ static const BaseRendererFuncTable BaseFuncTable =
 {
     .pfnCheckMediaType = VMR9_CheckMediaType,
     .pfnDoRenderSample = VMR9_DoRenderSample,
-    .pfnOnStartStreaming = VMR9_OnStartStreaming,
+    .renderer_start_stream = vmr_start_stream,
     .pfnOnStopStreaming = VMR9_OnStopStreaming,
     .pfnShouldDrawSampleNow = VMR9_ShouldDrawSampleNow,
     .pfnCompleteConnect = VMR9_CompleteConnect,

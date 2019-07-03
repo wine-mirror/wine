@@ -417,7 +417,7 @@ static VOID WINAPI VideoRenderer_OnStopStreaming(BaseRenderer* iface)
         RedrawWindow(This->baseControlWindow.baseWindow.hWnd, NULL, NULL, RDW_INVALIDATE|RDW_ERASE);
 }
 
-static VOID WINAPI VideoRenderer_OnStartStreaming(BaseRenderer* iface)
+static void video_renderer_start_stream(BaseRenderer *iface)
 {
     VideoRendererImpl *This = impl_from_BaseRenderer(iface);
 
@@ -473,7 +473,7 @@ static const BaseRendererFuncTable BaseFuncTable =
 {
     .pfnCheckMediaType = VideoRenderer_CheckMediaType,
     .pfnDoRenderSample = VideoRenderer_DoRenderSample,
-    .pfnOnStartStreaming = VideoRenderer_OnStartStreaming,
+    .renderer_start_stream = video_renderer_start_stream,
     .pfnOnStopStreaming = VideoRenderer_OnStopStreaming,
     .pfnShouldDrawSampleNow = VideoRenderer_ShouldDrawSampleNow,
     .pfnEndFlush = VideoRenderer_EndFlush,

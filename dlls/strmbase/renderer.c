@@ -441,8 +441,8 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     if (SUCCEEDED(hr))
     {
         QualityControlRender_Start(This->qcimpl, This->filter.rtStreamStart);
-        if (This->pFuncsTable->pfnOnStartStreaming)
-            This->pFuncsTable->pfnOnStartStreaming(This);
+        if (This->pFuncsTable->renderer_start_stream)
+            This->pFuncsTable->renderer_start_stream(This);
         if (This->filter.state == State_Stopped)
             BaseRendererImpl_ClearPendingSample(This);
         This->filter.state = State_Running;
