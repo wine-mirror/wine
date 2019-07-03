@@ -1406,6 +1406,7 @@
 @ cdecl _memccpy(ptr ptr long long)
 @ cdecl _memicmp(str str long)
 @ varargs _snprintf(ptr long str) NTDLL__snprintf
+@ varargs _snprintf_s(ptr long long str) _snprintf_s
 @ varargs _snwprintf(ptr long wstr) NTDLL__snwprintf
 @ cdecl _splitpath(str ptr ptr ptr ptr)
 @ cdecl _strcmpi(str str) _stricmp
@@ -1420,6 +1421,7 @@
 @ cdecl _ultoa(long ptr long)
 @ cdecl _ultow(long ptr long)
 @ cdecl -norelay _vsnprintf(ptr long str ptr) NTDLL__vsnprintf
+@ cdecl _vsnprintf_s(ptr long str ptr) _vsnprintf_s
 @ cdecl _vsnwprintf(ptr long wstr ptr) NTDLL__vsnwprintf
 @ cdecl _wcsicmp(wstr wstr) NTDLL__wcsicmp
 @ cdecl _wcslwr(wstr) NTDLL__wcslwr

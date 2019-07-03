@@ -765,6 +765,51 @@ int WINAPIV NTDLL__snwprintf( WCHAR *str, SIZE_T len, const WCHAR *format, ... )
 
 
 /*********************************************************************
+ *                  _vsnprintf_s   (NTDLL.@)
+ */
+int CDECL _vsnprintf_s( char *str, SIZE_T size, SIZE_T len, const char *format, __ms_va_list args )
+{
+    DWORD sz;
+    LPWSTR formatW = NULL;
+    pf_output out;
+    int r;
+
+    out.unicode = FALSE;
+    out.buf.A = str;
+    out.used = 0;
+    out.len = min( size, len );
+
+    if (format)
+    {
+        RtlMultiByteToUnicodeSize( &sz, format, strlen(format) + 1 );
+        if (!(formatW = RtlAllocateHeap( GetProcessHeap(), 0, sz ))) return -1;
+        RtlMultiByteToUnicodeN( formatW, sz, NULL, format, strlen(format) + 1 );
+    }
+    r = pf_vsnprintf( &out, formatW, args );
+    RtlFreeHeap( GetProcessHeap(), 0, formatW );
+    if (out.used < size) str[out.used] = 0;
+    else str[0] = 0;
+    if (r == size) r = -1;
+    return r;
+}
+
+
+/*********************************************************************
+ *                  _snprintf_s   (NTDLL.@)
+ */
+int WINAPIV _snprintf_s( char *str, SIZE_T size, SIZE_T len, const char *format, ... )
+{
+    int ret;
+    __ms_va_list valist;
+
+    __ms_va_start( valist, format );
+    ret = _vsnprintf_s( str, size, len, format, valist );
+    __ms_va_end( valist );
+    return ret;
+}
+
+
+/*********************************************************************
  *                  vsprintf   (NTDLL.@)
  */
 int CDECL NTDLL_vsprintf( char *str, const char *format, __ms_va_list args )
