@@ -25946,7 +25946,7 @@ static void test_mismatched_sample_types(void)
     {
         {"2d_2d", (IDirect3DBaseTexture9 **)&tex_2d, &ps_2d, 0x00707070},
         {"3d_3d", (IDirect3DBaseTexture9 **)&volume, &ps_3d, 0x00303030},
-        {"2d_3d", (IDirect3DBaseTexture9 **)&tex_2d, &ps_3d, 0x00707070, 0x00b2cce5, TRUE},
+        {"2d_3d", (IDirect3DBaseTexture9 **)&tex_2d, &ps_3d, 0x00707070, 0x00b2cce5},
         {"3d_2d", (IDirect3DBaseTexture9 **)&volume, &ps_2d, 0x00303030, 0x00b2cce5, TRUE, 0x00202020},
     };
 
