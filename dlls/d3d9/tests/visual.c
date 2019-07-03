@@ -25939,7 +25939,6 @@ static void test_mismatched_sample_types(void)
         IDirect3DPixelShader9 **pixel_shader;
         D3DCOLOR expected_colour;
         D3DCOLOR expected_broken;
-        BOOL todo;
         D3DCOLOR expected_broken2;
     }
     tests[] =
@@ -25947,7 +25946,7 @@ static void test_mismatched_sample_types(void)
         {"2d_2d", (IDirect3DBaseTexture9 **)&tex_2d, &ps_2d, 0x00707070},
         {"3d_3d", (IDirect3DBaseTexture9 **)&volume, &ps_3d, 0x00303030},
         {"2d_3d", (IDirect3DBaseTexture9 **)&tex_2d, &ps_3d, 0x00707070, 0x00b2cce5},
-        {"3d_2d", (IDirect3DBaseTexture9 **)&volume, &ps_2d, 0x00303030, 0x00b2cce5, TRUE, 0x00202020},
+        {"3d_2d", (IDirect3DBaseTexture9 **)&volume, &ps_2d, 0x00303030, 0x00b2cce5, 0x00202020},
     };
 
     window = create_window();
@@ -26044,7 +26043,7 @@ static void test_mismatched_sample_types(void)
 
         colour = getPixelColor(device, 320, 240);
 
-        todo_wine_if(tests[i].todo) ok(color_match(colour, tests[i].expected_colour, 1)
+        ok(color_match(colour, tests[i].expected_colour, 1)
                 || broken(tests[i].expected_broken && color_match(colour, tests[i].expected_broken, 1))
                 || broken(tests[i].expected_broken2 && color_match(colour, tests[i].expected_broken2, 1)),
                 "test %s, expected 0x%08x, got 0x%08x.\n",
