@@ -379,9 +379,9 @@ static void free_regfilter2(REGFILTER2 *rgf)
 
 static void write_filter_data(IPropertyBag *prop_bag, REGFILTER2 *rgf)
 {
+    BYTE *data = NULL, *array;
     IAMFilterData *fildata;
     SAFEARRAYBOUND sabound;
-    BYTE *data, *array;
     VARIANT var = {};
     ULONG size;
     HRESULT hr;
