@@ -75,17 +75,23 @@ static inline int pf_output_stringW( pf_output *out, LPCWSTR str, int len )
     if( out->unicode )
     {
         LPWSTR p = out->buf.W + out->used;
-        out->used += len;
 
         if (!out->buf.W)
+        {
+            out->used += len;
             return len;
+        }
         if( space >= len )
         {
             memcpy( p, str, len*sizeof(WCHAR) );
+            out->used += len;
             return len;
         }
         if( space > 0 )
+        {
             memcpy( p, str, space*sizeof(WCHAR) );
+            out->used += space;
+        }
     }
     else
     {
@@ -93,16 +99,23 @@ static inline int pf_output_stringW( pf_output *out, LPCWSTR str, int len )
         ULONG n;
 
         RtlUnicodeToMultiByteSize( &n, str, len * sizeof(WCHAR) );
-        out->used += n;
 
         if (!out->buf.A)
+        {
+            out->used += n;
             return len;
+        }
         if( space >= n )
         {
             RtlUnicodeToMultiByteN( p, n, NULL, str, len * sizeof(WCHAR) );
+            out->used += n;
             return len;
         }
-        if (space > 0) RtlUnicodeToMultiByteN( p, space, NULL, str, len * sizeof(WCHAR) );
+        if (space > 0)
+        {
+            RtlUnicodeToMultiByteN( p, space, NULL, str, len * sizeof(WCHAR) );
+            out->used += space;
+        }
     }
     return -1;
 }
@@ -116,17 +129,23 @@ static inline int pf_output_stringA( pf_output *out, LPCSTR str, int len )
     if( !out->unicode )
     {
         LPSTR p = out->buf.A + out->used;
-        out->used += len;
 
         if (!out->buf.A)
+        {
+            out->used += len;
             return len;
+        }
         if( space >= len )
         {
             memcpy( p, str, len );
+            out->used += len;
             return len;
         }
         if( space > 0 )
+        {
             memcpy( p, str, space );
+            out->used += space;
+        }
     }
     else
     {
@@ -134,16 +153,23 @@ static inline int pf_output_stringA( pf_output *out, LPCSTR str, int len )
         ULONG n;
 
         RtlMultiByteToUnicodeSize( &n, str, len );
-        out->used += n / sizeof(WCHAR);
 
         if (!out->buf.W)
+        {
+            out->used += n / sizeof(WCHAR);
             return len;
+        }
         if (space >= n / sizeof(WCHAR))
         {
             RtlMultiByteToUnicodeN( p, n, NULL, str, len );
+            out->used += n / sizeof(WCHAR);
             return len;
         }
-        if (space > 0) RtlMultiByteToUnicodeN( p, space * sizeof(WCHAR), NULL, str, len );
+        if (space > 0)
+        {
+            RtlMultiByteToUnicodeN( p, space * sizeof(WCHAR), NULL, str, len );
+            out->used += space;
+        }
     }
     return -1;
 }
@@ -657,9 +683,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
 
     /* check we reached the end, and null terminate the string */
     assert( *p == 0 );
-    pf_output_stringW( out, p, 1 );
-
-    return out->used - 1;
+    return out->used;
 }
 
 
@@ -686,6 +710,7 @@ int CDECL NTDLL__vsnprintf( char *str, SIZE_T len, const char *format, __ms_va_l
     }
     r = pf_vsnprintf( &out, formatW, args );
     RtlFreeHeap( GetProcessHeap(), 0, formatW );
+    if (out.used < len) str[out.used] = 0;
     return r;
 }
 
@@ -696,13 +721,16 @@ int CDECL NTDLL__vsnprintf( char *str, SIZE_T len, const char *format, __ms_va_l
 int CDECL NTDLL__vsnwprintf( WCHAR *str, SIZE_T len, const WCHAR *format, __ms_va_list args )
 {
     pf_output out;
+    int r;
 
     out.unicode = TRUE;
     out.buf.W = str;
     out.used = 0;
     out.len = len;
 
-    return pf_vsnprintf( &out, format, args );
+    r = pf_vsnprintf( &out, format, args );
+    if (out.used < len) str[out.used] = 0;
+    return r;
 }
 
 
