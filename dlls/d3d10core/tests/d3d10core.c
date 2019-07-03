@@ -1835,7 +1835,7 @@ static void test_texture1d_interfaces(void)
         desc.MipLevels = 1;
         desc.ArraySize = 1;
         desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.Usage = D3D10_USAGE_DEFAULT;
         desc.BindFlags = current->bind_flags;
         desc.CPUAccessFlags = 0;
         desc.MiscFlags = current->misc_flags;
@@ -17524,8 +17524,8 @@ static void test_multiple_viewports(void)
 
     /* Two viewports, only first scissor rectangle set. */
     memset(&rasterizer_desc, 0, sizeof(rasterizer_desc));
-    rasterizer_desc.FillMode = D3D11_FILL_SOLID;
-    rasterizer_desc.CullMode = D3D11_CULL_BACK;
+    rasterizer_desc.FillMode = D3D10_FILL_SOLID;
+    rasterizer_desc.CullMode = D3D10_CULL_BACK;
     rasterizer_desc.DepthClipEnable = TRUE;
     rasterizer_desc.ScissorEnable = TRUE;
     hr = ID3D10Device_CreateRasterizerState(device, &rasterizer_desc, &rasterizer_state);
