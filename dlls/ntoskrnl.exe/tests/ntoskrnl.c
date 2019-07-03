@@ -135,6 +135,8 @@ static BOOL start_driver(HANDLE service)
     }
     ok(status.dwCurrentState == SERVICE_RUNNING,
        "expected SERVICE_RUNNING, got %d\n", status.dwCurrentState);
+    ok(status.dwServiceType == SERVICE_KERNEL_DRIVER,
+       "expected SERVICE_KERNEL_DRIVER, got %#x\n", status.dwServiceType);
 
     return TRUE;
 }
