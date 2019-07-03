@@ -1975,6 +1975,7 @@ then
   dnl clang needs to be told to fail on unknown options
   saved_CFLAGS=$CFLAGS
   WINE_TRY_CFLAGS([-Werror=unknown-warning-option],[CFLAGS="$CFLAGS -Werror=unknown-warning-option"])
+  WINE_TRY_CFLAGS([-Werror=unused-command-line-argument],[CFLAGS="$CFLAGS -Werror=unused-command-line-argument"])
   WINE_TRY_CFLAGS([-Wdeclaration-after-statement])
   WINE_TRY_CFLAGS([-Wempty-body])
   WINE_TRY_CFLAGS([-Wignored-qualifiers])
@@ -2006,8 +2007,6 @@ char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=
       CFLAGS=$saved_string_h_CFLAGS
       test "$ac_cv_c_logicalop_noisy" = yes || EXTRACFLAGS="$EXTRACFLAGS -Wlogical-op"])
 
-  CFLAGS=$saved_CFLAGS
-
   dnl Default to dwarf-2 debug info
   for ac_flag in $CFLAGS; do
     case $ac_flag in
@@ -2035,6 +2034,8 @@ char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=
         *) WINE_TRY_CFLAGS([-mabi=ms],[MSVCRTFLAGS="$MSVCRTFLAGS -mabi=ms"]) ;;
       esac ;;
   esac
+
+  CFLAGS=$saved_CFLAGS
 
   dnl Enable -Werror for maintainer mode
   if test "x$enable_maintainer_mode" = "xyes"
