@@ -1493,52 +1493,94 @@ static enum fill_status fill_compsys( struct table *table, const struct expr *co
     return status;
 }
 
+#include "pshpack1.h"
+struct smbios_prologue
+{
+    BYTE  calling_method;
+    BYTE  major_version;
+    BYTE  minor_version;
+    BYTE  revision;
+    DWORD length;
+};
+
+struct smbios_header
+{
+    BYTE type;
+    BYTE length;
+    WORD handle;
+};
+
+struct smbios_system
+{
+    struct smbios_header hdr;
+    BYTE                 vendor;
+    BYTE                 product;
+    BYTE                 version;
+    BYTE                 serial;
+    BYTE                 uuid[16];
+};
+#include "poppack.h"
+
+#define RSMB (('R' << 24) | ('S' << 16) | ('M' << 8) | 'B')
+
 static WCHAR *get_compsysproduct_uuid(void)
 {
-#ifdef __APPLE__
-    unsigned char uuid[16];
-    const struct timespec timeout = {1, 0};
-    if (!gethostuuid( uuid, &timeout ))
-    {
-        static const WCHAR fmtW[] =
-            {'%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','-',
-             '%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X',
-             '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',0};
-        WCHAR *ret = heap_alloc( 37 * sizeof(WCHAR) );
-        if (!ret) return NULL;
-        sprintfW( ret, fmtW, uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7],
-                  uuid[8], uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15] );
-        return ret;
-    }
-#endif
-#ifdef __linux__
-    int file;
-    if ((file = open( "/var/lib/dbus/machine-id", O_RDONLY )) != -1)
-    {
-        unsigned char buf[32];
-        if (read( file, buf, sizeof(buf) ) == sizeof(buf))
-        {
-            unsigned int i, j;
-            WCHAR *ret, *p;
+    static const WCHAR fmtW[] =
+        {'%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','-',
+         '%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X',
+         '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',0};
+    static const BYTE none[] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+    ULONG len;
+    char *buf = NULL;
+    const char *ptr, *start;
+    const struct smbios_prologue *prologue;
+    const struct smbios_header *hdr;
+    const struct smbios_system *system;
+    const BYTE *uuid = NULL;
+    WCHAR *ret = NULL;
 
-            close( file );
-            if (!(p = ret = heap_alloc( 37 * sizeof(WCHAR) ))) return NULL;
-            for (i = 0, j = 0; i < 8; i++) p[i] = toupperW( buf[j++] );
-            p[8] = '-';
-            for (i = 9; i < 13; i++) p[i] = toupperW( buf[j++] );
-            p[13] = '-';
-            for (i = 14; i < 18; i++) p[i] = toupperW( buf[j++] );
-            p[18] = '-';
-            for (i = 19; i < 23; i++) p[i] = toupperW( buf[j++] );
-            p[23] = '-';
-            for (i = 24; i < 36; i++) p[i] = toupperW( buf[j++] );
-            ret[i] = 0;
-            return ret;
+    if ((len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 )) < sizeof(*prologue) ) goto done;
+    if (!(buf = heap_alloc( len ))) goto done;
+    GetSystemFirmwareTable( RSMB, 0, buf, len );
+
+    prologue = (const struct smbios_prologue *)buf;
+    if (prologue->length < sizeof(*hdr)) goto done;
+    start = (const char *)(prologue + 1);
+    hdr = (const struct smbios_header *)start;
+
+    for (;;)
+    {
+        if (uuid || (const char *)hdr - start >= prologue->length - sizeof(*hdr)) break;
+        if (!hdr->length)
+        {
+            WARN( "invalid entry\n" );
+            break;
         }
-        close( file );
+
+        switch (hdr->type)
+        {
+        case 1: /* system entry */
+            if (hdr->length < sizeof(*system) || (const char *)hdr - start + hdr->length > prologue->length) break;
+            system = (const struct smbios_system *)hdr;
+            uuid = system->uuid;
+            break;
+
+        default: /* skip other entries */
+            for (ptr = (const char *)hdr + hdr->length; *ptr; ptr += strlen(ptr) + 1) { /* nothing */ }
+            if (ptr == (const char *)hdr + hdr->length) ptr++;
+            hdr = (const struct smbios_header *)(ptr + 1);
+            break;
+        }
     }
-#endif
-    return heap_strdupW( compsysproduct_uuidW );
+    if (!uuid || !memcmp( uuid, none, sizeof(none) ) || !(ret = heap_alloc( 37 * sizeof(WCHAR) ))) goto done;
+
+    sprintfW( ret, fmtW, uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7], uuid[8],
+              uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15] );
+
+done:
+    heap_free( buf );
+    if (!ret) ret = heap_strdupW( compsysproduct_uuidW );
+    return ret;
 }
 
 static enum fill_status fill_compsysproduct( struct table *table, const struct expr *cond )
