@@ -117,12 +117,7 @@ static HRESULT WINAPI BaseRenderer_InputPin_BeginFlush(IPin * iface)
     EnterCriticalSection(&pFilter->filter.csFilter);
     hr = BaseInputPinImpl_BeginFlush(iface);
     if (SUCCEEDED(hr))
-    {
-        if (pFilter->pFuncsTable->pfnBeginFlush)
-            hr = pFilter->pFuncsTable->pfnBeginFlush(pFilter);
-        else
-            hr = BaseRendererImpl_BeginFlush(pFilter);
-    }
+        hr = BaseRendererImpl_BeginFlush(pFilter);
     LeaveCriticalSection(&pFilter->filter.csFilter);
     LeaveCriticalSection(&pFilter->csRenderLock);
     return hr;
@@ -334,17 +329,9 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
             return hr;
     }
 
-    if (This->pFuncsTable->pfnPrepareRender)
-        This->pFuncsTable->pfnPrepareRender(This);
-
     EnterCriticalSection(&This->csRenderLock);
-    if ( This->filter.state == State_Paused )
-    {
-        if (This->pFuncsTable->pfnOnReceiveFirstSample)
-            This->pFuncsTable->pfnOnReceiveFirstSample(This, pSample);
-
+    if (This->filter.state == State_Paused)
         SetEvent(This->state_event);
-    }
 
     /* Wait for render Time */
     if (This->filter.pClock && SUCCEEDED(IMediaSample_GetTime(pSample, &start, &stop)))
@@ -360,9 +347,6 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
         {
             REFERENCE_TIME now;
             DWORD_PTR cookie;
-
-            if (This->pFuncsTable->pfnOnWaitStart)
-                This->pFuncsTable->pfnOnWaitStart(This);
 
             IReferenceClock_GetTime(This->filter.pClock, &now);
 
@@ -380,9 +364,6 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
 
                 EnterCriticalSection(&This->csRenderLock);
             }
-
-            if (This->pFuncsTable->pfnOnWaitEnd)
-                This->pFuncsTable->pfnOnWaitEnd(This);
         }
         else
         {

@@ -601,28 +601,20 @@ static HRESULT dsound_render_query_interface(BaseRenderer *iface, REFIID iid, vo
     return S_OK;
 }
 
-static const BaseRendererFuncTable BaseFuncTable = {
-    DSoundRender_CheckMediaType,
-    DSoundRender_DoRenderSample,
-    /**/
-    NULL,
-    NULL,
-    NULL,
-    DSoundRender_OnStartStreaming,
-    DSoundRender_OnStopStreaming,
-    NULL,
-    NULL,
-    NULL,
-    DSoundRender_ShouldDrawSampleNow,
-    DSoundRender_PrepareReceive,
-    /**/
-    DSoundRender_CompleteConnect,
-    DSoundRender_BreakConnect,
-    DSoundRender_EndOfStream,
-    NULL,
-    DSoundRender_EndFlush,
-    dsound_render_destroy,
-    dsound_render_query_interface,
+static const BaseRendererFuncTable BaseFuncTable =
+{
+    .pfnCheckMediaType = DSoundRender_CheckMediaType,
+    .pfnDoRenderSample = DSoundRender_DoRenderSample,
+    .pfnOnStartStreaming = DSoundRender_OnStartStreaming,
+    .pfnOnStopStreaming = DSoundRender_OnStopStreaming,
+    .pfnShouldDrawSampleNow = DSoundRender_ShouldDrawSampleNow,
+    .pfnPrepareReceive = DSoundRender_PrepareReceive,
+    .pfnCompleteConnect = DSoundRender_CompleteConnect,
+    .pfnBreakConnect = DSoundRender_BreakConnect,
+    .pfnEndOfStream = DSoundRender_EndOfStream,
+    .pfnEndFlush = DSoundRender_EndFlush,
+    .renderer_destroy = dsound_render_destroy,
+    .renderer_query_interface = dsound_render_query_interface,
 };
 
 HRESULT DSoundRender_create(IUnknown *outer, void **out)

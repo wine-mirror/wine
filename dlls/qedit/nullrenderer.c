@@ -55,27 +55,11 @@ static void null_renderer_destroy(BaseRenderer *iface)
     CoTaskMemFree(filter);
 }
 
-static const BaseRendererFuncTable RendererFuncTable = {
-    NullRenderer_CheckMediaType,
-    NullRenderer_DoRenderSample,
-    /**/
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    /**/
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    null_renderer_destroy,
+static const BaseRendererFuncTable RendererFuncTable =
+{
+    .pfnCheckMediaType = NullRenderer_CheckMediaType,
+    .pfnDoRenderSample = NullRenderer_DoRenderSample,
+    .renderer_destroy = null_renderer_destroy,
 };
 
 static const IBaseFilterVtbl NullRenderer_Vtbl =

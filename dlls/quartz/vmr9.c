@@ -558,28 +558,17 @@ static HRESULT vmr_query_interface(BaseRenderer *iface, REFIID iid, void **out)
     return S_OK;
 }
 
-static const BaseRendererFuncTable BaseFuncTable = {
-    VMR9_CheckMediaType,
-    VMR9_DoRenderSample,
-    /**/
-    NULL,
-    NULL,
-    NULL,
-    VMR9_OnStartStreaming,
-    VMR9_OnStopStreaming,
-    NULL,
-    NULL,
-    NULL,
-    VMR9_ShouldDrawSampleNow,
-    NULL,
-    /**/
-    VMR9_CompleteConnect,
-    VMR9_BreakConnect,
-    NULL,
-    NULL,
-    NULL,
-    vmr_destroy,
-    vmr_query_interface,
+static const BaseRendererFuncTable BaseFuncTable =
+{
+    .pfnCheckMediaType = VMR9_CheckMediaType,
+    .pfnDoRenderSample = VMR9_DoRenderSample,
+    .pfnOnStartStreaming = VMR9_OnStartStreaming,
+    .pfnOnStopStreaming = VMR9_OnStopStreaming,
+    .pfnShouldDrawSampleNow = VMR9_ShouldDrawSampleNow,
+    .pfnCompleteConnect = VMR9_CompleteConnect,
+    .pfnBreakConnect = VMR9_BreakConnect,
+    .renderer_destroy = vmr_destroy,
+    .renderer_query_interface = vmr_query_interface,
 };
 
 static LPWSTR WINAPI VMR9_GetClassWindowStyles(BaseWindow *This, DWORD *pClassStyles, DWORD *pWindowStyles, DWORD *pWindowStylesEx)

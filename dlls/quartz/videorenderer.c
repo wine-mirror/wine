@@ -469,28 +469,16 @@ static BOOL WINAPI VideoRenderer_OnSize(BaseWindow *iface, LONG Width, LONG Heig
     return BaseWindowImpl_OnSize(iface, Width, Height);
 }
 
-static const BaseRendererFuncTable BaseFuncTable = {
-    VideoRenderer_CheckMediaType,
-    VideoRenderer_DoRenderSample,
-    /**/
-    NULL,
-    NULL,
-    NULL,
-    VideoRenderer_OnStartStreaming,
-    VideoRenderer_OnStopStreaming,
-    NULL,
-    NULL,
-    NULL,
-    VideoRenderer_ShouldDrawSampleNow,
-    NULL,
-    /**/
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    VideoRenderer_EndFlush,
-    video_renderer_destroy,
-    video_renderer_query_interface,
+static const BaseRendererFuncTable BaseFuncTable =
+{
+    .pfnCheckMediaType = VideoRenderer_CheckMediaType,
+    .pfnDoRenderSample = VideoRenderer_DoRenderSample,
+    .pfnOnStartStreaming = VideoRenderer_OnStartStreaming,
+    .pfnOnStopStreaming = VideoRenderer_OnStopStreaming,
+    .pfnShouldDrawSampleNow = VideoRenderer_ShouldDrawSampleNow,
+    .pfnEndFlush = VideoRenderer_EndFlush,
+    .renderer_destroy = video_renderer_destroy,
+    .renderer_query_interface = video_renderer_query_interface,
 };
 
 static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {

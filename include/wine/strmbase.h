@@ -576,28 +576,18 @@ typedef HRESULT (WINAPI *BaseRenderer_BreakConnect) (BaseRenderer *This);
 typedef HRESULT (WINAPI *BaseRenderer_CompleteConnect) (BaseRenderer *This, IPin *pReceivePin);
 
 typedef struct BaseRendererFuncTable {
-	/* Required */
-	BaseRenderer_CheckMediaType pfnCheckMediaType;
-	BaseRenderer_DoRenderSample pfnDoRenderSample;
-	/* Optional, Data Handlers */
-	BaseRenderer_OnReceiveFirstSample  pfnOnReceiveFirstSample;
-	BaseRenderer_OnRenderEnd  pfnOnRenderEnd;
-	BaseRenderer_OnRenderStart  pfnOnRenderStart;
-	BaseRenderer_OnStartStreaming  pfnOnStartStreaming;
-	BaseRenderer_OnStopStreaming  pfnOnStopStreaming;
-	BaseRenderer_OnWaitEnd  pfnOnWaitEnd;
-	BaseRenderer_OnWaitStart  pfnOnWaitStart;
-	BaseRenderer_PrepareRender  pfnPrepareRender;
-	BaseRenderer_ShouldDrawSampleNow  pfnShouldDrawSampleNow;
-	BaseRenderer_PrepareReceive pfnPrepareReceive;
-	/* Optional, Input Pin */
-	BaseRenderer_CompleteConnect pfnCompleteConnect;
-	BaseRenderer_BreakConnect pfnBreakConnect;
-	BaseRenderer_EndOfStream pfnEndOfStream;
-	BaseRenderer_BeginFlush pfnBeginFlush;
-	BaseRenderer_EndFlush pfnEndFlush;
-        void (*renderer_destroy)(BaseRenderer *iface);
-        HRESULT (*renderer_query_interface)(BaseRenderer *iface, REFIID iid, void **out);
+    BaseRenderer_CheckMediaType pfnCheckMediaType;
+    BaseRenderer_DoRenderSample pfnDoRenderSample;
+    BaseRenderer_OnStartStreaming  pfnOnStartStreaming;
+    BaseRenderer_OnStopStreaming  pfnOnStopStreaming;
+    BaseRenderer_ShouldDrawSampleNow  pfnShouldDrawSampleNow;
+    BaseRenderer_PrepareReceive pfnPrepareReceive;
+    BaseRenderer_CompleteConnect pfnCompleteConnect;
+    BaseRenderer_BreakConnect pfnBreakConnect;
+    BaseRenderer_EndOfStream pfnEndOfStream;
+    BaseRenderer_EndFlush pfnEndFlush;
+    void (*renderer_destroy)(BaseRenderer *iface);
+    HRESULT (*renderer_query_interface)(BaseRenderer *iface, REFIID iid, void **out);
 } BaseRendererFuncTable;
 
 HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSample);
