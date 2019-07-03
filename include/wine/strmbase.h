@@ -562,7 +562,6 @@ typedef HRESULT (WINAPI *BaseRenderer_DoRenderSample)(BaseRenderer *This, IMedia
 typedef VOID (WINAPI *BaseRenderer_OnReceiveFirstSample)(BaseRenderer *This, IMediaSample *pMediaSample);
 typedef VOID (WINAPI *BaseRenderer_OnRenderEnd)(BaseRenderer *This, IMediaSample *pMediaSample);
 typedef VOID (WINAPI *BaseRenderer_OnRenderStart)(BaseRenderer *This, IMediaSample *pMediaSample);
-typedef VOID (WINAPI *BaseRenderer_OnStopStreaming)(BaseRenderer *This);
 typedef VOID (WINAPI *BaseRenderer_OnWaitEnd)(BaseRenderer *This);
 typedef VOID (WINAPI *BaseRenderer_OnWaitStart)(BaseRenderer *This);
 typedef VOID (WINAPI *BaseRenderer_PrepareRender)(BaseRenderer *This);
@@ -578,7 +577,7 @@ typedef struct BaseRendererFuncTable {
     BaseRenderer_CheckMediaType pfnCheckMediaType;
     BaseRenderer_DoRenderSample pfnDoRenderSample;
     void (*renderer_start_stream)(BaseRenderer *iface);
-    BaseRenderer_OnStopStreaming  pfnOnStopStreaming;
+    void (*renderer_stop_stream)(BaseRenderer *iface);
     BaseRenderer_ShouldDrawSampleNow  pfnShouldDrawSampleNow;
     BaseRenderer_PrepareReceive pfnPrepareReceive;
     BaseRenderer_CompleteConnect pfnCompleteConnect;

@@ -424,7 +424,7 @@ static HRESULT WINAPI DSoundRender_CheckMediaType(BaseRenderer *iface, const AM_
     return S_OK;
 }
 
-static VOID WINAPI DSoundRender_OnStopStreaming(BaseRenderer * iface)
+static void dsound_render_stop_stream(BaseRenderer *iface)
 {
     DSoundRenderImpl *This = impl_from_BaseRenderer(iface);
 
@@ -606,7 +606,7 @@ static const BaseRendererFuncTable BaseFuncTable =
     .pfnCheckMediaType = DSoundRender_CheckMediaType,
     .pfnDoRenderSample = DSoundRender_DoRenderSample,
     .renderer_start_stream = dsound_render_start_stream,
-    .pfnOnStopStreaming = DSoundRender_OnStopStreaming,
+    .renderer_stop_stream = dsound_render_stop_stream,
     .pfnShouldDrawSampleNow = DSoundRender_ShouldDrawSampleNow,
     .pfnPrepareReceive = DSoundRender_PrepareReceive,
     .pfnCompleteConnect = DSoundRender_CompleteConnect,

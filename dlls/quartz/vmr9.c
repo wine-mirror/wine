@@ -447,7 +447,7 @@ static void vmr_start_stream(BaseRenderer *iface)
     GetClientRect(This->baseControlWindow.baseWindow.hWnd, &This->target_rect);
 }
 
-static VOID WINAPI VMR9_OnStopStreaming(BaseRenderer* iface)
+static void vmr_stop_stream(BaseRenderer *iface)
 {
     struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
@@ -563,7 +563,7 @@ static const BaseRendererFuncTable BaseFuncTable =
     .pfnCheckMediaType = VMR9_CheckMediaType,
     .pfnDoRenderSample = VMR9_DoRenderSample,
     .renderer_start_stream = vmr_start_stream,
-    .pfnOnStopStreaming = VMR9_OnStopStreaming,
+    .renderer_stop_stream = vmr_stop_stream,
     .pfnShouldDrawSampleNow = VMR9_ShouldDrawSampleNow,
     .pfnCompleteConnect = VMR9_CompleteConnect,
     .pfnBreakConnect = VMR9_BreakConnect,

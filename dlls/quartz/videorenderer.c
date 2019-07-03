@@ -405,7 +405,7 @@ static HRESULT video_renderer_query_interface(BaseRenderer *iface, REFIID iid, v
     return S_OK;
 }
 
-static VOID WINAPI VideoRenderer_OnStopStreaming(BaseRenderer* iface)
+static void video_renderer_stop_stream(BaseRenderer *iface)
 {
     VideoRendererImpl *This = impl_from_BaseRenderer(iface);
 
@@ -474,7 +474,7 @@ static const BaseRendererFuncTable BaseFuncTable =
     .pfnCheckMediaType = VideoRenderer_CheckMediaType,
     .pfnDoRenderSample = VideoRenderer_DoRenderSample,
     .renderer_start_stream = video_renderer_start_stream,
-    .pfnOnStopStreaming = VideoRenderer_OnStopStreaming,
+    .renderer_stop_stream = video_renderer_stop_stream,
     .pfnShouldDrawSampleNow = VideoRenderer_ShouldDrawSampleNow,
     .pfnEndFlush = VideoRenderer_EndFlush,
     .renderer_destroy = video_renderer_destroy,

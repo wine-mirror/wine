@@ -399,8 +399,8 @@ HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface)
     EnterCriticalSection(&This->csRenderLock);
     {
         RendererPosPassThru_ResetMediaTime(This->pPosition);
-        if (This->pFuncsTable->pfnOnStopStreaming)
-            This->pFuncsTable->pfnOnStopStreaming(This);
+        if (This->pFuncsTable->renderer_stop_stream)
+            This->pFuncsTable->renderer_stop_stream(This);
         This->filter.state = State_Stopped;
         SetEvent(This->state_event);
         SetEvent(This->flush_event);
@@ -469,8 +469,8 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
                     ResetEvent(This->state_event);
                 This->sink.end_of_stream = FALSE;
             }
-            else if (This->pFuncsTable->pfnOnStopStreaming)
-                This->pFuncsTable->pfnOnStopStreaming(This);
+            else if (This->pFuncsTable->renderer_stop_stream)
+                This->pFuncsTable->renderer_stop_stream(This);
 
             if (This->filter.state == State_Stopped)
                 BaseRendererImpl_ClearPendingSample(This);
