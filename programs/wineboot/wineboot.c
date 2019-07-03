@@ -61,9 +61,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_GETOPT_H
-# include <getopt.h>
-#endif
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
@@ -1226,7 +1223,7 @@ done:
     return ret;
 }
 
-static void usage(void)
+static void usage( int status )
 {
     WINE_MESSAGE( "Usage: wineboot [options]\n" );
     WINE_MESSAGE( "Options;\n" );
@@ -1238,22 +1235,8 @@ static void usage(void)
     WINE_MESSAGE( "    -r,--restart      Restart only, don't do normal startup operations\n" );
     WINE_MESSAGE( "    -s,--shutdown     Shutdown only, don't reboot\n" );
     WINE_MESSAGE( "    -u,--update       Update the wineprefix directory\n" );
+    exit( status );
 }
-
-static const char short_options[] = "efhikrsu";
-
-static const struct option long_options[] =
-{
-    { "help",        0, 0, 'h' },
-    { "end-session", 0, 0, 'e' },
-    { "force",       0, 0, 'f' },
-    { "init" ,       0, 0, 'i' },
-    { "kill",        0, 0, 'k' },
-    { "restart",     0, 0, 'r' },
-    { "shutdown",    0, 0, 's' },
-    { "update",      0, 0, 'u' },
-    { NULL,          0, 0, 0 }
-};
 
 int __cdecl main( int argc, char *argv[] )
 {
@@ -1264,7 +1247,7 @@ int __cdecl main( int argc, char *argv[] )
     static const WCHAR wineboot_eventW[] = {'_','_','w','i','n','e','b','o','o','t','_','e','v','e','n','t',0};
 
     /* First, set the current directory to SystemRoot */
-    int optc;
+    int i, j;
     BOOL end_session, force, init, kill, restart, shutdown, update;
     HANDLE event;
     SECURITY_ATTRIBUTES sa;
@@ -1299,19 +1282,36 @@ int __cdecl main( int argc, char *argv[] )
         Wow64RevertWow64FsRedirection( redir );
     }
 
-    while ((optc = getopt_long(argc, argv, short_options, long_options, NULL )) != -1)
+    for (i = 1; i < argc; i++)
     {
-        switch(optc)
+        if (argv[i][0] != '-') continue;
+        if (argv[i][1] == '-')
         {
-        case 'e': end_session = TRUE; break;
-        case 'f': force = TRUE; break;
-        case 'i': init = TRUE; break;
-        case 'k': kill = TRUE; break;
-        case 'r': restart = TRUE; break;
-        case 's': shutdown = TRUE; break;
-        case 'u': update = TRUE; break;
-        case 'h': usage(); return 0;
-        case '?': usage(); return 1;
+            if (!strcmp( argv[i], "--help" )) usage( 0 );
+            else if (!strcmp( argv[i], "--end-session" )) end_session = TRUE;
+            else if (!strcmp( argv[i], "--force" )) force = TRUE;
+            else if (!strcmp( argv[i], "--init" )) init = TRUE;
+            else if (!strcmp( argv[i], "--kill" )) kill = TRUE;
+            else if (!strcmp( argv[i], "--restart" )) restart = TRUE;
+            else if (!strcmp( argv[i], "--shutdown" )) shutdown = TRUE;
+            else if (!strcmp( argv[i], "--update" )) update = TRUE;
+            else usage( 1 );
+            continue;
+        }
+        for (j = 1; argv[i][j]; j++)
+        {
+            switch (argv[i][j])
+            {
+            case 'e': end_session = TRUE; break;
+            case 'f': force = TRUE; break;
+            case 'i': init = TRUE; break;
+            case 'k': kill = TRUE; break;
+            case 'r': restart = TRUE; break;
+            case 's': shutdown = TRUE; break;
+            case 'u': update = TRUE; break;
+            case 'h': usage(0); break;
+            default:  usage(1); break;
+            }
         }
     }
 
