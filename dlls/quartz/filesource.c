@@ -647,11 +647,6 @@ static inline AsyncReader *impl_from_BaseOutputPin(BaseOutputPin *iface)
     return CONTAINING_RECORD(iface, AsyncReader, source);
 }
 
-static inline BaseOutputPin *impl_BaseOutputPin_from_BasePin(BasePin *iface)
-{
-    return CONTAINING_RECORD(iface, BaseOutputPin, pin);
-}
-
 static inline AsyncReader *impl_from_IAsyncReader(IAsyncReader *iface)
 {
     return CONTAINING_RECORD(iface, AsyncReader, IAsyncReader_iface);
