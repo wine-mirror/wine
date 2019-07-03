@@ -682,34 +682,6 @@ HRESULT DSoundRender_create(IUnknown *outer, void **out)
     return hr;
 }
 
-static HRESULT WINAPI DSoundRender_Pause(IBaseFilter * iface)
-{
-    DSoundRenderImpl *This = impl_from_IBaseFilter(iface);
-    HRESULT hr = S_OK;
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    EnterCriticalSection(&This->renderer.csRenderLock);
-    if (This->renderer.filter.state != State_Paused)
-    {
-        if (This->renderer.filter.state == State_Stopped)
-        {
-            if (This->renderer.sink.pin.pConnectedTo)
-                ResetEvent(This->renderer.state_event);
-            This->renderer.sink.end_of_stream = 0;
-        }
-
-        hr = IDirectSoundBuffer_Stop(This->dsbuffer);
-        if (SUCCEEDED(hr))
-            This->renderer.filter.state = State_Paused;
-
-        ResetEvent(This->renderer.flush_event);
-    }
-    LeaveCriticalSection(&This->renderer.csRenderLock);
-
-    return hr;
-}
-
 static const IBaseFilterVtbl DSoundRender_Vtbl =
 {
     BaseFilterImpl_QueryInterface,
@@ -717,7 +689,7 @@ static const IBaseFilterVtbl DSoundRender_Vtbl =
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     BaseRendererImpl_Stop,
-    DSoundRender_Pause,
+    BaseRendererImpl_Pause,
     BaseRendererImpl_Run,
     BaseRendererImpl_GetState,
     BaseRendererImpl_SetSyncSource,
