@@ -25829,6 +25829,245 @@ static void test_desktop_window(void)
     IDirect3D9_Release(d3d);
 }
 
+static void test_mismatched_sample_types_fill_texture(DWORD *bits, unsigned int pitch, D3DCOLOR colour,
+        unsigned int size)
+{
+    unsigned int x, y;
+
+    for (y = 0; y < size; ++y)
+    {
+        DWORD *ptr = (DWORD *)(((BYTE *)bits) + (y * pitch));
+
+        for (x = 0; x < size; ++x)
+            *ptr++ = colour;
+    }
+}
+
+static void test_mismatched_sample_types(void)
+{
+    /* MSDN suggests that sampling a texture with fewer dimensions than sampler has
+     * is allowed while the opposite is not.
+     * AMD, Intel, WARP return sampled texture values in both cases. The use of W
+     * coordinate when sampling 3d texture with 2d sampler looks not entirely consistent.
+     * Nvidia returns zero texture values for both cases while that is different
+     * from unbound texture result (0, 0, 0, 1): it is (0, 0, 0, 0) for RGBA texture or,
+     * in a general case, result of a fixup of zero texture color, e. g., (0, 0, 1, 1)
+     * for D3DFMT_G16R16 texture. */
+
+    IDirect3DVertexDeclaration9 *vertex_declaration;
+    static IDirect3DPixelShader9 *ps_2d, *ps_3d;
+    static IDirect3DVolumeTexture9 *volume;
+    IDirect3DVertexShader9 *vertex_shader;
+    static IDirect3DTexture9 *tex_2d;
+    D3DLOCKED_RECT locked_rect;
+    D3DLOCKED_BOX locked_box;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    D3DCOLOR colour;
+    unsigned int i;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    static const D3DVERTEXELEMENT9 decl_elements[] =
+    {
+        {0,  0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    static const struct
+    {
+        struct vec3 position;
+        struct vec3 t0;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, {0.0f, 0.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.1f}, {0.0f, 1.0f, 0.5f}},
+        {{ 1.0f, -1.0f, 0.1f}, {1.0f, 0.0f, 0.5f}},
+        {{ 1.0f,  1.0f, 0.1f}, {1.0f, 1.0f, 1.0f}},
+    };
+
+    static const DWORD vs_code[] =
+    {
+        0xfffe0300,                                     /* vs_3_0                 */
+        0x0200001f, 0x80000000, 0x900f0000,             /* dcl_position v0        */
+        0x0200001f, 0x80000005, 0x900f0001,             /* dcl_texcoord0 v1       */
+        0x0200001f, 0x80000000, 0xe00f0000,             /* dcl_position o0        */
+        0x0200001f, 0x80000005, 0xe00f0001,             /* dcl_texcoord0 o1       */
+        0x02000001, 0xe00f0000, 0x90e40000,             /* mov o0, v0             */
+        0x02000001, 0xe00f0001, 0x90e40001,             /* mov o1, v1             */
+        0x0000ffff,                                     /* end                    */
+    };
+
+    static const DWORD ps_header[] =
+    {
+        0xffff0300,                                     /* ps_3_0                 */
+        0x05000051, 0xa00f0000, 0x3f333333, 0x3f4ccccd, 0x3f666666, 0x00000000,
+                /* def c0, 0.7, 0.8, 0.9, 0.0 */
+    };
+    static const DWORD ps_footer[] =
+    {
+        0x03000042, 0x800f0001, 0x90e40000, 0xa0e40800, /* texld r1, v0, s0       */
+        0x02020029, 0x80ff0001, 0xa0ff0000,             /* if_eq r1.w, c0.w       */
+        0x02000001, 0x800f0001, 0xa0e40000,             /* mov r1, c0             */
+        0x0000002b,                                     /* endif                  */
+        0x02000001, 0x800f0800, 0x80e40001,             /* mov oC0, r1            */
+        0x0000ffff,                                     /* end                    */
+    };
+
+#define TEST_MISMATCHED_SAMPLE_BODY_WORDS 6
+
+    static const DWORD ps_tex_2d[TEST_MISMATCHED_SAMPLE_BODY_WORDS] =
+    {
+        0x0200001f, 0x80000005, 0x90030000,             /* dcl_texcoord0 v0.xy    */
+        0x0200001f, 0x90000000, 0xa00f0800,             /* dcl_2d s0              */
+    };
+    static const DWORD ps_tex_3d[TEST_MISMATCHED_SAMPLE_BODY_WORDS] =
+    {
+        0x0200001f, 0x80000005, 0x90070000,             /* dcl_texcoord0 v0.xyz   */
+        0x0200001f, 0xa0000000, 0xa00f0800,             /* dcl_volume s0          */
+    };
+
+    static DWORD ps_code[ARRAY_SIZE(ps_header) + TEST_MISMATCHED_SAMPLE_BODY_WORDS + ARRAY_SIZE(ps_footer)];
+
+    static const struct
+    {
+        const char *name;
+        IDirect3DBaseTexture9 **texture;
+        IDirect3DPixelShader9 **pixel_shader;
+        D3DCOLOR expected_colour;
+        D3DCOLOR expected_broken;
+        BOOL todo;
+        D3DCOLOR expected_broken2;
+    }
+    tests[] =
+    {
+        {"2d_2d", (IDirect3DBaseTexture9 **)&tex_2d, &ps_2d, 0x00707070},
+        {"3d_3d", (IDirect3DBaseTexture9 **)&volume, &ps_3d, 0x00303030},
+        {"2d_3d", (IDirect3DBaseTexture9 **)&tex_2d, &ps_3d, 0x00707070, 0x00b2cce5, TRUE},
+        {"3d_2d", (IDirect3DBaseTexture9 **)&volume, &ps_2d, 0x00303030, 0x00b2cce5, TRUE, 0x00202020},
+    };
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(3, 0) || caps.VertexShaderVersion < D3DVS_VERSION(3, 0))
+    {
+        skip("No shader model 3 support, skipping tests.\n");
+        goto done;
+    }
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP))
+    {
+        skip("No volume texture support, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 2, 2, 2, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_MANAGED, &volume, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DVolumeTexture9_LockBox(volume, 0, &locked_box, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    test_mismatched_sample_types_fill_texture(locked_box.pBits, locked_box.RowPitch, 0x20202020, 2);
+    test_mismatched_sample_types_fill_texture((DWORD *)((BYTE *)locked_box.pBits + locked_box.SlicePitch),
+            locked_box.RowPitch, 0x40404040, 2);
+    hr = IDirect3DVolumeTexture9_UnlockBox(volume, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 2, 2, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_MANAGED, &tex_2d, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DTexture9_LockRect(tex_2d, 0, &locked_rect, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    test_mismatched_sample_types_fill_texture(locked_rect.pBits, locked_rect.Pitch, 0x70707070, 2);
+    hr = IDirect3DTexture9_UnlockRect(tex_2d, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateVertexShader(device, vs_code, &vertex_shader);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(device, vertex_shader);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memcpy(ps_code, ps_header, sizeof(ps_header));
+    memcpy(ps_code + ARRAY_SIZE(ps_header) + TEST_MISMATCHED_SAMPLE_BODY_WORDS, ps_footer, sizeof(ps_footer));
+
+    memcpy(ps_code + ARRAY_SIZE(ps_header), ps_tex_2d,
+            sizeof(*ps_code) * TEST_MISMATCHED_SAMPLE_BODY_WORDS);
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_code, &ps_2d);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memcpy(ps_code + ARRAY_SIZE(ps_header), ps_tex_3d,
+            sizeof(*ps_code) * TEST_MISMATCHED_SAMPLE_BODY_WORDS);
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_code, &ps_3d);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x80808080, 0.0f, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetTexture(device, 0, *tests[i].texture);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetPixelShader(device, *tests[i].pixel_shader);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        colour = getPixelColor(device, 320, 240);
+
+        todo_wine_if(tests[i].todo) ok(color_match(colour, tests[i].expected_colour, 1)
+                || broken(tests[i].expected_broken && color_match(colour, tests[i].expected_broken, 1))
+                || broken(tests[i].expected_broken2 && color_match(colour, tests[i].expected_broken2, 1)),
+                "test %s, expected 0x%08x, got 0x%08x.\n",
+                tests[i].name, tests[i].expected_colour, colour);
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    IDirect3DPixelShader9_Release(ps_2d);
+    IDirect3DPixelShader9_Release(ps_3d);
+
+    IDirect3DVertexShader9_Release(vertex_shader);
+    IDirect3DVertexDeclaration9_Release(vertex_declaration);
+    IDirect3DVolumeTexture9_Release(volume);
+    IDirect3DTexture9_Release(tex_2d);
+
+done:
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -25972,4 +26211,5 @@ START_TEST(visual)
     test_sysmem_draw();
     test_nrm_instruction();
     test_desktop_window();
+    test_mismatched_sample_types();
 }
