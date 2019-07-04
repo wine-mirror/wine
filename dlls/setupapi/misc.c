@@ -32,7 +32,6 @@
 #include "mscat.h"
 #include "shlobj.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "setupapi_private.h"
@@ -139,7 +138,7 @@ LPWSTR WINAPI DuplicateString(LPCWSTR lpSrc)
     if (lpDst == NULL)
         return NULL;
 
-    strcpyW(lpDst, lpSrc);
+    lstrcpyW(lpDst, lpSrc);
 
     return lpDst;
 }
@@ -920,14 +919,14 @@ static BOOL find_existing_inf(const WCHAR *source, WCHAR *target)
     }
 
     GetWindowsDirectoryW( target, MAX_PATH );
-    strcatW( target, infW );
-    strcatW( target, wildcardW );
+    lstrcatW( target, infW );
+    lstrcatW( target, wildcardW );
     if ((find_handle = FindFirstFileW( target, &find_data )) != INVALID_HANDLE_VALUE)
     {
         do {
             GetWindowsDirectoryW( target, MAX_PATH );
-            strcatW( target, infW );
-            strcatW( target, find_data.cFileName );
+            lstrcatW( target, infW );
+            lstrcatW( target, find_data.cFileName );
             dest_file = CreateFileW( target, FILE_READ_DATA | FILE_READ_ATTRIBUTES,
                                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                                      NULL, OPEN_EXISTING, 0, NULL );
@@ -999,8 +998,8 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
     }
 
     GetWindowsDirectoryW( target, ARRAY_SIZE(target) );
-    strcatW( target, inf );
-    strcatW( target, strrchrW( source, '\\' ) + 1 );
+    lstrcatW( target, inf );
+    lstrcatW( target, wcsrchr( source, '\\' ) + 1 );
     if (GetFileAttributesW( target ) != INVALID_FILE_ATTRIBUTES)
     {
         for (i = 0; i < OEM_INDEX_LIMIT; i++)
@@ -1008,8 +1007,8 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
             static const WCHAR formatW[] = {'o','e','m','%','u','.','i','n','f',0};
 
             GetWindowsDirectoryW( target, ARRAY_SIZE(target) );
-            strcatW( target, inf );
-            sprintfW( target + strlenW(target), formatW, i );
+            lstrcatW( target, inf );
+            swprintf( target + lstrlenW(target), ARRAY_SIZE(target) - lstrlenW(target), formatW, i );
 
             if (GetFileAttributesW( target ) == INVALID_FILE_ATTRIBUTES)
                 break;
@@ -1034,11 +1033,11 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
 
         SetupCloseInfFile( hinf );
 
-        strcpyW( source_cat, source );
-        p = strrchrW( source_cat, '\\' );
+        lstrcpyW( source_cat, source );
+        p = wcsrchr( source_cat, '\\' );
         if (p) p++;
         else p = source_cat;
-        strcpyW( p, catalog_file );
+        lstrcpyW( p, catalog_file );
 
         TRACE("installing catalog file %s\n", debugstr_w( source_cat ));
 
@@ -1068,12 +1067,12 @@ done:
     if (style & SP_COPY_DELETESOURCE)
         DeleteFileW( source );
 
-    size = strlenW( target ) + 1;
+    size = lstrlenW( target ) + 1;
     if (dest)
     {
         if (buffer_size >= size)
         {
-            strcpyW( dest, target );
+            lstrcpyW( dest, target );
         }
         else
         {
@@ -1082,7 +1081,7 @@ done:
         }
     }
 
-    if (filepart) *filepart = strrchrW( target, '\\' ) + 1;
+    if (filepart) *filepart = wcsrchr( target, '\\' ) + 1;
     if (required_size) *required_size = size;
     if (ret) SetLastError(ERROR_SUCCESS);
 
@@ -1123,8 +1122,8 @@ BOOL WINAPI SetupUninstallOEMInfW( PCWSTR inf_file, DWORD flags, PVOID reserved 
 
     if (!GetWindowsDirectoryW( target, ARRAY_SIZE( target ))) return FALSE;
 
-    strcatW( target, infW );
-    strcatW( target, inf_file );
+    lstrcatW( target, infW );
+    lstrcatW( target, inf_file );
 
     if (flags & SUOI_FORCEDELETE)
         return DeleteFileW(target);
@@ -1511,7 +1510,7 @@ static UINT CALLBACK decompress_or_copy_callback( PVOID context, UINT notificati
 
         TRACE("Requesting extraction of cabinet file %s\n",
               wine_dbgstr_w(info->NameInCabinet));
-        strcpyW( info->FullTargetName, context_info->target );
+        lstrcpyW( info->FullTargetName, context_info->target );
         context_info->has_extracted = TRUE;
         return FILEOP_DOIT;
     }

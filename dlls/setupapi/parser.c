@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -38,7 +35,6 @@
 #include "setupapi.h"
 #include "setupapi_private.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
@@ -178,7 +174,7 @@ static void *grow_array( void *array, unsigned int *count, size_t elem )
 /* get the directory of the inf file (as counted string, not null-terminated) */
 static const WCHAR *get_inf_dir( const struct inf_file *file, unsigned int *len )
 {
-    const WCHAR *p = strrchrW( file->filename, '\\' );
+    const WCHAR *p = wcsrchr( file->filename, '\\' );
     *len = p ? (p + 1 - file->filename) : 0;
     return file->filename;
 }
@@ -190,7 +186,7 @@ static int find_section( const struct inf_file *file, const WCHAR *name )
     unsigned int i;
 
     for (i = 0; i < file->nb_sections; i++)
-        if (!strcmpiW( name, file->sections[i]->name )) return i;
+        if (!wcsicmp( name, file->sections[i]->name )) return i;
     return -1;
 }
 
@@ -207,7 +203,7 @@ static struct line *find_line( struct inf_file *file, int section_index, const W
     for (i = 0, line = section->lines; i < section->nb_lines; i++, line++)
     {
         if (line->key_field == -1) continue;
-        if (!strcmpiW( name, file->fields[line->key_field].text )) return line;
+        if (!wcsicmp( name, file->fields[line->key_field].text )) return line;
     }
     return NULL;
 }
@@ -310,7 +306,7 @@ static const WCHAR *get_dirid_subst( const struct inf_file *file, int dirid, uns
 
     if (dirid == DIRID_SRCPATH) return get_inf_dir( file, len );
     ret = DIRID_get_string( dirid );
-    if (ret) *len = strlenW(ret);
+    if (ret) *len = lstrlenW(ret);
     return ret;
 }
 
@@ -340,12 +336,12 @@ static const WCHAR *get_string_subst( const struct inf_file *file, const WCHAR *
     for (i = 0, line = strings_section->lines; i < strings_section->nb_lines; i++, line++)
     {
         if (line->key_field == -1) continue;
-        if (strncmpiW( str, file->fields[line->key_field].text, *len )) continue;
+        if (wcsnicmp( str, file->fields[line->key_field].text, *len )) continue;
         if (!file->fields[line->key_field].text[*len]) break;
     }
     if (i == strings_section->nb_lines || !line->nb_fields) goto not_found;
     field = &file->fields[line->first_field];
-    *len = strlenW( field->text );
+    *len = lstrlenW( field->text );
     return field->text;
 
  not_found:  /* check for integer id */
@@ -353,7 +349,7 @@ static const WCHAR *get_string_subst( const struct inf_file *file, const WCHAR *
     {
         memcpy( dirid_str, str, *len * sizeof(WCHAR) );
         dirid_str[*len] = 0;
-        dirid = strtolW( dirid_str, &end, 10 );
+        dirid = wcstol( dirid_str, &end, 10 );
         if (!*end) ret = get_dirid_subst( file, dirid, len );
         if (no_trailing_slash && ret && *len && ret[*len - 1] == '\\') *len -= 1;
         HeapFree( GetProcessHeap(), 0, dirid_str );
@@ -440,8 +436,8 @@ static unsigned int PARSER_string_substA( const struct inf_file *file, const WCH
 static WCHAR *push_string( struct inf_file *file, const WCHAR *string )
 {
     WCHAR *ret = file->string_pos;
-    strcpyW( ret, string );
-    file->string_pos += strlenW( ret ) + 1;
+    lstrcpyW( ret, string );
+    file->string_pos += lstrlenW( ret ) + 1;
     return ret;
 }
 
@@ -601,7 +597,7 @@ static const WCHAR *line_start_state( struct parser *parser, const WCHAR *pos )
             set_state( parser, SECTION_NAME );
             return p + 1;
         default:
-            if (isspaceW(*p)) break;
+            if (iswspace(*p)) break;
             if (parser->cur_section != -1)
             {
                 parser->start = p;
@@ -676,7 +672,7 @@ static const WCHAR *key_name_state( struct parser *parser, const WCHAR *pos )
             set_state( parser, EOL_BACKSLASH );
             return p;
         default:
-            if (!isspaceW(*p)) token_end = p + 1;
+            if (!iswspace(*p)) token_end = p + 1;
             else
             {
                 push_token( parser, p );
@@ -728,7 +724,7 @@ static const WCHAR *value_name_state( struct parser *parser, const WCHAR *pos )
             set_state( parser, EOL_BACKSLASH );
             return p;
         default:
-            if (!isspaceW(*p)) token_end = p + 1;
+            if (!iswspace(*p)) token_end = p + 1;
             else
             {
                 push_token( parser, p );
@@ -767,7 +763,7 @@ static const WCHAR *eol_backslash_state( struct parser *parser, const WCHAR *pos
             set_state( parser, COMMENT );
             return p + 1;
         default:
-            if (isspaceW(*p)) continue;
+            if (iswspace(*p)) continue;
             push_token( parser, p );
             pop_state( parser );
             return p;
@@ -822,7 +818,7 @@ static const WCHAR *leading_spaces_state( struct parser *parser, const WCHAR *po
             set_state( parser, EOL_BACKSLASH );
             return p;
         }
-        if (!isspaceW(*p)) break;
+        if (!iswspace(*p)) break;
     }
     parser->start = p;
     pop_state( parser );
@@ -842,7 +838,7 @@ static const WCHAR *trailing_spaces_state( struct parser *parser, const WCHAR *p
             set_state( parser, EOL_BACKSLASH );
             return p;
         }
-        if (!isspaceW(*p)) break;
+        if (!iswspace(*p)) break;
     }
     pop_state( parser );
     return p;
@@ -1023,9 +1019,9 @@ static struct inf_file *parse_file( HANDLE handle, const WCHAR *class, DWORD sty
             if (line && line->nb_fields > 0)
             {
                 struct field *field = file->fields + line->first_field;
-                if (!strcmpiW( field->text, Chicago )) goto done;
-                if (!strcmpiW( field->text, WindowsNT )) goto done;
-                if (!strcmpiW( field->text, Windows95 )) goto done;
+                if (!wcsicmp( field->text, Chicago )) goto done;
+                if (!wcsicmp( field->text, WindowsNT )) goto done;
+                if (!wcsicmp( field->text, Windows95 )) goto done;
             }
         }
         if (error_line) *error_line = 0;
@@ -1115,7 +1111,7 @@ HINF WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR class, DWORD style, UINT *err
     WCHAR *path, *p;
     UINT len;
 
-    if (strchrW( name, '\\' ) || strchrW( name, '/' ))
+    if (wcschr( name, '\\' ) || wcschr( name, '/' ))
     {
         if (!(len = GetFullPathNameW( name, 0, NULL, NULL ))) return INVALID_HANDLE_VALUE;
         if (!(path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
@@ -1131,21 +1127,21 @@ HINF WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR class, DWORD style, UINT *err
         static const WCHAR Inf[]      = {'\\','i','n','f','\\',0};
         static const WCHAR System32[] = {'\\','s','y','s','t','e','m','3','2','\\',0};
 
-        len = GetWindowsDirectoryW( NULL, 0 ) + strlenW(name) + 12;
+        len = GetWindowsDirectoryW( NULL, 0 ) + lstrlenW(name) + 12;
         if (!(path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
         {
             SetLastError( ERROR_NOT_ENOUGH_MEMORY );
             return INVALID_HANDLE_VALUE;
         }
         GetWindowsDirectoryW( path, len );
-        p = path + strlenW(path);
-        strcpyW( p, Inf );
-        strcatW( p, name );
+        p = path + lstrlenW(path);
+        lstrcpyW( p, Inf );
+        lstrcatW( p, name );
         handle = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
         if (handle == INVALID_HANDLE_VALUE)
         {
-            strcpyW( p, System32 );
-            strcatW( p, name );
+            lstrcpyW( p, System32 );
+            lstrcatW( p, name );
             handle = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
         }
     }
@@ -1223,7 +1219,7 @@ HINF WINAPI SetupOpenMasterInf( VOID )
     WCHAR Buffer[MAX_PATH];
 
     GetWindowsDirectoryW( Buffer, MAX_PATH );
-    strcatW( Buffer, Layout );
+    lstrcatW( Buffer, Layout );
     return SetupOpenInfFileW( Buffer, NULL, INF_STYLE_WIN4, NULL);
 }
 
@@ -1288,7 +1284,7 @@ BOOL WINAPI SetupEnumInfSectionsW( HINF hinf, UINT index, PWSTR buffer, DWORD si
     {
         if (index < file->nb_sections)
         {
-            DWORD len = strlenW( file->sections[index]->name ) + 1;
+            DWORD len = lstrlenW( file->sections[index]->name ) + 1;
             if (need) *need = len;
             if (!buffer)
             {
@@ -1552,7 +1548,7 @@ BOOL WINAPI SetupFindNextMatchLineW( PINFCONTEXT context_in, PCWSTR key,
     {
         if (line->key_field == -1) continue;
         PARSER_string_substW( file, file->fields[line->key_field].text, buffer, ARRAY_SIZE(buffer) );
-        if (!strcmpiW( key, buffer ))
+        if (!wcsicmp( key, buffer ))
         {
             if (context_out != context_in) *context_out = *context_in;
             context_out->Line = i;
@@ -1573,7 +1569,7 @@ BOOL WINAPI SetupFindNextMatchLineW( PINFCONTEXT context_in, PCWSTR key,
         for (i = 0, line = section->lines; i < section->nb_lines; i++, line++)
         {
             if (line->key_field == -1) continue;
-            if (!strcmpiW( key, file->fields[line->key_field].text ))
+            if (!wcsicmp( key, file->fields[line->key_field].text ))
             {
                 context_out->Inf        = context_in->Inf;
                 context_out->CurrentInf = file;
@@ -1841,7 +1837,7 @@ BOOL WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buffer,
     {
         const WCHAR *p;
         DWORD value = 0;
-        for (p = field->text; *p && isxdigitW(*p); p++)
+        for (p = field->text; *p && iswxdigit(*p); p++)
         {
             if ((value <<= 4) > 255)
             {
@@ -1849,7 +1845,7 @@ BOOL WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buffer,
                 return FALSE;
             }
             if (*p <= '9') value |= (*p - '0');
-            else value |= (tolowerW(*p) - 'a' + 10);
+            else value |= (towlower(*p) - 'a' + 10);
         }
         buffer[i - index] = value;
     }

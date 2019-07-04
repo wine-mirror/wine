@@ -31,7 +31,6 @@
 #include "winspool.h"
 #include "setupapi.h"
 #include "shlobj.h"
-#include "wine/unicode.h"
 #include "setupapi_private.h"
 #include "wine/debug.h"
 
@@ -61,10 +60,10 @@ static const WCHAR *get_unknown_dirid(void)
 
     if (!unknown_dirid)
     {
-        UINT len = GetSystemDirectoryW( NULL, 0 ) + strlenW(unknown_str);
+        UINT len = GetSystemDirectoryW( NULL, 0 ) + lstrlenW(unknown_str);
         if (!(unknown_dirid = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
         GetSystemDirectoryW( unknown_dirid, len );
-        strcatW( unknown_dirid, unknown_str );
+        lstrcatW( unknown_dirid, unknown_str );
     }
     return unknown_dirid;
 }
@@ -101,23 +100,23 @@ static const WCHAR *create_system_dirid( int dirid )
         break;
     case DIRID_DRIVERS:
         GetSystemDirectoryW( buffer, MAX_PATH );
-        strcatW( buffer, Drivers );
+        lstrcatW( buffer, Drivers );
         break;
     case DIRID_INF:
         GetWindowsDirectoryW( buffer, MAX_PATH );
-        strcatW( buffer, Inf );
+        lstrcatW( buffer, Inf );
         break;
     case DIRID_HELP:
         GetWindowsDirectoryW( buffer, MAX_PATH );
-        strcatW( buffer, Help );
+        lstrcatW( buffer, Help );
         break;
     case DIRID_FONTS:
         GetWindowsDirectoryW( buffer, MAX_PATH );
-        strcatW( buffer, Fonts );
+        lstrcatW( buffer, Fonts );
         break;
     case DIRID_VIEWERS:
         GetSystemDirectoryW( buffer, MAX_PATH );
-        strcatW( buffer, Viewers );
+        lstrcatW( buffer, Viewers );
         break;
     case DIRID_APPS:
         return C_Root;  /* FIXME */
@@ -128,12 +127,12 @@ static const WCHAR *create_system_dirid( int dirid )
         return C_Root;  /* FIXME */
     case DIRID_SYSTEM16:
         GetWindowsDirectoryW( buffer, MAX_PATH );
-        strcatW( buffer, System );
+        lstrcatW( buffer, System );
         break;
     case DIRID_SPOOL:
     case DIRID_SPOOLDRIVERS:  /* FIXME */
         GetWindowsDirectoryW( buffer, MAX_PATH );
-        strcatW( buffer, Spool );
+        lstrcatW( buffer, Spool );
         break;
     case DIRID_USERPROFILE:
         if (GetEnvironmentVariableW( UserProfile, buffer, MAX_PATH )) break;
@@ -152,7 +151,7 @@ static const WCHAR *create_system_dirid( int dirid )
         FIXME( "unknown dirid %d\n", dirid );
         return get_unknown_dirid();
     }
-    len = (strlenW(buffer) + 1) * sizeof(WCHAR);
+    len = (lstrlenW(buffer) + 1) * sizeof(WCHAR);
     if ((str = HeapAlloc( GetProcessHeap(), 0, len ))) memcpy( str, buffer, len );
     return str;
 }
@@ -167,7 +166,7 @@ static const WCHAR *get_csidl_dir( DWORD csidl )
         FIXME( "CSIDL %x not found\n", csidl );
         return get_unknown_dirid();
     }
-    len = (strlenW(buffer) + 1) * sizeof(WCHAR);
+    len = (lstrlenW(buffer) + 1) * sizeof(WCHAR);
     if ((str = HeapAlloc( GetProcessHeap(), 0, len ))) memcpy( str, buffer, len );
     return str;
 }
@@ -288,7 +287,7 @@ BOOL WINAPI SetupSetDirectoryIdW( HINF hinf, DWORD id, PCWSTR dir )
     }
 
     /* duplicate the string */
-    len = (strlenW(dir)+1) * sizeof(WCHAR);
+    len = (lstrlenW(dir)+1) * sizeof(WCHAR);
     if (!(str = HeapAlloc( GetProcessHeap(), 0, len ))) return FALSE;
     memcpy( str, dir, len );
     return store_user_dirid( hinf, id, str );
