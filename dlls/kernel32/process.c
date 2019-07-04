@@ -1274,7 +1274,7 @@ void WINAPI start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
     }
     __EXCEPT(UnhandledExceptionFilter)
     {
-        TerminateThread( GetCurrentThread(), GetExceptionCode() );
+        TerminateProcess( GetCurrentProcess(), GetExceptionCode() );
     }
     __ENDTRY
     abort();  /* should not be reached */
