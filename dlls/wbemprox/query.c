@@ -18,7 +18,6 @@
 
 #define COBJMACROS
 
-#include "config.h"
 #include <stdarg.h>
 
 #include "windef.h"
@@ -63,10 +62,10 @@ static BOOL eval_like( const WCHAR *lstr, const WCHAR *rstr )
         {
             while (*q == '%') q++;
             if (!*q) return TRUE;
-            while (*p && *q && toupperW( *p ) == toupperW( *q )) { p++; q++; };
+            while (*p && *q && towupper( *p ) == towupper( *q )) { p++; q++; };
             if (!*p && !*q) return TRUE;
         }
-        if (*q != '%' && toupperW( *p++ ) != toupperW( *q++ )) return FALSE;
+        if (*q != '%' && towupper( *p++ ) != towupper( *q++ )) return FALSE;
     }
     return TRUE;
 }
@@ -81,22 +80,22 @@ static HRESULT eval_strcmp( UINT op, const WCHAR *lstr, const WCHAR *rstr, LONGL
     switch (op)
     {
     case OP_EQ:
-        *val = !strcmpW( lstr, rstr );
+        *val = !wcscmp( lstr, rstr );
         break;
     case OP_GT:
-        *val = strcmpW( lstr, rstr ) > 0;
+        *val = wcscmp( lstr, rstr ) > 0;
         break;
     case OP_LT:
-        *val = strcmpW( lstr, rstr ) < 0;
+        *val = wcscmp( lstr, rstr ) < 0;
         break;
     case OP_LE:
-        *val = strcmpW( lstr, rstr ) <= 0;
+        *val = wcscmp( lstr, rstr ) <= 0;
         break;
     case OP_GE:
-        *val = strcmpW( lstr, rstr ) >= 0;
+        *val = wcscmp( lstr, rstr ) >= 0;
         break;
     case OP_NE:
-        *val = strcmpW( lstr, rstr );
+        *val = wcscmp( lstr, rstr );
         break;
     case OP_LIKE:
         *val = eval_like( lstr, rstr );
@@ -148,8 +147,8 @@ static HRESULT eval_boolcmp( UINT op, LONGLONG lval, LONGLONG rval, UINT ltype, 
 {
     static const WCHAR trueW[] = {'T','r','u','e',0};
 
-    if (ltype == CIM_STRING) lval = !strcmpiW( (const WCHAR *)(INT_PTR)lval, trueW ) ? -1 : 0;
-    else if (rtype == CIM_STRING) rval = !strcmpiW( (const WCHAR *)(INT_PTR)rval, trueW ) ? -1 : 0;
+    if (ltype == CIM_STRING) lval = !wcsicmp( (const WCHAR *)(INT_PTR)lval, trueW ) ? -1 : 0;
+    else if (rtype == CIM_STRING) rval = !wcsicmp( (const WCHAR *)(INT_PTR)rval, trueW ) ? -1 : 0;
 
     switch (op)
     {
@@ -207,7 +206,7 @@ static UINT resolve_type( UINT left, UINT right )
     return CIM_ILLEGAL;
 }
 
-static const WCHAR *format_int( WCHAR *buf, CIMTYPE type, LONGLONG val )
+static const WCHAR *format_int( WCHAR *buf, UINT len, CIMTYPE type, LONGLONG val )
 {
     static const WCHAR fmt_signedW[] = {'%','d',0};
     static const WCHAR fmt_unsignedW[] = {'%','u',0};
@@ -219,13 +218,13 @@ static const WCHAR *format_int( WCHAR *buf, CIMTYPE type, LONGLONG val )
     case CIM_SINT8:
     case CIM_SINT16:
     case CIM_SINT32:
-        sprintfW( buf, fmt_signedW, val );
+        swprintf( buf, len, fmt_signedW, val );
         return buf;
 
     case CIM_UINT8:
     case CIM_UINT16:
     case CIM_UINT32:
-        sprintfW( buf, fmt_unsignedW, val );
+        swprintf( buf, len, fmt_unsignedW, val );
         return buf;
 
     case CIM_SINT64:
@@ -263,10 +262,10 @@ static HRESULT eval_binary( const struct table *table, UINT row, const struct co
         const WCHAR *lstr, *rstr;
         WCHAR lbuf[21], rbuf[21];
 
-        if (is_int( ltype )) lstr = format_int( lbuf, ltype, lval );
+        if (is_int( ltype )) lstr = format_int( lbuf, ARRAY_SIZE( lbuf ), ltype, lval );
         else lstr = (const WCHAR *)(INT_PTR)lval;
 
-        if (is_int( rtype )) rstr = format_int( rbuf, rtype, rval );
+        if (is_int( rtype )) rstr = format_int( rbuf, ARRAY_SIZE( rbuf ), rtype, rval );
         else rstr = (const WCHAR *)(INT_PTR)rval;
 
         return eval_strcmp( expr->op, lstr, rstr, val );
@@ -493,7 +492,7 @@ BOOL is_selected_prop( const struct view *view, const WCHAR *name )
     if (!prop) return TRUE;
     while (prop)
     {
-        if (!strcmpiW( prop->name, name )) return TRUE;
+        if (!wcsicmp( prop->name, name )) return TRUE;
         prop = prop->next;
     }
     return FALSE;
@@ -512,7 +511,7 @@ static BSTR build_servername( const struct view *view )
     if (view->proplist) return NULL;
 
     if (!(GetComputerNameW( server, &len ))) return NULL;
-    for (p = server; *p; p++) *p = toupperW( *p );
+    for (p = server; *p; p++) *p = towupper( *p );
     return SysAllocString( server );
 }
 
@@ -545,7 +544,7 @@ static BSTR build_proplist( const struct view *view, UINT index, UINT count, UIN
             const WCHAR *name = view->table->columns[i].name;
 
             values[j] = get_value_bstr( view->table, row, i );
-            *len += strlenW( fmtW ) + strlenW( name ) + strlenW( values[j] );
+            *len += lstrlenW( fmtW ) + lstrlenW( name ) + lstrlenW( values[j] );
             j++;
         }
     }
@@ -558,7 +557,7 @@ static BSTR build_proplist( const struct view *view, UINT index, UINT count, UIN
             {
                 const WCHAR *name = view->table->columns[i].name;
 
-                offset += sprintfW( ret + offset, fmtW, name, values[j] );
+                offset += swprintf( ret + offset, *len - offset, fmtW, name, values[j] );
                 if (j < count - 1) ret[offset++] = ',';
                 j++;
             }
@@ -592,9 +591,9 @@ static BSTR build_relpath( const struct view *view, UINT index, const WCHAR *nam
     if (!(num_keys = count_key_columns( view ))) return class;
     if (!(proplist = build_proplist( view, index, num_keys, &len ))) goto done;
 
-    len += strlenW( fmtW ) + SysStringLen( class );
+    len += lstrlenW( fmtW ) + SysStringLen( class );
     if (!(ret = SysAllocStringLen( NULL, len ))) goto done;
-    sprintfW( ret, fmtW, class, proplist );
+    swprintf( ret, len, fmtW, class, proplist );
 
 done:
     SysFreeString( class );
@@ -614,9 +613,9 @@ static BSTR build_path( const struct view *view, UINT index, const WCHAR *name )
     if (!(namespace = build_namespace( view ))) goto done;
     if (!(relpath = build_relpath( view, index, name ))) goto done;
 
-    len = strlenW( fmtW ) + SysStringLen( server ) + SysStringLen( namespace ) + SysStringLen( relpath );
+    len = lstrlenW( fmtW ) + SysStringLen( server ) + SysStringLen( namespace ) + SysStringLen( relpath );
     if (!(ret = SysAllocStringLen( NULL, len ))) goto done;
-    sprintfW( ret, fmtW, server, namespace, relpath );
+    swprintf( ret, len, fmtW, server, namespace, relpath );
 
 done:
     SysFreeString( server );
@@ -666,7 +665,7 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
 
     if (flavor) *flavor = WBEM_FLAVOR_ORIGIN_SYSTEM;
 
-    if (!strcmpiW( name, classW ))
+    if (!wcsicmp( name, classW ))
     {
         if (ret)
         {
@@ -676,7 +675,7 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
         if (type) *type = CIM_STRING;
         return S_OK;
     }
-    if (!strcmpiW( name, genusW ))
+    if (!wcsicmp( name, genusW ))
     {
         if (ret)
         {
@@ -686,7 +685,7 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
         if (type) *type = CIM_SINT32;
         return S_OK;
     }
-    else if (!strcmpiW( name, namespaceW ))
+    else if (!wcsicmp( name, namespaceW ))
     {
         if (ret)
         {
@@ -696,7 +695,7 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
         if (type) *type = CIM_STRING;
         return S_OK;
     }
-    else if (!strcmpiW( name, pathW ))
+    else if (!wcsicmp( name, pathW ))
     {
         if (ret)
         {
@@ -706,7 +705,7 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
         if (type) *type = CIM_STRING;
         return S_OK;
     }
-    if (!strcmpiW( name, propcountW ))
+    if (!wcsicmp( name, propcountW ))
     {
         if (ret)
         {
@@ -716,7 +715,7 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
         if (type) *type = CIM_SINT32;
         return S_OK;
     }
-    else if (!strcmpiW( name, relpathW ))
+    else if (!wcsicmp( name, relpathW ))
     {
         if (ret)
         {
@@ -726,7 +725,7 @@ static HRESULT get_system_propval( const struct view *view, UINT index, const WC
         if (type) *type = CIM_STRING;
         return S_OK;
     }
-    else if (!strcmpiW( name, serverW ))
+    else if (!wcsicmp( name, serverW ))
     {
         if (ret)
         {

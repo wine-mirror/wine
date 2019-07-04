@@ -20,32 +20,14 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#include "config.h"
 #include <stdarg.h>
-#include <fcntl.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
-#ifdef __MINGW32__
-# include "winsock2.h"
-# include "ws2tcpip.h"
-# define WS_AF_INET AF_INET
-# define WS_AF_UNSPEC AF_UNSPEC
-# define WS_NI_MAXHOST NI_MAXHOST
-# define WS_NI_NAMEREQD NI_NAMEREQD
-#else
-# define USE_WS_PREFIX
-# include "winsock2.h"
-# include "ws2tcpip.h"
-#endif
+#include "winsock2.h"
+#include "ws2tcpip.h"
 #include "initguid.h"
 #include "wbemcli.h"
 #include "wbemprov.h"
@@ -1351,7 +1333,7 @@ static enum fill_status fill_cdromdrive( struct table *table, const struct expr 
 
             rec = (struct record_cdromdrive *)(table->data + offset);
             rec->device_id    = cdromdrive_pnpdeviceidW;
-            sprintfW( drive, fmtW, 'A' + i );
+            swprintf( drive, ARRAY_SIZE( drive ), fmtW, 'A' + i );
             rec->drive        = heap_strdupW( drive );
             rec->mediatype    = cdromdrive_mediatypeW;
             rec->name         = cdromdrive_nameW;
@@ -1574,7 +1556,7 @@ static WCHAR *get_compsysproduct_uuid(void)
     }
     if (!uuid || !memcmp( uuid, none, sizeof(none) ) || !(ret = heap_alloc( 37 * sizeof(WCHAR) ))) goto done;
 
-    sprintfW( ret, fmtW, uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7], uuid[8],
+    swprintf( ret, 37, fmtW, uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7], uuid[8],
               uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15] );
 
 done:
@@ -1747,9 +1729,9 @@ static WCHAR *build_dirname( const WCHAR *path, UINT *ret_len )
     UINT len, i;
     WCHAR *ret;
 
-    if (!isalphaW( p[0] ) || p[1] != ':' || p[2] != '\\' || p[3] != '\\' || !p[4]) return NULL;
+    if (!iswalpha( p[0] ) || p[1] != ':' || p[2] != '\\' || p[3] != '\\' || !p[4]) return NULL;
     start = path + 4;
-    len = strlenW( start );
+    len = lstrlenW( start );
     p = start + len - 1;
     if (*p == '\\') return NULL;
 
@@ -1774,7 +1756,7 @@ static WCHAR *build_dirname( const WCHAR *path, UINT *ret_len )
 static BOOL seen_dir( struct dirstack *dirstack, const WCHAR *path )
 {
     UINT i;
-    for (i = 0; i < dirstack->num_dirs; i++) if (!strcmpW( dirstack->dirs[i], path )) return TRUE;
+    for (i = 0; i < dirstack->num_dirs; i++) if (!wcscmp( dirstack->dirs[i], path )) return TRUE;
     return FALSE;
 }
 
@@ -1794,14 +1776,14 @@ static UINT seed_dirs( struct dirstack *dirstack, const struct expr *cond, WCHAR
         const WCHAR *str = NULL;
 
         if (left->type == EXPR_PROPVAL && right->type == EXPR_SVAL &&
-            !strcmpW( left->u.propval->name, prop_nameW ) &&
-            toupperW( right->u.sval[0] ) == toupperW( root ))
+            !wcscmp( left->u.propval->name, prop_nameW ) &&
+            towupper( right->u.sval[0] ) == towupper( root ))
         {
             str = right->u.sval;
         }
         else if (left->type == EXPR_SVAL && right->type == EXPR_PROPVAL &&
-                 !strcmpW( right->u.propval->name, prop_nameW ) &&
-                 toupperW( left->u.sval[0] ) == toupperW( root ))
+                 !wcscmp( right->u.propval->name, prop_nameW ) &&
+                 towupper( left->u.sval[0] ) == towupper( root ))
         {
             str = left->u.sval;
         }
@@ -1830,11 +1812,11 @@ static UINT seed_dirs( struct dirstack *dirstack, const struct expr *cond, WCHAR
 
 static WCHAR *append_path( const WCHAR *path, const WCHAR *segment, UINT *len )
 {
-    UINT len_path = 0, len_segment = strlenW( segment );
+    UINT len_path = 0, len_segment = lstrlenW( segment );
     WCHAR *ret;
 
     *len = 0;
-    if (path) len_path = strlenW( path );
+    if (path) len_path = lstrlenW( path );
     if (!(ret = heap_alloc( (len_path + len_segment + 2) * sizeof(WCHAR) ))) return NULL;
     if (path && len_path)
     {
@@ -1852,11 +1834,11 @@ static WCHAR *get_file_version( const WCHAR *filename )
 {
     static const WCHAR slashW[] = {'\\',0}, fmtW[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
     VS_FIXEDFILEINFO *info;
-    DWORD size;
+    DWORD size, len = 4 * 5 + ARRAY_SIZE( fmtW );
     void *block;
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( (4 * 5 + ARRAY_SIZE( fmtW )) * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
     if (!(size = GetFileVersionInfoSizeW( filename, NULL )) || !(block = heap_alloc( size )))
     {
         heap_free( ret );
@@ -1869,8 +1851,8 @@ static WCHAR *get_file_version( const WCHAR *filename )
         heap_free( ret );
         return NULL;
     }
-    sprintfW( ret, fmtW, info->dwFileVersionMS >> 16, info->dwFileVersionMS & 0xffff,
-                         info->dwFileVersionLS >> 16, info->dwFileVersionLS & 0xffff );
+    swprintf( ret, len, fmtW, info->dwFileVersionMS >> 16, info->dwFileVersionMS & 0xffff,
+                              info->dwFileVersionLS >> 16, info->dwFileVersionLS & 0xffff );
     heap_free( block );
     return ret;
 }
@@ -1921,7 +1903,7 @@ static enum fill_status fill_datafile( struct table *table, const struct expr *c
                         FindClose( handle );
                         goto done;
                     }
-                    if (!strcmpW( data.cFileName, dotW ) || !strcmpW( data.cFileName, dotdotW )) continue;
+                    if (!wcscmp( data.cFileName, dotW ) || !wcscmp( data.cFileName, dotdotW )) continue;
                     new_path = append_path( path, data.cFileName, &len );
 
                     if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -2043,7 +2025,7 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
                         goto done;
                     }
                     if (!(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
-                        !strcmpW( data.cFileName, dotW ) || !strcmpW( data.cFileName, dotdotW ))
+                        !wcscmp( data.cFileName, dotW ) || !wcscmp( data.cFileName, dotdotW ))
                         continue;
 
                     new_path = append_path( path, data.cFileName, &len );
@@ -2136,7 +2118,7 @@ static enum fill_status fill_diskdrive( struct table *table, const struct expr *
             if (!resize_table( table, row + 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
             rec = (struct record_diskdrive *)(table->data + offset);
-            sprintfW( device_id, fmtW, index );
+            swprintf( device_id, ARRAY_SIZE( device_id ), fmtW, index );
             rec->device_id     = heap_strdupW( device_id );
             rec->index         = index;
             rec->interfacetype = diskdrive_interfacetypeW;
@@ -2202,7 +2184,7 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
             rec = (struct record_diskpartition *)(table->data + offset);
             rec->bootable       = (i == 2) ? -1 : 0;
             rec->bootpartition  = (i == 2) ? -1 : 0;
-            sprintfW( device_id, fmtW, index );
+            swprintf( device_id, ARRAY_SIZE( device_id ), fmtW, index );
             rec->device_id      = heap_strdupW( device_id );
             rec->diskindex      = index;
             rec->index          = 0;
@@ -2229,10 +2211,11 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
 static WCHAR *get_ip4_string( DWORD addr )
 {
     static const WCHAR fmtW[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
+    DWORD len = sizeof("ddd.ddd.ddd.ddd");
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( sizeof("ddd.ddd.ddd.ddd") * sizeof(WCHAR) ))) return NULL;
-    sprintfW( ret, fmtW, (addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff );
+    if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+    swprintf( ret, len, fmtW, (addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff );
     return ret;
 }
 
@@ -2292,7 +2275,7 @@ static WCHAR *get_volumeserialnumber( const WCHAR *root )
     WCHAR buffer[9];
 
     GetVolumeInformationW( root, NULL, 0, &serial, NULL, NULL, NULL, 0 );
-    sprintfW( buffer, fmtW, serial );
+    swprintf( buffer, ARRAY_SIZE( buffer ), fmtW, serial );
     return heap_strdupW( buffer );
 }
 
@@ -2320,7 +2303,7 @@ static enum fill_status fill_logicaldisk( struct table *table, const struct expr
             if (!resize_table( table, row + 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
             rec = (struct record_logicaldisk *)(table->data + offset);
-            sprintfW( device_id, fmtW, 'A' + i );
+            swprintf( device_id, ARRAY_SIZE( device_id ), fmtW, 'A' + i );
             rec->device_id          = heap_strdupW( device_id );
             rec->drivetype          = type;
             rec->filesystem         = get_filesystem( root );
@@ -2365,7 +2348,7 @@ static WCHAR *get_mac_address( const BYTE *addr, DWORD len )
     WCHAR *ret;
 
     if (len != 6 || !(ret = heap_alloc( 18 * sizeof(WCHAR) ))) return NULL;
-    sprintfW( ret, fmtW, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
+    swprintf( ret, 18, fmtW, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
     return ret;
 }
 static const WCHAR *get_adaptertype( DWORD type, int *id, int *physical )
@@ -2411,11 +2394,11 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
     int adaptertypeid, physical;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    ret = GetAdaptersAddresses( WS_AF_UNSPEC, 0, NULL, NULL, &size );
+    ret = GetAdaptersAddresses( AF_UNSPEC, 0, NULL, NULL, &size );
     if (ret != ERROR_BUFFER_OVERFLOW) return FILL_STATUS_FAILED;
 
     if (!(buffer = heap_alloc( size ))) return FILL_STATUS_FAILED;
-    if (GetAdaptersAddresses( WS_AF_UNSPEC, 0, NULL, buffer, &size ))
+    if (GetAdaptersAddresses( AF_UNSPEC, 0, NULL, buffer, &size ))
     {
         heap_free( buffer );
         return FILL_STATUS_FAILED;
@@ -2434,7 +2417,7 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
         if (aa->IfType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
 
         rec = (struct record_networkadapter *)(table->data + offset);
-        sprintfW( device_id, fmtW, aa->u.s.IfIndex );
+        swprintf( device_id, ARRAY_SIZE( device_id ), fmtW, aa->u.s.IfIndex );
         rec->adaptertype          = get_adaptertype( aa->IfType, &adaptertypeid, &physical );
         rec->adaptertypeid        = adaptertypeid;
         rec->description          = heap_strdupW( aa->Description );
@@ -2466,11 +2449,11 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
 static WCHAR *get_dnshostname( IP_ADAPTER_UNICAST_ADDRESS *addr )
 {
     const SOCKET_ADDRESS *sa = &addr->Address;
-    WCHAR buf[WS_NI_MAXHOST];
+    WCHAR buf[NI_MAXHOST];
 
     if (!addr) return NULL;
     if (GetNameInfoW( sa->lpSockaddr, sa->iSockaddrLength, buf, ARRAY_SIZE( buf ), NULL,
-                      0, WS_NI_NAMEREQD )) return NULL;
+                      0, NI_NAMEREQD )) return NULL;
     return heap_strdupW( buf );
 }
 static struct array *get_defaultipgateway( IP_ADAPTER_GATEWAY_ADDRESS *list )
@@ -2532,7 +2515,7 @@ static struct array *get_dnsserversearchorder( IP_ADAPTER_DNS_SERVER_ADDRESS *li
             heap_free( ret );
             return NULL;
         }
-        if ((p = strrchrW( ptr[i - 1], ':' ))) *p = 0;
+        if ((p = wcsrchr( ptr[i - 1], ':' ))) *p = 0;
     }
     ret->count = count;
     ret->ptr   = ptr;
@@ -2588,14 +2571,14 @@ static struct array *get_ipsubnet( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
     }
     for (address = list; address; address = address->Next)
     {
-        if (address->Address.lpSockaddr->sa_family == WS_AF_INET)
+        if (address->Address.lpSockaddr->sa_family == AF_INET)
         {
             WCHAR buf[INET_ADDRSTRLEN];
             SOCKADDR_IN addr;
             ULONG buflen = ARRAY_SIZE( buf );
 
             memset( &addr, 0, sizeof(addr) );
-            addr.sin_family = WS_AF_INET;
+            addr.sin_family = AF_INET;
             if (ConvertLengthToIpv4Mask( address->OnLinkPrefixLength, &addr.sin_addr.S_un.S_addr ) != NO_ERROR
                     || WSAAddressToStringW( (SOCKADDR*)&addr, sizeof(addr), NULL, buf, &buflen))
                 ptr[i] = NULL;
@@ -2607,7 +2590,7 @@ static struct array *get_ipsubnet( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
             static const WCHAR fmtW[] = {'%','u',0};
             WCHAR buf[11];
 
-            sprintfW(buf, fmtW, address->OnLinkPrefixLength);
+            swprintf( buf, ARRAY_SIZE( buf ), fmtW, address->OnLinkPrefixLength );
             ptr[i] = heap_strdupW( buf );
         }
         if (!ptr[i++])
@@ -2642,11 +2625,11 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
     DWORD size = 0, ret;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    ret = GetAdaptersAddresses( WS_AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS, NULL, NULL, &size );
+    ret = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS, NULL, NULL, &size );
     if (ret != ERROR_BUFFER_OVERFLOW) return FILL_STATUS_FAILED;
 
     if (!(buffer = heap_alloc( size ))) return FILL_STATUS_FAILED;
-    if (GetAdaptersAddresses( WS_AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS, NULL, buffer, &size ))
+    if (GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS, NULL, buffer, &size ))
     {
         heap_free( buffer );
         return FILL_STATUS_FAILED;
@@ -2788,7 +2771,7 @@ static enum fill_status fill_printer( struct table *table, const struct expr *co
     {
         rec = (struct record_printer *)(table->data + offset);
         rec->attributes           = info[i].Attributes;
-        sprintfW( id, fmtW, i );
+        swprintf( id, ARRAY_SIZE( id ), fmtW, i );
         rec->device_id            = heap_strdupW( id );
         rec->drivername           = heap_strdupW( info[i].pDriverName );
         rec->horizontalresolution = info[i].pDevMode->u1.s1.dmPrintQuality;
@@ -2843,7 +2826,7 @@ static enum fill_status fill_process( struct table *table, const struct expr *co
         rec->caption        = heap_strdupW( entry.szExeFile );
         rec->commandline    = get_cmdline( entry.th32ProcessID );
         rec->description    = heap_strdupW( entry.szExeFile );
-        sprintfW( handle, fmtW, entry.th32ProcessID );
+        swprintf( handle, ARRAY_SIZE( handle ), fmtW, entry.th32ProcessID );
         rec->handle         = heap_strdupW( handle );
         rec->name           = heap_strdupW( entry.szExeFile );
         rec->process_id     = entry.th32ProcessID;
@@ -2891,14 +2874,17 @@ __ASM_GLOBAL_FUNC( do_cpuid,
                    "ret" )
 #elif defined(__x86_64__)
 __ASM_GLOBAL_FUNC( do_cpuid,
+                   "pushq %rsi\n\t"
                    "pushq %rbx\n\t"
-                   "movl %edi,%eax\n\t"
+                   "movq %rcx,%rax\n\t"
+                   "movq %rdx,%rsi\n\t"
                    "cpuid\n\t"
                    "movl %eax,(%rsi)\n\t"
                    "movl %ebx,4(%rsi)\n\t"
                    "movl %ecx,8(%rsi)\n\t"
                    "movl %edx,12(%rsi)\n\t"
                    "popq %rbx\n\t"
+                   "popq %rsi\n\t"
                    "ret" )
 #else
 void do_cpuid( unsigned int ax, unsigned int *p )
@@ -2929,7 +2915,7 @@ static void regs_to_str( unsigned int *regs, unsigned int len, WCHAR *buffer )
     for (i = 0; i < len; i++) { buffer[i] = *p++; }
     buffer[i] = 0;
 }
-static void get_processor_manufacturer( WCHAR *manufacturer )
+static void get_processor_manufacturer( WCHAR *manufacturer, UINT len )
 {
     unsigned int tmp, regs[4] = {0, 0, 0, 0};
 
@@ -2938,7 +2924,7 @@ static void get_processor_manufacturer( WCHAR *manufacturer )
     regs[2] = regs[3];
     regs[3] = tmp;
 
-    regs_to_str( regs + 1, 12, manufacturer );
+    regs_to_str( regs + 1, min( 12, len ), manufacturer );
 }
 static const WCHAR *get_osarchitecture(void)
 {
@@ -2947,7 +2933,7 @@ static const WCHAR *get_osarchitecture(void)
     if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return os_64bitW;
     return os_32bitW;
 }
-static void get_processor_caption( WCHAR *caption )
+static void get_processor_caption( WCHAR *caption, UINT len )
 {
     static const WCHAR fmtW[] =
         {'%','s',' ','F','a','m','i','l','y',' ','%','u',' ',
@@ -2960,17 +2946,17 @@ static void get_processor_caption( WCHAR *caption )
     WCHAR manufacturer[13];
     unsigned int regs[4] = {0, 0, 0, 0}, family, model, stepping;
 
-    get_processor_manufacturer( manufacturer );
+    get_processor_manufacturer( manufacturer, ARRAY_SIZE( manufacturer ) );
     if (get_osarchitecture() == os_32bitW) arch = x86W;
-    else if (!strcmpW( manufacturer, authenticamdW )) arch = amd64W;
+    else if (!wcscmp( manufacturer, authenticamdW )) arch = amd64W;
     else arch = intel64W;
 
     do_cpuid( 1, regs );
 
     model = get_processor_model( regs[0], &stepping, &family );
-    sprintfW( caption, fmtW, arch, family, model, stepping );
+    swprintf( caption, len, fmtW, arch, family, model, stepping );
 }
-static void get_processor_version( WCHAR *version )
+static void get_processor_version( WCHAR *version, UINT len )
 {
     static const WCHAR fmtW[] =
         {'M','o','d','e','l',' ','%','u',',',' ','S','t','e','p','p','i','n','g',' ','%','u',0};
@@ -2979,7 +2965,7 @@ static void get_processor_version( WCHAR *version )
     do_cpuid( 1, regs );
 
     model = get_processor_model( regs[0], &stepping, NULL );
-    sprintfW( version, fmtW, model, stepping );
+    swprintf( version, len, fmtW, model, stepping );
 }
 static UINT16 get_processor_revision(void)
 {
@@ -2987,13 +2973,13 @@ static UINT16 get_processor_revision(void)
     do_cpuid( 1, regs );
     return regs[0];
 }
-static void get_processor_id( WCHAR *processor_id )
+static void get_processor_id( WCHAR *processor_id, UINT len )
 {
     static const WCHAR fmtW[] = {'%','0','8','X','%','0','8','X',0};
     unsigned int regs[4] = {0, 0, 0, 0};
 
     do_cpuid( 1, regs );
-    sprintfW( processor_id, fmtW, regs[3], regs[0] );
+    swprintf( processor_id, len, fmtW, regs[3], regs[0] );
 }
 static void get_processor_name( WCHAR *name )
 {
@@ -3010,7 +2996,7 @@ static void get_processor_name( WCHAR *name )
         do_cpuid( 0x80000004, regs );
         regs_to_str( regs, 16, name + 32 );
     }
-    for (i = strlenW(name) - 1; i >= 0 && name[i] == ' '; i--) name[i] = 0;
+    for (i = lstrlenW(name) - 1; i >= 0 && name[i] == ' '; i--) name[i] = 0;
 }
 static UINT get_processor_currentclockspeed( UINT index )
 {
@@ -3053,11 +3039,11 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
 
     if (!resize_table( table, num_packages, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
-    get_processor_caption( caption );
-    get_processor_id( processor_id );
-    get_processor_manufacturer( manufacturer );
+    get_processor_caption( caption, ARRAY_SIZE( caption ) );
+    get_processor_id( processor_id, ARRAY_SIZE( processor_id ) );
+    get_processor_manufacturer( manufacturer, ARRAY_SIZE( manufacturer ) );
     get_processor_name( name );
-    get_processor_version( version );
+    get_processor_version( version, ARRAY_SIZE( version ) );
 
     for (i = 0; i < num_packages; i++)
     {
@@ -3069,7 +3055,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec->currentclockspeed      = get_processor_currentclockspeed( i );
         rec->datawidth              = get_osarchitecture() == os_32bitW ? 32 : 64;
         rec->description            = heap_strdupW( caption );
-        sprintfW( device_id, fmtW, i );
+        swprintf( device_id, ARRAY_SIZE( device_id ), fmtW, i );
         rec->device_id              = heap_strdupW( device_id );
         rec->family                 = 2; /* Unknown */
         rec->level                  = 15;
@@ -3110,7 +3096,7 @@ static WCHAR *get_lastbootuptime(void)
 
     NtQuerySystemInformation( SystemTimeOfDayInformation, &ti, sizeof(ti), NULL );
     RtlTimeToTimeFields( &ti.liKeBootTime, &tf );
-    sprintfW( ret, fmtW, tf.Year, tf.Month, tf.Day, tf.Hour, tf.Minute, tf.Second, tf.Milliseconds * 1000 );
+    swprintf( ret, 26, fmtW, tf.Year, tf.Month, tf.Day, tf.Hour, tf.Minute, tf.Second, tf.Milliseconds * 1000 );
     return ret;
 }
 static WCHAR *get_localdatetime(void)
@@ -3135,7 +3121,7 @@ static WCHAR *get_localdatetime(void)
     if (!(ret = heap_alloc( 26 * sizeof(WCHAR) ))) return NULL;
 
     GetLocalTime(&st);
-    sprintfW( ret, fmtW, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds * 1000, -Bias);
+    swprintf( ret, 26, fmtW, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds * 1000, -Bias );
     return ret;
 }
 static WCHAR *get_systemdirectory(void)
@@ -3160,7 +3146,7 @@ static WCHAR *get_codeset(void)
 {
     static const WCHAR fmtW[] = {'%','u',0};
     WCHAR *ret = heap_alloc( 11 * sizeof(WCHAR) );
-    if (ret) sprintfW( ret, fmtW, GetACP() );
+    if (ret) swprintf( ret, 11, fmtW, GetACP() );
     return ret;
 }
 static WCHAR *get_countrycode(void)
@@ -3179,7 +3165,7 @@ static WCHAR *get_osbuildnumber( OSVERSIONINFOEXW *ver )
 {
     static const WCHAR fmtW[] = {'%','u',0};
     WCHAR *ret = heap_alloc( 11 * sizeof(WCHAR) );
-    if (ret) sprintfW( ret, fmtW, ver->dwBuildNumber );
+    if (ret) swprintf( ret, 11, fmtW, ver->dwBuildNumber );
     return ret;
 }
 static WCHAR *get_oscaption( OSVERSIONINFOEXW *ver )
@@ -3240,7 +3226,7 @@ static WCHAR *get_osname( const WCHAR *caption )
     static const WCHAR partitionW[] =
         {'|','C',':','\\','W','I','N','D','O','W','S','|','\\','D','e','v','i','c','e','\\',
          'H','a','r','d','d','i','s','k','0','\\','P','a','r','t','i','t','i','o','n','1',0};
-    int len = strlenW( caption );
+    int len = lstrlenW( caption );
     WCHAR *ret;
 
     if (!(ret = heap_alloc( len * sizeof(WCHAR) + sizeof(partitionW) ))) return NULL;
@@ -3252,7 +3238,7 @@ static WCHAR *get_osversion( OSVERSIONINFOEXW *ver )
 {
     static const WCHAR fmtW[] = {'%','u','.','%','u','.','%','u',0};
     WCHAR *ret = heap_alloc( 33 * sizeof(WCHAR) );
-    if (ret) sprintfW( ret, fmtW, ver->dwMajorVersion, ver->dwMinorVersion, ver->dwBuildNumber );
+    if (ret) swprintf( ret, 33, fmtW, ver->dwMajorVersion, ver->dwMinorVersion, ver->dwBuildNumber );
     return ret;
 }
 static DWORD get_operatingsystemsku(void)
@@ -3501,11 +3487,11 @@ static const WCHAR *find_sid_str( const struct expr *cond )
 
     left = cond->u.expr.left;
     right = cond->u.expr.right;
-    if (left->type == EXPR_PROPVAL && right->type == EXPR_SVAL && !strcmpiW( left->u.propval->name, prop_sidW ))
+    if (left->type == EXPR_PROPVAL && right->type == EXPR_SVAL && !wcsicmp( left->u.propval->name, prop_sidW ))
     {
         ret = right->u.sval;
     }
-    else if (left->type == EXPR_SVAL && right->type == EXPR_PROPVAL && !strcmpiW( right->u.propval->name, prop_sidW ))
+    else if (left->type == EXPR_SVAL && right->type == EXPR_PROPVAL && !wcsicmp( right->u.propval->name, prop_sidW ))
     {
         ret = left->u.sval;
     }
@@ -3578,10 +3564,11 @@ static WCHAR *get_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
         {'P','C','I','\\','V','E','N','_','%','0','4','X','&','D','E','V','_','%','0','4','X',
          '&','S','U','B','S','Y','S','_','%','0','8','X','&','R','E','V','_','%','0','2','X','\\',
          '0','&','D','E','A','D','B','E','E','F','&','0','&','D','E','A','D',0};
+    UINT len = sizeof(fmtW) + 2;
     WCHAR *ret;
 
-    if (!(ret = heap_alloc( sizeof(fmtW) + 2 * sizeof(WCHAR) ))) return NULL;
-    sprintfW( ret, fmtW, desc->VendorId, desc->DeviceId, desc->SubSysId, desc->Revision );
+    if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+    swprintf( ret, len, fmtW, desc->VendorId, desc->DeviceId, desc->SubSysId, desc->Revision );
     return ret;
 }
 
@@ -3659,7 +3646,7 @@ done:
     rec->status                = videocontroller_statusW;
     rec->videoarchitecture     = 2; /* Unknown */
     rec->videomemorytype       = 2; /* Unknown */
-    wsprintfW( mode, fmtW, hres, vres, (UINT64)1 << rec->current_bitsperpixel );
+    swprintf( mode, ARRAY_SIZE( mode ), fmtW, hres, vres, (UINT64)1 << rec->current_bitsperpixel );
     rec->videomodedescription  = heap_strdupW( mode );
     rec->videoprocessor        = heap_strdupW( name );
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );

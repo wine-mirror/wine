@@ -18,7 +18,6 @@
 
 #define COBJMACROS
 
-#include "config.h"
 #include <stdarg.h>
 
 #include "windef.h"
@@ -35,7 +34,7 @@ HRESULT get_column_index( const struct table *table, const WCHAR *name, UINT *co
     UINT i;
     for (i = 0; i < table->num_cols; i++)
     {
-        if (!strcmpiW( table->columns[i].name, name ))
+        if (!wcsicmp( table->columns[i].name, name ))
         {
             *column = i;
             return S_OK;
@@ -176,19 +175,19 @@ BSTR get_value_bstr( const struct table *table, UINT row, UINT column )
     case CIM_DATETIME:
     case CIM_STRING:
         if (!val) return NULL;
-        len = strlenW( (const WCHAR *)(INT_PTR)val ) + 2;
+        len = lstrlenW( (const WCHAR *)(INT_PTR)val ) + 2;
         if (!(ret = SysAllocStringLen( NULL, len ))) return NULL;
-        sprintfW( ret, fmt_strW, (const WCHAR *)(INT_PTR)val );
+        swprintf( ret, len, fmt_strW, (const WCHAR *)(INT_PTR)val );
         return ret;
 
     case CIM_SINT16:
     case CIM_SINT32:
-        sprintfW( number, fmt_signedW, val );
+        swprintf( number, ARRAY_SIZE( number ), fmt_signedW, val );
         return SysAllocString( number );
 
     case CIM_UINT16:
     case CIM_UINT32:
-        sprintfW( number, fmt_unsignedW, val );
+        swprintf( number, ARRAY_SIZE( number ), fmt_unsignedW, val );
         return SysAllocString( number );
 
     case CIM_SINT64:
@@ -263,7 +262,7 @@ HRESULT get_method( const struct table *table, const WCHAR *name, class_method *
     {
         for (j = 0; j < table->num_cols; j++)
         {
-            if (table->columns[j].type & COL_FLAG_METHOD && !strcmpW( table->columns[j].name, name ))
+            if (table->columns[j].type & COL_FLAG_METHOD && !wcscmp( table->columns[j].name, name ))
             {
                 HRESULT hr;
                 LONGLONG val;
@@ -357,7 +356,7 @@ struct table *grab_table( const WCHAR *name )
 
     LIST_FOR_EACH_ENTRY( table, table_list, struct table, entry )
     {
-        if (name && !strcmpiW( table->name, name ))
+        if (name && !wcsicmp( table->name, name ))
         {
             TRACE("returning %p\n", table);
             return addref_table( table );
@@ -392,7 +391,7 @@ BOOL add_table( struct table *table )
 
     LIST_FOR_EACH_ENTRY( iter, table_list, struct table, entry )
     {
-        if (!strcmpiW( iter->name, table->name ))
+        if (!wcsicmp( iter->name, table->name ))
         {
             TRACE("table %s already exists\n", debugstr_w(table->name));
             return FALSE;

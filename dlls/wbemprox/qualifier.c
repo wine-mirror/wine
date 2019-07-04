@@ -18,7 +18,6 @@
 
 #define COBJMACROS
 
-#include "config.h"
 #include <stdarg.h>
 
 #include "windef.h"
@@ -108,13 +107,13 @@ static HRESULT create_qualifier_enum( const WCHAR *class, const WCHAR *member, c
     int len;
 
     if (!member) member = noneW;
-    len = strlenW( class ) + strlenW( member );
-    if (name) len += strlenW( name ) + ARRAY_SIZE(fmtW);
+    len = lstrlenW( class ) + lstrlenW( member );
+    if (name) len += lstrlenW( name ) + ARRAY_SIZE(fmtW);
     else len += ARRAY_SIZE(fmt2W);
 
     if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
-    if (name) sprintfW( query, fmtW, class, member, name );
-    else sprintfW( query, fmt2W, class, member );
+    if (name) swprintf( query, len, fmtW, class, member, name );
+    else swprintf( query, len, fmt2W, class, member );
 
     hr = exec_query( query, iter );
     heap_free( query );

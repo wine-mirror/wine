@@ -18,7 +18,6 @@
 
 #define COBJMACROS
 
-#include "config.h"
 #include <stdarg.h>
 
 #include "windef.h"
@@ -27,7 +26,6 @@
 #include "wbemcli.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wbemprox_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
@@ -279,7 +277,7 @@ static HRESULT WINAPI wbem_services_OpenNamespace(
     TRACE("%p, %s, 0x%08x, %p, %p, %p\n", iface, debugstr_w(strNamespace), lFlags,
           pCtx, ppWorkingNamespace, ppResult);
 
-    if ((strcmpiW( strNamespace, cimv2W ) && strcmpiW( strNamespace, defaultW )) || ws->namespace)
+    if ((wcsicmp( strNamespace, cimv2W ) && wcsicmp( strNamespace, defaultW )) || ws->namespace)
         return WBEM_E_INVALID_NAMESPACE;
 
     return WbemServices_create( cimv2W, (void **)ppWorkingNamespace );
@@ -422,14 +420,14 @@ static WCHAR *query_from_path( const struct path *path )
     {
         len = path->class_len + path->filter_len + ARRAY_SIZE(selectW);
         if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
-        sprintfW( query, selectW, path->class, path->filter );
+        swprintf( query, len, selectW, path->class, path->filter );
     }
     else
     {
         len = path->class_len + ARRAY_SIZE(select_allW);
         if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
-        strcpyW( query, select_allW );
-        strcatW( query, path->class );
+        lstrcpyW( query, select_allW );
+        lstrcatW( query, path->class );
     }
     return query;
 }
@@ -653,7 +651,7 @@ static HRESULT WINAPI wbem_services_ExecQuery(
           debugstr_w(strQuery), lFlags, pCtx, ppEnum);
 
     if (!strQueryLanguage || !strQuery || !strQuery[0]) return WBEM_E_INVALID_PARAMETER;
-    if (strcmpiW( strQueryLanguage, wqlW )) return WBEM_E_INVALID_QUERY_TYPE;
+    if (wcsicmp( strQueryLanguage, wqlW )) return WBEM_E_INVALID_QUERY_TYPE;
     return exec_query( strQuery, ppEnum );
 }
 

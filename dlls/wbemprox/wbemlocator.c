@@ -18,7 +18,6 @@
 
 #define COBJMACROS
 
-#include "config.h"
 #include <stdarg.h>
 
 #include "windef.h"
@@ -27,7 +26,6 @@
 #include "wbemcli.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wbemprox_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
@@ -93,8 +91,8 @@ static BOOL is_local_machine( const WCHAR *server )
     WCHAR buffer[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD len = ARRAY_SIZE( buffer );
 
-    if (!server || !strcmpW( server, dotW ) || !strcmpiW( server, localhostW )) return TRUE;
-    if (GetComputerNameW( buffer, &len ) && !strcmpiW( server, buffer )) return TRUE;
+    if (!server || !wcscmp( server, dotW ) || !wcsicmp( server, localhostW )) return TRUE;
+    if (GetComputerNameW( buffer, &len ) && !wcsicmp( server, buffer )) return TRUE;
     return FALSE;
 }
 
@@ -133,15 +131,15 @@ static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **na
     p = q;
     while (*q && *q != '\\' && *q != '/') q++;
     len = q - p;
-    if (len >= ARRAY_SIZE( rootW ) && strncmpiW( rootW, p, len )) goto done;
+    if (len >= ARRAY_SIZE( rootW ) && wcsnicmp( rootW, p, len )) goto done;
     if (!*q)
     {
         hr = S_OK;
         goto done;
     }
     q++;
-    len = strlenW( q );
-    if (strcmpiW( q, cimv2W ) && strcmpiW( q, defaultW ))
+    len = lstrlenW( q );
+    if (wcsicmp( q, cimv2W ) && wcsicmp( q, defaultW ))
         goto done;
     if (!(*namespace = heap_alloc( (len + 1) * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
     else

@@ -19,7 +19,6 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 IClientSecurity client_security DECLSPEC_HIDDEN;
 struct list *table_list DECLSPEC_HIDDEN;
@@ -240,7 +239,7 @@ static inline WCHAR *heap_strdupW( const WCHAR *src )
 {
     WCHAR *dst;
     if (!src) return NULL;
-    if ((dst = heap_alloc( (strlenW( src ) + 1) * sizeof(WCHAR) ))) strcpyW( dst, src );
+    if ((dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) ))) lstrcpyW( dst, src );
     return dst;
 }
 

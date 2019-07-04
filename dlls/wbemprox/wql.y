@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <stdarg.h>
 
 #include "windef.h"
@@ -28,7 +27,6 @@
 
 #include "wine/list.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
@@ -666,13 +664,13 @@ static const struct wql_keyword keyword_table[] =
     { whereW,       ARRAY_SIZE(whereW),       TK_WHERE }
 };
 
-static int cmp_keyword( const void *arg1, const void *arg2 )
+static int __cdecl cmp_keyword( const void *arg1, const void *arg2 )
 {
     const struct wql_keyword *key1 = arg1, *key2 = arg2;
     int len = min( key1->len, key2->len );
     int ret;
 
-    if ((ret = strncmpiW( key1->name, key2->name, len ))) return ret;
+    if ((ret = wcsnicmp( key1->name, key2->name, len ))) return ret;
     if (key1->len < key2->len) return -1;
     else if (key1->len > key2->len) return 1;
     return 0;
@@ -702,7 +700,7 @@ static int get_token( const WCHAR *s, int *token )
     case '\t':
     case '\r':
     case '\n':
-        for (i = 1; isspaceW( s[i] ); i++) {}
+        for (i = 1; iswspace( s[i] ); i++) {}
         *token = TK_SPACE;
         return i;
     case '-':
@@ -781,7 +779,7 @@ static int get_token( const WCHAR *s, int *token )
         *token = TK_STRING;
         return i;
     case '.':
-        if (!isdigitW( s[1] ))
+        if (!iswdigit( s[1] ))
         {
             *token = TK_DOT;
             return 1;
@@ -790,7 +788,7 @@ static int get_token( const WCHAR *s, int *token )
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9':
         *token = TK_INTEGER;
-        for (i = 1; isdigitW( s[i] ); i++) {}
+        for (i = 1; iswdigit( s[i] ); i++) {}
         return i;
     default:
         if (!id_char[*s]) break;
