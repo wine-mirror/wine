@@ -516,22 +516,28 @@ void generate_startup_debug_events( struct process *process, client_ptr_t entry 
     struct list *ptr;
     struct thread *thread, *first_thread = get_process_first_thread( process );
 
-    /* generate creation events */
-    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
-    {
-        if (thread == first_thread)
-            generate_debug_event( thread, CREATE_PROCESS_DEBUG_EVENT, &entry );
-        else
-            generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT, NULL );
-    }
+    generate_debug_event( first_thread, CREATE_PROCESS_DEBUG_EVENT, &entry );
+    ptr = list_head( &process->dlls ); /* skip main module reported in create process event */
 
-    /* generate dll events (in loading order, i.e. reverse list order) */
-    ptr = list_tail( &process->dlls );
-    while (ptr != list_head( &process->dlls ))
+    /* generate ntdll.dll load event */
+    if (ptr && (ptr = list_next( &process->dlls, ptr )))
     {
         struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
         generate_debug_event( first_thread, LOAD_DLL_DEBUG_EVENT, dll );
-        ptr = list_prev( &process->dlls, ptr );
+    }
+
+    /* generate creation events */
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
+    {
+        if (thread != first_thread)
+            generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT, NULL );
+    }
+
+    /* generate dll events (in loading order) */
+    while (ptr && (ptr = list_next( &process->dlls, ptr )))
+    {
+        struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
+        generate_debug_event( first_thread, LOAD_DLL_DEBUG_EVENT, dll );
     }
 }
 

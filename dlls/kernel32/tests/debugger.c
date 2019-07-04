@@ -290,7 +290,6 @@ static void process_attach_events(struct debugger_context *ctx)
     if (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT) /* Vista+ reports ntdll.dll before reporting threads */
     {
         ok(ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
-        todo_wine
         ok(ctx->ev.u.LoadDll.lpBaseOfDll == ntdll, "The first reported DLL is not ntdll.dll\n");
         next_event(ctx, 0);
     }
@@ -302,7 +301,6 @@ static void process_attach_events(struct debugger_context *ctx)
     {
         next_event(ctx, 2000);
         if (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT)
-            todo_wine_if(ctx->ev.u.LoadDll.lpBaseOfDll == ntdll)
             ok(ctx->ev.u.LoadDll.lpBaseOfDll != ntdll, "ntdll.dll reported out of order\n");
     } while (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx->ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT);
     ok(ctx->dll_cnt > 2, "dll_cnt = %d\n", ctx->dll_cnt);
