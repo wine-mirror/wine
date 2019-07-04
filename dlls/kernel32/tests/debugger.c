@@ -40,7 +40,11 @@ static BOOL (WINAPI *pDebugActiveProcessStop)(DWORD);
 static BOOL (WINAPI *pDebugSetProcessKillOnExit)(BOOL);
 static BOOL (WINAPI *pIsDebuggerPresent)(void);
 
+static void (WINAPI *pDbgBreakPoint)(void);
+
 static LONG child_failures;
+
+static HMODULE ntdll;
 
 static void WINAPIV WINETEST_PRINTF_ATTR(2, 3) test_child_ok(int condition, const char *msg, ...)
 {
@@ -112,7 +116,7 @@ static void get_events(const char* name, HANDLE *start_event, HANDLE *done_event
     HeapFree(GetProcessHeap(), 0, event_name);
 }
 
-static void save_blackbox(const char* logfile, void* blackbox, int size)
+static void save_blackbox(const char* logfile, void* blackbox, int size, const char *dbgtrace)
 {
     HANDLE hFile;
     DWORD written;
@@ -121,6 +125,8 @@ static void save_blackbox(const char* logfile, void* blackbox, int size)
     if (hFile == INVALID_HANDLE_VALUE)
         return;
     WriteFile(hFile, blackbox, size, &written, NULL);
+    if (dbgtrace && dbgtrace[0])
+        WriteFile(hFile, dbgtrace, strlen(dbgtrace), &written, NULL);
     CloseHandle(hFile);
 }
 
@@ -129,6 +135,7 @@ static int load_blackbox(const char* logfile, void* blackbox, int size)
     HANDLE hFile;
     DWORD read;
     BOOL ret;
+    char buf[4096];
 
     hFile=CreateFileA(logfile, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
     if (hFile == INVALID_HANDLE_VALUE)
@@ -140,8 +147,29 @@ static int load_blackbox(const char* logfile, void* blackbox, int size)
     ret=ReadFile(hFile, blackbox, size, &read, NULL);
     ok(ret, "ReadFile failed: %d\n", GetLastError());
     ok(read == size, "wrong size for '%s': read=%d\n", logfile, read);
+    ret = ReadFile(hFile, buf, sizeof(buf) - 1, &read, NULL);
+    if (ret && read)
+    {
+        buf[read] = 0;
+        trace("debugger traces:\n%s", buf);
+    }
     CloseHandle(hFile);
     return 1;
+}
+
+static DWORD WINAPI thread_proc(void *arg)
+{
+    Sleep(10000);
+    trace("exiting\n");
+    ExitThread(1);
+}
+
+static void run_background_thread(void)
+{
+    DWORD tid;
+    HANDLE thread = CreateThread(NULL, 0, thread_proc, NULL, 0, &tid);
+    ok(thread != NULL, "CreateThrad failed\n");
+    CloseHandle(thread);
 }
 
 typedef struct
@@ -161,7 +189,7 @@ static void doCrash(int argc,  char** argv)
     {
         crash_blackbox_t blackbox;
         blackbox.pid=GetCurrentProcessId();
-        save_blackbox(argv[3], &blackbox, sizeof(blackbox));
+        save_blackbox(argv[3], &blackbox, sizeof(blackbox), NULL);
     }
 
     /* Just crash */
@@ -182,13 +210,133 @@ typedef struct
     DWORD nokill_err;
     BOOL detach_rc;
     DWORD detach_err;
+    DWORD failures;
 } debugger_blackbox_t;
+
+struct debugger_context
+{
+    DWORD pid;
+    DWORD main_thread;
+    DEBUG_EVENT ev;
+    unsigned process_cnt;
+    unsigned thread_cnt;
+    unsigned dll_cnt;
+    void *image_base;
+};
+
+#define next_event(a,b) next_event_(__LINE__,a,b)
+static void next_event_(unsigned line, struct debugger_context *ctx, unsigned timeout)
+{
+    BOOL ret;
+
+    for (;;)
+    {
+        if (ctx->process_cnt && ctx->ev.dwDebugEventCode != -1)
+        {
+            ret = ContinueDebugEvent(ctx->ev.dwProcessId, ctx->ev.dwThreadId, DBG_CONTINUE);
+            ok_(__FILE__,line)(ret, "ContinueDebugEvent failed, last error %d.\n", GetLastError());
+        }
+
+        ret = WaitForDebugEvent(&ctx->ev, timeout);
+        if (!ret)
+        {
+            ok_(__FILE__,line)(GetLastError() == ERROR_SEM_TIMEOUT,
+                               "WaitForDebugEvent failed, last error %d.\n", GetLastError());
+            ctx->ev.dwDebugEventCode = -1;
+            return;
+        }
+
+        if (ctx->ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT)
+        {
+            if (!ctx->process_cnt) ctx->pid = ctx->ev.dwProcessId;
+            ctx->process_cnt++;
+        }
+
+        if (ctx->ev.dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT) continue; /* ignore for now */
+        if (ctx->ev.dwProcessId == ctx->pid) break;
+
+        ok_(__FILE__,line)(ctx->process_cnt > 1, "unexpected event pid\n");
+    }
+
+    switch (ctx->ev.dwDebugEventCode)
+    {
+    case CREATE_PROCESS_DEBUG_EVENT:
+        ctx->thread_cnt++;
+        ctx->image_base = ctx->ev.u.CreateProcessInfo.lpBaseOfImage;
+        break;
+    case CREATE_THREAD_DEBUG_EVENT:
+        ctx->thread_cnt++;
+        break;
+    case EXIT_THREAD_DEBUG_EVENT:
+        ctx->thread_cnt--;
+        break;
+    case LOAD_DLL_DEBUG_EVENT:
+        ok(ctx->ev.u.LoadDll.lpBaseOfDll != ctx->image_base, "process image reported as DLL load event\n");
+        ctx->dll_cnt++;
+        break;
+    case UNLOAD_DLL_DEBUG_EVENT:
+        ctx->dll_cnt--;
+        break;
+    }
+}
+
+static void process_attach_events(struct debugger_context *ctx)
+{
+    ctx->ev.dwDebugEventCode = -1;
+    next_event(ctx, 0);
+    ok(ctx->ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
+
+    next_event(ctx, 0);
+    if (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT) /* Vista+ reports ntdll.dll before reporting threads */
+    {
+        ok(ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
+        todo_wine
+        ok(ctx->ev.u.LoadDll.lpBaseOfDll == ntdll, "The first reported DLL is not ntdll.dll\n");
+        next_event(ctx, 0);
+    }
+
+    while (ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT)
+        next_event(ctx, 0);
+
+    do
+    {
+        next_event(ctx, 2000);
+        if (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT)
+            todo_wine_if(ctx->ev.u.LoadDll.lpBaseOfDll == ntdll)
+            ok(ctx->ev.u.LoadDll.lpBaseOfDll != ntdll, "ntdll.dll reported out of order\n");
+    } while (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx->ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT);
+    ok(ctx->dll_cnt > 2, "dll_cnt = %d\n", ctx->dll_cnt);
+
+    /* a new thread is created and it executes DbgBreakPoint, which causes the exception */
+    todo_wine
+    ok(ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
+    if (ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT)
+    {
+        DWORD last_thread = ctx->ev.dwThreadId;
+        next_event(ctx, 2000);
+        ok(ctx->ev.dwThreadId == last_thread, "unexpected thread\n");
+    }
+
+    ok(ctx->ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
+    ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
+       ctx->ev.u.Exception.ExceptionRecord.ExceptionCode);
+    todo_wine
+    ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint, "ExceptionAddres != DbgBreakPoint\n");
+
+    /* flush debug events */
+    do next_event(ctx, 200);
+    while (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx->ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT
+           || ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT || ctx->ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT);
+    ok(ctx->ev.dwDebugEventCode == -1, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
+}
 
 static void doDebugger(int argc, char** argv)
 {
     const char* logfile;
     debugger_blackbox_t blackbox;
     HANDLE start_event = 0, done_event = 0, debug_event;
+    char buf[4096] = "";
+    struct debugger_context ctx = { 0 };
 
     blackbox.argc=argc;
     logfile=(argc >= 4 ? argv[3] : NULL);
@@ -204,16 +352,31 @@ static void doDebugger(int argc, char** argv)
     else
         blackbox.attach_rc=TRUE;
 
+    if (strstr(myARGV[2], "process"))
+    {
+        strcat(buf, "processing debug messages\n");
+        process_attach_events(&ctx);
+    }
+
     debug_event=(argc >= 6 ? (HANDLE)(INT_PTR)atol(argv[5]) : NULL);
     blackbox.debug_err=0;
     if (debug_event && strstr(myARGV[2], "event"))
     {
+        strcat(buf, "setting event\n");
         blackbox.debug_rc=SetEvent(debug_event);
         if (!blackbox.debug_rc)
             blackbox.debug_err=GetLastError();
     }
     else
         blackbox.debug_rc=TRUE;
+
+    if (strstr(myARGV[2], "process"))
+    {
+        next_event(&ctx, 2000);
+        ok(ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+        ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == STATUS_ACCESS_VIOLATION, "ExceptionCode = %x\n",
+           ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
+    }
 
     if (logfile)
     {
@@ -222,7 +385,7 @@ static void doDebugger(int argc, char** argv)
 
     if (strstr(myARGV[2], "order"))
     {
-        trace("debugger: waiting for the start signal...\n");
+        strcat(buf, "waiting for the start signal...\n");
         WaitForSingleObject(start_event, INFINITE);
     }
 
@@ -246,11 +409,21 @@ static void doDebugger(int argc, char** argv)
     else
         blackbox.detach_rc=TRUE;
 
+    if (debug_event && strstr(myARGV[2], "late"))
+    {
+        strcat(buf, "setting event\n");
+        blackbox.debug_rc=SetEvent(debug_event);
+        if (!blackbox.debug_rc)
+            blackbox.debug_err=GetLastError();
+    }
+
+    strcat(buf, "done debugging...\n");
     if (logfile)
     {
-        save_blackbox(logfile, &blackbox, sizeof(blackbox));
+        blackbox.failures = winetest_get_failures();
+        save_blackbox(logfile, &blackbox, sizeof(blackbox), buf);
     }
-    trace("debugger: done debugging...\n");
+
     SetEvent(done_event);
 
     /* Just exit with a known value */
@@ -301,6 +474,7 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
     cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+16+strlen(dbglog)+2+1);
     sprintf(cmd, "%s debugger crash \"%s\"", argv0, childlog);
 
+    trace("running %s...\n", dbgtasks);
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESHOWWINDOW;
@@ -374,6 +548,7 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
     ok(dbg_blackbox.attach_rc, "DebugActiveProcess(%d) failed err=%d\n", dbg_blackbox.pid, dbg_blackbox.attach_err);
     ok(dbg_blackbox.nokill_rc, "DebugSetProcessKillOnExit(FALSE) failed err=%d\n", dbg_blackbox.nokill_err);
     ok(dbg_blackbox.detach_rc, "DebugActiveProcessStop(%d) failed err=%d\n", dbg_blackbox.pid, dbg_blackbox.detach_err);
+    ok(!dbg_blackbox.failures, "debugger reported %u failures\n", dbg_blackbox.failures);
 
     DeleteFileA(dbglog);
     DeleteFileA(childlog);
@@ -484,9 +659,13 @@ static void test_ExitCode(void)
     else
         win_skip("DebugSetProcessKillOnExit is not available\n");
     if (pDebugActiveProcessStop)
+    {
         crash_and_debug(hkey, test_exe, "dbg,attach,event,detach");
+        crash_and_debug(hkey, test_exe, "dbg,attach,detach,late");
+    }
     else
         win_skip("DebugActiveProcessStop is not available\n");
+    crash_and_debug(hkey, test_exe, "dbg,attach,process,event,detach");
 
     if (disposition == REG_CREATED_NEW_KEY)
     {
@@ -589,7 +768,7 @@ static void doChild(int argc, char **argv)
     NtCurrentTeb()->Peb->BeingDebugged = TRUE;
 
     blackbox.failures = child_failures;
-    save_blackbox(blackbox_file, &blackbox, sizeof(blackbox));
+    save_blackbox(blackbox_file, &blackbox, sizeof(blackbox), NULL);
 }
 
 static void test_debug_loop(int argc, char **argv)
@@ -680,6 +859,8 @@ static void doChildren(int argc, char **argv)
 
     blackbox_file = argv[3];
 
+    run_background_thread();
+
     p = strrchr(blackbox_file, '\\');
     p = p ? p+1 : blackbox_file;
     strcpy(event_name, p);
@@ -715,7 +896,7 @@ static void doChildren(int argc, char **argv)
     child_ok(ret, "CloseHandle failed, last error %d.\n", GetLastError());
 
     blackbox.failures = child_failures;
-    save_blackbox(blackbox_file, &blackbox, sizeof(blackbox));
+    save_blackbox(blackbox_file, &blackbox, sizeof(blackbox), NULL);
 
     HeapFree(GetProcessHeap(), 0, cmd);
 }
@@ -731,7 +912,7 @@ static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
     HANDLE event_init, event_attach;
     char *cmd;
     BOOL debug, ret;
-    BOOL got_child_event = FALSE;
+    struct debugger_context ctx = { 0 };
 
     if (!pDebugActiveProcessStop || !pCheckRemoteDebuggerPresent)
     {
@@ -766,35 +947,77 @@ static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
     if (!flag)
     {
         WaitForSingleObject(event_init, INFINITE);
+        Sleep(100);
         ret = DebugActiveProcess(pi.dwProcessId);
         ok(ret, "DebugActiveProcess failed, last error %d.\n", GetLastError());
-        ret = SetEvent(event_attach);
-        ok(ret, "SetEvent failed, last error %d.\n", GetLastError());
     }
 
     ret = pCheckRemoteDebuggerPresent(pi.hProcess, &debug);
     ok(ret, "CheckRemoteDebuggerPresent failed, last error %d.\n", GetLastError());
     ok(debug, "Expected debug != 0, got %x.\n", debug);
 
-    for (;;)
+    trace("starting debugger loop\n");
+
+    if (flag)
     {
-        DEBUG_EVENT ev;
+        next_event(&ctx, 2000);
+        ok(ctx.ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+        ok(ctx.pid == pi.dwProcessId, "unexpected dwProcessId %x\n", ctx.ev.dwProcessId == ctx.pid);
 
-        ret = WaitForDebugEvent(&ev, INFINITE);
-        ok(ret, "WaitForDebugEvent failed, last error %d.\n", GetLastError());
-        if (!ret) break;
+        next_event(&ctx, 2000);
+        ok(ctx.ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
 
-        if (ev.dwDebugEventCode==EXIT_PROCESS_DEBUG_EVENT && ev.dwProcessId==pi.dwProcessId) break;
-        else if (ev.dwProcessId != pi.dwProcessId) got_child_event = TRUE;
+        do next_event(&ctx, 2000);
+        while (ctx.ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx.ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT
+               || ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT);
+        ok(ctx.dll_cnt > 2, "dll_cnt = %d\n", ctx.dll_cnt);
 
-        ret = ContinueDebugEvent(ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE);
-        ok(ret, "ContinueDebugEvent failed, last error %d.\n", GetLastError());
-        if (!ret) break;
+        ok(ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+        ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
+           ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
     }
-    if(debug_child)
-        ok(got_child_event, "didn't get any child events (flag: %x).\n", flag);
     else
-        ok(!got_child_event, "got child event (flag: %x).\n", flag);
+    {
+        DWORD last_thread;
+
+        process_attach_events(&ctx);
+        ok(ctx.pid == pi.dwProcessId, "unexpected dwProcessId %x\n", ctx.pid);
+
+        ret = DebugBreakProcess(pi.hProcess);
+        ok(ret, "BreakProcess failed: %u\n", GetLastError());
+
+        /* a new thread, which executes DbgDebugBreak, is created */
+        next_event(&ctx, 2000);
+        todo_wine
+        ok(ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+        last_thread = ctx.ev.dwThreadId;
+
+        if (ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT)
+            next_event(&ctx, 2000);
+
+        ok(ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+        ok(ctx.ev.dwThreadId == last_thread, "unexpected thread\n");
+        ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
+           ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
+        todo_wine
+        ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint, "ExceptionAddres != DbgBreakPoint\n");
+
+        ret = SetEvent(event_attach);
+        ok(ret, "SetEvent failed, last error %d.\n", GetLastError());
+    }
+
+    do next_event(&ctx, 2000);
+    while (ctx.ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx.ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT
+           || ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT || ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT);
+
+    ok(ctx.ev.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+    ret = ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_CONTINUE);
+    ok(ret, "ContinueDebugEvent failed, last error %d.\n", GetLastError());
+
+    if(debug_child)
+        ok(ctx.process_cnt == 2, "didn't get any child events (flag: %x).\n", flag);
+    else
+        ok(ctx.process_cnt == 1, "got child event (flag: %x).\n", flag);
     CloseHandle(event_init);
     CloseHandle(event_attach);
 
@@ -819,6 +1042,9 @@ START_TEST(debugger)
     pDebugActiveProcessStop=(void*)GetProcAddress(hdll, "DebugActiveProcessStop");
     pDebugSetProcessKillOnExit=(void*)GetProcAddress(hdll, "DebugSetProcessKillOnExit");
     pIsDebuggerPresent=(void*)GetProcAddress(hdll, "IsDebuggerPresent");
+
+    ntdll = GetModuleHandleA("ntdll.dll");
+    pDbgBreakPoint = (void*)GetProcAddress(ntdll, "DbgBreakPoint");
 
     myARGC=winetest_get_mainargs(&myARGV);
     if (myARGC >= 3 && strcmp(myARGV[2], "crash") == 0)
