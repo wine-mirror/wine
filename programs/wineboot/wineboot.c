@@ -51,27 +51,17 @@
  *   processed (requires translations from Unicode to Ansi).
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #define COBJMACROS
-#define WIN32_LEAN_AND_MEAN
 
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <sys/stat.h>
+#include <unistd.h>
 #include <windows.h>
 #include <winternl.h>
 #include <wine/svcctl.h>
-#include <wine/unicode.h>
-#include <wine/library.h>
 #include <wine/asm.h>
 #include <wine/debug.h>
 
@@ -90,42 +80,52 @@ extern void kill_processes( BOOL kill_desktop );
 static WCHAR windowsdir[MAX_PATH];
 static const BOOL is_64bit = sizeof(void *) > sizeof(int);
 
-/* retrieve the (unix) path to the wine.inf file */
-static char *get_wine_inf_path(void)
-{
-    const char *build_dir, *data_dir;
-    char *name = NULL;
+static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
+static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
+static const WCHAR wineconfigdirW[] = {'W','I','N','E','C','O','N','F','I','G','D','I','R',0};
 
-    if ((data_dir = wine_get_data_dir()))
+/* retrieve the path to the wine.inf file */
+static WCHAR *get_wine_inf_path(void)
+{
+    static const WCHAR loaderW[] = {'\\','l','o','a','d','e','r',0};
+    static const WCHAR wine_infW[] = {'\\','w','i','n','e','.','i','n','f',0};
+    WCHAR *dir, *name = NULL;
+
+    if ((dir = _wgetenv( winebuilddirW )))
     {
-        if (!(name = HeapAlloc( GetProcessHeap(), 0, strlen(data_dir) + sizeof("/wine.inf") )))
+        if (!(name = HeapAlloc( GetProcessHeap(), 0,
+                                sizeof(loaderW) + sizeof(wine_infW) + lstrlenW(dir) * sizeof(WCHAR) )))
             return NULL;
-        strcpy( name, data_dir );
-        strcat( name, "/wine.inf" );
+        lstrcpyW( name, dir );
+        lstrcatW( name, loaderW );
     }
-    else if ((build_dir = wine_get_build_dir()))
+    else if ((dir = _wgetenv( winedatadirW )))
     {
-        if (!(name = HeapAlloc( GetProcessHeap(), 0, strlen(build_dir) + sizeof("/loader/wine.inf") )))
+        if (!(name = HeapAlloc( GetProcessHeap(), 0, sizeof(wine_infW) + lstrlenW(dir) * sizeof(WCHAR) )))
             return NULL;
-        strcpy( name, build_dir );
-        strcat( name, "/loader/wine.inf" );
+        lstrcpyW( name, dir );
     }
+    else return NULL;
+
+    lstrcatW( name, wine_infW );
+    name[1] = '\\';  /* change \??\ to \\?\ */
     return name;
 }
 
 /* update the timestamp if different from the reference time */
-static BOOL update_timestamp( const char *config_dir, unsigned long timestamp )
+static BOOL update_timestamp( const WCHAR *config_dir, unsigned long timestamp )
 {
+    static const WCHAR timestampW[] = {'\\','.','u','p','d','a','t','e','-','t','i','m','e','s','t','a','m','p',0};
     BOOL ret = FALSE;
     int fd, count;
     char buffer[100];
-    char *file = HeapAlloc( GetProcessHeap(), 0, strlen(config_dir) + sizeof("/.update-timestamp") );
+    WCHAR *file = HeapAlloc( GetProcessHeap(), 0, lstrlenW(config_dir) * sizeof(WCHAR) + sizeof(timestampW) );
 
     if (!file) return FALSE;
-    strcpy( file, config_dir );
-    strcat( file, "/.update-timestamp" );
+    lstrcpyW( file, config_dir );
+    lstrcatW( file, timestampW );
 
-    if ((fd = open( file, O_RDWR )) != -1)
+    if ((fd = _wopen( file, O_RDWR )) != -1)
     {
         if ((count = read( fd, buffer, sizeof(buffer) - 1 )) >= 0)
         {
@@ -134,19 +134,19 @@ static BOOL update_timestamp( const char *config_dir, unsigned long timestamp )
             if (timestamp == strtoul( buffer, NULL, 10 )) goto done;
         }
         lseek( fd, 0, SEEK_SET );
-        ftruncate( fd, 0 );
+        chsize( fd, 0 );
     }
     else
     {
         if (errno != ENOENT) goto done;
-        if ((fd = open( file, O_WRONLY | O_CREAT | O_TRUNC, 0666 )) == -1) goto done;
+        if ((fd = _wopen( file, O_WRONLY | O_CREAT | O_TRUNC, 0666 )) == -1) goto done;
     }
 
     count = sprintf( buffer, "%lu\n", timestamp );
     if (write( fd, buffer, count ) != count)
     {
-        WINE_WARN( "failed to update timestamp in %s\n", file );
-        ftruncate( fd, 0 );
+        WINE_WARN( "failed to update timestamp in %s\n", debugstr_w(file) );
+        chsize( fd, 0 );
     }
     else ret = TRUE;
 
@@ -156,10 +156,33 @@ done:
     return ret;
 }
 
+/* print the config directory in a more Unix-ish way */
+static const char *prettyprint_configdir(void)
+{
+    static char buffer[MAX_PATH];
+    WCHAR *path = _wgetenv( wineconfigdirW );
+    char *p;
+
+    if (!WideCharToMultiByte( CP_UNIXCP, 0, path, -1, buffer, ARRAY_SIZE(buffer), NULL, NULL ))
+        strcpy( buffer + ARRAY_SIZE(buffer) - 4, "..." );
+
+    if (!strncmp( buffer, "\\??\\unix\\", 9 ))
+    {
+        for (p = buffer + 9; *p; p++) if (*p == '\\') *p = '/';
+        return buffer + 9;
+    }
+    else if (!strncmp( buffer, "\\??\\Z:\\", 7 ))
+    {
+        for (p = buffer + 6; *p; p++) if (*p == '\\') *p = '/';
+        return buffer + 6;
+    }
+    else return buffer + 4;
+}
+
 /* wrapper for RegSetValueExW */
 static DWORD set_reg_value( HKEY hkey, const WCHAR *name, const WCHAR *value )
 {
-    return RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)value, (strlenW(value) + 1) * sizeof(WCHAR) );
+    return RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)value, (lstrlenW(value) + 1) * sizeof(WCHAR) );
 }
 
 extern void do_cpuid( unsigned int ax, unsigned int *p );
@@ -223,7 +246,7 @@ static unsigned int get_model( unsigned int reg0, unsigned int *stepping, unsign
     return model;
 }
 
-static void get_identifier( WCHAR *buf, const WCHAR *arch )
+static void get_identifier( WCHAR *buf, size_t size, const WCHAR *arch )
 {
     static const WCHAR fmtW[] = {'%','s',' ','F','a','m','i','l','y',' ','%','u',' ','M','o','d','e','l',
                                  ' ','%','u',' ','S','t','e','p','p','i','n','g',' ','%','u',0};
@@ -231,7 +254,7 @@ static void get_identifier( WCHAR *buf, const WCHAR *arch )
 
     do_cpuid( 1, regs );
     model = get_model( regs[0], &stepping, &family );
-    sprintfW( buf, fmtW, arch, family, model, stepping );
+    swprintf( buf, size, fmtW, arch, family, model, stepping );
 }
 
 static void get_vendorid( WCHAR *buf )
@@ -261,7 +284,7 @@ static void get_namestring( WCHAR *buf )
         do_cpuid( 0x80000004, regs );
         regs_to_str( regs, 16, buf + 32 );
     }
-    for (i = strlenW(buf) - 1; i >= 0 && buf[i] == ' '; i--) buf[i] = 0;
+    for (i = lstrlenW(buf) - 1; i >= 0 && buf[i] == ' '; i--) buf[i] = 0;
 }
 
 /* create the volatile hardware registry keys */
@@ -306,16 +329,16 @@ static void create_hardware_registry_keys(void)
     {
     case PROCESSOR_ARCHITECTURE_ARM:
     case PROCESSOR_ARCHITECTURE_ARM64:
-        sprintfW( id, ARMCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
+        swprintf( id, ARRAY_SIZE(id), ARMCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
         break;
 
     case PROCESSOR_ARCHITECTURE_AMD64:
-        get_identifier( id, !strcmpW(vendorid, authenticamdW) ? amd64W : intel64W );
+        get_identifier( id, ARRAY_SIZE(id), !wcscmp(vendorid, authenticamdW) ? amd64W : intel64W );
         break;
 
     case PROCESSOR_ARCHITECTURE_INTEL:
     default:
-        get_identifier( id, x86W );
+        get_identifier( id, ARRAY_SIZE(id), x86W );
         break;
     }
 
@@ -353,7 +376,7 @@ static void create_hardware_registry_keys(void)
     {
         WCHAR numW[10];
 
-        sprintfW( numW, PercentDW, i );
+        swprintf( numW, ARRAY_SIZE(numW), PercentDW, i );
         if (!RegCreateKeyExW( cpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
                               KEY_ALL_ACCESS, NULL, &hkey, NULL ))
         {
@@ -428,14 +451,14 @@ static void create_environment_registry_keys( void )
     get_vendorid( vendorid );
     NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
 
-    sprintfW( buffer, PercentDW, NtCurrentTeb()->Peb->NumberOfProcessors );
+    swprintf( buffer, ARRAY_SIZE(buffer), PercentDW, NtCurrentTeb()->Peb->NumberOfProcessors );
     set_reg_value( env_key, NumProcW, buffer );
 
     switch (sci.Architecture)
     {
     case PROCESSOR_ARCHITECTURE_AMD64:
         arch = amd64W;
-        parch = !strcmpW(vendorid, authenticamdW) ? amd64W : intel64W;
+        parch = !wcscmp(vendorid, authenticamdW) ? amd64W : intel64W;
         break;
 
     case PROCESSOR_ARCHITECTURE_INTEL:
@@ -449,23 +472,24 @@ static void create_environment_registry_keys( void )
     {
     case PROCESSOR_ARCHITECTURE_ARM:
     case PROCESSOR_ARCHITECTURE_ARM64:
-        sprintfW( buffer, ARMCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
+        swprintf( buffer, ARRAY_SIZE(buffer), ARMCpuDescrW,
+                  sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
         break;
 
     case PROCESSOR_ARCHITECTURE_AMD64:
     case PROCESSOR_ARCHITECTURE_INTEL:
     default:
-        get_identifier( buffer, parch );
-        strcatW( buffer, commaW );
-        strcatW( buffer, vendorid );
+        get_identifier( buffer, ARRAY_SIZE(buffer), parch );
+        lstrcatW( buffer, commaW );
+        lstrcatW( buffer, vendorid );
         break;
     }
     set_reg_value( env_key, ProcIdW, buffer );
 
-    sprintfW( buffer, PercentDW, sci.Level );
+    swprintf( buffer, ARRAY_SIZE(buffer), PercentDW, sci.Level );
     set_reg_value( env_key, ProcLvlW, buffer );
 
-    sprintfW( buffer, Percent04XW, sci.Revision );
+    swprintf( buffer, ARRAY_SIZE(buffer), Percent04XW, sci.Revision );
     set_reg_value( env_key, ProcRevW, buffer );
 
     RegCloseKey( env_key );
@@ -557,12 +581,12 @@ static BOOL wininit(void)
         if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return FALSE;
     }
 
-    for (str = buffer; *str; str += strlenW(str) + 1)
+    for (str = buffer; *str; str += lstrlenW(str) + 1)
     {
         WCHAR *value;
 
         if (*str == ';') continue;  /* comment */
-        if (!(value = strchrW( str, '=' ))) continue;
+        if (!(value = wcschr( str, '=' ))) continue;
 
         /* split the line into key and value */
         *value++ = 0;
@@ -903,7 +927,7 @@ static int ProcessWindowsFileProtection(void)
             sz += sizeof(WCHAR);
             dllcache = HeapAlloc(GetProcessHeap(),0,sz + sizeof(wildcardW));
             RegQueryValueExW( hkey, cachedirW, 0, NULL, (LPBYTE)dllcache, &sz);
-            strcatW( dllcache, wildcardW );
+            lstrcatW( dllcache, wildcardW );
         }
     }
     RegCloseKey(hkey);
@@ -913,11 +937,11 @@ static int ProcessWindowsFileProtection(void)
         DWORD sz = GetSystemDirectoryW( NULL, 0 );
         dllcache = HeapAlloc( GetProcessHeap(), 0, sz * sizeof(WCHAR) + sizeof(dllcacheW));
         GetSystemDirectoryW( dllcache, sz );
-        strcatW( dllcache, dllcacheW );
+        lstrcatW( dllcache, dllcacheW );
     }
 
     find_handle = FindFirstFileW(dllcache,&finddata);
-    dllcache[ strlenW(dllcache) - 2] = 0; /* strip off wildcard */
+    dllcache[ lstrlenW(dllcache) - 2] = 0; /* strip off wildcard */
     find_rc = find_handle != INVALID_HANDLE_VALUE;
     while (find_rc)
     {
@@ -929,7 +953,7 @@ static int ProcessWindowsFileProtection(void)
         UINT sz2;
         WCHAR tempfile[MAX_PATH];
 
-        if (strcmpW(finddata.cFileName,dotW) == 0 || strcmpW(finddata.cFileName,dotdotW) == 0)
+        if (wcscmp(finddata.cFileName,dotW) == 0 || wcscmp(finddata.cFileName,dotdotW) == 0)
         {
             find_rc = FindNextFileW(find_handle,&finddata);
             continue;
@@ -950,7 +974,7 @@ static int ProcessWindowsFileProtection(void)
 
         /* now delete the source file so that we don't try to install it over and over again */
         lstrcpynW( targetpath, dllcache, MAX_PATH - 1 );
-        sz = strlenW( targetpath );
+        sz = lstrlenW( targetpath );
         targetpath[sz++] = '\\';
         lstrcpynW( targetpath + sz, finddata.cFileName, MAX_PATH - sz );
         if (!DeleteFileW( targetpath ))
@@ -972,9 +996,9 @@ static BOOL start_services_process(void)
     HANDLE wait_handles[2];
     WCHAR path[MAX_PATH];
 
-    if (!GetSystemDirectoryW(path, MAX_PATH - strlenW(services)))
+    if (!GetSystemDirectoryW(path, MAX_PATH - lstrlenW(services)))
         return FALSE;
-    strcatW(path, services);
+    lstrcatW(path, services);
     ZeroMemory(&si, sizeof(si));
     si.cb = sizeof(si);
     if (!CreateProcessW(path, path, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
@@ -1009,13 +1033,15 @@ static INT_PTR CALLBACK wait_dlgproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp 
     {
     case WM_INITDIALOG:
         {
+            DWORD len;
             WCHAR *buffer, text[1024];
             const WCHAR *name = (WCHAR *)lp;
             HICON icon = LoadImageW( 0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, 48, 48, LR_SHARED );
             SendDlgItemMessageW( hwnd, IDC_WAITICON, STM_SETICON, (WPARAM)icon, 0 );
             SendDlgItemMessageW( hwnd, IDC_WAITTEXT, WM_GETTEXT, 1024, (LPARAM)text );
-            buffer = HeapAlloc( GetProcessHeap(), 0, (strlenW(text) + strlenW(name) + 1) * sizeof(WCHAR) );
-            sprintfW( buffer, text, name );
+            len = lstrlenW(text) + lstrlenW(name) + 1;
+            buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+            swprintf( buffer, len, text, name );
             SendDlgItemMessageW( hwnd, IDC_WAITTEXT, WM_SETTEXT, 0, (LPARAM)buffer );
             HeapFree( GetProcessHeap(), 0, buffer );
         }
@@ -1026,7 +1052,7 @@ static INT_PTR CALLBACK wait_dlgproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp 
 
 static HWND show_wait_window(void)
 {
-    const char *config_dir = wine_get_config_dir();
+    const char *config_dir = prettyprint_configdir();
     WCHAR *name;
     HWND hwnd;
     DWORD len;
@@ -1041,20 +1067,20 @@ static HWND show_wait_window(void)
     return hwnd;
 }
 
-static HANDLE start_rundll32( const char *inf_path, BOOL wow64 )
+static HANDLE start_rundll32( const WCHAR *inf_path, BOOL wow64 )
 {
     static const WCHAR rundll[] = {'\\','r','u','n','d','l','l','3','2','.','e','x','e',0};
     static const WCHAR setupapi[] = {' ','s','e','t','u','p','a','p','i',',',
                                      'I','n','s','t','a','l','l','H','i','n','f','S','e','c','t','i','o','n',0};
     static const WCHAR definstall[] = {' ','D','e','f','a','u','l','t','I','n','s','t','a','l','l',0};
     static const WCHAR wowinstall[] = {' ','W','o','w','6','4','I','n','s','t','a','l','l',0};
-    static const WCHAR inf[] = {' ','1','2','8',' ','\\','\\','?','\\','u','n','i','x',0 };
+    static const WCHAR flags[] = {' ','1','2','8',' ',0};
 
     WCHAR app[MAX_PATH + ARRAY_SIZE(rundll)];
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
     WCHAR *buffer;
-    DWORD inf_len, cmd_len;
+    DWORD len;
 
     memset( &si, 0, sizeof(si) );
     si.cb = sizeof(si);
@@ -1065,18 +1091,17 @@ static HANDLE start_rundll32( const char *inf_path, BOOL wow64 )
     }
     else GetSystemDirectoryW( app, MAX_PATH );
 
-    strcatW( app, rundll );
+    lstrcatW( app, rundll );
 
-    cmd_len = strlenW(app) * sizeof(WCHAR) + sizeof(setupapi) + sizeof(definstall) + sizeof(inf);
-    inf_len = MultiByteToWideChar( CP_UNIXCP, 0, inf_path, -1, NULL, 0 );
+    len = lstrlenW(app) + ARRAY_SIZE(setupapi) + ARRAY_SIZE(definstall) + ARRAY_SIZE(flags) + lstrlenW(inf_path);
 
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, cmd_len + inf_len * sizeof(WCHAR) ))) return 0;
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return 0;
 
-    strcpyW( buffer, app );
-    strcatW( buffer, setupapi );
-    strcatW( buffer, wow64 ? wowinstall : definstall );
-    strcatW( buffer, inf );
-    MultiByteToWideChar( CP_UNIXCP, 0, inf_path, -1, buffer + strlenW(buffer), inf_len );
+    lstrcpyW( buffer, app );
+    lstrcatW( buffer, setupapi );
+    lstrcatW( buffer, wow64 ? wowinstall : definstall );
+    lstrcatW( buffer, flags );
+    lstrcatW( buffer, inf_path );
 
     if (CreateProcessW( app, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
         CloseHandle( pi.hThread );
@@ -1090,20 +1115,20 @@ static HANDLE start_rundll32( const char *inf_path, BOOL wow64 )
 /* execute rundll32 on the wine.inf file if necessary */
 static void update_wineprefix( BOOL force )
 {
-    const char *config_dir = wine_get_config_dir();
-    char *inf_path = get_wine_inf_path();
+    const WCHAR *config_dir = _wgetenv( wineconfigdirW );
+    WCHAR *inf_path = get_wine_inf_path();
     int fd;
     struct stat st;
 
     if (!inf_path)
     {
-        WINE_MESSAGE( "wine: failed to update %s, wine.inf not found\n", config_dir );
+        WINE_MESSAGE( "wine: failed to update %s, wine.inf not found\n", prettyprint_configdir() );
         return;
     }
-    if ((fd = open( inf_path, O_RDONLY )) == -1)
+    if ((fd = _wopen( inf_path, O_RDONLY )) == -1)
     {
         WINE_MESSAGE( "wine: failed to update %s with %s: %s\n",
-                      config_dir, inf_path, strerror(errno) );
+                      prettyprint_configdir(), debugstr_w(inf_path), strerror(errno) );
         goto done;
     }
     fstat( fd, &st );
@@ -1130,7 +1155,7 @@ static void update_wineprefix( BOOL force )
             }
             DestroyWindow( hwnd );
         }
-        WINE_MESSAGE( "wine: configuration in '%s' has been updated.\n", config_dir );
+        WINE_MESSAGE( "wine: configuration in '%s' has been updated.\n", prettyprint_configdir() );
     }
 
 done:

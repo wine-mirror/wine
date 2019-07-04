@@ -3,6 +3,8 @@ APPMODE   = -mconsole
 IMPORTS   = uuid advapi32
 DELAYIMPORTS = shell32 shlwapi version user32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	shutdown.c \
 	wineboot.c

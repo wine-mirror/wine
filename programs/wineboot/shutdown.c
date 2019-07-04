@@ -63,7 +63,7 @@ static BOOL CALLBACK enum_proc( HWND hwnd, LPARAM lp )
 }
 
 /* compare two window info structures; callback for qsort */
-static int cmp_window( const void *ptr1, const void *ptr2 )
+static int __cdecl cmp_window( const void *ptr1, const void *ptr2 )
 {
     const struct window_info *info1 = ptr1;
     const struct window_info *info2 = ptr2;
