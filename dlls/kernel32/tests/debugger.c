@@ -185,6 +185,8 @@ static void doCrash(int argc,  char** argv)
     SetErrorMode( 0 );
     SetUnhandledExceptionFilter( NULL );
 
+    run_background_thread();
+
     if (argc >= 4)
     {
         crash_blackbox_t blackbox;
