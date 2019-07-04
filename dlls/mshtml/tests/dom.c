@@ -566,7 +566,7 @@ static const elem_type_info_t elem_type_infos[] = {
 static int strncmp_wa(LPCWSTR strw, const char *stra, size_t len)
 {
     WCHAR buf[512];
-    size_t wlen = MultiByteToWideChar(CP_ACP, 0, stra, len, buf, sizeof(buf));
+    size_t wlen = MultiByteToWideChar(CP_ACP, 0, stra, len, buf, ARRAY_SIZE(buf));
     return wlen == len && memcmp(strw, buf, len * sizeof(WCHAR));
 }
 
@@ -580,7 +580,7 @@ static BOOL is_prefix_wa(const WCHAR *strw, const char *prefix)
     int len, prefix_len;
     CHAR buf[512];
 
-    len = WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL)-1;
+    len = WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, ARRAY_SIZE(buf), NULL, NULL)-1;
     prefix_len = lstrlenA(prefix);
     if(len < prefix_len)
         return FALSE;
