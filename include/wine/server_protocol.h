@@ -449,7 +449,8 @@ enum apc_type
     APC_VIRTUAL_UNLOCK,
     APC_MAP_VIEW,
     APC_UNMAP_VIEW,
-    APC_CREATE_THREAD
+    APC_CREATE_THREAD,
+    APC_BREAK_PROCESS
 };
 
 typedef union
@@ -638,6 +639,11 @@ typedef union
         thread_id_t      tid;
         obj_handle_t     handle;
     } create_thread;
+    struct
+    {
+        enum apc_type    type;
+        unsigned int     status;
+    } break_process;
 } apc_result_t;
 
 enum irp_type
@@ -6702,6 +6708,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 585
+#define SERVER_PROTOCOL_VERSION 586
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

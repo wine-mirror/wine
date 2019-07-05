@@ -575,6 +575,11 @@ BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
         else result->create_thread.status = STATUS_INVALID_PARAMETER;
         break;
     }
+    case APC_BREAK_PROCESS:
+        result->type = APC_BREAK_PROCESS;
+        result->break_process.status = RtlCreateUserThread( NtCurrentProcess(), NULL, FALSE, NULL, 0, 0,
+                                                            DbgUiRemoteBreakin, NULL, NULL, NULL );
+        break;
     default:
         server_protocol_error( "get_apc_request: bad type %d\n", call->type );
         break;

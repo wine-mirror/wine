@@ -218,6 +218,9 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
         dump_uint64( ",commit=", &call->create_thread.commit );
         fprintf( stderr, ",suspend=%u", call->create_thread.suspend );
         break;
+    case APC_BREAK_PROCESS:
+        fprintf( stderr, "APC_BREAK_PROCESS" );
+        break;
     default:
         fprintf( stderr, "type=%u", call->type );
         break;
@@ -297,6 +300,9 @@ static void dump_apc_result( const char *prefix, const apc_result_t *result )
         fprintf( stderr, "APC_CREATE_THREAD,status=%s,tid=%04x,handle=%04x",
                  get_status_name( result->create_thread.status ),
                  result->create_thread.tid, result->create_thread.handle );
+        break;
+    case APC_BREAK_PROCESS:
+        fprintf( stderr, "APC_BREAK_PROCESS,status=%s", get_status_name( result->break_process.status ) );
         break;
     default:
         fprintf( stderr, "type=%u", result->type );

@@ -1365,3 +1365,32 @@ done:
     RtlFreeHeap( GetProcessHeap(), 0, unixdir );
     return status;
 }
+
+/***********************************************************************
+ *      DbgUiRemoteBreakin (NTDLL.@)
+ */
+void WINAPI DbgUiRemoteBreakin( void *arg )
+{
+    TRACE( "\n" );
+    if (NtCurrentTeb()->Peb->BeingDebugged) DbgBreakPoint();
+    RtlExitUserThread( STATUS_SUCCESS );
+}
+
+/***********************************************************************
+ *      DbgUiIssueRemoteBreakin (NTDLL.@)
+ */
+NTSTATUS WINAPI DbgUiIssueRemoteBreakin( HANDLE process )
+{
+    apc_call_t call;
+    apc_result_t result;
+    NTSTATUS status;
+
+    TRACE( "(%p)\n", process );
+
+    memset( &call, 0, sizeof(call) );
+
+    call.type = APC_BREAK_PROCESS;
+    status = server_queue_process_apc( process, &call, &result );
+    if (status) return status;
+    return result.break_process.status;
+}

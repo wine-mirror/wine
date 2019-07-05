@@ -584,14 +584,6 @@ ULONG WINAPIV EtwTraceMessage( TRACEHANDLE handle, ULONG flags, LPGUID guid, USH
     return ret;
 }
 
-/***********************************************************************
- *		    DbgUiRemoteBreakin (NTDLL.@)
- */
-void WINAPI DbgUiRemoteBreakin( void *arg )
-{
-    FIXME("stub\n");
-}
-
 NTSTATUS WINAPI NtCreateLowBoxToken(HANDLE *token_handle, HANDLE existing_token_handle, ACCESS_MASK desired_access,
                                     OBJECT_ATTRIBUTES *object_attributes, SID *package_sid, ULONG capability_count,
                                     SID_AND_ATTRIBUTES *capabilities, ULONG handle_count, HANDLE *handle)

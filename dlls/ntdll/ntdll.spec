@@ -39,7 +39,7 @@
 @ stub DbgUiConvertStateChangeStructure
 # @ stub DbgUiDebugActiveProcess
 # @ stub DbgUiGetThreadDebugObject
-# @ stub DbgUiIssueRemoteBreakin
+@ stdcall DbgUiIssueRemoteBreakin(long)
 @ stdcall DbgUiRemoteBreakin(ptr)
 # @ stub DbgUiSetThreadDebugObject
 # @ stub DbgUiStopDebugging
