@@ -62,7 +62,7 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 static const char * const cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
 
-static inline BOOL is_64bit_arch( cpu_type_t cpu )
+static inline BOOL is_64bit_arch( client_cpu_t cpu )
 {
     return (cpu == CPU_x86_64 || cpu == CPU_ARM64);
 }

@@ -51,7 +51,7 @@ my %formats =
     "irp_params_t"  => [  32,  8,  "&dump_irp_params" ],
     "luid_t"        => [  8,   4,  "&dump_luid" ],
     "ioctl_code_t"  => [  4,   4,  "&dump_ioctl_code" ],
-    "cpu_type_t"    => [  4,   4,  "&dump_cpu_type" ],
+    "client_cpu_t"  => [  4,   4,  "&dump_client_cpu" ],
     "hw_input_t"    => [  32,  8,  "&dump_hw_input" ],
 );
 

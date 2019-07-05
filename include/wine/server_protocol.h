@@ -119,12 +119,12 @@ enum cpu_type
 {
     CPU_x86, CPU_x86_64, CPU_POWERPC, CPU_ARM, CPU_ARM64
 };
-typedef int cpu_type_t;
+typedef int client_cpu_t;
 
 
 typedef struct
 {
-    cpu_type_t       cpu;
+    client_cpu_t     cpu;
     unsigned int     flags;
     union
     {
@@ -743,7 +743,7 @@ typedef struct
     unsigned int   header_size;
     unsigned int   file_size;
     unsigned int   checksum;
-    cpu_type_t     cpu;
+    client_cpu_t   cpu;
     int            __pad;
 } pe_image_info_t;
 #define IMAGE_FLAGS_ComPlusNativeReady        0x01
@@ -774,7 +774,7 @@ struct new_process_request
     int          socket_fd;
     obj_handle_t exe_file;
     unsigned int access;
-    cpu_type_t   cpu;
+    client_cpu_t cpu;
     data_size_t  info_size;
     /* VARARG(objattr,object_attributes); */
     /* VARARG(info,startup_info,info_size); */
@@ -796,7 +796,7 @@ struct exec_process_request
     struct request_header __header;
     int          socket_fd;
     obj_handle_t exe_file;
-    cpu_type_t   cpu;
+    client_cpu_t cpu;
 };
 struct exec_process_reply
 {
@@ -881,7 +881,7 @@ struct init_thread_request
     client_ptr_t entry;
     int          reply_fd;
     int          wait_fd;
-    cpu_type_t   cpu;
+    client_cpu_t cpu;
     char __pad_52[4];
 };
 struct init_thread_reply
@@ -946,7 +946,7 @@ struct get_process_info_reply
     timeout_t    end_time;
     int          exit_code;
     int          priority;
-    cpu_type_t   cpu;
+    client_cpu_t cpu;
     short int    debugger_present;
     short int    debug_children;
 };
@@ -6691,6 +6691,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 587
+#define SERVER_PROTOCOL_VERSION 588
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

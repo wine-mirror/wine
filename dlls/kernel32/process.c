@@ -174,7 +174,7 @@ static inline unsigned int is_path_prefix( const WCHAR *prefix, const WCHAR *fil
 /***********************************************************************
  *           is_64bit_arch
  */
-static inline BOOL is_64bit_arch( cpu_type_t cpu )
+static inline BOOL is_64bit_arch( client_cpu_t cpu )
 {
     return (cpu == CPU_x86_64 || cpu == CPU_ARM64);
 }
