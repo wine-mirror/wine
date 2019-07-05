@@ -97,7 +97,7 @@ static unsigned short builtin_vt(const type_t *t)
   {
     const type_t *elem_type;
     if (is_array(t))
-      elem_type = type_array_get_element(t);
+      elem_type = type_array_get_element_type(t);
     else
       elem_type = type_pointer_get_ref(t);
     if (type_get_type(elem_type) == TYPE_BASIC)
@@ -198,7 +198,7 @@ unsigned short get_type_vt(type_t *t)
   case TYPE_ARRAY:
     if (type_array_is_decl_as_ptr(t))
     {
-      if (match(type_array_get_element(t)->name, "SAFEARRAY"))
+      if (match(type_array_get_element_type(t)->name, "SAFEARRAY"))
         return VT_SAFEARRAY;
       return VT_PTR;
     }

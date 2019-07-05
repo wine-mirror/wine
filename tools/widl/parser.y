@@ -1469,7 +1469,7 @@ static type_t *get_array_or_ptr_ref(type_t *type)
     if (is_ptr(type))
         return type_pointer_get_ref(type);
     else if (is_array(type))
-        return type_array_get_element(type);
+        return type_array_get_element_type(type);
     return NULL;
 }
 
@@ -1485,7 +1485,7 @@ static type_t *append_chain_type(type_t *chain, type_t *type)
     if (is_ptr(chain_type))
         chain_type->details.pointer.ref = type;
     else if (is_array(chain_type))
-        chain_type->details.array.elem = type;
+        chain_type->details.array.elem.type = type;
     else
         assert(0);
 
@@ -1587,7 +1587,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
         if (is_ptr(t))
             t = type_pointer_get_ref(t);
         else if (is_array(t))
-            t = type_array_get_element(t);
+            t = type_array_get_element_type(t);
         else
             break;
     }
@@ -1624,7 +1624,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
           error_loc("%s: cannot specify size_is for an already sized array\n", v->name);
         else
           *ptype = type_new_array((*ptype)->name,
-                                  type_array_get_element(*ptype), FALSE,
+                                  type_array_get_element_type(*ptype), FALSE,
                                   0, dim, NULL, FC_RP);
       }
       else if (is_ptr(*ptype))
@@ -1637,7 +1637,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
     if (is_ptr(*ptype))
       ptype = &(*ptype)->details.pointer.ref;
     else if (is_array(*ptype))
-      ptype = &(*ptype)->details.array.elem;
+      ptype = &(*ptype)->details.array.elem.type;
     else
       error_loc("%s: too many expressions in size_is attribute\n", v->name);
   }
@@ -1650,7 +1650,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
       if (is_array(*ptype))
       {
         *ptype = type_new_array((*ptype)->name,
-                                type_array_get_element(*ptype),
+                                type_array_get_element_type(*ptype),
                                 type_array_is_decl_as_ptr(*ptype),
                                 type_array_get_dim(*ptype),
                                 type_array_get_conformance(*ptype),
@@ -1663,7 +1663,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
     if (is_ptr(*ptype))
       ptype = &(*ptype)->details.pointer.ref;
     else if (is_array(*ptype))
-      ptype = &(*ptype)->details.array.elem;
+      ptype = &(*ptype)->details.array.elem.type;
     else
       error_loc("%s: too many expressions in length_is attribute\n", v->name);
   }
@@ -2648,7 +2648,7 @@ static void check_field_common(const type_t *container_type,
             more_to_do = TRUE;
             break;
         case TGT_ARRAY:
-            type = type_array_get_element(type);
+            type = type_array_get_element_type(type);
             more_to_do = TRUE;
             break;
         case TGT_USER_TYPE:

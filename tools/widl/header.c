@@ -361,9 +361,9 @@ void write_type_left(FILE *h, type_t *t, enum name_type name_type, int declonly)
           fprintf(h, "%s", t->name);
         else
         {
-          write_type_left(h, type_array_get_element(t), name_type, declonly);
+          write_type_left(h, type_array_get_element_type(t), name_type, declonly);
           if (type_array_is_decl_as_ptr(t))
-            write_pointer_left(h, type_array_get_element(t));
+            write_pointer_left(h, type_array_get_element_type(t));
         }
         break;
       case TYPE_BASIC:
@@ -443,7 +443,7 @@ void write_type_right(FILE *h, type_t *t, int is_field)
   {
   case TYPE_ARRAY:
   {
-    type_t *elem = type_array_get_element(t);
+    type_t *elem = type_array_get_element_type(t);
     if (type_array_is_decl_as_ptr(t))
     {
       if (!type_is_alias(elem) && is_array(elem) && !type_array_is_decl_as_ptr(elem))
@@ -705,7 +705,7 @@ void check_for_additional_prototype_types(type_t *type)
     else if (is_ptr(type))
       type = type_pointer_get_ref(type);
     else if (is_array(type))
-      type = type_array_get_element(type);
+      type = type_array_get_element_type(type);
     else
       break;
   }

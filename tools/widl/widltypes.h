@@ -364,7 +364,7 @@ struct array_details
 {
   expr_t *size_is;
   expr_t *length_is;
-  struct _type_t *elem;
+  struct _decl_spec_t elem;
   unsigned int dim;
   unsigned char ptr_def_fc;
   unsigned char declptr; /* if declared as a pointer */

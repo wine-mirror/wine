@@ -510,7 +510,7 @@ unsigned char get_struct_fc(const type_t *type)
             continue;
         }
 
-        if (is_array(type_array_get_element(field->declspec.type)))
+        if (is_array(type_array_get_element_type(field->declspec.type)))
             return FC_BOGUS_STRUCT;
 
         if (type_array_has_conformance(field->declspec.type))
@@ -523,7 +523,7 @@ unsigned char get_struct_fc(const type_t *type)
         if (type_array_has_variance(t))
             has_variance = 1;
 
-        t = type_array_get_element(t);
+        t = type_array_get_element_type(t);
         typegen_type = typegen_detect_type(t, field->attrs, TDT_IGNORE_STRINGS);
     }
 
@@ -625,7 +625,7 @@ static unsigned char get_array_fc(const type_t *type)
     const expr_t *size_is;
     const type_t *elem_type;
 
-    elem_type = type_array_get_element(type);
+    elem_type = type_array_get_element_type(type);
     size_is = type_array_get_conformance(type);
 
     if (!size_is)
@@ -714,7 +714,7 @@ static int type_has_pointers(const type_t *type)
     case TGT_POINTER:
         return TRUE;
     case TGT_ARRAY:
-        return type_array_is_decl_as_ptr(type) || type_has_pointers(type_array_get_element(type));
+        return type_array_is_decl_as_ptr(type) || type_has_pointers(type_array_get_element_type(type));
     case TGT_STRUCT:
     {
         var_list_t *fields = type_struct_get_fields(type);
@@ -768,7 +768,7 @@ static int type_has_full_pointer(const type_t *type, const attr_list_t *attrs,
         if (get_pointer_fc(type, attrs, toplevel_param) == FC_FP)
             return TRUE;
         else
-            return type_has_full_pointer(type_array_get_element(type), NULL, FALSE);
+            return type_has_full_pointer(type_array_get_element_type(type), NULL, FALSE);
     case TGT_STRUCT:
     {
         var_list_t *fields = type_struct_get_fields(type);
@@ -1944,12 +1944,12 @@ unsigned int type_memsize_and_alignment(const type_t *t, unsigned int *align)
         {
             if (is_conformant_array(t))
             {
-                type_memsize_and_alignment(type_array_get_element(t), align);
+                type_memsize_and_alignment(type_array_get_element_type(t), align);
                 size = 0;
             }
             else
                 size = type_array_get_dim(t) *
-                    type_memsize_and_alignment(type_array_get_element(t), align);
+                    type_memsize_and_alignment(type_array_get_element_type(t), align);
         }
         else /* declared as a pointer */
         {
@@ -2054,7 +2054,7 @@ static unsigned int type_buffer_alignment(const type_t *t)
         break;
     case TYPE_ARRAY:
         if (!type_array_is_decl_as_ptr(t))
-            return type_buffer_alignment( type_array_get_element(t) );
+            return type_buffer_alignment( type_array_get_element_type(t) );
         /* else fall through */
     case TYPE_POINTER:
         return 4;
@@ -2378,7 +2378,7 @@ static void write_member_type(FILE *file, const type_t *cont,
 static void write_array_element_type(FILE *file, const attr_list_t *attrs, const type_t *type,
                                      int cont_is_complex, unsigned int *tfsoff)
 {
-    type_t *elem = type_array_get_element(type);
+    type_t *elem = type_array_get_element_type(type);
 
     if (!is_embedded_complex(elem) && is_ptr(elem))
     {
@@ -2506,7 +2506,7 @@ static int write_pointer_description_offsets(
     if (is_array(type))
     {
         return write_pointer_description_offsets(
-            file, attrs, type_array_get_element(type), offset_in_memory,
+            file, attrs, type_array_get_element_type(type), offset_in_memory,
             offset_in_buffer, typestring_offset);
     }
     else if (is_non_complex_struct(type))
@@ -2609,14 +2609,14 @@ static int write_fixed_array_pointer_descriptions(
         /* unfortunately, this needs to be done in two passes to avoid
          * writing out redundant FC_FIXED_REPEAT descriptions */
         pointer_count = write_pointer_description_offsets(
-            NULL, attrs, type_array_get_element(type), NULL, NULL, &temp);
+            NULL, attrs, type_array_get_element_type(type), NULL, NULL, &temp);
         if (pointer_count > 0)
         {
             unsigned int increment_size;
             unsigned int offset_of_array_pointer_mem = 0;
             unsigned int offset_of_array_pointer_buf = 0;
 
-            increment_size = type_memsize(type_array_get_element(type));
+            increment_size = type_memsize(type_array_get_element_type(type));
 
             print_file(file, 2, "0x%02x, /* FC_FIXED_REPEAT */\n", FC_FIXED_REPEAT);
             print_file(file, 2, "0x%02x, /* FC_PAD */\n", FC_PAD);
@@ -2680,14 +2680,14 @@ static int write_conformant_array_pointer_descriptions(
         /* unfortunately, this needs to be done in two passes to avoid
          * writing out redundant FC_VARIABLE_REPEAT descriptions */
         pointer_count = write_pointer_description_offsets(
-            NULL, attrs, type_array_get_element(type), NULL, NULL, &temp);
+            NULL, attrs, type_array_get_element_type(type), NULL, NULL, &temp);
         if (pointer_count > 0)
         {
             unsigned int increment_size;
             unsigned int offset_of_array_pointer_mem = offset_in_memory;
             unsigned int offset_of_array_pointer_buf = offset_in_memory;
 
-            increment_size = type_memsize(type_array_get_element(type));
+            increment_size = type_memsize(type_array_get_element_type(type));
 
             if (increment_size > USHRT_MAX)
                 error("array size of %u bytes is too large\n", increment_size);
@@ -2700,7 +2700,7 @@ static int write_conformant_array_pointer_descriptions(
             *typestring_offset += 8;
 
             pointer_count = write_pointer_description_offsets(
-                file, attrs, type_array_get_element(type),
+                file, attrs, type_array_get_element_type(type),
                 &offset_of_array_pointer_mem, &offset_of_array_pointer_buf,
                 typestring_offset);
         }
@@ -2724,12 +2724,12 @@ static int write_varying_array_pointer_descriptions(
         /* unfortunately, this needs to be done in two passes to avoid
          * writing out redundant FC_VARIABLE_REPEAT descriptions */
         pointer_count = write_pointer_description_offsets(
-            NULL, attrs, type_array_get_element(type), NULL, NULL, &temp);
+            NULL, attrs, type_array_get_element_type(type), NULL, NULL, &temp);
         if (pointer_count > 0)
         {
             unsigned int increment_size;
 
-            increment_size = type_memsize(type_array_get_element(type));
+            increment_size = type_memsize(type_array_get_element_type(type));
 
             if (increment_size > USHRT_MAX)
                 error("array size of %u bytes is too large\n", increment_size);
@@ -2742,7 +2742,7 @@ static int write_varying_array_pointer_descriptions(
             *typestring_offset += 8;
 
             pointer_count = write_pointer_description_offsets(
-                file, attrs, type_array_get_element(type), offset_in_memory,
+                file, attrs, type_array_get_element_type(type), offset_in_memory,
                 offset_in_buffer, typestring_offset);
         }
     }
@@ -2864,7 +2864,7 @@ static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
     }
 
     if (is_array(type))
-        elem_type = type_array_get_element(type);
+        elem_type = type_array_get_element_type(type);
     else
         elem_type = type_pointer_get_ref(type);
 
@@ -2957,11 +2957,11 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
         ? type_memsize(current_structure)
         : 0;
 
-    if (!is_string_type(attrs, type_array_get_element(type)))
-        write_embedded_types(file, attrs, type_array_get_element(type), name, FALSE, typestring_offset);
+    if (!is_string_type(attrs, type_array_get_element_type(type)))
+        write_embedded_types(file, attrs, type_array_get_element_type(type), name, FALSE, typestring_offset);
 
-    size = type_memsize(is_conformant_array(type) ? type_array_get_element(type) : type);
-    align = type_buffer_alignment(is_conformant_array(type) ? type_array_get_element(type) : type);
+    size = type_memsize(is_conformant_array(type) ? type_array_get_element_type(type) : type);
+    align = type_buffer_alignment(is_conformant_array(type) ? type_array_get_element_type(type) : type);
     fc = get_array_fc(type);
 
     start_offset = *typestring_offset;
@@ -2992,7 +2992,7 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
 
         if (fc == FC_SMVARRAY || fc == FC_LGVARRAY)
         {
-            unsigned int elsize = type_memsize(type_array_get_element(type));
+            unsigned int elsize = type_memsize(type_array_get_element_type(type));
             unsigned int dim = type_array_get_dim(type);
 
             if (fc == FC_LGVARRAY)
@@ -3015,7 +3015,7 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
                 += write_conf_or_var_desc(file, current_structure, baseoff,
                                           type, length_is);
 
-        if (type_has_pointers(type_array_get_element(type)) &&
+        if (type_has_pointers(type_array_get_element_type(type)) &&
             (type_array_is_decl_as_ptr(type) || !current_structure))
         {
             print_file(file, 2, "0x%x,\t/* FC_PP */\n", FC_PP);
@@ -3868,7 +3868,7 @@ static unsigned int get_required_buffer_size_type(
             case FC_SMFARRAY:
             case FC_LGFARRAY:
                 return type_array_get_dim(type) *
-                    get_required_buffer_size_type(type_array_get_element(type), name,
+                    get_required_buffer_size_type(type_array_get_element_type(type), name,
                                                   NULL, FALSE, alignment);
             }
         }
@@ -4098,7 +4098,7 @@ expr_t *get_size_is_expr(const type_t *t, const char *name)
 {
     expr_t *x = NULL;
 
-    for ( ; is_array(t); t = type_array_get_element(t))
+    for ( ; is_array(t); t = type_array_get_element_type(t))
         if (type_array_has_conformance(t) &&
             type_array_get_conformance(t)->type != EXPR_VOID)
         {
@@ -4704,7 +4704,7 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                     fprintf(file, " = NdrAllocate(&__frame->_StubMsg, ");
                     for (type = var->declspec.type;
                          is_array(type) && type_array_has_conformance(type);
-                         type = type_array_get_element(type))
+                         type = type_array_get_element_type(type))
                     {
                         write_expr(file, type_array_get_conformance(type), TRUE,
                                    TRUE, NULL, NULL, local_var_prefix);
@@ -4716,7 +4716,7 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                     print_file(file, indent, "memset(%s%s, 0, ", local_var_prefix, var->name);
                     for (type = var->declspec.type;
                          is_array(type) && type_array_has_conformance(type);
-                         type = type_array_get_element(type))
+                         type = type_array_get_element_type(type))
                     {
                         write_expr(file, type_array_get_conformance(type), TRUE,
                                    TRUE, NULL, NULL, local_var_prefix);
@@ -4750,7 +4750,7 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                         print_file(file, indent, "%s_W%u = 0;\n", local_var_prefix, i);
                         break;
                     }
-                    ref = type_array_get_element(ref);
+                    ref = type_array_get_element_type(ref);
                     /* fall through */
                 case TGT_STRUCT:
                 case TGT_UNION:

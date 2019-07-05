@@ -912,10 +912,10 @@ static int encode_type(
 
     case VT_SAFEARRAY:
 	{
-	type_t *element_type = type_alias_get_aliasee(type_array_get_element(type));
+	type_t *element_type = type_alias_get_aliasee(type_array_get_element_type(type));
 	int next_vt = get_type_vt(element_type);
 
-	encode_type(typelib, next_vt, type_alias_get_aliasee(type_array_get_element(type)),
+	encode_type(typelib, next_vt, type_alias_get_aliasee(type_array_get_element_type(type)),
         &target_type, &child_size);
 
 	for (typeoffset = 0; typeoffset < typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
@@ -1056,7 +1056,7 @@ static int encode_var(
         num_dims = 0;
         for (atype = type;
              is_array(atype) && !type_array_is_decl_as_ptr(atype);
-             atype = type_array_get_element(atype))
+             atype = type_array_get_element_type(atype))
             ++num_dims;
 
         chat("array with %d dimensions\n", num_dims);
@@ -1071,7 +1071,7 @@ static int encode_var(
         arraydata += 2;
         for (atype = type;
              is_array(atype) && !type_array_is_decl_as_ptr(atype);
-             atype = type_array_get_element(atype))
+             atype = type_array_get_element_type(atype))
         {
             arraydata[0] = type_array_get_dim(atype);
             arraydata[1] = 0;
@@ -1093,7 +1093,7 @@ static int encode_var(
     vt = get_type_vt(type);
     if (vt == VT_PTR) {
         type_t *ref = is_ptr(type) ?
-            type_pointer_get_ref(type) : type_array_get_element(type);
+            type_pointer_get_ref(type) : type_array_get_element_type(type);
         int skip_ptr = encode_var(typelib, ref, var, &target_type, &child_size);
 
         if(skip_ptr == 2) {
@@ -1114,7 +1114,7 @@ static int encode_var(
 	    if (target_type & 0x80000000) {
 		mix_field = ((target_type >> 16) & 0x3fff) | VT_BYREF;
 	    } else if (get_type_vt(ref) == VT_SAFEARRAY) {
-		type_t *element_type = type_alias_get_aliasee(type_array_get_element(ref));
+		type_t *element_type = type_alias_get_aliasee(type_array_get_element_type(ref));
 		mix_field = get_type_vt(element_type) | VT_ARRAY | VT_BYREF;
 	    } else {
 		typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][target_type];

@@ -583,7 +583,7 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
             result.type = type_pointer_get_ref(result.type);
         else if(result.type && is_array(result.type)
                             && type_array_is_decl_as_ptr(result.type))
-            result.type = type_array_get_element(result.type);
+            result.type = type_array_get_element_type(result.type);
         else
             error_loc_info(&expr_loc->v->loc_info, "dereference operator applied to non-pointer type in expression%s%s\n",
                            expr_loc->attr ? " for attribute " : "",
@@ -665,7 +665,7 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
         if (result.type && is_array(result.type))
         {
             struct expression_type index_result;
-            result.type = type_array_get_element(result.type);
+            result.type = type_array_get_element_type(result.type);
             index_result = resolve_expression(expr_loc, cont_type /* FIXME */, e->u.ext);
             if (!index_result.type || !is_integer_type(index_result.type))
                 error_loc_info(&expr_loc->v->loc_info, "array subscript not of integral type in expression%s%s\n",

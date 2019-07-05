@@ -88,7 +88,7 @@ static inline int last_ptr(const type_t *type)
 
 static inline int last_array(const type_t *type)
 {
-    return is_array(type) && !is_array(type_array_get_element(type));
+    return is_array(type) && !is_array(type_array_get_element_type(type));
 }
 
 static inline int is_string_type(const attr_list_t *attrs, const type_t *type)

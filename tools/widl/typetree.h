@@ -250,11 +250,16 @@ static inline expr_t *type_array_get_variance(const type_t *type)
     return type->details.array.length_is;
 }
 
-static inline type_t *type_array_get_element(const type_t *type)
+static inline const decl_spec_t *type_array_get_element(const type_t *type)
 {
     type = type_get_real_type(type);
     assert(type_get_type(type) == TYPE_ARRAY);
-    return type->details.array.elem;
+    return &type->details.array.elem;
+}
+
+static inline type_t *type_array_get_element_type(const type_t *type)
+{
+    return type_array_get_element(type)->type;
 }
 
 static inline int type_array_is_decl_as_ptr(const type_t *type)
