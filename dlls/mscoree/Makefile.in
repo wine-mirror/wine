@@ -1,6 +1,8 @@
 MODULE    = mscoree.dll
 IMPORTS   = dbghelp uuid shell32 advapi32 ole32 oleaut32 shlwapi
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	assembly.c \
 	config.c \

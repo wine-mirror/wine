@@ -40,7 +40,6 @@
 #include "mscoree_private.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
@@ -1480,8 +1479,8 @@ __int32 WINAPI _CorExeMain(void)
             WCHAR config_file[MAX_PATH];
             static const WCHAR dotconfig[] = {'.','c','o','n','f','i','g',0};
 
-            strcpyW(config_file, filename);
-            strcatW(config_file, dotconfig);
+            lstrcpyW(config_file, filename);
+            lstrcatW(config_file, dotconfig);
 
             hr = RuntimeHost_GetDefaultDomain(host, config_file, &domain);
         }
@@ -1686,10 +1685,10 @@ static BOOL try_create_registration_free_com(REFIID clsid, WCHAR *classname, UIN
         ERR("Buffer is too small\n");
         goto end;
     }
-    strcpyW(classname, ptr_name);
+    lstrcpyW(classname, ptr_name);
 
     ptr_path_start = assembly_info->lpAssemblyEncodedAssemblyIdentity;
-    ptr_path_end = strchrW(ptr_path_start, ',');
+    ptr_path_end = wcschr(ptr_path_start, ',');
     memcpy(path, ptr_path_start, (char*)ptr_path_end - (char*)ptr_path_start);
 
     GetModuleFileNameW(NULL, filename, filename_size);
@@ -1702,7 +1701,7 @@ static BOOL try_create_registration_free_com(REFIID clsid, WCHAR *classname, UIN
     }
 
     PathAppendW(filename, path);
-    strcatW(filename, str_dll);
+    lstrcatW(filename, str_dll);
 
     ret = TRUE;
 
@@ -1766,10 +1765,10 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
         if(res == ERROR_SUCCESS)
         {
             /* Strip file:/// */
-            if(strncmpW(codebase, wszFileSlash, strlenW(wszFileSlash)) == 0)
-                offset = strlenW(wszFileSlash);
+            if(wcsncmp(codebase, wszFileSlash, lstrlenW(wszFileSlash)) == 0)
+                offset = lstrlenW(wszFileSlash);
 
-            strcpyW(filename, codebase + offset);
+            lstrcpyW(filename, codebase + offset);
         }
         else
         {
@@ -1808,14 +1807,14 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
 
                 WARN("Attempt to load from the application directory.\n");
                 GetModuleFileNameW(NULL, filename, MAX_PATH);
-                ns = strrchrW(filename, '\\');
+                ns = wcsrchr(filename, '\\');
                 *(ns+1) = '\0';
 
-                ns = strchrW(assemblyname, ',');
+                ns = wcschr(assemblyname, ',');
                 *(ns) = '\0';
-                strcatW(filename, assemblyname);
+                lstrcatW(filename, assemblyname);
                 *(ns) = '.';
-                strcatW(filename, wszDLL);
+                lstrcatW(filename, wszDLL);
             }
         }
     }

@@ -24,7 +24,6 @@
 
 #define COBJMACROS
 
-#include "wine/library.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"

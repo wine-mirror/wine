@@ -426,7 +426,7 @@ static HRESULT WINAPI ConfigFileHandler_startElement(ISAXContentHandler *iface,
     switch (This->states[This->statenum])
     {
     case STATE_ROOT:
-        if (nLocalName == ARRAY_SIZE(configuration) - 1 && lstrcmpW(pLocalName, configuration) == 0)
+        if (nLocalName == ARRAY_SIZE(configuration) - 1 && wcscmp(pLocalName, configuration) == 0)
         {
             This->states[++This->statenum] = STATE_CONFIGURATION;
             break;
@@ -434,13 +434,13 @@ static HRESULT WINAPI ConfigFileHandler_startElement(ISAXContentHandler *iface,
         else
             goto unknown;
     case STATE_CONFIGURATION:
-        if (nLocalName == ARRAY_SIZE(startup) - 1 && lstrcmpW(pLocalName, startup) == 0)
+        if (nLocalName == ARRAY_SIZE(startup) - 1 && wcscmp(pLocalName, startup) == 0)
         {
             hr = parse_startup(This, pAttr);
             This->states[++This->statenum] = STATE_STARTUP;
             break;
         }
-        else if (nLocalName == ARRAY_SIZE(runtime) - 1 && lstrcmpW(pLocalName, runtime) == 0)
+        else if (nLocalName == ARRAY_SIZE(runtime) - 1 && wcscmp(pLocalName, runtime) == 0)
         {
             This->states[++This->statenum] = STATE_RUNTIME;
             break;
@@ -449,7 +449,7 @@ static HRESULT WINAPI ConfigFileHandler_startElement(ISAXContentHandler *iface,
             goto unknown;
     case STATE_RUNTIME:
         if (nLocalName == ARRAY_SIZE(assemblyBinding) - 1 &&
-            lstrcmpW(pLocalName, assemblyBinding) == 0)
+            wcscmp(pLocalName, assemblyBinding) == 0)
         {
             This->states[++This->statenum] = STATE_ASSEMBLY_BINDING;
             break;
@@ -457,7 +457,7 @@ static HRESULT WINAPI ConfigFileHandler_startElement(ISAXContentHandler *iface,
         else
             goto unknown;
     case STATE_ASSEMBLY_BINDING:
-        if (nLocalName == ARRAY_SIZE(probing) - 1 && lstrcmpW(pLocalName, probing) == 0)
+        if (nLocalName == ARRAY_SIZE(probing) - 1 && wcscmp(pLocalName, probing) == 0)
         {
             hr = parse_probing(This, pAttr);
             This->states[++This->statenum] = STATE_PROBING;
@@ -467,7 +467,7 @@ static HRESULT WINAPI ConfigFileHandler_startElement(ISAXContentHandler *iface,
             goto unknown;
     case STATE_STARTUP:
         if (nLocalName == ARRAY_SIZE(supportedRuntime) - 1 &&
-            lstrcmpW(pLocalName, supportedRuntime) == 0)
+            wcscmp(pLocalName, supportedRuntime) == 0)
         {
             hr = parse_supported_runtime(This, pAttr);
             This->states[++This->statenum] = STATE_UNKNOWN;
