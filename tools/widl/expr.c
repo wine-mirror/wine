@@ -580,7 +580,7 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
     case EXPR_PPTR:
         result = resolve_expression(expr_loc, cont_type, e->ref);
         if (result.type && is_ptr(result.type))
-            result.type = type_pointer_get_ref(result.type);
+            result.type = type_pointer_get_ref_type(result.type);
         else if(result.type && is_array(result.type)
                             && type_array_is_decl_as_ptr(result.type))
             result.type = type_array_get_element_type(result.type);

@@ -182,7 +182,7 @@ type_t *type_new_pointer(unsigned char pointer_default, type_t *ref, attr_list_t
 {
     type_t *t = make_type(TYPE_POINTER);
     t->details.pointer.def_fc = pointer_default;
-    t->details.pointer.ref = ref;
+    t->details.pointer.ref.type = ref;
     t->attrs = attrs;
     return t;
 }

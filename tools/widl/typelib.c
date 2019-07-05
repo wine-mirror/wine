@@ -99,7 +99,7 @@ static unsigned short builtin_vt(const type_t *t)
     if (is_array(t))
       elem_type = type_array_get_element_type(t);
     else
-      elem_type = type_pointer_get_ref(t);
+      elem_type = type_pointer_get_ref_type(t);
     if (type_get_type(elem_type) == TYPE_BASIC)
     {
       switch (type_basic_get_type(elem_type))

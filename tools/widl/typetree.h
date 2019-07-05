@@ -294,11 +294,16 @@ static inline ifref_list_t *type_coclass_get_ifaces(const type_t *type)
     return type->details.coclass.ifaces;
 }
 
-static inline type_t *type_pointer_get_ref(const type_t *type)
+static inline const decl_spec_t *type_pointer_get_ref(const type_t *type)
 {
     type = type_get_real_type(type);
     assert(type_get_type(type) == TYPE_POINTER);
-    return type->details.pointer.ref;
+    return &type->details.pointer.ref;
+}
+
+static inline type_t *type_pointer_get_ref_type(const type_t *type)
+{
+    return type_pointer_get_ref(type)->type;
 }
 
 static inline unsigned char type_pointer_get_default_fc(const type_t *type)

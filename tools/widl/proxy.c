@@ -107,8 +107,8 @@ static void clear_output_vars( const var_list_t *args )
       if (!is_attr(arg->attrs, ATTR_OUT)) continue;
       if (is_ptr(arg->declspec.type))
       {
-          if (type_get_type(type_pointer_get_ref(arg->declspec.type)) == TYPE_BASIC) continue;
-          if (type_get_type(type_pointer_get_ref(arg->declspec.type)) == TYPE_ENUM) continue;
+          if (type_get_type(type_pointer_get_ref_type(arg->declspec.type)) == TYPE_BASIC) continue;
+          if (type_get_type(type_pointer_get_ref_type(arg->declspec.type)) == TYPE_ENUM) continue;
       }
       print_proxy( "if (%s) MIDL_memset( %s, 0, ", arg->name, arg->name );
       if (is_array(arg->declspec.type) && type_array_has_conformance(arg->declspec.type))

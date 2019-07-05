@@ -384,7 +384,7 @@ struct basic_details
 
 struct pointer_details
 {
-  struct _type_t *ref;
+  struct _decl_spec_t ref;
   unsigned char def_fc;
 };
 
@@ -458,7 +458,6 @@ struct _type_t {
 struct _var_t {
   char *name;
   decl_spec_t declspec;
-
   attr_list_t *attrs;
   expr_t *eval;
   unsigned int procstring_offset;
