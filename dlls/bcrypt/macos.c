@@ -48,19 +48,19 @@ NTSTATUS key_set_property( struct key *key, const WCHAR *prop, UCHAR *value, ULO
 {
     if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
     {
-        if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB, size ))
+        if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB ))
         {
             key->u.s.mode = MODE_ID_ECB;
             return STATUS_SUCCESS;
         }
-        else if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC, size ))
+        else if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC ))
         {
             key->u.s.mode = MODE_ID_CBC;
             return STATUS_SUCCESS;
         }
         else
         {
-            FIXME( "unsupported mode %s\n", debugstr_wn( (WCHAR *)value, size ) );
+            FIXME( "unsupported mode %s\n", debugstr_w((WCHAR *)value) );
             return STATUS_NOT_IMPLEMENTED;
         }
     }

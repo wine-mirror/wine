@@ -518,24 +518,24 @@ static NTSTATUS set_alg_property( struct algorithm *alg, const WCHAR *prop, UCHA
     case ALG_ID_AES:
         if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
         {
-            if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB, size ))
+            if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB ))
             {
                 alg->mode = MODE_ID_ECB;
                 return STATUS_SUCCESS;
             }
-            else if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC, size ))
+            else if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC ))
             {
                 alg->mode = MODE_ID_CBC;
                 return STATUS_SUCCESS;
             }
-            else if (!strncmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM, size ))
+            else if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM ))
             {
                 alg->mode = MODE_ID_GCM;
                 return STATUS_SUCCESS;
             }
             else
             {
-                FIXME( "unsupported mode %s\n", debugstr_wn( (WCHAR *)value, size ) );
+                FIXME( "unsupported mode %s\n", debugstr_w((WCHAR *)value) );
                 return STATUS_NOT_IMPLEMENTED;
             }
         }
