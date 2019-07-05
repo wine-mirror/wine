@@ -68,6 +68,7 @@ struct media_session
     LONG refcount;
     IMFMediaEventQueue *event_queue;
     IMFPresentationClock *clock;
+    IMFRateControl *clock_rate_control;
     struct list topologies;
     enum session_state state;
     CRITICAL_SECTION cs;
@@ -315,6 +316,8 @@ static ULONG WINAPI mfsession_Release(IMFMediaSession *iface)
             IMFMediaEventQueue_Release(session->event_queue);
         if (session->clock)
             IMFPresentationClock_Release(session->clock);
+        if (session->clock_rate_control)
+            IMFRateControl_Release(session->clock_rate_control);
         DeleteCriticalSection(&session->cs);
         heap_free(session);
     }
@@ -723,9 +726,11 @@ static HRESULT WINAPI session_rate_control_SetRate(IMFRateControl *iface, BOOL t
 
 static HRESULT WINAPI session_rate_control_GetRate(IMFRateControl *iface, BOOL *thin, float *rate)
 {
-    FIXME("%p, %p, %p.\n", iface, thin, rate);
+    struct media_session *session = impl_session_from_IMFRateControl(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, thin, rate);
+
+    return IMFRateControl_GetRate(session->clock_rate_control, thin, rate);
 }
 
 static const IMFRateControlVtbl session_rate_control_vtbl =
@@ -768,6 +773,12 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
 
     if (FAILED(hr = MFCreatePresentationClock(&object->clock)))
         goto failed;
+
+    if (FAILED(hr = IMFPresentationClock_QueryInterface(object->clock, &IID_IMFRateControl,
+            (void **)&object->clock_rate_control)))
+    {
+        goto failed;
+    }
 
     *session = &object->IMFMediaSession_iface;
 

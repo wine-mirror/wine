@@ -951,14 +951,16 @@ static void test_session_events(IMFMediaSession *session)
 
 static void test_media_session(void)
 {
+    IMFRateControl *rate_control, *rate_control2;
     MFCLOCK_PROPERTIES clock_props;
+    IMFRateSupport *rate_support;
     IMFMediaSession *session;
-    IMFRateControl *rc, *rc2;
-    IMFRateSupport *rs;
     IMFGetService *gs;
     IMFClock *clock;
     IUnknown *unk;
     HRESULT hr;
+    float rate;
+    BOOL thin;
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Startup failure, hr %#x.\n", hr);
@@ -972,29 +974,57 @@ static void test_media_session(void)
     hr = IMFMediaSession_QueryInterface(session, &IID_IMFGetService, (void **)&gs);
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
 
-    hr = IMFGetService_GetService(gs, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rs);
+    hr = IMFGetService_GetService(gs, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rate_support);
     ok(hr == S_OK, "Failed to get rate support interface, hr %#x.\n", hr);
 
-    hr = IMFGetService_GetService(gs, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, (void **)&rc);
+    hr = IMFGetService_GetService(gs, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, (void **)&rate_control);
     ok(hr == S_OK, "Failed to get rate control interface, hr %#x.\n", hr);
 
-    hr = IMFRateSupport_QueryInterface(rs, &IID_IMFMediaSession, (void **)&unk);
+    hr = IMFRateSupport_QueryInterface(rate_support, &IID_IMFMediaSession, (void **)&unk);
     ok(hr == S_OK, "Failed to get session interface, hr %#x.\n", hr);
     ok(unk == (IUnknown *)session, "Unexpected pointer.\n");
     IUnknown_Release(unk);
 
+    hr = IMFRateControl_GetRate(rate_control, NULL, NULL);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    rate = 0.0f;
+    hr = IMFRateControl_GetRate(rate_control, NULL, &rate);
+    ok(hr == S_OK, "Failed to get playback rate, hr %#x.\n", hr);
+    ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
+
+    hr = IMFRateControl_GetRate(rate_control, &thin, NULL);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    thin = TRUE;
+    rate = 0.0f;
+    hr = IMFRateControl_GetRate(rate_control, &thin, &rate);
+    ok(hr == S_OK, "Failed to get playback rate, hr %#x.\n", hr);
+    ok(!thin, "Unexpected thinning.\n");
+    ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
+
     hr = IMFMediaSession_GetClock(session, &clock);
     ok(hr == S_OK, "Failed to get clock, hr %#x.\n", hr);
 
-    hr = IMFClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&rc2);
+    hr = IMFClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&rate_control2);
     ok(hr == S_OK, "Failed to get rate control, hr %#x.\n", hr);
-    IMFRateControl_Release(rc2);
+
+    rate = 0.0f;
+    hr = IMFRateControl_GetRate(rate_control2, NULL, &rate);
+    ok(hr == S_OK, "Failed to get clock rate, hr %#x.\n", hr);
+    ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
+
+    hr = IMFRateControl_SetRate(rate_control, FALSE, 1.5f);
+todo_wine
+    ok(hr == S_OK, "Failed to set rate, hr %#x.\n", hr);
+
+    IMFRateControl_Release(rate_control2);
 
     hr = IMFClock_GetProperties(clock, &clock_props);
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
 
-    IMFRateControl_Release(rc);
-    IMFRateSupport_Release(rs);
+    IMFRateControl_Release(rate_control);
+    IMFRateSupport_Release(rate_support);
 
     IMFGetService_Release(gs);
 
