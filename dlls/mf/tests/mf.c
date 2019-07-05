@@ -2079,11 +2079,11 @@ static void test_video_processor(void)
 
     hr = CoCreateInstance(&CLSID_VideoProcessorMFT, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform,
             (void **)&transform);
-todo_wine
-    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "Failed to create video processor transform, hr %#x.\n", hr);
-
     if (FAILED(hr))
+    {
+        skip("Failed to create Video Processor instance, skipping tests.\n");
         goto failed;
+    }
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMFMediaEventGenerator, (void **)&unk);
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
@@ -2120,12 +2120,14 @@ todo_wine
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputStatus(transform, 0, &flags);
+todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputStreamAttributes(transform, 0, &attributes);
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetOutputStatus(transform, &flags);
+todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetOutputStreamAttributes(transform, 0, &attributes);
@@ -2137,30 +2139,38 @@ todo_wine
     IMFAttributes_Release(attributes2);
 
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
+todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
+todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputCurrentType(transform, 1, &media_type);
+todo_wine
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetOutputCurrentType(transform, 1, &media_type);
+todo_wine
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputStreamInfo(transform, 1, &input_info);
+todo_wine
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
 
+    memset(&input_info, 0xcc, sizeof(input_info));
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+todo_wine {
     ok(hr == S_OK, "Failed to get stream info, hr %#x.\n", hr);
     ok(input_info.dwFlags == 0, "Unexpected flag %#x.\n", input_info.dwFlags);
     ok(input_info.cbSize == 0, "Unexpected size %u.\n", input_info.cbSize);
     ok(input_info.cbMaxLookahead == 0, "Unexpected lookahead length %u.\n", input_info.cbMaxLookahead);
     ok(input_info.cbAlignment == 0, "Unexpected alignment %u.\n", input_info.cbAlignment);
-
+}
     hr = MFCreateMediaEvent(MEUnknown, &GUID_NULL, S_OK, NULL, &event);
     ok(hr == S_OK, "Failed to create event object, hr %#x.\n", hr);
     hr = IMFTransform_ProcessEvent(transform, 0, event);
@@ -2174,6 +2184,7 @@ todo_wine
     {
         if (FAILED(hr = IMFTransform_GetInputAvailableType(transform, 0, i, &media_type)))
         {
+        todo_wine
             ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
             break;
         }
@@ -2254,17 +2265,22 @@ todo_wine
     ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
 
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+todo_wine
     ok(hr == S_OK, "Failed to set input type, hr %#x.\n", hr);
 
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
     ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
 
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+todo_wine
     ok(hr == S_OK, "Failed to set output type, hr %#x.\n", hr);
 
+    memset(&output_info, 0, sizeof(output_info));
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+todo_wine
     ok(hr == S_OK, "Failed to get stream info, hr %#x.\n", hr);
     ok(output_info.dwFlags == 0, "Unexpected flags %#x.\n", output_info.dwFlags);
+todo_wine
     ok(output_info.cbSize > 0, "Unexpected size %u.\n", output_info.cbSize);
     ok(output_info.cbAlignment == 0, "Unexpected alignment %u.\n", output_info.cbAlignment);
 
@@ -2278,20 +2294,24 @@ todo_wine
     output_buffer.pSample = sample;
     flags = 0;
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+todo_wine
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "Unexpected hr %#x.\n", hr);
     ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#x.\n", output_buffer.dwStatus);
     ok(flags == 0, "Unexpected status %#x.\n", flags);
 
     hr = IMFTransform_ProcessInput(transform, 0, sample2, 0);
+todo_wine
     ok(hr == S_OK, "Failed to push a sample, hr %#x.\n", hr);
 
     hr = IMFTransform_ProcessInput(transform, 0, sample2, 0);
+todo_wine
     ok(hr == MF_E_NOTACCEPTING, "Unexpected hr %#x.\n", hr);
 
     memset(&output_buffer, 0, sizeof(output_buffer));
     output_buffer.pSample = sample;
     flags = 0;
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+todo_wine
     ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "Unexpected hr %#x.\n", hr);
     ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#x.\n", output_buffer.dwStatus);
     ok(flags == 0, "Unexpected status %#x.\n", flags);
@@ -2302,6 +2322,7 @@ todo_wine
     output_buffer.pSample = sample;
     flags = 0;
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
     ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#x.\n", output_buffer.dwStatus);
     ok(flags == 0, "Unexpected status %#x.\n", flags);
@@ -2319,6 +2340,7 @@ todo_wine
     output_buffer.pSample = sample;
     flags = 0;
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output_buffer, &flags);
+todo_wine
     ok(hr == S_OK || broken(FAILED(hr)) /* Win8 */, "Failed to get output buffer, hr %#x.\n", hr);
     ok(output_buffer.dwStatus == 0, "Unexpected buffer status, %#x.\n", output_buffer.dwStatus);
     ok(flags == 0, "Unexpected status %#x.\n", flags);

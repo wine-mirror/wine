@@ -232,7 +232,12 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    return STRMBASE_DllCanUnloadNow();
+    HRESULT hr = STRMBASE_DllCanUnloadNow();
+
+    if (hr == S_OK)
+        hr = mfplat_can_unload_now();
+
+    return hr;
 }
 
 /***********************************************************************
@@ -240,7 +245,12 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-    return STRMBASE_DllGetClassObject( rclsid, riid, ppv );
+    HRESULT hr;
+
+    if (FAILED(hr = mfplat_get_class_object(rclsid, riid, ppv)))
+        hr = STRMBASE_DllGetClassObject( rclsid, riid, ppv );
+
+    return hr;
 }
 
 /* GStreamer common functions */

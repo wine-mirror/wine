@@ -53,4 +53,7 @@ void start_dispatch_thread(void) DECLSPEC_HIDDEN;
 
 extern const char *media_quark_string DECLSPEC_HIDDEN;
 
+extern HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
+extern HRESULT mfplat_can_unload_now(void) DECLSPEC_HIDDEN;
+
 #endif /* __GST_PRIVATE_INCLUDED__ */
