@@ -1301,8 +1301,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
         return S_FALSE;
     }
 
-    if (type_get_function_args(func->type))
-      LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), var_t, entry )
+    if (type_get_function_args(func->declspec.type))
+      LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->declspec.type), var_t, entry )
       {
         num_params++;
         if (arg->attrs) LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry ) {
@@ -1444,7 +1444,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
 
     /* fill out the basic type information */
     typedata[0] = typedata_size | (index << 16);
-    encode_var(typeinfo->typelib, type_function_get_rettype(func->type), func,
+    encode_var(typeinfo->typelib, type_function_get_rettype(func->declspec.type), func,
         &typedata[1], &decoded_size);
     typedata[2] = funcflags;
     typedata[3] = ((52 /*sizeof(FUNCDESC)*/ + decoded_size) << 16) | typeinfo->typeinfo->cbSizeVft;
@@ -1471,10 +1471,10 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
         warning("unknown number of optional attrs\n");
     }
 
-    if (type_get_function_args(func->type))
+    if (type_get_function_args(func->declspec.type))
     {
       i = 0;
-      LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), var_t, entry )
+      LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->declspec.type), var_t, entry )
       {
         int paramflags = 0;
         int *paramdata = typedata + 6 + extra_attr + (num_defaults ? num_params : 0) + i * 3;
@@ -1482,13 +1482,13 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
 
         if(defaultdata) *defaultdata = -1;
 
-	encode_var(typeinfo->typelib, arg->type, arg, paramdata, &decoded_size);
+	    encode_var(typeinfo->typelib, arg->declspec.type, arg, paramdata, &decoded_size);
         if (arg->attrs) LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry ) {
             switch(attr->type) {
             case ATTR_DEFAULTVALUE:
               {
                 paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
-                write_default_value(typeinfo->typelib, arg->type, (expr_t *)attr->u.pval, defaultdata);
+                write_default_value(typeinfo->typelib, arg->declspec.type, (expr_t *)attr->u.pval, defaultdata);
                 break;
               }
             case ATTR_IN:
@@ -1572,10 +1572,10 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
     if(typeinfo->typekind == TKIND_MODULE)
         namedata[9] |= 0x20;
 
-    if (type_get_function_args(func->type))
+    if (type_get_function_args(func->declspec.type))
     {
         i = 0;
-        LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), var_t, entry )
+        LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->declspec.type), var_t, entry )
         {
             /* don't give the last arg of a [propput*] func a name */
             if(i != num_params - 1 || (invokekind != 0x4 /* INVOKE_PROPERTYPUT */ && invokekind != 0x8 /* INVOKE_PROPERTYPUTREF */))
@@ -1697,8 +1697,8 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     typeinfo->var_offsets[var_num] = offset;
 
     /* figure out type widths and whatnot */
-    var_datawidth = type_memsize_and_alignment(var->type, &var_alignment);
-    encode_var(typeinfo->typelib, var->type, var, &typedata[1], &var_type_size);
+    var_datawidth = type_memsize_and_alignment(var->declspec.type, &var_alignment);
+    encode_var(typeinfo->typelib, var->declspec.type, var, &typedata[1], &var_type_size);
 
     /* pad out starting position to data width */
     typeinfo->datawidth += var_alignment - 1;

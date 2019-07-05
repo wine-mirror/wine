@@ -55,7 +55,7 @@ static void write_function_stub(const type_t *iface, const var_t *func, unsigned
     unsigned char explicit_fc, implicit_fc;
     int has_full_pointer = is_full_pointer_function(func);
     const var_t *handle_var = get_func_handle_var( iface, func, &explicit_fc, &implicit_fc );
-    type_t *ret_type = type_function_get_rettype(func->type);
+    type_t *ret_type = type_function_get_rettype(func->declspec.type);
 
     if (is_interpreted_func( iface, func )) return;
 
@@ -121,7 +121,7 @@ static void write_function_stub(const type_t *iface, const var_t *func, unsigned
     if (has_full_pointer)
         write_full_pointer_init(server, indent, func, TRUE);
 
-    if (type_get_function_args(func->type))
+    if (type_get_function_args(func->declspec.type))
     {
         print_server("if ((_pRpcMessage->DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)\n");
         indent++;
@@ -166,31 +166,31 @@ static void write_function_stub(const type_t *iface, const var_t *func, unsigned
         print_server("%s", is_void(ret_type) ? "" : "__frame->_RetVal = ");
     fprintf(server, "%s%s", prefix_server, get_name(func));
 
-    if (type_get_function_args(func->type))
+    if (type_get_function_args(func->declspec.type))
     {
         int first_arg = 1;
 
         fprintf(server, "(\n");
         indent++;
-        LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
+        LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->declspec.type), const var_t, entry )
         {
             if (first_arg)
                 first_arg = 0;
             else
                 fprintf(server, ",\n");
-            if (is_context_handle(var->type))
+            if (is_context_handle(var->declspec.type))
             {
                 /* if the context_handle attribute appears in the chain of types
                  * without pointers being followed, then the context handle must
                  * be direct, otherwise it is a pointer */
-                const char *ch_ptr = is_aliaschain_attr(var->type, ATTR_CONTEXTHANDLE) ? "*" : "";
+                const char *ch_ptr = is_aliaschain_attr(var->declspec.type, ATTR_CONTEXTHANDLE) ? "*" : "";
                 print_server("(");
-                write_type_decl_left(server, var->type);
+                write_type_decl_left(server, var->declspec.type);
                 fprintf(server, ")%sNDRSContextValue(__frame->%s)", ch_ptr, var->name);
             }
             else
             {
-                print_server("%s__frame->%s", is_array(var->type) && !type_array_is_decl_as_ptr(var->type) ? "*" : "", var->name);
+                print_server("%s__frame->%s", is_array(var->declspec.type) && !type_array_is_decl_as_ptr(var->declspec.type) ? "*" : "", var->name);
             }
         }
         fprintf(server, ");\n");

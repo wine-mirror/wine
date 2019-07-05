@@ -52,9 +52,9 @@ static void print_client( const char *format, ... )
 
 static void write_client_func_decl( const type_t *iface, const var_t *func )
 {
-    const char *callconv = get_attrp(func->type->attrs, ATTR_CALLCONV);
-    const var_list_t *args = type_get_function_args(func->type);
-    type_t *rettype = type_function_get_rettype(func->type);
+    const char *callconv = get_attrp(func->declspec.type->attrs, ATTR_CALLCONV);
+    const var_list_t *args = type_get_function_args(func->declspec.type);
+    type_t *rettype = type_function_get_rettype(func->declspec.type);
 
     if (!callconv) callconv = "__cdecl";
     write_type_decl_left(client, rettype);
@@ -74,9 +74,9 @@ static void write_function_stub( const type_t *iface, const var_t *func,
 {
     unsigned char explicit_fc, implicit_fc;
     int has_full_pointer = is_full_pointer_function(func);
-    var_t *retval = type_function_get_retval(func->type);
+    var_t *retval = type_function_get_retval(func->declspec.type);
     const var_t *handle_var = get_func_handle_var( iface, func, &explicit_fc, &implicit_fc );
-    int has_ret = !is_void(retval->type);
+    int has_ret = !is_void(retval->declspec.type);
 
     if (is_interpreted_func( iface, func ))
     {
@@ -97,7 +97,7 @@ static void write_function_stub( const type_t *iface, const var_t *func,
         print_client("RPC_BINDING_HANDLE _Handle;\n");
     }
 
-    if (has_ret && decl_indirect(retval->type))
+    if (has_ret && decl_indirect(retval->declspec.type))
     {
         print_client("void *_p_%s;\n", retval->name);
     }
@@ -136,7 +136,7 @@ static void write_function_stub( const type_t *iface, const var_t *func,
     if (has_ret)
     {
         print_client("%s", "");
-        write_type_decl(client, retval->type, retval->name);
+        write_type_decl(client, retval->declspec.type, retval->name);
         fprintf(client, ";\n");
     }
     print_client("RPC_MESSAGE _RpcMessage;\n");
@@ -147,7 +147,7 @@ static void write_function_stub( const type_t *iface, const var_t *func,
         if (explicit_fc == FC_BIND_GENERIC)
             print_client("__frame->%s = %s;\n", handle_var->name, handle_var->name );
     }
-    if (has_ret && decl_indirect(retval->type))
+    if (has_ret && decl_indirect(retval->declspec.type))
     {
         print_client("__frame->_p_%s = &%s;\n", retval->name, retval->name);
     }
@@ -194,7 +194,7 @@ static void write_function_stub( const type_t *iface, const var_t *func,
         /* if the context_handle attribute appears in the chain of types
          * without pointers being followed, then the context handle must
          * be direct, otherwise it is a pointer */
-        int is_ch_ptr = !is_aliaschain_attr(handle_var->type, ATTR_CONTEXTHANDLE);
+        int is_ch_ptr = !is_aliaschain_attr(handle_var->declspec.type, ATTR_CONTEXTHANDLE);
         print_client("if (%s%s != 0)\n", is_ch_ptr ? "*" : "", handle_var->name);
         indent++;
         print_client("__frame->_Handle = NDRCContextBinding(%s%s);\n",
@@ -257,9 +257,9 @@ static void write_function_stub( const type_t *iface, const var_t *func,
     /* unmarshal return value */
     if (has_ret)
     {
-        if (decl_indirect(retval->type))
+        if (decl_indirect(retval->declspec.type))
             print_client("MIDL_memset(&%s, 0, sizeof(%s));\n", retval->name, retval->name);
-        else if (is_ptr(retval->type) || is_array(retval->type))
+        else if (is_ptr(retval->declspec.type) || is_array(retval->declspec.type))
             print_client("%s = 0;\n", retval->name);
         write_remoting_arguments(client, indent, func, "", PASS_RETURN, PHASE_UNMARSHAL);
     }
@@ -365,8 +365,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         case STMT_DECLARATION:
         {
             const var_t *func = stmt->u.var;
-            if (stmt->u.var->stgclass != STG_NONE
-                || type_get_type_detect_alias(stmt->u.var->type) != TYPE_FUNCTION)
+            if (stmt->u.var->declspec.stgclass != STG_NONE
+                || type_get_type_detect_alias(stmt->u.var->declspec.type) != TYPE_FUNCTION)
                 continue;
             write_function_stub( iface, func, method_count++, *proc_offset );
             *proc_offset += get_size_procformatstring_func( iface, func );
@@ -488,7 +488,7 @@ static void write_implicithandledecl(type_t *iface)
 
     if (implicit_handle)
     {
-        write_type_decl( client, implicit_handle->type, implicit_handle->name );
+        write_type_decl( client, implicit_handle->declspec.type, implicit_handle->name );
         fprintf(client, ";\n\n");
     }
 }
@@ -532,8 +532,8 @@ static void write_client_ifaces(const statement_list_t *stmts, int expr_eval_rou
 
             LIST_FOR_EACH_ENTRY(stmt2, type_iface_get_stmts(iface), const statement_t, entry)
             {
-                if (stmt2->type == STMT_DECLARATION && stmt2->u.var->stgclass == STG_NONE &&
-                    type_get_type_detect_alias(stmt2->u.var->type) == TYPE_FUNCTION)
+                if (stmt2->type == STMT_DECLARATION && stmt2->u.var->declspec.stgclass == STG_NONE &&
+                    type_get_type_detect_alias(stmt2->u.var->declspec.type) == TYPE_FUNCTION)
                 {
                     needs_stub = 1;
                     break;

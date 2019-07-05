@@ -137,7 +137,7 @@ type_t *type_new_function(var_list_t *args)
     if (args)
     {
         arg = LIST_ENTRY(list_head(args), var_t, entry);
-        if (list_count(args) == 1 && !arg->name && arg->type && type_get_type(arg->type) == TYPE_VOID)
+        if (list_count(args) == 1 && !arg->name && arg->declspec.type && type_get_type(arg->declspec.type) == TYPE_VOID)
         {
             list_remove(&arg->entry);
             free(arg);
@@ -147,7 +147,7 @@ type_t *type_new_function(var_list_t *args)
     }
     if (args) LIST_FOR_EACH_ENTRY(arg, args, var_t, entry)
     {
-        if (arg->type && type_get_type(arg->type) == TYPE_VOID)
+        if (arg->declspec.type && type_get_type(arg->declspec.type) == TYPE_VOID)
             error_loc("argument '%s' has void type\n", arg->name);
         if (!arg->name)
         {
@@ -354,7 +354,7 @@ type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *unio
 {
     type_t *t = get_type(TYPE_ENCAPSULATED_UNION, name, NULL, tsUNION);
     if (!union_field) union_field = make_var( xstrdup("tagged_union") );
-    union_field->type = type_new_nonencapsulated_union(NULL, TRUE, cases);
+    union_field->declspec.type = type_new_nonencapsulated_union(NULL, TRUE, cases);
     t->details.structure = xmalloc(sizeof(*t->details.structure));
     t->details.structure->fields = append_var( NULL, switch_field );
     t->details.structure->fields = append_var( t->details.structure->fields, union_field );
@@ -430,7 +430,7 @@ static int compute_method_indexes(type_t *iface)
     {
         var_t *func = stmt->u.var;
         if (!is_callas(func->attrs))
-            func->type->details.function->idx = idx++;
+            func->declspec.type->details.function->idx = idx++;
     }
 
     return idx;

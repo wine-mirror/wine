@@ -105,15 +105,15 @@ static void clear_output_vars( const var_list_t *args )
   {
       if (is_attr(arg->attrs, ATTR_IN)) continue;
       if (!is_attr(arg->attrs, ATTR_OUT)) continue;
-      if (is_ptr(arg->type))
+      if (is_ptr(arg->declspec.type))
       {
-          if (type_get_type(type_pointer_get_ref(arg->type)) == TYPE_BASIC) continue;
-          if (type_get_type(type_pointer_get_ref(arg->type)) == TYPE_ENUM) continue;
+          if (type_get_type(type_pointer_get_ref(arg->declspec.type)) == TYPE_BASIC) continue;
+          if (type_get_type(type_pointer_get_ref(arg->declspec.type)) == TYPE_ENUM) continue;
       }
       print_proxy( "if (%s) MIDL_memset( %s, 0, ", arg->name, arg->name );
-      if (is_array(arg->type) && type_array_has_conformance(arg->type))
+      if (is_array(arg->declspec.type) && type_array_has_conformance(arg->declspec.type))
       {
-          write_expr( proxy, type_array_get_conformance(arg->type), 1, 1, NULL, NULL, "" );
+          write_expr( proxy, type_array_get_conformance(arg->declspec.type), 1, 1, NULL, NULL, "" );
           fprintf( proxy, " * " );
       }
       fprintf( proxy, "sizeof( *%s ));\n", arg->name );
@@ -147,7 +147,7 @@ static int need_delegation_indirect(const type_t *iface)
 static void free_variable( const var_t *arg, const char *local_var_prefix )
 {
   unsigned int type_offset = arg->typestring_offset;
-  type_t *type = arg->type;
+  type_t *type = arg->declspec.type;
 
   write_parameter_conf_or_var_exprs(proxy, indent, local_var_prefix, PHASE_FREE, arg, FALSE);
 
@@ -191,18 +191,18 @@ static void proxy_free_variables( var_list_t *args, const char *local_var_prefix
 static void gen_proxy(type_t *iface, const var_t *func, int idx,
                       unsigned int proc_offset)
 {
-  var_t *retval = type_function_get_retval(func->type);
-  int has_ret = !is_void(retval->type);
+  var_t *retval = type_function_get_retval(func->declspec.type);
+  int has_ret = !is_void(retval->declspec.type);
   int has_full_pointer = is_full_pointer_function(func);
-  const char *callconv = get_attrp(func->type->attrs, ATTR_CALLCONV);
-  const var_list_t *args = type_get_function_args(func->type);
+  const char *callconv = get_attrp(func->declspec.type->attrs, ATTR_CALLCONV);
+  const var_list_t *args = type_get_function_args(func->declspec.type);
   if (!callconv) callconv = "STDMETHODCALLTYPE";
 
   indent = 0;
   if (is_interpreted_func( iface, func ))
   {
       if (get_stub_mode() == MODE_Oif && !is_callas( func->attrs )) return;
-      write_type_decl_left(proxy, retval->type);
+      write_type_decl_left(proxy, retval->declspec.type);
       print_proxy( " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
       write_args(proxy, args, iface->name, 1, TRUE);
       print_proxy( ")\n");
@@ -219,7 +219,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   print_proxy( "}\n");
   print_proxy( "\n");
 
-  write_type_decl_left(proxy, retval->type);
+  write_type_decl_left(proxy, retval->declspec.type);
   print_proxy( " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
   write_args(proxy, args, iface->name, 1, TRUE);
   print_proxy( ")\n");
@@ -229,12 +229,12 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   /* local variables */
   if (has_ret) {
     print_proxy( "%s", "" );
-    write_type_decl(proxy, retval->type, retval->name);
+    write_type_decl(proxy, retval->declspec.type, retval->name);
     fprintf( proxy, ";\n" );
   }
   print_proxy( "RPC_MESSAGE _RpcMessage;\n" );
   if (has_ret) {
-    if (decl_indirect(retval->type))
+    if (decl_indirect(retval->declspec.type))
         print_proxy("void *_p_%s = &%s;\n", retval->name, retval->name);
   }
   print_proxy( "\n");
@@ -246,7 +246,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
     write_full_pointer_init(proxy, indent, func, FALSE);
 
   /* FIXME: trace */
-  clear_output_vars( type_get_function_args(func->type) );
+  clear_output_vars( type_get_function_args(func->declspec.type) );
 
   print_proxy( "RpcTryExcept\n" );
   print_proxy( "{\n" );
@@ -279,9 +279,9 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
 
   if (has_ret)
   {
-      if (decl_indirect(retval->type))
+      if (decl_indirect(retval->declspec.type))
           print_proxy("MIDL_memset(&%s, 0, sizeof(%s));\n", retval->name, retval->name);
-      else if (is_ptr(retval->type) || is_array(retval->type))
+      else if (is_ptr(retval->declspec.type) || is_array(retval->declspec.type))
           print_proxy("%s = 0;\n", retval->name);
       write_remoting_arguments(proxy, indent, func, "", PASS_RETURN, PHASE_UNMARSHAL);
   }
@@ -301,7 +301,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   print_proxy( "{\n" );
   if (has_ret) {
     indent++;
-    proxy_free_variables( type_get_function_args(func->type), "" );
+    proxy_free_variables( type_get_function_args(func->declspec.type), "" );
     print_proxy( "_RetVal = NdrProxyErrorHandler(RpcExceptionCode());\n" );
     indent--;
   }
@@ -320,7 +320,7 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
                      unsigned int proc_offset)
 {
   const var_t *arg;
-  int has_ret = !is_void(type_function_get_rettype(func->type));
+  int has_ret = !is_void(type_function_get_rettype(func->declspec.type));
   int has_full_pointer = is_full_pointer_function(func);
 
   if (is_interpreted_func( iface, func )) return;
@@ -389,10 +389,10 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
   else fprintf(proxy, "__frame->_This->lpVtbl->%s", get_name(func));
   fprintf(proxy, "(__frame->_This");
 
-  if (type_get_function_args(func->type))
+  if (type_get_function_args(func->declspec.type))
   {
-      LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), const var_t, entry )
-          fprintf(proxy, ", %s__frame->%s", is_array(arg->type) && !type_array_is_decl_as_ptr(arg->type) ? "*" :"" , arg->name);
+      LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->declspec.type), const var_t, entry )
+          fprintf(proxy, ", %s__frame->%s", is_array(arg->declspec.type) && !type_array_is_decl_as_ptr(arg->declspec.type) ? "*" :"" , arg->name);
   }
   fprintf(proxy, ");\n");
   fprintf(proxy, "\n");
@@ -401,7 +401,7 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
 
   write_remoting_arguments(proxy, indent, func, "__frame->", PASS_OUT, PHASE_BUFFERSIZE);
 
-  if (!is_void(type_function_get_rettype(func->type)))
+  if (!is_void(type_function_get_rettype(func->declspec.type)))
     write_remoting_arguments(proxy, indent, func, "__frame->", PASS_RETURN, PHASE_BUFFERSIZE);
 
   print_proxy("NdrStubGetBuffer(This, _pRpcChannelBuffer, &__frame->_StubMsg);\n");
@@ -410,7 +410,7 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
   fprintf(proxy, "\n");
 
   /* marshall the return value */
-  if (!is_void(type_function_get_rettype(func->type)))
+  if (!is_void(type_function_get_rettype(func->declspec.type)))
     write_remoting_arguments(proxy, indent, func, "__frame->", PASS_RETURN, PHASE_MARSHAL);
 
   indent--;
@@ -432,16 +432,16 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
 
 static void gen_stub_thunk( type_t *iface, const var_t *func, unsigned int proc_offset )
 {
-    int has_ret = !is_void( type_function_get_rettype( func->type ));
+    int has_ret = !is_void( type_function_get_rettype( func->declspec.type ));
     const var_t *arg, *callas = is_callas( func->attrs );
-    const var_list_t *args = type_get_function_args( func->type );
+    const var_list_t *args = type_get_function_args( func->declspec.type );
 
     indent = 0;
     print_proxy( "void __RPC_API %s_%s_Thunk( PMIDL_STUB_MESSAGE pStubMsg )\n",
                  iface->name, get_name(func) );
     print_proxy( "{\n");
     indent++;
-    write_func_param_struct( proxy, iface, func->type,
+    write_func_param_struct( proxy, iface, func->declspec.type,
                              "*pParamStruct = (struct _PARAM_STRUCT *)pStubMsg->StackTop", has_ret );
     print_proxy( "%s%s_%s_Stub( pParamStruct->This",
                  has_ret ? "pParamStruct->_RetVal = " : "", iface->name, callas->name );
@@ -614,14 +614,14 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
     if (!is_local(func->attrs)) {
       const var_t *cas = is_callas(func->attrs);
       const char *cname = cas ? cas->name : NULL;
-      int idx = func->type->details.function->idx;
+      int idx = func->declspec.type->details.function->idx;
       if (cname) {
           const statement_t *stmt2;
           STATEMENTS_FOR_EACH_FUNC(stmt2, type_iface_get_stmts(iface)) {
               const var_t *m = stmt2->u.var;
               if (!strcmp(m->name, cname))
               {
-                  idx = m->type->details.function->idx;
+                  idx = m->declspec.type->details.function->idx;
                   break;
               }
           }
