@@ -199,6 +199,7 @@ BOOL WINAPI ContinueDebugEvent(
  */
 BOOL WINAPI DebugActiveProcess( DWORD pid )
 {
+    HANDLE process;
     BOOL ret;
     SERVER_START_REQ( debug_process )
     {
@@ -207,6 +208,11 @@ BOOL WINAPI DebugActiveProcess( DWORD pid )
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
+    if (!ret) return FALSE;
+    if (!(process = OpenProcess( PROCESS_CREATE_THREAD, FALSE, pid ))) return FALSE;
+    ret = DebugBreakProcess( process );
+    NtClose( process );
+    if (!ret) DebugActiveProcessStop( pid );
     return ret;
 }
 

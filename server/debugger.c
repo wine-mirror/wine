@@ -638,7 +638,6 @@ DECL_HANDLER(debug_process)
     else if (debugger_attach( process, current ))
     {
         generate_startup_debug_events( process, 0 );
-        break_process( process );
         resume_process( process );
     }
     release_object( process );

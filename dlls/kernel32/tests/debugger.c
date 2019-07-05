@@ -308,7 +308,6 @@ static void process_attach_events(struct debugger_context *ctx)
     ok(ctx->dll_cnt > 2, "dll_cnt = %d\n", ctx->dll_cnt);
 
     /* a new thread is created and it executes DbgBreakPoint, which causes the exception */
-    todo_wine
     ok(ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
     if (ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT)
     {
@@ -320,7 +319,6 @@ static void process_attach_events(struct debugger_context *ctx)
     ok(ctx->ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
     ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
        ctx->ev.u.Exception.ExceptionRecord.ExceptionCode);
-    todo_wine
     ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint, "ExceptionAddres != DbgBreakPoint\n");
 
     /* flush debug events */
