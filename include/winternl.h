@@ -2285,17 +2285,12 @@ typedef LONG (CALLBACK *PRTL_EXCEPTION_FILTER)(PEXCEPTION_POINTERS);
  * Function declarations
  */
 
-#if defined(__i386__) && defined(__GNUC__)
-static inline void WINAPI DbgBreakPoint(void) { __asm__ __volatile__("int3"); }
-static inline void WINAPI DbgUserBreakPoint(void) { __asm__ __volatile__("int3"); }
-#else  /* __i386__ && __GNUC__ */
-NTSYSAPI void WINAPI DbgBreakPoint(void);
-NTSYSAPI void WINAPI DbgUserBreakPoint(void);
-#endif  /* __i386__ && __GNUC__ */
+NTSYSAPI void      WINAPI DbgBreakPoint(void);
 NTSYSAPI NTSTATUS WINAPIV DbgPrint(LPCSTR fmt, ...);
 NTSYSAPI NTSTATUS WINAPIV DbgPrintEx(ULONG iComponentId, ULONG Level, LPCSTR fmt, ...);
 NTSYSAPI NTSTATUS  WINAPI DbgUiIssueRemoteBreakin(HANDLE);
 NTSYSAPI void      WINAPI DbgUiRemoteBreakin(void*);
+NTSYSAPI void      WINAPI DbgUserBreakPoint(void);
 NTSYSAPI NTSTATUS  WINAPI LdrAccessResource(HMODULE,const IMAGE_RESOURCE_DATA_ENTRY*,void**,PULONG);
 NTSYSAPI NTSTATUS  WINAPI LdrAddRefDll(ULONG,HMODULE);
 NTSYSAPI NTSTATUS  WINAPI LdrFindResourceDirectory_U(HMODULE,const LDR_RESOURCE_INFO*,ULONG,const IMAGE_RESOURCE_DIRECTORY**);
