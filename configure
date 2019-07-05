@@ -22219,6 +22219,7 @@ wine_fn_config_makefile dlls/cryptbase enable_cryptbase
 wine_fn_config_makefile dlls/cryptdlg enable_cryptdlg
 wine_fn_config_makefile dlls/cryptdll enable_cryptdll
 wine_fn_config_makefile dlls/cryptext enable_cryptext
+wine_fn_config_makefile dlls/cryptext/tests enable_tests
 wine_fn_config_makefile dlls/cryptnet enable_cryptnet
 wine_fn_config_makefile dlls/cryptnet/tests enable_tests
 wine_fn_config_makefile dlls/cryptowinrt enable_cryptowinrt
