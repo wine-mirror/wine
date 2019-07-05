@@ -407,21 +407,15 @@ void WINAPI DebugBreak(void)
  *
  *  True if successful.
  */
-BOOL WINAPI DebugBreakProcess(HANDLE hProc)
+BOOL WINAPI DebugBreakProcess(HANDLE process)
 {
-    BOOL ret, self;
+    NTSTATUS status;
 
-    TRACE("(%p)\n", hProc);
+    TRACE("(%p)\n", process);
 
-    SERVER_START_REQ( debug_break )
-    {
-        req->handle = wine_server_obj_handle( hProc );
-        ret = !wine_server_call_err( req );
-        self = ret && reply->self;
-    }
-    SERVER_END_REQ;
-    if (self) DbgBreakPoint();
-    return ret;
+    status = DbgUiIssueRemoteBreakin(process);
+    if (status) SetLastError(RtlNtStatusToDosError(status));
+    return !status;
 }
 
 

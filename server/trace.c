@@ -2447,16 +2447,6 @@ static void dump_debug_process_request( const struct debug_process_request *req 
     fprintf( stderr, ", attach=%d", req->attach );
 }
 
-static void dump_debug_break_request( const struct debug_break_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-}
-
-static void dump_debug_break_reply( const struct debug_break_reply *req )
-{
-    fprintf( stderr, " self=%d", req->self );
-}
-
 static void dump_set_debugger_kill_on_exit_request( const struct set_debugger_kill_on_exit_request *req )
 {
     fprintf( stderr, " kill_on_exit=%d", req->kill_on_exit );
@@ -4708,7 +4698,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_exception_status_request,
     (dump_func)dump_continue_debug_event_request,
     (dump_func)dump_debug_process_request,
-    (dump_func)dump_debug_break_request,
     (dump_func)dump_set_debugger_kill_on_exit_request,
     (dump_func)dump_read_process_memory_request,
     (dump_func)dump_write_process_memory_request,
@@ -5009,7 +4998,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_exception_status_reply,
     NULL,
     NULL,
-    (dump_func)dump_debug_break_reply,
     NULL,
     (dump_func)dump_read_process_memory_reply,
     NULL,
@@ -5310,7 +5298,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_exception_status",
     "continue_debug_event",
     "debug_process",
-    "debug_break",
     "set_debugger_kill_on_exit",
     "read_process_memory",
     "write_process_memory",

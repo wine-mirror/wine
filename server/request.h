@@ -213,7 +213,6 @@ DECL_HANDLER(queue_exception_event);
 DECL_HANDLER(get_exception_status);
 DECL_HANDLER(continue_debug_event);
 DECL_HANDLER(debug_process);
-DECL_HANDLER(debug_break);
 DECL_HANDLER(set_debugger_kill_on_exit);
 DECL_HANDLER(read_process_memory);
 DECL_HANDLER(write_process_memory);
@@ -517,7 +516,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_exception_status,
     (req_handler)req_continue_debug_event,
     (req_handler)req_debug_process,
-    (req_handler)req_debug_break,
     (req_handler)req_set_debugger_kill_on_exit,
     (req_handler)req_read_process_memory,
     (req_handler)req_write_process_memory,
@@ -1376,10 +1374,6 @@ C_ASSERT( sizeof(struct continue_debug_event_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct debug_process_request, pid) == 12 );
 C_ASSERT( FIELD_OFFSET(struct debug_process_request, attach) == 16 );
 C_ASSERT( sizeof(struct debug_process_request) == 24 );
-C_ASSERT( FIELD_OFFSET(struct debug_break_request, handle) == 12 );
-C_ASSERT( sizeof(struct debug_break_request) == 16 );
-C_ASSERT( FIELD_OFFSET(struct debug_break_reply, self) == 8 );
-C_ASSERT( sizeof(struct debug_break_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_debugger_kill_on_exit_request, kill_on_exit) == 12 );
 C_ASSERT( sizeof(struct set_debugger_kill_on_exit_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct read_process_memory_request, handle) == 12 );

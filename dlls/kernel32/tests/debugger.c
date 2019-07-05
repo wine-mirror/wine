@@ -988,7 +988,6 @@ static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
 
         /* a new thread, which executes DbgDebugBreak, is created */
         next_event(&ctx, 2000);
-        todo_wine
         ok(ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
         last_thread = ctx.ev.dwThreadId;
 
@@ -999,7 +998,7 @@ static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
         ok(ctx.ev.dwThreadId == last_thread, "unexpected thread\n");
         ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
            ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
-        todo_wine
+        todo_wine_if(sizeof(void*) == 4)
         ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint, "ExceptionAddres != DbgBreakPoint\n");
 
         ret = SetEvent(event_attach);

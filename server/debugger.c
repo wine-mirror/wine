@@ -714,20 +714,6 @@ DECL_HANDLER(get_exception_status)
     }
 }
 
-/* simulate a breakpoint in a process */
-DECL_HANDLER(debug_break)
-{
-    struct process *process;
-
-    reply->self = 0;
-    if ((process = get_process_from_handle( req->handle, PROCESS_SET_INFORMATION /*FIXME*/ )))
-    {
-        if (process != current->process) break_process( process );
-        else reply->self = 1;
-        release_object( process );
-    }
-}
-
 /* set debugger kill on exit flag */
 DECL_HANDLER(set_debugger_kill_on_exit)
 {
