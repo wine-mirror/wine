@@ -681,7 +681,7 @@ static HRESULT WINAPI session_rate_support_GetFastestRate(IMFRateSupport *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI session_rate_support_IsSupported(IMFRateSupport *iface, BOOL thin, float rate,
+static HRESULT WINAPI session_rate_support_IsRateSupported(IMFRateSupport *iface, BOOL thin, float rate,
         float *nearest_supported_rate)
 {
     FIXME("%p, %d, %f, %p.\n", iface, thin, rate, nearest_supported_rate);
@@ -696,7 +696,7 @@ static const IMFRateSupportVtbl session_rate_support_vtbl =
     session_rate_support_Release,
     session_rate_support_GetSlowestRate,
     session_rate_support_GetFastestRate,
-    session_rate_support_IsSupported,
+    session_rate_support_IsRateSupported,
 };
 
 static HRESULT WINAPI session_rate_control_QueryInterface(IMFRateControl *iface, REFIID riid, void **obj)
