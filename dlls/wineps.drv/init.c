@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <string.h>
 
@@ -36,7 +33,6 @@
 #include "winuser.h"
 #include "psdrv.h"
 #include "winspool.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
@@ -650,7 +646,7 @@ static WCHAR *get_ppd_filename( HANDLE printer )
     if (!info) return NULL;
     GetPrinterDriverW( printer, NULL, 2, (BYTE*)info, needed, &needed );
     name = (WCHAR *)info;
-    memmove( name, info->pDataFile, (strlenW( info->pDataFile ) + 1) * sizeof(WCHAR) );
+    memmove( name, info->pDataFile, (lstrlenW( info->pDataFile ) + 1) * sizeof(WCHAR) );
     return name;
 }
 
@@ -674,15 +670,15 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCWSTR name)
 
     LIST_FOR_EACH_ENTRY( pi, &printer_list, PRINTERINFO, entry )
     {
-        if (!strcmpW( pi->friendly_name, name ))
+        if (!wcscmp( pi->friendly_name, name ))
             return pi;
     }
 
     pi = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(*pi) );
     if (pi == NULL) return NULL;
 
-    if (!(pi->friendly_name = HeapAlloc( PSDRV_Heap, 0, (strlenW(name)+1)*sizeof(WCHAR) ))) goto fail;
-    strcpyW( pi->friendly_name, name );
+    if (!(pi->friendly_name = HeapAlloc( PSDRV_Heap, 0, (lstrlenW(name)+1)*sizeof(WCHAR) ))) goto fail;
+    lstrcpyW( pi->friendly_name, name );
 
     if (OpenPrinterW( pi->friendly_name, &hPrinter, NULL ) == 0) {
         ERR ("OpenPrinter failed with code %i\n", GetLastError ());

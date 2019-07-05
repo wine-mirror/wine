@@ -29,6 +29,7 @@
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "psdrv.h"
 #include "wine/debug.h"

@@ -25,8 +25,6 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#include "config.h"
-
 #include <string.h>
 
 #include "wine/debug.h"
@@ -283,7 +281,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
         WCHAR buf[256];
 
         res = di->pi->ppd->DefaultResolution;
-        len = sprintfW(buf, resW, res);
+        len = swprintf(buf, ARRAY_SIZE(buf), resW, res);
         buf[len++] = ' ';
         LoadStringW(PSDRV_hInstance, IDS_DPI, buf + len, ARRAY_SIZE(buf) - len);
         SendDlgItemMessageW(hwnd, IDD_QUALITY, CB_ADDSTRING, 0, (LPARAM)buf);
@@ -313,9 +311,9 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
             DWORD idx;
 
             if (res->resx == res->resy)
-                len = sprintfW(buf, resW, res->resx);
+                len = swprintf(buf, ARRAY_SIZE(buf), resW, res->resx);
             else
-                len = sprintfW(buf, resxyW, res->resx, res->resy);
+                len = swprintf(buf, ARRAY_SIZE(buf), resxyW, res->resx, res->resy);
             buf[len++] = ' ';
             LoadStringW(PSDRV_hInstance, IDS_DPI, buf + len, ARRAY_SIZE(buf) - len);
             idx = SendDlgItemMessageW(hwnd, IDD_QUALITY, CB_ADDSTRING, 0, (LPARAM)buf);

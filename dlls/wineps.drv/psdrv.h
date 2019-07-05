@@ -28,7 +28,6 @@
 #include "wingdi.h"
 #include "winspool.h"
 
-#include "wine/unicode.h"
 #include "wine/gdi_driver.h"
 #include "wine/list.h"
 
@@ -595,7 +594,7 @@ static inline WCHAR *strdupW( const WCHAR *str )
     WCHAR *ret;
 
     if (!str) return NULL;
-    size = (strlenW( str ) + 1) * sizeof(WCHAR);
+    size = (lstrlenW( str ) + 1) * sizeof(WCHAR);
     ret = HeapAlloc( GetProcessHeap(), 0, size );
     if (ret) memcpy( ret, str, size );
     return ret;

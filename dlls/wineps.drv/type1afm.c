@@ -25,23 +25,15 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#ifdef HAVE_DIRENT_H
-# include <dirent.h>
-#endif
 #include <errno.h>
+#include <io.h>
 #include <ctype.h>
 #include <limits.h> 	    /* INT_MIN */
-
-#ifdef HAVE_FLOAT_H
 #include <float.h>  	    /* FLT_MAX */
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -818,7 +810,7 @@ static const LONG ansiChars[21] =
     0x20ac, 0x2122, 0x2219
 };
 
-static int cmpUV(const void *a, const void *b)
+static int __cdecl cmpUV(const void *a, const void *b)
 {
     return (int)(*((const LONG *)a) - *((const LONG *)b));
 }
@@ -849,7 +841,7 @@ static inline BOOL IsWinANSI(LONG uv)
  *  Also does some font metric calculations that require UVs to be known.
  *
  */
-static int UnicodeGlyphByNameIndex(const void *a, const void *b)
+static int __cdecl UnicodeGlyphByNameIndex(const void *a, const void *b)
 {
     return ((const UNICODEGLYPH *)a)->name->index -
     	    ((const UNICODEGLYPH *)b)->name->index;
@@ -935,7 +927,7 @@ static VOID Unicodify(AFM *afm, OLD_AFMMETRICS *metrics)
  *  Reads metrics for all glyphs.  *p_metrics will be NULL on non-fatal error.
  *
  */
-static int OldAFMMetricsByUV(const void *a, const void *b)
+static int __cdecl OldAFMMetricsByUV(const void *a, const void *b)
 {
     return ((const OLD_AFMMETRICS *)a)->UV - ((const OLD_AFMMETRICS *)b)->UV;
 }
@@ -1099,17 +1091,18 @@ static BOOL BuildAFM(FILE *file)
  *  unexpected errors (memory allocation or I/O).
  *
  */
-static BOOL ReadAFMFile(LPCSTR filename)
+static BOOL ReadAFMFile(LPCWSTR filename)
 {
+    static const WCHAR rW[] = {'r',0};
     FILE    *f;
     BOOL    retval;
 
-    TRACE("%s\n", filename);
+    TRACE("%s\n", debugstr_w(filename));
 
-    f = fopen(filename, "r");
+    f = _wfopen(filename, rW);
     if (f == NULL)
     {
-    	WARN("%s: %s\n", filename, strerror(errno));
+    	WARN("%s: %s\n", debugstr_w(filename), strerror(errno));
 	return TRUE;
     }
 
@@ -1127,41 +1120,41 @@ static BOOL ReadAFMFile(LPCSTR filename)
  */
 static BOOL ReadAFMDir(LPCSTR dirname)
 {
-    struct dirent   *dent;
-    DIR     	    *dir;
-    CHAR    	    filename[256];
+    static const WCHAR starW[] = {'*',0};
+    static const WCHAR afmW[] = {'.','a','f','m',0};
+    WCHAR *path = wine_get_dos_file_name( dirname );
+    struct _wfinddata_t data;
+    intptr_t handle;
+    WCHAR *p, *filename;
+    BOOL ret = TRUE;
 
-    dir = opendir(dirname);
-    if (dir == NULL)
+    if (!path) return TRUE;
+    if (!(filename = HeapAlloc( GetProcessHeap(), 0, lstrlenW(path) + 256 )))
     {
-    	WARN("%s: %s\n", dirname, strerror(errno));
-	return TRUE;
+        HeapFree( GetProcessHeap(), 0, path );
+        return FALSE;
     }
+    lstrcpyW( filename, path );
+    HeapFree( GetProcessHeap(), 0, path );
+    p = filename + lstrlenW(filename);
+    *p++ = '\\';
+    lstrcpyW( p, starW );
 
-    while ((dent = readdir(dir)) != NULL)
+    handle = _wfindfirst( filename, &data );
+    if (handle != -1)
     {
-    	CHAR	*file_extension = strchr(dent->d_name, '.');
-	int 	fn_len;
-
-	if (file_extension == NULL || _strnicmp(file_extension, ".afm", -1) != 0)
-	    continue;
-
-	fn_len = snprintf(filename, 256, "%s/%s", dirname, dent->d_name);
-	if (fn_len < 0 || fn_len > sizeof(filename) - 1)
-	{
-	    WARN("Path '%s/%s' is too long\n", dirname, dent->d_name);
-	    continue;
-	}
-
-	if (ReadAFMFile(filename) == FALSE)
-	{
-	    closedir(dir);
-	    return FALSE;
-	}
+        do
+        {
+            WCHAR *ext = wcschr( data.name, '.' );
+            if (!ext || wcsicmp(ext, afmW)) continue;
+            lstrcpyW( p, data.name );
+            if (!(ret = ReadAFMFile( filename ))) break;
+        } while (!_wfindnext( handle, &data ));
     }
+    _findclose( handle );
 
-    closedir(dir);
-    return TRUE;
+    HeapFree( GetProcessHeap(), 0, filename );
+    return ret;
 }
 
 /*******************************************************************************

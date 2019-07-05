@@ -18,18 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#if defined(HAVE_FLOAT_H)
-# include <float.h>
-#endif
-#if !defined(PI)
-# define PI M_PI
-#endif
+#include <float.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -221,8 +214,8 @@ static BOOL PSDRV_DrawArc( PHYSDEV dev, INT left, INT top,
     start_angle = atan2((double)(y - start.y) * ratio, (double)(start.x - x));
     end_angle = atan2((double)(y - end.y) * ratio, (double)(end.x - x));
 
-    start_angle *= 180.0 / PI;
-    end_angle *= 180.0 / PI;
+    start_angle *= 180.0 / M_PI;
+    end_angle *= 180.0 / M_PI;
 
     PSDRV_WriteSpool(dev,"%DrawArc\n", 9);
     PSDRV_SetPen(dev);

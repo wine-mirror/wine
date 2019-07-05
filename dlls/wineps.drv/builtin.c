@@ -282,7 +282,7 @@ BOOL PSDRV_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics)
  *  Find the AFMMETRICS for a given UV.  Returns first glyph in the font
  *  (space?) if the font does not have a glyph for the given UV.
  */
-static int MetricsByUV(const void *a, const void *b)
+static int __cdecl MetricsByUV(const void *a, const void *b)
 {
     return (int)(((const AFMMETRICS *)a)->UV - ((const AFMMETRICS *)b)->UV);
 }
