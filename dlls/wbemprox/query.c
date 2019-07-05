@@ -745,6 +745,7 @@ VARTYPE to_vartype( CIMTYPE type )
     {
     case CIM_BOOLEAN:  return VT_BOOL;
     case CIM_STRING:
+    case CIM_REFERENCE:
     case CIM_DATETIME: return VT_BSTR;
     case CIM_SINT8:    return VT_I1;
     case CIM_UINT8:    return VT_UI1;
@@ -878,6 +879,7 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
         if (!vartype) vartype = VT_BOOL;
         break;
     case CIM_STRING:
+    case CIM_REFERENCE:
     case CIM_DATETIME:
         if (val)
         {

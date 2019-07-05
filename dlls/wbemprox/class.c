@@ -238,7 +238,7 @@ void destroy_array( struct array *array, CIMTYPE type )
     UINT i, size;
 
     if (!array) return;
-    if (type == CIM_STRING || type == CIM_DATETIME)
+    if (type == CIM_STRING || type == CIM_DATETIME || type == CIM_REFERENCE)
     {
         size = get_type_size( type );
         for (i = 0; i < array->count; i++) heap_free( *(WCHAR **)((char *)array->ptr + i * size) );
@@ -255,8 +255,9 @@ static void destroy_record( struct record *record )
     release_table( record->table );
     for (i = 0; i < record->count; i++)
     {
-        if (record->fields[i].type == CIM_STRING || record->fields[i].type == CIM_DATETIME)
-            heap_free( record->fields[i].u.sval );
+        if (record->fields[i].type == CIM_STRING ||
+            record->fields[i].type == CIM_DATETIME ||
+            record->fields[i].type == CIM_REFERENCE) heap_free( record->fields[i].u.sval );
         else if (record->fields[i].type & CIM_FLAG_ARRAY)
             destroy_array( record->fields[i].u.aval, record->fields[i].type & CIM_TYPE_MASK );
     }
@@ -357,6 +358,7 @@ static HRESULT record_get_value( const struct record *record, UINT index, VARIAN
     {
     case CIM_STRING:
     case CIM_DATETIME:
+    case CIM_REFERENCE:
         if (!vartype) vartype = VT_BSTR;
         V_BSTR( var ) = SysAllocString( record->fields[index].u.sval );
         break;
@@ -418,6 +420,7 @@ static HRESULT record_set_value( struct record *record, UINT index, VARIANT *var
     {
     case CIM_STRING:
     case CIM_DATETIME:
+    case CIM_REFERENCE:
         record->fields[index].u.sval = (WCHAR *)(INT_PTR)val;
         return S_OK;
     case CIM_SINT16:

@@ -64,6 +64,7 @@ UINT get_type_size( CIMTYPE type )
     case CIM_UINT64:
         return sizeof(INT64);
     case CIM_DATETIME:
+    case CIM_REFERENCE:
     case CIM_STRING:
         return sizeof(WCHAR *);
     default:
@@ -110,6 +111,7 @@ HRESULT get_value( const struct table *table, UINT row, UINT column, LONGLONG *v
         *val = *(const int *)ptr;
         break;
     case CIM_DATETIME:
+    case CIM_REFERENCE:
     case CIM_STRING:
         *val = (INT_PTR)*(const WCHAR **)ptr;
         break;
@@ -173,6 +175,7 @@ BSTR get_value_bstr( const struct table *table, UINT row, UINT column )
         else return SysAllocString( falseW );
 
     case CIM_DATETIME:
+    case CIM_REFERENCE:
     case CIM_STRING:
         if (!val) return NULL;
         len = lstrlenW( (const WCHAR *)(INT_PTR)val ) + 2;
@@ -220,6 +223,7 @@ HRESULT set_value( const struct table *table, UINT row, UINT column, LONGLONG va
     switch (table->columns[column].type & COL_TYPE_MASK)
     {
     case CIM_DATETIME:
+    case CIM_REFERENCE:
     case CIM_STRING:
         *(WCHAR **)ptr = (WCHAR *)(INT_PTR)val;
         break;
@@ -287,7 +291,7 @@ void free_row_values( const struct table *table, UINT row )
         if (!(table->columns[i].type & COL_FLAG_DYNAMIC)) continue;
 
         type = table->columns[i].type & COL_TYPE_MASK;
-        if (type == CIM_STRING || type == CIM_DATETIME)
+        if (type == CIM_STRING || type == CIM_DATETIME || type == CIM_REFERENCE)
         {
             if (get_value( table, row, i, &val ) == S_OK) heap_free( (void *)(INT_PTR)val );
         }
