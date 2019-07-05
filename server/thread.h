@@ -56,7 +56,6 @@ struct thread
     struct list            mutex_list;    /* list of currently owned mutexes */
     struct debug_ctx      *debug_ctx;     /* debugger context if this thread is a debugger */
     struct debug_event    *debug_event;   /* debug event being sent to debugger */
-    int                    debug_break;   /* debug breakpoint pending? */
     unsigned int           system_regs;   /* which system regs have been set */
     struct msg_queue      *queue;         /* message queue */
     struct thread_wait    *wait;          /* current wait condition if sleeping */
@@ -120,7 +119,6 @@ extern int wake_thread_queue_entry( struct wait_queue_entry *entry );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void kill_thread( struct thread *thread, int violent_death );
-extern void break_thread( struct thread *thread );
 extern void wake_up( struct object *obj, int max );
 extern int thread_queue_apc( struct process *process, struct thread *thread, struct object *owner, const apc_call_t *call_data );
 extern void thread_cancel_apc( struct thread *thread, struct object *owner, enum apc_type type );

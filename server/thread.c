@@ -185,7 +185,6 @@ static inline void init_thread_structure( struct thread *thread )
     thread->entry_point     = 0;
     thread->debug_ctx       = NULL;
     thread->debug_event     = NULL;
-    thread->debug_break     = 0;
     thread->system_regs     = 0;
     thread->queue           = NULL;
     thread->wait            = NULL;
@@ -1198,39 +1197,6 @@ static unsigned int get_context_system_regs( enum cpu_type cpu )
     return 0;
 }
 
-/* trigger a breakpoint event in a given thread */
-void break_thread( struct thread *thread )
-{
-    debug_event_t data;
-
-    assert( thread->context );
-
-    memset( &data, 0, sizeof(data) );
-    data.exception.first     = 1;
-    data.exception.exc_code  = STATUS_BREAKPOINT;
-    data.exception.flags     = EXCEPTION_CONTINUABLE;
-    switch (thread->context->cpu)
-    {
-    case CPU_x86:
-        data.exception.address = thread->context->ctl.i386_regs.eip;
-        break;
-    case CPU_x86_64:
-        data.exception.address = thread->context->ctl.x86_64_regs.rip;
-        break;
-    case CPU_POWERPC:
-        data.exception.address = thread->context->ctl.powerpc_regs.iar;
-        break;
-    case CPU_ARM:
-        data.exception.address = thread->context->ctl.arm_regs.pc;
-        break;
-    case CPU_ARM64:
-        data.exception.address = thread->context->ctl.arm64_regs.pc;
-        break;
-    }
-    generate_debug_event( thread, EXCEPTION_DEBUG_EVENT, &data );
-    thread->debug_break = 0;
-}
-
 /* take a snapshot of currently running threads */
 struct thread_snapshot *thread_snap( int *count )
 {
@@ -1829,7 +1795,6 @@ DECL_HANDLER(set_suspend_context)
         memcpy( current->suspend_context, get_req_data(), sizeof(context_t) );
         current->suspend_context->flags = 0;  /* to keep track of what is modified */
         current->context = current->suspend_context;
-        if (current->debug_break) break_thread( current );
     }
 }
 
