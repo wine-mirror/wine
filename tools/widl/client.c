@@ -20,7 +20,7 @@
 
 #include "config.h"
 #include "wine/port.h"
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -425,7 +425,7 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
     print_client("1, /* -error bounds_check flag */\n");
     print_client("0x%x, /* Ndr library version */\n", get_stub_mode() == MODE_Oif ? 0x50002 : 0x10001);
     print_client("0,\n");
-    print_client("0x50100a4, /* MIDL Version 5.1.164 */\n");
+    print_client("0x50200ca, /* MIDL Version 5.2.202 */\n");
     print_client("0,\n");
     print_client("%s,\n", list_empty(&user_type_list) ? "0" : "UserMarshalRoutines");
     print_client("0,  /* notify & notify_flag routine table */\n");
