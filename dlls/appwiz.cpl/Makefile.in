@@ -2,6 +2,8 @@ MODULE    = appwiz.cpl
 IMPORTS   = uuid urlmon advpack comctl32 advapi32 shell32 ole32 user32 comdlg32 bcrypt
 DELAYIMPORTS = msi
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	addons.c \
 	appwiz.c
