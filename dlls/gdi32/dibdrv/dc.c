@@ -317,8 +317,8 @@ void add_clipped_bounds( dibdrv_physdev *dev, const RECT *rect, HRGN clip )
 /**********************************************************************
  *	     dibdrv_CreateDC
  */
-static BOOL dibdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
-                             LPCWSTR output, const DEVMODEW *data )
+static BOOL CDECL dibdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
+                                   LPCWSTR output, const DEVMODEW *data )
 {
     dibdrv_physdev *pdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pdev) );
 
@@ -333,7 +333,7 @@ static BOOL dibdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
 /***********************************************************************
  *           dibdrv_DeleteDC
  */
-static BOOL dibdrv_DeleteDC( PHYSDEV dev )
+static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p)\n", dev);
@@ -347,7 +347,7 @@ static BOOL dibdrv_DeleteDC( PHYSDEV dev )
 /***********************************************************************
  *           dibdrv_SelectBitmap
  */
-static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
+static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
@@ -371,7 +371,7 @@ static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 /***********************************************************************
  *           dibdrv_SetDeviceClipping
  */
-static void dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
+static void CDECL dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p, %p)\n", dev, rgn);
@@ -382,7 +382,7 @@ static void dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 /***********************************************************************
  *           dibdrv_SetBoundsRect
  */
-static UINT dibdrv_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
+static UINT CDECL dibdrv_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
 
@@ -612,8 +612,8 @@ void dibdrv_set_window_surface( DC *dc, struct window_surface *surface )
     }
 }
 
-static BOOL windrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                               PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION func )
+static BOOL CDECL windrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                     PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION func )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dst_dev );
     BOOL ret;
@@ -625,8 +625,8 @@ static BOOL windrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     return ret;
 }
 
-static BOOL windrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                        INT xstart, INT ystart, INT xend, INT yend )
+static BOOL CDECL windrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                              INT xstart, INT ystart, INT xend, INT yend )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -638,8 +638,8 @@ static BOOL windrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     return ret;
 }
 
-static BOOL windrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                          INT xstart, INT ystart, INT xend, INT yend )
+static BOOL CDECL windrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                                INT xstart, INT ystart, INT xend, INT yend )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -651,8 +651,8 @@ static BOOL windrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     return ret;
 }
 
-static DWORD windrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
-                                struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION blend )
+static DWORD CDECL windrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                                      struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION blend )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     DWORD ret;
@@ -664,8 +664,8 @@ static DWORD windrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_
     return ret;
 }
 
-static BOOL windrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                          INT xstart, INT ystart, INT xend, INT yend )
+static BOOL CDECL windrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                                INT xstart, INT ystart, INT xend, INT yend )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -677,8 +677,8 @@ static BOOL windrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     return ret;
 }
 
-static BOOL windrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
-                             LPCWSTR output, const DEVMODEW *devmode )
+static BOOL CDECL windrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
+                                   LPCWSTR output, const DEVMODEW *devmode )
 {
     struct windrv_physdev *physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) );
 
@@ -694,7 +694,7 @@ static BOOL windrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
     return TRUE;
 }
 
-static BOOL windrv_DeleteDC( PHYSDEV dev )
+static BOOL CDECL windrv_DeleteDC( PHYSDEV dev )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
 
@@ -703,7 +703,7 @@ static BOOL windrv_DeleteDC( PHYSDEV dev )
     return TRUE;
 }
 
-static BOOL windrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+static BOOL CDECL windrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -715,7 +715,7 @@ static BOOL windrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT botto
     return ret;
 }
 
-static BOOL windrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
+static BOOL CDECL windrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -727,8 +727,8 @@ static BOOL windrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT
     return ret;
 }
 
-static BOOL windrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
-                               LPCWSTR str, UINT count, const INT *dx )
+static BOOL CDECL windrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
+                                     LPCWSTR str, UINT count, const INT *dx )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -740,8 +740,8 @@ static BOOL windrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
     return ret;
 }
 
-static DWORD windrv_GetImage( PHYSDEV dev, BITMAPINFO *info,
-                              struct gdi_image_bits *bits, struct bitblt_coords *src )
+static DWORD CDECL windrv_GetImage( PHYSDEV dev, BITMAPINFO *info,
+                                    struct gdi_image_bits *bits, struct bitblt_coords *src )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     DWORD ret;
@@ -773,7 +773,7 @@ static DWORD windrv_GetImage( PHYSDEV dev, BITMAPINFO *info,
     return ret;
 }
 
-static COLORREF windrv_GetPixel( PHYSDEV dev, INT x, INT y )
+static COLORREF CDECL windrv_GetPixel( PHYSDEV dev, INT x, INT y )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     COLORREF ret;
@@ -785,8 +785,8 @@ static COLORREF windrv_GetPixel( PHYSDEV dev, INT x, INT y )
     return ret;
 }
 
-static BOOL windrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
-                                 void * grad_array, ULONG ngrad, ULONG mode )
+static BOOL CDECL windrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                                       void * grad_array, ULONG ngrad, ULONG mode )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -798,7 +798,7 @@ static BOOL windrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert
     return ret;
 }
 
-static BOOL windrv_LineTo( PHYSDEV dev, INT x, INT y )
+static BOOL CDECL windrv_LineTo( PHYSDEV dev, INT x, INT y )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -810,7 +810,7 @@ static BOOL windrv_LineTo( PHYSDEV dev, INT x, INT y )
     return ret;
 }
 
-static BOOL windrv_PaintRgn( PHYSDEV dev, HRGN rgn )
+static BOOL CDECL windrv_PaintRgn( PHYSDEV dev, HRGN rgn )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -822,7 +822,7 @@ static BOOL windrv_PaintRgn( PHYSDEV dev, HRGN rgn )
     return ret;
 }
 
-static BOOL windrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
+static BOOL CDECL windrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -834,8 +834,8 @@ static BOOL windrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
     return ret;
 }
 
-static BOOL windrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                        INT xstart, INT ystart, INT xend, INT yend )
+static BOOL CDECL windrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                              INT xstart, INT ystart, INT xend, INT yend )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -847,7 +847,7 @@ static BOOL windrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     return ret;
 }
 
-static BOOL windrv_PolyPolygon( PHYSDEV dev, const POINT *points, const INT *counts, UINT polygons )
+static BOOL CDECL windrv_PolyPolygon( PHYSDEV dev, const POINT *points, const INT *counts, UINT polygons )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -859,7 +859,7 @@ static BOOL windrv_PolyPolygon( PHYSDEV dev, const POINT *points, const INT *cou
     return ret;
 }
 
-static BOOL windrv_PolyPolyline( PHYSDEV dev, const POINT *points, const DWORD *counts, DWORD lines )
+static BOOL CDECL windrv_PolyPolyline( PHYSDEV dev, const POINT *points, const DWORD *counts, DWORD lines )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -871,7 +871,7 @@ static BOOL windrv_PolyPolyline( PHYSDEV dev, const POINT *points, const DWORD *
     return ret;
 }
 
-static BOOL windrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
+static BOOL CDECL windrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -883,7 +883,7 @@ static BOOL windrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
     return ret;
 }
 
-static BOOL windrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
+static BOOL CDECL windrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -895,9 +895,9 @@ static BOOL windrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
     return ret;
 }
 
-static DWORD windrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
-                              const struct gdi_image_bits *bits, struct bitblt_coords *src,
-                              struct bitblt_coords *dst, DWORD rop )
+static DWORD CDECL windrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
+                                    const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                                    struct bitblt_coords *dst, DWORD rop )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     DWORD ret;
@@ -909,7 +909,7 @@ static DWORD windrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
     return ret;
 }
 
-static BOOL windrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+static BOOL CDECL windrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -921,8 +921,8 @@ static BOOL windrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bot
     return ret;
 }
 
-static BOOL windrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                               INT ell_width, INT ell_height )
+static BOOL CDECL windrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                                    INT ell_width, INT ell_height )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
@@ -934,15 +934,15 @@ static BOOL windrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bot
     return ret;
 }
 
-static UINT windrv_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
+static UINT CDECL windrv_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 {
     /* do nothing, we use the dibdrv bounds tracking for our own purpose */
     return DCB_RESET;
 }
 
-static INT windrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWORD cy,
-                                     INT x_src, INT y_src, UINT startscan, UINT lines,
-                                     const void *bits, BITMAPINFO *src_info, UINT coloruse )
+static INT CDECL windrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWORD cy,
+                                           INT x_src, INT y_src, UINT startscan, UINT lines,
+                                           const void *bits, BITMAPINFO *src_info, UINT coloruse )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     INT ret;
@@ -955,7 +955,7 @@ static INT windrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx
     return ret;
 }
 
-static void windrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
+static void CDECL windrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 {
     dev = GET_NEXT_PHYSDEV( dev, pSetDeviceClipping );
     dev->funcs->pSetDeviceClipping( dev, rgn );
@@ -967,7 +967,7 @@ static void windrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
     }
 }
 
-static COLORREF windrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+static COLORREF CDECL windrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     COLORREF ret;
@@ -979,8 +979,8 @@ static COLORREF windrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
     return ret;
 }
 
-static BOOL windrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                               PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
+static BOOL CDECL windrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                     PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dst_dev );
     BOOL ret;
@@ -992,9 +992,9 @@ static BOOL windrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     return ret;
 }
 
-static INT windrv_StretchDIBits( PHYSDEV dev, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
-                                 INT x_src, INT y_src, INT width_src, INT height_src, const void *bits,
-                                 BITMAPINFO *src_info, UINT coloruse, DWORD rop )
+static INT CDECL windrv_StretchDIBits( PHYSDEV dev, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                                       INT x_src, INT y_src, INT width_src, INT height_src, const void *bits,
+                                       BITMAPINFO *src_info, UINT coloruse, DWORD rop )
 {
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     INT ret;
@@ -1007,7 +1007,7 @@ static INT windrv_StretchDIBits( PHYSDEV dev, INT x_dst, INT y_dst, INT width_ds
     return ret;
 }
 
-static struct opengl_funcs *windrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
+static struct opengl_funcs * CDECL windrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
 {
     dev = GET_NEXT_PHYSDEV( dev, wine_get_wgl_driver );
     if (dev->funcs == &dib_driver) dev = GET_NEXT_PHYSDEV( dev, wine_get_wgl_driver );

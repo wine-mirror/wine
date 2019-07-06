@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           SelectBrush   (WINEPS.@)
  */
-HBRUSH PSDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
+HBRUSH CDECL PSDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     LOGBRUSH logbrush;
@@ -70,7 +70,7 @@ HBRUSH PSDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern
 /***********************************************************************
  *           SetDCBrushColor (WINEPS.@)
  */
-COLORREF PSDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color )
+COLORREF CDECL PSDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 

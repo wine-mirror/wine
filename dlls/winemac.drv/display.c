@@ -1175,7 +1175,7 @@ failed:
 /***********************************************************************
  *              GetDeviceGammaRamp (MACDRV.@)
  */
-BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
+BOOL CDECL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 {
     BOOL ret = FALSE;
     DDGAMMARAMP *r = ramp;
@@ -1311,7 +1311,7 @@ BOOL CDECL macdrv_GetMonitorInfo(HMONITOR monitor, LPMONITORINFO info)
 /***********************************************************************
  *              SetDeviceGammaRamp (MACDRV.@)
  */
-BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
+BOOL CDECL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 {
     DDGAMMARAMP *r = ramp;
     struct macdrv_display *displays;

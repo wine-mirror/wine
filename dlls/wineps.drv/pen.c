@@ -37,7 +37,7 @@ static const DWORD PEN_alternate[]  = { 1 };
 /***********************************************************************
  *           SelectPen   (WINEPS.@)
  */
-HPEN PSDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
+HPEN CDECL PSDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     LOGPEN logpen;
@@ -141,7 +141,7 @@ HPEN PSDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patter
 /***********************************************************************
  *           SetDCPenColor (WINEPS.@)
  */
-COLORREF PSDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
+COLORREF CDECL PSDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 

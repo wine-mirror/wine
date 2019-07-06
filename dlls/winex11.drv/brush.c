@@ -233,7 +233,7 @@ static BOOL select_pattern_brush( X11DRV_PDEVICE *physdev, const struct brush_pa
 /***********************************************************************
  *           SelectBrush   (X11DRV.@)
  */
-HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
+HBRUSH CDECL X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     LOGBRUSH logbrush;
@@ -285,7 +285,7 @@ HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_patter
 /***********************************************************************
  *           SetDCBrushColor (X11DRV.@)
  */
-COLORREF X11DRV_SetDCBrushColor( PHYSDEV dev, COLORREF crColor )
+COLORREF CDECL X11DRV_SetDCBrushColor( PHYSDEV dev, COLORREF crColor )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 

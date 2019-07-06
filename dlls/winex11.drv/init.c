@@ -82,8 +82,8 @@ static X11DRV_PDEVICE *create_x11_physdev( Drawable drawable )
 /**********************************************************************
  *	     X11DRV_CreateDC
  */
-static BOOL X11DRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
-                             LPCWSTR output, const DEVMODEW* initData )
+static BOOL CDECL X11DRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
+                                   LPCWSTR output, const DEVMODEW* initData )
 {
     X11DRV_PDEVICE *physDev = create_x11_physdev( root_window );
 
@@ -102,7 +102,7 @@ static BOOL X11DRV_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 /**********************************************************************
  *	     X11DRV_CreateCompatibleDC
  */
-static BOOL X11DRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
+static BOOL CDECL X11DRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
     X11DRV_PDEVICE *physDev = create_x11_physdev( stock_bitmap_pixmap );
 
@@ -120,7 +120,7 @@ static BOOL X11DRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 /**********************************************************************
  *	     X11DRV_DeleteDC
  */
-static BOOL X11DRV_DeleteDC( PHYSDEV dev )
+static BOOL CDECL X11DRV_DeleteDC( PHYSDEV dev )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
@@ -145,7 +145,7 @@ void add_device_bounds( X11DRV_PDEVICE *dev, const RECT *rect )
 /***********************************************************************
  *           X11DRV_SetBoundsRect
  */
-static UINT X11DRV_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
+static UINT CDECL X11DRV_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 {
     X11DRV_PDEVICE *pdev = get_x11drv_dev( dev );
 
@@ -158,7 +158,7 @@ static UINT X11DRV_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 /***********************************************************************
  *           GetDeviceCaps    (X11DRV.@)
  */
-static INT X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
+static INT CDECL X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
     switch(cap)
     {
@@ -176,7 +176,7 @@ static INT X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 /***********************************************************************
  *           SelectFont
  */
-static HFONT X11DRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
+static HFONT CDECL X11DRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 {
     if (default_visual.depth <= 8) *aa_flags = GGO_BITMAP;  /* no anti-aliasing on <= 8bpp */
     dev = GET_NEXT_PHYSDEV( dev, pSelectFont );
@@ -186,8 +186,8 @@ static HFONT X11DRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 /**********************************************************************
  *           ExtEscape  (X11DRV.@)
  */
-static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_data,
-                      INT out_count, LPVOID out_data )
+static INT CDECL X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_data,
+                                   INT out_count, LPVOID out_data )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
@@ -314,7 +314,7 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
 /**********************************************************************
  *           X11DRV_wine_get_wgl_driver
  */
-static struct opengl_funcs * X11DRV_wine_get_wgl_driver( PHYSDEV dev, UINT version )
+static struct opengl_funcs * CDECL X11DRV_wine_get_wgl_driver( PHYSDEV dev, UINT version )
 {
     struct opengl_funcs *ret;
 
@@ -329,7 +329,7 @@ static struct opengl_funcs * X11DRV_wine_get_wgl_driver( PHYSDEV dev, UINT versi
 /**********************************************************************
  *           X11DRV_wine_get_vulkan_driver
  */
-static const struct vulkan_funcs * X11DRV_wine_get_vulkan_driver( PHYSDEV dev, UINT version )
+static const struct vulkan_funcs * CDECL X11DRV_wine_get_vulkan_driver( PHYSDEV dev, UINT version )
 {
     const struct vulkan_funcs *ret;
 

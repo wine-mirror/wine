@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  *
  *                    PSDRV_PatBlt
  */
-BOOL PSDRV_PatBlt(PHYSDEV dev, struct bitblt_coords *dst, DWORD dwRop)
+BOOL CDECL PSDRV_PatBlt(PHYSDEV dev, struct bitblt_coords *dst, DWORD dwRop)
 {
     switch(dwRop) {
     case PATCOPY:

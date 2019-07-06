@@ -27,7 +27,7 @@
 #include "enhmetafiledrv.h"
 #include "wine/debug.h"
 
-BOOL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
+BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     EMRBITBLT emr;
     BOOL ret;
@@ -64,8 +64,8 @@ BOOL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
     return ret;
 }
 
-BOOL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
-                        PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop )
+BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
+                              PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop )
 {
     BOOL ret;
     PEMRBITBLT pEMR;
@@ -169,9 +169,9 @@ BOOL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
     return ret;
 }
 
-INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                          INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
-                          BITMAPINFO *info, UINT wUsage, DWORD dwRop )
+INT CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                                INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
+                                BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
     EMRSTRETCHDIBITS *emr;
     BOOL ret;
@@ -226,9 +226,9 @@ INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT hei
     return ret ? heightSrc : GDI_ERROR;
 }
 
-INT EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD width, DWORD height,
-                              INT xSrc, INT ySrc, UINT startscan, UINT lines,
-                              LPCVOID bits, BITMAPINFO *info, UINT wUsage )
+INT CDECL EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD width, DWORD height,
+                                    INT xSrc, INT ySrc, UINT startscan, UINT lines,
+                                    LPCVOID bits, BITMAPINFO *info, UINT wUsage )
 {
     EMRSETDIBITSTODEVICE* pEMR;
     DWORD bmiSize = get_dib_info_size(info, wUsage);

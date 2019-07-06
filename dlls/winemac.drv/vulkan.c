@@ -550,7 +550,7 @@ static const struct vulkan_funcs *get_vulkan_driver(UINT version)
 
 #endif /* SONAME_LIBMOLTENVK */
 
-const struct vulkan_funcs *macdrv_wine_get_vulkan_driver(PHYSDEV dev, UINT version)
+const struct vulkan_funcs * CDECL macdrv_wine_get_vulkan_driver(PHYSDEV dev, UINT version)
 {
     const struct vulkan_funcs *ret;
 

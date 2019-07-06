@@ -30,15 +30,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
-static BOOL MFDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev );
-static BOOL MFDRV_DeleteDC( PHYSDEV dev );
+static BOOL CDECL MFDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev );
+static BOOL CDECL MFDRV_DeleteDC( PHYSDEV dev );
 
 
 /**********************************************************************
  *           MFDRV_ExtEscape
  */
-static INT MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
-                            INT cbOutput, LPVOID out_data )
+static INT CDECL MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
+                                  INT cbOutput, LPVOID out_data )
 {
     METARECORD *mr;
     DWORD len;
@@ -62,7 +62,7 @@ static INT MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_da
 /******************************************************************
  *         MFDRV_GetBoundsRect
  */
-static UINT MFDRV_GetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
+static UINT CDECL MFDRV_GetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 {
     return 0;
 }
@@ -71,7 +71,7 @@ static UINT MFDRV_GetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 /******************************************************************
  *         MFDRV_SetBoundsRect
  */
-static UINT MFDRV_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
+static UINT CDECL MFDRV_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 {
     return 0;
 }
@@ -82,7 +82,7 @@ static UINT MFDRV_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
  *
  *A very simple implementation that returns DT_METAFILE
  */
-static INT MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
+static INT CDECL MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
 {
     switch(cap)
     {
@@ -280,7 +280,7 @@ static DC *MFDRV_AllocMetaFile(void)
 /**********************************************************************
  *	     MFDRV_CreateCompatibleDC
  */
-static BOOL MFDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
+static BOOL CDECL MFDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 {
     /* not supported on metafile DCs */
     return FALSE;
@@ -290,7 +290,7 @@ static BOOL MFDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 /**********************************************************************
  *	     MFDRV_DeleteDC
  */
-static BOOL MFDRV_DeleteDC( PHYSDEV dev )
+static BOOL CDECL MFDRV_DeleteDC( PHYSDEV dev )
 {
     METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
     DWORD index;

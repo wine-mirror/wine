@@ -184,9 +184,9 @@ static void PSDRV_WriteImageBits( PHYSDEV dev, const BITMAPINFO *info, BOOL gray
 /***********************************************************************
  *           PSDRV_PutImage
  */
-DWORD PSDRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
-                      const struct gdi_image_bits *bits, struct bitblt_coords *src,
-                      struct bitblt_coords *dst, DWORD rop )
+DWORD CDECL PSDRV_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
+                            const struct gdi_image_bits *bits, struct bitblt_coords *src,
+                            struct bitblt_coords *dst, DWORD rop )
 {
     int src_stride, dst_stride, size, x, y, width, height, bit_offset;
     int dst_x, dst_y, dst_width, dst_height;

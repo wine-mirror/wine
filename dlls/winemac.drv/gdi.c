@@ -174,8 +174,8 @@ static MACDRV_PDEVICE *create_mac_physdev(void)
 /**********************************************************************
  *              CreateDC (MACDRV.@)
  */
-static BOOL macdrv_CreateDC(PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
-                            LPCWSTR output, const DEVMODEW* initData)
+static BOOL CDECL macdrv_CreateDC(PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
+                                  LPCWSTR output, const DEVMODEW* initData)
 {
     MACDRV_PDEVICE *physDev = create_mac_physdev();
 
@@ -193,7 +193,7 @@ static BOOL macdrv_CreateDC(PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
 /**********************************************************************
  *              CreateCompatibleDC (MACDRV.@)
  */
-static BOOL macdrv_CreateCompatibleDC(PHYSDEV orig, PHYSDEV *pdev)
+static BOOL CDECL macdrv_CreateCompatibleDC(PHYSDEV orig, PHYSDEV *pdev)
 {
     MACDRV_PDEVICE *physDev = create_mac_physdev();
 
@@ -210,7 +210,7 @@ static BOOL macdrv_CreateCompatibleDC(PHYSDEV orig, PHYSDEV *pdev)
 /**********************************************************************
  *              DeleteDC (MACDRV.@)
  */
-static BOOL macdrv_DeleteDC(PHYSDEV dev)
+static BOOL CDECL macdrv_DeleteDC(PHYSDEV dev)
 {
     MACDRV_PDEVICE *physDev = get_macdrv_dev(dev);
 
@@ -224,7 +224,7 @@ static BOOL macdrv_DeleteDC(PHYSDEV dev)
 /***********************************************************************
  *              GetDeviceCaps (MACDRV.@)
  */
-static INT macdrv_GetDeviceCaps(PHYSDEV dev, INT cap)
+static INT CDECL macdrv_GetDeviceCaps(PHYSDEV dev, INT cap)
 {
     INT ret;
 

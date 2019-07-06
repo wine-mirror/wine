@@ -4653,7 +4653,7 @@ static struct opengl_funcs opengl_funcs =
 /**********************************************************************
  *              macdrv_wine_get_wgl_driver
  */
-struct opengl_funcs *macdrv_wine_get_wgl_driver(PHYSDEV dev, UINT version)
+struct opengl_funcs * CDECL macdrv_wine_get_wgl_driver(PHYSDEV dev, UINT version)
 {
     if (version != WINE_WGL_DRIVER_VERSION)
     {

@@ -72,8 +72,8 @@ static BOOL MFDRV_MetaExtTextOut( PHYSDEV dev, short x, short y, UINT16 flags,
 /***********************************************************************
  *           MFDRV_ExtTextOut
  */
-BOOL MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
-                       const RECT *lprect, LPCWSTR str, UINT count, const INT *lpDx )
+BOOL CDECL MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
+                             const RECT *lprect, LPCWSTR str, UINT count, const INT *lpDx )
 {
     RECT16	rect16;
     LPINT16	lpdx16 = NULL;
