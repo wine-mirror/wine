@@ -47,12 +47,12 @@ typedef struct __JUMP_BUFFER
 
 #elif defined(__x86_64__)
 
-typedef struct _SETJMP_FLOAT128
+typedef DECLSPEC_ALIGN(16) struct _SETJMP_FLOAT128
 {
-    unsigned __int64 DECLSPEC_ALIGN(16) Part[2];
+    unsigned __int64 Part[2];
 } SETJMP_FLOAT128;
 
-typedef struct _JUMP_BUFFER
+typedef DECLSPEC_ALIGN(16) struct _JUMP_BUFFER
 {
     unsigned __int64 Frame;
     unsigned __int64 Rbx;
