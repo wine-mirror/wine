@@ -185,13 +185,13 @@ static DWORD set_reg_value( HKEY hkey, const WCHAR *name, const WCHAR *value )
     return RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)value, (lstrlenW(value) + 1) * sizeof(WCHAR) );
 }
 
-extern void do_cpuid( unsigned int ax, unsigned int *p );
 #if defined(_MSC_VER)
-void do_cpuid( unsigned int ax, unsigned int *p )
+static void do_cpuid( unsigned int ax, unsigned int *p )
 {
     __cpuid( p, ax );
 }
 #elif defined(__i386__)
+extern void __cdecl do_cpuid( unsigned int ax, unsigned int *p );
 __ASM_GLOBAL_FUNC( do_cpuid,
                    "pushl %esi\n\t"
                    "pushl %ebx\n\t"
@@ -206,18 +206,22 @@ __ASM_GLOBAL_FUNC( do_cpuid,
                    "popl %esi\n\t"
                    "ret" )
 #elif defined(__x86_64__)
+extern void __cdecl do_cpuid( unsigned int ax, unsigned int *p );
 __ASM_GLOBAL_FUNC( do_cpuid,
+                   "pushq %rsi\n\t"
                    "pushq %rbx\n\t"
-                   "movl %edi,%eax\n\t"
+                   "movq %rcx,%rax\n\t"
+                   "movq %rdx,%rsi\n\t"
                    "cpuid\n\t"
                    "movl %eax,(%rsi)\n\t"
                    "movl %ebx,4(%rsi)\n\t"
                    "movl %ecx,8(%rsi)\n\t"
                    "movl %edx,12(%rsi)\n\t"
                    "popq %rbx\n\t"
+                   "popq %rsi\n\t"
                    "ret" )
 #else
-void do_cpuid( unsigned int ax, unsigned int *p )
+static void do_cpuid( unsigned int ax, unsigned int *p )
 {
     FIXME("\n");
 }
