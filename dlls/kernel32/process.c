@@ -714,31 +714,12 @@ static void set_additional_environment(void)
     static const WCHAR allusersW[] = {'A','L','L','U','S','E','R','S','P','R','O','F','I','L','E',0};
     static const WCHAR programdataW[] = {'P','r','o','g','r','a','m','D','a','t','a',0};
     static const WCHAR publicW[] = {'P','U','B','L','I','C',0};
-    static const WCHAR winedlldirW[] = {'W','I','N','E','D','L','L','D','I','R','%','u',0};
-    static const WCHAR winehomedirW[] = {'W','I','N','E','H','O','M','E','D','I','R',0};
-    static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
-    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
-    static const WCHAR wineconfigdirW[] = {'W','I','N','E','C','O','N','F','I','G','D','I','R',0};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    const char *path;
     WCHAR *profile_dir = NULL, *program_data_dir = NULL, *public_dir = NULL;
     WCHAR buf[32];
     HANDLE hkey;
-    DWORD len, i;
-
-    /* wine paths */
-    set_wine_path_variable( winedatadirW, wine_get_data_dir() );
-    set_wine_path_variable( winehomedirW, getenv("HOME") );
-    set_wine_path_variable( winebuilddirW, wine_get_build_dir() );
-    set_wine_path_variable( wineconfigdirW, wine_get_config_dir() );
-    for (i = 0; (path = wine_dll_enum_load_path( i )); i++)
-    {
-        sprintfW( buf, winedlldirW, i );
-        set_wine_path_variable( buf, path );
-    }
-    sprintfW( buf, winedlldirW, i );
-    set_wine_path_variable( buf, NULL );
+    DWORD len;
 
     /* ComputerName */
     len = ARRAY_SIZE( buf );
@@ -802,28 +783,49 @@ static void set_wow64_environment(void)
     static const WCHAR commondir86W[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r',' ','(','x','8','6',')',0};
     static const WCHAR commonfilesW[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','F','i','l','e','s',0};
     static const WCHAR commonw6432W[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','W','6','4','3','2',0};
+    static const WCHAR winedlldirW[] = {'W','I','N','E','D','L','L','D','I','R','%','u',0};
+    static const WCHAR winehomedirW[] = {'W','I','N','E','H','O','M','E','D','I','R',0};
+    static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
+    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
+    static const WCHAR wineconfigdirW[] = {'W','I','N','E','C','O','N','F','I','G','D','I','R',0};
 
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    WCHAR arch[64];
+    const char *path;
+    WCHAR buf[64];
     WCHAR *value;
     HANDLE hkey;
+    DWORD i;
+
+    /* set the Wine paths */
+
+    set_wine_path_variable( winedatadirW, wine_get_data_dir() );
+    set_wine_path_variable( winehomedirW, getenv("HOME") );
+    set_wine_path_variable( winebuilddirW, wine_get_build_dir() );
+    set_wine_path_variable( wineconfigdirW, wine_get_config_dir() );
+    for (i = 0; (path = wine_dll_enum_load_path( i )); i++)
+    {
+        sprintfW( buf, winedlldirW, i );
+        set_wine_path_variable( buf, path );
+    }
+    sprintfW( buf, winedlldirW, i );
+    set_wine_path_variable( buf, NULL );
 
     /* set the PROCESSOR_ARCHITECTURE variable */
 
-    if (GetEnvironmentVariableW( arch6432W, arch, ARRAY_SIZE( arch )))
+    if (GetEnvironmentVariableW( arch6432W, buf, ARRAY_SIZE( buf )))
     {
         if (is_win64)
         {
-            SetEnvironmentVariableW( archW, arch );
+            SetEnvironmentVariableW( archW, buf );
             SetEnvironmentVariableW( arch6432W, NULL );
         }
     }
-    else if (GetEnvironmentVariableW( archW, arch, ARRAY_SIZE( arch )))
+    else if (GetEnvironmentVariableW( archW, buf, ARRAY_SIZE( buf )))
     {
         if (is_wow64)
         {
-            SetEnvironmentVariableW( arch6432W, arch );
+            SetEnvironmentVariableW( arch6432W, buf );
             SetEnvironmentVariableW( archW, x86W );
         }
     }
