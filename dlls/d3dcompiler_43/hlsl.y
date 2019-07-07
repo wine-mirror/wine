@@ -34,7 +34,7 @@ struct hlsl_parse_ctx hlsl_ctx;
 struct YYLTYPE;
 static void set_location(struct source_location *loc, const struct YYLTYPE *l);
 
-void __cdecl hlsl_message(const char *fmt, ...)
+void WINAPIV hlsl_message(const char *fmt, ...)
 {
     __ms_va_list args;
 
@@ -54,7 +54,7 @@ static const char *hlsl_get_error_level_name(enum hlsl_error_level level)
     return names[level];
 }
 
-void __cdecl hlsl_report_message(const char *filename, DWORD line, DWORD column,
+void WINAPIV hlsl_report_message(const char *filename, DWORD line, DWORD column,
         enum hlsl_error_level level, const char *fmt, ...)
 {
     __ms_va_list args;

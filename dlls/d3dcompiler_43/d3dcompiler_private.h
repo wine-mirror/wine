@@ -286,7 +286,7 @@ struct bwriter_shader *parse_asm_shader(char **messages) DECLSPEC_HIDDEN;
 #endif
 
 void compilation_message(struct compilation_messages *msg, const char *fmt, __ms_va_list args) DECLSPEC_HIDDEN;
-void __cdecl asmparser_message(struct asm_parser *ctx, const char *fmt, ...) PRINTF_ATTR(2,3) DECLSPEC_HIDDEN;
+void WINAPIV asmparser_message(struct asm_parser *ctx, const char *fmt, ...) PRINTF_ATTR(2,3) DECLSPEC_HIDDEN;
 static inline void set_parse_status(enum parse_status *current, enum parse_status update)
 {
     if (update == PARSE_ERR)
@@ -1055,8 +1055,8 @@ enum hlsl_error_level
     HLSL_LEVEL_NOTE,
 };
 
-void __cdecl hlsl_message(const char *fmt, ...) PRINTF_ATTR(1,2) DECLSPEC_HIDDEN;
-void __cdecl hlsl_report_message(const char *filename, DWORD line, DWORD column,
+void WINAPIV hlsl_message(const char *fmt, ...) PRINTF_ATTR(1,2) DECLSPEC_HIDDEN;
+void WINAPIV hlsl_report_message(const char *filename, DWORD line, DWORD column,
         enum hlsl_error_level level, const char *fmt, ...) PRINTF_ATTR(5,6) DECLSPEC_HIDDEN;
 
 static inline struct hlsl_ir_var *var_from_node(const struct hlsl_ir_node *node)

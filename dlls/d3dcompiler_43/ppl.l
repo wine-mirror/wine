@@ -285,7 +285,7 @@ includelogicentry_t *pp_includelogiclist = NULL;
 
 #define BUFFERINITIALCAPACITY 256
 
-void __cdecl pp_writestring(const char *format, ...)
+void WINAPIV pp_writestring(const char *format, ...)
 {
 	__ms_va_list valist;
 	int len;

@@ -209,9 +209,9 @@ int pp_get_if_depth(void);
 
 extern const struct wpp_callbacks *wpp_callbacks;
 
-int __cdecl ppy_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
-int __cdecl ppy_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
-void __cdecl pp_internal_error(const char *file, int line, const char *s, ...) __attribute__((format (printf, 3, 4)));
+int WINAPIV ppy_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
+int WINAPIV ppy_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
+void WINAPIV pp_internal_error(const char *file, int line, const char *s, ...) __attribute__((format (printf, 3, 4)));
 
 /* current preprocessor state */
 /* everything is in this structure to avoid polluting the global symbol space */
@@ -240,7 +240,7 @@ void pp_do_include(char *fname, int type);
 void pp_push_ignore_state(void);
 void pp_pop_ignore_state(void);
 
-void __cdecl pp_writestring(const char *format, ...) __attribute__((format (printf, 1, 2)));
+void WINAPIV pp_writestring(const char *format, ...) __attribute__((format (printf, 1, 2)));
 
 /*
  * From ppy.y

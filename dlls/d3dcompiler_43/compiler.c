@@ -123,7 +123,7 @@ static void wpp_write_message(const char *fmt, __ms_va_list args)
     }
 }
 
-static void __cdecl PRINTF_ATTR(1,2) wpp_write_message_var(const char *fmt, ...)
+static void WINAPIV PRINTF_ATTR(1,2) wpp_write_message_var(const char *fmt, ...)
 {
     __ms_va_list args;
 
@@ -132,7 +132,7 @@ static void __cdecl PRINTF_ATTR(1,2) wpp_write_message_var(const char *fmt, ...)
     __ms_va_end(args);
 }
 
-int __cdecl ppy_error(const char *msg, ...)
+int WINAPIV ppy_error(const char *msg, ...)
 {
     __ms_va_list ap;
     __ms_va_start(ap, msg);
@@ -146,7 +146,7 @@ int __cdecl ppy_error(const char *msg, ...)
     return 1;
 }
 
-int __cdecl ppy_warning(const char *msg, ...)
+int WINAPIV ppy_warning(const char *msg, ...)
 {
     __ms_va_list ap;
     __ms_va_start(ap, msg);

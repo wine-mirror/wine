@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(asmshader);
 
 struct asm_parser asm_ctx;
 
-void __cdecl asmparser_message(struct asm_parser *ctx, const char *fmt, ...)
+void WINAPIV asmparser_message(struct asm_parser *ctx, const char *fmt, ...)
 {
     __ms_va_list args;
 
