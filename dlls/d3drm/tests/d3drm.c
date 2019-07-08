@@ -2155,6 +2155,8 @@ static void test_Viewport(void)
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
     hr = IDirect3DRMViewport_GetDevice(viewport, NULL);
     ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRMViewport_GetDirect3DViewport(viewport, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
 
     IDirect3DRMViewport_Release(viewport);
     ref4 = get_refcount((IUnknown *)d3drm1);
@@ -2244,6 +2246,8 @@ static void test_Viewport(void)
     hr = IDirect3DRMViewport2_Init(viewport2, device3, frame3, rc.left, rc.top, rc.right, rc.bottom);
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
     hr = IDirect3DRMViewport2_GetDevice(viewport2, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRMViewport2_GetDirect3DViewport(viewport2, NULL);
     ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
 
     IDirect3DRMViewport2_Release(viewport2);

@@ -896,6 +896,9 @@ static HRESULT WINAPI d3drm_viewport2_GetDirect3DViewport(IDirect3DRMViewport2 *
 
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
+    if (!viewport)
+        return D3DRMERR_BADVALUE;
+
     if (!viewport_object->d3d_viewport)
         return D3DRMERR_BADOBJECT;
 
