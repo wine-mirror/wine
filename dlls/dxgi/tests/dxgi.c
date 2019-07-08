@@ -5456,7 +5456,7 @@ static void test_window_association(void)
             ok(fullscreen == tests[i].expect_fullscreen
                     || broken(tests[i].broken_d3d10 && fullscreen),
                     "Test %u: Got unexpected fullscreen %#x.\n", i, fullscreen);
-            todo_wine_if(fullscreen) ok(fullscreen ? !!output : !output, "Test %u: Got wrong output.\n", i);
+            ok(fullscreen ? !!output : !output, "Test %u: Got wrong output.\n", i);
             if (output)
                 IDXGIOutput_Release(output);
 

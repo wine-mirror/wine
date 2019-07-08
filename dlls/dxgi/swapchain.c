@@ -407,22 +407,34 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetFullscreenState(IDXGISwapCha
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
     struct wined3d_swapchain_desc swapchain_desc;
+    HRESULT hr;
 
     TRACE("iface %p, fullscreen %p, target %p.\n", iface, fullscreen, target);
 
-    if (fullscreen)
+    if (fullscreen || target)
     {
         wined3d_mutex_lock();
         wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &swapchain_desc);
         wined3d_mutex_unlock();
-        *fullscreen = !swapchain_desc.windowed;
     }
+
+    if (fullscreen)
+        *fullscreen = !swapchain_desc.windowed;
 
     if (target)
     {
-        *target = swapchain->target;
-        if (*target)
+        if (!swapchain_desc.windowed)
+        {
+            if (!swapchain->target && FAILED(hr = IDXGISwapChain1_GetContainingOutput(iface, &swapchain->target)))
+                return hr;
+
+            *target = swapchain->target;
             IDXGIOutput_AddRef(*target);
+        }
+        else
+        {
+            *target = NULL;
+        }
     }
 
     return S_OK;
