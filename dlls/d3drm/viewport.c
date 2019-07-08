@@ -523,6 +523,9 @@ static HRESULT WINAPI d3drm_viewport2_SetField(IDirect3DRMViewport2 *iface, D3DV
 
     TRACE("iface %p, field %.8e.\n", iface, field);
 
+    if (field <= 0.0f)
+        return D3DRMERR_BADVALUE;
+
     viewport->field = field;
 
     return D3DRM_OK;
