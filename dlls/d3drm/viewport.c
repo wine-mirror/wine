@@ -683,6 +683,9 @@ static HRESULT WINAPI d3drm_viewport2_GetDevice(IDirect3DRMViewport2 *iface, IDi
 
     TRACE("iface %p, device %p.\n", iface, device);
 
+    if (!device)
+        return D3DRMERR_BADVALUE;
+
     if (!viewport->device)
         return D3DRMERR_BADOBJECT;
 
@@ -697,6 +700,9 @@ static HRESULT WINAPI d3drm_viewport1_GetDevice(IDirect3DRMViewport *iface, IDir
     struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
 
     TRACE("iface %p, device %p.\n\n", iface, device);
+
+    if (!device)
+        return D3DRMERR_BADVALUE;
 
     if (!viewport->device)
         return D3DRMERR_BADOBJECT;
