@@ -5306,6 +5306,7 @@ static void test_window_association(void)
     LONG_PTR original_wndproc, wndproc;
     IDXGIFactory *factory, *factory2;
     IDXGISwapChain *swapchain;
+    IDXGIOutput *output;
     IDXGIAdapter *adapter;
     IDXGIDevice *device;
     HWND hwnd, hwnd2;
@@ -5449,14 +5450,18 @@ static void test_window_association(void)
             PostMessageA(swapchain_desc.OutputWindow, WM_SYSKEYDOWN, VK_RETURN,
                     (MapVirtualKeyA(VK_RETURN, MAPVK_VK_TO_VSC) << 16) | 0x20000001);
             flush_events();
-            hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
+            output = NULL;
+            hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, &output);
             ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
             ok(fullscreen == tests[i].expect_fullscreen
                     || broken(tests[i].broken_d3d10 && fullscreen),
                     "Test %u: Got unexpected fullscreen %#x.\n", i, fullscreen);
+            todo_wine_if(fullscreen) ok(fullscreen ? !!output : !output, "Test %u: Got wrong output.\n", i);
+            if (output)
+                IDXGIOutput_Release(output);
 
             wndproc = GetWindowLongPtrW(swapchain_desc.OutputWindow, GWLP_WNDPROC);
-            ok(wndproc == original_wndproc, "Text %u: Got unexpected wndproc %#lx, expected %#lx.\n",
+            ok(wndproc == original_wndproc, "Test %u: Got unexpected wndproc %#lx, expected %#lx.\n",
                     i, wndproc, original_wndproc);
         }
     }
