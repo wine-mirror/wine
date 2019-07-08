@@ -3557,7 +3557,7 @@ enum wined3d_cs_queue_id
     WINED3D_CS_QUEUE_COUNT,
 };
 
-#define WINED3D_CS_QUERY_POLL_INTERVAL  10u
+#define WINED3D_CS_QUERY_POLL_INTERVAL  100u
 #if defined(_WIN64)
 #define WINED3D_CS_QUEUE_SIZE           0x1000000u
 #else
