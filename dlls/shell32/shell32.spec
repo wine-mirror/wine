@@ -409,6 +409,7 @@
 @ stdcall SHIsFileAvailableOffline(wstr ptr)
 @ stdcall SHLoadInProc(ptr)
 @ stdcall SHLoadNonloadedIconOverlayIdentifiers()
+@ stdcall SHMultiFileProperties(ptr long)
 @ stdcall SHOpenFolderAndSelectItems(ptr long ptr long)
 @ stdcall SHOpenWithDialog(long ptr)
 @ stdcall SHParseDisplayName(wstr ptr ptr long ptr)
