@@ -1978,6 +1978,7 @@ static void test_QueryFullProcessImageNameW(void)
     WCHAR deviceW[] = {'\\','D', 'e','v','i','c','e',0};
     WCHAR buf[1024];
     DWORD size, len;
+    DWORD flags;
 
     if (!pQueryFullProcessImageNameW)
     {
@@ -2031,6 +2032,33 @@ static void test_QueryFullProcessImageNameW(void)
     expect_eq_d(ERROR_INSUFFICIENT_BUFFER, GetLastError());
     expect_eq_ws_i(module_name, buf);  /* buffer not changed */
 
+    /* Invalid flags - a few arbitrary values only */
+    for (flags = 2; flags <= 15; ++flags)
+    {
+        size = ARRAY_SIZE(buf);
+        SetLastError(0xdeadbeef);
+        *(DWORD*)buf = 0x13579acf;
+        todo_wine
+        {
+        expect_eq_d(FALSE, pQueryFullProcessImageNameW(hSelf, flags, buf, &size));
+        expect_eq_d(ARRAY_SIZE(buf), size);  /* size not changed */
+        expect_eq_d(ERROR_INVALID_PARAMETER, GetLastError());
+        expect_eq_d(0x13579acf, *(DWORD*)buf);  /* buffer not changed */
+        }
+    }
+    for (flags = 16; flags != 0; flags <<= 1)
+    {
+        size = ARRAY_SIZE(buf);
+        SetLastError(0xdeadbeef);
+        *(DWORD*)buf = 0x13579acf;
+        todo_wine
+        {
+        expect_eq_d(FALSE, pQueryFullProcessImageNameW(hSelf, flags, buf, &size));
+        expect_eq_d(ARRAY_SIZE(buf), size);  /* size not changed */
+        expect_eq_d(ERROR_INVALID_PARAMETER, GetLastError());
+        expect_eq_d(0x13579acf, *(DWORD*)buf);  /* buffer not changed */
+        }
+    }
 
     /* native path */
     size = ARRAY_SIZE(buf);
