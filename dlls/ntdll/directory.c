@@ -142,6 +142,10 @@ typedef struct
 # define O_DIRECTORY 0200000 /* must be directory */
 #endif
 
+#ifndef AT_NO_AUTOMOUNT
+#define AT_NO_AUTOMOUNT 0x800
+#endif
+
 #endif  /* linux */
 
 #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
