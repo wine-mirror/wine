@@ -818,7 +818,7 @@ static char *find_cache_dir(void)
 static char **expand_mac_font(const char *path)
 {
     FSRef ref;
-    SInt16 res_ref;
+    ResFileRefNum res_ref;
     OSStatus s;
     unsigned int idx;
     const char *out_dir;
