@@ -558,7 +558,8 @@ BOOLEAN WINAPI StrongNameSignatureVerification(LPCWSTR filename, DWORD inFlags, 
 BOOLEAN WINAPI StrongNameSignatureVerificationEx(LPCWSTR filename, BOOLEAN forceVerification, BOOLEAN *pVerified)
 {
     FIXME("(%s, %u, %p): stub\n", debugstr_w(filename), forceVerification, pVerified);
-    return FALSE;
+    *pVerified = TRUE;
+    return TRUE;
 }
 
 HRESULT WINAPI CreateDebuggingInterfaceFromVersion(int nDebugVersion, LPCWSTR version, IUnknown **ppv)
