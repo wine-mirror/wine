@@ -10,7 +10,7 @@
 @ stub ValidateWaveFormat
 @ stub CopyPropVariant
 @ stub CreatePropVariant
-@ stub CreatePropertyStore
+@ stdcall CreatePropertyStore(ptr)
 @ stub DestroyPropVariant
 @ stub GetAMSubtypeFromD3DFormat
 @ stub GetD3DFormatFromMFSubtype

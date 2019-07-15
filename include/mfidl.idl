@@ -566,6 +566,7 @@ interface IMFSampleGrabberSinkCallback2 : IMFSampleGrabberSinkCallback
         [in] IMFAttributes *attributes);
 }
 
+cpp_quote("HRESULT WINAPI CreatePropertyStore(IPropertyStore **store);")
 cpp_quote("HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **session);")
 cpp_quote("HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **bytestream);" )
 cpp_quote("HRESULT WINAPI MFCreateMFByteStreamOnStreamEx(IUnknown *stream, IMFByteStream **bytestream);")

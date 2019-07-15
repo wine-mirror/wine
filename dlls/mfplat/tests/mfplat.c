@@ -3603,6 +3603,107 @@ static void test_local_handlers(void)
     ok(hr == S_OK, "Failed to register stream handler, hr %#x.\n", hr);
 }
 
+static void test_create_property_store(void)
+{
+    static const PROPERTYKEY test_pkey = {{0x12345678}, 9};
+    IPropertyStore *store, *store2;
+    PROPVARIANT value = {0};
+    PROPERTYKEY key;
+    ULONG refcount;
+    IUnknown *unk;
+    DWORD count;
+    HRESULT hr;
+
+    hr = CreatePropertyStore(NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = CreatePropertyStore(&store);
+    ok(hr == S_OK, "Failed to create property store, hr %#x.\n", hr);
+
+    hr = CreatePropertyStore(&store2);
+    ok(hr == S_OK, "Failed to create property store, hr %#x.\n", hr);
+    ok(store2 != store, "Expected different store objects.\n");
+    IPropertyStore_Release(store2);
+
+    hr = IPropertyStore_QueryInterface(store, &IID_IPropertyStoreCache, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    hr = IPropertyStore_QueryInterface(store, &IID_IPersistSerializedPropStorage, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IPropertyStore_GetCount(store, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    count = 0xdeadbeef;
+    hr = IPropertyStore_GetCount(store, &count);
+    ok(hr == S_OK, "Failed to get count, hr %#x.\n", hr);
+    ok(!count, "Unexpected count %u.\n", count);
+
+    hr = IPropertyStore_Commit(store);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IPropertyStore_GetAt(store, 0, &key);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IPropertyStore_GetValue(store, NULL, &value);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IPropertyStore_GetValue(store, &test_pkey, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IPropertyStore_GetValue(store, &test_pkey, &value);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    memset(&value, 0, sizeof(PROPVARIANT));
+    value.vt = VT_I4;
+    value.lVal = 0xdeadbeef;
+    hr = IPropertyStore_SetValue(store, &test_pkey, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+if (0)
+{
+    /* crashes on Windows */
+    hr = IPropertyStore_SetValue(store, NULL, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+}
+
+    hr = IPropertyStore_GetCount(store, &count);
+    ok(hr == S_OK, "Failed to get count, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    hr = IPropertyStore_Commit(store);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IPropertyStore_GetAt(store, 0, &key);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!memcmp(&key, &test_pkey, sizeof(PROPERTYKEY)), "Keys didn't match.\n");
+
+    hr = IPropertyStore_GetAt(store, 1, &key);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    memset(&value, 0xcc, sizeof(PROPVARIANT));
+    hr = IPropertyStore_GetValue(store, &test_pkey, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value.vt == VT_I4, "Unexpected type %u.\n", value.vt);
+    ok(value.lVal == 0xdeadbeef, "Unexpected value %#x.\n", value.lVal);
+
+    memset(&value, 0, sizeof(PROPVARIANT));
+    hr = IPropertyStore_SetValue(store, &test_pkey, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IPropertyStore_GetCount(store, &count);
+    ok(hr == S_OK, "Failed to get count, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    memset(&value, 0xcc, sizeof(PROPVARIANT));
+    hr = IPropertyStore_GetValue(store, &test_pkey, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value.vt == VT_EMPTY, "Unexpected type %u.\n", value.vt);
+    ok(!value.lVal, "Unexpected value %#x.\n", value.lVal);
+
+    refcount = IPropertyStore_Release(store);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -3639,6 +3740,7 @@ START_TEST(mfplat)
     test_MFCreateWaveFormatExFromMFMediaType();
     test_async_create_file();
     test_local_handlers();
+    test_create_property_store();
 
     CoUninitialize();
 }

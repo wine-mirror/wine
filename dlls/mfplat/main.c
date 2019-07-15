@@ -7415,3 +7415,205 @@ failed:
 
     return hr;
 }
+
+struct property_store
+{
+    IPropertyStore IPropertyStore_iface;
+    LONG refcount;
+    CRITICAL_SECTION cs;
+    size_t count, capacity;
+    struct
+    {
+        PROPERTYKEY key;
+        PROPVARIANT value;
+    } *values;
+};
+
+static struct property_store *impl_from_IPropertyStore(IPropertyStore *iface)
+{
+    return CONTAINING_RECORD(iface, struct property_store, IPropertyStore_iface);
+}
+
+static HRESULT WINAPI property_store_QueryInterface(IPropertyStore *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IPropertyStore) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IPropertyStore_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI property_store_AddRef(IPropertyStore *iface)
+{
+    struct property_store *store = impl_from_IPropertyStore(iface);
+    ULONG refcount = InterlockedIncrement(&store->refcount);
+
+    TRACE("%p, refcount %d.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI property_store_Release(IPropertyStore *iface)
+{
+    struct property_store *store = impl_from_IPropertyStore(iface);
+    ULONG refcount = InterlockedDecrement(&store->refcount);
+
+    TRACE("%p, refcount %d.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        DeleteCriticalSection(&store->cs);
+        heap_free(store->values);
+        heap_free(store);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI property_store_GetCount(IPropertyStore *iface, DWORD *count)
+{
+    struct property_store *store = impl_from_IPropertyStore(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    if (!count)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&store->cs);
+    *count = store->count;
+    LeaveCriticalSection(&store->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI property_store_GetAt(IPropertyStore *iface, DWORD index, PROPERTYKEY *key)
+{
+    struct property_store *store = impl_from_IPropertyStore(iface);
+
+    TRACE("%p, %u, %p.\n", iface, index, key);
+
+    EnterCriticalSection(&store->cs);
+
+    if (index >= store->count)
+    {
+        LeaveCriticalSection(&store->cs);
+        return E_INVALIDARG;
+    }
+
+    *key = store->values[index].key;
+
+    LeaveCriticalSection(&store->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI property_store_GetValue(IPropertyStore *iface, REFPROPERTYKEY key, PROPVARIANT *value)
+{
+    struct property_store *store = impl_from_IPropertyStore(iface);
+    unsigned int i;
+
+    TRACE("%p, %p, %p.\n", iface, key, value);
+
+    if (!value)
+        return E_INVALIDARG;
+
+    if (!key)
+        return S_FALSE;
+
+    EnterCriticalSection(&store->cs);
+
+    for (i = 0; i < store->count; ++i)
+    {
+        if (!memcmp(key, &store->values[i].key, sizeof(PROPERTYKEY)))
+        {
+            PropVariantCopy(value, &store->values[i].value);
+            LeaveCriticalSection(&store->cs);
+            return S_OK;
+        }
+    }
+
+    LeaveCriticalSection(&store->cs);
+    return S_FALSE;
+}
+
+static HRESULT WINAPI property_store_SetValue(IPropertyStore *iface, REFPROPERTYKEY key, REFPROPVARIANT value)
+{
+    struct property_store *store = impl_from_IPropertyStore(iface);
+    unsigned int i;
+
+    TRACE("%p, %p, %p.\n", iface, key, value);
+
+    EnterCriticalSection(&store->cs);
+
+    for (i = 0; i < store->count; ++i)
+    {
+        if (!memcmp(key, &store->values[i].key, sizeof(PROPERTYKEY)))
+        {
+            PropVariantCopy(&store->values[i].value, value);
+            LeaveCriticalSection(&store->cs);
+            return S_OK;
+        }
+    }
+
+    if (!mf_array_reserve((void **)&store->values, &store->capacity, store->count + 1, sizeof(*store->values)))
+    {
+        LeaveCriticalSection(&store->cs);
+        return E_OUTOFMEMORY;
+    }
+
+    store->values[store->count].key = *key;
+    PropVariantCopy(&store->values[store->count].value, value);
+    ++store->count;
+
+    LeaveCriticalSection(&store->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI property_store_Commit(IPropertyStore *iface)
+{
+    TRACE("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static const IPropertyStoreVtbl property_store_vtbl =
+{
+    property_store_QueryInterface,
+    property_store_AddRef,
+    property_store_Release,
+    property_store_GetCount,
+    property_store_GetAt,
+    property_store_GetValue,
+    property_store_SetValue,
+    property_store_Commit,
+};
+
+/***********************************************************************
+ *      CreatePropertyStore (mfplat.@)
+ */
+HRESULT WINAPI CreatePropertyStore(IPropertyStore **store)
+{
+    struct property_store *object;
+
+    TRACE("%p.\n", store);
+
+    if (!store)
+        return E_INVALIDARG;
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IPropertyStore_iface.lpVtbl = &property_store_vtbl;
+    object->refcount = 1;
+    InitializeCriticalSection(&object->cs);
+
+    TRACE("Created store %p.\n", object);
+    *store = &object->IPropertyStore_iface;
+
+    return S_OK;
+}
