@@ -2392,8 +2392,21 @@ static void SETUPDI_EnumerateDevices(HDEVINFO DeviceInfoSet, const GUID *class,
                     &enumStrKey);
             if (!l)
             {
-                SETUPDI_EnumerateMatchingDevices(DeviceInfoSet, enumstr,
-                        enumStrKey, class, flags);
+                WCHAR *bus, *device;
+
+                if (!wcschr(enumstr, '\\'))
+                {
+                    SETUPDI_EnumerateMatchingDevices(DeviceInfoSet, enumstr, enumStrKey, class, flags);
+                }
+                else if ((bus = strdupW(enumstr)))
+                {
+                    device = wcschr(bus, '\\');
+                    *device++ = 0;
+
+                    SETUPDI_EnumerateMatchingDeviceInstances(DeviceInfoSet, bus, device, enumStrKey, class, flags);
+                    HeapFree(GetProcessHeap(), 0, bus);
+                }
+
                 RegCloseKey(enumStrKey);
             }
         }
