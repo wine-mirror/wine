@@ -90,6 +90,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "netcfgx.h"
 #include "shimgdata.h"
 #include "comsvcs.h"
+#include "directmanipulation.h"
 
 /* FIXME: cguids declares GUIDs but does not define their values */
 
