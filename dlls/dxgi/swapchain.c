@@ -1663,9 +1663,9 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
     VkSwapchainCreateInfoKHR vk_swapchain_desc;
     VkDevice vk_device = swapchain->vk_device;
     VkFormat vk_format, vk_swapchain_format;
+    unsigned int width, height, image_count;
     VkSurfaceCapabilitiesKHR surface_caps;
     VkSwapchainKHR vk_swapchain;
-    unsigned int width, height;
     VkImageUsageFlags usage;
     VkResult vr;
     HRESULT hr;
@@ -1687,12 +1687,15 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
         return hresult_from_vk_result(vr);
     }
 
-    if (surface_caps.maxImageCount && (swapchain->desc.BufferCount > surface_caps.maxImageCount
-            || swapchain->desc.BufferCount < surface_caps.minImageCount))
+    image_count = swapchain->desc.BufferCount;
+    image_count = max(image_count, surface_caps.minImageCount);
+    if (surface_caps.maxImageCount)
+        image_count = min(image_count, surface_caps.maxImageCount);
+
+    if (image_count != swapchain->desc.BufferCount)
     {
         WARN("Buffer count %u is not supported (%u-%u).\n", swapchain->desc.BufferCount,
                 surface_caps.minImageCount, surface_caps.maxImageCount);
-        return DXGI_ERROR_UNSUPPORTED;
     }
 
     width = swapchain->desc.Width;
@@ -1728,7 +1731,7 @@ static HRESULT d3d12_swapchain_create_vulkan_swapchain(struct d3d12_swapchain *s
     vk_swapchain_desc.pNext = NULL;
     vk_swapchain_desc.flags = 0;
     vk_swapchain_desc.surface = swapchain->vk_surface;
-    vk_swapchain_desc.minImageCount = swapchain->desc.BufferCount;
+    vk_swapchain_desc.minImageCount = image_count;
     vk_swapchain_desc.imageFormat = vk_swapchain_format;
     vk_swapchain_desc.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     vk_swapchain_desc.imageExtent.width = width;
