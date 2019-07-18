@@ -337,6 +337,117 @@ static HRESULT WINAPI DirectManipulation_CreateInstance(IClassFactory *iface, IU
     return ret;
 }
 
+struct directcompositor
+{
+    IDirectManipulationCompositor IDirectManipulationCompositor_iface;
+    LONG ref;
+};
+
+static inline struct directcompositor *impl_from_IDirectManipulationCompositor(IDirectManipulationCompositor *iface)
+{
+    return CONTAINING_RECORD(iface, struct directcompositor, IDirectManipulationCompositor_iface);
+}
+
+static HRESULT WINAPI compositor_QueryInterface(IDirectManipulationCompositor *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IDirectManipulationCompositor))
+    {
+        IUnknown_AddRef(iface);
+        *ppv = iface;
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s,%p),not found\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI compositor_AddRef(IDirectManipulationCompositor *iface)
+{
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI compositor_Release(IDirectManipulationCompositor *iface)
+{
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    if (!ref)
+    {
+        heap_free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI compositor_AddContent(IDirectManipulationCompositor *iface, IDirectManipulationContent *content,
+                IUnknown *device, IUnknown *parent, IUnknown *child)
+{
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    FIXME("%p, %p, %p, %p, %p\n", This, content, device, parent, child);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI compositor_RemoveContent(IDirectManipulationCompositor *iface, IDirectManipulationContent *content)
+{
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    FIXME("%p, %p\n", This, content);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI compositor_SetUpdateManager(IDirectManipulationCompositor *iface, IDirectManipulationUpdateManager *manager)
+{
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    FIXME("%p, %p\n", This, manager);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI compositor_Flush(IDirectManipulationCompositor *iface)
+{
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static const struct IDirectManipulationCompositorVtbl compositorVtbl =
+{
+    compositor_QueryInterface,
+    compositor_AddRef,
+    compositor_Release,
+    compositor_AddContent,
+    compositor_RemoveContent,
+    compositor_SetUpdateManager,
+    compositor_Flush
+};
+
+static HRESULT WINAPI DirectCompositor_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
+{
+    struct directcompositor *object;
+    HRESULT ret;
+
+    TRACE("(%p, %s, %p)\n", outer, debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IDirectManipulationCompositor_iface.lpVtbl = &compositorVtbl;
+    object->ref = 1;
+
+    ret = compositor_QueryInterface(&object->IDirectManipulationCompositor_iface, riid, ppv);
+    compositor_Release(&object->IDirectManipulationCompositor_iface);
+
+    return ret;
+}
+
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -380,7 +491,16 @@ static const IClassFactoryVtbl DirectFactoryVtbl = {
     ClassFactory_LockServer
 };
 
+static const IClassFactoryVtbl DirectCompositorVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    DirectCompositor_CreateInstance,
+    ClassFactory_LockServer
+};
+
 static IClassFactory direct_factory = { &DirectFactoryVtbl };
+static IClassFactory compositor_factory = { &DirectCompositorVtbl };
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
@@ -388,6 +508,10 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
        IsEqualGUID(&CLSID_DirectManipulationSharedManager, rclsid) ) {
         TRACE("(CLSID_DirectManipulationManager %s %p)\n", debugstr_guid(riid), ppv);
         return IClassFactory_QueryInterface(&direct_factory, riid, ppv);
+    }
+    else if(IsEqualGUID(&CLSID_DCompManipulationCompositor, rclsid)) {
+        TRACE("(CLSID_DCompManipulationCompositor %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&compositor_factory, riid, ppv);
     }
 
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
