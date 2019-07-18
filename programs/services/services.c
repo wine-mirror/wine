@@ -424,7 +424,7 @@ static BOOL schedule_delayed_autostart(struct service_entry **services, unsigned
     return TRUE;
 }
 
-static BOOL is_root_pnp_service(const struct service_entry *service, HDEVINFO set)
+static BOOL is_root_pnp_service(HDEVINFO set, const struct service_entry *service)
 {
     SP_DEVINFO_DATA device = {sizeof(device)};
     WCHAR name[MAX_SERVICE_NAME];
