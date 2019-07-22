@@ -68,12 +68,113 @@ HRESULT WINAPI DllCanUnloadNow(void)
 struct directmanipulation
 {
     IDirectManipulationManager2 IDirectManipulationManager2_iface;
+    IDirectManipulationUpdateManager *updatemanager;
+    LONG ref;
+};
+
+struct directupdatemanager
+{
+    IDirectManipulationUpdateManager IDirectManipulationUpdateManager_iface;
     LONG ref;
 };
 
 static inline struct directmanipulation *impl_from_IDirectManipulationManager2(IDirectManipulationManager2 *iface)
 {
     return CONTAINING_RECORD(iface, struct directmanipulation, IDirectManipulationManager2_iface);
+}
+
+static inline struct directupdatemanager *impl_from_IDirectManipulationUpdateManager(IDirectManipulationUpdateManager *iface)
+{
+    return CONTAINING_RECORD(iface, struct directupdatemanager, IDirectManipulationUpdateManager_iface);
+}
+
+static HRESULT WINAPI update_manager_QueryInterface(IDirectManipulationUpdateManager *iface, REFIID riid,void **ppv)
+{
+    struct directupdatemanager *This = impl_from_IDirectManipulationUpdateManager(iface);
+
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppv);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IDirectManipulationUpdateManager)) {
+        IUnknown_AddRef(iface);
+        *ppv = iface;
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s,%p), not found\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+ULONG WINAPI update_manager_AddRef(IDirectManipulationUpdateManager *iface)
+{
+    struct directupdatemanager *This = impl_from_IDirectManipulationUpdateManager(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    return ref;
+}
+
+ULONG WINAPI update_manager_Release(IDirectManipulationUpdateManager *iface)
+{
+    struct directupdatemanager *This = impl_from_IDirectManipulationUpdateManager(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    if (!ref)
+    {
+        heap_free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI update_manager_RegisterWaitHandleCallback(IDirectManipulationUpdateManager *iface, HANDLE handle,
+            IDirectManipulationUpdateHandler *handler, DWORD *cookie)
+{
+    struct directupdatemanager *This = impl_from_IDirectManipulationUpdateManager(iface);
+    FIXME("%p, %p, %p, %p\n", This, handle, handler, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI update_manager_UnregisterWaitHandleCallback(IDirectManipulationUpdateManager *iface, DWORD cookie)
+{
+    struct directupdatemanager *This = impl_from_IDirectManipulationUpdateManager(iface);
+    FIXME("%p, %x\n", This, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI update_manager_Update(IDirectManipulationUpdateManager *iface, IDirectManipulationFrameInfoProvider *provider)
+{
+    struct directupdatemanager *This = impl_from_IDirectManipulationUpdateManager(iface);
+    FIXME("%p, %p\n", This, provider);
+    return E_NOTIMPL;
+}
+
+struct IDirectManipulationUpdateManagerVtbl updatemanagerVtbl =
+{
+    update_manager_QueryInterface,
+    update_manager_AddRef,
+    update_manager_Release,
+    update_manager_RegisterWaitHandleCallback,
+    update_manager_UnregisterWaitHandleCallback,
+    update_manager_Update
+};
+
+static HRESULT create_update_manager(IDirectManipulationUpdateManager **obj)
+{
+    struct directupdatemanager *object;
+
+    object = heap_alloc(sizeof(*object));
+    if(!object)
+        return E_OUTOFMEMORY;
+
+    object->IDirectManipulationUpdateManager_iface.lpVtbl = &updatemanagerVtbl;
+    object->ref = 1;
+
+    *obj = &object->IDirectManipulationUpdateManager_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI direct_manip_QueryInterface(IDirectManipulationManager2 *iface, REFIID riid, void **ppv)
@@ -109,6 +210,8 @@ static ULONG WINAPI direct_manip_Release(IDirectManipulationManager2 *iface)
 
     if (!ref)
     {
+        if(This->updatemanager)
+            IDirectManipulationUpdateManager_Release(This->updatemanager);
         heap_free(This);
     }
     return ref;
@@ -146,8 +249,32 @@ static HRESULT WINAPI direct_manip_ProcessInput(IDirectManipulationManager2 *ifa
 static HRESULT WINAPI direct_manip_GetUpdateManager(IDirectManipulationManager2 *iface, REFIID riid, void **obj)
 {
     struct directmanipulation *This = impl_from_IDirectManipulationManager2(iface);
-    FIXME("%p, %s, %p\n", This, debugstr_guid(riid), obj);
-    return E_NOTIMPL;
+    HRESULT hr = E_FAIL;
+
+    TRACE("%p, %s, %p\n", This, debugstr_guid(riid), obj);
+
+    *obj = NULL;
+    if(IsEqualGUID(riid, &IID_IDirectManipulationUpdateManager))
+    {
+        if(!This->updatemanager)
+        {
+            hr = create_update_manager(&This->updatemanager);
+        }
+        else
+        {
+            hr = S_OK;
+        }
+
+        if(hr == S_OK)
+        {
+            IDirectManipulationUpdateManager_AddRef(This->updatemanager);
+            *obj = This->updatemanager;
+        }
+    }
+    else
+        FIXME("Interface %s currently not supported.\n", debugstr_guid(riid));
+
+    return hr;
 }
 
 static HRESULT WINAPI direct_manip_CreateViewport(IDirectManipulationManager2 *iface, IDirectManipulationFrameInfoProvider *frame,
