@@ -85,12 +85,6 @@ typedef struct FormatConverter {
 } FormatConverter;
 
 /* https://www.w3.org/Graphics/Color/srgb */
-static inline float from_sRGB_component(float f)
-{
-    if (f <= 0.04045f) return f / 12.92f;
-    return powf((f + 0.055f) / 1.055f, 2.4f);
-}
-
 static inline float to_sRGB_component(float f)
 {
     if (f <= 0.0031308f) return 12.92f * f;
@@ -98,6 +92,12 @@ static inline float to_sRGB_component(float f)
 }
 
 #if 0 /* FIXME: enable once needed */
+static inline float from_sRGB_component(float f)
+{
+    if (f <= 0.04045f) return f / 12.92f;
+    return powf((f + 0.055f) / 1.055f, 2.4f);
+}
+
 static void from_sRGB(BYTE *bgr)
 {
     float r, g, b;
