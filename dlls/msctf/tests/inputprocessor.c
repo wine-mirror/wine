@@ -64,7 +64,7 @@ static DWORD tmSinkCookie;
 static DWORD tmSinkRefCount;
 static DWORD dmSinkCookie;
 static DWORD documentStatus;
-static DWORD key_trace_sink_cookie;
+static DWORD key_trace_sink_cookie, ui_element_sink_cookie;
 static ITfDocumentMgr *test_CurrentFocus = NULL;
 static ITfDocumentMgr *test_PrevFocus = NULL;
 static ITfDocumentMgr *test_LastCurrentFocus = FOCUS_SAVE;
@@ -671,6 +671,60 @@ static const ITfKeyTraceEventSinkVtbl TfKeyTraceEventSinkVtbl = {
 
 static ITfKeyTraceEventSink TfKeyTraceEventSink = { &TfKeyTraceEventSinkVtbl };
 
+static HRESULT WINAPI TfUIElementSink_QueryInterface(ITfUIElementSink *iface,
+        REFIID riid, void **ppvObject)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ITfUIElementSink, riid)){
+        *ppvObject = iface;
+        return S_OK;
+    }
+
+    *ppvObject = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TfUIElementSink_AddRef(ITfUIElementSink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI TfUIElementSink_Release(ITfUIElementSink *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI TfUIElementSink_BeginUIElement(ITfUIElementSink *iface,
+        DWORD id, BOOL *show)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TfUIElementSink_UpdateUIElement(ITfUIElementSink *iface,
+        DWORD id)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TfUIElementSink_EndUIElement(ITfUIElementSink *iface,
+        DWORD id)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const ITfUIElementSinkVtbl TfUIElementSinkVtbl = {
+    TfUIElementSink_QueryInterface,
+    TfUIElementSink_AddRef,
+    TfUIElementSink_Release,
+    TfUIElementSink_BeginUIElement,
+    TfUIElementSink_UpdateUIElement,
+    TfUIElementSink_EndUIElement
+};
+
+static ITfUIElementSink TfUIElementSink = { &TfUIElementSinkVtbl };
+
 static HRESULT WINAPI TfTransitoryExtensionSink_QueryInterface(ITfTransitoryExtensionSink *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ITfTransitoryExtensionSink, riid)) {
@@ -1128,7 +1182,7 @@ static void test_ThreadMgrAdviseSinks(void)
     tmSinkRefCount = 1;
     tmSinkCookie = 0;
     hr = ITfSource_AdviseSink(source,&IID_ITfThreadMgrEventSink, sink, &tmSinkCookie);
-    ok(hr == S_OK, "Failed to Advise Sink\n");
+    ok(hr == S_OK, "Failed to Advise ITfThreadMgrEventSink\n");
     ok(tmSinkCookie!=0,"Failed to get sink cookie\n");
 
     /* Advising the sink adds a ref, Releasing here lets the object be deleted
@@ -1138,7 +1192,11 @@ static void test_ThreadMgrAdviseSinks(void)
 
     hr = ITfSource_AdviseSink(source, &IID_ITfKeyTraceEventSink, (IUnknown*)&TfKeyTraceEventSink,
                               &key_trace_sink_cookie);
-    ok(hr == S_OK, "Failed to Advise Sink\n");
+    ok(hr == S_OK, "Failed to Advise ITfKeyTraceEventSink\n");
+
+    hr = ITfSource_AdviseSink(source, &IID_ITfUIElementSink, (IUnknown*)&TfUIElementSink,
+                              &ui_element_sink_cookie);
+    ok(hr == S_OK, "Failed to Advise ITfUIElementSink\n");
 
     ITfSource_Release(source);
 }
@@ -1155,10 +1213,13 @@ static void test_ThreadMgrUnadviseSinks(void)
 
     tmSinkRefCount = 1;
     hr = ITfSource_UnadviseSink(source, tmSinkCookie);
-    ok(hr == S_OK, "Failed to unadvise Sink\n");
+    ok(hr == S_OK, "Failed to unadvise ITfThreadMgrEventSink\n");
 
     hr = ITfSource_UnadviseSink(source, key_trace_sink_cookie);
-    ok(hr == S_OK, "Failed to unadvise Sink\n");
+    ok(hr == S_OK, "Failed to unadvise ITfKeyTraceEventSink\n");
+
+    hr = ITfSource_UnadviseSink(source, ui_element_sink_cookie);
+    ok(hr == S_OK, "Failed to unadvise ITfUIElementSink\n");
 
     ITfSource_Release(source);
 }
