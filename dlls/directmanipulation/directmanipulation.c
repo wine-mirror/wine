@@ -340,6 +340,7 @@ static HRESULT WINAPI DirectManipulation_CreateInstance(IClassFactory *iface, IU
 struct directcompositor
 {
     IDirectManipulationCompositor IDirectManipulationCompositor_iface;
+    IDirectManipulationFrameInfoProvider IDirectManipulationFrameInfoProvider_iface;
     LONG ref;
 };
 
@@ -348,13 +349,26 @@ static inline struct directcompositor *impl_from_IDirectManipulationCompositor(I
     return CONTAINING_RECORD(iface, struct directcompositor, IDirectManipulationCompositor_iface);
 }
 
+static inline struct directcompositor *impl_from_IDirectManipulationFrameInfoProvider(IDirectManipulationFrameInfoProvider *iface)
+{
+    return CONTAINING_RECORD(iface, struct directcompositor, IDirectManipulationFrameInfoProvider_iface);
+}
+
 static HRESULT WINAPI compositor_QueryInterface(IDirectManipulationCompositor *iface, REFIID riid, void **ppv)
 {
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IDirectManipulationCompositor))
     {
         IUnknown_AddRef(iface);
         *ppv = iface;
+        return S_OK;
+    }
+    else if(IsEqualGUID(riid, &IID_IDirectManipulationFrameInfoProvider))
+    {
+        IUnknown_AddRef(iface);
+        *ppv = &This->IDirectManipulationFrameInfoProvider_iface;
         return S_OK;
     }
 
@@ -426,6 +440,40 @@ static const struct IDirectManipulationCompositorVtbl compositorVtbl =
     compositor_Flush
 };
 
+static HRESULT WINAPI provider_QueryInterface(IDirectManipulationFrameInfoProvider *iface, REFIID riid, void **ppv)
+{
+    struct directcompositor *This = impl_from_IDirectManipulationFrameInfoProvider(iface);
+    return IDirectManipulationCompositor_QueryInterface(&This->IDirectManipulationCompositor_iface, riid, ppv);
+}
+
+static ULONG WINAPI provider_AddRef(IDirectManipulationFrameInfoProvider *iface)
+{
+    struct directcompositor *This = impl_from_IDirectManipulationFrameInfoProvider(iface);
+    return IDirectManipulationCompositor_AddRef(&This->IDirectManipulationCompositor_iface);
+}
+
+static ULONG WINAPI provider_Release(IDirectManipulationFrameInfoProvider *iface)
+{
+    struct directcompositor *This = impl_from_IDirectManipulationFrameInfoProvider(iface);
+    return IDirectManipulationCompositor_Release(&This->IDirectManipulationCompositor_iface);
+}
+
+static HRESULT WINAPI provider_GetNextFrameInfo(IDirectManipulationFrameInfoProvider *iface, ULONGLONG *time,
+            ULONGLONG *process, ULONGLONG *composition)
+{
+    struct directcompositor *This = impl_from_IDirectManipulationFrameInfoProvider(iface);
+    FIXME("%p, %p, %p, %p\n", This, time, process, composition);
+    return E_NOTIMPL;
+}
+
+static const struct IDirectManipulationFrameInfoProviderVtbl providerVtbl =
+{
+    provider_QueryInterface,
+    provider_AddRef,
+    provider_Release,
+    provider_GetNextFrameInfo
+};
+
 static HRESULT WINAPI DirectCompositor_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
     struct directcompositor *object;
@@ -440,6 +488,7 @@ static HRESULT WINAPI DirectCompositor_CreateInstance(IClassFactory *iface, IUnk
         return E_OUTOFMEMORY;
 
     object->IDirectManipulationCompositor_iface.lpVtbl = &compositorVtbl;
+    object->IDirectManipulationFrameInfoProvider_iface.lpVtbl = &providerVtbl;
     object->ref = 1;
 
     ret = compositor_QueryInterface(&object->IDirectManipulationCompositor_iface, riid, ppv);
