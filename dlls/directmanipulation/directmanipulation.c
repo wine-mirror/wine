@@ -341,6 +341,7 @@ struct directcompositor
 {
     IDirectManipulationCompositor IDirectManipulationCompositor_iface;
     IDirectManipulationFrameInfoProvider IDirectManipulationFrameInfoProvider_iface;
+    IDirectManipulationUpdateManager *manager;
     LONG ref;
 };
 
@@ -395,6 +396,8 @@ static ULONG WINAPI compositor_Release(IDirectManipulationCompositor *iface)
 
     if (!ref)
     {
+        if(This->manager)
+            IDirectManipulationUpdateManager_Release(This->manager);
         heap_free(This);
     }
     return ref;
@@ -418,8 +421,14 @@ static HRESULT WINAPI compositor_RemoveContent(IDirectManipulationCompositor *if
 static HRESULT WINAPI compositor_SetUpdateManager(IDirectManipulationCompositor *iface, IDirectManipulationUpdateManager *manager)
 {
     struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
-    FIXME("%p, %p\n", This, manager);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", This, manager);
+
+    if(!manager)
+        return E_INVALIDARG;
+
+    This->manager = manager;
+    IDirectManipulationUpdateManager_AddRef(This->manager);
+    return S_OK;
 }
 
 static HRESULT WINAPI compositor_Flush(IDirectManipulationCompositor *iface)
