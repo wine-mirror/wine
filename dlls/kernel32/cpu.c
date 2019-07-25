@@ -378,7 +378,7 @@ UINT WINAPI EnumSystemFirmwareTables(DWORD provider, void *buffer, DWORD size)
     SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti = HeapAlloc(GetProcessHeap(), 0, buffer_size);
     NTSTATUS status;
 
-    FIXME("(0x%08x, %p, %d)\n", provider, buffer, size);
+    TRACE("(0x%08x, %p, %d)\n", provider, buffer, size);
 
     if (!sfti)
     {
