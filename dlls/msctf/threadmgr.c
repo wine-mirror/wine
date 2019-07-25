@@ -97,6 +97,7 @@ typedef struct tagACLMulti {
     struct list     ThreadFocusSink;
     struct list     ThreadMgrEventSink;
     struct list     UIElementSink;
+    struct list     InputProcessorProfileActivationSink;
 } ThreadMgr;
 
 typedef struct tagEnumTfDocumentMgr {
@@ -174,6 +175,7 @@ static void ThreadMgr_Destructor(ThreadMgr *This)
     free_sinks(&This->ThreadFocusSink);
     free_sinks(&This->ThreadMgrEventSink);
     free_sinks(&This->UIElementSink);
+    free_sinks(&This->InputProcessorProfileActivationSink);
 
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->CurrentPreservedKeys)
     {
@@ -633,6 +635,13 @@ static HRESULT WINAPI ThreadMgrSource_AdviseSink(ITfSource *iface,
                            COOKIE_MAGIC_UIELEMENTSINK, punk, pdwCookie);
     }
 
+    if (IsEqualIID(riid, &IID_ITfInputProcessorProfileActivationSink))
+    {
+        WARN("semi-stub for ITfInputProcessorProfileActivationSink: sink won't be used.\n");
+        return advise_sink(&This->InputProcessorProfileActivationSink, &IID_ITfInputProcessorProfileActivationSink,
+                           COOKIE_MAGIC_INPUTPROCESSORPROFILEACTIVATIONSINK, punk, pdwCookie);
+    }
+
     FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
     return E_NOTIMPL;
 }
@@ -646,7 +655,8 @@ static HRESULT WINAPI ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCo
 
     magic = get_Cookie_magic(pdwCookie);
     if (magic != COOKIE_MAGIC_TMSINK && magic != COOKIE_MAGIC_THREADFOCUSSINK
-        && magic != COOKIE_MAGIC_KEYTRACESINK && magic != COOKIE_MAGIC_UIELEMENTSINK)
+        && magic != COOKIE_MAGIC_KEYTRACESINK && magic != COOKIE_MAGIC_UIELEMENTSINK
+        && magic != COOKIE_MAGIC_INPUTPROCESSORPROFILEACTIVATIONSINK)
         return E_INVALIDARG;
 
     return unadvise_sink(pdwCookie);
@@ -1364,6 +1374,7 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     list_init(&This->ThreadFocusSink);
     list_init(&This->ThreadMgrEventSink);
     list_init(&This->UIElementSink);
+    list_init(&This->InputProcessorProfileActivationSink);
 
     TRACE("returning %p\n", This);
     *ppOut = (IUnknown *)&This->ITfThreadMgrEx_iface;

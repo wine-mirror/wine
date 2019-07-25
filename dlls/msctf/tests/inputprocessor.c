@@ -64,7 +64,8 @@ static DWORD tmSinkCookie;
 static DWORD tmSinkRefCount;
 static DWORD dmSinkCookie;
 static DWORD documentStatus;
-static DWORD key_trace_sink_cookie, ui_element_sink_cookie;
+static DWORD key_trace_sink_cookie, ui_element_sink_cookie, profile_activation_sink_cookie;
+static DWORD fake_service_onactivated_flags = 0;
 static ITfDocumentMgr *test_CurrentFocus = NULL;
 static ITfDocumentMgr *test_PrevFocus = NULL;
 static ITfDocumentMgr *test_LastCurrentFocus = FOCUS_SAVE;
@@ -85,6 +86,7 @@ static INT  test_ACP_InsertTextAtSelection = SINK_UNEXPECTED;
 static INT  test_ACP_SetSelection = SINK_UNEXPECTED;
 static INT  test_OnEndEdit = SINK_UNEXPECTED;
 
+DEFINE_GUID(CLSID_FakeService, 0xEDE1A7AD,0x66DE,0x47E0,0xB6,0x20,0x3E,0x92,0xF8,0x24,0x6B,0xF3);
 
 static inline int expected_count(int *sink)
 {
@@ -725,6 +727,61 @@ static const ITfUIElementSinkVtbl TfUIElementSinkVtbl = {
 
 static ITfUIElementSink TfUIElementSink = { &TfUIElementSinkVtbl };
 
+static HRESULT WINAPI ProfileActivationSink_QueryInterface(ITfInputProcessorProfileActivationSink *iface,
+        REFIID riid, void **ppvObject)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ITfInputProcessorProfileActivationSink, riid)){
+        *ppvObject = iface;
+        return S_OK;
+    }
+
+    *ppvObject = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ProfileActivationSink_AddRef(ITfInputProcessorProfileActivationSink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ProfileActivationSink_Release(ITfInputProcessorProfileActivationSink *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ProfileActivationSink_OnActivated(ITfInputProcessorProfileActivationSink *iface,
+    DWORD dwProfileType, LANGID langid, REFCLSID clsid, REFGUID catid,
+    REFGUID guidProfile, HKL hkl, DWORD dwFlags)
+{
+    trace("Got OnActivated: {dwProfileType %08x, langid %08x, clsid %s, catid %s, guidProfile %s, %p, dwFlags %08x}\n",
+            dwProfileType, langid, wine_dbgstr_guid(clsid),
+            wine_dbgstr_guid(catid), wine_dbgstr_guid(guidProfile), hkl, dwFlags);
+
+    ok(dwProfileType == TF_PROFILETYPE_INPUTPROCESSOR || dwProfileType == TF_PROFILETYPE_KEYBOARDLAYOUT,
+            "unexpected dwProfileType: 0x%x\n", dwProfileType);
+
+    if(dwProfileType == TF_PROFILETYPE_INPUTPROCESSOR && IsEqualGUID(&CLSID_FakeService, clsid)){
+        if(dwFlags & TF_IPSINK_FLAG_ACTIVE){
+            ok(test_ShouldActivate, "OnActivated: Activation came unexpectedly\n");
+        }
+
+        fake_service_onactivated_flags = dwFlags;
+    }
+
+    return S_OK;
+}
+
+static const ITfInputProcessorProfileActivationSinkVtbl TfInputProcessorProfileActivationSinkVtbl = {
+    ProfileActivationSink_QueryInterface,
+    ProfileActivationSink_AddRef,
+    ProfileActivationSink_Release,
+    ProfileActivationSink_OnActivated
+};
+
+static ITfInputProcessorProfileActivationSink TfInputProcessorProfileActivationSink = {
+    &TfInputProcessorProfileActivationSinkVtbl
+};
+
 static HRESULT WINAPI TfTransitoryExtensionSink_QueryInterface(ITfTransitoryExtensionSink *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ITfTransitoryExtensionSink, riid)) {
@@ -974,7 +1031,6 @@ static HRESULT UnregisterTextService(void)
  * The tests
  */
 
-DEFINE_GUID(CLSID_FakeService, 0xEDE1A7AD,0x66DE,0x47E0,0xB6,0x20,0x3E,0x92,0xF8,0x24,0x6B,0xF3);
 DEFINE_GUID(CLSID_TF_InputProcessorProfiles, 0x33c53a50,0xf456,0x4884,0xb0,0x49,0x85,0xfd,0x64,0x3e,0xcf,0xed);
 DEFINE_GUID(CLSID_TF_CategoryMgr,         0xA4B544A1,0x438D,0x4B41,0x93,0x25,0x86,0x95,0x23,0xE2,0xD6,0xC7);
 DEFINE_GUID(GUID_TFCAT_TIP_KEYBOARD,     0x34745c63,0xb2f0,0x4784,0x8b,0x67,0x5e,0x12,0xc8,0x70,0x1a,0x31);
@@ -1198,6 +1254,10 @@ static void test_ThreadMgrAdviseSinks(void)
                               &ui_element_sink_cookie);
     ok(hr == S_OK, "Failed to Advise ITfUIElementSink\n");
 
+    hr = ITfSource_AdviseSink(source, &IID_ITfInputProcessorProfileActivationSink, (IUnknown*)&TfInputProcessorProfileActivationSink,
+                              &profile_activation_sink_cookie);
+    ok(hr == S_OK, "Failed to Advise ITfInputProcessorProfileActivationSink\n");
+
     ITfSource_Release(source);
 }
 
@@ -1220,6 +1280,9 @@ static void test_ThreadMgrUnadviseSinks(void)
 
     hr = ITfSource_UnadviseSink(source, ui_element_sink_cookie);
     ok(hr == S_OK, "Failed to unadvise ITfUIElementSink\n");
+
+    hr = ITfSource_UnadviseSink(source, profile_activation_sink_cookie);
+    ok(hr == S_OK, "Failed to unadvise ITfInputProcessorProfileActivationSink\n");
 
     ITfSource_Release(source);
 }
@@ -1617,6 +1680,8 @@ static void test_startSession(void)
     hr  = ITfThreadMgr_Activate(g_tm,&cid);
     ok(SUCCEEDED(hr),"Failed to Activate\n");
     ok(cid != tid,"TextService id mistakenly matches Client id\n");
+
+    todo_wine ok(fake_service_onactivated_flags & TF_IPSINK_FLAG_ACTIVE, "Expected OnActivated callback\n");
 
     test_ShouldActivate = FALSE;
     hr = ITfThreadMgr_Activate(g_tm,&cid2);
