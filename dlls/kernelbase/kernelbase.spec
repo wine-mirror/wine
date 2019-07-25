@@ -312,7 +312,7 @@
 @ stdcall EnumResourceTypesExA(long ptr long long long)
 @ stdcall EnumResourceTypesExW(long ptr long long long)
 @ stdcall EnumSystemCodePagesW(ptr long) kernel32.EnumSystemCodePagesW
-# @ stub EnumSystemFirmwareTables
+@ stdcall EnumSystemFirmwareTables(long ptr long) kernel32.EnumSystemFirmwareTables
 @ stdcall EnumSystemGeoID(long long ptr) kernel32.EnumSystemGeoID
 @ stdcall EnumSystemLanguageGroupsW(ptr long ptr) kernel32.EnumSystemLanguageGroupsW
 @ stdcall EnumSystemLocalesA(ptr long) kernel32.EnumSystemLocalesA
