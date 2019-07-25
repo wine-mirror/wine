@@ -177,6 +177,334 @@ static HRESULT create_update_manager(IDirectManipulationUpdateManager **obj)
     return S_OK;
 }
 
+struct directviewport
+{
+    IDirectManipulationViewport2 IDirectManipulationViewport2_iface;
+    LONG ref;
+};
+
+static inline struct directviewport *impl_from_IDirectManipulationViewport2(IDirectManipulationViewport2 *iface)
+{
+    return CONTAINING_RECORD(iface, struct directviewport, IDirectManipulationViewport2_iface);
+}
+
+static HRESULT WINAPI viewport_QueryInterface(IDirectManipulationViewport2 *iface, REFIID riid, void **ppv)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppv);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IDirectManipulationViewport) ||
+        IsEqualGUID(riid, &IID_IDirectManipulationViewport2))
+    {
+        IDirectManipulationViewport2_AddRef(&This->IDirectManipulationViewport2_iface);
+        *ppv = &This->IDirectManipulationViewport2_iface;
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI viewport_AddRef(IDirectManipulationViewport2 *iface)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI viewport_Release(IDirectManipulationViewport2 *iface)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    if (!ref)
+    {
+        heap_free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI viewport_Enable(IDirectManipulationViewport2 *iface)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_Disable(IDirectManipulationViewport2 *iface)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_SetContact(IDirectManipulationViewport2 *iface, UINT32 id)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %d\n", This, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_ReleaseContact(IDirectManipulationViewport2 *iface, UINT32 id)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %d\n", This, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_ReleaseAllContacts(IDirectManipulationViewport2 *iface)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_GetStatus(IDirectManipulationViewport2 *iface, DIRECTMANIPULATION_STATUS *status)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %p\n", This, status);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_GetTag(IDirectManipulationViewport2 *iface, REFIID riid, void **object, UINT32 *id)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %s, %p, %p\n", This, debugstr_guid(riid), object, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_SetTag(IDirectManipulationViewport2 *iface, IUnknown *object, UINT32 id)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %p, %u\n", This, object, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_GetViewportRect(IDirectManipulationViewport2 *iface, RECT *viewport)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %p\n", This, viewport);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_SetViewportRect(IDirectManipulationViewport2 *iface, const RECT *viewport)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %p\n", This, viewport);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_ZoomToRect(IDirectManipulationViewport2 *iface, const float left,
+                    const float top, const float right, const float bottom, BOOL animate)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %f, %f, %f, %f, %d\n", This, left, top, right, bottom, animate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_SetViewportTransform(IDirectManipulationViewport2 *iface,
+                    const float *matrix, DWORD count)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %p, %d\n", This, matrix, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_SyncDisplayTransform(IDirectManipulationViewport2 *iface,
+                    const float *matrix, DWORD count)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %p, %d\n", This, matrix, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_GetPrimaryContent(IDirectManipulationViewport2 *iface, REFIID riid, void **object)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %s, %p\n", This, debugstr_guid(riid), object);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_AddContent(IDirectManipulationViewport2 *iface, IDirectManipulationContent *content)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %p\n", This, content);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_RemoveContent(IDirectManipulationViewport2 *iface, IDirectManipulationContent *content)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %p\n", This, content);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_SetViewportOptions(IDirectManipulationViewport2 *iface, DIRECTMANIPULATION_VIEWPORT_OPTIONS options)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %d\n", This, options);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_AddConfiguration(IDirectManipulationViewport2 *iface, DIRECTMANIPULATION_CONFIGURATION configuration)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %d\n", This, configuration);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_RemoveConfiguration(IDirectManipulationViewport2 *iface, DIRECTMANIPULATION_CONFIGURATION configuration)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %d\n", This, configuration);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_ActivateConfiguration(IDirectManipulationViewport2 *iface, DIRECTMANIPULATION_CONFIGURATION configuration)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %d\n", This, configuration);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_SetManualGesture(IDirectManipulationViewport2 *iface, DIRECTMANIPULATION_GESTURE_CONFIGURATION configuration)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %d\n", This, configuration);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_SetChaining(IDirectManipulationViewport2 *iface, DIRECTMANIPULATION_MOTION_TYPES enabledTypes)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %d\n", This, enabledTypes);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_AddEventHandler(IDirectManipulationViewport2 *iface, HWND window,
+                    IDirectManipulationViewportEventHandler *eventHandler, DWORD *cookie)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %p, %p, %p\n", This, window, eventHandler, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_RemoveEventHandler(IDirectManipulationViewport2 *iface, DWORD cookie)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %d\n", This, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_SetInputMode(IDirectManipulationViewport2 *iface, DIRECTMANIPULATION_INPUT_MODE mode)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %d\n", This, mode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_SetUpdateMode(IDirectManipulationViewport2 *iface, DIRECTMANIPULATION_INPUT_MODE mode)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %d\n", This, mode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_Stop(IDirectManipulationViewport2 *iface)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_Abandon(IDirectManipulationViewport2 *iface)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_AddBehavior(IDirectManipulationViewport2 *iface, IUnknown *behavior, DWORD *cookie)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %p, %p\n", This, behavior, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_RemoveBehavior(IDirectManipulationViewport2 *iface, DWORD cookie)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p, %d\n", This, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI viewport_RemoveAllBehaviors(IDirectManipulationViewport2 *iface)
+{
+    struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static const IDirectManipulationViewport2Vtbl viewportVtbl =
+{
+    viewport_QueryInterface,
+    viewport_AddRef,
+    viewport_Release,
+    viewport_Enable,
+    viewport_Disable,
+    viewport_SetContact,
+    viewport_ReleaseContact,
+    viewport_ReleaseAllContacts,
+    viewport_GetStatus,
+    viewport_GetTag,
+    viewport_SetTag,
+    viewport_GetViewportRect,
+    viewport_SetViewportRect,
+    viewport_ZoomToRect,
+    viewport_SetViewportTransform,
+    viewport_SyncDisplayTransform,
+    viewport_GetPrimaryContent,
+    viewport_AddContent,
+    viewport_RemoveContent,
+    viewport_SetViewportOptions,
+    viewport_AddConfiguration,
+    viewport_RemoveConfiguration,
+    viewport_ActivateConfiguration,
+    viewport_SetManualGesture,
+    viewport_SetChaining,
+    viewport_AddEventHandler,
+    viewport_RemoveEventHandler,
+    viewport_SetInputMode,
+    viewport_SetUpdateMode,
+    viewport_Stop,
+    viewport_Abandon,
+    viewport_AddBehavior,
+    viewport_RemoveBehavior,
+    viewport_RemoveAllBehaviors
+};
+
+static HRESULT create_viewport(IDirectManipulationViewport2 **obj)
+{
+    struct directviewport *object;
+
+    object = heap_alloc(sizeof(*object));
+    if(!object)
+        return E_OUTOFMEMORY;
+
+    object->IDirectManipulationViewport2_iface.lpVtbl = &viewportVtbl;
+    object->ref = 1;
+
+    *obj = &object->IDirectManipulationViewport2_iface;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI direct_manip_QueryInterface(IDirectManipulationManager2 *iface, REFIID riid, void **ppv)
 {
     if (IsEqualGUID(riid, &IID_IUnknown) ||
@@ -280,9 +608,18 @@ static HRESULT WINAPI direct_manip_GetUpdateManager(IDirectManipulationManager2 
 static HRESULT WINAPI direct_manip_CreateViewport(IDirectManipulationManager2 *iface, IDirectManipulationFrameInfoProvider *frame,
                 HWND window, REFIID riid, void **obj)
 {
+    HRESULT hr = E_NOTIMPL;
     struct directmanipulation *This = impl_from_IDirectManipulationManager2(iface);
-    FIXME("%p, %p, %p, %s, %p\n", This, frame, window, debugstr_guid(riid), obj);
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p, %s, %p\n", This, frame, window, debugstr_guid(riid), obj);
+
+    if(IsEqualGUID(riid, &IID_IDirectManipulationViewport) ||
+       IsEqualGUID(riid, &IID_IDirectManipulationViewport2) )
+    {
+        hr = create_viewport( (IDirectManipulationViewport2**)obj);
+    }
+    else
+        FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+    return hr;
 }
 
 static HRESULT WINAPI direct_manip_CreateContent(IDirectManipulationManager2 *iface, IDirectManipulationFrameInfoProvider *frame,
