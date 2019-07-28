@@ -20625,6 +20625,7 @@ wine_fn_config_makefile dlls/dinput/tests enable_tests
 wine_fn_config_makefile dlls/dinput8 enable_dinput8
 wine_fn_config_makefile dlls/dinput8/tests enable_tests
 wine_fn_config_makefile dlls/directmanipulation enable_directmanipulation
+wine_fn_config_makefile dlls/directmanipulation/tests enable_tests
 wine_fn_config_makefile dlls/dispdib.dll16 enable_win16
 wine_fn_config_makefile dlls/dispex enable_dispex
 wine_fn_config_makefile dlls/dispex/tests enable_tests
