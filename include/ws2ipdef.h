@@ -280,6 +280,8 @@ typedef struct WS(in_pktinfo) {
 #define WS_IN6ADDR_LOOPBACK_INIT { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }
 #endif /* USE_WS_PREFIX */
 
+#define SS_PORT(ssp) (((PSOCKADDR_IN)(ssp))->sin_port)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
