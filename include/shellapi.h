@@ -497,6 +497,30 @@ HRESULT     WINAPI SHQueryRecycleBinW(LPCWSTR,LPSHQUERYRBINFO);
 #define     SHQueryRecycleBin WINELIB_NAME_AW(SHQueryRecycleBin)
 
 /******************************************
+ * Network Address Control
+ */
+typedef struct tagNC_ADDRESS
+{
+   struct NET_ADDRESS_INFO_ *pAddrInfo;
+   USHORT                   PortNumber;
+   BYTE                     PrefixLength;
+} NC_ADDRESS, *PNC_ADDRESS;
+
+#define NCM_GETADDRESS      (WM_USER+1)
+#define NCM_SETALLOWTYPE    (WM_USER+2)
+#define NCM_GETALLOWTYPE    (WM_USER+3)
+#define NCM_DISPLAYERRORTIP (WM_USER+4)
+
+#define NetAddr_GetAddress(hwnd,addr) \
+    (HRESULT)SNDMSG(hwnd,NCM_GETADDRESS,0,(LPARAM)addr)
+#define NetAddr_SetAllowType(hwnd, mask) \
+    (HRESULT)SNDMSG(hwnd,NCM_SETALLOWTYPE,(WPARAM)mask,0)
+#define NetAddr_GetAllowType(hwnd) \
+    (DWORD)SNDMSG(hwnd,NCM_GETALLOWTYPE,0,0)
+#define NetAddr_DisplayErrorTip(hwnd) \
+    (HRESULT)SNDMSG(hwnd,NCM_DISPLAYERRORTIP,0,0)
+
+/******************************************
  * Misc
  */
 
