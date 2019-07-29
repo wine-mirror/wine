@@ -650,6 +650,30 @@ typedef struct tagGESTURECONFIG {
 #define GIDC_ARRIVAL 1
 #define GIDC_REMOVAL 2
 
+#define GC_PAN                                 0x00000001
+#define GC_PAN_WITH_SINGLE_FINGER_VERTICALLY   0x00000002
+#define GC_PAN_WITH_SINGLE_FINGER_HORIZONTALLY 0x00000004
+#define GC_PAN_WITH_GUTTER                     0x00000008
+#define GC_PAN_WITH_INERTIA                    0x00000010
+
+#define GC_ALLGESTURES                         0x00000001
+#define GC_PRESSANDTAP                         0x00000001
+#define GC_ROLLOVER                            GC_PRESSANDTAP
+#define GC_ROTATE                              0x00000001
+#define GC_TWOFINGERTAP                        0x00000001
+#define GC_ZOOM                                0x00000001
+
+#define GESTURECONFIGMAXCOUNT                  256
+
+#define GID_BEGIN                              1
+#define GID_END                                2
+#define GID_ZOOM                               3
+#define GID_PAN                                4
+#define GID_ROTATE                             5
+#define GID_TWOFINGERTAP                       6
+#define GID_PRESSANDTAP                        7
+#define GID_ROLLOVER                           GID_PRESSANDTAP
+
 #if (_WIN32_WINNT >= 0x0601)
 #define GET_DEVICE_CHANGE_WPARAM(wParam) (LOWORD(wParam))
 #elif (_WIN32_WINNT >= 0x0501)
