@@ -631,7 +631,7 @@ static HRESULT WINAPI viewport_ActivateConfiguration(IDirectManipulationViewport
 {
     struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
     FIXME("%p, %d\n", This, configuration);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI viewport_SetManualGesture(IDirectManipulationViewport2 *iface, DIRECTMANIPULATION_GESTURE_CONFIGURATION configuration)
