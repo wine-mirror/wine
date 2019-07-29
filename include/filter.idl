@@ -1,0 +1,101 @@
+/*
+ * Copyright 2019 Alistair Leslie-Hughes
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "unknwn.idl";
+import "objidl.idl";
+import "propidl.idl";
+
+typedef struct tagFULLPROPSPEC
+{
+    GUID     guidPropSet;
+    PROPSPEC psProperty;
+} FULLPROPSPEC;
+
+[
+    object,
+    uuid(89bcb740-6119-101a-bcb7-00dd010655af),
+    pointer_default(unique)
+]
+
+interface IFilter : IUnknown
+{
+    typedef enum tagIFILTER_INIT
+    {
+        IFILTER_INIT_CANON_PARAGRAPHS        =    1,
+        IFILTER_INIT_HARD_LINE_BREAKS        =    2,
+        IFILTER_INIT_CANON_HYPHENS           =    4,
+        IFILTER_INIT_CANON_SPACES            =    8,
+        IFILTER_INIT_APPLY_INDEX_ATTRIBUTES  =   16,
+        IFILTER_INIT_APPLY_OTHER_ATTRIBUTES  =   32,
+        IFILTER_INIT_INDEXING_ONLY           =   64,
+        IFILTER_INIT_SEARCH_LINKS            =  128,
+        IFILTER_INIT_APPLY_CRAWL_ATTRIBUTES  =  256,
+        IFILTER_INIT_FILTER_OWNED_VALUE_OK   =  512,
+        IFILTER_INIT_FILTER_AGGRESSIVE_BREAK = 1024,
+        IFILTER_INIT_DISABLE_EMBEDDED        = 2048,
+        IFILTER_INIT_EMIT_FORMATTING         = 4096
+    } IFILTER_INIT;
+
+    typedef enum tagIFILTER_FLAGS
+    {
+        IFILTER_FLAGS_OLE_PROPERTIES = 1
+    } IFILTER_FLAGS;
+
+    typedef enum tagCHUNKSTATE
+    {
+        CHUNK_TEXT               = 0x1,
+        CHUNK_VALUE              = 0x2,
+        CHUNK_FILTER_OWNED_VALUE = 0x4
+    } CHUNKSTATE;
+
+    typedef enum tagCHUNK_BREAKTYPE
+    {
+        CHUNK_NO_BREAK = 0,
+        CHUNK_EOW      = 1,
+        CHUNK_EOS      = 2,
+        CHUNK_EOP      = 3,
+        CHUNK_EOC      = 4
+    } CHUNK_BREAKTYPE;
+
+    typedef struct tagFILTERREGION
+    {
+        ULONG idChunk;
+        ULONG cwcStart;
+        ULONG cwcExtent;
+    } FILTERREGION;
+
+    typedef struct tagSTAT_CHUNK
+    {
+        ULONG           idChunk;
+        CHUNK_BREAKTYPE breakType;
+        CHUNKSTATE      flags;
+        LCID            locale;
+        FULLPROPSPEC    attribute;
+        ULONG           idChunkSource;
+        ULONG           cwcStartSource;
+        ULONG           cwcLenSource;
+    } STAT_CHUNK;
+
+    SCODE Init([in] ULONG flags, [in] ULONG cnt, [in, size_is(cnt), unique] FULLPROPSPEC const *attributes, [out] ULONG *out_flags);
+    SCODE GetChunk([out] STAT_CHUNK *stat);
+    SCODE GetText([in, out] ULONG *cnt, [out, size_is(*cnt)] WCHAR *buffer);
+    SCODE GetValue([out] PROPVARIANT **value);
+
+    [local]
+    SCODE BindRegion([in] FILTERREGION pos, [in] REFIID riid, [out] void **unk);
+}
