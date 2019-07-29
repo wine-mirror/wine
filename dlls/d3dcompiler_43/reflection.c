@@ -51,6 +51,7 @@ struct d3dcompiler_shader_reflection_type
 
     D3D11_SHADER_TYPE_DESC desc;
     struct d3dcompiler_shader_reflection_type_member *members;
+    char *name;
 };
 
 struct d3dcompiler_shader_reflection_type_member
@@ -222,6 +223,7 @@ static void d3dcompiler_shader_reflection_type_destroy(struct wine_rb_entry *ent
         HeapFree(GetProcessHeap(), 0, t->members);
     }
 
+    heap_free(t->name);
     HeapFree(GetProcessHeap(), 0, t);
 }
 
@@ -1242,6 +1244,19 @@ static HRESULT d3dcompiler_parse_type(struct d3dcompiler_shader_reflection_type 
                 goto err_out;
             }
         }
+    }
+
+    if ((type->reflection->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK) >= 0x500)
+    {
+        read_dword(&ptr, &offset);
+        if (!copy_name(data + offset, &type->name))
+        {
+            ERR("Failed to copy name.\n");
+            heap_free(members);
+            return E_OUTOFMEMORY;
+        }
+        desc->Name = type->name;
+        TRACE("Type name: %s.\n", debugstr_a(type->name));
     }
 
     type->members = members;

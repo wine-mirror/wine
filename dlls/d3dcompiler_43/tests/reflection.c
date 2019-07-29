@@ -1207,11 +1207,11 @@ static const struct {
 
 static const D3D11_SHADER_TYPE_DESC test_reflection_constant_buffer_type_result[] =
 {
-    {D3D11_SVC_INTERFACE_POINTER, D3D11_SVT_INTERFACE_POINTER, 1, 4, 0, 1, 0},
-    {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 0, 1, 0},
-    {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 2, 1, 0},
-    {D3D_SVC_SCALAR, D3D_SVT_INT, 1, 1, 0, 1, 0},
-    {D3D_SVC_STRUCT, D3D_SVT_VOID, 1, 2, 0, 1, 0},
+    {D3D11_SVC_INTERFACE_POINTER, D3D11_SVT_INTERFACE_POINTER, 1, 4, 0, 1, 0, "iTest"},
+    {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 0, 1, 0, "float"},
+    {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 2, 1, 0, "float"},
+    {D3D_SVC_SCALAR, D3D_SVT_INT, 1, 1, 0, 1, 0, "int"},
+    {D3D_SVC_STRUCT, D3D_SVT_VOID, 1, 2, 0, 1, 0, "s"},
 };
 
 static void test_reflection_constant_buffer(void)
@@ -1459,6 +1459,8 @@ static void test_reflection_constant_buffer(void)
                 i, tdesc.Elements, ptdesc->Elements);
         ok(tdesc.Offset == ptdesc->Offset, "GetDesc(%u) Offset failed, got %u, expected %u\n",
                 i, tdesc.Offset, ptdesc->Offset);
+        ok(!strcmp(tdesc.Name, ptdesc->Name), "GetDesc(%u) Name failed, got %s, expected %s\n",
+                i, tdesc.Name, ptdesc->Name);
     }
 
     /* types */
