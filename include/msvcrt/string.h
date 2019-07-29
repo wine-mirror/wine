@@ -60,6 +60,7 @@ char* __cdecl _strnset(char*,int,size_t);
 char* __cdecl _strrev(char*);
 char* __cdecl _strset(char*,int);
 char* __cdecl _strupr(char*);
+errno_t __cdecl _strupr_s(char *, size_t);
 
 void*   __cdecl memmove(void*,const void*,size_t);
 errno_t __cdecl memmove_s(void*,size_t,const void*,size_t);
