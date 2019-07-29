@@ -28,6 +28,7 @@ SOURCES = \
 	asysta.idl \
 	atlbase.h \
 	atlcom.h \
+	atldef.h \
 	atliface.idl \
 	atlthunk.h \
 	atlwin.h \
