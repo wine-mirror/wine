@@ -3425,6 +3425,15 @@ typedef struct tagAUDIODESCRIPTION
     LCID Locale;
 } AUDIODESCRIPTION, *LPAUDIODESCRIPTION;
 
+typedef struct tagMENUGETOBJECTINFO
+{
+    DWORD dwFlags;
+    UINT  uPos;
+    HMENU hmenu;
+    void  *riid;
+    void  *pvObj;
+} MENUGETOBJECTINFO, *PMENUGETOBJECTINFO;
+
 #if defined(_WINGDI_) && !defined(NOGDI)
 WINUSERAPI LONG        WINAPI ChangeDisplaySettingsA(LPDEVMODEA,DWORD);
 WINUSERAPI LONG        WINAPI ChangeDisplaySettingsW(LPDEVMODEW,DWORD);
