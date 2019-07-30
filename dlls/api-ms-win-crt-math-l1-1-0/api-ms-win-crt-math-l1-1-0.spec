@@ -242,7 +242,7 @@
 @ cdecl floor(double) ucrtbase.floor
 @ cdecl -arch=arm,x86_64,arm64 floorf(float) ucrtbase.floorf
 @ cdecl fma(double double double) ucrtbase.fma
-@ cdecl -arch=arm,x86_64,arm64 fmaf(float float float) ucrtbase.fmaf
+@ cdecl fmaf(float float float) ucrtbase.fmaf
 @ stub fmal
 @ cdecl fmax(double double) ucrtbase.fmax
 @ cdecl fmaxf(float float) ucrtbase.fmaxf
