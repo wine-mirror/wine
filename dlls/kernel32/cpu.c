@@ -369,8 +369,6 @@ UINT WINAPI GetSystemFirmwareTable(DWORD provider, DWORD id, void *buffer, DWORD
 
 /***********************************************************************
  *              EnumSystemFirmwareTables   (KERNEL32.@)
- *
- * See EnumSystemCodePagesA.
  */
 UINT WINAPI EnumSystemFirmwareTables(DWORD provider, void *buffer, DWORD size)
 {
