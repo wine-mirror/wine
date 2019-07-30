@@ -3024,6 +3024,30 @@ double CDECL MSVCR120_fmax(double x, double y)
 }
 
 /*********************************************************************
+ *      fdimf (MSVCR120.@)
+ */
+float CDECL MSVCR120_fdimf(float x, float y)
+{
+    if(isnan(x))
+        return x;
+    if(isnan(y))
+        return y;
+    return x>y ? x-y : 0;
+}
+
+/*********************************************************************
+ *      fdim (MSVCR120.@)
+ */
+double CDECL MSVCR120_fdim(double x, double y)
+{
+    if(isnan(x))
+        return x;
+    if(isnan(y))
+        return y;
+    return x>y ? x-y : 0;
+}
+
+/*********************************************************************
  *      _fdsign (MSVCR120.@)
  */
 int CDECL MSVCR120__fdsign(float x)

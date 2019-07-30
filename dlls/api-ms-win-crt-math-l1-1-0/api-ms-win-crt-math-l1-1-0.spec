@@ -236,9 +236,9 @@
 @ cdecl expm1l(double) ucrtbase.expm1l
 @ cdecl fabs(double) ucrtbase.fabs
 @ cdecl -arch=arm,arm64 fabsf(float) ucrtbase.fabsf
-@ stub fdim
-@ stub fdimf
-@ stub fdiml
+@ cdecl fdim(double double) ucrtbase.fdim
+@ cdecl fdimf(float float) ucrtbase.fdimf
+@ cdecl fdiml(double double) ucrtbase.fdiml
 @ cdecl floor(double) ucrtbase.floor
 @ cdecl -arch=arm,x86_64,arm64 floorf(float) ucrtbase.floorf
 @ cdecl fma(double double double) ucrtbase.fma

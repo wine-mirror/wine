@@ -1806,9 +1806,9 @@
 @ cdecl fabs(double) msvcr120.fabs
 @ cdecl -arch=arm,x86_64,arm64 fabsf(float) msvcr120.fabsf
 @ cdecl fclose(ptr) msvcr120.fclose
-@ stub fdim
-@ stub fdimf
-@ stub fdiml
+@ cdecl fdim(double double) msvcr120.fdim
+@ cdecl fdimf(float float) msvcr120.fdimf
+@ cdecl fdiml(double double) msvcr120.fdiml
 @ stub feclearexcept
 @ cdecl fegetenv(ptr) msvcr120.fegetenv
 @ stub fegetexceptflag

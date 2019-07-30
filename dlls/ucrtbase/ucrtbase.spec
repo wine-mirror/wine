@@ -2283,9 +2283,9 @@
 @ cdecl fabs(double) MSVCRT_fabs
 @ cdecl -arch=arm,arm64 fabsf(float) MSVCRT_fabsf
 @ cdecl fclose(ptr) MSVCRT_fclose
-@ stub fdim
-@ stub fdimf
-@ stub fdiml
+@ cdecl fdim(double double) MSVCR120_fdim
+@ cdecl fdimf(float float) MSVCR120_fdimf
+@ cdecl fdiml(double double) MSVCR120_fdim
 @ stub feclearexcept
 @ cdecl fegetenv(ptr) MSVCRT_fegetenv
 @ stub fegetexceptflag
