@@ -450,6 +450,8 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
             }
         }
 
+        strarray_add( flags, "-Wl,--nxcompat" );
+
         if (opts->image_base) strarray_add( flags, strmake("-Wl,--image-base,%s", opts->image_base ));
 
         if (opts->large_address_aware && opts->target_cpu == CPU_x86)
