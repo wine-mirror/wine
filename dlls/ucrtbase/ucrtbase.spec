@@ -2307,7 +2307,7 @@
 @ cdecl -arch=arm,x86_64,arm64 floorf(float) MSVCRT_floorf
 @ cdecl fma(double double double) MSVCRT_fma
 @ cdecl fmaf(float float float) MSVCRT_fmaf
-@ stub fmal
+@ cdecl fmal(double double double) MSVCRT_fma
 @ cdecl fmax(double double) MSVCR120_fmax
 @ cdecl fmaxf(float float) MSVCR120_fmaxf
 @ cdecl fmaxl(double double) MSVCR120_fmax
