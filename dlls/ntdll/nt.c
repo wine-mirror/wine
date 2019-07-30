@@ -2540,7 +2540,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                             /* ftCreationTime, ftUserTime, ftKernelTime;
                              * vmCounters, ioCounters
                              */
- 
+
                             memset(spi, 0, sizeof(*spi));
 
                             spi->NextEntryOffset = procstructlen - wlen;
@@ -2560,7 +2560,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     }
                 }
                 SERVER_END_REQ;
- 
+
                 if (ret != STATUS_SUCCESS)
                 {
                     if (ret == STATUS_NO_MORE_FILES) ret = STATUS_SUCCESS;
@@ -2919,7 +2919,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 	FIXME("(0x%08x,%p,0x%08x,%p) stub\n",
 	      SystemInformationClass,SystemInformation,Length,ResultLength);
 
-        /* Several Information Classes are not implemented on Windows and return 2 different values 
+        /* Several Information Classes are not implemented on Windows and return 2 different values
          * STATUS_NOT_IMPLEMENTED or STATUS_INVALID_INFO_CLASS
          * in 95% of the cases it's STATUS_INVALID_INFO_CLASS, so use this as the default
         */

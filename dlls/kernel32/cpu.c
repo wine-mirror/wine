@@ -374,27 +374,6 @@ UINT WINAPI GetSystemFirmwareTable(DWORD provider, DWORD id, void *buffer, DWORD
  */
 UINT WINAPI EnumSystemFirmwareTables(DWORD provider, void *buffer, DWORD size)
 {
-    ULONG buffer_size = FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer) + size;
-    SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti = HeapAlloc(GetProcessHeap(), 0, buffer_size);
-    NTSTATUS status;
-
-    TRACE("(0x%08x, %p, %d)\n", provider, buffer, size);
-
-    if (!sfti)
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        return 0;
-    }
-
-    sfti->ProviderSignature = provider;
-    sfti->Action = SystemFirmwareTable_Get;
-
-    status = NtQuerySystemInformation(SystemFirmwareTableInformation, sfti, buffer_size, &buffer_size);
-    buffer_size -= FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer);
-    if (buffer_size <= size)
-        memcpy(buffer, sfti->TableBuffer, buffer_size);
-
-    if (status) SetLastError(RtlNtStatusToDosError(status));
-    HeapFree(GetProcessHeap(), 0, sfti);
-    return buffer_size;
+    FIXME("stub, always returning 0\n");
+    return 0;
 }
