@@ -3056,6 +3056,23 @@ NTSTATUS WINAPI NtInitiatePowerAction(
         return STATUS_NOT_IMPLEMENTED;
 }
 
+/******************************************************************************
+ *  NtSetThreadExecutionState                   [NTDLL.@]
+ *
+ */
+NTSTATUS WINAPI NtSetThreadExecutionState( EXECUTION_STATE new_state, EXECUTION_STATE *old_state )
+{
+    static EXECUTION_STATE current =
+        ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_USER_PRESENT;
+    *old_state = current;
+
+    WARN( "(0x%x, %p): stub, harmless.\n", new_state, old_state );
+
+    if (!(current & ES_CONTINUOUS) || (new_state & ES_CONTINUOUS))
+        current = new_state;
+    return STATUS_SUCCESS;
+}
+
 #ifdef linux
 /* Fallback using /proc/cpuinfo for Linux systems without cpufreq. For
  * most distributions on recent enough hardware, this is only likely to

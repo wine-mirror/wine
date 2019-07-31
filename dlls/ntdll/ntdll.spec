@@ -381,7 +381,7 @@
 @ stdcall NtSetSystemInformation(long ptr long)
 @ stub NtSetSystemPowerState
 @ stdcall NtSetSystemTime(ptr ptr)
-# @ stub NtSetThreadExecutionState
+@ stdcall NtSetThreadExecutionState(long ptr)
 @ stdcall NtSetTimer(long ptr ptr ptr long long ptr)
 @ stdcall NtSetTimerResolution(long long ptr)
 # @ stub NtSetUuidSeed
@@ -1330,7 +1330,7 @@
 @ stdcall -private ZwSetSystemInformation(long ptr long) NtSetSystemInformation
 @ stub ZwSetSystemPowerState
 @ stdcall -private ZwSetSystemTime(ptr ptr) NtSetSystemTime
-# @ stub ZwSetThreadExecutionState
+@ stdcall ZwSetThreadExecutionState(long ptr) NtSetThreadExecutionState
 @ stdcall -private ZwSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
 @ stdcall -private ZwSetTimerResolution(long long ptr) NtSetTimerResolution
 # @ stub ZwSetUuidSeed

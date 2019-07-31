@@ -21,6 +21,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(powermgnt);
@@ -100,14 +101,10 @@ BOOL WINAPI SetSystemPowerState(BOOL suspend_or_hibernate,
  */
 EXECUTION_STATE WINAPI SetThreadExecutionState(EXECUTION_STATE flags)
 {
-    static EXECUTION_STATE current =
-        ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_USER_PRESENT;
-    EXECUTION_STATE old = current;
+    EXECUTION_STATE old;
 
-    WARN("(0x%x): stub, harmless.\n", flags);
+    NtSetThreadExecutionState(flags, &old);
 
-    if (!(current & ES_CONTINUOUS) || (flags & ES_CONTINUOUS))
-        current = flags;
     return old;
 }
 
