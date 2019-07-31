@@ -2173,9 +2173,17 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d12_swapchain_SetFullscreen
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetFullscreenState(IDXGISwapChain3 *iface,
         BOOL *fullscreen, IDXGIOutput **target)
 {
-    FIXME("iface %p, fullscreen %p, target %p stub!\n", iface, fullscreen, target);
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, fullscreen %p, target %p.\n", iface, fullscreen, target);
+
+    if (fullscreen)
+        *fullscreen = !swapchain->fullscreen_desc.Windowed;
+
+    if (target)
+        *target = NULL;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetDesc(IDXGISwapChain3 *iface, DXGI_SWAP_CHAIN_DESC *desc)
