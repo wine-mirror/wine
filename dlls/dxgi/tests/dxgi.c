@@ -2295,28 +2295,18 @@ static void test_swapchain_fullscreen_state(IDXGISwapChain *swapchain,
     heap_free(output_monitor_info);
 }
 
-static void test_set_fullscreen(void)
+static void test_set_fullscreen(IUnknown *device, BOOL is_d3d12)
 {
     struct swapchain_fullscreen_state initial_state;
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    IDXGIAdapter *adapter = NULL;
     IDXGISwapChain *swapchain;
     IDXGIFactory *factory;
-    IDXGIAdapter *adapter;
-    IDXGIDevice *device;
+    IDXGIOutput *output;
     ULONG refcount;
     HRESULT hr;
 
-    if (!(device = create_device(0)))
-    {
-        skip("Failed to create device.\n");
-        return;
-    }
-
-    hr = IDXGIDevice_GetAdapter(device, &adapter);
-    ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
-
-    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
-    ok(SUCCEEDED(hr), "GetParent failed, hr %#x.\n", hr);
+    get_factory(device, is_d3d12, &factory);
 
     swapchain_desc.BufferDesc.Width = 800;
     swapchain_desc.BufferDesc.Height = 600;
@@ -2328,16 +2318,28 @@ static void test_set_fullscreen(void)
     swapchain_desc.SampleDesc.Count = 1;
     swapchain_desc.SampleDesc.Quality = 0;
     swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapchain_desc.BufferCount = 1;
+    swapchain_desc.BufferCount = is_d3d12 ? 2 : 1;
     swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
     swapchain_desc.Windowed = TRUE;
-    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.SwapEffect = is_d3d12 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.Flags = 0;
 
     memset(&initial_state, 0, sizeof(initial_state));
     capture_fullscreen_state(&initial_state.fullscreen_state, swapchain_desc.OutputWindow);
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
     ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+    hr = IDXGISwapChain_GetContainingOutput(swapchain, &output);
+    ok(SUCCEEDED(hr) || broken(hr == DXGI_ERROR_UNSUPPORTED), /* Win 7 testbot */
+            "Failed to get containing output, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Could not get output.\n");
+        goto done;
+    }
+    hr = IDXGIOutput_GetParent(output, &IID_IDXGIAdapter, (void **)&adapter);
+    ok(hr == S_OK, "Failed to get parent, hr %#x.\n", hr);
+    IDXGIOutput_Release(output);
+
     check_swapchain_fullscreen_state(swapchain, &initial_state);
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
     ok(SUCCEEDED(hr) || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
@@ -2407,16 +2409,15 @@ static void test_set_fullscreen(void)
     test_swapchain_fullscreen_state(swapchain, adapter, &initial_state);
 
 done:
+    if (adapter)
+        IDXGIAdapter_Release(adapter);
     refcount = IDXGISwapChain_Release(swapchain);
     ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
     check_window_fullscreen_state(swapchain_desc.OutputWindow, &initial_state.fullscreen_state);
     DestroyWindow(swapchain_desc.OutputWindow);
 
-    IDXGIAdapter_Release(adapter);
-    refcount = IDXGIDevice_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
     refcount = IDXGIFactory_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ok(refcount == !is_d3d12, "Got unexpected refcount %u.\n", refcount);
 }
 
 static void test_default_fullscreen_target_output(void)
@@ -5702,7 +5703,6 @@ START_TEST(dxgi)
 
     /* These tests use full-screen swapchains, so shouldn't run in parallel. */
     test_create_swapchain();
-    test_set_fullscreen();
     test_default_fullscreen_target_output();
     test_inexact_modes();
     test_gamma_control();
@@ -5710,6 +5710,7 @@ START_TEST(dxgi)
     test_swapchain_window_messages();
     test_swapchain_window_styles();
     test_window_association();
+    run_on_d3d10(test_set_fullscreen);
     run_on_d3d10(test_resize_target);
     run_on_d3d10(test_swapchain_resize);
     run_on_d3d10(test_swapchain_present);
@@ -5732,6 +5733,7 @@ START_TEST(dxgi)
         ID3D12Debug_Release(debug);
     }
 
+    run_on_d3d12(test_set_fullscreen);
     run_on_d3d12(test_resize_target);
     run_on_d3d12(test_swapchain_resize);
     run_on_d3d12(test_swapchain_present);
