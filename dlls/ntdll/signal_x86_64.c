@@ -4436,13 +4436,120 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
                    "call " __ASM_NAME("RtlRaiseStatus") /* does not return */ );
 
 
+static inline ULONG hash_pointers( void **ptrs, ULONG count )
+{
+    /* Based on MurmurHash2, which is in the public domain */
+    static const ULONG m = 0x5bd1e995;
+    static const ULONG r = 24;
+    ULONG hash = count * sizeof(void*);
+    for (; count > 0; ptrs++, count--)
+    {
+        ULONG_PTR data = (ULONG_PTR)*ptrs;
+        ULONG k1 = (ULONG)(data & 0xffffffff), k2 = (ULONG)(data >> 32);
+        k1 *= m;
+        k1 = (k1 ^ (k1 >> r)) * m;
+        k2 *= m;
+        k2 = (k2 ^ (k2 >> r)) * m;
+        hash = (((hash * m) ^ k1) * m) ^ k2;
+    }
+    hash = (hash ^ (hash >> 13)) * m;
+    return hash ^ (hash >> 15);
+}
+
+
 /*************************************************************************
  *		RtlCaptureStackBackTrace (NTDLL.@)
  */
 USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, ULONG *hash )
 {
-    FIXME( "(%d, %d, %p, %p) stub!\n", skip, count, buffer, hash );
-    return 0;
+    UNWIND_HISTORY_TABLE table;
+    DISPATCHER_CONTEXT dispatch;
+    CONTEXT context;
+    LDR_MODULE *module;
+    NTSTATUS status;
+    ULONG i;
+    USHORT num_entries = 0;
+
+    TRACE( "(%u, %u, %p, %p)", skip, count, buffer, hash );
+
+    RtlCaptureContext( &context );
+    dispatch.TargetIp      = 0;
+    dispatch.ContextRecord = &context;
+    dispatch.HistoryTable  = &table;
+    if (hash) *hash = 0;
+    for (i = 0; i < skip + count; i++)
+    {
+        /* FIXME: should use the history table to make things faster */
+
+        dispatch.ImageBase = 0;
+        dispatch.ControlPc = context.Rip;
+        dispatch.ScopeIndex = 0;
+
+        /* first look for PE exception information */
+
+        if ((dispatch.FunctionEntry = lookup_function_info( dispatch.ControlPc, &dispatch.ImageBase, &module )))
+        {
+            RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase, dispatch.ControlPc,
+                              dispatch.FunctionEntry, &context, &dispatch.HandlerData,
+                              &dispatch.EstablisherFrame, NULL );
+            goto unwind_done;
+        }
+
+        /* then look for host system exception information */
+
+        if (!module || (module->Flags & LDR_WINE_INTERNAL))
+        {
+            BOOL got_info = FALSE;
+            struct dwarf_eh_bases bases;
+            const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(dispatch.ControlPc - 1), &bases );
+
+            if (fde)
+            {
+                status = dwarf_virtual_unwind( dispatch.ControlPc, &dispatch.EstablisherFrame, &context,
+                                               fde, &bases, &dispatch.LanguageHandler, &dispatch.HandlerData );
+                if (status != STATUS_SUCCESS) return status;
+                got_info = TRUE;
+            }
+#ifdef HAVE_LIBUNWIND_H
+            else
+            {
+                status = libunwind_virtual_unwind( dispatch.ControlPc, &got_info, &dispatch.EstablisherFrame, &context,
+                                                   &dispatch.LanguageHandler, &dispatch.HandlerData );
+                if (status != STATUS_SUCCESS) return i;
+            }
+#endif
+
+            if (got_info)
+            {
+                dispatch.FunctionEntry = NULL;
+                goto unwind_done;
+            }
+        }
+        else WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
+
+        context.Rip = *(ULONG64 *)context.Rsp;
+        context.Rsp = context.Rsp + sizeof(ULONG64);
+        dispatch.EstablisherFrame = context.Rsp;
+
+    unwind_done:
+        if (!dispatch.EstablisherFrame) break;
+
+        if ((dispatch.EstablisherFrame & 7) ||
+            dispatch.EstablisherFrame < (ULONG64)NtCurrentTeb()->Tib.StackLimit ||
+            dispatch.EstablisherFrame > (ULONG64)NtCurrentTeb()->Tib.StackBase)
+        {
+            ERR( "invalid frame %lx (%p-%p)\n", dispatch.EstablisherFrame,
+                 NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+            break;
+        }
+
+        if (context.Rsp == (ULONG64)NtCurrentTeb()->Tib.StackBase) break;
+
+        if (i >= skip) buffer[num_entries++] = (void *)context.Rip;
+    }
+    if (hash && num_entries > 0) *hash = hash_pointers( buffer, num_entries );
+    TRACE( "captured %hu frames\n", num_entries );
+    return num_entries;
 }
 
 
