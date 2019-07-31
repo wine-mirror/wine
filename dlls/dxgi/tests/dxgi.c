@@ -4155,7 +4155,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
             skip("Test %u: Could not change fullscreen state.\n", i);
             continue;
         }
-        todo_wine_if(is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
         todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
@@ -4164,8 +4164,8 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         fullscreen = FALSE;
         hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, &output);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
-        todo_wine_if(is_d3d12) ok(fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
-        todo_wine_if(is_d3d12) ok(!!output, "Test %u: Got unexpected output.\n", i);
+        ok(fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
+        ok(!!output, "Test %u: Got unexpected output.\n", i);
 
         if (output)
             IDXGIOutput_ReleaseOwnership(output);
@@ -4173,7 +4173,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         fullscreen = FALSE;
         hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
-        todo_wine_if(is_d3d12) ok(fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
+        ok(fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
         /* Calling IDXGISwapChain_Present() will exit fullscreen. */
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
@@ -4185,7 +4185,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
             /* Still fullscreen on vista and 2008. */
             todo_wine ok(!fullscreen || broken(fullscreen), "Test %u: Got unexpected fullscreen status.\n", i);
         else
-            todo_wine_if(is_d3d12) ok(fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
+            ok(fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
         if (output)
             IDXGIOutput_Release(output);
 
@@ -4198,11 +4198,11 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
          * compositing. D3d12 fullscreen mode acts just like borderless
          * fullscreen window mode. */
         hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
-        todo_wine_if(is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         fullscreen = FALSE;
         hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
-        todo_wine_if(is_d3d12) ok(fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
+        ok(fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
         todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
@@ -4218,7 +4218,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         fullscreen = FALSE;
         hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
-        todo_wine_if(is_d3d12) ok(fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
+        ok(fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
         /* A visible, but with bottom z-order window still causes the
          * swapchain to exit fullscreen mode. */
         SetWindowPos(occluding_window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
@@ -4232,7 +4232,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         fullscreen = TRUE;
         hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
-        todo_wine ok(is_d3d12 ? fullscreen : !fullscreen,
+        todo_wine_if(!is_d3d12) ok(is_d3d12 ? fullscreen : !fullscreen,
                 "Test %u: Got unexpected fullscreen status.\n", i);
 
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
@@ -4245,10 +4245,10 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (flags[i] == DXGI_PRESENT_TEST)
-            todo_wine ok(is_d3d12 ? fullscreen : !fullscreen,
+            todo_wine_if(!is_d3d12) ok(is_d3d12 ? fullscreen : !fullscreen,
                     "Test %u: Got unexpected fullscreen status.\n", i);
         else
-            todo_wine_if(!is_d3d12) ok(!fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
+            todo_wine ok(!fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
 
         /* Even though d3d12 doesn't exit fullscreen, a
          * IDXGISwapChain_ResizeBuffers() is still needed for subsequent
@@ -4267,7 +4267,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
          * IDXGISwapChain_GetFullscreenState() before IDXGISwapChain_Present(). */
         ShowWindow(occluding_window, SW_HIDE);
         hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
-        todo_wine_if(is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         ShowWindow(occluding_window, SW_SHOW);
 
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
@@ -4303,7 +4303,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         fullscreen = TRUE;
         hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
-        todo_wine_if(!is_d3d12) ok(!fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
+        todo_wine ok(!fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
 
         DestroyWindow(occluding_window);
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
@@ -4312,7 +4312,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
 
         hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-        todo_wine_if(is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
     }
@@ -5558,11 +5558,11 @@ static void test_output_ownership(IUnknown *device, BOOL is_d3d12)
         skip("Failed to change fullscreen state.\n");
         goto done;
     }
-    todo_wine_if(is_d3d12) ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     fullscreen = FALSE;
     hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
-    todo_wine_if(is_d3d12) ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine_if(is_d3d12) ok(fullscreen, "Got unexpected fullscreen state.\n");
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(fullscreen, "Got unexpected fullscreen state.\n");
     if (is_d3d12)
         wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS, FALSE);
     else
