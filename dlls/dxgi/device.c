@@ -425,48 +425,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_factory_create_swapchain(IWineDX
     TRACE("iface %p, factory %p, window %p, desc %p, fullscreen_desc %p, output %p, swapchain %p.\n",
             iface, factory, window, desc, fullscreen_desc, output, swapchain);
 
-    if (desc->Scaling != DXGI_SCALING_STRETCH)
-        FIXME("Ignoring scaling %#x.\n", desc->Scaling);
-    if (desc->AlphaMode != DXGI_ALPHA_MODE_IGNORE)
-        FIXME("Ignoring alpha mode %#x.\n", desc->AlphaMode);
-    if (fullscreen_desc && fullscreen_desc->ScanlineOrdering)
-        FIXME("Unhandled scanline ordering %#x.\n", fullscreen_desc->ScanlineOrdering);
-    if (fullscreen_desc && fullscreen_desc->Scaling)
-        FIXME("Unhandled mode scaling %#x.\n", fullscreen_desc->Scaling);
-
-    switch (desc->SwapEffect)
-    {
-        case DXGI_SWAP_EFFECT_DISCARD:
-            wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;
-            break;
-        case DXGI_SWAP_EFFECT_SEQUENTIAL:
-            wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_SEQUENTIAL;
-            break;
-        case DXGI_SWAP_EFFECT_FLIP_DISCARD:
-            wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_FLIP_DISCARD;
-            break;
-        case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
-            wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_FLIP_SEQUENTIAL;
-            break;
-        default:
-            WARN("Invalid swap effect %#x.\n", desc->SwapEffect);
-            return DXGI_ERROR_INVALID_CALL;
-    }
-
-    wined3d_desc.backbuffer_width = desc->Width;
-    wined3d_desc.backbuffer_height = desc->Height;
-    wined3d_desc.backbuffer_format = wined3dformat_from_dxgi_format(desc->Format);
-    wined3d_desc.backbuffer_count = desc->BufferCount;
-    wined3d_desc.backbuffer_bind_flags = wined3d_bind_flags_from_dxgi_usage(desc->BufferUsage);
-    wined3d_sample_desc_from_dxgi(&wined3d_desc.multisample_type,
-            &wined3d_desc.multisample_quality, &desc->SampleDesc);
-    wined3d_desc.device_window = window;
-    wined3d_desc.windowed = fullscreen_desc ? fullscreen_desc->Windowed : TRUE;
-    wined3d_desc.enable_auto_depth_stencil = FALSE;
-    wined3d_desc.auto_depth_stencil_format = 0;
-    wined3d_desc.flags = wined3d_swapchain_flags_from_dxgi(desc->Flags);
-    wined3d_desc.refresh_rate = fullscreen_desc ? dxgi_rational_to_uint(&fullscreen_desc->RefreshRate) : 0;
-    wined3d_desc.auto_restore_display_mode = TRUE;
+    if (FAILED(hr = wined3d_swapchain_desc_from_dxgi(&wined3d_desc, window, desc, fullscreen_desc)))
+        return hr;
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
     {

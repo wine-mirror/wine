@@ -85,7 +85,6 @@ void dump_feature_levels(const D3D_FEATURE_LEVEL *feature_levels, unsigned int l
 
 DXGI_FORMAT dxgi_format_from_wined3dformat(enum wined3d_format_id format) DECLSPEC_HIDDEN;
 enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;
-UINT dxgi_rational_to_uint(const DXGI_RATIONAL *rational) DECLSPEC_HIDDEN;
 void dxgi_sample_desc_from_wined3d(DXGI_SAMPLE_DESC *desc,
         enum wined3d_multisample_type wined3d_type, unsigned int wined3d_quality) DECLSPEC_HIDDEN;
 void wined3d_sample_desc_from_dxgi(enum wined3d_multisample_type *wined3d_type,
@@ -97,7 +96,9 @@ void wined3d_display_mode_from_dxgi1(struct wined3d_display_mode *wined3d_mode,
 DXGI_USAGE dxgi_usage_from_wined3d_bind_flags(unsigned int wined3d_bind_flags) DECLSPEC_HIDDEN;
 unsigned int wined3d_bind_flags_from_dxgi_usage(DXGI_USAGE usage) DECLSPEC_HIDDEN;
 unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags) DECLSPEC_HIDDEN;
-unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags) DECLSPEC_HIDDEN;
+HRESULT wined3d_swapchain_desc_from_dxgi(struct wined3d_swapchain_desc *wined3d_desc,
+        HWND window, const DXGI_SWAP_CHAIN_DESC1 *dxgi_desc,
+        const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *dxgi_fullscreen_desc) DECLSPEC_HIDDEN;
 
 HRESULT dxgi_get_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT *data_size, void *data) DECLSPEC_HIDDEN;

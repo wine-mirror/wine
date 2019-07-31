@@ -415,7 +415,7 @@ void dump_feature_levels(const D3D_FEATURE_LEVEL *feature_levels, unsigned int l
         TRACE("    [%u] = %s.\n", i, debug_feature_level(feature_levels[i]));
 }
 
-UINT dxgi_rational_to_uint(const DXGI_RATIONAL *rational)
+static unsigned int dxgi_rational_to_uint(const DXGI_RATIONAL *rational)
 {
     if (rational->Denominator)
         return rational->Numerator / rational->Denominator;
@@ -537,7 +537,7 @@ unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags)
     return flags;
 }
 
-unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags)
+static unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags)
 {
     unsigned int wined3d_flags = DXGI_WINED3D_SWAPCHAIN_FLAGS; /* WINED3D_SWAPCHAIN_DISCARD_DEPTHSTENCIL? */
 
@@ -557,6 +557,55 @@ unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags)
         FIXME("Unhandled flags %#x.\n", flags);
 
     return wined3d_flags;
+}
+
+HRESULT wined3d_swapchain_desc_from_dxgi(struct wined3d_swapchain_desc *wined3d_desc, HWND window,
+        const DXGI_SWAP_CHAIN_DESC1 *dxgi_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *dxgi_fullscreen_desc)
+{
+    if (dxgi_desc->Scaling != DXGI_SCALING_STRETCH)
+        FIXME("Ignoring scaling %#x.\n", dxgi_desc->Scaling);
+    if (dxgi_desc->AlphaMode != DXGI_ALPHA_MODE_IGNORE)
+        FIXME("Ignoring alpha mode %#x.\n", dxgi_desc->AlphaMode);
+    if (dxgi_fullscreen_desc && dxgi_fullscreen_desc->ScanlineOrdering)
+        FIXME("Unhandled scanline ordering %#x.\n", dxgi_fullscreen_desc->ScanlineOrdering);
+    if (dxgi_fullscreen_desc && dxgi_fullscreen_desc->Scaling)
+        FIXME("Unhandled mode scaling %#x.\n", dxgi_fullscreen_desc->Scaling);
+
+    switch (dxgi_desc->SwapEffect)
+    {
+        case DXGI_SWAP_EFFECT_DISCARD:
+            wined3d_desc->swap_effect = WINED3D_SWAP_EFFECT_DISCARD;
+            break;
+        case DXGI_SWAP_EFFECT_SEQUENTIAL:
+            wined3d_desc->swap_effect = WINED3D_SWAP_EFFECT_SEQUENTIAL;
+            break;
+        case DXGI_SWAP_EFFECT_FLIP_DISCARD:
+            wined3d_desc->swap_effect = WINED3D_SWAP_EFFECT_FLIP_DISCARD;
+            break;
+        case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
+            wined3d_desc->swap_effect = WINED3D_SWAP_EFFECT_FLIP_SEQUENTIAL;
+            break;
+        default:
+            WARN("Invalid swap effect %#x.\n", dxgi_desc->SwapEffect);
+            return DXGI_ERROR_INVALID_CALL;
+    }
+
+    wined3d_desc->backbuffer_width = dxgi_desc->Width;
+    wined3d_desc->backbuffer_height = dxgi_desc->Height;
+    wined3d_desc->backbuffer_format = wined3dformat_from_dxgi_format(dxgi_desc->Format);
+    wined3d_desc->backbuffer_count = dxgi_desc->BufferCount;
+    wined3d_desc->backbuffer_bind_flags = wined3d_bind_flags_from_dxgi_usage(dxgi_desc->BufferUsage);
+    wined3d_sample_desc_from_dxgi(&wined3d_desc->multisample_type,
+            &wined3d_desc->multisample_quality, &dxgi_desc->SampleDesc);
+    wined3d_desc->device_window = window;
+    wined3d_desc->windowed = dxgi_fullscreen_desc ? dxgi_fullscreen_desc->Windowed : TRUE;
+    wined3d_desc->enable_auto_depth_stencil = FALSE;
+    wined3d_desc->auto_depth_stencil_format = 0;
+    wined3d_desc->flags = wined3d_swapchain_flags_from_dxgi(dxgi_desc->Flags);
+    wined3d_desc->refresh_rate = dxgi_fullscreen_desc ? dxgi_rational_to_uint(&dxgi_fullscreen_desc->RefreshRate) : 0;
+    wined3d_desc->auto_restore_display_mode = TRUE;
+
+    return S_OK;
 }
 
 HRESULT dxgi_get_private_data(struct wined3d_private_store *store,

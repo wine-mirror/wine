@@ -152,6 +152,37 @@ static HRESULT dxgi_get_output_from_window(IDXGIAdapter *adapter, HWND window, I
     return DXGI_ERROR_NOT_FOUND;
 }
 
+static HRESULT dxgi_swapchain_resize_target(IDXGISwapChain1 *swapchain,
+        struct wined3d_swapchain_state *state, const DXGI_MODE_DESC *target_mode_desc)
+{
+    struct wined3d_display_mode mode;
+    struct dxgi_output *dxgi_output;
+    struct dxgi_adapter *adapter;
+    IDXGIOutput *output;
+    HRESULT hr;
+
+    if (!target_mode_desc)
+    {
+        WARN("Invalid pointer.\n");
+        return DXGI_ERROR_INVALID_CALL;
+    }
+
+    if (FAILED(hr = IDXGISwapChain1_GetContainingOutput(swapchain, &output)))
+        return hr;
+    dxgi_output = unsafe_impl_from_IDXGIOutput(output);
+    adapter = dxgi_output->adapter;
+    IDXGIOutput_Release(output);
+
+    TRACE("Mode: %s.\n", debug_dxgi_mode(target_mode_desc));
+
+    if (target_mode_desc->Scaling)
+        FIXME("Ignoring scaling %#x.\n", target_mode_desc->Scaling);
+
+    wined3d_display_mode_from_dxgi(&mode, target_mode_desc);
+
+    return wined3d_swapchain_state_resize_target(state, adapter->factory->wined3d, adapter->ordinal, &mode);
+}
+
 static HWND d3d11_swapchain_get_hwnd(struct d3d11_swapchain *swapchain)
 {
     struct wined3d_swapchain_desc wined3d_desc;
@@ -521,35 +552,12 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_ResizeTarget(IDXGISwapChain1 *i
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
     struct wined3d_swapchain_state *state;
-    struct wined3d_display_mode mode;
-    struct dxgi_output *dxgi_output;
-    struct dxgi_adapter *adapter;
-    IDXGIOutput *output;
-    HRESULT hr;
 
     TRACE("iface %p, target_mode_desc %p.\n", iface, target_mode_desc);
 
-    if (!target_mode_desc)
-    {
-        WARN("Invalid pointer.\n");
-        return DXGI_ERROR_INVALID_CALL;
-    }
-
-    if (FAILED(hr = IDXGISwapChain1_GetContainingOutput(iface, &output)))
-        return hr;
-    dxgi_output = unsafe_impl_from_IDXGIOutput(output);
-    adapter = dxgi_output->adapter;
-    IDXGIOutput_Release(output);
-
-    TRACE("Mode: %s.\n", debug_dxgi_mode(target_mode_desc));
-
-    if (target_mode_desc->Scaling)
-        FIXME("Ignoring scaling %#x.\n", target_mode_desc->Scaling);
-
     state = wined3d_swapchain_get_state(swapchain->wined3d_swapchain);
-    wined3d_display_mode_from_dxgi(&mode, target_mode_desc);
 
-    return wined3d_swapchain_state_resize_target(state, adapter->factory->wined3d, adapter->ordinal, &mode);
+    return dxgi_swapchain_resize_target(iface, state, target_mode_desc);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetContainingOutput(IDXGISwapChain1 *iface, IDXGIOutput **output)
@@ -1029,6 +1037,8 @@ struct d3d12_swapchain
     IDXGISwapChain3 IDXGISwapChain3_iface;
     LONG refcount;
     struct wined3d_private_store private_store;
+
+    struct wined3d_swapchain_state *state;
 
     VkSwapchainKHR vk_swapchain;
     VkSurfaceKHR vk_surface;
@@ -1862,6 +1872,8 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
         IWineDXGIFactory_Release(swapchain->factory);
 
     close_library(vulkan_module);
+
+    wined3d_swapchain_state_destroy(swapchain->state);
 }
 
 static ULONG STDMETHODCALLTYPE d3d12_swapchain_Release(IDXGISwapChain3 *iface)
@@ -2262,9 +2274,11 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers(IDXGISwapChain3 *
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeTarget(IDXGISwapChain3 *iface,
         const DXGI_MODE_DESC *target_mode_desc)
 {
-    FIXME("iface %p, target_mode_desc %p stub!\n", iface, target_mode_desc);
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, target_mode_desc %p.\n", iface, target_mode_desc);
+
+    return dxgi_swapchain_resize_target((IDXGISwapChain1 *)iface, swapchain->state, target_mode_desc);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetContainingOutput(IDXGISwapChain3 *iface,
@@ -2701,6 +2715,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
         const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc)
 {
     const struct dxgi_vk_funcs *vk_funcs = &swapchain->vk_funcs;
+    struct wined3d_swapchain_desc wined3d_desc;
     VkWin32SurfaceCreateInfoKHR surface_desc;
     VkPhysicalDevice vk_physical_device;
     VkFenceCreateInfo fence_desc;
@@ -2745,6 +2760,11 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
         return DXGI_ERROR_UNSUPPORTED;
     }
 
+    if (FAILED(hr = wined3d_swapchain_desc_from_dxgi(&wined3d_desc, window, swapchain_desc, fullscreen_desc)))
+        return hr;
+    if (FAILED(hr = wined3d_swapchain_state_create(&wined3d_desc, window, &swapchain->state)))
+        return hr;
+
     if (swapchain_desc->BufferUsage && swapchain_desc->BufferUsage != DXGI_USAGE_RENDER_TARGET_OUTPUT)
         FIXME("Ignoring buffer usage %#x.\n", swapchain_desc->BufferUsage);
     if (swapchain_desc->Scaling != DXGI_SCALING_STRETCH)
@@ -2771,7 +2791,10 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     swapchain->vk_physical_device = vk_physical_device;
 
     if (!init_vk_funcs(&swapchain->vk_funcs, vk_instance, vk_device))
+    {
+        wined3d_swapchain_state_destroy(swapchain->state);
         return E_FAIL;
+    }
 
     wined3d_private_store_init(&swapchain->private_store);
 
