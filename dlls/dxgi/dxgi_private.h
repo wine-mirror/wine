@@ -148,6 +148,7 @@ struct dxgi_output
 };
 
 HRESULT dxgi_output_create(struct dxgi_adapter *adapter, struct dxgi_output **output) DECLSPEC_HIDDEN;
+struct dxgi_output *unsafe_impl_from_IDXGIOutput(IDXGIOutput *iface) DECLSPEC_HIDDEN;
 
 /* IDXGIAdapter */
 struct dxgi_adapter

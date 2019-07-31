@@ -4181,6 +4181,7 @@ struct wined3d_swapchain_state
     /* Window styles to restore when switching fullscreen mode. */
     LONG style;
     LONG exstyle;
+    HWND device_window;
 };
 
 void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_state *state,
@@ -4222,7 +4223,6 @@ struct wined3d_swapchain
 
     struct wined3d_swapchain_state state;
     HWND win_handle;
-    HWND device_window;
 
     HDC backup_dc;
     HWND backup_wnd;

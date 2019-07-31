@@ -522,6 +522,14 @@ static const struct IDXGIOutput4Vtbl dxgi_output_vtbl =
     dxgi_output_CheckOverlayColorSpaceSupport,
 };
 
+struct dxgi_output *unsafe_impl_from_IDXGIOutput(IDXGIOutput *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == (IDXGIOutputVtbl *)&dxgi_output_vtbl);
+    return CONTAINING_RECORD(iface, struct dxgi_output, IDXGIOutput4_iface);
+}
+
 static void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *adapter)
 {
     output->IDXGIOutput4_iface.lpVtbl = &dxgi_output_vtbl;
