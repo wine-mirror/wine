@@ -2313,6 +2313,34 @@ typedef struct
     INT iHeight;
 } NMPGCALCSIZE, *LPNMPGCALCSIZE;
 
+#define Pager_SetChild(hwnd, child) \
+    SNDMSG((hwnd), PGM_SETCHILD, 0, (LPARAM)(child))
+#define Pager_RecalcSize(hwnd) \
+    SNDMSG((hwnd), PGM_RECALCSIZE, 0, 0)
+#define Pager_ForwardMouse(hwnd, forward) \
+    SNDMSG((hwnd), PGM_FORWARDMOUSE, (WPARAM)(forward), 0)
+#define Pager_SetBkColor(hwnd, clr) \
+    (COLORREF)SNDMSG((hwnd), PGM_SETBKCOLOR, 0, (LPARAM)(clr))
+#define Pager_GetBkColor(hwnd) \
+    (COLORREF)SNDMSG((hwnd), PGM_GETBKCOLOR, 0, 0)
+#define Pager_SetBorder(hwnd, border) \
+    (INT)SNDMSG((hwnd), PGM_SETBORDER, 0, (LPARAM)(border))
+#define Pager_GetBorder(hwnd) \
+    (INT)SNDMSG((hwnd), PGM_GETBORDER, 0, 0)
+#define Pager_SetPos(hwnd, pos) \
+    (INT)SNDMSG((hwnd), PGM_SETPOS, 0, (LPARAM)(pos))
+#define Pager_GetPos(hwnd) \
+    (INT)SNDMSG((hwnd), PGM_GETPOS, 0, 0)
+#define Pager_SetButtonSize(hwnd, size) \
+    (INT)SNDMSG((hwnd), PGM_SETBUTTONSIZE, 0, (LPARAM)(size))
+#define Pager_GetButtonSize(hwnd) \
+    (INT)SNDMSG((hwnd), PGM_GETBUTTONSIZE, 0, 0)
+#define Pager_GetButtonState(hwnd, button) \
+    (DWORD)SNDMSG((hwnd), PGM_GETBUTTONSTATE, 0, (LPARAM)(button))
+#define Pager_GetDropTarget(hwnd, dt) \
+    SNDMSG((hwnd), PGM_GETDROPTARGET, 0, (LPARAM)(dt))
+#define Pager_SetScrollInfo(hwnd, timeout, lines, pixels) \
+    SNDMSG((hwnd), PGM_SETSCROLLINFO, timeout, MAKELONG(lines, pixels))
 
 /* Treeview control */
 
