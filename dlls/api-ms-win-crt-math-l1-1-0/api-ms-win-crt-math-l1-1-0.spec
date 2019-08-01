@@ -333,9 +333,9 @@
 @ cdecl -arch=arm,x86_64,arm64 tanf(float) ucrtbase.tanf
 @ cdecl tanh(double) ucrtbase.tanh
 @ cdecl -arch=arm,x86_64,arm64 tanhf(float) ucrtbase.tanhf
-@ stub tgamma
-@ stub tgammaf
-@ stub tgammal
+@ cdecl tgamma(double) ucrtbase.tgamma
+@ cdecl tgammaf(float) ucrtbase.tgammaf
+@ cdecl tgammal(double) ucrtbase.tgammal
 @ cdecl trunc(double) ucrtbase.trunc
 @ cdecl truncf(float) ucrtbase.truncf
 @ cdecl truncl(double) ucrtbase.truncl

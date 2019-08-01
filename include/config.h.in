@@ -1166,6 +1166,12 @@
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
 
+/* Define to 1 if you have the `tgamma' function. */
+#undef HAVE_TGAMMA
+
+/* Define to 1 if you have the `tgammaf' function. */
+#undef HAVE_TGAMMAF
+
 /* Define to 1 if you have the `thr_kill2' function. */
 #undef HAVE_THR_KILL2
 

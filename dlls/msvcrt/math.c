@@ -3405,6 +3405,44 @@ LDOUBLE CDECL MSVCR120_lgammal(LDOUBLE x)
 }
 
 /*********************************************************************
+ *      tgamma (MSVCR120.@)
+ */
+double CDECL MSVCR120_tgamma(double x)
+{
+#ifdef HAVE_TGAMMA
+    if(x==0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
+    if(x<0.0f) {
+      double integral;
+      if (modf(x, &integral) == 0)
+        *MSVCRT__errno() = MSVCRT_EDOM;
+    }
+    return tgamma(x);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0;
+#endif
+}
+
+/*********************************************************************
+ *      tgammaf (MSVCR120.@)
+ */
+float CDECL MSVCR120_tgammaf(float x)
+{
+#ifdef HAVE_TGAMMAF
+    if(x==0.0f) *MSVCRT__errno() = MSVCRT_ERANGE;
+    if(x<0.0f) {
+      float integral;
+      if (modff(x, &integral) == 0)
+        *MSVCRT__errno() = MSVCRT_EDOM;
+    }
+    return tgammaf(x);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0f;
+#endif
+}
+
+/*********************************************************************
  *      nan (MSVCR120.@)
  */
 double CDECL MSVCR120_nan(const char *tagp)

@@ -2405,9 +2405,9 @@
 @ cdecl -arch=arm,x86_64,arm64 tanf(float) MSVCRT_tanf
 @ cdecl tanh(double) MSVCRT_tanh
 @ cdecl -arch=arm,x86_64,arm64 tanhf(float) MSVCRT_tanhf
-@ stub tgamma
-@ stub tgammaf
-@ stub tgammal
+@ cdecl tgamma(double) MSVCR120_tgamma
+@ cdecl tgammaf(float) MSVCR120_tgammaf
+@ cdecl tgammal(double) MSVCR120_tgamma
 @ cdecl tmpfile() MSVCRT_tmpfile
 @ cdecl tmpfile_s(ptr) MSVCRT_tmpfile_s
 @ cdecl tmpnam(ptr) MSVCRT_tmpnam
