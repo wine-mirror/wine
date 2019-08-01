@@ -3271,13 +3271,25 @@ static void clean_sxs_info(sxs_info *info)
     if (info->handle_context)
         ReleaseActCtx(info->handle_context);
     if (*info->path_dll)
-        ok(DeleteFileA(info->path_dll), "DeleteFileA failed for %s: %d\n", info->path_dll, GetLastError());
+    {
+        BOOL ret = DeleteFileA(info->path_dll);
+        ok(ret, "DeleteFileA failed for %s: %d\n", info->path_dll, GetLastError());
+    }
     if (*info->path_manifest_exe)
-        ok(DeleteFileA(info->path_manifest_exe), "DeleteFileA failed for %s: %d\n", info->path_manifest_exe, GetLastError());
+    {
+        BOOL ret = DeleteFileA(info->path_manifest_exe);
+        ok(ret, "DeleteFileA failed for %s: %d\n", info->path_manifest_exe, GetLastError());
+    }
     if (*info->path_manifest_dll)
-        ok(DeleteFileA(info->path_manifest_dll), "DeleteFileA failed for %s: %d\n", info->path_manifest_dll, GetLastError());
+    {
+        BOOL ret = DeleteFileA(info->path_manifest_dll);
+        ok(ret, "DeleteFileA failed for %s: %d\n", info->path_manifest_dll, GetLastError());
+    }
     if (*info->path_tmp)
-        ok(RemoveDirectoryA(info->path_tmp), "RemoveDirectoryA failed for %s: %d\n", info->path_tmp, GetLastError());
+    {
+        BOOL ret = RemoveDirectoryA(info->path_tmp);
+        ok(ret, "RemoveDirectoryA failed for %s: %d\n", info->path_tmp, GetLastError());
+    }
 }
 
 static void get_application_directory(char *buffer, int buffer_size)
@@ -3348,7 +3360,10 @@ cleanup:
     if (dll.module)
         FreeLibrary(dll.module);
     if (*path_dll_local)
-        ok(DeleteFileA(path_dll_local), "DeleteFileA failed for %s: %d\n", path_dll_local, GetLastError());
+    {
+        BOOL success = DeleteFileA(path_dll_local);
+        ok(success, "DeleteFileA failed for %s: %d\n", path_dll_local, GetLastError());
+    }
     clean_sxs_info(&dll);
 }
 
@@ -3385,7 +3400,10 @@ cleanup:
     if (dll.module)
         FreeLibrary(dll.module);
     if (*path_dll_local)
-        ok(DeleteFileA(path_dll_local), "DeleteFileA failed for %s: %d\n", path_dll_local, GetLastError());
+    {
+        BOOL success = DeleteFileA(path_dll_local);
+        ok(success, "DeleteFileA failed for %s: %d\n", path_dll_local, GetLastError());
+    }
     clean_sxs_info(&dll);
 }
 
@@ -3423,7 +3441,10 @@ cleanup:
     if (dll.module)
         FreeLibrary(dll.module);
     if (*path_dll_local)
-        ok(DeleteFileA(path_dll_local), "DeleteFileA failed for %s: %d\n", path_dll_local, GetLastError());
+    {
+        success = DeleteFileA(path_dll_local);
+        ok(success, "DeleteFileA failed for %s: %d\n", path_dll_local, GetLastError());
+    }
     clean_sxs_info(&dll);
 }
 
@@ -3486,7 +3507,10 @@ cleanup:
     if (module_msvcr)
         FreeLibrary(module_msvcr);
     if (*path_manifest)
-        ok(DeleteFileA(path_manifest), "DeleteFileA failed for %s: %d\n", path_manifest, GetLastError());
+    {
+        success = DeleteFileA(path_manifest);
+        ok(success, "DeleteFileA failed for %s: %d\n", path_manifest, GetLastError());
+    }
 }
 
 static void run_sxs_test(int run)
