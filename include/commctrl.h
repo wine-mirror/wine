@@ -5054,6 +5054,17 @@ typedef struct tagNMDATETIMEFORMATQUERYW
 DECL_WINELIB_TYPE_AW(NMDATETIMEFORMATQUERY)
 DECL_WINELIB_TYPE_AW(LPNMDATETIMEFORMATQUERY)
 
+typedef struct tagDATETIMEPICKERINFO
+{
+    DWORD cbSize;
+    RECT  rcCheck;
+    DWORD stateCheck;
+    RECT  rcButton;
+    DWORD stateButton;
+    HWND  hwndEdit;
+    HWND  hwndUD;
+    HWND  hwndDropDown;
+} DATETIMEPICKERINFO, *LPDATETIMEPICKERINFO;
 
 
 #define GDT_ERROR    -1
@@ -5089,6 +5100,14 @@ DECL_WINELIB_TYPE_AW(LPNMDATETIMEFORMATQUERY)
   SNDMSG (hdp, DTM_GETMCFONT, 0, 0)
 #define DateTime_GetIdealSize(hdp, sz) \
   (BOOL) SNDMSG (hdp, DTM_GETIDEALSIZE, 0, (LPARAM)sz)
+#define DateTime_SetMonthCalStyle(hdp, style) \
+  SNDMSG(hdp, DTM_SETMCSTYLE, 0, (LPARAM)style)
+#define DateTime_GetMonthCalStyle(hdp) \
+  SNDMSG(hdp, DTM_GETMCSTYLE, 0, 0)
+#define DateTime_GetDateTimePickerInfo(hdp, info) \
+  SNDMSG(hdp, DTM_GETDATETIMEPICKERINFO, 0, (LPARAM)info)
+#define DateTime_CloseMonthCal(hdp) \
+  SNDMSG(hdp, DTM_CLOSEMONTHCAL, 0, 0)
 
 #define DA_LAST         (0x7fffffff)
 #define DPA_APPEND      (0x7fffffff)
