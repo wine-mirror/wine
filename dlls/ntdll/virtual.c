@@ -443,6 +443,15 @@ static inline unsigned short zero_bits_win_to_64( ULONG_PTR zero_bits )
 
 
 /***********************************************************************
+ *           get_zero_bits_64_mask
+ */
+static inline UINT_PTR get_zero_bits_64_mask( USHORT zero_bits_64 )
+{
+    return (UINT_PTR)((~(UINT64)0) >> zero_bits_64);
+}
+
+
+/***********************************************************************
  *           is_write_watch_range
  */
 static inline BOOL is_write_watch_range( const void *addr, size_t size )
@@ -1126,13 +1135,11 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
         size_t view_size = size + mask + 1;
         struct alloc_area alloc;
 
-        if (zero_bits_64)
-            FIXME("Unimplemented zero_bits parameter value\n");
-
         alloc.size = size;
         alloc.mask = mask;
         alloc.top_down = top_down;
-        alloc.limit = user_space_limit;
+        alloc.limit = (void*)(get_zero_bits_64_mask( zero_bits_64 ) & (UINT_PTR)user_space_limit);
+
         if (wine_mmap_enum_reserved_areas( alloc_reserved_area_callback, &alloc, top_down ))
         {
             ptr = alloc.result;
@@ -1144,7 +1151,12 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
 
         for (;;)
         {
-            if ((ptr = wine_anon_mmap( NULL, view_size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
+            if (!zero_bits_64)
+                ptr = NULL;
+            else if (!(ptr = find_free_area( (void*)0, alloc.limit, view_size, mask, top_down )))
+                return STATUS_NO_MEMORY;
+
+            if ((ptr = wine_anon_mmap( ptr, view_size, VIRTUAL_GetUnixProt(vprot), ptr ? MAP_FIXED : 0 )) == (void *)-1)
             {
                 if (errno == ENOMEM) return STATUS_NO_MEMORY;
                 return STATUS_INVALID_PARAMETER;
