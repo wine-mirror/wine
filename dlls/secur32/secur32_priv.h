@@ -161,7 +161,6 @@ SECURITY_STATUS decodeBase64(char *in_buf, int in_len, BYTE *out_buf,
         int max_len, int *out_len) DECLSPEC_HIDDEN;
 
 /* Functions from util.c */
-ULONG ComputeCrc32(const BYTE *pData, INT iLen, ULONG initial_crc) DECLSPEC_HIDDEN;
 SECURITY_STATUS SECUR32_CreateNTLM1SessionKey(PBYTE password, int len, PBYTE session_key) DECLSPEC_HIDDEN;
 SECURITY_STATUS SECUR32_CreateNTLM2SubKeys(PNegoHelper helper) DECLSPEC_HIDDEN;
 arc4_info *SECUR32_arc4Alloc(void) DECLSPEC_HIDDEN;
