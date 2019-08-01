@@ -5295,6 +5295,10 @@ static const WCHAR WC_COMBOBOXW[] = { 'C','o','m','b','o','B','o','x',0 };
         ((INT)SNDMSG((hwnd), CB_GETMINVISIBLE, 0, 0))
 #define ComboBox_SetMinVisible(hwnd, count) \
         ((BOOL)SNDMSG((hwnd), CB_SETMINVISIBLE, (WPARAM)(count), 0))
+#define ComboBox_SetCueBannerText(hwnd, text) \
+        ((BOOL)SNDMSG((hwnd), CB_SETCUEBANNER, 0, (LPARAM)(text)))
+#define ComboBox_GetCueBannerText(hwnd, text, cnt) \
+        ((BOOL)SNDMSG((hwnd), CB_GETCUEBANNER, (WPARAM)(text), (LPARAM)(cnt)))
 
 /**************************************************************************
  * Edit control
