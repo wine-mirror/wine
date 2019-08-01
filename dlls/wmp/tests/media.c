@@ -535,7 +535,6 @@ static void test_media_item(void)
     hr = IWMPPlayer4_newMedia(player, NULL, &media);
     ok(hr == S_OK, "Failed to create a media item, hr %#x.\n", hr);
     hr = IWMPMedia_get_name(media, NULL);
-todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
     hr = IWMPMedia_get_name(media, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);

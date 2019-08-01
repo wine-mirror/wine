@@ -135,7 +135,7 @@ static inline WCHAR *heap_strdupW(const WCHAR *str)
 static inline HRESULT return_bstr(const WCHAR *value, BSTR *p)
 {
     if(!p)
-        return E_INVALIDARG;
+        return E_POINTER;
 
     if(value) {
         *p = SysAllocString(value);
