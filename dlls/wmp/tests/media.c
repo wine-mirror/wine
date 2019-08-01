@@ -489,11 +489,40 @@ playback_skip:
 
 static void test_media_item(void)
 {
+    static const WCHAR slashW[] = {'\\',0};
     static const WCHAR testW[] = {'t','e','s','t',0};
+    static const WCHAR fooW[] = {'f','o','o',':','/','/',0};
+    static const WCHAR fileW[] = {'f','i','l','e',':','/','/','/',0};
+    static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
+    static const WCHAR httpsW[] = {'h','t','t','p','s',':','/','/',0};
+    static const WCHAR invalidurlW[] = {'i','n','v','a','l','i','d','_','u','r','l',0};
+    static const WCHAR invalidurlmp3W[] = {'i','n','v','a','l','i','d','_','u','r','l','.','m','p','3',0};
+    static const WCHAR winehqurlW[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',
+                                                    '/','t','e','s','t','s','/','t','e','s','t','.','m','p','3',0};
+    static WCHAR pathW[MAX_PATH];
+    static WCHAR currentdirW[MAX_PATH];
+    struct {
+        const WCHAR *prefix;
+        const WCHAR *filename;
+        const WCHAR *expected;
+    } tests[] = {
+        { NULL, invalidurlmp3W, invalidurlW },
+        { currentdirW, mp3file, testW },
+        { currentdirW, invalidurlmp3W, invalidurlW },
+        { httpW, winehqurlW, testW },
+        { httpW, invalidurlmp3W, invalidurlmp3W },
+        { httpsW, winehqurlW, testW },
+        { httpsW, invalidurlmp3W, invalidurlmp3W },
+        { fileW, mp3file, testW },
+        { fileW, invalidurlmp3W, invalidurlW },
+        { fooW, mp3file, mp3file },
+        { fooW, invalidurlmp3W, invalidurlmp3W }
+    };
     IWMPMedia *media, *media2;
     IWMPPlayer4 *player;
     HRESULT hr;
     BSTR str;
+    int i;
 
     hr = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IWMPPlayer4, (void **)&player);
     if (hr == REGDB_E_CLASSNOTREG)
@@ -505,6 +534,9 @@ static void test_media_item(void)
 
     hr = IWMPPlayer4_newMedia(player, NULL, &media);
     ok(hr == S_OK, "Failed to create a media item, hr %#x.\n", hr);
+    hr = IWMPMedia_get_name(media, NULL);
+todo_wine
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
     hr = IWMPMedia_get_name(media, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
     ok(*str == 0, "Unexpected name %s.\n", wine_dbgstr_w(str));
@@ -542,7 +574,15 @@ static void test_media_item(void)
     hr = IWMPMedia_get_name(media, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
 todo_wine
-    ok(!lstrcmpW(str, testW), "Unexpected name %s.\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, testW), "Expected %s, got %s\n", wine_dbgstr_w(testW), wine_dbgstr_w(str));
+    SysFreeString(str);
+    hr = IWMPMedia_put_name(media, NULL);
+todo_wine
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    hr = IWMPMedia_get_name(media, &str);
+    ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+todo_wine
+    ok(!lstrcmpW(str, testW), "Expected %s, got %s\n", wine_dbgstr_w(testW), wine_dbgstr_w(str));
     SysFreeString(str);
 
     hr = IWMPPlayer4_put_currentMedia(player, media);
@@ -555,9 +595,31 @@ todo_wine
     hr = IWMPMedia_get_name(media2, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
 todo_wine
-    ok(!lstrcmpW(str, testW), "Unexpected name %s.\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, testW), "Expected %s, got %s\n", wine_dbgstr_w(testW), wine_dbgstr_w(str));
     SysFreeString(str);
     IWMPMedia_Release(media2);
+
+    GetCurrentDirectoryW(ARRAY_SIZE(currentdirW), currentdirW);
+    lstrcatW(currentdirW, slashW);
+
+    for (i=0; i<ARRAY_SIZE(tests); i++)
+    {
+
+        pathW[0] = '\0';
+        if(tests[i].prefix) lstrcatW(pathW, tests[i].prefix);
+        lstrcatW(pathW, tests[i].filename);
+
+        str = SysAllocString(pathW);
+        hr = IWMPPlayer4_newMedia(player, str, &media);
+        ok(hr == S_OK, "Failed to create a media item, hr %#x.\n", hr);
+        SysFreeString(str);
+        hr = IWMPMedia_get_name(media, &str);
+        ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
+    todo_wine
+        ok(!lstrcmpW(str, tests[i].expected), "Expected %s, got %s\n", wine_dbgstr_w(tests[i].expected), wine_dbgstr_w(str));
+        SysFreeString(str);
+        IWMPMedia_Release(media);
+    }
 
     IWMPPlayer4_Release(player);
 }
