@@ -1112,6 +1112,14 @@ typedef struct tagNMBCHOTITEM
   (BOOL)SNDMSG(button, BCM_SETTEXTMARGIN, 0, (LPARAM)(margin))
 #define Button_GetIdealSize(button, size)  \
   (BOOL)SNDMSG(button, BCM_GETIDEALSIZE, 0, (LPARAM)(size))
+#define Button_SetSplitInfo(hwnd, info) \
+  (BOOL)SNDMSG((hwnd), BCM_SETSPLITINFO, 0, (LPARAM)(info))
+#define Button_GetSplitInfo(hwnd, info) \
+  (BOOL)SNDMSG((hwnd), BCM_GETSPLITINFO, 0, (LPARAM)(info))
+#define Button_SetElevationRequiredState(hwnd, required) \
+  (LRESULT)SNDMSG((hwnd), BCM_SETSHIELD, 0, (LPARAM)required)
+#define Button_SetDropDownState(hwnd, dropdown) \
+  (BOOL)SNDMSG((hwnd), BCM_SETDROPDOWNSTATE, (WPARAM)(dropdown), 0)
 
 /* Toolbar */
 
