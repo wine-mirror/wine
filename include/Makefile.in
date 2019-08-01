@@ -626,6 +626,7 @@ SOURCES = \
 	tcpmib.h \
 	textserv.h \
 	textstor.idl \
+	thumbcache.idl \
 	timezoneapi.h \
 	tlhelp32.h \
 	tlogstg.idl \
