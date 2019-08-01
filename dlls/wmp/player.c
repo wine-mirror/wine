@@ -1874,11 +1874,11 @@ static HRESULT WINAPI WMPMedia_getAttributeName(IWMPMedia *iface, LONG lIndex, B
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMPMedia_getItemInfo(IWMPMedia *iface, BSTR bstrItemName, BSTR *pbstrVal)
+static HRESULT WINAPI WMPMedia_getItemInfo(IWMPMedia *iface, BSTR item_name, BSTR *value)
 {
     WMPMedia *This = impl_from_IWMPMedia(iface);
-    FIXME("(%p)->(%s, %p)\n", This, debugstr_w(bstrItemName), pbstrVal);
-    return E_NOTIMPL;
+    FIXME("(%p)->(%s, %p)\n", This, debugstr_w(item_name), value);
+    return return_bstr(NULL, value);
 }
 
 static HRESULT WINAPI WMPMedia_setItemInfo(IWMPMedia *iface, BSTR bstrItemName, BSTR bstrVal)
