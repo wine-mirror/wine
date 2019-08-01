@@ -2135,7 +2135,7 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm,
             *module = NULL;
         }
         status = virtual_map_section( mapping, module, 0, 0, NULL, &len,
-                                      PAGE_EXECUTE_READ, image_info );
+                                      0, PAGE_EXECUTE_READ, image_info );
         if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
         NtClose( mapping );
     }

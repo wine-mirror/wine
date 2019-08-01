@@ -1361,7 +1361,7 @@ static NTSTATUS map_pe_header( void *ptr, size_t size, int fd, BOOL *removable )
  *
  * Map an executable (PE format) image into memory.
  */
-static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, SIZE_T zero_bits,
+static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, int top_down, SIZE_T zero_bits,
                            pe_image_info_t *image_info, int shared_fd, BOOL removable, PVOID *addr_ptr )
 {
     IMAGE_DOS_HEADER *dos;
@@ -1391,11 +1391,11 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, SIZE_T z
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
     if (base >= (char *)address_space_start)  /* make sure the DOS area remains free */
-        status = map_view( &view, base, total_size, 0, FALSE, SEC_IMAGE | SEC_FILE |
+        status = map_view( &view, base, total_size, 0, top_down, SEC_IMAGE | SEC_FILE |
                            VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY, zero_bits );
 
     if (status != STATUS_SUCCESS)
-        status = map_view( &view, NULL, total_size, 0, FALSE, SEC_IMAGE | SEC_FILE |
+        status = map_view( &view, NULL, total_size, 0, top_down, SEC_IMAGE | SEC_FILE |
                            VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY, zero_bits );
 
     if (status != STATUS_SUCCESS) goto error;
@@ -1612,8 +1612,8 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, SIZE_T z
  * Map a file section into memory.
  */
 NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG zero_bits, SIZE_T commit_size,
-                              const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG protect,
-                              pe_image_info_t *image_info )
+                              const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG alloc_type,
+                              ULONG protect, pe_image_info_t *image_info )
 {
     NTSTATUS res;
     mem_size_t full_size;
@@ -1673,14 +1673,14 @@ NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG zero_bits, S
 
             if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
                                            &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
-            res = map_image( handle, access, unix_handle, zero_bits, image_info,
+            res = map_image( handle, access, unix_handle, alloc_type & MEM_TOP_DOWN, zero_bits, image_info,
                              shared_fd, needs_close, addr_ptr );
             if (shared_needs_close) close( shared_fd );
             close_handle( shared_file );
         }
         else
         {
-            res = map_image( handle, access, unix_handle, zero_bits, image_info,
+            res = map_image( handle, access, unix_handle, alloc_type & MEM_TOP_DOWN, zero_bits, image_info,
                              -1, needs_close, addr_ptr );
         }
         if (needs_close) close( unix_handle );
@@ -1718,7 +1718,7 @@ NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG zero_bits, S
     get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE );
     vprot |= sec_flags;
     if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
-    res = map_view( &view, *addr_ptr, size, 0, FALSE, vprot, zero_bits );
+    res = map_view( &view, *addr_ptr, size, 0, alloc_type & MEM_TOP_DOWN, vprot, zero_bits );
     if (res)
     {
         server_leave_uninterrupted_section( &csVirtual, &sigset );
@@ -3198,7 +3198,8 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     }
 
     return virtual_map_section( handle, addr_ptr, zero_bits, commit_size,
-                                offset_ptr, size_ptr, protect, &image_info );
+                                offset_ptr, size_ptr, alloc_type, protect,
+                                &image_info );
 }
 
 
