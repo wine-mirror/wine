@@ -5578,6 +5578,13 @@ typedef struct _SYSTEM_POWER_POLICY {
 } SYSTEM_POWER_POLICY,
 *PSYSTEM_POWER_POLICY;
 
+typedef enum _POWER_REQUEST_TYPE
+{
+    PowerRequestDisplayRequired,
+    PowerRequestSystemRequired,
+    PowerRequestAwayModeRequired
+} POWER_REQUEST_TYPE, *PPOWER_REQUEST_TYPE;
+
 typedef union _FILE_SEGMENT_ELEMENT {
 	PVOID64 Buffer;
 	ULONGLONG Alignment;

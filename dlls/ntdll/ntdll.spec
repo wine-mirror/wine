@@ -142,6 +142,7 @@
 @ stdcall NtCancelIoFileEx(long ptr ptr)
 @ stdcall NtCancelTimer(long ptr)
 @ stdcall NtClearEvent(long)
+@ stdcall NtClearPowerRequest(long long)
 @ stdcall NtClose(long)
 @ stub NtCloseObjectAuditAlarm
 # @ stub NtCompactKeys
@@ -167,6 +168,7 @@
 @ stdcall NtCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr)
 @ stdcall NtCreatePagingFile(ptr ptr ptr ptr)
 @ stdcall NtCreatePort(ptr ptr long long ptr)
+@ stdcall NtCreatePowerRequest(ptr ptr)
 @ stub NtCreateProcess
 # @ stub NtCreateProcessEx
 @ stub NtCreateProfile
@@ -374,6 +376,7 @@
 @ stub NtSetLowEventPair
 @ stub NtSetLowWaitHighEventPair
 @ stub NtSetLowWaitHighThread
+@ stdcall NtSetPowerRequest(long long)
 # @ stub NtSetQuotaInformationFile
 @ stdcall NtSetSecurityObject(long long ptr)
 @ stub NtSetSystemEnvironmentValue
@@ -1094,6 +1097,7 @@
 @ stdcall -private ZwCancelIoFileEx(long ptr ptr) NtCancelIoFileEx
 @ stdcall -private ZwCancelTimer(long ptr) NtCancelTimer
 @ stdcall -private ZwClearEvent(long) NtClearEvent
+@ stdcall -private ZwClearPowerRequest(long long) NtClearPowerRequest
 @ stdcall -private ZwClose(long) NtClose
 @ stub ZwCloseObjectAuditAlarm
 # @ stub ZwCompactKeys
@@ -1118,6 +1122,7 @@
 @ stdcall -private ZwCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr) NtCreateNamedPipeFile
 @ stdcall -private ZwCreatePagingFile(ptr ptr ptr ptr) NtCreatePagingFile
 @ stdcall -private ZwCreatePort(ptr ptr long long ptr) NtCreatePort
+@ stdcall -private ZwCreatePowerRequest(ptr ptr) NtCreatePowerRequest
 @ stub ZwCreateProcess
 # @ stub ZwCreateProcessEx
 @ stub ZwCreateProfile
@@ -1323,6 +1328,7 @@
 @ stub ZwSetLowEventPair
 @ stub ZwSetLowWaitHighEventPair
 @ stub ZwSetLowWaitHighThread
+@ stdcall -private ZwSetPowerRequest(long long) NtSetPowerRequest
 # @ stub ZwSetQuotaInformationFile
 @ stdcall -private ZwSetSecurityObject(long long ptr) NtSetSecurityObject
 @ stub ZwSetSystemEnvironmentValue

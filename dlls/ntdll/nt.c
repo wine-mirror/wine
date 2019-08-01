@@ -3073,6 +3073,39 @@ NTSTATUS WINAPI NtSetThreadExecutionState( EXECUTION_STATE new_state, EXECUTION_
     return STATUS_SUCCESS;
 }
 
+/******************************************************************************
+ *  NtCreatePowerRequest                        [NTDLL.@]
+ *
+ */
+NTSTATUS WINAPI NtCreatePowerRequest( HANDLE *handle, COUNTED_REASON_CONTEXT *context )
+{
+    FIXME( "(%p, %p): stub\n", handle, context );
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *  NtSetPowerRequest                           [NTDLL.@]
+ *
+ */
+NTSTATUS WINAPI NtSetPowerRequest( HANDLE handle, POWER_REQUEST_TYPE type )
+{
+    FIXME( "(%p, %u): stub\n", handle, type );
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *  NtClearPowerRequest                         [NTDLL.@]
+ *
+ */
+NTSTATUS WINAPI NtClearPowerRequest( HANDLE handle, POWER_REQUEST_TYPE type )
+{
+    FIXME( "(%p, %u): stub\n", handle, type );
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 #ifdef linux
 /* Fallback using /proc/cpuinfo for Linux systems without cpufreq. For
  * most distributions on recent enough hardware, this is only likely to
