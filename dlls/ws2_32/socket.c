@@ -878,10 +878,12 @@ static inline int convert_control_headers(struct msghdr *hdr, WSABUF *control)
         }
     }
 
-error:
     /* Set the length of the returned control headers */
-    control->len = (ptr == NULL ? 0 : (char*)ptr - (char*)cmsg_win);
-    return (ptr != NULL);
+    control->len = (char*)ptr - (char*)cmsg_win;
+    return 1;
+error:
+    control->len = 0;
+    return 0;
 #else /* IP_PKTINFO */
     control->len = 0;
     return 1;
