@@ -1668,9 +1668,8 @@ todo_wine
            "SO_PROTOCOL_INFO[A/W] comparison failed\n");
 
         /* Remove IF when WSAEnumProtocols support IPV6 data */
-        todo_wine_if (prottest[i].family == AF_INET6)
-            ok(infoA.iAddressFamily == prottest[i].family, "socket family invalid, expected %d received %d\n",
-               prottest[i].family, infoA.iAddressFamily);
+        ok(infoA.iAddressFamily == prottest[i].family, "socket family invalid, expected %d received %d\n",
+           prottest[i].family, infoA.iAddressFamily);
         ok(infoA.iSocketType == prottest[i].type, "socket type invalid, expected %d received %d\n",
            prottest[i].type, infoA.iSocketType);
         ok(infoA.iProtocol == prottest[i].proto, "socket protocol invalid, expected %d received %d\n",

@@ -2328,6 +2328,9 @@ static INT WS_EnumProtocols( BOOL unicode, const INT *protocols, LPWSAPROTOCOL_I
 static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, int *size)
 {
     NTSTATUS status;
+    int address_family;
+    int socket_type;
+    int protocol;
 
     *size = unicode ? sizeof(WSAPROTOCOL_INFOW) : sizeof(WSAPROTOCOL_INFOA);
     memset(buffer, 0, *size);
@@ -2338,9 +2341,9 @@ static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, i
         status = wine_server_call( req );
         if (!status)
         {
-            buffer->iAddressFamily = convert_af_u2w(reply->family);
-            buffer->iSocketType = convert_socktype_u2w(reply->type);
-            buffer->iProtocol = convert_proto_u2w(reply->protocol);
+            address_family = convert_af_u2w(reply->family);
+            socket_type = convert_socktype_u2w(reply->type);
+            protocol = convert_proto_u2w(reply->protocol);
         }
     }
     SERVER_END_REQ;
@@ -2353,9 +2356,12 @@ static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, i
     }
 
     if (unicode)
-        WS_EnterSingleProtocolW( buffer->iProtocol, buffer);
+        WS_EnterSingleProtocolW( protocol, buffer);
     else
-        WS_EnterSingleProtocolA( buffer->iProtocol, (WSAPROTOCOL_INFOA *)buffer);
+        WS_EnterSingleProtocolA( protocol, (WSAPROTOCOL_INFOA *)buffer);
+    buffer->iAddressFamily = address_family;
+    buffer->iSocketType = socket_type;
+    buffer->iProtocol = protocol;
 
     return TRUE;
 }
