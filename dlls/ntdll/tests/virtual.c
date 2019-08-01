@@ -31,6 +31,7 @@ static unsigned int page_size;
 static NTSTATUS (WINAPI *pRtlCreateUserStack)(SIZE_T, SIZE_T, ULONG, SIZE_T, SIZE_T, INITIAL_TEB *);
 static NTSTATUS (WINAPI *pRtlFreeUserStack)(void *);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
+static const BOOL is_win64 = sizeof(void*) != sizeof(int);
 
 static HANDLE create_target_process(const char *arg)
 {
@@ -71,6 +72,8 @@ static void test_NtAllocateVirtualMemory(void)
     SIZE_T size;
     ULONG_PTR zero_bits;
     BOOL is_wow64;
+
+    if (!pIsWow64Process || !pIsWow64Process(NtCurrentProcess(), &is_wow64)) is_wow64 = FALSE;
 
     /* simple allocation should success */
     size = 0x1000;
@@ -163,8 +166,7 @@ static void test_NtAllocateVirtualMemory(void)
     status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr2, zero_bits, &size,
                                       MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
-    if (sizeof(void *) == sizeof(int) && (!pIsWow64Process ||
-        !pIsWow64Process(NtCurrentProcess(), &is_wow64) || !is_wow64))
+    if (!is_win64 && !is_wow64)
     {
         ok(status == STATUS_INVALID_PARAMETER_3, "NtAllocateVirtualMemory returned %08x\n", status);
     }
@@ -273,6 +275,8 @@ static void test_NtMapViewOfSection(void)
     LARGE_INTEGER offset;
     ULONG_PTR zero_bits;
 
+    if (!pIsWow64Process || !pIsWow64Process(NtCurrentProcess(), &is_wow64)) is_wow64 = FALSE;
+
     file = CreateFileA(testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "Failed to create test file\n");
     WriteFile(file, data, sizeof(data), &written, NULL);
@@ -360,8 +364,7 @@ static void test_NtMapViewOfSection(void)
     offset.QuadPart = 0;
     status = NtMapViewOfSection(mapping, process, &ptr2, zero_bits, 0, &offset, &size, 1, 0, PAGE_READWRITE);
 
-    if (sizeof(void *) == sizeof(int) && (!pIsWow64Process ||
-        !pIsWow64Process(NtCurrentProcess(), &is_wow64) || !is_wow64))
+    if (!is_win64 && !is_wow64)
     {
         ok(status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %08x\n", status);
     }
@@ -424,8 +427,7 @@ static void test_NtMapViewOfSection(void)
     status = NtMapViewOfSection(mapping, process, &ptr2, zero_bits, 0, &offset, &size, 1, 0, PAGE_READWRITE);
     ok(status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %08x\n", status);
 
-    if (sizeof(void *) == sizeof(int) && (!pIsWow64Process ||
-        !pIsWow64Process(NtCurrentProcess(), &is_wow64) || !is_wow64))
+    if (!is_win64 && !is_wow64)
     {
         /* new memory region conflicts with previous mapping */
         ptr2 = ptr;
