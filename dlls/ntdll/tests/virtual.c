@@ -60,9 +60,21 @@ static UINT_PTR get_zero_bits(UINT_PTR p)
         return (~(UINT_PTR)0) >> get_zero_bits(p >> 32);
 #endif
 
-    if (p == 0) return 32;
+    if (p == 0) return 0;
     while ((p >> (31 - z)) != 1) z++;
     return z;
+}
+
+static UINT_PTR get_zero_bits_mask(ULONG_PTR z)
+{
+    if (z >= 32)
+    {
+        z = get_zero_bits(z);
+#ifdef _WIN64
+        if (z >= 32) return z;
+#endif
+    }
+    return (~(UINT32)0) >> z;
 }
 
 static void test_NtAllocateVirtualMemory(void)
@@ -162,10 +174,10 @@ static void test_NtAllocateVirtualMemory(void)
     ok(status == STATUS_INVALID_PARAMETER_3 || status == STATUS_INVALID_PARAMETER,
        "NtAllocateVirtualMemory returned %08x\n", status);
 
-    /* zero bits > 31 should be considered as bitmask on 64bit and WoW64 */
+    /* zero bits > 31 should be considered as a leading zeroes bitmask on 64bit and WoW64 */
     size = 0x1000;
     addr2 = NULL;
-    zero_bits = 0x1fffffff;
+    zero_bits = 0x1aaaaaaa;
     status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr2, zero_bits, &size,
                                       MEM_RESERVE | MEM_COMMIT | MEM_TOP_DOWN,
                                       PAGE_READWRITE);
@@ -181,7 +193,8 @@ static void test_NtAllocateVirtualMemory(void)
         if (status == STATUS_SUCCESS)
         {
             todo_wine
-            ok(((UINT_PTR)addr2 & ~zero_bits) == 0,
+            ok(((UINT_PTR)addr2 & ~get_zero_bits_mask(zero_bits)) == 0 &&
+               ((UINT_PTR)addr2 & ~zero_bits) != 0, /* only the leading zeroes matter */
                "NtAllocateVirtualMemory returned address %p\n", addr2);
 
             size = 0;
@@ -361,10 +374,10 @@ static void test_NtMapViewOfSection(void)
     ok(status == STATUS_INVALID_PARAMETER_4 || status == STATUS_INVALID_PARAMETER,
        "NtMapViewOfSection returned %08x\n", status);
 
-    /* zero bits > 31 should be considered as bitmask on 64bit and WoW64 */
+    /* zero bits > 31 should be considered as a leading zeroes bitmask on 64bit and WoW64 */
     ptr2 = NULL;
     size = 0;
-    zero_bits = 0x1fffffff;
+    zero_bits = 0x1aaaaaaa;
     offset.QuadPart = 0;
     status = NtMapViewOfSection(mapping, process, &ptr2, zero_bits, 0, &offset, &size, 1, MEM_TOP_DOWN, PAGE_READWRITE);
 
@@ -379,7 +392,8 @@ static void test_NtMapViewOfSection(void)
         if (status == STATUS_SUCCESS)
         {
             todo_wine
-            ok(((UINT_PTR)ptr2 & ~zero_bits) == 0,
+            ok(((UINT_PTR)ptr2 & ~get_zero_bits_mask(zero_bits)) == 0 &&
+               ((UINT_PTR)ptr2 & ~zero_bits) != 0, /* only the leading zeroes matter */
                "NtMapViewOfSection returned address %p\n", ptr2);
 
             status = NtUnmapViewOfSection(process, ptr2);
