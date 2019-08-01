@@ -50,9 +50,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mspatcha);
 #define PA19_FILE_MAGIC 0x39314150
 #define PATCH_OPTION_EXTRA_FLAGS 0x80000000
 
-#define my_max(a, b) ((a) > (b) ? (a) : (b))
-#define my_min(a, b) ((a) < (b) ? (a) : (b))
-
 static UINT32 compute_zero_crc32(UINT32 crc, INT_PTR len)
 {
     static const BYTE zero_buffer[1024];
@@ -173,7 +170,7 @@ static UINT64 read_uvli(struct patch_file_header *ph)
     const BYTE *vli = ph->src;
     UINT64 n;
     ptrdiff_t i;
-    ptrdiff_t limit = my_min(ph->end - vli, 9);
+    ptrdiff_t limit = min(ph->end - vli, 9);
 
     if (ph->src >= ph->end)
     {
@@ -204,7 +201,7 @@ static INT64 read_svli(struct patch_file_header *ph)
     const BYTE *vli = ph->src;
     INT64 n;
     ptrdiff_t i;
-    ptrdiff_t limit = my_min(ph->end - vli, 9);
+    ptrdiff_t limit = min(ph->end - vli, 9);
 
     if (ph->src >= ph->end)
     {
@@ -423,7 +420,7 @@ static int read_header(struct patch_file_header *ph, const BYTE *buf, size_t siz
     }
 
     /* skip the crc adjustment field */
-    ph->src = my_min(ph->src + 4, ph->end);
+    ph->src = min(ph->src + 4, ph->end);
 
     {
         UINT32 crc = RtlComputeCrc32(0, buf, ph->src - buf) ^ 0xFFFFFFFF;
@@ -464,8 +461,8 @@ static ULONG next_ignored_range(const struct input_file_info *fi, size_t index, 
     if (fi->next_i < fi->ignore_range_count && fi->stream_size != 0)
     {
         start = fi->ignore_table[fi->next_i].OffsetInOldFile;
-        *end = my_max(start + fi->ignore_table[fi->next_i].LengthInBytes, index);
-        start = my_max(start, index);
+        *end = max(start + fi->ignore_table[fi->next_i].LengthInBytes, index);
+        start = max(start, index);
     }
     return start;
 }
@@ -479,8 +476,8 @@ static ULONG next_retained_range_old(const struct input_file_info *fi, size_t in
     if (fi->next_r < fi->retain_range_count)
     {
         start = fi->retain_table[fi->next_r].OffsetInOldFile;
-        *end = my_max(start + fi->retain_table[fi->next_r].LengthInBytes, index);
-        start = my_max(start, index);
+        *end = max(start + fi->retain_table[fi->next_r].LengthInBytes, index);
+        start = max(start, index);
     }
     return start;
 }
@@ -494,8 +491,8 @@ static ULONG next_retained_range_new(const struct input_file_info *fi, size_t in
     if (fi->next_r < fi->retain_range_count)
     {
         start = fi->retain_table[fi->next_r].OffsetInNewFile;
-        *end = my_max(start + fi->retain_table[fi->next_r].LengthInBytes, index);
-        start = my_max(start, index);
+        *end = max(start + fi->retain_table[fi->next_r].LengthInBytes, index);
+        start = max(start, index);
     }
     return start;
 }
