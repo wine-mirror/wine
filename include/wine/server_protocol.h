@@ -484,7 +484,7 @@ typedef union
         unsigned int     op_type;
         client_ptr_t     addr;
         mem_size_t       size;
-        unsigned int     zero_bits;
+        unsigned int     zero_bits_64;
         unsigned int     prot;
     } virtual_alloc;
     struct
@@ -536,7 +536,7 @@ typedef union
         mem_size_t       size;
         file_pos_t       offset;
         unsigned int     alloc_type;
-        unsigned short   zero_bits;
+        unsigned short   zero_bits_64;
         unsigned short   prot;
     } map_view;
     struct

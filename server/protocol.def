@@ -496,12 +496,12 @@ typedef union
     } async_io;
     struct
     {
-        enum apc_type    type;      /* APC_VIRTUAL_ALLOC */
-        unsigned int     op_type;   /* type of operation */
-        client_ptr_t     addr;      /* requested address */
-        mem_size_t       size;      /* allocation size */
-        unsigned int     zero_bits; /* allocation alignment */
-        unsigned int     prot;      /* memory protection flags */
+        enum apc_type    type;         /* APC_VIRTUAL_ALLOC */
+        unsigned int     op_type;      /* type of operation */
+        client_ptr_t     addr;         /* requested address */
+        mem_size_t       size;         /* allocation size */
+        unsigned int     zero_bits_64; /* number of zero high bits */
+        unsigned int     prot;         /* memory protection flags */
     } virtual_alloc;
     struct
     {
@@ -546,14 +546,14 @@ typedef union
     } virtual_unlock;
     struct
     {
-        enum apc_type    type;      /* APC_MAP_VIEW */
-        obj_handle_t     handle;    /* mapping handle */
-        client_ptr_t     addr;      /* requested address */
-        mem_size_t       size;      /* allocation size */
-        file_pos_t       offset;    /* file offset */
-        unsigned int     alloc_type;/* allocation type */
-        unsigned short   zero_bits; /* allocation alignment */
-        unsigned short   prot;      /* memory protection flags */
+        enum apc_type    type;         /* APC_MAP_VIEW */
+        obj_handle_t     handle;       /* mapping handle */
+        client_ptr_t     addr;         /* requested address */
+        mem_size_t       size;         /* allocation size */
+        file_pos_t       offset;       /* file offset */
+        unsigned int     alloc_type;   /* allocation type */
+        unsigned short   zero_bits_64; /* number of zero high bits */
+        unsigned short   prot;         /* memory protection flags */
     } map_view;
     struct
     {

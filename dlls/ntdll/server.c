@@ -431,7 +431,7 @@ BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
         if ((ULONG_PTR)addr == call->virtual_alloc.addr && size == call->virtual_alloc.size)
         {
             result->virtual_alloc.status = virtual_alloc_aligned( &addr,
-                                                                  call->virtual_alloc.zero_bits, &size,
+                                                                  call->virtual_alloc.zero_bits_64, &size,
                                                                   call->virtual_alloc.op_type,
                                                                   call->virtual_alloc.prot,
                                                                   0 );
@@ -538,7 +538,7 @@ BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
             offset.QuadPart = call->map_view.offset;
             result->map_view.status = virtual_map_section( wine_server_ptr_handle(call->map_view.handle),
                                                            &addr,
-                                                           call->map_view.zero_bits, 0,
+                                                           call->map_view.zero_bits_64, 0,
                                                            &offset, &size,
                                                            call->map_view.alloc_type, call->map_view.prot,
                                                            &image_info );
