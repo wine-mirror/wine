@@ -61,6 +61,15 @@ typedef struct {
     DOUBLE duration;
 } WMPMedia;
 
+typedef struct {
+    IWMPPlaylist IWMPPlaylist_iface;
+
+    LONG ref;
+
+    WCHAR *url;
+    WCHAR *name;
+} WMPPlaylist;
+
 struct WindowsMediaPlayer {
     IOleObject IOleObject_iface;
     IProvideClassInfo2 IProvideClassInfo2_iface;
@@ -89,6 +98,7 @@ struct WindowsMediaPlayer {
     ConnectionPoint *wmpocx;
 
     WMPMedia *media;
+    WMPPlaylist *playlist;
 
     /* DirectShow stuff */
     IGraphBuilder* filter_graph;
@@ -104,7 +114,9 @@ struct WindowsMediaPlayer {
 BOOL init_player(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
 void destroy_player(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
 WMPMedia *unsafe_impl_from_IWMPMedia(IWMPMedia *iface) DECLSPEC_HIDDEN;
+WMPPlaylist *unsafe_impl_from_IWMPPlaylist(IWMPPlaylist *iface) DECLSPEC_HIDDEN;
 HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia) DECLSPEC_HIDDEN;
+HRESULT create_playlist(BSTR name, BSTR url, IWMPPlaylist **ppPlaylist) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Init(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Destroy(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
 void call_sink(ConnectionPoint *This, DISPID dispid, DISPPARAMS *dispparams) DECLSPEC_HIDDEN;

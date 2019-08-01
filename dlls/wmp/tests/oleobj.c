@@ -894,6 +894,7 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     IWMPSettings *settings, *settings_qi;
     IWMPPlayer4 *player4;
     IWMPPlayer *player;
+    IWMPPlaylist *playlist;
     IWMPMedia *media;
     IWMPControls *controls;
     VARIANT_BOOL vbool;
@@ -936,6 +937,20 @@ static void test_wmp_ifaces(IOleObject *oleobj)
     ok(player == NULL, "player != NULL\n");
 
     IWMPNetwork_Release(network);
+
+    playlist = NULL;
+    hres = IWMPPlayer4_QueryInterface(player4, &IID_IWMPPlaylist, (void**)&playlist);
+    ok(hres == E_NOINTERFACE, "Getting IWMPPlaylist from IWMPPlayer4 succeeded: %08x\n", hres);
+    ok(playlist == NULL, "playlist != NULL\n");
+
+    playlist = NULL;
+    hres = IWMPPlayer4_get_currentPlaylist(player4, &playlist);
+todo_wine {
+    ok(hres == S_OK, "IWMPPlayer4_get_currentPlaylist failed: %08x\n", hres);
+    ok(playlist != NULL, "playlist != NULL\n");
+}
+
+    if (playlist) IWMPPlaylist_Release(playlist);
 
     media = NULL;
     hres = IWMPPlayer4_QueryInterface(player4, &IID_IWMPMedia, (void**)&media);

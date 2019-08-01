@@ -47,6 +47,11 @@ static void update_state(WindowsMediaPlayer *wmp, LONG type, LONG state)
     call_sink(wmp->wmpocx, type, &dispparams);
 }
 
+static inline WMPPlaylist *impl_from_IWMPPlaylist(IWMPPlaylist *iface)
+{
+    return CONTAINING_RECORD(iface, WMPPlaylist, IWMPPlaylist_iface);
+}
+
 static inline WMPMedia *impl_from_IWMPMedia(IWMPMedia *iface)
 {
     return CONTAINING_RECORD(iface, WMPMedia, IWMPMedia_iface);
@@ -337,11 +342,13 @@ static HRESULT WINAPI WMPPlayer4_get_dvd(IWMPPlayer4 *iface, IWMPDVD **ppDVD)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMPPlayer4_newPlaylist(IWMPPlayer4 *iface, BSTR name, BSTR url, IWMPPlaylist **ppPlaylist)
+static HRESULT WINAPI WMPPlayer4_newPlaylist(IWMPPlayer4 *iface, BSTR name, BSTR url, IWMPPlaylist **playlist)
 {
     WindowsMediaPlayer *This = impl_from_IWMPPlayer4(iface);
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_w(name), debugstr_w(url), ppPlaylist);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(name), debugstr_w(url), playlist);
+
+    return create_playlist(name, url, playlist);
 }
 
 static HRESULT WINAPI WMPPlayer4_newMedia(IWMPPlayer4 *iface, BSTR url, IWMPMedia **media)
@@ -1937,6 +1944,210 @@ static const IWMPMediaVtbl WMPMediaVtbl = {
     WMPMedia_isReadOnlyItem
 };
 
+static HRESULT WINAPI WMPPlaylist_QueryInterface(IWMPPlaylist *iface, REFIID riid, void **ppv)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    TRACE("(%p)\n", This);
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IWMPPlaylist_iface;
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = &This->IWMPPlaylist_iface;
+    }else if(IsEqualGUID(&IID_IWMPPlaylist, riid)) {
+        TRACE("(%p)->(IID_IWMPPlaylist %p)\n", This, ppv);
+        *ppv = &This->IWMPPlaylist_iface;
+    }else {
+        WARN("Unsupported interface %s\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI WMPPlaylist_AddRef(IWMPPlaylist *iface)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI WMPPlaylist_Release(IWMPPlaylist *iface)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        heap_free(This->url);
+        heap_free(This->name);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI WMPPlaylist_GetTypeInfoCount(IWMPPlaylist *iface, UINT *pctinfo)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_GetTypeInfo(IWMPPlaylist *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%u %d %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_GetIDsOfNames(IWMPPlaylist *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%s %p %u %d %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_Invoke(IWMPPlaylist *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%d %s %d %x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid), lcid,
+          wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_get_count(IWMPPlaylist *iface, LONG *count)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%p)\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_get_name(IWMPPlaylist *iface, BSTR *name)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%p)\n", This, name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_put_name(IWMPPlaylist *iface, BSTR name)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(name));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_get_attributeCount(IWMPPlaylist *iface, LONG *count)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%p)\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_get_attributeName(IWMPPlaylist *iface, LONG index, BSTR *attribute_name)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%d %p)\n", This, index, attribute_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_get_Item(IWMPPlaylist *iface, LONG index, IWMPMedia **media)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%d %p)\n", This, index, media);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_getItemInfo(IWMPPlaylist *iface, BSTR name, BSTR *value)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(name), value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_setItemInfo(IWMPPlaylist *iface, BSTR name, BSTR value)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%s %s)\n", This, debugstr_w(name), debugstr_w(value));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_get_isIdentical(IWMPPlaylist *iface, IWMPPlaylist *playlist, VARIANT_BOOL *var)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%p %p)\n", This, playlist, var);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_clear(IWMPPlaylist *iface)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_insertItem(IWMPPlaylist *iface, LONG index, IWMPMedia *media)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%d %p)\n", This, index, media);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_appendItem(IWMPPlaylist *iface, IWMPMedia *media)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%p)\n", This, media);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_removeItem(IWMPPlaylist *iface, IWMPMedia *media)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%p)\n", This, media);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPPlaylist_moveItem(IWMPPlaylist *iface, LONG old_index, LONG new_index)
+{
+    WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
+    FIXME("(%p)->(%d %d)\n", This, old_index, new_index);
+    return E_NOTIMPL;
+}
+
+static const IWMPPlaylistVtbl WMPPlaylistVtbl = {
+    WMPPlaylist_QueryInterface,
+    WMPPlaylist_AddRef,
+    WMPPlaylist_Release,
+    WMPPlaylist_GetTypeInfoCount,
+    WMPPlaylist_GetTypeInfo,
+    WMPPlaylist_GetIDsOfNames,
+    WMPPlaylist_Invoke,
+    WMPPlaylist_get_count,
+    WMPPlaylist_get_name,
+    WMPPlaylist_put_name,
+    WMPPlaylist_get_attributeCount,
+    WMPPlaylist_get_attributeName,
+    WMPPlaylist_get_Item,
+    WMPPlaylist_getItemInfo,
+    WMPPlaylist_setItemInfo,
+    WMPPlaylist_get_isIdentical,
+    WMPPlaylist_clear,
+    WMPPlaylist_insertItem,
+    WMPPlaylist_appendItem,
+    WMPPlaylist_removeItem,
+    WMPPlaylist_moveItem
+};
+
 static LRESULT WINAPI player_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (msg == WM_WMPEVENT && wParam == 0) {
@@ -1985,6 +2196,8 @@ void unregister_player_msg_class(void) {
 
 BOOL init_player(WindowsMediaPlayer *wmp)
 {
+    IWMPPlaylist *playlist;
+
     InitOnceExecuteOnce(&class_init_once, register_player_msg_class, NULL, NULL);
     wmp->msg_window = CreateWindowW( MAKEINTRESOURCEW(player_msg_class), NULL, 0, 0,
             0, 0, 0, HWND_MESSAGE, 0, wmp_instance, wmp );
@@ -2002,6 +2215,11 @@ BOOL init_player(WindowsMediaPlayer *wmp)
     wmp->IWMPSettings_iface.lpVtbl = &WMPSettingsVtbl;
     wmp->IWMPControls_iface.lpVtbl = &WMPControlsVtbl;
     wmp->IWMPNetwork_iface.lpVtbl = &WMPNetworkVtbl;
+
+    if (SUCCEEDED(create_playlist(NULL, NULL, &playlist)))
+        wmp->playlist = unsafe_impl_from_IWMPPlaylist(playlist);
+    else
+        wmp->playlist = NULL;
 
     wmp->invoke_urls = VARIANT_TRUE;
     wmp->auto_start = VARIANT_TRUE;
@@ -2021,6 +2239,14 @@ WMPMedia *unsafe_impl_from_IWMPMedia(IWMPMedia *iface)
 {
     if (iface->lpVtbl == &WMPMediaVtbl) {
         return CONTAINING_RECORD(iface, WMPMedia, IWMPMedia_iface);
+    }
+    return NULL;
+}
+
+WMPPlaylist *unsafe_impl_from_IWMPPlaylist(IWMPPlaylist *iface)
+{
+    if (iface->lpVtbl == &WMPPlaylistVtbl) {
+        return CONTAINING_RECORD(iface, WMPPlaylist, IWMPPlaylist_iface);
     }
     return NULL;
 }
@@ -2085,5 +2311,28 @@ HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia)
         return S_OK;
     }
     IWMPMedia_Release(&media->IWMPMedia_iface);
+    return E_OUTOFMEMORY;
+}
+
+HRESULT create_playlist(BSTR name, BSTR url, IWMPPlaylist **ppPlaylist)
+{
+    WMPPlaylist *playlist;
+
+    playlist = heap_alloc_zero(sizeof(*playlist));
+    if (!playlist)
+        return E_OUTOFMEMORY;
+
+    playlist->IWMPPlaylist_iface.lpVtbl = &WMPPlaylistVtbl;
+    playlist->url = url ? heap_strdupW(url) : heap_strdupW(emptyW);
+    playlist->name = name ? heap_strdupW(name) : heap_strdupW(emptyW);
+    playlist->ref = 1;
+
+    if (playlist->url)
+    {
+        *ppPlaylist = &playlist->IWMPPlaylist_iface;
+        return S_OK;
+    }
+
+    IWMPPlaylist_Release(&playlist->IWMPPlaylist_iface);
     return E_OUTOFMEMORY;
 }
