@@ -5336,6 +5336,14 @@ typedef struct _tagEDITBALLOONTIP
         (BOOL)SNDMSG((hwnd), EM_SETCUEBANNER, (WPARAM)(drawfocused), (LPARAM)(text))
 #define Edit_GetCueBannerText(hwnd, buff, buff_size) \
         (BOOL)SNDMSG((hwnd), EM_GETCUEBANNER, (WPARAM)(buff), (LPARAM)(buff_size))
+#define Edit_SetHilite(hwnd, start, end) \
+        SNDMSG((hwnd), EM_SETHILITE, start, end)
+#define Edit_GetHilite(hwnd) \
+        ((DWORD)SNDMSG((hwnd), EM_GETHILITE, 0L, 0L))
+#define Edit_ShowBalloonTip(hwnd, tip) \
+        (BOOL)SNDMSG((hwnd), EM_SHOWBALLOONTIP, 0, (LPARAM)(tip))
+#define Edit_HideBalloonTip(hwnd) \
+        (BOOL)SNDMSG((hwnd), EM_HIDEBALLOONTIP, 0, 0)
 
 /**************************************************************************
  * Listbox control
