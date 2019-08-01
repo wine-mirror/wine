@@ -92,6 +92,12 @@ extern "C" {
 #define WS_SOCK_SEQPACKET          5
 #endif /* USE_WS_PREFIX */
 
+/* protocol families */
+
+#ifndef USE_WS_PREFIX
+#define PF_INET6                   AF_INET6
+#endif
+
 /* option flags per socket */
 
 #define FD_MAX_EVENTS              10
