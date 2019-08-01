@@ -698,8 +698,10 @@ static const int ws_ip_map[][2] =
 #endif
     MAP_OPTION( IP_TOS ),
     MAP_OPTION( IP_TTL ),
-#ifdef IP_PKTINFO
+#if defined(IP_PKTINFO)
     MAP_OPTION( IP_PKTINFO ),
+#elif defined(IP_RECVDSTADDR)
+    { WS_IP_PKTINFO, IP_RECVDSTADDR },
 #endif
 #ifdef IP_UNICAST_IF
     MAP_OPTION( IP_UNICAST_IF ),
@@ -819,7 +821,7 @@ static const int ws_poll_map[][2] =
 static const char magic_loopback_addr[] = {127, 12, 34, 56};
 
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-#ifdef IP_PKTINFO
+#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
 static inline WSACMSGHDR *fill_control_message(int level, int type, WSACMSGHDR *current, ULONG *maxsize, void *data, int len)
 {
     ULONG msgsize = sizeof(WSACMSGHDR) + WSA_CMSG_ALIGN(len);
@@ -837,11 +839,11 @@ static inline WSACMSGHDR *fill_control_message(int level, int type, WSACMSGHDR *
     /* Return the pointer to where next entry should go */
     return (WSACMSGHDR *) (ptr + WSA_CMSG_ALIGN(len));
 }
-#endif /* IP_PKTINFO */
+#endif /* defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) */
 
 static inline int convert_control_headers(struct msghdr *hdr, WSABUF *control)
 {
-#ifdef IP_PKTINFO
+#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
     WSACMSGHDR *cmsg_win = (WSACMSGHDR *) control->buf, *ptr;
     ULONG ctlsize = control->len;
     struct cmsghdr *cmsg_unix;
@@ -855,6 +857,7 @@ static inline int convert_control_headers(struct msghdr *hdr, WSABUF *control)
             case IPPROTO_IP:
                 switch(cmsg_unix->cmsg_type)
                 {
+#if defined(IP_PKTINFO)
                     case IP_PKTINFO:
                     {
                         /* Convert the Unix IP_PKTINFO structure to the Windows version */
@@ -867,6 +870,19 @@ static inline int convert_control_headers(struct msghdr *hdr, WSABUF *control)
                                                    (void*)&data_win, sizeof(data_win));
                         if (!ptr) goto error;
                     }   break;
+#elif defined(IP_RECVDSTADDR)
+                    case IP_RECVDSTADDR:
+                    {
+                        struct in_addr *addr_unix = (struct in_addr *) CMSG_DATA(cmsg_unix);
+                        struct WS_in_pktinfo data_win;
+
+                        memcpy(&data_win.ipi_addr, &addr_unix->s_addr, 4); /* 4 bytes = 32 address bits */
+                        data_win.ipi_ifindex = 0; /* FIXME */
+                        ptr = fill_control_message(WS_IPPROTO_IP, WS_IP_PKTINFO, ptr, &ctlsize,
+                                                   (void*)&data_win, sizeof(data_win));
+                        if (!ptr) goto error;
+                    }   break;
+#endif /* IP_PKTINFO */
                     default:
                         FIXME("Unhandled IPPROTO_IP message header type %d\n", cmsg_unix->cmsg_type);
                         break;
@@ -884,10 +900,10 @@ static inline int convert_control_headers(struct msghdr *hdr, WSABUF *control)
 error:
     control->len = 0;
     return 0;
-#else /* IP_PKTINFO */
+#else /* defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) */
     control->len = 0;
     return 1;
-#endif /* IP_PKTINFO */
+#endif /* defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) */
 }
 #endif /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
@@ -4310,7 +4326,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_IP_MULTICAST_LOOP:
         case WS_IP_MULTICAST_TTL:
         case WS_IP_OPTIONS:
-#ifdef IP_PKTINFO
+#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
         case WS_IP_PKTINFO:
 #endif
         case WS_IP_TOS:
@@ -5998,7 +6014,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IP_MULTICAST_LOOP:
         case WS_IP_MULTICAST_TTL:
         case WS_IP_OPTIONS:
-#ifdef IP_PKTINFO
+#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
         case WS_IP_PKTINFO:
 #endif
         case WS_IP_TOS:
