@@ -69,7 +69,7 @@ static void test_NtAllocateVirtualMemory(void)
     void *addr1, *addr2;
     NTSTATUS status;
     SIZE_T size;
-    ULONG zero_bits;
+    ULONG_PTR zero_bits;
     BOOL is_wow64;
 
     /* simple allocation should success */
@@ -120,12 +120,12 @@ static void test_NtAllocateVirtualMemory(void)
                                          MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
         ok(status == STATUS_SUCCESS || status == STATUS_NO_MEMORY ||
            broken(zero_bits == 20 && status == STATUS_CONFLICTING_ADDRESSES) /* w1064v1809 */,
-           "NtAllocateVirtualMemory with %d zero_bits returned %08x\n", zero_bits, status);
+           "NtAllocateVirtualMemory with %d zero_bits returned %08x\n", (int)zero_bits, status);
         if (status == STATUS_SUCCESS)
         {
             todo_wine_if((UINT_PTR)addr2 >> (32 - zero_bits))
             ok(((UINT_PTR)addr2 >> (32 - zero_bits)) == 0,
-               "NtAllocateVirtualMemory with %d zero_bits returned address %p\n", zero_bits, addr2);
+               "NtAllocateVirtualMemory with %d zero_bits returned address %p\n", (int)zero_bits, addr2);
 
             size = 0;
             status = NtFreeVirtualMemory(NtCurrentProcess(), &addr2, &size, MEM_RELEASE);
@@ -271,7 +271,7 @@ static void test_NtMapViewOfSection(void)
     DWORD status, written;
     SIZE_T size, result;
     LARGE_INTEGER offset;
-    ULONG zero_bits;
+    ULONG_PTR zero_bits;
 
     file = CreateFileA(testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "Failed to create test file\n");
@@ -324,12 +324,12 @@ static void test_NtMapViewOfSection(void)
         offset.QuadPart = 0;
         status = NtMapViewOfSection(mapping, process, &ptr2, zero_bits, 0, &offset, &size, 1, 0, PAGE_READWRITE);
         ok(status == STATUS_SUCCESS || status == STATUS_NO_MEMORY,
-           "NtMapViewOfSection with %d zero_bits returned %08x\n", zero_bits, status);
+           "NtMapViewOfSection with %d zero_bits returned %08x\n", (int)zero_bits, status);
         if (status == STATUS_SUCCESS)
         {
             todo_wine_if((UINT_PTR)ptr2 >> (32 - zero_bits))
             ok(((UINT_PTR)ptr2 >> (32 - zero_bits)) == 0,
-               "NtMapViewOfSection with %d zero_bits returned address %p\n", zero_bits, ptr2);
+               "NtMapViewOfSection with %d zero_bits returned address %p\n", (int)zero_bits, ptr2);
 
             status = NtUnmapViewOfSection(process, ptr2);
             ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08x\n", status);
