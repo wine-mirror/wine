@@ -4790,6 +4790,11 @@ static const WCHAR MONTHCAL_CLASSW[] = { 'S','y','s',
 #define GMR_VISIBLE     0
 #define GMR_DAYSTATE    1
 
+#define MCMV_MONTH      0
+#define MCMV_YEAR       1
+#define MCMV_DECADE     2
+#define MCMV_CENTURY    3
+#define MCMV_MAX        MCMV_CENTURY
 
 /*  Month calendar's structures */
 
@@ -4826,6 +4831,21 @@ typedef struct tagNMDAYSTATE
     LPMONTHDAYSTATE prgDayState;
 } NMDAYSTATE, *LPNMDAYSTATE;
 
+typedef struct tagMCGRIDINFO
+{
+    UINT       cbSize;
+    DWORD      dwPart;
+    DWORD      dwFlags;
+    INT        iCalendar;
+    INT        iRow;
+    INT        iCol;
+    BOOL       bSelected;
+    SYSTEMTIME stStart;
+    SYSTEMTIME stEnd;
+    RECT       rc;
+    WCHAR      *pszName;
+    SIZE_T     cchName;
+} MCGRIDINFO, *PMCGRIDINFO;
 
 /* macros */
 
@@ -4875,7 +4895,24 @@ typedef struct tagNMDAYSTATE
         (BOOL)SNDMSG((hwnd), MCM_SETUNICODEFORMAT, (WPARAM)(fUnicode), 0)
 #define MonthCal_GetUnicodeFormat(hwnd)  \
         (BOOL)SNDMSG((hwnd), MCM_GETUNICODEFORMAT, 0, 0)
-
+#define MonthCal_SetCALID(hmc, calid) \
+        SNDMSG(hmc, MCM_SETCALID, (WPARAM)(calid), 0)
+#define MonthCal_GetCALID(hmc) \
+        (CALID)SNDMSG(hmc, MCM_GETCALID, 0, 0)
+#define MonthCal_GetCalendarCount(hmc) \
+        (DWORD)SNDMSG(hmc, MCM_GETCALENDARCOUNT, 0, 0)
+#define MonthCal_GetCurrentView(hmc) \
+        (DWORD)SNDMSG(hmc, MCM_GETCURRENTVIEW, 0, 0)
+#define MonthCal_SetCurrentView(hmc, view) \
+        (BOOL)SNDMSG(hmc, MCM_SETCURRENTVIEW, 0, (LPARAM)view)
+#define MonthCal_SizeRectToMin(hmc, prc) \
+        SNDMSG(hmc, MCM_SIZERECTTOMIN, 0, (LPARAM)prc)
+#define MonthCal_GetCalendarBorder(hmc) \
+        (INT)SNDMSG(hmc, MCM_GETCALENDARBORDER, 0, 0)
+#define MonthCal_SetCalendarBorder(hmc, reset, xy) \
+        SNDMSG(hmc, MCM_SETCALENDARBORDER, (WPARAM)reset, (LPARAM)xy)
+#define MonthCal_GetCalendarGridInfo(hmc, info) \
+        (BOOL)SNDMSG(hmc, MCM_GETCALENDARGRIDINFO, 0, (LPARAM)(PMCGRIDINFO)info)
 
 /**************************************************************************
  * Date and time picker control
