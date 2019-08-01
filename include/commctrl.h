@@ -3333,6 +3333,9 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVM_GETTOOLTIPS         (LVM_FIRST+78)
 #define LVM_GETUNICODEFORMAT    (CCM_GETUNICODEFORMAT)
 #define LVM_SETUNICODEFORMAT    (CCM_SETUNICODEFORMAT)
+#define LVM_GETGROUPSTATE       (LVM_FIRST + 92)
+#define LVM_GETFOCUSEDGROUP     (LVM_FIRST + 93)
+#define LVM_GETGROUPRECT        (LVM_FIRST + 98)
 #define LVM_SETSELECTEDCOLUMN   (LVM_FIRST + 140)
 #define LVM_SETTILEWIDTH        (LVM_FIRST + 141)
 #define LVM_SETVIEW             (LVM_FIRST + 142)
@@ -3342,6 +3345,8 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVM_GETGROUPINFO        (LVM_FIRST + 149)
 #define LVM_REMOVEGROUP         (LVM_FIRST + 150)
 #define LVM_MOVEGROUP           (LVM_FIRST + 151)
+#define LVM_GETGROUPCOUNT       (LVM_FIRST + 152)
+#define LVM_GETGROUPINFOBYINDEX (LVM_FIRST + 153)
 #define LVM_MOVEITEMTOGROUP     (LVM_FIRST + 154)
 #define LVM_SETGROUPMETRICS     (LVM_FIRST + 155)
 #define LVM_GETGROUPMETRICS     (LVM_FIRST + 156)
@@ -4157,6 +4162,25 @@ typedef struct NMLVSCROLL
     (BOOL)SNDMSG((hwnd), LVM_SETUNICODEFORMAT, (WPARAM)(fUnicode), 0)
 #define ListView_GetUnicodeFormat(hwnd) \
     (BOOL)SNDMSG((hwnd), LVM_GETUNICODEFORMAT, 0, 0)
+#define ListView_GetGroupInfoByIndex(hwnd, index, grp) \
+    SNDMSG((hwnd), LVM_GETGROUPINFOBYINDEX, (WPARAM)(index), (LPARAM)(grp))
+#define ListView_SetGroupState(hwnd, group, masks, states) \
+{   LVGROUP level;  level.cbSize = sizeof(level);  level.mask = LVGF_STATE; \
+    level.stateMask = masks; level.state = states; \
+    SNDMSG((hwnd), LVM_SETGROUPINFO, (WPARAM)(group), (LPARAM)(LVGROUP *)&level); }
+#define ListView_IsItemVisible(hwnd, index) \
+    (UINT)SNDMSG((hwnd), LVM_ISITEMVISIBLE, (WPARAM)(index), (LPARAM)0)
+#define ListView_GetGroupState(hwnd, group, mask) \
+    (UINT)SNDMSG((hwnd), LVM_GETGROUPSTATE, (WPARAM)(group), (LPARAM)(mask))
+#define ListView_GetFocusedGroup(hwnd) \
+    SNDMSG((hwnd), LVM_GETFOCUSEDGROUP, 0, 0)
+#define ListView_GetGroupRect(hwnd, group, type, rc) \
+    SNDMSG((hwnd), LVM_GETGROUPRECT, (WPARAM)(group), \
+      ((rc) ? (((RECT*)(rc))->top = type), (LPARAM)(RECT*)(rc) : (LPARAM)(RECT*)NULL))
+#define ListView_GetGroupCount(hwnd) \
+    SNDMSG((hwnd), LVM_GETGROUPCOUNT, (WPARAM)0, (LPARAM)0)
+#define ListView_GetGroupInfoByIndex(hwnd, index, grp) \
+    SNDMSG((hwnd), LVM_GETGROUPINFOBYINDEX, (WPARAM)(index), (LPARAM)(grp))
 
 /* Tab Control */
 
