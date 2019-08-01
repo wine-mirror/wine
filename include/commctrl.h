@@ -4608,6 +4608,7 @@ static const WCHAR ANIMATE_CLASSW[] = { 'S','y','s',
 #define ACM_OPEN                WINELIB_NAME_AW(ACM_OPEN)
 #define ACM_PLAY                (WM_USER+101)
 #define ACM_STOP                (WM_USER+102)
+#define ACM_ISPLAYING           (WM_USER+104)
 
 #define ACN_START               1
 #define ACN_STOP                2
@@ -4635,7 +4636,8 @@ static const WCHAR ANIMATE_CLASSW[] = { 'S','y','s',
     (BOOL)SNDMSG(hwnd,ACM_OPENA,0,0)
 #define Animate_Seek(hwnd,frame) \
     (BOOL)SNDMSG(hwnd,ACM_PLAY,1,(LPARAM)MAKELONG(frame,frame))
-
+#define Animate_IsPlaying(hwnd) \
+    (BOOL)SNDMSG(hwnd, ACM_ISPLAYING, 0, 0)
 
 /**************************************************************************
  * IP Address control
