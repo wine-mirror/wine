@@ -1002,6 +1002,14 @@ typedef struct tagNMHDFILTERBTNCLICK
   (BOOL)SNDMSG((hwnd),HDM_SETUNICODEFORMAT,(WPARAM)(fUnicode),0)
 #define Header_GetUnicodeFormat(hwnd) \
   (BOOL)SNDMSG((hwnd),HDM_GETUNICODEFORMAT,0,0)
+#define Header_GetItemDropDownRect(hwnd,iItem,lprc) \
+  (BOOL)SNDMSG((hwnd), HDM_GETITEMDROPDOWNRECT, (WPARAM)iItem, (LPARAM)lprc)
+#define Header_GetOverflowRect(hwnd, rc) \
+  (BOOL)SNDMSG((hwnd), HDM_GETOVERFLOWRECT, 0, (LPARAM)(rc))
+#define Header_GetFocusedItem(hwnd) \
+  (INT)SNDMSG((hwnd), HDM_GETFOCUSEDITEM, (WPARAM)(0), (LPARAM)(0))
+#define Header_SetFocusedItem(hwnd, item) \
+  (BOOL)SNDMSG((hwnd), HDM_SETFOCUSEDITEM, (WPARAM)(0), (LPARAM)(item))
 
 /* Win32 5.1 Button Theme */
 #define WC_BUTTONA       "Button"
