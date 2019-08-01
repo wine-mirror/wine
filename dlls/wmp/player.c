@@ -21,6 +21,7 @@
 #include "wine/debug.h"
 #include <nserror.h>
 #include "wmpids.h"
+#include "shlwapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 
@@ -1730,6 +1731,7 @@ static ULONG WINAPI WMPMedia_Release(IWMPMedia *iface)
 
     if(!ref) {
         heap_free(This->url);
+        heap_free(This->name);
         heap_free(This);
     }
 
@@ -1789,17 +1791,21 @@ static HRESULT WINAPI WMPMedia_get_name(IWMPMedia *iface, BSTR *name)
 {
     WMPMedia *This = impl_from_IWMPMedia(iface);
 
-    FIXME("(%p)->(%p)\n", This, name);
+    TRACE("(%p)->(%p)\n", This, name);
 
-    /* FIXME: this should be a display name */
-    return return_bstr(This->url, name);
+    return return_bstr(This->name, name);
 }
 
-static HRESULT WINAPI WMPMedia_put_name(IWMPMedia *iface, BSTR pbstrName)
+static HRESULT WINAPI WMPMedia_put_name(IWMPMedia *iface, BSTR name)
 {
     WMPMedia *This = impl_from_IWMPMedia(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(pbstrName));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(name));
+
+    if (!name) return E_POINTER;
+
+    This->name = heap_strdupW(name);
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPMedia_get_imageSourceWidth(IWMPMedia *iface, LONG *pWidth)
@@ -2022,13 +2028,54 @@ WMPMedia *unsafe_impl_from_IWMPMedia(IWMPMedia *iface)
 HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia)
 {
     WMPMedia *media;
+    IUri *uri;
+    BSTR path;
+    HRESULT hr;
+    WCHAR *name_dup, slashW[] = {'/',0};
 
     media = heap_alloc_zero(sizeof(*media));
     if (!media)
         return E_OUTOFMEMORY;
 
     media->IWMPMedia_iface.lpVtbl = &WMPMediaVtbl;
-    media->url = url ? heap_strdupW(url) : heap_strdupW(emptyW);
+
+    if (url)
+    {
+        media->url = heap_strdupW(url);
+        name_dup = heap_strdupW(url);
+
+        hr = CreateUri(name_dup, Uri_CREATE_ALLOW_RELATIVE | Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, 0, &uri);
+        if (FAILED(hr))
+        {
+            heap_free(name_dup);
+            return hr;
+        }
+        hr = IUri_GetPath(uri, &path);
+        if (hr != S_OK)
+        {
+            heap_free(name_dup);
+            IUri_Release(uri);
+            return hr;
+        }
+
+        /* GetPath() will return "/" for invalid uri's
+         * only strip extension when uri is valid
+         */
+        if (wcscmp(path, slashW) != 0)
+            PathRemoveExtensionW(name_dup);
+        PathStripPathW(name_dup);
+
+        media->name = name_dup;
+
+        SysFreeString(path);
+        IUri_Release(uri);
+    }
+    else
+    {
+        media->url = heap_strdupW(emptyW);
+        media->name = heap_strdupW(emptyW);
+    }
+
     media->duration = duration;
     media->ref = 1;
 

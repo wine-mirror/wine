@@ -573,15 +573,12 @@ todo_wine
     SysFreeString(str);
     hr = IWMPMedia_get_name(media, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
-todo_wine
     ok(!lstrcmpW(str, testW), "Expected %s, got %s\n", wine_dbgstr_w(testW), wine_dbgstr_w(str));
     SysFreeString(str);
     hr = IWMPMedia_put_name(media, NULL);
-todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
     hr = IWMPMedia_get_name(media, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
-todo_wine
     ok(!lstrcmpW(str, testW), "Expected %s, got %s\n", wine_dbgstr_w(testW), wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -594,7 +591,6 @@ todo_wine
     ok(media2 != NULL, "Unexpected media instance.\n");
     hr = IWMPMedia_get_name(media2, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
-todo_wine
     ok(!lstrcmpW(str, testW), "Expected %s, got %s\n", wine_dbgstr_w(testW), wine_dbgstr_w(str));
     SysFreeString(str);
     IWMPMedia_Release(media2);
@@ -615,7 +611,6 @@ todo_wine
         SysFreeString(str);
         hr = IWMPMedia_get_name(media, &str);
         ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
-    todo_wine
         ok(!lstrcmpW(str, tests[i].expected), "Expected %s, got %s\n", wine_dbgstr_w(tests[i].expected), wine_dbgstr_w(str));
         SysFreeString(str);
         IWMPMedia_Release(media);

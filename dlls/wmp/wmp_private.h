@@ -56,6 +56,7 @@ typedef struct {
     LONG ref;
 
     WCHAR *url;
+    WCHAR *name;
 
     DOUBLE duration;
 } WMPMedia;
