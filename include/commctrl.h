@@ -3756,7 +3756,7 @@ typedef struct LVINSERTMARK
 	DWORD dwFlags;
 	int iItem;
 	DWORD dwReserved;
-} LVINSERTMARK, *PLVINSERTMARK;
+} LVINSERTMARK, *LPLVINSERTMARK;
 
 typedef struct tagTCHITTESTINFO
 {
