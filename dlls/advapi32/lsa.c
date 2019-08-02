@@ -508,7 +508,7 @@ NTSTATUS WINAPI LsaLookupSids(
     {
         (*Names)[i].Use = SidTypeUnknown;
         (*Names)[i].DomainIndex = -1;
-        (*Names)[i].Name.Buffer = NULL;
+        RtlInitUnicodeStringEx(&(*Names)[i].Name, NULL);
 
         memset(&(*ReferencedDomains)->Domains[i], 0, sizeof(LSA_TRUST_INFORMATION));
 
