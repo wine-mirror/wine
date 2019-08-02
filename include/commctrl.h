@@ -3886,6 +3886,17 @@ typedef struct NMLVSCROLL
     int dy;
 } NMLVSCROLL, *LPNMLVSCROLL;
 
+typedef struct tagLVITEMINDEX
+{
+    int iItem;
+    int iGroup;
+} LVITEMINDEX, *PLVITEMINDEX;
+
+#define LVGGR_GROUP      0
+#define LVGGR_HEADER     1
+#define LVGGR_LABEL      2
+#define LVGGR_SUBSETLINK 3
+
 #define ListView_SetItemCount(hwnd,count) \
     (BOOL)SNDMSG((hwnd),LVM_SETITEMCOUNT,(WPARAM)(INT)(count),0)
 #define ListView_SetTextBkColor(hwnd,clrBk) \
