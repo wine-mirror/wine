@@ -729,6 +729,22 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         *buflen = len;
         return ret;
 
+    case WINHTTP_QUERY_REQUEST_METHOD:
+        len = strlenW( request->verb ) * sizeof(WCHAR);
+        if (!buffer || len + sizeof(WCHAR) > *buflen)
+        {
+            len += sizeof(WCHAR);
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        }
+        else
+        {
+            strcpyW( buffer, request->verb );
+            TRACE("returning string: %s\n", debugstr_w(buffer));
+            ret = TRUE;
+        }
+        *buflen = len;
+        return ret;
+
     default:
         if (attr >= ARRAY_SIZE(attribute_table) || !attribute_table[attr])
         {

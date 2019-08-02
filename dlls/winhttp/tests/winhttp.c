@@ -81,7 +81,7 @@ static BOOL proxy_active(void)
     return active;
 }
 
-static void test_QueryOption(void)
+static void test_WinHttpQueryOption(void)
 {
     BOOL ret;
     HINTERNET session, request, connection;
@@ -267,7 +267,7 @@ done:
     ok(ret, "WinHttpCloseHandle failed on closing session: %u\n", GetLastError());
 }
 
-static void test_OpenRequest (void)
+static void test_WinHttpOpenRequest (void)
 {
     BOOL ret;
     HINTERNET session, request, connection;
@@ -362,20 +362,21 @@ static void test_empty_headers_param(void)
     WinHttpCloseHandle(ses);
 }
 
-static void test_SendRequest (void)
+static void test_WinHttpSendRequest (void)
 {
     static const WCHAR content_type[] =
         {'C','o','n','t','e','n','t','-','T','y','p','e',':',' ','a','p','p','l','i','c','a','t','i','o','n',
          '/','x','-','w','w','w','-','f','o','r','m','-','u','r','l','e','n','c','o','d','e','d',0};
     static const WCHAR test_file[] = {'t','e','s','t','s','/','p','o','s','t','.','p','h','p',0};
-    static const WCHAR test_verb[] = {'P','O','S','T',0};
+    static const WCHAR postW[] = {'P','O','S','T',0};
     static CHAR post_data[] = "mode=Test";
     static const char test_post[] = "mode => Test\0\n";
     HINTERNET session, request, connection;
-    DWORD header_len, optional_len, total_len, bytes_rw, size, err, disable;
+    DWORD header_len, optional_len, total_len, bytes_rw, size, err, disable, len;
     DWORD_PTR context;
     BOOL ret;
     CHAR buffer[256];
+    WCHAR method[8];
     int i;
 
     header_len = -1L;
@@ -389,7 +390,7 @@ static void test_SendRequest (void)
     connection = WinHttpConnect (session, test_winehq, INTERNET_DEFAULT_HTTP_PORT, 0);
     ok(connection != NULL, "WinHttpConnect failed to open a connection, error: %u.\n", GetLastError());
 
-    request = WinHttpOpenRequest(connection, test_verb, test_file, NULL, WINHTTP_NO_REFERER,
+    request = WinHttpOpenRequest(connection, postW, test_file, NULL, WINHTTP_NO_REFERER,
         WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_BYPASS_PROXY_CACHE);
     if (request == NULL && GetLastError() == ERROR_WINHTTP_NAME_NOT_RESOLVED)
     {
@@ -398,6 +399,13 @@ static void test_SendRequest (void)
     }
     ok(request != NULL, "WinHttpOpenrequest failed to open a request, error: %u.\n", GetLastError());
     if (!request) goto done;
+
+    method[0] = 0;
+    len = sizeof(method);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_REQUEST_METHOD, NULL, method, &len, NULL);
+    ok(ret, "got %u\n", GetLastError());
+    ok(len == lstrlenW(postW) * sizeof(WCHAR), "got %u\n", len);
+    ok(!lstrcmpW(method, postW), "got %s\n", wine_dbgstr_w(method));
 
     context = 0xdeadbeef;
     ret = WinHttpSetOption(request, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(context));
@@ -4728,14 +4736,14 @@ START_TEST (winhttp)
     HANDLE thread;
     DWORD ret;
 
-    test_OpenRequest();
-    test_SendRequest();
+    test_WinHttpOpenRequest();
+    test_WinHttpSendRequest();
     test_WinHttpTimeFromSystemTime();
     test_WinHttpTimeToSystemTime();
     test_WinHttpAddHeaders();
     test_secure_connection();
     test_request_parameter_defaults();
-    test_QueryOption();
+    test_WinHttpQueryOption();
     test_set_default_proxy_config();
     test_empty_headers_param();
     test_timeouts();
