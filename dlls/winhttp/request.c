@@ -2278,8 +2278,8 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD heade
     BOOL ret;
     struct request *request;
 
-    TRACE("%p, %s, %u, %u, %u, %lx\n", hrequest, debugstr_wn(headers, headers_len), headers_len, optional_len,
-          total_len, context);
+    TRACE("%p, %s, %u, %p, %u, %u, %lx\n", hrequest, debugstr_wn(headers, headers_len), headers_len, optional,
+          optional_len, total_len, context);
 
     if (!(request = (struct request *)grab_object( hrequest )))
     {
