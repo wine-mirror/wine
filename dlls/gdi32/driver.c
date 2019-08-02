@@ -1447,3 +1447,12 @@ NTSTATUS WINAPI D3DKMTDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
 
     return status;
 }
+
+/******************************************************************************
+ *		D3DKMTQueryStatistics [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTQueryStatistics(D3DKMT_QUERYSTATISTICS *stats)
+{
+    FIXME("(%p): stub\n", stats);
+    return STATUS_SUCCESS;
+}

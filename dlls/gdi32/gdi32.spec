@@ -88,6 +88,7 @@
 @ stdcall D3DKMTEscape(ptr)
 @ stdcall D3DKMTOpenAdapterFromGdiDisplayName(ptr)
 @ stdcall D3DKMTOpenAdapterFromHdc(ptr)
+@ stdcall D3DKMTQueryStatistics(ptr)
 @ stdcall DPtoLP(long ptr long)
 @ stdcall DeleteColorSpace(long)
 @ stdcall DeleteDC(long)

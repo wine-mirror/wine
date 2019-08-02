@@ -68,7 +68,7 @@
 @ stub D3DKMTQueryRemoteVidPnSourceFromGdiDisplayName
 @ stub D3DKMTQueryResourceInfo
 @ stub D3DKMTQueryResourceInfoFromNtHandle
-@ stub D3DKMTQueryStatistics
+@ stdcall D3DKMTQueryStatistics(ptr) gdi32.D3DKMTQueryStatistics
 @ stub D3DKMTReclaimAllocations
 @ stub D3DKMTReleaseKeyedMutex
 @ stub D3DKMTReleaseKeyedMutex2
