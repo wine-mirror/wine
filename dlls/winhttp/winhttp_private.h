@@ -93,6 +93,7 @@ struct session
     struct list cookie_cache;
     HANDLE unload_event;
     DWORD secure_protocols;
+    DWORD passport_flags;
 };
 
 struct connect

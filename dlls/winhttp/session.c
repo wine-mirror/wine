@@ -210,7 +210,7 @@ static BOOL session_set_option( struct object_header *hdr, DWORD option, void *b
         return TRUE;
 
     case WINHTTP_OPTION_CONFIGURE_PASSPORT_AUTH:
-        FIXME("WINHTTP_OPTION_CONFIGURE_PASSPORT_AUTH: 0x%x\n", *(DWORD *)buffer);
+        session->passport_flags = *(DWORD *)buffer;
         return TRUE;
 
     case WINHTTP_OPTION_UNLOAD_NOTIFY_EVENT:

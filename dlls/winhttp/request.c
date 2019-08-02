@@ -873,7 +873,7 @@ static enum auth_scheme scheme_from_flag( DWORD flag )
     return SCHEME_INVALID;
 }
 
-static DWORD auth_scheme_from_header( WCHAR *header )
+static DWORD auth_scheme_from_header( const WCHAR *header )
 {
     unsigned int i;
 
@@ -2628,7 +2628,7 @@ static WCHAR *get_redirect_url( struct request *request, DWORD *len )
     WCHAR *ret;
 
     query_headers( request, WINHTTP_QUERY_LOCATION, NULL, NULL, &size, NULL );
-    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return FALSE;
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
     if (!(ret = heap_alloc( size ))) return NULL;
     *len = size / sizeof(WCHAR) - 1;
     if (query_headers( request, WINHTTP_QUERY_LOCATION, NULL, ret, &size, NULL )) return ret;
@@ -2747,6 +2747,42 @@ end:
     return ret;
 }
 
+static BOOL is_passport_request( struct request *request )
+{
+    static const WCHAR passportW[] = {'P','a','s','s','p','o','r','t','1','.','4'};
+    WCHAR buf[1024];
+    DWORD len = ARRAY_SIZE(buf);
+
+    if (!(request->connect->session->passport_flags & WINHTTP_ENABLE_PASSPORT_AUTH) ||
+        !query_headers( request, WINHTTP_QUERY_WWW_AUTHENTICATE, NULL, buf, &len, NULL )) return FALSE;
+
+    if (!strncmpiW( buf, passportW, ARRAY_SIZE(passportW) ) &&
+        (buf[ARRAY_SIZE(passportW)] == ' ' || !buf[ARRAY_SIZE(passportW)])) return TRUE;
+
+    return FALSE;
+}
+
+static BOOL handle_passport_redirect( struct request *request )
+{
+    static const WCHAR status401W[] = {'4','0','1',0};
+    DWORD flags = WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE;
+    int i, len = strlenW( request->raw_headers );
+    WCHAR *p = request->raw_headers;
+
+    if (!process_header( request, attr_status, status401W, flags, FALSE )) return FALSE;
+
+    for (i = 0; i < len; i++)
+    {
+        if (i <= len - 3 && p[i] == '3' && p[i + 1] == '0' && p[i + 2] == '2')
+        {
+            p[i] = '4';
+            p[i + 2] = '1';
+            break;
+        }
+    }
+    return TRUE;
+}
+
 static BOOL receive_response( struct request *request, BOOL async )
 {
     BOOL ret;
@@ -2774,7 +2810,11 @@ static BOOL receive_response( struct request *request, BOOL async )
 
         if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES)) record_cookies( request );
 
-        if (status == HTTP_STATUS_MOVED || status == HTTP_STATUS_REDIRECT || status == HTTP_STATUS_REDIRECT_KEEP_VERB)
+        if (status == HTTP_STATUS_REDIRECT && is_passport_request( request ))
+        {
+            ret = handle_passport_redirect( request );
+        }
+        else if (status == HTTP_STATUS_MOVED || status == HTTP_STATUS_REDIRECT || status == HTTP_STATUS_REDIRECT_KEEP_VERB)
         {
             if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS ||
                 request->hdr.redirect_policy == WINHTTP_OPTION_REDIRECT_POLICY_NEVER) break;
