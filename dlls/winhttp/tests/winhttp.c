@@ -456,6 +456,14 @@ static void test_WinHttpSendRequest (void)
        "Expected ERROR_SUCCESS got %u.\n", GetLastError());
     ok(ret == TRUE, "WinHttpReceiveResponse failed: %u.\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_ORIG_URI, NULL, NULL, &len, NULL);
+    ok(!ret && GetLastError() == ERROR_WINHTTP_HEADER_NOT_FOUND, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_MAX + 1, NULL, NULL, &len, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %u\n", GetLastError());
+
     bytes_rw = -1;
     ret = WinHttpReadData(request, buffer, sizeof(buffer) - 1, &bytes_rw);
     ok(ret == TRUE, "WinHttpReadData failed: %u.\n", GetLastError());

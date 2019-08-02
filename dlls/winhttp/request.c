@@ -746,9 +746,15 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         return ret;
 
     default:
-        if (attr >= ARRAY_SIZE(attribute_table) || !attribute_table[attr])
+        if (attr >= ARRAY_SIZE(attribute_table))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+        if (!attribute_table[attr])
         {
             FIXME("attribute %u not implemented\n", attr);
+            SetLastError( ERROR_WINHTTP_HEADER_NOT_FOUND );
             return FALSE;
         }
         TRACE("attribute %s\n", debugstr_w(attribute_table[attr]));
