@@ -2971,6 +2971,14 @@ PVOID WINAPI MmGetSystemRoutineAddress(PUNICODE_STRING SystemRoutineName)
     return pFunc;
 }
 
+/***********************************************************************
+ *           MmIsThisAnNtAsSystem   (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI MmIsThisAnNtAsSystem(void)
+{
+    TRACE("\n");
+    return FALSE;
+}
 
 /***********************************************************************
  *           MmQuerySystemSize   (NTOSKRNL.EXE.@)
