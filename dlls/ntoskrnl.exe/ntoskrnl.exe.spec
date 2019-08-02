@@ -689,7 +689,7 @@
 @ stub MmIsDriverVerifying
 @ stub MmIsNonPagedSystemAddressValid
 @ stub MmIsRecursiveIoFault
-@ stub MmIsThisAnNtAsSystem
+@ stdcall MmIsThisAnNtAsSystem()
 @ stub MmIsVerifierEnabled
 @ stub MmLockPagableDataSection
 @ stub MmLockPagableImageSection
