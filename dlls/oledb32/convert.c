@@ -475,6 +475,14 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             hr = (SystemTimeToVariantTime(&st, d) ? S_OK : E_FAIL);
             break;
         }
+        case DBTYPE_VARIANT:
+        {
+            VARIANT tmp;
+            VariantInit(&tmp);
+            if ((hr = VariantChangeType(&tmp, src, 0, VT_DATE)) == S_OK)
+                *d = V_DATE(&tmp);
+            break;
+        }
         default: FIXME("Unimplemented conversion %04x -> DATE\n", src_type); return E_NOTIMPL;
         }
         break;
