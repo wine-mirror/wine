@@ -392,13 +392,19 @@ static inline int WINAPIV swprintf(wchar_t *buffer, size_t size, const wchar_t *
 #ifndef _WSTDLIB_DEFINED
 #define _WSTDLIB_DEFINED
 wchar_t* __cdecl _itow(int,wchar_t*,int);
+errno_t  __cdecl _itow_s(int,wchar_t*,int, int);
 wchar_t* __cdecl _i64tow(__int64,wchar_t*,int);
+errno_t  __cdecl _i64tow_s(__int64, wchar_t*, size_t, int);
 wchar_t* __cdecl _ltow(__msvcrt_long,wchar_t*,int);
+errno_t  __cdecl _ltow_s(__msvcrt_long,wchar_t*,int,int);
 wchar_t* __cdecl _ui64tow(unsigned __int64,wchar_t*,int);
+errno_t  __cdecl _ui64tow_s(unsigned __int64, wchar_t*, size_t, int);
 wchar_t* __cdecl _ultow(__msvcrt_ulong,wchar_t*,int);
+errno_t  __cdecl _ultow_s(__msvcrt_ulong, wchar_t*, size_t, int);
 wchar_t* __cdecl _wfullpath(wchar_t*,const wchar_t*,size_t);
 wchar_t* __cdecl _wgetenv(const wchar_t*);
 void     __cdecl _wmakepath(wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
+int      __cdecl _wmakepath_s(wchar_t*,size_t,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
 void     __cdecl _wperror(const wchar_t*);
 int      __cdecl _wputenv(const wchar_t*);
 void     __cdecl _wsearchenv(const wchar_t*,const wchar_t*,wchar_t*);
@@ -431,6 +437,7 @@ int      __cdecl _wcsicmp(const wchar_t*,const wchar_t*);
 int      __cdecl _wcsicoll(const wchar_t*,const wchar_t*);
 int      __cdecl _wcsicoll_l(const wchar_t*,const wchar_t*,_locale_t);
 wchar_t* __cdecl _wcslwr(wchar_t*);
+errno_t  __cdecl _wcslwr_s(wchar_t*, size_t);
 int      __cdecl _wcsncoll(const wchar_t*,const wchar_t*,size_t);
 int      __cdecl _wcsncoll_l(const wchar_t*,const wchar_t*,size_t,_locale_t);
 int      __cdecl _wcsnicmp(const wchar_t*,const wchar_t*,size_t);
@@ -440,6 +447,7 @@ wchar_t* __cdecl _wcsnset(wchar_t*,wchar_t,size_t);
 wchar_t* __cdecl _wcsrev(wchar_t*);
 wchar_t* __cdecl _wcsset(wchar_t*,wchar_t);
 wchar_t* __cdecl _wcsupr(wchar_t*);
+errno_t  __cdecl _wcsupr_s(wchar_t*, size_t);
 
 wchar_t* __cdecl wcscat(wchar_t*,const wchar_t*);
 errno_t  __cdecl wcscat_s(wchar_t*,size_t,const wchar_t*);
@@ -451,9 +459,11 @@ errno_t  __cdecl wcscpy_s(wchar_t*,size_t,const wchar_t*);
 size_t   __cdecl wcscspn(const wchar_t*,const wchar_t*);
 size_t   __cdecl wcslen(const wchar_t*);
 wchar_t* __cdecl wcsncat(wchar_t*,const wchar_t*,size_t);
+errno_t  __cdecl wcsncat_s(wchar_t *, size_t, const wchar_t *, size_t);
 int      __cdecl wcsncmp(const wchar_t*,const wchar_t*,size_t);
 wchar_t* __cdecl wcsncpy(wchar_t*,const wchar_t*,size_t);
 errno_t  __cdecl wcsncpy_s(wchar_t*,size_t,const wchar_t*,size_t);
+size_t   __cdecl wcsnlen(const size_t*,size_t);
 wchar_t* __cdecl wcspbrk(const wchar_t*,const wchar_t*);
 wchar_t* __cdecl wcsrchr(const wchar_t*,wchar_t wcFor);
 size_t   __cdecl wcsspn(const wchar_t*,const wchar_t*);
@@ -491,6 +501,7 @@ size_t  __cdecl mbsrtowcs(wchar_t*,const char**,size_t,mbstate_t*);
 size_t  __cdecl wcrtomb(char*,wchar_t,mbstate_t*);
 size_t  __cdecl wcsrtombs(char*,const wchar_t**,size_t,mbstate_t*);
 int     __cdecl wctob(wint_t);
+errno_t __cdecl wmemcpy_s(wchar_t *, size_t, const wchar_t *, size_t);
 
 static inline wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t n)
 {

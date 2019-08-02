@@ -159,10 +159,13 @@ char*         __cdecl _ecvt(double,int,int*,int*);
 char*         __cdecl _fcvt(double,int,int*,int*);
 char*         __cdecl _fullpath(char*,const char*,size_t);
 char*         __cdecl _gcvt(double,int,char*);
+errno_t       __cdecl _gcvt_s(char*, size_t, double, int);
 char*         __cdecl _i64toa(__int64,char*,int);
+errno_t       __cdecl _i64toa_s(__int64, char*, size_t, int);
 char*         __cdecl _itoa(int,char*,int);
 errno_t       __cdecl _itoa_s(int,char*,size_t,int);
 char*         __cdecl _ltoa(__msvcrt_long,char*,int);
+errno_t       __cdecl _ltoa_s(__msvcrt_long, char*, size_t, int);
 __msvcrt_ulong __cdecl _lrotl(__msvcrt_ulong,int);
 __msvcrt_ulong __cdecl _lrotr(__msvcrt_ulong,int);
 void          __cdecl _makepath(char*,const char*,const char*,const char*,const char*);
@@ -232,10 +235,15 @@ void          __cdecl qsort(void*,size_t,size_t,int (__cdecl *)(const void*,cons
 #ifndef _WSTDLIB_DEFINED
 #define _WSTDLIB_DEFINED
 wchar_t*      __cdecl _itow(int,wchar_t*,int);
+errno_t       __cdecl _itow_s(int,wchar_t*,int, int);
 wchar_t*      __cdecl _i64tow(__int64,wchar_t*,int);
+errno_t       __cdecl _i64tow_s(__int64, wchar_t*, size_t, int);
 wchar_t*      __cdecl _ltow(__msvcrt_long,wchar_t*,int);
+errno_t       __cdecl _ltow_s(__msvcrt_long,wchar_t*,int,int);
 wchar_t*      __cdecl _ui64tow(unsigned __int64,wchar_t*,int);
+errno_t       __cdecl _ui64tow_s(unsigned __int64, wchar_t*, size_t, int);
 wchar_t*      __cdecl _ultow(__msvcrt_ulong,wchar_t*,int);
+errno_t       __cdecl _ultow_s(__msvcrt_ulong, wchar_t*, size_t, int);
 wchar_t*      __cdecl _wfullpath(wchar_t*,const wchar_t*,size_t);
 wchar_t*      __cdecl _wgetenv(const wchar_t*);
 void          __cdecl _wmakepath(wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
