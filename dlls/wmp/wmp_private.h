@@ -65,6 +65,7 @@ typedef struct {
     IWMPPlaylist IWMPPlaylist_iface;
 
     LONG ref;
+    LONG count;
 
     WCHAR *url;
     WCHAR *name;
@@ -116,7 +117,7 @@ void destroy_player(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
 WMPMedia *unsafe_impl_from_IWMPMedia(IWMPMedia *iface) DECLSPEC_HIDDEN;
 WMPPlaylist *unsafe_impl_from_IWMPPlaylist(IWMPPlaylist *iface) DECLSPEC_HIDDEN;
 HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia) DECLSPEC_HIDDEN;
-HRESULT create_playlist(BSTR name, BSTR url, IWMPPlaylist **ppPlaylist) DECLSPEC_HIDDEN;
+HRESULT create_playlist(BSTR name, BSTR url, LONG count, IWMPPlaylist **ppPlaylist) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Init(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Destroy(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
 void call_sink(ConnectionPoint *This, DISPID dispid, DISPPARAMS *dispparams) DECLSPEC_HIDDEN;
