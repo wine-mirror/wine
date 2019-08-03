@@ -2120,7 +2120,7 @@ static HRESULT WINAPI WMPPlaylist_appendItem(IWMPPlaylist *iface, IWMPMedia *med
 {
     WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
     FIXME("(%p)->(%p)\n", This, media);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPPlaylist_removeItem(IWMPPlaylist *iface, IWMPMedia *media)
