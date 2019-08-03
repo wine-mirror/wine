@@ -2049,15 +2049,22 @@ static HRESULT WINAPI WMPPlaylist_get_count(IWMPPlaylist *iface, LONG *count)
 static HRESULT WINAPI WMPPlaylist_get_name(IWMPPlaylist *iface, BSTR *name)
 {
     WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
-    FIXME("(%p)->(%p)\n", This, name);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, name);
+
+    return return_bstr(This->name, name);
 }
 
 static HRESULT WINAPI WMPPlaylist_put_name(IWMPPlaylist *iface, BSTR name)
 {
     WMPPlaylist *This = impl_from_IWMPPlaylist(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(name));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(name));
+
+    if (!name) return E_POINTER;
+
+    This->name = heap_strdupW(name);
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPPlaylist_get_attributeCount(IWMPPlaylist *iface, LONG *count)
