@@ -666,6 +666,78 @@ static void test_player_url(void)
     IWMPPlayer4_Release(player);
 }
 
+static void test_playlist(void)
+{
+    IWMPPlayer4 *player;
+    IWMPPlaylist *playlist, *playlist2;
+    HRESULT hr;
+    BSTR str, str2;
+    LONG count;
+    static const WCHAR nameW[] = {'P','l','a','y','l','i','s','t','1',0};
+
+    hr = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IWMPPlayer4, (void **)&player);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("CLSID_WindowsMediaPlayer is not registered.\n");
+        return;
+    }
+    ok(hr == S_OK, "Failed to create media player instance, hr %#x.\n", hr);
+
+    playlist = NULL;
+    hr = IWMPPlayer4_get_currentPlaylist(player, &playlist);
+    ok(hr == S_OK, "IWMPPlayer4_get_currentPlaylist failed: %08x\n", hr);
+    ok(playlist != NULL, "playlist == NULL\n");
+
+    if (0) /* fails on non-English locales */
+    {
+        hr = IWMPPlaylist_get_name(playlist, &str);
+        ok(hr == S_OK, "Failed to get playlist name, hr %#x.\n", hr);
+        ok(!lstrcmpW(str, nameW), "Expected %s, got %s\n", wine_dbgstr_w(nameW), wine_dbgstr_w(str));
+        SysFreeString(str);
+    }
+
+    hr = IWMPPlaylist_get_count(playlist, NULL);
+    ok(hr == E_POINTER, "Failed to get count, hr %#x.\n", hr);
+
+    count = -1;
+    hr = IWMPPlaylist_get_count(playlist, &count);
+    ok(hr == S_OK, "Failed to get count, hr %#x.\n", hr);
+    ok(count == 0, "Expected 0, got %d\n", count);
+
+    IWMPPlaylist_Release(playlist);
+
+    /* newPlaylist doesn't change current playlist */
+    hr = IWMPPlayer4_newPlaylist(player, NULL, NULL, &playlist);
+    ok(hr == S_OK, "Failed to create a playlist, hr %#x.\n", hr);
+
+    playlist2 = NULL;
+    hr = IWMPPlayer4_get_currentPlaylist(player, &playlist2);
+    ok(hr == S_OK, "IWMPPlayer4_get_currentPlaylist failed: %08x\n", hr);
+    ok(playlist2 != NULL && playlist2 != playlist, "Unexpected playlist instance\n");
+
+    IWMPPlaylist_Release(playlist2);
+
+    /* different playlists can have the same name */
+    str = SysAllocString(nameW);
+    hr = IWMPPlaylist_put_name(playlist, str);
+    ok(hr == S_OK, "Failed to get playlist name, hr %#x.\n", hr);
+
+    playlist2 = NULL;
+    hr = IWMPPlayer4_newPlaylist(player, str, NULL, &playlist2);
+    ok(hr == S_OK, "Failed to create a playlist, hr %#x.\n", hr);
+    hr = IWMPPlaylist_get_name(playlist2, &str2);
+    ok(hr == S_OK, "Failed to get playlist name, hr %#x.\n", hr);
+    ok(playlist != playlist2, "Expected playlists to be different");
+    ok(!lstrcmpW(str, str2), "Expected names to be the same\n");
+    SysFreeString(str);
+    SysFreeString(str2);
+
+    IWMPPlaylist_Release(playlist2);
+
+    IWMPPlaylist_Release(playlist);
+    IWMPPlayer4_Release(player);
+}
+
 START_TEST(media)
 {
     CoInitialize(NULL);
@@ -674,6 +746,7 @@ START_TEST(media)
     playing_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     completed_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
+    test_playlist();
     test_media_item();
     test_player_url();
     if (test_wmp()) {
