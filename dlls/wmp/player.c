@@ -286,11 +286,18 @@ static HRESULT WINAPI WMPPlayer4_get_network(IWMPPlayer4 *iface, IWMPNetwork **p
     return S_OK;
 }
 
-static HRESULT WINAPI WMPPlayer4_get_currentPlaylist(IWMPPlayer4 *iface, IWMPPlaylist **ppPL)
+static HRESULT WINAPI WMPPlayer4_get_currentPlaylist(IWMPPlayer4 *iface, IWMPPlaylist **playlist)
 {
     WindowsMediaPlayer *This = impl_from_IWMPPlayer4(iface);
-    FIXME("(%p)->(%p)\n", This, ppPL);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, playlist);
+
+    *playlist = NULL;
+
+    if (This->playlist == NULL)
+        return S_FALSE;
+
+    return create_playlist(This->playlist->name, This->playlist->url, playlist);
 }
 
 static HRESULT WINAPI WMPPlayer4_put_currentPlaylist(IWMPPlayer4 *iface, IWMPPlaylist *pPL)
@@ -2197,6 +2204,8 @@ void unregister_player_msg_class(void) {
 BOOL init_player(WindowsMediaPlayer *wmp)
 {
     IWMPPlaylist *playlist;
+    BSTR name;
+    static const WCHAR nameW[] = {'P','l','a','y','l','i','s','t','1',0};
 
     InitOnceExecuteOnce(&class_init_once, register_player_msg_class, NULL, NULL);
     wmp->msg_window = CreateWindowW( MAKEINTRESOURCEW(player_msg_class), NULL, 0, 0,
@@ -2216,10 +2225,12 @@ BOOL init_player(WindowsMediaPlayer *wmp)
     wmp->IWMPControls_iface.lpVtbl = &WMPControlsVtbl;
     wmp->IWMPNetwork_iface.lpVtbl = &WMPNetworkVtbl;
 
-    if (SUCCEEDED(create_playlist(NULL, NULL, &playlist)))
+    name = SysAllocString(nameW);
+    if (SUCCEEDED(create_playlist(name, NULL, &playlist)))
         wmp->playlist = unsafe_impl_from_IWMPPlaylist(playlist);
     else
         wmp->playlist = NULL;
+    SysFreeString(name);
 
     wmp->invoke_urls = VARIANT_TRUE;
     wmp->auto_start = VARIANT_TRUE;

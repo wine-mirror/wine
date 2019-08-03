@@ -945,12 +945,10 @@ static void test_wmp_ifaces(IOleObject *oleobj)
 
     playlist = NULL;
     hres = IWMPPlayer4_get_currentPlaylist(player4, &playlist);
-todo_wine {
     ok(hres == S_OK, "IWMPPlayer4_get_currentPlaylist failed: %08x\n", hres);
     ok(playlist != NULL, "playlist != NULL\n");
-}
 
-    if (playlist) IWMPPlaylist_Release(playlist);
+    IWMPPlaylist_Release(playlist);
 
     media = NULL;
     hres = IWMPPlayer4_QueryInterface(player4, &IID_IWMPMedia, (void**)&media);
