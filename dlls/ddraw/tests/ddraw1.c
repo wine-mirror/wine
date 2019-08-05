@@ -7166,11 +7166,12 @@ static void test_palette_alpha(void)
 
 static void test_lost_device(void)
 {
-    IDirectDrawSurface *surface;
+    IDirectDrawSurface *surface, *back_buffer;
     DDSURFACEDESC surface_desc;
     HWND window1, window2;
     IDirectDraw *ddraw;
     ULONG refcount;
+    DDSCAPS caps;
     HRESULT hr;
     BOOL ret;
 
@@ -7307,6 +7308,19 @@ static void test_lost_device(void)
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+
+    memset(&caps, 0, sizeof(caps));
+    caps.dwCaps = DDSCAPS_FLIP;
+
+    hr = IDirectDrawSurface_GetAttachedSurface(surface, &caps, &back_buffer);
+    ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_Restore(surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_GetAttachedSurface(surface, &caps, &back_buffer);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(back_buffer);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    IDirectDrawSurface_Release(back_buffer);
 
     IDirectDrawSurface_Release(surface);
     refcount = IDirectDraw_Release(ddraw);
