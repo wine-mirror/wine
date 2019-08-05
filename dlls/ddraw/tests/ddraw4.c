@@ -9255,11 +9255,12 @@ static void test_vb_writeonly(void)
 
 static void test_lost_device(void)
 {
-    IDirectDrawSurface4 *surface;
+    IDirectDrawSurface4 *surface, *back_buffer;
     DDSURFACEDESC2 surface_desc;
     HWND window1, window2;
     IDirectDraw4 *ddraw;
     ULONG refcount;
+    DDSCAPS2 caps;
     HRESULT hr;
     BOOL ret;
 
@@ -9426,8 +9427,22 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface4_IsLost(surface);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+
     hr = IDirectDrawSurface4_Flip(surface, NULL, DDFLIP_WAIT);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+
+    memset(&caps, 0, sizeof(caps));
+    caps.dwCaps = DDSCAPS_FLIP;
+
+    hr = IDirectDrawSurface4_GetAttachedSurface(surface, &caps, &back_buffer);
+    ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Restore(surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_GetAttachedSurface(surface, &caps, &back_buffer);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_IsLost(back_buffer);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    IDirectDrawSurface4_Release(back_buffer);
 
     IDirectDrawSurface4_Release(surface);
     refcount = IDirectDraw4_Release(ddraw);
