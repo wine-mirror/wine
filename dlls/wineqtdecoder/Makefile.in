@@ -9,6 +9,7 @@ C_SRCS = \
 	filter.c \
 	main.c \
 	mediatype.c \
+	outputqueue.c \
 	pin.c \
 	qtdatahandler.c \
 	qtsplitter.c \
