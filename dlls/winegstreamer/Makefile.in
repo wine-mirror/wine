@@ -1,14 +1,23 @@
 MODULE    = winegstreamer.dll
-IMPORTS   = strmbase strmiids uuid winmm msacm32 msvfw32 ole32 oleaut32 user32 gdi32 advapi32 mfplat mfuuid
+IMPORTS   = strmiids uuid winmm msacm32 msvfw32 ole32 oleaut32 user32 gdi32 advapi32 mfplat mfuuid
 EXTRAINCL = $(GSTREAMER_CFLAGS)
 EXTRALIBS = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
+PARENTSRC = ../strmbase
 
 C_SRCS = \
+	dllfunc.c \
+	enumpins.c \
+	filter.c \
 	gst_cbs.c \
 	gstdemux.c \
 	gsttffilter.c \
 	main.c \
-	mfplat.c
+	mediatype.c \
+	mfplat.c \
+	pin.c \
+	qualitycontrol.c \
+	seeking.c \
+	transform.c
 
 IDL_SRCS = mfplat.idl
 
