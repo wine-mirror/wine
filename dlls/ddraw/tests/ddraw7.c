@@ -8957,6 +8957,13 @@ static void test_lost_device(void)
 
     hr = IDirectDrawSurface7_GetAttachedSurface(surface, &caps, &back_buffer);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Restore(surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_GetAttachedSurface(surface, &caps, &back_buffer);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_IsLost(back_buffer);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    IDirectDrawSurface7_Release(back_buffer);
 
     IDirectDrawSurface7_Release(surface);
     refcount = IDirectDraw7_Release(ddraw);
