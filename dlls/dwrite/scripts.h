@@ -145,5 +145,12 @@ enum unicode_script_id {
     Script_Nushu = 139,
     Script_Soyombo = 140,
     Script_Zanabazar_Square = 141,
-    Script_LastId = 141
+    Script_Dogra = 142,
+    Script_Gunjala_Gondi = 143,
+    Script_Hanifi_Rohingya = 144,
+    Script_Makasar = 145,
+    Script_Medefaidrin = 146,
+    Script_Old_Sogdian = 147,
+    Script_Sogdian = 148,
+    Script_LastId = 148
 };

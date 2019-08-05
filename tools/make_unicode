@@ -1547,6 +1547,14 @@ my %scripts =
     "Nushu"                  => 139,
     "Soyombo"                => 140,
     "Zanabazar_Square"       => 141,
+    # Win10 1903
+    "Dogra"                  => 142,
+    "Gunjala_Gondi"          => 143,
+    "Hanifi_Rohingya"        => 144,
+    "Makasar"                => 145,
+    "Medefaidrin"            => 146,
+    "Old_Sogdian"            => 147,
+    "Sogdian"                => 148,
 );
 
 ################################################################
