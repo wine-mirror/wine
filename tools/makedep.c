@@ -4160,7 +4160,9 @@ static void load_sources( struct makefile *make )
     make->extra_targets = get_expanded_make_var_array( make, "EXTRA_TARGETS" );
 
     if (make->module && strendswith( make->module, ".a" )) make->staticlib = make->module;
-    if (make->testdll) strarray_add( &make->extradllflags, "-mno-cygwin" );
+
+    if ((make->module && make->staticlib) || make->testdll)
+        strarray_add( &make->extradllflags, "-mno-cygwin" );
 
     strarray_addall( &make->extradllflags, get_expanded_make_var_array( make, "APPMODE" ));
     make->disabled   = make->base_dir && strarray_exists( &disabled_dirs, make->base_dir );

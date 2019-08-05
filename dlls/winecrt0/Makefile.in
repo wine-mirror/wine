@@ -1,7 +1,5 @@
 MODULE    = libwinecrt0.a
 
-EXTRADLLFLAGS = -mno-cygwin
-
 C_SRCS = \
 	debug.c \
 	delay_load.c \
