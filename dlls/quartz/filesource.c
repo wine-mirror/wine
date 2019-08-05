@@ -24,7 +24,6 @@
 #include "quartz_private.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "pin.h"
 #include "uuids.h"
 #include "vfwmsgs.h"
@@ -115,7 +114,7 @@ static HRESULT process_extensions(HKEY hkeyExtensions, LPCOLESTR pszFileName, GU
         return E_POINTER;
 
     /* Get the part of the name that matters */
-    if (!(extension = strrchrW(pszFileName, '.')))
+    if (!(extension = wcsrchr(pszFileName, '.')))
         return E_FAIL;
 
     l = RegOpenKeyExW(hkeyExtensions, extension, 0, KEY_READ, &hsub);
@@ -157,7 +156,7 @@ static HRESULT process_extensions(HKEY hkeyExtensions, LPCOLESTR pszFileName, GU
 
 static unsigned char byte_from_hex_char(WCHAR wHex)
 {
-    switch (tolowerW(wHex))
+    switch (towlower(wHex))
     {
     case '0':
     case '1':
@@ -196,14 +195,14 @@ static HRESULT process_pattern_string(LPCWSTR wszPatternString, IAsyncReader * p
     
     /* format: "offset, bytestocompare, mask, value" */
 
-    ulOffset = strtolW(wszPatternString, NULL, 10);
+    ulOffset = wcstol(wszPatternString, NULL, 10);
 
-    if (!(wszPatternString = strchrW(wszPatternString, ',')))
+    if (!(wszPatternString = wcschr(wszPatternString, ',')))
         return E_INVALIDARG;
 
     wszPatternString++; /* skip ',' */
 
-    ulBytes = strtolW(wszPatternString, NULL, 10);
+    ulBytes = wcstol(wszPatternString, NULL, 10);
 
     pbMask = HeapAlloc(GetProcessHeap(), 0, ulBytes);
     pbValue = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ulBytes);
@@ -212,15 +211,15 @@ static HRESULT process_pattern_string(LPCWSTR wszPatternString, IAsyncReader * p
     /* default mask is match everything */
     memset(pbMask, 0xFF, ulBytes);
 
-    if (!(wszPatternString = strchrW(wszPatternString, ',')))
+    if (!(wszPatternString = wcschr(wszPatternString, ',')))
         hr = E_INVALIDARG;
 
     if (hr == S_OK)
     {
         wszPatternString++; /* skip ',' */
-        while (!isxdigitW(*wszPatternString) && (*wszPatternString != ',')) wszPatternString++;
+        while (!iswxdigit(*wszPatternString) && (*wszPatternString != ',')) wszPatternString++;
 
-        for (strpos = 0; isxdigitW(*wszPatternString) && (strpos/2 < ulBytes); wszPatternString++, strpos++)
+        for (strpos = 0; iswxdigit(*wszPatternString) && (strpos/2 < ulBytes); wszPatternString++, strpos++)
         {
             if ((strpos % 2) == 1) /* odd numbered position */
                 pbMask[strpos / 2] |= byte_from_hex_char(*wszPatternString);
@@ -228,7 +227,7 @@ static HRESULT process_pattern_string(LPCWSTR wszPatternString, IAsyncReader * p
                 pbMask[strpos / 2] = byte_from_hex_char(*wszPatternString) << 4;
         }
 
-        if (!(wszPatternString = strchrW(wszPatternString, ',')))
+        if (!(wszPatternString = wcschr(wszPatternString, ',')))
             hr = E_INVALIDARG;
         else
             wszPatternString++; /* skip ',' */
@@ -236,10 +235,10 @@ static HRESULT process_pattern_string(LPCWSTR wszPatternString, IAsyncReader * p
 
     if (hr == S_OK)
     {
-        for ( ; !isxdigitW(*wszPatternString) && (*wszPatternString != ','); wszPatternString++)
+        for ( ; !iswxdigit(*wszPatternString) && (*wszPatternString != ','); wszPatternString++)
             ;
 
-        for (strpos = 0; isxdigitW(*wszPatternString) && (strpos/2 < ulBytes); wszPatternString++, strpos++)
+        for (strpos = 0; iswxdigit(*wszPatternString) && (strpos/2 < ulBytes); wszPatternString++, strpos++)
         {
             if ((strpos % 2) == 1) /* odd numbered position */
                 pbValue[strpos / 2] |= byte_from_hex_char(*wszPatternString);
@@ -268,7 +267,7 @@ static HRESULT process_pattern_string(LPCWSTR wszPatternString, IAsyncReader * p
 
     /* if we encountered no errors with this string, and there is a following tuple, then we
      * have to match that as well to succeed */
-    if ((hr == S_OK) && (wszPatternString = strchrW(wszPatternString, ',')))
+    if ((hr == S_OK) && (wszPatternString = wcschr(wszPatternString, ',')))
         return process_pattern_string(wszPatternString + 1, pReader);
     else
         return hr;
@@ -310,7 +309,7 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
             if (RegOpenKeyExW(hkeyMediaType, wszMajorKeyName, 0, KEY_READ, &hkeyMajor) != ERROR_SUCCESS)
                 break;
             TRACE("%s\n", debugstr_w(wszMajorKeyName));
-            if (!strcmpW(wszExtensions, wszMajorKeyName))
+            if (!wcscmp(wszExtensions, wszMajorKeyName))
             {
                 if (process_extensions(hkeyMajor, pszFileName, majorType, minorType, sourceFilter) == S_OK)
                     bFound = TRUE;
@@ -355,7 +354,7 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
                             break;
                         }
 
-                        if (strcmpW(wszValueName, source_filter_name)==0) {
+                        if (wcscmp(wszValueName, source_filter_name)==0) {
                             HeapFree(GetProcessHeap(), 0, wszPatternString);
                             continue;
                         }
@@ -558,7 +557,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     /* create pin */
     pin_info.dir = PINDIR_OUTPUT;
     pin_info.pFilter = &This->filter.IBaseFilter_iface;
-    strcpyW(pin_info.achName, wszOutputPinName);
+    lstrcpyW(pin_info.achName, wszOutputPinName);
     strmbase_source_init(&This->source, &FileAsyncReaderPin_Vtbl, &pin_info,
             &output_BaseOutputFuncTable, &This->filter.csFilter);
     BaseFilterImpl_IncrementPinVersion(&This->filter);
@@ -575,8 +574,8 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     if (This->pmt)
         DeleteMediaType(This->pmt);
 
-    This->pszFileName = CoTaskMemAlloc((strlenW(pszFileName) + 1) * sizeof(WCHAR));
-    strcpyW(This->pszFileName, pszFileName);
+    This->pszFileName = CoTaskMemAlloc((lstrlenW(pszFileName) + 1) * sizeof(WCHAR));
+    lstrcpyW(This->pszFileName, pszFileName);
 
     This->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
     if (!pmt)
@@ -606,8 +605,8 @@ static HRESULT WINAPI FileSource_GetCurFile(IFileSourceFilter * iface, LPOLESTR 
     /* copy file name & media type if available, otherwise clear the outputs */
     if (This->pszFileName)
     {
-        *ppszFileName = CoTaskMemAlloc((strlenW(This->pszFileName) + 1) * sizeof(WCHAR));
-        strcpyW(*ppszFileName, This->pszFileName);
+        *ppszFileName = CoTaskMemAlloc((lstrlenW(This->pszFileName) + 1) * sizeof(WCHAR));
+        lstrcpyW(*ppszFileName, This->pszFileName);
     }
     else
         *ppszFileName = NULL;

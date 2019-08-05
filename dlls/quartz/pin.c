@@ -22,7 +22,6 @@
 #include "pin.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "uuids.h"
 #include "vfwmsgs.h"
 #include <assert.h>
@@ -177,7 +176,7 @@ static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO *info,
     pPinImpl->pin.pConnectedTo = NULL;
     pPinImpl->pin.pCritSec = pCritSec;
     /* avoid copying uninitialized data */
-    strcpyW(pPinImpl->pin.pinInfo.achName, info->achName);
+    wcscpy(pPinImpl->pin.pinInfo.achName, info->achName);
     pPinImpl->pin.pinInfo.dir = info->dir;
     pPinImpl->pin.pinInfo.pFilter = info->pFilter;
     ZeroMemory(&pPinImpl->pin.mtCurrent, sizeof(AM_MEDIA_TYPE));

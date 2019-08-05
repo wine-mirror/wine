@@ -1,5 +1,7 @@
 MODULE    = libstrmbase.a
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	dispatch.c \
 	dllfunc.c \

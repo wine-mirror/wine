@@ -17,11 +17,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include "wine/debug.h"
 
 #include "quartz_private.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
@@ -335,7 +333,7 @@ DWORD WINAPI AMGetErrorTextW(HRESULT hr, LPWSTR buffer, DWORD maxlen)
 
     if (!buffer) return 0;
     wsprintfW(error, format, hr);
-    if ((len = strlenW(error)) >= maxlen) return 0;
+    if ((len = lstrlenW(error)) >= maxlen) return 0;
     lstrcpyW(buffer, error);
     return len;
 }

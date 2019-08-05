@@ -18,7 +18,6 @@
 
 #define COBJMACROS
 
-#include "config.h"
 #include "wine/debug.h"
 
 #include <stdio.h>

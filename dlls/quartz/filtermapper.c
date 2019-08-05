@@ -34,7 +34,6 @@
 #include "ole2.h"
 #include "olectl.h"
 #include "strmif.h"
-#include "wine/unicode.h"
 #include "uuids.h"
 #include "initguid.h"
 #include "wine/fil_data.h"
@@ -278,10 +277,10 @@ static HRESULT WINAPI FilterMapper3_CreateCategory(
 
     if (SUCCEEDED(hr))
     {
-        strcpyW(wszKeyName, wszClsidSlash);
-        strcatW(wszKeyName, wClsidAMCat);
-        strcatW(wszKeyName, wszSlashInstance);
-        strcatW(wszKeyName, wClsidCategory);
+        lstrcpyW(wszKeyName, wszClsidSlash);
+        lstrcatW(wszKeyName, wClsidAMCat);
+        lstrcatW(wszKeyName, wszSlashInstance);
+        lstrcatW(wszKeyName, wClsidCategory);
 
         lRet = RegCreateKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
         hr = HRESULT_FROM_WIN32(lRet);
@@ -289,13 +288,13 @@ static HRESULT WINAPI FilterMapper3_CreateCategory(
 
     if (SUCCEEDED(hr))
     {
-        lRet = RegSetValueExW(hKey, wszFriendlyName, 0, REG_SZ, (const BYTE*)szDescription, (strlenW(szDescription) + 1) * sizeof(WCHAR));
+        lRet = RegSetValueExW(hKey, wszFriendlyName, 0, REG_SZ, (const BYTE*)szDescription, (lstrlenW(szDescription) + 1) * sizeof(WCHAR));
         hr = HRESULT_FROM_WIN32(lRet);
     }
 
     if (SUCCEEDED(hr))
     {
-        lRet = RegSetValueExW(hKey, wszClsidName, 0, REG_SZ, (LPBYTE)wClsidCategory, (strlenW(wClsidCategory) + 1) * sizeof(WCHAR));
+        lRet = RegSetValueExW(hKey, wszClsidName, 0, REG_SZ, (LPBYTE)wClsidCategory, (lstrlenW(wClsidCategory) + 1) * sizeof(WCHAR));
         hr = HRESULT_FROM_WIN32(lRet);
     }
 
@@ -332,16 +331,16 @@ static HRESULT WINAPI FilterMapper3_UnregisterFilter(
 
     if (SUCCEEDED(hr))
     {
-        strcpyW(wszKeyName, wszClsidSlash);
-        strcatW(wszKeyName, wClsidCategory);
-        strcatW(wszKeyName, wszSlashInstance);
+        lstrcpyW(wszKeyName, wszClsidSlash);
+        lstrcatW(wszKeyName, wClsidCategory);
+        lstrcatW(wszKeyName, wszSlashInstance);
         if (szInstance)
-            strcatW(wszKeyName, szInstance);
+            lstrcatW(wszKeyName, szInstance);
         else
         {
             hr = StringFromCLSID(Filter, &wFilter);
             if (SUCCEEDED(hr))
-                strcatW(wszKeyName, wFilter);
+                lstrcatW(wszKeyName, wFilter);
         }
     }
 
@@ -706,7 +705,7 @@ static HRESULT WINAPI FilterMapper3_RegisterFilter(
     nameLen = ARRAY_SIZE(wszDevice) + CHARS_IN_GUID - 1 + 1;
 
     if (szInstance)
-        nameLen += strlenW(szInstance);
+        nameLen += lstrlenW(szInstance);
     else
         nameLen += CHARS_IN_GUID - 1; /* CHARS_IN_GUID includes null terminator */
 
@@ -714,8 +713,8 @@ static HRESULT WINAPI FilterMapper3_RegisterFilter(
     if (!pwszParseName)
         return E_OUTOFMEMORY;
 
-    strcpyW(pwszParseName, wszDevice);
-    pCurrent += strlenW(wszDevice);
+    lstrcpyW(pwszParseName, wszDevice);
+    pCurrent += lstrlenW(wszDevice);
 
     hr = StringFromCLSID(pclsidCategory, &szClsidTemp);
 
@@ -726,7 +725,7 @@ static HRESULT WINAPI FilterMapper3_RegisterFilter(
         pCurrent[0] = '\\';
 
         if (szInstance)
-            strcpyW(pCurrent+1, szInstance);
+            lstrcpyW(pCurrent+1, szInstance);
         else
         {
             CoTaskMemFree(szClsidTemp);
@@ -734,7 +733,7 @@ static HRESULT WINAPI FilterMapper3_RegisterFilter(
 
             hr = StringFromCLSID(clsidFilter, &szClsidTemp);
             if (SUCCEEDED(hr))
-                strcpyW(pCurrent+1, szClsidTemp);
+                lstrcpyW(pCurrent+1, szClsidTemp);
         }
     }
 
@@ -853,7 +852,7 @@ static BOOL MatchTypes(
 }
 
 /* internal helper function for qsort of MONIKER_MERIT array */
-static int mm_compare(const void * left, const void * right)
+static int __cdecl mm_compare(const void * left, const void * right)
 {
     const struct MONIKER_MERIT * mmLeft = left;
     const struct MONIKER_MERIT * mmRight = right;
@@ -1228,7 +1227,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
 
         if (SUCCEEDED(hrSub))
         {
-            len = (strlenW(V_BSTR(&var))+1) * sizeof(WCHAR);
+            len = (lstrlenW(V_BSTR(&var))+1) * sizeof(WCHAR);
             if (!(regfilters[idx].Name = CoTaskMemAlloc(len*2)))
                 hr = E_OUTOFMEMORY;
         }
@@ -1274,8 +1273,8 @@ static HRESULT WINAPI FilterMapper_RegisterFilter(IFilterMapper * iface, CLSID c
 
     if (SUCCEEDED(hr))
     {
-        strcpyW(wszKeyName, wszFilterSlash);
-        strcatW(wszKeyName, wszClsid);
+        lstrcpyW(wszKeyName, wszFilterSlash);
+        lstrcatW(wszKeyName, wszClsid);
     
         lRet = RegCreateKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
         hr = HRESULT_FROM_WIN32(lRet);
@@ -1283,15 +1282,15 @@ static HRESULT WINAPI FilterMapper_RegisterFilter(IFilterMapper * iface, CLSID c
 
     if (SUCCEEDED(hr))
     {
-        lRet = RegSetValueExW(hKey, NULL, 0, REG_SZ, (const BYTE*)szName, (strlenW(szName) + 1) * sizeof(WCHAR));
+        lRet = RegSetValueExW(hKey, NULL, 0, REG_SZ, (const BYTE*)szName, (lstrlenW(szName) + 1) * sizeof(WCHAR));
         hr = HRESULT_FROM_WIN32(lRet);
         RegCloseKey(hKey);
     }
 
     if (SUCCEEDED(hr))
     {
-        strcpyW(wszKeyName, wszClsidSlash);
-        strcatW(wszKeyName, wszClsid);
+        lstrcpyW(wszKeyName, wszClsidSlash);
+        lstrcatW(wszKeyName, wszClsid);
     
         lRet = RegCreateKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
         hr = HRESULT_FROM_WIN32(lRet);
@@ -1344,8 +1343,8 @@ static HRESULT WINAPI FilterMapper_RegisterPin(
 
     if (SUCCEEDED(hr))
     {
-        strcpyW(wszKeyName, wszClsidSlash);
-        strcatW(wszKeyName, wszClsid);
+        lstrcpyW(wszKeyName, wszClsidSlash);
+        lstrcatW(wszKeyName, wszClsid);
 
         lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, KEY_WRITE, &hKey);
         hr = HRESULT_FROM_WIN32(lRet);
@@ -1353,16 +1352,16 @@ static HRESULT WINAPI FilterMapper_RegisterPin(
 
     if (SUCCEEDED(hr))
     {
-        wszPinsKeyName = CoTaskMemAlloc((strlenW(wszPins) + 1 + strlenW(szName) + 1) * 2);
+        wszPinsKeyName = CoTaskMemAlloc((lstrlenW(wszPins) + 1 + lstrlenW(szName) + 1) * 2);
         if (!wszPinsKeyName)
              hr = E_OUTOFMEMORY;
     }
 
     if (SUCCEEDED(hr))
     {
-        strcpyW(wszPinsKeyName, wszPins);
-        strcatW(wszPinsKeyName, wszSlash);
-        strcatW(wszPinsKeyName, szName);
+        lstrcpyW(wszPinsKeyName, wszPins);
+        lstrcatW(wszPinsKeyName, wszSlash);
+        lstrcatW(wszPinsKeyName, szName);
     
         lRet = RegCreateKeyExW(hKey, wszPinsKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hPinsKey, NULL);
         hr = HRESULT_FROM_WIN32(lRet);
@@ -1446,22 +1445,22 @@ static HRESULT WINAPI FilterMapper_RegisterPinType(
 
     if (SUCCEEDED(hr))
     {
-        wszTypesKey = CoTaskMemAlloc((strlenW(wszClsidSlash) + strlenW(wszClsid) + strlenW(wszPins) +
-                        strlenW(szName) + strlenW(wszTypes) + 3 + 1) * 2);
+        wszTypesKey = CoTaskMemAlloc((lstrlenW(wszClsidSlash) + lstrlenW(wszClsid) + lstrlenW(wszPins) +
+                        lstrlenW(szName) + lstrlenW(wszTypes) + 3 + 1) * 2);
         if (!wszTypesKey)
             hr = E_OUTOFMEMORY;
     }
 
     if (SUCCEEDED(hr))
     {
-        strcpyW(wszTypesKey, wszClsidSlash);
-        strcatW(wszTypesKey, wszClsid);
-        strcatW(wszTypesKey, wszSlash);
-        strcatW(wszTypesKey, wszPins);
-        strcatW(wszTypesKey, wszSlash);
-        strcatW(wszTypesKey, szName);
-        strcatW(wszTypesKey, wszSlash);
-        strcatW(wszTypesKey, wszTypes);
+        lstrcpyW(wszTypesKey, wszClsidSlash);
+        lstrcatW(wszTypesKey, wszClsid);
+        lstrcatW(wszTypesKey, wszSlash);
+        lstrcatW(wszTypesKey, wszPins);
+        lstrcatW(wszTypesKey, wszSlash);
+        lstrcatW(wszTypesKey, szName);
+        lstrcatW(wszTypesKey, wszSlash);
+        lstrcatW(wszTypesKey, wszTypes);
 
         lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszTypesKey, 0, KEY_WRITE, &hKey);
         hr = HRESULT_FROM_WIN32(lRet);
@@ -1472,9 +1471,9 @@ static HRESULT WINAPI FilterMapper_RegisterPinType(
     {
         HKEY hkeyDummy = NULL;
 
-        strcpyW(wszKeyName, wszClsidMajorType);
-        strcatW(wszKeyName, wszSlash);
-        strcatW(wszKeyName, wszClsidSubType);
+        lstrcpyW(wszKeyName, wszClsidMajorType);
+        lstrcatW(wszKeyName, wszSlash);
+        lstrcatW(wszKeyName, wszClsidSubType);
 
         lRet = RegCreateKeyExW(hKey, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hkeyDummy, NULL);
         hr = HRESULT_FROM_WIN32(lRet);
@@ -1517,8 +1516,8 @@ static HRESULT WINAPI FilterMapper_UnregisterFilter(IFilterMapper * iface, CLSID
 
     if (SUCCEEDED(hr))
     {
-        strcpyW(wszKeyName, wszClsidSlash);
-        strcatW(wszKeyName, wszClsid);
+        lstrcpyW(wszKeyName, wszClsidSlash);
+        lstrcatW(wszKeyName, wszClsid);
 
         lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, KEY_WRITE, &hKey);
         if (lRet == ERROR_FILE_NOT_FOUND)
@@ -1572,8 +1571,8 @@ static HRESULT WINAPI FilterMapper_UnregisterPin(IFilterMapper * iface, CLSID Fi
 
     if (SUCCEEDED(hr))
     {
-        strcpyW(wszKeyName, wszClsidSlash);
-        strcatW(wszKeyName, wszClsid);
+        lstrcpyW(wszKeyName, wszClsidSlash);
+        lstrcatW(wszKeyName, wszClsid);
 
         lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszKeyName, 0, KEY_WRITE, &hKey);
         hr = HRESULT_FROM_WIN32(lRet);
@@ -1581,16 +1580,16 @@ static HRESULT WINAPI FilterMapper_UnregisterPin(IFilterMapper * iface, CLSID Fi
 
     if (SUCCEEDED(hr))
     {
-        wszPinNameKey = CoTaskMemAlloc((strlenW(wszPins) + 1 + strlenW(Name) + 1) * 2);
+        wszPinNameKey = CoTaskMemAlloc((lstrlenW(wszPins) + 1 + lstrlenW(Name) + 1) * 2);
         if (!wszPinNameKey)
             hr = E_OUTOFMEMORY;
     }
 
     if (SUCCEEDED(hr))
     {
-        strcpyW(wszPinNameKey, wszPins);
-        strcatW(wszPinNameKey, wszSlash);
-        strcatW(wszPinNameKey, Name);
+        lstrcpyW(wszPinNameKey, wszPins);
+        lstrcatW(wszPinNameKey, wszSlash);
+        lstrcatW(wszPinNameKey, Name);
 
         lRet = RegDeleteTreeW(hKey, wszPinNameKey);
         hr = HRESULT_FROM_WIN32(lRet);

@@ -25,7 +25,6 @@
 #include "vfwmsgs.h"
 #include "amvideo.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include <math.h>

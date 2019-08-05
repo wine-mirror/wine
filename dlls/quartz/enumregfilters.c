@@ -20,7 +20,6 @@
 
 #include "quartz_private.h"
 
-#include "wine/unicode.h"
 
 #include "wine/debug.h"
 
@@ -72,7 +71,7 @@ HRESULT IEnumRegFiltersImpl_Construct(REGFILTER* pInRegFilters, const ULONG size
     for(i = 0; i < size; i++)
     {
         pRegFilters[i].Clsid = pInRegFilters[i].Clsid;
-        pRegFilters[i].Name = CoTaskMemAlloc((strlenW(pInRegFilters[i].Name)+1)*sizeof(WCHAR));
+        pRegFilters[i].Name = CoTaskMemAlloc((lstrlenW(pInRegFilters[i].Name)+1)*sizeof(WCHAR));
         if (!pRegFilters[i].Name)
         {
             while(i)
@@ -81,7 +80,7 @@ HRESULT IEnumRegFiltersImpl_Construct(REGFILTER* pInRegFilters, const ULONG size
             CoTaskMemFree(pEnumRegFilters);
             return E_OUTOFMEMORY;
         }
-        CopyMemory(pRegFilters[i].Name, pInRegFilters[i].Name, (strlenW(pInRegFilters[i].Name)+1)*sizeof(WCHAR));
+        CopyMemory(pRegFilters[i].Name, pInRegFilters[i].Name, (lstrlenW(pInRegFilters[i].Name)+1)*sizeof(WCHAR));
     }
 
     pEnumRegFilters->IEnumRegFilters_iface.lpVtbl = &IEnumRegFiltersImpl_Vtbl;
@@ -164,7 +163,7 @@ static HRESULT WINAPI IEnumRegFiltersImpl_Next(IEnumRegFilters * iface, ULONG cF
         for(i = 0; i < cFetched; i++)
         {
             /* The string in the REGFILTER structure must be allocated in the same block as the REGFILTER structure itself */
-            ppRegFilter[i] = CoTaskMemAlloc(sizeof(REGFILTER)+(strlenW(This->RegFilters[This->uIndex + i].Name)+1)*sizeof(WCHAR));
+            ppRegFilter[i] = CoTaskMemAlloc(sizeof(REGFILTER)+(lstrlenW(This->RegFilters[This->uIndex + i].Name)+1)*sizeof(WCHAR));
             if (!ppRegFilter[i])
             {
                 while(i)
@@ -177,7 +176,7 @@ static HRESULT WINAPI IEnumRegFiltersImpl_Next(IEnumRegFilters * iface, ULONG cF
             ppRegFilter[i]->Clsid = This->RegFilters[This->uIndex + i].Clsid;
             ppRegFilter[i]->Name = (WCHAR*)((char*)ppRegFilter[i]+sizeof(REGFILTER));
             CopyMemory(ppRegFilter[i]->Name, This->RegFilters[This->uIndex + i].Name,
-                            (strlenW(This->RegFilters[This->uIndex + i].Name)+1)*sizeof(WCHAR));
+                            (lstrlenW(This->RegFilters[This->uIndex + i].Name)+1)*sizeof(WCHAR));
         }
 
         This->uIndex += cFetched;

@@ -31,7 +31,6 @@
 #include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/strmbase.h"
-#include "wine/unicode.h"
 
 /* Quality Control */
 typedef struct QualityControlImpl {

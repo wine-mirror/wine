@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -38,7 +37,6 @@
 #include "evcode.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
@@ -535,7 +533,7 @@ static IBaseFilter *find_filter_by_name(IFilterGraphImpl *graph, const WCHAR *na
 
     LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
     {
-        if (!strcmpW(filter->name, name))
+        if (!wcscmp(filter->name, name))
             return filter->filter;
     }
 
@@ -558,7 +556,7 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface, IBaseFilter *
     if (!pFilter)
         return E_POINTER;
 
-    wszFilterName = CoTaskMemAlloc( (pName ? strlenW(pName) + 6 : 5) * sizeof(WCHAR) );
+    wszFilterName = CoTaskMemAlloc( (pName ? lstrlenW(pName) + 6 : 5) * sizeof(WCHAR) );
 
     if (pName && find_filter_by_name(This, pName))
         duplicate_name = TRUE;
@@ -573,9 +571,9 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface, IBaseFilter *
 	{
 	    /* Create name */
 	    if (pName)
-		sprintfW(wszFilterName, wszFmt1, pName, This->nameIndex);
+		swprintf(wszFilterName, pName ? lstrlenW(pName) + 6 : 5, wszFmt1, pName, This->nameIndex);
 	    else
-		sprintfW(wszFilterName, wszFmt2, This->nameIndex);
+		swprintf(wszFilterName, pName ? lstrlenW(pName) + 6 : 5, wszFmt2, This->nameIndex);
 	    TRACE("Generated name %s\n", debugstr_w(wszFilterName));
 
 	    if (This->nameIndex++ == 10000)
@@ -592,7 +590,7 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface, IBaseFilter *
 	}
     }
     else
-	memcpy(wszFilterName, pName, (strlenW(pName) + 1) * sizeof(WCHAR));
+	memcpy(wszFilterName, pName, (lstrlenW(pName) + 1) * sizeof(WCHAR));
 
     hr = IBaseFilter_JoinFilterGraph(pFilter, (IFilterGraph *)&This->IFilterGraph2_iface, wszFilterName);
     if (FAILED(hr))

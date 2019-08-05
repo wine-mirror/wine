@@ -21,6 +21,7 @@
 #define __QUARTZ_PRIVATE_INCLUDED__
 
 #include <stdarg.h>
+#include <wchar.h>
 
 #define COBJMACROS
 

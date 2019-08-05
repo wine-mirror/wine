@@ -26,7 +26,6 @@
 #include "vfwmsgs.h"
 #include "mmsystem.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include <math.h>

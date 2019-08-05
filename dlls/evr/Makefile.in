@@ -1,6 +1,8 @@
 MODULE    = evr.dll
 IMPORTS   = mfuuid strmiids strmbase uuid ole32 oleaut32
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	evr.c \
 	main.c
