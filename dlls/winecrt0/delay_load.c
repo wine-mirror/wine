@@ -18,13 +18,27 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "delayloadhandler.h"
+
+void *WINAPI ResolveDelayLoadedAPI( void* base, const IMAGE_DELAYLOAD_DESCRIPTOR* desc,
+                                    PDELAYLOAD_FAILURE_DLL_CALLBACK dllhook,
+                                    PDELAYLOAD_FAILURE_SYSTEM_ROUTINE syshook,
+                                    IMAGE_THUNK_DATA* addr, ULONG flags );
+void *WINAPI DelayLoadFailureHook( LPCSTR name, LPCSTR function );
+
+#ifdef _WIN32
+
+extern IMAGE_DOS_HEADER __ImageBase;
+
+FARPROC WINAPI __delayLoadHelper2( const IMAGE_DELAYLOAD_DESCRIPTOR *descr, IMAGE_THUNK_DATA *addr )
+{
+    return ResolveDelayLoadedAPI( &__ImageBase, descr, NULL, DelayLoadFailureHook, addr, 0 );
+}
+
+#else /* _WIN32 */
 
 struct ImgDelayDescr
 {
@@ -39,8 +53,6 @@ struct ImgDelayDescr
 };
 
 extern struct ImgDelayDescr __wine_spec_delay_imports[];
-
-extern FARPROC WINAPI DelayLoadFailureHook( LPCSTR name, LPCSTR function );
 
 FARPROC WINAPI DECLSPEC_HIDDEN __wine_spec_delay_load( unsigned int id )
 {
@@ -65,3 +77,5 @@ static void free_delay_imports(void)
         if (*descr->phmod) FreeLibrary( *descr->phmod );
 }
 #endif
+
+#endif /* _WIN32 */
