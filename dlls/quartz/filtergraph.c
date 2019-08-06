@@ -1691,11 +1691,10 @@ static HRESULT GetFileSourceFilter(LPCOLESTR pszFileName, IBaseFilter **filter)
     IFileSourceFilter* pSource = NULL;
     IPin * pOutputPin = NULL;
     static const WCHAR wszOutputPinName[] = { 'O','u','t','p','u','t',0 };
+    BOOL ret;
 
     /* Try to find a match without reading the file first */
-    hr = GetClassMediaFile(NULL, pszFileName, NULL, NULL, &clsid);
-
-    if (hr == S_OK)
+    if (get_media_type(NULL, pszFileName, NULL, NULL, &clsid))
         return CreateFilterInstanceAndLoadFile(&clsid, pszFileName, filter);
 
     /* Now create a AyncReader instance, to check for signature bytes in the file */
@@ -1734,10 +1733,10 @@ static HRESULT GetFileSourceFilter(LPCOLESTR pszFileName, IBaseFilter **filter)
     }
 
     /* Try again find a match */
-    hr = GetClassMediaFile(pReader, pszFileName, NULL, NULL, &clsid);
+    ret = get_media_type(pReader, pszFileName, NULL, NULL, &clsid);
     IAsyncReader_Release(pReader);
 
-    if (hr == S_OK)
+    if (ret)
     {
         TRACE("Found source filter %s.\n", debugstr_guid(&clsid));
         /* Release the AsyncReader filter and create the matching one */
