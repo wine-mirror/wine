@@ -46,29 +46,33 @@ static const WCHAR mpegfile[] = {'t','e','s','t','.','m','p','g',0};
 static const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
 static const WCHAR wavefile[] = {'t','e','s','t','.','w','a','v',0};
 
-static WCHAR *load_resource(const WCHAR *name)
+static WCHAR *create_file(const WCHAR *name, const char *data, DWORD size)
 {
     static WCHAR pathW[MAX_PATH];
     DWORD written;
     HANDLE file;
-    HRSRC res;
-    void *ptr;
 
     GetTempPathW(ARRAY_SIZE(pathW), pathW);
     lstrcatW(pathW, name);
-
     file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n", wine_dbgstr_w(pathW),
-        GetLastError());
-
-    res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
-    ok( res != 0, "couldn't find resource\n" );
-    ptr = LockResource( LoadResource( GetModuleHandleA(NULL), res ));
-    WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
-    ok( written == SizeofResource( GetModuleHandleA(NULL), res ), "couldn't write resource\n" );
-    CloseHandle( file );
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %u.\n",
+            wine_dbgstr_w(pathW), GetLastError());
+    WriteFile(file, data, size, &written, NULL);
+    ok(written = size, "Failed to write file data, error %u.\n", GetLastError());
+    CloseHandle(file);
 
     return pathW;
+}
+
+static WCHAR *load_resource(const WCHAR *name)
+{
+    HRSRC res;
+    void *ptr;
+
+    res = FindResourceW(NULL, name, (const WCHAR *)RT_RCDATA);
+    ok(!!res, "Failed to find resource %s, error %u.\n", wine_dbgstr_w(name), GetLastError());
+    ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
+    return create_file(name, ptr, SizeofResource(GetModuleHandleA(NULL), res));
 }
 
 static IFilterGraph2 *create_graph(void)
@@ -1175,6 +1179,9 @@ struct testfilter
     double seek_rate;
 
     IReferenceClock IReferenceClock_iface;
+
+    IFileSourceFilter IFileSourceFilter_iface;
+    WCHAR filename[MAX_PATH];
 };
 
 static inline struct testfilter *impl_from_IEnumPins(IEnumPins *iface)
@@ -1267,30 +1274,31 @@ static HRESULT WINAPI testfilter_QueryInterface(IBaseFilter *iface, REFIID iid, 
             || IsEqualGUID(iid, &IID_IBaseFilter))
     {
         *out = &filter->IBaseFilter_iface;
-        IBaseFilter_AddRef(*out);
-        return S_OK;
     }
     else if (IsEqualGUID(iid, &IID_IAMFilterMiscFlags) && filter->IAMFilterMiscFlags_iface.lpVtbl)
     {
         *out = &filter->IAMFilterMiscFlags_iface;
-        IAMFilterMiscFlags_AddRef(*out);
-        return S_OK;
     }
     else if (IsEqualGUID(iid, &IID_IMediaSeeking) && filter->IMediaSeeking_iface.lpVtbl)
     {
         *out = &filter->IMediaSeeking_iface;
-        IMediaSeeking_AddRef(*out);
-        return S_OK;
     }
     else if (IsEqualGUID(iid, &IID_IReferenceClock) && filter->IReferenceClock_iface.lpVtbl)
     {
         *out = &filter->IReferenceClock_iface;
-        IMediaSeeking_AddRef(*out);
-        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IFileSourceFilter) && filter->IFileSourceFilter_iface.lpVtbl)
+    {
+        *out = &filter->IFileSourceFilter_iface;
+    }
+    else
+    {
+        *out = NULL;
+        return E_NOINTERFACE;
     }
 
-    *out = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static ULONG WINAPI testfilter_AddRef(IBaseFilter *iface)
@@ -1740,6 +1748,56 @@ static const IReferenceClockVtbl testclock_vtbl =
     testclock_AdviseTime,
     testclock_AdvisePeriodic,
     testclock_Unadvise,
+};
+
+static struct testfilter *impl_from_IFileSourceFilter(IFileSourceFilter *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, IFileSourceFilter_iface);
+}
+
+static HRESULT WINAPI testfilesource_QueryInterface(IFileSourceFilter *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_IFileSourceFilter(iface);
+    return IBaseFilter_QueryInterface(&filter->IBaseFilter_iface, iid, out);
+}
+
+static ULONG WINAPI testfilesource_AddRef(IFileSourceFilter *iface)
+{
+    struct testfilter *filter = impl_from_IFileSourceFilter(iface);
+    return InterlockedIncrement(&filter->ref);
+}
+
+static ULONG WINAPI testfilesource_Release(IFileSourceFilter *iface)
+{
+    struct testfilter *filter = impl_from_IFileSourceFilter(iface);
+    return InterlockedDecrement(&filter->ref);
+}
+
+static HRESULT WINAPI testfilesource_Load(IFileSourceFilter *iface,
+        const WCHAR *filename, const AM_MEDIA_TYPE *mt)
+{
+    struct testfilter *filter = impl_from_IFileSourceFilter(iface);
+    if (winetest_debug > 1) trace("%p->Load()\n", iface);
+
+    wcscpy(filter->filename, filename);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI testfilesource_GetCurFile(IFileSourceFilter *iface,
+        WCHAR **filename, AM_MEDIA_TYPE *mt)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IFileSourceFilterVtbl testfilesource_vtbl =
+{
+    testfilesource_QueryInterface,
+    testfilesource_AddRef,
+    testfilesource_Release,
+    testfilesource_Load,
+    testfilesource_GetCurFile,
 };
 
 struct testfilter_cf
@@ -3827,6 +3885,137 @@ static void test_default_sync_source(void)
     ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
 }
 
+static void test_add_source_filter(void)
+{
+    static const char bogus_data[20] = {0xde, 0xad, 0xbe, 0xef};
+    static const char midi_data[20] = {'M','T','h','d'};
+    static const WCHAR testW[] = {'t','e','s','t',0};
+
+    IFilterGraph2 *graph = create_graph();
+    IFileSourceFilter *filesource;
+    IBaseFilter *filter, *filter2;
+    FILTER_INFO filter_info;
+    const WCHAR *filename;
+    WCHAR *ret_filename;
+    AM_MEDIA_TYPE mt;
+    CLSID clsid;
+    HRESULT hr;
+    ULONG ref;
+    BOOL ret;
+    HKEY key;
+
+    /* Test a file which should be registered by extension. */
+
+    filename = create_file(mp3file, midi_data, sizeof(midi_data));
+    hr = IFilterGraph2_AddSourceFilter(graph, filename, testW, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetClassID(filter, &clsid);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&clsid, &CLSID_AsyncReader), "Got filter %s.\n", wine_dbgstr_guid(&clsid));
+    hr = IBaseFilter_QueryFilterInfo(filter, &filter_info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!wcscmp(filter_info.achName, testW), "Got unexpected name %s.\n", wine_dbgstr_w(filter_info.achName));
+    IFilterGraph_Release(filter_info.pGraph);
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFileSourceFilter_GetCurFile(filesource, &ret_filename, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!wcscmp(ret_filename, filename), "Expected filename %s, got %s.\n",
+            wine_dbgstr_w(filename), wine_dbgstr_w(ret_filename));
+    ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Stream), "Got major type %s.\n", wine_dbgstr_guid(&mt.majortype));
+    ok(IsEqualGUID(&mt.subtype, &MEDIASUBTYPE_MPEG1Audio), "Got subtype %s.\n", wine_dbgstr_guid(&mt.subtype));
+    IFileSourceFilter_Release(filesource);
+
+    hr = IFilterGraph2_AddSourceFilter(graph, filename, testW, &filter2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(filter2 != filter, "Filters shouldn't match.\n");
+    hr = IFilterGraph2_RemoveFilter(graph, filter2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = IBaseFilter_Release(filter2);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    hr = IFilterGraph2_RemoveFilter(graph, filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %u.\n", wine_dbgstr_w(filename), GetLastError());
+
+    /* Test a file which should be registered by signature. */
+
+    filename = create_file(avifile, midi_data, sizeof(midi_data));
+    hr = IFilterGraph2_AddSourceFilter(graph, filename, NULL, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetClassID(filter, &clsid);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&clsid, &CLSID_AsyncReader), "Got filter %s.\n", wine_dbgstr_guid(&clsid));
+    hr = IBaseFilter_QueryFilterInfo(filter, &filter_info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!wcscmp(filter_info.achName, filename), "Got unexpected name %s.\n", wine_dbgstr_w(filter_info.achName));
+    IFilterGraph_Release(filter_info.pGraph);
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFileSourceFilter_GetCurFile(filesource, &ret_filename, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!wcscmp(ret_filename, filename), "Expected filename %s, got %s.\n",
+            wine_dbgstr_w(filename), wine_dbgstr_w(ret_filename));
+    ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Stream), "Got major type %s.\n", wine_dbgstr_guid(&mt.majortype));
+    ok(IsEqualGUID(&mt.subtype, &MEDIATYPE_Midi), "Got subtype %s.\n", wine_dbgstr_guid(&mt.subtype));
+    IFileSourceFilter_Release(filesource);
+
+    hr = IFilterGraph2_RemoveFilter(graph, filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %u.\n", wine_dbgstr_w(filename), GetLastError());
+
+    if (!RegCreateKeyA(HKEY_CLASSES_ROOT, "Media Type\\{abbccdde-0000-0000-0000-000000000000}"
+            "\\{bccddeef-0000-0000-0000-000000000000}", &key))
+    {
+        static const GUID testfilter_clsid = {0x12345678};
+        struct testpin testfilter_pin;
+        struct testfilter testfilter;
+        struct testfilter_cf cf = {{&testfilter_cf_vtbl}, &testfilter};
+        DWORD cookie;
+
+        testsource_init(&testfilter_pin, NULL, 0);
+        testfilter_init(&testfilter, &testfilter_pin, 1);
+        testfilter.IFileSourceFilter_iface.lpVtbl = &testfilesource_vtbl;
+
+        CoRegisterClassObject(&testfilter_clsid, (IUnknown *)&cf.IClassFactory_iface,
+                CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie);
+        RegSetValueExA(key, "0", 0, REG_SZ, (const BYTE *)"0,4,,deadbeef", 14);
+        RegSetValueExA(key, "Source Filter", 0, REG_SZ, (const BYTE *)"{12345678-0000-0000-0000-000000000000}", 39);
+
+        filename = create_file(avifile, bogus_data, sizeof(bogus_data));
+        hr = IFilterGraph2_AddSourceFilter(graph, filename, NULL, &filter);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(filter == &testfilter.IBaseFilter_iface, "Got unexpected filter %p.\n", filter);
+
+        hr = IFilterGraph2_RemoveFilter(graph, filter);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        IBaseFilter_Release(filter);
+        ref = IBaseFilter_Release(&testfilter.IBaseFilter_iface);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+        ret = DeleteFileW(filename);
+        ok(ret, "Failed to delete %s, error %u.\n", wine_dbgstr_w(filename), GetLastError());
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, "Media Type\\{abbccdde-0000-0000-0000-000000000000}"
+            "\\{bccddeef-0000-0000-0000-000000000000}");
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, "Media Type\\{abbccdde-0000-0000-0000-000000000000}");
+        CoRevokeClassObject(cookie);
+    }
+    else
+        skip("Not enough permission to register media types.\n");
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -3848,6 +4037,7 @@ START_TEST(filtergraph)
     test_ec_complete();
     test_graph_seeking();
     test_default_sync_source();
+    test_add_source_filter();
 
     CoUninitialize();
     test_render_with_multithread();
