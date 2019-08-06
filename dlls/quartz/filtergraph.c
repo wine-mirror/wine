@@ -1655,68 +1655,52 @@ static HRESULT WINAPI FilterGraph2_RenderFile(IFilterGraph2 *iface, LPCWSTR lpcw
     return hr;
 }
 
-static HRESULT CreateFilterInstanceAndLoadFile(GUID* clsid, LPCOLESTR pszFileName, IBaseFilter **filter)
+static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface,
+        const WCHAR *filename, const WCHAR *filter_name, IBaseFilter **ret_filter)
 {
-    IFileSourceFilter *source = NULL;
-    HRESULT hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)filter);
-    TRACE("CLSID: %s\n", debugstr_guid(clsid));
-    if (FAILED(hr))
-        return hr;
-
-    hr = IBaseFilter_QueryInterface(*filter, &IID_IFileSourceFilter, (LPVOID*)&source);
-    if (FAILED(hr))
-    {
-        IBaseFilter_Release(*filter);
-        return hr;
-    }
-
-    /* Load the file in the file source filter */
-    hr = IFileSourceFilter_Load(source, pszFileName, NULL);
-    IFileSourceFilter_Release(source);
-    if (FAILED(hr)) {
-        WARN("Load (%x)\n", hr);
-        IBaseFilter_Release(*filter);
-        return hr;
-    }
-
-    return hr;
-}
-
-/* Some filters implement their own asynchronous reader (Theoretically they all should, try to load it first */
-static HRESULT GetFileSourceFilter(const WCHAR *filename, IBaseFilter **filter)
-{
+    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    IFileSourceFilter *filesource;
+    IBaseFilter *filter;
+    HRESULT hr;
     GUID clsid;
+
+    TRACE("graph %p, filename %s, filter_name %s, ret_filter %p.\n",
+            graph, debugstr_w(filename), debugstr_w(filter_name), ret_filter);
+
     if (!get_media_type(filename, NULL, NULL, &clsid))
         clsid = CLSID_AsyncReader;
-    return CreateFilterInstanceAndLoadFile(&clsid, filename, filter);
-}
+    TRACE("Using source filter %s.\n", debugstr_guid(&clsid));
 
-static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface, LPCWSTR lpcwstrFileName,
-        LPCWSTR lpcwstrFilterName, IBaseFilter **ppFilter)
-{
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
-    HRESULT hr;
-    IBaseFilter* preader;
-
-    TRACE("(%p/%p)->(%s, %s, %p)\n", This, iface, debugstr_w(lpcwstrFileName), debugstr_w(lpcwstrFilterName), ppFilter);
-
-    /* Try from file name first, then fall back to default asynchronous reader */
-    hr = GetFileSourceFilter(lpcwstrFileName, &preader);
-    if (FAILED(hr)) {
-        WARN("Unable to create file source filter (%x)\n", hr);
+    if (FAILED(hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter)))
+    {
+        WARN("Failed to create filter, hr %#x.\n", hr);
         return hr;
     }
 
-    hr = IFilterGraph2_AddFilter(iface, preader, lpcwstrFilterName);
-    if (FAILED(hr)) {
-        WARN("Unable add filter (%x)\n", hr);
-        IBaseFilter_Release(preader);
+    if (FAILED(hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource)))
+    {
+        WARN("Failed to get IFileSourceFilter, hr %#x.\n", hr);
+        IBaseFilter_Release(filter);
         return hr;
     }
 
-    if (ppFilter)
-        *ppFilter = preader;
+    hr = IFileSourceFilter_Load(filesource, filename, NULL);
+    IFileSourceFilter_Release(filesource);
+    if (FAILED(hr))
+    {
+        WARN("Failed to load file, hr %#x.\n", hr);
+        return hr;
+    }
 
+    if (FAILED(hr = IFilterGraph2_AddFilter(iface, filter, filter_name)))
+    {
+        IBaseFilter_Release(filter);
+        return hr;
+    }
+
+    if (ret_filter)
+        *ret_filter = filter;
     return S_OK;
 }
 
