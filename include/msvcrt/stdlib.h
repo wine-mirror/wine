@@ -220,9 +220,7 @@ double        __cdecl strtod(const char*,char**);
 double        __cdecl strtold(const char*,char**);
 __msvcrt_long __cdecl strtol(const char*,char**,int);
 __msvcrt_ulong __cdecl strtoul(const char*,char**,int);
-__int64       __cdecl strtoll(const char*,char**,int);
 __int64       __cdecl strtoll_l(const char*,char**,int,_locale_t);
-unsigned __int64 __cdecl strtoull(const char*,char**,int);
 unsigned __int64 __cdecl strtoull_l(const char*,char**,int,_locale_t);
 __int64       __cdecl _strtoi64(const char*,char**,int);
 __int64       __cdecl _strtoi64_l(const char*,char**,int,_locale_t);
@@ -297,6 +295,8 @@ static inline char* itoa(int value, char* str, int radix) { return _itoa(value, 
 static inline char* ltoa(__msvcrt_long value, char* str, int radix) { return _ltoa(value, str, radix); }
 static inline _onexit_t onexit(_onexit_t func) { return _onexit(func); }
 static inline int putenv(const char* str) { return _putenv(str); }
+static inline __int64 strtoll(const char *ptr, char **endptr, int base) { return _strtoi64(ptr, endptr, base); }
+static inline unsigned __int64 __cdecl strtoull(const char *ptr, char **endptr, int base) { return _strtoui64(ptr, endptr, base); }
 static inline void swab(char* src, char* dst, int len) { _swab(src, dst, len); }
 static inline char* ultoa(__msvcrt_ulong value, char* str, int radix) { return _ultoa(value, str, radix); }
 
