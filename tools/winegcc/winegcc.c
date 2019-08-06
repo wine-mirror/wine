@@ -383,6 +383,7 @@ static int try_link( const strarray *prefix, const strarray *link_tool, const ch
 
 static strarray *get_link_args( struct options *opts, const char *output_name )
 {
+    int use_wine_crt = opts->wine_builtin && opts->shared;
     const strarray *link_tool = get_translator( opts );
     strarray *flags = strarray_alloc();
     unsigned int i;
@@ -437,8 +438,8 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         else strarray_add( flags, opts->gui_app ? "-mwindows" : "-mconsole" );
 
         if (opts->unicode_app) strarray_add( flags, "-municode" );
-        if (opts->nodefaultlibs) strarray_add( flags, "-nodefaultlibs" );
-        if (opts->nostartfiles) strarray_add( flags, "-nostartfiles" );
+        if (opts->nodefaultlibs || use_wine_crt) strarray_add( flags, "-nodefaultlibs" );
+        if (opts->nostartfiles || use_wine_crt) strarray_add( flags, "-nostartfiles" );
 
         if (opts->subsystem)
         {
@@ -1172,7 +1173,7 @@ static void build(struct options* opts)
 	strarray_add(link_args, "-lc");
     }
 
-    if (opts->nodefaultlibs && is_pe) strarray_add( link_args, "-lgcc" );
+    if ((opts->nodefaultlibs || opts->shared) && is_pe) strarray_add( link_args, "-lgcc" );
 
     spawn(opts->prefix, link_args, 0);
     strarray_free (link_args);
