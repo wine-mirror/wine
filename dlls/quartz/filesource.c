@@ -129,94 +129,84 @@ static unsigned char byte_from_hex_char(WCHAR wHex)
     }
 }
 
-static HRESULT process_pattern_string(LPCWSTR wszPatternString, IAsyncReader * pReader)
+static BOOL process_pattern_string(const WCHAR *pattern, IAsyncReader *reader)
 {
-    ULONG ulOffset;
-    ULONG ulBytes;
-    BYTE * pbMask;
-    BYTE * pbValue;
-    BYTE * pbFile;
-    HRESULT hr = S_OK;
-    ULONG strpos;
+    BYTE *mask, *expect, *actual;
+    ULONG size, offset, i;
+    BOOL ret = TRUE;
 
-    /* format: "offset, bytestocompare, mask, value" */
+    /* format: "offset, size, mask, value" */
 
-    ulOffset = wcstol(wszPatternString, NULL, 10);
+    offset = wcstol(pattern, NULL, 10);
 
-    if (!(wszPatternString = wcschr(wszPatternString, ',')))
-        return E_INVALIDARG;
+    if (!(pattern = wcschr(pattern, ',')))
+        return FALSE;
+    pattern++;
 
-    wszPatternString++; /* skip ',' */
+    size = wcstol(pattern, NULL, 10);
+    mask = heap_alloc(size);
+    expect = heap_alloc(size);
+    memset(mask, 0xff, size);
 
-    ulBytes = wcstol(wszPatternString, NULL, 10);
+    if (!(pattern = wcschr(pattern, ',')))
+        return FALSE;
+    pattern++;
+    while (!iswxdigit(*pattern) && (*pattern != ','))
+        pattern++;
 
-    pbMask = HeapAlloc(GetProcessHeap(), 0, ulBytes);
-    pbValue = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ulBytes);
-    pbFile = HeapAlloc(GetProcessHeap(), 0, ulBytes);
-
-    /* default mask is match everything */
-    memset(pbMask, 0xFF, ulBytes);
-
-    if (!(wszPatternString = wcschr(wszPatternString, ',')))
-        hr = E_INVALIDARG;
-
-    if (hr == S_OK)
+    for (i = 0; iswxdigit(*pattern) && (i/2 < size); pattern++, i++)
     {
-        wszPatternString++; /* skip ',' */
-        while (!iswxdigit(*wszPatternString) && (*wszPatternString != ',')) wszPatternString++;
-
-        for (strpos = 0; iswxdigit(*wszPatternString) && (strpos/2 < ulBytes); wszPatternString++, strpos++)
-        {
-            if ((strpos % 2) == 1) /* odd numbered position */
-                pbMask[strpos / 2] |= byte_from_hex_char(*wszPatternString);
-            else
-                pbMask[strpos / 2] = byte_from_hex_char(*wszPatternString) << 4;
-        }
-
-        if (!(wszPatternString = wcschr(wszPatternString, ',')))
-            hr = E_INVALIDARG;
+        if (i % 2)
+            mask[i / 2] |= byte_from_hex_char(*pattern);
         else
-            wszPatternString++; /* skip ',' */
+            mask[i / 2] = byte_from_hex_char(*pattern) << 4;
     }
 
-    if (hr == S_OK)
+    if (!(pattern = wcschr(pattern, ',')))
     {
-        for ( ; !iswxdigit(*wszPatternString) && (*wszPatternString != ','); wszPatternString++)
-            ;
+        heap_free(mask);
+        heap_free(expect);
+        return FALSE;
+    }
+    pattern++;
+    while (!iswxdigit(*pattern) && (*pattern != ','))
+        pattern++;
 
-        for (strpos = 0; iswxdigit(*wszPatternString) && (strpos/2 < ulBytes); wszPatternString++, strpos++)
+    for (i = 0; iswxdigit(*pattern) && (i/2 < size); pattern++, i++)
+    {
+        if (i % 2)
+            expect[i / 2] |= byte_from_hex_char(*pattern);
+        else
+            expect[i / 2] = byte_from_hex_char(*pattern) << 4;
+    }
+
+    actual = heap_alloc(size);
+    if (FAILED(IAsyncReader_SyncRead(reader, offset, size, actual)))
+    {
+        heap_free(actual);
+        heap_free(expect);
+        heap_free(mask);
+        return FALSE;
+    }
+
+    for (i = 0; i < size; ++i)
+    {
+        if ((actual[i] & mask[i]) != expect[i])
         {
-            if ((strpos % 2) == 1) /* odd numbered position */
-                pbValue[strpos / 2] |= byte_from_hex_char(*wszPatternString);
-            else
-                pbValue[strpos / 2] = byte_from_hex_char(*wszPatternString) << 4;
+            ret = FALSE;
+            break;
         }
     }
 
-    if (hr == S_OK)
-        hr = IAsyncReader_SyncRead(pReader, ulOffset, ulBytes, pbFile);
+    heap_free(actual);
+    heap_free(expect);
+    heap_free(mask);
 
-    if (hr == S_OK)
-    {
-        ULONG i;
-        for (i = 0; i < ulBytes; i++)
-            if ((pbFile[i] & pbMask[i]) != pbValue[i])
-            {
-                hr = S_FALSE;
-                break;
-            }
-    }
+    /* If there is a following tuple, then we must match that as well. */
+    if (ret && (pattern = wcschr(pattern, ',')))
+        return process_pattern_string(pattern + 1, reader);
 
-    HeapFree(GetProcessHeap(), 0, pbMask);
-    HeapFree(GetProcessHeap(), 0, pbValue);
-    HeapFree(GetProcessHeap(), 0, pbFile);
-
-    /* if we encountered no errors with this string, and there is a following tuple, then we
-     * have to match that as well to succeed */
-    if ((hr == S_OK) && (wszPatternString = wcschr(wszPatternString, ',')))
-        return process_pattern_string(wszPatternString + 1, pReader);
-    else
-        return hr;
+    return ret;
 }
 
 BOOL get_media_type(IAsyncReader *reader, const WCHAR *filename, GUID *majortype,
@@ -308,7 +298,7 @@ BOOL get_media_type(IAsyncReader *reader, const WCHAR *filename, GUID *majortype
                 if (!wcscmp(value_name, source_filter_name))
                     continue;
 
-                if (process_pattern_string(pattern, reader) != S_OK)
+                if (!process_pattern_string(pattern, reader))
                     continue;
 
                 if (majortype)
