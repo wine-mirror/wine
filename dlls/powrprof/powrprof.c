@@ -315,6 +315,14 @@ DWORD WINAPI PowerReadDCValue(HKEY RootPowerKey, const GUID *Scheme, const GUID 
    return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+DWORD WINAPI PowerReadFriendlyName(HKEY RootPowerKey, const GUID *Scheme,
+	const GUID *SubGroup, const GUID *PowerSettings, UCHAR *Buffer,
+	DWORD *BufferSize)
+{
+   FIXME("(%p,%s,%s,%s,%p,%p) stub!\n", RootPowerKey, debugstr_guid(Scheme), debugstr_guid(SubGroup), debugstr_guid(PowerSettings), Buffer, BufferSize);
+   return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 POWER_PLATFORM_ROLE WINAPI PowerDeterminePlatformRole(void)
 {
    FIXME("stub\n");
