@@ -129,10 +129,10 @@ static unsigned char byte_from_hex_char(WCHAR wHex)
     }
 }
 
-static BOOL process_pattern_string(const WCHAR *pattern, IAsyncReader *reader)
+static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
 {
+    ULONG size, offset, i, ret_size;
     BYTE *mask, *expect, *actual;
-    ULONG size, offset, i;
     BOOL ret = TRUE;
 
     /* format: "offset, size, mask, value" */
@@ -181,7 +181,8 @@ static BOOL process_pattern_string(const WCHAR *pattern, IAsyncReader *reader)
     }
 
     actual = heap_alloc(size);
-    if (FAILED(IAsyncReader_SyncRead(reader, offset, size, actual)))
+    SetFilePointer(file, offset, NULL, FILE_BEGIN);
+    if (!ReadFile(file, actual, size, &ret_size, NULL) || ret_size != size)
     {
         heap_free(actual);
         heap_free(expect);
@@ -204,13 +205,12 @@ static BOOL process_pattern_string(const WCHAR *pattern, IAsyncReader *reader)
 
     /* If there is a following tuple, then we must match that as well. */
     if (ret && (pattern = wcschr(pattern, ',')))
-        return process_pattern_string(pattern + 1, reader);
+        return process_pattern_string(pattern + 1, file);
 
     return ret;
 }
 
-BOOL get_media_type(IAsyncReader *reader, const WCHAR *filename, GUID *majortype,
-        GUID *subtype, GUID *source_clsid)
+BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID *source_clsid)
 {
     WCHAR extensions_path[278] = {'M','e','d','i','a',' ','T','y','p','e','\\','E','x','t','e','n','s','i','o','n','s','\\',0};
     static const WCHAR wszExtensions[] = {'E','x','t','e','n','s','i','o','n','s',0};
@@ -218,6 +218,7 @@ BOOL get_media_type(IAsyncReader *reader, const WCHAR *filename, GUID *majortype
     DWORD majortype_idx, size;
     const WCHAR *ext;
     HKEY parent_key;
+    HANDLE file;
 
     if ((ext = wcsrchr(filename, '.')))
     {
@@ -244,11 +245,18 @@ BOOL get_media_type(IAsyncReader *reader, const WCHAR *filename, GUID *majortype
         }
     }
 
-    if (!reader)
+    if ((file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+            OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+    {
+        WARN("Failed to open file %s, error %u.\n", debugstr_w(filename), GetLastError());
         return FALSE;
+    }
 
     if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszMediaType, 0, KEY_READ, &parent_key))
+    {
+        CloseHandle(file);
         return FALSE;
+    }
 
     for (majortype_idx = 0; ; ++majortype_idx)
     {
@@ -298,7 +306,7 @@ BOOL get_media_type(IAsyncReader *reader, const WCHAR *filename, GUID *majortype
                 if (!wcscmp(value_name, source_filter_name))
                     continue;
 
-                if (!process_pattern_string(pattern, reader))
+                if (!process_pattern_string(pattern, file))
                     continue;
 
                 if (majortype)
@@ -314,6 +322,7 @@ BOOL get_media_type(IAsyncReader *reader, const WCHAR *filename, GUID *majortype
                 RegCloseKey(subtype_key);
                 RegCloseKey(majortype_key);
                 RegCloseKey(parent_key);
+                CloseHandle(file);
                 return TRUE;
             }
 
@@ -325,6 +334,7 @@ BOOL get_media_type(IAsyncReader *reader, const WCHAR *filename, GUID *majortype
     }
 
     RegCloseKey(parent_key);
+    CloseHandle(file);
     return FALSE;
 }
 
@@ -503,7 +513,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     if (!pmt)
     {
         CopyMediaType(This->pmt, &default_mt);
-        if (get_media_type(&This->IAsyncReader_iface, pszFileName, &This->pmt->majortype, &This->pmt->subtype, NULL))
+        if (get_media_type(pszFileName, &This->pmt->majortype, &This->pmt->subtype, NULL))
         {
             TRACE("Found major type %s, subtype %s.\n",
                     debugstr_guid(&This->pmt->majortype), debugstr_guid(&This->pmt->subtype));

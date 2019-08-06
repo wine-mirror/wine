@@ -1683,69 +1683,12 @@ static HRESULT CreateFilterInstanceAndLoadFile(GUID* clsid, LPCOLESTR pszFileNam
 }
 
 /* Some filters implement their own asynchronous reader (Theoretically they all should, try to load it first */
-static HRESULT GetFileSourceFilter(LPCOLESTR pszFileName, IBaseFilter **filter)
+static HRESULT GetFileSourceFilter(const WCHAR *filename, IBaseFilter **filter)
 {
-    HRESULT hr;
     GUID clsid;
-    IAsyncReader * pReader = NULL;
-    IFileSourceFilter* pSource = NULL;
-    IPin * pOutputPin = NULL;
-    static const WCHAR wszOutputPinName[] = { 'O','u','t','p','u','t',0 };
-    BOOL ret;
-
-    /* Try to find a match without reading the file first */
-    if (get_media_type(NULL, pszFileName, NULL, NULL, &clsid))
-        return CreateFilterInstanceAndLoadFile(&clsid, pszFileName, filter);
-
-    /* Now create a AyncReader instance, to check for signature bytes in the file */
-    hr = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)filter);
-    if (FAILED(hr))
-        return hr;
-
-    hr = IBaseFilter_QueryInterface(*filter, &IID_IFileSourceFilter, (LPVOID *)&pSource);
-    if (FAILED(hr))
-    {
-        IBaseFilter_Release(*filter);
-        return hr;
-    }
-
-    hr = IFileSourceFilter_Load(pSource, pszFileName, NULL);
-    IFileSourceFilter_Release(pSource);
-    if (FAILED(hr))
-    {
-        IBaseFilter_Release(*filter);
-        return hr;
-    }
-
-    hr = IBaseFilter_FindPin(*filter, wszOutputPinName, &pOutputPin);
-    if (FAILED(hr))
-    {
-        IBaseFilter_Release(*filter);
-        return hr;
-    }
-
-    hr = IPin_QueryInterface(pOutputPin, &IID_IAsyncReader, (LPVOID *)&pReader);
-    IPin_Release(pOutputPin);
-    if (FAILED(hr))
-    {
-        IBaseFilter_Release(*filter);
-        return hr;
-    }
-
-    /* Try again find a match */
-    ret = get_media_type(pReader, pszFileName, NULL, NULL, &clsid);
-    IAsyncReader_Release(pReader);
-
-    if (ret)
-    {
-        TRACE("Found source filter %s.\n", debugstr_guid(&clsid));
-        /* Release the AsyncReader filter and create the matching one */
-        IBaseFilter_Release(*filter);
-        return CreateFilterInstanceAndLoadFile(&clsid, pszFileName, filter);
-    }
-
-    /* Return the AsyncReader filter */
-    return S_OK;
+    if (!get_media_type(filename, NULL, NULL, &clsid))
+        clsid = CLSID_AsyncReader;
+    return CreateFilterInstanceAndLoadFile(&clsid, filename, filter);
 }
 
 static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface, LPCWSTR lpcwstrFileName,
