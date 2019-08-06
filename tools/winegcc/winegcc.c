@@ -897,6 +897,7 @@ static void build(struct options* opts)
     const char *spec_o_name;
     const char *output_name, *spec_file, *lang;
     int generate_app_loader = 1;
+    const char* crt_lib = NULL;
     int fake_module = 0;
     int is_pe = (opts->target_platform == PLATFORM_WINDOWS || opts->target_platform == PLATFORM_CYGWIN);
     unsigned int j;
@@ -982,8 +983,15 @@ static void build(struct options* opts)
 		    strarray_add(files, strmake("-o%s", file));
 		    break;
 		case file_arh:
-		    strarray_add(files, strmake("-a%s", file));
-		    break;
+                    if (opts->use_msvcrt)
+                    {
+                        const char *p = strrchr(file, '/');
+                        if (p) p++;
+                        else p = file;
+                        if (!strncmp(p, "libmsvcr", 8) || !strncmp(p, "libucrt", 7)) crt_lib = file;
+                    }
+                    strarray_add(files, strmake("-a%s", file));
+                    break;
 		case file_so:
 		    strarray_add(files, strmake("-s%s", file));
 		    break;
@@ -1018,8 +1026,12 @@ static void build(struct options* opts)
 
     if (!opts->nodefaultlibs)
     {
-        if (opts->use_msvcrt) add_library(opts, lib_dirs, files, "msvcrt");
         add_library(opts, lib_dirs, files, "winecrt0");
+        if (opts->use_msvcrt)
+        {
+            if (!crt_lib) add_library(opts, lib_dirs, files, "msvcrt");
+            else strarray_add(files, strmake("-a%s", crt_lib));
+        }
         if (opts->win16_app) add_library(opts, lib_dirs, files, "kernel");
         add_library(opts, lib_dirs, files, "kernel32");
         add_library(opts, lib_dirs, files, "ntdll");
