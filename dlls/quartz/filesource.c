@@ -102,58 +102,6 @@ static const WCHAR subtype_name[] = {
 static const WCHAR source_filter_name[] = {
     'S','o','u','r','c','e',' ','F','i','l','t','e','r',0};
 
-static HRESULT process_extensions(HKEY hkeyExtensions, LPCOLESTR pszFileName, GUID * majorType, GUID * minorType, GUID * sourceFilter)
-{
-    WCHAR *extension;
-    LONG l;
-    HKEY hsub;
-    WCHAR keying[39];
-    DWORD size;
-
-    if (!pszFileName)
-        return E_POINTER;
-
-    /* Get the part of the name that matters */
-    if (!(extension = wcsrchr(pszFileName, '.')))
-        return E_FAIL;
-
-    l = RegOpenKeyExW(hkeyExtensions, extension, 0, KEY_READ, &hsub);
-    if (l)
-        return E_FAIL;
-
-    if (majorType)
-    {
-        size = sizeof(keying);
-        l = RegQueryValueExW(hsub, mediatype_name, NULL, NULL, (LPBYTE)keying, &size);
-        if (!l)
-            CLSIDFromString(keying, majorType);
-    }
-
-    if (minorType)
-    {
-        size = sizeof(keying);
-        if (!l)
-            l = RegQueryValueExW(hsub, subtype_name, NULL, NULL, (LPBYTE)keying, &size);
-        if (!l)
-            CLSIDFromString(keying, minorType);
-    }
-
-    if (sourceFilter)
-    {
-        size = sizeof(keying);
-        if (!l)
-            l = RegQueryValueExW(hsub, source_filter_name, NULL, NULL, (LPBYTE)keying, &size);
-        if (!l)
-            CLSIDFromString(keying, sourceFilter);
-    }
-
-    RegCloseKey(hsub);
-
-    if (!l)
-        return S_OK;
-    return E_FAIL;
-}
-
 static unsigned char byte_from_hex_char(WCHAR wHex)
 {
     switch (towlower(wHex))
@@ -278,6 +226,9 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
     HRESULT hr = S_OK;
     BOOL bFound = FALSE;
     static const WCHAR wszMediaType[] = {'M','e','d','i','a',' ','T','y','p','e',0};
+    WCHAR extensions_path[278] = {'M','e','d','i','a',' ','T','y','p','e','\\','E','x','t','e','n','s','i','o','n','s','\\',0};
+    const WCHAR *ext;
+    DWORD size;
 
     if(majorType)
         *majorType = GUID_NULL;
@@ -285,6 +236,31 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
         *minorType = GUID_NULL;
     if(sourceFilter)
         *sourceFilter = GUID_NULL;
+
+    if ((ext = wcsrchr(pszFileName, '.')))
+    {
+        WCHAR guidstr[39];
+        HKEY key;
+
+        wcscat(extensions_path, ext);
+        if (!RegOpenKeyExW(HKEY_CLASSES_ROOT, extensions_path, 0, KEY_READ, &key))
+        {
+            size = sizeof(guidstr);
+            if (majorType && !RegQueryValueExW(key, mediatype_name, NULL, NULL, (BYTE *)guidstr, &size))
+                CLSIDFromString(guidstr, majorType);
+
+            size = sizeof(guidstr);
+            if (minorType && !RegQueryValueExW(key, subtype_name, NULL, NULL, (BYTE *)guidstr, &size))
+                CLSIDFromString(guidstr, minorType);
+
+            size = sizeof(guidstr);
+            if (sourceFilter && !RegQueryValueExW(key, source_filter_name, NULL, NULL, (BYTE *)guidstr, &size))
+                CLSIDFromString(guidstr, sourceFilter);
+
+            RegCloseKey(key);
+            return S_OK;
+        }
+    }
 
     lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszMediaType, 0, KEY_READ, &hkeyMediaType);
     hr = HRESULT_FROM_WIN32(lRet);
@@ -304,13 +280,7 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
                 break;
             if (RegOpenKeyExW(hkeyMediaType, wszMajorKeyName, 0, KEY_READ, &hkeyMajor) != ERROR_SUCCESS)
                 break;
-            if (!wcscmp(wszExtensions, wszMajorKeyName))
-            {
-                if (process_extensions(hkeyMajor, pszFileName, majorType, minorType, sourceFilter) == S_OK)
-                    bFound = TRUE;
-            }
-            /* We need a reader interface to check bytes */
-            else if (pReader)
+            if (wcscmp(wszExtensions, wszMajorKeyName) && pReader)
             {
                 DWORD indexMinor;
 
