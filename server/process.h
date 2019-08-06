@@ -57,6 +57,7 @@ struct process
     process_id_t         parent_id;       /* parent process id (at the time of creation) */
     struct list          thread_list;     /* thread list */
     struct thread       *debugger;        /* thread debugging this process */
+    struct debug_event  *debug_event;     /* debug event being sent to debugger */
     struct handle_table *handles;         /* handle entries */
     struct fd           *msg_fd;          /* fd for sendmsg/recvmsg */
     process_id_t         id;              /* id of the process */

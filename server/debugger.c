@@ -244,7 +244,7 @@ static const fill_event_func fill_debug_event[NB_DEBUG_EVENTS] =
 static void unlink_event( struct debug_ctx *debug_ctx, struct debug_event *event )
 {
     list_remove( &event->entry );
-    if (event->sender->debug_event == event) event->sender->debug_event = NULL;
+    if (event->sender->process->debug_event == event) event->sender->process->debug_event = NULL;
     release_object( event );
 }
 
@@ -256,7 +256,7 @@ static void link_event( struct debug_event *event )
     assert( debug_ctx );
     grab_object( event );
     list_add_tail( &debug_ctx->event_queue, &event->entry );
-    if (!event->sender->debug_event)
+    if (!event->sender->process->debug_event)
     {
         /* grab reference since debugger could be killed while trying to wake up */
         grab_object( debug_ctx );
@@ -273,7 +273,7 @@ static struct debug_event *find_event_to_send( struct debug_ctx *debug_ctx )
     LIST_FOR_EACH_ENTRY( event, &debug_ctx->event_queue, struct debug_event, entry )
     {
         if (event->state == EVENT_SENT) continue;  /* already sent */
-        if (event->sender->debug_event) continue;  /* thread busy with another one */
+        if (event->sender->process->debug_event) continue;  /* process busy with another one */
         return event;
     }
     return NULL;
@@ -371,7 +371,7 @@ static int continue_debug_event( struct process *process, struct thread *thread,
             if (event->state != EVENT_SENT) continue;
             if (event->sender == thread)
             {
-                assert( event->sender->debug_event == event );
+                assert( event->sender->process->debug_event == event );
 
                 event->status = status;
                 event->state  = EVENT_CONTINUED;
@@ -594,7 +594,7 @@ DECL_HANDLER(wait_debug_event)
     {
         data_size_t size = get_reply_max_size();
         event->state = EVENT_SENT;
-        event->sender->debug_event = event;
+        event->sender->process->debug_event = event;
         reply->pid = get_process_id( event->sender->process );
         reply->tid = get_thread_id( event->sender );
         if (size > sizeof(debug_event_t)) size = sizeof(debug_event_t);

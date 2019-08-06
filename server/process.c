@@ -502,6 +502,7 @@ struct process *create_process( int fd, struct process *parent, int inherit_all,
     }
     process->parent_id       = 0;
     process->debugger        = NULL;
+    process->debug_event     = NULL;
     process->handles         = NULL;
     process->msg_fd          = NULL;
     process->sigkill_timeout = NULL;

@@ -287,6 +287,9 @@ static void next_event_(unsigned line, struct debugger_context *ctx, unsigned ti
 
 static void process_attach_events(struct debugger_context *ctx)
 {
+    DEBUG_EVENT ev;
+    BOOL ret;
+
     ctx->ev.dwDebugEventCode = -1;
     next_event(ctx, 0);
     ok(ctx->ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
@@ -304,6 +307,10 @@ static void process_attach_events(struct debugger_context *ctx)
 
     do
     {
+        /* even when there are more pending events, they are not reported until current event is continued */
+        ret = WaitForDebugEvent(&ev, 10);
+        ok(GetLastError() == ERROR_SEM_TIMEOUT, "WaitForDebugEvent returned %x(%u)\n", ret, GetLastError());
+
         next_event(ctx, WAIT_EVENT_TIMEOUT);
         if (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT)
             ok(ctx->ev.u.LoadDll.lpBaseOfDll != ntdll, "ntdll.dll reported out of order\n");
