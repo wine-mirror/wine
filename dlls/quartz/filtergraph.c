@@ -1754,9 +1754,6 @@ static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface, LPCWSTR
     IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
     HRESULT hr;
     IBaseFilter* preader;
-    IFileSourceFilter* pfile = NULL;
-    AM_MEDIA_TYPE mt;
-    WCHAR* filename;
 
     TRACE("(%p/%p)->(%s, %s, %p)\n", This, iface, debugstr_w(lpcwstrFileName), debugstr_w(lpcwstrFilterName), ppFilter);
 
@@ -1774,39 +1771,10 @@ static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface, LPCWSTR
         return hr;
     }
 
-    hr = IBaseFilter_QueryInterface(preader, &IID_IFileSourceFilter, (LPVOID*)&pfile);
-    if (FAILED(hr)) {
-        WARN("Unable to get IFileSourceInterface (%x)\n", hr);
-        goto error;
-    }
-
-    /* The file has been already loaded */
-    hr = IFileSourceFilter_GetCurFile(pfile, &filename, &mt);
-    if (FAILED(hr)) {
-        WARN("GetCurFile (%x)\n", hr);
-        goto error;
-    }
-
-    TRACE("File %s\n", debugstr_w(filename));
-    TRACE("MajorType %s\n", debugstr_guid(&mt.majortype));
-    TRACE("SubType %s\n", debugstr_guid(&mt.subtype));
-
-    CoTaskMemFree(filename);
-    FreeMediaType(&mt);
-
     if (ppFilter)
         *ppFilter = preader;
-    IFileSourceFilter_Release(pfile);
 
     return S_OK;
-
-error:
-    if (pfile)
-        IFileSourceFilter_Release(pfile);
-    IFilterGraph2_RemoveFilter(iface, preader);
-    IBaseFilter_Release(preader);
-
-    return hr;
 }
 
 static HRESULT WINAPI FilterGraph2_SetLogFile(IFilterGraph2 *iface, DWORD_PTR hFile)
