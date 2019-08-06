@@ -1739,6 +1739,7 @@ static HRESULT GetFileSourceFilter(LPCOLESTR pszFileName, IBaseFilter **filter)
 
     if (hr == S_OK)
     {
+        TRACE("Found source filter %s.\n", debugstr_guid(&clsid));
         /* Release the AsyncReader filter and create the matching one */
         IBaseFilter_Release(*filter);
         return CreateFilterInstanceAndLoadFile(&clsid, pszFileName, filter);

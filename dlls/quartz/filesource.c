@@ -191,8 +191,6 @@ static HRESULT process_pattern_string(LPCWSTR wszPatternString, IAsyncReader * p
     HRESULT hr = S_OK;
     ULONG strpos;
 
-    TRACE("\t\tPattern string: %s\n", debugstr_w(wszPatternString));
-    
     /* format: "offset, bytestocompare, mask, value" */
 
     ulOffset = wcstol(wszPatternString, NULL, 10);
@@ -281,8 +279,6 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
     BOOL bFound = FALSE;
     static const WCHAR wszMediaType[] = {'M','e','d','i','a',' ','T','y','p','e',0};
 
-    TRACE("(%p, %s, %p, %p)\n", pReader, debugstr_w(pszFileName), majorType, minorType);
-
     if(majorType)
         *majorType = GUID_NULL;
     if(minorType)
@@ -308,7 +304,6 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
                 break;
             if (RegOpenKeyExW(hkeyMediaType, wszMajorKeyName, 0, KEY_READ, &hkeyMajor) != ERROR_SUCCESS)
                 break;
-            TRACE("%s\n", debugstr_w(wszMajorKeyName));
             if (!wcscmp(wszExtensions, wszMajorKeyName))
             {
                 if (process_extensions(hkeyMajor, pszFileName, majorType, minorType, sourceFilter) == S_OK)
@@ -335,8 +330,6 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
                     if (RegOpenKeyExW(hkeyMajor, wszMinorKeyName, 0, KEY_READ, &hkeyMinor) != ERROR_SUCCESS)
                         break;
 
-                    TRACE("\t%s\n", debugstr_w(wszMinorKeyName));
-        
                     if (RegQueryInfoKeyW(hkeyMinor, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &maxValueLen, NULL, NULL) != ERROR_SUCCESS)
                         break;
 
@@ -387,22 +380,7 @@ HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, GUID * 
     }
     CloseHandle(hkeyMediaType);
 
-    if (SUCCEEDED(hr) && !bFound)
-    {
-        ERR("Media class not found\n");
-        hr = E_FAIL;
-    }
-    else if (bFound)
-    {
-        TRACE("Found file's class:\n");
-	if(majorType)
-		TRACE("\tmajor = %s\n", qzdebugstr_guid(majorType));
-	if(minorType)
-		TRACE("\tsubtype = %s\n", qzdebugstr_guid(minorType));
-	if(sourceFilter)
-		TRACE("\tsource filter = %s\n", qzdebugstr_guid(sourceFilter));
-    }
-
+    if (hr == S_OK && !bFound) hr = E_FAIL;
     return hr;
 }
 
@@ -581,7 +559,12 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     if (!pmt)
     {
         CopyMediaType(This->pmt, &default_mt);
-        if (FAILED(GetClassMediaFile(&This->IAsyncReader_iface, pszFileName, &This->pmt->majortype, &This->pmt->subtype, NULL)))
+        if (SUCCEEDED(GetClassMediaFile(&This->IAsyncReader_iface, pszFileName, &This->pmt->majortype, &This->pmt->subtype, NULL)))
+        {
+            TRACE("Found major type %s, subtype %s.\n",
+                    debugstr_guid(&This->pmt->majortype), debugstr_guid(&This->pmt->subtype));
+        }
+        else
         {
             This->pmt->majortype = MEDIATYPE_Stream;
             This->pmt->subtype = MEDIASUBTYPE_NULL;
