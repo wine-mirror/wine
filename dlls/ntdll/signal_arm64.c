@@ -94,6 +94,20 @@ typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
 
+struct arm64_thread_data
+{
+    void     *exit_frame;    /* exit frame pointer */
+    CONTEXT  *context;       /* context to set with SIGUSR2 */
+};
+
+C_ASSERT( sizeof(struct arm64_thread_data) <= sizeof(((TEB *)0)->SystemReserved2) );
+C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct arm64_thread_data, exit_frame ) == 0x300 );
+
+static inline struct arm64_thread_data *arm64_thread_data(void)
+{
+    return (struct arm64_thread_data *)NtCurrentTeb()->SystemReserved2;
+}
+
 /***********************************************************************
  *           dispatch_signal
  */
@@ -1084,35 +1098,91 @@ static void WINAPI call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *
     abort();  /* should not be reached */
 }
 
-typedef void (WINAPI *thread_start_func)(LPTHREAD_START_ROUTINE,void *);
+extern void DECLSPEC_NORETURN start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend,
+                                            void *relay, TEB *teb );
+__ASM_GLOBAL_FUNC( start_thread,
+                   "stp x29, x30, [sp,#-16]!\n\t"
+                   "mov x18, x4\n\t"             /* teb */
+                   /* store exit frame */
+                   "mov x29, sp\n\t"
+                   "str x29, [x4, #0x300]\n\t"  /* arm64_thread_data()->exit_frame */
+                   /* switch to thread stack */
+                   "ldr x5, [x4, #8]\n\t"       /* teb->Tib.StackBase */
+                   "sub sp, x5, #0x1000\n\t"
+                   /* attach dlls */
+                   "bl " __ASM_NAME("attach_thread") "\n\t"
+                   "mov sp, x0\n\t"
+                   /* clear the stack */
+                   "and x0, x0, #~0xfff\n\t"  /* round down to page size */
+                   "bl " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
+                   /* switch to the initial context */
+                   "mov x0, sp\n\t"
+                   "ldp x1, x2, [x0, #0x10]\n\t"       /* context->X1,2 */
+                   "ldp x3, x4, [x0, #0x20]\n\t"       /* context->X3,4 */
+                   "ldp x5, x6, [x0, #0x30]\n\t"       /* context->X5,6 */
+                   "ldp x7, x8, [x0, #0x40]\n\t"       /* context->X7,8 */
+                   "ldp x9, x10, [x0, #0x50]\n\t"      /* context->X9,10 */
+                   "ldp x11, x12, [x0, #0x60]\n\t"     /* context->X11,12 */
+                   "ldp x13, x14, [x0, #0x70]\n\t"     /* context->X13,14 */
+                   "ldp x15, x16, [x0, #0x80]\n\t"     /* context->X15,16 */
+                   "ldp x17, x18, [x0, #0x90]\n\t"     /* context->X17,18 */
+                   "ldp x19, x20, [x0, #0xa0]\n\t"     /* context->X19,20 */
+                   "ldp x21, x22, [x0, #0xb0]\n\t"     /* context->X21,22 */
+                   "ldp x23, x24, [x0, #0xc0]\n\t"     /* context->X23,24 */
+                   "ldp x25, x26, [x0, #0xd0]\n\t"     /* context->X25,26 */
+                   "ldp x27, x28, [x0, #0xe0]\n\t"     /* context->X27,28 */
+                   "ldp x29, x30, [x0, #0xf0]\n\t"     /* context->Fp,Lr */
+                   "ldr x17, [x0, #0x100]\n\t"         /* context->Sp */
+                   "mov sp, x17\n\t"
+                   "ldr x17, [x0, #0x108]\n\t"         /* context->Pc */
+                   "ldr x0, [x0, #0x8]\n\t"            /* context->X0 */
+                   "br x17" )
 
-struct startup_info
-{
-    thread_start_func      start;
-    LPTHREAD_START_ROUTINE entry;
-    void                  *arg;
-    BOOL                   suspend;
-};
+extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );
+__ASM_GLOBAL_FUNC( call_thread_exit_func,
+                   "ldr x3, [x2, #0x300]\n\t"  /* arm64_thread_data()->exit_frame */
+                   "str xzr, [x2, #0x300]\n\t"
+                   "cbz x3, 1f\n\t"
+                   "mov sp, x3\n"
+                   "1:\tblr x1" )
 
 /***********************************************************************
- *           thread_startup
+ *           init_thread_context
  */
-static void thread_startup( void *param )
+static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, void *relay )
 {
-    CONTEXT context = { 0 };
-    struct startup_info *info = param;
+    context->u.s.X0  = (DWORD64)entry;
+    context->u.s.X1  = (DWORD64)arg;
+    context->u.s.X18 = (DWORD64)NtCurrentTeb();
+    context->Sp      = (DWORD64)NtCurrentTeb()->Tib.StackBase;
+    context->Pc      = (DWORD64)relay;
+}
 
-    /* build the initial context */
-    context.ContextFlags = CONTEXT_FULL;
-    context.u.s.X0 = (DWORD_PTR)info->entry;
-    context.u.s.X1 = (DWORD_PTR)info->arg;
-    context.Sp = (DWORD_PTR)NtCurrentTeb()->Tib.StackBase;
-    context.Pc = (DWORD_PTR)info->start;
+/***********************************************************************
+ *           attach_thread
+ */
+PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
+                                        BOOL suspend, void *relay )
+{
+    CONTEXT *ctx;
 
-    if (info->suspend) wait_suspend( &context );
-    LdrInitializeThunk( &context, (void **)&context.u.s.X0, 0, 0 );
+    if (suspend)
+    {
+        CONTEXT context = { CONTEXT_ALL };
 
-    ((thread_start_func)context.Pc)( (LPTHREAD_START_ROUTINE)context.u.s.X0, (void *)context.u.s.X1 );
+        init_thread_context( &context, entry, arg, relay );
+        wait_suspend( &context );
+        ctx = (CONTEXT *)((ULONG_PTR)context.Sp & ~15) - 1;
+        *ctx = context;
+    }
+    else
+    {
+        ctx = (CONTEXT *)NtCurrentTeb()->Tib.StackBase - 1;
+        init_thread_context( ctx, entry, arg, relay );
+    }
+    ctx->ContextFlags = CONTEXT_FULL;
+    LdrInitializeThunk( ctx, (void **)&ctx->u.s.X0, 0, 0 );
+    return ctx;
 }
 
 /***********************************************************************
@@ -1120,13 +1190,12 @@ static void thread_startup( void *param )
  *
  * Thread startup sequence:
  * signal_start_thread()
- *   -> thread_startup()
- *     -> call_thread_entry_point()
+ *   -> start_thread()
+ *     -> call_thread_func()
  */
 void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
-    struct startup_info info = { call_thread_entry_point, entry, arg, suspend };
-    wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
+    start_thread( entry, arg, suspend, call_thread_entry_point, NtCurrentTeb() );
 }
 
 /**********************************************************************
@@ -1134,13 +1203,12 @@ void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend 
  *
  * Process startup sequence:
  * signal_start_process()
- *   -> thread_startup()
+ *   -> start_thread()
  *     -> kernel32_start_process()
  */
 void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 {
-    struct startup_info info = { kernel32_start_process, entry, NtCurrentTeb()->Peb, suspend };
-    wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
+    start_thread( entry, NtCurrentTeb()->Peb, suspend, kernel32_start_process, NtCurrentTeb() );
 }
 
 /***********************************************************************
@@ -1148,7 +1216,7 @@ void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
  */
 void signal_exit_thread( int status )
 {
-    exit_thread( status );
+    call_thread_exit_func( status, exit_thread, NtCurrentTeb() );
 }
 
 /***********************************************************************
@@ -1156,7 +1224,7 @@ void signal_exit_thread( int status )
  */
 void signal_exit_process( int status )
 {
-    exit( status );
+    call_thread_exit_func( status, exit, NtCurrentTeb() );
 }
 
 /**********************************************************************
