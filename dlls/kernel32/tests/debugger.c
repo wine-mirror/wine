@@ -226,6 +226,9 @@ struct debugger_context
     void *image_base;
 };
 
+#define WAIT_EVENT_TIMEOUT 20000
+#define POLL_EVENT_TIMEOUT 200
+
 #define next_event(a,b) next_event_(__LINE__,a,b)
 static void next_event_(unsigned line, struct debugger_context *ctx, unsigned timeout)
 {
@@ -301,7 +304,7 @@ static void process_attach_events(struct debugger_context *ctx)
 
     do
     {
-        next_event(ctx, 2000);
+        next_event(ctx, WAIT_EVENT_TIMEOUT);
         if (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT)
             ok(ctx->ev.u.LoadDll.lpBaseOfDll != ntdll, "ntdll.dll reported out of order\n");
     } while (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx->ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT);
@@ -312,7 +315,7 @@ static void process_attach_events(struct debugger_context *ctx)
     if (ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT)
     {
         DWORD last_thread = ctx->ev.dwThreadId;
-        next_event(ctx, 2000);
+        next_event(ctx, WAIT_EVENT_TIMEOUT);
         ok(ctx->ev.dwThreadId == last_thread, "unexpected thread\n");
     }
 
@@ -322,7 +325,7 @@ static void process_attach_events(struct debugger_context *ctx)
     ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint, "ExceptionAddres != DbgBreakPoint\n");
 
     /* flush debug events */
-    do next_event(ctx, 200);
+    do next_event(ctx, POLL_EVENT_TIMEOUT);
     while (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx->ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT
            || ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT || ctx->ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT);
     ok(ctx->ev.dwDebugEventCode == -1, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
@@ -370,7 +373,7 @@ static void doDebugger(int argc, char** argv)
 
     if (strstr(myARGV[2], "process"))
     {
-        next_event(&ctx, 2000);
+        next_event(&ctx, WAIT_EVENT_TIMEOUT);
         ok(ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
         ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == STATUS_ACCESS_VIOLATION, "ExceptionCode = %x\n",
            ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
@@ -958,7 +961,7 @@ static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
 
     if (flag)
     {
-        next_event(&ctx, 2000);
+        next_event(&ctx, WAIT_EVENT_TIMEOUT);
         ok(ctx.ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
         ok(ctx.pid == pi.dwProcessId, "unexpected dwProcessId %x\n", ctx.ev.dwProcessId == ctx.pid);
 
