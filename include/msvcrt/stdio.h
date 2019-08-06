@@ -90,9 +90,11 @@ FILE* __cdecl __iob_func(void);
 # endif
 #endif /* _STDIO_DEFINED */
 
-#define stdin              (_iob+STDIN_FILENO)
-#define stdout             (_iob+STDOUT_FILENO)
-#define stderr             (_iob+STDERR_FILENO)
+FILE *__cdecl __acrt_iob_func(unsigned index);
+
+#define stdin  (__acrt_iob_func(0))
+#define stdout (__acrt_iob_func(1))
+#define stderr (__acrt_iob_func(2))
 
 /* return value for _get_output_format */
 #define _TWO_DIGIT_EXPONENT 0x1
