@@ -556,7 +556,7 @@ BOOL WINAPI DragQueryPoint(HDROP hDrop, POINT *p)
 	lpDropFileStruct = GlobalLock(hDrop);
 
         *p = lpDropFileStruct->pt;
-	bRet = lpDropFileStruct->fNC;
+	bRet = !lpDropFileStruct->fNC;
 
 	GlobalUnlock(hDrop);
 	return bRet;

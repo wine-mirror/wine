@@ -455,7 +455,7 @@ BOOL query_drag_drop(macdrv_query* query)
             {
                 dropfiles->pt.x = pt.x;
                 dropfiles->pt.y = pt.y;
-                dropfiles->fNC  = TRUE;
+                dropfiles->fNC  = FALSE;
 
                 TRACE("sending WM_DROPFILES: hwnd %p pt %s %s\n", hwnd, wine_dbgstr_point(&pt),
                       debugstr_w((WCHAR*)((char*)dropfiles + dropfiles->pFiles)));
