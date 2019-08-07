@@ -209,6 +209,7 @@ static void *get_proc_address(const char *name)
 }
 
 static FILE_OBJECT *last_created_file;
+static unsigned int create_count, close_count;
 
 static void test_irp_struct(IRP *irp, DEVICE_OBJECT *device)
 {
@@ -1631,7 +1632,7 @@ static NTSTATUS test_basic_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_cancel_count(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
+static NTSTATUS get_dword(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info, DWORD value)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
     char *buffer = irp->AssociatedIrp.SystemBuffer;
@@ -1642,7 +1643,24 @@ static NTSTATUS get_cancel_count(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *
     if (length < sizeof(DWORD))
         return STATUS_BUFFER_TOO_SMALL;
 
-    *(DWORD*)buffer = cancel_cnt;
+    *(DWORD*)buffer = value;
+    *info = sizeof(DWORD);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS get_fscontext(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
+{
+    ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
+    char *buffer = irp->AssociatedIrp.SystemBuffer;
+    DWORD *context = stack->FileObject->FsContext;
+
+    if (!buffer || !context)
+        return STATUS_ACCESS_VIOLATION;
+
+    if (length < sizeof(DWORD))
+        return STATUS_BUFFER_TOO_SMALL;
+
+    *(DWORD*)buffer = *context;
     *info = sizeof(DWORD);
     return STATUS_SUCCESS;
 }
@@ -1667,8 +1685,13 @@ static NTSTATUS test_load_driver_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG
 static NTSTATUS WINAPI driver_Create(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    DWORD *context = ExAllocatePool(PagedPool, sizeof(*context));
 
     last_created_file = irpsp->FileObject;
+    ++create_count;
+    if (context)
+        *context = create_count;
+    irpsp->FileObject->FsContext = context;
     create_caller_thread = KeGetCurrentThread();
 
     irp->IoStatus.Status = STATUS_SUCCESS;
@@ -1701,7 +1724,16 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             IoMarkIrpPending(irp);
             return STATUS_PENDING;
         case IOCTL_WINETEST_GET_CANCEL_COUNT:
-            status = get_cancel_count(irp, stack, &irp->IoStatus.Information);
+            status = get_dword(irp, stack, &irp->IoStatus.Information, cancel_cnt);
+            break;
+        case IOCTL_WINETEST_GET_CREATE_COUNT:
+            status = get_dword(irp, stack, &irp->IoStatus.Information, create_count);
+            break;
+        case IOCTL_WINETEST_GET_CLOSE_COUNT:
+            status = get_dword(irp, stack, &irp->IoStatus.Information, close_count);
+            break;
+        case IOCTL_WINETEST_GET_FSCONTEXT:
+            status = get_fscontext(irp, stack, &irp->IoStatus.Information);
             break;
         case IOCTL_WINETEST_DETACH:
             IoDetachDevice(lower_device);
@@ -1733,6 +1765,10 @@ static NTSTATUS WINAPI driver_FlushBuffers(DEVICE_OBJECT *device, IRP *irp)
 
 static NTSTATUS WINAPI driver_Close(DEVICE_OBJECT *device, IRP *irp)
 {
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    ++close_count;
+    if (stack->FileObject->FsContext)
+        ExFreePool(stack->FileObject->FsContext);
     irp->IoStatus.Status = STATUS_SUCCESS;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
     return STATUS_SUCCESS;

@@ -318,6 +318,76 @@ static void test_load_driver(SC_HANDLE service)
     ok(status.dwCurrentState == SERVICE_STOPPED, "got state %#x\n", status.dwCurrentState);
 }
 
+static void test_file_handles(void)
+{
+    DWORD count, ret_size;
+    HANDLE file, dup, file2;
+    BOOL ret;
+
+    ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CREATE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
+    ok(ret, "ioctl failed: %u\n", GetLastError());
+    ok(count == 2, "got %u\n", count);
+
+    ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CLOSE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
+    ok(ret, "ioctl failed: %u\n", GetLastError());
+    ok(count == 1, "got %u\n", count);
+
+    file = CreateFileA("\\\\.\\WineTestDriver", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+
+    ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CREATE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
+    ok(ret, "ioctl failed: %u\n", GetLastError());
+    ok(count == 3, "got %u\n", count);
+
+    file2 = CreateFileA("\\\\.\\WineTestDriver", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file2 != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+
+    ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CREATE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
+    ok(ret, "ioctl failed: %u\n", GetLastError());
+    ok(count == 4, "got %u\n", count);
+
+    ret = DuplicateHandle(GetCurrentProcess(), file, GetCurrentProcess(), &dup, 0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(ret, "failed to duplicate handle: %u\n", GetLastError());
+
+    ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CREATE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
+    ok(ret, "ioctl failed: %u\n", GetLastError());
+    ok(count == 4, "got %u\n", count);
+
+    ret = DeviceIoControl(device, IOCTL_WINETEST_GET_FSCONTEXT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
+    ok(ret, "ioctl failed: %u\n", GetLastError());
+    ok(count == 1, "got %u\n", count);
+
+    ret = DeviceIoControl(file, IOCTL_WINETEST_GET_FSCONTEXT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
+    ok(ret, "ioctl failed: %u\n", GetLastError());
+    ok(count == 3, "got %u\n", count);
+
+    ret = DeviceIoControl(file2, IOCTL_WINETEST_GET_FSCONTEXT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
+    ok(ret, "ioctl failed: %u\n", GetLastError());
+    ok(count == 4, "got %u\n", count);
+
+    ret = DeviceIoControl(dup, IOCTL_WINETEST_GET_FSCONTEXT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
+    ok(ret, "ioctl failed: %u\n", GetLastError());
+    ok(count == 3, "got %u\n", count);
+
+    CloseHandle(dup);
+
+    ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CLOSE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
+    ok(ret, "ioctl failed: %u\n", GetLastError());
+    ok(count == 1, "got %u\n", count);
+
+    CloseHandle(file2);
+
+    ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CLOSE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
+    ok(ret, "ioctl failed: %u\n", GetLastError());
+    ok(count == 2, "got %u\n", count);
+
+    CloseHandle(file);
+
+    ret = DeviceIoControl(device, IOCTL_WINETEST_GET_CLOSE_COUNT, NULL, 0, &count, sizeof(count), &ret_size, NULL);
+    ok(ret, "ioctl failed: %u\n", GetLastError());
+    ok(count == 3, "got %u\n", count);
+}
+
 static void test_driver3(void)
 {
     char filename[MAX_PATH];
@@ -369,6 +439,7 @@ START_TEST(ntoskrnl)
     main_test();
     test_overlapped();
     test_load_driver(service2);
+    test_file_handles();
 
     /* We need a separate ioctl to call IoDetachDevice(); calling it in the
      * driver unload routine causes a live-lock. */
