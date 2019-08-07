@@ -1665,6 +1665,24 @@ static NTSTATUS get_fscontext(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *inf
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS return_status(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
+{
+    char *buffer = irp->AssociatedIrp.SystemBuffer;
+    NTSTATUS ret;
+
+    if (!buffer)
+        return STATUS_ACCESS_VIOLATION;
+
+    if (stack->Parameters.DeviceIoControl.InputBufferLength < sizeof(DWORD)
+            || stack->Parameters.DeviceIoControl.OutputBufferLength < 3)
+        return STATUS_BUFFER_TOO_SMALL;
+
+    ret = *(DWORD *)irp->AssociatedIrp.SystemBuffer;
+    memcpy(buffer, "ghi", 3);
+    *info = 3;
+    return ret;
+}
+
 static NTSTATUS test_load_driver_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
 {
     BOOL *load = irp->AssociatedIrp.SystemBuffer;
@@ -1734,6 +1752,9 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             break;
         case IOCTL_WINETEST_GET_FSCONTEXT:
             status = get_fscontext(irp, stack, &irp->IoStatus.Information);
+            break;
+        case IOCTL_WINETEST_RETURN_STATUS:
+            status = return_status(irp, stack, &irp->IoStatus.Information);
             break;
         case IOCTL_WINETEST_DETACH:
             IoDetachDevice(lower_device);

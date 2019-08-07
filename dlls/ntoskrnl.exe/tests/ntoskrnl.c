@@ -21,6 +21,8 @@
  */
 
 #include <stdio.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windows.h"
 #include "winsvc.h"
 #include "winioctl.h"
@@ -388,6 +390,74 @@ static void test_file_handles(void)
     ok(count == 3, "got %u\n", count);
 }
 
+static void test_return_status(void)
+{
+    NTSTATUS status;
+    char buffer[7];
+    DWORD ret_size;
+    BOOL ret;
+
+    strcpy(buffer, "abcdef");
+    status = STATUS_SUCCESS;
+    SetLastError(0xdeadbeef);
+    ret = DeviceIoControl(device, IOCTL_WINETEST_RETURN_STATUS, &status,
+            sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
+    ok(ret, "ioctl failed\n");
+    ok(GetLastError() == 0xdeadbeef, "got error %u\n", GetLastError());
+    ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
+    ok(ret_size == 3, "got size %u\n", ret_size);
+
+    strcpy(buffer, "abcdef");
+    status = STATUS_TIMEOUT;
+    SetLastError(0xdeadbeef);
+    ret = DeviceIoControl(device, IOCTL_WINETEST_RETURN_STATUS, &status,
+            sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
+    todo_wine ok(ret, "ioctl failed\n");
+    todo_wine ok(GetLastError() == 0xdeadbeef, "got error %u\n", GetLastError());
+    ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
+    ok(ret_size == 3, "got size %u\n", ret_size);
+
+    strcpy(buffer, "abcdef");
+    status = 0x0eadbeef;
+    SetLastError(0xdeadbeef);
+    ret = DeviceIoControl(device, IOCTL_WINETEST_RETURN_STATUS, &status,
+            sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
+    todo_wine ok(ret, "ioctl failed\n");
+    todo_wine ok(GetLastError() == 0xdeadbeef, "got error %u\n", GetLastError());
+    ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
+    ok(ret_size == 3, "got size %u\n", ret_size);
+
+    strcpy(buffer, "abcdef");
+    status = 0x4eadbeef;
+    SetLastError(0xdeadbeef);
+    ret = DeviceIoControl(device, IOCTL_WINETEST_RETURN_STATUS, &status,
+            sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
+    todo_wine ok(ret, "ioctl failed\n");
+    todo_wine ok(GetLastError() == 0xdeadbeef, "got error %u\n", GetLastError());
+    ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
+    ok(ret_size == 3, "got size %u\n", ret_size);
+
+    strcpy(buffer, "abcdef");
+    status = 0x8eadbeef;
+    SetLastError(0xdeadbeef);
+    ret = DeviceIoControl(device, IOCTL_WINETEST_RETURN_STATUS, &status,
+            sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
+    ok(!ret, "ioctl succeeded\n");
+    ok(GetLastError() == ERROR_MR_MID_NOT_FOUND, "got error %u\n", GetLastError());
+    todo_wine ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
+    todo_wine ok(ret_size == 3, "got size %u\n", ret_size);
+
+    strcpy(buffer, "abcdef");
+    status = 0xceadbeef;
+    SetLastError(0xdeadbeef);
+    ret = DeviceIoControl(device, IOCTL_WINETEST_RETURN_STATUS, &status,
+            sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
+    ok(!ret, "ioctl succeeded\n");
+    ok(GetLastError() == ERROR_MR_MID_NOT_FOUND, "got error %u\n", GetLastError());
+    ok(!strcmp(buffer, "abcdef"), "got buffer %s\n", buffer);
+    todo_wine ok(ret_size == 3, "got size %u\n", ret_size);
+}
+
 static void test_driver3(void)
 {
     char filename[MAX_PATH];
@@ -440,6 +510,7 @@ START_TEST(ntoskrnl)
     test_overlapped();
     test_load_driver(service2);
     test_file_handles();
+    test_return_status();
 
     /* We need a separate ioctl to call IoDetachDevice(); calling it in the
      * driver unload routine causes a live-lock. */
