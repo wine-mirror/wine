@@ -445,7 +445,7 @@ static void test_return_status(void)
     ok(!ret, "ioctl succeeded\n");
     ok(GetLastError() == ERROR_MR_MID_NOT_FOUND, "got error %u\n", GetLastError());
     todo_wine ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
-    todo_wine ok(ret_size == 3, "got size %u\n", ret_size);
+    ok(ret_size == 3, "got size %u\n", ret_size);
 
     strcpy(buffer, "abcdef");
     status = 0xceadbeef;
@@ -455,7 +455,7 @@ static void test_return_status(void)
     ok(!ret, "ioctl succeeded\n");
     ok(GetLastError() == ERROR_MR_MID_NOT_FOUND, "got error %u\n", GetLastError());
     ok(!strcmp(buffer, "abcdef"), "got buffer %s\n", buffer);
-    todo_wine ok(ret_size == 3, "got size %u\n", ret_size);
+    ok(ret_size == 3, "got size %u\n", ret_size);
 }
 
 static void test_driver3(void)
