@@ -23,6 +23,7 @@ typedef struct _xinput_controller
     XINPUT_CAPABILITIES caps;
     void *platform_private;
     XINPUT_STATE state;
+    XINPUT_VIBRATION vibration;
 } xinput_controller;
 
 

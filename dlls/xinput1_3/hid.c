@@ -173,7 +173,11 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
 
     value_caps_count = caps->NumberOutputValueCaps;
     if (value_caps_count > 0)
+    {
         xinput_caps->Flags |= XINPUT_CAPS_FFB_SUPPORTED;
+        xinput_caps->Vibration.wLeftMotorSpeed = 255;
+        xinput_caps->Vibration.wRightMotorSpeed = 255;
+    }
 
     return TRUE;
 }
@@ -456,8 +460,8 @@ DWORD HID_set_state(xinput_controller* device, XINPUT_VIBRATION* state)
 
     if (device->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
     {
-        device->caps.Vibration.wLeftMotorSpeed = state->wLeftMotorSpeed;
-        device->caps.Vibration.wRightMotorSpeed = state->wRightMotorSpeed;
+        device->vibration.wLeftMotorSpeed = state->wLeftMotorSpeed;
+        device->vibration.wRightMotorSpeed = state->wRightMotorSpeed;
 
         if (private->enabled)
         {
@@ -498,7 +502,7 @@ void HID_enable(xinput_controller* device, BOOL enable)
         }
         else if (!private->enabled && enable)
         {
-            HID_set_state(device, &device->caps.Vibration);
+            HID_set_state(device, &device->vibration);
         }
         LeaveCriticalSection(&private->crit);
     }
