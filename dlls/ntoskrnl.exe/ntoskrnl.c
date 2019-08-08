@@ -3801,6 +3801,16 @@ BOOLEAN WINAPI SePrivilegeCheck(PRIVILEGE_SET *privileges, SECURITY_SUBJECT_CONT
 }
 
 /*********************************************************************
+ *           SeLocateProcessImageName    (NTOSKRNL.@)
+ */
+NTSTATUS WINAPI SeLocateProcessImageName(PEPROCESS process, UNICODE_STRING **image_name)
+{
+    FIXME("stub: %p %p\n", process, image_name);
+    if (image_name) *image_name = NULL;
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/*********************************************************************
  *           KeFlushQueuedDpcs    (NTOSKRNL.@)
  */
 void WINAPI KeFlushQueuedDpcs(void)

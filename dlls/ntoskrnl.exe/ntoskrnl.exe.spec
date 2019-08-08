@@ -1257,6 +1257,7 @@
 @ stub SeFreePrivileges
 @ stub SeImpersonateClient
 @ stub SeImpersonateClientEx
+@ stdcall SeLocateProcessImageName(ptr ptr)
 @ stub SeLockSubjectContext
 @ stub SeMarkLogonSessionForTerminationNotification
 @ stub SeOpenObjectAuditAlarm
