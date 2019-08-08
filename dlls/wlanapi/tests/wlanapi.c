@@ -36,17 +36,17 @@ static void test_WlanOpenHandle(void)
     if (!is_xp) /* the results in XP differ completely from all other versions */
     {
         ok(ret == ERROR_NOT_SUPPORTED, "Expected 50, got %d\n", ret);
-        ok(neg_version == 0xdeadbeef, "neg_vesion changed\n");
+        ok(neg_version == 0xdeadbeef, "neg_version changed\n");
         ok(handle == bad_handle, "handle changed\n");
         ret = WlanOpenHandle(10, NULL, &neg_version, &handle);
         ok(ret == ERROR_NOT_SUPPORTED, "Expected 50, got %d\n", ret);
-        ok(neg_version == 0xdeadbeef, "neg_vesion changed\n");
+        ok(neg_version == 0xdeadbeef, "neg_version changed\n");
         ok(handle == bad_handle, "handle changed\n");
 
         /* reserved parameter must not be used */
         ret = WlanOpenHandle(1, &reserved, &neg_version, &handle);
         ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
-        ok(neg_version == 0xdeadbeef, "neg_vesion changed\n");
+        ok(neg_version == 0xdeadbeef, "neg_version changed\n");
         ok(handle == bad_handle, "handle changed\n");
 
         /* invalid parameters */
@@ -55,7 +55,7 @@ static void test_WlanOpenHandle(void)
         ok(handle == bad_handle, "bad handle\n");
         ret = WlanOpenHandle(1, NULL, &neg_version, NULL);
         ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
-        ok(neg_version == 0xdeadbeef, "neg_vesion changed\n");
+        ok(neg_version == 0xdeadbeef, "neg_version changed\n");
     }
     else
     {
