@@ -43,8 +43,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-#define NT_SUCCESS(status) (status == STATUS_SUCCESS)
-
 #define SELF_RELATIVE_FIELD(sd,field) ((BYTE *)(sd) + ((SECURITY_DESCRIPTOR_RELATIVE *)(sd))->field)
 
 /* helper function to retrieve active length of an ACL */
@@ -1521,7 +1519,7 @@ RtlAdjustPrivilege(ULONG Privilege,
                                     &TokenHandle);
     }
 
-    if (!NT_SUCCESS(Status))
+    if (Status)
     {
         WARN("Retrieving token handle failed (Status %x)\n", Status);
         return Status;
@@ -1546,7 +1544,7 @@ RtlAdjustPrivilege(ULONG Privilege,
         TRACE("Failed to assign all privileges\n");
         return STATUS_PRIVILEGE_NOT_HELD;
     }
-    if (!NT_SUCCESS(Status))
+    if (Status)
     {
         WARN("NtAdjustPrivilegesToken() failed (Status %x)\n", Status);
         return Status;

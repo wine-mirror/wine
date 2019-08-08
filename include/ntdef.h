@@ -43,4 +43,9 @@ typedef enum _WAIT_TYPE {
 }
 #endif
 
+#define NT_SUCCESS(status)      (((NTSTATUS)(status)) >= 0)
+#define NT_INFORMATION(status)  ((((NTSTATUS)(status)) & 0xc0000000) == 0x40000000)
+#define NT_WARNING(status)      ((((NTSTATUS)(status)) & 0xc0000000) == 0x80000000)
+#define NT_ERROR(status)        ((((NTSTATUS)(status)) & 0xc0000000) == 0xc0000000)
+
 #endif /* _NTDEF_ */
