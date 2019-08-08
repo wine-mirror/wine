@@ -492,7 +492,7 @@ static HRESULT install_init(LPCWSTR inf_filename, LPCWSTR install_sec,
     lstrcatW(info->inf_path, backslash);
     lstrcatW(info->inf_path, info->inf_filename);
 
-    /* RunSetupCommand opens unmodifed filename parameter */
+    /* RunSetupCommand opens unmodified filename parameter */
     if (flags & RSC_FLAG_INF)
         path = inf_filename;
     else
