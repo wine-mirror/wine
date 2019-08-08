@@ -3792,6 +3792,15 @@ BOOLEAN WINAPI SeSinglePrivilegeCheck(LUID privilege, KPROCESSOR_MODE mode)
 }
 
 /*********************************************************************
+ *           SePrivilegeCheck    (NTOSKRNL.@)
+ */
+BOOLEAN WINAPI SePrivilegeCheck(PRIVILEGE_SET *privileges, SECURITY_SUBJECT_CONTEXT *context, KPROCESSOR_MODE mode)
+{
+    FIXME("stub: %p %p %u\n", privileges, context, mode);
+    return TRUE;
+}
+
+/*********************************************************************
  *           KeFlushQueuedDpcs    (NTOSKRNL.@)
  */
 void WINAPI KeFlushQueuedDpcs(void)

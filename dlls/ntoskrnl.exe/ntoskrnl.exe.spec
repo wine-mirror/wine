@@ -1261,7 +1261,7 @@
 @ stub SeMarkLogonSessionForTerminationNotification
 @ stub SeOpenObjectAuditAlarm
 @ stub SeOpenObjectForDeleteAuditAlarm
-@ stub SePrivilegeCheck
+@ stdcall SePrivilegeCheck(ptr ptr long)
 @ stub SePrivilegeObjectAuditAlarm
 @ stub SePublicDefaultDacl
 @ stub SeQueryAuthenticationIdToken
