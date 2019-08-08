@@ -156,6 +156,12 @@ i = parseInt("1", 37);
 ok(isNaN(i), "parseInt('1', 37) = " + i);
 i = parseInt("1", 36);
 ok(i === 1, "parseInt('1', 36) = " + i);
+i = parseInt("0x1f", 16);
+ok(i === 31, "parseInt('0xf', 16) = " + i);
+i = parseInt("0x", 16);
+ok(isNaN(i), "parseInt('0x', 16) = " + i);
+i = parseInt("0x1f", 17);
+ok(i === 0, "parseInt('0xf', 16) = " + i);
 
 tmp = encodeURI("abc");
 ok(tmp === "abc", "encodeURI('abc') = " + tmp);

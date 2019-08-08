@@ -336,6 +336,8 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         }else {
             radix = 10;
         }
+    }else if(radix == 16 && *ptr == '0' && (ptr[1] == 'x' || ptr[1] == 'X')) {
+        ptr += 2;
     }
 
     i = char_to_int(*ptr++);
