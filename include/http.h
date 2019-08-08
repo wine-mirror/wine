@@ -54,6 +54,8 @@ typedef struct _HTTPAPI_VERSION
 #define HTTP_SEND_RESPONSE_FLAG_PROCESS_RANGES  0x00000020
 #define HTTP_SEND_RESPONSE_FLAG_OPAQUE          0x00000040
 
+#define HTTP_URL_FLAG_REMOVE_ALL    0x0000001
+
 typedef enum _HTTP_SERVICE_CONFIG_ID
 {
     HttpServiceConfigIPListenList,
@@ -404,6 +406,7 @@ ULONG WINAPI HttpInitialize(HTTPAPI_VERSION version, ULONG flags, void *reserved
 ULONG WINAPI HttpTerminate(ULONG flags, void *reserved);
 ULONG WINAPI HttpQueryServiceConfiguration(HANDLE,HTTP_SERVICE_CONFIG_ID,PVOID,ULONG,PVOID,ULONG,PULONG,LPOVERLAPPED);
 ULONG WINAPI HttpReceiveHttpRequest(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags, HTTP_REQUEST *request, ULONG size, ULONG *ret_size, OVERLAPPED *ovl);
+ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *url);
 ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags, HTTP_RESPONSE *response, HTTP_CACHE_POLICY *cache_policy, ULONG *ret_size, void *reserved1, ULONG reserved2, OVERLAPPED *ovl, HTTP_LOG_DATA *log_data);
 ULONG WINAPI HttpSetServiceConfiguration(HANDLE,HTTP_SERVICE_CONFIG_ID,PVOID,ULONG,LPOVERLAPPED);
 

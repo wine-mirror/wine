@@ -36,7 +36,7 @@
 @ stub HttpReceiveHttpResponse
 @ stub HttpReceiveRequestEntityBody
 @ stub HttpRemoveAllUrlsFromConfigGroup
-@ stub HttpRemoveUrl
+@ stdcall HttpRemoveUrl(ptr wstr)
 @ stub HttpRemoveUrlFromConfigGroup
 @ stub HttpSendHttpRequest
 @ stdcall HttpSendHttpResponse(ptr int64 long ptr ptr ptr ptr long ptr ptr)

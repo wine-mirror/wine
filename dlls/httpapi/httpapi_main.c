@@ -183,6 +183,15 @@ ULONG WINAPI HttpAddUrl( HANDLE handle, PCWSTR url, PVOID reserved )
 }
 
 /***********************************************************************
+ *        HttpRemoveUrl     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *url)
+{
+    FIXME("queue %p, url %s, stub!\n", queue, debugstr_w(url));
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  *        HttpReceiveHttpRequest     (HTTPAPI.@)
  */
 ULONG WINAPI HttpReceiveHttpRequest(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
