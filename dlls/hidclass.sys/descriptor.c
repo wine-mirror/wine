@@ -631,7 +631,7 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                 {
                     case TAG_LOCAL_USAGE:
                         if (usages_top == sizeof(usages))
-                            ERR("More then 256 individual usages defined\n");
+                            ERR("More than 256 individual usages defined\n");
                         else
                         {
                             usages[usages_top++] = getValue(bSize, itemVal, FALSE);
