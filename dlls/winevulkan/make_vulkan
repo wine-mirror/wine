@@ -2608,6 +2608,8 @@ class VkRegistry(object):
             if type_info["category"] == "struct":
                 struct = type_info["data"]
                 mark_struct_dependencies(struct, self.types)
+            elif type_info["category"] == "bitmask":
+                mark_bitmask_dependencies(type_info["data"], self.types)
 
         if func.is_alias():
             func.alias.required = True

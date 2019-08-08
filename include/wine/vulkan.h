@@ -754,6 +754,12 @@ typedef enum VkCommandBufferLevel
     VK_COMMAND_BUFFER_LEVEL_MAX_ENUM = 0x7fffffff,
 } VkCommandBufferLevel;
 
+typedef enum VkCommandBufferResetFlagBits
+{
+    VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT = 0x00000001,
+    VK_COMMAND_BUFFER_RESET_FLAG_BITS_MAX_ENUM = 0x7fffffff,
+} VkCommandBufferResetFlagBits;
+
 typedef enum VkCommandBufferUsageFlagBits
 {
     VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT = 0x00000001,
@@ -769,6 +775,12 @@ typedef enum VkCommandPoolCreateFlagBits
     VK_COMMAND_POOL_CREATE_PROTECTED_BIT = 0x00000004,
     VK_COMMAND_POOL_CREATE_FLAG_BITS_MAX_ENUM = 0x7fffffff,
 } VkCommandPoolCreateFlagBits;
+
+typedef enum VkCommandPoolResetFlagBits
+{
+    VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT = 0x00000001,
+    VK_COMMAND_POOL_RESET_FLAG_BITS_MAX_ENUM = 0x7fffffff,
+} VkCommandPoolResetFlagBits;
 
 typedef enum VkCompareOp
 {
@@ -1670,6 +1682,15 @@ typedef enum VkQueryPipelineStatisticFlagBits
     VK_QUERY_PIPELINE_STATISTIC_FLAG_BITS_MAX_ENUM = 0x7fffffff,
 } VkQueryPipelineStatisticFlagBits;
 
+typedef enum VkQueryResultFlagBits
+{
+    VK_QUERY_RESULT_64_BIT = 0x00000001,
+    VK_QUERY_RESULT_WAIT_BIT = 0x00000002,
+    VK_QUERY_RESULT_WITH_AVAILABILITY_BIT = 0x00000004,
+    VK_QUERY_RESULT_PARTIAL_BIT = 0x00000008,
+    VK_QUERY_RESULT_FLAG_BITS_MAX_ENUM = 0x7fffffff,
+} VkQueryResultFlagBits;
+
 typedef enum VkQueryType
 {
     VK_QUERY_TYPE_OCCLUSION = 0,
@@ -1899,6 +1920,14 @@ typedef enum VkSparseMemoryBindFlagBits
     VK_SPARSE_MEMORY_BIND_METADATA_BIT = 0x00000001,
     VK_SPARSE_MEMORY_BIND_FLAG_BITS_MAX_ENUM = 0x7fffffff,
 } VkSparseMemoryBindFlagBits;
+
+typedef enum VkStencilFaceFlagBits
+{
+    VK_STENCIL_FACE_FRONT_BIT = 0x00000001,
+    VK_STENCIL_FACE_BACK_BIT = 0x00000002,
+    VK_STENCIL_FRONT_AND_BACK = 0x00000003,
+    VK_STENCIL_FACE_FLAG_BITS_MAX_ENUM = 0x7fffffff,
+} VkStencilFaceFlagBits;
 
 typedef enum VkStencilOp
 {
