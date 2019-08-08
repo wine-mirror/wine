@@ -2637,7 +2637,7 @@ static void test_eval(void)
     ok(script_disp != NULL, "script_disp == NULL\n");
 
     hres = IDispatch_QueryInterface(script_disp, &IID_IDispatchEx, (void**)&script_dispex);
-    ok(hres == S_OK, "Coult not get IDispatchEx iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
     IDispatch_Release(script_disp);
 
     str = a2bstr("eval");
