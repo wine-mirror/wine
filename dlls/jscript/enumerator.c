@@ -61,7 +61,7 @@ static inline HRESULT enumvar_get_next_item(EnumeratorInstance *This)
     if (This->atend)
         return S_OK;
 
-    /* dont leak pervious value */
+    /* don't leak previous value */
     jsval_release(This->item);
 
     /* not at end ... get next item */
