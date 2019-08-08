@@ -1404,7 +1404,7 @@ static void test_completion(void)
     port = CreateIoCompletionPort(client, NULL, 0xdeadbeef, 0);
     ok(port != NULL, "CreateIoCompletionPort failed, error %u\n", GetLastError());
 
-    /* skipping completion on succcess: handle is signaled */
+    /* skipping completion on success: handle is signaled */
     info.Flags = FILE_SKIP_COMPLETION_PORT_ON_SUCCESS;
     status = pNtSetInformationFile(client, &io, &info, sizeof(info), FileIoCompletionNotificationInformation);
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
