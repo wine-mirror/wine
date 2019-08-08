@@ -249,11 +249,11 @@
 @ stdcall ContinueDebugEvent(long long long)
 # @ stub ConvertCalDateTimeToSystemTime
 @ stdcall ConvertDefaultLocale (long)
-@ stdcall ConvertFiberToThread()
+@ stdcall -import ConvertFiberToThread()
 # @ stub ConvertNLSDayOfWeekToWin32DayOfWeek
 # @ stub ConvertSystemTimeToCalDateTime
-@ stdcall ConvertThreadToFiber(ptr)
-@ stdcall ConvertThreadToFiberEx(ptr long)
+@ stdcall -import ConvertThreadToFiber(ptr)
+@ stdcall -import ConvertThreadToFiberEx(ptr long)
 @ stdcall ConvertToGlobalHandle(long)
 # @ stub CopyContext
 @ stdcall CopyFileA(str str long)
@@ -278,8 +278,8 @@
 @ stdcall -import CreateEventExA(ptr str long long)
 @ stdcall -import CreateEventExW(ptr wstr long long)
 @ stdcall -import CreateEventW(ptr long long wstr)
-@ stdcall CreateFiber(long ptr ptr)
-@ stdcall CreateFiberEx(long long long ptr ptr)
+@ stdcall -import CreateFiber(long ptr ptr)
+@ stdcall -import CreateFiberEx(long long long ptr ptr)
 @ stdcall CreateFile2(wstr long long long ptr)
 @ stdcall CreateFileA(str long long ptr long long long)
 @ stdcall CreateFileMappingA(long ptr long long long str)
@@ -360,7 +360,7 @@
 @ stdcall DeleteAtom(long)
 # @ stub DeleteBoundaryDescriptor
 @ stdcall DeleteCriticalSection(ptr) ntdll.RtlDeleteCriticalSection
-@ stdcall DeleteFiber(ptr)
+@ stdcall -import DeleteFiber(ptr)
 @ stdcall DeleteFileA(str)
 # @ stub DeleteFileTransactedA
 # @ stub DeleteFileTransactedW
@@ -511,10 +511,10 @@
 @ stdcall FindStringOrdinal(long wstr long wstr long long)
 @ stdcall FindVolumeClose(ptr)
 @ stdcall FindVolumeMountPointClose(ptr)
-@ stdcall FlsAlloc(ptr)
-@ stdcall FlsFree(long)
-@ stdcall FlsGetValue(long)
-@ stdcall FlsSetValue(long ptr)
+@ stdcall -import FlsAlloc(ptr)
+@ stdcall -import FlsFree(long)
+@ stdcall -import FlsGetValue(long)
+@ stdcall -import FlsSetValue(long ptr)
 @ stdcall FlushConsoleInputBuffer(long)
 @ stdcall FlushFileBuffers(long)
 @ stdcall FlushInstructionCache(long long long)
@@ -985,7 +985,7 @@
 @ stdcall IsProcessorFeaturePresent(long)
 @ stub -i386 IsSLCallback
 @ stdcall IsSystemResumeAutomatic()
-@ stdcall IsThreadAFiber()
+@ stdcall -import IsThreadAFiber()
 @ stdcall IsThreadpoolTimerSet(ptr) ntdll.TpIsTimerSet
 # @ stub IsTimeZoneRedirectionEnabled
 # @ stub IsValidCalDateTime
@@ -1490,7 +1490,7 @@
 # @ stub StartThreadpoolIo
 @ stdcall SubmitThreadpoolWork(ptr) ntdll.TpPostWork
 @ stdcall -import SuspendThread(long)
-@ stdcall SwitchToFiber(ptr)
+@ stdcall -import SwitchToFiber(ptr)
 @ stdcall -import SwitchToThread()
 @ stdcall SystemTimeToFileTime(ptr ptr)
 @ stdcall SystemTimeToTzSpecificLocalTime (ptr ptr ptr)

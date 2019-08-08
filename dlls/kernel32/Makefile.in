@@ -17,7 +17,6 @@ C_SRCS = \
 	editline.c \
 	environ.c \
 	except.c \
-	fiber.c \
 	file.c \
 	format_msg.c \
 	heap.c \

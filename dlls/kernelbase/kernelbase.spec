@@ -160,9 +160,9 @@
 @ stdcall ConnectNamedPipe(long ptr)
 @ stdcall ContinueDebugEvent(long long long) kernel32.ContinueDebugEvent
 @ stdcall ConvertDefaultLocale(long) kernel32.ConvertDefaultLocale
-@ stdcall ConvertFiberToThread() kernel32.ConvertFiberToThread
-@ stdcall ConvertThreadToFiber(ptr) kernel32.ConvertThreadToFiber
-@ stdcall ConvertThreadToFiberEx(ptr long) kernel32.ConvertThreadToFiberEx
+@ stdcall ConvertFiberToThread()
+@ stdcall ConvertThreadToFiber(ptr)
+@ stdcall ConvertThreadToFiberEx(ptr long)
 @ stdcall ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr)
 # @ stub CopyContext
 # @ stub CopyFile2
@@ -183,8 +183,8 @@
 @ stdcall CreateEventExA(ptr str long long)
 @ stdcall CreateEventExW(ptr wstr long long)
 @ stdcall CreateEventW(ptr long long wstr)
-@ stdcall CreateFiber(long ptr ptr) kernel32.CreateFiber
-@ stdcall CreateFiberEx(long long long ptr ptr) kernel32.CreateFiberEx
+@ stdcall CreateFiber(long ptr ptr)
+@ stdcall CreateFiberEx(long long long ptr ptr)
 @ stdcall CreateFile2(wstr long long long ptr) kernel32.CreateFile2
 @ stdcall CreateFileA(str long long ptr long long long) kernel32.CreateFileA
 # @ stub CreateFileMappingFromApp
@@ -249,7 +249,7 @@
 @ stdcall DeleteAce(ptr long)
 # @ stub DeleteBoundaryDescriptor
 @ stdcall DeleteCriticalSection(ptr) ntdll.RtlDeleteCriticalSection
-@ stdcall DeleteFiber(ptr) kernel32.DeleteFiber
+@ stdcall DeleteFiber(ptr)
 @ stdcall DeleteFileA(str) kernel32.DeleteFileA
 @ stdcall DeleteFileW(wstr) kernel32.DeleteFileW
 @ stdcall DeleteProcThreadAttributeList(ptr) kernel32.DeleteProcThreadAttributeList
@@ -375,10 +375,10 @@
 @ stdcall FindResourceW(long wstr wstr)
 @ stdcall FindStringOrdinal(long wstr long wstr long long) kernel32.FindStringOrdinal
 @ stdcall FindVolumeClose(ptr) kernel32.FindVolumeClose
-@ stdcall FlsAlloc(ptr) kernel32.FlsAlloc
-@ stdcall FlsFree(long) kernel32.FlsFree
-@ stdcall FlsGetValue(long) kernel32.FlsGetValue
-@ stdcall FlsSetValue(long ptr) kernel32.FlsSetValue
+@ stdcall FlsAlloc(ptr)
+@ stdcall FlsFree(long)
+@ stdcall FlsGetValue(long)
+@ stdcall FlsSetValue(long ptr)
 @ stdcall FlushConsoleInputBuffer(long) kernel32.FlushConsoleInputBuffer
 @ stdcall FlushFileBuffers(long) kernel32.FlushFileBuffers
 @ stdcall FlushInstructionCache(long long long) kernel32.FlushInstructionCache
@@ -870,7 +870,7 @@
 # @ stub IsSideloadingEnabled
 # @ stub IsSideloadingPolicyApplied
 # @ stub IsSyncForegroundPolicyRefresh
-@ stdcall IsThreadAFiber() kernel32.IsThreadAFiber
+@ stdcall IsThreadAFiber()
 @ stdcall IsThreadpoolTimerSet(ptr) ntdll.TpIsTimerSet
 # @ stub IsTimeZoneRedirectionEnabled
 @ stdcall IsTokenRestricted(long)
@@ -1589,7 +1589,7 @@
 # @ stub SubscribeEdpEnabledStateChange
 # @ stub SubscribeStateChangeNotification
 @ stdcall SuspendThread(long)
-@ stdcall SwitchToFiber(ptr) kernel32.SwitchToFiber
+@ stdcall SwitchToFiber(ptr)
 @ stdcall SwitchToThread()
 @ stdcall SystemTimeToFileTime(ptr ptr) kernel32.SystemTimeToFileTime
 @ stdcall SystemTimeToTzSpecificLocalTime(ptr ptr ptr) kernel32.SystemTimeToTzSpecificLocalTime
