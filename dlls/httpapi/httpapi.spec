@@ -32,7 +32,7 @@
 @ stdcall HttpQueryServiceConfiguration(ptr long ptr long ptr long ptr ptr)
 @ stub HttpReadFragmentFromCache
 @ stub HttpReceiveClientCertificate
-@ stub HttpReceiveHttpRequest
+@ stdcall HttpReceiveHttpRequest(ptr int64 long ptr long ptr ptr)
 @ stub HttpReceiveHttpResponse
 @ stub HttpReceiveRequestEntityBody
 @ stub HttpRemoveAllUrlsFromConfigGroup

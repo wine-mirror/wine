@@ -183,6 +183,17 @@ ULONG WINAPI HttpAddUrl( HANDLE handle, PCWSTR url, PVOID reserved )
 }
 
 /***********************************************************************
+ *        HttpReceiveHttpRequest     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpReceiveHttpRequest(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
+        HTTP_REQUEST *request, ULONG size, ULONG *ret_size, OVERLAPPED *ovl)
+{
+    FIXME("queue %p, id %s, flags %#x, request %p, size %#x, ret_size %p, ovl %p, stub!\n",
+          queue, wine_dbgstr_longlong(id), flags, request, size, ret_size, ovl);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  *        HttpCreateServerSession     (HTTPAPI.@)
  */
 ULONG WINAPI HttpCreateServerSession( HTTPAPI_VERSION version, HTTP_SERVER_SESSION_ID *id, ULONG reserved )
