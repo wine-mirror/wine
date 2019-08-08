@@ -316,8 +316,8 @@
 @ stdcall CreateProcessInternalW(long wstr wstr ptr ptr long long ptr wstr ptr ptr ptr)
 # @ stub CreateProcessInternalWSecure
 @ stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr)
-@ stdcall CreateRemoteThread(long ptr long ptr long long ptr)
-@ stdcall CreateRemoteThreadEx(long ptr long ptr ptr long ptr ptr)
+@ stdcall -import CreateRemoteThread(long ptr long ptr long long ptr)
+@ stdcall -import CreateRemoteThreadEx(long ptr long ptr ptr long ptr ptr)
 @ stdcall CreateSemaphoreA(ptr long long str)
 @ stdcall CreateSemaphoreExA(ptr long long str long long)
 @ stdcall -import CreateSemaphoreExW(ptr long long wstr long long)
@@ -328,7 +328,7 @@
 # @ stub CreateSymbolicLinkTransactedW
 @ stdcall CreateSymbolicLinkW(wstr wstr long)
 @ stdcall CreateTapePartition(long long long long)
-@ stdcall CreateThread(ptr long ptr long long ptr)
+@ stdcall -import CreateThread(ptr long ptr long long ptr)
 @ stdcall CreateThreadpool(ptr)
 @ stdcall CreateThreadpoolCleanupGroup()
 @ stdcall CreateThreadpoolIo(ptr ptr ptr ptr)
@@ -437,7 +437,7 @@
 @ stdcall EscapeCommFunction(long long)
 @ stdcall -arch=x86_64 ExecuteUmsThread(ptr)
 @ stdcall ExitProcess(long)
-@ stdcall ExitThread(long)
+@ stdcall ExitThread(long) ntdll.RtlExitUserThread
 @ stub ExitVDM
 @ stdcall ExpandEnvironmentStringsA(str ptr long)
 @ stdcall ExpandEnvironmentStringsW(wstr ptr long)
@@ -635,7 +635,7 @@
 @ stdcall GetCurrentProcessorNumberEx(ptr) ntdll.RtlGetCurrentProcessorNumberEx
 @ stdcall -norelay GetCurrentThread() KERNEL32_GetCurrentThread
 @ stdcall -norelay GetCurrentThreadId() KERNEL32_GetCurrentThreadId
-@ stdcall GetCurrentThreadStackLimits(ptr ptr)
+@ stdcall -import GetCurrentThreadStackLimits(ptr ptr)
 @ stdcall -arch=x86_64 GetCurrentUmsThread()
 @ stdcall GetDateFormatA(long long ptr str ptr long)
 @ stdcall GetDateFormatEx(wstr long ptr wstr ptr long wstr)
@@ -666,7 +666,7 @@
 # @ stub GetEraNameCountedString
 @ stdcall GetErrorMode()
 @ stdcall GetExitCodeProcess(long ptr)
-@ stdcall GetExitCodeThread(long ptr)
+@ stdcall -import GetExitCodeThread(long ptr)
 @ stdcall GetExpandedNameA(str ptr)
 @ stdcall GetExpandedNameW(wstr ptr)
 @ stdcall GetFileAttributesA(str)
@@ -783,7 +783,7 @@
 @ stdcall -norelay GetProcessHeap() KERNEL32_GetProcessHeap
 @ stdcall GetProcessHeaps(long ptr)
 @ stdcall GetProcessId(long)
-@ stdcall GetProcessIdOfThread(long)
+@ stdcall -import GetProcessIdOfThread(long)
 @ stdcall GetProcessIoCounters(long ptr)
 @ stdcall GetProcessMitigationPolicy(long long ptr long)
 @ stdcall GetProcessPreferredUILanguages(long ptr ptr ptr)
@@ -846,18 +846,19 @@
 @ stdcall GetTempFileNameW(wstr wstr long ptr)
 @ stdcall GetTempPathA(long ptr)
 @ stdcall GetTempPathW(long ptr)
-@ stdcall GetThreadContext(long ptr)
-@ stdcall GetThreadErrorMode()
-@ stdcall GetThreadGroupAffinity(long ptr)
-@ stdcall GetThreadId(ptr)
+@ stdcall -import GetThreadContext(long ptr)
+@ stdcall -import GetThreadErrorMode()
+@ stdcall -import GetThreadGroupAffinity(long ptr)
+@ stdcall -import GetThreadIOPendingFlag(long ptr)
+@ stdcall -import GetThreadId(ptr)
 # @ stub GetThreadIdealProcessorEx
-@ stdcall GetThreadIOPendingFlag(long ptr)
 @ stdcall GetThreadLocale()
 @ stdcall GetThreadPreferredUILanguages(long ptr ptr ptr)
-@ stdcall GetThreadPriority(long)
-@ stdcall GetThreadPriorityBoost(long ptr)
+@ stdcall -import GetThreadPriority(long)
+@ stdcall -import GetThreadPriorityBoost(long ptr)
 @ stdcall GetThreadSelectorEntry(long long ptr)
-@ stdcall GetThreadTimes(long ptr ptr ptr ptr)
+@ stdcall -import GetThreadTimes(long ptr ptr ptr ptr)
+@ stdcall -import GetThreadUILanguage()
 @ stdcall GetTickCount()
 @ stdcall -ret64 GetTickCount64()
 @ stdcall GetTimeFormatA(long long ptr str ptr long)
@@ -865,7 +866,6 @@
 @ stdcall GetTimeFormatW(long long ptr wstr ptr long)
 @ stdcall GetTimeZoneInformation(ptr)
 @ stdcall GetTimeZoneInformationForYear(long ptr ptr)
-@ stdcall GetThreadUILanguage()
 # @ stub GetUILanguageInfo
 @ stdcall -arch=x86_64 GetUmsCompletionListEvent(ptr ptr)
 # @ stub -arch=x86_64 GetUmsSystemThreadInformation
@@ -1129,7 +1129,7 @@
 @ stdcall OpenProfileUserMapping()
 @ stdcall OpenSemaphoreA(long long str)
 @ stdcall -import OpenSemaphoreW(long long wstr)
-@ stdcall OpenThread(long long long)
+@ stdcall -import OpenThread(long long long)
 # @ stub OpenThreadToken
 @ stdcall -i386 OpenVxDHandle(long)
 @ stdcall OpenWaitableTimerA(long long str)
@@ -1179,7 +1179,7 @@
 @ stdcall -arch=x86_64 QueryUmsThreadInformation(ptr long ptr long ptr)
 @ stdcall QueryUnbiasedInterruptTime(ptr)
 @ stub QueryWin31IniFilesMappedToRegistry
-@ stdcall QueueUserAPC(ptr long long)
+@ stdcall -import QueueUserAPC(ptr long long)
 @ stdcall QueueUserWorkItem(ptr ptr long)
 @ stdcall RaiseException(long long long ptr)
 # @ stub RaiseFailFastException
@@ -1284,7 +1284,7 @@
 @ stdcall ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) ntdll.LdrResolveDelayLoadedAPI
 @ stdcall ResolveLocaleName(wstr ptr long)
 @ stdcall RestoreLastError(long) ntdll.RtlRestoreLastWin32Error
-@ stdcall ResumeThread(long)
+@ stdcall -import ResumeThread(long)
 @ cdecl -arch=arm,arm64,x86_64 RtlAddFunctionTable(ptr long long) ntdll.RtlAddFunctionTable
 @ stdcall -norelay RtlCaptureContext(ptr) ntdll.RtlCaptureContext
 @ stdcall RtlCaptureStackBackTrace(long long ptr ptr) ntdll.RtlCaptureStackBackTrace
@@ -1446,17 +1446,17 @@
 @ stdcall SetTapePosition(ptr long long long long long)
 @ stdcall SetTermsrvAppInstallMode(long)
 @ stdcall SetThreadAffinityMask(long long)
-@ stdcall SetThreadContext(long ptr)
-@ stdcall SetThreadErrorMode(long ptr)
+@ stdcall -import SetThreadContext(long ptr)
+@ stdcall -import SetThreadErrorMode(long ptr)
 @ stdcall SetThreadExecutionState(long)
-@ stdcall SetThreadGroupAffinity(long ptr ptr)
-@ stdcall SetThreadIdealProcessor(long long)
-@ stdcall SetThreadIdealProcessorEx(long ptr ptr)
+@ stdcall -import SetThreadGroupAffinity(long ptr ptr)
+@ stdcall -import SetThreadIdealProcessor(long long)
+@ stdcall -import SetThreadIdealProcessorEx(long ptr ptr)
 @ stdcall SetThreadLocale(long)
 @ stdcall SetThreadPreferredUILanguages(long ptr ptr)
-@ stdcall SetThreadPriority(long long)
-@ stdcall SetThreadPriorityBoost(long long)
-@ stdcall SetThreadStackGuarantee(ptr)
+@ stdcall -import SetThreadPriority(long long)
+@ stdcall -import SetThreadPriorityBoost(long long)
+@ stdcall -import SetThreadStackGuarantee(ptr)
 # @ stub SetThreadToken
 @ stdcall SetThreadUILanguage(long)
 # @ stub SetThreadpoolStackInformation
@@ -1489,15 +1489,15 @@
 # @ stub SortGetHandle
 # @ stub StartThreadpoolIo
 @ stdcall SubmitThreadpoolWork(ptr) ntdll.TpPostWork
-@ stdcall SuspendThread(long)
+@ stdcall -import SuspendThread(long)
 @ stdcall SwitchToFiber(ptr)
-@ stdcall SwitchToThread()
+@ stdcall -import SwitchToThread()
 @ stdcall SystemTimeToFileTime(ptr ptr)
 @ stdcall SystemTimeToTzSpecificLocalTime (ptr ptr ptr)
 # @ stub SystemTimeToTzSpecificLocalTimeEx
 @ stdcall TerminateJobObject(long long)
 @ stdcall TerminateProcess(long long)
-@ stdcall TerminateThread(long long)
+@ stdcall -import TerminateThread(long long)
 @ stdcall TermsrvAppInstallMode()
 @ stdcall Thread32First(long ptr)
 @ stdcall Thread32Next(long ptr)

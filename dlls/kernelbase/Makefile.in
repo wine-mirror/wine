@@ -11,4 +11,5 @@ C_SRCS = \
 	security.c \
 	string.c \
 	sync.c \
+	thread.c \
 	version.c

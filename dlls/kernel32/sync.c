@@ -83,15 +83,6 @@ static BOOL get_open_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRING 
     return TRUE;
 }
 
-/***********************************************************************
- *		SwitchToThread (KERNEL32.@)
- */
-BOOL WINAPI SwitchToThread(void)
-{
-    return (NtYieldExecution() != STATUS_NO_YIELD_PERFORMED);
-}
-
-
 static HANDLE normalize_handle_if_console(HANDLE handle)
 {
     if ((handle == (HANDLE)STD_INPUT_HANDLE) ||

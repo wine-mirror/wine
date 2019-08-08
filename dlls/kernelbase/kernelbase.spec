@@ -211,8 +211,8 @@
 @ stdcall CreateProcessInternalA(long str str ptr ptr long long ptr str ptr ptr ptr) kernel32.CreateProcessInternalA
 @ stdcall CreateProcessInternalW(long wstr wstr ptr ptr long long ptr wstr ptr ptr ptr) kernel32.CreateProcessInternalW
 @ stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr) kernel32.CreateProcessW
-@ stdcall CreateRemoteThread(long ptr long ptr long long ptr) kernel32.CreateRemoteThread
-@ stdcall CreateRemoteThreadEx(long ptr long ptr ptr long ptr ptr) kernel32.CreateRemoteThreadEx
+@ stdcall CreateRemoteThread(long ptr long ptr long long ptr)
+@ stdcall CreateRemoteThreadEx(long ptr long ptr ptr long ptr ptr)
 @ stdcall CreateRestrictedToken(long long long ptr long ptr long ptr ptr)
 @ stdcall CreateSemaphoreExW(ptr long long wstr long long)
 @ stdcall CreateSemaphoreW(ptr long long wstr)
@@ -222,7 +222,7 @@
 # @ stub CreateStateLock
 # @ stub CreateStateSubcontainer
 @ stdcall CreateSymbolicLinkW(wstr wstr long) kernel32.CreateSymbolicLinkW
-@ stdcall CreateThread(ptr long ptr long long ptr) kernel32.CreateThread
+@ stdcall CreateThread(ptr long ptr long long ptr)
 @ stdcall CreateThreadpool(ptr) kernel32.CreateThreadpool
 @ stdcall CreateThreadpoolCleanupGroup() kernel32.CreateThreadpoolCleanupGroup
 @ stdcall CreateThreadpoolIo(ptr ptr ptr ptr) kernel32.CreateThreadpoolIo
@@ -395,7 +395,7 @@
 # @ stub FreeGPOListInternalA
 # @ stub FreeGPOListInternalW
 @ stdcall FreeLibrary(long) kernel32.FreeLibrary
-@ stdcall FreeLibraryAndExitThread(long long) kernel32.FreeLibraryAndExitThread
+@ stdcall FreeLibraryAndExitThread(long long)
 @ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) ntdll.TpCallbackUnloadDllOnCompletion
 @ stdcall FreeResource(long)
 @ stdcall FreeSid(ptr)
@@ -469,9 +469,9 @@
 @ stdcall GetCurrentProcessorNumber() ntdll.NtGetCurrentProcessorNumber
 @ stdcall GetCurrentProcessorNumberEx(ptr) ntdll.RtlGetCurrentProcessorNumberEx
 # @ stub GetCurrentTargetPlatformContext
-@ stdcall -norelay GetCurrentThread() kernel32.GetCurrentThread
-@ stdcall -norelay GetCurrentThreadId() kernel32.GetCurrentThreadId
-@ stdcall GetCurrentThreadStackLimits(ptr ptr) kernel32.GetCurrentThreadStackLimits
+@ stdcall -norelay GetCurrentThread() kernelbase_GetCurrentThread
+@ stdcall -norelay GetCurrentThreadId() kernelbase_GetCurrentThreadId
+@ stdcall GetCurrentThreadStackLimits(ptr ptr)
 @ stdcall GetDateFormatA(long long ptr str ptr long) kernel32.GetDateFormatA
 @ stdcall GetDateFormatEx(wstr long ptr wstr ptr long wstr) kernel32.GetDateFormatEx
 @ stdcall GetDateFormatW(long long ptr wstr ptr long) kernel32.GetDateFormatW
@@ -500,7 +500,7 @@
 @ stub GetEraNameCountedString
 @ stdcall GetErrorMode() kernel32.GetErrorMode
 @ stdcall GetExitCodeProcess(long ptr) kernel32.GetExitCodeProcess
-@ stdcall GetExitCodeThread(long ptr) kernel32.GetExitCodeThread
+@ stdcall GetExitCodeThread(long ptr)
 @ stub GetFallbackDisplayName
 @ stdcall GetFileAttributesA(str) kernel32.GetFileAttributesA
 @ stdcall GetFileAttributesExA(str long ptr) kernel32.GetFileAttributesExA
@@ -627,7 +627,7 @@
 @ stdcall -norelay GetProcessHeap() kernel32.GetProcessHeap
 @ stdcall GetProcessHeaps(long ptr) kernel32.GetProcessHeaps
 @ stdcall GetProcessId(long) kernel32.GetProcessId
-@ stdcall GetProcessIdOfThread(long) kernel32.GetProcessIdOfThread
+@ stdcall GetProcessIdOfThread(long)
 # @ stub GetProcessImageFileNameA
 # @ stub GetProcessImageFileNameW
 # @ stub GetProcessInformation
@@ -711,21 +711,21 @@
 @ stdcall GetTempFileNameW(wstr wstr long ptr) kernel32.GetTempFileNameW
 @ stdcall GetTempPathA(long ptr) kernel32.GetTempPathA
 @ stdcall GetTempPathW(long ptr) kernel32.GetTempPathW
-@ stdcall GetThreadContext(long ptr) kernel32.GetThreadContext
+@ stdcall GetThreadContext(long ptr)
 # @ stub GetThreadDescription
-@ stdcall GetThreadErrorMode() kernel32.GetThreadErrorMode
-@ stdcall GetThreadGroupAffinity(long ptr) kernel32.GetThreadGroupAffinity
-@ stdcall GetThreadIOPendingFlag(long ptr) kernel32.GetThreadIOPendingFlag
-@ stdcall GetThreadId(ptr) kernel32.GetThreadId
+@ stdcall GetThreadErrorMode()
+@ stdcall GetThreadGroupAffinity(long ptr)
+@ stdcall GetThreadIOPendingFlag(long ptr)
+@ stdcall GetThreadId(ptr)
 # @ stub GetThreadIdealProcessorEx
 # @ stub GetThreadInformation
 @ stdcall GetThreadLocale() kernel32.GetThreadLocale
 @ stdcall GetThreadPreferredUILanguages(long ptr ptr ptr) kernel32.GetThreadPreferredUILanguages
-@ stdcall GetThreadPriority(long) kernel32.GetThreadPriority
-@ stdcall GetThreadPriorityBoost(long ptr) kernel32.GetThreadPriorityBoost
+@ stdcall GetThreadPriority(long)
+@ stdcall GetThreadPriorityBoost(long ptr)
 # @ stub GetThreadSelectedCpuSets
-@ stdcall GetThreadTimes(long ptr ptr ptr ptr) kernel32.GetThreadTimes
-@ stdcall GetThreadUILanguage() kernel32.GetThreadUILanguage
+@ stdcall GetThreadTimes(long ptr ptr ptr ptr)
+@ stdcall GetThreadUILanguage()
 @ stdcall GetTickCount() kernel32.GetTickCount
 @ stdcall -ret64 GetTickCount64() kernel32.GetTickCount64
 @ stdcall GetTimeFormatA(long long ptr str ptr long) kernel32.GetTimeFormatA
@@ -1000,7 +1000,7 @@
 # @ stub OpenStateExplicit
 # @ stub OpenStateExplicitForUserSid
 # @ stub OpenStateExplicitForUserSidString
-@ stdcall OpenThread(long long long) kernel32.OpenThread
+@ stdcall OpenThread(long long long)
 @ stdcall OpenThreadToken(long long long ptr)
 @ stdcall OpenWaitableTimerW(long long wstr)
 @ stdcall OutputDebugStringA(str) kernel32.OutputDebugStringA
@@ -1220,7 +1220,7 @@
 # @ stub QueryVirtualMemoryInformation
 # @ stub QueryWorkingSet
 # @ stub QueryWorkingSetEx
-@ stdcall QueueUserAPC(ptr long long) kernel32.QueueUserAPC
+@ stdcall QueueUserAPC(ptr long long)
 @ stdcall QueueUserWorkItem(ptr ptr long) kernel32.QueueUserWorkItem
 # @ stub QuirkGetData
 # @ stub QuirkGetData2
@@ -1348,7 +1348,7 @@
 # @ stub ResolveDelayLoadsFromDll
 @ stdcall ResolveLocaleName(wstr ptr long) kernel32.ResolveLocaleName
 @ stdcall RestoreLastError(long) ntdll.RtlRestoreLastWin32Error
-@ stdcall ResumeThread(long) kernel32.ResumeThread
+@ stdcall ResumeThread(long)
 @ stdcall RevertToSelf()
 # @ stub RsopLoggingEnabledInternal
 # @ stub SHCoCreateInstance
@@ -1478,19 +1478,19 @@
 @ stdcall SetSystemFileCacheSize(long long long) kernel32.SetSystemFileCacheSize
 @ stdcall SetSystemTime(ptr) kernel32.SetSystemTime
 @ stdcall SetSystemTimeAdjustment(long long) kernel32.SetSystemTimeAdjustment
-@ stdcall SetThreadContext(long ptr) kernel32.SetThreadContext
+@ stdcall SetThreadContext(long ptr)
 # @ stub SetThreadDescription
-@ stdcall SetThreadErrorMode(long ptr) kernel32.SetThreadErrorMode
-@ stdcall SetThreadGroupAffinity(long ptr ptr) kernel32.SetThreadGroupAffinity
-@ stdcall SetThreadIdealProcessor(long long) kernel32.SetThreadIdealProcessor
-@ stdcall SetThreadIdealProcessorEx(long ptr ptr) kernel32.SetThreadIdealProcessorEx
+@ stdcall SetThreadErrorMode(long ptr)
+@ stdcall SetThreadGroupAffinity(long ptr ptr)
+@ stdcall SetThreadIdealProcessor(long long)
+@ stdcall SetThreadIdealProcessorEx(long ptr ptr)
 # @ stub SetThreadInformation
 @ stdcall SetThreadLocale(long) kernel32.SetThreadLocale
 @ stdcall SetThreadPreferredUILanguages(long ptr ptr) kernel32.SetThreadPreferredUILanguages
-@ stdcall SetThreadPriority(long long) kernel32.SetThreadPriority
-@ stdcall SetThreadPriorityBoost(long long) kernel32.SetThreadPriorityBoost
+@ stdcall SetThreadPriority(long long)
+@ stdcall SetThreadPriorityBoost(long long)
 # @ stub SetThreadSelectedCpuSets
-@ stdcall SetThreadStackGuarantee(ptr) kernel32.SetThreadStackGuarantee
+@ stdcall SetThreadStackGuarantee(ptr)
 @ stdcall SetThreadToken(ptr ptr)
 @ stdcall SetThreadUILanguage(long) kernel32.SetThreadUILanguage
 @ stub SetThreadpoolStackInformation
@@ -1588,15 +1588,15 @@
 @ stdcall SubmitThreadpoolWork(ptr) ntdll.TpPostWork
 # @ stub SubscribeEdpEnabledStateChange
 # @ stub SubscribeStateChangeNotification
-@ stdcall SuspendThread(long) kernel32.SuspendThread
+@ stdcall SuspendThread(long)
 @ stdcall SwitchToFiber(ptr) kernel32.SwitchToFiber
-@ stdcall SwitchToThread() kernel32.SwitchToThread
+@ stdcall SwitchToThread()
 @ stdcall SystemTimeToFileTime(ptr ptr) kernel32.SystemTimeToFileTime
 @ stdcall SystemTimeToTzSpecificLocalTime(ptr ptr ptr) kernel32.SystemTimeToTzSpecificLocalTime
 @ stub SystemTimeToTzSpecificLocalTimeEx
 @ stdcall TerminateProcess(long long) kernel32.TerminateProcess
 # @ stub TerminateProcessOnMemoryExhaustion
-@ stdcall TerminateThread(long long) kernel32.TerminateThread
+@ stdcall TerminateThread(long long)
 @ stdcall TlsAlloc() kernel32.TlsAlloc
 @ stdcall TlsFree(long) kernel32.TlsFree
 @ stdcall TlsGetValue(long) kernel32.TlsGetValue
