@@ -493,3 +493,92 @@ BOOL WINAPI DECLSPEC_HOTPATCH TerminateThread( HANDLE handle, DWORD exit_code )
 {
     return set_ntstatus( NtTerminateThread( handle, exit_code ));
 }
+
+
+/***********************************************************************
+ * Thread pool
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *           CreateThreadpool   (kernelbase.@)
+ */
+PTP_POOL WINAPI DECLSPEC_HOTPATCH CreateThreadpool( void *reserved )
+{
+    TP_POOL *pool;
+
+    if (!set_ntstatus( TpAllocPool( &pool, reserved ))) pool = NULL;
+    return pool;
+}
+
+
+/***********************************************************************
+ *           CreateThreadpoolCleanupGroup   (kernelbase.@)
+ */
+PTP_CLEANUP_GROUP WINAPI DECLSPEC_HOTPATCH CreateThreadpoolCleanupGroup(void)
+{
+    TP_CLEANUP_GROUP *group;
+
+    if (!set_ntstatus( TpAllocCleanupGroup( &group ))) return NULL;
+    return group;
+}
+
+
+/***********************************************************************
+ *           CreateThreadpoolIo   (kernelbase.@)
+ */
+PTP_IO WINAPI DECLSPEC_HOTPATCH CreateThreadpoolIo( HANDLE handle, PTP_WIN32_IO_CALLBACK callback,
+                                                    PVOID userdata, TP_CALLBACK_ENVIRON *environment )
+{
+    FIXME( "(%p, %p, %p, %p): stub\n", handle, callback, userdata, environment );
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           CreateThreadpoolTimer   (kernelbase.@)
+ */
+PTP_TIMER WINAPI DECLSPEC_HOTPATCH CreateThreadpoolTimer( PTP_TIMER_CALLBACK callback, PVOID userdata,
+                                                          TP_CALLBACK_ENVIRON *environment )
+{
+    TP_TIMER *timer;
+
+    if (!set_ntstatus( TpAllocTimer( &timer, callback, userdata, environment ))) return NULL;
+    return timer;
+}
+
+
+/***********************************************************************
+ *           CreateThreadpoolWait   (kernelbase.@)
+ */
+PTP_WAIT WINAPI DECLSPEC_HOTPATCH CreateThreadpoolWait( PTP_WAIT_CALLBACK callback, PVOID userdata,
+                                                       TP_CALLBACK_ENVIRON *environment )
+{
+    TP_WAIT *wait;
+
+    if (!set_ntstatus( TpAllocWait( &wait, callback, userdata, environment ))) return NULL;
+    return wait;
+}
+
+
+/***********************************************************************
+ *           CreateThreadpoolWork   (kernelbase.@)
+ */
+PTP_WORK WINAPI DECLSPEC_HOTPATCH CreateThreadpoolWork( PTP_WORK_CALLBACK callback, PVOID userdata,
+                                                        TP_CALLBACK_ENVIRON *environment )
+{
+    TP_WORK *work;
+
+    if (!set_ntstatus( TpAllocWork( &work, callback, userdata, environment ))) return NULL;
+    return work;
+}
+
+
+/***********************************************************************
+ *           TrySubmitThreadpoolCallback   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH TrySubmitThreadpoolCallback( PTP_SIMPLE_CALLBACK callback, PVOID userdata,
+                                                           TP_CALLBACK_ENVIRON *environment )
+{
+    return set_ntstatus( TpSimpleTryPost( callback, userdata, environment ));
+}

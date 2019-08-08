@@ -329,12 +329,12 @@
 @ stdcall CreateSymbolicLinkW(wstr wstr long)
 @ stdcall CreateTapePartition(long long long long)
 @ stdcall -import CreateThread(ptr long ptr long long ptr)
-@ stdcall CreateThreadpool(ptr)
-@ stdcall CreateThreadpoolCleanupGroup()
-@ stdcall CreateThreadpoolIo(ptr ptr ptr ptr)
-@ stdcall CreateThreadpoolTimer(ptr ptr ptr)
-@ stdcall CreateThreadpoolWait(ptr ptr ptr)
-@ stdcall CreateThreadpoolWork(ptr ptr ptr)
+@ stdcall -import CreateThreadpool(ptr)
+@ stdcall -import CreateThreadpoolCleanupGroup()
+@ stdcall -import CreateThreadpoolIo(ptr ptr ptr ptr)
+@ stdcall -import CreateThreadpoolTimer(ptr ptr ptr)
+@ stdcall -import CreateThreadpoolWait(ptr ptr ptr)
+@ stdcall -import CreateThreadpoolWork(ptr ptr ptr)
 @ stdcall -import CreateTimerQueue()
 @ stdcall -import CreateTimerQueueTimer(ptr long ptr ptr long long long)
 @ stdcall CreateToolhelp32Snapshot(long long)
@@ -1462,8 +1462,8 @@
 # @ stub SetThreadpoolStackInformation
 @ stdcall SetThreadpoolThreadMaximum(ptr long) ntdll.TpSetPoolMaxThreads
 @ stdcall SetThreadpoolThreadMinimum(ptr long) ntdll.TpSetPoolMinThreads
-@ stdcall SetThreadpoolTimer(ptr ptr long long)
-@ stdcall SetThreadpoolWait(ptr long ptr)
+@ stdcall SetThreadpoolTimer(ptr ptr long long) ntdll.TpSetTimer
+@ stdcall SetThreadpoolWait(ptr long ptr) ntdll.TpSetWait
 @ stdcall SetTimeZoneInformation(ptr)
 @ stub SetTimerQueueTimer
 @ stdcall -arch=x86_64 SetUmsThreadInformation(ptr long ptr long)
@@ -1515,7 +1515,7 @@
 @ stdcall TryAcquireSRWLockExclusive(ptr) ntdll.RtlTryAcquireSRWLockExclusive
 @ stdcall TryAcquireSRWLockShared(ptr) ntdll.RtlTryAcquireSRWLockShared
 @ stdcall TryEnterCriticalSection(ptr) ntdll.RtlTryEnterCriticalSection
-@ stdcall TrySubmitThreadpoolCallback(ptr ptr ptr)
+@ stdcall -import TrySubmitThreadpoolCallback(ptr ptr ptr)
 @ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr)
 # @ stub TzSpecificLocalTimeToSystemTimeEx
 # @ stub -arch=x86_64 uaw_lstrcmpW

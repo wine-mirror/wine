@@ -223,12 +223,12 @@
 # @ stub CreateStateSubcontainer
 @ stdcall CreateSymbolicLinkW(wstr wstr long) kernel32.CreateSymbolicLinkW
 @ stdcall CreateThread(ptr long ptr long long ptr)
-@ stdcall CreateThreadpool(ptr) kernel32.CreateThreadpool
-@ stdcall CreateThreadpoolCleanupGroup() kernel32.CreateThreadpoolCleanupGroup
-@ stdcall CreateThreadpoolIo(ptr ptr ptr ptr) kernel32.CreateThreadpoolIo
-@ stdcall CreateThreadpoolTimer(ptr ptr ptr) kernel32.CreateThreadpoolTimer
-@ stdcall CreateThreadpoolWait(ptr ptr ptr) kernel32.CreateThreadpoolWait
-@ stdcall CreateThreadpoolWork(ptr ptr ptr) kernel32.CreateThreadpoolWork
+@ stdcall CreateThreadpool(ptr)
+@ stdcall CreateThreadpoolCleanupGroup()
+@ stdcall CreateThreadpoolIo(ptr ptr ptr ptr)
+@ stdcall CreateThreadpoolTimer(ptr ptr ptr)
+@ stdcall CreateThreadpoolWait(ptr ptr ptr)
+@ stdcall CreateThreadpoolWork(ptr ptr ptr)
 @ stdcall CreateTimerQueue()
 @ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long)
 @ stdcall CreateWaitableTimerExW(ptr wstr long long)
@@ -1609,7 +1609,7 @@
 @ stdcall TryAcquireSRWLockExclusive(ptr) ntdll.RtlTryAcquireSRWLockExclusive
 @ stdcall TryAcquireSRWLockShared(ptr) ntdll.RtlTryAcquireSRWLockShared
 @ stdcall TryEnterCriticalSection(ptr) ntdll.RtlTryEnterCriticalSection
-@ stdcall TrySubmitThreadpoolCallback(ptr ptr ptr) kernel32.TrySubmitThreadpoolCallback
+@ stdcall TrySubmitThreadpoolCallback(ptr ptr ptr)
 @ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr) kernel32.TzSpecificLocalTimeToSystemTime
 @ stub TzSpecificLocalTimeToSystemTimeEx
 @ stdcall UnhandledExceptionFilter(ptr) kernel32.UnhandledExceptionFilter
