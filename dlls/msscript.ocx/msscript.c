@@ -993,7 +993,7 @@ static HRESULT WINAPI ScriptControl_Eval(IScriptControl *iface, BSTR expression,
 
     hr = IActiveScriptParse_ParseScriptText(This->host->parse, expression, NULL, NULL, NULL,
                                             0, 1, SCRIPTTEXT_ISEXPRESSION, res, &excepinfo);
-    /* FIXME: more error hanlding */
+    /* FIXME: more error handling */
 
     return hr;
 }
