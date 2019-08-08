@@ -259,7 +259,7 @@
 @ cdecl -arch=win32 __p__environ() MSVCRT___p__environ
 @ stub -arch=win32 __p__fileinfo()
 @ cdecl -arch=win32 __p__fmode() MSVCRT___p__fmode
-@ cdecl __p__iob() __iob_func
+@ cdecl -arch=i386 __p__iob() __iob_func
 @ stub -arch=win32 __p__mbcasemap()
 @ cdecl -arch=win32 __p__mbctype()
 @ cdecl -arch=win32 __p__osver()
