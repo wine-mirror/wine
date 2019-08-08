@@ -292,6 +292,12 @@ HRESULT variant_to_jsval(VARIANT *var, jsval_t *r)
         *r = jsval_disp(V_DISPATCH(var));
         return S_OK;
     }
+    case VT_I1:
+        *r = jsval_number(V_I1(var));
+        return S_OK;
+    case VT_UI1:
+        *r = jsval_number(V_UI1(var));
+        return S_OK;
     case VT_I2:
         *r = jsval_number(V_I2(var));
         return S_OK;

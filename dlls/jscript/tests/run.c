@@ -1448,7 +1448,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         return S_OK;
 
     case DISPID_GLOBAL_TESTARGTYPES: {
-        VARIANT args[8], v;
+        VARIANT args[10], v;
         DISPPARAMS dp = {args, NULL, ARRAY_SIZE(args), 0};
         HRESULT hres;
 
@@ -1491,7 +1491,11 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         V_VT(args+6) = VT_R4;
         V_R4(args+6) = 0.5;
         V_VT(args+7) = VT_UI2;
-        V_R4(args+7) = 3;
+        V_UI2(args+7) = 3;
+        V_VT(args+8) = VT_UI1;
+        V_UI1(args+8) = 4;
+        V_VT(args+9) = VT_I1;
+        V_I1(args+9) = 5;
         V_VT(&v) = VT_I4;
         V_I4(&v) = 2;
         hres = IDispatch_Invoke(V_DISPATCH(pdp->rgvarg), DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dp, NULL, NULL, NULL);
@@ -2924,7 +2928,7 @@ static BOOL run_tests(void)
 
     SET_EXPECT(global_testargtypes_i);
     parse_script_a("testArgTypes(dispUnk, intProp(), intProp, getShort(), shortProp,"
-                   "function(ui2,r4,i4ref,ui4,nullunk,d,i,s) {"
+                   "function(i1,ui1,ui2,r4,i4ref,ui4,nullunk,d,i,s) {"
                    "    ok(getVT(i) === 'VT_I4', 'getVT(i) = ' + getVT(i));"
                    "    ok(getVT(s) === 'VT_I4', 'getVT(s) = ' + getVT(s));"
                    "    ok(getVT(d) === 'VT_DISPATCH', 'getVT(d) = ' + getVT(d));"
@@ -2937,6 +2941,10 @@ static BOOL run_tests(void)
                    "    ok(r4 === 0.5, 'r4 = ' + r4);"
                    "    ok(getVT(r4) === 'VT_R8', 'getVT(r4) = ' + getVT(r4));"
                    "    ok(getVT(ui2) === 'VT_I4', 'getVT(ui2) = ' + getVT(ui2));"
+                   "    ok(getVT(ui1) === 'VT_I4', 'getVT(ui1) = ' + getVT(ui1));"
+                   "    ok(ui1 === 4, 'ui1 = ' + ui1);"
+                   "    ok(getVT(i1) === 'VT_I4', 'getVT(i1) = ' + getVT(i1));"
+                   "    ok(i1 === 5, 'i1 = ' + i1);"
                    "});");
     CHECK_CALLED(global_testargtypes_i);
 
