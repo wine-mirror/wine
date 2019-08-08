@@ -439,7 +439,7 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
         req->handle   = wine_server_obj_handle( irp_handle );
         req->status   = irp->IoStatus.u.Status;
         req->size     = irp->IoStatus.Information;
-        if (irp->IoStatus.u.Status >= 0)
+        if (!NT_ERROR(irp->IoStatus.u.Status))
         {
             if (out_buff) wine_server_add_data( req, out_buff, irp->IoStatus.Information );
         }

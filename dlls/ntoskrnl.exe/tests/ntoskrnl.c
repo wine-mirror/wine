@@ -444,7 +444,7 @@ static void test_return_status(void)
             sizeof(status), buffer, sizeof(buffer), &ret_size, NULL);
     ok(!ret, "ioctl succeeded\n");
     ok(GetLastError() == ERROR_MR_MID_NOT_FOUND, "got error %u\n", GetLastError());
-    todo_wine ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
+    ok(!strcmp(buffer, "ghidef"), "got buffer %s\n", buffer);
     ok(ret_size == 3, "got size %u\n", ret_size);
 
     strcpy(buffer, "abcdef");
