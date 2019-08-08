@@ -4470,7 +4470,7 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
     ULONG i;
     USHORT num_entries = 0;
 
-    TRACE( "(%u, %u, %p, %p)", skip, count, buffer, hash );
+    TRACE( "(%u, %u, %p, %p)\n", skip, count, buffer, hash );
 
     RtlCaptureContext( &context );
     dispatch.TargetIp      = 0;
