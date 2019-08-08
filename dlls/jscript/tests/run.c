@@ -90,6 +90,9 @@ DEFINE_EXPECT(global_success_i);
 DEFINE_EXPECT(global_notexists_d);
 DEFINE_EXPECT(global_propargput_d);
 DEFINE_EXPECT(global_propargput_i);
+DEFINE_EXPECT(global_propargputop_d);
+DEFINE_EXPECT(global_propargputop_get_i);
+DEFINE_EXPECT(global_propargputop_put_i);
 DEFINE_EXPECT(global_testargtypes_i);
 DEFINE_EXPECT(global_calleval_i);
 DEFINE_EXPECT(puredisp_prop_d);
@@ -151,6 +154,7 @@ DEFINE_EXPECT(BindHandler);
 #define DISPID_GLOBAL_BINDEVENTHANDLER 0x101d
 #define DISPID_GLOBAL_TESTENUMOBJ   0x101e
 #define DISPID_GLOBAL_CALLEVAL      0x101f
+#define DISPID_GLOBAL_PROPARGPUTOP  0x1020
 
 #define DISPID_GLOBAL_TESTPROPDELETE      0x2000
 #define DISPID_GLOBAL_TESTNOPROPDELETE    0x2001
@@ -928,6 +932,13 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         return S_OK;
     }
 
+    if(!strcmp_wa(bstrName, "propArgPutOp")) {
+        CHECK_EXPECT(global_propargputop_d);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_GLOBAL_PROPARGPUTOP;
+        return S_OK;
+    }
+
     if(!strcmp_wa(bstrName, "propArgPutO")) {
         CHECK_EXPECT(global_propargput_d);
         test_grfdex(grfdex, fdexNameEnsure|fdexNameCaseSensitive);
@@ -1384,6 +1395,55 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         ok(V_VT(pdp->rgvarg+2) == VT_I4, "V_VT(pdp->rgvarg+2) = %d\n", V_VT(pdp->rgvarg+2));
         ok(V_I4(pdp->rgvarg+2) == 0, "V_I4(pdp->rgvarg+2) = %d\n", V_I4(pdp->rgvarg+2));
+        return S_OK;
+
+    case DISPID_GLOBAL_PROPARGPUTOP:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        switch(wFlags) {
+        case INVOKE_PROPERTYGET | INVOKE_FUNC:
+            CHECK_EXPECT(global_propargputop_get_i);
+
+            ok(pdp->cNamedArgs == 0, "cNamedArgs = %d\n", pdp->cNamedArgs);
+            ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+            ok(pdp->cArgs == 2, "cArgs = %d\n", pdp->cArgs);
+            ok(pdp->cNamedArgs == 0, "cNamedArgs = %d\n", pdp->cNamedArgs);
+            ok(pvarRes != NULL, "pvarRes = NULL\n");
+
+            ok(V_VT(pdp->rgvarg) == VT_I4, "V_VT(pdp->rgvarg) = %d\n", V_VT(pdp->rgvarg));
+            ok(V_I4(pdp->rgvarg) == 1, "V_I4(pdp->rgvarg) = %d\n", V_I4(pdp->rgvarg));
+
+            ok(V_VT(pdp->rgvarg+1) == VT_I4, "V_VT(pdp->rgvarg+1) = %d\n", V_VT(pdp->rgvarg+1));
+            ok(V_I4(pdp->rgvarg+1) == 0, "V_I4(pdp->rgvarg+1) = %d\n", V_I4(pdp->rgvarg+1));
+
+            V_VT(pvarRes) = VT_I4;
+            V_I4(pvarRes) = 6;
+            break;
+        case INVOKE_PROPERTYPUT:
+            CHECK_EXPECT(global_propargputop_put_i);
+
+            ok(pdp->cNamedArgs == 1, "cNamedArgs = %d\n", pdp->cNamedArgs);
+            ok(pdp->rgdispidNamedArgs[0] == DISPID_PROPERTYPUT, "pdp->rgdispidNamedArgs[0] = %d\n", pdp->rgdispidNamedArgs[0]);
+            ok(pdp->rgdispidNamedArgs != NULL, "rgdispidNamedArgs == NULL\n");
+            ok(pdp->cArgs == 3, "cArgs = %d\n", pdp->cArgs);
+            ok(pdp->cNamedArgs == 1, "cNamedArgs = %d\n", pdp->cNamedArgs);
+            ok(!pvarRes, "pvarRes != NULL\n");
+
+            ok(V_VT(pdp->rgvarg) == VT_I4, "V_VT(pdp->rgvarg) = %d\n", V_VT(pdp->rgvarg));
+            ok(V_I4(pdp->rgvarg) == 8, "V_I4(pdp->rgvarg) = %d\n", V_I4(pdp->rgvarg));
+
+            ok(V_VT(pdp->rgvarg+1) == VT_I4, "V_VT(pdp->rgvarg+1) = %d\n", V_VT(pdp->rgvarg+1));
+            ok(V_I4(pdp->rgvarg+1) == 1, "V_I4(pdp->rgvarg+1) = %d\n", V_I4(pdp->rgvarg+1));
+
+            ok(V_VT(pdp->rgvarg+2) == VT_I4, "V_VT(pdp->rgvarg+2) = %d\n", V_VT(pdp->rgvarg+2));
+            ok(V_I4(pdp->rgvarg+2) == 0, "V_I4(pdp->rgvarg+2) = %d\n", V_I4(pdp->rgvarg+2));
+            break;
+        default:
+            ok(0, "wFlags = %x\n", wFlags);
+        }
+
         return S_OK;
 
     case DISPID_GLOBAL_OBJECT_FLAG: {
@@ -2925,6 +2985,22 @@ static BOOL run_tests(void)
     parse_script_a("var t=0; test.propArgPutO(t++, t++) = t++;");
     CHECK_CALLED(global_propargput_d);
     CHECK_CALLED(global_propargput_i);
+
+    SET_EXPECT(global_propargputop_d);
+    SET_EXPECT(global_propargputop_get_i);
+    SET_EXPECT(global_propargputop_put_i);
+    parse_script_a("var t=0; propArgPutOp(t++, t++) += t++;");
+    CHECK_CALLED(global_propargputop_d);
+    CHECK_CALLED(global_propargputop_get_i);
+    CHECK_CALLED(global_propargputop_put_i);
+
+    SET_EXPECT(global_propargputop_d);
+    SET_EXPECT(global_propargputop_get_i);
+    SET_EXPECT(global_propargputop_put_i);
+    parse_script_a("var t=0; propArgPutOp(t++, t++) ^= 14;");
+    CHECK_CALLED(global_propargputop_d);
+    CHECK_CALLED(global_propargputop_get_i);
+    CHECK_CALLED(global_propargputop_put_i);
 
     SET_EXPECT(global_testargtypes_i);
     parse_script_a("testArgTypes(dispUnk, intProp(), intProp, getShort(), shortProp,"

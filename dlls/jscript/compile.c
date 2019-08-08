@@ -736,11 +736,6 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
         call_expression_t *call_expr = (call_expression_t*)expr->expression1;
         argument_t *arg;
 
-        if(op != OP_LAST) {
-            FIXME("op %d not supported on parametrized assign expressions\n", op);
-            return E_NOTIMPL;
-        }
-
         if(is_memberid_expr(call_expr->expression->type) && call_expr->argument_list) {
             hres = compile_memberid_expression(ctx, call_expr->expression, fdexNameEnsure);
             if(FAILED(hres))
@@ -752,6 +747,23 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
                     return hres;
                 arg_cnt++;
             }
+
+            if(op != OP_LAST) {
+                unsigned instr;
+
+                /* We need to call the functions twice: to get the value and to set it.
+                 * JavaScript interpreted functions may to modify value on the stack,
+                 * but assignment calls are allowed only on external functions, so we
+                 * may reuse the stack here. */
+                instr = push_instr(ctx, OP_call_member);
+                if(!instr)
+                    return E_OUTOFMEMORY;
+                instr_ptr(ctx, instr)->u.arg[0].uint = arg_cnt;
+                instr_ptr(ctx, instr)->u.arg[1].lng = 1;
+
+                if(!push_instr(ctx, OP_push_acc))
+                    return E_OUTOFMEMORY;
+            }
         }else {
             use_throw_path = TRUE;
         }
@@ -759,6 +771,8 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
         hres = compile_memberid_expression(ctx, expr->expression1, fdexNameEnsure);
         if(FAILED(hres))
             return hres;
+        if(op != OP_LAST && !push_instr(ctx, OP_refval))
+            return E_OUTOFMEMORY;
     }else {
         use_throw_path = TRUE;
     }
@@ -778,9 +792,6 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
 
         return push_instr_uint(ctx, OP_throw_ref, JS_E_ILLEGAL_ASSIGN);
     }
-
-    if(op != OP_LAST && !push_instr(ctx, OP_refval))
-        return E_OUTOFMEMORY;
 
     hres = compile_expression(ctx, expr->expression2, TRUE);
     if(FAILED(hres))
