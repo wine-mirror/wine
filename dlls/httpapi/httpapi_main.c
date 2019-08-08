@@ -194,6 +194,19 @@ ULONG WINAPI HttpReceiveHttpRequest(HANDLE queue, HTTP_REQUEST_ID id, ULONG flag
 }
 
 /***********************************************************************
+ *        HttpSendHttpResponse     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
+        HTTP_RESPONSE *response, HTTP_CACHE_POLICY *cache_policy, ULONG *ret_size,
+        void *reserved1, ULONG reserved2, OVERLAPPED *ovl, HTTP_LOG_DATA *log_data)
+{
+    FIXME("queue %p, id %s, flags %#x, response %p, cache_policy %p, "
+            "ret_size %p, reserved1 %p, reserved2 %#x, ovl %p, log_data %p, stub!\n",
+          queue, wine_dbgstr_longlong(id), flags, response, cache_policy, ret_size, reserved1, reserved2, ovl, log_data);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  *        HttpCreateServerSession     (HTTPAPI.@)
  */
 ULONG WINAPI HttpCreateServerSession( HTTPAPI_VERSION version, HTTP_SERVER_SESSION_ID *id, ULONG reserved )

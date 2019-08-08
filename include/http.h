@@ -47,6 +47,13 @@ typedef struct _HTTPAPI_VERSION
 #define HTTP_REQUEST_FLAG_IP_ROUTED                 0x00000002
 #define HTTP_REQUEST_FLAG_HTTP2                     0x00000004
 
+#define HTTP_SEND_RESPONSE_FLAG_DISCONNECT      0x00000001
+#define HTTP_SEND_RESPONSE_FLAG_MORE_DATA       0x00000002
+#define HTTP_SEND_RESPONSE_FLAG_BUFFER_DATA     0x00000004
+#define HTTP_SEND_RESPONSE_FLAG_ENABLE_NAGLING  0x00000008
+#define HTTP_SEND_RESPONSE_FLAG_PROCESS_RANGES  0x00000020
+#define HTTP_SEND_RESPONSE_FLAG_OPAQUE          0x00000040
+
 typedef enum _HTTP_SERVICE_CONFIG_ID
 {
     HttpServiceConfigIPListenList,
@@ -311,6 +318,83 @@ typedef struct _HTTP_REQUEST_V2
 
 typedef HTTP_REQUEST_V2 HTTP_REQUEST, *PHTTP_REQUEST;
 
+typedef struct _HTTP_RESPONSE_HEADERS
+{
+    USHORT UnknownHeaderCount;
+    HTTP_UNKNOWN_HEADER *pUnknownHeaders;
+    USHORT TrailerCount;
+    HTTP_UNKNOWN_HEADER *pTrailers;
+    HTTP_KNOWN_HEADER KnownHeaders[HttpHeaderResponseMaximum];
+} HTTP_RESPONSE_HEADERS,*PHTTP_RESPONSE_HEADERS;
+
+typedef struct _HTTP_RESPONSE_V1
+{
+    ULONG Flags;
+    HTTP_VERSION Version;
+    USHORT StatusCode;
+    USHORT ReasonLength;
+    const char *pReason;
+    HTTP_RESPONSE_HEADERS Headers;
+    USHORT EntityChunkCount;
+    HTTP_DATA_CHUNK *pEntityChunks;
+} HTTP_RESPONSE_V1, *PHTTP_RESPONSE_V1;
+
+typedef enum _HTTP_RESPONSE_INFO_TYPE
+{
+    HttpResponseInfoTypeMultipleKnownHeaders = 0,
+    HttpResponseInfoTypeAuthenticationProperty,
+    HttpResponseInfoTypeQosProperty,
+    HttpResponseInfoTypeChannelBind,
+} HTTP_RESPONSE_INFO_TYPE, *PHTTP_RESPONSE_INFO_TYPE;
+
+typedef struct _HTTP_RESPONSE_INFO
+{
+    HTTP_RESPONSE_INFO_TYPE Type;
+    ULONG Length;
+    void *pInfo;
+} HTTP_RESPONSE_INFO, *PHTTP_RESPONSE_INFO;
+
+#ifdef __cplusplus
+typedef struct _HTTP_RESPONSE_V2 : HTTP_RESPONSE_V1
+{
+    USHORT ResponseInfoCount;
+    HTTP_RESPONSE_INFO *pResponseInfo;
+} HTTP_RESPONSE_V2, *PHTTP_RESPONSE_V2;
+#else
+typedef struct _HTTP_RESPONSE_V2
+{
+    HTTP_RESPONSE_V1 s;
+    USHORT ResponseInfoCount;
+    HTTP_RESPONSE_INFO *pResponseInfo;
+} HTTP_RESPONSE_V2, *PHTTP_RESPONSE_V2;
+#endif
+
+typedef HTTP_RESPONSE_V2 HTTP_RESPONSE, *PHTTP_RESPONSE;
+
+typedef enum _HTTP_CACHE_POLICY_TYPE
+{
+    HttpCachePolicyNocache,
+    HttpCachePolicyUserInvalidates,
+    HttpCachePolicyTimeToLive,
+    HttpCachePolicyMaximum,
+} HTTP_CACHE_POLICY_TYPE, *PHTTP_CACHE_POLICY_TYPE;
+
+typedef struct _HTTP_CACHE_POLICY
+{
+    HTTP_CACHE_POLICY_TYPE Policy;
+    ULONG SecondsToLive;
+} HTTP_CACHE_POLICY, *PHTTP_CACHE_POLICY;
+
+typedef enum _HTTP_LOG_DATA_TYPE
+{
+    HttpLogDataTypeFields = 0,
+} HTTP_LOG_DATA_TYPE, *PHTTP_LOG_DATA_TYPE;
+
+typedef struct _HTTP_LOG_DATA
+{
+    HTTP_LOG_DATA_TYPE Type;
+} HTTP_LOG_DATA, *PHTTP_LOG_DATA;
+
 ULONG WINAPI HttpAddUrl(HANDLE,PCWSTR,PVOID);
 ULONG WINAPI HttpCreateHttpHandle(PHANDLE,ULONG);
 ULONG WINAPI HttpCreateServerSession(HTTPAPI_VERSION,PHTTP_SERVER_SESSION_ID,ULONG);
@@ -320,6 +404,7 @@ ULONG WINAPI HttpInitialize(HTTPAPI_VERSION version, ULONG flags, void *reserved
 ULONG WINAPI HttpTerminate(ULONG flags, void *reserved);
 ULONG WINAPI HttpQueryServiceConfiguration(HANDLE,HTTP_SERVICE_CONFIG_ID,PVOID,ULONG,PVOID,ULONG,PULONG,LPOVERLAPPED);
 ULONG WINAPI HttpReceiveHttpRequest(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags, HTTP_REQUEST *request, ULONG size, ULONG *ret_size, OVERLAPPED *ovl);
+ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags, HTTP_RESPONSE *response, HTTP_CACHE_POLICY *cache_policy, ULONG *ret_size, void *reserved1, ULONG reserved2, OVERLAPPED *ovl, HTTP_LOG_DATA *log_data);
 ULONG WINAPI HttpSetServiceConfiguration(HANDLE,HTTP_SERVICE_CONFIG_ID,PVOID,ULONG,LPOVERLAPPED);
 
 #ifdef __cplusplus

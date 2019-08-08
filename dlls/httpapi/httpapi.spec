@@ -39,7 +39,7 @@
 @ stub HttpRemoveUrl
 @ stub HttpRemoveUrlFromConfigGroup
 @ stub HttpSendHttpRequest
-@ stub HttpSendHttpResponse
+@ stdcall HttpSendHttpResponse(ptr int64 long ptr ptr ptr ptr long ptr ptr)
 @ stub HttpSendRequestEntityBody
 @ stub HttpSendResponseEntityBody
 @ stub HttpSetAppPoolInformation
