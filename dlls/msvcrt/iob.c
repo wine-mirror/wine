@@ -18,21 +18,22 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* this function is part of the import lib for compatibility with the Mingw runtime */
+/* this function is part of the import lib for compatibility with ucrt runtime */
 #if 0
 #pragma makedep implib
 #endif
 
 #include "msvcrt.h"
 
-extern MSVCRT_FILE * CDECL __p__iob(void);
+#undef __iob_func
+extern MSVCRT_FILE * CDECL __iob_func(void);
 
 /*********************************************************************
  *		__acrt_iob_func(UCRTBASE.@)
  */
 MSVCRT_FILE * CDECL __acrt_iob_func(unsigned idx)
 {
-    return __p__iob() + idx;
+    return __iob_func() + idx;
 }
 
 #ifdef __i386__

@@ -214,7 +214,7 @@
 @ stub __get_app_type
 @ cdecl __getmainargs(ptr ptr ptr long ptr)
 @ extern __initenv MSVCRT___initenv
-@ cdecl __iob_func() __p__iob
+@ cdecl __iob_func()
 @ cdecl __isascii(long) MSVCRT___isascii
 @ cdecl __iscsym(long) MSVCRT___iscsym
 @ cdecl __iscsymf(long) MSVCRT___iscsymf
@@ -259,7 +259,7 @@
 @ cdecl -arch=win32 __p__environ() MSVCRT___p__environ
 @ stub -arch=win32 __p__fileinfo()
 @ cdecl -arch=win32 __p__fmode() MSVCRT___p__fmode
-@ cdecl __p__iob()
+@ cdecl __p__iob() __iob_func
 @ stub -arch=win32 __p__mbcasemap()
 @ cdecl -arch=win32 __p__mbctype()
 @ cdecl -arch=win32 __p__osver()
