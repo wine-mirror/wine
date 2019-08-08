@@ -329,7 +329,7 @@ static void process_attach_events(struct debugger_context *ctx)
     ok(ctx->ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
     ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
        ctx->ev.u.Exception.ExceptionRecord.ExceptionCode);
-    ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint, "ExceptionAddres != DbgBreakPoint\n");
+    ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint, "ExceptionAddress != DbgBreakPoint\n");
 
     /* flush debug events */
     do next_event(ctx, POLL_EVENT_TIMEOUT);
@@ -1006,7 +1006,7 @@ static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
         ok(ctx.ev.dwThreadId == last_thread, "unexpected thread\n");
         ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
            ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
-        ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint, "ExceptionAddres != DbgBreakPoint\n");
+        ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint, "ExceptionAddress != DbgBreakPoint\n");
 
         ret = SetEvent(event_attach);
         ok(ret, "SetEvent failed, last error %d.\n", GetLastError());
