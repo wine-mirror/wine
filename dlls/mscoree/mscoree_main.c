@@ -320,6 +320,13 @@ HRESULT WINAPI CorIsLatestSvc(int *unk1, int *unk2)
     return S_OK;
 }
 
+HRESULT WINAPI CorGetSvc(void *unk)
+{
+    ERR_(winediag)("If this function is called, it is likely the result of a broken .NET installation\n");
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWSTR pConfigurationFile,
     DWORD startupFlags, DWORD runtimeInfoFlags, LPWSTR pDirectory, DWORD dwDirectory, DWORD *dwDirectoryLength,
     LPWSTR pVersion, DWORD cchBuffer, DWORD *dwlength)
