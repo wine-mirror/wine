@@ -172,6 +172,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetExitCodeThread( HANDLE thread, LPDWORD exit_cod
 
 
 /**********************************************************************
+ *           GetLastError   (kernelbase.@)
+ */
+DWORD WINAPI kernelbase_GetLastError(void)
+{
+    return NtCurrentTeb()->LastErrorValue;
+}
+
+
+/**********************************************************************
  *           GetProcessIdOfThread   (kernelbase.@)
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetProcessIdOfThread( HANDLE thread )
@@ -494,6 +503,117 @@ BOOL WINAPI DECLSPEC_HOTPATCH SwitchToThread(void)
 BOOL WINAPI DECLSPEC_HOTPATCH TerminateThread( HANDLE handle, DWORD exit_code )
 {
     return set_ntstatus( NtTerminateThread( handle, exit_code ));
+}
+
+
+/**********************************************************************
+ *           TlsAlloc   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH TlsAlloc(void)
+{
+    DWORD index;
+    PEB * const peb = NtCurrentTeb()->Peb;
+
+    RtlAcquirePebLock();
+    index = RtlFindClearBitsAndSet( peb->TlsBitmap, 1, 1 );
+    if (index != ~0U) NtCurrentTeb()->TlsSlots[index] = 0; /* clear the value */
+    else
+    {
+        index = RtlFindClearBitsAndSet( peb->TlsExpansionBitmap, 1, 0 );
+        if (index != ~0U)
+        {
+            if (!NtCurrentTeb()->TlsExpansionSlots &&
+                !(NtCurrentTeb()->TlsExpansionSlots = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                         8 * sizeof(peb->TlsExpansionBitmapBits) * sizeof(void*) )))
+            {
+                RtlClearBits( peb->TlsExpansionBitmap, index, 1 );
+                index = ~0U;
+                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            }
+            else
+            {
+                NtCurrentTeb()->TlsExpansionSlots[index] = 0; /* clear the value */
+                index += TLS_MINIMUM_AVAILABLE;
+            }
+        }
+        else SetLastError( ERROR_NO_MORE_ITEMS );
+    }
+    RtlReleasePebLock();
+    return index;
+}
+
+
+/**********************************************************************
+ *           TlsFree   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH TlsFree( DWORD index )
+{
+    BOOL ret;
+
+    RtlAcquirePebLock();
+    if (index >= TLS_MINIMUM_AVAILABLE)
+    {
+        ret = RtlAreBitsSet( NtCurrentTeb()->Peb->TlsExpansionBitmap, index - TLS_MINIMUM_AVAILABLE, 1 );
+        if (ret) RtlClearBits( NtCurrentTeb()->Peb->TlsExpansionBitmap, index - TLS_MINIMUM_AVAILABLE, 1 );
+    }
+    else
+    {
+        ret = RtlAreBitsSet( NtCurrentTeb()->Peb->TlsBitmap, index, 1 );
+        if (ret) RtlClearBits( NtCurrentTeb()->Peb->TlsBitmap, index, 1 );
+    }
+    if (ret) NtSetInformationThread( GetCurrentThread(), ThreadZeroTlsCell, &index, sizeof(index) );
+    else SetLastError( ERROR_INVALID_PARAMETER );
+    RtlReleasePebLock();
+    return ret;
+}
+
+
+/**********************************************************************
+ *           TlsGetValue   (kernelbase.@)
+ */
+LPVOID WINAPI DECLSPEC_HOTPATCH TlsGetValue( DWORD index )
+{
+    SetLastError( ERROR_SUCCESS );
+    if (index < TLS_MINIMUM_AVAILABLE) return NtCurrentTeb()->TlsSlots[index];
+
+    index -= TLS_MINIMUM_AVAILABLE;
+    if (index >= 8 * sizeof(NtCurrentTeb()->Peb->TlsExpansionBitmapBits))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    if (!NtCurrentTeb()->TlsExpansionSlots) return NULL;
+    return NtCurrentTeb()->TlsExpansionSlots[index];
+}
+
+
+/**********************************************************************
+ *           TlsSetValue   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH TlsSetValue( DWORD index, LPVOID value )
+{
+    if (index < TLS_MINIMUM_AVAILABLE)
+    {
+        NtCurrentTeb()->TlsSlots[index] = value;
+    }
+    else
+    {
+        index -= TLS_MINIMUM_AVAILABLE;
+        if (index >= 8 * sizeof(NtCurrentTeb()->Peb->TlsExpansionBitmapBits))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+        if (!NtCurrentTeb()->TlsExpansionSlots &&
+            !(NtCurrentTeb()->TlsExpansionSlots = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         8 * sizeof(NtCurrentTeb()->Peb->TlsExpansionBitmapBits) * sizeof(void*) )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return FALSE;
+        }
+        NtCurrentTeb()->TlsExpansionSlots[index] = value;
+    }
+    return TRUE;
 }
 
 
@@ -918,6 +1038,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH FlsSetValue( DWORD index, PVOID data )
 
 
 /***********************************************************************
+ *           CallbackMayRunLong   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CallbackMayRunLong( TP_CALLBACK_INSTANCE *instance )
+{
+    return set_ntstatus( TpCallbackMayRunLong( instance ));
+}
+
+
+/***********************************************************************
  *           CreateThreadpool   (kernelbase.@)
  */
 PTP_POOL WINAPI DECLSPEC_HOTPATCH CreateThreadpool( void *reserved )
@@ -998,4 +1127,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH TrySubmitThreadpoolCallback( PTP_SIMPLE_CALLBACK c
                                                            TP_CALLBACK_ENVIRON *environment )
 {
     return set_ntstatus( TpSimpleTryPost( callback, userdata, environment ));
+}
+
+
+/***********************************************************************
+ *           QueueUserWorkItem   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH QueueUserWorkItem( LPTHREAD_START_ROUTINE func, PVOID context, ULONG flags )
+{
+    return set_ntstatus( RtlQueueWorkItem( func, context, flags ));
 }

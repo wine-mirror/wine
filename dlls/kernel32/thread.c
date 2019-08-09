@@ -19,15 +19,10 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
 #include <assert.h>
-#include <fcntl.h>
 #include <stdarg.h>
 #include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -35,15 +30,8 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winternl.h"
-#include "wine/exception.h"
-#include "wine/library.h"
-#include "wine/server.h"
-#include "wine/asm.h"
-#include "wine/debug.h"
 
 #include "kernel_private.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(thread);
 
 
 /***********************************************************************
@@ -67,7 +55,6 @@ BOOL WINAPI Wow64SetThreadContext( HANDLE handle, const WOW64_CONTEXT *context)
     NTSTATUS status = RtlWow64SetThreadContext( handle, context );
 #else
     NTSTATUS status = STATUS_NOT_IMPLEMENTED;
-    FIXME("not implemented on this platform\n");
 #endif
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
@@ -84,7 +71,6 @@ BOOL WINAPI Wow64GetThreadContext( HANDLE handle, WOW64_CONTEXT *context)
     NTSTATUS status = RtlWow64GetThreadContext( handle, context );
 #else
     NTSTATUS status = STATUS_NOT_IMPLEMENTED;
-    FIXME("not implemented on this platform\n");
 #endif
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
@@ -139,21 +125,6 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldten
 
 
 /***********************************************************************
- *              QueueUserWorkItem  (KERNEL32.@)
- */
-BOOL WINAPI QueueUserWorkItem( LPTHREAD_START_ROUTINE Function, PVOID Context, ULONG Flags )
-{
-    NTSTATUS status;
-
-    TRACE("(%p,%p,0x%08x)\n", Function, Context, Flags);
-
-    status = RtlQueueWorkItem( Function, Context, Flags );
-
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
-/***********************************************************************
  * GetCurrentThread [KERNEL32.@]  Gets pseudohandle for current thread
  *
  * RETURNS
@@ -162,32 +133,6 @@ BOOL WINAPI QueueUserWorkItem( LPTHREAD_START_ROUTINE Function, PVOID Context, U
 HANDLE WINAPI KERNEL32_GetCurrentThread(void)
 {
     return (HANDLE)~(ULONG_PTR)1;
-}
-
-/**********************************************************************
- *		SetLastError (KERNEL32.@)
- *
- * Sets the last-error code.
- *
- * RETURNS
- * Nothing.
- */
-void WINAPI KERNEL32_SetLastError( DWORD error ) /* [in] Per-thread error code */
-{
-    NtCurrentTeb()->LastErrorValue = error;
-}
-
-/**********************************************************************
- *              GetLastError (KERNEL32.@)
- *
- * Get the last-error code.
- *
- * RETURNS
- *  last-error code.
- */
-DWORD WINAPI KERNEL32_GetLastError(void)
-{
-    return NtCurrentTeb()->LastErrorValue;
 }
 
 /***********************************************************************
@@ -222,23 +167,4 @@ DWORD WINAPI KERNEL32_GetCurrentThreadId(void)
 HANDLE WINAPI KERNEL32_GetProcessHeap(void)
 {
     return NtCurrentTeb()->Peb->ProcessHeap;
-}
-
-/***********************************************************************
- *              CallbackMayRunLong (KERNEL32.@)
- */
-BOOL WINAPI CallbackMayRunLong( TP_CALLBACK_INSTANCE *instance )
-{
-    NTSTATUS status;
-
-    TRACE( "%p\n", instance );
-
-    status = TpCallbackMayRunLong( instance );
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-
-    return TRUE;
 }

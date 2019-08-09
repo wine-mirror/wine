@@ -101,7 +101,7 @@
 @ stub BemFreeReference
 # @ stub CLOSE_LOCAL_HANDLE_INTERNAL
 @ stdcall CallNamedPipeW(wstr ptr long ptr long ptr long)
-@ stdcall CallbackMayRunLong(ptr) kernel32.CallbackMayRunLong
+@ stdcall CallbackMayRunLong(ptr)
 @ stdcall CancelIo(long) kernel32.CancelIo
 @ stdcall CancelIoEx(long ptr) kernel32.CancelIoEx
 @ stdcall CancelSynchronousIo(long) kernel32.CancelSynchronousIo
@@ -538,7 +538,7 @@
 @ stdcall GetKernelObjectSecurity(long long ptr long ptr)
 @ stdcall GetLargePageMinimum() kernel32.GetLargePageMinimum
 @ stdcall GetLargestConsoleWindowSize(long) kernel32.GetLargestConsoleWindowSize
-@ stdcall GetLastError() kernel32.GetLastError
+@ stdcall GetLastError() kernelbase_GetLastError
 @ stdcall GetLengthSid(ptr)
 @ stdcall GetLocalTime(ptr) kernel32.GetLocalTime
 @ stdcall GetLocaleInfoA(long long ptr long) kernel32.GetLocaleInfoA
@@ -1221,7 +1221,7 @@
 # @ stub QueryWorkingSet
 # @ stub QueryWorkingSetEx
 @ stdcall QueueUserAPC(ptr long long)
-@ stdcall QueueUserWorkItem(ptr ptr long) kernel32.QueueUserWorkItem
+@ stdcall QueueUserWorkItem(ptr ptr long)
 # @ stub QuirkGetData
 # @ stub QuirkGetData2
 @ stdcall QuirkIsEnabled(ptr)
@@ -1597,10 +1597,10 @@
 @ stdcall TerminateProcess(long long) kernel32.TerminateProcess
 # @ stub TerminateProcessOnMemoryExhaustion
 @ stdcall TerminateThread(long long)
-@ stdcall TlsAlloc() kernel32.TlsAlloc
-@ stdcall TlsFree(long) kernel32.TlsFree
-@ stdcall TlsGetValue(long) kernel32.TlsGetValue
-@ stdcall TlsSetValue(long ptr) kernel32.TlsSetValue
+@ stdcall TlsAlloc()
+@ stdcall TlsFree(long)
+@ stdcall TlsGetValue(long)
+@ stdcall TlsSetValue(long ptr)
 @ stdcall TraceEvent(int64 ptr) ntdll.EtwLogTraceEvent
 @ varargs TraceMessage(int64 long ptr long) ntdll.EtwTraceMessage
 @ stdcall TraceMessageVa(int64 long ptr long ptr) ntdll.EtwTraceMessageVa

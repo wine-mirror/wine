@@ -203,7 +203,7 @@
 @ stdcall BuildCommDCBAndTimeoutsA(str ptr ptr)
 @ stdcall BuildCommDCBAndTimeoutsW(wstr ptr ptr)
 @ stdcall BuildCommDCBW(wstr ptr)
-@ stdcall CallbackMayRunLong(ptr)
+@ stdcall -import CallbackMayRunLong(ptr)
 @ stdcall CallNamedPipeA(str ptr long ptr long ptr long)
 @ stdcall -import CallNamedPipeW(wstr ptr long ptr long ptr long)
 @ stub CancelDeviceWakeupRequest
@@ -700,7 +700,7 @@
 @ stub -i386 GetLSCallbackTemplate
 @ stdcall GetLargePageMinimum()
 @ stdcall GetLargestConsoleWindowSize(long)
-@ stdcall GetLastError() KERNEL32_GetLastError
+@ stdcall -import GetLastError()
 @ stub GetLinguistLangSize
 @ stdcall GetLocalTime(ptr)
 @ stdcall GetLocaleInfoA(long long ptr long)
@@ -1180,7 +1180,7 @@
 @ stdcall QueryUnbiasedInterruptTime(ptr)
 @ stub QueryWin31IniFilesMappedToRegistry
 @ stdcall -import QueueUserAPC(ptr long long)
-@ stdcall QueueUserWorkItem(ptr ptr long)
+@ stdcall -import QueueUserWorkItem(ptr ptr long)
 @ stdcall RaiseException(long long long ptr)
 # @ stub RaiseFailFastException
 @ stdcall ReadConsoleA(long ptr long ptr ptr)
@@ -1414,7 +1414,7 @@
 @ stdcall SetHandleInformation(long long long)
 @ stdcall SetInformationJobObject(long long ptr long)
 @ stub SetLastConsoleEventActive
-@ stdcall SetLastError(long) KERNEL32_SetLastError
+@ stdcall SetLastError(long) RtlSetLastWin32Error
 # @ stub SetLocalPrimaryComputerNameA
 # @ stub SetLocalPrimaryComputerNameW
 @ stdcall SetLocalTime(ptr)
@@ -1502,12 +1502,12 @@
 @ stdcall Thread32First(long ptr)
 @ stdcall Thread32Next(long ptr)
 @ stdcall -i386 -private ThunkConnect32(ptr str str str ptr ptr) krnl386.exe16.ThunkConnect32
-@ stdcall TlsAlloc()
-@ stdcall TlsAllocInternal() TlsAlloc
-@ stdcall TlsFree(long)
-@ stdcall TlsFreeInternal(long) TlsFree
-@ stdcall TlsGetValue(long)
-@ stdcall TlsSetValue(long ptr)
+@ stdcall -import TlsAlloc()
+@ stdcall -import TlsAllocInternal() TlsAlloc
+@ stdcall -import TlsFree(long)
+@ stdcall -import TlsFreeInternal(long) TlsFree
+@ stdcall -import TlsGetValue(long)
+@ stdcall -import TlsSetValue(long ptr)
 @ stdcall Toolhelp32ReadProcessMemory(long ptr ptr long ptr)
 @ stdcall -import TransactNamedPipe(long ptr long ptr long ptr ptr)
 @ stdcall TransmitCommChar(long long)
