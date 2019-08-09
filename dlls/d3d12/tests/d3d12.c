@@ -1403,12 +1403,12 @@ static void test_desktop_window(void)
     swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapchain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapchain_desc.Flags = 0;
-    hr = IDXGIFactory4_CreateSwapChainForHwnd(factory, (IUnknown *)queue, window, &swapchain_desc, NULL, NULL, &swapchain);
+    hr = IDXGIFactory4_CreateSwapChainForHwnd(factory, queue, window, &swapchain_desc, NULL, NULL, &swapchain);
     ok(hr == E_ACCESSDENIED, "Got unexpected hr %#x.\n", hr);
 
     swapchain_desc.Width = rect.right;
     swapchain_desc.Height = rect.bottom;
-    hr = IDXGIFactory4_CreateSwapChainForHwnd(factory, (IUnknown *)queue, window, &swapchain_desc, NULL, NULL, &swapchain);
+    hr = IDXGIFactory4_CreateSwapChainForHwnd(factory, queue, window, &swapchain_desc, NULL, NULL, &swapchain);
     ok(hr == E_ACCESSDENIED, "Got unexpected hr %#x.\n", hr);
 
     IDXGIFactory4_Release(factory);
