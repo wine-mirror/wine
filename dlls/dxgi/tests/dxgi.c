@@ -2326,7 +2326,7 @@ static void test_set_fullscreen(IUnknown *device, BOOL is_d3d12)
 
     memset(&initial_state, 0, sizeof(initial_state));
     capture_fullscreen_state(&initial_state.fullscreen_state, swapchain_desc.OutputWindow);
-    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
     ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
     hr = IDXGISwapChain_GetContainingOutput(swapchain, &output);
     ok(SUCCEEDED(hr) || broken(hr == DXGI_ERROR_UNSUPPORTED), /* Win 7 testbot */
@@ -2358,7 +2358,7 @@ static void test_set_fullscreen(IUnknown *device, BOOL is_d3d12)
     DestroyWindow(swapchain_desc.OutputWindow);
     swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
     check_window_fullscreen_state(swapchain_desc.OutputWindow, &initial_state.fullscreen_state);
-    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
     ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
     check_swapchain_fullscreen_state(swapchain, &initial_state);
     test_swapchain_fullscreen_state(swapchain, adapter, &initial_state);
@@ -2368,7 +2368,7 @@ static void test_set_fullscreen(IUnknown *device, BOOL is_d3d12)
     DestroyWindow(swapchain_desc.OutputWindow);
     swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
     check_window_fullscreen_state(swapchain_desc.OutputWindow, &initial_state.fullscreen_state);
-    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
@@ -2384,7 +2384,7 @@ static void test_set_fullscreen(IUnknown *device, BOOL is_d3d12)
 
     swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
     check_window_fullscreen_state(swapchain_desc.OutputWindow, &initial_state.fullscreen_state);
-    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
@@ -2403,7 +2403,7 @@ static void test_set_fullscreen(IUnknown *device, BOOL is_d3d12)
     swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
     check_window_fullscreen_state(swapchain_desc.OutputWindow, &initial_state.fullscreen_state);
     swapchain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
     ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
     check_swapchain_fullscreen_state(swapchain, &initial_state);
     test_swapchain_fullscreen_state(swapchain, adapter, &initial_state);
@@ -2751,7 +2751,7 @@ static void test_resize_target(IUnknown *device, BOOL is_d3d12)
         memset(&initial_state, 0, sizeof(initial_state));
         capture_fullscreen_state(&initial_state.fullscreen_state, swapchain_desc.OutputWindow);
 
-        hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+        hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
         ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
         check_swapchain_fullscreen_state(swapchain, &initial_state);
 
