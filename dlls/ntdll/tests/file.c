@@ -1332,10 +1332,9 @@ static void test_file_basic_information(void)
     fbi2.LastWriteTime.QuadPart = -1;
     U(io).Status = 0xdeadbeef;
     res = pNtSetInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
-todo_wine {
     ok ( res == STATUS_SUCCESS, "can't set system attribute, NtSetInformationFile returned %x\n", res );
     ok ( U(io).Status == STATUS_SUCCESS, "can't set system attribute, io.Status is %x\n", U(io).Status );
-}
+
     memset(&fbi2, 0, sizeof(fbi2));
     res = pNtQueryInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
     ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);

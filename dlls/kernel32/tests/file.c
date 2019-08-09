@@ -5068,7 +5068,6 @@ todo_wine
     memset(&basicinfo, 0, sizeof(basicinfo));
     basicinfo.LastAccessTime.QuadPart = -1;
     ret = pSetFileInformationByHandle(file, FileBasicInfo, &basicinfo, sizeof(basicinfo));
-todo_wine
     ok(ret, "Failed to set basic info, error %d.\n", GetLastError());
 
     memset(&basicinfo, 0, sizeof(basicinfo));
@@ -5402,7 +5401,6 @@ static void test_SetFileTime(void)
 
     memset(&ft1, 0xff, sizeof(ft1));
     ret = SetFileTime(hfile, NULL, NULL, &ft1);
-todo_wine
     ok(ret, "SetFileTime error %d\n", GetLastError());
     memset(&ft1, 0, sizeof(ft1));
     ret = GetFileTime(hfile, NULL, NULL, &ft1);  /* get the actual time back */
