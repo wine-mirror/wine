@@ -365,7 +365,7 @@
 # @ stub DeleteFileTransactedA
 # @ stub DeleteFileTransactedW
 @ stdcall DeleteFileW(wstr)
-@ stdcall DeleteProcThreadAttributeList(ptr)
+@ stdcall -import DeleteProcThreadAttributeList(ptr)
 # @ stub DisableThreadProfiling
 @ stdcall DisassociateCurrentThreadFromCallback(ptr) ntdll.TpDisassociateCallback
 @ stdcall DeleteTimerQueue(long)
@@ -949,7 +949,7 @@
 @ stdcall InitializeCriticalSection(ptr) ntdll.RtlInitializeCriticalSection
 @ stdcall -import InitializeCriticalSectionAndSpinCount(ptr long)
 @ stdcall -import InitializeCriticalSectionEx(ptr long long)
-@ stdcall InitializeProcThreadAttributeList(ptr long long ptr)
+@ stdcall -import InitializeProcThreadAttributeList(ptr long long ptr)
 @ stdcall InitializeSListHead(ptr) ntdll.RtlInitializeSListHead
 @ stdcall InitializeSRWLock(ptr) ntdll.RtlInitializeSRWLock
 @ stdcall -arch=i386 InterlockedCompareExchange (ptr long long)
@@ -1543,7 +1543,7 @@
 @ stdcall UnregisterWait(long)
 @ stdcall -import UnregisterWaitEx(long long)
 # @ stub UpdateCalendarDayOfWeek
-@ stdcall UpdateProcThreadAttribute(ptr long long ptr long ptr ptr)
+@ stdcall -import UpdateProcThreadAttribute(ptr long long ptr long ptr ptr)
 @ stdcall UpdateResourceA(long str str long ptr long)
 @ stdcall UpdateResourceW(long wstr wstr long ptr long)
 @ stub VDMConsoleOperation
