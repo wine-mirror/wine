@@ -300,7 +300,7 @@ static void test_swizzle(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_
 {
     static const struct hlsl_probe_info probes[] =
     {
-       {0, 0, {0.0101f, 0.0303f, 0.0202f, 0.0404f}, 0.0001f, "swizzle_test failed"}
+       {0, 0, {0.0101f, 0.0303f, 0.0202f, 0.0404f}, 0.0001f, "swizzle_test"}
     };
 
     static const char *swizzle_test_shader =
@@ -338,7 +338,7 @@ static void test_math(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
     static const struct hlsl_probe_info probes[] =
     {
         {0, 0, {-12.4300f, 9.8333f, 1.6000f, 34.9999f}, 0.0001f,
-                "order of operations test failed"}
+                "order of operations test"}
     };
 
     static const char *order_of_operations_shader =
@@ -377,12 +377,12 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
 {
     static const struct hlsl_probe_info if_greater_probes[] =
     {
-        { 0, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
-        { 5, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
-        {10, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
-        {15, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test failed"},
-        {25, 0, {0.1f, 0.2f, 0.3f, 0.4f}, 0.0001f, "if greater test failed"},
-        {30, 0, {0.1f, 0.2f, 0.3f, 0.4f}, 0.0001f, "if greater test failed"}
+        { 0, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test"},
+        { 5, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test"},
+        {10, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test"},
+        {15, 0, {0.9f, 0.8f, 0.7f, 0.6f}, 0.0001f, "if greater test"},
+        {25, 0, {0.1f, 0.2f, 0.3f, 0.4f}, 0.0001f, "if greater test"},
+        {30, 0, {0.1f, 0.2f, 0.3f, 0.4f}, 0.0001f, "if greater test"}
     };
 
     static const char *if_greater_shader =
@@ -396,14 +396,14 @@ static void test_conditionals(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *
 
     static const struct hlsl_probe_info ternary_operator_probes[] =
     {
-        {0, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
-        {1, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
-        {2, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
-        {3, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test failed"},
-        {4, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test failed"},
-        {5, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test failed"},
-        {6, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test failed"},
-        {7, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test failed"}
+        {0, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test"},
+        {1, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test"},
+        {2, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test"},
+        {3, 0, {0.50f, 0.25f, 0.50f, 0.75f}, 0.00001f, "ternary operator test"},
+        {4, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test"},
+        {5, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test"},
+        {6, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test"},
+        {7, 0, {0.60f, 0.80f, 0.10f, 0.20f}, 0.00001f, "ternary operator test"}
     };
 
     static const char *ternary_operator_shader =
@@ -441,7 +441,7 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
 {
     static const struct hlsl_probe_info vec4_indexing_test1_probes[] =
     {
-        {0, 0, {0.020f, 0.245f, 0.351f, 1.000f}, 0.0001f, "vec4 indexing test 1 failed"}
+        {0, 0, {0.020f, 0.245f, 0.351f, 1.000f}, 0.0001f, "vec4 indexing test 1"}
     };
 
     static const char *vec4_indexing_test1_shader =
@@ -457,7 +457,7 @@ static void test_float_vectors(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 
 
     static const struct hlsl_probe_info vec4_indexing_test2_probes[] =
     {
-        {0, 0, {0.5f, 0.3f, 0.8f, 0.2f}, 0.0001f, "vec4 indexing test 2 failed"}
+        {0, 0, {0.5f, 0.3f, 0.8f, 0.2f}, 0.0001f, "vec4 indexing test 2"}
     };
 
     /* We have this uniform i here so the compiler can't optimize */
@@ -502,38 +502,38 @@ static void test_trig(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
 {
     static const struct hlsl_probe_info sincos_probes[] =
     {
-        {0, 0, {0.5000f, 1.0000f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {1, 0, {0.5975f, 0.9904f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {2, 0, {0.6913f, 0.9620f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {3, 0, {0.7778f, 0.9160f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {4, 0, {0.8536f, 0.8536f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {5, 0, {0.9157f, 0.7778f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {6, 0, {0.9620f, 0.6913f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {7, 0, {0.9904f, 0.5975f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {8, 0, {1.0000f, 0.5000f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {9, 0, {0.9904f, 0.4025f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {10, 0, {0.9619f, 0.3087f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {11, 0, {0.9157f, 0.2222f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {12, 0, {0.8536f, 0.1464f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {13, 0, {0.7778f, 0.0843f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {14, 0, {0.6913f, 0.0381f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {15, 0, {0.5975f, 0.0096f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {16, 0, {0.5000f, 0.0000f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {17, 0, {0.4025f, 0.0096f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {18, 0, {0.3087f, 0.0381f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {19, 0, {0.2222f, 0.0843f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {20, 0, {0.1464f, 0.1464f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {21, 0, {0.0843f, 0.2222f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {22, 0, {0.0381f, 0.3087f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {23, 0, {0.0096f, 0.4025f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {24, 0, {0.0000f, 0.5000f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {25, 0, {0.0096f, 0.5975f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {26, 0, {0.0381f, 0.6913f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {27, 0, {0.0843f, 0.7778f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {28, 0, {0.1464f, 0.8536f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {29, 0, {0.2222f, 0.9157f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {30, 0, {0.3087f, 0.9619f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
-        {31, 0, {0.4025f, 0.9904f, 0.0f, 0.0f}, 0.001f, "sin/cos test failed"},
+        {0, 0, {0.5000f, 1.0000f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {1, 0, {0.5975f, 0.9904f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {2, 0, {0.6913f, 0.9620f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {3, 0, {0.7778f, 0.9160f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {4, 0, {0.8536f, 0.8536f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {5, 0, {0.9157f, 0.7778f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {6, 0, {0.9620f, 0.6913f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {7, 0, {0.9904f, 0.5975f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {8, 0, {1.0000f, 0.5000f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {9, 0, {0.9904f, 0.4025f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {10, 0, {0.9619f, 0.3087f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {11, 0, {0.9157f, 0.2222f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {12, 0, {0.8536f, 0.1464f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {13, 0, {0.7778f, 0.0843f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {14, 0, {0.6913f, 0.0381f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {15, 0, {0.5975f, 0.0096f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {16, 0, {0.5000f, 0.0000f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {17, 0, {0.4025f, 0.0096f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {18, 0, {0.3087f, 0.0381f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {19, 0, {0.2222f, 0.0843f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {20, 0, {0.1464f, 0.1464f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {21, 0, {0.0843f, 0.2222f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {22, 0, {0.0381f, 0.3087f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {23, 0, {0.0096f, 0.4025f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {24, 0, {0.0000f, 0.5000f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {25, 0, {0.0096f, 0.5975f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {26, 0, {0.0381f, 0.6913f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {27, 0, {0.0843f, 0.7778f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {28, 0, {0.1464f, 0.8536f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {29, 0, {0.2222f, 0.9157f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {30, 0, {0.3087f, 0.9619f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
+        {31, 0, {0.4025f, 0.9904f, 0.0f, 0.0f}, 0.001f, "sin/cos test"},
     };
 
     static const char *sincos_shader =
