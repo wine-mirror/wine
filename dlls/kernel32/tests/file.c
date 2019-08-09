@@ -5065,6 +5065,17 @@ todo_wine
     ok(ret, "Failed to get basic info, error %d.\n", GetLastError());
     ok(atime.QuadPart + 1 == basicinfo.LastAccessTime.QuadPart, "Unexpected access time.\n");
 
+    memset(&basicinfo, 0, sizeof(basicinfo));
+    basicinfo.LastAccessTime.QuadPart = -1;
+    ret = pSetFileInformationByHandle(file, FileBasicInfo, &basicinfo, sizeof(basicinfo));
+todo_wine
+    ok(ret, "Failed to set basic info, error %d.\n", GetLastError());
+
+    memset(&basicinfo, 0, sizeof(basicinfo));
+    ret = pGetFileInformationByHandleEx(file, FileBasicInfo, &basicinfo, sizeof(basicinfo));
+    ok(ret, "Failed to get basic info, error %d.\n", GetLastError());
+    ok(atime.QuadPart + 1 == basicinfo.LastAccessTime.QuadPart, "Unexpected access time.\n");
+
     dispinfo.DeleteFile = TRUE;
     ret = pSetFileInformationByHandle(file, FileDispositionInfo, &dispinfo, sizeof(dispinfo));
     ok(ret, "setting FileDispositionInfo failed, error %d\n", GetLastError());
@@ -5357,6 +5368,50 @@ static void test_find_file_stream(void)
     ok(error == ERROR_HANDLE_EOF, "Expected ERROR_HANDLE_EOF, got %d\n", error);
 }
 
+static void test_SetFileTime(void)
+{
+    static const WCHAR prefix[] = {'p','f','x',0};
+    WCHAR path[MAX_PATH], temp_path[MAX_PATH];
+    FILETIME ft1, ft2;
+    DWORD ret, len;
+    HANDLE hfile;
+
+    ret = GetTempPathW(MAX_PATH, temp_path);
+    ok(ret != 0, "GetTempPathW error %d\n", GetLastError());
+    ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
+
+    ret = GetTempFileNameW(temp_path, prefix, 0, path);
+    ok(ret != 0, "GetTempFileNameW error %d\n", GetLastError());
+
+    hfile = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to open source file\n");
+    ret = WriteFile(hfile, prefix, sizeof(prefix), &len, NULL );
+    ok(ret && len == sizeof(prefix), "WriteFile error %d\n", GetLastError());
+    ok(GetFileSize(hfile, NULL) == sizeof(prefix), "source file has wrong size\n");
+
+    ret = GetFileTime(hfile, NULL, NULL, &ft1);
+    ok(ret, "GetFileTime error %d\n", GetLastError());
+    ft2 = ft1;
+    ft2.dwLowDateTime -= 600000000; /* 60 second */
+    ret = SetFileTime(hfile, NULL, NULL, &ft2);
+    ok(ret, "SetFileTime error %d\n", GetLastError());
+    memset(&ft2, 0, sizeof(ft2));
+    ret = GetFileTime(hfile, NULL, NULL, &ft2);  /* get the actual time back */
+    ok(ret, "GetFileTime error %d\n", GetLastError());
+    ok(memcmp(&ft1, &ft2, sizeof(ft1)), "Unexpected write time.\n");
+
+    memset(&ft1, 0xff, sizeof(ft1));
+    ret = SetFileTime(hfile, NULL, NULL, &ft1);
+todo_wine
+    ok(ret, "SetFileTime error %d\n", GetLastError());
+    memset(&ft1, 0, sizeof(ft1));
+    ret = GetFileTime(hfile, NULL, NULL, &ft1);  /* get the actual time back */
+    ok(ret, "GetFileTime error %d\n", GetLastError());
+    ok(!memcmp(&ft1, &ft2, sizeof(ft1)), "Unexpected write time.\n");
+
+    CloseHandle(hfile);
+}
+
 START_TEST(file)
 {
     char temp_path[MAX_PATH];
@@ -5429,4 +5484,5 @@ START_TEST(file)
     test_overlapped_read();
     test_file_readonly_access();
     test_find_file_stream();
+    test_SetFileTime();
 }
