@@ -594,6 +594,18 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
         "  float2 x = 45s;\n"
         "  return float4(x.x, x.y, 0, 0);\n"
         "}",
+
+        "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
+        "{\n"
+        "   struct { int b,c; } x = {0};\n"
+        "   return y;\n"
+        "}",
+
+        "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
+        "{\n"
+        "   struct {} x = {};\n"
+        "   return y;\n"
+        "}",
     };
 
     ID3D10Blob *compiled, *errors;
