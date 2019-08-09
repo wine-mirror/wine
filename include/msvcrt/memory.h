@@ -8,7 +8,7 @@
 #ifndef __WINE_MEMORY_H
 #define __WINE_MEMORY_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #ifdef __cplusplus
 extern "C" {

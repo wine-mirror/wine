@@ -20,7 +20,7 @@
 #ifndef __WINE_SYS_TIMEB_H
 #define __WINE_SYS_TIMEB_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #include <pshpack8.h>
 

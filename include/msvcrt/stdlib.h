@@ -8,7 +8,7 @@
 #ifndef __WINE_STDLIB_H
 #define __WINE_STDLIB_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #include <pshpack8.h>
 

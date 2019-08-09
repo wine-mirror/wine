@@ -8,7 +8,7 @@
 #ifndef __WINE_STDIO_H
 #define __WINE_STDIO_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #ifndef RC_INVOKED
 #include <stdarg.h>

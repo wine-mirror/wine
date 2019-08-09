@@ -9,7 +9,7 @@
 #ifndef __WINE_FLOAT_H
 #define __WINE_FLOAT_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #ifdef __cplusplus
 extern "C" {

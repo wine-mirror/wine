@@ -9,7 +9,7 @@
 #ifndef __WINE_MATH_H
 #define __WINE_MATH_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #include <pshpack8.h>
 

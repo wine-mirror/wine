@@ -8,7 +8,7 @@
 #ifndef __WINE_WCHAR_H
 #define __WINE_WCHAR_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 #include <stdarg.h>
 #include <string.h>
 

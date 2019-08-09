@@ -8,7 +8,7 @@
 #ifndef __WINE_FCNTL_H
 #define __WINE_FCNTL_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #define _O_RDONLY      0
 #define _O_WRONLY      1

@@ -8,7 +8,7 @@
 #ifndef __WINE_STRING_H
 #define __WINE_STRING_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #ifndef _NLSCMP_DEFINED
 #define _NLSCMPERROR               ((unsigned int)0x7fffffff)

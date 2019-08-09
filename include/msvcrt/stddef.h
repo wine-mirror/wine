@@ -18,7 +18,7 @@
 #ifndef __WINE_STDDEF_H
 #define __WINE_STDDEF_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #ifndef NULL
 #ifdef __cplusplus

@@ -8,7 +8,7 @@
 #ifndef __WINE_DIRECT_H
 #define __WINE_DIRECT_H
 
-#include <crtdefs.h>
+#include <corecrt.h>
 
 #include <pshpack8.h>
 
