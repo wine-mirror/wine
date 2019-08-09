@@ -952,7 +952,8 @@ struct hlsl_ir_constant
 struct hlsl_ir_constructor
 {
     struct hlsl_ir_node node;
-    struct list *arguments;
+    struct hlsl_ir_node *args[16];
+    unsigned int args_count;
 };
 
 struct hlsl_scope

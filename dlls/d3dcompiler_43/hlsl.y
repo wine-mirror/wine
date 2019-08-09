@@ -2092,6 +2092,7 @@ postfix_expr:             primary_expr
                         | var_modifiers type '(' initializer_expr_list ')'
                             {
                                 struct hlsl_ir_constructor *constructor;
+                                struct hlsl_ir_node *instr;
 
                                 TRACE("%s constructor.\n", debug_hlsl_type($2));
                                 if ($1)
@@ -2120,7 +2121,12 @@ postfix_expr:             primary_expr
                                 constructor->node.type = HLSL_IR_CONSTRUCTOR;
                                 set_location(&constructor->node.loc, &@3);
                                 constructor->node.data_type = $2;
-                                constructor->arguments = $4;
+                                constructor->args_count = 0;
+                                LIST_FOR_EACH_ENTRY(instr, $4, struct hlsl_ir_node, entry)
+                                {
+                                    constructor->args[constructor->args_count++] = instr;
+                                }
+                                d3dcompiler_free($4);
 
                                 $$ = &constructor->node;
                             }

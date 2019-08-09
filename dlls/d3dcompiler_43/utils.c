@@ -2122,12 +2122,12 @@ static void debug_dump_ir_expr(const struct hlsl_ir_expr *expr)
 
 static void debug_dump_ir_constructor(const struct hlsl_ir_constructor *constructor)
 {
-    struct hlsl_ir_node *arg;
+    unsigned int i;
 
     TRACE("%s (", debug_hlsl_type(constructor->node.data_type));
-    LIST_FOR_EACH_ENTRY(arg, constructor->arguments, struct hlsl_ir_node, entry)
+    for (i = 0; i < constructor->args_count; ++i)
     {
-        debug_dump_instr(arg);
+        debug_dump_instr(constructor->args[i]);
         TRACE(" ");
     }
     TRACE(")");
@@ -2349,7 +2349,9 @@ static void free_ir_swizzle(struct hlsl_ir_swizzle *swizzle)
 
 static void free_ir_constructor(struct hlsl_ir_constructor *constructor)
 {
-    free_instr_list(constructor->arguments);
+    unsigned int i;
+    for (i = 0; i < constructor->args_count; ++i)
+        free_instr(constructor->args[i]);
     d3dcompiler_free(constructor);
 }
 
