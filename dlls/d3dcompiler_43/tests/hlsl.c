@@ -616,9 +616,9 @@ static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_ge
     {
         compiled = errors = NULL;
         hr = ppD3DCompile(tests[i], strlen(tests[i]), NULL, NULL, NULL, "test", "ps_2_0", 0, 0, &compiled, &errors);
-        ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
-        ok(!!errors, "Expected non-NULL error blob.\n");
-        ok(!compiled, "Expected no compiled shader blob.\n");
+        ok(hr == E_FAIL, "Test %u, got unexpected hr %#x.\n", i, hr);
+        ok(!!errors, "Test %u, expected non-NULL error blob.\n", i);
+        ok(!compiled, "Test %u, expected no compiled shader blob.\n", i);
         ID3D10Blob_Release(errors);
     }
 }
