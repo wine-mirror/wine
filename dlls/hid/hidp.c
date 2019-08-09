@@ -450,8 +450,8 @@ NTSTATUS WINAPI HidP_GetValueCaps(HIDP_REPORT_TYPE ReportType, PHIDP_VALUE_CAPS 
     {
         for (i = 0; i < report[j].elementCount && u < v_count; i++)
         {
-            if (elems[report->elementIdx + i].ElementType == ValueElement)
-                ValueCaps[u++] = elems[report->elementIdx + i].caps.value;
+            if (elems[report[j].elementIdx + i].ElementType == ValueElement)
+                ValueCaps[u++] = elems[report[j].elementIdx + i].caps.value;
         }
     }
 
