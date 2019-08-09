@@ -1124,10 +1124,23 @@ next_line:
     return (found_id && found_serial);
 }
 
+static DWORD a_to_bcd(const char *s)
+{
+    DWORD r = 0;
+    const char *c;
+    int shift = strlen(s) - 1;
+    for (c = s; *c; ++c)
+    {
+        r |= (*c - '0') << (shift * 4);
+        --shift;
+    }
+    return r;
+}
+
 static void try_add_device(struct udev_device *dev)
 {
     DWORD vid = 0, pid = 0, version = 0;
-    struct udev_device *hiddev = NULL;
+    struct udev_device *hiddev = NULL, *walk_device;
     DEVICE_OBJECT *device = NULL;
     const char *subsystem;
     const char *devnode;
@@ -1150,6 +1163,7 @@ static void try_add_device(struct udev_device *dev)
     hiddev = udev_device_get_parent_with_subsystem_devtype(dev, "hid", NULL);
     if (hiddev)
     {
+        const char *bcdDevice = NULL;
 #ifdef HAS_PROPER_INPUT_HEADER
         const platform_vtbl *other_vtbl = NULL;
         DEVICE_OBJECT *dup = NULL;
@@ -1171,6 +1185,17 @@ static void try_add_device(struct udev_device *dev)
                           &vid, &pid, &input, &serial);
         if (serial == NULL)
             serial = strdupAtoW(base_serial);
+
+        walk_device = dev;
+        while (walk_device && !bcdDevice)
+        {
+            bcdDevice = udev_device_get_sysattr_value(walk_device, "bcdDevice");
+            walk_device = udev_device_get_parent(walk_device);
+        }
+        if (bcdDevice)
+        {
+            version = a_to_bcd(bcdDevice);
+        }
     }
 #ifdef HAS_PROPER_INPUT_HEADER
     else
