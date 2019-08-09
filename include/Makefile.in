@@ -414,6 +414,7 @@ SOURCES = \
 	mstcpip.h \
 	msvcrt/assert.h \
 	msvcrt/conio.h \
+	msvcrt/corecrt.h \
 	msvcrt/crtdbg.h \
 	msvcrt/crtdefs.h \
 	msvcrt/ctype.h \
