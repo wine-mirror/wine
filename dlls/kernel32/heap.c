@@ -252,14 +252,6 @@ BOOL WINAPI HeapUnlock(
 }
 
 
-/***********************************************************************
- *           GetProcessHeaps    (KERNEL32.@)
- */
-DWORD WINAPI GetProcessHeaps( DWORD count, HANDLE *heaps )
-{
-    return RtlGetProcessHeaps( count, heaps );
-}
-
 
 /* These are needed so that we can call the functions from inside kernel itself */
 

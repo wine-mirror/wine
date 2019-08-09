@@ -517,7 +517,7 @@
 @ stdcall -import FlsSetValue(long ptr)
 @ stdcall FlushConsoleInputBuffer(long)
 @ stdcall FlushFileBuffers(long)
-@ stdcall FlushInstructionCache(long long long)
+@ stdcall -import FlushInstructionCache(long long long)
 @ stdcall FlushProcessWriteBuffers()
 @ stdcall FlushViewOfFile(ptr long)
 @ stdcall FoldStringA(long str long ptr long)
@@ -664,7 +664,7 @@
 @ stdcall GetEnvironmentVariableA(str ptr long)
 @ stdcall GetEnvironmentVariableW(wstr ptr long)
 # @ stub GetEraNameCountedString
-@ stdcall GetErrorMode()
+@ stdcall -import GetErrorMode()
 @ stdcall GetExitCodeProcess(long ptr)
 @ stdcall -import GetExitCodeThread(long ptr)
 @ stdcall GetExpandedNameA(str ptr)
@@ -763,7 +763,7 @@
 @ stdcall GetUserPreferredUILanguages(long ptr ptr ptr)
 @ stdcall GetPackageFullName(long ptr ptr)
 @ stdcall GetPhysicallyInstalledSystemMemory(ptr)
-@ stdcall GetPriorityClass(long)
+@ stdcall -import GetPriorityClass(long)
 @ stdcall GetPrivateProfileIntA(str str long str)
 @ stdcall GetPrivateProfileIntW(wstr wstr long wstr)
 @ stdcall GetPrivateProfileSectionA(str ptr long str)
@@ -779,22 +779,22 @@
 @ stdcall GetProcessDEPPolicy(long ptr ptr)
 @ stdcall GetProcessFlags(long)
 # @ stub GetProcessGroupAffinity
-@ stdcall GetProcessHandleCount(long ptr)
-@ stdcall -norelay GetProcessHeap() KERNEL32_GetProcessHeap
-@ stdcall GetProcessHeaps(long ptr)
-@ stdcall GetProcessId(long)
+@ stdcall -import GetProcessHandleCount(long ptr)
+@ stdcall -import GetProcessHeap()
+@ stdcall -import GetProcessHeaps(long ptr) RtlGetProcessHeaps
+@ stdcall -import GetProcessId(long)
 @ stdcall -import GetProcessIdOfThread(long)
 @ stdcall GetProcessIoCounters(long ptr)
-@ stdcall GetProcessMitigationPolicy(long long ptr long)
+@ stdcall -import GetProcessMitigationPolicy(long long ptr long)
 @ stdcall GetProcessPreferredUILanguages(long ptr ptr ptr)
-@ stdcall GetProcessPriorityBoost(long ptr)
-@ stdcall GetProcessShutdownParameters(ptr ptr)
+@ stdcall -import GetProcessPriorityBoost(long ptr)
+@ stdcall -import GetProcessShutdownParameters(ptr ptr)
 # @ stub GetProcessorSystemCycleTime
 @ stdcall GetProcessTimes(long ptr ptr ptr ptr)
 # @ stub GetProcessUserModeExceptionPolicy
 @ stdcall GetProcessVersion(long)
 @ stdcall GetProcessWorkingSetSize(long ptr ptr)
-@ stdcall GetProcessWorkingSetSizeEx(long ptr ptr ptr)
+@ stdcall -import GetProcessWorkingSetSizeEx(long ptr ptr ptr)
 @ stdcall GetProductInfo(long long long long ptr)
 @ stub GetProductName
 @ stdcall GetProfileIntA(str str long)
@@ -994,7 +994,7 @@
 @ stdcall IsValidLocale(long long)
 @ stdcall IsValidLocaleName(wstr)
 # @ stub IsValidUILanguage
-@ stdcall IsWow64Process(ptr ptr)
+@ stdcall -import IsWow64Process(ptr ptr)
 @ stdcall K32EmptyWorkingSet(long)
 @ stdcall K32EnumDeviceDrivers(ptr long ptr)
 @ stdcall K32EnumPageFilesA(ptr ptr)
@@ -1124,7 +1124,7 @@
 @ stdcall -import OpenMutexW(long long wstr)
 # @ stub OpenPrivateNamespaceA
 # @ stub OpenPrivateNamespaceW
-@ stdcall OpenProcess(long long long)
+@ stdcall -import OpenProcess(long long long)
 # @ stub OpenProcessToken
 @ stdcall OpenProfileUserMapping()
 @ stdcall OpenSemaphoreA(long long str)
@@ -1388,7 +1388,7 @@
 # @ stub SetEnvironmentStringsW
 @ stdcall SetEnvironmentVariableA(str str)
 @ stdcall SetEnvironmentVariableW(wstr wstr)
-@ stdcall SetErrorMode(long)
+@ stdcall -import SetErrorMode(long)
 @ stdcall -import SetEvent(long)
 @ stdcall SetEventWhenCallbackReturns(ptr long) ntdll.TpCallbackSetEventOnCompletion
 @ stdcall SetFileApisToANSI()
@@ -1424,17 +1424,17 @@
 @ stub SetMessageWaitingIndicator
 # @ stub SetNamedPipeAttribute
 @ stdcall -import SetNamedPipeHandleState(long ptr ptr ptr)
-@ stdcall SetPriorityClass(long long)
+@ stdcall -import SetPriorityClass(long long)
 @ stdcall SetProcessAffinityMask(long long)
-@ stdcall SetProcessAffinityUpdateMode(long long)
+@ stdcall -import SetProcessAffinityUpdateMode(long long)
 @ stdcall SetProcessDEPPolicy(long)
-@ stdcall SetProcessMitigationPolicy(long ptr long)
+@ stdcall -import SetProcessMitigationPolicy(long ptr long)
 @ stdcall SetProcessPreferredUILanguages(long ptr ptr)
-@ stdcall SetProcessPriorityBoost(long long)
-@ stdcall SetProcessShutdownParameters(long long)
+@ stdcall -import SetProcessPriorityBoost(long long)
+@ stdcall -import SetProcessShutdownParameters(long long)
 # @ stub SetProcessUserModeExceptionPolicy
 @ stdcall SetProcessWorkingSetSize(long long long)
-@ stdcall SetProcessWorkingSetSizeEx(long long long long)
+@ stdcall -import SetProcessWorkingSetSizeEx(long long long long)
 @ stdcall SetSearchPathMode(long)
 @ stdcall SetStdHandle(long long)
 # @ stub SetStdHandleEx
@@ -1496,7 +1496,7 @@
 @ stdcall SystemTimeToTzSpecificLocalTime (ptr ptr ptr)
 # @ stub SystemTimeToTzSpecificLocalTimeEx
 @ stdcall TerminateJobObject(long long)
-@ stdcall TerminateProcess(long long)
+@ stdcall -import TerminateProcess(long long)
 @ stdcall -import TerminateThread(long long)
 @ stdcall TermsrvAppInstallMode()
 @ stdcall Thread32First(long ptr)

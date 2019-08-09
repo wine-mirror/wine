@@ -7,6 +7,7 @@ C_SRCS = \
 	loader.c \
 	main.c \
 	path.c \
+	process.c \
 	registry.c \
 	security.c \
 	string.c \

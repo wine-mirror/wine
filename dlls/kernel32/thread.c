@@ -160,11 +160,3 @@ DWORD WINAPI KERNEL32_GetCurrentThreadId(void)
 {
     return HandleToULong(NtCurrentTeb()->ClientId.UniqueThread);
 }
-
-/***********************************************************************
- *           GetProcessHeap    (KERNEL32.@)
- */
-HANDLE WINAPI KERNEL32_GetProcessHeap(void)
-{
-    return NtCurrentTeb()->Peb->ProcessHeap;
-}

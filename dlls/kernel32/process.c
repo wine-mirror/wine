@@ -84,8 +84,6 @@ typedef struct
     DWORD dwReserved;
 } LOADPARMS32;
 
-static DWORD shutdown_flags = 0;
-static DWORD shutdown_priority = 0x280;
 static BOOL is_wow64;
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
@@ -117,8 +115,6 @@ static WCHAR winevdm[] = {'C',':','\\','w','i','n','d','o','w','s',
 static const char * const cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
 
 static void exec_process( LPCWSTR name );
-
-extern void SHELL_LoadRegistry(void);
 
 /* return values for get_binary_info */
 enum binary_type
@@ -3115,34 +3111,6 @@ DWORD WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
 }
 
 
-/******************************************************************************
- *           TerminateProcess   (KERNEL32.@)
- *
- * Terminates a process.
- *
- * PARAMS
- *  handle    [I] Process to terminate.
- *  exit_code [I] Exit code.
- *
- * RETURNS
- *  Success: TRUE.
- *  Failure: FALSE, check GetLastError().
- */
-BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
-{
-    NTSTATUS status;
-
-    if (!handle)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
-
-    status = NtTerminateProcess( handle, exit_code );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
 /***********************************************************************
  *           ExitProcess   (KERNEL32.@)
  *
@@ -3204,32 +3172,6 @@ BOOL WINAPI GetExitCodeProcess( HANDLE hProcess, LPDWORD lpExitCode )
 
 
 /***********************************************************************
- *           SetErrorMode   (KERNEL32.@)
- */
-UINT WINAPI SetErrorMode( UINT mode )
-{
-    UINT old;
-
-    NtQueryInformationProcess( GetCurrentProcess(), ProcessDefaultHardErrorMode,
-                               &old, sizeof(old), NULL );
-    NtSetInformationProcess( GetCurrentProcess(), ProcessDefaultHardErrorMode,
-                             &mode, sizeof(mode) );
-    return old;
-}
-
-/***********************************************************************
- *           GetErrorMode   (KERNEL32.@)
- */
-UINT WINAPI GetErrorMode( void )
-{
-    UINT mode;
-
-    NtQueryInformationProcess( GetCurrentProcess(), ProcessDefaultHardErrorMode,
-                               &mode, sizeof(mode), NULL );
-    return mode;
-}
-
-/***********************************************************************
  *           GetProcessFlags    (KERNEL32.@)
  */
 DWORD WINAPI GetProcessFlags( DWORD processid )
@@ -3247,79 +3189,6 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
     if (!AreFileApisANSI()) flags |= PDB32_FILE_APIS_OEM;
     if (IsDebuggerPresent()) flags |= PDB32_DEBUGGED;
     return flags;
-}
-
-
-/*********************************************************************
- *           OpenProcess   (KERNEL32.@)
- *
- * Opens a handle to a process.
- *
- * PARAMS
- *  access  [I] Desired access rights assigned to the returned handle.
- *  inherit [I] Determines whether or not child processes will inherit the handle.
- *  id      [I] Process identifier of the process to get a handle to.
- *
- * RETURNS
- *  Success: Valid handle to the specified process.
- *  Failure: NULL, check GetLastError().
- */
-HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
-{
-    NTSTATUS            status;
-    HANDLE              handle;
-    OBJECT_ATTRIBUTES   attr;
-    CLIENT_ID           cid;
-
-    cid.UniqueProcess = ULongToHandle(id);
-    cid.UniqueThread = 0; /* FIXME ? */
-
-    attr.Length = sizeof(OBJECT_ATTRIBUTES);
-    attr.RootDirectory = NULL;
-    attr.Attributes = inherit ? OBJ_INHERIT : 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    attr.ObjectName = NULL;
-
-    if (GetVersion() & 0x80000000) access = PROCESS_ALL_ACCESS;
-
-    status = NtOpenProcess(&handle, access, &attr, &cid);
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return NULL;
-    }
-    return handle;
-}
-
-
-/*********************************************************************
- *           GetProcessId       (KERNEL32.@)
- *
- * Gets the a unique identifier of a process.
- *
- * PARAMS
- *  hProcess [I] Handle to the process.
- *
- * RETURNS
- *  Success: TRUE.
- *  Failure: FALSE, check GetLastError().
- *
- * NOTES
- *
- * The identifier is unique only on the machine and only until the process
- * exits (including system shutdown).
- */
-DWORD WINAPI GetProcessId( HANDLE hProcess )
-{
-    NTSTATUS status;
-    PROCESS_BASIC_INFORMATION pbi;
-
-    status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi,
-                                       sizeof(pbi), NULL);
-    if (status == STATUS_SUCCESS) return pbi.UniqueProcessId;
-    SetLastError( RtlNtStatusToDosError(status) );
-    return 0;
 }
 
 
@@ -3481,75 +3350,6 @@ HANDLE WINAPI CreateSocketHandle(void)
 
 
 /***********************************************************************
- *           SetPriorityClass   (KERNEL32.@)
- */
-BOOL WINAPI SetPriorityClass( HANDLE hprocess, DWORD priorityclass )
-{
-    NTSTATUS                    status;
-    PROCESS_PRIORITY_CLASS      ppc;
-
-    ppc.Foreground = FALSE;
-    switch (priorityclass)
-    {
-    case IDLE_PRIORITY_CLASS:
-        ppc.PriorityClass = PROCESS_PRIOCLASS_IDLE; break;
-    case BELOW_NORMAL_PRIORITY_CLASS:
-        ppc.PriorityClass = PROCESS_PRIOCLASS_BELOW_NORMAL; break;
-    case NORMAL_PRIORITY_CLASS:
-        ppc.PriorityClass = PROCESS_PRIOCLASS_NORMAL; break;
-    case ABOVE_NORMAL_PRIORITY_CLASS:
-        ppc.PriorityClass = PROCESS_PRIOCLASS_ABOVE_NORMAL; break;
-    case HIGH_PRIORITY_CLASS:
-        ppc.PriorityClass = PROCESS_PRIOCLASS_HIGH; break;
-    case REALTIME_PRIORITY_CLASS:
-        ppc.PriorityClass = PROCESS_PRIOCLASS_REALTIME; break;
-    default:
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    status = NtSetInformationProcess(hprocess, ProcessPriorityClass,
-                                     &ppc, sizeof(ppc));
-
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           GetPriorityClass   (KERNEL32.@)
- */
-DWORD WINAPI GetPriorityClass(HANDLE hProcess)
-{
-    NTSTATUS status;
-    PROCESS_BASIC_INFORMATION pbi;
-
-    status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi,
-                                       sizeof(pbi), NULL);
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return 0;
-    }
-    switch (pbi.BasePriority)
-    {
-    case PROCESS_PRIOCLASS_IDLE: return IDLE_PRIORITY_CLASS;
-    case PROCESS_PRIOCLASS_BELOW_NORMAL: return BELOW_NORMAL_PRIORITY_CLASS;
-    case PROCESS_PRIOCLASS_NORMAL: return NORMAL_PRIORITY_CLASS;
-    case PROCESS_PRIOCLASS_ABOVE_NORMAL: return ABOVE_NORMAL_PRIORITY_CLASS;
-    case PROCESS_PRIOCLASS_HIGH: return HIGH_PRIORITY_CLASS;
-    case PROCESS_PRIOCLASS_REALTIME: return REALTIME_PRIORITY_CLASS;
-    }
-    SetLastError( ERROR_INVALID_PARAMETER );
-    return 0;
-}
-
-
-/***********************************************************************
  *          SetProcessAffinityMask   (KERNEL32.@)
  */
 BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD_PTR affmask )
@@ -3590,17 +3390,6 @@ BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess, PDWORD_PTR process_mask, PD
             *system_mask = info.ActiveProcessorsAffinityMask;
     }
     return !status;
-}
-
-
-/***********************************************************************
- *           SetProcessAffinityUpdateMode (KERNEL32.@)
- */
-BOOL WINAPI SetProcessAffinityUpdateMode( HANDLE process, DWORD flags )
-{
-    FIXME("(%p,0x%08x): stub\n", process, flags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
 }
 
 
@@ -3660,30 +3449,6 @@ err:
 
 
 /***********************************************************************
- *		SetProcessWorkingSetSizeEx	[KERNEL32.@]
- * Sets the min/max working set sizes for a specified process.
- *
- * PARAMS
- *    process  [I] Handle to the process of interest
- *    minset   [I] Specifies minimum working set size
- *    maxset   [I] Specifies maximum working set size
- *    flags    [I] Flags to enforce working set sizes
- *
- * RETURNS
- *  Success: TRUE
- *  Failure: FALSE
- */
-BOOL WINAPI SetProcessWorkingSetSizeEx(HANDLE process, SIZE_T minset, SIZE_T maxset, DWORD flags)
-{
-    WARN("(%p,%ld,%ld,%x): stub - harmless\n", process, minset, maxset, flags);
-    if(( minset == (SIZE_T)-1) && (maxset == (SIZE_T)-1)) {
-        /* Trim the working set to zero */
-        /* Swap the process out of physical RAM */
-    }
-    return TRUE;
-}
-
-/***********************************************************************
  *		SetProcessWorkingSetSize	[KERNEL32.@]
  * Sets the min/max working set sizes for a specified process.
  *
@@ -3711,75 +3476,11 @@ BOOL WINAPI K32EmptyWorkingSet(HANDLE hProcess)
 
 
 /***********************************************************************
- *           GetProcessWorkingSetSizeEx    (KERNEL32.@)
- */
-BOOL WINAPI GetProcessWorkingSetSizeEx(HANDLE process, SIZE_T *minset,
-                                       SIZE_T *maxset, DWORD *flags)
-{
-    FIXME("(%p,%p,%p,%p): stub\n", process, minset, maxset, flags);
-    /* 32 MB working set size */
-    if (minset) *minset = 32*1024*1024;
-    if (maxset) *maxset = 32*1024*1024;
-    if (flags) *flags = QUOTA_LIMITS_HARDWS_MIN_DISABLE |
-                        QUOTA_LIMITS_HARDWS_MAX_DISABLE;
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           GetProcessWorkingSetSize    (KERNEL32.@)
  */
 BOOL WINAPI GetProcessWorkingSetSize(HANDLE process, SIZE_T *minset, SIZE_T *maxset)
 {
     return GetProcessWorkingSetSizeEx(process, minset, maxset, NULL);
-}
-
-
-/***********************************************************************
- *           SetProcessShutdownParameters    (KERNEL32.@)
- */
-BOOL WINAPI SetProcessShutdownParameters(DWORD level, DWORD flags)
-{
-    FIXME("(%08x, %08x): partial stub.\n", level, flags);
-    shutdown_flags = flags;
-    shutdown_priority = level;
-    return TRUE;
-}
-
-
-/***********************************************************************
- * GetProcessShutdownParameters                 (KERNEL32.@)
- *
- */
-BOOL WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel, LPDWORD lpdwFlags )
-{
-    *lpdwLevel = shutdown_priority;
-    *lpdwFlags = shutdown_flags;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           GetProcessPriorityBoost    (KERNEL32.@)
- */
-BOOL WINAPI GetProcessPriorityBoost(HANDLE hprocess,PBOOL pDisablePriorityBoost)
-{
-    FIXME("(%p,%p): semi-stub\n", hprocess, pDisablePriorityBoost);
-    
-    /* Report that no boost is present.. */
-    *pDisablePriorityBoost = FALSE;
-    
-    return TRUE;
-}
-
-/***********************************************************************
- *           SetProcessPriorityBoost    (KERNEL32.@)
- */
-BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
-{
-    FIXME("(%p,%d): stub\n",hprocess,disableboost);
-    /* Say we can do it. I doubt the program will notice that we don't. */
-    return TRUE;
 }
 
 
@@ -3807,18 +3508,6 @@ BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPCVOID buffer, SIZ
 }
 
 
-/****************************************************************************
- *		FlushInstructionCache (KERNEL32.@)
- */
-BOOL WINAPI FlushInstructionCache(HANDLE hProcess, LPCVOID lpBaseAddress, SIZE_T dwSize)
-{
-    NTSTATUS status;
-    status = NtFlushInstructionCache( hProcess, lpBaseAddress, dwSize );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
-
 /******************************************************************
  *		GetProcessIoCounters (KERNEL32.@)
  */
@@ -3828,19 +3517,6 @@ BOOL WINAPI GetProcessIoCounters(HANDLE hProcess, PIO_COUNTERS ioc)
 
     status = NtQueryInformationProcess(hProcess, ProcessIoCounters, 
                                        ioc, sizeof(*ioc), NULL);
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
-/******************************************************************
- *		GetProcessHandleCount (KERNEL32.@)
- */
-BOOL WINAPI GetProcessHandleCount(HANDLE hProcess, DWORD *cnt)
-{
-    NTSTATUS status;
-
-    status = NtQueryInformationProcess(hProcess, ProcessHandleCount,
-                                       cnt, sizeof(*cnt), NULL);
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
@@ -4111,26 +3787,6 @@ DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
 {
     /* I don't think that Wine needs to do anything in this function */
     return 1; /* success */
-}
-
-
-/**********************************************************************
- *           IsWow64Process         (KERNEL32.@)
- */
-BOOL WINAPI IsWow64Process(HANDLE hProcess, PBOOL Wow64Process)
-{
-    ULONG_PTR pbi;
-    NTSTATUS status;
-
-    status = NtQueryInformationProcess( hProcess, ProcessWow64Information, &pbi, sizeof(pbi), NULL );
-
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError( status ) );
-        return FALSE;
-    }
-    *Wow64Process = (pbi != 0);
-    return TRUE;
 }
 
 
@@ -4734,24 +4390,4 @@ BOOL WINAPI BaseFlushAppcompatCache(void)
     FIXME(": stub\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
-}
-
-/**********************************************************************
- *           SetProcessMitigationPolicy     (KERNEL32.@)
- */
-BOOL WINAPI SetProcessMitigationPolicy(PROCESS_MITIGATION_POLICY policy, void *buffer, SIZE_T length)
-{
-    FIXME("(%d, %p, %lu): stub\n", policy, buffer, length);
-
-    return TRUE;
-}
-
-/**********************************************************************
- *           GetProcessMitigationPolicy     (KERNEL32.@)
- */
-BOOL WINAPI GetProcessMitigationPolicy(HANDLE hProcess, PROCESS_MITIGATION_POLICY policy, void *buffer, SIZE_T length)
-{
-    FIXME("(%p, %u, %p, %lu): stub\n", hProcess, policy, buffer, length);
-
-    return TRUE;
 }

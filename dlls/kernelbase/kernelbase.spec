@@ -381,7 +381,7 @@
 @ stdcall FlsSetValue(long ptr)
 @ stdcall FlushConsoleInputBuffer(long) kernel32.FlushConsoleInputBuffer
 @ stdcall FlushFileBuffers(long) kernel32.FlushFileBuffers
-@ stdcall FlushInstructionCache(long long long) kernel32.FlushInstructionCache
+@ stdcall FlushInstructionCache(long long long)
 @ stdcall FlushProcessWriteBuffers() kernel32.FlushProcessWriteBuffers
 @ stdcall FlushViewOfFile(ptr long) kernel32.FlushViewOfFile
 @ stdcall FoldStringW(long wstr long ptr long) kernel32.FoldStringW
@@ -464,8 +464,8 @@
 # @ stub GetCurrentPackagePath
 # @ stub GetCurrentPackageResourcesContext
 # @ stub GetCurrentPackageSecurityContext
-@ stdcall -norelay GetCurrentProcess() kernel32.GetCurrentProcess
-@ stdcall -norelay GetCurrentProcessId() kernel32.GetCurrentProcessId
+@ stdcall -norelay GetCurrentProcess() kernelbase_GetCurrentProcess
+@ stdcall -norelay GetCurrentProcessId() kernelbase_GetCurrentProcessId
 @ stdcall GetCurrentProcessorNumber() ntdll.NtGetCurrentProcessorNumber
 @ stdcall GetCurrentProcessorNumberEx(ptr) ntdll.RtlGetCurrentProcessorNumberEx
 # @ stub GetCurrentTargetPlatformContext
@@ -498,8 +498,8 @@
 @ stdcall GetEnvironmentVariableA(str ptr long) kernel32.GetEnvironmentVariableA
 @ stdcall GetEnvironmentVariableW(wstr ptr long) kernel32.GetEnvironmentVariableW
 @ stub GetEraNameCountedString
-@ stdcall GetErrorMode() kernel32.GetErrorMode
-@ stdcall GetExitCodeProcess(long ptr) kernel32.GetExitCodeProcess
+@ stdcall GetErrorMode()
+@ stdcall GetExitCodeProcess(long ptr)
 @ stdcall GetExitCodeThread(long ptr)
 @ stub GetFallbackDisplayName
 @ stdcall GetFileAttributesA(str) kernel32.GetFileAttributesA
@@ -617,28 +617,28 @@
 # @ stub GetPerformanceInfo
 @ stdcall GetPhysicallyInstalledSystemMemory(ptr) kernel32.GetPhysicallyInstalledSystemMemory
 # @ stub GetPreviousFgPolicyRefreshInfoInternal
-@ stdcall GetPriorityClass(long) kernel32.GetPriorityClass
+@ stdcall GetPriorityClass(long)
 @ stdcall GetPrivateObjectSecurity(ptr long ptr long ptr)
 @ stdcall GetProcAddress(long str) kernel32.GetProcAddress
 # @ stub GetProcAddressForCaller
 # @ stub GetProcessDefaultCpuSets
 # @ stub GetProcessGroupAffinity
-@ stdcall GetProcessHandleCount(long ptr) kernel32.GetProcessHandleCount
-@ stdcall -norelay GetProcessHeap() kernel32.GetProcessHeap
-@ stdcall GetProcessHeaps(long ptr) kernel32.GetProcessHeaps
-@ stdcall GetProcessId(long) kernel32.GetProcessId
+@ stdcall GetProcessHandleCount(long ptr)
+@ stdcall -norelay GetProcessHeap() kernelbase_GetProcessHeap
+@ stdcall -import GetProcessHeaps(long ptr) RtlGetProcessHeaps
+@ stdcall GetProcessId(long)
 @ stdcall GetProcessIdOfThread(long)
 # @ stub GetProcessImageFileNameA
 # @ stub GetProcessImageFileNameW
 # @ stub GetProcessInformation
 # @ stub GetProcessMemoryInfo
-@ stdcall GetProcessMitigationPolicy(long long ptr long) kernel32.GetProcessMitigationPolicy
+@ stdcall GetProcessMitigationPolicy(long long ptr long)
 @ stdcall GetProcessPreferredUILanguages(long ptr ptr ptr) kernel32.GetProcessPreferredUILanguages
-@ stdcall GetProcessPriorityBoost(long ptr) kernel32.GetProcessPriorityBoost
-@ stdcall GetProcessShutdownParameters(ptr ptr) kernel32.GetProcessShutdownParameters
+@ stdcall GetProcessPriorityBoost(long ptr)
+@ stdcall GetProcessShutdownParameters(ptr ptr)
 @ stdcall GetProcessTimes(long ptr ptr ptr ptr) kernel32.GetProcessTimes
 @ stdcall GetProcessVersion(long) kernel32.GetProcessVersion
-@ stdcall GetProcessWorkingSetSizeEx(long ptr ptr ptr) kernel32.GetProcessWorkingSetSizeEx
+@ stdcall GetProcessWorkingSetSizeEx(long ptr ptr ptr)
 # @ stub GetProcessorSystemCycleTime
 @ stdcall GetProductInfo(long long long long ptr) kernel32.GetProductInfo
 @ stub GetPtrCalData
@@ -884,7 +884,7 @@
 @ stdcall IsValidSecurityDescriptor(ptr)
 @ stdcall IsValidSid(ptr)
 @ stdcall IsWellKnownSid(ptr long)
-@ stdcall IsWow64Process(ptr ptr) kernel32.IsWow64Process
+@ stdcall IsWow64Process(ptr ptr)
 # @ stub IsWow64Process2
 @ stdcall K32EmptyWorkingSet(long) kernel32.K32EmptyWorkingSet
 @ stdcall K32EnumDeviceDrivers(ptr long ptr) kernel32.K32EnumDeviceDrivers
@@ -991,7 +991,7 @@
 # @ stub OpenPackageInfoByFullName
 # @ stub OpenPackageInfoByFullNameForUser
 # @ stub OpenPrivateNamespaceW
-@ stdcall OpenProcess(long long long) kernel32.OpenProcess
+@ stdcall OpenProcess(long long long)
 @ stdcall OpenProcessToken(long long ptr)
 @ stub OpenRegKey
 @ stdcall OpenSemaphoreW(long long wstr)
@@ -1426,7 +1426,7 @@
 @ stub SetEnvironmentStringsW
 @ stdcall SetEnvironmentVariableA(str str) kernel32.SetEnvironmentVariableA
 @ stdcall SetEnvironmentVariableW(wstr wstr) kernel32.SetEnvironmentVariableW
-@ stdcall SetErrorMode(long) kernel32.SetErrorMode
+@ stdcall SetErrorMode(long)
 @ stdcall SetEvent(long)
 @ stdcall SetEventWhenCallbackReturns(ptr long) ntdll.TpCallbackSetEventOnCompletion
 @ stdcall SetFileApisToANSI() kernel32.SetFileApisToANSI
@@ -1450,19 +1450,19 @@
 @ stdcall SetLocalTime(ptr) kernel32.SetLocalTime
 @ stdcall SetLocaleInfoW(long long wstr) kernel32.SetLocaleInfoW
 @ stdcall SetNamedPipeHandleState(long ptr ptr ptr)
-@ stdcall SetPriorityClass(long long) kernel32.SetPriorityClass
+@ stdcall SetPriorityClass(long long)
 @ stdcall SetPrivateObjectSecurity(long ptr ptr ptr long)
 @ stub SetPrivateObjectSecurityEx
-@ stdcall SetProcessAffinityUpdateMode(long long) kernel32.SetProcessAffinityUpdateMode
+@ stdcall SetProcessAffinityUpdateMode(long long)
 # @ stub SetProcessDefaultCpuSets
 # @ stub SetProcessGroupAffinity
 # @ stub SetProcessInformation
-@ stdcall SetProcessMitigationPolicy(long ptr long) kernel32.SetProcessMitigationPolicy
+@ stdcall SetProcessMitigationPolicy(long ptr long)
 @ stdcall SetProcessPreferredUILanguages(long ptr ptr) kernel32.SetProcessPreferredUILanguages
-@ stdcall SetProcessPriorityBoost(long long) kernel32.SetProcessPriorityBoost
-@ stdcall SetProcessShutdownParameters(long long) kernel32.SetProcessShutdownParameters
+@ stdcall SetProcessPriorityBoost(long long)
+@ stdcall SetProcessShutdownParameters(long long)
 # @ stub SetProcessValidCallTargets
-@ stdcall SetProcessWorkingSetSizeEx(long long long long) kernel32.SetProcessWorkingSetSizeEx
+@ stdcall SetProcessWorkingSetSizeEx(long long long long)
 # @ stub SetProtectedPolicy
 # @ stub SetRoamingLastObservedChangeTime
 @ stub SetSecurityAccessMask
@@ -1594,7 +1594,7 @@
 @ stdcall SystemTimeToFileTime(ptr ptr) kernel32.SystemTimeToFileTime
 @ stdcall SystemTimeToTzSpecificLocalTime(ptr ptr ptr) kernel32.SystemTimeToTzSpecificLocalTime
 @ stub SystemTimeToTzSpecificLocalTimeEx
-@ stdcall TerminateProcess(long long) kernel32.TerminateProcess
+@ stdcall TerminateProcess(long long)
 # @ stub TerminateProcessOnMemoryExhaustion
 @ stdcall TerminateThread(long long)
 @ stdcall TlsAlloc()
