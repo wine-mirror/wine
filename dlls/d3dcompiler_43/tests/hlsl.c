@@ -562,93 +562,53 @@ static void test_trig(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *quad_geo
 static void test_fail(IDirect3DDevice9 *device, IDirect3DVertexBuffer9 *qquad_geometry,
         IDirect3DVertexShader9 *vshader_passthru)
 {
-    static const char *undefined_variable_shader =
+    static const char *tests[] =
+    {
         "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
         "{\n"
         "   return y;\n"
-        "}";
+        "}",
 
-    static const char *invalid_swizzle_shader =
         "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
         "{\n"
         "  float4 x = float4(0, 0, 0, 0);\n"
         "  x.xzzx = float4(1, 2, 3, 4);\n"
         "  return x;\n"
-        "}";
+        "}",
 
-    static const char *invalid_conversion_shader =
         "float4 test(float2 pos: TEXCOORD0) : COLOR\n"
         "{\n"
         "  float4 x = pos;\n"
         "  return x;\n"
-        "}";
+        "}",
 
-    static const char *invalid_syntax_shader =
         "float4 test(float2 pos, TEXCOORD0) ; COLOR\n"
         "{\n"
         "  pos = float4 x;\n"
         "  mul(float4(5, 4, 3, 2), mvp) = x;\n"
         "  return float4;\n"
-        "}";
+        "}",
 
-    static const char *invalid_identifiers_shader =
         "float4 563r(float2 45s: TEXCOORD0) : COLOR\n"
         "{\n"
         "  float2 x = 45s;\n"
         "  return float4(x.x, x.y, 0, 0);\n"
-        "}";
+        "}",
+    };
 
-    ID3D10Blob *compiled = NULL, *errors = NULL;
+    ID3D10Blob *compiled, *errors;
+    unsigned int i;
     HRESULT hr;
 
-    hr = ppD3DCompile(undefined_variable_shader, strlen(undefined_variable_shader), NULL, NULL, NULL,
-            "test", "ps_2_0", 0, 0, &compiled, &errors);
-    ok(hr != D3D_OK, "Pixel shader compilation succeeded on shader with undefined variable\n");
-    ok(errors != NULL, "No errors returned for a shader with undefined variables\n");
-    ok(compiled == NULL, "A shader blob was returned for a shader with undefined variables\n");
-
-    ID3D10Blob_Release(errors);
-    errors = NULL;
-
-    hr = ppD3DCompile(invalid_swizzle_shader, strlen(invalid_swizzle_shader), NULL, NULL, NULL,
-            "test","ps_2_0", 0, 0, &compiled, &errors);
-    ok(hr != D3D_OK, "Pixel shader compilation succeeded on shader with an invalid swizzle mask\n");
-    ok(errors != NULL, "No errors returned for a shader with an invalid swizzle mask\n");
-    ok(compiled == NULL, "A shader blob was returned for a shader with an invalid swizzle mask\n");
-
-    ID3D10Blob_Release(errors);
-    errors = NULL;
-
-    hr = ppD3DCompile(invalid_conversion_shader, strlen(invalid_conversion_shader), NULL, NULL, NULL,
-             "test", "ps_2_0", 0, 0, &compiled, &errors);
-    ok(hr != D3D_OK, "Pixel shader compilation succeeded on shader with an invalid type "
-            "conversion\n");
-    ok(errors != NULL, "No errors returned for a shader with invalid type conversions\n");
-    ok(compiled == NULL, "A shader blob was returned for a shader with invalid type conversions\n");
-
-    ID3D10Blob_Release(errors);
-    errors = NULL;
-
-    hr = ppD3DCompile(invalid_syntax_shader, strlen(invalid_syntax_shader), NULL, NULL, NULL, "test",
-            "ps_2_0", 0, 0, &compiled, &errors);
-    ok(hr != D3D_OK, "Pixel shader compilation succeeded on shader with blatantly invalid "
-            "syntax\n");
-    ok(errors != NULL, "No errors returned for a shader with invalid syntax\n");
-    ok(compiled == NULL, "A shader blob was returned for a shader with invalid syntax\n");
-
-    ID3D10Blob_Release(errors);
-    errors = NULL;
-
-    hr = ppD3DCompile(invalid_identifiers_shader, strlen(invalid_identifiers_shader), NULL, NULL,
-            NULL, "test", "ps_2_0", 0, 0, &compiled, &errors);
-    ok(hr != D3D_OK, "Pixel shader compilation successful on a shader with invalid variable and "
-            "function names\n");
-    ok(errors != NULL, "No errors returned for a shader with invalid variable and function "
-            "names\n");
-    ok(compiled == NULL, "A shader blob was returned for a shader with invalid variable and "
-            "function names\n");
-
-    ID3D10Blob_Release(errors);
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        compiled = errors = NULL;
+        hr = ppD3DCompile(tests[i], strlen(tests[i]), NULL, NULL, NULL, "test", "ps_2_0", 0, 0, &compiled, &errors);
+        ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+        ok(!!errors, "Expected non-NULL error blob.\n");
+        ok(!compiled, "Expected no compiled shader blob.\n");
+        ID3D10Blob_Release(errors);
+    }
 }
 
 static BOOL load_d3dcompiler(void)
