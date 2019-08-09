@@ -913,7 +913,6 @@ static const struct hlsl_ir_function_decl *get_overloaded_func(struct wine_rb_tr
     BOOL boolval;
     char *name;
     DWORD modifiers;
-    struct hlsl_ir_var *var;
     struct hlsl_ir_node *instr;
     struct list *list;
     struct parse_function function;
@@ -1049,7 +1048,6 @@ static const struct hlsl_ir_function_decl *get_overloaded_func(struct wine_rb_tr
 %type <list> parameters
 %type <list> param_list
 %type <instr> expr
-%type <var> variable
 %type <intval> array
 %type <list> statement
 %type <list> statement_list
@@ -1910,10 +1908,19 @@ primary_expr:             C_FLOAT
                                 c->v.value.b[0] = $1;
                                 $$ = &c->node;
                             }
-                        | variable
+                        | VAR_IDENTIFIER
                             {
-                                struct hlsl_ir_deref *deref = new_var_deref($1);
-                                if (deref)
+                                struct hlsl_ir_deref *deref;
+                                struct hlsl_ir_var *var;
+
+                                if (!(var = get_variable(hlsl_ctx.cur_scope, $1)))
+                                {
+                                    hlsl_message("Line %d: variable '%s' not declared\n",
+                                            hlsl_ctx.line_no, $1);
+                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    return 1;
+                                }
+                                if ((deref = new_var_deref(var)))
                                 {
                                     $$ = &deref->node;
                                     set_location(&$$->loc, &@1);
@@ -1924,20 +1931,6 @@ primary_expr:             C_FLOAT
                         | '(' expr ')'
                             {
                                 $$ = $2;
-                            }
-
-variable:                 VAR_IDENTIFIER
-                            {
-                                struct hlsl_ir_var *var;
-                                var = get_variable(hlsl_ctx.cur_scope, $1);
-                                if (!var)
-                                {
-                                    hlsl_message("Line %d: variable '%s' not declared\n",
-                                            hlsl_ctx.line_no, $1);
-                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    return 1;
-                                }
-                                $$ = var;
                             }
 
 postfix_expr:             primary_expr
