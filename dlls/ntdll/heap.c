@@ -1293,7 +1293,7 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
             if (*ptr != ARENA_FREE_FILLER)
             {
                 ERR("Heap %p: free block %p overwritten at %p by %08x\n",
-                    subheap->heap, (const ARENA_INUSE *)pArena + 1, ptr, *ptr );
+                    subheap->heap, pArena + 1, ptr, *ptr );
                 if (!*ptr) { HEAP_Dump( subheap->heap ); DbgBreakPoint(); }
                 return FALSE;
             }
