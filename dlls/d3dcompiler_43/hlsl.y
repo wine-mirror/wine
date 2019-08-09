@@ -387,19 +387,7 @@ static unsigned int initializer_size(struct list *initializer)
     {
         count += components_count_type(node->data_type);
     }
-    TRACE("Initializer size = %u\n", count);
-    return count;
-}
-
-static unsigned int components_count_expr_list(struct list *list)
-{
-    struct hlsl_ir_node *node;
-    unsigned int count = 0;
-
-    LIST_FOR_EACH_ENTRY(node, list, struct hlsl_ir_node, entry)
-    {
-        count += components_count_type(node->data_type);
-    }
+    TRACE("Initializer size = %u.\n", count);
     return count;
 }
 
@@ -2109,7 +2097,7 @@ postfix_expr:             primary_expr
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
                                     return -1;
                                 }
-                                if ($2->dimx * $2->dimy != components_count_expr_list($4))
+                                if ($2->dimx * $2->dimy != initializer_size($4))
                                 {
                                     hlsl_message("Line %u: wrong number of components in constructor.\n",
                                             hlsl_ctx.line_no);
