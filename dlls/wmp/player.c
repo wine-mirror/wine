@@ -1819,6 +1819,7 @@ static HRESULT WINAPI WMPMedia_put_name(IWMPMedia *iface, BSTR name)
 
     if (!name) return E_POINTER;
 
+    heap_free(This->name);
     This->name = heap_strdupW(name);
     return S_OK;
 }
@@ -2063,6 +2064,7 @@ static HRESULT WINAPI WMPPlaylist_put_name(IWMPPlaylist *iface, BSTR name)
 
     if (!name) return E_POINTER;
 
+    heap_free(This->name);
     This->name = heap_strdupW(name);
     return S_OK;
 }
