@@ -1313,8 +1313,8 @@ static void test_file_full_size_information(void)
 
 static void test_file_basic_information(void)
 {
+    FILE_BASIC_INFORMATION fbi, fbi2;
     IO_STATUS_BLOCK io;
-    FILE_BASIC_INFORMATION fbi;
     HANDLE h;
     int res;
     int attrib_mask = FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_NORMAL;
@@ -1327,6 +1327,30 @@ static void test_file_basic_information(void)
     ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
     ok ( (fbi.FileAttributes & FILE_ATTRIBUTE_ARCHIVE) == FILE_ATTRIBUTE_ARCHIVE,
          "attribute %x not expected\n", fbi.FileAttributes );
+
+    memset(&fbi2, 0, sizeof(fbi2));
+    fbi2.LastWriteTime.QuadPart = -1;
+    U(io).Status = 0xdeadbeef;
+    res = pNtSetInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
+todo_wine {
+    ok ( res == STATUS_SUCCESS, "can't set system attribute, NtSetInformationFile returned %x\n", res );
+    ok ( U(io).Status == STATUS_SUCCESS, "can't set system attribute, io.Status is %x\n", U(io).Status );
+}
+    memset(&fbi2, 0, sizeof(fbi2));
+    res = pNtQueryInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
+    ok ( fbi2.LastWriteTime.QuadPart == fbi.LastWriteTime.QuadPart, "unexpected write time.\n");
+
+    memset(&fbi2, 0, sizeof(fbi2));
+    U(io).Status = 0xdeadbeef;
+    res = pNtSetInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't set system attribute, NtSetInformationFile returned %x\n", res );
+    ok ( U(io).Status == STATUS_SUCCESS, "can't set system attribute, io.Status is %x\n", U(io).Status );
+
+    memset(&fbi2, 0, sizeof(fbi2));
+    res = pNtQueryInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
+    ok ( fbi2.LastWriteTime.QuadPart == fbi.LastWriteTime.QuadPart, "unexpected write time.\n");
 
     /* Then SYSTEM */
     /* Clear fbi to avoid setting times */
