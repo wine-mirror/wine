@@ -408,6 +408,7 @@ int wmain (int argc, WCHAR *argv[])
 
                     ZeroMemory(&startup_info, sizeof(startup_info));
                     startup_info.cb = sizeof(startup_info);
+                    startup_info.wShowWindow = sei.nShow;
                     startup_info.lpTitle = title;
 
                     if (!CreateProcessW(
