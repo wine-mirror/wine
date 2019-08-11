@@ -191,6 +191,165 @@ static void parse_title(const WCHAR *arg, WCHAR *title, int size)
     title[next] = '\0';
 }
 
+static BOOL search_path(const WCHAR *firstParam, WCHAR **full_path)
+{
+    /* Copied from WCMD_run_program() in programs/cmd/wcmdmain.c */
+
+#define MAXSTRING 8192
+    static const WCHAR slashW[] = {'\\','\0',};
+    static const WCHAR envPath[] = {'P','A','T','H','\0'};
+    static const WCHAR envPathExt[] = {'P','A','T','H','E','X','T','\0'};
+    static const WCHAR dfltPathExt[] = {'.','b','a','t',';',
+                                        '.','c','o','m',';',
+                                        '.','c','m','d',';',
+                                        '.','e','x','e','\0'};
+    static const WCHAR delims[] = {'/','\\',':','\0'};
+
+    WCHAR  temp[MAX_PATH];
+    WCHAR  pathtosearch[MAXSTRING];
+    WCHAR *pathposn;
+    WCHAR  stemofsearch[MAX_PATH];    /* maximum allowed executable name is
+                                         MAX_PATH, including null character */
+    WCHAR *lastSlash;
+    WCHAR  pathext[MAXSTRING];
+    BOOL  extensionsupplied = FALSE;
+    DWORD len;
+
+    /* Calculate the search path and stem to search for */
+    if (wcspbrk (firstParam, delims) == NULL) {  /* No explicit path given, search path */
+        static const WCHAR curDir[] = {'.',';','\0'};
+        lstrcpyW(pathtosearch, curDir);
+        len = GetEnvironmentVariableW(envPath, &pathtosearch[2], ARRAY_SIZE(pathtosearch)-2);
+        if ((len == 0) || (len >= ARRAY_SIZE(pathtosearch) - 2)) {
+            static const WCHAR curDir[] = {'.','\0'};
+            lstrcpyW (pathtosearch, curDir);
+        }
+        if (wcschr(firstParam, '.') != NULL) extensionsupplied = TRUE;
+        if (lstrlenW(firstParam) >= MAX_PATH) {
+            return FALSE;
+        }
+
+        lstrcpyW(stemofsearch, firstParam);
+
+    } else {
+
+        /* Convert eg. ..\fred to include a directory by removing file part */
+        GetFullPathNameW(firstParam, ARRAY_SIZE(pathtosearch), pathtosearch, NULL);
+        lastSlash = wcsrchr(pathtosearch, '\\');
+        if (lastSlash && wcschr(lastSlash, '.') != NULL) extensionsupplied = TRUE;
+        lstrcpyW(stemofsearch, lastSlash+1);
+
+        /* Reduce pathtosearch to a path with trailing '\' to support c:\a.bat and
+           c:\windows\a.bat syntax                                                 */
+        if (lastSlash) *(lastSlash + 1) = 0x00;
+    }
+
+    /* Now extract PATHEXT */
+    len = GetEnvironmentVariableW(envPathExt, pathext, ARRAY_SIZE(pathext));
+    if ((len == 0) || (len >= ARRAY_SIZE(pathext))) {
+        lstrcpyW (pathext, dfltPathExt);
+    }
+
+    /* Loop through the search path, dir by dir */
+    pathposn = pathtosearch;
+    WINE_TRACE("Searching in '%s' for '%s'\n", wine_dbgstr_w(pathtosearch),
+               wine_dbgstr_w(stemofsearch));
+    while (pathposn) {
+        WCHAR  thisDir[MAX_PATH] = {'\0'};
+        int    length            = 0;
+        WCHAR *pos               = NULL;
+        BOOL  found             = FALSE;
+        BOOL inside_quotes      = FALSE;
+
+        /* Work on the first directory on the search path */
+        pos = pathposn;
+        while ((inside_quotes || *pos != ';') && *pos != 0)
+        {
+            if (*pos == '"')
+                inside_quotes = !inside_quotes;
+            pos++;
+        }
+
+        if (*pos) { /* Reached semicolon */
+            memcpy(thisDir, pathposn, (pos-pathposn) * sizeof(WCHAR));
+            thisDir[(pos-pathposn)] = 0x00;
+            pathposn = pos+1;
+        } else {    /* Reached string end */
+            lstrcpyW(thisDir, pathposn);
+            pathposn = NULL;
+        }
+
+        /* Remove quotes */
+        length = lstrlenW(thisDir);
+        if (thisDir[length - 1] == '"')
+            thisDir[length - 1] = 0;
+
+        if (*thisDir != '"')
+            lstrcpyW(temp, thisDir);
+        else
+            lstrcpyW(temp, thisDir + 1);
+
+        /* Since you can have eg. ..\.. on the path, need to expand
+           to full information                                      */
+        GetFullPathNameW(temp, MAX_PATH, thisDir, NULL);
+
+        /* 1. If extension supplied, see if that file exists */
+        lstrcatW(thisDir, slashW);
+        lstrcatW(thisDir, stemofsearch);
+        pos = &thisDir[lstrlenW(thisDir)]; /* Pos = end of name */
+
+        /* 1. If extension supplied, see if that file exists */
+        if (extensionsupplied) {
+            if (GetFileAttributesW(thisDir) != INVALID_FILE_ATTRIBUTES) {
+               found = TRUE;
+            }
+        }
+
+        /* 2. Any .* matches? */
+        if (!found) {
+            HANDLE          h;
+            WIN32_FIND_DATAW finddata;
+            static const WCHAR allFiles[] = {'.','*','\0'};
+
+            lstrcatW(thisDir,allFiles);
+            h = FindFirstFileW(thisDir, &finddata);
+            FindClose(h);
+            if (h != INVALID_HANDLE_VALUE) {
+
+                WCHAR *thisExt = pathext;
+
+                /* 3. Yes - Try each path ext */
+                while (thisExt) {
+                    WCHAR *nextExt = wcschr(thisExt, ';');
+
+                    if (nextExt) {
+                        memcpy(pos, thisExt, (nextExt-thisExt) * sizeof(WCHAR));
+                        pos[(nextExt-thisExt)] = 0x00;
+                        thisExt = nextExt+1;
+                    } else {
+                        lstrcpyW(pos, thisExt);
+                        thisExt = NULL;
+                    }
+
+                    if (GetFileAttributesW(thisDir) != INVALID_FILE_ATTRIBUTES) {
+                        found = TRUE;
+                        thisExt = NULL;
+                    }
+                }
+            }
+        }
+
+        if (found) {
+            int needed_size = lstrlenW(thisDir) + 1;
+            *full_path = HeapAlloc(GetProcessHeap(), 0, needed_size * sizeof(WCHAR));
+            if (*full_path)
+                lstrcpyW(*full_path, thisDir);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 int wmain (int argc, WCHAR *argv[])
 {
 	SHELLEXECUTEINFOW sei;
@@ -200,7 +359,9 @@ int wmain (int argc, WCHAR *argv[])
         BOOL unix_mode = FALSE;
         BOOL progid_open = FALSE;
 	WCHAR *title = NULL;
+	const WCHAR *file;
 	WCHAR *dos_filename = NULL;
+	WCHAR *fullpath = NULL;
 	WCHAR *parent_directory = NULL;
 	DWORD binary_type;
 
@@ -359,10 +520,10 @@ int wmain (int argc, WCHAR *argv[])
 	if (i == argc) {
 		if (progid_open || unix_mode)
 			usage();
-		sei.lpFile = cmdW;
+		file = cmdW;
 	}
 	else
-		sei.lpFile = argv[i++];
+		file = argv[i++];
 
 	args = build_args( argc - i, &argv[i] );
 	sei.lpParameters = args;
@@ -377,10 +538,10 @@ int wmain (int argc, WCHAR *argv[])
 		if (!wine_get_dos_file_name_ptr)
 			fatal_string(STRING_UNIXFAIL);
 
-		multibyte_unixpath_len = WideCharToMultiByte(CP_UNIXCP, 0, sei.lpFile, -1, NULL, 0, NULL, NULL);
+		multibyte_unixpath_len = WideCharToMultiByte(CP_UNIXCP, 0, file, -1, NULL, 0, NULL, NULL);
 		multibyte_unixpath = HeapAlloc(GetProcessHeap(), 0, multibyte_unixpath_len);
 
-		WideCharToMultiByte(CP_UNIXCP, 0, sei.lpFile, -1, multibyte_unixpath, multibyte_unixpath_len, NULL, NULL);
+		WideCharToMultiByte(CP_UNIXCP, 0, file, -1, multibyte_unixpath, multibyte_unixpath_len, NULL, NULL);
 
 		dos_filename = wine_get_dos_file_name_ptr(multibyte_unixpath);
 
@@ -393,6 +554,16 @@ int wmain (int argc, WCHAR *argv[])
 		if (!sei.lpDirectory)
 			sei.lpDirectory = parent_directory = get_parent_dir(dos_filename);
 		sei.fMask &= ~SEE_MASK_FLAG_NO_UI;
+	} else {
+		if (search_path(file, &fullpath)) {
+			if (fullpath != NULL) {
+				sei.lpFile = fullpath;
+			} else {
+				fatal_string_error(STRING_EXECFAIL, ERROR_OUTOFMEMORY, file);
+			}
+		} else {
+			sei.lpFile = file;
+		}
 	}
 
         if (GetBinaryTypeW(sei.lpFile, &binary_type)) {
@@ -413,7 +584,7 @@ int wmain (int argc, WCHAR *argv[])
                     startup_info.lpTitle = title;
 
                     if (!CreateProcessW(
-                            NULL, /* lpApplicationName */
+                            sei.lpFile, /* lpApplicationName */
                             commandline, /* lpCommandLine */
                             NULL, /* lpProcessAttributes */
                             NULL, /* lpThreadAttributes */
@@ -484,6 +655,7 @@ int wmain (int argc, WCHAR *argv[])
 done:
 	HeapFree( GetProcessHeap(), 0, args );
 	HeapFree( GetProcessHeap(), 0, dos_filename );
+	HeapFree( GetProcessHeap(), 0, fullpath );
 	HeapFree( GetProcessHeap(), 0, parent_directory );
 	HeapFree( GetProcessHeap(), 0, title );
 
