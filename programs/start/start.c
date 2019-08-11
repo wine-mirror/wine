@@ -172,6 +172,25 @@ static BOOL is_option(const WCHAR* arg, const WCHAR* opt)
                           arg, -1, opt, -1) == CSTR_EQUAL;
 }
 
+static void parse_title(const WCHAR *arg, WCHAR *title, int size)
+{
+    /* See:
+     *     WCMD_start() in programs/cmd/builtins.c
+     *     WCMD_parameter_with_delims() in programs/cmd/batch.c
+     * The shell has already tokenized the command line for us.
+     * All we need to do is filter out all the quotes.
+     */
+
+    int next;
+    const WCHAR *p = arg;
+
+    for (next = 0; next < (size-1) && *p; p++) {
+        if (*p != '"')
+            title[next++] = *p;
+    }
+    title[next] = '\0';
+}
+
 int wmain (int argc, WCHAR *argv[])
 {
 	SHELLEXECUTEINFOW sei;
@@ -223,7 +242,15 @@ int wmain (int argc, WCHAR *argv[])
 	for (i=1; i<argc; i++) {
                 /* parse first quoted argument as console title */
                 if (!title && argv[i][0] == '"') {
-			title = argv[i];
+			/* it will remove at least 1 quote */
+			int maxChars = lstrlenW(argv[1]);
+			title = HeapAlloc(GetProcessHeap(), 0, maxChars*sizeof(WCHAR));
+			if (title)
+				parse_title(argv[i], title, maxChars);
+			else {
+				WINE_ERR("out of memory\n");
+				ExitProcess(1);
+			}
 			continue;
 		}
 		if (argv[i][0] != '/')
@@ -457,6 +484,7 @@ done:
 	HeapFree( GetProcessHeap(), 0, args );
 	HeapFree( GetProcessHeap(), 0, dos_filename );
 	HeapFree( GetProcessHeap(), 0, parent_directory );
+	HeapFree( GetProcessHeap(), 0, title );
 
 	if (sei.fMask & SEE_MASK_NOCLOSEPROCESS) {
 		DWORD exitcode;
