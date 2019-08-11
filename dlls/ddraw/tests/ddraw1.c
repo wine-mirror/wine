@@ -12890,9 +12890,44 @@ static void test_clipper_refcount(void)
 
 static void test_caps(void)
 {
+    DWORD caps_never, caps_always, caps_hal;
     DDCAPS hal_caps, hel_caps;
     IDirectDraw *ddraw;
     HRESULT hr;
+    BOOL no3d;
+
+    caps_never = DDSCAPS_RESERVED1
+            | DDSCAPS_ALPHA
+            | DDSCAPS_PRIMARYSURFACELEFT
+            | DDSCAPS_SYSTEMMEMORY
+            | DDSCAPS_VISIBLE
+            | DDSCAPS_WRITEONLY
+            | DDSCAPS_LIVEVIDEO
+            | DDSCAPS_HWCODEC
+            | DDSCAPS_MODEX
+            | DDSCAPS_RESERVED2
+            | 0x01000000u
+            | 0x02000000u
+            | DDSCAPS_ALLOCONLOAD
+            | DDSCAPS_VIDEOPORT
+            | DDSCAPS_STANDARDVGAMODE
+            | DDSCAPS_OPTIMIZED;
+
+    caps_always = DDSCAPS_FLIP
+            | DDSCAPS_OFFSCREENPLAIN
+            | DDSCAPS_PRIMARYSURFACE
+            | DDSCAPS_TEXTURE
+            | DDSCAPS_ZBUFFER
+            | DDSCAPS_MIPMAP;
+
+    caps_hal = DDSCAPS_BACKBUFFER
+            | DDSCAPS_COMPLEX
+            | DDSCAPS_FRONTBUFFER
+            | DDSCAPS_3DDEVICE
+            | DDSCAPS_VIDEOMEMORY
+            | DDSCAPS_OWNDC
+            | DDSCAPS_LOCALVIDMEM
+            | DDSCAPS_NONLOCALVIDMEM;
 
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
@@ -12909,6 +12944,70 @@ static void test_caps(void)
     ok(hel_caps.ddsOldCaps.dwCaps == hel_caps.ddsCaps.dwCaps,
             "Got unexpected caps %#x, expected %#x.\n",
             hel_caps.ddsOldCaps.dwCaps, hel_caps.ddsCaps.dwCaps);
+
+    no3d = !(hal_caps.ddsCaps.dwCaps & DDSCAPS_3DDEVICE);
+    if (hal_caps.ddsCaps.dwCaps)
+    {
+        todo_wine ok(!(hal_caps.ddsCaps.dwCaps & caps_never), "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
+        todo_wine_if(no3d) ok(!(~hal_caps.ddsCaps.dwCaps & caps_always),
+                "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
+        todo_wine ok(!(~hal_caps.ddsCaps.dwCaps & caps_hal), "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
+    }
+    todo_wine ok(!(hel_caps.ddsCaps.dwCaps & caps_never), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+    todo_wine_if(no3d) ok(!(~hel_caps.ddsCaps.dwCaps & caps_always),
+            "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+    todo_wine ok(!(hel_caps.ddsCaps.dwCaps & caps_hal), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+
+    IDirectDraw_Release(ddraw);
+
+    if (hal_caps.ddsCaps.dwCaps)
+    {
+        hr = DirectDrawCreate((GUID *)DDCREATE_HARDWAREONLY, &ddraw, NULL);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+        memset(&hal_caps, 0, sizeof(hal_caps));
+        memset(&hel_caps, 0, sizeof(hel_caps));
+        hal_caps.dwSize = sizeof(hal_caps);
+        hel_caps.dwSize = sizeof(hel_caps);
+        hr = IDirectDraw_GetCaps(ddraw, &hal_caps, &hel_caps);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hal_caps.ddsOldCaps.dwCaps == hal_caps.ddsCaps.dwCaps,
+                "Got unexpected caps %#x, expected %#x.\n",
+                hal_caps.ddsOldCaps.dwCaps, hal_caps.ddsCaps.dwCaps);
+        ok(hel_caps.ddsOldCaps.dwCaps == hel_caps.ddsCaps.dwCaps,
+                "Got unexpected caps %#x, expected %#x.\n",
+                hel_caps.ddsOldCaps.dwCaps, hel_caps.ddsCaps.dwCaps);
+
+        todo_wine ok(!(hal_caps.ddsCaps.dwCaps & caps_never), "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
+        todo_wine_if(no3d) ok(!(~hal_caps.ddsCaps.dwCaps & caps_always),
+                "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
+        todo_wine ok(!(~hal_caps.ddsCaps.dwCaps & caps_hal), "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
+        todo_wine ok(!hel_caps.ddsCaps.dwCaps, "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+
+        IDirectDraw_Release(ddraw);
+    }
+
+    hr = DirectDrawCreate((GUID *)DDCREATE_EMULATIONONLY, &ddraw, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&hal_caps, 0, sizeof(hal_caps));
+    memset(&hel_caps, 0, sizeof(hel_caps));
+    hal_caps.dwSize = sizeof(hal_caps);
+    hel_caps.dwSize = sizeof(hel_caps);
+    hr = IDirectDraw_GetCaps(ddraw, &hal_caps, &hel_caps);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hal_caps.ddsOldCaps.dwCaps == hal_caps.ddsCaps.dwCaps,
+            "Got unexpected caps %#x, expected %#x.\n",
+            hal_caps.ddsOldCaps.dwCaps, hal_caps.ddsCaps.dwCaps);
+    ok(hel_caps.ddsOldCaps.dwCaps == hel_caps.ddsCaps.dwCaps,
+            "Got unexpected caps %#x, expected %#x.\n",
+            hel_caps.ddsOldCaps.dwCaps, hel_caps.ddsCaps.dwCaps);
+
+    todo_wine ok(!hal_caps.ddsCaps.dwCaps, "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
+    todo_wine ok(!(hel_caps.ddsCaps.dwCaps & caps_never), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+    todo_wine_if(no3d) ok(!(~hel_caps.ddsCaps.dwCaps & caps_always),
+            "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+    todo_wine ok(!(hel_caps.ddsCaps.dwCaps & caps_hal), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
 
     IDirectDraw_Release(ddraw);
 }
