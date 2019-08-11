@@ -393,8 +393,9 @@ int wmain (int argc, WCHAR *argv[])
 		if (!sei.lpDirectory)
 			sei.lpDirectory = parent_directory = get_parent_dir(dos_filename);
 		sei.fMask &= ~SEE_MASK_FLAG_NO_UI;
+	}
 
-                if (GetBinaryTypeW(sei.lpFile, &binary_type)) {
+        if (GetBinaryTypeW(sei.lpFile, &binary_type)) {
                     WCHAR *commandline;
                     STARTUPINFOW startup_info;
                     PROCESS_INFORMATION process_information;
@@ -427,8 +428,7 @@ int wmain (int argc, WCHAR *argv[])
                     }
                     sei.hProcess = process_information.hProcess;
                     goto done;
-                }
-	}
+        }
 
         if (!ShellExecuteExW(&sei))
         {
