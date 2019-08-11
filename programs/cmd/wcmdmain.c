@@ -2417,6 +2417,7 @@ int wmain (int argc, WCHAR *argvW[])
   CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
   OSVERSIONINFOW osv;
   char osver[50];
+  STARTUPINFOW startupInfo;
 
   if (!GetEnvironmentVariableW(comspecW, comspec, ARRAY_SIZE(comspec)))
   {
@@ -2676,7 +2677,11 @@ int wmain (int argc, WCHAR *argvW[])
       return errorlevel;
   }
 
-  SetConsoleTitleW(WCMD_LoadMessage(WCMD_CONSTITLE));
+  GetStartupInfoW(&startupInfo);
+  if (startupInfo.lpTitle != NULL)
+      SetConsoleTitleW(startupInfo.lpTitle);
+  else
+      SetConsoleTitleW(WCMD_LoadMessage(WCMD_CONSTITLE));
 
   /* Note: cmd.exe /c dir does not get a new color, /k dir does */
   if (opt_t) {
