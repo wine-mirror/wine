@@ -13771,7 +13771,6 @@ static void test_caps(void)
     IDirectDraw2 *ddraw;
     IDirectDraw *ddraw1;
     HRESULT hr;
-    BOOL no3d;
 
     caps_never = DDSCAPS_RESERVED1
             | DDSCAPS_ALPHA
@@ -13822,17 +13821,14 @@ static void test_caps(void)
             "Got unexpected caps %#x, expected %#x.\n",
             hel_caps.ddsOldCaps.dwCaps, hel_caps.ddsCaps.dwCaps);
 
-    no3d = !(hal_caps.ddsCaps.dwCaps & DDSCAPS_3DDEVICE);
     if (hal_caps.ddsCaps.dwCaps)
     {
         ok(!(hal_caps.ddsCaps.dwCaps & caps_never), "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
-        todo_wine_if(no3d) ok(!(~hal_caps.ddsCaps.dwCaps & caps_always),
-                "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
+        ok(!(~hal_caps.ddsCaps.dwCaps & caps_always), "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
         todo_wine ok(!(~hal_caps.ddsCaps.dwCaps & caps_hal), "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
     }
     ok(!(hel_caps.ddsCaps.dwCaps & caps_never), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
-    todo_wine_if(no3d) ok(!(~hel_caps.ddsCaps.dwCaps & caps_always),
-            "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+    ok(!(~hel_caps.ddsCaps.dwCaps & caps_always), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
     todo_wine ok(!(hel_caps.ddsCaps.dwCaps & caps_hal), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
 
     IDirectDraw2_Release(ddraw);
@@ -13859,8 +13855,7 @@ static void test_caps(void)
                 hel_caps.ddsOldCaps.dwCaps, hel_caps.ddsCaps.dwCaps);
 
         ok(!(hal_caps.ddsCaps.dwCaps & caps_never), "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
-        todo_wine_if(no3d) ok(!(~hal_caps.ddsCaps.dwCaps & caps_always),
-                "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
+        ok(!(~hal_caps.ddsCaps.dwCaps & caps_always), "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
         todo_wine ok(!(~hal_caps.ddsCaps.dwCaps & caps_hal), "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
         todo_wine ok(!hel_caps.ddsCaps.dwCaps, "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
 
@@ -13888,8 +13883,7 @@ static void test_caps(void)
 
     todo_wine ok(!hal_caps.ddsCaps.dwCaps, "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
     ok(!(hel_caps.ddsCaps.dwCaps & caps_never), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
-    todo_wine_if(no3d) ok(!(~hel_caps.ddsCaps.dwCaps & caps_always),
-            "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+    ok(!(~hel_caps.ddsCaps.dwCaps & caps_always), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
     todo_wine ok(!(hel_caps.ddsCaps.dwCaps & caps_hal), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
 
     IDirectDraw2_Release(ddraw);
