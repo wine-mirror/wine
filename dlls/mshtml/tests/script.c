@@ -3493,9 +3493,9 @@ static void run_js_tests(void)
     run_script_as_http_with_mode("documentmode.js", "7", "7");
     run_script_as_http_with_mode("documentmode.js", "8", "8");
     run_script_as_http_with_mode("documentmode.js", "9", "9");
-    run_script_as_http_with_mode("documentmode.js", "10", "10");
+    run_script_as_http_with_mode("documentmode.js", "10", "10;abc");
     run_script_as_http_with_mode("documentmode.js", "11", "11");
-    run_script_as_http_with_mode("documentmode.js", "11", "edge");
+    run_script_as_http_with_mode("documentmode.js", "11", "edge;123");
 
     run_script_as_http_with_mode("asyncscriptload.js", NULL, "9");
 }

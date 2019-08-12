@@ -405,7 +405,7 @@ BOOL parse_compat_version(const WCHAR *version_string, compat_mode_t *r)
 
     for(p = version_string; '0' <= *p && *p <= '9'; p++)
         version = version * 10 + *p-'0';
-    if(*p || p == version_string)
+    if((*p && *p != ';') || p == version_string)
         return FALSE;
 
     switch(version){
@@ -434,7 +434,7 @@ BOOL parse_compat_version(const WCHAR *version_string, compat_mode_t *r)
 static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
 {
     static const WCHAR ie_eqW[] = {'I','E','='};
-    static const WCHAR edgeW[] = {'e','d','g','e',0};
+    static const WCHAR edgeW[] = {'e','d','g','e'};
 
     TRACE("%s\n", debugstr_w(p));
 
@@ -442,7 +442,10 @@ static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
         return FALSE;
     p += 3;
 
-    if(!wcsicmp(p, edgeW)) {
+    if(!wcsnicmp(p, edgeW, ARRAY_SIZE(edgeW))) {
+        p += ARRAY_SIZE(edgeW);
+        if(*p && *p != ';')
+            return FALSE;
         *r = COMPAT_MODE_IE11;
         return TRUE;
     }
