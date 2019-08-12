@@ -64,7 +64,7 @@
 # @ stub ApplicationUserModelIdFromProductId
 @ stdcall AreAllAccessesGranted(long long)
 @ stdcall AreAnyAccessesGranted(long long)
-@ stdcall AreFileApisANSI() kernel32.AreFileApisANSI
+@ stdcall AreFileApisANSI()
 # @ stub AreThereVisibleLogoffScriptsInternal
 # @ stub AreThereVisibleShutdownScriptsInternal
 @ stdcall AttachConsole(long) kernel32.AttachConsole
@@ -102,9 +102,9 @@
 # @ stub CLOSE_LOCAL_HANDLE_INTERNAL
 @ stdcall CallNamedPipeW(wstr ptr long ptr long ptr long)
 @ stdcall CallbackMayRunLong(ptr)
-@ stdcall CancelIo(long) kernel32.CancelIo
-@ stdcall CancelIoEx(long ptr) kernel32.CancelIoEx
-@ stdcall CancelSynchronousIo(long) kernel32.CancelSynchronousIo
+@ stdcall CancelIo(long)
+@ stdcall CancelIoEx(long ptr)
+@ stdcall CancelSynchronousIo(long)
 @ stub CancelThreadpoolIo
 @ stdcall CancelWaitableTimer(long)
 # @ stub CeipIsOptedIn
@@ -380,7 +380,7 @@
 @ stdcall FlsGetValue(long)
 @ stdcall FlsSetValue(long ptr)
 @ stdcall FlushConsoleInputBuffer(long) kernel32.FlushConsoleInputBuffer
-@ stdcall FlushFileBuffers(long) kernel32.FlushFileBuffers
+@ stdcall FlushFileBuffers(long)
 @ stdcall FlushInstructionCache(long long long)
 @ stdcall FlushProcessWriteBuffers() kernel32.FlushProcessWriteBuffers
 @ stdcall FlushViewOfFile(ptr long) kernel32.FlushViewOfFile
@@ -506,15 +506,15 @@
 @ stdcall GetFileAttributesExA(str long ptr) kernel32.GetFileAttributesExA
 @ stdcall GetFileAttributesExW(wstr long ptr) kernel32.GetFileAttributesExW
 @ stdcall GetFileAttributesW(wstr) kernel32.GetFileAttributesW
-@ stdcall GetFileInformationByHandle(long ptr) kernel32.GetFileInformationByHandle
-@ stdcall GetFileInformationByHandleEx(long long ptr long) kernel32.GetFileInformationByHandleEx
+@ stdcall GetFileInformationByHandle(long ptr)
+@ stdcall GetFileInformationByHandleEx(long long ptr long)
 @ stdcall GetFileMUIInfo(long wstr ptr ptr) kernel32.GetFileMUIInfo
 @ stdcall GetFileMUIPath(long wstr wstr ptr ptr ptr ptr) kernel32.GetFileMUIPath
 @ stdcall GetFileSecurityW(wstr long ptr long ptr)
-@ stdcall GetFileSize(long ptr) kernel32.GetFileSize
-@ stdcall GetFileSizeEx(long ptr) kernel32.GetFileSizeEx
-@ stdcall GetFileTime(long ptr ptr ptr) kernel32.GetFileTime
-@ stdcall GetFileType(long) kernel32.GetFileType
+@ stdcall GetFileSize(long ptr)
+@ stdcall GetFileSizeEx(long ptr)
+@ stdcall GetFileTime(long ptr ptr ptr)
+@ stdcall GetFileType(long)
 @ stdcall GetFileVersionInfoA(str long long ptr)
 # @ stub GetFileVersionInfoByHandle
 @ stdcall GetFileVersionInfoExA(long str long long ptr)
@@ -584,7 +584,7 @@
 @ stdcall GetOEMCP() kernel32.GetOEMCP
 # @ stub GetOsManufacturingMode
 # @ stub GetOsSafeBootMode
-@ stdcall GetOverlappedResult(long ptr ptr long) kernel32.GetOverlappedResult
+@ stdcall GetOverlappedResult(long ptr ptr long)
 # @ stub GetOverlappedResultEx
 # @ stub GetPackageApplicationContext
 # @ stub GetPackageApplicationIds
@@ -941,8 +941,8 @@
 @ stdcall LocalUnlock(long) kernel32.LocalUnlock
 @ stdcall LocaleNameToLCID(wstr long) kernel32.LocaleNameToLCID
 # @ stub LocateXStateFeature
-@ stdcall LockFile(long long long long long) kernel32.LockFile
-@ stdcall LockFileEx(long long long long long ptr) kernel32.LockFileEx
+@ stdcall LockFile(long long long long long)
+@ stdcall LockFileEx(long long long long long ptr)
 @ stdcall LockResource(long)
 @ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub MakeAbsoluteSD2
@@ -1247,9 +1247,9 @@
 @ stdcall ReadConsoleOutputW(long ptr long long ptr) kernel32.ReadConsoleOutputW
 @ stdcall ReadConsoleW(long ptr long ptr ptr) kernel32.ReadConsoleW
 @ stdcall ReadDirectoryChangesW(long ptr long long long ptr ptr ptr) kernel32.ReadDirectoryChangesW
-@ stdcall ReadFile(long ptr long ptr ptr) kernel32.ReadFile
-@ stdcall ReadFileEx(long ptr long ptr ptr) kernel32.ReadFileEx
-@ stdcall ReadFileScatter(long ptr long ptr ptr) kernel32.ReadFileScatter
+@ stdcall ReadFile(long ptr long ptr ptr)
+@ stdcall ReadFileEx(long ptr long ptr ptr)
+@ stdcall ReadFileScatter(long ptr long ptr ptr)
 @ stdcall ReadProcessMemory(long ptr ptr long ptr) kernel32.ReadProcessMemory
 # @ stub ReadStateAtomValue
 # @ stub ReadStateContainerValue
@@ -1422,24 +1422,24 @@
 @ stdcall SetCurrentDirectoryW(wstr) kernel32.SetCurrentDirectoryW
 @ stdcall SetDefaultDllDirectories(long) kernel32.SetDefaultDllDirectories
 # @ stub SetDynamicTimeZoneInformation
-@ stdcall SetEndOfFile(long) kernel32.SetEndOfFile
+@ stdcall SetEndOfFile(long)
 @ stub SetEnvironmentStringsW
 @ stdcall SetEnvironmentVariableA(str str) kernel32.SetEnvironmentVariableA
 @ stdcall SetEnvironmentVariableW(wstr wstr) kernel32.SetEnvironmentVariableW
 @ stdcall SetErrorMode(long)
 @ stdcall SetEvent(long)
 @ stdcall SetEventWhenCallbackReturns(ptr long) ntdll.TpCallbackSetEventOnCompletion
-@ stdcall SetFileApisToANSI() kernel32.SetFileApisToANSI
-@ stdcall SetFileApisToOEM() kernel32.SetFileApisToOEM
+@ stdcall SetFileApisToANSI()
+@ stdcall SetFileApisToOEM()
 @ stdcall SetFileAttributesA(str long) kernel32.SetFileAttributesA
 @ stdcall SetFileAttributesW(wstr long) kernel32.SetFileAttributesW
-@ stdcall SetFileInformationByHandle(long long ptr long) kernel32.SetFileInformationByHandle
+@ stdcall SetFileInformationByHandle(long long ptr long)
 # @ stub SetFileIoOverlappedRange
-@ stdcall SetFilePointer(long long ptr long) kernel32.SetFilePointer
-@ stdcall SetFilePointerEx(long int64 ptr long) kernel32.SetFilePointerEx
+@ stdcall SetFilePointer(long long ptr long)
+@ stdcall SetFilePointerEx(long int64 ptr long)
 @ stdcall SetFileSecurityW(wstr long ptr)
-@ stdcall SetFileTime(long ptr ptr ptr) kernel32.SetFileTime
-@ stdcall SetFileValidData(ptr int64) kernel32.SetFileValidData
+@ stdcall SetFileTime(long ptr ptr ptr)
+@ stdcall SetFileValidData(ptr int64)
 @ stdcall SetHandleCount(long) kernel32.SetHandleCount
 @ stdcall SetHandleInformation(long long long) kernel32.SetHandleInformation
 # @ stub SetIsDeveloperModeEnabled
@@ -1613,8 +1613,8 @@
 @ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr) kernel32.TzSpecificLocalTimeToSystemTime
 @ stub TzSpecificLocalTimeToSystemTimeEx
 @ stdcall UnhandledExceptionFilter(ptr) kernel32.UnhandledExceptionFilter
-@ stdcall UnlockFile(long long long long long) kernel32.UnlockFile
-@ stdcall UnlockFileEx(long long long long ptr) kernel32.UnlockFileEx
+@ stdcall UnlockFile(long long long long long)
+@ stdcall UnlockFileEx(long long long long ptr)
 @ stdcall UnmapViewOfFile(ptr) kernel32.UnmapViewOfFile
 # @ stub UnmapViewOfFileEx
 # @ stub UnregisterBadMemoryNotification
@@ -1726,9 +1726,9 @@
 @ stdcall WriteConsoleOutputCharacterW(long ptr long long ptr) kernel32.WriteConsoleOutputCharacterW
 @ stdcall WriteConsoleOutputW(long ptr long long ptr) kernel32.WriteConsoleOutputW
 @ stdcall WriteConsoleW(long ptr long ptr ptr) kernel32.WriteConsoleW
-@ stdcall WriteFile(long ptr long ptr ptr) kernel32.WriteFile
-@ stdcall WriteFileEx(long ptr long ptr ptr) kernel32.WriteFileEx
-@ stdcall WriteFileGather(long ptr long ptr ptr) kernel32.WriteFileGather
+@ stdcall WriteFile(long ptr long ptr ptr)
+@ stdcall WriteFileEx(long ptr long ptr ptr)
+@ stdcall WriteFileGather(long ptr long ptr ptr)
 @ stdcall WriteProcessMemory(long ptr ptr long ptr) kernel32.WriteProcessMemory
 # @ stub WriteStateAtomValue
 # @ stub WriteStateContainerValue

@@ -157,7 +157,7 @@
 @ stdcall AllocateUserPhysicalPages(long ptr ptr)
 @ stdcall ApplicationRecoveryFinished(long)
 @ stdcall ApplicationRecoveryInProgress(ptr)
-@ stdcall AreFileApisANSI()
+@ stdcall -import AreFileApisANSI()
 @ stdcall AssignProcessToJobObject(ptr ptr)
 @ stdcall AttachConsole(long)
 @ stdcall BackupRead(ptr ptr long ptr long long ptr)
@@ -207,9 +207,9 @@
 @ stdcall CallNamedPipeA(str ptr long ptr long ptr long)
 @ stdcall -import CallNamedPipeW(wstr ptr long ptr long ptr long)
 @ stub CancelDeviceWakeupRequest
-@ stdcall CancelIo(long)
-@ stdcall CancelIoEx(long ptr)
-@ stdcall CancelSynchronousIo(long)
+@ stdcall -import CancelIo(long)
+@ stdcall -import CancelIoEx(long ptr)
+@ stdcall -import CancelSynchronousIo(long)
 # @ stub CancelThreadpoolIo
 @ stdcall CancelTimerQueueTimer(ptr ptr)
 @ stdcall -import CancelWaitableTimer(long)
@@ -516,7 +516,7 @@
 @ stdcall -import FlsGetValue(long)
 @ stdcall -import FlsSetValue(long ptr)
 @ stdcall FlushConsoleInputBuffer(long)
-@ stdcall FlushFileBuffers(long)
+@ stdcall -import FlushFileBuffers(long)
 @ stdcall -import FlushInstructionCache(long long long)
 @ stdcall FlushProcessWriteBuffers()
 @ stdcall FlushViewOfFile(ptr long)
@@ -676,14 +676,14 @@
 # @ stub GetFileAttributesTransactedW
 @ stdcall GetFileAttributesW(wstr)
 # @ stub GetFileBandwidthReservation
-@ stdcall GetFileInformationByHandle(long ptr)
-@ stdcall GetFileInformationByHandleEx(long long ptr long)
+@ stdcall -import GetFileInformationByHandle(long ptr)
+@ stdcall -import GetFileInformationByHandleEx(long long ptr long)
 @ stdcall GetFileMUIInfo(long wstr ptr ptr)
 @ stdcall GetFileMUIPath(long wstr wstr ptr ptr ptr ptr)
-@ stdcall GetFileSize(long ptr)
-@ stdcall GetFileSizeEx(long ptr)
-@ stdcall GetFileTime(long ptr ptr ptr)
-@ stdcall GetFileType(long)
+@ stdcall -import GetFileSize(long ptr)
+@ stdcall -import GetFileSizeEx(long ptr)
+@ stdcall -import GetFileTime(long ptr ptr ptr)
+@ stdcall -import GetFileType(long)
 @ stdcall GetFinalPathNameByHandleA(long ptr long long)
 @ stdcall GetFinalPathNameByHandleW(long ptr long long)
 @ stdcall GetFirmwareEnvironmentVariableA(str str ptr long)
@@ -759,7 +759,7 @@
 @ stdcall GetNumberOfConsoleInputEvents(long ptr)
 @ stdcall GetNumberOfConsoleMouseButtons(ptr)
 @ stdcall GetOEMCP()
-@ stdcall GetOverlappedResult(long ptr ptr long)
+@ stdcall -import GetOverlappedResult(long ptr ptr long)
 @ stdcall GetUserPreferredUILanguages(long ptr ptr ptr)
 @ stdcall GetPackageFullName(long ptr ptr)
 @ stdcall GetPhysicallyInstalledSystemMemory(ptr)
@@ -1063,8 +1063,8 @@
 @ stdcall LocalUnlock(long)
 @ stdcall LocaleNameToLCID(wstr long)
 # @ stub LocateXStateFeature
-@ stdcall LockFile(long long long long long)
-@ stdcall LockFileEx(long long long long long ptr)
+@ stdcall -import LockFile(long long long long long)
+@ stdcall -import LockFileEx(long long long long long ptr)
 @ stdcall -import LockResource(long)
 @ stdcall MakeCriticalSectionGlobal(ptr)
 @ stdcall -i386 -private -norelay MapHInstLS() krnl386.exe16.MapHInstLS
@@ -1195,9 +1195,9 @@
 @ stdcall ReadConsoleOutputW(long ptr long long ptr)
 @ stdcall ReadConsoleW(long ptr long ptr ptr)
 @ stdcall ReadDirectoryChangesW(long ptr long long long ptr ptr ptr)
-@ stdcall ReadFile(long ptr long ptr ptr)
-@ stdcall ReadFileEx(long ptr long ptr ptr)
-@ stdcall ReadFileScatter(long ptr long ptr ptr)
+@ stdcall -import ReadFile(long ptr long ptr ptr)
+@ stdcall -import ReadFileEx(long ptr long ptr ptr)
+@ stdcall -import ReadFileScatter(long ptr long ptr ptr)
 @ stdcall ReadProcessMemory(long ptr ptr long ptr)
 # @ stub ReadThreadProfilingData
 @ stdcall -private RegCloseKey(long) advapi32.RegCloseKey
@@ -1383,7 +1383,7 @@
 @ stdcall SetDllDirectoryA(str)
 @ stdcall SetDllDirectoryW(wstr)
 # @ stub SetDynamicTimeZoneInformation
-@ stdcall SetEndOfFile(long)
+@ stdcall -import SetEndOfFile(long)
 # @ stub SetEnvironmentStringsA
 # @ stub SetEnvironmentStringsW
 @ stdcall SetEnvironmentVariableA(str str)
@@ -1391,22 +1391,22 @@
 @ stdcall -import SetErrorMode(long)
 @ stdcall -import SetEvent(long)
 @ stdcall SetEventWhenCallbackReturns(ptr long) ntdll.TpCallbackSetEventOnCompletion
-@ stdcall SetFileApisToANSI()
-@ stdcall SetFileApisToOEM()
+@ stdcall -import SetFileApisToANSI()
+@ stdcall -import SetFileApisToOEM()
 @ stdcall SetFileAttributesA(str long)
 # @ stub SetFileAttributesTransactedA
 # @ stub SetFileAttributesTransactedW
 @ stdcall SetFileAttributesW(wstr long)
 # @ stub SetFileBandwidthReservation
 @ stdcall SetFileCompletionNotificationModes(long long)
-@ stdcall SetFileInformationByHandle(long long ptr long)
+@ stdcall -import SetFileInformationByHandle(long long ptr long)
 # @ stub SetFileIoOverlappedRange
-@ stdcall SetFilePointer(long long ptr long)
-@ stdcall SetFilePointerEx(long int64 ptr long)
+@ stdcall -import SetFilePointer(long long ptr long)
+@ stdcall -import SetFilePointerEx(long int64 ptr long)
 # @ stub SetFileShortNameA
 # @ stub SetFileShortNameW
-@ stdcall SetFileTime(long ptr ptr ptr)
-@ stdcall SetFileValidData(ptr int64)
+@ stdcall -import SetFileTime(long ptr ptr ptr)
+@ stdcall -import SetFileValidData(ptr int64)
 # @ stub SetFirmwareEnvironmentVariableA
 # @ stub SetFirmwareEnvironmentVariableW
 @ stdcall SetHandleContext(long long)
@@ -1534,8 +1534,8 @@
 @ stdcall -i386 -private -norelay UnMapSLFixArray(long long) krnl386.exe16.UnMapSLFixArray
 @ stdcall UnhandledExceptionFilter(ptr)
 @ stdcall UninitializeCriticalSection(ptr)
-@ stdcall UnlockFile(long long long long long)
-@ stdcall UnlockFileEx(long long long long ptr)
+@ stdcall -import UnlockFile(long long long long long)
+@ stdcall -import UnlockFileEx(long long long long ptr)
 @ stdcall UnmapViewOfFile(ptr)
 # @ stub UnregisterApplicationRecoveryCallback
 @ stdcall UnregisterApplicationRestart()
@@ -1618,9 +1618,9 @@
 @ stdcall WriteConsoleOutputCharacterW(long ptr long long ptr)
 @ stdcall WriteConsoleOutputW(long ptr long long ptr)
 @ stdcall WriteConsoleW(long ptr long ptr ptr)
-@ stdcall WriteFile(long ptr long ptr ptr)
-@ stdcall WriteFileEx(long ptr long ptr ptr)
-@ stdcall WriteFileGather(long ptr long ptr ptr)
+@ stdcall -import WriteFile(long ptr long ptr ptr)
+@ stdcall -import WriteFileEx(long ptr long ptr ptr)
+@ stdcall -import WriteFileGather(long ptr long ptr ptr)
 @ stdcall WritePrivateProfileSectionA(str str str)
 @ stdcall WritePrivateProfileSectionW(wstr wstr wstr)
 @ stdcall WritePrivateProfileStringA(str str str str)
