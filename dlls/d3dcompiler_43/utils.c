@@ -1277,19 +1277,10 @@ static struct hlsl_type *expr_common_type(struct hlsl_type *t1, struct hlsl_type
 static struct hlsl_ir_node *implicit_conversion(struct hlsl_ir_node *node, struct hlsl_type *type,
         struct source_location *loc)
 {
-    struct hlsl_ir_expr *cast;
-    struct hlsl_ir_node *operands[3];
-
     if (compare_hlsl_types(node->data_type, type))
         return node;
     TRACE("Implicit conversion of expression to %s\n", debug_hlsl_type(type));
-    operands[0] = node;
-    operands[1] = operands[2] = NULL;
-    cast = new_expr(HLSL_IR_UNOP_CAST, operands, loc);
-    if (!cast)
-        return NULL;
-    cast->node.data_type = type;
-    return &cast->node;
+    return &new_cast(node, type, loc)->node;
 }
 
 struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **operands,
