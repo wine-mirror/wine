@@ -980,6 +980,12 @@ struct parse_colon_attribute
     struct reg_reservation *reg_reservation;
 };
 
+struct parse_initializer
+{
+    struct hlsl_ir_node **args;
+    unsigned int args_count;
+};
+
 struct parse_variable_def
 {
     struct list entry;
@@ -989,7 +995,7 @@ struct parse_variable_def
     unsigned int array_size;
     const char *semantic;
     struct reg_reservation *reg_reservation;
-    struct list *initializer;
+    struct parse_initializer initializer;
 };
 
 struct parse_function

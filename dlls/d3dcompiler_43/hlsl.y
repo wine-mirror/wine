@@ -378,17 +378,24 @@ oom:
     return NULL;
 }
 
-static unsigned int initializer_size(struct list *initializer)
+static unsigned int initializer_size(const struct parse_initializer *initializer)
 {
-    unsigned int count = 0;
-    struct hlsl_ir_node *node;
+    unsigned int count = 0, i;
 
-    LIST_FOR_EACH_ENTRY(node, initializer, struct hlsl_ir_node, entry)
+    for (i = 0; i < initializer->args_count; ++i)
     {
-        count += components_count_type(node->data_type);
+        count += components_count_type(initializer->args[i]->data_type);
     }
     TRACE("Initializer size = %u.\n", count);
     return count;
+}
+
+static void free_parse_initializer(struct parse_initializer *initializer)
+{
+    unsigned int i;
+    for (i = 0; i < initializer->args_count; ++i)
+        free_instr(initializer->args[i]);
+    d3dcompiler_free(initializer->args);
 }
 
 static struct hlsl_ir_swizzle *new_swizzle(DWORD s, unsigned int components,
@@ -488,30 +495,30 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
     return NULL;
 }
 
-static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var, struct list *initializer)
+static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
+        struct parse_initializer *initializer)
 {
     struct hlsl_type *type = var->node.data_type;
-    struct hlsl_ir_node *node;
     struct hlsl_struct_field *field;
-    struct list *cur_node;
     struct hlsl_ir_node *assignment;
     struct hlsl_ir_deref *deref;
+    unsigned int i = 0;
 
     if (initializer_size(initializer) != components_count_type(type))
     {
         hlsl_report_message(var->node.loc.file, var->node.loc.line, var->node.loc.col, HLSL_LEVEL_ERROR,
                 "structure initializer mismatch");
-        free_instr_list(initializer);
+        free_parse_initializer(initializer);
         return;
     }
-    cur_node = list_head(initializer);
-    assert(cur_node);
-    node = LIST_ENTRY(cur_node, struct hlsl_ir_node, entry);
+
     LIST_FOR_EACH_ENTRY(field, type->e.elements, struct hlsl_struct_field, entry)
     {
-        if (!cur_node)
+        struct hlsl_ir_node *node = initializer->args[i];
+
+        if (i++ >= initializer->args_count)
         {
-            d3dcompiler_free(initializer);
+            d3dcompiler_free(initializer->args);
             return;
         }
         if (components_count_type(field->type) == components_count_type(node->data_type))
@@ -528,19 +535,12 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var, s
         }
         else
             FIXME("Initializing with \"mismatched\" fields is not supported yet.\n");
-        cur_node = list_next(initializer, cur_node);
-        node = LIST_ENTRY(cur_node, struct hlsl_ir_node, entry);
     }
 
     /* Free initializer elements in excess. */
-    while (cur_node)
-    {
-        struct list *next = list_next(initializer, cur_node);
-        free_instr(node);
-        cur_node = next;
-        node = LIST_ENTRY(cur_node, struct hlsl_ir_node, entry);
-    }
-    d3dcompiler_free(initializer);
+    for (; i < initializer->args_count; ++i)
+        free_instr(initializer->args[i]);
+    d3dcompiler_free(initializer->args);
 }
 
 static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, struct list *var_list)
@@ -593,7 +593,7 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
             local = FALSE;
         }
 
-        if (var->modifiers & HLSL_MODIFIER_CONST && !(var->modifiers & HLSL_STORAGE_UNIFORM) && !v->initializer)
+        if (var->modifiers & HLSL_MODIFIER_CONST && !(var->modifiers & HLSL_STORAGE_UNIFORM) && !v->initializer.args_count)
         {
             hlsl_report_message(v->loc.file, v->loc.line, v->loc.col,
                     HLSL_LEVEL_ERROR, "const variable without initializer");
@@ -611,10 +611,9 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
         }
         TRACE("Declared variable %s.\n", var->name);
 
-        if (v->initializer)
+        if (v->initializer.args_count)
         {
-            unsigned int size = initializer_size(v->initializer);
-            struct hlsl_ir_node *node;
+            unsigned int size = initializer_size(&v->initializer);
 
             TRACE("Variable with initializer.\n");
             if (type->type <= HLSL_CLASS_LAST_NUMERIC
@@ -624,7 +623,7 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
                 {
                     hlsl_report_message(v->loc.file, v->loc.line, v->loc.col, HLSL_LEVEL_ERROR,
                             "'%s' initializer does not match", v->name);
-                    free_instr_list(v->initializer);
+                    free_parse_initializer(&v->initializer);
                     d3dcompiler_free(v);
                     continue;
                 }
@@ -634,43 +633,43 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
             {
                 hlsl_report_message(v->loc.file, v->loc.line, v->loc.col, HLSL_LEVEL_ERROR,
                         "'%s' initializer does not match", v->name);
-                free_instr_list(v->initializer);
+                free_parse_initializer(&v->initializer);
                 d3dcompiler_free(v);
                 continue;
             }
 
             if (type->type == HLSL_CLASS_STRUCT)
             {
-                struct_var_initializer(statements_list, var, v->initializer);
+                struct_var_initializer(statements_list, var, &v->initializer);
                 d3dcompiler_free(v);
                 continue;
             }
             if (type->type > HLSL_CLASS_LAST_NUMERIC)
             {
                 FIXME("Initializers for non scalar/struct variables not supported yet.\n");
-                free_instr_list(v->initializer);
+                free_parse_initializer(&v->initializer);
                 d3dcompiler_free(v);
                 continue;
             }
             if (v->array_size > 0)
             {
                 FIXME("Initializing arrays is not supported yet.\n");
-                free_instr_list(v->initializer);
+                free_parse_initializer(&v->initializer);
                 d3dcompiler_free(v);
                 continue;
             }
-            if (list_count(v->initializer) > 1)
+            if (v->initializer.args_count > 1)
             {
                 FIXME("Complex initializers are not supported yet.\n");
-                free_instr_list(v->initializer);
+                free_parse_initializer(&v->initializer);
                 d3dcompiler_free(v);
                 continue;
             }
-            node = LIST_ENTRY(list_head(v->initializer), struct hlsl_ir_node, entry);
+
             assignment = make_assignment(&var->node, ASSIGN_OP_ASSIGN,
-                    BWRITERSP_WRITEMASK_ALL, node);
+                    BWRITERSP_WRITEMASK_ALL, v->initializer.args[0]);
+            d3dcompiler_free(v->initializer.args);
             list_add_tail(statements_list, &assignment->entry);
-            d3dcompiler_free(v->initializer);
         }
         d3dcompiler_free(v);
     }
@@ -718,11 +717,11 @@ static struct list *gen_struct_fields(struct hlsl_type *type, DWORD modifiers, s
         field->name = v->name;
         field->modifiers = modifiers;
         field->semantic = v->semantic;
-        if (v->initializer)
+        if (v->initializer.args_count)
         {
             hlsl_report_message(v->loc.file, v->loc.line, v->loc.col, HLSL_LEVEL_ERROR,
                     "struct field with an initializer.\n");
-            free_instr_list(v->initializer);
+            free_parse_initializer(&v->initializer);
         }
         list_add_tail(list, &field->entry);
         d3dcompiler_free(v);
@@ -905,6 +904,7 @@ static const struct hlsl_ir_function_decl *get_overloaded_func(struct wine_rb_tr
     struct list *list;
     struct parse_function function;
     struct parse_parameter parameter;
+    struct parse_initializer initializer;
     struct parse_variable_def *variable_def;
     struct parse_if_body if_body;
     enum parse_unary_op unary_op;
@@ -1028,8 +1028,8 @@ static const struct hlsl_ir_function_decl *get_overloaded_func(struct wine_rb_tr
 %type <type> unnamed_struct_spec
 %type <list> type_specs
 %type <variable_def> type_spec
-%type <list> complex_initializer
-%type <list> initializer_expr_list
+%type <initializer> complex_initializer
+%type <initializer> initializer_expr_list
 %type <instr> initializer_expr
 %type <modifiers> var_modifiers
 %type <list> field
@@ -1675,9 +1675,10 @@ var_modifiers:            /* Empty */
 
 complex_initializer:      initializer_expr
                             {
-                                $$ = d3dcompiler_alloc(sizeof(*$$));
-                                list_init($$);
-                                list_add_head($$, &$1->entry);
+                                $$.args_count = 1;
+                                if (!($$.args = d3dcompiler_alloc(sizeof(*$$.args))))
+                                    YYABORT;
+                                $$.args[0] = $1;
                             }
                         | '{' initializer_expr_list '}'
                             {
@@ -1695,14 +1696,17 @@ initializer_expr:         assignment_expr
 
 initializer_expr_list:    initializer_expr
                             {
-                                $$ = d3dcompiler_alloc(sizeof(*$$));
-                                list_init($$);
-                                list_add_head($$, &$1->entry);
+                                $$.args_count = 1;
+                                if (!($$.args = d3dcompiler_alloc(sizeof(*$$.args))))
+                                    YYABORT;
+                                $$.args[0] = $1;
                             }
                         | initializer_expr_list ',' initializer_expr
                             {
                                 $$ = $1;
-                                list_add_tail($$, &$3->entry);
+                                if (!($$.args = d3dcompiler_realloc($$.args, ($$.args_count + 1) * sizeof(*$$.args))))
+                                    YYABORT;
+                                $$.args[$$.args_count++] = $3;
                             }
 
 boolean:                  KW_TRUE
@@ -2080,7 +2084,6 @@ postfix_expr:             primary_expr
                         | var_modifiers type '(' initializer_expr_list ')'
                             {
                                 struct hlsl_ir_constructor *constructor;
-                                struct hlsl_ir_node *instr;
 
                                 TRACE("%s constructor.\n", debug_hlsl_type($2));
                                 if ($1)
@@ -2097,25 +2100,22 @@ postfix_expr:             primary_expr
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
                                     YYABORT;
                                 }
-                                if ($2->dimx * $2->dimy != initializer_size($4))
+                                if ($2->dimx * $2->dimy != initializer_size(&$4))
                                 {
                                     hlsl_message("Line %u: wrong number of components in constructor.\n",
                                             hlsl_ctx.line_no);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
                                     YYABORT;
                                 }
+                                assert($4.args_count <= ARRAY_SIZE(constructor->args));
 
                                 constructor = d3dcompiler_alloc(sizeof(*constructor));
                                 constructor->node.type = HLSL_IR_CONSTRUCTOR;
                                 set_location(&constructor->node.loc, &@3);
                                 constructor->node.data_type = $2;
-                                constructor->args_count = 0;
-                                LIST_FOR_EACH_ENTRY(instr, $4, struct hlsl_ir_node, entry)
-                                {
-                                    constructor->args[constructor->args_count++] = instr;
-                                }
-                                d3dcompiler_free($4);
-
+                                constructor->args_count = $4.args_count;
+                                memcpy(constructor->args, $4.args, $4.args_count * sizeof(*$4.args));
+                                d3dcompiler_free($4.args);
                                 $$ = &constructor->node;
                             }
 
