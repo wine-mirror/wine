@@ -108,7 +108,8 @@ DEFINE_EXPECT(InitNew);
 DEFINE_EXPECT(Close);
 DEFINE_EXPECT(SetProperty_HACK_TRIDENTEVENTSINK);
 DEFINE_EXPECT(SetProperty_INVOKEVERSIONING);
-DEFINE_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION);
+DEFINE_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION_FALSE);
+DEFINE_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION_TRUE);
 DEFINE_EXPECT(SetScriptSite);
 DEFINE_EXPECT(GetScriptState);
 DEFINE_EXPECT(SetScriptState_STARTED);
@@ -1824,9 +1825,11 @@ static HRESULT WINAPI ActiveScriptProperty_SetProperty(IActiveScriptProperty *if
         ok(V_I4(pvarValue) == 1, "V_I4(pvarValue)=%d\n", V_I4(pvarValue));
         break;
     case SCRIPTPROP_ABBREVIATE_GLOBALNAME_RESOLUTION:
-        CHECK_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION);
+        if(V_BOOL(pvarValue))
+            CHECK_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION_TRUE);
+        else
+            CHECK_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION_FALSE);
         ok(V_VT(pvarValue) == VT_BOOL, "V_VT(pvarValue)=%d\n", V_VT(pvarValue));
-        ok(V_BOOL(pvarValue) == VARIANT_TRUE, "V_BOOL(pvarValue)=%x\n", V_BOOL(pvarValue));
         break;
     case 0x70000003: /* Undocumented property set by IE10 */
         return E_NOTIMPL;
@@ -2369,8 +2372,11 @@ static void test_script_run(void)
     dp.cArgs = 1;
     dp.rgvarg = &arg;
 
+    SET_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION_FALSE); /* IE11 */
     SET_EXPECT(funcDisp);
     hres = IDispatchEx_InvokeEx(document, id, LOCALE_NEUTRAL, INVOKE_FUNC, &dp, &var, &ei, NULL);
+    todo_wine
+    CHECK_CALLED_BROKEN(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION_FALSE); /* IE11 */
     CHECK_CALLED(funcDisp);
 
     ok(hres == S_OK, "InvokeEx(INVOKE_FUNC) failed: %08x\n", hres);
@@ -3304,7 +3310,7 @@ static void test_simple_script(void)
     SET_EXPECT(GetScriptState);
     SET_EXPECT(SetScriptState_STARTED);
     SET_EXPECT(AddNamedItem);
-    SET_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION); /* IE8 */
+    SET_EXPECT(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION_TRUE); /* IE8 */
     SET_EXPECT(ParseScriptText_script);
     SET_EXPECT(SetScriptState_CONNECTED);
 
@@ -3320,7 +3326,7 @@ static void test_simple_script(void)
     CHECK_CALLED(GetScriptState);
     CHECK_CALLED(SetScriptState_STARTED);
     CHECK_CALLED(AddNamedItem);
-    CHECK_CALLED_BROKEN(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION); /* IE8 */
+    CHECK_CALLED_BROKEN(SetProperty_ABBREVIATE_GLOBALNAME_RESOLUTION_TRUE); /* IE8 */
     CHECK_CALLED(ParseScriptText_script);
     CHECK_CALLED(SetScriptState_CONNECTED);
 
