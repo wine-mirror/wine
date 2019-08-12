@@ -54,8 +54,9 @@ typedef struct WS(addrinfoW)
     struct WS(addrinfoW)*   ai_next;
 } ADDRINFOW, *PADDRINFOW;
 
-DECL_WINELIB_TYPE_AW(ADDRINFOT)
-DECL_WINELIB_TYPE_AW(PADDRINFOT)
+#ifndef WINE_NO_UNICODE_MACROS
+typedef WINELIB_NAME_AW(ADDRINFO) ADDRINFOT, *PADDRINFOT;
+#endif
 
 #ifdef USE_WS_PREFIX
 typedef int WS_socklen_t;
