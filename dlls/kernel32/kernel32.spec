@@ -280,13 +280,13 @@
 @ stdcall -import CreateEventW(ptr long long wstr)
 @ stdcall -import CreateFiber(long ptr ptr)
 @ stdcall -import CreateFiberEx(long long long ptr ptr)
-@ stdcall CreateFile2(wstr long long long ptr)
-@ stdcall CreateFileA(str long long ptr long long long)
+@ stdcall -import CreateFile2(wstr long long long ptr)
+@ stdcall -import CreateFileA(str long long ptr long long long)
 @ stdcall CreateFileMappingA(long ptr long long long str)
 # @ stub CreateFileMappingNumaA
 # @ stub CreateFileMappingNumaW
 @ stdcall -import CreateFileMappingW(long ptr long long long wstr)
-@ stdcall CreateFileW(wstr long long ptr long long long)
+@ stdcall -import CreateFileW(wstr long long ptr long long long)
 @ stdcall CreateHardLinkA(str str ptr)
 @ stdcall CreateHardLinkTransactedA(str str ptr ptr)
 @ stdcall CreateHardLinkTransactedW(wstr wstr ptr ptr)
@@ -361,10 +361,10 @@
 # @ stub DeleteBoundaryDescriptor
 @ stdcall DeleteCriticalSection(ptr) ntdll.RtlDeleteCriticalSection
 @ stdcall -import DeleteFiber(ptr)
-@ stdcall DeleteFileA(str)
+@ stdcall -import DeleteFileA(str)
 # @ stub DeleteFileTransactedA
 # @ stub DeleteFileTransactedW
-@ stdcall DeleteFileW(wstr)
+@ stdcall -import DeleteFileW(wstr)
 @ stdcall -import DeleteProcThreadAttributeList(ptr)
 # @ stub DisableThreadProfiling
 @ stdcall DisassociateCurrentThreadFromCallback(ptr) ntdll.TpDisassociateCallback
@@ -570,10 +570,10 @@
 @ stdcall GetCommTimeouts(long ptr)
 @ stdcall GetCommandLineA()
 @ stdcall GetCommandLineW()
-@ stdcall GetCompressedFileSizeA(long ptr)
+@ stdcall -import GetCompressedFileSizeA(long ptr)
 # @ stub GetCompressedFileSizeTransactedA
 # @ stub GetCompressedFileSizeTransactedW
-@ stdcall GetCompressedFileSizeW(long ptr)
+@ stdcall -import GetCompressedFileSizeW(long ptr)
 @ stdcall GetComputerNameA(ptr ptr)
 @ stdcall GetComputerNameExA(long ptr ptr)
 @ stdcall GetComputerNameExW(long ptr ptr)
@@ -669,12 +669,12 @@
 @ stdcall -import GetExitCodeThread(long ptr)
 @ stdcall GetExpandedNameA(str ptr)
 @ stdcall GetExpandedNameW(wstr ptr)
-@ stdcall GetFileAttributesA(str)
-@ stdcall GetFileAttributesExA(str long ptr)
-@ stdcall GetFileAttributesExW(wstr long ptr)
+@ stdcall -import GetFileAttributesA(str)
+@ stdcall -import GetFileAttributesExA(str long ptr)
+@ stdcall -import GetFileAttributesExW(wstr long ptr)
 # @ stub GetFileAttributesTransactedA
 # @ stub GetFileAttributesTransactedW
-@ stdcall GetFileAttributesW(wstr)
+@ stdcall -import GetFileAttributesW(wstr)
 # @ stub GetFileBandwidthReservation
 @ stdcall -import GetFileInformationByHandle(long ptr)
 @ stdcall -import GetFileInformationByHandleEx(long long ptr long)
@@ -1115,7 +1115,7 @@
 @ stdcall -import OpenEventA(long long str)
 @ stdcall -import OpenEventW(long long wstr)
 @ stdcall OpenFile(str ptr long)
-@ stdcall OpenFileById(long ptr long long ptr long)
+@ stdcall -import OpenFileById(long ptr long long ptr long)
 @ stdcall OpenFileMappingA(long long str)
 @ stdcall -import OpenFileMappingW(long long wstr)
 @ stdcall OpenJobObjectA(long long str)
@@ -1268,7 +1268,7 @@
 # @ stub RemoveLocalAlternateComputerNameW
 @ stdcall RemoveVectoredContinueHandler(ptr) ntdll.RtlRemoveVectoredContinueHandler
 @ stdcall RemoveVectoredExceptionHandler(ptr) ntdll.RtlRemoveVectoredExceptionHandler
-@ stdcall ReOpenFile(ptr long long long) ReOpenFile
+@ stdcall -import ReOpenFile(ptr long long long) ReOpenFile
 @ stdcall ReplaceFile(wstr wstr wstr long ptr ptr) ReplaceFileW
 @ stdcall ReplaceFileA(str str str long ptr ptr)
 @ stdcall ReplaceFileW(wstr wstr wstr long ptr ptr)
@@ -1393,10 +1393,10 @@
 @ stdcall SetEventWhenCallbackReturns(ptr long) ntdll.TpCallbackSetEventOnCompletion
 @ stdcall -import SetFileApisToANSI()
 @ stdcall -import SetFileApisToOEM()
-@ stdcall SetFileAttributesA(str long)
+@ stdcall -import SetFileAttributesA(str long)
 # @ stub SetFileAttributesTransactedA
 # @ stub SetFileAttributesTransactedW
-@ stdcall SetFileAttributesW(wstr long)
+@ stdcall -import SetFileAttributesW(wstr long)
 # @ stub SetFileBandwidthReservation
 @ stdcall SetFileCompletionNotificationModes(long long)
 @ stdcall -import SetFileInformationByHandle(long long ptr long)

@@ -185,12 +185,12 @@
 @ stdcall CreateEventW(ptr long long wstr)
 @ stdcall CreateFiber(long ptr ptr)
 @ stdcall CreateFiberEx(long long long ptr ptr)
-@ stdcall CreateFile2(wstr long long long ptr) kernel32.CreateFile2
-@ stdcall CreateFileA(str long long ptr long long long) kernel32.CreateFileA
+@ stdcall CreateFile2(wstr long long long ptr)
+@ stdcall CreateFileA(str long long ptr long long long)
 # @ stub CreateFileMappingFromApp
 @ stub CreateFileMappingNumaW
 @ stdcall CreateFileMappingW(long ptr long long long wstr)
-@ stdcall CreateFileW(wstr long long ptr long long long) kernel32.CreateFileW
+@ stdcall CreateFileW(wstr long long ptr long long long)
 @ stdcall CreateHardLinkA(str str ptr) kernel32.CreateHardLinkA
 @ stdcall CreateHardLinkW(wstr wstr ptr) kernel32.CreateHardLinkW
 @ stdcall CreateIoCompletionPort(long long long long)
@@ -250,8 +250,8 @@
 # @ stub DeleteBoundaryDescriptor
 @ stdcall DeleteCriticalSection(ptr) ntdll.RtlDeleteCriticalSection
 @ stdcall DeleteFiber(ptr)
-@ stdcall DeleteFileA(str) kernel32.DeleteFileA
-@ stdcall DeleteFileW(wstr) kernel32.DeleteFileW
+@ stdcall DeleteFileA(str)
+@ stdcall DeleteFileW(wstr)
 @ stdcall DeleteProcThreadAttributeList(ptr)
 # @ stub DeleteStateAtomValue
 # @ stub DeleteStateContainer
@@ -435,8 +435,8 @@
 @ stdcall GetCommTimeouts(long ptr) kernel32.GetCommTimeouts
 @ stdcall GetCommandLineA() kernel32.GetCommandLineA
 @ stdcall GetCommandLineW() kernel32.GetCommandLineW
-@ stdcall GetCompressedFileSizeA(long ptr) kernel32.GetCompressedFileSizeA
-@ stdcall GetCompressedFileSizeW(long ptr) kernel32.GetCompressedFileSizeW
+@ stdcall GetCompressedFileSizeA(long ptr)
+@ stdcall GetCompressedFileSizeW(long ptr)
 @ stdcall GetComputerNameExA(long ptr ptr) kernel32.GetComputerNameExA
 @ stdcall GetComputerNameExW(long ptr ptr) kernel32.GetComputerNameExW
 @ stdcall GetConsoleCP() kernel32.GetConsoleCP
@@ -502,10 +502,10 @@
 @ stdcall GetExitCodeProcess(long ptr)
 @ stdcall GetExitCodeThread(long ptr)
 @ stub GetFallbackDisplayName
-@ stdcall GetFileAttributesA(str) kernel32.GetFileAttributesA
-@ stdcall GetFileAttributesExA(str long ptr) kernel32.GetFileAttributesExA
-@ stdcall GetFileAttributesExW(wstr long ptr) kernel32.GetFileAttributesExW
-@ stdcall GetFileAttributesW(wstr) kernel32.GetFileAttributesW
+@ stdcall GetFileAttributesA(str)
+@ stdcall GetFileAttributesExA(str long ptr)
+@ stdcall GetFileAttributesExW(wstr long ptr)
+@ stdcall GetFileAttributesW(wstr)
 @ stdcall GetFileInformationByHandle(long ptr)
 @ stdcall GetFileInformationByHandleEx(long long ptr long)
 @ stdcall GetFileMUIInfo(long wstr ptr ptr) kernel32.GetFileMUIInfo
@@ -983,7 +983,7 @@
 # @ stub OfferVirtualMemory
 @ stdcall OpenEventA(long long str)
 @ stdcall OpenEventW(long long wstr)
-@ stdcall OpenFileById(long ptr long long ptr long) kernel32.OpenFileById
+@ stdcall OpenFileById(long ptr long long ptr long)
 # @ stub OpenFileMappingFromApp
 @ stdcall OpenFileMappingW(long long wstr)
 # @ stub OpenGlobalizationUserSettingsKey
@@ -1234,7 +1234,7 @@
 # @ stub QuirkIsEnabledForProcess
 @ stdcall RaiseException(long long long ptr) kernel32.RaiseException
 # @ stub RaiseFailFastException
-@ stdcall ReOpenFile(ptr long long long) kernel32.ReOpenFile
+@ stdcall ReOpenFile(ptr long long long)
 @ stdcall ReadConsoleA(long ptr long ptr ptr) kernel32.ReadConsoleA
 @ stdcall ReadConsoleInputA(long ptr long ptr) kernel32.ReadConsoleInputA
 @ stub ReadConsoleInputExA
@@ -1431,8 +1431,8 @@
 @ stdcall SetEventWhenCallbackReturns(ptr long) ntdll.TpCallbackSetEventOnCompletion
 @ stdcall SetFileApisToANSI()
 @ stdcall SetFileApisToOEM()
-@ stdcall SetFileAttributesA(str long) kernel32.SetFileAttributesA
-@ stdcall SetFileAttributesW(wstr long) kernel32.SetFileAttributesW
+@ stdcall SetFileAttributesA(str long)
+@ stdcall SetFileAttributesW(wstr long)
 @ stdcall SetFileInformationByHandle(long long ptr long)
 # @ stub SetFileIoOverlappedRange
 @ stdcall SetFilePointer(long long ptr long)
