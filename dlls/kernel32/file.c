@@ -1981,7 +1981,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
 
     TRACE("%s %d %p %d %p %x\n", debugstr_w(filename), level, data, search_op, filter, flags);
 
-    if (flags != 0)
+    if (flags & ~FIND_FIRST_EX_LARGE_FETCH)
     {
         FIXME("flags not implemented 0x%08x\n", flags );
     }
