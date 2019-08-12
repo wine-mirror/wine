@@ -1091,7 +1091,7 @@ hlsl_prog:                /* empty */
                                         hlsl_report_message($2.decl->node.loc.file, $2.decl->node.loc.line,
                                                 $2.decl->node.loc.col, HLSL_LEVEL_ERROR,
                                                 "redefinition of function %s", debugstr_a($2.name));
-                                        return 1;
+                                        YYABORT;
                                     }
                                     else if (!compare_hlsl_types(decl->node.data_type, $2.decl->node.data_type))
                                     {
@@ -1102,7 +1102,7 @@ hlsl_prog:                /* empty */
                                         hlsl_report_message(decl->node.loc.file, decl->node.loc.line, decl->node.loc.col, HLSL_LEVEL_NOTE,
                                                 "%s previously declared here",
                                                 debugstr_a($2.name));
-                                        return 1;
+                                        YYABORT;
                                     }
                                 }
 
@@ -1184,7 +1184,7 @@ named_struct_spec:        var_modifiers KW_STRUCT any_identifier '{' fields_list
                                 {
                                     hlsl_report_message(hlsl_ctx.source_file, @3.first_line, @3.first_column,
                                             HLSL_LEVEL_ERROR, "redefinition of '%s'", $3);
-                                    return 1;
+                                    YYABORT;
                                 }
 
                                 ret = add_type_to_scope(hlsl_ctx.cur_scope, $$);
@@ -1192,7 +1192,7 @@ named_struct_spec:        var_modifiers KW_STRUCT any_identifier '{' fields_list
                                 {
                                     hlsl_report_message(hlsl_ctx.source_file, @3.first_line, @3.first_column,
                                             HLSL_LEVEL_ERROR, "redefinition of struct '%s'", $3);
-                                    return 1;
+                                    YYABORT;
                                 }
                             }
 
@@ -1263,7 +1263,7 @@ func_prototype:           var_modifiers type var_identifier '(' parameters ')' c
                                 {
                                     hlsl_report_message(hlsl_ctx.source_file, @3.first_line, @3.first_column,
                                             HLSL_LEVEL_ERROR, "redefinition of '%s'\n", $3);
-                                    return 1;
+                                    YYABORT;
                                 }
                                 if ($2->base_type == HLSL_TYPE_VOID && $7.semantic)
                                 {
@@ -1280,7 +1280,7 @@ func_prototype:           var_modifiers type var_identifier '(' parameters ')' c
                                 if (!$$.decl)
                                 {
                                     ERR("Out of memory.\n");
-                                    return -1;
+                                    YYABORT;
                                 }
                                 $$.name = $3;
                                 $$.decl->semantic = $7.semantic;
@@ -1363,7 +1363,7 @@ param_list:               parameter
                                 {
                                     ERR("Error adding function parameter %s.\n", $1.name);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    return -1;
+                                    YYABORT;
                                 }
                             }
                         | param_list ',' parameter
@@ -1376,7 +1376,7 @@ param_list:               parameter
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "duplicate parameter %s", $3.name);
-                                    return 1;
+                                    YYABORT;
                                 }
                             }
 
@@ -1400,7 +1400,7 @@ input_mods:               /* Empty */
                                 {
                                     hlsl_report_message(hlsl_ctx.source_file, @2.first_line, @2.first_column,
                                             HLSL_LEVEL_ERROR, "duplicate input-output modifiers");
-                                    return 1;
+                                    YYABORT;
                                 }
                                 $$ = $1 | $2;
                             }
@@ -1429,14 +1429,14 @@ type:                     base_type
                                     hlsl_message("Line %u: vectors of non-scalar types are not allowed.\n",
                                             hlsl_ctx.line_no);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    return 1;
+                                    YYABORT;
                                 }
                                 if ($5 < 1 || $5 > 4)
                                 {
                                     hlsl_message("Line %u: vector size must be between 1 and 4.\n",
                                             hlsl_ctx.line_no);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    return 1;
+                                    YYABORT;
                                 }
 
                                 $$ = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, $3->base_type, $5, 1);
@@ -1448,14 +1448,14 @@ type:                     base_type
                                     hlsl_message("Line %u: matrices of non-scalar types are not allowed.\n",
                                             hlsl_ctx.line_no);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    return 1;
+                                    YYABORT;
                                 }
                                 if ($5 < 1 || $5 > 4 || $7 < 1 || $7 > 4)
                                 {
                                     hlsl_message("Line %u: matrix dimensions must be between 1 and 4.\n",
                                             hlsl_ctx.line_no);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    return 1;
+                                    YYABORT;
                                 }
 
                                 $$ = new_hlsl_type(NULL, HLSL_CLASS_MATRIX, $3->base_type, $5, $7);
@@ -1524,7 +1524,7 @@ declaration_statement:    declaration
                                 if (!$$)
                                 {
                                     ERR("Out of memory\n");
-                                    return -1;
+                                    YYABORT;
                                 }
                                 list_init($$);
                             }
@@ -1535,7 +1535,7 @@ typedef:                  KW_TYPEDEF var_modifiers type type_specs ';'
 
                                 set_location(&loc, &@1);
                                 if (!add_typedef($2, $3, $4, &loc))
-                                    return 1;
+                                    YYABORT;
                             }
                         | KW_TYPEDEF struct_spec type_specs ';'
                             {
@@ -1543,7 +1543,7 @@ typedef:                  KW_TYPEDEF var_modifiers type type_specs ';'
 
                                 set_location(&loc, &@1);
                                 if (!add_typedef(0, $2, $3, &loc))
-                                    return 1;
+                                    YYABORT;
                             }
 
 type_specs:               type_spec
@@ -1739,7 +1739,7 @@ jump_statement:           KW_RETURN expr ';'
                                 if (!jump)
                                 {
                                     ERR("Out of memory\n");
-                                    return -1;
+                                    YYABORT;
                                 }
                                 jump->node.type = HLSL_IR_JUMP;
                                 set_location(&jump->node.loc, &@1);
@@ -1762,7 +1762,7 @@ selection_statement:      KW_IF '(' expr ')' if_body
                                 if (!instr)
                                 {
                                     ERR("Out of memory\n");
-                                    return -1;
+                                    YYABORT;
                                 }
                                 instr->node.type = HLSL_IR_IF;
                                 set_location(&instr->node.loc, &@1);
@@ -1799,7 +1799,7 @@ loop_statement:           KW_WHILE '(' expr ')' statement
                                 if (!cond)
                                 {
                                     ERR("Out of memory.\n");
-                                    return -1;
+                                    YYABORT;
                                 }
                                 list_init(cond);
                                 list_add_head(cond, &$3->entry);
@@ -1814,7 +1814,7 @@ loop_statement:           KW_WHILE '(' expr ')' statement
                                 if (!cond)
                                 {
                                     ERR("Out of memory.\n");
-                                    return -1;
+                                    YYABORT;
                                 }
                                 list_init(cond);
                                 list_add_head(cond, &$5->entry);
@@ -1860,7 +1860,7 @@ primary_expr:             C_FLOAT
                                 if (!c)
                                 {
                                     ERR("Out of memory.\n");
-                                    return -1;
+                                    YYABORT;
                                 }
                                 c->node.type = HLSL_IR_CONSTANT;
                                 set_location(&c->node.loc, &yylloc);
@@ -1874,7 +1874,7 @@ primary_expr:             C_FLOAT
                                 if (!c)
                                 {
                                     ERR("Out of memory.\n");
-                                    return -1;
+                                    YYABORT;
                                 }
                                 c->node.type = HLSL_IR_CONSTANT;
                                 set_location(&c->node.loc, &yylloc);
@@ -1888,7 +1888,7 @@ primary_expr:             C_FLOAT
                                 if (!c)
                                 {
                                     ERR("Out of memory.\n");
-                                    return -1;
+                                    YYABORT;
                                 }
                                 c->node.type = HLSL_IR_CONSTANT;
                                 set_location(&c->node.loc, &yylloc);
@@ -1906,7 +1906,7 @@ primary_expr:             C_FLOAT
                                     hlsl_message("Line %d: variable '%s' not declared\n",
                                             hlsl_ctx.line_no, $1);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    return 1;
+                                    YYABORT;
                                 }
                                 if ((deref = new_var_deref(var)))
                                 {
@@ -1935,7 +1935,7 @@ postfix_expr:             primary_expr
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "modifying a const expression");
-                                    return 1;
+                                    YYABORT;
                                 }
                                 operands[0] = $1;
                                 operands[1] = operands[2] = NULL;
@@ -1954,7 +1954,7 @@ postfix_expr:             primary_expr
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "modifying a const expression");
-                                    return 1;
+                                    YYABORT;
                                 }
                                 operands[0] = $1;
                                 operands[1] = operands[2] = NULL;
@@ -1983,7 +1983,7 @@ postfix_expr:             primary_expr
                                             if (!deref)
                                             {
                                                 ERR("Out of memory\n");
-                                                return -1;
+                                                YYABORT;
                                             }
                                             deref->node.loc = loc;
                                             $$ = &deref->node;
@@ -1994,7 +1994,7 @@ postfix_expr:             primary_expr
                                     {
                                         hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                                 "invalid subscript %s", debugstr_a($3));
-                                        return 1;
+                                        YYABORT;
                                     }
                                 }
                                 else if ($1->data_type->type <= HLSL_CLASS_LAST_NUMERIC)
@@ -2006,7 +2006,7 @@ postfix_expr:             primary_expr
                                     {
                                         hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                                 "invalid swizzle %s", debugstr_a($3));
-                                        return 1;
+                                        YYABORT;
                                     }
                                     $$ = &swizzle->node;
                                 }
@@ -2014,7 +2014,7 @@ postfix_expr:             primary_expr
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "invalid subscript %s", debugstr_a($3));
-                                    return 1;
+                                    YYABORT;
                                 }
                             }
                         | postfix_expr '[' expr ']'
@@ -2030,7 +2030,7 @@ postfix_expr:             primary_expr
                                 if (!deref)
                                 {
                                     ERR("Out of memory\n");
-                                    return -1;
+                                    YYABORT;
                                 }
                                 deref->node.type = HLSL_IR_DEREF;
                                 set_location(&loc, &@2);
@@ -2058,7 +2058,7 @@ postfix_expr:             primary_expr
                                     d3dcompiler_free(deref);
                                     free_instr($1);
                                     free_instr($3);
-                                    return 1;
+                                    YYABORT;
                                 }
                                 if ($3->data_type->type != HLSL_CLASS_SCALAR)
                                 {
@@ -2067,7 +2067,7 @@ postfix_expr:             primary_expr
                                     d3dcompiler_free(deref);
                                     free_instr($1);
                                     free_instr($3);
-                                    return 1;
+                                    YYABORT;
                                 }
                                 deref->type = HLSL_IR_DEREF_ARRAY;
                                 deref->v.array.array = $1;
@@ -2088,21 +2088,21 @@ postfix_expr:             primary_expr
                                     hlsl_message("Line %u: unexpected modifier in a constructor.\n",
                                             hlsl_ctx.line_no);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    return -1;
+                                    YYABORT;
                                 }
                                 if ($2->type > HLSL_CLASS_LAST_NUMERIC)
                                 {
                                     hlsl_message("Line %u: constructors are allowed only for numeric data types.\n",
                                             hlsl_ctx.line_no);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    return -1;
+                                    YYABORT;
                                 }
                                 if ($2->dimx * $2->dimy != initializer_size($4))
                                 {
                                     hlsl_message("Line %u: wrong number of components in constructor.\n",
                                             hlsl_ctx.line_no);
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    return -1;
+                                    YYABORT;
                                 }
 
                                 constructor = d3dcompiler_alloc(sizeof(*constructor));
@@ -2133,7 +2133,7 @@ unary_expr:               postfix_expr
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "modifying a const expression");
-                                    return 1;
+                                    YYABORT;
                                 }
                                 operands[0] = $2;
                                 operands[1] = operands[2] = NULL;
@@ -2149,7 +2149,7 @@ unary_expr:               postfix_expr
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "modifying a const expression");
-                                    return 1;
+                                    YYABORT;
                                 }
                                 operands[0] = $2;
                                 operands[1] = operands[2] = NULL;
@@ -2187,7 +2187,7 @@ unary_expr:               postfix_expr
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "unexpected modifier in a cast");
-                                    return 1;
+                                    YYABORT;
                                 }
 
                                 if ($4)
@@ -2200,7 +2200,7 @@ unary_expr:               postfix_expr
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "can't cast from %s to %s",
                                             debug_hlsl_type(src_type), debug_hlsl_type(dst_type));
-                                    return 1;
+                                    YYABORT;
                                 }
 
                                 expr = new_cast($6, dst_type, &loc);
@@ -2401,11 +2401,11 @@ assignment_expr:          conditional_expr
                                 {
                                     hlsl_report_message(loc.file, loc.line, loc.col, HLSL_LEVEL_ERROR,
                                             "l-value is const");
-                                    return 1;
+                                    YYABORT;
                                 }
                                 $$ = make_assignment($1, $2, BWRITERSP_WRITEMASK_ALL, $3);
                                 if (!$$)
-                                    return 1;
+                                    YYABORT;
                                 $$->loc = loc;
                             }
 
