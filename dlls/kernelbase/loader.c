@@ -38,6 +38,176 @@ WINE_DEFAULT_DEBUG_CHANNEL(module);
 
 
 /***********************************************************************
+ * Modules
+ ***********************************************************************/
+
+
+/****************************************************************************
+ *	DisableThreadLibraryCalls   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH DisableThreadLibraryCalls( HMODULE module )
+{
+    return set_ntstatus( LdrDisableThreadCalloutsForDll( module ));
+}
+
+
+/***********************************************************************
+ *	GetModuleFileNameA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameA( HMODULE module, LPSTR filename, DWORD size )
+{
+    LPWSTR filenameW = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) );
+    DWORD len;
+
+    if (!filenameW)
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return 0;
+    }
+    if ((len = GetModuleFileNameW( module, filenameW, size )))
+    {
+    	len = file_name_WtoA( filenameW, len, filename, size );
+        if (len < size)
+            filename[len] = 0;
+        else
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+    }
+    HeapFree( GetProcessHeap(), 0, filenameW );
+    return len;
+}
+
+
+/***********************************************************************
+ *	GetModuleFileNameW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameW( HMODULE module, LPWSTR filename, DWORD size )
+{
+    ULONG len = 0;
+    ULONG_PTR magic;
+    LDR_MODULE *pldr;
+    WIN16_SUBSYSTEM_TIB *win16_tib;
+
+    if (!module && ((win16_tib = NtCurrentTeb()->Tib.SubSystemTib)) && win16_tib->exe_name)
+    {
+        len = min( size, win16_tib->exe_name->Length / sizeof(WCHAR) );
+        memcpy( filename, win16_tib->exe_name->Buffer, len * sizeof(WCHAR) );
+        if (len < size) filename[len] = 0;
+        goto done;
+    }
+
+    LdrLockLoaderLock( 0, NULL, &magic );
+
+    if (!module) module = NtCurrentTeb()->Peb->ImageBaseAddress;
+    if (set_ntstatus( LdrFindEntryForAddress( module, &pldr )))
+    {
+        len = min( size, pldr->FullDllName.Length / sizeof(WCHAR) );
+        memcpy( filename, pldr->FullDllName.Buffer, len * sizeof(WCHAR) );
+        if (len < size)
+        {
+            filename[len] = 0;
+            SetLastError( 0 );
+        }
+        else SetLastError( ERROR_INSUFFICIENT_BUFFER );
+    }
+
+    LdrUnlockLoaderLock( 0, magic );
+done:
+    TRACE( "%s\n", debugstr_wn(filename, len) );
+    return len;
+}
+
+
+/***********************************************************************
+ *	GetModuleHandleA   (kernelbase.@)
+ */
+HMODULE WINAPI DECLSPEC_HOTPATCH GetModuleHandleA( LPCSTR module )
+{
+    HMODULE ret;
+
+    GetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, module, &ret );
+    return ret;
+}
+
+
+/***********************************************************************
+ *	GetModuleHandleW   (kernelbase.@)
+ */
+HMODULE WINAPI DECLSPEC_HOTPATCH GetModuleHandleW( LPCWSTR module )
+{
+    HMODULE ret;
+
+    GetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, module, &ret );
+    return ret;
+}
+
+
+/***********************************************************************
+ *	GetModuleHandleExA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetModuleHandleExA( DWORD flags, LPCSTR name, HMODULE *module )
+{
+    WCHAR *nameW;
+
+    if (!name || (flags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS))
+        return GetModuleHandleExW( flags, (LPCWSTR)name, module );
+
+    if (!(nameW = file_name_AtoW( name, FALSE ))) return FALSE;
+    return GetModuleHandleExW( flags, nameW, module );
+}
+
+
+/***********************************************************************
+ *	GetModuleHandleExW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetModuleHandleExW( DWORD flags, LPCWSTR name, HMODULE *module )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    HMODULE ret = NULL;
+    ULONG_PTR magic;
+    BOOL lock;
+
+    if (!module)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    /* if we are messing with the refcount, grab the loader lock */
+    lock = (flags & GET_MODULE_HANDLE_EX_FLAG_PIN) || !(flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT);
+    if (lock) LdrLockLoaderLock( 0, NULL, &magic );
+
+    if (!name)
+    {
+        ret = NtCurrentTeb()->Peb->ImageBaseAddress;
+    }
+    else if (flags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS)
+    {
+        void *dummy;
+        if (!(ret = RtlPcToFileHeader( (void *)name, &dummy ))) status = STATUS_DLL_NOT_FOUND;
+    }
+    else
+    {
+        UNICODE_STRING wstr;
+        RtlInitUnicodeString( &wstr, name );
+        status = LdrGetDllHandle( NULL, 0, &wstr, &ret );
+    }
+
+    if (status == STATUS_SUCCESS)
+    {
+        if (flags & GET_MODULE_HANDLE_EX_FLAG_PIN)
+            LdrAddRefDll( LDR_ADDREF_DLL_PIN, ret );
+        else if (!(flags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT))
+            LdrAddRefDll( 0, ret );
+    }
+
+    if (lock) LdrUnlockLoaderLock( 0, magic );
+
+    *module = ret;
+    return set_ntstatus( status );
+}
+
+
+/***********************************************************************
  * Resources
  ***********************************************************************/
 
@@ -89,7 +259,7 @@ static NTSTATUS get_res_nameW( LPCWSTR name, UNICODE_STRING *str )
 
 
 /**********************************************************************
- *	EnumResourceLanguagesExA	(KERNEL32.@)
+ *	EnumResourceLanguagesExA	(kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH EnumResourceLanguagesExA( HMODULE module, LPCSTR type, LPCSTR name,
                                                         ENUMRESLANGPROCA func, LONG_PTR param,
@@ -149,7 +319,7 @@ done:
 
 
 /**********************************************************************
- *	EnumResourceLanguagesExW	(KERNEL32.@)
+ *	EnumResourceLanguagesExW	(kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH EnumResourceLanguagesExW( HMODULE module, LPCWSTR type, LPCWSTR name,
                                                         ENUMRESLANGPROCW func, LONG_PTR param,

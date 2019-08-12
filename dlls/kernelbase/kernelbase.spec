@@ -263,7 +263,7 @@
 @ stdcall DestroyPrivateObjectSecurity(ptr)
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr) kernel32.DeviceIoControl
 @ stdcall DisablePredefinedHandleTableInternal(long)
-@ stdcall DisableThreadLibraryCalls(long) kernel32.DisableThreadLibraryCalls
+@ stdcall DisableThreadLibraryCalls(long)
 @ stdcall DisassociateCurrentThreadFromCallback(ptr) ntdll.TpDisassociateCallback
 # @ stub DiscardVirtualMemory
 @ stdcall DisconnectNamedPipe(long)
@@ -556,14 +556,14 @@
 # @ stub GetMemoryErrorHandlingCapabilities
 # @ stub GetModuleBaseNameA
 # @ stub GetModuleBaseNameW
-@ stdcall GetModuleFileNameA(long ptr long) kernel32.GetModuleFileNameA
+@ stdcall GetModuleFileNameA(long ptr long)
 # @ stub GetModuleFileNameExA
 # @ stub GetModuleFileNameExW
-@ stdcall GetModuleFileNameW(long ptr long) kernel32.GetModuleFileNameW
-@ stdcall GetModuleHandleA(str) kernel32.GetModuleHandleA
-@ stdcall GetModuleHandleExA(long ptr ptr) kernel32.GetModuleHandleExA
-@ stdcall GetModuleHandleExW(long ptr ptr) kernel32.GetModuleHandleExW
-@ stdcall GetModuleHandleW(wstr) kernel32.GetModuleHandleW
+@ stdcall GetModuleFileNameW(long ptr long)
+@ stdcall GetModuleHandleA(str)
+@ stdcall GetModuleHandleExA(long ptr ptr)
+@ stdcall GetModuleHandleExW(long ptr ptr)
+@ stdcall GetModuleHandleW(wstr)
 # @ stub GetModuleInformation
 @ stub GetNLSVersion
 @ stub GetNLSVersionEx

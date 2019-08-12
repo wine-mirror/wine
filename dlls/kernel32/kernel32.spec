@@ -377,7 +377,7 @@
 @ stdcall DeleteVolumeMountPointW(wstr)
 @ stdcall -arch=x86_64 DequeueUmsCompletionListItems(ptr long ptr)
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr)
-@ stdcall DisableThreadLibraryCalls(long)
+@ stdcall -import DisableThreadLibraryCalls(long)
 @ stdcall -import DisconnectNamedPipe(long)
 @ stdcall DnsHostnameToComputerNameA (str ptr ptr)
 @ stdcall DnsHostnameToComputerNameW (wstr ptr ptr)
@@ -718,12 +718,12 @@
 @ stdcall GetMailslotInfo(long ptr ptr ptr ptr)
 @ stdcall GetMaximumProcessorCount(long)
 # @ stub GetMaximumProcessorGroupCount
-@ stdcall GetModuleFileNameA(long ptr long)
-@ stdcall GetModuleFileNameW(long ptr long)
-@ stdcall GetModuleHandleA(str)
-@ stdcall GetModuleHandleExA(long ptr ptr)
-@ stdcall GetModuleHandleExW(long ptr ptr)
-@ stdcall GetModuleHandleW(wstr)
+@ stdcall -import GetModuleFileNameA(long ptr long)
+@ stdcall -import GetModuleFileNameW(long ptr long)
+@ stdcall -import GetModuleHandleA(str)
+@ stdcall -import GetModuleHandleExA(long ptr ptr)
+@ stdcall -import GetModuleHandleExW(long ptr ptr)
+@ stdcall -import GetModuleHandleW(wstr)
 # @ stub GetNamedPipeAttribute
 # @ stub GetNamedPipeClientComputerNameA
 # @ stub GetNamedPipeClientComputerNameW
