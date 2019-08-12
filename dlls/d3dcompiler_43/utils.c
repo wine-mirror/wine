@@ -1351,149 +1351,6 @@ struct hlsl_ir_expr *new_cast(struct hlsl_ir_node *node, struct hlsl_type *type,
     return expr_from_node(cast);
 }
 
-struct hlsl_ir_expr *hlsl_mul(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
-        struct source_location *loc)
-{
-    struct hlsl_ir_expr *expr;
-    struct hlsl_ir_node *ops[3];
-
-    ops[0] = op1;
-    ops[1] = op2;
-    ops[2] = NULL;
-    expr = new_expr(HLSL_IR_BINOP_MUL, ops, loc);
-    return expr;
-}
-
-struct hlsl_ir_expr *hlsl_div(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
-        struct source_location *loc)
-{
-    struct hlsl_ir_expr *expr;
-    struct hlsl_ir_node *ops[3];
-
-    ops[0] = op1;
-    ops[1] = op2;
-    ops[2] = NULL;
-    expr = new_expr(HLSL_IR_BINOP_DIV, ops, loc);
-    return expr;
-}
-
-struct hlsl_ir_expr *hlsl_mod(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
-        struct source_location *loc)
-{
-    struct hlsl_ir_expr *expr;
-    struct hlsl_ir_node *ops[3];
-
-    ops[0] = op1;
-    ops[1] = op2;
-    ops[2] = NULL;
-    expr = new_expr(HLSL_IR_BINOP_MOD, ops, loc);
-    return expr;
-}
-
-struct hlsl_ir_expr *hlsl_add(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
-        struct source_location *loc)
-{
-    struct hlsl_ir_expr *expr;
-    struct hlsl_ir_node *ops[3];
-
-    ops[0] = op1;
-    ops[1] = op2;
-    ops[2] = NULL;
-    expr = new_expr(HLSL_IR_BINOP_ADD, ops, loc);
-    return expr;
-}
-
-struct hlsl_ir_expr *hlsl_sub(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
-        struct source_location *loc)
-{
-    struct hlsl_ir_expr *expr;
-    struct hlsl_ir_node *ops[3];
-
-    ops[0] = op1;
-    ops[1] = op2;
-    ops[2] = NULL;
-    expr = new_expr(HLSL_IR_BINOP_SUB, ops, loc);
-    return expr;
-}
-
-struct hlsl_ir_expr *hlsl_lt(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
-        struct source_location *loc)
-{
-    struct hlsl_ir_expr *expr;
-    struct hlsl_ir_node *ops[3];
-
-    ops[0] = op1;
-    ops[1] = op2;
-    ops[2] = NULL;
-    expr = new_expr(HLSL_IR_BINOP_LESS, ops, loc);
-    return expr;
-}
-
-struct hlsl_ir_expr *hlsl_gt(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
-        struct source_location *loc)
-{
-    struct hlsl_ir_expr *expr;
-    struct hlsl_ir_node *ops[3];
-
-    ops[0] = op1;
-    ops[1] = op2;
-    ops[2] = NULL;
-    expr = new_expr(HLSL_IR_BINOP_GREATER, ops, loc);
-    return expr;
-}
-
-struct hlsl_ir_expr *hlsl_le(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
-        struct source_location *loc)
-{
-    struct hlsl_ir_expr *expr;
-    struct hlsl_ir_node *ops[3];
-
-    ops[0] = op1;
-    ops[1] = op2;
-    ops[2] = NULL;
-    expr = new_expr(HLSL_IR_BINOP_LEQUAL, ops, loc);
-    return expr;
-}
-
-struct hlsl_ir_expr *hlsl_ge(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
-        struct source_location *loc)
-{
-    struct hlsl_ir_expr *expr;
-    struct hlsl_ir_node *ops[3];
-
-    ops[0] = op1;
-    ops[1] = op2;
-    ops[2] = NULL;
-    expr = new_expr(HLSL_IR_BINOP_GEQUAL, ops, loc);
-    return expr;
-}
-
-struct hlsl_ir_expr *hlsl_eq(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
-        struct source_location *loc)
-{
-    struct hlsl_ir_expr *expr;
-    struct hlsl_ir_node *ops[3];
-
-    ops[0] = op1;
-    ops[1] = op2;
-    ops[2] = NULL;
-    expr = new_expr(HLSL_IR_BINOP_EQUAL, ops, loc);
-    return expr;
-}
-
-struct hlsl_ir_expr *hlsl_ne(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,
-        struct source_location *loc)
-{
-    struct hlsl_ir_expr *expr;
-    struct hlsl_ir_node *ops[3];
-
-    ops[0] = op1;
-    ops[1] = op2;
-    ops[2] = NULL;
-    expr = new_expr(HLSL_IR_BINOP_NEQUAL, ops, loc);
-    return expr;
-}
-
 struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var)
 {
     struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
@@ -1553,7 +1410,6 @@ static enum hlsl_ir_expr_op op_from_assignment(enum parse_assign_op op)
 struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assign_op assign_op,
         DWORD writemask, struct hlsl_ir_node *right)
 {
-    struct hlsl_ir_expr *expr;
     struct hlsl_ir_assignment *assign = d3dcompiler_alloc(sizeof(*assign));
     struct hlsl_type *type;
     struct hlsl_ir_node *lhs, *rhs;
@@ -1643,8 +1499,8 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
     assign->lhs = lhs;
     if (assign_op != ASSIGN_OP_ASSIGN)
     {
-        struct hlsl_ir_node *operands[3];
         enum hlsl_ir_expr_op op = op_from_assignment(assign_op);
+        struct hlsl_ir_node *expr;
 
         if (lhs->type != HLSL_IR_DEREF || deref_from_node(lhs)->type != HLSL_IR_DEREF_VAR)
         {
@@ -1657,11 +1513,8 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
 
             TRACE("Adding an expression for the compound assignment.\n");
             new_deref = new_var_deref(lhs_deref->v.var);
-            operands[0] = &new_deref->node;
-            operands[1] = rhs;
-            operands[2] = NULL;
-            expr = new_expr(op, operands, &left->loc);
-            assign->rhs = &expr->node;
+            expr = new_binary_expr(op, &new_deref->node, rhs, left->loc);
+            assign->rhs = expr;
         }
     }
     else

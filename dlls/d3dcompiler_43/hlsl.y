@@ -2214,21 +2214,21 @@ mul_expr:                 unary_expr
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = &hlsl_mul($1, $3, &loc)->node;
+                                $$ = new_binary_expr(HLSL_IR_BINOP_MUL, $1, $3, loc);
                             }
                         | mul_expr '/' unary_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = &hlsl_div($1, $3, &loc)->node;
+                                $$ = new_binary_expr(HLSL_IR_BINOP_DIV, $1, $3, loc);
                             }
                         | mul_expr '%' unary_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = &hlsl_mod($1, $3, &loc)->node;
+                                $$ = new_binary_expr(HLSL_IR_BINOP_MOD, $1, $3, loc);
                             }
 
 add_expr:                 mul_expr
@@ -2240,14 +2240,14 @@ add_expr:                 mul_expr
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = &hlsl_add($1, $3, &loc)->node;
+                                $$ = new_binary_expr(HLSL_IR_BINOP_ADD, $1, $3, loc);
                             }
                         | add_expr '-' mul_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = &hlsl_sub($1, $3, &loc)->node;
+                                $$ = new_binary_expr(HLSL_IR_BINOP_SUB, $1, $3, loc);
                             }
 
 shift_expr:               add_expr
@@ -2272,28 +2272,28 @@ relational_expr:          shift_expr
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = &hlsl_lt($1, $3, &loc)->node;
+                                $$ = new_binary_expr(HLSL_IR_BINOP_LESS, $1, $3, loc);
                             }
                         | relational_expr '>' shift_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = &hlsl_gt($1, $3, &loc)->node;
+                                $$ = new_binary_expr(HLSL_IR_BINOP_GREATER, $1, $3, loc);
                             }
                         | relational_expr OP_LE shift_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = &hlsl_le($1, $3, &loc)->node;
+                                $$ = new_binary_expr(HLSL_IR_BINOP_LEQUAL, $1, $3, loc);
                             }
                         | relational_expr OP_GE shift_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = &hlsl_ge($1, $3, &loc)->node;
+                                $$ = new_binary_expr(HLSL_IR_BINOP_GEQUAL, $1, $3, loc);
                             }
 
 equality_expr:            relational_expr
@@ -2305,14 +2305,14 @@ equality_expr:            relational_expr
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = &hlsl_eq($1, $3, &loc)->node;
+                                $$ = new_binary_expr(HLSL_IR_BINOP_EQUAL, $1, $3, loc);
                             }
                         | equality_expr OP_NE relational_expr
                             {
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
-                                $$ = &hlsl_ne($1, $3, &loc)->node;
+                                $$ = new_binary_expr(HLSL_IR_BINOP_NEQUAL, $1, $3, loc);
                             }
 
 bitand_expr:              equality_expr
