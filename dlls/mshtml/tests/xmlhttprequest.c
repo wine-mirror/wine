@@ -141,17 +141,14 @@ static void _test_event_args(unsigned line, const IID *dispiid, const IID *broke
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
 {
-    *ppv = NULL;
-
-    if(IsEqualGUID(riid, &IID_IUnknown)
-       || IsEqualGUID(riid, &IID_IDispatch)
-       || IsEqualGUID(riid, &IID_IDispatchEx))
-        *ppv = iface;
-    else {
-        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
+    if(!IsEqualGUID(riid, &IID_IUnknown)
+       && !IsEqualGUID(riid, &IID_IDispatch)
+       && !IsEqualGUID(riid, &IID_IDispatchEx)) {
+        *ppv = NULL;
         return E_NOINTERFACE;
     }
 
+    *ppv = iface;
     return S_OK;
 }
 
