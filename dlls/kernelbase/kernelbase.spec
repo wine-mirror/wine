@@ -175,9 +175,9 @@
 # @ stub CreateAppContainerToken
 # @ stub CreateBoundaryDescriptorW
 @ stdcall CreateConsoleScreenBuffer(long long ptr long ptr) kernel32.CreateConsoleScreenBuffer
-@ stdcall CreateDirectoryA(str ptr) kernel32.CreateDirectoryA
-@ stdcall CreateDirectoryExW(wstr wstr ptr) kernel32.CreateDirectoryExW
-@ stdcall CreateDirectoryW(wstr ptr) kernel32.CreateDirectoryW
+@ stdcall CreateDirectoryA(str ptr)
+@ stdcall CreateDirectoryExW(wstr wstr ptr)
+@ stdcall CreateDirectoryW(wstr ptr)
 # @ stub CreateEnclave
 @ stdcall CreateEventA(ptr long long str)
 @ stdcall CreateEventExA(ptr str long long)
@@ -685,8 +685,8 @@
 @ stdcall GetSystemDefaultLangID() kernel32.GetSystemDefaultLangID
 @ stdcall GetSystemDefaultLocaleName(ptr long) kernel32.GetSystemDefaultLocaleName
 @ stdcall GetSystemDefaultUILanguage() kernel32.GetSystemDefaultUILanguage
-@ stdcall GetSystemDirectoryA(ptr long) kernel32.GetSystemDirectoryA
-@ stdcall GetSystemDirectoryW(ptr long) kernel32.GetSystemDirectoryW
+@ stdcall GetSystemDirectoryA(ptr long)
+@ stdcall GetSystemDirectoryW(ptr long)
 @ stdcall GetSystemFileCacheSize(ptr ptr ptr) kernel32.GetSystemFileCacheSize
 @ stdcall GetSystemFirmwareTable(long long ptr long) kernel32.GetSystemFirmwareTable
 @ stdcall GetSystemInfo(ptr) kernel32.GetSystemInfo
@@ -700,8 +700,8 @@
 @ stdcall GetSystemTimeAsFileTime(ptr) kernel32.GetSystemTimeAsFileTime
 @ stdcall GetSystemTimePreciseAsFileTime(ptr) kernel32.GetSystemTimePreciseAsFileTime
 @ stdcall GetSystemTimes(ptr ptr ptr) kernel32.GetSystemTimes
-@ stdcall GetSystemWindowsDirectoryA(ptr long) kernel32.GetSystemWindowsDirectoryA
-@ stdcall GetSystemWindowsDirectoryW(ptr long) kernel32.GetSystemWindowsDirectoryW
+@ stdcall GetSystemWindowsDirectoryA(ptr long)
+@ stdcall GetSystemWindowsDirectoryW(ptr long)
 # @ stub GetSystemWow64Directory2A
 # @ stub GetSystemWow64Directory2W
 @ stdcall GetSystemWow64DirectoryA(ptr long) kernel32.GetSystemWow64DirectoryA
@@ -760,8 +760,8 @@
 @ stdcall GetVolumePathNameW(wstr ptr long) kernel32.GetVolumePathNameW
 @ stdcall GetVolumePathNamesForVolumeNameW(wstr ptr long ptr) kernel32.GetVolumePathNamesForVolumeNameW
 @ stdcall GetWindowsAccountDomainSid(ptr ptr ptr)
-@ stdcall GetWindowsDirectoryA(ptr long) kernel32.GetWindowsDirectoryA
-@ stdcall GetWindowsDirectoryW(ptr long) kernel32.GetWindowsDirectoryW
+@ stdcall GetWindowsDirectoryA(ptr long)
+@ stdcall GetWindowsDirectoryW(ptr long)
 @ stdcall GetWriteWatch(long ptr long ptr ptr ptr) kernel32.GetWriteWatch
 # @ stub GetWsChanges
 # @ stub GetWsChangesEx
@@ -1713,8 +1713,8 @@
 # @ stub WerpNotifyLoadStringResource
 # @ stub WerpNotifyUseStringResource
 @ stdcall WideCharToMultiByte(long long wstr long ptr long ptr ptr) kernel32.WideCharToMultiByte
-@ stdcall Wow64DisableWow64FsRedirection(ptr) kernel32.Wow64DisableWow64FsRedirection
-@ stdcall Wow64RevertWow64FsRedirection(ptr) kernel32.Wow64RevertWow64FsRedirection
+@ stdcall Wow64DisableWow64FsRedirection(ptr)
+@ stdcall Wow64RevertWow64FsRedirection(ptr)
 # @ stub Wow64SetThreadDefaultGuestMachine
 # @ stub -arch=i386 Wow64Transition
 @ stdcall WriteConsoleA(long ptr long ptr ptr) kernel32.WriteConsoleA

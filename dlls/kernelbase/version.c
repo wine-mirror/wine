@@ -38,6 +38,8 @@
 #include "winternl.h"
 #include "lzexpand.h"
 #include "winerror.h"
+
+#include "kernelbase.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ver);
@@ -1267,7 +1269,6 @@ DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWS
     DWORD retval = 0;
     const WCHAR *curDir;
     const WCHAR *destDir;
-    WCHAR winDir[MAX_PATH], systemDir[MAX_PATH];
 
     TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)\n",
           flags, debugstr_w(filename), debugstr_w(win_dir), debugstr_w(app_dir),
@@ -1276,12 +1277,11 @@ DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWS
     /* Figure out where the file should go; shared files default to the
        system directory */
 
-    GetSystemDirectoryW(systemDir, ARRAY_SIZE(systemDir));
     curDir = &emptyW;
 
     if(flags & VFFF_ISSHAREDFILE)
     {
-        destDir = systemDir;
+        destDir = system_dir;
         /* Were we given a filename?  If so, try to find the file. */
         if(filename)
         {
@@ -1298,16 +1298,15 @@ DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWS
         destDir = app_dir ? app_dir : &emptyW;
         if(filename)
         {
-            GetWindowsDirectoryW( winDir, MAX_PATH );
             if(file_existsW(destDir, filename, FALSE)) curDir = destDir;
-            else if(file_existsW(winDir, filename, FALSE))
+            else if(file_existsW(windows_dir, filename, FALSE))
             {
-                curDir = winDir;
+                curDir = windows_dir;
                 retval |= VFF_CURNEDEST;
             }
-            else if(file_existsW(systemDir, filename, FALSE))
+            else if (file_existsW(system_dir, filename, FALSE))
             {
-                curDir = systemDir;
+                curDir = system_dir;
                 retval |= VFF_CURNEDEST;
             }
         }

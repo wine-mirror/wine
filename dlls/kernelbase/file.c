@@ -42,6 +42,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
+const WCHAR windows_dir[] = {'C',':','\\','w','i','n','d','o','w','s',0};
+const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m','3','2',0};
+
 static const WCHAR krnl386W[] = {'k','r','n','l','3','8','6','.','e','x','e','1','6',0};
 
 static BOOL oem_file_apis;
@@ -57,6 +60,35 @@ static void WINAPI read_write_apc( void *apc_user, PIO_STATUS_BLOCK io, ULONG re
 /***********************************************************************
  * Operations on file names
  ***********************************************************************/
+
+
+/***********************************************************************
+ *           copy_filename_WtoA
+ *
+ * copy a file name back to OEM/Ansi, but only if the buffer is large enough
+ */
+static DWORD copy_filename_WtoA( LPCWSTR nameW, LPSTR buffer, DWORD len )
+{
+    UNICODE_STRING strW;
+    DWORD ret;
+
+    RtlInitUnicodeString( &strW, nameW );
+
+    ret = oem_file_apis ? RtlUnicodeStringToOemSize( &strW ) : RtlUnicodeStringToAnsiSize( &strW );
+    if (buffer && ret <= len)
+    {
+        ANSI_STRING str;
+
+        str.Buffer = buffer;
+        str.MaximumLength = min( len, UNICODE_STRING_MAX_CHARS );
+        if (oem_file_apis)
+            RtlUnicodeStringToOemString( &str, &strW, FALSE );
+        else
+            RtlUnicodeStringToAnsiString( &str, &strW, FALSE );
+        ret = str.Length;  /* length without terminating 0 */
+    }
+    return ret;
+}
 
 
 /***********************************************************************
@@ -114,6 +146,63 @@ DWORD file_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen )
 BOOL WINAPI DECLSPEC_HOTPATCH AreFileApisANSI(void)
 {
     return !oem_file_apis;
+}
+
+
+/***********************************************************************
+ *	CreateDirectoryA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateDirectoryA( LPCSTR path, LPSECURITY_ATTRIBUTES sa )
+{
+    WCHAR *pathW;
+
+    if (!(pathW = file_name_AtoW( path, FALSE ))) return FALSE;
+    return CreateDirectoryW( pathW, sa );
+}
+
+
+/***********************************************************************
+ *	CreateDirectoryW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateDirectoryW( LPCWSTR path, LPSECURITY_ATTRIBUTES sa )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nt_name;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE handle;
+
+    TRACE( "%s\n", debugstr_w(path) );
+
+    if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtCreateFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL,
+                           FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_CREATE,
+                           FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    if (status == STATUS_SUCCESS) NtClose( handle );
+
+    RtlFreeUnicodeString( &nt_name );
+    return set_ntstatus( status );
+}
+
+
+/***********************************************************************
+ *	CreateDirectoryEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateDirectoryExW( LPCWSTR template, LPCWSTR path,
+                                                  LPSECURITY_ATTRIBUTES sa )
+{
+    return CreateDirectoryW( path, sa );
 }
 
 
@@ -552,6 +641,72 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetFileAttributesExW( LPCWSTR name, GET_FILEEX_INF
 }
 
 
+/***********************************************************************
+ *	GetSystemDirectoryA   (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH GetSystemDirectoryA( LPSTR path, UINT count )
+{
+    return copy_filename_WtoA( system_dir, path, count );
+}
+
+
+/***********************************************************************
+ *	GetSystemDirectoryW   (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH GetSystemDirectoryW( LPWSTR path, UINT count )
+{
+    UINT len = lstrlenW( system_dir ) + 1;
+    if (path && count >= len)
+    {
+        lstrcpyW( path, system_dir );
+        len--;
+    }
+    return len;
+}
+
+
+/***********************************************************************
+ *	GetSystemWindowsDirectoryA   (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH GetSystemWindowsDirectoryA( LPSTR path, UINT count )
+{
+    return GetWindowsDirectoryA( path, count );
+}
+
+
+/***********************************************************************
+ *	GetSystemWindowsDirectoryW   (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH GetSystemWindowsDirectoryW( LPWSTR path, UINT count )
+{
+    return GetWindowsDirectoryW( path, count );
+}
+
+
+/***********************************************************************
+ *	GetWindowsDirectoryA   (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH GetWindowsDirectoryA( LPSTR path, UINT count )
+{
+    return copy_filename_WtoA( windows_dir, path, count );
+}
+
+
+/***********************************************************************
+ *	GetWindowsDirectoryW   (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH GetWindowsDirectoryW( LPWSTR path, UINT count )
+{
+    UINT len = lstrlenW( windows_dir ) + 1;
+    if (path && count >= len)
+    {
+        lstrcpyW( path, windows_dir );
+        len--;
+    }
+    return len;
+}
+
+
 /**************************************************************************
  *	SetFileApisToANSI   (kernelbase.@)
  */
@@ -621,6 +776,24 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileAttributesW( LPCWSTR name, DWORD attributes
         NtClose( handle );
     }
     return set_ntstatus( status );
+}
+
+
+/***********************************************************************
+ *	Wow64DisableWow64FsRedirection   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH Wow64DisableWow64FsRedirection( PVOID *old_value )
+{
+    return set_ntstatus( RtlWow64EnableFsRedirectionEx( TRUE, (ULONG *)old_value ));
+}
+
+
+/***********************************************************************
+ *	Wow64RevertWow64FsRedirection   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH Wow64RevertWow64FsRedirection( PVOID old_value )
+{
+    return set_ntstatus( RtlWow64EnableFsRedirection( !old_value ));
 }
 
 

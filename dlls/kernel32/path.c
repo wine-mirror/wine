@@ -1605,67 +1605,6 @@ BOOL WINAPI CreateHardLinkA(LPCSTR lpFileName, LPCSTR lpExistingFileName,
 
 
 /***********************************************************************
- *           CreateDirectoryW   (KERNEL32.@)
- * RETURNS:
- *	TRUE : success
- *	FALSE : failure
- *		ERROR_DISK_FULL:	on full disk
- *		ERROR_ALREADY_EXISTS:	if directory name exists (even as file)
- *		ERROR_ACCESS_DENIED:	on permission problems
- *		ERROR_FILENAME_EXCED_RANGE: too long filename(s)
- */
-BOOL WINAPI CreateDirectoryW( LPCWSTR path, LPSECURITY_ATTRIBUTES sa )
-{
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nt_name;
-    IO_STATUS_BLOCK io;
-    NTSTATUS status;
-    HANDLE handle;
-    BOOL ret = FALSE;
-
-    TRACE( "%s\n", debugstr_w(path) );
-
-    if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL ))
-    {
-        SetLastError( ERROR_PATH_NOT_FOUND );
-        return FALSE;
-    }
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nt_name;
-    attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    status = NtCreateFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL,
-                           FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_CREATE,
-                           FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
-
-    if (status == STATUS_SUCCESS)
-    {
-        NtClose( handle );
-        ret = TRUE;
-    }
-    else SetLastError( RtlNtStatusToDosError(status) );
-
-    RtlFreeUnicodeString( &nt_name );
-    return ret;
-}
-
-
-/***********************************************************************
- *           CreateDirectoryA   (KERNEL32.@)
- */
-BOOL WINAPI CreateDirectoryA( LPCSTR path, LPSECURITY_ATTRIBUTES sa )
-{
-    WCHAR *pathW;
-
-    if (!(pathW = FILE_name_AtoW( path, FALSE ))) return FALSE;
-    return CreateDirectoryW( pathW, sa );
-}
-
-
-/***********************************************************************
  *           CreateDirectoryExA   (KERNEL32.@)
  */
 BOOL WINAPI CreateDirectoryExA( LPCSTR template, LPCSTR path, LPSECURITY_ATTRIBUTES sa )
@@ -1679,15 +1618,6 @@ BOOL WINAPI CreateDirectoryExA( LPCSTR template, LPCSTR path, LPSECURITY_ATTRIBU
     ret = CreateDirectoryExW( templateW, pathW, sa );
     HeapFree( GetProcessHeap(), 0, templateW );
     return ret;
-}
-
-
-/***********************************************************************
- *           CreateDirectoryExW   (KERNEL32.@)
- */
-BOOL WINAPI CreateDirectoryExW( LPCWSTR template, LPCWSTR path, LPSECURITY_ATTRIBUTES sa )
-{
-    return CreateDirectoryW( path, sa );
 }
 
 
@@ -1828,56 +1758,6 @@ BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
 
 
 /***********************************************************************
- *           GetWindowsDirectoryW   (KERNEL32.@)
- *
- * See comment for GetWindowsDirectoryA.
- */
-UINT WINAPI GetWindowsDirectoryW( LPWSTR path, UINT count )
-{
-    UINT len = strlenW( DIR_Windows ) + 1;
-    if (path && count >= len)
-    {
-        strcpyW( path, DIR_Windows );
-        len--;
-    }
-    return len;
-}
-
-
-/***********************************************************************
- *           GetWindowsDirectoryA   (KERNEL32.@)
- *
- * Return value:
- * If buffer is large enough to hold full path and terminating '\0' character
- * function copies path to buffer and returns length of the path without '\0'.
- * Otherwise function returns required size including '\0' character and
- * does not touch the buffer.
- */
-UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
-{
-    return copy_filename_WtoA( DIR_Windows, path, count );
-}
-
-
-/***********************************************************************
- *           GetSystemWindowsDirectoryA   (KERNEL32.@) W2K, TS4.0SP4
- */
-UINT WINAPI GetSystemWindowsDirectoryA( LPSTR path, UINT count )
-{
-    return GetWindowsDirectoryA( path, count );
-}
-
-
-/***********************************************************************
- *           GetSystemWindowsDirectoryW   (KERNEL32.@) W2K, TS4.0SP4
- */
-UINT WINAPI GetSystemWindowsDirectoryW( LPWSTR path, UINT count )
-{
-    return GetWindowsDirectoryW( path, count );
-}
-
-
-/***********************************************************************
  *           GetSystemDirectoryW   (KERNEL32.@)
  *
  * See comment for GetWindowsDirectoryA.
@@ -1953,28 +1833,6 @@ UINT WINAPI GetSystemWow64DirectoryA( LPSTR path, UINT count )
 BOOLEAN WINAPI Wow64EnableWow64FsRedirection( BOOLEAN enable )
 {
     NTSTATUS status = RtlWow64EnableFsRedirection( enable );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
-
-/***********************************************************************
- *           Wow64DisableWow64FsRedirection   (KERNEL32.@)
- */
-BOOL WINAPI Wow64DisableWow64FsRedirection( PVOID *old_value )
-{
-    NTSTATUS status = RtlWow64EnableFsRedirectionEx( TRUE, (ULONG *)old_value );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
-
-/***********************************************************************
- *           Wow64RevertWow64FsRedirection   (KERNEL32.@)
- */
-BOOL WINAPI Wow64RevertWow64FsRedirection( PVOID old_value )
-{
-    NTSTATUS status = RtlWow64EnableFsRedirection( !old_value );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }

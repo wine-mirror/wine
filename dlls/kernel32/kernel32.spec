@@ -268,12 +268,12 @@
 # @ stub CreateBoundaryDescriptorA
 # @ stub CreateBoundaryDescriptorW
 @ stdcall CreateConsoleScreenBuffer(long long ptr long ptr)
-@ stdcall CreateDirectoryA(str ptr)
+@ stdcall -import CreateDirectoryA(str ptr)
 @ stdcall CreateDirectoryExA(str str ptr)
-@ stdcall CreateDirectoryExW(wstr wstr ptr)
+@ stdcall -import CreateDirectoryExW(wstr wstr ptr)
 # @ stub CreateDirectoryTransactedA
 # @ stub CreateDirectoryTransactedW
-@ stdcall CreateDirectoryW(wstr ptr)
+@ stdcall -import CreateDirectoryW(wstr ptr)
 @ stdcall -import CreateEventA(ptr long long str)
 @ stdcall -import CreateEventExA(ptr str long long)
 @ stdcall -import CreateEventExW(ptr wstr long long)
@@ -835,8 +835,8 @@
 @ stdcall GetSystemTimeAsFileTime(ptr) ntdll.NtQuerySystemTime
 @ stdcall GetSystemTimePreciseAsFileTime(ptr)
 @ stdcall GetSystemTimes(ptr ptr ptr)
-@ stdcall GetSystemWindowsDirectoryA(ptr long)
-@ stdcall GetSystemWindowsDirectoryW(ptr long)
+@ stdcall -import GetSystemWindowsDirectoryA(ptr long)
+@ stdcall -import GetSystemWindowsDirectoryW(ptr long)
 @ stdcall GetSystemWow64DirectoryA(ptr long)
 @ stdcall GetSystemWow64DirectoryW(ptr long)
 @ stdcall GetTapeParameters(ptr long ptr ptr)
@@ -887,8 +887,8 @@
 @ stdcall GetVolumePathNameW(wstr ptr long)
 @ stdcall GetVolumePathNamesForVolumeNameA(str ptr long ptr)
 @ stdcall GetVolumePathNamesForVolumeNameW(wstr ptr long ptr)
-@ stdcall GetWindowsDirectoryA(ptr long)
-@ stdcall GetWindowsDirectoryW(ptr long)
+@ stdcall -import GetWindowsDirectoryA(ptr long)
+@ stdcall -import GetWindowsDirectoryW(ptr long)
 @ stdcall GetWriteWatch(long ptr long ptr ptr ptr)
 # @ stub GetXStateFeaturesMask
 @ stdcall GlobalAddAtomA(str)
@@ -1601,10 +1601,10 @@
 @ stdcall WideCharToMultiByte(long long wstr long ptr long ptr ptr)
 @ stdcall WinExec(str long)
 @ stdcall Wow64EnableWow64FsRedirection(long)
-@ stdcall Wow64DisableWow64FsRedirection(ptr)
+@ stdcall -import Wow64DisableWow64FsRedirection(ptr)
 @ stdcall Wow64GetThreadContext(long ptr)
 # @ stub Wow64GetThreadSelectorEntry
-@ stdcall Wow64RevertWow64FsRedirection(ptr)
+@ stdcall -import Wow64RevertWow64FsRedirection(ptr)
 @ stdcall Wow64SetThreadContext(long ptr)
 # @ stub Wow64SuspendThread
 @ stdcall WriteConsoleA(long ptr long ptr ptr)

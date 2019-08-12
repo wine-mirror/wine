@@ -39,6 +39,7 @@
 #include "shlwapi.h"
 #include "sddl.h"
 
+#include "kernelbase.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
@@ -3075,7 +3076,6 @@ DWORD WINAPI EnumDynamicTimeZoneInformation(const DWORD index,
     static const WCHAR mui_dltW[] = { 'M','U','I','_','D','l','t',0 };
     WCHAR keyname[ARRAY_SIZE(dtzi->TimeZoneKeyName)];
     HKEY time_zones_key, sub_key;
-    WCHAR sysdir[MAX_PATH];
     LSTATUS ret;
     DWORD size;
     struct tz_reg_data
@@ -3103,13 +3103,12 @@ DWORD WINAPI EnumDynamicTimeZoneInformation(const DWORD index,
     ret = RegOpenKeyExW( time_zones_key, keyname, 0, KEY_QUERY_VALUE, &sub_key );
     if (ret) goto cleanup;
 
-    GetSystemDirectoryW(sysdir, ARRAY_SIZE(sysdir));
     size = sizeof(dtzi->StandardName);
-    ret = RegLoadMUIStringW( sub_key, mui_stdW, dtzi->StandardName, size, NULL, 0, sysdir );
+    ret = RegLoadMUIStringW( sub_key, mui_stdW, dtzi->StandardName, size, NULL, 0, system_dir );
     if (ret) goto cleanup;
 
     size = sizeof(dtzi->DaylightName);
-    ret = RegLoadMUIStringW( sub_key, mui_dltW, dtzi->DaylightName, size, NULL, 0, sysdir );
+    ret = RegLoadMUIStringW( sub_key, mui_dltW, dtzi->DaylightName, size, NULL, 0, system_dir );
     if (ret) goto cleanup;
 
     size = sizeof(tz_data);
