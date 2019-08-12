@@ -257,9 +257,8 @@ static void declare_predefined_types(struct hlsl_scope *scope)
 
 static struct hlsl_ir_if *loop_condition(struct list *cond_list)
 {
+    struct hlsl_ir_node *cond, *not_cond;
     struct hlsl_ir_if *out_cond;
-    struct hlsl_ir_expr *not_cond;
-    struct hlsl_ir_node *cond, *operands[3];
     struct hlsl_ir_jump *jump;
     unsigned int count = list_count(cond_list);
 
@@ -276,16 +275,13 @@ static struct hlsl_ir_if *loop_condition(struct list *cond_list)
         return NULL;
     }
     out_cond->node.type = HLSL_IR_IF;
-    operands[0] = cond;
-    operands[1] = operands[2] = NULL;
-    not_cond = new_expr(HLSL_IR_UNOP_LOGIC_NOT, operands, &cond->loc);
-    if (!not_cond)
+    if (!(not_cond = new_unary_expr(HLSL_IR_UNOP_LOGIC_NOT, cond, cond->loc)))
     {
         ERR("Out of memory.\n");
         d3dcompiler_free(out_cond);
         return NULL;
     }
-    out_cond->condition = &not_cond->node;
+    out_cond->condition = not_cond;
     jump = d3dcompiler_alloc(sizeof(*jump));
     if (!jump)
     {
@@ -1931,7 +1927,6 @@ postfix_expr:             primary_expr
                             }
                         | postfix_expr OP_INC
                             {
-                                struct hlsl_ir_node *operands[3];
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
@@ -1941,16 +1936,13 @@ postfix_expr:             primary_expr
                                             "modifying a const expression");
                                     YYABORT;
                                 }
-                                operands[0] = $1;
-                                operands[1] = operands[2] = NULL;
-                                $$ = &new_expr(HLSL_IR_UNOP_POSTINC, operands, &loc)->node;
+                                $$ = new_unary_expr(HLSL_IR_UNOP_POSTINC, $1, loc);
                                 /* Post increment/decrement expressions are considered const */
                                 $$->data_type = clone_hlsl_type($$->data_type);
                                 $$->data_type->modifiers |= HLSL_MODIFIER_CONST;
                             }
                         | postfix_expr OP_DEC
                             {
-                                struct hlsl_ir_node *operands[3];
                                 struct source_location loc;
 
                                 set_location(&loc, &@2);
@@ -1960,9 +1952,7 @@ postfix_expr:             primary_expr
                                             "modifying a const expression");
                                     YYABORT;
                                 }
-                                operands[0] = $1;
-                                operands[1] = operands[2] = NULL;
-                                $$ = &new_expr(HLSL_IR_UNOP_POSTDEC, operands, &loc)->node;
+                                $$ = new_unary_expr(HLSL_IR_UNOP_POSTDEC, $1, loc);
                                 /* Post increment/decrement expressions are considered const */
                                 $$->data_type = clone_hlsl_type($$->data_type);
                                 $$->data_type->modifiers |= HLSL_MODIFIER_CONST;
@@ -2125,7 +2115,6 @@ unary_expr:               postfix_expr
                             }
                         | OP_INC unary_expr
                             {
-                                struct hlsl_ir_node *operands[3];
                                 struct source_location loc;
 
                                 set_location(&loc, &@1);
@@ -2135,13 +2124,10 @@ unary_expr:               postfix_expr
                                             "modifying a const expression");
                                     YYABORT;
                                 }
-                                operands[0] = $2;
-                                operands[1] = operands[2] = NULL;
-                                $$ = &new_expr(HLSL_IR_UNOP_PREINC, operands, &loc)->node;
+                                $$ = new_unary_expr(HLSL_IR_UNOP_PREINC, $2, loc);
                             }
                         | OP_DEC unary_expr
                             {
-                                struct hlsl_ir_node *operands[3];
                                 struct source_location loc;
 
                                 set_location(&loc, &@1);
@@ -2151,15 +2137,12 @@ unary_expr:               postfix_expr
                                             "modifying a const expression");
                                     YYABORT;
                                 }
-                                operands[0] = $2;
-                                operands[1] = operands[2] = NULL;
-                                $$ = &new_expr(HLSL_IR_UNOP_PREDEC, operands, &loc)->node;
+                                $$ = new_unary_expr(HLSL_IR_UNOP_PREDEC, $2, loc);
                             }
                         | unary_op unary_expr
                             {
                                 enum hlsl_ir_expr_op ops[] = {0, HLSL_IR_UNOP_NEG,
                                         HLSL_IR_UNOP_LOGIC_NOT, HLSL_IR_UNOP_BIT_NOT};
-                                struct hlsl_ir_node *operands[3];
                                 struct source_location loc;
 
                                 if ($1 == UNARY_OP_PLUS)
@@ -2168,10 +2151,8 @@ unary_expr:               postfix_expr
                                 }
                                 else
                                 {
-                                    operands[0] = $2;
-                                    operands[1] = operands[2] = NULL;
                                     set_location(&loc, &@1);
-                                    $$ = &new_expr(ops[$1], operands, &loc)->node;
+                                    $$ = new_unary_expr(ops[$1], $2, loc);
                                 }
                             }
                           /* var_modifiers just to avoid shift/reduce conflicts */

@@ -1343,15 +1343,12 @@ struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **ope
 struct hlsl_ir_expr *new_cast(struct hlsl_ir_node *node, struct hlsl_type *type,
         struct source_location *loc)
 {
-    struct hlsl_ir_expr *cast;
-    struct hlsl_ir_node *operands[3];
+    struct hlsl_ir_node *cast;
 
-    operands[0] = node;
-    operands[1] = operands[2] = NULL;
-    cast = new_expr(HLSL_IR_UNOP_CAST, operands, loc);
+    cast = new_unary_expr(HLSL_IR_UNOP_CAST, node, *loc);
     if (cast)
-        cast->node.data_type = type;
-    return cast;
+        cast->data_type = type;
+    return expr_from_node(cast);
 }
 
 struct hlsl_ir_expr *hlsl_mul(struct hlsl_ir_node *op1, struct hlsl_ir_node *op2,

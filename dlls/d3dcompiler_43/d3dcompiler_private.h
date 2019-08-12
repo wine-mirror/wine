@@ -1186,6 +1186,12 @@ void free_instr(struct hlsl_ir_node *node) DECLSPEC_HIDDEN;
 void free_instr_list(struct list *list) DECLSPEC_HIDDEN;
 void free_function_rb(struct wine_rb_entry *entry, void *context) DECLSPEC_HIDDEN;
 
+static inline struct hlsl_ir_node *new_unary_expr(enum hlsl_ir_expr_op op,
+        struct hlsl_ir_node *op1, struct source_location loc)
+{
+    struct hlsl_ir_node *operands[3] = {op1};
+    return &new_expr(op, operands, &loc)->node;
+}
 
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
     ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
