@@ -525,6 +525,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     pthread_attr_init( &attr );
     pthread_attr_setstack( &attr, teb->DeallocationStack,
                          (char *)teb->Tib.StackBase + extra_stack - (char *)teb->DeallocationStack );
+    pthread_attr_setguardsize( &attr, 0 );
     pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
     interlocked_xchg_add( &nb_threads, 1 );
     if (pthread_create( &pthread_id, &attr, (void * (*)(void *))start_thread, info ))
