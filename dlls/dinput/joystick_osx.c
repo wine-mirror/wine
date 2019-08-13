@@ -985,7 +985,7 @@ static HRESULT joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
         /* Return joystick */
         lpddi->guidInstance = DInput_Wine_OsX_Joystick_GUID;
         lpddi->guidInstance.Data3 = id;
-        lpddi->guidProduct = DInput_Wine_OsX_Joystick_GUID;
+        lpddi->guidProduct = DInput_PIDVID_Product_GUID;
         lpddi->guidProduct.Data1 = make_vid_pid(device);
         lpddi->dwDevType = get_device_type(version, is_joystick);
         lpddi->dwDevType |= DIDEVTYPE_HID;
@@ -1033,7 +1033,7 @@ static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
         /* Return joystick */
         lpddi->guidInstance = DInput_Wine_OsX_Joystick_GUID;
         lpddi->guidInstance.Data3 = id;
-        lpddi->guidProduct = DInput_Wine_OsX_Joystick_GUID;
+        lpddi->guidProduct = DInput_PIDVID_Product_GUID;
         lpddi->guidProduct.Data1 = make_vid_pid(device);
         lpddi->dwDevType = get_device_type(version, is_joystick);
         lpddi->dwDevType |= DIDEVTYPE_HID;
@@ -1109,7 +1109,7 @@ static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
 
     newDevice->generic.guidInstance = DInput_Wine_OsX_Joystick_GUID;
     newDevice->generic.guidInstance.Data3 = index;
-    newDevice->generic.guidProduct = DInput_Wine_OsX_Joystick_GUID;
+    newDevice->generic.guidProduct = DInput_PIDVID_Product_GUID;
     newDevice->generic.guidProduct.Data1 = make_vid_pid(device);
     newDevice->generic.joy_polldev = poll_osx_device_state;
 

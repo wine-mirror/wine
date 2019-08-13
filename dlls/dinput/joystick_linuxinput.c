@@ -165,19 +165,6 @@ static const GUID DInput_Wine_Joystick_Base_GUID = { /* 9e573eda-7734-11d2-8d4a-
   {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
 };
 
-/*
- * Construct the GUID in the same way of Windows doing this.
- * Data1 is concatenation of productid and vendorid.
- * Data2 and Data3 are NULL.
- * Data4 seems to be a constant.
- */
-static const GUID DInput_Wine_Joystick_Constant_Part_GUID = {
-  0x000000000,
-  0x0000,
-  0x0000,
-  {0x00, 0x00, 0x50, 0x49, 0x44, 0x56, 0x49, 0x44}
-};
-
 #define test_bit(arr,bit) (((BYTE*)(arr))[(bit)>>3]&(1<<((bit)&7)))
 
 #define MAX_JOYDEV 64
@@ -344,7 +331,7 @@ static void find_joydevs(void)
             joydev.bus_type = device_id.bustype;
 
             /* Concatenate product_id with vendor_id to mimic Windows behaviour */
-            joydev.guid_product       = DInput_Wine_Joystick_Constant_Part_GUID;
+            joydev.guid_product       = DInput_PIDVID_Product_GUID;
             joydev.guid_product.Data1 = MAKELONG(joydev.vendor_id, joydev.product_id);
         }
 
