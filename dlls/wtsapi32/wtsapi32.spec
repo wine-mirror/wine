@@ -4,6 +4,8 @@
 @ stdcall WTSDisconnectSession(long long long)
 @ stdcall WTSEnableChildSessions(long)
 @ stdcall WTSEnumerateProcessesA(long long long ptr ptr)
+@ stdcall WTSEnumerateProcessesExA(ptr ptr long ptr ptr)
+@ stdcall WTSEnumerateProcessesExW(ptr ptr long ptr ptr)
 @ stdcall WTSEnumerateProcessesW(long long long ptr ptr)
 @ stdcall WTSEnumerateServersA(ptr long long ptr ptr)
 @ stdcall WTSEnumerateServersW(ptr long long ptr ptr)

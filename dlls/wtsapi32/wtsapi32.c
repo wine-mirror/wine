@@ -70,6 +70,27 @@ BOOL WINAPI WTSEnableChildSessions(BOOL enable)
     return TRUE;
 }
 
+
+/************************************************************
+ *                WTSEnumerateProcessesExW  (WTSAPI32.@)
+ */
+BOOL WINAPI WTSEnumerateProcessesExW(HANDLE server, DWORD *level, DWORD session_id, WCHAR **info, DWORD *count)
+{
+    FIXME("Stub %p %p %d %p %p\n", server, level, session_id, info, count);
+    if (count) *count = 0;
+    return FALSE;
+}
+
+/************************************************************
+ *                WTSEnumerateProcessesExA  (WTSAPI32.@)
+ */
+BOOL WINAPI WTSEnumerateProcessesExA(HANDLE server, DWORD *level, DWORD session_id, char **info, DWORD *count)
+{
+    FIXME("Stub %p %p %d %p %p\n", server, level, session_id, info, count);
+    if (count) *count = 0;
+    return FALSE;
+}
+
 /************************************************************
  *                WTSEnumerateProcessesA  (WTSAPI32.@)
  */
