@@ -122,7 +122,7 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
     BOOL ret;
 
     TRACE("Declaring variable %s.\n", decl->name);
-    if (decl->node.data_type->type == HLSL_CLASS_MATRIX)
+    if (decl->data_type->type == HLSL_CLASS_MATRIX)
     {
         if (!(decl->modifiers & (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)))
         {
@@ -131,7 +131,7 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
         }
     }
     else
-        check_invalid_matrix_modifiers(decl->modifiers, &decl->node.loc);
+        check_invalid_matrix_modifiers(decl->modifiers, &decl->loc);
 
     if (local)
     {
@@ -139,12 +139,12 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
                 | HLSL_STORAGE_GROUPSHARED | HLSL_STORAGE_UNIFORM);
         if (invalid)
         {
-            hlsl_report_message(decl->node.loc.file, decl->node.loc.line, decl->node.loc.col, HLSL_LEVEL_ERROR,
+            hlsl_report_message(decl->loc.file, decl->loc.line, decl->loc.col, HLSL_LEVEL_ERROR,
                     "modifier '%s' invalid for local variables", debug_modifiers(invalid));
         }
         if (decl->semantic)
         {
-            hlsl_report_message(decl->node.loc.file, decl->node.loc.line, decl->node.loc.col, HLSL_LEVEL_ERROR,
+            hlsl_report_message(decl->loc.file, decl->loc.line, decl->loc.col, HLSL_LEVEL_ERROR,
                     "semantics are not allowed on local variables");
             return FALSE;
         }
@@ -153,7 +153,7 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
     {
         if (find_function(decl->name))
         {
-            hlsl_report_message(decl->node.loc.file, decl->node.loc.line, decl->node.loc.col, HLSL_LEVEL_ERROR,
+            hlsl_report_message(decl->loc.file, decl->loc.line, decl->loc.col, HLSL_LEVEL_ERROR,
                     "redefinition of '%s'", decl->name);
             return FALSE;
         }
@@ -163,9 +163,9 @@ static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
     {
         struct hlsl_ir_var *old = get_variable(hlsl_ctx.cur_scope, decl->name);
 
-        hlsl_report_message(decl->node.loc.file, decl->node.loc.line, decl->node.loc.col, HLSL_LEVEL_ERROR,
+        hlsl_report_message(decl->loc.file, decl->loc.line, decl->loc.col, HLSL_LEVEL_ERROR,
                 "\"%s\" already declared", decl->name);
-        hlsl_report_message(old->node.loc.file, old->node.loc.line, old->node.loc.col, HLSL_LEVEL_NOTE,
+        hlsl_report_message(old->loc.file, old->loc.line, old->loc.col, HLSL_LEVEL_NOTE,
                 "\"%s\" was previously declared here", old->name);
         return FALSE;
     }
@@ -494,7 +494,7 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
 static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
         struct parse_initializer *initializer)
 {
-    struct hlsl_type *type = var->node.data_type;
+    struct hlsl_type *type = var->data_type;
     struct hlsl_struct_field *field;
     struct hlsl_ir_node *assignment;
     struct hlsl_ir_deref *deref;
@@ -502,7 +502,7 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
 
     if (initializer_size(initializer) != components_count_type(type))
     {
-        hlsl_report_message(var->node.loc.file, var->node.loc.line, var->node.loc.col, HLSL_LEVEL_ERROR,
+        hlsl_report_message(var->loc.file, var->loc.line, var->loc.col, HLSL_LEVEL_ERROR,
                 "structure initializer mismatch");
         free_parse_initializer(initializer);
         return;
@@ -519,7 +519,7 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
         }
         if (components_count_type(field->type) == components_count_type(node->data_type))
         {
-            deref = new_record_deref(&var->node, field);
+            deref = new_record_deref(&new_var_deref(var)->node, field);
             if (!deref)
             {
                 ERR("Out of memory.\n");
@@ -570,13 +570,12 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
             d3dcompiler_free(v);
             continue;
         }
-        var->node.type = HLSL_IR_VAR;
         if (v->array_size)
             type = new_array_type(basic_type, v->array_size);
         else
             type = basic_type;
-        var->node.data_type = type;
-        var->node.loc = v->loc;
+        var->data_type = type;
+        var->loc = v->loc;
         var->name = v->name;
         var->modifiers = modifiers;
         var->semantic = v->semantic;
@@ -662,7 +661,7 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
                 continue;
             }
 
-            assignment = make_assignment(&var->node, ASSIGN_OP_ASSIGN,
+            assignment = make_assignment(&new_var_deref(var)->node, ASSIGN_OP_ASSIGN,
                     BWRITERSP_WRITEMASK_ALL, v->initializer.args[0]);
             d3dcompiler_free(v->initializer.args);
             list_add_tail(statements_list, &assignment->entry);
@@ -800,9 +799,8 @@ static BOOL add_func_parameter(struct list *list, struct parse_parameter *param,
         ERR("Out of memory.\n");
         return FALSE;
     }
-    decl->node.type = HLSL_IR_VAR;
-    decl->node.data_type = param->type;
-    decl->node.loc = *loc;
+    decl->data_type = param->type;
+    decl->loc = *loc;
     decl->name = param->name;
     decl->semantic = param->semantic;
     decl->reg_reservation = param->reg_reservation;
@@ -813,7 +811,7 @@ static BOOL add_func_parameter(struct list *list, struct parse_parameter *param,
         free_declaration(decl);
         return FALSE;
     }
-    list_add_tail(list, &decl->node.entry);
+    list_add_tail(list, &decl->param_entry);
     return TRUE;
 }
 

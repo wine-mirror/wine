@@ -1361,7 +1361,7 @@ struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var)
         return NULL;
     }
     deref->node.type = HLSL_IR_DEREF;
-    deref->node.data_type = var->node.data_type;
+    deref->node.data_type = var->data_type;
     deref->type = HLSL_IR_DEREF_VAR;
     deref->v.var = var;
     return deref;
@@ -1379,10 +1379,7 @@ struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record, struct hlsl_
     deref->node.type = HLSL_IR_DEREF;
     deref->node.data_type = field->type;
     deref->type = HLSL_IR_DEREF_RECORD;
-    if (record->type == HLSL_IR_VAR)
-        deref->v.record.record = &new_var_deref(var_from_node(record))->node;
-    else
-        deref->v.record.record = record;
+    deref->v.record.record = record;
     deref->v.record.field = field;
     return deref;
 }
@@ -1459,11 +1456,6 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
     FIXME("Check for casts in the lhs.\n");
 
     lhs = left;
-    if (lhs->type == HLSL_IR_VAR)
-    {
-        struct hlsl_ir_deref *lhs_deref = new_var_deref(var_from_node(lhs));
-        lhs = &lhs_deref->node;
-    }
     /* FIXME: check for invalid writemasks on the lhs. */
 
     if (!compare_hlsl_types(type, rhs->data_type))
@@ -1649,9 +1641,9 @@ static int compare_function_decl_rb(const void *key, const struct wine_rb_entry 
     while (p1cur && p2cur)
     {
         struct hlsl_ir_var *p1, *p2;
-        p1 = LIST_ENTRY(p1cur, struct hlsl_ir_var, node.entry);
-        p2 = LIST_ENTRY(p2cur, struct hlsl_ir_var, node.entry);
-        if ((r = compare_param_hlsl_types(p1->node.data_type, p2->node.data_type)))
+        p1 = LIST_ENTRY(p1cur, struct hlsl_ir_var, param_entry);
+        p2 = LIST_ENTRY(p2cur, struct hlsl_ir_var, param_entry);
+        if ((r = compare_param_hlsl_types(p1->data_type, p2->data_type)))
             return r;
         p1cur = list_next(params, p1cur);
         p2cur = list_next(decl->parameters, p2cur);
@@ -1768,7 +1760,6 @@ static const char *debug_node_type(enum hlsl_ir_node_type type)
 {
     static const char * const names[] =
     {
-        "HLSL_IR_VAR",
         "HLSL_IR_ASSIGNMENT",
         "HLSL_IR_CONSTANT",
         "HLSL_IR_CONSTRUCTOR",
@@ -1801,7 +1792,7 @@ static void debug_dump_ir_var(const struct hlsl_ir_var *var)
 {
     if (var->modifiers)
         TRACE("%s ", debug_modifiers(var->modifiers));
-    TRACE("%s %s", debug_hlsl_type(var->node.data_type), var->name);
+    TRACE("%s %s", debug_hlsl_type(var->data_type), var->name);
     if (var->semantic)
         TRACE(" : %s", debugstr_a(var->semantic));
 }
@@ -2098,7 +2089,7 @@ void debug_dump_ir_function_decl(const struct hlsl_ir_function_decl *func)
 
     TRACE("Dumping function %s.\n", debugstr_a(func->func->name));
     TRACE("Function parameters:\n");
-    LIST_FOR_EACH_ENTRY(param, func->parameters, struct hlsl_ir_var, node.entry)
+    LIST_FOR_EACH_ENTRY(param, func->parameters, struct hlsl_ir_var, param_entry)
     {
         debug_dump_ir_var(param);
         TRACE("\n");
@@ -2234,9 +2225,6 @@ void free_instr(struct hlsl_ir_node *node)
 {
     switch (node->type)
     {
-        case HLSL_IR_VAR:
-            /* These are freed later on from the scopes. */
-            break;
         case HLSL_IR_CONSTANT:
             free_ir_constant(constant_from_node(node));
             break;

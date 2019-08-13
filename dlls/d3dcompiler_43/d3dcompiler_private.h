@@ -706,8 +706,7 @@ struct source_location
 
 enum hlsl_ir_node_type
 {
-    HLSL_IR_VAR = 0,
-    HLSL_IR_ASSIGNMENT,
+    HLSL_IR_ASSIGNMENT = 0,
     HLSL_IR_CONSTANT,
     HLSL_IR_CONSTRUCTOR,
     HLSL_IR_DEREF,
@@ -755,12 +754,13 @@ struct reg_reservation
 
 struct hlsl_ir_var
 {
-    struct hlsl_ir_node node;
+    struct hlsl_type *data_type;
+    struct source_location loc;
     const char *name;
     const char *semantic;
     unsigned int modifiers;
     const struct reg_reservation *reg_reservation;
-    struct list scope_entry;
+    struct list scope_entry, param_entry;
 
     struct hlsl_var_allocation *allocation;
 };
@@ -1065,12 +1065,6 @@ enum hlsl_error_level
 void WINAPIV hlsl_message(const char *fmt, ...) PRINTF_ATTR(1,2) DECLSPEC_HIDDEN;
 void WINAPIV hlsl_report_message(const char *filename, DWORD line, DWORD column,
         enum hlsl_error_level level, const char *fmt, ...) PRINTF_ATTR(5,6) DECLSPEC_HIDDEN;
-
-static inline struct hlsl_ir_var *var_from_node(const struct hlsl_ir_node *node)
-{
-    assert(node->type == HLSL_IR_VAR);
-    return CONTAINING_RECORD(node, struct hlsl_ir_var, node);
-}
 
 static inline struct hlsl_ir_expr *expr_from_node(const struct hlsl_ir_node *node)
 {
