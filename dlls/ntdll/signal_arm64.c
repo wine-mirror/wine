@@ -81,8 +81,21 @@ static pthread_key_t teb_key;
 # define FP_sig(context)            REGn_sig(29, context)    /* Frame pointer */
 # define LR_sig(context)            REGn_sig(30, context)    /* Link Register */
 
-/* Exceptions */
-# define FAULT_sig(context)         REG_sig(fault_address, context)
+static struct _aarch64_ctx *get_extended_sigcontext( ucontext_t *sigcontext, unsigned int magic )
+{
+    struct _aarch64_ctx *ctx = (struct _aarch64_ctx *)sigcontext->uc_mcontext.__reserved;
+    while ((char *)ctx < (char *)(&sigcontext->uc_mcontext + 1) && ctx->magic && ctx->size)
+    {
+        if (ctx->magic == magic) return ctx;
+        ctx = (struct _aarch64_ctx *)((char *)ctx + ctx->size);
+    }
+    return NULL;
+}
+
+static struct fpsimd_context *get_fpsimd_context( ucontext_t *sigcontext )
+{
+    return (struct fpsimd_context *)get_extended_sigcontext( sigcontext, FPSIMD_MAGIC );
+}
 
 #endif /* linux */
 
@@ -169,9 +182,15 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
  *
  * Set the FPU context from a sigcontext.
  */
-static inline void save_fpu( CONTEXT *context, const ucontext_t *sigcontext )
+static void save_fpu( CONTEXT *context, ucontext_t *sigcontext )
 {
-    FIXME( "Not implemented on ARM64\n" );
+    struct fpsimd_context *fp = get_fpsimd_context( sigcontext );
+
+    if (!fp) return;
+    context->ContextFlags |= CONTEXT_FLOATING_POINT;
+    context->Fpcr = fp->fpcr;
+    context->Fpsr = fp->fpsr;
+    memcpy( context->V, fp->vregs, sizeof(context->V) );
 }
 
 
@@ -180,9 +199,14 @@ static inline void save_fpu( CONTEXT *context, const ucontext_t *sigcontext )
  *
  * Restore the FPU context to a sigcontext.
  */
-static inline void restore_fpu( CONTEXT *context, const ucontext_t *sigcontext )
+static void restore_fpu( CONTEXT *context, ucontext_t *sigcontext )
 {
-    FIXME( "Not implemented on ARM64\n" );
+    struct fpsimd_context *fp = get_fpsimd_context( sigcontext );
+
+    if (!fp) return;
+    fp->fpcr = context->Fpcr;
+    fp->fpsr = context->Fpsr;
+    memcpy( fp->vregs, context->V, sizeof(fp->vregs) );
 }
 
 /***********************************************************************
