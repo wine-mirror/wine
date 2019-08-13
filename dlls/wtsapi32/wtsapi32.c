@@ -149,6 +149,26 @@ BOOL WINAPI WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved, DWORD Versi
 
 
 /************************************************************
+ *                WTSEnumerateEnumerateSessionsExW  (WTSAPI32.@)
+ */
+BOOL WINAPI WTSEnumerateSessionsExW(HANDLE server, DWORD *level, DWORD filter, WTS_SESSION_INFO_1W* info, DWORD *count)
+{
+    FIXME("Stub %p %p %d %p %p\n", server, level, filter, info, count);
+    if (count) *count = 0;
+    return FALSE;
+}
+
+/************************************************************
+ *                WTSEnumerateEnumerateSessionsExA  (WTSAPI32.@)
+ */
+BOOL WINAPI WTSEnumerateSessionsExA(HANDLE server, DWORD *level, DWORD filter, WTS_SESSION_INFO_1A* info, DWORD *count)
+{
+    FIXME("Stub %p %p %d %p %p\n", server, level, filter, info, count);
+    if (count) *count = 0;
+    return FALSE;
+}
+
+/************************************************************
  *                WTSEnumerateEnumerateSessionsA  (WTSAPI32.@)
  */
 BOOL WINAPI WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version,

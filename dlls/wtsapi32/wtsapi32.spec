@@ -10,6 +10,8 @@
 @ stdcall WTSEnumerateServersA(ptr long long ptr ptr)
 @ stdcall WTSEnumerateServersW(ptr long long ptr ptr)
 @ stdcall WTSEnumerateSessionsA(long long long ptr ptr)
+@ stdcall WTSEnumerateSessionsExA(ptr ptr long ptr ptr)
+@ stdcall WTSEnumerateSessionsExW(ptr ptr long ptr ptr)
 @ stdcall WTSEnumerateSessionsW(long long long ptr ptr)
 @ stdcall WTSFreeMemory(ptr)
 @ stdcall WTSLogoffSession(long long long)
