@@ -222,6 +222,27 @@ BOOL WINAPI WTSLogoffSession(HANDLE hserver, DWORD session_id, BOOL bwait)
     return FALSE;
 }
 
+
+/************************************************************
+ *                WTSOpenServerExW (WTSAPI32.@)
+ */
+HANDLE WINAPI WTSOpenServerExW(WCHAR *server_name)
+{
+    FIXME("(%s) stub\n", debugstr_w(server_name));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+/************************************************************
+ *                WTSOpenServerExA (WTSAPI32.@)
+ */
+HANDLE WINAPI WTSOpenServerExA(char *server_name)
+{
+    FIXME("(%s) stub\n", debugstr_a(server_name));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
 /************************************************************
  *                WTSOpenServerA (WTSAPI32.@)
  */
