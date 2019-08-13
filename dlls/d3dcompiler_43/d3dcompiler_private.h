@@ -712,7 +712,6 @@ enum hlsl_ir_node_type
     HLSL_IR_CONSTRUCTOR,
     HLSL_IR_DEREF,
     HLSL_IR_EXPR,
-    HLSL_IR_FUNCTION_DECL,
     HLSL_IR_IF,
     HLSL_IR_LOOP,
     HLSL_IR_JUMP,
@@ -776,7 +775,8 @@ struct hlsl_ir_function
 
 struct hlsl_ir_function_decl
 {
-    struct hlsl_ir_node node;
+    struct hlsl_type *return_type;
+    struct source_location loc;
     struct wine_rb_entry entry;
     struct hlsl_ir_function *func;
     const char *semantic;

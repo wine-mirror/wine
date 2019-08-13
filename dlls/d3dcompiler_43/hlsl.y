@@ -1084,28 +1084,28 @@ hlsl_prog:                /* empty */
                                 {
                                     if (decl->body && $2.decl->body)
                                     {
-                                        hlsl_report_message($2.decl->node.loc.file, $2.decl->node.loc.line,
-                                                $2.decl->node.loc.col, HLSL_LEVEL_ERROR,
+                                        hlsl_report_message($2.decl->loc.file, $2.decl->loc.line,
+                                                $2.decl->loc.col, HLSL_LEVEL_ERROR,
                                                 "redefinition of function %s", debugstr_a($2.name));
                                         YYABORT;
                                     }
-                                    else if (!compare_hlsl_types(decl->node.data_type, $2.decl->node.data_type))
+                                    else if (!compare_hlsl_types(decl->return_type, $2.decl->return_type))
                                     {
-                                        hlsl_report_message($2.decl->node.loc.file, $2.decl->node.loc.line,
-                                                $2.decl->node.loc.col, HLSL_LEVEL_ERROR,
+                                        hlsl_report_message($2.decl->loc.file, $2.decl->loc.line,
+                                                $2.decl->loc.col, HLSL_LEVEL_ERROR,
                                                 "redefining function %s with a different return type",
                                                 debugstr_a($2.name));
-                                        hlsl_report_message(decl->node.loc.file, decl->node.loc.line, decl->node.loc.col, HLSL_LEVEL_NOTE,
+                                        hlsl_report_message(decl->loc.file, decl->loc.line, decl->loc.col, HLSL_LEVEL_NOTE,
                                                 "%s previously declared here",
                                                 debugstr_a($2.name));
                                         YYABORT;
                                     }
                                 }
 
-                                if ($2.decl->node.data_type->base_type == HLSL_TYPE_VOID && $2.decl->semantic)
+                                if ($2.decl->return_type->base_type == HLSL_TYPE_VOID && $2.decl->semantic)
                                 {
-                                    hlsl_report_message($2.decl->node.loc.file, $2.decl->node.loc.line,
-                                            $2.decl->node.loc.col, HLSL_LEVEL_ERROR,
+                                    hlsl_report_message($2.decl->loc.file, $2.decl->loc.line,
+                                            $2.decl->loc.col, HLSL_LEVEL_ERROR,
                                             "void function with a semantic");
                                 }
 
@@ -1280,7 +1280,7 @@ func_prototype:           var_modifiers type var_identifier '(' parameters ')' c
                                 }
                                 $$.name = $3;
                                 $$.decl->semantic = $7.semantic;
-                                set_location(&$$.decl->node.loc, &@3);
+                                set_location(&$$.decl->loc, &@3);
                             }
 
 compound_statement:       '{' '}'

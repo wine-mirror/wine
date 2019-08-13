@@ -1577,8 +1577,7 @@ struct hlsl_ir_function_decl *new_func_decl(struct hlsl_type *return_type, struc
         ERR("Out of memory.\n");
         return NULL;
     }
-    decl->node.type = HLSL_IR_FUNCTION_DECL;
-    decl->node.data_type = return_type;
+    decl->return_type = return_type;
     decl->parameters = parameters;
 
     return decl;
@@ -1775,7 +1774,6 @@ static const char *debug_node_type(enum hlsl_ir_node_type type)
         "HLSL_IR_CONSTRUCTOR",
         "HLSL_IR_DEREF",
         "HLSL_IR_EXPR",
-        "HLSL_IR_FUNCTION_DECL",
         "HLSL_IR_IF",
         "HLSL_IR_JUMP",
         "HLSL_IR_SWIZZLE",
