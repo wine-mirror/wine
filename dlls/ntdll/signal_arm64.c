@@ -476,6 +476,7 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
     {
         CONTEXT           context;
         EXCEPTION_RECORD  rec;
+        void             *redzone[2];
     } *stack;
     DWORD exception_code = 0;
 
@@ -608,11 +609,11 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
         }
         else
         {
-            TRACE(" x0=%016lx x1=%016lx x2=%016lx x3=%016lx\n",
+            TRACE("  x0=%016lx  x1=%016lx  x2=%016lx  x3=%016lx\n",
                   context->u.s.X0, context->u.s.X1, context->u.s.X2, context->u.s.X3 );
-            TRACE(" x4=%016lx x5=%016lx x6=%016lx x7=%016lx\n",
+            TRACE("  x4=%016lx  x5=%016lx  x6=%016lx  x7=%016lx\n",
                   context->u.s.X4, context->u.s.X5, context->u.s.X6, context->u.s.X7 );
-            TRACE(" x8=%016lx x9=%016lx x10=%016lx x11=%016lx\n",
+            TRACE("  x8=%016lx  x9=%016lx x10=%016lx x11=%016lx\n",
                   context->u.s.X8, context->u.s.X9, context->u.s.X10, context->u.s.X11 );
             TRACE(" x12=%016lx x13=%016lx x14=%016lx x15=%016lx\n",
                   context->u.s.X12, context->u.s.X13, context->u.s.X14, context->u.s.X15 );
@@ -622,9 +623,9 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
                   context->u.s.X20, context->u.s.X21, context->u.s.X22, context->u.s.X23 );
             TRACE(" x24=%016lx x25=%016lx x26=%016lx x27=%016lx\n",
                   context->u.s.X24, context->u.s.X25, context->u.s.X26, context->u.s.X27 );
-            TRACE(" x28=%016lx fp=%016lx lr=%016lx sp=%016lx\n",
+            TRACE(" x28=%016lx  fp=%016lx  lr=%016lx  sp=%016lx\n",
                   context->u.s.X28, context->u.s.Fp, context->u.s.Lr, context->Sp );
-            TRACE(" pc=%016lx\n",
+            TRACE("  pc=%016lx\n",
                   context->Pc );
         }
 
