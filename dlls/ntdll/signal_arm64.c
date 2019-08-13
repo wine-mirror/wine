@@ -252,7 +252,8 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 8,
  */
 static void set_cpu_context( const CONTEXT *context )
 {
-    FIXME( "Not implemented on ARM64\n" );
+    interlocked_xchg_ptr( (void **)&arm64_thread_data()->context, (void *)context );
+    raise( SIGUSR2 );
 }
 
 /***********************************************************************
@@ -861,6 +862,21 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 }
 
 
+/**********************************************************************
+ *		usr2_handler
+ *
+ * Handler for SIGUSR2, used to set a thread context.
+ */
+static void usr2_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    CONTEXT *context = interlocked_xchg_ptr( (void **)&arm64_thread_data()->context, NULL );
+    if (!context) return;
+    if ((context->ContextFlags & ~CONTEXT_ARM64) & CONTEXT_FLOATING_POINT)
+        restore_fpu( context, sigcontext );
+    restore_context( context, sigcontext );
+}
+
+
 /***********************************************************************
  *           __wine_set_signal_handler   (NTDLL.@)
  */
@@ -955,6 +971,8 @@ void signal_init_process(void)
     if (sigaction( SIGQUIT, &sig_act, NULL ) == -1) goto error;
     sig_act.sa_sigaction = usr1_handler;
     if (sigaction( SIGUSR1, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = usr2_handler;
+    if (sigaction( SIGUSR2, &sig_act, NULL ) == -1) goto error;
 
     sig_act.sa_sigaction = segv_handler;
     if (sigaction( SIGSEGV, &sig_act, NULL ) == -1) goto error;
