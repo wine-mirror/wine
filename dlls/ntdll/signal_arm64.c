@@ -97,6 +97,13 @@ static struct fpsimd_context *get_fpsimd_context( ucontext_t *sigcontext )
     return (struct fpsimd_context *)get_extended_sigcontext( sigcontext, FPSIMD_MAGIC );
 }
 
+static DWORD64 get_fault_esr( ucontext_t *sigcontext )
+{
+    struct esr_context *esr = (struct esr_context *)get_extended_sigcontext( sigcontext, ESR_MAGIC );
+    if (esr) return esr->esr;
+    return 0;
+}
+
 #endif /* linux */
 
 static const size_t teb_size = 0x2000;  /* we reserve two pages for the TEB */
@@ -649,23 +656,6 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
     return STATUS_SUCCESS;
 }
 
-static inline DWORD is_write_fault( DWORD *pc )
-{
-    DWORD inst = *pc;
-    if ((inst & 0xbfff0000) == 0x0c000000   /* C3.3.1 */ ||
-        (inst & 0xbfe00000) == 0x0c800000   /* C3.3.2 */ ||
-        (inst & 0xbfdf0000) == 0x0d000000   /* C3.3.3 */ ||
-        (inst & 0xbfc00000) == 0x0d800000   /* C3.3.4 */ ||
-        (inst & 0x3f400000) == 0x08000000   /* C3.3.6 */ ||
-        (inst & 0x3bc00000) == 0x38000000   /* C3.3.8-12 */ ||
-        (inst & 0x3fe00000) == 0x3c800000   /* C3.3.8-12 128bit */ ||
-        (inst & 0x3bc00000) == 0x39000000   /* C3.3.13 */ ||
-        (inst & 0x3fc00000) == 0x3d800000   /* C3.3.13 128bit */ ||
-        (inst & 0x3a400000) == 0x28000000)  /* C3.3.7,14-16 */
-        return EXCEPTION_WRITE_FAULT;
-    return EXCEPTION_READ_FAULT;
-}
-
 /**********************************************************************
  *		segv_handler
  *
@@ -675,7 +665,6 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
 {
     EXCEPTION_RECORD *rec;
     ucontext_t *context = ucontext;
-    DWORD *orig_pc = (DWORD *)PC_sig(context);
 
     /* check for page fault inside the thread stack */
     if (signal == SIGSEGV &&
@@ -703,7 +692,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     case SIGSEGV:  /* Segmentation fault */
         rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
         rec->NumberParameters = 2;
-        rec->ExceptionInformation[0] = is_write_fault(orig_pc);
+        rec->ExceptionInformation[0] = (get_fault_esr( context ) & 0x40) != 0;
         rec->ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
         break;
     case SIGBUS:  /* Alignment check exception */
