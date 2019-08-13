@@ -185,6 +185,8 @@ static DWORD set_reg_value( HKEY hkey, const WCHAR *name, const WCHAR *value )
     return RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)value, (lstrlenW(value) + 1) * sizeof(WCHAR) );
 }
 
+#if defined(__i386__) || defined(__x86_64__)
+
 #if defined(_MSC_VER)
 static void do_cpuid( unsigned int ax, unsigned int *p )
 {
@@ -205,7 +207,7 @@ __ASM_GLOBAL_FUNC( do_cpuid,
                    "popl %ebx\n\t"
                    "popl %esi\n\t"
                    "ret" )
-#elif defined(__x86_64__)
+#else
 extern void __cdecl do_cpuid( unsigned int ax, unsigned int *p );
 __ASM_GLOBAL_FUNC( do_cpuid,
                    "pushq %rsi\n\t"
@@ -220,11 +222,6 @@ __ASM_GLOBAL_FUNC( do_cpuid,
                    "popq %rbx\n\t"
                    "popq %rsi\n\t"
                    "ret" )
-#else
-static void do_cpuid( unsigned int ax, unsigned int *p )
-{
-    FIXME("\n");
-}
 #endif
 
 static void regs_to_str( unsigned int *regs, unsigned int len, WCHAR *buffer )
@@ -290,6 +287,14 @@ static void get_namestring( WCHAR *buf )
     }
     for (i = lstrlenW(buf) - 1; i >= 0 && buf[i] == ' '; i--) buf[i] = 0;
 }
+
+#else  /* __i386__ || __x86_64__ */
+
+static void get_identifier( WCHAR *buf, size_t size, const WCHAR *arch ) { }
+static void get_vendorid( WCHAR *buf ) { }
+static void get_namestring( WCHAR *buf ) { }
+
+#endif  /* __i386__ || __x86_64__ */
 
 /* create the volatile hardware registry keys */
 static void create_hardware_registry_keys(void)
