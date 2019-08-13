@@ -86,6 +86,13 @@ typedef enum _WTS_CONFIG_CLASS
     WTSUserConfigfTerminalServerRemoteHomeDir
 } WTS_CONFIG_CLASS;
 
+typedef enum _WTS_TYPE_CLASS
+{
+    WTSTypeProcessInfoLevel0,
+    WTSTypeProcessInfoLevel1,
+    WTSTypeSessionInfoLevel1
+} WTS_TYPE_CLASS;
+
 typedef struct _WTS_PROCESS_INFOA
 {
     DWORD SessionId;
