@@ -1564,7 +1564,7 @@ fi
 
 dnl **** Check for pthread functions ****
 WINE_CHECK_LIB_FUNCS(\
-        pthread_getthreadid_np \
+        pthread_getthreadid_np,
         [$PTHREAD_LIBS])
 
 dnl **** Check for zlib ****
