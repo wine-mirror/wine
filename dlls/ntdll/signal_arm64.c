@@ -470,6 +470,7 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
     stack->rec.NumberParameters = 0;
 
     save_context( &stack->context, sigcontext );
+    save_fpu( &stack->context, sigcontext );
 
     /* now modify the sigcontext to return to the raise function */
     SP_sig(sigcontext) = (ULONG_PTR)stack;
@@ -499,9 +500,18 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
         break;
     }
     status = NtRaiseException( rec, context, TRUE );
-    if (status) raise_status( status, rec );
+    raise_status( status, rec );
 done:
     set_cpu_context( context );
+}
+
+/**********************************************************************
+ *		raise_generic_exception
+ */
+static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status = NtRaiseException( rec, context, TRUE );
+    raise_status( status, rec );
 }
 
 /**********************************************************************
@@ -693,29 +703,19 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
  */
 static void trap_handler( int signal, siginfo_t *info, void *ucontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-    NTSTATUS status;
+    ucontext_t *context = ucontext;
+    EXCEPTION_RECORD *rec = setup_exception( context, raise_generic_exception );
 
-    switch ( info->si_code )
+    switch (info->si_code)
     {
     case TRAP_TRACE:
-        rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
+        rec->ExceptionCode = EXCEPTION_SINGLE_STEP;
         break;
     case TRAP_BRKPT:
     default:
-        rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+        rec->ExceptionCode = EXCEPTION_BREAKPOINT;
         break;
     }
-
-    save_context( &context, ucontext );
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Pc;
-    rec.NumberParameters = 0;
-    status = raise_exception( &rec, &context, TRUE );
-    if (status) raise_status( status, &rec );
-    restore_context( &context, ucontext );
 }
 
 /**********************************************************************
@@ -725,66 +725,52 @@ static void trap_handler( int signal, siginfo_t *info, void *ucontext )
  */
 static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-    NTSTATUS status;
-
-    save_fpu( &context, sigcontext );
-    save_context( &context, sigcontext );
+    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_generic_exception );
 
     switch (siginfo->si_code & 0xffff )
     {
 #ifdef FPE_FLTSUB
     case FPE_FLTSUB:
-        rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
+        rec->ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
         break;
 #endif
 #ifdef FPE_INTDIV
     case FPE_INTDIV:
-        rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+        rec->ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
         break;
 #endif
 #ifdef FPE_INTOVF
     case FPE_INTOVF:
-        rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
+        rec->ExceptionCode = EXCEPTION_INT_OVERFLOW;
         break;
 #endif
 #ifdef FPE_FLTDIV
     case FPE_FLTDIV:
-        rec.ExceptionCode = EXCEPTION_FLT_DIVIDE_BY_ZERO;
+        rec->ExceptionCode = EXCEPTION_FLT_DIVIDE_BY_ZERO;
         break;
 #endif
 #ifdef FPE_FLTOVF
     case FPE_FLTOVF:
-        rec.ExceptionCode = EXCEPTION_FLT_OVERFLOW;
+        rec->ExceptionCode = EXCEPTION_FLT_OVERFLOW;
         break;
 #endif
 #ifdef FPE_FLTUND
     case FPE_FLTUND:
-        rec.ExceptionCode = EXCEPTION_FLT_UNDERFLOW;
+        rec->ExceptionCode = EXCEPTION_FLT_UNDERFLOW;
         break;
 #endif
 #ifdef FPE_FLTRES
     case FPE_FLTRES:
-        rec.ExceptionCode = EXCEPTION_FLT_INEXACT_RESULT;
+        rec->ExceptionCode = EXCEPTION_FLT_INEXACT_RESULT;
         break;
 #endif
 #ifdef FPE_FLTINV
     case FPE_FLTINV:
 #endif
     default:
-        rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
+        rec->ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
         break;
     }
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Pc;
-    rec.NumberParameters = 0;
-    status = raise_exception( &rec, &context, TRUE );
-    if (status) raise_status( status, &rec );
-
-    restore_context( &context, sigcontext );
-    restore_fpu( &context, sigcontext );
 }
 
 /**********************************************************************
@@ -796,19 +782,9 @@ static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     if (!dispatch_signal(SIGINT))
     {
-        EXCEPTION_RECORD rec;
-        CONTEXT context;
-        NTSTATUS status;
+        EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_generic_exception );
 
-        save_context( &context, sigcontext );
-        rec.ExceptionCode    = CONTROL_C_EXIT;
-        rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-        rec.ExceptionRecord  = NULL;
-        rec.ExceptionAddress = (LPVOID)context.Pc;
-        rec.NumberParameters = 0;
-        status = raise_exception( &rec, &context, TRUE );
-        if (status) raise_status( status, &rec );
-        restore_context( &context, sigcontext );
+        rec->ExceptionCode = CONTROL_C_EXIT;
     }
 }
 
@@ -820,19 +796,10 @@ static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-    NTSTATUS status;
+    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_generic_exception );
 
-    save_context( &context, sigcontext );
-    rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
-    rec.ExceptionFlags   = EH_NONCONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Pc;
-    rec.NumberParameters = 0;
-    status = raise_exception( &rec, &context, TRUE );
-    if (status) raise_status( status, &rec );
-    restore_context( &context, sigcontext );
+    rec->ExceptionCode  = EXCEPTION_WINE_ASSERTION;
+    rec->ExceptionFlags = EH_NONCONTINUABLE;
 }
 
 
