@@ -213,6 +213,27 @@ void WINAPI WTSFreeMemory(PVOID pMemory)
 }
 
 /************************************************************
+ *                WTSFreeMemoryExA (WTSAPI32.@)
+ */
+BOOL WINAPI WTSFreeMemoryExA(WTS_TYPE_CLASS type, void *ptr, ULONG nmemb)
+{
+    TRACE("%d %p %d\n", type, ptr, nmemb);
+    heap_free(ptr);
+    return TRUE;
+}
+
+/************************************************************
+ *                WTSFreeMemoryExW (WTSAPI32.@)
+ */
+BOOL WINAPI WTSFreeMemoryExW(WTS_TYPE_CLASS type, void *ptr, ULONG nmemb)
+{
+    TRACE("%d %p %d\n", type, ptr, nmemb);
+    heap_free(ptr);
+    return TRUE;
+}
+
+
+/************************************************************
  *                WTSLogoffSession (WTSAPI32.@)
  */
 BOOL WINAPI WTSLogoffSession(HANDLE hserver, DWORD session_id, BOOL bwait)

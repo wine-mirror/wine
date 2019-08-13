@@ -14,6 +14,8 @@
 @ stdcall WTSEnumerateSessionsExW(ptr ptr long ptr ptr)
 @ stdcall WTSEnumerateSessionsW(long long long ptr ptr)
 @ stdcall WTSFreeMemory(ptr)
+@ stdcall WTSFreeMemoryExA(long ptr long)
+@ stdcall WTSFreeMemoryExW(long ptr long)
 @ stdcall WTSLogoffSession(long long long)
 @ stdcall WTSOpenServerA(str)
 @ stdcall WTSOpenServerExA(str)
