@@ -24,8 +24,19 @@ extern "C" {
 
 DEFINE_GUID(IID_IDebugInputCallbacks,     0x9f50e42c, 0xf136, 0x499e, 0x9a, 0x97, 0x73, 0x03, 0x6c, 0x94, 0xed, 0x2d);
 DEFINE_GUID(IID_IDebugOutputCallbacks,    0x4bf58045, 0xd654, 0x4c40, 0xb0, 0xaf, 0x68, 0x30, 0x90, 0xf3, 0x56, 0xdc);
+DEFINE_GUID(IID_IDebugOutputCallbacksWide,0x4c7fd663, 0xc394, 0x4e26, 0x8e, 0xf1, 0x34, 0xad, 0x5e, 0xd3, 0x76, 0x4c);
 DEFINE_GUID(IID_IDebugEventCallbacks,     0x337be28b, 0x5036, 0x4d72, 0xb6, 0xbf, 0xc4, 0x5f, 0xbb, 0x9f, 0x2e, 0xaa);
+DEFINE_GUID(IID_IDebugEventCallbacksWide, 0x0690e046, 0x9c23, 0x45ac, 0xa0, 0x4f, 0x98, 0x7a, 0xc2, 0x9a, 0xd0, 0xd3);
+DEFINE_GUID(IID_IDebugEventContextCallbacks, 0x61a4905b, 0x23f9, 0x4247, 0xb3, 0xc5, 0x53, 0xd0, 0x87, 0x52, 0x9a, 0xb7);
+DEFINE_GUID(IID_IDebugBreakpoint,         0x5bd9d474, 0x5975, 0x423a, 0xb8, 0x8b, 0x65, 0xa8, 0xe7, 0x11, 0x0e, 0x65);
+DEFINE_GUID(IID_IDebugBreakpoint2,        0x1b278d20, 0x79f2, 0x426e, 0xa3, 0xf9, 0xc1, 0xdd, 0xf3, 0x75, 0xd4, 0x8e);
 DEFINE_GUID(IID_IDebugClient,             0x27fe5639, 0x8407, 0x4f47, 0x83, 0x64, 0xee, 0x11, 0x8f, 0xb0, 0x8a, 0xc8);
+DEFINE_GUID(IID_IDebugClient2,            0xedbed635, 0x372e, 0x4dab, 0xbb, 0xfe, 0xed, 0x0d, 0x2f, 0x63, 0xbe, 0x81);
+DEFINE_GUID(IID_IDebugClient3,            0xdd492d7f, 0x71b8, 0x4ad6, 0xa8, 0xdc, 0x1c, 0x88, 0x74, 0x79, 0xff, 0x91);
+DEFINE_GUID(IID_IDebugClient4,            0xca83c3de, 0x5089, 0x4cf8, 0x93, 0xc8, 0xd8, 0x92, 0x38, 0x7f, 0x2a, 0x5e);
+DEFINE_GUID(IID_IDebugClient5,            0xe3acb9d7, 0x7ec2, 0x4f0c, 0xa0, 0xda, 0xe8, 0x1e, 0x0c, 0xbb, 0xe6, 0x28);
+DEFINE_GUID(IID_IDebugClient6,            0xfd28b4c5, 0xc498, 0x4686, 0xa2, 0x8e, 0x62, 0xca, 0xd2, 0x15, 0x4e, 0xb3);
+DEFINE_GUID(IID_IDebugClient7,            0x13586be3, 0x542e, 0x481e, 0xb1, 0xf2, 0x84, 0x97, 0xba, 0x74, 0xf9, 0xa9);
 DEFINE_GUID(IID_IDebugDataSpaces,         0x88f7dfab, 0x3ea7, 0x4c3a, 0xae, 0xfb, 0xc4, 0xe8, 0x10, 0x61, 0x73, 0xaa);
 DEFINE_GUID(IID_IDebugDataSpaces2,        0x7a5e852f, 0x96e9, 0x468f, 0xac, 0x1b, 0x0b, 0x3a, 0xdd, 0xc4, 0xa0, 0x49);
 DEFINE_GUID(IID_IDebugSymbols,            0x8c31e98c, 0x983a, 0x48a5, 0x90, 0x16, 0x6f, 0xe5, 0xd6, 0x67, 0xa9, 0x50);
@@ -193,6 +204,15 @@ DEFINE_GUID(IID_IDebugSystemObjects3,     0xe9676e2f, 0xe286, 0x4ea3, 0xb0, 0xf9
 #define DEBUG_INVALID_OFFSET                      ((ULONG64)-1)
 #define DEBUG_ANY_ID                                0xffffffff
 
+#ifndef __IDebugClient_FWD_DEFINED__
+#define __IDebugClient_FWD_DEFINED__
+typedef interface IDebugClient IDebugClient;
+#ifdef __cplusplus
+interface IDebugClient;
+#endif /* __cplusplus */
+#endif
+
+
 typedef struct _DEBUG_MODULE_PARAMETERS
 {
     ULONG64 Base;
@@ -356,6 +376,44 @@ DECLARE_INTERFACE_(IDebugBreakpoint, IUnknown)
 };
 #undef INTERFACE
 
+#define INTERFACE IDebugBreakpoint2
+DECLARE_INTERFACE_(IDebugBreakpoint2, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugBreakpoint */
+    STDMETHOD(GetId)(THIS_ PULONG id) PURE;
+    STDMETHOD(GetType)(THIS_ PULONG breaktype, PULONG proc) PURE;
+    STDMETHOD(GetAdder)(THIS_ IDebugClient **adder) PURE;
+    STDMETHOD(GetFlags)(THIS_ PULONG flags) PURE;
+    STDMETHOD(AddFlags)(THIS_ ULONG flags) PURE;
+    STDMETHOD(RemoveFlags)(THIS_ ULONG flags) PURE;
+    STDMETHOD(SetFlags)(THIS_ ULONG flags) PURE;
+    STDMETHOD(GetOffset)(THIS_ PULONG64 offset) PURE;
+    STDMETHOD(SetOffset)(THIS_ ULONG64 offset) PURE;
+    STDMETHOD(GetDataParameters)(THIS_ PULONG size, PULONG access) PURE;
+    STDMETHOD(SetDataParameters)(THIS_ ULONG size, ULONG access) PURE;
+    STDMETHOD(GetPassCount)(THIS_ PULONG count) PURE;
+    STDMETHOD(SetPassCount)(THIS_ ULONG count) PURE;
+    STDMETHOD(GetCurrentPassCount)(THIS_ PULONG count) PURE;
+    STDMETHOD(GetMatchThreadId)(THIS_ PULONG id) PURE;
+    STDMETHOD(SetMatchThreadId)(THIS_ ULONG thread) PURE;
+    STDMETHOD(GetCommand)(THIS_ PSTR buffer, ULONG buf_size, PULONG command) PURE;
+    STDMETHOD(SetCommand)(THIS_ PCSTR command) PURE;
+    STDMETHOD(GetOffsetExpression)(THIS_ PSTR buffer, ULONG buf_size, PULONG expression) PURE;
+    STDMETHOD(SetOffsetExpression)(THIS_ PCSTR expression) PURE;
+    STDMETHOD(GetParameters)(THIS_ PDEBUG_BREAKPOINT_PARAMETERS params) PURE;
+    /* IDebugBreakpoint2. */
+    STDMETHOD(GetCommandWide)(THIS_ PWSTR buffer, ULONG buf_size, PULONG command) PURE;
+    STDMETHOD(SetCommandWide)(THIS_ PCWSTR command) PURE;
+    STDMETHOD(GetOffsetExpressionWide)(THIS_ PWSTR buffer, ULONG buf_size, PULONG expression) PURE;
+    STDMETHOD(SetOffsetExpressionWide)(THIS_ PCWSTR expression) PURE;
+};
+#undef INTERFACE
+
+
 #define INTERFACE IDebugSymbolGroup
 DECLARE_INTERFACE_(IDebugSymbolGroup, IUnknown)
 {
@@ -409,6 +467,18 @@ DECLARE_INTERFACE_(IDebugOutputCallbacks, IUnknown)
 };
 #undef INTERFACE
 
+#define INTERFACE IDebugOutputCallbacksWide
+DECLARE_INTERFACE_(IDebugOutputCallbacksWide, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugOutputCallbacksWide */
+    STDMETHOD(Output)(THIS_ ULONG mask, const WCHAR *text) PURE;
+};
+#undef INTERFACE
+
 #ifdef WINE_NO_UNICODE_MACROS
 #undef CreateProcess
 #endif
@@ -437,6 +507,65 @@ DECLARE_INTERFACE_(IDebugEventCallbacks, IUnknown)
     STDMETHOD(SessionStatus)(THIS_ ULONG status) PURE;
     STDMETHOD(ChangeDebuggeeState)(THIS_ ULONG flags, ULONG64 argument) PURE;
     STDMETHOD(ChangeEngineState)(THIS_ ULONG flags, ULONG64 argument) PURE;
+    STDMETHOD(ChangeSymbolState)(THIS_ ULONG flags, ULONG64 argument) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugEventCallbacksWide
+DECLARE_INTERFACE_(IDebugEventCallbacksWide, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    /* IDebugEventCallbacksWide */
+    STDMETHOD(GetInterestMask)(THIS_ ULONG *mask) PURE;
+    STDMETHOD(Breakpoint)(THIS_ PDEBUG_BREAKPOINT breakpoint) PURE;
+    STDMETHOD(Exception)(THIS_ EXCEPTION_RECORD64 *exception, ULONG first_chance) PURE;
+    STDMETHOD(CreateThread)(THIS_ ULONG64 handle, ULONG64 data_offset, ULONG64 start_offset) PURE;
+    STDMETHOD(ExitThread)(THIS_ ULONG exit_code) PURE;
+    STDMETHOD(CreateProcess)(THIS_ ULONG64 image_handle, ULONG64 handle, ULONG64 base_offset, ULONG module_size,
+            const WCHAR *module_name, const WCHAR *image_name, ULONG checksum, ULONG timedatestamp,
+            ULONG64 initial_thread_handle, ULONG64 thread_data_offset, ULONG64 start_offset) PURE;
+    STDMETHOD(ExitProcess)(THIS_ ULONG exit_code) PURE;
+    STDMETHOD(LoadModule)(THIS_ ULONG64 image_handle, ULONG64 base_offset, ULONG module_size, const WCHAR *module_name,
+            const WCHAR *image_name, ULONG checksum, ULONG timedatestamp) PURE;
+    STDMETHOD(UnloadModule)(THIS_ const WCHAR *image_basename, ULONG64 base_offset) PURE;
+    STDMETHOD(SystemError)(THIS_ ULONG error, ULONG level) PURE;
+    STDMETHOD(SessionStatus)(THIS_ ULONG status) PURE;
+    STDMETHOD(ChangeDebuggeeState)(THIS_ ULONG flags, ULONG64 argument) PURE;
+    STDMETHOD(ChangeEngineState)(THIS_ ULONG flags, ULONG64 argument) PURE;
+    STDMETHOD(ChangeSymbolState)(THIS_ ULONG flags, ULONG64 argument) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugEventContextCallbacks
+DECLARE_INTERFACE_(IDebugEventContextCallbacks, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    /* IDebugEventContextCallbacks */
+    STDMETHOD(GetInterestMask)(THIS_ ULONG *mask) PURE;
+    STDMETHOD(Breakpoint)(THIS_ IDebugBreakpoint2 *bp, void *context, ULONG size) PURE;
+    STDMETHOD(Exception)(THIS_ EXCEPTION_RECORD64 *exception, ULONG firstchance, void *context, ULONG size) PURE;
+    STDMETHOD(CreateThread)(THIS_ ULONG64 handle, ULONG64 data_offset, ULONG64 start_offset, void *context, ULONG size) PURE;
+    STDMETHOD(ExitThread)(THIS_ ULONG exitcode, void *context, ULONG size) PURE;
+
+    STDMETHOD(CreateProcess)(THIS_ ULONG64 image_handle, ULONG64 handle, ULONG64 baseoffset, ULONG module_size,
+                const WCHAR *module_name, const WCHAR image_name, ULONG checksum, ULONG timestamp, ULONG64 initial,
+                ULONG64 thread_offset, ULONG64 start_offset, void *context, ULONG size) PURE;
+    STDMETHOD(ExitProcess)(THIS_ ULONG exitcode, void *context, ULONG size) PURE;
+    STDMETHOD(LoadModule)(THIS_ ULONG64 image_handle, ULONG64 baseoffset, ULONG module_size, const WCHAR *module_name,
+                const WCHAR *image_name, ULONG checksum, ULONG timestamp, void *context, ULONG size) PURE;
+    STDMETHOD(UnloadModule)(THIS_ const WCHAR *image_name, ULONG64 offset, void *context, ULONG size) PURE;
+    STDMETHOD(SystemError)(THIS_ ULONG error, ULONG level, void *context, ULONG size) PURE;
+    STDMETHOD(SessionStatus)(THIS_ ULONG status) PURE;
+    STDMETHOD(ChangeDebuggeeState)(THIS_ ULONG flags, ULONG64 argument, void *context, ULONG size) PURE;
+    STDMETHOD(ChangeEngineState)(THIS_ ULONG flags, ULONG64 argument, void *context, ULONG size) PURE;
     STDMETHOD(ChangeSymbolState)(THIS_ ULONG flags, ULONG64 argument) PURE;
 };
 #undef INTERFACE
@@ -498,6 +627,591 @@ DECLARE_INTERFACE_(IDebugClient, IUnknown)
     STDMETHOD(GetEventCallbacks)(THIS_ IDebugEventCallbacks **callbacks) PURE;
     STDMETHOD(SetEventCallbacks)(THIS_ IDebugEventCallbacks *callbacks) PURE;
     STDMETHOD(FlushCallbacks)(THIS) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugClient2
+DECLARE_INTERFACE_(IDebugClient2, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugClient */
+    STDMETHOD(AttachKernel)(THIS_ ULONG flags, const char *options) PURE;
+    STDMETHOD(GetKernelConnectionOptions)(THIS_ char *buffer, ULONG buffer_size, ULONG *options_size) PURE;
+    STDMETHOD(SetKernelConnectionOptions)(THIS_ const char *options) PURE;
+    STDMETHOD(StartProcessServer)(THIS_ ULONG flags, const char *options, void *reserved) PURE;
+    STDMETHOD(ConnectProcessServer)(THIS_ const char *remote_options, ULONG64 *server) PURE;
+    STDMETHOD(DisconnectProcessServer)(THIS_ ULONG64 server) PURE;
+    STDMETHOD(GetRunningProcessSystemIds)(THIS_ ULONG64 server, ULONG *ids, ULONG count, ULONG *actual_count) PURE;
+    STDMETHOD(GetRunningProcessSystemIdByExecutableName)(THIS_ ULONG64 server, const char *exe_name,
+            ULONG flags, ULONG *id) PURE;
+    STDMETHOD(GetRunningProcessDescription)(THIS_ ULONG64 server, ULONG systemid, ULONG flags, char *exe_name,
+            ULONG exe_name_size, ULONG *actual_exe_name_size, char *description, ULONG description_size,
+            ULONG *actual_description_size) PURE;
+    STDMETHOD(AttachProcess)(THIS_ ULONG64 server, ULONG pid, ULONG flags) PURE;
+    STDMETHOD(CreateProcess)(THIS_ ULONG64 server, char *cmdline, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttach)(THIS_ ULONG64 server, char *cmdline, ULONG create_flags,
+            ULONG pid, ULONG attach_flags) PURE;
+    STDMETHOD(GetProcessOptions)(THIS_ ULONG *options) PURE;
+    STDMETHOD(AddProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(RemoveProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(SetProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(OpenDumpFile)(THIS_ const char *filename) PURE;
+    STDMETHOD(WriteDumpFile)(THIS_ const char *filename, ULONG qualifier) PURE;
+    STDMETHOD(ConnectSession)(THIS_ ULONG flags, ULONG history_limit) PURE;
+    STDMETHOD(StartServer)(THIS_ const char *options) PURE;
+    STDMETHOD(OutputServers)(THIS_ ULONG output_control, const char *machine, ULONG flags) PURE;
+    STDMETHOD(TerminateProcesses)(THIS) PURE;
+    STDMETHOD(DetachProcesses)(THIS) PURE;
+    STDMETHOD(EndSession)(THIS_ ULONG flags) PURE;
+    STDMETHOD(GetExitCode)(THIS_ ULONG *code) PURE;
+    STDMETHOD(DispatchCallbacks)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(ExitDispatch)(THIS_ IDebugClient *client) PURE;
+    STDMETHOD(CreateClient)(THIS_ IDebugClient **client) PURE;
+    STDMETHOD(GetInputCallbacks)(THIS_ IDebugInputCallbacks **callbacks) PURE;
+    STDMETHOD(SetInputCallbacks)(THIS_ IDebugInputCallbacks *callbacks) PURE;
+    STDMETHOD(GetOutputCallbacks)(THIS_ IDebugOutputCallbacks **callbacks) PURE;
+    STDMETHOD(SetOutputCallbacks)(THIS_ IDebugOutputCallbacks *callbacks) PURE;
+    STDMETHOD(GetOutputMask)(THIS_ ULONG *mask) PURE;
+    STDMETHOD(SetOutputMask)(THIS_ ULONG mask) PURE;
+    STDMETHOD(GetOtherOutputMask)(THIS_ IDebugClient *client, ULONG *mask) PURE;
+    STDMETHOD(SetOtherOutputMask)(THIS_ IDebugClient *client, ULONG mask) PURE;
+    STDMETHOD(GetOutputWidth)(THIS_ ULONG *columns) PURE;
+    STDMETHOD(SetOutputWidth)(THIS_ ULONG columns) PURE;
+    STDMETHOD(GetOutputLinePrefix)(THIS_ char *buffer, ULONG buffer_size, ULONG *prefix_size) PURE;
+    STDMETHOD(SetOutputLinePrefix)(THIS_ const char *prefix) PURE;
+    STDMETHOD(GetIdentity)(THIS_ char *buffer, ULONG buffer_size, ULONG *identity_size) PURE;
+    STDMETHOD(OutputIdentity)(THIS_ ULONG output_control, ULONG flags, const char *format) PURE;
+    STDMETHOD(GetEventCallbacks)(THIS_ IDebugEventCallbacks **callbacks) PURE;
+    STDMETHOD(SetEventCallbacks)(THIS_ IDebugEventCallbacks *callbacks) PURE;
+    STDMETHOD(FlushCallbacks)(THIS) PURE;
+    /* IDebugClient2 */
+    STDMETHOD(WriteDumpFile2)(THIS_ const char *dumpfile, ULONG qualifier, ULONG flags, const char *comment) PURE;
+    STDMETHOD(AddDumpInformationFile)(THIS_ const char *infofile, ULONG type) PURE;
+    STDMETHOD(EndProcessServer)(THIS_ ULONG64 server) PURE;
+    STDMETHOD(WaitForProcessServerEnd)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(IsKernelDebuggerEnabled)(THIS) PURE;
+    STDMETHOD(TerminateCurrentProcess)(THIS) PURE;
+    STDMETHOD(DetachCurrentProcess)(THIS) PURE;
+    STDMETHOD(AbandonCurrentProcess)(THIS) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugClient3
+DECLARE_INTERFACE_(IDebugClient3, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugClient */
+    STDMETHOD(AttachKernel)(THIS_ ULONG flags, const char *options) PURE;
+    STDMETHOD(GetKernelConnectionOptions)(THIS_ char *buffer, ULONG buffer_size, ULONG *options_size) PURE;
+    STDMETHOD(SetKernelConnectionOptions)(THIS_ const char *options) PURE;
+    STDMETHOD(StartProcessServer)(THIS_ ULONG flags, const char *options, void *reserved) PURE;
+    STDMETHOD(ConnectProcessServer)(THIS_ const char *remote_options, ULONG64 *server) PURE;
+    STDMETHOD(DisconnectProcessServer)(THIS_ ULONG64 server) PURE;
+    STDMETHOD(GetRunningProcessSystemIds)(THIS_ ULONG64 server, ULONG *ids, ULONG count, ULONG *actual_count) PURE;
+    STDMETHOD(GetRunningProcessSystemIdByExecutableName)(THIS_ ULONG64 server, const char *exe_name,
+            ULONG flags, ULONG *id) PURE;
+    STDMETHOD(GetRunningProcessDescription)(THIS_ ULONG64 server, ULONG systemid, ULONG flags, char *exe_name,
+            ULONG exe_name_size, ULONG *actual_exe_name_size, char *description, ULONG description_size,
+            ULONG *actual_description_size) PURE;
+    STDMETHOD(AttachProcess)(THIS_ ULONG64 server, ULONG pid, ULONG flags) PURE;
+    STDMETHOD(CreateProcess)(THIS_ ULONG64 server, char *cmdline, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttach)(THIS_ ULONG64 server, char *cmdline, ULONG create_flags,
+            ULONG pid, ULONG attach_flags) PURE;
+    STDMETHOD(GetProcessOptions)(THIS_ ULONG *options) PURE;
+    STDMETHOD(AddProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(RemoveProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(SetProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(OpenDumpFile)(THIS_ const char *filename) PURE;
+    STDMETHOD(WriteDumpFile)(THIS_ const char *filename, ULONG qualifier) PURE;
+    STDMETHOD(ConnectSession)(THIS_ ULONG flags, ULONG history_limit) PURE;
+    STDMETHOD(StartServer)(THIS_ const char *options) PURE;
+    STDMETHOD(OutputServers)(THIS_ ULONG output_control, const char *machine, ULONG flags) PURE;
+    STDMETHOD(TerminateProcesses)(THIS) PURE;
+    STDMETHOD(DetachProcesses)(THIS) PURE;
+    STDMETHOD(EndSession)(THIS_ ULONG flags) PURE;
+    STDMETHOD(GetExitCode)(THIS_ ULONG *code) PURE;
+    STDMETHOD(DispatchCallbacks)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(ExitDispatch)(THIS_ IDebugClient *client) PURE;
+    STDMETHOD(CreateClient)(THIS_ IDebugClient **client) PURE;
+    STDMETHOD(GetInputCallbacks)(THIS_ IDebugInputCallbacks **callbacks) PURE;
+    STDMETHOD(SetInputCallbacks)(THIS_ IDebugInputCallbacks *callbacks) PURE;
+    STDMETHOD(GetOutputCallbacks)(THIS_ IDebugOutputCallbacks **callbacks) PURE;
+    STDMETHOD(SetOutputCallbacks)(THIS_ IDebugOutputCallbacks *callbacks) PURE;
+    STDMETHOD(GetOutputMask)(THIS_ ULONG *mask) PURE;
+    STDMETHOD(SetOutputMask)(THIS_ ULONG mask) PURE;
+    STDMETHOD(GetOtherOutputMask)(THIS_ IDebugClient *client, ULONG *mask) PURE;
+    STDMETHOD(SetOtherOutputMask)(THIS_ IDebugClient *client, ULONG mask) PURE;
+    STDMETHOD(GetOutputWidth)(THIS_ ULONG *columns) PURE;
+    STDMETHOD(SetOutputWidth)(THIS_ ULONG columns) PURE;
+    STDMETHOD(GetOutputLinePrefix)(THIS_ char *buffer, ULONG buffer_size, ULONG *prefix_size) PURE;
+    STDMETHOD(SetOutputLinePrefix)(THIS_ const char *prefix) PURE;
+    STDMETHOD(GetIdentity)(THIS_ char *buffer, ULONG buffer_size, ULONG *identity_size) PURE;
+    STDMETHOD(OutputIdentity)(THIS_ ULONG output_control, ULONG flags, const char *format) PURE;
+    STDMETHOD(GetEventCallbacks)(THIS_ IDebugEventCallbacks **callbacks) PURE;
+    STDMETHOD(SetEventCallbacks)(THIS_ IDebugEventCallbacks *callbacks) PURE;
+    STDMETHOD(FlushCallbacks)(THIS) PURE;
+    /* IDebugClient2 */
+    STDMETHOD(WriteDumpFile2)(THIS_ const char *dumpfile, ULONG qualifier, ULONG flags, const char *comment) PURE;
+    STDMETHOD(AddDumpInformationFile)(THIS_ const char *infofile, ULONG type) PURE;
+    STDMETHOD(EndProcessServer)(THIS_ ULONG64 server) PURE;
+    STDMETHOD(WaitForProcessServerEnd)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(IsKernelDebuggerEnabled)(THIS) PURE;
+    STDMETHOD(TerminateCurrentProcess)(THIS) PURE;
+    STDMETHOD(DetachCurrentProcess)(THIS) PURE;
+    STDMETHOD(AbandonCurrentProcess)(THIS) PURE;
+    /* IDebugClient3 */
+    STDMETHOD(GetRunningProcessSystemIdByExecutableNameWide)(THIS_ ULONG64 server, const WCHAR *exename, ULONG flags, ULONG *id) PURE;
+    STDMETHOD(GetRunningProcessDescriptionWide)(THIS_ ULONG64 server, ULONG id, ULONG flags, WCHAR *exename, ULONG size,
+                ULONG *actualsize, WCHAR *description, ULONG desc_size, ULONG *actual_descr_size) PURE;
+    STDMETHOD(CreateProcessWide)(THIS_ ULONG64 server, WCHAR *CommandLine, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttachWide)(THIS_ ULONG64 server, WCHAR *commandline, ULONG flags,
+                ULONG processid,ULONG attachflags) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugClient4
+DECLARE_INTERFACE_(IDebugClient4, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugClient */
+    STDMETHOD(AttachKernel)(THIS_ ULONG flags, const char *options) PURE;
+    STDMETHOD(GetKernelConnectionOptions)(THIS_ char *buffer, ULONG buffer_size, ULONG *options_size) PURE;
+    STDMETHOD(SetKernelConnectionOptions)(THIS_ const char *options) PURE;
+    STDMETHOD(StartProcessServer)(THIS_ ULONG flags, const char *options, void *reserved) PURE;
+    STDMETHOD(ConnectProcessServer)(THIS_ const char *remote_options, ULONG64 *server) PURE;
+    STDMETHOD(DisconnectProcessServer)(THIS_ ULONG64 server) PURE;
+    STDMETHOD(GetRunningProcessSystemIds)(THIS_ ULONG64 server, ULONG *ids, ULONG count, ULONG *actual_count) PURE;
+    STDMETHOD(GetRunningProcessSystemIdByExecutableName)(THIS_ ULONG64 server, const char *exe_name,
+            ULONG flags, ULONG *id) PURE;
+    STDMETHOD(GetRunningProcessDescription)(THIS_ ULONG64 server, ULONG systemid, ULONG flags, char *exe_name,
+            ULONG exe_name_size, ULONG *actual_exe_name_size, char *description, ULONG description_size,
+            ULONG *actual_description_size) PURE;
+    STDMETHOD(AttachProcess)(THIS_ ULONG64 server, ULONG pid, ULONG flags) PURE;
+    STDMETHOD(CreateProcess)(THIS_ ULONG64 server, char *cmdline, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttach)(THIS_ ULONG64 server, char *cmdline, ULONG create_flags,
+            ULONG pid, ULONG attach_flags) PURE;
+    STDMETHOD(GetProcessOptions)(THIS_ ULONG *options) PURE;
+    STDMETHOD(AddProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(RemoveProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(SetProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(OpenDumpFile)(THIS_ const char *filename) PURE;
+    STDMETHOD(WriteDumpFile)(THIS_ const char *filename, ULONG qualifier) PURE;
+    STDMETHOD(ConnectSession)(THIS_ ULONG flags, ULONG history_limit) PURE;
+    STDMETHOD(StartServer)(THIS_ const char *options) PURE;
+    STDMETHOD(OutputServers)(THIS_ ULONG output_control, const char *machine, ULONG flags) PURE;
+    STDMETHOD(TerminateProcesses)(THIS) PURE;
+    STDMETHOD(DetachProcesses)(THIS) PURE;
+    STDMETHOD(EndSession)(THIS_ ULONG flags) PURE;
+    STDMETHOD(GetExitCode)(THIS_ ULONG *code) PURE;
+    STDMETHOD(DispatchCallbacks)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(ExitDispatch)(THIS_ IDebugClient *client) PURE;
+    STDMETHOD(CreateClient)(THIS_ IDebugClient **client) PURE;
+    STDMETHOD(GetInputCallbacks)(THIS_ IDebugInputCallbacks **callbacks) PURE;
+    STDMETHOD(SetInputCallbacks)(THIS_ IDebugInputCallbacks *callbacks) PURE;
+    STDMETHOD(GetOutputCallbacks)(THIS_ IDebugOutputCallbacks **callbacks) PURE;
+    STDMETHOD(SetOutputCallbacks)(THIS_ IDebugOutputCallbacks *callbacks) PURE;
+    STDMETHOD(GetOutputMask)(THIS_ ULONG *mask) PURE;
+    STDMETHOD(SetOutputMask)(THIS_ ULONG mask) PURE;
+    STDMETHOD(GetOtherOutputMask)(THIS_ IDebugClient *client, ULONG *mask) PURE;
+    STDMETHOD(SetOtherOutputMask)(THIS_ IDebugClient *client, ULONG mask) PURE;
+    STDMETHOD(GetOutputWidth)(THIS_ ULONG *columns) PURE;
+    STDMETHOD(SetOutputWidth)(THIS_ ULONG columns) PURE;
+    STDMETHOD(GetOutputLinePrefix)(THIS_ char *buffer, ULONG buffer_size, ULONG *prefix_size) PURE;
+    STDMETHOD(SetOutputLinePrefix)(THIS_ const char *prefix) PURE;
+    STDMETHOD(GetIdentity)(THIS_ char *buffer, ULONG buffer_size, ULONG *identity_size) PURE;
+    STDMETHOD(OutputIdentity)(THIS_ ULONG output_control, ULONG flags, const char *format) PURE;
+    STDMETHOD(GetEventCallbacks)(THIS_ IDebugEventCallbacks **callbacks) PURE;
+    STDMETHOD(SetEventCallbacks)(THIS_ IDebugEventCallbacks *callbacks) PURE;
+    STDMETHOD(FlushCallbacks)(THIS) PURE;
+    /* IDebugClient2 */
+    STDMETHOD(WriteDumpFile2)(THIS_ const char *dumpfile, ULONG qualifier, ULONG flags, const char *comment) PURE;
+    STDMETHOD(AddDumpInformationFile)(THIS_ const char *infofile, ULONG type) PURE;
+    STDMETHOD(EndProcessServer)(THIS_ ULONG64 server) PURE;
+    STDMETHOD(WaitForProcessServerEnd)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(IsKernelDebuggerEnabled)(THIS) PURE;
+    STDMETHOD(TerminateCurrentProcess)(THIS) PURE;
+    STDMETHOD(DetachCurrentProcess)(THIS) PURE;
+    STDMETHOD(AbandonCurrentProcess)(THIS) PURE;
+    /* IDebugClient3 */
+    STDMETHOD(GetRunningProcessSystemIdByExecutableNameWide)(THIS_ ULONG64 server, const WCHAR *exename, ULONG flags, ULONG *id) PURE;
+    STDMETHOD(GetRunningProcessDescriptionWide)(THIS_ ULONG64 server, ULONG id, ULONG flags, WCHAR *exename, ULONG size,
+                ULONG *actualsize, WCHAR *description, ULONG desc_size, ULONG *actual_descr_size) PURE;
+    STDMETHOD(CreateProcessWide)(THIS_ ULONG64 server, WCHAR *CommandLine, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttachWide)(THIS_ ULONG64 server, WCHAR *commandline, ULONG flags,
+                ULONG processid,ULONG attachflags) PURE;
+    /* IDebugClient4 */
+    STDMETHOD(OpenDumpFileWide)(THIS_ const WCHAR *filename, ULONG64 handle) PURE;
+    STDMETHOD(WriteDumpFileWide)(THIS_ const WCHAR *filename, ULONG64 handle, ULONG qualifier, ULONG Flags, const WCHAR *comment) PURE;
+    STDMETHOD(AddDumpInformationFileWide)(THIS_ const WCHAR *filename,ULONG64 handle, ULONG type) PURE;
+    STDMETHOD(GetNumberDumpFiles)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetDumpFile)(THIS_ ULONG index, char *buffer, ULONG buf_size, ULONG *name_size, ULONG64 *handle, ULONG *type) PURE;
+    STDMETHOD(GetDumpFileWide)(THIS_ ULONG index, WCHAR *buffer, ULONG buf_size, ULONG *name_size, ULONG64 *handle,ULONG *type) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugClient5
+DECLARE_INTERFACE_(IDebugClient5, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugClient */
+    STDMETHOD(AttachKernel)(THIS_ ULONG flags, const char *options) PURE;
+    STDMETHOD(GetKernelConnectionOptions)(THIS_ char *buffer, ULONG buffer_size, ULONG *options_size) PURE;
+    STDMETHOD(SetKernelConnectionOptions)(THIS_ const char *options) PURE;
+    STDMETHOD(StartProcessServer)(THIS_ ULONG flags, const char *options, void *reserved) PURE;
+    STDMETHOD(ConnectProcessServer)(THIS_ const char *remote_options, ULONG64 *server) PURE;
+    STDMETHOD(DisconnectProcessServer)(THIS_ ULONG64 server) PURE;
+    STDMETHOD(GetRunningProcessSystemIds)(THIS_ ULONG64 server, ULONG *ids, ULONG count, ULONG *actual_count) PURE;
+    STDMETHOD(GetRunningProcessSystemIdByExecutableName)(THIS_ ULONG64 server, const char *exe_name,
+            ULONG flags, ULONG *id) PURE;
+    STDMETHOD(GetRunningProcessDescription)(THIS_ ULONG64 server, ULONG systemid, ULONG flags, char *exe_name,
+            ULONG exe_name_size, ULONG *actual_exe_name_size, char *description, ULONG description_size,
+            ULONG *actual_description_size) PURE;
+    STDMETHOD(AttachProcess)(THIS_ ULONG64 server, ULONG pid, ULONG flags) PURE;
+    STDMETHOD(CreateProcess)(THIS_ ULONG64 server, char *cmdline, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttach)(THIS_ ULONG64 server, char *cmdline, ULONG create_flags,
+            ULONG pid, ULONG attach_flags) PURE;
+    STDMETHOD(GetProcessOptions)(THIS_ ULONG *options) PURE;
+    STDMETHOD(AddProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(RemoveProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(SetProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(OpenDumpFile)(THIS_ const char *filename) PURE;
+    STDMETHOD(WriteDumpFile)(THIS_ const char *filename, ULONG qualifier) PURE;
+    STDMETHOD(ConnectSession)(THIS_ ULONG flags, ULONG history_limit) PURE;
+    STDMETHOD(StartServer)(THIS_ const char *options) PURE;
+    STDMETHOD(OutputServers)(THIS_ ULONG output_control, const char *machine, ULONG flags) PURE;
+    STDMETHOD(TerminateProcesses)(THIS) PURE;
+    STDMETHOD(DetachProcesses)(THIS) PURE;
+    STDMETHOD(EndSession)(THIS_ ULONG flags) PURE;
+    STDMETHOD(GetExitCode)(THIS_ ULONG *code) PURE;
+    STDMETHOD(DispatchCallbacks)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(ExitDispatch)(THIS_ IDebugClient *client) PURE;
+    STDMETHOD(CreateClient)(THIS_ IDebugClient **client) PURE;
+    STDMETHOD(GetInputCallbacks)(THIS_ IDebugInputCallbacks **callbacks) PURE;
+    STDMETHOD(SetInputCallbacks)(THIS_ IDebugInputCallbacks *callbacks) PURE;
+    STDMETHOD(GetOutputCallbacks)(THIS_ IDebugOutputCallbacks **callbacks) PURE;
+    STDMETHOD(SetOutputCallbacks)(THIS_ IDebugOutputCallbacks *callbacks) PURE;
+    STDMETHOD(GetOutputMask)(THIS_ ULONG *mask) PURE;
+    STDMETHOD(SetOutputMask)(THIS_ ULONG mask) PURE;
+    STDMETHOD(GetOtherOutputMask)(THIS_ IDebugClient *client, ULONG *mask) PURE;
+    STDMETHOD(SetOtherOutputMask)(THIS_ IDebugClient *client, ULONG mask) PURE;
+    STDMETHOD(GetOutputWidth)(THIS_ ULONG *columns) PURE;
+    STDMETHOD(SetOutputWidth)(THIS_ ULONG columns) PURE;
+    STDMETHOD(GetOutputLinePrefix)(THIS_ char *buffer, ULONG buffer_size, ULONG *prefix_size) PURE;
+    STDMETHOD(SetOutputLinePrefix)(THIS_ const char *prefix) PURE;
+    STDMETHOD(GetIdentity)(THIS_ char *buffer, ULONG buffer_size, ULONG *identity_size) PURE;
+    STDMETHOD(OutputIdentity)(THIS_ ULONG output_control, ULONG flags, const char *format) PURE;
+    STDMETHOD(GetEventCallbacks)(THIS_ IDebugEventCallbacks **callbacks) PURE;
+    STDMETHOD(SetEventCallbacks)(THIS_ IDebugEventCallbacks *callbacks) PURE;
+    STDMETHOD(FlushCallbacks)(THIS) PURE;
+    /* IDebugClient2 */
+    STDMETHOD(WriteDumpFile2)(THIS_ const char *dumpfile, ULONG qualifier, ULONG flags, const char *comment) PURE;
+    STDMETHOD(AddDumpInformationFile)(THIS_ const char *infofile, ULONG type) PURE;
+    STDMETHOD(EndProcessServer)(THIS_ ULONG64 server) PURE;
+    STDMETHOD(WaitForProcessServerEnd)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(IsKernelDebuggerEnabled)(THIS) PURE;
+    STDMETHOD(TerminateCurrentProcess)(THIS) PURE;
+    STDMETHOD(DetachCurrentProcess)(THIS) PURE;
+    STDMETHOD(AbandonCurrentProcess)(THIS) PURE;
+    /* IDebugClient3 */
+    STDMETHOD(GetRunningProcessSystemIdByExecutableNameWide)(THIS_ ULONG64 server, const WCHAR *exename, ULONG flags, ULONG *id) PURE;
+    STDMETHOD(GetRunningProcessDescriptionWide)(THIS_ ULONG64 server, ULONG id, ULONG flags, WCHAR *exename, ULONG size,
+                ULONG *actualsize, WCHAR *description, ULONG desc_size, ULONG *actual_descr_size) PURE;
+    STDMETHOD(CreateProcessWide)(THIS_ ULONG64 server, WCHAR *CommandLine, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttachWide)(THIS_ ULONG64 server, WCHAR *commandline, ULONG flags,
+                ULONG processid,ULONG attachflags) PURE;
+    /* IDebugClient4 */
+    STDMETHOD(OpenDumpFileWide)(THIS_ const WCHAR *filename, ULONG64 handle) PURE;
+    STDMETHOD(WriteDumpFileWide)(THIS_ const WCHAR *filename, ULONG64 handle, ULONG qualifier, ULONG Flags, const WCHAR *comment) PURE;
+    STDMETHOD(AddDumpInformationFileWide)(THIS_ const WCHAR *filename,ULONG64 handle, ULONG type) PURE;
+    STDMETHOD(GetNumberDumpFiles)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetDumpFile)(THIS_ ULONG index, char *buffer, ULONG buf_size, ULONG *name_size, ULONG64 *handle, ULONG *type) PURE;
+    STDMETHOD(GetDumpFileWide)(THIS_ ULONG index, WCHAR *buffer, ULONG buf_size, ULONG *name_size, ULONG64 *handle,ULONG *type) PURE;
+    /* IDebugClient5 */
+    STDMETHOD(AttachKernelWide)(THIS_ ULONG flags, const WCHAR *options) PURE;
+    STDMETHOD(GetKernelConnectionOptionsWide)(THIS_ WCHAR *buffer, ULONG buf_size, ULONG *size) PURE;
+    STDMETHOD(SetKernelConnectionOptionsWide)(THIS_ const WCHAR *options) PURE;
+    STDMETHOD(StartProcessServerWide)(THIS_ ULONG flags, const WCHAR *options, void *reserved) PURE;
+    STDMETHOD(ConnectProcessServerWide)(THIS_ const WCHAR *options, ULONG64 *server) PURE;
+    STDMETHOD(StartServerWide)(THIS_ const WCHAR *options) PURE;
+    STDMETHOD(OutputServersWide)(THIS_ ULONG control, const WCHAR *machine, ULONG flags) PURE;
+    STDMETHOD(GetOutputCallbacksWide)(THIS_ IDebugOutputCallbacksWide **callbacks) PURE;
+    STDMETHOD(SetOutputCallbacksWide)(THIS_ IDebugOutputCallbacksWide *callbacks) PURE;
+    STDMETHOD(GetOutputLinePrefixWide)(THIS_ WCHAR *buffer, ULONG buf_size, ULONG *size) PURE;
+    STDMETHOD(SetOutputLinePrefixWide)(THIS_ const WCHAR *prefix) PURE;
+    STDMETHOD(GetIdentityWide)(THIS_ WCHAR *buffer, ULONG buf_size, ULONG *identity) PURE;
+    STDMETHOD(OutputIdentityWide)(THIS_ ULONG control, ULONG flags, const WCHAR *format) PURE;
+    STDMETHOD(GetEventCallbacksWide)(THIS_ IDebugEventCallbacksWide **callbacks) PURE;
+    STDMETHOD(SetEventCallbacksWide)(THIS_ IDebugEventCallbacksWide *callbacks) PURE;
+    STDMETHOD(CreateProcess2)(THIS_ ULONG64 server, char *command, void *options, ULONG buf_size,
+                const char *initial, const char *environment) PURE;
+    STDMETHOD(CreateProcess2Wide)(THIS_ ULONG64 server, WCHAR *command, void *options, ULONG size,
+                const WCHAR *initial, const WCHAR *environment) PURE;
+    STDMETHOD(CreateProcessAndAttach2)(THIS_ ULONG64 server, char *command, void *options, ULONG buf_size,
+                const char *initial, const char *environment, ULONG processid, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttach2Wide)(THIS_ ULONG64 server, WCHAR *command, void *buffer, ULONG buf_size,
+                const WCHAR *initial, const WCHAR *environment, ULONG processid, ULONG flags) PURE;
+    STDMETHOD(PushOutputLinePrefix)(THIS_ const char *prefix, ULONG64 *handle) PURE;
+    STDMETHOD(PushOutputLinePrefixWide)(THIS_ const WCHAR *prefix, ULONG64 *handle) PURE;
+    STDMETHOD(PopOutputLinePrefix)(THIS_ ULONG64 handle) PURE;
+    STDMETHOD(GetNumberInputCallbacks)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetNumberOutputCallbacks)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetNumberEventCallbacks)(THIS_ ULONG flags, ULONG *count) PURE;
+    STDMETHOD(GetQuitLockString)(THIS_ char *buffer, ULONG buf_size, ULONG *size) PURE;
+    STDMETHOD(SetQuitLockString)(THIS_ char *string) PURE;
+    STDMETHOD(GetQuitLockStringWide)(THIS_ WCHAR *buffer, ULONG buf_size, ULONG *size) PURE;
+    STDMETHOD(SetQuitLockStringWide)(THIS_ const WCHAR *string) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugClient6
+DECLARE_INTERFACE_(IDebugClient6, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugClient */
+    STDMETHOD(AttachKernel)(THIS_ ULONG flags, const char *options) PURE;
+    STDMETHOD(GetKernelConnectionOptions)(THIS_ char *buffer, ULONG buffer_size, ULONG *options_size) PURE;
+    STDMETHOD(SetKernelConnectionOptions)(THIS_ const char *options) PURE;
+    STDMETHOD(StartProcessServer)(THIS_ ULONG flags, const char *options, void *reserved) PURE;
+    STDMETHOD(ConnectProcessServer)(THIS_ const char *remote_options, ULONG64 *server) PURE;
+    STDMETHOD(DisconnectProcessServer)(THIS_ ULONG64 server) PURE;
+    STDMETHOD(GetRunningProcessSystemIds)(THIS_ ULONG64 server, ULONG *ids, ULONG count, ULONG *actual_count) PURE;
+    STDMETHOD(GetRunningProcessSystemIdByExecutableName)(THIS_ ULONG64 server, const char *exe_name,
+            ULONG flags, ULONG *id) PURE;
+    STDMETHOD(GetRunningProcessDescription)(THIS_ ULONG64 server, ULONG systemid, ULONG flags, char *exe_name,
+            ULONG exe_name_size, ULONG *actual_exe_name_size, char *description, ULONG description_size,
+            ULONG *actual_description_size) PURE;
+    STDMETHOD(AttachProcess)(THIS_ ULONG64 server, ULONG pid, ULONG flags) PURE;
+    STDMETHOD(CreateProcess)(THIS_ ULONG64 server, char *cmdline, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttach)(THIS_ ULONG64 server, char *cmdline, ULONG create_flags,
+            ULONG pid, ULONG attach_flags) PURE;
+    STDMETHOD(GetProcessOptions)(THIS_ ULONG *options) PURE;
+    STDMETHOD(AddProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(RemoveProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(SetProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(OpenDumpFile)(THIS_ const char *filename) PURE;
+    STDMETHOD(WriteDumpFile)(THIS_ const char *filename, ULONG qualifier) PURE;
+    STDMETHOD(ConnectSession)(THIS_ ULONG flags, ULONG history_limit) PURE;
+    STDMETHOD(StartServer)(THIS_ const char *options) PURE;
+    STDMETHOD(OutputServers)(THIS_ ULONG output_control, const char *machine, ULONG flags) PURE;
+    STDMETHOD(TerminateProcesses)(THIS) PURE;
+    STDMETHOD(DetachProcesses)(THIS) PURE;
+    STDMETHOD(EndSession)(THIS_ ULONG flags) PURE;
+    STDMETHOD(GetExitCode)(THIS_ ULONG *code) PURE;
+    STDMETHOD(DispatchCallbacks)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(ExitDispatch)(THIS_ IDebugClient *client) PURE;
+    STDMETHOD(CreateClient)(THIS_ IDebugClient **client) PURE;
+    STDMETHOD(GetInputCallbacks)(THIS_ IDebugInputCallbacks **callbacks) PURE;
+    STDMETHOD(SetInputCallbacks)(THIS_ IDebugInputCallbacks *callbacks) PURE;
+    STDMETHOD(GetOutputCallbacks)(THIS_ IDebugOutputCallbacks **callbacks) PURE;
+    STDMETHOD(SetOutputCallbacks)(THIS_ IDebugOutputCallbacks *callbacks) PURE;
+    STDMETHOD(GetOutputMask)(THIS_ ULONG *mask) PURE;
+    STDMETHOD(SetOutputMask)(THIS_ ULONG mask) PURE;
+    STDMETHOD(GetOtherOutputMask)(THIS_ IDebugClient *client, ULONG *mask) PURE;
+    STDMETHOD(SetOtherOutputMask)(THIS_ IDebugClient *client, ULONG mask) PURE;
+    STDMETHOD(GetOutputWidth)(THIS_ ULONG *columns) PURE;
+    STDMETHOD(SetOutputWidth)(THIS_ ULONG columns) PURE;
+    STDMETHOD(GetOutputLinePrefix)(THIS_ char *buffer, ULONG buffer_size, ULONG *prefix_size) PURE;
+    STDMETHOD(SetOutputLinePrefix)(THIS_ const char *prefix) PURE;
+    STDMETHOD(GetIdentity)(THIS_ char *buffer, ULONG buffer_size, ULONG *identity_size) PURE;
+    STDMETHOD(OutputIdentity)(THIS_ ULONG output_control, ULONG flags, const char *format) PURE;
+    STDMETHOD(GetEventCallbacks)(THIS_ IDebugEventCallbacks **callbacks) PURE;
+    STDMETHOD(SetEventCallbacks)(THIS_ IDebugEventCallbacks *callbacks) PURE;
+    STDMETHOD(FlushCallbacks)(THIS) PURE;
+    /* IDebugClient2 */
+    STDMETHOD(WriteDumpFile2)(THIS_ const char *dumpfile, ULONG qualifier, ULONG flags, const char *comment) PURE;
+    STDMETHOD(AddDumpInformationFile)(THIS_ const char *infofile, ULONG type) PURE;
+    STDMETHOD(EndProcessServer)(THIS_ ULONG64 server) PURE;
+    STDMETHOD(WaitForProcessServerEnd)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(IsKernelDebuggerEnabled)(THIS) PURE;
+    STDMETHOD(TerminateCurrentProcess)(THIS) PURE;
+    STDMETHOD(DetachCurrentProcess)(THIS) PURE;
+    STDMETHOD(AbandonCurrentProcess)(THIS) PURE;
+    /* IDebugClient3 */
+    STDMETHOD(GetRunningProcessSystemIdByExecutableNameWide)(THIS_ ULONG64 server, const WCHAR *exename, ULONG flags, ULONG *id) PURE;
+    STDMETHOD(GetRunningProcessDescriptionWide)(THIS_ ULONG64 server, ULONG id, ULONG flags, WCHAR *exename, ULONG size,
+                ULONG *actualsize, WCHAR *description, ULONG desc_size, ULONG *actual_descr_size) PURE;
+    STDMETHOD(CreateProcessWide)(THIS_ ULONG64 server, WCHAR *CommandLine, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttachWide)(THIS_ ULONG64 server, WCHAR *commandline, ULONG flags,
+                ULONG processid,ULONG attachflags) PURE;
+    /* IDebugClient4 */
+    STDMETHOD(OpenDumpFileWide)(THIS_ const WCHAR *filename, ULONG64 handle) PURE;
+    STDMETHOD(WriteDumpFileWide)(THIS_ const WCHAR *filename, ULONG64 handle, ULONG qualifier, ULONG Flags, const WCHAR *comment) PURE;
+    STDMETHOD(AddDumpInformationFileWide)(THIS_ const WCHAR *filename,ULONG64 handle, ULONG type) PURE;
+    STDMETHOD(GetNumberDumpFiles)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetDumpFile)(THIS_ ULONG index, char *buffer, ULONG buf_size, ULONG *name_size, ULONG64 *handle, ULONG *type) PURE;
+    STDMETHOD(GetDumpFileWide)(THIS_ ULONG index, WCHAR *buffer, ULONG buf_size, ULONG *name_size, ULONG64 *handle,ULONG *type) PURE;
+    /* IDebugClient5 */
+    STDMETHOD(AttachKernelWide)(THIS_ ULONG flags, const WCHAR *options) PURE;
+    STDMETHOD(GetKernelConnectionOptionsWide)(THIS_ WCHAR *buffer, ULONG buf_size, ULONG *size) PURE;
+    STDMETHOD(SetKernelConnectionOptionsWide)(THIS_ const WCHAR *options) PURE;
+    STDMETHOD(StartProcessServerWide)(THIS_ ULONG flags, const WCHAR *options, void *reserved) PURE;
+    STDMETHOD(ConnectProcessServerWide)(THIS_ const WCHAR *options, ULONG64 *server) PURE;
+    STDMETHOD(StartServerWide)(THIS_ const WCHAR *options) PURE;
+    STDMETHOD(OutputServersWide)(THIS_ ULONG control, const WCHAR *machine, ULONG flags) PURE;
+    STDMETHOD(GetOutputCallbacksWide)(THIS_ IDebugOutputCallbacksWide **callbacks) PURE;
+    STDMETHOD(SetOutputCallbacksWide)(THIS_ IDebugOutputCallbacksWide *callbacks) PURE;
+    STDMETHOD(GetOutputLinePrefixWide)(THIS_ WCHAR *buffer, ULONG buf_size, ULONG *size) PURE;
+    STDMETHOD(SetOutputLinePrefixWide)(THIS_ const WCHAR *prefix) PURE;
+    STDMETHOD(GetIdentityWide)(THIS_ WCHAR *buffer, ULONG buf_size, ULONG *identity) PURE;
+    STDMETHOD(OutputIdentityWide)(THIS_ ULONG control, ULONG flags, const WCHAR *format) PURE;
+    STDMETHOD(GetEventCallbacksWide)(THIS_ IDebugEventCallbacksWide **callbacks) PURE;
+    STDMETHOD(SetEventCallbacksWide)(THIS_ IDebugEventCallbacksWide *callbacks) PURE;
+    STDMETHOD(CreateProcess2)(THIS_ ULONG64 server, char *command, void *options, ULONG buf_size,
+                const char *initial, const char *environment) PURE;
+    STDMETHOD(CreateProcess2Wide)(THIS_ ULONG64 server, WCHAR *command, void *options, ULONG size,
+                const WCHAR *initial, const WCHAR *environment) PURE;
+    STDMETHOD(CreateProcessAndAttach2)(THIS_ ULONG64 server, char *command, void *options, ULONG buf_size,
+                const char *initial, const char *environment, ULONG processid, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttach2Wide)(THIS_ ULONG64 server, WCHAR *command, void *buffer, ULONG buf_size,
+                const WCHAR *initial, const WCHAR *environment, ULONG processid, ULONG flags) PURE;
+    STDMETHOD(PushOutputLinePrefix)(THIS_ const char *prefix, ULONG64 *handle) PURE;
+    STDMETHOD(PushOutputLinePrefixWide)(THIS_ const WCHAR *prefix, ULONG64 *handle) PURE;
+    STDMETHOD(PopOutputLinePrefix)(THIS_ ULONG64 handle) PURE;
+    STDMETHOD(GetNumberInputCallbacks)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetNumberOutputCallbacks)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetNumberEventCallbacks)(THIS_ ULONG flags, ULONG *count) PURE;
+    STDMETHOD(GetQuitLockString)(THIS_ char *buffer, ULONG buf_size, ULONG *size) PURE;
+    STDMETHOD(SetQuitLockString)(THIS_ char *string) PURE;
+    STDMETHOD(GetQuitLockStringWide)(THIS_ WCHAR *buffer, ULONG buf_size, ULONG *size) PURE;
+    STDMETHOD(SetQuitLockStringWide)(THIS_ const WCHAR *string) PURE;
+    /* IDebugClient6 */
+    STDMETHOD(SetEventContextCallbacks)(THIS_ IDebugEventContextCallbacks *callbacks) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugClient7
+DECLARE_INTERFACE_(IDebugClient7, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugClient */
+    STDMETHOD(AttachKernel)(THIS_ ULONG flags, const char *options) PURE;
+    STDMETHOD(GetKernelConnectionOptions)(THIS_ char *buffer, ULONG buffer_size, ULONG *options_size) PURE;
+    STDMETHOD(SetKernelConnectionOptions)(THIS_ const char *options) PURE;
+    STDMETHOD(StartProcessServer)(THIS_ ULONG flags, const char *options, void *reserved) PURE;
+    STDMETHOD(ConnectProcessServer)(THIS_ const char *remote_options, ULONG64 *server) PURE;
+    STDMETHOD(DisconnectProcessServer)(THIS_ ULONG64 server) PURE;
+    STDMETHOD(GetRunningProcessSystemIds)(THIS_ ULONG64 server, ULONG *ids, ULONG count, ULONG *actual_count) PURE;
+    STDMETHOD(GetRunningProcessSystemIdByExecutableName)(THIS_ ULONG64 server, const char *exe_name,
+            ULONG flags, ULONG *id) PURE;
+    STDMETHOD(GetRunningProcessDescription)(THIS_ ULONG64 server, ULONG systemid, ULONG flags, char *exe_name,
+            ULONG exe_name_size, ULONG *actual_exe_name_size, char *description, ULONG description_size,
+            ULONG *actual_description_size) PURE;
+    STDMETHOD(AttachProcess)(THIS_ ULONG64 server, ULONG pid, ULONG flags) PURE;
+    STDMETHOD(CreateProcess)(THIS_ ULONG64 server, char *cmdline, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttach)(THIS_ ULONG64 server, char *cmdline, ULONG create_flags,
+            ULONG pid, ULONG attach_flags) PURE;
+    STDMETHOD(GetProcessOptions)(THIS_ ULONG *options) PURE;
+    STDMETHOD(AddProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(RemoveProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(SetProcessOptions)(THIS_ ULONG options) PURE;
+    STDMETHOD(OpenDumpFile)(THIS_ const char *filename) PURE;
+    STDMETHOD(WriteDumpFile)(THIS_ const char *filename, ULONG qualifier) PURE;
+    STDMETHOD(ConnectSession)(THIS_ ULONG flags, ULONG history_limit) PURE;
+    STDMETHOD(StartServer)(THIS_ const char *options) PURE;
+    STDMETHOD(OutputServers)(THIS_ ULONG output_control, const char *machine, ULONG flags) PURE;
+    STDMETHOD(TerminateProcesses)(THIS) PURE;
+    STDMETHOD(DetachProcesses)(THIS) PURE;
+    STDMETHOD(EndSession)(THIS_ ULONG flags) PURE;
+    STDMETHOD(GetExitCode)(THIS_ ULONG *code) PURE;
+    STDMETHOD(DispatchCallbacks)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(ExitDispatch)(THIS_ IDebugClient *client) PURE;
+    STDMETHOD(CreateClient)(THIS_ IDebugClient **client) PURE;
+    STDMETHOD(GetInputCallbacks)(THIS_ IDebugInputCallbacks **callbacks) PURE;
+    STDMETHOD(SetInputCallbacks)(THIS_ IDebugInputCallbacks *callbacks) PURE;
+    STDMETHOD(GetOutputCallbacks)(THIS_ IDebugOutputCallbacks **callbacks) PURE;
+    STDMETHOD(SetOutputCallbacks)(THIS_ IDebugOutputCallbacks *callbacks) PURE;
+    STDMETHOD(GetOutputMask)(THIS_ ULONG *mask) PURE;
+    STDMETHOD(SetOutputMask)(THIS_ ULONG mask) PURE;
+    STDMETHOD(GetOtherOutputMask)(THIS_ IDebugClient *client, ULONG *mask) PURE;
+    STDMETHOD(SetOtherOutputMask)(THIS_ IDebugClient *client, ULONG mask) PURE;
+    STDMETHOD(GetOutputWidth)(THIS_ ULONG *columns) PURE;
+    STDMETHOD(SetOutputWidth)(THIS_ ULONG columns) PURE;
+    STDMETHOD(GetOutputLinePrefix)(THIS_ char *buffer, ULONG buffer_size, ULONG *prefix_size) PURE;
+    STDMETHOD(SetOutputLinePrefix)(THIS_ const char *prefix) PURE;
+    STDMETHOD(GetIdentity)(THIS_ char *buffer, ULONG buffer_size, ULONG *identity_size) PURE;
+    STDMETHOD(OutputIdentity)(THIS_ ULONG output_control, ULONG flags, const char *format) PURE;
+    STDMETHOD(GetEventCallbacks)(THIS_ IDebugEventCallbacks **callbacks) PURE;
+    STDMETHOD(SetEventCallbacks)(THIS_ IDebugEventCallbacks *callbacks) PURE;
+    STDMETHOD(FlushCallbacks)(THIS) PURE;
+    /* IDebugClient2 */
+    STDMETHOD(WriteDumpFile2)(THIS_ const char *dumpfile, ULONG qualifier, ULONG flags, const char *comment) PURE;
+    STDMETHOD(AddDumpInformationFile)(THIS_ const char *infofile, ULONG type) PURE;
+    STDMETHOD(EndProcessServer)(THIS_ ULONG64 server) PURE;
+    STDMETHOD(WaitForProcessServerEnd)(THIS_ ULONG timeout) PURE;
+    STDMETHOD(IsKernelDebuggerEnabled)(THIS) PURE;
+    STDMETHOD(TerminateCurrentProcess)(THIS) PURE;
+    STDMETHOD(DetachCurrentProcess)(THIS) PURE;
+    STDMETHOD(AbandonCurrentProcess)(THIS) PURE;
+    /* IDebugClient3 */
+    STDMETHOD(GetRunningProcessSystemIdByExecutableNameWide)(THIS_ ULONG64 server, const WCHAR *exename, ULONG flags, ULONG *id) PURE;
+    STDMETHOD(GetRunningProcessDescriptionWide)(THIS_ ULONG64 server, ULONG id, ULONG flags, WCHAR *exename, ULONG size,
+                ULONG *actualsize, WCHAR *description, ULONG desc_size, ULONG *actual_descr_size) PURE;
+    STDMETHOD(CreateProcessWide)(THIS_ ULONG64 server, WCHAR *CommandLine, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttachWide)(THIS_ ULONG64 server, WCHAR *commandline, ULONG flags,
+                ULONG processid,ULONG attachflags) PURE;
+    /* IDebugClient4 */
+    STDMETHOD(OpenDumpFileWide)(THIS_ const WCHAR *filename, ULONG64 handle) PURE;
+    STDMETHOD(WriteDumpFileWide)(THIS_ const WCHAR *filename, ULONG64 handle, ULONG qualifier, ULONG Flags, const WCHAR *comment) PURE;
+    STDMETHOD(AddDumpInformationFileWide)(THIS_ const WCHAR *filename,ULONG64 handle, ULONG type) PURE;
+    STDMETHOD(GetNumberDumpFiles)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetDumpFile)(THIS_ ULONG index, char *buffer, ULONG buf_size, ULONG *name_size, ULONG64 *handle, ULONG *type) PURE;
+    STDMETHOD(GetDumpFileWide)(THIS_ ULONG index, WCHAR *buffer, ULONG buf_size, ULONG *name_size, ULONG64 *handle,ULONG *type) PURE;
+    /* IDebugClient5 */
+    STDMETHOD(AttachKernelWide)(THIS_ ULONG flags, const WCHAR *options) PURE;
+    STDMETHOD(GetKernelConnectionOptionsWide)(THIS_ WCHAR *buffer, ULONG buf_size, ULONG *size) PURE;
+    STDMETHOD(SetKernelConnectionOptionsWide)(THIS_ const WCHAR *options) PURE;
+    STDMETHOD(StartProcessServerWide)(THIS_ ULONG flags, const WCHAR *options, void *reserved) PURE;
+    STDMETHOD(ConnectProcessServerWide)(THIS_ const WCHAR *options, ULONG64 *server) PURE;
+    STDMETHOD(StartServerWide)(THIS_ const WCHAR *options) PURE;
+    STDMETHOD(OutputServersWide)(THIS_ ULONG control, const WCHAR *machine, ULONG flags) PURE;
+    STDMETHOD(GetOutputCallbacksWide)(THIS_ IDebugOutputCallbacksWide **callbacks) PURE;
+    STDMETHOD(SetOutputCallbacksWide)(THIS_ IDebugOutputCallbacksWide *callbacks) PURE;
+    STDMETHOD(GetOutputLinePrefixWide)(THIS_ WCHAR *buffer, ULONG buf_size, ULONG *size) PURE;
+    STDMETHOD(SetOutputLinePrefixWide)(THIS_ const WCHAR *prefix) PURE;
+    STDMETHOD(GetIdentityWide)(THIS_ WCHAR *buffer, ULONG buf_size, ULONG *identity) PURE;
+    STDMETHOD(OutputIdentityWide)(THIS_ ULONG control, ULONG flags, const WCHAR *format) PURE;
+    STDMETHOD(GetEventCallbacksWide)(THIS_ IDebugEventCallbacksWide **callbacks) PURE;
+    STDMETHOD(SetEventCallbacksWide)(THIS_ IDebugEventCallbacksWide *callbacks) PURE;
+    STDMETHOD(CreateProcess2)(THIS_ ULONG64 server, char *command, void *options, ULONG buf_size,
+                const char *initial, const char *environment) PURE;
+    STDMETHOD(CreateProcess2Wide)(THIS_ ULONG64 server, WCHAR *command, void *options, ULONG size,
+                const WCHAR *initial, const WCHAR *environment) PURE;
+    STDMETHOD(CreateProcessAndAttach2)(THIS_ ULONG64 server, char *command, void *options, ULONG buf_size,
+                const char *initial, const char *environment, ULONG processid, ULONG flags) PURE;
+    STDMETHOD(CreateProcessAndAttach2Wide)(THIS_ ULONG64 server, WCHAR *command, void *buffer, ULONG buf_size,
+                const WCHAR *initial, const WCHAR *environment, ULONG processid, ULONG flags) PURE;
+    STDMETHOD(PushOutputLinePrefix)(THIS_ const char *prefix, ULONG64 *handle) PURE;
+    STDMETHOD(PushOutputLinePrefixWide)(THIS_ const WCHAR *prefix, ULONG64 *handle) PURE;
+    STDMETHOD(PopOutputLinePrefix)(THIS_ ULONG64 handle) PURE;
+    STDMETHOD(GetNumberInputCallbacks)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetNumberOutputCallbacks)(THIS_ ULONG *count) PURE;
+    STDMETHOD(GetNumberEventCallbacks)(THIS_ ULONG flags, ULONG *count) PURE;
+    STDMETHOD(GetQuitLockString)(THIS_ char *buffer, ULONG buf_size, ULONG *size) PURE;
+    STDMETHOD(SetQuitLockString)(THIS_ char *string) PURE;
+    STDMETHOD(GetQuitLockStringWide)(THIS_ WCHAR *buffer, ULONG buf_size, ULONG *size) PURE;
+    STDMETHOD(SetQuitLockStringWide)(THIS_ const WCHAR *string) PURE;
+    /* IDebugClient6 */
+    STDMETHOD(SetEventContextCallbacks)(THIS_ IDebugEventContextCallbacks *callbacks) PURE;
+    /* IDebugClient7 */
+    STDMETHOD(SetClientContext)(THIS_ void *context, ULONG size) PURE;
 };
 #undef INTERFACE
 
