@@ -506,6 +506,17 @@ done:
 }
 
 /**********************************************************************
+ *		raise_trap_exception
+ */
+static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status;
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Pc += 4;
+    status = NtRaiseException( rec, context, TRUE );
+    raise_status( status, rec );
+}
+
+/**********************************************************************
  *		raise_generic_exception
  */
 static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
@@ -704,7 +715,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
 static void trap_handler( int signal, siginfo_t *info, void *ucontext )
 {
     ucontext_t *context = ucontext;
-    EXCEPTION_RECORD *rec = setup_exception( context, raise_generic_exception );
+    EXCEPTION_RECORD *rec = setup_exception( context, raise_trap_exception );
 
     switch (info->si_code)
     {
@@ -1208,18 +1219,12 @@ void signal_exit_process( int status )
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
  */
-void WINAPI DbgBreakPoint(void)
-{
-     kill(getpid(), SIGTRAP);
-}
+__ASM_STDCALL_FUNC( DbgBreakPoint, 0, "brk #0; ret")
 
 /**********************************************************************
  *              DbgUserBreakPoint   (NTDLL.@)
  */
-void WINAPI DbgUserBreakPoint(void)
-{
-     kill(getpid(), SIGTRAP);
-}
+__ASM_STDCALL_FUNC( DbgUserBreakPoint, 0, "brk #0; ret")
 
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.@)
