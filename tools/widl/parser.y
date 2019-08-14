@@ -2668,7 +2668,10 @@ static void check_remoting_args(const var_t *func)
     const char *funcname = func->name;
     const var_t *arg;
 
-    if (func->declspec.type->details.function->args) LIST_FOR_EACH_ENTRY( arg, func->declspec.type->details.function->args, const var_t, entry )
+    if (!type_function_get_args(func->declspec.type))
+        return;
+
+    LIST_FOR_EACH_ENTRY( arg, type_function_get_args(func->declspec.type), const var_t, entry )
     {
         const type_t *type = arg->declspec.type;
 
@@ -2818,7 +2821,7 @@ static void check_async_uuid(type_t *iface)
         var_t *begin_func, *finish_func, *func = stmt->u.var, *arg;
         var_list_t *begin_args = NULL, *finish_args = NULL, *args;
 
-        args = func->declspec.type->details.function->args;
+        args = type_function_get_args(func->declspec.type);
         if (args) LIST_FOR_EACH_ENTRY(arg, args, var_t, entry)
         {
             if (is_attr(arg->attrs, ATTR_IN) || !is_attr(arg->attrs, ATTR_OUT))
@@ -2888,8 +2891,8 @@ static void check_all_user_types(const statement_list_t *stmts)
       const statement_t *stmt_func;
       STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(stmt->u.type)) {
         const var_t *func = stmt_func->u.var;
-        if (func->declspec.type->details.function->args)
-          LIST_FOR_EACH_ENTRY( v, func->declspec.type->details.function->args, const var_t, entry )
+        if (type_function_get_args(func->declspec.type))
+          LIST_FOR_EACH_ENTRY( v, type_function_get_args(func->declspec.type), const var_t, entry )
             check_for_additional_prototype_types(v->declspec.type);
         check_for_additional_prototype_types(type_function_get_rettype(func->declspec.type));
       }
