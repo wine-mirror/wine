@@ -736,6 +736,18 @@ static void release_display_device_init_mutex( HANDLE mutex )
     CloseHandle( mutex );
 }
 
+/* Wait until graphics driver is loaded by explorer */
+static void wait_graphics_driver_ready(void)
+{
+    static BOOL ready = FALSE;
+
+    if (!ready)
+    {
+        SendMessageW( GetDesktopWindow(), WM_NULL, 0, 0 );
+        ready = TRUE;
+    }
+}
+
 /* map value from system dpi to standard 96 dpi for storing in the registry */
 static int map_from_system_dpi( int val )
 {
@@ -4048,6 +4060,7 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
 
     TRACE("%s %d %p %#x\n", debugstr_w( device ), index, info, flags);
 
+    wait_graphics_driver_ready();
     mutex = get_display_device_init_mutex();
 
     /* Find adapter */
