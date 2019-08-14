@@ -724,6 +724,83 @@ function test_getPrototypeOf() {
     next_test();
 }
 
+function test_bind() {
+    var f, r;
+    var o = new Object(), o2 = new Object();
+
+    f = (function() {
+        ok(this === o, "this != o");
+        ok(arguments.length === 0, "arguments.length = " + arguments.length);
+        return 1;
+    }).bind(o);
+    ok(f.length === 0, "f.length = " + f.length);
+    r = f.call(o2);
+    ok(r === 1, "r = " + r);
+
+    f = (function() {
+        ok(this === o, "this != o");
+        ok(arguments.length === 1, "arguments.length = " + arguments.length);
+        ok(arguments[0] === 1, "arguments[0] = " + arguments[0]);
+        return 1;
+    }).bind(o, 1);
+    ok(f.length === 0, "f.length = " + f.length);
+    r = f.call(o2);
+    ok(r === 1, "r = " + r);
+
+    f = (function() {
+        ok(this === o, "this != o");
+        ok(arguments.length === 2, "arguments.length = " + arguments.length);
+        ok(arguments[0] === 1, "arguments[0] = " + arguments[0]);
+        ok(arguments[1] === 2, "arguments[1] = " + arguments[0]);
+        return 1;
+    }).bind(o, 1);
+    r = f.call(o2, 2);
+    ok(r === 1, "r = " + r);
+
+    o2.f = f;
+    r = o2.f(2);
+    ok(r === 1, "r = " + r);
+
+    f = (function test(x, y, z) {
+        ok(this === o, "this != o");
+        ok(arguments.length === 2, "arguments.length = " + arguments.length);
+        ok(x === 1, "x = " + x);
+        ok(y === 2, "y = " + y);
+        ok(z === undefined, "z = " + z);
+        return 1;
+    }).bind(o, 1);
+    ok(f.length === 2, "f.length = " + f.length);
+    r = f.call(o2, 2);
+    ok(r === 1, "r = " + r);
+    ok(f.toString() === "\nfunction() {\n    [native code]\n}\n", "f.toString() = " + f.toString());
+    ok(!("prototype" in f), "bound function has prototype");
+
+    var a = [];
+    f = Array.prototype.push.bind(a, 1);
+    f();
+    ok(a.length === 1, "a.length = " + a.length);
+    f(2);
+    ok(a.length === 3, "a.length = " + a.length);
+    ok(f.length === 0, "f.length = " + f.length);
+    ok(f.toString() === "\nfunction() {\n    [native code]\n}\n", "f.toString() = " + f.toString());
+    ok(a.toString() === "1,1,2", "a = " + a);
+    f.call([], 3);
+    ok(a.toString() === "1,1,2,1,3", "a = " + a);
+
+    f = (function() { return this; }).bind(a);
+    ok(f() === a, "f() != a");
+
+    var t;
+    f = (function() { return t = this; }).bind(a);
+    ok(new f() === t, "new f() != a");
+    ok(typeof(t) === "object", "typeof(t) = " + typeof(t));
+    ok(t != a, "t == a");
+
+    ok(Function.prototype.bind.length === 1, "Function.prototype.bind.length = " + Function.prototype.bind.length);
+
+    next_test();
+}
+
 var tests = [
     test_date_now,
     test_toISOString,
@@ -738,5 +815,6 @@ var tests = [
     test_string_trim,
     test_global_properties,
     test_string_split,
-    test_getPrototypeOf
+    test_getPrototypeOf,
+    test_bind
 ];
