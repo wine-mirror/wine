@@ -30,7 +30,6 @@ typedef struct _function_vtbl_t function_vtbl_t;
 typedef struct {
     jsdisp_t dispex;
     const function_vtbl_t *vtbl;
-    const WCHAR *name;
     DWORD flags;
     DWORD length;
 } FunctionInstance;
@@ -51,6 +50,7 @@ typedef struct {
 typedef struct {
     FunctionInstance function;
     builtin_invoke_t proc;
+    const WCHAR *name;
 } NativeFunction;
 
 typedef struct {
@@ -567,8 +567,9 @@ static HRESULT NativeFunction_call(script_ctx_t *ctx, FunctionInstance *func, ID
     return hres;
 }
 
-static HRESULT NativeFunction_toString(FunctionInstance *function, jsstr_t **ret)
+static HRESULT NativeFunction_toString(FunctionInstance *func, jsstr_t **ret)
 {
+    NativeFunction *function = (NativeFunction*)func;
     DWORD name_len;
     jsstr_t *str;
     WCHAR *ptr;
@@ -623,7 +624,7 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
     }
 
     function->proc = value_proc;
-    function->function.name = name;
+    function->name = name;
 
     *ret = &function->function.dispex;
     return S_OK;
@@ -886,13 +887,13 @@ HRESULT init_function_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
         return hres;
 
     prot->proc = FunctionProt_value;
-    prot->function.name = prototypeW;
+    prot->name = prototypeW;
 
     hres = create_function(ctx, &FunctionInst_info, &NativeFunctionVtbl, sizeof(NativeFunction), PROPF_CONSTR|1,
                            TRUE, &prot->function.dispex, (void**)&constr);
     if(SUCCEEDED(hres)) {
         constr->proc = FunctionConstr_value;
-        constr->function.name = FunctionW;
+        constr->name = FunctionW;
         hres = jsdisp_define_data_property(&constr->function.dispex, prototypeW, 0, jsval_obj(&prot->function.dispex));
         if(SUCCEEDED(hres))
             hres = set_constructor_prop(ctx, &constr->function.dispex, &prot->function.dispex);
