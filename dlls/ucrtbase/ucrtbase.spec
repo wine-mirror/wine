@@ -820,7 +820,7 @@
 @ stub _o___stdio_common_vfwscanf
 @ cdecl _o___stdio_common_vsnprintf_s(int64 ptr long long str ptr ptr) MSVCRT__stdio_common_vsnprintf_s
 @ stub _o___stdio_common_vsnwprintf_s
-@ stub _o___stdio_common_vsprintf
+@ cdecl _o___stdio_common_vsprintf(int64 ptr long str ptr ptr) __stdio_common_vsprintf
 @ stub _o___stdio_common_vsprintf_p
 @ cdecl _o___stdio_common_vsprintf_s(int64 ptr long str ptr ptr) MSVCRT__stdio_common_vsprintf_s
 @ stub _o___stdio_common_vsscanf
@@ -1356,7 +1356,7 @@
 @ stub _o__strcoll_l
 @ stub _o__strdate
 @ stub _o__strdate_s
-@ stub _o__strdup
+@ cdecl _o__strdup(str) MSVCRT__strdup
 @ stub _o__strerror
 @ stub _o__strerror_s
 @ stub _o__strftime_l
@@ -1370,7 +1370,7 @@
 @ stub _o__strlwr_s_l
 @ stub _o__strncoll
 @ stub _o__strncoll_l
-@ stub _o__strnicmp
+@ cdecl _o__strnicmp(str str long) MSVCRT__strnicmp
 @ stub _o__strnicmp_l
 @ stub _o__strnicoll
 @ stub _o__strnicoll_l
@@ -1576,7 +1576,7 @@
 @ stub _o_atanh
 @ stub _o_atanhf
 @ stub _o_atanhl
-@ stub _o_atof
+@ cdecl _o_atof(str) MSVCRT_atof
 @ stub _o_atoi
 @ stub _o_atol
 @ stub _o_atoll
@@ -1641,7 +1641,7 @@
 @ stub _o_fwrite
 @ stub _o_getc
 @ stub _o_getchar
-@ stub _o_getenv
+@ cdecl _o_getenv(str) MSVCRT_getenv
 @ stub _o_getenv_s
 @ stub _o_gets
 @ stub _o_gets_s
@@ -1675,7 +1675,7 @@
 @ stub _o_iswspace
 @ stub _o_iswupper
 @ stub _o_iswxdigit
-@ stub _o_isxdigit
+@ cdecl _o_isxdigit(long) MSVCRT_isxdigit
 @ stub _o_ldexp
 @ stub _o_lgamma
 @ stub _o_lgammaf
@@ -1687,7 +1687,7 @@
 @ stub _o_llroundf
 @ stub _o_llroundl
 @ stub _o_localeconv
-@ stub _o_log
+@ cdecl _o_log(double) MSVCRT_log
 @ stub _o_log10
 @ stub _o_log10f
 @ stub _o_log1p
@@ -1719,7 +1719,7 @@
 @ stub _o_mbtowc
 @ stub _o_memcpy_s
 @ stub _o_memset
-@ stub _o_modf
+@ cdecl _o_modf(double ptr) MSVCRT_modf
 @ stub _o_modff
 @ stub _o_nan
 @ stub _o_nanf
@@ -1733,7 +1733,7 @@
 @ stub _o_nexttoward
 @ stub _o_nexttowardf
 @ stub _o_nexttowardl
-@ stub _o_pow
+@ cdecl _o_pow(double double) MSVCRT_pow
 @ stub _o_powf
 @ stub _o_putc
 @ stub _o_putchar
@@ -1769,13 +1769,13 @@
 @ stub _o_scalbnl
 @ stub _o_set_terminate
 @ stub _o_setbuf
-@ stub _o_setlocale
+@ cdecl _o_setlocale(long str) MSVCRT_setlocale
 @ stub _o_setvbuf
 @ stub _o_sin
 @ stub _o_sinf
 @ stub _o_sinh
 @ stub _o_sinhf
-@ stub _o_sqrt
+@ cdecl _o_sqrt(double) MSVCRT_sqrt
 @ stub _o_sqrtf
 @ stub _o_srand
 @ cdecl _o_strcat_s(str long str) MSVCRT_strcat_s
