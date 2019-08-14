@@ -633,6 +633,7 @@ SOURCES = \
 	tlogstg.idl \
 	tmschema.h \
 	tom.idl \
+	tpcshrd.h \
 	traffic.h \
 	transact.idl \
 	twain.h \
