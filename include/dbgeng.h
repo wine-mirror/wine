@@ -229,6 +229,16 @@ typedef struct _DEBUG_MODULE_PARAMETERS
     ULONG64 Reserved[2];
 } DEBUG_MODULE_PARAMETERS, *PDEBUG_MODULE_PARAMETERS;
 
+typedef struct _DEBUG_SYMBOL_PARAMETERS
+{
+    ULONG64 Module;
+    ULONG   TypeId;
+    ULONG   ParentSymbol;
+    ULONG   SubElements;
+    ULONG   Flags;
+    ULONG64 Reserved;
+} DEBUG_SYMBOL_PARAMETERS, *PDEBUG_SYMBOL_PARAMETERS;
+
 typedef struct _DEBUG_STACK_FRAME
 {
     ULONG64 InstructionOffset;
@@ -372,7 +382,27 @@ DECLARE_INTERFACE_(IDebugBreakpoint, IUnknown)
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /* IDebugBreakpoint */
-    /* FIXME */
+    STDMETHOD(GetId)(THIS_ PULONG id) PURE;
+    STDMETHOD(GetType)(THIS_ PULONG breaktype, PULONG proc) PURE;
+    STDMETHOD(GetAdder)(THIS_ IDebugClient **adder) PURE;
+    STDMETHOD(GetFlags)(THIS_ PULONG flags) PURE;
+    STDMETHOD(AddFlags)(THIS_ ULONG flags) PURE;
+    STDMETHOD(RemoveFlags)(THIS_ ULONG flags) PURE;
+    STDMETHOD(SetFlags)(THIS_ ULONG flags) PURE;
+    STDMETHOD(GetOffset)(THIS_ PULONG64 offset) PURE;
+    STDMETHOD(SetOffset)(THIS_ ULONG64 offset) PURE;
+    STDMETHOD(GetDataParameters)(THIS_ PULONG size, PULONG access) PURE;
+    STDMETHOD(SetDataParameters)(THIS_ ULONG size, ULONG access) PURE;
+    STDMETHOD(GetPassCount)(THIS_ PULONG count) PURE;
+    STDMETHOD(SetPassCount)(THIS_ ULONG count) PURE;
+    STDMETHOD(GetCurrentPassCount)(THIS_ PULONG count) PURE;
+    STDMETHOD(GetMatchThreadId)(THIS_ PULONG id) PURE;
+    STDMETHOD(SetMatchThreadId)(THIS_ ULONG thread) PURE;
+    STDMETHOD(GetCommand)(THIS_ PSTR buffer, ULONG buf_size, PULONG command) PURE;
+    STDMETHOD(SetCommand)(THIS_ PCSTR command) PURE;
+    STDMETHOD(GetOffsetExpression)(THIS_ PSTR buffer, ULONG buf_size, PULONG expression) PURE;
+    STDMETHOD(SetOffsetExpression)(THIS_ PCSTR expression) PURE;
+    STDMETHOD(GetParameters)(THIS_ PDEBUG_BREAKPOINT_PARAMETERS params) PURE;
 };
 #undef INTERFACE
 
@@ -422,7 +452,16 @@ DECLARE_INTERFACE_(IDebugSymbolGroup, IUnknown)
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /* IDebugSymbolGroup */
-    /* FIXME */
+    STDMETHOD(GetNumberSymbols)(THIS_ PULONG number) PURE;
+    STDMETHOD(AddSymbol)(THIS_ PCSTR name, PULONG index) PURE;
+    STDMETHOD(RemoveSymbolByName)(THIS_ PCSTR name) PURE;
+    STDMETHOD(RemoveSymbolByIndex)(THIS_ ULONG index) PURE;
+    STDMETHOD(GetSymbolName)(THIS_ ULONG index, PSTR buffer, ULONG buf_size, PULONG name_size) PURE;
+    STDMETHOD(GetSymbolParameters)(THIS_ ULONG start, ULONG count, PDEBUG_SYMBOL_PARAMETERS params) PURE;
+    STDMETHOD(ExpandSymbol)(THIS_ ULONG index, BOOL expand) PURE;
+    STDMETHOD(OutputSymbols)(THIS_ ULONG control, ULONG flags, ULONG start, ULONG count) PURE;
+    STDMETHOD(WriteSymbol)(THIS_ ULONG index, PCSTR value) PURE;
+    STDMETHOD(OutputAsType)(THIS_ ULONG index, PCSTR type) PURE;
 };
 #undef INTERFACE
 
@@ -434,8 +473,30 @@ DECLARE_INTERFACE_(IDebugSymbolGroup2, IUnknown)
     STDMETHOD_(ULONG, AddRef)(THIS) PURE;
     STDMETHOD_(ULONG, Release)(THIS) PURE;
     /* IDebugSymbolGroup */
+    STDMETHOD(GetNumberSymbols)(THIS_ PULONG number) PURE;
+    STDMETHOD(AddSymbol)(THIS_ PCSTR name, PULONG index) PURE;
+    STDMETHOD(RemoveSymbolByName)(THIS_ PCSTR name) PURE;
+    STDMETHOD(RemoveSymbolByIndex)(THIS_ ULONG index) PURE;
+    STDMETHOD(GetSymbolName)(THIS_ ULONG index, PSTR buffer, ULONG buf_size, PULONG name_size) PURE;
+    STDMETHOD(GetSymbolParameters)(THIS_ ULONG start, ULONG count, PDEBUG_SYMBOL_PARAMETERS params) PURE;
+    STDMETHOD(ExpandSymbol)(THIS_ ULONG index, BOOL expand) PURE;
+    STDMETHOD(OutputSymbols)(THIS_ ULONG control, ULONG flags, ULONG start, ULONG count) PURE;
+    STDMETHOD(WriteSymbol)(THIS_ ULONG index, PCSTR value) PURE;
+    STDMETHOD(OutputAsType)(THIS_ ULONG index, PCSTR type) PURE;
     /* IDebugSymbolGroup2 */
-    /* FIXME */
+    STDMETHOD(AddSymbolWide)(THIS_ PCWSTR name, PULONG index) PURE;
+    STDMETHOD(RemoveSymbolByNameWide)(THIS_ PCWSTR name) PURE;
+    STDMETHOD(GetSymbolNameWide)(THIS_ ULONG index, PWSTR buffer, ULONG buf_size, PULONG size) PURE;
+    STDMETHOD(WriteSymbolWide)(THIS_ ULONG index, PCWSTR value) PURE;
+    STDMETHOD(OutputAsTypeWide)(THIS_ ULONG index, PCWSTR type) PURE;
+    STDMETHOD(GetSymbolTypeName)(THIS_ ULONG index, PSTR buffer, ULONG buf_size, PULONG size) PURE;
+    STDMETHOD(GetSymbolTypeNameWide)(THIS_ ULONG index, PWSTR buffer, ULONG buf_size, PULONG size) PURE;
+    STDMETHOD(GetSymbolSize)(THIS_ ULONG index, PULONG size) PURE;
+    STDMETHOD(GetSymbolOffset)(THIS_ ULONG index, PULONG64 offset) PURE;
+    STDMETHOD(GetSymbolRegister)(THIS_ ULONG index, PULONG reg) PURE;
+    STDMETHOD(GetSymbolValueText)(THIS_ ULONG index, PSTR buffer, ULONG buf_size, PULONG size) PURE;
+    STDMETHOD(GetSymbolValueTextWide)(THIS_ ULONG index, PWSTR buffer, ULONG buf_size, PULONG size) PURE;
+    STDMETHOD(GetSymbolEntryInformation)(THIS_ ULONG index, PDEBUG_SYMBOL_ENTRY entry) PURE;
 };
 #undef INTERFACE
 
