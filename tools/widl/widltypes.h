@@ -589,11 +589,6 @@ void init_loc_info(loc_info_t *);
 
 char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix);
 
-static inline var_list_t *type_get_function_args(const type_t *func_type)
-{
-  return func_type->details.function->args;
-}
-
 static inline enum type_type type_get_type_detect_alias(const type_t *type)
 {
     if (type->is_alias)

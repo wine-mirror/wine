@@ -912,10 +912,10 @@ void write_parameters_init(FILE *file, int indent, const var_t *func, const char
     if (!is_void(var->declspec.type))
         write_var_init(file, indent, var->declspec.type, var->name, local_var_prefix);
 
-    if (!type_get_function_args(func->declspec.type))
+    if (!type_function_get_args(func->declspec.type))
         return;
 
-    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->declspec.type), const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), const var_t, entry )
         write_var_init(file, indent, var->declspec.type, var->name, local_var_prefix);
 
     fprintf(file, "\n");
@@ -1128,7 +1128,7 @@ static unsigned char get_parameter_fc( const var_t *var, int is_return, unsigned
 static unsigned char get_func_oi2_flags( const var_t *func )
 {
     const var_t *var;
-    var_list_t *args = type_get_function_args( func->declspec.type );
+    var_list_t *args = type_function_get_args( func->declspec.type );
     var_t *retval = type_function_get_retval( func->declspec.type );
     unsigned char oi2_flags = 0x40;  /* HasExtensions */
     unsigned short flags;
@@ -1254,7 +1254,7 @@ int is_interpreted_func( const type_t *iface, const var_t *func )
 {
     const char *str;
     const var_t *var;
-    const var_list_t *args = type_get_function_args( func->declspec.type );
+    const var_list_t *args = type_function_get_args( func->declspec.type );
     const type_t *ret_type = type_function_get_rettype( func->declspec.type );
 
     if (type_get_type( ret_type ) == TYPE_BASIC)
@@ -1305,7 +1305,7 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
                                     unsigned short num_proc )
 {
     var_t *var;
-    var_list_t *args = type_get_function_args( func->declspec.type );
+    var_list_t *args = type_function_get_args( func->declspec.type );
     unsigned char explicit_fc, implicit_fc;
     unsigned char handle_flags;
     const var_t *handle_var = get_func_handle_var( iface, func, &explicit_fc, &implicit_fc );
@@ -1445,10 +1445,10 @@ static void write_procformatstring_func( FILE *file, int indent, const type_t *i
     if (is_interpreted) write_proc_func_header( file, indent, iface, func, offset, num_proc );
 
     /* emit argument data */
-    if (type_get_function_args(func->declspec.type))
+    if (type_function_get_args(func->declspec.type))
     {
         const var_t *var;
-        LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->declspec.type), const var_t, entry )
+        LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), const var_t, entry )
         {
             print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
             if (is_new_style)
@@ -1669,7 +1669,7 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
 
         if (type_get_type(cont_type) == TYPE_FUNCTION)
         {
-            var_list_t *args = type_get_function_args( cont_type );
+            var_list_t *args = type_function_get_args( cont_type );
 
             if (is_object( iface )) offset += pointer_size;
             if (args) LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
@@ -2079,9 +2079,9 @@ int is_full_pointer_function(const var_t *func)
     const var_t *var;
     if (type_has_full_pointer(type_function_get_rettype(func->declspec.type), func->attrs, TRUE))
         return TRUE;
-    if (!type_get_function_args(func->declspec.type))
+    if (!type_function_get_args(func->declspec.type))
         return FALSE;
-    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->declspec.type), const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), const var_t, entry )
         if (type_has_full_pointer( var->declspec.type, var->attrs, TRUE ))
             return TRUE;
     return FALSE;
@@ -3711,8 +3711,8 @@ static void process_tfs_iface(type_t *iface, FILE *file, int indent, unsigned in
                 var->typestring_offset = write_type_tfs( file, var->attrs, var->declspec.type, func->name,
                                                          TYPE_CONTEXT_RETVAL, offset);
 
-            if (type_get_function_args(func->declspec.type))
-                LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->declspec.type), var_t, entry )
+            if (type_function_get_args(func->declspec.type))
+                LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), var_t, entry )
                     var->typestring_offset = write_type_tfs( file, var->attrs, var->declspec.type, var->name,
                                                              TYPE_CONTEXT_TOPLEVELPARAM, offset );
             break;
@@ -3911,9 +3911,9 @@ static unsigned int get_function_buffer_size( const var_t *func, enum pass pass 
     const var_t *var;
     unsigned int total_size = 0, alignment;
 
-    if (type_get_function_args(func->declspec.type))
+    if (type_function_get_args(func->declspec.type))
     {
-        LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->declspec.type), const var_t, entry )
+        LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), const var_t, entry )
         {
             total_size += get_required_buffer_size(var, &alignment, pass);
             total_size += alignment;
@@ -4561,9 +4561,9 @@ void write_remoting_arguments(FILE *file, int indent, const var_t *func, const c
     else
     {
         const var_t *var;
-        if (!type_get_function_args(func->declspec.type))
+        if (!type_function_get_args(func->declspec.type))
             return;
-        LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->declspec.type), const var_t, entry )
+        LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), const var_t, entry )
             write_remoting_arg( file, indent, func, local_var_prefix, pass, phase, var );
     }
 }
@@ -4619,10 +4619,10 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
         }
     }
 
-    if (!type_get_function_args(func->declspec.type))
+    if (!type_function_get_args(func->declspec.type))
         return;
 
-    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->declspec.type), const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), const var_t, entry )
     {
         in_attr = is_attr(var->attrs, ATTR_IN);
         out_attr = is_attr(var->attrs, ATTR_OUT);
@@ -4673,10 +4673,10 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
     const var_t *var;
     type_t *ref;
 
-    if (!type_get_function_args(func->declspec.type))
+    if (!type_function_get_args(func->declspec.type))
         return;
 
-    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->declspec.type), const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), const var_t, entry )
     {
         in_attr = is_attr(var->attrs, ATTR_IN);
         out_attr = is_attr(var->attrs, ATTR_OUT);
@@ -4783,7 +4783,7 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
                               const char *var_decl, int add_retval )
 {
     var_t *retval = type_function_get_retval( func );
-    const var_list_t *args = type_get_function_args( func );
+    const var_list_t *args = type_function_get_args( func );
     const var_t *arg;
     int needs_packing;
     unsigned int align = 0;
@@ -4833,7 +4833,7 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
 
 void write_pointer_checks( FILE *file, int indent, const var_t *func )
 {
-    const var_list_t *args = type_get_function_args( func->declspec.type );
+    const var_list_t *args = type_function_get_args( func->declspec.type );
     const var_t *var;
 
     if (!args) return;
@@ -4965,7 +4965,7 @@ void write_client_call_routine( FILE *file, const type_t *iface, const var_t *fu
 {
     type_t *rettype = type_function_get_rettype( func->declspec.type );
     int has_ret = !is_void( rettype );
-    const var_list_t *args = type_get_function_args( func->declspec.type );
+    const var_list_t *args = type_function_get_args( func->declspec.type );
     const var_t *arg;
     int len, needs_params = 0;
 

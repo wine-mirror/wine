@@ -195,7 +195,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   int has_ret = !is_void(retval->declspec.type);
   int has_full_pointer = is_full_pointer_function(func);
   const char *callconv = get_attrp(func->declspec.type->attrs, ATTR_CALLCONV);
-  const var_list_t *args = type_get_function_args(func->declspec.type);
+  const var_list_t *args = type_function_get_args(func->declspec.type);
   if (!callconv) callconv = "STDMETHODCALLTYPE";
 
   indent = 0;
@@ -246,7 +246,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
     write_full_pointer_init(proxy, indent, func, FALSE);
 
   /* FIXME: trace */
-  clear_output_vars( type_get_function_args(func->declspec.type) );
+  clear_output_vars( type_function_get_args(func->declspec.type) );
 
   print_proxy( "RpcTryExcept\n" );
   print_proxy( "{\n" );
@@ -301,7 +301,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   print_proxy( "{\n" );
   if (has_ret) {
     indent++;
-    proxy_free_variables( type_get_function_args(func->declspec.type), "" );
+    proxy_free_variables( type_function_get_args(func->declspec.type), "" );
     print_proxy( "_RetVal = NdrProxyErrorHandler(RpcExceptionCode());\n" );
     indent--;
   }
@@ -389,9 +389,9 @@ static void gen_stub(type_t *iface, const var_t *func, const char *cas,
   else fprintf(proxy, "__frame->_This->lpVtbl->%s", get_name(func));
   fprintf(proxy, "(__frame->_This");
 
-  if (type_get_function_args(func->declspec.type))
+  if (type_function_get_args(func->declspec.type))
   {
-      LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->declspec.type), const var_t, entry )
+      LIST_FOR_EACH_ENTRY( arg, type_function_get_args(func->declspec.type), const var_t, entry )
           fprintf(proxy, ", %s__frame->%s", is_array(arg->declspec.type) && !type_array_is_decl_as_ptr(arg->declspec.type) ? "*" :"" , arg->name);
   }
   fprintf(proxy, ");\n");
@@ -434,7 +434,7 @@ static void gen_stub_thunk( type_t *iface, const var_t *func, unsigned int proc_
 {
     int has_ret = !is_void( type_function_get_rettype( func->declspec.type ));
     const var_t *arg, *callas = is_callas( func->attrs );
-    const var_list_t *args = type_get_function_args( func->declspec.type );
+    const var_list_t *args = type_function_get_args( func->declspec.type );
 
     indent = 0;
     print_proxy( "void __RPC_API %s_%s_Thunk( PMIDL_STUB_MESSAGE pStubMsg )\n",

@@ -53,7 +53,7 @@ static void print_client( const char *format, ... )
 static void write_client_func_decl( const type_t *iface, const var_t *func )
 {
     const char *callconv = get_attrp(func->declspec.type->attrs, ATTR_CALLCONV);
-    const var_list_t *args = type_get_function_args(func->declspec.type);
+    const var_list_t *args = type_function_get_args(func->declspec.type);
     type_t *rettype = type_function_get_rettype(func->declspec.type);
 
     if (!callconv) callconv = "__cdecl";

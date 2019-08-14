@@ -1301,8 +1301,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
         return S_FALSE;
     }
 
-    if (type_get_function_args(func->declspec.type))
-      LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->declspec.type), var_t, entry )
+    if (type_function_get_args(func->declspec.type))
+      LIST_FOR_EACH_ENTRY( arg, type_function_get_args(func->declspec.type), var_t, entry )
       {
         num_params++;
         if (arg->attrs) LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry ) {
@@ -1471,10 +1471,10 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
         warning("unknown number of optional attrs\n");
     }
 
-    if (type_get_function_args(func->declspec.type))
+    if (type_function_get_args(func->declspec.type))
     {
       i = 0;
-      LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->declspec.type), var_t, entry )
+      LIST_FOR_EACH_ENTRY( arg, type_function_get_args(func->declspec.type), var_t, entry )
       {
         int paramflags = 0;
         int *paramdata = typedata + 6 + extra_attr + (num_defaults ? num_params : 0) + i * 3;
@@ -1572,10 +1572,10 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
     if(typeinfo->typekind == TKIND_MODULE)
         namedata[9] |= 0x20;
 
-    if (type_get_function_args(func->declspec.type))
+    if (type_function_get_args(func->declspec.type))
     {
         i = 0;
-        LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->declspec.type), var_t, entry )
+        LIST_FOR_EACH_ENTRY( arg, type_function_get_args(func->declspec.type), var_t, entry )
         {
             /* don't give the last arg of a [propput*] func a name */
             if(i != num_params - 1 || (invokekind != 0x4 /* INVOKE_PROPERTYPUT */ && invokekind != 0x8 /* INVOKE_PROPERTYPUTREF */))

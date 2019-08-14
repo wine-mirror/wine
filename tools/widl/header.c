@@ -863,7 +863,7 @@ const var_t *get_func_handle_var( const type_t *iface, const var_t *func,
                                   unsigned char *explicit_fc, unsigned char *implicit_fc )
 {
     const var_t *var;
-    const var_list_t *args = type_get_function_args( func->declspec.type );
+    const var_list_t *args = type_function_get_args( func->declspec.type );
 
     *explicit_fc = *implicit_fc = 0;
     if (args) LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
@@ -907,10 +907,10 @@ int has_out_arg_or_return(const var_t *func)
     if (!is_void(type_function_get_rettype(func->declspec.type)))
         return 1;
 
-    if (!type_get_function_args(func->declspec.type))
+    if (!type_function_get_args(func->declspec.type))
         return 0;
 
-    LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->declspec.type), const var_t, entry )
+    LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), const var_t, entry )
         if (is_attr(var->attrs, ATTR_OUT))
             return 1;
 
@@ -1030,8 +1030,8 @@ static void write_method_macro(FILE *header, const type_t *iface, const type_t *
       const var_t *arg;
 
       fprintf(header, "#define %s_%s(This", name, get_name(func));
-      if (type_get_function_args(func->declspec.type))
-          LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->declspec.type), const var_t, entry )
+      if (type_function_get_args(func->declspec.type))
+          LIST_FOR_EACH_ENTRY( arg, type_function_get_args(func->declspec.type), const var_t, entry )
               fprintf(header, ",%s", arg->name);
       fprintf(header, ") ");
 
@@ -1042,8 +1042,8 @@ static void write_method_macro(FILE *header, const type_t *iface, const type_t *
       }
 
       fprintf(header, "(This)->lpVtbl->%s(This", get_vtbl_entry_name(iface, func));
-      if (type_get_function_args(func->declspec.type))
-          LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->declspec.type), const var_t, entry )
+      if (type_function_get_args(func->declspec.type))
+          LIST_FOR_EACH_ENTRY( arg, type_function_get_args(func->declspec.type), const var_t, entry )
               fprintf(header, ",%s", arg->name);
       fprintf(header, ")\n");
     }
@@ -1115,7 +1115,7 @@ static void write_cpp_method_def(FILE *header, const type_t *iface)
     const var_t *func = stmt->u.var;
     if (!is_callas(func->attrs)) {
       const char *callconv = get_attrp(func->declspec.type->attrs, ATTR_CALLCONV);
-      const var_list_t *args = type_get_function_args(func->declspec.type);
+      const var_list_t *args = type_function_get_args(func->declspec.type);
       const var_t *arg;
 
       if (!callconv) callconv = "STDMETHODCALLTYPE";
@@ -1203,7 +1203,7 @@ static void write_inline_wrappers(FILE *header, const type_t *iface, const type_
       fprintf(header, "static FORCEINLINE ");
       write_type_decl_left(header, type_function_get_rettype(func->declspec.type));
       fprintf(header, " %s_%s(", name, get_name(func));
-      write_args(header, type_get_function_args(func->declspec.type), name, 1, FALSE);
+      write_args(header, type_function_get_args(func->declspec.type), name, 1, FALSE);
       fprintf(header, ") {\n");
       ++indentation;
       if (!is_aggregate_return(func)) {
@@ -1218,8 +1218,8 @@ static void write_inline_wrappers(FILE *header, const type_t *iface, const type_
         indent(header, 0);
         fprintf(header, "return *This->lpVtbl->%s(This,&__ret", get_vtbl_entry_name(iface, func));
       }
-      if (type_get_function_args(func->declspec.type))
-          LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->declspec.type), const var_t, entry )
+      if (type_function_get_args(func->declspec.type))
+          LIST_FOR_EACH_ENTRY( arg, type_function_get_args(func->declspec.type), const var_t, entry )
               fprintf(header, ",%s", arg->name);
       fprintf(header, ");\n");
       --indentation;
@@ -1265,9 +1265,9 @@ static void do_write_c_method_def(FILE *header, const type_t *iface, const char 
         fprintf(header, " *__ret");
       }
       --indentation;
-      if (type_get_function_args(func->declspec.type)) {
+      if (type_function_get_args(func->declspec.type)) {
         fprintf(header, ",\n");
-        write_args(header, type_get_function_args(func->declspec.type), name, 0, TRUE);
+        write_args(header, type_function_get_args(func->declspec.type), name, 0, TRUE);
       }
       fprintf(header, ");\n");
       fprintf(header, "\n");
@@ -1299,7 +1299,7 @@ static void write_method_proto(FILE *header, const type_t *iface)
       /* proxy prototype */
       write_type_decl_left(header, type_function_get_rettype(func->declspec.type));
       fprintf(header, " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
-      write_args(header, type_get_function_args(func->declspec.type), iface->name, 1, TRUE);
+      write_args(header, type_function_get_args(func->declspec.type), iface->name, 1, TRUE);
       fprintf(header, ");\n");
       /* stub prototype */
       fprintf(header, "void __RPC_STUB %s_%s_Stub(\n", iface->name, get_name(func));
@@ -1334,7 +1334,7 @@ static void write_locals(FILE *fp, const type_t *iface, int body)
         /* proxy prototype - use local prototype */
         write_type_decl_left(fp, type_function_get_rettype(m->declspec.type));
         fprintf(fp, " CALLBACK %s_%s_Proxy(\n", iface->name, get_name(m));
-        write_args(fp, type_get_function_args(m->declspec.type), iface->name, 1, TRUE);
+        write_args(fp, type_function_get_args(m->declspec.type), iface->name, 1, TRUE);
         fprintf(fp, ")");
         if (body) {
           type_t *rt = type_function_get_rettype(m->declspec.type);
@@ -1356,7 +1356,7 @@ static void write_locals(FILE *fp, const type_t *iface, int body)
         /* stub prototype - use remotable prototype */
         write_type_decl_left(fp, type_function_get_rettype(func->declspec.type));
         fprintf(fp, " __RPC_STUB %s_%s_Stub(\n", iface->name, get_name(m));
-        write_args(fp, type_get_function_args(func->declspec.type), iface->name, 1, TRUE);
+        write_args(fp, type_function_get_args(func->declspec.type), iface->name, 1, TRUE);
         fprintf(fp, ")");
         if (body)
           /* Remotable methods must all return HRESULTs.  */
@@ -1409,8 +1409,8 @@ static void write_function_proto(FILE *header, const type_t *iface, const var_t 
   write_type_decl_left(header, type_function_get_rettype(fun->declspec.type));
   fprintf(header, " %s ", callconv);
   fprintf(header, "%s%s(\n", prefix, get_name(fun));
-  if (type_get_function_args(fun->declspec.type))
-    write_args(header, type_get_function_args(fun->declspec.type), iface->name, 0, TRUE);
+  if (type_function_get_args(fun->declspec.type))
+    write_args(header, type_function_get_args(fun->declspec.type), iface->name, 0, TRUE);
   else
     fprintf(header, "    void");
   fprintf(header, ");\n\n");

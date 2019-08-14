@@ -121,7 +121,7 @@ static void write_function_stub(const type_t *iface, const var_t *func, unsigned
     if (has_full_pointer)
         write_full_pointer_init(server, indent, func, TRUE);
 
-    if (type_get_function_args(func->declspec.type))
+    if (type_function_get_args(func->declspec.type))
     {
         print_server("if ((_pRpcMessage->DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)\n");
         indent++;
@@ -166,13 +166,13 @@ static void write_function_stub(const type_t *iface, const var_t *func, unsigned
         print_server("%s", is_void(ret_type) ? "" : "__frame->_RetVal = ");
     fprintf(server, "%s%s", prefix_server, get_name(func));
 
-    if (type_get_function_args(func->declspec.type))
+    if (type_function_get_args(func->declspec.type))
     {
         int first_arg = 1;
 
         fprintf(server, "(\n");
         indent++;
-        LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->declspec.type), const var_t, entry )
+        LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), const var_t, entry )
         {
             if (first_arg)
                 first_arg = 0;
