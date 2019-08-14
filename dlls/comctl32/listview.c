@@ -4259,8 +4259,11 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
     
     memset(&nmlv, 0, sizeof(NMLISTVIEW));
     nmlv.iItem = lpLVItem->iItem;
-    nmlv.uNewState = (item.state & ~stateMask) | (lpLVItem->state & stateMask);
-    nmlv.uOldState = item.state;
+    if (lpLVItem->mask & LVIF_STATE)
+    {
+        nmlv.uNewState = (item.state & ~stateMask) | (lpLVItem->state & stateMask);
+        nmlv.uOldState = item.state;
+    }
     nmlv.uChanged = uChanged ? uChanged : lpLVItem->mask;
     nmlv.lParam = item.lParam;
 
