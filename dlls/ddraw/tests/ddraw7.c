@@ -8900,7 +8900,12 @@ static void test_palette_alpha(void)
         surface_desc.dwHeight = 128;
         surface_desc.ddsCaps.dwCaps = test_data[i].caps;
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
-        ok(SUCCEEDED(hr), "Failed to create %s surface, hr %#x.\n", test_data[i].name, hr);
+        if (is_ddraw64 && test_data[i].caps & DDSCAPS_TEXTURE)
+            todo_wine ok(hr == E_NOINTERFACE, "%s: Got unexpected hr %#x.\n", test_data[i].name, hr);
+        else
+            ok(hr == DD_OK, "%s: Got unexpected hr %#x.\n", test_data[i].name, hr);
+        if (FAILED(hr))
+            continue;
 
         hr = IDirectDrawSurface7_SetPalette(surface, palette);
         if (test_data[i].attach_allowed)

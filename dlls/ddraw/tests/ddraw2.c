@@ -13862,37 +13862,50 @@ static void test_caps(void)
         ok(!(~hal_caps.ddsCaps.dwCaps & caps_always), "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
         todo_wine_if(no3d) ok(!(~hal_caps.ddsCaps.dwCaps & caps_hal),
                 "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
-        todo_wine ok(!hel_caps.ddsCaps.dwCaps, "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+        if (is_ddraw64)
+        {
+            ok(!(hel_caps.ddsCaps.dwCaps & caps_never), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+            ok(!(~hel_caps.ddsCaps.dwCaps & caps_always), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+            todo_wine_if(!no3d) ok(!(hel_caps.ddsCaps.dwCaps & caps_hal),
+                    "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+        }
+        else
+        {
+            todo_wine ok(!hel_caps.ddsCaps.dwCaps, "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+        }
 
         IDirectDraw2_Release(ddraw);
     }
 
     hr = DirectDrawCreate((GUID *)DDCREATE_EMULATIONONLY, &ddraw1, NULL);
-    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirectDraw_QueryInterface(ddraw1, &IID_IDirectDraw2, (void **)&ddraw);
-    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
-    IDirectDraw_Release(ddraw1);
+    ok(hr == (is_ddraw64 ? E_FAIL : DD_OK), "Got unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirectDraw_QueryInterface(ddraw1, &IID_IDirectDraw2, (void **)&ddraw);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        IDirectDraw_Release(ddraw1);
 
-    memset(&hal_caps, 0, sizeof(hal_caps));
-    memset(&hel_caps, 0, sizeof(hel_caps));
-    hal_caps.dwSize = sizeof(hal_caps);
-    hel_caps.dwSize = sizeof(hel_caps);
-    hr = IDirectDraw2_GetCaps(ddraw, &hal_caps, &hel_caps);
-    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
-    ok(hal_caps.ddsOldCaps.dwCaps == hal_caps.ddsCaps.dwCaps,
-            "Got unexpected caps %#x, expected %#x.\n",
-            hal_caps.ddsOldCaps.dwCaps, hal_caps.ddsCaps.dwCaps);
-    ok(hel_caps.ddsOldCaps.dwCaps == hel_caps.ddsCaps.dwCaps,
-            "Got unexpected caps %#x, expected %#x.\n",
-            hel_caps.ddsOldCaps.dwCaps, hel_caps.ddsCaps.dwCaps);
+        memset(&hal_caps, 0, sizeof(hal_caps));
+        memset(&hel_caps, 0, sizeof(hel_caps));
+        hal_caps.dwSize = sizeof(hal_caps);
+        hel_caps.dwSize = sizeof(hel_caps);
+        hr = IDirectDraw2_GetCaps(ddraw, &hal_caps, &hel_caps);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hal_caps.ddsOldCaps.dwCaps == hal_caps.ddsCaps.dwCaps,
+                "Got unexpected caps %#x, expected %#x.\n",
+                hal_caps.ddsOldCaps.dwCaps, hal_caps.ddsCaps.dwCaps);
+        ok(hel_caps.ddsOldCaps.dwCaps == hel_caps.ddsCaps.dwCaps,
+                "Got unexpected caps %#x, expected %#x.\n",
+                hel_caps.ddsOldCaps.dwCaps, hel_caps.ddsCaps.dwCaps);
 
-    todo_wine ok(!hal_caps.ddsCaps.dwCaps, "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
-    ok(!(hel_caps.ddsCaps.dwCaps & caps_never), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
-    ok(!(~hel_caps.ddsCaps.dwCaps & caps_always), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
-    todo_wine_if(!no3d) ok(!(hel_caps.ddsCaps.dwCaps & caps_hal),
-            "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+        todo_wine ok(!hal_caps.ddsCaps.dwCaps, "Got unexpected caps %#x.\n", hal_caps.ddsCaps.dwCaps);
+        ok(!(hel_caps.ddsCaps.dwCaps & caps_never), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+        ok(!(~hel_caps.ddsCaps.dwCaps & caps_always), "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
+        todo_wine_if(!no3d) ok(!(hel_caps.ddsCaps.dwCaps & caps_hal),
+                "Got unexpected caps %#x.\n", hel_caps.ddsCaps.dwCaps);
 
-    IDirectDraw2_Release(ddraw);
+        IDirectDraw2_Release(ddraw);
+    }
 }
 
 static void test_d32_support(void)
