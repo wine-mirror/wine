@@ -30,7 +30,6 @@ typedef struct _function_vtbl_t function_vtbl_t;
 typedef struct {
     jsdisp_t dispex;
     const function_vtbl_t *vtbl;
-    builtin_invoke_t value_proc;
     const WCHAR *name;
     DWORD flags;
     scope_chain_t *scope_chain;
@@ -47,6 +46,7 @@ struct _function_vtbl_t {
 
 typedef struct {
     FunctionInstance function;
+    builtin_invoke_t proc;
 } NativeFunction;
 
 typedef struct {
@@ -541,9 +541,10 @@ static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_
     return S_OK;
 }
 
-static HRESULT NativeFunction_call(script_ctx_t *ctx, FunctionInstance *function, IDispatch *this_disp, unsigned flags,
+static HRESULT NativeFunction_call(script_ctx_t *ctx, FunctionInstance *func, IDispatch *this_disp, unsigned flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
+    NativeFunction *function = (NativeFunction*)func;
     vdisp_t vthis;
     HRESULT hres;
 
@@ -554,7 +555,7 @@ static HRESULT NativeFunction_call(script_ctx_t *ctx, FunctionInstance *function
     else
         set_jsdisp(&vthis, ctx->global);
 
-    hres = function->value_proc(ctx, &vthis, flags & ~DISPATCH_JSCRIPT_INTERNAL_MASK, argc, argv, r);
+    hres = function->proc(ctx, &vthis, flags & ~DISPATCH_JSCRIPT_INTERNAL_MASK, argc, argv, r);
 
     vdisp_release(&vthis);
     return hres;
@@ -598,7 +599,7 @@ static const function_vtbl_t NativeFunctionVtbl = {
 HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,
         const builtin_info_t *builtin_info, DWORD flags, jsdisp_t *prototype, jsdisp_t **ret)
 {
-    FunctionInstance *function;
+    NativeFunction *function;
     HRESULT hres;
 
     hres = create_function(ctx, builtin_info, &NativeFunctionVtbl, sizeof(NativeFunction), flags, FALSE, NULL, (void**)&function);
@@ -606,19 +607,19 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
         return hres;
 
     if(builtin_info)
-        hres = jsdisp_define_data_property(&function->dispex, lengthW, 0,
-                                           jsval_number(function->length));
+        hres = jsdisp_define_data_property(&function->function.dispex, lengthW, 0,
+                                           jsval_number(function->function.length));
     if(SUCCEEDED(hres))
-        hres = jsdisp_define_data_property(&function->dispex, prototypeW, 0, jsval_obj(prototype));
+        hres = jsdisp_define_data_property(&function->function.dispex, prototypeW, 0, jsval_obj(prototype));
     if(FAILED(hres)) {
-        jsdisp_release(&function->dispex);
+        jsdisp_release(&function->function.dispex);
         return hres;
     }
 
-    function->value_proc = value_proc;
-    function->name = name;
+    function->proc = value_proc;
+    function->function.name = name;
 
-    *ret = &function->dispex;
+    *ret = &function->function.dispex;
     return S_OK;
 }
 
@@ -873,13 +874,13 @@ HRESULT init_function_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
     if(FAILED(hres))
         return hres;
 
-    prot->function.value_proc = FunctionProt_value;
+    prot->proc = FunctionProt_value;
     prot->function.name = prototypeW;
 
     hres = create_function(ctx, &FunctionInst_info, &NativeFunctionVtbl, sizeof(NativeFunction), PROPF_CONSTR|1,
                            TRUE, &prot->function.dispex, (void**)&constr);
     if(SUCCEEDED(hres)) {
-        constr->function.value_proc = FunctionConstr_value;
+        constr->proc = FunctionConstr_value;
         constr->function.name = FunctionW;
         hres = jsdisp_define_data_property(&constr->function.dispex, prototypeW, 0, jsval_obj(&prot->function.dispex));
         if(SUCCEEDED(hres))
