@@ -25,6 +25,8 @@
 #include <winternl.h>
 #include <winreg.h>
 #include "wine/test.h"
+#include "wine/heap.h"
+#include "wine/rbtree.h"
 
 #ifndef STATUS_DEBUGGER_INACTIVE
 #define STATUS_DEBUGGER_INACTIVE         ((NTSTATUS) 0xC0000354)
@@ -218,13 +220,96 @@ typedef struct
 struct debugger_context
 {
     DWORD pid;
-    DWORD main_thread;
     DEBUG_EVENT ev;
     unsigned process_cnt;
-    unsigned thread_cnt;
     unsigned dll_cnt;
     void *image_base;
+    DWORD thread_tag;
+    unsigned thread_cnt;
+    struct wine_rb_tree threads;
+    struct debuggee_thread *current_thread;
+    struct debuggee_thread *main_thread;
 };
+
+struct debuggee_thread
+{
+    DWORD tid;
+    DWORD tag;
+    HANDLE handle;
+    CONTEXT ctx;
+    struct wine_rb_entry entry;
+};
+
+int debuggee_thread_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    struct debuggee_thread *thread = WINE_RB_ENTRY_VALUE(entry, struct debuggee_thread, entry);
+    return memcmp(key, &thread->tid, sizeof(thread->tid));
+}
+
+static void add_thread(struct debugger_context *ctx, DWORD tid)
+{
+    struct debuggee_thread *thread;
+    if (!ctx->thread_cnt++) wine_rb_init(&ctx->threads, debuggee_thread_compare);
+    thread = heap_alloc(sizeof(*thread));
+    thread->tid = tid;
+    thread->tag = ctx->thread_tag;
+    thread->handle = NULL;
+    wine_rb_put(&ctx->threads, &tid, &thread->entry);
+    if (!ctx->main_thread) ctx->main_thread = thread;
+}
+
+static struct debuggee_thread *get_debuggee_thread(struct debugger_context *ctx, DWORD tid)
+{
+    struct wine_rb_entry *entry = wine_rb_get(&ctx->threads, &tid);
+    ok(entry != NULL, "unknown thread %x\n", tid);
+    return WINE_RB_ENTRY_VALUE(entry, struct debuggee_thread, entry);
+}
+
+static void remove_thread(struct debugger_context *ctx, DWORD tid)
+{
+    struct debuggee_thread *thread = get_debuggee_thread(ctx, tid);
+
+    wine_rb_remove(&ctx->threads, &thread->entry);
+    if (thread->handle) CloseHandle(thread->handle);
+    heap_free(thread);
+}
+
+static void *get_ip(const CONTEXT *ctx)
+{
+#ifdef __i386__
+    return (void *)ctx->Eip;
+#elif defined(__x86_64__)
+    return (void *)ctx->Rip;
+#else
+    return NULL;
+#endif
+}
+
+#define fetch_thread_context(a) fetch_thread_context_(__LINE__,a)
+static void fetch_thread_context_(unsigned line, struct debuggee_thread *thread)
+{
+    BOOL ret;
+
+    if (!thread->handle)
+    {
+        thread->handle = OpenThread(THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_QUERY_INFORMATION,
+                                    FALSE, thread->tid);
+        ok_(__FILE__,line)(thread->handle != NULL, "OpenThread failed: %u\n", GetLastError());
+    }
+
+    memset(&thread->ctx, 0xaa, sizeof(thread->ctx));
+    thread->ctx.ContextFlags = CONTEXT_FULL;
+    ret = GetThreadContext(thread->handle, &thread->ctx);
+    ok_(__FILE__,line)(ret, "GetThreadContext failed: %u\n", GetLastError());
+}
+
+#define set_thread_context(a,b) set_thread_context_(__LINE__,a,b)
+static void set_thread_context_(unsigned line, struct debugger_context *ctx, struct debuggee_thread *thread)
+{
+    BOOL ret;
+    ret = SetThreadContext(thread->handle, &thread->ctx);
+    ok_(__FILE__,line)(ret, "SetThreadContext failed: %u\n", GetLastError());
+}
 
 #define WAIT_EVENT_TIMEOUT 20000
 #define POLL_EVENT_TIMEOUT 200
@@ -233,6 +318,8 @@ struct debugger_context
 static void next_event_(unsigned line, struct debugger_context *ctx, unsigned timeout)
 {
     BOOL ret;
+
+    ctx->current_thread = NULL;
 
     for (;;)
     {
@@ -266,15 +353,18 @@ static void next_event_(unsigned line, struct debugger_context *ctx, unsigned ti
     switch (ctx->ev.dwDebugEventCode)
     {
     case CREATE_PROCESS_DEBUG_EVENT:
-        ctx->thread_cnt++;
+        add_thread(ctx, ctx->ev.dwThreadId);
         ctx->image_base = ctx->ev.u.CreateProcessInfo.lpBaseOfImage;
         break;
+    case EXIT_PROCESS_DEBUG_EVENT:
+        remove_thread(ctx, ctx->ev.dwThreadId);
+        return;
     case CREATE_THREAD_DEBUG_EVENT:
-        ctx->thread_cnt++;
+        add_thread(ctx, ctx->ev.dwThreadId);
         break;
     case EXIT_THREAD_DEBUG_EVENT:
-        ctx->thread_cnt--;
-        break;
+        remove_thread(ctx, ctx->ev.dwThreadId);
+        return;
     case LOAD_DLL_DEBUG_EVENT:
         ok(ctx->ev.u.LoadDll.lpBaseOfDll != ctx->image_base, "process image reported as DLL load event\n");
         ctx->dll_cnt++;
@@ -283,6 +373,20 @@ static void next_event_(unsigned line, struct debugger_context *ctx, unsigned ti
         ctx->dll_cnt--;
         break;
     }
+
+    ctx->current_thread = get_debuggee_thread(ctx, ctx->ev.dwThreadId);
+}
+
+#define wait_for_breakpoint(a) wait_for_breakpoint_(__LINE__,a)
+static void wait_for_breakpoint_(unsigned line, struct debugger_context *ctx)
+{
+    do next_event_(line, ctx, 2000);
+    while (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx->ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT
+           || ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT);
+
+    ok(ctx->ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx->ev.dwDebugEventCode);
+    ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
+       ctx->ev.u.Exception.ExceptionRecord.ExceptionCode);
 }
 
 static void process_attach_events(struct debugger_context *ctx)
@@ -972,17 +1076,11 @@ static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
         ok(ctx.ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
         ok(ctx.pid == pi.dwProcessId, "unexpected dwProcessId %x\n", ctx.ev.dwProcessId == ctx.pid);
 
-        next_event(&ctx, 2000);
+        next_event(&ctx, WAIT_EVENT_TIMEOUT);
         ok(ctx.ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
 
-        do next_event(&ctx, 2000);
-        while (ctx.ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx.ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT
-               || ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT);
+        wait_for_breakpoint(&ctx);
         ok(ctx.dll_cnt > 2, "dll_cnt = %d\n", ctx.dll_cnt);
-
-        ok(ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
-        ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
-           ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
     }
     else
     {
@@ -994,13 +1092,13 @@ static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
         ret = DebugBreakProcess(pi.hProcess);
         ok(ret, "BreakProcess failed: %u\n", GetLastError());
 
-        /* a new thread, which executes DbgDebugBreak, is created */
-        next_event(&ctx, 2000);
+        /* a new thread, which executes DbgBreakPoint, is created */
+        next_event(&ctx, WAIT_EVENT_TIMEOUT);
         ok(ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
         last_thread = ctx.ev.dwThreadId;
 
         if (ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT)
-            next_event(&ctx, 2000);
+            next_event(&ctx, WAIT_EVENT_TIMEOUT);
 
         ok(ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
         ok(ctx.ev.dwThreadId == last_thread, "unexpected thread\n");
@@ -1012,7 +1110,7 @@ static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
         ok(ret, "SetEvent failed, last error %d.\n", GetLastError());
     }
 
-    do next_event(&ctx, 2000);
+    do next_event(&ctx, WAIT_EVENT_TIMEOUT);
     while (ctx.ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx.ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT
            || ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT || ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT);
 
@@ -1037,6 +1135,232 @@ static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
 
     ret = DeleteFileA(blackbox_file);
     ok(ret, "DeleteFileA failed, last error %d.\n", GetLastError());
+}
+
+static void wait_debugger(HANDLE event)
+{
+    WaitForSingleObject(event, INFINITE);
+    ExitProcess(0);
+}
+
+#define expect_event(a,b) expect_event_(__LINE__,a,b)
+static void expect_event_(unsigned line, struct debugger_context *ctx, DWORD event_code)
+{
+    next_event(ctx, WAIT_EVENT_TIMEOUT);
+    ok_(__FILE__,line)(ctx->ev.dwDebugEventCode == event_code, "dwDebugEventCode = %d expected %d\n",
+                       ctx->ev.dwDebugEventCode, event_code);
+}
+
+#define expect_exception(a,b) expect_exception_(__LINE__,a,b)
+static void expect_exception_(unsigned line, struct debugger_context *ctx, DWORD exception_code)
+{
+    expect_event_(line, ctx, EXCEPTION_DEBUG_EVENT);
+    ok_(__FILE__,line)(ctx->ev.u.Exception.ExceptionRecord.ExceptionCode == exception_code, "ExceptionCode = %x expected %x\n",
+                       ctx->ev.u.Exception.ExceptionRecord.ExceptionCode, exception_code);
+}
+
+#define expect_breakpoint_exception(a,b) expect_breakpoint_exception_(__LINE__,a,b)
+static void expect_breakpoint_exception_(unsigned line, struct debugger_context *ctx, const void *expect_addr)
+{
+    struct debuggee_thread *thread;
+    expect_exception_(line, ctx, EXCEPTION_BREAKPOINT);
+    if (!expect_addr) return;
+    ok_(__FILE__,line)(ctx->ev.u.Exception.ExceptionRecord.ExceptionAddress == expect_addr,
+                       "ExceptionAddress = %p expected %p\n", ctx->ev.u.Exception.ExceptionRecord.ExceptionAddress, expect_addr);
+    thread = get_debuggee_thread(ctx, ctx->ev.dwThreadId);
+    fetch_thread_context(thread);
+    ok_(__FILE__,line)(get_ip(&thread->ctx) == (char*)expect_addr + 1, "unexpected instruction pointer %p expected %p\n",
+                       get_ip(&thread->ctx), expect_addr);
+}
+
+#define single_step(a,b,c) single_step_(__LINE__,a,b,c)
+static void single_step_(unsigned line, struct debugger_context *ctx, struct debuggee_thread *thread, void *expect_addr)
+{
+#if defined(__i386__) || defined(__x86_64__)
+    fetch_thread_context(thread);
+    thread->ctx.EFlags |= 0x100;
+    set_thread_context(ctx, thread);
+    expect_exception_(line, ctx, EXCEPTION_SINGLE_STEP);
+    ok_(__FILE__,line)(ctx->ev.u.Exception.ExceptionRecord.ExceptionAddress == expect_addr,
+                       "ExceptionAddress = %p expected %p\n", ctx->ev.u.Exception.ExceptionRecord.ExceptionAddress, expect_addr);
+    fetch_thread_context(thread);
+    ok_(__FILE__,line)(get_ip(&thread->ctx) == expect_addr, "unexpected instruction pointer %p expected %p\n",
+                       get_ip(&thread->ctx), expect_addr);
+    ok_(__FILE__,line)(!(thread->ctx.EFlags & 0x100), "EFlags = %x\n", thread->ctx.EFlags);
+#endif
+}
+
+static const BYTE loop_code[] = {
+#if defined(__i386__) || defined(__x86_64__)
+    0x90,                         /* nop */
+    0x90,                         /* nop */
+    0x90,                         /* nop */
+    0xe9, 0xf8, 0xff, 0xff, 0xff  /* jmp $-8 */
+#endif
+};
+
+static const BYTE call_debug_service_code[] = {
+#ifdef __i386__
+    0x53,                         /* pushl %ebx */
+    0x57,                         /* pushl %edi */
+    0x8b, 0x44, 0x24, 0x0c,       /* movl 12(%esp),%eax */
+    0xb9, 0x11, 0x11, 0x11, 0x11, /* movl $0x11111111,%ecx */
+    0xba, 0x22, 0x22, 0x22, 0x22, /* movl $0x22222222,%edx */
+    0xbb, 0x33, 0x33, 0x33, 0x33, /* movl $0x33333333,%ebx */
+    0xbf, 0x44, 0x44, 0x44, 0x44, /* movl $0x44444444,%edi */
+    0xcd, 0x2d,                   /* int $0x2d */
+    0xeb,                         /* jmp $+17 */
+    0x0f, 0x1f, 0x00,             /* nop */
+    0x31, 0xc0,                   /* xorl %eax,%eax */
+    0xeb, 0x0c,                   /* jmp $+14 */
+    0x90, 0x90, 0x90, 0x90,       /* nop */
+    0x90, 0x90, 0x90, 0x90,
+    0x90,
+    0x31, 0xc0,                   /* xorl %eax,%eax */
+    0x40,                         /* incl %eax */
+    0x5f,                         /* popl %edi */
+    0x5b,                         /* popl %ebx */
+    0xc3,                         /* ret */
+#elif defined(__x86_64__)
+    0x53,                         /* push %rbx */
+    0x57,                         /* push %rdi */
+    0x48, 0x89, 0xc8,             /* movl %rcx,%rax */
+    0x48, 0xb9, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, /* movabs $0x1111111111111111,%rcx */
+    0x48, 0xba, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, /* movabs $0x2222222222222222,%rdx */
+    0x48, 0xbb, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, /* movabs $0x3333333333333333,%rbx */
+    0x48, 0xbf, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, /* movabs $0x4444444444444444,%rdi */
+    0xcd, 0x2d,                   /* int $0x2d */
+    0xeb,                         /* jmp $+17 */
+    0x0f, 0x1f, 0x00,             /* nop */
+    0x48, 0x31, 0xc0,             /* xor %rax,%rax */
+    0xeb, 0x0e,                   /* jmp $+16 */
+    0x90, 0x90, 0x90, 0x90,       /* nop */
+    0x90, 0x90, 0x90, 0x90,
+    0x48, 0x31, 0xc0,             /* xor %rax,%rax */
+    0x48, 0xff, 0xc0,             /* inc %rax */
+    0x5f,                         /* pop %rdi */
+    0x5b,                         /* pop %rbx */
+    0xc3,                         /* ret */
+#endif
+};
+
+#if defined(__i386__) || defined(__x86_64__)
+#define OP_BP 0xcc
+#else
+#define OP_BP 0
+#endif
+
+static void test_debugger(const char *argv0)
+{
+    static const char arguments[] = " debugger wait ";
+    SECURITY_ATTRIBUTES sa = { sizeof(sa), NULL, TRUE };
+    struct debugger_context ctx = { 0 };
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si;
+    HANDLE event, thread;
+    BYTE *mem, buf[4096], *proc_code, *thread_proc, byte;
+    struct debuggee_thread *debuggee_thread;
+    char *cmd;
+    BOOL ret;
+
+    event = CreateEventW(&sa, TRUE, FALSE, NULL);
+    ok(event != NULL, "CreateEvent failed: %u\n", GetLastError());
+
+    cmd = heap_alloc(strlen(argv0) + strlen(arguments) + 16);
+    sprintf(cmd, "%s%s%x\n", argv0, arguments, (DWORD)(DWORD_PTR)event);
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    ret = CreateProcessA(NULL, cmd, NULL, NULL, TRUE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess failed, last error %#x.\n", GetLastError());
+    heap_free(cmd);
+
+    next_event(&ctx, WAIT_EVENT_TIMEOUT);
+    ok(ctx.ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+    wait_for_breakpoint(&ctx);
+    do next_event(&ctx, POLL_EVENT_TIMEOUT);
+    while(ctx.ev.dwDebugEventCode != -1);
+
+    mem = VirtualAllocEx(pi.hProcess, NULL, sizeof(buf), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    ok(mem != NULL, "VirtualAllocEx failed: %u\n", GetLastError());
+    proc_code   = buf + 1024;
+    thread_proc = mem + 1024;
+
+    if (sizeof(loop_code) > 1)
+    {
+        /* test single-step exceptions */
+        memset(buf, OP_BP, sizeof(buf));
+        memcpy(proc_code, &loop_code, sizeof(loop_code));
+        proc_code[0] = OP_BP; /* set a breakpoint */
+        ret = WriteProcessMemory(pi.hProcess, mem, buf, sizeof(buf), NULL);
+        ok(ret, "WriteProcessMemory failed: %u\n", GetLastError());
+
+        thread = CreateRemoteThread(pi.hProcess, NULL, 0, (void*)thread_proc, NULL, 0, NULL);
+        ok(thread != NULL, "CreateRemoteThread failed: %u\n", GetLastError());
+
+        expect_event(&ctx, CREATE_THREAD_DEBUG_EVENT);
+        debuggee_thread = get_debuggee_thread(&ctx, ctx.ev.dwThreadId);
+
+        wait_for_breakpoint(&ctx);
+        fetch_thread_context(debuggee_thread);
+        ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == thread_proc,
+           "ExceptionAddress = %p\n", ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress);
+        ok(get_ip(&debuggee_thread->ctx) == thread_proc + 1, "unexpected instruction pointer %p\n",
+           get_ip(&debuggee_thread->ctx));
+
+        single_step(&ctx, debuggee_thread, thread_proc + 2);
+        single_step(&ctx, debuggee_thread, thread_proc + 3);
+        single_step(&ctx, debuggee_thread, thread_proc);
+
+        byte = 0xc3; /* ret */
+        ret = WriteProcessMemory(pi.hProcess, thread_proc, &byte, 1, NULL);
+        ok(ret, "WriteProcessMemory failed: %u\n", GetLastError());
+
+        expect_event(&ctx, EXIT_THREAD_DEBUG_EVENT);
+    }
+    else win_skip("loop_code not supported on this architecture\n");
+
+    if (sizeof(call_debug_service_code) > 1)
+    {
+        /* test debug service exceptions */
+        memset(buf, OP_BP, sizeof(buf));
+        memcpy(proc_code, call_debug_service_code, sizeof(call_debug_service_code));
+        ret = WriteProcessMemory(pi.hProcess, mem, buf, sizeof(buf), NULL);
+        ok(ret, "WriteProcessMemory failed: %u\n", GetLastError());
+
+        /* BREAKPOINT_PRINT */
+        thread = CreateRemoteThread(pi.hProcess, NULL, 0, (void*)thread_proc, (void*)2, 0, NULL);
+        ok(thread != NULL, "CreateRemoteThread failed: %u\n", GetLastError());
+        expect_event(&ctx, CREATE_THREAD_DEBUG_EVENT);
+        expect_breakpoint_exception(&ctx, NULL);
+        expect_event(&ctx, EXIT_THREAD_DEBUG_EVENT);
+
+        /* BREAKPOINT_PROMPT */
+        thread = CreateRemoteThread(pi.hProcess, NULL, 0, (void*)thread_proc, (void*)1, 0, NULL);
+        ok(thread != NULL, "CreateRemoteThread failed: %u\n", GetLastError());
+        expect_event(&ctx, CREATE_THREAD_DEBUG_EVENT);
+        next_event(&ctx, WAIT_EVENT_TIMEOUT);
+        /* some 32-bit Windows versions report exception to the debugger */
+        if (sizeof(void *) == 4 && ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT) next_event(&ctx, WAIT_EVENT_TIMEOUT);
+        ok(ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT, "unexpected debug event %u\n", ctx.ev.dwDebugEventCode);
+    }
+    else win_skip("call_debug_service_code not supported on this architecture\n");
+
+    SetEvent(event);
+
+    do
+    {
+        next_event(&ctx, WAIT_EVENT_TIMEOUT);
+        ok (ctx.ev.dwDebugEventCode != EXCEPTION_DEBUG_EVENT, "got exception\n");
+    }
+    while (ctx.ev.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
+
+    ret = CloseHandle(event);
+    ok(ret, "CloseHandle failed, last error %d.\n", GetLastError());
+    ret = CloseHandle(pi.hThread);
+    ok(ret, "CloseHandle failed, last error %d.\n", GetLastError());
+    ret = CloseHandle(pi.hProcess);
+    ok(ret, "CloseHandle failed, last error %d.\n", GetLastError());
 }
 
 START_TEST(debugger)
@@ -1069,6 +1393,12 @@ START_TEST(debugger)
     {
         doChildren(myARGC, myARGV);
     }
+    else if (myARGC >= 4 && !strcmp(myARGV[2], "wait"))
+    {
+        DWORD event;
+        sscanf(myARGV[3], "%x", &event);
+        wait_debugger((HANDLE)(DWORD_PTR)event);
+    }
     else
     {
         test_ExitCode();
@@ -1078,5 +1408,6 @@ START_TEST(debugger)
         test_debug_children(myARGV[0], DEBUG_ONLY_THIS_PROCESS, FALSE);
         test_debug_children(myARGV[0], DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS, FALSE);
         test_debug_children(myARGV[0], 0, FALSE);
+        test_debugger(myARGV[0]);
     }
 }
