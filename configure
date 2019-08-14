@@ -1585,6 +1585,7 @@ enable_usbd_sys
 enable_user32
 enable_userenv
 enable_usp10
+enable_utildll
 enable_uuid
 enable_uxtheme
 enable_vbscript
@@ -20689,6 +20690,7 @@ wine_fn_config_makefile dlls/userenv enable_userenv
 wine_fn_config_makefile dlls/userenv/tests enable_tests
 wine_fn_config_makefile dlls/usp10 enable_usp10
 wine_fn_config_makefile dlls/usp10/tests enable_tests
+wine_fn_config_makefile dlls/utildll enable_utildll
 wine_fn_config_makefile dlls/uuid enable_uuid
 wine_fn_config_makefile dlls/uxtheme enable_uxtheme
 wine_fn_config_makefile dlls/uxtheme/tests enable_tests
