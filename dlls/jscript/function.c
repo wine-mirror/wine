@@ -41,6 +41,7 @@ typedef struct {
 
 struct _function_vtbl_t {
     HRESULT (*toString)(FunctionInstance*,jsstr_t**);
+    void (*destructor)(FunctionInstance*);
 };
 
 typedef struct {
@@ -555,13 +556,9 @@ static HRESULT Function_get_arguments(script_ctx_t *ctx, jsdisp_t *jsthis, jsval
 
 static void Function_destructor(jsdisp_t *dispex)
 {
-    FunctionInstance *This = function_from_jsdisp(dispex);
-
-    if(This->code)
-        release_bytecode(This->code);
-    if(This->scope_chain)
-        scope_release(This->scope_chain);
-    heap_free(This);
+    FunctionInstance *function = function_from_jsdisp(dispex);
+    function->vtbl->destructor(function);
+    heap_free(function);
 }
 
 static const builtin_prop_t Function_props[] = {
@@ -649,8 +646,13 @@ static HRESULT NativeFunction_toString(FunctionInstance *function, jsstr_t **ret
     return S_OK;
 }
 
+static void NativeFunction_destructor(FunctionInstance *function)
+{
+}
+
 static const function_vtbl_t NativeFunctionVtbl = {
     NativeFunction_toString,
+    NativeFunction_destructor
 };
 
 HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,
@@ -714,8 +716,16 @@ static HRESULT InterpretedFunction_toString(FunctionInstance *function, jsstr_t 
     return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
+static void InterpretedFunction_destructor(FunctionInstance *function)
+{
+    release_bytecode(function->code);
+    if(function->scope_chain)
+        scope_release(function->scope_chain);
+}
+
 static const function_vtbl_t InterpretedFunctionVtbl = {
     InterpretedFunction_toString,
+    InterpretedFunction_destructor
 };
 
 HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_code_t *func_code,
