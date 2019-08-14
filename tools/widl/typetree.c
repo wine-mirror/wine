@@ -174,7 +174,6 @@ type_t *type_new_function(var_list_t *args)
     t = make_type(TYPE_FUNCTION);
     t->details.function = xmalloc(sizeof(*t->details.function));
     t->details.function->args = args;
-    t->details.function->idx = -1;
     return t;
 }
 
@@ -413,9 +412,9 @@ type_t *type_new_bitfield(type_t *field, const expr_t *bits)
     return t;
 }
 
-static int compute_method_indexes(type_t *iface)
+static unsigned int compute_method_indexes(type_t *iface)
 {
-    int idx;
+    unsigned int idx;
     statement_t *stmt;
 
     if (!iface->details.iface)
@@ -430,7 +429,7 @@ static int compute_method_indexes(type_t *iface)
     {
         var_t *func = stmt->u.var;
         if (!is_callas(func->attrs))
-            func->declspec.type->details.function->idx = idx++;
+            func->func_idx = idx++;
     }
 
     return idx;

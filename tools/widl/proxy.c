@@ -614,14 +614,14 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
     if (!is_local(func->attrs)) {
       const var_t *cas = is_callas(func->attrs);
       const char *cname = cas ? cas->name : NULL;
-      int idx = func->declspec.type->details.function->idx;
+      int idx = func->func_idx;
       if (cname) {
           const statement_t *stmt2;
           STATEMENTS_FOR_EACH_FUNC(stmt2, type_iface_get_stmts(iface)) {
               const var_t *m = stmt2->u.var;
               if (!strcmp(m->name, cname))
               {
-                  idx = m->declspec.type->details.function->idx;
+                  idx = m->func_idx;
                   break;
               }
           }

@@ -342,7 +342,6 @@ struct func_details
 {
   var_list_t *args;
   struct _var_t *retval;
-  int idx;
 };
 
 struct iface_details
@@ -460,8 +459,11 @@ struct _var_t {
   decl_spec_t declspec;
   attr_list_t *attrs;
   expr_t *eval;
-  unsigned int procstring_offset;
+
   unsigned int typestring_offset;
+
+  /* fields specific to functions */
+  unsigned int procstring_offset, func_idx;
 
   struct _loc_info_t loc_info;
 
