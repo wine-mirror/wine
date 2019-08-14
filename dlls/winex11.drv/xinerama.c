@@ -35,8 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
-static RECT virtual_screen_rect;
-
 static MONITORINFOEXW default_monitor =
 {
     sizeof(default_monitor),    /* cbSize */
@@ -160,32 +158,6 @@ static inline int query_screens(void)
 }
 
 #endif  /* SONAME_LIBXINERAMA */
-
-POINT virtual_screen_to_root( INT x, INT y )
-{
-    POINT pt;
-    pt.x = x - virtual_screen_rect.left;
-    pt.y = y - virtual_screen_rect.top;
-    return pt;
-}
-
-POINT root_to_virtual_screen( INT x, INT y )
-{
-    POINT pt;
-    pt.x = x + virtual_screen_rect.left;
-    pt.y = y + virtual_screen_rect.top;
-    return pt;
-}
-
-RECT get_virtual_screen_rect(void)
-{
-    return virtual_screen_rect;
-}
-
-RECT get_primary_monitor_rect(void)
-{
-    return get_primary()->rcMonitor;
-}
 
 static BOOL xinerama_get_gpus( struct x11drv_gpu **new_gpus, int *count )
 {
@@ -349,7 +321,6 @@ void xinerama_init( unsigned int width, unsigned int height )
     }
 
     primary = get_primary();
-    SetRectEmpty( &virtual_screen_rect );
 
     /* coordinates (0,0) have to point to the primary monitor origin */
     OffsetRect( &rect, -primary->rcMonitor.left, -primary->rcMonitor.top );
@@ -357,7 +328,6 @@ void xinerama_init( unsigned int width, unsigned int height )
     {
         OffsetRect( &monitors[i].rcMonitor, rect.left, rect.top );
         OffsetRect( &monitors[i].rcWork, rect.left, rect.top );
-        UnionRect( &virtual_screen_rect, &virtual_screen_rect, &monitors[i].rcMonitor );
         TRACE( "monitor 0x%x: %s work %s%s\n",
                i, wine_dbgstr_rect(&monitors[i].rcMonitor),
                wine_dbgstr_rect(&monitors[i].rcWork),
@@ -373,7 +343,4 @@ void xinerama_init( unsigned int width, unsigned int height )
     handler.pFreeAdapters = xinerama_free_adapters;
     handler.pFreeMonitors = xinerama_free_monitors;
     X11DRV_DisplayDevices_SetHandler( &handler );
-
-    TRACE( "virtual size: %s primary: %s\n",
-           wine_dbgstr_rect(&virtual_screen_rect), wine_dbgstr_rect(&primary->rcMonitor) );
 }

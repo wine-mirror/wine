@@ -104,6 +104,34 @@ static const WCHAR monitor_hardware_idW[] = {
     'D','e','f','a','u','l','t','_','M','o','n','i','t','o','r',0,0};
 
 static struct x11drv_display_device_handler handler;
+static RECT virtual_screen_rect;
+static RECT primary_monitor_rect;
+
+POINT virtual_screen_to_root(INT x, INT y)
+{
+    POINT pt;
+    pt.x = x - virtual_screen_rect.left;
+    pt.y = y - virtual_screen_rect.top;
+    return pt;
+}
+
+POINT root_to_virtual_screen(INT x, INT y)
+{
+    POINT pt;
+    pt.x = x + virtual_screen_rect.left;
+    pt.y = y + virtual_screen_rect.top;
+    return pt;
+}
+
+RECT get_virtual_screen_rect(void)
+{
+    return virtual_screen_rect;
+}
+
+RECT get_primary_monitor_rect(void)
+{
+    return primary_monitor_rect;
+}
 
 void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *new_handler)
 {
@@ -293,6 +321,9 @@ static BOOL X11DRV_InitMonitor(HDEVINFO devinfo, const struct x11drv_monitor *mo
     if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, DEVPROP_TYPE_BINARY,
                                    (const BYTE *)&monitor->rc_monitor, sizeof(monitor->rc_monitor), 0))
         goto done;
+    UnionRect(&virtual_screen_rect, &virtual_screen_rect, &monitor->rc_monitor);
+    if (video_index == 0)
+        primary_monitor_rect = monitor->rc_monitor;
     /* RcWork */
     if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCWORK, DEVPROP_TYPE_BINARY,
                                    (const BYTE *)&monitor->rc_work, sizeof(monitor->rc_work), 0))
@@ -316,6 +347,9 @@ static void prepare_devices(HKEY video_hkey)
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
     HDEVINFO devinfo;
     DWORD i = 0;
+
+    SetRectEmpty(&virtual_screen_rect);
+    SetRectEmpty(&primary_monitor_rect);
 
     /* Remove all monitors */
     devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_MONITOR, displayW, NULL, 0);
@@ -365,6 +399,36 @@ static void cleanup_devices(void)
     SetupDiDestroyDeviceInfoList(devinfo);
 }
 
+/* Initialize virtual screen rect and primary monitor rect for current process */
+static void init_screen_rects(void)
+{
+    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
+    HDEVINFO devinfo;
+    DWORD type;
+    DWORD i = 0;
+    RECT rect;
+
+    /* Already initialized */
+    if (!IsRectEmpty(&virtual_screen_rect))
+        return;
+
+    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_MONITOR, displayW, NULL, 0);
+    while (SetupDiEnumDeviceInfo(devinfo, i++, &device_data))
+    {
+        if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type, (BYTE *)&rect,
+                                       sizeof(rect), NULL, 0))
+            ERR("Failed to get monitor size property\n");
+
+        UnionRect(&virtual_screen_rect, &virtual_screen_rect, &rect);
+        if (i == 1)
+            primary_monitor_rect = rect;
+    }
+    SetupDiDestroyDeviceInfoList(devinfo);
+
+    TRACE("virtual screen rect:%s primary monitor rect:%s\n", wine_dbgstr_rect(&virtual_screen_rect),
+          wine_dbgstr_rect(&primary_monitor_rect));
+}
+
 void X11DRV_DisplayDevices_Init(BOOL force)
 {
     static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
@@ -393,7 +457,10 @@ void X11DRV_DisplayDevices_Init(BOOL force)
 
     /* Avoid unnecessary reinit */
     if (!force && disposition != REG_CREATED_NEW_KEY)
+    {
+        init_screen_rects();
         goto done;
+    }
 
     TRACE("via %s\n", wine_dbgstr_a(handler.name));
 
@@ -439,6 +506,9 @@ void X11DRV_DisplayDevices_Init(BOOL force)
         handler.pFreeAdapters(adapters);
         adapters = NULL;
     }
+
+    TRACE("virtual screen rect:%s primary monitor rect:%s\n", wine_dbgstr_rect(&virtual_screen_rect),
+          wine_dbgstr_rect(&primary_monitor_rect));
 
 done:
     cleanup_devices();
