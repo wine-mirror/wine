@@ -54,7 +54,6 @@ struct _import_t
 
 typelist_t incomplete_types = LIST_INIT(incomplete_types);
 
-static void fix_incomplete(void);
 static void fix_incomplete_types(type_t *complete_type);
 
 static str_list_t *append_str(str_list_t *list, char *str);
@@ -315,8 +314,7 @@ static typelib_t *current_typelib;
 
 %%
 
-input: gbl_statements m_acf			{ fix_incomplete();
-						  check_statements($1, FALSE);
+input: gbl_statements m_acf			{ check_statements($1, FALSE);
 						  check_all_user_types($1);
 						  write_header($1);
 						  write_id_data($1);
@@ -1912,30 +1910,6 @@ void add_incomplete(type_t *t)
   struct typenode *tn = xmalloc(sizeof *tn);
   tn->type = t;
   list_add_tail(&incomplete_types, &tn->entry);
-}
-
-static void fix_type(type_t *t)
-{
-  if (type_is_alias(t) && is_incomplete(t)) {
-    type_t *ot = type_alias_get_aliasee(t);
-    fix_type(ot);
-    if (type_get_type_detect_alias(ot) == TYPE_STRUCT ||
-        type_get_type_detect_alias(ot) == TYPE_UNION ||
-        type_get_type_detect_alias(ot) == TYPE_ENCAPSULATED_UNION)
-      t->details.structure = ot->details.structure;
-    t->defined = ot->defined;
-  }
-}
-
-static void fix_incomplete(void)
-{
-  struct typenode *tn, *next;
-
-  LIST_FOR_EACH_ENTRY_SAFE(tn, next, &incomplete_types, struct typenode, entry) {
-    fix_type(tn->type);
-    list_remove(&tn->entry);
-    free(tn);
-  }
 }
 
 static void fix_incomplete_types(type_t *complete_type)
