@@ -41,7 +41,7 @@ typedef struct tagContext {
     ITfContext ITfContext_iface;
     ITfSource ITfSource_iface;
     /* const ITfContextCompositionVtbl *ContextCompositionVtbl; */
-    /* const ITfContextOwnerCompositionServicesVtbl *ContextOwnerCompositionServicesVtbl; */
+    ITfContextOwnerCompositionServices ITfContextOwnerCompositionServices_iface;
     /* const ITfContextOwnerServicesVtbl *ContextOwnerServicesVtbl; */
     ITfInsertAtSelection ITfInsertAtSelection_iface;
     /* const ITfMouseTrackerVtbl *MouseTrackerVtbl; */
@@ -87,6 +87,11 @@ static inline Context *impl_from_ITfContext(ITfContext *iface)
 static inline Context *impl_from_ITfSource(ITfSource *iface)
 {
     return CONTAINING_RECORD(iface, Context, ITfSource_iface);
+}
+
+static inline Context *impl_from_ITfContextOwnerCompositionServices(ITfContextOwnerCompositionServices *iface)
+{
+    return CONTAINING_RECORD(iface, Context, ITfContextOwnerCompositionServices_iface);
 }
 
 static inline Context *impl_from_ITfInsertAtSelection(ITfInsertAtSelection *iface)
@@ -149,6 +154,10 @@ static HRESULT WINAPI Context_QueryInterface(ITfContext *iface, REFIID iid, LPVO
     else if (IsEqualIID(iid, &IID_ITfSource))
     {
         *ppvOut = &This->ITfSource_iface;
+    }
+    else if (IsEqualIID(iid, &IID_ITfContextOwnerCompositionServices))
+    {
+        *ppvOut = &This->ITfContextOwnerCompositionServices_iface;
     }
     else if (IsEqualIID(iid, &IID_ITfInsertAtSelection))
     {
@@ -526,6 +535,9 @@ static const ITfContextVtbl ContextVtbl =
     Context_CreateRangeBackup
 };
 
+/*****************************************************
+ * ITfSource functions
+ *****************************************************/
 static HRESULT WINAPI ContextSource_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
 {
     Context *This = impl_from_ITfSource(iface);
@@ -544,9 +556,6 @@ static ULONG WINAPI ContextSource_Release(ITfSource *iface)
     return ITfContext_Release(&This->ITfContext_iface);
 }
 
-/*****************************************************
- * ITfSource functions
- *****************************************************/
 static HRESULT WINAPI ContextSource_AdviseSink(ITfSource *iface,
         REFIID riid, IUnknown *punk, DWORD *pdwCookie)
 {
@@ -583,6 +592,80 @@ static const ITfSourceVtbl ContextSourceVtbl =
     ContextSource_Release,
     ContextSource_AdviseSink,
     ContextSource_UnadviseSink
+};
+
+/*****************************************************
+ * ITfContextOwnerCompositionServices functions
+ *****************************************************/
+static HRESULT WINAPI ContextOwnerCompositionServices_QueryInterface(ITfContextOwnerCompositionServices *iface,
+        REFIID iid, LPVOID *ppvOut)
+{
+    Context *This = impl_from_ITfContextOwnerCompositionServices(iface);
+    return ITfContext_QueryInterface(&This->ITfContext_iface, iid, ppvOut);
+}
+
+static ULONG WINAPI ContextOwnerCompositionServices_AddRef(ITfContextOwnerCompositionServices *iface)
+{
+    Context *This = impl_from_ITfContextOwnerCompositionServices(iface);
+    return ITfContext_AddRef(&This->ITfContext_iface);
+}
+
+static ULONG WINAPI ContextOwnerCompositionServices_Release(ITfContextOwnerCompositionServices *iface)
+{
+    Context *This = impl_from_ITfContextOwnerCompositionServices(iface);
+    return ITfContext_Release(&This->ITfContext_iface);
+}
+
+static HRESULT WINAPI ContextOwnerCompositionServices_StartComposition(ITfContextOwnerCompositionServices *iface,
+        TfEditCookie ecWrite, ITfRange *pCompositionRange, ITfCompositionSink *pSink, ITfComposition **ppComposition)
+{
+    Context *This = impl_from_ITfContextOwnerCompositionServices(iface);
+    FIXME("STUB:(%p) %#x %p %p %p\n", This, ecWrite, pCompositionRange, pSink, ppComposition);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ContextOwnerCompositionServices_EnumCompositions(ITfContextOwnerCompositionServices *iface,
+        IEnumITfCompositionView **ppEnum)
+{
+    Context *This = impl_from_ITfContextOwnerCompositionServices(iface);
+    FIXME("STUB:(%p) %p\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ContextOwnerCompositionServices_FindComposition(ITfContextOwnerCompositionServices *iface,
+        TfEditCookie ecRead, ITfRange *pTestRange, IEnumITfCompositionView **ppEnum)
+{
+    Context *This = impl_from_ITfContextOwnerCompositionServices(iface);
+    FIXME("STUB:(%p) %#x %p %p\n", This, ecRead, pTestRange, ppEnum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ContextOwnerCompositionServices_TakeOwnership(ITfContextOwnerCompositionServices *iface,
+        TfEditCookie ecWrite, ITfCompositionView *pComposition, ITfCompositionSink *pSink, ITfComposition **ppComposition)
+{
+    Context *This = impl_from_ITfContextOwnerCompositionServices(iface);
+    FIXME("STUB:(%p) %#x %p %p %p\n", This, ecWrite, pComposition, pSink, ppComposition);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ContextOwnerCompositionServices_TerminateComposition(ITfContextOwnerCompositionServices *iface,
+        ITfCompositionView *pComposition)
+{
+    Context *This = impl_from_ITfContextOwnerCompositionServices(iface);
+    FIXME("STUB:(%p) %p\n", This, pComposition);
+    return E_NOTIMPL;
+}
+
+static const ITfContextOwnerCompositionServicesVtbl ContextOwnerCompositionServicesVtbl =
+{
+    ContextOwnerCompositionServices_QueryInterface,
+    ContextOwnerCompositionServices_AddRef,
+    ContextOwnerCompositionServices_Release,
+    ContextOwnerCompositionServices_StartComposition,
+    ContextOwnerCompositionServices_EnumCompositions,
+    ContextOwnerCompositionServices_FindComposition,
+    ContextOwnerCompositionServices_TakeOwnership,
+    ContextOwnerCompositionServices_TerminateComposition
 };
 
 /*****************************************************
@@ -981,6 +1064,7 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfDocumentMgr 
 
     This->ITfContext_iface.lpVtbl= &ContextVtbl;
     This->ITfSource_iface.lpVtbl = &ContextSourceVtbl;
+    This->ITfContextOwnerCompositionServices_iface.lpVtbl = &ContextOwnerCompositionServicesVtbl;
     This->ITfInsertAtSelection_iface.lpVtbl = &InsertAtSelectionVtbl;
     This->ITfSourceSingle_iface.lpVtbl = &ContextSourceSingleVtbl;
     This->ITextStoreACPSink_iface.lpVtbl = &TextStoreACPSinkVtbl;
