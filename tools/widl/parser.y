@@ -1559,7 +1559,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
           warning_loc_info(&v->loc_info,
                            "%s: pointer attribute applied to interface "
                            "pointer type has no effect\n", v->name);
-      if (!ptr_attr && top && (*pt)->details.pointer.def_fc != FC_RP)
+      if (!ptr_attr && top && type_pointer_get_default_fc(*pt) != FC_RP)
       {
         /* FIXME: this is a horrible hack to cope with the issue that we
          * store an offset to the typeformat string in the type object, but
