@@ -1,13 +1,12 @@
-The Wine maintenance release 4.0.1 is now available.
+The Wine maintenance release 4.0.2 is now available.
 
 What's new in this release (see below for details):
   - Various bug fixes
-  - Sinhala and Tamil translation updates
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/4.0/wine-4.0.1.tar.xz
-  http://mirrors.ibiblio.org/wine/source/4.0/wine-4.0.1.tar.xz
+  https://dl.winehq.org/wine/source/4.0/wine-4.0.2.tar.xz
+  http://mirrors.ibiblio.org/wine/source/4.0/wine-4.0.2.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -23,199 +22,230 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 4.0.1 (total 44):
+Bugs fixed in 4.0.2 (total 66):
 
-   8226  DlgDirListComboBox does not fail properly on bad path spec argument
-  23863  The Bard's Tale (2005): unplayable due to almost completely black screen
-  26653  Multiple VB6 applications need oleaut32 VarRound to support VT_DECIMAL
-  28140  Theatre of War 3: Korea demo 1.2.0 crashes on startup (hook engine can't cope with GOT/PIC register load code at API entry, needs DECLSPEC_HOTPATCH for kernel32.SizeofResource and kernel32.FindClose)
-  31954  Second Sight hangs with a black screen after the intro videos
-  33456  D3DXMatrixTransformation: Broken calculation when scalingrotation and scaling is used
-  35516  Microworlds EX hangs when clicking toolbar button
-  37705  Heroes of Might and Magic VI Shades of Darkness Textures Fail to Display in Most Campaign Maps
-  38138  Avencast: Rise of the Mage: invisible doors
-  38558  cmd.exe bundled with Windows XP messed up when using FOR /F
-  39663  GOG Galaxy client 1.x hangs or reports 'Something went wrong during DeelevateStrategy'  error in Win7 mode (GOG Galaxy service needs wtsapi32.WTSQueryUserToken implementation)
-  39890  Orcish Inn fails to start with exception System.NotImplementedException
-  40441  Chicken tournament crashes when loading texture
-  44300  Windows Media Player 7.1 fails to play media due to unimplemented function wmvcore.dll.WMCheckURLExtension
-  44469  Multiple apps using Windows 10 v1507+ UCRT crash due to multiple missing api-ms-win-crt-private-l1-1-0.dll._o__xxx stubs/forwards (Win10 DISM pkgmgr.exe, MS DirectX Shader Compiler)
-  45326  Multiple 64-bit kernel drivers crash on unimplemented function ntoskrnl.exe.__C_specific_handler (NoxPlayer 6.x, MTA:SA 1.5.x)
-  45473  Rogue Squadron 3D crashes on startup
-  45631  League of Legends client crashes when joining a lobby with other players
-  45632  Garena client v2.0.x crashes on startup ('ntdll.NtQueryVirtualMemory' needs to validate 'MemoryInformationLength' before writing to buffer)
-  46127  aria2 1.34 fails to connect, reports 'WinTLS: Channel setup failed. Schannel provider did not fulfill requested flags. Excepted: 33180 Actual: 33052'
-  46298  Middle-earth: Shadow of War (steam appid 356190) crashes on launch
-  46300  Yousician: unimplemented function mfplat.dll.MFGetSystemTime
-  46303  Warcraft 3: Reign of Chaos (Czech language) can't be installed from CD
-  46318  vbscript doesn't parse if identifier is also keyword token
-  46319  32-bit IL-only executable launched as 32-bit subprocess on Wine and 64-bit subprocess on Windows
-  46387  ReactOS/Windows XP TASKMGR: Column headers don't scroll when scrolling horizontally (multiple listview or header control)
-  46442  FormatCurrency(9) returns .9.00 (period in front)
-  46465  Visual Studio 2015 crashes on unimplemented function msvcp140.dll._Equivalent
-  46481  strftime has a buffer overflow
-  46482  Gas Guzzlers Combat Carnage crashes when changing screen resolution
-  46485  PBM_STEPIT crashes with division by zero when MinVal == MaxVal == 0
-  46493  Functions ilogb* are not implemented
-  46494  64bit WinMerge crash after clicking "About WinMerge"
-  46499  Multiple games crash in GetRawInputData when exiting(House Party, Murderous Pursuits, ICEY)
-  46520  Kindred Spirits on the Roof crashes
-  46536  Empire Earth (GOG version) main menu rendering is broken
-  46569  ToDoList 7.1 : fails to launch after WINE upgrade to 4.0 version
-  46581  HeidiSQL generates OLE error when executing custom queries against MSSQL server.
-  46583  LINE latest version doesn't work
-  46678  Width of latin characters is wrong with some fonts.
-  46691  comctl32/tests/propsheet.c shows uninitalized memory use
-  46708  Photoline crashed right after start, no problem with wine 3.0.4
-  46729  Wine directx not detecting Intel HD Graphics 620 (Rev 02) chipset
-  46907  msi crashes in RemoveFiles action for a broken msi
+  15934  Can't see Worms 2 intro films as they play (mciavi32 missing support to MCI_MCIAVI_PLAY_FULLSCREEN)
+  18099  No keyboard response in Super Mario 3 remake
+  19098  Regedit randomly crashes when deleting registry keys
+  21403  Shiva Editor/Evochron: Mercenary refuse to run with built-in dinput/dinput8.dll
+  23455  FileAlyzer 1.6.0.4, Affinity-installer-1.6.5.123 can't load PE images (needs imagehlp.ImageLoad and imagehlp.ImageUnload implementation)
+  26445  URLDownloadToFileW does not support FTP URLs
+  28847  LabChart Reader 7.x crashes due to missing wmvcore 'IWMProfileManager2', CLSID '{7a924e51-73c1-494d-8019-23d37ed9b89a}'
+  33845  Warframe (Steam) updater fails to replace 'Launcher.exe', reports sharing violation
+  33904  Face Noir demo crashes on start without native d3dx9_36 ('D3DXLoadSkinMeshFromXof' must return 'ID3DXSkinInfo' interface even with no skinning info present)
+  36764  Rogue Squadron 3D 1.3: Unable to setup controller in-game
+  37784  wine-mono does not appear in "wine uninstaller" list on a 64-bit prefix
+  37871  GOG.com downloader (.NET 3.5 app) wants wininet.GetUrlCacheConfigInfoA/W implementation
+  38087  Settlers III: mouse not working on start screen and menu (after fixing raw input bug 33479)
+  43356  Mass Effect (1) Steam freezes since Steam Update from 8th of July 2017
+  43411  Older directx games (The Sims, Revenant) - Screen not redrawing properly (needs Set/GetClipStatus implementation)
+  44423  Office 2007/2010 32bit - links not working
+  45429  Inno Setup v5.x based game-installers using 'wintb' plugin fail with: 'Runtime error 229 at <address>' (Win7+ ITaskbarList3 ThumbBar/Thumbnail semi-stubs needed)
+  45543  Multiple games and applications crash in dwrite due to invalid index access to cluster array (Rekordbox 5.3.0, SpellForce 3)
+  45703  Microsoft Office 365 applications crash on startup (Microsoft AppV ISV virtual filesystem technology requires several native and core API to be hot-patchable)
+  45878  Aruba digital signature crashes on missing hid.dll.HidD_FlushQueue
+  46019  Multiple NSIS 2.x based installers fail due to invalid module handle passed to 'kernel32.FreeLibrary', causing code dll unmapped as data dll (Adobe Digital Editions 4.5.x, ConceptDraw Office 4)
+  46115  Cursor in unity games moving down and to the right one pixel on any mouse interaction
+  46187  Windows PowerShell Core 6.2 Preview 2 for ARM32 crashes due to unhandled trap_no 0 (write watch access causes SIGSEGV)
+  46189  Windows PowerShell Core 6.2 Preview 2 for ARM32 crashes due to ntdll 'set_cpu_context' not restoring Thumb mode during return from exception handling
+  46316  Hauppauge Capture version 36187 crashes during install
+  46371  FFXI + Ashita random crash ingame
+  46579  F.E.A.R. 2: Project Origin screen is completely light grey while playing intro movie
+  46626  UPlay fails to start : "Error at hooking API LoadStringA" (UPlay's hooking engine can't handle ENDBR32 instruction inserted at non-hotpatch API entries due to distro build environments '-fcf-protection')
+  46706  Eventide H9 Control crashes on unimplemented function bthprops.cpl.BluetoothFindDeviceClose
+  46711  Since 3.3 other HID devices than Joysticks not supported anymore
+  46712  Atelier Firis config tool crashes with "Unhandled page fault on execute access"
+  46713  School days HQ occasional divide by zero
+  46721  Two quotes together (in outer quotes) not parsed correctly in argv
+  46754  Multiple application installers fail in VBscripts due to IWshEnvironment::Item property returning BSTR with embedded null terminator (PostgreSQL 9.3)
+  46761  BigNox VM VirtualBox Support Driver 'YSDrv.sys' (part of NoxPlayer 6.x) crashes on unimplemented function ntoskrnl.exe.MmBuildMdlForNonPagedPool
+  46772  Creo Elements/Direct Modeling Express 6.0 installer fails with VBScript parser error: parser_lex '_' not followed by newline
+  46800  LINE (Powered by Naver): LINE v5.12.XXX series crashes after few seconds
+  46807  The Sims hangs when opening menus
+  46811  Inquisitor: black screen after start in fullscreen mode
+  46812  PS4 Remote Play installer 2.8.x fails, claims 'You need the Media Feature Pack' (MsiGetDatabaseState is called from a custom action)
+  46845  Freelancer: character glitches in cutscenes after loading a saved game
+  46848  PTC Mathcad Prime 3.0 Web installer crashes on unimplemented function api-ms-win-crt-convert-l1-1-0.dll.wctrans
+  46863  If prefix contains "windows" drive information not available in 64-bit prefix
+  46881  Power World Simulator installer needs unimplemented function msi.dll.MsiSourceListForceResolutionW
+  46894  SIMATIC WinCC V15.1 Runtime installer (.NET 4.0) fails in CoreLib::GetPhysicalMemoryAmountWmi() (missing 'DeviceLocator' property of 'Win32_PhysicalMemory' WMI class)
+  46895  SIMATIC WinCC V15.1 Runtime installer (.NET 4.0) fails due to missing 'OperatingSystemSKU' property of 'Win32_OperatingSystem' WMI class
+  46899  SIMATIC WinCC V15.1 Runtime installer: user can't accept license terms (richedit20 ITextRange::ScrollIntoView lacks handling of 'tomEnd')
+  46902  SIMATIC WinCC V15.1 Runtime installer: S7Inst64.exe sub-installer crashes on unimplemented function msvcr110.dll._wcsnset_s
+  46903  SIMATIC WinCC V15.1 Runtime installer: AdHocSigner.exe tool crashes on unimplemented functions mssign32.dll.SignerSignEx and SignerFreeSignerContext
+  46906  SIMATIC WinCC V15.1 Runtime installer: SeCon tool 'SeCon_Win32.exe' crashes due to hnetcfg 'INetFwRules::get__NewEnum' not initializing out parameter
+  46908  Support msvcp mtx_init 'mtx_try' flag (0x2) to create a mutex object that supports test and return
+  46909  Missing (black) textures in Black & White
+  46923  X-Tension, X-Beyond The Frontier: Dynamic light breaks after opening up a menu
+  46928  Atelier Firis config tool doesn't show up when launched through Steam
+  46939  propvarutil.h: missing extern "C"
+  46953  Watch_Dogs crashes after intro
+  46971  Multiple Steam games crash with Wine 4.6 (Steam Game Overlay Renderer hook engine requires several API to be hot-patchable) (Sniper Elite V2, Sniper Elite 3, Brawlhalla)
+  46989  Grand Prix Legends: Wheel (Wheel, Gas, Brake) axes inputs aren't recognized
+  46996  Improvements to the 7.1 and 5.1 to stereo conversion
+  47009  msi x64 installation file created by Visual Studio cannot be uninstalled
+  47022  Multiple performance monitor applications fail to display system physical/committed virtual memory usage (Sysinternals Process Explorer v16.x, builtin Taskmgr)
+  47031  widl generates invalid typelib when importing types from multiple typelibs
+  47051  Microsoft Excel 2016 (Office 365) crashes on startup (Microsoft AppV ISV virtual filesystem technology requires kernel32.CreateActCtxW to be hot-patchable)
+  47065  Vocaloid 5 (.NET 4.x app) crashes on startup (needs 'Win32_OperatingSystem' WMI class 'SystemDrive' property)
+  47183  Grand Prix Legends: Only the first two axes are recognized
+  47262  compile error: ‘for’ loop initial declarations are only allowed in C99 mode
 
 ----------------------------------------------------------------
 
-Changes since 4.0:
+Changes since 4.0.1:
 
 Alexandre Julliard (2):
-      server: Report a 64-bit CPU for IL-only binaries.
-      dinput: Add error check to silence a compiler warning.
+      kernel32: Validate handle before freeing a LOAD_LIBRARY_AS_DATAFILE module.
+      ntdll: Check for time conversion error to silence a compiler warning.
 
-Alistair Leslie-Hughes (4):
-      dsound: IDirectSoundNotify is only available when DSBCAPS_CTRLPOSITIONNOTIFY is specified.
-      mfplat: Implement MFGetSystemTime.
-      oleaut32: Correctly get the Currency separator in VarFormatCurrency.
-      oleaut32: Support VT_DECIMAL in VarRound.
+Alistair Leslie-Hughes (7):
+      regedit: Grow the buffer when modifying a DWORD value.
+      urlmon: Pass unescaped URLs to InternetOpenUrl in ftp protocol handler.
+      hid: Implement HidD_FlushQueue().
+      dinput: Ensure Cursor is visible on config dialog.
+      dinput: Allow enumeration of joysticks with DirectX 3.
+      dinput: Handle setting DIPROP_CALIBRATIONMODE mode in generic implementation.
+      vbscript: Move variable declaration outside of for.
 
-Andrew Eikum (1):
-      winhttp: Don't crash setting up secure proxy.
+Andrey Gusev (2):
+      dxgi: Add DECLSPEC_HOTPATCH to d3d11_swapchain_Present().
+      setupapi: Add DECLSPEC_HOTPATCH to SetupDiEnumDeviceInfo().
 
-Brendan McGrath (2):
-      vbscript: Allow more keywords to be used as identifiers.
-      vbscript: Allow most keywords to be used as 'dot' identifiers.
+André Hentschel (5):
+      ntdll: Add stub for RtlInstallFunctionTableCallback on ARM/ARM64.
+      ntdll: Adjust PC according to THUMB/ARM flag.
+      kernel32: Add forward for RtlInstallFunctionTableCallback on ARM/ARM64.
+      include: Fix vararg standard call types for ARM.
+      ntdll: Translate signal to trap when trap code is 0 on ARM.
 
-David Adam (2):
-      ddraw/tests: Add tests for the "dwMipMapCount" field of texture sub-levels.
-      ddraw: Fix the "dwMipMapCount" field of texture sub-levels.
+Austin English (1):
+      propvarutil.h: Add extern "C" if __cplusplus is defined.
 
-Dmitry Timoshkov (2):
-      windowscodecs: Implement IWICPalette::InitializeFromBitmap.
-      wpcap: Fix compilation with recent pcap/pcap.h versions.
+Brendan McGrath (1):
+      kernel32: Allow double quote style escape in argv.
 
-Fabian Maurer (2):
-      api-ms-win-crt-private-l1-1-0: Update to 10.0.17134.12 (WinBuild.160101.0800).
-      ucrtbase: Forward a few functions for dxil.dll and pkgmgr.exe.
+Bruno Jesus (1):
+      mciavi32: Add Support for MCI_MCIAVI_PLAY_FULLSCREEN.
 
-Gabriel Ivăncescu (1):
-      libport: Handle partially overlapping buffers.
+Claudio Fontana (1):
+      kernel32: Allow empty profile section and key name strings.
 
-Gijs Vermeulen (3):
-      msvcp140: Export _Equivalent and port tests.
-      ntdll: Validate len in NtQueryVirtualMemory.
-      kernel32: Add DECLSPEC_HOTPATCH to SizeofResource().
+Dmitry Timoshkov (1):
+      wininet: Return proper cache path from GetUrlCacheConfigInfo.
+
+Gijs Vermeulen (8):
+      wmvcore: Upgrade to IWMProfileManager2.
+      ntoskrnl.exe: Add MmBuildMdlForNonPagedPool stub.
+      msvcr120: Add [to]wctrans.
+      hnetcfg: Initialize INetFwRules::get__NewEnum out parameter.
+      msvcrt: Implement _wcsnset_s.
+      mssign32: Add SignerSignEx stub.
+      mssign32: Implement SignerFreeSignerContext.
+      riched20: Handle tomEnd in ITextRange::ScrollIntoView.
 
 Hans Leidekker (3):
-      secur32: Return ISC_RET_USED_SUPPLIED_CREDS for schannel contexts if the feature was requested.
-      mscms: Add a partial implementation of WcsOpenColorProfileA/W.
-      msi: Avoid a crash in RemoveFiles if the component directory is invalid.
+      wbemprox: Implement Win32_PhysicalMemory.DeviceLocator.
+      wbemprox: Implement Win32_OperatingSystem.OperatingSystemSKU.
+      wbemprox: Implement Win32_OperatingSystem.SystemDrive.
 
-Isira Seneviratne (10):
-      po: Update Sinhala translation.
-      po: Update Sinhala translation.
-      po: Update Sinhala translation.
-      po: Add Tamil translation.
-      po: Update Tamil translation.
-      po: Update Tamil translation.
-      kernel32: Add the Sinhala NLS file.
-      kernel32: Fix LOCALE_SSCRIPTS value for Sinhala.
-      kernel32/nls: Fix some values in Sinhala NLS file.
-      kernel32/nls: Change Sinhala sublang identifier to SUBLANG_SINHALESE_SRI_LANKA.
+Henri Verbeet (1):
+      wined3d: Also update the "src_texture_gl" pointer when using a staging texture in the blitter.
 
-Jacek Caban (1):
-      ntoskrnl.exe: Add __C_specific_handler entry.
+Józef Kucia (1):
+      dxgi: Do not forward d3d11_swapchain_Present() to d3d11_swapchain_Present1().
 
-Józef Kucia (3):
-      ddraw: Pass correct box when mapping system memory vertex buffers.
-      d3d9: Validate surface parameter in d3d9_device_ColorFill().
-      wined3d: Add GPU information for Intel HD Graphics 620.
-
-Ken Thomases (1):
-      loader: On Mac, move the top-down allocations area down to avoid regions reserved by the system.
+Louis Lenders (8):
+      bthprops.cpl: Add BluetoothFindDeviceClose stub.
+      explorerframe: Return S_OK in ITaskbarList3 SetThumbnailTooltip method.
+      explorerframe: Return S_OK in ITaskbarList3 ThumbBarAddButtons.
+      explorerframe: Return S_OK in ITaskbarList3 ThumbBarUpdateButtons method.
+      msi: Add MsiSourceListForceResolution{A,W} stub.
+      ntdll: Add DECLSPEC_HOTPATCH to NtQueryDirectoryFile.
+      ntdll: Add DECLSPEC_HOTPATCH to NtQueryValueKey.
+      kernel32: Add DECLSPEC_HOTPATCH to CreateActCtx.
 
 Mark Jansen (1):
-      msi: Do not leak rootkey.
+      imagehlp/tests: Add tests for ImageLoad, ImageUnload, GetImageUnusedHeaderBytes.
 
-Matteo Bruni (3):
-      d3dx9: Improve D3DXMatrixTransformation() implementation.
-      d3dx9: Improve D3DXMatrixTransformation2D().
-      d3dx9/tests: Avoid some 64-bit test failures.
+Matteo Bruni (8):
+      d3d9: Release system memory wined3d buffer only after the draw buffer is destroyed.
+      d3d8: Release system memory wined3d buffer only after the draw buffer is destroyed.
+      d3d9: Return failure in CheckDeviceFormat() for unsupported adapter formats.
+      d3d8: Return failure in CheckDeviceFormat() for unsupported adapter formats.
+      wined3d: Set display mode to a suitable adapter format.
+      d3d9: Validate vertex stride in Draw[Indexed]PrimitiveUP().
+      d3d8: Validate vertex stride in Draw[Indexed]PrimitiveUP().
+      wined3d: Avoid a GCC 8 warning.
 
-Michael Stefaniuc (1):
-      tools: Get the ANNOUNCE bug list from the stable-notes git notes.
+Michael Müller (2):
+      imagehlp: Implement ImageLoad and cleanup ImageUnload.
+      d3dx9/tests: Add initial tests for dummy skin info interface.
 
-Nikolay Sivov (9):
-      api-ms-win-core-libraryloader-l1-2-1: Add missing FindResourceW() forward.
-      comctl32/progress: Handle min == max case in PBM_STEPIT.
-      user32/dialog: Fix setting negative dialog item ids.
-      d3d11: Implement d3d11_device_GetImmediateContext1().
-      comctl32/listview: Take care of scrolling offset when repositioning header.
-      comctl32/propsheet: Avoid posting uninitialized data (Valgrind).
-      comctl32/toolbar: Send BN_CLICKED for button that was pressed, not released.
-      usp10: Use single path for all fonts in ScriptGetCMap().
-      ucrtbase: Add ilogb* functions.
+Nikola Pavlica (2):
+      dsound: Revised 5.1 to stereo downmix.
+      dsound: Added 7.1 to stereo downmix.
 
-Paul Gofman (8):
-      wined3d: Use lower 8 bits only from _ALPHAREF state.
-      wined3d: Return 1e10f for MaxVertexW from wined3d_get_device_caps().
-      wined3d: Only use the LSB of the _SAMP_SRGB_TEXTURE state value.
-      kernel32/tests: Add test for overlapped file read.
-      ntdll/tests: Add more tests for overlapped file read.
-      ntdll: Return STATUS_PENDING from NtReadFile() for async read in case of no buffering.
-      kernel32: Add DECLSPEC_HOTPATCH to FindClose().
-      user32: Select more appropriate stretch mode for colored images interpolation.
+Nikolay Sivov (4):
+      user32: Do not touch some of the values on 64-bit with SetWindowLong().
+      user32: Make GetWindowLong() fail for some values on 64-bit.
+      wshom.ocx: Fix string length returned from Check returned BSTR length.
+      dwrite/layout: Fix invalid index access to cluster array.
 
-Piotr Caban (4):
-      msvcrt: Optimize tolower function when locale was never changed.
-      msvcrt: Optimize toupper function when locale was never changed.
-      msvcp140: Don't forward __ExceptionPtrCreate to msvcr120.
-      msvcrt: Fix buffer overflow in _get_tzname.
+Paul Gofman (4):
+      ddraw: Deny adding the same light to viewports multiple times.
+      ddraw: Fix ddraw[1-4] light activation / deactivation.
+      ddraw: Improve d3d_device7_GetClipStatus() stub.
+      xaudio2_7: Also preserve %ebx in call_on_voice_processing_pass_start().
 
-Sebastian Lackner (1):
-      wtsapi32: Improve WTSQueryUserToken stub.
+Piotr Caban (5):
+      msvcrt: Don't detect overflow in atol implementation.
+      msvcrt: Use correct locale when comparing strings in getenv.
+      msvcp90: Add support for more creation flags in _Mtx class.
+      msvcp140: Don't forward __ExceptionPtrDestroy to msvcr120.
+      msvcr110: Fix __crtGetShowWindowMode implementation.
 
-Sveinar Søpler (1):
-      wined3d: Add GPU information for the NVIDIA RTX series.
+Sebastian Lackner (4):
+      server: Improve handling of cursor position clipping for empty rectangle.
+      winex11: Forward all clipping requests to the right thread.
+      dinput: Do not wait for hook thread startup in IDirectInput8::Initialize.
+      dinput: Avoid deadlock when CS are acquired in different order.
 
-Sven Baars (14):
-      windowscodecs: Fix a memory leak (Valgrind).
-      gdiplus: Fix a memory leak on error path (Valgrind).
-      wsdapi: Fix some memory leaks (Valgrind).
-      strmbase: Fix some memory leaks (Valgrind).
-      ole32: Fix some memory leaks (Valgrind).
-      mstask: Fix some memory leaks on error path (Valgrind).
-      mstask: Move memory allocation to avoid a memory leak (Valgrind).
-      taskschd: Fix some memory leaks (Valgrind).
-      dinput: Free the device after a callback (Valgrind).
-      riched20: Fix IRichEditOle COM aggregation (Valgrind).
-      ws2_32: Use heap_realloc instead of HeapReAlloc to avoid an invalid realloc (Valgrind).
-      windowscodecs: Add missing source_bpp initialization (Valgrind).
-      setupapi: Add a missing return statement (Coverity).
-      dsound: Add missing SetEventHandle error handling (Coverity).
+Thomas J. Moore (1):
+      ntdll: Also try to stat() the drive root.
 
-Vijay Kiran Kamuju (2):
-      user32: Add DlgDirList wildcard checks.
-      wmvcore: Add stub for WMCheckURlExtension.
+Tim Schumacher (2):
+      winejoystick: Add support for wheel axes.
+      dinput: Map wheel, gas, and brake axes as well.
 
-Zebediah Figura (5):
-      comsvcs/tests: Add tests for implicit MTA creation in RegisterDispenser().
-      comsvcs: Create an implicit MTA thread in RegisterDispenser().
-      msvcr120: Add nexttoward implementation.
-      hid: Handle overlapped file handles.
-      ntdll: Avoid crashing while tracing parameters to NtCreateNamedPipeFile().
+Vijay Kiran Kamuju (3):
+      d3dx9: Generate ID3DXSkinInfo in D3DXLoadSkinMeshFromXof() when needed.
+      ntdll: Report system information SystemPerformanceInformation info class.
+      wpcap: Fix compile warnings for redefinition of PCAP_OPENFLAG_PROMISCUOUS.
 
-Zhiyi Zhang (5):
-      msacm32: Reference count local drivers.
-      user32: Check for null handle in GetRawInputData().
-      kernel32: Add DECLSPEC_HOTPATCH to VirtualAllocEx().
-      d3d8: Fix building on Mac.
-      user32: Fix a memory leak.
+Vincent Povirk (1):
+      uninstaller: Re-exec as 64-bit in wow64.
+
+Vlad Bespalov (1):
+      user32: Make LoadString[AW] patchable.
+
+Zebediah Figura (12):
+      mshtml: Open pages in the native browser in HlinkTarget_Navigate().
+      vbscript: Handle carriage return in more places.
+      hid: Fix length argument to GetOverlappedResult().
+      msi/tests: Test calling more functions from custom actions.
+      msi: Return MSIDBSTATE_ERROR when MsiGetDatabaseState() is called from a custom action.
+      msi: Fix handling of architecture in MSIREG_{Open, Delete}UninstallKey().
+      winebus.sys: Retrieve hidraw device strings from the parent USB device.
+      hid: Implement HidD_GetIndexedString().
+      devenum: Return S_FALSE from CreateClassEnumerator() if no devices exist.
+      d3d9/tests: Add more tests for reset state after DrawIndexedPrimitiveUP().
+      d3d8/tests: Port test_draw_primitive() from d3d9.
+      widl: Correctly set the import library offset for all imported types.
+
+Zhiyi Zhang (2):
+      kernel32: Open replaced file without GENERIC_WRITE in ReplaceFileW().
+      dinput: Fix a possible deadlock at exit.
 
 --
 Michael Stefaniuc
