@@ -1011,8 +1011,9 @@ static unsigned char get_parameter_fc( const var_t *var, int is_return, unsigned
         break;
     case TGT_ARRAY:
         *flags |= MustFree;
-        if (type_array_is_decl_as_ptr(var->declspec.type) && var->declspec.type->details.array.ptr_tfsoff &&
-            get_pointer_fc( var->declspec.type, var->attrs, !is_return ) == FC_RP)
+        if (type_array_is_decl_as_ptr(var->declspec.type)
+                && type_array_get_ptr_tfsoff(var->declspec.type)
+                && get_pointer_fc(var->declspec.type, var->attrs, !is_return) == FC_RP)
         {
             *typestring_offset = var->declspec.type->typestring_offset;
             *flags |= IsSimpleRef;
@@ -1228,9 +1229,9 @@ static unsigned int write_old_procformatstring_type(FILE *file, int indent, cons
     {
         unsigned short offset = var->typestring_offset;
 
-        if (!is_interpreted && is_array(var->declspec.type) &&
-            type_array_is_decl_as_ptr(var->declspec.type) &&
-            var->declspec.type->details.array.ptr_tfsoff)
+        if (!is_interpreted && is_array(var->declspec.type)
+                && type_array_is_decl_as_ptr(var->declspec.type)
+                && type_array_get_ptr_tfsoff(var->declspec.type))
             offset = var->declspec.type->typestring_offset;
 
         if (is_return)
@@ -3621,7 +3622,7 @@ static unsigned int write_type_tfs(FILE *file, const attr_list_t *attrs,
                 if (ptr_type != FC_RP) update_tfsoff( type, off, file );
                 *typeformat_offset += 4;
             }
-            type->details.array.ptr_tfsoff = off;
+            type_array_set_ptr_tfsoff(type, off);
         }
         return off;
     }
@@ -4350,10 +4351,10 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                 ((tc == FC_SMVARRAY || tc == FC_LGVARRAY) && in_attr) ||
                 (tc == FC_CARRAY && !in_attr))
             {
-                if (type_array_is_decl_as_ptr(type) && type->details.array.ptr_tfsoff)
+                if (type_array_is_decl_as_ptr(type) && type_array_get_ptr_tfsoff(type))
                 {
                     print_phase_function(file, indent, "Pointer", local_var_prefix, phase, var,
-                                         type->details.array.ptr_tfsoff);
+                                         type_array_get_ptr_tfsoff(type));
                     break;
                 }
                 print_phase_function(file, indent, array_type, local_var_prefix, phase, var, start_offset);

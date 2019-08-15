@@ -257,6 +257,20 @@ static inline expr_t *type_array_get_variance(const type_t *type)
     return type->details.array.length_is;
 }
 
+static inline unsigned short type_array_get_ptr_tfsoff(const type_t *type)
+{
+    type = type_get_real_type(type);
+    assert(type_get_type(type) == TYPE_ARRAY);
+    return type->details.array.ptr_tfsoff;
+}
+
+static inline void type_array_set_ptr_tfsoff(type_t *type, unsigned short ptr_tfsoff)
+{
+    type = type_get_real_type(type);
+    assert(type_get_type(type) == TYPE_ARRAY);
+    type->details.array.ptr_tfsoff = ptr_tfsoff;
+}
+
 static inline const decl_spec_t *type_array_get_element(const type_t *type)
 {
     type = type_get_real_type(type);
