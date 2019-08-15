@@ -2807,7 +2807,7 @@ static void check_async_uuid(type_t *iface)
 
     if (!is_attr(iface->attrs, ATTR_ASYNCUUID)) return;
 
-    inherit = iface->details.iface->inherit;
+    inherit = type_iface_get_inherit(iface);
     if (inherit && strcmp(inherit->name, "IUnknown"))
         inherit = type_iface_get_async_iface(inherit);
     if (!inherit)
