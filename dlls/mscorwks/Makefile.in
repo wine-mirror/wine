@@ -1,1 +1,6 @@
 MODULE    = mscorwks.dll
+
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	mscorwks_main.c
