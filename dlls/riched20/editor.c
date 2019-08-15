@@ -3578,7 +3578,6 @@ static LRESULT handle_EM_SETCHARFORMAT( ME_TextEditor *editor, WPARAM flags, con
     {
         ME_WrapMarkedParagraphs( editor );
         ME_UpdateScrollBar( editor );
-        ME_Repaint( editor );
     }
     return 1;
 }
@@ -3730,7 +3729,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       ME_CommitUndo(editor);
       ME_WrapMarkedParagraphs(editor);
       ME_UpdateScrollBar(editor);
-      ME_Repaint(editor);
 
       return TRUE;
   }
@@ -4005,7 +4003,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     BOOL result = ME_SetSelectionParaFormat(editor, (PARAFORMAT2 *)lParam);
     ME_WrapMarkedParagraphs(editor);
     ME_UpdateScrollBar(editor);
-    ME_Repaint(editor);
     ME_CommitUndo(editor);
     return result;
   }
