@@ -3532,6 +3532,56 @@ static LRESULT ME_WmCreate(ME_TextEditor *editor, LPARAM lParam, BOOL unicode)
   return 0;
 }
 
+static LRESULT handle_EM_SETCHARFORMAT( ME_TextEditor *editor, WPARAM flags, const CHARFORMAT2W *fmt_in )
+{
+    CHARFORMAT2W fmt;
+    BOOL changed = TRUE;
+    ME_Cursor start, end;
+
+    if (!cfany_to_cf2w( &fmt, fmt_in )) return 0;
+
+    if (flags & SCF_ALL)
+    {
+        if (editor->mode & TM_PLAINTEXT)
+        {
+            ME_SetDefaultCharFormat( editor, &fmt );
+        }
+        else
+        {
+            ME_SetCursorToStart( editor, &start );
+            ME_SetCharFormat( editor, &start, NULL, &fmt );
+            editor->nModifyStep = 1;
+        }
+    }
+    else if (flags & SCF_SELECTION)
+    {
+        if (editor->mode & TM_PLAINTEXT) return 0;
+        if (flags & SCF_WORD)
+        {
+            end = editor->pCursors[0];
+            ME_MoveCursorWords( editor, &end, +1 );
+            start = end;
+            ME_MoveCursorWords( editor, &start, -1 );
+            ME_SetCharFormat( editor, &start, &end, &fmt );
+        }
+        changed = ME_IsSelection( editor );
+        ME_SetSelectionCharFormat( editor, &fmt );
+        if (changed) editor->nModifyStep = 1;
+    }
+    else /* SCF_DEFAULT */
+    {
+        ME_SetDefaultCharFormat( editor, &fmt );
+    }
+
+    ME_CommitUndo( editor );
+    if (changed)
+    {
+        ME_WrapMarkedParagraphs( editor );
+        ME_UpdateScrollBar( editor );
+        ME_Repaint( editor );
+    }
+    return 1;
+}
 
 #define UNSUPPORTED_MSG(e) \
   case e:                  \
@@ -3933,46 +3983,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_GETEVENTMASK:
     return editor->nEventMask;
   case EM_SETCHARFORMAT:
-  {
-    CHARFORMAT2W p;
-    BOOL bRepaint = TRUE;
-    if (!cfany_to_cf2w(&p, (CHARFORMAT2W *)lParam))
-      return 0;
-    if (wParam & SCF_ALL) {
-      if (editor->mode & TM_PLAINTEXT) {
-        ME_SetDefaultCharFormat(editor, &p);
-      } else {
-        ME_Cursor start;
-        ME_SetCursorToStart(editor, &start);
-        ME_SetCharFormat(editor, &start, NULL, &p);
-        editor->nModifyStep = 1;
-      }
-    } else if (wParam & SCF_SELECTION) {
-      if (editor->mode & TM_PLAINTEXT)
-        return 0;
-      if (wParam & SCF_WORD) {
-        ME_Cursor start;
-        ME_Cursor end = editor->pCursors[0];
-        ME_MoveCursorWords(editor, &end, +1);
-        start = end;
-        ME_MoveCursorWords(editor, &start, -1);
-        ME_SetCharFormat(editor, &start, &end, &p);
-      }
-      bRepaint = ME_IsSelection(editor);
-      ME_SetSelectionCharFormat(editor, &p);
-      if (bRepaint) editor->nModifyStep = 1;
-    } else { /* SCF_DEFAULT */
-      ME_SetDefaultCharFormat(editor, &p);
-    }
-    ME_CommitUndo(editor);
-    if (bRepaint)
-    {
-      ME_WrapMarkedParagraphs(editor);
-      ME_UpdateScrollBar(editor);
-      ME_Repaint(editor);
-    }
-    return 1;
-  }
+    return handle_EM_SETCHARFORMAT( editor, wParam, (CHARFORMAT2W *)lParam );
   case EM_GETCHARFORMAT:
   {
     CHARFORMAT2W tmp, *dst = (CHARFORMAT2W *)lParam;
