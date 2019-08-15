@@ -59,7 +59,6 @@ type_t *make_type(enum type_type type)
     t->user_types_registered = FALSE;
     t->tfswrite = FALSE;
     t->checked = FALSE;
-    t->is_alias = FALSE;
     t->typelib_idx = -1;
     init_loc_info(&t->loc_info);
     return t;
@@ -188,12 +187,11 @@ type_t *type_new_pointer(unsigned char pointer_default, type_t *ref, attr_list_t
 
 type_t *type_new_alias(type_t *t, const char *name)
 {
-    type_t *a = duptype(t, 0);
+    type_t *a = make_type(TYPE_ALIAS);
 
     a->name = xstrdup(name);
     a->attrs = NULL;
     a->orig = t;
-    a->is_alias = TRUE;
     /* for pointer types */
     a->details = t->details;
     init_loc_info(&a->loc_info);

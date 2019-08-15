@@ -451,7 +451,6 @@ struct _type_t {
   unsigned int user_types_registered : 1;
   unsigned int tfswrite : 1;   /* if the type needs to be written to the TFS */
   unsigned int checked : 1;
-  unsigned int is_alias : 1; /* is the type an alias? */
 };
 
 struct _var_t {
@@ -593,8 +592,6 @@ char *format_namespace(struct namespace *namespace, const char *prefix, const ch
 
 static inline enum type_type type_get_type_detect_alias(const type_t *type)
 {
-    if (type->is_alias)
-        return TYPE_ALIAS;
     return type->type_type;
 }
 

@@ -59,7 +59,7 @@ type_t *duptype(type_t *t, int dupname);
 /* un-alias the type until finding the non-alias type */
 static inline type_t *type_get_real_type(const type_t *type)
 {
-    if (type->is_alias)
+    if (type->type_type == TYPE_ALIAS)
         return type_get_real_type(type->orig);
     else
         return (type_t *)type;
@@ -299,7 +299,7 @@ static inline unsigned char type_array_get_ptr_default_fc(const type_t *type)
 
 static inline int type_is_alias(const type_t *type)
 {
-    return type->is_alias;
+    return type->type_type == TYPE_ALIAS;
 }
 
 static inline type_t *type_alias_get_aliasee(const type_t *type)
