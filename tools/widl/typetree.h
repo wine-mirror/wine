@@ -162,6 +162,13 @@ static inline type_t *type_iface_get_inherit(const type_t *type)
     return type->details.iface->inherit;
 }
 
+static inline type_t *type_iface_get_async_iface(const type_t *type)
+{
+    type = type_get_real_type(type);
+    assert(type_get_type(type) == TYPE_INTERFACE);
+    return type->details.iface->async_iface;
+}
+
 static inline var_list_t *type_dispiface_get_props(const type_t *type)
 {
     type = type_get_real_type(type);

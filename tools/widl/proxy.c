@@ -739,7 +739,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "{\n");
   indent++;
   print_proxy( "%s_%s\n",
-               iface->details.iface->async_iface == iface ? "CStdAsyncStubBuffer" : "CStdStubBuffer",
+               type_iface_get_async_iface(iface) == iface ? "CStdAsyncStubBuffer" : "CStdStubBuffer",
                need_delegation_indirect(iface) ? "DELEGATING_METHODS" : "METHODS");
   indent--;
   print_proxy( "}\n");
@@ -840,8 +840,8 @@ static void write_proxy_stmts(const statement_list_t *stmts, unsigned int *proc_
       if (need_proxy(iface))
       {
         write_proxy(iface, proc_offset);
-        if (iface->details.iface->async_iface)
-          write_proxy(iface->details.iface->async_iface, proc_offset);
+        if (type_iface_get_async_iface(iface))
+          write_proxy(type_iface_get_async_iface(iface), proc_offset);
       }
     }
   }
@@ -870,9 +870,9 @@ static void build_iface_list( const statement_list_t *stmts, type_t **ifaces[], 
             {
                 *ifaces = xrealloc( *ifaces, (*count + 1) * sizeof(**ifaces) );
                 (*ifaces)[(*count)++] = iface;
-                if (iface->details.iface->async_iface)
+                if (type_iface_get_async_iface(iface))
                 {
-                    iface = iface->details.iface->async_iface;
+                    iface = type_iface_get_async_iface(iface);
                     *ifaces = xrealloc( *ifaces, (*count + 1) * sizeof(**ifaces) );
                     (*ifaces)[(*count)++] = iface;
                 }
@@ -1012,7 +1012,7 @@ static void write_proxy_routines(const statement_list_t *stmts)
   table_version = get_stub_mode() == MODE_Oif ? 2 : 1;
   for (i = 0; i < count; i++)
   {
-      if (interfaces[i]->details.iface->async_iface != interfaces[i]) continue;
+      if (type_iface_get_async_iface(interfaces[i]) != interfaces[i]) continue;
       if (table_version != 6)
       {
           fprintf(proxy, "static const IID *_AsyncInterfaceTable[] =\n");

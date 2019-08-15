@@ -2809,7 +2809,7 @@ static void check_async_uuid(type_t *iface)
 
     inherit = iface->details.iface->inherit;
     if (inherit && strcmp(inherit->name, "IUnknown"))
-        inherit = inherit->details.iface->async_iface;
+        inherit = type_iface_get_async_iface(inherit);
     if (!inherit)
         error_loc("async_uuid applied to an interface with incompatible parent\n");
 

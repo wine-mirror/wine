@@ -1651,8 +1651,8 @@ static void write_forward_decls(FILE *header, const statement_list_t *stmts)
           if (is_object(iface) || is_attr(iface->attrs, ATTR_DISPINTERFACE))
           {
             write_forward(header, iface);
-            if (iface->details.iface->async_iface)
-              write_forward(header, iface->details.iface->async_iface);
+            if (type_iface_get_async_iface(iface))
+              write_forward(header, type_iface_get_async_iface(iface));
           }
         }
         else if (type_get_type(stmt->u.type) == TYPE_COCLASS)
@@ -1688,7 +1688,7 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
         if (type_get_type(stmt->u.type) == TYPE_INTERFACE)
         {
           type_t *iface = stmt->u.type;
-          type_t *async_iface = iface->details.iface->async_iface;
+          type_t *async_iface = type_iface_get_async_iface(iface);
           if (is_object(iface)) is_object_interface++;
           if (is_attr(stmt->u.type->attrs, ATTR_DISPINTERFACE) || is_object(stmt->u.type))
           {
