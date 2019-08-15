@@ -1548,7 +1548,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
     {
       ptr_attr = get_attrv(ptr->attrs, ATTR_POINTERTYPE);
       if (!ptr_attr && type_is_alias(ptr))
-        ptr = type_alias_get_aliasee(ptr);
+        ptr = type_alias_get_aliasee_type(ptr);
       else
         break;
     }

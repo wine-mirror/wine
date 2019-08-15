@@ -60,7 +60,7 @@ type_t *duptype(type_t *t, int dupname);
 static inline type_t *type_get_real_type(const type_t *type)
 {
     if (type->type_type == TYPE_ALIAS)
-        return type_get_real_type(type->orig);
+        return type_get_real_type(type->details.alias.aliasee.type);
     else
         return (type_t *)type;
 }
@@ -302,10 +302,10 @@ static inline int type_is_alias(const type_t *type)
     return type->type_type == TYPE_ALIAS;
 }
 
-static inline type_t *type_alias_get_aliasee(const type_t *type)
+static inline type_t *type_alias_get_aliasee_type(const type_t *type)
 {
     assert(type_is_alias(type));
-    return type->orig;
+    return type->details.alias.aliasee.type;
 }
 
 static inline ifref_list_t *type_coclass_get_ifaces(const type_t *type)

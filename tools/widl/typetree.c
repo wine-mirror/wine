@@ -49,7 +49,6 @@ type_t *make_type(enum type_type type)
     t->type_type = type;
     t->attrs = NULL;
     t->c_name = NULL;
-    t->orig = NULL;
     memset(&t->details, 0, sizeof(t->details));
     t->typestring_offset = 0;
     t->ptrdesc = 0;
@@ -191,9 +190,7 @@ type_t *type_new_alias(type_t *t, const char *name)
 
     a->name = xstrdup(name);
     a->attrs = NULL;
-    a->orig = t;
-    /* for pointer types */
-    a->details = t->details;
+    a->details.alias.aliasee.type = t;
     init_loc_info(&a->loc_info);
 
     return a;

@@ -197,7 +197,7 @@ static void *get_aliaschain_attrp(const type_t *type, enum attr_type attr)
         if (is_attr(t->attrs, attr))
             return get_attrp(t->attrs, attr);
         else if (type_is_alias(t))
-            t = type_alias_get_aliasee(t);
+            t = type_alias_get_aliasee_type(t);
         else return NULL;
     }
 }
@@ -267,7 +267,7 @@ unsigned char get_pointer_fc(const type_t *type, const attr_list_t *attrs, int t
     if (pointer_type)
         return pointer_type;
 
-    for (t = type; type_is_alias(t); t = type_alias_get_aliasee(t))
+    for (t = type; type_is_alias(t); t = type_alias_get_aliasee_type(t))
     {
         pointer_type = get_attrv(t->attrs, ATTR_POINTERTYPE);
         if (pointer_type)
@@ -316,7 +316,7 @@ static type_t *get_user_type(const type_t *t, const char **pname)
         }
 
         if (type_is_alias(t))
-            t = type_alias_get_aliasee(t);
+            t = type_alias_get_aliasee_type(t);
         else
             return NULL;
     }
@@ -857,7 +857,7 @@ static const char *get_context_handle_type_name(const type_t *type)
     const type_t *t;
     for (t = type;
          is_ptr(t) || type_is_alias(t);
-         t = type_is_alias(t) ? type_alias_get_aliasee(t) : type_pointer_get_ref_type(t))
+         t = type_is_alias(t) ? type_alias_get_aliasee_type(t) : type_pointer_get_ref_type(t))
         if (is_attr(t->attrs, ATTR_CONTEXTHANDLE))
             return t->name;
     assert(0);

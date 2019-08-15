@@ -75,7 +75,7 @@ int is_ptrchain_attr(const var_t *var, enum attr_type t)
             if (is_attr(type->attrs, t))
                 return 1;
             else if (type_is_alias(type))
-                type = type_alias_get_aliasee(type);
+                type = type_alias_get_aliasee_type(type);
             else if (is_ptr(type))
                 type = type_pointer_get_ref_type(type);
             else return 0;
@@ -91,7 +91,7 @@ int is_aliaschain_attr(const type_t *type, enum attr_type attr)
         if (is_attr(t->attrs, attr))
             return 1;
         else if (type_is_alias(t))
-            t = type_alias_get_aliasee(t);
+            t = type_alias_get_aliasee_type(t);
         else return 0;
     }
 }
@@ -602,7 +602,7 @@ unsigned int get_context_handle_offset( const type_t *type )
 
     while (!is_attr( type->attrs, ATTR_CONTEXTHANDLE ))
     {
-        if (type_is_alias( type )) type = type_alias_get_aliasee( type );
+        if (type_is_alias( type )) type = type_alias_get_aliasee_type( type );
         else if (is_ptr( type )) type = type_pointer_get_ref_type( type );
         else error( "internal error: %s is not a context handle\n", type->name );
     }
@@ -622,7 +622,7 @@ unsigned int get_generic_handle_offset( const type_t *type )
 
     while (!is_attr( type->attrs, ATTR_HANDLE ))
     {
-        if (type_is_alias( type )) type = type_alias_get_aliasee( type );
+        if (type_is_alias( type )) type = type_alias_get_aliasee_type( type );
         else if (is_ptr( type )) type = type_pointer_get_ref_type( type );
         else error( "internal error: %s is not a generic handle\n", type->name );
     }
@@ -701,7 +701,7 @@ void check_for_additional_prototype_types(type_t *type)
     }
 
     if (type_is_alias(type))
-      type = type_alias_get_aliasee(type);
+      type = type_alias_get_aliasee_type(type);
     else if (is_ptr(type))
       type = type_pointer_get_ref_type(type);
     else if (is_array(type))
@@ -789,7 +789,7 @@ static void write_generic_handle_routines(FILE *header)
 static void write_typedef(FILE *header, type_t *type)
 {
   fprintf(header, "typedef ");
-  write_type_def_or_decl(header, type_alias_get_aliasee(type), FALSE, type->name);
+  write_type_def_or_decl(header, type_alias_get_aliasee_type(type), FALSE, type->name);
   fprintf(header, ";\n");
 }
 
@@ -852,7 +852,7 @@ const type_t* get_explicit_generic_handle_type(const var_t* var)
     const type_t *t;
     for (t = var->declspec.type;
          is_ptr(t) || type_is_alias(t);
-         t = type_is_alias(t) ? type_alias_get_aliasee(t) : type_pointer_get_ref_type(t))
+         t = type_is_alias(t) ? type_alias_get_aliasee_type(t) : type_pointer_get_ref_type(t))
         if ((type_get_type_detect_alias(t) != TYPE_BASIC || type_basic_get_type(t) != TYPE_BASIC_HANDLE) &&
             is_attr(t->attrs, ATTR_HANDLE))
             return t;

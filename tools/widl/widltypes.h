@@ -393,6 +393,11 @@ struct bitfield_details
   const expr_t *bits;
 };
 
+struct alias_details
+{
+    struct _decl_spec_t aliasee;
+};
+
 #define HASHMAX 64
 
 struct namespace {
@@ -438,9 +443,9 @@ struct _type_t {
     struct basic_details basic;
     struct pointer_details pointer;
     struct bitfield_details bitfield;
+    struct alias_details alias;
   } details;
   const char *c_name;
-  type_t *orig;                   /* dup'd types */
   unsigned int typestring_offset;
   unsigned int ptrdesc;           /* used for complex structs */
   int typelib_idx;
