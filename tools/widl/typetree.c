@@ -217,7 +217,7 @@ type_t *type_new_coclass(char *name)
 }
 
 
-type_t *type_new_array(const char *name, type_t *element, int declptr,
+type_t *type_new_array(const char *name, const decl_spec_t *element, int declptr,
                        unsigned int dim, expr_t *size_is, expr_t *length_is,
                        unsigned char ptr_default_fc)
 {
@@ -229,7 +229,8 @@ type_t *type_new_array(const char *name, type_t *element, int declptr,
         t->details.array.size_is = size_is;
     else
         t->details.array.dim = dim;
-    t->details.array.elem.type = element;
+    if (element)
+        t->details.array.elem = *element;
     t->details.array.ptr_def_fc = ptr_default_fc;
     return t;
 }

@@ -1622,11 +1622,11 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
           error_loc("%s: cannot specify size_is for an already sized array\n", v->name);
         else
           *ptype = type_new_array((*ptype)->name,
-                                  type_array_get_element_type(*ptype), FALSE,
+                                  type_array_get_element(*ptype), FALSE,
                                   0, dim, NULL, FC_RP);
       }
       else if (is_ptr(*ptype))
-        *ptype = type_new_array((*ptype)->name, type_pointer_get_ref_type(*ptype), TRUE,
+        *ptype = type_new_array((*ptype)->name, type_pointer_get_ref(*ptype), TRUE,
                                 0, dim, NULL, pointer_default);
       else
         error_loc("%s: size_is attribute applied to illegal type\n", v->name);
@@ -1648,7 +1648,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
       if (is_array(*ptype))
       {
         *ptype = type_new_array((*ptype)->name,
-                                type_array_get_element_type(*ptype),
+                                type_array_get_element(*ptype),
                                 type_array_is_decl_as_ptr(*ptype),
                                 type_array_get_dim(*ptype),
                                 type_array_get_conformance(*ptype),
@@ -1802,8 +1802,8 @@ static declarator_t *make_declarator(var_t *var)
 
 static type_t *make_safearray(type_t *type)
 {
-  return type_new_array(NULL, type_new_alias(type, "SAFEARRAY"), TRUE, 0,
-                        NULL, NULL, FC_RP);
+    const decl_spec_t ds = {.type = type_new_alias(type, "SAFEARRAY")};
+    return type_new_array(NULL, &ds, TRUE, 0, NULL, NULL, FC_RP);
 }
 
 static typelib_t *make_library(const char *name, const attr_list_t *attrs)
