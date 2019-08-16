@@ -132,6 +132,46 @@ DEFINE_GUID(GUID_DSCFX_CLASS_NS,            0xE07F903F,0x62FD,0x4E60,0x8C,0xDD,0
 DEFINE_GUID(GUID_DSCFX_MS_NS,               0x11C5C73B,0x66E9,0x4BA1,0xA0,0xBA,0xE8,0x14,0xC6,0xEE,0xD9,0x2D);
 DEFINE_GUID(GUID_DSCFX_SYSTEM_NS,           0x5AB0882E,0x7274,0x4516,0x87,0x7D,0x4E,0xEE,0x99,0xBA,0x4F,0xD0);
 
+DEFINE_GUID(IID_IDirectSoundFXGargle,       0xd616f352,0xd622,0x11ce,0xaa,0xc5,0x00,0x20,0xaf,0x0b,0x99,0xa3);
+typedef struct IDirectSoundFXGargle8        *LPDIRECTSOUNDFXGARGLE8;
+#define IDirectSoundFXGargle8               IDirectSoundFXGargle
+#define IID_IDirectSoundFXGargle8           IID_IDirectSoundFXGargle
+
+DEFINE_GUID(IID_IDirectSoundFXChorus,       0x880842e3,0x145f,0x43e6,0xa9,0x34,0xa7,0x18,0x06,0xe5,0x05,0x47);
+typedef struct IDirectSoundFXChorus8        *LPDIRECTSOUNDFXCHORUS8;
+#define IDirectSoundFXChorus8               IDirectSoundFXChorus
+#define IID_IDirectSoundFXChorus8           IID_IDirectSoundFXChorus
+
+DEFINE_GUID(IID_IDirectSoundFXFlanger,      0x903e9878,0x2c92,0x4072,0x9b,0x2c,0xea,0x68,0xf5,0x39,0x67,0x83);
+typedef struct IDirectSoundFXFlanger8       *LPDIRECTSOUNDFXFLANGER8;
+#define IDirectSoundFXFlanger8              IDirectSoundFXFlanger
+#define IID_IDirectSoundFXFlanger8          IID_IDirectSoundFXFlanger
+
+DEFINE_GUID(IID_IDirectSoundFXEcho,         0x8bd28edf,0x50db,0x4e92,0xa2,0xbd,0x44,0x54,0x88, 0xd1,0xed,0x42);
+typedef struct IDirectSoundFXEcho8          *LPDIRECTSOUNDFXECHO8;
+#define IDirectSoundFXEcho8                 IDirectSoundFXEcho
+#define IID_IDirectSoundFXEcho8             IID_IDirectSoundFXEcho
+
+DEFINE_GUID(IID_IDirectSoundFXDistortion,   0x8ecf4326,0x455f,0x4d8b,0xbd,0xa9,0x8d,0x5d,0x3e,0x9e,0x3e,0x0b);
+typedef struct IDirectSoundFXDistortion8    *LPDIRECTSOUNDFXDISTORTION8;
+#define IDirectSoundFXDistortion8           IDirectSoundFXDistortion
+#define IID_IDirectSoundFXDistortion8       IID_IDirectSoundFXDistortion
+
+DEFINE_GUID(IID_IDirectSoundFXCompressor,   0x4bbd1154,0x62f6,0x4e2c,0xa1,0x5c,0xd3,0xb6,0xc4,0x17,0xf7,0xa0);
+typedef struct IDirectSoundFXCompressor8    *LPDIRECTSOUNDFXCOMPRESSOR8;
+#define IDirectSoundFXCompressor8           IDirectSoundFXCompressor
+#define IID_IDirectSoundFXCompressor8       IID_IDirectSoundFXCompressor
+
+DEFINE_GUID(IID_IDirectSoundFXParamEq,      0xc03ca9fe,0xfe90,0x4204,0x80,0x78,0x82,0x33,0x4c,0xd1,0x77,0xda);
+typedef struct IDirectSoundFXParamEq8       *LPDIRECTSOUNDFXPARAMEQ8;
+#define IDirectSoundFXParamEq8              IDirectSoundFXParamEq
+#define IID_IDirectSoundFXParamEq8          IID_IDirectSoundFXParamEq
+
+DEFINE_GUID(IID_IDirectSoundFXWavesReverb,  0x46858c3a,0x0dc6,0x45e3,0xb7,0x60,0xd4,0xee,0xf1,0x6c,0xb3,0x25);
+typedef struct IDirectSoundFXWavesReverb8   *LPDIRECTSOUNDFXWAVESREVERB8;
+#define IDirectSoundFXWavesReverb8          IDirectSoundFXWavesReverb
+#define IID_IDirectSoundFXWavesReverb8      IID_IDirectSoundFXWavesReverb
+
 #define	_FACDS		0x878
 #define	MAKE_DSHRESULT(code)		MAKE_HRESULT(1,_FACDS,code)
 
@@ -1276,6 +1316,317 @@ DECLARE_INTERFACE_(IDirectSoundFXI3DL2Reverb,IUnknown)
 #define IDirectSoundFXI3DL2Reverb_GetAllParameters(p,a) (p)->GetAllParameters(a)
 #define IDirectSoundFXI3DL2Reverb_SetPreset(p,a)        (p)->SetPreset(a)
 #define IDirectSoundFXI3DL2Reverb_GetPreset(p,a)        (p)->GetPreset(a)
+#endif
+
+typedef struct _DSFXGargle
+{
+    DWORD       dwRateHz;
+    DWORD       dwWaveShape;
+} DSFXGargle, *LPDSFXGargle;
+
+typedef const DSFXGargle *LPCDSFXGargle;
+
+#define INTERFACE IDirectSoundFXGargle
+DECLARE_INTERFACE_(IDirectSoundFXGargle,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)(THIS_ REFIID, void**) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+
+    /*** IDirectSoundFXGargle methods ***/
+    STDMETHOD(SetAllParameters)(THIS_ const DSFXGargle *gargle) PURE;
+    STDMETHOD(GetAllParameters)(THIS_ DSFXGargle *gargle) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+#define IDirectSoundFXGargle_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundFXGargle_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSoundFXGargle_Release(p)            (p)->lpVtbl->Release(p)
+#define IDirectSoundFXGargle_SetAllParameters(p,a) (p)->lpVtbl->SetAllParameters(p,a)
+#define IDirectSoundFXGargle_GetAllParameters(p,a) (p)->lpVtbl->GetAllParameters(p,a)
+#else
+#define IDirectSoundFXGargle_QueryInterface(p,a,b) (p)->QueryInterface(p,a,b)
+#define IDirectSoundFXGargle_AddRef(p)             (p)->AddRef(p)
+#define IDirectSoundFXGargle_Release(p)            (p)->Release(p)
+#define IDirectSoundFXGargle_SetAllParameters(p,a) (p)->SetAllParameters(a)
+#define IDirectSoundFXGargle_GetAllParameters(p,a) (p)->GetAllParameters(a)
+#endif
+
+typedef struct _DSFXChorus
+{
+    FLOAT fWetDryMix;
+    FLOAT fDepth;
+    FLOAT fFeedback;
+    FLOAT fFrequency;
+    LONG  lWaveform;
+    FLOAT fDelay;
+    LONG  lPhase;
+} DSFXChorus, *LPDSFXChorus;
+
+typedef const DSFXChorus *LPCDSFXChorus;
+
+#define INTERFACE IDirectSoundFXChorus
+DECLARE_INTERFACE_(IDirectSoundFXChorus,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)(THIS_ REFIID, void**) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+
+    /*** IDirectSoundFXChorus methods ***/
+    STDMETHOD(SetAllParameters)(THIS_ const DSFXChorus *chorus) PURE;
+    STDMETHOD(GetAllParameters)(THIS_ DSFXChorus *chorus) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+#define IDirectSoundFXChorus_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundFXChorus_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSoundFXChorus_Release(p)            (p)->lpVtbl->Release(p)
+#define IDirectSoundFXChorus_SetAllParameters(p,a) (p)->lpVtbl->SetAllParameters(p,a)
+#define IDirectSoundFXChorus_GetAllParameters(p,a) (p)->lpVtbl->GetAllParameters(p,a)
+#else
+#define IDirectSoundFXChorus_QueryInterface(p,a,b) (p)->QueryInterface(p,a,b)
+#define IDirectSoundFXChorus_AddRef(p)             (p)->AddRef(p)
+#define IDirectSoundFXChorus_Release(p)            (p)->Release(p)
+#define IDirectSoundFXChorus_SetAllParameters(p,a) (p)->SetAllParameters(a)
+#define IDirectSoundFXChorus_GetAllParameters(p,a) (p)->GetAllParameters(a)
+#endif
+
+typedef struct _DSFXFlanger
+{
+    FLOAT fWetDryMix;
+    FLOAT fDepth;
+    FLOAT fFeedback;
+    FLOAT fFrequency;
+    LONG  lWaveform;
+    FLOAT fDelay;
+    LONG  lPhase;
+} DSFXFlanger, *LPDSFXFlanger;
+
+typedef const DSFXFlanger *LPCDSFXFlanger;
+
+#define INTERFACE IDirectSoundFXFlanger
+DECLARE_INTERFACE_(IDirectSoundFXFlanger,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)(THIS_ REFIID, void**) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+
+    /*** IDirectSoundFXFlanger methods ***/
+    STDMETHOD(SetAllParameters)(THIS_ const DSFXFlanger *flanger) PURE;
+    STDMETHOD(GetAllParameters)(THIS_ DSFXFlanger *flanger) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+#define IDirectSoundFXFlanger_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundFXFlanger_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSoundFXFlanger_Release(p)            (p)->lpVtbl->Release(p)
+#define IDirectSoundFXFlanger_SetAllParameters(p,a) (p)->lpVtbl->SetAllParameters(p,a)
+#define IDirectSoundFXFlanger_GetAllParameters(p,a) (p)->lpVtbl->GetAllParameters(p,a)
+#else
+#define IDirectSoundFXFlanger_QueryInterface(p,a,b) (p)->QueryInterface(p,a,b)
+#define IDirectSoundFXFlanger_AddRef(p)             (p)->AddRef(p)
+#define IDirectSoundFXFlanger_Release(p)            (p)->Release(p)
+#define IDirectSoundFXFlanger_SetAllParameters(p,a) (p)->SetAllParameters(a)
+#define IDirectSoundFXFlanger_GetAllParameters(p,a) (p)->GetAllParameters(a)
+#endif
+
+typedef struct _DSFXEcho
+{
+    FLOAT fWetDryMix;
+    FLOAT fFeedback;
+    FLOAT fLeftDelay;
+    FLOAT fRightDelay;
+    LONG  lPanDelay;
+} DSFXEcho, *LPDSFXEcho;
+
+typedef const DSFXEcho *LPCDSFXEcho;
+
+#define INTERFACE IDirectSoundFXEcho
+DECLARE_INTERFACE_(IDirectSoundFXEcho,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)(THIS_ REFIID, void**) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+
+    /*** IDirectSoundFXEcho methods ***/
+    STDMETHOD(SetAllParameters)(THIS_ const DSFXEcho *echo) PURE;
+    STDMETHOD(GetAllParameters)(THIS_ DSFXEcho *echo) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+#define IDirectSoundFXEcho_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundFXEcho_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSoundFXEcho_Release(p)            (p)->lpVtbl->Release(p)
+#define IDirectSoundFXEcho_SetAllParameters(p,a) (p)->lpVtbl->SetAllParameters(p,a)
+#define IDirectSoundFXEcho_GetAllParameters(p,a) (p)->lpVtbl->GetAllParameters(p,a)
+#else
+#define IDirectSoundFXEcho_QueryInterface(p,a,b) (p)->QueryInterface(p,a,b)
+#define IDirectSoundFXEcho_AddRef(p)             (p)->AddRef(p)
+#define IDirectSoundFXEcho_Release(p)            (p)->Release(p)
+#define IDirectSoundFXEcho_SetAllParameters(p,a) (p)->SetAllParameters(a)
+#define IDirectSoundFXEcho_GetAllParameters(p,a) (p)->GetAllParameters(a)
+#endif
+
+typedef struct _DSFXDistortion
+{
+    FLOAT fGain;
+    FLOAT fEdge;
+    FLOAT fPostEQCenterFrequency;
+    FLOAT fPostEQBandwidth;
+    FLOAT fPreLowpassCutoff;
+} DSFXDistortion, *LPDSFXDistortion;
+
+typedef const DSFXDistortion *LPCDSFXDistortion;
+
+#define INTERFACE IDirectSoundFXDistortion
+DECLARE_INTERFACE_(IDirectSoundFXDistortion,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)(THIS_ REFIID, void**) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+
+    /*** IDirectSoundFXDistortion methods ***/
+    STDMETHOD(SetAllParameters)(THIS_ const DSFXDistortion *distortion) PURE;
+    STDMETHOD(GetAllParameters)(THIS_ DSFXDistortion *distortion) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+#define IDirectSoundFXDistortion_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundFXDistortion_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSoundFXDistortion_Release(p)            (p)->lpVtbl->Release(p)
+#define IDirectSoundFXDistortion_SetAllParameters(p,a) (p)->lpVtbl->SetAllParameters(p,a)
+#define IDirectSoundFXDistortion_GetAllParameters(p,a) (p)->lpVtbl->GetAllParameters(p,a)
+#else
+#define IDirectSoundFXDistortion_QueryInterface(p,a,b) (p)->QueryInterface(p,a,b)
+#define IDirectSoundFXDistortion_AddRef(p)             (p)->AddRef(p)
+#define IDirectSoundFXDistortion_Release(p)            (p)->Release(p)
+#define IDirectSoundFXDistortion_SetAllParameters(p,a) (p)->SetAllParameters(a)
+#define IDirectSoundFXDistortion_GetAllParameters(p,a) (p)->GetAllParameters(a)
+#endif
+
+typedef struct _DSFXCompressor
+{
+    FLOAT fGain;
+    FLOAT fAttack;
+    FLOAT fRelease;
+    FLOAT fThreshold;
+    FLOAT fRatio;
+    FLOAT fPredelay;
+} DSFXCompressor, *LPDSFXCompressor;
+
+typedef const DSFXCompressor *LPCDSFXCompressor;
+
+#define INTERFACE IDirectSoundFXCompressor
+DECLARE_INTERFACE_(IDirectSoundFXCompressor, IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)(THIS_ REFIID, void**) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+
+    /*** IDirectSoundFXCompressor methods ***/
+    STDMETHOD(SetAllParameters)(THIS_ const DSFXCompressor *compressor) PURE;
+    STDMETHOD(GetAllParameters)(THIS_ DSFXCompressor *compressor) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+#define IDirectSoundFXCompressor_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundFXCompressor_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSoundFXCompressor_Release(p)            (p)->lpVtbl->Release(p)
+#define IDirectSoundFXCompressor_SetAllParameters(p,a) (p)->lpVtbl->SetAllParameters(p,a)
+#define IDirectSoundFXCompressor_GetAllParameters(p,a) (p)->lpVtbl->GetAllParameters(p,a)
+#else
+#define IDirectSoundFXCompressor_QueryInterface(p,a,b) (p)->QueryInterface(p,a,b)
+#define IDirectSoundFXCompressor_AddRef(p)             (p)->AddRef(p)
+#define IDirectSoundFXCompressor_Release(p)            (p)->Release(p)
+#define IDirectSoundFXCompressor_SetAllParameters(p,a) (p)->SetAllParameters(a)
+#define IDirectSoundFXCompressor_GetAllParameters(p,a) (p)->GetAllParameters(a)
+#endif
+
+typedef struct _DSFXParamEq
+{
+    FLOAT fCenter;
+    FLOAT fBandwidth;
+    FLOAT fGain;
+} DSFXParamEq, *LPDSFXParamEq;
+
+typedef const DSFXParamEq *LPCDSFXParamEq;
+
+#define INTERFACE IDirectSoundFXParamEq
+DECLARE_INTERFACE_(IDirectSoundFXParamEq, IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)(THIS_ REFIID, void**) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+
+    /*** IDirectSoundFXParamEq methods ***/
+    STDMETHOD(SetAllParameters)(THIS_ const DSFXParamEq *param) PURE;
+    STDMETHOD(GetAllParameters)(THIS_ DSFXParamEq *param) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+#define IDirectSoundFXParamEq_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundFXParamEq_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSoundFXParamEq_Release(p)            (p)->lpVtbl->Release(p)
+#define IDirectSoundFXParamEq_SetAllParameters(p,a) (p)->lpVtbl->SetAllParameters(p,a)
+#define IDirectSoundFXParamEq_GetAllParameters(p,a) (p)->lpVtbl->GetAllParameters(p,a)
+#else
+#define IDirectSoundFXParamEq_QueryInterface(p,a,b) (p)->QueryInterface(p,a,b)
+#define IDirectSoundFXParamEq_AddRef(p)             (p)->AddRef(p)
+#define IDirectSoundFXParamEq_Release(p)            (p)->Release(p)
+#define IDirectSoundFXParamEq_SetAllParameters(p,a) (p)->SetAllParameters(a)
+#define IDirectSoundFXParamEq_GetAllParameters(p,a) (p)->GetAllParameters(a)
+#endif
+
+typedef struct _DSFXWavesReverb
+{
+    FLOAT fInGain;
+    FLOAT fReverbMix;
+    FLOAT fReverbTime;
+    FLOAT fHighFreqRTRatio;
+} DSFXWavesReverb, *LPDSFXWavesReverb;
+
+typedef const DSFXWavesReverb *LPCDSFXWavesReverb;
+
+#define INTERFACE IDirectSoundFXWavesReverb
+DECLARE_INTERFACE_(IDirectSoundFXWavesReverb,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)(THIS_ REFIID, void**) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+
+    /*** IDirectSoundFXWavesReverb methods ***/
+    STDMETHOD(SetAllParameters)(THIS_ const DSFXWavesReverb *reverb) PURE;
+    STDMETHOD(GetAllParameters)(THIS_ DSFXWavesReverb *reverb) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+#define IDirectSoundFXWavesReverb_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundFXWavesReverb_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSoundFXWavesReverb_Release(p)            (p)->lpVtbl->Release(p)
+#define IDirectSoundFXWavesReverb_SetAllParameters(p,a) (p)->lpVtbl->SetAllParameters(p,a)
+#define IDirectSoundFXWavesReverb_GetAllParameters(p,a) (p)->lpVtbl->GetAllParameters(p,a)
+#else
+#define IDirectSoundFXWavesReverb_QueryInterface(p,a,b) (p)->QueryInterface(p,a,b)
+#define IDirectSoundFXWavesReverb_AddRef(p)             (p)->AddRef(p)
+#define IDirectSoundFXWavesReverb_Release(p)            (p)->Release(p)
+#define IDirectSoundFXWavesReverb_SetAllParameters(p,a) (p)->SetAllParameters(a)
+#define IDirectSoundFXWavesReverb_GetAllParameters(p,a) (p)->GetAllParameters(a)
 #endif
 
 #ifdef __cplusplus
