@@ -185,7 +185,7 @@ static void write_function_stub(const type_t *iface, const var_t *func, unsigned
                  * be direct, otherwise it is a pointer */
                 const char *ch_ptr = is_aliaschain_attr(var->declspec.type, ATTR_CONTEXTHANDLE) ? "*" : "";
                 print_server("(");
-                write_type_decl_left(server, var->declspec.type);
+                write_type_decl_left(server, &var->declspec);
                 fprintf(server, ")%sNDRSContextValue(__frame->%s)", ch_ptr, var->name);
             }
             else

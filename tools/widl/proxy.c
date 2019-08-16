@@ -202,7 +202,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   if (is_interpreted_func( iface, func ))
   {
       if (get_stub_mode() == MODE_Oif && !is_callas( func->attrs )) return;
-      write_type_decl_left(proxy, retval->declspec.type);
+      write_type_decl_left(proxy, &retval->declspec);
       print_proxy( " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
       write_args(proxy, args, iface->name, 1, TRUE);
       print_proxy( ")\n");
@@ -219,7 +219,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   print_proxy( "}\n");
   print_proxy( "\n");
 
-  write_type_decl_left(proxy, retval->declspec.type);
+  write_type_decl_left(proxy, &retval->declspec);
   print_proxy( " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
   write_args(proxy, args, iface->name, 1, TRUE);
   print_proxy( ")\n");

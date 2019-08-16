@@ -4652,7 +4652,7 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
             }
 
             print_file(file, indent, "%s", "");
-            write_type_decl_left(file, var->declspec.type);
+            write_type_decl_left(file, &var->declspec);
             fprintf(file, " ");
             if (type_get_type(var->declspec.type) == TYPE_ARRAY &&
                 !type_array_is_decl_as_ptr(var->declspec.type)) {
@@ -4805,7 +4805,7 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
     if (args) LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
     {
         print_file(file, 2, "%s", "");
-        write_type_left( file, (type_t *)arg->declspec.type, NAME_DEFAULT, TRUE );
+        write_type_left( file, &arg->declspec, NAME_DEFAULT, TRUE );
         if (needs_space_after( arg->declspec.type )) fputc( ' ', file );
         if (is_array( arg->declspec.type ) && !type_array_is_decl_as_ptr( arg->declspec.type )) fputc( '*', file );
 
@@ -4869,10 +4869,11 @@ int write_expr_eval_routines(FILE *file, const char *iface)
         }
         else
         {
+            decl_spec_t ds = {.type = (type_t *)eval->cont_type};
             print_file(file, 1, "%s", "");
-            write_type_left(file, (type_t *)eval->cont_type, NAME_DEFAULT, TRUE);
+            write_type_left(file, &ds, NAME_DEFAULT, TRUE);
             fprintf(file, " *%s = (", var_name);
-            write_type_left(file, (type_t *)eval->cont_type, NAME_DEFAULT, TRUE);
+            write_type_left(file, &ds, NAME_DEFAULT, TRUE);
             fprintf(file, " *)(pStubMsg->StackTop - %u);\n", eval->baseoff);
         }
         print_file(file, 1, "pStubMsg->Offset = 0;\n"); /* FIXME */
@@ -4966,8 +4967,8 @@ error:
 void write_client_call_routine( FILE *file, const type_t *iface, const var_t *func,
                                 const char *prefix, unsigned int proc_offset )
 {
-    type_t *rettype = type_function_get_rettype( func->declspec.type );
-    int has_ret = !is_void( rettype );
+    const decl_spec_t *rettype = type_function_get_ret( func->declspec.type );
+    int has_ret = !is_void( rettype->type );
     const var_list_t *args = type_function_get_args( func->declspec.type );
     const var_t *arg;
     int len, needs_params = 0;
