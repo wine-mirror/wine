@@ -396,6 +396,7 @@ struct UNWIND_INFO
 #define UWOP_SET_FPREG       3
 #define UWOP_SAVE_NONVOL     4
 #define UWOP_SAVE_NONVOL_FAR 5
+#define UWOP_EPILOG          6
 #define UWOP_SAVE_XMM128     8
 #define UWOP_SAVE_XMM128_FAR 9
 #define UWOP_PUSH_MACHFRAME  10
@@ -484,6 +485,19 @@ static void dump_unwind_info( ULONG64 base, RUNTIME_FUNCTION *function )
             case UWOP_PUSH_MACHFRAME:
                 TRACE( "PUSH_MACHFRAME %u\n", info->opcodes[i].info );
                 break;
+            case UWOP_EPILOG:
+                if (info->version == 2)
+                {
+                    unsigned int offset;
+                    if (info->opcodes[i].info)
+                        offset = info->opcodes[i].offset;
+                    else
+                        offset = (info->opcodes[i+1].info << 8) + info->opcodes[i+1].offset;
+                    TRACE("epilog %p-%p\n", (char *)base + function->EndAddress - offset,
+                            (char *)base + function->EndAddress - offset + info->opcodes[i].offset );
+                    i += 1;
+                    break;
+                }
             default:
                 FIXME( "unknown code %u\n", info->opcodes[i].code );
                 break;
@@ -3669,6 +3683,7 @@ static int get_opcode_size( struct opcode op )
         return 2 + (op.info != 0);
     case UWOP_SAVE_NONVOL:
     case UWOP_SAVE_XMM128:
+    case UWOP_EPILOG:
         return 2;
     case UWOP_SAVE_NONVOL_FAR:
     case UWOP_SAVE_XMM128_FAR:
@@ -3904,6 +3919,9 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
             case UWOP_PUSH_MACHFRAME:
                 FIXME( "PUSH_MACHFRAME %u\n", info->opcodes[i].info );
                 break;
+            case UWOP_EPILOG:
+                if (info->version == 2)
+                    break; /* nothing to do */
             default:
                 FIXME( "unknown code %u\n", info->opcodes[i].code );
                 break;
