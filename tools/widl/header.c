@@ -43,7 +43,7 @@ user_type_list_t user_type_list = LIST_INIT(user_type_list);
 context_handle_list_t context_handle_list = LIST_INIT(context_handle_list);
 generic_handle_list_t generic_handle_list = LIST_INIT(generic_handle_list);
 
-static void write_type_def_or_decl(FILE *f, type_t *t, int field, const char *name);
+static void write_type_def_or_decl(FILE *f, const decl_spec_t *t, int field, const char *name);
 
 static void indent(FILE *h, int delta)
 {
@@ -252,7 +252,7 @@ static void write_fields(FILE *h, var_list_t *fields)
         default:
             ;
         }
-        write_type_def_or_decl(h, v->declspec.type, TRUE, name);
+        write_type_def_or_decl(h, &v->declspec, TRUE, name);
         fprintf(h, ";\n");
     }
 }
@@ -485,9 +485,9 @@ void write_type_right(FILE *h, type_t *t, int is_field)
   }
 }
 
-static void write_type_v(FILE *h, type_t *t, int is_field, int declonly, const char *name)
+static void write_type_v(FILE *h, const decl_spec_t *ds, int is_field, int declonly, const char *name)
 {
-  type_t *pt = NULL;
+  type_t *t = ds->type, *pt = NULL;
   int ptr_level = 0;
 
   if (!h) return;
@@ -529,7 +529,7 @@ static void write_type_v(FILE *h, type_t *t, int is_field, int declonly, const c
   }
 }
 
-static void write_type_def_or_decl(FILE *f, type_t *t, int field, const char *name)
+static void write_type_def_or_decl(FILE *f, const decl_spec_t *t, int field, const char *name)
 {
   write_type_v(f, t, field, FALSE, name);
 }
@@ -558,7 +558,7 @@ static void write_type_definition(FILE *f, type_t *t)
     }
 }
 
-void write_type_decl(FILE *f, type_t *t, const char *name)
+void write_type_decl(FILE *f, const decl_spec_t *t, const char *name)
 {
   write_type_v(f, t, FALSE, TRUE, name);
 }
@@ -789,7 +789,7 @@ static void write_generic_handle_routines(FILE *header)
 static void write_typedef(FILE *header, type_t *type)
 {
   fprintf(header, "typedef ");
-  write_type_def_or_decl(header, type_alias_get_aliasee_type(type), FALSE, type->name);
+  write_type_def_or_decl(header, type_alias_get_aliasee(type), FALSE, type->name);
   fprintf(header, ";\n");
 }
 
@@ -833,7 +833,7 @@ static void write_declaration(FILE *header, const var_t *v)
         fprintf(header, "extern ");
         break;
     }
-    write_type_def_or_decl(header, v->declspec.type, FALSE, v->name);
+    write_type_def_or_decl(header, &v->declspec, FALSE, v->name);
     fprintf(header, ";\n\n");
   }
 }
@@ -1073,7 +1073,7 @@ void write_args(FILE *h, const var_list_t *args, const char *name, int method, i
         }
         else fprintf(h, ",");
     }
-    write_type_decl(h, arg->declspec.type, arg->name);
+    write_type_decl(h, &arg->declspec, arg->name);
     if (method == 2) {
         const expr_t *expr = get_attrp(arg->attrs, ATTR_DEFAULTVALUE);
         if (expr) {
@@ -1337,12 +1337,12 @@ static void write_locals(FILE *fp, const type_t *iface, int body)
         write_args(fp, type_function_get_args(m->declspec.type), iface->name, 1, TRUE);
         fprintf(fp, ")");
         if (body) {
-          type_t *rt = type_function_get_rettype(m->declspec.type);
+          const decl_spec_t *rt = type_function_get_ret(m->declspec.type);
           fprintf(fp, "\n{\n");
           fprintf(fp, "    %s\n", comment);
-          if (rt->name && strcmp(rt->name, "HRESULT") == 0)
+          if (rt->type->name && strcmp(rt->type->name, "HRESULT") == 0)
             fprintf(fp, "    return E_NOTIMPL;\n");
-          else if (type_get_type(rt) != TYPE_VOID) {
+          else if (type_get_type(rt->type) != TYPE_VOID) {
             fprintf(fp, "    ");
             write_type_decl(fp, rt, "rv");
             fprintf(fp, ";\n");
@@ -1536,7 +1536,7 @@ static void write_rpc_interface_start(FILE *header, const type_t *iface)
   if (var)
   {
       fprintf(header, "extern ");
-      write_type_decl( header, var->declspec.type, var->name );
+      write_type_decl( header, &var->declspec, var->name );
       fprintf(header, ";\n");
   }
   if (old_names)

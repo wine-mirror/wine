@@ -229,7 +229,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   /* local variables */
   if (has_ret) {
     print_proxy( "%s", "" );
-    write_type_decl(proxy, retval->declspec.type, retval->name);
+    write_type_decl(proxy, &retval->declspec, retval->name);
     fprintf( proxy, ";\n" );
   }
   print_proxy( "RPC_MESSAGE _RpcMessage;\n" );

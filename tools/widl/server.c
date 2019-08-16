@@ -159,7 +159,7 @@ static void write_function_stub(const type_t *iface, const var_t *func, unsigned
     {
         print_server("__frame->_RetVal = NDRSContextUnmarshall((char*)0, _pRpcMessage->DataRepresentation);\n");
         print_server("*((");
-        write_type_decl(server, ret_type, NULL);
+        write_type_decl(server, type_function_get_ret(func->declspec.type), NULL);
         fprintf(server, "*)NDRSContextValue(__frame->_RetVal)) = ");
     }
     else

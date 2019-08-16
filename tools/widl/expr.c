@@ -759,13 +759,13 @@ void write_expr(FILE *h, const expr_t *e, int brackets,
         break;
     case EXPR_CAST:
         fprintf(h, "(");
-        write_type_decl(h, e->u.tref.type, NULL);
+        write_type_decl(h, &e->u.tref, NULL);
         fprintf(h, ")");
         write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type, local_var_prefix);
         break;
     case EXPR_SIZEOF:
         fprintf(h, "sizeof(");
-        write_type_decl(h, e->u.tref.type, NULL);
+        write_type_decl(h, &e->u.tref, NULL);
         fprintf(h, ")");
         break;
     case EXPR_SHL:
