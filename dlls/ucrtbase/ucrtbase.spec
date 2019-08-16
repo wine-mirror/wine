@@ -1504,7 +1504,7 @@
 @ stub _o__wfullpath
 @ stub _o__wgetcwd
 @ stub _o__wgetdcwd
-@ stub _o__wgetenv
+@ cdecl _o__wgetenv(wstr) MSVCRT__wgetenv
 @ stub _o__wgetenv_s
 @ stub _o__wmakepath
 @ stub _o__wmakepath_s
@@ -1521,7 +1521,7 @@
 @ stub _o__wrmdir
 @ stub _o__wsearchenv
 @ stub _o__wsearchenv_s
-@ stub _o__wsetlocale
+@ cdecl _o__wsetlocale(long wstr) MSVCRT__wsetlocale
 @ stub _o__wsopen_dispatch
 @ stub _o__wsopen_s
 @ stub _o__wspawnv
@@ -1577,7 +1577,7 @@
 @ stub _o_atanhf
 @ stub _o_atanhl
 @ cdecl _o_atof(str) MSVCRT_atof
-@ stub _o_atoi
+@ cdecl _o_atoi(str) MSVCRT_atoi
 @ stub _o_atol
 @ stub _o_atoll
 @ stub _o_bsearch
@@ -1586,7 +1586,7 @@
 @ cdecl _o_calloc(long long) MSVCRT_calloc
 @ stub _o_cbrt
 @ stub _o_cbrtf
-@ stub _o_ceil
+@ cdecl _o_ceil(double) MSVCRT_ceil
 @ stub _o_ceilf
 @ stub _o_clearerr
 @ stub _o_clearerr_s
@@ -1616,7 +1616,7 @@
 @ stub _o_fgets
 @ stub _o_fgetwc
 @ stub _o_fgetws
-@ stub _o_floor
+@ cdecl _o_floor(double) MSVCRT_floor
 @ stub _o_floorf
 @ stub _o_fma
 @ stub _o_fmaf
