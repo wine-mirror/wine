@@ -3840,7 +3840,7 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
         info = (struct UNWIND_INFO *)((char *)base + function->UnwindData);
         handler_data = (union handler_data *)&info->opcodes[(info->count + 1) & ~1];
 
-        if (info->version != 1)
+        if (info->version != 1 && info->version != 2)
         {
             FIXME( "unknown unwind info version %u at %p\n", info->version, info );
             return NULL;
