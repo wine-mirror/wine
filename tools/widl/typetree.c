@@ -184,13 +184,13 @@ type_t *type_new_pointer(unsigned char pointer_default, type_t *ref, attr_list_t
     return t;
 }
 
-type_t *type_new_alias(type_t *t, const char *name)
+type_t *type_new_alias(const decl_spec_t *t, const char *name)
 {
     type_t *a = make_type(TYPE_ALIAS);
 
     a->name = xstrdup(name);
     a->attrs = NULL;
-    a->details.alias.aliasee.type = t;
+    a->details.alias.aliasee = *t;
     init_loc_info(&a->loc_info);
 
     return a;
