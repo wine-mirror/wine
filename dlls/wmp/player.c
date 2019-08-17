@@ -2300,6 +2300,7 @@ HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia)
         if (FAILED(hr))
         {
             heap_free(name_dup);
+            IWMPMedia_Release(&media->IWMPMedia_iface);
             return hr;
         }
         hr = IUri_GetPath(uri, &path);
@@ -2307,6 +2308,7 @@ HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia)
         {
             heap_free(name_dup);
             IUri_Release(uri);
+            IWMPMedia_Release(&media->IWMPMedia_iface);
             return hr;
         }
 
