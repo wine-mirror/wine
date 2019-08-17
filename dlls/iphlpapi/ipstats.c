@@ -2226,13 +2226,15 @@ DWORD build_tcp_table( TCP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
              pXIG->xig_len > sizeof (struct xinpgen);
              pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len))
         {
-            struct tcpcb *pTCPData = NULL;
-            struct inpcb *pINData;
-            struct xsocket *pSockData;
-
-            pTCPData = &((struct xtcpcb *)pXIG)->xt_tp;
-            pINData = &((struct xtcpcb *)pXIG)->xt_inp;
-            pSockData = &((struct xtcpcb *)pXIG)->xt_socket;
+#if __FreeBSD_version >= 1200026
+            struct xtcpcb *pTCPData = (struct xtcpcb *)pXIG;
+            struct xinpcb *pINData = &pTCPData->xt_inp;
+            struct xsocket *pSockData = &pINData->xi_socket;
+#else
+            struct tcpcb *pTCPData = &((struct xtcpcb *)pXIG)->xt_tp;
+            struct inpcb *pINData = &((struct xtcpcb *)pXIG)->xt_inp;
+            struct xsocket *pSockData = &((struct xtcpcb *)pXIG)->xt_socket;
+#endif
 
             /* Ignore sockets for other protocols */
             if (pSockData->xso_protocol != IPPROTO_TCP)
@@ -2538,11 +2540,13 @@ DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
              pXIG->xig_len > sizeof (struct xinpgen);
              pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len))
         {
-            struct inpcb *pINData;
-            struct xsocket *pSockData;
-
-            pINData = &((struct xinpcb *)pXIG)->xi_inp;
-            pSockData = &((struct xinpcb *)pXIG)->xi_socket;
+#if __FreeBSD_version >= 1200026
+            struct xinpcb *pINData = (struct xinpcb *)pXIG;
+            struct xsocket *pSockData = &pINData->xi_socket;
+#else
+            struct inpcb *pINData = &((struct xinpcb *)pXIG)->xi_inp;
+            struct xsocket *pSockData = &((struct xinpcb *)pXIG)->xi_socket;
+#endif
 
             /* Ignore sockets for other protocols */
             if (pSockData->xso_protocol != IPPROTO_UDP)
