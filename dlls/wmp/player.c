@@ -2258,6 +2258,8 @@ void destroy_player(WindowsMediaPlayer *wmp)
     IWMPControls_stop(&wmp->IWMPControls_iface);
     if (wmp->media)
         IWMPMedia_Release(&wmp->media->IWMPMedia_iface);
+    if (wmp->playlist)
+        IWMPPlaylist_Release(&wmp->playlist->IWMPPlaylist_iface);
     DestroyWindow(wmp->msg_window);
 }
 
