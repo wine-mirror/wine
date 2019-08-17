@@ -985,18 +985,18 @@ static HRESULT WINAPI WMPSettings_get_volume(IWMPSettings *iface, LONG *p)
 
 static HRESULT WINAPI WMPSettings_put_volume(IWMPSettings *iface, LONG v)
 {
-    HRESULT hres;
     WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
     TRACE("(%p)->(%d)\n", This, v);
     This->volume = v;
-    if (!This->filter_graph) {
-        hres = S_OK;
-    } else {
-        /* IBasicAudio -   [-10000, 0], wmp - [0, 100] */
-        v = 10000 * v / 100 - 10000;
-        hres = IBasicAudio_put_Volume(This->basic_audio, v);
-    }
-    return hres;
+    if (!This->filter_graph)
+        return S_OK;
+
+    /* IBasicAudio -   [-10000, 0], wmp - [0, 100] */
+    v = 10000 * v / 100 - 10000;
+    if (!This->basic_audio)
+        return S_FALSE;
+
+    return IBasicAudio_put_Volume(This->basic_audio, v);
 }
 
 static HRESULT WINAPI WMPSettings_getMode(IWMPSettings *iface, BSTR mode, VARIANT_BOOL *p)
