@@ -478,7 +478,6 @@ struct _var_t {
 struct _declarator_t {
   var_t *var;
   type_t *type;
-  type_t *func_type;
   expr_t *bits;
 
   /* parser-internal */

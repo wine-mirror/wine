@@ -29,7 +29,7 @@ extern int is_attr(const attr_list_t *list, enum attr_type t);
 extern void *get_attrp(const attr_list_t *list, enum attr_type t);
 extern unsigned int get_attrv(const attr_list_t *list, enum attr_type t);
 extern const char* get_name(const var_t *v);
-extern void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, int declonly);
+extern void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, int declonly, int write_callconv);
 extern void write_type_right(FILE *h, type_t *t, int is_field);
 extern void write_type_decl(FILE *f, const decl_spec_t *t, const char *name);
 extern void write_type_decl_left(FILE *f, const decl_spec_t *ds);
@@ -64,6 +64,11 @@ static inline int is_ptr(const type_t *t)
 static inline int is_array(const type_t *t)
 {
     return type_get_type(t) == TYPE_ARRAY;
+}
+
+static inline int is_func(const type_t *t)
+{
+    return type_get_type(t) == TYPE_FUNCTION;
 }
 
 static inline int is_void(const type_t *t)

@@ -75,6 +75,7 @@ static declarator_t *make_declarator(var_t *var);
 static type_t *make_safearray(type_t *type);
 static typelib_t *make_library(const char *name, const attr_list_t *attrs);
 static type_t *append_chain_type(type_t *chain, type_t *type);
+static void append_chain_callconv(type_t *chain, char *callconv);
 static warning_list_t *append_warning(warning_list_t *, int);
 
 static type_t *reg_typedefs(decl_spec_t *decl_spec, var_list_t *names, attr_list_t *attrs);
@@ -975,8 +976,7 @@ decl_spec_no_type:
 declarator:
 	  '*' m_type_qual_list declarator %prec PPTR
 						{ $$ = $3; $$->type = append_chain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
-	| callconv declarator			{ $$ = $2; if ($$->func_type) $$->func_type->attrs = append_attr($$->func_type->attrs, make_attrp(ATTR_CALLCONV, $1));
-						           else if ($$->type) $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
+	| callconv declarator			{ $$ = $2; append_chain_callconv($$->type, $1); }
 	| direct_declarator
 	;
 
@@ -984,18 +984,14 @@ direct_declarator:
 	  ident					{ $$ = make_declarator($1); }
 	| '(' declarator ')'			{ $$ = $2; }
 	| direct_declarator array		{ $$ = $1; $$->type = append_array($$->type, $2); }
-	| direct_declarator '(' m_args ')'	{ $$ = $1;
-						  $$->func_type = append_chain_type($$->type, type_new_function($3));
-						  $$->type = NULL;
-						}
+	| direct_declarator '(' m_args ')'	{ $$ = $1; $$->type = append_chain_type($$->type, type_new_function($3)); }
 	;
 
 /* abstract declarator */
 abstract_declarator:
 	  '*' m_type_qual_list m_abstract_declarator %prec PPTR
 						{ $$ = $3; $$->type = append_chain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
-	| callconv m_abstract_declarator	{ $$ = $2; if ($$->func_type) $$->func_type->attrs = append_attr($$->func_type->attrs, make_attrp(ATTR_CALLCONV, $1));
-						           else if ($$->type) $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
+	| callconv m_abstract_declarator	{ $$ = $2; append_chain_callconv($$->type, $1); }
 	| abstract_direct_declarator
 	;
 
@@ -1003,8 +999,7 @@ abstract_declarator:
 abstract_declarator_no_direct:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
 						{ $$ = $3; $$->type = append_chain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
-	| callconv m_any_declarator		{ $$ = $2; if ($$->func_type) $$->func_type->attrs = append_attr($$->func_type->attrs, make_attrp(ATTR_CALLCONV, $1));
-						           else if ($$->type) $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
+	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv($$->type, $1); }
 	;
 
 /* abstract declarator or empty */
@@ -1019,13 +1014,11 @@ abstract_direct_declarator:
 	| array					{ $$ = make_declarator(NULL); $$->type = append_array($$->type, $1); }
 	| '(' m_args ')'
 						{ $$ = make_declarator(NULL);
-						  $$->func_type = append_chain_type($$->type, type_new_function($2));
-						  $$->type = NULL;
+						  $$->type = append_chain_type($$->type, type_new_function($2));
 						}
 	| abstract_direct_declarator '(' m_args ')'
 						{ $$ = $1;
-						  $$->func_type = append_chain_type($$->type, type_new_function($3));
-						  $$->type = NULL;
+						  $$->type = append_chain_type($$->type, type_new_function($3));
 						}
 	;
 
@@ -1033,7 +1026,7 @@ abstract_direct_declarator:
 any_declarator:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
 						{ $$ = $3; $$->type = append_chain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
-	| callconv m_any_declarator		{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
+	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv($$->type, $1); }
 	| any_direct_declarator
 	;
 
@@ -1041,7 +1034,7 @@ any_declarator:
 any_declarator_no_direct:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
 						{ $$ = $3; $$->type = append_chain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
-	| callconv m_any_declarator		{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
+	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv($$->type, $1); }
 	;
 
 /* abstract or non-abstract declarator or empty */
@@ -1059,13 +1052,11 @@ any_direct_declarator:
 	| array					{ $$ = make_declarator(NULL); $$->type = append_array($$->type, $1); }
 	| '(' m_args ')'
 						{ $$ = make_declarator(NULL);
-						  $$->func_type = append_chain_type($$->type, type_new_function($2));
-						  $$->type = NULL;
+						  $$->type = append_chain_type($$->type, type_new_function($2));
 						}
 	| any_direct_declarator '(' m_args ')'
 						{ $$ = $1;
-						  $$->func_type = append_chain_type($$->type, type_new_function($3));
-						  $$->type = NULL;
+						  $$->type = append_chain_type($$->type, type_new_function($3));
 						}
 	;
 
@@ -1463,13 +1454,23 @@ static int is_allowed_range_type(const type_t *type)
     }
 }
 
-static type_t *get_array_or_ptr_ref(type_t *type)
+static type_t *get_chain_ref(type_t *type)
 {
     if (is_ptr(type))
         return type_pointer_get_ref_type(type);
     else if (is_array(type))
         return type_array_get_element_type(type);
+    else if (is_func(type))
+        return type_function_get_rettype(type);
     return NULL;
+}
+
+static type_t *get_chain_end(type_t *type)
+{
+    type_t *inner;
+    while ((inner = get_chain_ref(type)))
+        type = inner;
+    return type;
 }
 
 static type_t *append_chain_type(type_t *chain, type_t *type)
@@ -1478,17 +1479,31 @@ static type_t *append_chain_type(type_t *chain, type_t *type)
 
     if (!chain)
         return type;
-    for (chain_type = chain; get_array_or_ptr_ref(chain_type); chain_type = get_array_or_ptr_ref(chain_type))
-        ;
+    chain_type = get_chain_end(chain);
 
     if (is_ptr(chain_type))
         chain_type->details.pointer.ref.type = type;
     else if (is_array(chain_type))
         chain_type->details.array.elem.type = type;
+    else if (is_func(chain_type))
+        chain_type->details.function->retval->declspec.type = type;
     else
         assert(0);
 
+    if (!is_func(chain_type))
+        type->attrs = move_attr(type->attrs, chain_type->attrs, ATTR_CALLCONV);
+
     return chain;
+}
+
+static void append_chain_callconv(type_t *chain, char *callconv)
+{
+    type_t *chain_end;
+
+    if (chain && (chain_end = get_chain_end(chain)))
+        chain_end->attrs = append_attr(chain_end->attrs, make_attrp(ATTR_CALLCONV, callconv));
+    else
+        error_loc("calling convention applied to non-function type\n");
 }
 
 static warning_list_t *append_warning(warning_list_t *list, int num)
@@ -1514,21 +1529,14 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
   expr_list_t *lengs = get_attrp(attrs, ATTR_LENGTHIS);
   expr_t *dim;
   type_t **ptype;
-  type_t *func_type = decl ? decl->func_type : NULL;
   type_t *type = decl_spec->type;
 
   if (is_attr(type->attrs, ATTR_INLINE))
   {
-    if (!func_type)
+    if (!decl || !is_func(decl->type))
       error_loc("inline attribute applied to non-function type\n");
     else
-    {
-      type_t *t;
-      /* move inline attribute from return type node to function node */
-      for (t = func_type; is_ptr(t); t = type_pointer_get_ref_type(t))
-        ;
-      t->attrs = move_attr(t->attrs, type->attrs, ATTR_INLINE);
-    }
+      decl->type->attrs = move_attr(decl->type->attrs, type->attrs, ATTR_INLINE);
   }
 
   /* add type onto the end of the pointers in pident->type */
@@ -1536,16 +1544,16 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
   v->declspec.stgclass = decl_spec->stgclass;
   v->attrs = attrs;
 
+  if (is_attr(type->attrs, ATTR_CALLCONV) && !is_func(type))
+    error_loc("calling convention applied to non-function type\n");
+
   /* check for pointer attribute being applied to non-pointer, non-array
    * type */
   if (!is_array(v->declspec.type))
   {
     int ptr_attr = get_attrv(v->attrs, ATTR_POINTERTYPE);
     const type_t *ptr = NULL;
-    /* pointer attributes on the left side of the type belong to the function
-     * pointer, if one is being declared */
-    type_t **pt = func_type ? &func_type : &v->declspec.type;
-    for (ptr = *pt; ptr && !ptr_attr; )
+    for (ptr = v->declspec.type; ptr && !ptr_attr; )
     {
       ptr_attr = get_attrv(ptr->attrs, ATTR_POINTERTYPE);
       if (!ptr_attr && type_is_alias(ptr))
@@ -1560,13 +1568,13 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
           warning_loc_info(&v->loc_info,
                            "%s: pointer attribute applied to interface "
                            "pointer type has no effect\n", v->name);
-      if (!ptr_attr && top && type_pointer_get_default_fc(*pt) != FC_RP)
+      if (!ptr_attr && top && type_pointer_get_default_fc(v->declspec.type) != FC_RP)
       {
         /* FIXME: this is a horrible hack to cope with the issue that we
          * store an offset to the typeformat string in the type object, but
          * two typeformat strings may be written depending on whether the
          * pointer is a toplevel parameter or not */
-        *pt = duptype(*pt, 1);
+        v->declspec.type = duptype(v->declspec.type, 1);
       }
     }
     else if (ptr_attr)
@@ -1665,32 +1673,6 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
       ptype = &(*ptype)->details.array.elem.type;
     else
       error_loc("%s: too many expressions in length_is attribute\n", v->name);
-  }
-
-  /* v->type is currently pointing to the type on the left-side of the
-   * declaration, so we need to fix this up so that it is the return type of the
-   * function and make v->type point to the function side of the declaration */
-  if (func_type)
-  {
-    type_t *ft, *t;
-    type_t *return_type = v->declspec.type;
-    v->declspec.type = func_type;
-    for (ft = v->declspec.type; is_ptr(ft); ft = type_pointer_get_ref_type(ft))
-      ;
-    assert(type_get_type_detect_alias(ft) == TYPE_FUNCTION);
-    ft->details.function->retval = make_var(xstrdup("_RetVal"));
-    ft->details.function->retval->declspec.type = return_type;
-    /* move calling convention attribute, if present, from pointer nodes to
-     * function node */
-    for (t = v->declspec.type; is_ptr(t); t = type_pointer_get_ref_type(t))
-      ft->attrs = move_attr(ft->attrs, t->attrs, ATTR_CALLCONV);
-  }
-  else
-  {
-    type_t *t;
-    for (t = v->declspec.type; is_ptr(t); t = type_pointer_get_ref_type(t))
-      if (is_attr(t->attrs, ATTR_CALLCONV))
-        error_loc("calling convention applied to non-function-pointer type\n");
   }
 
   if (decl->bits)
@@ -1796,7 +1778,6 @@ static declarator_t *make_declarator(var_t *var)
   declarator_t *d = xmalloc(sizeof(*d));
   d->var = var ? var : make_var(NULL);
   d->type = NULL;
-  d->func_type = NULL;
   d->bits = NULL;
   return d;
 }
