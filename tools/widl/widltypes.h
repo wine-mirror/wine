@@ -115,7 +115,6 @@ enum attr_type
     ATTR_IMMEDIATEBIND,
     ATTR_IMPLICIT_HANDLE,
     ATTR_IN,
-    ATTR_INLINE,
     ATTR_INPUTSYNC,
     ATTR_LENGTHIS,
     ATTR_LIBLCID,
@@ -239,6 +238,11 @@ enum type_qualifier
     TYPE_QUALIFIER_CONST = 1,
 };
 
+enum function_specifier
+{
+    FUNCTION_SPECIFIER_INLINE = 1,
+};
+
 enum statement_type
 {
     STMT_LIBRARY,
@@ -301,9 +305,9 @@ struct str_list_entry_t
 struct _decl_spec_t
 {
   type_t *type;
-  attr_list_t *attrs;
   enum storage_class stgclass;
   enum type_qualifier qualifier;
+  enum function_specifier func_specifier;
 };
 
 struct _attr_t {
@@ -630,9 +634,9 @@ static inline int is_global_namespace(const struct namespace *namespace)
 static inline decl_spec_t *init_declspec(decl_spec_t *declspec, type_t *type)
 {
   declspec->type = type;
-  declspec->attrs = NULL;
   declspec->stgclass = STG_NONE;
   declspec->qualifier = 0;
+  declspec->func_specifier = 0;
 
   return declspec;
 }

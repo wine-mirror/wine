@@ -60,7 +60,7 @@ static str_list_t *append_str(str_list_t *list, char *str);
 static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 static attr_list_t *append_attr_list(attr_list_t *new_list, attr_list_t *old_list);
 static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t *right,
-        attr_t *attr, enum storage_class stgclass, enum type_qualifier qual);
+        enum storage_class stgclass, enum type_qualifier qual, enum function_specifier func_specifier);
 static attr_t *make_attr(enum attr_type type);
 static attr_t *make_attrv(enum attr_type type, unsigned int val);
 static attr_t *make_attrp(enum attr_type type, void *val);
@@ -160,6 +160,7 @@ static typelib_t *current_typelib;
 	struct _decl_spec_t *declspec;
 	enum storage_class stgclass;
 	enum type_qualifier type_qualifier;
+	enum function_specifier function_specifier;
 }
 
 %token <str> aIDENTIFIER aPRAGMA
@@ -261,7 +262,7 @@ static typelib_t *current_typelib;
 %token tWCHAR tWIREMARSHAL
 %token tAPARTMENT tNEUTRAL tSINGLE tFREE tBOTH
 
-%type <attr> attribute function_specifier acf_attribute
+%type <attr> attribute acf_attribute
 %type <attr_list> m_attributes attributes attrib_list
 %type <attr_list> acf_attributes acf_attribute_list
 %type <str_list> str_list
@@ -270,6 +271,7 @@ static typelib_t *current_typelib;
 %type <ifinfo> interfacehdr
 %type <stgclass> storage_cls_spec
 %type <type_qualifier> type_qualifier m_type_qual_list
+%type <function_specifier> function_specifier
 %type <declspec> decl_spec decl_spec_no_type m_decl_spec_no_type
 %type <type> inherit interface interfacedef interfacedec
 %type <type> dispinterface dispinterfacehdr dispinterfacedef
@@ -950,7 +952,7 @@ storage_cls_spec:
 	;
 
 function_specifier:
-	  tINLINE				{ $$ = make_attr(ATTR_INLINE); }
+	  tINLINE				{ $$ = FUNCTION_SPECIFIER_INLINE; }
 	;
 
 type_qualifier:
@@ -961,9 +963,9 @@ m_type_qual_list:				{ $$ = 0; }
 	| m_type_qual_list type_qualifier	{ $$ = $1 | $2; }
 	;
 
-decl_spec: type m_decl_spec_no_type		{ $$ = make_decl_spec($1, $2, NULL, NULL, STG_NONE, 0); }
+decl_spec: type m_decl_spec_no_type		{ $$ = make_decl_spec($1, $2, NULL, STG_NONE, 0, 0); }
 	| decl_spec_no_type type m_decl_spec_no_type
-						{ $$ = make_decl_spec($2, $1, $3, NULL, STG_NONE, 0); }
+						{ $$ = make_decl_spec($2, $1, $3, STG_NONE, 0, 0); }
 	;
 
 m_decl_spec_no_type:				{ $$ = NULL; }
@@ -971,9 +973,9 @@ m_decl_spec_no_type:				{ $$ = NULL; }
 	;
 
 decl_spec_no_type:
-	  type_qualifier m_decl_spec_no_type	{ $$ = make_decl_spec(NULL, $2, NULL, NULL, STG_NONE, $1); }
-	| function_specifier m_decl_spec_no_type  { $$ = make_decl_spec(NULL, $2, NULL, $1, STG_NONE, 0); }
-	| storage_cls_spec m_decl_spec_no_type  { $$ = make_decl_spec(NULL, $2, NULL, NULL, $1, 0); }
+	  type_qualifier m_decl_spec_no_type	{ $$ = make_decl_spec(NULL, $2, NULL, STG_NONE, $1, 0); }
+	| function_specifier m_decl_spec_no_type  { $$ = make_decl_spec(NULL, $2, NULL, STG_NONE, 0, $1); }
+	| storage_cls_spec m_decl_spec_no_type  { $$ = make_decl_spec(NULL, $2, NULL, $1, 0, 0); }
 	;
 
 declarator:
@@ -1285,57 +1287,47 @@ static attr_list_t *map_attrs(const attr_list_t *list, map_attrs_filter_t filter
 }
 
 static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t *right,
-        attr_t *attr, enum storage_class stgclass, enum type_qualifier qual)
+        enum storage_class stgclass, enum type_qualifier qual, enum function_specifier func_specifier)
 {
   decl_spec_t *declspec = left ? left : right;
   if (!declspec)
   {
     declspec = xmalloc(sizeof(*declspec));
     declspec->type = NULL;
-    declspec->attrs = NULL;
     declspec->stgclass = STG_NONE;
     declspec->qualifier = 0;
+    declspec->func_specifier = 0;
   }
   declspec->type = type;
   if (left && declspec != left)
   {
-    declspec->attrs = append_attr_list(declspec->attrs, left->attrs);
     if (declspec->stgclass == STG_NONE)
       declspec->stgclass = left->stgclass;
     else if (left->stgclass != STG_NONE)
       error_loc("only one storage class can be specified\n");
     declspec->qualifier |= left->qualifier;
+    declspec->func_specifier |= left->func_specifier;
     assert(!left->type);
     free(left);
   }
   if (right && declspec != right)
   {
-    declspec->attrs = append_attr_list(declspec->attrs, right->attrs);
     if (declspec->stgclass == STG_NONE)
       declspec->stgclass = right->stgclass;
     else if (right->stgclass != STG_NONE)
       error_loc("only one storage class can be specified\n");
     declspec->qualifier |= right->qualifier;
+    declspec->func_specifier |= right->func_specifier;
     assert(!right->type);
     free(right);
   }
 
-  declspec->attrs = append_attr(declspec->attrs, attr);
   if (declspec->stgclass == STG_NONE)
     declspec->stgclass = stgclass;
   else if (stgclass != STG_NONE)
     error_loc("only one storage class can be specified\n");
   declspec->qualifier |= qual;
-
-  /* apply attributes to type */
-  if (type && declspec->attrs)
-  {
-    attr_list_t *attrs;
-    declspec->type = duptype(type, 1);
-    attrs = map_attrs(type->attrs, NULL);
-    declspec->type->attrs = append_attr_list(attrs, declspec->attrs);
-    declspec->attrs = NULL;
-  }
+  declspec->func_specifier |= func_specifier;
 
   return declspec;
 }
@@ -1550,12 +1542,10 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator
   type_t **ptype;
   type_t *type = decl_spec->type;
 
-  if (is_attr(type->attrs, ATTR_INLINE))
+  if (decl_spec->func_specifier & FUNCTION_SPECIFIER_INLINE)
   {
     if (!decl || !is_func(decl->type))
       error_loc("inline attribute applied to non-function type\n");
-    else
-      decl->type->attrs = move_attr(decl->type->attrs, type->attrs, ATTR_INLINE);
   }
 
   /* add type onto the end of the pointers in pident->type */
@@ -2182,7 +2172,6 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_IMMEDIATEBIND */       { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "immediatebind" },
     /* ATTR_IMPLICIT_HANDLE */     { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "implicit_handle" },
     /* ATTR_IN */                  { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "in" },
-    /* ATTR_INLINE */              { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "inline" },
     /* ATTR_INPUTSYNC */           { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "inputsync" },
     /* ATTR_LENGTHIS */            { 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, "length_is" },
     /* ATTR_LIBLCID */             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, "lcid" },

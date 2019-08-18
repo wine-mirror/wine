@@ -318,6 +318,9 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
 
   name = type_get_name(t, name_type);
 
+  if (ds->func_specifier & FUNCTION_SPECIFIER_INLINE)
+    fprintf(h, "inline ");
+
   if ((ds->qualifier & TYPE_QUALIFIER_CONST) && (type_is_alias(t) || !is_ptr(t)))
     fprintf(h, "const ");
 
@@ -383,7 +386,6 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
         break;
       case TYPE_FUNCTION:
       {
-        if (is_attr(t->attrs, ATTR_INLINE)) fprintf(h, "inline ");
         write_type_left(h, type_function_get_ret(t), name_type, declonly, TRUE);
 
         /* A pointer to a function has to write the calling convention inside
