@@ -427,6 +427,16 @@ ULONG WINAPI EtwEventSetInformation( REGHANDLE handle, EVENT_INFO_CLASS class, v
 }
 
 /******************************************************************************
+ *                  EtwEventWriteString   (NTDLL.@)
+ */
+ULONG WINAPI EtwEventWriteString( REGHANDLE handle, UCHAR level, ULONGLONG keyword, PCWSTR string )
+{
+    FIXME("%s, %u, %s, %s: stub\n", wine_dbgstr_longlong(handle), level,
+          wine_dbgstr_longlong(keyword), debugstr_w(string));
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  *                  EtwEventWriteTransfer   (NTDLL.@)
  */
 ULONG WINAPI EtwEventWriteTransfer( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor, LPCGUID activity,
