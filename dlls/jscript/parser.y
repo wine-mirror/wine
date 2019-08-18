@@ -141,7 +141,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 
 %lex-param { parser_ctx_t *ctx }
 %parse-param { parser_ctx_t *ctx }
-%pure-parser
+%define api.pure
 %start Program
 
 %union {
