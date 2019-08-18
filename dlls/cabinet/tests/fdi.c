@@ -776,7 +776,7 @@ static UINT CDECL fdi_mem_read(INT_PTR hf, void *pv, UINT cb)
 
 static UINT CDECL fdi_mem_write(INT_PTR hf, void *pv, UINT cb)
 {
-    static const char expected[12] = "Hello World!";
+    static const char expected[] = "Hello World!";
 
     trace("mem_write(%#lx,%p,%u)\n", hf, pv, cb);
 
