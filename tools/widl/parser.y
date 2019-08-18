@@ -59,13 +59,13 @@ static void fix_incomplete_types(type_t *complete_type);
 static str_list_t *append_str(str_list_t *list, char *str);
 static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 static attr_list_t *append_attr_list(attr_list_t *new_list, attr_list_t *old_list);
-static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t *right, attr_t *attr, enum storage_class stgclass);
+static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t *right,
+        attr_t *attr, enum storage_class stgclass, enum type_qualifier qual);
 static attr_t *make_attr(enum attr_type type);
 static attr_t *make_attrv(enum attr_type type, unsigned int val);
 static attr_t *make_attrp(enum attr_type type, void *val);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
-static type_t *append_array(type_t *chain, expr_t *expr);
-static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const declarator_t *decl, int top);
+static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_t *decl, int top);
 static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_list_t *decls);
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
@@ -74,7 +74,8 @@ static declarator_list_t *append_declarator(declarator_list_t *list, declarator_
 static declarator_t *make_declarator(var_t *var);
 static type_t *make_safearray(type_t *type);
 static typelib_t *make_library(const char *name, const attr_list_t *attrs);
-static type_t *append_chain_type(type_t *chain, type_t *type);
+static void append_array(declarator_t *decl, expr_t *expr);
+static void append_chain_type(declarator_t *decl, type_t *type, enum type_qualifier qual);
 static void append_chain_callconv(type_t *chain, char *callconv);
 static warning_list_t *append_warning(warning_list_t *, int);
 
@@ -158,6 +159,7 @@ static typelib_t *current_typelib;
 	struct _import_t *import;
 	struct _decl_spec_t *declspec;
 	enum storage_class stgclass;
+	enum type_qualifier type_qualifier;
 }
 
 %token <str> aIDENTIFIER aPRAGMA
@@ -259,14 +261,15 @@ static typelib_t *current_typelib;
 %token tWCHAR tWIREMARSHAL
 %token tAPARTMENT tNEUTRAL tSINGLE tFREE tBOTH
 
-%type <attr> attribute type_qualifier function_specifier acf_attribute
-%type <attr_list> m_attributes attributes attrib_list m_type_qual_list
+%type <attr> attribute function_specifier acf_attribute
+%type <attr_list> m_attributes attributes attrib_list
 %type <attr_list> acf_attributes acf_attribute_list
 %type <str_list> str_list
 %type <expr> m_expr expr expr_const expr_int_const array m_bitfield
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
 %type <ifinfo> interfacehdr
 %type <stgclass> storage_cls_spec
+%type <type_qualifier> type_qualifier m_type_qual_list
 %type <declspec> decl_spec decl_spec_no_type m_decl_spec_no_type
 %type <type> inherit interface interfacedef interfacedec
 %type <type> dispinterface dispinterfacehdr dispinterfacedef
@@ -951,16 +954,16 @@ function_specifier:
 	;
 
 type_qualifier:
-	  tCONST				{ $$ = make_attr(ATTR_CONST); }
+	  tCONST				{ $$ = TYPE_QUALIFIER_CONST; }
 	;
 
-m_type_qual_list:				{ $$ = NULL; }
-	| m_type_qual_list type_qualifier	{ $$ = append_attr($1, $2); }
+m_type_qual_list:				{ $$ = 0; }
+	| m_type_qual_list type_qualifier	{ $$ = $1 | $2; }
 	;
 
-decl_spec: type m_decl_spec_no_type		{ $$ = make_decl_spec($1, $2, NULL, NULL, STG_NONE); }
+decl_spec: type m_decl_spec_no_type		{ $$ = make_decl_spec($1, $2, NULL, NULL, STG_NONE, 0); }
 	| decl_spec_no_type type m_decl_spec_no_type
-						{ $$ = make_decl_spec($2, $1, $3, NULL, STG_NONE); }
+						{ $$ = make_decl_spec($2, $1, $3, NULL, STG_NONE, 0); }
 	;
 
 m_decl_spec_no_type:				{ $$ = NULL; }
@@ -968,14 +971,14 @@ m_decl_spec_no_type:				{ $$ = NULL; }
 	;
 
 decl_spec_no_type:
-	  type_qualifier m_decl_spec_no_type	{ $$ = make_decl_spec(NULL, $2, NULL, $1, STG_NONE); }
-	| function_specifier m_decl_spec_no_type  { $$ = make_decl_spec(NULL, $2, NULL, $1, STG_NONE); }
-	| storage_cls_spec m_decl_spec_no_type  { $$ = make_decl_spec(NULL, $2, NULL, NULL, $1); }
+	  type_qualifier m_decl_spec_no_type	{ $$ = make_decl_spec(NULL, $2, NULL, NULL, STG_NONE, $1); }
+	| function_specifier m_decl_spec_no_type  { $$ = make_decl_spec(NULL, $2, NULL, $1, STG_NONE, 0); }
+	| storage_cls_spec m_decl_spec_no_type  { $$ = make_decl_spec(NULL, $2, NULL, NULL, $1, 0); }
 	;
 
 declarator:
 	  '*' m_type_qual_list declarator %prec PPTR
-						{ $$ = $3; $$->type = append_chain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
+						{ $$ = $3; append_chain_type($$, type_new_pointer(pointer_default, NULL), $2); }
 	| callconv declarator			{ $$ = $2; append_chain_callconv($$->type, $1); }
 	| direct_declarator
 	;
@@ -983,14 +986,14 @@ declarator:
 direct_declarator:
 	  ident					{ $$ = make_declarator($1); }
 	| '(' declarator ')'			{ $$ = $2; }
-	| direct_declarator array		{ $$ = $1; $$->type = append_array($$->type, $2); }
-	| direct_declarator '(' m_args ')'	{ $$ = $1; $$->type = append_chain_type($$->type, type_new_function($3)); }
+	| direct_declarator array		{ $$ = $1; append_array($$, $2); }
+	| direct_declarator '(' m_args ')'	{ $$ = $1; append_chain_type($$, type_new_function($3), 0); }
 	;
 
 /* abstract declarator */
 abstract_declarator:
 	  '*' m_type_qual_list m_abstract_declarator %prec PPTR
-						{ $$ = $3; $$->type = append_chain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
+						{ $$ = $3; append_chain_type($$, type_new_pointer(pointer_default, NULL), $2); }
 	| callconv m_abstract_declarator	{ $$ = $2; append_chain_callconv($$->type, $1); }
 	| abstract_direct_declarator
 	;
@@ -998,7 +1001,7 @@ abstract_declarator:
 /* abstract declarator without accepting direct declarator */
 abstract_declarator_no_direct:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
-						{ $$ = $3; $$->type = append_chain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
+						{ $$ = $3; append_chain_type($$, type_new_pointer(pointer_default, NULL), $2); }
 	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv($$->type, $1); }
 	;
 
@@ -1010,22 +1013,22 @@ m_abstract_declarator: 				{ $$ = make_declarator(NULL); }
 /* abstract direct declarator */
 abstract_direct_declarator:
 	  '(' abstract_declarator_no_direct ')'	{ $$ = $2; }
-	| abstract_direct_declarator array	{ $$ = $1; $$->type = append_array($$->type, $2); }
-	| array					{ $$ = make_declarator(NULL); $$->type = append_array($$->type, $1); }
+	| abstract_direct_declarator array	{ $$ = $1; append_array($$, $2); }
+	| array					{ $$ = make_declarator(NULL); append_array($$, $1); }
 	| '(' m_args ')'
 						{ $$ = make_declarator(NULL);
-						  $$->type = append_chain_type($$->type, type_new_function($2));
+						  append_chain_type($$, type_new_function($2), 0);
 						}
 	| abstract_direct_declarator '(' m_args ')'
 						{ $$ = $1;
-						  $$->type = append_chain_type($$->type, type_new_function($3));
+						  append_chain_type($$, type_new_function($3), 0);
 						}
 	;
 
 /* abstract or non-abstract declarator */
 any_declarator:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
-						{ $$ = $3; $$->type = append_chain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
+						{ $$ = $3; append_chain_type($$, type_new_pointer(pointer_default, NULL), $2); }
 	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv($$->type, $1); }
 	| any_direct_declarator
 	;
@@ -1033,7 +1036,7 @@ any_declarator:
 /* abstract or non-abstract declarator without accepting direct declarator */
 any_declarator_no_direct:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
-						{ $$ = $3; $$->type = append_chain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
+						{ $$ = $3; append_chain_type($$, type_new_pointer(pointer_default, NULL), $2); }
 	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv($$->type, $1); }
 	;
 
@@ -1048,15 +1051,15 @@ m_any_declarator: 				{ $$ = make_declarator(NULL); }
 any_direct_declarator:
 	  ident					{ $$ = make_declarator($1); }
 	| '(' any_declarator_no_direct ')'	{ $$ = $2; }
-	| any_direct_declarator array		{ $$ = $1; $$->type = append_array($$->type, $2); }
-	| array					{ $$ = make_declarator(NULL); $$->type = append_array($$->type, $1); }
+	| any_direct_declarator array		{ $$ = $1; append_array($$, $2); }
+	| array					{ $$ = make_declarator(NULL); append_array($$, $1); }
 	| '(' m_args ')'
 						{ $$ = make_declarator(NULL);
-						  $$->type = append_chain_type($$->type, type_new_function($2));
+						  append_chain_type($$, type_new_function($2), 0);
 						}
 	| any_direct_declarator '(' m_args ')'
 						{ $$ = $1;
-						  $$->type = append_chain_type($$->type, type_new_function($3));
+						  append_chain_type($$, type_new_function($3), 0);
 						}
 	;
 
@@ -1281,7 +1284,8 @@ static attr_list_t *map_attrs(const attr_list_t *list, map_attrs_filter_t filter
   return new_list;
 }
 
-static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t *right, attr_t *attr, enum storage_class stgclass)
+static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t *right,
+        attr_t *attr, enum storage_class stgclass, enum type_qualifier qual)
 {
   decl_spec_t *declspec = left ? left : right;
   if (!declspec)
@@ -1290,6 +1294,7 @@ static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t 
     declspec->type = NULL;
     declspec->attrs = NULL;
     declspec->stgclass = STG_NONE;
+    declspec->qualifier = 0;
   }
   declspec->type = type;
   if (left && declspec != left)
@@ -1299,6 +1304,7 @@ static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t 
       declspec->stgclass = left->stgclass;
     else if (left->stgclass != STG_NONE)
       error_loc("only one storage class can be specified\n");
+    declspec->qualifier |= left->qualifier;
     assert(!left->type);
     free(left);
   }
@@ -1309,6 +1315,7 @@ static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t 
       declspec->stgclass = right->stgclass;
     else if (right->stgclass != STG_NONE)
       error_loc("only one storage class can be specified\n");
+    declspec->qualifier |= right->qualifier;
     assert(!right->type);
     free(right);
   }
@@ -1318,6 +1325,7 @@ static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t 
     declspec->stgclass = stgclass;
   else if (stgclass != STG_NONE)
     error_loc("only one storage class can be specified\n");
+  declspec->qualifier |= qual;
 
   /* apply attributes to type */
   if (type && declspec->attrs)
@@ -1368,19 +1376,19 @@ static expr_list_t *append_expr(expr_list_t *list, expr_t *expr)
     return list;
 }
 
-static type_t *append_array(type_t *chain, expr_t *expr)
+static void append_array(declarator_t *decl, expr_t *expr)
 {
     type_t *array;
 
     if (!expr)
-        return chain;
+        return;
 
     /* An array is always a reference pointer unless explicitly marked otherwise
      * (regardless of what the default pointer attribute is). */
     array = type_new_array(NULL, NULL, FALSE, expr->is_const ? expr->cval : 0,
             expr->is_const ? NULL : expr, NULL, FC_RP);
 
-    return append_chain_type(chain, array);
+    append_chain_type(decl, array, 0);
 }
 
 static struct list type_pool = LIST_INIT(type_pool);
@@ -1473,27 +1481,38 @@ static type_t *get_chain_end(type_t *type)
     return type;
 }
 
-static type_t *append_chain_type(type_t *chain, type_t *type)
+static void append_chain_type(declarator_t *decl, type_t *type, enum type_qualifier qual)
 {
     type_t *chain_type;
 
-    if (!chain)
-        return type;
-    chain_type = get_chain_end(chain);
+    if (!decl->type)
+    {
+        decl->type = type;
+        decl->qualifier = qual;
+        return;
+    }
+    chain_type = get_chain_end(decl->type);
 
     if (is_ptr(chain_type))
+    {
         chain_type->details.pointer.ref.type = type;
+        chain_type->details.pointer.ref.qualifier = qual;
+    }
     else if (is_array(chain_type))
+    {
         chain_type->details.array.elem.type = type;
+        chain_type->details.array.elem.qualifier = qual;
+    }
     else if (is_func(chain_type))
+    {
         chain_type->details.function->retval->declspec.type = type;
+        chain_type->details.function->retval->declspec.qualifier = qual;
+    }
     else
         assert(0);
 
     if (!is_func(chain_type))
         type->attrs = move_attr(type->attrs, chain_type->attrs, ATTR_CALLCONV);
-
-    return chain;
 }
 
 static void append_chain_callconv(type_t *chain, char *callconv)
@@ -1521,7 +1540,7 @@ static warning_list_t *append_warning(warning_list_t *list, int num)
     return list;
 }
 
-static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const declarator_t *decl,
+static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_t *decl,
                        int top)
 {
   var_t *v = decl->var;
@@ -1540,8 +1559,10 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, const decl
   }
 
   /* add type onto the end of the pointers in pident->type */
-  v->declspec.type = append_chain_type(decl ? decl->type : NULL, type);
-  v->declspec.stgclass = decl_spec->stgclass;
+  append_chain_type(decl, type, decl_spec->qualifier);
+  v->declspec = *decl_spec;
+  v->declspec.type = decl->type;
+  v->declspec.qualifier = decl->qualifier;
   v->attrs = attrs;
 
   if (is_attr(type->attrs, ATTR_CALLCONV) && !is_func(type))
@@ -1778,6 +1799,7 @@ static declarator_t *make_declarator(var_t *var)
   declarator_t *d = xmalloc(sizeof(*d));
   d->var = var ? var : make_var(NULL);
   d->type = NULL;
+  d->qualifier = 0;
   d->bits = NULL;
   return d;
 }
@@ -1912,7 +1934,7 @@ static void fix_incomplete_types(type_t *complete_type)
 
 static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, attr_list_t *attrs)
 {
-  const declarator_t *decl;
+  declarator_t *decl;
   type_t *type = decl_spec->type;
 
   if (is_attr(attrs, ATTR_UUID) && !is_attr(attrs, ATTR_PUBLIC))
@@ -1934,7 +1956,7 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
         type->attrs = attrs;
   }
 
-  LIST_FOR_EACH_ENTRY( decl, decls, const declarator_t, entry )
+  LIST_FOR_EACH_ENTRY( decl, decls, declarator_t, entry )
   {
 
     if (decl->var->name) {
@@ -2126,7 +2148,6 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_CASE */                { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, "case" },
     /* ATTR_CODE */                { 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "code" },
     /* ATTR_COMMSTATUS */          { 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "comm_status" },
-    /* ATTR_CONST */               { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "const" },
     /* ATTR_CONTEXTHANDLE */       { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "context_handle" },
     /* ATTR_CONTROL */             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, "control" },
     /* ATTR_DECODE */              { 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "decode" },

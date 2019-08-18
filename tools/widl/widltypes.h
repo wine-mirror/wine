@@ -81,7 +81,6 @@ enum attr_type
     ATTR_CASE,
     ATTR_CODE,
     ATTR_COMMSTATUS,
-    ATTR_CONST, /* const pseudo-attribute */
     ATTR_CONTEXTHANDLE,
     ATTR_CONTROL,
     ATTR_DECODE,
@@ -235,6 +234,11 @@ enum storage_class
     STG_REGISTER,
 };
 
+enum type_qualifier
+{
+    TYPE_QUALIFIER_CONST = 1,
+};
+
 enum statement_type
 {
     STMT_LIBRARY,
@@ -299,6 +303,7 @@ struct _decl_spec_t
   type_t *type;
   attr_list_t *attrs;
   enum storage_class stgclass;
+  enum type_qualifier qualifier;
 };
 
 struct _attr_t {
@@ -478,6 +483,7 @@ struct _var_t {
 struct _declarator_t {
   var_t *var;
   type_t *type;
+  enum type_qualifier qualifier;
   expr_t *bits;
 
   /* parser-internal */
@@ -626,6 +632,7 @@ static inline decl_spec_t *init_declspec(decl_spec_t *declspec, type_t *type)
   declspec->type = type;
   declspec->attrs = NULL;
   declspec->stgclass = STG_NONE;
+  declspec->qualifier = 0;
 
   return declspec;
 }

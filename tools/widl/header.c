@@ -318,8 +318,7 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
 
   name = type_get_name(t, name_type);
 
-  if (is_attr(t->attrs, ATTR_CONST) &&
-      (type_is_alias(t) || !is_ptr(t)))
+  if ((ds->qualifier & TYPE_QUALIFIER_CONST) && (type_is_alias(t) || !is_ptr(t)))
     fprintf(h, "const ");
 
   if (type_is_alias(t)) fprintf(h, "%s", t->name);
@@ -369,7 +368,7 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
       {
         write_type_left(h, type_pointer_get_ref(t), name_type, declonly, FALSE);
         write_pointer_left(h, type_pointer_get_ref_type(t));
-        if (is_attr(t->attrs, ATTR_CONST)) fprintf(h, "const ");
+        if (ds->qualifier & TYPE_QUALIFIER_CONST) fprintf(h, "const ");
         break;
       }
       case TYPE_ARRAY:
@@ -813,17 +812,17 @@ static void write_typedef(FILE *header, type_t *type)
 
 int is_const_decl(const var_t *var)
 {
-  const type_t *t;
+  const decl_spec_t *t;
   /* strangely, MIDL accepts a const attribute on any pointer in the
   * declaration to mean that data isn't being instantiated. this appears
   * to be a bug, but there is no benefit to being incompatible with MIDL,
   * so we'll do the same thing */
-  for (t = var->declspec.type; ; )
+  for (t = &var->declspec; ; )
   {
-    if (is_attr(t->attrs, ATTR_CONST))
+    if (t->qualifier & TYPE_QUALIFIER_CONST)
       return TRUE;
-    else if (is_ptr(t))
-      t = type_pointer_get_ref_type(t);
+    else if (is_ptr(t->type))
+      t = type_pointer_get_ref(t->type);
     else break;
   }
   return FALSE;

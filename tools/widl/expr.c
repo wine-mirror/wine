@@ -521,11 +521,11 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
         break;
     case EXPR_STRLIT:
         result.is_temporary = TRUE;
-        result.type = type_new_pointer(FC_UP, type_new_int(TYPE_BASIC_CHAR, 0), NULL);
+        result.type = type_new_pointer(FC_UP, type_new_int(TYPE_BASIC_CHAR, 0));
         break;
     case EXPR_WSTRLIT:
         result.is_temporary = TRUE;
-        result.type = type_new_pointer(FC_UP, type_new_int(TYPE_BASIC_WCHAR, 0), NULL);
+        result.type = type_new_pointer(FC_UP, type_new_int(TYPE_BASIC_WCHAR, 0));
         break;
     case EXPR_CHARCONST:
         result.is_temporary = TRUE;
@@ -575,7 +575,7 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
                            expr_loc->attr ? expr_loc->attr : "");
         result.is_variable = FALSE;
         result.is_temporary = TRUE;
-        result.type = type_new_pointer(FC_UP, result.type, NULL);
+        result.type = type_new_pointer(FC_UP, result.type);
         break;
     case EXPR_PPTR:
         result = resolve_expression(expr_loc, cont_type, e->ref);

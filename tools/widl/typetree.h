@@ -30,7 +30,7 @@ enum name_type {
 };
 
 type_t *type_new_function(var_list_t *args);
-type_t *type_new_pointer(unsigned char pointer_default, type_t *ref, attr_list_t *attrs);
+type_t *type_new_pointer(unsigned char pointer_default, type_t *ref);
 type_t *type_new_alias(const decl_spec_t *t, const char *name);
 type_t *type_new_module(char *name);
 type_t *type_new_array(const char *name, const decl_spec_t *element, int declptr,
