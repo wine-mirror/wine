@@ -725,6 +725,7 @@ static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     struct root_pnp_device *root_device = device->DeviceExtension;
+    NTSTATUS status;
 
     TRACE("device %p, irp %p, minor function %#x.\n", device, irp, stack->MinorFunction);
 
@@ -783,8 +784,9 @@ static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
         FIXME("Unhandled PnP request %#x.\n", stack->MinorFunction);
     }
 
+    status = irp->IoStatus.u.Status;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
-    return irp->IoStatus.u.Status;
+    return status;
 }
 
 static NTSTATUS WINAPI pnp_manager_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *keypath )
