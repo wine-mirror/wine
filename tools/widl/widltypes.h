@@ -374,7 +374,6 @@ struct array_details
   expr_t *length_is;
   struct _decl_spec_t elem;
   unsigned int dim;
-  unsigned char ptr_def_fc;
   unsigned char declptr; /* if declared as a pointer */
   unsigned short ptr_tfsoff;  /* offset of pointer definition for declptr */
 };
@@ -393,7 +392,6 @@ struct basic_details
 struct pointer_details
 {
   struct _decl_spec_t ref;
-  unsigned char def_fc;
 };
 
 struct bitfield_details

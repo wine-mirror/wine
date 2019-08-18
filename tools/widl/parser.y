@@ -38,8 +38,6 @@
 #include "expr.h"
 #include "typetree.h"
 
-static unsigned char pointer_default = FC_UP;
-
 typedef struct list typelist_t;
 struct typenode {
   type_t *type;
@@ -154,7 +152,6 @@ static typelib_t *current_typelib;
 	UUID *uuid;
 	unsigned int num;
 	double dbl;
-	interface_info_t ifinfo;
 	typelib_t *typelib;
 	struct _import_t *import;
 	struct _decl_spec_t *declspec;
@@ -268,7 +265,7 @@ static typelib_t *current_typelib;
 %type <str_list> str_list
 %type <expr> m_expr expr expr_const expr_int_const array m_bitfield
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
-%type <ifinfo> interfacehdr
+%type <type> interfacehdr
 %type <stgclass> storage_cls_spec
 %type <type_qualifier> type_qualifier m_type_qual_list
 %type <function_specifier> function_specifier
@@ -896,10 +893,7 @@ interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(TYPE_INTERFACE, $2, current_n
 	|  tINTERFACE aKNOWNTYPE		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
 	;
 
-interfacehdr: attributes interface		{ $$.interface = $2;
-						  $$.old_pointer_default = pointer_default;
-						  if (is_attr($1, ATTR_POINTERDEFAULT))
-						    pointer_default = get_attrv($1, ATTR_POINTERDEFAULT);
+interfacehdr: attributes interface		{ $$ = $2;
 						  check_def($2);
 						  $2->attrs = check_iface_attrs($2->name, $1);
 						  $2->defined = TRUE;
@@ -907,20 +901,18 @@ interfacehdr: attributes interface		{ $$.interface = $2;
 	;
 
 interfacedef: interfacehdr inherit
-	  '{' int_statements '}' semicolon_opt	{ $$ = $1.interface;
+	  '{' int_statements '}' semicolon_opt	{ $$ = $1;
 						  if($$ == $2)
 						    error_loc("Interface can't inherit from itself\n");
 						  type_interface_define($$, $2, $4);
 						  check_async_uuid($$);
-						  pointer_default = $1.old_pointer_default;
 						}
 /* MIDL is able to import the definition of a base class from inside the
  * definition of a derived class, I'll try to support it with this rule */
 	| interfacehdr ':' aIDENTIFIER
 	  '{' import int_statements '}'
-	   semicolon_opt			{ $$ = $1.interface;
+	   semicolon_opt			{ $$ = $1;
 						  type_interface_define($$, find_type_or_error2($3, 0), $6);
-						  pointer_default = $1.old_pointer_default;
 						}
 	| dispinterfacedef semicolon_opt	{ $$ = $1; }
 	;
@@ -980,7 +972,7 @@ decl_spec_no_type:
 
 declarator:
 	  '*' m_type_qual_list declarator %prec PPTR
-						{ $$ = $3; append_chain_type($$, type_new_pointer(pointer_default, NULL), $2); }
+						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
 	| callconv declarator			{ $$ = $2; append_chain_callconv($$->type, $1); }
 	| direct_declarator
 	;
@@ -995,7 +987,7 @@ direct_declarator:
 /* abstract declarator */
 abstract_declarator:
 	  '*' m_type_qual_list m_abstract_declarator %prec PPTR
-						{ $$ = $3; append_chain_type($$, type_new_pointer(pointer_default, NULL), $2); }
+						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
 	| callconv m_abstract_declarator	{ $$ = $2; append_chain_callconv($$->type, $1); }
 	| abstract_direct_declarator
 	;
@@ -1003,7 +995,7 @@ abstract_declarator:
 /* abstract declarator without accepting direct declarator */
 abstract_declarator_no_direct:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
-						{ $$ = $3; append_chain_type($$, type_new_pointer(pointer_default, NULL), $2); }
+						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
 	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv($$->type, $1); }
 	;
 
@@ -1030,7 +1022,7 @@ abstract_direct_declarator:
 /* abstract or non-abstract declarator */
 any_declarator:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
-						{ $$ = $3; append_chain_type($$, type_new_pointer(pointer_default, NULL), $2); }
+						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
 	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv($$->type, $1); }
 	| any_direct_declarator
 	;
@@ -1038,7 +1030,7 @@ any_declarator:
 /* abstract or non-abstract declarator without accepting direct declarator */
 any_declarator_no_direct:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
-						{ $$ = $3; append_chain_type($$, type_new_pointer(pointer_default, NULL), $2); }
+						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
 	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv($$->type, $1); }
 	;
 
@@ -1378,7 +1370,7 @@ static void append_array(declarator_t *decl, expr_t *expr)
     /* An array is always a reference pointer unless explicitly marked otherwise
      * (regardless of what the default pointer attribute is). */
     array = type_new_array(NULL, NULL, FALSE, expr->is_const ? expr->cval : 0,
-            expr->is_const ? NULL : expr, NULL, FC_RP);
+            expr->is_const ? NULL : expr, NULL);
 
     append_chain_type(decl, array, 0);
 }
@@ -1579,7 +1571,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator
           warning_loc_info(&v->loc_info,
                            "%s: pointer attribute applied to interface "
                            "pointer type has no effect\n", v->name);
-      if (!ptr_attr && top && type_pointer_get_default_fc(v->declspec.type) != FC_RP)
+      if (!ptr_attr && top)
       {
         /* FIXME: this is a horrible hack to cope with the issue that we
          * store an offset to the typeformat string in the type object, but
@@ -1643,11 +1635,11 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator
         else
           *ptype = type_new_array((*ptype)->name,
                                   type_array_get_element(*ptype), FALSE,
-                                  0, dim, NULL, FC_RP);
+                                  0, dim, NULL);
       }
       else if (is_ptr(*ptype))
         *ptype = type_new_array((*ptype)->name, type_pointer_get_ref(*ptype), TRUE,
-                                0, dim, NULL, pointer_default);
+                                0, dim, NULL);
       else
         error_loc("%s: size_is attribute applied to illegal type\n", v->name);
     }
@@ -1671,8 +1663,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator
                                 type_array_get_element(*ptype),
                                 type_array_is_decl_as_ptr(*ptype),
                                 type_array_get_dim(*ptype),
-                                type_array_get_conformance(*ptype),
-                                dim, type_array_get_ptr_default_fc(*ptype));
+                                type_array_get_conformance(*ptype), dim);
       }
       else
         error_loc("%s: length_is attribute applied to illegal type\n", v->name);
@@ -1798,7 +1789,7 @@ static type_t *make_safearray(type_t *type)
 {
     decl_spec_t ds = {.type = type};
     ds.type = type_new_alias(&ds, "SAFEARRAY");
-    return type_new_array(NULL, &ds, TRUE, 0, NULL, NULL, FC_RP);
+    return type_new_array(NULL, &ds, TRUE, 0, NULL, NULL);
 }
 
 static typelib_t *make_library(const char *name, const attr_list_t *attrs)

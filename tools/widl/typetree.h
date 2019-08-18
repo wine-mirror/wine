@@ -30,12 +30,11 @@ enum name_type {
 };
 
 type_t *type_new_function(var_list_t *args);
-type_t *type_new_pointer(unsigned char pointer_default, type_t *ref);
+type_t *type_new_pointer(type_t *ref);
 type_t *type_new_alias(const decl_spec_t *t, const char *name);
 type_t *type_new_module(char *name);
 type_t *type_new_array(const char *name, const decl_spec_t *element, int declptr,
-                       unsigned int dim, expr_t *size_is, expr_t *length_is,
-                       unsigned char ptr_default_fc);
+                       unsigned int dim, expr_t *size_is, expr_t *length_is);
 type_t *type_new_basic(enum type_basic_type basic_type);
 type_t *type_new_int(enum type_basic_type basic_type, int sign);
 type_t *type_new_void(void);
@@ -295,13 +294,6 @@ static inline int type_array_is_decl_as_ptr(const type_t *type)
     return type->details.array.declptr;
 }
 
-static inline unsigned char type_array_get_ptr_default_fc(const type_t *type)
-{
-    type = type_get_real_type(type);
-    assert(type_get_type(type) == TYPE_ARRAY);
-    return type->details.array.ptr_def_fc;
-}
-
 static inline int type_is_alias(const type_t *type)
 {
     return type->type_type == TYPE_ALIAS;
@@ -336,13 +328,6 @@ static inline const decl_spec_t *type_pointer_get_ref(const type_t *type)
 static inline type_t *type_pointer_get_ref_type(const type_t *type)
 {
     return type_pointer_get_ref(type)->type;
-}
-
-static inline unsigned char type_pointer_get_default_fc(const type_t *type)
-{
-    type = type_get_real_type(type);
-    assert(type_get_type(type) == TYPE_POINTER);
-    return type->details.pointer.def_fc;
 }
 
 static inline type_t *type_bitfield_get_field(const type_t *type)

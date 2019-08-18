@@ -276,10 +276,11 @@ unsigned char get_pointer_fc(const type_t *type, const attr_list_t *attrs, int t
 
     if (toplevel_param)
         return FC_RP;
-    else if (is_ptr(type))
-        return type_pointer_get_default_fc(type);
-    else
-        return type_array_get_ptr_default_fc(type);
+
+    if ((pointer_type = get_attrv(current_iface->attrs, ATTR_POINTERDEFAULT)))
+        return pointer_type;
+
+    return FC_UP;
 }
 
 static unsigned char get_pointer_fc_context( const type_t *type, const attr_list_t *attrs,

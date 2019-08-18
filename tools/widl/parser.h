@@ -21,12 +21,6 @@
 #ifndef __WIDL_PARSER_H
 #define __WIDL_PARSER_H
 
-typedef struct
-{
-  type_t *interface;
-  unsigned char old_pointer_default;
-} interface_info_t;
-
 int parser_parse(void);
 
 extern FILE *parser_in;
