@@ -826,7 +826,7 @@ static DWORD get_service_binary_path(const struct service_entry *service_entry, 
     ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName, *path, size);
 
     /* if service image is configured to systemdir, redirect it to wow64 systemdir */
-    if (service_entry->is_wow64)
+    if (service_entry->is_wow64 && !(service_entry->config.dwServiceType & (SERVICE_FILE_SYSTEM_DRIVER | SERVICE_KERNEL_DRIVER)))
     {
         WCHAR system_dir[MAX_PATH], *redirected;
         DWORD len;

@@ -35,6 +35,8 @@
 static const CHAR spooler[] = "Spooler"; /* Should be available on all platforms */
 static CHAR selfname[MAX_PATH];
 
+static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
+
 static BOOL (WINAPI *pChangeServiceConfig2A)(SC_HANDLE,DWORD,LPVOID);
 static BOOL (WINAPI *pChangeServiceConfig2W)(SC_HANDLE,DWORD,LPVOID);
 static BOOL (WINAPI *pEnumServicesStatusExA)(SC_HANDLE, SC_ENUM_TYPE, DWORD,
@@ -67,6 +69,8 @@ static void init_function_pointers(void)
     pQueryServiceStatusEx= (void*)GetProcAddress(hadvapi32, "QueryServiceStatusEx");
     pQueryServiceObjectSecurity = (void*)GetProcAddress(hadvapi32, "QueryServiceObjectSecurity");
     pNotifyServiceStatusChangeW = (void*)GetProcAddress(hadvapi32, "NotifyServiceStatusChangeW");
+
+    pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
 }
 
 static void test_open_scm(void)
@@ -1767,6 +1771,91 @@ static void test_close(void)
     ok(ret, "Expected success got error %u\n", GetLastError());
 }
 
+static void test_wow64(void)
+{
+    SC_HANDLE manager, service;
+    BOOL wow64, ret;
+    HANDLE file;
+
+    if (!pIsWow64Process || !pIsWow64Process(GetCurrentProcess(), &wow64) || !wow64)
+    {
+        skip("Not running under WoW64.\n");
+        return;
+    }
+
+    if (!(manager = OpenSCManagerA(NULL, NULL, SC_MANAGER_CREATE_SERVICE)))
+    {
+        skip("Not enough permissions to create a service.\n");
+        return;
+    }
+
+    file = CreateFileA("C:\\windows\\syswow64\\winetestsvc.exe", GENERIC_WRITE,
+            0, NULL, CREATE_ALWAYS, 0, NULL);
+    CloseHandle(file);
+
+    service = CreateServiceA(manager, "winetestsvc", "winetestsvc",
+            SERVICE_START | SERVICE_STOP | SERVICE_QUERY_STATUS | DELETE,
+            SERVICE_WIN32_OWN_PROCESS, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
+            "C:\\windows\\system32\\winetestsvc.exe service serve", NULL, NULL, NULL, NULL, NULL);
+    ok(!!service, "Failed to create service, error %u.\n", GetLastError());
+    ret = StartServiceA(service, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    todo_wine ok(GetLastError() == ERROR_BAD_EXE_FORMAT, "Got error %u.\n", GetLastError());
+
+    ret = DeleteService(service);
+    ok(ret, "Failed to delete service, error %u.\n", GetLastError());
+    CloseServiceHandle(service);
+
+    service = CreateServiceA(manager, "winetestsvc", "winetestsvc", SERVICE_START | DELETE,
+            SERVICE_KERNEL_DRIVER, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
+            "C:\\windows\\system32\\winetestsvc.exe", NULL, NULL, NULL, NULL, NULL);
+    ok(!!service, "Failed to create service, error %u.\n", GetLastError());
+    ret = StartServiceA(service, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    todo_wine ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %u.\n", GetLastError());
+
+    ret = DeleteService(service);
+    ok(ret, "Failed to delete service, error %u.\n", GetLastError());
+    CloseServiceHandle(service);
+
+    ret = DeleteFileA("C:\\windows\\syswow64\\winetestsvc.exe");
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+
+    file = CreateFileA("C:\\windows\\sysnative\\winetestsvc.exe", GENERIC_WRITE,
+            0, NULL, CREATE_ALWAYS, 0, NULL);
+    CloseHandle(file);
+
+    service = CreateServiceA(manager, "winetestsvc", "winetestsvc", SERVICE_START | DELETE,
+            SERVICE_WIN32_OWN_PROCESS, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
+            "C:\\windows\\system32\\winetestsvc.exe service serve", NULL, NULL, NULL, NULL, NULL);
+    ok(!!service, "Failed to create service, error %u.\n", GetLastError());
+    ret = StartServiceA(service, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %u.\n", GetLastError());
+
+    ret = DeleteService(service);
+    ok(ret, "Failed to delete service, error %u.\n", GetLastError());
+    CloseServiceHandle(service);
+
+    service = CreateServiceA(manager, "winetestsvc", "winetestsvc", SERVICE_START | DELETE,
+            SERVICE_KERNEL_DRIVER, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
+            "C:\\windows\\system32\\winetestsvc.exe", NULL, NULL, NULL, NULL, NULL);
+    ok(!!service, "Failed to create service, error %u.\n", GetLastError());
+    ret = StartServiceA(service, 0, NULL);
+    ok(!ret, "Expected failure.\n");
+    todo_wine ok(GetLastError() == ERROR_BAD_EXE_FORMAT, "Got error %u.\n", GetLastError());
+
+    ret = DeleteService(service);
+    ok(ret, "Failed to delete service, error %u.\n", GetLastError());
+    CloseServiceHandle(service);
+
+    ret = DeleteFileA("C:\\windows\\sysnative\\winetestsvc.exe");
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+
+    CloseServiceHandle(service);
+    CloseServiceHandle(manager);
+}
+
 static void test_sequence(void)
 {
     SC_HANDLE scm_handle, svc_handle;
@@ -2689,6 +2778,7 @@ START_TEST(service)
     test_query_svc();
     test_enum_svc();
     test_close();
+    test_wow64();
     /* Test the creation, querying and deletion of a service */
     test_sequence();
     test_queryconfig2();
