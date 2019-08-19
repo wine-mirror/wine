@@ -2153,9 +2153,9 @@ int set_selection( ME_TextEditor *editor, int to, int from )
 
     TRACE("%d - %d\n", to, from );
 
-    ME_InvalidateSelection( editor );
+    if (!editor->bHideSelection) ME_InvalidateSelection( editor );
     end = set_selection_cursors( editor, to, from );
-    ME_InvalidateSelection( editor );
+    if (!editor->bHideSelection) ME_InvalidateSelection( editor );
     update_caret( editor );
     ME_SendSelChange( editor );
 
