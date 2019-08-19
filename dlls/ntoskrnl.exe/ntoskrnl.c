@@ -3128,10 +3128,19 @@ VOID WINAPI IoStartNextPacket(PDEVICE_OBJECT deviceobject, BOOLEAN cancelable)
 /*****************************************************
  *           ObQueryNameString  (NTOSKRNL.EXE.@)
  */
-NTSTATUS WINAPI ObQueryNameString(PVOID object, POBJECT_NAME_INFORMATION name, ULONG maxlength, PULONG returnlength)
+NTSTATUS WINAPI ObQueryNameString( void *object, OBJECT_NAME_INFORMATION *name, ULONG size, ULONG *ret_size )
 {
-    FIXME("(%p %p %u %p) stub\n", object, name, maxlength, returnlength);
-    return STATUS_NOT_IMPLEMENTED;
+    HANDLE handle;
+    NTSTATUS ret;
+
+    TRACE("object %p, name %p, size %u, ret_size %p.\n", object, name, size, ret_size);
+
+    if ((ret = ObOpenObjectByPointer( object, 0, NULL, 0, NULL, KernelMode, &handle )))
+        return ret;
+    ret = NtQueryObject( handle, ObjectNameInformation, name, size, ret_size );
+
+    NtClose( handle );
+    return ret;
 }
 
 /*****************************************************

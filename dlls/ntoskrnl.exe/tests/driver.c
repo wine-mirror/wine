@@ -1524,6 +1524,82 @@ static void test_IoAttachDeviceToDeviceStack(void)
     IoDeleteDevice(dev3);
 }
 
+static void test_object_name(void)
+{
+    static const WCHAR event_nameW[] = L"\\wine_test_event";
+    static const WCHAR device_nameW[] = L"\\Device\\WineTestDriver";
+    char buffer[1024];
+    OBJECT_NAME_INFORMATION *name = (OBJECT_NAME_INFORMATION *)buffer;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING string;
+    ULONG ret_size;
+    HANDLE handle;
+    KEVENT *event;
+    NTSTATUS ret;
+
+    ret_size = 0;
+    ret = ObQueryNameString(lower_device, name, 0, &ret_size);
+    ok(ret == STATUS_INFO_LENGTH_MISMATCH, "got status %#x\n", ret);
+    ok(ret_size == sizeof(*name) + sizeof(device_nameW), "got size %u\n", ret_size);
+
+    ret_size = 0;
+    ret = ObQueryNameString(lower_device, name, sizeof(buffer), &ret_size);
+    ok(!ret, "got status %#x\n", ret);
+    ok(!wcscmp(name->Name.Buffer, device_nameW), "got name %ls\n", name->Name.Buffer);
+    ok(ret_size == sizeof(*name) + sizeof(device_nameW), "got size %u\n", ret_size);
+    ok(name->Name.Length == wcslen(device_nameW) * sizeof(WCHAR), "got length %u\n", name->Name.Length);
+    ok(name->Name.MaximumLength == sizeof(device_nameW), "got maximum length %u\n", name->Name.MaximumLength);
+
+    event = IoCreateSynchronizationEvent(NULL, &handle);
+    ok(!!event, "failed to create event\n");
+
+    ret_size = 0;
+    ret = ObQueryNameString(event, name, sizeof(buffer), &ret_size);
+    ok(!ret, "got status %#x\n", ret);
+    ok(!name->Name.Buffer, "got name %ls\n", name->Name.Buffer);
+    ok(ret_size == sizeof(*name), "got size %u\n", ret_size);
+    ok(!name->Name.Length, "got length %u\n", name->Name.Length);
+    ok(!name->Name.MaximumLength, "got maximum length %u\n", name->Name.MaximumLength);
+
+    ret = ZwClose(handle);
+    ok(!ret, "got status %#x\n", ret);
+
+    RtlInitUnicodeString(&string, event_nameW);
+    InitializeObjectAttributes(&attr, &string, OBJ_KERNEL_HANDLE, NULL, NULL);
+    ret = ZwCreateEvent(&handle, 0, &attr, NotificationEvent, TRUE);
+    ok(!ret, "got status %#x\n", ret);
+    ret = ObReferenceObjectByHandle(handle, 0, *pExEventObjectType, KernelMode, (void **)&event, NULL);
+    ok(!ret, "got status %#x\n", ret);
+
+    ret_size = 0;
+    ret = ObQueryNameString(event, name, sizeof(buffer), &ret_size);
+    ok(!ret, "got status %#x\n", ret);
+    ok(!wcscmp(name->Name.Buffer, event_nameW), "got name %ls\n", name->Name.Buffer);
+    ok(ret_size == sizeof(*name) + sizeof(event_nameW), "got size %u\n", ret_size);
+    ok(name->Name.Length == wcslen(event_nameW) * sizeof(WCHAR), "got length %u\n", name->Name.Length);
+    ok(name->Name.MaximumLength == sizeof(event_nameW), "got maximum length %u\n", name->Name.MaximumLength);
+
+    ObDereferenceObject(event);
+    ret = ZwClose(handle);
+    ok(!ret, "got status %#x\n", ret);
+
+    ret_size = 0;
+    ret = ObQueryNameString(KeGetCurrentThread(), name, sizeof(buffer), &ret_size);
+    ok(!ret, "got status %#x\n", ret);
+    ok(!name->Name.Buffer, "got name %ls\n", name->Name.Buffer);
+    ok(ret_size == sizeof(*name), "got size %u\n", ret_size);
+    ok(!name->Name.Length, "got length %u\n", name->Name.Length);
+    ok(!name->Name.MaximumLength, "got maximum length %u\n", name->Name.MaximumLength);
+
+    ret_size = 0;
+    ret = ObQueryNameString(IoGetCurrentProcess(), name, sizeof(buffer), &ret_size);
+    ok(!ret, "got status %#x\n", ret);
+    ok(!name->Name.Buffer, "got name %ls\n", name->Name.Buffer);
+    ok(ret_size == sizeof(*name), "got size %u\n", ret_size);
+    ok(!name->Name.Length, "got length %u\n", name->Name.Length);
+    ok(!name->Name.MaximumLength, "got maximum length %u\n", name->Name.MaximumLength);
+}
+
 static PIO_WORKITEM main_test_work_item;
 
 static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
@@ -1605,6 +1681,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_resource();
     test_lookup_thread();
     test_IoAttachDeviceToDeviceStack();
+    test_object_name();
 
     if (main_test_work_item) return STATUS_UNEXPECTED_IO_ERROR;
 
