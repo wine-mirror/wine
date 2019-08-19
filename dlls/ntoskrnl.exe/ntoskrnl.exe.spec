@@ -33,6 +33,7 @@
 @ stdcall -arch=win64 ExpInterlockedPopEntrySList(ptr) RtlInterlockedPopEntrySList
 @ stdcall -arch=win64 ExpInterlockedPushEntrySList(ptr ptr) RtlInterlockedPushEntrySList
 @ stub HalExamineMBR
+@ stdcall -arch=arm,arm64,x86_64 InitializeSListHead(ptr) RtlInitializeSListHead
 @ stdcall -fastcall InterlockedCompareExchange(ptr long long) NTOSKRNL_InterlockedCompareExchange
 @ stdcall -fastcall InterlockedDecrement(ptr) NTOSKRNL_InterlockedDecrement
 @ stdcall -fastcall InterlockedExchange(ptr long) NTOSKRNL_InterlockedExchange
