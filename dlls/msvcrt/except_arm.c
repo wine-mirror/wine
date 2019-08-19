@@ -40,29 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
-struct _DISPATCHER_CONTEXT;
-
-typedef LONG (WINAPI *PC_LANGUAGE_EXCEPTION_HANDLER)(EXCEPTION_POINTERS *ptrs, DWORD frame);
-typedef EXCEPTION_DISPOSITION (WINAPI *PEXCEPTION_ROUTINE)(EXCEPTION_RECORD *rec, DWORD frame,
-                                                           CONTEXT *context,
-                                                           struct _DISPATCHER_CONTEXT *dispatch);
-
-typedef struct _DISPATCHER_CONTEXT
-{
-    DWORD                 ControlPc;
-    DWORD                 ImageBase;
-    PRUNTIME_FUNCTION     FunctionEntry;
-    DWORD                 EstablisherFrame;
-    DWORD                 TargetPc;
-    PCONTEXT              ContextRecord;
-    PEXCEPTION_ROUTINE    LanguageHandler;
-    PVOID                 HandlerData;
-    PUNWIND_HISTORY_TABLE HistoryTable;
-    DWORD                 ScopeIndex;
-    BOOLEAN               ControlPcIsUnwound;
-    PBYTE                 NonVolatileRegisters;
-    DWORD                 VirtualVfpHead;
-} DISPATCHER_CONTEXT;
 
 /*********************************************************************
  *		__CxxExceptionFilter (MSVCRT.@)

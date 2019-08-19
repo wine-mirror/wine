@@ -75,29 +75,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
-struct _DISPATCHER_CONTEXT;
-
-typedef LONG (WINAPI *PC_LANGUAGE_EXCEPTION_HANDLER)( EXCEPTION_POINTERS *ptrs, ULONG64 frame );
-typedef EXCEPTION_DISPOSITION (WINAPI *PEXCEPTION_ROUTINE)( EXCEPTION_RECORD *rec,
-                                                            ULONG64 frame,
-                                                            CONTEXT *context,
-                                                            struct _DISPATCHER_CONTEXT *dispatch );
-typedef void (WINAPI *TERMINATION_HANDLER)( ULONG flags, ULONG64 frame );
-
-typedef struct _DISPATCHER_CONTEXT
-{
-    ULONG64               ControlPc;
-    ULONG64               ImageBase;
-    PRUNTIME_FUNCTION     FunctionEntry;
-    ULONG64               EstablisherFrame;
-    ULONG64               TargetIp;
-    PCONTEXT              ContextRecord;
-    PEXCEPTION_ROUTINE    LanguageHandler;
-    PVOID                 HandlerData;
-    PUNWIND_HISTORY_TABLE HistoryTable;
-    ULONG                 ScopeIndex;
-} DISPATCHER_CONTEXT, *PDISPATCHER_CONTEXT;
-
 typedef struct _SCOPE_TABLE
 {
     ULONG Count;
@@ -2619,7 +2596,7 @@ static DWORD call_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_C
 
     TRACE( "calling handler %p (rec=%p, frame=0x%lx context=%p, dispatch=%p)\n",
            dispatch->LanguageHandler, rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
-    res = dispatch->LanguageHandler( rec, dispatch->EstablisherFrame, context, dispatch );
+    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, context, dispatch );
     TRACE( "handler at %p returned %u\n", dispatch->LanguageHandler, res );
 
     __wine_pop_frame( &frame );
@@ -3990,7 +3967,7 @@ static DWORD call_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dis
 
     TRACE( "calling handler %p (rec=%p, frame=0x%lx context=%p, dispatch=%p)\n",
          dispatch->LanguageHandler, rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
-    res = dispatch->LanguageHandler( rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
+    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
     TRACE( "handler %p returned %x\n", dispatch->LanguageHandler, res );
 
     __wine_pop_frame( &frame.frame );
@@ -4359,14 +4336,14 @@ void WINAPI _local_unwind( void *frame, void *target_ip )
  *		__C_specific_handler (NTDLL.@)
  */
 EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
-                                                   ULONG64 frame,
+                                                   void *frame,
                                                    CONTEXT *context,
                                                    struct _DISPATCHER_CONTEXT *dispatch )
 {
     SCOPE_TABLE *table = dispatch->HandlerData;
     ULONG i;
 
-    TRACE( "%p %lx %p %p\n", rec, frame, context, dispatch );
+    TRACE( "%p %p %p %p\n", rec, frame, context, dispatch );
     if (TRACE_ON(seh)) dump_scope_table( dispatch->ImageBase, table );
 
     if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
@@ -4376,7 +4353,7 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
             if (dispatch->ControlPc >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
                 dispatch->ControlPc < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
             {
-                TERMINATION_HANDLER handler;
+                PTERMINATION_HANDLER handler;
 
                 if (table->ScopeRecord[i].JumpTarget) continue;
 
@@ -4387,11 +4364,11 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
                     break;
                 }
 
-                handler = (TERMINATION_HANDLER)(dispatch->ImageBase + table->ScopeRecord[i].HandlerAddress);
+                handler = (PTERMINATION_HANDLER)(dispatch->ImageBase + table->ScopeRecord[i].HandlerAddress);
                 dispatch->ScopeIndex = i+1;
 
-                TRACE( "calling __finally %p frame %lx\n", handler, frame );
-                handler( 1, frame );
+                TRACE( "calling __finally %p frame %p\n", handler, frame );
+                handler( TRUE, frame );
             }
         }
         return ExceptionContinueSearch;
@@ -4406,12 +4383,12 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
             if (table->ScopeRecord[i].HandlerAddress != EXCEPTION_EXECUTE_HANDLER)
             {
                 EXCEPTION_POINTERS ptrs;
-                PC_LANGUAGE_EXCEPTION_HANDLER filter;
+                PEXCEPTION_FILTER filter;
 
-                filter = (PC_LANGUAGE_EXCEPTION_HANDLER)(dispatch->ImageBase + table->ScopeRecord[i].HandlerAddress);
+                filter = (PEXCEPTION_FILTER)(dispatch->ImageBase + table->ScopeRecord[i].HandlerAddress);
                 ptrs.ExceptionRecord = rec;
                 ptrs.ContextRecord = context;
-                TRACE( "calling filter %p ptrs %p frame %lx\n", filter, &ptrs, frame );
+                TRACE( "calling filter %p ptrs %p frame %p\n", filter, &ptrs, frame );
                 switch (filter( &ptrs, frame ))
                 {
                 case EXCEPTION_EXECUTE_HANDLER:
@@ -4423,7 +4400,7 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
                 }
             }
             TRACE( "unwinding to target %lx\n", dispatch->ImageBase + table->ScopeRecord[i].JumpTarget );
-            RtlUnwindEx( (void *)frame, (char *)dispatch->ImageBase + table->ScopeRecord[i].JumpTarget,
+            RtlUnwindEx( frame, (char *)dispatch->ImageBase + table->ScopeRecord[i].JumpTarget,
                          rec, 0, dispatch->ContextRecord, dispatch->HistoryTable );
         }
     }

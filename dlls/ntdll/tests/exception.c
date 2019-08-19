@@ -84,20 +84,6 @@ typedef struct
     } ScopeRecord[1];
 } SCOPE_TABLE;
 
-typedef struct
-{
-    ULONG64               ControlPc;
-    ULONG64               ImageBase;
-    PRUNTIME_FUNCTION     FunctionEntry;
-    ULONG64               EstablisherFrame;
-    ULONG64               TargetIp;
-    PCONTEXT              ContextRecord;
-    void* /*PEXCEPTION_ROUTINE*/ LanguageHandler;
-    PVOID                 HandlerData;
-    PUNWIND_HISTORY_TABLE HistoryTable;
-    ULONG                 ScopeIndex;
-} DISPATCHER_CONTEXT;
-
 typedef struct _SETJMP_FLOAT128
 {
     unsigned __int64 DECLSPEC_ALIGN(16) Part[2];

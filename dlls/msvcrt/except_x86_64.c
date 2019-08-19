@@ -39,28 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
-struct _DISPATCHER_CONTEXT;
-
-typedef LONG (WINAPI *PC_LANGUAGE_EXCEPTION_HANDLER)( EXCEPTION_POINTERS *ptrs, ULONG64 frame );
-typedef EXCEPTION_DISPOSITION (WINAPI *PEXCEPTION_ROUTINE)( EXCEPTION_RECORD *rec,
-                                                            ULONG64 frame,
-                                                            CONTEXT *context,
-                                                            struct _DISPATCHER_CONTEXT *dispatch );
-
-typedef struct _DISPATCHER_CONTEXT
-{
-    ULONG64               ControlPc;
-    ULONG64               ImageBase;
-    PRUNTIME_FUNCTION     FunctionEntry;
-    ULONG64               EstablisherFrame;
-    ULONG64               TargetIp;
-    PCONTEXT              ContextRecord;
-    PEXCEPTION_ROUTINE    LanguageHandler;
-    PVOID                 HandlerData;
-    PUNWIND_HISTORY_TABLE HistoryTable;
-    ULONG                 ScopeIndex;
-} DISPATCHER_CONTEXT;
-
 typedef struct
 {
     int  prev;
