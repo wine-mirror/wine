@@ -365,3 +365,13 @@ UINT WINAPI GetSystemFirmwareTable(DWORD provider, DWORD id, void *buffer, DWORD
     HeapFree(GetProcessHeap(), 0, sfti);
     return buffer_size;
 }
+
+
+/***********************************************************************
+ *           EnumSystemFirmwareTables (KERNEL32.@)
+ */
+UINT WINAPI EnumSystemFirmwareTables(DWORD provider, void *buffer, DWORD size)
+{
+    FIXME("(0x%08x, %p, %d)\n", provider, buffer, size);
+    return 0;
+}

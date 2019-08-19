@@ -1,4 +1,4 @@
-@ stub EnumSystemFirmwareTables
+@ stdcall EnumSystemFirmwareTables(long ptr long) kernel32.EnumSystemFirmwareTables
 @ stdcall GetComputerNameExA(long ptr ptr) kernel32.GetComputerNameExA
 @ stdcall GetComputerNameExW(long ptr ptr) kernel32.GetComputerNameExW
 @ stdcall GetLocalTime(ptr) kernel32.GetLocalTime
