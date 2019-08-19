@@ -4983,42 +4983,46 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   {
     case WM_PAINT:
     {
-      HDC hDC;
+      HDC hdc;
       RECT rc;
       PAINTSTRUCT ps;
+      HBRUSH old_brush;
 
       update_caret(editor);
-      hDC = BeginPaint(editor->hWnd, &ps);
+      hdc = BeginPaint(editor->hWnd, &ps);
       if (!editor->bEmulateVersion10 || (editor->nEventMask & ENM_UPDATE))
         ME_SendOldNotify(editor, EN_UPDATE);
+      old_brush = SelectObject(hdc, editor->hbrBackground);
+
       /* Erase area outside of the formatting rectangle */
       if (ps.rcPaint.top < editor->rcFormat.top)
       {
         rc = ps.rcPaint;
         rc.bottom = editor->rcFormat.top;
-        FillRect(hDC, &rc, editor->hbrBackground);
+        PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
         ps.rcPaint.top = editor->rcFormat.top;
       }
       if (ps.rcPaint.bottom > editor->rcFormat.bottom) {
         rc = ps.rcPaint;
         rc.top = editor->rcFormat.bottom;
-        FillRect(hDC, &rc, editor->hbrBackground);
+        PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
         ps.rcPaint.bottom = editor->rcFormat.bottom;
       }
       if (ps.rcPaint.left < editor->rcFormat.left) {
         rc = ps.rcPaint;
         rc.right = editor->rcFormat.left;
-        FillRect(hDC, &rc, editor->hbrBackground);
+        PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
         ps.rcPaint.left = editor->rcFormat.left;
       }
       if (ps.rcPaint.right > editor->rcFormat.right) {
         rc = ps.rcPaint;
         rc.left = editor->rcFormat.right;
-        FillRect(hDC, &rc, editor->hbrBackground);
+        PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
         ps.rcPaint.right = editor->rcFormat.right;
       }
 
-      ME_PaintContent(editor, hDC, &ps.rcPaint);
+      ME_PaintContent(editor, hdc, &ps.rcPaint);
+      SelectObject(hdc, old_brush);
       EndPaint(editor->hWnd, &ps);
       return 0;
     }

@@ -43,6 +43,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
 
   ME_InitContext(&c, editor, hDC);
   SetBkMode(hDC, TRANSPARENT);
+
   item = editor->pBuffer->pFirst->next;
   /* This context point is an offset for the paragraph positions stored
    * during wrapping. It shouldn't be modified during painting. */
@@ -86,7 +87,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
     IntersectRect(&rc, &rc, rcUpdate);
 
     if (!IsRectEmpty(&rc))
-      FillRect(hDC, &rc, c.editor->hbrBackground);
+      PatBlt(hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
   }
   if (editor->nTotalLength != editor->nLastTotalLength ||
       editor->nTotalWidth != editor->nLastTotalWidth)
@@ -597,7 +598,7 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
     rc.top = y;
     bounds->top = ME_twips2pointsY(c, para->fmt.dySpaceBefore);
     rc.bottom = y + bounds->top + top_border;
-    FillRect(c->hDC, &rc, c->editor->hbrBackground);
+    PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
   }
 
   if (para->fmt.dwMask & PFM_SPACEAFTER)
@@ -607,7 +608,7 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
     rc.bottom = y + para->nHeight;
     bounds->bottom = ME_twips2pointsY(c, para->fmt.dySpaceAfter);
     rc.top = rc.bottom - bounds->bottom - bottom_border;
-    FillRect(c->hDC, &rc, c->editor->hbrBackground);
+    PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
   }
 
   /* Native richedit doesn't support paragraph borders in v1.0 - 4.1,
@@ -646,7 +647,7 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
         rc.right = rc.left + border_width;
         rc.top = y + bounds->top;
         rc.bottom = y + para->nHeight - bounds->bottom;
-        FillRect(c->hDC, &rc, c->editor->hbrBackground);
+        PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
         MoveToEx(c->hDC, c->pt.x + pen_width + 1, y + bounds->top + DD(4), NULL);
         LineTo(c->hDC, c->pt.x + pen_width + 1, y + para->nHeight - bounds->bottom - DD(8));
       }
@@ -661,7 +662,7 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
         rc.right = rc.left + pen_width;
         rc.top = y + bounds->top;
         rc.bottom = y + para->nHeight - bounds->bottom;
-        FillRect(c->hDC, &rc, c->editor->hbrBackground);
+        PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
         MoveToEx(c->hDC, rightEdge - 1 - pen_width - 1, y + bounds->top + DD(4), NULL);
         LineTo(c->hDC, rightEdge - 1 - pen_width - 1, y + para->nHeight - bounds->bottom - DD(8));
       }
@@ -725,9 +726,8 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
         rc.top = top + width;
         width = cell->yTextOffset - width;
         rc.bottom = rc.top + width;
-        if (width) {
-          FillRect(c->hDC, &rc, c->editor->hbrBackground);
-        }
+        if (width)
+          PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
       }
       /* Draw cell borders.
        * The order borders are draw in is left, top, bottom, right in order
@@ -966,18 +966,18 @@ static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
           rc.bottom = y + p->member.row.nHeight;
         }
         visible = RectVisible(c->hDC, &rc);
-        if (visible) {
-          FillRect(c->hDC, &rc, c->editor->hbrBackground);
-        }
+        if (visible)
+          PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
         if (bounds.right)
         {
           /* If scrolled to the right past the end of the text, then
            * there may be space to the right of the paragraph border. */
-          RECT rcAfterBrdr = rc;
-          rcAfterBrdr.left = rc.right + bounds.right;
-          rcAfterBrdr.right = c->rcView.right;
-          if (RectVisible(c->hDC, &rcAfterBrdr))
-            FillRect(c->hDC, &rcAfterBrdr, c->editor->hbrBackground);
+          RECT after_bdr = rc;
+          after_bdr.left = rc.right + bounds.right;
+          after_bdr.right = c->rcView.right;
+          if (RectVisible(c->hDC, &after_bdr))
+            PatBlt(c->hDC, after_bdr.left, after_bdr.top, after_bdr.right - after_bdr.left,
+                   after_bdr.bottom - after_bdr.top, PATCOPY);
         }
         if (me_debug)
         {
@@ -1026,9 +1026,7 @@ static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
         rc.top = c->pt.y + para->pt.y + para->nHeight;
         rc.bottom = c->pt.y + p->member.cell.pt.y + p->member.cell.nHeight;
         if (RectVisible(c->hDC, &rc))
-        {
-          FillRect(c->hDC, &rc, c->editor->hbrBackground);
-        }
+          PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
         break;
       default:
         break;
