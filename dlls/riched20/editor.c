@@ -1622,7 +1622,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   } else {
     style = editor->pBuffer->pDefaultStyle;
     ME_AddRefStyle(style);
-    ME_SetSelection(editor, 0, 0);
+    set_selection_cursors(editor, 0, 0);
     ME_InternalDeleteText(editor, &editor->pCursors[1],
                           ME_GetTextLength(editor), FALSE);
     from = to = 0;
@@ -1756,9 +1756,9 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
           cf.dwMask = CFM_ALL2;
           ME_MoveCursorChars(editor, &lastcharCursor, -1, FALSE);
           ME_GetCharFormat(editor, &lastcharCursor, &linebreakCursor, &cf);
-          ME_SetSelection(editor, newto, -1);
+          set_selection_cursors(editor, newto, -1);
           ME_SetSelectionCharFormat(editor, &cf);
-          ME_SetSelection(editor, newto, newto);
+          set_selection_cursors(editor, newto, newto);
 
           ME_MoveCursorChars(editor, &linebreakCursor, -linebreakSize, FALSE);
           ME_GetTextW(editor, lastchar, 2, &linebreakCursor, linebreakSize, FALSE, FALSE);
@@ -1781,7 +1781,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       ERR("EM_STREAMIN without SF_TEXT or SF_RTF\n");
     /* put the cursor at the top */
     if (!(format & SFF_SELECTION))
-      ME_SetSelection(editor, 0, 0);
+      set_selection_cursors(editor, 0, 0);
     ME_CursorFromCharOfs(editor, from, &start);
     ME_UpdateLinkAttribute(editor, &start, to - from);
   }
@@ -2147,14 +2147,14 @@ static int ME_GetTextRange(ME_TextEditor *editor, WCHAR *strText,
     }
 }
 
-static int handle_EM_EXSETSEL( ME_TextEditor *editor, int to, int from )
+int set_selection( ME_TextEditor *editor, int to, int from )
 {
     int end;
 
     TRACE("%d - %d\n", to, from );
 
     ME_InvalidateSelection( editor );
-    end = ME_SetSelection( editor, to, from );
+    end = set_selection_cursors( editor, to, from );
     ME_InvalidateSelection( editor );
     update_caret( editor );
     ME_SendSelChange( editor );
@@ -2682,7 +2682,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
     case 'A':
       if (ctrl_is_down)
       {
-        handle_EM_EXSETSEL( editor, 0, -1 );
+        set_selection( editor, 0, -1 );
         return TRUE;
       }
       break;
@@ -3796,7 +3796,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_SETSEL:
   {
-    return handle_EM_EXSETSEL( editor, wParam, lParam );
+    return set_selection( editor, wParam, lParam );
   }
   case EM_SETSCROLLPOS:
   {
@@ -3821,7 +3821,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     CHARRANGE range = *(CHARRANGE *)lParam;
 
-    return handle_EM_EXSETSEL( editor, range.cpMin, range.cpMax );
+    return set_selection( editor, range.cpMin, range.cpMax );
   }
   case EM_SHOWSCROLLBAR:
   {
@@ -4122,7 +4122,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       TRACE("WM_SETTEXT - NULL\n");
     ME_SetCursorToStart(editor, &cursor);
     ME_UpdateLinkAttribute(editor, &cursor, INT_MAX);
-    ME_SetSelection(editor, 0, 0);
+    set_selection_cursors(editor, 0, 0);
     editor->nModifyStep = 0;
     ME_CommitUndo(editor);
     ME_EmptyUndoStack(editor);
@@ -4813,7 +4813,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
         HeapFree(GetProcessHeap(), 0, lpCompStr);
 
         if (dwIndex == GCS_COMPSTR)
-          ME_SetSelection(editor,editor->imeStartIndex,
+          set_selection_cursors(editor,editor->imeStartIndex,
                           editor->imeStartIndex + dwBufLen/sizeof(WCHAR));
     }
     ME_ReleaseStyle(style);

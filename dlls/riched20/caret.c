@@ -122,8 +122,14 @@ int ME_GetTextLengthEx(ME_TextEditor *editor, const GETTEXTLENGTHEX *how)
   return length; 
 }
 
-
-int ME_SetSelection(ME_TextEditor *editor, int from, int to)
+/******************************************************************
+ *    set_selection_cursors
+ *
+ * Updates the selection cursors.
+ *
+ * Note that this does not invalidate either the old or the new selections.
+ */
+int set_selection_cursors(ME_TextEditor *editor, int from, int to)
 {
   int selectionEnd = 0;
   const int len = ME_GetTextLength(editor);
@@ -139,7 +145,6 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
   {
     ME_SetCursorToStart(editor, &editor->pCursors[1]);
     ME_SetCursorToEnd(editor, &editor->pCursors[0], TRUE);
-    ME_InvalidateSelection(editor);
     return len + 1;
   }
 
@@ -165,7 +170,6 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
               end --;
           }
           editor->pCursors[1] = editor->pCursors[0];
-          ME_Repaint(editor);
       }
       return end;
     }
@@ -194,7 +198,6 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
   {
     ME_SetCursorToEnd(editor, &editor->pCursors[0], FALSE);
     editor->pCursors[1] = editor->pCursors[0];
-    ME_InvalidateSelection(editor);
     return len;
   }
 

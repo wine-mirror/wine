@@ -290,7 +290,7 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxSetText(ITextServices *iface, LPC
    ME_InternalDeleteText(This->editor, &cursor, ME_GetTextLength(This->editor), FALSE);
    if(pszText)
        ME_InsertTextFromCursor(This->editor, 0, pszText, -1, This->editor->pBuffer->pDefaultStyle);
-   ME_SetSelection(This->editor, 0, 0);
+   set_selection_cursors(This->editor, 0, 0);
    This->editor->nModifyStep = 0;
    OleFlushClipboard();
    ME_EmptyUndoStack(This->editor);

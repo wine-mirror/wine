@@ -2149,7 +2149,7 @@ static HRESULT WINAPI ITextRange_fnSelect(ITextRange *me)
     if (!This->child.reole)
         return CO_E_RELEASED;
 
-    ME_SetSelection(This->child.reole->editor, This->start, This->end);
+    set_selection(This->child.reole->editor, This->start, This->end);
     return S_OK;
 }
 
@@ -4649,7 +4649,7 @@ static HRESULT WINAPI ITextSelection_fnSetStart(ITextSelection *me, LONG value)
     ME_GetSelectionOfs(This->reOle->editor, &start, &end);
     hr = textrange_setstart(This->reOle, value, &start, &end);
     if (hr == S_OK)
-        ME_SetSelection(This->reOle->editor, start, end);
+        set_selection(This->reOle->editor, start, end);
 
     return hr;
 }
@@ -4684,7 +4684,7 @@ static HRESULT WINAPI ITextSelection_fnSetEnd(ITextSelection *me, LONG value)
     ME_GetSelectionOfs(This->reOle->editor, &start, &end);
     hr = textrange_setend(This->reOle, value, &start, &end);
     if (hr == S_OK)
-        ME_SetSelection(This->reOle->editor, start, end);
+        set_selection(This->reOle->editor, start, end);
 
     return hr;
 }
@@ -4803,7 +4803,7 @@ static HRESULT WINAPI ITextSelection_fnCollapse(ITextSelection *me, LONG bStart)
     ME_GetSelectionOfs(This->reOle->editor, &start, &end);
     hres = range_Collapse(bStart, &start, &end);
     if (SUCCEEDED(hres))
-        ME_SetSelection(This->reOle->editor, start, end);
+        set_selection(This->reOle->editor, start, end);
     return hres;
 }
 
