@@ -401,6 +401,7 @@ void para_num_init( ME_Context *c, ME_Paragraph *para )
     static const WCHAR spaceW[] = {' ', 0};
     SIZE sz;
 
+    if (!para->fmt.wNumbering) return;
     if (para->para_num.style && para->para_num.text) return;
 
     if (!para->para_num.style)
