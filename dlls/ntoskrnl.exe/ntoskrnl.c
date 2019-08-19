@@ -1413,10 +1413,15 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
     for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
         driver->driver_obj.MajorFunction[i] = unhandled_irp;
 
+    EnterCriticalSection( &drivers_cs );
+    if (wine_rb_put( &wine_drivers, &driver->driver_obj.DriverName, &driver->entry ))
+        ERR( "failed to insert driver %s in tree\n", debugstr_us(name) );
+    LeaveCriticalSection( &drivers_cs );
+
     status = driver->driver_obj.DriverInit( &driver->driver_obj, &driver->driver_extension.ServiceKeyName );
     if (status)
     {
-        ObDereferenceObject( driver );
+        IoDeleteDriver( &driver->driver_obj );
         return status;
     }
 
@@ -1426,10 +1431,6 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
         driver->driver_obj.MajorFunction[i] = unhandled_irp;
     }
 
-    EnterCriticalSection( &drivers_cs );
-    if (wine_rb_put( &wine_drivers, &driver->driver_obj.DriverName, &driver->entry ))
-        ERR( "failed to insert driver %s in tree\n", debugstr_us(name) );
-    LeaveCriticalSection( &drivers_cs );
     return STATUS_SUCCESS;
 }
 

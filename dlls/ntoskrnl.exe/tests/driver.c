@@ -56,7 +56,7 @@ static int running_under_wine;
 static int winetest_debug;
 static int winetest_report_success;
 
-static POBJECT_TYPE *pExEventObjectType, *pIoFileObjectType, *pPsThreadType;
+static POBJECT_TYPE *pExEventObjectType, *pIoFileObjectType, *pPsThreadType, *pIoDriverObjectType;
 static PEPROCESS *pPsInitialSystemProcess;
 static void *create_caller_thread;
 
@@ -1887,8 +1887,12 @@ static VOID WINAPI driver_Unload(DRIVER_OBJECT *driver)
 
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
 {
+    static const WCHAR IoDriverObjectTypeW[] = {'I','o','D','r','i','v','e','r','O','b','j','e','c','t','T','y','p','e',0};
+    static const WCHAR driver_nameW[] = {'\\','D','r','i','v','e','r',
+            '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r',0};
     UNICODE_STRING nameW, linkW;
     NTSTATUS status;
+    void *obj;
 
     DbgPrint("loading driver\n");
 
@@ -1902,6 +1906,19 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL]    = driver_IoControl;
     driver->MajorFunction[IRP_MJ_FLUSH_BUFFERS]     = driver_FlushBuffers;
     driver->MajorFunction[IRP_MJ_CLOSE]             = driver_Close;
+
+    RtlInitUnicodeString(&nameW, IoDriverObjectTypeW);
+    pIoDriverObjectType = MmGetSystemRoutineAddress(&nameW);
+
+    RtlInitUnicodeString(&nameW, driver_nameW);
+    if ((status = ObReferenceObjectByName(&nameW, 0, NULL, 0, *pIoDriverObjectType, KernelMode, NULL, &obj)))
+        return status;
+    if (obj != driver)
+    {
+        ObDereferenceObject(obj);
+        return STATUS_UNSUCCESSFUL;
+    }
+    ObDereferenceObject(obj);
 
     RtlInitUnicodeString(&nameW, device_name);
     RtlInitUnicodeString(&linkW, driver_link);
