@@ -366,67 +366,77 @@ static void release_font_cache(ME_FontCacheItem *item)
     }
 }
 
-HFONT ME_SelectStyleFont( ME_Context *c, ME_Style *s )
+void select_style( ME_Context *c, ME_Style *s )
 {
     HFONT old_font;
     LOGFONTW lf;
     int i, empty, age = 0x7FFFFFFF;
     ME_FontCacheItem *item;
 
-    assert( s );
+    if (c->current_style == s) return;
 
-    ME_LogFontFromStyle( c, &lf, s );
-
-    for (i = 0; i < HFONT_CACHE_SIZE; i++)
-        c->editor->pFontCache[i].nAge++;
-    for (i = 0, empty = -1, age = 0; i < HFONT_CACHE_SIZE; i++)
+    if (s)
     {
-        item = &c->editor->pFontCache[i];
-        if (!item->nRefs)
+        ME_LogFontFromStyle( c, &lf, s );
+
+        for (i = 0; i < HFONT_CACHE_SIZE; i++)
+            c->editor->pFontCache[i].nAge++;
+        for (i = 0, empty = -1, age = 0; i < HFONT_CACHE_SIZE; i++)
         {
-            if (item->nAge > age)
+            item = &c->editor->pFontCache[i];
+            if (!item->nRefs)
             {
-                empty = i;
-                age = item->nAge;
+                if (item->nAge > age)
+                {
+                    empty = i;
+                    age = item->nAge;
+                }
             }
+
+            if (item->hFont && ME_IsFontEqual( &item->lfSpecs, &lf ))
+                break;
         }
 
-        if (item->hFont && ME_IsFontEqual( &item->lfSpecs, &lf ))
-            break;
-    }
-
-    if (i < HFONT_CACHE_SIZE) /* found */
-    {
-        item = &c->editor->pFontCache[i];
-        TRACE_(richedit_style)( "font reused %d\n", i );
-        item->nRefs++;
+        if (i < HFONT_CACHE_SIZE) /* found */
+        {
+            item = &c->editor->pFontCache[i];
+            TRACE_(richedit_style)( "font reused %d\n", i );
+            item->nRefs++;
+        }
+        else
+        {
+            assert(empty != -1);
+            item = &c->editor->pFontCache[empty];
+            if (item->hFont)
+            {
+                TRACE_(richedit_style)( "font deleted %d\n", empty );
+                DeleteObject(item->hFont);
+                item->hFont = NULL;
+            }
+            item->hFont = CreateFontIndirectW( &lf );
+            TRACE_(richedit_style)( "font created %d\n", empty );
+            item->nRefs = 1;
+            item->lfSpecs = lf;
+        }
+        s->font_cache = item;
+        old_font = SelectObject( c->hDC, item->hFont );
+        GetTextMetricsW( c->hDC, &s->tm );
+        if (!c->orig_font) c->orig_font = old_font;
     }
     else
     {
-        assert(empty != -1);
-        item = &c->editor->pFontCache[empty];
-        if (item->hFont)
-        {
-            TRACE_(richedit_style)( "font deleted %d\n", empty );
-            DeleteObject(item->hFont);
-            item->hFont = NULL;
-        }
-        item->hFont = CreateFontIndirectW( &lf );
-        TRACE_(richedit_style)( "font created %d\n", empty );
-        item->nRefs = 1;
-        item->lfSpecs = lf;
+        SelectObject( c->hDC, c->orig_font );
+        c->orig_font = NULL;
     }
-    s->font_cache = item;
-    old_font = SelectObject( c->hDC, item->hFont );
-    GetTextMetricsW( c->hDC, &s->tm );
-    return old_font;
-}
 
-void ME_UnselectStyleFont(ME_Context *c, ME_Style *s, HFONT hOldFont)
-{
-  SelectObject(c->hDC, hOldFont);
-  release_font_cache(s->font_cache);
-  s->font_cache = NULL;
+    if (c->current_style)
+    {
+        release_font_cache( c->current_style->font_cache );
+        c->current_style->font_cache = NULL;
+    }
+    c->current_style = s;
+
+    return;
 }
 
 void ME_DestroyStyle(ME_Style *s)

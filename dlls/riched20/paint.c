@@ -290,11 +290,10 @@ static void draw_space( ME_Context *c, ME_Run *run, int x, int y,
     {
         COLORREF text_color = get_text_color( c, run->style, selected );
         COLORREF old_text, old_back;
-        HFONT old_font = NULL;
         int y_offset = calc_y_offset( c, run->style );
         static const WCHAR space[1] = {' '};
 
-        old_font = ME_SelectStyleFont( c, run->style );
+        select_style( c, run->style );
         old_text = SetTextColor( hdc, text_color );
         if (selected) old_back = SetBkColor( hdc, back_color );
 
@@ -302,7 +301,6 @@ static void draw_space( ME_Context *c, ME_Run *run, int x, int y,
 
         if (selected) SetBkColor( hdc, old_back );
         SetTextColor( hdc, old_text );
-        ME_UnselectStyleFont( c, run->style, old_font );
 
         draw_underline( c, run, x, y - y_offset, text_color );
     }
@@ -370,7 +368,6 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y,
                                  int nSelFrom, int nSelTo, int ymin, int cy)
 {
   HDC hDC = c->hDC;
-  HGDIOBJ hOldFont;
   int yOffset = 0;
   BOOL selected = (nSelFrom < run->len && nSelTo >= 0
                    && nSelFrom < nSelTo && !c->editor->bHideSelection &&
@@ -403,7 +400,7 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y,
     }
   }
 
-  hOldFont = ME_SelectStyleFont( c, run->style );
+  select_style( c, run->style );
 
   if (sel_rgn) ExtSelectClipRgn( hDC, sel_rgn, RGN_DIFF );
 
@@ -430,8 +427,6 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y,
 
   if (old_style_selected)
     PatBlt( hDC, sel_rect.left, ymin, sel_rect.right - sel_rect.left, cy, DSTINVERT );
-
-  ME_UnselectStyleFont(c, run->style, hOldFont);
 }
 
 static void ME_DebugWrite(HDC hDC, const POINT *pt, LPCWSTR szText) {
@@ -900,13 +895,12 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
 static void draw_para_number( ME_Context *c, ME_DisplayItem *p )
 {
     ME_Paragraph *para = &p->member.para;
-    HFONT old_font;
     int x, y;
     COLORREF old_text;
 
     if (para->fmt.wNumbering)
     {
-        old_font = ME_SelectStyleFont( c, para->para_num.style );
+        select_style( c, para->para_num.style );
         old_text = SetTextColor( c->hDC, get_text_color( c, para->para_num.style, FALSE ) );
 
         x = c->pt.x + para->para_num.pt.x;
@@ -915,7 +909,6 @@ static void draw_para_number( ME_Context *c, ME_DisplayItem *p )
         ExtTextOutW( c->hDC, x, y, 0, NULL, para->para_num.text->szData, para->para_num.text->nLen, NULL );
 
         SetTextColor( c->hDC, old_text );
-        ME_UnselectStyleFont( c, para->para_num.style, old_font );
     }
 }
 
