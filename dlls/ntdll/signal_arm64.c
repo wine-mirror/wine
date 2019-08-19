@@ -971,63 +971,6 @@ void signal_init_process(void)
 }
 
 
-/**********************************************************************
- *              RtlAddFunctionTable   (NTDLL.@)
- */
-BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, ULONG_PTR addr )
-{
-    FIXME( "%p %u %lx: stub\n", table, count, addr );
-    return TRUE;
-}
-
-/**********************************************************************
- *              RtlInstallFunctionTableCallback   (NTDLL.@)
- */
-BOOLEAN CDECL RtlInstallFunctionTableCallback( ULONG_PTR table, ULONG_PTR base, DWORD length,
-                                               PGET_RUNTIME_FUNCTION_CALLBACK callback, PVOID context, PCWSTR dll )
-{
-    FIXME( "%lx %lx %d %p %p %s: stub\n", table, base, length, callback, context, wine_dbgstr_w(dll) );
-    return TRUE;
-}
-
-
-/*************************************************************************
- *              RtlAddGrowableFunctionTable   (NTDLL.@)
- */
-DWORD WINAPI RtlAddGrowableFunctionTable( void **table, RUNTIME_FUNCTION *functions, DWORD count, DWORD max_count,
-                                          ULONG_PTR base, ULONG_PTR end )
-{
-    FIXME( "(%p, %p, %d, %d, %ld, %ld) stub!\n", table, functions, count, max_count, base, end );
-    if (table) *table = NULL;
-    return STATUS_SUCCESS;
-}
-
-
-/*************************************************************************
- *              RtlGrowFunctionTable   (NTDLL.@)
- */
-void WINAPI RtlGrowFunctionTable( void *table, DWORD count )
-{
-    FIXME( "(%p, %d) stub!\n", table, count );
-}
-
-/*************************************************************************
- *              RtlDeleteGrowableFunctionTable   (NTDLL.@)
- */
-void WINAPI RtlDeleteGrowableFunctionTable( void *table )
-{
-    FIXME( "(%p) stub!\n", table );
-}
-
-/**********************************************************************
- *              RtlDeleteFunctionTable   (NTDLL.@)
- */
-BOOLEAN CDECL RtlDeleteFunctionTable( RUNTIME_FUNCTION *table )
-{
-    FIXME( "%p: stub\n", table );
-    return TRUE;
-}
-
 /***********************************************************************
  *            RtlUnwind  (NTDLL.@)
  */

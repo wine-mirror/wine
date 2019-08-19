@@ -128,15 +128,6 @@ typedef int (*wine_signal_handler)(unsigned int sig);
 static wine_signal_handler handlers[256];
 
 
-struct UNWIND_INFO
-{
-    WORD function_length;
-    WORD unknown1 : 7;
-    WORD count : 5;
-    WORD unknown2 : 4;
-};
-
-
 /***********************************************************************
  *           get_trap_code
  *
@@ -1063,118 +1054,6 @@ void signal_init_process(void)
     exit(1);
 }
 
-
-/**********************************************************************
- *              RtlAddFunctionTable   (NTDLL.@)
- */
-BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD addr )
-{
-    FIXME( "%p %u %x: stub\n", table, count, addr );
-    return TRUE;
-}
-
-/**********************************************************************
- *              RtlInstallFunctionTableCallback   (NTDLL.@)
- */
-BOOLEAN CDECL RtlInstallFunctionTableCallback( DWORD table, DWORD base, DWORD length,
-                                               PGET_RUNTIME_FUNCTION_CALLBACK callback, PVOID context, PCWSTR dll )
-{
-    FIXME( "%x %x %d %p %p %s: stub\n", table, base, length, callback, context, wine_dbgstr_w(dll) );
-    return TRUE;
-}
-
-/*************************************************************************
- *              RtlAddGrowableFunctionTable   (NTDLL.@)
- */
-DWORD WINAPI RtlAddGrowableFunctionTable( void **table, RUNTIME_FUNCTION *functions, DWORD count, DWORD max_count,
-                                          ULONG_PTR base, ULONG_PTR end )
-{
-    FIXME( "(%p, %p, %d, %d, %ld, %ld) stub!\n", table, functions, count, max_count, base, end );
-    if (table) *table = NULL;
-    return STATUS_SUCCESS;
-}
-
-/*************************************************************************
- *              RtlGrowFunctionTable   (NTDLL.@)
- */
-void WINAPI RtlGrowFunctionTable( void *table, DWORD count )
-{
-    FIXME( "(%p, %d) stub!\n", table, count );
-}
-
-/*************************************************************************
- *              RtlDeleteGrowableFunctionTable   (NTDLL.@)
- */
-void WINAPI RtlDeleteGrowableFunctionTable( void *table )
-{
-    FIXME( "(%p) stub!\n", table );
-}
-
-/**********************************************************************
- *              RtlDeleteFunctionTable   (NTDLL.@)
- */
-BOOLEAN CDECL RtlDeleteFunctionTable( RUNTIME_FUNCTION *table )
-{
-    FIXME( "%p: stub\n", table );
-    return TRUE;
-}
-
-/**********************************************************************
- *              find_function_info
- */
-static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, HMODULE module,
-                                             RUNTIME_FUNCTION *func, ULONG size )
-{
-    int min = 0;
-    int max = size/sizeof(*func) - 1;
-
-    while (min <= max)
-    {
-        int pos = (min + max) / 2;
-        DWORD begin = (func[pos].BeginAddress & ~1), end;
-        if (func[pos].u.s.Flag)
-            end = begin + func[pos].u.s.FunctionLength * 2;
-        else
-        {
-            struct UNWIND_INFO *info;
-            info = (struct UNWIND_INFO *)((char *)module + func[pos].u.UnwindData);
-            end = begin + info->function_length * 2;
-        }
-
-        if ((char *)pc < (char *)module + begin) max = pos - 1;
-        else if ((char *)pc >= (char *)module + end) min = pos + 1;
-        else return func + pos;
-    }
-    return NULL;
-}
-
-/**********************************************************************
- *              RtlLookupFunctionEntry   (NTDLL.@)
- */
-PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, DWORD *base,
-                                                 UNWIND_HISTORY_TABLE *table )
-{
-    LDR_MODULE *module;
-    RUNTIME_FUNCTION *func;
-    ULONG size;
-
-    /* FIXME: should use the history table to make things faster */
-
-    if (LdrFindEntryForAddress( (void *)pc, &module ))
-    {
-        WARN( "module not found for %lx\n", pc );
-        return NULL;
-    }
-    if (!(func = RtlImageDirectoryEntryToData( module->BaseAddress, TRUE,
-                                               IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
-    {
-        WARN( "no exception table found in module %p pc %lx\n", module->BaseAddress, pc );
-        return NULL;
-    }
-    func = find_function_info( pc, module->BaseAddress, func, size );
-    if (func) *base = (DWORD)module->BaseAddress;
-    return func;
-}
 
 /***********************************************************************
  *            RtlUnwind  (NTDLL.@)
