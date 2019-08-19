@@ -4190,8 +4190,14 @@ typedef struct tagLVITEMINDEX
       ((rc) ? (((RECT*)(rc))->top = type), (LPARAM)(RECT*)(rc) : (LPARAM)(RECT*)NULL))
 #define ListView_GetGroupCount(hwnd) \
     SNDMSG((hwnd), LVM_GETGROUPCOUNT, (WPARAM)0, (LPARAM)0)
-#define ListView_GetGroupInfoByIndex(hwnd, index, grp) \
-    SNDMSG((hwnd), LVM_GETGROUPINFOBYINDEX, (WPARAM)(index), (LPARAM)(grp))
+#define ListView_GetItemIndexRect(hwnd, index, subitem, code, prc) \
+    (BOOL)SNDMSG((hwnd), LVM_GETITEMINDEXRECT, (WPARAM)(LVITEMINDEX*)(index), \
+      (prc ? ((((LPRECT)prc)->top = subitem), (((LPRECT)prc)->left = code), (LPARAM)prc) : (LPARAM)NULL)
+#define ListView_SetItemIndexState(hwndLV, index, data, mask) \
+{   LV_ITEM macro; macro.stateMask = (mask); macro.state = data; \
+    SNDMSG((hwndLV), LVM_SETITEMINDEXSTATE, (WPARAM)(LVITEMINDEX*)(index), (LPARAM)(LV_ITEM *)&macro); }
+#define ListView_GetNextItemIndex(hwnd, index, flags) \
+    (BOOL)SNDMSG((hwnd), LVM_GETNEXTITEMINDEX, (WPARAM)(LVITEMINDEX*)(index), MAKELPARAM((flags),0))
 
 /* Tab Control */
 
