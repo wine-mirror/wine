@@ -371,7 +371,7 @@ NTSTATUS WINAPI ObOpenObjectByPointer( void *obj, ULONG attr, ACCESS_STATE *acce
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (attr & ~OBJ_KERNEL_HANDLE) FIXME( "access %x not supported\n", access );
+    if (attr & ~OBJ_KERNEL_HANDLE) FIXME( "attr %#x not supported\n", attr );
     if (access_state) FIXME( "access_state not implemented\n" );
 
     if (type && ObGetObjectType( obj ) != type) return STATUS_OBJECT_TYPE_MISMATCH;
