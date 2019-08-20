@@ -478,6 +478,8 @@ struct _var_t {
 
   struct _loc_info_t loc_info;
 
+  unsigned int declonly : 1;
+
   /* parser-internal */
   struct list entry;
 };
@@ -560,6 +562,7 @@ struct _statement_t {
         typelib_t *lib;
         type_list_t *type_list;
     } u;
+    unsigned int declonly : 1; /* for STMT_TYPE and STMT_TYPEDEF */
 };
 
 struct _warning_t {
