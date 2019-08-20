@@ -1224,3 +1224,18 @@ NTSTATUS WINAPI IoAcquireRemoveLockEx( IO_REMOVE_LOCK *lock, void *tag,
     InterlockedIncrement( &lock->Common.IoCount );
     return STATUS_SUCCESS;
 }
+
+/***********************************************************************
+ *           IoReleaseRemoveLockEx   (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoReleaseRemoveLockEx( IO_REMOVE_LOCK *lock, void *tag, ULONG size )
+{
+    LONG count;
+
+    TRACE("lock %p, tag %p, size %u.\n", lock, tag, size);
+
+    if (!(count = InterlockedDecrement( &lock->Common.IoCount )))
+        KeSetEvent( &lock->Common.RemoveEvent, IO_NO_INCREMENT, FALSE );
+    else if (count < 0)
+        ERR("Lock %p is not acquired!\n", lock);
+}

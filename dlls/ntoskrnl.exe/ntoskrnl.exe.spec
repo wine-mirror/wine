@@ -448,7 +448,7 @@
 @ stdcall IoRegisterShutdownNotification(ptr)
 @ stdcall IoReleaseCancelSpinLock(long)
 @ stdcall IoReleaseRemoveLockAndWaitEx(ptr ptr long)
-@ stub IoReleaseRemoveLockEx
+@ stdcall IoReleaseRemoveLockEx(ptr ptr long)
 @ stub IoReleaseVpbSpinLock
 @ stub IoRemoveShareAccess
 @ stub IoReportDetectedDevice
