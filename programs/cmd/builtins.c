@@ -2837,25 +2837,9 @@ static int evaluate_if_comparison(const WCHAR *leftOperand, const WCHAR *operato
     return -1;
 }
 
-/****************************************************************************
- * WCMD_if
- *
- * Batch file conditional.
- *
- * On entry, cmdlist will point to command containing the IF, and optionally
- *   the first command to execute (if brackets not found)
- *   If &&'s were found, this may be followed by a record flagged as isAmpersand
- *   If ('s were found, execute all within that bracket
- *   Command may optionally be followed by an ELSE - need to skip instructions
- *   in the else using the same logic
- *
- * FIXME: Much more syntax checking needed!
- */
-void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
+int evaluate_if_condition(WCHAR *p, WCHAR **command, int *test, int *negate)
 {
-  int negate; /* Negate condition */
-  int test;   /* Condition evaluation result */
-  WCHAR condition[MAX_PATH], *command;
+  WCHAR condition[MAX_PATH];
   static const WCHAR notW[]    = {'n','o','t','\0'};
   static const WCHAR errlvlW[] = {'e','r','r','o','r','l','e','v','e','l','\0'};
   static const WCHAR existW[]  = {'e','x','i','s','t','\0'};
@@ -2863,43 +2847,43 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
   static const WCHAR parmI[]   = {'/','I','\0'};
   int caseInsensitive = (wcsstr(quals, parmI) != NULL);
 
-  negate = !lstrcmpiW(param1,notW);
-  lstrcpyW(condition, (negate ? param2 : param1));
+  *negate = !lstrcmpiW(param1,notW);
+  lstrcpyW(condition, (*negate ? param2 : param1));
   WINE_TRACE("Condition: %s\n", wine_dbgstr_w(condition));
 
   if (!lstrcmpiW (condition, errlvlW)) {
-    WCHAR *param = WCMD_parameter(p, 1+negate, NULL, FALSE, FALSE);
+    WCHAR *param = WCMD_parameter(p, 1+(*negate), NULL, FALSE, FALSE);
     WCHAR *endptr;
     long int param_int = wcstol(param, &endptr, 10);
     if (*endptr) goto syntax_err;
-    test = ((long int)errorlevel >= param_int);
-    WCMD_parameter(p, 2+negate, &command, FALSE, FALSE);
+    *test = ((long int)errorlevel >= param_int);
+    WCMD_parameter(p, 2+(*negate), command, FALSE, FALSE);
   }
   else if (!lstrcmpiW (condition, existW)) {
     WIN32_FIND_DATAW fd;
     HANDLE hff;
-    WCHAR *param = WCMD_parameter(p, 1+negate, NULL, FALSE, FALSE);
+    WCHAR *param = WCMD_parameter(p, 1+(*negate), NULL, FALSE, FALSE);
     int    len = lstrlenW(param);
 
     /* FindFirstFile does not like a directory path ending in '\', append a '.' */
     if (len && param[len-1] == '\\') lstrcatW(param, dotW);
 
     hff = FindFirstFileW(param, &fd);
-    test = (hff != INVALID_HANDLE_VALUE );
-    if (test) FindClose(hff);
+    *test = (hff != INVALID_HANDLE_VALUE );
+    if (*test) FindClose(hff);
 
-    WCMD_parameter(p, 2+negate, &command, FALSE, FALSE);
+    WCMD_parameter(p, 2+(*negate), command, FALSE, FALSE);
   }
   else if (!lstrcmpiW (condition, defdW)) {
-    test = (GetEnvironmentVariableW(WCMD_parameter(p, 1+negate, NULL, FALSE, FALSE),
+    *test = (GetEnvironmentVariableW(WCMD_parameter(p, 1+(*negate), NULL, FALSE, FALSE),
                                     NULL, 0) > 0);
-    WCMD_parameter(p, 2+negate, &command, FALSE, FALSE);
+    WCMD_parameter(p, 2+(*negate), command, FALSE, FALSE);
   }
   else { /* comparison operation */
     WCHAR leftOperand[MAXSTRING], rightOperand[MAXSTRING], operator[MAXSTRING];
     WCHAR *paramStart;
 
-    lstrcpyW(leftOperand, WCMD_parameter(p, negate+caseInsensitive, &paramStart, TRUE, FALSE));
+    lstrcpyW(leftOperand, WCMD_parameter(p, (*negate)+caseInsensitive, &paramStart, TRUE, FALSE));
     if (!*leftOperand)
       goto syntax_err;
 
@@ -2920,13 +2904,42 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
     if (!*rightOperand)
       goto syntax_err;
 
-    test = evaluate_if_comparison(leftOperand, operator, rightOperand, caseInsensitive);
-    if (test == -1)
+    *test = evaluate_if_comparison(leftOperand, operator, rightOperand, caseInsensitive);
+    if (*test == -1)
       goto syntax_err;
 
     p = paramStart + lstrlenW(rightOperand);
-    WCMD_parameter(p, 0, &command, FALSE, FALSE);
+    WCMD_parameter(p, 0, command, FALSE, FALSE);
   }
+
+  return 1;
+
+syntax_err:
+  return -1;
+}
+
+/****************************************************************************
+ * WCMD_if
+ *
+ * Batch file conditional.
+ *
+ * On entry, cmdlist will point to command containing the IF, and optionally
+ *   the first command to execute (if brackets not found)
+ *   If &&'s were found, this may be followed by a record flagged as isAmpersand
+ *   If ('s were found, execute all within that bracket
+ *   Command may optionally be followed by an ELSE - need to skip instructions
+ *   in the else using the same logic
+ *
+ * FIXME: Much more syntax checking needed!
+ */
+void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
+{
+  int negate; /* Negate condition */
+  int test;   /* Condition evaluation result */
+  WCHAR *command;
+
+  if (evaluate_if_condition(p, &command, &test, &negate) == -1)
+      goto syntax_err;
 
   /* Process rest of IF statement which is on the same line
      Note: This may process all or some of the cmdList (eg a GOTO) */

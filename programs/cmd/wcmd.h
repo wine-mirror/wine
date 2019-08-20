@@ -150,6 +150,8 @@ static inline BOOL ends_with_backslash( const WCHAR *path )
     return path[0] && path[lstrlenW(path) - 1] == '\\';
 }
 
+int evaluate_if_condition(WCHAR *p, WCHAR **command, int *test, int *negate);
+
 /* Data structure to hold context when executing batch files */
 
 typedef struct _BATCH_CONTEXT {

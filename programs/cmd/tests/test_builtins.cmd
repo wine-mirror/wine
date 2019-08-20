@@ -993,6 +993,26 @@ if "x" == "a" (
   if "y" == "b" echo broken2
   echo expected post-embedded if
 )
+if ()==() (
+  echo comparison operators surrounded by brackets seem to work
+) else (
+  echo comparison operators surrounded by brackets seem to be broken
+)
+if 1(==1( (
+  echo comparison operators surrounded by brackets seem to work
+) else (
+  echo comparison operators surrounded by brackets seem to be broken
+)
+if )==) (
+  echo comparison operators surrounded by brackets seem to work
+) else (
+  echo comparison operators surrounded by brackets seem to be broken
+)
+if /i not (a)==(b) (
+  echo comparison operators surrounded by brackets seem to work
+) else (
+  echo comparison operators surrounded by brackets seem to be broken
+)
 echo --- case sensitivity with and without /i option
 if bar==BAR echo if does not default to case sensitivity
 if not bar==BAR echo if seems to default to case sensitivity
