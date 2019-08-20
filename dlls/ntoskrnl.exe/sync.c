@@ -1195,3 +1195,17 @@ ULONG WINAPI ExIsResourceAcquiredSharedLite( ERESOURCE *resource )
 
     return ret;
 }
+
+/***********************************************************************
+ *           IoInitializeRemoveLockEx   (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoInitializeRemoveLockEx( IO_REMOVE_LOCK *lock, ULONG tag,
+        ULONG max_minutes, ULONG max_count, ULONG size )
+{
+    TRACE("lock %p, tag %#x, max_minutes %u, max_count %u, size %u.\n",
+            lock, tag, max_minutes, max_count, size);
+
+    KeInitializeEvent( &lock->Common.RemoveEvent, SynchronizationEvent, FALSE );
+    lock->Common.Removed = FALSE;
+    lock->Common.IoCount = 0;
+}
