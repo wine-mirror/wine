@@ -283,8 +283,6 @@ type_t *type_new_enum(const char *name, struct namespace *namespace, int defined
     {
         if (defined)
             reg_type(t, name, namespace, tsENUM);
-        else
-            add_incomplete(t);
     }
     return t;
 }
@@ -317,36 +315,57 @@ type_t *type_new_struct(char *name, struct namespace *namespace, int defined, va
 
 type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t *fields)
 {
-    type_t *tag_type = name ? find_type(name, NULL, tsUNION) : NULL;
-    type_t *t = make_type(TYPE_UNION);
-    t->name = name;
-    if (tag_type && tag_type->details.structure)
-        t->details.structure = tag_type->details.structure;
-    else if (defined)
+    type_t *t = NULL;
+
+    if (name)
+        t = find_type(name, NULL, tsUNION);
+
+    if (!t)
+    {
+        t = make_type(TYPE_UNION);
+        t->name = name;
+        if (name)
+            reg_type(t, name, NULL, tsUNION);
+    }
+
+    if (!t->defined && defined)
     {
         t->details.structure = xmalloc(sizeof(*t->details.structure));
         t->details.structure->fields = fields;
         t->defined = TRUE;
     }
-    if (name)
-    {
-        if (defined)
-            reg_type(t, name, NULL, tsUNION);
-        else
-            add_incomplete(t);
-    }
+
     return t;
 }
 
 type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases)
 {
-    type_t *t = get_type(TYPE_ENCAPSULATED_UNION, name, NULL, tsUNION);
-    if (!union_field) union_field = make_var( xstrdup("tagged_union") );
-    union_field->declspec.type = type_new_nonencapsulated_union(NULL, TRUE, cases);
-    t->details.structure = xmalloc(sizeof(*t->details.structure));
-    t->details.structure->fields = append_var( NULL, switch_field );
-    t->details.structure->fields = append_var( t->details.structure->fields, union_field );
-    t->defined = TRUE;
+    type_t *t = NULL;
+
+    if (name)
+        t = find_type(name, NULL, tsUNION);
+
+    if (!t)
+    {
+        t = make_type(TYPE_ENCAPSULATED_UNION);
+        t->name = name;
+        if (name)
+            reg_type(t, name, NULL, tsUNION);
+    }
+    t->type_type = TYPE_ENCAPSULATED_UNION;
+
+    if (!t->defined)
+    {
+        if (!union_field)
+            union_field = make_var(xstrdup("tagged_union"));
+        union_field->declspec.type = type_new_nonencapsulated_union(NULL, TRUE, cases);
+
+        t->details.structure = xmalloc(sizeof(*t->details.structure));
+        t->details.structure->fields = append_var(NULL, switch_field);
+        t->details.structure->fields = append_var(t->details.structure->fields, union_field);
+        t->defined = TRUE;
+    }
+
     return t;
 }
 

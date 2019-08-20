@@ -50,10 +50,6 @@ struct _import_t
   int import_performed;
 };
 
-typelist_t incomplete_types = LIST_INIT(incomplete_types);
-
-static void fix_incomplete_types(type_t *complete_type);
-
 static str_list_t *append_str(str_list_t *list, char *str);
 static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 static attr_list_t *append_attr_list(attr_list_t *new_list, attr_list_t *old_list);
@@ -1880,39 +1876,7 @@ type_t *reg_type(type_t *type, const char *name, struct namespace *namespace, in
   nt->t = t;
   nt->next = namespace->type_hash[hash];
   namespace->type_hash[hash] = nt;
-  if ((t == tsUNION))
-    fix_incomplete_types(type);
   return type;
-}
-
-static int is_incomplete(const type_t *t)
-{
-  return !t->defined &&
-    (type_get_type_detect_alias(t) == TYPE_STRUCT ||
-     type_get_type_detect_alias(t) == TYPE_UNION ||
-     type_get_type_detect_alias(t) == TYPE_ENCAPSULATED_UNION);
-}
-
-void add_incomplete(type_t *t)
-{
-  struct typenode *tn = xmalloc(sizeof *tn);
-  tn->type = t;
-  list_add_tail(&incomplete_types, &tn->entry);
-}
-
-static void fix_incomplete_types(type_t *complete_type)
-{
-  struct typenode *tn, *next;
-
-  LIST_FOR_EACH_ENTRY_SAFE(tn, next, &incomplete_types, struct typenode, entry)
-  {
-    if (type_is_equal(complete_type, tn->type))
-    {
-      tn->type->details.structure = complete_type->details.structure;
-      list_remove(&tn->entry);
-      free(tn);
-    }
-  }
 }
 
 static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, attr_list_t *attrs)
@@ -1966,8 +1930,6 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
       cur = type_new_alias(&name->declspec, name->name);
       cur->attrs = attrs;
 
-      if (is_incomplete(cur))
-        add_incomplete(cur);
       reg_type(cur, cur->name, current_namespace, 0);
     }
   }

@@ -596,7 +596,6 @@ type_t *find_type(const char *name, struct namespace *namespace, int t);
 type_t *make_type(enum type_type type);
 type_t *get_type(enum type_type type, char *name, struct namespace *namespace, int t);
 type_t *reg_type(type_t *type, const char *name, struct namespace *namespace, int t);
-void add_incomplete(type_t *t);
 
 var_t *make_var(char *name);
 var_list_t *append_var(var_list_t *list, var_t *var);
