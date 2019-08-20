@@ -291,31 +291,27 @@ type_t *type_new_enum(const char *name, struct namespace *namespace, int defined
 
 type_t *type_new_struct(char *name, struct namespace *namespace, int defined, var_list_t *fields)
 {
-    type_t *tag_type = name ? find_type(name, namespace, tsSTRUCT) : NULL;
-    type_t *t;
+    type_t *t = NULL;
 
-    /* avoid creating duplicate typelib type entries */
-    if (tag_type && do_typelib) return tag_type;
+    if (name)
+        t = find_type(name, namespace, tsSTRUCT);
 
-    t = make_type(TYPE_STRUCT);
-    t->name = name;
-    t->namespace = namespace;
+    if (!t)
+    {
+        t = make_type(TYPE_STRUCT);
+        t->name = name;
+        t->namespace = namespace;
+        if (name)
+            reg_type(t, name, namespace, tsSTRUCT);
+    }
 
-    if (tag_type && tag_type->details.structure)
-        t->details.structure = tag_type->details.structure;
-    else if (defined)
+    if (!t->defined && defined)
     {
         t->details.structure = xmalloc(sizeof(*t->details.structure));
         t->details.structure->fields = fields;
         t->defined = TRUE;
     }
-    if (name)
-    {
-        if (defined)
-            reg_type(t, name, namespace, tsSTRUCT);
-        else
-            add_incomplete(t);
-    }
+
     return t;
 }
 

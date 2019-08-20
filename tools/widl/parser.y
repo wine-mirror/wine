@@ -1880,7 +1880,7 @@ type_t *reg_type(type_t *type, const char *name, struct namespace *namespace, in
   nt->t = t;
   nt->next = namespace->type_hash[hash];
   namespace->type_hash[hash] = nt;
-  if ((t == tsSTRUCT || t == tsUNION))
+  if ((t == tsUNION))
     fix_incomplete_types(type);
   return type;
 }
