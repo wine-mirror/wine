@@ -3805,14 +3805,6 @@ void WINAPI KeFlushQueuedDpcs(void)
 }
 
 /*********************************************************************
- *           IoReleaseRemoveLockAndWaitEx    (NTOSKRNL.@)
- */
-void WINAPI IoReleaseRemoveLockAndWaitEx(PIO_REMOVE_LOCK lock, PVOID tag, ULONG size)
-{
-    FIXME("stub: %p %p %u\n", lock, tag, size);
-}
-
-/*********************************************************************
  *           DbgQueryDebugFilterState    (NTOSKRNL.@)
  */
 NTSTATUS WINAPI DbgQueryDebugFilterState(ULONG component, ULONG level)
