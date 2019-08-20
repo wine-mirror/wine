@@ -265,25 +265,27 @@ type_t *type_new_void(void)
 
 type_t *type_new_enum(const char *name, struct namespace *namespace, int defined, var_list_t *enums)
 {
-    type_t *tag_type = name ? find_type(name, namespace, tsENUM) : NULL;
-    type_t *t = make_type(TYPE_ENUM);
-    t->name = name;
-    t->namespace = namespace;
+    type_t *t = NULL;
 
-    if (tag_type && tag_type->details.enumeration)
-        t->details.enumeration = tag_type->details.enumeration;
-    else if (defined)
+    if (name)
+        t = find_type(name, namespace,tsENUM);
+
+    if (!t)
+    {
+        t = make_type(TYPE_ENUM);
+        t->name = name;
+        t->namespace = namespace;
+        if (name)
+            reg_type(t, name, namespace, tsENUM);
+    }
+
+    if (!t->defined && defined)
     {
         t->details.enumeration = xmalloc(sizeof(*t->details.enumeration));
         t->details.enumeration->enums = enums;
         t->defined = TRUE;
     }
 
-    if (name)
-    {
-        if (defined)
-            reg_type(t, name, namespace, tsENUM);
-    }
     return t;
 }
 
