@@ -2511,6 +2511,53 @@ static void test_profile_mgr(void)
     ITfInputProcessorProfileMgr_Release(ipp_mgr);
 }
 
+static DWORD WINAPI test_MultiThreadApartment_Thread(void *param) {
+    ITfThreadMgrEx *thmgr;
+    ITfSource *source;
+    DWORD cookie;
+    HRESULT hr;
+
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(SUCCEEDED(hr), "Failed to initialize multi-threaded apartment\n");
+
+    hr = CoCreateInstance(&CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, &IID_ITfThreadMgrEx, (LPVOID *)&thmgr);
+    ok(SUCCEEDED(hr), "Failed to create ITfThreadMgrEx instance\n");
+
+    hr = ITfThreadMgrEx_QueryInterface(thmgr, &IID_ITfSource, (LPVOID *)&source);
+    ok(SUCCEEDED(hr), "Failed to query ITfSource interface\n");
+
+    hr = ITfSource_AdviseSink(source, &IID_ITfUIElementSink, (IUnknown*)&TfUIElementSink, &cookie);
+    ok(hr == REGDB_E_IIDNOTREG /* native */ || hr == E_NOINTERFACE /* wine */,
+       "Advise ITfUIElementSink should return marshalling failure: %08x\n", hr);
+
+    hr = ITfSource_Release(source);
+    ok(SUCCEEDED(hr), "Failed to Release source\n");
+
+    hr = ITfThreadMgrEx_Release(thmgr);
+    ok(SUCCEEDED(hr), "Failed to Release thread manager\n");
+
+    CoUninitialize();
+
+    return 0xdeadcafe;
+}
+
+static void test_MultiThreadApartment(void)
+{
+    DWORD ret;
+    HANDLE thread;
+
+    thread = CreateThread(0, 0, test_MultiThreadApartment_Thread, 0, 0, 0);
+    ok(thread != NULL, "Failed to create test thread\n");
+
+    ret = WaitForSingleObject(thread, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "Failed to wait for thread completion\n");
+
+    GetExitCodeThread(thread, &ret);
+    ok(ret == 0xdeadcafe, "Thread terminated in an unexpected way\n");
+
+    CloseHandle(thread);
+}
+
 START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
@@ -2540,6 +2587,7 @@ START_TEST(inputprocessor)
         test_UnregisterCategory();
         test_Unregister();
         test_profile_mgr();
+        test_MultiThreadApartment();
 
         ITextStoreACPSink_Release(ACPSink);
         ITfDocumentMgr_Release(g_dm);
