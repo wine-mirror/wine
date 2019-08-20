@@ -659,6 +659,20 @@ bar
 ---2
 bar
 ---3
+---4
+---5
+bar
+foo
+---6
+
+foobaz
+
+
+
+foobay
+
+
+---7
 ------------ Testing NUL ------------
 bar
 bar

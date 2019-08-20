@@ -875,7 +875,15 @@ type ."\foobaz"
 echo ---2
 type ".\foobaz"
 echo ---3
-del foobaz
+echo foo> foobay
+echo ---4
+type foobaz foobay > foobax 2> foobaw
+echo ---5
+type foobax
+echo ---6
+type foobaw
+echo ---7
+del foobaz foobay foobax foobaw
 
 echo ------------ Testing NUL ------------
 md foobar & cd foobar

@@ -4561,8 +4561,8 @@ void WCMD_type (WCHAR *args) {
       errorlevel = 1;
     } else {
       if (writeHeaders) {
-        static const WCHAR fmt[] = {'\n','%','1','\n','\n','\0'};
-        WCMD_output(fmt, thisArg);
+        static const WCHAR fmt[] = {'\n','%','1','\n','\n','\n','\0'};
+        WCMD_output_stderr(fmt, thisArg);
       }
       while (WCMD_ReadFile(h, buffer, ARRAY_SIZE(buffer) - 1, &count)) {
         if (count == 0) break;	/* ReadFile reports success on EOF! */
