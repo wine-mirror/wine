@@ -578,6 +578,25 @@ struct runtime_function_armnt
     } DUMMYUNIONNAME;
 };
 
+struct runtime_function_arm64
+{
+    DWORD BeginAddress;
+    union
+    {
+        DWORD UnwindData;
+        struct
+        {
+            DWORD Flag : 2;
+            DWORD FunctionLength : 11;
+            DWORD RegF : 3;
+            DWORD RegI : 4;
+            DWORD H : 1;
+            DWORD CR : 2;
+            DWORD FrameSize : 9;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+};
+
 union handler_data
 {
     struct runtime_function_x86_64 chain;
@@ -1165,6 +1184,331 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
     }
 }
 
+struct unwind_info_arm64
+{
+    DWORD function_length : 18;
+    DWORD version : 2;
+    DWORD x : 1;
+    DWORD e : 1;
+    DWORD epilog : 5;
+    DWORD codes : 5;
+};
+
+struct unwind_info_ext_arm64
+{
+    WORD epilog;
+    BYTE codes;
+    BYTE reserved;
+};
+
+struct unwind_info_epilog_arm64
+{
+    DWORD offset : 18;
+    DWORD res : 4;
+    DWORD index : 10;
+};
+
+static const BYTE code_lengths[256] =
+{
+/* 00 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 20 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 40 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 60 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 80 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* a0 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* c0 */ 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+/* e0 */ 4,1,2,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+};
+
+static void dump_arm64_codes( const BYTE *ptr, unsigned int count )
+{
+    unsigned int i, j;
+
+    for (i = 0; i < count; i += code_lengths[ptr[i]])
+    {
+        BYTE len = code_lengths[ptr[i]];
+        unsigned int val = ptr[i];
+        if (len == 2) val = ptr[i] * 0x100 + ptr[i+1];
+        else if (len == 4) val = ptr[i] * 0x1000000 + ptr[i+1] * 0x10000 + ptr[i+2] * 0x100 + ptr[i+3];
+
+        printf( "    %04x: ", i );
+        for (j = 0; j < 4; j++)
+            if (j < len) printf( "%02x ", ptr[i+j] );
+            else printf( "   " );
+
+        if (ptr[i] < 0x20)  /* alloc_s */
+        {
+            printf( "sub sp,sp,#%#x\n", 16 * (val & 0x1f) );
+        }
+        else if (ptr[i] < 0x40)  /* save_r19r20_x */
+        {
+            printf( "stp r19,r20,[sp,-#%#x]!\n", 8 * (val & 0x1f) );
+        }
+        else if (ptr[i] < 0x80) /* save_fplr */
+        {
+            printf( "stp r29,lr,[sp,#%#x]\n", 8 * (val & 0x3f) );
+        }
+        else if (ptr[i] < 0xc0)  /* save_fplr_x */
+        {
+            printf( "stp r29,lr,[sp,-#%#x]!\n", 8 * (val & 0x3f) + 8 );
+        }
+        else if (ptr[i] < 0xc8)  /* alloc_m */
+        {
+            printf( "sub sp,sp,#%#x\n", 16 * (val & 0x7ff) );
+        }
+        else if (ptr[i] < 0xcc)  /* save_regp */
+        {
+            int reg = 19 + ((val >> 6) & 0xf);
+            printf( "stp r%u,r%u,[sp,#%#x]\n", reg, reg + 1, 8 * (val & 0x3f) );
+        }
+        else if (ptr[i] < 0xd0)  /* save_regp_x */
+        {
+            int reg = 19 + ((val >> 6) & 0xf);
+            printf( "stp r%u,r%u,[sp,-#%#x]!\n", reg, reg + 1, 8 * (val & 0x3f) + 8 );
+        }
+        else if (ptr[i] < 0xd4)  /* save_reg */
+        {
+            int reg = 19 + ((val >> 6) & 0xf);
+            printf( "str r%u,[sp,#%#x]\n", reg, 8 * (val & 0x3f) );
+        }
+        else if (ptr[i] < 0xd6)  /* save_reg_x */
+        {
+            int reg = 19 + ((val >> 5) & 0xf);
+            printf( "str r%u,[sp,-#%#x]!\n", reg, 8 * (val & 0x1f) + 8 );
+        }
+        else if (ptr[i] < 0xd8)  /* save_lrpair */
+        {
+            int reg = 19 + 2 * ((val >> 6) & 0x7);
+            printf( "stp r%u,lr,[sp,#%#x]\n", reg, 8 * (val & 0x3f) );
+        }
+        else if (ptr[i] < 0xda)  /* save_fregp */
+        {
+            int reg = 8 + ((val >> 6) & 0x7);
+            printf( "stp d%u,d%u,[sp,#%#x]\n", reg, reg + 1, 8 * (val & 0x3f) );
+        }
+        else if (ptr[i] < 0xdc)  /* save_fregp_x */
+        {
+            int reg = 8 + ((val >> 6) & 0x7);
+            printf( "stp d%u,d%u,[sp,-#%#x]!\n", reg, reg + 1, 8 * (val & 0x3f) + 8 );
+        }
+        else if (ptr[i] < 0xde)  /* save_freg */
+        {
+            int reg = 8 + ((val >> 6) & 0x7);
+            printf( "str d%u,[sp,#%#x]\n", reg, 8 * (val & 0x3f) );
+        }
+        else if (ptr[i] == 0xde)  /* save_freg_x */
+        {
+            int reg = 8 + ((val >> 5) & 0x7);
+            printf( "str d%u,[sp,-#%#x]!\n", reg, 8 * (val & 0x3f) + 8 );
+        }
+        else if (ptr[i] == 0xe0)  /* alloc_l */
+        {
+            printf( "sub sp,sp,#%#x\n", 16 * (val & 0xffffff) );
+        }
+        else if (ptr[i] == 0xe1)  /* set_fp */
+        {
+            printf( "mov x29,sp\n" );
+        }
+        else if (ptr[i] == 0xe2)  /* add_fp */
+        {
+            printf( "add x29,sp,#%#x\n", 8 * (val & 0xff) );
+        }
+        else if (ptr[i] == 0xe3)  /* nop */
+        {
+            printf( "nop\n" );
+        }
+        else if (ptr[i] == 0xe4)  /* end */
+        {
+            printf( "end\n" );
+        }
+        else if (ptr[i] == 0xe5)  /* end_c */
+        {
+            printf( "end_c\n" );
+        }
+        else if (ptr[i] == 0xe6)  /* save_next */
+        {
+            printf( "save_next\n" );
+        }
+        else if (ptr[i] == 0xe7)  /* arithmetic */
+        {
+            switch ((val >> 4) & 0x0f)
+            {
+            case 0: printf( "add lr,lr,x28\n" ); break;
+            case 1: printf( "add lr,lr,sp\n" ); break;
+            case 2: printf( "sub lr,lr,x28\n" ); break;
+            case 3: printf( "sub lr,lr,sp\n" ); break;
+            case 4: printf( "eor lr,lr,x28\n" ); break;
+            case 5: printf( "eor lr,lr,sp\n" ); break;
+            case 6: printf( "rol lr,lr,neg x28\n" ); break;
+            case 8: printf( "ror lr,lr,x28\n" ); break;
+            case 9: printf( "ror lr,lr,sp\n" ); break;
+            default:printf( "unknown op\n" ); break;
+            }
+        }
+        else if (ptr[i] == 0xe9)  /* MSFT_OP_TRAP_FRAME */
+        {
+            printf( "MSFT_OP_TRAP_FRAME\n" );
+        }
+        else if (ptr[i] == 0xea)  /* MSFT_OP_MACHINE_FRAME */
+        {
+            printf( "MSFT_OP_MACHINE_FRAME\n" );
+        }
+        else if (ptr[i] == 0xeb)  /* MSFT_OP_CONTEXT */
+        {
+            printf( "MSFT_OP_CONTEXT\n" );
+        }
+        else printf( "??\n");
+    }
+}
+
+static void dump_arm64_packed_info( const struct runtime_function_arm64 *func )
+{
+    int i, pos = 0, intsz = func->u.s.RegI * 8, fpsz = func->u.s.RegF * 8, savesz, locsz;
+
+    if (func->u.s.CR == 1) intsz += 8;
+    if (func->u.s.RegF) fpsz += 8;
+
+    savesz = ((intsz + fpsz + 8 * 8 * func->u.s.H) + 0xf) & ~0xf;
+    locsz = func->u.s.FrameSize * 16 - savesz;
+
+    switch (func->u.s.CR)
+    {
+    case 3:
+        printf( "    %04x:  mov x29,sp\n", pos++ );
+        if (locsz <= 512)
+        {
+            printf( "    %04x:  stp x29,lr,[sp,-#%#x]!\n", pos++, locsz );
+            break;
+        }
+        printf( "    %04x:  stp x29,lr,[sp,0]\n", pos++ );
+        /* fall through */
+    case 0:
+    case 1:
+        if (locsz <= 4080)
+        {
+            printf( "    %04x:  sub sp,sp,#%#x\n", pos++, locsz );
+        }
+        else
+        {
+            printf( "    %04x:  sub sp,sp,#%#x\n", pos++, locsz - 4080 );
+            printf( "    %04x:  sub sp,sp,#%#x\n", pos++, 4080 );
+        }
+        break;
+    }
+
+    if (func->u.s.H)
+    {
+        printf( "    %04x:  stp x6,x7,[sp,#%#x]\n", pos++, intsz + fpsz + 48 );
+        printf( "    %04x:  stp x4,x5,[sp,#%#x]\n", pos++, intsz + fpsz + 32 );
+        printf( "    %04x:  stp x2,x3,[sp,#%#x]\n", pos++, intsz + fpsz + 16 );
+        printf( "    %04x:  stp x0,x1,[sp,#%#x]\n", pos++, intsz + fpsz );
+    }
+
+    if (func->u.s.RegF)
+    {
+        if (func->u.s.RegF % 2 == 0)
+            printf( "    %04x:  str d%u,[sp,#%#x]\n", pos++, 8 + func->u.s.RegF, intsz + fpsz - 8 );
+        for (i = func->u.s.RegF / 2 - 1; i >= 0; i--)
+        {
+            if (!i && !intsz)
+                printf( "    %04x:  stp d8,d9,[sp,-#%#x]!\n", pos++, savesz );
+            else
+                printf( "    %04x:  stp d%u,d%u,[sp,#%#x]\n", pos++, 8 + 2 * i, 9 + 2 * i, intsz + 16 * i );
+        }
+    }
+
+    switch (func->u.s.RegI)
+    {
+    case 0:
+        if (func->u.s.CR == 1)
+            printf( "    %04x:  str lr,[sp,-#%#x]!\n", pos++, savesz );
+        break;
+    case 1:
+        if (func->u.s.CR == 1)
+            printf( "    %04x:  stp x19,lr,[sp,-#%#x]!\n", pos++, savesz );
+        else
+            printf( "    %04x:  str x19,[sp,-#%#x]!\n", pos++, savesz );
+        break;
+    default:
+        if (func->u.s.RegI % 2)
+        {
+            if (func->u.s.CR == 1)
+                printf( "    %04x:  stp x%u,lr,[sp,#%#x]\n", pos++, 18 + func->u.s.RegI, 8 * func->u.s.RegI - 8 );
+            else
+                printf( "    %04x:  str x%u,[sp,#%#x]\n", pos++, 18 + func->u.s.RegI, 8 * func->u.s.RegI - 8 );
+        }
+        else if (func->u.s.CR == 1)
+            printf( "    %04x:  str lr,[sp,#%#x]\n", pos++, intsz - 8 );
+
+        for (i = func->u.s.RegI / 2 - 1; i >= 0; i--)
+            if (i)
+                printf( "    %04x:  stp x%u,x%u,[sp,#%#x]\n", pos++, 19 + 2 * i, 20 + 2 * i, 16 * i );
+            else
+                printf( "    %04x:  stp x19,x20,[sp,-#%#x]!\n", pos++, savesz );
+        break;
+    }
+    printf( "    %04x:  end\n", pos );
+}
+
+static void dump_arm64_unwind_info( const struct runtime_function_arm64 *func )
+{
+    const struct unwind_info_arm64 *info;
+    const struct unwind_info_ext_arm64 *infoex;
+    const struct unwind_info_epilog_arm64 *infoepi;
+    const BYTE *ptr;
+    unsigned int i, rva, codes, epilogs;
+
+    if (func->u.s.Flag)
+    {
+        printf( "\nFunction %08x-%08x:\n", func->BeginAddress,
+                func->BeginAddress + func->u.s.FunctionLength * 4 );
+        printf( "    len=%#x flag=%x regF=%u regI=%u H=%u CR=%u frame=%x\n",
+                func->u.s.FunctionLength, func->u.s.Flag, func->u.s.RegF, func->u.s.RegI,
+                func->u.s.H, func->u.s.CR, func->u.s.FrameSize );
+        dump_arm64_packed_info( func );
+        return;
+    }
+
+    rva = func->u.UnwindData;
+    info = RVA( rva, sizeof(*info) );
+    rva += sizeof(*info);
+    epilogs = info->epilog;
+    codes = info->codes;
+
+    if (!codes)
+    {
+        infoex = RVA( rva, sizeof(*infoex) );
+        rva = rva + sizeof(*infoex);
+        codes = infoex->codes;
+        epilogs = infoex->epilog;
+    }
+    printf( "\nFunction %08x-%08x:\n",
+            func->BeginAddress, func->BeginAddress + info->function_length * 4 );
+    printf( "    len=%#x ver=%u X=%u E=%u epilogs=%u codes=%u\n",
+            info->function_length, info->version, info->x, info->e, epilogs, codes * 4 );
+    if (info->e)
+    {
+        printf( "    epilog 0: code=%04x\n", info->epilog );
+    }
+    else
+    {
+        infoepi = RVA( rva, sizeof(*infoepi) * epilogs );
+        rva += sizeof(*infoepi) * epilogs;
+        for (i = 0; i < epilogs; i++)
+            printf( "    epilog %u: pc=%08x code=%04x\n", i,
+                    func->BeginAddress + infoepi[i].offset * 4, infoepi[i].index );
+    }
+    ptr = RVA( rva, codes * 4);
+    rva += codes * 4;
+    if (info->x)
+    {
+        const DWORD *handler = RVA( rva, sizeof(*handler) );
+        rva += sizeof(*handler);
+        printf( "    handler: %08x data %08x\n", *handler, rva );
+    }
+    dump_arm64_codes( ptr, codes * 4 );
+}
+
 static void dump_dir_exceptions(void)
 {
     unsigned int i, size = 0;
@@ -1173,20 +1517,28 @@ static void dump_dir_exceptions(void)
 
     if (!funcs) return;
 
-    if (file_header->Machine == IMAGE_FILE_MACHINE_AMD64)
+    switch (file_header->Machine)
     {
+    case IMAGE_FILE_MACHINE_AMD64:
         size /= sizeof(struct runtime_function_x86_64);
         printf( "Exception info (%u functions):\n", size );
         for (i = 0; i < size; i++) dump_x86_64_unwind_info( (struct runtime_function_x86_64*)funcs + i );
-    }
-    else if (file_header->Machine == IMAGE_FILE_MACHINE_ARMNT)
-    {
+        break;
+    case IMAGE_FILE_MACHINE_ARMNT:
         size /= sizeof(struct runtime_function_armnt);
         printf( "Exception info (%u functions):\n", size );
         for (i = 0; i < size; i++) dump_armnt_unwind_info( (struct runtime_function_armnt*)funcs + i );
-    }
-    else printf( "Exception information not supported for %s binaries\n",
+        break;
+    case IMAGE_FILE_MACHINE_ARM64:
+        size /= sizeof(struct runtime_function_arm64);
+        printf( "Exception info (%u functions):\n", size );
+        for (i = 0; i < size; i++) dump_arm64_unwind_info( (struct runtime_function_arm64*)funcs + i );
+        break;
+    default:
+        printf( "Exception information not supported for %s binaries\n",
                  get_machine_str(file_header->Machine));
+        break;
+    }
 }
 
 
