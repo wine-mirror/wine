@@ -1565,6 +1565,7 @@ void      WINAPI ExReleaseResourceForThreadLite(ERESOURCE*,ERESOURCE_THREAD);
 ULONG     WINAPI ExSetTimerResolution(ULONG,BOOLEAN);
 
 void      WINAPI IoAcquireCancelSpinLock(KIRQL*);
+NTSTATUS  WINAPI IoAcquireRemoveLockEx(IO_REMOVE_LOCK*,void*,const char*,ULONG, ULONG);
 NTSTATUS  WINAPI IoAllocateDriverObjectExtension(PDRIVER_OBJECT,PVOID,ULONG,PVOID*);
 PVOID     WINAPI IoAllocateErrorLogEntry(PVOID,UCHAR);
 PIRP      WINAPI IoAllocateIrp(CCHAR,BOOLEAN);

@@ -1209,3 +1209,18 @@ void WINAPI IoInitializeRemoveLockEx( IO_REMOVE_LOCK *lock, ULONG tag,
     lock->Common.Removed = FALSE;
     lock->Common.IoCount = 0;
 }
+
+/***********************************************************************
+ *           IoAcquireRemoveLockEx   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoAcquireRemoveLockEx( IO_REMOVE_LOCK *lock, void *tag,
+        const char *file, ULONG line, ULONG size )
+{
+    TRACE("lock %p, tag %p, file %s, line %u, size %u.\n", lock, tag, debugstr_a(file), line, size);
+
+    if (lock->Common.Removed)
+        return STATUS_DELETE_PENDING;
+
+    InterlockedIncrement( &lock->Common.IoCount );
+    return STATUS_SUCCESS;
+}

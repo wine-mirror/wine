@@ -3051,19 +3051,6 @@ BOOLEAN WINAPI IoSetThreadHardErrorMode(BOOLEAN EnableHardErrors)
 }
 
 /*****************************************************
- *           IoAcquireRemoveLockEx  (NTOSKRNL.EXE.@)
- */
-
-NTSTATUS WINAPI IoAcquireRemoveLockEx(PIO_REMOVE_LOCK lock, PVOID tag,
-                                      LPCSTR file, ULONG line, ULONG lock_size)
-{
-    FIXME("(%p, %p, %s, %u, %u): stub\n", lock, tag, debugstr_a(file), line, lock_size);
-
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-
-/*****************************************************
  *           DllMain
  */
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
