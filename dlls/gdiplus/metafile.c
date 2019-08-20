@@ -859,6 +859,27 @@ GpStatus WINGDIPAPI GdipRecordMetafileI(HDC hdc, EmfType type, GDIPCONST GpRect 
     return GdipRecordMetafile(hdc, type, pFrameRectF, frameUnit, desc, metafile);
 }
 
+GpStatus WINGDIPAPI GdipRecordMetafileStreamI(IStream *stream, HDC hdc, EmfType type, GDIPCONST GpRect *frameRect,
+                                        MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
+{
+    GpRectF frameRectF, *pFrameRectF;
+
+    TRACE("(%p %p %d %p %d %p %p)\n", stream, hdc, type, frameRect, frameUnit, desc, metafile);
+
+    if (frameRect)
+    {
+        frameRectF.X = frameRect->X;
+        frameRectF.Y = frameRect->Y;
+        frameRectF.Width = frameRect->Width;
+        frameRectF.Height = frameRect->Height;
+        pFrameRectF = &frameRectF;
+    }
+    else
+        pFrameRectF = NULL;
+
+    return GdipRecordMetafileStream(stream, hdc, type, pFrameRectF, frameUnit, desc, metafile);
+}
+
 GpStatus WINGDIPAPI GdipRecordMetafileStream(IStream *stream, HDC hdc, EmfType type, GDIPCONST GpRectF *frameRect,
                                         MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
 {

@@ -451,7 +451,7 @@
 451 stdcall GdipRecordMetafileFileNameI(wstr long long ptr long wstr ptr)
 452 stdcall GdipRecordMetafileI(long long ptr long wstr ptr)
 453 stdcall GdipRecordMetafileStream(ptr long long ptr long wstr ptr)
-454 stub GdipRecordMetafileStreamI
+454 stdcall GdipRecordMetafileStreamI(ptr long long ptr long wstr ptr)
 455 stdcall GdipReleaseDC(ptr ptr)
 456 stdcall GdipRemovePropertyItem(ptr long)
 457 stdcall GdipResetClip(ptr)
