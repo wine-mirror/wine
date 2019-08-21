@@ -129,7 +129,8 @@ unsigned short get_type_vt(type_t *t)
     if (vt) return vt;
   }
 
-  if (type_is_alias(t) && is_attr(t->attrs, ATTR_PUBLIC))
+  if (type_is_alias(t) &&
+        (is_attr(t->attrs, ATTR_PUBLIC) || is_attr(t->attrs, ATTR_WIREMARSHAL)))
     return VT_USERDEFINED;
 
   switch (type_get_type(t)) {

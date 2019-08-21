@@ -967,9 +967,22 @@ static int encode_type(
         }
         else
         {
-            /* typedef'd types without public attribute aren't included in the typelib */
-            while (type_is_alias(type) && !is_attr(type->attrs, ATTR_PUBLIC))
-                type = type_alias_get_aliasee_type(type);
+            /* Typedefs without the [public] attribute aren't included in the
+             * typelib, unless the aliasee is an anonymous UDT or the typedef
+             * is wire-marshalled. In the latter case the wire-marshal type,
+             * which may be a non-public alias, is used instead. */
+            while (type_is_alias(type))
+            {
+                if (is_attr(type->attrs, ATTR_WIREMARSHAL))
+                {
+                    type = get_attrp(type->attrs, ATTR_WIREMARSHAL);
+                    break;
+                }
+                else if (!is_attr(type->attrs, ATTR_PUBLIC))
+                    type = type_alias_get_aliasee_type(type);
+                else
+                    break;
+            }
 
             chat("encode_type: VT_USERDEFINED - adding new type %s, real type %d\n",
                  type->name, type_get_type(type));
