@@ -980,11 +980,15 @@ extern FARPROC get_proc_address_wrapper( HMODULE module, LPCSTR function );
 
 __ASM_GLOBAL_FUNC( get_proc_address_wrapper,
                    "pushq %rbp\n\t"
+                   __ASM_SEH(".seh_pushreg %rbp\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
                    "movq %rsp,%rbp\n\t"
+                   __ASM_SEH(".seh_setframe %rbp,0\n\t")
                    __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
                    "subq $0x40,%rsp\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x40\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    "movaps %xmm0,-0x10(%rbp)\n\t"
                    "movaps %xmm1,-0x20(%rbp)\n\t"
                    "movaps %xmm2,-0x30(%rbp)\n\t"
@@ -994,7 +998,7 @@ __ASM_GLOBAL_FUNC( get_proc_address_wrapper,
                    "movaps -0x30(%rbp), %xmm2\n\t"
                    "movaps -0x20(%rbp), %xmm1\n\t"
                    "movaps -0x10(%rbp), %xmm0\n\t"
-                   "movq %rbp,%rsp\n\t"
+                   "leaq 0(%rbp),%rsp\n\t"
                    __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
                    "popq %rbp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
