@@ -763,6 +763,7 @@ static void add_enum_typeinfo(msft_typelib_t *typelib, type_t *enumeration);
 static void add_union_typeinfo(msft_typelib_t *typelib, type_t *tunion);
 static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls);
 static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinterface);
+static void add_typedef_typeinfo(msft_typelib_t *typelib, type_t *dispinterface);
 
 
 /****************************************************************************
@@ -973,7 +974,7 @@ static int encode_type(
             chat("encode_type: VT_USERDEFINED - adding new type %s, real type %d\n",
                  type->name, type_get_type(type));
 
-            switch (type_get_type(type))
+            switch (type_get_type_detect_alias(type))
             {
             case TYPE_STRUCT:
             case TYPE_ENCAPSULATED_UNION:
@@ -990,6 +991,9 @@ static int encode_type(
                 break;
             case TYPE_COCLASS:
                 add_coclass_typeinfo(typelib, type);
+                break;
+            case TYPE_ALIAS:
+                add_typedef_typeinfo(typelib, type);
                 break;
             default:
                 error("encode_type: VT_USERDEFINED - unhandled type %d\n",
