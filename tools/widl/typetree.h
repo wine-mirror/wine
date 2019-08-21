@@ -51,6 +51,7 @@ void type_module_define(type_t *module, statement_list_t *stmts);
 type_t *type_coclass_define(type_t *coclass, ifref_list_t *ifaces);
 int type_is_equal(const type_t *type1, const type_t *type2);
 const char *type_get_name(const type_t *type, enum name_type name_type);
+char *gen_name(void);
 
 /* FIXME: shouldn't need to export this */
 type_t *duptype(type_t *t, int dupname);

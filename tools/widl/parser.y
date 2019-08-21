@@ -82,7 +82,6 @@ static var_t *reg_const(var_t *var);
 static void push_namespace(const char *name);
 static void pop_namespace(const char *name);
 
-static char *gen_name(void);
 static void check_arg_attrs(const var_t *arg);
 static void check_statements(const statement_list_t *stmts, int is_inside_library);
 static void check_all_user_types(const statement_list_t *stmts);
@@ -2033,7 +2032,7 @@ var_t *find_const(const char *name, int f)
   return cur->var;
 }
 
-static char *gen_name(void)
+char *gen_name(void)
 {
   static const char format[] = "__WIDL_%s_generated_name_%08lX";
   static unsigned long n = 0;

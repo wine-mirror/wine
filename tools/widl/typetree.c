@@ -366,7 +366,7 @@ type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *unio
     {
         if (!union_field)
             union_field = make_var(xstrdup("tagged_union"));
-        union_field->declspec.type = type_new_nonencapsulated_union(NULL, TRUE, cases);
+        union_field->declspec.type = type_new_nonencapsulated_union(gen_name(), TRUE, cases);
 
         t->details.structure = xmalloc(sizeof(*t->details.structure));
         t->details.structure->fields = append_var(NULL, switch_field);
