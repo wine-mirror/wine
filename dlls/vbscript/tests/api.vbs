@@ -237,6 +237,17 @@ Call ok(UBound(arr2) = 2, "UBound(x) = " & UBound(x))
 Call ok(UBound(arr2, 1) = 2, "UBound(x) = " & UBound(x))
 Call ok(UBound(arr2, 2) = 4, "UBound(x) = " & UBound(x))
 
+sub testUBoundError()
+    on error resume next
+    call Err.clear()
+    call UBound()
+    call ok(Err.number = 450, "Err.number = " & Err.number)
+    call Err.clear()
+    call UBound(arr, 1, 2)
+    call ok(Err.number = 450, "Err.number = " & Err.number)
+end sub
+call testUBoundError()
+
 Dim newObject
 Set newObject = New ValClass
 newObject.myval = 1
@@ -493,6 +504,17 @@ TestStrComp Empty,  "ABC",  1,  -1
 TestStrComp "ABC",  Empty,  1,  1
 TestStrComp vbNull, vbNull, 1,  0
 TestStrComp "",     vbNull, 1,  -1
+
+sub testStrCompError()
+    on error resume next
+    call Err.clear()
+    call StrComp()
+    call ok(Err.number = 450, "Err.number = " & Err.number)
+    call Err.clear()
+    call StrComp("a", "a", 0, 1)
+    call ok(Err.number = 450, "Err.number = " & Err.number)
+end sub
+call testStrCompError()
 
 Call ok(Len("abc") = 3, "Len(abc) = " & Len("abc"))
 Call ok(Len("") = 0, "Len() = " & Len(""))

@@ -232,8 +232,8 @@ static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD f
     argn = arg_cnt(dp);
 
     if(argn < prop->min_args || argn > (prop->max_args ? prop->max_args : prop->min_args)) {
-        FIXME("invalid number of arguments\n");
-        return E_FAIL;
+        WARN("invalid number of arguments\n");
+        return MAKE_VBSERROR(VBSE_FUNC_ARITY_MISMATCH);
     }
 
     assert(argn < ARRAY_SIZE(args));
