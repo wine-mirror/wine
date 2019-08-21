@@ -1895,7 +1895,11 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
       type_get_type_detect_alias(type) == TYPE_ENCAPSULATED_UNION)
   {
     if (!type->name)
+    {
       type->name = gen_name();
+      if (!is_attr(attrs, ATTR_PUBLIC))
+        attrs = append_attr(attrs, make_attr(ATTR_PUBLIC));
+    }
 
     /* replace existing attributes when generating a typelib */
     if (do_typelib)
