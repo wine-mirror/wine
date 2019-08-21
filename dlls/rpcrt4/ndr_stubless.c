@@ -1092,13 +1092,18 @@ __ASM_GLOBAL_FUNC(call_server_func,
 LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned int stack_size);
 __ASM_GLOBAL_FUNC( call_server_func,
                    "pushq %rbp\n\t"
+                   __ASM_SEH(".seh_pushreg %rbp\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
                    "movq %rsp,%rbp\n\t"
+                   __ASM_SEH(".seh_setframe %rbp,0\n\t")
                    __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
                    "pushq %rsi\n\t"
+                   __ASM_SEH(".seh_pushreg %rsi\n\t")
                    __ASM_CFI(".cfi_rel_offset %rsi,-8\n\t")
                    "pushq %rdi\n\t"
+                   __ASM_SEH(".seh_pushreg %rdi\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_rel_offset %rdi,-16\n\t")
                    "movq %rcx,%rax\n\t"   /* function to call */
                    "movq $32,%rcx\n\t"    /* allocate max(32,stack_size) bytes of stack space */
@@ -1854,11 +1859,13 @@ cleanup:
 #ifdef __x86_64__
 
 __ASM_GLOBAL_FUNC( NdrAsyncClientCall,
-                   "movq %r8,0x18(%rsp)\n\t"
-                   "movq %r9,0x20(%rsp)\n\t"
-                   "leaq 0x18(%rsp),%r8\n\t"
                    "subq $0x28,%rsp\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x28\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
+                   "movq %r8,0x40(%rsp)\n\t"
+                   "movq %r9,0x48(%rsp)\n\t"
+                   "leaq 0x40(%rsp),%r8\n\t"
                    "call " __ASM_NAME("ndr_async_client_call") "\n\t"
                    "addq $0x28,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")

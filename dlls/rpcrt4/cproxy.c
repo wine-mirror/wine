@@ -104,19 +104,21 @@ static inline void init_thunk( struct thunk *thunk, unsigned int index )
 
 extern void call_stubless_func(void);
 __ASM_GLOBAL_FUNC(call_stubless_func,
-                  "movq %rcx,0x8(%rsp)\n\t"
-                  "movq %rdx,0x10(%rsp)\n\t"
-                  "movq %r8,0x18(%rsp)\n\t"
-                  "movq %r9,0x20(%rsp)\n\t"
-                  "leaq 0x8(%rsp),%r8\n\t"        /* &This */
+                  "subq $0x38,%rsp\n\t"
+                  __ASM_SEH(".seh_stackalloc 0x38\n\t")
+                  __ASM_SEH(".seh_endprologue\n\t")
+                  __ASM_CFI(".cfi_adjust_cfa_offset 0x38\n\t")
+                  "movq %rcx,0x40(%rsp)\n\t"
+                  "movq %rdx,0x48(%rsp)\n\t"
+                  "movq %r8,0x50(%rsp)\n\t"
+                  "movq %r9,0x58(%rsp)\n\t"
+                  "leaq 0x40(%rsp),%r8\n\t"       /* &This */
                   "movq (%rcx),%rcx\n\t"          /* This->lpVtbl */
                   "movq -0x10(%rcx),%rcx\n\t"     /* MIDL_STUBLESS_PROXY_INFO */
                   "movq 0x10(%rcx),%rdx\n\t"      /* info->FormatStringOffset */
                   "movzwq (%rdx,%r10,2),%rdx\n\t" /* FormatStringOffset[index] */
                   "addq 8(%rcx),%rdx\n\t"         /* info->ProcFormatString + offset */
                   "movq (%rcx),%rcx\n\t"          /* info->pStubDesc */
-                  "subq $0x38,%rsp\n\t"
-                  __ASM_CFI(".cfi_adjust_cfa_offset 0x38\n\t")
                   "movq %xmm1,0x20(%rsp)\n\t"
                   "movq %xmm2,0x28(%rsp)\n\t"
                   "movq %xmm3,0x30(%rsp)\n\t"
