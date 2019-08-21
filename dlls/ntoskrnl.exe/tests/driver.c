@@ -427,16 +427,33 @@ static void WINAPI mutex_thread(void *arg)
     PsTerminateSystemThread(STATUS_SUCCESS);
 }
 
+static KEVENT remove_lock_ready;
+
+static void WINAPI remove_lock_thread(void *arg)
+{
+    IO_REMOVE_LOCK *lock = arg;
+    NTSTATUS ret;
+
+    ret = IoAcquireRemoveLockEx(lock, NULL, "", 1, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+    KeSetEvent(&remove_lock_ready, 0, FALSE);
+
+    IoReleaseRemoveLockAndWaitEx(lock, NULL, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
+    PsTerminateSystemThread(STATUS_SUCCESS);
+}
+
 static void test_sync(void)
 {
+    static const ULONG wine_tag = 0x454e4957; /* WINE */
     KSEMAPHORE semaphore, semaphore2;
     KEVENT manual_event, auto_event, *event;
     KTIMER timer;
+    IO_REMOVE_LOCK remove_lock;
     LARGE_INTEGER timeout;
     OBJECT_ATTRIBUTES attr;
+    HANDLE handle, thread;
     void *objs[2];
     NTSTATUS ret;
-    HANDLE handle;
     int i;
 
     KeInitializeEvent(&manual_event, NotificationEvent, FALSE);
@@ -719,6 +736,42 @@ static void test_sync(void)
     ok(ret == 0, "got %#x\n", ret);
 
     KeCancelTimer(&timer);
+
+    /* remove locks */
+
+    IoInitializeRemoveLockEx(&remove_lock, wine_tag, 0, 0, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
+
+    ret = IoAcquireRemoveLockEx(&remove_lock, NULL, "", 1, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    IoReleaseRemoveLockEx(&remove_lock, NULL, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
+
+    ret = IoAcquireRemoveLockEx(&remove_lock, NULL, "", 1, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    ret = IoAcquireRemoveLockEx(&remove_lock, NULL, "", 1, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    KeInitializeEvent(&remove_lock_ready, SynchronizationEvent, FALSE);
+    thread = create_thread(remove_lock_thread, &remove_lock);
+    ret = wait_single(&remove_lock_ready, -1000 * 10000);
+    ok(!ret, "got %#x\n", ret);
+    ret = wait_single_handle(thread, -50 * 10000);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    ret = IoAcquireRemoveLockEx(&remove_lock, NULL, "", 1, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
+    ok(ret == STATUS_DELETE_PENDING, "got %#x\n", ret);
+
+    IoReleaseRemoveLockEx(&remove_lock, NULL, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
+    ret = wait_single_handle(thread, 0);
+    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+
+    IoReleaseRemoveLockEx(&remove_lock, NULL, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
+    ret = wait_single_handle(thread, -10000 * 10000);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    ret = IoAcquireRemoveLockEx(&remove_lock, NULL, "", 1, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
+    ok(ret == STATUS_DELETE_PENDING, "got %#x\n", ret);
 }
 
 static void test_call_driver(DEVICE_OBJECT *device)
