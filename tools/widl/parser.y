@@ -2573,10 +2573,15 @@ static void check_field_common(const type_t *container_type,
             type = type_array_get_element_type(type);
             more_to_do = TRUE;
             break;
+        case TGT_ENUM:
+            type = type_get_real_type(type);
+            if (!type_is_complete(type))
+            {
+                error_loc_info(&arg->loc_info, "undefined type declaration \"enum %s\"\n", type->name);
+            }
         case TGT_USER_TYPE:
         case TGT_IFACE_POINTER:
         case TGT_BASIC:
-        case TGT_ENUM:
         case TGT_RANGE:
             /* nothing to do */
             break;
@@ -2601,10 +2606,15 @@ static void check_remoting_fields(const var_t *var, type_t *type)
         if (type_is_complete(type))
             fields = type_struct_get_fields(type);
         else
-            error_loc_info(&var->loc_info, "undefined type declaration %s\n", type->name);
+            error_loc_info(&var->loc_info, "undefined type declaration \"struct %s\"\n", type->name);
     }
     else if (type_get_type(type) == TYPE_UNION || type_get_type(type) == TYPE_ENCAPSULATED_UNION)
-        fields = type_union_get_cases(type);
+    {
+        if (type_is_complete(type))
+            fields = type_union_get_cases(type);
+        else
+            error_loc_info(&var->loc_info, "undefined type declaration \"union %s\"\n", type->name);
+    }
 
     if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
         if (field->declspec.type) check_field_common(type, type->name, field);
