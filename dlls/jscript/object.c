@@ -500,6 +500,8 @@ static HRESULT Object_defineProperty(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
 
     hres = jsdisp_define_property(obj, name, &prop_desc);
     release_property_descriptor(&prop_desc);
+    if(SUCCEEDED(hres) && r)
+        *r = jsval_obj(jsdisp_addref(obj));
     return hres;
 }
 

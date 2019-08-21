@@ -311,8 +311,9 @@ function test_defineProperty() {
         ok(false, "expected exception");
     }
 
-    var obj = new Object();
-    Object.defineProperty(obj, "test", {});
+    var obj = new Object(), defined;
+    defined = Object.defineProperty(obj, "test", {});
+    ok(defined === obj, "defined != obj");
     ok("test" in obj, "test is not in obj");
     test_own_data_prop_desc(obj, "test", false, false, false);
     ok(obj.test === undefined, "obj.test = " + obj.test);
