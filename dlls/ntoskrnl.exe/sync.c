@@ -1234,7 +1234,7 @@ void WINAPI IoReleaseRemoveLockEx( IO_REMOVE_LOCK *lock, void *tag, ULONG size )
 
     TRACE("lock %p, tag %p, size %u.\n", lock, tag, size);
 
-    if (!(count = InterlockedDecrement( &lock->Common.IoCount )))
+    if (!(count = InterlockedDecrement( &lock->Common.IoCount )) && lock->Common.Removed)
         KeSetEvent( &lock->Common.RemoveEvent, IO_NO_INCREMENT, FALSE );
     else if (count < 0)
         ERR("Lock %p is not acquired!\n", lock);
@@ -1251,10 +1251,10 @@ void WINAPI IoReleaseRemoveLockAndWaitEx( IO_REMOVE_LOCK *lock, void *tag, ULONG
 
     lock->Common.Removed = TRUE;
 
-    if (!(count = InterlockedDecrement( &lock->Common.IoCount )))
+    if (!(count = InterlockedDecrement( &lock->Common.IoCount )) && lock->Common.Removed)
         KeSetEvent( &lock->Common.RemoveEvent, IO_NO_INCREMENT, FALSE );
     else if (count < 0)
         ERR("Lock %p is not acquired!\n", lock);
-    else
+    else if (count > 0)
         KeWaitForSingleObject( &lock->Common.RemoveEvent, Executive, KernelMode, FALSE, NULL );
 }
