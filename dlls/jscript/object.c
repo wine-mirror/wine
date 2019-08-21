@@ -598,11 +598,6 @@ static HRESULT Object_create(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 
     TRACE("(%s)\n", debugstr_jsval(argv[0]));
 
-    if(argc > 1) {
-        FIXME("Unsupported properties argument %s\n", debugstr_jsval(argv[1]));
-        return E_NOTIMPL;
-    }
-
     if(argc && is_object_instance(argv[0])) {
         if(get_object(argv[0]))
             proto = to_jsdisp(get_object(argv[0]));
@@ -615,13 +610,18 @@ static HRESULT Object_create(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         return E_INVALIDARG;
     }
 
-    if(r) {
-        hres = create_dispex(ctx, NULL, proto, &obj);
-        if(FAILED(hres))
-            return hres;
+    hres = create_dispex(ctx, NULL, proto, &obj);
+    if(FAILED(hres))
+        return hres;
+
+    if(argc >= 2 && !is_undefined(argv[1]))
+        hres = jsdisp_define_properties(ctx, obj, argv[1]);
+
+    if(SUCCEEDED(hres) && r)
         *r = jsval_obj(obj);
-    }
-    return S_OK;
+    else
+        jsdisp_release(obj);
+    return hres;
 }
 
 static HRESULT Object_getPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
