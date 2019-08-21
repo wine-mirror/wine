@@ -1797,6 +1797,8 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
 extern void set_full_cpu_context( const CONTEXT *context );
 __ASM_GLOBAL_FUNC( set_full_cpu_context,
                    "subq $40,%rsp\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x40\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 40\n\t")
                    "ldmxcsr 0x34(%rdi)\n\t"         /* context->MxCsr */
                    "movw 0x38(%rdi),%ax\n\t"        /* context->SegCs */
@@ -3733,11 +3735,15 @@ extern void * WINAPI call_consolidate_callback( CONTEXT *context,
                                                 EXCEPTION_RECORD *rec );
 __ASM_GLOBAL_FUNC( call_consolidate_callback,
                    "pushq %rbp\n\t"
+                   __ASM_SEH(".seh_pushreg %rbp\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
                    "movq %rsp,%rbp\n\t"
+                   __ASM_SEH(".seh_setframe %rbp,0\n\t")
                    __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
                    "subq $0x20,%rsp\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x20\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    "movq %rcx,0x10(%rbp)\n\t"
                    __ASM_CFI(".cfi_remember_state\n\t")
                    __ASM_CFI(".cfi_escape 0x0f,0x07,0x76,0x10,0x06,0x23,0x98,0x01,0x06\n\t") /* CFA    */
@@ -3763,7 +3769,7 @@ __ASM_GLOBAL_FUNC( call_consolidate_callback,
                    "movq %r8,%rcx\n\t"
                    "callq *%rdx\n\t"
                    __ASM_CFI(".cfi_restore_state\n\t")
-                   "movq %rbp,%rsp\n\t"
+                   "leaq 0(%rbp),%rsp\n\t"
                    __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
                    "popq %rbp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
@@ -4110,9 +4116,11 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
  *		RtlRaiseException (NTDLL.@)
  */
 __ASM_GLOBAL_FUNC( RtlRaiseException,
-                   "movq %rcx,8(%rsp)\n\t"
                    "sub $0x4f8,%rsp\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x4f8\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 0x4f8\n\t")
+                   "movq %rcx,0x500(%rsp)\n\t"
                    "leaq 0x20(%rsp),%rcx\n\t"
                    "call " __ASM_NAME("RtlCaptureContext") "\n\t"
                    "leaq 0x20(%rsp),%rdx\n\t"   /* context pointer */
@@ -4269,6 +4277,8 @@ extern void DECLSPEC_NORETURN start_thread( LPTHREAD_START_ROUTINE entry, void *
                                             void *relay );
 __ASM_GLOBAL_FUNC( start_thread,
                    "subq $56,%rsp\n\t"
+                   __ASM_SEH(".seh_stackalloc 56\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 56\n\t")
                    "movq %rbp,48(%rsp)\n\t"
                    __ASM_CFI(".cfi_rel_offset %rbp,48\n\t")
