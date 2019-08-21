@@ -507,6 +507,48 @@ function test_defineProperty() {
     next_test();
 }
 
+function test_defineProperties() {
+    var o, defined, descs;
+
+    descs = {
+        acc_prop: { get: function() { return 1; } },
+        prop: { value: 2 },
+        e: { enumerable: true }
+    };
+
+    o = new Object();
+    defined = Object.defineProperties(o, descs);
+    ok(defined === o, "defined != o");
+    ok(o.acc_prop === 1, "o.acc_prop = " + o.acc_prop);
+    ok(o.prop === 2, "o.prop = " + o.prop);
+    ok(o.e === undefined, "o.e = " + o.e);
+    ok("e" in o, "e is not in o");
+    test_own_data_prop_desc(o, "prop", false, false, false);
+    test_own_data_prop_desc(o, "e", false, true, false);
+    for(var p in o) ok(p === "e", "p = " + p);
+
+    o = new Object();
+    Object.defineProperties(o, 1);
+    for(var p in o) ok(false, "o has property " + p);
+
+    o = Object.create(null, descs);
+    ok(o.acc_prop === 1, "o.acc_prop = " + o.acc_prop);
+    ok(o.prop === 2, "o.prop = " + o.prop);
+    ok(o.e === undefined, "o.e = " + o.e);
+    ok("e" in o, "e is not in o");
+    test_own_data_prop_desc(o, "prop", false, false, false);
+    test_own_data_prop_desc(o, "e", false, true, false);
+    for(var p in o) ok(p === "e", "p = " + p);
+
+    var desc_proto = new Object();
+    desc_proto.proto_prop = { value: true, enumerable: true };
+    descs = Object.create(desc_proto);
+    o = Object.create(null, descs);
+    ok(!("proto_prop" in o), "proto_prop is in o");
+
+    next_test();
+}
+
 function test_property_definitions() {
     var obj, val, i, arr;
 
@@ -811,6 +853,7 @@ var tests = [
     test_identifier_keywords,
     test_getOwnPropertyDescriptor,
     test_defineProperty,
+    test_defineProperties,
     test_property_definitions,
     test_string_trim,
     test_global_properties,
