@@ -6358,14 +6358,19 @@ extern DWORD_PTR CDECL call_method( void *func, int nb_args, const DWORD_PTR *ar
 extern double CDECL call_double_method( void *func, int nb_args, const DWORD_PTR *args );
 __ASM_GLOBAL_FUNC( call_method,
                    "pushq %rbp\n\t"
+                   __ASM_SEH(".seh_pushreg %rbp\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
                    "movq %rsp,%rbp\n\t"
+                   __ASM_SEH(".seh_setframe %rbp,0\n\t")
                    __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
                    "pushq %rsi\n\t"
+                   __ASM_SEH(".seh_pushreg %rsi\n\t")
                    __ASM_CFI(".cfi_rel_offset %rsi,-8\n\t")
                    "pushq %rdi\n\t"
+                   __ASM_SEH(".seh_pushreg %rdi\n\t")
                    __ASM_CFI(".cfi_rel_offset %rdi,-16\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    "movq %rcx,%rax\n\t"
                    "movq $4,%rcx\n\t"
                    "cmp %rcx,%rdx\n\t"
