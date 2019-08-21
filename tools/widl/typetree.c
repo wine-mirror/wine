@@ -285,6 +285,8 @@ type_t *type_new_enum(const char *name, struct namespace *namespace, int defined
         t->details.enumeration->enums = enums;
         t->defined = TRUE;
     }
+    else if (defined)
+        error_loc("redefinition of enum %s\n", name);
 
     return t;
 }
@@ -311,6 +313,8 @@ type_t *type_new_struct(char *name, struct namespace *namespace, int defined, va
         t->details.structure->fields = fields;
         t->defined = TRUE;
     }
+    else if (defined)
+        error_loc("redefinition of struct %s\n", name);
 
     return t;
 }
@@ -336,6 +340,8 @@ type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t
         t->details.structure->fields = fields;
         t->defined = TRUE;
     }
+    else if (defined)
+        error_loc("redefinition of union %s\n", name);
 
     return t;
 }
@@ -367,6 +373,8 @@ type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *unio
         t->details.structure->fields = append_var(t->details.structure->fields, union_field);
         t->defined = TRUE;
     }
+    else
+        error_loc("redefinition of union %s\n", name);
 
     return t;
 }
