@@ -39,6 +39,12 @@
 # define __ASM_CFI(str)
 #endif
 
+#ifdef __SEH__
+# define __ASM_SEH(str) str
+#else
+# define __ASM_SEH(str)
+#endif
+
 #ifdef _WIN32
 # define __ASM_FUNC_TYPE(name) ".def " name "; .scl 2; .type 32; .endef"
 #elif defined(__APPLE__)
@@ -51,12 +57,12 @@
 
 #ifdef __GNUC__
 # define __ASM_DEFINE_FUNC(name,code) \
-    asm(".text\n\t.align 4\n\t.globl " name "\n\t" __ASM_FUNC_TYPE(name) "\n" name ":\n\t" \
-        __ASM_CFI(".cfi_startproc\n\t") code __ASM_CFI("\n\t.cfi_endproc") );
+    asm(".text\n\t.align 4\n\t.globl " name "\n\t" __ASM_FUNC_TYPE(name) __ASM_SEH("\n\t.seh_proc " name) "\n" name ":\n\t" \
+        __ASM_CFI(".cfi_startproc\n\t") code __ASM_CFI("\n\t.cfi_endproc") __ASM_SEH("\n\t.seh_endproc") );
 #else
 # define __ASM_DEFINE_FUNC(name,code) void __asm_dummy_##__LINE__(void) { \
-    asm(".text\n\t.align 4\n\t.globl " name "\n\t" __ASM_FUNC_TYPE(name) "\n" name ":\n\t" \
-        __ASM_CFI(".cfi_startproc\n\t") code __ASM_CFI("\n\t.cfi_endproc") ); }
+    asm(".text\n\t.align 4\n\t.globl " name "\n\t" __ASM_FUNC_TYPE(name) __ASM_SEH("\n\t.seh_proc " name) "\n" name ":\n\t" \
+        __ASM_CFI(".cfi_startproc\n\t") code __ASM_CFI("\n\t.cfi_endproc") __ASM_SEH("\n\t.seh_endproc") ); }
 #endif
 
 #define __ASM_GLOBAL_FUNC(name,code) __ASM_DEFINE_FUNC(__ASM_NAME(#name),code)
