@@ -976,6 +976,7 @@ static int encode_type(
             switch (type_get_type(type))
             {
             case TYPE_STRUCT:
+            case TYPE_ENCAPSULATED_UNION:
                 add_structure_typeinfo(typelib, type);
                 break;
             case TYPE_INTERFACE:
@@ -2119,6 +2120,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
 
 static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure)
 {
+    var_list_t *fields;
     int idx = 0;
     var_t *cur;
     msft_typeinfo_t *msft_typeinfo;
@@ -2130,9 +2132,16 @@ static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure)
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_RECORD, structure->name, structure->attrs);
     msft_typeinfo->typeinfo->size = 0;
 
-    if (type_struct_get_fields(structure))
-        LIST_FOR_EACH_ENTRY( cur, type_struct_get_fields(structure), var_t, entry )
+    if (type_get_type(structure) == TYPE_STRUCT)
+        fields = type_struct_get_fields(structure);
+    else
+        fields = type_encapsulated_union_get_fields(structure);
+
+    if (fields)
+    {
+        LIST_FOR_EACH_ENTRY( cur, fields, var_t, entry )
             add_var_desc(msft_typeinfo, idx++, cur);
+    }
 }
 
 static void add_enum_typeinfo(msft_typelib_t *typelib, type_t *enumeration)
@@ -2320,6 +2329,7 @@ static void add_type_typeinfo(msft_typelib_t *typelib, type_t *type)
         add_interface_typeinfo(typelib, type);
         break;
     case TYPE_STRUCT:
+    case TYPE_ENCAPSULATED_UNION:
         add_structure_typeinfo(typelib, type);
         break;
     case TYPE_ENUM:
