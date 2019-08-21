@@ -117,11 +117,15 @@ __ASM_GLOBAL_FUNC( __wine_longjmp,
 
 __ASM_GLOBAL_FUNC( __wine_rtl_unwind,
                    "pushq %rbp\n\t"
+                   __ASM_SEH(".seh_pushreg %rbp\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
                    "movq %rsp,%rbp\n\t"
+                   __ASM_SEH(".seh_setframe %rbp,0\n\t")
                    __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
                    "subq $0x20,%rsp\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x20\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    "movq %r8,%r9\n\t"  /* retval = final target */
                    "movq %rdx,%r8\n\t" /* record */
                    "leaq __wine_unwind_trampoline(%rip),%rdx\n\t"  /* target = trampoline */
