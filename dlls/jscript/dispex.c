@@ -870,34 +870,14 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BS
 static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
-    dispex_prop_t *iter;
     HRESULT hres;
 
     TRACE("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
 
-    if(id == DISPID_STARTENUM) {
-        hres = fill_protrefs(This);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    if(id+1>=0 && id+1<This->prop_cnt) {
-        iter = &This->props[id+1];
-    }else {
+    hres = jsdisp_next_prop(This, id, FALSE, pid);
+    if(hres == S_FALSE)
         *pid = DISPID_STARTENUM;
-        return S_FALSE;
-    }
-
-    while(iter < This->props + This->prop_cnt) {
-        if(iter->name && (get_flags(This, iter) & PROPF_ENUMERABLE) && iter->type!=PROP_DELETED) {
-            *pid = prop_to_id(This, iter);
-            return S_OK;
-        }
-        iter++;
-    }
-
-    *pid = DISPID_STARTENUM;
-    return S_FALSE;
+    return hres;
 }
 
 static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
@@ -1561,6 +1541,34 @@ HRESULT disp_delete(IDispatch *disp, DISPID id, BOOL *ret)
 
     *ret = hres == S_OK;
     return S_OK;
+}
+
+HRESULT jsdisp_next_prop(jsdisp_t *obj, DISPID id, BOOL own_only, DISPID *ret)
+{
+    dispex_prop_t *iter;
+    HRESULT hres;
+
+    if(id == DISPID_STARTENUM && !own_only) {
+        hres = fill_protrefs(obj);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(id + 1 < 0 || id+1 >= obj->prop_cnt)
+        return S_FALSE;
+
+    for(iter = &obj->props[id + 1]; iter < obj->props + obj->prop_cnt; iter++) {
+        if(!iter->name || iter->type == PROP_DELETED)
+            continue;
+        if(own_only && iter->type == PROP_PROTREF)
+            continue;
+        if(!(get_flags(obj, iter) & PROPF_ENUMERABLE))
+            continue;
+        *ret = prop_to_id(obj, iter);
+        return S_OK;
+    }
+
+    return S_FALSE;
 }
 
 HRESULT disp_delete_name(script_ctx_t *ctx, IDispatch *disp, jsstr_t *name, BOOL *ret)
