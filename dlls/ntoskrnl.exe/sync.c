@@ -1205,7 +1205,7 @@ void WINAPI IoInitializeRemoveLockEx( IO_REMOVE_LOCK *lock, ULONG tag,
     TRACE("lock %p, tag %#x, max_minutes %u, max_count %u, size %u.\n",
             lock, tag, max_minutes, max_count, size);
 
-    KeInitializeEvent( &lock->Common.RemoveEvent, SynchronizationEvent, FALSE );
+    KeInitializeEvent( &lock->Common.RemoveEvent, NotificationEvent, FALSE );
     lock->Common.Removed = FALSE;
     lock->Common.IoCount = 0;
 }
