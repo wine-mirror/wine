@@ -1453,4 +1453,40 @@ Call testRGBError(&h4d&, -2, &h2f&, 5)
 
 Call ok(getVT(Timer) = "VT_R4", "getVT(Timer) = " & getVT(Timer))
 
+sub testAsc(arg, expected)
+    dim x
+    x = Asc(arg)
+    call ok(x = expected, "x = " & x & " expected " & expected)
+    call ok(getVT(x) = "VT_I2*", "getVT = " & getVT(x))
+end sub
+
+sub testAscError()
+    on error resume next
+    call Err.clear()
+    call Asc(null)
+    Call ok(Err.number = 94, "Err.number = " & Err.number)
+    call Err.clear()
+    call Asc(empty)
+    Call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Asc()
+    Call ok(Err.number = 450, "Err.number = " & Err.number)
+    call Err.clear()
+    call Asc(Chr(260))
+    Call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Asc("")
+    Call ok(Err.number = 5, "Err.number = " & Err.number)
+end sub
+
+call testAsc("T", 84)
+call testAsc("test", 116)
+call testAsc("3", 51)
+call testAsc(3, 51)
+call testAsc("   ", 32)
+call testAsc(Chr(255), 255)
+call testAsc(Chr(0), 0)
+if isEnglishLang then testAsc true, 84
+call testAscError()
+
 Call reportSuccess()
