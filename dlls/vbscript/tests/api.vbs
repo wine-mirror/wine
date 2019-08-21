@@ -129,6 +129,14 @@ TestCStr 3, "3"
 if isEnglishLang then TestCStr 3.5, "3.5"
 if isEnglishLang then TestCStr true, "True"
 
+sub testCStrError()
+    on error resume next
+    Error.clear()
+    CStr(null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+end sub
+call testCStrError()
+
 Call ok(getVT(Chr(120)) = "VT_BSTR", "getVT(Chr(120)) = " & getVT(Chr(120)))
 Call ok(getVT(Chr(255)) = "VT_BSTR", "getVT(Chr(255)) = " & getVT(Chr(255)))
 Call ok(Chr(120) = "x", "Chr(120) = " & Chr(120))

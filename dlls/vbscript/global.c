@@ -528,6 +528,9 @@ static HRESULT Global_CStr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
 
     TRACE("%s\n", debugstr_variant(arg));
 
+    if(V_VT(arg) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
     hres = to_string(arg, &str);
     if(FAILED(hres))
         return hres;
