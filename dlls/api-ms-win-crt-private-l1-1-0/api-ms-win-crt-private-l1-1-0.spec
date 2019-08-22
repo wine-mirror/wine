@@ -613,7 +613,7 @@
 @ stub _o__mbstok_s_l
 @ stub _o__mbstowcs_l
 @ stub _o__mbstowcs_s_l
-@ stub _o__mbstrlen
+@ cdecl _o__mbstrlen(str) ucrtbase._o__mbstrlen
 @ stub _o__mbstrlen_l
 @ stub _o__mbstrnlen
 @ stub _o__mbstrnlen_l
