@@ -119,6 +119,7 @@ AddReg=\
 
 [DefaultInstall.Services]
 AddService=BITS,0,BITSService
+AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
 AddService=MountMgr,0x800,MountMgrService
 AddService=RpcSs,0,RpcSsService
@@ -135,6 +136,7 @@ AddService=Winmgmt,0,WinmgmtService
 
 [DefaultInstall.NT.Services]
 AddService=BITS,0,BITSService
+AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
 AddService=MountMgr,0x800,MountMgrService
 AddService=RpcSs,0,RpcSsService
@@ -151,6 +153,7 @@ AddService=Winmgmt,0,WinmgmtService
 
 [DefaultInstall.ntamd64.Services]
 AddService=BITS,0,BITSService
+AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
 AddService=MountMgr,0x800,MountMgrService
 AddService=RpcSs,0,RpcSsService
@@ -3431,6 +3434,14 @@ Description="BITS Service"
 DisplayName="BITS Service"
 ServiceBinary="%11%\svchost.exe -k netsvcs"
 ServiceType=16
+StartType=3
+ErrorControl=1
+
+[HTTPService]
+Description="HTTP server"
+DisplayName="HTTP"
+ServiceBinary="%12%\http.sys"
+ServiceType=1
 StartType=3
 ErrorControl=1
 

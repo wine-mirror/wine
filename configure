@@ -1340,6 +1340,7 @@ enable_hid
 enable_hidclass_sys
 enable_hlink
 enable_hnetcfg
+enable_http_sys
 enable_httpapi
 enable_iccvid
 enable_icmp
@@ -20307,6 +20308,7 @@ wine_fn_config_makefile dlls/hlink enable_hlink
 wine_fn_config_makefile dlls/hlink/tests enable_tests
 wine_fn_config_makefile dlls/hnetcfg enable_hnetcfg
 wine_fn_config_makefile dlls/hnetcfg/tests enable_tests
+wine_fn_config_makefile dlls/http.sys enable_http_sys
 wine_fn_config_makefile dlls/httpapi enable_httpapi
 wine_fn_config_makefile dlls/httpapi/tests enable_tests
 wine_fn_config_makefile dlls/iccvid enable_iccvid
