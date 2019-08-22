@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "http.h"
 #include "wine/debug.h"
 
@@ -167,10 +168,22 @@ ULONG WINAPI HttpSetServiceConfiguration( HANDLE handle, HTTP_SERVICE_CONFIG_ID 
  *   NO_ERROR if function succeeds, or error code if function fails
  *
  */
-ULONG WINAPI HttpCreateHttpHandle( PHANDLE handle, ULONG reserved )
+ULONG WINAPI HttpCreateHttpHandle(HANDLE *handle, ULONG reserved)
 {
-    FIXME( "(%p, %d): stub!\n", handle, reserved);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    static const WCHAR device_nameW[] = {'\\','D','e','v','i','c','e','\\','H','t','t','p','\\','R','e','q','Q','u','e','u','e',0};
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    UNICODE_STRING string;
+    IO_STATUS_BLOCK iosb;
+
+    TRACE("handle %p, reserved %#x.\n", handle, reserved);
+
+    if (!handle)
+        return ERROR_INVALID_PARAMETER;
+
+    RtlInitUnicodeString(&string, device_nameW);
+    attr.ObjectName = &string;
+    return RtlNtStatusToDosError(NtCreateFile(handle, 0, &attr, &iosb, NULL,
+            FILE_ATTRIBUTE_NORMAL, 0, FILE_OPEN, FILE_NON_DIRECTORY_FILE, NULL, 0));
 }
 
 /***********************************************************************

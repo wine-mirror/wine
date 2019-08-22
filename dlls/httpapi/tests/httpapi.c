@@ -117,7 +117,7 @@ static void test_v1_server(void)
     memset(req_buffer, 0xcc, sizeof(req_buffer));
 
     ret = HttpCreateHttpHandle(NULL, 0);
-    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Unexpected error %u.\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Unexpected error %u.\n", ret);
 
     /* Non-zero reserved parameter is accepted on XP/2k3. */
     queue = NULL;
