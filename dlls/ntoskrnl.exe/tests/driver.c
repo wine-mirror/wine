@@ -1685,6 +1685,26 @@ static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
     IoCompleteRequest(irp, IO_NO_INCREMENT);
 }
 
+#if defined(__i386__) || defined(__x86_64__)
+static void test_executable_pool(void)
+{
+    static const unsigned char bytes[] =
+            { 0xb8, 0xef, 0xbe, 0xad, 0xde, 0xc3 }; /* mov $0xdeadbeef,%eax ; ret */
+    static const ULONG tag = 0x74736574; /* test */
+    int (*func)(void);
+    int ret;
+
+    func = ExAllocatePoolWithTag(NonPagedPool, sizeof(bytes), tag);
+    ok(!!func, "Got NULL memory.\n");
+
+    memcpy(func, bytes, sizeof(bytes));
+    ret = func();
+    ok(ret == 0xdeadbeef, "Got %#x.\n", ret);
+
+    ExFreePoolWithTag(func, tag);
+}
+#endif
+
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -1735,6 +1755,9 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_lookup_thread();
     test_IoAttachDeviceToDeviceStack();
     test_object_name();
+#if defined(__i386__) || defined(__x86_64__)
+    test_executable_pool();
+#endif
 
     if (main_test_work_item) return STATUS_UNEXPECTED_IO_ERROR;
 

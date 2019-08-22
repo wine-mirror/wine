@@ -78,6 +78,8 @@ static DWORD request_thread;
 /* tid of the client thread */
 static DWORD client_tid;
 
+static HANDLE ntoskrnl_heap;
+
 struct wine_driver
 {
     DRIVER_OBJECT driver_obj;
@@ -1998,7 +2000,7 @@ PVOID WINAPI ExAllocatePoolWithQuota( POOL_TYPE type, SIZE_T size )
 PVOID WINAPI ExAllocatePoolWithTag( POOL_TYPE type, SIZE_T size, ULONG tag )
 {
     /* FIXME: handle page alignment constraints */
-    void *ret = HeapAlloc( GetProcessHeap(), 0, size );
+    void *ret = HeapAlloc( ntoskrnl_heap, 0, size );
     TRACE( "%lu pool %u -> %p\n", size, type, ret );
     return ret;
 }
@@ -2040,7 +2042,7 @@ void WINAPI ExFreePool( void *ptr )
 void WINAPI ExFreePoolWithTag( void *ptr, ULONG tag )
 {
     TRACE( "%p\n", ptr );
-    HeapFree( GetProcessHeap(), 0, ptr );
+    HeapFree( ntoskrnl_heap, 0, ptr );
 }
 
 static void initialize_lookaside_list( GENERAL_LOOKASIDE *lookaside, PALLOCATE_FUNCTION allocate, PFREE_FUNCTION free,
@@ -3067,9 +3069,11 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 #endif
         KeQueryTickCount( &count );  /* initialize the global KeTickCount */
         NtBuildNumber = NtCurrentTeb()->Peb->OSBuildNumber;
+        ntoskrnl_heap = HeapCreate( HEAP_CREATE_ENABLE_EXECUTE, 0, 0 );
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;
+        HeapDestroy( ntoskrnl_heap );
         RtlRemoveVectoredExceptionHandler( handler );
         break;
     }
