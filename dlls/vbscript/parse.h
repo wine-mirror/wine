@@ -50,7 +50,6 @@ typedef enum {
     EXPR_STRING,
     EXPR_SUB,
     EXPR_ULONG,
-    EXPR_USHORT,
     EXPR_XOR
 } expression_type_t;
 

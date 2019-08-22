@@ -272,7 +272,6 @@ typedef enum {
     X(ret,            0, 0,           0)          \
     X(set_ident,      1, ARG_BSTR,    ARG_UINT)   \
     X(set_member,     1, ARG_BSTR,    ARG_UINT)   \
-    X(short,          1, ARG_INT,     0)          \
     X(step,           0, ARG_ADDR,    ARG_BSTR)   \
     X(stop,           1, 0,           0)          \
     X(string,         1, ARG_STR,     0)          \

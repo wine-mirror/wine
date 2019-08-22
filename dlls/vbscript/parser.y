@@ -119,7 +119,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token <string> tNEXT tON tRESUME tGOTO
 %token <string> tIdentifier tString
 %token <string> tDEFAULT tERROR tEXPLICIT tPROPERTY tSTEP
-%token <lng> tLong tShort
+%token <lng> tLong
 %token <dbl> tDouble
 
 %type <statement> Statement SimpleStatement StatementNl StatementsNl StatementsNl_opt IfStatement Else_opt
@@ -381,14 +381,12 @@ LiteralExpression
     | tNOTHING                      { $$ = new_expression(ctx, EXPR_NOTHING, 0); CHECK_ERROR; }
 
 NumericLiteralExpression
-    : tShort                        { $$ = new_long_expression(ctx, EXPR_USHORT, $1); CHECK_ERROR; }
-    | '0'                           { $$ = new_long_expression(ctx, EXPR_USHORT, 0); CHECK_ERROR; }
+    : '0'                           { $$ = new_long_expression(ctx, EXPR_ULONG, 0); CHECK_ERROR; }
     | tLong                         { $$ = new_long_expression(ctx, EXPR_ULONG, $1); CHECK_ERROR; }
     | tDouble                       { $$ = new_double_expression(ctx, $1); CHECK_ERROR; }
 
 IntegerValue
-    : tShort                        { $$ = $1; }
-    | '0'                           { $$ = 0; }
+    : '0'                           { $$ = 0; }
     | tLong                         { $$ = $1; }
 
 PrimaryExpression
