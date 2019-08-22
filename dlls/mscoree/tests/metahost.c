@@ -29,6 +29,12 @@
 #include "metahost.h"
 #include "wine/test.h"
 
+#if !defined(__i386__) && !defined(__x86_64__)
+static int has_mono = 0;
+#else
+static int has_mono = 1;
+#endif
+
 static HMODULE hmscoree;
 
 static HRESULT (WINAPI *pCLRCreateInstance)(REFCLSID clsid, REFIID riid, LPVOID *ppInterface);
@@ -210,10 +216,12 @@ static void test_notification_cb(void)
 
     expect_runtime_tid = GetCurrentThreadId();
     hr = ICLRRuntimeInfo_GetInterface(info, &CLSID_CLRRuntimeHost, &IID_ICLRRuntimeHost, (void**)&host);
-    ok(hr == S_OK, "GetInterface returned %x\n", hr);
-    ok(expect_runtime_tid == 0, "notification_callback was not called\n");
 
-    ICLRRuntimeHost_Release(host);
+    todo_wine_if(!has_mono) ok(hr == S_OK, "GetInterface returned %x\n", hr);
+    todo_wine if(!has_mono) ok(expect_runtime_tid == 0, "notification_callback was not called\n");
+
+    if(has_mono)
+        ICLRRuntimeHost_Release(host);
 
     ICLRRuntimeInfo_Release(info);
 }
