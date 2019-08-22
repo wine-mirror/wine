@@ -1272,7 +1272,7 @@ static BOOL d2d_cdt_triangulate(struct d2d_cdt *cdt, size_t start_vertex, size_t
     return TRUE;
 }
 
-static int d2d_cdt_compare_vertices(const void *a, const void *b)
+static int __cdecl d2d_cdt_compare_vertices(const void *a, const void *b)
 {
     const D2D1_POINT_2F *p0 = a;
     const D2D1_POINT_2F *p1 = b;
@@ -1623,7 +1623,7 @@ static BOOL d2d_geometry_intersections_add(struct d2d_geometry_intersections *i,
     return TRUE;
 }
 
-static int d2d_geometry_intersections_compare(const void *a, const void *b)
+static int __cdecl d2d_geometry_intersections_compare(const void *a, const void *b)
 {
     const struct d2d_geometry_intersection *i0 = a;
     const struct d2d_geometry_intersection *i1 = b;
