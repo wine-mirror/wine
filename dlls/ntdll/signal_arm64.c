@@ -107,7 +107,7 @@ static DWORD64 get_fault_esr( ucontext_t *sigcontext )
 #endif /* linux */
 
 static const size_t teb_size = 0x2000;  /* we reserve two pages for the TEB */
-static size_t signal_stack_size;
+static const size_t signal_stack_size = max( MINSIGSTKSZ, 8192 );
 
 typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 typedef int (*wine_signal_handler)(unsigned int sig);
@@ -872,24 +872,13 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
  */
 NTSTATUS signal_alloc_thread( TEB **teb )
 {
-    static size_t sigstack_alignment;
     SIZE_T size;
     NTSTATUS status;
 
-    if (!sigstack_alignment)
-    {
-        size_t min_size = teb_size + max( MINSIGSTKSZ, 8192 );
-        /* find the first power of two not smaller than min_size */
-        sigstack_alignment = 12;
-        while ((1u << sigstack_alignment) < min_size) sigstack_alignment++;
-        signal_stack_size = (1 << sigstack_alignment) - teb_size;
-        assert( sizeof(TEB) <= teb_size );
-    }
-
-    size = 1 << sigstack_alignment;
+    size = teb_size + max( MINSIGSTKSZ, 8192 );
     *teb = NULL;
     if (!(status = virtual_alloc_aligned( (void **)teb, 0, &size, MEM_COMMIT | MEM_TOP_DOWN,
-                                          PAGE_READWRITE, sigstack_alignment )))
+                                          PAGE_READWRITE, 13 )))
     {
         (*teb)->Tib.Self = &(*teb)->Tib;
         (*teb)->Tib.ExceptionList = (void *)~0UL;
@@ -915,12 +904,18 @@ void signal_free_thread( TEB *teb )
 void signal_init_thread( TEB *teb )
 {
     static BOOL init_done;
+    stack_t ss;
 
     if (!init_done)
     {
         pthread_key_create( &teb_key, NULL );
         init_done = TRUE;
     }
+
+    ss.ss_sp    = (char *)teb + teb_size;
+    ss.ss_size  = signal_stack_size;
+    ss.ss_flags = 0;
+    if (sigaltstack( &ss, NULL ) == -1) perror( "sigaltstack" );
 
     /* Win64/ARM applications expect the TEB pointer to be in the x18 platform register. */
     __asm__ __volatile__( "mov x18, %0" : : "r" (teb) );
@@ -937,7 +932,7 @@ void signal_init_process(void)
     struct sigaction sig_act;
 
     sig_act.sa_mask = server_block_set;
-    sig_act.sa_flags = SA_RESTART | SA_SIGINFO;
+    sig_act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 
     sig_act.sa_sigaction = int_handler;
     if (sigaction( SIGINT, &sig_act, NULL ) == -1) goto error;
