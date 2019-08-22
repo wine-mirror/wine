@@ -606,7 +606,7 @@ struct guid_def
     const char *name;
 };
 
-static int debug_compare_guid(const void *a, const void *b)
+static int __cdecl debug_compare_guid(const void *a, const void *b)
 {
     const GUID *guid = a;
     const struct guid_def *guid_def = b;
@@ -946,7 +946,7 @@ struct event_id
     const char *name;
 };
 
-static int debug_event_id(const void *a, const void *b)
+static int __cdecl debug_event_id(const void *a, const void *b)
 {
     const DWORD *id = a;
     const struct event_id *event_id = b;

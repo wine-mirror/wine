@@ -1735,7 +1735,7 @@ struct uncompressed_video_format
     unsigned int bytes_per_pixel;
 };
 
-static int uncompressed_video_format_compare(const void *a, const void *b)
+static int __cdecl uncompressed_video_format_compare(const void *a, const void *b)
 {
     const GUID *guid = a;
     const struct uncompressed_video_format *format = b;
