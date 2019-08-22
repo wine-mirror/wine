@@ -3976,7 +3976,7 @@ static void test_head_request(int port)
     len = sizeof(content_length);
     content_length = -1;
     ret = HttpQueryInfoA(req.request, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH, &content_length, &len, 0);
-    ok(ret, "HttpQueryInfo dailed: %u\n", GetLastError());
+    ok(ret, "HttpQueryInfo failed: %u\n", GetLastError());
     ok(len == sizeof(DWORD), "len = %u\n", len);
     ok(content_length == 100, "content_length = %u\n", content_length);
 
