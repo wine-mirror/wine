@@ -285,7 +285,7 @@ NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
                     break;
                 case BusQueryDeviceSerialNumber:
                     FIXME("BusQueryDeviceSerialNumber not implemented\n");
-                    HeapFree(GetProcessHeap(), 0, id);
+                    ExFreePool(id);
                     break;
             }
             break;
