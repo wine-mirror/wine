@@ -1315,7 +1315,7 @@ static HRESULT interp_string(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
-static HRESULT interp_long(exec_ctx_t *ctx)
+static HRESULT interp_int(exec_ctx_t *ctx)
 {
     const LONG arg = ctx->instr->arg1.lng;
     VARIANT v;

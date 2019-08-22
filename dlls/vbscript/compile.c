@@ -536,8 +536,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return push_instr_str(ctx, OP_string, ((string_expression_t*)expr)->value);
     case EXPR_SUB:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_sub);
-    case EXPR_ULONG:
-        return push_instr_int(ctx, OP_long, ((int_expression_t*)expr)->value);
+    case EXPR_INT:
+        return push_instr_int(ctx, OP_int, ((int_expression_t*)expr)->value);
     case EXPR_XOR:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_xor);
     default:
@@ -779,7 +779,7 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
         if(!push_instr(ctx, OP_val))
             return E_OUTOFMEMORY;
     }else {
-        hres = push_instr_int(ctx, OP_long, 1);
+        hres = push_instr_int(ctx, OP_int, 1);
         if(FAILED(hres))
             return hres;
     }

@@ -335,7 +335,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
 
     if(use_int && (LONG)d == d) {
         *(LONG*)ret = d;
-        return tLong;
+        return tInt;
     }
 
     r = exp>=0 ? d*pow(10, exp) : d/pow(10, -exp);
@@ -376,7 +376,7 @@ static int parse_hex_literal(parser_ctx_t *ctx, LONG *ret)
         ctx->ptr++;
 
     *ret = l;
-    return tLong;
+    return tInt;
 }
 
 static void skip_spaces(parser_ctx_t *ctx)

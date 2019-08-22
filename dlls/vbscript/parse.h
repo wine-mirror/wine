@@ -32,6 +32,7 @@ typedef enum {
     EXPR_GTEQ,
     EXPR_IDIV,
     EXPR_IMP,
+    EXPR_INT,
     EXPR_IS,
     EXPR_LT,
     EXPR_LTEQ,
@@ -49,7 +50,6 @@ typedef enum {
     EXPR_OR,
     EXPR_STRING,
     EXPR_SUB,
-    EXPR_ULONG,
     EXPR_XOR
 } expression_type_t;
 

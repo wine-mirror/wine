@@ -97,7 +97,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
     const_decl_t *const_decl;
     case_clausule_t *case_clausule;
     unsigned uint;
-    LONG lng;
+    LONG integer;
     BOOL boolean;
     double dbl;
 }
@@ -119,7 +119,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token <string> tNEXT tON tRESUME tGOTO
 %token <string> tIdentifier tString
 %token <string> tDEFAULT tERROR tEXPLICIT tPROPERTY tSTEP
-%token <lng> tLong
+%token <integer> tInt
 %token <dbl> tDouble
 
 %type <statement> Statement SimpleStatement StatementNl StatementsNl StatementsNl_opt IfStatement Else_opt
@@ -381,13 +381,13 @@ LiteralExpression
     | tNOTHING                      { $$ = new_expression(ctx, EXPR_NOTHING, 0); CHECK_ERROR; }
 
 NumericLiteralExpression
-    : '0'                           { $$ = new_long_expression(ctx, EXPR_ULONG, 0); CHECK_ERROR; }
-    | tLong                         { $$ = new_long_expression(ctx, EXPR_ULONG, $1); CHECK_ERROR; }
+    : '0'                           { $$ = new_long_expression(ctx, EXPR_INT, 0); CHECK_ERROR; }
+    | tInt                          { $$ = new_long_expression(ctx, EXPR_INT, $1); CHECK_ERROR; }
     | tDouble                       { $$ = new_double_expression(ctx, $1); CHECK_ERROR; }
 
 IntegerValue
     : '0'                           { $$ = 0; }
-    | tLong                         { $$ = $1; }
+    | tInt                          { $$ = $1; }
 
 PrimaryExpression
     : '(' Expression ')'            { $$ = new_unary_expression(ctx, EXPR_BRACKETS, $2); }
