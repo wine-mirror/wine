@@ -1794,6 +1794,13 @@ void WINAPI IoRegisterDriverReinitialization( PDRIVER_OBJECT obj, PDRIVER_REINIT
     FIXME( "stub: %p %p %p\n", obj, reinit, context );
 }
 
+/***********************************************************************
+ *           IoRegisterBootDriverReinitialization   (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoRegisterBootDriverReinitialization(DRIVER_OBJECT *driver, PDRIVER_REINITIALIZE proc, void *ctx)
+{
+    FIXME("driver %p, proc %p, ctx %p, stub!\n", driver, proc, ctx);
+}
 
 /***********************************************************************
  *           IoRegisterShutdownNotification    (NTOSKRNL.EXE.@)
