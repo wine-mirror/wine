@@ -640,7 +640,7 @@ static void append_pres_const_sets_for_shader_input(struct d3dx_const_tab *const
     }
 }
 
-static int compare_const_set(const void *a, const void *b)
+static int __cdecl compare_const_set(const void *a, const void *b)
 {
     const struct d3dx_const_param_eval_output *r1 = a;
     const struct d3dx_const_param_eval_output *r2 = b;
