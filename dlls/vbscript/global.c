@@ -627,16 +627,19 @@ static HRESULT Global_Oct(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 
 static HRESULT Global_VarType(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
+    VARTYPE vt;
+
     TRACE("(%s)\n", debugstr_variant(arg));
 
     assert(args_cnt == 1);
 
-    if(V_VT(arg) & ~VT_TYPEMASK) {
+    vt = V_VT(arg) & ~VT_BYREF;
+    if(vt & ~(VT_TYPEMASK | VT_ARRAY)) {
         FIXME("not supported %s\n", debugstr_variant(arg));
         return E_NOTIMPL;
     }
 
-    return return_short(res, V_VT(arg));
+    return return_short(res, vt);
 }
 
 static HRESULT Global_IsDate(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

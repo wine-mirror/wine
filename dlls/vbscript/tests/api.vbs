@@ -1096,6 +1096,9 @@ Call ok(VarType(Null) = vbNull, "VarType(Null) = " & VarType(Null))
 Call ok(getVT(VarType(Null)) = "VT_I2", "getVT(VarType(Null)) = " & getVT(VarType(Null)))
 Call ok(VarType(255) = vbInteger, "VarType(255) = " & VarType(255))
 Call ok(getVT(VarType(255)) = "VT_I2", "getVT(VarType(255)) = " & getVT(VarType(255)))
+set x = new EmptyClass
+Call ok(VarType(x) = vbObject, "VarType(x) = " & VarType(x))
+Call ok(getVT(VarType(x)) = "VT_I2", "getVT(VarType(x)) = " & getVT(VarType(x)))
 Call ok(VarType(32768) = vbLong, "VarType(32768) = " & VarType(32768))
 Call ok(getVT(VarType(32768)) = "VT_I2", "getVT(VarType(32768)) = " & getVT(VarType(32768)))
 Call ok(VarType(CSng(0.5)) = vbSingle, "VarType(CSng(0.5)) = " & VarType(CSng(0.5)))
@@ -1110,6 +1113,8 @@ Call ok(VarType(CBool(0.5)) = vbBoolean, "VarType(CBool(0.5)) = " & VarType(CBoo
 Call ok(getVT(VarType(CBool(0.5))) = "VT_I2", "getVT(VarType(CBool(0.5))) = " & getVT(VarType(CBool(0.5))))
 Call ok(VarType(CByte(255)) = vbByte, "VarType(CByte(255)) = " & VarType(CByte(255)))
 Call ok(getVT(VarType(CByte(255))) = "VT_I2", "getVT(VarType(CByte(255))) = " & getVT(VarType(CByte(255))))
+Call ok(VarType(arr) = (vbArray or vbVariant), "VarType(arr) = " & VarType(arr))
+Call ok(getVT(VarType(arr)) = "VT_I2", "getVT(VarType(arr)) = " & getVT(VarType(arr)))
 
 Call ok(Sgn(Empty) = 0, "Sgn(MyEmpty) = " & Sgn(Empty))
 Call ok(getVT(Sgn(Empty)) = "VT_I2", "getVT(Sgn(MyEmpty)) = " & getVT(Sgn(Empty)))
