@@ -406,7 +406,7 @@
 @ stub IoGetInitialStack
 @ stub IoGetLowerDeviceObject
 @ stdcall IoGetRelatedDeviceObject(ptr)
-@ stub IoGetRequestorProcess
+@ stdcall IoGetRequestorProcess(ptr)
 @ stub IoGetRequestorProcessId
 @ stub IoGetRequestorSessionId
 @ stdcall IoGetStackLimits(ptr ptr)

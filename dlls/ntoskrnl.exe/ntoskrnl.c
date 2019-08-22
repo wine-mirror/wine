@@ -3911,3 +3911,12 @@ ULONG WINAPI ExSetTimerResolution(ULONG time, BOOLEAN set_resolution)
     FIXME("stub: %u %d\n", time, set_resolution);
     return KeQueryTimeIncrement();
 }
+
+/***********************************************************************
+ *           IoGetRequestorProcess   (NTOSKRNL.EXE.@)
+ */
+PEPROCESS WINAPI IoGetRequestorProcess(IRP *irp)
+{
+    TRACE("irp %p.\n", irp);
+    return irp->Tail.Overlay.Thread->kthread.process;
+}

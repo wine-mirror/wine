@@ -225,6 +225,8 @@ static void test_irp_struct(IRP *irp, DEVICE_OBJECT *device)
     ok(!irp->UserEvent, "UserEvent = %p\n", irp->UserEvent);
     ok(irp->Tail.Overlay.Thread == (PETHREAD)KeGetCurrentThread(),
        "IRP thread is not the current thread\n");
+
+    ok(IoGetRequestorProcess(irp) == IoGetCurrentProcess(), "processes didn't match\n");
 }
 
 static void test_mdl_map(void)
