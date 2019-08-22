@@ -366,6 +366,7 @@ UnaryExpression
     | CallExpression                { $$ = $1; }
     | tNEW Identifier               { $$ = new_new_expression(ctx, $2); CHECK_ERROR; }
     | '-' UnaryExpression           { $$ = new_unary_expression(ctx, EXPR_NEG, $2); CHECK_ERROR; }
+    | '+' UnaryExpression           { $$ = $2; }
 
 CallExpression
     : PrimaryExpression                 { $$ = $1; }

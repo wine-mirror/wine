@@ -1093,6 +1093,14 @@ Call ok(getVT(cs) = "VT_BSTR", "getVT(cs) = " & getVT(cs))
 Call ok(isNull(cnull), "cnull = " & cnull)
 Call ok(getVT(cnull) = "VT_NULL", "getVT(cnull) = " & getVT(cnull))
 
+Call ok(+1 = 1, "+1 != 1")
+Call ok(+true = true, "+1 != 1")
+Call ok(getVT(+true) = "VT_BOOL", "getVT(+true) = " & getVT(+true))
+Call ok(+"true" = "true", """+true"" != true")
+Call ok(getVT(+"true") = "VT_BSTR", "getVT(+""true"") = " & getVT(+"true"))
+Call ok(+obj is obj, "+obj != obj")
+Call ok(+--+-+1 = -1, "+--+-+1 != -1")
+
 if false then Const conststr = "str"
 Call ok(conststr = "str", "conststr = " & conststr)
 Call ok(getVT(conststr) = "VT_BSTR", "getVT(conststr) = " & getVT(conststr))
