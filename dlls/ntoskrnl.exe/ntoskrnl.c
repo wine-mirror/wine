@@ -528,6 +528,7 @@ static NTSTATUS dispatch_create( struct dispatch_context *context )
     irpsp->Parameters.Create.EaLength = 0;
 
     irp->Tail.Overlay.OriginalFileObject = file;
+    irp->Tail.Overlay.Thread = (PETHREAD)KeGetCurrentThread();
     irp->RequestorMode = UserMode;
     irp->AssociatedIrp.SystemBuffer = NULL;
     irp->UserBuffer = NULL;
@@ -565,6 +566,7 @@ static NTSTATUS dispatch_close( struct dispatch_context *context )
     irpsp->FileObject = file;
 
     irp->Tail.Overlay.OriginalFileObject = file;
+    irp->Tail.Overlay.Thread = (PETHREAD)KeGetCurrentThread();
     irp->RequestorMode = UserMode;
     irp->AssociatedIrp.SystemBuffer = NULL;
     irp->UserBuffer = NULL;
