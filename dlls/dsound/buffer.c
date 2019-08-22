@@ -81,7 +81,7 @@ static ULONG WINAPI IDirectSoundNotifyImpl_Release(IDirectSoundNotify *iface)
     return ref;
 }
 
-static int notify_compar(const void *l, const void *r)
+static int __cdecl notify_compar(const void *l, const void *r)
 {
     const DSBPOSITIONNOTIFY *left = l;
     const DSBPOSITIONNOTIFY *right = r;
