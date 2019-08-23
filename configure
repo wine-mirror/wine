@@ -1791,6 +1791,7 @@ enable_wmplayer
 enable_wordpad
 enable_write
 enable_wscript
+enable_wuauserv
 enable_wusa
 enable_xcopy
 enable_server
@@ -20960,6 +20961,7 @@ wine_fn_config_makefile programs/wordpad enable_wordpad
 wine_fn_config_makefile programs/write enable_write
 wine_fn_config_makefile programs/wscript enable_wscript
 wine_fn_config_makefile programs/wscript/tests enable_tests
+wine_fn_config_makefile programs/wuauserv enable_wuauserv
 wine_fn_config_makefile programs/wusa enable_wusa
 wine_fn_config_makefile programs/xcopy enable_xcopy
 wine_fn_config_makefile programs/xcopy/tests enable_tests
