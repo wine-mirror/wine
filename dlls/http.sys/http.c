@@ -54,6 +54,7 @@ struct connection
     unsigned int len, size;
 
     BOOL available;
+    struct request_queue *queue;
 
     /* Things we already parsed out of the request header in parse_request().
      * These are valid only if "available" is TRUE. */
@@ -180,12 +181,20 @@ static int parse_number(const char *str, const char **endptr, const char *end)
     return n;
 }
 
+static BOOL host_matches(const struct connection *conn, const struct request_queue *queue)
+{
+    const char *conn_host = (conn->url[0] == '/') ? conn->host : conn->url + 7;
+
+    return !memicmp(queue->url + 7, conn_host, strlen(queue->url) - 8 /* strip final slash */);
+}
+
 /* Upon receiving a request, parse it to ensure that it is a valid HTTP request,
  * and mark down some information that we will use later. Returns 1 if we parsed
  * a complete request, 0 if incomplete, -1 if invalid. */
 static int parse_request(struct connection *conn)
 {
     const char *const req = conn->buffer, *const end = conn->buffer + conn->len;
+    struct request_queue *queue;
     const char *p = req, *q;
     int len, ret;
 
@@ -274,6 +283,18 @@ static int parse_request(struct connection *conn)
     conn->req_len = (p - req) + conn->content_len;
 
     TRACE("Received a full request, length %u bytes.\n", conn->req_len);
+
+    conn->queue = NULL;
+    /* Find a queue which can receive this request. */
+    LIST_FOR_EACH_ENTRY(queue, &request_queues, struct request_queue, entry)
+    {
+        if (host_matches(conn, queue))
+        {
+            TRACE("Assigning request to queue %p.\n", queue);
+            conn->queue = queue;
+            break;
+        }
+    }
 
     /* Stop selecting on incoming data until a response is queued. */
     WSAEventSelect(conn->socket, request_event, FD_CLOSE);
@@ -376,6 +397,7 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
 {
     const struct http_add_url_params *params = irp->AssociatedIrp.SystemBuffer;
     struct sockaddr_in addr;
+    struct connection *conn;
     char *url, *endptr;
     int s, count = 0;
     ULONG true = 1;
@@ -452,6 +474,13 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
     queue->socket = s;
     queue->url = url;
     queue->context = params->context;
+
+    /* See if any pending requests now match this queue. */
+    LIST_FOR_EACH_ENTRY(conn, &connections, struct connection, entry)
+    {
+        if (conn->available && !conn->queue && host_matches(conn, queue))
+            conn->queue = queue;
+    }
 
     LeaveCriticalSection(&http_cs);
 
