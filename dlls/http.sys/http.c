@@ -53,7 +53,10 @@ struct connection
     char *buffer;
     unsigned int len, size;
 
-    /* Things we already parsed out of the request header in parse_request(). */
+    BOOL available;
+
+    /* Things we already parsed out of the request header in parse_request().
+     * These are valid only if "available" is TRUE. */
     unsigned int req_len;
     HTTP_VERB verb;
     HTTP_VERSION version;
@@ -272,6 +275,11 @@ static int parse_request(struct connection *conn)
 
     TRACE("Received a full request, length %u bytes.\n", conn->req_len);
 
+    /* Stop selecting on incoming data until a response is queued. */
+    WSAEventSelect(conn->socket, request_event, FD_CLOSE);
+
+    conn->available = TRUE;
+
     return 1;
 }
 
@@ -293,6 +301,9 @@ static void receive_data(struct connection *conn)
         return;
     }
     conn->len += len;
+
+    if (conn->available)
+        return; /* waiting for an HttpReceiveHttpRequest() call */
 
     TRACE("Received %u bytes of data.\n", len);
 
