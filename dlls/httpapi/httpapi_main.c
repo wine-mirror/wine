@@ -18,13 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
+#include "wine/http.h"
 #include "winternl.h"
-#include "http.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(httpapi);
 
@@ -186,13 +183,36 @@ ULONG WINAPI HttpCreateHttpHandle(HANDLE *handle, ULONG reserved)
             FILE_ATTRIBUTE_NORMAL, 0, FILE_OPEN, FILE_NON_DIRECTORY_FILE, NULL, 0));
 }
 
+static ULONG add_url(HANDLE queue, const WCHAR *urlW, HTTP_URL_CONTEXT context)
+{
+    struct http_add_url_params *params;
+    ULONG ret = ERROR_SUCCESS;
+    OVERLAPPED ovl;
+    int len;
+
+    len = WideCharToMultiByte(CP_ACP, 0, urlW, -1, NULL, 0, NULL, NULL);
+    if (!(params = heap_alloc(offsetof(struct http_add_url_params, url[len]))))
+        return ERROR_OUTOFMEMORY;
+    WideCharToMultiByte(CP_ACP, 0, urlW, -1, params->url, len, NULL, NULL);
+    params->context = context;
+
+    ovl.hEvent = (HANDLE)((ULONG_PTR)CreateEventW(NULL, TRUE, FALSE, NULL) | 1);
+
+    if (!DeviceIoControl(queue, IOCTL_HTTP_ADD_URL, params,
+            offsetof(struct http_add_url_params, url[len]), NULL, 0, NULL, &ovl))
+        ret = GetLastError();
+    CloseHandle(ovl.hEvent);
+    return ret;
+}
+
 /***********************************************************************
  *        HttpAddUrl     (HTTPAPI.@)
  */
-ULONG WINAPI HttpAddUrl( HANDLE handle, PCWSTR url, PVOID reserved )
+ULONG WINAPI HttpAddUrl(HANDLE queue, const WCHAR *url, void *reserved)
 {
-    FIXME( "(%p, %s, %p): stub!\n", handle, debugstr_w(url), reserved );
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    TRACE("queue %p, url %s, reserved %p.\n", queue, debugstr_w(url), reserved);
+
+    return add_url(queue, url, 0);
 }
 
 /***********************************************************************
