@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "wine/http.h"
@@ -31,6 +32,108 @@ static HANDLE directory_obj;
 static DEVICE_OBJECT *device_obj;
 
 WINE_DEFAULT_DEBUG_CHANNEL(http);
+
+/* We have to return the HTTP_REQUEST structure to userspace exactly as it will
+ * be consumed; httpapi has no opportunity to massage it. Since it contains
+ * pointers, this is somewhat nontrivial. */
+
+struct http_request_32
+{
+    ULONG Flags;
+    HTTP_CONNECTION_ID ConnectionId;
+    HTTP_REQUEST_ID RequestId;
+    HTTP_URL_CONTEXT UrlContext;
+    HTTP_VERSION Version;
+    HTTP_VERB Verb;
+    USHORT UnknownVerbLength;
+    USHORT RawUrlLength;
+    ULONG pUnknownVerb; /* char string */
+    ULONG pRawUrl; /* char string */
+    struct
+    {
+        USHORT FullUrlLength;
+        USHORT HostLength;
+        USHORT AbsPathLength;
+        USHORT QueryStringLength;
+        ULONG pFullUrl; /* WCHAR string */
+        ULONG pHost; /* pointer to above */
+        ULONG pAbsPath; /* pointer to above */
+        ULONG pQueryString; /* pointer to above */
+    } CookedUrl;
+    struct
+    {
+        ULONG pRemoteAddress; /* SOCKADDR */
+        ULONG pLocalAddress; /* SOCKADDR */
+    } Address;
+    struct
+    {
+        USHORT UnknownHeaderCount;
+        ULONG pUnknownHeaders; /* struct http_unknown_header_32 */
+        USHORT TrailerCount;
+        ULONG pTrailers; /* NULL */
+        struct
+        {
+            USHORT RawValueLength;
+            ULONG pRawValue; /* char string */
+        } KnownHeaders[HttpHeaderRequestMaximum];
+    } Headers;
+    ULONGLONG BytesReceived;
+    USHORT EntityChunkCount;
+    ULONG pEntityChunks; /* struct http_data_chunk_32 */
+    HTTP_RAW_CONNECTION_ID RawConnectionId;
+    ULONG pSslInfo; /* NULL (FIXME) */
+    USHORT RequestInfoCount;
+    ULONG pRequestInfo; /* NULL (FIXME) */
+};
+
+struct http_request_64
+{
+    ULONG Flags;
+    HTTP_CONNECTION_ID ConnectionId;
+    HTTP_REQUEST_ID RequestId;
+    HTTP_URL_CONTEXT UrlContext;
+    HTTP_VERSION Version;
+    HTTP_VERB Verb;
+    USHORT UnknownVerbLength;
+    USHORT RawUrlLength;
+    ULONGLONG pUnknownVerb; /* char string */
+    ULONGLONG pRawUrl; /* char string */
+    struct
+    {
+        USHORT FullUrlLength;
+        USHORT HostLength;
+        USHORT AbsPathLength;
+        USHORT QueryStringLength;
+        ULONGLONG pFullUrl; /* WCHAR string */
+        ULONGLONG pHost; /* pointer to above */
+        ULONGLONG pAbsPath; /* pointer to above */
+        ULONGLONG pQueryString; /* pointer to above */
+    } CookedUrl;
+    struct
+    {
+        ULONGLONG pRemoteAddress; /* SOCKADDR */
+        ULONGLONG pLocalAddress; /* SOCKADDR */
+    } Address;
+    struct
+    {
+        USHORT UnknownHeaderCount;
+        ULONGLONG pUnknownHeaders; /* struct http_unknown_header_32 */
+        USHORT TrailerCount;
+        ULONGLONG pTrailers; /* NULL */
+        struct
+        {
+            USHORT RawValueLength;
+            ULONGLONG pRawValue; /* char string */
+        } KnownHeaders[HttpHeaderRequestMaximum];
+    } Headers;
+    ULONGLONG BytesReceived;
+    USHORT EntityChunkCount;
+    ULONGLONG pEntityChunks; /* struct http_data_chunk_32 */
+    HTTP_RAW_CONNECTION_ID RawConnectionId;
+    ULONGLONG pSslInfo; /* NULL (FIXME) */
+    USHORT RequestInfoCount;
+    ULONGLONG pRequestInfo; /* NULL (FIXME) */
+};
 
 #define DECLARE_CRITICAL_SECTION(cs) \
     static CRITICAL_SECTION cs; \
@@ -159,6 +262,73 @@ static int parse_token(const char *str, const char *end)
             break;
     }
     return p - str;
+}
+
+static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
+{
+    const struct http_receive_request_params params
+            = *(struct http_receive_request_params *)irp->AssociatedIrp.SystemBuffer;
+    DWORD irp_size = (params.bits == 32) ? sizeof(struct http_request_32) : sizeof(struct http_request_64);
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    const DWORD output_len = stack->Parameters.DeviceIoControl.OutputBufferLength;
+    ULONG offset;
+
+    TRACE("Completing IRP %p.\n", irp);
+
+    /* First calculate the total buffer size needed for this IRP. */
+
+    TRACE("Need %u bytes, have %u.\n", irp_size, output_len);
+    irp->IoStatus.Information = irp_size;
+
+    memset(irp->AssociatedIrp.SystemBuffer, 0, output_len);
+
+    if (output_len < irp_size)
+    {
+        if (params.bits == 32)
+        {
+            struct http_request_32 *req = irp->AssociatedIrp.SystemBuffer;
+            req->ConnectionId = (ULONG_PTR)conn;
+        }
+        else
+        {
+            struct http_request_64 *req = irp->AssociatedIrp.SystemBuffer;
+            req->ConnectionId = (ULONG_PTR)conn;
+        }
+        return STATUS_BUFFER_OVERFLOW;
+    }
+
+    if (params.bits == 32)
+    {
+        struct http_request_32 *req = irp->AssociatedIrp.SystemBuffer;
+
+        offset = sizeof(*req);
+
+        req->ConnectionId = (ULONG_PTR)conn;
+        req->UrlContext = conn->queue->context;
+        req->Version = conn->version;
+        req->Verb = conn->verb;
+        req->BytesReceived = conn->req_len;
+    }
+    else
+    {
+        struct http_request_64 *req = irp->AssociatedIrp.SystemBuffer;
+
+        offset = sizeof(*req);
+
+        req->ConnectionId = (ULONG_PTR)conn;
+        req->UrlContext = conn->queue->context;
+        req->Version = conn->version;
+        req->Verb = conn->verb;
+        req->BytesReceived = conn->req_len;
+    }
+
+    assert(offset == irp->IoStatus.Information);
+
+    conn->available = FALSE;
+    memmove(conn->buffer, conn->buffer + conn->req_len, conn->len - conn->req_len);
+    conn->len -= conn->req_len;
+
+    return STATUS_SUCCESS;
 }
 
 /* Return 1 if str matches expect, 0 if str is incomplete, -1 if they don't match. */
@@ -507,6 +677,32 @@ static NTSTATUS http_remove_url(struct request_queue *queue, IRP *irp)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
+{
+    const struct http_receive_request_params *params = irp->AssociatedIrp.SystemBuffer;
+    struct connection *conn;
+    NTSTATUS ret;
+
+    TRACE("addr %s, id %s, flags %#x, bits %u.\n", wine_dbgstr_longlong(params->addr),
+            wine_dbgstr_longlong(params->id), params->flags, params->bits);
+
+    EnterCriticalSection(&http_cs);
+
+    LIST_FOR_EACH_ENTRY(conn, &connections, struct connection, entry)
+    {
+        if (conn->available && conn->queue == queue)
+        {
+            ret = complete_irp(conn, irp);
+            LeaveCriticalSection(&http_cs);
+            return ret;
+        }
+    }
+
+    LeaveCriticalSection(&http_cs);
+
+    return STATUS_PENDING;
+}
+
 static NTSTATUS WINAPI dispatch_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
@@ -520,6 +716,9 @@ static NTSTATUS WINAPI dispatch_ioctl(DEVICE_OBJECT *device, IRP *irp)
         break;
     case IOCTL_HTTP_REMOVE_URL:
         ret = http_remove_url(queue, irp);
+        break;
+    case IOCTL_HTTP_RECEIVE_REQUEST:
+        ret = http_receive_request(queue, irp);
         break;
     default:
         FIXME("Unhandled ioctl %#x.\n", stack->Parameters.DeviceIoControl.IoControlCode);

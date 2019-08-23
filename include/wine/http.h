@@ -25,11 +25,20 @@
 
 #define IOCTL_HTTP_ADD_URL          CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_BUFFERED, 0)
 #define IOCTL_HTTP_REMOVE_URL       CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_BUFFERED, 0)
+#define IOCTL_HTTP_RECEIVE_REQUEST  CTL_CODE(FILE_DEVICE_UNKNOWN, 0x802, METHOD_BUFFERED, 0)
 
 struct http_add_url_params
 {
     HTTP_URL_CONTEXT context;
     char url[1];
+};
+
+struct http_receive_request_params
+{
+    ULONGLONG addr; /* user-mode buffer address */
+    HTTP_REQUEST_ID id;
+    ULONG flags;
+    ULONG bits;
 };
 
 #endif
