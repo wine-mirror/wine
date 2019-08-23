@@ -52,6 +52,13 @@ struct connection
 
     char *buffer;
     unsigned int len, size;
+
+    /* Things we already parsed out of the request header in parse_request(). */
+    unsigned int req_len;
+    HTTP_VERB verb;
+    HTTP_VERSION version;
+    const char *url, *host;
+    ULONG unk_verb_len, url_len, content_len;
 };
 
 static struct list connections = LIST_INIT(connections);
@@ -99,10 +106,75 @@ static void accept_connection(int socket)
 
 static void close_connection(struct connection *conn)
 {
+    heap_free(conn->buffer);
     shutdown(conn->socket, SD_BOTH);
     closesocket(conn->socket);
     list_remove(&conn->entry);
     heap_free(conn);
+}
+
+static HTTP_VERB parse_verb(const char *verb, int len)
+{
+    static const char *const verbs[] =
+    {
+        "OPTIONS",
+        "GET",
+        "HEAD",
+        "POST",
+        "PUT",
+        "DELETE",
+        "TRACE",
+        "CONNECT",
+        "TRACK",
+        "MOVE",
+        "COPY",
+        "PROPFIND",
+        "PROPPATCH",
+        "MKCOL",
+        "LOCK",
+        "UNLOCK",
+        "SEARCH",
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(verbs); ++i)
+    {
+        if (!strncmp(verb, verbs[i], len))
+            return HttpVerbOPTIONS + i;
+    }
+    return HttpVerbUnknown;
+}
+
+/* Return the length of a token, as defined in RFC 2616 section 2.2. */
+static int parse_token(const char *str, const char *end)
+{
+    const char *p;
+    for (p = str; !end || p < end; ++p)
+    {
+        if (!isgraph(*p) || strchr("()<>@,;:\\\"/[]?={}", *p))
+            break;
+    }
+    return p - str;
+}
+
+/* Return 1 if str matches expect, 0 if str is incomplete, -1 if they don't match. */
+static int compare_exact(const char *str, const char *expect, const char *end)
+{
+    while (*expect)
+    {
+        if (str >= end) return 0;
+        if (*str++ != *expect++) return -1;
+    }
+    return 1;
+}
+
+static int parse_number(const char *str, const char **endptr, const char *end)
+{
+    int n = 0;
+    while (str < end && isdigit(*str))
+        n = n * 10 + (*str++ - '0');
+    *endptr = str;
+    return n;
 }
 
 /* Upon receiving a request, parse it to ensure that it is a valid HTTP request,
@@ -110,8 +182,97 @@ static void close_connection(struct connection *conn)
  * a complete request, 0 if incomplete, -1 if invalid. */
 static int parse_request(struct connection *conn)
 {
-    FIXME("Not implemented.\n");
-    return -1;
+    const char *const req = conn->buffer, *const end = conn->buffer + conn->len;
+    const char *p = req, *q;
+    int len, ret;
+
+    if (!conn->len) return 0;
+
+    TRACE("%s\n", wine_dbgstr_an(conn->buffer, conn->len));
+
+    len = parse_token(p, end);
+    if (p + len >= end) return 0;
+    if (!len || p[len] != ' ') return -1;
+
+    /* verb */
+    if ((conn->verb = parse_verb(p, len)) == HttpVerbUnknown)
+        conn->unk_verb_len = len;
+    p += len + 1;
+
+    TRACE("Got verb %u (%s).\n", conn->verb, debugstr_an(req, len));
+
+    /* URL */
+    conn->url = p;
+    while (p < end && isgraph(*p)) ++p;
+    conn->url_len = p - conn->url;
+    if (p >= end) return 0;
+    if (!conn->url_len) return -1;
+
+    TRACE("Got URI %s.\n", debugstr_an(conn->url, conn->url_len));
+
+    /* version */
+    if ((ret = compare_exact(p, " HTTP/", end)) <= 0) return ret;
+    p += 6;
+    conn->version.MajorVersion = parse_number(p, &q, end);
+    if (q >= end) return 0;
+    if (q == p || *q != '.') return -1;
+    p = q + 1;
+    if (p >= end) return 0;
+    conn->version.MinorVersion = parse_number(p, &q, end);
+    if (q >= end) return 0;
+    if (q == p) return -1;
+    p = q;
+    if ((ret = compare_exact(p, "\r\n", end)) <= 0) return ret;
+    p += 2;
+
+    TRACE("Got version %hu.%hu.\n", conn->version.MajorVersion, conn->version.MinorVersion);
+
+    /* headers */
+    conn->host = NULL;
+    conn->content_len = 0;
+    for (;;)
+    {
+        const char *name = p;
+
+        if (!(ret = compare_exact(p, "\r\n", end))) return 0;
+        else if (ret > 0) break;
+
+        len = parse_token(p, end);
+        if (p + len >= end) return 0;
+        if (!len) return -1;
+        p += len;
+        while (p < end && (*p == ' ' || *p == '\t')) ++p;
+        if (p >= end) return 0;
+        if (*p != ':') return -1;
+        ++p;
+        while (p < end && (*p == ' ' || *p == '\t')) ++p;
+
+        TRACE("Got %s header.\n", debugstr_an(name, len));
+
+        if (!strncmp(name, "Host", len))
+            conn->host = p;
+        else if (!strncmp(name, "Content-Length", len))
+        {
+            conn->content_len = parse_number(p, &q, end);
+            if (q >= end) return 0;
+            if (q == p) return -1;
+        }
+        else if (!strncmp(name, "Transfer-Encoding", len))
+            FIXME("Unhandled Transfer-Encoding header.\n");
+        while (p < end && (isprint(*p) || *p == '\t')) ++p;
+        if ((ret = compare_exact(p, "\r\n", end)) <= 0) return ret;
+        p += 2;
+    }
+    p += 2;
+    if (conn->url[0] == '/' && !conn->host) return -1;
+
+    if (end - p < conn->content_len) return 0;
+
+    conn->req_len = (p - req) + conn->content_len;
+
+    TRACE("Received a full request, length %u bytes.\n", conn->req_len);
+
+    return 1;
 }
 
 static void receive_data(struct connection *conn)
