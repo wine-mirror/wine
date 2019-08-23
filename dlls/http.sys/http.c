@@ -277,6 +277,9 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
 
     /* First calculate the total buffer size needed for this IRP. */
 
+    if (conn->unk_verb_len)
+        irp_size += conn->unk_verb_len + 1;
+
     TRACE("Need %u bytes, have %u.\n", irp_size, output_len);
     irp->IoStatus.Information = irp_size;
 
@@ -300,6 +303,7 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
     if (params.bits == 32)
     {
         struct http_request_32 *req = irp->AssociatedIrp.SystemBuffer;
+        char *buffer = irp->AssociatedIrp.SystemBuffer;
 
         offset = sizeof(*req);
 
@@ -307,11 +311,22 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         req->UrlContext = conn->queue->context;
         req->Version = conn->version;
         req->Verb = conn->verb;
+        req->UnknownVerbLength = conn->unk_verb_len;
+
+        if (conn->unk_verb_len)
+        {
+            req->pUnknownVerb = params.addr + offset;
+            memcpy(buffer + offset, conn->buffer, conn->unk_verb_len);
+            offset += conn->unk_verb_len;
+            buffer[offset++] = 0;
+        }
+
         req->BytesReceived = conn->req_len;
     }
     else
     {
         struct http_request_64 *req = irp->AssociatedIrp.SystemBuffer;
+        char *buffer = irp->AssociatedIrp.SystemBuffer;
 
         offset = sizeof(*req);
 
@@ -319,6 +334,16 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         req->UrlContext = conn->queue->context;
         req->Version = conn->version;
         req->Verb = conn->verb;
+        req->UnknownVerbLength = conn->unk_verb_len;
+
+        if (conn->unk_verb_len)
+        {
+            req->pUnknownVerb = params.addr + offset;
+            memcpy(buffer + offset, conn->buffer, conn->unk_verb_len);
+            offset += conn->unk_verb_len;
+            buffer[offset++] = 0;
+        }
+
         req->BytesReceived = conn->req_len;
     }
 
