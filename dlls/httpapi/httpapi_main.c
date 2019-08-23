@@ -218,10 +218,30 @@ ULONG WINAPI HttpAddUrl(HANDLE queue, const WCHAR *url, void *reserved)
 /***********************************************************************
  *        HttpRemoveUrl     (HTTPAPI.@)
  */
-ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *url)
+ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *urlW)
 {
-    FIXME("queue %p, url %s, stub!\n", queue, debugstr_w(url));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    ULONG ret = ERROR_SUCCESS;
+    OVERLAPPED ovl = {};
+    char *url;
+    int len;
+
+    TRACE("queue %p, url %s.\n", queue, debugstr_w(urlW));
+
+    if (!queue)
+        return ERROR_INVALID_PARAMETER;
+
+    len = WideCharToMultiByte(CP_ACP, 0, urlW, -1, NULL, 0, NULL, NULL);
+    if (!(url = heap_alloc(len)))
+        return ERROR_OUTOFMEMORY;
+    WideCharToMultiByte(CP_ACP, 0, urlW, -1, url, len, NULL, NULL);
+
+    ovl.hEvent = (HANDLE)((ULONG_PTR)CreateEventW(NULL, TRUE, FALSE, NULL) | 1);
+
+    if (!DeviceIoControl(queue, IOCTL_HTTP_REMOVE_URL, url, len, NULL, 0, NULL, &ovl))
+        ret = GetLastError();
+    CloseHandle(ovl.hEvent);
+    heap_free(url);
+    return ret;
 }
 
 /***********************************************************************
