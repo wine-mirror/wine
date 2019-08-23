@@ -49,6 +49,9 @@ struct connection
     struct list entry; /* in "connections" below */
 
     int socket;
+
+    char *buffer;
+    unsigned int len, size;
 };
 
 static struct list connections = LIST_INIT(connections);
@@ -79,6 +82,15 @@ static void accept_connection(int socket)
         closesocket(peer);
         return;
     }
+    if (!(conn->buffer = heap_alloc(8192)))
+    {
+        ERR("Failed to allocate buffer memory.\n");
+        heap_free(conn);
+        shutdown(peer, SD_BOTH);
+        closesocket(peer);
+        return;
+    }
+    conn->size = 8192;
     WSAEventSelect(peer, request_event, FD_READ | FD_CLOSE);
     ioctlsocket(peer, FIONBIO, &true);
     conn->socket = peer;
@@ -93,8 +105,74 @@ static void close_connection(struct connection *conn)
     heap_free(conn);
 }
 
+/* Upon receiving a request, parse it to ensure that it is a valid HTTP request,
+ * and mark down some information that we will use later. Returns 1 if we parsed
+ * a complete request, 0 if incomplete, -1 if invalid. */
+static int parse_request(struct connection *conn)
+{
+    FIXME("Not implemented.\n");
+    return -1;
+}
+
+static void receive_data(struct connection *conn)
+{
+    int len, ret;
+
+    /* We might be waiting for an IRP, but always call recv() anyway, since we
+     * might have been woken up by the socket closing. */
+    if ((len = recv(conn->socket, conn->buffer + conn->len, conn->size - conn->len, 0)) <= 0)
+    {
+        if (WSAGetLastError() == WSAEWOULDBLOCK)
+            return; /* nothing to receive */
+        else if (!len)
+            TRACE("Connection was shut down by peer.\n");
+        else
+            ERR("Got error %u; shutting down connection.\n", WSAGetLastError());
+        close_connection(conn);
+        return;
+    }
+    conn->len += len;
+
+    TRACE("Received %u bytes of data.\n", len);
+
+    if (!(ret = parse_request(conn)))
+    {
+        ULONG available;
+        ioctlsocket(conn->socket, FIONREAD, &available);
+        if (available)
+        {
+            TRACE("%u more bytes of data available, trying with larger buffer.\n", available);
+            if (!(conn->buffer = heap_realloc(conn->buffer, conn->len + available)))
+            {
+                ERR("Failed to allocate %u bytes of memory.\n", conn->len + available);
+                close_connection(conn);
+                return;
+            }
+            conn->size = conn->len + available;
+
+            if ((len = recv(conn->socket, conn->buffer + conn->len, conn->size - conn->len, 0)) < 0)
+            {
+                ERR("Got error %u; shutting down connection.\n", WSAGetLastError());
+                close_connection(conn);
+                return;
+            }
+            TRACE("Received %u bytes of data.\n", len);
+            conn->len += len;
+            ret = parse_request(conn);
+        }
+    }
+    if (!ret)
+        TRACE("Request is incomplete, waiting for more data.\n");
+    else if (ret < 0)
+    {
+        WARN("Failed to parse request; shutting down connection.\n");
+        close_connection(conn);
+    }
+}
+
 static DWORD WINAPI request_thread_proc(void *arg)
 {
+    struct connection *conn, *cursor;
     struct request_queue *queue;
 
     TRACE("Starting request thread.\n");
@@ -107,6 +185,11 @@ static DWORD WINAPI request_thread_proc(void *arg)
         {
             if (queue->socket != -1)
                 accept_connection(queue->socket);
+        }
+
+        LIST_FOR_EACH_ENTRY_SAFE(conn, cursor, &connections, struct connection, entry)
+        {
+            receive_data(conn);
         }
 
         LeaveCriticalSection(&http_cs);
