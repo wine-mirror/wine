@@ -177,6 +177,142 @@ static HRESULT create_update_manager(IDirectManipulationUpdateManager **obj)
     return S_OK;
 }
 
+
+struct primarycontext
+{
+    IDirectManipulationPrimaryContent IDirectManipulationPrimaryContent_iface;
+    LONG ref;
+};
+
+static inline struct primarycontext *impl_from_IDirectManipulationPrimaryContent(IDirectManipulationPrimaryContent *iface)
+{
+    return CONTAINING_RECORD(iface, struct primarycontext, IDirectManipulationPrimaryContent_iface);
+}
+
+static HRESULT WINAPI primary_QueryInterface(IDirectManipulationPrimaryContent *iface, REFIID riid, void **ppv)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationPrimaryContent(iface);
+    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppv);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IDirectManipulationPrimaryContent))
+    {
+        IDirectManipulationPrimaryContent_AddRef(&This->IDirectManipulationPrimaryContent_iface);
+        *ppv = &This->IDirectManipulationPrimaryContent_iface;
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI primary_AddRef(IDirectManipulationPrimaryContent *iface)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationPrimaryContent(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI primary_Release(IDirectManipulationPrimaryContent *iface)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationPrimaryContent(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    if (!ref)
+    {
+        heap_free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI primary_SetSnapInterval(IDirectManipulationPrimaryContent *iface, DIRECTMANIPULATION_MOTION_TYPES motion,
+            float interval, float offset)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationPrimaryContent(iface);
+    FIXME("%p, %d, %f, %f\n", This, motion, interval, offset);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI primary_SetSnapPoints(IDirectManipulationPrimaryContent *iface, DIRECTMANIPULATION_MOTION_TYPES motion,
+            const float *points, DWORD count)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationPrimaryContent(iface);
+    FIXME("%p, %d, %p, %d\n", This, motion, points, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI primary_SetSnapType(IDirectManipulationPrimaryContent *iface, DIRECTMANIPULATION_MOTION_TYPES motion,
+            DIRECTMANIPULATION_SNAPPOINT_TYPE type)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationPrimaryContent(iface);
+    FIXME("%p, %d, %d\n", This, motion, type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI primary_SetSnapCoordinate(IDirectManipulationPrimaryContent *iface, DIRECTMANIPULATION_MOTION_TYPES motion,
+            DIRECTMANIPULATION_SNAPPOINT_COORDINATE coordinate, float origin)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationPrimaryContent(iface);
+    FIXME("%p, %d, %d, %f\n", This, motion, coordinate, origin);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI primary_SetZoomBoundaries(IDirectManipulationPrimaryContent *iface, float minimum, float maximum)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationPrimaryContent(iface);
+    FIXME("%p, %f, %f\n", This, minimum, maximum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI primary_SetHorizontalAlignment(IDirectManipulationPrimaryContent *iface, DIRECTMANIPULATION_HORIZONTALALIGNMENT alignment)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationPrimaryContent(iface);
+    FIXME("%p, %d\n", This, alignment);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI primary_SetVerticalAlignment(IDirectManipulationPrimaryContent *iface, DIRECTMANIPULATION_VERTICALALIGNMENT alignment)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationPrimaryContent(iface);
+    FIXME("%p, %d\n", This, alignment);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI primary_GetInertiaEndTransform(IDirectManipulationPrimaryContent *iface, float *matrix, DWORD count)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationPrimaryContent(iface);
+    FIXME("%p,  %p, %d\n", This, matrix, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI primary_GetCenterPoint(IDirectManipulationPrimaryContent *iface, float *x, float *y)
+{
+    struct primarycontext *This = impl_from_IDirectManipulationPrimaryContent(iface);
+    FIXME("%p, %p, %p\n", This, x, y);
+    return E_NOTIMPL;
+}
+
+static const IDirectManipulationPrimaryContentVtbl primaryVtbl =
+{
+    primary_QueryInterface,
+    primary_AddRef,
+    primary_Release,
+    primary_SetSnapInterval,
+    primary_SetSnapPoints,
+    primary_SetSnapType,
+    primary_SetSnapCoordinate,
+    primary_SetZoomBoundaries,
+    primary_SetHorizontalAlignment,
+    primary_SetVerticalAlignment,
+    primary_GetInertiaEndTransform,
+    primary_GetCenterPoint
+};
+
 struct directviewport
 {
     IDirectManipulationViewport2 IDirectManipulationViewport2_iface;
@@ -327,7 +463,24 @@ static HRESULT WINAPI viewport_SyncDisplayTransform(IDirectManipulationViewport2
 static HRESULT WINAPI viewport_GetPrimaryContent(IDirectManipulationViewport2 *iface, REFIID riid, void **object)
 {
     struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
-    FIXME("%p, %s, %p\n", This, debugstr_guid(riid), object);
+    TRACE("%p, %s, %p\n", This, debugstr_guid(riid), object);
+    if(IsEqualGUID(riid, &IID_IDirectManipulationPrimaryContent))
+    {
+        struct primarycontext *primary;
+        TRACE("IDirectManipulationPrimaryContent\n");
+        primary = heap_alloc( sizeof(*primary));
+        if(!primary)
+            return E_OUTOFMEMORY;
+
+        primary->IDirectManipulationPrimaryContent_iface.lpVtbl = &primaryVtbl;
+        primary->ref = 1;
+
+        *object = &primary->IDirectManipulationPrimaryContent_iface;
+
+        return S_OK;
+    }
+    else
+        FIXME("Unsupported interface %s\n", debugstr_guid(riid));
     return E_NOTIMPL;
 }
 
