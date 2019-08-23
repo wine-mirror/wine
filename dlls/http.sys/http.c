@@ -41,22 +41,89 @@ WINE_DEFAULT_DEBUG_CHANNEL(http);
 
 DECLARE_CRITICAL_SECTION(http_cs);
 
+static HANDLE request_thread, request_event;
+static BOOL thread_stop;
+
+struct connection
+{
+    struct list entry; /* in "connections" below */
+
+    int socket;
+};
+
+static struct list connections = LIST_INIT(connections);
+
 struct request_queue
 {
     struct list entry;
     HTTP_URL_CONTEXT context;
     char *url;
+    int socket;
 };
 
 static struct list request_queues = LIST_INIT(request_queues);
 
+static void accept_connection(int socket)
+{
+    struct connection *conn;
+    ULONG true = 1;
+    int peer;
+
+    if ((peer = accept(socket, NULL, NULL)) == -1)
+        return;
+
+    if (!(conn = heap_alloc_zero(sizeof(*conn))))
+    {
+        ERR("Failed to allocate memory.\n");
+        shutdown(peer, SD_BOTH);
+        closesocket(peer);
+        return;
+    }
+    WSAEventSelect(peer, request_event, FD_READ | FD_CLOSE);
+    ioctlsocket(peer, FIONBIO, &true);
+    conn->socket = peer;
+    list_add_head(&connections, &conn->entry);
+}
+
+static void close_connection(struct connection *conn)
+{
+    shutdown(conn->socket, SD_BOTH);
+    closesocket(conn->socket);
+    list_remove(&conn->entry);
+    heap_free(conn);
+}
+
+static DWORD WINAPI request_thread_proc(void *arg)
+{
+    struct request_queue *queue;
+
+    TRACE("Starting request thread.\n");
+
+    while (!WaitForSingleObject(request_event, INFINITE))
+    {
+        EnterCriticalSection(&http_cs);
+
+        LIST_FOR_EACH_ENTRY(queue, &request_queues, struct request_queue, entry)
+        {
+            if (queue->socket != -1)
+                accept_connection(queue->socket);
+        }
+
+        LeaveCriticalSection(&http_cs);
+    }
+
+    TRACE("Stopping request thread.\n");
+
+    return 0;
+}
 
 static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
 {
     const struct http_add_url_params *params = irp->AssociatedIrp.SystemBuffer;
-    unsigned short port;
+    struct sockaddr_in addr;
     char *url, *endptr;
-    int count = 0;
+    int s, count = 0;
+    ULONG true = 1;
     const char *p;
 
     TRACE("host %s, context %s.\n", debugstr_a(params->url), wine_dbgstr_longlong(params->context));
@@ -69,7 +136,7 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
     else if (strncmp(params->url, "http://", 7) || !strchr(params->url + 7, ':')
             || params->url[strlen(params->url) - 1] != '/')
         return STATUS_INVALID_PARAMETER;
-    if (!(port = strtol(strchr(params->url + 7, ':') + 1, &endptr, 10)) || *endptr != '/')
+    if (!(addr.sin_port = htons(strtol(strchr(params->url + 7, ':') + 1, &endptr, 10))) || *endptr != '/')
         return STATUS_INVALID_PARAMETER;
 
     if (!(url = heap_alloc(strlen(params->url))))
@@ -97,6 +164,37 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
         return STATUS_NOT_IMPLEMENTED;
     }
 
+    if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    {
+        ERR("Failed to create socket, error %u.\n", WSAGetLastError());
+        LeaveCriticalSection(&http_cs);
+        heap_free(url);
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    addr.sin_family = AF_INET;
+    addr.sin_addr.S_un.S_addr = INADDR_ANY;
+    if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) == -1)
+    {
+        ERR("Failed to bind socket, error %u.\n", WSAGetLastError());
+        LeaveCriticalSection(&http_cs);
+        closesocket(s);
+        heap_free(url);
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    if (listen(s, SOMAXCONN) == -1)
+    {
+        ERR("Failed to listen to port %u, error %u.\n", addr.sin_port, WSAGetLastError());
+        LeaveCriticalSection(&http_cs);
+        closesocket(s);
+        heap_free(url);
+        return STATUS_OBJECT_NAME_COLLISION;
+    }
+
+    ioctlsocket(s, FIONBIO, &true);
+    WSAEventSelect(s, request_event, FD_ACCEPT);
+    queue->socket = s;
     queue->url = url;
     queue->context = params->context;
 
@@ -178,6 +276,11 @@ static void close_queue(struct request_queue *queue)
 {
     EnterCriticalSection(&http_cs);
     list_remove(&queue->entry);
+    if (queue->socket != -1)
+    {
+        shutdown(queue->socket, SD_BOTH);
+        closesocket(queue->socket);
+    }
     LeaveCriticalSection(&http_cs);
 
     heap_free(queue->url);
@@ -200,11 +303,25 @@ static NTSTATUS WINAPI dispatch_close(DEVICE_OBJECT *device, IRP *irp)
 static void WINAPI unload(DRIVER_OBJECT *driver)
 {
     struct request_queue *queue, *queue_next;
+    struct connection *conn, *conn_next;
+
+    thread_stop = TRUE;
+    SetEvent(request_event);
+    WaitForSingleObject(request_thread, INFINITE);
+    CloseHandle(request_thread);
+    CloseHandle(request_event);
+
+    LIST_FOR_EACH_ENTRY_SAFE(conn, conn_next, &connections, struct connection, entry)
+    {
+        close_connection(conn);
+    }
 
     LIST_FOR_EACH_ENTRY_SAFE(queue, queue_next, &request_queues, struct request_queue, entry)
     {
         close_queue(queue);
     }
+
+    WSACleanup();
 
     IoDeleteDevice(device_obj);
     NtClose(directory_obj);
@@ -216,6 +333,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
     static const WCHAR directory_nameW[] = {'\\','D','e','v','i','c','e','\\','H','t','t','p',0};
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
     UNICODE_STRING string;
+    WSADATA wsadata;
     NTSTATUS ret;
 
     TRACE("driver %p, path %s.\n", driver, debugstr_w(path->Buffer));
@@ -237,6 +355,11 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
     driver->MajorFunction[IRP_MJ_CLOSE] = dispatch_close;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = dispatch_ioctl;
     driver->DriverUnload = unload;
+
+    WSAStartup(MAKEWORD(1,1), &wsadata);
+
+    request_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    request_thread = CreateThread(NULL, 0, request_thread_proc, NULL, 0, NULL);
 
     return STATUS_SUCCESS;
 }

@@ -1,5 +1,5 @@
 MODULE    = http.sys
-IMPORTS   = ntoskrnl
+IMPORTS   = ntoskrnl ws2_32
 EXTRADLLFLAGS = -Wl,--subsystem,native -mno-cygwin
 
 C_SRCS = \
