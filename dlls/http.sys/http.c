@@ -18,12 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
+#include "wine/http.h"
 #include "winternl.h"
-#include "winioctl.h"
 #include "ddk/wdm.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -46,9 +44,115 @@ DECLARE_CRITICAL_SECTION(http_cs);
 struct request_queue
 {
     struct list entry;
+    HTTP_URL_CONTEXT context;
+    char *url;
 };
 
 static struct list request_queues = LIST_INIT(request_queues);
+
+
+static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
+{
+    const struct http_add_url_params *params = irp->AssociatedIrp.SystemBuffer;
+    unsigned short port;
+    char *url, *endptr;
+    int count = 0;
+    const char *p;
+
+    TRACE("host %s, context %s.\n", debugstr_a(params->url), wine_dbgstr_longlong(params->context));
+
+    if (!strncmp(params->url, "https://", 8))
+    {
+        FIXME("HTTPS is not implemented.\n");
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    else if (strncmp(params->url, "http://", 7) || !strchr(params->url + 7, ':')
+            || params->url[strlen(params->url) - 1] != '/')
+        return STATUS_INVALID_PARAMETER;
+    if (!(port = strtol(strchr(params->url + 7, ':') + 1, &endptr, 10)) || *endptr != '/')
+        return STATUS_INVALID_PARAMETER;
+
+    if (!(url = heap_alloc(strlen(params->url))))
+        return STATUS_NO_MEMORY;
+    strcpy(url, params->url);
+
+    for (p = url; *p; ++p)
+        if (*p == '/') ++count;
+    if (count > 3)
+        FIXME("Binding to relative URIs is not implemented; binding to all URIs instead.\n");
+
+    EnterCriticalSection(&http_cs);
+
+    if (queue->url && !strcmp(queue->url, url))
+    {
+        LeaveCriticalSection(&http_cs);
+        heap_free(url);
+        return STATUS_OBJECT_NAME_COLLISION;
+    }
+    else if (queue->url)
+    {
+        FIXME("Binding to multiple URLs is not implemented.\n");
+        LeaveCriticalSection(&http_cs);
+        heap_free(url);
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    queue->url = url;
+    queue->context = params->context;
+
+    LeaveCriticalSection(&http_cs);
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS http_remove_url(struct request_queue *queue, IRP *irp)
+{
+    const char *url = irp->AssociatedIrp.SystemBuffer;
+
+    TRACE("host %s.\n", debugstr_a(url));
+
+    EnterCriticalSection(&http_cs);
+
+    if (!queue->url || strcmp(url, queue->url))
+    {
+        LeaveCriticalSection(&http_cs);
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+    }
+    heap_free(queue->url);
+    queue->url = NULL;
+
+    LeaveCriticalSection(&http_cs);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS WINAPI dispatch_ioctl(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    struct request_queue *queue = stack->FileObject->FsContext;
+    NTSTATUS ret;
+
+    switch (stack->Parameters.DeviceIoControl.IoControlCode)
+    {
+    case IOCTL_HTTP_ADD_URL:
+        ret = http_add_url(queue, irp);
+        break;
+    case IOCTL_HTTP_REMOVE_URL:
+        ret = http_remove_url(queue, irp);
+        break;
+    default:
+        FIXME("Unhandled ioctl %#x.\n", stack->Parameters.DeviceIoControl.IoControlCode);
+        ret = STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (ret != STATUS_PENDING)
+    {
+        irp->IoStatus.Status = ret;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
+    else
+        IoMarkIrpPending(irp);
+    return ret;
+}
 
 static NTSTATUS WINAPI dispatch_create(DEVICE_OBJECT *device, IRP *irp)
 {
@@ -76,6 +180,7 @@ static void close_queue(struct request_queue *queue)
     list_remove(&queue->entry);
     LeaveCriticalSection(&http_cs);
 
+    heap_free(queue->url);
     heap_free(queue);
 }
 
@@ -130,6 +235,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 
     driver->MajorFunction[IRP_MJ_CREATE] = dispatch_create;
     driver->MajorFunction[IRP_MJ_CLOSE] = dispatch_close;
+    driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = dispatch_ioctl;
     driver->DriverUnload = unload;
 
     return STATUS_SUCCESS;
