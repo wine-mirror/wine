@@ -82,6 +82,7 @@ static HANDLE (WINAPI *pOpenThread)(DWORD,BOOL,DWORD);
 static BOOL (WINAPI *pQueueUserWorkItem)(LPTHREAD_START_ROUTINE,PVOID,ULONG);
 static DWORD (WINAPI *pSetThreadIdealProcessor)(HANDLE,DWORD);
 static BOOL (WINAPI *pSetThreadPriorityBoost)(HANDLE,BOOL);
+static BOOL (WINAPI *pSetThreadStackGuarantee)(ULONG*);
 static BOOL (WINAPI *pRegisterWaitForSingleObject)(PHANDLE,HANDLE,WAITORTIMERCALLBACK,PVOID,ULONG,ULONG);
 static BOOL (WINAPI *pUnregisterWait)(HANDLE);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
@@ -1014,6 +1015,61 @@ static VOID test_GetCurrentThreadStackLimits(void)
     pGetCurrentThreadStackLimits(&low, &high);
     ok(low == (ULONG_PTR)NtCurrentTeb()->DeallocationStack, "expected %p, got %lx\n", NtCurrentTeb()->DeallocationStack, low);
     ok(high == (ULONG_PTR)NtCurrentTeb()->Tib.StackBase, "expected %p, got %lx\n", NtCurrentTeb()->Tib.StackBase, high);
+}
+
+static void test_SetThreadStackGuarantee(void)
+{
+    ULONG size;
+    BOOL ret;
+
+    if (!pSetThreadStackGuarantee)
+    {
+        win_skip("SetThreadStackGuarantee not available.\n");
+        return;
+    }
+    size = 0;
+    ret = pSetThreadStackGuarantee( &size );
+    ok( ret, "failed err %u\n", GetLastError() );
+    ok( size == 0, "wrong size %u\n", size );
+    ok( NtCurrentTeb()->GuaranteedStackBytes == 0, "wrong teb %u\n",
+        NtCurrentTeb()->GuaranteedStackBytes );
+    size = 0xdeadbef;
+    ret = pSetThreadStackGuarantee( &size );
+    ok( !ret, "succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INVALID_ADDRESS,
+        "wrong error %u\n", GetLastError());
+    ok( size == 0, "wrong size %u\n", size );
+    ok( NtCurrentTeb()->GuaranteedStackBytes == 0, "wrong teb %u\n",
+        NtCurrentTeb()->GuaranteedStackBytes );
+    size = 200;
+    ret = pSetThreadStackGuarantee( &size );
+    ok( ret, "failed err %u\n", GetLastError() );
+    ok( size == 0, "wrong size %u\n", size );
+    ok( NtCurrentTeb()->GuaranteedStackBytes == 4096 * sizeof(void *) / 4, "wrong teb %u\n",
+        NtCurrentTeb()->GuaranteedStackBytes );
+    size = 5000;
+    ret = pSetThreadStackGuarantee( &size );
+    ok( ret, "failed err %u\n", GetLastError() );
+    ok( size == 4096 * sizeof(void *) / 4, "wrong size %u\n", size );
+    ok( NtCurrentTeb()->GuaranteedStackBytes == 8192, "wrong teb %u\n",
+        NtCurrentTeb()->GuaranteedStackBytes );
+    size = 2000;
+    ret = pSetThreadStackGuarantee( &size );
+    ok( ret, "failed err %u\n", GetLastError() );
+    ok( size == 8192, "wrong size %u\n", size );
+    ok( NtCurrentTeb()->GuaranteedStackBytes == 8192, "wrong teb %u\n",
+        NtCurrentTeb()->GuaranteedStackBytes );
+    size = 10000;
+    ret = pSetThreadStackGuarantee( &size );
+    ok( ret, "failed err %u\n", GetLastError() );
+    ok( size == 8192, "wrong size %u\n", size );
+    ok( NtCurrentTeb()->GuaranteedStackBytes == 12288, "wrong teb %u\n",
+        NtCurrentTeb()->GuaranteedStackBytes );
+    ret = pSetThreadStackGuarantee( &size );
+    ok( ret, "failed err %u\n", GetLastError() );
+    ok( size == 12288, "wrong size %u\n", size );
+    ok( NtCurrentTeb()->GuaranteedStackBytes == 12288, "wrong teb %u\n",
+        NtCurrentTeb()->GuaranteedStackBytes );
 }
 
 static VOID test_GetThreadExitCode(void)
@@ -2029,6 +2085,7 @@ static void init_funcs(void)
     X(QueueUserWorkItem);
     X(SetThreadIdealProcessor);
     X(SetThreadPriorityBoost);
+    X(SetThreadStackGuarantee);
     X(RegisterWaitForSingleObject);
     X(UnregisterWait);
     X(IsWow64Process);
@@ -2110,6 +2167,7 @@ START_TEST(thread)
    test_CreateThread_stack();
    test_thread_priority();
    test_GetCurrentThreadStackLimits();
+   test_SetThreadStackGuarantee();
    test_GetThreadTimes();
    test_thread_processor();
    test_GetThreadExitCode();
