@@ -2269,26 +2269,37 @@ BOOL virtual_is_valid_code_address( const void *addr, SIZE_T size )
  *           virtual_handle_stack_fault
  *
  * Handle an access fault inside the current thread stack.
+ * Return 1 if safely handled, -1 if handled into the overflow space.
  * Called from inside a signal handler.
  */
-BOOL virtual_handle_stack_fault( void *addr )
+int virtual_handle_stack_fault( void *addr )
 {
-    BOOL ret = FALSE;
+    int ret = 0;
+
+    if ((char *)addr < (char *)NtCurrentTeb()->DeallocationStack) return 0;
+    if ((char *)addr >= (char *)NtCurrentTeb()->Tib.StackBase) return 0;
 
     RtlEnterCriticalSection( &csVirtual );  /* no need for signal masking inside signal handler */
     if (get_page_vprot( addr ) & VPROT_GUARD)
     {
+        size_t guaranteed = max( NtCurrentTeb()->GuaranteedStackBytes, page_size * (is_win64 ? 2 : 1) );
         char *page = ROUND_ADDR( addr, page_mask );
         set_page_vprot_bits( page, page_size, 0, VPROT_GUARD );
         mprotect_range( page, page_size, 0, 0 );
-        NtCurrentTeb()->Tib.StackLimit = page;
-        if (page >= (char *)NtCurrentTeb()->DeallocationStack + 2*page_size)
+        if (page >= (char *)NtCurrentTeb()->DeallocationStack + page_size + guaranteed)
         {
-            page -= page_size;
-            set_page_vprot_bits( page, page_size, VPROT_COMMITTED | VPROT_GUARD, 0 );
-            mprotect_range( page, page_size, 0, 0 );
+            set_page_vprot_bits( page - page_size, page_size, VPROT_COMMITTED | VPROT_GUARD, 0 );
+            mprotect_range( page - page_size, page_size, 0, 0 );
+            ret = 1;
         }
-        ret = TRUE;
+        else  /* inside guaranteed space -> overflow exception */
+        {
+            page = (char *)NtCurrentTeb()->DeallocationStack + page_size;
+            set_page_vprot_bits( page, guaranteed, VPROT_COMMITTED, VPROT_GUARD );
+            mprotect_range( page, guaranteed, 0, 0 );
+            ret = -1;
+        }
+        NtCurrentTeb()->Tib.StackLimit = page;
     }
     RtlLeaveCriticalSection( &csVirtual );
     return ret;

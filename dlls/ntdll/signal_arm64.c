@@ -669,18 +669,17 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     ucontext_t *context = ucontext;
 
     /* check for page fault inside the thread stack */
-    if (signal == SIGSEGV &&
-        (char *)info->si_addr >= (char *)NtCurrentTeb()->DeallocationStack &&
-        (char *)info->si_addr < (char *)NtCurrentTeb()->Tib.StackBase &&
-        virtual_handle_stack_fault( info->si_addr ))
+    if (signal == SIGSEGV)
     {
-        /* check if this was the last guard page */
-        if ((char *)info->si_addr < (char *)NtCurrentTeb()->DeallocationStack + 2*4096)
+        switch (virtual_handle_stack_fault( info->si_addr ))
         {
+        case 1:  /* handled */
+            return;
+        case -1:  /* overflow */
             rec = setup_exception( context, raise_segv_exception );
             rec->ExceptionCode = EXCEPTION_STACK_OVERFLOW;
+            return;
         }
-        return;
     }
 
     rec = setup_exception( context, raise_segv_exception );
