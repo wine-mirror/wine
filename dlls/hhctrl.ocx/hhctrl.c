@@ -97,7 +97,7 @@ static const char *command_to_string(UINT command)
 #undef X
 }
 
-static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD buflen, WCHAR **index, WCHAR **window)
+static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD buflen, WCHAR **index, WCHAR **window)
 {
     const WCHAR *extra;
     WCHAR chm_file[MAX_PATH];
@@ -106,11 +106,24 @@ static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD bufle
     static const WCHAR delimW[] = {':',':',0};
     static const WCHAR delim2W[] = {'>',0};
 
-    filename = skip_schema(filename);
+    DWORD env_len;
+    WCHAR *filename;
+
+    env_filename = skip_schema(env_filename);
 
     /* the format is "helpFile[::/index][>window]" */
     if (index) *index = NULL;
     if (window) *window = NULL;
+
+    env_len = ExpandEnvironmentStringsW(env_filename, NULL, 0);
+    if (!env_len)
+        return 0;
+
+    filename = heap_alloc(env_len * sizeof(WCHAR));
+    if (filename == NULL)
+        return 0;
+
+    ExpandEnvironmentStringsW(env_filename, filename, env_len);
 
     extra = wcsstr(filename, delim2W);
     if (extra)
@@ -140,6 +153,9 @@ static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD bufle
         lstrcatW(fullname, helpW);
         lstrcatW(fullname, filename);
     }
+
+    heap_free(filename);
+
     return (GetFileAttributesW(fullname) != INVALID_FILE_ATTRIBUTES);
 }
 
