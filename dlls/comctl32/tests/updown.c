@@ -949,7 +949,7 @@ static void test_updown_pos_notifications(void)
     expect(result, 0);
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, test_updown_pos_notifications_seq,
-                "test updown to parent notify (vertical)", TRUE);
+                "test updown to parent notify (vertical)", FALSE);
 
     DestroyWindow(updown);
 
@@ -968,7 +968,7 @@ static void test_updown_pos_notifications(void)
     expect(result, 0);
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, test_updown_pos_notifications_horz_seq,
-                "test updown to parent notify (horizontal)", TRUE);
+                "test updown to parent notify (horizontal)", FALSE);
 
     DestroyWindow(updown);
 }
