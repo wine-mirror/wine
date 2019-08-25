@@ -25,6 +25,7 @@ C_SRCS = \
 	lock.c \
 	main.c \
 	math.c \
+	mathf.c \
 	mbcs.c \
 	misc.c \
 	onexit.c \

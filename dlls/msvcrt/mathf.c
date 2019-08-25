@@ -25,7 +25,7 @@
 
 #include <math.h>
 
-#if !defined(__i386__) && _MSVCR_VER > 0 && _MSVCR_VER < 80
+#if defined(__i386__) || (_MSVCR_VER > 0 && _MSVCR_VER < 80)
 float sinf(float x) { return sin(x); }
 float cosf(float x) { return cos(x); }
 float tanf(float x) { return tan(x); }
@@ -34,4 +34,6 @@ float expf(float x) { return exp(x); }
 float logf(float x) { return log(x); }
 float powf(float x, float y) { return pow(x, y); }
 float sqrtf(float x) { return sqrt(x); }
+float floorf(float x) { return floor(x); }
+float ceilf(float x) { return ceil(x); }
 #endif
