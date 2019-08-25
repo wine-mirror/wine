@@ -28,7 +28,7 @@
 #endif
 
 #if defined(_WIN32) && defined(__i386__)
-# define __ASM_STDCALL(name,args) __ASM_NAME(name) "@" #args
+# define __ASM_STDCALL(name,args) "\"" __ASM_NAME(name) "@" #args "\""
 #else
 # define __ASM_STDCALL(name,args) __ASM_NAME(name)
 #endif
