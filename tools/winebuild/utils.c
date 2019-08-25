@@ -1093,7 +1093,7 @@ const char *func_declaration( const char *func )
         return "";
     case PLATFORM_WINDOWS:
         free( buffer );
-        buffer = strmake( ".def %s%s; .scl 2; .type 32; .endef", target_cpu == CPU_x86 ? "_" : "", func );
+        buffer = strmake( ".def %s; .scl 2; .type 32; .endef", asm_name(func) );
         break;
     default:
         free( buffer );
