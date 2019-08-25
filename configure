@@ -1747,6 +1747,7 @@ enable_progman
 enable_reg
 enable_regasm
 enable_regedit
+enable_regini
 enable_regsvcs
 enable_regsvr32
 enable_rpcss
@@ -20910,6 +20911,7 @@ wine_fn_config_makefile programs/reg/tests enable_tests
 wine_fn_config_makefile programs/regasm enable_regasm
 wine_fn_config_makefile programs/regedit enable_regedit
 wine_fn_config_makefile programs/regedit/tests enable_tests
+wine_fn_config_makefile programs/regini enable_regini
 wine_fn_config_makefile programs/regsvcs enable_regsvcs
 wine_fn_config_makefile programs/regsvr32 enable_regsvr32
 wine_fn_config_makefile programs/rpcss enable_rpcss
