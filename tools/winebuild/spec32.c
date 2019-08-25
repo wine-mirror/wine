@@ -570,7 +570,7 @@ void output_exports( DLLSPEC *spec )
                 output( "1:\tjmp *__imp_%s-1b(%%eax)\n", asm_name( get_link_name( odp )));
                 needs_get_pc_thunk = 1;
             }
-            else output( "\tjmp *__imp_%s\n", asm_name( get_link_name( odp )));
+            else output( "\tjmp *\"__imp_%s\"\n", asm_name( get_link_name( odp )));
             break;
         case CPU_x86_64:
             output( "\t.byte 0x48\n" );  /* hotpatch prolog */
