@@ -664,7 +664,7 @@ int main(int argc, char **argv)
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
         open_output_file();
-        output_def_file( spec, 1 );
+        output_def_file( spec, 0 );
         close_output_file();
         break;
     case MODE_IMPLIB:

@@ -310,7 +310,7 @@ extern void output_resources( DLLSPEC *spec );
 extern void output_bin_resources( DLLSPEC *spec, unsigned int start_rva );
 extern void output_spec32_file( DLLSPEC *spec );
 extern void output_fake_module( DLLSPEC *spec );
-extern void output_def_file( DLLSPEC *spec, int include_stubs );
+extern void output_def_file( DLLSPEC *spec, int import_only );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
 extern void output_res16_data( DLLSPEC *spec );
 extern void output_bin_res16_data( DLLSPEC *spec );

@@ -1452,7 +1452,7 @@ static void build_windows_import_lib( DLLSPEC *spec )
     const char *as_flags, *m_flag;
 
     def_file = open_temp_output_file( ".def" );
-    output_def_file( spec, 0 );
+    output_def_file( spec, 1 );
     fclose( output_file );
 
     args = find_tool( "dlltool", NULL );

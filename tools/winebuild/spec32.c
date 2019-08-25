@@ -983,7 +983,7 @@ void output_fake_module( DLLSPEC *spec )
  *
  * Build a Win32 def file from a spec file.
  */
-void output_def_file( DLLSPEC *spec, int include_stubs )
+void output_def_file( DLLSPEC *spec, int import_only )
 {
     DLLSPEC *spec32 = NULL;
     const char *name;
@@ -1017,7 +1017,7 @@ void output_def_file( DLLSPEC *spec, int include_stubs )
         else continue;
 
         if (!is_private) total++;
-        if (!include_stubs && odp->type == TYPE_STUB) continue;
+        if (import_only && odp->type == TYPE_STUB) continue;
 
         if ((odp->flags & FLAG_FASTCALL) && target_platform == PLATFORM_WINDOWS)
             name = strmake( "@%s", name );
@@ -1032,13 +1032,14 @@ void output_def_file( DLLSPEC *spec, int include_stubs )
         case TYPE_VARARGS:
         case TYPE_CDECL:
             /* try to reduce output */
-            if(strcmp(name, odp->link_name) || (odp->flags & FLAG_FORWARD))
+            if(!import_only && (strcmp(name, odp->link_name) || (odp->flags & FLAG_FORWARD)))
                 output( "=%s", odp->link_name );
             break;
         case TYPE_STDCALL:
         {
             int at_param = get_args_size( odp );
             if (!kill_at && target_cpu == CPU_x86) output( "@%d", at_param );
+            if (import_only) break;
             if  (odp->flags & FLAG_FORWARD)
                 output( "=%s", odp->link_name );
             else if (strcmp(name, odp->link_name)) /* try to reduce output */
