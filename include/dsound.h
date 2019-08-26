@@ -1326,6 +1326,11 @@ typedef struct _DSFXGargle
 
 typedef const DSFXGargle *LPCDSFXGargle;
 
+#define DSFXGARGLE_RATEHZ_MIN       1
+#define DSFXGARGLE_RATEHZ_MAX    1000
+#define DSFXGARGLE_WAVE_SQUARE      1
+#define DSFXGARGLE_WAVE_TRIANGLE    0
+
 #define INTERFACE IDirectSoundFXGargle
 DECLARE_INTERFACE_(IDirectSoundFXGargle,IUnknown)
 {
@@ -1366,6 +1371,26 @@ typedef struct _DSFXChorus
 } DSFXChorus, *LPDSFXChorus;
 
 typedef const DSFXChorus *LPCDSFXChorus;
+
+#define DSFXCHORUS_DEPTH_MIN       0.0f
+#define DSFXCHORUS_DEPTH_MAX     100.0f
+#define DSFXCHORUS_DELAY_MIN       0.0f
+#define DSFXCHORUS_DELAY_MAX      20.0f
+#define DSFXCHORUS_FEEDBACK_MIN  -99.0f
+#define DSFXCHORUS_FEEDBACK_MAX   99.0f
+#define DSFXCHORUS_FREQUENCY_MIN   0.0f
+#define DSFXCHORUS_FREQUENCY_MAX  10.0f
+#define DSFXCHORUS_PHASE_MIN       0
+#define DSFXCHORUS_PHASE_MAX       4
+#define DSFXCHORUS_PHASE_NEG_180   0
+#define DSFXCHORUS_PHASE_NEG_90    1
+#define DSFXCHORUS_PHASE_ZERO      2
+#define DSFXCHORUS_PHASE_90        3
+#define DSFXCHORUS_PHASE_180       4
+#define DSFXCHORUS_WAVE_TRIANGLE   0
+#define DSFXCHORUS_WAVE_SIN        1
+#define DSFXCHORUS_WETDRYMIX_MIN   0.0f
+#define DSFXCHORUS_WETDRYMIX_MAX 100.0f
 
 #define INTERFACE IDirectSoundFXChorus
 DECLARE_INTERFACE_(IDirectSoundFXChorus,IUnknown)
@@ -1408,6 +1433,26 @@ typedef struct _DSFXFlanger
 
 typedef const DSFXFlanger *LPCDSFXFlanger;
 
+#define DSFXFLANGER_DELAY_MIN       0.0f
+#define DSFXFLANGER_DELAY_MAX       4.0f
+#define DSFXFLANGER_DEPTH_MIN       0.0f
+#define DSFXFLANGER_DEPTH_MAX     100.0f
+#define DSFXFLANGER_FREQUENCY_MIN   0.0f
+#define DSFXFLANGER_FREQUENCY_MAX  10.0f
+#define DSFXFLANGER_FEEDBACK_MIN  -99.0f
+#define DSFXFLANGER_FEEDBACK_MAX   99.0f
+#define DSFXFLANGER_PHASE_MIN       0
+#define DSFXFLANGER_PHASE_MAX       4
+#define DSFXFLANGER_PHASE_NEG_180   0
+#define DSFXFLANGER_PHASE_NEG_90    1
+#define DSFXFLANGER_PHASE_ZERO      2
+#define DSFXFLANGER_PHASE_90        3
+#define DSFXFLANGER_PHASE_180       4
+#define DSFXFLANGER_WAVE_SIN        1
+#define DSFXFLANGER_WAVE_TRIANGLE   0
+#define DSFXFLANGER_WETDRYMIX_MIN   0.0f
+#define DSFXFLANGER_WETDRYMIX_MAX 100.0f
+
 #define INTERFACE IDirectSoundFXFlanger
 DECLARE_INTERFACE_(IDirectSoundFXFlanger,IUnknown)
 {
@@ -1447,6 +1492,17 @@ typedef struct _DSFXEcho
 
 typedef const DSFXEcho *LPCDSFXEcho;
 
+#define DSFXECHO_FEEDBACK_MIN      0.0f
+#define DSFXECHO_FEEDBACK_MAX    100.0f
+#define DSFXECHO_LEFTDELAY_MIN     1.0f
+#define DSFXECHO_LEFTDELAY_MAX  2000.0f
+#define DSFXECHO_PANDELAY_MIN      0
+#define DSFXECHO_PANDELAY_MAX      1
+#define DSFXECHO_RIGHTDELAY_MIN    1.0f
+#define DSFXECHO_RIGHTDELAY_MAX 2000.0f
+#define DSFXECHO_WETDRYMIX_MIN     0.0f
+#define DSFXECHO_WETDRYMIX_MAX   100.0f
+
 #define INTERFACE IDirectSoundFXEcho
 DECLARE_INTERFACE_(IDirectSoundFXEcho,IUnknown)
 {
@@ -1485,6 +1541,17 @@ typedef struct _DSFXDistortion
 } DSFXDistortion, *LPDSFXDistortion;
 
 typedef const DSFXDistortion *LPCDSFXDistortion;
+
+#define DSFXDISTORTION_EDGE_MIN                     0.0f
+#define DSFXDISTORTION_EDGE_MAX                   100.0f
+#define DSFXDISTORTION_GAIN_MIN                   -60.0f
+#define DSFXDISTORTION_GAIN_MAX                     0.0f
+#define DSFXDISTORTION_POSTEQCENTERFREQUENCY_MIN  100.0f
+#define DSFXDISTORTION_POSTEQCENTERFREQUENCY_MAX 8000.0f
+#define DSFXDISTORTION_POSTEQBANDWIDTH_MIN        100.0f
+#define DSFXDISTORTION_POSTEQBANDWIDTH_MAX       8000.0f
+#define DSFXDISTORTION_PRELOWPASSCUTOFF_MIN       100.0f
+#define DSFXDISTORTION_PRELOWPASSCUTOFF_MAX      8000.0f
 
 #define INTERFACE IDirectSoundFXDistortion
 DECLARE_INTERFACE_(IDirectSoundFXDistortion,IUnknown)
@@ -1526,6 +1593,19 @@ typedef struct _DSFXCompressor
 
 typedef const DSFXCompressor *LPCDSFXCompressor;
 
+#define DSFXCOMPRESSOR_ATTACK_MIN       0.01f
+#define DSFXCOMPRESSOR_ATTACK_MAX     500.0f
+#define DSFXCOMPRESSOR_GAIN_MIN       -60.0f
+#define DSFXCOMPRESSOR_GAIN_MAX        60.0f
+#define DSFXCOMPRESSOR_PREDELAY_MIN     0.0f
+#define DSFXCOMPRESSOR_PREDELAY_MAX     4.0f
+#define DSFXCOMPRESSOR_RATIO_MIN        1.0f
+#define DSFXCOMPRESSOR_RATIO_MAX      100.0f
+#define DSFXCOMPRESSOR_RELEASE_MIN     50.0f
+#define DSFXCOMPRESSOR_RELEASE_MAX   3000.0f
+#define DSFXCOMPRESSOR_THRESHOLD_MIN  -60.0f
+#define DSFXCOMPRESSOR_THRESHOLD_MAX    0.0f
+
 #define INTERFACE IDirectSoundFXCompressor
 DECLARE_INTERFACE_(IDirectSoundFXCompressor, IUnknown)
 {
@@ -1562,6 +1642,13 @@ typedef struct _DSFXParamEq
 } DSFXParamEq, *LPDSFXParamEq;
 
 typedef const DSFXParamEq *LPCDSFXParamEq;
+
+#define DSFXPARAMEQ_BANDWIDTH_MIN     1.0f
+#define DSFXPARAMEQ_BANDWIDTH_MAX    36.0f
+#define DSFXPARAMEQ_CENTER_MIN       80.0f
+#define DSFXPARAMEQ_CENTER_MAX    16000.0f
+#define DSFXPARAMEQ_GAIN_MIN        -15.0f
+#define DSFXPARAMEQ_GAIN_MAX         15.0f
 
 #define INTERFACE IDirectSoundFXParamEq
 DECLARE_INTERFACE_(IDirectSoundFXParamEq, IUnknown)
@@ -1600,6 +1687,19 @@ typedef struct _DSFXWavesReverb
 } DSFXWavesReverb, *LPDSFXWavesReverb;
 
 typedef const DSFXWavesReverb *LPCDSFXWavesReverb;
+
+#define DSFX_WAVESREVERB_HIGHFREQRTRATIO_MIN       0.001f
+#define DSFX_WAVESREVERB_HIGHFREQRTRATIO_MAX       0.999f
+#define DSFX_WAVESREVERB_HIGHFREQRTRATIO_DEFAULT   0.001f
+#define DSFX_WAVESREVERB_INGAIN_MIN              -96.0f
+#define DSFX_WAVESREVERB_INGAIN_MAX                0.0f
+#define DSFX_WAVESREVERB_INGAIN_DEFAULT            0.0f
+#define DSFX_WAVESREVERB_REVERBMIX_MIN           -96.0f
+#define DSFX_WAVESREVERB_REVERBMIX_MAX             0.0f
+#define DSFX_WAVESREVERB_REVERBMIX_DEFAULT         0.0f
+#define DSFX_WAVESREVERB_REVERBTIME_MIN            0.001f
+#define DSFX_WAVESREVERB_REVERBTIME_MAX         3000.0f
+#define DSFX_WAVESREVERB_REVERBTIME_DEFAULT     1000.0f
 
 #define INTERFACE IDirectSoundFXWavesReverb
 DECLARE_INTERFACE_(IDirectSoundFXWavesReverb,IUnknown)
