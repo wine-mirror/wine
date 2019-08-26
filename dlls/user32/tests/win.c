@@ -11733,6 +11733,114 @@ static void test_arrange_iconic_windows(void)
     ok(ret, "failed to restore minimized metrics, error %u\n", GetLastError());
 }
 
+static void other_process_proc(HWND hwnd)
+{
+    HANDLE window_ready_event, test_done_event;
+    WINDOWPLACEMENT wp;
+    DWORD ret;
+
+    window_ready_event = OpenEventA(EVENT_ALL_ACCESS, FALSE, "test_opw_window");
+    ok(!!window_ready_event, "OpenEvent failed.\n");
+    test_done_event = OpenEventA(EVENT_ALL_ACCESS, FALSE, "test_opw_test");
+    ok(!!test_done_event, "OpenEvent failed.\n");
+
+    /* SW_SHOW */
+    ret = WaitForSingleObject(window_ready_event, 5000);
+    ok(ret == WAIT_OBJECT_0, "Unexpected ret %x.\n", ret);
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "Unexpected ret %#x.\n", ret);
+    ok(wp.showCmd == SW_SHOWNORMAL, "Unexpected showCmd %#x.\n", wp.showCmd);
+    ok(!wp.flags, "Unexpected flags %#x.\n", wp.flags);
+    SetEvent(test_done_event);
+
+    /* SW_SHOWMAXIMIZED */
+    ret = WaitForSingleObject(window_ready_event, 5000);
+    ok(ret == WAIT_OBJECT_0, "Unexpected ret %x.\n", ret);
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "Unexpected ret %#x.\n", ret);
+    ok(wp.showCmd == SW_SHOWMAXIMIZED, "Unexpected showCmd %#x.\n", wp.showCmd);
+    todo_wine ok(wp.flags == WPF_RESTORETOMAXIMIZED, "Unexpected flags %#x.\n", wp.flags);
+    SetEvent(test_done_event);
+
+    /* SW_SHOWMINIMIZED */
+    ret = WaitForSingleObject(window_ready_event, 5000);
+    ok(ret == WAIT_OBJECT_0, "Unexpected ret %x.\n", ret);
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "Unexpected ret %#x.\n", ret);
+    ok(wp.showCmd == SW_SHOWMINIMIZED, "Unexpected showCmd %#x.\n", wp.showCmd);
+    todo_wine ok(wp.flags == WPF_RESTORETOMAXIMIZED, "Unexpected flags %#x.\n", wp.flags);
+    SetEvent(test_done_event);
+
+    /* SW_RESTORE */
+    ret = WaitForSingleObject(window_ready_event, 5000);
+    ok(ret == WAIT_OBJECT_0, "Unexpected ret %x.\n", ret);
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "Unexpected ret %#x.\n", ret);
+    ok(wp.showCmd == SW_SHOWMAXIMIZED, "Unexpected showCmd %#x.\n", wp.showCmd);
+    todo_wine ok(wp.flags == WPF_RESTORETOMAXIMIZED, "Unexpected flags %#x.\n", wp.flags);
+    SetEvent(test_done_event);
+
+    CloseHandle(window_ready_event);
+    CloseHandle(test_done_event);
+}
+
+static void test_other_process_window(const char *argv0)
+{
+    HANDLE window_ready_event, test_done_event;
+    PROCESS_INFORMATION info;
+    STARTUPINFOA startup;
+    char cmd[MAX_PATH];
+    HWND hwnd;
+    BOOL ret;
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP,
+            100, 100, 100, 100, 0, 0, NULL, NULL);
+    ok(!!hwnd, "CreateWindowEx failed.\n");
+
+    window_ready_event = CreateEventA(NULL, FALSE, FALSE, "test_opw_window");
+    ok(!!window_ready_event, "CreateEvent failed.\n");
+    test_done_event = CreateEventA(NULL, FALSE, FALSE, "test_opw_test");
+    ok(!!test_done_event, "CreateEvent failed.\n");
+
+    sprintf(cmd, "%s win test_other_process_window %p", argv0, hwnd);
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+
+    ok(CreateProcessA(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL,
+            &startup, &info), "CreateProcess failed.\n");
+
+    ret = ShowWindow(hwnd, SW_SHOW);
+    ok(!ret, "Unexpected ret %#x.\n", ret);
+    SetEvent(window_ready_event);
+    ret = WaitForSingleObject(test_done_event, 5000);
+    ok(ret == WAIT_OBJECT_0, "Unexpected ret %x.\n", ret);
+
+    ret = ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+    ok(ret, "Unexpected ret %#x.\n", ret);
+    SetEvent(window_ready_event);
+    ret = WaitForSingleObject(test_done_event, 5000);
+    ok(ret == WAIT_OBJECT_0, "Unexpected ret %x.\n", ret);
+
+    ret = ShowWindow(hwnd, SW_SHOWMINIMIZED);
+    ok(ret, "Unexpected ret %#x.\n", ret);
+    SetEvent(window_ready_event);
+    ret = WaitForSingleObject(test_done_event, 5000);
+    ok(ret == WAIT_OBJECT_0, "Unexpected ret %x.\n", ret);
+
+    ret = ShowWindow(hwnd, SW_RESTORE);
+    ok(ret, "Unexpected ret %#x.\n", ret);
+    SetEvent(window_ready_event);
+    ret = WaitForSingleObject(test_done_event, 5000);
+    ok(ret == WAIT_OBJECT_0, "Unexpected ret %x.\n", ret);
+
+    winetest_wait_child_process(info.hProcess);
+    CloseHandle(window_ready_event);
+    CloseHandle(test_done_event);
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -11762,16 +11870,24 @@ START_TEST(win)
     pAdjustWindowRectExForDpi = (void *)GetProcAddress( user32, "AdjustWindowRectExForDpi" );
     pSystemParametersInfoForDpi = (void *)GetProcAddress( user32, "SystemParametersInfoForDpi" );
 
-    if (argc==4 && !strcmp(argv[2], "create_children"))
+    if (argc == 4)
     {
         HWND hwnd;
 
         sscanf(argv[3], "%p", &hwnd);
-        window_from_point_proc(hwnd);
-        return;
+        if (!strcmp(argv[2], "create_children"))
+        {
+            window_from_point_proc(hwnd);
+            return;
+        }
+        else if (!strcmp(argv[2], "test_other_process_window"))
+        {
+            other_process_proc(hwnd);
+            return;
+        }
     }
 
-    if (argc==3 && !strcmp(argv[2], "winproc_limit"))
+    if (argc == 3 && !strcmp(argv[2], "winproc_limit"))
     {
         test_winproc_limit();
         return;
@@ -11894,6 +12010,7 @@ START_TEST(win)
     test_IsWindowEnabled();
     test_window_placement();
     test_arrange_iconic_windows();
+    test_other_process_window(argv[0]);
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);

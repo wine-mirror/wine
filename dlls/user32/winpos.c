@@ -1280,17 +1280,27 @@ BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
     }
     if (pWnd == WND_OTHER_PROCESS)
     {
-        if (!IsWindow( hwnd )) return FALSE;
-        FIXME( "not supported on other process window %p\n", hwnd );
-        /* provide some dummy information */
+        RECT normal_position;
+        DWORD style;
+
+        if (!GetWindowRect(hwnd, &normal_position))
+            return FALSE;
+
+        FIXME("not fully supported on other process window %p.\n", hwnd);
+
         wndpl->length  = sizeof(*wndpl);
-        wndpl->showCmd = SW_SHOWNORMAL;
+        style = GetWindowLongW(hwnd, GWL_STYLE);
+        if (style & WS_MINIMIZE)
+            wndpl->showCmd = SW_SHOWMINIMIZED;
+        else
+            wndpl->showCmd = (style & WS_MAXIMIZE) ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL;
+        /* provide some dummy information */
         wndpl->flags = 0;
         wndpl->ptMinPosition.x = -1;
         wndpl->ptMinPosition.y = -1;
         wndpl->ptMaxPosition.x = -1;
         wndpl->ptMaxPosition.y = -1;
-        GetWindowRect( hwnd, &wndpl->rcNormalPosition );
+        wndpl->rcNormalPosition = normal_position;
         return TRUE;
     }
 
