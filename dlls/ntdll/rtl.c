@@ -1040,6 +1040,41 @@ NTSTATUS WINAPI RtlIpv4StringToAddressW(const WCHAR *str, BOOLEAN strict, const 
 }
 
 /***********************************************************************
+ * RtlIpv4StringToAddressExA [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlIpv4StringToAddressExA(const char *str, BOOLEAN strict, IN_ADDR *address, USHORT *port)
+{
+    WCHAR wstr[32];
+
+    TRACE("(%s, %u, %p, %p)\n", debugstr_a(str), strict, address, port);
+
+    if (!str || !address || !port)
+        return STATUS_INVALID_PARAMETER;
+
+    RtlMultiByteToUnicodeN(wstr, sizeof(wstr), NULL, str, strlen(str) + 1);
+    wstr[ARRAY_SIZE(wstr) - 1] = 0;
+    return ipv4_string_to_address(wstr, strict, NULL, address, port);
+}
+
+/***********************************************************************
+ * RtlIpv4StringToAddressA [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlIpv4StringToAddressA(const char *str, BOOLEAN strict, const char **terminator, IN_ADDR *address)
+{
+    WCHAR wstr[32];
+    const WCHAR *wterminator;
+    NTSTATUS ret;
+
+    TRACE("(%s, %u, %p, %p)\n", debugstr_a(str), strict, terminator, address);
+
+    RtlMultiByteToUnicodeN(wstr, sizeof(wstr), NULL, str, strlen(str) + 1);
+    wstr[ARRAY_SIZE(wstr) - 1] = 0;
+    ret = ipv4_string_to_address(wstr, strict, &wterminator, address, NULL);
+    if (terminator) *terminator = str + (wterminator - wstr);
+    return ret;
+}
+
+/***********************************************************************
  * RtlIpv6StringToAddressExW [NTDLL.@]
  */
 NTSTATUS NTAPI RtlIpv6StringToAddressExW(const WCHAR *str, IN6_ADDR *address, ULONG *scope, USHORT *port)
