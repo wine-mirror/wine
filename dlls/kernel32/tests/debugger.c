@@ -311,6 +311,16 @@ static void set_thread_context_(unsigned line, struct debugger_context *ctx, str
     ok_(__FILE__,line)(ret, "SetThreadContext failed: %u\n", GetLastError());
 }
 
+static void fetch_process_context(struct debugger_context *ctx)
+{
+    struct debuggee_thread *thread;
+
+    WINE_RB_FOR_EACH_ENTRY(thread, &ctx->threads, struct debuggee_thread, entry)
+    {
+        fetch_thread_context(thread);
+    }
+}
+
 #define WAIT_EVENT_TIMEOUT 20000
 #define POLL_EVENT_TIMEOUT 200
 
@@ -1259,6 +1269,7 @@ static void test_debugger(const char *argv0)
     STARTUPINFOA si;
     HANDLE event, thread;
     BYTE *mem, buf[4096], *proc_code, *thread_proc, byte;
+    unsigned int i, worker_cnt, exception_cnt;
     struct debuggee_thread *debuggee_thread;
     char *cmd;
     BOOL ret;
@@ -1345,6 +1356,78 @@ static void test_debugger(const char *argv0)
         ok(ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT, "unexpected debug event %u\n", ctx.ev.dwDebugEventCode);
     }
     else win_skip("call_debug_service_code not supported on this architecture\n");
+
+    if (sizeof(loop_code) > 1 && broken(1) /* FIXME: broken in Wine */)
+    {
+        memset(buf, OP_BP, sizeof(buf));
+        memcpy(proc_code, &loop_code, sizeof(loop_code));
+        ret = WriteProcessMemory(pi.hProcess, mem, buf, sizeof(buf), NULL);
+        ok(ret, "WriteProcessMemory failed: %u\n", GetLastError());
+
+        ctx.thread_tag = 1;
+
+        worker_cnt = 20;
+        for (i = 0; i < worker_cnt; i++)
+        {
+            thread = CreateRemoteThread(pi.hProcess, NULL, 0, (void*)thread_proc, NULL, 0, NULL);
+            ok(thread != NULL, "CreateRemoteThread failed: %u\n", GetLastError());
+
+            next_event(&ctx, 20000);
+            ok(ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+
+            ret = CloseHandle(thread);
+            ok(ret, "CloseHandle failed, last error %d.\n", GetLastError());
+        }
+
+        byte = OP_BP;
+        ret = WriteProcessMemory(pi.hProcess, thread_proc + 1, &byte, 1, NULL);
+        ok(ret, "WriteProcessMemory failed: %u\n", GetLastError());
+
+        expect_breakpoint_exception(&ctx, thread_proc + 1);
+        exception_cnt = 1;
+
+        debuggee_thread = ctx.current_thread;
+        fetch_process_context(&ctx);
+        ok(get_ip(&ctx.current_thread->ctx) == thread_proc + 2, "unexpected instruction pointer %p\n",
+           get_ip(&ctx.current_thread->ctx));
+
+        byte = 0xc3; /* ret */
+        ret = WriteProcessMemory(pi.hProcess, thread_proc + 1, &byte, 1, NULL);
+        ok(ret, "WriteProcessMemory failed: %u\n", GetLastError());
+
+        for (;;)
+        {
+            DEBUG_EVENT ev;
+
+            /* even when there are more pending events, they are not reported until current event is continued */
+            ret = WaitForDebugEvent(&ev, 10);
+            ok(GetLastError() == ERROR_SEM_TIMEOUT, "WaitForDebugEvent returned %x(%u)\n", ret, GetLastError());
+
+            next_event(&ctx, 100);
+            if (ctx.ev.dwDebugEventCode != EXCEPTION_DEBUG_EVENT) break;
+            trace("exception at %p in thread %04x\n", ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress, ctx.ev.dwThreadId);
+            ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
+               ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
+            ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == thread_proc + 1,
+               "ExceptionAddress = %p\n", ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress);
+            ok(get_ip(&ctx.current_thread->ctx) == thread_proc + 2
+               || broken(get_ip(&ctx.current_thread->ctx) == thread_proc), /* sometimes observed on win10 */
+               "unexpected instruction pointer %p\n",
+               get_ip(&ctx.current_thread->ctx));
+            exception_cnt++;
+        }
+
+        trace("received %u exceptions\n", exception_cnt);
+
+        for (;;)
+        {
+            ok(ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT
+               || broken(ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT), /* sometimes happens on vista */
+               "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+            if (ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT && !--worker_cnt) break;
+            next_event(&ctx, 2000);
+        }
+    }
 
     SetEvent(event);
 
