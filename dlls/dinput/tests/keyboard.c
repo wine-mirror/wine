@@ -93,6 +93,7 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
         };
     DIDATAFORMAT df;
     HKL hkl, hkl_orig;
+    UINT prev_raw_devices_count, raw_devices_count;
 
     hkl = activate_keyboard_layout(MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), &hkl_orig);
     if (!hkl) return;
@@ -164,6 +165,22 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
             ok(custom_state[i] == 0, "Should be zeroed, got 0x%08x\n", custom_state[i]);
     }
     keybd_event('Q', 0, KEYEVENTF_KEYUP, 0);
+
+    prev_raw_devices_count = 0;
+    GetRegisteredRawInputDevices(NULL, &prev_raw_devices_count, sizeof(RAWINPUTDEVICE));
+    ok(prev_raw_devices_count == 0 || broken(prev_raw_devices_count == 1) /* wxppro, w2003std */,
+       "Unexpected raw devices registered: %d\n", prev_raw_devices_count);
+
+    hr = IDirectInputDevice_Acquire(pKeyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
+
+    raw_devices_count = 0;
+    GetRegisteredRawInputDevices(NULL, &raw_devices_count, sizeof(RAWINPUTDEVICE));
+    ok(raw_devices_count == prev_raw_devices_count,
+       "Unexpected raw devices registered: %d\n", raw_devices_count);
+
+    hr = IDirectInputDevice_Unacquire(pKeyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Unacquire() failed: %08x\n", hr);
 
     if (pKeyboard) IUnknown_Release(pKeyboard);
 
