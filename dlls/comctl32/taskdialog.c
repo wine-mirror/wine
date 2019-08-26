@@ -418,47 +418,11 @@ static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND 
     Free(text);
 }
 
-static void taskdialog_get_radio_button_size(struct taskdialog_info *dialog_info, HWND hwnd, LONG max_width, SIZE *size)
+static void taskdialog_get_button_size(HWND hwnd, LONG max_width, SIZE *size)
 {
-    DWORD style = DT_EXPANDTABS | DT_CALCRECT | DT_WORDBREAK;
-    HFONT hfont, old_hfont;
-    HDC hdc;
-    RECT rect = {0};
-    INT text_length;
-    WCHAR *text;
-    INT text_offset, radio_box_width, radio_box_height;
-
-    hdc = GetDC(hwnd);
-    hfont = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
-    old_hfont = SelectObject(hdc, hfont);
-
-    radio_box_width = 12 * GetDpiForWindow(hwnd) / 96 + 1;
-    radio_box_height = 12 * GetDpiForWindow(hwnd) / 96 + 1;
-    GetCharWidthW(hdc, '0', '0', &text_offset);
-    text_offset /= 2;
-
-    if (dialog_info->taskconfig->dwFlags & TDF_RTL_LAYOUT)
-        style |= DT_RIGHT | DT_RTLREADING;
-    else
-        style |= DT_LEFT;
-
-    rect.right = max_width - radio_box_width - text_offset;
-    text_length = GetWindowTextLengthW(hwnd);
-    text = Alloc((text_length + 1) * sizeof(WCHAR));
-    if (!text)
-    {
-        size->cx = 0;
-        size->cy = 0;
-        return;
-    }
-    GetWindowTextW(hwnd, text, text_length + 1);
-    size->cy = DrawTextW(hdc, text, text_length, &rect, style);
-    size->cx = min(max_width - radio_box_width - text_offset, rect.right - rect.left);
-    size->cx += radio_box_width + text_offset;
-    size->cy = max(size->cy, radio_box_height);
-    if (old_hfont) SelectObject(hdc, old_hfont);
-    Free(text);
-    ReleaseDC(hwnd, hdc);
+    size->cx = max_width;
+    size->cy = 0;
+    SendMessageW(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)size);
 }
 
 static void taskdialog_get_expando_size(struct taskdialog_info *dialog_info, HWND hwnd, SIZE *size)
@@ -951,7 +915,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     {
         x = main_icon_right + h_spacing;
         y = dialog_height + v_spacing;
-        taskdialog_get_radio_button_size(dialog_info, dialog_info->radio_buttons[i], dialog_width - x - h_spacing, &size);
+        taskdialog_get_button_size(dialog_info->radio_buttons[i], dialog_width - x - h_spacing, &size);
         size.cx = dialog_width - x - h_spacing;
         SetWindowPos(dialog_info->radio_buttons[i], 0, x, y, size.cx, size.cy, SWP_NOZORDER);
         dialog_height = y + size.cy;
@@ -961,8 +925,11 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     for (i = 0; i < dialog_info->command_link_count; i++)
     {
         x = main_icon_right + h_spacing;
-        y = dialog_height + v_spacing;
-        taskdialog_get_label_size(dialog_info, dialog_info->command_links[i], dialog_width - x - h_spacing, &size, FALSE);
+        y = dialog_height;
+        /* Only add spacing for the first command links. There is no vertical spacing between command links */
+        if (!i)
+            y += v_spacing;
+        taskdialog_get_button_size(dialog_info->command_links[i], dialog_width - x - h_spacing, &size);
         size.cx = dialog_width - x - h_spacing;
         /* Add spacing */
         size.cy += 4;
@@ -992,7 +959,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
         y = expando_bottom + v_spacing;
         size.cx = DIALOG_MIN_WIDTH / 2;
         taskdialog_du_to_px(dialog_info, &size.cx, NULL);
-        taskdialog_get_radio_button_size(dialog_info, dialog_info->verification_box, size.cx, &size);
+        taskdialog_get_button_size(dialog_info->verification_box, size.cx, &size);
         SetWindowPos(dialog_info->verification_box, 0, x, y, size.cx, size.cy, SWP_NOZORDER);
         expando_right = max(expando_right, x + size.cx);
         expando_bottom = y + size.cy;
@@ -1007,8 +974,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     taskdialog_du_to_px(dialog_info, &button_min_width, &button_height);
     for (i = 0; i < dialog_info->button_count; i++)
     {
-        taskdialog_get_label_size(dialog_info, dialog_info->buttons[i], dialog_width - expando_right - h_spacing * 2,
-                                  &size, FALSE);
+        taskdialog_get_button_size(dialog_info->buttons[i], dialog_width - expando_right - h_spacing * 2, &size);
         button_layout_infos[i].width = max(size.cx, button_min_width);
     }
 
