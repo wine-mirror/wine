@@ -302,9 +302,12 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
     if(*ctx->ptr == 'e' || *ctx->ptr == 'E') {
         int e = 0, sign = 1;
 
-        if(*++ctx->ptr == '-') {
+        ctx->ptr++;
+        if(*ctx->ptr == '-') {
             ctx->ptr++;
             sign = -1;
+        }else if(*ctx->ptr == '+') {
+            ctx->ptr++;
         }
 
         if(!iswdigit(*ctx->ptr)) {
