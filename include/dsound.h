@@ -133,43 +133,43 @@ DEFINE_GUID(GUID_DSCFX_MS_NS,               0x11C5C73B,0x66E9,0x4BA1,0xA0,0xBA,0
 DEFINE_GUID(GUID_DSCFX_SYSTEM_NS,           0x5AB0882E,0x7274,0x4516,0x87,0x7D,0x4E,0xEE,0x99,0xBA,0x4F,0xD0);
 
 DEFINE_GUID(IID_IDirectSoundFXGargle,       0xd616f352,0xd622,0x11ce,0xaa,0xc5,0x00,0x20,0xaf,0x0b,0x99,0xa3);
-typedef struct IDirectSoundFXGargle8        *LPDIRECTSOUNDFXGARGLE8;
 #define IDirectSoundFXGargle8               IDirectSoundFXGargle
+typedef struct IDirectSoundFXGargle8        *LPDIRECTSOUNDFXGARGLE8;
 #define IID_IDirectSoundFXGargle8           IID_IDirectSoundFXGargle
 
 DEFINE_GUID(IID_IDirectSoundFXChorus,       0x880842e3,0x145f,0x43e6,0xa9,0x34,0xa7,0x18,0x06,0xe5,0x05,0x47);
-typedef struct IDirectSoundFXChorus8        *LPDIRECTSOUNDFXCHORUS8;
 #define IDirectSoundFXChorus8               IDirectSoundFXChorus
+typedef struct IDirectSoundFXChorus8        *LPDIRECTSOUNDFXCHORUS8;
 #define IID_IDirectSoundFXChorus8           IID_IDirectSoundFXChorus
 
 DEFINE_GUID(IID_IDirectSoundFXFlanger,      0x903e9878,0x2c92,0x4072,0x9b,0x2c,0xea,0x68,0xf5,0x39,0x67,0x83);
-typedef struct IDirectSoundFXFlanger8       *LPDIRECTSOUNDFXFLANGER8;
 #define IDirectSoundFXFlanger8              IDirectSoundFXFlanger
+typedef struct IDirectSoundFXFlanger8       *LPDIRECTSOUNDFXFLANGER8;
 #define IID_IDirectSoundFXFlanger8          IID_IDirectSoundFXFlanger
 
 DEFINE_GUID(IID_IDirectSoundFXEcho,         0x8bd28edf,0x50db,0x4e92,0xa2,0xbd,0x44,0x54,0x88, 0xd1,0xed,0x42);
-typedef struct IDirectSoundFXEcho8          *LPDIRECTSOUNDFXECHO8;
 #define IDirectSoundFXEcho8                 IDirectSoundFXEcho
+typedef struct IDirectSoundFXEcho8          *LPDIRECTSOUNDFXECHO8;
 #define IID_IDirectSoundFXEcho8             IID_IDirectSoundFXEcho
 
 DEFINE_GUID(IID_IDirectSoundFXDistortion,   0x8ecf4326,0x455f,0x4d8b,0xbd,0xa9,0x8d,0x5d,0x3e,0x9e,0x3e,0x0b);
-typedef struct IDirectSoundFXDistortion8    *LPDIRECTSOUNDFXDISTORTION8;
 #define IDirectSoundFXDistortion8           IDirectSoundFXDistortion
+typedef struct IDirectSoundFXDistortion8    *LPDIRECTSOUNDFXDISTORTION8;
 #define IID_IDirectSoundFXDistortion8       IID_IDirectSoundFXDistortion
 
 DEFINE_GUID(IID_IDirectSoundFXCompressor,   0x4bbd1154,0x62f6,0x4e2c,0xa1,0x5c,0xd3,0xb6,0xc4,0x17,0xf7,0xa0);
-typedef struct IDirectSoundFXCompressor8    *LPDIRECTSOUNDFXCOMPRESSOR8;
 #define IDirectSoundFXCompressor8           IDirectSoundFXCompressor
+typedef struct IDirectSoundFXCompressor8    *LPDIRECTSOUNDFXCOMPRESSOR8;
 #define IID_IDirectSoundFXCompressor8       IID_IDirectSoundFXCompressor
 
 DEFINE_GUID(IID_IDirectSoundFXParamEq,      0xc03ca9fe,0xfe90,0x4204,0x80,0x78,0x82,0x33,0x4c,0xd1,0x77,0xda);
-typedef struct IDirectSoundFXParamEq8       *LPDIRECTSOUNDFXPARAMEQ8;
 #define IDirectSoundFXParamEq8              IDirectSoundFXParamEq
+typedef struct IDirectSoundFXParamEq8       *LPDIRECTSOUNDFXPARAMEQ8;
 #define IID_IDirectSoundFXParamEq8          IID_IDirectSoundFXParamEq
 
 DEFINE_GUID(IID_IDirectSoundFXWavesReverb,  0x46858c3a,0x0dc6,0x45e3,0xb7,0x60,0xd4,0xee,0xf1,0x6c,0xb3,0x25);
-typedef struct IDirectSoundFXWavesReverb8   *LPDIRECTSOUNDFXWAVESREVERB8;
 #define IDirectSoundFXWavesReverb8          IDirectSoundFXWavesReverb
+typedef struct IDirectSoundFXWavesReverb8   *LPDIRECTSOUNDFXWAVESREVERB8;
 #define IID_IDirectSoundFXWavesReverb8      IID_IDirectSoundFXWavesReverb
 
 #define	_FACDS		0x878
