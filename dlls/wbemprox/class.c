@@ -235,13 +235,11 @@ static struct record *create_record( struct table *table )
 
 void destroy_array( struct array *array, CIMTYPE type )
 {
-    UINT i, size;
-
+    UINT i;
     if (!array) return;
     if (type == CIM_STRING || type == CIM_DATETIME || type == CIM_REFERENCE)
     {
-        size = get_type_size( type );
-        for (i = 0; i < array->count; i++) heap_free( *(WCHAR **)((char *)array->ptr + i * size) );
+        for (i = 0; i < array->count; i++) heap_free( *(WCHAR **)((char *)array->ptr + i * array->elem_size) );
     }
     heap_free( array->ptr );
     heap_free( array );

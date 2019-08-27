@@ -765,7 +765,6 @@ VARTYPE to_vartype( CIMTYPE type )
 SAFEARRAY *to_safearray( const struct array *array, CIMTYPE type )
 {
     SAFEARRAY *ret;
-    UINT size = get_type_size( type );
     VARTYPE vartype = to_vartype( type );
     LONG i;
 
@@ -773,7 +772,7 @@ SAFEARRAY *to_safearray( const struct array *array, CIMTYPE type )
 
     for (i = 0; i < array->count; i++)
     {
-        void *ptr = (char *)array->ptr + i * size;
+        void *ptr = (char *)array->ptr + i * array->elem_size;
         if (vartype == VT_BSTR)
         {
             BSTR str = SysAllocString( *(const WCHAR **)ptr );
@@ -951,23 +950,22 @@ static struct array *to_array( VARIANT *var, CIMTYPE *type )
     LONG bound, i;
     VARTYPE vartype;
     CIMTYPE basetype;
-    UINT size;
 
     if (SafeArrayGetVartype( V_ARRAY( var ), &vartype ) != S_OK) return NULL;
     if (!(basetype = to_cimtype( vartype ))) return NULL;
     if (SafeArrayGetUBound( V_ARRAY( var ), 1, &bound ) != S_OK) return NULL;
     if (!(ret = heap_alloc( sizeof(struct array) ))) return NULL;
 
-    ret->count = bound + 1;
-    size = get_type_size( basetype );
-    if (!(ret->ptr = heap_alloc_zero( ret->count * size )))
+    ret->count     = bound + 1;
+    ret->elem_size = get_type_size( basetype );
+    if (!(ret->ptr = heap_alloc_zero( ret->count * ret->elem_size )))
     {
         heap_free( ret );
         return NULL;
     }
     for (i = 0; i < ret->count; i++)
     {
-        void *ptr = (char *)ret->ptr + i * size;
+        void *ptr = (char *)ret->ptr + i * ret->elem_size;
         if (vartype == VT_BSTR)
         {
             BSTR str;

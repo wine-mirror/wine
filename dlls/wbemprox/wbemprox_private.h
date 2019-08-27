@@ -124,6 +124,7 @@ struct property
 
 struct array
 {
+    UINT elem_size;
     UINT count;
     void *ptr;
 };

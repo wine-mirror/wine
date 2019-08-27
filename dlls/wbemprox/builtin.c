@@ -1251,6 +1251,7 @@ static UINT16 systemenclosure_chassistypes[] =
 };
 static const struct array systemenclosure_chassistypes_array =
 {
+    sizeof(*systemenclosure_chassistypes),
     ARRAY_SIZE(systemenclosure_chassistypes),
     &systemenclosure_chassistypes
 };
@@ -2484,8 +2485,9 @@ static struct array *get_defaultipgateway( IP_ADAPTER_GATEWAY_ADDRESS *list )
             return NULL;
         }
     }
-    ret->count = count;
-    ret->ptr   = ptr;
+    ret->elem_size = sizeof(*ptr);
+    ret->count     = count;
+    ret->ptr       = ptr;
     return ret;
 }
 static struct array *get_dnsserversearchorder( IP_ADAPTER_DNS_SERVER_ADDRESS *list )
@@ -2517,8 +2519,9 @@ static struct array *get_dnsserversearchorder( IP_ADAPTER_DNS_SERVER_ADDRESS *li
         }
         if ((p = wcsrchr( ptr[i - 1], ':' ))) *p = 0;
     }
-    ret->count = count;
-    ret->ptr   = ptr;
+    ret->elem_size = sizeof(*ptr);
+    ret->count     = count;
+    ret->ptr       = ptr;
     return ret;
 }
 static struct array *get_ipaddress( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
@@ -2549,8 +2552,9 @@ static struct array *get_ipaddress( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
             return NULL;
         }
     }
-    ret->count = count;
-    ret->ptr   = ptr;
+    ret->elem_size = sizeof(*ptr);
+    ret->count     = count;
+    ret->ptr       = ptr;
     return ret;
 }
 static struct array *get_ipsubnet( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
@@ -2601,8 +2605,9 @@ static struct array *get_ipsubnet( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
             return NULL;
         }
     }
-    ret->count = count;
-    ret->ptr   = ptr;
+    ret->elem_size = sizeof(*ptr);
+    ret->count     = count;
+    ret->ptr       = ptr;
     return ret;
 }
 static WCHAR *get_settingid( UINT32 index )
@@ -3458,20 +3463,20 @@ static WCHAR *get_accountname( LSA_TRANSLATED_NAME *name )
 }
 static struct array *get_binaryrepresentation( PSID sid, UINT len )
 {
-    struct array *array = heap_alloc( sizeof(struct array) );
-    if (array)
+    struct array *ret;
+    UINT8 *ptr;
+
+    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ptr = heap_alloc( len )))
     {
-        UINT8 *ret = heap_alloc( len );
-        if (ret)
-        {
-            memcpy( ret, sid, len );
-            array->count = len;
-            array->ptr = ret;
-            return array;
-        }
-        heap_free( array );
+        heap_free( ret );
+        return NULL;
     }
-    return NULL;
+    memcpy( ptr, sid, len );
+    ret->elem_size = sizeof(*ptr);
+    ret->count     = len;
+    ret->ptr       = ptr;
+    return ret;
 }
 static WCHAR *get_referenceddomainname( LSA_REFERENCED_DOMAIN_LIST *domain )
 {
