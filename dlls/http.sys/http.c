@@ -920,6 +920,35 @@ static int parse_request(struct connection *conn)
     return 1;
 }
 
+static void format_date(char *buffer)
+{
+    static const char day_names[7][4] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    static const char month_names[12][4] =
+            {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    SYSTEMTIME date;
+    GetSystemTime(&date);
+    sprintf(buffer + strlen(buffer), "Date: %s, %02u %s %u %02u:%02u:%02u GMT\r\n",
+            day_names[date.wDayOfWeek], date.wDay, month_names[date.wMonth - 1],
+            date.wYear, date.wHour, date.wMinute, date.wSecond);
+}
+
+/* Send a 400 Bad Request response. */
+static void send_400(struct connection *conn)
+{
+    static const char response_header[] = "HTTP/1.1 400 Bad Request\r\n";
+    static const char response_body[] =
+        "Content-Type: text/html; charset=utf-8\r\n"
+        "Content-Language: en\r\n"
+        "Connection: close\r\n";
+    char buffer[sizeof(response_header) + sizeof(response_body) + 37];
+
+    strcpy(buffer, response_header);
+    format_date(buffer + strlen(buffer));
+    strcat(buffer, response_body);
+    if (send(conn->socket, buffer, strlen(buffer), 0) < 0)
+        ERR("Failed to send 400 response, error %u.\n", WSAGetLastError());
+}
+
 static void receive_data(struct connection *conn)
 {
     int len, ret;
@@ -977,6 +1006,7 @@ static void receive_data(struct connection *conn)
     else if (ret < 0)
     {
         WARN("Failed to parse request; shutting down connection.\n");
+        send_400(conn);
         close_connection(conn);
     }
 }
