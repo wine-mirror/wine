@@ -1733,7 +1733,7 @@ DECLARE_INTERFACE_(IDebugControl, IUnknown)
     /* IDebugControl */
     STDMETHOD(GetInterrupt)(THIS) PURE;
     STDMETHOD(SetInterrupt)(THIS_ ULONG flags) PURE;
-    STDMETHOD(GetIterruptTimeout)(THIS_ ULONG *timeout) PURE;
+    STDMETHOD(GetInterruptTimeout)(THIS_ ULONG *timeout) PURE;
     STDMETHOD(SetInterruptTimeout)(THIS_ ULONG timeout) PURE;
     STDMETHOD(GetLogFile)(THIS_ char *buffer, ULONG buffer_size, ULONG *file_size, BOOL *append) PURE;
     STDMETHOD(OpenLogFile)(THIS_ const char *file, BOOL append) PURE;
@@ -1853,7 +1853,7 @@ DECLARE_INTERFACE_(IDebugControl2, IUnknown)
     /* IDebugControl */
     STDMETHOD(GetInterrupt)(THIS) PURE;
     STDMETHOD(SetInterrupt)(THIS_ ULONG flags) PURE;
-    STDMETHOD(GetIterruptTimeout)(THIS_ ULONG *timeout) PURE;
+    STDMETHOD(GetInterruptTimeout)(THIS_ ULONG *timeout) PURE;
     STDMETHOD(SetInterruptTimeout)(THIS_ ULONG timeout) PURE;
     STDMETHOD(GetLogFile)(THIS_ char *buffer, ULONG buffer_size, ULONG *file_size, BOOL *append) PURE;
     STDMETHOD(OpenLogFile)(THIS_ const char *file, BOOL append) PURE;
