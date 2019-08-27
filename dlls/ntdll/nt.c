@@ -115,7 +115,7 @@ struct smbios_board {
 struct smbios_chassis {
     struct smbios_header hdr;
     BYTE vendor;
-    BYTE shape;
+    BYTE type;
     BYTE version;
     BYTE serial;
     BYTE asset_tag;
@@ -2117,6 +2117,7 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             char board_vendor[128], board_product[128], board_version[128], board_serial[128];
             size_t board_vendor_len, board_product_len, board_version_len, board_serial_len;
             char chassis_vendor[128], chassis_version[128], chassis_serial[128], chassis_asset_tag[128];
+            char chassis_type[11] = "2"; /* unknown */
             size_t chassis_vendor_len, chassis_version_len, chassis_serial_len, chassis_asset_tag_len;
             char *buffer = (char*)sfti->TableBuffer;
             BYTE string_count;
@@ -2142,6 +2143,7 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             chassis_version_len = get_smbios_string("/sys/class/dmi/id/chassis_version", S(chassis_version));
             chassis_serial_len = get_smbios_string("/sys/class/dmi/id/chassis_serial", S(chassis_serial));
             chassis_asset_tag_len = get_smbios_string("/sys/class/dmi/id/chassis_tag", S(chassis_asset_tag));
+            get_smbios_string("/sys/class/dmi/id/chassis_type", S(chassis_type));
 #undef S
 
             *required_len = sizeof(struct smbios_prologue);
@@ -2237,7 +2239,7 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
             chassis->hdr.length = sizeof(struct smbios_chassis);
             chassis->hdr.handle = 0;
             chassis->vendor = chassis_vendor_len ? ++string_count : 0;
-            chassis->shape = 0x2; /* unknown */
+            chassis->type = atoi(chassis_type);
             chassis->version = chassis_version_len ? ++string_count : 0;
             chassis->serial = chassis_serial_len ? ++string_count : 0;
             chassis->asset_tag = chassis_asset_tag_len ? ++string_count : 0;
