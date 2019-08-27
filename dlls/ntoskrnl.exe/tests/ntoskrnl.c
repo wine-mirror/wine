@@ -493,6 +493,7 @@ START_TEST(ntoskrnl)
     pSetFileCompletionNotificationModes = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),
                                                                  "SetFileCompletionNotificationModes");
 
+    subtest("driver");
     if (!(service = load_driver(filename, "driver.dll", "WineTestDriver")))
         return;
     if (!start_driver(service))
