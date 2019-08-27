@@ -37,6 +37,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(http);
  * be consumed; httpapi has no opportunity to massage it. Since it contains
  * pointers, this is somewhat nontrivial. */
 
+struct http_unknown_header_32
+{
+    USHORT NameLength;
+    USHORT RawValueLength;
+    ULONG pName; /* char string */
+    ULONG pRawValue; /* char string */
+};
+
 struct http_request_32
 {
     ULONG Flags;
@@ -84,6 +92,14 @@ struct http_request_32
     ULONG pSslInfo; /* NULL (FIXME) */
     USHORT RequestInfoCount;
     ULONG pRequestInfo; /* NULL (FIXME) */
+};
+
+struct http_unknown_header_64
+{
+    USHORT NameLength;
+    USHORT RawValueLength;
+    ULONGLONG pName; /* char string */
+    ULONGLONG pRawValue; /* char string */
 };
 
 struct http_request_64
@@ -264,6 +280,76 @@ static int parse_token(const char *str, const char *end)
     return p - str;
 }
 
+static HTTP_HEADER_ID parse_header_name(const char *header, int len)
+{
+    static const char *const headers[] =
+    {
+        "Cache-Control",
+        "Connection",
+        "Date",
+        "Keep-Alive",
+        "Pragma",
+        "Trailer",
+        "Transfer-Encoding",
+        "Upgrade",
+        "Via",
+        "Warning",
+        "Allow",
+        "Content-Length",
+        "Content-Type",
+        "Content-Encoding",
+        "Content-Language",
+        "Content-Location",
+        "Content-MD5",
+        "Content-Range",
+        "Expires",
+        "Last-Modified",
+        "Accept",
+        "Accept-Charset",
+        "Accept-Encoding",
+        "Accept-Language",
+        "Authorization",
+        "Cookie",
+        "Expect",
+        "From",
+        "Host",
+        "If-Match",
+        "If-Modified-Since",
+        "If-None-Match",
+        "If-Range",
+        "If-Unmodified-Since",
+        "Max-Forwards",
+        "Proxy-Authorization",
+        "Referer",
+        "Range",
+        "TE",
+        "Translate",
+        "User-Agent",
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(headers); ++i)
+    {
+        if (!strncmp(header, headers[i], len))
+            return i;
+    }
+    return HttpHeaderRequestMaximum;
+}
+
+static void parse_header(const char *name, int *name_len, const char **value, int *value_len)
+{
+    const char *p = name;
+    *name_len = parse_token(name, NULL);
+    p += *name_len;
+    while (*p == ' ' || *p == '\t') ++p;
+    ++p; /* skip colon */
+    while (*p == ' ' || *p == '\t') ++p;
+    *value = p;
+    while (isprint(*p) || *p == '\t') ++p;
+    while (isspace(*p)) --p; /* strip trailing LWS */
+    *value_len = p - *value + 1;
+}
+
 static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
 {
     static const WCHAR httpW[] = {'h','t','t','p',':','/','/'};
@@ -273,9 +359,10 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     const DWORD output_len = stack->Parameters.DeviceIoControl.OutputBufferLength;
     ULONG cooked_len, host_len, abs_path_len, query_len, offset;
-    const char *p, *host, *abs_path, *query;
+    const char *p, *name, *value, *host, *abs_path, *query;
+    USHORT unk_headers_count = 0, unk_header_idx;
+    int name_len, value_len, len;
     struct sockaddr_in addr;
-    int len;
 
     TRACE("Completing IRP %p.\n", irp);
 
@@ -314,6 +401,27 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
     /* addresses */
     irp_size += 2 * sizeof(addr);
 
+    /* headers */
+    p = strstr(conn->buffer, "\r\n") + 2;
+    while (memcmp(p, "\r\n", 2))
+    {
+        name = p;
+        parse_header(name, &name_len, &value, &value_len);
+        if (parse_header_name(name, name_len) == HttpHeaderRequestMaximum)
+        {
+            irp_size += name_len + 1;
+            ++unk_headers_count;
+        }
+        irp_size += value_len + 1;
+        p = strstr(p, "\r\n") + 2;
+    }
+    p += 2;
+
+    if (params.bits == 32)
+        irp_size += unk_headers_count * sizeof(struct http_unknown_header_32);
+    else
+        irp_size += unk_headers_count * sizeof(struct http_unknown_header_64);
+
     TRACE("Need %u bytes, have %u.\n", irp_size, output_len);
     irp->IoStatus.Information = irp_size;
 
@@ -337,6 +445,7 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
     if (params.bits == 32)
     {
         struct http_request_32 *req = irp->AssociatedIrp.SystemBuffer;
+        struct http_unknown_header_32 *unk_headers = NULL;
         char *buffer = irp->AssociatedIrp.SystemBuffer;
 
         offset = sizeof(*req);
@@ -392,12 +501,55 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         getsockname(conn->socket, (struct sockaddr *)&addr, &len);
         memcpy(buffer + offset, &addr, sizeof(addr));
         offset += sizeof(addr);
+
+        req->Headers.UnknownHeaderCount = unk_headers_count;
+        if (unk_headers_count)
+        {
+            req->Headers.pUnknownHeaders = params.addr + offset;
+            unk_headers = (struct http_unknown_header_32 *)(buffer + offset);
+            offset += unk_headers_count * sizeof(*unk_headers);
+        }
+
+        unk_header_idx = 0;
+        p = strstr(conn->buffer, "\r\n") + 2;
+        while (memcmp(p, "\r\n", 2))
+        {
+            HTTP_HEADER_ID id;
+
+            name = p;
+            parse_header(name, &name_len, &value, &value_len);
+            if ((id = parse_header_name(name, name_len)) == HttpHeaderRequestMaximum)
+            {
+                unk_headers[unk_header_idx].NameLength = name_len;
+                unk_headers[unk_header_idx].RawValueLength = value_len;
+                unk_headers[unk_header_idx].pName = params.addr + offset;
+                memcpy(buffer + offset, name, name_len);
+                offset += name_len;
+                buffer[offset++] = 0;
+                unk_headers[unk_header_idx].pRawValue = params.addr + offset;
+                memcpy(buffer + offset, value, value_len);
+                offset += value_len;
+                buffer[offset++] = 0;
+                ++unk_header_idx;
+            }
+            else
+            {
+                req->Headers.KnownHeaders[id].RawValueLength = value_len;
+                req->Headers.KnownHeaders[id].pRawValue = params.addr + offset;
+                memcpy(buffer + offset, value, value_len);
+                offset += value_len;
+                buffer[offset++] = 0;
+            }
+            p = strstr(p, "\r\n") + 2;
+        }
+        p += 2;
 
         req->BytesReceived = conn->req_len;
     }
     else
     {
         struct http_request_64 *req = irp->AssociatedIrp.SystemBuffer;
+        struct http_unknown_header_64 *unk_headers = NULL;
         char *buffer = irp->AssociatedIrp.SystemBuffer;
 
         offset = sizeof(*req);
@@ -453,6 +605,48 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         getsockname(conn->socket, (struct sockaddr *)&addr, &len);
         memcpy(buffer + offset, &addr, sizeof(addr));
         offset += sizeof(addr);
+
+        req->Headers.UnknownHeaderCount = unk_headers_count;
+        if (unk_headers_count)
+        {
+            req->Headers.pUnknownHeaders = params.addr + offset;
+            unk_headers = (struct http_unknown_header_64 *)(buffer + offset);
+            offset += unk_headers_count * sizeof(*unk_headers);
+        }
+
+        unk_header_idx = 0;
+        p = strstr(conn->buffer, "\r\n") + 2;
+        while (memcmp(p, "\r\n", 2))
+        {
+            HTTP_HEADER_ID id;
+
+            name = p;
+            parse_header(name, &name_len, &value, &value_len);
+            if ((id = parse_header_name(name, name_len)) == HttpHeaderRequestMaximum)
+            {
+                unk_headers[unk_header_idx].NameLength = name_len;
+                unk_headers[unk_header_idx].RawValueLength = value_len;
+                unk_headers[unk_header_idx].pName = params.addr + offset;
+                memcpy(buffer + offset, name, name_len);
+                offset += name_len;
+                buffer[offset++] = 0;
+                unk_headers[unk_header_idx].pRawValue = params.addr + offset;
+                memcpy(buffer + offset, value, value_len);
+                offset += value_len;
+                buffer[offset++] = 0;
+                ++unk_header_idx;
+            }
+            else
+            {
+                req->Headers.KnownHeaders[id].RawValueLength = value_len;
+                req->Headers.KnownHeaders[id].pRawValue = params.addr + offset;
+                memcpy(buffer + offset, value, value_len);
+                offset += value_len;
+                buffer[offset++] = 0;
+            }
+            p = strstr(p, "\r\n") + 2;
+        }
+        p += 2;
 
         req->BytesReceived = conn->req_len;
     }
