@@ -104,7 +104,7 @@ typedef enum _CONFIGURATION_TYPE
     DockingInformation,
     RealModeIrqRoutingTable,
     RealModePCIEnumeration,
-    MaximunType
+    MaximumType
 } CONFIGURATION_TYPE, *PCONFIGURATION_TYPE;
 
 typedef struct _IMAGE_INFO
