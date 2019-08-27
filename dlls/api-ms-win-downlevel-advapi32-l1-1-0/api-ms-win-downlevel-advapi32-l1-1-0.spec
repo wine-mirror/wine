@@ -23,7 +23,7 @@
 @ stdcall AreAllAccessesGranted(long long) advapi32.AreAllAccessesGranted
 @ stdcall AreAnyAccessesGranted(long long) advapi32.AreAnyAccessesGranted
 @ stdcall CheckTokenMembership(long ptr ptr) advapi32.CheckTokenMembership
-@ stub ConvertToAutoInheritPrivateObjecSecurity
+@ stdcall ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr) advapi32.ConvertToAutoInheritPrivateObjectSecurity
 @ stdcall CopySid(long ptr ptr) advapi32.CopySid
 @ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr) advapi32.CreatePrivateObjectSecurity
 @ stdcall CreatePrivateObjectSecurityEx(ptr ptr ptr ptr long long long ptr) advapi32.CreatePrivateObjectSecurityEx
