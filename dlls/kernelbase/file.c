@@ -1172,7 +1172,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH OpenFileById( HANDLE handle, LPFILE_ID_DESCRIPTO
 /***********************************************************************
  *	ReOpenFile   (kernelbase.@)
  */
-HANDLE WINAPI DECLSPEC_HOTPATCH ReOpenFile( HANDLE handle, DWORD access, DWORD sharing, DWORD flags )
+HANDLE WINAPI /* DECLSPEC_HOTPATCH */ ReOpenFile( HANDLE handle, DWORD access, DWORD sharing, DWORD flags )
 {
     FIXME( "(%p, %d, %d, %d): stub\n", handle, access, sharing, flags );
     return INVALID_HANDLE_VALUE;

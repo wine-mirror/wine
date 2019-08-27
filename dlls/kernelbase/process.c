@@ -155,7 +155,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetProcessId( HANDLE process )
 /**********************************************************************
  *           GetProcessMitigationPolicy   (kernelbase.@)
  */
-BOOL WINAPI DECLSPEC_HOTPATCH GetProcessMitigationPolicy( HANDLE process, PROCESS_MITIGATION_POLICY policy,
+BOOL WINAPI /* DECLSPEC_HOTPATCH */ GetProcessMitigationPolicy( HANDLE process, PROCESS_MITIGATION_POLICY policy,
                                                           void *buffer, SIZE_T length )
 {
     FIXME( "(%p, %u, %p, %lu): stub\n", process, policy, buffer, length );
@@ -291,7 +291,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetProcessAffinityUpdateMode( HANDLE process, DWOR
 /**********************************************************************
  *           SetProcessMitigationPolicy   (kernelbase.@)
  */
-BOOL WINAPI DECLSPEC_HOTPATCH SetProcessMitigationPolicy( PROCESS_MITIGATION_POLICY policy,
+BOOL WINAPI /* DECLSPEC_HOTPATCH */ SetProcessMitigationPolicy( PROCESS_MITIGATION_POLICY policy,
                                                           void *buffer, SIZE_T length )
 {
     FIXME( "(%d, %p, %lu): stub\n", policy, buffer, length );
@@ -302,7 +302,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetProcessMitigationPolicy( PROCESS_MITIGATION_POL
 /***********************************************************************
  *           SetProcessPriorityBoost   (kernelbase.@)
  */
-BOOL WINAPI DECLSPEC_HOTPATCH SetProcessPriorityBoost( HANDLE process, BOOL disable )
+BOOL WINAPI /* DECLSPEC_HOTPATCH */ SetProcessPriorityBoost( HANDLE process, BOOL disable )
 {
     FIXME( "(%p,%d): stub\n", process, disable );
     return TRUE;
@@ -327,7 +327,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetProcessShutdownParameters( DWORD level, DWORD f
 BOOL WINAPI DECLSPEC_HOTPATCH SetProcessWorkingSetSizeEx( HANDLE process, SIZE_T minset,
                                                           SIZE_T maxset, DWORD flags )
 {
-    WARN( "(%p,%ld,%ld,%x): stub - harmless\n", process, minset, maxset, flags );
     return TRUE;
 }
 

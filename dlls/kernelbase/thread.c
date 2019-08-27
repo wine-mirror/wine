@@ -1084,7 +1084,7 @@ PTP_CLEANUP_GROUP WINAPI DECLSPEC_HOTPATCH CreateThreadpoolCleanupGroup(void)
 /***********************************************************************
  *           CreateThreadpoolIo   (kernelbase.@)
  */
-PTP_IO WINAPI DECLSPEC_HOTPATCH CreateThreadpoolIo( HANDLE handle, PTP_WIN32_IO_CALLBACK callback,
+PTP_IO WINAPI /* DECLSPEC_HOTPATCH */ CreateThreadpoolIo( HANDLE handle, PTP_WIN32_IO_CALLBACK callback,
                                                     PVOID userdata, TP_CALLBACK_ENVIRON *environment )
 {
     FIXME( "(%p, %p, %p, %p): stub\n", handle, callback, userdata, environment );
