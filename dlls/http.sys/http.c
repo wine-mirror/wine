@@ -274,6 +274,8 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
     const DWORD output_len = stack->Parameters.DeviceIoControl.OutputBufferLength;
     ULONG cooked_len, host_len, abs_path_len, query_len, offset;
     const char *p, *host, *abs_path, *query;
+    struct sockaddr_in addr;
+    int len;
 
     TRACE("Completing IRP %p.\n", irp);
 
@@ -308,6 +310,9 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         query_len = 0;
     cooked_len = (7 /* scheme */ + host_len + abs_path_len + query_len) * sizeof(WCHAR);
     irp_size += cooked_len + sizeof(WCHAR);
+
+    /* addresses */
+    irp_size += 2 * sizeof(addr);
 
     TRACE("Need %u bytes, have %u.\n", irp_size, output_len);
     irp->IoStatus.Information = irp_size;
@@ -376,6 +381,18 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         buffer[offset++] = 0;
         buffer[offset++] = 0;
 
+        req->Address.pRemoteAddress = params.addr + offset;
+        len = sizeof(addr);
+        getpeername(conn->socket, (struct sockaddr *)&addr, &len);
+        memcpy(buffer + offset, &addr, sizeof(addr));
+        offset += sizeof(addr);
+
+        req->Address.pLocalAddress = params.addr + offset;
+        len = sizeof(addr);
+        getsockname(conn->socket, (struct sockaddr *)&addr, &len);
+        memcpy(buffer + offset, &addr, sizeof(addr));
+        offset += sizeof(addr);
+
         req->BytesReceived = conn->req_len;
     }
     else
@@ -424,6 +441,18 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         offset += (abs_path_len + query_len) * sizeof(WCHAR);
         buffer[offset++] = 0;
         buffer[offset++] = 0;
+
+        req->Address.pRemoteAddress = params.addr + offset;
+        len = sizeof(addr);
+        getpeername(conn->socket, (struct sockaddr *)&addr, &len);
+        memcpy(buffer + offset, &addr, sizeof(addr));
+        offset += sizeof(addr);
+
+        req->Address.pLocalAddress = params.addr + offset;
+        len = sizeof(addr);
+        getsockname(conn->socket, (struct sockaddr *)&addr, &len);
+        memcpy(buffer + offset, &addr, sizeof(addr));
+        offset += sizeof(addr);
 
         req->BytesReceived = conn->req_len;
     }
