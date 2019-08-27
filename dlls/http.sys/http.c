@@ -266,12 +266,14 @@ static int parse_token(const char *str, const char *end)
 
 static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
 {
+    static const WCHAR httpW[] = {'h','t','t','p',':','/','/'};
     const struct http_receive_request_params params
             = *(struct http_receive_request_params *)irp->AssociatedIrp.SystemBuffer;
     DWORD irp_size = (params.bits == 32) ? sizeof(struct http_request_32) : sizeof(struct http_request_64);
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     const DWORD output_len = stack->Parameters.DeviceIoControl.OutputBufferLength;
-    ULONG offset;
+    ULONG cooked_len, host_len, abs_path_len, query_len, offset;
+    const char *p, *host, *abs_path, *query;
 
     TRACE("Completing IRP %p.\n", irp);
 
@@ -280,6 +282,32 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
     if (conn->unk_verb_len)
         irp_size += conn->unk_verb_len + 1;
     irp_size += conn->url_len + 1;
+
+    /* cooked URL */
+    if (conn->url[0] == '/')
+    {
+        p = host = conn->host;
+        while (isgraph(*p)) ++p;
+        host_len = p - conn->host;
+        abs_path = conn->url;
+        abs_path_len = conn->url_len;
+    }
+    else
+    {
+        host = conn->url + 7;
+        abs_path = strchr(host, '/');
+        host_len = abs_path - host;
+        abs_path_len = (conn->url + conn->url_len) - abs_path;
+    }
+    if ((query = memchr(abs_path, '?', abs_path_len)))
+    {
+        query_len = (abs_path + abs_path_len) - query;
+        abs_path_len = query - abs_path;
+    }
+    else
+        query_len = 0;
+    cooked_len = (7 /* scheme */ + host_len + abs_path_len + query_len) * sizeof(WCHAR);
+    irp_size += cooked_len + sizeof(WCHAR);
 
     TRACE("Need %u bytes, have %u.\n", irp_size, output_len);
     irp->IoStatus.Information = irp_size;
@@ -328,6 +356,26 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         offset += conn->url_len;
         buffer[offset++] = 0;
 
+        req->CookedUrl.FullUrlLength = cooked_len;
+        req->CookedUrl.HostLength = host_len * sizeof(WCHAR);
+        req->CookedUrl.AbsPathLength = abs_path_len * sizeof(WCHAR);
+        req->CookedUrl.QueryStringLength = query_len * sizeof(WCHAR);
+        req->CookedUrl.pFullUrl = params.addr + offset;
+        req->CookedUrl.pHost = req->CookedUrl.pFullUrl + 7 * sizeof(WCHAR);
+        req->CookedUrl.pAbsPath = req->CookedUrl.pHost + host_len * sizeof(WCHAR);
+        if (query)
+            req->CookedUrl.pQueryString = req->CookedUrl.pAbsPath + abs_path_len * sizeof(WCHAR);
+
+        memcpy(buffer + offset, httpW, sizeof(httpW));
+        offset += 7 * sizeof(WCHAR);
+        MultiByteToWideChar(CP_ACP, 0, host, host_len, (WCHAR *)(buffer + offset), host_len * sizeof(WCHAR));
+        offset += host_len * sizeof(WCHAR);
+        MultiByteToWideChar(CP_ACP, 0, abs_path, abs_path_len + query_len,
+                (WCHAR *)(buffer + offset), (abs_path_len + query_len) * sizeof(WCHAR));
+        offset += (abs_path_len + query_len) * sizeof(WCHAR);
+        buffer[offset++] = 0;
+        buffer[offset++] = 0;
+
         req->BytesReceived = conn->req_len;
     }
     else
@@ -355,6 +403,26 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         req->pRawUrl = params.addr + offset;
         memcpy(buffer + offset, conn->url, conn->url_len);
         offset += conn->url_len;
+        buffer[offset++] = 0;
+
+        req->CookedUrl.FullUrlLength = cooked_len;
+        req->CookedUrl.HostLength = host_len * sizeof(WCHAR);
+        req->CookedUrl.AbsPathLength = abs_path_len * sizeof(WCHAR);
+        req->CookedUrl.QueryStringLength = query_len * sizeof(WCHAR);
+        req->CookedUrl.pFullUrl = params.addr + offset;
+        req->CookedUrl.pHost = req->CookedUrl.pFullUrl + 7 * sizeof(WCHAR);
+        req->CookedUrl.pAbsPath = req->CookedUrl.pHost + host_len * sizeof(WCHAR);
+        if (query)
+            req->CookedUrl.pQueryString = req->CookedUrl.pAbsPath + abs_path_len * sizeof(WCHAR);
+
+        memcpy(buffer + offset, httpW, sizeof(httpW));
+        offset += 7 * sizeof(WCHAR);
+        MultiByteToWideChar(CP_ACP, 0, host, host_len, (WCHAR *)(buffer + offset), host_len * sizeof(WCHAR));
+        offset += host_len * sizeof(WCHAR);
+        MultiByteToWideChar(CP_ACP, 0, abs_path, abs_path_len + query_len,
+                (WCHAR *)(buffer + offset), (abs_path_len + query_len) * sizeof(WCHAR));
+        offset += (abs_path_len + query_len) * sizeof(WCHAR);
+        buffer[offset++] = 0;
         buffer[offset++] = 0;
 
         req->BytesReceived = conn->req_len;
