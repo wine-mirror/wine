@@ -288,7 +288,7 @@ static HMODULE load_config_driver(const WCHAR *driver)
     if(ret != ERROR_SUCCESS)
     {
         HeapFree(GetProcessHeap(), 0, filename);
-        push_error(ODBC_ERROR_INVALID_DSN, odbc_error_invalid_dsn);
+        push_error(ODBC_ERROR_COMPONENT_NOT_FOUND, odbc_error_component_not_found);
         return NULL;
     }
 
