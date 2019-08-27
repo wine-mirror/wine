@@ -45,6 +45,26 @@ struct http_unknown_header_32
     ULONG pRawValue; /* char string */
 };
 
+struct http_data_chunk_32
+{
+    HTTP_DATA_CHUNK_TYPE DataChunkType;
+    union
+    {
+        struct
+        {
+            ULONG pBuffer; /* char string */
+            ULONG BufferLength;
+        } FromMemory;
+        /* for the struct size */
+        struct
+        {
+            ULARGE_INTEGER StartingOffset;
+            ULARGE_INTEGER Length;
+            HANDLE FileHandle;
+        } FromFileHandle;
+    };
+};
+
 struct http_request_32
 {
     ULONG Flags;
@@ -100,6 +120,26 @@ struct http_unknown_header_64
     USHORT RawValueLength;
     ULONGLONG pName; /* char string */
     ULONGLONG pRawValue; /* char string */
+};
+
+struct http_data_chunk_64
+{
+    HTTP_DATA_CHUNK_TYPE DataChunkType;
+    union
+    {
+        struct
+        {
+            ULONGLONG pBuffer; /* char string */
+            ULONG BufferLength;
+        } FromMemory;
+        /* for the struct size */
+        struct
+        {
+            ULARGE_INTEGER StartingOffset;
+            ULARGE_INTEGER Length;
+            HANDLE FileHandle;
+        } FromFileHandle;
+    };
 };
 
 struct http_request_64
@@ -358,7 +398,7 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
     DWORD irp_size = (params.bits == 32) ? sizeof(struct http_request_32) : sizeof(struct http_request_64);
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     const DWORD output_len = stack->Parameters.DeviceIoControl.OutputBufferLength;
-    ULONG cooked_len, host_len, abs_path_len, query_len, offset;
+    ULONG cooked_len, host_len, abs_path_len, query_len, chunk_len = 0, offset;
     const char *p, *name, *value, *host, *abs_path, *query;
     USHORT unk_headers_count = 0, unk_header_idx;
     int name_len, value_len, len;
@@ -447,6 +487,7 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         struct http_request_32 *req = irp->AssociatedIrp.SystemBuffer;
         struct http_unknown_header_32 *unk_headers = NULL;
         char *buffer = irp->AssociatedIrp.SystemBuffer;
+        struct http_data_chunk_32 *chunk = NULL;
 
         offset = sizeof(*req);
 
@@ -544,6 +585,26 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         }
         p += 2;
 
+        if (irp_size + sizeof(*chunk) < output_len && (params.flags & HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY))
+            chunk_len = min(conn->content_len, output_len - (irp_size + sizeof(*chunk)));
+        if (chunk_len)
+        {
+            req->EntityChunkCount = 1;
+            req->pEntityChunks = params.addr + offset;
+            chunk = (struct http_data_chunk_32 *)(buffer + offset);
+            offset += sizeof(*chunk);
+            chunk->DataChunkType = HttpDataChunkFromMemory;
+            chunk->FromMemory.BufferLength = chunk_len;
+            chunk->FromMemory.pBuffer = params.addr + offset;
+            memcpy(buffer + offset, p, chunk_len);
+            offset += chunk_len;
+
+            irp->IoStatus.Information = irp_size + sizeof(*chunk) + chunk_len;
+        }
+
+        if (chunk_len < conn->content_len)
+            req->Flags |= HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS;
+
         req->BytesReceived = conn->req_len;
     }
     else
@@ -551,6 +612,7 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         struct http_request_64 *req = irp->AssociatedIrp.SystemBuffer;
         struct http_unknown_header_64 *unk_headers = NULL;
         char *buffer = irp->AssociatedIrp.SystemBuffer;
+        struct http_data_chunk_64 *chunk = NULL;
 
         offset = sizeof(*req);
 
@@ -647,6 +709,26 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
             p = strstr(p, "\r\n") + 2;
         }
         p += 2;
+
+        if (irp_size + sizeof(*chunk) < output_len && (params.flags & HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY))
+            chunk_len = min(conn->content_len, output_len - (irp_size + sizeof(*chunk)));
+        if (chunk_len)
+        {
+            req->EntityChunkCount = 1;
+            req->pEntityChunks = params.addr + offset;
+            chunk = (struct http_data_chunk_64 *)(buffer + offset);
+            offset += sizeof(*chunk);
+            chunk->DataChunkType = HttpDataChunkFromMemory;
+            chunk->FromMemory.BufferLength = chunk_len;
+            chunk->FromMemory.pBuffer = params.addr + offset;
+            memcpy(buffer + offset, p, chunk_len);
+            offset += chunk_len;
+
+            irp->IoStatus.Information = irp_size + sizeof(*chunk) + chunk_len;
+        }
+
+        if (chunk_len < conn->content_len)
+            req->Flags |= HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS;
 
         req->BytesReceived = conn->req_len;
     }
