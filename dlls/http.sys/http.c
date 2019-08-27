@@ -203,6 +203,8 @@ DECLARE_CRITICAL_SECTION(http_cs);
 static HANDLE request_thread, request_event;
 static BOOL thread_stop;
 
+static HTTP_REQUEST_ID req_id_counter;
+
 struct connection
 {
     struct list entry; /* in "connections" below */
@@ -212,8 +214,20 @@ struct connection
     char *buffer;
     unsigned int len, size;
 
+    /* If there is a request fully received and waiting to be read, the
+     * "available" parameter will be TRUE. Either there is no queue matching
+     * the URL of this request yet ("queue" is NULL), there is a queue but no
+     * IRPs have arrived for this request yet ("queue" is non-NULL and "req_id"
+     * is HTTP_NULL_ID), or an IRP has arrived but did not provide a large
+     * enough buffer to read the whole request ("queue" is non-NULL and
+     * "req_id" is not HTTP_NULL_ID).
+     *
+     * If "available" is FALSE, either we are waiting for a new request
+     * ("req_id" is HTTP_NULL_ID), or we are waiting for the user to send a
+     * response ("req_id" is not HTTP_NULL_ID). */
     BOOL available;
     struct request_queue *queue;
+    HTTP_REQUEST_ID req_id;
 
     /* Things we already parsed out of the request header in parse_request().
      * These are valid only if "available" is TRUE. */
@@ -406,6 +420,9 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
 
     TRACE("Completing IRP %p.\n", irp);
 
+    if (!conn->req_id)
+        conn->req_id = ++req_id_counter;
+
     /* First calculate the total buffer size needed for this IRP. */
 
     if (conn->unk_verb_len)
@@ -473,11 +490,13 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         {
             struct http_request_32 *req = irp->AssociatedIrp.SystemBuffer;
             req->ConnectionId = (ULONG_PTR)conn;
+            req->RequestId = conn->req_id;
         }
         else
         {
             struct http_request_64 *req = irp->AssociatedIrp.SystemBuffer;
             req->ConnectionId = (ULONG_PTR)conn;
+            req->RequestId = conn->req_id;
         }
         return STATUS_BUFFER_OVERFLOW;
     }
@@ -492,6 +511,7 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         offset = sizeof(*req);
 
         req->ConnectionId = (ULONG_PTR)conn;
+        req->RequestId = conn->req_id;
         req->UrlContext = conn->queue->context;
         req->Version = conn->version;
         req->Verb = conn->verb;
@@ -617,6 +637,7 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         offset = sizeof(*req);
 
         req->ConnectionId = (ULONG_PTR)conn;
+        req->RequestId = conn->req_id;
         req->UrlContext = conn->queue->context;
         req->Version = conn->version;
         req->Verb = conn->verb;
@@ -906,6 +927,8 @@ static void receive_data(struct connection *conn)
 
     if (conn->available)
         return; /* waiting for an HttpReceiveHttpRequest() call */
+    if (conn->req_id != HTTP_NULL_ID)
+        return; /* waiting for an HttpSendHttpResponse() call */
 
     TRACE("Received %u bytes of data.\n", len);
 
@@ -1101,7 +1124,7 @@ static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
 
     LIST_FOR_EACH_ENTRY(conn, &connections, struct connection, entry)
     {
-        if (conn->available && conn->queue == queue)
+        if (conn->available && conn->queue == queue && params->id == conn->req_id)
         {
             ret = complete_irp(conn, irp);
             LeaveCriticalSection(&http_cs);
@@ -1109,9 +1132,14 @@ static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
         }
     }
 
+    if (params->id == HTTP_NULL_ID)
+        ret = STATUS_PENDING;
+    else
+        ret = STATUS_CONNECTION_INVALID;
+
     LeaveCriticalSection(&http_cs);
 
-    return STATUS_PENDING;
+    return ret;
 }
 
 static NTSTATUS WINAPI dispatch_ioctl(DEVICE_OBJECT *device, IRP *irp)
