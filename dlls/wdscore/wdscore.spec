@@ -125,8 +125,8 @@
 @ stub WdsInitializeDataUInt32
 @ stub WdsInitializeDataUInt64
 @ stub WdsIsDiagnosticModeEnabled
-@ stub WdsInterateOfflineQueue
-@ stub WdsInterateQueue
+@ stub WdsIterateOfflineQueue
+@ stub WdsIterateQueue
 @ stub WdsLockBlackboardValue
 @ stub WdsLockExecutionGroup
 @ stub WdsLogCreate
