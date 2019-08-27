@@ -250,9 +250,43 @@ ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *urlW)
 ULONG WINAPI HttpReceiveHttpRequest(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
         HTTP_REQUEST *request, ULONG size, ULONG *ret_size, OVERLAPPED *ovl)
 {
-    FIXME("queue %p, id %s, flags %#x, request %p, size %#x, ret_size %p, ovl %p, stub!\n",
-          queue, wine_dbgstr_longlong(id), flags, request, size, ret_size, ovl);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    struct http_receive_request_params params =
+    {
+        .addr = (ULONG_PTR)request,
+        .id = id,
+        .flags = flags,
+        .bits = sizeof(void *) * 8,
+    };
+    ULONG ret = ERROR_SUCCESS;
+    OVERLAPPED sync_ovl;
+
+    TRACE("queue %p, id %s, flags %#x, request %p, size %#x, ret_size %p, ovl %p.\n",
+            queue, wine_dbgstr_longlong(id), flags, request, size, ret_size, ovl);
+
+    if (flags & ~HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY)
+        FIXME("Ignoring flags %#x.\n", flags & ~HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY);
+
+    if (size < sizeof(HTTP_REQUEST_V1))
+        return ERROR_INSUFFICIENT_BUFFER;
+
+    if (!ovl)
+    {
+        sync_ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+        ovl = &sync_ovl;
+    }
+
+    if (!DeviceIoControl(queue, IOCTL_HTTP_RECEIVE_REQUEST, &params, sizeof(params), request, size, NULL, ovl))
+        ret = GetLastError();
+
+    if (ovl == &sync_ovl)
+    {
+        ret = ERROR_SUCCESS;
+        if (!GetOverlappedResult(queue, ovl, ret_size, TRUE))
+            ret = GetLastError();
+        CloseHandle(sync_ovl.hEvent);
+    }
+
+    return ret;
 }
 
 /***********************************************************************
