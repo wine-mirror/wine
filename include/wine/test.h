@@ -68,6 +68,7 @@ extern int winetest_report_success;
 extern const char *winetest_platform;
 
 extern void winetest_set_location( const char* file, int line );
+extern void winetest_subtest( const char* name );
 extern void winetest_start_todo( int is_todo );
 extern int winetest_loop_todo(void);
 extern void winetest_end_todo(void);
@@ -123,17 +124,20 @@ extern void __winetest_cdecl winetest_win_skip( const char *msg, ... ) WINETEST_
 extern void __winetest_cdecl winetest_trace( const char *msg, ... ) WINETEST_PRINTF_ATTR(1,2);
 
 #ifdef WINETEST_NO_LINE_NUMBERS
+# define subtest_(file, line)  (winetest_set_location(file, 0), 0) ? (void)0 : winetest_subtest
 # define ok_(file, line)       (winetest_set_location(file, 0), 0) ? (void)0 : winetest_ok
 # define skip_(file, line)     (winetest_set_location(file, 0), 0) ? (void)0 : winetest_skip
 # define win_skip_(file, line) (winetest_set_location(file, 0), 0) ? (void)0 : winetest_win_skip
 # define trace_(file, line)    (winetest_set_location(file, 0), 0) ? (void)0 : winetest_trace
 #else
+# define subtest_(file, line)  (winetest_set_location(file, line), 0) ? (void)0 : winetest_subtest
 # define ok_(file, line)       (winetest_set_location(file, line), 0) ? (void)0 : winetest_ok
 # define skip_(file, line)     (winetest_set_location(file, line), 0) ? (void)0 : winetest_skip
 # define win_skip_(file, line) (winetest_set_location(file, line), 0) ? (void)0 : winetest_win_skip
 # define trace_(file, line)    (winetest_set_location(file, line), 0) ? (void)0 : winetest_trace
 #endif
 
+#define subtest  subtest_(__FILE__, __LINE__)
 #define ok       ok_(__FILE__, __LINE__)
 #define skip     skip_(__FILE__, __LINE__)
 #define win_skip win_skip_(__FILE__, __LINE__)
@@ -306,6 +310,13 @@ void winetest_set_location( const char* file, int line )
     else
         data->current_file++;
     data->current_line=line;
+}
+
+void winetest_subtest( const char* name )
+{
+    struct tls_data *data = get_tls_data();
+    printf( "%s:%d: Subtest %s\n",
+            data->current_file, data->current_line, name);
 }
 
 int broken( int condition )
