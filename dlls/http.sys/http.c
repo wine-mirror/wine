@@ -243,6 +243,7 @@ static struct list connections = LIST_INIT(connections);
 struct request_queue
 {
     struct list entry;
+    LIST_ENTRY irp_queue;
     HTTP_URL_CONTEXT context;
     char *url;
     int socket;
@@ -763,6 +764,18 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
     return STATUS_SUCCESS;
 }
 
+/* Complete an IOCTL_HTTP_RECEIVE_REQUEST IRP if there is one to complete. */
+static void try_complete_irp(struct connection *conn)
+{
+    LIST_ENTRY *entry;
+    if (conn->queue && (entry = RemoveHeadList(&conn->queue->irp_queue)) != &conn->queue->irp_queue)
+    {
+        IRP *irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+        irp->IoStatus.Status = complete_irp(conn, irp);
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
+}
+
 /* Return 1 if str matches expect, 0 if str is incomplete, -1 if they don't match. */
 static int compare_exact(const char *str, const char *expect, const char *end)
 {
@@ -902,6 +915,7 @@ static int parse_request(struct connection *conn)
     WSAEventSelect(conn->socket, request_event, FD_CLOSE);
 
     conn->available = TRUE;
+    try_complete_irp(conn);
 
     return 1;
 }
@@ -1083,7 +1097,10 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
     LIST_FOR_EACH_ENTRY(conn, &connections, struct connection, entry)
     {
         if (conn->available && !conn->queue && host_matches(conn, queue))
+        {
             conn->queue = queue;
+            try_complete_irp(conn);
+        }
     }
 
     LeaveCriticalSection(&http_cs);
@@ -1133,7 +1150,11 @@ static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
     }
 
     if (params->id == HTTP_NULL_ID)
+    {
+        TRACE("Queuing IRP %p.\n", irp);
+        InsertTailList(&queue->irp_queue, &irp->Tail.Overlay.ListEntry);
         ret = STATUS_PENDING;
+    }
     else
         ret = STATUS_CONNECTION_INVALID;
 
@@ -1182,6 +1203,7 @@ static NTSTATUS WINAPI dispatch_create(DEVICE_OBJECT *device, IRP *irp)
     if (!(queue = heap_alloc_zero(sizeof(*queue))))
         return STATUS_NO_MEMORY;
     stack->FileObject->FsContext = queue;
+    InitializeListHead(&queue->irp_queue);
 
     EnterCriticalSection(&http_cs);
     list_add_head(&request_queues, &queue->entry);
