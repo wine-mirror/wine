@@ -113,7 +113,7 @@ typedef struct MANIPULATION_VELOCITY
 {
     float velocityX;
     float velocityY;
-    float velocityExapnsion;
+    float velocityExpansion;
     float velocityAngular;
 } MANIPULATION_VELOCITY;
 
