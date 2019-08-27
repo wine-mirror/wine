@@ -279,6 +279,7 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
 
     if (conn->unk_verb_len)
         irp_size += conn->unk_verb_len + 1;
+    irp_size += conn->url_len + 1;
 
     TRACE("Need %u bytes, have %u.\n", irp_size, output_len);
     irp->IoStatus.Information = irp_size;
@@ -312,6 +313,7 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         req->Version = conn->version;
         req->Verb = conn->verb;
         req->UnknownVerbLength = conn->unk_verb_len;
+        req->RawUrlLength = conn->url_len;
 
         if (conn->unk_verb_len)
         {
@@ -320,6 +322,11 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
             offset += conn->unk_verb_len;
             buffer[offset++] = 0;
         }
+
+        req->pRawUrl = params.addr + offset;
+        memcpy(buffer + offset, conn->url, conn->url_len);
+        offset += conn->url_len;
+        buffer[offset++] = 0;
 
         req->BytesReceived = conn->req_len;
     }
@@ -335,6 +342,7 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
         req->Version = conn->version;
         req->Verb = conn->verb;
         req->UnknownVerbLength = conn->unk_verb_len;
+        req->RawUrlLength = conn->url_len;
 
         if (conn->unk_verb_len)
         {
@@ -343,6 +351,11 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
             offset += conn->unk_verb_len;
             buffer[offset++] = 0;
         }
+
+        req->pRawUrl = params.addr + offset;
+        memcpy(buffer + offset, conn->url, conn->url_len);
+        offset += conn->url_len;
+        buffer[offset++] = 0;
 
         req->BytesReceived = conn->req_len;
     }
