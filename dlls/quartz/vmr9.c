@@ -2155,15 +2155,7 @@ static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
     pVMR->IVMRWindowlessControl_iface.lpVtbl = &VMR7_WindowlessControl_Vtbl;
     pVMR->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
 
-    if (IsEqualGUID(clsid, &CLSID_VideoMixingRenderer))
-        hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, outer,
-                &CLSID_VideoMixingRenderer, sink_name,
-                (DWORD_PTR)(__FILE__ ": VMR7Impl.csFilter"), &BaseFuncTable);
-    else
-        hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, outer,
-                &CLSID_VideoMixingRenderer9, sink_name,
-                (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
-
+    hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, outer, clsid, sink_name, &BaseFuncTable);
     if (FAILED(hr))
         goto fail;
 

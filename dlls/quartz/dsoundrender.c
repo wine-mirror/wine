@@ -629,8 +629,7 @@ HRESULT DSoundRender_create(IUnknown *outer, void **out)
     ZeroMemory(pDSoundRender, sizeof(DSoundRenderImpl));
 
     hr = strmbase_renderer_init(&pDSoundRender->renderer, &DSoundRender_Vtbl,
-            outer, &CLSID_DSoundRender, sink_name,
-            (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter"), &BaseFuncTable);
+            outer, &CLSID_DSoundRender, sink_name, &BaseFuncTable);
 
     pDSoundRender->IBasicAudio_iface.lpVtbl = &IBasicAudio_Vtbl;
     pDSoundRender->IReferenceClock_iface.lpVtbl = &IReferenceClock_Vtbl;

@@ -2251,8 +2251,7 @@ IUnknown * WINAPI QCAP_createAVIMux(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_filter_init(&avimux->filter, &AviMuxVtbl, outer, &CLSID_AviDest,
-            (DWORD_PTR)(__FILE__ ": AviMux.csFilter"), &filter_func_table);
+    strmbase_filter_init(&avimux->filter, &AviMuxVtbl, outer, &CLSID_AviDest, &filter_func_table);
     avimux->IConfigAviMux_iface.lpVtbl = &ConfigAviMuxVtbl;
     avimux->IConfigInterleaving_iface.lpVtbl = &ConfigInterleavingVtbl;
     avimux->IMediaSeeking_iface.lpVtbl = &MediaSeekingVtbl;

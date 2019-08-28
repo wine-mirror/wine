@@ -200,7 +200,7 @@ HRESULT WINAPI BaseFilterImpl_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVend
 VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter* This);
 
 void strmbase_filter_init(BaseFilter *filter, const IBaseFilterVtbl *vtbl, IUnknown *outer,
-        const CLSID *clsid, DWORD_PTR debug_info, const BaseFilterFuncTable *func_table);
+        const CLSID *clsid, const BaseFilterFuncTable *func_table);
 void strmbase_filter_cleanup(BaseFilter *filter);
 
 /* Enums */
@@ -600,7 +600,7 @@ HRESULT WINAPI BaseRendererImpl_EndFlush(BaseRenderer* iface);
 HRESULT WINAPI BaseRendererImpl_ClearPendingSample(BaseRenderer *iface);
 
 HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtbl *vtbl,
-        IUnknown *outer, const CLSID *clsid, const WCHAR *sink_name, DWORD_PTR debug_info,
+        IUnknown *outer, const CLSID *clsid, const WCHAR *sink_name,
         const BaseRendererFuncTable *func_table);
 void strmbase_renderer_cleanup(BaseRenderer *filter);
 

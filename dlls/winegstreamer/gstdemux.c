@@ -1271,8 +1271,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     }
     memset(This, 0, sizeof(*This));
 
-    strmbase_filter_init(&This->filter, &GST_Vtbl, outer, &CLSID_Gstreamer_Splitter,
-            (DWORD_PTR)(__FILE__ ": GSTImpl.csFilter"), &BaseFuncTable);
+    strmbase_filter_init(&This->filter, &GST_Vtbl, outer, &CLSID_Gstreamer_Splitter, &BaseFuncTable);
 
     This->cStreams = 0;
     This->ppPins = NULL;

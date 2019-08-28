@@ -232,13 +232,13 @@ static const BaseInputPinFuncTable input_BaseInputFuncTable = {
 
 
 HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtbl *vtbl,
-        IUnknown *outer, const CLSID *clsid, const WCHAR *sink_name, DWORD_PTR debug_info,
+        IUnknown *outer, const CLSID *clsid, const WCHAR *sink_name,
         const BaseRendererFuncTable *pBaseFuncsTable)
 {
     PIN_INFO piInput;
     HRESULT hr;
 
-    strmbase_filter_init(&filter->filter, vtbl, outer, clsid, debug_info, &RendererBaseFilterFuncTable);
+    strmbase_filter_init(&filter->filter, vtbl, outer, clsid, &RendererBaseFilterFuncTable);
 
     filter->pFuncsTable = pBaseFuncsTable;
 

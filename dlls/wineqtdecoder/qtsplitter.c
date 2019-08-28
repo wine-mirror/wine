@@ -301,8 +301,7 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
     }
     ZeroMemory(This,sizeof(*This));
 
-    strmbase_filter_init(&This->filter, &QT_Vtbl, outer, &CLSID_QTSplitter,
-            (DWORD_PTR)(__FILE__ ": QTSplitter.csFilter"), &BaseFuncTable);
+    strmbase_filter_init(&This->filter, &QT_Vtbl, outer, &CLSID_QTSplitter, &BaseFuncTable);
 
     InitializeCriticalSection(&This->csReceive);
     This->csReceive.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": QTSplitter.csReceive");

@@ -90,8 +90,8 @@ HRESULT evr_filter_create(IUnknown *outer, void **out)
     if (!object)
         return E_OUTOFMEMORY;
 
-    strmbase_filter_init(&object->filter, &basefilter_vtbl, outer, &CLSID_EnhancedVideoRenderer,
-                    (DWORD_PTR)(__FILE__ ": EVR.csFilter"), &basefilter_functable);
+    strmbase_filter_init(&object->filter, &basefilter_vtbl, outer,
+            &CLSID_EnhancedVideoRenderer, &basefilter_functable);
 
     *out = &object->filter.IUnknown_inner;
 

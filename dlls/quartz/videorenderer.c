@@ -801,8 +801,7 @@ HRESULT VideoRenderer_create(IUnknown *outer, void **out)
     pVideoRenderer->FullScreenMode = OAFALSE;
 
     hr = strmbase_renderer_init(&pVideoRenderer->renderer, &VideoRenderer_Vtbl,
-            outer, &CLSID_VideoRenderer, sink_name,
-            (DWORD_PTR)(__FILE__ ": VideoRendererImpl.csFilter"), &BaseFuncTable);
+            outer, &CLSID_VideoRenderer, sink_name, &BaseFuncTable);
 
     if (FAILED(hr))
         goto fail;

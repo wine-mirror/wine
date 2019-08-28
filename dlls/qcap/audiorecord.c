@@ -213,8 +213,7 @@ IUnknown* WINAPI QCAP_createAudioCaptureFilter(IUnknown *outer, HRESULT *phr)
     memset(This, 0, sizeof(*This));
     This->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
 
-    strmbase_filter_init(&This->filter, &AudioRecordVtbl, outer, &CLSID_AudioRecord,
-            (DWORD_PTR)(__FILE__ ": AudioRecord.csFilter"), &AudioRecordFuncs);
+    strmbase_filter_init(&This->filter, &AudioRecordVtbl, outer, &CLSID_AudioRecord, &AudioRecordFuncs);
 
     *phr = S_OK;
     return &This->filter.IUnknown_inner;

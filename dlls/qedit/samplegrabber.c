@@ -1154,8 +1154,7 @@ HRESULT SampleGrabber_create(IUnknown *outer, void **out)
     }
     ZeroMemory(obj, sizeof(SG_Impl));
 
-    strmbase_filter_init(&obj->filter, &IBaseFilter_VTable, outer, &CLSID_SampleGrabber,
-            (DWORD_PTR)(__FILE__ ": SG_Impl.csFilter"), &basefunc_vtbl);
+    strmbase_filter_init(&obj->filter, &IBaseFilter_VTable, outer, &CLSID_SampleGrabber, &basefunc_vtbl);
     obj->ISampleGrabber_iface.lpVtbl = &ISampleGrabber_VTable;
     obj->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
     obj->pin_in.IPin_iface.lpVtbl = &IPin_In_VTable;

@@ -292,7 +292,7 @@ VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter *filter)
 }
 
 void strmbase_filter_init(BaseFilter *filter, const IBaseFilterVtbl *vtbl, IUnknown *outer,
-        const CLSID *clsid, DWORD_PTR debug_info, const BaseFilterFuncTable *func_table)
+        const CLSID *clsid, const BaseFilterFuncTable *func_table)
 {
     memset(filter, 0, sizeof(*filter));
 
@@ -302,8 +302,8 @@ void strmbase_filter_init(BaseFilter *filter, const IBaseFilterVtbl *vtbl, IUnkn
     filter->refcount = 1;
 
     InitializeCriticalSection(&filter->csFilter);
+    filter->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BaseFilter.csFilter");
     filter->clsid = *clsid;
-    filter->csFilter.DebugInfo->Spare[0] = debug_info;
     filter->pin_version = 1;
     filter->pFuncsTable = func_table;
 }

@@ -600,8 +600,7 @@ IUnknown* WINAPI QCAP_createAVICompressor(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_filter_init(&compressor->filter, &AVICompressorVtbl, outer, &CLSID_AVICo,
-            (DWORD_PTR)(__FILE__ ": AVICompressor.csFilter"), &filter_func_table);
+    strmbase_filter_init(&compressor->filter, &AVICompressorVtbl, outer, &CLSID_AVICo, &filter_func_table);
 
     compressor->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
 

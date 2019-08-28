@@ -82,8 +82,7 @@ HRESULT Parser_Create(ParserImpl *pParser, const IBaseFilterVtbl *vtbl, IUnknown
     HRESULT hr;
     PIN_INFO piInput;
 
-    strmbase_filter_init(&pParser->filter, vtbl, outer, clsid,
-            (DWORD_PTR)(__FILE__ ": ParserImpl.csFilter"), func_table);
+    strmbase_filter_init(&pParser->filter, vtbl, outer, clsid, func_table);
 
     pParser->fnDisconnect = fnDisconnect;
 

@@ -409,8 +409,7 @@ HRESULT AsyncReader_create(IUnknown *outer, void **out)
     if (!pAsyncRead)
         return E_OUTOFMEMORY;
 
-    strmbase_filter_init(&pAsyncRead->filter, &AsyncReader_Vtbl, outer, &CLSID_AsyncReader,
-            (DWORD_PTR)(__FILE__ ": AsyncReader.csFilter"), &BaseFuncTable);
+    strmbase_filter_init(&pAsyncRead->filter, &AsyncReader_Vtbl, outer, &CLSID_AsyncReader, &BaseFuncTable);
 
     pAsyncRead->IFileSourceFilter_iface.lpVtbl = &FileSource_Vtbl;
 

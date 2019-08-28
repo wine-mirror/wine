@@ -93,8 +93,7 @@ HRESULT NullRenderer_create(IUnknown *outer, void **out)
     pNullRenderer = CoTaskMemAlloc(sizeof(NullRendererImpl));
 
     hr = strmbase_renderer_init(&pNullRenderer->renderer, &NullRenderer_Vtbl, outer,
-            &CLSID_NullRenderer, sink_name,
-            (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"), &RendererFuncTable);
+            &CLSID_NullRenderer, sink_name, &RendererFuncTable);
 
     if (FAILED(hr))
         CoTaskMemFree(pNullRenderer);
