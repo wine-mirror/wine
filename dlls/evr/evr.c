@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(evr);
 
 typedef struct
 {
-    BaseFilter filter;
+    BaseRenderer renderer;
 } evr_filter;
 
 static const IBaseFilterVtbl basefilter_vtbl =
@@ -55,33 +55,41 @@ static const IBaseFilterVtbl basefilter_vtbl =
     BaseFilterImpl_QueryVendorInfo
 };
 
-static inline evr_filter *impl_from_BaseFilter(BaseFilter *iface)
+static inline evr_filter *impl_from_BaseRenderer(BaseRenderer *iface)
 {
-    return CONTAINING_RECORD(iface, evr_filter, filter);
+    return CONTAINING_RECORD(iface, evr_filter, renderer);
 }
 
-static IPin *evr_get_pin(BaseFilter *iface, unsigned int index)
+static void evr_destroy(BaseRenderer *iface)
 {
-    FIXME("iface %p, index %u, stub!\n", iface, index);
-    return NULL;
-}
+    evr_filter *filter = impl_from_BaseRenderer(iface);
 
-static void evr_destroy(BaseFilter *iface)
-{
-    evr_filter *filter = impl_from_BaseFilter(iface);
-
-    strmbase_filter_cleanup(&filter->filter);
+    strmbase_renderer_cleanup(&filter->renderer);
     CoTaskMemFree(filter);
 }
 
-static const BaseFilterFuncTable basefilter_functable =
+static HRESULT WINAPI evr_DoRenderSample(BaseRenderer *iface, IMediaSample *sample)
 {
-    .filter_get_pin = evr_get_pin,
-    .filter_destroy = evr_destroy,
+    FIXME("Not implemented.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI evr_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TYPE *mt)
+{
+    FIXME("Not implemented.\n");
+    return E_NOTIMPL;
+}
+
+static const BaseRendererFuncTable renderer_ops =
+{
+    .pfnCheckMediaType = evr_CheckMediaType,
+    .pfnDoRenderSample = evr_DoRenderSample,
+    .renderer_destroy = evr_destroy,
 };
 
 HRESULT evr_filter_create(IUnknown *outer, void **out)
 {
+    static const WCHAR sink_name[] = {'E','V','R',' ','I','n','p','u','t','0',0};
     evr_filter *object;
 
     *out = NULL;
@@ -90,10 +98,10 @@ HRESULT evr_filter_create(IUnknown *outer, void **out)
     if (!object)
         return E_OUTOFMEMORY;
 
-    strmbase_filter_init(&object->filter, &basefilter_vtbl, outer,
-            &CLSID_EnhancedVideoRenderer, &basefilter_functable);
+    strmbase_renderer_init(&object->renderer, &basefilter_vtbl, outer,
+            &CLSID_EnhancedVideoRenderer, sink_name, &renderer_ops);
 
-    *out = &object->filter.IUnknown_inner;
+    *out = &object->renderer.filter.IUnknown_inner;
 
     return S_OK;
 }
