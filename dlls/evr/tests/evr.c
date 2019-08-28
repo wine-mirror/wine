@@ -25,6 +25,8 @@
 #include "initguid.h"
 #include "dxva2api.h"
 
+static const WCHAR sink_id[] = {'E','V','R',' ','I','n','p','u','t','0',0};
+
 static IBaseFilter *create_evr(void)
 {
     IBaseFilter *filter = NULL;
@@ -266,6 +268,30 @@ static void test_enum_pins(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_find_pin(void)
+{
+    IBaseFilter *filter = create_evr();
+    IEnumPins *enum_pins;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin2 == pin, "Expected pin %p, got %p.\n", pin, pin2);
+    IPin_Release(pin2);
+    IPin_Release(pin);
+
+    IEnumPins_Release(enum_pins);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
@@ -273,6 +299,7 @@ START_TEST(evr)
     test_aggregation();
     test_interfaces();
     test_enum_pins();
+    test_find_pin();
 
     CoUninitialize();
 }
