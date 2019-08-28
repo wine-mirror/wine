@@ -329,7 +329,7 @@ static void _check_property( ULONG line, IWbemClassObject *obj, const WCHAR *pro
 static void test_Win32_Bios( IWbemServices *services )
 {
     static const WCHAR queryW[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_', 'B','i','o','s',0};
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_','B','i','o','s',0};
     static const WCHAR descriptionW[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
     static const WCHAR identificationcodeW[] = {'I','d','e','n','t','i','f','i','c','a','t','i','o','n','C','o','d','e',0};
     static const WCHAR manufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
@@ -372,6 +372,57 @@ static void test_Win32_Bios( IWbemServices *services )
     check_property( obj, smbiosbiosversionW, VT_BSTR, CIM_STRING );
     check_property( obj, smbiosmajorversionW, VT_I4, CIM_UINT16 );
     check_property( obj, smbiosminorversionW, VT_I4, CIM_UINT16 );
+    check_property( obj, versionW, VT_BSTR, CIM_STRING );
+
+    IWbemClassObject_Release( obj );
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
+static void test_Win32_Baseboard( IWbemServices *services )
+{
+    static const WCHAR queryW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_','B','a','s','e','b','o','a','r','d',0};
+    static const WCHAR manufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
+    static const WCHAR modelW[] = {'M','o','d','e','l',0};
+    static const WCHAR nameW[] = {'N','a','m','e',0};
+    static const WCHAR productW[] = {'P','r','o','d','u','c','t',0};
+    static const WCHAR tagW[] = {'T','a','g',0};
+    static const WCHAR versionW[] = {'V','e','r','s','i','o','n',0};
+    BSTR wql = SysAllocString( wqlW ), query = SysAllocString( queryW );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    CIMTYPE type;
+    ULONG count;
+    VARIANT val;
+    HRESULT hr;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "IWbemServices_ExecQuery failed %08x\n", hr );
+
+    hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+    if (hr != S_OK)
+    {
+        win_skip( "Win32_Baseboard not available\n" );
+        return;
+    }
+    ok( hr == S_OK, "IEnumWbemClassObject_Next failed %08x\n", hr );
+
+    check_property( obj, manufacturerW, VT_BSTR, CIM_STRING );
+
+    type = 0xdeadbeef;
+    VariantInit( &val );
+    hr = IWbemClassObject_Get( obj, modelW, 0, &val, &type, NULL );
+    ok( hr == S_OK, "failed to get model %08x\n", hr );
+    ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
+    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    trace( "model: %s\n", wine_dbgstr_w(V_BSTR(&val)) );
+    VariantClear( &val );
+
+    check_property( obj, nameW, VT_BSTR, CIM_STRING );
+    check_property( obj, productW, VT_BSTR, CIM_STRING );
+    check_property( obj, tagW, VT_BSTR, CIM_STRING );
     check_property( obj, versionW, VT_BSTR, CIM_STRING );
 
     IWbemClassObject_Release( obj );
@@ -1591,28 +1642,31 @@ START_TEST(query)
                             RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE );
     ok( hr == S_OK, "failed to set proxy blanket %08x\n", hr );
 
-    test_select( services );
+    test_GetNames( services );
     test_associators( services );
-    test_Win32_Bios( services );
-    test_Win32_Process( services, FALSE );
-    test_Win32_Process( services, TRUE );
-    test_Win32_Service( services );
-    test_Win32_ComputerSystem( services );
-    test_Win32_SystemEnclosure( services );
-    test_StdRegProv( services );
     test_notification_query_async( services );
     test_query_async( services );
     test_query_semisync( services );
-    test_GetNames( services );
+    test_select( services );
+
+    /* classes */
+    test_StdRegProv( services );
     test_SystemSecurity( services );
-    test_Win32_OperatingSystem( services );
+    test_Win32_Baseboard( services );
+    test_Win32_ComputerSystem( services );
     test_Win32_ComputerSystemProduct( services );
-    test_Win32_PhysicalMemory( services );
+    test_Win32_Bios( services );
     test_Win32_IP4RouteTable( services );
-    test_Win32_Processor( services );
-    test_Win32_VideoController( services );
-    test_Win32_Printer( services );
+    test_Win32_OperatingSystem( services );
+    test_Win32_PhysicalMemory( services );
     test_Win32_PnPEntity( services );
+    test_Win32_Printer( services );
+    test_Win32_Process( services, FALSE );
+    test_Win32_Process( services, TRUE );
+    test_Win32_Processor( services );
+    test_Win32_Service( services );
+    test_Win32_SystemEnclosure( services );
+    test_Win32_VideoController( services );
 
     SysFreeString( path );
     IWbemServices_Release( services );
