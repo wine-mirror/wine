@@ -10958,33 +10958,37 @@ static void stencil_cull_test(void)
     D3DCAPS9 caps;
     HWND window;
     HRESULT hr;
-    static const float quad1[] =
+    static const struct
     {
-        -1.0,   -1.0,   0.1,
-         0.0,   -1.0,   0.1,
-        -1.0,    0.0,   0.1,
-         0.0,    0.0,   0.1,
-    };
-    static const float quad2[] =
+        struct vec3 position;
+    }
+    quad1[] =
     {
-         0.0,   -1.0,   0.1,
-         1.0,   -1.0,   0.1,
-         0.0,    0.0,   0.1,
-         1.0,    0.0,   0.1,
-    };
-    static const float quad3[] =
+        {{-1.0f, -1.0f, 0.1f}},
+        {{ 0.0f, -1.0f, 0.1f}},
+        {{-1.0f,  0.0f, 0.1f}},
+        {{ 0.0f,  0.0f, 0.1f}},
+    },
+    quad2[] =
     {
-        0.0,    0.0,   0.1,
-        1.0,    0.0,   0.1,
-        0.0,    1.0,   0.1,
-        1.0,    1.0,   0.1,
-    };
-    static const float quad4[] =
+        {{ 0.0f, -1.0f, 0.1f}},
+        {{ 1.0f, -1.0f, 0.1f}},
+        {{ 0.0f,  0.0f, 0.1f}},
+        {{ 1.0f,  0.0f, 0.1f}},
+    },
+    quad3[] =
     {
-        -1.0,    0.0,   0.1,
-         0.0,    0.0,   0.1,
-        -1.0,    1.0,   0.1,
-         0.0,    1.0,   0.1,
+        {{ 0.0f,  0.0f, 0.1f}},
+        {{ 1.0f,  0.0f, 0.1f}},
+        {{ 0.0f,  1.0f, 0.1f}},
+        {{ 1.0f,  1.0f, 0.1f}},
+    },
+    quad4[] =
+    {
+        {{-1.0f,  0.0f, 0.1f}},
+        {{ 0.0f,  0.0f, 0.1f}},
+        {{-1.0f,  1.0f, 0.1f}},
+        {{ 0.0f,  1.0f, 0.1f}},
     };
     struct
     {
@@ -11057,40 +11061,40 @@ static void stencil_cull_test(void)
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_CW);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-            1 /* PrimCount */, indices_cw, D3DFMT_INDEX16, quad1, sizeof(float) * 3);
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST,
+            0, 4, 1, indices_cw, D3DFMT_INDEX16, quad1, sizeof(*quad1));
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-            1 /* PrimCount */, indices_ccw, D3DFMT_INDEX16, quad1, sizeof(float) * 3);
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST,
+            0, 4, 1, indices_ccw, D3DFMT_INDEX16, quad1, sizeof(*quad1));
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TWOSIDEDSTENCILMODE, TRUE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-            1 /* PrimCount */, indices_cw, D3DFMT_INDEX16, quad2, sizeof(float) * 3);
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST,
+            0, 4, 1, indices_cw, D3DFMT_INDEX16, quad2, sizeof(*quad2));
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-            1 /* PrimCount */, indices_ccw, D3DFMT_INDEX16, quad2, sizeof(float) * 3);
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST,
+            0, 4, 1, indices_ccw, D3DFMT_INDEX16, quad2, sizeof(*quad2));
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_CW);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-            1 /* PrimCount */, indices_cw, D3DFMT_INDEX16, quad3, sizeof(float) * 3);
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST,
+            0, 4, 1, indices_cw, D3DFMT_INDEX16, quad3, sizeof(*quad3));
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-            1 /* PrimCount */, indices_ccw, D3DFMT_INDEX16, quad3, sizeof(float) * 3);
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST,
+            0, 4, 1, indices_ccw, D3DFMT_INDEX16, quad3, sizeof(*quad3));
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_CCW);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-            1 /* PrimCount */, indices_cw, D3DFMT_INDEX16, quad4, sizeof(float) * 3);
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST,
+            0, 4, 1, indices_cw, D3DFMT_INDEX16, quad4, sizeof(*quad4));
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-            1 /* PrimCount */, indices_ccw, D3DFMT_INDEX16, quad4, sizeof(float) * 3);
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST,
+            0, 4, 1, indices_ccw, D3DFMT_INDEX16, quad4, sizeof(*quad4));
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_EndScene(device);
@@ -11154,6 +11158,60 @@ static void stencil_cull_test(void)
     ok(color == 0x00000090, "CCW triangle, twoside TRUE, cull cw, incr, has color 0x%08x, expected 0x00000090\n", color);
     color = getPixelColor(device, 480, 60);
     ok(color == 0x00000080, "CW triangle, twoside TRUE, cull cw, culled, has color 0x%08x, expected 0x00000080\n", color);
+
+    /* Test for reference truncation. */
+    /* 1st pass: set stencil. */
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_STENCIL, 0x00ff0000, 0.0f, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILFAIL, D3DSTENCILOP_REPLACE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILZFAIL, D3DSTENCILOP_REPLACE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILREF, 0x1cc);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILMASK, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILFUNC, D3DCMP_ALWAYS);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILENABLE, TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_CW);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST,
+            0, 4, 1, indices_cw, D3DFMT_INDEX16, quad1, sizeof(*quad1));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* 2nd pass: draw image. */
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff0000, 0.0f, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILREF, 0xdb);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILMASK, 0x0f);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILFUNC, D3DCMP_LESS);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, painter, sizeof(painter[0]));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    color = getPixelColor(device, 280, 360);
+    todo_wine ok(color == 0x000000f0, "Got unexpected colour 0x%08x.\n", color);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
