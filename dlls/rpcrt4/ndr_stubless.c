@@ -1574,8 +1574,9 @@ struct async_call_data
     ULONG_PTR NdrCorrCache[256];
 };
 
-LONG_PTR CDECL DECLSPEC_HIDDEN ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,
-                                                      void **stack_top )
+/* Helper for ndr_async_client_call, to factor out the part that may or may not be
+ * guarded by a try/except block. */
+static void do_ndr_async_client_call( const MIDL_STUB_DESC *pStubDesc, PFORMAT_STRING pFormat, void **stack_top )
 {
     /* pointer to start of stack where arguments start */
     PRPC_MESSAGE pRpcMsg;
@@ -1591,8 +1592,6 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr_async_client_call( PMIDL_STUB_DESC pStubDesc,
     /* header for procedure string */
     const NDR_PROC_HEADER * pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
     RPC_STATUS status;
-
-    TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
 
     /* Later NDR language versions probably won't be backwards compatible */
     if (pStubDesc->Version > 0x50002)
@@ -1650,7 +1649,7 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr_async_client_call( PMIDL_STUB_DESC pStubDesc,
 
     pFormat += get_handle_desc_size(pProcHeader, pFormat);
     async_call_data->hBinding = client_get_handle(pStubMsg, pProcHeader, async_call_data->pHandleFormat);
-    if (!async_call_data->hBinding) goto done;
+    if (!async_call_data->hBinding) return;
 
     if (is_oicf_stubdesc(pStubDesc))
     {
@@ -1769,8 +1768,30 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr_async_client_call( PMIDL_STUB_DESC pStubDesc,
                 RpcRaiseException(status);
         }
     }
+}
 
-done:
+LONG_PTR CDECL DECLSPEC_HIDDEN ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,
+                                                      void **stack_top )
+{
+    const NDR_PROC_HEADER *pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
+
+    TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
+
+    if (pProcHeader->Oi_flags & Oi_HAS_COMM_OR_FAULT)
+    {
+        __TRY
+        {
+            do_ndr_async_client_call( pStubDesc, pFormat, stack_top );
+        }
+        __EXCEPT_ALL
+        {
+            FIXME("exception %x during ndr_async_client_call()\n", GetExceptionCode());
+        }
+        __ENDTRY
+    }
+    else
+        do_ndr_async_client_call( pStubDesc, pFormat, stack_top);
+
     TRACE("returning 0\n");
     return 0;
 }
