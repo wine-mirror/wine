@@ -336,8 +336,11 @@ static HRESULT WINAPI class_object_GetQualifierSet(
     IWbemClassObject *iface,
     IWbemQualifierSet **ppQualSet )
 {
-    FIXME("%p, %p\n", iface, ppQualSet);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+
+    TRACE("%p, %p\n", iface, ppQualSet);
+
+    return WbemQualifierSet_create( co->name, NULL, (void **)ppQualSet );
 }
 
 static HRESULT record_get_value( const struct record *record, UINT index, VARIANT *var, CIMTYPE *type )
