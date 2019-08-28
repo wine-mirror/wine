@@ -46,6 +46,8 @@ static HRESULT exec_query( IWbemServices *services, const WCHAR *str, IEnumWbemC
         for (;;)
         {
             VARIANT var;
+            IWbemQualifierSet *qualifiers;
+            SAFEARRAY *names;
 
             IEnumWbemClassObject_Next( *result, 10000, 1, &obj, &count );
             if (!count) break;
@@ -60,6 +62,15 @@ static HRESULT exec_query( IWbemServices *services, const WCHAR *str, IEnumWbemC
                 trace("description: %s\n", wine_dbgstr_w(V_BSTR(&var)));
                 VariantClear( &var );
             }
+
+            hr = IWbemClassObject_GetQualifierSet( obj, &qualifiers );
+            ok( hr == S_OK, "got %08x\n", hr );
+
+            hr = IWbemQualifierSet_GetNames( qualifiers, 0, &names );
+            ok( hr == S_OK, "got %08x\n", hr );
+
+            SafeArrayDestroy( names );
+            IWbemQualifierSet_Release( qualifiers );
             IWbemClassObject_Release( obj );
         }
     }
