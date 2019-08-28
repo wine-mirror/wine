@@ -3026,7 +3026,7 @@ static enum fill_status fill_printer( struct table *table, const struct expr *co
     WCHAR id[20];
 
     EnumPrintersW( PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &size, &count );
-    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return FILL_STATUS_FAILED;
+    if (!count) return FILL_STATUS_UNFILTERED;
 
     if (!(info = heap_alloc( size ))) return FILL_STATUS_FAILED;
     if (!EnumPrintersW( PRINTER_ENUM_LOCAL, NULL, 2, (BYTE *)info, size, &size, &count ))
@@ -3093,7 +3093,11 @@ static enum fill_status fill_process( struct table *table, const struct expr *co
 
     do
     {
-        if (!resize_table( table, row + 1, sizeof(*rec) )) goto done;
+        if (!resize_table( table, row + 1, sizeof(*rec) ))
+        {
+            status = FILL_STATUS_FAILED;
+            goto done;
+        }
 
         rec = (struct record_process *)(table->data + offset);
         rec->caption        = heap_strdupW( entry.szExeFile );
@@ -3118,7 +3122,6 @@ static enum fill_status fill_process( struct table *table, const struct expr *co
 
     TRACE("created %u rows\n", row);
     table->num_rows = row;
-    status = FILL_STATUS_UNFILTERED;
 
 done:
     CloseHandle( snap );

@@ -404,13 +404,15 @@ HRESULT eval_cond( const struct table *table, UINT row, const struct expr *cond,
 HRESULT execute_view( struct view *view )
 {
     UINT i, j = 0, len;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
 
     if (!view->table) return S_OK;
     if (view->table->fill)
     {
         clear_table( view->table );
-        view->table->fill( view->table, view->cond );
+        status = view->table->fill( view->table, view->cond );
     }
+    if (status == FILL_STATUS_FAILED) return WBEM_E_FAILED;
     if (!view->table->num_rows) return S_OK;
 
     len = min( view->table->num_rows, 16 );
@@ -429,7 +431,8 @@ HRESULT execute_view( struct view *view )
             if (!(tmp = heap_realloc( view->result, len * sizeof(UINT) ))) return E_OUTOFMEMORY;
             view->result = tmp;
         }
-        if ((hr = eval_cond( view->table, i, view->cond, &val, &type )) != S_OK) return hr;
+        if (status == FILL_STATUS_FILTERED) val = 1;
+        else if ((hr = eval_cond( view->table, i, view->cond, &val, &type )) != S_OK) return hr;
         if (val) view->result[j++] = i;
     }
     view->count = j;
