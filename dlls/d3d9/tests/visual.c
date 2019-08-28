@@ -11211,7 +11211,7 @@ static void stencil_cull_test(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     color = getPixelColor(device, 280, 360);
-    todo_wine ok(color == 0x000000f0, "Got unexpected colour 0x%08x.\n", color);
+    ok(color == 0x000000f0, "Got unexpected colour 0x%08x.\n", color);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
