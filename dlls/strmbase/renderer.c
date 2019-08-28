@@ -238,6 +238,7 @@ HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtb
     PIN_INFO piInput;
     HRESULT hr;
 
+    memset(filter, 0, sizeof(*filter));
     strmbase_filter_init(&filter->filter, vtbl, outer, clsid, &RendererBaseFilterFuncTable);
 
     filter->pFuncsTable = pBaseFuncsTable;
@@ -264,7 +265,6 @@ HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtb
     filter->state_event = CreateEventW(NULL, TRUE, TRUE, NULL);
     filter->advise_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     filter->flush_event = CreateEventW(NULL, TRUE, TRUE, NULL);
-    filter->pMediaSample = NULL;
 
     QualityControlImpl_Create(&filter->sink.pin.IPin_iface, &filter->filter.IBaseFilter_iface, &filter->qcimpl);
     filter->qcimpl->IQualityControl_iface.lpVtbl = &Renderer_QualityControl_Vtbl;
