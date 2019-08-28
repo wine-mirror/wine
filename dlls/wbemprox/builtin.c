@@ -137,6 +137,8 @@ static const WCHAR prop_availabilityW[] =
     {'A','v','a','i','l','a','b','i','l','i','t','y',0};
 static const WCHAR prop_binaryrepresentationW[] =
     {'B','i','n','a','r','y','R','e','p','r','e','s','e','n','t','a','t','i','o','n',0};
+static const WCHAR prop_boolvalueW[] =
+    {'B','o','o','l','V','a','l','u','e',0};
 static const WCHAR prop_bootableW[] =
     {'B','o','o','t','a','b','l','e',0};
 static const WCHAR prop_bootpartitionW[] =
@@ -667,13 +669,14 @@ static const struct column col_processor[] =
 };
 static const struct column col_qualifier[] =
 {
-    { prop_classW,    CIM_STRING },
-    { prop_memberW,   CIM_STRING },
-    { prop_typeW,     CIM_UINT32 },
-    { prop_flavorW,   CIM_SINT32 },
-    { prop_nameW,     CIM_STRING },
-    { prop_intvalueW, CIM_SINT32 },
-    { prop_strvalueW, CIM_STRING }
+    { prop_classW,     CIM_STRING },
+    { prop_memberW,    CIM_STRING },
+    { prop_typeW,      CIM_UINT32 },
+    { prop_flavorW,    CIM_SINT32 },
+    { prop_nameW,      CIM_STRING },
+    { prop_intvalueW,  CIM_SINT32 },
+    { prop_strvalueW,  CIM_STRING },
+    { prop_boolvalueW, CIM_BOOLEAN }
 };
 static const struct column col_service[] =
 {
@@ -1101,6 +1104,7 @@ struct record_qualifier
     const WCHAR *name;
     INT32        intvalue;
     const WCHAR *strvalue;
+    int          boolvalue;
 };
 struct record_service
 {

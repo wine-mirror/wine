@@ -126,6 +126,7 @@ static HRESULT get_qualifier_value( const WCHAR *class, const WCHAR *member, con
     static const WCHAR qualifiersW[] = {'_','_','Q','U','A','L','I','F','I','E','R','S',0};
     static const WCHAR intvalueW[] = {'I','n','t','e','g','e','r','V','a','l','u','e',0};
     static const WCHAR strvalueW[] = {'S','t','r','i','n','g','V','a','l','u','e',0};
+    static const WCHAR boolvalueW[] = {'B','o','o','l','V','a','l','u','e',0};
     static const WCHAR flavorW[] = {'F','l','a','v','o','r',0};
     static const WCHAR typeW[] = {'T','y','p','e',0};
     IEnumWbemClassObject *iter;
@@ -155,6 +156,9 @@ static HRESULT get_qualifier_value( const WCHAR *class, const WCHAR *member, con
         break;
     case CIM_SINT32:
         hr = IWbemClassObject_Get( obj, intvalueW, 0, val, NULL, NULL );
+        break;
+    case CIM_BOOLEAN:
+        hr = IWbemClassObject_Get( obj, boolvalueW, 0, val, NULL, NULL );
         break;
     default:
         ERR("unhandled type %u\n", V_UI4( &var ));
