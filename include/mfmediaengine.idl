@@ -1,0 +1,168 @@
+/*
+ * Copyright 2019 Jactry Zeng for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "mfidl.idl";
+
+cpp_quote("EXTERN_GUID(CLSID_MFMediaEngineClassFactory, 0xb44392da, 0x499b, 0x446b, 0xa4, 0xcb, 0x00, 0x5f, 0xea, 0xd0, 0xe6, 0xd5);")
+
+typedef enum MF_MEDIA_ENGINE_ERR
+{
+    MF_MEDIA_ENGINE_ERR_NOERROR,
+    MF_MEDIA_ENGINE_ERR_ABORTED,
+    MF_MEDIA_ENGINE_ERR_NETWORK,
+    MF_MEDIA_ENGINE_ERR_DECODE,
+    MF_MEDIA_ENGINE_ERR_SRC_NOT_SUPPORTED,
+    MF_MEDIA_ENGINE_ERR_ENCRYPTED
+} MF_MEDIA_ENGINE_ERR;
+
+typedef enum MF_MEDIA_ENGINE_PRELOAD
+{
+    MF_MEDIA_ENGINE_PRELOAD_MISSING,
+    MF_MEDIA_ENGINE_PRELOAD_EMPTY,
+    MF_MEDIA_ENGINE_PRELOAD_NONE,
+    MF_MEDIA_ENGINE_PRELOAD_METADATA,
+    MF_MEDIA_ENGINE_PRELOAD_AUTOMATIC
+} MF_MEDIA_ENGINE_PRELOAD;
+
+typedef enum MF_MEDIA_ENGINE_CANPLAY
+{
+    MF_MEDIA_ENGINE_CANPLAY_NOT_SUPPORTED,
+    MF_MEDIA_ENGINE_CANPLAY_MAYBE,
+    MF_MEDIA_ENGINE_CANPLAY_PROBABLY,
+} MF_MEDIA_ENGINE_CANPLAY;
+
+typedef struct MFVideoNormalizedRect
+{
+    float left;
+    float top;
+    float right;
+    float bottom;
+} MFVideoNormalizedRect;
+
+[
+    object,
+    uuid(fc0e10d2-ab2a-4501-a951-06bb1075184c),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaError : IUnknown
+{
+    USHORT GetErrorCode();
+    HRESULT GetExtendedErrorCode();
+    HRESULT SetErrorCode([in] MF_MEDIA_ENGINE_ERR error);
+    HRESULT SetExtendedErrorCode([in] HRESULT error);
+}
+
+[
+    object,
+    uuid(7a5e5354-b114-4c72-b991-3131d75032ea),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaEngineSrcElements : IUnknown
+{
+    DWORD GetLength();
+    HRESULT GetURL([in] DWORD index, [out] BSTR *url);
+    HRESULT GetType([in] DWORD index, [out] BSTR *type);
+    HRESULT GetMedia([in] DWORD index, [out] BSTR *media);
+    HRESULT AddElement([in] BSTR url, [in] BSTR type, [in] BSTR media);
+    HRESULT RemoveAllElements();
+}
+
+[
+    object,
+    uuid(db71a2fc-078a-414e-9df9-8c2531b0aa6c),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaTimeRange : IUnknown
+{
+    DWORD GetLength();
+    HRESULT GetStart([in] DWORD index, [out] double *start);
+    HRESULT GetEnd([in] DWORD index, [out] double *end);
+    BOOL ContainsTime([in] double time);
+    HRESULT AddRange([in] double start, [in] double end);
+    HRESULT Clear();
+}
+
+[
+    object,
+    uuid(98a1b0bb-03eb-4935-ae7c-93c1fa0e1c93),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaEngine : IUnknown
+{
+    HRESULT GetError([out] IMFMediaError **error);
+    HRESULT SetErrorCode([in] MF_MEDIA_ENGINE_ERR error);
+    HRESULT SetSourceElements([in] IMFMediaEngineSrcElements *elements);
+    HRESULT SetSource([in] BSTR url);
+    HRESULT GetCurrentSource([out] BSTR *url);
+    USHORT GetNetworkState();
+    MF_MEDIA_ENGINE_PRELOAD GetPreload();
+    HRESULT SetPreload([in] MF_MEDIA_ENGINE_PRELOAD preload);
+    HRESULT GetBuffered([out] IMFMediaTimeRange **buffered);
+    HRESULT Load();
+    HRESULT CanPlayType([in] BSTR type, [out] MF_MEDIA_ENGINE_CANPLAY *answer);
+    USHORT GetReadyState();
+    BOOL IsSeeking();
+    cpp_quote("#undef GetCurrentTime")
+    double GetCurrentTime();
+    HRESULT SetCurrentTime([in] double time);
+    double GetStartTime();
+    double GetDuration();
+    BOOL IsPaused();
+    double GetDefaultPlaybackRate();
+    HRESULT SetDefaultPlaybackRate([in] double rate);
+    double GetPlaybackRate();
+    HRESULT SetPlaybackRate([in] double rate);
+    HRESULT GetPlayed([out] IMFMediaTimeRange **played);
+    HRESULT GetSeekable([out] IMFMediaTimeRange **seekable);
+    BOOL IsEnded();
+    BOOL GetAutoPlay();
+    HRESULT SetAutoPlay([in] BOOL autoplay);
+    BOOL GetLoop();
+    HRESULT SetLoop([in] BOOL loop);
+    HRESULT Play();
+    HRESULT Pause();
+    BOOL GetMuted();
+    HRESULT SetMuted([in] BOOL muted);
+    double GetVolume();
+    HRESULT SetVolume([in] double volume);
+    BOOL HasVideo();
+    BOOL HasAudio();
+    HRESULT GetNativeVideoSize([out] DWORD *cx, [out] DWORD *cy);
+    HRESULT GetVideoAspectRatio([out] DWORD *cx, [out] DWORD *cy);
+    HRESULT Shutdown();
+    HRESULT TransferVideoFrame([in] IUnknown *surface, [in] const MFVideoNormalizedRect *src,
+                               [in] const RECT *dst, [in] const MFARGB *color);
+    HRESULT OnVideoStreamTick([out] LONGLONG *time);
+}
+
+[
+    object,
+    uuid(4d645ace-26aa-4688-9be1-df3516990b93),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaEngineClassFactory : IUnknown
+{
+    HRESULT CreateInstance([in] DWORD flags, [in] IMFAttributes *attributes, [out] IMFMediaEngine **engine);
+    HRESULT CreateTimeRange([out] IMFMediaTimeRange **range);
+    HRESULT CreateError([out] IMFMediaError **error);
+}

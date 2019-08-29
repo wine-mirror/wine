@@ -371,6 +371,7 @@ SOURCES = \
 	mfapi.h \
 	mferror.h \
 	mfidl.idl \
+	mfmediaengine.idl \
 	mfobjects.idl \
 	mfplay.idl \
 	mfreadwrite.idl \
