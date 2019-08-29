@@ -38,7 +38,10 @@
 #include "wine/test.h"
 #include "wine/heap.h"
 
+#define D3D11_INIT_GUID
 #include "initguid.h"
+#include "d3d11_4.h"
+
 DEFINE_GUID(DUMMY_CLSID, 0x12345678,0x1234,0x1234,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19);
 DEFINE_GUID(DUMMY_GUID1, 0x12345678,0x1234,0x1234,0x21,0x21,0x21,0x21,0x21,0x21,0x21,0x21);
 DEFINE_GUID(DUMMY_GUID2, 0x12345678,0x1234,0x1234,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22);
@@ -3709,6 +3712,7 @@ if (0)
 static void test_dxgi_device_manager(void)
 {
     IMFDXGIDeviceManager *manager, *manager2;
+    ID3D11Device *d3d11_dev, *d3d11_dev2;
     UINT token, token2;
     HRESULT hr;
 
@@ -3740,7 +3744,47 @@ static void test_dxgi_device_manager(void)
     ok(manager != manager2, "got wrong pointer: %p.\n", manager2);
     EXPECT_REF(manager, 1);
 
+    hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
+                           NULL, 0, D3D11_SDK_VERSION, &d3d11_dev, NULL, NULL);
+    ok(hr == S_OK, "D3D11CreateDevice failed: %#x.\n", hr);
+    EXPECT_REF(d3d11_dev, 1);
+
+    hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)d3d11_dev, token - 1);
+    ok(hr == E_INVALIDARG, "IMFDXGIDeviceManager_ResetDevice should failed: %#x.\n", hr);
+    EXPECT_REF(d3d11_dev, 1);
+
+    hr = IMFDXGIDeviceManager_ResetDevice(manager, NULL, token);
+    ok(hr == E_INVALIDARG, "IMFDXGIDeviceManager_ResetDevice should failed: %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)d3d11_dev, token);
+    ok(hr == S_OK, "IMFDXGIDeviceManager_ResetDevice failed: %#x.\n", hr);
+    EXPECT_REF(manager, 1);
+    EXPECT_REF(d3d11_dev, 2);
+
+    hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)manager2, token);
+    ok(hr == E_INVALIDARG, "IMFDXGIDeviceManager_ResetDevice should failed: %#x.\n", hr);
+    EXPECT_REF(manager2, 1);
+    EXPECT_REF(d3d11_dev, 2);
+
+    hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)d3d11_dev, token);
+    ok(hr == S_OK, "IMFDXGIDeviceManager_ResetDevice failed: %#x.\n", hr);
+    EXPECT_REF(manager, 1);
+    EXPECT_REF(d3d11_dev, 2);
+
+    hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0,
+                           NULL, 0, D3D11_SDK_VERSION, &d3d11_dev2, NULL, NULL);
+    ok(hr == S_OK, "D3D11CreateDevice failed: %#x.\n", hr);
+    EXPECT_REF(d3d11_dev2, 1);
+    hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)d3d11_dev2, token);
+    ok(hr == S_OK, "IMFDXGIDeviceManager_ResetDevice failed: %#x.\n", hr);
+    EXPECT_REF(manager, 1);
+    EXPECT_REF(d3d11_dev2, 2);
+    EXPECT_REF(d3d11_dev, 1);
+
     IMFDXGIDeviceManager_Release(manager);
+    EXPECT_REF(d3d11_dev2, 1);
+    ID3D11Device_Release(d3d11_dev);
+    ID3D11Device_Release(d3d11_dev2);
     IMFDXGIDeviceManager_Release(manager2);
 }
 

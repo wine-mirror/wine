@@ -31,6 +31,7 @@
 #include "initguid.h"
 #include "ole2.h"
 #include "propsys.h"
+#include "dxgi.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -7623,6 +7624,7 @@ struct dxgi_device_manager
     IMFDXGIDeviceManager IMFDXGIDeviceManager_iface;
     LONG refcount;
     UINT token;
+    IDXGIDevice *device;
 };
 
 static struct dxgi_device_manager *impl_from_IMFDXGIDeviceManager(IMFDXGIDeviceManager *iface)
@@ -7666,6 +7668,8 @@ static ULONG WINAPI dxgi_device_manager_Release(IMFDXGIDeviceManager *iface)
 
     if (!refcount)
     {
+        if (manager->device)
+            IDXGIDevice_Release(manager->device);
         heap_free(manager);
     }
 
@@ -7704,9 +7708,26 @@ static HRESULT WINAPI dxgi_device_manager_OpenDeviceHandle(IMFDXGIDeviceManager 
 
 static HRESULT WINAPI dxgi_device_manager_ResetDevice(IMFDXGIDeviceManager *iface, IUnknown *device, UINT token)
 {
-    FIXME("(%p, %p, %u): stub.\n", iface, device, token);
+    struct dxgi_device_manager *manager = impl_from_IMFDXGIDeviceManager(iface);
+    IDXGIDevice *dxgi_device;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %u).\n", iface, device, token);
+
+    if (!device || token != manager->token)
+        return E_INVALIDARG;
+
+    hr = IUnknown_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    if (SUCCEEDED(hr))
+    {
+        if (manager->device)
+            IDXGIDevice_Release(manager->device);
+        manager->device = dxgi_device;
+    }
+    else
+        hr = E_INVALIDARG;
+
+    return hr;
 }
 
 static HRESULT WINAPI dxgi_device_manager_TestDevice(IMFDXGIDeviceManager *iface, HANDLE device)
@@ -7753,6 +7774,7 @@ HRESULT WINAPI MFCreateDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **man
     object->IMFDXGIDeviceManager_iface.lpVtbl = &dxgi_device_manager_vtbl;
     object->refcount = 1;
     object->token = GetTickCount();
+    object->device = NULL;
 
     TRACE("Created device manager: %p, token: %u.\n", object, object->token);
 
