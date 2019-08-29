@@ -42,6 +42,7 @@
 @ stdcall MFCreateAttributes(ptr long)
 @ stub MFCreateAudioMediaType
 @ stdcall MFCreateCollection(ptr)
+@ stdcall MFCreateDXGIDeviceManager(ptr ptr)
 @ stdcall MFCreateEventQueue(ptr)
 @ stdcall MFCreateFile(long long long wstr ptr)
 @ stub MFCreateLegacyMediaBufferOnMFMediaBuffer

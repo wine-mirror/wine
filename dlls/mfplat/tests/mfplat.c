@@ -58,6 +58,7 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
 
 static HRESULT (WINAPI *pMFCopyImage)(BYTE *dest, LONG deststride, const BYTE *src, LONG srcstride,
         DWORD width, DWORD lines);
+static HRESULT (WINAPI *pMFCreateDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
 static HRESULT (WINAPI *pMFCreateSourceResolver)(IMFSourceResolver **resolver);
 static HRESULT (WINAPI *pMFCreateMFByteStreamOnStream)(IStream *stream, IMFByteStream **bytestream);
 static void*   (WINAPI *pMFHeapAlloc)(SIZE_T size, ULONG flags, char *file, int line, EAllocationType type);
@@ -510,6 +511,7 @@ static void init_functions(void)
     X(MFAddPeriodicCallback);
     X(MFAllocateSerialWorkQueue);
     X(MFCopyImage);
+    X(MFCreateDXGIDeviceManager);
     X(MFCreateSourceResolver);
     X(MFCreateMFByteStreamOnStream);
     X(MFHeapAlloc);
@@ -3704,6 +3706,44 @@ if (0)
     ok(!refcount, "Unexpected refcount %u.\n", refcount);
 }
 
+static void test_dxgi_device_manager(void)
+{
+    IMFDXGIDeviceManager *manager, *manager2;
+    UINT token, token2;
+    HRESULT hr;
+
+    if (!pMFCreateDXGIDeviceManager)
+    {
+        win_skip("MFCreateDXGIDeviceManager not found.\n");
+        return;
+    }
+
+    hr = pMFCreateDXGIDeviceManager(NULL, &manager);
+    ok(hr == E_POINTER, "MFCreateDXGIDeviceManager should failed: %#x.\n", hr);
+
+    token = 0;
+    hr = pMFCreateDXGIDeviceManager(&token, NULL);
+    ok(hr == E_POINTER, "MFCreateDXGIDeviceManager should failed: %#x.\n", hr);
+    ok(!token, "got wrong token: %u.\n", token);
+
+    hr = pMFCreateDXGIDeviceManager(&token, &manager);
+    ok(hr == S_OK, "MFCreateDXGIDeviceManager failed: %#x.\n", hr);
+    EXPECT_REF(manager, 1);
+    ok(!!token, "got wrong token: %u.\n", token);
+
+    Sleep(50);
+    token2 = 0;
+    hr = pMFCreateDXGIDeviceManager(&token2, &manager2);
+    ok(hr == S_OK, "MFCreateDXGIDeviceManager failed: %#x.\n", hr);
+    EXPECT_REF(manager2, 1);
+    ok(token2 && token2 != token, "got wrong token: %u, %u.\n", token2, token);
+    ok(manager != manager2, "got wrong pointer: %p.\n", manager2);
+    EXPECT_REF(manager, 1);
+
+    IMFDXGIDeviceManager_Release(manager);
+    IMFDXGIDeviceManager_Release(manager2);
+}
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -3741,6 +3781,7 @@ START_TEST(mfplat)
     test_async_create_file();
     test_local_handlers();
     test_create_property_store();
+    test_dxgi_device_manager();
 
     CoUninitialize();
 }

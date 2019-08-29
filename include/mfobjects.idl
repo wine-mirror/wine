@@ -727,3 +727,20 @@ interface IMFMediaEventQueue : IUnknown
         [in] HRESULT status, [in, unique] IUnknown *unk);
     HRESULT Shutdown();
 }
+
+[
+    object,
+    uuid(eb533d5d-2db6-40f8-97a9-494692014f07),
+    local,
+    pointer_default(unique)
+]
+interface IMFDXGIDeviceManager : IUnknown
+{
+    HRESULT CloseDeviceHandle([in] HANDLE device);
+    HRESULT GetVideoService([in] HANDLE device, [in] REFIID riid, [out] void **service);
+    HRESULT LockDevice([in] HANDLE device, [in] REFIID riid, [out] void **ppv, [in] BOOL block);
+    HRESULT OpenDeviceHandle([out] HANDLE *device);
+    HRESULT ResetDevice([in] IUnknown *device, [in] UINT token);
+    HRESULT TestDevice([in] HANDLE device);
+    HRESULT UnlockDevice([in] HANDLE device, [in] BOOL state);
+}
