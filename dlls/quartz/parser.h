@@ -40,7 +40,7 @@ typedef struct Parser_OutputPin
 
 struct ParserImpl
 {
-    BaseFilter filter;
+    struct strmbase_filter filter;
 
     PFN_DISCONNECT fnDisconnect;
 
@@ -67,7 +67,7 @@ extern HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart);
 extern HRESULT WINAPI Parser_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState);
 extern HRESULT WINAPI Parser_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock);
 
-IPin *parser_get_pin(BaseFilter *iface, unsigned int index) DECLSPEC_HIDDEN;
+IPin *parser_get_pin(struct strmbase_filter *iface, unsigned int index) DECLSPEC_HIDDEN;
 
 /* COM helpers */
 static inline Parser_OutputPin *unsafe_impl_Parser_OutputPin_from_IPin( IPin *iface )

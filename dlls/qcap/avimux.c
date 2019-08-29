@@ -70,7 +70,7 @@ typedef struct {
 } AviMuxIn;
 
 typedef struct {
-    BaseFilter filter;
+    struct strmbase_filter filter;
     IConfigAviMux IConfigAviMux_iface;
     IConfigInterleaving IConfigInterleaving_iface;
     IMediaSeeking IMediaSeeking_iface;
@@ -108,14 +108,14 @@ typedef struct {
 
 static HRESULT create_input_pin(AviMux*);
 
-static inline AviMux* impl_from_BaseFilter(BaseFilter *filter)
+static inline AviMux* impl_from_strmbase_filter(struct strmbase_filter *filter)
 {
     return CONTAINING_RECORD(filter, AviMux, filter);
 }
 
-static IPin *avi_mux_get_pin(BaseFilter *iface, unsigned int index)
+static IPin *avi_mux_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
-    AviMux *filter = impl_from_BaseFilter(iface);
+    AviMux *filter = impl_from_strmbase_filter(iface);
 
     if (!index)
         return &filter->source.pin.IPin_iface;
@@ -124,9 +124,9 @@ static IPin *avi_mux_get_pin(BaseFilter *iface, unsigned int index)
     return NULL;
 }
 
-static void avi_mux_destroy(BaseFilter *iface)
+static void avi_mux_destroy(struct strmbase_filter *iface)
 {
-    AviMux *filter = impl_from_BaseFilter(iface);
+    AviMux *filter = impl_from_strmbase_filter(iface);
     int i;
 
     strmbase_source_cleanup(&filter->source);
@@ -146,9 +146,9 @@ static void avi_mux_destroy(BaseFilter *iface)
     ObjectRefCount(FALSE);
 }
 
-static HRESULT avi_mux_query_interface(BaseFilter *iface, REFIID iid, void **out)
+static HRESULT avi_mux_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
 {
-    AviMux *filter = impl_from_BaseFilter(iface);
+    AviMux *filter = impl_from_strmbase_filter(iface);
 
     if (IsEqualGUID(iid, &IID_IConfigAviMux))
         *out = &filter->IConfigAviMux_iface;
@@ -176,8 +176,8 @@ static const struct strmbase_filter_ops filter_ops =
 
 static inline AviMux* impl_from_IBaseFilter(IBaseFilter *iface)
 {
-    BaseFilter *filter = CONTAINING_RECORD(iface, BaseFilter, IBaseFilter_iface);
-    return impl_from_BaseFilter(filter);
+    struct strmbase_filter *filter = CONTAINING_RECORD(iface, struct strmbase_filter, IBaseFilter_iface);
+    return impl_from_strmbase_filter(filter);
 }
 
 static HRESULT out_flush(AviMux *This)

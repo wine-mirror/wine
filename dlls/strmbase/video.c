@@ -647,7 +647,7 @@ static const IBasicVideoVtbl basic_video_vtbl =
     basic_video_IsUsingDefaultDestination
 };
 
-HRESULT WINAPI strmbase_video_init(BaseControlVideo *video, BaseFilter *filter,
+HRESULT WINAPI strmbase_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
         CRITICAL_SECTION *cs, BasePin *pin, const BaseControlVideoFuncTable *func_table)
 {
     video->IBasicVideo_iface.lpVtbl = &basic_video_vtbl;

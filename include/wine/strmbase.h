@@ -156,7 +156,7 @@ void strmbase_sink_init(BaseInputPin *pin, const IPinVtbl *vtbl, const PIN_INFO 
         const BaseInputPinFuncTable *func_table, CRITICAL_SECTION *cs, IMemAllocator *allocator);
 void strmbase_sink_cleanup(BaseInputPin *pin);
 
-typedef struct BaseFilter
+struct strmbase_filter
 {
     IBaseFilter IBaseFilter_iface;
     IUnknown IUnknown_inner;
@@ -172,13 +172,13 @@ typedef struct BaseFilter
     LONG pin_version;
 
     const struct strmbase_filter_ops *pFuncsTable;
-} BaseFilter;
+};
 
 struct strmbase_filter_ops
 {
-    IPin *(*filter_get_pin)(BaseFilter *iface, unsigned int index);
-    void (*filter_destroy)(BaseFilter *iface);
-    HRESULT (*filter_query_interface)(BaseFilter *iface, REFIID iid, void **out);
+    IPin *(*filter_get_pin)(struct strmbase_filter *iface, unsigned int index);
+    void (*filter_destroy)(struct strmbase_filter *iface);
+    HRESULT (*filter_query_interface)(struct strmbase_filter *iface, REFIID iid, void **out);
 };
 
 HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
@@ -197,11 +197,11 @@ HRESULT WINAPI BaseFilterImpl_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *
 HRESULT WINAPI BaseFilterImpl_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName );
 HRESULT WINAPI BaseFilterImpl_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo);
 
-VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter* This);
+VOID WINAPI BaseFilterImpl_IncrementPinVersion(struct strmbase_filter *filter);
 
-void strmbase_filter_init(BaseFilter *filter, const IBaseFilterVtbl *vtbl, IUnknown *outer,
+void strmbase_filter_init(struct strmbase_filter *filter, const IBaseFilterVtbl *vtbl, IUnknown *outer,
         const CLSID *clsid, const struct strmbase_filter_ops *func_table);
-void strmbase_filter_cleanup(BaseFilter *filter);
+void strmbase_filter_cleanup(struct strmbase_filter *filter);
 
 /* Enums */
 HRESULT WINAPI EnumMediaTypes_Construct(BasePin *iface, BasePin_GetMediaType enumFunc, BasePin_GetMediaTypeVersion versionFunc, IEnumMediaTypes ** ppEnum);
@@ -209,7 +209,7 @@ HRESULT WINAPI EnumMediaTypes_Construct(BasePin *iface, BasePin_GetMediaType enu
 /* Transform Filter */
 typedef struct TransformFilter
 {
-    BaseFilter filter;
+    struct strmbase_filter filter;
     BaseOutputPin source;
     BaseInputPin sink;
 
@@ -429,12 +429,13 @@ typedef struct tagBaseControlWindow
 	BOOL AutoShow;
 	HWND hwndDrain;
 	HWND hwndOwner;
-	BaseFilter* pFilter;
+	struct strmbase_filter *pFilter;
 	CRITICAL_SECTION* pInterfaceLock;
 	BasePin*  pPin;
 } BaseControlWindow;
 
-HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *pControlWindow, const IVideoWindowVtbl *lpVtbl, BaseFilter *owner, CRITICAL_SECTION *lock, BasePin* pPin, const BaseWindowFuncTable* pFuncsTable);
+HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *window, const IVideoWindowVtbl *vtbl,
+        struct strmbase_filter *filter, CRITICAL_SECTION *lock, BasePin *pin, const BaseWindowFuncTable *ops);
 HRESULT WINAPI BaseControlWindow_Destroy(BaseControlWindow *pControlWindow);
 
 BOOL WINAPI BaseControlWindowImpl_PossiblyEatMessage(BaseWindow *This, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -494,7 +495,7 @@ typedef struct tagBaseControlVideo
 {
 	IBasicVideo IBasicVideo_iface;
 
-	BaseFilter* pFilter;
+	struct strmbase_filter *pFilter;
 	CRITICAL_SECTION* pInterfaceLock;
 	BasePin*  pPin;
 
@@ -526,7 +527,7 @@ typedef struct BaseControlVideoFuncTable {
 	BaseControlVideo_SetTargetRect pfnSetTargetRect;
 } BaseControlVideoFuncTable;
 
-HRESULT WINAPI strmbase_video_init(BaseControlVideo *video, BaseFilter *filter,
+HRESULT WINAPI strmbase_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
         CRITICAL_SECTION *cs, BasePin *pin, const BaseControlVideoFuncTable *func_table);
 HRESULT WINAPI BaseControlVideo_Destroy(BaseControlVideo *pControlVideo);
 #endif
@@ -535,7 +536,7 @@ HRESULT WINAPI BaseControlVideo_Destroy(BaseControlVideo *pControlVideo);
 /* BaseRenderer Filter */
 typedef struct BaseRendererTag
 {
-    BaseFilter filter;
+    struct strmbase_filter filter;
 
     BaseInputPin sink;
     IUnknown *pPosition;

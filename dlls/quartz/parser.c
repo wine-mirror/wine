@@ -56,14 +56,14 @@ static inline ParserImpl *impl_from_IBaseFilter( IBaseFilter *iface )
     return CONTAINING_RECORD(iface, ParserImpl, filter.IBaseFilter_iface);
 }
 
-static inline ParserImpl *impl_from_BaseFilter( BaseFilter *iface )
+static inline ParserImpl *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, ParserImpl, filter);
 }
 
-IPin *parser_get_pin(BaseFilter *iface, unsigned int index)
+IPin *parser_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
-    ParserImpl *filter = impl_from_BaseFilter(iface);
+    ParserImpl *filter = impl_from_strmbase_filter(iface);
 
     if (!index)
         return &filter->pInputPin->pin.IPin_iface;

@@ -27,7 +27,7 @@ static inline BaseRenderer *impl_from_IBaseFilter(IBaseFilter *iface)
     return CONTAINING_RECORD(iface, BaseRenderer, filter.IBaseFilter_iface);
 }
 
-static inline BaseRenderer *impl_from_BaseFilter(BaseFilter *iface)
+static inline BaseRenderer *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, BaseRenderer, filter);
 }
@@ -167,24 +167,24 @@ static const IPinVtbl BaseRenderer_InputPin_Vtbl =
     BaseInputPinImpl_NewSegment
 };
 
-static IPin *renderer_get_pin(BaseFilter *iface, unsigned int index)
+static IPin *renderer_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
-    BaseRenderer *filter = impl_from_BaseFilter(iface);
+    BaseRenderer *filter = impl_from_strmbase_filter(iface);
 
     if (index == 0)
         return &filter->sink.pin.IPin_iface;
     return NULL;
 }
 
-static void renderer_destroy(BaseFilter *iface)
+static void renderer_destroy(struct strmbase_filter *iface)
 {
-    BaseRenderer *filter = impl_from_BaseFilter(iface);
+    BaseRenderer *filter = impl_from_strmbase_filter(iface);
     filter->pFuncsTable->renderer_destroy(filter);
 }
 
-static HRESULT renderer_query_interface(BaseFilter *iface, REFIID iid, void **out)
+static HRESULT renderer_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
 {
-    BaseRenderer *filter = impl_from_BaseFilter(iface);
+    BaseRenderer *filter = impl_from_strmbase_filter(iface);
     HRESULT hr;
 
     if (filter->pFuncsTable->renderer_query_interface

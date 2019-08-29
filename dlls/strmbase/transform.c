@@ -35,7 +35,7 @@ static inline TransformFilter *impl_from_IBaseFilter( IBaseFilter *iface )
     return CONTAINING_RECORD(iface, TransformFilter, filter.IBaseFilter_iface);
 }
 
-static inline TransformFilter *impl_from_BaseFilter( BaseFilter *iface )
+static inline TransformFilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, TransformFilter, filter);
 }
@@ -121,9 +121,9 @@ static HRESULT WINAPI TransformFilter_Output_GetMediaType(BasePin *This, int iPo
     return S_OK;
 }
 
-static IPin *transform_get_pin(BaseFilter *iface, unsigned int index)
+static IPin *transform_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
-    TransformFilter *filter = impl_from_BaseFilter(iface);
+    TransformFilter *filter = impl_from_strmbase_filter(iface);
 
     if (index == 0)
         return &filter->sink.pin.IPin_iface;
@@ -132,9 +132,9 @@ static IPin *transform_get_pin(BaseFilter *iface, unsigned int index)
     return NULL;
 }
 
-static void transform_destroy(BaseFilter *iface)
+static void transform_destroy(struct strmbase_filter *iface)
 {
-    TransformFilter *filter = impl_from_BaseFilter(iface);
+    TransformFilter *filter = impl_from_strmbase_filter(iface);
 
     if (filter->sink.pin.pConnectedTo)
         IPin_Disconnect(filter->sink.pin.pConnectedTo);

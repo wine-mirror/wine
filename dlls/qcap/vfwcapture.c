@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
 typedef struct VfwCapture
 {
-    BaseFilter filter;
+    struct strmbase_filter filter;
     IAMStreamConfig IAMStreamConfig_iface;
     IAMVideoProcAmp IAMVideoProcAmp_iface;
     IPersistPropertyBag IPersistPropertyBag_iface;
@@ -57,7 +57,7 @@ typedef struct VfwCapture
     IKsPropertySet IKsPropertySet_iface;
 } VfwCapture;
 
-static inline VfwCapture *impl_from_BaseFilter(BaseFilter *iface)
+static inline VfwCapture *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, VfwCapture, filter);
 }
@@ -87,9 +87,9 @@ static inline VfwCapture *impl_from_IPin(IPin *iface)
     return CONTAINING_RECORD(iface, VfwCapture, source.pin.IPin_iface);
 }
 
-static IPin *vfw_capture_get_pin(BaseFilter *iface, unsigned int index)
+static IPin *vfw_capture_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
-    VfwCapture *This = impl_from_BaseFilter(iface);
+    VfwCapture *This = impl_from_strmbase_filter(iface);
 
     if (index >= 1)
         return NULL;
@@ -97,9 +97,9 @@ static IPin *vfw_capture_get_pin(BaseFilter *iface, unsigned int index)
     return &This->source.pin.IPin_iface;
 }
 
-static void vfw_capture_destroy(BaseFilter *iface)
+static void vfw_capture_destroy(struct strmbase_filter *iface)
 {
-    VfwCapture *filter = impl_from_BaseFilter(iface);
+    VfwCapture *filter = impl_from_strmbase_filter(iface);
 
     if (filter->init)
     {
@@ -119,9 +119,9 @@ static void vfw_capture_destroy(BaseFilter *iface)
     ObjectRefCount(FALSE);
 }
 
-static HRESULT vfw_capture_query_interface(BaseFilter *iface, REFIID iid, void **out)
+static HRESULT vfw_capture_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
 {
-    VfwCapture *filter = impl_from_BaseFilter(iface);
+    VfwCapture *filter = impl_from_strmbase_filter(iface);
 
     if (IsEqualGUID(iid, &IID_IPersistPropertyBag))
         *out = &filter->IPersistPropertyBag_iface;

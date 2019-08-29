@@ -144,7 +144,7 @@ typedef struct QTInPin {
 } QTInPin;
 
 typedef struct QTSplitter {
-    BaseFilter filter;
+    struct strmbase_filter filter;
 
     QTInPin pInputPin;
     QTOutPin *pVideo_Pin;
@@ -188,7 +188,7 @@ static inline QTSplitter *impl_from_IMediaSeeking( IMediaSeeking *iface )
     return CONTAINING_RECORD(iface, QTSplitter, sourceSeeking.IMediaSeeking_iface);
 }
 
-static inline QTSplitter *impl_from_BaseFilter( BaseFilter *iface )
+static inline QTSplitter *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, QTSplitter, filter);
 }
@@ -202,9 +202,9 @@ static inline QTSplitter *impl_from_IBaseFilter( IBaseFilter *iface )
  * Base Filter
  */
 
-static IPin *qt_splitter_get_pin(BaseFilter *base, unsigned int index)
+static IPin *qt_splitter_get_pin(struct strmbase_filter *base, unsigned int index)
 {
-    QTSplitter *filter = impl_from_BaseFilter(base);
+    QTSplitter *filter = impl_from_strmbase_filter(base);
 
     if (index == 0)
         return &filter->pInputPin.pin.IPin_iface;
@@ -221,9 +221,9 @@ static IPin *qt_splitter_get_pin(BaseFilter *base, unsigned int index)
     return NULL;
 }
 
-static void qt_splitter_destroy(BaseFilter *iface)
+static void qt_splitter_destroy(struct strmbase_filter *iface)
 {
-    QTSplitter *filter = impl_from_BaseFilter(iface);
+    QTSplitter *filter = impl_from_strmbase_filter(iface);
     IPin *peer = NULL;
 
     EnterCriticalSection(&filter->csReceive);

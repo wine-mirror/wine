@@ -28,7 +28,7 @@ typedef struct IEnumPinsImpl
     IEnumPins IEnumPins_iface;
     LONG refCount;
     unsigned int uIndex, count;
-    BaseFilter *base;
+    struct strmbase_filter *base;
     DWORD Version;
 } IEnumPinsImpl;
 
@@ -39,7 +39,7 @@ static inline IEnumPinsImpl *impl_from_IEnumPins(IEnumPins *iface)
 
 static const struct IEnumPinsVtbl IEnumPinsImpl_Vtbl;
 
-HRESULT enum_pins_create(BaseFilter *base, IEnumPins **out)
+HRESULT enum_pins_create(struct strmbase_filter *base, IEnumPins **out)
 {
     IEnumPinsImpl *object;
     IPin *pin;

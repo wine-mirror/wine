@@ -36,20 +36,20 @@
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
 typedef struct {
-    BaseFilter filter;
+    struct strmbase_filter filter;
     BaseInputPin sink;
     BaseOutputPin capture, preview;
 } SmartTeeFilter;
 
-static inline SmartTeeFilter *impl_from_BaseFilter(BaseFilter *filter)
+static inline SmartTeeFilter *impl_from_strmbase_filter(struct strmbase_filter *filter)
 {
     return CONTAINING_RECORD(filter, SmartTeeFilter, filter);
 }
 
 static inline SmartTeeFilter *impl_from_IBaseFilter(IBaseFilter *iface)
 {
-    BaseFilter *filter = CONTAINING_RECORD(iface, BaseFilter, IBaseFilter_iface);
-    return impl_from_BaseFilter(filter);
+    struct strmbase_filter *filter = CONTAINING_RECORD(iface, struct strmbase_filter, IBaseFilter_iface);
+    return impl_from_strmbase_filter(filter);
 }
 
 static inline SmartTeeFilter *impl_from_BasePin(BasePin *pin)
@@ -117,9 +117,9 @@ static const IBaseFilterVtbl SmartTeeFilterVtbl = {
     BaseFilterImpl_QueryVendorInfo
 };
 
-static IPin *smart_tee_get_pin(BaseFilter *iface, unsigned int index)
+static IPin *smart_tee_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
-    SmartTeeFilter *filter = impl_from_BaseFilter(iface);
+    SmartTeeFilter *filter = impl_from_strmbase_filter(iface);
 
     if (index == 0)
         return &filter->sink.pin.IPin_iface;
@@ -130,9 +130,9 @@ static IPin *smart_tee_get_pin(BaseFilter *iface, unsigned int index)
     return NULL;
 }
 
-static void smart_tee_destroy(BaseFilter *iface)
+static void smart_tee_destroy(struct strmbase_filter *iface)
 {
-    SmartTeeFilter *filter = impl_from_BaseFilter(iface);
+    SmartTeeFilter *filter = impl_from_strmbase_filter(iface);
 
     strmbase_sink_cleanup(&filter->sink);
     strmbase_source_cleanup(&filter->capture);

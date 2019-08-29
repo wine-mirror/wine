@@ -62,7 +62,7 @@ void QualityControlRender_DoQOS(QualityControlImpl *priv);
 void QualityControlRender_BeginRender(QualityControlImpl *This, REFERENCE_TIME start, REFERENCE_TIME stop);
 void QualityControlRender_EndRender(QualityControlImpl *This);
 
-HRESULT enum_pins_create(BaseFilter *base, IEnumPins **enum_pins);
+HRESULT enum_pins_create(struct strmbase_filter *filter, IEnumPins **enum_pins);
 
 HRESULT WINAPI RendererPosPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start);
 HRESULT WINAPI RendererPosPassThru_ResetMediaTime(IUnknown *iface);

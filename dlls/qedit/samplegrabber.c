@@ -211,7 +211,7 @@ static inline SG_Pin *impl_from_IPin(IPin *iface)
 
 /* Sample Grabber filter implementation */
 typedef struct _SG_Impl {
-    BaseFilter filter;
+    struct strmbase_filter filter;
     ISampleGrabber ISampleGrabber_iface;
     /* IMediaSeeking and IMediaPosition are implemented by ISeekingPassThru */
     IUnknown* seekthru_unk;
@@ -234,7 +234,7 @@ enum {
     OneShot_Past,
 };
 
-static inline SG_Impl *impl_from_BaseFilter(BaseFilter *iface)
+static inline SG_Impl *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, SG_Impl, filter);
 }
@@ -273,9 +273,9 @@ static void SampleGrabber_cleanup(SG_Impl *This)
         IUnknown_Release(This->seekthru_unk);
 }
 
-static IPin *sample_grabber_get_pin(BaseFilter *iface, unsigned int index)
+static IPin *sample_grabber_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
-    SG_Impl *filter = impl_from_BaseFilter(iface);
+    SG_Impl *filter = impl_from_strmbase_filter(iface);
 
     if (index == 0)
         return &filter->pin_in.IPin_iface;
@@ -284,18 +284,18 @@ static IPin *sample_grabber_get_pin(BaseFilter *iface, unsigned int index)
     return NULL;
 }
 
-static void sample_grabber_destroy(BaseFilter *iface)
+static void sample_grabber_destroy(struct strmbase_filter *iface)
 {
-    SG_Impl *filter = impl_from_BaseFilter(iface);
+    SG_Impl *filter = impl_from_strmbase_filter(iface);
 
     SampleGrabber_cleanup(filter);
     strmbase_filter_cleanup(&filter->filter);
     CoTaskMemFree(filter);
 }
 
-static HRESULT sample_grabber_query_interface(BaseFilter *iface, REFIID iid, void **out)
+static HRESULT sample_grabber_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
 {
-    SG_Impl *filter = impl_from_BaseFilter(iface);
+    SG_Impl *filter = impl_from_strmbase_filter(iface);
 
     if (IsEqualGUID(iid, &IID_ISampleGrabber))
         *out = &filter->ISampleGrabber_iface;

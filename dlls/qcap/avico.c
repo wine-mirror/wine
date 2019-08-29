@@ -34,7 +34,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
 typedef struct {
-    BaseFilter filter;
+    struct strmbase_filter filter;
     IPersistPropertyBag IPersistPropertyBag_iface;
 
     BaseInputPin sink;
@@ -51,15 +51,15 @@ typedef struct {
     DWORD frame_cnt;
 } AVICompressor;
 
-static inline AVICompressor *impl_from_BaseFilter(BaseFilter *filter)
+static inline AVICompressor *impl_from_strmbase_filter(struct strmbase_filter *filter)
 {
     return CONTAINING_RECORD(filter, AVICompressor, filter);
 }
 
 static inline AVICompressor *impl_from_IBaseFilter(IBaseFilter *iface)
 {
-    BaseFilter *filter = CONTAINING_RECORD(iface, BaseFilter, IBaseFilter_iface);
-    return impl_from_BaseFilter(filter);
+    struct strmbase_filter *filter = CONTAINING_RECORD(iface, struct strmbase_filter, IBaseFilter_iface);
+    return impl_from_strmbase_filter(filter);
 }
 
 static inline AVICompressor *impl_from_BasePin(BasePin *pin)
@@ -178,9 +178,9 @@ static const IBaseFilterVtbl AVICompressorVtbl = {
     BaseFilterImpl_QueryVendorInfo,
 };
 
-static IPin *avi_compressor_get_pin(BaseFilter *iface, unsigned int index)
+static IPin *avi_compressor_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
-    AVICompressor *filter = impl_from_BaseFilter(iface);
+    AVICompressor *filter = impl_from_strmbase_filter(iface);
 
     if (index == 0)
         return &filter->sink.pin.IPin_iface;
@@ -189,9 +189,9 @@ static IPin *avi_compressor_get_pin(BaseFilter *iface, unsigned int index)
     return NULL;
 }
 
-static void avi_compressor_destroy(BaseFilter *iface)
+static void avi_compressor_destroy(struct strmbase_filter *iface)
 {
-    AVICompressor *filter = impl_from_BaseFilter(iface);
+    AVICompressor *filter = impl_from_strmbase_filter(iface);
 
     if (filter->hic)
         ICClose(filter->hic);
@@ -202,9 +202,9 @@ static void avi_compressor_destroy(BaseFilter *iface)
     heap_free(filter);
 }
 
-static HRESULT avi_compressor_query_interface(BaseFilter *iface, REFIID iid, void **out)
+static HRESULT avi_compressor_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
 {
-    AVICompressor *filter = impl_from_BaseFilter(iface);
+    AVICompressor *filter = impl_from_strmbase_filter(iface);
 
     if (IsEqualGUID(iid, &IID_IPersistPropertyBag))
         *out = &filter->IPersistPropertyBag_iface;

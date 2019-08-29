@@ -408,7 +408,7 @@ static const IBaseFilterVtbl WAVEParser_Vtbl =
     BaseFilterImpl_QueryVendorInfo,
 };
 
-static void wave_parser_destroy(BaseFilter *iface)
+static void wave_parser_destroy(struct strmbase_filter *iface)
 {
     WAVEParserImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
     Parser_Destroy(&filter->Parser);

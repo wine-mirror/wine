@@ -55,7 +55,7 @@ typedef struct GSTInPin {
 } GSTInPin;
 
 typedef struct GSTImpl {
-    BaseFilter filter;
+    struct strmbase_filter filter;
 
     GSTInPin pInputPin;
     GSTOutPin **ppPins;
@@ -1196,7 +1196,7 @@ static inline GSTOutPin *impl_from_IMediaSeeking( IMediaSeeking *iface )
     return CONTAINING_RECORD(iface, GSTOutPin, seek.IMediaSeeking_iface);
 }
 
-static IPin *gstdemux_get_pin(BaseFilter *base, unsigned int index)
+static IPin *gstdemux_get_pin(struct strmbase_filter *base, unsigned int index)
 {
     GSTImpl *filter = impl_from_IBaseFilter(&base->IBaseFilter_iface);
 
@@ -1207,7 +1207,7 @@ static IPin *gstdemux_get_pin(BaseFilter *base, unsigned int index)
     return NULL;
 }
 
-static void gstdemux_destroy(BaseFilter *iface)
+static void gstdemux_destroy(struct strmbase_filter *iface)
 {
     GSTImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
     IPin *connected = NULL;

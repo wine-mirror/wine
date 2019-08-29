@@ -1404,7 +1404,7 @@ static const IBaseFilterVtbl AVISplitterImpl_Vtbl =
     BaseFilterImpl_QueryVendorInfo,
 };
 
-static void avi_splitter_destroy(BaseFilter *iface)
+static void avi_splitter_destroy(struct strmbase_filter *iface)
 {
     AVISplitterImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
     AVISplitter_Flush(filter);

@@ -836,13 +836,13 @@ static const IAMStreamSelectVtbl AMStreamSelectVtbl =
     AMStreamSelect_Enable
 };
 
-static void mpeg_splitter_destroy(BaseFilter *iface)
+static void mpeg_splitter_destroy(struct strmbase_filter *iface)
 {
     MPEGSplitterImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
     Parser_Destroy(&filter->Parser);
 }
 
-static HRESULT mpeg_splitter_query_interface(BaseFilter *iface, REFIID iid, void **out)
+static HRESULT mpeg_splitter_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
 {
     MPEGSplitterImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
 
