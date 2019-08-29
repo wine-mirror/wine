@@ -76,7 +76,7 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_AMMultiMediaStream, AM_create },
     { &CLSID_AMDirectDrawStream, AM_create },
     { &CLSID_AMAudioData, AMAudioData_create },
-    { &CLSID_MediaStreamFilter, MediaStreamFilter_create }
+    { &CLSID_MediaStreamFilter, filter_create }
 };
 
 static HRESULT WINAPI AMCF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)
