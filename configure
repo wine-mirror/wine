@@ -662,6 +662,8 @@ FAUDIO_LIBS
 FAUDIO_CFLAGS
 SDL2_LIBS
 SDL2_CFLAGS
+UNWIND_LIBS
+UNWIND_CFLAGS
 UDEV_LIBS
 UDEV_CFLAGS
 OSS4_CFLAGS
@@ -874,6 +876,7 @@ with_sane
 with_sdl
 with_tiff
 with_udev
+with_unwind
 with_v4l2
 with_vkd3d
 with_vulkan
@@ -1852,6 +1855,8 @@ GSTREAMER_CFLAGS
 GSTREAMER_LIBS
 UDEV_CFLAGS
 UDEV_LIBS
+UNWIND_CFLAGS
+UNWIND_LIBS
 SDL2_CFLAGS
 SDL2_LIBS
 FAUDIO_CFLAGS
@@ -2559,6 +2564,8 @@ Optional Packages:
   --without-sdl           do not use SDL
   --without-tiff          do not use TIFF
   --without-udev          do not use udev (plug and play support)
+  --without-unwind        do not use the libunwind library (exception
+                          handling)
   --without-v4l2          do not use v4l2 (video capture)
   --without-vkd3d         do not use vkd3d (Direct3D 12 support)
   --without-vulkan        do not use Vulkan
@@ -2640,6 +2647,9 @@ Some influential environment variables:
               gstreamer-audio-1.0, overriding pkg-config
   UDEV_CFLAGS C compiler flags for libudev, overriding pkg-config
   UDEV_LIBS   Linker flags for libudev, overriding pkg-config
+  UNWIND_CFLAGS
+              C compiler flags for libunwind, overriding pkg-config
+  UNWIND_LIBS Linker flags for libunwind, overriding pkg-config
   SDL2_CFLAGS C compiler flags for sdl2, overriding pkg-config
   SDL2_LIBS   Linker flags for sdl2, overriding pkg-config
   FAUDIO_CFLAGS
@@ -4072,6 +4082,12 @@ fi
 # Check whether --with-udev was given.
 if test "${with_udev+set}" = set; then :
   withval=$with_udev;
+fi
+
+
+# Check whether --with-unwind was given.
+if test "${with_unwind+set}" = set; then :
+  withval=$with_unwind;
 fi
 
 
@@ -5590,6 +5606,7 @@ $as_echo "$wine_cv_cc_m32" >&6; }
       PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-/usr/lib/i386-linux-gnu/pkgconfig:/usr/lib/pkgconfig}
       export PKG_CONFIG_PATH
       enable_win16=${enable_win16:-yes}
+      with_unwind=${with_unwind:-no}
     else
       if test "x${GCC}" = "xyes"
       then
@@ -5736,6 +5753,7 @@ $as_echo "$wine_cv_builtin_ms_va_list" >&6; }
     ;;
   i[3456789]86*)
     enable_win16=${enable_win16:-yes}
+    with_unwind=${with_unwind:-no}
     ;;
 esac
 
@@ -8254,18 +8272,6 @@ fi
     ;;
 
   darwin*|macosx*)
-    for ac_header in libunwind.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "libunwind.h" "ac_cv_header_libunwind_h" "$ac_includes_default"
-if test "x$ac_cv_header_libunwind_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBUNWIND_H 1
-_ACEOF
-
-fi
-
-done
-
     ac_ext=m
 ac_cpp='$OBJCPP $CPPFLAGS'
 ac_compile='$OBJC -c $OBJCFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -14823,6 +14829,110 @@ esac
 
 fi
 
+if test "x$with_unwind" != xno
+then
+    if ${UNWIND_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  UNWIND_CFLAGS=`$PKG_CONFIG --cflags libunwind 2>/dev/null`
+fi
+fi
+
+if ${UNWIND_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  UNWIND_LIBS=`$PKG_CONFIG --libs libunwind 2>/dev/null`
+fi
+fi
+
+UNWIND_LIBS=${UNWIND_LIBS:-"-lunwind"}
+$as_echo "$as_me:${as_lineno-$LINENO}: libunwind cflags: $UNWIND_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libunwind libs: $UNWIND_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $UNWIND_CFLAGS"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for unw_getcontext" >&5
+$as_echo_n "checking for unw_getcontext... " >&6; }
+if ${wine_cv_have_unw_getcontext+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
+int
+main ()
+{
+unw_context_t context; unw_getcontext( &context );
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  wine_cv_have_unw_getcontext="yes"
+else
+  wine_cv_have_unw_getcontext="no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_unw_getcontext" >&5
+$as_echo "$wine_cv_have_unw_getcontext" >&6; }
+        if test "$wine_cv_have_unw_getcontext" = no -a -n "$UNWIND_LIBS"
+        then
+            save_libs=$LIBS
+            LIBS="$UNWIND_LIBS $LIBS"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for unw_getcontext in libunwind" >&5
+$as_echo_n "checking for unw_getcontext in libunwind... " >&6; }
+if ${wine_cv_have_libunwind_unw_getcontext+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
+int
+main ()
+{
+unw_context_t context; unw_getcontext( &context );
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  wine_cv_have_libunwind_unw_getcontext="yes"
+else
+  wine_cv_have_libunwind_unw_getcontext="no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_libunwind_unw_getcontext" >&5
+$as_echo "$wine_cv_have_libunwind_unw_getcontext" >&6; }
+            test "$wine_cv_have_libunwind_unw_getcontext" = yes || UNWIND_LIBS=""
+            LIBS=$save_libs
+        fi
+        if test "x$wine_cv_have_unw_getcontext$wine_cv_have_libunwind_unw_getcontext" != xnono
+        then
+
+$as_echo "#define HAVE_LIBUNWIND 1" >>confdefs.h
+
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$UNWIND_CFLAGS" || UNWIND_CFLAGS=`echo " $UNWIND_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$UNWIND_LIBS" || UNWIND_LIBS=`echo " $UNWIND_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
+fi
+case $host in
+  aarch64*|*-darwin*)
+    if test "x$wine_cv_have_unw_getcontext$wine_cv_have_libunwind_unw_getcontext" != xnono; then :
+  case "x$with_unwind" in
+  x)   as_fn_append wine_notices "|libunwind ${notice_platform}development files not found, stack unwinding won't work." ;;
+  xno) ;;
+  *)   as_fn_error $? "libunwind ${notice_platform}development files not found, stack unwinding won't work.
+This is an error since --with-unwind was requested." "$LINENO" 5 ;;
+esac
+
+fi ;;
+esac
+
 if test "x$with_sdl" != "xno"
 then
     if ${SDL2_CFLAGS:+false} :; then :
@@ -19717,6 +19827,8 @@ ALSA_LIBS = $ALSA_LIBS
 OSS4_CFLAGS = $OSS4_CFLAGS
 UDEV_CFLAGS = $UDEV_CFLAGS
 UDEV_LIBS = $UDEV_LIBS
+UNWIND_CFLAGS = $UNWIND_CFLAGS
+UNWIND_LIBS = $UNWIND_LIBS
 SDL2_CFLAGS = $SDL2_CFLAGS
 SDL2_LIBS = $SDL2_LIBS
 FAUDIO_CFLAGS = $FAUDIO_CFLAGS

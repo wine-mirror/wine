@@ -419,8 +419,8 @@
 /* Define to 1 if you have the <libudev.h> header file. */
 #undef HAVE_LIBUDEV_H
 
-/* Define to 1 if you have the <libunwind.h> header file. */
-#undef HAVE_LIBUNWIND_H
+/* Define to 1 if you have the `unwind' library (-lunwind). */
+#undef HAVE_LIBUNWIND
 
 /* Define if you have the libxml2 library */
 #undef HAVE_LIBXML2

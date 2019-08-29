@@ -82,6 +82,7 @@ AC_ARG_WITH(sane,      AS_HELP_STRING([--without-sane],[do not use SANE (scanner
 AC_ARG_WITH(sdl,       AS_HELP_STRING([--without-sdl],[do not use SDL]))
 AC_ARG_WITH(tiff,      AS_HELP_STRING([--without-tiff],[do not use TIFF]))
 AC_ARG_WITH(udev,      AS_HELP_STRING([--without-udev],[do not use udev (plug and play support)]))
+AC_ARG_WITH(unwind,    AS_HELP_STRING([--without-unwind],[do not use the libunwind library (exception handling)]))
 AC_ARG_WITH(v4l2,      AS_HELP_STRING([--without-v4l2],[do not use v4l2 (video capture)]))
 AC_ARG_WITH(vkd3d,     AS_HELP_STRING([--without-vkd3d],[do not use vkd3d (Direct3D 12 support)]))
 AC_ARG_WITH(vulkan,    AS_HELP_STRING([--without-vulkan],[do not use Vulkan]))
@@ -161,6 +162,7 @@ case $host in
       PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-/usr/lib/i386-linux-gnu/pkgconfig:/usr/lib/pkgconfig}
       export PKG_CONFIG_PATH
       enable_win16=${enable_win16:-yes}
+      with_unwind=${with_unwind:-no}
     else
       if test "x${GCC}" = "xyes"
       then
@@ -214,6 +216,7 @@ case $host in
     ;;
   i[[3456789]]86*)
     enable_win16=${enable_win16:-yes}
+    with_unwind=${with_unwind:-no}
     ;;
 esac
 
@@ -743,7 +746,6 @@ case $host_os in
     ;;
 
   darwin*|macosx*)
-    AC_CHECK_HEADERS(libunwind.h)
     AC_LANG_PUSH([Objective C])
         AC_CHECK_HEADERS(Metal/Metal.h)
     AC_LANG_POP([Objective C])
@@ -1675,6 +1677,39 @@ then
 fi
 WINE_NOTICE_WITH(udev,[test "x$UDEV_LIBS" = "x"],
                  [libudev ${notice_platform}development files not found, plug and play won't be supported.])
+
+dnl **** Check for libuwind ****
+if test "x$with_unwind" != xno
+then
+    WINE_PACKAGE_FLAGS(UNWIND,[libunwind],[-lunwind],,,
+       [AC_CACHE_CHECK([for unw_getcontext],wine_cv_have_unw_getcontext,
+           [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define UNW_LOCAL_ONLY
+#include <libunwind.h>]],
+                [[unw_context_t context; unw_getcontext( &context );]])],
+                [wine_cv_have_unw_getcontext="yes"],[wine_cv_have_unw_getcontext="no"])])
+        if test "$wine_cv_have_unw_getcontext" = no -a -n "$UNWIND_LIBS"
+        then
+            save_libs=$LIBS
+            LIBS="$UNWIND_LIBS $LIBS"
+            AC_CACHE_CHECK([for unw_getcontext in libunwind],wine_cv_have_libunwind_unw_getcontext,
+               [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define UNW_LOCAL_ONLY
+#include <libunwind.h>]],
+                    [[unw_context_t context; unw_getcontext( &context );]])],
+                    [wine_cv_have_libunwind_unw_getcontext="yes"],
+                    [wine_cv_have_libunwind_unw_getcontext="no"])])
+            test "$wine_cv_have_libunwind_unw_getcontext" = yes || UNWIND_LIBS=""
+            LIBS=$save_libs
+        fi
+        if test "x$wine_cv_have_unw_getcontext$wine_cv_have_libunwind_unw_getcontext" != xnono
+        then
+            AC_DEFINE(HAVE_LIBUNWIND,1,[Define to 1 if you have the `unwind' library (-lunwind).])
+        fi])
+fi
+case $host in
+  aarch64*|*-darwin*)
+    WINE_NOTICE_WITH(unwind,[test "x$wine_cv_have_unw_getcontext$wine_cv_have_libunwind_unw_getcontext" != xnono],
+                     [libunwind ${notice_platform}development files not found, stack unwinding won't work.]) ;;
+esac
 
 dnl **** Check for libSDL2 ****
 if test "x$with_sdl" != "xno"

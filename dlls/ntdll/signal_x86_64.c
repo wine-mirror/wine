@@ -51,7 +51,7 @@
 #ifdef HAVE_SYS_UCONTEXT_H
 # include <sys/ucontext.h>
 #endif
-#ifdef HAVE_LIBUNWIND_H
+#ifdef HAVE_LIBUNWIND
 # define UNW_LOCAL_ONLY
 # include <libunwind.h>
 #endif
@@ -1409,7 +1409,7 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
 }
 
 
-#ifdef HAVE_LIBUNWIND_H
+#ifdef HAVE_LIBUNWIND
 /***********************************************************************
  *           libunwind_set_cursor_from_context
  */
@@ -1629,7 +1629,7 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
             if (status != STATUS_SUCCESS) return status;
             got_info = TRUE;
         }
-#ifdef HAVE_LIBUNWIND_H
+#ifdef HAVE_LIBUNWIND
         else
         {
             status = libunwind_virtual_unwind( context->Rip, &got_info, &dispatch->EstablisherFrame,
