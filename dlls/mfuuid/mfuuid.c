@@ -31,3 +31,4 @@
 #include "mfapi.h"
 #include "mfidl.h"
 #include "mfreadwrite.h"
+#include "mfmediaengine.h"
