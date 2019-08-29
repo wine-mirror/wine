@@ -215,7 +215,8 @@ static HRESULT avi_compressor_query_interface(BaseFilter *iface, REFIID iid, voi
     return S_OK;
 }
 
-static const BaseFilterFuncTable filter_func_table = {
+static const struct strmbase_filter_ops filter_ops =
+{
     .filter_get_pin = avi_compressor_get_pin,
     .filter_destroy = avi_compressor_destroy,
     .filter_query_interface = avi_compressor_query_interface,
@@ -600,7 +601,7 @@ IUnknown* WINAPI QCAP_createAVICompressor(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_filter_init(&compressor->filter, &AVICompressorVtbl, outer, &CLSID_AVICo, &filter_func_table);
+    strmbase_filter_init(&compressor->filter, &AVICompressorVtbl, outer, &CLSID_AVICo, &filter_ops);
 
     compressor->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
 

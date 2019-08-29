@@ -73,7 +73,7 @@ IPin *parser_get_pin(BaseFilter *iface, unsigned int index)
 }
 
 HRESULT Parser_Create(ParserImpl *pParser, const IBaseFilterVtbl *vtbl, IUnknown *outer,
-        const CLSID *clsid, const BaseFilterFuncTable *func_table, const WCHAR *sink_name,
+        const CLSID *clsid, const struct strmbase_filter_ops *func_table, const WCHAR *sink_name,
         PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect,
         PFN_CLEANUP fnCleanup, PFN_DISCONNECT fnDisconnect, REQUESTPROC fnRequest,
         STOPPROCESSPROC fnDone, SourceSeeking_ChangeStop stop,

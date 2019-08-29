@@ -1411,7 +1411,7 @@ static void avi_splitter_destroy(BaseFilter *iface)
     Parser_Destroy(&filter->Parser);
 }
 
-static const BaseFilterFuncTable avi_splitter_func_table =
+static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = parser_get_pin,
     .filter_destroy = avi_splitter_destroy,
@@ -1432,7 +1432,7 @@ HRESULT AVISplitter_create(IUnknown *outer, void **out)
     This->oldindex = NULL;
 
     hr = Parser_Create(&This->Parser, &AVISplitterImpl_Vtbl, outer, &CLSID_AviSplitter,
-            &avi_splitter_func_table, sink_name, AVISplitter_Sample, AVISplitter_QueryAccept,
+            &filter_ops, sink_name, AVISplitter_Sample, AVISplitter_QueryAccept,
             AVISplitter_InputPin_PreConnect, AVISplitter_Flush,
             AVISplitter_Disconnect, AVISplitter_first_request,
             AVISplitter_done_process, NULL, AVISplitter_seek, NULL);

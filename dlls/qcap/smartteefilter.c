@@ -141,7 +141,8 @@ static void smart_tee_destroy(BaseFilter *iface)
     CoTaskMemFree(filter);
 }
 
-static const BaseFilterFuncTable SmartTeeFilterFuncs = {
+static const struct strmbase_filter_ops filter_ops =
+{
     .filter_get_pin = smart_tee_get_pin,
     .filter_destroy = smart_tee_destroy,
 };
@@ -483,7 +484,7 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
     }
     memset(This, 0, sizeof(*This));
 
-    strmbase_filter_init(&This->filter, &SmartTeeFilterVtbl, outer, &CLSID_SmartTee, &SmartTeeFilterFuncs);
+    strmbase_filter_init(&This->filter, &SmartTeeFilterVtbl, outer, &CLSID_SmartTee, &filter_ops);
 
     inputPinInfo.pFilter = &This->filter.IBaseFilter_iface;
     strmbase_sink_init(&This->sink, &SmartTeeFilterInputVtbl, &inputPinInfo,

@@ -156,7 +156,8 @@ static void transform_destroy(BaseFilter *iface)
     CoTaskMemFree(filter);
 }
 
-static const BaseFilterFuncTable tfBaseFuncTable = {
+static const struct strmbase_filter_ops filter_ops =
+{
     .filter_get_pin = transform_get_pin,
     .filter_destroy = transform_destroy,
 };
@@ -277,7 +278,7 @@ static HRESULT strmbase_transform_init(IUnknown *outer, const CLSID *clsid,
     PIN_INFO piInput;
     PIN_INFO piOutput;
 
-    strmbase_filter_init(&filter->filter, &transform_vtbl, outer, clsid, &tfBaseFuncTable);
+    strmbase_filter_init(&filter->filter, &transform_vtbl, outer, clsid, &filter_ops);
 
     InitializeCriticalSection(&filter->csReceive);
     filter->csReceive.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": TransformFilter.csReceive");

@@ -414,7 +414,7 @@ static void wave_parser_destroy(BaseFilter *iface)
     Parser_Destroy(&filter->Parser);
 }
 
-static const BaseFilterFuncTable wave_parser_func_table =
+static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = parser_get_pin,
     .filter_destroy = wave_parser_destroy,
@@ -432,7 +432,7 @@ HRESULT WAVEParser_create(IUnknown *outer, void **out)
     This = CoTaskMemAlloc(sizeof(WAVEParserImpl));
 
     hr = Parser_Create(&This->Parser, &WAVEParser_Vtbl, outer, &CLSID_WAVEParser,
-            &wave_parser_func_table, sink_name, WAVEParser_Sample, WAVEParser_QueryAccept,
+            &filter_ops, sink_name, WAVEParser_Sample, WAVEParser_QueryAccept,
             WAVEParser_InputPin_PreConnect, WAVEParser_Cleanup, WAVEParser_disconnect,
             WAVEParser_first_request, NULL, NULL, WAVEParserImpl_seek, NULL);
 

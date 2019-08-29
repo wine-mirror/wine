@@ -393,7 +393,7 @@ static HRESULT async_reader_query_interface(BaseFilter *iface, REFIID iid, void 
     return E_NOINTERFACE;
 }
 
-static const BaseFilterFuncTable BaseFuncTable =
+static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = async_reader_get_pin,
     .filter_destroy = async_reader_destroy,
@@ -409,7 +409,7 @@ HRESULT AsyncReader_create(IUnknown *outer, void **out)
     if (!pAsyncRead)
         return E_OUTOFMEMORY;
 
-    strmbase_filter_init(&pAsyncRead->filter, &AsyncReader_Vtbl, outer, &CLSID_AsyncReader, &BaseFuncTable);
+    strmbase_filter_init(&pAsyncRead->filter, &AsyncReader_Vtbl, outer, &CLSID_AsyncReader, &filter_ops);
 
     pAsyncRead->IFileSourceFilter_iface.lpVtbl = &FileSource_Vtbl;
 

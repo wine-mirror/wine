@@ -856,7 +856,7 @@ static HRESULT mpeg_splitter_query_interface(BaseFilter *iface, REFIID iid, void
     return E_NOINTERFACE;
 }
 
-static const BaseFilterFuncTable mpeg_splitter_func_table =
+static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = parser_get_pin,
     .filter_destroy = mpeg_splitter_destroy,
@@ -877,7 +877,7 @@ HRESULT MPEGSplitter_create(IUnknown *outer, void **out)
 
     ZeroMemory(This, sizeof(MPEGSplitterImpl));
     hr = Parser_Create(&This->Parser, &MPEGSplitter_Vtbl, outer, &CLSID_MPEG1Splitter,
-            &mpeg_splitter_func_table, sink_name, MPEGSplitter_process_sample, MPEGSplitter_query_accept,
+            &filter_ops, sink_name, MPEGSplitter_process_sample, MPEGSplitter_query_accept,
             MPEGSplitter_pre_connect, MPEGSplitter_cleanup, MPEGSplitter_disconnect,
             MPEGSplitter_first_request, NULL, NULL, MPEGSplitter_seek, NULL);
     if (FAILED(hr))

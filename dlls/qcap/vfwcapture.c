@@ -134,7 +134,8 @@ static HRESULT vfw_capture_query_interface(BaseFilter *iface, REFIID iid, void *
     return S_OK;
 }
 
-static const BaseFilterFuncTable BaseFuncTable = {
+static const struct strmbase_filter_ops filter_ops =
+{
     .filter_get_pin = vfw_capture_get_pin,
     .filter_destroy = vfw_capture_destroy,
     .filter_query_interface = vfw_capture_query_interface,
@@ -642,7 +643,7 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_filter_init(&object->filter, &VfwCapture_Vtbl, outer, &CLSID_VfwCapture, &BaseFuncTable);
+    strmbase_filter_init(&object->filter, &VfwCapture_Vtbl, outer, &CLSID_VfwCapture, &filter_ops);
 
     object->IAMStreamConfig_iface.lpVtbl = &IAMStreamConfig_VTable;
     object->IAMVideoProcAmp_iface.lpVtbl = &IAMVideoProcAmp_VTable;

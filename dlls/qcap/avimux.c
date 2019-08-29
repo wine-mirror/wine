@@ -167,7 +167,8 @@ static HRESULT avi_mux_query_interface(BaseFilter *iface, REFIID iid, void **out
     return S_OK;
 }
 
-static const BaseFilterFuncTable filter_func_table = {
+static const struct strmbase_filter_ops filter_ops =
+{
     .filter_get_pin = avi_mux_get_pin,
     .filter_destroy = avi_mux_destroy,
     .filter_query_interface = avi_mux_query_interface,
@@ -2251,7 +2252,7 @@ IUnknown * WINAPI QCAP_createAVIMux(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_filter_init(&avimux->filter, &AviMuxVtbl, outer, &CLSID_AviDest, &filter_func_table);
+    strmbase_filter_init(&avimux->filter, &AviMuxVtbl, outer, &CLSID_AviDest, &filter_ops);
     avimux->IConfigAviMux_iface.lpVtbl = &ConfigAviMuxVtbl;
     avimux->IConfigInterleaving_iface.lpVtbl = &ConfigInterleavingVtbl;
     avimux->IMediaSeeking_iface.lpVtbl = &MediaSeekingVtbl;

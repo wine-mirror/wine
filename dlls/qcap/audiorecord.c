@@ -122,7 +122,8 @@ static HRESULT audio_record_query_interface(BaseFilter *iface, REFIID iid, void 
     return S_OK;
 }
 
-static const BaseFilterFuncTable AudioRecordFuncs = {
+static const struct strmbase_filter_ops filter_ops =
+{
     .filter_get_pin = audio_record_get_pin,
     .filter_destroy = audio_record_destroy,
     .filter_query_interface = audio_record_query_interface,
@@ -213,7 +214,7 @@ IUnknown* WINAPI QCAP_createAudioCaptureFilter(IUnknown *outer, HRESULT *phr)
     memset(This, 0, sizeof(*This));
     This->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
 
-    strmbase_filter_init(&This->filter, &AudioRecordVtbl, outer, &CLSID_AudioRecord, &AudioRecordFuncs);
+    strmbase_filter_init(&This->filter, &AudioRecordVtbl, outer, &CLSID_AudioRecord, &filter_ops);
 
     *phr = S_OK;
     return &This->filter.IUnknown_inner;

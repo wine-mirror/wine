@@ -53,7 +53,7 @@ struct ParserImpl
 extern HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, const AM_MEDIA_TYPE * amt);
 
 HRESULT Parser_Create(ParserImpl *parser, const IBaseFilterVtbl *vtbl, IUnknown *outer,
-        const CLSID *clsid, const BaseFilterFuncTable *func_table, const WCHAR *sink_name,
+        const CLSID *clsid, const struct strmbase_filter_ops *func_table, const WCHAR *sink_name,
         PFN_PROCESS_SAMPLE, PFN_QUERY_ACCEPT, PFN_PRE_CONNECT, PFN_CLEANUP, PFN_DISCONNECT,
         REQUESTPROC, STOPPROCESSPROC, SourceSeeking_ChangeStop,
         SourceSeeking_ChangeStart, SourceSeeking_ChangeRate) DECLSPEC_HIDDEN;

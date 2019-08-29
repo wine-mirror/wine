@@ -1245,7 +1245,8 @@ static void gstdemux_destroy(BaseFilter *iface)
     CoTaskMemFree(filter);
 }
 
-static const BaseFilterFuncTable BaseFuncTable = {
+static const struct strmbase_filter_ops filter_ops =
+{
     .filter_get_pin = gstdemux_get_pin,
     .filter_destroy = gstdemux_destroy,
 };
@@ -1271,7 +1272,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     }
     memset(This, 0, sizeof(*This));
 
-    strmbase_filter_init(&This->filter, &GST_Vtbl, outer, &CLSID_Gstreamer_Splitter, &BaseFuncTable);
+    strmbase_filter_init(&This->filter, &GST_Vtbl, outer, &CLSID_Gstreamer_Splitter, &filter_ops);
 
     This->cStreams = 0;
     This->ppPins = NULL;

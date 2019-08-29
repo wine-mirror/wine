@@ -306,7 +306,8 @@ static HRESULT sample_grabber_query_interface(BaseFilter *iface, REFIID iid, voi
     return S_OK;
 }
 
-static const BaseFilterFuncTable basefunc_vtbl = {
+static const struct strmbase_filter_ops filter_ops =
+{
     .filter_get_pin = sample_grabber_get_pin,
     .filter_destroy = sample_grabber_destroy,
     .filter_query_interface = sample_grabber_query_interface,
@@ -1154,7 +1155,7 @@ HRESULT SampleGrabber_create(IUnknown *outer, void **out)
     }
     ZeroMemory(obj, sizeof(SG_Impl));
 
-    strmbase_filter_init(&obj->filter, &IBaseFilter_VTable, outer, &CLSID_SampleGrabber, &basefunc_vtbl);
+    strmbase_filter_init(&obj->filter, &IBaseFilter_VTable, outer, &CLSID_SampleGrabber, &filter_ops);
     obj->ISampleGrabber_iface.lpVtbl = &ISampleGrabber_VTable;
     obj->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
     obj->pin_in.IPin_iface.lpVtbl = &IPin_In_VTable;

@@ -171,15 +171,15 @@ typedef struct BaseFilter
     CLSID clsid;
     LONG pin_version;
 
-    const struct BaseFilterFuncTable* pFuncsTable;
+    const struct strmbase_filter_ops *pFuncsTable;
 } BaseFilter;
 
-typedef struct BaseFilterFuncTable
+struct strmbase_filter_ops
 {
     IPin *(*filter_get_pin)(BaseFilter *iface, unsigned int index);
     void (*filter_destroy)(BaseFilter *iface);
     HRESULT (*filter_query_interface)(BaseFilter *iface, REFIID iid, void **out);
-} BaseFilterFuncTable;
+};
 
 HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
 ULONG WINAPI BaseFilterImpl_AddRef(IBaseFilter * iface);
@@ -200,7 +200,7 @@ HRESULT WINAPI BaseFilterImpl_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVend
 VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter* This);
 
 void strmbase_filter_init(BaseFilter *filter, const IBaseFilterVtbl *vtbl, IUnknown *outer,
-        const CLSID *clsid, const BaseFilterFuncTable *func_table);
+        const CLSID *clsid, const struct strmbase_filter_ops *func_table);
 void strmbase_filter_cleanup(BaseFilter *filter);
 
 /* Enums */

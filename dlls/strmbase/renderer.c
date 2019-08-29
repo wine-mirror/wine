@@ -204,7 +204,8 @@ static HRESULT renderer_query_interface(BaseFilter *iface, REFIID iid, void **ou
     return E_NOINTERFACE;
 }
 
-static const BaseFilterFuncTable RendererBaseFilterFuncTable = {
+static const struct strmbase_filter_ops filter_ops =
+{
     .filter_get_pin = renderer_get_pin,
     .filter_destroy = renderer_destroy,
     .filter_query_interface = renderer_query_interface,
@@ -239,7 +240,7 @@ HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtb
     HRESULT hr;
 
     memset(filter, 0, sizeof(*filter));
-    strmbase_filter_init(&filter->filter, vtbl, outer, clsid, &RendererBaseFilterFuncTable);
+    strmbase_filter_init(&filter->filter, vtbl, outer, clsid, &filter_ops);
 
     filter->pFuncsTable = pBaseFuncsTable;
 

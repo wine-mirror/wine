@@ -292,7 +292,7 @@ VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter *filter)
 }
 
 void strmbase_filter_init(BaseFilter *filter, const IBaseFilterVtbl *vtbl, IUnknown *outer,
-        const CLSID *clsid, const BaseFilterFuncTable *func_table)
+        const CLSID *clsid, const struct strmbase_filter_ops *func_table)
 {
     memset(filter, 0, sizeof(*filter));
 
