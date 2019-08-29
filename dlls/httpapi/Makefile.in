@@ -1,5 +1,6 @@
 MODULE    = httpapi.dll
 IMPORTLIB = httpapi
+IMPORTS   = advapi32
 
 EXTRADLLFLAGS = -mno-cygwin
 

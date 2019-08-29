@@ -122,8 +122,7 @@ static void test_v1_server(void)
     /* Non-zero reserved parameter is accepted on XP/2k3. */
     queue = NULL;
     ret = HttpCreateHttpHandle(&queue, 0);
-    todo_wine ok(!ret, "Unexpected ret value %u.\n", ret);
-    if (ret) return;
+    ok(!ret, "Unexpected ret value %u.\n", ret);
     ok(!!queue, "Unexpected handle value %p.\n", queue);
 
     queue2 = NULL;
@@ -314,8 +313,7 @@ static void test_v1_completion_port(void)
     ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
 
     ret = HttpCreateHttpHandle(&queue, 0);
-    todo_wine ok(!ret, "Got error %u.\n", ret);
-    if (ret) return;
+    ok(!ret, "Got error %u.\n", ret);
 
     port = CreateIoCompletionPort(queue, NULL, 123, 0);
     ok(!!port, "Failed to create completion port, error %u.\n", GetLastError());
@@ -391,8 +389,7 @@ static void test_v1_multiple_requests(void)
     ovl2.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
 
     ret = HttpCreateHttpHandle(&queue, 0);
-    todo_wine ok(!ret, "Got error %u.\n", ret);
-    if (ret) return;
+    ok(!ret, "Got error %u.\n", ret);
     ret = HttpAddUrl(queue, localhost_urlW, NULL);
     ok(!ret, "Got error %u.\n", ret);
 
@@ -493,8 +490,7 @@ static void test_v1_short_buffer(void)
     ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
 
     ret = HttpCreateHttpHandle(&queue, 0);
-    todo_wine ok(!ret, "Got error %u.\n", ret);
-    if (ret) return;
+    ok(!ret, "Got error %u.\n", ret);
     ret = HttpAddUrl(queue, localhost_urlW, NULL);
     ok(!ret, "Got error %u.\n", ret);
 
@@ -569,8 +565,7 @@ static void test_v1_entity_body(void)
         req_body[i] = i / 111;
 
     ret = HttpCreateHttpHandle(&queue, 0);
-    todo_wine ok(!ret, "Got error %u.\n", ret);
-    if (ret) return;
+    ok(!ret, "Got error %u.\n", ret);
     ret = HttpAddUrl(queue, localhost_urlW, NULL);
     ok(!ret, "Got error %u.\n", ret);
 
@@ -716,8 +711,7 @@ static void test_v1_bad_request(void)
     SOCKET s;
 
     ret = HttpCreateHttpHandle(&queue, 0);
-    todo_wine ok(!ret, "Got error %u.\n", ret);
-    if (ret) return;
+    ok(!ret, "Got error %u.\n", ret);
     ret = HttpAddUrl(queue, localhost_urlW, NULL);
     ok(!ret, "Got error %u.\n", ret);
 
@@ -774,8 +768,7 @@ static void test_v1_cooked_url(void)
         "\r\n";
 
     ret = HttpCreateHttpHandle(&queue, 0);
-    todo_wine ok(!ret, "Got error %u.\n", ret);
-    if (ret) return;
+    ok(!ret, "Got error %u.\n", ret);
     ret = HttpAddUrl(queue, localhost_urlW, NULL);
     ok(!ret, "Got error %u.\n", ret);
 
@@ -849,8 +842,7 @@ static void test_v1_unknown_tokens(void)
         "\r\n";
 
     ret = HttpCreateHttpHandle(&queue, 0);
-    todo_wine ok(!ret, "Got error %u.\n", ret);
-    if (ret) return;
+    ok(!ret, "Got error %u.\n", ret);
     ret = HttpAddUrl(queue, localhost_urlW, NULL);
     ok(!ret, "Got error %u.\n", ret);
 

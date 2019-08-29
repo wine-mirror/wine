@@ -19,6 +19,7 @@
  */
 
 #include "wine/http.h"
+#include "winsvc.h"
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -52,11 +53,41 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID lpv )
  *   NO_ERROR if function succeeds, or error code if function fails
  *
  */
-ULONG WINAPI HttpInitialize( HTTPAPI_VERSION version, ULONG flags, PVOID reserved )
+ULONG WINAPI HttpInitialize(HTTPAPI_VERSION version, ULONG flags, void *reserved)
 {
-    FIXME( "({%d,%d}, 0x%x, %p): stub!\n", version.HttpApiMajorVersion,
-           version.HttpApiMinorVersion, flags, reserved );
-    return NO_ERROR;
+    static const WCHAR httpW[] = {'h','t','t','p',0};
+    SC_HANDLE manager, service;
+
+    TRACE("version %u.%u, flags %#x, reserved %p.\n", version.HttpApiMajorVersion,
+            version.HttpApiMinorVersion, flags, reserved);
+
+    if (flags & ~HTTP_INITIALIZE_SERVER)
+    {
+        FIXME("Unhandled flags %#x.\n", flags);
+        return ERROR_CALL_NOT_IMPLEMENTED;
+    }
+
+    if (!(manager = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT)))
+        return GetLastError();
+
+    if (!(service = OpenServiceW(manager, httpW, SERVICE_START)))
+    {
+        ERR("Failed to open HTTP service, error %u.\n", GetLastError());
+        CloseServiceHandle(manager);
+        return GetLastError();
+    }
+
+    if (!StartServiceW(service, 0, NULL) && GetLastError() != ERROR_SERVICE_ALREADY_RUNNING)
+    {
+        ERR("Failed to start HTTP service, error %u.\n", GetLastError());
+        CloseServiceHandle(service);
+        CloseServiceHandle(manager);
+        return GetLastError();
+    }
+
+    CloseServiceHandle(service);
+    CloseServiceHandle(manager);
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
