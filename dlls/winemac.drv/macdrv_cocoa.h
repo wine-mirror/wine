@@ -293,6 +293,10 @@ struct macdrv_monitor
 {
     /* Name, in UTF-8 encoding */
     char name[128];
+    /* as RcMonitor in MONITORINFO struct after conversion by rect_from_cgrect */
+    CGRect rc_monitor;
+    /* as RcWork in MONITORINFO struct after conversion by rect_from_cgrect */
+    CGRect rc_work;
     /* StateFlags in DISPLAY_DEVICE struct */
     uint32_t state_flags;
 };

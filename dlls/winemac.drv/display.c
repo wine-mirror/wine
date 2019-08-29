@@ -53,6 +53,9 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW 
 
 /* Wine specific monitor properties */
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_STATEFLAGS, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 2);
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCMONITOR, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 3);
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCWORK, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 4);
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 5);
 
 static const char initial_mode_key[] = "Initial Display Mode";
 static const WCHAR pixelencodingW[] = {'P','i','x','e','l','E','n','c','o','d','i','n','g',0};
@@ -64,6 +67,7 @@ static const WCHAR video_idW[] = {'V','i','d','e','o','I','D',0};
 static const WCHAR symbolic_link_valueW[]= {'S','y','m','b','o','l','i','c','L','i','n','k','V','a','l','u','e',0};
 static const WCHAR gpu_idW[] = {'G','P','U','I','D',0};
 static const WCHAR mointor_id_fmtW[] = {'M','o','n','i','t','o','r','I','D','%','d',0};
+static const WCHAR adapter_name_fmtW[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','%','d',0};
 static const WCHAR state_flagsW[] = {'S','t','a','t','e','F','l','a','g','s',0};
 static const WCHAR guid_fmtW[] = {
     '{','%','0','8','x','-','%','0','4','x','-','%','0','4','x','-','%','0','2','x','%','0','2','x','-',
@@ -127,18 +131,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION modes_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static BOOL inited_original_display_mode;
-
-
-static inline HMONITOR display_id_to_monitor(CGDirectDisplayID display_id)
-{
-    return (HMONITOR)(UINT_PTR)display_id;
-}
-
-static inline CGDirectDisplayID monitor_to_display_id(HMONITOR handle)
-{
-    return (CGDirectDisplayID)(UINT_PTR)handle;
-}
-
 
 static BOOL get_display_device_reg_key(char *key, unsigned len)
 {
@@ -969,76 +961,6 @@ better:
     return ret;
 }
 
-
-/***********************************************************************
- *              EnumDisplayMonitors  (MACDRV.@)
- */
-BOOL CDECL macdrv_EnumDisplayMonitors(HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lparam)
-{
-    struct macdrv_display *displays;
-    int num_displays;
-    int i;
-    BOOL ret = TRUE;
-
-    TRACE("%p, %s, %p, %#lx\n", hdc, wine_dbgstr_rect(rect), proc, lparam);
-
-    if (hdc)
-    {
-        POINT origin;
-        RECT limit;
-
-        if (!GetDCOrgEx(hdc, &origin)) return FALSE;
-        if (GetClipBox(hdc, &limit) == ERROR) return FALSE;
-
-        if (rect && !IntersectRect(&limit, &limit, rect)) return TRUE;
-
-        if (macdrv_get_displays(&displays, &num_displays))
-            return FALSE;
-
-        for (i = 0; i < num_displays; i++)
-        {
-            RECT monrect = rect_from_cgrect(displays[i].frame);
-            OffsetRect(&monrect, -origin.x, -origin.y);
-            if (IntersectRect(&monrect, &monrect, &limit))
-            {
-                HMONITOR monitor = display_id_to_monitor(displays[i].displayID);
-                TRACE("monitor %d handle %p @ %s\n", i, monitor, wine_dbgstr_rect(&monrect));
-                if (!proc(monitor, hdc, &monrect, lparam))
-                {
-                    ret = FALSE;
-                    break;
-                }
-            }
-        }
-    }
-    else
-    {
-        if (macdrv_get_displays(&displays, &num_displays))
-            return FALSE;
-
-        for (i = 0; i < num_displays; i++)
-        {
-            RECT monrect = rect_from_cgrect(displays[i].frame);
-            RECT unused;
-            if (!rect || IntersectRect(&unused, &monrect, rect))
-            {
-                HMONITOR monitor = display_id_to_monitor(displays[i].displayID);
-                TRACE("monitor %d handle %p @ %s\n", i, monitor, wine_dbgstr_rect(&monrect));
-                if (!proc(monitor, 0, &monrect, lparam))
-                {
-                    ret = FALSE;
-                    break;
-                }
-            }
-        }
-    }
-
-    macdrv_free_displays(displays);
-
-    return ret;
-}
-
-
 /***********************************************************************
  *              EnumDisplaySettingsEx  (MACDRV.@)
  *
@@ -1323,58 +1245,6 @@ done:
     return ret;
 }
 
-
-/***********************************************************************
- *              GetMonitorInfo  (MACDRV.@)
- */
-BOOL CDECL macdrv_GetMonitorInfo(HMONITOR monitor, LPMONITORINFO info)
-{
-    static const WCHAR adapter_name[] = { '\\','\\','.','\\','D','I','S','P','L','A','Y','1',0 };
-    struct macdrv_display *displays;
-    int num_displays;
-    CGDirectDisplayID display_id;
-    int i;
-
-    TRACE("%p, %p\n", monitor, info);
-
-    if (macdrv_get_displays(&displays, &num_displays))
-    {
-        ERR("couldn't get display list\n");
-        SetLastError(ERROR_GEN_FAILURE);
-        return FALSE;
-    }
-
-    display_id = monitor_to_display_id(monitor);
-    for (i = 0; i < num_displays; i++)
-    {
-        if (displays[i].displayID == display_id)
-            break;
-    }
-
-    if (i < num_displays)
-    {
-        info->rcMonitor = rect_from_cgrect(displays[i].frame);
-        info->rcWork    = rect_from_cgrect(displays[i].work_frame);
-
-        info->dwFlags = (i == 0) ? MONITORINFOF_PRIMARY : 0;
-
-        if (info->cbSize >= sizeof(MONITORINFOEXW))
-            lstrcpyW(((MONITORINFOEXW*)info)->szDevice, adapter_name);
-
-        TRACE(" -> rcMonitor %s rcWork %s dwFlags %08x\n", wine_dbgstr_rect(&info->rcMonitor),
-              wine_dbgstr_rect(&info->rcWork), info->dwFlags);
-    }
-    else
-    {
-        ERR("invalid monitor handle\n");
-        SetLastError(ERROR_INVALID_HANDLE);
-    }
-
-    macdrv_free_displays(displays);
-    return (i < num_displays);
-}
-
-
 /***********************************************************************
  *              SetDeviceGammaRamp (MACDRV.@)
  */
@@ -1640,6 +1510,7 @@ static BOOL macdrv_init_monitor(HDEVINFO devinfo, const struct macdrv_monitor *m
     WCHAR nameW[MAX_PATH];
     WCHAR bufferW[MAX_PATH];
     HKEY hkey;
+    RECT rect;
     BOOL ret = FALSE;
 
     /* Create GUID_DEVCLASS_MONITOR instance */
@@ -1663,6 +1534,21 @@ static BOOL macdrv_init_monitor(HDEVINFO devinfo, const struct macdrv_monitor *m
     /* StateFlags */
     if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_STATEFLAGS, DEVPROP_TYPE_UINT32,
                                    (const BYTE *)&monitor->state_flags, sizeof(monitor->state_flags), 0))
+        goto done;
+    /* RcMonitor */
+    rect = rect_from_cgrect(monitor->rc_monitor);
+    if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, DEVPROP_TYPE_BINARY,
+                                   (const BYTE *)&rect, sizeof(rect), 0))
+        goto done;
+    /* RcWork */
+    rect = rect_from_cgrect(monitor->rc_work);
+    if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCWORK, DEVPROP_TYPE_BINARY,
+                                   (const BYTE *)&rect, sizeof(rect), 0))
+        goto done;
+    /* Adapter name */
+    sprintfW(bufferW, adapter_name_fmtW, video_index + 1);
+    if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_ADAPTERNAME, DEVPROP_TYPE_STRING,
+                                   (const BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR), 0))
         goto done;
 
     ret = TRUE;

@@ -12,14 +12,12 @@
 @ cdecl CreateWindow(long) macdrv_CreateWindow
 @ cdecl DestroyCursorIcon(long) macdrv_DestroyCursorIcon
 @ cdecl DestroyWindow(long) macdrv_DestroyWindow
-@ cdecl EnumDisplayMonitors(long ptr ptr long) macdrv_EnumDisplayMonitors
 @ cdecl EnumDisplaySettingsEx(ptr long ptr long) macdrv_EnumDisplaySettingsEx
 @ cdecl GetCursorPos(ptr) macdrv_GetCursorPos
 @ cdecl GetKeyboardLayout(long) macdrv_GetKeyboardLayout
 @ cdecl GetKeyboardLayoutList(long ptr) macdrv_GetKeyboardLayoutList
 @ cdecl GetKeyboardLayoutName(ptr) macdrv_GetKeyboardLayoutName
 @ cdecl GetKeyNameText(long ptr long) macdrv_GetKeyNameText
-@ cdecl GetMonitorInfo(long ptr) macdrv_GetMonitorInfo
 @ cdecl MapVirtualKeyEx(long long long) macdrv_MapVirtualKeyEx
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) macdrv_MsgWaitForMultipleObjectsEx
 @ cdecl RegisterHotKey(long long long) macdrv_RegisterHotKey
