@@ -257,10 +257,27 @@ extern int macdrv_clip_cursor(CGRect rect) DECLSPEC_HIDDEN;
 
 
 /* display */
+
+/* Represent a physical GPU in the PCI slots */
+struct macdrv_gpu
+{
+    /* PCI GPU io registry entry id */
+    uint64_t id;
+    /* Name, in UTF-8 encoding */
+    char name[128];
+    /* PCI ID */
+    uint32_t vendor_id;
+    uint32_t device_id;
+    uint32_t subsys_id;
+    uint32_t revision_id;
+};
+
 extern int macdrv_get_displays(struct macdrv_display** displays, int* count) DECLSPEC_HIDDEN;
 extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDEN;
 extern int macdrv_set_display_mode(const struct macdrv_display* display,
                                    CGDisplayModeRef display_mode) DECLSPEC_HIDDEN;
+extern int macdrv_get_gpus(struct macdrv_gpu** gpus, int* count) DECLSPEC_HIDDEN;
+extern void macdrv_free_gpus(struct macdrv_gpu* gpus) DECLSPEC_HIDDEN;
 
 
 /* event */
