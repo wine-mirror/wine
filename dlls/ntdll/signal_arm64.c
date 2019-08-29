@@ -964,6 +964,420 @@ void signal_init_process(void)
     exit(1);
 }
 
+/***********************************************************************
+ * Definitions for Win32 unwind tables
+ */
+
+struct unwind_info
+{
+    DWORD function_length : 18;
+    DWORD version : 2;
+    DWORD x : 1;
+    DWORD e : 1;
+    DWORD epilog : 5;
+    DWORD codes : 5;
+};
+
+struct unwind_info_ext
+{
+    WORD epilog;
+    BYTE codes;
+    BYTE reserved;
+};
+
+struct unwind_info_epilog
+{
+    DWORD offset : 18;
+    DWORD res : 4;
+    DWORD index : 10;
+};
+
+static const BYTE unwind_code_len[256] =
+{
+/* 00 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 20 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 40 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 60 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* 80 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* a0 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+/* c0 */ 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+/* e0 */ 4,1,2,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+};
+
+/***********************************************************************
+ *           get_sequence_len
+ */
+static unsigned int get_sequence_len( BYTE *ptr, BYTE *end )
+{
+    unsigned int ret = 0;
+
+    while (ptr < end)
+    {
+        if (*ptr == 0xe4 || *ptr == 0xe5) break;
+        ptr += unwind_code_len[*ptr];
+        ret++;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           restore_regs
+ */
+static void restore_regs( int reg, int count, int pos, CONTEXT *context,
+                          KNONVOLATILE_CONTEXT_POINTERS *ptrs )
+{
+    int i, offset = max( 0, pos );
+    for (i = 0; i < count; i++)
+    {
+        if (ptrs && reg + i >= 19) (&ptrs->X19)[reg + i - 19] = (DWORD64 *)context->Sp + i + offset;
+        context->u.X[reg + i] = ((DWORD64 *)context->Sp)[i + offset];
+    }
+    if (pos < 0) context->Sp += -8 * pos;
+}
+
+
+/***********************************************************************
+ *           restore_fpregs
+ */
+static void restore_fpregs( int reg, int count, int pos, CONTEXT *context,
+                            KNONVOLATILE_CONTEXT_POINTERS *ptrs )
+{
+    int i, offset = max( 0, pos );
+    for (i = 0; i < count; i++)
+    {
+        if (ptrs && reg + i >= 8) (&ptrs->D8)[reg + i - 8] = (DWORD64 *)context->Sp + i + offset;
+        context->V[reg + i].D[0] = ((double *)context->Sp)[i + offset];
+    }
+    if (pos < 0) context->Sp += -8 * pos;
+}
+
+
+/***********************************************************************
+ *           process_unwind_codes
+ */
+static void process_unwind_codes( BYTE *ptr, BYTE *end, CONTEXT *context,
+                                  KNONVOLATILE_CONTEXT_POINTERS *ptrs, int skip )
+{
+    unsigned int val, len, save_next = 2;
+
+    /* skip codes */
+    while (ptr < end && skip)
+    {
+        if (*ptr == 0xe4 || *ptr == 0xe5) break;
+        ptr += unwind_code_len[*ptr];
+        skip--;
+    }
+
+    while (ptr < end)
+    {
+        if ((len = unwind_code_len[*ptr]) > 1)
+        {
+            if (ptr + len > end) break;
+            val = ptr[0] * 0x100 + ptr[1];
+        }
+        else val = *ptr;
+
+        if (*ptr < 0x20)  /* alloc_s */
+            context->Sp += 16 * (val & 0x1f);
+        else if (*ptr < 0x40)  /* save_r19r20_x */
+            restore_regs( 19, save_next, -(val & 0x1f), context, ptrs );
+        else if (*ptr < 0x80) /* save_fplr */
+            restore_regs( 29, 2, val & 0x3f, context, ptrs );
+        else if (*ptr < 0xc0)  /* save_fplr_x */
+            restore_regs( 29, 2, -(val & 0x3f) - 1, context, ptrs );
+        else if (*ptr < 0xc8)  /* alloc_m */
+            context->Sp += 16 * (val & 0x7ff);
+        else if (*ptr < 0xcc)  /* save_regp */
+            restore_regs( 19 + ((val >> 6) & 0xf), save_next, val & 0x3f, context, ptrs );
+        else if (*ptr < 0xd0)  /* save_regp_x */
+            restore_regs( 19 + ((val >> 6) & 0xf), save_next, -(val & 0x3f) - 1, context, ptrs );
+        else if (*ptr < 0xd4)  /* save_reg */
+            restore_regs( 19 + ((val >> 6) & 0xf), 1, val & 0x3f, context, ptrs );
+        else if (*ptr < 0xd6)  /* save_reg_x */
+            restore_regs( 19 + ((val >> 5) & 0xf), 1, -(val & 0x1f) - 1, context, ptrs );
+        else if (*ptr < 0xd8)  /* save_lrpair */
+            restore_regs( 19 + ((val >> 6) & 0x7), 2, val & 0x3f, context, ptrs );
+        else if (*ptr < 0xda)  /* save_fregp */
+            restore_fpregs( 8 + ((val >> 6) & 0x7), save_next, val & 0x3f, context, ptrs );
+        else if (*ptr < 0xdc)  /* save_fregp_x */
+            restore_fpregs( 8 + ((val >> 6) & 0x7), save_next, -(val & 0x3f) - 1, context, ptrs );
+        else if (*ptr < 0xde)  /* save_freg */
+            restore_fpregs( 8 + ((val >> 6) & 0x7), 1, val & 0x3f, context, ptrs );
+        else if (*ptr == 0xde)  /* save_freg_x */
+            restore_fpregs( 8 + ((val >> 5) & 0x7), 1, -(val & 0x3f) - 1, context, ptrs );
+        else if (*ptr == 0xe0)  /* alloc_l */
+            context->Sp += 16 * ((ptr[1] << 16) + (ptr[2] << 8) + ptr[3]);
+        else if (*ptr == 0xe1)  /* set_fp */
+            context->Sp = context->u.s.Fp;
+        else if (*ptr == 0xe2)  /* add_fp */
+            context->Sp = context->u.s.Fp - 8 * (val & 0xff);
+        else if (*ptr == 0xe3)  /* nop */
+            /* nop */ ;
+        else if (*ptr == 0xe4)  /* end */
+            break;
+        else if (*ptr == 0xe5)  /* end_c */
+            break;
+        else if (*ptr == 0xe6)  /* save_next */
+        {
+            save_next += 2;
+            ptr += len;
+            continue;
+        }
+        else
+        {
+            WARN( "unsupported code %02x\n", *ptr );
+            return;
+        }
+        save_next = 2;
+        ptr += len;
+    }
+}
+
+
+/***********************************************************************
+ *           unwind_packed_data
+ */
+static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION *func,
+                                 CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ptrs )
+{
+    unsigned int i, len, offset, skip = 0;
+    unsigned int int_size = func->u.s.RegI * 8, fp_size = func->u.s.RegF * 8, regsave, local_size;
+
+    TRACE( "function %lx-%lx: len=%#x flag=%x regF=%u regI=%u H=%u CR=%u frame=%x\n",
+           base + func->BeginAddress, base + func->BeginAddress + func->u.s.FunctionLength * 4,
+           func->u.s.FunctionLength, func->u.s.Flag, func->u.s.RegF, func->u.s.RegI,
+           func->u.s.H, func->u.s.CR, func->u.s.FrameSize );
+
+    if (func->u.s.CR == 1) int_size += 8;
+    if (func->u.s.RegF) fp_size += 8;
+
+    regsave = ((int_size + fp_size + 8 * 8 * func->u.s.H) + 0xf) & ~0xf;
+    local_size = func->u.s.FrameSize * 16 - regsave;
+
+    /* check for prolog/epilog */
+    if (func->u.s.Flag == 1)
+    {
+        offset = ((pc - base) - func->BeginAddress) / 4;
+        if (offset < 17 || offset >= func->u.s.FunctionLength - 15)
+        {
+            len = (int_size + 8) / 16 + (fp_size + 8) / 16;
+            switch (func->u.s.CR)
+            {
+            case 3:
+                len++; /* stp x29,lr,[sp,0] */
+                if (local_size <= 512) break;
+                /* fall through */
+            case 0:
+            case 1:
+                if (local_size) len++;  /* sub sp,sp,#local_size */
+                if (local_size > 4088) len++;  /* sub sp,sp,#4088 */
+                break;
+            }
+            if (offset < len + 4 * func->u.s.H)  /* prolog */
+            {
+                skip = len + 4 * func->u.s.H - offset;
+            }
+            else if (offset >= func->u.s.FunctionLength - (len + 1))  /* epilog */
+            {
+                skip = offset - (func->u.s.FunctionLength - (len + 1));
+            }
+        }
+    }
+
+    if (!skip)
+    {
+        if (func->u.s.CR == 3) restore_regs( 29, 2, 0, context, ptrs );
+        context->Sp += local_size;
+        if (fp_size) restore_fpregs( 8, fp_size / 8, int_size, context, ptrs );
+        if (func->u.s.CR == 1) restore_regs( 30, 1, int_size - 8, context, ptrs );
+        restore_regs( 19, func->u.s.RegI, -regsave, context, ptrs );
+    }
+    else
+    {
+        unsigned int pos = 0;
+
+        switch (func->u.s.CR)
+        {
+        case 3:
+            if (local_size <= 512)
+            {
+                /* stp x29,lr,[sp,-#local_size]! */
+                if (pos++ > skip) restore_regs( 29, 2, -local_size, context, ptrs );
+                break;
+            }
+            /* stp x29,lr,[sp,0] */
+            if (pos++ > skip) restore_regs( 29, 2, 0, context, ptrs );
+            /* fall through */
+        case 0:
+        case 1:
+            if (!local_size) break;
+            /* sub sp,sp,#local_size */
+            if (pos++ > skip) context->Sp += (local_size - 1) % 4088 + 1;
+            if (local_size > 4088 && pos++ > skip) context->Sp += 4088;
+            break;
+        }
+
+        if (func->u.s.H && offset < len + 4) pos += 4;
+
+        if (fp_size)
+        {
+            if (func->u.s.RegF % 2 == 0 && pos++ > skip)
+                /* str d%u,[sp,#fp_size] */
+                restore_fpregs( 8 + func->u.s.RegF, 1, int_size + fp_size - 8, context, ptrs );
+            for (i = func->u.s.RegF / 2 - 1; i >= 0; i--)
+            {
+                if (pos++ <= skip) continue;
+                if (!i && !int_size)
+                     /* stp d8,d9,[sp,-#regsave]! */
+                    restore_fpregs( 8, 2, -regsave, context, ptrs );
+                else
+                     /* stp dn,dn+1,[sp,#offset] */
+                    restore_fpregs( 8 + 2 * i, 2, int_size + 16 * i, context, ptrs );
+            }
+        }
+
+        if (pos++ > skip)
+        {
+            if (func->u.s.RegI % 2)
+            {
+                /* stp xn,lr,[sp,#offset] */
+                if (func->u.s.CR == 1) restore_regs( 30, 1, int_size - 8, context, ptrs );
+                /* str xn,[sp,#offset] */
+                restore_regs( 18 + func->u.s.RegI, 1,
+                              (func->u.s.RegI > 1) ? 8 * func->u.s.RegI - 8 : -regsave,
+                              context, ptrs );
+            }
+            else if (func->u.s.CR == 1)
+                /* str lr,[sp,#offset] */
+                restore_regs( 30, 1, func->u.s.RegI ? int_size - 8 : -regsave, context, ptrs );
+        }
+
+        for (i = func->u.s.RegI / 2 - 1; i >= 0; i--)
+        {
+            if (pos++ <= skip) continue;
+            if (i)
+                /* stp xn,xn+1,[sp,#offset] */
+                restore_regs( 19 + 2 * i, 2, 16 * i, context, ptrs );
+            else
+                /* stp x19,x20,[sp,-#regsave]! */
+                restore_regs( 19, 2, -regsave, context, ptrs );
+        }
+    }
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           unwind_full_data
+ */
+static void *unwind_full_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION *func,
+                               CONTEXT *context, PVOID *handler_data, KNONVOLATILE_CONTEXT_POINTERS *ptrs )
+{
+    struct unwind_info *info;
+    struct unwind_info_epilog *info_epilog;
+    unsigned int i, codes, epilogs, len, offset;
+    void *data;
+    BYTE *end;
+
+    info = (struct unwind_info *)((char *)base + func->u.UnwindData);
+    data = info + 1;
+    epilogs = info->epilog;
+    codes = info->codes;
+    if (!codes && !epilogs)
+    {
+        struct unwind_info_ext *infoex = data;
+        codes = infoex->codes;
+        epilogs = infoex->epilog;
+        data = infoex + 1;
+    }
+    info_epilog = data;
+    if (!info->e) data = info_epilog + epilogs;
+
+    offset = ((pc - base) - func->BeginAddress) / 4;
+    end = (BYTE *)data + codes * 4;
+
+    TRACE( "function %lx-%lx: len=%#x ver=%u X=%u E=%u epilogs=%u codes=%u\n",
+           base + func->BeginAddress, base + func->BeginAddress + info->function_length * 4,
+           info->function_length, info->version, info->x, info->e, epilogs, codes * 4 );
+
+    /* check for prolog */
+    if (offset < codes * 4)
+    {
+        len = get_sequence_len( data, end );
+        if (offset < len)
+        {
+            process_unwind_codes( data, end, context, ptrs, len - offset );
+            return NULL;
+        }
+    }
+
+    /* check for epilog */
+    if (!info->e)
+    {
+        for (i = 0; i < epilogs; i++)
+        {
+            if (offset < info_epilog[i].offset) break;
+            if (offset - info_epilog[i].offset < codes * 4 - info_epilog[i].index)
+            {
+                BYTE *ptr = (BYTE *)data + info_epilog[i].index;
+                len = get_sequence_len( ptr, end );
+                if (offset <= info_epilog[i].offset + len)
+                {
+                    process_unwind_codes( ptr, end, context, ptrs, offset - info_epilog[i].offset );
+                    return NULL;
+                }
+            }
+        }
+    }
+    else if (info->function_length - offset <= codes * 4 - epilogs)
+    {
+        BYTE *ptr = (BYTE *)data + epilogs;
+        len = get_sequence_len( ptr, end ) + 1;
+        if (offset >= info->function_length - len)
+        {
+            process_unwind_codes( ptr, end, context, ptrs, offset - (info->function_length - len) );
+            return NULL;
+        }
+    }
+
+    process_unwind_codes( data, end, context, ptrs, 0 );
+
+    /* get handler since we are inside the main code */
+    if (info->x)
+    {
+        DWORD *handler_rva = (DWORD *)data + codes;
+        *handler_data = handler_rva + 1;
+        return (char *)base + *handler_rva;
+    }
+    return NULL;
+}
+
+
+/**********************************************************************
+ *              RtlVirtualUnwind   (NTDLL.@)
+ */
+PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
+                               RUNTIME_FUNCTION *func, CONTEXT *context,
+                               PVOID *handler_data, ULONG_PTR *frame_ret,
+                               KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr )
+{
+    void *handler;
+
+    TRACE( "type %x pc %lx sp %lx func %lx\n", type, pc, context->Sp, base + func->BeginAddress );
+
+    if (func->u.s.Flag)
+        handler = unwind_packed_data( base, pc, func, context, ctx_ptr );
+    else
+        handler = unwind_full_data( base, pc, func, context, handler_data, ctx_ptr );
+
+    TRACE( "ret: lr=%lx sp=%lx handler=%p\n", context->u.s.Lr, context->Sp, handler );
+    context->Pc = context->u.s.Lr;
+    *frame_ret = context->Sp;
+    return handler;
+}
+
+
 
 /***********************************************************************
  *            RtlUnwind  (NTDLL.@)
