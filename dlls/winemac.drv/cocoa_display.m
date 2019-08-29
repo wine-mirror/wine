@@ -18,7 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+
 #import <AppKit/AppKit.h>
+#ifdef HAVE_METAL_METAL_H
+#import <Metal/Metal.h>
+#endif
 #include "macdrv_cocoa.h"
 
 
@@ -227,6 +232,113 @@ done:
     return ret;
 }
 
+#ifdef HAVE_METAL_METAL_H
+
+/***********************************************************************
+ *              macdrv_get_gpu_info_from_registry_id
+ *
+ * Get GPU information from a Metal device registry id.
+ *
+ * Returns non-zero value on failure.
+ */
+static int macdrv_get_gpu_info_from_registry_id(struct macdrv_gpu* gpu, uint64_t registry_id)
+{
+    int ret;
+    io_registry_entry_t entry;
+
+    entry = IOServiceGetMatchingService(kIOMasterPortDefault, IORegistryEntryIDMatching(registry_id));
+    ret = macdrv_get_gpu_info_from_entry(gpu, entry);
+    IOObjectRelease(entry);
+    return ret;
+}
+
+/***********************************************************************
+ *              macdrv_get_gpus_from_metal
+ *
+ * Get a list of GPUs from Metal.
+ *
+ * Returns non-zero value on failure with parameters unchanged and zero on success.
+ */
+static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
+{
+    struct macdrv_gpu* gpus = NULL;
+    struct macdrv_gpu primary_gpu;
+    id<MTLDevice> primary_device;
+    BOOL hide_integrated = FALSE;
+    int primary_index = 0, i;
+    int gpu_count = 0;
+    int ret = -1;
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
+    /* Test if Metal is available */
+    if (&MTLCopyAllDevices == NULL)
+        goto done;
+    NSArray<id<MTLDevice>>* devices = [MTLCopyAllDevices() autorelease];
+    if (!devices.count || ![devices[0] respondsToSelector:@selector(registryID)])
+        goto done;
+
+    gpus = calloc(devices.count, sizeof(*gpus));
+    if (!gpus)
+        goto done;
+
+    /* Use MTLCreateSystemDefaultDevice instead of CGDirectDisplayCopyCurrentMetalDevice(CGMainDisplayID()) to get
+     * the primary GPU because we need to hide the integrated GPU for an automatic graphic switching pair to avoid apps
+     * using the integrated GPU. This is the behavior of Windows on a Mac. */
+    primary_device = [MTLCreateSystemDefaultDevice() autorelease];
+    if (macdrv_get_gpu_info_from_registry_id(&primary_gpu, primary_device.registryID))
+        goto done;
+
+    /* Hide the integrated GPU if the system default device is a dedicated GPU */
+    if (!primary_device.isLowPower)
+    {
+        hide_integrated = TRUE;
+    }
+
+    for (i = 0; i < devices.count; i++)
+    {
+        if (macdrv_get_gpu_info_from_registry_id(&gpus[gpu_count], devices[i].registryID))
+            goto done;
+
+        if (hide_integrated && devices[i].isLowPower)
+        {
+            continue;
+        }
+
+        if (gpus[gpu_count].id == primary_gpu.id)
+            primary_index = gpu_count;
+
+        gpu_count++;
+    }
+
+    /* Make sure the first GPU is primary */
+    if (primary_index)
+    {
+        struct macdrv_gpu tmp;
+        tmp = gpus[0];
+        gpus[0] = gpus[primary_index];
+        gpus[primary_index] = tmp;
+    }
+
+    *new_gpus = gpus;
+    *count = gpu_count;
+    ret = 0;
+done:
+    if (ret)
+        macdrv_free_gpus(gpus);
+    [pool release];
+    return ret;
+}
+
+#else
+
+static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
+{
+    TRACE("Metal support not compiled in\n");
+    return -1;
+}
+
+#endif
+
 /***********************************************************************
  *              macdrv_get_gpu_info_from_display_id
  *
@@ -348,7 +460,10 @@ done:
  */
 int macdrv_get_gpus(struct macdrv_gpu** new_gpus, int* count)
 {
-    return macdrv_get_gpus_from_iokit(new_gpus, count);
+    if (!macdrv_get_gpus_from_metal(new_gpus, count))
+        return 0;
+    else
+        return macdrv_get_gpus_from_iokit(new_gpus, count);
 }
 
 /***********************************************************************
