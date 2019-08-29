@@ -130,10 +130,6 @@ static void test_interfaces(void)
     HRESULT hr;
     ULONG ref;
 
-    /* FIXME: This call should not be necessary. */
-    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
     check_interface(mmstream, &IID_IAMMultiMediaStream, TRUE);
     check_interface(mmstream, &IID_IMultiMediaStream, TRUE);
     check_interface(mmstream, &IID_IUnknown, TRUE);
@@ -636,15 +632,11 @@ static void test_enum_pins(void)
     ULONG ref, count;
     HRESULT hr;
 
-    /* FIXME: This call should not be necessary. */
-    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
     hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ref = get_refcount(filter);
-    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    todo_wine ok(ref == 3, "Got unexpected refcount %d.\n", ref);
 
     hr = IMediaStreamFilter_EnumPins(filter, NULL);
     ok(hr == E_POINTER, "Got hr %#x.\n", hr);
@@ -652,7 +644,7 @@ static void test_enum_pins(void)
     hr = IMediaStreamFilter_EnumPins(filter, &enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
-    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    todo_wine ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(enum1);
     ok(ref == 1, "Got unexpected refcount %d.\n", ref);
 
@@ -771,10 +763,6 @@ static void test_find_pin(void)
     HRESULT hr;
     ULONG ref;
 
-    /* FIXME: This call should not be necessary. */
-    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
     hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -808,10 +796,6 @@ static void test_pin_info(void)
     HRESULT hr;
     WCHAR *id;
     IPin *pin;
-
-    /* FIXME: This call should not be necessary. */
-    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
