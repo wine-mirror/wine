@@ -289,6 +289,18 @@ ULONG WINAPI HttpReceiveHttpRequest(HANDLE queue, HTTP_REQUEST_ID id, ULONG flag
     return ret;
 }
 
+static void format_date(char *buffer)
+{
+    static const char day_names[7][4] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    static const char month_names[12][4] =
+            {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    SYSTEMTIME date;
+    GetSystemTime(&date);
+    sprintf(buffer + strlen(buffer), "Date: %s, %02u %s %u %02u:%02u:%02u GMT\r\n",
+            day_names[date.wDayOfWeek], date.wDay, month_names[date.wMonth - 1],
+            date.wYear, date.wHour, date.wMinute, date.wSecond);
+}
+
 /***********************************************************************
  *        HttpSendHttpResponse     (HTTPAPI.@)
  */
@@ -296,10 +308,135 @@ ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
         HTTP_RESPONSE *response, HTTP_CACHE_POLICY *cache_policy, ULONG *ret_size,
         void *reserved1, ULONG reserved2, OVERLAPPED *ovl, HTTP_LOG_DATA *log_data)
 {
-    FIXME("queue %p, id %s, flags %#x, response %p, cache_policy %p, "
-            "ret_size %p, reserved1 %p, reserved2 %#x, ovl %p, log_data %p, stub!\n",
-          queue, wine_dbgstr_longlong(id), flags, response, cache_policy, ret_size, reserved1, reserved2, ovl, log_data);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    static const char *const header_names[] =
+    {
+        "Cache-Control",
+        "Connection",
+        "Date",
+        "Keep-Alive",
+        "Pragma",
+        "Trailer",
+        "Transfer-Encoding",
+        "Upgrade",
+        "Via",
+        "Warning",
+        "Allow",
+        "Content-Length",
+        "Content-Type",
+        "Content-Encoding",
+        "Content-Language",
+        "Content-Location",
+        "Content-MD5",
+        "Content-Range",
+        "Expires",
+        "Last-Modified",
+        "Accept-Ranges",
+        "Age",
+        "ETag",
+        "Location",
+        "Proxy-Authenticate",
+        "Retry-After",
+        "Server",
+        "Set-Cookie",
+        "Vary",
+        "WWW-Authenticate",
+    };
+
+    struct http_response *buffer;
+    OVERLAPPED dummy_ovl = {};
+    ULONG ret = ERROR_SUCCESS;
+    int len, body_len = 0;
+    char *p, dummy[12];
+    USHORT i;
+
+    TRACE("queue %p, id %s, flags %#x, response %p, cache_policy %p, "
+            "ret_size %p, reserved1 %p, reserved2 %#x, ovl %p, log_data %p.\n",
+            queue, wine_dbgstr_longlong(id), flags, response, cache_policy,
+            ret_size, reserved1, reserved2, ovl, log_data);
+
+    if (flags)
+        FIXME("Unhandled flags %#x.\n", flags);
+    if (response->s.Flags)
+        FIXME("Unhandled response flags %#x.\n", response->s.Flags);
+    if (cache_policy)
+        WARN("Ignoring cache_policy.\n");
+    if (log_data)
+        WARN("Ignoring log_data.\n");
+
+    len = 12 + sprintf(dummy, "%hu", response->s.StatusCode) + response->s.ReasonLength;
+    for (i = 0; i < response->s.EntityChunkCount; ++i)
+    {
+        if (response->s.pEntityChunks[i].DataChunkType != HttpDataChunkFromMemory)
+        {
+            FIXME("Unhandled data chunk type %u.\n", response->s.pEntityChunks[i].DataChunkType);
+            return ERROR_CALL_NOT_IMPLEMENTED;
+        }
+        body_len += response->s.pEntityChunks[i].FromMemory.BufferLength;
+    }
+    len += body_len;
+    for (i = 0; i < HttpHeaderResponseMaximum; ++i)
+    {
+        if (i == HttpHeaderDate)
+            len += 37;
+        else if (response->s.Headers.KnownHeaders[i].RawValueLength)
+            len += strlen(header_names[i]) + 2 + response->s.Headers.KnownHeaders[i].RawValueLength + 2;
+        else if (i == HttpHeaderContentLength)
+        {
+            char dummy[12];
+            len += strlen(header_names[i]) + 2 + sprintf(dummy, "%d", body_len) + 2;
+        }
+    }
+    for (i = 0; i < response->s.Headers.UnknownHeaderCount; ++i)
+    {
+        len += response->s.Headers.pUnknownHeaders[i].NameLength + 2;
+        len += response->s.Headers.pUnknownHeaders[i].RawValueLength + 2;
+    }
+    len += 2;
+
+    if (!(buffer = heap_alloc(offsetof(struct http_response, buffer[len]))))
+        return ERROR_OUTOFMEMORY;
+    buffer->id = id;
+    buffer->len = len;
+    sprintf(buffer->buffer, "HTTP/1.1 %u %.*s\r\n", response->s.StatusCode,
+            response->s.ReasonLength, response->s.pReason);
+
+    for (i = 0; i < HttpHeaderResponseMaximum; ++i)
+    {
+        const HTTP_KNOWN_HEADER *header = &response->s.Headers.KnownHeaders[i];
+        if (i == HttpHeaderDate)
+            format_date(buffer->buffer);
+        else if (header->RawValueLength)
+            sprintf(buffer->buffer + strlen(buffer->buffer), "%s: %.*s\r\n",
+                    header_names[i], header->RawValueLength, header->pRawValue);
+        else if (i == HttpHeaderContentLength)
+            sprintf(buffer->buffer + strlen(buffer->buffer), "Content-Length: %d\r\n", body_len);
+    }
+    for (i = 0; i < response->s.Headers.UnknownHeaderCount; ++i)
+    {
+        const HTTP_UNKNOWN_HEADER *header = &response->s.Headers.pUnknownHeaders[i];
+        sprintf(buffer->buffer + strlen(buffer->buffer), "%.*s: %.*s\r\n", header->NameLength,
+                header->pName, header->RawValueLength, header->pRawValue);
+    }
+    p = buffer->buffer + strlen(buffer->buffer);
+    /* Don't use strcat, because this might be the end of the buffer. */
+    memcpy(p, "\r\n", 2);
+    p += 2;
+    for (i = 0; i < response->s.EntityChunkCount; ++i)
+    {
+        const HTTP_DATA_CHUNK *chunk = &response->s.pEntityChunks[i];
+        memcpy(p, chunk->FromMemory.pBuffer, chunk->FromMemory.BufferLength);
+        p += chunk->FromMemory.BufferLength;
+    }
+
+    if (!ovl)
+        ovl = &dummy_ovl;
+
+    if (!DeviceIoControl(queue, IOCTL_HTTP_SEND_RESPONSE, buffer,
+            offsetof(struct http_response, buffer[len]), NULL, 0, NULL, ovl))
+        ret = GetLastError();
+
+    heap_free(buffer);
+    return ret;
 }
 
 /***********************************************************************
