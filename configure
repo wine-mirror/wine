@@ -666,6 +666,7 @@ UNWIND_LIBS
 UNWIND_CFLAGS
 UDEV_LIBS
 UDEV_CFLAGS
+OSS4_LIBS
 OSS4_CFLAGS
 ALSA_LIBS
 GSTREAMER_LIBS
@@ -6860,51 +6861,6 @@ if test "x$ac_cv_lib_i386_i386_set_ldt" = xyes; then :
 _ACEOF
 
   LIBS="-li386 $LIBS"
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for _oss_ioctl in -lossaudio" >&5
-$as_echo_n "checking for _oss_ioctl in -lossaudio... " >&6; }
-if ${ac_cv_lib_ossaudio__oss_ioctl+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lossaudio  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char _oss_ioctl ();
-int
-main ()
-{
-return _oss_ioctl ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_ossaudio__oss_ioctl=yes
-else
-  ac_cv_lib_ossaudio__oss_ioctl=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ossaudio__oss_ioctl" >&5
-$as_echo "$ac_cv_lib_ossaudio__oss_ioctl" >&6; }
-if test "x$ac_cv_lib_ossaudio__oss_ioctl" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBOSSAUDIO 1
-_ACEOF
-
-  LIBS="-lossaudio $LIBS"
 
 fi
 
@@ -14721,6 +14677,47 @@ _ACEOF
 
 OSS4_CFLAGS="$ac_oss_incl"
 
+             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for _oss_ioctl in -lossaudio" >&5
+$as_echo_n "checking for _oss_ioctl in -lossaudio... " >&6; }
+if ${ac_cv_lib_ossaudio__oss_ioctl+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lossaudio  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char _oss_ioctl ();
+int
+main ()
+{
+return _oss_ioctl ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_ossaudio__oss_ioctl=yes
+else
+  ac_cv_lib_ossaudio__oss_ioctl=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ossaudio__oss_ioctl" >&5
+$as_echo "$ac_cv_lib_ossaudio__oss_ioctl" >&6; }
+if test "x$ac_cv_lib_ossaudio__oss_ioctl" = xyes; then :
+  OSS4_LIBS="-lossaudio"
+
+fi
+
 fi
 
 fi
@@ -19825,6 +19822,7 @@ GSTREAMER_CFLAGS = $GSTREAMER_CFLAGS
 GSTREAMER_LIBS = $GSTREAMER_LIBS
 ALSA_LIBS = $ALSA_LIBS
 OSS4_CFLAGS = $OSS4_CFLAGS
+OSS4_LIBS = $OSS4_LIBS
 UDEV_CFLAGS = $UDEV_CFLAGS
 UDEV_LIBS = $UDEV_LIBS
 UNWIND_CFLAGS = $UNWIND_CFLAGS

@@ -410,8 +410,6 @@ dnl **** Check for some libraries ****
 
 dnl Check for -li386 for NetBSD and OpenBSD
 AC_CHECK_LIB(i386,i386_set_ldt)
-dnl Check for -lossaudio for NetBSD
-AC_CHECK_LIB(ossaudio,_oss_ioctl)
 
 AC_SUBST(OPENGL_LIBS,"")
 
@@ -1657,8 +1655,10 @@ then
     CPPFLAGS="$CPPFLAGS $ac_oss_incl"
     AC_CHECK_HEADER([sys/soundcard.h],
         [AC_CHECK_MEMBERS([oss_sysinfo.numaudioengines],
-                          [AC_SUBST(OSS4_CFLAGS,"$ac_oss_incl")],,
-                          [#include <sys/soundcard.h>])])
+            [AC_SUBST(OSS4_CFLAGS,"$ac_oss_incl")
+             AC_CHECK_LIB(ossaudio,_oss_ioctl,
+                 [AC_SUBST(OSS4_LIBS,"-lossaudio")])],,
+            [#include <sys/soundcard.h>])])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(oss,[test "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes],
