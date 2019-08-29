@@ -455,9 +455,10 @@ BOOL query_drag_drop(macdrv_query* query)
             {
                 dropfiles->pt.x = pt.x;
                 dropfiles->pt.y = pt.y;
-                dropfiles->fNC  = FALSE;
+                dropfiles->fNC  = !ScreenToClient(hwnd, &dropfiles->pt);
 
-                TRACE("sending WM_DROPFILES: hwnd %p pt %s %s\n", hwnd, wine_dbgstr_point(&pt),
+                TRACE("sending WM_DROPFILES: hwnd %p nc %d pt %s %s\n", hwnd,
+                      dropfiles->fNC, wine_dbgstr_point(&dropfiles->pt),
                       debugstr_w((WCHAR*)((char*)dropfiles + dropfiles->pFiles)));
 
                 GlobalUnlock(hdrop);
