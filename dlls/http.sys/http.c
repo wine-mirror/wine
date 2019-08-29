@@ -1193,6 +1193,48 @@ static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
     return ret;
 }
 
+static NTSTATUS http_send_response(struct request_queue *queue, IRP *irp)
+{
+    const struct http_response *response = irp->AssociatedIrp.SystemBuffer;
+    struct connection *conn;
+
+    TRACE("id %s, len %d.\n", wine_dbgstr_longlong(response->id), response->len);
+
+    EnterCriticalSection(&http_cs);
+
+    LIST_FOR_EACH_ENTRY(conn, &connections, struct connection, entry)
+    {
+        if (conn->req_id == response->id)
+        {
+            if (send(conn->socket, response->buffer, response->len, 0) >= 0)
+            {
+                conn->queue = NULL;
+                conn->req_id = HTTP_NULL_ID;
+                WSAEventSelect(conn->socket, request_event, FD_READ | FD_CLOSE);
+                irp->IoStatus.Information = response->len;
+                /* We might have another request already in the buffer. */
+                if (parse_request(conn) < 0)
+                {
+                    WARN("Failed to parse request; shutting down connection.\n");
+                    send_400(conn);
+                    close_connection(conn);
+                }
+            }
+            else
+            {
+                ERR("Got error %u; shutting down connection.\n", WSAGetLastError());
+                close_connection(conn);
+            }
+
+            LeaveCriticalSection(&http_cs);
+            return STATUS_SUCCESS;
+        }
+    }
+
+    LeaveCriticalSection(&http_cs);
+    return STATUS_CONNECTION_INVALID;
+}
+
 static NTSTATUS WINAPI dispatch_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
@@ -1209,6 +1251,9 @@ static NTSTATUS WINAPI dispatch_ioctl(DEVICE_OBJECT *device, IRP *irp)
         break;
     case IOCTL_HTTP_RECEIVE_REQUEST:
         ret = http_receive_request(queue, irp);
+        break;
+    case IOCTL_HTTP_SEND_RESPONSE:
+        ret = http_send_response(queue, irp);
         break;
     default:
         FIXME("Unhandled ioctl %#x.\n", stack->Parameters.DeviceIoControl.IoControlCode);

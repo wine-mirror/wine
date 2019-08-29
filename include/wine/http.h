@@ -26,6 +26,7 @@
 #define IOCTL_HTTP_ADD_URL          CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_BUFFERED, 0)
 #define IOCTL_HTTP_REMOVE_URL       CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_BUFFERED, 0)
 #define IOCTL_HTTP_RECEIVE_REQUEST  CTL_CODE(FILE_DEVICE_UNKNOWN, 0x802, METHOD_BUFFERED, 0)
+#define IOCTL_HTTP_SEND_RESPONSE    CTL_CODE(FILE_DEVICE_UNKNOWN, 0x803, METHOD_BUFFERED, 0)
 
 struct http_add_url_params
 {
@@ -39,6 +40,13 @@ struct http_receive_request_params
     HTTP_REQUEST_ID id;
     ULONG flags;
     ULONG bits;
+};
+
+struct http_response
+{
+    HTTP_REQUEST_ID id;
+    int len;
+    char buffer[1];
 };
 
 #endif
