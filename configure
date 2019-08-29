@@ -20490,6 +20490,7 @@ wine_fn_config_makefile dlls/mf/tests enable_tests
 wine_fn_config_makefile dlls/mf3216 enable_mf3216
 wine_fn_config_makefile dlls/mferror enable_mferror
 wine_fn_config_makefile dlls/mfmediaengine enable_mfmediaengine
+wine_fn_config_makefile dlls/mfmediaengine/tests enable_tests
 wine_fn_config_makefile dlls/mfplat enable_mfplat
 wine_fn_config_makefile dlls/mfplat/tests enable_tests
 wine_fn_config_makefile dlls/mfplay enable_mfplay

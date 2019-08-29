@@ -1,3 +1,3 @@
-@ stub DllCanUnloadNow
+@ stdcall -private DllCanUnloadNow()
 @ stub DllGetActivationFactory
-@ stub DllGetClassObject
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
