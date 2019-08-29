@@ -258,6 +258,10 @@ extern int macdrv_clip_cursor(CGRect rect) DECLSPEC_HIDDEN;
 
 /* display */
 
+/* Used DISPLAY_DEVICE.StateFlags for adapters */
+#define DISPLAY_DEVICE_ATTACHED_TO_DESKTOP      0x00000001
+#define DISPLAY_DEVICE_PRIMARY_DEVICE           0x00000004
+
 /* Represent a physical GPU in the PCI slots */
 struct macdrv_gpu
 {
@@ -272,12 +276,23 @@ struct macdrv_gpu
     uint32_t revision_id;
 };
 
+/* Represent an adapter in EnumDisplayDevices context */
+struct macdrv_adapter
+{
+    /* ID to uniquely identify an adapter. Currently it's a CGDirectDisplayID */
+    uint32_t id;
+    /* as StateFlags in DISPLAY_DEVICE struct */
+    uint32_t state_flags;
+};
+
 extern int macdrv_get_displays(struct macdrv_display** displays, int* count) DECLSPEC_HIDDEN;
 extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDEN;
 extern int macdrv_set_display_mode(const struct macdrv_display* display,
                                    CGDisplayModeRef display_mode) DECLSPEC_HIDDEN;
 extern int macdrv_get_gpus(struct macdrv_gpu** gpus, int* count) DECLSPEC_HIDDEN;
 extern void macdrv_free_gpus(struct macdrv_gpu* gpus) DECLSPEC_HIDDEN;
+extern int macdrv_get_adapters(uint64_t gpu_id, struct macdrv_adapter** adapters, int* count) DECLSPEC_HIDDEN;
+extern void macdrv_free_adapters(struct macdrv_adapter* adapters) DECLSPEC_HIDDEN;
 
 
 /* event */

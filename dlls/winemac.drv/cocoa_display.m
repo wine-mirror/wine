@@ -26,6 +26,8 @@
 #endif
 #include "macdrv_cocoa.h"
 
+static uint64_t dedicated_gpu_id;
+static uint64_t integrated_gpu_id;
 
 /***********************************************************************
  *              convert_display_rect
@@ -291,6 +293,7 @@ static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
     /* Hide the integrated GPU if the system default device is a dedicated GPU */
     if (!primary_device.isLowPower)
     {
+        dedicated_gpu_id = primary_gpu.id;
         hide_integrated = TRUE;
     }
 
@@ -301,6 +304,7 @@ static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
 
         if (hide_integrated && devices[i].isLowPower)
         {
+            integrated_gpu_id = gpus[gpu_count].id;
             continue;
         }
 
@@ -406,6 +410,7 @@ static int macdrv_get_gpus_from_iokit(struct macdrv_gpu** new_gpus, int* count)
              * Assuming integrated GPU vendor is Intel for now */
             if (gpus[i].vendor_id == 0x8086)
             {
+                integrated_gpu_id = gpus[i].id;
                 integrated_index = i;
             }
 
@@ -428,6 +433,7 @@ static int macdrv_get_gpus_from_iokit(struct macdrv_gpu** new_gpus, int* count)
             else if (primary_index == gpu_count - 1)
                 primary_index = integrated_index;
 
+            dedicated_gpu_id = gpus[primary_index].id;
             gpu_count--;
         }
     }
@@ -460,6 +466,9 @@ done:
  */
 int macdrv_get_gpus(struct macdrv_gpu** new_gpus, int* count)
 {
+    integrated_gpu_id = 0;
+    dedicated_gpu_id = 0;
+
     if (!macdrv_get_gpus_from_metal(new_gpus, count))
         return 0;
     else
@@ -475,4 +484,94 @@ void macdrv_free_gpus(struct macdrv_gpu* gpus)
 {
     if (gpus)
         free(gpus);
+}
+
+/***********************************************************************
+ *              macdrv_get_adapters
+ *
+ * Get a list of adapters under gpu_id. The first adapter is primary if GPU is primary.
+ * Call macdrv_free_adapters() when you are done using the data.
+ *
+ * Returns non-zero value on failure with parameters unchanged and zero on success.
+ */
+int macdrv_get_adapters(uint64_t gpu_id, struct macdrv_adapter** new_adapters, int* count)
+{
+    CGDirectDisplayID display_ids[16];
+    uint32_t display_id_count;
+    struct macdrv_adapter* adapters;
+    struct macdrv_gpu gpu;
+    int primary_index = 0;
+    int adapter_count = 0;
+    int ret = -1;
+    uint32_t i;
+
+    if (CGGetOnlineDisplayList(sizeof(display_ids) / sizeof(display_ids[0]), display_ids, &display_id_count)
+        != kCGErrorSuccess)
+        return -1;
+
+    if (!display_id_count)
+    {
+        *new_adapters = NULL;
+        *count = 0;
+        return 0;
+    }
+
+    /* Actual adapter count may be less */
+    adapters = calloc(display_id_count, sizeof(*adapters));
+    if (!adapters)
+        return -1;
+
+    for (i = 0; i < display_id_count; i++)
+    {
+        /* Mirrored displays are under the same adapter with primary display, so they doesn't increase adapter count */
+        if (CGDisplayMirrorsDisplay(display_ids[i]) != kCGNullDirectDisplay)
+            continue;
+
+        if (macdrv_get_gpu_info_from_display_id(&gpu, display_ids[i]))
+            goto done;
+
+        if (gpu.id == gpu_id || (gpu_id == dedicated_gpu_id && gpu.id == integrated_gpu_id))
+        {
+            adapters[adapter_count].id = display_ids[i];
+
+            if (CGDisplayIsMain(display_ids[i]))
+            {
+                adapters[adapter_count].state_flags |= DISPLAY_DEVICE_PRIMARY_DEVICE;
+                primary_index = adapter_count;
+            }
+
+            if (CGDisplayIsActive(display_ids[i]))
+                adapters[adapter_count].state_flags |= DISPLAY_DEVICE_ATTACHED_TO_DESKTOP;
+
+            adapter_count++;
+        }
+    }
+
+    /* Make sure the first adapter is primary if the GPU is primary */
+    if (primary_index)
+    {
+        struct macdrv_adapter tmp;
+        tmp = adapters[0];
+        adapters[0] = adapters[primary_index];
+        adapters[primary_index] = tmp;
+    }
+
+    *new_adapters = adapters;
+    *count = adapter_count;
+    ret = 0;
+done:
+    if (ret)
+        macdrv_free_adapters(adapters);
+    return ret;
+}
+
+/***********************************************************************
+ *              macdrv_free_adapters
+ *
+ * Frees an adapter list allocated from macdrv_get_adapters()
+ */
+void macdrv_free_adapters(struct macdrv_adapter* adapters)
+{
+    if (adapters)
+        free(adapters);
 }
