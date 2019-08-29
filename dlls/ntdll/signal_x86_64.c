@@ -1592,6 +1592,73 @@ static NTSTATUS libunwind_virtual_unwind( ULONG64 ip, BOOL* got_info, ULONG64 *f
 
 
 /***********************************************************************
+ *           virtual_unwind
+ */
+static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
+{
+    LDR_MODULE *module;
+    NTSTATUS status;
+
+    dispatch->ImageBase = 0;
+    dispatch->ScopeIndex = 0;
+    dispatch->ControlPc = context->Rip;
+
+    /* first look for PE exception information */
+
+    if ((dispatch->FunctionEntry = lookup_function_info( context->Rip, &dispatch->ImageBase, &module )))
+    {
+        dispatch->LanguageHandler = RtlVirtualUnwind( type, dispatch->ImageBase, context->Rip,
+                                                      dispatch->FunctionEntry, context,
+                                                      &dispatch->HandlerData, &dispatch->EstablisherFrame,
+                                                      NULL );
+        return STATUS_SUCCESS;
+    }
+
+    /* then look for host system exception information */
+
+    if (!module || (module->Flags & LDR_WINE_INTERNAL))
+    {
+        BOOL got_info = FALSE;
+        struct dwarf_eh_bases bases;
+        const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(context->Rip - 1), &bases );
+
+        if (fde)
+        {
+            status = dwarf_virtual_unwind( context->Rip, &dispatch->EstablisherFrame, context, fde,
+                                           &bases, &dispatch->LanguageHandler, &dispatch->HandlerData );
+            if (status != STATUS_SUCCESS) return status;
+            got_info = TRUE;
+        }
+#ifdef HAVE_LIBUNWIND_H
+        else
+        {
+            status = libunwind_virtual_unwind( context->Rip, &got_info, &dispatch->EstablisherFrame,
+                                               context, &dispatch->LanguageHandler, &dispatch->HandlerData );
+            if (status != STATUS_SUCCESS) return status;
+        }
+#endif
+        if (got_info)
+        {
+            if (dispatch->LanguageHandler && !module)
+            {
+                FIXME( "calling personality routine in system library not supported yet\n" );
+                dispatch->LanguageHandler = NULL;
+            }
+            return STATUS_SUCCESS;
+        }
+    }
+    else WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
+
+    /* no exception information, treat as a leaf function */
+
+    dispatch->EstablisherFrame = context->Rsp;
+    dispatch->LanguageHandler = NULL;
+    context->Rip = *(ULONG64 *)context->Rsp;
+    context->Rsp = context->Rsp + sizeof(ULONG64);
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
  *           dispatch_signal
  */
 static inline int dispatch_signal(unsigned int sig)
@@ -2538,7 +2605,6 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
     UNWIND_HISTORY_TABLE table;
     DISPATCHER_CONTEXT dispatch;
     CONTEXT context;
-    LDR_MODULE *module;
     NTSTATUS status;
 
     context = *orig_context;
@@ -2547,64 +2613,8 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
     dispatch.HistoryTable  = &table;
     for (;;)
     {
-        /* FIXME: should use the history table to make things faster */
-
-        dispatch.ImageBase = 0;
-        dispatch.ControlPc = context.Rip;
-        dispatch.ScopeIndex = 0;
-
-        /* first look for PE exception information */
-
-        if ((dispatch.FunctionEntry = lookup_function_info( dispatch.ControlPc, &dispatch.ImageBase, &module )))
-        {
-            dispatch.LanguageHandler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, dispatch.ImageBase,
-                                                         dispatch.ControlPc, dispatch.FunctionEntry,
-                                                         &context, &dispatch.HandlerData,
-                                                         &dispatch.EstablisherFrame, NULL );
-            goto unwind_done;
-        }
-
-        /* then look for host system exception information */
-
-        if (!module || (module->Flags & LDR_WINE_INTERNAL))
-        {
-            BOOL got_info = FALSE;
-            struct dwarf_eh_bases bases;
-            const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(dispatch.ControlPc - 1), &bases );
-
-            if (fde)
-            {
-                status = dwarf_virtual_unwind( dispatch.ControlPc, &dispatch.EstablisherFrame, &context,
-                                               fde, &bases, &dispatch.LanguageHandler, &dispatch.HandlerData );
-                if (status != STATUS_SUCCESS) return status;
-                got_info = TRUE;
-            }
-#ifdef HAVE_LIBUNWIND_H
-            else
-            {
-                status = libunwind_virtual_unwind( dispatch.ControlPc, &got_info, &dispatch.EstablisherFrame, &context,
-                                                   &dispatch.LanguageHandler, &dispatch.HandlerData );
-                if (status != STATUS_SUCCESS) return status;
-            }
-#endif
-
-            if (got_info)
-            {
-                dispatch.FunctionEntry = NULL;
-                if (dispatch.LanguageHandler && !module)
-                {
-                    FIXME( "calling personality routine in system library not supported yet\n" );
-                    dispatch.LanguageHandler = NULL;
-                }
-                goto unwind_done;
-            }
-        }
-        else WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
-
-        context.Rip = *(ULONG64 *)context.Rsp;
-        context.Rsp = context.Rsp + sizeof(ULONG64);
-        dispatch.EstablisherFrame = context.Rsp;
-        dispatch.LanguageHandler = NULL;
+        status = virtual_unwind( UNW_FLAG_EHANDLER, &dispatch, &context );
+        if (status != STATUS_SUCCESS) return status;
 
     unwind_done:
         if (!dispatch.EstablisherFrame) break;
@@ -3840,7 +3850,6 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     EXCEPTION_RECORD record;
     DISPATCHER_CONTEXT dispatch;
     CONTEXT new_context;
-    LDR_MODULE *module;
     NTSTATUS status;
     DWORD i;
 
@@ -3880,66 +3889,8 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 
     for (;;)
     {
-        /* FIXME: should use the history table to make things faster */
-
-        dispatch.ImageBase = 0;
-        dispatch.ScopeIndex = 0;
-        dispatch.ControlPc = context->Rip;
-
-        /* first look for PE exception information */
-
-        if ((dispatch.FunctionEntry = lookup_function_info( context->Rip, &dispatch.ImageBase, &module )))
-        {
-            dispatch.LanguageHandler = RtlVirtualUnwind( UNW_FLAG_UHANDLER, dispatch.ImageBase,
-                                                         context->Rip, dispatch.FunctionEntry,
-                                                         &new_context, &dispatch.HandlerData,
-                                                         &dispatch.EstablisherFrame, NULL );
-            goto unwind_done;
-        }
-
-        /* then look for host system exception information */
-
-        if (!module || (module->Flags & LDR_WINE_INTERNAL))
-        {
-            BOOL got_info = FALSE;
-            struct dwarf_eh_bases bases;
-            const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(context->Rip - 1), &bases );
-
-            if (fde)
-            {
-                status = dwarf_virtual_unwind( context->Rip, &dispatch.EstablisherFrame, &new_context, fde,
-                                               &bases, &dispatch.LanguageHandler, &dispatch.HandlerData );
-                if (status != STATUS_SUCCESS) raise_status( status, rec );
-                got_info = TRUE;
-            }
-#ifdef HAVE_LIBUNWIND_H
-            else
-            {
-                status = libunwind_virtual_unwind( context->Rip, &got_info, &dispatch.EstablisherFrame, &new_context,
-                                                   &dispatch.LanguageHandler, &dispatch.HandlerData );
-                if (status != STATUS_SUCCESS) raise_status( status, rec );
-            }
-#endif
-
-            if (got_info)
-            {
-                dispatch.FunctionEntry = NULL;
-                if (dispatch.LanguageHandler && !module)
-                {
-                    FIXME( "calling personality routine in system library not supported yet\n" );
-                    dispatch.LanguageHandler = NULL;
-                }
-                goto unwind_done;
-            }
-        }
-        else WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
-
-        /* no exception information, treat as a leaf function */
-
-        new_context.Rip = *(ULONG64 *)context->Rsp;
-        new_context.Rsp = context->Rsp + sizeof(ULONG64);
-        dispatch.EstablisherFrame = context->Rsp;
-        dispatch.LanguageHandler = NULL;
+        status = virtual_unwind( UNW_FLAG_UHANDLER, &dispatch, &new_context );
+        if (status != STATUS_SUCCESS) raise_status( status, rec );
 
     unwind_done:
         if (!dispatch.EstablisherFrame) break;
@@ -4170,7 +4121,6 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
     UNWIND_HISTORY_TABLE table;
     DISPATCHER_CONTEXT dispatch;
     CONTEXT context;
-    LDR_MODULE *module;
     NTSTATUS status;
     ULONG i;
     USHORT num_entries = 0;
@@ -4184,59 +4134,9 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
     if (hash) *hash = 0;
     for (i = 0; i < skip + count; i++)
     {
-        /* FIXME: should use the history table to make things faster */
+        status = virtual_unwind( UNW_FLAG_NHANDLER, &dispatch, &context );
+        if (status != STATUS_SUCCESS) return i;
 
-        dispatch.ImageBase = 0;
-        dispatch.ControlPc = context.Rip;
-        dispatch.ScopeIndex = 0;
-
-        /* first look for PE exception information */
-
-        if ((dispatch.FunctionEntry = lookup_function_info( dispatch.ControlPc, &dispatch.ImageBase, &module )))
-        {
-            RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase, dispatch.ControlPc,
-                              dispatch.FunctionEntry, &context, &dispatch.HandlerData,
-                              &dispatch.EstablisherFrame, NULL );
-            goto unwind_done;
-        }
-
-        /* then look for host system exception information */
-
-        if (!module || (module->Flags & LDR_WINE_INTERNAL))
-        {
-            BOOL got_info = FALSE;
-            struct dwarf_eh_bases bases;
-            const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(dispatch.ControlPc - 1), &bases );
-
-            if (fde)
-            {
-                status = dwarf_virtual_unwind( dispatch.ControlPc, &dispatch.EstablisherFrame, &context,
-                                               fde, &bases, &dispatch.LanguageHandler, &dispatch.HandlerData );
-                if (status != STATUS_SUCCESS) return status;
-                got_info = TRUE;
-            }
-#ifdef HAVE_LIBUNWIND_H
-            else
-            {
-                status = libunwind_virtual_unwind( dispatch.ControlPc, &got_info, &dispatch.EstablisherFrame, &context,
-                                                   &dispatch.LanguageHandler, &dispatch.HandlerData );
-                if (status != STATUS_SUCCESS) return i;
-            }
-#endif
-
-            if (got_info)
-            {
-                dispatch.FunctionEntry = NULL;
-                goto unwind_done;
-            }
-        }
-        else WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
-
-        context.Rip = *(ULONG64 *)context.Rsp;
-        context.Rsp = context.Rsp + sizeof(ULONG64);
-        dispatch.EstablisherFrame = context.Rsp;
-
-    unwind_done:
         if (!dispatch.EstablisherFrame) break;
 
         if ((dispatch.EstablisherFrame & 7) ||
