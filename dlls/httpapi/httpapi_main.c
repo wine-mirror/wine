@@ -23,6 +23,7 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(httpapi);
 
@@ -470,20 +471,63 @@ ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
     return ret;
 }
 
+struct server_session
+{
+    struct list entry;
+};
+
+static struct list server_sessions = LIST_INIT(server_sessions);
+
+static struct server_session *get_server_session(HTTP_SERVER_SESSION_ID id)
+{
+    struct server_session *session;
+    LIST_FOR_EACH_ENTRY(session, &server_sessions, struct server_session, entry)
+    {
+        if ((HTTP_SERVER_SESSION_ID)(ULONG_PTR)session == id)
+            return session;
+    }
+    return NULL;
+}
+
 /***********************************************************************
  *        HttpCreateServerSession     (HTTPAPI.@)
  */
-ULONG WINAPI HttpCreateServerSession( HTTPAPI_VERSION version, HTTP_SERVER_SESSION_ID *id, ULONG reserved )
+ULONG WINAPI HttpCreateServerSession(HTTPAPI_VERSION version, HTTP_SERVER_SESSION_ID *id, ULONG reserved)
 {
-    FIXME( "({%d,%d}, %p, %d): stub!\n", version.HttpApiMajorVersion, version.HttpApiMinorVersion, id, reserved );
-    return ERROR_ACCESS_DENIED;
+    struct server_session *session;
+
+    TRACE("version %u.%u, id %p, reserved %u.\n", version.HttpApiMajorVersion,
+            version.HttpApiMinorVersion, id, reserved);
+
+    if (!id)
+        return ERROR_INVALID_PARAMETER;
+
+    if ((version.HttpApiMajorVersion != 1 && version.HttpApiMajorVersion != 2)
+            || version.HttpApiMinorVersion)
+        return ERROR_REVISION_MISMATCH;
+
+    if (!(session = heap_alloc(sizeof(*session))))
+        return ERROR_OUTOFMEMORY;
+
+    list_add_tail(&server_sessions, &session->entry);
+
+    *id = (ULONG_PTR)session;
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
  *        HttpCloseServerSession     (HTTPAPI.@)
  */
-ULONG WINAPI HttpCloseServerSession( HTTP_SERVER_SESSION_ID id )
+ULONG WINAPI HttpCloseServerSession(HTTP_SERVER_SESSION_ID id)
 {
-    FIXME( "(%s): stub!\n", wine_dbgstr_longlong(id));
-    return ERROR_INVALID_PARAMETER;
+    struct server_session *session;
+
+    TRACE("id %s.\n", wine_dbgstr_longlong(id));
+
+    if (!(session = get_server_session(id)))
+        return ERROR_INVALID_PARAMETER;
+
+    list_remove(&session->entry);
+    heap_free(session);
+    return ERROR_SUCCESS;
 }
