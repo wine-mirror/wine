@@ -51,15 +51,19 @@ struct display_mode_descriptor
 
 BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmode, DWORD flags);
 
+/* Wine specific monitor properties */
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_STATEFLAGS, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 2);
 
 static const char initial_mode_key[] = "Initial Display Mode";
 static const WCHAR pixelencodingW[] = {'P','i','x','e','l','E','n','c','o','d','i','n','g',0};
 static const WCHAR driver_date_dataW[] = {'D','r','i','v','e','r','D','a','t','e','D','a','t','a',0};
 static const WCHAR driver_descW[] = {'D','r','i','v','e','r','D','e','s','c',0};
+static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
 static const WCHAR pciW[] = {'P','C','I',0};
 static const WCHAR video_idW[] = {'V','i','d','e','o','I','D',0};
 static const WCHAR symbolic_link_valueW[]= {'S','y','m','b','o','l','i','c','L','i','n','k','V','a','l','u','e',0};
 static const WCHAR gpu_idW[] = {'G','P','U','I','D',0};
+static const WCHAR mointor_id_fmtW[] = {'M','o','n','i','t','o','r','I','D','%','d',0};
 static const WCHAR state_flagsW[] = {'S','t','a','t','e','F','l','a','g','s',0};
 static const WCHAR guid_fmtW[] = {
     '{','%','0','8','x','-','%','0','4','x','-','%','0','4','x','-','%','0','2','x','%','0','2','x','-',
@@ -101,6 +105,13 @@ static const WCHAR nt_classW[] = {
     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
     'C','o','n','t','r','o','l','\\',
     'C','l','a','s','s','\\',0};
+static const WCHAR monitor_instance_fmtW[] = {
+    'D','I','S','P','L','A','Y','\\',
+    'D','e','f','a','u','l','t','_','M','o','n','i','t','o','r','\\',
+    '%','0','4','X','&','%','0','4','X',0};
+static const WCHAR monitor_hardware_idW[] = {
+    'M','O','N','I','T','O','R','\\',
+    'D','e','f','a','u','l','t','_','M','o','n','i','t','o','r',0,0};
 
 
 static CFArrayRef modes;
@@ -1544,7 +1555,7 @@ done:
  *
  * Return FALSE on failure and TRUE on success.
  */
-static BOOL macdrv_init_adapter(HKEY video_hkey, int video_index, int gpu_index, int adapter_index,
+static BOOL macdrv_init_adapter(HKEY video_hkey, int video_index, int gpu_index, int adapter_index, int monitor_count,
                                 const struct macdrv_gpu *gpu, const WCHAR *guid_string, const WCHAR *gpu_driver,
                                 const struct macdrv_adapter *adapter)
 {
@@ -1554,6 +1565,7 @@ static BOOL macdrv_init_adapter(HKEY video_hkey, int video_index, int gpu_index,
     HKEY hkey = NULL;
     BOOL ret = FALSE;
     LSTATUS ls;
+    INT i;
 
     sprintfW(key_nameW, device_video_fmtW, video_index);
     lstrcpyW(bufferW, machine_prefixW);
@@ -1588,6 +1600,15 @@ static BOOL macdrv_init_adapter(HKEY video_hkey, int video_index, int gpu_index,
     if (RegSetValueExW(hkey, gpu_idW, 0, REG_SZ, (const BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR)))
         goto done;
 
+    /* Write all monitor instances paths under this adapter */
+    for (i = 0; i < monitor_count; i++)
+    {
+        sprintfW(key_nameW, mointor_id_fmtW, i);
+        sprintfW(bufferW, monitor_instance_fmtW, video_index, i);
+        if (RegSetValueExW(hkey, key_nameW, 0, REG_SZ, (const BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR)))
+            goto done;
+    }
+
     /* Write StateFlags */
     if (RegSetValueExW(hkey, state_flagsW, 0, REG_DWORD, (const BYTE *)&adapter->state_flags,
                        sizeof(adapter->state_flags)))
@@ -1601,12 +1622,67 @@ done:
     return ret;
 }
 
+/***********************************************************************
+ *              macdrv_init_monitor
+ *
+ * Initialize an monitor.
+ *
+ * Return FALSE on failure and TRUE on success.
+ */
+static BOOL macdrv_init_monitor(HDEVINFO devinfo, const struct macdrv_monitor *monitor, int monitor_index,
+                                 int video_index)
+{
+    SP_DEVINFO_DATA device_data = {sizeof(SP_DEVINFO_DATA)};
+    WCHAR nameW[MAX_PATH];
+    WCHAR bufferW[MAX_PATH];
+    HKEY hkey;
+    BOOL ret = FALSE;
+
+    /* Create GUID_DEVCLASS_MONITOR instance */
+    sprintfW(bufferW, monitor_instance_fmtW, video_index, monitor_index);
+    MultiByteToWideChar(CP_UTF8, 0, monitor->name, -1, nameW, ARRAY_SIZE(nameW));
+    SetupDiCreateDeviceInfoW(devinfo, bufferW, &GUID_DEVCLASS_MONITOR, nameW, NULL, 0, &device_data);
+    if (!SetupDiRegisterDeviceInfo(devinfo, &device_data, 0, NULL, NULL, NULL))
+        goto done;
+
+    /* Write HardwareID registry property */
+    if (!SetupDiSetDeviceRegistryPropertyW(devinfo, &device_data, SPDRP_HARDWAREID,
+                                           (const BYTE *)monitor_hardware_idW, sizeof(monitor_hardware_idW)))
+        goto done;
+
+    /* Create driver key */
+    hkey = SetupDiCreateDevRegKeyW(devinfo, &device_data, DICS_FLAG_GLOBAL, 0, DIREG_DRV, NULL, NULL);
+    RegCloseKey(hkey);
+
+    /* FIXME:
+     * Following properties are Wine specific, see comments in macdrv_init_adapter for details */
+    /* StateFlags */
+    if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_STATEFLAGS, DEVPROP_TYPE_UINT32,
+                                   (const BYTE *)&monitor->state_flags, sizeof(monitor->state_flags), 0))
+        goto done;
+
+    ret = TRUE;
+done:
+    if (!ret)
+        ERR("Failed to initialize monitor\n");
+    return ret;
+}
+
 static void prepare_devices(HKEY video_hkey)
 {
     static const BOOL not_present = FALSE;
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
     HDEVINFO devinfo;
     DWORD i = 0;
+
+    /* Remove all monitors */
+    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_MONITOR, displayW, NULL, 0);
+    while (SetupDiEnumDeviceInfo(devinfo, i++, &device_data))
+    {
+        if (!SetupDiRemoveDevice(devinfo, &device_data))
+            ERR("Failed to remove monitor\n");
+    }
+    SetupDiDestroyDeviceInfoList(devinfo);
 
     /* Clean up old adapter keys for reinitialization */
     RegDeleteTreeW(video_hkey, NULL);
@@ -1616,6 +1692,7 @@ static void prepare_devices(HKEY video_hkey)
      * case application uses SetupDiGetClassDevsW to enumerate devices. Wrong devices could exist in registry as a result
      * of prefix copying or having devices unplugged. But then we couldn't simply delete GPUs because we need to retain
      * the same GUID for the same GPU. */
+    i = 0;
     devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_DISPLAY, pciW, NULL, 0);
     while (SetupDiEnumDeviceInfo(devinfo, i++, &device_data))
     {
@@ -1657,9 +1734,10 @@ void macdrv_init_display_devices(void)
     HANDLE mutex;
     struct macdrv_gpu *gpus = NULL;
     struct macdrv_adapter *adapters = NULL;
-    INT gpu_count, adapter_count;
-    INT gpu, adapter;
-    HDEVINFO gpu_devinfo = NULL;
+    struct macdrv_monitor *monitors = NULL;
+    INT gpu_count, adapter_count, monitor_count;
+    INT gpu, adapter, monitor;
+    HDEVINFO gpu_devinfo = NULL, monitor_devinfo = NULL;
     HKEY video_hkey = NULL;
     INT video_index = 0;
     DWORD disposition = 0;
@@ -1685,6 +1763,7 @@ void macdrv_init_display_devices(void)
     prepare_devices(video_hkey);
 
     gpu_devinfo = SetupDiCreateDeviceInfoList(&GUID_DEVCLASS_DISPLAY, NULL);
+    monitor_devinfo = SetupDiCreateDeviceInfoList(&GUID_DEVCLASS_MONITOR, NULL);
 
     /* Initialize GPUs */
     if (macdrv_get_gpus(&gpus, &gpu_count))
@@ -1701,10 +1780,22 @@ void macdrv_init_display_devices(void)
 
         for (adapter = 0; adapter < adapter_count; adapter++)
         {
-            if (!macdrv_init_adapter(video_hkey, video_index, gpu, adapter, &gpus[gpu], guidW, driverW,
+            if (macdrv_get_monitors(adapters[adapter].id, &monitors, &monitor_count))
+                goto done;
+
+            if (!macdrv_init_adapter(video_hkey, video_index, gpu, adapter, monitor_count, &gpus[gpu], guidW, driverW,
                                      &adapters[adapter]))
                 goto done;
 
+            /* Initialize monitors */
+            for (monitor = 0; monitor < monitor_count; monitor++)
+            {
+                if (!macdrv_init_monitor(monitor_devinfo, &monitors[monitor], monitor, video_index))
+                    goto done;
+            }
+
+            macdrv_free_monitors(monitors);
+            monitors = NULL;
             video_index++;
         }
 
@@ -1714,6 +1805,7 @@ void macdrv_init_display_devices(void)
 
 done:
     cleanup_devices();
+    SetupDiDestroyDeviceInfoList(monitor_devinfo);
     SetupDiDestroyDeviceInfoList(gpu_devinfo);
     RegCloseKey(video_hkey);
 
@@ -1722,4 +1814,5 @@ done:
 
     macdrv_free_gpus(gpus);
     macdrv_free_adapters(adapters);
+    macdrv_free_monitors(monitors);
 }

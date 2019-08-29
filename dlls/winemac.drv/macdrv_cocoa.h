@@ -261,6 +261,9 @@ extern int macdrv_clip_cursor(CGRect rect) DECLSPEC_HIDDEN;
 /* Used DISPLAY_DEVICE.StateFlags for adapters */
 #define DISPLAY_DEVICE_ATTACHED_TO_DESKTOP      0x00000001
 #define DISPLAY_DEVICE_PRIMARY_DEVICE           0x00000004
+/* Used DISPLAY_DEVICE.StateFlags for monitors */
+#define DISPLAY_DEVICE_ACTIVE                   0x00000001
+#define DISPLAY_DEVICE_ATTACHED                 0x00000002
 
 /* Represent a physical GPU in the PCI slots */
 struct macdrv_gpu
@@ -285,6 +288,15 @@ struct macdrv_adapter
     uint32_t state_flags;
 };
 
+/* Represent a monitor in EnumDisplayDevices context */
+struct macdrv_monitor
+{
+    /* Name, in UTF-8 encoding */
+    char name[128];
+    /* StateFlags in DISPLAY_DEVICE struct */
+    uint32_t state_flags;
+};
+
 extern int macdrv_get_displays(struct macdrv_display** displays, int* count) DECLSPEC_HIDDEN;
 extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDEN;
 extern int macdrv_set_display_mode(const struct macdrv_display* display,
@@ -293,6 +305,8 @@ extern int macdrv_get_gpus(struct macdrv_gpu** gpus, int* count) DECLSPEC_HIDDEN
 extern void macdrv_free_gpus(struct macdrv_gpu* gpus) DECLSPEC_HIDDEN;
 extern int macdrv_get_adapters(uint64_t gpu_id, struct macdrv_adapter** adapters, int* count) DECLSPEC_HIDDEN;
 extern void macdrv_free_adapters(struct macdrv_adapter* adapters) DECLSPEC_HIDDEN;
+extern int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** monitors, int* count) DECLSPEC_HIDDEN;
+extern void macdrv_free_monitors(struct macdrv_monitor* monitors) DECLSPEC_HIDDEN;
 
 
 /* event */

@@ -575,3 +575,112 @@ void macdrv_free_adapters(struct macdrv_adapter* adapters)
     if (adapters)
         free(adapters);
 }
+
+/***********************************************************************
+ *              macdrv_get_monitors
+ *
+ * Get a list of monitors under adapter_id. The first monitor is primary if adapter is primary.
+ * Call macdrv_free_monitors() when you are done using the data.
+ *
+ * Returns non-zero value on failure with parameters unchanged and zero on success.
+ */
+int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** new_monitors, int* count)
+{
+    struct macdrv_monitor* monitors = NULL;
+    struct macdrv_monitor* realloc_monitors;
+    struct macdrv_display* displays = NULL;
+    CGDirectDisplayID display_ids[16];
+    uint32_t display_id_count;
+    int primary_index = 0;
+    int monitor_count = 0;
+    int display_count;
+    int capacity;
+    int ret = -1;
+    int i, j;
+
+    /* 2 should be enough for most cases */
+    capacity = 2;
+    monitors = calloc(capacity, sizeof(*monitors));
+    if (!monitors)
+        return -1;
+
+    /* Report an inactive monitor */
+    if (!CGDisplayIsActive(adapter_id) && !CGDisplayIsInMirrorSet(adapter_id))
+    {
+        strcpy(monitors[monitor_count].name, "Generic Non-PnP Monitor");
+        monitors[monitor_count].state_flags = DISPLAY_DEVICE_ATTACHED;
+        monitor_count++;
+    }
+    /* Report active and mirrored monitors in the same mirroring set */
+    else
+    {
+        if (CGGetOnlineDisplayList(sizeof(display_ids) / sizeof(display_ids[0]), display_ids, &display_id_count)
+            != kCGErrorSuccess)
+            goto done;
+
+        if (macdrv_get_displays(&displays, &display_count))
+            goto done;
+
+        for (i = 0; i < display_id_count; i++)
+        {
+            if (display_ids[i] != adapter_id && CGDisplayMirrorsDisplay(display_ids[i]) != adapter_id)
+                continue;
+
+            /* Find and fill in monitor info */
+            for (j = 0; j < display_count; j++)
+            {
+                if (displays[j].displayID == display_ids[i]
+                    || CGDisplayMirrorsDisplay(display_ids[i]) == displays[j].displayID)
+                {
+                    /* Allocate more space if needed */
+                    if (monitor_count >= capacity)
+                    {
+                        capacity *= 2;
+                        realloc_monitors = realloc(monitors, sizeof(*monitors) * capacity);
+                        if (!realloc_monitors)
+                            goto done;
+                        monitors = realloc_monitors;
+                    }
+
+                    if (j == 0)
+                        primary_index = monitor_count;
+
+                    strcpy(monitors[monitor_count].name, "Generic Non-PnP Monitor");
+                    monitors[monitor_count].state_flags = DISPLAY_DEVICE_ATTACHED | DISPLAY_DEVICE_ACTIVE;
+                    monitor_count++;
+                    break;
+                }
+            }
+        }
+
+        /* Make sure the first monitor on primary adapter is primary */
+        if (primary_index)
+        {
+            struct macdrv_monitor tmp;
+            tmp = monitors[0];
+            monitors[0] = monitors[primary_index];
+            monitors[primary_index] = tmp;
+        }
+    }
+
+    *new_monitors = monitors;
+    *count = monitor_count;
+    ret = 0;
+done:
+    if (displays)
+        macdrv_free_displays(displays);
+    if (ret)
+        macdrv_free_monitors(monitors);
+    return ret;
+}
+
+/***********************************************************************
+ *              macdrv_free_monitors
+ *
+ * Frees an monitor list allocated from macdrv_get_monitors()
+ */
+void macdrv_free_monitors(struct macdrv_monitor* monitors)
+{
+    if (monitors)
+        free(monitors);
+}
