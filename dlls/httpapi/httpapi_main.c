@@ -471,9 +471,28 @@ ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
     return ret;
 }
 
+struct url_group
+{
+    struct list entry, session_entry;
+};
+
+static struct list url_groups = LIST_INIT(url_groups);
+
+static struct url_group *get_url_group(HTTP_URL_GROUP_ID id)
+{
+    struct url_group *group;
+    LIST_FOR_EACH_ENTRY(group, &url_groups, struct url_group, entry)
+    {
+        if ((HTTP_URL_GROUP_ID)(ULONG_PTR)group == id)
+            return group;
+    }
+    return NULL;
+}
+
 struct server_session
 {
     struct list entry;
+    struct list groups;
 };
 
 static struct list server_sessions = LIST_INIT(server_sessions);
@@ -510,6 +529,7 @@ ULONG WINAPI HttpCreateServerSession(HTTPAPI_VERSION version, HTTP_SERVER_SESSIO
         return ERROR_OUTOFMEMORY;
 
     list_add_tail(&server_sessions, &session->entry);
+    list_init(&session->groups);
 
     *id = (ULONG_PTR)session;
     return ERROR_SUCCESS;
@@ -520,6 +540,7 @@ ULONG WINAPI HttpCreateServerSession(HTTPAPI_VERSION version, HTTP_SERVER_SESSIO
  */
 ULONG WINAPI HttpCloseServerSession(HTTP_SERVER_SESSION_ID id)
 {
+    struct url_group *group, *group_next;
     struct server_session *session;
 
     TRACE("id %s.\n", wine_dbgstr_longlong(id));
@@ -527,7 +548,53 @@ ULONG WINAPI HttpCloseServerSession(HTTP_SERVER_SESSION_ID id)
     if (!(session = get_server_session(id)))
         return ERROR_INVALID_PARAMETER;
 
+    LIST_FOR_EACH_ENTRY_SAFE(group, group_next, &session->groups, struct url_group, session_entry)
+    {
+        HttpCloseUrlGroup((ULONG_PTR)group);
+    }
     list_remove(&session->entry);
     heap_free(session);
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *        HttpCreateUrlGroup     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpCreateUrlGroup(HTTP_SERVER_SESSION_ID session_id, HTTP_URL_GROUP_ID *group_id, ULONG reserved)
+{
+    struct server_session *session;
+    struct url_group *group;
+
+    TRACE("session_id %#I64x, group_id %p, reserved %#x.\n", session_id, group_id, reserved);
+
+    if (!(session = get_server_session(session_id)))
+        return ERROR_INVALID_PARAMETER;
+
+    if (!(group = heap_alloc_zero(sizeof(*group))))
+        return ERROR_OUTOFMEMORY;
+    list_add_tail(&url_groups, &group->entry);
+    list_add_tail(&session->groups, &group->session_entry);
+
+    *group_id = (ULONG_PTR)group;
+
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *        HttpCloseUrlGroup     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpCloseUrlGroup(HTTP_URL_GROUP_ID id)
+{
+    struct url_group *group;
+
+    TRACE("id %#I64x.\n", id);
+
+    if (!(group = get_url_group(id)))
+        return ERROR_INVALID_PARAMETER;
+
+    list_remove(&group->session_entry);
+    list_remove(&group->entry);
+    heap_free(group);
+
     return ERROR_SUCCESS;
 }
