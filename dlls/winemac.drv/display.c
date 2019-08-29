@@ -946,6 +946,8 @@ better:
             SendMessageW(GetDesktopWindow(), WM_MACDRV_UPDATE_DESKTOP_RECT, mode_bpp,
                          MAKELPARAM(width, height));
             ret = DISP_CHANGE_SUCCESSFUL;
+
+            macdrv_init_display_devices(TRUE);
         }
         else
         {
@@ -1452,6 +1454,8 @@ void macdrv_displays_changed(const macdrv_event *event)
         free_display_mode_descriptor(desc);
         CGDisplayModeRelease(mode);
 
+        macdrv_init_display_devices(TRUE);
+
         if (is_original && retina_enabled)
         {
             width *= 2;
@@ -1728,7 +1732,7 @@ static void cleanup_devices(void)
  *
  * Initialize display device registry data.
  */
-void macdrv_init_display_devices(void)
+void macdrv_init_display_devices(BOOL force)
 {
     static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
     HANDLE mutex;
@@ -1755,7 +1759,7 @@ void macdrv_init_display_devices(void)
     }
 
     /* Avoid unnecessary reinit */
-    if (disposition != REG_CREATED_NEW_KEY)
+    if (!force && disposition != REG_CREATED_NEW_KEY)
         goto done;
 
     TRACE("\n");
