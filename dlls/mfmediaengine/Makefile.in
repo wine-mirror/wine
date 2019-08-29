@@ -1,0 +1,7 @@
+MODULE    = mfmediaengine.dll
+IMPORTLIB = mfmediaengine
+
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	main.c
