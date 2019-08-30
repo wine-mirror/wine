@@ -1714,6 +1714,7 @@ static void test_Viewport(void)
 {
     IDirect3DRMFrame3 *frame3, *d3drm_frame3, *tmp_frame3;
     IDirect3DRMFrame *frame, *d3drm_frame, *tmp_frame1;
+    float field, left, top, right, bottom;
     IDirectDrawClipper *clipper;
     HRESULT hr;
     IDirect3DRM *d3drm1;
@@ -2136,8 +2137,19 @@ static void test_Viewport(void)
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
     hr = IDirect3DRMViewport_GetCamera(viewport, &d3drm_frame);
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
+    field = IDirect3DRMViewport_GetField(viewport);
+    ok(field == -1.0f, "Got unexpected field %.8e.\n", field);
+    left = right = bottom = top = 10.0f;
+    hr = IDirect3DRMViewport_GetPlane(viewport, &left, &right, &bottom, &top);
+    ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
+    ok(left == 10.0f, "Got unexpected left %.8e.\n", left);
+    ok(right == 10.0f, "Got unexpected right %.8e.\n", right);
+    ok(bottom == 10.0f, "Got unexpected bottom %.8e.\n", bottom);
+    ok(top == 10.0f, "Got unexpected top %.8e.\n", top);
 
     hr = IDirect3DRMViewport_SetCamera(viewport, frame);
+    ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMViewport_SetField(viewport, 0.5f);
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
 
     /* Test all failures together */
@@ -2202,6 +2214,26 @@ static void test_Viewport(void)
     ok(vp.dvMaxY == expected_val, "Expected dvMaxY = %f, got %f.\n", expected_val, vp.dvMaxY);
     IDirect3DViewport_Release(d3d_viewport);
 
+    field = IDirect3DRMViewport_GetField(viewport);
+    ok(field == 0.5f, "Got unexpected field %.8e.\n", field);
+    hr = IDirect3DRMViewport_GetPlane(viewport, &left, &right, &bottom, &top);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    ok(left == -0.5f, "Got unexpected left %.8e.\n", left);
+    ok(right == 0.5f, "Got unexpected right %.8e.\n", right);
+    ok(bottom == -0.5f, "Got unexpected bottom %.8e.\n", bottom);
+    ok(top == 0.5f, "Got unexpected top %.8e.\n", top);
+
+    hr = IDirect3DRMViewport_SetField(viewport, 1.0f);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    field = IDirect3DRMViewport_GetField(viewport);
+    ok(field == 1.0f, "Got unexpected field %.8e.\n", field);
+    hr = IDirect3DRMViewport_GetPlane(viewport, &left, &right, &bottom, &top);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    ok(left == -1.0f, "Got unexpected left %.8e.\n", left);
+    ok(right == 1.0f, "Got unexpected right %.8e.\n", right);
+    ok(bottom == -1.0f, "Got unexpected bottom %.8e.\n", bottom);
+    ok(top == 1.0f, "Got unexpected top %.8e.\n", top);
+
     hr = IDirect3DRMViewport_Init(viewport, device1, frame, rc.left, rc.top, rc.right, rc.bottom);
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
     hr = IDirect3DRMViewport_GetDevice(viewport, NULL);
@@ -2246,8 +2278,19 @@ static void test_Viewport(void)
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
     hr = IDirect3DRMViewport2_GetCamera(viewport2, &d3drm_frame3);
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
+    field = IDirect3DRMViewport2_GetField(viewport2);
+    ok(field == -1.0f, "Got unexpected field %.8e.\n", field);
+    left = right = bottom = top = 10.0f;
+    hr = IDirect3DRMViewport2_GetPlane(viewport2, &left, &right, &bottom, &top);
+    ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
+    ok(left == 10.0f, "Got unexpected left %.8e.\n", left);
+    ok(right == 10.0f, "Got unexpected right %.8e.\n", right);
+    ok(bottom == 10.0f, "Got unexpected bottom %.8e.\n", bottom);
+    ok(top == 10.0f, "Got unexpected top %.8e.\n", top);
 
     hr = IDirect3DRMViewport2_SetCamera(viewport2, frame3);
+    ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMViewport2_SetField(viewport2, 0.5f);
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DRMViewport2_Init(viewport2, NULL, frame3, rc.left, rc.top, rc.right, rc.bottom);
@@ -2304,6 +2347,26 @@ static void test_Viewport(void)
     expected_val = vp.dwHeight / (2.0f * vp.dvScaleY);
     ok(vp.dvMaxY == expected_val, "Expected dvMaxY = %f, got %f.\n", expected_val, vp.dvMaxY);
     IDirect3DViewport_Release(d3d_viewport);
+
+    field = IDirect3DRMViewport2_GetField(viewport2);
+    ok(field == 0.5f, "Got unexpected field %.8e.\n", field);
+    hr = IDirect3DRMViewport2_GetPlane(viewport2, &left, &right, &bottom, &top);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    ok(left == -0.5f, "Got unexpected left %.8e.\n", left);
+    ok(right == 0.5f, "Got unexpected right %.8e.\n", right);
+    ok(bottom == -0.5f, "Got unexpected bottom %.8e.\n", bottom);
+    ok(top == 0.5f, "Got unexpected top %.8e.\n", top);
+
+    hr = IDirect3DRMViewport2_SetField(viewport2, 1.0f);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    field = IDirect3DRMViewport2_GetField(viewport2);
+    ok(field == 1.0f, "Got unexpected field %.8e.\n", field);
+    hr = IDirect3DRMViewport2_GetPlane(viewport2, &left, &right, &bottom, &top);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    ok(left == -1.0f, "Got unexpected left %.8e.\n", left);
+    ok(right == 1.0f, "Got unexpected right %.8e.\n", right);
+    ok(bottom == -1.0f, "Got unexpected bottom %.8e.\n", bottom);
+    ok(top == 1.0f, "Got unexpected top %.8e.\n", top);
 
     hr = IDirect3DRMViewport2_Init(viewport2, device3, frame3, rc.left, rc.top, rc.right, rc.bottom);
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);

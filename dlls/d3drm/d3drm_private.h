@@ -89,6 +89,16 @@ struct d3drm_frame
     DWORD traversal_options;
 };
 
+struct d3drm_box
+{
+    float left;
+    float top;
+    float right;
+    float bottom;
+    float front;
+    float back;
+};
+
 struct d3drm_viewport
 {
     struct d3drm_object obj;
@@ -99,9 +109,7 @@ struct d3drm_viewport
     IDirect3DViewport *d3d_viewport;
     IDirect3DMaterial *material;
     IDirect3DRM *d3drm;
-    D3DVALUE back;
-    D3DVALUE front;
-    D3DVALUE field;
+    struct d3drm_box clip;
     D3DRMPROJECTIONTYPE projection;
 };
 
