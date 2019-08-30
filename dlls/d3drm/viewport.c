@@ -373,6 +373,8 @@ static HRESULT WINAPI d3drm_viewport2_Init(IDirect3DRMViewport2 *iface, IDirect3
     viewport->clip.top = 0.5f;
     viewport->clip.right = 0.5f;
     viewport->clip.bottom = -0.5f;
+    viewport->clip.front = 1.0f;
+    viewport->clip.back = 100.0f;
 
 cleanup:
 
@@ -488,6 +490,12 @@ static HRESULT WINAPI d3drm_viewport2_SetFront(IDirect3DRMViewport2 *iface, D3DV
 
     TRACE("iface %p, front %.8e.\n", iface, front);
 
+    if (!viewport->d3d_viewport)
+        return D3DRMERR_BADOBJECT;
+
+    if (front <= 0.0f)
+        return D3DRMERR_BADVALUE;
+
     viewport->clip.front = front;
 
     return D3DRM_OK;
@@ -507,6 +515,12 @@ static HRESULT WINAPI d3drm_viewport2_SetBack(IDirect3DRMViewport2 *iface, D3DVA
     struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
 
     TRACE("iface %p, back %.8e.\n", iface, back);
+
+    if (!viewport->d3d_viewport)
+        return D3DRMERR_BADOBJECT;
+
+    if (back <= viewport->clip.front)
+        return D3DRMERR_BADVALUE;
 
     viewport->clip.back = back;
 
@@ -919,6 +933,9 @@ static D3DVALUE WINAPI d3drm_viewport2_GetBack(IDirect3DRMViewport2 *iface)
 
     TRACE("iface %p.\n", iface);
 
+    if (!viewport->d3d_viewport)
+        return -1.0f;
+
     return viewport->clip.back;
 }
 
@@ -936,6 +953,9 @@ static D3DVALUE WINAPI d3drm_viewport2_GetFront(IDirect3DRMViewport2 *iface)
     struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
 
     TRACE("iface %p.\n", iface);
+
+    if (!viewport->d3d_viewport)
+        return -1.0f;
 
     return viewport->clip.front;
 }
