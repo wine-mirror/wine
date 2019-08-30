@@ -397,6 +397,33 @@ typedef struct _HTTP_LOG_DATA
     HTTP_LOG_DATA_TYPE Type;
 } HTTP_LOG_DATA, *PHTTP_LOG_DATA;
 
+typedef enum _HTTP_SERVER_PROPERTY
+{
+    HttpServerAuthenticationProperty,
+    HttpServerLoggingProperty,
+    HttpServerQosProperty,
+    HttpServerTimeoutsProperty,
+    HttpServerQueueLengthProperty,
+    HttpServerStateProperty,
+    HttpServer503VerbosityProperty,
+    HttpServerBindingProperty,
+    HttpServerExtendedAuthenticationProperty,
+    HttpServerListenEndpointProperty,
+    HttpServerChannelBindProperty,
+    HttpServerProtectionLevelProperty,
+} HTTP_SERVER_PROPERTY, *PHTTP_SERVER_PROPERTY;
+
+typedef struct _HTTP_PROPERTY_FLAGS
+{
+    ULONG Present : 1;
+} HTTP_PROPERTY_FLAGS, *PHTTP_PROPERTY_FLAGS;
+
+typedef struct _HTTP_BINDING_INFO
+{
+    HTTP_PROPERTY_FLAGS Flags;
+    HANDLE RequestQueueHandle;
+} HTTP_BINDING_INFO, *PHTTP_BINDING_INFO;
+
 ULONG WINAPI HttpAddUrl(HANDLE,PCWSTR,PVOID);
 ULONG WINAPI HttpCloseServerSession(HTTP_SERVER_SESSION_ID id);
 ULONG WINAPI HttpCloseUrlGroup(HTTP_URL_GROUP_ID id);
@@ -411,6 +438,7 @@ ULONG WINAPI HttpReceiveHttpRequest(HANDLE queue, HTTP_REQUEST_ID id, ULONG flag
 ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *url);
 ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags, HTTP_RESPONSE *response, HTTP_CACHE_POLICY *cache_policy, ULONG *ret_size, void *reserved1, ULONG reserved2, OVERLAPPED *ovl, HTTP_LOG_DATA *log_data);
 ULONG WINAPI HttpSetServiceConfiguration(HANDLE,HTTP_SERVICE_CONFIG_ID,PVOID,ULONG,LPOVERLAPPED);
+ULONG WINAPI HttpSetUrlGroupProperty(HTTP_URL_GROUP_ID id, HTTP_SERVER_PROPERTY property, void *value, ULONG length);
 
 #ifdef __cplusplus
 }

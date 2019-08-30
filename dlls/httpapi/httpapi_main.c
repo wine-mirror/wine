@@ -474,6 +474,7 @@ ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
 struct url_group
 {
     struct list entry, session_entry;
+    HANDLE queue;
 };
 
 static struct list url_groups = LIST_INIT(url_groups);
@@ -565,7 +566,8 @@ ULONG WINAPI HttpCreateUrlGroup(HTTP_SERVER_SESSION_ID session_id, HTTP_URL_GROU
     struct server_session *session;
     struct url_group *group;
 
-    TRACE("session_id %#I64x, group_id %p, reserved %#x.\n", session_id, group_id, reserved);
+    TRACE("session_id %s, group_id %p, reserved %#x.\n",
+          wine_dbgstr_longlong(session_id), group_id, reserved);
 
     if (!(session = get_server_session(session_id)))
         return ERROR_INVALID_PARAMETER;
@@ -587,7 +589,7 @@ ULONG WINAPI HttpCloseUrlGroup(HTTP_URL_GROUP_ID id)
 {
     struct url_group *group;
 
-    TRACE("id %#I64x.\n", id);
+    TRACE("id %s.\n", wine_dbgstr_longlong(id));
 
     if (!(group = get_url_group(id)))
         return ERROR_INVALID_PARAMETER;
@@ -595,6 +597,30 @@ ULONG WINAPI HttpCloseUrlGroup(HTTP_URL_GROUP_ID id)
     list_remove(&group->session_entry);
     list_remove(&group->entry);
     heap_free(group);
+
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *        HttpSetUrlGroupProperty     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpSetUrlGroupProperty(HTTP_URL_GROUP_ID id, HTTP_SERVER_PROPERTY property, void *value, ULONG length)
+{
+    struct url_group *group = get_url_group(id);
+    const HTTP_BINDING_INFO *info = value;
+
+    TRACE("id %s, property %u, value %p, length %u.\n",
+            wine_dbgstr_longlong(id), property, value, length);
+
+    if (property != HttpServerBindingProperty)
+    {
+        FIXME("Unhandled property %u.\n", property);
+        return ERROR_CALL_NOT_IMPLEMENTED;
+    }
+
+    TRACE("Binding to queue %p.\n", info->RequestQueueHandle);
+
+    group->queue = info->RequestQueueHandle;
 
     return ERROR_SUCCESS;
 }

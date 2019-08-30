@@ -49,6 +49,7 @@
 @ stub HttpSetControlChannelInformation
 @ stub HttpSetServerContextInformation
 @ stdcall HttpSetServiceConfiguration(ptr long ptr long ptr)
+@ stdcall HttpSetUrlGroupProperty(int64 long ptr long)
 @ stub HttpShutdownAppPool
 @ stub HttpShutdownFilter
 @ stdcall HttpTerminate(long ptr)
