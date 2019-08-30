@@ -1,5 +1,5 @@
 /*
- * Implementation of IAMMultiMediaStream Interface
+ * Multimedia stream object
  *
  * Copyright 2004, 2012 Christian Costa
  * Copyright 2006 Ivan Leo Puoti

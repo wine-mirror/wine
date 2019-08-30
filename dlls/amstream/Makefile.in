@@ -4,11 +4,11 @@ IMPORTS   = strmiids strmbase uuid ole32 advapi32 ddraw
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
-	amstream.c \
 	audiodata.c \
 	filter.c \
 	main.c \
-	mediastream.c
+	mediastream.c \
+	multimedia.c
 
 IDL_SRCS = amstream_classes.idl
 
