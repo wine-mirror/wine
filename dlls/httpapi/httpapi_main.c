@@ -27,6 +27,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(httpapi);
 
+static const WCHAR device_nameW[] = {'\\','D','e','v','i','c','e','\\','H','t','t','p','\\','R','e','q','Q','u','e','u','e',0};
+
 static WCHAR *heap_strdupW(const WCHAR *str)
 {
     int len = wcslen(str) + 1;
@@ -207,7 +209,6 @@ ULONG WINAPI HttpSetServiceConfiguration( HANDLE handle, HTTP_SERVICE_CONFIG_ID 
  */
 ULONG WINAPI HttpCreateHttpHandle(HANDLE *handle, ULONG reserved)
 {
-    static const WCHAR device_nameW[] = {'\\','D','e','v','i','c','e','\\','H','t','t','p','\\','R','e','q','Q','u','e','u','e',0};
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
     UNICODE_STRING string;
     IO_STATUS_BLOCK iosb;
@@ -691,5 +692,44 @@ ULONG WINAPI HttpRemoveUrlFromUrlGroup(HTTP_URL_GROUP_ID id, const WCHAR *url, U
     if (group->queue)
         return remove_url(group->queue, url);
 
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *        HttpCreateRequestQueue     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpCreateRequestQueue(HTTPAPI_VERSION version, const WCHAR *name,
+        SECURITY_ATTRIBUTES *sa, ULONG flags, HANDLE *handle)
+{
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    UNICODE_STRING string;
+    IO_STATUS_BLOCK iosb;
+
+    TRACE("version %u.%u, name %s, sa %p, flags %#x, handle %p.\n",
+            version.HttpApiMajorVersion, version.HttpApiMinorVersion,
+            debugstr_w(name), sa, flags, handle);
+
+    if (name)
+        FIXME("Unhandled name %s.\n", debugstr_w(name));
+    if (flags)
+        FIXME("Unhandled flags %#x.\n", flags);
+
+    RtlInitUnicodeString(&string, device_nameW);
+    attr.ObjectName = &string;
+    if (sa && sa->bInheritHandle)
+        attr.Attributes |= OBJ_INHERIT;
+    attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
+    return RtlNtStatusToDosError(NtCreateFile(handle, 0, &attr, &iosb, NULL,
+            FILE_ATTRIBUTE_NORMAL, 0, FILE_OPEN, FILE_NON_DIRECTORY_FILE, NULL, 0));
+}
+
+/***********************************************************************
+ *        HttpCloseRequestQueue     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpCloseRequestQueue(HANDLE handle)
+{
+    TRACE("handle %p.\n", handle);
+    if (!CloseHandle(handle))
+        return GetLastError();
     return ERROR_SUCCESS;
 }

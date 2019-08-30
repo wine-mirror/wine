@@ -7,8 +7,10 @@
 @ stub HttpCreateConfigGroup
 @ stub HttpCreateFilter
 @ stdcall HttpCreateHttpHandle(ptr long)
+@ stdcall HttpCreateRequestQueue(long wstr ptr long ptr)
 @ stdcall HttpCreateServerSession(long ptr long)
 @ stdcall HttpCreateUrlGroup(int64 ptr long)
+@ stdcall HttpCloseRequestQueue(ptr)
 @ stdcall HttpCloseServerSession(int64)
 @ stdcall HttpCloseUrlGroup(int64)
 @ stub HttpDeleteConfigGroup
