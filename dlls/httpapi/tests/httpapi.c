@@ -33,23 +33,37 @@
 
 static const WCHAR localhost_urlW[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','5','0','0','0','0','/',0};
 static const WCHAR localhost_url2W[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','5','0','0','0','1','/',0};
+static const WCHAR invalid_url1[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','5','0','0','0','0',0};
+static const WCHAR invalid_url2[] = {'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0',0};
+static const WCHAR invalid_url3[] = {'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0','/',0};
+static const WCHAR invalid_url4[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t','/',0};
+static const WCHAR invalid_url5[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','/',0};
+static const WCHAR invalid_url6[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','0','/',0};
 
-static ULONG (WINAPI *pHttpCreateServerSession)(HTTPAPI_VERSION version, HTTP_SERVER_SESSION_ID *session_id,
-        ULONG reserved);
+static ULONG (WINAPI *pHttpAddUrlToUrlGroup)(HTTP_URL_GROUP_ID id, const WCHAR *url, HTTP_URL_CONTEXT context, ULONG reserved);
+static ULONG (WINAPI *pHttpCreateServerSession)(HTTPAPI_VERSION version, HTTP_SERVER_SESSION_ID *session_id, ULONG reserved);
+static ULONG (WINAPI *pHttpCreateRequestQueue)(HTTPAPI_VERSION version, const WCHAR *name, SECURITY_ATTRIBUTES *sa, ULONG flags, HANDLE *handle);
+static ULONG (WINAPI *pHttpCreateUrlGroup)(HTTP_SERVER_SESSION_ID session_id, HTTP_URL_GROUP_ID *group_id, ULONG reserved);
+static ULONG (WINAPI *pHttpCloseRequestQueue)(HANDLE queue);
 static ULONG (WINAPI *pHttpCloseServerSession)(HTTP_SERVER_SESSION_ID session_id);
-static ULONG (WINAPI *pHttpCreateUrlGroup)(HTTP_SERVER_SESSION_ID session_id, HTTP_URL_GROUP_ID *group_id,
-        ULONG reserved);
 static ULONG (WINAPI *pHttpCloseUrlGroup)(HTTP_URL_GROUP_ID group_id);
+static ULONG (WINAPI *pHttpRemoveUrlFromUrlGroup)(HTTP_URL_GROUP_ID id, const WCHAR *url, ULONG flags);
+static ULONG (WINAPI *pHttpSetUrlGroupProperty)(HTTP_URL_GROUP_ID id, HTTP_SERVER_PROPERTY property, void *value, ULONG length);
 
 static void init(void)
 {
     HMODULE mod = GetModuleHandleA("httpapi.dll");
 
 #define X(f) p##f = (void *)GetProcAddress(mod, #f)
+    X(HttpAddUrlToUrlGroup);
+    X(HttpCreateRequestQueue);
     X(HttpCreateServerSession);
-    X(HttpCloseServerSession);
     X(HttpCreateUrlGroup);
+    X(HttpCloseRequestQueue);
+    X(HttpCloseServerSession);
     X(HttpCloseUrlGroup);
+    X(HttpRemoveUrlFromUrlGroup);
+    X(HttpSetUrlGroupProperty);
 #undef X
 }
 
@@ -92,12 +106,6 @@ static void send_response_v1(HANDLE queue, HTTP_REQUEST_ID id, int s)
 
 static void test_v1_server(void)
 {
-    static const WCHAR invalid_url1[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','5','0','0','0','0',0};
-    static const WCHAR invalid_url2[] = {'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0',0};
-    static const WCHAR invalid_url3[] = {'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0','/',0};
-    static const WCHAR invalid_url4[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t','/',0};
-    static const WCHAR invalid_url5[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','/',0};
-    static const WCHAR invalid_url6[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','0','/',0};
     static const WCHAR cooked_urlW[] = {'h','t','t','p',':','/','/',
         'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0','/','f','o','o','b','a','r',0};
 
@@ -879,12 +887,6 @@ static void test_HttpCreateServerSession(void)
     HTTPAPI_VERSION version;
     ULONG ret;
 
-    if (!pHttpCreateServerSession || !pHttpCloseServerSession)
-    {
-        skip("HttpCreateServerSession() is not supported.\n");
-        return;
-    }
-
     version.HttpApiMajorVersion = 1;
     version.HttpApiMinorVersion = 0;
     ret = pHttpCreateServerSession(version, NULL, 0);
@@ -925,12 +927,6 @@ static void test_HttpCreateUrlGroup(void)
     HTTPAPI_VERSION version;
     ULONG ret;
 
-    if (!pHttpCreateUrlGroup)
-    {
-        skip("HttpCreateUrlGroup is not supported.\n");
-        return;
-    }
-
     group_id = 1;
     ret = pHttpCreateUrlGroup(0, &group_id, 0);
     ok(ret == ERROR_INVALID_PARAMETER, "Unexpected return value %u.\n", ret);
@@ -970,6 +966,289 @@ static void test_HttpCreateUrlGroup(void)
     ok(!ret, "Unexpected return value %u.\n", ret);
 }
 
+static void test_v2_server(void)
+{
+    static const WCHAR cooked_urlW[] = {'h','t','t','p',':','/','/',
+        'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0','/','f','o','o','b','a','r',0};
+
+    char DECLSPEC_ALIGN(8) req_buffer[2048], response_buffer[2048];
+    HTTP_REQUEST_V2 *reqv2 = (HTTP_REQUEST_V2 *)req_buffer;
+    static const HTTPAPI_VERSION version = {2, 0};
+    struct sockaddr_in sockaddr, *sin;
+    HTTP_REQUEST_V1 *req = &reqv2->s;
+    HTTP_SERVER_SESSION_ID session;
+    HTTP_RESPONSE_V2 response = {};
+    HTTP_BINDING_INFO binding;
+    HTTP_URL_GROUP_ID group;
+    unsigned int i;
+    OVERLAPPED ovl;
+    DWORD ret_size;
+    HANDLE queue;
+    ULONG ret;
+    SOCKET s;
+    int len;
+
+    ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
+    memset(req_buffer, 0xcc, sizeof(req_buffer));
+
+    ret = pHttpCreateServerSession(version, &session, 0);
+    ok(!ret, "Failed to create session, error %u.\n", ret);
+    ret = pHttpCreateUrlGroup(session, &group, 0);
+    ok(!ret, "Failed to create URL group, error %u.\n", ret);
+    ret = pHttpCreateRequestQueue(version, NULL, NULL, 0, &queue);
+    ok(!ret, "Failed to create request queue, error %u.\n", ret);
+    binding.Flags.Present = 1;
+    binding.RequestQueueHandle = queue;
+    ret = pHttpSetUrlGroupProperty(group, HttpServerBindingProperty, &binding, sizeof(binding));
+    ok(!ret, "Failed to bind request queue, error %u.\n", ret);
+
+    ret = HttpReceiveHttpRequest(NULL, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
+    ok(ret == ERROR_INVALID_HANDLE, "Got error %u.\n", ret);
+    ret = HttpReceiveHttpRequest(queue, 0xdeadbeef, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
+    ok(ret == ERROR_CONNECTION_INVALID, "Got error %u.\n", ret);
+    ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
+    ok(ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = GetOverlappedResult(queue, &ovl, &ret_size, FALSE);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %u.\n", GetLastError());
+
+    ret = pHttpAddUrlToUrlGroup(group, localhost_urlW, 0xdeadbeef, 0);
+    ok(!ret, "Got error %u.\n", ret);
+    ret = pHttpAddUrlToUrlGroup(group, invalid_url1, 0xdeadbeef, 0);
+    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
+    ret = pHttpAddUrlToUrlGroup(group, invalid_url2, 0xdeadbeef, 0);
+    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
+    ret = pHttpAddUrlToUrlGroup(group, invalid_url3, 0xdeadbeef, 0);
+    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
+    ret = pHttpAddUrlToUrlGroup(group, invalid_url4, 0xdeadbeef, 0);
+    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
+    ret = pHttpAddUrlToUrlGroup(group, invalid_url5, 0xdeadbeef, 0);
+    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
+    ret = pHttpAddUrlToUrlGroup(group, invalid_url6, 0xdeadbeef, 0);
+    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
+    ret = pHttpAddUrlToUrlGroup(group, localhost_urlW, 0xdeadbeef, 0);
+    todo_wine ok(ret == ERROR_ALREADY_EXISTS, "Got error %u.\n", ret);
+    ret = pHttpAddUrlToUrlGroup(group, localhost_url2W, 0xdeadbeef, 0);
+    todo_wine ok(!ret, "Got error %u.\n", ret);
+
+    s = create_client_socket();
+    len = sizeof(sockaddr);
+    ret = getsockname(s, (struct sockaddr *)&sockaddr, &len);
+    ok(ret == 0, "getsockname() failed, error %u.\n", WSAGetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetOverlappedResult(queue, &ovl, &ret_size, FALSE);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_IO_INCOMPLETE, "Got error %u.\n", GetLastError());
+
+    ret = send(s, simple_req, strlen(simple_req), 0);
+    ok(ret == strlen(simple_req), "send() returned %d.\n", ret);
+
+    ret = GetOverlappedResult(queue, &ovl, &ret_size, TRUE);
+    ok(ret, "Got error %u.\n", GetLastError());
+    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
+    Sleep(100);
+
+    ok(!req->Flags, "Got flags %#x.\n", req->Flags);
+    ok(req->ConnectionId, "Expected nonzero connection ID.\n");
+    ok(req->RequestId, "Expected nonzero connection ID.\n");
+    ok(req->UrlContext == 0xdeadbeef, "Got URL context %s.\n", wine_dbgstr_longlong(req->UrlContext));
+    ok(req->Version.MajorVersion == 1, "Got major version %u.\n", req->Version.MajorVersion);
+    ok(req->Version.MinorVersion == 1, "Got major version %u.\n", req->Version.MinorVersion);
+    ok(req->Verb == HttpVerbGET, "Got verb %u.\n", req->Verb);
+    ok(!req->UnknownVerbLength, "Got unknown verb length %u.\n", req->UnknownVerbLength);
+    ok(req->RawUrlLength == 7, "Got raw URL length %u.\n", req->RawUrlLength);
+    ok(!req->pUnknownVerb, "Got unknown verb %s.\n", req->pUnknownVerb);
+    ok(!strcmp(req->pRawUrl, "/foobar"), "Got raw URL %s.\n", req->pRawUrl);
+    ok(req->CookedUrl.FullUrlLength == 58, "Got full URL length %u.\n", req->CookedUrl.FullUrlLength);
+    ok(req->CookedUrl.HostLength == 30, "Got host length %u.\n", req->CookedUrl.HostLength);
+    ok(req->CookedUrl.AbsPathLength == 14, "Got absolute path length %u.\n", req->CookedUrl.AbsPathLength);
+    ok(!req->CookedUrl.QueryStringLength, "Got query string length %u.\n", req->CookedUrl.QueryStringLength);
+    ok(!wcscmp(req->CookedUrl.pFullUrl, cooked_urlW), "Got full URL %s.\n", wine_dbgstr_w(req->CookedUrl.pFullUrl));
+    ok(req->CookedUrl.pHost == req->CookedUrl.pFullUrl + 7, "Got host %s.\n", wine_dbgstr_w(req->CookedUrl.pHost));
+    ok(req->CookedUrl.pAbsPath == req->CookedUrl.pFullUrl + 22,
+            "Got absolute path %s.\n", wine_dbgstr_w(req->CookedUrl.pAbsPath));
+    ok(!req->CookedUrl.pQueryString, "Got query string %s.\n", wine_dbgstr_w(req->CookedUrl.pQueryString));
+    ok(!memcmp(req->Address.pRemoteAddress, &sockaddr, len), "Client addresses didn't match.\n");
+    sin = (SOCKADDR_IN *)req->Address.pLocalAddress;
+    ok(sin->sin_family == AF_INET, "Got family %u.\n", sin->sin_family);
+    ok(ntohs(sin->sin_port) == 50000, "Got wrong port %u.\n", ntohs(sin->sin_port));
+    ok(sin->sin_addr.S_un.S_addr == inet_addr("127.0.0.1"), "Got address %08x.\n", sin->sin_addr.S_un.S_addr);
+    ok(!req->Headers.UnknownHeaderCount, "Got %u unknown headers.\n", req->Headers.UnknownHeaderCount);
+    ok(!req->Headers.pUnknownHeaders, "Got unknown headers %p.\n", req->Headers.pUnknownHeaders);
+    for (i = 0; i < ARRAY_SIZE(req->Headers.KnownHeaders); ++i)
+    {
+        if (i == HttpHeaderConnection)
+        {
+            ok(req->Headers.KnownHeaders[i].RawValueLength == 10, "Got length %u.\n",
+                    req->Headers.KnownHeaders[i].RawValueLength);
+            ok(!strcmp(req->Headers.KnownHeaders[i].pRawValue, "keep-alive"),
+                    "Got connection '%s'.\n", req->Headers.KnownHeaders[i].pRawValue);
+        }
+        else if (i == HttpHeaderHost)
+        {
+            ok(req->Headers.KnownHeaders[i].RawValueLength == 15, "Got length %u.\n",
+                    req->Headers.KnownHeaders[i].RawValueLength);
+            ok(!strcmp(req->Headers.KnownHeaders[i].pRawValue, "localhost:50000"),
+                    "Got connection '%s'.\n", req->Headers.KnownHeaders[i].pRawValue);
+        }
+        else if (i == HttpHeaderUserAgent)
+        {
+            ok(req->Headers.KnownHeaders[i].RawValueLength == 4, "Got length %u.\n",
+                    req->Headers.KnownHeaders[i].RawValueLength);
+            ok(!strcmp(req->Headers.KnownHeaders[i].pRawValue, "WINE"),
+                    "Got connection '%s'.\n", req->Headers.KnownHeaders[i].pRawValue);
+        }
+        else
+        {
+            ok(!req->Headers.KnownHeaders[i].RawValueLength, "Header %#x: got length %u.\n",
+                    i, req->Headers.KnownHeaders[i].RawValueLength);
+            ok(!req->Headers.KnownHeaders[i].pRawValue, "Header %#x: got value '%s'.\n",
+                    i, req->Headers.KnownHeaders[i].pRawValue);
+        }
+    }
+    ok(req->BytesReceived == strlen(simple_req), "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
+    ok(!req->EntityChunkCount, "Got %u entity chunks.\n", req->EntityChunkCount);
+    ok(!req->pEntityChunks, "Got entity chunks %p.\n", req->pEntityChunks);
+    ok(!req->RawConnectionId, "Got SSL connection ID %s.\n", wine_dbgstr_longlong(req->RawConnectionId));
+    ok(!req->pSslInfo, "Got SSL info %p.\n", req->pSslInfo);
+    ok(!reqv2->RequestInfoCount, "Got request info count %u.\n", reqv2->RequestInfoCount);
+    ok(!reqv2->pRequestInfo, "Got request info %p.\n", reqv2->pRequestInfo);
+
+    response.s.StatusCode = 418;
+    response.s.pReason = "I'm a teapot";
+    response.s.ReasonLength = 12;
+    response.s.Headers.KnownHeaders[HttpHeaderRetryAfter].pRawValue = "120";
+    response.s.Headers.KnownHeaders[HttpHeaderRetryAfter].RawValueLength = 3;
+    ret = HttpSendHttpResponse(queue, 0xdeadbeef, 0, (HTTP_RESPONSE *)&response, NULL, NULL, NULL, 0, &ovl, NULL);
+    ok(ret == ERROR_CONNECTION_INVALID, "Got error %u.\n", ret);
+    ret = HttpSendHttpResponse(queue, req->RequestId, 0, (HTTP_RESPONSE *)&response, NULL, NULL, NULL, 0, &ovl, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ret = GetOverlappedResult(queue, &ovl, &ret_size, FALSE);
+    ok(ret, "Got error %u.\n", GetLastError());
+
+    ret = recv(s, response_buffer, sizeof(response_buffer), 0);
+    ok(ret == ret_size, "Expected size %u, got %u.\n", ret_size, ret);
+
+    if (winetest_debug > 1)
+        trace("%.*s\n", ret, response_buffer);
+
+    ok(!strncmp(response_buffer, "HTTP/1.1 418 I'm a teapot\r\n", 27), "Got incorrect status line.\n");
+    ok(!!strstr(response_buffer, "\r\nRetry-After: 120\r\n"), "Missing or malformed Retry-After header.\n");
+    ok(!!strstr(response_buffer, "\r\nDate:"), "Missing Date header.\n");
+
+    ret = HttpReceiveHttpRequest(queue, req->RequestId, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
+    ok(ret == ERROR_CONNECTION_INVALID, "Got error %u.\n", ret);
+
+    ret = pHttpRemoveUrlFromUrlGroup(group, localhost_urlW, 0);
+    ok(!ret, "Got error %u.\n", ret);
+    ret = pHttpRemoveUrlFromUrlGroup(group, localhost_urlW, 0);
+    ok(ret == ERROR_FILE_NOT_FOUND, "Got error %u.\n", ret);
+    ret = pHttpRemoveUrlFromUrlGroup(group, localhost_url2W, 0);
+    todo_wine ok(!ret, "Got error %u.\n", ret);
+
+    closesocket(s);
+    CloseHandle(ovl.hEvent);
+    ret = pHttpCloseRequestQueue(queue);
+    ok(!ret, "Failed to close queue handle, error %u.\n", ret);
+    ret = pHttpCloseUrlGroup(group);
+    ok(!ret, "Failed to close group, error %u.\n", ret);
+    ret = pHttpCloseServerSession(session);
+    ok(!ret, "Failed to close group, error %u.\n", ret);
+}
+
+static void test_v2_completion_port(void)
+{
+    char DECLSPEC_ALIGN(8) req_buffer[2048], response_buffer[2048];
+    HTTP_REQUEST_V2 *req = (HTTP_REQUEST_V2 *)req_buffer;
+    static const HTTPAPI_VERSION version = {2, 0};
+    HTTP_SERVER_SESSION_ID session;
+    HTTP_RESPONSE_V2 response = {};
+    HTTP_BINDING_INFO binding;
+    HTTP_URL_GROUP_ID group;
+    OVERLAPPED ovl, *povl;
+    HANDLE queue, port;
+    DWORD ret_size;
+    ULONG_PTR key;
+    ULONG ret;
+    SOCKET s;
+
+    ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
+
+    ret = pHttpCreateServerSession(version, &session, 0);
+    ok(!ret, "Failed to create session, error %u.\n", ret);
+    ret = pHttpCreateUrlGroup(session, &group, 0);
+    ok(!ret, "Failed to create URL group, error %u.\n", ret);
+    ret = pHttpCreateRequestQueue(version, NULL, NULL, 0, &queue);
+    ok(!ret, "Failed to create request queue, error %u.\n", ret);
+    binding.Flags.Present = 1;
+    binding.RequestQueueHandle = queue;
+    ret = pHttpSetUrlGroupProperty(group, HttpServerBindingProperty, &binding, sizeof(binding));
+    ok(!ret, "Failed to bind request queue, error %u.\n", ret);
+
+    port = CreateIoCompletionPort(queue, NULL, 123, 0);
+    ok(!!port, "Failed to create completion port, error %u.\n", GetLastError());
+
+    ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 0);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
+
+    ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, &ovl);
+    ok(ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
+
+    ret = pHttpAddUrlToUrlGroup(group, localhost_urlW, 0, 0);
+    ok(!ret, "Got error %u.\n", ret);
+
+    s = create_client_socket();
+
+    ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 0);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
+
+    ret = send(s, simple_req, strlen(simple_req), 0);
+    ok(ret == strlen(simple_req), "send() returned %d.\n", ret);
+
+    ret_size = key = 0xdeadbeef;
+    ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 1000);
+    ok(ret, "Got error %u.\n", GetLastError());
+    ok(povl == &ovl, "OVERLAPPED pointers didn't match.\n");
+    ok(key == 123, "Got unexpected key %lu.\n", key);
+    ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
+
+    ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 0);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
+
+    response.s.StatusCode = 418;
+    response.s.pReason = "I'm a teapot";
+    response.s.ReasonLength = 12;
+    ret = HttpSendHttpResponse(queue, req->s.RequestId, 0, (HTTP_RESPONSE *)&response, NULL, NULL, NULL, 0, &ovl, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+
+    ret_size = key = 0xdeadbeef;
+    ret = GetQueuedCompletionStatus(port, &ret_size, &key, &povl, 1000);
+    ok(ret, "Got error %u.\n", GetLastError());
+    ok(povl == &ovl, "OVERLAPPED pointers didn't match.\n");
+    ok(key == 123, "Got unexpected key %lu.\n", key);
+
+    ret = recv(s, response_buffer, sizeof(response_buffer), 0);
+    ok(ret == ret_size, "Expected size %u, got %u.\n", ret_size, ret);
+
+    ret = pHttpRemoveUrlFromUrlGroup(group, localhost_urlW, 0);
+    ok(!ret, "Got error %u.\n", ret);
+    closesocket(s);
+    CloseHandle(port);
+    CloseHandle(ovl.hEvent);
+    ret = pHttpCloseRequestQueue(queue);
+    ok(!ret, "Failed to close queue handle, error %u.\n", ret);
+    ret = pHttpCloseUrlGroup(group);
+    ok(!ret, "Failed to close group, error %u.\n", ret);
+    ret = pHttpCloseServerSession(session);
+    ok(!ret, "Failed to close group, error %u.\n", ret);
+}
+
 START_TEST(httpapi)
 {
     HTTPAPI_VERSION version = { 1, 0 };
@@ -991,9 +1270,21 @@ START_TEST(httpapi)
     test_v1_bad_request();
     test_v1_cooked_url();
     test_v1_unknown_tokens();
-    test_HttpCreateServerSession();
-    test_HttpCreateUrlGroup();
 
     ret = HttpTerminate(HTTP_INITIALIZE_SERVER, NULL);
     ok(!ret, "Failed to terminate, ret %u.\n", ret);
+
+    version.HttpApiMajorVersion = 2;
+    if (!HttpInitialize(version, HTTP_INITIALIZE_SERVER, NULL))
+    {
+        test_HttpCreateServerSession();
+        test_HttpCreateUrlGroup();
+        test_v2_server();
+        test_v2_completion_port();
+
+        ret = HttpTerminate(HTTP_INITIALIZE_SERVER, NULL);
+        ok(!ret, "Failed to terminate, ret %u.\n", ret);
+    }
+    else
+        win_skip("Version 2 is not supported.\n");
 }
