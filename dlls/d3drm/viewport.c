@@ -556,16 +556,30 @@ static HRESULT WINAPI d3drm_viewport1_SetUniformScaling(IDirect3DRMViewport *ifa
 
 static HRESULT WINAPI d3drm_viewport2_SetCamera(IDirect3DRMViewport2 *iface, IDirect3DRMFrame3 *camera)
 {
-    FIXME("iface %p, camera %p stub!\n", iface, camera);
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
+    struct d3drm_frame *frame = unsafe_impl_from_IDirect3DRMFrame3(camera);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, camera %p.\n", iface, camera);
+
+    if (!camera || !viewport->camera)
+        return D3DRMERR_BADOBJECT;
+
+    IDirect3DRMFrame_AddRef(&frame->IDirect3DRMFrame_iface);
+    IDirect3DRMFrame_Release(viewport->camera);
+    viewport->camera = &frame->IDirect3DRMFrame_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_viewport1_SetCamera(IDirect3DRMViewport *iface, IDirect3DRMFrame *camera)
 {
-    FIXME("iface %p, camera %p stub!\n", iface, camera);
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
+    struct d3drm_frame *frame = unsafe_impl_from_IDirect3DRMFrame(camera);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, camera %p.\n", iface, camera);
+
+    return d3drm_viewport2_SetCamera(&viewport->IDirect3DRMViewport2_iface,
+            frame ? &frame->IDirect3DRMFrame3_iface : NULL);
 }
 
 static HRESULT WINAPI d3drm_viewport2_SetProjection(IDirect3DRMViewport2 *iface, D3DRMPROJECTIONTYPE type)

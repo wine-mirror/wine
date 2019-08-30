@@ -1791,9 +1791,18 @@ static void test_Viewport(void)
     ok(device1 == d3drm_device1, "Expected device returned = %p, got %p.\n", device1, d3drm_device1);
     IDirect3DRMDevice_Release(d3drm_device1);
 
+    hr = IDirect3DRMViewport_SetCamera(viewport, NULL);
+    ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DRMViewport_GetCamera(viewport, &d3drm_frame);
     ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
     ok(frame == d3drm_frame, "Expected frame returned = %p, got %p.\n", frame, d3drm_frame);
+    IDirect3DRMFrame_Release(d3drm_frame);
+
+    hr = IDirect3DRMViewport_SetCamera(viewport, tmp_frame1);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMViewport_GetCamera(viewport, &d3drm_frame);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    ok(d3drm_frame == tmp_frame1, "Got unexpected frame %p, expected %p.\n", d3drm_frame, tmp_frame1);
     IDirect3DRMFrame_Release(d3drm_frame);
 
     IDirect3DRMViewport_Release(viewport);
@@ -1826,9 +1835,18 @@ static void test_Viewport(void)
     ok(device1 == d3drm_device1, "Expected device returned = %p, got %p.\n", device1, d3drm_device1);
     IDirect3DRMDevice_Release(d3drm_device1);
 
+    hr = IDirect3DRMViewport_SetCamera(viewport, NULL);
+    ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DRMViewport_GetCamera(viewport, &d3drm_frame);
     ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
     ok(frame == d3drm_frame, "Expected frame returned = %p, got %p.\n", frame, d3drm_frame);
+    IDirect3DRMFrame_Release(d3drm_frame);
+
+    hr = IDirect3DRMViewport_SetCamera(viewport, tmp_frame1);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMViewport_GetCamera(viewport, &d3drm_frame);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    ok(d3drm_frame == tmp_frame1, "Got unexpected frame %p, expected %p.\n", d3drm_frame, tmp_frame1);
     IDirect3DRMFrame_Release(d3drm_frame);
 
     IDirect3DRMViewport_Release(viewport);
@@ -1864,9 +1882,18 @@ static void test_Viewport(void)
     ok(device3 == d3drm_device3, "Expected device returned = %p, got %p.\n", device3, d3drm_device3);
     IDirect3DRMDevice3_Release(d3drm_device3);
 
+    hr = IDirect3DRMViewport2_SetCamera(viewport2, NULL);
+    ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DRMViewport2_GetCamera(viewport2, &d3drm_frame3);
     ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
     ok(frame3 == d3drm_frame3, "Expected frame returned = %p, got %p.\n", frame3, d3drm_frame3);
+    IDirect3DRMFrame3_Release(d3drm_frame3);
+
+    hr = IDirect3DRMViewport2_SetCamera(viewport2, tmp_frame3);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMViewport2_GetCamera(viewport2, &d3drm_frame3);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    ok(d3drm_frame3 == tmp_frame3, "Got unexpected frame %p, expected %p.\n", d3drm_frame3, tmp_frame3);
     IDirect3DRMFrame3_Release(d3drm_frame3);
 
     IDirect3DRMViewport2_Release(viewport2);
@@ -2110,6 +2137,9 @@ static void test_Viewport(void)
     hr = IDirect3DRMViewport_GetCamera(viewport, &d3drm_frame);
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
 
+    hr = IDirect3DRMViewport_SetCamera(viewport, frame);
+    ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
+
     /* Test all failures together */
     hr = IDirect3DRMViewport_Init(viewport, NULL, frame, rc.left, rc.top, rc.right, rc.bottom);
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
@@ -2215,6 +2245,9 @@ static void test_Viewport(void)
     hr = IDirect3DRMViewport2_GetDevice(viewport2, &d3drm_device3);
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
     hr = IDirect3DRMViewport2_GetCamera(viewport2, &d3drm_frame3);
+    ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DRMViewport2_SetCamera(viewport2, frame3);
     ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DRMViewport2_Init(viewport2, NULL, frame3, rc.left, rc.top, rc.right, rc.bottom);
