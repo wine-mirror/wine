@@ -22,7 +22,7 @@
 
 #include "wine/test.h"
 #include "initguid.h"
-#include "uuids.h"
+#include "dshow.h"
 #include "amstream.h"
 #include "vfwmsgs.h"
 #include "mmreg.h"
@@ -1297,6 +1297,359 @@ static void test_pin_info(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static IUnknown *graph_inner_unk;
+static IFilterGraph2 *graph_inner;
+static LONG graph_refcount = 1;
+static unsigned int got_add_filter;
+static IBaseFilter *graph_filter;
+static WCHAR graph_filter_name[128];
+
+static HRESULT WINAPI graph_QueryInterface(IFilterGraph2 *iface, REFIID iid, void **out)
+{
+    if (winetest_debug > 1) trace("QueryInterface(%s)\n", wine_dbgstr_guid(iid));
+    if (IsEqualGUID(iid, &IID_IFilterGraph2)
+            || IsEqualGUID(iid, &IID_IGraphBuilder)
+            || IsEqualGUID(iid, &IID_IFilterGraph)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        IFilterGraph2_AddRef(iface);
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IMediaSeeking)
+            || IsEqualGUID(iid, &IID_IMediaControl)
+            || IsEqualGUID(iid, &IID_IMediaEventEx))
+    {
+        return IUnknown_QueryInterface(graph_inner_unk, iid, out);
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI graph_AddRef(IFilterGraph2 *iface)
+{
+    return InterlockedIncrement(&graph_refcount);
+}
+
+static ULONG WINAPI graph_Release(IFilterGraph2 *iface)
+{
+    return InterlockedDecrement(&graph_refcount);
+}
+
+static HRESULT WINAPI graph_AddFilter(IFilterGraph2 *iface, IBaseFilter *filter, const WCHAR *name)
+{
+    if (winetest_debug > 1) trace("AddFilter(%p, %s)\n", filter, wine_dbgstr_w(name));
+    ++got_add_filter;
+    graph_filter = filter;
+    if (name)
+        wcscpy(graph_filter_name, name);
+    else
+        graph_filter_name[0] = 0;
+    return IFilterGraph2_AddFilter(graph_inner, filter, name);
+}
+
+static HRESULT WINAPI graph_RemoveFilter(IFilterGraph2 *iface, IBaseFilter *filter)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_EnumFilters(IFilterGraph2 *iface, IEnumFilters **enumfilters)
+{
+    if (winetest_debug > 1) trace("EnumFilters()\n");
+    return IFilterGraph2_EnumFilters(graph_inner, enumfilters);
+}
+
+static HRESULT WINAPI graph_FindFilterByName(IFilterGraph2 *iface, const WCHAR *name, IBaseFilter **filter)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_ConnectDirect(IFilterGraph2 *iface, IPin *source, IPin *sink, const AM_MEDIA_TYPE *mt)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_Reconnect(IFilterGraph2 *iface, IPin *pin)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_Disconnect(IFilterGraph2 *iface, IPin *pin)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_SetDefaultSyncSource(IFilterGraph2 *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_Connect(IFilterGraph2 *iface, IPin *source, IPin *sink)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_Render(IFilterGraph2 *iface, IPin *source)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_RenderFile(IFilterGraph2 *iface, const WCHAR *filename, const WCHAR *playlist)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_AddSourceFilter(IFilterGraph2 *iface,
+        const WCHAR *filename, const WCHAR *filter_name, IBaseFilter **filter)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_SetLogFile(IFilterGraph2 *iface, DWORD_PTR file)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_Abort(IFilterGraph2 *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_ShouldOperationContinue(IFilterGraph2 *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_AddSourceFilterForMoniker(IFilterGraph2 *iface,
+        IMoniker *moniker, IBindCtx *bind_ctx, const WCHAR *filter_name, IBaseFilter **filter)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_ReconnectEx(IFilterGraph2 *iface, IPin *pin, const AM_MEDIA_TYPE *mt)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI graph_RenderEx(IFilterGraph2 *iface, IPin *pin, DWORD flags, DWORD *context)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IFilterGraph2Vtbl graph_vtbl =
+{
+    graph_QueryInterface,
+    graph_AddRef,
+    graph_Release,
+    graph_AddFilter,
+    graph_RemoveFilter,
+    graph_EnumFilters,
+    graph_FindFilterByName,
+    graph_ConnectDirect,
+    graph_Reconnect,
+    graph_Disconnect,
+    graph_SetDefaultSyncSource,
+    graph_Connect,
+    graph_Render,
+    graph_RenderFile,
+    graph_AddSourceFilter,
+    graph_SetLogFile,
+    graph_Abort,
+    graph_ShouldOperationContinue,
+    graph_AddSourceFilterForMoniker,
+    graph_ReconnectEx,
+    graph_RenderEx,
+};
+
+static void test_initialize(void)
+{
+    static const WCHAR expectW[] = {'M','e','d','i','a','S','t','r','e','a','m','F','i','l','t','e','r',0};
+
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IFilterGraph2 graph = {&graph_vtbl};
+    IMediaStreamFilter *filter;
+    IGraphBuilder *ret_graph;
+    IMediaStream *stream;
+    STREAM_TYPE type;
+    HRESULT hr;
+    ULONG ref;
+
+    ret_graph = (IGraphBuilder *)0xdeadbeef;
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!ret_graph, "Got unexpected graph %p.\n", ret_graph);
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!filter, "Expected a non-NULL filter.");
+    IMediaStreamFilter_Release(filter);
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_WRITE, 0, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_TRANSFORM, 0, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    ret_graph = (IGraphBuilder *)0xdeadbeef;
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!ret_graph, "Got unexpected graph %p.\n", ret_graph);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    type = 0xdeadbeef;
+    hr = IMediaStream_GetInformation(stream, NULL, &type);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(type == STREAMTYPE_READ, "Got type %u.\n", type);
+    IMediaStream_Release(stream);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    mmstream = create_ammultimediastream();
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_WRITE, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_WRITE, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_TRANSFORM, 0, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    ret_graph = (IGraphBuilder *)0xdeadbeef;
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!ret_graph, "Got unexpected graph %p.\n", ret_graph);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    type = 0xdeadbeef;
+    hr = IMediaStream_GetInformation(stream, NULL, &type);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(type == STREAMTYPE_WRITE, "Got type %u.\n", type);
+    IMediaStream_Release(stream);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    mmstream = create_ammultimediastream();
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_TRANSFORM, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_TRANSFORM, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_WRITE, 0, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    ret_graph = (IGraphBuilder *)0xdeadbeef;
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!ret_graph, "Got unexpected graph %p.\n", ret_graph);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    type = 0xdeadbeef;
+    hr = IMediaStream_GetInformation(stream, NULL, &type);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(type == STREAMTYPE_TRANSFORM, "Got type %u.\n", type);
+    IMediaStream_Release(stream);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    mmstream = create_ammultimediastream();
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    type = 0xdeadbeef;
+    hr = IMediaStream_GetInformation(stream, NULL, &type);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(type == STREAMTYPE_READ, "Got type %u.\n", type);
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_TRANSFORM, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    type = 0xdeadbeef;
+    hr = IMediaStream_GetInformation(stream, NULL, &type);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(type == STREAMTYPE_READ, "Got type %u.\n", type);
+
+    IMediaStream_Release(stream);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    /* Test with a custom filter graph. */
+
+    mmstream = create_ammultimediastream();
+
+    CoCreateInstance(&CLSID_FilterGraph, (IUnknown *)&graph, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void **)&graph_inner_unk);
+    IUnknown_QueryInterface(graph_inner_unk, &IID_IFilterGraph2, (void **)&graph_inner);
+
+    ret_graph = (IGraphBuilder *)0xdeadbeef;
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!ret_graph, "Got unexpected graph %p.\n", ret_graph);
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!filter, "Expected a non-NULL filter.");
+
+    got_add_filter = 0;
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, (IGraphBuilder *)&graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(got_add_filter == 1, "Got %d calls to IGraphBuilder::AddFilter().\n", got_add_filter);
+    ok(graph_filter == (IBaseFilter *)filter, "Got filter %p.\n", filter);
+    ok(!wcscmp(graph_filter_name, expectW), "Got unexpected name %s.\n", wine_dbgstr_w(graph_filter_name));
+
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ret_graph == (IGraphBuilder *)&graph, "Got unexpected graph %p.\n", ret_graph);
+    IGraphBuilder_Release(ret_graph);
+
+    got_add_filter = 0;
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!got_add_filter, "Got %d calls to IGraphBuilder::AddFilter().\n", got_add_filter);
+
+    got_add_filter = 0;
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!got_add_filter, "Got %d calls to IGraphBuilder::AddFilter().\n", got_add_filter);
+
+    IMediaStreamFilter_Release(filter);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IFilterGraph2_Release(graph_inner);
+    ok(graph_refcount == 1, "Got outstanding refcount %d.\n", graph_refcount);
+    IUnknown_Release(graph_inner_unk);
+}
+
 static void test_IDirectDrawStreamSample(void)
 {
     DDSURFACEDESC desc = { sizeof(desc) };
@@ -1673,6 +2026,7 @@ START_TEST(amstream)
     test_enum_pins();
     test_find_pin();
     test_pin_info();
+    test_initialize();
     test_IDirectDrawStreamSample();
 
     file = CreateFileW(filenameW, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
