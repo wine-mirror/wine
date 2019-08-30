@@ -125,6 +125,9 @@ XContext cursor_context = 0;
 static HWND cursor_window;
 static HCURSOR last_cursor;
 static DWORD last_cursor_change;
+static RECT last_clip_rect;
+static HWND last_clip_foreground_window;
+static BOOL last_clip_refused;
 static RECT clip_rect;
 static Cursor create_cursor( HANDLE handle );
 
@@ -395,7 +398,14 @@ static BOOL grab_clipping_window( const RECT *clip )
     if (keyboard_grabbed)
     {
         WARN( "refusing to clip to %s\n", wine_dbgstr_rect(clip) );
+        last_clip_refused = TRUE;
+        last_clip_foreground_window = GetForegroundWindow();
+        last_clip_rect = *clip;
         return FALSE;
+    }
+    else
+    {
+        last_clip_refused = FALSE;
     }
 
     /* enable XInput2 unless we are already clipping */
@@ -468,6 +478,20 @@ void reset_clipping_window(void)
 {
     ungrab_clipping_window();
     ClipCursor( NULL );  /* make sure the clip rectangle is reset too */
+}
+
+/***********************************************************************
+ *      retry_grab_clipping_window
+ *
+ * Restore the current clip rectangle or retry the last one if it has
+ * been refused because of an active keyboard grab.
+ */
+void retry_grab_clipping_window(void)
+{
+    if (clipping_cursor)
+        ClipCursor( &clip_rect );
+    else if (last_clip_refused && GetForegroundWindow() == last_clip_foreground_window)
+        ClipCursor( &last_clip_rect );
 }
 
 BOOL CDECL X11DRV_ClipCursor( const RECT *clip );

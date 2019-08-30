@@ -788,6 +788,7 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
         break;
     case NotifyUngrab:
         keyboard_grabbed = FALSE;
+        retry_grab_clipping_window();
         return TRUE; /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
     }
 
@@ -888,6 +889,13 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
         break;
     case NotifyGrab:
         keyboard_grabbed = TRUE;
+
+        /* This will do nothing due to keyboard_grabbed == TRUE, but it
+         * will save the current clipping rect so we can restore it on
+         * FocusIn with NotifyUngrab mode.
+         */
+        retry_grab_clipping_window();
+
         return TRUE; /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
     }
 
