@@ -465,6 +465,7 @@ void ungrab_clipping_window(void)
 
     TRACE( "no longer clipping\n" );
     XUnmapWindow( display, clip_window );
+    if (clipping_cursor) XUngrabPointer( display, CurrentTime );
     clipping_cursor = FALSE;
     SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, 0 );
 }
