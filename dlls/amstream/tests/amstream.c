@@ -305,13 +305,558 @@ error:
     IAMMultiMediaStream_Release(pams);
 }
 
+static const GUID test_mspid = {0x88888888};
+static IAMMediaStream teststream;
+static LONG teststream_refcount = 1;
+static IAMMultiMediaStream *teststream_mmstream;
+static IMediaStreamFilter *teststream_filter;
+static IFilterGraph *teststream_graph;
+
+static HRESULT WINAPI pin_QueryInterface(IPin *iface, REFIID iid, void **out)
+{
+    return IAMMediaStream_QueryInterface(&teststream, iid, out);
+}
+
+static ULONG WINAPI pin_AddRef(IPin *iface)
+{
+    return IAMMediaStream_AddRef(&teststream);
+}
+
+static ULONG WINAPI pin_Release(IPin *iface)
+{
+    return IAMMediaStream_Release(&teststream);
+}
+
+static HRESULT WINAPI pin_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_ReceiveConnection(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_Disconnect(IPin *iface)
+{
+    if (winetest_debug > 1) trace("Disconnect\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_ConnectedTo(IPin *iface, IPin **peer)
+{
+    if (winetest_debug > 1) trace("ConnectedTo\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_ConnectionMediaType(IPin *iface, AM_MEDIA_TYPE *mt)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_QueryPinInfo(IPin *iface, PIN_INFO *info)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_QueryDirection(IPin *iface, PIN_DIRECTION *dir)
+{
+    if (winetest_debug > 1) trace("QueryDirection\n");
+    *dir = PINDIR_INPUT;
+    return S_OK;
+}
+
+static HRESULT WINAPI pin_QueryId(IPin *iface, WCHAR **id)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *mt)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **out)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_QueryInternalConnections(IPin *iface, IPin **pins, ULONG *count)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_EndOfStream(IPin *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_BeginFlush(IPin *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_EndFlush(IPin *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI pin_NewSegment(IPin *iface, REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IPinVtbl pin_vtbl =
+{
+    pin_QueryInterface,
+    pin_AddRef,
+    pin_Release,
+    pin_Connect,
+    pin_ReceiveConnection,
+    pin_Disconnect,
+    pin_ConnectedTo,
+    pin_ConnectionMediaType,
+    pin_QueryPinInfo,
+    pin_QueryDirection,
+    pin_QueryId,
+    pin_QueryAccept,
+    pin_EnumMediaTypes,
+    pin_QueryInternalConnections,
+    pin_EndOfStream,
+    pin_BeginFlush,
+    pin_EndFlush,
+    pin_NewSegment
+};
+
+static IPin testpin = {&pin_vtbl};
+
+static HRESULT WINAPI stream_QueryInterface(IAMMediaStream *iface, REFIID iid, void **out)
+{
+    if (winetest_debug > 1) trace("QueryInterface(%s)\n", wine_dbgstr_guid(iid));
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IMediaStream) || IsEqualGUID(iid, &IID_IAMMediaStream))
+    {
+        IAMMediaStream_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IPin))
+    {
+        IAMMediaStream_AddRef(iface);
+        *out = &testpin;
+        return S_OK;
+    }
+
+    ok(0, "Unexpected interface %s.\n", wine_dbgstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI stream_AddRef(IAMMediaStream *iface)
+{
+    return InterlockedIncrement(&teststream_refcount);
+}
+
+static ULONG WINAPI stream_Release(IAMMediaStream *iface)
+{
+    return InterlockedDecrement(&teststream_refcount);
+}
+
+static HRESULT WINAPI stream_GetMultiMediaStream(IAMMediaStream *iface, IMultiMediaStream **mmstream)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_GetInformation(IAMMediaStream *iface, MSPID *id, STREAM_TYPE *type)
+{
+    if (winetest_debug > 1) trace("GetInformation(%p, %p)\n", id, type);
+    *id = test_mspid;
+    ok(!type, "Got unexpected type %p.\n", type);
+    return S_OK;
+}
+
+static HRESULT WINAPI stream_SetSameFormat(IAMMediaStream *iface, IMediaStream *ref, DWORD flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_AllocateSample(IAMMediaStream *iface, DWORD flags, IStreamSample **sample)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_CreateSharedSample(IAMMediaStream *iface,
+        IStreamSample *existing, DWORD flags, IStreamSample **out)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_SendEndOfStream(IAMMediaStream *iface, DWORD flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_Initialize(IAMMediaStream *iface, IUnknown *source,
+        DWORD flags, REFMSPID id, const STREAM_TYPE type)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_SetState(IAMMediaStream *iface, FILTER_STATE state)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_JoinAMMultiMediaStream(IAMMediaStream *iface, IAMMultiMediaStream *mmstream)
+{
+    if (winetest_debug > 1) trace("JoinAMMultiMediaStream(%p)\n", mmstream);
+    teststream_mmstream = mmstream;
+    return S_OK;
+}
+
+static HRESULT WINAPI stream_JoinFilter(IAMMediaStream *iface, IMediaStreamFilter *filter)
+{
+    if (winetest_debug > 1) trace("JoinFilter(%p)\n", filter);
+    teststream_filter = filter;
+    return S_OK;
+}
+
+static HRESULT WINAPI stream_JoinFilterGraph(IAMMediaStream *iface, IFilterGraph *graph)
+{
+    if (winetest_debug > 1) trace("JoinFilterGraph(%p)\n", graph);
+    teststream_graph = graph;
+    return S_OK;
+}
+
+static const IAMMediaStreamVtbl stream_vtbl =
+{
+    stream_QueryInterface,
+    stream_AddRef,
+    stream_Release,
+    stream_GetMultiMediaStream,
+    stream_GetInformation,
+    stream_SetSameFormat,
+    stream_AllocateSample,
+    stream_CreateSharedSample,
+    stream_SendEndOfStream,
+    stream_Initialize,
+    stream_SetState,
+    stream_JoinAMMultiMediaStream,
+    stream_JoinFilter,
+    stream_JoinFilterGraph,
+};
+
+static IAMMediaStream teststream = {&stream_vtbl};
+
+#define check_enum_stream(a,b,c,d) check_enum_stream_(__LINE__,a,b,c,d)
+static void check_enum_stream_(int line, IAMMultiMediaStream *mmstream,
+        IMediaStreamFilter *filter, LONG index, IMediaStream *expect)
+{
+    IMediaStream *stream = NULL, *stream2 = NULL;
+    HRESULT hr;
+
+    hr = IAMMultiMediaStream_EnumMediaStreams(mmstream, index, &stream);
+    todo_wine ok_(__FILE__, line)(hr == (expect ? S_OK : S_FALSE),
+            "IAMMultiMediaStream::EnumMediaStreams() returned %#x.\n", hr);
+    hr = IMediaStreamFilter_EnumMediaStreams(filter, index, &stream2);
+    todo_wine ok_(__FILE__, line)(hr == (expect ? S_OK : S_FALSE),
+            "IMediaStreamFilter::EnumMediaStreams() returned %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        ok_(__FILE__, line)(stream == expect, "Expected stream %p, got %p.\n", expect, stream);
+        ok_(__FILE__, line)(stream2 == expect, "Expected stream %p, got %p.\n", expect, stream2);
+    }
+
+    if (stream) IMediaStream_Release(stream);
+    if (stream2) IMediaStream_Release(stream2);
+}
+
+#define check_get_stream(a,b,c,d) check_get_stream_(__LINE__,a,b,c,d)
+static void check_get_stream_(int line, IAMMultiMediaStream *mmstream,
+        IMediaStreamFilter *filter, const GUID *mspid, IMediaStream *expect)
+{
+    IMediaStream *stream = NULL, *stream2 = NULL;
+    HRESULT hr;
+
+    hr = IAMMultiMediaStream_GetMediaStream(mmstream, mspid, &stream);
+    ok_(__FILE__, line)(hr == (expect ? S_OK : MS_E_NOSTREAM),
+            "IAMMultiMediaStream::GetMediaStream() returned %#x.\n", hr);
+    hr = IMediaStreamFilter_GetMediaStream(filter, mspid, &stream2);
+    ok_(__FILE__, line)(hr == (expect ? S_OK : MS_E_NOSTREAM),
+            "IMediaStreamFilter::GetMediaStream() returned %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        ok_(__FILE__, line)(stream == expect, "Expected stream %p, got %p.\n", expect, stream);
+        ok_(__FILE__, line)(stream2 == expect, "Expected stream %p, got %p.\n", expect, stream2);
+    }
+
+    if (stream) IMediaStream_Release(stream);
+    if (stream2) IMediaStream_Release(stream2);
+}
+
+static void test_add_stream(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IMediaStream *video_stream, *audio_stream, *stream;
+    IDirectDrawMediaStream *ddraw_stream;
+    IMediaStreamFilter *stream_filter;
+    IDirectDraw *ddraw, *ddraw2;
+    IEnumFilters *enum_filters;
+    IBaseFilter *filters[3];
+    IGraphBuilder *graph;
+    ULONG ref, count;
+    CLSID clsid;
+    HRESULT hr;
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &stream_filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_EnumMediaStreams(mmstream, 0, NULL);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = IMediaStreamFilter_EnumMediaStreams(stream_filter, 0, NULL);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_GetMediaStream(mmstream, &MSPID_PrimaryAudio, NULL);
+    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IMediaStreamFilter_GetMediaStream(stream_filter, &MSPID_PrimaryAudio, NULL);
+    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    check_enum_stream(mmstream, stream_filter, 0, NULL);
+
+    check_get_stream(mmstream, stream_filter, NULL, NULL);
+    check_get_stream(mmstream, stream_filter, &MSPID_PrimaryAudio, NULL);
+    check_get_stream(mmstream, stream_filter, &MSPID_PrimaryVideo, NULL);
+    check_get_stream(mmstream, stream_filter, &test_mspid, NULL);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &test_mspid, 0, &stream);
+    ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &video_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    todo_wine ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_EnumMediaStreams(mmstream, 0, NULL);
+    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IMediaStreamFilter_EnumMediaStreams(stream_filter, 0, NULL);
+    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_EnumMediaStreams(mmstream, 1, NULL);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = IMediaStreamFilter_EnumMediaStreams(stream_filter, 1, NULL);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    check_enum_stream(mmstream, stream_filter, 0, video_stream);
+    check_enum_stream(mmstream, stream_filter, 1, NULL);
+
+    check_get_stream(mmstream, stream_filter, &MSPID_PrimaryVideo, video_stream);
+    check_get_stream(mmstream, stream_filter, &MSPID_PrimaryAudio, NULL);
+    check_get_stream(mmstream, stream_filter, &test_mspid, NULL);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &audio_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_enum_stream(mmstream, stream_filter, 0, video_stream);
+    check_enum_stream(mmstream, stream_filter, 1, audio_stream);
+    check_enum_stream(mmstream, stream_filter, 2, NULL);
+
+    check_get_stream(mmstream, stream_filter, &MSPID_PrimaryVideo, video_stream);
+    check_get_stream(mmstream, stream_filter, &MSPID_PrimaryAudio, audio_stream);
+    check_get_stream(mmstream, stream_filter, &test_mspid, NULL);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, (IUnknown *)&teststream, &IID_IUnknown, 0, &stream);
+    ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, (IUnknown *)&teststream, &test_mspid, 0, &stream);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(stream == (IMediaStream *)&teststream, "Streams didn't match.\n");
+    if (hr == S_OK) IMediaStream_Release(stream);
+    todo_wine ok(teststream_mmstream == mmstream, "IAMMultiMediaStream objects didn't match.\n");
+    todo_wine ok(teststream_filter == stream_filter, "IMediaStreamFilter objects didn't match.\n");
+    todo_wine ok(!!teststream_graph, "Expected a non-NULL graph.\n");
+
+    check_enum_stream(mmstream, stream_filter, 0, video_stream);
+    check_enum_stream(mmstream, stream_filter, 1, audio_stream);
+    check_enum_stream(mmstream, stream_filter, 2, (IMediaStream *)&teststream);
+    check_enum_stream(mmstream, stream_filter, 3, NULL);
+
+    check_get_stream(mmstream, stream_filter, &MSPID_PrimaryVideo, video_stream);
+    check_get_stream(mmstream, stream_filter, &MSPID_PrimaryAudio, audio_stream);
+    todo_wine check_get_stream(mmstream, stream_filter, &test_mspid, (IMediaStream *)&teststream);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    todo_wine ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!!graph, "Expected a non-NULL graph.\n");
+    if (graph)
+    {
+        hr = IGraphBuilder_EnumFilters(graph, &enum_filters);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IEnumFilters_Next(enum_filters, 3, filters, &count);
+        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+        ok(count == 1, "Got count %u.\n", count);
+        ok(filters[0] == (IBaseFilter *)stream_filter,
+                "Expected filter %p, got %p.\n", stream_filter, filters[0]);
+        IBaseFilter_Release(filters[0]);
+        IEnumFilters_Release(enum_filters);
+        IGraphBuilder_Release(graph);
+    }
+
+    IMediaStreamFilter_Release(stream_filter);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStream_Release(video_stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStream_Release(audio_stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(teststream_refcount == 1, "Got outstanding refcount %d.\n", ref);
+
+    /* The return parameter is optional. */
+
+    mmstream = create_ammultimediastream();
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_GetMediaStream(mmstream, &MSPID_PrimaryVideo, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IMediaStream_Release(stream);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    /* Test supplying a DirectDraw object with the primary video stream. */
+
+    hr = DirectDrawCreate(NULL, &ddraw, NULL);
+    ok(hr == DD_OK, "Got hr %#x.\n", hr);
+    mmstream = create_ammultimediastream();
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, (IUnknown *)ddraw, &MSPID_PrimaryVideo, 0, &video_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStream_QueryInterface(video_stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ddraw2 == ddraw, "Expected IDirectDraw %p, got %p.\n", ddraw, ddraw2);
+    IDirectDraw_Release(ddraw2);
+    IDirectDrawMediaStream_Release(ddraw_stream);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStream_Release(video_stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IDirectDraw_Release(ddraw);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    mmstream = create_ammultimediastream();
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &video_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStream_QueryInterface(video_stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!ddraw, "Expected a non-NULL IDirectDraw.\n");
+    IDirectDraw_Release(ddraw);
+    IDirectDrawMediaStream_Release(ddraw_stream);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStream_Release(video_stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    /* Test the AMMSF_ADDDEFAULTRENDERER flag. No stream is added; however, a
+     * new filter will be added to the graph. */
+
+    mmstream = create_ammultimediastream();
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &stream_filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* FIXME: This call should not be necessary. */
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo,
+            AMMSF_ADDDEFAULTRENDERER, &video_stream);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo,
+            AMMSF_ADDDEFAULTRENDERER, NULL);
+    ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio,
+            AMMSF_ADDDEFAULTRENDERER, &audio_stream);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio,
+            AMMSF_ADDDEFAULTRENDERER, NULL);
+    ok(hr == S_OK || hr == VFW_E_NO_AUDIO_HARDWARE, "Got hr %#x.\n", hr);
+
+    check_enum_stream(mmstream, stream_filter, 0, NULL);
+
+    check_get_stream(mmstream, stream_filter, &MSPID_PrimaryAudio, NULL);
+    check_get_stream(mmstream, stream_filter, &MSPID_PrimaryVideo, NULL);
+
+    if (hr == S_OK)
+    {
+        hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(!!graph, "Got graph %p.\n", graph);
+        hr = IAMMultiMediaStream_GetFilter(mmstream, &stream_filter);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IGraphBuilder_EnumFilters(graph, &enum_filters);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IEnumFilters_Next(enum_filters, 3, filters, &count);
+        todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+        todo_wine ok(count == 2, "Got count %u.\n", count);
+        todo_wine ok(filters[1] == (IBaseFilter *)stream_filter,
+                "Expected filter %p, got %p.\n", stream_filter, filters[1]);
+        hr = IBaseFilter_GetClassID(filters[0], &clsid);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(IsEqualGUID(&clsid, &CLSID_DSoundRender), "Got unexpected filter %s.\n", wine_dbgstr_guid(&clsid));
+        IBaseFilter_Release(filters[0]);
+        IMediaStreamFilter_Release(stream_filter);
+        IEnumFilters_Release(enum_filters);
+        IGraphBuilder_Release(graph);
+    }
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &test_mspid,
+            AMMSF_ADDDEFAULTRENDERER, &audio_stream);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    IMediaStreamFilter_Release(stream_filter);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_media_streams(void)
 {
     IAMMultiMediaStream *pams;
     HRESULT hr;
     IMediaStream *video_stream = NULL;
     IMediaStream *audio_stream = NULL;
-    IMediaStream *dummy_stream;
     IMediaStreamFilter* media_stream_filter = NULL;
 
     if (!(pams = create_ammultimediastream()))
@@ -331,41 +876,10 @@ static void test_media_streams(void)
     hr = IAMMultiMediaStream_GetFilter(pams, &media_stream_filter);
     ok(hr == S_OK, "IAMMultiMediaStream_GetFilter returned: %x\n", hr);
 
-    /* Verify behaviour with invalid purpose id */
-    hr = IAMMultiMediaStream_GetMediaStream(pams, &IID_IUnknown, &dummy_stream);
-    ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
-    hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &IID_IUnknown, 0, NULL);
-    ok(hr == MS_E_PURPOSEID, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
-
-    /* Verify there is no video media stream */
-    hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &video_stream);
-    ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
-
-    /* Verify there is no default renderer for video stream */
-    hr = IAMMultiMediaStream_AddMediaStream(pams, (IUnknown*)pdd7, &MSPID_PrimaryVideo, AMMSF_ADDDEFAULTRENDERER, NULL);
-    ok(hr == MS_E_PURPOSEID, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
-    hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &video_stream);
-    ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
-    hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &MSPID_PrimaryVideo, AMMSF_ADDDEFAULTRENDERER, NULL);
-    ok(hr == MS_E_PURPOSEID, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
-    hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &video_stream);
-    ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
-
-    /* Verify normal case for video stream */
     hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &MSPID_PrimaryVideo, 0, NULL);
     ok(hr == S_OK, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
     hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryVideo, &video_stream);
     ok(hr == S_OK, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
-
-    /* Verify the video stream has been added to the media stream filter */
-    if (media_stream_filter)
-    {
-        hr = IMediaStreamFilter_GetMediaStream(media_stream_filter, &MSPID_PrimaryVideo, &dummy_stream);
-        ok(hr == S_OK, "IMediaStreamFilter_GetMediaStream returned: %x\n", hr);
-        ok(dummy_stream == video_stream, "Got wrong returned pointer %p, expected %p\n", dummy_stream, video_stream);
-        if (SUCCEEDED(hr))
-            IMediaStream_Release(dummy_stream);
-    }
 
     /* Check interfaces and samples for video */
     if (video_stream)
@@ -431,57 +945,10 @@ static void test_media_streams(void)
             IDirectDrawMediaStream_Release(ddraw_stream);
     }
 
-    /* Verify there is no audio media stream */
-    hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryAudio, &audio_stream);
-    ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
-
-    /* Verify no stream is created when using the default renderer for audio stream */
-    hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &MSPID_PrimaryAudio, AMMSF_ADDDEFAULTRENDERER, NULL);
-    ok((hr == S_OK) || (hr == VFW_E_NO_AUDIO_HARDWARE), "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
-    if (hr == S_OK)
-    {
-        IGraphBuilder* filtergraph = NULL;
-        IBaseFilter* filter = NULL;
-        const WCHAR name[] = {'0','0','0','1',0};
-        CLSID clsid;
-
-        hr = IAMMultiMediaStream_GetFilterGraph(pams, &filtergraph);
-        ok(hr == S_OK, "IAMMultiMediaStream_GetFilterGraph returned: %x\n", hr);
-        if (hr == S_OK)
-        {
-            hr = IGraphBuilder_FindFilterByName(filtergraph, name, &filter);
-            ok(hr == S_OK, "IGraphBuilder_FindFilterByName returned: %x\n", hr);
-        }
-        if (hr == S_OK)
-        {
-            hr = IBaseFilter_GetClassID(filter, &clsid);
-            ok(hr == S_OK, "IGraphBuilder_FindFilterByName returned: %x\n", hr);
-        }
-        if (hr == S_OK)
-            ok(IsEqualGUID(&clsid, &CLSID_DSoundRender), "Got wrong CLSID\n");
-        if (filter)
-            IBaseFilter_Release(filter);
-        if (filtergraph)
-            IGraphBuilder_Release(filtergraph);
-    }
-    hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryAudio, &audio_stream);
-    ok(hr == MS_E_NOSTREAM, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
-
-    /* Verify a stream is created when no default renderer is used */
     hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &MSPID_PrimaryAudio, 0, NULL);
     ok(hr == S_OK, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
     hr = IAMMultiMediaStream_GetMediaStream(pams, &MSPID_PrimaryAudio, &audio_stream);
     ok(hr == S_OK, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
-
-    /* verify the audio stream has been added to the media stream filter */
-    if (media_stream_filter)
-    {
-        hr = IMediaStreamFilter_GetMediaStream(media_stream_filter, &MSPID_PrimaryAudio, &dummy_stream);
-        ok(hr == S_OK, "IAMMultiMediaStream_GetMediaStream returned: %x\n", hr);
-        ok(dummy_stream == audio_stream, "Got wrong returned pointer %p, expected %p\n", dummy_stream, audio_stream);
-        if (SUCCEEDED(hr))
-            IMediaStream_Release(dummy_stream);
-    }
 
    /* Check interfaces and samples for audio */
     if (audio_stream)
@@ -1201,6 +1668,7 @@ START_TEST(amstream)
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     test_interfaces();
+    test_add_stream();
     test_media_streams();
     test_enum_pins();
     test_find_pin();
