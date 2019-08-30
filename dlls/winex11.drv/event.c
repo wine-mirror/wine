@@ -772,6 +772,19 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
     if (event->detail == NotifyPointer) return FALSE;
     if (hwnd == GetDesktopWindow()) return FALSE;
 
+    switch (event->mode)
+    {
+    case NotifyGrab:
+        WARN( "unexpected FocusIn event with NotifyGrab mode\n" );
+        break;
+    case NotifyWhileGrabbed:
+        break;
+    case NotifyNormal:
+        break;
+    case NotifyUngrab:
+        return TRUE; /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
+    }
+
     if ((xic = X11DRV_get_ic( hwnd ))) XSetICFocus( xic );
     if (use_take_focus)
     {
@@ -855,6 +868,20 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
         return TRUE;
     }
     if (!hwnd) return FALSE;
+
+    switch (event->mode)
+    {
+    case NotifyUngrab:
+        WARN( "unexpected FocusOut event with NotifyUngrab mode\n" );
+        break;
+    case NotifyNormal:
+        break;
+    case NotifyWhileGrabbed:
+        break;
+    case NotifyGrab:
+        return TRUE; /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
+    }
+
     focus_out( event->display, hwnd );
     return TRUE;
 }
