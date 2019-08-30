@@ -70,8 +70,6 @@ static inline struct d3drm_frame *impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 
     return CONTAINING_RECORD(iface, struct d3drm_frame, IDirect3DRMFrame3_iface);
 }
 
-static inline struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface);
-
 static inline struct d3drm_frame_array *impl_from_IDirect3DRMFrameArray(IDirect3DRMFrameArray *iface)
 {
     return CONTAINING_RECORD(iface, struct d3drm_frame_array, IDirect3DRMFrameArray_iface);
@@ -3110,7 +3108,7 @@ static const struct IDirect3DRMFrameVtbl d3drm_frame1_vtbl =
     d3drm_frame1_Transform,
 };
 
-static inline struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface)
+struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface)
 {
     if (!iface)
         return NULL;

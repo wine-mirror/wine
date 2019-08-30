@@ -668,16 +668,38 @@ static HRESULT WINAPI d3drm_viewport1_SetPlane(IDirect3DRMViewport *iface,
 
 static HRESULT WINAPI d3drm_viewport2_GetCamera(IDirect3DRMViewport2 *iface, IDirect3DRMFrame3 **camera)
 {
-    FIXME("iface %p, camera %p stub!\n", iface, camera);
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, camera %p.\n", iface, camera);
+
+    if (!camera)
+        return D3DRMERR_BADVALUE;
+
+    if (!viewport->camera)
+        return D3DRMERR_BADOBJECT;
+
+    return IDirect3DRMFrame_QueryInterface(viewport->camera, &IID_IDirect3DRMFrame3, (void **)camera);
 }
 
 static HRESULT WINAPI d3drm_viewport1_GetCamera(IDirect3DRMViewport *iface, IDirect3DRMFrame **camera)
 {
-    FIXME("iface %p, camera %p stub!\n", iface, camera);
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
+    struct d3drm_frame *camera_impl;
+    IDirect3DRMFrame3 *camera3;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, camera %p.\n", iface, camera);
+
+    if (!camera)
+        return D3DRMERR_BADVALUE;
+
+    if (FAILED(hr = d3drm_viewport2_GetCamera(&viewport->IDirect3DRMViewport2_iface, &camera3)))
+        return hr;
+
+    camera_impl = unsafe_impl_from_IDirect3DRMFrame3(camera3);
+    *camera = &camera_impl->IDirect3DRMFrame_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_viewport2_GetDevice(IDirect3DRMViewport2 *iface, IDirect3DRMDevice3 **device)
