@@ -112,6 +112,16 @@ BOOL WINAPI DnsFlushResolverCacheEntry_W( PCWSTR entry )
 }
 
 /******************************************************************************
+ * DnsGetCacheDataTable                    [DNSAPI.@]
+ *
+ */
+BOOL WINAPI DnsGetCacheDataTable( PDNS_CACHE_ENTRY* entry )
+{
+    FIXME( "(%p) stub\n", entry );
+    return FALSE;
+}
+
+/******************************************************************************
  * DnsReleaseContextHandle                [DNSAPI.@]
  *
  */

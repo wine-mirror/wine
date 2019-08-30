@@ -698,6 +698,15 @@ typedef struct _DNS_QUERY_CANCEL
     char Reserved[32];
 } DNS_QUERY_CANCEL, *PDNS_QUERY_CANCEL;
 
+typedef struct _DNS_CACHE_ENTRY
+{
+    struct _DNS_CACHE_ENTRY* Next;
+    const WCHAR *Name;
+    WORD Type;
+    WORD DataLength;
+    ULONG Flags;
+} DNS_CACHE_ENTRY, *PDNS_CACHE_ENTRY;
+
 DNS_STATUS WINAPI DnsAcquireContextHandle_A(DWORD,PVOID,PHANDLE);
 DNS_STATUS WINAPI DnsAcquireContextHandle_W(DWORD,PVOID,PHANDLE);
 #define DnsAcquireContextHandle WINELIB_NAME_AW(DnsAcquireContextHandle_)
@@ -735,6 +744,7 @@ DNS_STATUS WINAPI DnsValidateName_UTF8(PCSTR,DNS_NAME_FORMAT);
 #define DnsValidateName WINELIB_NAME_AW(DnsValidateName_)
 BOOL WINAPI DnsWriteQuestionToBuffer_W(PDNS_MESSAGE_BUFFER,PDWORD,PCWSTR,WORD,WORD,BOOL);
 BOOL WINAPI DnsWriteQuestionToBuffer_UTF8(PDNS_MESSAGE_BUFFER,PDWORD,PCSTR,WORD,WORD,BOOL);
+BOOL WINAPI DnsGetCacheDataTable(PDNS_CACHE_ENTRY*);
 
 #ifdef __cplusplus
 }
