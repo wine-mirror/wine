@@ -681,7 +681,7 @@ const char *debugstr_attr(const GUID *guid)
         X(MFSampleExtension_3DVideo_SampleFormat),
         X(MF_SAMPLEGRABBERSINK_SAMPLE_TIME_OFFSET),
         X(MF_MT_SAMPLE_SIZE),
-        X(MF_MT_AAC_PAYLOAD_TIME),
+        X(MF_MT_AAC_PAYLOAD_TYPE),
         X(MF_TOPOLOGY_PLAYBACK_FRAMERATE),
         X(MF_SOURCE_READER_D3D11_BIND_FLAGS),
         X(MF_MT_AUDIO_FOLDDOWN_MATRIX),
