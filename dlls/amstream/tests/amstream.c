@@ -21,12 +21,11 @@
 #define COBJMACROS
 
 #include "wine/test.h"
-#include "initguid.h"
 #include "dshow.h"
 #include "amstream.h"
-#include "vfwmsgs.h"
 #include "mmreg.h"
 #include "ks.h"
+#include "initguid.h"
 #include "ksmedia.h"
 
 static const WCHAR primary_video_sink_id[] = {'I','{','A','3','5','F','F','5','6','A',
