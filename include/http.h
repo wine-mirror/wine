@@ -425,6 +425,7 @@ typedef struct _HTTP_BINDING_INFO
 } HTTP_BINDING_INFO, *PHTTP_BINDING_INFO;
 
 ULONG WINAPI HttpAddUrl(HANDLE,PCWSTR,PVOID);
+ULONG WINAPI HttpAddUrlToUrlGroup(HTTP_URL_GROUP_ID id, const WCHAR *url, HTTP_URL_CONTEXT context, ULONG reserved);
 ULONG WINAPI HttpCloseServerSession(HTTP_SERVER_SESSION_ID id);
 ULONG WINAPI HttpCloseUrlGroup(HTTP_URL_GROUP_ID id);
 ULONG WINAPI HttpCreateHttpHandle(PHANDLE,ULONG);
@@ -436,6 +437,7 @@ ULONG WINAPI HttpTerminate(ULONG flags, void *reserved);
 ULONG WINAPI HttpQueryServiceConfiguration(HANDLE,HTTP_SERVICE_CONFIG_ID,PVOID,ULONG,PVOID,ULONG,PULONG,LPOVERLAPPED);
 ULONG WINAPI HttpReceiveHttpRequest(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags, HTTP_REQUEST *request, ULONG size, ULONG *ret_size, OVERLAPPED *ovl);
 ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *url);
+ULONG WINAPI HttpRemoveUrlFromUrlGroup(HTTP_URL_GROUP_ID id, const WCHAR *url, ULONG flags);
 ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags, HTTP_RESPONSE *response, HTTP_CACHE_POLICY *cache_policy, ULONG *ret_size, void *reserved1, ULONG reserved2, OVERLAPPED *ovl, HTTP_LOG_DATA *log_data);
 ULONG WINAPI HttpSetServiceConfiguration(HANDLE,HTTP_SERVICE_CONFIG_ID,PVOID,ULONG,LPOVERLAPPED);
 ULONG WINAPI HttpSetUrlGroupProperty(HTTP_URL_GROUP_ID id, HTTP_SERVER_PROPERTY property, void *value, ULONG length);

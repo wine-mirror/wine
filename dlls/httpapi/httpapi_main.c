@@ -27,6 +27,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(httpapi);
 
+static WCHAR *heap_strdupW(const WCHAR *str)
+{
+    int len = wcslen(str) + 1;
+    WCHAR *ret = heap_alloc(len * sizeof(WCHAR));
+    wcscpy(ret, str);
+    return ret;
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID lpv )
 {
     switch(reason)
@@ -247,20 +255,12 @@ ULONG WINAPI HttpAddUrl(HANDLE queue, const WCHAR *url, void *reserved)
     return add_url(queue, url, 0);
 }
 
-/***********************************************************************
- *        HttpRemoveUrl     (HTTPAPI.@)
- */
-ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *urlW)
+static ULONG remove_url(HANDLE queue, const WCHAR *urlW)
 {
     ULONG ret = ERROR_SUCCESS;
     OVERLAPPED ovl = {};
     char *url;
     int len;
-
-    TRACE("queue %p, url %s.\n", queue, debugstr_w(urlW));
-
-    if (!queue)
-        return ERROR_INVALID_PARAMETER;
 
     len = WideCharToMultiByte(CP_ACP, 0, urlW, -1, NULL, 0, NULL, NULL);
     if (!(url = heap_alloc(len)))
@@ -274,6 +274,19 @@ ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *urlW)
     CloseHandle(ovl.hEvent);
     heap_free(url);
     return ret;
+}
+
+/***********************************************************************
+ *        HttpRemoveUrl     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *url)
+{
+    TRACE("queue %p, url %s.\n", queue, debugstr_w(url));
+
+    if (!queue)
+        return ERROR_INVALID_PARAMETER;
+
+    return remove_url(queue, url);
 }
 
 /***********************************************************************
@@ -475,6 +488,8 @@ struct url_group
 {
     struct list entry, session_entry;
     HANDLE queue;
+    WCHAR *url;
+    HTTP_URL_CONTEXT context;
 };
 
 static struct list url_groups = LIST_INIT(url_groups);
@@ -621,6 +636,60 @@ ULONG WINAPI HttpSetUrlGroupProperty(HTTP_URL_GROUP_ID id, HTTP_SERVER_PROPERTY 
     TRACE("Binding to queue %p.\n", info->RequestQueueHandle);
 
     group->queue = info->RequestQueueHandle;
+
+    if (group->url)
+        add_url(group->queue, group->url, group->context);
+
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *        HttpAddUrlToUrlGroup     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpAddUrlToUrlGroup(HTTP_URL_GROUP_ID id, const WCHAR *url,
+        HTTP_URL_CONTEXT context, ULONG reserved)
+{
+    struct url_group *group = get_url_group(id);
+
+    TRACE("id %s, url %s, context %s, reserved %#x.\n", wine_dbgstr_longlong(id),
+            debugstr_w(url), wine_dbgstr_longlong(context), reserved);
+
+    if (group->url)
+    {
+        FIXME("Multiple URLs are not handled!\n");
+        return ERROR_CALL_NOT_IMPLEMENTED;
+    }
+
+    if (!(group->url = heap_strdupW(url)))
+        return ERROR_OUTOFMEMORY;
+    group->context = context;
+
+    if (group->queue)
+        return add_url(group->queue, url, context);
+
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *        HttpRemoveUrlFromUrlGroup     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpRemoveUrlFromUrlGroup(HTTP_URL_GROUP_ID id, const WCHAR *url, ULONG flags)
+{
+    struct url_group *group = get_url_group(id);
+
+    TRACE("id %s, url %s, flags %#x.\n", wine_dbgstr_longlong(id), debugstr_w(url), flags);
+
+    if (!group->url)
+        return ERROR_FILE_NOT_FOUND;
+
+    if (flags)
+        FIXME("Ignoring flags %#x.\n", flags);
+
+    heap_free(group->url);
+    group->url = NULL;
+
+    if (group->queue)
+        return remove_url(group->queue, url);
 
     return ERROR_SUCCESS;
 }

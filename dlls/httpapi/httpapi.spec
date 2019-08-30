@@ -1,6 +1,7 @@
 @ stub HttpAddFragmentToCache
 @ stdcall HttpAddUrl(ptr wstr ptr)
 @ stub HttpAddUrlToConfigGroup
+@ stdcall HttpAddUrlToUrlGroup(int64 wstr int64 long)
 @ stub HttpCancelHttpRequest
 @ stub HttpCreateAppPool
 @ stub HttpCreateConfigGroup
@@ -40,6 +41,7 @@
 @ stub HttpRemoveAllUrlsFromConfigGroup
 @ stdcall HttpRemoveUrl(ptr wstr)
 @ stub HttpRemoveUrlFromConfigGroup
+@ stdcall HttpRemoveUrlFromUrlGroup(int64 wstr long)
 @ stub HttpSendHttpRequest
 @ stdcall HttpSendHttpResponse(ptr int64 long ptr ptr ptr ptr long ptr ptr)
 @ stub HttpSendRequestEntityBody
