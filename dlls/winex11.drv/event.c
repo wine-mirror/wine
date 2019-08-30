@@ -984,11 +984,8 @@ static BOOL X11DRV_MapNotify( HWND hwnd, XEvent *event )
 {
     struct x11drv_win_data *data;
 
-    if (event->xany.window == x11drv_thread_data()->clip_window)
-    {
-        clipping_cursor = TRUE;
-        return TRUE;
-    }
+    if (event->xany.window == x11drv_thread_data()->clip_window) return TRUE;
+
     if (!(data = get_win_data( hwnd ))) return FALSE;
 
     if (!data->managed && !data->embedded && data->mapped)
@@ -1007,8 +1004,6 @@ static BOOL X11DRV_MapNotify( HWND hwnd, XEvent *event )
  */
 static BOOL X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 {
-    if (event->xany.window == x11drv_thread_data()->clip_window)
-        clipping_cursor = FALSE;
     return TRUE;
 }
 
