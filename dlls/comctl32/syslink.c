@@ -566,12 +566,12 @@ static BOOL SYSLINK_WrapLine (LPWSTR Text, WCHAR BreakChar, int x, int *LineLen,
 {
     int i;
 
-    for (i = 0; i < nFit; i++) if (Text[i] == '\n') break;
+    for (i = 0; i < nFit; i++) if (Text[i] == '\r' || Text[i] == '\n') break;
 
     if (i == *LineLen) return FALSE;
 
     /* check if we're in the middle of a word */
-    if (Text[i] != '\n' && Text[i] != BreakChar)
+    if (Text[i] != '\r' && Text[i] != '\n' && Text[i] != BreakChar)
     {
         /* search for the beginning of the word */
         while (i && Text[i - 1] != BreakChar) i--;
@@ -654,6 +654,12 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
             /* skip break characters unless they're the first of the doc item */
             if(tx != Current->Text || x == SL_LEFTMARGIN)
             {
+                if (n && *tx == '\r')
+                {
+                    tx++;
+                    SkipChars++;
+                    n--;
+                }
                 if (n && *tx == '\n')
                 {
                     tx++;
