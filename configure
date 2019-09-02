@@ -752,6 +752,7 @@ LDRPATH_INSTALL
 DLLFLAGS
 CPP
 OPENGL_LIBS
+I386_LIBS
 ICOTOOL
 CONVERT
 RSVG
@@ -6857,11 +6858,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_i386_i386_set_ldt" >&5
 $as_echo "$ac_cv_lib_i386_i386_set_ldt" >&6; }
 if test "x$ac_cv_lib_i386_i386_set_ldt" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBI386 1
-_ACEOF
-
-  LIBS="-li386 $LIBS"
+  I386_LIBS="-li386"
 
 fi
 
@@ -19770,7 +19767,8 @@ ac_config_commands="$ac_config_commands include/stamp-h"
 
 $as_echo_n "creating Makefile rules..." >&6
 
-ALL_VARS_RULES="OPENGL_LIBS = $OPENGL_LIBS
+ALL_VARS_RULES="I386_LIBS = $I386_LIBS
+OPENGL_LIBS = $OPENGL_LIBS
 COREFOUNDATION_LIBS = $COREFOUNDATION_LIBS
 IOKIT_LIBS = $IOKIT_LIBS
 FORCEFEEDBACK_LIBS = $FORCEFEEDBACK_LIBS

@@ -409,7 +409,7 @@ WINE_WARNING_WITH(gettext,[test "$MSGFMT" = false],
 dnl **** Check for some libraries ****
 
 dnl Check for -li386 for NetBSD and OpenBSD
-AC_CHECK_LIB(i386,i386_set_ldt)
+AC_CHECK_LIB(i386,i386_set_ldt,[AC_SUBST(I386_LIBS, "-li386")])
 
 AC_SUBST(OPENGL_LIBS,"")
 
