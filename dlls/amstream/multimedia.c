@@ -121,26 +121,13 @@ static HRESULT WINAPI multimedia_stream_GetInformation(IAMMultiMediaStream *ifac
 }
 
 static HRESULT WINAPI multimedia_stream_GetMediaStream(IAMMultiMediaStream *iface,
-        REFMSPID idPurpose, IMediaStream **ppMediaStream)
+        REFMSPID id, IMediaStream **stream)
 {
-    struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
-    MSPID PurposeId;
-    unsigned int i;
+    struct multimedia_stream *mmstream = impl_from_IAMMultiMediaStream(iface);
 
-    TRACE("(%p/%p)->(%s,%p)\n", This, iface, debugstr_guid(idPurpose), ppMediaStream);
+    TRACE("mmstream %p, id %s, stream %p.\n", mmstream, debugstr_guid(id), stream);
 
-    for (i = 0; i < This->nbStreams; i++)
-    {
-        IAMMediaStream_GetInformation(This->pStreams[i], &PurposeId, NULL);
-        if (IsEqualIID(&PurposeId, idPurpose))
-        {
-            *ppMediaStream = (IMediaStream*)This->pStreams[i];
-            IMediaStream_AddRef(*ppMediaStream);
-            return S_OK;
-        }
-    }
-
-    return MS_E_NOSTREAM;
+    return IMediaStreamFilter_GetMediaStream(mmstream->filter, id, stream);
 }
 
 static HRESULT WINAPI multimedia_stream_EnumMediaStreams(IAMMultiMediaStream *iface,
