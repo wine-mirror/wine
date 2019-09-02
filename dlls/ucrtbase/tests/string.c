@@ -80,6 +80,9 @@ static int (__cdecl *p__towupper_l)(wint_t, _locale_t);
 static char* (__cdecl *p_setlocale)(int, const char*);
 static _locale_t (__cdecl *p__create_locale)(int, const char*);
 static void (__cdecl *p__free_locale)(_locale_t);
+static int (__cdecl *p__getmbcp)(void);
+static int (__cdecl *p__setmbcp)(int);
+static size_t (__cdecl *p__mbsspn)(const unsigned char*, const unsigned char*);
 
 static BOOL init(void)
 {
@@ -104,6 +107,9 @@ static BOOL init(void)
     p_setlocale = (void*)GetProcAddress(module, "setlocale");
     p__create_locale = (void*)GetProcAddress(module, "_create_locale");
     p__free_locale = (void*)GetProcAddress(module, "_free_locale");
+    p__getmbcp = (void*)GetProcAddress(module, "_getmbcp");
+    p__setmbcp = (void*)GetProcAddress(module, "_setmbcp");
+    p__mbsspn = (void*)GetProcAddress(module, "_mbsspn");
     return TRUE;
 }
 
@@ -339,6 +345,40 @@ static void test_C_locale(void)
     }
 }
 
+static void test_mbsspn( void)
+{
+    unsigned char str1[] = "cabernet";
+    unsigned char str2[] = "shiraz";
+    unsigned char set[] = "abc";
+    unsigned char empty[] = "";
+    unsigned char mbstr[] = " 2019\x94\x4e" "6\x8c\x8e" "29\x93\xfa";
+    unsigned char mbset1[] = "0123456789 \x94\x4e";
+    unsigned char mbset2[] = " \x94\x4e\x8c\x8e";
+    unsigned char mbset3[] = "\x8e";
+    int ret, cp = p__getmbcp();
+
+    ret = p__mbsspn(str1, set);
+    ok(ret == 3, "_mbsspn returns %d should be 3\n", ret);
+    ret = p__mbsspn(str2, set);
+    ok(ret == 0, "_mbsspn returns %d should be 0\n", ret);
+    ret = p__mbsspn(str1, empty);
+    ok(ret == 0, "_mbsspn returns %d should be 0\n", ret);
+
+    p__setmbcp(932);
+    ret = p__mbsspn(mbstr, mbset1);
+    ok(ret == 8, "_mbsspn returns %d should be 8\n", ret);
+    ret = p__mbsspn(mbstr, mbset2);
+    ok(ret == 1, "_mbsspn returns %d should be 1\n", ret);
+    ret = p__mbsspn(mbstr+8, mbset1);
+    ok(ret == 0, "_mbsspn returns %d should be 0\n", ret);
+    ret = p__mbsspn(mbstr+8, mbset2);
+    ok(ret == 2, "_mbsspn returns %d should be 2\n", ret);
+    ret = p__mbsspn(mbstr, mbset3);
+    ok(ret == 14, "_mbsspn returns %d should be 14\n", ret);
+
+    p__setmbcp(cp);
+}
+
 START_TEST(string)
 {
     if (!init()) return;
@@ -347,4 +387,5 @@ START_TEST(string)
     test__memicmp_l();
     test___strncnt();
     test_C_locale();
+    test_mbsspn();
 }

@@ -519,6 +519,7 @@ static void test_mbsspn( void)
     unsigned char mbstr[]=" 2019\x94\x4e" "6\x8c\x8e" "29\x93\xfa";
     unsigned char mbset1[]="0123456789 \x94\x4e";
     unsigned char mbset2[]=" \x94\x4e\x8c\x8e";
+    unsigned char mbset3[]="\x8e";
     int ret, cp = _getmbcp();
 
     ret=_mbsspn( str1, set);
@@ -537,6 +538,8 @@ static void test_mbsspn( void)
     ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
     ret=_mbsspn( mbstr+8, mbset2);
     ok( ret==2, "_mbsspn returns %d should be 2\n", ret);
+    ret=_mbsspn( mbstr, mbset3);
+    ok( ret==14, "_mbsspn returns %d should be 14\n", ret);
 
     _setmbcp( cp);
 }

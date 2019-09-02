@@ -2035,6 +2035,9 @@ MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* se
         {
             if (_ismbblead(*q))
             {
+                /* duplicate a bug in native implementation */
+                if (!q[1]) break;
+
                 if (p[0] == q[0] && p[1] == q[1])
                 {
                     p++;
