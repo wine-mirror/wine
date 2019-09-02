@@ -351,9 +351,9 @@ HRESULT strmbase_transform_create(LONG filter_size, IUnknown *outer, const CLSID
     return E_FAIL;
 }
 
-HRESULT WINAPI TransformFilterImpl_Notify(TransformFilter *iface, IBaseFilter *sender, Quality qm)
+HRESULT WINAPI TransformFilterImpl_Notify(TransformFilter *filter, IBaseFilter *sender, Quality qm)
 {
-    return QualityControlImpl_Notify((IQualityControl*)iface->qcimpl, sender, qm);
+    return QualityControlImpl_Notify(&filter->qcimpl->IQualityControl_iface, sender, qm);
 }
 
 static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
