@@ -2028,27 +2028,19 @@ int CDECL _mbsupr_s(unsigned char* s, MSVCRT_size_t len)
 MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* set)
 {
     const unsigned char *p, *q;
+    unsigned int pc, qc;
 
     for (p = string; *p; p++)
     {
-        if (_ismbblead(*p))
+        pc = _mbsnextc(p);
+        for (q = set; *q; q++)
         {
-            for (q = set; *q; q += 2)
-            {
-                if (!q[1])
-                    break;
-                if ((*p == *q) &&  (p[1] == q[1]))
-                    break;
-            }
-            if (!q[0] || !q[1]) break;
+            qc = _mbsnextc(q);
+            if (pc == qc) break;
+            if (qc > 255 && q[1]) q++;
         }
-        else
-        {
-            for (q = set; *q; q++)
-                if (*p == *q)
-                    break;
-            if (!*q) break;
-        }
+        if (!*q) break;
+        if (pc > 255 && p[1]) p++;
     }
     return p - string;
 }
