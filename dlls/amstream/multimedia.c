@@ -50,37 +50,6 @@ static inline struct multimedia_stream *impl_from_IAMMultiMediaStream(IAMMultiMe
     return CONTAINING_RECORD(iface, struct multimedia_stream, IAMMultiMediaStream_iface);
 }
 
-static const struct IAMMultiMediaStreamVtbl multimedia_stream_vtbl;
-
-HRESULT multimedia_stream_create(IUnknown *pUnkOuter, LPVOID *ppObj)
-{
-    struct multimedia_stream *object;
-    HRESULT hr;
-
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
-
-    if( pUnkOuter )
-        return CLASS_E_NOAGGREGATION;
-
-    if (!(object = heap_alloc_zero(sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    object->IAMMultiMediaStream_iface.lpVtbl = &multimedia_stream_vtbl;
-    object->ref = 1;
-
-    if (FAILED(hr = CoCreateInstance(&CLSID_MediaStreamFilter, NULL,
-            CLSCTX_INPROC_SERVER, &IID_IMediaStreamFilter, (void **)&object->filter)))
-    {
-        ERR("Failed to create stream filter, hr %#x.\n", hr);
-        heap_free(object);
-        return hr;
-    }
-
-    *ppObj = &object->IAMMultiMediaStream_iface;
-
-    return S_OK;
-}
-
 /*** IUnknown methods ***/
 static HRESULT WINAPI multimedia_stream_QueryInterface(IAMMultiMediaStream *iface,
         REFIID riid, void **ppvObject)
@@ -492,3 +461,31 @@ static const IAMMultiMediaStreamVtbl multimedia_stream_vtbl =
     multimedia_stream_OpenMoniker,
     multimedia_stream_Render
 };
+
+HRESULT multimedia_stream_create(IUnknown *outer, void **out)
+{
+    struct multimedia_stream *object;
+    HRESULT hr;
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IAMMultiMediaStream_iface.lpVtbl = &multimedia_stream_vtbl;
+    object->ref = 1;
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_MediaStreamFilter, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IMediaStreamFilter, (void **)&object->filter)))
+    {
+        ERR("Failed to create stream filter, hr %#x.\n", hr);
+        heap_free(object);
+        return hr;
+    }
+
+    TRACE("Created multimedia stream %p.\n", object);
+    *out = &object->IAMMultiMediaStream_iface;
+
+    return S_OK;
+}
