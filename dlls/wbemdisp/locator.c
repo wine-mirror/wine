@@ -618,8 +618,8 @@ static HRESULT init_members( struct object *object )
         {
             count++;
             SysFreeString( name );
-            IWbemClassObject_Release( sig_in );
-            IWbemClassObject_Release( sig_out );
+            if (sig_in) IWbemClassObject_Release( sig_in );
+            if (sig_out) IWbemClassObject_Release( sig_out );
         }
         IWbemClassObject_EndMethodEnumeration( object->object );
     }
@@ -657,8 +657,8 @@ static HRESULT init_members( struct object *object )
                 IWbemClassObject_EndMethodEnumeration( object->object );
                 goto error;
             }
-            IWbemClassObject_Release( sig_in );
-            IWbemClassObject_Release( sig_out );
+            if (sig_in) IWbemClassObject_Release( sig_in );
+            if (sig_out) IWbemClassObject_Release( sig_out );
             TRACE( "added method %s\n", debugstr_w(name) );
         }
         IWbemClassObject_EndMethodEnumeration( object->object );
