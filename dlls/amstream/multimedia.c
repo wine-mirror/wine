@@ -39,8 +39,6 @@ struct multimedia_stream
     IMediaControl* media_control;
     IMediaStreamFilter *filter;
     IPin* ipin;
-    ULONG nbStreams;
-    IAMMediaStream **pStreams;
     STREAM_TYPE StreamType;
     OAEVENT event;
 };
@@ -85,15 +83,11 @@ static ULONG WINAPI multimedia_stream_Release(IAMMultiMediaStream *iface)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
-    ULONG i;
 
     TRACE("(%p/%p)\n", iface, This);
 
     if (!ref)
     {
-        for(i = 0; i < This->nbStreams; i++)
-            IAMMediaStream_Release(This->pStreams[i]);
-        CoTaskMemFree(This->pStreams);
         if (This->ipin)
             IPin_Release(This->ipin);
         IMediaStreamFilter_Release(This->filter);
@@ -291,14 +285,14 @@ static HRESULT WINAPI multimedia_stream_GetFilter(IAMMultiMediaStream *iface,
 }
 
 static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *iface,
-        IUnknown *stream_object, const MSPID *PurposeId, DWORD dwFlags, IMediaStream **ppNewStream)
+        IUnknown *stream_object, const MSPID *PurposeId, DWORD dwFlags, IMediaStream **ret_stream)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
     HRESULT hr;
     IAMMediaStream* pStream;
-    IAMMediaStream** pNewStreams;
 
-    TRACE("(%p/%p)->(%p,%s,%x,%p)\n", This, iface, stream_object, debugstr_guid(PurposeId), dwFlags, ppNewStream);
+    TRACE("mmstream %p, stream_object %p, id %s, flags %#x, ret_stream %p.\n",
+            This, stream_object, debugstr_guid(PurposeId), dwFlags, ret_stream);
 
     if (!IsEqualGUID(PurposeId, &MSPID_PrimaryVideo) && !IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
         return MS_E_PURPOSEID;
@@ -331,28 +325,15 @@ static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *ifac
         hr = ddrawmediastream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->StreamType, &pStream);
     else
         hr = audiomediastream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->StreamType, &pStream);
-    if (SUCCEEDED(hr))
-    {
-        pNewStreams = CoTaskMemRealloc(This->pStreams, (This->nbStreams+1) * sizeof(IAMMediaStream*));
-        if (!pNewStreams)
-        {
-            IAMMediaStream_Release(pStream);
-            return E_OUTOFMEMORY;
-        }
-        This->pStreams = pNewStreams;
-        This->pStreams[This->nbStreams] = pStream;
-        This->nbStreams++;
-
-        if (ppNewStream)
-        {
-            IMediaStream_AddRef(*ppNewStream = (IMediaStream*)pStream);
-        }
-    }
 
     if (SUCCEEDED(hr))
     {
         /* Add stream to the media stream filter */
         IMediaStreamFilter_AddMediaStream(This->filter, pStream);
+        if (ret_stream)
+            *ret_stream = (IMediaStream *)pStream;
+        else
+            IAMMediaStream_Release(pStream);
     }
 
     return hr;

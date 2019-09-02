@@ -1152,7 +1152,7 @@ static void test_enum_pins(void)
     ref = get_refcount(enum1);
     ok(ref == 1, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
-    todo_wine ok(ref == 4, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 4, "Got unexpected refcount %d.\n", ref);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1162,7 +1162,7 @@ static void test_enum_pins(void)
     ref = get_refcount(enum1);
     ok(ref == 1, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
-    todo_wine ok(ref == 5, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 5, "Got unexpected refcount %d.\n", ref);
     IPin_Release(pins[0]);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
