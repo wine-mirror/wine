@@ -61,7 +61,7 @@ static void fatal_error( const char *err, ... )  __attribute__((noreturn,format(
 static void fatal_perror( const char *err, ... )  __attribute__((noreturn,format(printf,1,2)));
 #endif
 
-#if defined(__linux__) || defined(__FreeBSD_kernel__ )
+#if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
 static const char exe_link[] = "/proc/self/exe";
 #elif defined (__FreeBSD__) || defined(__DragonFly__)
 static const char exe_link[] = "/proc/curproc/file";
