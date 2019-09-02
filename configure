@@ -14904,9 +14904,9 @@ rm -f core conftest.err conftest.$ac_objext \
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_libunwind_unw_getcontext" >&5
 $as_echo "$wine_cv_have_libunwind_unw_getcontext" >&6; }
-            test "$wine_cv_have_libunwind_unw_getcontext" = yes || UNWIND_LIBS=""
             LIBS=$save_libs
         fi
+        test "$wine_cv_have_libunwind_unw_getcontext" = yes || UNWIND_LIBS=""
         if test "x$wine_cv_have_unw_getcontext$wine_cv_have_libunwind_unw_getcontext" != xnono
         then
 

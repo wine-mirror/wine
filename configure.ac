@@ -1697,9 +1697,9 @@ then
                     [[unw_context_t context; unw_getcontext( &context );]])],
                     [wine_cv_have_libunwind_unw_getcontext="yes"],
                     [wine_cv_have_libunwind_unw_getcontext="no"])])
-            test "$wine_cv_have_libunwind_unw_getcontext" = yes || UNWIND_LIBS=""
             LIBS=$save_libs
         fi
+        test "$wine_cv_have_libunwind_unw_getcontext" = yes || UNWIND_LIBS=""
         if test "x$wine_cv_have_unw_getcontext$wine_cv_have_libunwind_unw_getcontext" != xnono
         then
             AC_DEFINE(HAVE_LIBUNWIND,1,[Define to 1 if you have the `unwind' library (-lunwind).])
