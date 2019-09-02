@@ -164,33 +164,15 @@ static char *get_runtime_libdir(void)
 /* read a symlink and return its directory */
 static char *symlink_dirname( const char *name )
 {
-    char *p, *buffer, *absdir = NULL;
-    int ret, size;
+    char *p, *fullpath = realpath( name, NULL );
 
-    for (size = 256; ; size *= 2)
+    if (fullpath)
     {
-        if (!(buffer = malloc( size ))) return NULL;
-        if ((ret = readlink( name, buffer, size )) == -1) break;
-        if (ret != size)
-        {
-            buffer[ret] = 0;
-            if (!(p = strrchr( buffer, '/' ))) break;
-            if (p == buffer) p++;
-            *p = 0;
-            if (buffer[0] == '/') return buffer;
-            /* make it absolute */
-            absdir = xmalloc( strlen(name) + strlen(buffer) + 1 );
-            strcpy( absdir, name );
-            if (!(p = strrchr( absdir, '/' ))) break;
-            strcpy( p + 1, buffer );
-            free( buffer );
-            return absdir;
-        }
-        free( buffer );
+        p = strrchr( fullpath, '/' );
+        if (p == fullpath) p++;
+        if (p) *p = 0;
     }
-    free( buffer );
-    free( absdir );
-    return NULL;
+    return fullpath;
 }
 
 /* return the directory that contains the main exe at run-time */
