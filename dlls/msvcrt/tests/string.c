@@ -516,13 +516,29 @@ static void test_mbsspn( void)
     unsigned char str2[]="shiraz";
     unsigned char set[]="abc";
     unsigned char empty[]="";
-    int ret;
+    unsigned char mbstr[]=" 2019\x94\x4e" "6\x8c\x8e" "29\x93\xfa";
+    unsigned char mbset1[]="0123456789 \x94\x4e";
+    unsigned char mbset2[]=" \x94\x4e\x8c\x8e";
+    int ret, cp = _getmbcp();
+
     ret=_mbsspn( str1, set);
     ok( ret==3, "_mbsspn returns %d should be 3\n", ret);
     ret=_mbsspn( str2, set);
     ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
     ret=_mbsspn( str1, empty);
     ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
+
+    _setmbcp( 932);
+    ret=_mbsspn( mbstr, mbset1);
+    todo_wine ok( ret==8, "_mbsspn returns %d should be 8\n", ret);
+    ret=_mbsspn( mbstr, mbset2);
+    ok( ret==1, "_mbsspn returns %d should be 1\n", ret);
+    ret=_mbsspn( mbstr+8, mbset1);
+    ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
+    ret=_mbsspn( mbstr+8, mbset2);
+    todo_wine ok( ret==2, "_mbsspn returns %d should be 2\n", ret);
+
+    _setmbcp( cp);
 }
 
 static void test_mbsspnp( void)
@@ -532,7 +548,12 @@ static void test_mbsspnp( void)
     unsigned char set[]="abc";
     unsigned char empty[]="";
     unsigned char full[]="abcenrt";
+    unsigned char mbstr[]=" 2019\x94\x4e" "6\x8c\x8e" "29\x93\xfa";
+    unsigned char mbset1[]="0123456789 \x94\x4e";
+    unsigned char mbset2[]=" \x94\x4e\x8c\x8e";
     unsigned char* ret;
+    int cp = _getmbcp();
+
     ret=_mbsspnp( str1, set);
     ok( ret[0]=='e', "_mbsspnp returns %c should be e\n", ret[0]);
     ret=_mbsspnp( str2, set);
@@ -541,6 +562,18 @@ static void test_mbsspnp( void)
     ok( ret[0]=='c', "_mbsspnp returns %c should be c\n", ret[0]);
     ret=_mbsspnp( str1, full);
     ok( ret==NULL, "_mbsspnp returns %p should be NULL\n", ret);
+
+    _setmbcp( 932);
+    ret=_mbsspnp( mbstr, mbset1);
+    todo_wine ok( ret==mbstr+8, "_mbsspnp returns %p should be %p\n", ret, mbstr+8);
+    ret=_mbsspnp( mbstr, mbset2);
+    ok( ret==mbstr+1, "_mbsspnp returns %p should be %p\n", ret, mbstr+1);
+    ret=_mbsspnp( mbstr+8, mbset1);
+    ok( ret==mbstr+8, "_mbsspnp returns %p should be %p\n", ret, mbstr+8);
+    ret=_mbsspnp( mbstr+8, mbset2);
+    todo_wine ok( ret==mbstr+10, "_mbsspnp returns %p should be %p\n", ret, mbstr+10);
+
+    _setmbcp( cp);
 }
 
 static void test_strdup(void)
