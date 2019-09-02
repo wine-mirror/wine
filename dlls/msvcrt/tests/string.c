@@ -565,13 +565,13 @@ static void test_mbsspnp( void)
 
     _setmbcp( 932);
     ret=_mbsspnp( mbstr, mbset1);
-    todo_wine ok( ret==mbstr+8, "_mbsspnp returns %p should be %p\n", ret, mbstr+8);
+    ok( ret==mbstr+8, "_mbsspnp returns %p should be %p\n", ret, mbstr+8);
     ret=_mbsspnp( mbstr, mbset2);
     ok( ret==mbstr+1, "_mbsspnp returns %p should be %p\n", ret, mbstr+1);
     ret=_mbsspnp( mbstr+8, mbset1);
     ok( ret==mbstr+8, "_mbsspnp returns %p should be %p\n", ret, mbstr+8);
     ret=_mbsspnp( mbstr+8, mbset2);
-    todo_wine ok( ret==mbstr+10, "_mbsspnp returns %p should be %p\n", ret, mbstr+10);
+    ok( ret==mbstr+10, "_mbsspnp returns %p should be %p\n", ret, mbstr+10);
 
     _setmbcp( cp);
 }
