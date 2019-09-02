@@ -1773,6 +1773,7 @@ static void do_ndr_async_client_call( const MIDL_STUB_DESC *pStubDesc, PFORMAT_S
 LONG_PTR CDECL DECLSPEC_HIDDEN ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,
                                                       void **stack_top )
 {
+    LONG_PTR ret = 0;
     const NDR_PROC_HEADER *pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
@@ -1786,14 +1787,15 @@ LONG_PTR CDECL DECLSPEC_HIDDEN ndr_async_client_call( PMIDL_STUB_DESC pStubDesc,
         __EXCEPT_ALL
         {
             FIXME("exception %x during ndr_async_client_call()\n", GetExceptionCode());
+            ret = GetExceptionCode();
         }
         __ENDTRY
     }
     else
         do_ndr_async_client_call( pStubDesc, pFormat, stack_top);
 
-    TRACE("returning 0\n");
-    return 0;
+    TRACE("returning %ld\n", ret);
+    return ret;
 }
 
 RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply)
