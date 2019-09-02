@@ -530,13 +530,13 @@ static void test_mbsspn( void)
 
     _setmbcp( 932);
     ret=_mbsspn( mbstr, mbset1);
-    todo_wine ok( ret==8, "_mbsspn returns %d should be 8\n", ret);
+    ok( ret==8, "_mbsspn returns %d should be 8\n", ret);
     ret=_mbsspn( mbstr, mbset2);
     ok( ret==1, "_mbsspn returns %d should be 1\n", ret);
     ret=_mbsspn( mbstr+8, mbset1);
     ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
     ret=_mbsspn( mbstr+8, mbset2);
-    todo_wine ok( ret==2, "_mbsspn returns %d should be 2\n", ret);
+    ok( ret==2, "_mbsspn returns %d should be 2\n", ret);
 
     _setmbcp( cp);
 }
