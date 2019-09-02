@@ -2028,19 +2028,26 @@ int CDECL _mbsupr_s(unsigned char* s, MSVCRT_size_t len)
 MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* set)
 {
     const unsigned char *p, *q;
-    unsigned int pc, qc;
 
     for (p = string; *p; p++)
     {
-        pc = _mbsnextc(p);
         for (q = set; *q; q++)
         {
-            qc = _mbsnextc(q);
-            if (pc == qc) break;
-            if (qc > 255 && q[1]) q++;
+            if (_ismbblead(*q))
+            {
+                if (p[0] == q[0] && p[1] == q[1])
+                {
+                    p++;
+                    break;
+                }
+                q++;
+            }
+            else
+            {
+                if (p[0] == q[0]) break;
+            }
         }
         if (!*q) break;
-        if (pc > 255 && p[1]) p++;
     }
     return p - string;
 }
@@ -2050,32 +2057,8 @@ MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* se
  */
 unsigned char* CDECL _mbsspnp(const unsigned char* string, const unsigned char* set)
 {
-    const unsigned char *p, *q;
-
-    for (p = string; *p; p++)
-    {
-        if (_ismbblead(*p))
-        {
-            for (q = set; *q; q += 2)
-            {
-                if (!q[1])
-                    break;
-                if ((*p == *q) &&  (p[1] == q[1]))
-                    break;
-            }
-            if (!q[0] || !q[1]) break;
-        }
-        else
-        {
-            for (q = set; *q; q++)
-                if (*p == *q)
-                    break;
-            if (!*q) break;
-        }
-    }
-    if (*p == '\0')
-        return NULL;
-    return (unsigned char *)p;
+    string += _mbsspn( string, set );
+    return *string ? (unsigned char*)string : NULL;
 }
 
 /*********************************************************************
