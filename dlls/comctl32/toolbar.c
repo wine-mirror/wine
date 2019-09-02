@@ -5691,7 +5691,7 @@ TOOLBAR_LButtonUp (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
             if (nButton == infoPtr->nButtonDrag)
             {
-                /* if the button is moved sightly left and we have a
+                /* if the button is moved slightly left and we have a
                  * separator there then remove it */
                 if (pt.x < (btnPtr->rect.left + (btnPtr->rect.right - btnPtr->rect.left)/2))
                 {

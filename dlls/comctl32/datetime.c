@@ -237,7 +237,7 @@ DATETIME_SetSystemTime (DATETIME_INFO *infoPtr, DWORD flag, const SYSTEMTIME *sy
  * *'dddddd' is handled as 'dddd' plus 'dd'.
  * *unrecognized formats are strings (here given the type DT_STRING;
  * start of the string is encoded in lower bits of DT_STRING.
- * Therefore, 'string' ends finally up as '<show seconds>tring'.
+ * Therefore, 'string' ends up as '<show seconds>tring'.
  *
  */
 static void

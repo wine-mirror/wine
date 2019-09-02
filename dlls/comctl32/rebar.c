@@ -2135,7 +2135,7 @@ REBAR_HandleUDDrag (REBAR_INFO *infoPtr, const POINT *ptsmove)
     }
     else
     {
-        /* Place the band in the prexisting row the mouse is hovering over */
+        /* Place the band in the preexisting row the mouse is hovering over */
         iRowBegin = first_visible(infoPtr);
         while(iRowBegin < infoPtr->uNumBands)
         {

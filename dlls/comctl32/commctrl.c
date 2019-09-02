@@ -671,7 +671,7 @@ CreateUpDownControl (DWORD style, INT x, INT y, INT cx, INT cy,
  *
  * NOTES
  *     This function is just a dummy - all the controls are registered at
- *     the DLL initialization time. See InitCommonContolsEx for details.
+ *     the DLL initialization time. See InitCommonControlsEx for details.
  */
 
 VOID WINAPI

@@ -951,7 +951,7 @@ static LRESULT SYSLINK_SetText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
 
 /***********************************************************************
  *           SYSLINK_SetFocusLink
- * Updates the focus status bits and focusses the specified link.
+ * Updates the focus status bits and focuses the specified link.
  * If no document item is specified, the focus bit will be removed from all links.
  * Returns the previous focused item.
  */
