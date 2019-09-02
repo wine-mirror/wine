@@ -3933,7 +3933,7 @@ static void test_RegLoadMUIString(void)
     ret = GetSystemDirectoryA(sysdir, ARRAY_SIZE(sysdir));
     ok(ret > 0, "GetSystemDirectoryA failed\n");
 
-    /* change the current direcoty to system32 */
+    /* change the current directory to system32 */
     GetCurrentDirectoryW(ARRAY_SIZE(curdirW), curdirW);
     SetCurrentDirectoryW(sysdirW);
 
@@ -3982,7 +3982,7 @@ static void test_RegLoadMUIString(void)
     ret = pRegLoadMUIStringA(hkey, tz_value, buf, ARRAY_SIZE(buf), &size, 0, NULL);
     ok(ret == ERROR_CALL_NOT_IMPLEMENTED, "got %d, expected ERROR_CALL_NOT_IMPLEMENTED\n", ret);
 
-    /* change the current direcoty to other than system32 directory */
+    /* change the current directory to other than system32 directory */
     SetCurrentDirectoryA("\\");
 
     size = 0xdeadbeef;
