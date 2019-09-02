@@ -2707,7 +2707,7 @@ static void test__ultoa_s(void)
 
 static void test_wctob(void)
 {
-    int ret;
+    int ret, cp = _getmbcp();
 
     if(!p_wctob || !setlocale(LC_ALL, "chinese-traditional")) {
         win_skip("Skipping wctob tests\n");
@@ -2739,7 +2739,10 @@ static void test_wctob(void)
 
     ret = p_wctob(0xe0);
     ok(ret == (int)(char)0xe0, "ret = %x\n", ret);
+
+    _setmbcp(cp);
 }
+
 static void test_wctomb(void)
 {
     mbstate_t state;
@@ -3337,7 +3340,7 @@ static void test__mbscmp(void)
 
 static void test__ismbclx(void)
 {
-    int cp, ret;
+    int ret, cp = _getmbcp();
 
     ret = _ismbcl0(0);
     ok(!ret, "got %d\n", ret);
@@ -3348,7 +3351,7 @@ static void test__ismbclx(void)
     ret = _ismbcl2(0);
     ok(!ret, "got %d\n", ret);
 
-    cp = _setmbcp(1252);
+    _setmbcp(1252);
 
     ret = _ismbcl0(0x8140);
     ok(!ret, "got %d\n", ret);
