@@ -1649,6 +1649,137 @@ static void test_initialize(void)
     IUnknown_Release(graph_inner_unk);
 }
 
+static void test_enum_media_types(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IEnumMediaTypes *enum1, *enum2;
+    AM_MEDIA_TYPE *mts[2];
+    IMediaStream *stream;
+    ULONG ref, count;
+    HRESULT hr;
+    IPin *pin;
+
+    /* FIXME: This call should not be necessary. */
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_EnumMediaTypes(pin, &enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 0, mts, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    CoTaskMemFree(mts[0]);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 2, mts, &count);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 1, "Got count %u.\n", count);
+    CoTaskMemFree(mts[0]);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Clone(enum1, &enum2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Next(enum2, 1, mts, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    CoTaskMemFree(mts[0]);
+
+    IEnumMediaTypes_Release(enum2);
+    IEnumMediaTypes_Release(enum1);
+    IPin_Release(pin);
+    IMediaStream_Release(stream);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_EnumMediaTypes(pin, &enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 0, mts, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 1, "Got count %u.\n", count);
+    if (hr == S_OK) CoTaskMemFree(mts[0]->pbFormat);
+    if (hr == S_OK) CoTaskMemFree(mts[0]);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 2, mts, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    CoTaskMemFree(mts[0]->pbFormat);
+    CoTaskMemFree(mts[0]);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Clone(enum1, &enum2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 2);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Next(enum2, 1, mts, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    CoTaskMemFree(mts[0]->pbFormat);
+    CoTaskMemFree(mts[0]);
+
+    IEnumMediaTypes_Release(enum2);
+    IEnumMediaTypes_Release(enum1);
+    IPin_Release(pin);
+    IMediaStream_Release(stream);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_IDirectDrawStreamSample(void)
 {
     DDSURFACEDESC desc = { sizeof(desc) };
@@ -2026,6 +2157,7 @@ START_TEST(amstream)
     test_find_pin();
     test_pin_info();
     test_initialize();
+    test_enum_media_types();
     test_IDirectDrawStreamSample();
 
     file = CreateFileW(filenameW, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
