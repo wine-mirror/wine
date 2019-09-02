@@ -5524,7 +5524,7 @@ static void test_http_connection(void)
     si.hEvent = CreateEventW(NULL, 0, 0, NULL);
     si.port = 7531;
 
-    hThread = CreateThread(NULL, 0, server_thread, (LPVOID) &si, 0, &id);
+    hThread = CreateThread(NULL, 0, server_thread, &si, 0, &id);
     ok( hThread != NULL, "create thread failed\n");
 
     r = WaitForSingleObject(si.hEvent, 10000);
