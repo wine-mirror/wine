@@ -859,6 +859,18 @@ case $host_os in
         AC_SUBST(METAL_LIBS,"-framework Metal -framework QuartzCore")
     fi
 
+    dnl Check for MTLDevice registryID property
+    if test "$ac_cv_header_Metal_Metal_h" = "yes"
+    then
+        AC_MSG_CHECKING([whether MTLDevice protocol supports registryID property])
+        AC_LANG_PUSH([Objective C])
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Metal/Metal.h>]], [[id<MTLDevice> device; device.registryID;]])],
+                              [AC_MSG_RESULT(yes)
+                               AC_DEFINE(HAVE_MTLDEVICE_REGISTRYID, 1, [Define if MTLDevice protocol has registryID property.])],
+                              [AC_MSG_RESULT(no)])
+        AC_LANG_POP([Objective C])
+    fi
+
     dnl Enable Mac driver on Mac OS X 10.6 or later
     if test "$ac_cv_header_ApplicationServices_ApplicationServices_h" = "yes"
     then

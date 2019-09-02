@@ -21,7 +21,7 @@
 #include "config.h"
 
 #import <AppKit/AppKit.h>
-#ifdef HAVE_METAL_METAL_H
+#ifdef HAVE_MTLDEVICE_REGISTRYID
 #import <Metal/Metal.h>
 #endif
 #include "macdrv_cocoa.h"
@@ -234,7 +234,7 @@ done:
     return ret;
 }
 
-#ifdef HAVE_METAL_METAL_H
+#ifdef HAVE_MTLDEVICE_REGISTRYID
 
 /***********************************************************************
  *              macdrv_get_gpu_info_from_registry_id
@@ -337,7 +337,6 @@ done:
 
 static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
 {
-    TRACE("Metal support not compiled in\n");
     return -1;
 }
 

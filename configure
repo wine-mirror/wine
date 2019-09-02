@@ -8954,6 +8954,46 @@ rm -f core conftest.err conftest.$ac_objext \
 
     fi
 
+        if test "$ac_cv_header_Metal_Metal_h" = "yes"
+    then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether MTLDevice protocol supports registryID property" >&5
+$as_echo_n "checking whether MTLDevice protocol supports registryID property... " >&6; }
+        ac_ext=m
+ac_cpp='$OBJCPP $CPPFLAGS'
+ac_compile='$OBJC -c $OBJCFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$OBJC -o conftest$ac_exeext $OBJCFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_objc_compiler_gnu
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <Metal/Metal.h>
+int
+main ()
+{
+id<MTLDevice> device; device.registryID;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_objc_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_MTLDEVICE_REGISTRYID 1" >>confdefs.h
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    fi
+
         if test "$ac_cv_header_ApplicationServices_ApplicationServices_h" = "yes"
     then
         ac_save_LIBS="$LIBS"
