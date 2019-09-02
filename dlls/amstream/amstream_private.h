@@ -34,7 +34,7 @@
 #include "amstream.h"
 #include "wine/heap.h"
 
-HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT multimedia_stream_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
 HRESULT AMAudioData_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT filter_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
 HRESULT ddrawmediastream_create(IMultiMediaStream *Parent, const MSPID *pPurposeId,

@@ -50,9 +50,9 @@ static inline struct multimedia_stream *impl_from_IAMMultiMediaStream(IAMMultiMe
     return CONTAINING_RECORD(iface, struct multimedia_stream, IAMMultiMediaStream_iface);
 }
 
-static const struct IAMMultiMediaStreamVtbl AM_Vtbl;
+static const struct IAMMultiMediaStreamVtbl multimedia_stream_vtbl;
 
-HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT multimedia_stream_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     struct multimedia_stream *object;
     HRESULT hr;
@@ -65,7 +65,7 @@ HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    object->IAMMultiMediaStream_iface.lpVtbl = &AM_Vtbl;
+    object->IAMMultiMediaStream_iface.lpVtbl = &multimedia_stream_vtbl;
     object->ref = 1;
 
     if (FAILED(hr = CoCreateInstance(&CLSID_MediaStreamFilter, NULL,
@@ -82,7 +82,8 @@ HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 }
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI IAMMultiMediaStreamImpl_QueryInterface(IAMMultiMediaStream* iface, REFIID riid, void** ppvObject)
+static HRESULT WINAPI multimedia_stream_QueryInterface(IAMMultiMediaStream *iface,
+        REFIID riid, void **ppvObject)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
 
@@ -102,7 +103,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_QueryInterface(IAMMultiMediaStream
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IAMMultiMediaStreamImpl_AddRef(IAMMultiMediaStream* iface)
+static ULONG WINAPI multimedia_stream_AddRef(IAMMultiMediaStream *iface)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
 
@@ -111,7 +112,7 @@ static ULONG WINAPI IAMMultiMediaStreamImpl_AddRef(IAMMultiMediaStream* iface)
     return InterlockedIncrement(&This->ref);
 }
 
-static ULONG WINAPI IAMMultiMediaStreamImpl_Release(IAMMultiMediaStream* iface)
+static ULONG WINAPI multimedia_stream_Release(IAMMultiMediaStream *iface)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -140,7 +141,8 @@ static ULONG WINAPI IAMMultiMediaStreamImpl_Release(IAMMultiMediaStream* iface)
 }
 
 /*** IMultiMediaStream methods ***/
-static HRESULT WINAPI IAMMultiMediaStreamImpl_GetInformation(IAMMultiMediaStream* iface, DWORD* pdwFlags, STREAM_TYPE* pStreamType)
+static HRESULT WINAPI multimedia_stream_GetInformation(IAMMultiMediaStream *iface,
+        DWORD *pdwFlags, STREAM_TYPE *pStreamType)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
 
@@ -149,7 +151,8 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetInformation(IAMMultiMediaStream
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_GetMediaStream(IAMMultiMediaStream* iface, REFMSPID idPurpose, IMediaStream** ppMediaStream)
+static HRESULT WINAPI multimedia_stream_GetMediaStream(IAMMultiMediaStream *iface,
+        REFMSPID idPurpose, IMediaStream **ppMediaStream)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
     MSPID PurposeId;
@@ -171,7 +174,8 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetMediaStream(IAMMultiMediaStream
     return MS_E_NOSTREAM;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_EnumMediaStreams(IAMMultiMediaStream* iface, LONG Index, IMediaStream** ppMediaStream)
+static HRESULT WINAPI multimedia_stream_EnumMediaStreams(IAMMultiMediaStream *iface,
+        LONG Index, IMediaStream **ppMediaStream)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
 
@@ -180,7 +184,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_EnumMediaStreams(IAMMultiMediaStre
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_GetState(IAMMultiMediaStream* iface, STREAM_STATE* pCurrentState)
+static HRESULT WINAPI multimedia_stream_GetState(IAMMultiMediaStream *iface, STREAM_STATE *pCurrentState)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
 
@@ -189,7 +193,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetState(IAMMultiMediaStream* ifac
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_SetState(IAMMultiMediaStream* iface, STREAM_STATE new_state)
+static HRESULT WINAPI multimedia_stream_SetState(IAMMultiMediaStream *iface, STREAM_STATE new_state)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
     HRESULT hr = E_INVALIDARG;
@@ -204,7 +208,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_SetState(IAMMultiMediaStream* ifac
     return hr;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_GetTime(IAMMultiMediaStream* iface, STREAM_TIME* pCurrentTime)
+static HRESULT WINAPI multimedia_stream_GetTime(IAMMultiMediaStream *iface, STREAM_TIME *pCurrentTime)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
 
@@ -213,7 +217,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetTime(IAMMultiMediaStream* iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_GetDuration(IAMMultiMediaStream* iface, STREAM_TIME* pDuration)
+static HRESULT WINAPI multimedia_stream_GetDuration(IAMMultiMediaStream *iface, STREAM_TIME *pDuration)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
 
@@ -222,7 +226,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetDuration(IAMMultiMediaStream* i
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_Seek(IAMMultiMediaStream* iface, STREAM_TIME seek_time)
+static HRESULT WINAPI multimedia_stream_Seek(IAMMultiMediaStream *iface, STREAM_TIME seek_time)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
 
@@ -231,7 +235,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Seek(IAMMultiMediaStream* iface, S
     return IMediaSeeking_SetPositions(This->media_seeking, &seek_time, AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_GetEndOfStream(IAMMultiMediaStream* iface, HANDLE* phEOS)
+static HRESULT WINAPI multimedia_stream_GetEndOfStream(IAMMultiMediaStream *iface, HANDLE *phEOS)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
 
@@ -241,7 +245,8 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetEndOfStream(IAMMultiMediaStream
 }
 
 /*** IAMMultiMediaStream methods ***/
-static HRESULT WINAPI IAMMultiMediaStreamImpl_Initialize(IAMMultiMediaStream* iface, STREAM_TYPE StreamType, DWORD dwFlags, IGraphBuilder* pFilterGraph)
+static HRESULT WINAPI multimedia_stream_Initialize(IAMMultiMediaStream *iface,
+        STREAM_TYPE StreamType, DWORD dwFlags, IGraphBuilder *pFilterGraph)
 {
     static const WCHAR filternameW[] = {'M','e','d','i','a','S','t','r','e','a','m','F','i','l','t','e','r',0};
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
@@ -296,7 +301,8 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Initialize(IAMMultiMediaStream* if
     return hr;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_GetFilterGraph(IAMMultiMediaStream* iface, IGraphBuilder** ppGraphBuilder)
+static HRESULT WINAPI multimedia_stream_GetFilterGraph(IAMMultiMediaStream *iface,
+        IGraphBuilder **ppGraphBuilder)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
 
@@ -313,7 +319,8 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetFilterGraph(IAMMultiMediaStream
     return S_OK;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_GetFilter(IAMMultiMediaStream *iface, IMediaStreamFilter **filter)
+static HRESULT WINAPI multimedia_stream_GetFilter(IAMMultiMediaStream *iface,
+        IMediaStreamFilter **filter)
 {
     struct multimedia_stream *mmstream = impl_from_IAMMultiMediaStream(iface);
 
@@ -327,8 +334,8 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetFilter(IAMMultiMediaStream *ifa
     return S_OK;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream* iface, IUnknown* stream_object, const MSPID* PurposeId,
-                                          DWORD dwFlags, IMediaStream** ppNewStream)
+static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *iface,
+        IUnknown *stream_object, const MSPID *PurposeId, DWORD dwFlags, IMediaStream **ppNewStream)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
     HRESULT hr;
@@ -395,7 +402,8 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
     return hr;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* iface, LPCWSTR filename, DWORD flags)
+static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,
+        const WCHAR *filename, DWORD flags)
 {
     static const WCHAR sourceW[] = {'S','o','u','r','c','e',0};
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
@@ -440,7 +448,8 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
     return ret;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenMoniker(IAMMultiMediaStream* iface, IBindCtx* pCtx, IMoniker* pMoniker, DWORD dwFlags)
+static HRESULT WINAPI multimedia_stream_OpenMoniker(IAMMultiMediaStream *iface,
+        IBindCtx *pCtx, IMoniker *pMoniker, DWORD dwFlags)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
 
@@ -449,7 +458,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenMoniker(IAMMultiMediaStream* i
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IAMMultiMediaStreamImpl_Render(IAMMultiMediaStream* iface, DWORD dwFlags)
+static HRESULT WINAPI multimedia_stream_Render(IAMMultiMediaStream *iface, DWORD dwFlags)
 {
     struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
 
@@ -461,25 +470,25 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Render(IAMMultiMediaStream* iface,
     return IGraphBuilder_Render(This->pFilterGraph, This->ipin);
 }
 
-static const IAMMultiMediaStreamVtbl AM_Vtbl =
+static const IAMMultiMediaStreamVtbl multimedia_stream_vtbl =
 {
-    IAMMultiMediaStreamImpl_QueryInterface,
-    IAMMultiMediaStreamImpl_AddRef,
-    IAMMultiMediaStreamImpl_Release,
-    IAMMultiMediaStreamImpl_GetInformation,
-    IAMMultiMediaStreamImpl_GetMediaStream,
-    IAMMultiMediaStreamImpl_EnumMediaStreams,
-    IAMMultiMediaStreamImpl_GetState,
-    IAMMultiMediaStreamImpl_SetState,
-    IAMMultiMediaStreamImpl_GetTime,
-    IAMMultiMediaStreamImpl_GetDuration,
-    IAMMultiMediaStreamImpl_Seek,
-    IAMMultiMediaStreamImpl_GetEndOfStream,
-    IAMMultiMediaStreamImpl_Initialize,
-    IAMMultiMediaStreamImpl_GetFilterGraph,
-    IAMMultiMediaStreamImpl_GetFilter,
-    IAMMultiMediaStreamImpl_AddMediaStream,
-    IAMMultiMediaStreamImpl_OpenFile,
-    IAMMultiMediaStreamImpl_OpenMoniker,
-    IAMMultiMediaStreamImpl_Render
+    multimedia_stream_QueryInterface,
+    multimedia_stream_AddRef,
+    multimedia_stream_Release,
+    multimedia_stream_GetInformation,
+    multimedia_stream_GetMediaStream,
+    multimedia_stream_EnumMediaStreams,
+    multimedia_stream_GetState,
+    multimedia_stream_SetState,
+    multimedia_stream_GetTime,
+    multimedia_stream_GetDuration,
+    multimedia_stream_Seek,
+    multimedia_stream_GetEndOfStream,
+    multimedia_stream_Initialize,
+    multimedia_stream_GetFilterGraph,
+    multimedia_stream_GetFilter,
+    multimedia_stream_AddMediaStream,
+    multimedia_stream_OpenFile,
+    multimedia_stream_OpenMoniker,
+    multimedia_stream_Render
 };
