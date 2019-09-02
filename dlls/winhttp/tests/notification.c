@@ -1023,7 +1023,7 @@ START_TEST (notification)
     si.event = CreateEventW( NULL, 0, 0, NULL );
     si.port = 7533;
 
-    thread = CreateThread( NULL, 0, server_thread, (LPVOID)&si, 0, NULL );
+    thread = CreateThread( NULL, 0, server_thread, &si, 0, NULL );
     ok(thread != NULL, "failed to create thread %u\n", GetLastError());
 
     server_socket_available = CreateEventW( NULL, 0, 0, NULL );
