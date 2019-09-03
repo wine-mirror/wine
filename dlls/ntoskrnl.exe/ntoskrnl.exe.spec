@@ -1457,7 +1457,7 @@
 @ cdecl _strrev(str)
 @ cdecl _strset(str long)
 @ cdecl _strupr(str)
-@ cdecl _vsnprintf(ptr long str ptr)
+@ cdecl -norelay _vsnprintf(ptr long str ptr)
 @ cdecl _vsnwprintf(ptr long wstr ptr)
 @ cdecl _wcsicmp(wstr wstr)
 @ cdecl _wcslwr(wstr)
