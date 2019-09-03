@@ -448,6 +448,130 @@ static const struct IDirectDrawMediaStreamVtbl DirectDrawMediaStreamImpl_IDirect
     DirectDrawMediaStreamImpl_IDirectDrawMediaStream_GetTimePerFrame
 };
 
+struct enum_media_types
+{
+    IEnumMediaTypes IEnumMediaTypes_iface;
+    LONG refcount;
+    unsigned int index;
+};
+
+static const IEnumMediaTypesVtbl enum_media_types_vtbl;
+
+static struct enum_media_types *impl_from_IEnumMediaTypes(IEnumMediaTypes *iface)
+{
+    return CONTAINING_RECORD(iface, struct enum_media_types, IEnumMediaTypes_iface);
+}
+
+static HRESULT WINAPI enum_media_types_QueryInterface(IEnumMediaTypes *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IEnumMediaTypes))
+    {
+        IEnumMediaTypes_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI enum_media_types_AddRef(IEnumMediaTypes *iface)
+{
+    struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
+    ULONG refcount = InterlockedIncrement(&enum_media_types->refcount);
+    TRACE("%p increasing refcount to %u.\n", enum_media_types, refcount);
+    return refcount;
+}
+
+static ULONG WINAPI enum_media_types_Release(IEnumMediaTypes *iface)
+{
+    struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
+    ULONG refcount = InterlockedDecrement(&enum_media_types->refcount);
+    TRACE("%p decreasing refcount to %u.\n", enum_media_types, refcount);
+    if (!refcount)
+        heap_free(enum_media_types);
+    return refcount;
+}
+
+static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count, AM_MEDIA_TYPE **mts, ULONG *ret_count)
+{
+    struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
+
+    TRACE("iface %p, count %u, mts %p, ret_count %p.\n", iface, count, mts, ret_count);
+
+    if (!ret_count)
+        return E_POINTER;
+
+    if (count && !enum_media_types->index)
+    {
+        mts[0] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
+        memset(mts[0], 0, sizeof(AM_MEDIA_TYPE));
+        mts[0]->majortype = MEDIATYPE_Video;
+        mts[0]->subtype = MEDIASUBTYPE_RGB8;
+        mts[0]->bFixedSizeSamples = TRUE;
+        mts[0]->lSampleSize = 10000;
+        ++enum_media_types->index;
+        *ret_count = 1;
+        return count == 1 ? S_OK : S_FALSE;
+    }
+
+    *ret_count = 0;
+    return count ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI enum_media_types_Skip(IEnumMediaTypes *iface, ULONG count)
+{
+    struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
+
+    TRACE("iface %p, count %u.\n", iface, count);
+
+    enum_media_types->index += count;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_media_types_Reset(IEnumMediaTypes *iface)
+{
+    struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    enum_media_types->index = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_media_types_Clone(IEnumMediaTypes *iface, IEnumMediaTypes **out)
+{
+    struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
+    struct enum_media_types *object;
+
+    TRACE("iface %p, out %p.\n", iface, out);
+
+    if (!(object = heap_alloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IEnumMediaTypes_iface.lpVtbl = &enum_media_types_vtbl;
+    object->refcount = 1;
+    object->index = enum_media_types->index;
+
+    *out = &object->IEnumMediaTypes_iface;
+    return S_OK;
+}
+
+static const IEnumMediaTypesVtbl enum_media_types_vtbl =
+{
+    enum_media_types_QueryInterface,
+    enum_media_types_AddRef,
+    enum_media_types_Release,
+    enum_media_types_Next,
+    enum_media_types_Skip,
+    enum_media_types_Reset,
+    enum_media_types_Clone,
+};
+
 static inline DirectDrawMediaStreamInputPin *impl_from_DirectDrawMediaStreamInputPin_IPin(IPin *iface)
 {
     return CONTAINING_RECORD(iface, DirectDrawMediaStreamInputPin, pin.pin.IPin_iface);
@@ -475,6 +599,26 @@ static ULONG WINAPI DirectDrawMediaStreamInputPin_IPin_Release(IPin *iface)
     return IAMMediaStream_Release(&This->parent->IAMMediaStream_iface);
 }
 
+static HRESULT WINAPI ddraw_pin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_media_types)
+{
+    struct enum_media_types *object;
+
+    TRACE("iface %p, enum_media_types %p.\n", iface, enum_media_types);
+
+    if (!enum_media_types)
+        return E_POINTER;
+
+    if (!(object = heap_alloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IEnumMediaTypes_iface.lpVtbl = &enum_media_types_vtbl;
+    object->refcount = 1;
+    object->index = 0;
+
+    *enum_media_types = &object->IEnumMediaTypes_iface;
+    return S_OK;
+}
+
 static const IPinVtbl DirectDrawMediaStreamInputPin_IPin_Vtbl =
 {
     DirectDrawMediaStreamInputPin_IPin_QueryInterface,
@@ -489,7 +633,7 @@ static const IPinVtbl DirectDrawMediaStreamInputPin_IPin_Vtbl =
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
     BasePinImpl_QueryAccept,
-    BasePinImpl_EnumMediaTypes,
+    ddraw_pin_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     BaseInputPinImpl_EndOfStream,
     BaseInputPinImpl_BeginFlush,
