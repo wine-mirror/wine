@@ -24,10 +24,84 @@
 #include "winbase.h"
 
 #include "mfapi.h"
+#include "mfidl.h"
 #include "mfmediaengine.h"
+#include "mferror.h"
+#include "dxgi.h"
+#include "initguid.h"
 
 #include "wine/heap.h"
 #include "wine/test.h"
+
+static HRESULT (WINAPI *pMFCreateDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
+
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown *obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "Unexpected refcount %d, expected %d.\n", rc, ref);
+}
+
+static void init_functions(void)
+{
+    HMODULE mod = GetModuleHandleA("mfplat.dll");
+
+#define X(f) p##f = (void*)GetProcAddress(mod, #f)
+    X(MFCreateDXGIDeviceManager);
+#undef X
+}
+
+struct media_engine_notify
+{
+    IMFMediaEngineNotify IMFMediaEngineNotify_iface;
+    LONG refcount;
+};
+
+static inline struct media_engine_notify *impl_from_IMFMediaEngineNotify(IMFMediaEngineNotify *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_engine_notify, IMFMediaEngineNotify_iface);
+}
+
+static HRESULT WINAPI media_engine_notify_QueryInterface(IMFMediaEngineNotify *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFMediaEngineNotify) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFMediaEngineNotify_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI media_engine_notify_AddRef(IMFMediaEngineNotify *iface)
+{
+    struct media_engine_notify *notify = impl_from_IMFMediaEngineNotify(iface);
+    return InterlockedIncrement(&notify->refcount);
+}
+
+static ULONG WINAPI media_engine_notify_Release(IMFMediaEngineNotify *iface)
+{
+    struct media_engine_notify *notify = impl_from_IMFMediaEngineNotify(iface);
+    return InterlockedDecrement(&notify->refcount);
+}
+
+static HRESULT WINAPI media_engine_notify_EventNotify(IMFMediaEngineNotify *iface, DWORD event, DWORD_PTR param1, DWORD param2)
+{
+    return S_OK;
+}
+
+static IMFMediaEngineNotifyVtbl media_engine_notify_vtbl =
+{
+    media_engine_notify_QueryInterface,
+    media_engine_notify_AddRef,
+    media_engine_notify_Release,
+    media_engine_notify_EventNotify,
+};
 
 static void test_factory(void)
 {
@@ -47,7 +121,83 @@ static void test_factory(void)
        "Unexpected hr %#x.\n", hr);
 
     if (factory)
+    {
+        struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
+        IMFMediaEngineNotify *notify = &notify_impl.IMFMediaEngineNotify_iface;
+        IMFMediaEngine *media_engine, *media_engine2;
+        IMFDXGIDeviceManager *manager;
+        IMFAttributes *attributes;
+        UINT token;
+
+        hr = pMFCreateDXGIDeviceManager(&token, &manager);
+        ok(hr == S_OK, "MFCreateDXGIDeviceManager failed: %#x.\n", hr);
+        hr = MFCreateAttributes(&attributes, 3);
+        ok(hr == S_OK, "MFCreateAttributes failed: %#x.\n", hr);
+
+        if (0)
+        {
+            /* Crashed on Windows 8 */
+            hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
+                                                           NULL, &media_engine);
+            ok(hr == E_POINTER, "IMFMediaEngineClassFactory_CreateInstance got %#x.\n", hr);
+
+            hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
+                                                           NULL, NULL);
+            ok(hr == E_POINTER, "IMFMediaEngineClassFactory_CreateInstance got %#x.\n", hr);
+        }
+
+        hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
+                                                       attributes, &media_engine);
+        ok(hr == MF_E_ATTRIBUTENOTFOUND, "IMFMediaEngineClassFactory_CreateInstance got %#x.\n", hr);
+
+        hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_OPM_HWND, NULL);
+        ok(hr == S_OK, "IMFAttributes_SetUnknown failed: %#x.\n", hr);
+        hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
+                                                       attributes, &media_engine);
+        ok(hr == MF_E_ATTRIBUTENOTFOUND, "IMFMediaEngineClassFactory_CreateInstance got %#x.\n", hr);
+
+        hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, (IUnknown *)notify);
+        ok(hr == S_OK, "IMFAttributes_SetUnknown failed: %#x.\n", hr);
+        hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
+                                                       attributes, &media_engine);
+        ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* pre win10v1809 */,
+           "IMFMediaEngineClassFactory_CreateInstance got %#x.\n", hr);
+        if (SUCCEEDED(hr))
+            IMFMediaEngine_Release(media_engine);
+
+        EXPECT_REF(factory, 1);
+        hr = IMFAttributes_SetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, DXGI_FORMAT_UNKNOWN);
+        ok(hr == S_OK, "IMFAttributes_SetUINT32 failed: %#x.\n", hr);
+        hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
+                                                       attributes, &media_engine);
+        ok(hr == S_OK, "IMFMediaEngineClassFactory_CreateInstance failed: %#x.\n", hr);
+        if (0)
+        {
+            /* Different version of Windows has different reference count behaviour, and I didn't
+               see their logics. So skipping these tests on Windows. */
+            EXPECT_REF(media_engine, 1);
+            EXPECT_REF(factory, 1);
+        }
+
+        hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
+                                                       attributes, &media_engine2);
+        ok(hr == S_OK, "IMFMediaEngineClassFactory_CreateInstance failed: %#x.\n", hr);
+        if (0)
+        {
+            EXPECT_REF(media_engine, 1);
+            EXPECT_REF(media_engine2, 1);
+            EXPECT_REF(factory, 1);
+        }
+
+        IMFMediaEngine_Release(media_engine);
+        IMFMediaEngine_Release(media_engine2);
+        IMFAttributes_DeleteAllItems(attributes);
+        IMFAttributes_Release(attributes);
+        IMFDXGIDeviceManager_Release(manager);
         IMFMediaEngineClassFactory_Release(factory);
+    }
+    else
+        win_skip("Not IMFMediaEngineClassFactory support.\n");
 
     CoUninitialize();
 }
@@ -55,6 +205,8 @@ static void test_factory(void)
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
+
+    init_functions();
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "MFStartup failed: %#x.\n", hr);
