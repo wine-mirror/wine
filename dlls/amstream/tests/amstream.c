@@ -1039,34 +1039,10 @@ static void test_media_streams(void)
             ok(nb_pins == expected_nb_pins, "Number of pins is %u instead of %u\n", nb_pins, expected_nb_pins);
             for (i = 0; i < min(nb_pins, expected_nb_pins); i++)
             {
-                IEnumMediaTypes* enum_media_types;
-                AM_MEDIA_TYPE* media_types[10];
-                ULONG nb_media_types;
                 IPin* pin;
-                PIN_INFO info;
-                WCHAR id[40];
-
-                /* Pin name is "I{guid MSPID_PrimaryVideo or MSPID_PrimaryAudio}" */
-                id[0] = 'I';
-                StringFromGUID2(i ? &MSPID_PrimaryAudio : &MSPID_PrimaryVideo, id + 1, 39);
 
                 hr = IPin_ConnectedTo(pins[i], &pin);
                 ok(hr == VFW_E_NOT_CONNECTED, "IPin_ConnectedTo returned: %x\n", hr);
-                hr = IPin_QueryPinInfo(pins[i], &info);
-                ok(hr == S_OK, "IPin_QueryPinInfo returned: %x\n", hr);
-                IBaseFilter_Release(info.pFilter);
-                ok(info.dir == PINDIR_INPUT, "Pin direction is %u instead of %u\n", info.dir, PINDIR_INPUT);
-                ok(!lstrcmpW(info.achName, id), "Pin name is %s instead of %s\n", wine_dbgstr_w(info.achName), wine_dbgstr_w(id));
-                hr = IPin_EnumMediaTypes(pins[i], &enum_media_types);
-                ok(hr == S_OK, "IPin_EnumMediaTypes returned: %x\n", hr);
-                hr = IEnumMediaTypes_Next(enum_media_types, ARRAY_SIZE(media_types), media_types, &nb_media_types);
-                ok(SUCCEEDED(hr), "IEnumMediaTypes_Next returned: %x\n", hr);
-                ok(nb_media_types > 0, "nb_media_types should be >0\n");
-                IEnumMediaTypes_Release(enum_media_types);
-                hr = IMediaStream_QueryInterface(i ? audio_stream : video_stream, &IID_IPin, (void **)&pin);
-                ok(hr == S_OK, "IMediaStream_QueryInterface returned: %x\n", hr);
-                ok(pin == pins[i], "Pin is %p instead of %p\n", pins[i], pin);
-                IPin_Release(pin);
                 IPin_Release(pins[i]);
             }
             IEnumPins_Release(enum_pins);
@@ -1780,6 +1756,156 @@ static void test_enum_media_types(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_media_types(void)
+{
+    static const VIDEOINFOHEADER req_vih = {};
+    static const WAVEFORMATEX expect_wfx =
+    {
+        .wFormatTag = WAVE_FORMAT_PCM,
+        .nChannels = 1,
+        .nSamplesPerSec = 11025,
+        .nAvgBytesPerSec = 11025 * 2,
+        .nBlockAlign = 2,
+        .wBitsPerSample = 16,
+        .cbSize = 0,
+    };
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IEnumMediaTypes *enummt;
+    IMediaStream *stream;
+    AM_MEDIA_TYPE *pmt;
+    ULONG ref, count;
+    unsigned int i;
+    HRESULT hr;
+    IPin *pin;
+
+    static const GUID *rejected_subtypes[] =
+    {
+        &MEDIASUBTYPE_RGB1,
+        &MEDIASUBTYPE_RGB4,
+        &MEDIASUBTYPE_RGB565,
+        &MEDIASUBTYPE_RGB555,
+        &MEDIASUBTYPE_RGB24,
+        &MEDIASUBTYPE_RGB32,
+        &MEDIASUBTYPE_ARGB32,
+        &MEDIASUBTYPE_ARGB1555,
+        &MEDIASUBTYPE_ARGB4444,
+        &GUID_NULL,
+    };
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video), "Got major type %s\n",
+            wine_dbgstr_guid(&pmt->majortype));
+    todo_wine ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB8), "Got subtype %s\n",
+            wine_dbgstr_guid(&pmt->subtype));
+    todo_wine ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+    ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+    todo_wine ok(pmt->lSampleSize == 10000, "Got sample size %u.\n", pmt->lSampleSize);
+    ok(IsEqualGUID(&pmt->formattype, &GUID_NULL), "Got format type %s.\n",
+            wine_dbgstr_guid(&pmt->formattype));
+    ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+
+    pmt->formattype = FORMAT_VideoInfo;
+    pmt->cbFormat = sizeof(VIDEOINFOHEADER);
+    pmt->pbFormat = (BYTE *)&req_vih;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    pmt->bFixedSizeSamples = FALSE;
+    pmt->bTemporalCompression = TRUE;
+    pmt->lSampleSize = 123;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    pmt->majortype = MEDIATYPE_NULL;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    pmt->majortype = MEDIATYPE_Audio;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    pmt->majortype = MEDIATYPE_Stream;
+    hr = IPin_QueryAccept(pin, pmt);
+    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    pmt->majortype = MEDIATYPE_Video;
+
+    for (i = 0; i < ARRAY_SIZE(rejected_subtypes); ++i)
+    {
+        pmt->subtype = *rejected_subtypes[i];
+        hr = IPin_QueryAccept(pin, pmt);
+        todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x for subtype %s.\n",
+                hr, wine_dbgstr_guid(rejected_subtypes[i]));
+    }
+
+    CoTaskMemFree(pmt);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, &count);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+    IPin_Release(pin);
+    IMediaStream_Release(stream);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, &count);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(count == 1, "Got count %u.\n", count);
+        ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Audio), "Got major type %s\n",
+                wine_dbgstr_guid(&pmt->majortype));
+        todo_wine ok(IsEqualGUID(&pmt->subtype, &GUID_NULL), "Got subtype %s\n",
+                wine_dbgstr_guid(&pmt->subtype));
+        todo_wine ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+        ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+        todo_wine ok(pmt->lSampleSize == 2, "Got sample size %u.\n", pmt->lSampleSize);
+        ok(IsEqualGUID(&pmt->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n",
+                wine_dbgstr_guid(&pmt->formattype));
+        ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+        ok(pmt->cbFormat == sizeof(WAVEFORMATEX), "Got format size %u.\n", pmt->cbFormat);
+        ok(!memcmp(pmt->pbFormat, &expect_wfx, sizeof(WAVEFORMATEX)), "Format blocks didn't match.\n");
+
+        hr = IPin_QueryAccept(pin, pmt);
+        ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    }
+
+    CoTaskMemFree(pmt);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+    IPin_Release(pin);
+    IMediaStream_Release(stream);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_IDirectDrawStreamSample(void)
 {
     DDSURFACEDESC desc = { sizeof(desc) };
@@ -2158,6 +2284,7 @@ START_TEST(amstream)
     test_pin_info();
     test_initialize();
     test_enum_media_types();
+    test_media_types();
     test_IDirectDrawStreamSample();
 
     file = CreateFileW(filenameW, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
