@@ -5,9 +5,10 @@ EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	audiodata.c \
+	audiostream.c \
+	ddrawstream.c \
 	filter.c \
 	main.c \
-	mediastream.c \
 	multimedia.c
 
 IDL_SRCS = amstream_classes.idl
