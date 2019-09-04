@@ -2726,6 +2726,7 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
         {
             ret = wine_cp_wcstombs( unix_cptable, flags, src, srclen, dst, dstlen,
                                     defchar, used ? &used_tmp : NULL );
+            if (used) *used = used_tmp;
             break;
         }
         /* fall through */
