@@ -2664,16 +2664,6 @@ static void raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
                 set_cpu_context( context );
         }
         break;
-    case EXCEPTION_BREAKPOINT:
-        switch (rec->ExceptionInformation[0])
-        {
-            case 1: /* BREAKPOINT_PRINT */
-            case 3: /* BREAKPOINT_LOAD_SYMBOLS */
-            case 4: /* BREAKPOINT_UNLOAD_SYMBOLS */
-            case 5: /* BREAKPOINT_COMMAND_STRING (>= Win2003) */
-                set_cpu_context( context );
-        }
-        break;
     }
     status = NtRaiseException( rec, context, TRUE );
     raise_status( status, rec );
@@ -2919,23 +2909,34 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
  *
  * Handle an interrupt.
  */
-static inline BOOL handle_interrupt( unsigned int interrupt, EXCEPTION_RECORD *rec, CONTEXT *context )
+static inline BOOL handle_interrupt( ucontext_t *sigcontext, EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    switch(interrupt)
+    switch (ERROR_sig(sigcontext) >> 3)
     {
     case 0x2c:
         rec->ExceptionCode = STATUS_ASSERTION_FAILURE;
-        return TRUE;
+        break;
     case 0x2d:
+        switch (context->Rax)
+        {
+            case 1: /* BREAKPOINT_PRINT */
+            case 3: /* BREAKPOINT_LOAD_SYMBOLS */
+            case 4: /* BREAKPOINT_UNLOAD_SYMBOLS */
+            case 5: /* BREAKPOINT_COMMAND_STRING (>= Win2003) */
+                RIP_sig(sigcontext) += 3;
+                return TRUE;
+        }
         context->Rip += 3;
         rec->ExceptionCode = EXCEPTION_BREAKPOINT;
         rec->ExceptionAddress = (void *)context->Rip;
         rec->NumberParameters = 1;
         rec->ExceptionInformation[0] = context->Rax;
-        return TRUE;
+        break;
     default:
         return FALSE;
     }
+    setup_raise_exception( sigcontext, rec, raise_generic_exception );
+    return TRUE;
 }
 
 
@@ -2992,7 +2993,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             CONTEXT *win_context = get_exception_context( rec );
             WORD err = ERROR_sig(ucontext);
             if (!err && (rec->ExceptionCode = is_privileged_instr( win_context ))) break;
-            if ((err & 7) == 2 && handle_interrupt( err >> 3, rec, win_context )) break;
+            if ((err & 7) == 2 && handle_interrupt( ucontext, rec, win_context )) return;
             rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
             rec->NumberParameters = 2;
             rec->ExceptionInformation[0] = 0;
