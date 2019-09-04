@@ -2681,36 +2681,6 @@ static void raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 
 
 /**********************************************************************
- *		raise_trap_exception
- */
-static void raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status;
-
-    if (rec->ExceptionCode == EXCEPTION_SINGLE_STEP)
-    {
-        /* when single stepping can't tell whether this is a hw bp or a
-         * single step interrupt. try to avoid as much overhead as possible
-         * and only do a server call if there is any hw bp enabled. */
-
-        if( !(context->EFlags & 0x100) || (amd64_thread_data()->dr7 & 0xff) )
-        {
-            /* (possible) hardware breakpoint, fetch the debug registers */
-            DWORD saved_flags = context->ContextFlags;
-            context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
-            NtGetContextThread(GetCurrentThread(), context);
-            context->ContextFlags |= saved_flags;  /* restore flags */
-        }
-
-        context->EFlags &= ~0x100;  /* clear single-step flag */
-    }
-
-    status = NtRaiseException( rec, context, TRUE );
-    raise_status( status, rec );
-}
-
-
-/**********************************************************************
  *		raise_generic_exception
  *
  * Generic raise function for exceptions that don't need special treatment.
@@ -2826,6 +2796,24 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
 {
     struct stack_layout *stack = CONTAINING_RECORD( rec, struct stack_layout, rec );
     ULONG64 *rsp_ptr;
+
+    if (rec->ExceptionCode == EXCEPTION_SINGLE_STEP)
+    {
+        /* when single stepping can't tell whether this is a hw bp or a
+         * single step interrupt. try to avoid as much overhead as possible
+         * and only do a server call if there is any hw bp enabled. */
+
+        if( !(stack->context.EFlags & 0x100) || (amd64_thread_data()->dr7 & 0xff) )
+        {
+            /* (possible) hardware breakpoint, fetch the debug registers */
+            DWORD saved_flags = stack->context.ContextFlags;
+            stack->context.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+            NtGetContextThread(GetCurrentThread(), &stack->context);
+            stack->context.ContextFlags |= saved_flags;  /* restore flags */
+        }
+
+        stack->context.EFlags &= ~0x100;  /* clear single-step flag */
+    }
 
     /* store return address and %rbp without aligning, so that the offset is fixed */
     rsp_ptr = (ULONG64 *)RSP_sig(sigcontext) - 16;
@@ -3070,7 +3058,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         break;
     }
 
-    setup_raise_exception( sigcontext, rec, raise_trap_exception );
+    setup_raise_exception( sigcontext, rec, raise_generic_exception );
 }
 
 /**********************************************************************
