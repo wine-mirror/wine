@@ -322,7 +322,7 @@ static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *ifac
     }
 
     if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo))
-        hr = ddrawmediastream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->StreamType, &pStream);
+        hr = ddraw_stream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->StreamType, &pStream);
     else
         hr = audiomediastream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->StreamType, &pStream);
 

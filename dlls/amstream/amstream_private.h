@@ -37,8 +37,8 @@
 HRESULT multimedia_stream_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
 HRESULT AMAudioData_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT filter_create(IUnknown *outer, void **out) DECLSPEC_HIDDEN;
-HRESULT ddrawmediastream_create(IMultiMediaStream *Parent, const MSPID *pPurposeId,
-        IUnknown *stream_object, STREAM_TYPE StreamType, IAMMediaStream **ppMediaStream) DECLSPEC_HIDDEN;
+HRESULT ddraw_stream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
+        IUnknown *stream_object, STREAM_TYPE type, IAMMediaStream **stream) DECLSPEC_HIDDEN;
 HRESULT audiomediastream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
         IUnknown *stream_object, STREAM_TYPE stream_type, IAMMediaStream **media_stream) DECLSPEC_HIDDEN;
 
