@@ -2577,10 +2577,7 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
 }
 
 
-/*******************************************************************
- *		NtRaiseException (NTDLL.@)
- */
-NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
 {
     NTSTATUS status;
 
@@ -2615,8 +2612,6 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
             TRACE(" r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
                   context->R12, context->R13, context->R14, context->R15 );
         }
-        status = send_debug_event( rec, TRUE, context );
-        if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED) goto done;
 
         /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
         if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Rip--;
@@ -2644,6 +2639,24 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
 
 done:
     return NtSetContextThread( GetCurrentThread(), context );
+}
+
+
+/*******************************************************************
+ *		NtRaiseException (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+{
+    NTSTATUS status;
+
+    if (first_chance)
+    {
+        status = send_debug_event( rec, TRUE, context );
+        if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
+            return NtSetContextThread( GetCurrentThread(), context );
+    }
+
+    return raise_exception( rec, context, first_chance);
 }
 
 
@@ -2763,6 +2776,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
 {
     struct stack_layout *stack = CONTAINING_RECORD( rec, struct stack_layout, rec );
     ULONG64 *rsp_ptr;
+    NTSTATUS status;
 
     if (rec->ExceptionCode == EXCEPTION_SINGLE_STEP)
     {
@@ -2782,12 +2796,19 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
         stack->context.EFlags &= ~0x100;  /* clear single-step flag */
     }
 
+    status = send_debug_event( rec, TRUE, &stack->context );
+    if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
+    {
+        restore_context( &stack->context, sigcontext );
+        return;
+    }
+
     /* store return address and %rbp without aligning, so that the offset is fixed */
     rsp_ptr = (ULONG64 *)RSP_sig(sigcontext) - 16;
-    *(--rsp_ptr) = RIP_sig(sigcontext);
-    *(--rsp_ptr) = RBP_sig(sigcontext);
-    *(--rsp_ptr) = RDI_sig(sigcontext);
-    *(--rsp_ptr) = RSI_sig(sigcontext);
+    *(--rsp_ptr) = stack->context.Rip;
+    *(--rsp_ptr) = stack->context.Rbp;
+    *(--rsp_ptr) = stack->context.Rdi;
+    *(--rsp_ptr) = stack->context.Rsi;
 
     /* now modify the sigcontext to return to the raise function */
     RIP_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline;

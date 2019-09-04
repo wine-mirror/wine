@@ -1357,7 +1357,7 @@ static void test_debugger(const char *argv0)
     }
     else win_skip("call_debug_service_code not supported on this architecture\n");
 
-    if (sizeof(loop_code) > 1 && broken(1) /* FIXME: broken in Wine */)
+    if (sizeof(loop_code) > 1 && (sizeof(void*) == 8 || broken(1) /* FIXME: broken in Wine */))
     {
         memset(buf, OP_BP, sizeof(buf));
         memcpy(proc_code, &loop_code, sizeof(loop_code));
