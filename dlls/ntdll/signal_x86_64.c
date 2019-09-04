@@ -2648,29 +2648,6 @@ done:
 
 
 /**********************************************************************
- *		raise_segv_exception
- */
-static void raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status;
-
-    switch(rec->ExceptionCode)
-    {
-    case EXCEPTION_ACCESS_VIOLATION:
-        if (rec->NumberParameters == 2)
-        {
-            if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
-                                                             rec->ExceptionInformation[0], FALSE )))
-                set_cpu_context( context );
-        }
-        break;
-    }
-    status = NtRaiseException( rec, context, TRUE );
-    raise_status( status, rec );
-}
-
-
-/**********************************************************************
  *		raise_generic_exception
  *
  * Generic raise function for exceptions that don't need special treatment.
@@ -2960,7 +2937,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         case -1:  /* overflow */
             rec = setup_exception( sigcontext );
             rec->ExceptionCode = EXCEPTION_STACK_OVERFLOW;
-            setup_raise_exception( sigcontext, rec, raise_segv_exception );
+            setup_raise_exception( sigcontext, rec, raise_generic_exception );
             return;
         }
     }
@@ -2968,7 +2945,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     rec = setup_exception( sigcontext );
     if (rec->ExceptionCode == EXCEPTION_STACK_OVERFLOW)
     {
-        setup_raise_exception( sigcontext, rec, raise_segv_exception );
+        setup_raise_exception( sigcontext, rec, raise_generic_exception );
         return;
     }
 
@@ -3001,10 +2978,12 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         }
         break;
     case TRAP_x86_PAGEFLT:  /* Page fault */
-        rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
         rec->NumberParameters = 2;
         rec->ExceptionInformation[0] = (ERROR_sig(ucontext) >> 1) & 0x09;
         rec->ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
+        if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
+                                                         rec->ExceptionInformation[0], FALSE )))
+            return;
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
         rec->ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
@@ -3022,7 +3001,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         break;
     }
 
-    setup_raise_exception( sigcontext, rec, raise_segv_exception );
+    setup_raise_exception( sigcontext, rec, raise_generic_exception );
 }
 
 /**********************************************************************
