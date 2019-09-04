@@ -83,7 +83,7 @@ static void test_query_dos_deviceA(void)
     if (ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         p = buffer;
         for (;;) {
-            if (!strlen(p)) break;
+            if (!*p) break;
             ret2 = QueryDosDeviceA( p, buffer2, sizeof(buffer2) );
             ok(ret2, "QueryDosDeviceA failed to return current mapping for %s, last error %u\n", p, GetLastError());
             p += strlen(p) + 1;

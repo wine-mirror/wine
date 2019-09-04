@@ -130,7 +130,7 @@ static void test_ValidPathA(const CHAR *curdir, const CHAR *subdir, const CHAR *
   ok(! HAS_TRAIL_SLASH_A(curdirshort),
      "%s: GetShortPathNameA should not have a trailing \\\n",errstr);
 /* build relative and absolute paths from inputs */
-  if(lstrlenA(subdir)) {
+  if(*subdir) {
     sprintf(subpath,"%s\\%s",subdir,filename);
   } else {
     lstrcpyA(subpath,filename);
