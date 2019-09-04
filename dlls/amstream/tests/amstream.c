@@ -31,6 +31,9 @@
 static const WCHAR primary_video_sink_id[] = {'I','{','A','3','5','F','F','5','6','A',
         '-','9','F','D','A','-','1','1','D','0','-','8','F','D','F',
         '-','0','0','C','0','4','F','D','9','1','8','9','D','}',0};
+static const WCHAR primary_audio_sink_id[] = {'I','{','A','3','5','F','F','5','6','B',
+        '-','9','F','D','A','-','1','1','D','0','-','8','F','D','F',
+        '-','0','0','C','0','4','F','D','9','1','8','9','D','}',0};
 
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
@@ -1268,6 +1271,35 @@ static void test_pin_info(void)
     ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     IPin_Release(pin);
+    IMediaStream_Release(stream);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_QueryPinInfo(pin, &info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(info.pFilter == (IBaseFilter *)filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+    ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
+    ok(!lstrcmpW(info.achName, primary_audio_sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    IBaseFilter_Release(info.pFilter);
+
+    hr = IPin_QueryDirection(pin, &dir);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
+
+    hr = IPin_QueryId(pin, &id);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!lstrcmpW(id, primary_audio_sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+    CoTaskMemFree(id);
+
+    hr = IPin_QueryInternalConnections(pin, NULL, &count);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    IPin_Release(pin);
+    IMediaStream_Release(stream);
+
     IMediaStreamFilter_Release(filter);
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
