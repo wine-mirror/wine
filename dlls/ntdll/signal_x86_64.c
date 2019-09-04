@@ -2414,123 +2414,6 @@ NTSTATUS WINAPI RtlWow64SetThreadContext( HANDLE handle, const WOW64_CONTEXT *co
 }
 
 
-extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func );
-__ASM_GLOBAL_FUNC( raise_func_trampoline,
-                   __ASM_CFI(".cfi_signal_frame\n\t")
-                   __ASM_CFI(".cfi_def_cfa %rbp,160\n\t")  /* red zone + rip + rbp + rdi + rsi */
-                   __ASM_CFI(".cfi_rel_offset %rip,24\n\t")
-                   __ASM_CFI(".cfi_rel_offset %rbp,16\n\t")
-                   __ASM_CFI(".cfi_rel_offset %rdi,8\n\t")
-                   __ASM_CFI(".cfi_rel_offset %rsi,0\n\t")
-                   "call *%rdx\n\t"
-                   "int $3")
-
-/***********************************************************************
- *           setup_exception
- *
- * Setup a proper stack frame for the raise function, and modify the
- * sigcontext so that the return from the signal handler will call
- * the raise function.
- */
-static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func func )
-{
-    struct stack_layout
-    {
-        CONTEXT           context;
-        EXCEPTION_RECORD  rec;
-        ULONG64           rsi;
-        ULONG64           rdi;
-        ULONG64           rbp;
-        ULONG64           rip;
-        ULONG64           red_zone[16];
-    } *stack;
-    ULONG64 *rsp_ptr;
-    DWORD exception_code = 0;
-
-    stack = (struct stack_layout *)(RSP_sig(sigcontext) & ~15);
-
-    /* stack sanity checks */
-
-    if (is_inside_signal_stack( stack ))
-    {
-        ERR( "nested exception on signal stack in thread %04x eip %016lx esp %016lx stack %p-%p\n",
-             GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext), (ULONG_PTR)RSP_sig(sigcontext),
-             NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-        abort_thread(1);
-    }
-
-    if (stack - 1 > stack || /* check for overflow in subtraction */
-        (char *)stack <= (char *)NtCurrentTeb()->DeallocationStack ||
-        (char *)stack > (char *)NtCurrentTeb()->Tib.StackBase)
-    {
-        WARN( "exception outside of stack limits in thread %04x eip %016lx esp %016lx stack %p-%p\n",
-              GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext), (ULONG_PTR)RSP_sig(sigcontext),
-              NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-    }
-    else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->DeallocationStack + 4096)
-    {
-        /* stack overflow on last page, unrecoverable */
-        UINT diff = (char *)NtCurrentTeb()->DeallocationStack + 4096 - (char *)(stack - 1);
-        ERR( "stack overflow %u bytes in thread %04x eip %016lx esp %016lx stack %p-%p-%p\n",
-             diff, GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext),
-             (ULONG_PTR)RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
-             NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-        abort_thread(1);
-    }
-    else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit)
-    {
-        /* stack access below stack limit, may be recoverable */
-        switch (virtual_handle_stack_fault( stack - 1 ))
-        {
-        case 0:  /* not handled */
-        {
-            UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)(stack - 1);
-            ERR( "stack overflow %u bytes in thread %04x eip %016lx esp %016lx stack %p-%p-%p\n",
-                 diff, GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext),
-                 (ULONG_PTR)RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
-                 NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-            abort_thread(1);
-        }
-        case -1:  /* overflow */
-            exception_code = EXCEPTION_STACK_OVERFLOW;
-            break;
-        }
-    }
-
-    stack--;  /* push the stack_layout structure */
-#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
-    VALGRIND_MAKE_MEM_UNDEFINED(stack, sizeof(*stack));
-#elif defined(VALGRIND_MAKE_WRITABLE)
-    VALGRIND_MAKE_WRITABLE(stack, sizeof(*stack));
-#endif
-    stack->rec.ExceptionRecord  = NULL;
-    stack->rec.ExceptionCode    = exception_code;
-    stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    stack->rec.ExceptionAddress = (void *)RIP_sig(sigcontext);
-    stack->rec.NumberParameters = 0;
-    save_context( &stack->context, sigcontext );
-
-    /* store return address and %rbp without aligning, so that the offset is fixed */
-    rsp_ptr = (ULONG64 *)RSP_sig(sigcontext) - 16;
-    *(--rsp_ptr) = RIP_sig(sigcontext);
-    *(--rsp_ptr) = RBP_sig(sigcontext);
-    *(--rsp_ptr) = RDI_sig(sigcontext);
-    *(--rsp_ptr) = RSI_sig(sigcontext);
-
-    /* now modify the sigcontext to return to the raise function */
-    RIP_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline;
-    RDI_sig(sigcontext) = (ULONG_PTR)&stack->rec;
-    RSI_sig(sigcontext) = (ULONG_PTR)&stack->context;
-    RDX_sig(sigcontext) = (ULONG_PTR)func;
-    RBP_sig(sigcontext) = (ULONG_PTR)rsp_ptr;
-    RSP_sig(sigcontext) = (ULONG_PTR)stack;
-    /* clear single-step, direction, and align check flag */
-    EFL_sig(sigcontext) &= ~(0x100|0x400|0x40000);
-
-    return &stack->rec;
-}
-
-
 /***********************************************************************
  *           get_exception_context
  *
@@ -2836,6 +2719,123 @@ static void raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     NTSTATUS status = NtRaiseException( rec, context, TRUE );
     raise_status( status, rec );
+}
+
+
+extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func );
+__ASM_GLOBAL_FUNC( raise_func_trampoline,
+                   __ASM_CFI(".cfi_signal_frame\n\t")
+                   __ASM_CFI(".cfi_def_cfa %rbp,160\n\t")  /* red zone + rip + rbp + rdi + rsi */
+                   __ASM_CFI(".cfi_rel_offset %rip,24\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,16\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rdi,8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rsi,0\n\t")
+                   "call *%rdx\n\t"
+                   "int $3")
+
+/***********************************************************************
+ *           setup_exception
+ *
+ * Setup a proper stack frame for the raise function, and modify the
+ * sigcontext so that the return from the signal handler will call
+ * the raise function.
+ */
+static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func func )
+{
+    struct stack_layout
+    {
+        CONTEXT           context;
+        EXCEPTION_RECORD  rec;
+        ULONG64           rsi;
+        ULONG64           rdi;
+        ULONG64           rbp;
+        ULONG64           rip;
+        ULONG64           red_zone[16];
+    } *stack;
+    ULONG64 *rsp_ptr;
+    DWORD exception_code = 0;
+
+    stack = (struct stack_layout *)(RSP_sig(sigcontext) & ~15);
+
+    /* stack sanity checks */
+
+    if (is_inside_signal_stack( stack ))
+    {
+        ERR( "nested exception on signal stack in thread %04x eip %016lx esp %016lx stack %p-%p\n",
+             GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext), (ULONG_PTR)RSP_sig(sigcontext),
+             NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        abort_thread(1);
+    }
+
+    if (stack - 1 > stack || /* check for overflow in subtraction */
+        (char *)stack <= (char *)NtCurrentTeb()->DeallocationStack ||
+        (char *)stack > (char *)NtCurrentTeb()->Tib.StackBase)
+    {
+        WARN( "exception outside of stack limits in thread %04x eip %016lx esp %016lx stack %p-%p\n",
+              GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext), (ULONG_PTR)RSP_sig(sigcontext),
+              NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+    }
+    else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->DeallocationStack + 4096)
+    {
+        /* stack overflow on last page, unrecoverable */
+        UINT diff = (char *)NtCurrentTeb()->DeallocationStack + 4096 - (char *)(stack - 1);
+        ERR( "stack overflow %u bytes in thread %04x eip %016lx esp %016lx stack %p-%p-%p\n",
+             diff, GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext),
+             (ULONG_PTR)RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
+             NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        abort_thread(1);
+    }
+    else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit)
+    {
+        /* stack access below stack limit, may be recoverable */
+        switch (virtual_handle_stack_fault( stack - 1 ))
+        {
+        case 0:  /* not handled */
+        {
+            UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)(stack - 1);
+            ERR( "stack overflow %u bytes in thread %04x eip %016lx esp %016lx stack %p-%p-%p\n",
+                 diff, GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext),
+                 (ULONG_PTR)RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
+                 NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+            abort_thread(1);
+        }
+        case -1:  /* overflow */
+            exception_code = EXCEPTION_STACK_OVERFLOW;
+            break;
+        }
+    }
+
+    stack--;  /* push the stack_layout structure */
+#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
+    VALGRIND_MAKE_MEM_UNDEFINED(stack, sizeof(*stack));
+#elif defined(VALGRIND_MAKE_WRITABLE)
+    VALGRIND_MAKE_WRITABLE(stack, sizeof(*stack));
+#endif
+    stack->rec.ExceptionRecord  = NULL;
+    stack->rec.ExceptionCode    = exception_code;
+    stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    stack->rec.ExceptionAddress = (void *)RIP_sig(sigcontext);
+    stack->rec.NumberParameters = 0;
+    save_context( &stack->context, sigcontext );
+
+    /* store return address and %rbp without aligning, so that the offset is fixed */
+    rsp_ptr = (ULONG64 *)RSP_sig(sigcontext) - 16;
+    *(--rsp_ptr) = RIP_sig(sigcontext);
+    *(--rsp_ptr) = RBP_sig(sigcontext);
+    *(--rsp_ptr) = RDI_sig(sigcontext);
+    *(--rsp_ptr) = RSI_sig(sigcontext);
+
+    /* now modify the sigcontext to return to the raise function */
+    RIP_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline;
+    RDI_sig(sigcontext) = (ULONG_PTR)&stack->rec;
+    RSI_sig(sigcontext) = (ULONG_PTR)&stack->context;
+    RDX_sig(sigcontext) = (ULONG_PTR)func;
+    RBP_sig(sigcontext) = (ULONG_PTR)rsp_ptr;
+    RSP_sig(sigcontext) = (ULONG_PTR)stack;
+    /* clear single-step, direction, and align check flag */
+    EFL_sig(sigcontext) &= ~(0x100|0x400|0x40000);
+
+    return &stack->rec;
 }
 
 
