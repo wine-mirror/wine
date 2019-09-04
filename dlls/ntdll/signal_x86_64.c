@@ -2759,7 +2759,7 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext )
     return &stack->rec;
 }
 
-static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec, raise_func func )
+static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 {
     struct stack_layout *stack = CONTAINING_RECORD( rec, struct stack_layout, rec );
     ULONG64 *rsp_ptr;
@@ -2793,7 +2793,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     RIP_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline;
     RDI_sig(sigcontext) = (ULONG_PTR)&stack->rec;
     RSI_sig(sigcontext) = (ULONG_PTR)&stack->context;
-    RDX_sig(sigcontext) = (ULONG_PTR)func;
+    RDX_sig(sigcontext) = (ULONG_PTR)raise_generic_exception;
     RBP_sig(sigcontext) = (ULONG_PTR)rsp_ptr;
     RSP_sig(sigcontext) = (ULONG_PTR)stack;
     /* clear single-step, direction, and align check flag */
@@ -2912,7 +2912,7 @@ static inline BOOL handle_interrupt( ucontext_t *sigcontext, EXCEPTION_RECORD *r
     default:
         return FALSE;
     }
-    setup_raise_exception( sigcontext, rec, raise_generic_exception );
+    setup_raise_exception( sigcontext, rec );
     return TRUE;
 }
 
@@ -2937,7 +2937,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         case -1:  /* overflow */
             rec = setup_exception( sigcontext );
             rec->ExceptionCode = EXCEPTION_STACK_OVERFLOW;
-            setup_raise_exception( sigcontext, rec, raise_generic_exception );
+            setup_raise_exception( sigcontext, rec );
             return;
         }
     }
@@ -2945,7 +2945,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     rec = setup_exception( sigcontext );
     if (rec->ExceptionCode == EXCEPTION_STACK_OVERFLOW)
     {
-        setup_raise_exception( sigcontext, rec, raise_generic_exception );
+        setup_raise_exception( sigcontext, rec );
         return;
     }
 
@@ -3001,7 +3001,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         break;
     }
 
-    setup_raise_exception( sigcontext, rec, raise_generic_exception );
+    setup_raise_exception( sigcontext, rec );
 }
 
 /**********************************************************************
@@ -3038,7 +3038,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         break;
     }
 
-    setup_raise_exception( sigcontext, rec, raise_generic_exception );
+    setup_raise_exception( sigcontext, rec );
 }
 
 /**********************************************************************
@@ -3079,7 +3079,7 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         break;
     }
 
-    setup_raise_exception( sigcontext, rec, raise_generic_exception );
+    setup_raise_exception( sigcontext, rec );
 }
 
 /**********************************************************************
@@ -3093,7 +3093,7 @@ static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     {
         EXCEPTION_RECORD *rec = setup_exception( sigcontext );
         rec->ExceptionCode = CONTROL_C_EXIT;
-        setup_raise_exception( sigcontext, rec, raise_generic_exception );
+        setup_raise_exception( sigcontext, rec );
     }
 }
 
@@ -3108,7 +3108,7 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     EXCEPTION_RECORD *rec = setup_exception( sigcontext );
     rec->ExceptionCode = EXCEPTION_WINE_ASSERTION;
     rec->ExceptionFlags = EH_NONCONTINUABLE;
-    setup_raise_exception( sigcontext, rec, raise_generic_exception );
+    setup_raise_exception( sigcontext, rec );
 }
 
 
