@@ -3886,7 +3886,7 @@ static struct array *get_systemenclosure_chassistypes( const char *buf, UINT len
     if (!(types = heap_alloc( sizeof(*types) )))
     {
         heap_free( ret );
-        goto done;
+        return NULL;
     }
     types[0] = chassis->type & ~0x80;
 
