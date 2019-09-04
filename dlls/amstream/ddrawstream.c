@@ -40,13 +40,17 @@ struct ddraw_stream
 {
     IAMMediaStream IAMMediaStream_iface;
     IDirectDrawMediaStream IDirectDrawMediaStream_iface;
+    IMemInputPin IMemInputPin_iface;
     LONG ref;
+
     IMultiMediaStream* parent;
     MSPID purpose_id;
     STREAM_TYPE stream_type;
     IDirectDraw7 *ddraw;
     DirectDrawMediaStreamInputPin *input_pin;
     CRITICAL_SECTION critical_section;
+
+    IMemAllocator *allocator;
 };
 
 static inline struct ddraw_stream *impl_from_IAMMediaStream(IAMMediaStream *iface)
@@ -85,7 +89,7 @@ static HRESULT WINAPI DirectDrawMediaStreamImpl_IAMMediaStream_QueryInterface(IA
     else if (IsEqualGUID(riid, &IID_IMemInputPin))
     {
         IAMMediaStream_AddRef(iface);
-        *ret_iface = &This->input_pin->pin.IMemInputPin_iface;
+        *ret_iface = &This->IMemInputPin_iface;
         return S_OK;
     }
 
@@ -725,6 +729,101 @@ static const BaseInputPinFuncTable DirectDrawMediaStreamInputPin_FuncTable =
     DirectDrawMediaStreamInputPin_Receive,
 };
 
+static inline struct ddraw_stream *impl_from_IMemInputPin(IMemInputPin *iface)
+{
+    return CONTAINING_RECORD(iface, struct ddraw_stream, IMemInputPin_iface);
+}
+
+static HRESULT WINAPI ddraw_meminput_QueryInterface(IMemInputPin *iface, REFIID iid, void **out)
+{
+    struct ddraw_stream *stream = impl_from_IMemInputPin(iface);
+    return IAMMediaStream_QueryInterface(&stream->IAMMediaStream_iface, iid, out);
+}
+
+static ULONG WINAPI ddraw_meminput_AddRef(IMemInputPin *iface)
+{
+    struct ddraw_stream *stream = impl_from_IMemInputPin(iface);
+    return IAMMediaStream_AddRef(&stream->IAMMediaStream_iface);
+}
+
+static ULONG WINAPI ddraw_meminput_Release(IMemInputPin *iface)
+{
+    struct ddraw_stream *stream = impl_from_IMemInputPin(iface);
+    return IAMMediaStream_Release(&stream->IAMMediaStream_iface);
+}
+
+static HRESULT WINAPI ddraw_meminput_GetAllocator(IMemInputPin *iface, IMemAllocator **allocator)
+{
+    struct ddraw_stream *stream = impl_from_IMemInputPin(iface);
+
+    TRACE("stream %p, allocator %p.\n", stream, allocator);
+
+    if (stream->allocator)
+    {
+        IMemAllocator_AddRef(*allocator = stream->allocator);
+        return S_OK;
+    }
+
+    *allocator = NULL;
+    return VFW_E_NO_ALLOCATOR;
+}
+
+static HRESULT WINAPI ddraw_meminput_NotifyAllocator(IMemInputPin *iface, IMemAllocator *allocator, BOOL readonly)
+{
+    struct ddraw_stream *stream = impl_from_IMemInputPin(iface);
+
+    TRACE("stream %p, allocator %p, readonly %d.\n", stream, allocator, readonly);
+
+    if (!allocator)
+        return E_POINTER;
+
+    if (allocator)
+        IMemAllocator_AddRef(allocator);
+    if (stream->allocator)
+        IMemAllocator_Release(stream->allocator);
+    stream->allocator = allocator;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ddraw_meminput_GetAllocatorRequirements(IMemInputPin *iface, ALLOCATOR_PROPERTIES *props)
+{
+    TRACE("iface %p, props %p.\n", iface, props);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *sample)
+{
+    FIXME("iface %p, sample %p, stub!\n", iface, sample);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ddraw_meminput_ReceiveMultiple(IMemInputPin *iface,
+        IMediaSample **samples, LONG count, LONG *processed)
+{
+    FIXME("iface %p, samples %p, count %u, processed %p, stub!\n", iface, samples, count, processed);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ddraw_meminput_ReceiveCanBlock(IMemInputPin *iface)
+{
+    TRACE("iface %p.\n", iface);
+    return S_OK;
+}
+
+static const IMemInputPinVtbl ddraw_meminput_vtbl =
+{
+    ddraw_meminput_QueryInterface,
+    ddraw_meminput_AddRef,
+    ddraw_meminput_Release,
+    ddraw_meminput_GetAllocator,
+    ddraw_meminput_NotifyAllocator,
+    ddraw_meminput_GetAllocatorRequirements,
+    ddraw_meminput_Receive,
+    ddraw_meminput_ReceiveMultiple,
+    ddraw_meminput_ReceiveCanBlock,
+};
+
 HRESULT ddrawmediastream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
         IUnknown *stream_object, STREAM_TYPE stream_type, IAMMediaStream **media_stream)
 {
@@ -740,6 +839,7 @@ HRESULT ddrawmediastream_create(IMultiMediaStream *parent, const MSPID *purpose_
 
     object->IAMMediaStream_iface.lpVtbl = &DirectDrawMediaStreamImpl_IAMMediaStream_Vtbl;
     object->IDirectDrawMediaStream_iface.lpVtbl = &DirectDrawMediaStreamImpl_IDirectDrawMediaStream_Vtbl;
+    object->IMemInputPin_iface.lpVtbl = &ddraw_meminput_vtbl;
     object->ref = 1;
 
     InitializeCriticalSection(&object->critical_section);
