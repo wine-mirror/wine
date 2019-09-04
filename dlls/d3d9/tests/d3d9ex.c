@@ -2986,7 +2986,7 @@ static void test_wndproc(void)
         ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
         ok(ret, "Failed to get display mode.\n");
         ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
-                && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
+                && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpected screen size %ux%u.\n",
                 devmode.dmPelsWidth, devmode.dmPelsHeight);
 
         /* In d3d9ex the device and focus windows have to be minimized and restored,
@@ -3015,7 +3015,7 @@ static void test_wndproc(void)
         ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
         ok(ret, "Failed to get display mode.\n");
         ok(devmode.dmPelsWidth == d3d_width
-                && devmode.dmPelsHeight == d3d_height, "Got unexpect screen size %ux%u.\n",
+                && devmode.dmPelsHeight == d3d_height, "Got unexpected screen size %ux%u.\n",
                 devmode.dmPelsWidth, devmode.dmPelsHeight);
 
         hr = reset_device(device, &device_desc);
@@ -3039,8 +3039,8 @@ static void test_wndproc(void)
 
         ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
         ok(ret, "Failed to get display mode.\n");
-        ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth, "Got unexpect width %u.\n", devmode.dmPelsWidth);
-        ok(devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect height %u.\n", devmode.dmPelsHeight);
+        ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth, "Got unexpected width %u.\n", devmode.dmPelsWidth);
+        ok(devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpected height %u.\n", devmode.dmPelsHeight);
 
         /* SW_SHOWMINNOACTIVE is needed to make FVWM happy. SW_SHOWNOACTIVATE is needed to make windows
          * send SIZE_RESTORED after ShowWindow(SW_SHOWMINNOACTIVE). */

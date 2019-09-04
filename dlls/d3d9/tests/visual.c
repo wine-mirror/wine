@@ -14139,7 +14139,7 @@ static void sincos_test(void)
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_Present returned %#x.\n", hr);
-    /* TODO: Find a way to properly validate the lines. Precicion issues make this a kinda nasty task */
+    /* TODO: Find a way to properly validate the lines. Precision issues make this a kinda nasty task */
 
     IDirect3DVertexShader9_Release(sin_shader);
     IDirect3DVertexShader9_Release(cos_shader);
