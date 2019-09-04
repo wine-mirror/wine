@@ -1960,7 +1960,7 @@
 @ cdecl -ret64 _strtoui64_l(str ptr long ptr) MSVCRT_strtoui64_l
 @ cdecl _strtoul_l(str ptr long ptr) MSVCRT_strtoul_l
 @ cdecl -ret64 _strtoull_l(str ptr long ptr) MSVCRT_strtoui64_l
-@ stub _strtoumax_l
+@ cdecl -ret64 _strtoumax_l(str ptr long ptr) MSVCRT_strtoui64_l
 @ cdecl _strupr(str) MSVCRT__strupr
 @ cdecl _strupr_l(str ptr) MSVCRT__strupr_l
 @ cdecl _strupr_s(str long) MSVCRT__strupr_s
@@ -2526,7 +2526,7 @@
 @ cdecl -ret64 strtoll(str ptr long) MSVCRT_strtoi64
 @ cdecl strtoul(str ptr long) MSVCRT_strtoul
 @ cdecl -ret64 strtoull(str ptr long) MSVCRT_strtoui64
-@ stub strtoumax
+@ cdecl -ret64 strtoumax(str ptr long) MSVCRT_strtoui64
 @ cdecl strxfrm(ptr str long) MSVCRT_strxfrm
 @ cdecl system(str) MSVCRT_system
 @ cdecl tan(double) MSVCRT_tan
