@@ -2716,14 +2716,14 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
     if (index >= This->local_buffer_count)
     {
         WARN("Invalid index specified\n");
-        return (ID3D10EffectConstantBuffer *)&null_local_buffer;
+        return (ID3D10EffectConstantBuffer *)&null_local_buffer.ID3D10EffectVariable_iface;
     }
 
     l = &This->local_buffers[index];
 
     TRACE("Returning buffer %p, %s.\n", l, debugstr_a(l->name));
 
-    return (ID3D10EffectConstantBuffer *)l;
+    return (ID3D10EffectConstantBuffer *)&l->ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetConstantBufferByName(ID3D10Effect *iface,
@@ -2741,13 +2741,13 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
         if (l->name && !strcmp(l->name, name))
         {
             TRACE("Returning buffer %p.\n", l);
-            return (ID3D10EffectConstantBuffer *)l;
+            return (ID3D10EffectConstantBuffer *)&l->ID3D10EffectVariable_iface;
         }
     }
 
     WARN("Invalid name specified\n");
 
-    return (ID3D10EffectConstantBuffer *)&null_local_buffer;
+    return (ID3D10EffectConstantBuffer *)&null_local_buffer.ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableByIndex(ID3D10Effect *iface, UINT index)
@@ -3529,7 +3529,7 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_variab
 
     TRACE("iface %p\n", iface);
 
-    return (ID3D10EffectConstantBuffer *)This->buffer;
+    return (ID3D10EffectConstantBuffer *)&This->buffer->ID3D10EffectVariable_iface;
 }
 
 static struct ID3D10EffectScalarVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsScalar(
