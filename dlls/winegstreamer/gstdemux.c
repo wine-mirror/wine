@@ -104,7 +104,7 @@ static const IPinVtbl GST_InputPin_Vtbl;
 static const IBaseFilterVtbl GST_Vtbl;
 static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl;
 
-static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt);
+static BOOL create_pin(GSTImpl *filter, const PIN_INFO *pin_info, const AM_MEDIA_TYPE *mt);
 static HRESULT GST_RemoveOutputPins(GSTImpl *This);
 static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface);
@@ -825,9 +825,9 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
         return;
     }
 
-    hr = GST_AddPin(This, &piOutput, &amt);
-    if (FAILED(hr)) {
-        ERR("%08x\n", hr);
+    if (!create_pin(This, &piOutput, &amt))
+    {
+        ERR("Failed to allocate memory.\n");
         return;
     }
 
@@ -1771,13 +1771,12 @@ static void free_source_pin(GSTOutPin *pin)
     gst_object_unref(pin->my_sink);
     CloseHandle(pin->caps_event);
     DeleteMediaType(pin->pmt);
-    FreeMediaType(&pin->pin.pin.mtCurrent);
     gst_segment_free(pin->segment);
     if (pin->gstpool)
         gst_object_unref(pin->gstpool);
-    if (pin->pin.pAllocator)
-        IMemAllocator_Release(pin->pin.pAllocator);
-    CoTaskMemFree(pin);
+
+    strmbase_source_cleanup(&pin->pin);
+    heap_free(pin);
 }
 
 static const IPinVtbl GST_OutputPin_Vtbl = {
@@ -1811,27 +1810,30 @@ static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     GSTOutPin_DecideAllocator,
 };
 
-static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt)
+static BOOL create_pin(GSTImpl *filter, const PIN_INFO *pin_info, const AM_MEDIA_TYPE *mt)
 {
-    HRESULT hr;
-    This->ppPins = CoTaskMemRealloc(This->ppPins, (This->cStreams + 1) * sizeof(IPin *));
+    GSTOutPin *pin, **new_array;
 
-    hr = BaseOutputPin_Construct(&GST_OutputPin_Vtbl, sizeof(GSTOutPin), piOutput, &output_BaseOutputFuncTable, &This->filter.csFilter, (IPin**)(This->ppPins + This->cStreams));
-    if (SUCCEEDED(hr)) {
-        GSTOutPin *pin = This->ppPins[This->cStreams];
-        memset((char*)pin + sizeof(pin->pin), 0, sizeof(GSTOutPin) - sizeof(pin->pin));
-        pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
-        CopyMediaType(pin->pmt, amt);
-        pin->pin.pin.pinInfo.pFilter = &This->filter.IBaseFilter_iface;
-        pin->caps_event = CreateEventW(NULL, 0, 0, NULL);
-        pin->segment = gst_segment_new();
-        This->cStreams++;
-        pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
-        SourceSeeking_Init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop, GST_ChangeCurrent, GST_ChangeRate, &This->filter.csFilter);
-        BaseFilterImpl_IncrementPinVersion(&This->filter);
-    } else
-        ERR("Failed with error %x\n", hr);
-    return hr;
+    if (!(new_array = CoTaskMemRealloc(filter->ppPins, (filter->cStreams + 1) * sizeof(*new_array))))
+        return FALSE;
+    filter->ppPins = new_array;
+
+    if (!(pin = heap_alloc_zero(sizeof(*pin))))
+        return FALSE;
+
+    strmbase_source_init(&pin->pin, &GST_OutputPin_Vtbl, pin_info,
+            &output_BaseOutputFuncTable, &filter->filter.csFilter);
+    pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
+    CopyMediaType(pin->pmt, mt);
+    pin->caps_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    pin->segment = gst_segment_new();
+    pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
+    SourceSeeking_Init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop,
+            GST_ChangeCurrent, GST_ChangeRate, &filter->filter.csFilter);
+    BaseFilterImpl_IncrementPinVersion(&filter->filter);
+
+    filter->ppPins[filter->cStreams++] = pin;
+    return TRUE;
 }
 
 static HRESULT GST_RemoveOutputPins(GSTImpl *This)

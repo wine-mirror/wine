@@ -30,6 +30,7 @@
 #include "winuser.h"
 #include "dshow.h"
 #include "strmif.h"
+#include "wine/heap.h"
 #include "wine/strmbase.h"
 
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
