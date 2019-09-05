@@ -122,7 +122,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token <integer> tInt
 %token <dbl> tDouble
 
-%type <statement> Statement SimpleStatement StatementNl StatementsNl StatementsNl_opt IfStatement Else_opt
+%type <statement> Statement SimpleStatement StatementNl StatementsNl StatementsNl_opt BodyStatements IfStatement Else_opt
 %type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression CallExpression
 %type <expression> ConcatExpression AdditiveExpression ModExpression IntdivExpression MultiplicativeExpression ExpExpression
 %type <expression> NotExpression UnaryExpression AndExpression OrExpression XorExpression EqvExpression
@@ -154,6 +154,11 @@ SourceElements
     : /* empty */
     | SourceElements StatementNl            { source_add_statement(ctx, $2); }
     | SourceElements ClassDeclaration       { source_add_class(ctx, $2); }
+
+BodyStatements
+    : /* empty */                           { $$ = NULL; }
+    | Statement                             { $$ = $1; }
+    | StatementNl BodyStatements            { $$ = link_statements($1, $2); }
 
 StatementsNl_opt
     : /* empty */                           { $$ = NULL; }
@@ -399,25 +404,30 @@ ClassDeclaration
 
 ClassBody
     : /* empty */                                 { $$ = new_class_decl(ctx); }
+    | FunctionDecl                                { $$ = add_class_function(ctx, new_class_decl(ctx), $1); CHECK_ERROR; }
     | FunctionDecl StSep ClassBody                { $$ = add_class_function(ctx, $3, $1); CHECK_ERROR; }
     /* FIXME: We should use DimDecl here to support arrays, but that conflicts with PropertyDecl. */
+    | Storage tIdentifier                         { dim_decl_t *dim_decl = new_dim_decl(ctx, $2, FALSE, NULL); CHECK_ERROR;
+                                                  $$ = add_dim_prop(ctx, new_class_decl(ctx), dim_decl, $1); CHECK_ERROR; }
     | Storage tIdentifier StSep ClassBody         { dim_decl_t *dim_decl = new_dim_decl(ctx, $2, FALSE, NULL); CHECK_ERROR;
                                                   $$ = add_dim_prop(ctx, $4, dim_decl, $1); CHECK_ERROR; }
+    | tDIM DimDecl                                { $$ = add_dim_prop(ctx, new_class_decl(ctx), $2, 0); CHECK_ERROR; }
     | tDIM DimDecl StSep ClassBody                { $$ = add_dim_prop(ctx, $4, $2, 0); CHECK_ERROR; }
+    | PropertyDecl                                { $$ = add_class_function(ctx, new_class_decl(ctx), $1); CHECK_ERROR; }
     | PropertyDecl StSep ClassBody                { $$ = add_class_function(ctx, $3, $1); CHECK_ERROR; }
 
 PropertyDecl
-    : Storage_opt tPROPERTY tGET tIdentifier ArgumentsDecl_opt StSep StatementsNl_opt tEND tPROPERTY
+    : Storage_opt tPROPERTY tGET tIdentifier ArgumentsDecl_opt StSep BodyStatements tEND tPROPERTY
                                     { $$ = new_function_decl(ctx, $4, FUNC_PROPGET, $1, $5, $7); CHECK_ERROR; }
-    | Storage_opt tPROPERTY tLET tIdentifier '(' ArgumentDecl ')' StSep StatementsNl_opt tEND tPROPERTY
+    | Storage_opt tPROPERTY tLET tIdentifier '(' ArgumentDecl ')' StSep BodyStatements tEND tPROPERTY
                                     { $$ = new_function_decl(ctx, $4, FUNC_PROPLET, $1, $6, $9); CHECK_ERROR; }
-    | Storage_opt tPROPERTY tSET tIdentifier '(' ArgumentDecl ')' StSep StatementsNl_opt tEND tPROPERTY
+    | Storage_opt tPROPERTY tSET tIdentifier '(' ArgumentDecl ')' StSep BodyStatements tEND tPROPERTY
                                     { $$ = new_function_decl(ctx, $4, FUNC_PROPSET, $1, $6, $9); CHECK_ERROR; }
 
 FunctionDecl
-    : Storage_opt tSUB Identifier ArgumentsDecl_opt StSep StatementsNl_opt tEND tSUB
+    : Storage_opt tSUB Identifier ArgumentsDecl_opt StSep BodyStatements tEND tSUB
                                     { $$ = new_function_decl(ctx, $3, FUNC_SUB, $1, $4, $6); CHECK_ERROR; }
-    | Storage_opt tFUNCTION Identifier ArgumentsDecl_opt StSep StatementsNl_opt tEND tFUNCTION
+    | Storage_opt tFUNCTION Identifier ArgumentsDecl_opt StSep BodyStatements tEND tFUNCTION
                                     { $$ = new_function_decl(ctx, $3, FUNC_FUNCTION, $1, $4, $6); CHECK_ERROR; }
 
 Storage_opt
