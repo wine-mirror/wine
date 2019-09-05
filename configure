@@ -9318,13 +9318,18 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 void myfunc() {}
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_c_dll_gnuelf="yes"
+  ac_cv_cflags__fPIC__shared__Wl__Bsymbolic=yes
 else
-  ac_cv_c_dll_gnuelf="no"
+  ac_cv_cflags__fPIC__shared__Wl__Bsymbolic=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
+if test "x$ac_cv_cflags__fPIC__shared__Wl__Bsymbolic" = xyes; then :
+  ac_cv_c_dll_gnuelf="yes"
+else
+  ac_cv_c_dll_gnuelf="no"
+fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_dll_gnuelf" >&5
 $as_echo "$ac_cv_c_dll_gnuelf" >&6; }
@@ -9667,13 +9672,18 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 void myfunc() {}
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_c_dll_unixware="yes"
+  ac_cv_cflags__fPIC__Wl__G__h_conftest_so_1_0__B_symbolic=yes
 else
-  ac_cv_c_dll_unixware="no"
+  ac_cv_cflags__fPIC__Wl__G__h_conftest_so_1_0__B_symbolic=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
+if test "x$ac_cv_cflags__fPIC__Wl__G__h_conftest_so_1_0__B_symbolic" = xyes; then :
+  ac_cv_c_dll_unixware="yes"
+else
+  ac_cv_c_dll_unixware="no"
+fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_dll_unixware" >&5
 $as_echo "$ac_cv_c_dll_unixware" >&6; }

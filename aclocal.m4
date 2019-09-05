@@ -178,10 +178,14 @@ dnl
 dnl Usage: WINE_TRY_SHLIB_FLAGS(flags,[action-if-yes,[action-if-no]])
 dnl
 AC_DEFUN([WINE_TRY_SHLIB_FLAGS],
-[ac_wine_try_cflags_saved=$CFLAGS
+[AS_VAR_PUSHDEF([ac_var], ac_cv_cflags_[[$1]])dnl
+ac_wine_try_cflags_saved=$CFLAGS
 CFLAGS="$CFLAGS $1"
-AC_LINK_IFELSE([AC_LANG_SOURCE([void myfunc() {}])],[$2],[$3])
-CFLAGS=$ac_wine_try_cflags_saved])
+AC_LINK_IFELSE([AC_LANG_SOURCE([[void myfunc() {}]])],
+               [AS_VAR_SET(ac_var,yes)], [AS_VAR_SET(ac_var,no)])
+CFLAGS=$ac_wine_try_cflags_saved
+AS_VAR_IF([ac_var],[yes], [$2], [$3])dnl
+AS_VAR_POPDEF([ac_var])])
 
 dnl **** Check whether we need to define a symbol on the compiler command line ****
 dnl
