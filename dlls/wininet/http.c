@@ -43,6 +43,7 @@
 #include <time.h>
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "windef.h"
 #include "winbase.h"
