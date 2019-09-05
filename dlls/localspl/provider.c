@@ -1475,9 +1475,7 @@ static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
 
     mi2w = (LPMONITOR_INFO_2W) pMonitors;
     TRACE("(%s, %d, %p): %s %s %s\n", debugstr_w(pName), Level, pMonitors,
-            debugstr_w(mi2w ? mi2w->pName : NULL),
-            debugstr_w(mi2w ? mi2w->pEnvironment : NULL),
-            debugstr_w(mi2w ? mi2w->pDLLName : NULL));
+        debugstr_w(mi2w->pName), debugstr_w(mi2w->pEnvironment), debugstr_w(mi2w->pDLLName));
 
     if (copy_servername_from_name(pName, NULL)) {
         FIXME("server %s not supported\n", debugstr_w(pName));
