@@ -39,6 +39,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ws2tcpip.h"
+#include "windns.h"
 #include "iphlpapi.h"
 #include "iprtrmib.h"
 #include "netioapi.h"
@@ -98,6 +99,7 @@ static DWORD (WINAPI *pConvertInterfaceLuidToNameA)(const NET_LUID*,char*,SIZE_T
 static DWORD (WINAPI *pConvertInterfaceNameToLuidA)(const char*,NET_LUID*);
 static DWORD (WINAPI *pConvertInterfaceNameToLuidW)(const WCHAR*,NET_LUID*);
 static DWORD (WINAPI *pConvertLengthToIpv4Mask)(ULONG,ULONG*);
+static DWORD (WINAPI *pParseNetworkString)(const WCHAR*,DWORD,NET_ADDRESS_INFO*,USHORT*,BYTE*);
 
 static PCHAR (WINAPI *pif_indextoname)(NET_IFINDEX,PCHAR);
 static NET_IFINDEX (WINAPI *pif_nametoindex)(const char*);
@@ -153,6 +155,7 @@ static void loadIPHlpApi(void)
     pConvertInterfaceNameToLuidA = (void *)GetProcAddress(hLibrary, "ConvertInterfaceNameToLuidA");
     pConvertInterfaceNameToLuidW = (void *)GetProcAddress(hLibrary, "ConvertInterfaceNameToLuidW");
     pConvertLengthToIpv4Mask = (void *)GetProcAddress(hLibrary, "ConvertLengthToIpv4Mask");
+    pParseNetworkString = (void *)GetProcAddress(hLibrary, "ParseNetworkString");
     pif_indextoname = (void *)GetProcAddress(hLibrary, "if_indextoname");
     pif_nametoindex = (void *)GetProcAddress(hLibrary, "if_nametoindex");
   }
@@ -2271,6 +2274,113 @@ static void test_GetUdp6Table(void)
   }
 }
 
+static void test_ParseNetworkString(void)
+{
+    struct
+    {
+        char str[32];
+        IN_ADDR addr;
+        DWORD ret;
+    }
+    ipv4_address_tests[] =
+    {
+        {"1.2.3.4",               {{{1, 2, 3, 4}}}},
+        {"1.2.3.4a",              {}, ERROR_INVALID_PARAMETER},
+        {"1.2.3.0x4a",            {}, ERROR_INVALID_PARAMETER},
+        {"1.2.3",                 {}, ERROR_INVALID_PARAMETER},
+        {"a1.2.3.4",              {}, ERROR_INVALID_PARAMETER},
+        {"0xdeadbeef",            {}, ERROR_INVALID_PARAMETER},
+        {"1.2.3.4:22",            {}, ERROR_INVALID_PARAMETER},
+        {"::1",                   {}, ERROR_INVALID_PARAMETER},
+        {"winehq.org",            {}, ERROR_INVALID_PARAMETER},
+    };
+    struct
+    {
+        char str[32];
+        IN_ADDR addr;
+        DWORD port;
+        DWORD ret;
+    }
+    ipv4_service_tests[] =
+    {
+        {"1.2.3.4:22",            {{{1, 2, 3, 4}}}, 22},
+        {"winehq.org:22",         {}, 0, ERROR_INVALID_PARAMETER},
+        {"1.2.3.4",               {}, 0, ERROR_INVALID_PARAMETER},
+        {"1.2.3.4:0",             {}, 0, ERROR_INVALID_PARAMETER},
+        {"1.2.3.4:65536",         {}, 0, ERROR_INVALID_PARAMETER},
+    };
+    WCHAR wstr[IP6_ADDRESS_STRING_BUFFER_LENGTH] = {'1','2','7','.','0','.','0','.','1',':','2','2',0};
+    NET_ADDRESS_INFO info;
+    USHORT port;
+    BYTE prefix_len;
+    DWORD ret;
+    int i;
+
+    if (!pParseNetworkString)
+    {
+        skip("ParseNetworkString not available\n");
+        return;
+    }
+
+    ret = pParseNetworkString(wstr, -1, NULL, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "expected success, got %d\n", ret);
+
+    ret = pParseNetworkString(NULL, NET_STRING_IPV4_SERVICE, &info, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+
+    for (i = 0; i < ARRAY_SIZE(ipv4_address_tests); i++)
+    {
+        MultiByteToWideChar(CP_ACP, 0, ipv4_address_tests[i].str, sizeof(ipv4_address_tests[i].str),
+                            wstr, sizeof(wstr));
+        memset(&info, 0x99, sizeof(info));
+        port = 0x9999;
+        prefix_len = 0x99;
+
+        ret = pParseNetworkString(wstr, NET_STRING_IPV4_ADDRESS, &info, &port, &prefix_len);
+
+        ok(ret == ipv4_address_tests[i].ret,
+           "%s gave error %d\n", ipv4_address_tests[i].str, ret);
+        ok(info.Format == ret ? NET_ADDRESS_FORMAT_UNSPECIFIED : NET_ADDRESS_IPV4,
+           "%s gave format %d\n", ipv4_address_tests[i].str, info.Format);
+        ok(info.Ipv4Address.sin_addr.S_un.S_addr == (ret ? 0x99999999 : ipv4_address_tests[i].addr.S_un.S_addr),
+           "%s gave address %d.%d.%d.%d\n", ipv4_address_tests[i].str,
+           info.Ipv4Address.sin_addr.S_un.S_un_b.s_b1, info.Ipv4Address.sin_addr.S_un.S_un_b.s_b2,
+           info.Ipv4Address.sin_addr.S_un.S_un_b.s_b3, info.Ipv4Address.sin_addr.S_un.S_un_b.s_b4);
+        ok(info.Ipv4Address.sin_port == (ret ? 0x9999 : 0),
+           "%s gave port %d\n", ipv4_service_tests[i].str, ntohs(info.Ipv4Address.sin_port));
+        ok(port == (ret ? 0x9999 : 0),
+           "%s gave port %d\n", ipv4_service_tests[i].str, port);
+        ok(prefix_len == (ret ? 0x99 : 255),
+           "%s gave prefix length %d\n", ipv4_service_tests[i].str, prefix_len);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(ipv4_service_tests); i++)
+    {
+        MultiByteToWideChar(CP_ACP, 0, ipv4_service_tests[i].str, sizeof(ipv4_service_tests[i].str),
+                            wstr, sizeof(wstr));
+        memset(&info, 0x99, sizeof(info));
+        port = 0x9999;
+        prefix_len = 0x99;
+
+        ret = pParseNetworkString(wstr, NET_STRING_IPV4_SERVICE, &info, &port, &prefix_len);
+
+        ok(ret == ipv4_service_tests[i].ret,
+           "%s gave error %d\n", ipv4_service_tests[i].str, ret);
+        ok(info.Format == ret ? NET_ADDRESS_FORMAT_UNSPECIFIED : NET_ADDRESS_IPV4,
+           "%s gave format %d\n", ipv4_address_tests[i].str, info.Format);
+        ok(info.Ipv4Address.sin_addr.S_un.S_addr == (ret ? 0x99999999 : ipv4_service_tests[i].addr.S_un.S_addr),
+           "%s gave address %d.%d.%d.%d\n", ipv4_service_tests[i].str,
+           info.Ipv4Address.sin_addr.S_un.S_un_b.s_b1, info.Ipv4Address.sin_addr.S_un.S_un_b.s_b2,
+           info.Ipv4Address.sin_addr.S_un.S_un_b.s_b3, info.Ipv4Address.sin_addr.S_un.S_un_b.s_b4);
+        ok(ntohs(info.Ipv4Address.sin_port) == (ret ? 0x9999 : ipv4_service_tests[i].port),
+           "%s gave port %d\n", ipv4_service_tests[i].str, ntohs(info.Ipv4Address.sin_port));
+        ok(port == (ret ? 0x9999 : ipv4_service_tests[i].port),
+           "%s gave port %d\n", ipv4_service_tests[i].str, port);
+        ok(prefix_len == (ret ? 0x99 : 255),
+           "%s gave prefix length %d\n", ipv4_service_tests[i].str, prefix_len);
+    }
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -2300,6 +2410,7 @@ START_TEST(iphlpapi)
     test_GetUnicastIpAddressTable();
     test_ConvertLengthToIpv4Mask();
     test_GetUdp6Table();
+    test_ParseNetworkString();
     freeIPHlpApi();
   }
 }
