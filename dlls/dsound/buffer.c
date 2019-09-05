@@ -695,6 +695,23 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetFrequency(IDirectSoundBuffer8 *i
 	return DS_OK;
 }
 
+static const char* dump_DSFX_guid(const DSEFFECTDESC *desc)
+{
+#define FE(guid) if (IsEqualGUID(&guid, &desc->guidDSFXClass)) return #guid
+    FE(GUID_DSFX_STANDARD_GARGLE);
+    FE(GUID_DSFX_STANDARD_CHORUS);
+    FE(GUID_DSFX_STANDARD_FLANGER);
+    FE(GUID_DSFX_STANDARD_ECHO);
+    FE(GUID_DSFX_STANDARD_DISTORTION);
+    FE(GUID_DSFX_STANDARD_COMPRESSOR);
+    FE(GUID_DSFX_STANDARD_PARAMEQ);
+    FE(GUID_DSFX_STANDARD_I3DL2REVERB);
+    FE(GUID_DSFX_WAVES_REVERB);
+#undef FE
+
+    return debugstr_guid(&desc->guidDSFXClass);
+}
+
 static HRESULT WINAPI IDirectSoundBufferImpl_SetFX(IDirectSoundBuffer8 *iface, DWORD dwEffectsCount,
         LPDSEFFECTDESC pDSFXDesc, DWORD *pdwResultCodes)
 {
@@ -767,6 +784,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFX(IDirectSoundBuffer8 *iface, D
 	dmt.pbFormat = (BYTE*)&wfx;
 
 	for (u = 0; u < dwEffectsCount; u++) {
+		TRACE("%d: 0x%08x, %s\n", u, pDSFXDesc[u].dwFlags, dump_DSFX_guid(&pDSFXDesc[u]));
+
 		hr2 = CoCreateInstance(&pDSFXDesc[u].guidDSFXClass, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (LPVOID*)&filters[u].obj);
 
 		if (SUCCEEDED(hr2)) {
