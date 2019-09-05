@@ -175,12 +175,16 @@ struct audio_stream
 {
     IAMMediaStream IAMMediaStream_iface;
     IAudioMediaStream IAudioMediaStream_iface;
+    IMemInputPin IMemInputPin_iface;
     LONG ref;
+
     IMultiMediaStream* parent;
     MSPID purpose_id;
     STREAM_TYPE stream_type;
     AudioMediaStreamInputPin *input_pin;
     CRITICAL_SECTION critical_section;
+
+    IMemAllocator *allocator;
 };
 
 static inline struct audio_stream *impl_from_IAMMediaStream(IAMMediaStream *iface)
@@ -219,7 +223,7 @@ static HRESULT WINAPI AudioMediaStreamImpl_IAMMediaStream_QueryInterface(IAMMedi
     else if (IsEqualGUID(riid, &IID_IMemInputPin))
     {
         IAMMediaStream_AddRef(iface);
-        *ret_iface = &This->input_pin->pin.IMemInputPin_iface;
+        *ret_iface = &This->IMemInputPin_iface;
         return S_OK;
     }
 
@@ -794,6 +798,101 @@ static const BaseInputPinFuncTable AudioMediaStreamInputPin_FuncTable =
     AudioMediaStreamInputPin_Receive,
 };
 
+static inline struct audio_stream *impl_from_IMemInputPin(IMemInputPin *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_stream, IMemInputPin_iface);
+}
+
+static HRESULT WINAPI audio_meminput_QueryInterface(IMemInputPin *iface, REFIID iid, void **out)
+{
+    struct audio_stream *stream = impl_from_IMemInputPin(iface);
+    return IAMMediaStream_QueryInterface(&stream->IAMMediaStream_iface, iid, out);
+}
+
+static ULONG WINAPI audio_meminput_AddRef(IMemInputPin *iface)
+{
+    struct audio_stream *stream = impl_from_IMemInputPin(iface);
+    return IAMMediaStream_AddRef(&stream->IAMMediaStream_iface);
+}
+
+static ULONG WINAPI audio_meminput_Release(IMemInputPin *iface)
+{
+    struct audio_stream *stream = impl_from_IMemInputPin(iface);
+    return IAMMediaStream_Release(&stream->IAMMediaStream_iface);
+}
+
+static HRESULT WINAPI audio_meminput_GetAllocator(IMemInputPin *iface, IMemAllocator **allocator)
+{
+    struct audio_stream *stream = impl_from_IMemInputPin(iface);
+
+    TRACE("stream %p, allocator %p.\n", stream, allocator);
+
+    if (stream->allocator)
+    {
+        IMemAllocator_AddRef(*allocator = stream->allocator);
+        return S_OK;
+    }
+
+    *allocator = NULL;
+    return VFW_E_NO_ALLOCATOR;
+}
+
+static HRESULT WINAPI audio_meminput_NotifyAllocator(IMemInputPin *iface, IMemAllocator *allocator, BOOL readonly)
+{
+    struct audio_stream *stream = impl_from_IMemInputPin(iface);
+
+    TRACE("stream %p, allocator %p, readonly %d.\n", stream, allocator, readonly);
+
+    if (!allocator)
+        return E_POINTER;
+
+    if (allocator)
+        IMemAllocator_AddRef(allocator);
+    if (stream->allocator)
+        IMemAllocator_Release(stream->allocator);
+    stream->allocator = allocator;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI audio_meminput_GetAllocatorRequirements(IMemInputPin *iface, ALLOCATOR_PROPERTIES *props)
+{
+    TRACE("iface %p, props %p.\n", iface, props);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_meminput_Receive(IMemInputPin *iface, IMediaSample *sample)
+{
+    FIXME("iface %p, sample %p, stub!\n", iface, sample);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_meminput_ReceiveMultiple(IMemInputPin *iface,
+        IMediaSample **samples, LONG count, LONG *processed)
+{
+    FIXME("iface %p, samples %p, count %u, processed %p, stub!\n", iface, samples, count, processed);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_meminput_ReceiveCanBlock(IMemInputPin *iface)
+{
+    TRACE("iface %p.\n", iface);
+    return S_OK;
+}
+
+static const IMemInputPinVtbl audio_meminput_vtbl =
+{
+    audio_meminput_QueryInterface,
+    audio_meminput_AddRef,
+    audio_meminput_Release,
+    audio_meminput_GetAllocator,
+    audio_meminput_NotifyAllocator,
+    audio_meminput_GetAllocatorRequirements,
+    audio_meminput_Receive,
+    audio_meminput_ReceiveMultiple,
+    audio_meminput_ReceiveCanBlock,
+};
+
 HRESULT audiomediastream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
         IUnknown *stream_object, STREAM_TYPE stream_type, IAMMediaStream **media_stream)
 {
@@ -812,6 +911,7 @@ HRESULT audiomediastream_create(IMultiMediaStream *parent, const MSPID *purpose_
 
     object->IAMMediaStream_iface.lpVtbl = &AudioMediaStreamImpl_IAMMediaStream_Vtbl;
     object->IAudioMediaStream_iface.lpVtbl = &AudioMediaStreamImpl_IAudioMediaStream_Vtbl;
+    object->IMemInputPin_iface.lpVtbl = &audio_meminput_vtbl;
     object->ref = 1;
 
     InitializeCriticalSection(&object->critical_section);
