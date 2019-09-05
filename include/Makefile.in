@@ -323,6 +323,7 @@ SOURCES = \
 	inspectable.idl \
 	interactioncontext.h \
 	intshcut.h \
+	ip2string.h \
 	ipexport.h \
 	iphlpapi.h \
 	ipifcons.h \
