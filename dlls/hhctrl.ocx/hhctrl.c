@@ -99,15 +99,12 @@ static const char *command_to_string(UINT command)
 
 static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD buflen, WCHAR **index, WCHAR **window)
 {
-    const WCHAR *extra;
-    WCHAR chm_file[MAX_PATH];
-
     static const WCHAR helpW[] = {'\\','h','e','l','p','\\',0};
     static const WCHAR delimW[] = {':',':',0};
     static const WCHAR delim2W[] = {'>',0};
 
     DWORD env_len;
-    WCHAR *filename;
+    WCHAR *filename, *extra;
 
     env_filename = skip_schema(env_filename);
 
@@ -128,9 +125,7 @@ static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD b
     extra = wcsstr(filename, delim2W);
     if (extra)
     {
-        memcpy(chm_file, filename, (extra-filename)*sizeof(WCHAR));
-        chm_file[extra-filename] = 0;
-        filename = chm_file;
+        *extra = 0;
         if (window)
             *window = strdupW(extra+1);
     }
@@ -138,10 +133,7 @@ static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD b
     extra = wcsstr(filename, delimW);
     if (extra)
     {
-        if (filename != chm_file)
-            memcpy(chm_file, filename, (extra-filename)*sizeof(WCHAR));
-        chm_file[extra-filename] = 0;
-        filename = chm_file;
+        *extra = 0;
         if (index)
             *index = strdupW(extra+2);
     }
