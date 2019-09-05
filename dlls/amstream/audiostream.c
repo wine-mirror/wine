@@ -25,6 +25,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
+static const WCHAR sink_id[] = {'I','{','A','3','5','F','F','5','6','B',
+        '-','9','F','D','A','-','1','1','D','0','-','8','F','D','F',
+        '-','0','0','C','0','4','F','D','9','1','8','9','D','}',0};
+
 typedef struct {
     IAudioStreamSample IAudioStreamSample_iface;
     LONG ref;
@@ -164,27 +168,23 @@ static HRESULT audiostreamsample_create(IAudioMediaStream *parent, IAudioData *a
     return S_OK;
 }
 
-struct AudioMediaStreamImpl;
-
-typedef struct {
-    BaseInputPin pin;
-    struct audio_stream *parent;
-} AudioMediaStreamInputPin;
-
 struct audio_stream
 {
     IAMMediaStream IAMMediaStream_iface;
     IAudioMediaStream IAudioMediaStream_iface;
     IMemInputPin IMemInputPin_iface;
+    IPin IPin_iface;
     LONG ref;
 
     IMultiMediaStream* parent;
     MSPID purpose_id;
     STREAM_TYPE stream_type;
-    AudioMediaStreamInputPin *input_pin;
-    CRITICAL_SECTION critical_section;
+    CRITICAL_SECTION cs;
+    IMediaStreamFilter *filter;
 
+    IPin *peer;
     IMemAllocator *allocator;
+    AM_MEDIA_TYPE mt;
 };
 
 static inline struct audio_stream *impl_from_IAMMediaStream(IAMMediaStream *iface)
@@ -217,7 +217,7 @@ static HRESULT WINAPI AudioMediaStreamImpl_IAMMediaStream_QueryInterface(IAMMedi
     else if (IsEqualGUID(riid, &IID_IPin))
     {
         IAMMediaStream_AddRef(iface);
-        *ret_iface = &This->input_pin->pin.pin.IPin_iface;
+        *ret_iface = &This->IPin_iface;
         return S_OK;
     }
     else if (IsEqualGUID(riid, &IID_IMemInputPin))
@@ -250,8 +250,7 @@ static ULONG WINAPI AudioMediaStreamImpl_IAMMediaStream_Release(IAMMediaStream *
 
     if (!ref)
     {
-        BaseInputPin_Destroy((BaseInputPin *)This->input_pin);
-        DeleteCriticalSection(&This->critical_section);
+        DeleteCriticalSection(&This->cs);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -358,13 +357,13 @@ static HRESULT WINAPI AudioMediaStreamImpl_IAMMediaStream_JoinAMMultiMediaStream
     return S_FALSE;
 }
 
-static HRESULT WINAPI AudioMediaStreamImpl_IAMMediaStream_JoinFilter(IAMMediaStream *iface, IMediaStreamFilter *media_stream_filter)
+static HRESULT WINAPI AudioMediaStreamImpl_IAMMediaStream_JoinFilter(IAMMediaStream *iface, IMediaStreamFilter *filter)
 {
-    struct audio_stream *This = impl_from_IAMMediaStream(iface);
+    struct audio_stream *stream = impl_from_IAMMediaStream(iface);
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, media_stream_filter);
+    TRACE("stream %p, filter %p.\n", stream, filter);
 
-    This->input_pin->pin.pin.pinInfo.pFilter = (IBaseFilter *)media_stream_filter;
+    stream->filter = filter;
 
     return S_OK;
 }
@@ -675,31 +674,176 @@ static const IEnumMediaTypesVtbl enum_media_types_vtbl =
     enum_media_types_Clone,
 };
 
-static inline AudioMediaStreamInputPin *impl_from_AudioMediaStreamInputPin_IPin(IPin *iface)
+static inline struct audio_stream *impl_from_IPin(IPin *iface)
 {
-    return CONTAINING_RECORD(iface, AudioMediaStreamInputPin, pin.pin.IPin_iface);
+    return CONTAINING_RECORD(iface, struct audio_stream, IPin_iface);
 }
 
-/*** IUnknown methods ***/
-static HRESULT WINAPI AudioMediaStreamInputPin_IPin_QueryInterface(IPin *iface, REFIID riid, void **ret_iface)
+static HRESULT WINAPI audio_sink_QueryInterface(IPin *iface, REFIID iid, void **out)
 {
-    AudioMediaStreamInputPin *This = impl_from_AudioMediaStreamInputPin_IPin(iface);
-
-    return IAMMediaStream_QueryInterface(&This->parent->IAMMediaStream_iface, riid, ret_iface);
+    struct audio_stream *stream = impl_from_IPin(iface);
+    return IAMMediaStream_QueryInterface(&stream->IAMMediaStream_iface, iid, out);
 }
 
-static ULONG WINAPI AudioMediaStreamInputPin_IPin_AddRef(IPin *iface)
+static ULONG WINAPI audio_sink_AddRef(IPin *iface)
 {
-    AudioMediaStreamInputPin *This = impl_from_AudioMediaStreamInputPin_IPin(iface);
-
-    return IAMMediaStream_AddRef(&This->parent->IAMMediaStream_iface);
+    struct audio_stream *stream = impl_from_IPin(iface);
+    return IAMMediaStream_AddRef(&stream->IAMMediaStream_iface);
 }
 
-static ULONG WINAPI AudioMediaStreamInputPin_IPin_Release(IPin *iface)
+static ULONG WINAPI audio_sink_Release(IPin *iface)
 {
-    AudioMediaStreamInputPin *This = impl_from_AudioMediaStreamInputPin_IPin(iface);
+    struct audio_stream *stream = impl_from_IPin(iface);
+    return IAMMediaStream_Release(&stream->IAMMediaStream_iface);
+}
 
-    return IAMMediaStream_Release(&This->parent->IAMMediaStream_iface);
+static HRESULT WINAPI audio_sink_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    WARN("iface %p, peer %p, mt %p, unexpected call!\n", iface, peer, mt);
+    return E_UNEXPECTED;
+}
+
+static HRESULT WINAPI audio_sink_ReceiveConnection(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    struct audio_stream *stream = impl_from_IPin(iface);
+    PIN_DIRECTION dir;
+
+    TRACE("stream %p, peer %p, mt %p.\n", stream, peer, mt);
+
+    EnterCriticalSection(&stream->cs);
+
+    if (stream->peer)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return VFW_E_ALREADY_CONNECTED;
+    }
+
+    IPin_QueryDirection(peer, &dir);
+    if (dir != PINDIR_OUTPUT)
+    {
+        WARN("Rejecting connection from input pin.\n");
+        LeaveCriticalSection(&stream->cs);
+        return VFW_E_INVALID_DIRECTION;
+    }
+
+    CopyMediaType(&stream->mt, mt);
+    IPin_AddRef(stream->peer = peer);
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI audio_sink_Disconnect(IPin *iface)
+{
+    struct audio_stream *stream = impl_from_IPin(iface);
+
+    TRACE("stream %p.\n", stream);
+
+    EnterCriticalSection(&stream->cs);
+
+    if (!stream->peer)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return S_FALSE;
+    }
+
+    IPin_Release(stream->peer);
+    stream->peer = NULL;
+    FreeMediaType(&stream->mt);
+    memset(&stream->mt, 0, sizeof(AM_MEDIA_TYPE));
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI audio_sink_ConnectedTo(IPin *iface, IPin **peer)
+{
+    struct audio_stream *stream = impl_from_IPin(iface);
+    HRESULT hr;
+
+    TRACE("stream %p, peer %p.\n", stream, peer);
+
+    EnterCriticalSection(&stream->cs);
+
+    if (stream->peer)
+    {
+        IPin_AddRef(*peer = stream->peer);
+        hr = S_OK;
+    }
+    else
+    {
+        *peer = NULL;
+        hr = VFW_E_NOT_CONNECTED;
+    }
+
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI audio_sink_ConnectionMediaType(IPin *iface, AM_MEDIA_TYPE *mt)
+{
+    struct audio_stream *stream = impl_from_IPin(iface);
+    HRESULT hr;
+
+    TRACE("stream %p, mt %p.\n", stream, mt);
+
+    EnterCriticalSection(&stream->cs);
+
+    if (stream->peer)
+    {
+        CopyMediaType(mt, &stream->mt);
+        hr = S_OK;
+    }
+    else
+    {
+        memset(mt, 0, sizeof(AM_MEDIA_TYPE));
+        hr = VFW_E_NOT_CONNECTED;
+    }
+
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI audio_sink_QueryPinInfo(IPin *iface, PIN_INFO *info)
+{
+    struct audio_stream *stream = impl_from_IPin(iface);
+
+    TRACE("stream %p, info %p.\n", stream, info);
+
+    IBaseFilter_AddRef(info->pFilter = (IBaseFilter *)stream->filter);
+    info->dir = PINDIR_INPUT;
+    lstrcpyW(info->achName, sink_id);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI audio_sink_QueryDirection(IPin *iface, PIN_DIRECTION *dir)
+{
+    TRACE("iface %p, dir %p.\n", iface, dir);
+    *dir = PINDIR_INPUT;
+    return S_OK;
+}
+
+static HRESULT WINAPI audio_sink_QueryId(IPin *iface, WCHAR **id)
+{
+    TRACE("iface %p, id %p.\n", iface, id);
+
+    if (!(*id = CoTaskMemAlloc(sizeof(sink_id))))
+        return E_OUTOFMEMORY;
+
+    lstrcpyW(*id, sink_id);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI audio_sink_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *mt)
+{
+    TRACE("iface %p, mt %p.\n", iface, mt);
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_sink_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_media_types)
@@ -722,80 +866,57 @@ static HRESULT WINAPI audio_sink_EnumMediaTypes(IPin *iface, IEnumMediaTypes **e
     return S_OK;
 }
 
-static const IPinVtbl AudioMediaStreamInputPin_IPin_Vtbl =
+static HRESULT WINAPI audio_sink_QueryInternalConnections(IPin *iface, IPin **pins, ULONG *count)
 {
-    AudioMediaStreamInputPin_IPin_QueryInterface,
-    AudioMediaStreamInputPin_IPin_AddRef,
-    AudioMediaStreamInputPin_IPin_Release,
-    BaseInputPinImpl_Connect,
-    BaseInputPinImpl_ReceiveConnection,
-    BasePinImpl_Disconnect,
-    BasePinImpl_ConnectedTo,
-    BasePinImpl_ConnectionMediaType,
-    BasePinImpl_QueryPinInfo,
-    BasePinImpl_QueryDirection,
-    BasePinImpl_QueryId,
-    BasePinImpl_QueryAccept,
-    audio_sink_EnumMediaTypes,
-    BasePinImpl_QueryInternalConnections,
-    BaseInputPinImpl_EndOfStream,
-    BaseInputPinImpl_BeginFlush,
-    BaseInputPinImpl_EndFlush,
-    BaseInputPinImpl_NewSegment,
-};
-
-static HRESULT WINAPI AudioMediaStreamInputPin_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *media_type)
-{
-    AudioMediaStreamInputPin *This = impl_from_AudioMediaStreamInputPin_IPin(&base->IPin_iface);
-
-    TRACE("(%p)->(%p)\n", This, media_type);
-
-    if (IsEqualGUID(&media_type->majortype, &MEDIATYPE_Audio))
-    {
-        if (IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_PCM))
-        {
-            TRACE("Audio sub-type %s matches\n", debugstr_guid(&media_type->subtype));
-            return S_OK;
-        }
-    }
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioMediaStreamInputPin_GetMediaType(BasePin *base, int index, AM_MEDIA_TYPE *media_type)
-{
-    AudioMediaStreamInputPin *This = impl_from_AudioMediaStreamInputPin_IPin(&base->IPin_iface);
-
-    TRACE("(%p)->(%d,%p)\n", This, index, media_type);
-
-    /* FIXME: Reset structure as we only fill majortype and minortype for now */
-    ZeroMemory(media_type, sizeof(*media_type));
-
-    if (index)
-        return S_FALSE;
-
-    media_type->majortype = MEDIATYPE_Audio;
-    media_type->subtype = MEDIASUBTYPE_PCM;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AudioMediaStreamInputPin_Receive(BaseInputPin *base, IMediaSample *sample)
-{
-    AudioMediaStreamInputPin *This = impl_from_AudioMediaStreamInputPin_IPin(&base->pin.IPin_iface);
-
-    FIXME("(%p)->(%p) stub!\n", This, sample);
-
+    TRACE("iface %p, pins %p, count %p.\n", iface, pins, count);
     return E_NOTIMPL;
 }
 
-static const BaseInputPinFuncTable AudioMediaStreamInputPin_FuncTable =
+static HRESULT WINAPI audio_sink_EndOfStream(IPin *iface)
 {
-    {
-        AudioMediaStreamInputPin_CheckMediaType,
-        AudioMediaStreamInputPin_GetMediaType,
-    },
-    AudioMediaStreamInputPin_Receive,
+    FIXME("iface %p, stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_sink_BeginFlush(IPin *iface)
+{
+    FIXME("iface %p, stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_sink_EndFlush(IPin *iface)
+{
+    FIXME("iface %p, stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_sink_NewSegment(IPin *iface, REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
+{
+    FIXME("iface %p, start %s, stop %s, rate %0.16e, stub!\n",
+            iface, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop), rate);
+    return E_NOTIMPL;
+}
+
+static const IPinVtbl audio_sink_vtbl =
+{
+    audio_sink_QueryInterface,
+    audio_sink_AddRef,
+    audio_sink_Release,
+    audio_sink_Connect,
+    audio_sink_ReceiveConnection,
+    audio_sink_Disconnect,
+    audio_sink_ConnectedTo,
+    audio_sink_ConnectionMediaType,
+    audio_sink_QueryPinInfo,
+    audio_sink_QueryDirection,
+    audio_sink_QueryId,
+    audio_sink_QueryAccept,
+    audio_sink_EnumMediaTypes,
+    audio_sink_QueryInternalConnections,
+    audio_sink_EndOfStream,
+    audio_sink_BeginFlush,
+    audio_sink_EndFlush,
+    audio_sink_NewSegment,
 };
 
 static inline struct audio_stream *impl_from_IMemInputPin(IMemInputPin *iface)
@@ -897,8 +1018,6 @@ HRESULT audiomediastream_create(IMultiMediaStream *parent, const MSPID *purpose_
         IUnknown *stream_object, STREAM_TYPE stream_type, IAMMediaStream **media_stream)
 {
     struct audio_stream *object;
-    PIN_INFO pin_info;
-    HRESULT hr;
 
     TRACE("(%p,%s,%p,%p)\n", parent, debugstr_guid(purpose_id), stream_object, media_stream);
 
@@ -912,22 +1031,10 @@ HRESULT audiomediastream_create(IMultiMediaStream *parent, const MSPID *purpose_
     object->IAMMediaStream_iface.lpVtbl = &AudioMediaStreamImpl_IAMMediaStream_Vtbl;
     object->IAudioMediaStream_iface.lpVtbl = &AudioMediaStreamImpl_IAudioMediaStream_Vtbl;
     object->IMemInputPin_iface.lpVtbl = &audio_meminput_vtbl;
+    object->IPin_iface.lpVtbl = &audio_sink_vtbl;
     object->ref = 1;
 
-    InitializeCriticalSection(&object->critical_section);
-
-    pin_info.pFilter = NULL;
-    pin_info.dir = PINDIR_INPUT;
-    pin_info.achName[0] = 'I';
-    StringFromGUID2(purpose_id, pin_info.achName + 1, MAX_PIN_NAME - 1);
-    hr = BaseInputPin_Construct(&AudioMediaStreamInputPin_IPin_Vtbl,
-        sizeof(AudioMediaStreamInputPin), &pin_info, &AudioMediaStreamInputPin_FuncTable,
-        &object->critical_section, NULL, (IPin **)&object->input_pin);
-    if (FAILED(hr))
-        goto out_object;
-
-    object->input_pin->parent = object;
-
+    InitializeCriticalSection(&object->cs);
     object->parent = parent;
     object->purpose_id = *purpose_id;
     object->stream_type = stream_type;
@@ -935,9 +1042,4 @@ HRESULT audiomediastream_create(IMultiMediaStream *parent, const MSPID *purpose_
     *media_stream = &object->IAMMediaStream_iface;
 
     return S_OK;
-
-out_object:
-    HeapFree(GetProcessHeap(), 0, object);
-
-    return hr;
 }
