@@ -48,19 +48,10 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 
 enum media_engine_mode
 {
-    MEDIA_ENGINE_INVIAL,
+    MEDIA_ENGINE_INVALID,
     MEDIA_ENGINE_AUDIO_MODE,
     MEDIA_ENGINE_RENDERING_MODE,
     MEDIA_ENGINE_FRAME_SERVER_MODE,
-};
-
-struct media_engine_attributes
-{
-    IMFMediaEngineNotify *callback;
-    HWND playback_hwnd;
-    DXGI_FORMAT output_format;
-    IMFDXGIDeviceManager *dxgi_manager;
-    enum media_engine_mode mode;
 };
 
 struct media_engine
@@ -68,7 +59,11 @@ struct media_engine
     IMFMediaEngine IMFMediaEngine_iface;
     LONG refcount;
     DWORD flags;
-    struct media_engine_attributes attributes;
+    IMFMediaEngineNotify *callback;
+    UINT64 playback_hwnd;
+    DXGI_FORMAT output_format;
+    IMFDXGIDeviceManager *dxgi_manager;
+    enum media_engine_mode mode;
 };
 
 static inline struct media_engine *impl_from_IMFMediaEngine(IMFMediaEngine *iface)
@@ -103,12 +98,13 @@ static ULONG WINAPI media_engine_AddRef(IMFMediaEngine *iface)
     return refcount;
 }
 
-static void free_media_engine_attributes(struct media_engine_attributes engine_attr)
+static void free_media_engine(struct media_engine *engine)
 {
-    if (engine_attr.callback)
-        IMFMediaEngineNotify_Release(engine_attr.callback);
-    if (engine_attr.dxgi_manager)
-        IMFDXGIDeviceManager_Release(engine_attr.dxgi_manager);
+    if (engine->callback)
+        IMFMediaEngineNotify_Release(engine->callback);
+    if (engine->dxgi_manager)
+        IMFDXGIDeviceManager_Release(engine->dxgi_manager);
+    heap_free(engine);
 }
 
 static ULONG WINAPI media_engine_Release(IMFMediaEngine *iface)
@@ -119,10 +115,7 @@ static ULONG WINAPI media_engine_Release(IMFMediaEngine *iface)
     TRACE("(%p) ref=%u.\n", iface, refcount);
 
     if (!refcount)
-    {
-        free_media_engine_attributes(engine->attributes);
-        HeapFree(GetProcessHeap(), 0, engine);
-    }
+        free_media_engine(engine);
 
     return refcount;
 }
@@ -222,7 +215,7 @@ static double WINAPI media_engine_GetCurrentTime(IMFMediaEngine *iface)
 {
     FIXME("(%p): stub.\n", iface);
 
-    return 0;
+    return 0.0;
 }
 
 static HRESULT WINAPI media_engine_SetCurrentTime(IMFMediaEngine *iface, double time)
@@ -236,28 +229,28 @@ static double WINAPI media_engine_GetStartTime(IMFMediaEngine *iface)
 {
     FIXME("(%p): stub.\n", iface);
 
-    return 0;
+    return 0.0;
 }
 
 static double WINAPI media_engine_GetDuration(IMFMediaEngine *iface)
 {
     FIXME("(%p): stub.\n", iface);
 
-    return 0;
+    return 0.0;
 }
 
 static BOOL WINAPI media_engine_IsPaused(IMFMediaEngine *iface)
 {
     FIXME("(%p): stub.\n", iface);
 
-    return 0;
+    return FALSE;
 }
 
 static double WINAPI media_engine_GetDefaultPlaybackRate(IMFMediaEngine *iface)
 {
     FIXME("(%p): stub.\n", iface);
 
-    return 0;
+    return 0.0;
 }
 
 static HRESULT WINAPI media_engine_SetDefaultPlaybackRate(IMFMediaEngine *iface, double rate)
@@ -271,7 +264,7 @@ static double WINAPI media_engine_GetPlaybackRate(IMFMediaEngine *iface)
 {
     FIXME("(%p): stub.\n", iface);
 
-    return 0;
+    return 0.0;
 }
 
 static HRESULT WINAPI media_engine_SetPlaybackRate(IMFMediaEngine *iface, double rate)
@@ -299,14 +292,14 @@ static BOOL WINAPI media_engine_IsEnded(IMFMediaEngine *iface)
 {
     FIXME("(%p): stub.\n", iface);
 
-    return E_NOTIMPL;
+    return FALSE;
 }
 
 static BOOL WINAPI media_engine_GetAutoPlay(IMFMediaEngine *iface)
 {
     FIXME("(%p): stub.\n", iface);
 
-    return E_NOTIMPL;
+    return FALSE;
 }
 
 static HRESULT WINAPI media_engine_SetAutoPlay(IMFMediaEngine *iface, BOOL autoplay)
@@ -362,7 +355,7 @@ static double WINAPI media_engine_GetVolume(IMFMediaEngine *iface)
 {
     FIXME("(%p): stub.\n", iface);
 
-    return 0;
+    return 0.0;
 }
 
 static HRESULT WINAPI media_engine_SetVolume(IMFMediaEngine *iface, double volume)
@@ -497,57 +490,57 @@ static ULONG WINAPI media_engine_factory_Release(IMFMediaEngineClassFactory *ifa
     return 1;
 }
 
-static void init_media_engine_attributes(IMFAttributes *attributes, struct media_engine_attributes *engine_attr)
+static HRESULT init_media_engine(IMFAttributes *attributes, struct media_engine *engine)
 {
     HRESULT hr;
 
-    memset(engine_attr, 0, sizeof(*engine_attr));
     hr = IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, &IID_IMFMediaEngineNotify,
-                                  (void **)&engine_attr->callback);
+                                  (void **)&engine->callback);
     if (FAILED(hr))
-        return;
+        return MF_E_ATTRIBUTENOTFOUND;
 
-    IMFAttributes_GetUINT64(attributes, &MF_MEDIA_ENGINE_PLAYBACK_HWND, (UINT64 *)&engine_attr->playback_hwnd);
+    IMFAttributes_GetUINT64(attributes, &MF_MEDIA_ENGINE_PLAYBACK_HWND, &engine->playback_hwnd);
     IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_DXGI_MANAGER, &IID_IMFDXGIDeviceManager,
-                             (void **)&engine_attr->dxgi_manager);
-    hr = IMFAttributes_GetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, &engine_attr->output_format);
-    if (engine_attr->playback_hwnd) /* FIXME: handle MF_MEDIA_ENGINE_PLAYBACK_VISUAL */
-        engine_attr->mode = MEDIA_ENGINE_RENDERING_MODE;
+                             (void **)&engine->dxgi_manager);
+    hr = IMFAttributes_GetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, &engine->output_format);
+    if (engine->playback_hwnd) /* FIXME: handle MF_MEDIA_ENGINE_PLAYBACK_VISUAL */
+        engine->mode = MEDIA_ENGINE_RENDERING_MODE;
     else
     {
         if (SUCCEEDED(hr))
-            engine_attr->mode = MEDIA_ENGINE_FRAME_SERVER_MODE;
+            engine->mode = MEDIA_ENGINE_FRAME_SERVER_MODE;
         else
-            engine_attr->mode = MEDIA_ENGINE_AUDIO_MODE;
+            engine->mode = MEDIA_ENGINE_AUDIO_MODE;
     }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_engine_factory_CreateInstance(IMFMediaEngineClassFactory *iface, DWORD flags,
                                                           IMFAttributes *attributes, IMFMediaEngine **engine)
 {
-    struct media_engine_attributes engine_attr;
     struct media_engine *object;
+    HRESULT hr;
 
-    FIXME("(%p, %#x, %p, %p): semi-stub.\n", iface, flags, attributes, engine);
+    TRACE("(%p, %#x, %p, %p).\n", iface, flags, attributes, engine);
 
     if (!attributes || !engine)
         return E_POINTER;
 
-    init_media_engine_attributes(attributes, &engine_attr);
-    if (!engine_attr.mode)
-        return MF_E_ATTRIBUTENOTFOUND;
-
     object = heap_alloc_zero(sizeof(*object));
     if (!object)
-    {
-        free_media_engine_attributes(engine_attr);
         return E_OUTOFMEMORY;
+
+    hr = init_media_engine(attributes, object);
+    if (FAILED(hr))
+    {
+        free_media_engine(object);
+        return hr;
     }
 
     object->IMFMediaEngine_iface.lpVtbl = &media_engine_vtbl;
     object->refcount = 1;
     object->flags = flags;
-    object->attributes = engine_attr;
 
     *engine = &object->IMFMediaEngine_iface;
 
