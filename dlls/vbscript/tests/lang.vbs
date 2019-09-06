@@ -1429,4 +1429,32 @@ sub test_dotIdentifiers
 end sub
 call test_dotIdentifiers
 
+' Test End statements not required to be preceeded by a newline or separator
+Sub EndTestSub
+    x = 1 End Sub
+
+Sub EndTestSubWithCall
+    x = 1
+    Call ok(x = 1, "x = " & x)End Sub
+Call EndTestSubWithCall()
+
+Function EndTestFunc(x)
+    Call ok(x > 0, "x = " & x)End Function
+EndTestFunc(1)
+
+Class EndTestClassWithStorageId
+    Public x End Class
+
+Class EndTestClassWithDim
+    Dim x End Class
+
+Class EndTestClassWithFunc
+    Function test(ByVal x)
+        x = 0 End Function End Class
+
+Class EndTestClassWithProperty
+    Public x
+    Public default Property Get defprop
+        defprop = x End Property End Class
+
 reportSuccess()

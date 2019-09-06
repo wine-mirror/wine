@@ -2077,6 +2077,62 @@ static void test_gc(void)
     IActiveScriptParse_Release(parser);
 }
 
+static void test_parse_errors(void)
+{
+    static const char *invalid_scripts[] =
+    {
+        /* If...End If */
+        "If 0 > 1 Then\n"
+        "    x = 0 End If\n",
+
+        /* While...End While */
+        "While False\n"
+        "    x = 0 End While\n",
+
+        /* While...Wend */
+        "While False\n"
+        "    x = 0 Wend\n",
+
+        /* Do While...Loop */
+        "Do While False\n"
+        "    x = 0 Loop\n",
+
+        /* Do Until...Loop */
+        "Do Until True\n"
+        "    x = 0 Loop\n",
+
+        /* Do...Loop While */
+        "Do\n"
+        "    x = 0 Loop While False\n",
+
+        /* Do...Loop Until */
+        "Do\n"
+        "    x = 0 Loop Until True\n",
+
+        /* Select...End Select */
+        "x = False\n"
+        "Select Case 42\n"
+        "    Case 0\n"
+        "        Call ok(False, \"unexpected case\")\n"
+        "    Case 42\n"
+        "        x = True End Select\n"
+        "Call ok(x, \"wrong case\")\n",
+
+        /* Class...End Class  (empty) */
+        "Class C End Class"
+    };
+    HRESULT hres;
+    UINT i;
+
+    for (i = 0; i < ARRAY_SIZE(invalid_scripts); i++)
+    {
+        SET_EXPECT(OnScriptError);
+        hres = parse_script_ar(invalid_scripts[i]);
+        ok(FAILED(hres), "[%u] script did not fail\n", i);
+        todo_wine CHECK_CALLED(OnScriptError);
+    }
+}
+
 static void test_msgbox(void)
 {
     HRESULT hres;
@@ -2500,6 +2556,7 @@ static void run_tests(void)
     test_procedures();
     test_gc();
     test_msgbox();
+    test_parse_errors();
     test_parse_context();
 }
 
