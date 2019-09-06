@@ -790,10 +790,8 @@ static void free_source_pin(QTOutPin *pin)
     LeaveCriticalSection(pin->pin.pin.pCritSec);
 
     DeleteMediaType(pin->pmt);
-    FreeMediaType(&pin->pin.pin.mtCurrent);
-    if (pin->pin.pAllocator)
-        IMemAllocator_Release(pin->pin.pAllocator);
-    CoTaskMemFree(pin);
+    strmbase_source_cleanup(&pin->pin);
+    heap_free(pin);
 }
 
 /*
@@ -1446,38 +1444,28 @@ static const OutputQueueFuncTable output_OutputQueueFuncTable = {
     OutputQueueImpl_ThreadProc
 };
 
-static HRESULT QT_AddPin(QTSplitter *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt, BOOL video)
+static HRESULT QT_AddPin(QTSplitter *filter, const PIN_INFO *pin_info,
+        const AM_MEDIA_TYPE *mt, BOOL video)
 {
-    HRESULT hr;
-    IPin **target;
+    QTOutPin *pin;
+
+    if (!(pin = heap_alloc_zero(sizeof(*pin))))
+        return E_OUTOFMEMORY;
 
     if (video)
-        target = (IPin**)&This->pVideo_Pin;
+        filter->pVideo_Pin = pin;
     else
-        target = (IPin**)&This->pAudio_Pin;
+        filter->pAudio_Pin = pin;
 
-    if (*target != NULL)
-    {
-        FIXME("We already have a %s pin\n",(video)?"video":"audio");
-        return E_FAIL;
-    }
+    strmbase_source_init(&pin->pin, &QT_OutputPin_Vtbl, piOutput,
+            &output_BaseOutputFuncTable, &filter->filter.csFilter);
+    pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
+    CopyMediaType(pin->pmt, mt);
+    pin->IQualityControl_iface.lpVtbl = &QTOutPin_QualityControl_Vtbl;
+    BaseFilterImpl_IncrementPinVersion(&filter->filter);
 
-    hr = BaseOutputPin_Construct(&QT_OutputPin_Vtbl, sizeof(QTOutPin), piOutput, &output_BaseOutputFuncTable, &This->filter.csFilter, (IPin**)target);
-    if (SUCCEEDED(hr))
-    {
-        QTOutPin *pin = (QTOutPin*)*target;
-        pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
-        CopyMediaType(pin->pmt, amt);
-        pin->pin.pin.pinInfo.pFilter = (LPVOID)This;
-        pin->IQualityControl_iface.lpVtbl = &QTOutPin_QualityControl_Vtbl;
-
-        BaseFilterImpl_IncrementPinVersion(&This->filter);
-
-        hr = OutputQueue_Construct(&pin->pin, TRUE, TRUE, 5, FALSE, THREAD_PRIORITY_NORMAL, &output_OutputQueueFuncTable, &pin->queue);
-    }
-    else
-        ERR("Failed with error %x\n", hr);
-    return hr;
+    return OutputQueue_Construct(&pin->pin, TRUE, TRUE, 5, FALSE,
+            THREAD_PRIORITY_NORMAL, &output_OutputQueueFuncTable, &pin->queue);
 }
 
 static HRESULT WINAPI QTSplitter_ChangeStart(IMediaSeeking *iface)
