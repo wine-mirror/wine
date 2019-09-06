@@ -209,7 +209,7 @@ struct connection
 {
     struct list entry; /* in "connections" below */
 
-    int socket;
+    SOCKET socket;
 
     char *buffer;
     unsigned int len, size;
@@ -246,18 +246,18 @@ struct request_queue
     LIST_ENTRY irp_queue;
     HTTP_URL_CONTEXT context;
     char *url;
-    int socket;
+    SOCKET socket;
 };
 
 static struct list request_queues = LIST_INIT(request_queues);
 
-static void accept_connection(int socket)
+static void accept_connection(SOCKET socket)
 {
     struct connection *conn;
     ULONG true = 1;
-    int peer;
+    SOCKET peer;
 
-    if ((peer = accept(socket, NULL, NULL)) == -1)
+    if ((peer = accept(socket, NULL, NULL)) == INVALID_SOCKET)
         return;
 
     if (!(conn = heap_alloc_zero(sizeof(*conn))))
@@ -1046,10 +1046,11 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
     const struct http_add_url_params *params = irp->AssociatedIrp.SystemBuffer;
     struct sockaddr_in addr;
     struct connection *conn;
+    unsigned int count = 0;
     char *url, *endptr;
-    int s, count = 0;
     ULONG true = 1;
     const char *p;
+    SOCKET s;
 
     TRACE("host %s, context %s.\n", debugstr_a(params->url), wine_dbgstr_longlong(params->context));
 
@@ -1089,7 +1090,7 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
     {
         ERR("Failed to create socket, error %u.\n", WSAGetLastError());
         LeaveCriticalSection(&http_cs);
