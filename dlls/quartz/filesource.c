@@ -149,7 +149,11 @@ static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
     memset(mask, 0xff, size);
 
     if (!(pattern = wcschr(pattern, ',')))
+    {
+        heap_free(mask);
+        heap_free(expect);
         return FALSE;
+    }
     pattern++;
     while (!iswxdigit(*pattern) && (*pattern != ','))
         pattern++;
