@@ -74,7 +74,7 @@ static const char simple_req[] =
     "User-Agent: WINE\r\n"
     "\r\n";
 
-static int create_client_socket(void)
+static SOCKET create_client_socket(void)
 {
     struct sockaddr_in sockaddr =
     {
@@ -82,7 +82,7 @@ static int create_client_socket(void)
         .sin_port = htons(50000),
         .sin_addr.S_un.S_addr = inet_addr("127.0.0.1"),
     };
-    int s = socket(AF_INET, SOCK_STREAM, 0), ret;
+    SOCKET s = socket(AF_INET, SOCK_STREAM, 0), ret;
     ret = connect(s, (struct sockaddr *)&sockaddr, sizeof(sockaddr));
     ok(!ret, "Failed to connect socket, error %u.\n", GetLastError());
     return s;
