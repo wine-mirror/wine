@@ -132,8 +132,6 @@ HRESULT WINAPI BaseOutputPinImpl_InitAllocator(BaseOutputPin *This, IMemAllocato
 HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(BaseOutputPin *This, IMemInputPin *pPin, IMemAllocator **pAlloc);
 HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BaseOutputPin *pin, IPin *peer, const AM_MEDIA_TYPE *mt);
 
-HRESULT WINAPI BaseOutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outputpin_size, const PIN_INFO * pPinInfo, const BaseOutputPinFuncTable* pBaseOutputFuncsTable, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
-HRESULT WINAPI BaseOutputPin_Destroy(BaseOutputPin *This);
 void strmbase_source_cleanup(BaseOutputPin *pin);
 void strmbase_source_init(BaseOutputPin *pin, const IPinVtbl *vtbl, const PIN_INFO *info,
         const BaseOutputPinFuncTable *func_table, CRITICAL_SECTION *cs);
@@ -148,10 +146,6 @@ HRESULT WINAPI BaseInputPinImpl_BeginFlush(IPin * iface);
 HRESULT WINAPI BaseInputPinImpl_EndFlush(IPin * iface);
 HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
-HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, LONG inputpin_size, const PIN_INFO * pPinInfo,
-        const BaseInputPinFuncTable* pBaseInputFuncsTable,
-        LPCRITICAL_SECTION pCritSec, IMemAllocator *, IPin ** ppPin);
-HRESULT WINAPI BaseInputPin_Destroy(BaseInputPin *This);
 void strmbase_sink_init(BaseInputPin *pin, const IPinVtbl *vtbl, const PIN_INFO *info,
         const BaseInputPinFuncTable *func_table, CRITICAL_SECTION *cs, IMemAllocator *allocator);
 void strmbase_sink_cleanup(BaseInputPin *pin);
