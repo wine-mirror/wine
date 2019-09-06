@@ -353,37 +353,34 @@ static void CALLBACK delayed_autostart_cancel_callback(void *object, void *userd
 }
 
 static void CALLBACK delayed_autostart_callback(TP_CALLBACK_INSTANCE *instance, void *context,
-                                                 TP_WAIT *wait, TP_WAIT_RESULT result)
+                                                TP_TIMER *timer)
 {
     struct delayed_autostart_params *params = context;
     struct service_entry *service;
     unsigned int i;
     DWORD err;
 
-    if (result == WAIT_TIMEOUT)
+    scmdatabase_lock_startup(active_database, INFINITE);
+
+    for (i = 0; i < params->count; i++)
     {
-        scmdatabase_lock_startup(active_database, INFINITE);
-
-        for (i = 0; i < params->count; i++)
+        service = params->services[i];
+        if (service->status.dwCurrentState == SERVICE_STOPPED)
         {
-            service = params->services[i];
-            if (service->status.dwCurrentState == SERVICE_STOPPED)
-            {
-                TRACE("Starting deleyed auto-start service %s\n", debugstr_w(service->name));
-                err = service_start(service, 0, NULL);
-                if (err != ERROR_SUCCESS)
-                    FIXME("Delayed auto-start service %s failed to start: %d\n",
-                          wine_dbgstr_w(service->name), err);
-            }
-            release_service(service);
+            TRACE("Starting delayed auto-start service %s\n", debugstr_w(service->name));
+            err = service_start(service, 0, NULL);
+            if (err != ERROR_SUCCESS)
+                FIXME("Delayed auto-start service %s failed to start: %d\n",
+                      wine_dbgstr_w(service->name), err);
         }
-
-        scmdatabase_unlock_startup(active_database);
+        release_service(service);
     }
+
+    scmdatabase_unlock_startup(active_database);
 
     heap_free(params->services);
     heap_free(params);
-    CloseThreadpoolWait(wait);
+    CloseThreadpoolTimer(timer);
 }
 
 static BOOL schedule_delayed_autostart(struct service_entry **services, unsigned int count)
@@ -391,7 +388,7 @@ static BOOL schedule_delayed_autostart(struct service_entry **services, unsigned
     struct delayed_autostart_params *params;
     TP_CALLBACK_ENVIRON environment;
     LARGE_INTEGER timestamp;
-    TP_WAIT *wait;
+    TP_TIMER *timer;
     FILETIME ft;
 
     if (!(delayed_autostart_cleanup = CreateThreadpoolCleanupGroup()))
@@ -413,14 +410,14 @@ static BOOL schedule_delayed_autostart(struct service_entry **services, unsigned
     ft.dwLowDateTime   = timestamp.u.LowPart;
     ft.dwHighDateTime  = timestamp.u.HighPart;
 
-    if (!(wait = CreateThreadpoolWait(delayed_autostart_callback, params, &environment)))
+    if (!(timer = CreateThreadpoolTimer(delayed_autostart_callback, params, &environment)))
     {
         ERR("CreateThreadpoolWait failed: %u\n", GetLastError());
         heap_free(params);
         return FALSE;
     }
 
-    SetThreadpoolWait(wait, params, &ft);
+    SetThreadpoolTimer(timer, &ft, 0, 0);
     return TRUE;
 }
 
