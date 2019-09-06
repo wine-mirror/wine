@@ -1287,7 +1287,6 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     lstrcpynW(This->pInputPin.pin.name, wcsInputPinName, ARRAY_SIZE(This->pInputPin.pin.name));
     This->pInputPin.pin.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
     This->pInputPin.pin.pConnectedTo = NULL;
-    This->pInputPin.pin.pCritSec = &This->filter.csFilter;
     ZeroMemory(&This->pInputPin.pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
     *phr = S_OK;
 
@@ -1744,14 +1743,12 @@ static HRESULT WINAPI GSTOutPin_DecideAllocator(BaseOutputPin *base, IMemInputPi
 
 static void free_source_pin(GSTOutPin *pin)
 {
-    EnterCriticalSection(pin->pin.pin.pCritSec);
     if (pin->pin.pin.pConnectedTo)
     {
         if (SUCCEEDED(IMemAllocator_Decommit(pin->pin.pAllocator)))
             IPin_Disconnect(pin->pin.pin.pConnectedTo);
         IPin_Disconnect(&pin->pin.pin.IPin_iface);
     }
-    LeaveCriticalSection(pin->pin.pin.pCritSec);
 
     if (pin->their_src)
     {
@@ -1881,7 +1878,7 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
 
     mark_wine_thread();
 
-    EnterCriticalSection(This->pin.pCritSec);
+    EnterCriticalSection(&filter->filter.csFilter);
     if (!This->pin.pConnectedTo) {
         ALLOCATOR_PROPERTIES props;
         IMemAllocator *pAlloc = NULL;
@@ -1940,13 +1937,14 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
         TRACE("Size: %i\n", props.cbBuffer);
     } else
         hr = VFW_E_ALREADY_CONNECTED;
-    LeaveCriticalSection(This->pin.pCritSec);
+    LeaveCriticalSection(&filter->filter.csFilter);
     return hr;
 }
 
 static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface)
 {
     GSTInPin *This = impl_sink_from_IPin(iface);
+    GSTImpl *filter = impl_from_strmbase_filter(This->pin.filter);
     HRESULT hr;
     FILTER_STATE state;
 
@@ -1954,8 +1952,8 @@ static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface)
 
     mark_wine_thread();
 
-    hr = IBaseFilter_GetState(&This->pin.filter->IBaseFilter_iface, INFINITE, &state);
-    EnterCriticalSection(This->pin.pCritSec);
+    hr = IBaseFilter_GetState(&filter->filter.IBaseFilter_iface, INFINITE, &state);
+    EnterCriticalSection(&filter->filter.csFilter);
     if (This->pin.pConnectedTo) {
         GSTImpl *Parser = impl_from_strmbase_filter(This->pin.filter);
 
@@ -1969,7 +1967,7 @@ static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface)
             hr = VFW_E_NOT_STOPPED;
     } else
         hr = S_FALSE;
-    LeaveCriticalSection(This->pin.pCritSec);
+    LeaveCriticalSection(&filter->filter.csFilter);
     return hr;
 }
 

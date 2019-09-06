@@ -31,7 +31,6 @@ void WINAPI DeleteMediaType(AM_MEDIA_TYPE * pMediaType);
 typedef struct BasePin
 {
     IPin IPin_iface;
-    CRITICAL_SECTION *pCritSec;
     struct strmbase_filter *filter;
     PIN_DIRECTION dir;
     WCHAR name[128];

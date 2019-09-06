@@ -317,7 +317,6 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
     lstrcpynW(This->pInputPin.pin.name, wcsInputPinName, ARRAY_SIZE(This->pInputPin.pin.name));
     This->pInputPin.pin.IPin_iface.lpVtbl = &QT_InputPin_Vtbl;
     This->pInputPin.pin.pConnectedTo = NULL;
-    This->pInputPin.pin.pCritSec = &This->filter.csFilter;
 
     SourceSeeking_Init(&This->sourceSeeking, &QT_Seeking_Vtbl, QTSplitter_ChangeStop, QTSplitter_ChangeStart, QTSplitter_ChangeRate,  &This->filter.csFilter);
 
@@ -778,14 +777,12 @@ static const IBaseFilterVtbl QT_Vtbl = {
 
 static void free_source_pin(QTOutPin *pin)
 {
-    EnterCriticalSection(pin->pin.pin.pCritSec);
     if (pin->pin.pin.pConnectedTo)
     {
         if (SUCCEEDED(IMemAllocator_Decommit(pin->pin.pAllocator)))
             IPin_Disconnect(pin->pin.pin.pConnectedTo);
         IPin_Disconnect(&pin->pin.pin.IPin_iface);
     }
-    LeaveCriticalSection(pin->pin.pin.pCritSec);
 
     DeleteMediaType(pin->pmt);
     strmbase_source_cleanup(&pin->pin);
@@ -1044,7 +1041,7 @@ static HRESULT WINAPI QTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, 
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, pReceivePin, pmt);
 
-    EnterCriticalSection(This->pin.pCritSec);
+    EnterCriticalSection(&filter->filter.csFilter);
     This->pReader = NULL;
 
     if (This->pin.pConnectedTo)
@@ -1061,19 +1058,19 @@ static HRESULT WINAPI QTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, 
 
     if (FAILED(hr))
     {
-        LeaveCriticalSection(This->pin.pCritSec);
+        LeaveCriticalSection(&filter->filter.csFilter);
         return hr;
     }
 
     hr = IPin_QueryInterface(pReceivePin, &IID_IAsyncReader, (LPVOID *)&This->pReader);
     if (FAILED(hr))
     {
-        LeaveCriticalSection(This->pin.pCritSec);
+        LeaveCriticalSection(&filter->filter.csFilter);
         TRACE("Input source is not an AsyncReader\n");
         return hr;
     }
 
-    LeaveCriticalSection(This->pin.pCritSec);
+    LeaveCriticalSection(&filter->filter.csFilter);
     EnterCriticalSection(&filter->filter.csFilter);
     hr = QT_Process_Movie(filter);
     if (FAILED(hr))
@@ -1129,11 +1126,12 @@ static HRESULT WINAPI QTInPin_Disconnect(IPin *iface)
 {
     HRESULT hr;
     QTInPin *This = impl_from_IPin(iface);
+    QTSplitter *filter = impl_from_strmbase_filter(This->pin.filter);
     FILTER_STATE state;
     TRACE("()\n");
 
-    hr = IBaseFilter_GetState(&This->pin.filter->IBaseFilter_iface, INFINITE, &state);
-    EnterCriticalSection(This->pin.pCritSec);
+    hr = IBaseFilter_GetState(&filter->filter.IBaseFilter_iface, INFINITE, &state);
+    EnterCriticalSection(&filter->filter.csFilter);
     if (This->pin.pConnectedTo)
     {
         QTSplitter *Parser = impl_from_strmbase_filter(This->pin.filter);
@@ -1151,7 +1149,7 @@ static HRESULT WINAPI QTInPin_Disconnect(IPin *iface)
     }
     else
         hr = S_FALSE;
-    LeaveCriticalSection(This->pin.pCritSec);
+    LeaveCriticalSection(&filter->filter.csFilter);
     return hr;
 }
 

@@ -505,9 +505,9 @@ static HRESULT WINAPI DSoundRender_BreakConnect(BaseRenderer* iface)
 
     if (This->threadid) {
         PostThreadMessageW(This->threadid, WM_APP, 0, 0);
-        LeaveCriticalSection(This->renderer.sink.pin.pCritSec);
+        LeaveCriticalSection(&This->renderer.filter.csFilter);
         WaitForSingleObject(This->advisethread, INFINITE);
-        EnterCriticalSection(This->renderer.sink.pin.pCritSec);
+        EnterCriticalSection(&This->renderer.filter.csFilter);
         CloseHandle(This->advisethread);
     }
     if (This->dsbuffer)

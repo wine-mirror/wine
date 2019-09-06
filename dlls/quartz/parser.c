@@ -552,9 +552,9 @@ static HRESULT WINAPI Parser_OutputPin_Connect(IPin * iface, IPin * pReceivePin,
     ParserImpl *parser = impl_from_IBaseFilter(&This->pin.pin.filter->IBaseFilter_iface);
 
     /* Set the allocator to our input pin's */
-    EnterCriticalSection(This->pin.pin.pCritSec);
+    EnterCriticalSection(&parser->filter.csFilter);
     This->alloc = parser->pInputPin->pAlloc;
-    LeaveCriticalSection(This->pin.pin.pCritSec);
+    LeaveCriticalSection(&parser->filter.csFilter);
 
     return BaseOutputPinImpl_Connect(iface, pReceivePin, pmt);
 }
@@ -623,22 +623,22 @@ static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)
     TRACE("()\n");
 
     EnterCriticalSection(&This->thread_lock);
-    EnterCriticalSection(This->pin.pCritSec);
+    EnterCriticalSection(&This->pin.filter->csFilter);
     {
         if (This->pin.pConnectedTo)
         {
             FILTER_STATE state;
             ParserImpl *Parser = impl_from_IBaseFilter(&This->pin.filter->IBaseFilter_iface);
 
-            LeaveCriticalSection(This->pin.pCritSec);
+            LeaveCriticalSection(&This->pin.filter->csFilter);
             hr = IBaseFilter_GetState(&This->pin.filter->IBaseFilter_iface, INFINITE, &state);
-            EnterCriticalSection(This->pin.pCritSec);
+            EnterCriticalSection(&This->pin.filter->csFilter);
 
             if (SUCCEEDED(hr) && (state == State_Stopped) && SUCCEEDED(Parser->fnDisconnect(Parser)))
             {
-                LeaveCriticalSection(This->pin.pCritSec);
+                LeaveCriticalSection(&This->pin.filter->csFilter);
                 PullPin_Disconnect(iface);
-                EnterCriticalSection(This->pin.pCritSec);
+                EnterCriticalSection(&This->pin.filter->csFilter);
                 hr = Parser_RemoveOutputPins(impl_from_IBaseFilter(&This->pin.filter->IBaseFilter_iface));
             }
             else
@@ -647,7 +647,7 @@ static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)
         else
             hr = S_FALSE;
     }
-    LeaveCriticalSection(This->pin.pCritSec);
+    LeaveCriticalSection(&This->pin.filter->csFilter);
     LeaveCriticalSection(&This->thread_lock);
 
     return hr;
@@ -664,9 +664,9 @@ static HRESULT WINAPI Parser_PullPin_ReceiveConnection(IPin * iface, IPin * pRec
     {
         BasePin *This = (BasePin *)iface;
 
-        EnterCriticalSection(This->pCritSec);
+        EnterCriticalSection(&This->filter->csFilter);
         Parser_RemoveOutputPins(impl_from_IBaseFilter(&This->filter->IBaseFilter_iface));
-        LeaveCriticalSection(This->pCritSec);
+        LeaveCriticalSection(&This->filter->csFilter);
     }
 
     return hr;

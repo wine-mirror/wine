@@ -52,14 +52,14 @@ static HRESULT WINAPI BaseRenderer_InputPin_ReceiveConnection(IPin *iface, IPin 
 
     TRACE("iface %p, peer %p, mt %p.\n", iface, peer, mt);
 
-    EnterCriticalSection(filter->sink.pin.pCritSec);
+    EnterCriticalSection(&filter->filter.csFilter);
     hr = BaseInputPinImpl_ReceiveConnection(iface, peer, mt);
     if (SUCCEEDED(hr))
     {
         if (filter->pFuncsTable->pfnCompleteConnect)
             hr = filter->pFuncsTable->pfnCompleteConnect(filter, peer);
     }
-    LeaveCriticalSection(filter->sink.pin.pCritSec);
+    LeaveCriticalSection(&filter->filter.csFilter);
 
     return hr;
 }
@@ -71,7 +71,7 @@ static HRESULT WINAPI BaseRenderer_InputPin_Disconnect(IPin * iface)
 
     TRACE("iface %p.\n", iface);
 
-    EnterCriticalSection(filter->sink.pin.pCritSec);
+    EnterCriticalSection(&filter->filter.csFilter);
     hr = BasePinImpl_Disconnect(iface);
     if (SUCCEEDED(hr))
     {
@@ -79,7 +79,7 @@ static HRESULT WINAPI BaseRenderer_InputPin_Disconnect(IPin * iface)
             hr = filter->pFuncsTable->pfnBreakConnect(filter);
     }
     BaseRendererImpl_ClearPendingSample(filter);
-    LeaveCriticalSection(filter->sink.pin.pCritSec);
+    LeaveCriticalSection(&filter->filter.csFilter);
 
     return hr;
 }
