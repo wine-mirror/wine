@@ -1849,13 +1849,12 @@ static BOOL request_selection_contents( Display *display, BOOL changed )
                last_size != size ||
                memcmp( last_data, data, size ));
 
-    if (!changed)
+    if (!changed || !OpenClipboard( clipboard_hwnd ))
     {
         HeapFree( GetProcessHeap(), 0, data );
         return FALSE;
     }
 
-    if (!OpenClipboard( clipboard_hwnd )) return FALSE;
     TRACE( "selection changed, importing\n" );
     EmptyClipboard();
     is_clipboard_owner = TRUE;
