@@ -1560,10 +1560,7 @@ static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
                 res = FALSE;
             }
             else
-            {
-                monitor_unload(pm);
                 SetLastError(ERROR_SUCCESS); /* Monitor installer depends on this */
-            }
         }
 
         RegCloseKey(hentry);
@@ -1857,6 +1854,7 @@ static BOOL WINAPI fpConfigurePort(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
 
 static BOOL WINAPI fpDeleteMonitor(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorName)
 {
+    monitor_t *pm;
     HKEY    hroot = NULL;
     LONG    lres;
 
@@ -1876,6 +1874,18 @@ static BOOL WINAPI fpDeleteMonitor(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMo
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+
+    /* Unload the monitor if it's loaded */
+    EnterCriticalSection(&monitor_handles_cs);
+    LIST_FOR_EACH_ENTRY(pm, &monitor_handles, monitor_t, entry)
+    {
+        if (pm->name && !lstrcmpW(pMonitorName, pm->name))
+        {
+            monitor_unload(pm);
+            break;
+        }
+    }
+    LeaveCriticalSection(&monitor_handles_cs);
 
     if(RegCreateKeyW(HKEY_LOCAL_MACHINE, monitorsW, &hroot) != ERROR_SUCCESS) {
         ERR("unable to create key %s\n", debugstr_w(monitorsW));
