@@ -460,6 +460,7 @@ static void test_file_source_filter(void)
 
     hr = IPin_QueryAccept(pin, pmt);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    CoTaskMemFree(pmt);
 
     hr = IEnumMediaTypes_Next(enum_mt, 1, &pmt, NULL);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
