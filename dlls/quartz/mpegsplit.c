@@ -355,7 +355,7 @@ static HRESULT MPEGSplitter_query_accept(LPVOID iface, const AM_MEDIA_TYPE *pmt)
 }
 
 
-static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *header, PIN_INFO *ppiOutput, AM_MEDIA_TYPE *pamt)
+static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *header, AM_MEDIA_TYPE *pamt)
 {
     WAVEFORMATEX *format;
     int bitrate_index;
@@ -369,9 +369,6 @@ static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *heade
     int mode;
 
     ZeroMemory(pamt, sizeof(*pamt));
-    ppiOutput->dir = PINDIR_OUTPUT;
-    ppiOutput->pFilter = &This->Parser.filter.IBaseFilter_iface;
-    wsprintfW(ppiOutput->achName, wszAudioStream);
 
     pamt->formattype = FORMAT_WaveFormatEx;
     pamt->majortype = MEDIATYPE_Audio;
@@ -480,14 +477,13 @@ static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *heade
 static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin, ALLOCATOR_PROPERTIES *props)
 {
     PullPin *pPin = impl_PullPin_from_IPin(iface);
-    MPEGSplitterImpl *This = impl_from_IBaseFilter(pPin->pin.pinInfo.pFilter);
+    MPEGSplitterImpl *This = impl_from_IBaseFilter(&pPin->pin.filter->IBaseFilter_iface);
     HRESULT hr;
     LONGLONG pos = 0; /* in bytes */
     BYTE header[10];
     int streamtype;
     LONGLONG total, avail;
     AM_MEDIA_TYPE amt;
-    PIN_INFO piOutput;
 
     IAsyncReader_Length(pPin->pReader, &total, &avail);
     This->EndOfFile = total;
@@ -570,7 +566,7 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin, ALLOCATO
             LONGLONG duration = 0;
             WAVEFORMATEX *format;
 
-            hr = MPEGSplitter_init_audio(This, header, &piOutput, &amt);
+            hr = MPEGSplitter_init_audio(This, header, &amt);
             if (SUCCEEDED(hr))
             {
                 format = (WAVEFORMATEX*)amt.pbFormat;
@@ -581,7 +577,7 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin, ALLOCATO
                 props->cbBuffer = 0x4000 / format->nBlockAlign *
                                  format->nBlockAlign;
                 props->cBuffers = 3;
-                hr = Parser_AddPin(&(This->Parser), &piOutput, props, &amt);
+                hr = Parser_AddPin(&This->Parser, wszAudioStream, props, &amt);
             }
 
             if (FAILED(hr))

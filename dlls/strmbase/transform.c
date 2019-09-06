@@ -275,8 +275,6 @@ static HRESULT strmbase_transform_init(IUnknown *outer, const CLSID *clsid,
 {
     ISeekingPassThru *passthru;
     HRESULT hr;
-    PIN_INFO piInput;
-    PIN_INFO piOutput;
 
     strmbase_filter_init(&filter->filter, &transform_vtbl, outer, clsid, &filter_ops);
 
@@ -287,19 +285,11 @@ static HRESULT strmbase_transform_init(IUnknown *outer, const CLSID *clsid,
     filter->pFuncsTable = func_table;
     ZeroMemory(&filter->pmt, sizeof(filter->pmt));
 
-    /* construct input pin */
-    piInput.dir = PINDIR_INPUT;
-    piInput.pFilter = &filter->filter.IBaseFilter_iface;
-    lstrcpynW(piInput.achName, wcsInputPinName, ARRAY_SIZE(piInput.achName));
-    piOutput.dir = PINDIR_OUTPUT;
-    piOutput.pFilter = &filter->filter.IBaseFilter_iface;
-    lstrcpynW(piOutput.achName, wcsOutputPinName, ARRAY_SIZE(piOutput.achName));
+    strmbase_sink_init(&filter->sink, &TransformFilter_InputPin_Vtbl, &filter->filter,
+            wcsInputPinName, &tf_input_BaseInputFuncTable, NULL);
 
-    strmbase_sink_init(&filter->sink, &TransformFilter_InputPin_Vtbl, &piInput,
-            &tf_input_BaseInputFuncTable, &filter->filter.csFilter, NULL);
-
-    strmbase_source_init(&filter->source, &TransformFilter_OutputPin_Vtbl,
-            &piOutput, &tf_output_BaseOutputFuncTable, &filter->filter.csFilter);
+    strmbase_source_init(&filter->source, &TransformFilter_OutputPin_Vtbl, &filter->filter,
+            wcsOutputPinName, &tf_output_BaseOutputFuncTable);
 
     QualityControlImpl_Create(&filter->sink.pin.IPin_iface,
             &filter->filter.IBaseFilter_iface, &filter->qcimpl);

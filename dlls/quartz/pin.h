@@ -102,10 +102,10 @@ typedef struct PullPin
 #define Req_Pause  3
 
 /*** Constructors ***/
-HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo,
+HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, struct strmbase_filter *filter, const WCHAR *name,
                           SAMPLEPROC_PULL pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept,
                           CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, STOPPROCESSPROC pDone,
-                          LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
+                          IPin **ppPin);
 void PullPin_destroy(PullPin *pin) DECLSPEC_HIDDEN;
 
 /**************************/

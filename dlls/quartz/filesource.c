@@ -469,7 +469,6 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
 {
     HANDLE hFile;
     AsyncReader *This = impl_from_IFileSourceFilter(iface);
-    PIN_INFO pin_info;
 
     TRACE("%p->(%s, %p)\n", This, debugstr_w(pszFileName), pmt);
 
@@ -485,12 +484,8 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    /* create pin */
-    pin_info.dir = PINDIR_OUTPUT;
-    pin_info.pFilter = &This->filter.IBaseFilter_iface;
-    lstrcpyW(pin_info.achName, wszOutputPinName);
-    strmbase_source_init(&This->source, &FileAsyncReaderPin_Vtbl, &pin_info,
-            &output_BaseOutputFuncTable, &This->filter.csFilter);
+    strmbase_source_init(&This->source, &FileAsyncReaderPin_Vtbl, &This->filter,
+            wszOutputPinName, &output_BaseOutputFuncTable);
     BaseFilterImpl_IncrementPinVersion(&This->filter);
 
     This->file = hFile;

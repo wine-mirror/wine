@@ -30,16 +30,17 @@ void WINAPI DeleteMediaType(AM_MEDIA_TYPE * pMediaType);
 
 typedef struct BasePin
 {
-	IPin IPin_iface;
-	LPCRITICAL_SECTION pCritSec;
-	PIN_INFO pinInfo;
-	IPin * pConnectedTo;
-	AM_MEDIA_TYPE mtCurrent;
-	REFERENCE_TIME tStart;
-	REFERENCE_TIME tStop;
-	double dRate;
+    IPin IPin_iface;
+    CRITICAL_SECTION *pCritSec;
+    struct strmbase_filter *filter;
+    PIN_DIRECTION dir;
+    WCHAR name[128];
+    IPin *pConnectedTo;
+    AM_MEDIA_TYPE mtCurrent;
+    REFERENCE_TIME tStart, tStop;
+    double dRate;
 
-	const struct BasePinFuncTable* pFuncsTable;
+    const struct BasePinFuncTable* pFuncsTable;
 } BasePin;
 
 typedef HRESULT (WINAPI *BasePin_CheckMediaType)(BasePin *This, const AM_MEDIA_TYPE *pmt);
@@ -133,8 +134,8 @@ HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(BaseOutputPin *This, IMemInputP
 HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BaseOutputPin *pin, IPin *peer, const AM_MEDIA_TYPE *mt);
 
 void strmbase_source_cleanup(BaseOutputPin *pin);
-void strmbase_source_init(BaseOutputPin *pin, const IPinVtbl *vtbl, const PIN_INFO *info,
-        const BaseOutputPinFuncTable *func_table, CRITICAL_SECTION *cs);
+void strmbase_source_init(BaseOutputPin *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
+        const WCHAR *name, const BaseOutputPinFuncTable *func_table);
 
 /* Base Input Pin */
 HRESULT WINAPI BaseInputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);
@@ -146,8 +147,8 @@ HRESULT WINAPI BaseInputPinImpl_BeginFlush(IPin * iface);
 HRESULT WINAPI BaseInputPinImpl_EndFlush(IPin * iface);
 HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
-void strmbase_sink_init(BaseInputPin *pin, const IPinVtbl *vtbl, const PIN_INFO *info,
-        const BaseInputPinFuncTable *func_table, CRITICAL_SECTION *cs, IMemAllocator *allocator);
+void strmbase_sink_init(BaseInputPin *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
+        const WCHAR *name, const BaseInputPinFuncTable *func_table, IMemAllocator *allocator);
 void strmbase_sink_cleanup(BaseInputPin *pin);
 
 struct strmbase_filter

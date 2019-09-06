@@ -635,7 +635,6 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *outer, HRESULT *phr)
 {
     static const WCHAR source_name[] = {'O','u','t','p','u','t',0};
     VfwCapture *object;
-    PIN_INFO pin_info;
 
     if (!(object = CoTaskMemAlloc(sizeof(*object))))
     {
@@ -650,11 +649,8 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *outer, HRESULT *phr)
     object->IPersistPropertyBag_iface.lpVtbl = &IPersistPropertyBag_VTable;
     object->init = FALSE;
 
-    pin_info.dir = PINDIR_OUTPUT;
-    pin_info.pFilter = &object->filter.IBaseFilter_iface;
-    lstrcpyW(pin_info.achName, source_name);
-    strmbase_source_init(&object->source, &VfwPin_Vtbl, &pin_info,
-            &output_BaseOutputFuncTable, &object->filter.csFilter);
+    strmbase_source_init(&object->source, &VfwPin_Vtbl, &object->filter,
+            source_name, &output_BaseOutputFuncTable);
 
     object->IKsPropertySet_iface.lpVtbl = &IKsPropertySet_VTable;
 

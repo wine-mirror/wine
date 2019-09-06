@@ -50,7 +50,8 @@ struct ParserImpl
     SourceSeeking sourceSeeking;
 };
 
-extern HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, const AM_MEDIA_TYPE * amt);
+extern HRESULT Parser_AddPin(ParserImpl *filter, const WCHAR *name,
+        ALLOCATOR_PROPERTIES *props, const AM_MEDIA_TYPE *mt);
 
 HRESULT Parser_Create(ParserImpl *parser, const IBaseFilterVtbl *vtbl, IUnknown *outer,
         const CLSID *clsid, const struct strmbase_filter_ops *func_table, const WCHAR *sink_name,

@@ -166,19 +166,18 @@ static HRESULT deliver_newsegment(IPin *pin, LPVOID data)
 
 /*** PullPin implementation ***/
 
-static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO *info,
-    SAMPLEPROC_PULL pSampleProc, void *pUserData, QUERYACCEPTPROC pQueryAccept,
-    CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, STOPPROCESSPROC pDone,
-    LPCRITICAL_SECTION pCritSec, PullPin *pPinImpl)
+static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, struct strmbase_filter *filter,
+    const WCHAR *name, SAMPLEPROC_PULL pSampleProc, void *pUserData,
+    QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest,
+    STOPPROCESSPROC pDone, PullPin *pPinImpl)
 {
     /* Common attributes */
     pPinImpl->pin.IPin_iface.lpVtbl = PullPin_Vtbl;
     pPinImpl->pin.pConnectedTo = NULL;
-    pPinImpl->pin.pCritSec = pCritSec;
-    /* avoid copying uninitialized data */
-    wcscpy(pPinImpl->pin.pinInfo.achName, info->achName);
-    pPinImpl->pin.pinInfo.dir = info->dir;
-    pPinImpl->pin.pinInfo.pFilter = info->pFilter;
+    pPinImpl->pin.pCritSec = &filter->csFilter;
+    wcscpy(pPinImpl->pin.name, name);
+    pPinImpl->pin.dir = PINDIR_INPUT;
+    pPinImpl->pin.filter = filter;
     ZeroMemory(&pPinImpl->pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
 
     /* Input pin attributes */
@@ -209,27 +208,22 @@ static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO *info,
     return S_OK;
 }
 
-HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo,
+HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, struct strmbase_filter *filter, const WCHAR *name,
                           SAMPLEPROC_PULL pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept,
                           CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, STOPPROCESSPROC pDone,
-                          LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
+                          IPin ** ppPin)
 {
     PullPin * pPinImpl;
 
     *ppPin = NULL;
-
-    if (pPinInfo->dir != PINDIR_INPUT)
-    {
-        ERR("Pin direction(%x) != PINDIR_INPUT\n", pPinInfo->dir);
-        return E_INVALIDARG;
-    }
 
     pPinImpl = CoTaskMemAlloc(sizeof(*pPinImpl));
 
     if (!pPinImpl)
         return E_OUTOFMEMORY;
 
-    if (SUCCEEDED(PullPin_Init(PullPin_Vtbl, pPinInfo, pSampleProc, pUserData, pQueryAccept, pCleanUp, pCustomRequest, pDone, pCritSec, pPinImpl)))
+    if (SUCCEEDED(PullPin_Init(PullPin_Vtbl, filter, name, pSampleProc, pUserData,
+            pQueryAccept, pCleanUp, pCustomRequest, pDone, pPinImpl)))
     {
         *ppPin = &pPinImpl->pin.IPin_iface;
         return S_OK;
@@ -348,7 +342,7 @@ HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
     else if (IsEqualIID(riid, &IID_IMediaSeeking) ||
              IsEqualIID(riid, &IID_IQualityControl))
     {
-        return IBaseFilter_QueryInterface(This->pin.pinInfo.pFilter, riid, ppv);
+        return IBaseFilter_QueryInterface(&This->pin.filter->IBaseFilter_iface, riid, ppv);
     }
 
     if (*ppv)
@@ -525,7 +519,7 @@ static void  PullPin_Thread_Stop(PullPin *This)
     SetEvent(This->hEventStateChanged);
     LeaveCriticalSection(This->pin.pCritSec);
 
-    IBaseFilter_Release(This->pin.pinInfo.pFilter);
+    IPin_Release(&This->pin.IPin_iface);
 
     CoUninitialize();
     ExitThread(0);
@@ -576,16 +570,13 @@ static HRESULT PullPin_InitProcessing(PullPin * This)
         assert(WaitForSingleObject(This->thread_sleepy, 0) == WAIT_TIMEOUT);
         This->state = Req_Sleepy;
 
-        /* AddRef the filter to make sure it and its pins will be around
-         * as long as the thread */
-        IBaseFilter_AddRef(This->pin.pinInfo.pFilter);
-
+        IPin_AddRef(&This->pin.IPin_iface);
 
         This->hThread = CreateThread(NULL, 0, PullPin_Thread_Main, This, 0, &dwThreadId);
         if (!This->hThread)
         {
             hr = HRESULT_FROM_WIN32(GetLastError());
-            IBaseFilter_Release(This->pin.pinInfo.pFilter);
+            IPin_Release(&This->pin.IPin_iface);
         }
 
         if (SUCCEEDED(hr))
@@ -769,7 +760,7 @@ HRESULT WINAPI PullPin_EndFlush(IPin * iface)
         if (This->pReader)
             IAsyncReader_EndFlush(This->pReader);
 
-        IBaseFilter_GetState(This->pin.pinInfo.pFilter, INFINITE, &state);
+        IBaseFilter_GetState(&This->pin.filter->IBaseFilter_iface, INFINITE, &state);
 
         if (state != State_Stopped)
             PullPin_StartProcessing(This);

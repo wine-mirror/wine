@@ -675,7 +675,6 @@ static HRESULT AVISplitter_ProcessOldIndex(AVISplitterImpl *This)
 
 static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE * pData, DWORD cb, ALLOCATOR_PROPERTIES *props)
 {
-    PIN_INFO piOutput;
     const RIFFCHUNK * pChunk;
     HRESULT hr;
     AM_MEDIA_TYPE amt;
@@ -685,11 +684,9 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
     DWORD nstdindex = 0;
     static const WCHAR wszStreamTemplate[] = {'S','t','r','e','a','m',' ','%','0','2','d',0};
     StreamData *stream;
+    WCHAR name[18];
 
     ZeroMemory(&amt, sizeof(amt));
-    piOutput.dir = PINDIR_OUTPUT;
-    piOutput.pFilter = &This->Parser.filter.IBaseFilter_iface;
-    wsprintfW(piOutput.achName, wszStreamTemplate, This->Parser.cStreams);
     This->streams = CoTaskMemRealloc(This->streams, sizeof(StreamData) * (This->Parser.cStreams+1));
     stream = This->streams + This->Parser.cStreams;
     ZeroMemory(stream, sizeof(*stream));
@@ -792,7 +789,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
         case ckidSTREAMNAME:
             TRACE("processing stream name\n");
             /* FIXME: this doesn't exactly match native version (we omit the "##)" prefix), but hey... */
-            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(pChunk + 1), pChunk->cb, piOutput.achName, ARRAY_SIZE(piOutput.achName));
+            MultiByteToWideChar(CP_ACP, 0, (LPCSTR)(pChunk + 1), pChunk->cb, name, ARRAY_SIZE(name));
             break;
         case ckidSTREAMHANDLERDATA:
             FIXME("process stream handler data\n");
@@ -872,7 +869,8 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
     stream->dwLength = dwLength; /* TODO: Use this for mediaseeking */
     stream->packet_queued = CreateEventW(NULL, 0, 0, NULL);
 
-    hr = Parser_AddPin(&(This->Parser), &piOutput, props, &amt);
+    swprintf(name, ARRAY_SIZE(name), wszStreamTemplate, This->Parser.cStreams);
+    hr = Parser_AddPin(&This->Parser, name, props, &amt);
     CoTaskMemFree(amt.pbFormat);
 
 
@@ -1023,7 +1021,7 @@ static HRESULT AVISplitter_Disconnect(LPVOID iface);
 static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, ALLOCATOR_PROPERTIES *props)
 {
     PullPin *This = impl_PullPin_from_IPin(iface);
-    AVISplitterImpl *pAviSplit = impl_from_IBaseFilter(This->pin.pinInfo.pFilter);
+    AVISplitterImpl *pAviSplit = impl_from_IBaseFilter(&This->pin.filter->IBaseFilter_iface);
     HRESULT hr;
     RIFFLIST list;
     LONGLONG pos = 0; /* in bytes */

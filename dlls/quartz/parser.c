@@ -80,7 +80,6 @@ HRESULT Parser_Create(ParserImpl *pParser, const IBaseFilterVtbl *vtbl, IUnknown
         SourceSeeking_ChangeStart start, SourceSeeking_ChangeRate rate)
 {
     HRESULT hr;
-    PIN_INFO piInput;
 
     strmbase_filter_init(&pParser->filter, vtbl, outer, clsid, func_table);
 
@@ -88,11 +87,6 @@ HRESULT Parser_Create(ParserImpl *pParser, const IBaseFilterVtbl *vtbl, IUnknown
 
     pParser->cStreams = 0;
     pParser->sources = CoTaskMemAlloc(0 * sizeof(IPin *));
-
-    /* construct input pin */
-    piInput.dir = PINDIR_INPUT;
-    piInput.pFilter = &pParser->filter.IBaseFilter_iface;
-    lstrcpynW(piInput.achName, sink_name, ARRAY_SIZE(piInput.achName));
 
     if (!start)
         start = Parser_ChangeStart;
@@ -105,7 +99,9 @@ HRESULT Parser_Create(ParserImpl *pParser, const IBaseFilterVtbl *vtbl, IUnknown
 
     SourceSeeking_Init(&pParser->sourceSeeking, &Parser_Seeking_Vtbl, stop, start, rate,  &pParser->filter.csFilter);
 
-    hr = PullPin_Construct(&Parser_InputPin_Vtbl, &piInput, fnProcessSample, (LPVOID)pParser, fnQueryAccept, fnCleanup, fnRequest, fnDone, &pParser->filter.csFilter, (IPin **)&pParser->pInputPin);
+    hr = PullPin_Construct(&Parser_InputPin_Vtbl, &pParser->filter, sink_name,
+            fnProcessSample, (void *)pParser, fnQueryAccept, fnCleanup, fnRequest,
+            fnDone, (IPin **)&pParser->pInputPin);
 
     if (SUCCEEDED(hr))
     {
@@ -346,7 +342,7 @@ static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     Parser_OutputPin_DecideAllocator,
 };
 
-HRESULT Parser_AddPin(ParserImpl *filter, const PIN_INFO *pin_info,
+HRESULT Parser_AddPin(ParserImpl *filter, const WCHAR *name,
         ALLOCATOR_PROPERTIES *props, const AM_MEDIA_TYPE *mt)
 {
     Parser_OutputPin **old_sources;
@@ -361,14 +357,12 @@ HRESULT Parser_AddPin(ParserImpl *filter, const PIN_INFO *pin_info,
     memcpy(filter->sources, old_sources, filter->cStreams * sizeof(filter->sources[0]));
     filter->sources[filter->cStreams] = object;
 
-    strmbase_source_init(&object->pin, &Parser_OutputPin_Vtbl, pin_info,
-            &output_BaseOutputFuncTable, &filter->filter.csFilter);
+    strmbase_source_init(&object->pin, &Parser_OutputPin_Vtbl, &filter->filter,
+            name, &output_BaseOutputFuncTable);
 
     object->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
     CopyMediaType(object->pmt, mt);
     object->dwSamplesProcessed = 0;
-
-    object->pin.pin.pinInfo.pFilter = &filter->filter.IBaseFilter_iface;
     object->allocProps = *props;
     filter->cStreams++;
     BaseFilterImpl_IncrementPinVersion(&filter->filter);
@@ -539,7 +533,7 @@ static HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid,
         *ppv = iface;
     /* The Parser filter does not support querying IMediaSeeking, return it directly */
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = &impl_from_IBaseFilter(This->pin.pin.pinInfo.pFilter)->sourceSeeking;
+        *ppv = &impl_from_IBaseFilter(&This->pin.pin.filter->IBaseFilter_iface)->sourceSeeking;
 
     if (*ppv)
     {
@@ -555,7 +549,7 @@ static HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid,
 static HRESULT WINAPI Parser_OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
     Parser_OutputPin *This = unsafe_impl_Parser_OutputPin_from_IPin(iface);
-    ParserImpl *parser = impl_from_IBaseFilter(This->pin.pin.pinInfo.pFilter);
+    ParserImpl *parser = impl_from_IBaseFilter(&This->pin.pin.filter->IBaseFilter_iface);
 
     /* Set the allocator to our input pin's */
     EnterCriticalSection(This->pin.pin.pCritSec);
@@ -610,7 +604,7 @@ static HRESULT WINAPI Parser_PullPin_QueryInterface(IPin * iface, REFIID riid, L
      * querying IMediaSeeking
      */
     if (IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = &impl_from_IBaseFilter(This->pin.pinInfo.pFilter)->sourceSeeking;
+        *ppv = &impl_from_IBaseFilter(&This->pin.filter->IBaseFilter_iface)->sourceSeeking;
 
     if (*ppv)
     {
@@ -634,10 +628,10 @@ static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)
         if (This->pin.pConnectedTo)
         {
             FILTER_STATE state;
-            ParserImpl *Parser = impl_from_IBaseFilter(This->pin.pinInfo.pFilter);
+            ParserImpl *Parser = impl_from_IBaseFilter(&This->pin.filter->IBaseFilter_iface);
 
             LeaveCriticalSection(This->pin.pCritSec);
-            hr = IBaseFilter_GetState(This->pin.pinInfo.pFilter, INFINITE, &state);
+            hr = IBaseFilter_GetState(&This->pin.filter->IBaseFilter_iface, INFINITE, &state);
             EnterCriticalSection(This->pin.pCritSec);
 
             if (SUCCEEDED(hr) && (state == State_Stopped) && SUCCEEDED(Parser->fnDisconnect(Parser)))
@@ -645,7 +639,7 @@ static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)
                 LeaveCriticalSection(This->pin.pCritSec);
                 PullPin_Disconnect(iface);
                 EnterCriticalSection(This->pin.pCritSec);
-                hr = Parser_RemoveOutputPins(impl_from_IBaseFilter(This->pin.pinInfo.pFilter));
+                hr = Parser_RemoveOutputPins(impl_from_IBaseFilter(&This->pin.filter->IBaseFilter_iface));
             }
             else
                 hr = VFW_E_NOT_STOPPED;
@@ -671,7 +665,7 @@ static HRESULT WINAPI Parser_PullPin_ReceiveConnection(IPin * iface, IPin * pRec
         BasePin *This = (BasePin *)iface;
 
         EnterCriticalSection(This->pCritSec);
-        Parser_RemoveOutputPins(impl_from_IBaseFilter(This->pinInfo.pFilter));
+        Parser_RemoveOutputPins(impl_from_IBaseFilter(&This->filter->IBaseFilter_iface));
         LeaveCriticalSection(This->pCritSec);
     }
 

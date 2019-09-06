@@ -51,9 +51,9 @@ static inline WAVEParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
     return CONTAINING_RECORD(iface, WAVEParserImpl, Parser.sourceSeeking.IMediaSeeking_iface);
 }
 
-static inline WAVEParserImpl *impl_from_IBaseFilter( IBaseFilter *iface )
+static inline WAVEParserImpl *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
-    return CONTAINING_RECORD(iface, WAVEParserImpl, Parser.filter.IBaseFilter_iface);
+    return CONTAINING_RECORD(iface, WAVEParserImpl, Parser.filter);
 }
 
 static LONGLONG bytepos_to_duration(WAVEParserImpl *This, LONGLONG bytepos)
@@ -246,13 +246,8 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, 
     RIFFLIST list;
     RIFFCHUNK chunk;
     LONGLONG pos = 0; /* in bytes */
-    PIN_INFO piOutput;
     AM_MEDIA_TYPE amt;
-    WAVEParserImpl * pWAVEParser = impl_from_IBaseFilter(This->pin.pinInfo.pFilter);
-
-    piOutput.dir = PINDIR_OUTPUT;
-    piOutput.pFilter = &pWAVEParser->Parser.filter.IBaseFilter_iface;
-    lstrcpynW(piOutput.achName, outputW, ARRAY_SIZE(piOutput.achName));
+    WAVEParserImpl *pWAVEParser = impl_from_strmbase_filter(This->pin.filter);
 
     hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
     pos += sizeof(list);
@@ -314,7 +309,7 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, 
     props->cBuffers = 3;
     pWAVEParser->nBlockAlign = ((WAVEFORMATEX*)amt.pbFormat)->nBlockAlign;
     pWAVEParser->nAvgBytesPerSec = ((WAVEFORMATEX*)amt.pbFormat)->nAvgBytesPerSec;
-    hr = Parser_AddPin(&(pWAVEParser->Parser), &piOutput, props, &amt);
+    hr = Parser_AddPin(&pWAVEParser->Parser, outputW, props, &amt);
     CoTaskMemFree(amt.pbFormat);
 
     pWAVEParser->Parser.sourceSeeking.llCurrent = 0;
@@ -410,7 +405,7 @@ static const IBaseFilterVtbl WAVEParser_Vtbl =
 
 static void wave_parser_destroy(struct strmbase_filter *iface)
 {
-    WAVEParserImpl *filter = impl_from_IBaseFilter(&iface->IBaseFilter_iface);
+    WAVEParserImpl *filter = impl_from_strmbase_filter(iface);
     Parser_Destroy(&filter->Parser);
 }
 
