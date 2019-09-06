@@ -1064,7 +1064,7 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
     if (!(addr.sin_port = htons(strtol(strchr(params->url + 7, ':') + 1, &endptr, 10))) || *endptr != '/')
         return STATUS_INVALID_PARAMETER;
 
-    if (!(url = heap_alloc(strlen(params->url))))
+    if (!(url = heap_alloc(strlen(params->url)+1)))
         return STATUS_NO_MEMORY;
     strcpy(url, params->url);
 
