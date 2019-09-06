@@ -1499,14 +1499,6 @@ static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
         return FALSE;
     }
 
-    /* Load and initialize the monitor. SetLastError() is called on failure */
-    if ((pm = monitor_load(mi2w->pName, mi2w->pDLLName)) == NULL) {
-        return FALSE;
-    }
-    monitor_unload(pm);
-
-    SetLastError(ERROR_SUCCESS); /* Monitor installer depends on this */
-
     if (RegCreateKeyW(HKEY_LOCAL_MACHINE, monitorsW, &hroot) != ERROR_SUCCESS) {
         ERR("unable to create key %s\n", debugstr_w(monitorsW));
         return FALSE;
@@ -1537,7 +1529,20 @@ static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
             len = (lstrlenW(mi2w->pDLLName) +1) * sizeof(WCHAR);
             res = (RegSetValueExW(hentry, driverW, 0, REG_SZ,
                     (LPBYTE) mi2w->pDLLName, len) == ERROR_SUCCESS);
+
+            /* Load and initialize the monitor. SetLastError() is called on failure */
+            if ((pm = monitor_load(mi2w->pName, mi2w->pDLLName)) == NULL)
+            {
+                RegDeleteKeyW(hroot, mi2w->pName);
+                res = FALSE;
+            }
+            else
+            {
+                monitor_unload(pm);
+                SetLastError(ERROR_SUCCESS); /* Monitor installer depends on this */
+            }
         }
+
         RegCloseKey(hentry);
     }
 
