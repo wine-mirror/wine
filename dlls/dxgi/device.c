@@ -42,6 +42,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IWineDXGIDevice *ifa
             || IsEqualGUID(riid, &IID_IDXGIDevice)
             || IsEqualGUID(riid, &IID_IDXGIDevice1)
             || IsEqualGUID(riid, &IID_IDXGIDevice2)
+            || IsEqualGUID(riid, &IID_IDXGIDevice3)
             || IsEqualGUID(riid, &IID_IWineDXGIDevice))
     {
         IUnknown_AddRef(iface);
@@ -321,6 +322,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_EnqueueSetEvent(IWineDXGIDevice *if
     return E_NOTIMPL;
 }
 
+static void STDMETHODCALLTYPE dxgi_device_Trim(IWineDXGIDevice *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+}
+
 /* IWineDXGIDevice methods */
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *iface,
@@ -376,6 +382,8 @@ static const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
     dxgi_device_OfferResources,
     dxgi_device_ReclaimResources,
     dxgi_device_EnqueueSetEvent,
+    /* IDXGIDevice3 methods */
+    dxgi_device_Trim,
     /* IWineDXGIDevice methods */
     dxgi_device_create_surface,
 };
