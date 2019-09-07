@@ -5545,7 +5545,9 @@ static void test_large_content(int port)
     };
     test_request_t req;
     DWORD sizelen, len;
+    DWORD read_size;
     DWORD64 len64;
+    char buf[16];
     BOOL ret;
     size_t i;
 
@@ -5594,6 +5596,24 @@ static void test_large_content(int port)
     ok(len64 == ~0, "len64 %x%08x\n", (DWORD)(len64 >> 32), (DWORD)len64);
 
     close_request(&req);
+
+    /* test internal use of HttpQueryInfo on large size */
+    open_read_test_request(port, &req,
+                           "HTTP/1.1 200 OK\r\n"
+                           "Server: winetest\r\n"
+                           "Content-Length: 4294967296\r\n"
+                           "\r\n"
+                           "xx");
+    read_expect_async(req.request, buf, 4, &read_size, "xx");
+    send_response_and_wait("yy1234567890", FALSE, buf, &read_size, "xxyy", 4, 0, 2);
+    read_expect_sync_data(req.request, buf, 10, "1234567890");
+
+    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
+    close_async_handle(req.session, 2);
+    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+    close_connection();
 }
 
 static void test_http_connection(void)
