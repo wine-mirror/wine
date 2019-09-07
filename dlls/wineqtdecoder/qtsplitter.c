@@ -118,6 +118,7 @@
 #include "winuser.h"
 #include "dshow.h"
 
+#include "wine/heap.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/strmbase.h"
