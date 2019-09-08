@@ -172,7 +172,7 @@ msgid ""
 "href=\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
-"Wine fant ikke wine-mono-pakken, som er nødvendig for at .NET programmer "
+"Wine fant ikke wine-mono pakken, som er nødvendig for at .NET programmer "
 "skal fungere ordentlig. Wine kan laste ned og installere denne pakken for "
 "deg.\n"
 "\n"
@@ -7333,10 +7333,8 @@ msgid "Stream descriptor is not selected.\n"
 msgstr "Enheten er ikke koblet til.\n"
 
 #: mferror.mc:697
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "Indeksen mangler.\n"
+msgstr "Kilde mangler.\n"
 
 #: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
@@ -11161,10 +11159,6 @@ msgid ""
 msgstr "Tidsformatet til \"song pointer\" og SMPTE kan ikke brukes sammen."
 
 #: winmm.rc:128
-#, fuzzy
-#| msgid ""
-#| "The specified MIDI port is already in use. Wait until it is free; then "
-#| "try again."
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free, and then "
 "try again."
@@ -11185,10 +11179,6 @@ msgid "An error occurred with the specified port."
 msgstr "En feil oppstod med den oppgitte porten."
 
 #: winmm.rc:133
-#, fuzzy
-#| msgid ""
-#| "All multimedia timers are being used by other applications. Quit one of "
-#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications, and then try again."
@@ -15339,7 +15329,7 @@ msgstr "Vanlig metafil-framviser"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "Metafiler (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -15510,16 +15500,12 @@ msgid "Drive configuration"
 msgstr "Oppsett av stasjoner"
 
 #: winecfg.rc:233
-#, fuzzy
-#| msgid ""
-#| "Failed to connect to the mount manager, the drive configuration cannot be "
-#| "edited."
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
-"Klarte ikke koble til monteringsbehandleren; diskstasjonene kan derfor ikke "
-"redigeres."
+"Klarte ikke koble til monteringsbehandleren; stasjonsoppsettet kan derfor "
+"ikke redigeres."
 
 #: winecfg.rc:236
 msgid "A&dd..."
@@ -15804,12 +15790,6 @@ msgid "System drive"
 msgstr "Systemstasjon"
 
 #: winecfg.rc:76
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete drive C?\n"
-#| "\n"
-#| "Most Windows applications expect drive C to exist, and will die messily "
-#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -16888,10 +16868,8 @@ msgid "Text documents (*.txt)"
 msgstr "Tekstdokument (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
-msgstr "Unicode-tekstdokument (*.txt)"
+msgstr "Unicode-tekstdokumenter (*.txt)"
 
 #: wordpad.rc:150
 msgid "Rich text format (*.rtf)"
@@ -17093,42 +17071,6 @@ msgid "D"
 msgstr "K"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/K]  Copy file attributes, without this attributes are not preserved.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -17192,7 +17134,7 @@ msgstr ""
 "[/A]  Bare kopier filer som er markert som arkiv.\n"
 "[/M]  Bare kopier filer som er markert som arkiv; fjern denne\n"
 "\tmerkingen etterpå.\n"
-"[/K]  Kopier filegenskaper, uten denne blir ikke egenskapene preservert.\n"
+"[/K]  Kopier filegenskaper; uten denne blir ikke egenskapene preservert.\n"
 "[/D | /D:m-d-å] Kopier nye filer eller de som er endret etter\n"
 "\t\tden oppgitte datoen. Hvis ingen dato oppgis kopieres det bare hvis\n"
 "\t\tmålet er eldre enn kilden.\n"
