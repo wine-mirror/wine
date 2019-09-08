@@ -109,7 +109,7 @@ static void test_device_input(IDirectInputDevice8A *lpdid, DWORD event_type, DWO
 
     ok (obj_data.uAppData == expected, "Retrieval of action failed uAppData=%lu expected=%d\n", obj_data.uAppData, expected);
 
-    /* Check for buffer owerflow */
+    /* Check for buffer overflow */
     for (i = 0; i < 17; i++)
         if (event_type == INPUT_KEYBOARD)
         {
