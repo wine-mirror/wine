@@ -82,7 +82,6 @@ struct GSTOutPin {
     GstPad *flip_sink, *flip_src;
     GstPad *their_src;
     GstPad *my_sink;
-    BOOL isaud, isvid;
     AM_MEDIA_TYPE * pmt;
     HANDLE caps_event;
     GstSegment *segment;
@@ -258,7 +257,6 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
 
 static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
 {
-    GSTOutPin *pin = gst_pad_get_element_private(pad);
     AM_MEDIA_TYPE amt;
     GstStructure *arg;
     const char *typename;
@@ -269,20 +267,12 @@ static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
     if (!strcmp(typename, "audio/x-raw")) {
-        if (!pin->isaud) {
-            ERR("Setting audio caps on non-audio pad?\n");
-            return FALSE;
-        }
         ret = amt_from_gst_caps_audio(caps, &amt);
         if (ret)
             FreeMediaType(&amt);
         TRACE("+%i\n", ret);
         return ret;
     } else if (!strcmp(typename, "video/x-raw")) {
-        if (!pin->isvid) {
-            ERR("Setting video caps on non-video pad?\n");
-            return FALSE;
-        }
         ret = amt_from_gst_caps_video(caps, &amt);
         if (ret)
             FreeMediaType(&amt);
@@ -308,16 +298,8 @@ static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
     if (!strcmp(typename, "audio/x-raw")) {
-        if (!pin->isaud) {
-            ERR("Setting audio caps on non-audio pad?\n");
-            return FALSE;
-        }
         ret = amt_from_gst_caps_audio(caps, &amt);
     } else if (!strcmp(typename, "video/x-raw")) {
-        if (!pin->isvid) {
-            ERR("Setting video caps on non-video pad?\n");
-            return FALSE;
-        }
         ret = amt_from_gst_caps_video(caps, &amt);
         if (ret)
             This->props.cbBuffer = max(This->props.cbBuffer, ((VIDEOINFOHEADER*)amt.pbFormat)->bmiHeader.biSizeImage);
@@ -793,7 +775,6 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
     GstPad *mypad;
     GSTOutPin *pin;
     int ret;
-    BOOL isvid = FALSE, isaud = FALSE;
     gchar my_name[1024];
     WCHAR nameW[128];
 
@@ -817,11 +798,8 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
     gst_pad_set_event_function(mypad, event_sink_wrapper);
     gst_pad_set_query_function(mypad, query_sink_wrapper);
 
-    if (!strcmp(typename, "audio/x-raw")) {
-        isaud = TRUE;
-    } else if (!strcmp(typename, "video/x-raw")) {
-        isvid = TRUE;
-    } else {
+    if (strcmp(typename, "audio/x-raw") && strcmp(typename, "video/x-raw"))
+    {
         FIXME("Unknown type \'%s\'\n", typename);
         return;
     }
@@ -835,12 +813,11 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
     pin = This->ppPins[This->cStreams - 1];
     gst_pad_set_element_private(mypad, pin);
     pin->my_sink = mypad;
-    pin->isaud = isaud;
-    pin->isvid = isvid;
 
     gst_segment_init(pin->segment, GST_FORMAT_TIME);
 
-    if (isvid) {
+    if (!strcmp(typename, "video/x-raw"))
+    {
         GstElement *vconv;
 
         TRACE("setting up videoflip filter for pin %p, my_sink: %p, their_src: %p\n",
