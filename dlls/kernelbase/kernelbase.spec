@@ -126,7 +126,7 @@
 # @ stub CheckAllowDecryptedRemoteDestinationPolicy
 @ stub CheckGroupPolicyEnabled
 # @ stub CheckIfStateChangeNotificationExists
-@ stdcall CheckRemoteDebuggerPresent(long ptr) kernel32.CheckRemoteDebuggerPresent
+@ stdcall CheckRemoteDebuggerPresent(long ptr)
 # @ stub CheckTokenCapability
 @ stdcall CheckTokenMembership(long ptr ptr)
 # @ stub CheckTokenMembershipEx
@@ -158,7 +158,7 @@
 @ stdcall CompareStringOrdinal(wstr long wstr long long) kernel32.CompareStringOrdinal
 @ stdcall CompareStringW(long long wstr long wstr long) kernel32.CompareStringW
 @ stdcall ConnectNamedPipe(long ptr)
-@ stdcall ContinueDebugEvent(long long long) kernel32.ContinueDebugEvent
+@ stdcall ContinueDebugEvent(long long long)
 @ stdcall ConvertDefaultLocale(long) kernel32.ConvertDefaultLocale
 @ stdcall ConvertFiberToThread()
 @ stdcall ConvertThreadToFiber(ptr)
@@ -237,9 +237,9 @@
 # @ stub CtrlRoutine
 # @ stub CveEventWrite
 @ stdcall DeactivateActCtx(long long)
-@ stdcall DebugActiveProcess(long) kernel32.DebugActiveProcess
-@ stdcall DebugActiveProcessStop(long) kernel32.DebugActiveProcessStop
-@ stdcall DebugBreak() kernel32.DebugBreak
+@ stdcall DebugActiveProcess(long)
+@ stdcall DebugActiveProcessStop(long)
+@ stdcall DebugBreak()
 @ stdcall DecodePointer(ptr) ntdll.RtlDecodePointer
 # @ stub DecodeRemotePointer
 @ stdcall DecodeSystemPointer(ptr) ntdll.RtlDecodeSystemPointer
@@ -856,7 +856,7 @@
 @ stdcall IsCharXDigitW(long)
 @ stdcall IsDBCSLeadByte(long) kernel32.IsDBCSLeadByte
 @ stdcall IsDBCSLeadByteEx(long long) kernel32.IsDBCSLeadByteEx
-@ stdcall IsDebuggerPresent() kernel32.IsDebuggerPresent
+@ stdcall IsDebuggerPresent()
 # @ stub IsDeveloperModeEnabled
 # @ stub IsDeveloperModePolicyApplied
 # @ stub IsEnclaveTypeSupported
@@ -1003,8 +1003,8 @@
 @ stdcall OpenThread(long long long)
 @ stdcall OpenThreadToken(long long long ptr)
 @ stdcall OpenWaitableTimerW(long long wstr)
-@ stdcall OutputDebugStringA(str) kernel32.OutputDebugStringA
-@ stdcall OutputDebugStringW(wstr) kernel32.OutputDebugStringW
+@ stdcall OutputDebugStringA(str)
+@ stdcall OutputDebugStringW(wstr)
 # @ stub OverrideRoamingDataModificationTimesInRange
 # @ stub PackageFamilyNameFromFullName
 # @ stub PackageFamilyNameFromId
@@ -1684,7 +1684,7 @@
 # @ stub WTSGetServiceSessionId
 # @ stub WTSIsServerContainer
 @ stdcall WaitCommEvent(long ptr ptr) kernel32.WaitCommEvent
-@ stdcall WaitForDebugEvent(ptr long) kernel32.WaitForDebugEvent
+@ stdcall WaitForDebugEvent(ptr long)
 # @ stub WaitForDebugEventEx
 # @ stub WaitForMachinePolicyForegroundProcessingInternal
 @ stdcall WaitForMultipleObjects(long ptr long long)

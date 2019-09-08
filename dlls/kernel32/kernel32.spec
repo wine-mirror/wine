@@ -219,7 +219,7 @@
 # @ stub CheckForReadOnlyResource
 @ stdcall CheckNameLegalDOS8Dot3A(str ptr long ptr ptr)
 @ stdcall CheckNameLegalDOS8Dot3W(wstr ptr long ptr ptr)
-@ stdcall CheckRemoteDebuggerPresent(long ptr)
+@ stdcall -import CheckRemoteDebuggerPresent(long ptr)
 @ stdcall ClearCommBreak(long)
 @ stdcall ClearCommError(long ptr ptr)
 @ stdcall CloseConsoleHandle(long)
@@ -246,7 +246,7 @@
 @ stdcall -import ConnectNamedPipe(long ptr)
 @ stub ConsoleMenuControl
 @ stub ConsoleSubst
-@ stdcall ContinueDebugEvent(long long long)
+@ stdcall -import ContinueDebugEvent(long long long)
 # @ stub ConvertCalDateTimeToSystemTime
 @ stdcall ConvertDefaultLocale (long)
 @ stdcall -import ConvertFiberToThread()
@@ -347,8 +347,8 @@
 @ stdcall -import CreateWaitableTimerW(ptr long wstr)
 # @ stub CtrlRoutine
 @ stdcall -import DeactivateActCtx(long long)
-@ stdcall DebugActiveProcess(long)
-@ stdcall DebugActiveProcessStop(long)
+@ stdcall -import DebugActiveProcess(long)
+@ stdcall -import DebugActiveProcessStop(long)
 @ stdcall DebugBreak()
 @ stdcall DebugBreakProcess(long)
 @ stdcall DebugSetProcessKillOnExit(long)
@@ -977,7 +977,7 @@
 # @ stub IsCalendarLeapYear
 @ stdcall IsDBCSLeadByte(long)
 @ stdcall IsDBCSLeadByteEx(long long)
-@ stdcall IsDebuggerPresent()
+@ stdcall -import IsDebuggerPresent()
 @ stub -i386 IsLSCallback
 # @ stub IsNLSDefinedString
 @ stdcall IsNormalizedString(long wstr long)
@@ -1134,8 +1134,8 @@
 @ stdcall -i386 OpenVxDHandle(long)
 @ stdcall OpenWaitableTimerA(long long str)
 @ stdcall -import OpenWaitableTimerW(long long wstr)
-@ stdcall OutputDebugStringA(str)
-@ stdcall OutputDebugStringW(wstr)
+@ stdcall -import OutputDebugStringA(str)
+@ stdcall -import OutputDebugStringW(wstr)
 @ stdcall PeekConsoleInputA(ptr ptr long ptr)
 @ stdcall PeekConsoleInputW(ptr ptr long ptr)
 @ stdcall -import PeekNamedPipe(long ptr long ptr ptr ptr)
@@ -1571,7 +1571,7 @@
 @ stdcall -import VirtualUnlock(ptr long)
 @ stdcall WTSGetActiveConsoleSessionId()
 @ stdcall WaitCommEvent(long ptr ptr)
-@ stdcall WaitForDebugEvent(ptr long)
+@ stdcall -import WaitForDebugEvent(ptr long)
 @ stdcall -import WaitForMultipleObjects(long ptr long long)
 @ stdcall -import WaitForMultipleObjectsEx(long ptr long long long)
 @ stdcall -import WaitForSingleObject(long long)
