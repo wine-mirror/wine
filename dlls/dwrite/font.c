@@ -5402,7 +5402,7 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
 
     *ret = NULL;
 
-    /* Check rendering, antialising, measuring, and grid fitting modes. */
+    /* Check rendering, antialiasing, measuring, and grid fitting modes. */
     if ((UINT32)desc->rendering_mode >= DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED ||
             desc->rendering_mode == DWRITE_RENDERING_MODE1_OUTLINE ||
             desc->rendering_mode == DWRITE_RENDERING_MODE1_DEFAULT)
