@@ -3010,7 +3010,7 @@ static void test_coop_level_mode_set(void)
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
     ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
-            && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
+            && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpected screen size %ux%u.\n",
             devmode.dmPelsWidth, devmode.dmPelsHeight);
 
     expect_messages = exclusive_focus_restore_messages;
@@ -3023,7 +3023,7 @@ static void test_coop_level_mode_set(void)
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
     ok(devmode.dmPelsWidth == param.ddraw_width
-            && devmode.dmPelsHeight == param.ddraw_height, "Got unexpect screen size %ux%u.\n",
+            && devmode.dmPelsHeight == param.ddraw_height, "Got unexpected screen size %ux%u.\n",
             devmode.dmPelsWidth, devmode.dmPelsHeight);
 
     hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
