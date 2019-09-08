@@ -383,7 +383,7 @@
 @ stdcall FlushFileBuffers(long)
 @ stdcall FlushInstructionCache(long long long)
 @ stdcall FlushProcessWriteBuffers() kernel32.FlushProcessWriteBuffers
-@ stdcall FlushViewOfFile(ptr long) kernel32.FlushViewOfFile
+@ stdcall FlushViewOfFile(ptr long)
 @ stdcall FoldStringW(long wstr long ptr long) kernel32.FoldStringW
 # @ stub ForceSyncFgPolicyInternal
 # @ stub FormatApplicationUserModelId
@@ -762,7 +762,7 @@
 @ stdcall GetWindowsAccountDomainSid(ptr ptr ptr)
 @ stdcall GetWindowsDirectoryA(ptr long)
 @ stdcall GetWindowsDirectoryW(ptr long)
-@ stdcall GetWriteWatch(long ptr long ptr ptr ptr) kernel32.GetWriteWatch
+@ stdcall GetWriteWatch(long ptr long ptr ptr ptr)
 # @ stub GetWsChanges
 # @ stub GetWsChangesEx
 # @ stub GetXStateFeaturesMask
@@ -950,9 +950,9 @@
 @ stdcall MapGenericMask(ptr ptr)
 # @ stub MapPredefinedHandleInternal
 @ stdcall MapUserPhysicalPages(ptr long ptr) kernel32.MapUserPhysicalPages
-@ stdcall MapViewOfFile(long long long long long) kernel32.MapViewOfFile
-@ stdcall MapViewOfFileEx(long long long long long ptr) kernel32.MapViewOfFileEx
-@ stub MapViewOfFileExNuma
+@ stdcall MapViewOfFile(long long long long long)
+@ stdcall MapViewOfFileEx(long long long long long ptr)
+@ stdcall MapViewOfFileExNuma(long long long long long ptr long)
 # @ stub MapViewOfFileFromApp
 @ stdcall MoveFileExW(wstr wstr long) kernel32.MoveFileExW
 # @ stub MoveFileWithProgressTransactedW
@@ -1250,7 +1250,7 @@
 @ stdcall ReadFile(long ptr long ptr ptr)
 @ stdcall ReadFileEx(long ptr long ptr ptr)
 @ stdcall ReadFileScatter(long ptr long ptr ptr)
-@ stdcall ReadProcessMemory(long ptr ptr long ptr) kernel32.ReadProcessMemory
+@ stdcall ReadProcessMemory(long ptr ptr long ptr)
 # @ stub ReadStateAtomValue
 # @ stub ReadStateContainerValue
 # @ stub ReclaimVirtualMemory
@@ -1343,7 +1343,7 @@
 @ stdcall ReplaceFileW(wstr wstr wstr long ptr ptr) kernel32.ReplaceFileW
 @ stdcall ResetEvent(long)
 # @ stub ResetState
-@ stdcall ResetWriteWatch(ptr long) kernel32.ResetWriteWatch
+@ stdcall ResetWriteWatch(ptr long)
 @ stdcall ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) kernel32.ResolveDelayLoadedAPI
 # @ stub ResolveDelayLoadsFromDll
 @ stdcall ResolveLocaleName(wstr ptr long) kernel32.ResolveLocaleName
@@ -1615,7 +1615,7 @@
 @ stdcall UnhandledExceptionFilter(ptr) kernel32.UnhandledExceptionFilter
 @ stdcall UnlockFile(long long long long long)
 @ stdcall UnlockFileEx(long long long long ptr)
-@ stdcall UnmapViewOfFile(ptr) kernel32.UnmapViewOfFile
+@ stdcall UnmapViewOfFile(ptr)
 # @ stub UnmapViewOfFileEx
 # @ stub UnregisterBadMemoryNotification
 # @ stub UnregisterGPNotificationInternal
@@ -1668,19 +1668,19 @@
 # @ stub VerifyPackageId
 # @ stub VerifyPackageRelativeApplicationId
 # @ stub VerifyScripts
-@ stdcall VirtualAlloc(ptr long long long) kernel32.VirtualAlloc
-@ stdcall VirtualAllocEx(long ptr long long long) kernel32.VirtualAllocEx
-@ stdcall VirtualAllocExNuma(long ptr long long long long) kernel32.VirtualAllocExNuma
+@ stdcall VirtualAlloc(ptr long long long)
+@ stdcall VirtualAllocEx(long ptr long long long)
+@ stdcall VirtualAllocExNuma(long ptr long long long long)
 # @ stub VirtualAllocFromApp
-@ stdcall VirtualFree(ptr long long) kernel32.VirtualFree
-@ stdcall VirtualFreeEx(long ptr long long) kernel32.VirtualFreeEx
-@ stdcall VirtualLock(ptr long) kernel32.VirtualLock
-@ stdcall VirtualProtect(ptr long long ptr) kernel32.VirtualProtect
-@ stdcall VirtualProtectEx(long ptr long long ptr) kernel32.VirtualProtectEx
+@ stdcall VirtualFree(ptr long long)
+@ stdcall VirtualFreeEx(long ptr long long)
+@ stdcall VirtualLock(ptr long)
+@ stdcall VirtualProtect(ptr long long ptr)
+@ stdcall VirtualProtectEx(long ptr long long ptr)
 # @ stub VirtualProtectFromApp
-@ stdcall VirtualQuery(ptr ptr long) kernel32.VirtualQuery
-@ stdcall VirtualQueryEx(long ptr ptr long) kernel32.VirtualQueryEx
-@ stdcall VirtualUnlock(ptr long) kernel32.VirtualUnlock
+@ stdcall VirtualQuery(ptr ptr long)
+@ stdcall VirtualQueryEx(long ptr ptr long)
+@ stdcall VirtualUnlock(ptr long)
 # @ stub WTSGetServiceSessionId
 # @ stub WTSIsServerContainer
 @ stdcall WaitCommEvent(long ptr ptr) kernel32.WaitCommEvent
@@ -1729,7 +1729,7 @@
 @ stdcall WriteFile(long ptr long ptr ptr)
 @ stdcall WriteFileEx(long ptr long ptr ptr)
 @ stdcall WriteFileGather(long ptr long ptr ptr)
-@ stdcall WriteProcessMemory(long ptr ptr long ptr) kernel32.WriteProcessMemory
+@ stdcall WriteProcessMemory(long ptr ptr long ptr)
 # @ stub WriteStateAtomValue
 # @ stub WriteStateContainerValue
 @ stdcall ZombifyActCtx(ptr)

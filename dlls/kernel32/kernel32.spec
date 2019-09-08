@@ -519,7 +519,7 @@
 @ stdcall -import FlushFileBuffers(long)
 @ stdcall -import FlushInstructionCache(long long long)
 @ stdcall FlushProcessWriteBuffers()
-@ stdcall FlushViewOfFile(ptr long)
+@ stdcall -import FlushViewOfFile(ptr long)
 @ stdcall FoldStringA(long str long ptr long)
 @ stdcall FoldStringW(long wstr long ptr long)
 @ stdcall FormatMessageA(long ptr long long ptr long ptr)
@@ -889,7 +889,7 @@
 @ stdcall GetVolumePathNamesForVolumeNameW(wstr ptr long ptr)
 @ stdcall -import GetWindowsDirectoryA(ptr long)
 @ stdcall -import GetWindowsDirectoryW(ptr long)
-@ stdcall GetWriteWatch(long ptr long ptr ptr ptr)
+@ stdcall -import GetWriteWatch(long ptr long ptr ptr ptr)
 # @ stub GetXStateFeaturesMask
 @ stdcall GlobalAddAtomA(str)
 @ stdcall GlobalAddAtomW(wstr)
@@ -1078,9 +1078,9 @@
 @ stdcall -i386 -private MapSLFix(long) krnl386.exe16.MapSLFix
 @ stdcall MapUserPhysicalPages(ptr long ptr)
 # @ stub MapUserPhysicalPagesScatter
-@ stdcall MapViewOfFile(long long long long long)
-@ stdcall MapViewOfFileEx(long long long long long ptr)
-# @ stub MapViewOfFileExNuma
+@ stdcall -import MapViewOfFile(long long long long long)
+@ stdcall -import MapViewOfFileEx(long long long long long ptr)
+@ stdcall -import MapViewOfFileExNuma(long long long long long ptr long)
 @ stdcall Module32First(long ptr)
 @ stdcall Module32FirstW(long ptr)
 @ stdcall Module32Next(long ptr)
@@ -1198,7 +1198,7 @@
 @ stdcall -import ReadFile(long ptr long ptr ptr)
 @ stdcall -import ReadFileEx(long ptr long ptr ptr)
 @ stdcall -import ReadFileScatter(long ptr long ptr ptr)
-@ stdcall ReadProcessMemory(long ptr ptr long ptr)
+@ stdcall -import ReadProcessMemory(long ptr ptr long ptr)
 # @ stub ReadThreadProfilingData
 @ stdcall -private RegCloseKey(long) advapi32.RegCloseKey
 @ stdcall -private RegCreateKeyExA(long str long ptr long long ptr ptr ptr) advapi32.RegCreateKeyExA
@@ -1280,7 +1280,7 @@
 @ stdcall RequestDeviceWakeup(long)
 @ stdcall RequestWakeupLatency(long)
 @ stdcall -import ResetEvent(long)
-@ stdcall ResetWriteWatch(ptr long)
+@ stdcall -import ResetWriteWatch(ptr long)
 @ stdcall ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) ntdll.LdrResolveDelayLoadedAPI
 @ stdcall ResolveLocaleName(wstr ptr long)
 @ stdcall RestoreLastError(long) ntdll.RtlRestoreLastWin32Error
@@ -1536,7 +1536,7 @@
 @ stdcall UninitializeCriticalSection(ptr)
 @ stdcall -import UnlockFile(long long long long long)
 @ stdcall -import UnlockFileEx(long long long long ptr)
-@ stdcall UnmapViewOfFile(ptr)
+@ stdcall -import UnmapViewOfFile(ptr)
 # @ stub UnregisterApplicationRecoveryCallback
 @ stdcall UnregisterApplicationRestart()
 # @ stub UnregisterConsoleIME
@@ -1557,18 +1557,18 @@
 # @ stub VerifyScripts
 @ stdcall VerifyVersionInfoA(long long int64)
 @ stdcall VerifyVersionInfoW(long long int64)
-@ stdcall VirtualAlloc(ptr long long long)
-@ stdcall VirtualAllocEx(long ptr long long long)
-@ stdcall VirtualAllocExNuma(long ptr long long long long)
+@ stdcall -import VirtualAlloc(ptr long long long)
+@ stdcall -import VirtualAllocEx(long ptr long long long)
+@ stdcall -import VirtualAllocExNuma(long ptr long long long long)
 @ stub VirtualBufferExceptionHandler
-@ stdcall VirtualFree(ptr long long)
-@ stdcall VirtualFreeEx(long ptr long long)
-@ stdcall VirtualLock(ptr long)
-@ stdcall VirtualProtect(ptr long long ptr)
-@ stdcall VirtualProtectEx(long ptr long long ptr)
-@ stdcall VirtualQuery(ptr ptr long)
-@ stdcall VirtualQueryEx(long ptr ptr long)
-@ stdcall VirtualUnlock(ptr long)
+@ stdcall -import VirtualFree(ptr long long)
+@ stdcall -import VirtualFreeEx(long ptr long long)
+@ stdcall -import VirtualLock(ptr long)
+@ stdcall -import VirtualProtect(ptr long long ptr)
+@ stdcall -import VirtualProtectEx(long ptr long long ptr)
+@ stdcall -import VirtualQuery(ptr ptr long)
+@ stdcall -import VirtualQueryEx(long ptr ptr long)
+@ stdcall -import VirtualUnlock(ptr long)
 @ stdcall WTSGetActiveConsoleSessionId()
 @ stdcall WaitCommEvent(long ptr ptr)
 @ stdcall WaitForDebugEvent(ptr long)
@@ -1627,7 +1627,7 @@
 @ stdcall WritePrivateProfileStringW(wstr wstr wstr wstr)
 @ stdcall WritePrivateProfileStructA (str str ptr long str)
 @ stdcall WritePrivateProfileStructW(wstr wstr ptr long wstr)
-@ stdcall WriteProcessMemory(long ptr ptr long ptr)
+@ stdcall -import WriteProcessMemory(long ptr ptr long ptr)
 @ stdcall WriteProfileSectionA(str str)
 @ stdcall WriteProfileSectionW(str str)
 @ stdcall WriteProfileStringA(str str str)

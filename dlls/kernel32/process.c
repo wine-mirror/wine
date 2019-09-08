@@ -3484,30 +3484,6 @@ BOOL WINAPI GetProcessWorkingSetSize(HANDLE process, SIZE_T *minset, SIZE_T *max
 }
 
 
-/***********************************************************************
- *		ReadProcessMemory (KERNEL32.@)
- */
-BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, SIZE_T size,
-                               SIZE_T *bytes_read )
-{
-    NTSTATUS status = NtReadVirtualMemory( process, addr, buffer, size, bytes_read );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
-
-/***********************************************************************
- *           WriteProcessMemory    		(KERNEL32.@)
- */
-BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPCVOID buffer, SIZE_T size,
-                                SIZE_T *bytes_written )
-{
-    NTSTATUS status = NtWriteVirtualMemory( process, addr, buffer, size, bytes_written );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
-
 /******************************************************************
  *		GetProcessIoCounters (KERNEL32.@)
  */
