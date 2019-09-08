@@ -237,78 +237,6 @@ typedef struct __GLOBAL32_INTERN
 #include "poppack.h"
 
 /***********************************************************************
- *           GlobalAlloc   (KERNEL32.@)
- *
- * Allocate a global memory object.
- *
- * RETURNS
- *      Handle: Success
- *      NULL: Failure
- */
-HGLOBAL WINAPI GlobalAlloc(
-                 UINT flags, /* [in] Object allocation attributes */
-                 SIZE_T size /* [in] Number of bytes to allocate */
-) {
-   PGLOBAL32_INTERN     pintern;
-   DWORD                hpflags;
-   LPVOID               palloc;
-
-   if(flags&GMEM_ZEROINIT)
-      hpflags=HEAP_ZERO_MEMORY;
-   else
-      hpflags=0;
-
-   if((flags & GMEM_MOVEABLE)==0) /* POINTER */
-   {
-      palloc = HeapAlloc( GetProcessHeap(), hpflags, max( 1, size ));
-      TRACE( "(flags=%04x) returning %p\n",  flags, palloc );
-      return palloc;
-   }
-   else  /* HANDLE */
-   {
-      if (size > INT_MAX-HGLOBAL_STORAGE)
-      {
-          SetLastError(ERROR_OUTOFMEMORY);
-          return 0;
-      }
-
-      pintern = HeapAlloc(GetProcessHeap(), 0, sizeof(GLOBAL32_INTERN));
-      if (pintern)
-      {
-          /* Mask out obsolete flags */
-          flags &= ~(GMEM_LOWER | GMEM_NOCOMPACT | GMEM_NOT_BANKED | GMEM_NOTIFY);
-
-          pintern->Magic = MAGIC_GLOBAL_USED;
-          pintern->Flags = flags >> 8;
-          pintern->LockCount = 0;
-
-          if (size)
-          {
-              palloc = HeapAlloc(GetProcessHeap(), hpflags, size+HGLOBAL_STORAGE);
-              if (!palloc)
-              {
-                  HeapFree(GetProcessHeap(), 0, pintern);
-                  pintern = NULL;
-              }
-              else
-              {
-                  *(HGLOBAL *)palloc = INTERN_TO_HANDLE(pintern);
-                  pintern->Pointer = (char *)palloc + HGLOBAL_STORAGE;
-              }
-          }
-          else
-              pintern->Pointer = NULL;
-      }
-
-      if (!pintern) return 0;
-      TRACE( "(flags=%04x) returning handle %p pointer %p\n",
-             flags, INTERN_TO_HANDLE(pintern), pintern->Pointer );
-      return INTERN_TO_HANDLE(pintern);
-   }
-}
-
-
-/***********************************************************************
  *           GlobalLock   (KERNEL32.@)
  *
  * Lock a global memory object and return a pointer to first byte of the memory
@@ -326,40 +254,7 @@ HGLOBAL WINAPI GlobalAlloc(
  */
 LPVOID WINAPI GlobalLock(HGLOBAL hmem)
 {
-    PGLOBAL32_INTERN pintern;
-    LPVOID           palloc;
-
-    if (ISPOINTER(hmem))
-        return IsBadReadPtr(hmem, 1) ? NULL : hmem;
-
-    RtlLockHeap(GetProcessHeap());
-    __TRY
-    {
-        pintern = HANDLE_TO_INTERN(hmem);
-        if (pintern->Magic == MAGIC_GLOBAL_USED)
-        {
-            palloc = pintern->Pointer;
-            if (!pintern->Pointer)
-                SetLastError(ERROR_DISCARDED);
-            else if (pintern->LockCount < GMEM_LOCKCOUNT)
-                pintern->LockCount++;
-        }
-        else
-        {
-            WARN("invalid handle %p (Magic: 0x%04x)\n", hmem, pintern->Magic);
-            palloc = NULL;
-            SetLastError(ERROR_INVALID_HANDLE);
-        }
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        WARN("(%p): Page fault occurred ! Caused by bug ?\n", hmem);
-        palloc = NULL;
-        SetLastError(ERROR_INVALID_HANDLE);
-    }
-    __ENDTRY
-    RtlUnlockHeap(GetProcessHeap());
-    return palloc;
+    return LocalLock( hmem );
 }
 
 
@@ -381,46 +276,8 @@ LPVOID WINAPI GlobalLock(HGLOBAL hmem)
  */
 BOOL WINAPI GlobalUnlock(HGLOBAL hmem)
 {
-    PGLOBAL32_INTERN pintern;
-    BOOL locked;
-
-    if (ISPOINTER(hmem)) return TRUE;
-
-    RtlLockHeap(GetProcessHeap());
-    __TRY
-    {
-        pintern=HANDLE_TO_INTERN(hmem);
-        if(pintern->Magic==MAGIC_GLOBAL_USED)
-        {
-            if(pintern->LockCount)
-            {
-                pintern->LockCount--;
-                locked = (pintern->LockCount != 0);
-                if (!locked) SetLastError(NO_ERROR);
-            }
-            else
-            {
-                WARN("%p not locked\n", hmem);
-                SetLastError(ERROR_NOT_LOCKED);
-                locked = FALSE;
-            }
-        }
-        else
-        {
-            WARN("invalid handle %p (Magic: 0x%04x)\n", hmem, pintern->Magic);
-            SetLastError(ERROR_INVALID_HANDLE);
-            locked=FALSE;
-        }
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        WARN("(%p): Page fault occurred ! Caused by bug ?\n", hmem);
-        SetLastError( ERROR_INVALID_PARAMETER );
-        locked=FALSE;
-    }
-    __ENDTRY
-    RtlUnlockHeap(GetProcessHeap());
-    return locked;
+    if (ISPOINTER( hmem )) return TRUE;
+    return LocalUnlock( hmem );
 }
 
 
@@ -495,200 +352,9 @@ HGLOBAL WINAPI GlobalHandle(
  *      Handle: Success
  *      NULL: Failure
  */
-HGLOBAL WINAPI GlobalReAlloc(
-                 HGLOBAL hmem, /* [in] Handle of global memory object */
-                 SIZE_T size,  /* [in] New size of block */
-                 UINT flags    /* [in] How to reallocate object */
-) {
-   LPVOID               palloc;
-   HGLOBAL            hnew;
-   PGLOBAL32_INTERN     pintern;
-   DWORD heap_flags = (flags & GMEM_ZEROINIT) ? HEAP_ZERO_MEMORY : 0;
-
-   hnew = 0;
-   RtlLockHeap(GetProcessHeap());
-   if(flags & GMEM_MODIFY) /* modify flags */
-   {
-      if( ISPOINTER(hmem) && (flags & GMEM_MOVEABLE))
-      {
-         /* make a fixed block moveable
-          * actually only NT is able to do this. But it's soo simple
-          */
-         if (hmem == 0)
-         {
-             WARN("GlobalReAlloc with null handle!\n");
-             SetLastError( ERROR_NOACCESS );
-             hnew = 0;
-         }
-         else
-         {
-             size = HeapSize(GetProcessHeap(), 0, hmem);
-             hnew = GlobalAlloc(flags, size);
-             palloc = GlobalLock(hnew);
-             memcpy(palloc, hmem, size);
-             GlobalUnlock(hnew);
-             GlobalFree(hmem);
-         }
-      }
-      else if( ISPOINTER(hmem) &&(flags & GMEM_DISCARDABLE))
-      {
-         /* change the flags to make our block "discardable" */
-         pintern=HANDLE_TO_INTERN(hmem);
-         pintern->Flags = pintern->Flags | (GMEM_DISCARDABLE >> 8);
-         hnew=hmem;
-      }
-      else
-      {
-         SetLastError(ERROR_INVALID_PARAMETER);
-         hnew = 0;
-      }
-   }
-   else
-   {
-      if(ISPOINTER(hmem))
-      {
-         /* reallocate fixed memory */
-         if (!(flags & GMEM_MOVEABLE))
-            heap_flags |= HEAP_REALLOC_IN_PLACE_ONLY;
-         hnew=HeapReAlloc(GetProcessHeap(), heap_flags, hmem, size);
-      }
-      else
-      {
-         /* reallocate a moveable block */
-         pintern=HANDLE_TO_INTERN(hmem);
-
-#if 0
-/* Apparently Windows doesn't care whether the handle is locked at this point */
-/* See also the same comment in GlobalFree() */
-         if(pintern->LockCount>1) {
-            ERR("handle 0x%08lx is still locked, cannot realloc!\n",(DWORD)hmem);
-            SetLastError(ERROR_INVALID_HANDLE);
-         } else
-#endif
-         if(size!=0)
-         {
-            hnew=hmem;
-            if(pintern->Pointer)
-            {
-               if(size > INT_MAX-HGLOBAL_STORAGE)
-               {
-                   SetLastError(ERROR_OUTOFMEMORY);
-                   hnew = 0;
-               }
-               else if((palloc = HeapReAlloc(GetProcessHeap(), heap_flags,
-                                   (char *) pintern->Pointer-HGLOBAL_STORAGE,
-                                   size+HGLOBAL_STORAGE)) == NULL)
-                   hnew = 0; /* Block still valid */
-               else
-                   pintern->Pointer = (char *)palloc+HGLOBAL_STORAGE;
-            }
-            else
-            {
-                if(size > INT_MAX-HGLOBAL_STORAGE)
-                {
-                    SetLastError(ERROR_OUTOFMEMORY);
-                    hnew = 0;
-                }
-                else if((palloc=HeapAlloc(GetProcessHeap(), heap_flags, size+HGLOBAL_STORAGE))
-                   == NULL)
-                    hnew = 0;
-                else
-                {
-                    *(HGLOBAL *)palloc = hmem;
-                    pintern->Pointer = (char *)palloc + HGLOBAL_STORAGE;
-                }
-            }
-         }
-         else
-         {
-            if (pintern->LockCount == 0)
-            {
-                if(pintern->Pointer)
-                {
-                    HeapFree(GetProcessHeap(), 0, (char *) pintern->Pointer-HGLOBAL_STORAGE);
-                    pintern->Pointer = NULL;
-                }
-                hnew = hmem;
-            }
-            else
-                WARN("not freeing memory associated with locked handle\n");
-         }
-      }
-   }
-   RtlUnlockHeap(GetProcessHeap());
-   return hnew;
-}
-
-
-/***********************************************************************
- *           GlobalFree   (KERNEL32.@)
- *
- * Free a global memory object.
- *
- * PARAMS
- *  hmem [I] Handle of the global memory object
- *
- * RETURNS
- *  Success: NULL
- *  Failure: The provided handle
- *
- * NOTES
- *   When the handle is invalid, last error is set to ERROR_INVALID_HANDLE
- *
- */
-HGLOBAL WINAPI GlobalFree(HGLOBAL hmem)
+HGLOBAL WINAPI GlobalReAlloc( HGLOBAL hmem, SIZE_T size, UINT flags )
 {
-    PGLOBAL32_INTERN pintern;
-    HGLOBAL hreturned;
-
-    RtlLockHeap(GetProcessHeap());
-    __TRY
-    {
-        hreturned = 0;
-        if(ISPOINTER(hmem)) /* POINTER */
-        {
-            if(!HeapFree(GetProcessHeap(), HEAP_NO_SERIALIZE, hmem))
-            {
-                SetLastError(ERROR_INVALID_HANDLE);
-                hreturned = hmem;
-            }
-        }
-        else  /* HANDLE */
-        {
-            pintern=HANDLE_TO_INTERN(hmem);
-
-            if(pintern->Magic==MAGIC_GLOBAL_USED)
-            {
-                pintern->Magic = 0xdead;
-
-                /* WIN98 does not make this test. That is you can free a */
-                /* block you have not unlocked. Go figure!!              */
-                /* if(pintern->LockCount!=0)  */
-                /*    SetLastError(ERROR_INVALID_HANDLE);  */
-
-                if(pintern->Pointer)
-                    if(!HeapFree(GetProcessHeap(), HEAP_NO_SERIALIZE, (char *)(pintern->Pointer)-HGLOBAL_STORAGE))
-                        hreturned=hmem;
-                if(!HeapFree(GetProcessHeap(), HEAP_NO_SERIALIZE, pintern))
-                    hreturned=hmem;
-            }
-            else
-            {
-                WARN("invalid handle %p (Magic: 0x%04x)\n", hmem, pintern->Magic);
-                SetLastError(ERROR_INVALID_HANDLE);
-                hreturned = hmem;
-            }
-        }
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        ERR("invalid handle %p\n", hmem);
-        SetLastError(ERROR_INVALID_HANDLE);
-        hreturned = hmem;
-    }
-    __ENDTRY
-    RtlUnlockHeap(GetProcessHeap());
-    return hreturned;
+    return LocalReAlloc( hmem, size, flags );
 }
 
 
@@ -847,33 +513,6 @@ SIZE_T WINAPI GlobalCompact( DWORD minfree )
 
 
 /***********************************************************************
- *           LocalAlloc   (KERNEL32.@)
- *
- * Allocate a local memory object.
- *
- * RETURNS
- *	Handle: Success
- *	NULL: Failure
- *
- * NOTES
- *  Windows memory management does not provide a separate local heap
- *  and global heap.
- */
-HLOCAL WINAPI LocalAlloc( UINT flags, SIZE_T size )
-{
-    /* LocalAlloc allows a 0-size fixed block, but GlobalAlloc doesn't */
-    if (!(flags & LMEM_MOVEABLE))
-    {
-        DWORD heap_flags = (flags & LMEM_ZEROINIT) ? HEAP_ZERO_MEMORY : 0;
-        void *ret = HeapAlloc( GetProcessHeap(), heap_flags, size );
-        TRACE( "(flags=%04x) returning %p\n",  flags, ret );
-        return ret;
-    }
-    return GlobalAlloc( flags, size );
-}
-
-
-/***********************************************************************
  *           LocalCompact   (KERNEL32.@)
  */
 SIZE_T WINAPI LocalCompact( UINT minfree )
@@ -903,26 +542,6 @@ UINT WINAPI LocalFlags(
 
 
 /***********************************************************************
- *           LocalFree   (KERNEL32.@)
- *
- * Free a local memory object.
- *
- * RETURNS
- *	NULL: Success
- *	Handle: Failure
- *
- * NOTES
- *  Windows memory management does not provide a separate local heap
- *  and global heap.
- */
-HLOCAL WINAPI LocalFree(
-                HLOCAL handle /* [in] Handle of memory object */
-) {
-    return GlobalFree( handle );
-}
-
-
-/***********************************************************************
  *           LocalHandle   (KERNEL32.@)
  *
  * Get the handle associated with the pointer to a local memory block.
@@ -939,48 +558,6 @@ HLOCAL WINAPI LocalHandle(
                 LPCVOID ptr /* [in] Address of local memory block */
 ) {
     return GlobalHandle( ptr );
-}
-
-
-/***********************************************************************
- *           LocalLock   (KERNEL32.@)
- * Locks a local memory object and returns pointer to the first byte
- * of the memory block.
- *
- * RETURNS
- *	Pointer: Success
- *	NULL: Failure
- *
- * NOTES
- *  Windows memory management does not provide a separate local heap
- *  and global heap.
- */
-LPVOID WINAPI LocalLock(
-              HLOCAL handle /* [in] Address of local memory object */
-) {
-    return GlobalLock( handle );
-}
-
-
-/***********************************************************************
- *           LocalReAlloc   (KERNEL32.@)
- *
- * Change the size or attributes of a local memory object.
- *
- * RETURNS
- *	Handle: Success
- *	NULL: Failure
- *
- * NOTES
- *  Windows memory management does not provide a separate local heap
- *  and global heap.
- */
-HLOCAL WINAPI LocalReAlloc(
-                HLOCAL handle, /* [in] Handle of memory object */
-                SIZE_T size,   /* [in] New size of block */
-                UINT flags     /* [in] How to reallocate object */
-) {
-    return GlobalReAlloc( handle, size, flags );
 }
 
 
@@ -1012,32 +589,6 @@ SIZE_T WINAPI LocalSize(
     return GlobalSize( handle );
 }
 
-
-/***********************************************************************
- *           LocalUnlock   (KERNEL32.@)
- *
- * Unlock a local memory object.
- *
- * RETURNS
- *	TRUE: Object is still locked
- *	FALSE: Object is unlocked
- *
- * NOTES
- *  Windows memory management does not provide a separate local heap
- *  and global heap.
- */
-BOOL WINAPI LocalUnlock(
-              HLOCAL handle /* [in] Handle of memory object */
-)
-{
-    if (ISPOINTER( handle ))
-    {
-        SetLastError( ERROR_NOT_LOCKED );
-        return FALSE;
-    }
-
-    return GlobalUnlock( handle );
-}
 
 
 /***********************************************************************

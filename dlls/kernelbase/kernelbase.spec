@@ -766,8 +766,8 @@
 # @ stub GetWsChanges
 # @ stub GetWsChangesEx
 # @ stub GetXStateFeaturesMask
-@ stdcall GlobalAlloc(long long) kernel32.GlobalAlloc
-@ stdcall GlobalFree(long) kernel32.GlobalFree
+@ stdcall GlobalAlloc(long long)
+@ stdcall GlobalFree(long)
 @ stdcall GlobalMemoryStatusEx(ptr) kernel32.GlobalMemoryStatusEx
 # @ stub GuardCheckLongJumpTarget
 # @ stub HasPolicyForegroundProcessingCompletedInternal
@@ -933,12 +933,12 @@
 @ stub LoadStringBaseExW
 @ stub LoadStringByReference
 @ stdcall LoadStringW(long long ptr long)
-@ stdcall LocalAlloc(long long) kernel32.LocalAlloc
+@ stdcall LocalAlloc(long long)
 @ stdcall LocalFileTimeToFileTime(ptr ptr) kernel32.LocalFileTimeToFileTime
-@ stdcall LocalFree(long) kernel32.LocalFree
-@ stdcall LocalLock(long) kernel32.LocalLock
-@ stdcall LocalReAlloc(long long long) kernel32.LocalReAlloc
-@ stdcall LocalUnlock(long) kernel32.LocalUnlock
+@ stdcall LocalFree(long)
+@ stdcall LocalLock(long)
+@ stdcall LocalReAlloc(long long long)
+@ stdcall LocalUnlock(long)
 @ stdcall LocaleNameToLCID(wstr long) kernel32.LocaleNameToLCID
 # @ stub LocateXStateFeature
 @ stdcall LockFile(long long long long long)

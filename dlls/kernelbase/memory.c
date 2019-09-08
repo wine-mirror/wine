@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <sys/types.h>
 
 #include "ntstatus.h"
@@ -36,7 +37,7 @@
 #include "wine/exception.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(virtual);
+WINE_DEFAULT_DEBUG_CHANNEL(heap);
 
 
 /***********************************************************************
@@ -381,6 +382,354 @@ BOOL WINAPI DECLSPEC_HOTPATCH HeapValidate( HANDLE heap, DWORD flags, LPCVOID pt
 BOOL WINAPI DECLSPEC_HOTPATCH HeapWalk( HANDLE heap, PROCESS_HEAP_ENTRY *entry )
 {
     return set_ntstatus( RtlWalkHeap( heap, entry ));
+}
+
+
+/***********************************************************************
+ * Global/local heap functions
+ ***********************************************************************/
+
+#include "pshpack1.h"
+
+struct local_header
+{
+   WORD  magic;
+   void *ptr;
+   BYTE flags;
+   BYTE lock;
+};
+
+#include "poppack.h"
+
+#define MAGIC_LOCAL_USED    0x5342
+/* align the storage needed for the HLOCAL on an 8-byte boundary thus
+ * LocalAlloc/LocalReAlloc'ing with LMEM_MOVEABLE of memory with
+ * size = 8*k, where k=1,2,3,... allocs exactly the given size.
+ * The Minolta DiMAGE Image Viewer heavily relies on this, corrupting
+ * the output jpeg's > 1 MB if not */
+#define HLOCAL_STORAGE      (sizeof(HLOCAL) * 2)
+
+static inline struct local_header *get_header( HLOCAL hmem )
+{
+    return (struct local_header *)((char *)hmem - 2);
+}
+
+static inline HLOCAL get_handle( struct local_header *header )
+{
+    return &header->ptr;
+}
+
+static inline BOOL is_pointer( HLOCAL hmem )
+{
+    return !((ULONG_PTR)hmem & 2);
+}
+
+/***********************************************************************
+ *           GlobalAlloc   (kernelbase.@)
+ */
+HGLOBAL WINAPI DECLSPEC_HOTPATCH GlobalAlloc( UINT flags, SIZE_T size )
+{
+    /* mask out obsolete flags */
+    flags &= ~(GMEM_NOCOMPACT | GMEM_NOT_BANKED | GMEM_NOTIFY);
+
+    /* LocalAlloc allows a 0-size fixed block, but GlobalAlloc doesn't */
+    if (!(flags & GMEM_MOVEABLE) && !size) size = 1;
+
+    return LocalAlloc( flags, size );
+}
+
+
+/***********************************************************************
+ *           GlobalFree   (kernelbase.@)
+ */
+HGLOBAL WINAPI DECLSPEC_HOTPATCH GlobalFree( HLOCAL hmem )
+{
+    return LocalFree( hmem );
+}
+
+
+/***********************************************************************
+ *           LocalAlloc   (kernelbase.@)
+ */
+HLOCAL WINAPI DECLSPEC_HOTPATCH LocalAlloc( UINT flags, SIZE_T size )
+{
+    struct local_header *header;
+    DWORD heap_flags = 0;
+    void *ptr;
+
+    if (flags & LMEM_ZEROINIT) heap_flags = HEAP_ZERO_MEMORY;
+
+    if (!(flags & LMEM_MOVEABLE)) /* pointer */
+    {
+        ptr = HeapAlloc( GetProcessHeap(), heap_flags, size );
+        TRACE( "(flags=%04x) returning %p\n",  flags, ptr );
+        return ptr;
+    }
+
+    if (size > INT_MAX - HLOCAL_STORAGE)
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        return 0;
+    }
+    if (!(header = HeapAlloc( GetProcessHeap(), 0, sizeof(*header) ))) return 0;
+
+    header->magic = MAGIC_LOCAL_USED;
+    header->flags = flags >> 8;
+    header->lock  = 0;
+
+    if (size)
+    {
+        if (!(ptr = HeapAlloc(GetProcessHeap(), heap_flags, size + HLOCAL_STORAGE )))
+        {
+            HeapFree( GetProcessHeap(), 0, header );
+            return 0;
+        }
+        *(HLOCAL *)ptr = get_handle( header );
+        header->ptr = (char *)ptr + HLOCAL_STORAGE;
+    }
+    else header->ptr = NULL;
+
+    TRACE( "(flags=%04x) returning handle %p pointer %p\n",
+           flags, get_handle( header ), header->ptr );
+    return get_handle( header );
+}
+
+
+/***********************************************************************
+ *           LocalFree   (kernelbase.@)
+ */
+HLOCAL WINAPI DECLSPEC_HOTPATCH LocalFree( HLOCAL hmem )
+{
+    struct local_header *header;
+    HLOCAL ret;
+
+    RtlLockHeap( GetProcessHeap() );
+    __TRY
+    {
+        ret = 0;
+        if (is_pointer(hmem)) /* POINTER */
+        {
+            if (!HeapFree( GetProcessHeap(), HEAP_NO_SERIALIZE, hmem ))
+            {
+                SetLastError( ERROR_INVALID_HANDLE );
+                ret = hmem;
+            }
+        }
+        else  /* HANDLE */
+        {
+            header = get_header( hmem );
+            if (header->magic == MAGIC_LOCAL_USED)
+            {
+                header->magic = 0xdead;
+                if (header->ptr)
+                {
+                    if (!HeapFree( GetProcessHeap(), HEAP_NO_SERIALIZE,
+                                   (char *)header->ptr - HLOCAL_STORAGE ))
+                        ret = hmem;
+                }
+                if (!HeapFree( GetProcessHeap(), HEAP_NO_SERIALIZE, header )) ret = hmem;
+            }
+            else
+            {
+                WARN( "invalid handle %p (magic: 0x%04x)\n", hmem, header->magic );
+                SetLastError( ERROR_INVALID_HANDLE );
+                ret = hmem;
+            }
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        WARN( "invalid handle %p\n", hmem );
+        SetLastError( ERROR_INVALID_HANDLE );
+        ret = hmem;
+    }
+    __ENDTRY
+    RtlUnlockHeap( GetProcessHeap() );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           LocalLock   (kernelbase.@)
+ */
+LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL hmem )
+{
+    void *ret = NULL;
+
+    if (is_pointer( hmem )) return IsBadReadPtr( hmem, 1 ) ? NULL : hmem;
+
+    RtlLockHeap( GetProcessHeap() );
+    __TRY
+    {
+        struct local_header *header = get_header( hmem );
+        if (header->magic == MAGIC_LOCAL_USED)
+        {
+            ret = header->ptr;
+            if (!header->ptr) SetLastError( ERROR_DISCARDED );
+            else if (header->lock < LMEM_LOCKCOUNT) header->lock++;
+        }
+        else
+        {
+            WARN( "invalid handle %p (magic: 0x%04x)\n", hmem, header->magic );
+            SetLastError( ERROR_INVALID_HANDLE );
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        WARN("(%p): Page fault occurred ! Caused by bug ?\n", hmem);
+        SetLastError( ERROR_INVALID_HANDLE );
+    }
+    __ENDTRY
+    RtlUnlockHeap( GetProcessHeap() );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           LocalReAlloc   (kernelbase.@)
+ */
+HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL hmem, SIZE_T size, UINT flags )
+{
+   struct local_header *header;
+   void *ptr;
+   HLOCAL ret = 0;
+   DWORD heap_flags = (flags & LMEM_ZEROINIT) ? HEAP_ZERO_MEMORY : 0;
+
+   RtlLockHeap( GetProcessHeap() );
+   if (flags & LMEM_MODIFY) /* modify flags */
+   {
+      if (is_pointer( hmem ) && (flags & LMEM_MOVEABLE))
+      {
+         /* make a fixed block moveable
+          * actually only NT is able to do this. But it's soo simple
+          */
+         if (hmem == 0)
+         {
+             WARN( "null handle\n");
+             SetLastError( ERROR_NOACCESS );
+         }
+         else
+         {
+             size = RtlSizeHeap( GetProcessHeap(), 0, hmem );
+             ret = LocalAlloc( flags, size );
+             ptr = LocalLock( ret );
+             memcpy( ptr, hmem, size );
+             LocalUnlock( ret );
+             LocalFree( hmem );
+         }
+      }
+      else if (!is_pointer( hmem ) && (flags & LMEM_DISCARDABLE))
+      {
+         /* change the flags to make our block "discardable" */
+         header = get_header( hmem );
+         header->flags |= LMEM_DISCARDABLE >> 8;
+         ret = hmem;
+      }
+      else SetLastError( ERROR_INVALID_PARAMETER );
+   }
+   else
+   {
+      if (is_pointer( hmem ))
+      {
+         /* reallocate fixed memory */
+         if (!(flags & LMEM_MOVEABLE)) heap_flags |= HEAP_REALLOC_IN_PLACE_ONLY;
+         ret = HeapReAlloc( GetProcessHeap(), heap_flags, hmem, size );
+      }
+      else
+      {
+          /* reallocate a moveable block */
+          header = get_header( hmem );
+          if (size != 0)
+          {
+              if (size <= INT_MAX - HLOCAL_STORAGE)
+              {
+                  if (header->ptr)
+                  {
+                      if ((ptr = HeapReAlloc( GetProcessHeap(), heap_flags,
+                                              (char *)header->ptr - HLOCAL_STORAGE,
+                                              size + HLOCAL_STORAGE )))
+                      {
+                          header->ptr = (char *)ptr + HLOCAL_STORAGE;
+                          ret = hmem;
+                      }
+                  }
+                  else
+                  {
+                      if ((ptr = HeapAlloc( GetProcessHeap(), heap_flags, size + HLOCAL_STORAGE )))
+                      {
+                          *(HLOCAL *)ptr = hmem;
+                          header->ptr = (char *)ptr + HLOCAL_STORAGE;
+                          ret = hmem;
+                      }
+                  }
+              }
+              else SetLastError( ERROR_OUTOFMEMORY );
+          }
+          else
+          {
+              if (header->lock == 0)
+              {
+                  if (header->ptr)
+                  {
+                      HeapFree( GetProcessHeap(), 0, (char *)header->ptr - HLOCAL_STORAGE );
+                      header->ptr = NULL;
+                  }
+                  ret = hmem;
+              }
+              else WARN( "not freeing memory associated with locked handle\n" );
+          }
+      }
+   }
+   RtlUnlockHeap( GetProcessHeap() );
+   return ret;
+}
+
+
+/***********************************************************************
+ *           LocalUnlock   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH LocalUnlock( HLOCAL hmem )
+{
+    BOOL ret = FALSE;
+
+    if (is_pointer( hmem ))
+    {
+        SetLastError( ERROR_NOT_LOCKED );
+        return FALSE;
+    }
+
+    RtlLockHeap( GetProcessHeap() );
+    __TRY
+    {
+        struct local_header *header = get_header( hmem );
+        if (header->magic == MAGIC_LOCAL_USED)
+        {
+            if (header->lock)
+            {
+                header->lock--;
+                ret = (header->lock != 0);
+                if (!ret) SetLastError( NO_ERROR );
+            }
+            else
+            {
+                WARN( "%p not locked\n", hmem );
+                SetLastError( ERROR_NOT_LOCKED );
+            }
+        }
+        else
+        {
+            WARN( "invalid handle %p (Magic: 0x%04x)\n", hmem, header->magic );
+            SetLastError( ERROR_INVALID_HANDLE );
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        WARN("(%p): Page fault occurred ! Caused by bug ?\n", hmem);
+        SetLastError( ERROR_INVALID_PARAMETER );
+    }
+    __ENDTRY
+    RtlUnlockHeap( GetProcessHeap() );
+    return ret;
 }
 
 
