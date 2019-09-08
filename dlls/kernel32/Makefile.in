@@ -15,7 +15,6 @@ C_SRCS = \
 	debugger.c \
 	editline.c \
 	environ.c \
-	except.c \
 	file.c \
 	format_msg.c \
 	heap.c \

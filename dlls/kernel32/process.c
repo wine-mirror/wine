@@ -3171,6 +3171,16 @@ BOOL WINAPI GetExitCodeProcess( HANDLE hProcess, LPDWORD lpExitCode )
 }
 
 
+/**************************************************************************
+ *           FatalExit   (KERNEL32.@)
+ */
+void WINAPI FatalExit( int code )
+{
+    WARN( "FatalExit\n" );
+    ExitProcess( code );
+}
+
+
 /***********************************************************************
  *           GetProcessFlags    (KERNEL32.@)
  */

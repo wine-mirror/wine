@@ -461,8 +461,8 @@
 @ stdcall -i386 -private -norelay FT_Exit8() krnl386.exe16.FT_Exit8
 @ stdcall -i386 -private -norelay FT_Prolog() krnl386.exe16.FT_Prolog
 @ stdcall -i386 -private -norelay FT_Thunk() krnl386.exe16.FT_Thunk
-@ stdcall FatalAppExitA(long str)
-@ stdcall FatalAppExitW(long wstr)
+@ stdcall -import FatalAppExitA(long str)
+@ stdcall -import FatalAppExitW(long wstr)
 @ stdcall FatalExit(long)
 @ stdcall FileTimeToDosDateTime(ptr ptr ptr)
 @ stdcall FileTimeToLocalFileTime(ptr ptr)
@@ -1181,7 +1181,7 @@
 @ stub QueryWin31IniFilesMappedToRegistry
 @ stdcall -import QueueUserAPC(ptr long long)
 @ stdcall -import QueueUserWorkItem(ptr ptr long)
-@ stdcall RaiseException(long long long ptr)
+@ stdcall -import RaiseException(long long long ptr)
 # @ stub RaiseFailFastException
 @ stdcall ReadConsoleA(long ptr long ptr ptr)
 @ stdcall ReadConsoleInputA(long ptr long ptr)
@@ -1467,7 +1467,7 @@
 @ stdcall SetTimeZoneInformation(ptr)
 @ stub SetTimerQueueTimer
 @ stdcall -arch=x86_64 SetUmsThreadInformation(ptr long ptr long)
-@ stdcall SetUnhandledExceptionFilter(ptr)
+@ stdcall -import SetUnhandledExceptionFilter(ptr)
 @ stdcall SetUserGeoID(long)
 @ stub SetVDMCurrentDirectories
 @ stdcall SetVolumeLabelA(str str)
@@ -1532,7 +1532,7 @@
 @ stdcall -i386 -private UTUnRegister(long) krnl386.exe16.UTUnRegister
 @ stdcall -i386 -private UnMapLS(long) krnl386.exe16.UnMapLS
 @ stdcall -i386 -private -norelay UnMapSLFixArray(long long) krnl386.exe16.UnMapSLFixArray
-@ stdcall UnhandledExceptionFilter(ptr)
+@ stdcall -import UnhandledExceptionFilter(ptr)
 @ stdcall UninitializeCriticalSection(ptr)
 @ stdcall -import UnlockFile(long long long long long)
 @ stdcall -import UnlockFileEx(long long long long ptr)

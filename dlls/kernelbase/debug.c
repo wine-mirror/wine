@@ -23,7 +23,11 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "winerror.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winternl.h"
+#include "wingdi.h"
+#include "winuser.h"
 
 #include "wine/exception.h"
 #include "wine/server.h"
@@ -32,7 +36,12 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
+WINE_DECLARE_DEBUG_CHANNEL(winedbg);
 
+typedef INT (WINAPI *MessageBoxA_funcptr)(HWND,LPCSTR,LPCSTR,UINT);
+typedef INT (WINAPI *MessageBoxW_funcptr)(HWND,LPCWSTR,LPCWSTR,UINT);
+
+static PTOP_LEVEL_EXCEPTION_FILTER top_filter;
 
 /***********************************************************************
  *           CheckRemoteDebuggerPresent   (kernelbase.@)
@@ -125,6 +134,38 @@ void WINAPI DebugBreak(void)
     DbgBreakPoint();
 }
 #endif
+
+
+/**************************************************************************
+ *           FatalAppExitA   (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH FatalAppExitA( UINT action, LPCSTR str )
+{
+    HMODULE mod = GetModuleHandleA( "user32.dll" );
+    MessageBoxA_funcptr pMessageBoxA = NULL;
+
+    if (mod) pMessageBoxA = (MessageBoxA_funcptr)GetProcAddress( mod, "MessageBoxA" );
+    if (pMessageBoxA) pMessageBoxA( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+    else ERR( "%s\n", debugstr_a(str) );
+    RtlExitUserProcess( 1 );
+}
+
+
+/**************************************************************************
+ *           FatalAppExitW   (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH FatalAppExitW( UINT action, LPCWSTR str )
+{
+    static const WCHAR User32DllW[] = {'u','s','e','r','3','2','.','d','l','l',0};
+
+    HMODULE mod = GetModuleHandleW( User32DllW );
+    MessageBoxW_funcptr pMessageBoxW = NULL;
+
+    if (mod) pMessageBoxW = (MessageBoxW_funcptr)GetProcAddress( mod, "MessageBoxW" );
+    if (pMessageBoxW) pMessageBoxW( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
+    else ERR( "%s\n", debugstr_w(str) );
+    RtlExitUserProcess( 1 );
+}
 
 
 /***********************************************************************
@@ -253,6 +294,39 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringW( LPCWSTR str )
 }
 
 
+/*******************************************************************
+ *           RaiseException  (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH RaiseException( DWORD code, DWORD flags, DWORD count, const ULONG_PTR *args )
+{
+    EXCEPTION_RECORD record;
+
+    record.ExceptionCode    = code;
+    record.ExceptionFlags   = flags & EH_NONCONTINUABLE;
+    record.ExceptionRecord  = NULL;
+    record.ExceptionAddress = RaiseException;
+    if (count && args)
+    {
+        if (count > EXCEPTION_MAXIMUM_PARAMETERS) count = EXCEPTION_MAXIMUM_PARAMETERS;
+        record.NumberParameters = count;
+        memcpy( record.ExceptionInformation, args, count * sizeof(*args) );
+    }
+    else record.NumberParameters = 0;
+
+    RtlRaiseException( &record );
+}
+
+
+/***********************************************************************
+ *           SetUnhandledExceptionFilter   (kernelbase.@)
+ */
+LPTOP_LEVEL_EXCEPTION_FILTER WINAPI DECLSPEC_HOTPATCH SetUnhandledExceptionFilter(
+    LPTOP_LEVEL_EXCEPTION_FILTER filter )
+{
+    return InterlockedExchangePointer( (void **)&top_filter, filter );
+}
+
+
 /******************************************************************************
  *           WaitForDebugEvent   (kernelbase.@)
  */
@@ -355,4 +429,357 @@ BOOL WINAPI DECLSPEC_HOTPATCH WaitForDebugEvent( DEBUG_EVENT *event, DWORD timeo
     }
     SetLastError( ERROR_SEM_TIMEOUT );
     return FALSE;
+}
+
+
+/*******************************************************************
+ *         format_exception_msg
+ */
+static void format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, int size )
+{
+    const EXCEPTION_RECORD *rec = ptr->ExceptionRecord;
+    int len;
+
+    switch(rec->ExceptionCode)
+    {
+    case EXCEPTION_INT_DIVIDE_BY_ZERO:
+        len = snprintf( buffer, size, "Unhandled division by zero" );
+        break;
+    case EXCEPTION_INT_OVERFLOW:
+        len = snprintf( buffer, size, "Unhandled overflow" );
+        break;
+    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+        len = snprintf( buffer, size, "Unhandled array bounds" );
+        break;
+    case EXCEPTION_ILLEGAL_INSTRUCTION:
+        len = snprintf( buffer, size, "Unhandled illegal instruction" );
+        break;
+    case EXCEPTION_STACK_OVERFLOW:
+        len = snprintf( buffer, size, "Unhandled stack overflow" );
+        break;
+    case EXCEPTION_PRIV_INSTRUCTION:
+        len = snprintf( buffer, size, "Unhandled privileged instruction" );
+        break;
+    case EXCEPTION_ACCESS_VIOLATION:
+        if (rec->NumberParameters == 2)
+            len = snprintf( buffer, size, "Unhandled page fault on %s access to 0x%08lx",
+                            rec->ExceptionInformation[0] == EXCEPTION_WRITE_FAULT ? "write" :
+                            rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT ? "execute" : "read",
+                            rec->ExceptionInformation[1]);
+        else
+            len = snprintf( buffer, size, "Unhandled page fault");
+        break;
+    case EXCEPTION_DATATYPE_MISALIGNMENT:
+        len = snprintf( buffer, size, "Unhandled alignment" );
+        break;
+    case CONTROL_C_EXIT:
+        len = snprintf( buffer, size, "Unhandled ^C");
+        break;
+    case STATUS_POSSIBLE_DEADLOCK:
+        len = snprintf( buffer, size, "Critical section %08lx wait failed",
+                 rec->ExceptionInformation[0]);
+        break;
+    case EXCEPTION_WINE_STUB:
+        if ((ULONG_PTR)rec->ExceptionInformation[1] >> 16)
+            len = snprintf( buffer, size, "Unimplemented function %s.%s called",
+                            (char *)rec->ExceptionInformation[0], (char *)rec->ExceptionInformation[1] );
+        else
+            len = snprintf( buffer, size, "Unimplemented function %s.%ld called",
+                            (char *)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
+        break;
+    case EXCEPTION_WINE_ASSERTION:
+        len = snprintf( buffer, size, "Assertion failed" );
+        break;
+    default:
+        len = snprintf( buffer, size, "Unhandled exception 0x%08x in thread %x",
+                        rec->ExceptionCode, GetCurrentThreadId());
+        break;
+    }
+    if (len < 0 || len >= size) return;
+    snprintf( buffer + len,  size - len, " at address %p", ptr->ExceptionRecord->ExceptionAddress );
+}
+
+
+/******************************************************************
+ *		start_debugger
+ *
+ * Does the effective debugger startup according to 'format'
+ */
+static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    WCHAR *cmdline, *env, *p, *format = NULL;
+    HANDLE dbg_key;
+    DWORD autostart = TRUE;
+    PROCESS_INFORMATION	info;
+    STARTUPINFOW startup;
+    BOOL ret = FALSE;
+    char buffer[256];
+
+    static const WCHAR AeDebugW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                     'M','a','c','h','i','n','e','\\',
+                                     'S','o','f','t','w','a','r','e','\\',
+                                     'M','i','c','r','o','s','o','f','t','\\',
+                                     'W','i','n','d','o','w','s',' ','N','T','\\',
+                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                     'A','e','D','e','b','u','g',0};
+    static const WCHAR DebuggerW[] = {'D','e','b','u','g','g','e','r',0};
+    static const WCHAR AutoW[] = {'A','u','t','o',0};
+
+    format_exception_msg( epointers, buffer, sizeof(buffer) );
+    MESSAGE( "wine: %s (thread %04x), starting debugger...\n", buffer, GetCurrentThreadId() );
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, AeDebugW );
+
+    if (!NtOpenKey( &dbg_key, KEY_READ, &attr ))
+    {
+        KEY_VALUE_PARTIAL_INFORMATION *info;
+        DWORD format_size = 0;
+
+        RtlInitUnicodeString( &nameW, DebuggerW );
+        if (NtQueryValueKey( dbg_key, &nameW, KeyValuePartialInformation,
+                             NULL, 0, &format_size ) == STATUS_BUFFER_TOO_SMALL)
+        {
+            char *data = HeapAlloc( GetProcessHeap(), 0, format_size );
+            NtQueryValueKey( dbg_key, &nameW, KeyValuePartialInformation,
+                             data, format_size, &format_size );
+            info = (KEY_VALUE_PARTIAL_INFORMATION *)data;
+            format = HeapAlloc( GetProcessHeap(), 0, info->DataLength + sizeof(WCHAR) );
+            memcpy( format, info->Data, info->DataLength );
+            format[info->DataLength / sizeof(WCHAR)] = 0;
+
+            if (info->Type == REG_EXPAND_SZ)
+            {
+                WCHAR *tmp;
+
+                format_size = ExpandEnvironmentStringsW( format, NULL, 0 );
+                tmp = HeapAlloc( GetProcessHeap(), 0, format_size * sizeof(WCHAR));
+                ExpandEnvironmentStringsW( format, tmp, format_size );
+                HeapFree( GetProcessHeap(), 0, format );
+                format = tmp;
+            }
+            HeapFree( GetProcessHeap(), 0, data );
+        }
+
+        RtlInitUnicodeString( &nameW, AutoW );
+        if (!NtQueryValueKey( dbg_key, &nameW, KeyValuePartialInformation,
+                              buffer, sizeof(buffer)-sizeof(WCHAR), &format_size ))
+       {
+           info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+           if (info->Type == REG_DWORD) memcpy( &autostart, info->Data, sizeof(DWORD) );
+           else if (info->Type == REG_SZ)
+           {
+               WCHAR *str = (WCHAR *)info->Data;
+               str[info->DataLength/sizeof(WCHAR)] = 0;
+               autostart = wcstol( str, NULL, 10 );
+           }
+       }
+
+       NtClose( dbg_key );
+    }
+
+    if (format)
+    {
+        size_t format_size = lstrlenW( format ) + 2*20;
+        cmdline = HeapAlloc( GetProcessHeap(), 0, format_size * sizeof(WCHAR) );
+        swprintf( cmdline, format_size, format, (long)GetCurrentProcessId(), (long)HandleToLong(event) );
+        HeapFree( GetProcessHeap(), 0, format );
+    }
+    else
+    {
+        static const WCHAR fmtW[] = {'w','i','n','e','d','b','g',' ','-','-','a','u','t','o',' ','%','l','d',' ','%','l','d',0};
+        cmdline = HeapAlloc( GetProcessHeap(), 0, 80 * sizeof(WCHAR) );
+        swprintf( cmdline, 80, fmtW, (long)GetCurrentProcessId(), (long)HandleToLong(event) );
+    }
+
+    if (!autostart)
+    {
+	HMODULE mod = GetModuleHandleA( "user32.dll" );
+	MessageBoxA_funcptr pMessageBoxA = NULL;
+
+	if (mod) pMessageBoxA = (void *)GetProcAddress( mod, "MessageBoxA" );
+	if (pMessageBoxA)
+	{
+            static const char msg[] = ".\nDo you wish to debug it?";
+
+            format_exception_msg( epointers, buffer, sizeof(buffer) - sizeof(msg) );
+            strcat( buffer, msg );
+	    if (pMessageBoxA( 0, buffer, "Exception raised", MB_YESNO | MB_ICONHAND ) == IDNO)
+	    {
+		TRACE( "Killing process\n" );
+		goto exit;
+	    }
+	}
+    }
+
+    /* make WINEDEBUG empty in the environment */
+    env = GetEnvironmentStringsW();
+    if (!TRACE_ON(winedbg))
+    {
+        static const WCHAR winedebugW[] = {'W','I','N','E','D','E','B','U','G','=',0};
+        for (p = env; *p; p += lstrlenW(p) + 1)
+        {
+            if (!wcsncmp( p, winedebugW, lstrlenW(winedebugW) ))
+            {
+                WCHAR *next = p + lstrlenW(p);
+                WCHAR *end = next + 1;
+                while (*end) end += lstrlenW(end) + 1;
+                memmove( p + lstrlenW(winedebugW), next, end + 1 - next );
+                break;
+            }
+        }
+    }
+
+    TRACE( "Starting debugger %s\n", debugstr_w(cmdline) );
+    memset( &startup, 0, sizeof(startup) );
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+    ret = CreateProcessW( NULL, cmdline, NULL, NULL, TRUE, 0, env, NULL, &startup, &info );
+    FreeEnvironmentStringsW( env );
+
+    if (ret)
+    {
+        /* wait for debugger to come up... */
+        HANDLE handles[2];
+        CloseHandle( info.hThread );
+        handles[0] = event;
+        handles[1] = info.hProcess;
+        WaitForMultipleObjects( 2, handles, FALSE, INFINITE );
+        CloseHandle( info.hProcess );
+    }
+    else ERR( "Couldn't start debugger %s (%d)\n"
+              "Read the Wine Developers Guide on how to set up winedbg or another debugger\n",
+              debugstr_w(cmdline), GetLastError() );
+exit:
+    HeapFree(GetProcessHeap(), 0, cmdline);
+    return ret;
+}
+
+/******************************************************************
+ *		start_debugger_atomic
+ *
+ * starts the debugger in an atomic way:
+ *	- either the debugger is not started and it is started
+ *	- or the debugger has already been started by another thread
+ *	- or the debugger couldn't be started
+ *
+ * returns TRUE for the two first conditions, FALSE for the last
+ */
+static BOOL start_debugger_atomic( EXCEPTION_POINTERS *epointers )
+{
+    static HANDLE once;
+
+    if (once == 0)
+    {
+	OBJECT_ATTRIBUTES attr;
+	HANDLE event;
+
+	attr.Length                   = sizeof(attr);
+	attr.RootDirectory            = 0;
+	attr.Attributes               = OBJ_INHERIT;
+	attr.ObjectName               = NULL;
+	attr.SecurityDescriptor       = NULL;
+	attr.SecurityQualityOfService = NULL;
+
+	/* ask for manual reset, so that once the debugger is started,
+	 * every thread will know it */
+	NtCreateEvent( &event, EVENT_ALL_ACCESS, &attr, NotificationEvent, FALSE );
+        if (InterlockedCompareExchangePointer( &once, event, 0 ) == 0)
+	{
+	    /* ok, our event has been set... we're the winning thread */
+	    BOOL ret = start_debugger( epointers, once );
+
+	    if (!ret)
+	    {
+		/* so that the other threads won't be stuck */
+		NtSetEvent( once, NULL );
+	    }
+	    return ret;
+	}
+
+	/* someone beat us here... */
+	CloseHandle( event );
+    }
+
+    /* and wait for the winner to have actually created the debugger */
+    WaitForSingleObject( once, INFINITE );
+    /* in fact, here, we only know that someone has tried to start the debugger,
+     * we'll know by reposting the exception if it has actually attached
+     * to the current process */
+    return TRUE;
+}
+
+
+/*******************************************************************
+ *         check_resource_write
+ *
+ * Check if the exception is a write attempt to the resource data.
+ * If yes, we unprotect the resources to let broken apps continue
+ * (Windows does this too).
+ */
+static BOOL check_resource_write( void *addr )
+{
+    DWORD old_prot;
+    void *rsrc;
+    DWORD size;
+    MEMORY_BASIC_INFORMATION info;
+
+    if (!VirtualQuery( addr, &info, sizeof(info) )) return FALSE;
+    if (info.State == MEM_FREE || !(info.Type & MEM_IMAGE)) return FALSE;
+    if (!(rsrc = RtlImageDirectoryEntryToData( info.AllocationBase, TRUE,
+                                               IMAGE_DIRECTORY_ENTRY_RESOURCE, &size )))
+        return FALSE;
+    if (addr < rsrc || (char *)addr >= (char *)rsrc + size) return FALSE;
+    TRACE( "Broken app is writing to the resource data, enabling work-around\n" );
+    VirtualProtect( rsrc, size, PAGE_READWRITE, &old_prot );
+    return TRUE;
+}
+
+
+/*******************************************************************
+ *         UnhandledExceptionFilter   (kernelbase.@)
+ */
+LONG WINAPI UnhandledExceptionFilter( EXCEPTION_POINTERS *epointers )
+{
+    const EXCEPTION_RECORD *rec = epointers->ExceptionRecord;
+
+    if (rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && rec->NumberParameters >= 2)
+    {
+        switch (rec->ExceptionInformation[0])
+        {
+        case EXCEPTION_WRITE_FAULT:
+            if (check_resource_write( (void *)rec->ExceptionInformation[1] ))
+                return EXCEPTION_CONTINUE_EXECUTION;
+            break;
+        }
+    }
+
+    if (!NtCurrentTeb()->Peb->BeingDebugged)
+    {
+        if (rec->ExceptionCode == CONTROL_C_EXIT)
+        {
+            /* do not launch the debugger on ^C, simply terminate the process */
+            TerminateProcess( GetCurrentProcess(), 1 );
+        }
+
+        if (top_filter)
+        {
+            LONG ret = top_filter( epointers );
+            if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
+        }
+
+        /* FIXME: Should check the current error mode */
+
+        if (!start_debugger_atomic( epointers ) || !NtCurrentTeb()->Peb->BeingDebugged)
+            return EXCEPTION_EXECUTE_HANDLER;
+    }
+    return EXCEPTION_CONTINUE_SEARCH;
 }

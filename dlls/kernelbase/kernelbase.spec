@@ -341,8 +341,8 @@
 @ stdcall ExitThread(long) ntdll.RtlExitUserThread
 @ stdcall ExpandEnvironmentStringsA(str ptr long) kernel32.ExpandEnvironmentStringsA
 @ stdcall ExpandEnvironmentStringsW(wstr ptr long) kernel32.ExpandEnvironmentStringsW
-@ stdcall FatalAppExitA(long str) kernel32.FatalAppExitA
-@ stdcall FatalAppExitW(long wstr) kernel32.FatalAppExitW
+@ stdcall FatalAppExitA(long str)
+@ stdcall FatalAppExitW(long wstr)
 @ stdcall FileTimeToLocalFileTime(ptr ptr) kernel32.FileTimeToLocalFileTime
 @ stdcall FileTimeToSystemTime(ptr ptr) kernel32.FileTimeToSystemTime
 @ stdcall FillConsoleOutputAttribute(long long long long ptr) kernel32.FillConsoleOutputAttribute
@@ -1232,7 +1232,7 @@
 # @ stub QuirkIsEnabledForPackage3
 # @ stub QuirkIsEnabledForPackage4
 # @ stub QuirkIsEnabledForProcess
-@ stdcall RaiseException(long long long ptr) kernel32.RaiseException
+@ stdcall RaiseException(long long long ptr)
 # @ stub RaiseFailFastException
 @ stdcall ReOpenFile(ptr long long long)
 @ stdcall ReadConsoleA(long ptr long ptr ptr) kernel32.ReadConsoleA
@@ -1502,7 +1502,7 @@
 # @ stub SetThreadpoolWaitEx
 @ stdcall SetTimeZoneInformation(ptr) kernel32.SetTimeZoneInformation
 @ stdcall SetTokenInformation(long long ptr long)
-@ stdcall SetUnhandledExceptionFilter(ptr) kernel32.SetUnhandledExceptionFilter
+@ stdcall SetUnhandledExceptionFilter(ptr)
 @ stdcall SetUserGeoID(long) kernel32.SetUserGeoID
 @ stdcall SetWaitableTimer(long ptr long ptr ptr long)
 @ stdcall SetWaitableTimerEx(long ptr long ptr ptr ptr long)
@@ -1612,7 +1612,7 @@
 @ stdcall TrySubmitThreadpoolCallback(ptr ptr ptr)
 @ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr) kernel32.TzSpecificLocalTimeToSystemTime
 @ stub TzSpecificLocalTimeToSystemTimeEx
-@ stdcall UnhandledExceptionFilter(ptr) kernel32.UnhandledExceptionFilter
+@ stdcall UnhandledExceptionFilter(ptr)
 @ stdcall UnlockFile(long long long long long)
 @ stdcall UnlockFileEx(long long long long ptr)
 @ stdcall UnmapViewOfFile(ptr)
@@ -1736,8 +1736,8 @@
 # @ stub _AddMUIStringToCache
 # @ stub _GetMUIStringFromCache
 # @ stub _OpenMuiStringCache
-@ stdcall -arch=x86_64 -private __C_specific_handler(ptr long ptr ptr) kernel32.__C_specific_handler
-@ stdcall -arch=arm,x86_64 -private -norelay __chkstk() kernel32.__chkstk
+@ stdcall -arch=x86_64 -private __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
+@ stdcall -arch=arm,x86_64 -private -norelay __chkstk() ntdll.__chkstk
 # @ stub __dllonexit3
 @ stub __misaligned_access
 # @ stub __wgetmainargs
@@ -1748,7 +1748,7 @@
 # @ stub _initterm
 # @ stub _initterm_e
 # @ stub _invalid_parameter
-@ stdcall -arch=x86_64 -private _local_unwind(ptr ptr) kernel32._local_unwind
+@ stdcall -arch=x86_64 -private _local_unwind(ptr ptr) ntdll._local_unwind
 # @ stub _onexit
 # @ stub _purecall
 # @ stub _time64
