@@ -1383,3 +1383,93 @@ BOOL WINAPI DECLSPEC_HOTPATCH WaitNamedPipeW( LPCWSTR name, DWORD timeout )
     NtClose( pipe_dev );
     return set_ntstatus( status );
 }
+
+
+
+/***********************************************************************
+ * Interlocked functions
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *           InitOnceBeginInitialize    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH InitOnceBeginInitialize( INIT_ONCE *once, DWORD flags,
+                                                       BOOL *pending, void **context )
+{
+    NTSTATUS status = RtlRunOnceBeginInitialize( once, flags, context );
+    if (status >= 0) *pending = (status == STATUS_PENDING);
+    else SetLastError( RtlNtStatusToDosError(status) );
+    return status >= 0;
+}
+
+
+/***********************************************************************
+ *           InitOnceComplete    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH InitOnceComplete( INIT_ONCE *once, DWORD flags, void *context )
+{
+    return set_ntstatus( RtlRunOnceComplete( once, flags, context ));
+}
+
+
+/***********************************************************************
+ *           InitOnceExecuteOnce    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH InitOnceExecuteOnce( INIT_ONCE *once, PINIT_ONCE_FN func,
+                                                   void *param, void **context )
+{
+    return !RtlRunOnceExecuteOnce( once, (PRTL_RUN_ONCE_INIT_FN)func, param, context );
+}
+
+#ifdef __i386__
+
+/***********************************************************************
+ *	     InterlockedCompareExchange   (kernelbase.@)
+ */
+__ASM_STDCALL_FUNC(InterlockedCompareExchange, 12,
+                  "movl 12(%esp),%eax\n\t"
+                  "movl 8(%esp),%ecx\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; cmpxchgl %ecx,(%edx)\n\t"
+                  "ret $12")
+
+/***********************************************************************
+ *	     InterlockedExchange   (kernelbase.@)
+ */
+__ASM_STDCALL_FUNC(InterlockedExchange, 8,
+                  "movl 8(%esp),%eax\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; xchgl %eax,(%edx)\n\t"
+                  "ret $8")
+
+/***********************************************************************
+ *	     InterlockedExchangeAdd   (kernelbase.@)
+ */
+__ASM_STDCALL_FUNC(InterlockedExchangeAdd, 8,
+                  "movl 8(%esp),%eax\n\t"
+                  "movl 4(%esp),%edx\n\t"
+                  "lock; xaddl %eax,(%edx)\n\t"
+                  "ret $8")
+
+/***********************************************************************
+ *	     InterlockedIncrement   (kernelbase.@)
+ */
+__ASM_STDCALL_FUNC(InterlockedIncrement, 4,
+                  "movl 4(%esp),%edx\n\t"
+                  "movl $1,%eax\n\t"
+                  "lock; xaddl %eax,(%edx)\n\t"
+                  "incl %eax\n\t"
+                  "ret $4")
+
+/***********************************************************************
+ *	     InterlockedDecrement   (kernelbase.@)
+ */
+__ASM_STDCALL_FUNC(InterlockedDecrement, 4,
+                  "movl 4(%esp),%edx\n\t"
+                  "movl $-1,%eax\n\t"
+                  "lock; xaddl %eax,(%edx)\n\t"
+                  "decl %eax\n\t"
+                  "ret $4")
+
+#endif  /* __i386__ */
