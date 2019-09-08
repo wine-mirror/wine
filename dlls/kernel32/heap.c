@@ -171,85 +171,6 @@ BOOL WINAPI HeapDestroy( HANDLE heap /* [in] Handle of heap */ )
 }
 
 
-/***********************************************************************
- *           HeapCompact   (KERNEL32.@)
- */
-SIZE_T WINAPI HeapCompact( HANDLE heap, DWORD flags )
-{
-    return RtlCompactHeap( heap, flags );
-}
-
-
-/***********************************************************************
- *           HeapValidate   (KERNEL32.@)
- * Validates a specified heap.
- *
- * NOTES
- *	Flags is ignored.
- *
- * RETURNS
- *	TRUE: Success
- *	FALSE: Failure
- */
-BOOL WINAPI HeapValidate(
-              HANDLE heap, /* [in] Handle to the heap */
-              DWORD flags,   /* [in] Bit flags that control access during operation */
-              LPCVOID block  /* [in] Optional pointer to memory block to validate */
-) {
-    return RtlValidateHeap( heap, flags, block );
-}
-
-
-/***********************************************************************
- *           HeapWalk   (KERNEL32.@)
- * Enumerates the memory blocks in a specified heap.
- *
- * TODO
- *   - handling of PROCESS_HEAP_ENTRY_MOVEABLE and
- *     PROCESS_HEAP_ENTRY_DDESHARE (needs heap.c support)
- *
- * RETURNS
- *	TRUE: Success
- *	FALSE: Failure
- */
-BOOL WINAPI HeapWalk(
-              HANDLE heap,               /* [in]  Handle to heap to enumerate */
-              LPPROCESS_HEAP_ENTRY entry /* [out] Pointer to structure of enumeration info */
-) {
-    NTSTATUS ret = RtlWalkHeap( heap, entry );
-    if (ret) SetLastError( RtlNtStatusToDosError(ret) );
-    return !ret;
-}
-
-
-/***********************************************************************
- *           HeapLock   (KERNEL32.@)
- * Attempts to acquire the critical section object for a specified heap.
- *
- * RETURNS
- *	TRUE: Success
- *	FALSE: Failure
- */
-BOOL WINAPI HeapLock(
-              HANDLE heap /* [in] Handle of heap to lock for exclusive access */
-) {
-    return RtlLockHeap( heap );
-}
-
-
-/***********************************************************************
- *           HeapUnlock   (KERNEL32.@)
- * Releases ownership of the critical section object.
- *
- * RETURNS
- *	TRUE: Success
- *	FALSE: Failure
- */
-BOOL WINAPI HeapUnlock(
-              HANDLE heap /* [in] Handle to the heap to unlock */
-) {
-    return RtlUnlockHeap( heap );
-}
 
 
 
@@ -276,21 +197,6 @@ LPVOID WINAPI HeapReAlloc( HANDLE heap, DWORD flags, LPVOID ptr, SIZE_T size )
 SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPCVOID ptr )
 {
     return RtlSizeHeap( heap, flags, ptr );
-}
-
-BOOL WINAPI HeapQueryInformation( HANDLE heap, HEAP_INFORMATION_CLASS info_class,
-                                  PVOID info, SIZE_T size_in, PSIZE_T size_out)
-{
-    NTSTATUS ret = RtlQueryHeapInformation( heap, info_class, info, size_in, size_out );
-    if (ret) SetLastError( RtlNtStatusToDosError(ret) );
-    return !ret;
-}
-
-BOOL WINAPI HeapSetInformation( HANDLE heap, HEAP_INFORMATION_CLASS infoclass, PVOID info, SIZE_T size)
-{
-    NTSTATUS ret = RtlSetHeapInformation( heap, infoclass, info, size );
-    if (ret) SetLastError( RtlNtStatusToDosError(ret) );
-    return !ret;
 }
 
 /*

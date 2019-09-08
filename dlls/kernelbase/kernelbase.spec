@@ -773,19 +773,19 @@
 # @ stub HasPolicyForegroundProcessingCompletedInternal
 @ stdcall HashData(ptr long ptr long)
 @ stdcall HeapAlloc(long long long) ntdll.RtlAllocateHeap
-@ stdcall HeapCompact(long long) kernel32.HeapCompact
-@ stdcall HeapCreate(long long long) kernel32.HeapCreate
-@ stdcall HeapDestroy(long) kernel32.HeapDestroy
-@ stdcall HeapFree(long long ptr) ntdll.RtlFreeHeap
-@ stdcall HeapLock(long) kernel32.HeapLock
-@ stdcall HeapQueryInformation(long long ptr long ptr) kernel32.HeapQueryInformation
+@ stdcall HeapCompact(long long)
+@ stdcall HeapCreate(long long long)
+@ stdcall HeapDestroy(long)
+@ stdcall HeapFree(long long ptr)
+@ stdcall HeapLock(long)
+@ stdcall HeapQueryInformation(long long ptr long ptr)
 @ stdcall HeapReAlloc(long long ptr long) ntdll.RtlReAllocateHeap
-@ stdcall HeapSetInformation(ptr long ptr long) kernel32.HeapSetInformation
+@ stdcall HeapSetInformation(ptr long ptr long)
 @ stdcall HeapSize(long long ptr) ntdll.RtlSizeHeap
 @ stub HeapSummary
-@ stdcall HeapUnlock(long) kernel32.HeapUnlock
-@ stdcall HeapValidate(long long ptr) kernel32.HeapValidate
-@ stdcall HeapWalk(long ptr) kernel32.HeapWalk
+@ stdcall HeapUnlock(long)
+@ stdcall HeapValidate(long long ptr)
+@ stdcall HeapWalk(long ptr)
 @ stdcall IdnToAscii(long wstr long ptr long) kernel32.IdnToAscii
 @ stdcall IdnToNameprepUnicode(long wstr long ptr long) kernel32.IdnToNameprepUnicode
 @ stdcall IdnToUnicode(long wstr long ptr long) kernel32.IdnToUnicode

@@ -918,24 +918,24 @@
 @ stub Heap32ListNext
 @ stub Heap32Next
 @ stdcall HeapAlloc(long long long) ntdll.RtlAllocateHeap
-@ stdcall HeapCompact(long long)
+@ stdcall -import HeapCompact(long long)
 @ stdcall HeapCreate(long long long)
 @ stub HeapCreateTagsW
 @ stdcall HeapDestroy(long)
 @ stub HeapExtend
-@ stdcall HeapFree(long long ptr) ntdll.RtlFreeHeap
-@ stdcall HeapLock(long)
-@ stdcall HeapQueryInformation(long long ptr long ptr)
+@ stdcall HeapFree(long long ptr)
+@ stdcall -import HeapLock(long)
+@ stdcall -import HeapQueryInformation(long long ptr long ptr)
 @ stub HeapQueryTagW
 @ stdcall HeapReAlloc(long long ptr long) ntdll.RtlReAllocateHeap
 @ stub HeapSetFlags
-@ stdcall HeapSetInformation(ptr long ptr long)
+@ stdcall -import HeapSetInformation(ptr long ptr long)
 @ stdcall HeapSize(long long ptr) ntdll.RtlSizeHeap
 @ stub HeapSummary
-@ stdcall HeapUnlock(long)
+@ stdcall -import HeapUnlock(long)
 @ stub HeapUsage
-@ stdcall HeapValidate(long long ptr)
-@ stdcall HeapWalk(long ptr)
+@ stdcall -import HeapValidate(long long ptr)
+@ stdcall -import HeapWalk(long ptr)
 @ stdcall IdnToAscii(long wstr long ptr long)
 @ stdcall IdnToNameprepUnicode(long wstr long ptr long)
 @ stdcall IdnToUnicode(long wstr long ptr long)

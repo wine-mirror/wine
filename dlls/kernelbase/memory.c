@@ -291,3 +291,94 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteProcessMemory( HANDLE process, void *addr, co
 {
     return set_ntstatus( NtWriteVirtualMemory( process, addr, buffer, size, bytes_written ));
 }
+
+
+/***********************************************************************
+ * Heap functions
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *           HeapCompact   (kernelbase.@)
+ */
+SIZE_T WINAPI DECLSPEC_HOTPATCH HeapCompact( HANDLE heap, DWORD flags )
+{
+    return RtlCompactHeap( heap, flags );
+}
+
+
+/***********************************************************************
+ *           HeapCreate   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH HeapCreate( DWORD flags, SIZE_T init_size, SIZE_T max_size )
+{
+    HANDLE ret = RtlCreateHeap( flags, NULL, max_size, init_size, NULL, NULL );
+    if (!ret) SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           HeapDestroy   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH HeapDestroy( HANDLE heap )
+{
+    if (!RtlDestroyHeap( heap )) return TRUE;
+    SetLastError( ERROR_INVALID_HANDLE );
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           HeapLock   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH HeapLock( HANDLE heap )
+{
+    return RtlLockHeap( heap );
+}
+
+
+/***********************************************************************
+ *           HeapQueryInformation   (kernelbase.@)
+ */
+BOOL WINAPI HeapQueryInformation( HANDLE heap, HEAP_INFORMATION_CLASS info_class,
+                                  PVOID info, SIZE_T size, PSIZE_T size_out )
+{
+    return set_ntstatus( RtlQueryHeapInformation( heap, info_class, info, size, size_out ));
+}
+
+
+/***********************************************************************
+ *           HeapSetInformation   (kernelbase.@)
+ */
+BOOL WINAPI HeapSetInformation( HANDLE heap, HEAP_INFORMATION_CLASS infoclass, PVOID info, SIZE_T size )
+{
+    return set_ntstatus( RtlSetHeapInformation( heap, infoclass, info, size ));
+}
+
+
+/***********************************************************************
+ *           HeapUnlock   (kernelbase.@)
+ */
+BOOL WINAPI HeapUnlock( HANDLE heap )
+{
+    return RtlUnlockHeap( heap );
+}
+
+
+/***********************************************************************
+ *           HeapValidate   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH HeapValidate( HANDLE heap, DWORD flags, LPCVOID ptr )
+{
+    return RtlValidateHeap( heap, flags, ptr );
+}
+
+
+/***********************************************************************
+ *           HeapWalk   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH HeapWalk( HANDLE heap, PROCESS_HEAP_ENTRY *entry )
+{
+    return set_ntstatus( RtlWalkHeap( heap, entry ));
+}
