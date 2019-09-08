@@ -60,7 +60,7 @@ typedef struct GSTImpl {
 
     LONGLONG filesize;
 
-    BOOL discont, initial, ignore_flush;
+    BOOL initial, ignore_flush;
     GstElement *container;
     GstPad *my_src, *their_sink;
     GstBus *bus;
@@ -1123,7 +1123,7 @@ static HRESULT GST_Connect(GSTImpl *This, IPin *pConnectPin, ALLOCATOR_PROPERTIE
     This->start = This->nextofs = This->nextpullofs = This->stop = 0;
 
     /* Add initial pins */
-    This->initial = This->discont = TRUE;
+    This->initial = TRUE;
     ResetEvent(This->no_more_pads_event);
     gst_element_set_state(This->container, GST_STATE_PLAYING);
     ret = gst_element_get_state(This->container, NULL, NULL, -1);
