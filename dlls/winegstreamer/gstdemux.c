@@ -82,7 +82,6 @@ struct GSTOutPin {
     GstPad *flip_sink, *flip_src;
     GstPad *their_src;
     GstPad *my_sink;
-    GstBufferPool *gstpool;
     BOOL isaud, isvid;
     AM_MEDIA_TYPE * pmt;
     HANDLE caps_event;
@@ -1769,8 +1768,6 @@ static void free_source_pin(GSTOutPin *pin)
     CloseHandle(pin->caps_event);
     DeleteMediaType(pin->pmt);
     gst_segment_free(pin->segment);
-    if (pin->gstpool)
-        gst_object_unref(pin->gstpool);
 
     strmbase_source_cleanup(&pin->pin);
     heap_free(pin);
