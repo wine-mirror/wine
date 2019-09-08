@@ -27,7 +27,7 @@
 static IDirectDrawFactory *factory;
 static HRESULT (WINAPI *pDllGetClassObject)(REFCLSID rclsid, REFIID riid, void **out);
 
-static IDirectDraw *createDD(void)
+static IDirectDraw *createDDraw(void)
 {
     HRESULT hr;
     IDirectDraw *dd;
@@ -46,7 +46,7 @@ static ULONG get_ref(IUnknown *o)
 
 static void RefCountTest(void)
 {
-    IDirectDraw *dd1 = createDD();
+    IDirectDraw *dd1 = createDDraw();
     IDirectDraw2 *dd2;
     IDirectDraw3 *dd3;
     IDirectDraw4 *dd4;
