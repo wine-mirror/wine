@@ -194,7 +194,7 @@
 @ stdcall CreateHardLinkA(str str ptr) kernel32.CreateHardLinkA
 @ stdcall CreateHardLinkW(wstr wstr ptr) kernel32.CreateHardLinkW
 @ stdcall CreateIoCompletionPort(long long long long)
-@ stdcall CreateMemoryResourceNotification(long) kernel32.CreateMemoryResourceNotification
+@ stdcall CreateMemoryResourceNotification(long)
 @ stdcall CreateMutexA(ptr long str)
 @ stdcall CreateMutexExA(ptr str long long)
 @ stdcall CreateMutexExW(ptr wstr long long)
@@ -1202,7 +1202,7 @@
 # @ stub QueryIdleProcessorCycleTimeEx
 # @ stub QueryInterruptTime
 # @ stub QueryInterruptTimePrecise
-@ stdcall QueryMemoryResourceNotification(ptr ptr) kernel32.QueryMemoryResourceNotification
+@ stdcall QueryMemoryResourceNotification(ptr ptr)
 # @ stub QueryOptionalDelayLoadedAPI
 @ stdcall QueryPerformanceCounter(ptr) kernel32.QueryPerformanceCounter
 @ stdcall QueryPerformanceFrequency(ptr) kernel32.QueryPerformanceFrequency

@@ -382,3 +382,60 @@ BOOL WINAPI DECLSPEC_HOTPATCH HeapWalk( HANDLE heap, PROCESS_HEAP_ENTRY *entry )
 {
     return set_ntstatus( RtlWalkHeap( heap, entry ));
 }
+
+
+/***********************************************************************
+ * Memory resource functions
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *           CreateMemoryResourceNotification   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateMemoryResourceNotification( MEMORY_RESOURCE_NOTIFICATION_TYPE type )
+{
+    static const WCHAR lowmemW[] =
+        {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
+         '\\','L','o','w','M','e','m','o','r','y','C','o','n','d','i','t','i','o','n',0};
+    static const WCHAR highmemW[] =
+        {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
+         '\\','H','i','g','h','M','e','m','o','r','y','C','o','n','d','i','t','i','o','n',0};
+    HANDLE ret;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+
+    switch (type)
+    {
+    case LowMemoryResourceNotification:
+        RtlInitUnicodeString( &nameW, lowmemW );
+        break;
+    case HighMemoryResourceNotification:
+        RtlInitUnicodeString( &nameW, highmemW );
+        break;
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
+    if (!set_ntstatus( NtOpenEvent( &ret, EVENT_ALL_ACCESS, &attr ))) return 0;
+    return ret;
+}
+
+/***********************************************************************
+ *          QueryMemoryResourceNotification   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH QueryMemoryResourceNotification( HANDLE handle, BOOL *state )
+{
+    switch (WaitForSingleObject( handle, 0 ))
+    {
+    case WAIT_OBJECT_0:
+        *state = TRUE;
+        return TRUE;
+    case WAIT_TIMEOUT:
+        *state = FALSE;
+        return TRUE;
+    }
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return FALSE;
+}

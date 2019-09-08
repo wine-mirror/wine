@@ -298,7 +298,7 @@
 @ stub CreateKernelThread
 @ stdcall CreateMailslotA(str long long ptr)
 @ stdcall CreateMailslotW(wstr long long ptr)
-@ stdcall CreateMemoryResourceNotification(long)
+@ stdcall -import CreateMemoryResourceNotification(long)
 @ stdcall -import CreateMutexA(ptr long str)
 @ stdcall -import CreateMutexExA(ptr str long long)
 @ stdcall -import CreateMutexExW(ptr wstr long long)
@@ -1166,7 +1166,7 @@
 # @ stub QueryIdleProcessorCycleTime
 # @ stub QueryIdleProcessorCycleTimeEx
 @ stdcall QueryInformationJobObject(long long ptr long ptr)
-@ stdcall QueryMemoryResourceNotification(ptr ptr)
+@ stdcall -import QueryMemoryResourceNotification(ptr ptr)
 @ stub QueryNumberOfEventLogRecords
 @ stub QueryOldestEventLogRecord
 @ stdcall QueryPerformanceCounter(ptr)
