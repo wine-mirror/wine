@@ -2331,7 +2331,7 @@ static void test_ParseNetworkString(void)
     for (i = 0; i < ARRAY_SIZE(ipv4_address_tests); i++)
     {
         MultiByteToWideChar(CP_ACP, 0, ipv4_address_tests[i].str, sizeof(ipv4_address_tests[i].str),
-                            wstr, sizeof(wstr));
+                            wstr, ARRAY_SIZE(wstr));
         memset(&info, 0x99, sizeof(info));
         port = 0x9999;
         prefix_len = 0x99;
@@ -2357,7 +2357,7 @@ static void test_ParseNetworkString(void)
     for (i = 0; i < ARRAY_SIZE(ipv4_service_tests); i++)
     {
         MultiByteToWideChar(CP_ACP, 0, ipv4_service_tests[i].str, sizeof(ipv4_service_tests[i].str),
-                            wstr, sizeof(wstr));
+                            wstr, ARRAY_SIZE(wstr));
         memset(&info, 0x99, sizeof(info));
         port = 0x9999;
         prefix_len = 0x99;
