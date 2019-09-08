@@ -8,7 +8,6 @@ EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b400000
 C_SRCS = \
 	actctx.c \
 	atom.c \
-	change.c \
 	comm.c \
 	computername.c \
 	console.c \

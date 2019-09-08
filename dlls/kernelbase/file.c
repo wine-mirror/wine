@@ -480,6 +480,89 @@ BOOL WINAPI DECLSPEC_HOTPATCH DeleteFileW( LPCWSTR path )
 }
 
 
+/****************************************************************************
+ *	FindCloseChangeNotification   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH FindCloseChangeNotification( HANDLE handle )
+{
+    return CloseHandle( handle );
+}
+
+
+/****************************************************************************
+ *	FindFirstChangeNotificationA   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstChangeNotificationA( LPCSTR path, BOOL subtree, DWORD filter )
+{
+    WCHAR *pathW;
+
+    if (!(pathW = file_name_AtoW( path, FALSE ))) return INVALID_HANDLE_VALUE;
+    return FindFirstChangeNotificationW( pathW, subtree, filter );
+}
+
+
+/*
+ * NtNotifyChangeDirectoryFile may write back to the IO_STATUS_BLOCK
+ * asynchronously.  We don't care about the contents, but it can't
+ * be placed on the stack since it will go out of scope when we return.
+ */
+static IO_STATUS_BLOCK dummy_iosb;
+
+/****************************************************************************
+ *	FindFirstChangeNotificationW   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstChangeNotificationW( LPCWSTR path, BOOL subtree, DWORD filter )
+{
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+    HANDLE handle = INVALID_HANDLE_VALUE;
+
+    TRACE( "%s %d %x\n", debugstr_w(path), subtree, filter );
+
+    if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return handle;
+    }
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtOpenFile( &handle, FILE_LIST_DIRECTORY | SYNCHRONIZE, &attr, &dummy_iosb,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+    RtlFreeUnicodeString( &nt_name );
+
+    if (!set_ntstatus( status )) return INVALID_HANDLE_VALUE;
+
+    status = NtNotifyChangeDirectoryFile( handle, NULL, NULL, NULL, &dummy_iosb, NULL, 0, filter, subtree );
+    if (status != STATUS_PENDING)
+    {
+        NtClose( handle );
+        SetLastError( RtlNtStatusToDosError(status) );
+        return INVALID_HANDLE_VALUE;
+    }
+    return handle;
+}
+
+
+/****************************************************************************
+ *	FindNextChangeNotification   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH FindNextChangeNotification( HANDLE handle )
+{
+    NTSTATUS status = NtNotifyChangeDirectoryFile( handle, NULL, NULL, NULL, &dummy_iosb,
+                                                   NULL, 0, FILE_NOTIFY_CHANGE_SIZE, 0 );
+    if (status == STATUS_PENDING) return TRUE;
+    return set_ntstatus( status );
+}
+
+
 /******************************************************************************
  *	GetCompressedFileSizeA   (kernelbase.@)
  */
@@ -1176,6 +1259,59 @@ HANDLE WINAPI /* DECLSPEC_HOTPATCH */ ReOpenFile( HANDLE handle, DWORD access, D
 {
     FIXME( "(%p, %d, %d, %d): stub\n", handle, access, sharing, flags );
     return INVALID_HANDLE_VALUE;
+}
+
+
+static void WINAPI invoke_completion( void *context, IO_STATUS_BLOCK *io, ULONG res )
+{
+    LPOVERLAPPED_COMPLETION_ROUTINE completion = context;
+    completion( io->u.Status, io->Information, (LPOVERLAPPED)io );
+}
+
+/****************************************************************************
+ *	ReadDirectoryChangesW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len,
+                                                     BOOL subtree, DWORD filter, LPDWORD returned,
+                                                     LPOVERLAPPED overlapped,
+                                                     LPOVERLAPPED_COMPLETION_ROUTINE completion )
+{
+    OVERLAPPED ov, *pov;
+    IO_STATUS_BLOCK *ios;
+    NTSTATUS status;
+    LPVOID cvalue = NULL;
+
+    TRACE( "%p %p %08x %d %08x %p %p %p\n",
+           handle, buffer, len, subtree, filter, returned, overlapped, completion );
+
+    if (!overlapped)
+    {
+        memset( &ov, 0, sizeof ov );
+        ov.hEvent = CreateEventW( NULL, 0, 0, NULL );
+        pov = &ov;
+    }
+    else
+    {
+        pov = overlapped;
+        if (completion) cvalue = completion;
+        else if (((ULONG_PTR)overlapped->hEvent & 1) == 0) cvalue = overlapped;
+    }
+
+    ios = (PIO_STATUS_BLOCK)pov;
+    ios->u.Status = STATUS_PENDING;
+
+    status = NtNotifyChangeDirectoryFile( handle, completion && overlapped ? NULL : pov->hEvent,
+                                          completion && overlapped ? invoke_completion : NULL,
+                                          cvalue, ios, buffer, len, filter, subtree );
+    if (status == STATUS_PENDING)
+    {
+        if (overlapped) return TRUE;
+        WaitForSingleObjectEx( ov.hEvent, INFINITE, TRUE );
+        if (returned) *returned = ios->Information;
+        status = ios->u.Status;
+    }
+    if (!overlapped) CloseHandle( ov.hEvent );
+    return set_ntstatus( status );
 }
 
 

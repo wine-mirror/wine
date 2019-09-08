@@ -351,9 +351,9 @@
 @ stdcall FindActCtxSectionGuid(long ptr long ptr ptr)
 @ stdcall FindActCtxSectionStringW(long ptr long wstr ptr)
 @ stdcall FindClose(long) kernel32.FindClose
-@ stdcall FindCloseChangeNotification(long) kernel32.FindCloseChangeNotification
-@ stdcall FindFirstChangeNotificationA(str long long) kernel32.FindFirstChangeNotificationA
-@ stdcall FindFirstChangeNotificationW(wstr long long) kernel32.FindFirstChangeNotificationW
+@ stdcall FindCloseChangeNotification(long)
+@ stdcall FindFirstChangeNotificationA(str long long)
+@ stdcall FindFirstChangeNotificationW(wstr long long)
 @ stdcall FindFirstFileA(str ptr) kernel32.FindFirstFileA
 @ stdcall FindFirstFileExA(str long ptr long ptr long) kernel32.FindFirstFileExA
 @ stdcall FindFirstFileExW(wstr long ptr long ptr long) kernel32.FindFirstFileExW
@@ -364,7 +364,7 @@
 @ stdcall FindFirstVolumeW(ptr long) kernel32.FindFirstVolumeW
 @ stub FindNLSString
 @ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long) kernel32.FindNLSStringEx
-@ stdcall FindNextChangeNotification(long) kernel32.FindNextChangeNotification
+@ stdcall FindNextChangeNotification(long)
 @ stdcall FindNextFileA(long ptr) kernel32.FindNextFileA
 # @ stub FindNextFileNameW
 @ stdcall FindNextFileW(long ptr) kernel32.FindNextFileW
@@ -1246,7 +1246,7 @@
 @ stdcall ReadConsoleOutputCharacterW(long ptr long long ptr) kernel32.ReadConsoleOutputCharacterW
 @ stdcall ReadConsoleOutputW(long ptr long long ptr) kernel32.ReadConsoleOutputW
 @ stdcall ReadConsoleW(long ptr long ptr ptr) kernel32.ReadConsoleW
-@ stdcall ReadDirectoryChangesW(long ptr long long long ptr ptr ptr) kernel32.ReadDirectoryChangesW
+@ stdcall ReadDirectoryChangesW(long ptr long long long ptr ptr ptr)
 @ stdcall ReadFile(long ptr long ptr ptr)
 @ stdcall ReadFileEx(long ptr long ptr ptr)
 @ stdcall ReadFileScatter(long ptr long ptr ptr)
