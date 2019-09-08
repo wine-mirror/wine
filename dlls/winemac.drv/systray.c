@@ -123,7 +123,7 @@ static BOOL modify_icon(struct tray_icon *icon, NOTIFYICONDATAW *nid)
 
                         if (icon->image)
                             update_image = TRUE;
-                        if (lstrlenW(icon->tiptext))
+                        if (*icon->tiptext)
                             update_tooltip = TRUE;
                     }
                     else
