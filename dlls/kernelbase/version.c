@@ -1337,3 +1337,69 @@ DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWS
           debugstr_w(cur_dir), debugstr_w(dest));
     return retval;
 }
+
+
+/***********************************************************************
+ *         GetVersion   (kernelbase.@)
+ */
+DWORD WINAPI GetVersion(void)
+{
+    DWORD result = MAKELONG( MAKEWORD( NtCurrentTeb()->Peb->OSMajorVersion,
+                                       NtCurrentTeb()->Peb->OSMinorVersion ),
+                             (NtCurrentTeb()->Peb->OSPlatformId ^ 2) << 14 );
+    if (NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32_NT)
+        result |= LOWORD(NtCurrentTeb()->Peb->OSBuildNumber) << 16;
+    return result;
+}
+
+
+/***********************************************************************
+ *         GetVersionExA   (kernelbase.@)
+ */
+BOOL WINAPI GetVersionExA( OSVERSIONINFOA *info )
+{
+    RTL_OSVERSIONINFOEXW infoW;
+
+    if (info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOA) &&
+        info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXA))
+    {
+        WARN( "wrong OSVERSIONINFO size from app (got: %d)\n", info->dwOSVersionInfoSize );
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
+    infoW.dwOSVersionInfoSize = sizeof(infoW);
+    if (!set_ntstatus( RtlGetVersion( &infoW ))) return FALSE;
+
+    info->dwMajorVersion = infoW.dwMajorVersion;
+    info->dwMinorVersion = infoW.dwMinorVersion;
+    info->dwBuildNumber  = infoW.dwBuildNumber;
+    info->dwPlatformId   = infoW.dwPlatformId;
+    WideCharToMultiByte( CP_ACP, 0, infoW.szCSDVersion, -1,
+                         info->szCSDVersion, sizeof(info->szCSDVersion), NULL, NULL );
+
+    if (info->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA))
+    {
+        OSVERSIONINFOEXA *vex = (OSVERSIONINFOEXA *)info;
+        vex->wServicePackMajor = infoW.wServicePackMajor;
+        vex->wServicePackMinor = infoW.wServicePackMinor;
+        vex->wSuiteMask        = infoW.wSuiteMask;
+        vex->wProductType      = infoW.wProductType;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *         GetVersionExW   (kernelbase.@)
+ */
+BOOL WINAPI GetVersionExW( OSVERSIONINFOW *info )
+{
+    if (info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOW) &&
+        info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXW))
+    {
+        WARN( "wrong OSVERSIONINFO size from app (got: %d)\n", info->dwOSVersionInfoSize );
+        return FALSE;
+    }
+    return set_ntstatus( RtlGetVersion( (RTL_OSVERSIONINFOEXW *)info ));
+}

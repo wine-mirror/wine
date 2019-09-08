@@ -750,9 +750,9 @@
 # @ stub GetUserOverrideString
 # @ stub GetUserOverrideWord
 @ stdcall GetUserPreferredUILanguages(long ptr ptr ptr) kernel32.GetUserPreferredUILanguages
-@ stdcall GetVersion() kernel32.GetVersion
-@ stdcall GetVersionExA(ptr) kernel32.GetVersionExA
-@ stdcall GetVersionExW(ptr) kernel32.GetVersionExW
+@ stdcall GetVersion()
+@ stdcall GetVersionExA(ptr)
+@ stdcall GetVersionExW(ptr)
 @ stdcall GetVolumeInformationA(str ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationA
 @ stdcall GetVolumeInformationByHandleW(ptr ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationByHandleW
 @ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationW

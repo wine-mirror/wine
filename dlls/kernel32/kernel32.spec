@@ -875,9 +875,9 @@
 @ stdcall GetUserDefaultUILanguage()
 @ stdcall GetUserGeoID(long)
 @ stub GetVDMCurrentDirectories
-@ stdcall GetVersion()
-@ stdcall GetVersionExA(ptr)
-@ stdcall GetVersionExW(ptr)
+@ stdcall -import GetVersion()
+@ stdcall -import GetVersionExA(ptr)
+@ stdcall -import GetVersionExW(ptr)
 @ stdcall GetVolumeInformationA(str ptr long ptr ptr ptr ptr long)
 @ stdcall GetVolumeInformationByHandleW(ptr ptr long ptr ptr ptr ptr long)
 @ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long)
