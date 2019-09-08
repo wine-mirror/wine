@@ -408,6 +408,7 @@ static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
             FIXME("%p (%u) stub\n", event, event->type);
         case GST_EVENT_TAG:
         case GST_EVENT_QOS:
+        case GST_EVENT_RECONFIGURE:
             return gst_pad_event_default(pad, parent, event);
     }
     return TRUE;
