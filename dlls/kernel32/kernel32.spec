@@ -439,8 +439,8 @@
 @ stdcall ExitProcess(long)
 @ stdcall ExitThread(long) ntdll.RtlExitUserThread
 @ stub ExitVDM
-@ stdcall ExpandEnvironmentStringsA(str ptr long)
-@ stdcall ExpandEnvironmentStringsW(wstr ptr long)
+@ stdcall -import ExpandEnvironmentStringsA(str ptr long)
+@ stdcall -import ExpandEnvironmentStringsW(wstr ptr long)
 @ stdcall ExpungeConsoleCommandHistoryA(str)
 @ stdcall ExpungeConsoleCommandHistoryW(wstr)
 @ stub ExtendVirtualBuffer
@@ -525,8 +525,8 @@
 @ stdcall FormatMessageA(long ptr long long ptr long ptr)
 @ stdcall FormatMessageW(long ptr long long ptr long ptr)
 @ stdcall FreeConsole()
-@ stdcall FreeEnvironmentStringsA(ptr)
-@ stdcall FreeEnvironmentStringsW(ptr)
+@ stdcall -import FreeEnvironmentStringsA(ptr)
+@ stdcall -import FreeEnvironmentStringsW(ptr)
 @ stub -i386 FreeLSCallback
 @ stdcall FreeLibrary(long)
 @ stdcall FreeLibraryAndExitThread(long long)
@@ -658,11 +658,11 @@
 @ stdcall GetDynamicTimeZoneInformation(ptr)
 @ stdcall GetDynamicTimeZoneInformationEffectiveYears(ptr ptr ptr)
 @ stdcall -ret64 -arch=i386,x86_64 GetEnabledXStateFeatures()
-@ stdcall GetEnvironmentStrings() GetEnvironmentStringsA
-@ stdcall GetEnvironmentStringsA()
-@ stdcall GetEnvironmentStringsW()
-@ stdcall GetEnvironmentVariableA(str ptr long)
-@ stdcall GetEnvironmentVariableW(wstr ptr long)
+@ stdcall -import GetEnvironmentStrings()
+@ stdcall -import GetEnvironmentStringsA()
+@ stdcall -import GetEnvironmentStringsW()
+@ stdcall -import GetEnvironmentVariableA(str ptr long)
+@ stdcall -import GetEnvironmentVariableW(wstr ptr long)
 # @ stub GetEraNameCountedString
 @ stdcall -import GetErrorMode()
 @ stdcall GetExitCodeProcess(long ptr)
@@ -1386,8 +1386,8 @@
 @ stdcall -import SetEndOfFile(long)
 # @ stub SetEnvironmentStringsA
 # @ stub SetEnvironmentStringsW
-@ stdcall SetEnvironmentVariableA(str str)
-@ stdcall SetEnvironmentVariableW(wstr wstr)
+@ stdcall -import SetEnvironmentVariableA(str str)
+@ stdcall -import SetEnvironmentVariableW(wstr wstr)
 @ stdcall -import SetErrorMode(long)
 @ stdcall -import SetEvent(long)
 @ stdcall SetEventWhenCallbackReturns(ptr long) ntdll.TpCallbackSetEventOnCompletion

@@ -339,8 +339,8 @@
 @ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) ntdll.EtwEventWriteTransfer
 @ stdcall ExitProcess(long) ntdll.RtlExitUserProcess
 @ stdcall ExitThread(long) ntdll.RtlExitUserThread
-@ stdcall ExpandEnvironmentStringsA(str ptr long) kernel32.ExpandEnvironmentStringsA
-@ stdcall ExpandEnvironmentStringsW(wstr ptr long) kernel32.ExpandEnvironmentStringsW
+@ stdcall ExpandEnvironmentStringsA(str ptr long)
+@ stdcall ExpandEnvironmentStringsW(wstr ptr long)
 @ stdcall FatalAppExitA(long str)
 @ stdcall FatalAppExitW(long wstr)
 @ stdcall FileTimeToLocalFileTime(ptr ptr) kernel32.FileTimeToLocalFileTime
@@ -390,8 +390,8 @@
 @ stdcall FormatMessageA(long ptr long long ptr long ptr) kernel32.FormatMessageA
 @ stdcall FormatMessageW(long ptr long long ptr long ptr) kernel32.FormatMessageW
 @ stdcall FreeConsole() kernel32.FreeConsole
-@ stdcall FreeEnvironmentStringsA(ptr) kernel32.FreeEnvironmentStringsA
-@ stdcall FreeEnvironmentStringsW(ptr) kernel32.FreeEnvironmentStringsW
+@ stdcall FreeEnvironmentStringsA(ptr) FreeEnvironmentStringsW
+@ stdcall FreeEnvironmentStringsW(ptr)
 # @ stub FreeGPOListInternalA
 # @ stub FreeGPOListInternalW
 @ stdcall FreeLibrary(long) kernel32.FreeLibrary
@@ -492,11 +492,11 @@
 # @ stub GetEightBitStringToUnicodeSizeRoutine
 # @ stub GetEightBitStringToUnicodeStringRoutine
 @ stdcall -ret64 -arch=i386,x86_64 GetEnabledXStateFeatures() kernel32.GetEnabledXStateFeatures
-@ stdcall GetEnvironmentStrings() kernel32.GetEnvironmentStrings
-@ stdcall GetEnvironmentStringsA() kernel32.GetEnvironmentStringsA
-@ stdcall GetEnvironmentStringsW() kernel32.GetEnvironmentStringsW
-@ stdcall GetEnvironmentVariableA(str ptr long) kernel32.GetEnvironmentVariableA
-@ stdcall GetEnvironmentVariableW(wstr ptr long) kernel32.GetEnvironmentVariableW
+@ stdcall GetEnvironmentStrings() GetEnvironmentStringsA
+@ stdcall GetEnvironmentStringsA()
+@ stdcall GetEnvironmentStringsW()
+@ stdcall GetEnvironmentVariableA(str ptr long)
+@ stdcall GetEnvironmentVariableW(wstr ptr long)
 @ stub GetEraNameCountedString
 @ stdcall GetErrorMode()
 @ stdcall GetExitCodeProcess(long ptr)
@@ -1352,8 +1352,8 @@
 @ stdcall RevertToSelf()
 # @ stub RsopLoggingEnabledInternal
 # @ stub SHCoCreateInstance
-@ stdcall SHExpandEnvironmentStringsA(str ptr long) kernel32.ExpandEnvironmentStringsA
-@ stdcall SHExpandEnvironmentStringsW(wstr ptr long) kernel32.ExpandEnvironmentStringsW
+@ stdcall SHExpandEnvironmentStringsA(str ptr long) ExpandEnvironmentStringsA
+@ stdcall SHExpandEnvironmentStringsW(wstr ptr long) ExpandEnvironmentStringsW
 @ stdcall SHLoadIndirectString(wstr ptr long ptr)
 # @ stub SHLoadIndirectStringInternal
 @ stdcall SHRegCloseUSKey(ptr)
@@ -1424,8 +1424,8 @@
 # @ stub SetDynamicTimeZoneInformation
 @ stdcall SetEndOfFile(long)
 @ stub SetEnvironmentStringsW
-@ stdcall SetEnvironmentVariableA(str str) kernel32.SetEnvironmentVariableA
-@ stdcall SetEnvironmentVariableW(wstr wstr) kernel32.SetEnvironmentVariableW
+@ stdcall SetEnvironmentVariableA(str str)
+@ stdcall SetEnvironmentVariableW(wstr wstr)
 @ stdcall SetErrorMode(long)
 @ stdcall SetEvent(long)
 @ stdcall SetEventWhenCallbackReturns(ptr long) ntdll.TpCallbackSetEventOnCompletion
