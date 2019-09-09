@@ -347,6 +347,127 @@ BOOL WINAPI DECLSPEC_HOTPATCH TerminateProcess( HANDLE handle, DWORD exit_code )
 
 
 /***********************************************************************
+ * Process startup information
+ ***********************************************************************/
+
+
+static STARTUPINFOW startup_infoW;
+static char *command_lineA;
+static WCHAR *command_lineW;
+
+/******************************************************************
+ *		init_startup_info
+ */
+void init_startup_info( RTL_USER_PROCESS_PARAMETERS *params )
+{
+    ANSI_STRING ansi;
+
+    startup_infoW.cb              = sizeof(startup_infoW);
+    startup_infoW.lpReserved      = NULL;
+    startup_infoW.lpDesktop       = params->Desktop.Buffer;
+    startup_infoW.lpTitle         = params->WindowTitle.Buffer;
+    startup_infoW.dwX             = params->dwX;
+    startup_infoW.dwY             = params->dwY;
+    startup_infoW.dwXSize         = params->dwXSize;
+    startup_infoW.dwYSize         = params->dwYSize;
+    startup_infoW.dwXCountChars   = params->dwXCountChars;
+    startup_infoW.dwYCountChars   = params->dwYCountChars;
+    startup_infoW.dwFillAttribute = params->dwFillAttribute;
+    startup_infoW.dwFlags         = params->dwFlags;
+    startup_infoW.wShowWindow     = params->wShowWindow;
+    startup_infoW.cbReserved2     = params->RuntimeInfo.MaximumLength;
+    startup_infoW.lpReserved2     = params->RuntimeInfo.MaximumLength ? (void *)params->RuntimeInfo.Buffer : NULL;
+    startup_infoW.hStdInput       = params->hStdInput ? params->hStdInput : INVALID_HANDLE_VALUE;
+    startup_infoW.hStdOutput      = params->hStdOutput ? params->hStdOutput : INVALID_HANDLE_VALUE;
+    startup_infoW.hStdError       = params->hStdError ? params->hStdError : INVALID_HANDLE_VALUE;
+
+    command_lineW = params->CommandLine.Buffer;
+    if (!RtlUnicodeStringToAnsiString( &ansi, &params->CommandLine, TRUE )) command_lineA = ansi.Buffer;
+}
+
+
+/***********************************************************************
+ *           GetCommandLineA   (kernelbase.@)
+ */
+LPSTR WINAPI DECLSPEC_HOTPATCH GetCommandLineA(void)
+{
+    return command_lineA;
+}
+
+
+/***********************************************************************
+ *           GetCommandLineW   (kernelbase.@)
+ */
+LPWSTR WINAPI DECLSPEC_HOTPATCH GetCommandLineW(void)
+{
+    return NtCurrentTeb()->Peb->ProcessParameters->CommandLine.Buffer;
+}
+
+
+/***********************************************************************
+ *           GetStartupInfoW    (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH GetStartupInfoW( STARTUPINFOW *info )
+{
+    *info = startup_infoW;
+}
+
+
+/***********************************************************************
+ *           GetStdHandle    (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH GetStdHandle( DWORD std_handle )
+{
+    switch (std_handle)
+    {
+    case STD_INPUT_HANDLE:  return NtCurrentTeb()->Peb->ProcessParameters->hStdInput;
+    case STD_OUTPUT_HANDLE: return NtCurrentTeb()->Peb->ProcessParameters->hStdOutput;
+    case STD_ERROR_HANDLE:  return NtCurrentTeb()->Peb->ProcessParameters->hStdError;
+    }
+    SetLastError( ERROR_INVALID_HANDLE );
+    return INVALID_HANDLE_VALUE;
+}
+
+
+/***********************************************************************
+ *           SetStdHandle    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetStdHandle( DWORD std_handle, HANDLE handle )
+{
+    switch (std_handle)
+    {
+    case STD_INPUT_HANDLE:  NtCurrentTeb()->Peb->ProcessParameters->hStdInput = handle;  return TRUE;
+    case STD_OUTPUT_HANDLE: NtCurrentTeb()->Peb->ProcessParameters->hStdOutput = handle; return TRUE;
+    case STD_ERROR_HANDLE:  NtCurrentTeb()->Peb->ProcessParameters->hStdError = handle;  return TRUE;
+    }
+    SetLastError( ERROR_INVALID_HANDLE );
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           SetStdHandleEx    (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetStdHandleEx( DWORD std_handle, HANDLE handle, HANDLE *prev )
+{
+    HANDLE *ptr;
+
+    switch (std_handle)
+    {
+    case STD_INPUT_HANDLE:  ptr = &NtCurrentTeb()->Peb->ProcessParameters->hStdInput;  break;
+    case STD_OUTPUT_HANDLE: ptr = &NtCurrentTeb()->Peb->ProcessParameters->hStdOutput; break;
+    case STD_ERROR_HANDLE:  ptr = &NtCurrentTeb()->Peb->ProcessParameters->hStdError;  break;
+    default:
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (prev) *prev = *ptr;
+    *ptr = handle;
+    return TRUE;
+}
+
+
+/***********************************************************************
  * Process environment
  ***********************************************************************/
 

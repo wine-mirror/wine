@@ -568,8 +568,8 @@
 @ stdcall GetCommProperties(long ptr)
 @ stdcall GetCommState(long ptr)
 @ stdcall GetCommTimeouts(long ptr)
-@ stdcall GetCommandLineA()
-@ stdcall GetCommandLineW()
+@ stdcall -import GetCommandLineA()
+@ stdcall -import GetCommandLineW()
 @ stdcall -import GetCompressedFileSizeA(long ptr)
 # @ stub GetCompressedFileSizeTransactedA
 # @ stub GetCompressedFileSizeTransactedW
@@ -810,8 +810,8 @@
 @ stdcall GetShortPathNameA(str ptr long)
 @ stdcall GetShortPathNameW(wstr ptr long)
 @ stdcall GetStartupInfoA(ptr)
-@ stdcall GetStartupInfoW(ptr)
-@ stdcall GetStdHandle(long)
+@ stdcall -import GetStartupInfoW(ptr)
+@ stdcall -import GetStdHandle(long)
 # @ stub GetStringScripts
 @ stdcall GetStringTypeA(long long str long ptr)
 @ stdcall GetStringTypeExA(long long str long ptr)
@@ -1436,8 +1436,8 @@
 @ stdcall SetProcessWorkingSetSize(long long long)
 @ stdcall -import SetProcessWorkingSetSizeEx(long long long long)
 @ stdcall SetSearchPathMode(long)
-@ stdcall SetStdHandle(long long)
-# @ stub SetStdHandleEx
+@ stdcall -import SetStdHandle(long long)
+@ stdcall -import SetStdHandleEx(long long ptr)
 @ stdcall SetSystemFileCacheSize(long long long)
 @ stdcall SetSystemPowerState(long long)
 @ stdcall SetSystemTime(ptr)

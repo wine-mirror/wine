@@ -25,12 +25,27 @@
 #include "appmodel.h"
 #include "shlwapi.h"
 #include "perflib.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "winternl.h"
+#include "kernelbase.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(kernelbase);
+
+
+/***********************************************************************
+ *           DllMain
+ */
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+{
+    if (reason == DLL_PROCESS_ATTACH)
+    {
+        DisableThreadLibraryCalls( hinst );
+        init_startup_info( NtCurrentTeb()->Peb->ProcessParameters );
+    }
+    return TRUE;
+}
 
 
 /*************************************************************
@@ -38,7 +53,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(kernelbase);
  */
 BOOL WINAPI DllMainCRTStartup( HANDLE inst, DWORD reason, LPVOID reserved )
 {
-    return TRUE;
+    return DllMain( inst, reason, reserved );
 }
 
 

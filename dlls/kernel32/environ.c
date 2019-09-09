@@ -46,83 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(environ);
  *   to sort them either.
  */
 
-static STARTUPINFOW startup_infoW;
 static STARTUPINFOA startup_infoA;
-
-
-/***********************************************************************
- *           GetCommandLineA      (KERNEL32.@)
- *
- * WARNING: there's a Windows incompatibility lurking here !
- * Win32s always includes the full path of the program file,
- * whereas Windows NT only returns the full file path plus arguments
- * in case the program has been started with a full path.
- * Win9x seems to have inherited NT behaviour.
- *
- * Note that both Start Menu Execute and Explorer start programs with
- * fully specified quoted app file paths, which is why probably the only case
- * where you'll see single file names is in case of direct launch
- * via CreateProcess or WinExec.
- *
- * Perhaps we should take care of Win3.1 programs here (Win32s "feature").
- *
- * References: MS KB article q102762.txt (special Win32s handling)
- */
-LPSTR WINAPI GetCommandLineA(void)
-{
-    static char *cmdlineA;  /* ASCII command line */
-    
-    if (!cmdlineA) /* make an ansi version if we don't have it */
-    {
-        ANSI_STRING     ansi;
-        RtlAcquirePebLock();
-
-        cmdlineA = (RtlUnicodeStringToAnsiString( &ansi, &NtCurrentTeb()->Peb->ProcessParameters->CommandLine, TRUE) == STATUS_SUCCESS) ?
-            ansi.Buffer : NULL;
-        RtlReleasePebLock();
-    }
-    return cmdlineA;
-}
-
-/***********************************************************************
- *           GetCommandLineW      (KERNEL32.@)
- */
-LPWSTR WINAPI GetCommandLineW(void)
-{
-    return NtCurrentTeb()->Peb->ProcessParameters->CommandLine.Buffer;
-}
-
-
-/***********************************************************************
- *           GetStdHandle    (KERNEL32.@)
- */
-HANDLE WINAPI GetStdHandle( DWORD std_handle )
-{
-    switch (std_handle)
-    {
-        case STD_INPUT_HANDLE:  return NtCurrentTeb()->Peb->ProcessParameters->hStdInput;
-        case STD_OUTPUT_HANDLE: return NtCurrentTeb()->Peb->ProcessParameters->hStdOutput;
-        case STD_ERROR_HANDLE:  return NtCurrentTeb()->Peb->ProcessParameters->hStdError;
-    }
-    SetLastError( ERROR_INVALID_HANDLE );
-    return INVALID_HANDLE_VALUE;
-}
-
-
-/***********************************************************************
- *           SetStdHandle    (KERNEL32.@)
- */
-BOOL WINAPI SetStdHandle( DWORD std_handle, HANDLE handle )
-{
-    switch (std_handle)
-    {
-        case STD_INPUT_HANDLE:  NtCurrentTeb()->Peb->ProcessParameters->hStdInput = handle;  return TRUE;
-        case STD_OUTPUT_HANDLE: NtCurrentTeb()->Peb->ProcessParameters->hStdOutput = handle; return TRUE;
-        case STD_ERROR_HANDLE:  NtCurrentTeb()->Peb->ProcessParameters->hStdError = handle;  return TRUE;
-    }
-    SetLastError( ERROR_INVALID_HANDLE );
-    return FALSE;
-}
 
 /***********************************************************************
  *              GetStartupInfoA         (KERNEL32.@)
@@ -130,15 +54,6 @@ BOOL WINAPI SetStdHandle( DWORD std_handle, HANDLE handle )
 VOID WINAPI GetStartupInfoA( LPSTARTUPINFOA info )
 {
     *info = startup_infoA;
-}
-
-
-/***********************************************************************
- *              GetStartupInfoW         (KERNEL32.@)
- */
-VOID WINAPI GetStartupInfoW( LPSTARTUPINFOW info )
-{
-    *info = startup_infoW;
 }
 
 /******************************************************************
@@ -154,25 +69,6 @@ void ENV_CopyStartupInformation(void)
     RtlAcquirePebLock();
     
     rupp = NtCurrentTeb()->Peb->ProcessParameters;
-
-    startup_infoW.cb                   = sizeof(startup_infoW);
-    startup_infoW.lpReserved           = NULL;
-    startup_infoW.lpDesktop            = rupp->Desktop.Buffer;
-    startup_infoW.lpTitle              = rupp->WindowTitle.Buffer;
-    startup_infoW.dwX                  = rupp->dwX;
-    startup_infoW.dwY                  = rupp->dwY;
-    startup_infoW.dwXSize              = rupp->dwXSize;
-    startup_infoW.dwYSize              = rupp->dwYSize;
-    startup_infoW.dwXCountChars        = rupp->dwXCountChars;
-    startup_infoW.dwYCountChars        = rupp->dwYCountChars;
-    startup_infoW.dwFillAttribute      = rupp->dwFillAttribute;
-    startup_infoW.dwFlags              = rupp->dwFlags;
-    startup_infoW.wShowWindow          = rupp->wShowWindow;
-    startup_infoW.cbReserved2          = rupp->RuntimeInfo.MaximumLength;
-    startup_infoW.lpReserved2          = rupp->RuntimeInfo.MaximumLength ? (void*)rupp->RuntimeInfo.Buffer : NULL;
-    startup_infoW.hStdInput            = rupp->hStdInput ? rupp->hStdInput : INVALID_HANDLE_VALUE;
-    startup_infoW.hStdOutput           = rupp->hStdOutput ? rupp->hStdOutput : INVALID_HANDLE_VALUE;
-    startup_infoW.hStdError            = rupp->hStdError ? rupp->hStdError : INVALID_HANDLE_VALUE;
 
     startup_infoA.cb                   = sizeof(startup_infoA);
     startup_infoA.lpReserved           = NULL;

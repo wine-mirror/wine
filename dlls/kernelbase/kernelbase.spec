@@ -433,8 +433,8 @@
 @ stdcall GetCommProperties(long ptr) kernel32.GetCommProperties
 @ stdcall GetCommState(long ptr) kernel32.GetCommState
 @ stdcall GetCommTimeouts(long ptr) kernel32.GetCommTimeouts
-@ stdcall GetCommandLineA() kernel32.GetCommandLineA
-@ stdcall GetCommandLineW() kernel32.GetCommandLineW
+@ stdcall GetCommandLineA()
+@ stdcall GetCommandLineW()
 @ stdcall GetCompressedFileSizeA(long ptr)
 @ stdcall GetCompressedFileSizeW(long ptr)
 @ stdcall GetComputerNameExA(long ptr ptr) kernel32.GetComputerNameExA
@@ -665,14 +665,14 @@
 @ stdcall GetSidSubAuthorityCount(ptr)
 # @ stub GetStagedPackageOrigin
 # @ stub GetStagedPackagePathByFullName
-@ stdcall GetStartupInfoW(ptr) kernel32.GetStartupInfoW
+@ stdcall GetStartupInfoW(ptr)
 # @ stub GetStateContainerDepth
 # @ stub GetStateFolder
 # @ stub GetStateRootFolder
 # @ stub GetStateRootFolderBase
 # @ stub GetStateSettingsFolder
 # @ stub GetStateVersion
-@ stdcall GetStdHandle(long) kernel32.GetStdHandle
+@ stdcall GetStdHandle(long)
 # @ stub GetStringScripts
 @ stub GetStringTableEntry
 @ stdcall GetStringTypeA(long long str long ptr) kernel32.GetStringTypeA
@@ -1473,8 +1473,8 @@
 @ stub SetSecurityDescriptorRMControl
 @ stdcall SetSecurityDescriptorSacl(ptr long ptr long)
 # @ stub SetStateVersion
-@ stdcall SetStdHandle(long long) kernel32.SetStdHandle
-@ stub SetStdHandleEx
+@ stdcall SetStdHandle(long long)
+@ stdcall SetStdHandleEx(long long ptr)
 @ stdcall SetSystemFileCacheSize(long long long) kernel32.SetSystemFileCacheSize
 @ stdcall SetSystemTime(ptr) kernel32.SetSystemTime
 @ stdcall SetSystemTimeAdjustment(long long) kernel32.SetSystemTimeAdjustment
