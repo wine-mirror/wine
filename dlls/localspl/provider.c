@@ -504,7 +504,9 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
             if (pmonitorEx)
             {
                 /* Layout of MONITOREX and MONITOR2 mostly matches */
-                memcpy(&pm->monitor, pmonitorEx, min(pmonitorEx->dwMonitorSize + sizeof(DWORD), sizeof(pm->monitor)));
+                memcpy(&pm->monitor, pmonitorEx, min(pmonitorEx->dwMonitorSize + sizeof(void *), sizeof(pm->monitor)));
+                /* MONITOREX.dwMonitorSize doesn't include the size field, while MONITOR2.cbSize does */
+                pm->monitor.cbSize += sizeof(void *);
                 pm->old_XcvOpenPort = pmonitorEx->Monitor.pfnXcvOpenPort;
                 pm->monitor.pfnXcvOpenPort = NULL;
             }

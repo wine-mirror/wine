@@ -777,7 +777,7 @@ LPMONITOREX WINAPI InitializePrintMonitor(LPWSTR regroot)
 {
     static MONITOREX mymonitorex =
     {
-        sizeof(MONITOREX) - sizeof(DWORD),
+        sizeof(MONITOR),
         {
             localmon_EnumPortsW,
             localmon_OpenPortW,
