@@ -132,8 +132,8 @@
 # @ stub CheckTokenMembershipEx
 @ stdcall ChrCmpIA(long long)
 @ stdcall ChrCmpIW(long long)
-@ stdcall ClearCommBreak(long) kernel32.ClearCommBreak
-@ stdcall ClearCommError(long ptr ptr) kernel32.ClearCommError
+@ stdcall ClearCommBreak(long)
+@ stdcall ClearCommError(long ptr ptr)
 # @ stub CloseGlobalizationUserSettingsKey
 @ stdcall CloseHandle(long) kernel32.CloseHandle
 # @ stub ClosePackageInfo
@@ -261,7 +261,7 @@
 @ stdcall DeleteTimerQueueTimer(long long long)
 @ stdcall DeleteVolumeMountPointW(wstr) kernel32.DeleteVolumeMountPointW
 @ stdcall DestroyPrivateObjectSecurity(ptr)
-@ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr) kernel32.DeviceIoControl
+@ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr)
 @ stdcall DisablePredefinedHandleTableInternal(long)
 @ stdcall DisableThreadLibraryCalls(long)
 @ stdcall DisassociateCurrentThreadFromCallback(ptr) ntdll.TpDisassociateCallback
@@ -326,7 +326,7 @@
 @ stub EqualDomainSid
 @ stdcall EqualPrefixSid(ptr ptr)
 @ stdcall EqualSid(ptr ptr)
-@ stdcall EscapeCommFunction(long long) kernel32.EscapeCommFunction
+@ stdcall EscapeCommFunction(long long)
 @ stdcall EventActivityIdControl(long ptr) ntdll.EtwEventActivityIdControl
 @ stdcall EventEnabled(int64 ptr) ntdll.EtwEventEnabled
 @ stdcall EventProviderEnabled(int64 long int64) ntdll.EtwEventProviderEnabled
@@ -427,12 +427,12 @@
 @ stub GetCalendar
 @ stdcall GetCalendarInfoEx(wstr long ptr long ptr long ptr) kernel32.GetCalendarInfoEx
 @ stdcall GetCalendarInfoW(long long long ptr long ptr) kernel32.GetCalendarInfoW
-@ stdcall GetCommConfig(long ptr ptr) kernel32.GetCommConfig
-@ stdcall GetCommMask(long ptr) kernel32.GetCommMask
-@ stdcall GetCommModemStatus(long ptr) kernel32.GetCommModemStatus
-@ stdcall GetCommProperties(long ptr) kernel32.GetCommProperties
-@ stdcall GetCommState(long ptr) kernel32.GetCommState
-@ stdcall GetCommTimeouts(long ptr) kernel32.GetCommTimeouts
+@ stdcall GetCommConfig(long ptr ptr)
+@ stdcall GetCommMask(long ptr)
+@ stdcall GetCommModemStatus(long ptr)
+@ stdcall GetCommProperties(long ptr)
+@ stdcall GetCommState(long ptr)
+@ stdcall GetCommTimeouts(long ptr)
 @ stdcall GetCommandLineA()
 @ stdcall GetCommandLineW()
 @ stdcall GetCompressedFileSizeA(long ptr)
@@ -1190,7 +1190,7 @@
 # @ stub PssWalkSnapshot
 # @ stub PublishStateChangeNotification
 @ stdcall PulseEvent(long)
-@ stdcall PurgeComm(long long) kernel32.PurgeComm
+@ stdcall PurgeComm(long long)
 @ stdcall QISearch(ptr ptr ptr ptr)
 @ stdcall QueryActCtxSettingsW(long ptr wstr wstr ptr long ptr)
 @ stdcall QueryActCtxW(long ptr ptr long ptr long ptr)
@@ -1393,11 +1393,11 @@
 @ stdcall SetCalendarInfoW(long long long wstr) kernel32.SetCalendarInfoW
 # @ stub SetClientDynamicTimeZoneInformation
 # @ stub SetClientTimeZoneInformation
-@ stdcall SetCommBreak(long) kernel32.SetCommBreak
-@ stdcall SetCommConfig(long ptr long) kernel32.SetCommConfig
-@ stdcall SetCommMask(long long) kernel32.SetCommMask
-@ stdcall SetCommState(long ptr) kernel32.SetCommState
-@ stdcall SetCommTimeouts(long ptr) kernel32.SetCommTimeouts
+@ stdcall SetCommBreak(long)
+@ stdcall SetCommConfig(long ptr long)
+@ stdcall SetCommMask(long long)
+@ stdcall SetCommState(long ptr)
+@ stdcall SetCommTimeouts(long ptr)
 @ stdcall SetComputerNameA(str) kernel32.SetComputerNameA
 # @ stub SetComputerNameEx2W
 @ stdcall SetComputerNameExA(long str) kernel32.SetComputerNameExA
@@ -1507,7 +1507,7 @@
 @ stdcall SetWaitableTimer(long ptr long ptr ptr long)
 @ stdcall SetWaitableTimerEx(long ptr long ptr ptr ptr long)
 # @ stub SetXStateFeaturesMask
-@ stdcall SetupComm(long long long) kernel32.SetupComm
+@ stdcall SetupComm(long long long)
 # @ stub SharedLocalIsEnabled
 @ stdcall SignalObjectAndWait(long long long long)
 @ stdcall SizeofResource(long long)
@@ -1605,7 +1605,7 @@
 @ varargs TraceMessage(int64 long ptr long) ntdll.EtwTraceMessage
 @ stdcall TraceMessageVa(int64 long ptr long ptr) ntdll.EtwTraceMessageVa
 @ stdcall TransactNamedPipe(long ptr long ptr long ptr ptr)
-@ stdcall TransmitCommChar(long long) kernel32.TransmitCommChar
+@ stdcall TransmitCommChar(long long)
 @ stdcall TryAcquireSRWLockExclusive(ptr) ntdll.RtlTryAcquireSRWLockExclusive
 @ stdcall TryAcquireSRWLockShared(ptr) ntdll.RtlTryAcquireSRWLockShared
 @ stdcall TryEnterCriticalSection(ptr) ntdll.RtlTryEnterCriticalSection
@@ -1683,7 +1683,7 @@
 @ stdcall VirtualUnlock(ptr long)
 # @ stub WTSGetServiceSessionId
 # @ stub WTSIsServerContainer
-@ stdcall WaitCommEvent(long ptr ptr) kernel32.WaitCommEvent
+@ stdcall WaitCommEvent(long ptr ptr)
 @ stdcall WaitForDebugEvent(ptr long)
 # @ stub WaitForDebugEventEx
 # @ stub WaitForMachinePolicyForegroundProcessingInternal

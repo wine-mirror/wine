@@ -220,8 +220,8 @@
 @ stdcall CheckNameLegalDOS8Dot3A(str ptr long ptr ptr)
 @ stdcall CheckNameLegalDOS8Dot3W(wstr ptr long ptr ptr)
 @ stdcall -import CheckRemoteDebuggerPresent(long ptr)
-@ stdcall ClearCommBreak(long)
-@ stdcall ClearCommError(long ptr ptr)
+@ stdcall -import ClearCommBreak(long)
+@ stdcall -import ClearCommError(long ptr ptr)
 @ stdcall CloseConsoleHandle(long)
 @ stdcall CloseHandle(long)
 # @ stub ClosePrivateNamespace
@@ -434,7 +434,7 @@
 # @ stub EnumerateLocalComputerNamesW
 @ stdcall -arch=x86_64 EnterUmsSchedulingMode(ptr)
 @ stdcall EraseTape(ptr long long)
-@ stdcall EscapeCommFunction(long long)
+@ stdcall -import EscapeCommFunction(long long)
 @ stdcall -arch=x86_64 ExecuteUmsThread(ptr)
 @ stdcall ExitProcess(long)
 @ stdcall ExitThread(long) ntdll.RtlExitUserThread
@@ -562,12 +562,12 @@
 # @ stub GetCalendarSupportedDateRange
 # @ stub GetCalendarWeekNumber
 # @ stub GetComPlusPackageInstallStatus
-@ stdcall GetCommConfig(long ptr ptr)
-@ stdcall GetCommMask(long ptr)
-@ stdcall GetCommModemStatus(long ptr)
-@ stdcall GetCommProperties(long ptr)
-@ stdcall GetCommState(long ptr)
-@ stdcall GetCommTimeouts(long ptr)
+@ stdcall -import GetCommConfig(long ptr ptr)
+@ stdcall -import GetCommMask(long ptr)
+@ stdcall -import GetCommModemStatus(long ptr)
+@ stdcall -import GetCommProperties(long ptr)
+@ stdcall -import GetCommState(long ptr)
+@ stdcall -import GetCommTimeouts(long ptr)
 @ stdcall -import GetCommandLineA()
 @ stdcall -import GetCommandLineW()
 @ stdcall -import GetCompressedFileSizeA(long ptr)
@@ -1154,7 +1154,7 @@
 @ stdcall Process32NextW (ptr ptr)
 @ stdcall ProcessIdToSessionId(long ptr)
 @ stdcall -import PulseEvent(long)
-@ stdcall PurgeComm(long long)
+@ stdcall -import PurgeComm(long long)
 @ stdcall -i386 -private -norelay QT_Thunk() krnl386.exe16.QT_Thunk
 @ stdcall -import QueryActCtxSettingsW(long ptr wstr wstr ptr long ptr)
 @ stdcall -import QueryActCtxW(long ptr ptr long ptr long ptr)
@@ -1331,11 +1331,11 @@
 @ stdcall SetCalendarInfoW(long long long wstr)
 # @ stub SetClientTimeZoneInformation
 # @ stub SetComPlusPackageInstallStatus
-@ stdcall SetCommBreak(long)
-@ stdcall SetCommConfig(long ptr long)
-@ stdcall SetCommMask(long long)
-@ stdcall SetCommState(long ptr)
-@ stdcall SetCommTimeouts(long ptr)
+@ stdcall -import SetCommBreak(long)
+@ stdcall -import SetCommConfig(long ptr long)
+@ stdcall -import SetCommMask(long long)
+@ stdcall -import SetCommState(long ptr)
+@ stdcall -import SetCommTimeouts(long ptr)
 @ stdcall SetComputerNameA(str)
 @ stdcall SetComputerNameExA(long str)
 @ stdcall SetComputerNameExW(long wstr)
@@ -1477,7 +1477,7 @@
 @ stdcall -import SetWaitableTimer(long ptr long ptr ptr long)
 @ stdcall -import SetWaitableTimerEx(long ptr long ptr ptr ptr long)
 # @ stub SetXStateFeaturesMask
-@ stdcall SetupComm(long long long)
+@ stdcall -import SetupComm(long long long)
 @ stub ShowConsoleCursor
 @ stdcall -import SignalObjectAndWait(long long long long)
 @ stdcall -import SizeofResource(long long)
@@ -1510,7 +1510,7 @@
 @ stdcall -import TlsSetValue(long ptr)
 @ stdcall Toolhelp32ReadProcessMemory(long ptr ptr long ptr)
 @ stdcall -import TransactNamedPipe(long ptr long ptr long ptr ptr)
-@ stdcall TransmitCommChar(long long)
+@ stdcall -import TransmitCommChar(long long)
 @ stub TrimVirtualBuffer
 @ stdcall TryAcquireSRWLockExclusive(ptr) ntdll.RtlTryAcquireSRWLockExclusive
 @ stdcall TryAcquireSRWLockShared(ptr) ntdll.RtlTryAcquireSRWLockShared
@@ -1570,7 +1570,7 @@
 @ stdcall -import VirtualQueryEx(long ptr ptr long)
 @ stdcall -import VirtualUnlock(ptr long)
 @ stdcall WTSGetActiveConsoleSessionId()
-@ stdcall WaitCommEvent(long ptr ptr)
+@ stdcall -import WaitCommEvent(long ptr ptr)
 @ stdcall -import WaitForDebugEvent(ptr long)
 @ stdcall -import WaitForMultipleObjects(long ptr long long)
 @ stdcall -import WaitForMultipleObjectsEx(long ptr long long long)
