@@ -369,6 +369,92 @@ static void monitor_unloadall(void)
     LeaveCriticalSection(&monitor_handles_cs);
 }
 
+static LONG WINAPI CreateKey(HANDLE hcKey, LPCWSTR pszSubKey, DWORD dwOptions,
+                REGSAM samDesired, PSECURITY_ATTRIBUTES pSecurityAttributes,
+                PHANDLE phckResult, PDWORD pdwDisposition, HANDLE hSpooler)
+{
+    FIXME("stub\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+static LONG WINAPI OpenKey(HANDLE hcKey, LPCWSTR pszSubKey, REGSAM samDesired,
+                PHANDLE phkResult, HANDLE hSpooler)
+{
+    FIXME("stub\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+static LONG WINAPI CloseKey(HANDLE hcKey, HANDLE hSpooler)
+{
+    FIXME("stub\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+static LONG WINAPI DeleteKey(HANDLE hcKey, LPCWSTR pszSubKey, HANDLE hSpooler)
+{
+    FIXME("stub\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+static LONG WINAPI EnumKey(HANDLE hcKey, DWORD dwIndex, LPWSTR pszName,
+                PDWORD pcchName, PFILETIME pftLastWriteTime, HANDLE hSpooler)
+{
+    FIXME("stub\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+static LONG WINAPI QueryInfoKey(HANDLE hcKey, PDWORD pcSubKeys, PDWORD pcbKey,
+                PDWORD pcValues, PDWORD pcbValue, PDWORD pcbData,
+                PDWORD pcbSecurityDescriptor, PFILETIME pftLastWriteTime,
+                HANDLE hSpooler)
+{
+    FIXME("stub\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+static LONG WINAPI SetValue(HANDLE hcKey, LPCWSTR pszValue, DWORD dwType,
+                const BYTE* pData, DWORD cbData, HANDLE hSpooler)
+{
+    FIXME("stub\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+static LONG WINAPI DeleteValue(HANDLE hcKey, LPCWSTR pszValue, HANDLE hSpooler)
+{
+    FIXME("stub\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+static LONG WINAPI EnumValue(HANDLE hcKey, DWORD dwIndex, LPWSTR pszValue,
+                PDWORD pcbValue, PDWORD pType, PBYTE pData, PDWORD pcbData,
+                HANDLE hSpooler)
+{
+    FIXME("stub\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+static LONG WINAPI QueryValue(HANDLE hcKey, LPCWSTR pszValue, PDWORD pType,
+                PBYTE pData, PDWORD pcbData, HANDLE hSpooler)
+{
+    FIXME("stub\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+static MONITORREG monreg =
+{
+    sizeof(MONITORREG),
+    CreateKey,
+    OpenKey,
+    CloseKey,
+    DeleteKey,
+    EnumKey,
+    QueryInfoKey,
+    SetValue,
+    DeleteValue,
+    EnumValue,
+    QueryValue
+};
+
 /******************************************************************
  * monitor_load [internal]
  *
@@ -491,6 +577,7 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
             memset(&init, 0, sizeof(init));
             init.cbSize = sizeof(init);
             init.hckRegistryRoot = hroot;
+            init.pMonitorReg = &monreg;
             init.bLocal = TRUE;
 
             monitor2 = pInitializePrintMonitor2(&init, &hmon);
