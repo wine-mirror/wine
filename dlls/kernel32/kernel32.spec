@@ -159,7 +159,7 @@
 @ stdcall ApplicationRecoveryInProgress(ptr)
 @ stdcall -import AreFileApisANSI()
 @ stdcall AssignProcessToJobObject(ptr ptr)
-@ stdcall AttachConsole(long)
+@ stdcall -import AttachConsole(long)
 @ stdcall BackupRead(ptr ptr long ptr long long ptr)
 @ stdcall BackupSeek(ptr long long ptr ptr ptr)
 @ stdcall BackupWrite(ptr ptr long ptr long long ptr)
@@ -267,7 +267,7 @@
 @ stdcall -import CreateActCtxW(ptr)
 # @ stub CreateBoundaryDescriptorA
 # @ stub CreateBoundaryDescriptorW
-@ stdcall CreateConsoleScreenBuffer(long long ptr long ptr)
+@ stdcall -import CreateConsoleScreenBuffer(long long ptr long ptr)
 @ stdcall -import CreateDirectoryA(str ptr)
 @ stdcall CreateDirectoryExA(str str ptr)
 @ stdcall -import CreateDirectoryExW(wstr wstr ptr)
@@ -467,9 +467,9 @@
 @ stdcall FileTimeToDosDateTime(ptr ptr ptr)
 @ stdcall FileTimeToLocalFileTime(ptr ptr)
 @ stdcall FileTimeToSystemTime(ptr ptr)
-@ stdcall FillConsoleOutputAttribute(long long long long ptr)
-@ stdcall FillConsoleOutputCharacterA(long long long long ptr)
-@ stdcall FillConsoleOutputCharacterW(long long long long ptr)
+@ stdcall -import FillConsoleOutputAttribute(long long long long ptr)
+@ stdcall -import FillConsoleOutputCharacterA(long long long long ptr)
+@ stdcall -import FillConsoleOutputCharacterW(long long long long ptr)
 @ stdcall -import FindActCtxSectionGuid(long ptr long ptr ptr)
 @ stdcall FindActCtxSectionStringA(long ptr long str ptr)
 @ stdcall -import FindActCtxSectionStringW(long ptr long wstr ptr)
@@ -535,7 +535,7 @@
 @ stdcall -i386 -private FreeSLCallback(long) krnl386.exe16.FreeSLCallback
 @ stdcall FreeUserPhysicalPages(long ptr ptr)
 @ stub FreeVirtualBuffer
-@ stdcall GenerateConsoleCtrlEvent(long long)
+@ stdcall -import GenerateConsoleCtrlEvent(long long)
 @ stdcall -i386 -private Get16DLLAddress(long str) krnl386.exe16.Get16DLLAddress
 @ stdcall GetACP()
 @ stdcall GetActiveProcessorCount(long)
@@ -588,35 +588,35 @@
 @ stdcall GetConsoleAliasesLengthA(str)
 @ stdcall GetConsoleAliasesLengthW(wstr)
 @ stub GetConsoleAliasesW
-@ stdcall GetConsoleCP()
+@ stdcall -import GetConsoleCP()
 @ stub GetConsoleCharType
 @ stdcall GetConsoleCommandHistoryA(long long long)
 @ stdcall GetConsoleCommandHistoryLengthA(str)
 @ stdcall GetConsoleCommandHistoryLengthW(wstr)
 @ stdcall GetConsoleCommandHistoryW(long long long)
-@ stdcall GetConsoleCursorInfo(long ptr)
+@ stdcall -import GetConsoleCursorInfo(long ptr)
 @ stub GetConsoleCursorMode
 @ stdcall GetConsoleDisplayMode(ptr)
 @ stdcall GetConsoleFontInfo(ptr long long ptr)
 @ stdcall GetConsoleFontSize(long long)
 @ stub GetConsoleHardwareState
 # @ stub GetConsoleHistoryInfo
-@ stdcall GetConsoleInputExeNameA(long ptr)
-@ stdcall GetConsoleInputExeNameW(long ptr)
+@ stdcall -import GetConsoleInputExeNameA(long ptr)
+@ stdcall -import GetConsoleInputExeNameW(long ptr)
 @ stdcall GetConsoleInputWaitHandle()
 @ stdcall GetConsoleKeyboardLayoutNameA(ptr)
 @ stdcall GetConsoleKeyboardLayoutNameW(ptr)
-@ stdcall GetConsoleMode(long ptr)
+@ stdcall -import GetConsoleMode(long ptr)
 @ stub GetConsoleNlsMode
 # @ stub GetConsoleOriginalTitleA
 # @ stub GetConsoleOriginalTitleW
-@ stdcall GetConsoleOutputCP()
+@ stdcall -import GetConsoleOutputCP()
 @ stdcall GetConsoleProcessList(ptr long)
-@ stdcall GetConsoleScreenBufferInfo(long ptr)
-@ stdcall GetConsoleScreenBufferInfoEx(long ptr)
+@ stdcall -import GetConsoleScreenBufferInfo(long ptr)
+@ stdcall -import GetConsoleScreenBufferInfoEx(long ptr)
 # @ stub GetConsoleSelectionInfo
 @ stdcall GetConsoleTitleA(ptr long)
-@ stdcall GetConsoleTitleW(ptr long)
+@ stdcall -import GetConsoleTitleW(ptr long)
 @ stdcall GetConsoleWindow()
 @ stdcall GetCurrencyFormatA(long long str ptr ptr long)
 @ stdcall GetCurrencyFormatEx(wstr long wstr ptr ptr long)
@@ -699,7 +699,7 @@
 @ stub -i386 GetLSCallbackTarget
 @ stub -i386 GetLSCallbackTemplate
 @ stdcall GetLargePageMinimum()
-@ stdcall GetLargestConsoleWindowSize(long)
+@ stdcall -import GetLargestConsoleWindowSize(long)
 @ stdcall -import GetLastError()
 @ stub GetLinguistLangSize
 @ stdcall GetLocalTime(ptr)
@@ -756,7 +756,7 @@
 @ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long)
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long)
 @ stdcall GetNumberOfConsoleFonts()
-@ stdcall GetNumberOfConsoleInputEvents(long ptr)
+@ stdcall -import GetNumberOfConsoleInputEvents(long ptr)
 @ stdcall GetNumberOfConsoleMouseButtons(ptr)
 @ stdcall GetOEMCP()
 @ stdcall -import GetOverlappedResult(long ptr ptr long)
@@ -1136,8 +1136,8 @@
 @ stdcall -import OpenWaitableTimerW(long long wstr)
 @ stdcall -import OutputDebugStringA(str)
 @ stdcall -import OutputDebugStringW(wstr)
-@ stdcall PeekConsoleInputA(ptr ptr long ptr)
-@ stdcall PeekConsoleInputW(ptr ptr long ptr)
+@ stdcall -import PeekConsoleInputA(ptr ptr long ptr)
+@ stdcall -import PeekConsoleInputW(ptr ptr long ptr)
 @ stdcall -import PeekNamedPipe(long ptr long ptr ptr ptr)
 @ stdcall -import PostQueuedCompletionStatus(long long ptr ptr)
 @ stdcall PowerClearRequest(long long)
@@ -1183,16 +1183,16 @@
 @ stdcall -import QueueUserWorkItem(ptr ptr long)
 @ stdcall -import RaiseException(long long long ptr)
 # @ stub RaiseFailFastException
-@ stdcall ReadConsoleA(long ptr long ptr ptr)
-@ stdcall ReadConsoleInputA(long ptr long ptr)
+@ stdcall -import ReadConsoleA(long ptr long ptr ptr)
+@ stdcall -import ReadConsoleInputA(long ptr long ptr)
 @ stub ReadConsoleInputExA
 @ stub ReadConsoleInputExW
 @ stdcall ReadConsoleInputW(long ptr long ptr)
-@ stdcall ReadConsoleOutputA(long ptr long long ptr)
-@ stdcall ReadConsoleOutputAttribute(long ptr long long ptr)
-@ stdcall ReadConsoleOutputCharacterA(long ptr long long ptr)
-@ stdcall ReadConsoleOutputCharacterW(long ptr long long ptr)
-@ stdcall ReadConsoleOutputW(long ptr long long ptr)
+@ stdcall -import ReadConsoleOutputA(long ptr long long ptr)
+@ stdcall -import ReadConsoleOutputAttribute(long ptr long long ptr)
+@ stdcall -import ReadConsoleOutputCharacterA(long ptr long long ptr)
+@ stdcall -import ReadConsoleOutputCharacterW(long ptr long long ptr)
+@ stdcall -import ReadConsoleOutputW(long ptr long long ptr)
 @ stdcall ReadConsoleW(long ptr long ptr ptr)
 @ stdcall -import ReadDirectoryChangesW(long ptr long long long ptr ptr ptr)
 @ stdcall -import ReadFile(long ptr long ptr ptr)
@@ -1322,8 +1322,8 @@
 @ stdcall -i386 -private -norelay SUnMapLS_IP_EBP_36() krnl386.exe16.SUnMapLS_IP_EBP_36
 @ stdcall -i386 -private -norelay SUnMapLS_IP_EBP_40() krnl386.exe16.SUnMapLS_IP_EBP_40
 @ stdcall -i386 -private -norelay SUnMapLS_IP_EBP_8() krnl386.exe16.SUnMapLS_IP_EBP_8
-@ stdcall ScrollConsoleScreenBufferA(long ptr ptr ptr ptr)
-@ stdcall ScrollConsoleScreenBufferW(long ptr ptr ptr ptr)
+@ stdcall -import ScrollConsoleScreenBufferA(long ptr ptr ptr ptr)
+@ stdcall -import ScrollConsoleScreenBufferW(long ptr ptr ptr ptr)
 @ stdcall SearchPathA(str str str long ptr ptr)
 @ stdcall SearchPathW(wstr wstr wstr long ptr ptr)
 @ stdcall SetCPGlobal(long)
@@ -1340,38 +1340,38 @@
 @ stdcall SetComputerNameExA(long str)
 @ stdcall SetComputerNameExW(long wstr)
 @ stdcall SetComputerNameW(wstr)
-@ stdcall SetConsoleActiveScreenBuffer(long)
-@ stdcall SetConsoleCP(long)
+@ stdcall -import SetConsoleActiveScreenBuffer(long)
+@ stdcall -import SetConsoleCP(long)
 # @ stub SetConsoleHistoryInfo
 @ stub SetConsoleCommandHistoryMode
 @ stdcall SetConsoleCtrlHandler(ptr long)
 @ stub SetConsoleCursor
-@ stdcall SetConsoleCursorInfo(long ptr)
+@ stdcall -import SetConsoleCursorInfo(long ptr)
 @ stub SetConsoleCursorMode
-@ stdcall SetConsoleCursorPosition(long long)
+@ stdcall -import SetConsoleCursorPosition(long long)
 @ stdcall SetConsoleDisplayMode(long long ptr)
 @ stdcall SetConsoleFont(long long)
 @ stub SetConsoleHardwareState
 @ stdcall SetConsoleIcon(ptr)
-@ stdcall SetConsoleInputExeNameA(str)
-@ stdcall SetConsoleInputExeNameW(wstr)
+@ stdcall -import SetConsoleInputExeNameA(str)
+@ stdcall -import SetConsoleInputExeNameW(wstr)
 @ stdcall SetConsoleKeyShortcuts(long long ptr long)
 @ stub SetConsoleLocalEUDC
 @ stub SetConsoleMaximumWindowSize
 @ stub SetConsoleMenuClose
-@ stdcall SetConsoleMode(long long)
+@ stdcall -import SetConsoleMode(long long)
 @ stub SetConsoleNlsMode
 @ stub SetConsoleNumberOfCommandsA
 @ stub SetConsoleNumberOfCommandsW
 @ stub SetConsoleOS2OemFormat
-@ stdcall SetConsoleOutputCP(long)
+@ stdcall -import SetConsoleOutputCP(long)
 @ stub SetConsolePalette
-@ stdcall SetConsoleScreenBufferInfoEx(long ptr)
-@ stdcall SetConsoleScreenBufferSize(long long)
-@ stdcall SetConsoleTextAttribute(long long)
+@ stdcall -import SetConsoleScreenBufferInfoEx(long ptr)
+@ stdcall -import SetConsoleScreenBufferSize(long long)
+@ stdcall -import SetConsoleTextAttribute(long long)
 @ stdcall SetConsoleTitleA(str)
-@ stdcall SetConsoleTitleW(wstr)
-@ stdcall SetConsoleWindowInfo(long long ptr)
+@ stdcall -import SetConsoleTitleW(wstr)
+@ stdcall -import SetConsoleWindowInfo(long long ptr)
 @ stdcall SetCriticalSectionSpinCount(ptr long) ntdll.RtlSetCriticalSectionSpinCount
 @ stdcall SetCurrentConsoleFontEx(long long ptr)
 @ stdcall SetCurrentDirectoryA(str)
@@ -1607,16 +1607,16 @@
 @ stdcall -import Wow64RevertWow64FsRedirection(ptr)
 @ stdcall Wow64SetThreadContext(long ptr)
 # @ stub Wow64SuspendThread
-@ stdcall WriteConsoleA(long ptr long ptr ptr)
-@ stdcall WriteConsoleInputA(long ptr long ptr)
+@ stdcall -import WriteConsoleA(long ptr long ptr ptr)
+@ stdcall -import WriteConsoleInputA(long ptr long ptr)
 @ stub WriteConsoleInputVDMA
 @ stub WriteConsoleInputVDMW
-@ stdcall WriteConsoleInputW(long ptr long ptr)
-@ stdcall WriteConsoleOutputA(long ptr long long ptr)
-@ stdcall WriteConsoleOutputAttribute(long ptr long long ptr)
-@ stdcall WriteConsoleOutputCharacterA(long ptr long long ptr)
-@ stdcall WriteConsoleOutputCharacterW(long ptr long long ptr)
-@ stdcall WriteConsoleOutputW(long ptr long long ptr)
+@ stdcall -import WriteConsoleInputW(long ptr long ptr)
+@ stdcall -import WriteConsoleOutputA(long ptr long long ptr)
+@ stdcall -import WriteConsoleOutputAttribute(long ptr long long ptr)
+@ stdcall -import WriteConsoleOutputCharacterA(long ptr long long ptr)
+@ stdcall -import WriteConsoleOutputCharacterW(long ptr long long ptr)
+@ stdcall -import WriteConsoleOutputW(long ptr long long ptr)
 @ stdcall WriteConsoleW(long ptr long ptr ptr)
 @ stdcall -import WriteFile(long ptr long ptr ptr)
 @ stdcall -import WriteFileEx(long ptr long ptr ptr)

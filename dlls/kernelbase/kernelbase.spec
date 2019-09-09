@@ -67,7 +67,7 @@
 @ stdcall AreFileApisANSI()
 # @ stub AreThereVisibleLogoffScriptsInternal
 # @ stub AreThereVisibleShutdownScriptsInternal
-@ stdcall AttachConsole(long) kernel32.AttachConsole
+@ stdcall AttachConsole(long)
 @ stub BaseCheckAppcompatCache
 # @ stub BaseCheckAppcompatCacheEx
 @ stub BaseCleanupAppcompatCacheSupport
@@ -174,7 +174,7 @@
 @ stdcall CreateActCtxW(ptr)
 # @ stub CreateAppContainerToken
 # @ stub CreateBoundaryDescriptorW
-@ stdcall CreateConsoleScreenBuffer(long long ptr long ptr) kernel32.CreateConsoleScreenBuffer
+@ stdcall CreateConsoleScreenBuffer(long long ptr long ptr)
 @ stdcall CreateDirectoryA(str ptr)
 @ stdcall CreateDirectoryExW(wstr wstr ptr)
 @ stdcall CreateDirectoryW(wstr ptr)
@@ -345,9 +345,9 @@
 @ stdcall FatalAppExitW(long wstr)
 @ stdcall FileTimeToLocalFileTime(ptr ptr) kernel32.FileTimeToLocalFileTime
 @ stdcall FileTimeToSystemTime(ptr ptr) kernel32.FileTimeToSystemTime
-@ stdcall FillConsoleOutputAttribute(long long long long ptr) kernel32.FillConsoleOutputAttribute
-@ stdcall FillConsoleOutputCharacterA(long long long long ptr) kernel32.FillConsoleOutputCharacterA
-@ stdcall FillConsoleOutputCharacterW(long long long long ptr) kernel32.FillConsoleOutputCharacterW
+@ stdcall FillConsoleOutputAttribute(long long long long ptr)
+@ stdcall FillConsoleOutputCharacterA(long long long long ptr)
+@ stdcall FillConsoleOutputCharacterW(long long long long ptr)
 @ stdcall FindActCtxSectionGuid(long ptr long ptr ptr)
 @ stdcall FindActCtxSectionStringW(long ptr long wstr ptr)
 @ stdcall FindClose(long) kernel32.FindClose
@@ -389,7 +389,7 @@
 # @ stub FormatApplicationUserModelId
 @ stdcall FormatMessageA(long ptr long long ptr long ptr) kernel32.FormatMessageA
 @ stdcall FormatMessageW(long ptr long long ptr long ptr) kernel32.FormatMessageW
-@ stdcall FreeConsole() kernel32.FreeConsole
+@ stdcall FreeConsole()
 @ stdcall FreeEnvironmentStringsA(ptr) FreeEnvironmentStringsW
 @ stdcall FreeEnvironmentStringsW(ptr)
 # @ stub FreeGPOListInternalA
@@ -400,7 +400,7 @@
 @ stdcall FreeResource(long)
 @ stdcall FreeSid(ptr)
 @ stdcall FreeUserPhysicalPages(long ptr ptr) kernel32.FreeUserPhysicalPages
-@ stdcall GenerateConsoleCtrlEvent(long long) kernel32.GenerateConsoleCtrlEvent
+@ stdcall GenerateConsoleCtrlEvent(long long)
 # @ stub GenerateGPNotificationInternal
 @ stdcall GetACP() kernel32.GetACP
 @ stdcall GetAcceptLanguagesA(ptr ptr)
@@ -439,15 +439,15 @@
 @ stdcall GetCompressedFileSizeW(long ptr)
 @ stdcall GetComputerNameExA(long ptr ptr) kernel32.GetComputerNameExA
 @ stdcall GetComputerNameExW(long ptr ptr) kernel32.GetComputerNameExW
-@ stdcall GetConsoleCP() kernel32.GetConsoleCP
-@ stdcall GetConsoleCursorInfo(long ptr) kernel32.GetConsoleCursorInfo
-@ stdcall GetConsoleInputExeNameA(long ptr) kernel32.GetConsoleInputExeNameA
-@ stdcall GetConsoleInputExeNameW(long ptr) kernel32.GetConsoleInputExeNameW
-@ stdcall GetConsoleMode(long ptr) kernel32.GetConsoleMode
-@ stdcall GetConsoleOutputCP() kernel32.GetConsoleOutputCP
-@ stdcall GetConsoleScreenBufferInfo(long ptr) kernel32.GetConsoleScreenBufferInfo
-@ stdcall GetConsoleScreenBufferInfoEx(long ptr) kernel32.GetConsoleScreenBufferInfoEx
-@ stdcall GetConsoleTitleW(ptr long) kernel32.GetConsoleTitleW
+@ stdcall GetConsoleCP()
+@ stdcall GetConsoleCursorInfo(long ptr)
+@ stdcall GetConsoleInputExeNameA(long ptr)
+@ stdcall GetConsoleInputExeNameW(long ptr)
+@ stdcall GetConsoleMode(long ptr)
+@ stdcall GetConsoleOutputCP()
+@ stdcall GetConsoleScreenBufferInfo(long ptr)
+@ stdcall GetConsoleScreenBufferInfoEx(long ptr)
+@ stdcall GetConsoleTitleW(ptr long)
 @ stdcall GetCurrencyFormatEx(wstr long wstr ptr ptr long) kernel32.GetCurrencyFormatEx
 @ stdcall GetCurrencyFormatW(long long wstr ptr ptr long) kernel32.GetCurrencyFormatW
 @ stdcall GetCurrentActCtx(ptr)
@@ -537,7 +537,7 @@
 # @ stub GetIsEdpEnabled
 @ stdcall GetKernelObjectSecurity(long long ptr long ptr)
 @ stdcall GetLargePageMinimum() kernel32.GetLargePageMinimum
-@ stdcall GetLargestConsoleWindowSize(long) kernel32.GetLargestConsoleWindowSize
+@ stdcall GetLargestConsoleWindowSize(long)
 @ stdcall GetLastError() kernelbase_GetLastError
 @ stdcall GetLengthSid(ptr)
 @ stdcall GetLocalTime(ptr) kernel32.GetLocalTime
@@ -580,7 +580,7 @@
 @ stdcall GetNumaProximityNodeEx(long ptr) kernel32.GetNumaProximityNodeEx
 @ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long) kernel32.GetNumberFormatEx
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long) kernel32.GetNumberFormatW
-@ stdcall GetNumberOfConsoleInputEvents(long ptr) kernel32.GetNumberOfConsoleInputEvents
+@ stdcall GetNumberOfConsoleInputEvents(long ptr)
 @ stdcall GetOEMCP() kernel32.GetOEMCP
 # @ stub GetOsManufacturingMode
 # @ stub GetOsSafeBootMode
@@ -1142,8 +1142,8 @@
 # @ stub PcwSendStatelessNotification
 # @ stub PcwSetCounterSetSecurity
 # @ stub PcwSetQueryItemUserData
-@ stdcall PeekConsoleInputA(ptr ptr long ptr) kernel32.PeekConsoleInputA
-@ stdcall PeekConsoleInputW(ptr ptr long ptr) kernel32.PeekConsoleInputW
+@ stdcall PeekConsoleInputA(ptr ptr long ptr)
+@ stdcall PeekConsoleInputW(ptr ptr long ptr)
 @ stdcall PeekNamedPipe(long ptr long ptr ptr ptr)
 @ stdcall PerfCreateInstance(long ptr wstr long)
 # @ stub PerfDecrementULongCounterValue
@@ -1235,16 +1235,16 @@
 @ stdcall RaiseException(long long long ptr)
 # @ stub RaiseFailFastException
 @ stdcall ReOpenFile(ptr long long long)
-@ stdcall ReadConsoleA(long ptr long ptr ptr) kernel32.ReadConsoleA
-@ stdcall ReadConsoleInputA(long ptr long ptr) kernel32.ReadConsoleInputA
+@ stdcall ReadConsoleA(long ptr long ptr ptr)
+@ stdcall ReadConsoleInputA(long ptr long ptr)
 @ stub ReadConsoleInputExA
 @ stub ReadConsoleInputExW
 @ stdcall ReadConsoleInputW(long ptr long ptr) kernel32.ReadConsoleInputW
-@ stdcall ReadConsoleOutputA(long ptr long long ptr) kernel32.ReadConsoleOutputA
-@ stdcall ReadConsoleOutputAttribute(long ptr long long ptr) kernel32.ReadConsoleOutputAttribute
-@ stdcall ReadConsoleOutputCharacterA(long ptr long long ptr) kernel32.ReadConsoleOutputCharacterA
-@ stdcall ReadConsoleOutputCharacterW(long ptr long long ptr) kernel32.ReadConsoleOutputCharacterW
-@ stdcall ReadConsoleOutputW(long ptr long long ptr) kernel32.ReadConsoleOutputW
+@ stdcall ReadConsoleOutputA(long ptr long long ptr)
+@ stdcall ReadConsoleOutputAttribute(long ptr long long ptr)
+@ stdcall ReadConsoleOutputCharacterA(long ptr long long ptr)
+@ stdcall ReadConsoleOutputCharacterW(long ptr long long ptr)
+@ stdcall ReadConsoleOutputW(long ptr long long ptr)
 @ stdcall ReadConsoleW(long ptr long ptr ptr) kernel32.ReadConsoleW
 @ stdcall ReadDirectoryChangesW(long ptr long long long ptr ptr ptr)
 @ stdcall ReadFile(long ptr long ptr ptr)
@@ -1384,8 +1384,8 @@
 @ stdcall SHTruncateString(str long)
 # @ stub SaveAlternatePackageRootPath
 # @ stub SaveStateRootFolderPath
-@ stdcall ScrollConsoleScreenBufferA(long ptr ptr ptr ptr) kernel32.ScrollConsoleScreenBufferA
-@ stdcall ScrollConsoleScreenBufferW(long ptr ptr ptr ptr) kernel32.ScrollConsoleScreenBufferW
+@ stdcall ScrollConsoleScreenBufferA(long ptr ptr ptr ptr)
+@ stdcall ScrollConsoleScreenBufferW(long ptr ptr ptr ptr)
 @ stdcall SearchPathA(str str str long ptr ptr) kernel32.SearchPathA
 @ stdcall SearchPathW(wstr wstr wstr long ptr ptr) kernel32.SearchPathW
 @ stdcall SetAclInformation(ptr ptr long long)
@@ -1403,20 +1403,20 @@
 @ stdcall SetComputerNameExA(long str) kernel32.SetComputerNameExA
 @ stdcall SetComputerNameExW(long wstr) kernel32.SetComputerNameExW
 @ stdcall SetComputerNameW(wstr) kernel32.SetComputerNameW
-@ stdcall SetConsoleActiveScreenBuffer(long) kernel32.SetConsoleActiveScreenBuffer
-@ stdcall SetConsoleCP(long) kernel32.SetConsoleCP
+@ stdcall SetConsoleActiveScreenBuffer(long)
+@ stdcall SetConsoleCP(long)
 @ stdcall SetConsoleCtrlHandler(ptr long) kernel32.SetConsoleCtrlHandler
-@ stdcall SetConsoleCursorInfo(long ptr) kernel32.SetConsoleCursorInfo
-@ stdcall SetConsoleCursorPosition(long long) kernel32.SetConsoleCursorPosition
-@ stdcall SetConsoleInputExeNameA(str) kernel32.SetConsoleInputExeNameA
-@ stdcall SetConsoleInputExeNameW(wstr) kernel32.SetConsoleInputExeNameW
-@ stdcall SetConsoleMode(long long) kernel32.SetConsoleMode
-@ stdcall SetConsoleOutputCP(long) kernel32.SetConsoleOutputCP
-@ stdcall SetConsoleScreenBufferInfoEx(long ptr) kernel32.SetConsoleScreenBufferInfoEx
-@ stdcall SetConsoleScreenBufferSize(long long) kernel32.SetConsoleScreenBufferSize
-@ stdcall SetConsoleTextAttribute(long long) kernel32.SetConsoleTextAttribute
-@ stdcall SetConsoleTitleW(wstr) kernel32.SetConsoleTitleW
-@ stdcall SetConsoleWindowInfo(long long ptr) kernel32.SetConsoleWindowInfo
+@ stdcall SetConsoleCursorInfo(long ptr)
+@ stdcall SetConsoleCursorPosition(long long)
+@ stdcall SetConsoleInputExeNameA(str)
+@ stdcall SetConsoleInputExeNameW(wstr)
+@ stdcall SetConsoleMode(long long)
+@ stdcall SetConsoleOutputCP(long)
+@ stdcall SetConsoleScreenBufferInfoEx(long ptr)
+@ stdcall SetConsoleScreenBufferSize(long long)
+@ stdcall SetConsoleTextAttribute(long long)
+@ stdcall SetConsoleTitleW(wstr)
+@ stdcall SetConsoleWindowInfo(long long ptr)
 @ stdcall SetCriticalSectionSpinCount(ptr long) ntdll.RtlSetCriticalSectionSpinCount
 @ stdcall SetCurrentDirectoryA(str) kernel32.SetCurrentDirectoryA
 @ stdcall SetCurrentDirectoryW(wstr) kernel32.SetCurrentDirectoryW
@@ -1717,14 +1717,14 @@
 @ stdcall Wow64RevertWow64FsRedirection(ptr)
 # @ stub Wow64SetThreadDefaultGuestMachine
 # @ stub -arch=i386 Wow64Transition
-@ stdcall WriteConsoleA(long ptr long ptr ptr) kernel32.WriteConsoleA
-@ stdcall WriteConsoleInputA(long ptr long ptr) kernel32.WriteConsoleInputA
-@ stdcall WriteConsoleInputW(long ptr long ptr) kernel32.WriteConsoleInputW
-@ stdcall WriteConsoleOutputA(long ptr long long ptr) kernel32.WriteConsoleOutputA
-@ stdcall WriteConsoleOutputAttribute(long ptr long long ptr) kernel32.WriteConsoleOutputAttribute
-@ stdcall WriteConsoleOutputCharacterA(long ptr long long ptr) kernel32.WriteConsoleOutputCharacterA
-@ stdcall WriteConsoleOutputCharacterW(long ptr long long ptr) kernel32.WriteConsoleOutputCharacterW
-@ stdcall WriteConsoleOutputW(long ptr long long ptr) kernel32.WriteConsoleOutputW
+@ stdcall WriteConsoleA(long ptr long ptr ptr)
+@ stdcall WriteConsoleInputA(long ptr long ptr)
+@ stdcall WriteConsoleInputW(long ptr long ptr)
+@ stdcall WriteConsoleOutputA(long ptr long long ptr)
+@ stdcall WriteConsoleOutputAttribute(long ptr long long ptr)
+@ stdcall WriteConsoleOutputCharacterA(long ptr long long ptr)
+@ stdcall WriteConsoleOutputCharacterW(long ptr long long ptr)
+@ stdcall WriteConsoleOutputW(long ptr long long ptr)
 @ stdcall WriteConsoleW(long ptr long ptr ptr) kernel32.WriteConsoleW
 @ stdcall WriteFile(long ptr long ptr ptr)
 @ stdcall WriteFileEx(long ptr long ptr ptr)
