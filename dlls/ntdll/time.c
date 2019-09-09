@@ -552,6 +552,23 @@ NTSTATUS WINAPI NtQueryPerformanceCounter( LARGE_INTEGER *counter, LARGE_INTEGER
     return STATUS_SUCCESS;
 }
 
+/******************************************************************************
+ *  RtlQueryPerformanceCounter   [NTDLL.@]
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH RtlQueryPerformanceCounter( LARGE_INTEGER *counter )
+{
+    counter->QuadPart = monotonic_counter();
+    return TRUE;
+}
+
+/******************************************************************************
+ *  RtlQueryPerformanceFrequency   [NTDLL.@]
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH RtlQueryPerformanceFrequency( LARGE_INTEGER *frequency )
+{
+    frequency->QuadPart = TICKSPERSEC;
+    return TRUE;
+}
 
 /******************************************************************************
  * NtGetTickCount   (NTDLL.@)

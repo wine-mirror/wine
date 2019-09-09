@@ -46,51 +46,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
-/****************************************************************************
- *		QueryPerformanceCounter (KERNEL32.@)
- *
- * Get the current value of the performance counter.
- * 
- * PARAMS
- *  counter [O] Destination for the current counter reading
- *
- * RETURNS
- *  Success: TRUE. counter contains the current reading
- *  Failure: FALSE.
- *
- * SEE ALSO
- *  See QueryPerformanceFrequency.
- */
-BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
-{
-    NtQueryPerformanceCounter( counter, NULL );
-    return TRUE;
-}
-
-
-/****************************************************************************
- *		QueryPerformanceFrequency (KERNEL32.@)
- *
- * Get the resolution of the performance counter.
- *
- * PARAMS
- *  frequency [O] Destination for the counter resolution
- *
- * RETURNS
- *  Success. TRUE. Frequency contains the resolution of the counter.
- *  Failure: FALSE.
- *
- * SEE ALSO
- *  See QueryPerformanceCounter.
- */
-BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
-{
-    LARGE_INTEGER counter;
-    NtQueryPerformanceCounter( &counter, frequency );
-    return TRUE;
-}
-
-
 /***********************************************************************
  * 			GetSystemInfo            	[KERNEL32.@]
  *

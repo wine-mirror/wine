@@ -1204,8 +1204,8 @@
 # @ stub QueryInterruptTimePrecise
 @ stdcall QueryMemoryResourceNotification(ptr ptr)
 # @ stub QueryOptionalDelayLoadedAPI
-@ stdcall QueryPerformanceCounter(ptr) kernel32.QueryPerformanceCounter
-@ stdcall QueryPerformanceFrequency(ptr) kernel32.QueryPerformanceFrequency
+@ stdcall QueryPerformanceCounter(ptr) ntdll.RtlQueryPerformanceCounter
+@ stdcall QueryPerformanceFrequency(ptr) ntdll.RtlQueryPerformanceFrequency
 @ stub QueryProcessAffinityUpdateMode
 @ stdcall QueryProcessCycleTime(long ptr) kernel32.QueryProcessCycleTime
 # @ stub QueryProtectedPolicy

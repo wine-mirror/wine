@@ -850,6 +850,8 @@
 @ stub RtlQueryInformationActiveActivationContext
 @ stub RtlQueryInterfaceMemoryStream
 @ stdcall RtlQueryPackageIdentity(long ptr ptr ptr ptr ptr)
+@ stdcall RtlQueryPerformanceCounter(ptr)
+@ stdcall RtlQueryPerformanceFrequency(ptr)
 @ stub RtlQueryProcessBackTraceInformation
 @ stdcall RtlQueryProcessDebugInformation(long long ptr)
 @ stub RtlQueryProcessHeapInformation
