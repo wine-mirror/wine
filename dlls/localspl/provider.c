@@ -67,6 +67,7 @@ typedef struct {
     PMONITORUI      monitorUI;
     MONITOR2        monitor;
     BOOL (WINAPI *old_XcvOpenPort)(LPCWSTR,ACCESS_MASK,PHANDLE);
+    HANDLE          hmon;
     HMODULE         hdll;
     DWORD           refcount;
 } monitor_t;
@@ -329,7 +330,7 @@ static void monitor_unload(monitor_t * pm)
         list_remove(&pm->entry);
 
         if (pm->monitor.pfnShutdown)
-            pm->monitor.pfnShutdown(0);
+            pm->monitor.pfnShutdown(pm->hmon);
 
         FreeLibrary(pm->hdll);
         heap_free(pm->name);
@@ -489,7 +490,10 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
             TRACE("%p: MONITOR2 from %s,InitializePrintMonitor2(%s)\n",
                     monitor2, debugstr_w(driver), debugstr_w(regroot));
             if (monitor2)
+            {
                 memcpy(&pm->monitor, monitor2, min(monitor2->cbSize, sizeof(pm->monitor)));
+                pm->hmon = hmon;
+            }
         }
         else if (pInitializePrintMonitor && regroot) {
             MONITOREX *pmonitorEx;
@@ -596,7 +600,7 @@ static monitor_t * monitor_loadui(monitor_t * pm)
     /* query the userinterface-dllname from the Portmonitor */
     /* building (",XcvMonitor %s",pm->name) not needed yet */
     if (pm->monitor.pfnXcvOpenPort)
-        res = pm->monitor.pfnXcvOpenPort(0, emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
+        res = pm->monitor.pfnXcvOpenPort(pm->hmon, emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
     else if (pm->old_XcvOpenPort)
         res = pm->old_XcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
     TRACE("got %u with %p\n", res, hXcv);
@@ -1245,7 +1249,7 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
 
         if (printer->pm) {
             if (printer->pm->monitor.pfnXcvOpenPort)
-                printer->pm->monitor.pfnXcvOpenPort(0, &printername[len],
+                printer->pm->monitor.pfnXcvOpenPort(printer->pm->hmon, &printername[len],
                                                    pDefault ? pDefault->DesiredAccess : 0,
                                                    &printer->hXcv);
             else if (printer->pm->old_XcvOpenPort)
