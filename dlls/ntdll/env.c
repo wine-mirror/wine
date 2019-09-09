@@ -41,6 +41,13 @@ static WCHAR empty[] = {0};
 static const UNICODE_STRING empty_str = { 0, sizeof(empty), empty };
 static const UNICODE_STRING null_str = { 0, 0, NULL };
 
+static inline SIZE_T get_env_length( const WCHAR *env )
+{
+    const WCHAR *end = env;
+    while (*end) end += strlenW(end) + 1;
+    return end + 1 - env;
+}
+
 /******************************************************************************
  *  NtQuerySystemEnvironmentValue		[NTDLL.@]
  */
@@ -68,40 +75,21 @@ NTSYSAPI NTSTATUS WINAPI NtQuerySystemEnvironmentValueEx(PUNICODE_STRING name, L
  */
 NTSTATUS WINAPI RtlCreateEnvironment(BOOLEAN inherit, PWSTR* env)
 {
-    NTSTATUS    nts;
+    SIZE_T size;
 
     TRACE("(%u,%p)!\n", inherit, env);
 
     if (inherit)
     {
-        MEMORY_BASIC_INFORMATION        mbi;
-
         RtlAcquirePebLock();
-
-        nts = NtQueryVirtualMemory(NtCurrentProcess(),
-                                   NtCurrentTeb()->Peb->ProcessParameters->Environment,
-                                   0, &mbi, sizeof(mbi), NULL);
-        if (nts == STATUS_SUCCESS)
-        {
-            *env = NULL;
-            nts = NtAllocateVirtualMemory(NtCurrentProcess(), (void**)env, 0, &mbi.RegionSize, 
-                                          MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-            if (nts == STATUS_SUCCESS)
-                memcpy(*env, NtCurrentTeb()->Peb->ProcessParameters->Environment, mbi.RegionSize);
-            else *env = NULL;
-        }
+        size = get_env_length( NtCurrentTeb()->Peb->ProcessParameters->Environment ) * sizeof(WCHAR);
+        if ((*env = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+            memcpy( *env, NtCurrentTeb()->Peb->ProcessParameters->Environment, size );
         RtlReleasePebLock();
     }
-    else 
-    {
-        SIZE_T      size = 1;
-        PVOID       addr = NULL;
-        nts = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 0, &size,
-                                      MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-        if (nts == STATUS_SUCCESS) *env = addr;
-    }
+    else *env = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WCHAR) );
 
-    return nts;
+    return *env ? STATUS_SUCCESS : STATUS_NO_MEMORY;
 }
 
 /******************************************************************************
@@ -109,11 +97,8 @@ NTSTATUS WINAPI RtlCreateEnvironment(BOOLEAN inherit, PWSTR* env)
  */
 NTSTATUS WINAPI RtlDestroyEnvironment(PWSTR env) 
 {
-    SIZE_T size = 0;
-
-    TRACE("(%p)!\n", env);
-
-    return NtFreeVirtualMemory(NtCurrentProcess(), (void**)&env, &size, MEM_RELEASE);
+    RtlFreeHeap( GetProcessHeap(), 0, env );
+    return STATUS_SUCCESS;
 }
 
 static LPCWSTR ENV_FindVariable(PCWSTR var, PCWSTR name, unsigned namelen)
@@ -205,7 +190,6 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
     INT         len, old_size;
     LPWSTR      p, env;
     NTSTATUS    nts = STATUS_VARIABLE_NOT_FOUND;
-    MEMORY_BASIC_INFORMATION mbi;
 
     TRACE("(%p, %s, %s)\n", penv, debugstr_us(name), debugstr_us(value));
 
@@ -224,9 +208,7 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
         env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
     } else env = *penv;
 
-    /* compute current size of environment */
-    for (p = env; *p; p += strlenW(p) + 1);
-    old_size = p + 1 - env;
+    old_size = get_env_length( env );
 
     /* Find a place to insert the string */
     for (p = env; *p; p += strlenW(p) + 1)
@@ -245,20 +227,16 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
         memmove(next + len, next, (old_size - (next - env)) * sizeof(WCHAR));
     }
 
-    nts = NtQueryVirtualMemory(NtCurrentProcess(), env, 0,
-                               &mbi, sizeof(mbi), NULL);
-    if (nts != STATUS_SUCCESS) goto done;
-
-    if ((old_size + len) * sizeof(WCHAR) > mbi.RegionSize)
+    if ((old_size + len) * sizeof(WCHAR) > RtlSizeHeap( GetProcessHeap(), 0, env ))
     {
-        LPWSTR  new_env;
-        SIZE_T  new_size = (old_size + len) * sizeof(WCHAR);
+        SIZE_T new_size = max( old_size * 2, old_size + len ) * sizeof(WCHAR);
+        LPWSTR new_env = RtlAllocateHeap( GetProcessHeap(), 0, new_size );
 
-        new_env = NULL;
-        nts = NtAllocateVirtualMemory(NtCurrentProcess(), (void**)&new_env, 0,
-                                      &new_size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-        if (nts != STATUS_SUCCESS) goto done;
-
+        if (!new_env)
+        {
+            nts = STATUS_NO_MEMORY;
+            goto done;
+        }
         memmove(new_env, env, (p - env) * sizeof(WCHAR));
         assert(len > 0);
         memmove(new_env + (p - env) + len, p, (old_size - (p - env)) * sizeof(WCHAR));
@@ -282,6 +260,8 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
         memcpy( p, value->Buffer, value->Length );
         p[value->Length / sizeof(WCHAR)] = 0;
     }
+    nts = STATUS_SUCCESS;
+
 done:
     if (!penv) RtlReleasePebLock();
 
@@ -465,7 +445,6 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
     const RTL_USER_PROCESS_PARAMETERS *cur_params;
     SIZE_T size, env_size = 0;
     void *ptr;
-    const WCHAR *env;
     NTSTATUS status = STATUS_SUCCESS;
 
     RtlAcquirePebLock();
@@ -488,13 +467,7 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
     if (!ShellInfo) ShellInfo = &empty_str;
     if (!RuntimeInfo) RuntimeInfo = &null_str;
 
-    if (Environment)
-    {
-        env = Environment;
-        while (*env) env += strlenW(env) + 1;
-        env++;
-        env_size = ROUND_SIZE( (env - Environment) * sizeof(WCHAR) );
-    }
+    if (Environment) env_size = get_env_length( Environment ) * sizeof(WCHAR);
 
     size = (sizeof(RTL_USER_PROCESS_PARAMETERS)
             + ROUND_SIZE( ImagePathName->MaximumLength )
@@ -506,7 +479,7 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
             + ROUND_SIZE( ShellInfo->MaximumLength )
             + ROUND_SIZE( RuntimeInfo->MaximumLength ));
 
-    if ((ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size + env_size )))
+    if ((ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size + ROUND_SIZE(env_size) )))
     {
         RTL_USER_PROCESS_PARAMETERS *params = ptr;
         params->AllocationSize = size;
@@ -524,8 +497,7 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
         append_unicode_string( &ptr, Desktop, &params->Desktop );
         append_unicode_string( &ptr, ShellInfo, &params->ShellInfo );
         append_unicode_string( &ptr, RuntimeInfo, &params->RuntimeInfo );
-        if (Environment)
-            params->Environment = memcpy( ptr, Environment, (env - Environment) * sizeof(WCHAR) );
+        if (Environment) params->Environment = memcpy( ptr, Environment, env_size );
         *result = params;
         if (!(flags & PROCESS_PARAMS_FLAG_NORMALIZED)) RtlDeNormalizeProcessParams( params );
     }
@@ -579,9 +551,8 @@ static inline void get_unicode_string( UNICODE_STRING *str, WCHAR **src, UINT le
  */
 void init_user_process_params( SIZE_T data_size )
 {
-    void *ptr;
     WCHAR *src;
-    SIZE_T info_size, env_size, alloc_size;
+    SIZE_T info_size, env_size;
     NTSTATUS status;
     startup_info_t *info;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
@@ -658,13 +629,11 @@ void init_user_process_params( SIZE_T data_size )
     params->wShowWindow     = info->show;
 
     /* environment needs to be a separate memory block */
-    ptr = NULL;
-    alloc_size = max( 1, env_size );
-    status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &alloc_size,
-                                      MEM_COMMIT, PAGE_READWRITE );
-    if (status != STATUS_SUCCESS) goto done;
-    memcpy( ptr, (char *)info + info_size, env_size );
-    params->Environment = ptr;
+    if ((params->Environment = RtlAllocateHeap( GetProcessHeap(), 0, max( env_size, sizeof(WCHAR) ))))
+    {
+        if (env_size) memcpy( params->Environment, (char *)info + info_size, env_size );
+        else params->Environment[0] = 0;
+    }
 
 done:
     RtlFreeHeap( GetProcessHeap(), 0, info );

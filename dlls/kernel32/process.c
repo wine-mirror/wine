@@ -472,12 +472,7 @@ static BOOL build_initial_environment(void)
     }
     size *= sizeof(WCHAR);
 
-    /* Now allocate the environment */
-    ptr = NULL;
-    if (NtAllocateVirtualMemory(NtCurrentProcess(), &ptr, 0, &size,
-                                MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE) != STATUS_SUCCESS)
-        return FALSE;
-
+    if (!(ptr = RtlAllocateHeap( GetProcessHeap(), 0, size ))) return FALSE;
     NtCurrentTeb()->Peb->ProcessParameters->Environment = p = ptr;
     endptr = p + size / sizeof(WCHAR);
 
