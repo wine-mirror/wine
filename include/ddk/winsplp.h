@@ -155,6 +155,7 @@ typedef struct _MONITORINIT {
  HANDLE      hckRegistryRoot;
  PMONITORREG pMonitorReg;
  BOOL        bLocal;
+ LPCWSTR     pszServerName;
 } MONITORINIT, *PMONITORINIT;
 
 typedef struct _MONITORUI {
