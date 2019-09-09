@@ -66,6 +66,13 @@ typedef struct {
     LPWSTR          dllname;
     PMONITORUI      monitorUI;
     MONITOR2        monitor;
+    BOOL (WINAPI *old_EnumPorts)(LPWSTR,DWORD,LPBYTE,DWORD,LPDWORD,LPDWORD);
+    BOOL (WINAPI *old_OpenPort)(LPWSTR,PHANDLE);
+    BOOL (WINAPI *old_OpenPortEx)(LPWSTR,LPWSTR,PHANDLE,struct _MONITOR *);
+    BOOL (WINAPI *old_AddPort)(LPWSTR,HWND,LPWSTR);
+    BOOL (WINAPI *old_AddPortEx)(LPWSTR,DWORD,LPBYTE,LPWSTR);
+    BOOL (WINAPI *old_ConfigurePort)(LPWSTR,HWND,LPWSTR);
+    BOOL (WINAPI *old_DeletePort)(LPWSTR,HWND,LPWSTR);
     BOOL (WINAPI *old_XcvOpenPort)(LPCWSTR,ACCESS_MASK,PHANDLE);
     HANDLE          hmon;
     HMODULE         hdll;
@@ -507,7 +514,23 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
                 memcpy(&pm->monitor, pmonitorEx, min(pmonitorEx->dwMonitorSize + sizeof(void *), sizeof(pm->monitor)));
                 /* MONITOREX.dwMonitorSize doesn't include the size field, while MONITOR2.cbSize does */
                 pm->monitor.cbSize += sizeof(void *);
+
+                pm->old_EnumPorts = pmonitorEx->Monitor.pfnEnumPorts;
+                pm->old_OpenPort = pmonitorEx->Monitor.pfnOpenPort;
+                pm->old_OpenPortEx = pmonitorEx->Monitor.pfnOpenPortEx;
+                pm->old_AddPort = pmonitorEx->Monitor.pfnAddPort;
+                pm->old_AddPortEx = pmonitorEx->Monitor.pfnAddPortEx;
+                pm->old_ConfigurePort = pmonitorEx->Monitor.pfnConfigurePort;
+                pm->old_DeletePort = pmonitorEx->Monitor.pfnDeletePort;
                 pm->old_XcvOpenPort = pmonitorEx->Monitor.pfnXcvOpenPort;
+
+                pm->monitor.pfnEnumPorts = NULL;
+                pm->monitor.pfnOpenPort = NULL;
+                pm->monitor.pfnOpenPortEx = NULL;
+                pm->monitor.pfnAddPort = NULL;
+                pm->monitor.pfnAddPortEx = NULL;
+                pm->monitor.pfnConfigurePort = NULL;
+                pm->monitor.pfnDeletePort = NULL;
                 pm->monitor.pfnXcvOpenPort = NULL;
             }
         }
@@ -921,6 +944,19 @@ static DWORD get_local_printprocessors(LPWSTR regpathW, LPBYTE pPPInfo, DWORD cb
     return needed;
 }
 
+static BOOL wrap_EnumPorts(monitor_t *pm, LPWSTR name, DWORD level, LPBYTE buffer,
+                           DWORD size, LPDWORD needed, LPDWORD returned)
+{
+    if (pm->monitor.pfnEnumPorts)
+        return pm->monitor.pfnEnumPorts(pm->hmon, name, level, buffer, size, needed, returned);
+
+    if (pm->old_EnumPorts)
+        return pm->old_EnumPorts(name, level, buffer, size, needed, returned);
+
+    WARN("EnumPorts is not implemented by monitor\n");
+    return FALSE;
+}
+
 /******************************************************************
  * enumerate the local Ports from all loaded monitors (internal)
  *
@@ -957,16 +993,16 @@ static DWORD get_ports_from_all_monitors(DWORD level, LPBYTE pPorts, DWORD cbBuf
 
     LIST_FOR_EACH_ENTRY(pm, &monitor_handles, monitor_t, entry)
     {
-        if (pm->monitor.pfnEnumPorts) {
+        if (pm->monitor.pfnEnumPorts || pm->old_EnumPorts) {
             pi_needed = 0;
             pi_returned = 0;
-            res = pm->monitor.pfnEnumPorts(NULL, level, pi_buffer, pi_allocated, &pi_needed, &pi_returned);
+            res = wrap_EnumPorts(pm, NULL, level, pi_buffer, pi_allocated, &pi_needed, &pi_returned);
             if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
                 /* Do not use heap_realloc (we do not need the old data in the buffer) */
                 heap_free(pi_buffer);
                 pi_buffer = heap_alloc(pi_needed);
                 pi_allocated = (pi_buffer) ? pi_needed : 0;
-                res = pm->monitor.pfnEnumPorts(NULL, level, pi_buffer, pi_allocated, &pi_needed, &pi_returned);
+                res = wrap_EnumPorts(pm, NULL, level, pi_buffer, pi_allocated, &pi_needed, &pi_returned);
             }
             TRACE("(%s) got %d with %d (need %d byte for %d entries)\n",
                   debugstr_w(pm->name), res, GetLastError(), pi_needed, pi_returned);
@@ -1576,6 +1612,18 @@ static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
     return (res);
 }
 
+static BOOL wrap_AddPort(monitor_t *pm, LPWSTR name, HWND hwnd, LPWSTR monitor_name)
+{
+    if (pm->monitor.pfnAddPort)
+        return pm->monitor.pfnAddPort(pm->hmon, name, hwnd, monitor_name);
+
+    if (pm->old_AddPort)
+        return pm->old_AddPort(name, hwnd, monitor_name);
+
+    WARN("AddPort is not implemented by monitor\n");
+    return FALSE;
+}
+
 /******************************************************************************
  * fpAddPort [exported through PRINTPROVIDOR]
  *
@@ -1614,8 +1662,8 @@ static BOOL WINAPI fpAddPort(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
     }
 
     pm = monitor_load(pMonitorName, NULL);
-    if (pm && pm->monitor.pfnAddPort) {
-        res = pm->monitor.pfnAddPort(pName, hWnd, pMonitorName);
+    if (pm && (pm->monitor.pfnAddPort || pm->old_AddPort)) {
+        res = wrap_AddPort(pm, pName, hWnd, pMonitorName);
         TRACE("got %d with %u (%s)\n", res, GetLastError(), debugstr_w(pm->dllname));
     }
     else
@@ -1640,6 +1688,18 @@ static BOOL WINAPI fpAddPort(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
 
     TRACE("returning %d with %u\n", res, GetLastError());
     return res;
+}
+
+static BOOL wrap_AddPortEx(monitor_t *pm, LPWSTR name, DWORD level, LPBYTE buffer, LPWSTR monitor_name)
+{
+    if (pm->monitor.pfnAddPortEx)
+        return pm->monitor.pfnAddPortEx(pm->hmon, name, level, buffer, monitor_name);
+
+    if (pm->old_AddPortEx)
+        return pm->old_AddPortEx(name, level, buffer, monitor_name);
+
+    WARN("AddPortEx is not implemented by monitor\n");
+    return FALSE;
 }
 
 /******************************************************************************
@@ -1691,9 +1751,9 @@ static BOOL WINAPI fpAddPortEx(LPWSTR pName, DWORD level, LPBYTE pBuffer, LPWSTR
 
     /* load the Monitor */
     pm = monitor_load(pMonitorName, NULL);
-    if (pm && pm->monitor.pfnAddPortEx)
+    if (pm && (pm->monitor.pfnAddPortEx || pm->old_AddPortEx))
     {
-        res = pm->monitor.pfnAddPortEx(pName, level, pBuffer, pMonitorName);
+        res = wrap_AddPortEx(pm, pName, level, pBuffer, pMonitorName);
         TRACE("got %d with %u (%s)\n", res, GetLastError(), debugstr_w(pm->dllname));
     }
     else
@@ -1768,6 +1828,18 @@ static BOOL WINAPI fpClosePrinter(HANDLE hPrinter)
     return FALSE;
 }
 
+static BOOL wrap_ConfigurePort(monitor_t *pm, LPWSTR name, HWND hwnd, LPWSTR port_name)
+{
+    if (pm->monitor.pfnConfigurePort)
+        return pm->monitor.pfnConfigurePort(pm->hmon, name, hwnd, port_name);
+
+    if (pm->old_ConfigurePort)
+        return pm->old_ConfigurePort(name, hwnd, port_name);
+
+    WARN("ConfigurePort is not implemented by monitor\n");
+    return FALSE;
+}
+
 /******************************************************************************
  * fpConfigurePort [exported through PRINTPROVIDOR]
  *
@@ -1806,11 +1878,11 @@ static BOOL WINAPI fpConfigurePort(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
     }
 
     pm = monitor_load_by_port(pPortName);
-    if (pm && pm->monitor.pfnConfigurePort)
+    if (pm && (pm->monitor.pfnConfigurePort || pm->old_ConfigurePort))
     {
         TRACE("use %s for %s (monitor %p: %s)\n", debugstr_w(pm->name),
                 debugstr_w(pPortName), pm, debugstr_w(pm->dllname));
-        res = pm->monitor.pfnConfigurePort(pName, hWnd, pPortName);
+        res = wrap_ConfigurePort(pm, pName, hWnd, pPortName);
         TRACE("got %d with %u\n", res, GetLastError());
     }
     else
@@ -1912,6 +1984,18 @@ static BOOL WINAPI fpDeleteMonitor(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMo
     return FALSE;
 }
 
+static BOOL wrap_DeletePort(monitor_t *pm, LPWSTR name, HWND hwnd, LPWSTR port_name)
+{
+    if (pm->monitor.pfnDeletePort)
+        return pm->monitor.pfnDeletePort(pm->hmon, name, hwnd, port_name);
+
+    if (pm->old_ConfigurePort)
+        return pm->old_DeletePort(name, hwnd, port_name);
+
+    WARN("DeletePort is not implemented by monitor\n");
+    return FALSE;
+}
+
 /*****************************************************************************
  * fpDeletePort [exported through PRINTPROVIDOR]
  *
@@ -1950,11 +2034,11 @@ static BOOL WINAPI fpDeletePort(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
     }
 
     pm = monitor_load_by_port(pPortName);
-    if (pm && pm->monitor.pfnDeletePort)
+    if (pm && (pm->monitor.pfnDeletePort || pm->old_DeletePort))
     {
         TRACE("use %s for %s (monitor %p: %s)\n", debugstr_w(pm->name),
                 debugstr_w(pPortName), pm, debugstr_w(pm->dllname));
-        res = pm->monitor.pfnDeletePort(pName, hWnd, pPortName);
+        res = wrap_DeletePort(pm, pName, hWnd, pPortName);
         TRACE("got %d with %u\n", res, GetLastError());
     }
     else
