@@ -1429,6 +1429,7 @@ int main(int argc, char **argv)
 		case '-':
 		    next_is_arg = (strcmp("--param", argv[i]) == 0 ||
                                    strcmp("--sysroot", argv[i]) == 0 ||
+                                   strcmp("--target", argv[i]) == 0 ||
                                    strcmp("--lib-suffix", argv[i]) == 0);
 		    break;
 	    }
@@ -1655,6 +1656,12 @@ int main(int argc, char **argv)
                         if (argv[i][9] == '=') opts.sysroot = argv[i] + 10;
                         else opts.sysroot = argv[i + 1];
                         if (opts.wine_objdir) raw_compiler_arg = raw_linker_arg = 0;
+                    }
+                    else if (!strncmp("--target", argv[i], 8))
+                    {
+                        if (argv[i][8] == '=') parse_target_option( &opts, argv[i] + 9 );
+                        else parse_target_option( &opts, argv[i + 1] );
+                        raw_compiler_arg = raw_linker_arg = 0;
                     }
                     else if (!strncmp("--lib-suffix", argv[i], 12) && opts.wine_objdir)
                     {

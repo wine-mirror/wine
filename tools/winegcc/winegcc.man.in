@@ -35,6 +35,9 @@ enters a special mode for building Wine itself. Developers should
 avoid prefixes ending with the magic suffix, or if that is not 
 possible, simply express it differently, such as '/tools/winebuild/',
 to avoid the special behaviour.
+.IP "\fB-b,--target \fItarget\fR"
+Specify the target architecture triplet for cross-compiling. winegcc
+will then invoke \fItarget\fR-gcc instead of gcc.
 .IP \fB-fno-short-wchar\fR
 Override the underlying type for wchar_t to be the default for the 
 target, instead of using short unsigned int, which is the default 
