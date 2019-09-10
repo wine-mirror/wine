@@ -338,8 +338,7 @@ static HRESULT parse_path( const WCHAR *str, struct path **ret )
 
     if (*p == '\\')
     {
-        static const WCHAR cimv2W[] = {'R','O','O','T','\\','C','I','M','V','2'};
-
+        static const WCHAR cimv2W[] = {'R','O','O','T','\\','C','I','M','V','2',0};
         WCHAR server[MAX_COMPUTERNAME_LENGTH+1];
         DWORD server_len = ARRAY_SIZE(server);
 
@@ -352,8 +351,7 @@ static HRESULT parse_path( const WCHAR *str, struct path **ret )
         if (!*p) return WBEM_E_INVALID_OBJECT_PATH;
 
         len = p - q;
-        if (!GetComputerNameW( server, &server_len ) || server_len != len
-                || memcmp( q, server, server_len * sizeof(WCHAR) ))
+        if (!GetComputerNameW( server, &server_len ) || server_len != len || wcsnicmp( q, server, server_len ))
             return WBEM_E_NOT_SUPPORTED;
 
         q = ++p;
@@ -361,7 +359,7 @@ static HRESULT parse_path( const WCHAR *str, struct path **ret )
         if (!*p) return WBEM_E_INVALID_OBJECT_PATH;
 
         len = p - q;
-        if (len != ARRAY_SIZE(cimv2W) || memcmp( q, cimv2W, sizeof(cimv2W) ))
+        if (len != ARRAY_SIZE(cimv2W) - 1 || wcsnicmp( q, cimv2W, ARRAY_SIZE(cimv2W) - 1 ))
             return WBEM_E_INVALID_NAMESPACE;
         p++;
     }
