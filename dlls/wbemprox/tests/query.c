@@ -126,8 +126,11 @@ static void test_select( IWbemServices *services )
     static const WCHAR query14[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
          'L','o','g','i','c','a','l','D','i','s','k','T','o','P','a','r','t','i','t','i','o','n',0};
+    static const WCHAR query15[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
+         'D','i','s','k','D','r','i','v','e','T','o','D','i','s','k','P','a','r','t','i','t','i','o','n',0};
     static const WCHAR *test[] = { query1, query2, query3, query4, query5, query6, query7, query8, query9, query10,
-                                   query11, query12, query13, query14 };
+                                   query11, query12, query13, query14, query15 };
     HRESULT hr;
     IEnumWbemClassObject *result;
     BSTR wql = SysAllocString( wqlW );

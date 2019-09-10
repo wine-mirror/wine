@@ -68,6 +68,8 @@ static const WCHAR class_directoryW[] =
     {'W','i','n','3','2','_','D','i','r','e','c','t','o','r','y',0};
 static const WCHAR class_diskdriveW[] =
     {'W','i','n','3','2','_','D','i','s','k','D','r','i','v','e',0};
+static const WCHAR class_diskdrivetodiskpartitionW[] =
+    {'W','i','n','3','2','_','D','i','s','k','D','r','i','v','e','T','o','D','i','s','k','P','a','r','t','i','t','i','o','n',0};
 static const WCHAR class_diskpartitionW[] =
     {'W','i','n','3','2','_','D','i','s','k','P','a','r','t','i','t','i','o','n',0};
 static const WCHAR class_ip4routetableW[] =
@@ -510,6 +512,11 @@ static const struct column col_diskdrive[] =
     { prop_serialnumberW,  CIM_STRING },
     { prop_sizeW,          CIM_UINT64 }
 };
+static const struct column col_diskdrivetodiskpartition[] =
+{
+    { prop_antecedentW, CIM_REFERENCE|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_dependentW,  CIM_REFERENCE|COL_FLAG_DYNAMIC|COL_FLAG_KEY }
+};
 static const struct column col_diskpartition[] =
 {
     { prop_bootableW,       CIM_BOOLEAN },
@@ -942,6 +949,11 @@ struct record_diskdrive
     const WCHAR *pnpdevice_id;
     const WCHAR *serialnumber;
     UINT64       size;
+};
+struct record_diskdrivetodiskpartition
+{
+    const WCHAR *antecedent;
+    const WCHAR *dependent;
 };
 struct record_diskpartition
 {
@@ -2436,6 +2448,110 @@ static enum fill_status fill_diskdrive( struct table *table, const struct expr *
     return status;
 }
 
+struct association
+{
+    WCHAR *ref;
+    WCHAR *ref2;
+};
+
+static void free_assocations( struct association *assoc, UINT count )
+{
+    UINT i;
+    if (!assoc) return;
+    for (i = 0; i < count; i++)
+    {
+        heap_free( assoc[i].ref );
+        heap_free( assoc[i].ref2 );
+    }
+    heap_free( assoc );
+}
+
+static struct association *get_diskdrivetodiskpartition_pairs( UINT *count )
+{
+    static const WCHAR pathW[] =
+        {'_','_','P','A','T','H',0};
+    static const WCHAR selectW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
+         'D','i','s','k','D','r','i','v','e',0};
+    static const WCHAR select2W[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
+         'D','i','s','k','P','a','r','t','i','t','i','o','n',0};
+    struct association *ret = NULL;
+    struct query *query, *query2 = NULL;
+    VARIANT val;
+    HRESULT hr;
+    UINT i;
+
+    if (!(query = create_query())) return NULL;
+    if ((hr = parse_query( selectW, &query->view, &query->mem )) != S_OK) goto done;
+    if ((hr = execute_view( query->view )) != S_OK) goto done;
+
+    if (!(query2 = create_query())) return FALSE;
+    if ((hr = parse_query( select2W, &query2->view, &query2->mem )) != S_OK) goto done;
+    if ((hr = execute_view( query2->view )) != S_OK) goto done;
+
+    if (!(ret = heap_alloc_zero( query->view->count * sizeof(*ret) ))) goto done;
+
+    for (i = 0; i < query->view->count; i++)
+    {
+        if ((hr = get_propval( query->view, i, pathW, &val, NULL, NULL )) != S_OK) goto done;
+        if (!(ret[i].ref = heap_strdupW( V_BSTR(&val) ))) goto done;
+        VariantClear( &val );
+
+        if ((hr = get_propval( query2->view, i, pathW, &val, NULL, NULL )) != S_OK) goto done;
+        if (!(ret[i].ref2 = heap_strdupW( V_BSTR(&val) ))) goto done;
+        VariantClear( &val );
+    }
+
+    *count = query->view->count;
+
+done:
+    if (!ret) free_assocations( ret, query->view->count );
+    free_query( query );
+    free_query( query2 );
+    return ret;
+}
+
+static enum fill_status fill_diskdrivetodiskpartition( struct table *table, const struct expr *cond )
+{
+    struct record_diskdrivetodiskpartition *rec;
+    UINT i, row = 0, offset = 0, count = 0;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+    struct association *assoc;
+
+    if (!(assoc = get_diskdrivetodiskpartition_pairs( &count ))) return FILL_STATUS_FAILED;
+    if (!count)
+    {
+        free_assocations( assoc, count );
+        return FILL_STATUS_UNFILTERED;
+    }
+    if (!resize_table( table, count, sizeof(*rec) ))
+    {
+        free_assocations( assoc, count );
+        return FILL_STATUS_FAILED;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        rec = (struct record_diskdrivetodiskpartition *)(table->data + offset);
+        rec->antecedent = assoc[i].ref;
+        rec->dependent  = assoc[i].ref2;
+        if (!match_row( table, row, cond, &status ))
+        {
+            free_row_values( table, row );
+            continue;
+        }
+        offset += sizeof(*rec);
+        row++;
+    }
+
+    heap_free( assoc );
+
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
+}
+
 static WCHAR *get_filesystem( const WCHAR *root )
 {
     static const WCHAR ntfsW[] = {'N','T','F','S',0};
@@ -2613,24 +2729,6 @@ static enum fill_status fill_logicaldisk( struct table *table, const struct expr
     TRACE("created %u rows\n", row);
     table->num_rows = row;
     return status;
-}
-
-struct association
-{
-    WCHAR *ref;
-    WCHAR *ref2;
-};
-
-static void free_assocations( struct association *assoc, UINT count )
-{
-    UINT i;
-    if (!assoc) return;
-    for (i = 0; i < count; i++)
-    {
-        heap_free( assoc[i].ref );
-        heap_free( assoc[i].ref2 );
-    }
-    heap_free( assoc );
 }
 
 static struct association *get_logicaldisktopartition_pairs( UINT *count )
@@ -4179,6 +4277,7 @@ static struct table builtin_classes[] =
     { class_desktopmonitorW, C(col_desktopmonitor), 0, 0, NULL, fill_desktopmonitor },
     { class_directoryW, C(col_directory), 0, 0, NULL, fill_directory },
     { class_diskdriveW, C(col_diskdrive), 0, 0, NULL, fill_diskdrive },
+    { class_diskdrivetodiskpartitionW, C(col_diskdrivetodiskpartition), 0, 0, NULL, fill_diskdrivetodiskpartition },
     { class_diskpartitionW, C(col_diskpartition), 0, 0, NULL, fill_diskpartition },
     { class_ip4routetableW, C(col_ip4routetable), 0, 0, NULL, fill_ip4routetable },
     { class_logicaldiskW, C(col_logicaldisk), 0, 0, NULL, fill_logicaldisk },
