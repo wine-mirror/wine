@@ -103,6 +103,12 @@ static WCHAR *get_path( struct parser *parser, const struct string *str )
     int len = str->len;
     WCHAR *ret;
 
+    if (p[0] == '{' && p[len - 1] == '}')
+    {
+        p++;
+        len -= 2;
+    }
+
     if (!(ret = alloc_mem( parser, (len + 1) * sizeof(WCHAR) ))) return NULL;
     memcpy( ret, p, len * sizeof(WCHAR) );
     ret[len] = 0;
