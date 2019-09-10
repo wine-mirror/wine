@@ -281,11 +281,72 @@ int output( const char *format, ... )
     return ret;
 }
 
+static struct strarray get_tools_path(void)
+{
+    static int done;
+    static struct strarray dirs;
+
+    if (!done)
+    {
+        dirs = strarray_copy( tools_path );
+
+        /* then append the PATH directories */
+        if (getenv( "PATH" ))
+        {
+            char *p = xstrdup( getenv( "PATH" ));
+            while (*p)
+            {
+                strarray_add_one( &dirs, p );
+                while (*p && *p != PATH_SEPARATOR) p++;
+                if (!*p) break;
+                *p++ = 0;
+            }
+        }
+        done = 1;
+    }
+    return dirs;
+}
+
+/* find a binary in the path */
+static const char *find_binary( const char *prefix, const char *name )
+{
+    struct strarray dirs = get_tools_path();
+    unsigned int i, maxlen = 0;
+    struct stat st;
+    char *p, *file;
+
+    if (strchr( name, '/' )) return name;
+    if (!prefix) prefix = "";
+    for (i = 0; i < dirs.count; i++) maxlen = max( maxlen, strlen(dirs.str[i]) + 2 );
+    file = xmalloc( maxlen + strlen(prefix) + strlen(name) + sizeof(EXEEXT) + 1 );
+
+    for (i = 0; i < dirs.count; i++)
+    {
+        strcpy( file, dirs.str[i] );
+        p = file + strlen(file);
+        if (p == file) *p++ = '.';
+        if (p[-1] != '/') *p++ = '/';
+        if (*prefix)
+        {
+            strcpy( p, prefix );
+            p += strlen(p);
+            *p++ = '-';
+        }
+        strcpy( p, name );
+        strcat( p, EXEEXT );
+        if (!stat( file, &st ) && S_ISREG(st.st_mode) && (st.st_mode & 0111)) return file;
+    }
+    free( file );
+    return NULL;
+}
+
 void spawn( struct strarray args )
 {
     unsigned int i;
     int status;
+    const char *argv0 = find_binary( NULL, args.str[0] );
 
+    if (argv0) args.str[0] = argv0;
     strarray_add_one( &args, NULL );
     if (verbose)
         for (i = 0; args.str[i]; i++)
@@ -302,35 +363,8 @@ void spawn( struct strarray args )
 /* find a build tool in the path, trying the various names */
 struct strarray find_tool( const char *name, const char * const *names )
 {
-    static char **dirs;
-    static unsigned int count, maxlen;
-
-    char *p, *file;
+    const char *file;
     const char *alt_names[2];
-    unsigned int i, len;
-    struct stat st;
-
-    if (!dirs)
-    {
-        char *path;
-
-        /* split the path in directories */
-
-        if (!getenv( "PATH" )) fatal_error( "PATH not set, cannot find required tools\n" );
-        path = xstrdup( getenv( "PATH" ));
-        for (p = path, count = 2; *p; p++) if (*p == PATH_SEPARATOR) count++;
-        dirs = xmalloc( count * sizeof(*dirs) );
-        count = 0;
-        dirs[count++] = p = path;
-        while (*p)
-        {
-            while (*p && *p != PATH_SEPARATOR) p++;
-            if (!*p) break;
-            *p++ = 0;
-            dirs[count++] = p;
-        }
-        for (i = 0; i < count; i++) maxlen = max( maxlen, strlen(dirs[i])+2 );
-    }
 
     if (!names)
     {
@@ -341,34 +375,12 @@ struct strarray find_tool( const char *name, const char * const *names )
 
     while (*names)
     {
-        len = strlen(*names) + sizeof(EXEEXT) + 1;
-        if (target_alias)
-            len += strlen(target_alias) + 1;
-        file = xmalloc( maxlen + len );
-
-        for (i = 0; i < count; i++)
+        if ((file = find_binary( target_alias, *names )))
         {
-            strcpy( file, dirs[i] );
-            p = file + strlen(file);
-            if (p == file) *p++ = '.';
-            if (p[-1] != '/') *p++ = '/';
-            if (target_alias)
-            {
-                strcpy( p, target_alias );
-                p += strlen(p);
-                *p++ = '-';
-            }
-            strcpy( p, *names );
-            strcat( p, EXEEXT );
-
-            if (!stat( file, &st ) && S_ISREG(st.st_mode) && (st.st_mode & 0111))
-            {
-                struct strarray ret = empty_strarray;
-                strarray_add_one( &ret, file );
-                return ret;
-            }
+            struct strarray ret = empty_strarray;
+            strarray_add_one( &ret, file );
+            return ret;
         }
-        free( file );
         names++;
     }
     fatal_error( "cannot find the '%s' tool\n", name );
@@ -377,6 +389,7 @@ struct strarray find_tool( const char *name, const char * const *names )
 struct strarray get_as_command(void)
 {
     struct strarray args;
+    unsigned int i;
 
     if (cc_command.count)
     {
@@ -387,6 +400,8 @@ struct strarray get_as_command(void)
         if (cpu_option) strarray_add_one( &args, strmake("-mcpu=%s", cpu_option) );
         if (fpu_option) strarray_add_one( &args, strmake("-mfpu=%s", fpu_option) );
         if (arch_option) strarray_add_one( &args, strmake("-march=%s", arch_option) );
+        for (i = 0; i < tools_path.count; i++)
+            strarray_add_one( &args, strmake("-B%s", tools_path.str[i] ));
         return args;
     }
 

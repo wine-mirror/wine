@@ -68,6 +68,10 @@ Specify the target CPU and platform on which the generated code will
 be built. The target specification is in the standard autoconf format
 as returned by config.sub.
 .TP
+.BI \-B\  directory
+Add the directory to the search path for the various binutils tools
+like \fBas\fR, \fBnm\fR and \fBld\fR.
+.TP
 .BI \--cc-cmd= cc-command
 Specify the C compiler to use to compile assembly files; the default
 is to instead use the assembler specified with \fB--as-cmd\fR.

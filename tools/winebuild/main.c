@@ -83,6 +83,7 @@ const char *output_file_name = NULL;
 static int fake_module;
 
 struct strarray lib_path = { 0 };
+struct strarray tools_path = { 0 };
 struct strarray as_command = { 0 };
 struct strarray cc_command = { 0 };
 struct strarray ld_command = { 0 };
@@ -257,6 +258,7 @@ static const char usage_str[] =
 "Options:\n"
 "       --as-cmd=AS           Command to use for assembling (default: as)\n"
 "   -b, --target=TARGET       Specify target CPU and platform for cross-compiling\n"
+"   -B PREFIX                 Look for build tools in the PREFIX directory\n"
 "       --cc-cmd=CC           C compiler to use for assembling (default: fall back to --as-cmd)\n"
 "   -d, --delay-lib=LIB       Import the specified library in delayed mode\n"
 "   -D SYM                    Ignored for C flags compatibility\n"
@@ -316,7 +318,7 @@ enum long_options_values
     LONG_OPT_VERSION
 };
 
-static const char short_options[] = "C:D:E:F:H:I:K:L:M:N:b:d:e:f:hkl:m:o:r:u:vw";
+static const char short_options[] = "B:C:D:E:F:H:I:K:L:M:N:b:d:e:f:hkl:m:o:r:u:vw";
 
 static const struct option long_options[] =
 {
@@ -389,6 +391,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
     {
         switch(optc)
         {
+        case 'B':
+            strarray_add( &tools_path, xstrdup( optarg ), NULL );
+            break;
         case 'D':
             /* ignored */
             break;

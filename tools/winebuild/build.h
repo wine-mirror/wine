@@ -369,6 +369,7 @@ extern FILE *output_file;
 extern const char *output_file_name;
 
 extern struct strarray lib_path;
+extern struct strarray tools_path;
 extern struct strarray as_command;
 extern struct strarray cc_command;
 extern struct strarray ld_command;
