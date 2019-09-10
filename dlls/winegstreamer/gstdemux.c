@@ -66,7 +66,7 @@ typedef struct GSTImpl {
     GstBus *bus;
     guint64 start, nextofs, nextpullofs, stop;
     ALLOCATOR_PROPERTIES props;
-    HANDLE no_more_pads_event, push_event;
+    HANDLE no_more_pads_event;
 
     HANDLE push_thread;
 } GSTImpl;
@@ -506,10 +506,6 @@ static DWORD CALLBACK push_data(LPVOID iface)
         IAsyncReader_Length(This->reader, &maxlen, &curlen);
     else
         maxlen = This->stop;
-
-    TRACE("Waiting..\n");
-
-    WaitForSingleObject(This->push_event, INFINITE);
 
     TRACE("Starting..\n");
     for (;;) {
@@ -1155,10 +1151,6 @@ static HRESULT GST_Connect(GSTImpl *This, IPin *pConnectPin, ALLOCATOR_PROPERTIE
 
     This->initial = FALSE;
 
-    /* don't set active during test-play, as we don't want to push/pull data
-     * from the source yet */
-    gst_pad_set_active(This->my_src, 1);
-
     This->nextofs = This->nextpullofs = 0;
     return S_OK;
 }
@@ -1185,7 +1177,6 @@ static void gstdemux_destroy(struct strmbase_filter *iface)
     HRESULT hr;
 
     CloseHandle(filter->no_more_pads_event);
-    CloseHandle(filter->push_event);
 
     /* Don't need to clean up output pins, disconnecting input pin will do that */
     if (filter->sink.pConnectedTo)
@@ -1246,7 +1237,6 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     This->ppPins = NULL;
     This->push_thread = NULL;
     This->no_more_pads_event = CreateEventW(NULL, 0, 0, NULL);
-    This->push_event = CreateEventW(NULL, 0, 0, NULL);
     This->bus = NULL;
 
     This->sink.dir = PINDIR_INPUT;
@@ -1864,7 +1854,6 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
 
         filter->reader = NULL;
         filter->alloc = NULL;
-        ResetEvent(filter->push_event);
         if (SUCCEEDED(hr))
             hr = IPin_QueryInterface(pReceivePin, &IID_IAsyncReader, (LPVOID *)&filter->reader);
         if (SUCCEEDED(hr))
@@ -1887,7 +1876,6 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
             filter->sink.pConnectedTo = pReceivePin;
             IPin_AddRef(pReceivePin);
             hr = IMemAllocator_Commit(filter->alloc);
-            SetEvent(filter->push_event);
         } else {
             GST_RemoveOutputPins(filter);
             if (filter->reader)
