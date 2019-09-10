@@ -113,6 +113,7 @@ static HRESULT WINAPI enum_class_object_Next(
 {
     struct enum_class_object *ec = impl_from_IEnumWbemClassObject( iface );
     struct view *view = ec->query->view;
+    struct table *table;
     static int once = 0;
     HRESULT hr;
 
@@ -123,14 +124,15 @@ static HRESULT WINAPI enum_class_object_Next(
     if (lTimeout != WBEM_INFINITE && !once++) FIXME("timeout not supported\n");
 
     *puReturned = 0;
-    if (ec->index >= view->count) return WBEM_S_FALSE;
+    if (ec->index >= view->result_count) return WBEM_S_FALSE;
 
-    hr = create_class_object( view->table->name, iface, ec->index, NULL, apObjects );
+    table = get_view_table( view, ec->index );
+    hr = create_class_object( table->name, iface, ec->index, NULL, apObjects );
     if (hr != S_OK) return hr;
 
     ec->index++;
     *puReturned = 1;
-    if (ec->index == view->count && uCount > 1) return WBEM_S_FALSE;
+    if (ec->index == view->result_count && uCount > 1) return WBEM_S_FALSE;
     if (uCount > 1) return WBEM_S_TIMEDOUT;
     return WBEM_S_NO_ERROR;
 }
@@ -168,11 +170,11 @@ static HRESULT WINAPI enum_class_object_Skip(
 
     if (lTimeout != WBEM_INFINITE && !once++) FIXME("timeout not supported\n");
 
-    if (!view->count) return WBEM_S_FALSE;
+    if (!view->result_count) return WBEM_S_FALSE;
 
-    if (nCount > view->count - ec->index)
+    if (nCount > view->result_count - ec->index)
     {
-        ec->index = view->count - 1;
+        ec->index = view->result_count - 1;
         return WBEM_S_FALSE;
     }
     ec->index += nCount;
@@ -491,7 +493,7 @@ static HRESULT WINAPI class_object_GetNames(
     if (wszQualifierName || pQualifierVal)
         FIXME("qualifier not supported\n");
 
-    return get_properties( ec->query->view, lFlags, pNames );
+    return get_properties( ec->query->view, co->index, lFlags, pNames );
 }
 
 static HRESULT WINAPI class_object_BeginEnumeration(
@@ -519,17 +521,18 @@ static HRESULT WINAPI class_object_Next(
     struct class_object *obj = impl_from_IWbemClassObject( iface );
     struct enum_class_object *iter = impl_from_IEnumWbemClassObject( obj->iter );
     struct view *view = iter->query->view;
+    struct table *table = get_view_table( view, obj->index );
     BSTR prop;
     HRESULT hr;
     UINT i;
 
     TRACE("%p, %08x, %p, %p, %p, %p\n", iface, lFlags, strName, pVal, pType, plFlavor);
 
-    for (i = obj->index_property; i < view->table->num_cols; i++)
+    for (i = obj->index_property; i < table->num_cols; i++)
     {
-        if (is_method( view->table, i )) continue;
-        if (!is_selected_prop( view, view->table->columns[i].name )) continue;
-        if (!(prop = SysAllocString( view->table->columns[i].name ))) return E_OUTOFMEMORY;
+        if (is_method( table, i )) continue;
+        if (!is_result_prop( view, table->columns[i].name )) continue;
+        if (!(prop = SysAllocString( table->columns[i].name ))) return E_OUTOFMEMORY;
         if ((hr = get_propval( view, obj->index, prop, pVal, pType, plFlavor )) != S_OK)
         {
             SysFreeString( prop );
@@ -612,15 +615,16 @@ static BSTR get_object_text( const struct view *view, UINT index )
     static const WCHAR fmtW[] =
         {'\n','i','n','s','t','a','n','c','e',' ','o','f',' ','%','s','\n','{','%','s','\n','}',';',0};
     UINT len, len_body, row = view->result[index];
+    struct table *table = get_view_table( view, index );
     BSTR ret, body;
 
     len = ARRAY_SIZE( fmtW );
-    len += lstrlenW( view->table->name );
-    if (!(body = get_body_text( view->table, row, &len_body ))) return NULL;
+    len += lstrlenW( table->name );
+    if (!(body = get_body_text( table, row, &len_body ))) return NULL;
     len += len_body;
 
     if (!(ret = SysAllocStringLen( NULL, len ))) return NULL;
-    swprintf( ret, len, fmtW, view->table->name, body );
+    swprintf( ret, len, fmtW, table->name, body );
     SysFreeString( body );
     return ret;
 }
@@ -660,12 +664,12 @@ static HRESULT WINAPI class_object_SpawnInstance(
 {
     struct class_object *co = impl_from_IWbemClassObject( iface );
     struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
-    struct view *view = ec->query->view;
+    struct table *table = get_view_table( ec->query->view, co->index );
     struct record *record;
 
     TRACE("%p, %08x, %p\n", iface, lFlags, ppNewInstance);
 
-    if (!(record = create_record( view->table ))) return E_OUTOFMEMORY;
+    if (!(record = create_record( table ))) return E_OUTOFMEMORY;
 
     return create_class_object( co->name, NULL, 0, record, ppNewInstance );
 }

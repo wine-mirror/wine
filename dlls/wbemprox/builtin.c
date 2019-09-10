@@ -50,6 +50,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
+static const WCHAR class_associatorsW[] =
+    {'_','_','A','S','S','O','C','I','A','T','O','R','S',0};
 static const WCHAR class_baseboardW[] =
     {'W','i','n','3','2','_','B','a','s','e','B','o','a','r','d',0};
 static const WCHAR class_biosW[] =
@@ -137,6 +139,10 @@ static const WCHAR prop_antecedentW[] =
     {'A','n','t','e','c','e','d','e','n','t',0};
 static const WCHAR prop_architectureW[] =
     {'A','r','c','h','i','t','e','c','t','u','r','e',0};
+static const WCHAR prop_assocclassW[] =
+    {'A','s','s','o','c','C','l','a','s','s',0};
+static const WCHAR prop_associatorW[] =
+    {'A','s','s','o','c','i','a','t','o','r',0};
 static const WCHAR prop_attributesW[] =
     {'A','t','t','r','i','b','u','t','e','s',0};
 static const WCHAR prop_availabilityW[] =
@@ -433,6 +439,12 @@ static const WCHAR prop_workingsetsizeW[] =
     {'W','o','r','k','i','n','g','S','e','t','S','i','z','e',0};
 
 /* column definitions must be kept in sync with record structures below */
+static const struct column col_associator[] =
+{
+    { prop_assocclassW, CIM_STRING },
+    { prop_classW,      CIM_STRING },
+    { prop_associatorW, CIM_STRING }
+};
 static const struct column col_baseboard[] =
 {
     { prop_manufacturerW,  CIM_STRING|COL_FLAG_DYNAMIC },
@@ -871,6 +883,12 @@ static const WCHAR videocontroller_statusW[] =
     {'O','K',0};
 
 #include "pshpack1.h"
+struct record_associator
+{
+    const WCHAR *assocclass;
+    const WCHAR *class;
+    const WCHAR *associator;
+};
 struct record_baseboard
 {
     const WCHAR *manufacturer;
@@ -1214,6 +1232,11 @@ struct record_videocontroller
 };
 #include "poppack.h"
 
+static const struct record_associator data_associator[] =
+{
+    { class_diskdrivetodiskpartitionW, class_diskpartitionW, class_diskdriveW },
+    { class_logicaldisktopartitionW, class_logicaldiskW, class_diskpartitionW },
+};
 static const struct record_param data_param[] =
 {
     { class_processW, method_getownerW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
@@ -2489,9 +2512,9 @@ static struct association *get_diskdrivetodiskpartition_pairs( UINT *count )
     if ((hr = parse_query( select2W, &query2->view, &query2->mem )) != S_OK) goto done;
     if ((hr = execute_view( query2->view )) != S_OK) goto done;
 
-    if (!(ret = heap_alloc_zero( query->view->count * sizeof(*ret) ))) goto done;
+    if (!(ret = heap_alloc_zero( query->view->result_count * sizeof(*ret) ))) goto done;
 
-    for (i = 0; i < query->view->count; i++)
+    for (i = 0; i < query->view->result_count; i++)
     {
         if ((hr = get_propval( query->view, i, pathW, &val, NULL, NULL )) != S_OK) goto done;
         if (!(ret[i].ref = heap_strdupW( V_BSTR(&val) ))) goto done;
@@ -2502,10 +2525,10 @@ static struct association *get_diskdrivetodiskpartition_pairs( UINT *count )
         VariantClear( &val );
     }
 
-    *count = query->view->count;
+    *count = query->view->result_count;
 
 done:
-    if (!ret) free_assocations( ret, query->view->count );
+    if (!ret) free_assocations( ret, query->view->result_count );
     free_query( query );
     free_query( query2 );
     return ret;
@@ -2754,10 +2777,10 @@ static struct association *get_logicaldisktopartition_pairs( UINT *count )
     if ((hr = parse_query( select2W, &query2->view, &query2->mem )) != S_OK) goto done;
     if ((hr = execute_view( query2->view )) != S_OK) goto done;
 
-    if (!(ret = heap_alloc_zero( query->view->count * sizeof(*ret) ))) goto done;
+    if (!(ret = heap_alloc_zero( query->view->result_count * sizeof(*ret) ))) goto done;
 
     /* assume fixed and removable disks are enumerated in the same order as partitions */
-    for (i = 0; i < query->view->count; i++)
+    for (i = 0; i < query->view->result_count; i++)
     {
         if ((hr = get_propval( query->view, i, pathW, &val, NULL, NULL )) != S_OK) goto done;
         if (!(ret[i].ref = heap_strdupW( V_BSTR(&val) ))) goto done;
@@ -2768,10 +2791,10 @@ static struct association *get_logicaldisktopartition_pairs( UINT *count )
         VariantClear( &val );
     }
 
-    *count = query->view->count;
+    *count = query->view->result_count;
 
 done:
-    if (!ret) free_assocations( ret, query->view->count );
+    if (!ret) free_assocations( ret, query->view->result_count );
     free_query( query );
     free_query( query2 );
     return ret;
@@ -4266,6 +4289,7 @@ done:
 #define D(d) sizeof(d)/sizeof(d[0]), 0, (BYTE *)d
 static struct table builtin_classes[] =
 {
+    { class_associatorsW, C(col_associator), D(data_associator) },
     { class_baseboardW, C(col_baseboard), 0, 0, NULL, fill_baseboard },
     { class_biosW, C(col_bios), 0, 0, NULL, fill_bios },
     { class_cdromdriveW, C(col_cdromdrive), 0, 0, NULL, fill_cdromdrive },

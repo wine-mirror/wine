@@ -289,7 +289,7 @@ associatorsof:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( $3, NULL, NULL, NULL, NULL, &view );
+            hr = create_view( VIEW_TYPE_ASSOCIATORS, $3, NULL, NULL, NULL, NULL, &view );
             if (hr != S_OK)
                 YYABORT;
 
@@ -301,7 +301,7 @@ associatorsof:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( $3, $5, NULL, NULL, NULL, &view );
+            hr = create_view( VIEW_TYPE_ASSOCIATORS, $3, $5, NULL, NULL, NULL, &view );
             if (hr != S_OK)
                 YYABORT;
 
@@ -316,7 +316,7 @@ select:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( NULL, NULL, $3, NULL, NULL, &view );
+            hr = create_view( VIEW_TYPE_SELECT, NULL, NULL, $3, NULL, NULL, &view );
             if (hr != S_OK)
                 YYABORT;
 
@@ -328,7 +328,7 @@ select:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( NULL, NULL, $4, $2, NULL, &view );
+            hr = create_view( VIEW_TYPE_SELECT, NULL, NULL, $4, $2, NULL, &view );
             if (hr != S_OK)
                 YYABORT;
 
@@ -340,7 +340,7 @@ select:
             struct parser *parser = ctx;
             struct view *view;
 
-            hr = create_view( NULL, NULL, $4, $2, $6, &view );
+            hr = create_view( VIEW_TYPE_SELECT, NULL, NULL, $4, $2, $6, &view );
             if (hr != S_OK)
                 YYABORT;
 
