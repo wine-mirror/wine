@@ -1736,6 +1736,122 @@ unsupported:
     return AUDCLNT_E_UNSUPPORTED_FORMAT;
 }
 
+static DWORD ca_channel_layout_to_channel_mask(const AudioChannelLayout *layout)
+{
+    int i;
+    DWORD mask = 0;
+
+    for (i = 0; i < layout->mNumberChannelDescriptions; ++i) {
+        switch (layout->mChannelDescriptions[i].mChannelLabel) {
+            default: FIXME("Unhandled channel 0x%x\n", layout->mChannelDescriptions[i].mChannelLabel); break;
+            case kAudioChannelLabel_Left: mask |= SPEAKER_FRONT_LEFT; break;
+            case kAudioChannelLabel_Mono:
+            case kAudioChannelLabel_Center: mask |= SPEAKER_FRONT_CENTER; break;
+            case kAudioChannelLabel_Right: mask |= SPEAKER_FRONT_RIGHT; break;
+            case kAudioChannelLabel_LeftSurround: mask |= SPEAKER_BACK_LEFT; break;
+            case kAudioChannelLabel_CenterSurround: mask |= SPEAKER_BACK_CENTER; break;
+            case kAudioChannelLabel_RightSurround: mask |= SPEAKER_BACK_RIGHT; break;
+            case kAudioChannelLabel_LFEScreen: mask |= SPEAKER_LOW_FREQUENCY; break;
+            case kAudioChannelLabel_LeftSurroundDirect: mask |= SPEAKER_SIDE_LEFT; break;
+            case kAudioChannelLabel_RightSurroundDirect: mask |= SPEAKER_SIDE_RIGHT; break;
+            case kAudioChannelLabel_TopCenterSurround: mask |= SPEAKER_TOP_CENTER; break;
+            case kAudioChannelLabel_VerticalHeightLeft: mask |= SPEAKER_TOP_FRONT_LEFT; break;
+            case kAudioChannelLabel_VerticalHeightCenter: mask |= SPEAKER_TOP_FRONT_CENTER; break;
+            case kAudioChannelLabel_VerticalHeightRight: mask |= SPEAKER_TOP_FRONT_RIGHT; break;
+            case kAudioChannelLabel_TopBackLeft: mask |= SPEAKER_TOP_BACK_LEFT; break;
+            case kAudioChannelLabel_TopBackCenter: mask |= SPEAKER_TOP_BACK_CENTER; break;
+            case kAudioChannelLabel_TopBackRight: mask |= SPEAKER_TOP_BACK_RIGHT; break;
+            case kAudioChannelLabel_LeftCenter: mask |= SPEAKER_FRONT_LEFT_OF_CENTER; break;
+            case kAudioChannelLabel_RightCenter: mask |= SPEAKER_FRONT_RIGHT_OF_CENTER; break;
+        }
+    }
+
+    return mask;
+}
+
+/* For most hardware on Windows, users must choose a configuration with an even
+ * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
+ * channels, but those channels are still reported to applications from
+ * GetMixFormat! Some applications behave badly if given an odd number of
+ * channels (e.g. 2.1).  Here, we find the nearest configuration that Windows
+ * would report for a given channel layout. */
+static void convert_channel_layout(const AudioChannelLayout *ca_layout, WAVEFORMATEXTENSIBLE *fmt)
+{
+    DWORD ca_mask = ca_channel_layout_to_channel_mask(ca_layout);
+
+    TRACE("Got channel mask for CA: 0x%x\n", ca_mask);
+
+    if (ca_layout->mNumberChannelDescriptions == 1)
+    {
+        fmt->Format.nChannels = 1;
+        fmt->dwChannelMask = ca_mask;
+        return;
+    }
+
+    /* compare against known configurations and find smallest configuration
+     * which is a superset of the given speakers */
+
+    if (ca_layout->mNumberChannelDescriptions <= 2 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_STEREO) == 0)
+    {
+        fmt->Format.nChannels = 2;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_STEREO;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 4 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_QUAD) == 0)
+    {
+        fmt->Format.nChannels = 4;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_QUAD;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 4 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_SURROUND) == 0)
+    {
+        fmt->Format.nChannels = 4;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_SURROUND;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 6 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_5POINT1) == 0)
+    {
+        fmt->Format.nChannels = 6;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_5POINT1;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 6 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_5POINT1_SURROUND) == 0)
+    {
+        fmt->Format.nChannels = 6;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_5POINT1_SURROUND;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 8 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_7POINT1) == 0)
+    {
+        fmt->Format.nChannels = 8;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_7POINT1;
+        return;
+    }
+
+    if (ca_layout->mNumberChannelDescriptions <= 8 &&
+            (ca_mask & ~KSAUDIO_SPEAKER_7POINT1_SURROUND) == 0)
+    {
+        fmt->Format.nChannels = 8;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_7POINT1_SURROUND;
+        return;
+    }
+
+    /* oddball format, report truthfully */
+    fmt->Format.nChannels = ca_layout->mNumberChannelDescriptions;
+    fmt->dwChannelMask = ca_mask;
+}
+
 static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
         WAVEFORMATEX **pwfx)
 {
@@ -1745,6 +1861,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     UInt32 size;
     Float64 rate;
     AudioBufferList *buffers;
+    AudioChannelLayout *layout;
     AudioObjectPropertyAddress addr;
     int i;
 
@@ -1762,37 +1879,69 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
 
     addr.mScope = This->scope;
     addr.mElement = 0;
-    addr.mSelector = kAudioDevicePropertyStreamConfiguration;
+    addr.mSelector = kAudioDevicePropertyPreferredChannelLayout;
 
     sc = AudioObjectGetPropertyDataSize(This->adevid, &addr, 0, NULL, &size);
-    if(sc != noErr){
-        CoTaskMemFree(fmt);
-        WARN("Unable to get size for _StreamConfiguration property: %x\n", (int)sc);
-        return osstatus_to_hresult(sc);
+    if(sc == noErr){
+        layout = HeapAlloc(GetProcessHeap(), 0, size);
+
+        sc = AudioObjectGetPropertyData(This->adevid, &addr, 0, NULL, &size, layout);
+        if(sc == noErr){
+            TRACE("Got channel layout: {tag: 0x%x, bitmap: 0x%x, num_descs: %u}\n",
+                    layout->mChannelLayoutTag, layout->mChannelBitmap, layout->mNumberChannelDescriptions);
+
+            if(layout->mChannelLayoutTag == kAudioChannelLayoutTag_UseChannelDescriptions){
+                convert_channel_layout(layout, fmt);
+            }else{
+                WARN("Haven't implemented support for this layout tag: 0x%x, guessing at layout\n", layout->mChannelLayoutTag);
+                fmt->Format.nChannels = 0;
+            }
+        }else{
+            TRACE("Unable to get _PreferredChannelLayout property: %x, guessing at layout\n", (int)sc);
+            fmt->Format.nChannels = 0;
+        }
+
+        HeapFree(GetProcessHeap(), 0, layout);
+    }else{
+        TRACE("Unable to get size for _PreferredChannelLayout property: %x, guessing at layout\n", (int)sc);
+        fmt->Format.nChannels = 0;
     }
 
-    buffers = HeapAlloc(GetProcessHeap(), 0, size);
-    if(!buffers){
-        CoTaskMemFree(fmt);
-        return E_OUTOFMEMORY;
-    }
+    if(fmt->Format.nChannels == 0){
+        addr.mScope = This->scope;
+        addr.mElement = 0;
+        addr.mSelector = kAudioDevicePropertyStreamConfiguration;
 
-    sc = AudioObjectGetPropertyData(This->adevid, &addr, 0, NULL,
-            &size, buffers);
-    if(sc != noErr){
-        CoTaskMemFree(fmt);
+        sc = AudioObjectGetPropertyDataSize(This->adevid, &addr, 0, NULL, &size);
+        if(sc != noErr){
+            CoTaskMemFree(fmt);
+            WARN("Unable to get size for _StreamConfiguration property: %x\n", (int)sc);
+            return osstatus_to_hresult(sc);
+        }
+
+        buffers = HeapAlloc(GetProcessHeap(), 0, size);
+        if(!buffers){
+            CoTaskMemFree(fmt);
+            return E_OUTOFMEMORY;
+        }
+
+        sc = AudioObjectGetPropertyData(This->adevid, &addr, 0, NULL,
+                &size, buffers);
+        if(sc != noErr){
+            CoTaskMemFree(fmt);
+            HeapFree(GetProcessHeap(), 0, buffers);
+            WARN("Unable to get _StreamConfiguration property: %x\n", (int)sc);
+            return osstatus_to_hresult(sc);
+        }
+
+        fmt->Format.nChannels = 0;
+        for(i = 0; i < buffers->mNumberBuffers; ++i)
+            fmt->Format.nChannels += buffers->mBuffers[i].mNumberChannels;
+
         HeapFree(GetProcessHeap(), 0, buffers);
-        WARN("Unable to get _StreamConfiguration property: %x\n", (int)sc);
-        return osstatus_to_hresult(sc);
+
+        fmt->dwChannelMask = get_channel_mask(fmt->Format.nChannels);
     }
-
-    fmt->Format.nChannels = 0;
-    for(i = 0; i < buffers->mNumberBuffers; ++i)
-        fmt->Format.nChannels += buffers->mBuffers[i].mNumberChannels;
-
-    HeapFree(GetProcessHeap(), 0, buffers);
-
-    fmt->dwChannelMask = get_channel_mask(fmt->Format.nChannels);
 
     addr.mSelector = kAudioDevicePropertyNominalSampleRate;
     size = sizeof(Float64);

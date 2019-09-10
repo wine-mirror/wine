@@ -341,11 +341,12 @@ static const enum pa_channel_position pulse_pos_from_wfx[] = {
     PA_CHANNEL_POSITION_TOP_REAR_RIGHT
 };
 
-static DWORD pulse_channel_map_to_channel_mask(const pa_channel_map *map) {
+static DWORD pulse_channel_map_to_channel_mask(const pa_channel_map *map)
+{
     int i;
     DWORD mask = 0;
 
-    for (i = 0; i < map->channels; ++i)
+    for (i = 0; i < map->channels; ++i) {
         switch (map->map[i]) {
             default: FIXME("Unhandled channel %s\n", pa_channel_position_to_string(map->map[i])); break;
             case PA_CHANNEL_POSITION_FRONT_LEFT: mask |= SPEAKER_FRONT_LEFT; break;
@@ -367,9 +368,93 @@ static DWORD pulse_channel_map_to_channel_mask(const pa_channel_map *map) {
             case PA_CHANNEL_POSITION_TOP_REAR_RIGHT: mask |= SPEAKER_TOP_BACK_RIGHT; break;
             case PA_CHANNEL_POSITION_FRONT_LEFT_OF_CENTER: mask |= SPEAKER_FRONT_LEFT_OF_CENTER; break;
             case PA_CHANNEL_POSITION_FRONT_RIGHT_OF_CENTER: mask |= SPEAKER_FRONT_RIGHT_OF_CENTER; break;
+        }
     }
 
     return mask;
+}
+
+/* For most hardware on Windows, users must choose a configuration with an even
+ * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
+ * channels, but those channels are still reported to applications from
+ * GetMixFormat! Some applications behave badly if given an odd number of
+ * channels (e.g. 2.1).  Here, we find the nearest configuration that Windows
+ * would report for a given channel layout. */
+static void convert_channel_map(const pa_channel_map *pa_map, WAVEFORMATEXTENSIBLE *fmt)
+{
+    DWORD pa_mask = pulse_channel_map_to_channel_mask(pa_map);
+
+    TRACE("got mask for PA: 0x%x\n", pa_mask);
+
+    if (pa_map->channels == 1)
+    {
+        fmt->Format.nChannels = 1;
+        fmt->dwChannelMask = pa_mask;
+        return;
+    }
+
+    /* compare against known configurations and find smallest configuration
+     * which is a superset of the given speakers */
+
+    if (pa_map->channels <= 2 &&
+            (pa_mask & ~KSAUDIO_SPEAKER_STEREO) == 0)
+    {
+        fmt->Format.nChannels = 2;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_STEREO;
+        return;
+    }
+
+    if (pa_map->channels <= 4 &&
+            (pa_mask & ~KSAUDIO_SPEAKER_QUAD) == 0)
+    {
+        fmt->Format.nChannels = 4;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_QUAD;
+        return;
+    }
+
+    if (pa_map->channels <= 4 &&
+            (pa_mask & ~KSAUDIO_SPEAKER_SURROUND) == 0)
+    {
+        fmt->Format.nChannels = 4;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_SURROUND;
+        return;
+    }
+
+    if (pa_map->channels <= 6 &&
+            (pa_mask & ~KSAUDIO_SPEAKER_5POINT1) == 0)
+    {
+        fmt->Format.nChannels = 6;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_5POINT1;
+        return;
+    }
+
+    if (pa_map->channels <= 6 &&
+            (pa_mask & ~KSAUDIO_SPEAKER_5POINT1_SURROUND) == 0)
+    {
+        fmt->Format.nChannels = 6;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_5POINT1_SURROUND;
+        return;
+    }
+
+    if (pa_map->channels <= 8 &&
+            (pa_mask & ~KSAUDIO_SPEAKER_7POINT1) == 0)
+    {
+        fmt->Format.nChannels = 8;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_7POINT1;
+        return;
+    }
+
+    if (pa_map->channels <= 8 &&
+            (pa_mask & ~KSAUDIO_SPEAKER_7POINT1_SURROUND) == 0)
+    {
+        fmt->Format.nChannels = 8;
+        fmt->dwChannelMask = KSAUDIO_SPEAKER_7POINT1_SURROUND;
+        return;
+    }
+
+    /* oddball format, report truthfully */
+    fmt->Format.nChannels = pa_map->channels;
+    fmt->dwChannelMask = pa_mask;
 }
 
 static void pulse_probe_settings(int render, WAVEFORMATEXTENSIBLE *fmt) {
@@ -433,10 +518,12 @@ static void pulse_probe_settings(int render, WAVEFORMATEXTENSIBLE *fmt) {
 
     wfx->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
     wfx->cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
-    wfx->nChannels = ss.channels;
+
+    convert_channel_map(&map, fmt);
+
     wfx->wBitsPerSample = 8 * pa_sample_size_of_format(ss.format);
     wfx->nSamplesPerSec = ss.rate;
-    wfx->nBlockAlign = pa_frame_size(&ss);
+    wfx->nBlockAlign = wfx->nChannels * wfx->wBitsPerSample / 8;
     wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
     if (ss.format != PA_SAMPLE_S24_32LE)
         fmt->Samples.wValidBitsPerSample = wfx->wBitsPerSample;
@@ -446,8 +533,6 @@ static void pulse_probe_settings(int render, WAVEFORMATEXTENSIBLE *fmt) {
         fmt->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
     else
         fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-
-    fmt->dwChannelMask = pulse_channel_map_to_channel_mask(&map);
 }
 
 static HRESULT pulse_connect(void)

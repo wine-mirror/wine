@@ -1831,6 +1831,22 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     else
         fmt->Format.nChannels = max_channels;
 
+    if(fmt->Format.nChannels > 1 && (fmt->Format.nChannels & 0x1)){
+        /* For most hardware on Windows, users must choose a configuration with an even
+         * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
+         * channels, but those channels are still reported to applications from
+         * GetMixFormat! Some applications behave badly if given an odd number of
+         * channels (e.g. 2.1). */
+
+        if(fmt->Format.nChannels < max_channels)
+            fmt->Format.nChannels += 1;
+        else
+            /* We could "fake" more channels and downmix the emulated channels,
+             * but at that point you really ought to tweak your ALSA setup or
+             * just use PulseAudio. */
+            WARN("Some Windows applications behave badly with an odd number of channels (%u)!\n", fmt->Format.nChannels);
+    }
+
     fmt->dwChannelMask = get_channel_mask(fmt->Format.nChannels);
 
     if((err = snd_pcm_hw_params_get_rate_max(This->hw_params, &max_rate,
