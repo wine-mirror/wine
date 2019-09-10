@@ -1602,7 +1602,7 @@ end:
  */
 static HRESULT WINAPI snapshot_QueryGetData(IDataObject *iface, FORMATETC *fmt)
 {
-    FIXME("(%p, %p {%s})\n", iface, fmt, dump_fmtetc(fmt));
+    TRACE("(%p, %p {%s})\n", iface, fmt, dump_fmtetc(fmt));
 
     if (!fmt) return E_INVALIDARG;
 
