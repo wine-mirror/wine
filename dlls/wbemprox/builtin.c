@@ -2424,7 +2424,7 @@ static enum fill_status fill_diskdrive( struct table *table, const struct expr *
             rec = (struct record_diskdrive *)(table->data + offset);
             swprintf( device_id, ARRAY_SIZE( device_id ), fmtW, index );
             rec->device_id     = heap_strdupW( device_id );
-            rec->index         = index;
+            rec->index         = index++;
             rec->interfacetype = diskdrive_interfacetypeW;
             rec->manufacturer  = diskdrive_manufacturerW;
             rec->mediatype     = (type == DRIVE_FIXED) ? diskdrive_mediatype_fixedW : diskdrive_mediatype_removableW;
@@ -2439,7 +2439,6 @@ static enum fill_status fill_diskdrive( struct table *table, const struct expr *
                 continue;
             }
             offset += sizeof(*rec);
-            index++;
             row++;
         }
     }
@@ -2591,7 +2590,7 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
             rec->bootpartition  = (i == 2) ? -1 : 0;
             swprintf( device_id, ARRAY_SIZE( device_id ), fmtW, index );
             rec->device_id      = heap_strdupW( device_id );
-            rec->diskindex      = index;
+            rec->diskindex      = index++;
             rec->index          = 0;
             rec->pnpdevice_id   = heap_strdupW( device_id );
             get_freespace( root, &size );
@@ -2605,7 +2604,6 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
             }
             offset += sizeof(*rec);
             row++;
-            index++;
         }
     }
     TRACE("created %u rows\n", row);
