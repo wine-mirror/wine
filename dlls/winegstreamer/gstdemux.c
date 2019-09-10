@@ -131,7 +131,7 @@ static gboolean amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt)
     if (!gst_audio_info_from_caps (&ainfo, caps))
         return FALSE;
 
-    wfe = CoTaskMemAlloc(sizeof(*wfe));
+    wfe = heap_alloc(sizeof(*wfe));
     wfx = (WAVEFORMATEX*)wfe;
     amt->majortype = MEDIATYPE_Audio;
     amt->subtype = MEDIASUBTYPE_PCM;
@@ -196,7 +196,7 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
     nom = vinfo.fps_n;
     denom = vinfo.fps_d;
 
-    vih = CoTaskMemAlloc(sizeof(*vih));
+    vih = heap_alloc(sizeof(*vih));
     bih = &vih->bmiHeader;
 
     amt->formattype = FORMAT_VideoInfo;
@@ -215,14 +215,14 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
             case 32: amt->subtype = MEDIASUBTYPE_RGB32; break;
             default:
                 FIXME("Unknown bpp %u\n", bih->biBitCount);
-                CoTaskMemFree(vih);
+                heap_free(vih);
                 return FALSE;
         }
         bih->biCompression = BI_RGB;
     } else {
         amt->subtype = MEDIATYPE_Video;
         if (!(amt->subtype.Data1 = gst_video_format_to_fourcc(vinfo.finfo->format))) {
-            CoTaskMemFree(vih);
+            heap_free(vih);
             return FALSE;
         }
         switch (amt->subtype.Data1) {
@@ -1202,7 +1202,7 @@ static void gstdemux_destroy(struct strmbase_filter *iface)
         gst_object_unref(filter->bus);
     }
     strmbase_filter_cleanup(&filter->filter);
-    CoTaskMemFree(filter);
+    heap_free(filter);
 }
 
 static const struct strmbase_filter_ops filter_ops =
@@ -1213,7 +1213,7 @@ static const struct strmbase_filter_ops filter_ops =
 
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
 {
-    GSTImpl *This;
+    GSTImpl *object;
 
     if (!init_gstreamer())
     {
@@ -1223,30 +1223,23 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
 
     mark_wine_thread();
 
-    This = CoTaskMemAlloc(sizeof(*This));
-    if (!This)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
     {
         *phr = E_OUTOFMEMORY;
         return NULL;
     }
-    memset(This, 0, sizeof(*This));
 
-    strmbase_filter_init(&This->filter, &GST_Vtbl, outer, &CLSID_Gstreamer_Splitter, &filter_ops);
+    strmbase_filter_init(&object->filter, &GST_Vtbl, outer, &CLSID_Gstreamer_Splitter, &filter_ops);
 
-    This->cStreams = 0;
-    This->ppPins = NULL;
-    This->push_thread = NULL;
-    This->no_more_pads_event = CreateEventW(NULL, 0, 0, NULL);
-    This->bus = NULL;
-
-    This->sink.dir = PINDIR_INPUT;
-    This->sink.filter = &This->filter;
-    lstrcpynW(This->sink.name, wcsInputPinName, ARRAY_SIZE(This->sink.name));
-    This->sink.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
+    object->no_more_pads_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    object->sink.dir = PINDIR_INPUT;
+    object->sink.filter = &object->filter;
+    lstrcpynW(object->sink.name, wcsInputPinName, ARRAY_SIZE(object->sink.name));
+    object->sink.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
     *phr = S_OK;
 
-    TRACE("Created GStreamer demuxer %p.\n", This);
-    return &This->filter.IUnknown_inner;
+    TRACE("Created GStreamer demuxer %p.\n", object);
+    return &object->filter.IUnknown_inner;
 }
 
 static HRESULT WINAPI GST_Stop(IBaseFilter *iface)
@@ -1764,7 +1757,7 @@ static BOOL create_pin(GSTImpl *filter, const WCHAR *name, const AM_MEDIA_TYPE *
 {
     GSTOutPin *pin, **new_array;
 
-    if (!(new_array = CoTaskMemRealloc(filter->ppPins, (filter->cStreams + 1) * sizeof(*new_array))))
+    if (!(new_array = heap_realloc(filter->ppPins, (filter->cStreams + 1) * sizeof(*new_array))))
         return FALSE;
     filter->ppPins = new_array;
 
@@ -1773,7 +1766,7 @@ static BOOL create_pin(GSTImpl *filter, const WCHAR *name, const AM_MEDIA_TYPE *
 
     strmbase_source_init(&pin->pin, &GST_OutputPin_Vtbl, &filter->filter, name,
             &output_BaseOutputFuncTable);
-    pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
+    pin->pmt = heap_alloc(sizeof(AM_MEDIA_TYPE));
     CopyMediaType(pin->pmt, mt);
     pin->caps_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     pin->segment = gst_segment_new();
@@ -1805,7 +1798,7 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
         free_source_pin(This->ppPins[i]);
 
     This->cStreams = 0;
-    CoTaskMemFree(This->ppPins);
+    heap_free(This->ppPins);
     This->ppPins = NULL;
     gst_element_set_bus(This->container, NULL);
     gst_object_unref(This->container);
