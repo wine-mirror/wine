@@ -402,7 +402,7 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid);
 HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID);
 INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 HRESULT WINAPI IIDFromString(LPCOLESTR str, IID *iid);
-HRESULT WINAPI StringFromIID(REFIID riid, LPOLESTR str);
+HRESULT WINAPI StringFromIID(REFIID riid, LPOLESTR*);
 
 /*****************************************************************************
  *	COM Server dll - exports
