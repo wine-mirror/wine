@@ -165,6 +165,35 @@ static HRESULT eval_boolcmp( UINT op, LONGLONG lval, LONGLONG rval, UINT ltype, 
     return S_OK;
 }
 
+static inline BOOL is_refcmp( const struct complex_expr *expr, UINT ltype, UINT rtype )
+{
+    if (ltype == CIM_REFERENCE && expr->left->type == EXPR_PROPVAL && expr->right->type == EXPR_SVAL) return TRUE;
+    else if (rtype == CIM_REFERENCE && expr->right->type == EXPR_PROPVAL && expr->left->type == EXPR_SVAL) return TRUE;
+    return FALSE;
+}
+
+static HRESULT eval_refcmp( UINT op, const WCHAR *lstr, const WCHAR *rstr, LONGLONG *val )
+{
+    if (!lstr || !rstr)
+    {
+        *val = 0;
+        return S_OK;
+    }
+    switch (op)
+    {
+    case OP_EQ:
+        *val = !wcsicmp( lstr, rstr );
+        break;
+    case OP_NE:
+        *val = wcsicmp( lstr, rstr );
+        break;
+    default:
+        ERR("unhandled operator %u\n", op);
+        return WBEM_E_INVALID_QUERY;
+    }
+    return S_OK;
+}
+
 static UINT resolve_type( UINT left, UINT right )
 {
     switch (left)
@@ -198,6 +227,10 @@ static UINT resolve_type( UINT left, UINT right )
 
     case CIM_BOOLEAN:
         if (right == CIM_BOOLEAN) return CIM_BOOLEAN;
+        break;
+
+    case CIM_REFERENCE:
+        if (right == CIM_REFERENCE) return CIM_REFERENCE;
         break;
 
     default:
@@ -254,9 +287,6 @@ static HRESULT eval_binary( const struct table *table, UINT row, const struct co
 
     *type = resolve_type( ltype, rtype );
 
-    if (is_boolcmp( expr, ltype, rtype ))
-        return eval_boolcmp( expr->op, lval, rval, ltype, rtype, val );
-
     if (is_strcmp( expr, ltype, rtype ))
     {
         const WCHAR *lstr, *rstr;
@@ -270,6 +300,15 @@ static HRESULT eval_binary( const struct table *table, UINT row, const struct co
 
         return eval_strcmp( expr->op, lstr, rstr, val );
     }
+    if (is_boolcmp( expr, ltype, rtype ))
+    {
+        return eval_boolcmp( expr->op, lval, rval, ltype, rtype, val );
+    }
+    if (is_refcmp( expr, ltype, rtype ))
+    {
+        return eval_refcmp( expr->op, (const WCHAR *)(INT_PTR)lval, (const WCHAR *)(INT_PTR)rval, val );
+    }
+
     switch (expr->op)
     {
     case OP_EQ:
