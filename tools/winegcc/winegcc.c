@@ -213,6 +213,8 @@ struct options
     const char* output_name;
     const char* image_base;
     const char* section_align;
+    const char* sysroot;
+    const char* isysroot;
     const char* lib_suffix;
     const char* subsystem;
     const char* prelink;
@@ -567,6 +569,7 @@ static char *get_lib_dir( struct options *opts )
     static const char *stdlibpath[] = { LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
     static const char libwine[] = "/libwine.so";
     const char *bit_suffix, *other_bit_suffix, *build_multiarch, *target_multiarch;
+    const char *root = opts->sysroot ? opts->sysroot : "";
     unsigned int i;
     size_t build_len, target_len;
 
@@ -579,8 +582,10 @@ static char *get_lib_dir( struct options *opts )
 
     for (i = 0; i < sizeof(stdlibpath)/sizeof(stdlibpath[0]); i++)
     {
-        char *p, *buffer = xmalloc( strlen(stdlibpath[i]) + strlen("/arm-linux-gnueabi") + strlen(libwine) + 1 );
-        strcpy( buffer, stdlibpath[i] );
+        char *p, *buffer = xmalloc( strlen(root) + strlen(stdlibpath[i]) +
+                                    strlen("/arm-linux-gnueabi") + strlen(libwine) + 1 );
+        strcpy( buffer, root );
+        strcat( buffer, stdlibpath[i] );
         p = buffer + strlen(buffer);
         while (p > buffer && p[-1] == '/') p--;
         strcpy( p, libwine );
@@ -598,7 +603,8 @@ static char *get_lib_dir( struct options *opts )
         strcat( p, libwine );
         if (check_platform( opts, buffer )) goto found;
 
-        strcpy( buffer, stdlibpath[i] );
+        strcpy( buffer, root );
+        strcat( buffer, stdlibpath[i] );
         p = buffer + strlen(buffer);
         while (p > buffer && p[-1] == '/') p--;
         strcpy( p, libwine );
@@ -646,7 +652,7 @@ static char *get_lib_dir( struct options *opts )
         buffer[strlen(buffer) - strlen(libwine)] = 0;
         return buffer;
     }
-    return xstrdup( LIBDIR );
+    return strmake( "%s%s", root, LIBDIR );
 }
 
 static void compile(struct options* opts, const char* lang)
@@ -798,13 +804,16 @@ no_compat_defines:
     /* standard includes come last in the include search path */
     if (!opts->wine_objdir && !opts->nostdinc)
     {
+        const char *root = opts->isysroot ? opts->isysroot : opts->sysroot ? opts->sysroot : "";
         if (opts->use_msvcrt)
         {
-            strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR "/wine/msvcrt" : "-I" INCLUDEDIR "/wine/msvcrt" );
+            strarray_add(comp_args, strmake( "%s%s%s/wine/msvcrt",
+                                             gcc_defs ? "-isystem" : "-I", root, INCLUDEDIR ));
             strarray_add(comp_args, "-D__MSVCRT__");
         }
-        strarray_add(comp_args, "-I" INCLUDEDIR );
-        strarray_add(comp_args, gcc_defs ? "-isystem" INCLUDEDIR "/wine/windows" : "-I" INCLUDEDIR "/wine/windows" );
+        strarray_add(comp_args, strmake( "-I%s%s", root, INCLUDEDIR ));
+        strarray_add(comp_args, strmake( "%s%s%s/wine/windows",
+                                         gcc_defs ? "-isystem" : "-I", root, INCLUDEDIR ));
     }
     else if (opts->wine_objdir)
         strarray_add(comp_args, strmake("-I%s/include", opts->wine_objdir) );
@@ -1418,8 +1427,9 @@ int main(int argc, char **argv)
 			next_is_arg = 1;
 		    break;
 		case '-':
-		    if (strcmp("--param", argv[i]) == 0)
-			next_is_arg = 1;
+		    next_is_arg = (strcmp("--param", argv[i]) == 0 ||
+                                   strcmp("--sysroot", argv[i]) == 0 ||
+                                   strcmp("--lib-suffix", argv[i]) == 0);
 		    break;
 	    }
 	    if (next_is_arg)
@@ -1496,6 +1506,9 @@ int main(int argc, char **argv)
                     else if (!strcmp("-fno-PIC", argv[i]) || !strcmp("-fno-pic", argv[i]))
                         opts.pic = 0;
 		    break;
+                case 'i':
+                    if (!strcmp( "-isysroot", argv[i] )) opts.isysroot = argv[i + 1];
+                    break;
 		case 'l':
 		    strarray_add(opts.files, strmake("-l%s", option_arg));
 		    break;
@@ -1637,16 +1650,16 @@ int main(int argc, char **argv)
                 case '-':
                     if (strcmp("-static", argv[i]+1) == 0)
                         linking = -1;
-                    else if (!strncmp("--sysroot", argv[i], 9) && opts.wine_objdir)
+                    else if (!strncmp("--sysroot", argv[i], 9))
                     {
-                        if (argv[i][9] == '=') opts.wine_objdir = argv[i] + 10;
-                        else opts.wine_objdir = argv[++i];
-                        raw_compiler_arg = raw_linker_arg = 0;
+                        if (argv[i][9] == '=') opts.sysroot = argv[i] + 10;
+                        else opts.sysroot = argv[i + 1];
+                        if (opts.wine_objdir) raw_compiler_arg = raw_linker_arg = 0;
                     }
                     else if (!strncmp("--lib-suffix", argv[i], 12) && opts.wine_objdir)
                     {
                         if (argv[i][12] == '=') opts.lib_suffix = argv[i] + 13;
-                        else opts.lib_suffix = argv[++i];
+                        else opts.lib_suffix = argv[i + 1];
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
                     break;
@@ -1675,6 +1688,7 @@ int main(int argc, char **argv)
 	} 
     }
 
+    if (opts.wine_objdir && opts.sysroot) opts.wine_objdir = opts.sysroot;
     if (opts.processor == proc_cpp) linking = 0;
     if (linking == -1) error("Static linking is not supported\n");
 
