@@ -49,7 +49,6 @@ static void test_RegisterRawInputDevices(void)
     SetLastError(0xdeadbeef);
     res = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), 0);
     ok(res == FALSE, "RegisterRawInputDevices succeeded\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "RegisterRawInputDevices returned %08x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -64,9 +63,7 @@ static void test_RegisterRawInputDevices(void)
 
     SetLastError(0xdeadbeef);
     res = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
-    todo_wine
     ok(res == FALSE, "RegisterRawInputDevices succeeded\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "RegisterRawInputDevices returned %08x\n", GetLastError());
 
     raw_devices[0].hwndTarget = 0;

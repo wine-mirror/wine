@@ -261,7 +261,18 @@ BOOL WINAPI DECLSPEC_HOTPATCH RegisterRawInputDevices(RAWINPUTDEVICE *devices, U
     if (size != sizeof(*devices))
     {
         WARN("Invalid structure size %u.\n", size);
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
+    }
+
+    for (i = 0; i < device_count; ++i)
+    {
+        if ((devices[i].dwFlags & RIDEV_REMOVE) &&
+            (devices[i].hwndTarget != NULL))
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
     }
 
     if (!(d = HeapAlloc( GetProcessHeap(), 0, device_count * sizeof(*d) ))) return FALSE;
