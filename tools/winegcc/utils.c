@@ -297,6 +297,22 @@ file_type get_lib_type(enum target_platform platform, strarray* path, const char
     return file_na;
 }
 
+const char *find_binary( const strarray* prefix, const char *name )
+{
+    unsigned int i;
+
+    if (!prefix) return name;
+    if (strchr( name, '/' )) return name;
+
+    for (i = 0; i < prefix->size; i++)
+    {
+        struct stat st;
+        char *prog = strmake( "%s/%s%s", prefix->base[i], name, EXEEXT );
+        if (stat( prog, &st ) == 0 && S_ISREG( st.st_mode ) && (st.st_mode & 0111)) return prog;
+    }
+    return name;
+}
+
 int spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 {
     unsigned int i;
@@ -307,26 +323,7 @@ int spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 
     strarray_add(arr, NULL);
     argv = arr->base;
-
-    if (prefix)
-    {
-        const char *p = strrchr(argv[0], '/');
-        if (!p) p = argv[0];
-        else p++;
-
-        for (i = 0; i < prefix->size; i++)
-        {
-            struct stat st;
-
-            free( prog );
-            prog = strmake("%s/%s%s", prefix->base[i], p, EXEEXT);
-            if (stat(prog, &st) == 0 && S_ISREG(st.st_mode) && (st.st_mode & 0111))
-            {
-                argv[0] = prog;
-                break;
-            }
-        }
-    }
+    argv[0] = find_binary( prefix, argv[0] );
 
     if (verbose)
     {

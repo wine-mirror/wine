@@ -300,7 +300,7 @@ static char* get_temp_file(const char* prefix, const char* suffix)
     return tmp;
 }
 
-static char* build_tool_name(struct options *opts, const char* base, const char* deflt)
+static const char* build_tool_name(struct options *opts, const char* base, const char* deflt)
 {
     char* str;
 
@@ -318,12 +318,12 @@ static char* build_tool_name(struct options *opts, const char* base, const char*
     }
     else
         str = xstrdup(deflt);
-    return str;
+    return find_binary( opts->prefix, str );
 }
 
 static const strarray* get_translator(struct options *opts)
 {
-    char *str = NULL;
+    const char *str = NULL;
     strarray *ret;
 
     switch(opts->processor)
@@ -342,7 +342,6 @@ static const strarray* get_translator(struct options *opts)
         assert(0);
     }
     ret = strarray_fromstring( str, " " );
-    free(str);
     if (opts->force_pointer_size)
         strarray_add( ret, strmake("-m%u", 8 * opts->force_pointer_size ));
     return ret;
@@ -847,15 +846,24 @@ static strarray *get_winebuild_args(struct options *opts)
 {
     const char* winebuild = getenv("WINEBUILD");
     strarray *spec_args = strarray_alloc();
+    unsigned int i;
 
     if (!winebuild) winebuild = "winebuild";
-    strarray_add( spec_args, winebuild );
+    strarray_add( spec_args, find_binary( opts->prefix, winebuild ));
     if (verbose) strarray_add( spec_args, "-v" );
     if (keep_generated) strarray_add( spec_args, "--save-temps" );
     if (opts->target)
     {
         strarray_add( spec_args, "--target" );
         strarray_add( spec_args, opts->target );
+    }
+    if (opts->prefix)
+    {
+        for (i = 0; i < opts->prefix->size; i++)
+        {
+            if (strendswith( opts->prefix->base[i], "/tools/winebuild" )) continue;
+            strarray_add( spec_args, strmake( "-B%s", opts->prefix->base[i] ));
+        }
     }
     if (!opts->use_msvcrt) strarray_add( spec_args, "-munix" );
     if (opts->unwind_tables) strarray_add( spec_args, "-fasynchronous-unwind-tables" );
