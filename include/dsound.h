@@ -491,7 +491,7 @@ typedef struct _DSFXI3DL2Reverb
 #define DSFX_I3DL2REVERB_REVERBDELAY_MAX               0.1f
 #define DSFX_I3DL2REVERB_REVERBDELAY_DEFAULT           0.011f
 #define DSFX_I3DL2REVERB_ROOM_DEFAULT            (-1000)
-#define DSFX_I3DL2REVERB_ROOM_MIN                  10000
+#define DSFX_I3DL2REVERB_ROOM_MIN               (-10000)
 #define DSFX_I3DL2REVERB_ROOM_MAX                      0
 #define DSFX_I3DL2REVERB_ROOMHF_MIN             (-10000)
 #define DSFX_I3DL2REVERB_ROOMHF_MAX                    0
