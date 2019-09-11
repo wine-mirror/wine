@@ -163,7 +163,11 @@ extern "C" {
 # define DECLSPEC_HIDDEN
 #endif
 
-#if defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 6))) && (defined(__i386__) || defined(__x86_64__))
+#ifndef __has_attribute
+# define __has_attribute(x) 0
+#endif
+
+#if ((defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 6)))) || __has_attribute(ms_hook_prologue)) && (defined(__i386__) || defined(__x86_64__))
 #define DECLSPEC_HOTPATCH __attribute__((__ms_hook_prologue__))
 #else
 #define DECLSPEC_HOTPATCH
