@@ -1529,7 +1529,6 @@ error:
 
 NTSTATUS udev_driver_init(void)
 {
-    WARN("Wine was compiled without UDEV support\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 

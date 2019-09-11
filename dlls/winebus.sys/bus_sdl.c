@@ -1145,9 +1145,13 @@ NTSTATUS sdl_driver_init(void)
     map_controllers = check_bus_option(&controller_mode, 1);
 
     if (!(events[0] = CreateEventW(NULL, TRUE, FALSE, NULL)))
+    {
+        WARN("CreateEvent failed\n");
         return STATUS_UNSUCCESSFUL;
+    }
     if (!(events[1] = CreateThread(NULL, 0, deviceloop_thread, events[0], 0, NULL)))
     {
+        WARN("CreateThread failed\n");
         CloseHandle(events[0]);
         return STATUS_UNSUCCESSFUL;
     }
@@ -1171,7 +1175,6 @@ sym_not_found:
 
 NTSTATUS sdl_driver_init(void)
 {
-    WARN("compiled without SDL support\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 

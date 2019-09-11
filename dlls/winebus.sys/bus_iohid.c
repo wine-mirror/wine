@@ -409,6 +409,7 @@ NTSTATUS iohid_driver_init(void)
         return STATUS_UNSUCCESSFUL;
     }
 
+    TRACE("Initialization successful\n");
     return STATUS_SUCCESS;
 }
 
@@ -429,7 +430,6 @@ void iohid_driver_unload( void )
 
 NTSTATUS iohid_driver_init(void)
 {
-    WARN("IOHID Support not compiled into Wine.\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 
