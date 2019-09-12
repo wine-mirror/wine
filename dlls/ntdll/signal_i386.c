@@ -1594,18 +1594,19 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
  *
  * Check for fault caused by invalid %gs value (some copy protection schemes mess with it).
  */
-static inline BOOL check_invalid_gs( CONTEXT *context )
+static inline BOOL check_invalid_gs( ucontext_t *sigcontext, CONTEXT *context )
 {
-    unsigned int prefix_count = 0;
-    const BYTE *instr = (BYTE *)context->Eip;
+    BYTE instr[14];
+    unsigned int i, len;
     WORD system_gs = x86_thread_data()->gs;
 
     if (context->SegGs == system_gs) return FALSE;
     if (!wine_ldt_is_system( context->SegCs )) return FALSE;
     /* only handle faults in system libraries */
-    if (virtual_is_valid_code_address( instr, 1 )) return FALSE;
+    if (virtual_is_valid_code_address( (BYTE *)context->Eip, 1 )) return FALSE;
 
-    for (;;) switch(*instr)
+    len = virtual_uninterrupted_read_memory( (BYTE *)context->Eip, instr, sizeof(instr) );
+    for (i = 0; i < len; i++) switch (instr[i])
     {
     /* instruction prefixes */
     case 0x2e:  /* %cs: */
@@ -1618,16 +1619,17 @@ static inline BOOL check_invalid_gs( CONTEXT *context )
     case 0xf0:  /* lock */
     case 0xf2:  /* repne */
     case 0xf3:  /* repe */
-        if (++prefix_count >= 15) return FALSE;
-        instr++;
         continue;
     case 0x65:  /* %gs: */
         TRACE( "%04x/%04x at %p, fixing up\n", context->SegGs, system_gs, instr );
-        context->SegGs = system_gs;
+#ifdef GS_sig
+        GS_sig(sigcontext) = system_gs;
+#endif
         return TRUE;
     default:
         return FALSE;
     }
+    return FALSE;
 }
 
 
@@ -1911,8 +1913,6 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
     case EXCEPTION_ACCESS_VIOLATION:
         if (rec->NumberParameters == 2)
         {
-            if (rec->ExceptionInformation[1] == 0xffffffff && check_invalid_gs( context ))
-                goto done;
             if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
                                                              rec->ExceptionInformation[0], FALSE )))
                 goto done;
@@ -2059,7 +2059,10 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             if ((err & 7) == 4 && !wine_ldt_is_system( err | 7 ))
                 stack->rec.ExceptionInformation[1] = err & ~7;
             else
+            {
                 stack->rec.ExceptionInformation[1] = 0xffffffff;
+                if (check_invalid_gs( context, &stack->context )) return;
+            }
         }
         break;
     case TRAP_x86_PAGEFLT:  /* Page fault */
