@@ -2829,10 +2829,11 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
  */
 static inline DWORD is_privileged_instr( CONTEXT *context )
 {
-    const BYTE *instr = (BYTE *)context->Rip;
-    unsigned int prefix_count = 0;
+    BYTE instr[16];
+    unsigned int i, prefix_count = 0;
+    unsigned int len = virtual_uninterrupted_read_memory( (BYTE *)context->Rip, instr, sizeof(instr) );
 
-    for (;;) switch(*instr)
+    for (i = 0; i < len; i++) switch (instr[i])
     {
     /* instruction prefixes */
     case 0x2e:  /* %cs: */
@@ -2863,11 +2864,11 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
     case 0xf2:  /* repne */
     case 0xf3:  /* repe */
         if (++prefix_count >= 15) return EXCEPTION_ILLEGAL_INSTRUCTION;
-        instr++;
         continue;
 
     case 0x0f: /* extended instruction */
-        switch(instr[1])
+        if (i == len - 1) return 0;
+        switch (instr[i + 1])
         {
         case 0x06: /* clts */
         case 0x08: /* invd */
@@ -2899,6 +2900,7 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
     default:
         return 0;
     }
+    return 0;
 }
 
 
