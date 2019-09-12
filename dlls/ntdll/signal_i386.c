@@ -1682,9 +1682,9 @@ union atl_thunk
  *
  * Check if code destination is an ATL thunk, and emulate it if so.
  */
-static BOOL check_atl_thunk( EXCEPTION_RECORD *rec, CONTEXT *context )
+static BOOL check_atl_thunk( ucontext_t *sigcontext, struct stack_layout *stack )
 {
-    const union atl_thunk *thunk = (const union atl_thunk *)rec->ExceptionInformation[1];
+    const union atl_thunk *thunk = (const union atl_thunk *)stack->rec.ExceptionInformation[1];
     union atl_thunk thunk_copy;
     SIZE_T thunk_len;
 
@@ -1694,62 +1694,61 @@ static BOOL check_atl_thunk( EXCEPTION_RECORD *rec, CONTEXT *context )
     if (thunk_len >= sizeof(thunk_copy.t1) && thunk_copy.t1.movl == 0x042444c7 &&
                                               thunk_copy.t1.jmp == 0xe9)
     {
-        if (!virtual_uninterrupted_write_memory( (DWORD *)context->Esp + 1,
+        if (!virtual_uninterrupted_write_memory( (DWORD *)stack->context.Esp + 1,
                                                  &thunk_copy.t1.this, sizeof(DWORD) ))
         {
-            context->Eip = (DWORD_PTR)(&thunk->t1.func + 1) + thunk_copy.t1.func;
+            EIP_sig(sigcontext) = (DWORD_PTR)(&thunk->t1.func + 1) + thunk_copy.t1.func;
             TRACE( "emulating ATL thunk type 1 at %p, func=%08x arg=%08x\n",
-                   thunk, context->Eip, thunk_copy.t1.this );
+                   thunk, EIP_sig(sigcontext), thunk_copy.t1.this );
             return TRUE;
         }
     }
     else if (thunk_len >= sizeof(thunk_copy.t2) && thunk_copy.t2.movl == 0xb9 &&
                                                    thunk_copy.t2.jmp == 0xe9)
     {
-        context->Ecx = thunk_copy.t2.this;
-        context->Eip = (DWORD_PTR)(&thunk->t2.func + 1) + thunk_copy.t2.func;
+        ECX_sig(sigcontext) = thunk_copy.t2.this;
+        EIP_sig(sigcontext) = (DWORD_PTR)(&thunk->t2.func + 1) + thunk_copy.t2.func;
         TRACE( "emulating ATL thunk type 2 at %p, func=%08x ecx=%08x\n",
-               thunk, context->Eip, context->Ecx );
+               thunk, EIP_sig(sigcontext), ECX_sig(sigcontext) );
         return TRUE;
     }
     else if (thunk_len >= sizeof(thunk_copy.t3) && thunk_copy.t3.movl1 == 0xba &&
                                                    thunk_copy.t3.movl2 == 0xb9 &&
                                                    thunk_copy.t3.jmp == 0xe1ff)
     {
-        context->Edx = thunk_copy.t3.this;
-        context->Ecx = thunk_copy.t3.func;
-        context->Eip = thunk_copy.t3.func;
+        EDX_sig(sigcontext) = thunk_copy.t3.this;
+        ECX_sig(sigcontext) = thunk_copy.t3.func;
+        EIP_sig(sigcontext) = thunk_copy.t3.func;
         TRACE( "emulating ATL thunk type 3 at %p, func=%08x ecx=%08x edx=%08x\n",
-               thunk, context->Eip, context->Ecx, context->Edx );
+               thunk, EIP_sig(sigcontext), ECX_sig(sigcontext), EDX_sig(sigcontext) );
         return TRUE;
     }
     else if (thunk_len >= sizeof(thunk_copy.t4) && thunk_copy.t4.movl1 == 0xb9 &&
                                                    thunk_copy.t4.movl2 == 0xb8 &&
                                                    thunk_copy.t4.jmp == 0xe0ff)
     {
-        context->Ecx = thunk_copy.t4.this;
-        context->Eax = thunk_copy.t4.func;
-        context->Eip = thunk_copy.t4.func;
+        ECX_sig(sigcontext) = thunk_copy.t4.this;
+        EAX_sig(sigcontext) = thunk_copy.t4.func;
+        EIP_sig(sigcontext) = thunk_copy.t4.func;
         TRACE( "emulating ATL thunk type 4 at %p, func=%08x eax=%08x ecx=%08x\n",
-               thunk, context->Eip, context->Eax, context->Ecx );
+               thunk, EIP_sig(sigcontext), EAX_sig(sigcontext), ECX_sig(sigcontext) );
         return TRUE;
     }
     else if (thunk_len >= sizeof(thunk_copy.t5) && thunk_copy.t5.inst1 == 0xff515859 &&
                                                    thunk_copy.t5.inst2 == 0x0460)
     {
-        DWORD func, stack[2];
-        if (virtual_uninterrupted_read_memory( (DWORD *)context->Esp,
-            stack, sizeof(stack) ) == sizeof(stack) &&
-            virtual_uninterrupted_read_memory( (DWORD *)stack[1] + 1,
-            &func, sizeof(DWORD) ) == sizeof(DWORD) &&
-            !virtual_uninterrupted_write_memory( (DWORD *)context->Esp + 1, &stack[0], sizeof(stack[0]) ))
+        DWORD func, sp[2];
+        if (virtual_uninterrupted_read_memory( (DWORD *)stack->context.Esp, sp, sizeof(sp) ) == sizeof(sp) &&
+            virtual_uninterrupted_read_memory( (DWORD *)sp[1] + 1, &func, sizeof(DWORD) ) == sizeof(DWORD) &&
+            !virtual_uninterrupted_write_memory( (DWORD *)stack->context.Esp + 1, &sp[0], sizeof(sp[0]) ))
         {
-            context->Ecx = stack[0];
-            context->Eax = stack[1];
-            context->Esp = context->Esp + sizeof(DWORD);
-            context->Eip = func;
+            ECX_sig(sigcontext) = sp[0];
+            EAX_sig(sigcontext) = sp[1];
+            ESP_sig(sigcontext) += sizeof(DWORD);
+            EIP_sig(sigcontext) = func;
             TRACE( "emulating ATL thunk type 5 at %p, func=%08x eax=%08x ecx=%08x esp=%08x\n",
-                   thunk, context->Eip, context->Eax, context->Ecx, context->Esp );
+                   thunk, EIP_sig(sigcontext), EAX_sig(sigcontext),
+                   ECX_sig(sigcontext), ESP_sig(sigcontext) );
             return TRUE;
         }
     }
@@ -1902,41 +1901,6 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
 
 
 /**********************************************************************
- *		raise_segv_exception
- */
-static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status;
-
-    switch(rec->ExceptionCode)
-    {
-    case EXCEPTION_ACCESS_VIOLATION:
-        if (rec->NumberParameters == 2)
-        {
-            if (rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT)
-            {
-                ULONG flags;
-                NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags,
-                                           &flags, sizeof(flags), NULL );
-
-                if (!(flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION) && check_atl_thunk( rec, context ))
-                    goto done;
-
-                /* send EXCEPTION_EXECUTE_FAULT only if data execution prevention is enabled */
-                if (!(flags & MEM_EXECUTE_OPTION_DISABLE))
-                    rec->ExceptionInformation[0] = EXCEPTION_READ_FAULT;
-            }
-        }
-        break;
-    }
-    status = NtRaiseException( rec, context, TRUE );
-    raise_status( status, rec );
-done:
-    set_cpu_context( context );
-}
-
-
-/**********************************************************************
  *		raise_generic_exception
  *
  * Generic raise function for exceptions that don't need special treatment.
@@ -2065,9 +2029,22 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         stack->rec.NumberParameters = 2;
         stack->rec.ExceptionInformation[0] = (get_error_code(context) >> 1) & 0x09;
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
-        if (!(stack->rec.ExceptionCode = virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
-                                                               stack->rec.ExceptionInformation[0], FALSE )))
-            return;
+        stack->rec.ExceptionCode = virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
+                                                         stack->rec.ExceptionInformation[0], FALSE );
+        if (!stack->rec.ExceptionCode) return;
+        if (stack->rec.ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
+            stack->rec.ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT)
+        {
+            ULONG flags;
+            NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags,
+                                       &flags, sizeof(flags), NULL );
+            if (!(flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION) && check_atl_thunk( context, stack ))
+                return;
+
+            /* send EXCEPTION_EXECUTE_FAULT only if data execution prevention is enabled */
+            if (!(flags & MEM_EXECUTE_OPTION_DISABLE))
+                stack->rec.ExceptionInformation[0] = EXCEPTION_READ_FAULT;
+        }
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
         /* FIXME: pass through exception handler first? */
@@ -2091,7 +2068,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         break;
     }
 done:
-    setup_raise_exception( context, stack, raise_segv_exception );
+    setup_raise_exception( context, stack, raise_generic_exception );
 }
 
 
