@@ -541,17 +541,6 @@ done:
 }
 
 /**********************************************************************
- *		raise_trap_exception
- */
-static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status;
-    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Pc += 4;
-    status = NtRaiseException( rec, context, TRUE );
-    raise_status( status, rec );
-}
-
-/**********************************************************************
  *		raise_generic_exception
  */
 static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
@@ -1110,9 +1099,10 @@ static void trap_handler( int signal, siginfo_t *info, void *ucontext )
     case TRAP_BRKPT:
     default:
         stack->rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+        stack->context.Pc += 4;
         break;
     }
-    setup_raise_exception( context, stack, raise_trap_exception );
+    setup_raise_exception( context, stack, raise_generic_exception );
 }
 
 /**********************************************************************
