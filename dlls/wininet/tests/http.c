@@ -4425,6 +4425,7 @@ static void test_basic_auth_credentials_reuse(int port)
     HINTERNET ses, con, req;
     DWORD status, size;
     BOOL ret;
+    char buffer[0x40];
 
     ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
     ok( ses != NULL, "InternetOpenA failed\n" );
@@ -4438,6 +4439,20 @@ static void test_basic_auth_credentials_reuse(int port)
 
     ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
     ok( ret, "HttpSendRequestA failed %u\n", GetLastError() );
+
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_USERNAME, buffer, &size);
+    ok(ret, "unexpected failure %u\n", GetLastError());
+    ok(!strcmp(buffer, "user"), "got %s\n", buffer);
+    ok(size == 4, "got %u\n", size);
+
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_PASSWORD, buffer, &size);
+    ok(ret, "unexpected failure %u\n", GetLastError());
+    ok(!strcmp(buffer, "pwd"), "got %s\n", buffer);
+    ok(size == 3, "got %u\n", size);
 
     status = 0xdeadbeef;
     size = sizeof(status);
@@ -4461,6 +4476,20 @@ static void test_basic_auth_credentials_reuse(int port)
 
     ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
     ok( ret, "HttpSendRequestA failed %u\n", GetLastError() );
+
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_USERNAME, buffer, &size);
+    ok(ret, "unexpected failure %u\n", GetLastError());
+    todo_wine ok(!strcmp(buffer, "user"), "got %s\n", buffer);
+    todo_wine ok(size == 4, "got %u\n", size);
+
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_PASSWORD, buffer, &size);
+    ok(ret, "unexpected failure %u\n", GetLastError());
+    todo_wine ok(!strcmp(buffer, "pwd"), "got %s\n", buffer);
+    todo_wine ok(size == 3, "got %u\n", size);
 
     status = 0xdeadbeef;
     size = sizeof(status);
