@@ -14893,9 +14893,9 @@ $as_echo "$as_me:${as_lineno-$LINENO}: libunwind cflags: $UNWIND_CFLAGS" >&5
 $as_echo "$as_me:${as_lineno-$LINENO}: libunwind libs: $UNWIND_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $UNWIND_CFLAGS"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for unw_getcontext" >&5
-$as_echo_n "checking for unw_getcontext... " >&6; }
-if ${wine_cv_have_unw_getcontext+:} false; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for unw_step" >&5
+$as_echo_n "checking for unw_step... " >&6; }
+if ${wine_cv_have_unw_step+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -14905,28 +14905,28 @@ else
 int
 main ()
 {
-unw_context_t context; unw_getcontext( &context );
+unw_context_t context; unw_step( &context );
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  wine_cv_have_unw_getcontext="yes"
+  wine_cv_have_unw_step="yes"
 else
-  wine_cv_have_unw_getcontext="no"
+  wine_cv_have_unw_step="no"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_unw_getcontext" >&5
-$as_echo "$wine_cv_have_unw_getcontext" >&6; }
-        if test "$wine_cv_have_unw_getcontext" = no -a -n "$UNWIND_LIBS"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_unw_step" >&5
+$as_echo "$wine_cv_have_unw_step" >&6; }
+        if test "$wine_cv_have_unw_step" = no -a -n "$UNWIND_LIBS"
         then
             save_libs=$LIBS
             LIBS="$UNWIND_LIBS $LIBS"
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for unw_getcontext in libunwind" >&5
-$as_echo_n "checking for unw_getcontext in libunwind... " >&6; }
-if ${wine_cv_have_libunwind_unw_getcontext+:} false; then :
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for unw_step in libunwind" >&5
+$as_echo_n "checking for unw_step in libunwind... " >&6; }
+if ${wine_cv_have_libunwind_unw_step+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -14936,25 +14936,25 @@ else
 int
 main ()
 {
-unw_context_t context; unw_getcontext( &context );
+unw_context_t context; unw_step( &context );
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  wine_cv_have_libunwind_unw_getcontext="yes"
+  wine_cv_have_libunwind_unw_step="yes"
 else
-  wine_cv_have_libunwind_unw_getcontext="no"
+  wine_cv_have_libunwind_unw_step="no"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_libunwind_unw_getcontext" >&5
-$as_echo "$wine_cv_have_libunwind_unw_getcontext" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_libunwind_unw_step" >&5
+$as_echo "$wine_cv_have_libunwind_unw_step" >&6; }
             LIBS=$save_libs
         fi
-        test "$wine_cv_have_libunwind_unw_getcontext" = yes || UNWIND_LIBS=""
-        if test "x$wine_cv_have_unw_getcontext$wine_cv_have_libunwind_unw_getcontext" != xnono
+        test "$wine_cv_have_libunwind_unw_step" = yes || UNWIND_LIBS=""
+        if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" != xnono
         then
 
 $as_echo "#define HAVE_LIBUNWIND 1" >>confdefs.h
@@ -14967,7 +14967,7 @@ test -z "$UNWIND_LIBS" || UNWIND_LIBS=`echo " $UNWIND_LIBS" | sed 's/ -L\([^/]\)
 fi
 case $host in
   aarch64*|*-darwin*)
-    if test "x$wine_cv_have_unw_getcontext$wine_cv_have_libunwind_unw_getcontext" != xnono; then :
+    if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" != xnono; then :
   case "x$with_unwind" in
   x)   as_fn_append wine_notices "|libunwind ${notice_platform}development files not found, stack unwinding won't work." ;;
   xno) ;;
