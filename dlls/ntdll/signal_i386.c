@@ -1989,36 +1989,6 @@ done:
 
 
 /**********************************************************************
- *		raise_trap_exception
- */
-static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status;
-
-    if (rec->ExceptionCode == EXCEPTION_SINGLE_STEP)
-    {
-        /* when single stepping can't tell whether this is a hw bp or a
-         * single step interrupt. try to avoid as much overhead as possible
-         * and only do a server call if there is any hw bp enabled. */
-
-        if( !(context->EFlags & 0x100) || (x86_thread_data()->dr7 & 0xff) )
-        {
-            /* (possible) hardware breakpoint, fetch the debug registers */
-            DWORD saved_flags = context->ContextFlags;
-            context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
-            NtGetContextThread(GetCurrentThread(), context);
-            context->ContextFlags |= saved_flags;  /* restore flags */
-        }
-
-        context->EFlags &= ~0x100;  /* clear single-step flag */
-    }
-
-    status = NtRaiseException( rec, context, TRUE );
-    raise_status( status, rec );
-}
-
-
-/**********************************************************************
  *		raise_generic_exception
  *
  * Generic raise function for exceptions that don't need special treatment.
@@ -2141,6 +2111,18 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     {
     case TRAP_x86_TRCTRAP:  /* Single-step exception */
         stack->rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
+        /* when single stepping can't tell whether this is a hw bp or a
+         * single step interrupt. try to avoid as much overhead as possible
+         * and only do a server call if there is any hw bp enabled. */
+        if (!(stack->context.EFlags & 0x100) || (stack->context.Dr7 & 0xff))
+        {
+            /* (possible) hardware breakpoint, fetch the debug registers */
+            DWORD saved_flags = stack->context.ContextFlags;
+            stack->context.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+            NtGetContextThread( GetCurrentThread(), &stack->context );
+            stack->context.ContextFlags |= saved_flags;  /* restore flags */
+        }
+        stack->context.EFlags &= ~0x100;  /* clear single-step flag */
         break;
     case TRAP_x86_BPTFLT:   /* Breakpoint exception */
         stack->rec.ExceptionAddress = (char *)stack->rec.ExceptionAddress - 1;  /* back up over the int3 instruction */
@@ -2153,7 +2135,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         stack->rec.ExceptionInformation[2] = 0; /* FIXME */
         break;
     }
-    setup_raise_exception( context, stack, raise_trap_exception );
+    setup_raise_exception( context, stack, raise_generic_exception );
 }
 
 
