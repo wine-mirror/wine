@@ -980,6 +980,7 @@
 @ stdcall RtlUnicodeToMultiByteN(ptr long ptr ptr long)
 @ stdcall RtlUnicodeToMultiByteSize(ptr ptr long)
 @ stdcall RtlUnicodeToOemN(ptr long ptr ptr long)
+@ stdcall RtlUnicodeToUTF8N(ptr long ptr ptr long)
 @ stdcall RtlUniform(ptr)
 # @ stub RtlUnlockBootStatusData
 @ stdcall RtlUnlockHeap(long)

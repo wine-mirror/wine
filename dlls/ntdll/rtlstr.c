@@ -908,6 +908,39 @@ NTSTATUS WINAPI RtlUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
 }
 
 
+/**************************************************************************
+ *	RtlUnicodeToUTF8N   (NTDLL.@)
+ *
+ * Converts a Unicode string to a UTF-8 string.
+ *
+ * RETURNS
+ *  NTSTATUS code
+ */
+NTSTATUS WINAPI RtlUnicodeToUTF8N( LPSTR dst, DWORD dstlen, LPDWORD reslen,
+                                   LPCWSTR src, DWORD srclen)
+{
+    int ret;
+
+    if (!src) return STATUS_INVALID_PARAMETER_4;
+    if (!reslen) return STATUS_INVALID_PARAMETER;
+    if (dst && (srclen & 1)) return STATUS_INVALID_PARAMETER_5;
+
+    if (!dstlen && dst)
+    {
+        char c;
+        dst = &c;
+        ret = wine_utf8_wcstombs( 0, src, srclen / sizeof(WCHAR), dst, 1 );
+        if (ret > 0) ret--;
+    }
+    else
+        ret = wine_utf8_wcstombs( 0, src, srclen / sizeof(WCHAR), dst, dstlen );
+    if (reslen)
+        *reslen = (ret >= 0) ? ret : dstlen; /* overflow -> we filled up to dstlen */
+    if (ret < 0) return STATUS_BUFFER_TOO_SMALL;
+    return STATUS_SUCCESS;
+}
+
+
 /*
      CASE CONVERSIONS
 */
