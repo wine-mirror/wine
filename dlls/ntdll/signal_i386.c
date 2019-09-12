@@ -1913,11 +1913,7 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
     case EXCEPTION_ACCESS_VIOLATION:
         if (rec->NumberParameters == 2)
         {
-            if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
-                                                             rec->ExceptionInformation[0], FALSE )))
-                goto done;
-            if (rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
-                rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT)
+            if (rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT)
             {
                 ULONG flags;
                 NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags,
@@ -2066,10 +2062,12 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         }
         break;
     case TRAP_x86_PAGEFLT:  /* Page fault */
-        stack->rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
         stack->rec.NumberParameters = 2;
         stack->rec.ExceptionInformation[0] = (get_error_code(context) >> 1) & 0x09;
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
+        if (!(stack->rec.ExceptionCode = virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
+                                                               stack->rec.ExceptionInformation[0], FALSE )))
+            return;
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
         /* FIXME: pass through exception handler first? */
