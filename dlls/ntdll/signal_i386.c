@@ -422,9 +422,9 @@ typedef struct trapframe ucontext_t;
 /* stack layout when calling an exception raise function */
 struct stack_layout
 {
-    void             *ret_addr;      /* return address from raise_func */
-    EXCEPTION_RECORD *rec_ptr;       /* first arg for raise_func */
-    CONTEXT          *context_ptr;   /* second arg for raise_func */
+    void             *ret_addr;      /* return address from raise_generic_exception */
+    EXCEPTION_RECORD *rec_ptr;       /* first arg for raise_generic_exception */
+    CONTEXT          *context_ptr;   /* second arg for raise_generic_exception */
     CONTEXT           context;
     EXCEPTION_RECORD  rec;
     DWORD             ebp;
@@ -803,8 +803,6 @@ static int solaris_sigaction( int sig, const struct sigaction *new, struct sigac
 #define sigaction(sig,new,old) solaris_sigaction(sig,new,old)
 
 #endif
-
-typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
 extern void clear_alignment_flag(void);
 __ASM_GLOBAL_FUNC( clear_alignment_flag,
@@ -1852,15 +1850,29 @@ static struct stack_layout *setup_exception( ucontext_t *sigcontext )
 }
 
 
+/**********************************************************************
+ *		raise_generic_exception
+ *
+ * Generic raise function for exceptions that don't need special treatment.
+ */
+static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status;
+
+    status = NtRaiseException( rec, context, TRUE );
+    raise_status( status, rec );
+}
+
+
 /***********************************************************************
  *           setup_raise_exception
  *
  * Change context to setup a call to a raise exception function.
  */
-static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *stack, raise_func func )
+static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *stack )
 {
     ESP_sig(sigcontext) = (DWORD)stack;
-    EIP_sig(sigcontext) = (DWORD)func;
+    EIP_sig(sigcontext) = (DWORD)raise_generic_exception;
     /* clear single-step, direction, and align check flag */
     EFL_sig(sigcontext) &= ~(0x100|0x400|0x40000);
     CS_sig(sigcontext)  = wine_get_cs();
@@ -1869,8 +1881,8 @@ static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *
     FS_sig(sigcontext)  = wine_get_fs();
     GS_sig(sigcontext)  = wine_get_gs();
     SS_sig(sigcontext)  = wine_get_ss();
-    stack->ret_addr     = (void *)0xdeadbabe;  /* raise_func must not return */
-    stack->rec_ptr      = &stack->rec;         /* arguments for raise_func */
+    stack->ret_addr     = (void *)0xdeadbabe;  /* raise_generic_exception must not return */
+    stack->rec_ptr      = &stack->rec;         /* arguments for raise_generic_exception */
     stack->context_ptr  = &stack->context;
 }
 
@@ -1897,20 +1909,6 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
     if (status & 0x10) return EXCEPTION_FLT_UNDERFLOW;         /* UE flag */
     if (status & 0x20) return EXCEPTION_FLT_INEXACT_RESULT;    /* PE flag */
     return EXCEPTION_FLT_INVALID_OPERATION;  /* generic error */
-}
-
-
-/**********************************************************************
- *		raise_generic_exception
- *
- * Generic raise function for exceptions that don't need special treatment.
- */
-static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status;
-
-    status = NtRaiseException( rec, context, TRUE );
-    raise_status( status, rec );
 }
 
 
@@ -1945,7 +1943,7 @@ static BOOL handle_interrupt( unsigned int interrupt, ucontext_t *sigcontext, st
         stack->rec.ExceptionInformation[0] = stack->context.Eax;
         stack->rec.ExceptionInformation[1] = stack->context.Ecx;
         stack->rec.ExceptionInformation[2] = stack->context.Edx;
-        setup_raise_exception( sigcontext, stack, raise_generic_exception );
+        setup_raise_exception( sigcontext, stack );
         return TRUE;
     default:
         return FALSE;
@@ -2068,7 +2066,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         break;
     }
 done:
-    setup_raise_exception( context, stack, raise_generic_exception );
+    setup_raise_exception( context, stack );
 }
 
 
@@ -2110,7 +2108,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         stack->rec.ExceptionInformation[2] = 0; /* FIXME */
         break;
     }
-    setup_raise_exception( context, stack, raise_generic_exception );
+    setup_raise_exception( context, stack );
 }
 
 
@@ -2156,7 +2154,7 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         break;
     }
 
-    setup_raise_exception( context, stack, raise_generic_exception );
+    setup_raise_exception( context, stack );
 }
 
 
@@ -2175,7 +2173,7 @@ static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     {
         struct stack_layout *stack = setup_exception( sigcontext );
         stack->rec.ExceptionCode = CONTROL_C_EXIT;
-        setup_raise_exception( sigcontext, stack, raise_generic_exception );
+        setup_raise_exception( sigcontext, stack );
     }
 }
 
@@ -2189,7 +2187,7 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     struct stack_layout *stack = setup_exception( sigcontext );
     stack->rec.ExceptionCode  = EXCEPTION_WINE_ASSERTION;
     stack->rec.ExceptionFlags = EH_NONCONTINUABLE;
-    setup_raise_exception( sigcontext, stack, raise_generic_exception );
+    setup_raise_exception( sigcontext, stack );
 }
 
 
