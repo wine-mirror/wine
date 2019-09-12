@@ -708,7 +708,7 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *This,
 }
 
 void strmbase_source_init(struct strmbase_source *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
-        const WCHAR *name, const BaseOutputPinFuncTable *func_table)
+        const WCHAR *name, const struct strmbase_source_ops *func_table)
 {
     memset(pin, 0, sizeof(*pin));
     pin->pin.IPin_iface.lpVtbl = vtbl;

@@ -1408,7 +1408,8 @@ static const IQualityControlVtbl QTOutPin_QualityControl_Vtbl = {
     QT_QualityControl_SetSink
 };
 
-static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
+static const struct strmbase_source_ops source_ops =
+{
     {
         QTOutPin_CheckMediaType,
         QTOutPin_GetMediaType
@@ -1436,7 +1437,7 @@ static HRESULT QT_AddPin(QTSplitter *filter, const WCHAR *name,
         filter->pAudio_Pin = pin;
 
     strmbase_source_init(&pin->pin, &QT_OutputPin_Vtbl, &filter->filter, name,
-            &output_BaseOutputFuncTable);
+            &source_ops);
     pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
     CopyMediaType(pin->pmt, mt);
     pin->IQualityControl_iface.lpVtbl = &QTOutPin_QualityControl_Vtbl;

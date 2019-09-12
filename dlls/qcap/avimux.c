@@ -1221,7 +1221,8 @@ static HRESULT WINAPI AviMuxOut_DecideAllocator(struct strmbase_source *base,
     return IMemInputPin_NotifyAllocator(pPin, *pAlloc, TRUE);
 }
 
-static const BaseOutputPinFuncTable AviMuxOut_BaseOutputFuncTable = {
+static const struct strmbase_source_ops source_ops =
+{
     {
         AviMuxOut_CheckMediaType,
         AviMuxOut_GetMediaType
@@ -2018,7 +2019,7 @@ IUnknown * WINAPI QCAP_createAVIMux(IUnknown *outer, HRESULT *phr)
     info.pFilter = &avimux->filter.IBaseFilter_iface;
     lstrcpyW(info.achName, output_name);
     strmbase_source_init(&avimux->source, &AviMuxOut_PinVtbl, &avimux->filter,
-            output_name, &AviMuxOut_BaseOutputFuncTable);
+            output_name, &source_ops);
     avimux->IQualityControl_iface.lpVtbl = &AviMuxOut_QualityControlVtbl;
     avimux->cur_stream = 0;
     avimux->cur_time = 0;

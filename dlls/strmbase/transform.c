@@ -171,7 +171,8 @@ static const BaseInputPinFuncTable tf_input_BaseInputFuncTable = {
     TransformFilter_Input_Receive
 };
 
-static const BaseOutputPinFuncTable tf_output_BaseOutputFuncTable = {
+static const struct strmbase_source_ops source_ops =
+{
     {
         TransformFilter_Output_CheckMediaType,
         TransformFilter_Output_GetMediaType
@@ -290,7 +291,7 @@ static HRESULT strmbase_transform_init(IUnknown *outer, const CLSID *clsid,
             wcsInputPinName, &tf_input_BaseInputFuncTable, NULL);
 
     strmbase_source_init(&filter->source, &TransformFilter_OutputPin_Vtbl, &filter->filter,
-            wcsOutputPinName, &tf_output_BaseOutputFuncTable);
+            wcsOutputPinName, &source_ops);
 
     QualityControlImpl_Create(&filter->sink.pin.IPin_iface,
             &filter->filter.IBaseFilter_iface, &filter->qcimpl);

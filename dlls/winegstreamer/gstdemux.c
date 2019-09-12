@@ -1745,7 +1745,8 @@ static const IPinVtbl GST_OutputPin_Vtbl = {
     BasePinImpl_NewSegment
 };
 
-static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
+static const struct strmbase_source_ops source_ops =
+{
     {
         GSTOutPin_CheckMediaType,
         GSTOutPin_GetMediaType
@@ -1767,7 +1768,7 @@ static BOOL create_pin(GSTImpl *filter, const WCHAR *name, const AM_MEDIA_TYPE *
         return FALSE;
 
     strmbase_source_init(&pin->pin, &GST_OutputPin_Vtbl, &filter->filter, name,
-            &output_BaseOutputFuncTable);
+            &source_ops);
     pin->pmt = heap_alloc(sizeof(AM_MEDIA_TYPE));
     CopyMediaType(pin->pmt, mt);
     pin->caps_event = CreateEventW(NULL, FALSE, FALSE, NULL);

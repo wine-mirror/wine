@@ -334,7 +334,8 @@ HRESULT WINAPI Parser_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock
     return S_OK;
 }
 
-static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
+static const struct strmbase_source_ops source_ops =
+{
     {
         Parser_OutputPin_CheckMediaType,
         Parser_OutputPin_GetMediaType
@@ -360,7 +361,7 @@ HRESULT Parser_AddPin(ParserImpl *filter, const WCHAR *name,
     filter->sources[filter->cStreams] = object;
 
     strmbase_source_init(&object->pin, &Parser_OutputPin_Vtbl, &filter->filter,
-            name, &output_BaseOutputFuncTable);
+            name, &source_ops);
 
     object->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
     CopyMediaType(object->pmt, mt);

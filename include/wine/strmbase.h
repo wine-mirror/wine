@@ -60,14 +60,15 @@ struct strmbase_source
 	IMemInputPin * pMemInputPin;
 	IMemAllocator * pAllocator;
 
-	const struct BaseOutputPinFuncTable* pFuncsTable;
+	const struct strmbase_source_ops *pFuncsTable;
 };
 
 typedef HRESULT (WINAPI *BaseOutputPin_AttemptConnection)(struct strmbase_source *pin, IPin *peer, const AM_MEDIA_TYPE *mt);
 typedef HRESULT (WINAPI *BaseOutputPin_DecideBufferSize)(struct strmbase_source *pin, IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props);
 typedef HRESULT (WINAPI *BaseOutputPin_DecideAllocator)(struct strmbase_source *pin, IMemInputPin *peer, IMemAllocator **allocator);
 
-typedef struct BaseOutputPinFuncTable {
+struct strmbase_source_ops
+{
 	BasePinFuncTable base;
 
         /* Required for Connect(). */
@@ -76,7 +77,7 @@ typedef struct BaseOutputPinFuncTable {
 	BaseOutputPin_DecideBufferSize pfnDecideBufferSize;
 	/* Required for BaseOutputPinImpl_AttemptConnection */
 	BaseOutputPin_DecideAllocator pfnDecideAllocator;
-} BaseOutputPinFuncTable;
+};
 
 typedef struct BaseInputPin
 {
@@ -135,7 +136,7 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *pin, 
 
 void strmbase_source_cleanup(struct strmbase_source *pin);
 void strmbase_source_init(struct strmbase_source *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
-        const WCHAR *name, const BaseOutputPinFuncTable *func_table);
+        const WCHAR *name, const struct strmbase_source_ops *func_table);
 
 /* Base Input Pin */
 HRESULT WINAPI BaseInputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);

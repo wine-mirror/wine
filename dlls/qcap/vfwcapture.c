@@ -554,7 +554,8 @@ static HRESULT WINAPI VfwPin_DecideBufferSize(struct strmbase_source *iface,
     return IMemAllocator_SetProperties(pAlloc, ppropInputRequest, &actual);
 }
 
-static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
+static const struct strmbase_source_ops source_ops =
+{
     {
         VfwPin_CheckMediaType,
         VfwPin_GetMediaType
@@ -651,7 +652,7 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *outer, HRESULT *phr)
     object->init = FALSE;
 
     strmbase_source_init(&object->source, &VfwPin_Vtbl, &object->filter,
-            source_name, &output_BaseOutputFuncTable);
+            source_name, &source_ops);
 
     object->IKsPropertySet_iface.lpVtbl = &IKsPropertySet_VTable;
 

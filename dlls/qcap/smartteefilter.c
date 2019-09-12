@@ -389,7 +389,8 @@ static HRESULT WINAPI SmartTeeFilterCapture_DecideAllocator(struct strmbase_sour
     return IMemInputPin_NotifyAllocator(pPin, This->sink.pAllocator, TRUE);
 }
 
-static const BaseOutputPinFuncTable SmartTeeFilterCaptureFuncs = {
+static const struct strmbase_source_ops capture_ops =
+{
     {
         SmartTeeFilterCapture_CheckMediaType,
         SmartTeeFilterCapture_GetMediaType
@@ -461,7 +462,8 @@ static HRESULT WINAPI SmartTeeFilterPreview_DecideAllocator(struct strmbase_sour
     return IMemInputPin_NotifyAllocator(pPin, This->sink.pAllocator, TRUE);
 }
 
-static const BaseOutputPinFuncTable SmartTeeFilterPreviewFuncs = {
+static const struct strmbase_source_ops preview_ops =
+{
     {
         SmartTeeFilterPreview_CheckMediaType,
         SmartTeeFilterPreview_GetMediaType
@@ -498,9 +500,9 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
     }
 
     strmbase_source_init(&object->capture, &SmartTeeFilterCaptureVtbl,
-            &object->filter, captureW, &SmartTeeFilterCaptureFuncs);
+            &object->filter, captureW, &capture_ops);
     strmbase_source_init(&object->preview, &SmartTeeFilterPreviewVtbl,
-            &object->filter, previewW, &SmartTeeFilterPreviewFuncs);
+            &object->filter, previewW, &preview_ops);
 
     *phr = S_OK;
     return &object->filter.IUnknown_inner;

@@ -79,7 +79,7 @@ typedef struct AsyncReader
 } AsyncReader;
 
 static const IPinVtbl FileAsyncReaderPin_Vtbl;
-static const BaseOutputPinFuncTable output_BaseOutputFuncTable;
+static const struct strmbase_source_ops source_ops;
 
 static inline AsyncReader *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
@@ -489,7 +489,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     }
 
     strmbase_source_init(&This->source, &FileAsyncReaderPin_Vtbl, &This->filter,
-            wszOutputPinName, &output_BaseOutputFuncTable);
+            wszOutputPinName, &source_ops);
     BaseFilterImpl_IncrementPinVersion(&This->filter);
 
     This->file = hFile;
@@ -702,7 +702,8 @@ static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(struct strmbase_source
     return IMemAllocator_SetProperties(pAlloc, &This->allocProps, &actual);
 }
 
-static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
+static const struct strmbase_source_ops source_ops =
+{
     {
         FileAsyncReaderPin_CheckMediaType,
         FileAsyncReaderPin_GetMediaType

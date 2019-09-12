@@ -579,7 +579,8 @@ static HRESULT WINAPI AVICompressorOut_DecideAllocator(struct strmbase_source *b
     return BaseOutputPinImpl_DecideAllocator(base, pPin, pAlloc);
 }
 
-static const BaseOutputPinFuncTable AVICompressorBaseOutputPinVtbl = {
+static const struct strmbase_source_ops source_ops =
+{
     {
         NULL,
         AVICompressorOut_GetMediaType
@@ -608,7 +609,7 @@ IUnknown* WINAPI QCAP_createAVICompressor(IUnknown *outer, HRESULT *phr)
     strmbase_sink_init(&compressor->sink, &AVICompressorInputPinVtbl,
             &compressor->filter, sink_name, &AVICompressorBaseInputPinVtbl, NULL);
     strmbase_source_init(&compressor->source, &AVICompressorOutputPinVtbl,
-            &compressor->filter, source_name, &AVICompressorBaseOutputPinVtbl);
+            &compressor->filter, source_name, &source_ops);
 
     *phr = S_OK;
     return &compressor->filter.IUnknown_inner;
