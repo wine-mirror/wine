@@ -517,30 +517,6 @@ static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *
 }
 
 /**********************************************************************
- *		raise_segv_exception
- */
-static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status;
-
-    switch(rec->ExceptionCode)
-    {
-    case EXCEPTION_ACCESS_VIOLATION:
-        if (rec->NumberParameters == 2)
-        {
-            if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
-                                                             rec->ExceptionInformation[0], FALSE )))
-                goto done;
-        }
-        break;
-    }
-    status = NtRaiseException( rec, context, TRUE );
-    raise_status( status, rec );
-done:
-    set_cpu_context( context );
-}
-
-/**********************************************************************
  *		raise_generic_exception
  */
 static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
@@ -1064,10 +1040,12 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         stack->rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     case SIGSEGV:  /* Segmentation fault */
-        stack->rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
         stack->rec.NumberParameters = 2;
         stack->rec.ExceptionInformation[0] = (get_fault_esr( context ) & 0x40) != 0;
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
+        if (!(stack->rec.ExceptionCode = virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
+                                                         stack->rec.ExceptionInformation[0], FALSE )))
+            return;
         break;
     case SIGBUS:  /* Alignment check exception */
         stack->rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
@@ -1078,7 +1056,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         break;
     }
 done:
-    setup_raise_exception( context, stack, raise_segv_exception );
+    setup_raise_exception( context, stack, raise_generic_exception );
 }
 
 /**********************************************************************
