@@ -1211,6 +1211,19 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_destroy = gstdemux_destroy,
 };
 
+static HRESULT WINAPI sink_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE *mt)
+{
+    if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream))
+        return S_OK;
+    return S_FALSE;
+}
+
+static const BasePinFuncTable sink_ops =
+{
+    .pfnCheckMediaType = sink_CheckMediaType,
+    .pfnGetMediaType = BasePinImpl_GetMediaType,
+};
+
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
 {
     GSTImpl *object;
@@ -1236,6 +1249,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     object->sink.filter = &object->filter;
     lstrcpynW(object->sink.name, wcsInputPinName, ARRAY_SIZE(object->sink.name));
     object->sink.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
+    object->sink.pFuncsTable = &sink_ops;
     *phr = S_OK;
 
     TRACE("Created GStreamer demuxer %p.\n", object);
@@ -1916,16 +1930,6 @@ static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface)
     return hr;
 }
 
-static HRESULT WINAPI GSTInPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt)
-{
-    TRACE("iface %p, mt %p.\n", iface, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
-
-    if (IsEqualIID(&pmt->majortype, &MEDIATYPE_Stream))
-        return S_OK;
-    return S_FALSE;
-}
-
 static HRESULT WINAPI GSTInPin_EndOfStream(IPin *iface)
 {
     FIXME("iface %p, stub!\n", iface);
@@ -1982,15 +1986,6 @@ static HRESULT WINAPI GSTInPin_QueryInterface(IPin * iface, REFIID riid, LPVOID 
     return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI GSTInPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **ppEnum)
-{
-    BasePin *This = (BasePin *)iface;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
-
-    return EnumMediaTypes_Construct(This, BasePinImpl_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
-}
-
 static const IPinVtbl GST_InputPin_Vtbl = {
     GSTInPin_QueryInterface,
     BasePinImpl_AddRef,
@@ -2003,8 +1998,8 @@ static const IPinVtbl GST_InputPin_Vtbl = {
     BasePinImpl_QueryPinInfo,
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
-    GSTInPin_QueryAccept,
-    GSTInPin_EnumMediaTypes,
+    BasePinImpl_QueryAccept,
+    BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     GSTInPin_EndOfStream,
     GSTInPin_BeginFlush,
