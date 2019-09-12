@@ -1956,15 +1956,6 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
             }
         }
         break;
-    case EXCEPTION_DATATYPE_MISALIGNMENT:
-        /* FIXME: pass through exception handler first? */
-        if (context->EFlags & 0x00040000)
-        {
-            /* Disable AC flag, return */
-            context->EFlags &= ~0x00040000;
-            goto done;
-        }
-        break;
     case EXCEPTION_BREAKPOINT:
         if (!is_wow64)
         {
@@ -2078,6 +2069,12 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
+        /* FIXME: pass through exception handler first? */
+        if (stack->context.EFlags & 0x00040000)
+        {
+            EFL_sig(context) &= ~0x00040000;  /* disable AC flag */
+            return;
+        }
         stack->rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
