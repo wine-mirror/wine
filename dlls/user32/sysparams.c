@@ -3750,7 +3750,8 @@ static BOOL update_monitor_cache(void)
     HANDLE mutex = NULL;
     DWORD state_flags;
     BOOL ret = FALSE;
-    DWORD i = 0;
+    BOOL mirrored_slave;
+    DWORD i = 0, j;
     DWORD type;
 
     /* Update monitor cache from SetupAPI if it's outdated */
@@ -3794,6 +3795,20 @@ static BOOL update_monitor_cache(void)
         if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type,
                                         (BYTE *)&monitors[monitor_count].rcMonitor, sizeof(RECT), NULL, 0 ))
             goto fail;
+
+        /* Mirrored slave monitors also don't get enumerated */
+        mirrored_slave = FALSE;
+        for (j = 0; j < monitor_count; j++)
+        {
+            if (EqualRect(&monitors[j].rcMonitor, &monitors[monitor_count].rcMonitor))
+            {
+                mirrored_slave = TRUE;
+                break;
+            }
+        }
+        if (mirrored_slave)
+            continue;
+
         if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCWORK, &type,
                                         (BYTE *)&monitors[monitor_count].rcWork, sizeof(RECT), NULL, 0 ))
             goto fail;
