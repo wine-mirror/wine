@@ -640,7 +640,7 @@ static BOOL be_x86_64_fetch_integer(const struct dbg_lvalue* lvalue, unsigned si
     if (!memory_read_value(lvalue, size, ret)) return FALSE;
 
     /* propagate sign information */
-    if (is_signed && size < 16 && (*ret >> (size * 8 - 1)) != 0)
+    if (is_signed && size < sizeof(*ret) && (*ret >> (size * 8 - 1)) != 0)
     {
         ULONGLONG neg = -1;
         *ret |= neg << (size * 8);
