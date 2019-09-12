@@ -751,7 +751,7 @@ static const char *debugstr_fbconfig( GLXFBConfig fbconfig )
 static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_pbuffer* pbuf) {
   int nAttribs = 0;
   unsigned cur = 0; 
-  int pop;
+  int attr, pop;
   int drawattrib = 0;
   int nvfloatattrib = GLX_DONT_CARE;
   int pixelattrib = GLX_DONT_CARE;
@@ -759,62 +759,53 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_
   /* The list of WGL attributes is allowed to be NULL. We don't return here for NULL
    * because we need to do fixups for GLX_DRAWABLE_TYPE/GLX_RENDER_TYPE/GLX_FLOAT_COMPONENTS_NV. */
   while (iWGLAttr && 0 != iWGLAttr[cur]) {
-    TRACE("pAttr[%d] = %x\n", cur, iWGLAttr[cur]);
+    attr = iWGLAttr[cur];
+    TRACE("pAttr[%d] = %x\n", cur, attr);
+    pop = iWGLAttr[++cur];
 
-    switch (iWGLAttr[cur]) {
+    switch (attr) {
     case WGL_AUX_BUFFERS_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_AUX_BUFFERS, pop);
       TRACE("pAttr[%d] = GLX_AUX_BUFFERS: %d\n", cur, pop);
       break;
     case WGL_COLOR_BITS_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_BUFFER_SIZE, pop);
       TRACE("pAttr[%d] = GLX_BUFFER_SIZE: %d\n", cur, pop);
       break;
     case WGL_BLUE_BITS_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_BLUE_SIZE, pop);
       TRACE("pAttr[%d] = GLX_BLUE_SIZE: %d\n", cur, pop);
       break;
     case WGL_RED_BITS_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_RED_SIZE, pop);
       TRACE("pAttr[%d] = GLX_RED_SIZE: %d\n", cur, pop);
       break;
     case WGL_GREEN_BITS_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_GREEN_SIZE, pop);
       TRACE("pAttr[%d] = GLX_GREEN_SIZE: %d\n", cur, pop);
       break;
     case WGL_ALPHA_BITS_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_ALPHA_SIZE, pop);
       TRACE("pAttr[%d] = GLX_ALPHA_SIZE: %d\n", cur, pop);
       break;
     case WGL_DEPTH_BITS_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_DEPTH_SIZE, pop);
       TRACE("pAttr[%d] = GLX_DEPTH_SIZE: %d\n", cur, pop);
       break;
     case WGL_STENCIL_BITS_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_STENCIL_SIZE, pop);
       TRACE("pAttr[%d] = GLX_STENCIL_SIZE: %d\n", cur, pop);
       break;
     case WGL_DOUBLE_BUFFER_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_DOUBLEBUFFER, pop);
       TRACE("pAttr[%d] = GLX_DOUBLEBUFFER: %d\n", cur, pop);
       break;
     case WGL_STEREO_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_STEREO, pop);
       TRACE("pAttr[%d] = GLX_STEREO: %d\n", cur, pop);
       break;
 
     case WGL_PIXEL_TYPE_ARB:
-      pop = iWGLAttr[++cur];
       TRACE("pAttr[%d] = WGL_PIXEL_TYPE_ARB: %d\n", cur, pop);
       switch (pop) {
       case WGL_TYPE_COLORINDEX_ARB: pixelattrib = GLX_COLOR_INDEX_BIT; break ;
@@ -824,24 +815,20 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_
       case WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT: pixelattrib = GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT; break ;
       default:
         ERR("unexpected PixelType(%x)\n", pop);	
-        pop = 0;
       }
       break;
 
     case WGL_SUPPORT_GDI_ARB:
       /* This flag is set in a pixel format */
-      pop = iWGLAttr[++cur];
       TRACE("pAttr[%d] = WGL_SUPPORT_GDI_ARB: %d\n", cur, pop);
       break;
 
     case WGL_DRAW_TO_BITMAP_ARB:
       /* This flag is set in a pixel format */
-      pop = iWGLAttr[++cur];
       TRACE("pAttr[%d] = WGL_DRAW_TO_BITMAP_ARB: %d\n", cur, pop);
       break;
 
     case WGL_DRAW_TO_WINDOW_ARB:
-      pop = iWGLAttr[++cur];
       TRACE("pAttr[%d] = WGL_DRAW_TO_WINDOW_ARB: %d\n", cur, pop);
       /* GLX_DRAWABLE_TYPE flags need to be OR'd together. See below. */
       if (pop) {
@@ -850,7 +837,6 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_
       break;
 
     case WGL_DRAW_TO_PBUFFER_ARB:
-      pop = iWGLAttr[++cur];
       TRACE("pAttr[%d] = WGL_DRAW_TO_PBUFFER_ARB: %d\n", cur, pop);
       /* GLX_DRAWABLE_TYPE flags need to be OR'd together. See below. */
       if (pop) {
@@ -860,18 +846,15 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_
 
     case WGL_ACCELERATION_ARB:
       /* This flag is set in a pixel format */
-      pop = iWGLAttr[++cur];
       TRACE("pAttr[%d] = WGL_ACCELERATION_ARB: %d\n", cur, pop);
       break;
 
     case WGL_SUPPORT_OPENGL_ARB:
-      pop = iWGLAttr[++cur];
       /** nothing to do, if we are here, supposing support Accelerated OpenGL */
       TRACE("pAttr[%d] = WGL_SUPPORT_OPENGL_ARB: %d\n", cur, pop);
       break;
 
     case WGL_SWAP_METHOD_ARB:
-      pop = iWGLAttr[++cur];
       TRACE("pAttr[%d] = WGL_SWAP_METHOD_ARB: %#x\n", cur, pop);
       if (has_swap_method)
       {
@@ -899,19 +882,16 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_
       break;
 
     case WGL_PBUFFER_LARGEST_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_LARGEST_PBUFFER, pop);
       TRACE("pAttr[%d] = GLX_LARGEST_PBUFFER: %x\n", cur, pop);
       break;
 
     case WGL_SAMPLE_BUFFERS_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_SAMPLE_BUFFERS_ARB, pop);
       TRACE("pAttr[%d] = GLX_SAMPLE_BUFFERS_ARB: %x\n", cur, pop);
       break;
 
     case WGL_SAMPLES_ARB:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_SAMPLES_ARB, pop);
       TRACE("pAttr[%d] = GLX_SAMPLES_ARB: %x\n", cur, pop);
       break;
@@ -919,8 +899,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_
     case WGL_TEXTURE_FORMAT_ARB:
     case WGL_TEXTURE_TARGET_ARB:
     case WGL_MIPMAP_TEXTURE_ARB:
-      TRACE("WGL_render_texture Attributes: %x as %x\n", iWGLAttr[cur], iWGLAttr[cur + 1]);
-      pop = iWGLAttr[++cur];
+      TRACE("WGL_render_texture Attributes: %x as %x\n", iWGLAttr[cur - 1], iWGLAttr[cur]);
       if (NULL == pbuf) {
         ERR("trying to use GLX_Pbuffer Attributes without Pbuffer (was %x)\n", iWGLAttr[cur]);
       }
@@ -934,7 +913,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_
       }
       break ;
     case WGL_FLOAT_COMPONENTS_NV:
-      nvfloatattrib = iWGLAttr[++cur];
+      nvfloatattrib = pop;
       TRACE("pAttr[%d] = WGL_FLOAT_COMPONENTS_NV: %x\n", cur, nvfloatattrib);
       break ;
     case WGL_BIND_TO_TEXTURE_DEPTH_NV:
@@ -944,26 +923,22 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_
     case WGL_BIND_TO_TEXTURE_RECTANGLE_FLOAT_RG_NV:
     case WGL_BIND_TO_TEXTURE_RECTANGLE_FLOAT_RGB_NV:
     case WGL_BIND_TO_TEXTURE_RECTANGLE_FLOAT_RGBA_NV:
-      pop = iWGLAttr[++cur];
       /** cannot be converted, see direct handling on 
        *   - wglGetPixelFormatAttribivARB
        *  TODO: wglChoosePixelFormat
        */
       break ;
     case WGL_FRAMEBUFFER_SRGB_CAPABLE_EXT:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT, pop);
       TRACE("pAttr[%d] = GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT: %x\n", cur, pop);
       break ;
 
     case WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT:
-      pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT, pop);
       TRACE("pAttr[%d] = GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT: %x\n", cur, pop);
       break ;
     default:
-      FIXME("unsupported %x WGL Attribute\n", iWGLAttr[cur]);
-      cur++;
+      FIXME("unsupported %x WGL Attribute\n", attr);
       break;
     }
     ++cur;
