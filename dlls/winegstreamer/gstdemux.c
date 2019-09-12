@@ -49,7 +49,8 @@ static pthread_key_t wine_gst_key;
 
 typedef struct GSTOutPin GSTOutPin;
 
-typedef struct GSTImpl {
+struct gstdemux
+{
     struct strmbase_filter filter;
 
     BasePin sink;
@@ -69,7 +70,7 @@ typedef struct GSTImpl {
     HANDLE no_more_pads_event;
 
     HANDLE push_thread;
-} GSTImpl;
+};
 
 struct GSTOutPin {
     struct strmbase_source pin;
@@ -85,14 +86,14 @@ struct GSTOutPin {
     SourceSeeking seek;
 };
 
-static inline GSTImpl *impl_from_IBaseFilter(IBaseFilter *iface)
+static inline struct gstdemux *impl_from_IBaseFilter(IBaseFilter *iface)
 {
-    return CONTAINING_RECORD(iface, GSTImpl, filter.IBaseFilter_iface);
+    return CONTAINING_RECORD(iface, struct gstdemux, filter.IBaseFilter_iface);
 }
 
-static inline GSTImpl *impl_from_strmbase_filter(struct strmbase_filter *iface)
+static inline struct gstdemux *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
-    return CONTAINING_RECORD(iface, GSTImpl, filter);
+    return CONTAINING_RECORD(iface, struct gstdemux, filter);
 }
 
 const char* media_quark_string = "media-sample";
@@ -104,8 +105,8 @@ static const IPinVtbl GST_InputPin_Vtbl;
 static const IBaseFilterVtbl GST_Vtbl;
 static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl;
 
-static BOOL create_pin(GSTImpl *filter, const WCHAR *name, const AM_MEDIA_TYPE *mt);
-static HRESULT GST_RemoveOutputPins(GSTImpl *This);
+static BOOL create_pin(struct gstdemux *filter, const WCHAR *name, const AM_MEDIA_TYPE *mt);
+static HRESULT GST_RemoveOutputPins(struct gstdemux *This);
 static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeRate(IMediaSeeking *iface);
@@ -284,7 +285,7 @@ static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
 static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
 {
     GSTOutPin *pin = gst_pad_get_element_private(pad);
-    GSTImpl *This = impl_from_strmbase_filter(pin->pin.pin.filter);
+    struct gstdemux *This = impl_from_strmbase_filter(pin->pin.pin.filter);
     AM_MEDIA_TYPE amt;
     GstStructure *arg;
     const char *typename;
@@ -330,7 +331,7 @@ static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
     }
 }
 
-static gboolean gst_base_src_perform_seek(GSTImpl *This, GstEvent *event)
+static gboolean gst_base_src_perform_seek(struct gstdemux *This, GstEvent *event)
 {
     gboolean res = TRUE;
     gdouble rate;
@@ -385,7 +386,7 @@ static gboolean gst_base_src_perform_seek(GSTImpl *This, GstEvent *event)
 
 static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
 {
-    GSTImpl *This = gst_pad_get_element_private(pad);
+    struct gstdemux *This = gst_pad_get_element_private(pad);
 
     TRACE("%p %p\n", pad, event);
 
@@ -495,7 +496,7 @@ static void release_sample(void *data)
 static DWORD CALLBACK push_data(LPVOID iface)
 {
     LONGLONG maxlen, curlen;
-    GSTImpl *This = iface;
+    struct gstdemux *This = iface;
     IMediaSample *buf;
     DWORD_PTR user;
     HRESULT hr;
@@ -585,7 +586,7 @@ static DWORD CALLBACK push_data(LPVOID iface)
 static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
     GSTOutPin *pin = gst_pad_get_element_private(pad);
-    GSTImpl *This = impl_from_strmbase_filter(pin->pin.pin.filter);
+    struct gstdemux *This = impl_from_strmbase_filter(pin->pin.pin.filter);
     HRESULT hr;
     BYTE *ptr = NULL;
     IMediaSample *sample;
@@ -674,7 +675,7 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *bu
 
 static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 ofs, guint len, GstBuffer **buf)
 {
-    GSTImpl *This = gst_pad_get_element_private(pad);
+    struct gstdemux *This = gst_pad_get_element_private(pad);
     HRESULT hr;
     GstMapInfo info;
 
@@ -706,7 +707,7 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
 
 static DWORD CALLBACK push_data_init(LPVOID iface)
 {
-    GSTImpl *This = iface;
+    struct gstdemux *This = iface;
     DWORD64 ofs = 0;
 
     TRACE("Starting..\n");
@@ -730,7 +731,7 @@ static DWORD CALLBACK push_data_init(LPVOID iface)
 
 static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
 {
-    GSTImpl *This = (GSTImpl*)user;
+    struct gstdemux *This = user;
     int x;
     GSTOutPin *pin;
 
@@ -758,7 +759,7 @@ out:
     LeaveCriticalSection(&This->filter.csFilter);
 }
 
-static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
+static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *This)
 {
     const char *typename;
     char *name;
@@ -894,7 +895,7 @@ exit:
 
 static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
 {
-    GSTImpl *This = (GSTImpl*)user;
+    struct gstdemux *This = user;
     int x, ret;
 
     TRACE("%p %p %p\n", This, bin, pad);
@@ -934,7 +935,7 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
 
 static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
 {
-    GSTImpl *This = gst_pad_get_element_private(pad);
+    struct gstdemux *This = gst_pad_get_element_private(pad);
     GstFormat format;
     int ret;
     LONGLONG duration;
@@ -971,7 +972,7 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
 
 static gboolean activate_push(GstPad *pad, gboolean activate)
 {
-    GSTImpl *This = gst_pad_get_element_private(pad);
+    struct gstdemux *This = gst_pad_get_element_private(pad);
 
     TRACE("%p %p %u\n", This, pad, activate);
 
@@ -1016,7 +1017,7 @@ static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, g
 
 static void no_more_pads(GstElement *decodebin, gpointer user)
 {
-    GSTImpl *This = (GSTImpl*)user;
+    struct gstdemux *This = user;
     TRACE("%p %p\n", This, decodebin);
     SetEvent(This->no_more_pads_event);
 }
@@ -1039,7 +1040,7 @@ static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, 
 
 static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
 {
-    GSTImpl *This = data;
+    struct gstdemux *This = data;
     GError *err = NULL;
     gchar *dbg_info = NULL;
 
@@ -1067,7 +1068,7 @@ static void unknown_type(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer u
     g_free(strcaps);
 }
 
-static HRESULT GST_Connect(GSTImpl *This, IPin *pConnectPin, ALLOCATOR_PROPERTIES *props)
+static HRESULT GST_Connect(struct gstdemux *This, IPin *pConnectPin, ALLOCATOR_PROPERTIES *props)
 {
     int ret, i;
     LONGLONG avail, duration;
@@ -1162,7 +1163,7 @@ static inline GSTOutPin *impl_from_IMediaSeeking( IMediaSeeking *iface )
 
 static IPin *gstdemux_get_pin(struct strmbase_filter *base, unsigned int index)
 {
-    GSTImpl *filter = impl_from_strmbase_filter(base);
+    struct gstdemux *filter = impl_from_strmbase_filter(base);
 
     if (!index)
         return &filter->sink.IPin_iface;
@@ -1173,7 +1174,7 @@ static IPin *gstdemux_get_pin(struct strmbase_filter *base, unsigned int index)
 
 static void gstdemux_destroy(struct strmbase_filter *iface)
 {
-    GSTImpl *filter = impl_from_strmbase_filter(iface);
+    struct gstdemux *filter = impl_from_strmbase_filter(iface);
     HRESULT hr;
 
     CloseHandle(filter->no_more_pads_event);
@@ -1226,7 +1227,7 @@ static const BasePinFuncTable sink_ops =
 
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
 {
-    GSTImpl *object;
+    struct gstdemux *object;
 
     if (!init_gstreamer())
     {
@@ -1258,7 +1259,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
 
 static HRESULT WINAPI GST_Stop(IBaseFilter *iface)
 {
-    GSTImpl *This = impl_from_IBaseFilter(iface);
+    struct gstdemux *This = impl_from_IBaseFilter(iface);
 
     TRACE("(%p)\n", This);
 
@@ -1275,7 +1276,7 @@ static HRESULT WINAPI GST_Stop(IBaseFilter *iface)
 
 static HRESULT WINAPI GST_Pause(IBaseFilter *iface)
 {
-    GSTImpl *This = impl_from_IBaseFilter(iface);
+    struct gstdemux *This = impl_from_IBaseFilter(iface);
     HRESULT hr = S_OK;
     GstState now;
     GstStateChangeReturn ret;
@@ -1302,7 +1303,7 @@ static HRESULT WINAPI GST_Pause(IBaseFilter *iface)
 
 static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 {
-    GSTImpl *This = impl_from_IBaseFilter(iface);
+    struct gstdemux *This = impl_from_IBaseFilter(iface);
     HRESULT hr = S_OK;
     ULONG i;
     GstState now;
@@ -1348,7 +1349,7 @@ static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 
 static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
 {
-    GSTImpl *This = impl_from_IBaseFilter(iface);
+    struct gstdemux *This = impl_from_IBaseFilter(iface);
     HRESULT hr = S_OK;
     GstState now, pending;
     GstStateChangeReturn ret;
@@ -1684,7 +1685,7 @@ static HRESULT WINAPI GSTOutPin_DecideAllocator(struct strmbase_source *base,
         IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
     GSTOutPin *pin = impl_source_from_IPin(&base->pin.IPin_iface);
-    GSTImpl *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
+    struct gstdemux *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
     HRESULT hr;
 
     TRACE("pin %p, peer %p, allocator %p.\n", pin, pPin, pAlloc);
@@ -1770,7 +1771,7 @@ static const struct strmbase_source_ops source_ops =
     GSTOutPin_DecideAllocator,
 };
 
-static BOOL create_pin(GSTImpl *filter, const WCHAR *name, const AM_MEDIA_TYPE *mt)
+static BOOL create_pin(struct gstdemux *filter, const WCHAR *name, const AM_MEDIA_TYPE *mt)
 {
     GSTOutPin *pin, **new_array;
 
@@ -1796,7 +1797,7 @@ static BOOL create_pin(GSTImpl *filter, const WCHAR *name, const AM_MEDIA_TYPE *
     return TRUE;
 }
 
-static HRESULT GST_RemoveOutputPins(GSTImpl *This)
+static HRESULT GST_RemoveOutputPins(struct gstdemux *This)
 {
     ULONG i;
 
@@ -1824,14 +1825,14 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
     return S_OK;
 }
 
-static inline GSTImpl *impl_from_sink_IPin(IPin *iface)
+static inline struct gstdemux *impl_from_sink_IPin(IPin *iface)
 {
-    return CONTAINING_RECORD(iface, GSTImpl, sink.IPin_iface);
+    return CONTAINING_RECORD(iface, struct gstdemux, sink.IPin_iface);
 }
 
 static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
-    GSTImpl *filter = impl_from_sink_IPin(iface);
+    struct gstdemux *filter = impl_from_sink_IPin(iface);
     PIN_DIRECTION pindirReceive;
     HRESULT hr = S_OK;
 
@@ -1904,7 +1905,7 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
 
 static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface)
 {
-    GSTImpl *filter = impl_from_sink_IPin(iface);
+    struct gstdemux *filter = impl_from_sink_IPin(iface);
     HRESULT hr;
     FILTER_STATE state;
 
@@ -1960,7 +1961,7 @@ static HRESULT WINAPI GSTInPin_NewSegment(IPin *iface, REFERENCE_TIME start,
 
 static HRESULT WINAPI GSTInPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
-    GSTImpl *filter = impl_from_sink_IPin(iface);
+    struct gstdemux *filter = impl_from_sink_IPin(iface);
 
     TRACE("filter %p, riid %s, ppv %p.\n", filter, debugstr_guid(riid), ppv);
 
