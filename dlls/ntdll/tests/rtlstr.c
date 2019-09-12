@@ -1970,7 +1970,7 @@ static void test_RtlHashUnicodeString(void)
     status = pRtlHashUnicodeString(NULL, FALSE, HASH_STRING_ALGORITHM_X65599, &hash);
     ok(status == STATUS_INVALID_PARAMETER, "got status 0x%08x\n", status);
 
-    RtlInitUnicodeString(&str, strW);
+    pRtlInitUnicodeString(&str, strW);
     status = pRtlHashUnicodeString(&str, FALSE, HASH_STRING_ALGORITHM_X65599, NULL);
     ok(status == STATUS_INVALID_PARAMETER, "got status 0x%08x\n", status);
 
@@ -1988,7 +1988,7 @@ static void test_RtlHashUnicodeString(void)
     ptr = hash_test;
     while (*ptr->str)
     {
-        RtlInitUnicodeString(&str, ptr->str);
+        pRtlInitUnicodeString(&str, ptr->str);
         hash = 0;
         status = pRtlHashUnicodeString(&str, ptr->case_insensitive, HASH_STRING_ALGORITHM_X65599, &hash);
         ok(status == STATUS_SUCCESS, "got status 0x%08x for %s\n", status, wine_dbgstr_w(ptr->str));
