@@ -1590,30 +1590,6 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
 
 
 /***********************************************************************
- *           handle_interrupt
- *
- * Handle an interrupt.
- */
-static inline BOOL handle_interrupt( unsigned int interrupt, EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    switch(interrupt)
-    {
-    case 0x2d:
-        context->Eip += 3;
-        rec->ExceptionCode = EXCEPTION_BREAKPOINT;
-        rec->ExceptionAddress = (void *)context->Eip;
-        rec->NumberParameters = is_wow64 ? 1 : 3;
-        rec->ExceptionInformation[0] = context->Eax;
-        rec->ExceptionInformation[1] = context->Ecx;
-        rec->ExceptionInformation[2] = context->Edx;
-        return TRUE;
-    default:
-        return FALSE;
-    }
-}
-
-
-/***********************************************************************
  *           check_invalid_gs
  *
  * Check for fault caused by invalid %gs value (some copy protection schemes mess with it).
@@ -1956,21 +1932,6 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
             }
         }
         break;
-    case EXCEPTION_BREAKPOINT:
-        if (!is_wow64)
-        {
-            /* On Wow64, the upper DWORD of Rax contains garbage, and the debug
-             * service is usually not recognized when called from usermode. */
-            switch (rec->ExceptionInformation[0])
-            {
-                case 1: /* BREAKPOINT_PRINT */
-                case 3: /* BREAKPOINT_LOAD_SYMBOLS */
-                case 4: /* BREAKPOINT_UNLOAD_SYMBOLS */
-                case 5: /* BREAKPOINT_COMMAND_STRING (>= Win2003) */
-                    goto done;
-            }
-        }
-        break;
     }
     status = NtRaiseException( rec, context, TRUE );
     raise_status( status, rec );
@@ -1990,6 +1951,45 @@ static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *cont
 
     status = NtRaiseException( rec, context, TRUE );
     raise_status( status, rec );
+}
+
+
+/***********************************************************************
+ *           handle_interrupt
+ *
+ * Handle an interrupt.
+ */
+static BOOL handle_interrupt( unsigned int interrupt, ucontext_t *sigcontext, struct stack_layout *stack )
+{
+    switch(interrupt)
+    {
+    case 0x2d:
+        if (!is_wow64)
+        {
+            /* On Wow64, the upper DWORD of Rax contains garbage, and the debug
+             * service is usually not recognized when called from usermode. */
+            switch (stack->context.Eax)
+            {
+                case 1: /* BREAKPOINT_PRINT */
+                case 3: /* BREAKPOINT_LOAD_SYMBOLS */
+                case 4: /* BREAKPOINT_UNLOAD_SYMBOLS */
+                case 5: /* BREAKPOINT_COMMAND_STRING (>= Win2003) */
+                    EIP_sig(sigcontext) += 3;
+                    return TRUE;
+            }
+        }
+        stack->context.Eip += 3;
+        stack->rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+        stack->rec.ExceptionAddress = (void *)stack->context.Eip;
+        stack->rec.NumberParameters = is_wow64 ? 1 : 3;
+        stack->rec.ExceptionInformation[0] = stack->context.Eax;
+        stack->rec.ExceptionInformation[1] = stack->context.Ecx;
+        stack->rec.ExceptionInformation[2] = stack->context.Edx;
+        setup_raise_exception( sigcontext, stack, raise_generic_exception );
+        return TRUE;
+    default:
+        return FALSE;
+    }
 }
 
 
@@ -2051,7 +2051,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         {
             WORD err = get_error_code(context);
             if (!err && (stack->rec.ExceptionCode = is_privileged_instr( &stack->context ))) break;
-            if ((err & 7) == 2 && handle_interrupt( err >> 3, &stack->rec, &stack->context )) break;
+            if ((err & 7) == 2 && handle_interrupt( err >> 3, context, stack )) return;
             stack->rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
             stack->rec.NumberParameters = 2;
             stack->rec.ExceptionInformation[0] = 0;
