@@ -37,7 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 typedef struct {
     struct strmbase_filter filter;
     IPersistPropertyBag IPersistPropertyBag_iface;
-    BaseOutputPin *output;
 } AudioRecord;
 
 static inline AudioRecord *impl_from_strmbase_filter(struct strmbase_filter *filter)

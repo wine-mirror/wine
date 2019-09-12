@@ -38,7 +38,7 @@ typedef struct {
     IPersistPropertyBag IPersistPropertyBag_iface;
 
     BaseInputPin sink;
-    BaseOutputPin source;
+    struct strmbase_source source;
 
     DWORD fcc_handler;
     HIC hic;
@@ -554,7 +554,8 @@ static HRESULT WINAPI AVICompressorOut_GetMediaType(BasePin *base, int iPosition
     return S_OK;
 }
 
-static HRESULT WINAPI AVICompressorOut_DecideBufferSize(BaseOutputPin *base, IMemAllocator *alloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI AVICompressorOut_DecideBufferSize(struct strmbase_source *base,
+        IMemAllocator *alloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
     AVICompressor *This = impl_from_BasePin(&base->pin);
     ALLOCATOR_PROPERTIES actual;
@@ -571,7 +572,7 @@ static HRESULT WINAPI AVICompressorOut_DecideBufferSize(BaseOutputPin *base, IMe
     return IMemAllocator_SetProperties(alloc, ppropInputRequest, &actual);
 }
 
-static HRESULT WINAPI AVICompressorOut_DecideAllocator(BaseOutputPin *base,
+static HRESULT WINAPI AVICompressorOut_DecideAllocator(struct strmbase_source *base,
         IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
     TRACE("(%p)->(%p %p)\n", base, pPin, pAlloc);

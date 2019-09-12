@@ -23,7 +23,7 @@
 struct _Capture;
 typedef struct _Capture Capture;
 
-Capture *qcap_driver_init(BaseOutputPin*,USHORT) DECLSPEC_HIDDEN;
+Capture *qcap_driver_init(struct strmbase_source *,USHORT) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_destroy(Capture*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_check_format(Capture*,const AM_MEDIA_TYPE*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_set_format(Capture*,AM_MEDIA_TYPE*) DECLSPEC_HIDDEN;

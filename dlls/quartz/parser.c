@@ -41,10 +41,12 @@ static const IPinVtbl Parser_InputPin_Vtbl;
 static HRESULT WINAPI Parser_ChangeStart(IMediaSeeking *iface);
 static HRESULT WINAPI Parser_ChangeStop(IMediaSeeking *iface);
 static HRESULT WINAPI Parser_ChangeRate(IMediaSeeking *iface);
-static HRESULT WINAPI Parser_OutputPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest);
+static HRESULT WINAPI Parser_OutputPin_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props);
 static HRESULT WINAPI Parser_OutputPin_CheckMediaType(BasePin *pin, const AM_MEDIA_TYPE *pmt);
 static HRESULT WINAPI Parser_OutputPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt);
-static HRESULT WINAPI Parser_OutputPin_DecideAllocator(BaseOutputPin *This, IMemInputPin *pPin, IMemAllocator **pAlloc);
+static HRESULT WINAPI Parser_OutputPin_DecideAllocator(struct strmbase_source *iface,
+        IMemInputPin *peer, IMemAllocator **allocator);
 
 static inline ParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
@@ -469,7 +471,8 @@ static const IMediaSeekingVtbl Parser_Seeking_Vtbl =
     SourceSeekingImpl_GetPreroll
 };
 
-static HRESULT WINAPI Parser_OutputPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI Parser_OutputPin_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
     Parser_OutputPin *This = (Parser_OutputPin*)iface;
     ALLOCATOR_PROPERTIES actual;
@@ -497,7 +500,8 @@ static HRESULT WINAPI Parser_OutputPin_GetMediaType(BasePin *iface, int iPositio
     return S_OK;
 }
 
-static HRESULT WINAPI Parser_OutputPin_DecideAllocator(BaseOutputPin *iface, IMemInputPin *pPin, IMemAllocator **pAlloc)
+static HRESULT WINAPI Parser_OutputPin_DecideAllocator(struct strmbase_source *iface,
+        IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
     Parser_OutputPin *This = (Parser_OutputPin*)iface;
     HRESULT hr;

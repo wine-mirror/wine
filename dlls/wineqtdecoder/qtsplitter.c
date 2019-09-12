@@ -129,7 +129,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qtsplitter);
 extern CLSID CLSID_QTSplitter;
 
 typedef struct QTOutPin {
-    BaseOutputPin pin;
+    struct strmbase_source pin;
     IQualityControl IQualityControl_iface;
 
     AM_MEDIA_TYPE * pmt;
@@ -1262,7 +1262,7 @@ static inline QTOutPin *impl_QTOutPin_from_BasePin( BasePin *iface )
     return CONTAINING_RECORD(iface, QTOutPin, pin.pin);
 }
 
-static inline QTOutPin *impl_QTOutPin_from_BaseOutputPin( BaseOutputPin *iface )
+static inline QTOutPin *impl_QTOutPin_from_BaseOutputPin(struct strmbase_source *iface)
 {
     return CONTAINING_RECORD(iface, QTOutPin, pin);
 }
@@ -1311,13 +1311,15 @@ static HRESULT WINAPI QTOutPin_GetMediaType(BasePin *iface, int iPosition, AM_ME
     return S_OK;
 }
 
-static HRESULT WINAPI QTOutPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI QTOutPin_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
     /* Unused */
     return S_OK;
 }
 
-static HRESULT WINAPI QTOutPin_DecideAllocator(BaseOutputPin *iface, IMemInputPin *pPin, IMemAllocator **pAlloc)
+static HRESULT WINAPI QTOutPin_DecideAllocator(struct strmbase_source *iface,
+        IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
     HRESULT hr;
     QTOutPin *This = impl_QTOutPin_from_BaseOutputPin(iface);

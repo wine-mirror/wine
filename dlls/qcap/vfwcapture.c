@@ -53,7 +53,7 @@ typedef struct VfwCapture
     BOOL init;
     Capture *driver_info;
 
-    BaseOutputPin source;
+    struct strmbase_source source;
     IKsPropertySet IKsPropertySet_iface;
 } VfwCapture;
 
@@ -537,7 +537,8 @@ static HRESULT WINAPI VfwPin_GetMediaType(BasePin *pin, int iPosition, AM_MEDIA_
     return hr;
 }
 
-static HRESULT WINAPI VfwPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI VfwPin_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
     ALLOCATOR_PROPERTIES actual;
 

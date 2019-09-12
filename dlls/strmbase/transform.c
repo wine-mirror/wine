@@ -103,7 +103,8 @@ static HRESULT WINAPI TransformFilter_Output_CheckMediaType(BasePin *This, const
     return S_FALSE;
 }
 
-static HRESULT WINAPI TransformFilter_Output_DecideBufferSize(BaseOutputPin *This, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI TransformFilter_Output_DecideBufferSize(struct strmbase_source *This,
+        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
     TransformFilter *pTransformFilter = impl_from_source_IPin(&This->pin.IPin_iface);
     return pTransformFilter->pFuncsTable->pfnDecideBufferSize(pTransformFilter, pAlloc, ppropInputRequest);

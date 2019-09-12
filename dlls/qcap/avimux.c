@@ -81,7 +81,7 @@ typedef struct {
     REFERENCE_TIME interleave;
     REFERENCE_TIME preroll;
 
-    BaseOutputPin source;
+    struct strmbase_source source;
     IQualityControl IQualityControl_iface;
 
     int input_pin_no;
@@ -1158,7 +1158,7 @@ static HRESULT WINAPI AviMuxOut_CheckMediaType(BasePin *base, const AM_MEDIA_TYP
     return S_OK;
 }
 
-static HRESULT WINAPI AviMuxOut_AttemptConnection(BaseOutputPin *base,
+static HRESULT WINAPI AviMuxOut_AttemptConnection(struct strmbase_source *base,
         IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
     PIN_DIRECTION dir;
@@ -1195,7 +1195,7 @@ static HRESULT WINAPI AviMuxOut_GetMediaType(BasePin *base, int iPosition, AM_ME
     return S_OK;
 }
 
-static HRESULT WINAPI AviMuxOut_DecideAllocator(BaseOutputPin *base,
+static HRESULT WINAPI AviMuxOut_DecideAllocator(struct strmbase_source *base,
         IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
     ALLOCATOR_PROPERTIES req, actual;

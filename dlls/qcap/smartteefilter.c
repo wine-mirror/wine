@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 typedef struct {
     struct strmbase_filter filter;
     BaseInputPin sink;
-    BaseOutputPin capture, preview;
+    struct strmbase_source capture, preview;
 } SmartTeeFilter;
 
 static inline SmartTeeFilter *impl_from_strmbase_filter(struct strmbase_filter *filter)
@@ -379,7 +379,8 @@ static HRESULT WINAPI SmartTeeFilterCapture_GetMediaType(BasePin *base, int iPos
         return S_FALSE;
 }
 
-static HRESULT WINAPI SmartTeeFilterCapture_DecideAllocator(BaseOutputPin *base, IMemInputPin *pPin, IMemAllocator **pAlloc)
+static HRESULT WINAPI SmartTeeFilterCapture_DecideAllocator(struct strmbase_source *base,
+        IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
     SmartTeeFilter *This = impl_from_BasePin(&base->pin);
     TRACE("(%p, %p, %p)\n", This, pPin, pAlloc);
@@ -450,7 +451,8 @@ static HRESULT WINAPI SmartTeeFilterPreview_GetMediaType(BasePin *base, int iPos
         return S_FALSE;
 }
 
-static HRESULT WINAPI SmartTeeFilterPreview_DecideAllocator(BaseOutputPin *base, IMemInputPin *pPin, IMemAllocator **pAlloc)
+static HRESULT WINAPI SmartTeeFilterPreview_DecideAllocator(struct strmbase_source *base,
+        IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
     SmartTeeFilter *This = impl_from_BasePin(&base->pin);
     TRACE("(%p, %p, %p)\n", This, pPin, pAlloc);

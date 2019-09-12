@@ -28,7 +28,7 @@ typedef HRESULT (*PFN_DISCONNECT) (LPVOID iface);
 
 typedef struct Parser_OutputPin
 {
-    BaseOutputPin pin;
+    struct strmbase_source pin;
 
     AM_MEDIA_TYPE * pmt;
     LONGLONG dwSamplesProcessed;

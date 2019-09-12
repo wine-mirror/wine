@@ -334,14 +334,14 @@ HRESULT WINAPI BasePinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFER
 
 /*** OutputPin implementation ***/
 
-static inline BaseOutputPin *impl_BaseOutputPin_from_IPin( IPin *iface )
+static inline struct strmbase_source *impl_source_from_IPin( IPin *iface )
 {
-    return CONTAINING_RECORD(iface, BaseOutputPin, pin.IPin_iface);
+    return CONTAINING_RECORD(iface, struct strmbase_source, pin.IPin_iface);
 }
 
 HRESULT WINAPI BaseOutputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
-    BaseOutputPin *This = impl_BaseOutputPin_from_IPin(iface);
+    struct strmbase_source *This = impl_source_from_IPin(iface);
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
@@ -371,7 +371,7 @@ HRESULT WINAPI BaseOutputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOI
 HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
     HRESULT hr;
-    BaseOutputPin *This = impl_BaseOutputPin_from_IPin(iface);
+    struct strmbase_source *This = impl_source_from_IPin(iface);
 
     TRACE("(%p)->(%p, %p)\n", This, pReceivePin, pmt);
     dump_AM_MEDIA_TYPE(pmt);
@@ -462,7 +462,7 @@ HRESULT WINAPI BaseOutputPinImpl_ReceiveConnection(IPin *iface, IPin *pin, const
 HRESULT WINAPI BaseOutputPinImpl_Disconnect(IPin * iface)
 {
     HRESULT hr;
-    BaseOutputPin *This = impl_BaseOutputPin_from_IPin(iface);
+    struct strmbase_source *This = impl_source_from_IPin(iface);
 
     TRACE("(%p)->()\n", This);
 
@@ -516,7 +516,8 @@ HRESULT WINAPI BaseOutputPinImpl_EndFlush(IPin * iface)
     return E_UNEXPECTED;
 }
 
-HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(BaseOutputPin *This, IMediaSample ** ppSample, REFERENCE_TIME * tStart, REFERENCE_TIME * tStop, DWORD dwFlags)
+HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(struct strmbase_source *This,
+        IMediaSample **ppSample, REFERENCE_TIME *tStart, REFERENCE_TIME *tStop, DWORD dwFlags)
 {
     HRESULT hr;
 
@@ -536,7 +537,7 @@ HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(BaseOutputPin *This, IMediaSa
 }
 
 /* replaces OutputPin_SendSample */
-HRESULT WINAPI BaseOutputPinImpl_Deliver(BaseOutputPin *This, IMediaSample * pSample)
+HRESULT WINAPI BaseOutputPinImpl_Deliver(struct strmbase_source *This, IMediaSample *pSample)
 {
     IMemInputPin * pMemConnected = NULL;
     PIN_INFO pinInfo;
@@ -576,7 +577,7 @@ HRESULT WINAPI BaseOutputPinImpl_Deliver(BaseOutputPin *This, IMediaSample * pSa
 }
 
 /* replaces OutputPin_CommitAllocator */
-HRESULT WINAPI BaseOutputPinImpl_Active(BaseOutputPin *This)
+HRESULT WINAPI BaseOutputPinImpl_Active(struct strmbase_source *This)
 {
     HRESULT hr;
 
@@ -596,7 +597,7 @@ HRESULT WINAPI BaseOutputPinImpl_Active(BaseOutputPin *This)
 }
 
 /* replaces OutputPin_DecommitAllocator */
-HRESULT WINAPI BaseOutputPinImpl_Inactive(BaseOutputPin *This)
+HRESULT WINAPI BaseOutputPinImpl_Inactive(struct strmbase_source *This)
 {
     HRESULT hr;
 
@@ -615,12 +616,13 @@ HRESULT WINAPI BaseOutputPinImpl_Inactive(BaseOutputPin *This)
     return hr;
 }
 
-HRESULT WINAPI BaseOutputPinImpl_InitAllocator(BaseOutputPin *This, IMemAllocator **pMemAlloc)
+HRESULT WINAPI BaseOutputPinImpl_InitAllocator(struct strmbase_source *This, IMemAllocator **pMemAlloc)
 {
     return CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (LPVOID*)pMemAlloc);
 }
 
-HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(BaseOutputPin *This, IMemInputPin *pPin, IMemAllocator **pAlloc)
+HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(struct strmbase_source *This,
+        IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
     HRESULT hr;
 
@@ -649,7 +651,8 @@ HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(BaseOutputPin *This, IMemInputP
 
 /* Function called as a helper to IPin_Connect */
 /* specific AM_MEDIA_TYPE - it cannot be NULL */
-HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BaseOutputPin *This, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
+HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *This,
+        IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
     HRESULT hr;
     IMemAllocator * pMemAlloc = NULL;
@@ -704,7 +707,7 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BaseOutputPin *This, IPin *pR
     return hr;
 }
 
-void strmbase_source_init(BaseOutputPin *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
+void strmbase_source_init(struct strmbase_source *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
         const WCHAR *name, const BaseOutputPinFuncTable *func_table)
 {
     memset(pin, 0, sizeof(*pin));
@@ -717,7 +720,7 @@ void strmbase_source_init(BaseOutputPin *pin, const IPinVtbl *vtbl, struct strmb
     pin->pFuncsTable = func_table;
 }
 
-void strmbase_source_cleanup(BaseOutputPin *pin)
+void strmbase_source_cleanup(struct strmbase_source *pin)
 {
     FreeMediaType(&pin->pin.mtCurrent);
     if (pin->pAllocator)

@@ -61,7 +61,7 @@ typedef struct AsyncReader
     struct strmbase_filter filter;
     IFileSourceFilter IFileSourceFilter_iface;
 
-    BaseOutputPin source;
+    struct strmbase_source source;
     IAsyncReader IAsyncReader_iface;
 
     LPOLESTR pszFileName;
@@ -571,7 +571,7 @@ static inline AsyncReader *impl_from_BasePin(BasePin *iface)
     return CONTAINING_RECORD(iface, AsyncReader, source.pin);
 }
 
-static inline AsyncReader *impl_from_BaseOutputPin(BaseOutputPin *iface)
+static inline AsyncReader *impl_from_strmbase_source(struct strmbase_source *iface)
 {
     return CONTAINING_RECORD(iface, AsyncReader, source);
 }
@@ -657,7 +657,7 @@ static const IPinVtbl FileAsyncReaderPin_Vtbl =
 /* specific AM_MEDIA_TYPE - it cannot be NULL */
 /* this differs from standard OutputPin_AttemptConnection only in that it
  * doesn't need the IMemInputPin interface on the receiving pin */
-static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(BaseOutputPin *This,
+static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(struct strmbase_source *This,
         IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
     HRESULT hr;
@@ -684,9 +684,10 @@ static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(BaseOutputPin *This,
     return hr;
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
-    AsyncReader *This = impl_from_BaseOutputPin(iface);
+    AsyncReader *This = impl_from_strmbase_source(iface);
     ALLOCATOR_PROPERTIES actual;
 
     if (ppropInputRequest->cbAlign && ppropInputRequest->cbAlign != This->allocProps.cbAlign)

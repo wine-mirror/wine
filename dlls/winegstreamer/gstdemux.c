@@ -72,7 +72,7 @@ typedef struct GSTImpl {
 } GSTImpl;
 
 struct GSTOutPin {
-    BaseOutputPin pin;
+    struct strmbase_source pin;
     IQualityControl IQualityControl_iface;
 
     GstElement *flipfilter;
@@ -1657,7 +1657,8 @@ static HRESULT WINAPI GSTOutPin_GetMediaType(BasePin *iface, int iPosition, AM_M
     return S_OK;
 }
 
-static HRESULT WINAPI GSTOutPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
     GSTOutPin *This = impl_source_from_IPin(&iface->pin.IPin_iface);
     TRACE("(%p)->(%p, %p)\n", This, pAlloc, ppropInputRequest);
@@ -1665,7 +1666,8 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(BaseOutputPin *iface, IMemAlloc
     return S_OK;
 }
 
-static HRESULT WINAPI GSTOutPin_DecideAllocator(BaseOutputPin *base, IMemInputPin *pPin, IMemAllocator **pAlloc)
+static HRESULT WINAPI GSTOutPin_DecideAllocator(struct strmbase_source *base,
+        IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
     GSTOutPin *pin = impl_source_from_IPin(&base->pin.IPin_iface);
     GSTImpl *filter = impl_from_strmbase_filter(pin->pin.pin.filter);

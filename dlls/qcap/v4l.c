@@ -101,7 +101,7 @@ struct _Capture
 
     CRITICAL_SECTION CritSect;
 
-    BaseOutputPin *pin;
+    struct strmbase_source *pin;
     int fd, mmap;
     BOOL iscommitted, stopped;
 
@@ -562,7 +562,7 @@ HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
     return S_OK;
 }
 
-Capture * qcap_driver_init(BaseOutputPin *pin, USHORT card)
+Capture *qcap_driver_init(struct strmbase_source *pin, USHORT card)
 {
     struct v4l2_capability caps = {{0}};
     struct v4l2_format format = {0};
@@ -659,7 +659,7 @@ error:
 
 #else
 
-Capture * qcap_driver_init(BaseOutputPin *pin, USHORT card)
+Capture *qcap_driver_init(struct strmbase_source *pin, USHORT card)
 {
     static const char msg[] =
         "The v4l headers were not available at compile time,\n"

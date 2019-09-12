@@ -48,15 +48,9 @@ static void OutputQueue_FreeSamples(OutputQueue *pOutputQueue)
     }
 }
 
-HRESULT WINAPI OutputQueue_Construct(
-    BaseOutputPin *pInputPin,
-    BOOL bAuto,
-    BOOL bQueue,
-    LONG lBatchSize,
-    BOOL bBatchExact,
-    DWORD dwPriority,
-    const OutputQueueFuncTable* pFuncsTable,
-    OutputQueue **ppOutputQueue )
+HRESULT WINAPI OutputQueue_Construct(struct strmbase_source *pInputPin, BOOL bAuto,
+        BOOL bQueue, LONG lBatchSize, BOOL bBatchExact, DWORD dwPriority,
+        const OutputQueueFuncTable *pFuncsTable, OutputQueue **ppOutputQueue)
 
 {
     BOOL threaded = FALSE;
