@@ -9105,7 +9105,7 @@ todo_wine
                 static const WCHAR fmtW[] = {'%','u',0};
                 IDWriteLocalizedStrings *values;
                 WCHAR buffW[255], buff2W[255];
-                UINT32 c, ivalue;
+                UINT32 c, ivalue = 0;
                 BOOL exists;
 
                 hr = IDWriteFontSet_GetPropertyValues(fontset, 0, id, &exists, &values);
