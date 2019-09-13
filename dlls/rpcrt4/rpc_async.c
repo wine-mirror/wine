@@ -125,8 +125,7 @@ RPC_STATUS WINAPI RpcAsyncCompleteCall(PRPC_ASYNC_STATE pAsync, void *Reply)
     if (data->pStubMsg->IsClient)
         return NdrpCompleteAsyncClientCall(pAsync, Reply);
 
-    FIXME("not implemented for server side\n");
-    return RPC_S_CALL_FAILED;
+    return NdrpCompleteAsyncServerCall(pAsync, Reply);
 }
 
 /***********************************************************************

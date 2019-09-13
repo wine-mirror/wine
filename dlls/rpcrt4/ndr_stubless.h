@@ -261,3 +261,4 @@ PFORMAT_STRING convert_old_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFo
                                  unsigned int stack_size, BOOL object_proc,
                                  void *buffer, unsigned int size, unsigned int *count ) DECLSPEC_HIDDEN;
 RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply) DECLSPEC_HIDDEN;
+RPC_STATUS NdrpCompleteAsyncServerCall(RPC_ASYNC_STATE *pAsync, void *Reply) DECLSPEC_HIDDEN;

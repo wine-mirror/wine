@@ -2082,3 +2082,95 @@ void RPC_ENTRY NdrAsyncServerCall(PRPC_MESSAGE pRpcMsg)
     else
         call_server_func(pServerInfo->DispatchTable[pRpcMsg->ProcNum], args, async_call_data->stack_size);
 }
+
+RPC_STATUS NdrpCompleteAsyncServerCall(RPC_ASYNC_STATE *pAsync, void *Reply)
+{
+    /* pointer to start of stack where arguments start */
+    PMIDL_STUB_MESSAGE pStubMsg;
+    struct async_call_data *async_call_data;
+    /* the type of pass we are currently doing */
+    enum stubless_phase phase;
+    /* location to put retval into */
+    LONG_PTR *retval_ptr;
+    RPC_STATUS status = RPC_S_OK;
+
+    if (!pAsync->StubInfo)
+        return RPC_S_INVALID_ASYNC_HANDLE;
+
+    async_call_data = pAsync->StubInfo;
+    pStubMsg = async_call_data->pStubMsg;
+
+    TRACE("pAsync %p, pAsync->StubInfo %p, pFormat %p\n", pAsync, pAsync->StubInfo, async_call_data->pHandleFormat);
+
+    /* 3. INITOUT */
+    TRACE("INITOUT\n");
+    retval_ptr = stub_do_args(async_call_data->pStubMsg, async_call_data->pHandleFormat, STUBLESS_INITOUT, async_call_data->number_of_params);
+    if (retval_ptr)
+    {
+        TRACE("stub implementation returned 0x%lx\n", *(LONG_PTR *)Reply);
+        *retval_ptr = *(LONG_PTR *)Reply;
+    }
+    else
+        TRACE("void stub implementation\n");
+
+    for (phase = STUBLESS_CALCSIZE; phase <= STUBLESS_FREE; phase++)
+    {
+        TRACE("phase = %d\n", phase);
+        switch (phase)
+        {
+        case STUBLESS_GETBUFFER:
+            if (async_call_data->pProcHeader->Oi_flags & Oi_OBJECT_PROC)
+            {
+                ERR("objects not supported\n");
+                HeapFree(GetProcessHeap(), 0, async_call_data->pStubMsg->StackTop);
+                I_RpcFree(async_call_data);
+                I_RpcFree(pAsync);
+                RpcRaiseException(RPC_X_BAD_STUB_DATA);
+            }
+            else
+            {
+                pStubMsg->RpcMsg->BufferLength = pStubMsg->BufferLength;
+                /* allocate buffer for [out] and [ret] params */
+                status = I_RpcGetBuffer(pStubMsg->RpcMsg);
+                if (status)
+                    RpcRaiseException(status);
+                pStubMsg->Buffer = pStubMsg->RpcMsg->Buffer;
+            }
+            break;
+
+        case STUBLESS_CALCSIZE:
+        case STUBLESS_MARSHAL:
+        case STUBLESS_MUSTFREE:
+        case STUBLESS_FREE:
+            stub_do_args(pStubMsg, async_call_data->pHandleFormat, phase, async_call_data->number_of_params);
+            break;
+        default:
+            ERR("shouldn't reach here. phase %d\n", phase);
+            break;
+        }
+    }
+
+#if 0 /* FIXME */
+    if (ext_flags.HasNewCorrDesc)
+    {
+        /* free extra correlation package */
+        NdrCorrelationFree(pStubMsg);
+    }
+
+    if (Oif_flags.HasPipes)
+    {
+        /* NdrPipesDone(...) */
+    }
+
+    /* free the full pointer translation tables */
+    if (async_call_data->pProcHeader->Oi_flags & Oi_FULL_PTR_USED)
+        NdrFullPointerXlatFree(pStubMsg->FullPtrXlatTables);
+#endif
+
+    /* free server function stack */
+    HeapFree(GetProcessHeap(), 0, async_call_data->pStubMsg->StackTop);
+    I_RpcFree(async_call_data);
+    I_RpcFree(pAsync);
+
+    return S_OK;
+}
