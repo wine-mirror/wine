@@ -3204,8 +3204,17 @@ void signal_free_thread( TEB *teb )
  */
 static void *mac_thread_gsbase(void)
 {
+    struct thread_identifier_info tiinfo;
+    unsigned int info_count = THREAD_IDENTIFIER_INFO_COUNT;
     static int gsbase_offset = -1;
     void *ret;
+
+    kern_return_t kr = thread_info(mach_thread_self(), THREAD_IDENTIFIER_INFO, (thread_identifier_info_t) &tiinfo, &info_count);
+    if (kr == KERN_SUCCESS)
+    {
+        TRACE("pthread_self() %p thread ID %lx gsbase %lx\n", pthread_self(), tiinfo.thread_id, tiinfo.thread_handle);
+        return (void*)tiinfo.thread_handle;
+    }
 
     if (gsbase_offset < 0)
     {
