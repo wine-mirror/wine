@@ -1530,13 +1530,13 @@ __ASM_STDCALL_FUNC( NtGetContextThread, 8,
  */
 static inline DWORD is_privileged_instr( CONTEXT *context )
 {
-    const BYTE *instr;
-    unsigned int prefix_count = 0;
+    BYTE instr[16];
+    unsigned int i, len, prefix_count = 0;
 
     if (!wine_ldt_is_system( context->SegCs )) return 0;
-    instr = (BYTE *)context->Eip;
+    len = virtual_uninterrupted_read_memory( (BYTE *)context->Eip, instr, sizeof(instr) );
 
-    for (;;) switch(*instr)
+    for (i = 0; i < len; i++) switch (instr[i])
     {
     /* instruction prefixes */
     case 0x2e:  /* %cs: */
@@ -1551,11 +1551,11 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
     case 0xf2:  /* repne */
     case 0xf3:  /* repe */
         if (++prefix_count >= 15) return EXCEPTION_ILLEGAL_INSTRUCTION;
-        instr++;
         continue;
 
     case 0x0f: /* extended instruction */
-        switch(instr[1])
+        if (i == len - 1) return 0;
+        switch(instr[i + 1])
         {
         case 0x20: /* mov crX, reg */
         case 0x21: /* mov drX, reg */
@@ -1584,6 +1584,7 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
     default:
         return 0;
     }
+    return 0;
 }
 
 
