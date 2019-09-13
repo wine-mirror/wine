@@ -14967,7 +14967,7 @@ test -z "$UNWIND_LIBS" || UNWIND_LIBS=`echo " $UNWIND_LIBS" | sed 's/ -L\([^/]\)
 fi
 case $host in
   aarch64*|*-darwin*)
-    if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" != xnono; then :
+    if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" = xnono; then :
   case "x$with_unwind" in
   x)   as_fn_append wine_notices "|libunwind ${notice_platform}development files not found, stack unwinding won't work." ;;
   xno) ;;
