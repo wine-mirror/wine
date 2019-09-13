@@ -14905,7 +14905,7 @@ else
 int
 main ()
 {
-unw_context_t context; unw_step( &context );
+unw_cursor_t cursor; unw_step( &cursor );
   ;
   return 0;
 }
@@ -14936,7 +14936,7 @@ else
 int
 main ()
 {
-unw_context_t context; unw_step( &context );
+unw_cursor_t cursor; unw_step( &cursor );
   ;
   return 0;
 }

@@ -1697,7 +1697,7 @@ then
        [AC_CACHE_CHECK([for unw_step],wine_cv_have_unw_step,
            [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define UNW_LOCAL_ONLY
 #include <libunwind.h>]],
-                [[unw_context_t context; unw_step( &context );]])],
+                [[unw_cursor_t cursor; unw_step( &cursor );]])],
                 [wine_cv_have_unw_step="yes"],[wine_cv_have_unw_step="no"])])
         if test "$wine_cv_have_unw_step" = no -a -n "$UNWIND_LIBS"
         then
@@ -1706,7 +1706,7 @@ then
             AC_CACHE_CHECK([for unw_step in libunwind],wine_cv_have_libunwind_unw_step,
                [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define UNW_LOCAL_ONLY
 #include <libunwind.h>]],
-                    [[unw_context_t context; unw_step( &context );]])],
+                    [[unw_cursor_t cursor; unw_step( &cursor );]])],
                     [wine_cv_have_libunwind_unw_step="yes"],
                     [wine_cv_have_libunwind_unw_step="no"])])
             LIBS=$save_libs
