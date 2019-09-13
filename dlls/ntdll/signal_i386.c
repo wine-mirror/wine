@@ -2168,10 +2168,10 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     WORD fs, gs;
-    init_handler( sigcontext, &fs, &gs );
+    void *stack_ptr = init_handler( sigcontext, &fs, &gs );
     if (!dispatch_signal(SIGINT))
     {
-        struct stack_layout *stack = setup_exception( sigcontext );
+        struct stack_layout *stack = setup_exception_record( sigcontext, stack_ptr, fs, gs );
         stack->rec.ExceptionCode = CONTROL_C_EXIT;
         setup_raise_exception( sigcontext, stack );
     }
