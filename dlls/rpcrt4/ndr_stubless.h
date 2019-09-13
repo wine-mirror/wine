@@ -224,6 +224,21 @@ typedef struct _NDR_EHD_CONTEXT
 
 #include "poppack.h"
 
+struct async_call_data
+{
+    MIDL_STUB_MESSAGE *pStubMsg;
+    const NDR_PROC_HEADER *pProcHeader;
+    PFORMAT_STRING pHandleFormat;
+    PFORMAT_STRING pParamFormat;
+    RPC_BINDING_HANDLE hBinding;
+    /* size of stack */
+    unsigned short stack_size;
+    /* number of parameters. optional for client to give it to us */
+    unsigned int number_of_params;
+    /* correlation cache */
+    ULONG_PTR NdrCorrCache[256];
+};
+
 enum stubless_phase
 {
     STUBLESS_UNMARSHAL,
