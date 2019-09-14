@@ -79,7 +79,7 @@ struct gstdemux_source
     GstPad *flip_sink, *flip_src;
     GstPad *their_src;
     GstPad *my_sink;
-    AM_MEDIA_TYPE * pmt;
+    AM_MEDIA_TYPE mt;
     HANDLE caps_event;
     GstSegment *segment;
     SourceSeeking seek;
@@ -104,7 +104,7 @@ static const IPinVtbl GST_InputPin_Vtbl;
 static const IBaseFilterVtbl GST_Vtbl;
 static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl;
 
-static BOOL create_pin(struct gstdemux *filter, const WCHAR *name, const AM_MEDIA_TYPE *mt);
+static BOOL create_pin(struct gstdemux *filter, const WCHAR *name);
 static HRESULT GST_RemoveOutputPins(struct gstdemux *This);
 static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface);
@@ -285,21 +285,25 @@ static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
 {
     struct gstdemux_source *pin = gst_pad_get_element_private(pad);
     struct gstdemux *This = impl_from_strmbase_filter(pin->pin.pin.filter);
-    AM_MEDIA_TYPE amt;
     GstStructure *arg;
     const char *typename;
     gboolean ret;
 
     TRACE("%p %p\n", pad, caps);
 
+    FreeMediaType(&pin->mt);
+
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
     if (!strcmp(typename, "audio/x-raw")) {
-        ret = amt_from_gst_caps_audio(caps, &amt);
+        ret = amt_from_gst_caps_audio(caps, &pin->mt);
     } else if (!strcmp(typename, "video/x-raw")) {
-        ret = amt_from_gst_caps_video(caps, &amt);
+        ret = amt_from_gst_caps_video(caps, &pin->mt);
         if (ret)
-            This->props.cbBuffer = max(This->props.cbBuffer, ((VIDEOINFOHEADER*)amt.pbFormat)->bmiHeader.biSizeImage);
+        {
+            VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)pin->mt.pbFormat;
+            This->props.cbBuffer = max(This->props.cbBuffer, vih->bmiHeader.biSizeImage);
+        }
     } else {
         FIXME("Unhandled type \"%s\"\n", typename);
         return FALSE;
@@ -307,8 +311,6 @@ static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
     TRACE("Linking returned %i for %s\n", ret, typename);
     if (!ret)
         return FALSE;
-    FreeMediaType(pin->pmt);
-    *pin->pmt = amt;
     SetEvent(pin->caps_event);
     return TRUE;
 }
@@ -762,7 +764,6 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
 {
     const char *typename;
     char *name;
-    AM_MEDIA_TYPE amt = {{0}};
     GstCaps *caps;
     GstStructure *arg;
     GstPad *mypad;
@@ -797,7 +798,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
         return;
     }
 
-    if (!create_pin(This, nameW, &amt))
+    if (!create_pin(This, nameW))
     {
         ERR("Failed to allocate memory.\n");
         return;
@@ -1666,7 +1667,7 @@ static HRESULT WINAPI GSTOutPin_GetMediaType(BasePin *iface, int iPosition, AM_M
     if (iPosition > 0)
         return VFW_S_NO_MORE_ITEMS;
 
-    CopyMediaType(pmt, This->pmt);
+    CopyMediaType(pmt, &This->mt);
 
     return S_OK;
 }
@@ -1731,7 +1732,7 @@ static void free_source_pin(struct gstdemux_source *pin)
     }
     gst_object_unref(pin->my_sink);
     CloseHandle(pin->caps_event);
-    DeleteMediaType(pin->pmt);
+    FreeMediaType(&pin->mt);
     gst_segment_free(pin->segment);
 
     strmbase_source_cleanup(&pin->pin);
@@ -1770,7 +1771,7 @@ static const struct strmbase_source_ops source_ops =
     GSTOutPin_DecideAllocator,
 };
 
-static BOOL create_pin(struct gstdemux *filter, const WCHAR *name, const AM_MEDIA_TYPE *mt)
+static BOOL create_pin(struct gstdemux *filter, const WCHAR *name)
 {
     struct gstdemux_source *pin, **new_array;
 
@@ -1783,8 +1784,6 @@ static BOOL create_pin(struct gstdemux *filter, const WCHAR *name, const AM_MEDI
 
     strmbase_source_init(&pin->pin, &GST_OutputPin_Vtbl, &filter->filter, name,
             &source_ops);
-    pin->pmt = heap_alloc(sizeof(AM_MEDIA_TYPE));
-    CopyMediaType(pin->pmt, mt);
     pin->caps_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     pin->segment = gst_segment_new();
     pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
