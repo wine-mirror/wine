@@ -207,16 +207,35 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
     amt->pUnk = NULL;
     ZeroMemory(vih, sizeof(*vih));
     amt->majortype = MEDIATYPE_Video;
-    if (GST_VIDEO_INFO_IS_RGB(&vinfo)) {
-        bih->biBitCount = GST_VIDEO_FORMAT_INFO_BITS(vinfo.finfo);
-        switch (bih->biBitCount) {
-            case 16: amt->subtype = MEDIASUBTYPE_RGB555; break;
-            case 24: amt->subtype = MEDIASUBTYPE_RGB24; break;
-            case 32: amt->subtype = MEDIASUBTYPE_RGB32; break;
-            default:
-                FIXME("Unknown bpp %u\n", bih->biBitCount);
-                heap_free(vih);
-                return FALSE;
+
+    if (GST_VIDEO_INFO_IS_RGB(&vinfo))
+    {
+        switch (vinfo.finfo->format)
+        {
+        case GST_VIDEO_FORMAT_BGRA:
+            amt->subtype = MEDIASUBTYPE_ARGB32;
+            bih->biBitCount = 32;
+            break;
+        case GST_VIDEO_FORMAT_BGRx:
+            amt->subtype = MEDIASUBTYPE_RGB32;
+            bih->biBitCount = 32;
+            break;
+        case GST_VIDEO_FORMAT_BGR:
+            amt->subtype = MEDIASUBTYPE_RGB24;
+            bih->biBitCount = 24;
+            break;
+        case GST_VIDEO_FORMAT_BGR16:
+            amt->subtype = MEDIASUBTYPE_RGB565;
+            bih->biBitCount = 16;
+            break;
+        case GST_VIDEO_FORMAT_BGR15:
+            amt->subtype = MEDIASUBTYPE_RGB555;
+            bih->biBitCount = 16;
+            break;
+        default:
+            FIXME("Unhandled type %s.\n", vinfo.finfo->name);
+            heap_free(vih);
+            return FALSE;
         }
         bih->biCompression = BI_RGB;
     } else {
