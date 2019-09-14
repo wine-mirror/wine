@@ -254,12 +254,15 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
 
 static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
 {
+    struct gstdemux_source *pin = gst_pad_get_element_private(pad);
+    gchar *caps_str = gst_caps_to_string(caps);
     AM_MEDIA_TYPE amt;
     GstStructure *arg;
     const char *typename;
     gboolean ret;
 
-    TRACE("%p %p\n", pad, caps);
+    TRACE("pin %p, caps %s.\n", pin, debugstr_a(caps_str));
+    g_free(caps_str);
 
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
@@ -284,12 +287,14 @@ static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
 static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
 {
     struct gstdemux_source *pin = gst_pad_get_element_private(pad);
-    struct gstdemux *This = impl_from_strmbase_filter(pin->pin.pin.filter);
+    struct gstdemux *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
+    gchar *caps_str = gst_caps_to_string(caps);
     GstStructure *arg;
     const char *typename;
     gboolean ret;
 
-    TRACE("%p %p\n", pad, caps);
+    TRACE("filter %p, caps %s.\n", filter, debugstr_a(caps_str));
+    g_free(caps_str);
 
     FreeMediaType(&pin->mt);
 
@@ -302,7 +307,7 @@ static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
         if (ret)
         {
             VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)pin->mt.pbFormat;
-            This->props.cbBuffer = max(This->props.cbBuffer, vih->bmiHeader.biSizeImage);
+            filter->props.cbBuffer = max(filter->props.cbBuffer, vih->bmiHeader.biSizeImage);
         }
     } else {
         FIXME("Unhandled type \"%s\"\n", typename);
@@ -345,13 +350,12 @@ static gboolean gst_base_src_perform_seek(struct gstdemux *This, GstEvent *event
     GstEvent *tevent;
     BOOL thread = !!This->push_thread;
 
-    TRACE("%p %p\n", This, event);
-
     gst_event_parse_seek(event, &rate, &seek_format, &flags,
                          &cur_type, &cur, &stop_type, &stop);
 
-    if (seek_format != GST_FORMAT_BYTES) {
-        FIXME("Not handling other format %i\n", seek_format);
+    if (seek_format != GST_FORMAT_BYTES)
+    {
+        FIXME("Unhandled format \"%s\".\n", gst_format_get_name(seek_format));
         return FALSE;
     }
 
@@ -389,7 +393,7 @@ static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
 {
     struct gstdemux *This = gst_pad_get_element_private(pad);
 
-    TRACE("%p %p\n", pad, event);
+    TRACE("filter %p, type \"%s\".\n", This, GST_EVENT_TYPE_NAME(event));
 
     switch (event->type) {
         case GST_EVENT_SEEK:
@@ -407,7 +411,7 @@ static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
             LeaveCriticalSection(&This->filter.csFilter);
             break;
         default:
-            FIXME("%p (%u) stub\n", event, event->type);
+            WARN("Ignoring \"%s\" event.\n", GST_EVENT_TYPE_NAME(event));
         case GST_EVENT_TAG:
         case GST_EVENT_QOS:
         case GST_EVENT_RECONFIGURE:
@@ -420,7 +424,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 {
     struct gstdemux_source *pin = gst_pad_get_element_private(pad);
 
-    TRACE("%p %p\n", pad, event);
+    TRACE("pin %p, type \"%s\".\n", pin, GST_EVENT_TYPE_NAME(event));
 
     switch (event->type) {
         case GST_EVENT_SEGMENT: {
@@ -435,8 +439,9 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             rate = segment->rate;
             applied_rate = segment->applied_rate;
 
-            if (segment->format != GST_FORMAT_TIME) {
-                FIXME("Ignoring new segment because of format %i\n", segment->format);
+            if (segment->format != GST_FORMAT_TIME)
+            {
+                FIXME("Unhandled format \"%s\".\n", gst_format_get_name(segment->format));
                 return TRUE;
             }
 
@@ -482,7 +487,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             return setcaps_sink(pad, caps);
         }
         default:
-            TRACE("%p stub %s\n", event, gst_event_type_get_name(event->type));
+            WARN("Ignoring \"%s\" event.\n", GST_EVENT_TYPE_NAME(event));
             return gst_pad_event_default(pad, parent, event);
     }
 }
@@ -940,7 +945,7 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
     int ret;
     LONGLONG duration;
 
-    TRACE("%p %p %p\n", This, pad, query);
+    TRACE("filter %p, type %s.\n", This, GST_QUERY_TYPE_NAME(query));
 
     switch (GST_QUERY_TYPE(query)) {
         case GST_QUERY_DURATION:
@@ -954,9 +959,11 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
             return ret;
         case GST_QUERY_SEEKING:
             gst_query_parse_seeking (query, &format, NULL, NULL, NULL);
-            TRACE("Seeking %i %i\n", format, GST_FORMAT_BYTES);
             if (format != GST_FORMAT_BYTES)
+            {
+                WARN("Cannot seek using format \"%s\".\n", gst_format_get_name(format));
                 return FALSE;
+            }
             gst_query_set_seeking(query, GST_FORMAT_BYTES, 1, 0, This->filesize);
             return TRUE;
         case GST_QUERY_SCHEDULING:
@@ -965,7 +972,7 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
             gst_query_add_scheduling_mode(query, GST_PAD_MODE_PULL);
             return TRUE;
         default:
-            TRACE("Unhandled query type: %s\n", GST_QUERY_TYPE_NAME(query));
+            WARN("Unhandled query type %s.\n", GST_QUERY_TYPE_NAME(query));
             return FALSE;
     }
 }
@@ -973,8 +980,6 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
 static gboolean activate_push(GstPad *pad, gboolean activate)
 {
     struct gstdemux *This = gst_pad_get_element_private(pad);
-
-    TRACE("%p %p %u\n", This, pad, activate);
 
     EnterCriticalSection(&This->filter.csFilter);
     if (!activate) {
@@ -1003,7 +1008,11 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
 
 static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate)
 {
-    TRACE("%p %p 0x%x %u\n", pad, parent, mode, activate);
+    struct gstdemux *filter = gst_pad_get_element_private(pad);
+
+    TRACE("%s source pad for filter %p in %s mode.\n",
+            activate ? "Activating" : "Deactivating", filter, gst_pad_mode_get_name(mode));
+
     switch (mode) {
       case GST_PAD_MODE_PULL:
         return TRUE;
@@ -1017,9 +1026,9 @@ static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, g
 
 static void no_more_pads(GstElement *decodebin, gpointer user)
 {
-    struct gstdemux *This = user;
-    TRACE("%p %p\n", This, decodebin);
-    SetEvent(This->no_more_pads_event);
+    struct gstdemux *filter = user;
+    TRACE("filter %p.\n", filter);
+    SetEvent(filter->no_more_pads_event);
 }
 
 static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user)
@@ -1044,7 +1053,7 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
     GError *err = NULL;
     gchar *dbg_info = NULL;
 
-    TRACE("%p %p %p\n", This, bus, msg);
+    TRACE("filter %p, message type %s.\n", This, GST_MESSAGE_TYPE_NAME(msg));
 
     if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_ERROR) {
         gst_message_parse_error(msg, &err, &dbg_info);
@@ -2013,8 +2022,6 @@ struct list cb_list = LIST_INIT(cb_list);
 void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
 {
     struct cb_data *cbdata = user;
-
-    TRACE("got cb type: 0x%x\n", cbdata->type);
 
     switch(cbdata->type)
     {
