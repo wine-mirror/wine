@@ -121,7 +121,7 @@ BOOL is_wine_thread(void)
     return pthread_getspecific(wine_gst_key) != NULL;
 }
 
-static gboolean amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt)
+static gboolean amt_from_gst_caps_audio(const GstCaps *caps, AM_MEDIA_TYPE *amt)
 {
     WAVEFORMATEXTENSIBLE *wfe;
     WAVEFORMATEX *wfx;
@@ -182,7 +182,7 @@ static gboolean amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt)
     return TRUE;
 }
 
-static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
+static gboolean amt_from_gst_caps_video(const GstCaps *caps, AM_MEDIA_TYPE *amt)
 {
     VIDEOINFOHEADER *vih;
     BITMAPINFOHEADER *bih;
@@ -271,36 +271,34 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
     return TRUE;
 }
 
+static gboolean amt_from_gst_caps(const GstCaps *caps, AM_MEDIA_TYPE *mt)
+{
+    const char *type = gst_structure_get_name(gst_caps_get_structure(caps, 0));
+
+    if (!strcmp(type, "audio/x-raw"))
+        return amt_from_gst_caps_audio(caps, mt);
+    else if (!strcmp(type, "video/x-raw"))
+        return amt_from_gst_caps_video(caps, mt);
+    else
+    {
+        FIXME("Unhandled type %s.\n", debugstr_a(type));
+        return FALSE;
+    }
+}
+
 static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
 {
     struct gstdemux_source *pin = gst_pad_get_element_private(pad);
     gchar *caps_str = gst_caps_to_string(caps);
-    AM_MEDIA_TYPE amt;
-    GstStructure *arg;
-    const char *typename;
+    AM_MEDIA_TYPE mt;
     gboolean ret;
 
     TRACE("pin %p, caps %s.\n", pin, debugstr_a(caps_str));
     g_free(caps_str);
 
-    arg = gst_caps_get_structure(caps, 0);
-    typename = gst_structure_get_name(arg);
-    if (!strcmp(typename, "audio/x-raw")) {
-        ret = amt_from_gst_caps_audio(caps, &amt);
-        if (ret)
-            FreeMediaType(&amt);
-        TRACE("+%i\n", ret);
-        return ret;
-    } else if (!strcmp(typename, "video/x-raw")) {
-        ret = amt_from_gst_caps_video(caps, &amt);
-        if (ret)
-            FreeMediaType(&amt);
-        TRACE("-%i\n", ret);
-        return ret;
-    } else {
-        FIXME("Unhandled type \"%s\"\n", typename);
-        return FALSE;
-    }
+    if ((ret = amt_from_gst_caps(caps, &mt)))
+        FreeMediaType(&mt);
+    return ret;
 }
 
 static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
@@ -308,33 +306,20 @@ static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
     struct gstdemux_source *pin = gst_pad_get_element_private(pad);
     struct gstdemux *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
     gchar *caps_str = gst_caps_to_string(caps);
-    GstStructure *arg;
-    const char *typename;
-    gboolean ret;
 
     TRACE("filter %p, caps %s.\n", filter, debugstr_a(caps_str));
     g_free(caps_str);
 
     FreeMediaType(&pin->mt);
 
-    arg = gst_caps_get_structure(caps, 0);
-    typename = gst_structure_get_name(arg);
-    if (!strcmp(typename, "audio/x-raw")) {
-        ret = amt_from_gst_caps_audio(caps, &pin->mt);
-    } else if (!strcmp(typename, "video/x-raw")) {
-        ret = amt_from_gst_caps_video(caps, &pin->mt);
-        if (ret)
-        {
-            VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)pin->mt.pbFormat;
-            filter->props.cbBuffer = max(filter->props.cbBuffer, vih->bmiHeader.biSizeImage);
-        }
-    } else {
-        FIXME("Unhandled type \"%s\"\n", typename);
+    if (!amt_from_gst_caps(caps, &pin->mt))
         return FALSE;
+
+    if (IsEqualGUID(&pin->mt.formattype, &FORMAT_VideoInfo))
+    {
+        VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)pin->mt.pbFormat;
+        filter->props.cbBuffer = max(filter->props.cbBuffer, vih->bmiHeader.biSizeImage);
     }
-    TRACE("Linking returned %i for %s\n", ret, typename);
-    if (!ret)
-        return FALSE;
     SetEvent(pin->caps_event);
     return TRUE;
 }
