@@ -2743,10 +2743,11 @@ static inline void call_sendmsg_callback( SENDASYNCPROC callback, HWND hwnd, UIN
 /***********************************************************************
  *           peek_message
  *
- * Peek for a message matching the given parameters. Return FALSE if none available.
+ * Peek for a message matching the given parameters. Return 0 if none are
+ * available; -1 on error.
  * All pending sent messages are processed before returning.
  */
-static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags, UINT changed_mask )
+static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags, UINT changed_mask )
 {
     LRESULT result;
     struct user_thread_info *thread_info = get_user_thread_info();
@@ -2756,7 +2757,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
     void *buffer;
     size_t buffer_size = 256;
 
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, buffer_size ))) return FALSE;
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, buffer_size ))) return -1;
 
     if (!first && !last) last = ~0;
     if (hwnd == HWND_BROADCAST) hwnd = HWND_TOPMOST;
@@ -2804,9 +2805,14 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             {
                 thread_info->wake_mask = changed_mask & (QS_SENDMESSAGE | QS_SMRESULT);
                 thread_info->changed_mask = changed_mask;
+                return 0;
             }
-            if (res != STATUS_BUFFER_OVERFLOW) return FALSE;
-            if (!(buffer = HeapAlloc( GetProcessHeap(), 0, buffer_size ))) return FALSE;
+            if (res != STATUS_BUFFER_OVERFLOW)
+            {
+                SetLastError( RtlNtStatusToDosError(res) );
+                return -1;
+            }
+            if (!(buffer = HeapAlloc( GetProcessHeap(), 0, buffer_size ))) return -1;
             continue;
         }
 
@@ -2927,7 +2933,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                 thread_info->GetMessageExtraInfoVal = msg_data->hardware.info;
                 HeapFree( GetProcessHeap(), 0, buffer );
                 HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, TRUE );
-                return TRUE;
+                return 1;
             }
             continue;
         case MSG_POSTED:
@@ -2941,7 +2947,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                     if (first == info.msg.message && last == info.msg.message)
                     {
                         HeapFree( GetProcessHeap(), 0, buffer );
-                        return FALSE;
+                        return 0;
                     }
                 }
                 else
@@ -2963,7 +2969,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             thread_info->msg_source = msg_source_unavailable;
             HeapFree( GetProcessHeap(), 0, buffer );
             HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, TRUE );
-            return TRUE;
+            return 1;
         }
 
         /* if we get here, we have a sent message; call the window procedure */
@@ -3786,18 +3792,20 @@ static inline void check_for_driver_events( UINT msg )
 BOOL WINAPI DECLSPEC_HOTPATCH PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags )
 {
     MSG msg;
+    int ret;
 
     USER_CheckNotLock();
     check_for_driver_events( 0 );
 
-    if (!peek_message( &msg, hwnd, first, last, flags, 0 ))
-    {
-        DWORD ret;
+    ret = peek_message( &msg, hwnd, first, last, flags, 0 );
+    if (ret < 0) return FALSE;
 
+    if (!ret)
+    {
         flush_window_surfaces( TRUE );
         ret = wow_handlers.wait_message( 0, NULL, 0, QS_ALLINPUT, 0 );
         /* if we received driver events, check again for a pending message */
-        if (ret == WAIT_TIMEOUT || !peek_message( &msg, hwnd, first, last, flags, 0 )) return FALSE;
+        if (ret == WAIT_TIMEOUT || peek_message( &msg, hwnd, first, last, flags, 0 ) <= 0) return FALSE;
     }
 
     check_for_driver_events( msg.message );
@@ -3835,6 +3843,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT
 {
     HANDLE server_queue = get_server_queue_handle();
     unsigned int mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
+    int ret;
 
     USER_CheckNotLock();
     check_for_driver_events( 0 );
@@ -3850,10 +3859,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT
     }
     else mask = QS_ALLINPUT;
 
-    while (!peek_message( msg, hwnd, first, last, PM_REMOVE | (mask << 16), mask ))
+    while (!(ret = peek_message( msg, hwnd, first, last, PM_REMOVE | (mask << 16), mask )))
     {
         wait_objects( 1, &server_queue, INFINITE, mask & (QS_SENDMESSAGE | QS_SMRESULT), mask, 0 );
     }
+    if (ret < 0) return -1;
+
     check_for_driver_events( msg->message );
 
     return (msg->message != WM_QUIT);
@@ -3866,7 +3877,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT
 BOOL WINAPI DECLSPEC_HOTPATCH GetMessageA( MSG *msg, HWND hwnd, UINT first, UINT last )
 {
     if (get_pending_wmchar( msg, first, last, TRUE )) return TRUE;
-    GetMessageW( msg, hwnd, first, last );
+    if (GetMessageW( msg, hwnd, first, last ) < 0) return -1;
     map_wparam_WtoA( msg, TRUE );
     return (msg->message != WM_QUIT);
 }
