@@ -853,7 +853,7 @@ static void destroy_authinfo( struct HttpAuthInfo *authinfo )
     heap_free(authinfo);
 }
 
-static UINT retrieve_cached_basic_authorization(const WCHAR *host, const WCHAR *realm, char **auth_data)
+static UINT retrieve_cached_basic_authorization(http_request_t *req, const WCHAR *host, const WCHAR *realm, char **auth_data)
 {
     basicAuthorizationData *ad;
     UINT rc = 0;
@@ -865,10 +865,24 @@ static UINT retrieve_cached_basic_authorization(const WCHAR *host, const WCHAR *
     {
         if (!strcmpiW(host, ad->host) && (!realm || !strcmpW(realm, ad->realm)))
         {
+            char *colon;
+            DWORD length;
+
             TRACE("Authorization found in cache\n");
             *auth_data = heap_alloc(ad->authorizationLen);
             memcpy(*auth_data,ad->authorization,ad->authorizationLen);
             rc = ad->authorizationLen;
+
+            /* update session username and password to reflect current credentials */
+            colon = strchr(ad->authorization, ':');
+            length = colon - ad->authorization;
+
+            heap_free(req->session->userName);
+            heap_free(req->session->password);
+
+            req->session->userName = heap_strndupAtoW(ad->authorization, length, &length);
+            length++;
+            req->session->password = heap_strndupAtoW(&ad->authorization[length], ad->authorizationLen - length, &length);
             break;
         }
     }
@@ -1144,7 +1158,7 @@ static BOOL HTTP_DoAuthorization( http_request_t *request, LPCWSTR pszAuthValue,
         if (!domain_and_username)
         {
             if (host && szRealm)
-                auth_data_len = retrieve_cached_basic_authorization(host, szRealm,&auth_data);
+                auth_data_len = retrieve_cached_basic_authorization(request, host, szRealm,&auth_data);
             if (auth_data_len == 0)
             {
                 heap_free(szRealm);
@@ -1660,7 +1674,7 @@ static BOOL HTTP_InsertAuthorization( http_request_t *request, struct HttpAuthIn
         UINT data_len;
         char *data;
 
-        if ((data_len = retrieve_cached_basic_authorization(host, NULL, &data)))
+        if ((data_len = retrieve_cached_basic_authorization(request, host, NULL, &data)))
         {
             TRACE("Found cached basic authorization for %s\n", debugstr_w(host));
 

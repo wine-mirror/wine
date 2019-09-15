@@ -4481,15 +4481,15 @@ static void test_basic_auth_credentials_reuse(int port)
     SetLastError(0xdeadbeef);
     ret = InternetQueryOptionA(req, INTERNET_OPTION_USERNAME, buffer, &size);
     ok(ret, "unexpected failure %u\n", GetLastError());
-    todo_wine ok(!strcmp(buffer, "user"), "got %s\n", buffer);
-    todo_wine ok(size == 4, "got %u\n", size);
+    ok(!strcmp(buffer, "user"), "got %s\n", buffer);
+    ok(size == 4, "got %u\n", size);
 
     size = sizeof(buffer);
     SetLastError(0xdeadbeef);
     ret = InternetQueryOptionA(req, INTERNET_OPTION_PASSWORD, buffer, &size);
     ok(ret, "unexpected failure %u\n", GetLastError());
-    todo_wine ok(!strcmp(buffer, "pwd"), "got %s\n", buffer);
-    todo_wine ok(size == 3, "got %u\n", size);
+    ok(!strcmp(buffer, "pwd"), "got %s\n", buffer);
+    ok(size == 3, "got %u\n", size);
 
     status = 0xdeadbeef;
     size = sizeof(status);
