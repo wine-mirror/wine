@@ -556,7 +556,7 @@ static ULONG WINAPI OleContainer_Release(IOleContainer *iface)
 }
 
 static HRESULT WINAPI OleContainer_ParseDisplayName(IOleContainer *iface, IBindCtx *pbc,
-        LPOLESTR pszDiaplayName, ULONG *pchEaten, IMoniker **ppmkOut)
+        LPOLESTR pszDisplayName, ULONG *pchEaten, IMoniker **ppmkOut)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
