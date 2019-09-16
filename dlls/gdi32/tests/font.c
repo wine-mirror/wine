@@ -4801,7 +4801,7 @@ static void test_GetGlyphOutline(void)
 
         old_hfont = SelectObject(hdc, hfont);
 
-        /* expected to ignore superfluous bytes (sigle-byte character) */
+        /* expected to ignore superfluous bytes (single-byte character) */
         ret = GetGlyphOutlineA(hdc, 0x8041, GGO_BITMAP, &gm, 0, NULL, &mat);
         ret2 = GetGlyphOutlineA(hdc, 0x41, GGO_BITMAP, &gm2, 0, NULL, &mat);
         ok(ret == ret2 && memcmp(&gm, &gm2, sizeof gm) == 0, "%d %d\n", ret, ret2);

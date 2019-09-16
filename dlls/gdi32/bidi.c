@@ -68,7 +68,7 @@ extern const unsigned short bidi_direction_table[] DECLSPEC_HIDDEN;
     Note:
 
       The list of bidirectional character types here is not grouped the
-      same way as the table 3-7, since the numberic values for the types
+      same way as the table 3-7, since the numeric values for the types
       are chosen to keep the state and action tables compact.
 ------------------------------------------------------------------------*/
 enum directions
