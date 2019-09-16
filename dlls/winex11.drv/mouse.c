@@ -502,7 +502,7 @@ BOOL CDECL X11DRV_ClipCursor( const RECT *clip );
  *
  * Notification function called upon receiving a WM_X11DRV_CLIP_CURSOR.
  */
-LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
+LRESULT clip_cursor_notify( HWND hwnd, HWND prev_clip_hwnd, HWND new_clip_hwnd )
 {
     struct x11drv_thread_data *data = x11drv_init_thread_data();
 
@@ -513,7 +513,7 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
         HWND prev = clip_hwnd;
         clip_hwnd = new_clip_hwnd;
         if (prev || new_clip_hwnd) TRACE( "clip hwnd changed from %p to %p\n", prev, new_clip_hwnd );
-        if (prev) SendNotifyMessageW( prev, WM_X11DRV_CLIP_CURSOR, 0, 0 );
+        if (prev) SendNotifyMessageW( prev, WM_X11DRV_CLIP_CURSOR, (WPARAM)prev, 0 );
     }
     else if (hwnd == data->clip_hwnd)  /* this is a notification that clipping has been reset */
     {
@@ -529,6 +529,14 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
 
         GetClipCursor( &clip );
         X11DRV_ClipCursor( &clip );
+    }
+    else if (prev_clip_hwnd)
+    {
+        /* This is a notification send by the desktop window to an old
+         * dangling clip window.
+         */
+        TRACE( "destroying old clip hwnd %p\n", prev_clip_hwnd );
+        DestroyWindow( prev_clip_hwnd );
     }
     return 0;
 }

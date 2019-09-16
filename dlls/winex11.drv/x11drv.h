@@ -621,7 +621,7 @@ extern void X11DRV_InitClipboard(void) DECLSPEC_HIDDEN;
 extern void CDECL X11DRV_SetFocus( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void set_window_cursor( Window window, HCURSOR handle ) DECLSPEC_HIDDEN;
 extern void sync_window_cursor( Window window ) DECLSPEC_HIDDEN;
-extern LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd ) DECLSPEC_HIDDEN;
+extern LRESULT clip_cursor_notify( HWND hwnd, HWND prev_clip_hwnd, HWND new_clip_hwnd ) DECLSPEC_HIDDEN;
 extern void ungrab_clipping_window(void) DECLSPEC_HIDDEN;
 extern void reset_clipping_window(void) DECLSPEC_HIDDEN;
 extern void retry_grab_clipping_window(void) DECLSPEC_HIDDEN;
