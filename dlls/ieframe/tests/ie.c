@@ -215,7 +215,7 @@ static void test_window(IWebBrowser2 *wb)
     HRESULT hres;
 
     hres = IWebBrowser2_get_HWND(wb, &handle);
-    ok(hres == S_OK, "get_HWND faile: %08x\n", hres);
+    ok(hres == S_OK, "get_HWND failed: %08x\n", hres);
     ok(handle, "handle == 0\n");
 
     hwnd = (HWND)handle;
