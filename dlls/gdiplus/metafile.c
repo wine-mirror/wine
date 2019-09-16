@@ -2407,7 +2407,7 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
         if (pendata->PenDataFlags & PenDataCompoundLine)
         {
             EmfPlusCompoundLineData *compoundline = (EmfPlusCompoundLineData *)((BYTE *)pendata + offset);
-            FIXME("PenDataCompundLine is not supported.\n");
+            FIXME("PenDataCompoundLine is not supported.\n");
             offset += FIELD_OFFSET(EmfPlusCompoundLineData, data) + compoundline->CompoundLineDataSize * sizeof(float);
         }
 
