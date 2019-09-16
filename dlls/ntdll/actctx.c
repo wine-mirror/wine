@@ -5569,7 +5569,7 @@ NTSTATUS WINAPI RtlQueryActivationContextApplicationSettings( DWORD flags, HANDL
                                                               const WCHAR *settings, WCHAR *buffer,
                                                               SIZE_T size, SIZE_T *written )
 {
-    ACTIVATION_CONTEXT *actctx = check_actctx( handle );
+    ACTIVATION_CONTEXT *actctx;
     const WCHAR *res;
 
     if (flags)
