@@ -87,11 +87,11 @@ static HMMIO	get_mmioFromProfile(UINT uFlags, LPCWSTR lpszName)
 
     TRACE("searching in SystemSound list for %s\n", debugstr_w(lpszName));
     GetProfileStringW(wszSounds, lpszName, wszNull, str, ARRAY_SIZE(str));
-    if (lstrlenW(str) == 0)
+    if (!*str)
     {
 	if (uFlags & SND_NODEFAULT) goto next;
 	GetProfileStringW(wszSounds, wszDefault, wszNull, str, ARRAY_SIZE(str));
-	if (lstrlenW(str) == 0) goto next;
+	if (!*str) goto next;
     }
     for (ptr = str; *ptr && *ptr != ','; ptr++);
     if (*ptr) *ptr = 0;
