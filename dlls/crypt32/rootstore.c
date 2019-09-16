@@ -156,55 +156,41 @@ static BOOL import_base64_certs_from_fp(FILE *fp, HCERTSTORE store)
 
 static const char *trust_status_to_str(DWORD status)
 {
+    static const struct
+    {
+        DWORD flag;
+        char text[32];
+    }
+    messages[] =
+    {
+        { CERT_TRUST_IS_NOT_TIME_VALID, "expired" },
+        { CERT_TRUST_IS_NOT_TIME_NESTED, "bad time nesting" },
+        { CERT_TRUST_IS_REVOKED, "revoked" },
+        { CERT_TRUST_IS_NOT_SIGNATURE_VALID, "bad signature" },
+        { CERT_TRUST_IS_NOT_VALID_FOR_USAGE, "bad usage" },
+        { CERT_TRUST_IS_UNTRUSTED_ROOT, "untrusted root" },
+        { CERT_TRUST_REVOCATION_STATUS_UNKNOWN, "unknown revocation status" },
+        { CERT_TRUST_IS_CYCLIC, "cyclic chain" },
+        { CERT_TRUST_INVALID_EXTENSION, "unsupported critical extension" },
+        { CERT_TRUST_INVALID_POLICY_CONSTRAINTS, "bad policy" },
+        { CERT_TRUST_INVALID_BASIC_CONSTRAINTS, "bad basic constraints" },
+        { CERT_TRUST_INVALID_NAME_CONSTRAINTS, "bad name constraints" },
+        { CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT, "unsupported name constraint" },
+        { CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT, "undefined name constraint" },
+        { CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT, "disallowed name constraint" },
+        { CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT, "excluded name constraint" },
+        { CERT_TRUST_IS_OFFLINE_REVOCATION, "revocation server offline" },
+        { CERT_TRUST_NO_ISSUANCE_CHAIN_POLICY, "no issuance policy" },
+    };
     static char buf[1024];
-    int pos = 0;
+    int i, pos = 0;
 
-    if (status & CERT_TRUST_IS_NOT_TIME_VALID)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, "\n\texpired");
-    if (status & CERT_TRUST_IS_NOT_TIME_NESTED)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, "\n\tbad time nesting");
-    if (status & CERT_TRUST_IS_REVOKED)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, "\n\trevoked");
-    if (status & CERT_TRUST_IS_NOT_SIGNATURE_VALID)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, "\n\tbad signature");
-    if (status & CERT_TRUST_IS_NOT_VALID_FOR_USAGE)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, "\n\tbad usage");
-    if (status & CERT_TRUST_IS_UNTRUSTED_ROOT)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, "\n\tuntrusted root");
-    if (status & CERT_TRUST_REVOCATION_STATUS_UNKNOWN)
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-         "\n\tunknown revocation status");
-    if (status & CERT_TRUST_IS_CYCLIC)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, "\n\tcyclic chain");
-    if (status & CERT_TRUST_INVALID_EXTENSION)
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-         "\n\tunsupported critical extension");
-    if (status & CERT_TRUST_INVALID_POLICY_CONSTRAINTS)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, "\n\tbad policy");
-    if (status & CERT_TRUST_INVALID_BASIC_CONSTRAINTS)
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-         "\n\tbad basic constraints");
-    if (status & CERT_TRUST_INVALID_NAME_CONSTRAINTS)
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-         "\n\tbad name constraints");
-    if (status & CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT)
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-         "\n\tunsupported name constraint");
-    if (status & CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT)
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-         "\n\tundefined name constraint");
-    if (status & CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT)
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-         "\n\tdisallowed name constraint");
-    if (status & CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT)
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-         "\n\texcluded name constraint");
-    if (status & CERT_TRUST_IS_OFFLINE_REVOCATION)
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-         "\n\trevocation server offline");
-    if (status & CERT_TRUST_NO_ISSUANCE_CHAIN_POLICY)
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-         "\n\tno issuance policy");
+    for (i = 0; i < ARRAY_SIZE(messages); i++)
+    {
+        if (status & messages[i].flag)
+            pos += sprintf(buf + pos, "\n\t%s", messages[i].text);
+    }
+
     return buf;
 }
 
