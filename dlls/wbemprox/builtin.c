@@ -183,6 +183,8 @@ static const WCHAR prop_currentclockspeedW[] =
     {'C','u','r','r','e','n','t','C','l','o','c','k','S','p','e','e','d',0};
 static const WCHAR prop_currenthorizontalresW[] =
     {'C','u','r','r','e','n','t','H','o','r','i','z','o','n','t','a','l','R','e','s','o','l','u','t','i','o','n',0};
+static const WCHAR prop_currentlanguageW[] =
+    {'C','u','r','r','e','n','t','L','a','n','g','u','a','g','e',0};
 static const WCHAR prop_currentrefreshrateW[] =
     {'C','u','r','r','e','n','t','R','e','f','r','e','s','h','R','a','t','e',0};
 static const WCHAR prop_currentscanmodeW[] =
@@ -457,6 +459,7 @@ static const struct column col_baseboard[] =
 };
 static const struct column col_bios[] =
 {
+    { prop_currentlanguageW,    CIM_STRING },
     { prop_descriptionW,        CIM_STRING },
     { prop_identificationcodeW, CIM_STRING },
     { prop_manufacturerW,       CIM_STRING|COL_FLAG_DYNAMIC },
@@ -901,6 +904,7 @@ struct record_baseboard
 };
 struct record_bios
 {
+    const WCHAR *currentlanguage;
     const WCHAR *description;
     const WCHAR *identificationcode;
     const WCHAR *manufacturer;
@@ -1634,6 +1638,7 @@ static enum fill_status fill_bios( struct table *table, const struct expr *cond 
     GetSystemFirmwareTable( RSMB, 0, buf, len );
 
     rec = (struct record_bios *)table->data;
+    rec->currentlanguage    = NULL;
     rec->description        = bios_descriptionW;
     rec->identificationcode = NULL;
     rec->manufacturer       = get_bios_manufacturer( buf, len );
