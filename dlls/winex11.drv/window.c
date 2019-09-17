@@ -1792,9 +1792,19 @@ static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp,
     switch (msg)
     {
     case WM_WINE_NOTIFY_ACTIVITY:
-        XResetScreenSaver( gdi_display );
-        XFlush( gdi_display );
+    {
+        static ULONGLONG last = 0;
+        ULONGLONG now = GetTickCount64();
+        /* calling XResetScreenSaver too often can cause performance
+         * problems, so throttle it */
+        if (now > last + 5000)
+        {
+            XResetScreenSaver( gdi_display );
+            XFlush( gdi_display );
+            last = now;
+        }
         break;
+    }
     }
     return desktop_orig_wndproc( hwnd, msg, wp, lp );
 }
