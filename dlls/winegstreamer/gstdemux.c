@@ -140,7 +140,6 @@ static gboolean amt_from_gst_caps_audio(const GstCaps *caps, AM_MEDIA_TYPE *amt)
     amt->cbFormat = sizeof(*wfe);
     amt->bFixedSizeSamples = 0;
     amt->bTemporalCompression = 1;
-    amt->lSampleSize = 0;
     amt->pUnk = NULL;
 
     wfx->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
@@ -177,7 +176,7 @@ static gboolean amt_from_gst_caps_audio(const GstCaps *caps, AM_MEDIA_TYPE *amt)
             wfx->cbSize = 0;
         }
     }
-    wfx->nBlockAlign = wfx->nChannels * wfx->wBitsPerSample/8;
+    amt->lSampleSize = wfx->nBlockAlign = wfx->nChannels * wfx->wBitsPerSample/8;
     wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
     return TRUE;
 }
