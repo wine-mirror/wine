@@ -139,7 +139,7 @@ static gboolean amt_from_gst_caps_audio(const GstCaps *caps, AM_MEDIA_TYPE *amt)
     amt->pbFormat = (BYTE*)wfe;
     amt->cbFormat = sizeof(*wfe);
     amt->bFixedSizeSamples = TRUE;
-    amt->bTemporalCompression = 1;
+    amt->bTemporalCompression = FALSE;
     amt->pUnk = NULL;
 
     wfx->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
