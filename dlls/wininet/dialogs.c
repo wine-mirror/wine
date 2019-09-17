@@ -216,7 +216,7 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
 {
     HWND hitem;
     struct WININET_ErrorDlgParams *params;
-    WCHAR szRealm[0x80], szServer[0x80];
+    WCHAR szRealm[0x80];
 
     if( uMsg == WM_INITDIALOG )
     {
@@ -237,7 +237,7 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
         hitem = GetDlgItem( hdlg, IDC_PROXY );
         SetWindowTextW( hitem, params->req->session->appInfo->proxy );
 
-        WININET_GetSetPassword( hdlg, szServer, szRealm, FALSE );
+        WININET_GetSetPassword( hdlg, params->req->session->appInfo->proxy, szRealm, FALSE );
 
         return TRUE;
     }
@@ -291,7 +291,7 @@ static INT_PTR WINAPI WININET_PasswordDialog(
 {
     HWND hitem;
     struct WININET_ErrorDlgParams *params;
-    WCHAR szRealm[0x80], szServer[0x80];
+    WCHAR szRealm[0x80];
 
     if( uMsg == WM_INITDIALOG )
     {
@@ -312,7 +312,7 @@ static INT_PTR WINAPI WININET_PasswordDialog(
         hitem = GetDlgItem( hdlg, IDC_SERVER );
         SetWindowTextW( hitem, params->req->session->hostName );
 
-        WININET_GetSetPassword( hdlg, szServer, szRealm, FALSE );
+        WININET_GetSetPassword( hdlg, params->req->session->hostName, szRealm, FALSE );
 
         return TRUE;
     }
