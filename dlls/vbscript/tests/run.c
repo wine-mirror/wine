@@ -1792,7 +1792,7 @@ static IActiveScript *create_script(void)
     return script;
 }
 
-static IActiveScript *create_and_init_script(DWORD flags)
+static IActiveScript *create_and_init_script(DWORD flags, BOOL start)
 {
     IActiveScriptParse *parser;
     IActiveScript *engine;
@@ -1817,8 +1817,11 @@ static IActiveScript *create_and_init_script(DWORD flags)
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|flags);
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
 
-    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
-    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+    if (start)
+    {
+        hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+        ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+    }
 
     return engine;
 }
@@ -1843,7 +1846,7 @@ static HRESULT parse_script(DWORD flags, BSTR script_str, const WCHAR *delim)
     LONG ref;
     HRESULT hres;
 
-    engine = create_and_init_script(flags);
+    engine = create_and_init_script(flags, TRUE);
     if(!engine)
         return S_OK;
 
@@ -1907,7 +1910,7 @@ static void test_parse_context(void)
     static const WCHAR yW[] = {'y',0};
 
     global_ref = 1;
-    engine = create_and_init_script(0);
+    engine = create_and_init_script(0, TRUE);
     if(!engine)
         return;
 
@@ -2004,7 +2007,7 @@ static void test_procedures(void)
     VARIANT v;
     HRESULT hres;
 
-    script = create_and_init_script(0);
+    script = create_and_init_script(0, TRUE);
 
     hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParseProcedure2, (void**)&parse_proc);
     ok(hres == S_OK, "Could not get IActiveScriptParseProcedure2 iface: %08x\n", hres);
@@ -2237,6 +2240,141 @@ static HRESULT test_global_vars_ref(BOOL use_close)
     ref = IActiveScriptParse_Release(parser);
     ok(!ref, "ref=%d\n", ref);
     return hres;
+}
+
+static void test_isexpression(void)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    SCRIPTSTATE ss;
+    HRESULT hres;
+    VARIANT var;
+    BSTR str;
+
+    if (!(engine = create_and_init_script(0, FALSE)))
+        return;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+    if (FAILED(hres))
+    {
+        close_script(engine);
+        return;
+    }
+
+    /* Expression when script is not started is still executed */
+    hres = IActiveScript_GetScriptState(engine, &ss);
+    ok(hres == S_OK, "GetScriptState failed: %08x\n", hres);
+    ok(ss == SCRIPTSTATE_INITIALIZED, "Wrong script state %u\n", ss);
+
+    str = a2bstr("13");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_I2, "Expected VT_I2, got %s\n", vt2a(&var));
+    ok(V_I2(&var) == 13, "Expected 13, got %d\n", V_I2(&var));
+    VariantClear(&var);
+    SysFreeString(str);
+
+    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+
+    /* Empty expressions */
+    V_VT(&var) = VT_I2;
+    str = a2bstr("");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_EMPTY, "Expected VT_EMPTY, got %s\n", vt2a(&var));
+    VariantClear(&var);
+    SysFreeString(str);
+
+    /* Two expressions fail */
+    str = a2bstr("1\n3");
+    SET_EXPECT(OnScriptError);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(FAILED(hres), "ParseScriptText did not fail: %08x\n", hres);
+    todo_wine CHECK_CALLED(OnScriptError);
+    VariantClear(&var);
+    SysFreeString(str);
+
+    /* Simple numerical expression */
+    str = a2bstr("(1 + 7) * 2 - 3");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_I2, "Expected VT_I2, got %s\n", vt2a(&var));
+    ok(V_I2(&var) == 13, "Expected 13, got %d\n", V_I2(&var));
+    VariantClear(&var);
+    SysFreeString(str);
+
+    /* An expression can also refer to a variable, function, class, etc previously set */
+    V_VT(&var) = VT_I2;
+    str = a2bstr("If True Then foo = 42 Else foo = 0\n");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_EMPTY, "Expected VT_EMPTY, got %s\n", vt2a(&var));
+    VariantClear(&var);
+    SysFreeString(str);
+
+    str = a2bstr("foo\n\n");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_I2, "Expected VT_I2, got %s\n", vt2a(&var));
+    ok(V_I2(&var) == 42, "Expected 42, got %d\n", V_I2(&var));
+    VariantClear(&var);
+    SysFreeString(str);
+
+    str = a2bstr("foo : ");
+    SET_EXPECT(OnScriptError);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(FAILED(hres), "ParseScriptText did not fail: %08x\n", hres);
+    todo_wine CHECK_CALLED(OnScriptError);
+    VariantClear(&var);
+    SysFreeString(str);
+
+    str = a2bstr("\"foo is \" & CStr(foo)  \n  \n\n ");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "Expected VT_BSTR, got %s\n", vt2a(&var));
+    ok(!strcmp_wa(V_BSTR(&var), "foo is 42"), "Wrong string, got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+    SysFreeString(str);
+
+    str = a2bstr("Function test(x)\n"
+                 "    test = x + 0.5\n"
+                 "End Function\n");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("test(4) * 3\n");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_R8, "Expected VT_R8, got %s\n", vt2a(&var));
+    ok(V_R8(&var) == 13.5, "Expected %lf, got %lf\n", 13.5, V_R8(&var));
+    VariantClear(&var);
+    SysFreeString(str);
+
+    str = a2bstr("Class C\n"
+                 "    Public x\n"
+                 "End Class\n"
+                 "Set obj = New C\n"
+                 "obj.x = True\n");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("obj.x");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_BOOL, "Expected VT_BOOL, got %s\n", vt2a(&var));
+    ok(V_BOOL(&var) == VARIANT_TRUE, "Expected %x, got %x\n", VARIANT_TRUE, V_BOOL(&var));
+    VariantClear(&var);
+    SysFreeString(str);
+
+    IActiveScriptParse_Release(parser);
+    close_script(engine);
 }
 
 static BSTR get_script_from_file(const char *filename)
@@ -2556,6 +2694,7 @@ static void run_tests(void)
     test_procedures();
     test_gc();
     test_msgbox();
+    test_isexpression();
     test_parse_errors();
     test_parse_context();
 }
