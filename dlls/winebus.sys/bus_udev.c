@@ -1478,6 +1478,12 @@ static DWORD CALLBACK deviceloop_thread(void *args)
     return 0;
 }
 
+static int device_unload(DEVICE_OBJECT *device, void *context)
+{
+    try_remove_device(impl_from_DEVICE_OBJECT(device)->udev_device);
+    return 1;
+}
+
 void udev_driver_unload( void )
 {
     TRACE("Unload Driver\n");
@@ -1487,6 +1493,9 @@ void udev_driver_unload( void )
     close(deviceloop_control[0]);
     close(deviceloop_control[1]);
     CloseHandle(deviceloop_handle);
+
+    bus_enumerate_hid_devices(&hidraw_vtbl, device_unload, NULL);
+    bus_enumerate_hid_devices(&lnxev_vtbl, device_unload, NULL);
 }
 
 NTSTATUS udev_driver_init(void)
