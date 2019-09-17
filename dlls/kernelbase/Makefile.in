@@ -8,6 +8,7 @@ C_SRCS = \
 	debug.c \
 	file.c \
 	loader.c \
+	locale.c \
 	main.c \
 	memory.c \
 	path.c \

@@ -242,7 +242,7 @@
 @ stdcall CompareStringA(long long str long str long)
 @ stdcall CompareStringW(long long wstr long wstr long)
 @ stdcall CompareStringEx(wstr long wstr long wstr long ptr ptr long)
-@ stdcall CompareStringOrdinal(wstr long wstr long long)
+@ stdcall -import CompareStringOrdinal(wstr long wstr long long)
 @ stdcall -import ConnectNamedPipe(long ptr)
 @ stub ConsoleMenuControl
 @ stub ConsoleSubst
@@ -508,7 +508,7 @@
 @ stdcall FindResourceExA(long str str long)
 @ stdcall -import FindResourceExW(long wstr wstr long)
 @ stdcall -import FindResourceW(long wstr wstr)
-@ stdcall FindStringOrdinal(long wstr long wstr long long)
+@ stdcall -import FindStringOrdinal(long wstr long wstr long long)
 @ stdcall FindVolumeClose(ptr)
 @ stdcall FindVolumeMountPointClose(ptr)
 @ stdcall -import FlsAlloc(ptr)
@@ -818,10 +818,10 @@
 @ stdcall GetStringTypeExW(long long wstr long ptr)
 @ stdcall GetStringTypeW(long wstr long ptr)
 @ stdcall GetSystemFileCacheSize(ptr ptr ptr)
-@ stdcall GetSystemDefaultLCID()
-@ stdcall GetSystemDefaultLangID()
-@ stdcall GetSystemDefaultLocaleName(ptr long)
-@ stdcall GetSystemDefaultUILanguage()
+@ stdcall -import GetSystemDefaultLCID()
+@ stdcall -import GetSystemDefaultLangID()
+@ stdcall -import GetSystemDefaultLocaleName(ptr long)
+@ stdcall -import GetSystemDefaultUILanguage()
 @ stdcall GetSystemDEPPolicy()
 @ stdcall GetSystemDirectoryA(ptr long)
 @ stdcall GetSystemDirectoryW(ptr long)
@@ -852,7 +852,7 @@
 @ stdcall -import GetThreadIOPendingFlag(long ptr)
 @ stdcall -import GetThreadId(ptr)
 # @ stub GetThreadIdealProcessorEx
-@ stdcall GetThreadLocale()
+@ stdcall -import GetThreadLocale()
 @ stdcall GetThreadPreferredUILanguages(long ptr ptr ptr)
 @ stdcall -import GetThreadPriority(long)
 @ stdcall -import GetThreadPriorityBoost(long ptr)
@@ -869,10 +869,10 @@
 # @ stub GetUILanguageInfo
 @ stdcall -arch=x86_64 GetUmsCompletionListEvent(ptr ptr)
 # @ stub -arch=x86_64 GetUmsSystemThreadInformation
-@ stdcall GetUserDefaultLCID()
-@ stdcall GetUserDefaultLangID()
-@ stdcall GetUserDefaultLocaleName(ptr long)
-@ stdcall GetUserDefaultUILanguage()
+@ stdcall -import GetUserDefaultLCID()
+@ stdcall -import GetUserDefaultLangID()
+@ stdcall -import GetUserDefaultLocaleName(ptr long)
+@ stdcall -import GetUserDefaultUILanguage()
 @ stdcall GetUserGeoID(long)
 @ stub GetVDMCurrentDirectories
 @ stdcall -import GetVersion()
@@ -1024,7 +1024,7 @@
 @ stdcall K32QueryWorkingSetEx(long ptr long)
 @ stdcall -i386 -private -norelay K32Thk1632Epilog() krnl386.exe16.K32Thk1632Epilog
 @ stdcall -i386 -private -norelay K32Thk1632Prolog() krnl386.exe16.K32Thk1632Prolog
-@ stdcall LCIDToLocaleName(long ptr long long)
+@ stdcall -import LCIDToLocaleName(long ptr long long)
 @ stdcall LCMapStringA(long long str long ptr long)
 @ stdcall LCMapStringEx(wstr long wstr long ptr long ptr ptr long)
 @ stdcall LCMapStringW(long long wstr long ptr long)
@@ -1282,7 +1282,7 @@
 @ stdcall -import ResetEvent(long)
 @ stdcall -import ResetWriteWatch(ptr long)
 @ stdcall ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) ntdll.LdrResolveDelayLoadedAPI
-@ stdcall ResolveLocaleName(wstr ptr long)
+@ stdcall -import ResolveLocaleName(wstr ptr long)
 @ stdcall RestoreLastError(long) ntdll.RtlRestoreLastWin32Error
 @ stdcall -import ResumeThread(long)
 @ cdecl -arch=arm,arm64,x86_64 RtlAddFunctionTable(ptr long long) ntdll.RtlAddFunctionTable
@@ -1452,13 +1452,13 @@
 @ stdcall -import SetThreadGroupAffinity(long ptr ptr)
 @ stdcall -import SetThreadIdealProcessor(long long)
 @ stdcall -import SetThreadIdealProcessorEx(long ptr ptr)
-@ stdcall SetThreadLocale(long)
+@ stdcall -import SetThreadLocale(long)
 @ stdcall SetThreadPreferredUILanguages(long ptr ptr)
 @ stdcall -import SetThreadPriority(long long)
 @ stdcall -import SetThreadPriorityBoost(long long)
 @ stdcall -import SetThreadStackGuarantee(ptr)
 # @ stub SetThreadToken
-@ stdcall SetThreadUILanguage(long)
+@ stdcall -import SetThreadUILanguage(long)
 # @ stub SetThreadpoolStackInformation
 @ stdcall SetThreadpoolThreadMaximum(ptr long) ntdll.TpSetPoolMaxThreads
 @ stdcall SetThreadpoolThreadMinimum(ptr long) ntdll.TpSetPoolMinThreads
@@ -1550,8 +1550,8 @@
 @ stub VDMOperationStarted
 @ stub ValidateLCType
 @ stub ValidateLocale
-@ stdcall VerLanguageNameA(long str long)
-@ stdcall VerLanguageNameW(long wstr long)
+@ stdcall -import VerLanguageNameA(long str long)
+@ stdcall -import VerLanguageNameW(long wstr long)
 @ stdcall -ret64 VerSetConditionMask(long long long long) ntdll.VerSetConditionMask
 @ stdcall VerifyConsoleIoHandle(long)
 # @ stub VerifyScripts

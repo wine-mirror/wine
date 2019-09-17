@@ -1159,86 +1159,6 @@ static UINT setup_unix_locales(void)
 }
 
 
-/***********************************************************************
- *		GetUserDefaultLangID (KERNEL32.@)
- *
- * Get the default language Id for the current user.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  The current LANGID of the default language for the current user.
- */
-LANGID WINAPI GetUserDefaultLangID(void)
-{
-    return LANGIDFROMLCID(GetUserDefaultLCID());
-}
-
-
-/***********************************************************************
- *		GetSystemDefaultLangID (KERNEL32.@)
- *
- * Get the default language Id for the system.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  The current LANGID of the default language for the system.
- */
-LANGID WINAPI GetSystemDefaultLangID(void)
-{
-    return LANGIDFROMLCID(GetSystemDefaultLCID());
-}
-
-
-/***********************************************************************
- *		GetUserDefaultLCID (KERNEL32.@)
- *
- * Get the default locale Id for the current user.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  The current LCID of the default locale for the current user.
- */
-LCID WINAPI GetUserDefaultLCID(void)
-{
-    LCID lcid;
-    NtQueryDefaultLocale( TRUE, &lcid );
-    return lcid;
-}
-
-
-/***********************************************************************
- *		GetSystemDefaultLCID (KERNEL32.@)
- *
- * Get the default locale Id for the system.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  The current LCID of the default locale for the system.
- */
-LCID WINAPI GetSystemDefaultLCID(void)
-{
-    LCID lcid;
-    NtQueryDefaultLocale( FALSE, &lcid );
-    return lcid;
-}
-
-/***********************************************************************
- *		GetSystemDefaultLocaleName (KERNEL32.@)
- */
-INT WINAPI GetSystemDefaultLocaleName(LPWSTR localename, INT len)
-{
-    LCID lcid = GetSystemDefaultLCID();
-    return LCIDToLocaleName(lcid, localename, len, 0);
-}
-
 static BOOL get_dummy_preferred_ui_language( DWORD flags, ULONG *count, WCHAR *buffer, ULONG *size )
 {
     LCTYPE type;
@@ -1372,45 +1292,6 @@ BOOL WINAPI GetUserPreferredUILanguages( DWORD flags, ULONG *count, WCHAR *buffe
 }
 
 /***********************************************************************
- *		GetUserDefaultUILanguage (KERNEL32.@)
- *
- * Get the default user interface language Id for the current user.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  The current LANGID of the default UI language for the current user.
- */
-LANGID WINAPI GetUserDefaultUILanguage(void)
-{
-    LANGID lang;
-    NtQueryDefaultUILanguage( &lang );
-    return lang;
-}
-
-
-/***********************************************************************
- *		GetSystemDefaultUILanguage (KERNEL32.@)
- *
- * Get the default user interface language Id for the system.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  The current LANGID of the default UI language for the system. This is
- *  typically the same language used during the installation process.
- */
-LANGID WINAPI GetSystemDefaultUILanguage(void)
-{
-    LANGID lang;
-    NtQueryInstallUILanguage( &lang );
-    return lang;
-}
-
-
-/***********************************************************************
  *           LocaleNameToLCID  (KERNEL32.@)
  */
 LCID WINAPI LocaleNameToLCID( LPCWSTR name, DWORD flags )
@@ -1441,18 +1322,6 @@ LCID WINAPI LocaleNameToLCID( LPCWSTR name, DWORD flags )
               debugstr_w(name), debugstr_w(locale_name.lang) );
 
     return locale_name.lcid;
-}
-
-
-/***********************************************************************
- *           LCIDToLocaleName  (KERNEL32.@)
- */
-INT WINAPI LCIDToLocaleName( LCID lcid, LPWSTR name, INT count, DWORD flags )
-{
-    static int once;
-    if (flags && !once++) FIXME( "unsupported flags %x\n", flags );
-
-    return GetLocaleInfoW( lcid, LOCALE_SNAME | LOCALE_NOUSEROVERRIDE, name, count );
 }
 
 
@@ -2779,80 +2648,6 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
 }
 
 
-/***********************************************************************
- *           GetThreadLocale    (KERNEL32.@)
- *
- * Get the current threads locale.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  The LCID currently associated with the calling thread.
- */
-LCID WINAPI GetThreadLocale(void)
-{
-    LCID ret = NtCurrentTeb()->CurrentLocale;
-    if (!ret) NtCurrentTeb()->CurrentLocale = ret = GetUserDefaultLCID();
-    return ret;
-}
-
-/**********************************************************************
- *           SetThreadLocale    (KERNEL32.@)
- *
- * Set the current threads locale.
- *
- * PARAMS
- *  lcid [I] LCID of the locale to set
- *
- * RETURNS
- *  Success: TRUE. The threads locale is set to lcid.
- *  Failure: FALSE. Use GetLastError() to determine the cause.
- */
-BOOL WINAPI SetThreadLocale( LCID lcid )
-{
-    TRACE("(0x%04X)\n", lcid);
-
-    lcid = ConvertDefaultLocale(lcid);
-
-    if (lcid != GetThreadLocale())
-    {
-        if (!IsValidLocale(lcid, LCID_SUPPORTED))
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-
-        NtCurrentTeb()->CurrentLocale = lcid;
-    }
-    return TRUE;
-}
-
-/**********************************************************************
- *           SetThreadUILanguage    (KERNEL32.@)
- *
- * Set the current threads UI language.
- *
- * PARAMS
- *  langid [I] LANGID of the language to set, or 0 to use
- *             the available language which is best supported
- *             for console applications
- *
- * RETURNS
- *  Success: The return value is the same as the input value.
- *  Failure: The return value differs from the input value.
- *           Use GetLastError() to determine the cause.
- */
-LANGID WINAPI SetThreadUILanguage( LANGID langid )
-{
-    TRACE("(0x%04x) stub - returning success\n", langid);
-
-    if (!langid)
-        return GetThreadUILanguage();
-    else
-        return langid;
-}
-
 /******************************************************************************
  *		ConvertDefaultLocale (KERNEL32.@)
  *
@@ -3044,38 +2839,6 @@ BOOL WINAPI EnumSystemLocalesEx( LOCALE_ENUMPROCEX proc, DWORD flags, LPARAM lpa
                             (LPCWSTR)MAKEINTRESOURCE((LOCALE_SNAME >> 4) + 1),
                             enum_locale_ex_proc, (LONG_PTR)&data );
     return TRUE;
-}
-
-
-/***********************************************************************
- *           VerLanguageNameA  (KERNEL32.@)
- *
- * Get the name of a language.
- *
- * PARAMS
- *  wLang  [I] LANGID of the language
- *  szLang [O] Destination for the language name
- *
- * RETURNS
- *  Success: The size of the language name. If szLang is non-NULL, it is filled
- *           with the name.
- *  Failure: 0. Use GetLastError() to determine the cause.
- *
- */
-DWORD WINAPI VerLanguageNameA( DWORD wLang, LPSTR szLang, DWORD nSize )
-{
-    return GetLocaleInfoA( MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize );
-}
-
-
-/***********************************************************************
- *           VerLanguageNameW  (KERNEL32.@)
- *
- * See VerLanguageNameA.
- */
-DWORD WINAPI VerLanguageNameW( DWORD wLang, LPWSTR szLang, DWORD nSize )
-{
-    return GetLocaleInfoW( MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize );
 }
 
 
@@ -4044,27 +3807,6 @@ INT WINAPI CompareStringA(LCID lcid, DWORD flags,
     if (str1W != buf1W) HeapFree(GetProcessHeap(), 0, str1W);
     if (str2W != buf2W) HeapFree(GetProcessHeap(), 0, str2W);
     return ret;
-}
-
-/******************************************************************************
- *           CompareStringOrdinal    (KERNEL32.@)
- */
-INT WINAPI CompareStringOrdinal(const WCHAR *str1, INT len1, const WCHAR *str2, INT len2, BOOL ignore_case)
-{
-    int ret;
-
-    if (!str1 || !str2)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-    if (len1 < 0) len1 = strlenW(str1);
-    if (len2 < 0) len2 = strlenW(str2);
-
-    ret = RtlCompareUnicodeStrings( str1, len1, str2, len2, ignore_case );
-    if (ret < 0) return CSTR_LESS_THAN;
-    if (ret > 0) return CSTR_GREATER_THAN;
-    return CSTR_EQUAL;
 }
 
 /******************************************************************************
@@ -5260,16 +5002,6 @@ BOOL WINAPI EnumSystemGeoID(GEOCLASS geoclass, GEOID parent, GEO_ENUMPROC enumpr
     return TRUE;
 }
 
-INT WINAPI GetUserDefaultLocaleName(LPWSTR localename, int buffersize)
-{
-    LCID userlcid;
-
-    TRACE("%p, %d\n", localename,  buffersize);
-    
-    userlcid = GetUserDefaultLCID();
-    return LCIDToLocaleName(userlcid, localename, buffersize, 0);
-}
-
 /******************************************************************************
  *           NormalizeString (KERNEL32.@)
  */
@@ -5892,18 +5624,6 @@ BOOL WINAPI GetFileMUIInfo(DWORD flags, PCWSTR path, FILEMUIINFO *info, DWORD *s
 }
 
 /******************************************************************************
- *           ResolveLocaleName (KERNEL32.@)
- */
-
-INT WINAPI ResolveLocaleName(LPCWSTR name, LPWSTR localename, INT len)
-{
-    FIXME("stub: %s, %p, %d\n", wine_dbgstr_w(name), localename, len);
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
-}
-
-/******************************************************************************
  *           FindNLSStringEx (KERNEL32.@)
  */
 
@@ -5951,54 +5671,5 @@ INT WINAPI FindNLSStringEx(const WCHAR *localename, DWORD flags, const WCHAR *sr
         offset += inc;
     }
 
-    return -1;
-}
-
-/******************************************************************************
- *           FindStringOrdinal (KERNEL32.@)
- */
-
-INT WINAPI FindStringOrdinal(DWORD flag, const WCHAR *src, INT src_size, const WCHAR *val, INT val_size,
-                             BOOL ignore_case)
-{
-    INT offset, inc, count;
-    TRACE("%#x %s %d %s %d %d\n", flag, wine_dbgstr_w(src), src_size, wine_dbgstr_w(val), val_size, ignore_case);
-
-    if (!src || !val)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return -1;
-    }
-
-    if (flag != FIND_FROMSTART && flag != FIND_FROMEND && flag != FIND_STARTSWITH && flag != FIND_ENDSWITH)
-    {
-        SetLastError(ERROR_INVALID_FLAGS);
-        return -1;
-    }
-
-    if (src_size == -1) src_size = strlenW(src);
-    if (val_size == -1) val_size = strlenW(val);
-
-    src_size -= val_size;
-    if (src_size < 0)
-    {
-        SetLastError(NO_ERROR);
-        return -1;
-    }
-
-    count = flag & (FIND_FROMSTART | FIND_FROMEND) ? src_size + 1 : 1;
-    offset = flag & (FIND_FROMSTART | FIND_STARTSWITH) ? 0 : src_size;
-    inc = flag & (FIND_FROMSTART | FIND_STARTSWITH) ? 1 : -1;
-    while (count--)
-    {
-        if (CompareStringOrdinal(src + offset, val_size, val, val_size, ignore_case) == CSTR_EQUAL)
-        {
-            SetLastError(NO_ERROR);
-            return offset;
-        }
-        offset += inc;
-    }
-
-    SetLastError(NO_ERROR);
     return -1;
 }

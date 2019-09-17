@@ -26,6 +26,7 @@
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winternl.h"
 
 #include "kernelbase.h"
@@ -249,6 +250,17 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetThreadId( HANDLE thread )
 }
 
 
+/***********************************************************************
+ *	GetThreadLocale   (kernelbase.@)
+ */
+LCID WINAPI DECLSPEC_HOTPATCH GetThreadLocale(void)
+{
+    LCID ret = NtCurrentTeb()->CurrentLocale;
+    if (!ret) NtCurrentTeb()->CurrentLocale = ret = GetUserDefaultLCID();
+    return ret;
+}
+
+
 /**********************************************************************
  *           GetThreadPriority   (kernelbase.@)
  */
@@ -447,6 +459,25 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetThreadIdealProcessorEx( HANDLE thread, PROCESSO
 
 
 /**********************************************************************
+ *	SetThreadLocale   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetThreadLocale( LCID lcid )
+{
+    lcid = ConvertDefaultLocale( lcid );
+    if (lcid != GetThreadLocale())
+    {
+        if (!IsValidLocale( lcid, LCID_SUPPORTED ))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+        NtCurrentTeb()->CurrentLocale = lcid;
+    }
+    return TRUE;
+}
+
+
+/**********************************************************************
  *           SetThreadPriority   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetThreadPriority( HANDLE thread, INT priority )
@@ -484,6 +515,18 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetThreadStackGuarantee( ULONG *size )
     }
     if (new_size > prev_size) NtCurrentTeb()->GuaranteedStackBytes = (new_size + 4095) & ~4095;
     return TRUE;
+}
+
+
+/**********************************************************************
+ *	SetThreadUILanguage   (kernelbase.@)
+ */
+LANGID WINAPI DECLSPEC_HOTPATCH SetThreadUILanguage( LANGID langid )
+{
+    TRACE( "(0x%04x) stub - returning success\n", langid );
+
+    if (!langid) langid = GetThreadUILanguage();
+    return langid;
 }
 
 

@@ -155,7 +155,7 @@
 # @ stub CompareObjectHandles
 @ stdcall CompareStringA(long long str long str long) kernel32.CompareStringA
 @ stdcall CompareStringEx(wstr long wstr long wstr long ptr ptr long) kernel32.CompareStringEx
-@ stdcall CompareStringOrdinal(wstr long wstr long long) kernel32.CompareStringOrdinal
+@ stdcall CompareStringOrdinal(wstr long wstr long long)
 @ stdcall CompareStringW(long long wstr long wstr long) kernel32.CompareStringW
 @ stdcall ConnectNamedPipe(long ptr)
 @ stdcall ContinueDebugEvent(long long long)
@@ -373,7 +373,7 @@
 # @ stub FindPackagesByPackageFamily
 @ stdcall FindResourceExW(long wstr wstr long)
 @ stdcall FindResourceW(long wstr wstr)
-@ stdcall FindStringOrdinal(long wstr long wstr long long) kernel32.FindStringOrdinal
+@ stdcall FindStringOrdinal(long wstr long wstr long long)
 @ stdcall FindVolumeClose(ptr) kernel32.FindVolumeClose
 @ stdcall FlsAlloc(ptr)
 @ stdcall FlsFree(long)
@@ -681,10 +681,10 @@
 # @ stub GetSystemAppDataFolder
 # @ stub GetSystemAppDataKey
 # @ stub GetSystemCpuSetInformation
-@ stdcall GetSystemDefaultLCID() kernel32.GetSystemDefaultLCID
-@ stdcall GetSystemDefaultLangID() kernel32.GetSystemDefaultLangID
-@ stdcall GetSystemDefaultLocaleName(ptr long) kernel32.GetSystemDefaultLocaleName
-@ stdcall GetSystemDefaultUILanguage() kernel32.GetSystemDefaultUILanguage
+@ stdcall GetSystemDefaultLCID()
+@ stdcall GetSystemDefaultLangID()
+@ stdcall GetSystemDefaultLocaleName(ptr long)
+@ stdcall GetSystemDefaultUILanguage()
 @ stdcall GetSystemDirectoryA(ptr long)
 @ stdcall GetSystemDirectoryW(ptr long)
 @ stdcall GetSystemFileCacheSize(ptr ptr ptr) kernel32.GetSystemFileCacheSize
@@ -719,7 +719,7 @@
 @ stdcall GetThreadId(ptr)
 # @ stub GetThreadIdealProcessorEx
 # @ stub GetThreadInformation
-@ stdcall GetThreadLocale() kernel32.GetThreadLocale
+@ stdcall GetThreadLocale()
 @ stdcall GetThreadPreferredUILanguages(long ptr ptr ptr) kernel32.GetThreadPreferredUILanguages
 @ stdcall GetThreadPriority(long)
 @ stdcall GetThreadPriorityBoost(long ptr)
@@ -740,10 +740,10 @@
 @ stub GetUILanguageInfo
 # @ stub GetUnicodeStringToEightBitSizeRoutine
 # @ stub GetUnicodeStringToEightBitStringRoutine
-@ stdcall GetUserDefaultLCID() kernel32.GetUserDefaultLCID
-@ stdcall GetUserDefaultLangID() kernel32.GetUserDefaultLangID
-@ stdcall GetUserDefaultLocaleName(ptr long) kernel32.GetUserDefaultLocaleName
-@ stdcall GetUserDefaultUILanguage() kernel32.GetUserDefaultUILanguage
+@ stdcall GetUserDefaultLCID()
+@ stdcall GetUserDefaultLangID()
+@ stdcall GetUserDefaultLocaleName(ptr long)
+@ stdcall GetUserDefaultUILanguage()
 @ stdcall GetUserGeoID(long) kernel32.GetUserGeoID
 @ stub GetUserInfo
 @ stub GetUserInfoWord
@@ -914,7 +914,7 @@
 @ stdcall K32QueryWorkingSet(long ptr long) kernel32.K32QueryWorkingSet
 @ stdcall K32QueryWorkingSetEx(long ptr long) kernel32.K32QueryWorkingSetEx
 @ stub KernelBaseGetGlobalData
-@ stdcall LCIDToLocaleName(long ptr long long) kernel32.LCIDToLocaleName
+@ stdcall LCIDToLocaleName(long ptr long long)
 @ stdcall LCMapStringA(long long str long ptr long) kernel32.LCMapStringA
 @ stdcall LCMapStringEx(wstr long wstr long ptr long ptr ptr long) kernel32.LCMapStringEx
 @ stdcall LCMapStringW(long long wstr long ptr long) kernel32.LCMapStringW
@@ -1346,7 +1346,7 @@
 @ stdcall ResetWriteWatch(ptr long)
 @ stdcall ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) kernel32.ResolveDelayLoadedAPI
 # @ stub ResolveDelayLoadsFromDll
-@ stdcall ResolveLocaleName(wstr ptr long) kernel32.ResolveLocaleName
+@ stdcall ResolveLocaleName(wstr ptr long)
 @ stdcall RestoreLastError(long) ntdll.RtlRestoreLastWin32Error
 @ stdcall ResumeThread(long)
 @ stdcall RevertToSelf()
@@ -1485,14 +1485,14 @@
 @ stdcall SetThreadIdealProcessor(long long)
 @ stdcall SetThreadIdealProcessorEx(long ptr ptr)
 # @ stub SetThreadInformation
-@ stdcall SetThreadLocale(long) kernel32.SetThreadLocale
+@ stdcall SetThreadLocale(long)
 @ stdcall SetThreadPreferredUILanguages(long ptr ptr) kernel32.SetThreadPreferredUILanguages
 @ stdcall SetThreadPriority(long long)
 @ stdcall SetThreadPriorityBoost(long long)
 # @ stub SetThreadSelectedCpuSets
 @ stdcall SetThreadStackGuarantee(ptr)
 @ stdcall SetThreadToken(ptr ptr)
-@ stdcall SetThreadUILanguage(long) kernel32.SetThreadUILanguage
+@ stdcall SetThreadUILanguage(long)
 @ stub SetThreadpoolStackInformation
 @ stdcall SetThreadpoolThreadMaximum(ptr long) ntdll.TpSetPoolMaxThreads
 @ stdcall SetThreadpoolThreadMinimum(ptr long) ntdll.TpSetPoolMinThreads
@@ -1657,8 +1657,8 @@
 @ stdcall UrlUnescapeW(wstr ptr ptr long)
 @ stdcall VerFindFileA(long str str str ptr ptr ptr ptr)
 @ stdcall VerFindFileW(long wstr wstr wstr ptr ptr ptr ptr)
-@ stdcall VerLanguageNameA(long str long) kernel32.VerLanguageNameA
-@ stdcall VerLanguageNameW(long wstr long) kernel32.VerLanguageNameW
+@ stdcall VerLanguageNameA(long str long)
+@ stdcall VerLanguageNameW(long wstr long)
 @ stdcall VerQueryValueA(ptr str ptr ptr)
 @ stdcall VerQueryValueW(ptr wstr ptr ptr)
 @ stdcall -ret64 VerSetConditionMask(long long long long) ntdll.VerSetConditionMask
