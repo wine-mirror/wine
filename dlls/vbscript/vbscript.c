@@ -76,14 +76,14 @@ static inline BOOL is_started(VBScript *This)
         || This->state == SCRIPTSTATE_DISCONNECTED;
 }
 
-static HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code)
+static HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res)
 {
     HRESULT hres;
 
     code->pending_exec = FALSE;
 
     IActiveScriptSite_OnEnterScript(ctx->site);
-    hres = exec_script(ctx, &code->main_code, NULL, NULL, NULL);
+    hres = exec_script(ctx, &code->main_code, NULL, NULL, res);
     IActiveScriptSite_OnLeaveScript(ctx->site);
 
     return hres;
@@ -95,7 +95,7 @@ static void exec_queued_code(script_ctx_t *ctx)
 
     LIST_FOR_EACH_ENTRY(iter, &ctx->code_list, vbscode_t, entry) {
         if(iter->pending_exec)
-            exec_global_code(ctx, iter);
+            exec_global_code(ctx, iter, NULL);
     }
 }
 
@@ -719,19 +719,19 @@ static HRESULT WINAPI VBScriptParse_ParseScriptText(IActiveScriptParse *iface,
         }
     }
 
-    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, &code);
+    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, dwFlags, &code);
     if(FAILED(hres))
         return hres;
 
     if(context)
         IDispatch_AddRef(code->context = context);
 
-    if(!is_started(This)) {
+    if(!(dwFlags & SCRIPTTEXT_ISEXPRESSION) && !is_started(This)) {
         code->pending_exec = TRUE;
         return S_OK;
     }
 
-    return exec_global_code(This->ctx, code);
+    return exec_global_code(This->ctx, code, pvarResult);
 }
 
 static const IActiveScriptParseVtbl VBScriptParseVtbl = {
@@ -782,7 +782,7 @@ static HRESULT WINAPI VBScriptParseProcedure_ParseProcedureText(IActiveScriptPar
     if(This->thread_id != GetCurrentThreadId() || This->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, &code);
+    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, dwFlags, &code);
     if(FAILED(hres))
         return hres;
 

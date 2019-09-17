@@ -1258,6 +1258,30 @@ static HRESULT interp_ret(exec_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT interp_retval(exec_ctx_t *ctx)
+{
+    variant_val_t val;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = stack_pop_val(ctx, &val);
+    if(FAILED(hres))
+        return hres;
+
+    if(val.owned) {
+        VariantClear(&ctx->ret_val);
+        ctx->ret_val = *val.v;
+    }
+    else {
+        hres = VariantCopy(&ctx->ret_val, val.v);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
+}
+
 static HRESULT interp_stop(exec_ctx_t *ctx)
 {
     WARN("\n");
@@ -2179,8 +2203,6 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, vbdisp_t *vbthis, DISPP
     }
 
     assert(!exec.top);
-    if(func->type != FUNC_FUNCTION && func->type != FUNC_PROPGET && func->type != FUNC_DEFGET)
-        assert(V_VT(&exec.ret_val) == VT_EMPTY);
 
     if(SUCCEEDED(hres) && res) {
         *res = exec.ret_val;

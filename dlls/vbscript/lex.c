@@ -493,6 +493,12 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
 {
     int ret;
 
+    if (ctx->last_token == tEXPRESSION)
+    {
+        ctx->last_token = tNL;
+        return tEXPRESSION;
+    }
+
     while(1) {
         ret = parse_next_token(lval, ctx);
         if(ret == '_') {

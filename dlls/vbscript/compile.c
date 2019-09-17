@@ -1196,6 +1196,21 @@ static HRESULT compile_onerror_statement(compile_ctx_t *ctx, onerror_statement_t
     return push_instr_int(ctx, OP_errmode, stat->resume_next);
 }
 
+static HRESULT compile_retval_statement(compile_ctx_t *ctx, retval_statement_t *stat)
+{
+    HRESULT hres;
+
+    hres = compile_expression(ctx, stat->expr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = push_instr(ctx, OP_retval);
+    if(FAILED(hres))
+        return hres;
+
+    return S_OK;
+}
+
 static HRESULT compile_statement(compile_ctx_t *ctx, statement_ctx_t *stat_ctx, statement_t *stat)
 {
     HRESULT hres;
@@ -1266,6 +1281,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_ctx_t *stat_ctx, 
         case STAT_WHILE:
         case STAT_WHILELOOP:
             hres = compile_while_statement(ctx, (while_statement_t*)stat);
+            break;
+        case STAT_RETVAL:
+            hres = compile_retval_statement(ctx, (retval_statement_t*)stat);
             break;
         default:
             FIXME("Unimplemented statement type %d\n", stat->type);
@@ -1795,7 +1813,7 @@ static void release_compiler(compile_ctx_t *ctx)
         release_vbscode(ctx->code);
 }
 
-HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *delimiter, vbscode_t **ret)
+HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *delimiter, DWORD flags, vbscode_t **ret)
 {
     function_t *new_func;
     function_decl_t *func_decl;
@@ -1804,7 +1822,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     vbscode_t *code;
     HRESULT hres;
 
-    hres = parse_script(&ctx.parser, src, delimiter);
+    hres = parse_script(&ctx.parser, src, delimiter, flags);
     if(FAILED(hres))
         return hres;
 
