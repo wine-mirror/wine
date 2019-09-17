@@ -626,7 +626,7 @@ static HRESULT Procedure_invoke(vbdisp_t *This, VARIANT *args, unsigned args_cnt
     TRACE("\n");
 
     IActiveScriptSite_OnEnterScript(ctx->site);
-    hres = exec_script(ctx, This->desc->value_func, NULL, NULL, NULL);
+    hres = exec_script(ctx, This->desc->value_func, NULL, NULL, res);
     IActiveScriptSite_OnLeaveScript(ctx->site);
 
     return hres;
