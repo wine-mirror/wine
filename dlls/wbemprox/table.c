@@ -67,6 +67,8 @@ UINT get_type_size( CIMTYPE type )
     case CIM_REFERENCE:
     case CIM_STRING:
         return sizeof(WCHAR *);
+    case CIM_REAL32:
+        return sizeof(FLOAT);
     default:
         ERR("unhandled type %u\n", type);
         break;
@@ -138,6 +140,9 @@ HRESULT get_value( const struct table *table, UINT row, UINT column, LONGLONG *v
         break;
     case CIM_UINT64:
         *val = *(const UINT64 *)ptr;
+        break;
+    case CIM_REAL32:
+        memcpy( val, ptr, sizeof(FLOAT) );
         break;
     default:
         ERR("invalid column type %u\n", table->columns[column].type & COL_TYPE_MASK);
