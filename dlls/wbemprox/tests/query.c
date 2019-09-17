@@ -339,6 +339,9 @@ static void _check_property( ULONG line, IWbemClassObject *obj, const WCHAR *pro
     case VT_I4:
         trace( "%s: %d\n", wine_dbgstr_w(prop), V_I4(&val) );
         break;
+    case VT_R4:
+        trace( "%s: %f\n", wine_dbgstr_w(prop), V_R4(&val) );
+        break;
     default:
         break;
     }
@@ -1643,6 +1646,58 @@ static void test_Win32_PnPEntity( IWbemServices *services )
     IEnumWbemClassObject_Release( enm );
 }
 
+static void test_Win32_WinSAT( IWbemServices *services )
+{
+    static const WCHAR cpuscoreW[] =
+        {'C','P','U','S','c','o','r','e',0};
+    static const WCHAR d3dscoreW[] =
+        {'D','3','D','S','c','o','r','e',0};
+    static const WCHAR diskscoreW[] =
+        {'D','i','s','k','S','c','o','r','e',0};
+    static const WCHAR graphicsscoreW[] =
+        {'G','r','a','p','h','i','c','s','S','c','o','r','e',0};
+    static const WCHAR memoryscoreW[] =
+        {'M','e','m','o','r','y','S','c','o','r','e',0};
+    static const WCHAR winsatassessmentstateW[] =
+        {'W','i','n','S','A','T','A','s','s','e','s','s','m','e','n','t','S','t','a','t','e',0};
+    static const WCHAR winsprlevelW[] =
+        {'W','i','n','S','P','R','L','e','v','e','l',0};
+    static const WCHAR queryW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_','W','i','n','S','A','T',0};
+    BSTR wql = SysAllocString( wqlW ), query = SysAllocString( queryW );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    HRESULT hr;
+    DWORD count;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK || broken(hr == WBEM_E_INVALID_CLASS) /* win2k8 */, "got %08x\n", hr );
+    if (hr == WBEM_E_INVALID_CLASS)
+    {
+        win_skip( "class not found\n" );
+        return;
+    }
+
+    for (;;)
+    {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+
+        check_property( obj, cpuscoreW, VT_R4, CIM_REAL32 );
+        check_property( obj, d3dscoreW, VT_R4, CIM_REAL32 );
+        check_property( obj, diskscoreW, VT_R4, CIM_REAL32 );
+        check_property( obj, graphicsscoreW, VT_R4, CIM_REAL32 );
+        check_property( obj, memoryscoreW, VT_R4, CIM_REAL32 );
+        check_property( obj, winsatassessmentstateW, VT_I4, CIM_UINT32 );
+        check_property( obj, winsprlevelW, VT_R4, CIM_REAL32 );
+        IWbemClassObject_Release( obj );
+    }
+
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
 START_TEST(query)
 {
     static const WCHAR cimv2W[] = {'R','O','O','T','\\','C','I','M','V','2',0};
@@ -1693,6 +1748,7 @@ START_TEST(query)
     test_Win32_Service( services );
     test_Win32_SystemEnclosure( services );
     test_Win32_VideoController( services );
+    test_Win32_WinSAT( services );
 
     SysFreeString( path );
     IWbemServices_Release( services );

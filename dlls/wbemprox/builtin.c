@@ -116,6 +116,8 @@ static const WCHAR class_systemenclosureW[] =
     {'W','i','n','3','2','_','S','y','s','t','e','m','E','n','c','l','o','s','u','r','e',0};
 static const WCHAR class_videocontrollerW[] =
     {'W','i','n','3','2','_','V','i','d','e','o','C','o','n','t','r','o','l','l','e','r',0};
+static const WCHAR class_winsatW[] =
+    {'W','i','n','3','2','_','W','i','n','S','A','T',0};
 
 static const WCHAR prop_accountnameW[] =
     {'A','c','c','o','u','n','t','N','a','m','e',0};
@@ -175,6 +177,8 @@ static const WCHAR prop_configuredclockspeedW[] =
     {'C','o','n','f','i','g','u','r','e','d','C','l','o','c','k','S','p','e','e','d',0};
 static const WCHAR prop_countrycodeW[] =
     {'C','o','u','n','t','r','y','C','o','d','e',0};
+static const WCHAR prop_cpuscoreW[] =
+    {'C','P','U','S','c','o','r','e',0};
 static const WCHAR prop_cpustatusW[] =
     {'C','p','u','S','t','a','t','u','s',0};
 static const WCHAR prop_csdversionW[] =
@@ -197,6 +201,8 @@ static const WCHAR prop_currenttimezoneW[] =
     {'C','u','r','r','e','n','t','T','i','m','e','Z','o','n','e',0};
 static const WCHAR prop_currentverticalresW[] =
     {'C','u','r','r','e','n','t','V','e','r','t','i','c','a','l','R','e','s','o','l','u','t','i','o','n',0};
+static const WCHAR prop_d3dscoreW[] =
+    {'D','3','D','S','c','o','r','e',0};
 static const WCHAR prop_datawidthW[] =
     {'D','a','t','a','W','i','d','t','h',0};
 static const WCHAR prop_defaultipgatewayW[] =
@@ -217,6 +223,8 @@ static const WCHAR prop_dhcpenabledW[] =
     {'D','H','C','P','E','n','a','b','l','e','d',0};
 static const WCHAR prop_directionW[] =
     {'D','i','r','e','c','t','i','o','n',0};
+static const WCHAR prop_diskscoreW[] =
+    {'D','i','s','k','S','c','o','r','e',0};
 static const WCHAR prop_displaynameW[] =
     {'D','i','s','p','l','a','y','N','a','m','e',0};
 static const WCHAR prop_diskindexW[] =
@@ -251,6 +259,8 @@ static const WCHAR prop_freephysicalmemoryW[] =
     {'F','r','e','e','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
 static const WCHAR prop_handleW[] =
     {'H','a','n','d','l','e',0};
+static const WCHAR prop_graphicsscoreW[] =
+    {'G','r','a','p','h','i','c','s','S','c','o','r','e',0};
 static const WCHAR prop_horizontalresolutionW[] =
     {'H','o','r','i','z','o','n','t','a','l','R','e','s','o','l','u','t','i','o','n',0};
 static const WCHAR prop_idW[] =
@@ -303,6 +313,8 @@ static const WCHAR prop_mediatypeW[] =
     {'M','e','d','i','a','T','y','p','e',0};
 static const WCHAR prop_memberW[] =
     {'M','e','m','b','e','r',0};
+static const WCHAR prop_memoryscoreW[] =
+    {'M','e','m','o','r','y','S','c','o','r','e',0};
 static const WCHAR prop_memorytypeW[] =
     {'M','e','m','o','r','y','T','y','p','e',0};
 static const WCHAR prop_methodW[] =
@@ -413,6 +425,8 @@ static const WCHAR prop_tagW[] =
     {'T','a','g',0};
 static const WCHAR prop_threadcountW[] =
     {'T','h','r','e','a','d','C','o','u','n','t',0};
+static const WCHAR prop_timetakenW[] =
+    {'T','i','m','e','T','a','k','e','n',0};
 static const WCHAR prop_totalphysicalmemoryW[] =
     {'T','o','t','a','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
 static const WCHAR prop_totalvirtualmemorysizeW[] =
@@ -445,6 +459,10 @@ static const WCHAR prop_volumenameW[] =
     {'V','o','l','u','m','e','N','a','m','e',0};
 static const WCHAR prop_volumeserialnumberW[] =
     {'V','o','l','u','m','e','S','e','r','i','a','l','N','u','m','b','e','r',0};
+static const WCHAR prop_winsatassessmentstateW[] =
+    {'W','i','n','S','A','T','A','s','s','e','s','s','m','e','n','t','S','t','a','t','e',0};
+static const WCHAR prop_winsprlevelW[] =
+    {'W','i','n','S','P','R','L','e','v','e','l',0};
 static const WCHAR prop_workingsetsizeW[] =
     {'W','o','r','k','i','n','g','S','e','t','S','i','z','e',0};
 
@@ -802,6 +820,17 @@ static const struct column col_videocontroller[] =
     { prop_videomodedescriptionW,   CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_videoprocessorW,         CIM_STRING|COL_FLAG_DYNAMIC },
 };
+static const struct column col_winsat[] =
+{
+    { prop_cpuscoreW,              CIM_REAL32 },
+    { prop_d3dscoreW,              CIM_REAL32 },
+    { prop_diskscoreW,             CIM_REAL32 },
+    { prop_graphicsscoreW,         CIM_REAL32 },
+    { prop_memoryscoreW,           CIM_REAL32 },
+    { prop_timetakenW,             CIM_STRING|COL_FLAG_KEY },
+    { prop_winsatassessmentstateW, CIM_UINT32, VT_I4 },
+    { prop_winsprlevelW,           CIM_REAL32 },
+};
 
 static const WCHAR baseboard_manufacturerW[] =
     {'I','n','t','e','l',' ','C','o','r','p','o','r','a','t','i','o','n',0};
@@ -897,6 +926,8 @@ static const WCHAR videocontroller_driverversionW[] =
     {'1','.','0',0};
 static const WCHAR videocontroller_statusW[] =
     {'O','K',0};
+static const WCHAR winsat_timetakenW[] =
+    {'M','o','s','t','R','e','c','e','n','t','A','s','s','e','s','s','m','e','n','t',0};
 
 #include "pshpack1.h"
 struct record_associator
@@ -1252,6 +1283,17 @@ struct record_videocontroller
     const WCHAR *videomodedescription;
     const WCHAR *videoprocessor;
 };
+struct record_winsat
+{
+    FLOAT        cpuscore;
+    FLOAT        d3dscore;
+    FLOAT        diskscrore;
+    FLOAT        graphicsscore;
+    FLOAT        memoryscore;
+    const WCHAR *timetaken;
+    UINT32       winsatassessmentstate;
+    FLOAT        winsprlevel;
+};
 #include "poppack.h"
 
 static const struct record_associator data_associator[] =
@@ -1324,6 +1366,10 @@ static const struct array systemenclosure_chassistypes_array =
 static const struct record_systemsecurity data_systemsecurity[] =
 {
     { security_get_sd, security_set_sd }
+};
+static const struct record_winsat data_winsat[] =
+{
+    { 8.0f, 8.0f, 8.0f, 8.0f, 8.0f, winsat_timetakenW, 1 /* Valid */, 8.0f },
 };
 
 /* check if row matches condition and update status */
@@ -4360,7 +4406,8 @@ static struct table builtin_classes[] =
     { class_stdregprovW, C(col_stdregprov), D(data_stdregprov) },
     { class_systemsecurityW, C(col_systemsecurity), D(data_systemsecurity) },
     { class_systemenclosureW, C(col_systemenclosure), 0, 0, NULL, fill_systemenclosure },
-    { class_videocontrollerW, C(col_videocontroller), 0, 0, NULL, fill_videocontroller }
+    { class_videocontrollerW, C(col_videocontroller), 0, 0, NULL, fill_videocontroller },
+    { class_winsatW, C(col_winsat), D(data_winsat) },
 };
 #undef C
 #undef D
