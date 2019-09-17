@@ -87,7 +87,7 @@ static const WCHAR class_networkadapterW[] =
 static const WCHAR class_networkadapterconfigW[] =
     {'W','i','n','3','2','_','N','e','t','w','o','r','k','A','d','a','p','t','e','r',
      'C','o','n','f','i','g','u','r','a','t','i','o','n',0};
-static const WCHAR class_osW[] =
+static const WCHAR class_operatingsystemW[] =
     {'W','i','n','3','2','_','O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
 static const WCHAR class_paramsW[] =
     {'_','_','P','A','R','A','M','E','T','E','R','S',0};
@@ -177,6 +177,8 @@ static const WCHAR prop_cpustatusW[] =
     {'C','p','u','S','t','a','t','u','s',0};
 static const WCHAR prop_csdversionW[] =
     {'C','S','D','V','e','r','s','i','o','n',0};
+static const WCHAR prop_csnameW[] =
+    {'C','S','N','a','m','e',0};
 static const WCHAR prop_currentbitsperpixelW[] =
     {'C','u','r','r','e','n','t','B','i','t','s','P','e','r','P','i','x','e','l',0};
 static const WCHAR prop_currentclockspeedW[] =
@@ -189,6 +191,8 @@ static const WCHAR prop_currentrefreshrateW[] =
     {'C','u','r','r','e','n','t','R','e','f','r','e','s','h','R','a','t','e',0};
 static const WCHAR prop_currentscanmodeW[] =
     {'C','u','r','r','e','n','t','S','c','a','n','M','o','d','e',0};
+static const WCHAR prop_currenttimezoneW[] =
+    {'C','u','r','r','e','n','t','T','i','m','e','Z','o','n','e',0};
 static const WCHAR prop_currentverticalresW[] =
     {'C','u','r','r','e','n','t','V','e','r','t','i','c','a','l','R','e','s','o','l','u','t','i','o','n',0};
 static const WCHAR prop_datawidthW[] =
@@ -597,18 +601,21 @@ static const struct column col_networkadapterconfig[] =
     { prop_macaddressW,           CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_settingidW,            CIM_STRING|COL_FLAG_DYNAMIC }
 };
-static const struct column col_os[] =
+static const struct column col_operatingsystem[] =
 {
     { prop_buildnumberW,            CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_captionW,                CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_codesetW,                CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_countrycodeW,            CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_csdversionW,             CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_csnameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_currenttimezoneW,        CIM_SINT16 },
     { prop_freephysicalmemoryW,     CIM_UINT64 },
     { prop_installdateW,            CIM_DATETIME },
     { prop_lastbootuptimeW,         CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_localdatetimeW,          CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_localeW,                 CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_manufacturerW,           CIM_STRING },
     { prop_nameW,                   CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_operatingsystemskuW,     CIM_UINT32, VT_I4 },
     { prop_osarchitectureW,         CIM_STRING },
@@ -1049,11 +1056,14 @@ struct record_operatingsystem
     const WCHAR *codeset;
     const WCHAR *countrycode;
     const WCHAR *csdversion;
+    const WCHAR *csname;
+    INT16        currenttimezone;
     UINT64       freephysicalmemory;
     const WCHAR *installdate;
     const WCHAR *lastbootuptime;
     const WCHAR *localdatetime;
     const WCHAR *locale;
+    const WCHAR *manufacturer;
     const WCHAR *name;
     UINT32       operatingsystemsku;
     const WCHAR *osarchitecture;
@@ -3773,9 +3783,18 @@ static DWORD get_operatingsystemsku(void)
     GetProductInfo( 6, 0, 0, 0, &ret );
     return ret;
 }
-
-static enum fill_status fill_os( struct table *table, const struct expr *cond )
+static INT16 get_currenttimezone(void)
 {
+    TIME_ZONE_INFORMATION info;
+    DWORD status = GetTimeZoneInformation( &info );
+    if (status == TIME_ZONE_ID_INVALID) return 0;
+    if (status == TIME_ZONE_ID_DAYLIGHT) return -(info.Bias + info.DaylightBias);
+    return -(info.Bias + info.StandardBias);
+}
+
+static enum fill_status fill_operatingsystem( struct table *table, const struct expr *cond )
+{
+    static const WCHAR wineprojectW[] = {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0};
     struct record_operatingsystem *rec;
     enum fill_status status = FILL_STATUS_UNFILTERED;
     OSVERSIONINFOEXW ver;
@@ -3792,11 +3811,14 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec->codeset                = get_codeset();
     rec->countrycode            = get_countrycode();
     rec->csdversion             = ver.szCSDVersion[0] ? heap_strdupW( ver.szCSDVersion ) : NULL;
+    rec->csname                 = get_computername();
+    rec->currenttimezone        = get_currenttimezone();
     rec->freephysicalmemory     = get_available_physical_memory() / 1024;
     rec->installdate            = os_installdateW;
     rec->lastbootuptime         = get_lastbootuptime();
     rec->localdatetime          = get_localdatetime();
     rec->locale                 = get_locale();
+    rec->manufacturer           = wineprojectW;
     rec->name                   = get_osname( rec->caption );
     rec->operatingsystemsku     = get_operatingsystemsku();
     rec->osarchitecture         = get_osarchitecture();
@@ -4312,7 +4334,7 @@ static struct table builtin_classes[] =
     { class_logicaldisktopartitionW, C(col_logicaldisktopartition), 0, 0, NULL, fill_logicaldisktopartition },
     { class_networkadapterW, C(col_networkadapter), 0, 0, NULL, fill_networkadapter },
     { class_networkadapterconfigW, C(col_networkadapterconfig), 0, 0, NULL, fill_networkadapterconfig },
-    { class_osW, C(col_os), 0, 0, NULL, fill_os },
+    { class_operatingsystemW, C(col_operatingsystem), 0, 0, NULL, fill_operatingsystem },
     { class_paramsW, C(col_param), D(data_param) },
     { class_physicalmediaW, C(col_physicalmedia), D(data_physicalmedia) },
     { class_physicalmemoryW, C(col_physicalmemory), 0, 0, NULL, fill_physicalmemory },

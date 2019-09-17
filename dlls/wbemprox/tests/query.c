@@ -333,6 +333,9 @@ static void _check_property( ULONG line, IWbemClassObject *obj, const WCHAR *pro
     case VT_BSTR:
         trace( "%s: %s\n", wine_dbgstr_w(prop), wine_dbgstr_w(V_BSTR(&val)) );
         break;
+    case VT_I2:
+        trace( "%s: %d\n", wine_dbgstr_w(prop), V_I2(&val) );
+        break;
     case VT_I4:
         trace( "%s: %d\n", wine_dbgstr_w(prop), V_I4(&val) );
         break;
@@ -1187,7 +1190,10 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     static const WCHAR buildnumberW[] = {'B','u','i','l','d','N','u','m','b','e','r',0};
     static const WCHAR captionW[] = {'C','a','p','t','i','o','n',0};
     static const WCHAR csdversionW[] = {'C','S','D','V','e','r','s','i','o','n',0};
+    static const WCHAR csnameW[] = {'C','S','N','a','m','e',0};
+    static const WCHAR currenttimezoneW[] = {'C','u','r','r','e','n','t','T','i','m','e','Z','o','n','e',0};
     static const WCHAR freephysicalmemoryW[] = {'F','r','e','e','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
+    static const WCHAR manufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
     static const WCHAR nameW[] = {'N','a','m','e',0};
     static const WCHAR operatingsystemskuW[] = {'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m','S','K','U',0};
     static const WCHAR osproductsuiteW[] = {'O','S','P','r','o','d','u','c','t','S','u','i','t','e',0};
@@ -1262,6 +1268,9 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     trace( "osproductsuite: %d (%08x)\n", V_I4( &val ), V_I4( &val ) );
     VariantClear( &val );
 
+    check_property( obj, csnameW, VT_BSTR, CIM_STRING );
+    check_property( obj, currenttimezoneW, VT_I2, CIM_SINT16 );
+    check_property( obj, manufacturerW, VT_BSTR, CIM_STRING );
     check_property( obj, ostypeW, VT_I4, CIM_UINT16 );
     check_property( obj, servicepackmajorW, VT_I4, CIM_UINT16 );
     check_property( obj, servicepackminorW, VT_I4, CIM_UINT16 );
