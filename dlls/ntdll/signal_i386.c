@@ -1595,17 +1595,16 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
  */
 static inline BOOL check_invalid_gs( ucontext_t *sigcontext, CONTEXT *context )
 {
-    BYTE instr[14];
-    unsigned int i, len;
+    unsigned int prefix_count = 0;
+    const BYTE *instr = (BYTE *)context->Eip;
     WORD system_gs = x86_thread_data()->gs;
 
     if (context->SegGs == system_gs) return FALSE;
     if (!wine_ldt_is_system( context->SegCs )) return FALSE;
     /* only handle faults in system libraries */
-    if (virtual_is_valid_code_address( (BYTE *)context->Eip, 1 )) return FALSE;
+    if (virtual_is_valid_code_address( instr, 1 )) return FALSE;
 
-    len = virtual_uninterrupted_read_memory( (BYTE *)context->Eip, instr, sizeof(instr) );
-    for (i = 0; i < len; i++) switch (instr[i])
+    for (;;) switch(*instr)
     {
     /* instruction prefixes */
     case 0x2e:  /* %cs: */
@@ -1618,6 +1617,8 @@ static inline BOOL check_invalid_gs( ucontext_t *sigcontext, CONTEXT *context )
     case 0xf0:  /* lock */
     case 0xf2:  /* repne */
     case 0xf3:  /* repe */
+        if (++prefix_count >= 15) return FALSE;
+        instr++;
         continue;
     case 0x65:  /* %gs: */
         TRACE( "%04x/%04x at %p, fixing up\n", context->SegGs, system_gs, instr );
@@ -1628,7 +1629,6 @@ static inline BOOL check_invalid_gs( ucontext_t *sigcontext, CONTEXT *context )
     default:
         return FALSE;
     }
-    return FALSE;
 }
 
 
