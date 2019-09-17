@@ -1973,7 +1973,7 @@ static void _parse_htmlscript_a(unsigned line, const char *src)
     ok_(__FILE__,line)(hres == S_OK, "parse_script failed: %08x\n", hres);
 }
 
-static IDispatchEx *parse_procedure(IActiveScriptParseProcedure2 *parse_proc, const char *src)
+static IDispatchEx *parse_procedure(IActiveScriptParseProcedure2 *parse_proc, const char *src, DWORD flags)
 {
     IDispatchEx *dispex;
     IDispatch *disp;
@@ -1984,7 +1984,7 @@ static IDispatchEx *parse_procedure(IActiveScriptParseProcedure2 *parse_proc, co
 
     str = a2bstr(src);
     hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, str, NULL, emptyW, NULL, NULL, delimiterW, 0, 0,
-            SCRIPTPROC_HOSTMANAGESSOURCE|SCRIPTPROC_IMPLICIT_THIS|SCRIPTPROC_IMPLICIT_PARENTS, &disp);
+            SCRIPTPROC_HOSTMANAGESSOURCE|SCRIPTPROC_IMPLICIT_THIS|SCRIPTPROC_IMPLICIT_PARENTS|flags, &disp);
     SysFreeString(str);
     ok(hres == S_OK, "ParseProcedureText failed: %08x\n", hres);
     ok(disp != NULL, "disp = NULL\n");
@@ -2012,12 +2012,20 @@ static void test_procedures(void)
     hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParseProcedure2, (void**)&parse_proc);
     ok(hres == S_OK, "Could not get IActiveScriptParseProcedure2 iface: %08x\n", hres);
 
-    proc = parse_procedure(parse_proc, "dim x\nif true then x=false");
+    proc = parse_procedure(parse_proc, "dim x\nif true then x=false", 0);
 
     V_VT(&v) = VT_EMPTY;
     hres = IDispatchEx_InvokeEx(proc, DISPID_VALUE, 0, DISPATCH_METHOD, &dp, &v, &ei, &caller_sp);
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    VariantClear(&v);
+    IDispatchEx_Release(proc);
 
+    proc = parse_procedure(parse_proc, "\"foobar\"", SCRIPTPROC_ISEXPRESSION);
+    hres = IDispatchEx_InvokeEx(proc, DISPID_VALUE, 0, DISPATCH_METHOD, &dp, &v, &ei, &caller_sp);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "Expected VT_BSTR, got %s\n", vt2a(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "foobar"), "Wrong string, got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
     IDispatchEx_Release(proc);
 
     IActiveScriptParseProcedure2_Release(parse_proc);
