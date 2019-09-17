@@ -92,6 +92,8 @@ WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 static struct udev *udev_context = NULL;
 static DWORD disable_hidraw = 0;
 static DWORD disable_input = 0;
+static HANDLE deviceloop_handle;
+static int deviceloop_control[2];
 
 static const WCHAR hidraw_busidW[] = {'H','I','D','R','A','W',0};
 static const WCHAR lnxev_busidW[] = {'L','N','X','E','V',0};
@@ -1453,15 +1455,20 @@ static DWORD CALLBACK deviceloop_thread(void *args)
 {
     struct udev_monitor *monitor;
     HANDLE init_done = args;
-    struct pollfd pfd;
+    struct pollfd pfd[2];
 
-    monitor = create_monitor(&pfd);
+    pfd[1].fd = deviceloop_control[0];
+    pfd[1].events = POLLIN;
+    pfd[1].revents = 0;
+
+    monitor = create_monitor(&pfd[0]);
     build_initial_deviceset();
     SetEvent(init_done);
 
     while (monitor)
     {
-        if (poll(&pfd, 1, -1) <= 0) continue;
+        if (poll(pfd, 2, -1) <= 0) continue;
+        if (pfd[1].revents) break;
         process_monitor_event(monitor);
     }
 
@@ -1474,6 +1481,12 @@ static DWORD CALLBACK deviceloop_thread(void *args)
 void udev_driver_unload( void )
 {
     TRACE("Unload Driver\n");
+
+    write(deviceloop_control[1], "q", 1);
+    WaitForSingleObject(deviceloop_handle, INFINITE);
+    close(deviceloop_control[0]);
+    close(deviceloop_control[1]);
+    CloseHandle(deviceloop_handle);
 }
 
 NTSTATUS udev_driver_init(void)
@@ -1485,10 +1498,16 @@ NTSTATUS udev_driver_init(void)
     static const WCHAR input_disabledW[] = {'D','i','s','a','b','l','e','I','n','p','u','t',0};
     static const UNICODE_STRING input_disabled = {sizeof(input_disabledW) - sizeof(WCHAR), sizeof(input_disabledW), (WCHAR*)input_disabledW};
 
+    if (pipe(deviceloop_control) != 0)
+    {
+        ERR("Control pipe creation failed\n");
+        return STATUS_UNSUCCESSFUL;
+    }
+
     if (!(udev_context = udev_new()))
     {
         ERR("Can't create udev object\n");
-        return STATUS_UNSUCCESSFUL;
+        goto error;
     }
 
     disable_hidraw = check_bus_option(&hidraw_disabled, 0);
@@ -1511,17 +1530,23 @@ NTSTATUS udev_driver_init(void)
 
     result = WaitForMultipleObjects(2, events, FALSE, INFINITE);
     CloseHandle(events[0]);
-    CloseHandle(events[1]);
     if (result == WAIT_OBJECT_0)
     {
+        deviceloop_handle = events[1];
         TRACE("Initialization successful\n");
         return STATUS_SUCCESS;
     }
+    CloseHandle(events[1]);
 
 error:
     ERR("Failed to initialize udev device thread\n");
-    udev_unref(udev_context);
-    udev_context = NULL;
+    close(deviceloop_control[0]);
+    close(deviceloop_control[1]);
+    if (udev_context)
+    {
+        udev_unref(udev_context);
+        udev_context = NULL;
+    }
     return STATUS_UNSUCCESSFUL;
 }
 
