@@ -624,8 +624,8 @@
 @ stdcall -import GetCurrentActCtx(ptr)
 @ stdcall GetCurrentConsoleFont(long long ptr)
 # @ stub GetCurrentConsoleFontEx
-@ stdcall GetCurrentDirectoryA(long ptr)
-@ stdcall GetCurrentDirectoryW(long ptr)
+@ stdcall -import GetCurrentDirectoryA(long ptr)
+@ stdcall -import GetCurrentDirectoryW(long ptr)
 @ stdcall GetCurrentPackageFamilyName(ptr ptr)
 @ stdcall GetCurrentPackageFullName(ptr ptr)
 @ stdcall GetCurrentPackageId(ptr ptr)
@@ -688,10 +688,10 @@
 @ stdcall GetFinalPathNameByHandleW(long ptr long long)
 @ stdcall GetFirmwareEnvironmentVariableA(str str ptr long)
 @ stdcall GetFirmwareEnvironmentVariableW(wstr wstr ptr long)
-@ stdcall GetFullPathNameA(str long ptr ptr)
+@ stdcall -import GetFullPathNameA(str long ptr ptr)
 # @ stub GetFullPathNameTransactedA
 # @ stub GetFullPathNameTransactedW
-@ stdcall GetFullPathNameW(wstr long ptr ptr)
+@ stdcall -import GetFullPathNameW(wstr long ptr ptr)
 @ stdcall GetGeoInfoA(long long ptr long long)
 @ stdcall GetGeoInfoW(long long ptr long long)
 @ stdcall GetHandleContext(long)
@@ -711,10 +711,10 @@
 @ stdcall GetLogicalDrives()
 @ stdcall GetLogicalProcessorInformation(ptr ptr)
 @ stdcall GetLogicalProcessorInformationEx(long ptr ptr)
-@ stdcall GetLongPathNameA (str long long)
+@ stdcall -import GetLongPathNameA (str long long)
 # @ stub GetLongPathNameTransactedA
 # @ stub GetLongPathNameTransactedW
-@ stdcall GetLongPathNameW (wstr long long)
+@ stdcall -import GetLongPathNameW (wstr long long)
 @ stdcall GetMailslotInfo(long ptr ptr ptr ptr)
 @ stdcall GetMaximumProcessorCount(long)
 # @ stub GetMaximumProcessorGroupCount
@@ -808,7 +808,7 @@
 @ stub -i386 GetSLCallbackTarget
 @ stub -i386 GetSLCallbackTemplate
 @ stdcall GetShortPathNameA(str ptr long)
-@ stdcall GetShortPathNameW(wstr ptr long)
+@ stdcall -import GetShortPathNameW(wstr ptr long)
 @ stdcall GetStartupInfoA(ptr)
 @ stdcall -import GetStartupInfoW(ptr)
 @ stdcall -import GetStdHandle(long)
@@ -842,10 +842,10 @@
 @ stdcall GetTapeParameters(ptr long ptr ptr)
 @ stdcall GetTapePosition(ptr long ptr ptr ptr)
 @ stdcall GetTapeStatus(ptr)
-@ stdcall GetTempFileNameA(str str long ptr)
-@ stdcall GetTempFileNameW(wstr wstr long ptr)
-@ stdcall GetTempPathA(long ptr)
-@ stdcall GetTempPathW(long ptr)
+@ stdcall -import GetTempFileNameA(str str long ptr)
+@ stdcall -import GetTempFileNameW(wstr wstr long ptr)
+@ stdcall -import GetTempPathA(long ptr)
+@ stdcall -import GetTempPathW(long ptr)
 @ stdcall -import GetThreadContext(long ptr)
 @ stdcall -import GetThreadErrorMode()
 @ stdcall -import GetThreadGroupAffinity(long ptr)
@@ -1095,8 +1095,8 @@
 @ stdcall MoveFileWithProgressW(wstr wstr ptr ptr long)
 @ stdcall MulDiv(long long long)
 @ stdcall MultiByteToWideChar(long long str long ptr long)
-@ stdcall NeedCurrentDirectoryForExePathA(str)
-@ stdcall NeedCurrentDirectoryForExePathW(wstr)
+@ stdcall -import NeedCurrentDirectoryForExePathA(str)
+@ stdcall -import NeedCurrentDirectoryForExePathW(wstr)
 # @ stub NlsCheckPolicy
 # @ stub NlsConvertIntegerToString
 # @ stub NlsEventDataDescCreate
@@ -1374,8 +1374,8 @@
 @ stdcall -import SetConsoleWindowInfo(long long ptr)
 @ stdcall SetCriticalSectionSpinCount(ptr long) ntdll.RtlSetCriticalSectionSpinCount
 @ stdcall SetCurrentConsoleFontEx(long long ptr)
-@ stdcall SetCurrentDirectoryA(str)
-@ stdcall SetCurrentDirectoryW(wstr)
+@ stdcall -import SetCurrentDirectoryA(str)
+@ stdcall -import SetCurrentDirectoryW(wstr)
 @ stub SetDaylightFlag
 @ stdcall SetDefaultCommConfigA(str ptr long)
 @ stdcall SetDefaultCommConfigW(wstr ptr long)

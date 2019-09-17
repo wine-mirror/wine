@@ -614,6 +614,45 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetCompressedFileSizeW( LPCWSTR name, LPDWORD siz
 }
 
 
+/***********************************************************************
+ *           GetCurrentDirectoryA    (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH GetCurrentDirectoryA( UINT buflen, LPSTR buf )
+{
+    WCHAR bufferW[MAX_PATH];
+    DWORD ret;
+
+    if (buflen && buf && ((ULONG_PTR)buf >> 16) == 0)
+    {
+        /* Win9x catches access violations here, returning zero.
+         * This behaviour resulted in some people not noticing
+         * that they got the argument order wrong. So let's be
+         * nice and fail gracefully if buf is invalid and looks
+         * more like a buflen. */
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    ret = RtlGetCurrentDirectory_U( sizeof(bufferW), bufferW );
+    if (!ret) return 0;
+    if (ret > sizeof(bufferW))
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    return copy_filename_WtoA( bufferW, buf, buflen );
+}
+
+
+/***********************************************************************
+ *           GetCurrentDirectoryW    (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH GetCurrentDirectoryW( UINT buflen, LPWSTR buf )
+{
+    return RtlGetCurrentDirectory_U( buflen * sizeof(WCHAR), buf ) / sizeof(WCHAR);
+}
+
+
 /**************************************************************************
  *	GetFileAttributesA   (kernelbase.@)
  */
@@ -726,6 +765,308 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetFileAttributesExW( LPCWSTR name, GET_FILEEX_INF
 
 
 /***********************************************************************
+ *	GetFullPathNameA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer, LPSTR *lastpart )
+{
+    WCHAR *nameW;
+    WCHAR bufferW[MAX_PATH], *lastpartW = NULL;
+    DWORD ret;
+
+    if (!(nameW = file_name_AtoW( name, FALSE ))) return 0;
+
+    ret = GetFullPathNameW( nameW, MAX_PATH, bufferW, &lastpartW );
+
+    if (!ret) return 0;
+    if (ret > MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    ret = copy_filename_WtoA( bufferW, buffer, len );
+    if (ret < len && lastpart)
+    {
+        if (lastpartW)
+            *lastpart = buffer + file_name_WtoA( bufferW, lastpartW - bufferW, NULL, 0 );
+        else
+            *lastpart = NULL;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *	GetFullPathNameW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer, LPWSTR *lastpart )
+{
+    return RtlGetFullPathName_U( name, len * sizeof(WCHAR), buffer, lastpart ) / sizeof(WCHAR);
+}
+
+
+/***********************************************************************
+ *	GetLongPathNameA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetLongPathNameA( LPCSTR shortpath, LPSTR longpath, DWORD longlen )
+{
+    WCHAR *shortpathW;
+    WCHAR longpathW[MAX_PATH];
+    DWORD ret;
+
+    TRACE( "%s\n", debugstr_a( shortpath ));
+
+    if (!(shortpathW = file_name_AtoW( shortpath, FALSE ))) return 0;
+
+    ret = GetLongPathNameW( shortpathW, longpathW, MAX_PATH );
+
+    if (!ret) return 0;
+    if (ret > MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    return copy_filename_WtoA( longpathW, longpath, longlen );
+}
+
+
+/***********************************************************************
+ *	GetLongPathNameW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen )
+{
+    static const WCHAR wildcardsW[] = {'*','?',0};
+    WCHAR tmplongpath[1024];
+    DWORD sp = 0, lp = 0, tmplen;
+    WIN32_FIND_DATAW wfd;
+    UNICODE_STRING nameW;
+    LPCWSTR p;
+    HANDLE handle;
+
+    TRACE("%s,%p,%u\n", debugstr_w(shortpath), longpath, longlen);
+
+    if (!shortpath)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (!shortpath[0])
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return 0;
+    }
+
+    if (shortpath[0] == '\\' && shortpath[1] == '\\')
+    {
+        FIXME( "UNC pathname %s\n", debugstr_w(shortpath) );
+        tmplen = lstrlenW( shortpath );
+        if (tmplen < longlen)
+        {
+            if (longpath != shortpath) lstrcpyW( longpath, shortpath );
+            return tmplen;
+        }
+        return tmplen + 1;
+    }
+
+    /* check for drive letter */
+    if (shortpath[0] != '/' && shortpath[1] == ':' )
+    {
+        tmplongpath[0] = shortpath[0];
+        tmplongpath[1] = ':';
+        lp = sp = 2;
+    }
+
+    if (wcspbrk( shortpath + sp, wildcardsW ))
+    {
+        SetLastError( ERROR_INVALID_NAME );
+        return 0;
+    }
+
+    while (shortpath[sp])
+    {
+        /* check for path delimiters and reproduce them */
+        if (shortpath[sp] == '\\' || shortpath[sp] == '/')
+        {
+            tmplongpath[lp++] = shortpath[sp++];
+            tmplongpath[lp] = 0; /* terminate string */
+            continue;
+        }
+
+        for (p = shortpath + sp; *p && *p != '/' && *p != '\\'; p++);
+        tmplen = p - (shortpath + sp);
+        lstrcpynW( tmplongpath + lp, shortpath + sp, tmplen + 1 );
+
+        if (tmplongpath[lp] == '.')
+        {
+            if (tmplen == 1 || (tmplen == 2 && tmplongpath[lp + 1] == '.'))
+            {
+                lp += tmplen;
+                sp += tmplen;
+                continue;
+            }
+        }
+
+        /* Check if the file exists */
+        handle = FindFirstFileW( tmplongpath, &wfd );
+        if (handle == INVALID_HANDLE_VALUE)
+        {
+            TRACE( "not found %s\n", debugstr_w( tmplongpath ));
+            SetLastError ( ERROR_FILE_NOT_FOUND );
+            return 0;
+        }
+        FindClose( handle );
+
+        /* Use the existing file name if it's a short name */
+        RtlInitUnicodeString( &nameW, tmplongpath + lp );
+        if (RtlIsNameLegalDOS8Dot3( &nameW, NULL, NULL )) lstrcpyW( tmplongpath + lp, wfd.cFileName );
+        lp += lstrlenW( tmplongpath + lp );
+        sp += tmplen;
+    }
+    tmplen = lstrlenW( shortpath ) - 1;
+    if ((shortpath[tmplen] == '/' || shortpath[tmplen] == '\\') &&
+        (tmplongpath[lp - 1] != '/' && tmplongpath[lp - 1] != '\\'))
+        tmplongpath[lp++] = shortpath[tmplen];
+    tmplongpath[lp] = 0;
+
+    tmplen = lstrlenW( tmplongpath ) + 1;
+    if (tmplen <= longlen)
+    {
+        lstrcpyW( longpath, tmplongpath );
+        TRACE("returning %s\n", debugstr_w( longpath ));
+        tmplen--; /* length without 0 */
+    }
+    return tmplen;
+}
+
+
+/***********************************************************************
+ *	GetShortPathNameW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortlen )
+{
+    static const WCHAR wildcardsW[] = {'*','?',0};
+    WIN32_FIND_DATAW wfd;
+    WCHAR *tmpshortpath;
+    HANDLE handle;
+    LPCWSTR p;
+    DWORD sp = 0, lp = 0, tmplen, buf_len;
+
+    TRACE( "%s,%p,%u\n", debugstr_w(longpath), shortpath, shortlen );
+
+    if (!longpath)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (!longpath[0])
+    {
+        SetLastError( ERROR_BAD_PATHNAME );
+        return 0;
+    }
+
+    /* code below only removes characters from string, never adds, so this is
+     * the largest buffer that tmpshortpath will need to have */
+    buf_len = lstrlenW(longpath) + 1;
+    tmpshortpath = HeapAlloc( GetProcessHeap(), 0, buf_len * sizeof(WCHAR) );
+    if (!tmpshortpath)
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        return 0;
+    }
+
+    if (longpath[0] == '\\' && longpath[1] == '\\' && longpath[2] == '?' && longpath[3] == '\\')
+    {
+        memcpy( tmpshortpath, longpath, 4 * sizeof(WCHAR) );
+        sp = lp = 4;
+    }
+
+    if (wcspbrk( longpath + lp, wildcardsW ))
+    {
+        HeapFree( GetProcessHeap(), 0, tmpshortpath );
+        SetLastError( ERROR_INVALID_NAME );
+        return 0;
+    }
+
+    /* check for drive letter */
+    if (longpath[lp] != '/' && longpath[lp + 1] == ':' )
+    {
+        tmpshortpath[sp] = longpath[lp];
+        tmpshortpath[sp + 1] = ':';
+        sp += 2;
+        lp += 2;
+    }
+
+    while (longpath[lp])
+    {
+        /* check for path delimiters and reproduce them */
+        if (longpath[lp] == '\\' || longpath[lp] == '/')
+        {
+            tmpshortpath[sp++] = longpath[lp++];
+            tmpshortpath[sp] = 0; /* terminate string */
+            continue;
+        }
+
+        p = longpath + lp;
+        for (; *p && *p != '/' && *p != '\\'; p++);
+        tmplen = p - (longpath + lp);
+        lstrcpynW( tmpshortpath + sp, longpath + lp, tmplen + 1 );
+
+        if (tmpshortpath[sp] == '.')
+        {
+            if (tmplen == 1 || (tmplen == 2 && tmpshortpath[sp + 1] == '.'))
+            {
+                sp += tmplen;
+                lp += tmplen;
+                continue;
+            }
+        }
+
+        /* Check if the file exists and use the existing short file name */
+        handle = FindFirstFileW( tmpshortpath, &wfd );
+        if (handle == INVALID_HANDLE_VALUE) goto notfound;
+        FindClose( handle );
+
+        /* In rare cases (like "a.abcd") short path may be longer than original path.
+         * Make sure we have enough space in temp buffer. */
+        if (wfd.cAlternateFileName[0] && tmplen < lstrlenW(wfd.cAlternateFileName))
+        {
+            WCHAR *new_buf;
+            buf_len += lstrlenW( wfd.cAlternateFileName ) - tmplen;
+            new_buf = HeapReAlloc( GetProcessHeap(), 0, tmpshortpath, buf_len * sizeof(WCHAR) );
+            if(!new_buf)
+            {
+                HeapFree( GetProcessHeap(), 0, tmpshortpath );
+                SetLastError( ERROR_OUTOFMEMORY );
+                return 0;
+            }
+            tmpshortpath = new_buf;
+        }
+
+        lstrcpyW( tmpshortpath + sp, wfd.cAlternateFileName[0] ? wfd.cAlternateFileName : wfd.cFileName );
+        sp += lstrlenW( tmpshortpath + sp );
+        lp += tmplen;
+    }
+    tmpshortpath[sp] = 0;
+
+    tmplen = lstrlenW( tmpshortpath ) + 1;
+    if (tmplen <= shortlen)
+    {
+        lstrcpyW( shortpath, tmpshortpath );
+        TRACE( "returning %s\n", debugstr_w( shortpath ));
+        tmplen--; /* length without 0 */
+    }
+
+    HeapFree( GetProcessHeap(), 0, tmpshortpath );
+    return tmplen;
+
+ notfound:
+    HeapFree( GetProcessHeap(), 0, tmpshortpath );
+    TRACE( "not found\n" );
+    SetLastError( ERROR_FILE_NOT_FOUND );
+    return 0;
+}
+
+
+/***********************************************************************
  *	GetSystemDirectoryA   (kernelbase.@)
  */
 UINT WINAPI DECLSPEC_HOTPATCH GetSystemDirectoryA( LPSTR path, UINT count )
@@ -768,6 +1109,166 @@ UINT WINAPI DECLSPEC_HOTPATCH GetSystemWindowsDirectoryW( LPWSTR path, UINT coun
 
 
 /***********************************************************************
+ *	GetTempFileNameA   (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique, LPSTR buffer )
+{
+    WCHAR *pathW, *prefixW = NULL;
+    WCHAR bufferW[MAX_PATH];
+    UINT ret;
+
+    if (!(pathW = file_name_AtoW( path, FALSE ))) return 0;
+    if (prefix && !(prefixW = file_name_AtoW( prefix, TRUE ))) return 0;
+
+    ret = GetTempFileNameW( pathW, prefixW, unique, bufferW );
+    if (ret) file_name_WtoA( bufferW, -1, buffer, MAX_PATH );
+
+    HeapFree( GetProcessHeap(), 0, prefixW );
+    return ret;
+}
+
+
+/***********************************************************************
+ *	GetTempFileNameW   (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR buffer )
+{
+    static const WCHAR formatW[] = {'%','x','.','t','m','p',0};
+    int i;
+    LPWSTR p;
+    DWORD attr;
+
+    if (!path || !buffer)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    /* ensure that the provided directory exists */
+    attr = GetFileAttributesW( path );
+    if (attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY))
+    {
+        TRACE( "path not found %s\n", debugstr_w( path ));
+        SetLastError( ERROR_DIRECTORY );
+        return 0;
+    }
+
+    lstrcpyW( buffer, path );
+    p = buffer + lstrlenW(buffer);
+
+    /* add a \, if there isn't one  */
+    if ((p == buffer) || (p[-1] != '\\')) *p++ = '\\';
+
+    if (prefix) for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
+
+    unique &= 0xffff;
+    if (unique) swprintf( p, MAX_PATH - (p - buffer), formatW, unique );
+    else
+    {
+        /* get a "random" unique number and try to create the file */
+        HANDLE handle;
+        UINT num = NtGetTickCount() & 0xffff;
+        static UINT last;
+
+        /* avoid using the same name twice in a short interval */
+        if (last - num < 10) num = last + 1;
+        if (!num) num = 1;
+        unique = num;
+        do
+        {
+            swprintf( p, MAX_PATH - (p - buffer), formatW, unique );
+            handle = CreateFileW( buffer, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
+            if (handle != INVALID_HANDLE_VALUE)
+            {  /* We created it */
+                CloseHandle( handle );
+                last = unique;
+                break;
+            }
+            if (GetLastError() != ERROR_FILE_EXISTS && GetLastError() != ERROR_SHARING_VIOLATION)
+                break;  /* No need to go on */
+            if (!(++unique & 0xffff)) unique = 1;
+        } while (unique != num);
+    }
+    TRACE( "returning %s\n", debugstr_w( buffer ));
+    return unique;
+}
+
+
+/***********************************************************************
+ *	GetTempPathA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetTempPathA( DWORD count, LPSTR path )
+{
+    WCHAR pathW[MAX_PATH];
+    UINT ret;
+
+    if (!(ret = GetTempPathW( MAX_PATH, pathW ))) return 0;
+    if (ret > MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    return copy_filename_WtoA( pathW, path, count );
+}
+
+
+/***********************************************************************
+ *	GetTempPathW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetTempPathW( DWORD count, LPWSTR path )
+{
+    static const WCHAR tmp[]  = { 'T','M','P',0 };
+    static const WCHAR temp[] = { 'T','E','M','P',0 };
+    static const WCHAR userprofile[] = { 'U','S','E','R','P','R','O','F','I','L','E',0 };
+    WCHAR tmp_path[MAX_PATH];
+    UINT ret;
+
+    if (!(ret = GetEnvironmentVariableW( tmp, tmp_path, MAX_PATH )) &&
+        !(ret = GetEnvironmentVariableW( temp, tmp_path, MAX_PATH )) &&
+        !(ret = GetEnvironmentVariableW( userprofile, tmp_path, MAX_PATH )) &&
+        !(ret = GetWindowsDirectoryW( tmp_path, MAX_PATH )))
+        return 0;
+
+    if (ret > MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    ret = GetFullPathNameW( tmp_path, MAX_PATH, tmp_path, NULL );
+    if (!ret) return 0;
+
+    if (ret > MAX_PATH - 2)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    if (tmp_path[ret-1] != '\\')
+    {
+        tmp_path[ret++] = '\\';
+        tmp_path[ret]   = '\0';
+    }
+
+    ret++; /* add space for terminating 0 */
+    if (count >= ret)
+    {
+        lstrcpynW( path, tmp_path, count );
+        /* the remaining buffer must be zeroed up to 32766 bytes in XP or 32767
+         * bytes after it, we will assume the > XP behavior for now */
+        memset( path + ret, 0, (min(count, 32767) - ret) * sizeof(WCHAR) );
+        ret--; /* return length without 0 */
+    }
+    else if (count)
+    {
+        /* the buffer must be cleared if contents will not fit */
+        memset( path, 0, count * sizeof(WCHAR) );
+    }
+
+    TRACE( "returning %u, %s\n", ret, debugstr_w( path ));
+    return ret;
+}
+
+
+/***********************************************************************
  *	GetWindowsDirectoryA   (kernelbase.@)
  */
 UINT WINAPI DECLSPEC_HOTPATCH GetWindowsDirectoryA( LPSTR path, UINT count )
@@ -788,6 +1289,61 @@ UINT WINAPI DECLSPEC_HOTPATCH GetWindowsDirectoryW( LPWSTR path, UINT count )
         len--;
     }
     return len;
+}
+
+
+/***********************************************************************
+ *	NeedCurrentDirectoryForExePathA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH NeedCurrentDirectoryForExePathA( LPCSTR name )
+{
+    WCHAR *nameW;
+
+    if (!(nameW = file_name_AtoW( name, FALSE ))) return TRUE;
+    return NeedCurrentDirectoryForExePathW( nameW );
+}
+
+
+/***********************************************************************
+ *	NeedCurrentDirectoryForExePathW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH NeedCurrentDirectoryForExePathW( LPCWSTR name )
+{
+    static const WCHAR env_name[] = {'N','o','D','e','f','a','u','l','t',
+                                     'C','u','r','r','e','n','t',
+                                     'D','i','r','e','c','t','o','r','y',
+                                     'I','n','E','x','e','P','a','t','h',0};
+    WCHAR env_val;
+
+    if (wcschr( name, '\\' )) return TRUE;
+    /* check the existence of the variable, not value */
+    return !GetEnvironmentVariableW( env_name, &env_val, 1 );
+}
+
+
+/***********************************************************************
+ *	SetCurrentDirectoryA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetCurrentDirectoryA( LPCSTR dir )
+{
+    WCHAR *dirW;
+    UNICODE_STRING strW;
+
+    if (!(dirW = file_name_AtoW( dir, FALSE ))) return FALSE;
+    RtlInitUnicodeString( &strW, dirW );
+    return set_ntstatus( RtlSetCurrentDirectory_U( &strW ));
+}
+
+
+/***********************************************************************
+ *	SetCurrentDirectoryW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetCurrentDirectoryW( LPCWSTR dir )
+{
+    UNICODE_STRING dirW;
+
+    RtlInitUnicodeString( &dirW, dir );
+    return set_ntstatus( RtlSetCurrentDirectory_U( &dirW ));
 }
 
 

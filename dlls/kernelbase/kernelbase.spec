@@ -452,8 +452,8 @@
 @ stdcall GetCurrencyFormatW(long long wstr ptr ptr long) kernel32.GetCurrencyFormatW
 @ stdcall GetCurrentActCtx(ptr)
 # @ stub GetCurrentApplicationUserModelId
-@ stdcall GetCurrentDirectoryA(long ptr) kernel32.GetCurrentDirectoryA
-@ stdcall GetCurrentDirectoryW(long ptr) kernel32.GetCurrentDirectoryW
+@ stdcall GetCurrentDirectoryA(long ptr)
+@ stdcall GetCurrentDirectoryW(long ptr)
 # @ stub GetCurrentPackageApplicationContext
 # @ stub GetCurrentPackageApplicationResourcesContext
 # @ stub GetCurrentPackageContext
@@ -526,8 +526,8 @@
 @ stdcall GetFileVersionInfoW(wstr long long ptr)
 @ stdcall GetFinalPathNameByHandleA(long ptr long long) kernel32.GetFinalPathNameByHandleA
 @ stdcall GetFinalPathNameByHandleW(long ptr long long) kernel32.GetFinalPathNameByHandleW
-@ stdcall GetFullPathNameA(str long ptr ptr) kernel32.GetFullPathNameA
-@ stdcall GetFullPathNameW(wstr long ptr ptr) kernel32.GetFullPathNameW
+@ stdcall GetFullPathNameA(str long ptr ptr)
+@ stdcall GetFullPathNameW(wstr long ptr ptr)
 # @ stub GetGPOListInternalA
 # @ stub GetGPOListInternalW
 @ stdcall GetGeoInfoW(long long ptr long long) kernel32.GetGeoInfoW
@@ -549,8 +549,8 @@
 @ stdcall GetLogicalDrives() kernel32.GetLogicalDrives
 @ stdcall GetLogicalProcessorInformation(ptr ptr) kernel32.GetLogicalProcessorInformation
 @ stdcall GetLogicalProcessorInformationEx(long ptr ptr) kernel32.GetLogicalProcessorInformationEx
-@ stdcall GetLongPathNameA(str long long) kernel32.GetLongPathNameA
-@ stdcall GetLongPathNameW(wstr long long) kernel32.GetLongPathNameW
+@ stdcall GetLongPathNameA(str long long)
+@ stdcall GetLongPathNameW(wstr long long)
 # @ stub GetMappedFileNameA
 # @ stub GetMappedFileNameW
 # @ stub GetMemoryErrorHandlingCapabilities
@@ -658,7 +658,7 @@
 @ stdcall GetSecurityDescriptorSacl(ptr ptr ptr ptr)
 # @ stub GetSerializedAtomBytes
 # @ stub GetSharedLocalFolder
-@ stdcall GetShortPathNameW(wstr ptr long) kernel32.GetShortPathNameW
+@ stdcall GetShortPathNameW(wstr ptr long)
 @ stdcall GetSidIdentifierAuthority(ptr)
 @ stdcall GetSidLengthRequired(long)
 @ stdcall GetSidSubAuthority(ptr long)
@@ -707,10 +707,10 @@
 @ stdcall GetSystemWow64DirectoryA(ptr long) kernel32.GetSystemWow64DirectoryA
 @ stdcall GetSystemWow64DirectoryW(ptr long) kernel32.GetSystemWow64DirectoryW
 # @ stub GetTargetPlatformContext
-@ stdcall GetTempFileNameA(str str long ptr) kernel32.GetTempFileNameA
-@ stdcall GetTempFileNameW(wstr wstr long ptr) kernel32.GetTempFileNameW
-@ stdcall GetTempPathA(long ptr) kernel32.GetTempPathA
-@ stdcall GetTempPathW(long ptr) kernel32.GetTempPathW
+@ stdcall GetTempFileNameA(str str long ptr)
+@ stdcall GetTempFileNameW(wstr wstr long ptr)
+@ stdcall GetTempPathA(long ptr)
+@ stdcall GetTempPathW(long ptr)
 @ stdcall GetThreadContext(long ptr)
 # @ stub GetThreadDescription
 @ stdcall GetThreadErrorMode()
@@ -961,8 +961,8 @@
 @ stdcall MultiByteToWideChar(long long str long ptr long) kernel32.MultiByteToWideChar
 # @ stub NamedPipeEventEnum
 # @ stub NamedPipeEventSelect
-@ stdcall NeedCurrentDirectoryForExePathA(str) kernel32.NeedCurrentDirectoryForExePathA
-@ stdcall NeedCurrentDirectoryForExePathW(wstr) kernel32.NeedCurrentDirectoryForExePathW
+@ stdcall NeedCurrentDirectoryForExePathA(str)
+@ stdcall NeedCurrentDirectoryForExePathW(wstr)
 @ stub NlsCheckPolicy
 @ stub NlsDispatchAnsiEnumProc
 @ stub NlsEventDataDescCreate
@@ -1418,8 +1418,8 @@
 @ stdcall SetConsoleTitleW(wstr)
 @ stdcall SetConsoleWindowInfo(long long ptr)
 @ stdcall SetCriticalSectionSpinCount(ptr long) ntdll.RtlSetCriticalSectionSpinCount
-@ stdcall SetCurrentDirectoryA(str) kernel32.SetCurrentDirectoryA
-@ stdcall SetCurrentDirectoryW(wstr) kernel32.SetCurrentDirectoryW
+@ stdcall SetCurrentDirectoryA(str)
+@ stdcall SetCurrentDirectoryW(wstr)
 @ stdcall SetDefaultDllDirectories(long) kernel32.SetDefaultDllDirectories
 # @ stub SetDynamicTimeZoneInformation
 @ stdcall SetEndOfFile(long)
