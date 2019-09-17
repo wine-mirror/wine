@@ -174,6 +174,7 @@ static gboolean amt_from_gst_caps_audio(const GstCaps *caps, AM_MEDIA_TYPE *amt)
         if (wfx->nChannels <= 2 && bpp <= 16 && depth == bpp)  {
             wfx->wFormatTag = WAVE_FORMAT_PCM;
             wfx->cbSize = 0;
+            amt->cbFormat = sizeof(WAVEFORMATEX);
         }
     }
     amt->lSampleSize = wfx->nBlockAlign = wfx->nChannels * wfx->wBitsPerSample/8;
