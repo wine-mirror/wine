@@ -171,6 +171,8 @@ static const WCHAR prop_commandlineW[] =
     {'C','o','m','m','a','n','d','L','i','n','e',0};
 static const WCHAR prop_configmanagererrorcodeW[] =
     {'C','o','n','f','i','g','M','a','n','a','g','e','r','E','r','r','o','r','C','o','d','e',0};
+static const WCHAR prop_configuredclockspeedW[] =
+    {'C','o','n','f','i','g','u','r','e','d','C','l','o','c','k','S','p','e','e','d',0};
 static const WCHAR prop_countrycodeW[] =
     {'C','o','u','n','t','r','y','C','o','d','e',0};
 static const WCHAR prop_cpustatusW[] =
@@ -331,6 +333,8 @@ static const WCHAR prop_ostypeW[] =
     {'O','S','T','y','p','e',0};
 static const WCHAR prop_parameterW[] =
     {'P','a','r','a','m','e','t','e','r',0};
+static const WCHAR prop_partnumberW[] =
+    {'P','a','r','t','N','u','m','b','e','r',0};
 static const WCHAR prop_physicaladapterW[] =
     {'P','h','y','s','i','c','a','l','A','d','a','p','t','e','r',0};
 static const WCHAR prop_pixelsperxlogicalinchW[] =
@@ -650,9 +654,11 @@ static const struct column col_physicalmedia[] =
 };
 static const struct column col_physicalmemory[] =
 {
-    { prop_capacityW,      CIM_UINT64 },
-    { prop_devicelocatorW, CIM_STRING },
-    { prop_memorytypeW,    CIM_UINT16, VT_I4 }
+    { prop_capacityW,             CIM_UINT64 },
+    { prop_configuredclockspeedW, CIM_UINT32, VT_I4 },
+    { prop_devicelocatorW,        CIM_STRING },
+    { prop_memorytypeW,           CIM_UINT16, VT_I4 },
+    { prop_partnumberW,           CIM_STRING }
 };
 static const struct column col_pnpentity[] =
 {
@@ -1099,8 +1105,10 @@ struct record_physicalmedia
 struct record_physicalmemory
 {
     UINT64       capacity;
+    UINT32       configuredclockspeed;
     const WCHAR *devicelocator;
     UINT16       memorytype;
+    const WCHAR *partnumber;
 };
 struct record_pnpentity
 {
@@ -3218,9 +3226,11 @@ static enum fill_status fill_physicalmemory( struct table *table, const struct e
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     rec = (struct record_physicalmemory *)table->data;
-    rec->capacity      = get_total_physical_memory();
-    rec->devicelocator = heap_strdupW( dimm0W );
-    rec->memorytype    = 9; /* RAM */
+    rec->capacity             = get_total_physical_memory();
+    rec->configuredclockspeed = 0;
+    rec->devicelocator        = dimm0W;
+    rec->memorytype           = 9; /* RAM */
+    rec->partnumber           = NULL;
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
