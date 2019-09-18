@@ -505,7 +505,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetThreadStackGuarantee( ULONG *size )
     ULONG new_size = (*size + 4095) & ~4095;
 
     /* at least 2 pages on 64-bit */
-    if (sizeof(void *) > sizeof(int)) new_size = max( new_size, 8192 );
+    if (sizeof(void *) > sizeof(int) && new_size) new_size = max( new_size, 8192 );
 
     *size = prev_size;
     if (new_size >= (char *)NtCurrentTeb()->Tib.StackBase - (char *)NtCurrentTeb()->DeallocationStack)
