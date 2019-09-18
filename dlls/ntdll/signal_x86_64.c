@@ -2604,7 +2604,7 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
  */
 static void raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    NTSTATUS status = NtRaiseException( rec, context, TRUE );
+    NTSTATUS status = raise_exception( rec, context, TRUE );
     raise_status( status, rec );
 }
 
