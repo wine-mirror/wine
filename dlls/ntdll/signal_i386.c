@@ -724,18 +724,14 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
                   context->Ebp, context->Esp, context->SegCs, context->SegDs,
                   context->SegEs, context->SegFs, context->SegGs, context->EFlags );
         }
-        status = send_debug_event( rec, TRUE, context );
-        if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
-            return STATUS_SUCCESS;
 
         /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
         if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Eip--;
 
-        if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
-            return STATUS_SUCCESS;
+        if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION) goto done;
 
-        if ((status = call_stack_handlers( rec, context )) != STATUS_UNHANDLED_EXCEPTION)
-            return status;
+        if ((status = call_stack_handlers( rec, context )) == STATUS_SUCCESS) goto done;
+        if (status != STATUS_UNHANDLED_EXCEPTION) return status;
     }
 
     /* last chance exception */
@@ -752,7 +748,8 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
                      rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
         NtTerminateProcess( NtCurrentProcess(), rec->ExceptionCode );
     }
-    return STATUS_SUCCESS;
+done:
+    return NtSetContextThread( GetCurrentThread(), context );
 }
 
 
@@ -1860,7 +1857,7 @@ static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *cont
 {
     NTSTATUS status;
 
-    status = NtRaiseException( rec, context, TRUE );
+    status = raise_exception( rec, context, TRUE );
     raise_status( status, rec );
 }
 
@@ -1872,6 +1869,13 @@ static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *cont
  */
 static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *stack )
 {
+    NTSTATUS status = send_debug_event( &stack->rec, TRUE, &stack->context );
+
+    if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
+    {
+        restore_context( &stack->context, sigcontext );
+        return;
+    }
     ESP_sig(sigcontext) = (DWORD)stack;
     EIP_sig(sigcontext) = (DWORD)raise_generic_exception;
     /* clear single-step, direction, and align check flag */
@@ -2499,9 +2503,13 @@ __ASM_STDCALL_FUNC( RtlUnwind, 16,
  */
 NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
 {
-    NTSTATUS status = raise_exception( rec, context, first_chance );
-    if (status == STATUS_SUCCESS) NtSetContextThread( GetCurrentThread(), context );
-    return status;
+    if (first_chance)
+    {
+        NTSTATUS status = send_debug_event( rec, TRUE, context );
+        if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
+            NtSetContextThread( GetCurrentThread(), context );
+    }
+    return raise_exception( rec, context, first_chance );
 }
 
 
@@ -2510,7 +2518,7 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
  *
  * Raise an exception with the full CPU context.
  */
-void raise_exception_full_context( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+void raise_exception_full_context( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     save_fpu( context );
     save_fpux( context );
@@ -2523,7 +2531,7 @@ void raise_exception_full_context( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL
     context->Dr7 = x86_thread_data()->dr7;
     context->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
 
-    RtlRaiseStatus( NtRaiseException( rec, context, first_chance ));
+    RtlRaiseStatus( NtRaiseException( rec, context, TRUE ));
 }
 
 
@@ -2545,7 +2553,6 @@ __ASM_STDCALL_FUNC( RtlRaiseException, 4,
                     "leal 12(%ebp),%eax\n\t"
                     "movl %eax,0xc4(%esp)\n\t"    /* context->Esp */
                     "movl %esp,%eax\n\t"
-                    "pushl $1\n\t"
                     "pushl %eax\n\t"
                     "pushl %ecx\n\t"
                     "call " __ASM_NAME("raise_exception_full_context") "\n\t"
