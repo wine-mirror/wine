@@ -253,7 +253,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetThreadId( HANDLE thread )
 /***********************************************************************
  *	GetThreadLocale   (kernelbase.@)
  */
-LCID WINAPI DECLSPEC_HOTPATCH GetThreadLocale(void)
+LCID WINAPI /* DECLSPEC_HOTPATCH */ GetThreadLocale(void)
 {
     LCID ret = NtCurrentTeb()->CurrentLocale;
     if (!ret) NtCurrentTeb()->CurrentLocale = ret = GetUserDefaultLCID();
