@@ -20773,6 +20773,7 @@ wine_fn_config_makefile dlls/schannel/tests enable_tests
 wine_fn_config_makefile dlls/schedsvc enable_schedsvc
 wine_fn_config_makefile dlls/schedsvc/tests enable_tests
 wine_fn_config_makefile dlls/scrobj enable_scrobj
+wine_fn_config_makefile dlls/scrobj/tests enable_tests
 wine_fn_config_makefile dlls/scrrun enable_scrrun
 wine_fn_config_makefile dlls/scrrun/tests enable_tests
 wine_fn_config_makefile dlls/scsiport.sys enable_scsiport_sys
