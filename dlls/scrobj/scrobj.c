@@ -444,6 +444,25 @@ HRESULT WINAPI DllUnregisterServer(void)
     return __wine_unregister_resources(scrobj_instance);
 }
 
+/***********************************************************************
+ *      DllInstall (scrobj.@)
+ */
+HRESULT WINAPI DllInstall(BOOL install, const WCHAR *arg)
+{
+    HRESULT hres;
+
+    if (install)
+    {
+        hres = DllRegisterServer();
+        if (!arg || FAILED(hres)) return hres;
+    }
+    else if (!arg)
+        return DllUnregisterServer();
+
+    FIXME("argument %s not supported\n", debugstr_w(arg));
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI scriptlet_typelib_CreateInstance(IClassFactory *factory, IUnknown *outer, REFIID riid, void **obj)
 {
     struct scriptlet_typelib *This;
