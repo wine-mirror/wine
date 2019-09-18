@@ -321,6 +321,41 @@ static inline struct amd64_thread_data *amd64_thread_data(void)
     return (struct amd64_thread_data *)NtCurrentTeb()->SystemReserved2;
 }
 
+static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontext )
+{
+    RAX_sig(sigcontext) = context->Rax;
+    RCX_sig(sigcontext) = context->Rcx;
+    RDX_sig(sigcontext) = context->Rdx;
+    RBX_sig(sigcontext) = context->Rbx;
+    RSP_sig(sigcontext) = context->Rsp;
+    RBP_sig(sigcontext) = context->Rbp;
+    RSI_sig(sigcontext) = context->Rsi;
+    RDI_sig(sigcontext) = context->Rdi;
+    R8_sig(sigcontext)  = context->R8;
+    R9_sig(sigcontext)  = context->R9;
+    R10_sig(sigcontext) = context->R10;
+    R11_sig(sigcontext) = context->R11;
+    R12_sig(sigcontext) = context->R12;
+    R13_sig(sigcontext) = context->R13;
+    R14_sig(sigcontext) = context->R14;
+    R15_sig(sigcontext) = context->R15;
+    RIP_sig(sigcontext) = context->Rip;
+    CS_sig(sigcontext)  = context->SegCs;
+    FS_sig(sigcontext)  = context->SegFs;
+    GS_sig(sigcontext)  = context->SegGs;
+    EFL_sig(sigcontext) = context->EFlags;
+#ifdef DS_sig
+    DS_sig(sigcontext) = context->SegDs;
+#endif
+#ifdef ES_sig
+    ES_sig(sigcontext) = context->SegEs;
+#endif
+#ifdef SS_sig
+    SS_sig(sigcontext) = context->SegSs;
+#endif
+}
+
+
 /***********************************************************************
  * Definitions for Win32 unwind tables
  */
@@ -1427,112 +1462,6 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
 
 #ifdef HAVE_LIBUNWIND
 /***********************************************************************
- *           libunwind_set_cursor_from_context
- */
-static int libunwind_set_cursor_from_context( unw_cursor_t *cursor, CONTEXT *context, ULONG64 ip )
-{
-    int rc;
-
-    rc = unw_set_reg(cursor, UNW_REG_IP, ip);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_REG_SP, context->Rsp);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_RAX, context->Rax);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_RDX, context->Rdx);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_RCX, context->Rcx);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_RBX, context->Rbx);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_RSI, context->Rsi);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_RDI, context->Rdi);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_RBP, context->Rbp);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_R8, context->R8);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_R9, context->R9);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_R10, context->R10);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_R11, context->R11);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_R12, context->R12);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_R13, context->R13);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_R14, context->R14);
-    if (rc == UNW_ESUCCESS)
-        rc = unw_set_reg(cursor, UNW_X86_64_R15, context->R15);
-
-    return rc;
-}
-
-
-/***********************************************************************
- *           libunwind_get_reg
- */
-static int libunwind_get_reg( unw_cursor_t *cursor, unw_regnum_t reg, ULONG64 *val )
-{
-    int rc;
-    unw_word_t word;
-
-    rc = unw_get_reg(cursor, reg, &word);
-    if (rc == UNW_ESUCCESS)
-        *val = word;
-
-    return rc;
-}
-
-
-/***********************************************************************
- *           libunwind_set_context_from_cursor
- */
-static BOOL libunwind_set_context_from_cursor( CONTEXT *context, unw_cursor_t *cursor )
-{
-    int rc;
-
-    rc = libunwind_get_reg(cursor, UNW_REG_IP, &context->Rip);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_REG_SP, &context->Rsp);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_RAX, &context->Rax);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_RDX, &context->Rdx);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_RCX, &context->Rcx);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_RBX, &context->Rbx);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_RSI, &context->Rsi);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_RDI, &context->Rdi);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_RBP, &context->Rbp);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_R8, &context->R8);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_R9, &context->R9);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_R10, &context->R10);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_R11, &context->R11);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_R12, &context->R12);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_R13, &context->R13);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_R14, &context->R14);
-    if (rc == UNW_ESUCCESS)
-        rc = libunwind_get_reg(cursor, UNW_X86_64_R15, &context->R15);
-
-    return rc;
-}
-
-
-/***********************************************************************
  *           libunwind_virtual_unwind
  *
  * Equivalent of RtlVirtualUnwind for builtin modules.
@@ -1545,11 +1474,34 @@ static NTSTATUS libunwind_virtual_unwind( ULONG64 ip, BOOL* got_info, ULONG64 *f
     unw_proc_info_t info;
     int rc;
 
+#ifdef __APPLE__
     rc = unw_getcontext( &unw_context );
     if (rc == UNW_ESUCCESS)
         rc = unw_init_local( &cursor, &unw_context );
     if (rc == UNW_ESUCCESS)
-        rc = libunwind_set_cursor_from_context( &cursor, context, ip - 1 );
+    {
+        unw_set_reg( &cursor, UNW_REG_IP,     context->Rip );
+        unw_set_reg( &cursor, UNW_REG_SP,     context->Rsp );
+        unw_set_reg( &cursor, UNW_X86_64_RAX, context->Rax );
+        unw_set_reg( &cursor, UNW_X86_64_RDX, context->Rdx );
+        unw_set_reg( &cursor, UNW_X86_64_RCX, context->Rcx );
+        unw_set_reg( &cursor, UNW_X86_64_RBX, context->Rbx );
+        unw_set_reg( &cursor, UNW_X86_64_RSI, context->Rsi );
+        unw_set_reg( &cursor, UNW_X86_64_RDI, context->Rdi );
+        unw_set_reg( &cursor, UNW_X86_64_RBP, context->Rbp );
+        unw_set_reg( &cursor, UNW_X86_64_R8,  context->R8 );
+        unw_set_reg( &cursor, UNW_X86_64_R9,  context->R9 );
+        unw_set_reg( &cursor, UNW_X86_64_R10, context->R10 );
+        unw_set_reg( &cursor, UNW_X86_64_R11, context->R11 );
+        unw_set_reg( &cursor, UNW_X86_64_R12, context->R12 );
+        unw_set_reg( &cursor, UNW_X86_64_R13, context->R13 );
+        unw_set_reg( &cursor, UNW_X86_64_R14, context->R14 );
+        unw_set_reg( &cursor, UNW_X86_64_R15, context->R15 );
+    }
+#else
+    set_sigcontext( context, &unw_context );
+    rc = unw_init_local( &cursor, &unw_context );
+#endif
     if (rc != UNW_ESUCCESS)
     {
         WARN( "setup failed: %d\n", rc );
@@ -1562,7 +1514,7 @@ static NTSTATUS libunwind_virtual_unwind( ULONG64 ip, BOOL* got_info, ULONG64 *f
         WARN( "failed to get info: %d\n", rc );
         return STATUS_INVALID_DISPOSITION;
     }
-    if (rc == UNW_ENOINFO || ip < info.start_ip || info.end_ip <= ip || !info.format)
+    if (rc == UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip || info.end_ip == info.start_ip + 1)
     {
         *got_info = FALSE;
         return STATUS_SUCCESS;
@@ -1580,14 +1532,23 @@ static NTSTATUS libunwind_virtual_unwind( ULONG64 ip, BOOL* got_info, ULONG64 *f
     }
 
     *frame = context->Rsp;
-
-    rc = libunwind_set_context_from_cursor( context, &cursor );
-    if (rc != UNW_ESUCCESS)
-    {
-        WARN( "failed to update context after unwind: %d\n", rc );
-        return STATUS_INVALID_DISPOSITION;
-    }
-
+    unw_get_reg( &cursor, UNW_REG_IP,     (unw_word_t *)&context->Rip );
+    unw_get_reg( &cursor, UNW_REG_SP,     (unw_word_t *)&context->Rsp );
+    unw_get_reg( &cursor, UNW_X86_64_RAX, (unw_word_t *)&context->Rax );
+    unw_get_reg( &cursor, UNW_X86_64_RDX, (unw_word_t *)&context->Rdx );
+    unw_get_reg( &cursor, UNW_X86_64_RCX, (unw_word_t *)&context->Rcx );
+    unw_get_reg( &cursor, UNW_X86_64_RBX, (unw_word_t *)&context->Rbx );
+    unw_get_reg( &cursor, UNW_X86_64_RSI, (unw_word_t *)&context->Rsi );
+    unw_get_reg( &cursor, UNW_X86_64_RDI, (unw_word_t *)&context->Rdi );
+    unw_get_reg( &cursor, UNW_X86_64_RBP, (unw_word_t *)&context->Rbp );
+    unw_get_reg( &cursor, UNW_X86_64_R8,  (unw_word_t *)&context->R8 );
+    unw_get_reg( &cursor, UNW_X86_64_R9,  (unw_word_t *)&context->R9 );
+    unw_get_reg( &cursor, UNW_X86_64_R10, (unw_word_t *)&context->R10 );
+    unw_get_reg( &cursor, UNW_X86_64_R11, (unw_word_t *)&context->R11 );
+    unw_get_reg( &cursor, UNW_X86_64_R12, (unw_word_t *)&context->R12 );
+    unw_get_reg( &cursor, UNW_X86_64_R13, (unw_word_t *)&context->R13 );
+    unw_get_reg( &cursor, UNW_X86_64_R14, (unw_word_t *)&context->R14 );
+    unw_get_reg( &cursor, UNW_X86_64_R15, (unw_word_t *)&context->R15 );
     *handler = (void*)info.handler;
     *handler_data = (void*)info.lsda;
     *got_info = TRUE;
@@ -1776,36 +1737,7 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
     amd64_thread_data()->dr3 = context->Dr3;
     amd64_thread_data()->dr6 = context->Dr6;
     amd64_thread_data()->dr7 = context->Dr7;
-    RAX_sig(sigcontext) = context->Rax;
-    RCX_sig(sigcontext) = context->Rcx;
-    RDX_sig(sigcontext) = context->Rdx;
-    RBX_sig(sigcontext) = context->Rbx;
-    RSP_sig(sigcontext) = context->Rsp;
-    RBP_sig(sigcontext) = context->Rbp;
-    RSI_sig(sigcontext) = context->Rsi;
-    RDI_sig(sigcontext) = context->Rdi;
-    R8_sig(sigcontext)  = context->R8;
-    R9_sig(sigcontext)  = context->R9;
-    R10_sig(sigcontext) = context->R10;
-    R11_sig(sigcontext) = context->R11;
-    R12_sig(sigcontext) = context->R12;
-    R13_sig(sigcontext) = context->R13;
-    R14_sig(sigcontext) = context->R14;
-    R15_sig(sigcontext) = context->R15;
-    RIP_sig(sigcontext) = context->Rip;
-    CS_sig(sigcontext)  = context->SegCs;
-    FS_sig(sigcontext)  = context->SegFs;
-    GS_sig(sigcontext)  = context->SegGs;
-    EFL_sig(sigcontext) = context->EFlags;
-#ifdef DS_sig
-    DS_sig(sigcontext) = context->SegDs;
-#endif
-#ifdef ES_sig
-    ES_sig(sigcontext) = context->SegEs;
-#endif
-#ifdef SS_sig
-    SS_sig(sigcontext) = context->SegSs;
-#endif
+    set_sigcontext( context, sigcontext );
     if (FPU_sig(sigcontext)) *FPU_sig(sigcontext) = context->u.FltSave;
 }
 
