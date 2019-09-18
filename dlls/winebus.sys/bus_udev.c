@@ -1495,7 +1495,9 @@ void udev_driver_unload( void )
     CloseHandle(deviceloop_handle);
 
     bus_enumerate_hid_devices(&hidraw_vtbl, device_unload, NULL);
+#ifdef HAS_PROPER_INPUT_HEADER
     bus_enumerate_hid_devices(&lnxev_vtbl, device_unload, NULL);
+#endif
 }
 
 NTSTATUS udev_driver_init(void)
