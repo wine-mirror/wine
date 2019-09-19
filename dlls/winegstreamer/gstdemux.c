@@ -2172,3 +2172,112 @@ void start_dispatch_thread(void)
     pthread_key_create(&wine_gst_key, NULL);
     CloseHandle(CreateThread(NULL, 0, &dispatch_thread, NULL, 0, NULL));
 }
+
+static HRESULT WINAPI wave_parser_sink_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE *mt)
+{
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream))
+        return S_FALSE;
+    if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WAVE))
+        return S_OK;
+    if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_AU) || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_AIFF))
+        FIXME("AU and AIFF files are not yet supported.\n");
+    return S_FALSE;
+}
+
+static const BasePinFuncTable wave_parser_sink_ops =
+{
+    .pfnCheckMediaType = wave_parser_sink_CheckMediaType,
+    .pfnGetMediaType = BasePinImpl_GetMediaType,
+};
+
+static BOOL wave_parser_init_gst(struct gstdemux *filter)
+{
+    static const WCHAR source_name[] = {'o','u','t','p','u','t',0};
+    struct gstdemux_source *pin;
+    GstElement *element;
+    LONGLONG duration;
+    int ret;
+
+    if (!(element = gst_element_factory_make("wavparse", NULL)))
+    {
+        ERR("Failed to create wavparse; are %u-bit GStreamer \"good\" plugins installed?\n",
+                8 * (int)sizeof(void*));
+        return FALSE;
+    }
+
+    gst_bin_add(GST_BIN(filter->container), element);
+
+    filter->their_sink = gst_element_get_static_pad(element, "sink");
+    if ((ret = gst_pad_link(filter->my_src, filter->their_sink)) < 0)
+    {
+        ERR("Failed to link sink pads, error %d.\n", ret);
+        return FALSE;
+    }
+
+    if (!(pin = create_pin(filter, source_name)))
+        return FALSE;
+    pin->their_src = gst_element_get_static_pad(element, "src");
+    gst_object_ref(pin->their_src);
+    if ((ret = gst_pad_link(pin->their_src, pin->my_sink)) < 0)
+    {
+        ERR("Failed to link source pads, error %d.\n", ret);
+        return FALSE;
+    }
+
+    gst_pad_set_active(pin->my_sink, 1);
+    gst_element_set_state(filter->container, GST_STATE_PAUSED);
+    ret = gst_element_get_state(filter->container, NULL, NULL, -1);
+    if (ret == GST_STATE_CHANGE_FAILURE)
+    {
+        ERR("Failed to play stream.\n");
+        return FALSE;
+    }
+
+    gst_pad_query_duration(pin->their_src, GST_FORMAT_TIME, &duration);
+    pin->seek.llDuration = pin->seek.llStop = duration / 100;
+    pin->seek.llCurrent = 0;
+    if (!pin->seek.llDuration)
+        pin->seek.dwCapabilities = 0;
+
+    WaitForSingleObject(pin->caps_event, INFINITE);
+
+    filter->ignore_flush = TRUE;
+    gst_element_set_state(filter->container, GST_STATE_READY);
+    gst_element_get_state(filter->container, NULL, NULL, -1);
+    filter->ignore_flush = FALSE;
+
+    return TRUE;
+}
+
+IUnknown * CALLBACK wave_parser_create(IUnknown *outer, HRESULT *phr)
+{
+    static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
+    struct gstdemux *object;
+
+    if (!init_gstreamer())
+    {
+        *phr = E_FAIL;
+        return NULL;
+    }
+
+    mark_wine_thread();
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+    {
+        *phr = E_OUTOFMEMORY;
+        return NULL;
+    }
+
+    strmbase_filter_init(&object->filter, &GST_Vtbl, outer, &CLSID_WAVEParser, &filter_ops);
+
+    object->sink.dir = PINDIR_INPUT;
+    object->sink.filter = &object->filter;
+    lstrcpynW(object->sink.name, sink_name, ARRAY_SIZE(object->sink.name));
+    object->sink.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
+    object->sink.pFuncsTable = &wave_parser_sink_ops;
+    object->init_gst = wave_parser_init_gst;
+    *phr = S_OK;
+
+    TRACE("Created WAVE parser %p.\n", object);
+    return &object->filter.IUnknown_inner;
+}

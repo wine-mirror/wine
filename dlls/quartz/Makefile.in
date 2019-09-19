@@ -23,8 +23,7 @@ C_SRCS = \
 	regsvr.c \
 	systemclock.c \
 	videorenderer.c \
-	vmr9.c \
-	waveparser.c
+	vmr9.c
 
 RC_SRCS = quartz.rc
 

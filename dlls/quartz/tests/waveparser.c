@@ -148,7 +148,7 @@ static void test_interfaces(void)
     check_interface(pin, &IID_IKsPropertySet, FALSE);
     check_interface(pin, &IID_IMemInputPin, FALSE);
     check_interface(pin, &IID_IMediaPosition, FALSE);
-    todo_wine check_interface(pin, &IID_IMediaSeeking, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
 
     IPin_Release(pin);
 
@@ -157,6 +157,7 @@ static void test_interfaces(void)
     todo_wine check_interface(pin, &IID_IMediaPosition, TRUE);
     check_interface(pin, &IID_IMediaSeeking, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
+    check_interface(pin, &IID_IQualityControl, TRUE);
     check_interface(pin, &IID_IUnknown, TRUE);
 
     check_interface(pin, &IID_IAsyncReader, FALSE);
@@ -762,7 +763,17 @@ static void test_enum_media_types(void)
 
 START_TEST(waveparser)
 {
+    IBaseFilter *filter;
+
     CoInitialize(NULL);
+
+    if (FAILED(CoCreateInstance(&CLSID_WAVEParser, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter)))
+    {
+        skip("Failed to create WAVE parser.\n");
+        return;
+    }
+    IBaseFilter_Release(filter);
 
     test_interfaces();
     test_aggregation();

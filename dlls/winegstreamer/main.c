@@ -46,6 +46,8 @@ static const WCHAR wGstreamer_Mp3[] =
 {'G','S','t','r','e','a','m','e','r',' ','M','p','3',' ','f','i','l','t','e','r',0};
 static const WCHAR wGstreamer_AudioConvert[] =
 {'G','S','t','r','e','a','m','e','r',' ','A','u','d','i','o','C','o','n','v','e','r','t',' ','f','i','l','t','e','r',0};
+static const WCHAR wave_parserW[] =
+{'W','a','v','e',' ','P','a','r','s','e','r',0};
 
 static WCHAR wNull[] = {'\0'};
 
@@ -180,6 +182,47 @@ AMOVIESETUP_FILTER const amfAudioConvert =
     amfAudioConvertPin
 };
 
+static const AMOVIESETUP_MEDIATYPE wave_parser_sink_type_data[] =
+{
+    {&MEDIATYPE_Stream, &MEDIASUBTYPE_WAVE},
+    {&MEDIATYPE_Stream, &MEDIASUBTYPE_AU},
+    {&MEDIATYPE_Stream, &MEDIASUBTYPE_AIFF},
+};
+
+static const AMOVIESETUP_MEDIATYPE wave_parser_source_type_data[] =
+{
+    {&MEDIATYPE_Audio, &GUID_NULL},
+};
+
+static const AMOVIESETUP_PIN wave_parser_pin_data[] =
+{
+    {
+        NULL,
+        FALSE, FALSE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        ARRAY_SIZE(wave_parser_sink_type_data),
+        wave_parser_sink_type_data,
+    },
+    {
+        NULL,
+        FALSE, FALSE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        ARRAY_SIZE(wave_parser_source_type_data),
+        wave_parser_source_type_data,
+    },
+};
+
+static const AMOVIESETUP_FILTER wave_parser_filter_data =
+{
+    &CLSID_WAVEParser,
+    wave_parserW,
+    MERIT_UNLIKELY,
+    ARRAY_SIZE(wave_parser_pin_data),
+    wave_parser_pin_data,
+};
+
 FactoryTemplate const g_Templates[] = {
     {
         wGstreamer_Splitter,
@@ -215,6 +258,13 @@ FactoryTemplate const g_Templates[] = {
         Gstreamer_AudioConvert_create,
         NULL,
         &amfAudioConvert,
+    },
+    {
+        wave_parserW,
+        &CLSID_WAVEParser,
+        wave_parser_create,
+        NULL,
+        &wave_parser_filter_data,
     },
 };
 

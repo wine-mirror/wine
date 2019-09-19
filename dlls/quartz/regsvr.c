@@ -354,25 +354,6 @@ static struct regsvr_filter const filter_list[] = {
 	    { 0xFFFFFFFF },
 	}
     },
-    {   &CLSID_WAVEParser,
-	&CLSID_LegacyAmFilterCategory,
-	{'W','a','v','e',' ','P','a','r','s','e','r',0},
-	0x400000,
-	{   {   0,
-		{   { &MEDIATYPE_Stream, &MEDIASUBTYPE_WAVE },
-		    { &MEDIATYPE_Stream, &MEDIASUBTYPE_AU },
-		    { &MEDIATYPE_Stream, &MEDIASUBTYPE_AIFF },
-		    { NULL }
-		},
-	    },
-	    {   REG_PINFLAG_B_OUTPUT,
-		{   { &MEDIATYPE_Audio, &GUID_NULL },
-		    { NULL }
-		},
-	    },
-	    { 0xFFFFFFFF },
-	}
-    },
     { NULL }		/* list terminator */
 };
 
