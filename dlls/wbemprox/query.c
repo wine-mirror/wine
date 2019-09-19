@@ -1123,6 +1123,8 @@ void set_variant( VARTYPE type, LONGLONG val, void *val_ptr, VARIANT *ret )
 
 static HRESULT map_view_index( const struct view *view, UINT index, UINT *table_index, UINT *result_index )
 {
+    if (!view->table) return WBEM_E_NOT_FOUND;
+
     switch (view->type)
     {
     case VIEW_TYPE_SELECT:
