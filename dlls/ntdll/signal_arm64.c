@@ -435,12 +435,18 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
  */
 NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 {
-    NTSTATUS ret;
-    BOOL self;
-    context_t server_context;
+    NTSTATUS ret = STATUS_SUCCESS;
+    BOOL self = (handle == GetCurrentThread());
 
-    context_to_server( &server_context, context );
-    ret = set_thread_context( handle, &server_context, &self );
+    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_ARM64)))
+        self = FALSE;
+
+    if (!self)
+    {
+        context_t server_context;
+        context_to_server( &server_context, context );
+        ret = set_thread_context( handle, &server_context, &self );
+    }
     if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
     return ret;
 }
