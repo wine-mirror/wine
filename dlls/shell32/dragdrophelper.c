@@ -155,7 +155,7 @@ static HRESULT WINAPI IDropTargetHelper_fnShow (IDropTargetHelper * iface, BOOL 
 {
     dragdrophelper *This = impl_from_IDropTargetHelper(iface);
     FIXME ("(%p)->(%u)\n", This, fShow);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IDropTargetHelperVtbl DropTargetHelperVtbl =
