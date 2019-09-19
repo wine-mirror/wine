@@ -454,6 +454,7 @@ SOURCES = \
 	msvcrt/sys/unistd.h \
 	msvcrt/sys/utime.h \
 	msvcrt/time.h \
+	msvcrt/uchar.h \
 	msvcrt/unistd.h \
 	msvcrt/wchar.h \
 	msvcrt/wctype.h \
