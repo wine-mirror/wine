@@ -276,13 +276,8 @@ HRESULT WINAPI PathAllocCanonicalize(const WCHAR *path_in, DWORD flags, WCHAR **
                     continue;
                 }
 
-                /* Keep the . if one of the following is true:
-                 * 1. PATHCCH_DO_NOT_NORMALIZE_SEGMENTS
-                 * 2. in form of a..b
-                 */
-                if (dst > buffer
-                    && (((flags & PATHCCH_DO_NOT_NORMALIZE_SEGMENTS) && dst[-1] != '\\')
-                        || (dst[-1] != '\\' && src[2] != '\\' && src[2])))
+                /* Keep the .. if not surrounded by \ */
+                if ((src[2] != '\\' && src[2]) || (dst > buffer && dst[-1] != '\\'))
                 {
                     *dst++ = *src++;
                     *dst++ = *src++;
@@ -313,14 +308,8 @@ HRESULT WINAPI PathAllocCanonicalize(const WCHAR *path_in, DWORD flags, WCHAR **
             }
             else
             {
-                /* Keep the . if one of the following is true:
-                 * 1. PATHCCH_DO_NOT_NORMALIZE_SEGMENTS
-                 * 2. in form of a.b, which is used in domain names
-                 * 3. *.
-                 */
-                if (dst > buffer
-                    && ((flags & PATHCCH_DO_NOT_NORMALIZE_SEGMENTS && dst[-1] != '\\')
-                        || (dst[-1] != '\\' && src[1] != '\\' && src[1]) || (dst[-1] == '*')))
+                /* Keep the . if not surrounded by \ */
+                if ((src[1] != '\\' && src[1]) || (dst > buffer && dst[-1] != '\\'))
                 {
                     *dst++ = *src++;
                     continue;
@@ -351,6 +340,22 @@ HRESULT WINAPI PathAllocCanonicalize(const WCHAR *path_in, DWORD flags, WCHAR **
     }
     /* End the path */
     *dst = 0;
+
+    /* Strip multiple trailing . */
+    if (!(flags & PATHCCH_DO_NOT_NORMALIZE_SEGMENTS))
+    {
+        while (dst > buffer && dst[-1] == '.')
+        {
+            /* Keep a . after * */
+            if (dst - 1 > buffer && dst[-2] == '*')
+                break;
+            /* If . follow a : at the second character, remove the . and add a \ */
+            else if (dst - 1 > buffer && dst[-2] == ':' && dst - 2 == buffer + 1)
+                *--dst = '\\';
+            else
+                *--dst = 0;
+        }
+    }
 
     /* If result path is empty, fill in \ */
     if (!*buffer)
