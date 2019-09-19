@@ -27,6 +27,7 @@
 
 #include "initguid.h"
 #include "scrobj.h"
+#include "xmllite.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -38,7 +39,11 @@ static HINSTANCE scrobj_instance;
 struct scriptlet_factory
 {
     IClassFactory IClassFactory_iface;
+
     LONG ref;
+
+    IXmlReader *xml_reader;
+    IMoniker *moniker;
 };
 
 typedef enum tid_t
@@ -116,6 +121,139 @@ static void release_typelib(void)
     ITypeLib_Release(typelib);
 }
 
+static const char *debugstr_xml_name(struct scriptlet_factory *factory)
+{
+    const WCHAR *str;
+    UINT len;
+    HRESULT hres;
+    hres = IXmlReader_GetLocalName(factory->xml_reader, &str, &len);
+    if (FAILED(hres)) return "#err";
+    return debugstr_wn(str, len);
+}
+
+static HRESULT next_xml_node(struct scriptlet_factory *factory, XmlNodeType *node_type)
+{
+    HRESULT hres;
+    do hres = IXmlReader_Read(factory->xml_reader, node_type);
+    while (hres == S_OK && *node_type == XmlNodeType_Whitespace);
+    return hres;
+}
+
+static BOOL is_xml_name(struct scriptlet_factory *factory, const WCHAR *name)
+{
+    const WCHAR *qname;
+    UINT len;
+    HRESULT hres;
+    hres = IXmlReader_GetQualifiedName(factory->xml_reader, &qname, &len);
+    return hres == S_OK && len == wcslen(name) && !memcmp(qname, name, len * sizeof(WCHAR));
+}
+
+static HRESULT expect_no_attributes(struct scriptlet_factory *factory)
+{
+    UINT count;
+    HRESULT hres;
+    hres = IXmlReader_GetAttributeCount(factory->xml_reader, &count);
+    if (FAILED(hres)) return hres;
+    if (!count) return S_OK;
+    FIXME("Unexpected attributes\n");
+    return E_FAIL;
+}
+
+static HRESULT parse_scriptlet_registration(struct scriptlet_factory *factory)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT parse_scriptlet_script(struct scriptlet_factory *factory)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT parse_scriptlet_file(struct scriptlet_factory *factory, const WCHAR *url)
+{
+    XmlNodeType node_type;
+    IBindCtx *bind_ctx;
+    IStream *stream;
+    HRESULT hres;
+
+    hres = CreateURLMoniker(NULL, url, &factory->moniker);
+    if (FAILED(hres))
+    {
+        WARN("CreateURLMoniker failed: %08x\n", hres);
+        return hres;
+    }
+
+    hres = CreateBindCtx(0, &bind_ctx);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IMoniker_BindToStorage(factory->moniker, bind_ctx, NULL, &IID_IStream, (void**)&stream);
+    IBindCtx_Release(bind_ctx);
+    if (FAILED(hres))
+        return hres;
+
+    hres = CreateXmlReader(&IID_IXmlReader, (void**)&factory->xml_reader, NULL);
+    if(SUCCEEDED(hres))
+        hres = IXmlReader_SetInput(factory->xml_reader, (IUnknown*)stream);
+    IStream_Release(stream);
+    if (FAILED(hres))
+        return hres;
+
+    hres = next_xml_node(factory, &node_type);
+    if (hres == S_OK && node_type == XmlNodeType_XmlDeclaration)
+        hres = next_xml_node(factory, &node_type);
+
+    if (node_type != XmlNodeType_Element || !is_xml_name(factory, L"component"))
+    {
+        FIXME("Unexpected %s element\n", debugstr_xml_name(factory));
+        return E_FAIL;
+    }
+
+    hres = expect_no_attributes(factory);
+    if (FAILED(hres)) return hres;
+
+    for (;;)
+    {
+        hres = next_xml_node(factory, &node_type);
+        if (FAILED(hres)) return hres;
+        if (node_type == XmlNodeType_EndElement) break;
+        if (node_type != XmlNodeType_Element)
+        {
+            FIXME("Unexpected node type %u\n", node_type);
+            return E_FAIL;
+        }
+
+        if (is_xml_name(factory, L"registration"))
+            hres = parse_scriptlet_registration(factory);
+        else if (is_xml_name(factory, L"public"))
+            hres = parse_scriptlet_public(factory);
+        else if (is_xml_name(factory, L"script"))
+            hres = parse_scriptlet_script(factory);
+        else
+        {
+            FIXME("Unexpected element %s\n", debugstr_xml_name(factory));
+            return E_NOTIMPL;
+        }
+        if (FAILED(hres)) return hres;
+    }
+
+    hres = next_xml_node(factory, &node_type);
+    if (hres != S_FALSE)
+    {
+        FIXME("Unexpected node type %u\n", node_type);
+        return E_FAIL;
+    }
+    return S_OK;
+}
+
 static inline struct scriptlet_factory *impl_from_IClassFactory(IClassFactory *iface)
 {
     return CONTAINING_RECORD(iface, struct scriptlet_factory, IClassFactory_iface);
@@ -164,7 +302,11 @@ static ULONG WINAPI scriptlet_factory_Release(IClassFactory *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (!ref)
+    {
+        if (This->moniker) IMoniker_Release(This->moniker);
+        if (This->xml_reader) IXmlReader_Release(This->xml_reader);
         heap_free(This);
+    }
     return ref;
 }
 
@@ -194,6 +336,7 @@ static const struct IClassFactoryVtbl scriptlet_factory_vtbl =
 static HRESULT create_scriptlet_factory(const WCHAR *url, struct scriptlet_factory **ret)
 {
     struct scriptlet_factory *factory;
+    HRESULT hres;
 
     TRACE("%s\n", debugstr_w(url));
 
@@ -205,6 +348,13 @@ static HRESULT create_scriptlet_factory(const WCHAR *url, struct scriptlet_facto
 
     factory->IClassFactory_iface.lpVtbl = &scriptlet_factory_vtbl;
     factory->ref = 1;
+
+    hres = parse_scriptlet_file(factory, url);
+    if (FAILED(hres))
+    {
+        IClassFactory_Release(&factory->IClassFactory_iface);
+        return hres;
+    }
 
     *ret = factory;
     return S_OK;
