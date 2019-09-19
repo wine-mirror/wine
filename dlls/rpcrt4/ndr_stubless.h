@@ -235,6 +235,8 @@ struct async_call_data
     unsigned short stack_size;
     /* number of parameters. optional for client to give it to us */
     unsigned int number_of_params;
+    /* location to put retval into */
+    LONG_PTR *retval_ptr;
     /* correlation cache */
     ULONG_PTR NdrCorrCache[256];
 };

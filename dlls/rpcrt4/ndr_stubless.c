@@ -1632,6 +1632,8 @@ static void do_ndr_async_client_call( const MIDL_STUB_DESC *pStubDesc, PFORMAT_S
     pAsync->StubInfo = async_call_data;
     async_call_data->pHandleFormat = pFormat;
 
+    TRACE("pAsync %p, pAsync->StubInfo %p, NotificationType %d\n", pAsync, pAsync->StubInfo, pAsync->NotificationType);
+
     pFormat += get_handle_desc_size(pProcHeader, pFormat);
     async_call_data->hBinding = client_get_handle(pStubMsg, pProcHeader, async_call_data->pHandleFormat);
     if (!async_call_data->hBinding) return;
@@ -2075,7 +2077,11 @@ void RPC_ENTRY NdrAsyncServerCall(PRPC_MESSAGE pRpcMsg)
     TRACE("UNMARSHAL\n");
     stub_do_args(async_call_data->pStubMsg, pFormat, STUBLESS_UNMARSHAL, async_call_data->number_of_params);
 
-    /* 2. CALLSERVER */
+    /* 2. INITOUT */
+    TRACE("INITOUT\n");
+    async_call_data->retval_ptr = stub_do_args(async_call_data->pStubMsg, pFormat, STUBLESS_INITOUT, async_call_data->number_of_params);
+
+    /* 3. CALLSERVER */
     TRACE("CALLSERVER\n");
     if (pServerInfo->ThunkTable && pServerInfo->ThunkTable[pRpcMsg->ProcNum])
         pServerInfo->ThunkTable[pRpcMsg->ProcNum](async_call_data->pStubMsg);
@@ -2090,8 +2096,6 @@ RPC_STATUS NdrpCompleteAsyncServerCall(RPC_ASYNC_STATE *pAsync, void *Reply)
     struct async_call_data *async_call_data;
     /* the type of pass we are currently doing */
     enum stubless_phase phase;
-    /* location to put retval into */
-    LONG_PTR *retval_ptr;
     RPC_STATUS status = RPC_S_OK;
 
     if (!pAsync->StubInfo)
@@ -2102,13 +2106,10 @@ RPC_STATUS NdrpCompleteAsyncServerCall(RPC_ASYNC_STATE *pAsync, void *Reply)
 
     TRACE("pAsync %p, pAsync->StubInfo %p, pFormat %p\n", pAsync, pAsync->StubInfo, async_call_data->pHandleFormat);
 
-    /* 3. INITOUT */
-    TRACE("INITOUT\n");
-    retval_ptr = stub_do_args(async_call_data->pStubMsg, async_call_data->pHandleFormat, STUBLESS_INITOUT, async_call_data->number_of_params);
-    if (retval_ptr)
+    if (async_call_data->retval_ptr)
     {
         TRACE("stub implementation returned 0x%lx\n", *(LONG_PTR *)Reply);
-        *retval_ptr = *(LONG_PTR *)Reply;
+        *async_call_data->retval_ptr = *(LONG_PTR *)Reply;
     }
     else
         TRACE("void stub implementation\n");
