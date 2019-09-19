@@ -204,7 +204,8 @@ static gboolean amt_from_gst_caps_video(const GstCaps *caps, AM_MEDIA_TYPE *amt)
     amt->formattype = FORMAT_VideoInfo;
     amt->pbFormat = (BYTE*)vih;
     amt->cbFormat = sizeof(*vih);
-    amt->bFixedSizeSamples = amt->bTemporalCompression = 1;
+    amt->bFixedSizeSamples = FALSE;
+    amt->bTemporalCompression = TRUE;
     amt->lSampleSize = 0;
     amt->pUnk = NULL;
     ZeroMemory(vih, sizeof(*vih));
