@@ -1019,6 +1019,37 @@ static void cache_authorization(LPWSTR host, LPWSTR scheme,
     LeaveCriticalSection(&authcache_cs);
 }
 
+void free_authorization_cache(void)
+{
+    authorizationData *ad, *sa_safe;
+    basicAuthorizationData *basic, *basic_safe;
+
+    EnterCriticalSection(&authcache_cs);
+
+    LIST_FOR_EACH_ENTRY_SAFE(basic, basic_safe, &basicAuthorizationCache, basicAuthorizationData, entry)
+    {
+        heap_free(basic->host);
+        heap_free(basic->realm);
+        heap_free(basic->authorization);
+
+        list_remove(&basic->entry);
+        heap_free(basic);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(ad, sa_safe, &authorizationCache, authorizationData, entry)
+    {
+        heap_free(ad->host);
+        heap_free(ad->scheme);
+        heap_free(ad->user);
+        heap_free(ad->password);
+        heap_free(ad->domain);
+        list_remove(&ad->entry);
+        heap_free(ad);
+    }
+
+    LeaveCriticalSection(&authcache_cs);
+}
+
 static BOOL HTTP_DoAuthorization( http_request_t *request, LPCWSTR pszAuthValue,
                                   struct HttpAuthInfo **ppAuthInfo,
                                   LPWSTR domain_and_username, LPWSTR password,

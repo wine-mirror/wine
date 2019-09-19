@@ -2821,6 +2821,7 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_END_BROWSER_SESSION:
         FIXME("Option INTERNET_OPTION_END_BROWSER_SESSION: semi-stub\n");
         free_cookie();
+        free_authorization_cache();
         break;
     case INTERNET_OPTION_CONNECTED_STATE:
         FIXME("Option INTERNET_OPTION_CONNECTED_STATE: STUB\n");

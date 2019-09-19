@@ -456,6 +456,7 @@ static inline req_file_t *req_file_addref(req_file_t *req_file)
 BOOL init_urlcache(void) DECLSPEC_HIDDEN;
 void free_urlcache(void) DECLSPEC_HIDDEN;
 void free_cookie(void) DECLSPEC_HIDDEN;
+void free_authorization_cache(void) DECLSPEC_HIDDEN;
 
 void init_winsock(void) DECLSPEC_HIDDEN;
 
