@@ -7,7 +7,6 @@ EXTRADLLFLAGS = -mno-cygwin
 C_SRCS = \
 	acmwrapper.c \
 	avidec.c \
-	avisplit.c \
 	dsoundrender.c \
 	enummedia.c \
 	enummoniker.c \

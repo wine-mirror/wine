@@ -769,6 +769,7 @@ out:
 
 static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *This)
 {
+    static const WCHAR formatW[] = {'S','t','r','e','a','m',' ','%','0','2','u',0};
     const char *typename;
     char *name;
     GstCaps *caps;
@@ -779,9 +780,9 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
 
     TRACE("%p %p %p\n", This, bin, pad);
 
+    sprintfW(nameW, formatW, This->cStreams);
+
     name = gst_pad_get_name(pad);
-    MultiByteToWideChar(CP_UNIXCP, 0, name, -1, nameW, ARRAY_SIZE(nameW) - 1);
-    nameW[ARRAY_SIZE(nameW) - 1] = 0;
     TRACE("Name: %s\n", name);
     g_free(name);
 
@@ -2275,5 +2276,112 @@ IUnknown * CALLBACK wave_parser_create(IUnknown *outer, HRESULT *phr)
     *phr = S_OK;
 
     TRACE("Created WAVE parser %p.\n", object);
+    return &object->filter.IUnknown_inner;
+}
+
+static HRESULT WINAPI avi_splitter_sink_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE *mt)
+{
+    if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream)
+            && IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_Avi))
+        return S_OK;
+    return S_FALSE;
+}
+
+static const BasePinFuncTable avi_splitter_sink_ops =
+{
+    .pfnCheckMediaType = avi_splitter_sink_CheckMediaType,
+    .pfnGetMediaType = BasePinImpl_GetMediaType,
+};
+
+static BOOL avi_splitter_init_gst(struct gstdemux *filter)
+{
+    GstElement *element = gst_element_factory_make("avidemux", NULL);
+    LONGLONG duration;
+    unsigned int i;
+    int ret;
+
+    if (!element)
+    {
+        ERR("Failed to create avidemux; are %u-bit GStreamer \"good\" plugins installed?\n",
+                8 * (int)sizeof(void*));
+        return FALSE;
+    }
+
+    gst_bin_add(GST_BIN(filter->container), element);
+
+    g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), filter);
+    g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), filter);
+    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads_wrapper), filter);
+
+    filter->their_sink = gst_element_get_static_pad(element, "sink");
+    ResetEvent(filter->no_more_pads_event);
+
+    if ((ret = gst_pad_link(filter->my_src, filter->their_sink)) < 0)
+    {
+        ERR("Failed to link pads, error %d.\n", ret);
+        return FALSE;
+    }
+
+    gst_element_set_state(filter->container, GST_STATE_PLAYING);
+    ret = gst_element_get_state(filter->container, NULL, NULL, -1);
+    if (ret == GST_STATE_CHANGE_FAILURE)
+    {
+        ERR("Failed to play stream.\n");
+        return FALSE;
+    }
+
+    WaitForSingleObject(filter->no_more_pads_event, INFINITE);
+
+    gst_pad_query_duration(filter->ppPins[0]->their_src, GST_FORMAT_TIME, &duration);
+    for (i = 0; i < filter->cStreams; ++i)
+    {
+        struct gstdemux_source *pin = filter->ppPins[i];
+
+        pin->seek.llDuration = pin->seek.llStop = duration / 100;
+        pin->seek.llCurrent = 0;
+        if (!pin->seek.llDuration)
+            pin->seek.dwCapabilities = 0;
+        WaitForSingleObject(pin->caps_event, INFINITE);
+    }
+
+    filter->ignore_flush = TRUE;
+    gst_element_set_state(filter->container, GST_STATE_READY);
+    gst_element_get_state(filter->container, NULL, NULL, -1);
+    filter->ignore_flush = FALSE;
+
+    return TRUE;
+}
+
+IUnknown * CALLBACK avi_splitter_create(IUnknown *outer, HRESULT *phr)
+{
+    static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
+    struct gstdemux *object;
+
+    if (!init_gstreamer())
+    {
+        *phr = E_FAIL;
+        return NULL;
+    }
+
+    mark_wine_thread();
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+    {
+        *phr = E_OUTOFMEMORY;
+        return NULL;
+    }
+
+    strmbase_filter_init(&object->filter, &GST_Vtbl, outer, &CLSID_AviSplitter, &filter_ops);
+
+    object->no_more_pads_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    object->sink.dir = PINDIR_INPUT;
+    object->sink.filter = &object->filter;
+    lstrcpynW(object->sink.name, sink_name, ARRAY_SIZE(object->sink.name));
+    object->sink.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
+    object->sink.pFuncsTable = &avi_splitter_sink_ops;
+    object->init_gst = avi_splitter_init_gst;
+    *phr = S_OK;
+
+    TRACE("Created AVI splitter %p.\n", object);
     return &object->filter.IUnknown_inner;
 }

@@ -48,6 +48,8 @@ static const WCHAR wGstreamer_AudioConvert[] =
 {'G','S','t','r','e','a','m','e','r',' ','A','u','d','i','o','C','o','n','v','e','r','t',' ','f','i','l','t','e','r',0};
 static const WCHAR wave_parserW[] =
 {'W','a','v','e',' ','P','a','r','s','e','r',0};
+static const WCHAR avi_splitterW[] =
+{'A','V','I',' ','S','p','l','i','t','t','e','r',0};
 
 static WCHAR wNull[] = {'\0'};
 
@@ -223,6 +225,40 @@ static const AMOVIESETUP_FILTER wave_parser_filter_data =
     wave_parser_pin_data,
 };
 
+static const AMOVIESETUP_MEDIATYPE avi_splitter_sink_type_data[] =
+{
+    {&MEDIATYPE_Stream, &MEDIASUBTYPE_Avi},
+};
+
+static const AMOVIESETUP_PIN avi_splitter_pin_data[] =
+{
+    {
+        NULL,
+        FALSE, FALSE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        ARRAY_SIZE(avi_splitter_sink_type_data),
+        avi_splitter_sink_type_data,
+    },
+    {
+        NULL,
+        FALSE, TRUE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        ARRAY_SIZE(amfMTvideo),
+        amfMTvideo,
+    },
+};
+
+static const AMOVIESETUP_FILTER avi_splitter_filter_data =
+{
+    &CLSID_AviSplitter,
+    avi_splitterW,
+    0x5ffff0,
+    ARRAY_SIZE(avi_splitter_pin_data),
+    avi_splitter_pin_data,
+};
+
 FactoryTemplate const g_Templates[] = {
     {
         wGstreamer_Splitter,
@@ -265,6 +301,13 @@ FactoryTemplate const g_Templates[] = {
         wave_parser_create,
         NULL,
         &wave_parser_filter_data,
+    },
+    {
+        avi_splitterW,
+        &CLSID_AviSplitter,
+        avi_splitter_create,
+        NULL,
+        &avi_splitter_filter_data,
     },
 };
 

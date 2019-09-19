@@ -85,13 +85,6 @@ coclass SeekingPassThru { interface ISeekingPassThru; }
 coclass AsyncReader { interface IBaseFilter; }
 
 [
-    helpstring("AVI Splitter"),
-    threading(both),
-    uuid(1b544c20-fd0b-11ce-8c63-00aa0044b51e)
-]
-coclass AviSplitter { interface IBaseFilter; }
-
-[
     helpstring("MPEG-I Stream Splitter"),
     threading(both),
     uuid(336475d0-942a-11ce-a870-00aa002feab5)

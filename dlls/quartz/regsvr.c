@@ -178,23 +178,6 @@ static HRESULT unregister_filters(struct regsvr_filter const *list)
  */
 
 static struct regsvr_filter const filter_list[] = {
-    {   &CLSID_AviSplitter,
-	&CLSID_LegacyAmFilterCategory,
-	{'A','V','I',' ','S','p','l','i','t','t','e','r',0},
-	0x5ffff0,
-	{   {   0,
-		{   { &MEDIATYPE_Stream, &MEDIASUBTYPE_Avi },
-		    { NULL }
-		},
-	    },
-	    {   REG_PINFLAG_B_OUTPUT,
-		{   { &MEDIATYPE_Video, &GUID_NULL },
-		    { NULL }
-		},
-	    },
-	    { 0xFFFFFFFF },
-	}
-    },
     {   &CLSID_MPEG1Splitter,
         &CLSID_LegacyAmFilterCategory,
         {'M','P','E','G','-','I',' ','S','t','r','e','a','m',' ','S','p','l','i','t','t','e','r',0},
