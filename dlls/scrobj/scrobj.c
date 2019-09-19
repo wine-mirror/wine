@@ -44,6 +44,14 @@ struct scriptlet_factory
 
     IXmlReader *xml_reader;
     IMoniker *moniker;
+
+    BOOL have_registration;
+    WCHAR *description;
+    WCHAR *progid;
+    WCHAR *versioned_progid;
+    WCHAR *version;
+    WCHAR *classid_str;
+    CLSID classid;
 };
 
 typedef enum tid_t
@@ -148,6 +156,19 @@ static BOOL is_xml_name(struct scriptlet_factory *factory, const WCHAR *name)
     return hres == S_OK && len == wcslen(name) && !memcmp(qname, name, len * sizeof(WCHAR));
 }
 
+static HRESULT expect_end_element(struct scriptlet_factory *factory)
+{
+    XmlNodeType node_type;
+    HRESULT hres;
+    hres = next_xml_node(factory, &node_type);
+    if (hres != S_OK || node_type != XmlNodeType_EndElement)
+    {
+        FIXME("Unexpected node %u %s\n", node_type, debugstr_xml_name(factory));
+        return E_FAIL;
+    }
+    return S_OK;
+}
+
 static HRESULT expect_no_attributes(struct scriptlet_factory *factory)
 {
     UINT count;
@@ -159,10 +180,122 @@ static HRESULT expect_no_attributes(struct scriptlet_factory *factory)
     return E_FAIL;
 }
 
+static BOOL is_case_xml_name(struct scriptlet_factory *factory, const WCHAR *name)
+{
+    const WCHAR *qname;
+    UINT len;
+    HRESULT hres;
+    hres = IXmlReader_GetQualifiedName(factory->xml_reader, &qname, &len);
+    return hres == S_OK && len == wcslen(name) && !memicmp(qname, name, len * sizeof(WCHAR));
+}
+
+static HRESULT read_xml_value(struct scriptlet_factory *factory, WCHAR **ret)
+{
+    const WCHAR *str;
+    UINT len;
+    HRESULT hres;
+    hres = IXmlReader_GetValue(factory->xml_reader, &str, &len);
+    if (FAILED(hres)) return hres;
+    if (!(*ret = heap_alloc((len + 1) * sizeof(WCHAR)))) return E_OUTOFMEMORY;
+    memcpy(*ret, str, len * sizeof(WCHAR));
+    (*ret)[len] = 0;
+    return S_OK;
+}
+
 static HRESULT parse_scriptlet_registration(struct scriptlet_factory *factory)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    if (factory->have_registration)
+    {
+        FIXME("duplicated registration element\n");
+        return E_FAIL;
+    }
+    factory->have_registration = TRUE;
+
+    for (;;)
+    {
+        hres = IXmlReader_MoveToNextAttribute(factory->xml_reader);
+        if (hres != S_OK) break;
+
+        if (is_xml_name(factory, L"description"))
+        {
+            if (factory->description)
+            {
+                FIXME("Duplicated description\n");
+                return E_FAIL;
+            }
+            hres = read_xml_value(factory, &factory->description);
+            if (FAILED(hres)) return hres;
+        }
+        else if (is_case_xml_name(factory, L"progid"))
+        {
+            if (factory->progid)
+            {
+                FIXME("Duplicated progid\n");
+                return E_FAIL;
+            }
+            hres = read_xml_value(factory, &factory->progid);
+            if (FAILED(hres)) return hres;
+        }
+        else if (is_xml_name(factory, L"version"))
+        {
+            if (factory->version)
+            {
+                FIXME("Duplicated version\n");
+                return E_FAIL;
+            }
+            hres = read_xml_value(factory, &factory->version);
+            if (FAILED(hres)) return hres;
+        }
+        else if (is_xml_name(factory, L"classid"))
+        {
+            if (factory->classid_str)
+            {
+                FIXME("Duplicated classid attribute\n");
+                return E_FAIL;
+            }
+            hres = read_xml_value(factory, &factory->classid_str);
+            if (FAILED(hres)) return hres;
+            hres = IIDFromString(factory->classid_str, &factory->classid);
+            if (FAILED(hres))
+            {
+                FIXME("Invalid classid %s\n", debugstr_w(factory->classid_str));
+
+                return E_FAIL;
+            }
+        }
+        else
+        {
+            FIXME("Unexpected attribute\n");
+            return E_NOTIMPL;
+        }
+    }
+
+    if (!factory->progid && !factory->classid_str)
+    {
+        FIXME("Incomplet registration element\n");
+        return E_FAIL;
+    }
+
+    if (factory->progid)
+    {
+        size_t progid_len = wcslen(factory->progid);
+        size_t version_len = wcslen(factory->version);
+
+        if (!(factory->versioned_progid = heap_alloc((progid_len + version_len + 2) * sizeof(WCHAR))))
+            return E_OUTOFMEMORY;
+
+        memcpy(factory->versioned_progid, factory->progid, (progid_len + 1) * sizeof(WCHAR));
+        if (version_len)
+        {
+            factory->versioned_progid[progid_len++] = '.';
+            wcscpy(factory->versioned_progid + progid_len, factory->version);
+        }
+        else factory->versioned_progid[progid_len] = 0;
+    }
+
+    return expect_end_element(factory);
 }
 
 static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
@@ -305,6 +438,11 @@ static ULONG WINAPI scriptlet_factory_Release(IClassFactory *iface)
     {
         if (This->moniker) IMoniker_Release(This->moniker);
         if (This->xml_reader) IXmlReader_Release(This->xml_reader);
+        heap_free(This->classid_str);
+        heap_free(This->description);
+        heap_free(This->versioned_progid);
+        heap_free(This->progid);
+        heap_free(This->version);
         heap_free(This);
     }
     return ref;
