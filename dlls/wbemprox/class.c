@@ -227,7 +227,6 @@ static struct record *create_record( struct table *table )
     for (i = 0; i < table->num_cols; i++)
     {
         record->fields[i].type    = table->columns[i].type;
-        record->fields[i].vartype = table->columns[i].vartype;
         record->fields[i].u.ival  = 0;
     }
     record->count = table->num_cols;
@@ -347,13 +346,13 @@ static HRESULT WINAPI class_object_GetQualifierSet(
 
 static HRESULT record_get_value( const struct record *record, UINT index, VARIANT *var, CIMTYPE *type )
 {
-    VARTYPE vartype = record->fields[index].vartype;
+    VARTYPE vartype = to_vartype( record->fields[index].type & CIM_TYPE_MASK );
 
     if (type) *type = record->fields[index].type;
 
     if (record->fields[index].type & CIM_FLAG_ARRAY)
     {
-        V_VT( var ) = vartype ? vartype : to_vartype( record->fields[index].type & CIM_TYPE_MASK ) | VT_ARRAY;
+        V_VT( var ) = vartype | VT_ARRAY;
         V_ARRAY( var ) = to_safearray( record->fields[index].u.aval, record->fields[index].type & CIM_TYPE_MASK );
         return S_OK;
     }
@@ -362,15 +361,12 @@ static HRESULT record_get_value( const struct record *record, UINT index, VARIAN
     case CIM_STRING:
     case CIM_DATETIME:
     case CIM_REFERENCE:
-        if (!vartype) vartype = VT_BSTR;
         V_BSTR( var ) = SysAllocString( record->fields[index].u.sval );
         break;
     case CIM_SINT32:
-        if (!vartype) vartype = VT_I4;
         V_I4( var ) = record->fields[index].u.ival;
         break;
     case CIM_UINT32:
-        if (!vartype) vartype = VT_UI4;
         V_UI4( var ) = record->fields[index].u.ival;
         break;
     default:
@@ -735,7 +731,6 @@ static HRESULT create_signature_columns_and_data( IEnumWbemClassObject *iter, UI
 {
     static const WCHAR parameterW[] = {'P','a','r','a','m','e','t','e','r',0};
     static const WCHAR typeW[] = {'T','y','p','e',0};
-    static const WCHAR varianttypeW[] = {'V','a','r','i','a','n','t','T','y','p','e',0};
     static const WCHAR defaultvalueW[] = {'D','e','f','a','u','l','t','V','a','l','u','e',0};
     struct column *columns;
     BYTE *row;
@@ -763,10 +758,6 @@ static HRESULT create_signature_columns_and_data( IEnumWbemClassObject *iter, UI
         hr = IWbemClassObject_Get( param, typeW, 0, &val, NULL, NULL );
         if (hr != S_OK) goto error;
         columns[i].type = V_UI4( &val );
-
-        hr = IWbemClassObject_Get( param, varianttypeW, 0, &val, NULL, NULL );
-        if (hr != S_OK) goto error;
-        columns[i].vartype = V_UI4( &val );
 
         hr = IWbemClassObject_Get( param, defaultvalueW, 0, &val, NULL, NULL );
         if (hr != S_OK) goto error;

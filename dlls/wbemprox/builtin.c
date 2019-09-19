@@ -441,8 +441,6 @@ static const WCHAR prop_usernameW[] =
     {'U','s','e','r','N','a','m','e',0};
 static const WCHAR prop_uuidW[] =
     {'U','U','I','D',0};
-static const WCHAR prop_varianttypeW[] =
-    {'V','a','r','i','a','n','t','T','y','p','e',0};
 static const WCHAR prop_vendorW[] =
     {'V','e','n','d','o','r',0};
 static const WCHAR prop_versionW[] =
@@ -493,8 +491,8 @@ static const struct column col_bios[] =
     { prop_releasedateW,        CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_serialnumberW,       CIM_STRING },
     { prop_smbiosbiosversionW,  CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_smbiosmajorversionW, CIM_UINT16, VT_I4 },
-    { prop_smbiosminorversionW, CIM_UINT16, VT_I4 },
+    { prop_smbiosmajorversionW, CIM_UINT16 },
+    { prop_smbiosminorversionW, CIM_UINT16 },
     { prop_versionW,            CIM_STRING|COL_FLAG_KEY }
 };
 static const struct column col_cdromdrive[] =
@@ -509,12 +507,12 @@ static const struct column col_compsys[] =
 {
     { prop_descriptionW,          CIM_STRING },
     { prop_domainW,               CIM_STRING },
-    { prop_domainroleW,           CIM_UINT16, VT_I4 },
+    { prop_domainroleW,           CIM_UINT16 },
     { prop_manufacturerW,         CIM_STRING },
     { prop_modelW,                CIM_STRING },
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
-    { prop_numprocessorsW,        CIM_UINT32, VT_I4 },
+    { prop_numlogicalprocessorsW, CIM_UINT32 },
+    { prop_numprocessorsW,        CIM_UINT32 },
     { prop_totalphysicalmemoryW,  CIM_UINT64 },
     { prop_usernameW,             CIM_STRING|COL_FLAG_DYNAMIC }
 };
@@ -544,7 +542,7 @@ static const struct column col_directory[] =
 static const struct column col_diskdrive[] =
 {
     { prop_deviceidW,      CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_indexW,         CIM_UINT32, VT_I4 },
+    { prop_indexW,         CIM_UINT32 },
     { prop_interfacetypeW, CIM_STRING },
     { prop_manufacturerW,  CIM_STRING },
     { prop_mediatypeW,     CIM_STRING },
@@ -563,8 +561,8 @@ static const struct column col_diskpartition[] =
     { prop_bootableW,       CIM_BOOLEAN },
     { prop_bootpartitionW,  CIM_BOOLEAN },
     { prop_deviceidW,       CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_diskindexW,      CIM_UINT32, VT_I4 },
-    { prop_indexW,          CIM_UINT32, VT_I4 },
+    { prop_diskindexW,      CIM_UINT32 },
+    { prop_indexW,          CIM_UINT32 },
     { prop_pnpdeviceidW,    CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_sizeW,           CIM_UINT64 },
     { prop_startingoffsetW, CIM_UINT64 },
@@ -579,7 +577,7 @@ static const struct column col_ip4routetable[] =
 static const struct column col_logicaldisk[] =
 {
     { prop_deviceidW,           CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_drivetypeW,          CIM_UINT32, VT_I4 },
+    { prop_drivetypeW,          CIM_UINT32 },
     { prop_filesystemW,         CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_freespaceW,          CIM_UINT64 },
     { prop_nameW,               CIM_STRING|COL_FLAG_DYNAMIC },
@@ -595,15 +593,15 @@ static const struct column col_logicaldisktopartition[] =
 static const struct column col_networkadapter[] =
 {
     { prop_adaptertypeW,         CIM_STRING },
-    { prop_adaptertypeidW,       CIM_UINT16, VT_I4 },
+    { prop_adaptertypeidW,       CIM_UINT16 },
     { prop_descriptionW,         CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_deviceidW,            CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_indexW,               CIM_UINT32, VT_I4 },
-    { prop_interfaceindexW,      CIM_UINT32, VT_I4 },
+    { prop_indexW,               CIM_UINT32 },
+    { prop_interfaceindexW,      CIM_UINT32 },
     { prop_macaddressW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_manufacturerW,        CIM_STRING },
     { prop_nameW,                CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_netconnectionstatusW, CIM_UINT16, VT_I4 },
+    { prop_netconnectionstatusW, CIM_UINT16 },
     { prop_physicaladapterW,     CIM_BOOLEAN },
     { prop_pnpdeviceidW,         CIM_STRING },
     { prop_speedW,               CIM_UINT64 }
@@ -615,9 +613,9 @@ static const struct column col_networkadapterconfig[] =
     { prop_dhcpenabledW,          CIM_BOOLEAN },
     { prop_dnshostnameW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_dnsserversearchorderW, CIM_STRING|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
-    { prop_indexW,                CIM_UINT32|COL_FLAG_KEY, VT_I4 },
+    { prop_indexW,                CIM_UINT32|COL_FLAG_KEY },
     { prop_ipaddressW,            CIM_STRING|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
-    { prop_ipconnectionmetricW,   CIM_UINT32, VT_I4 },
+    { prop_ipconnectionmetricW,   CIM_UINT32 },
     { prop_ipenabledW,            CIM_BOOLEAN },
     { prop_ipsubnet,              CIM_STRING|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
     { prop_macaddressW,           CIM_STRING|COL_FLAG_DYNAMIC },
@@ -639,16 +637,16 @@ static const struct column col_operatingsystem[] =
     { prop_localeW,                 CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_manufacturerW,           CIM_STRING },
     { prop_nameW,                   CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_operatingsystemskuW,     CIM_UINT32, VT_I4 },
+    { prop_operatingsystemskuW,     CIM_UINT32 },
     { prop_osarchitectureW,         CIM_STRING },
-    { prop_oslanguageW,             CIM_UINT32, VT_I4 },
-    { prop_osproductsuiteW,         CIM_UINT32, VT_I4 },
-    { prop_ostypeW,                 CIM_UINT16, VT_I4 },
+    { prop_oslanguageW,             CIM_UINT32 },
+    { prop_osproductsuiteW,         CIM_UINT32 },
+    { prop_ostypeW,                 CIM_UINT16 },
     { prop_primaryW,                CIM_BOOLEAN },
     { prop_serialnumberW,           CIM_STRING },
-    { prop_servicepackmajorW,       CIM_UINT16, VT_I4 },
-    { prop_servicepackminorW,       CIM_UINT16, VT_I4 },
-    { prop_suitemaskW,              CIM_UINT32, VT_I4 },
+    { prop_servicepackmajorW,       CIM_UINT16 },
+    { prop_servicepackminorW,       CIM_UINT16 },
+    { prop_suitemaskW,              CIM_UINT32 },
     { prop_systemdirectoryW,        CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_systemdriveW,            CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_totalvirtualmemorysizeW, CIM_UINT64 },
@@ -662,7 +660,6 @@ static const struct column col_param[] =
     { prop_directionW,    CIM_SINT32 },
     { prop_parameterW,    CIM_STRING },
     { prop_typeW,         CIM_UINT32 },
-    { prop_varianttypeW,  CIM_UINT32 },
     { prop_defaultvalueW, CIM_UINT32 }
 };
 static const struct column col_physicalmedia[] =
@@ -673,9 +670,9 @@ static const struct column col_physicalmedia[] =
 static const struct column col_physicalmemory[] =
 {
     { prop_capacityW,             CIM_UINT64 },
-    { prop_configuredclockspeedW, CIM_UINT32, VT_I4 },
+    { prop_configuredclockspeedW, CIM_UINT32 },
     { prop_devicelocatorW,        CIM_STRING },
-    { prop_memorytypeW,           CIM_UINT16, VT_I4 },
+    { prop_memorytypeW,           CIM_UINT16 },
     { prop_partnumberW,           CIM_STRING }
 };
 static const struct column col_pnpentity[] =
@@ -701,33 +698,33 @@ static const struct column col_process[] =
     { prop_descriptionW,    CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_handleW,         CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_nameW,           CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_pprocessidW,     CIM_UINT32, VT_I4 },
-    { prop_processidW,      CIM_UINT32, VT_I4 },
-    { prop_threadcountW,    CIM_UINT32, VT_I4 },
+    { prop_pprocessidW,     CIM_UINT32 },
+    { prop_processidW,      CIM_UINT32 },
+    { prop_threadcountW,    CIM_UINT32 },
     { prop_workingsetsizeW, CIM_UINT64 },
     /* methods */
     { method_getownerW,     CIM_FLAG_ARRAY|COL_FLAG_METHOD }
 };
 static const struct column col_processor[] =
 {
-    { prop_addresswidthW,         CIM_UINT16, VT_I4 },
-    { prop_architectureW,         CIM_UINT16, VT_I4 },
+    { prop_addresswidthW,         CIM_UINT16 },
+    { prop_architectureW,         CIM_UINT16 },
     { prop_captionW,              CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_cpustatusW,            CIM_UINT16 },
-    { prop_currentclockspeedW,    CIM_UINT32, VT_I4 },
-    { prop_datawidthW,            CIM_UINT16, VT_I4 },
+    { prop_currentclockspeedW,    CIM_UINT32 },
+    { prop_datawidthW,            CIM_UINT16 },
     { prop_descriptionW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_deviceidW,             CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_familyW,               CIM_UINT16, VT_I4 },
-    { prop_levelW,                CIM_UINT16, VT_I4 },
+    { prop_familyW,               CIM_UINT16 },
+    { prop_levelW,                CIM_UINT16 },
     { prop_manufacturerW,         CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_maxclockspeedW,        CIM_UINT32, VT_I4 },
+    { prop_maxclockspeedW,        CIM_UINT32 },
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_numcoresW,             CIM_UINT32, VT_I4 },
-    { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
+    { prop_numcoresW,             CIM_UINT32 },
+    { prop_numlogicalprocessorsW, CIM_UINT32 },
     { prop_processoridW,          CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_processortypeW,        CIM_UINT16, VT_I4 },
-    { prop_revisionW,             CIM_UINT16, VT_I4 },
+    { prop_processortypeW,        CIM_UINT16 },
+    { prop_revisionW,             CIM_UINT16 },
     { prop_uniqueidW,             CIM_STRING },
     { prop_versionW,              CIM_STRING|COL_FLAG_DYNAMIC }
 };
@@ -771,7 +768,7 @@ static const struct column col_sounddevice[] =
 {
     { prop_nameW,        CIM_STRING },
     { prop_productnameW, CIM_STRING },
-    { prop_statusinfoW,  CIM_UINT16, VT_I4 }
+    { prop_statusinfoW,  CIM_UINT16 }
 };
 static const struct column col_stdregprov[] =
 {
@@ -783,7 +780,7 @@ static const struct column col_stdregprov[] =
 static const struct column col_systemenclosure[] =
 {
     { prop_captionW,      CIM_STRING },
-    { prop_chassistypesW, CIM_UINT16|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC, VT_I4|VT_ARRAY },
+    { prop_chassistypesW, CIM_UINT16|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
     { prop_descriptionW,  CIM_STRING },
     { prop_lockpresentW,  CIM_BOOLEAN },
     { prop_manufacturerW, CIM_STRING|COL_FLAG_DYNAMIC },
@@ -798,15 +795,15 @@ static const struct column col_systemsecurity[] =
 static const struct column col_videocontroller[] =
 {
     { prop_adapterdactypeW,         CIM_STRING },
-    { prop_adapterramW,             CIM_UINT32, VT_I4 },
+    { prop_adapterramW,             CIM_UINT32 },
     { prop_availabilityW,           CIM_UINT16 },
     { prop_captionW,                CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_configmanagererrorcodeW, CIM_UINT32, VT_I4 },
-    { prop_currentbitsperpixelW,    CIM_UINT32, VT_I4 },
-    { prop_currenthorizontalresW,   CIM_UINT32, VT_I4 },
-    { prop_currentrefreshrateW,     CIM_UINT32, VT_I4 },
-    { prop_currentscanmodeW,        CIM_UINT16, VT_I4 },
-    { prop_currentverticalresW,     CIM_UINT32, VT_I4 },
+    { prop_configmanagererrorcodeW, CIM_UINT32 },
+    { prop_currentbitsperpixelW,    CIM_UINT32 },
+    { prop_currenthorizontalresW,   CIM_UINT32 },
+    { prop_currentrefreshrateW,     CIM_UINT32 },
+    { prop_currentscanmodeW,        CIM_UINT16 },
+    { prop_currentverticalresW,     CIM_UINT32 },
     { prop_descriptionW,            CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_deviceidW,               CIM_STRING|COL_FLAG_KEY },
     { prop_driverdateW,             CIM_DATETIME },
@@ -815,8 +812,8 @@ static const struct column col_videocontroller[] =
     { prop_nameW,                   CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_pnpdeviceidW,            CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_statusW,                 CIM_STRING },
-    { prop_videoarchitectureW,      CIM_UINT16, VT_I4 },
-    { prop_videomemorytypeW,        CIM_UINT16, VT_I4 },
+    { prop_videoarchitectureW,      CIM_UINT16 },
+    { prop_videomemorytypeW,        CIM_UINT16 },
     { prop_videomodedescriptionW,   CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_videoprocessorW,         CIM_STRING|COL_FLAG_DYNAMIC },
 };
@@ -828,7 +825,7 @@ static const struct column col_winsat[] =
     { prop_graphicsscoreW,         CIM_REAL32 },
     { prop_memoryscoreW,           CIM_REAL32 },
     { prop_timetakenW,             CIM_STRING|COL_FLAG_KEY },
-    { prop_winsatassessmentstateW, CIM_UINT32, VT_I4 },
+    { prop_winsatassessmentstateW, CIM_UINT32 },
     { prop_winsprlevelW,           CIM_REAL32 },
 };
 
@@ -1125,7 +1122,6 @@ struct record_param
     INT32        direction;
     const WCHAR *parameter;
     UINT32       type;
-    UINT32       varianttype;
     UINT32       defaultvalue;
 };
 struct record_physicalmedia
@@ -1303,34 +1299,34 @@ static const struct record_associator data_associator[] =
 };
 static const struct record_param data_param[] =
 {
-    { class_processW, method_getownerW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
+    { class_processW, method_getownerW, -1, param_returnvalueW, CIM_UINT32 },
     { class_processW, method_getownerW, -1, param_userW, CIM_STRING },
     { class_processW, method_getownerW, -1, param_domainW, CIM_STRING },
-    { class_serviceW, method_pauseserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
-    { class_serviceW, method_resumeserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
-    { class_serviceW, method_startserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
-    { class_serviceW, method_stopserviceW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
-    { class_stdregprovW, method_createkeyW, 1, param_defkeyW, CIM_SINT32, 0, 0x80000002 },
+    { class_serviceW, method_pauseserviceW, -1, param_returnvalueW, CIM_UINT32 },
+    { class_serviceW, method_resumeserviceW, -1, param_returnvalueW, CIM_UINT32 },
+    { class_serviceW, method_startserviceW, -1, param_returnvalueW, CIM_UINT32 },
+    { class_serviceW, method_stopserviceW, -1, param_returnvalueW, CIM_UINT32 },
+    { class_stdregprovW, method_createkeyW, 1, param_defkeyW, CIM_SINT32, 0x80000002 },
     { class_stdregprovW, method_createkeyW, 1, param_subkeynameW, CIM_STRING },
-    { class_stdregprovW, method_createkeyW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
-    { class_stdregprovW, method_enumkeyW, 1, param_defkeyW, CIM_SINT32, 0, 0x80000002 },
+    { class_stdregprovW, method_createkeyW, -1, param_returnvalueW, CIM_UINT32 },
+    { class_stdregprovW, method_enumkeyW, 1, param_defkeyW, CIM_SINT32, 0x80000002 },
     { class_stdregprovW, method_enumkeyW, 1, param_subkeynameW, CIM_STRING },
-    { class_stdregprovW, method_enumkeyW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
+    { class_stdregprovW, method_enumkeyW, -1, param_returnvalueW, CIM_UINT32 },
     { class_stdregprovW, method_enumkeyW, -1, param_namesW, CIM_STRING|CIM_FLAG_ARRAY },
-    { class_stdregprovW, method_enumvaluesW, 1, param_defkeyW, CIM_SINT32, 0, 0x80000002 },
+    { class_stdregprovW, method_enumvaluesW, 1, param_defkeyW, CIM_SINT32, 0x80000002 },
     { class_stdregprovW, method_enumvaluesW, 1, param_subkeynameW, CIM_STRING },
-    { class_stdregprovW, method_enumvaluesW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
+    { class_stdregprovW, method_enumvaluesW, -1, param_returnvalueW, CIM_UINT32 },
     { class_stdregprovW, method_enumvaluesW, -1, param_namesW, CIM_STRING|CIM_FLAG_ARRAY },
     { class_stdregprovW, method_enumvaluesW, -1, param_typesW, CIM_SINT32|CIM_FLAG_ARRAY },
-    { class_stdregprovW, method_getstringvalueW, 1, param_defkeyW, CIM_SINT32, 0, 0x80000002 },
+    { class_stdregprovW, method_getstringvalueW, 1, param_defkeyW, CIM_SINT32, 0x80000002 },
     { class_stdregprovW, method_getstringvalueW, 1, param_subkeynameW, CIM_STRING },
     { class_stdregprovW, method_getstringvalueW, 1, param_valuenameW, CIM_STRING },
-    { class_stdregprovW, method_getstringvalueW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
+    { class_stdregprovW, method_getstringvalueW, -1, param_returnvalueW, CIM_UINT32 },
     { class_stdregprovW, method_getstringvalueW, -1, param_valueW, CIM_STRING },
-    { class_systemsecurityW, method_getsdW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
+    { class_systemsecurityW, method_getsdW, -1, param_returnvalueW, CIM_UINT32 },
     { class_systemsecurityW, method_getsdW, -1, param_sdW, CIM_UINT8|CIM_FLAG_ARRAY },
     { class_systemsecurityW, method_setsdW, 1, param_sdW, CIM_UINT8|CIM_FLAG_ARRAY },
-    { class_systemsecurityW, method_setsdW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
+    { class_systemsecurityW, method_setsdW, -1, param_returnvalueW, CIM_UINT32 },
 };
 
 #define FLAVOR_ID (WBEM_FLAVOR_FLAG_PROPAGATE_TO_INSTANCE | WBEM_FLAVOR_NOT_OVERRIDABLE |\

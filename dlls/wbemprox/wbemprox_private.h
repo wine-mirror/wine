@@ -89,7 +89,6 @@ struct column
 {
     const WCHAR *name;
     UINT type;
-    VARTYPE vartype; /* 0 for default mapping */
 };
 
 enum fill_status
@@ -132,7 +131,6 @@ struct array
 struct field
 {
     UINT type;
-    VARTYPE vartype; /* 0 for default mapping */
     union
     {
         LONGLONG ival;

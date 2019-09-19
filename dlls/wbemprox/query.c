@@ -1025,18 +1025,25 @@ VARTYPE to_vartype( CIMTYPE type )
 {
     switch (type)
     {
-    case CIM_BOOLEAN:  return VT_BOOL;
+    case CIM_BOOLEAN:   return VT_BOOL;
+
     case CIM_STRING:
     case CIM_REFERENCE:
-    case CIM_DATETIME: return VT_BSTR;
-    case CIM_SINT8:    return VT_I1;
-    case CIM_UINT8:    return VT_UI1;
-    case CIM_SINT16:   return VT_I2;
-    case CIM_UINT16:   return VT_UI2;
-    case CIM_SINT32:   return VT_I4;
-    case CIM_UINT32:   return VT_UI4;
-    case CIM_SINT64:   return VT_I8;
-    case CIM_UINT64:   return VT_UI8;
+    case CIM_DATETIME:  return VT_BSTR;
+
+    case CIM_SINT8:     return VT_I1;
+    case CIM_UINT8:     return VT_UI1;
+    case CIM_SINT16:    return VT_I2;
+
+    case CIM_UINT16:
+    case CIM_SINT32:
+    case CIM_UINT32:    return VT_I4;
+
+    case CIM_SINT64:    return VT_I8;
+    case CIM_UINT64:    return VT_UI8;
+
+    case CIM_REAL32:    return VT_R4;
+
     default:
         ERR("unhandled type %u\n", type);
         break;
@@ -1044,10 +1051,10 @@ VARTYPE to_vartype( CIMTYPE type )
     return 0;
 }
 
-SAFEARRAY *to_safearray( const struct array *array, CIMTYPE type )
+SAFEARRAY *to_safearray( const struct array *array, CIMTYPE basetype )
 {
     SAFEARRAY *ret;
-    VARTYPE vartype = to_vartype( type );
+    VARTYPE vartype = to_vartype( basetype );
     LONG i;
 
     if (!array || !(ret = SafeArrayCreateVector( vartype, 0, array->count ))) return NULL;
@@ -1187,23 +1194,20 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
 
     if (!ret) return S_OK;
 
-    vartype = table->columns[column].vartype;
+    vartype = to_vartype( table->columns[column].type & CIM_TYPE_MASK );
     if (table->columns[column].type & CIM_FLAG_ARRAY)
     {
         CIMTYPE basetype = table->columns[column].type & CIM_TYPE_MASK;
 
         val_ptr = to_safearray( (const struct array *)(INT_PTR)val, basetype );
         if (!val_ptr) vartype = VT_NULL;
-        else if (!vartype) vartype = to_vartype( basetype ) | VT_ARRAY;
+        else vartype |= VT_ARRAY;
         set_variant( vartype, val, val_ptr, ret );
         return S_OK;
     }
 
     switch (table->columns[column].type & COL_TYPE_MASK)
     {
-    case CIM_BOOLEAN:
-        if (!vartype) vartype = VT_BOOL;
-        break;
     case CIM_STRING:
     case CIM_REFERENCE:
     case CIM_DATETIME:
@@ -1215,24 +1219,6 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
         else
             vartype = VT_NULL;
         break;
-    case CIM_SINT8:
-        if (!vartype) vartype = VT_I1;
-        break;
-    case CIM_UINT8:
-        if (!vartype) vartype = VT_UI1;
-        break;
-    case CIM_SINT16:
-        if (!vartype) vartype = VT_I2;
-        break;
-    case CIM_UINT16:
-        if (!vartype) vartype = VT_UI2;
-        break;
-    case CIM_SINT32:
-        if (!vartype) vartype = VT_I4;
-        break;
-    case CIM_UINT32:
-        if (!vartype) vartype = VT_UI4;
-        break;
     case CIM_SINT64:
         vartype = VT_BSTR;
         val_ptr = get_value_bstr( table, row, column );
@@ -1241,8 +1227,14 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
         vartype = VT_BSTR;
         val_ptr = get_value_bstr( table, row, column );
         break;
+    case CIM_BOOLEAN:
+    case CIM_SINT8:
+    case CIM_UINT8:
+    case CIM_SINT16:
+    case CIM_UINT16:
+    case CIM_SINT32:
+    case CIM_UINT32:
     case CIM_REAL32:
-        if (!vartype) vartype = VT_R4;
         break;
     default:
         ERR("unhandled column type %u\n", table->columns[column].type);
