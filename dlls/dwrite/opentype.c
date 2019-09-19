@@ -2010,6 +2010,9 @@ static HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OP
         }
     }
 
+    if (*strings)
+        sort_localizedstrings(*strings);
+
     return exists ? S_OK : E_FAIL;
 }
 

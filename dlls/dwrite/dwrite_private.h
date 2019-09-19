@@ -237,6 +237,7 @@ extern HRESULT create_localizedstrings(IDWriteLocalizedStrings**) DECLSPEC_HIDDE
 extern HRESULT add_localizedstring(IDWriteLocalizedStrings*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;
 extern HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedStrings **strings) DECLSPEC_HIDDEN;
 extern void    set_en_localizedstring(IDWriteLocalizedStrings*,const WCHAR*) DECLSPEC_HIDDEN;
+extern void    sort_localizedstrings(IDWriteLocalizedStrings*) DECLSPEC_HIDDEN;
 extern HRESULT get_system_fontcollection(IDWriteFactory5*,IDWriteFontCollection1**) DECLSPEC_HIDDEN;
 extern HRESULT get_eudc_fontcollection(IDWriteFactory5*,IDWriteFontCollection1**) DECLSPEC_HIDDEN;
 extern IDWriteTextAnalyzer *get_text_analyzer(void) DECLSPEC_HIDDEN;

@@ -520,6 +520,20 @@ void set_en_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *string)
     }
 }
 
+static int localizedstrings_sorting_compare(const void *left, const void *right)
+{
+    const struct localizedpair *_l = left, *_r = right;
+
+    return strcmpW(_l->locale, _r->locale);
+};
+
+void sort_localizedstrings(IDWriteLocalizedStrings *iface)
+{
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
+
+    qsort(strings->data, strings->count, sizeof(*strings->data), localizedstrings_sorting_compare);
+}
+
 struct collectionloader
 {
     struct list entry;
