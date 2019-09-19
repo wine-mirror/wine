@@ -206,7 +206,7 @@ static const AMOVIESETUP_PIN wave_parser_pin_data[] =
     },
     {
         NULL,
-        FALSE, FALSE, FALSE, FALSE,
+        FALSE, TRUE, FALSE, FALSE,
         &GUID_NULL,
         NULL,
         ARRAY_SIZE(wave_parser_source_type_data),
