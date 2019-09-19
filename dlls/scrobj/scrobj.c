@@ -27,11 +27,19 @@
 
 #include "initguid.h"
 #include "scrobj.h"
+
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrobj);
 
 static HINSTANCE scrobj_instance;
+
+struct scriptlet_factory
+{
+    IClassFactory IClassFactory_iface;
+    LONG ref;
+};
 
 typedef enum tid_t
 {
@@ -106,6 +114,100 @@ static void release_typelib(void)
             ITypeInfo_Release(typeinfos[i]);
 
     ITypeLib_Release(typelib);
+}
+
+static inline struct scriptlet_factory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct scriptlet_factory, IClassFactory_iface);
+}
+
+static HRESULT WINAPI scriptlet_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    struct scriptlet_factory *This = impl_from_IClassFactory(iface);
+
+    if (IsEqualGUID(&IID_IUnknown, riid))
+    {
+        TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+        *ppv = &This->IClassFactory_iface;
+    }
+    else if (IsEqualGUID(&IID_IClassFactory, riid))
+    {
+        TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+        *ppv = &This->IClassFactory_iface;
+    }
+    else
+    {
+        WARN("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI scriptlet_factory_AddRef(IClassFactory *iface)
+{
+    struct scriptlet_factory *This = impl_from_IClassFactory(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI scriptlet_factory_Release(IClassFactory *iface)
+{
+    struct scriptlet_factory *This = impl_from_IClassFactory(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref)
+        heap_free(This);
+    return ref;
+}
+
+static HRESULT WINAPI scriptlet_factory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
+{
+    struct scriptlet_factory *This = impl_from_IClassFactory(iface);
+    FIXME("(%p)->(%p %s %p)\n", This, outer, debugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_factory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    struct scriptlet_factory *This = impl_from_IClassFactory(iface);
+    TRACE("(%p)->(%x)\n", This, fLock);
+    return S_OK;
+}
+
+static const struct IClassFactoryVtbl scriptlet_factory_vtbl =
+{
+    scriptlet_factory_QueryInterface,
+    scriptlet_factory_AddRef,
+    scriptlet_factory_Release,
+    scriptlet_factory_CreateInstance,
+    scriptlet_factory_LockServer
+};
+
+static HRESULT create_scriptlet_factory(const WCHAR *url, struct scriptlet_factory **ret)
+{
+    struct scriptlet_factory *factory;
+
+    TRACE("%s\n", debugstr_w(url));
+
+    if (!(factory = heap_alloc_zero(sizeof(*factory))))
+    {
+        IClassFactory_Release(&factory->IClassFactory_iface);
+        return E_OUTOFMEMORY;
+    }
+
+    factory->IClassFactory_iface.lpVtbl = &scriptlet_factory_vtbl;
+    factory->ref = 1;
+
+    *ret = factory;
+    return S_OK;
 }
 
 struct scriptlet_typelib
@@ -544,10 +646,37 @@ static IClassFactory scriptlet_typelib_factory = { &scriptlet_typelib_factory_vt
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
+    WCHAR key_name[128], *p;
+    LONG size = 0;
+    LSTATUS status;
+
     if (IsEqualGUID(&CLSID_TypeLib, rclsid))
     {
         TRACE("(Scriptlet.TypeLib %s %p)\n", debugstr_guid(riid), ppv);
         return IClassFactory_QueryInterface(&scriptlet_typelib_factory, riid, ppv);
+    }
+
+    wcscpy(key_name, L"CLSID\\");
+    p = key_name + wcslen(key_name);
+    p += StringFromGUID2(rclsid, p, ARRAY_SIZE(key_name) - (p - key_name)) - 1;
+    wcscpy(p, L"\\ScriptletURL");
+    status = RegQueryValueW(HKEY_CLASSES_ROOT, key_name, NULL, &size);
+    if (!status)
+    {
+        struct scriptlet_factory *factory;
+        WCHAR *url;
+        HRESULT hres;
+
+        if (!(url = heap_alloc(size * sizeof(WCHAR)))) return E_OUTOFMEMORY;
+        status = RegQueryValueW(HKEY_CLASSES_ROOT, key_name, url, &size);
+
+        hres = create_scriptlet_factory(url, &factory);
+        heap_free(url);
+        if (FAILED(hres)) return hres;
+
+        hres = IClassFactory_QueryInterface(&factory->IClassFactory_iface, riid, ppv);
+        IClassFactory_Release(&factory->IClassFactory_iface);
+        return hres;
     }
 
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
