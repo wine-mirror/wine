@@ -731,19 +731,23 @@ static void test_DeleteDC(void)
     ok(hdc != 0, "GetDC failed\n");
     ret = GetObjectType(hdc);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
-    ret = GetObjectType(hdc);
-    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     hdc = GetWindowDC(hwnd);
     ok(hdc != 0, "GetDC failed\n");
     ret = GetObjectType(hdc);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
-    ret = GetObjectType(hdc);
-    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     DestroyWindow(hwnd);
 
@@ -755,19 +759,23 @@ static void test_DeleteDC(void)
     ok(hdc != 0, "GetDC failed\n");
     ret = GetObjectType(hdc);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
-    ret = GetObjectType(hdc);
-    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     hdc = GetWindowDC(hwnd);
     ok(hdc != 0, "GetDC failed\n");
     ret = GetObjectType(hdc);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
-    ret = GetObjectType(hdc);
-    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     /* CS_CLASSDC */
     memset(&cls, 0, sizeof(cls));
@@ -802,21 +810,25 @@ static void test_DeleteDC(void)
     ok(hdc != 0, "GetDC failed\n");
     ret = GetObjectType(hdc);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
-    ret = GetObjectType(hdc);
-    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     DestroyWindow(hwnd);
 
     ret = GetObjectType(hdc_test);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc_test, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
 
     ret = UnregisterClassA("Wine class DC", GetModuleHandleA(NULL));
     ok(ret, "UnregisterClassA failed\n");
 
-    ret = GetObjectType(hdc_test);
-    ok(!ret, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc_test, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     /* CS_OWNDC */
     memset(&cls, 0, sizeof(cls));
@@ -849,10 +861,12 @@ static void test_DeleteDC(void)
     ok(hdc != 0, "GetDC failed\n");
     ret = GetObjectType(hdc);
     ok(ret == OBJ_DC, "expected OBJ_DC, got %d\n", ret);
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(ret == DT_RASDISPLAY, "GetDeviceCaps rets %d\n", ret);
     ret = DeleteDC(hdc);
     ok(ret, "DeleteDC failed\n");
-    ret = GetObjectType(hdc);
-    ok(!ret || broken(ret) /* win9x */, "GetObjectType should fail for a deleted DC\n");
+    ret = GetDeviceCaps(hdc, TECHNOLOGY);
+    ok(!ret, "GetDeviceCaps should fail for a deleted DC\n");
 
     DestroyWindow(hwnd);
 
