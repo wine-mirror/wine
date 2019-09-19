@@ -3540,6 +3540,7 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
  */
 void WINAPI LdrInitializeThunk( CONTEXT *context, void **entry, ULONG_PTR unknown3, ULONG_PTR unknown4 )
 {
+    static const LARGE_INTEGER zero;
     NTSTATUS status;
     WINE_MODREF *wm;
     LPCWSTR load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
@@ -3602,6 +3603,8 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, void **entry, ULONG_PTR unknow
     }
 
     RtlLeaveCriticalSection( &loader_section );
+
+    NtDelayExecution( TRUE, &zero );
 }
 
 
