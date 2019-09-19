@@ -93,7 +93,7 @@ static int wine_drivers_rb_compare( const void *key, const struct wine_rb_entry 
     const struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, const struct wine_driver, entry );
     const UNICODE_STRING *k = key;
 
-    return RtlCompareUnicodeString( k, &driver->driver_obj.DriverName, FALSE );
+    return RtlCompareUnicodeString( k, &driver->driver_obj.DriverName, TRUE );
 }
 
 static struct wine_rb_tree wine_drivers = { wine_drivers_rb_compare };
