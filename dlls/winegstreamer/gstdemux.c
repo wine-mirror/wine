@@ -68,6 +68,8 @@ struct gstdemux
     HANDLE no_more_pads_event;
 
     HANDLE push_thread;
+
+    BOOL (*init_gst)(struct gstdemux *filter);
 };
 
 struct gstdemux_source
@@ -1068,14 +1070,12 @@ static void unknown_type(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer u
 
 static HRESULT GST_Connect(struct gstdemux *This, IPin *pConnectPin, ALLOCATOR_PROPERTIES *props)
 {
-    int ret, i;
-    LONGLONG avail, duration;
+    LONGLONG avail;
     GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE(
         "quartz_src",
         GST_PAD_SRC,
         GST_PAD_ALWAYS,
         GST_STATIC_CAPS_ANY);
-    GstElement *gstfilter;
 
     This->props = *props;
     IAsyncReader_Length(This->reader, &This->filesize, &avail);
@@ -1088,68 +1088,21 @@ static HRESULT GST_Connect(struct gstdemux *This, IPin *pConnectPin, ALLOCATOR_P
     This->container = gst_bin_new(NULL);
     gst_element_set_bus(This->container, This->bus);
 
-    gstfilter = gst_element_factory_make("decodebin", NULL);
-    if (!gstfilter) {
-        ERR("Could not make source filter, are gstreamer-plugins-* installed for %u bits?\n",
-              8 * (int)sizeof(void*));
-        return E_FAIL;
-    }
-
-    gst_bin_add(GST_BIN(This->container), gstfilter);
-
-    g_signal_connect(gstfilter, "pad-added", G_CALLBACK(existing_new_pad_wrapper), This);
-    g_signal_connect(gstfilter, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), This);
-    g_signal_connect(gstfilter, "autoplug-select", G_CALLBACK(autoplug_blacklist_wrapper), This);
-    g_signal_connect(gstfilter, "unknown-type", G_CALLBACK(unknown_type_wrapper), This);
-
     This->my_src = gst_pad_new_from_static_template(&src_template, "quartz-src");
     gst_pad_set_getrange_function(This->my_src, request_buffer_src_wrapper);
     gst_pad_set_query_function(This->my_src, query_function_wrapper);
     gst_pad_set_activatemode_function(This->my_src, activate_mode_wrapper);
     gst_pad_set_event_function(This->my_src, event_src_wrapper);
     gst_pad_set_element_private (This->my_src, This);
-    This->their_sink = gst_element_get_static_pad(gstfilter, "sink");
 
-    g_signal_connect(gstfilter, "no-more-pads", G_CALLBACK(no_more_pads_wrapper), This);
-    ret = gst_pad_link(This->my_src, This->their_sink);
-    if (ret < 0) {
-        ERR("Returns: %i\n", ret);
-        return E_FAIL;
-    }
     This->start = This->nextofs = This->nextpullofs = This->stop = 0;
 
-    /* Add initial pins */
     This->initial = TRUE;
-    ResetEvent(This->no_more_pads_event);
-    gst_element_set_state(This->container, GST_STATE_PLAYING);
-    ret = gst_element_get_state(This->container, NULL, NULL, -1);
-
-    if (ret == GST_STATE_CHANGE_FAILURE)
-    {
-        ERR("GStreamer failed to play stream\n");
+    if (!This->init_gst(This))
         return E_FAIL;
-    }
-
-    WaitForSingleObject(This->no_more_pads_event, INFINITE);
-
-    gst_pad_query_duration(This->ppPins[0]->their_src, GST_FORMAT_TIME, &duration);
-    for (i = 0; i < This->cStreams; ++i)
-    {
-        This->ppPins[i]->seek.llDuration = This->ppPins[i]->seek.llStop = duration / 100;
-        This->ppPins[i]->seek.llCurrent = 0;
-        if (!This->ppPins[i]->seek.llDuration)
-            This->ppPins[i]->seek.dwCapabilities = 0;
-        WaitForSingleObject(This->ppPins[i]->caps_event, INFINITE);
-    }
-    *props = This->props;
-
-    This->ignore_flush = TRUE;
-    gst_element_set_state(This->container, GST_STATE_READY);
-    gst_element_get_state(This->container, NULL, NULL, -1);
-    This->ignore_flush = FALSE;
-
     This->initial = FALSE;
 
+    *props = This->props;
     This->nextofs = This->nextpullofs = 0;
     return S_OK;
 }
@@ -1223,6 +1176,67 @@ static const BasePinFuncTable sink_ops =
     .pfnGetMediaType = BasePinImpl_GetMediaType,
 };
 
+static BOOL gstdecoder_init_gst(struct gstdemux *filter)
+{
+    GstElement *element = gst_element_factory_make("decodebin", NULL);
+    LONGLONG duration;
+    unsigned int i;
+    int ret;
+
+    if (!element)
+    {
+        ERR("Failed to create decodebin; are %u-bit GStreamer \"base\" plugins installed?\n",
+                8 * (int)sizeof(void*));
+        return FALSE;
+    }
+
+    gst_bin_add(GST_BIN(filter->container), element);
+
+    g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), filter);
+    g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), filter);
+    g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_blacklist_wrapper), filter);
+    g_signal_connect(element, "unknown-type", G_CALLBACK(unknown_type_wrapper), filter);
+    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads_wrapper), filter);
+
+    filter->their_sink = gst_element_get_static_pad(element, "sink");
+    ResetEvent(filter->no_more_pads_event);
+
+    if ((ret = gst_pad_link(filter->my_src, filter->their_sink)) < 0)
+    {
+        ERR("Failed to link pads, error %d.\n", ret);
+        return FALSE;
+    }
+
+    gst_element_set_state(filter->container, GST_STATE_PLAYING);
+    ret = gst_element_get_state(filter->container, NULL, NULL, -1);
+    if (ret == GST_STATE_CHANGE_FAILURE)
+    {
+        ERR("Failed to play stream.\n");
+        return FALSE;
+    }
+
+    WaitForSingleObject(filter->no_more_pads_event, INFINITE);
+
+    gst_pad_query_duration(filter->ppPins[0]->their_src, GST_FORMAT_TIME, &duration);
+    for (i = 0; i < filter->cStreams; ++i)
+    {
+        struct gstdemux_source *pin = filter->ppPins[i];
+
+        pin->seek.llDuration = pin->seek.llStop = duration / 100;
+        pin->seek.llCurrent = 0;
+        if (!pin->seek.llDuration)
+            pin->seek.dwCapabilities = 0;
+        WaitForSingleObject(pin->caps_event, INFINITE);
+    }
+
+    filter->ignore_flush = TRUE;
+    gst_element_set_state(filter->container, GST_STATE_READY);
+    gst_element_get_state(filter->container, NULL, NULL, -1);
+    filter->ignore_flush = FALSE;
+
+    return TRUE;
+}
+
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
 {
     struct gstdemux *object;
@@ -1249,6 +1263,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     lstrcpynW(object->sink.name, wcsInputPinName, ARRAY_SIZE(object->sink.name));
     object->sink.IPin_iface.lpVtbl = &GST_InputPin_Vtbl;
     object->sink.pFuncsTable = &sink_ops;
+    object->init_gst = gstdecoder_init_gst;
     *phr = S_OK;
 
     TRACE("Created GStreamer demuxer %p.\n", object);
