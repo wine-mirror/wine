@@ -262,11 +262,6 @@ static gboolean amt_from_gst_caps_video(const GstCaps *caps, AM_MEDIA_TYPE *amt)
     bih->biSizeImage = width * height * bih->biBitCount / 8;
     if ((vih->AvgTimePerFrame = (REFERENCE_TIME)MulDiv(10000000, denom, nom)) == -1)
         vih->AvgTimePerFrame = 0; /* zero division or integer overflow */
-    vih->rcSource.left = 0;
-    vih->rcSource.right = width;
-    vih->rcSource.top = height;
-    vih->rcSource.bottom = 0;
-    vih->rcTarget = vih->rcSource;
     bih->biSize = sizeof(*bih);
     bih->biWidth = width;
     bih->biHeight = height;
