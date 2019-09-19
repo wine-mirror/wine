@@ -104,7 +104,7 @@ static const IPinVtbl GST_InputPin_Vtbl;
 static const IBaseFilterVtbl GST_Vtbl;
 static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl;
 
-static BOOL create_pin(struct gstdemux *filter, const WCHAR *name);
+static struct gstdemux_source *create_pin(struct gstdemux *filter, const WCHAR *name);
 static HRESULT GST_RemoveOutputPins(struct gstdemux *This);
 static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface);
@@ -775,10 +775,8 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
     char *name;
     GstCaps *caps;
     GstStructure *arg;
-    GstPad *mypad;
     struct gstdemux_source *pin;
     int ret;
-    gchar my_name[1024];
     WCHAR nameW[128];
 
     TRACE("%p %p %p\n", This, bin, pad);
@@ -787,8 +785,6 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
     MultiByteToWideChar(CP_UNIXCP, 0, name, -1, nameW, ARRAY_SIZE(nameW) - 1);
     nameW[ARRAY_SIZE(nameW) - 1] = 0;
     TRACE("Name: %s\n", name);
-    strcpy(my_name, "qz_sink_");
-    strcat(my_name, name);
     g_free(name);
 
     caps = gst_pad_query_caps(pad, NULL);
@@ -796,28 +792,17 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
 
-    mypad = gst_pad_new(my_name, GST_PAD_SINK);
-    gst_pad_set_chain_function(mypad, got_data_sink_wrapper);
-    gst_pad_set_event_function(mypad, event_sink_wrapper);
-    gst_pad_set_query_function(mypad, query_sink_wrapper);
-
     if (strcmp(typename, "audio/x-raw") && strcmp(typename, "video/x-raw"))
     {
         FIXME("Unknown type \'%s\'\n", typename);
         return;
     }
 
-    if (!create_pin(This, nameW))
+    if (!(pin = create_pin(This, nameW)))
     {
         ERR("Failed to allocate memory.\n");
         return;
     }
-
-    pin = This->ppPins[This->cStreams - 1];
-    gst_pad_set_element_private(mypad, pin);
-    pin->my_sink = mypad;
-
-    gst_segment_init(pin->segment, GST_FORMAT_TIME);
 
     if (!strcmp(typename, "video/x-raw"))
     {
@@ -889,9 +874,9 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
             goto exit;
         }
     } else
-        ret = gst_pad_link(pad, mypad);
+        ret = gst_pad_link(pad, pin->my_sink);
 
-    gst_pad_set_active(mypad, 1);
+    gst_pad_set_active(pin->my_sink, 1);
 
 exit:
     TRACE("Linking: %i\n", ret);
@@ -1784,28 +1769,37 @@ static const struct strmbase_source_ops source_ops =
     GSTOutPin_DecideAllocator,
 };
 
-static BOOL create_pin(struct gstdemux *filter, const WCHAR *name)
+static struct gstdemux_source *create_pin(struct gstdemux *filter, const WCHAR *name)
 {
     struct gstdemux_source *pin, **new_array;
+    char pad_name[19];
 
     if (!(new_array = heap_realloc(filter->ppPins, (filter->cStreams + 1) * sizeof(*new_array))))
-        return FALSE;
+        return NULL;
     filter->ppPins = new_array;
 
     if (!(pin = heap_alloc_zero(sizeof(*pin))))
-        return FALSE;
+        return NULL;
 
     strmbase_source_init(&pin->pin, &GST_OutputPin_Vtbl, &filter->filter, name,
             &source_ops);
     pin->caps_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     pin->segment = gst_segment_new();
+    gst_segment_init(pin->segment, GST_FORMAT_TIME);
     pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
     SourceSeeking_Init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop,
             GST_ChangeCurrent, GST_ChangeRate, &filter->filter.csFilter);
     BaseFilterImpl_IncrementPinVersion(&filter->filter);
 
+    sprintf(pad_name, "qz_sink_%u", filter->cStreams);
+    pin->my_sink = gst_pad_new(pad_name, GST_PAD_SINK);
+    gst_pad_set_element_private(pin->my_sink, pin);
+    gst_pad_set_chain_function(pin->my_sink, got_data_sink_wrapper);
+    gst_pad_set_event_function(pin->my_sink, event_sink_wrapper);
+    gst_pad_set_query_function(pin->my_sink, query_sink_wrapper);
+
     filter->ppPins[filter->cStreams++] = pin;
-    return TRUE;
+    return pin;
 }
 
 static HRESULT GST_RemoveOutputPins(struct gstdemux *This)
