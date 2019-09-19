@@ -545,6 +545,67 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
     SetBoundsRect( ref_dc, NULL, DCB_RESET | DCB_DISABLE );
 }
 
+static void test_CreateDC(void)
+{
+    DISPLAY_DEVICEW display_device = {sizeof(display_device)};
+    WCHAR adapter_name[CCHDEVICENAME];
+    DWORD i, j;
+    HDC hdc;
+
+    hdc = CreateDCW( NULL, NULL, NULL, NULL );
+    ok( !hdc, "CreateDC succeeded\n" );
+
+    hdc = CreateDCW( NULL, L"display", NULL, NULL );
+    todo_wine ok( !hdc, "CreateDC succeeded\n" );
+
+    hdc = CreateDCW( L"display", NULL, NULL, NULL );
+    ok( hdc != NULL, "CreateDC failed\n" );
+    DeleteDC( hdc );
+
+    hdc = CreateDCW( L"display", L"deadbeef", NULL, NULL );
+    ok( hdc != NULL, "CreateDC failed\n" );
+    DeleteDC( hdc );
+
+    for (i = 0; EnumDisplayDevicesW( NULL, i, &display_device, 0 ); ++i)
+    {
+        if (!(display_device.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
+        {
+            hdc = CreateDCW( display_device.DeviceName, NULL, NULL, NULL );
+            todo_wine ok( !hdc, "CreateDC succeeded\n" );
+
+            hdc = CreateDCW( NULL, display_device.DeviceName, NULL, NULL );
+            todo_wine ok( !hdc, "CreateDC succeeded\n" );
+            continue;
+        }
+
+        hdc = CreateDCW( display_device.DeviceName, NULL, NULL, NULL );
+        ok( hdc != NULL, "CreateDC failed %s\n", wine_dbgstr_w( display_device.DeviceName ) );
+        DeleteDC( hdc );
+
+        hdc = CreateDCW( NULL, display_device.DeviceName, NULL, NULL );
+        ok( hdc != NULL, "CreateDC failed\n" );
+        DeleteDC( hdc );
+
+        hdc = CreateDCW( display_device.DeviceName, display_device.DeviceName, NULL, NULL );
+        ok( hdc != NULL, "CreateDC failed\n" );
+        DeleteDC( hdc );
+
+        hdc = CreateDCW( display_device.DeviceName, L"deadbeef", NULL, NULL );
+        ok( hdc != NULL, "CreateDC failed\n" );
+        DeleteDC( hdc );
+
+        lstrcpyW( adapter_name, display_device.DeviceName );
+        for (j = 0; EnumDisplayDevicesW( adapter_name, j, &display_device, 0 ); ++j)
+        {
+            hdc = CreateDCW( display_device.DeviceName, NULL, NULL, NULL );
+            ok( !hdc, "CreateDC succeeded\n" );
+
+            hdc = CreateDCW( NULL, display_device.DeviceName, NULL, NULL );
+            ok( !hdc, "CreateDC succeeded\n" );
+        }
+    }
+}
+
 static void test_CreateCompatibleDC(void)
 {
     BOOL bRet;
@@ -1509,6 +1570,7 @@ START_TEST(dc)
     test_savedc();
     test_savedc_2();
     test_GdiConvertToDevmodeW();
+    test_CreateDC();
     test_CreateCompatibleDC();
     test_DC_bitmap();
     test_DeleteDC();
