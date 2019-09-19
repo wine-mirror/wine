@@ -484,52 +484,6 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
 
 /***********************************************************************
- *           setup_exception
- *
- * Setup the exception record and context on the thread stack.
- */
-static struct stack_layout *setup_exception( ucontext_t *sigcontext )
-{
-    struct stack_layout *stack;
-    DWORD exception_code = 0;
-
-    /* push the stack_layout structure */
-    stack = (struct stack_layout *)((SP_sig(sigcontext) - sizeof(*stack)) & ~15);
-
-    stack->rec.ExceptionRecord  = NULL;
-    stack->rec.ExceptionCode    = exception_code;
-    stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    stack->rec.ExceptionAddress = (LPVOID)PC_sig(sigcontext);
-    stack->rec.NumberParameters = 0;
-
-    save_context( &stack->context, sigcontext );
-    save_fpu( &stack->context, sigcontext );
-    return stack;
-}
-
-/**********************************************************************
- *		raise_generic_exception
- */
-static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status = NtRaiseException( rec, context, TRUE );
-    raise_status( status, rec );
-}
-
-/***********************************************************************
- *           setup_raise_exception
- *
- * Modify the signal context to call the exception raise function.
- */
-static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *stack )
-{
-    SP_sig(sigcontext) = (ULONG_PTR)stack;
-    PC_sig(sigcontext) = (ULONG_PTR)raise_generic_exception;
-    REGn_sig(0, sigcontext) = (ULONG_PTR)&stack->rec;  /* first arg for raise_generic_exception */
-    REGn_sig(1, sigcontext) = (ULONG_PTR)&stack->context; /* second arg for raise_generic_exception */
-}
-
-/***********************************************************************
  *           libunwind_virtual_unwind
  *
  * Equivalent of RtlVirtualUnwind for builtin modules.
@@ -852,6 +806,7 @@ static NTSTATUS call_function_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_con
     dispatch.TargetPc      = 0;
     dispatch.ContextRecord = &context;
     dispatch.HistoryTable  = &table;
+    dispatch.NonVolatileRegisters = (BYTE *)&context.u.s.X19;
     for (;;)
     {
         status = virtual_unwind( UNW_FLAG_EHANDLER, &dispatch, &context );
@@ -979,19 +934,12 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
                   context->u.s.X24, context->u.s.X25, context->u.s.X26, context->u.s.X27 );
             TRACE(" x28=%016lx  fp=%016lx  lr=%016lx  sp=%016lx\n",
                   context->u.s.X28, context->u.s.Fp, context->u.s.Lr, context->Sp );
-            TRACE("  pc=%016lx\n",
-                  context->Pc );
         }
 
-        status = send_debug_event( rec, TRUE, context );
-        if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
-            return STATUS_SUCCESS;
+        if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION) goto done;
 
-        if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
-            return STATUS_SUCCESS;
-
-        if ((status = call_function_handlers( rec, context )) != STATUS_UNHANDLED_EXCEPTION)
-            return status;
+        if ((status = call_function_handlers( rec, context )) == STATUS_SUCCESS) goto done;
+        if (status != STATUS_UNHANDLED_EXCEPTION) return status;
     }
 
     /* last chance exception */
@@ -1008,7 +956,62 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
                 rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
         NtTerminateProcess( NtCurrentProcess(), rec->ExceptionCode );
     }
-    return STATUS_SUCCESS;
+done:
+    return NtSetContextThread( GetCurrentThread(), context );
+}
+
+/***********************************************************************
+ *           setup_exception
+ *
+ * Setup the exception record and context on the thread stack.
+ */
+static struct stack_layout *setup_exception( ucontext_t *sigcontext )
+{
+    struct stack_layout *stack;
+    DWORD exception_code = 0;
+
+    /* push the stack_layout structure */
+    stack = (struct stack_layout *)((SP_sig(sigcontext) - sizeof(*stack)) & ~15);
+
+    stack->rec.ExceptionRecord  = NULL;
+    stack->rec.ExceptionCode    = exception_code;
+    stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    stack->rec.ExceptionAddress = (LPVOID)PC_sig(sigcontext);
+    stack->rec.NumberParameters = 0;
+
+    save_context( &stack->context, sigcontext );
+    save_fpu( &stack->context, sigcontext );
+    return stack;
+}
+
+/**********************************************************************
+ *		raise_generic_exception
+ */
+static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status = raise_exception( rec, context, TRUE );
+    raise_status( status, rec );
+}
+
+/***********************************************************************
+ *           setup_raise_exception
+ *
+ * Modify the signal context to call the exception raise function.
+ */
+static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *stack )
+{
+    NTSTATUS status = send_debug_event( &stack->rec, TRUE, &stack->context );
+
+    if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
+    {
+        restore_context( &stack->context, sigcontext );
+        return;
+    }
+    SP_sig(sigcontext) = (ULONG_PTR)stack;
+    PC_sig(sigcontext) = (ULONG_PTR)raise_generic_exception;
+    REGn_sig(0, sigcontext) = (ULONG_PTR)&stack->rec;  /* first arg for raise_generic_exception */
+    REGn_sig(1, sigcontext) = (ULONG_PTR)&stack->context; /* second arg for raise_generic_exception */
+    REGn_sig(18, sigcontext) = (ULONG_PTR)NtCurrentTeb();
 }
 
 /**********************************************************************
@@ -1790,10 +1793,10 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     TRACE(" x28=%016lx  fp=%016lx  lr=%016lx  sp=%016lx\n",
           context->u.s.X28, context->u.s.Fp, context->u.s.Lr, context->Sp );
 
-    dispatch.EstablisherFrame = context->Sp;
     dispatch.TargetPc         = (ULONG64)target_ip;
     dispatch.ContextRecord    = context;
     dispatch.HistoryTable     = table;
+    dispatch.NonVolatileRegisters = (BYTE *)&context->u.s.X19;
 
     for (;;)
     {
@@ -1891,9 +1894,13 @@ void WINAPI RtlUnwind( void *frame, void *target_ip, EXCEPTION_RECORD *rec, void
  */
 NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
 {
-    NTSTATUS status = raise_exception( rec, context, first_chance );
-    if (status == STATUS_SUCCESS) NtSetContextThread( GetCurrentThread(), context );
-    return status;
+    if (first_chance)
+    {
+        NTSTATUS status = send_debug_event( rec, TRUE, context );
+        if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
+            NtSetContextThread( GetCurrentThread(), context );
+    }
+    return raise_exception( rec, context, first_chance );
 }
 
 /***********************************************************************
@@ -1902,12 +1909,10 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
 void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
 {
     CONTEXT context;
-    NTSTATUS status;
 
     RtlCaptureContext( &context );
     rec->ExceptionAddress = (LPVOID)context.Pc;
-    status = raise_exception( rec, &context, TRUE );
-    if (status) raise_status( status, rec );
+    RtlRaiseStatus( NtRaiseException( rec, &context, TRUE ));
 }
 
 /*************************************************************************
