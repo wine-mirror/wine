@@ -85,6 +85,7 @@ struct scriptlet_factory
 struct script_host
 {
     IActiveScriptSite IActiveScriptSite_iface;
+    IActiveScriptSiteWindow IActiveScriptSiteWindow_iface;
     LONG ref;
     struct list entry;
     WCHAR *language;
@@ -192,6 +193,11 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     {
         TRACE("(%p)->(IID_IActiveScriptSite %p)\n", This, ppv);
         *ppv = &This->IActiveScriptSite_iface;
+    }
+    else if (IsEqualGUID(&IID_IActiveScriptSiteWindow, riid))
+    {
+        TRACE("(%p)->(IID_IActiveScriptSiteWindow %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptSiteWindow_iface;
     }
     else
     {
@@ -304,6 +310,51 @@ static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
     ActiveScriptSite_OnLeaveScript
 };
 
+static inline struct script_host *impl_from_IActiveScriptSiteWindow(IActiveScriptSiteWindow *iface)
+{
+    return CONTAINING_RECORD(iface, struct script_host, IActiveScriptSiteWindow_iface);
+}
+
+static HRESULT WINAPI ActiveScriptSiteWindow_QueryInterface(IActiveScriptSiteWindow *iface, REFIID riid, void **obj)
+{
+    struct script_host *This = impl_from_IActiveScriptSiteWindow(iface);
+    return IActiveScriptSite_QueryInterface(&This->IActiveScriptSite_iface, riid, obj);
+}
+
+static ULONG WINAPI ActiveScriptSiteWindow_AddRef(IActiveScriptSiteWindow *iface)
+{
+    struct script_host *This = impl_from_IActiveScriptSiteWindow(iface);
+    return IActiveScriptSite_AddRef(&This->IActiveScriptSite_iface);
+}
+
+static ULONG WINAPI ActiveScriptSiteWindow_Release(IActiveScriptSiteWindow *iface)
+{
+    struct script_host *This = impl_from_IActiveScriptSiteWindow(iface);
+    return IActiveScriptSite_Release(&This->IActiveScriptSite_iface);
+}
+
+static HRESULT WINAPI ActiveScriptSiteWindow_GetWindow(IActiveScriptSiteWindow *iface, HWND *hwnd)
+{
+    struct script_host *This = impl_from_IActiveScriptSiteWindow(iface);
+    FIXME("(%p, %p)\n", This, hwnd);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ActiveScriptSiteWindow_EnableModeless(IActiveScriptSiteWindow *iface, BOOL enable)
+{
+    struct script_host *This = impl_from_IActiveScriptSiteWindow(iface);
+    FIXME("(%p, %d)\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static const IActiveScriptSiteWindowVtbl ActiveScriptSiteWindowVtbl = {
+    ActiveScriptSiteWindow_QueryInterface,
+    ActiveScriptSiteWindow_AddRef,
+    ActiveScriptSiteWindow_Release,
+    ActiveScriptSiteWindow_GetWindow,
+    ActiveScriptSiteWindow_EnableModeless
+};
+
 static struct script_host *find_script_host(struct list *hosts, const WCHAR *language)
 {
     struct script_host *host;
@@ -321,6 +372,7 @@ static HRESULT create_script_host(const WCHAR *language, struct list *hosts)
     if (!(host = heap_alloc_zero(sizeof(*host)))) return E_OUTOFMEMORY;
 
     host->IActiveScriptSite_iface.lpVtbl = &ActiveScriptSiteVtbl;
+    host->IActiveScriptSiteWindow_iface.lpVtbl = &ActiveScriptSiteWindowVtbl;
     host->ref = 1;
 
     if (!(host->language = heap_strdupW(language)))
