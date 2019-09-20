@@ -4256,6 +4256,17 @@ static void test_create_shader_resource_view(void)
     ID3D11ShaderResourceView_Release(srview);
     ID3D11Buffer_Release(buffer);
 
+    /* Without D3D11_BIND_SHADER_RESOURCE. */
+    buffer = create_buffer(device, 0, 1024, NULL);
+
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)buffer, &srv_desc, &srview);
+todo_wine
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D11ShaderResourceView_Release(srview);
+
+    ID3D11Buffer_Release(buffer);
+
     if (feature_level >= D3D_FEATURE_LEVEL_11_0)
     {
         buffer_desc.ByteWidth = 1024;
