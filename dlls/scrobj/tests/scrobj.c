@@ -716,19 +716,14 @@ static void register_script_object(BOOL do_register, const WCHAR *file_name)
     SET_EXPECT(SetScriptState_UNINITIALIZED);
     SET_EXPECT(Close);
     hres = pDllInstall(do_register, file_name);
-    todo_wine
     CHECK_CALLED(CreateInstance);
-    todo_wine
     CHECK_CALLED(QI_IActiveScriptParse);
-    todo_wine
     CHECK_CALLED(InitNew);
-    todo_wine
     CHECK_CALLED(SetScriptSite);
     todo_wine
     CHECK_CALLED(ParseScriptText);
     todo_wine
     CHECK_CALLED(SetScriptState_UNINITIALIZED);
-    todo_wine
     CHECK_CALLED(Close);
     ok(hres == S_OK, "DllInstall failed: %08x\n", hres);
     if (FAILED(hres))

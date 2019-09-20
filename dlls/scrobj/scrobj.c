@@ -26,6 +26,7 @@
 #include "olectl.h"
 #include "rpcproxy.h"
 #include "activscp.h"
+#include "mshtmhst.h"
 
 #include "initguid.h"
 #include "scrobj.h"
@@ -36,6 +37,20 @@
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrobj);
+
+#ifdef _WIN64
+
+#define IActiveScriptParse_Release IActiveScriptParse64_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+
+#else
+
+#define IActiveScriptParse_Release IActiveScriptParse32_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+
+#endif
 
 static HINSTANCE scrobj_instance;
 
@@ -87,9 +102,15 @@ struct script_host
     IActiveScriptSite IActiveScriptSite_iface;
     IActiveScriptSiteWindow IActiveScriptSiteWindow_iface;
     IServiceProvider IServiceProvider_iface;
+
     LONG ref;
     struct list entry;
+
     WCHAR *language;
+
+    IActiveScript *active_script;
+    IActiveScriptParse *parser;
+    BOOL cloned;
 };
 
 typedef enum tid_t
@@ -409,9 +430,71 @@ static struct script_host *find_script_host(struct list *hosts, const WCHAR *lan
     return NULL;
 }
 
-static HRESULT create_script_host(const WCHAR *language, struct list *hosts)
+static HRESULT init_script_host(struct script_host *host, IActiveScript *clone)
 {
+    HRESULT hres;
+
+    if (!clone)
+    {
+        IClassFactoryEx *factory_ex;
+        IClassFactory *factory;
+        IUnknown *unk;
+        CLSID clsid;
+
+        if (FAILED(hres = CLSIDFromProgID(host->language, &clsid)))
+        {
+            WARN("Could not find script engine for %s\n", debugstr_w(host->language));
+            return hres;
+        }
+
+        hres = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER, NULL,
+                                &IID_IClassFactory, (void**)&factory);
+        if (FAILED(hres)) return hres;
+
+        hres = IClassFactory_QueryInterface(factory, &IID_IClassFactoryEx, (void**)&factory_ex);
+        if (SUCCEEDED(hres))
+        {
+            FIXME("Use IClassFactoryEx\n");
+            IClassFactoryEx_Release(factory_ex);
+        }
+
+        hres = IClassFactory_CreateInstance(factory, NULL, &IID_IUnknown, (void**)&unk);
+        IClassFactory_Release(factory);
+        if (FAILED(hres)) return hres;
+
+        hres = IUnknown_QueryInterface(unk, &IID_IActiveScript, (void**)&host->active_script);
+        IUnknown_Release(unk);
+        if (FAILED(hres)) return hres;
+    }
+    else
+    {
+        IActiveScript_AddRef(clone);
+        host->active_script = clone;
+        host->cloned = TRUE;
+    }
+
+    hres = IActiveScript_QueryInterface(host->active_script, &IID_IActiveScriptParse, (void**)&host->parser);
+    if (FAILED(hres)) return hres;
+
+    if (!clone)
+    {
+        hres = IActiveScriptParse_InitNew(host->parser);
+        if (FAILED(hres))
+        {
+            IActiveScriptParse_Release(host->parser);
+            host->parser = NULL;
+            return hres;
+        }
+    }
+
+    return IActiveScript_SetScriptSite(host->active_script, &host->IActiveScriptSite_iface);
+}
+
+static HRESULT create_script_host(const WCHAR *language, IActiveScript *origin_script, struct list *hosts)
+{
+    IActiveScript *clone = NULL;
     struct script_host *host;
+    HRESULT hres;
 
     if (!(host = heap_alloc_zero(sizeof(*host)))) return E_OUTOFMEMORY;
 
@@ -426,8 +509,16 @@ static HRESULT create_script_host(const WCHAR *language, struct list *hosts)
         return E_OUTOFMEMORY;
     }
 
+    if (origin_script)
+    {
+        hres = IActiveScript_Clone(origin_script, &clone);
+        if (FAILED(hres)) clone = NULL;
+    }
+
     list_add_tail(hosts, &host->entry);
-    return S_OK;
+    hres = init_script_host(host, clone);
+    if (clone) IActiveScript_Release(clone);
+    return hres;
 }
 
 static void detach_script_hosts(struct list *hosts)
@@ -436,6 +527,17 @@ static void detach_script_hosts(struct list *hosts)
     {
         struct script_host *host = LIST_ENTRY(list_head(hosts), struct script_host, entry);
         list_remove(&host->entry);
+        if (host->parser)
+        {
+            IActiveScript_Close(host->active_script);
+            IActiveScriptParse_Release(host->parser);
+            host->parser = NULL;
+        }
+        if (host->active_script)
+        {
+            IActiveScript_Release(host->active_script);
+            host->active_script = NULL;
+        }
         IActiveScriptSite_Release(&host->IActiveScriptSite_iface);
     }
 }
@@ -448,7 +550,7 @@ static HRESULT create_scriptlet_hosts(struct scriptlet_factory *factory, struct 
     LIST_FOR_EACH_ENTRY(script, &factory->scripts, struct scriptlet_script, entry)
     {
         if (find_script_host(hosts, script->language)) continue;
-        hres = create_script_host(script->language, hosts);
+        hres = create_script_host(script->language, NULL, hosts);
         if (FAILED(hres))
         {
             detach_script_hosts(hosts);
