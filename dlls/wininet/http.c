@@ -1700,10 +1700,17 @@ static BOOL HTTP_InsertAuthorization( http_request_t *request, struct HttpAuthIn
                            HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD);
         heap_free(authorization);
     }
-    else if (!strcmpW(header, szAuthorization) && (host = get_host_header(request)))
+    else
     {
         UINT data_len;
         char *data;
+
+        /* Don't use cached credentials when a username or Authorization was specified */
+        if ((request->session->userName && request->session->userName[0]) || strcmpW(header, szAuthorization))
+            return TRUE;
+
+        if (!(host = get_host_header(request)))
+            return TRUE;
 
         if ((data_len = retrieve_cached_basic_authorization(request, host, NULL, &data)))
         {

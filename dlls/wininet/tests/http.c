@@ -2431,6 +2431,13 @@ static DWORD CALLBACK server_thread(LPVOID param)
             else
                 send(c, notokmsg, sizeof notokmsg-1, 0);
         }
+        if (strstr(buffer, "HEAD /upload3.txt"))
+        {
+            if (strstr(buffer, "Authorization: Basic dXNlcjE6cHdkMQ=="))
+                send(c, okmsg, sizeof okmsg-1, 0);
+            else
+                send(c, noauthmsg, sizeof noauthmsg-1, 0);
+        }
         if (strstr(buffer, "/test_host_override"))
         {
             if (strstr(buffer, host_header_override))
@@ -4588,6 +4595,88 @@ static void test_basic_auth_credentials_end_session(int port)
     InternetCloseHandle( ses );
 }
 
+static void test_basic_auth_credentials_different(int port)
+{
+    HINTERNET ses, con, req;
+    DWORD status, size;
+    BOOL ret;
+    char buffer[0x40];
+
+    ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+
+    con = InternetConnectA( ses, "localhost", port, "user", "pwd",
+                            INTERNET_SERVICE_HTTP, 0, 0 );
+    ok( con != NULL, "InternetConnectA failed %u\n", GetLastError() );
+
+    req = HttpOpenRequestA( con, "HEAD", "/upload.txt", NULL, NULL, NULL, 0, 0 );
+    ok( req != NULL, "HttpOpenRequestA failed %u\n", GetLastError() );
+
+    ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
+    ok( ret, "HttpSendRequestA failed %u\n", GetLastError() );
+
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_USERNAME, buffer, &size);
+    ok(ret, "unexpected failure %u\n", GetLastError());
+    ok(!strcmp(buffer, "user"), "got %s\n", buffer);
+    ok(size == 4, "got %u\n", size);
+
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_PASSWORD, buffer, &size);
+    ok(ret, "unexpected failure %u\n", GetLastError());
+    ok(!strcmp(buffer, "pwd"), "got %s\n", buffer);
+    ok(size == 3, "got %u\n", size);
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = HttpQueryInfoA( req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
+    ok( status == 200, "got %u\n", status );
+
+    InternetCloseHandle( req );
+    InternetCloseHandle( con );
+    InternetCloseHandle( ses );
+
+    ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+
+    con = InternetConnectA( ses, "localhost", port, "user1", "pwd1",
+                            INTERNET_SERVICE_HTTP, 0, 0 );
+    ok( con != NULL, "InternetConnectA failed %u\n", GetLastError() );
+
+    req = HttpOpenRequestA( con, "HEAD", "/upload3.txt", NULL, NULL, NULL, 0, 0 );
+    ok( req != NULL, "HttpOpenRequestA failed %u\n", GetLastError() );
+
+    ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
+    ok( ret, "HttpSendRequestA failed %u\n", GetLastError() );
+
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_USERNAME, buffer, &size);
+    ok(ret, "unexpected failure %u\n", GetLastError());
+    ok(!strcmp(buffer, "user1"), "got %s\n", buffer);
+    ok(size == 5, "got %u\n", size);
+
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_PASSWORD, buffer, &size);
+    ok(ret, "unexpected failure %u\n", GetLastError());
+    ok(!strcmp(buffer, "pwd1"), "got %s\n", buffer);
+    ok(size == 4, "got %u\n", size);
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = HttpQueryInfoA( req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
+    ok( status == 200, "got %u\n", status );
+
+    InternetCloseHandle( req );
+    InternetCloseHandle( con );
+    InternetCloseHandle( ses );
+}
+
 static void test_async_read(int port)
 {
     HINTERNET ses, con, req;
@@ -5783,6 +5872,7 @@ static void test_http_connection(void)
     test_accept_encoding(si.port);
     test_basic_auth_credentials_reuse(si.port);
     test_basic_auth_credentials_end_session(si.port);
+    test_basic_auth_credentials_different(si.port);
     test_async_read(si.port);
     test_http_read(si.port);
     test_connection_break(si.port);
