@@ -1223,7 +1223,12 @@ then
                     [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>]], [[static typeof(XRRGetScreenResources) *f; if (f) return 0;]])],
                       [AC_DEFINE(HAVE_XRRGETSCREENRESOURCES, 1,
-                        [Define if Xrandr has the XRRGetScreenResources function])])],,[$X_LIBS $X_EXTRA_LIBS])])
+                        [Define if Xrandr has the XRRGetScreenResources function])])
+                     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <X11/Xlib.h>
+#include <X11/extensions/Xrandr.h>]], [[static typeof(XRRGetProviderResources) *f; if (f) return 0;]])],
+                      [AC_DEFINE(HAVE_XRRGETPROVIDERRESOURCES, 1,
+                        [Define if Xrandr has the XRRGetProviderResources function])],
+                      [WINE_NOTICE([libxrandr ${notice_platform}development files too old, XRandR display device handler won't be supported.])])],,[$X_LIBS $X_EXTRA_LIBS])])
         fi
         WINE_NOTICE_WITH(xrandr,[test "x$ac_cv_lib_soname_Xrandr" = "x"],
                          [libxrandr ${notice_platform}development files not found, XRandr won't be supported.])

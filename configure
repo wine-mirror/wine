@@ -11976,6 +11976,26 @@ $as_echo "#define HAVE_XRRGETSCREENRESOURCES 1" >>confdefs.h
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+                     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <X11/Xlib.h>
+#include <X11/extensions/Xrandr.h>
+int
+main ()
+{
+static typeof(XRRGetProviderResources) *f; if (f) return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+$as_echo "#define HAVE_XRRGETPROVIDERRESOURCES 1" >>confdefs.h
+
+else
+  as_fn_append wine_notices "|libxrandr ${notice_platform}development files too old, XRandR display device handler won't be supported."
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext

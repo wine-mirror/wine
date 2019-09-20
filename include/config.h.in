@@ -1280,6 +1280,9 @@
 /* Define if Xrender has the XRenderSetPictureTransform function */
 #undef HAVE_XRENDERSETPICTURETRANSFORM
 
+/* Define if Xrandr has the XRRGetProviderResources function */
+#undef HAVE_XRRGETPROVIDERRESOURCES
+
 /* Define if Xrandr has the XRRGetScreenResources function */
 #undef HAVE_XRRGETSCREENRESOURCES
 

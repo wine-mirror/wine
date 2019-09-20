@@ -55,7 +55,7 @@ static inline MONITORINFOEXW *get_primary(void)
     return &monitors[idx];
 }
 
-static void query_work_area( RECT *rc_work )
+void query_work_area( RECT *rc_work )
 {
     Atom type;
     int format;
