@@ -1713,6 +1713,49 @@ static void test_Win32_WinSAT( IWbemServices *services )
     SysFreeString( wql );
 }
 
+static void test_Win32_DisplayControllerConfiguration( IWbemServices *services )
+{
+    static const WCHAR bitsperpixelW[] =
+        {'B','i','t','s','P','e','r','P','i','x','e','l',0};
+    static const WCHAR captionW[] =
+        {'C','a','p','t','i','o','n',0};
+    static const WCHAR horizontalresolutionW[] =
+        {'H','o','r','i','z','o','n','t','a','l','R','e','s','o','l','u','t','i','o','n',0};
+    static const WCHAR nameW[] =
+        {'N','a','m','e',0};
+    static const WCHAR queryW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
+         'D','i','s','p','l','a','y','C','o','n','t','r','o','l','l','e','r',
+         'C','o','n','f','i','g','u','r','a','t','i','o','n',0};
+    static const WCHAR verticalresolutionW[] =
+        {'V','e','r','t','i','c','a','l','R','e','s','o','l','u','t','i','o','n',0};
+    BSTR wql = SysAllocString( wqlW ), query = SysAllocString( queryW );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    HRESULT hr;
+    DWORD count;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (;;)
+    {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+
+        check_property( obj, bitsperpixelW, VT_I4, CIM_UINT32 );
+        check_property( obj, captionW, VT_BSTR, CIM_STRING );
+        check_property( obj, horizontalresolutionW, VT_I4, CIM_UINT32 );
+        check_property( obj, nameW, VT_BSTR, CIM_STRING );
+        check_property( obj, verticalresolutionW, VT_I4, CIM_UINT32 );
+        IWbemClassObject_Release( obj );
+    }
+
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
 START_TEST(query)
 {
     static const WCHAR cimv2W[] = {'R','O','O','T','\\','C','I','M','V','2',0};
@@ -1752,6 +1795,7 @@ START_TEST(query)
     test_Win32_ComputerSystem( services );
     test_Win32_ComputerSystemProduct( services );
     test_Win32_Bios( services );
+    test_Win32_DisplayControllerConfiguration( services );
     test_Win32_IP4RouteTable( services );
     test_Win32_OperatingSystem( services );
     test_Win32_PhysicalMemory( services );

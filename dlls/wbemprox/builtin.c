@@ -74,6 +74,9 @@ static const WCHAR class_diskdrivetodiskpartitionW[] =
     {'W','i','n','3','2','_','D','i','s','k','D','r','i','v','e','T','o','D','i','s','k','P','a','r','t','i','t','i','o','n',0};
 static const WCHAR class_diskpartitionW[] =
     {'W','i','n','3','2','_','D','i','s','k','P','a','r','t','i','t','i','o','n',0};
+static const WCHAR class_displaycontrollerconfigW[] =
+    {'W','i','n','3','2','_','D','i','s','p','l','a','y','C','o','n','t','r','o','l','l','e','r',
+     'C','o','n','f','i','g','u','r','a','t','i','o','n',0};
 static const WCHAR class_ip4routetableW[] =
     {'W','i','n','3','2','_','I','P','4','R','o','u','t','e','T','a','b','l','e',0};
 static const WCHAR class_logicaldiskW[] =
@@ -151,6 +154,8 @@ static const WCHAR prop_availabilityW[] =
     {'A','v','a','i','l','a','b','i','l','i','t','y',0};
 static const WCHAR prop_binaryrepresentationW[] =
     {'B','i','n','a','r','y','R','e','p','r','e','s','e','n','t','a','t','i','o','n',0};
+static const WCHAR prop_bitsperpixelW[] =
+    {'B','i','t','s','P','e','r','P','i','x','e','l',0};
 static const WCHAR prop_boolvalueW[] =
     {'B','o','o','l','V','a','l','u','e',0};
 static const WCHAR prop_bootableW[] =
@@ -445,6 +450,8 @@ static const WCHAR prop_vendorW[] =
     {'V','e','n','d','o','r',0};
 static const WCHAR prop_versionW[] =
     {'V','e','r','s','i','o','n',0};
+static const WCHAR prop_verticalresolutionW[] =
+    {'V','e','r','t','i','c','a','l','R','e','s','o','l','u','t','i','o','n',0};
 static const WCHAR prop_videoarchitectureW[] =
     {'V','i','d','e','o','A','r','c','h','i','t','e','c','t','u','r','e',0};
 static const WCHAR prop_videomemorytypeW[] =
@@ -567,6 +574,14 @@ static const struct column col_diskpartition[] =
     { prop_sizeW,           CIM_UINT64 },
     { prop_startingoffsetW, CIM_UINT64 },
     { prop_typeW,           CIM_STRING|COL_FLAG_DYNAMIC }
+};
+static const struct column col_displaycontrollerconfig[] =
+{
+    { prop_bitsperpixelW,         CIM_UINT32 },
+    { prop_captionW,              CIM_STRING },
+    { prop_horizontalresolutionW, CIM_UINT32 },
+    { prop_nameW,                 CIM_STRING|COL_FLAG_KEY },
+    { prop_verticalresolutionW,   CIM_UINT32 }
 };
 static const struct column col_ip4routetable[] =
 {
@@ -1029,6 +1044,14 @@ struct record_diskpartition
     UINT64       size;
     UINT64       startingoffset;
     const WCHAR *type;
+};
+struct record_displaycontrollerconfig
+{
+    UINT32       bitsperpixel;
+    const WCHAR *caption;
+    UINT32       horizontalresolution;
+    const WCHAR *name;
+    UINT32       verticalresolution;
 };
 struct record_ip4routetable
 {
@@ -2699,6 +2722,41 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
     return status;
 }
 
+static UINT32 get_bitsperpixel( UINT *hres, UINT *vres )
+{
+    HDC hdc = GetDC( NULL );
+    UINT32 ret;
+
+    if (!hdc) return 32;
+    ret = GetDeviceCaps( hdc, BITSPIXEL );
+    *hres = GetDeviceCaps( hdc, HORZRES );
+    *vres = GetDeviceCaps( hdc, VERTRES );
+    ReleaseDC( NULL, hdc );
+    return ret;
+}
+
+static enum fill_status fill_displaycontrollerconfig( struct table *table, const struct expr *cond )
+{
+    struct record_displaycontrollerconfig *rec;
+    UINT row = 0, hres = 1024, vres = 768;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+
+    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+    rec = (struct record_displaycontrollerconfig *)table->data;
+    rec->bitsperpixel         = get_bitsperpixel( &hres, &vres );
+    rec->caption              = videocontroller_deviceidW;
+    rec->horizontalresolution = hres;
+    rec->name                 = videocontroller_deviceidW;
+    rec->verticalresolution   = vres;
+    if (!match_row( table, row, cond, &status )) free_row_values( table, row );
+    else row++;
+
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
+}
+
 static WCHAR *get_ip4_string( DWORD addr )
 {
     static const WCHAR fmtW[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
@@ -4250,18 +4308,6 @@ static enum fill_status fill_systemenclosure( struct table *table, const struct 
     return status;
 }
 
-static UINT32 get_bits_per_pixel( UINT *hres, UINT *vres )
-{
-    HDC hdc = GetDC( NULL );
-    UINT32 ret;
-
-    if (!hdc) return 32;
-    ret = GetDeviceCaps( hdc, BITSPIXEL );
-    *hres = GetDeviceCaps( hdc, HORZRES );
-    *vres = GetDeviceCaps( hdc, VERTRES );
-    ReleaseDC( NULL, hdc );
-    return ret;
-}
 static WCHAR *get_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
 {
     static const WCHAR fmtW[] =
@@ -4335,7 +4381,7 @@ done:
     rec->availability          = 3; /* Running or Full Power */
     rec->config_errorcode      = 0; /* no error */
     rec->caption               = heap_strdupW( name );
-    rec->current_bitsperpixel  = get_bits_per_pixel( &hres, &vres );
+    rec->current_bitsperpixel  = get_bitsperpixel( &hres, &vres );
     rec->current_horizontalres = hres;
     rec->current_refreshrate   = 0; /* default refresh rate */
     rec->current_scanmode      = 2; /* Unknown */
@@ -4380,6 +4426,7 @@ static struct table builtin_classes[] =
     { class_diskdriveW, C(col_diskdrive), 0, 0, NULL, fill_diskdrive },
     { class_diskdrivetodiskpartitionW, C(col_diskdrivetodiskpartition), 0, 0, NULL, fill_diskdrivetodiskpartition },
     { class_diskpartitionW, C(col_diskpartition), 0, 0, NULL, fill_diskpartition },
+    { class_displaycontrollerconfigW, C(col_displaycontrollerconfig), 0, 0, NULL, fill_displaycontrollerconfig },
     { class_ip4routetableW, C(col_ip4routetable), 0, 0, NULL, fill_ip4routetable },
     { class_logicaldiskW, C(col_logicaldisk), 0, 0, NULL, fill_logicaldisk },
     { class_logicaldisk2W, C(col_logicaldisk), 0, 0, NULL, fill_logicaldisk },
