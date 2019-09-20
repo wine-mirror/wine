@@ -34,7 +34,6 @@
 #include "dvdmedia.h"
 #include "d3d9.h"
 #include "vmr9.h"
-#include "pin.h"
 
 #include "wine/debug.h"
 

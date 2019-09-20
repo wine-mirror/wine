@@ -24,7 +24,6 @@
 #include "quartz_private.h"
 
 #include "wine/debug.h"
-#include "pin.h"
 #include "uuids.h"
 #include "vfwmsgs.h"
 #include "winbase.h"

@@ -16,8 +16,6 @@ C_SRCS = \
 	filtermapper.c \
 	main.c \
 	memallocator.c \
-	parser.c \
-	pin.c \
 	regsvr.c \
 	systemclock.c \
 	videorenderer.c \

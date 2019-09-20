@@ -36,18 +36,9 @@
 #include "wine/strmbase.h"
 #include "wine/list.h"
 
-static inline const char *debugstr_fourcc(DWORD fourcc)
-{
-    if (!fourcc) return "''";
-    return wine_dbg_sprintf("'%c%c%c%c'", (char)(fourcc), (char)(fourcc >> 8),
-            (char)(fourcc >> 16), (char)(fourcc >> 24));
-}
-
 /* see IAsyncReader::Request on MSDN for the explanation of this */
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
-#define SEC_FROM_MEDIATIME(time) ((time) / 10000000)
-#define BYTES_FROM_MEDIATIME(time) SEC_FROM_MEDIATIME(time)
-#define MSEC_FROM_MEDIATIME(time) ((time) / 10000)
+#define BYTES_FROM_MEDIATIME(time) ((time) / 10000000)
 
 HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT FilterGraphNoThread_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
@@ -71,7 +62,6 @@ HRESULT IEnumRegFiltersImpl_Construct(REGFILTER * pInRegFilters, const ULONG siz
 extern const char * qzdebugstr_guid(const GUID * id) DECLSPEC_HIDDEN;
 extern void video_unregister_windowclass(void) DECLSPEC_HIDDEN;
 
-BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards);
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt) DECLSPEC_HIDDEN;
 
 BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID *source_clsid) DECLSPEC_HIDDEN;
