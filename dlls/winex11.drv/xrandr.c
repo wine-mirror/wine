@@ -68,6 +68,7 @@ static int primary_crtc;
 #endif
 
 #ifdef HAVE_XRRGETPROVIDERRESOURCES
+MAKE_FUNCPTR(XRRSelectInput)
 MAKE_FUNCPTR(XRRGetOutputPrimary)
 MAKE_FUNCPTR(XRRGetProviderResources)
 MAKE_FUNCPTR(XRRFreeProviderResources)
@@ -119,6 +120,7 @@ static int load_xrandr(void)
 #endif
 
 #ifdef HAVE_XRRGETPROVIDERRESOURCES
+        LOAD_FUNCPTR(XRRSelectInput)
         LOAD_FUNCPTR(XRRGetOutputPrimary)
         LOAD_FUNCPTR(XRRGetProviderResources)
         LOAD_FUNCPTR(XRRFreeProviderResources)
@@ -1030,6 +1032,12 @@ static void xrandr14_free_monitors( struct x11drv_monitor *monitors )
     heap_free( monitors );
 }
 
+static BOOL xrandr14_device_change_event( HWND hwnd, XEvent *event )
+{
+    X11DRV_DisplayDevices_Init( TRUE );
+    return TRUE;
+}
+
 #endif
 
 void X11DRV_XRandR_Init(void)
@@ -1077,6 +1085,15 @@ void X11DRV_XRandR_Init(void)
         handler.pGetMonitors = xrandr14_get_monitors;
         handler.pFreeMonitors = xrandr14_free_monitors;
         X11DRV_DisplayDevices_SetHandler( &handler );
+
+        pXRRSelectInput( thread_init_display(), root_window,
+                         RRCrtcChangeNotifyMask | RROutputChangeNotifyMask | RRProviderChangeNotifyMask);
+        X11DRV_register_event_handler( event_base + RRNotify_CrtcChange, xrandr14_device_change_event,
+                                       "XRandR CrtcChange" );
+        X11DRV_register_event_handler( event_base + RRNotify_OutputChange, xrandr14_device_change_event,
+                                       "XRandR OutputChange" );
+        X11DRV_register_event_handler( event_base + RRNotify_ProviderChange, xrandr14_device_change_event,
+                                       "XRandR ProviderChange" );
     }
 #endif
 }
