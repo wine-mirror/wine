@@ -86,6 +86,7 @@ struct script_host
 {
     IActiveScriptSite IActiveScriptSite_iface;
     IActiveScriptSiteWindow IActiveScriptSiteWindow_iface;
+    IServiceProvider IServiceProvider_iface;
     LONG ref;
     struct list entry;
     WCHAR *language;
@@ -198,6 +199,11 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     {
         TRACE("(%p)->(IID_IActiveScriptSiteWindow %p)\n", This, ppv);
         *ppv = &This->IActiveScriptSiteWindow_iface;
+    }
+    else if(IsEqualGUID(&IID_IServiceProvider, riid))
+    {
+        TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
+        *ppv = &This->IServiceProvider_iface;
     }
     else
     {
@@ -355,6 +361,44 @@ static const IActiveScriptSiteWindowVtbl ActiveScriptSiteWindowVtbl = {
     ActiveScriptSiteWindow_EnableModeless
 };
 
+static inline struct script_host *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, struct script_host, IServiceProvider_iface);
+}
+
+static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **obj)
+{
+    struct script_host *This = impl_from_IServiceProvider(iface);
+    return IActiveScriptSite_QueryInterface(&This->IActiveScriptSite_iface, riid, obj);
+}
+
+static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    struct script_host *This = impl_from_IServiceProvider(iface);
+    return IActiveScriptSite_AddRef(&This->IActiveScriptSite_iface);
+}
+
+static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
+{
+    struct script_host *This = impl_from_IServiceProvider(iface);
+    return IActiveScriptSite_Release(&This->IActiveScriptSite_iface);
+}
+
+static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID service,
+    REFIID riid, void **obj)
+{
+    struct script_host *This = impl_from_IServiceProvider(iface);
+    FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(service), debugstr_guid(riid), obj);
+    return E_NOTIMPL;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    ServiceProvider_QueryInterface,
+    ServiceProvider_AddRef,
+    ServiceProvider_Release,
+    ServiceProvider_QueryService
+};
+
 static struct script_host *find_script_host(struct list *hosts, const WCHAR *language)
 {
     struct script_host *host;
@@ -373,6 +417,7 @@ static HRESULT create_script_host(const WCHAR *language, struct list *hosts)
 
     host->IActiveScriptSite_iface.lpVtbl = &ActiveScriptSiteVtbl;
     host->IActiveScriptSiteWindow_iface.lpVtbl = &ActiveScriptSiteWindowVtbl;
+    host->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
     host->ref = 1;
 
     if (!(host->language = heap_strdupW(language)))
