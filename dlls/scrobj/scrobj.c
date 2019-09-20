@@ -31,10 +31,24 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrobj);
 
 static HINSTANCE scrobj_instance;
+
+struct scriptlet_member
+{
+    struct list entry;
+    WCHAR *name;
+    struct list parameters;
+};
+
+struct method_parameter
+{
+    struct list entry;
+    WCHAR *name;
+};
 
 struct scriptlet_factory
 {
@@ -46,12 +60,15 @@ struct scriptlet_factory
     IMoniker *moniker;
 
     BOOL have_registration;
+    BOOL have_public;
     WCHAR *description;
     WCHAR *progid;
     WCHAR *versioned_progid;
     WCHAR *version;
     WCHAR *classid_str;
     CLSID classid;
+
+    struct list members;
 };
 
 typedef enum tid_t
@@ -300,8 +317,93 @@ static HRESULT parse_scriptlet_registration(struct scriptlet_factory *factory)
 
 static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct scriptlet_member *member;
+    XmlNodeType node_type;
+    HRESULT hres;
+
+    if (factory->have_public)
+    {
+        FIXME("duplicated public element\n");
+        return E_FAIL;
+    }
+    factory->have_public = TRUE;
+
+    for (;;)
+    {
+        hres = next_xml_node(factory, &node_type);
+        if (FAILED(hres)) return hres;
+        if (node_type == XmlNodeType_EndElement) break;
+        if (node_type != XmlNodeType_Element)
+        {
+            FIXME("Unexpected node type %u\n", node_type);
+            return E_FAIL;
+        }
+
+        if (is_xml_name(factory, L"method"))
+        {
+            hres = IXmlReader_MoveToAttributeByName(factory->xml_reader, L"name", NULL);
+            if (hres != S_OK)
+            {
+                FIXME("Missing method name\n");
+                return E_FAIL;
+            }
+
+            if (!(member = heap_alloc(sizeof(*member)))) return E_OUTOFMEMORY;
+
+            hres = read_xml_value(factory, &member->name);
+            if (FAILED(hres))
+            {
+                heap_free(member);
+                return hres;
+            }
+            list_init(&member->parameters);
+            list_add_tail(&factory->members, &member->entry);
+
+            for (;;)
+            {
+                struct method_parameter *parameter;
+                BOOL empty;
+
+                hres = next_xml_node(factory, &node_type);
+                if (FAILED(hres)) return hres;
+                if (node_type == XmlNodeType_EndElement) break;
+                if (node_type != XmlNodeType_Element)
+                {
+                    FIXME("Unexpected node type %u\n", node_type);
+                    return E_FAIL;
+                }
+                if (!is_case_xml_name(factory, L"parameter"))
+                {
+                    FIXME("Unexpected method element\n");
+                    return E_FAIL;
+                }
+
+                empty = IXmlReader_IsEmptyElement(factory->xml_reader);
+
+                hres = IXmlReader_MoveToAttributeByName(factory->xml_reader, L"name", NULL);
+                if (hres != S_OK)
+                {
+                    FIXME("Missing parameter name\n");
+                    return E_FAIL;
+                }
+
+                if (!(parameter = heap_alloc(sizeof(*parameter)))) return E_OUTOFMEMORY;
+
+                hres = read_xml_value(factory, &parameter->name);
+                if (FAILED(hres)) return hres;
+                list_add_tail(&member->parameters, &parameter->entry);
+                if (!empty && FAILED(hres = expect_end_element(factory))) return hres;
+            }
+        }
+        else
+        {
+            FIXME("Unexpected element %s\n", debugstr_xml_name(factory));
+            return E_NOTIMPL;
+        }
+        if (FAILED(hres)) return hres;
+    }
+
+    return S_OK;
 }
 
 static HRESULT parse_scriptlet_script(struct scriptlet_factory *factory)
@@ -438,6 +540,20 @@ static ULONG WINAPI scriptlet_factory_Release(IClassFactory *iface)
     {
         if (This->moniker) IMoniker_Release(This->moniker);
         if (This->xml_reader) IXmlReader_Release(This->xml_reader);
+        while (!list_empty(&This->members))
+        {
+            struct scriptlet_member *member = LIST_ENTRY(list_head(&This->members), struct scriptlet_member, entry);
+            list_remove(&member->entry);
+            heap_free(member->name);
+            while (!list_empty(&member->parameters))
+            {
+                struct method_parameter *parameter = LIST_ENTRY(list_head(&member->parameters), struct method_parameter, entry);
+                list_remove(&parameter->entry);
+                heap_free(parameter->name);
+                heap_free(parameter);
+            }
+            heap_free(member);
+        }
         heap_free(This->classid_str);
         heap_free(This->description);
         heap_free(This->versioned_progid);
@@ -486,6 +602,7 @@ static HRESULT create_scriptlet_factory(const WCHAR *url, struct scriptlet_facto
 
     factory->IClassFactory_iface.lpVtbl = &scriptlet_factory_vtbl;
     factory->ref = 1;
+    list_init(&factory->members);
 
     hres = parse_scriptlet_file(factory, url);
     if (FAILED(hres))
