@@ -304,6 +304,7 @@ void xinerama_init( unsigned int width, unsigned int height )
 {
     struct x11drv_display_device_handler handler;
     MONITORINFOEXW *primary;
+    BOOL desktop_mode = FALSE;
     int i;
     RECT rect;
 
@@ -318,6 +319,7 @@ void xinerama_init( unsigned int width, unsigned int height )
             query_desktop_work_area( &default_monitor.rcWork );
         nb_monitors = 1;
         monitors = &default_monitor;
+        desktop_mode = TRUE;
     }
 
     primary = get_primary();
@@ -334,8 +336,8 @@ void xinerama_init( unsigned int width, unsigned int height )
                (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
     }
 
-    handler.name = "Xinerama";
-    handler.priority = 100;
+    handler.name = desktop_mode ? "Desktop" : "Xinerama";
+    handler.priority = desktop_mode ? 1000 : 100;
     handler.pGetGpus = xinerama_get_gpus;
     handler.pGetAdapters = xinerama_get_adapters;
     handler.pGetMonitors = xinerama_get_monitors;
