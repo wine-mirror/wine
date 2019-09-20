@@ -178,33 +178,6 @@ static HRESULT unregister_filters(struct regsvr_filter const *list)
  */
 
 static struct regsvr_filter const filter_list[] = {
-    {   &CLSID_MPEG1Splitter,
-        &CLSID_LegacyAmFilterCategory,
-        {'M','P','E','G','-','I',' ','S','t','r','e','a','m',' ','S','p','l','i','t','t','e','r',0},
-        0x5ffff0,
-        {   {   0,
-                {   { &MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1Audio },
-                    { &MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1Video },
-                    { &MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1System },
-                    { &MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1VideoCD },
-                    { NULL }
-                },
-            },
-            {   REG_PINFLAG_B_OUTPUT,
-                {   { &MEDIATYPE_Audio, &MEDIASUBTYPE_MPEG1Packet },
-                    { &MEDIATYPE_Audio, &MEDIASUBTYPE_MPEG1AudioPayload },
-                    { NULL }
-                },
-            },
-            {   REG_PINFLAG_B_OUTPUT,
-                {   { &MEDIATYPE_Video, &MEDIASUBTYPE_MPEG1Packet },
-                    { &MEDIATYPE_Video, &MEDIASUBTYPE_MPEG1Payload },
-                    { NULL }
-                },
-            },
-            { 0xFFFFFFFF },
-        }
-    },
     {   &CLSID_NullRenderer,
         &CLSID_LegacyAmFilterCategory,
         {'N','u','l','l',' ','R','e','n','d','e','r','e','r',0},

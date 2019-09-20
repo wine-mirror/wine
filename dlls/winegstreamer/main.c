@@ -50,6 +50,8 @@ static const WCHAR wave_parserW[] =
 {'W','a','v','e',' ','P','a','r','s','e','r',0};
 static const WCHAR avi_splitterW[] =
 {'A','V','I',' ','S','p','l','i','t','t','e','r',0};
+static const WCHAR mpeg_splitterW[] =
+{'M','P','E','G','-','I',' ','S','t','r','e','a','m',' ','S','p','l','i','t','t','e','r',0};
 
 static WCHAR wNull[] = {'\0'};
 
@@ -259,6 +261,63 @@ static const AMOVIESETUP_FILTER avi_splitter_filter_data =
     avi_splitter_pin_data,
 };
 
+static const AMOVIESETUP_MEDIATYPE mpeg_splitter_sink_type_data[] =
+{
+    {&MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1Audio},
+    {&MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1Video},
+    {&MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1System},
+    {&MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1VideoCD},
+};
+
+static const AMOVIESETUP_MEDIATYPE mpeg_splitter_audio_type_data[] =
+{
+    {&MEDIATYPE_Audio, &MEDIASUBTYPE_MPEG1Packet},
+    {&MEDIATYPE_Audio, &MEDIASUBTYPE_MPEG1AudioPayload},
+};
+
+static const AMOVIESETUP_MEDIATYPE mpeg_splitter_video_type_data[] =
+{
+    {&MEDIATYPE_Video, &MEDIASUBTYPE_MPEG1Packet},
+    {&MEDIATYPE_Video, &MEDIASUBTYPE_MPEG1Payload},
+};
+
+static const AMOVIESETUP_PIN mpeg_splitter_pin_data[] =
+{
+    {
+        NULL,
+        FALSE, FALSE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        ARRAY_SIZE(mpeg_splitter_sink_type_data),
+        mpeg_splitter_sink_type_data,
+    },
+    {
+        NULL,
+        FALSE, TRUE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        ARRAY_SIZE(mpeg_splitter_audio_type_data),
+        mpeg_splitter_audio_type_data,
+    },
+    {
+        NULL,
+        FALSE, TRUE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        ARRAY_SIZE(mpeg_splitter_video_type_data),
+        mpeg_splitter_video_type_data,
+    },
+};
+
+static const AMOVIESETUP_FILTER mpeg_splitter_filter_data =
+{
+    &CLSID_MPEG1Splitter,
+    mpeg_splitterW,
+    0x5ffff0,
+    ARRAY_SIZE(mpeg_splitter_pin_data),
+    mpeg_splitter_pin_data,
+};
+
 FactoryTemplate const g_Templates[] = {
     {
         wGstreamer_Splitter,
@@ -308,6 +367,13 @@ FactoryTemplate const g_Templates[] = {
         avi_splitter_create,
         NULL,
         &avi_splitter_filter_data,
+    },
+    {
+        mpeg_splitterW,
+        &CLSID_MPEG1Splitter,
+        mpeg_splitter_create,
+        NULL,
+        &mpeg_splitter_filter_data,
     },
 };
 

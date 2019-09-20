@@ -153,7 +153,7 @@ static void test_interfaces(void)
 
     check_interface(pin, &IID_IKsPropertySet, FALSE);
     check_interface(pin, &IID_IMediaPosition, FALSE);
-    todo_wine check_interface(pin, &IID_IMediaSeeking, FALSE);
+    check_interface(pin, &IID_IMediaSeeking, FALSE);
 
     IPin_Release(pin);
 
@@ -161,7 +161,7 @@ static void test_interfaces(void)
 
     check_interface(pin, &IID_IMediaSeeking, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
-    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    check_interface(pin, &IID_IQualityControl, TRUE);
     check_interface(pin, &IID_IUnknown, TRUE);
 
     check_interface(pin, &IID_IAsyncReader, FALSE);
@@ -999,7 +999,17 @@ static void test_enum_media_types(void)
 
 START_TEST(mpegsplit)
 {
+    IBaseFilter *filter;
+
     CoInitialize(NULL);
+
+    if (FAILED(CoCreateInstance(&CLSID_MPEG1Splitter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter)))
+    {
+        skip("Failed to create MPEG-1 splitter.\n");
+        return;
+    }
+    IBaseFilter_Release(filter);
 
     test_interfaces();
     test_aggregation();
