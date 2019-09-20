@@ -147,14 +147,17 @@ static LONG X11DRV_desktop_SetCurrentMode(int mode)
  */
 void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
 {
-    RECT primary_rect = get_primary_monitor_rect();
+    RECT primary_rect;
 
     root_window = win;
     managed_mode = FALSE;  /* no managed windows in desktop mode */
-    max_width = primary_rect.right - primary_rect.left;
-    max_height = primary_rect.bottom - primary_rect.top;
+
     xinerama_init( width, height );
     X11DRV_DisplayDevices_Init( TRUE );
+
+    primary_rect = get_primary_monitor_rect();
+    max_width = primary_rect.right - primary_rect.left;
+    max_height = primary_rect.bottom - primary_rect.top;
 
     /* initialize the available resolutions */
     dd_modes = X11DRV_Settings_SetHandlers("desktop", 
