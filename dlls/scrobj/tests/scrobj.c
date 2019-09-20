@@ -730,7 +730,6 @@ static void register_script_object(BOOL do_register, const WCHAR *file_name)
     CHECK_CALLED(SetScriptState_UNINITIALIZED);
     todo_wine
     CHECK_CALLED(Close);
-    todo_wine
     ok(hres == S_OK, "DllInstall failed: %08x\n", hres);
     if (FAILED(hres))
         return;
@@ -769,10 +768,7 @@ static void test_create_object(void)
 
     hres = CoGetClassObject(&CLSID_WineTest, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER, NULL,
                             &IID_IClassFactory, (void**)&cf);
-    todo_wine
     ok(hres == S_OK, "Could not get class factory: %08x\n", hres);
-    if (FAILED(hres))
-        return;
 
     parse_flags = SCRIPTTEXT_ISPERSISTENT | SCRIPTTEXT_ISVISIBLE;
 
@@ -790,20 +786,34 @@ static void test_create_object(void)
     SET_EXPECT(SetScriptState_UNINITIALIZED);
     SET_EXPECT(Clone);
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&unk);
+    todo_wine
     ok(hres == S_OK, "Could not create scriptlet instance: %08x\n", hres);
+    todo_wine
     CHECK_CALLED(Clone);
+    todo_wine
     CHECK_CALLED(CreateInstance);
+    todo_wine
     CHECK_CALLED(QI_IActiveScriptParse);
+    todo_wine
     CHECK_CALLED(InitNew);
+    todo_wine
     CHECK_CALLED(SetScriptSite);
+    todo_wine
     CHECK_CALLED(AddNamedItem_scriptlet);
+    todo_wine
     CHECK_CALLED(AddNamedItem_globals);
+    todo_wine
     CHECK_CALLED(GetScriptDispatch);
     todo_wine
     CHECK_CALLED(GetDispID_vbAddOne);
+    todo_wine
     CHECK_CALLED(GetDispID_wtTest);
+    todo_wine
     CHECK_CALLED(SetScriptState_STARTED);
+    todo_wine
     CHECK_CALLED(ParseScriptText);
+    if (FAILED(hres))
+        return;
 
     hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&disp);
     ok(hres == S_OK, "Could not get IDispatch iface: %08x\n", hres);

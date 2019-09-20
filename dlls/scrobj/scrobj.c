@@ -1,5 +1,6 @@
 /*
  * Copyright 2017 Nikolay Sivov
+ * Copyright 2019 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -679,6 +680,151 @@ static HRESULT create_scriptlet_factory(const WCHAR *url, struct scriptlet_facto
     return S_OK;
 }
 
+static HRESULT register_scriptlet(struct scriptlet_factory *factory)
+{
+    HKEY key, clsid_key, obj_key;
+    LSTATUS status;
+    HRESULT hres;
+
+    if (factory->classid_str)
+    {
+        WCHAR *url;
+
+        status = RegCreateKeyW(HKEY_CLASSES_ROOT, L"CLSID", &clsid_key);
+        if (status) return E_ACCESSDENIED;
+
+        status = RegCreateKeyW(clsid_key, factory->classid_str, &obj_key);
+        RegCloseKey(clsid_key);
+        if (status) return E_ACCESSDENIED;
+
+        hres = IMoniker_GetDisplayName(factory->moniker, NULL, NULL, &url);
+        if (FAILED(hres))
+        {
+            RegCloseKey(obj_key);
+            return hres;
+        }
+        status = RegCreateKeyW(obj_key, L"ScriptletURL", &key);
+        if (!status)
+        {
+            status = RegSetValueExW(key, NULL, 0, REG_SZ, (BYTE*)url,
+                                    (wcslen(url) + 1) * sizeof(WCHAR));
+            RegCloseKey(key);
+        }
+        CoTaskMemFree(url);
+
+        if (factory->description)
+            status = RegSetValueExW(obj_key, NULL, 0, REG_SZ, (BYTE*)factory->description,
+                                    (wcslen(factory->description) + 1) * sizeof(WCHAR));
+
+        if (!status)
+        {
+            status = RegCreateKeyW(obj_key, L"InprocServer32", &key);
+            if (!status)
+            {
+                WCHAR str[MAX_PATH];
+                GetModuleFileNameW(scrobj_instance, str, MAX_PATH);
+                status = RegSetValueExW(key, NULL, 0, REG_SZ, (BYTE*)str, (wcslen(str) + 1) * sizeof(WCHAR));
+                RegCloseKey(key);
+            }
+        }
+
+        if (!status && factory->versioned_progid)
+        {
+            status = RegCreateKeyW(obj_key, L"ProgID", &key);
+            if (!status)
+            {
+                status = RegSetValueExW(key, NULL, 0, REG_SZ, (BYTE*)factory->versioned_progid,
+                                        (wcslen(factory->versioned_progid) + 1) * sizeof(WCHAR));
+                RegCloseKey(key);
+            }
+        }
+
+        if (!status && factory->progid)
+        {
+            status = RegCreateKeyW(obj_key, L"VersionIndependentProgID", &key);
+            if (!status)
+            {
+                status = RegSetValueExW(key, NULL, 0, REG_SZ, (BYTE*)factory->progid,
+                                        (wcslen(factory->progid) + 1) * sizeof(WCHAR));
+                RegCloseKey(key);
+            }
+        }
+
+        RegCloseKey(obj_key);
+        if (status) return E_ACCESSDENIED;
+    }
+
+    if (factory->progid)
+    {
+        status = RegCreateKeyW(HKEY_CLASSES_ROOT, factory->progid, &key);
+        if (status) return E_ACCESSDENIED;
+
+        if (factory->description)
+            status = RegSetValueExW(key, NULL, 0, REG_SZ, (BYTE*)factory->description,
+                                    (wcslen(factory->description) + 1) * sizeof(WCHAR));
+
+        if (!status && factory->classid_str)
+        {
+            status = RegCreateKeyW(key, L"CLSID", &clsid_key);
+            if (!status)
+            {
+                status = RegSetValueExW(clsid_key, NULL, 0, REG_SZ, (BYTE*)factory->classid_str,
+                                        (wcslen(factory->classid_str) + 1) * sizeof(WCHAR));
+                RegCloseKey(clsid_key);
+            }
+        }
+
+        RegCloseKey(key);
+        if (status) return E_ACCESSDENIED;
+    }
+
+    if (factory->versioned_progid)
+    {
+        status = RegCreateKeyW(HKEY_CLASSES_ROOT, factory->versioned_progid, &key);
+        if (status) return E_ACCESSDENIED;
+
+        if (factory->description)
+            status = RegSetValueExW(key, NULL, 0, REG_SZ, (BYTE*)factory->description,
+                                    (wcslen(factory->description) + 1) * sizeof(WCHAR));
+
+        if (!status && factory->classid_str)
+        {
+            status = RegCreateKeyW(key, L"CLSID", &clsid_key);
+            if (!status)
+            {
+                status = RegSetValueExW(clsid_key, NULL, 0, REG_SZ, (BYTE*)factory->classid_str,
+                                        (wcslen(factory->classid_str) + 1) * sizeof(WCHAR));
+                RegCloseKey(clsid_key);
+            }
+        }
+
+        RegCloseKey(key);
+        if (status) return E_ACCESSDENIED;
+    }
+
+    return S_OK;
+}
+
+static HRESULT unregister_scriptlet(struct scriptlet_factory *factory)
+{
+    LSTATUS status;
+
+    if (factory->classid_str)
+    {
+        HKEY clsid_key;
+        status = RegCreateKeyW(HKEY_CLASSES_ROOT, L"CLSID", &clsid_key);
+        if (!status)
+        {
+            RegDeleteTreeW(clsid_key, factory->classid_str);
+            RegCloseKey(clsid_key);
+        }
+    }
+
+    if (factory->progid) RegDeleteTreeW(HKEY_CLASSES_ROOT, factory->progid);
+    if (factory->versioned_progid) RegDeleteTreeW(HKEY_CLASSES_ROOT, factory->versioned_progid);
+    return S_OK;
+}
+
 struct scriptlet_typelib
 {
     IGenScriptletTLib IGenScriptletTLib_iface;
@@ -1020,6 +1166,7 @@ HRESULT WINAPI DllUnregisterServer(void)
  */
 HRESULT WINAPI DllInstall(BOOL install, const WCHAR *arg)
 {
+    struct scriptlet_factory *factory;
     HRESULT hres;
 
     if (install)
@@ -1030,8 +1177,25 @@ HRESULT WINAPI DllInstall(BOOL install, const WCHAR *arg)
     else if (!arg)
         return DllUnregisterServer();
 
-    FIXME("argument %s not supported\n", debugstr_w(arg));
-    return E_NOTIMPL;
+    hres = create_scriptlet_factory(arg, &factory);
+    if (SUCCEEDED(hres))
+    {
+        if (factory->have_registration)
+        {
+            if (install)
+                hres = register_scriptlet(factory);
+            else
+                hres = unregister_scriptlet(factory);
+        }
+        else
+        {
+            FIXME("No registration info\n");
+            hres = E_FAIL;
+        }
+        IClassFactory_Release(&factory->IClassFactory_iface);
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI scriptlet_typelib_CreateInstance(IClassFactory *factory, IUnknown *outer, REFIID riid, void **obj)
