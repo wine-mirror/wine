@@ -622,7 +622,9 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
     WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *data;
     NTSTATUS status = STATUS_SUCCESS;
+    UNICODE_STRING device_path;
     struct device_interface *iface;
+    struct wine_rb_entry *entry;
     DWORD required;
     HDEVINFO set;
 
@@ -660,18 +662,31 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
 
     data->DevicePath[1] = '?';
     TRACE("Returning path %s.\n", debugstr_w(data->DevicePath));
+    RtlCreateUnicodeString( &device_path, data->DevicePath);
 
-    iface = heap_alloc_zero( sizeof(struct device_interface) );
+    entry = wine_rb_get( &device_interfaces, &device_path );
+    if (entry)
+    {
+        iface = WINE_RB_ENTRY_VALUE( entry, struct device_interface, entry );
+        if (iface->enabled)
+            ERR("Device interface %s is still enabled.\n", debugstr_us(&iface->symbolic_link));
+    }
+    else
+    {
+        iface = heap_alloc_zero( sizeof(struct device_interface) );
+        RtlCreateUnicodeString(&iface->symbolic_link, data->DevicePath);
+        if (wine_rb_put( &device_interfaces, &iface->symbolic_link, &iface->entry ))
+            ERR("Failed to insert interface %s into tree.\n", debugstr_us(&iface->symbolic_link));
+    }
+
     iface->device = device;
     iface->interface_class = *class_guid;
-    RtlCreateUnicodeString(&iface->symbolic_link, data->DevicePath);
     if (symbolic_link)
         RtlCreateUnicodeString( symbolic_link, data->DevicePath);
 
-    if (wine_rb_put( &device_interfaces, &iface->symbolic_link, &iface->entry ))
-        ERR("Failed to insert interface %s into tree.\n", debugstr_us(&iface->symbolic_link));
-
     HeapFree( GetProcessHeap(), 0, data );
+
+    RtlFreeUnicodeString( &device_path );
 
     return status;
 }
