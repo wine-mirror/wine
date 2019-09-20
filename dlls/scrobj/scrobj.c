@@ -50,6 +50,13 @@ struct method_parameter
     WCHAR *name;
 };
 
+struct scriptlet_script
+{
+    struct list entry;
+    WCHAR *language;
+    WCHAR *body;
+};
+
 struct scriptlet_factory
 {
     IClassFactory IClassFactory_iface;
@@ -69,6 +76,7 @@ struct scriptlet_factory
     CLSID classid;
 
     struct list members;
+    struct list scripts;
 };
 
 typedef enum tid_t
@@ -406,10 +414,51 @@ static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
     return S_OK;
 }
 
-static HRESULT parse_scriptlet_script(struct scriptlet_factory *factory)
+static HRESULT parse_scriptlet_script(struct scriptlet_factory *factory, struct scriptlet_script *script)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    XmlNodeType node_type;
+    HRESULT hres;
+
+    for (;;)
+    {
+        hres = IXmlReader_MoveToNextAttribute(factory->xml_reader);
+        if (hres != S_OK) break;
+
+        if (is_xml_name(factory, L"language"))
+        {
+            if (script->language)
+            {
+                FIXME("Duplicated language\n");
+                return E_FAIL;
+            }
+            hres = read_xml_value(factory, &script->language);
+            if (FAILED(hres)) return hres;
+        }
+        else
+        {
+            FIXME("Unexpected attribute\n");
+            return E_NOTIMPL;
+        }
+    }
+
+    if (!script->language)
+    {
+        FIXME("Language not specified\n");
+        return E_FAIL;
+    }
+
+    if (FAILED(hres = next_xml_node(factory, &node_type))) return hres;
+
+    if (node_type != XmlNodeType_Text && node_type != XmlNodeType_CDATA)
+    {
+        FIXME("Unexpected node type %u\n", node_type);
+        return E_FAIL;
+    }
+
+    hres = read_xml_value(factory, &script->body);
+    if (FAILED(hres)) return hres;
+
+    return expect_end_element(factory);
 }
 
 static HRESULT parse_scriptlet_file(struct scriptlet_factory *factory, const WCHAR *url)
@@ -471,7 +520,13 @@ static HRESULT parse_scriptlet_file(struct scriptlet_factory *factory, const WCH
         else if (is_xml_name(factory, L"public"))
             hres = parse_scriptlet_public(factory);
         else if (is_xml_name(factory, L"script"))
-            hres = parse_scriptlet_script(factory);
+        {
+            struct scriptlet_script *script;
+            if (!(script = heap_alloc_zero(sizeof(*script)))) return E_OUTOFMEMORY;
+            list_add_tail(&factory->scripts, &script->entry);
+            hres = parse_scriptlet_script(factory, script);
+            if (FAILED(hres)) return hres;
+        }
         else
         {
             FIXME("Unexpected element %s\n", debugstr_xml_name(factory));
@@ -554,6 +609,14 @@ static ULONG WINAPI scriptlet_factory_Release(IClassFactory *iface)
             }
             heap_free(member);
         }
+        while (!list_empty(&This->scripts))
+        {
+            struct scriptlet_script *script = LIST_ENTRY(list_head(&This->scripts), struct scriptlet_script, entry);
+            list_remove(&script->entry);
+            heap_free(script->language);
+            heap_free(script->body);
+            heap_free(script);
+        }
         heap_free(This->classid_str);
         heap_free(This->description);
         heap_free(This->versioned_progid);
@@ -603,6 +666,7 @@ static HRESULT create_scriptlet_factory(const WCHAR *url, struct scriptlet_facto
     factory->IClassFactory_iface.lpVtbl = &scriptlet_factory_vtbl;
     factory->ref = 1;
     list_init(&factory->members);
+    list_init(&factory->scripts);
 
     hres = parse_scriptlet_file(factory, url);
     if (FAILED(hres))
