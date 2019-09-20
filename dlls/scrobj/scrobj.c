@@ -25,6 +25,7 @@
 #include "ole2.h"
 #include "olectl.h"
 #include "rpcproxy.h"
+#include "activscp.h"
 
 #include "initguid.h"
 #include "scrobj.h"
@@ -76,8 +77,17 @@ struct scriptlet_factory
     WCHAR *classid_str;
     CLSID classid;
 
+    struct list hosts;
     struct list members;
     struct list scripts;
+};
+
+struct script_host
+{
+    IActiveScriptSite IActiveScriptSite_iface;
+    LONG ref;
+    struct list entry;
+    WCHAR *language;
 };
 
 typedef enum tid_t
@@ -153,6 +163,202 @@ static void release_typelib(void)
             ITypeInfo_Release(typeinfos[i]);
 
     ITypeLib_Release(typelib);
+}
+
+static WCHAR *heap_strdupW(const WCHAR *str)
+{
+    WCHAR *ret;
+    size_t size = (wcslen(str) + 1) * sizeof(WCHAR);
+    if (!(ret = heap_alloc(size))) return NULL;
+    memcpy(ret, str, size);
+    return ret;
+}
+
+static inline struct script_host *impl_from_IActiveScriptSite(IActiveScriptSite *iface)
+{
+    return CONTAINING_RECORD(iface, struct script_host, IActiveScriptSite_iface);
+}
+
+static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, REFIID riid, void **ppv)
+{
+    struct script_host *This = impl_from_IActiveScriptSite(iface);
+
+    if (IsEqualGUID(&IID_IUnknown, riid))
+    {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptSite_iface;
+    }
+    else if (IsEqualGUID(&IID_IActiveScriptSite, riid))
+    {
+        TRACE("(%p)->(IID_IActiveScriptSite %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptSite_iface;
+    }
+    else
+    {
+        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI ActiveScriptSite_AddRef(IActiveScriptSite *iface)
+{
+    struct script_host *This = impl_from_IActiveScriptSite(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
+{
+    struct script_host *This = impl_from_IActiveScriptSite(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        heap_free(This->language);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *lcid)
+{
+    struct script_host *This = impl_from_IActiveScriptSite(iface);
+
+    TRACE("(%p, %p)\n", This, lcid);
+
+    *lcid = GetUserDefaultLCID();
+    return S_OK;
+}
+
+static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPCOLESTR name, DWORD mask,
+    IUnknown **unk, ITypeInfo **ti)
+{
+    struct script_host *This = impl_from_IActiveScriptSite(iface);
+    FIXME("(%p, %s, %#x, %p, %p)\n", This, debugstr_w(name), mask, unk, ti);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ActiveScriptSite_GetDocVersionString(IActiveScriptSite *iface, BSTR *version)
+{
+    struct script_host *This = impl_from_IActiveScriptSite(iface);
+    FIXME("(%p, %p)\n", This, version);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ActiveScriptSite_OnScriptTerminate(IActiveScriptSite *iface, const VARIANT *result,
+    const EXCEPINFO *ei)
+{
+    struct script_host *This = impl_from_IActiveScriptSite(iface);
+    FIXME("(%p, %s, %p)\n", This, debugstr_variant(result), ei);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface, SCRIPTSTATE state)
+{
+    struct script_host *This = impl_from_IActiveScriptSite(iface);
+    TRACE("(%p, %d)\n", This, state);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, IActiveScriptError *script_error)
+{
+    struct script_host *This = impl_from_IActiveScriptSite(iface);
+    FIXME("(%p, %p)\n", This, script_error);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ActiveScriptSite_OnEnterScript(IActiveScriptSite *iface)
+{
+    struct script_host *This = impl_from_IActiveScriptSite(iface);
+    TRACE("(%p)\n", This);
+    return S_OK;
+}
+
+static HRESULT WINAPI ActiveScriptSite_OnLeaveScript(IActiveScriptSite *iface)
+{
+    struct script_host *This = impl_from_IActiveScriptSite(iface);
+    TRACE("(%p)\n", This);
+    return S_OK;
+}
+
+static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
+    ActiveScriptSite_QueryInterface,
+    ActiveScriptSite_AddRef,
+    ActiveScriptSite_Release,
+    ActiveScriptSite_GetLCID,
+    ActiveScriptSite_GetItemInfo,
+    ActiveScriptSite_GetDocVersionString,
+    ActiveScriptSite_OnScriptTerminate,
+    ActiveScriptSite_OnStateChange,
+    ActiveScriptSite_OnScriptError,
+    ActiveScriptSite_OnEnterScript,
+    ActiveScriptSite_OnLeaveScript
+};
+
+static struct script_host *find_script_host(struct list *hosts, const WCHAR *language)
+{
+    struct script_host *host;
+    LIST_FOR_EACH_ENTRY(host, hosts, struct script_host, entry)
+    {
+        if (!wcscmp(host->language, language)) return host;
+    }
+    return NULL;
+}
+
+static HRESULT create_script_host(const WCHAR *language, struct list *hosts)
+{
+    struct script_host *host;
+
+    if (!(host = heap_alloc_zero(sizeof(*host)))) return E_OUTOFMEMORY;
+
+    host->IActiveScriptSite_iface.lpVtbl = &ActiveScriptSiteVtbl;
+    host->ref = 1;
+
+    if (!(host->language = heap_strdupW(language)))
+    {
+        IActiveScriptSite_Release(&host->IActiveScriptSite_iface);
+        return E_OUTOFMEMORY;
+    }
+
+    list_add_tail(hosts, &host->entry);
+    return S_OK;
+}
+
+static void detach_script_hosts(struct list *hosts)
+{
+    while (!list_empty(hosts))
+    {
+        struct script_host *host = LIST_ENTRY(list_head(hosts), struct script_host, entry);
+        list_remove(&host->entry);
+        IActiveScriptSite_Release(&host->IActiveScriptSite_iface);
+    }
+}
+
+static HRESULT create_scriptlet_hosts(struct scriptlet_factory *factory, struct list *hosts)
+{
+    struct scriptlet_script *script;
+    HRESULT hres;
+
+    LIST_FOR_EACH_ENTRY(script, &factory->scripts, struct scriptlet_script, entry)
+    {
+        if (find_script_host(hosts, script->language)) continue;
+        hres = create_script_host(script->language, hosts);
+        if (FAILED(hres))
+        {
+            detach_script_hosts(hosts);
+            return hres;
+        }
+    }
+    return S_OK;
 }
 
 static const char *debugstr_xml_name(struct scriptlet_factory *factory)
@@ -596,6 +802,7 @@ static ULONG WINAPI scriptlet_factory_Release(IClassFactory *iface)
     {
         if (This->moniker) IMoniker_Release(This->moniker);
         if (This->xml_reader) IXmlReader_Release(This->xml_reader);
+        detach_script_hosts(&This->hosts);
         while (!list_empty(&This->members))
         {
             struct scriptlet_member *member = LIST_ENTRY(list_head(&This->members), struct scriptlet_member, entry);
@@ -666,6 +873,7 @@ static HRESULT create_scriptlet_factory(const WCHAR *url, struct scriptlet_facto
 
     factory->IClassFactory_iface.lpVtbl = &scriptlet_factory_vtbl;
     factory->ref = 1;
+    list_init(&factory->hosts);
     list_init(&factory->members);
     list_init(&factory->scripts);
 
@@ -1182,15 +1390,20 @@ HRESULT WINAPI DllInstall(BOOL install, const WCHAR *arg)
     {
         if (factory->have_registration)
         {
-            if (install)
-                hres = register_scriptlet(factory);
-            else
-                hres = unregister_scriptlet(factory);
+            /* validate scripts */
+            hres = create_scriptlet_hosts(factory, &factory->hosts);
         }
         else
         {
             FIXME("No registration info\n");
             hres = E_FAIL;
+        }
+        if (SUCCEEDED(hres))
+        {
+            if (install)
+                hres = register_scriptlet(factory);
+            else
+                hres = unregister_scriptlet(factory);
         }
         IClassFactory_Release(&factory->IClassFactory_iface);
     }
