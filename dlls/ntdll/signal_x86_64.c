@@ -2390,6 +2390,7 @@ static DWORD call_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_C
     res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, context, dispatch );
     TRACE( "handler at %p returned %u\n", dispatch->LanguageHandler, res );
 
+    rec->ExceptionFlags &= EH_NONCONTINUABLE;
     __wine_pop_frame( &frame );
     return res;
 }
