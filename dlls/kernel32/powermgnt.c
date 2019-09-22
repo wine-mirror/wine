@@ -52,7 +52,7 @@ BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS ps)
         ps->ACLineStatus        = 255;
         ps->BatteryFlag         = 255;
         ps->BatteryLifePercent  = 255;
-        ps->Reserved1           = 0;
+        ps->SystemStatusFlag    = 0;
         ps->BatteryLifeTime     = ~0u;
         ps->BatteryFullLifeTime = ~0u;
         return TRUE;
