@@ -1343,11 +1343,11 @@ static DWORD CALLBACK serverThreadMain5(LPVOID arg)
     return 0;
 }
 
-static void exercizeServer(const char *pipename, HANDLE serverThread)
+static void exerciseServer(const char *pipename, HANDLE serverThread)
 {
     int i;
 
-    if (winetest_debug > 1) trace("exercizeServer starting\n");
+    if (winetest_debug > 1) trace("exerciseServer starting\n");
     for (i = 0; i < NB_SERVER_LOOPS; i++) {
         HANDLE hFile=INVALID_HANDLE_VALUE;
         static const char obuf[] = "Bit Bucket";
@@ -1390,7 +1390,7 @@ static void exercizeServer(const char *pipename, HANDLE serverThread)
 
     ok(WaitForSingleObject(serverThread,INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject\n");
     CloseHandle(hnp);
-    if (winetest_debug > 1) trace("exercizeServer returning\n");
+    if (winetest_debug > 1) trace("exerciseServer returning\n");
 }
 
 static void test_NamedPipe_2(void)
@@ -1416,31 +1416,31 @@ static void test_NamedPipe_2(void)
     SetLastError(0xdeadbeef);
     serverThread = CreateThread(NULL, 0, serverThreadMain1, (void *)8, 0, &serverThreadId);
     ok(serverThread != NULL, "CreateThread failed: %d\n", GetLastError());
-    exercizeServer(PIPENAME "serverThreadMain1", serverThread);
+    exerciseServer(PIPENAME "serverThreadMain1", serverThread);
 
     /* Try server #2 */
     SetLastError(0xdeadbeef);
     serverThread = CreateThread(NULL, 0, serverThreadMain2, 0, 0, &serverThreadId);
     ok(serverThread != NULL, "CreateThread failed: %d\n", GetLastError());
-    exercizeServer(PIPENAME "serverThreadMain2", serverThread);
+    exerciseServer(PIPENAME "serverThreadMain2", serverThread);
 
     /* Try server #3 */
     SetLastError(0xdeadbeef);
     serverThread = CreateThread(NULL, 0, serverThreadMain3, 0, 0, &serverThreadId);
     ok(serverThread != NULL, "CreateThread failed: %d\n", GetLastError());
-    exercizeServer(PIPENAME "serverThreadMain3", serverThread);
+    exerciseServer(PIPENAME "serverThreadMain3", serverThread);
 
     /* Try server #4 */
     SetLastError(0xdeadbeef);
     serverThread = CreateThread(NULL, 0, serverThreadMain4, 0, 0, &serverThreadId);
     ok(serverThread != NULL, "CreateThread failed: %d\n", GetLastError());
-    exercizeServer(PIPENAME "serverThreadMain4", serverThread);
+    exerciseServer(PIPENAME "serverThreadMain4", serverThread);
 
     /* Try server #5 */
     SetLastError(0xdeadbeef);
     serverThread = CreateThread(NULL, 0, serverThreadMain5, 0, 0, &serverThreadId);
     ok(serverThread != NULL, "CreateThread failed: %d\n", GetLastError());
-    exercizeServer(PIPENAME "serverThreadMain5", serverThread);
+    exerciseServer(PIPENAME "serverThreadMain5", serverThread);
 
     ok(SetEvent( alarm_event ), "SetEvent\n");
     CloseHandle( alarm_event );
