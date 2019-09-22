@@ -170,7 +170,7 @@ static void run_background_thread(void)
 {
     DWORD tid;
     HANDLE thread = CreateThread(NULL, 0, thread_proc, NULL, 0, &tid);
-    ok(thread != NULL, "CreateThrad failed\n");
+    ok(thread != NULL, "CreateThread failed\n");
     CloseHandle(thread);
 }
 

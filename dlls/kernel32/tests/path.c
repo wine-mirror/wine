@@ -309,7 +309,7 @@ static void test_setdir(CHAR *olddir,CHAR *newdir,
     ok(SetCurrentDirectoryA(olddir),
        "%s: Couldn't set directory to its original value\n",errstr);
   } else {
-/* else thest that it fails correctly */
+/* else test that it fails correctly */
     chklen=lstrlenA(olddir);
     ok(val==0,
        "%s: SetCurrentDirectoryA passed when it should have failed\n",errstr);
@@ -517,7 +517,7 @@ static void test_CurrentDirectoryA(CHAR *origdir, CHAR *newdir)
 /* Check that SetCurrentDirectory fails when a nonexistent dir is specified */
   sprintf(tmpstr,"%s\\%s\\%s",newdir,SHORTDIR,NONDIR_SHORT);
   test_setdir(newdir,tmpstr,NULL,0,"check 3");
-/* Check that SetCurrentDirectory fails for a nonexistent lond directory */
+/* Check that SetCurrentDirectory fails for a nonexistent long directory */
   sprintf(tmpstr,"%s\\%s\\%s",newdir,SHORTDIR,NONDIR_LONG);
   test_setdir(newdir,tmpstr,NULL,0,"check 4");
 /* Check that SetCurrentDirectory passes with a long directory */

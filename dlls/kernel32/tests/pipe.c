@@ -3071,7 +3071,7 @@ static void test_blocking_rw(HANDLE writer, HANDLE reader, DWORD buf_size, BOOL 
     test_overlapped_result(writer, &write_overlapped2, 1, FALSE);
     test_peek_pipe(reader, 0, 0, 0);
 
-    /* same as above, but parially read written data before canceling */
+    /* same as above, but partially read written data before canceling */
     overlapped_write_async(writer, buf, buf_size+2000, &write_overlapped);
     overlapped_write_async(writer, buf, 1, &write_overlapped2);
     test_peek_pipe(reader, buf_size + 2000 + (msg_mode ? 0 : 1),

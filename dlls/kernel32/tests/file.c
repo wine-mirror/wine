@@ -5229,7 +5229,7 @@ static void test_overlapped_read(void)
     DWORD ret;
 
     ret = GetTempPathA(MAX_PATH, temp_path);
-    ok(ret, "Unexpect error %u.\n", GetLastError());
+    ok(ret, "Unexpected error %u.\n", GetLastError());
     ret = GetTempFileNameA(temp_path, prefix, 0, file_name);
     ok(ret, "Unexpected error %u.\n", GetLastError());
 
