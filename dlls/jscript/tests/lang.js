@@ -1526,7 +1526,7 @@ deleteTest = 1;
 delete deleteTest;
 try {
     tmp = deleteTest;
-    ok(false, "deleteTest not throwed exception?");
+    ok(false, "deleteTest did not throw an exception?");
 }catch(ex) {}
 
 (function() {
