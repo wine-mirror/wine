@@ -1917,11 +1917,11 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
 
     s = JSON.stringify(testObj);
     ok(s === undefined || s === "undefined" /* broken on some old versions */,
-       "stringify(testObj) returned " + s + " expected undfined");
+       "stringify(testObj) returned " + s + " expected undefined");
 
     s = JSON.stringify(undefined);
     ok(s === undefined || s === "undefined" /* broken on some old versions */,
-       "stringify(undefined) returned " + s + " expected undfined");
+       "stringify(undefined) returned " + s + " expected undefined");
 
     var parse_tests = [
         ["true", true],
