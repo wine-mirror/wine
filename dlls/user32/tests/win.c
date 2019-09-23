@@ -1007,7 +1007,7 @@ static void test_window_info(const char *hook, HWND hwnd)
     if (0) {    /* crashes on XP, 2003 */
     SetLastError(0xdeadbeef);
     ok(!pGetWindowInfo(0, NULL), "GetWindowInfo should fail\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
        "got error %d expected ERROR_INVALID_WINDOW_HANDLE\n", GetLastError());
     }
 
