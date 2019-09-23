@@ -210,6 +210,7 @@ struct options
     int strip;
     int pic;
     const char* wine_objdir;
+    const char* winebuild;
     const char* output_name;
     const char* image_base;
     const char* section_align;
@@ -845,11 +846,17 @@ static const char* compile_to_object(struct options* opts, const char* file, con
 static strarray *get_winebuild_args(struct options *opts)
 {
     const char* winebuild = getenv("WINEBUILD");
+    const char *binary = NULL;
     strarray *spec_args = strarray_alloc();
     unsigned int i;
 
-    if (!winebuild) winebuild = "winebuild";
-    strarray_add( spec_args, find_binary( opts->prefix, winebuild ));
+    if (opts->winebuild)
+        binary = opts->winebuild;
+    else if (opts->wine_objdir)
+        binary = strmake( "%s/tools/winebuild/winebuild%s", opts->wine_objdir, EXEEXT );
+    else
+        binary = find_binary( opts->prefix, winebuild ? winebuild : "winebuild" );
+    strarray_add( spec_args, binary );
     if (verbose) strarray_add( spec_args, "-v" );
     if (keep_generated) strarray_add( spec_args, "--save-temps" );
     if (opts->target)
@@ -860,10 +867,7 @@ static strarray *get_winebuild_args(struct options *opts)
     if (opts->prefix)
     {
         for (i = 0; i < opts->prefix->size; i++)
-        {
-            if (strendswith( opts->prefix->base[i], "/tools/winebuild" )) continue;
             strarray_add( spec_args, strmake( "-B%s", opts->prefix->base[i] ));
-        }
     }
     if (!opts->use_msvcrt) strarray_add( spec_args, "-munix" );
     if (opts->unwind_tables) strarray_add( spec_args, "-fasynchronous-unwind-tables" );
@@ -1352,6 +1356,22 @@ static void parse_target_option( struct options *opts, const char *target )
     opts->target = xstrdup( target );
 }
 
+static int is_option( char **argv, int i, const char *option, const char **option_arg )
+{
+    if (!strcmp( argv[i], option ))
+    {
+        if (!argv[i + 1]) error( "option %s requires an argument\n", argv[i] );
+        *option_arg = argv[i + 1];
+        return 1;
+    }
+    if (!strncmp( argv[i], option, strlen(option) ) && argv[i][strlen(option)] == '=')
+    {
+        *option_arg = argv[i] + strlen(option) + 1;
+        return 1;
+    }
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     int i, c, next_is_arg = 0, linking = 1;
@@ -1438,6 +1458,8 @@ int main(int argc, char **argv)
 		    next_is_arg = (strcmp("--param", argv[i]) == 0 ||
                                    strcmp("--sysroot", argv[i]) == 0 ||
                                    strcmp("--target", argv[i]) == 0 ||
+                                   strcmp("--wine-objdir", argv[i]) == 0 ||
+                                   strcmp("--winebuild", argv[i]) == 0 ||
                                    strcmp("--lib-suffix", argv[i]) == 0);
 		    break;
 	    }
@@ -1474,19 +1496,6 @@ int main(int argc, char **argv)
 		case 'B':
 		    str = strdup(option_arg);
 		    if (strendswith(str, "/")) str[strlen(str) - 1] = 0;
-		    if (strendswith(str, "/tools/winebuild"))
-                    {
-                        char *objdir = strdup(str);
-                        objdir[strlen(objdir) - sizeof("/tools/winebuild") + 1] = 0;
-                        opts.wine_objdir = objdir;
-                        /* don't pass it to the compiler, this generates warnings */
-                        raw_compiler_arg = raw_linker_arg = 0;
-                    }
-                    else if (!strcmp(str, "tools/winebuild"))
-                    {
-                        opts.wine_objdir = ".";
-                        raw_compiler_arg = raw_linker_arg = 0;
-                    }
                     if (!opts.prefix) opts.prefix = strarray_alloc();
                     strarray_add(opts.prefix, str);
 		    break;
@@ -1659,22 +1668,26 @@ int main(int argc, char **argv)
                 case '-':
                     if (strcmp("-static", argv[i]+1) == 0)
                         linking = -1;
-                    else if (!strncmp("--sysroot", argv[i], 9))
+                    else if (is_option( argv, i, "--sysroot", &option_arg ))
+                        opts.sysroot = option_arg;
+                    else if (is_option( argv, i, "--target", &option_arg ))
                     {
-                        if (argv[i][9] == '=') opts.sysroot = argv[i] + 10;
-                        else opts.sysroot = argv[i + 1];
-                        if (opts.wine_objdir) raw_compiler_arg = raw_linker_arg = 0;
-                    }
-                    else if (!strncmp("--target", argv[i], 8))
-                    {
-                        if (argv[i][8] == '=') parse_target_option( &opts, argv[i] + 9 );
-                        else parse_target_option( &opts, argv[i + 1] );
+                        parse_target_option( &opts, option_arg );
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
-                    else if (!strncmp("--lib-suffix", argv[i], 12) && opts.wine_objdir)
+                    else if (is_option( argv, i, "--wine-objdir", &option_arg ))
                     {
-                        if (argv[i][12] == '=') opts.lib_suffix = argv[i] + 13;
-                        else opts.lib_suffix = argv[i + 1];
+                        opts.wine_objdir = option_arg;
+                        raw_compiler_arg = raw_linker_arg = 0;
+                    }
+                    else if (is_option( argv, i, "--winebuild", &option_arg ))
+                    {
+                        opts.winebuild = option_arg;
+                        raw_compiler_arg = raw_linker_arg = 0;
+                    }
+                    else if (is_option( argv, i, "--lib-suffix", &option_arg ))
+                    {
+                        opts.lib_suffix = option_arg;
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
                     break;
@@ -1703,7 +1716,6 @@ int main(int argc, char **argv)
 	} 
     }
 
-    if (opts.wine_objdir && opts.sysroot) opts.wine_objdir = opts.sysroot;
     if (opts.processor == proc_cpp) linking = 0;
     if (linking == -1) error("Static linking is not supported\n");
 

@@ -2321,8 +2321,13 @@ static struct strarray get_source_defines( struct makefile *make, struct incl_fi
 static void output_winegcc_command( struct makefile *make )
 {
     output( "\t%s -o $@", tools_path( make, "winegcc" ));
-    output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
-    if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir_path( make, "" )));
+    output_filename( "--wine-objdir" );
+    output_filename( top_obj_dir_path( make, "" ));
+    if (tools_dir)
+    {
+        output_filename( "--winebuild" );
+        output_filename( tools_path( make, "winebuild" ));
+    }
     if (make->is_cross)
     {
         output_filename( "-b" );
