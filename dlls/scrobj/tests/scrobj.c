@@ -726,8 +726,6 @@ static void register_script_object(BOOL do_register, const WCHAR *file_name)
     CHECK_CALLED(SetScriptState_UNINITIALIZED);
     CHECK_CALLED(Close);
     ok(hres == S_OK, "DllInstall failed: %08x\n", hres);
-    if (FAILED(hres))
-        return;
 
     if (do_register)
     {
@@ -781,7 +779,6 @@ static void test_create_object(void)
     SET_EXPECT(SetScriptState_UNINITIALIZED);
     SET_EXPECT(Clone);
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&unk);
-    todo_wine
     ok(hres == S_OK, "Could not create scriptlet instance: %08x\n", hres);
     todo_wine
     CHECK_CALLED(Clone);
@@ -807,8 +804,6 @@ static void test_create_object(void)
     CHECK_CALLED(SetScriptState_STARTED);
     todo_wine
     CHECK_CALLED(ParseScriptText);
-    if (FAILED(hres))
-        return;
 
     hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&disp);
     ok(hres == S_OK, "Could not get IDispatch iface: %08x\n", hres);
@@ -820,32 +815,39 @@ static void test_create_object(void)
 
     str = SysAllocString(L"vbAddOne");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &vb_add_one_id);
+    todo_wine
     ok(hres == S_OK, "Could not get vkAddOne id: %08x\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"jsAddTwo");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &js_add_two_id);
+    todo_wine
     ok(hres == S_OK, "Could not get jsAddTwo id: %08x\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"wtTest");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &wt_test_id);
+    todo_wine
     ok(hres == S_OK, "Could not get wtTest id: %08x\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"vbaddone");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &id);
+    todo_wine
     ok(hres == DISP_E_UNKNOWNNAME, "invalid case returned: %08x\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"vbaddone");
     hres = IDispatchEx_GetDispID(dispex, str, 0, &id);
+    todo_wine
     ok(hres == DISP_E_UNKNOWNNAME, "invalid case returned: %08x\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"vbaddone");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &id);
+    todo_wine
     ok(hres == S_OK, "case insensitive returned: %08x\n", hres);
+    todo_wine
     ok(id == vb_add_one_id, "id = %u, expected %u\n", id, vb_add_one_id);
     SysFreeString(str);
 
@@ -857,8 +859,11 @@ static void test_create_object(void)
     dp.cArgs = 1;
     dp.rgvarg = &v;
     hres = IDispatchEx_InvokeEx(dispex, vb_add_one_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &r, &ei, NULL);
+    todo_wine
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    todo_wine
     ok(V_VT(&r) == VT_I4, "V_VT(r) = %d\n", V_VT(&r));
+    todo_wine
     ok(V_I4(&r) == 3, "V_I4(r) = %d\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
@@ -869,8 +874,11 @@ static void test_create_object(void)
     dp.cArgs = 1;
     dp.rgvarg = &v;
     hres = IDispatchEx_InvokeEx(dispex, js_add_two_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &r, &ei, NULL);
+    todo_wine
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    todo_wine
     ok(V_VT(&r) == VT_I4, "V_VT(r) = %d\n", V_VT(&r));
+    todo_wine
     ok(V_I4(&r) == 6, "V_I4(r) = %d\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
@@ -882,9 +890,13 @@ static void test_create_object(void)
     dp.rgvarg = &v;
     SET_EXPECT(InvokeEx);
     hres = IDispatchEx_InvokeEx(dispex, wt_test_id, 0x100, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &r, &ei, (void*)0xdeadbeef);
+    todo_wine
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    todo_wine
     CHECK_CALLED(InvokeEx);
+    todo_wine
     ok(V_VT(&r) == VT_BOOL, "V_VT(r) = %d\n", V_VT(&r));
+    todo_wine
     ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %d\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
@@ -892,9 +904,13 @@ static void test_create_object(void)
     V_VT(&r) = VT_ERROR;
     SET_EXPECT(InvokeEx);
     hres = IDispatchEx_InvokeEx(dispex, wt_test_id, 0x100, DISPATCH_METHOD, &dp, &r, &ei, (void*)0xdeadbeef);
+    todo_wine
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    todo_wine
     CHECK_CALLED(InvokeEx);
+    todo_wine
     ok(V_VT(&r) == VT_BOOL, "V_VT(r) = %d\n", V_VT(&r));
+    todo_wine
     ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %d\n", V_I4(&r));
 
     hres = IDispatchEx_InvokeEx(dispex, wt_test_id, 0x100, DISPATCH_PROPERTYGET, &dp, &r, &ei, (void*)0xdeadbeef);
@@ -909,9 +925,12 @@ static void test_create_object(void)
     IDispatchEx_Release(dispex);
 
     SET_EXPECT(SetScriptState_UNINITIALIZED);
+    todo_wine
     SET_EXPECT(Close);
     IUnknown_Release(unk);
+    todo_wine
     CHECK_CALLED(SetScriptState_UNINITIALIZED);
+    todo_wine
     CHECK_CALLED(Close);
 
     parse_flags = SCRIPTTEXT_ISVISIBLE;
@@ -930,24 +949,37 @@ static void test_create_object(void)
     SET_EXPECT(ParseScriptText);
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "Could not create scriptlet instance: %08x\n", hres);
+    todo_wine
     CHECK_CALLED(Clone);
+    todo_wine
     CHECK_CALLED(CreateInstance);
+    todo_wine
     CHECK_CALLED(QI_IActiveScriptParse);
+    todo_wine
     CHECK_CALLED(InitNew);
+    todo_wine
     CHECK_CALLED(SetScriptSite);
+    todo_wine
     CHECK_CALLED(AddNamedItem_scriptlet);
+    todo_wine
     CHECK_CALLED(AddNamedItem_globals);
+    todo_wine
     CHECK_CALLED(GetScriptDispatch);
     todo_wine
     CHECK_CALLED(GetDispID_vbAddOne);
+    todo_wine
     CHECK_CALLED(GetDispID_wtTest);
+    todo_wine
     CHECK_CALLED(SetScriptState_STARTED);
+    todo_wine
     CHECK_CALLED(ParseScriptText);
 
     SET_EXPECT(SetScriptState_UNINITIALIZED);
     SET_EXPECT(Close);
     IUnknown_Release(unk);
+    todo_wine
     CHECK_CALLED(SetScriptState_UNINITIALIZED);
+    todo_wine
     CHECK_CALLED(Close);
 
     support_clone = TRUE;
@@ -962,25 +994,36 @@ static void test_create_object(void)
     SET_EXPECT(SetScriptState_STARTED);
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "Could not create scriptlet instance: %08x\n", hres);
+    todo_wine
     CHECK_CALLED(Clone);
+    todo_wine
     CHECK_CALLED(QI_IActiveScriptParse);
+    todo_wine
     CHECK_CALLED(SetScriptSite);
+    todo_wine
     CHECK_CALLED(AddNamedItem_scriptlet);
+    todo_wine
     CHECK_CALLED(AddNamedItem_globals);
+    todo_wine
     CHECK_CALLED(GetScriptDispatch);
     todo_wine
     CHECK_CALLED(GetDispID_vbAddOne);
+    todo_wine
     CHECK_CALLED(GetDispID_wtTest);
+    todo_wine
     CHECK_CALLED(SetScriptState_STARTED);
 
     SET_EXPECT(SetScriptState_UNINITIALIZED);
     SET_EXPECT(Close);
     IUnknown_Release(unk);
+    todo_wine
     CHECK_CALLED(SetScriptState_UNINITIALIZED);
+    todo_wine
     CHECK_CALLED(Close);
 
     SET_EXPECT(Close);
     IClassFactory_Release(cf);
+    todo_wine
     CHECK_CALLED(Close);
 }
 

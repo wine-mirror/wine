@@ -26,6 +26,7 @@
 #include "olectl.h"
 #include "rpcproxy.h"
 #include "activscp.h"
+#include "dispex.h"
 #include "mshtmhst.h"
 
 #include "initguid.h"
@@ -95,6 +96,12 @@ struct scriptlet_factory
     struct list hosts;
     struct list members;
     struct list scripts;
+};
+
+struct scriptlet_instance
+{
+    IDispatchEx IDispatchEx_iface;
+    LONG ref;
 };
 
 struct script_host
@@ -557,6 +564,197 @@ static HRESULT create_scriptlet_hosts(struct scriptlet_factory *factory, struct 
             return hres;
         }
     }
+
+    return S_OK;
+}
+
+static inline struct scriptlet_instance *impl_from_IDispatchEx(IDispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, struct scriptlet_instance, IDispatchEx_iface);
+}
+
+static HRESULT WINAPI scriptlet_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+
+    if (IsEqualGUID(&IID_IUnknown, riid))
+    {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IDispatchEx_iface;
+    }
+    else if (IsEqualGUID(&IID_IDispatch, riid))
+    {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = &This->IDispatchEx_iface;
+    }
+    else if (IsEqualGUID(&IID_IDispatchEx, riid))
+    {
+        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+        *ppv = &This->IDispatchEx_iface;
+    }
+    else
+    {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI scriptlet_AddRef(IDispatchEx *iface)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI scriptlet_Release(IDispatchEx *iface)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref)
+        heap_free(This);
+    return ref;
+}
+
+static HRESULT WINAPI scriptlet_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    UINT i;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+
+    for(i=0; i < cNames; i++)
+    {
+        hres = IDispatchEx_GetDispID(&This->IDispatchEx_iface, rgszNames[i], 0, rgDispId + i);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI scriptlet_Invoke(IDispatchEx *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return IDispatchEx_InvokeEx(&This->IDispatchEx_iface, dispIdMember, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, NULL);
+}
+
+static HRESULT WINAPI scriptlet_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    FIXME("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *pdp,
+        VARIANT *res, EXCEPINFO *pei, IServiceProvider *caller)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, pdp, res, pei, caller);
+    return DISP_E_MEMBERNOTFOUND;
+}
+
+static HRESULT WINAPI scriptlet_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    FIXME("(%p)->(%s %x)\n", This, debugstr_w(bstrName), grfdex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x)\n", This, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x %x %p)\n", This, id, grfdexFetch, pgrfdex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x %p)\n", This, id, pbstrName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
+{
+    struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
+    FIXME("(%p)->(%p)\n", This, ppunk);
+    return E_NOTIMPL;
+}
+
+static IDispatchExVtbl DispatchExVtbl = {
+    scriptlet_QueryInterface,
+    scriptlet_AddRef,
+    scriptlet_Release,
+    scriptlet_GetTypeInfoCount,
+    scriptlet_GetTypeInfo,
+    scriptlet_GetIDsOfNames,
+    scriptlet_Invoke,
+    scriptlet_GetDispID,
+    scriptlet_InvokeEx,
+    scriptlet_DeleteMemberByName,
+    scriptlet_DeleteMemberByDispID,
+    scriptlet_GetMemberProperties,
+    scriptlet_GetMemberName,
+    scriptlet_GetNextDispID,
+    scriptlet_GetNameSpaceParent
+};
+
+static HRESULT create_scriptlet_instance(IDispatchEx **disp)
+{
+    struct scriptlet_instance *obj;
+
+    if (!(obj = heap_alloc(sizeof(*obj)))) return E_OUTOFMEMORY;
+
+    obj->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
+    obj->ref = 1;
+
+    *disp = &obj->IDispatchEx_iface;
     return S_OK;
 }
 
@@ -1037,8 +1235,19 @@ static ULONG WINAPI scriptlet_factory_Release(IClassFactory *iface)
 static HRESULT WINAPI scriptlet_factory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
     struct scriptlet_factory *This = impl_from_IClassFactory(iface);
-    FIXME("(%p)->(%p %s %p)\n", This, outer, debugstr_guid(riid), ppv);
-    return E_NOTIMPL;
+    IDispatchEx *disp;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %s %p)\n", This, outer, debugstr_guid(riid), ppv);
+
+    if (outer) FIXME("outer not supported\n");
+
+    hres = create_scriptlet_instance(&disp);
+    if (FAILED(hres)) return hres;
+
+    hres = IDispatchEx_QueryInterface(disp, riid, ppv);
+    IDispatchEx_Release(disp);
+    return hres;
 }
 
 static HRESULT WINAPI scriptlet_factory_LockServer(IClassFactory *iface, BOOL fLock)
