@@ -35,6 +35,8 @@
 # endif
 #endif
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
 enum target_cpu
 {
     CPU_x86, CPU_x86_64, CPU_POWERPC, CPU_ARM, CPU_ARM64

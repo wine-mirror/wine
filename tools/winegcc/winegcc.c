@@ -579,7 +579,7 @@ static char *get_lib_dir( struct options *opts )
     build_len = strlen( build_multiarch );
     target_len = strlen( target_multiarch );
 
-    for (i = 0; i < sizeof(stdlibpath)/sizeof(stdlibpath[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(stdlibpath); i++)
     {
         char *p, *buffer = xmalloc( strlen(root) + strlen(stdlibpath[i]) +
                                     strlen("/arm-linux-gnueabi") + strlen(libwine) + 1 );
@@ -1260,7 +1260,7 @@ static int is_linker_arg(const char* arg)
 	    break;
     }
 
-    for (j = 0; j < sizeof(link_switches)/sizeof(link_switches[0]); j++)
+    for (j = 0; j < ARRAY_SIZE(link_switches); j++)
 	if (strcmp(link_switches[j], arg) == 0) return 1;
 
     return 0;
@@ -1297,7 +1297,7 @@ static int is_mingw_arg(const char* arg)
     };
     unsigned int j;
 
-    for (j = 0; j < sizeof(mingw_switches)/sizeof(mingw_switches[0]); j++)
+    for (j = 0; j < ARRAY_SIZE(mingw_switches); j++)
 	if (strcmp(mingw_switches[j], arg) == 0) return 1;
 
     return 0;
@@ -1315,7 +1315,7 @@ static void parse_target_option( struct options *opts, const char *target )
     if ((p = strchr( spec, '-' )))
     {
         *p++ = 0;
-        for (i = 0; i < sizeof(cpu_names)/sizeof(cpu_names[0]); i++)
+        for (i = 0; i < ARRAY_SIZE(cpu_names); i++)
         {
             if (!strcmp( cpu_names[i].name, spec ))
             {
@@ -1323,7 +1323,7 @@ static void parse_target_option( struct options *opts, const char *target )
                 break;
             }
         }
-        if (i == sizeof(cpu_names)/sizeof(cpu_names[0]))
+        if (i == ARRAY_SIZE(cpu_names))
             error( "Unrecognized CPU '%s'\n", spec );
         platform = p;
         if ((p = strrchr( p, '-' ))) platform = p + 1;
@@ -1339,7 +1339,7 @@ static void parse_target_option( struct options *opts, const char *target )
     /* get the OS part */
 
     opts->target_platform = PLATFORM_UNSPECIFIED;  /* default value */
-    for (i = 0; i < sizeof(platform_names)/sizeof(platform_names[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(platform_names); i++)
     {
         if (!strncmp( platform_names[i].name, platform, strlen(platform_names[i].name) ))
         {
