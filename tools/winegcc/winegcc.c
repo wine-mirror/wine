@@ -322,10 +322,9 @@ static const char* build_tool_name(struct options *opts, const char* base, const
     return find_binary( opts->prefix, str );
 }
 
-static const strarray* get_translator(struct options *opts)
+static strarray* get_translator(struct options *opts)
 {
     const char *str = NULL;
-    strarray *ret;
 
     switch(opts->processor)
     {
@@ -342,10 +341,7 @@ static const strarray* get_translator(struct options *opts)
     default:
         assert(0);
     }
-    ret = strarray_fromstring( str, " " );
-    if (opts->force_pointer_size)
-        strarray_add( ret, strmake("-m%u", 8 * opts->force_pointer_size ));
-    return ret;
+    return strarray_fromstring( str, " " );
 }
 
 static int try_link( const strarray *prefix, const strarray *link_tool, const char *cflags )
@@ -386,12 +382,10 @@ static int try_link( const strarray *prefix, const strarray *link_tool, const ch
 static strarray *get_link_args( struct options *opts, const char *output_name )
 {
     int use_wine_crt = opts->wine_builtin && opts->shared;
-    const strarray *link_tool = get_translator( opts );
+    strarray *link_args = get_translator( opts );
     strarray *flags = strarray_alloc();
-    unsigned int i;
 
-    strarray_addall( flags, link_tool );
-    for (i = 0; i < opts->linker_args->size; i++) strarray_add( flags, opts->linker_args->base[i] );
+    strarray_addall( link_args, opts->linker_args );
 
     if (verbose > 1) strarray_add( flags, "-v" );
 
@@ -412,7 +406,8 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
             strarray_add( flags, opts->image_base );
         }
         if (opts->strip) strarray_add( flags, "-Wl,-x" );
-        return flags;
+        strarray_addall( link_args, flags );
+        return link_args;
 
     case PLATFORM_SOLARIS:
         {
@@ -463,45 +458,45 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         /* make sure we don't need a libgcc_s dll on Windows */
         strarray_add( flags, "-static-libgcc" );
 
-        return flags;
+        strarray_addall( link_args, flags );
+        return link_args;
 
     default:
         if (opts->image_base)
         {
-            if (!try_link( opts->prefix, link_tool, strmake("-Wl,-Ttext-segment=%s", opts->image_base)) )
+            if (!try_link( opts->prefix, link_args, strmake("-Wl,-Ttext-segment=%s", opts->image_base)) )
                 strarray_add( flags, strmake("-Wl,-Ttext-segment=%s", opts->image_base) );
             else
                 opts->prelink = PRELINK;
         }
-        if (!try_link( opts->prefix, link_tool, "-Wl,-z,max-page-size=0x1000"))
+        if (!try_link( opts->prefix, link_args, "-Wl,-z,max-page-size=0x1000"))
             strarray_add( flags, "-Wl,-z,max-page-size=0x1000");
         break;
     }
 
     /* generic Unix shared library flags */
 
-    strarray_add( flags, "-shared" );
-    strarray_add( flags, "-Wl,-Bsymbolic" );
+    strarray_add( link_args, "-shared" );
+    strarray_add( link_args, "-Wl,-Bsymbolic" );
     if (!opts->noshortwchar && opts->target_cpu == CPU_ARM)
         strarray_add( flags, "-Wl,--no-wchar-size-warning" );
 
     /* Try all options first - this is likely to succeed on modern compilers */
-    if (!try_link( opts->prefix, link_tool, "-fPIC -shared -Wl,-Bsymbolic "
-                   "-Wl,-z,defs -Wl,-init,__wine_spec_init,-fini,_wine_spec_fini" ))
+    if (!try_link( opts->prefix, link_args, "-Wl,-z,defs -Wl,-init,__wine_spec_init,-fini,_wine_spec_fini" ))
     {
         strarray_add( flags, "-Wl,-z,defs" );
         strarray_add( flags, "-Wl,-init,__wine_spec_init,-fini,__wine_spec_fini" );
     }
     else /* otherwise figure out which ones are allowed */
     {
-        if (!try_link( opts->prefix, link_tool, "-fPIC -shared -Wl,-Bsymbolic -Wl,-z,defs" ))
+        if (!try_link( opts->prefix, link_args, "-Wl,-z,defs" ))
             strarray_add( flags, "-Wl,-z,defs" );
-        if (!try_link( opts->prefix, link_tool, "-fPIC -shared -Wl,-Bsymbolic "
-                       "-Wl,-init,__wine_spec_init,-fini,_wine_spec_fini" ))
+        if (!try_link( opts->prefix, link_args, "-Wl,-init,__wine_spec_init,-fini,_wine_spec_fini" ))
             strarray_add( flags, "-Wl,-init,__wine_spec_init,-fini,__wine_spec_fini" );
     }
 
-    return flags;
+    strarray_addall( link_args, flags );
+    return link_args;
 }
 
 /* check that file is a library for the correct platform */
@@ -664,6 +659,8 @@ static void compile(struct options* opts, const char* lang)
     strarray* gpp;
 
     strarray_addall(comp_args, get_translator(opts));
+    if (opts->force_pointer_size)
+        strarray_add( comp_args, strmake("-m%u", 8 * opts->force_pointer_size ) );
     switch(opts->processor)
     {
 	case proc_cpp: gcc_defs = 1; break;
