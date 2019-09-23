@@ -1032,8 +1032,16 @@ static HRESULT create_scriptlet_instance(struct scriptlet_factory *factory, IDis
         hres = create_script_host(factory_host->language, factory_host->active_script, &obj->hosts, &host);
         if (FAILED(hres)) break;
         host->object = obj;
+
+        hres = IActiveScript_AddNamedItem(host->active_script, L"scriptlet",
+                                          SCRIPTITEM_ISVISIBLE | SCRIPTITEM_GLOBALMEMBERS);
+        if (FAILED(hres)) break;
+
+        hres = IActiveScript_AddNamedItem(host->active_script, L"globals", SCRIPTITEM_ISVISIBLE);
+        if (FAILED(hres)) break;
     }
 
+    if (SUCCEEDED(hres)) hres = parse_scripts(factory, &obj->hosts, TRUE);
     if (FAILED(hres))
     {
         IDispatchEx_Release(&obj->IDispatchEx_iface);

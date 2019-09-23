@@ -783,9 +783,7 @@ static void test_create_object(void)
     CHECK_CALLED(QI_IActiveScriptParse);
     CHECK_CALLED(InitNew);
     CHECK_CALLED(SetScriptSite);
-    todo_wine
     CHECK_CALLED(AddNamedItem_scriptlet);
-    todo_wine
     CHECK_CALLED(AddNamedItem_globals);
     todo_wine
     CHECK_CALLED(GetScriptDispatch);
@@ -793,9 +791,7 @@ static void test_create_object(void)
     CHECK_CALLED(GetDispID_vbAddOne);
     todo_wine
     CHECK_CALLED(GetDispID_wtTest);
-    todo_wine
     CHECK_CALLED(SetScriptState_STARTED);
-    todo_wine
     CHECK_CALLED(ParseScriptText);
 
     hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&disp);
@@ -945,9 +941,7 @@ static void test_create_object(void)
     CHECK_CALLED(QI_IActiveScriptParse);
     CHECK_CALLED(InitNew);
     CHECK_CALLED(SetScriptSite);
-    todo_wine
     CHECK_CALLED(AddNamedItem_scriptlet);
-    todo_wine
     CHECK_CALLED(AddNamedItem_globals);
     todo_wine
     CHECK_CALLED(GetScriptDispatch);
@@ -955,9 +949,7 @@ static void test_create_object(void)
     CHECK_CALLED(GetDispID_vbAddOne);
     todo_wine
     CHECK_CALLED(GetDispID_wtTest);
-    todo_wine
     CHECK_CALLED(SetScriptState_STARTED);
-    todo_wine
     CHECK_CALLED(ParseScriptText);
 
     SET_EXPECT(SetScriptState_UNINITIALIZED);
@@ -981,9 +973,7 @@ static void test_create_object(void)
     CHECK_CALLED(Clone);
     CHECK_CALLED(QI_IActiveScriptParse);
     CHECK_CALLED(SetScriptSite);
-    todo_wine
     CHECK_CALLED(AddNamedItem_scriptlet);
-    todo_wine
     CHECK_CALLED(AddNamedItem_globals);
     todo_wine
     CHECK_CALLED(GetScriptDispatch);
@@ -991,7 +981,6 @@ static void test_create_object(void)
     CHECK_CALLED(GetDispID_vbAddOne);
     todo_wine
     CHECK_CALLED(GetDispID_wtTest);
-    todo_wine
     CHECK_CALLED(SetScriptState_STARTED);
 
     SET_EXPECT(SetScriptState_UNINITIALIZED);
