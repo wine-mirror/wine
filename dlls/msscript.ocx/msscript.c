@@ -977,40 +977,47 @@ static HRESULT WINAPI ScriptControl_Reset(IScriptControl *iface)
     return set_script_state(This->host, SCRIPTSTATE_INITIALIZED);
 }
 
+static HRESULT parse_script_text(ScriptControl *control, BSTR script_text, DWORD flag, VARIANT *res)
+{
+    EXCEPINFO excepinfo;
+    HRESULT hr;
+
+    if (!control->host || control->state != Initialized)
+        return E_FAIL;
+
+    if (control->host->script_state != SCRIPTSTATE_STARTED)
+    {
+        hr = set_script_state(control->host, SCRIPTSTATE_STARTED);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    hr = IActiveScriptParse_ParseScriptText(control->host->parse, script_text, NULL,
+                                            NULL, NULL, 0, 1, flag, res, &excepinfo);
+    /* FIXME: more error handling */
+    return hr;
+}
+
 static HRESULT WINAPI ScriptControl_AddCode(IScriptControl *iface, BSTR code)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(code));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s).\n", This, debugstr_w(code));
+
+    return parse_script_text(This, code, SCRIPTTEXT_ISVISIBLE, NULL);
 }
 
 static HRESULT WINAPI ScriptControl_Eval(IScriptControl *iface, BSTR expression, VARIANT *res)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    EXCEPINFO excepinfo;
-    HRESULT hr;
 
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(expression), res);
+    TRACE("(%p)->(%s, %p).\n", This, debugstr_w(expression), res);
 
     if (!res)
         return E_POINTER;
     V_VT(res) = VT_EMPTY;
 
-    if (!This->host || This->state != Initialized)
-        return E_FAIL;
-
-    if (This->host->script_state != SCRIPTSTATE_STARTED)
-    {
-        hr = set_script_state(This->host, SCRIPTSTATE_STARTED);
-        if (FAILED(hr))
-            return hr;
-    }
-
-    hr = IActiveScriptParse_ParseScriptText(This->host->parse, expression, NULL, NULL, NULL,
-                                            0, 1, SCRIPTTEXT_ISEXPRESSION, res, &excepinfo);
-    /* FIXME: more error handling */
-
-    return hr;
+    return parse_script_text(This, expression, SCRIPTTEXT_ISEXPRESSION, res);
 }
 
 static HRESULT WINAPI ScriptControl_ExecuteStatement(IScriptControl *iface, BSTR statement)
