@@ -75,6 +75,12 @@ struct scriptlet_script
     WCHAR *body;
 };
 
+struct scriptlet_global
+{
+    IDispatchEx IDispatchEx_iface;
+    LONG ref;
+};
+
 struct scriptlet_factory
 {
     IClassFactory IClassFactory_iface;
@@ -103,6 +109,7 @@ struct scriptlet_instance
     IDispatchEx IDispatchEx_iface;
     LONG ref;
     struct list hosts;
+    struct scriptlet_global *global;
 };
 
 struct script_host
@@ -118,6 +125,7 @@ struct script_host
 
     IActiveScript *active_script;
     IActiveScriptParse *parser;
+    struct scriptlet_instance *object;
     SCRIPTSTATE state;
     BOOL cloned;
 };
@@ -205,6 +213,181 @@ static WCHAR *heap_strdupW(const WCHAR *str)
     memcpy(ret, str, size);
     return ret;
 }
+
+static inline struct scriptlet_global *global_from_IDispatchEx(IDispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, struct scriptlet_global, IDispatchEx_iface);
+}
+
+static HRESULT WINAPI global_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+
+    if (IsEqualGUID(&IID_IUnknown, riid))
+    {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IDispatchEx_iface;
+    }
+    else if (IsEqualGUID(&IID_IDispatch, riid))
+    {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = &This->IDispatchEx_iface;
+    }
+    else if (IsEqualGUID(&IID_IDispatchEx, riid))
+    {
+        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+        *ppv = &This->IDispatchEx_iface;
+    }
+    else
+    {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI global_AddRef(IDispatchEx *iface)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI global_Release(IDispatchEx *iface)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref) heap_free(This);
+    return ref;
+}
+
+static HRESULT WINAPI global_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI global_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI global_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    UINT i;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    for(i=0; i < cNames; i++)
+    {
+        hres = IDispatchEx_GetDispID(&This->IDispatchEx_iface, rgszNames[i], 0, rgDispId + i);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI global_Invoke(IDispatchEx *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return IDispatchEx_InvokeEx(&This->IDispatchEx_iface, dispIdMember, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, NULL);
+}
+
+static HRESULT WINAPI global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    FIXME("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI global_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    FIXME("(%p)->(%s %x)\n", This, debugstr_w(bstrName), grfdex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI global_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x)\n", This, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI global_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x %x %p)\n", This, id, grfdexFetch, pgrfdex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI global_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x %p)\n", This, id, pbstrName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI global_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    FIXME("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI global_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
+{
+    struct scriptlet_global *This = global_from_IDispatchEx(iface);
+    FIXME("(%p)->(%p)\n", This, ppunk);
+    return E_NOTIMPL;
+}
+
+static IDispatchExVtbl global_vtbl = {
+    global_QueryInterface,
+    global_AddRef,
+    global_Release,
+    global_GetTypeInfoCount,
+    global_GetTypeInfo,
+    global_GetIDsOfNames,
+    global_Invoke,
+    global_GetDispID,
+    global_InvokeEx,
+    global_DeleteMemberByName,
+    global_DeleteMemberByDispID,
+    global_GetMemberProperties,
+    global_GetMemberName,
+    global_GetNextDispID,
+    global_GetNameSpaceParent
+};
 
 static HRESULT set_script_state(struct script_host *host, SCRIPTSTATE state)
 {
@@ -295,8 +478,26 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
     IUnknown **unk, ITypeInfo **ti)
 {
     struct script_host *This = impl_from_IActiveScriptSite(iface);
-    FIXME("(%p, %s, %#x, %p, %p)\n", This, debugstr_w(name), mask, unk, ti);
-    return E_NOTIMPL;
+
+    TRACE("(%p, %s, %#x, %p, %p)\n", This, debugstr_w(name), mask, unk, ti);
+
+    if (mask != SCRIPTINFO_IUNKNOWN)
+    {
+        FIXME("mask %x not supported\n", mask);
+        return E_NOTIMPL;
+    }
+
+    if (wcscmp(name, L"scriptlet") && wcscmp(name, L"globals"))
+    {
+        FIXME("%s not supported\n", debugstr_w(name));
+        return E_FAIL;
+    }
+
+    if (!This->object) return E_UNEXPECTED;
+
+    *unk = (IUnknown *)&This->object->global->IDispatchEx_iface;
+    IUnknown_AddRef(*unk);
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScriptSite_GetDocVersionString(IActiveScriptSite *iface, BSTR *version)
@@ -549,7 +750,7 @@ static HRESULT init_script_host(struct script_host *host, IActiveScript *clone)
     return IActiveScript_SetScriptSite(host->active_script, &host->IActiveScriptSite_iface);
 }
 
-static HRESULT create_script_host(const WCHAR *language, IActiveScript *origin_script, struct list *hosts)
+static HRESULT create_script_host(const WCHAR *language, IActiveScript *origin_script, struct list *hosts, struct script_host **ret)
 {
     IActiveScript *clone = NULL;
     struct script_host *host;
@@ -578,7 +779,9 @@ static HRESULT create_script_host(const WCHAR *language, IActiveScript *origin_s
     list_add_tail(hosts, &host->entry);
     hres = init_script_host(host, clone);
     if (clone) IActiveScript_Release(clone);
-    return hres;
+    if (FAILED(hres)) return hres;
+    if (ret) *ret = host;
+    return S_OK;
 }
 
 static void detach_script_hosts(struct list *hosts)
@@ -588,6 +791,7 @@ static void detach_script_hosts(struct list *hosts)
         struct script_host *host = LIST_ENTRY(list_head(hosts), struct script_host, entry);
         if (host->state != SCRIPTSTATE_UNINITIALIZED) set_script_state(host, SCRIPTSTATE_UNINITIALIZED);
         list_remove(&host->entry);
+        host->object = NULL;
         if (host->parser)
         {
             IActiveScript_Close(host->active_script);
@@ -611,7 +815,7 @@ static HRESULT create_scriptlet_hosts(struct scriptlet_factory *factory, struct 
     LIST_FOR_EACH_ENTRY(script, &factory->scripts, struct scriptlet_script, entry)
     {
         if (find_script_host(hosts, script->language)) continue;
-        hres = create_script_host(script->language, NULL, hosts);
+        hres = create_script_host(script->language, NULL, hosts, NULL);
         if (FAILED(hres))
         {
             detach_script_hosts(hosts);
@@ -677,6 +881,7 @@ static ULONG WINAPI scriptlet_Release(IDispatchEx *iface)
     if (!ref)
     {
         detach_script_hosts(&This->hosts);
+        if (This->global) IDispatchEx_Release(&This->global->IDispatchEx_iface);
         heap_free(This);
     }
     return ref;
@@ -804,7 +1009,7 @@ static IDispatchExVtbl DispatchExVtbl = {
 
 static HRESULT create_scriptlet_instance(struct scriptlet_factory *factory, IDispatchEx **disp)
 {
-    struct script_host *factory_host;
+    struct script_host *factory_host, *host;
     struct scriptlet_instance *obj;
     HRESULT hres;
 
@@ -814,10 +1019,19 @@ static HRESULT create_scriptlet_instance(struct scriptlet_factory *factory, IDis
     obj->ref = 1;
     list_init(&obj->hosts);
 
+    if (!(obj->global = heap_alloc(sizeof(*obj->global))))
+    {
+        IDispatchEx_Release(&obj->IDispatchEx_iface);
+        return E_OUTOFMEMORY;
+    }
+    obj->global->IDispatchEx_iface.lpVtbl = &global_vtbl;
+    obj->global->ref = 1;
+
     LIST_FOR_EACH_ENTRY(factory_host, &factory->hosts, struct script_host, entry)
     {
-        hres = create_script_host(factory_host->language, factory_host->active_script, &obj->hosts);
+        hres = create_script_host(factory_host->language, factory_host->active_script, &obj->hosts, &host);
         if (FAILED(hres)) break;
+        host->object = obj;
     }
 
     if (FAILED(hres))
