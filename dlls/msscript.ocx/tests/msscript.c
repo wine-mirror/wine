@@ -501,6 +501,8 @@ static BOOL register_script_engine(void)
     return TRUE;
 }
 
+static BOOL have_custom_engine;
+
 static HRESULT WINAPI OleClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IOleClientSite) || IsEqualIID(riid, &IID_IUnknown))
@@ -754,7 +756,7 @@ static void test_Language(void)
     IScriptControl_Release(sc);
 
     /* custom script engine */
-    if (register_script_engine()) {
+    if (have_custom_engine) {
         static const WCHAR testscriptW[] = {'t','e','s','t','s','c','r','i','p','t',0};
 
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -786,16 +788,12 @@ static void test_Language(void)
 
         IActiveScriptSite_Release(site);
 
-        init_registry(FALSE);
-
         SET_EXPECT(Close);
 
         IScriptControl_Release(sc);
 
         CHECK_CALLED(Close);
     }
-    else
-        skip("Could not register TestScript engine\n");
 }
 
 static void test_connectionpoints(void)
@@ -1055,7 +1053,7 @@ static void test_Reset(void)
     IScriptControl_Release(sc);
 
     /* custom script engine */
-    if (register_script_engine()) {
+    if (have_custom_engine) {
         static const WCHAR testscriptW[] = {'t','e','s','t','s','c','r','i','p','t',0};
 
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -1086,16 +1084,12 @@ static void test_Reset(void)
         CHECK_CALLED(SetScriptSite);
         IActiveScriptSite_Release(site);
 
-        init_registry(FALSE);
-
         SET_EXPECT(Close);
 
         IScriptControl_Release(sc);
 
         CHECK_CALLED(Close);
     }
-    else
-        skip("Could not register TestScript engine\n");
 }
 
 static HRESULT WINAPI disp_QI(IDispatch *iface, REFIID riid, void **obj)
@@ -1193,7 +1187,7 @@ static void test_AddObject(void)
     IScriptControl_Release(sc);
 
     /* custom script engine */
-    if (register_script_engine()) {
+    if (have_custom_engine) {
         static const WCHAR testscriptW[] = {'t','e','s','t','s','c','r','i','p','t',0};
 
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -1225,16 +1219,12 @@ static void test_AddObject(void)
         CHECK_CALLED(SetScriptSite);
         IActiveScriptSite_Release(site);
 
-        init_registry(FALSE);
-
         SET_EXPECT(Close);
 
         IScriptControl_Release(sc);
 
         CHECK_CALLED(Close);
     }
-    else
-        skip("Could not register TestScript engine\n");
 
     SysFreeString(objname);
 }
@@ -1502,6 +1492,10 @@ START_TEST(msscript)
     }
     IUnknown_Release(unk);
 
+    have_custom_engine = register_script_engine();
+    if (!have_custom_engine)
+        skip("Could not register TestScript engine.\n");
+
     test_oleobject();
     test_persiststreaminit();
     test_olecontrol();
@@ -1517,6 +1511,8 @@ START_TEST(msscript)
     test_UseSafeSubset();
     test_State();
     test_IScriptControl_Eval();
+
+    init_registry(FALSE);
 
     CoUninitialize();
 }
