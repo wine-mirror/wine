@@ -1213,6 +1213,13 @@ NTSTATUS key_asymmetric_generate( struct key *key )
     return STATUS_NOT_IMPLEMENTED;
 }
 
+NTSTATUS key_asymmetric_sign( struct key *key, void *padding, UCHAR *input, ULONG input_len, UCHAR *output,
+                              ULONG output_len, ULONG *ret_len, ULONG flags )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 NTSTATUS key_asymmetric_verify( struct key *key, void *padding, UCHAR *hash, ULONG hash_len, UCHAR *signature,
                                 ULONG signature_len, DWORD flags )
 {
@@ -1415,6 +1422,24 @@ NTSTATUS WINAPI BCryptImportKeyPair( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_HAN
     }
 
     return key_import_pair( alg, type, ret_key, input, input_len );
+}
+
+NTSTATUS WINAPI BCryptSignHash( BCRYPT_KEY_HANDLE handle, void *padding, UCHAR *input, ULONG input_len,
+                                UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
+{
+    struct key *key = handle;
+
+    TRACE( "%p, %p, %p, %u, %p, %u, %p, %08x\n", handle, padding, input, input_len, output, output_len,
+           ret_len, flags );
+
+    if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
+    if (key_is_symmetric( key ))
+    {
+        FIXME( "signing with symmetric keys not yet supported\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    return key_asymmetric_sign( key, padding, input, input_len, output, output_len, ret_len, flags );
 }
 
 NTSTATUS WINAPI BCryptVerifySignature( BCRYPT_KEY_HANDLE handle, void *padding, UCHAR *hash, ULONG hash_len,

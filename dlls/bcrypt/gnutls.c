@@ -99,6 +99,7 @@ MAKE_FUNCPTR(gnutls_global_set_log_level);
 MAKE_FUNCPTR(gnutls_perror);
 MAKE_FUNCPTR(gnutls_privkey_deinit);
 MAKE_FUNCPTR(gnutls_privkey_init);
+MAKE_FUNCPTR(gnutls_privkey_sign_hash);
 MAKE_FUNCPTR(gnutls_pubkey_deinit);
 MAKE_FUNCPTR(gnutls_pubkey_init);
 #undef MAKE_FUNCPTR
@@ -195,6 +196,7 @@ BOOL gnutls_initialize(void)
     LOAD_FUNCPTR(gnutls_perror)
     LOAD_FUNCPTR(gnutls_privkey_deinit);
     LOAD_FUNCPTR(gnutls_privkey_init);
+    LOAD_FUNCPTR(gnutls_privkey_sign_hash);
     LOAD_FUNCPTR(gnutls_pubkey_deinit);
     LOAD_FUNCPTR(gnutls_pubkey_init);
 #undef LOAD_FUNCPTR
@@ -1065,6 +1067,55 @@ NTSTATUS key_asymmetric_verify( struct key *key, void *padding, UCHAR *hash, ULO
     if (gnutls_signature.data != signature) heap_free( gnutls_signature.data );
     pgnutls_pubkey_deinit( gnutls_key );
     return (ret < 0) ? STATUS_INVALID_SIGNATURE : STATUS_SUCCESS;
+}
+
+NTSTATUS key_asymmetric_sign( struct key *key, void *padding, UCHAR *input, ULONG input_len, UCHAR *output,
+                              ULONG output_len, ULONG *ret_len, ULONG flags )
+{
+    BCRYPT_PKCS1_PADDING_INFO *pad = padding;
+    gnutls_datum_t hash, signature;
+    int ret;
+
+    if (key->alg_id != ALG_ID_RSA)
+    {
+        FIXME( "algorithm %u not supported\n", key->alg_id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    if (flags != BCRYPT_PAD_PKCS1)
+    {
+        FIXME( "flags %08x not implemented\n", flags );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    if (!pad || !pad->pszAlgId || lstrcmpiW(pad->pszAlgId, BCRYPT_SHA1_ALGORITHM))
+    {
+        FIXME( "%s padding not implemented\n", debugstr_w(pad ? pad->pszAlgId : NULL) );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (!input)
+    {
+        *ret_len = key->u.a.bitlen / 8;
+        return STATUS_SUCCESS;
+    }
+    if (!key->u.a.handle) return STATUS_INVALID_PARAMETER;
+
+    hash.data = input;
+    hash.size = input_len;
+
+    signature.data = NULL;
+    signature.size = 0;
+
+    if ((ret = pgnutls_privkey_sign_hash( key->u.a.handle, GNUTLS_DIG_SHA1, 0, &hash, &signature )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (output_len >= signature.size) memcpy( output, signature.data, signature.size );
+    *ret_len = signature.size;
+
+    free( signature.data );
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS key_destroy( struct key *key )

@@ -48,7 +48,7 @@
 @ stub BCryptSetAuditingInterface
 @ stub BCryptSetContextFunctionProperty
 @ stdcall BCryptSetProperty(ptr wstr ptr long long)
-@ stub BCryptSignHash
+@ stdcall BCryptSignHash(ptr ptr ptr long ptr long ptr long)
 @ stub BCryptUnregisterConfigChangeNotify
 @ stdcall BCryptUnregisterProvider(wstr)
 @ stdcall BCryptVerifySignature(ptr ptr ptr long ptr long long)

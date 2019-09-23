@@ -229,6 +229,7 @@ NTSTATUS key_symmetric_decrypt( struct key *, const UCHAR *, ULONG, UCHAR *, ULO
 NTSTATUS key_symmetric_get_tag( struct key *, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_asymmetric_init( struct key *, struct algorithm *, ULONG, const UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_asymmetric_generate( struct key * ) DECLSPEC_HIDDEN;
+NTSTATUS key_asymmetric_sign( struct key *, void *, UCHAR *, ULONG, UCHAR *, ULONG, ULONG *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_asymmetric_verify( struct key *, void *, UCHAR *, ULONG, UCHAR *, ULONG, DWORD ) DECLSPEC_HIDDEN;
 NTSTATUS key_destroy( struct key * ) DECLSPEC_HIDDEN;
 BOOL key_is_symmetric( struct key * ) DECLSPEC_HIDDEN;
