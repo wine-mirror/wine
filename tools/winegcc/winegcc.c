@@ -96,6 +96,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include "utils.h"
 
@@ -891,6 +892,49 @@ static char *find_static_lib( const char *dll )
     return NULL;
 }
 
+static const char *find_libgcc(const strarray *prefix, const strarray *link_tool)
+{
+    const char *out = get_temp_file( "find_libgcc", ".out" );
+    const char *err = get_temp_file( "find_libgcc", ".err" );
+    strarray *link = strarray_dup( link_tool );
+    int sout = -1, serr = -1;
+    char *libgcc, *p;
+    struct stat st;
+    size_t cnt;
+    int ret;
+
+    strarray_add( link, "-print-libgcc-file-name" );
+
+    sout = dup( fileno(stdout) );
+    freopen( out, "w", stdout );
+    serr = dup( fileno(stderr) );
+    freopen( err, "w", stderr );
+    ret = spawn( prefix, link, 1 );
+    if (sout >= 0)
+    {
+        dup2( sout, fileno(stdout) );
+        close( sout );
+    }
+    if (serr >= 0)
+    {
+        dup2( serr, fileno(stderr) );
+        close( serr );
+    }
+    strarray_free( link );
+
+    if (ret || stat(out, &st) || !st.st_size) return NULL;
+
+    libgcc = xmalloc(st.st_size + 1);
+    sout = open(out, O_RDONLY);
+    if (sout == -1) return NULL;
+    cnt = read(sout, libgcc, st.st_size);
+    close(sout);
+    libgcc[cnt] = 0;
+    if ((p = strchr(libgcc, '\n'))) *p = 0;
+    return libgcc;
+}
+
+
 /* add specified library to the list of files */
 static void add_library( struct options *opts, strarray *lib_dirs, strarray *files, const char *library )
 {
@@ -923,7 +967,7 @@ static void build(struct options* opts)
     strarray *lib_dirs, *files;
     strarray *spec_args, *link_args;
     char *output_file, *output_path;
-    const char *spec_o_name;
+    const char *spec_o_name, *libgcc = NULL;
     const char *output_name, *spec_file, *lang;
     int generate_app_loader = 1;
     const char* crt_lib = NULL;
@@ -1147,6 +1191,12 @@ static void build(struct options* opts)
     /* link everything together now */
     link_args = get_link_args( opts, output_name );
 
+    if ((opts->nodefaultlibs || opts->shared) && is_pe)
+    {
+        libgcc = find_libgcc(opts->prefix, link_args);
+        if (!libgcc) libgcc = "-lgcc";
+    }
+
     strarray_add(link_args, "-o");
     strarray_add(link_args, output_path);
 
@@ -1201,7 +1251,7 @@ static void build(struct options* opts)
 	strarray_add(link_args, "-lc");
     }
 
-    if ((opts->nodefaultlibs || opts->shared) && is_pe) strarray_add( link_args, "-lgcc" );
+    if (libgcc) strarray_add(link_args, libgcc);
 
     spawn(opts->prefix, link_args, 0);
     strarray_free (link_args);
