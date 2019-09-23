@@ -1822,6 +1822,8 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     vbscode_t *code;
     HRESULT hres;
 
+    if (!src) src = L"";
+
     hres = parse_script(&ctx.parser, src, delimiter, flags);
     if(FAILED(hres))
         return hres;

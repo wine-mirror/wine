@@ -1917,6 +1917,10 @@ static void test_parse_context(void)
     hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
 
+    /* NULL code text succeeds but does nothing */
+    hres = IActiveScriptParse_ParseScriptText(parser, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+
     /* unknown identifier context is not a valid argument */
     str = a2bstr("Call reportSuccess()\n");
     hres = IActiveScriptParse_ParseScriptText(parser, str, yW, NULL, NULL, 0, 0, 0, NULL, NULL);
@@ -2003,6 +2007,7 @@ static void test_procedures(void)
     DISPPARAMS dp = {NULL};
     IActiveScript *script;
     IDispatchEx *proc;
+    IDispatch *disp;
     EXCEPINFO ei = {0};
     VARIANT v;
     HRESULT hres;
@@ -2011,6 +2016,10 @@ static void test_procedures(void)
 
     hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParseProcedure2, (void**)&parse_proc);
     ok(hres == S_OK, "Could not get IActiveScriptParseProcedure2 iface: %08x\n", hres);
+
+    hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, NULL, NULL, emptyW, NULL, NULL, NULL, 0, 0, 0, &disp);
+    ok(hres == S_OK, "ParseProcedureText failed: %08x\n", hres);
+    IDispatch_Release(disp);
 
     proc = parse_procedure(parse_proc, "dim x\nif true then x=false", 0);
 
