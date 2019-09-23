@@ -720,9 +720,7 @@ static void register_script_object(BOOL do_register, const WCHAR *file_name)
     CHECK_CALLED(QI_IActiveScriptParse);
     CHECK_CALLED(InitNew);
     CHECK_CALLED(SetScriptSite);
-    todo_wine
     CHECK_CALLED(ParseScriptText);
-    todo_wine
     CHECK_CALLED(SetScriptState_UNINITIALIZED);
     CHECK_CALLED(Close);
     ok(hres == S_OK, "DllInstall failed: %08x\n", hres);

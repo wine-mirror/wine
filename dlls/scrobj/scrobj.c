@@ -117,6 +117,7 @@ struct script_host
 
     IActiveScript *active_script;
     IActiveScriptParse *parser;
+    SCRIPTSTATE state;
     BOOL cloned;
 };
 
@@ -202,6 +203,16 @@ static WCHAR *heap_strdupW(const WCHAR *str)
     if (!(ret = heap_alloc(size))) return NULL;
     memcpy(ret, str, size);
     return ret;
+}
+
+static HRESULT set_script_state(struct script_host *host, SCRIPTSTATE state)
+{
+    HRESULT hres;
+    if (state == host->state) return S_OK;
+    hres = IActiveScript_SetScriptState(host->active_script, state);
+    if (FAILED(hres)) return hres;
+    host->state = state;
+    return S_OK;
 }
 
 static inline struct script_host *impl_from_IActiveScriptSite(IActiveScriptSite *iface)
@@ -437,6 +448,46 @@ static struct script_host *find_script_host(struct list *hosts, const WCHAR *lan
     return NULL;
 }
 
+static HRESULT parse_scripts(struct scriptlet_factory *factory, struct list *hosts, BOOL start)
+{
+    DWORD parse_flags = SCRIPTTEXT_ISVISIBLE;
+    struct scriptlet_script *script;
+    struct script_host *host;
+    HRESULT hres;
+
+    if (!start) parse_flags |= SCRIPTITEM_ISPERSISTENT;
+
+    LIST_FOR_EACH_ENTRY(script, &factory->scripts, struct scriptlet_script, entry)
+    {
+        host = find_script_host(hosts, script->language);
+
+        if (start && host->state != SCRIPTSTATE_STARTED)
+        {
+            hres = set_script_state(host, SCRIPTSTATE_STARTED);
+            if (FAILED(hres)) return hres;
+        }
+
+        if (host->cloned) continue;
+
+        hres = IActiveScriptParse_ParseScriptText(host->parser, script->body, NULL, NULL, NULL, 0, 0 /* FIXME */,
+                                                  parse_flags, NULL, NULL);
+        if (FAILED(hres))
+        {
+            WARN("ParseScriptText failed: %08x\n", hres);
+            return hres;
+        }
+    }
+    if (!start)
+    {
+        LIST_FOR_EACH_ENTRY(host, hosts, struct script_host, entry)
+        {
+            if (host->state != SCRIPTSTATE_UNINITIALIZED)
+                set_script_state(host, SCRIPTSTATE_UNINITIALIZED);
+        }
+    }
+    return S_OK;
+}
+
 static HRESULT init_script_host(struct script_host *host, IActiveScript *clone)
 {
     HRESULT hres;
@@ -509,6 +560,7 @@ static HRESULT create_script_host(const WCHAR *language, IActiveScript *origin_s
     host->IActiveScriptSiteWindow_iface.lpVtbl = &ActiveScriptSiteWindowVtbl;
     host->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
     host->ref = 1;
+    host->state = SCRIPTSTATE_CLOSED;
 
     if (!(host->language = heap_strdupW(language)))
     {
@@ -533,6 +585,7 @@ static void detach_script_hosts(struct list *hosts)
     while (!list_empty(hosts))
     {
         struct script_host *host = LIST_ENTRY(list_head(hosts), struct script_host, entry);
+        if (host->state != SCRIPTSTATE_UNINITIALIZED) set_script_state(host, SCRIPTSTATE_UNINITIALIZED);
         list_remove(&host->entry);
         if (host->parser)
         {
@@ -1800,6 +1853,7 @@ HRESULT WINAPI DllInstall(BOOL install, const WCHAR *arg)
         {
             /* validate scripts */
             hres = create_scriptlet_hosts(factory, &factory->hosts);
+            if (SUCCEEDED(hres)) hres = parse_scripts(factory, &factory->hosts, FALSE);
         }
         else
         {
