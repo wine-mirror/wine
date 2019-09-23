@@ -778,8 +778,9 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
     switch (event->mode)
     {
     case NotifyGrab:
-        WARN( "unexpected FocusIn event with NotifyGrab mode\n" );
-        break;
+        /* these are received when moving undecorated managed windows on mutter */
+        keyboard_grabbed = TRUE;
+        return FALSE;
     case NotifyWhileGrabbed:
         keyboard_grabbed = TRUE;
         break;
@@ -879,8 +880,9 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
     switch (event->mode)
     {
     case NotifyUngrab:
-        WARN( "unexpected FocusOut event with NotifyUngrab mode\n" );
-        break;
+        /* these are received when moving undecorated managed windows on mutter */
+        keyboard_grabbed = FALSE;
+        return FALSE;
     case NotifyNormal:
         keyboard_grabbed = FALSE;
         break;
