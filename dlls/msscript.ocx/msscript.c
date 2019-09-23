@@ -71,6 +71,7 @@ typedef struct ScriptHost {
 
     IActiveScript *script;
     IActiveScriptParse *parse;
+    SCRIPTSTATE script_state;
     CLSID clsid;
 
     struct list named_items;
@@ -568,6 +569,7 @@ static HRESULT init_script_host(const CLSID *clsid, ScriptHost **ret)
         WARN("InitNew failed, %#x\n", hr);
         goto failed;
     }
+    host->script_state = SCRIPTSTATE_INITIALIZED;
 
     *ret = host;
     return S_OK;
@@ -952,6 +954,16 @@ static HRESULT WINAPI ScriptControl_AddObject(IScriptControl *iface, BSTR name, 
     return hr;
 }
 
+static HRESULT set_script_state(ScriptHost *host, SCRIPTSTATE state)
+{
+    HRESULT hr;
+
+    hr = IActiveScript_SetScriptState(host->script, state);
+    if (SUCCEEDED(hr))
+        host->script_state = state;
+    return hr;
+}
+
 static HRESULT WINAPI ScriptControl_Reset(IScriptControl *iface)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
@@ -962,7 +974,7 @@ static HRESULT WINAPI ScriptControl_Reset(IScriptControl *iface)
         return E_FAIL;
 
     clear_named_items(This->host);
-    return IActiveScript_SetScriptState(This->host->script, SCRIPTSTATE_INITIALIZED);
+    return set_script_state(This->host, SCRIPTSTATE_INITIALIZED);
 }
 
 static HRESULT WINAPI ScriptControl_AddCode(IScriptControl *iface, BSTR code)
@@ -987,9 +999,12 @@ static HRESULT WINAPI ScriptControl_Eval(IScriptControl *iface, BSTR expression,
     if (!This->host || This->state != Initialized)
         return E_FAIL;
 
-    hr = IActiveScript_SetScriptState(This->host->script, SCRIPTSTATE_STARTED);
-    if (FAILED(hr))
-        return hr;
+    if (This->host->script_state != SCRIPTSTATE_STARTED)
+    {
+        hr = set_script_state(This->host, SCRIPTSTATE_STARTED);
+        if (FAILED(hr))
+            return hr;
+    }
 
     hr = IActiveScriptParse_ParseScriptText(This->host->parse, expression, NULL, NULL, NULL,
                                             0, 1, SCRIPTTEXT_ISEXPRESSION, res, &excepinfo);

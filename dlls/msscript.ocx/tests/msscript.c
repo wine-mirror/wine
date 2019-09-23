@@ -95,6 +95,8 @@ DEFINE_EXPECT(Close);
 DEFINE_EXPECT(SetScriptSite);
 DEFINE_EXPECT(QI_IActiveScriptParse);
 DEFINE_EXPECT(SetScriptState_INITIALIZED);
+DEFINE_EXPECT(SetScriptState_STARTED);
+DEFINE_EXPECT(ParseScriptText);
 DEFINE_EXPECT(AddNamedItem);
 
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
@@ -147,8 +149,17 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
         LPCOLESTR pstrDelimiter, CTXARG_T dwSourceContextCookie, ULONG ulStartingLine,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    ok(!!pstrCode, "got wrong pointer: %p.\n", pstrCode);
+    ok(!pstrItemName, "got wrong pointer: %p.\n", pstrItemName);
+    ok(!punkContext, "got wrong pointer: %p.\n", punkContext);
+    ok(!pstrDelimiter, "got wrong pointer: %p.\n", pstrDelimiter);
+    ok(!dwSourceContextCookie, "got wrong value: %s.\n", wine_dbgstr_longlong(dwSourceContextCookie));
+    ok(ulStartingLine == 1, "got wrong value: %d.\n", ulStartingLine);
+    ok(dwFlags == SCRIPTTEXT_ISEXPRESSION, "got wrong flags: %x.\n", dwFlags);
+    ok(!!pvarResult, "got wrong pointer: %p.\n", pvarResult);
+    ok(!!pexcepinfo, "got wrong pointer: %p.\n", pexcepinfo);
+    CHECK_EXPECT(ParseScriptText);
+    return S_OK;
 }
 
 static const IActiveScriptParseVtbl ActiveScriptParseVtbl = {
@@ -302,6 +313,10 @@ static HRESULT WINAPI ActiveScript_SetScriptState(IActiveScript *iface, SCRIPTST
 {
     if (ss == SCRIPTSTATE_INITIALIZED) {
         CHECK_EXPECT(SetScriptState_INITIALIZED);
+        return S_OK;
+    }
+    else if (ss == SCRIPTSTATE_STARTED) {
+        CHECK_EXPECT(SetScriptState_STARTED);
         return S_OK;
     }
     else
@@ -1371,7 +1386,7 @@ static void _check_error(IScriptControl *sc, LONG exp_num, int line)
     {
         error_num = 0xdeadbeef;
         hr = IScriptError_get_Number(script_err, &error_num);
-        ok_(__FILE__,line)(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.", hr);
+        ok_(__FILE__,line)(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
         ok_(__FILE__,line)(error_num == exp_num, "got wrong error number: %d, expected %d.\n",
                            error_num, exp_num);
         IScriptError_Release(script_err);
@@ -1475,6 +1490,80 @@ static void test_IScriptControl_Eval(void)
     SysFreeString(script_str);
 
     IScriptControl_Release(sc);
+
+    if (have_custom_engine)
+    {
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void **)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        language= a2bstr("testscript");
+        hr = IScriptControl_put_Language(sc, language);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        SysFreeString(language);
+
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(ParseScriptText);
+        script_str = a2bstr("var1 = 1 + 1");
+        V_VT(&var) = VT_NULL;
+        V_I4(&var) = 0xdeadbeef;
+        hr = IScriptControl_Eval(sc, script_str, &var);
+        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+        ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
+           V_VT(&var), V_I4(&var));
+        SysFreeString(script_str);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(ParseScriptText);
+
+        SET_EXPECT(ParseScriptText);
+        script_str = a2bstr("var2 = 10 + var1");
+        V_VT(&var) = VT_NULL;
+        V_I4(&var) = 0xdeadbeef;
+        hr = IScriptControl_Eval(sc, script_str, &var);
+        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+        ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
+           V_VT(&var), V_I4(&var));
+        SysFreeString(script_str);
+        CHECK_CALLED(ParseScriptText);
+
+        SET_EXPECT(SetScriptState_INITIALIZED);
+        hr = IScriptControl_Reset(sc);
+        ok(hr == S_OK, "IScriptControl_Reset failed: 0x%08x.\n", hr);
+        CHECK_CALLED(SetScriptState_INITIALIZED);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(ParseScriptText);
+        script_str = a2bstr("var2 = 10 + var1");
+        V_VT(&var) = VT_NULL;
+        V_I4(&var) = 0xdeadbeef;
+        hr = IScriptControl_Eval(sc, script_str, &var);
+        ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+        ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
+           V_VT(&var), V_I4(&var));
+        SysFreeString(script_str);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(ParseScriptText);
+
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+
+        IScriptControl_Release(sc);
+
+        CHECK_CALLED(Close);
+    }
 }
 
 START_TEST(msscript)
