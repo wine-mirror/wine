@@ -24,6 +24,7 @@
 #define _WIN32_WINNT 0x0501
 
 #include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -996,6 +997,61 @@ if (0)
        "wrong wCreatorVersion %04x for %p in hook %s\n", info->wCreatorVersion, hwnd, hook);
 }
 
+static void test_window_info(const char *hook, HWND hwnd)
+{
+    WINDOWINFO info, info2;
+
+    if (0)      /* crashes on Win10 */
+    ok(!pGetWindowInfo(hwnd, NULL), "GetWindowInfo should fail\n");
+
+    if (0) {    /* crashes on XP, 2003 */
+    SetLastError(0xdeadbeef);
+    ok(!pGetWindowInfo(0, NULL), "GetWindowInfo should fail\n");
+    todo_wine ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
+       "got error %d expected ERROR_INVALID_WINDOW_HANDLE\n", GetLastError());
+    }
+
+    SetLastError(0xdeadbeef);
+    ok(!pGetWindowInfo(0, &info), "GetWindowInfo should fail\n");
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
+       "got error %d expected ERROR_INVALID_WINDOW_HANDLE\n", GetLastError());
+
+    info.cbSize = sizeof(WINDOWINFO);
+    ok(pGetWindowInfo(hwnd, &info), "GetWindowInfo should not fail\n");
+    verify_window_info(hook, hwnd, &info);
+
+    /* test different cbSize values.
+     * Windows ignores it (except for Win98, according to an old comment).
+     */
+    memset(&info, 0xcc, sizeof(WINDOWINFO));
+    memset(&info2, 0xcc, sizeof(WINDOWINFO));
+
+    info.cbSize = sizeof(WINDOWINFO);
+    info2.cbSize = sizeof(WINDOWINFO);
+
+    ok(pGetWindowInfo(hwnd, &info), "GetWindowInfo should not fail\n");
+    ok(pGetWindowInfo(hwnd, &info2), "GetWindowInfo should not fail\n");
+    ok(memcmp(&info, &info2, sizeof(WINDOWINFO)) == 0, "identical GetWindowInfo calls produce different result\n");
+
+    memset(&info2, 0xcc, sizeof(WINDOWINFO));
+    info2.cbSize = 0;
+    ok(pGetWindowInfo(hwnd, &info2), "GetWindowInfo should not fail\n");
+    info2.cbSize = sizeof(WINDOWINFO);
+    ok(memcmp(&info, &info2, sizeof(WINDOWINFO)) == 0, "GetWindowInfo cbSize should be ignored\n");
+
+    memset(&info2, 0xcc, sizeof(WINDOWINFO));
+    info2.cbSize = sizeof(WINDOWINFO)/2;
+    ok(pGetWindowInfo(hwnd, &info2), "GetWindowInfo should not fail\n");
+    info2.cbSize = sizeof(WINDOWINFO);
+    ok(memcmp(&info, &info2, sizeof(WINDOWINFO)) == 0, "GetWindowInfo cbSize should be ignored\n");
+
+    memset(&info2, 0xcc, sizeof(WINDOWINFO));
+    info2.cbSize = UINT_MAX;
+    ok(pGetWindowInfo(hwnd, &info2), "GetWindowInfo should not fail\n");
+    info2.cbSize = sizeof(WINDOWINFO);
+    ok(memcmp(&info, &info2, sizeof(WINDOWINFO)) == 0, "GetWindowInfo cbSize should be ignored\n");
+}
+
 static void FixedAdjustWindowRectEx(RECT* rc, LONG style, BOOL menu, LONG exstyle)
 {
     AdjustWindowRectEx(rc, style, menu, exstyle);
@@ -1172,12 +1228,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	    ok(createwnd->hwndInsertAfter == HWND_TOP, "hwndInsertAfter should be always HWND_TOP\n");
 
             if (pGetWindowInfo)
-            {
-                WINDOWINFO info;
-                info.cbSize = sizeof(WINDOWINFO);
-                ok(pGetWindowInfo(hwnd, &info), "GetWindowInfo should not fail\n");
-                verify_window_info(code_name, hwnd, &info);
-            }
+                test_window_info(code_name, hwnd);
 
 	    /* WS_VISIBLE should be turned off yet */
 	    style = createwnd->lpcs->style & ~WS_VISIBLE;
@@ -1238,17 +1289,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     case HCBT_MINMAX:
     case HCBT_ACTIVATE:
 	if (pGetWindowInfo && IsWindow(hwnd))
-	{
-	    WINDOWINFO info;
-
-	    /* Win98 actually does check the info.cbSize and doesn't allow
-	     * it to be anything except sizeof(WINDOWINFO), while Win95, Win2k,
-	     * WinXP do not check it at all.
-	     */
-	    info.cbSize = sizeof(WINDOWINFO);
-	    ok(pGetWindowInfo(hwnd, &info), "GetWindowInfo should not fail\n");
-	    verify_window_info(code_name, hwnd, &info);
-	}
+	    test_window_info(code_name, hwnd);
         break;
     /* window state is undefined */
     case HCBT_SETFOCUS:
