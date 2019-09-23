@@ -778,15 +778,10 @@ static void test_create_object(void)
     SET_EXPECT(Clone);
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "Could not create scriptlet instance: %08x\n", hres);
-    todo_wine
     CHECK_CALLED(Clone);
-    todo_wine
     CHECK_CALLED(CreateInstance);
-    todo_wine
     CHECK_CALLED(QI_IActiveScriptParse);
-    todo_wine
     CHECK_CALLED(InitNew);
-    todo_wine
     CHECK_CALLED(SetScriptSite);
     todo_wine
     CHECK_CALLED(AddNamedItem_scriptlet);
@@ -926,9 +921,7 @@ static void test_create_object(void)
     todo_wine
     SET_EXPECT(Close);
     IUnknown_Release(unk);
-    todo_wine
     CHECK_CALLED(SetScriptState_UNINITIALIZED);
-    todo_wine
     CHECK_CALLED(Close);
 
     parse_flags = SCRIPTTEXT_ISVISIBLE;
@@ -947,15 +940,10 @@ static void test_create_object(void)
     SET_EXPECT(ParseScriptText);
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "Could not create scriptlet instance: %08x\n", hres);
-    todo_wine
     CHECK_CALLED(Clone);
-    todo_wine
     CHECK_CALLED(CreateInstance);
-    todo_wine
     CHECK_CALLED(QI_IActiveScriptParse);
-    todo_wine
     CHECK_CALLED(InitNew);
-    todo_wine
     CHECK_CALLED(SetScriptSite);
     todo_wine
     CHECK_CALLED(AddNamedItem_scriptlet);
@@ -975,9 +963,7 @@ static void test_create_object(void)
     SET_EXPECT(SetScriptState_UNINITIALIZED);
     SET_EXPECT(Close);
     IUnknown_Release(unk);
-    todo_wine
     CHECK_CALLED(SetScriptState_UNINITIALIZED);
-    todo_wine
     CHECK_CALLED(Close);
 
     support_clone = TRUE;
@@ -992,11 +978,8 @@ static void test_create_object(void)
     SET_EXPECT(SetScriptState_STARTED);
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "Could not create scriptlet instance: %08x\n", hres);
-    todo_wine
     CHECK_CALLED(Clone);
-    todo_wine
     CHECK_CALLED(QI_IActiveScriptParse);
-    todo_wine
     CHECK_CALLED(SetScriptSite);
     todo_wine
     CHECK_CALLED(AddNamedItem_scriptlet);
@@ -1014,14 +997,11 @@ static void test_create_object(void)
     SET_EXPECT(SetScriptState_UNINITIALIZED);
     SET_EXPECT(Close);
     IUnknown_Release(unk);
-    todo_wine
     CHECK_CALLED(SetScriptState_UNINITIALIZED);
-    todo_wine
     CHECK_CALLED(Close);
 
     SET_EXPECT(Close);
     IClassFactory_Release(cf);
-    todo_wine
     CHECK_CALLED(Close);
 }
 

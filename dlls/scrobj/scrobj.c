@@ -102,6 +102,7 @@ struct scriptlet_instance
 {
     IDispatchEx IDispatchEx_iface;
     LONG ref;
+    struct list hosts;
 };
 
 struct script_host
@@ -674,7 +675,10 @@ static ULONG WINAPI scriptlet_Release(IDispatchEx *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (!ref)
+    {
+        detach_script_hosts(&This->hosts);
         heap_free(This);
+    }
     return ref;
 }
 
@@ -798,14 +802,29 @@ static IDispatchExVtbl DispatchExVtbl = {
     scriptlet_GetNameSpaceParent
 };
 
-static HRESULT create_scriptlet_instance(IDispatchEx **disp)
+static HRESULT create_scriptlet_instance(struct scriptlet_factory *factory, IDispatchEx **disp)
 {
+    struct script_host *factory_host;
     struct scriptlet_instance *obj;
+    HRESULT hres;
 
     if (!(obj = heap_alloc(sizeof(*obj)))) return E_OUTOFMEMORY;
 
     obj->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
     obj->ref = 1;
+    list_init(&obj->hosts);
+
+    LIST_FOR_EACH_ENTRY(factory_host, &factory->hosts, struct script_host, entry)
+    {
+        hres = create_script_host(factory_host->language, factory_host->active_script, &obj->hosts);
+        if (FAILED(hres)) break;
+    }
+
+    if (FAILED(hres))
+    {
+        IDispatchEx_Release(&obj->IDispatchEx_iface);
+        return hres;
+    }
 
     *disp = &obj->IDispatchEx_iface;
     return S_OK;
@@ -1295,7 +1314,20 @@ static HRESULT WINAPI scriptlet_factory_CreateInstance(IClassFactory *iface, IUn
 
     if (outer) FIXME("outer not supported\n");
 
-    hres = create_scriptlet_instance(&disp);
+    if (list_empty(&This->hosts))
+    {
+        hres = create_scriptlet_hosts(This, &This->hosts);
+        if (FAILED(hres)) return hres;
+
+        hres = parse_scripts(This, &This->hosts, FALSE);
+        if (FAILED(hres))
+        {
+            detach_script_hosts(&This->hosts);
+            return hres;
+        }
+    }
+
+    hres = create_scriptlet_instance(This, &disp);
     if (FAILED(hres)) return hres;
 
     hres = IDispatchEx_QueryInterface(disp, riid, ppv);
