@@ -158,6 +158,7 @@ struct key_symmetric
 struct key_asymmetric
 {
     gnutls_privkey_t  handle;
+    ULONG             bitlen;     /* ignored for ECC keys */
     UCHAR            *pubkey;
     ULONG             pubkey_len;
 };
@@ -185,6 +186,7 @@ struct key_symmetric
 
 struct key_asymmetric
 {
+    ULONG  bitlen;
     UCHAR *pubkey;
     ULONG  pubkey_len;
 };
@@ -225,7 +227,7 @@ NTSTATUS key_symmetric_set_auth_data( struct key *, UCHAR *, ULONG ) DECLSPEC_HI
 NTSTATUS key_symmetric_encrypt( struct key *, const UCHAR *, ULONG, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_symmetric_decrypt( struct key *, const UCHAR *, ULONG, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_symmetric_get_tag( struct key *, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
-NTSTATUS key_asymmetric_init( struct key *, struct algorithm *, const UCHAR *, ULONG ) DECLSPEC_HIDDEN;
+NTSTATUS key_asymmetric_init( struct key *, struct algorithm *, ULONG, const UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_asymmetric_generate( struct key * ) DECLSPEC_HIDDEN;
 NTSTATUS key_asymmetric_verify( struct key *, void *, UCHAR *, ULONG, UCHAR *, ULONG, DWORD ) DECLSPEC_HIDDEN;
 NTSTATUS key_destroy( struct key * ) DECLSPEC_HIDDEN;

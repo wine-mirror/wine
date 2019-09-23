@@ -854,6 +854,14 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
         memcpy( output + sizeof(len), key->u.s.secret, key->u.s.secret_len );
         return STATUS_SUCCESS;
     }
+    else if (!strcmpW( type, BCRYPT_RSAPUBLIC_BLOB ))
+    {
+        *size = key->u.a.pubkey_len;
+        if (output_len < key->u.a.pubkey_len) return STATUS_SUCCESS;
+
+        memcpy( output, key->u.a.pubkey, key->u.a.pubkey_len );
+        return STATUS_SUCCESS;
+    }
     else if (!strcmpW( type, BCRYPT_ECCPUBLIC_BLOB ))
     {
         *size = key->u.a.pubkey_len;
@@ -1059,7 +1067,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
     if (!strcmpW( type, BCRYPT_ECCPUBLIC_BLOB ))
     {
         BCRYPT_ECCKEY_BLOB *ecc_blob = (BCRYPT_ECCKEY_BLOB *)input;
-        DWORD key_size, magic;
+        DWORD key_size, magic, size;
 
         if (input_len < sizeof(*ecc_blob)) return STATUS_INVALID_PARAMETER;
 
@@ -1091,7 +1099,9 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
 
         if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
         key->hdr.magic = MAGIC_KEY;
-        if ((status = key_asymmetric_init( key, alg, (BYTE *)ecc_blob, sizeof(*ecc_blob) + ecc_blob->cbKey * 2 )))
+
+        size = sizeof(*ecc_blob) + ecc_blob->cbKey * 2;
+        if ((status = key_asymmetric_init( key, alg, key_size * 8, (BYTE *)ecc_blob, size )))
         {
             heap_free( key );
             return status;
@@ -1125,7 +1135,8 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
 
         if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
         key->hdr.magic = MAGIC_KEY;
-        if ((status = key_asymmetric_init( key, alg, NULL, 0 )))
+
+        if ((status = key_asymmetric_init( key, alg, key_size * 8, NULL, 0 )))
         {
             heap_free( key );
             return status;
@@ -1151,7 +1162,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         key->hdr.magic = MAGIC_KEY;
 
         size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
-        if ((status = key_asymmetric_init( key, alg, (BYTE *)rsa_blob, size )))
+        if ((status = key_asymmetric_init( key, alg, rsa_blob->BitLength, (BYTE *)rsa_blob, size )))
         {
             heap_free( key );
             return status;
@@ -1189,7 +1200,8 @@ static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_asymmetric_init( struct key *key, struct algorithm *alg, const UCHAR *pubkey, ULONG pubkey_len )
+NTSTATUS key_asymmetric_init( struct key *key, struct algorithm *alg, ULONG bitlen, const UCHAR *pubkey,
+                              ULONG pubkey_len )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;
@@ -1302,7 +1314,7 @@ NTSTATUS WINAPI BCryptGenerateKeyPair( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_H
     if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
     key->hdr.magic = MAGIC_KEY;
 
-    if ((status = key_asymmetric_init( key, alg, NULL, 0 )))
+    if ((status = key_asymmetric_init( key, alg, key_len, NULL, 0 )))
     {
         heap_free( key );
         return status;
