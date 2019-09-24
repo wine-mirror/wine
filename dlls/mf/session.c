@@ -70,6 +70,7 @@ struct media_session
     IMFPresentationClock *clock;
     IMFRateControl *clock_rate_control;
     IMFTopoLoader *topo_loader;
+    IMFQualityManager *quality_manager;
     struct list topologies;
     enum session_state state;
     CRITICAL_SECTION cs;
@@ -332,6 +333,8 @@ static ULONG WINAPI mfsession_Release(IMFMediaSession *iface)
             IMFRateControl_Release(session->clock_rate_control);
         if (session->topo_loader)
             IMFTopoLoader_Release(session->topo_loader);
+        if (session->quality_manager)
+            IMFQualityManager_Release(session->quality_manager);
         DeleteCriticalSection(&session->cs);
         heap_free(session);
     }
@@ -761,6 +764,7 @@ static const IMFRateControlVtbl session_rate_control_vtbl =
  */
 HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **session)
 {
+    BOOL without_quality_manager = FALSE;
     struct media_session *object;
     HRESULT hr;
 
@@ -806,10 +810,28 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
                 WARN("Failed to create custom topology loader, hr %#x.\n", hr);
             }
         }
+
+        if (SUCCEEDED(IMFAttributes_GetGUID(config, &MF_SESSION_QUALITY_MANAGER, &clsid)))
+        {
+            if (!(without_quality_manager = IsEqualGUID(&clsid, &GUID_NULL)))
+            {
+                if (FAILED(hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFQualityManager,
+                        (void **)&object->quality_manager)))
+                {
+                    WARN("Failed to create custom quality manager, hr %#x.\n", hr);
+                }
+            }
+        }
     }
 
     if (!object->topo_loader && FAILED(hr = MFCreateTopoLoader(&object->topo_loader)))
         goto failed;
+
+    if (!object->quality_manager && !without_quality_manager &&
+            FAILED(hr = MFCreateStandardQualityManager(&object->quality_manager)))
+    {
+        goto failed;
+    }
 
     *session = &object->IMFMediaSession_iface;
 

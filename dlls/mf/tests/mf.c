@@ -1055,6 +1055,14 @@ todo_wine
     ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
     IMFMediaSession_Release(session);
 
+    /* Disabled quality manager. */
+    hr = IMFAttributes_SetGUID(attributes, &MF_SESSION_QUALITY_MANAGER, &GUID_NULL);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = MFCreateMediaSession(attributes, &session);
+    ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
+    IMFMediaSession_Release(session);
+
     IMFAttributes_Release(attributes);
 
     hr = MFShutdown();
