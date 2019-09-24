@@ -1162,6 +1162,9 @@ static HRESULT WINAPI contentHandler_startPrefixMapping(
 {
     struct call_entry call;
 
+    ok(prefix != NULL, "prefix == NULL\n");
+    ok(uri != NULL, "uri == NULL\n");
+
     init_call_entry(locator, &call);
     call.id = CH_STARTPREFIXMAPPING;
     call.arg1W = SysAllocStringLen(prefix, prefix_len);
@@ -1176,6 +1179,8 @@ static HRESULT WINAPI contentHandler_endPrefixMapping(
         const WCHAR *prefix, int len)
 {
     struct call_entry call;
+
+    ok(prefix != NULL, "prefix == NULL\n");
 
     init_call_entry(locator, &call);
     call.id = CH_ENDPREFIXMAPPING;
@@ -1196,6 +1201,10 @@ static HRESULT WINAPI contentHandler_startElement(
     IMXAttributes *mxattr;
     HRESULT hr;
     int len;
+
+    ok(uri != NULL, "uri == NULL\n");
+    ok(localname != NULL, "localname == NULL\n");
+    ok(qname != NULL, "qname == NULL\n");
 
     hr = ISAXAttributes_QueryInterface(saxattr, &IID_IMXAttributes, (void**)&mxattr);
     EXPECT_HR(hr, E_NOINTERFACE);
@@ -1272,6 +1281,10 @@ static HRESULT WINAPI contentHandler_endElement(
 {
     struct call_entry call;
 
+    ok(uri != NULL, "uri == NULL\n");
+    ok(localname != NULL, "localname == NULL\n");
+    ok(qname != NULL, "qname == NULL\n");
+
     init_call_entry(locator, &call);
     call.id = CH_ENDELEMENT;
     call.arg1W = SysAllocStringLen(uri, uri_len);
@@ -1289,6 +1302,8 @@ static HRESULT WINAPI contentHandler_characters(
 {
     struct call_entry call;
 
+    ok(chars != NULL, "chars == NULL\n");
+
     init_call_entry(locator, &call);
     call.id = CH_CHARACTERS;
     call.arg1W = SysAllocStringLen(chars, len);
@@ -1302,6 +1317,8 @@ static HRESULT WINAPI contentHandler_ignorableWhitespace(
         const WCHAR *chars, int len)
 {
     struct call_entry call;
+
+    ok(chars != NULL, "chars == NULL\n");
 
     init_call_entry(locator, &call);
     call.id = CH_IGNORABLEWHITESPACE;
@@ -1318,6 +1335,9 @@ static HRESULT WINAPI contentHandler_processingInstruction(
 {
     struct call_entry call;
 
+    ok(target != NULL, "target == NULL\n");
+    ok(data != NULL, "data == NULL\n");
+
     init_call_entry(locator, &call);
     call.id = CH_PROCESSINGINSTRUCTION;
     call.arg1W = SysAllocStringLen(target, target_len);
@@ -1332,6 +1352,8 @@ static HRESULT WINAPI contentHandler_skippedEntity(
         const WCHAR *name, int len)
 {
     struct call_entry call;
+
+    ok(name != NULL, "name == NULL\n");
 
     init_call_entry(locator, &call);
     call.id = CH_SKIPPEDENTITY;
