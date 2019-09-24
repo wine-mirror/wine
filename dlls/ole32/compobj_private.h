@@ -179,6 +179,7 @@ struct oletls
     DWORD            unknown2[46];
     IUnknown        *cancel_object; /* cancel object set by CoSetCancelObject (+F8h on x86) */
     struct list      spies;         /* Spies installed with CoRegisterInitializeSpy */
+    DWORD            spies_lock;
 };
 
 

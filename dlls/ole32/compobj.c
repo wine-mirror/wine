@@ -1744,7 +1744,7 @@ static void COM_TlsDestroy(void)
         LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &info->spies, struct init_spy, entry)
         {
             list_remove(&cursor->entry);
-            IInitializeSpy_Release(cursor->spy);
+            if (cursor->spy) IInitializeSpy_Release(cursor->spy);
             heap_free(cursor);
         }
 
@@ -1777,11 +1777,34 @@ static struct init_spy *get_spy_entry(struct oletls *info, unsigned int id)
 
     LIST_FOR_EACH_ENTRY(spy, &info->spies, struct init_spy, entry)
     {
-        if (id == spy->id)
+        if (id == spy->id && spy->spy)
             return spy;
     }
 
     return NULL;
+}
+
+/*
+ * When locked, don't modify list (unless we add a new head), so that it's
+ * safe to iterate it. Freeing of list entries is delayed and done on unlock.
+ */
+static inline void lock_init_spies(struct oletls *info)
+{
+    info->spies_lock++;
+}
+
+static void unlock_init_spies(struct oletls *info)
+{
+    struct init_spy *spy, *next;
+
+    if (--info->spies_lock) return;
+
+    LIST_FOR_EACH_ENTRY_SAFE(spy, next, &info->spies, struct init_spy, entry)
+    {
+        if (spy->spy) continue;
+        list_remove(&spy->entry);
+        heap_free(spy);
+    }
 }
 
 /******************************************************************************
@@ -1869,16 +1892,16 @@ HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie)
     if (!info || cookie.HighPart != GetCurrentThreadId())
         return E_INVALIDARG;
 
-    if ((spy = get_spy_entry(info, cookie.LowPart)))
+    if (!(spy = get_spy_entry(info, cookie.LowPart))) return E_INVALIDARG;
+
+    IInitializeSpy_Release(spy->spy);
+    spy->spy = NULL;
+    if (!info->spies_lock)
     {
-        IInitializeSpy_Release(spy->spy);
         list_remove(&spy->entry);
         heap_free(spy);
-
-        return S_OK;
     }
-
-    return E_INVALIDARG;
+    return S_OK;
 }
 
 HRESULT enter_apartment( struct oletls *info, DWORD model )
@@ -2000,17 +2023,21 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(LPVOID lpReserved, DWORD dwCoIni
     RunningObjectTableImpl_Initialize();
   }
 
+  lock_init_spies(info);
   LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
   {
-      IInitializeSpy_PreInitialize(cursor->spy, dwCoInit, info->inits);
+      if (cursor->spy) IInitializeSpy_PreInitialize(cursor->spy, dwCoInit, info->inits);
   }
+  unlock_init_spies(info);
 
   hr = enter_apartment( info, dwCoInit );
 
+  lock_init_spies(info);
   LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
   {
-      hr = IInitializeSpy_PostInitialize(cursor->spy, hr, dwCoInit, info->inits);
+      if (cursor->spy) hr = IInitializeSpy_PostInitialize(cursor->spy, hr, dwCoInit, info->inits);
   }
+  unlock_init_spies(info);
 
   return hr;
 }
@@ -2034,7 +2061,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(LPVOID lpReserved, DWORD dwCoIni
 void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
 {
   struct oletls * info = COM_CurrentInfo();
-  struct init_spy *cursor;
+  struct init_spy *cursor, *next;
   LONG lCOMRefCnt;
 
   TRACE("()\n");
@@ -2042,20 +2069,24 @@ void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
   /* will only happen on OOM */
   if (!info) return;
 
-  LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
+  lock_init_spies(info);
+  LIST_FOR_EACH_ENTRY_SAFE(cursor, next, &info->spies, struct init_spy, entry)
   {
-      IInitializeSpy_PreUninitialize(cursor->spy, info->inits);
+      if (cursor->spy) IInitializeSpy_PreUninitialize(cursor->spy, info->inits);
   }
+  unlock_init_spies(info);
 
   /* sanity check */
   if (!info->inits)
   {
       ERR("Mismatched CoUninitialize\n");
 
-      LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
+      lock_init_spies(info);
+      LIST_FOR_EACH_ENTRY_SAFE(cursor, next, &info->spies, struct init_spy, entry)
       {
-          IInitializeSpy_PostUninitialize(cursor->spy, info->inits);
+          if (cursor->spy) IInitializeSpy_PostUninitialize(cursor->spy, info->inits);
       }
+      unlock_init_spies(info);
 
       return;
   }
@@ -2080,10 +2111,12 @@ void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
     InterlockedExchangeAdd(&s_COMLockCount,1); /* restore the lock count. */
   }
 
+  lock_init_spies(info);
   LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
   {
-      IInitializeSpy_PostUninitialize(cursor->spy, info->inits);
+      if (cursor->spy) IInitializeSpy_PostUninitialize(cursor->spy, info->inits);
   }
+  unlock_init_spies(info);
 }
 
 /******************************************************************************
