@@ -199,6 +199,11 @@ static inline QTSplitter *impl_from_IBaseFilter( IBaseFilter *iface )
     return CONTAINING_RECORD(iface, QTSplitter, filter.IBaseFilter_iface);
 }
 
+static inline QTInPin *impl_from_IPin(IPin *iface)
+{
+    return CONTAINING_RECORD(iface, QTInPin, pin.IPin_iface);
+}
+
 /*
  * Base Filter
  */
@@ -285,6 +290,24 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_destroy = qt_splitter_destroy,
 };
 
+static HRESULT WINAPI sink_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE *mt)
+{
+    QTInPin *pin = impl_from_IPin(&iface->IPin_iface);
+
+    if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream))
+    {
+        pin->subType = mt->subtype;
+        return S_OK;
+    }
+    return S_FALSE;
+}
+
+static const BasePinFuncTable sink_ops =
+{
+    .pfnCheckMediaType = sink_CheckMediaType,
+    .pfnGetMediaType = BasePinImpl_GetMediaType,
+};
+
 IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
 {
     QTSplitter *This;
@@ -318,6 +341,7 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
     lstrcpynW(This->pInputPin.pin.name, wcsInputPinName, ARRAY_SIZE(This->pInputPin.pin.name));
     This->pInputPin.pin.IPin_iface.lpVtbl = &QT_InputPin_Vtbl;
     This->pInputPin.pin.pConnectedTo = NULL;
+    This->pInputPin.pin.pFuncsTable = &sink_ops;
 
     SourceSeeking_Init(&This->sourceSeeking, &QT_Seeking_Vtbl, QTSplitter_ChangeStop, QTSplitter_ChangeStart, QTSplitter_ChangeRate,  &This->filter.csFilter);
 
@@ -812,11 +836,6 @@ static HRESULT QT_RemoveOutputPins(QTSplitter *This)
     return S_OK;
 }
 
-static inline QTInPin *impl_from_IPin( IPin *iface )
-{
-    return CONTAINING_RECORD(iface, QTInPin, pin.IPin_iface);
-}
-
 static HRESULT QT_Process_Video_Track(QTSplitter* filter, Track trk)
 {
     AM_MEDIA_TYPE amt;
@@ -1154,20 +1173,6 @@ static HRESULT WINAPI QTInPin_Disconnect(IPin *iface)
     return hr;
 }
 
-static HRESULT WINAPI QTInPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt)
-{
-    QTInPin *This = impl_from_IPin(iface);
-
-    TRACE("(%p)->(%p)\n", This, pmt);
-
-    if (IsEqualIID(&pmt->majortype, &MEDIATYPE_Stream))
-    {
-        This->subType = pmt->subtype;
-        return S_OK;
-    }
-    return S_FALSE;
-}
-
 static HRESULT WINAPI QTInPin_EndOfStream(IPin *iface)
 {
     FIXME("iface %p, stub!\n", iface);
@@ -1219,15 +1224,6 @@ static HRESULT WINAPI QTInPin_QueryInterface(IPin * iface, REFIID riid, LPVOID *
     return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI QTInPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **ppEnum)
-{
-    QTInPin *This = impl_from_IPin(iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
-
-    return EnumMediaTypes_Construct(&This->pin, BasePinImpl_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
-}
-
 static const IPinVtbl QT_InputPin_Vtbl = {
     QTInPin_QueryInterface,
     BasePinImpl_AddRef,
@@ -1240,8 +1236,8 @@ static const IPinVtbl QT_InputPin_Vtbl = {
     BasePinImpl_QueryPinInfo,
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
-    QTInPin_QueryAccept,
-    QTInPin_EnumMediaTypes,
+    BasePinImpl_QueryAccept,
+    BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     QTInPin_EndOfStream,
     QTInPin_BeginFlush,
