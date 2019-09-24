@@ -82,7 +82,6 @@ typedef struct IEnumMediaTypesImpl
     IEnumMediaTypes IEnumMediaTypes_iface;
     LONG refCount;
     BasePin *basePin;
-    BasePin_GetMediaType enumMediaFunction;
     ULONG count;
     ULONG uIndex;
 } IEnumMediaTypesImpl;
@@ -94,11 +93,9 @@ static inline IEnumMediaTypesImpl *impl_from_IEnumMediaTypes(IEnumMediaTypes *if
 
 static const struct IEnumMediaTypesVtbl IEnumMediaTypesImpl_Vtbl;
 
-HRESULT WINAPI EnumMediaTypes_Construct(BasePin *basePin, BasePin_GetMediaType enumFunc, IEnumMediaTypes **ppEnum)
+HRESULT enum_media_types_create(BasePin *basePin, IEnumMediaTypes **ppEnum)
 {
-    ULONG i;
     IEnumMediaTypesImpl * pEnumMediaTypes = CoTaskMemAlloc(sizeof(IEnumMediaTypesImpl));
-    AM_MEDIA_TYPE amt;
 
     *ppEnum = NULL;
 
@@ -108,18 +105,11 @@ HRESULT WINAPI EnumMediaTypes_Construct(BasePin *basePin, BasePin_GetMediaType e
     pEnumMediaTypes->IEnumMediaTypes_iface.lpVtbl = &IEnumMediaTypesImpl_Vtbl;
     pEnumMediaTypes->refCount = 1;
     pEnumMediaTypes->uIndex = 0;
-    pEnumMediaTypes->enumMediaFunction = enumFunc;
     IPin_AddRef(&basePin->IPin_iface);
     pEnumMediaTypes->basePin = basePin;
 
-    i = 0;
-    while (enumFunc(basePin, i, &amt) == S_OK)
-    {
-        FreeMediaType(&amt);
-        i++;
-    }
+    IEnumMediaTypes_Reset(&pEnumMediaTypes->IEnumMediaTypes_iface);
 
-    pEnumMediaTypes->count = i;
     *ppEnum = &pEnumMediaTypes->IEnumMediaTypes_iface;
     return S_OK;
 }
@@ -179,7 +169,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes *iface,
     for (i = 0; i < count && enummt->uIndex + i < enummt->count; i++)
     {
         if (!(mts[i] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE)))
-                || FAILED(enummt->enumMediaFunction(enummt->basePin, enummt->uIndex + i, mts[i])))
+                || FAILED(enummt->basePin->pFuncsTable->pfnGetMediaType(enummt->basePin, enummt->uIndex + i, mts[i])))
         {
             while (i--)
                 DeleteMediaType(mts[i]);
@@ -216,7 +206,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Reset(IEnumMediaTypes * iface)
     TRACE("(%p)->()\n", iface);
 
     i = 0;
-    while (This->enumMediaFunction(This->basePin, i, &amt) == S_OK)
+    while (This->basePin->pFuncsTable->pfnGetMediaType(This->basePin, i, &amt) == S_OK)
     {
         FreeMediaType(&amt);
         i++;
@@ -234,7 +224,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Clone(IEnumMediaTypes * iface, IEnumMe
 
     TRACE("(%p)->(%p)\n", iface, ppEnum);
 
-    hr = EnumMediaTypes_Construct(This->basePin, This->enumMediaFunction, ppEnum);
+    hr = enum_media_types_create(This->basePin, ppEnum);
     if (FAILED(hr))
         return hr;
     return IEnumMediaTypes_Skip(*ppEnum, This->uIndex);
