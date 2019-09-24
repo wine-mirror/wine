@@ -1161,16 +1161,14 @@ static void create_port_devices( DRIVER_OBJECT *driver )
         "/dev/cuau%u",
 #elif defined(__DragonFly__)
         "/dev/cuaa%u",
-#else
-        "",
 #endif
+        NULL
     };
     static const char *parallel_search_paths[] = {
 #ifdef linux
         "/dev/lp%u",
-#else
-        "",
 #endif
+        NULL
     };
     static const WCHAR serialcomm_keyW[] = {'H','A','R','D','W','A','R','E','\\',
                                             'D','E','V','I','C','E','M','A','P','\\',
@@ -1183,7 +1181,7 @@ static void create_port_devices( DRIVER_OBJECT *driver )
     char *dosdevices_path, *p;
     HKEY wine_ports_key = NULL, windows_ports_key = NULL;
     char unix_path[256];
-    int num_search_paths, i, j, n;
+    int i, j, n;
 
     if (!(dosdevices_path = get_dosdevices_path( &p )))
         return;
@@ -1194,7 +1192,6 @@ static void create_port_devices( DRIVER_OBJECT *driver )
         p[1] = 'o';
         p[2] = 'm';
         search_paths = serial_search_paths;
-        num_search_paths = ARRAY_SIZE(serial_search_paths);
         windows_ports_key_name = serialcomm_keyW;
     }
     else
@@ -1203,7 +1200,6 @@ static void create_port_devices( DRIVER_OBJECT *driver )
         p[1] = 'p';
         p[2] = 't';
         search_paths = parallel_search_paths;
-        num_search_paths = ARRAY_SIZE(parallel_search_paths);
         windows_ports_key_name = parallel_ports_keyW;
     }
     p += 3;
@@ -1223,7 +1219,7 @@ static void create_port_devices( DRIVER_OBJECT *driver )
 
     /* look for ports in the usual places */
     n = 1;
-    for (i = 0; i < num_search_paths; i++)
+    for (i = 0; search_paths[i]; i++)
     {
         for (j = 0; n <= MAX_PORTS; j++)
         {
