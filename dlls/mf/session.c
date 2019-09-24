@@ -768,10 +768,7 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
     struct media_session *object;
     HRESULT hr;
 
-    TRACE("(%p, %p)\n", config, session);
-
-    if (config)
-        FIXME("session configuration ignored\n");
+    TRACE("%p, %p.\n", config, session);
 
     object = heap_alloc_zero(sizeof(*object));
     if (!object)
