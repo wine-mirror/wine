@@ -2398,6 +2398,17 @@ failed:
     CoUninitialize();
 }
 
+static void test_quality_manager(void)
+{
+    IMFQualityManager *manager;
+    HRESULT hr;
+
+    hr = MFCreateStandardQualityManager(&manager);
+    ok(hr == S_OK, "Failed to create quality manager, hr %#x.\n", hr);
+
+    IMFQualityManager_Release(manager);
+}
+
 START_TEST(mf)
 {
     test_topology();
@@ -2409,4 +2420,5 @@ START_TEST(mf)
     test_presentation_clock();
     test_sample_grabber();
     test_video_processor();
+    test_quality_manager();
 }

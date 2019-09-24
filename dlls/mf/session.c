@@ -133,6 +133,12 @@ struct presentation_clock
     CRITICAL_SECTION cs;
 };
 
+struct quality_manager
+{
+    IMFQualityManager IMFQualityManager_iface;
+    LONG refcount;
+};
+
 static inline struct media_session *impl_from_IMFMediaSession(IMFMediaSession *iface)
 {
     return CONTAINING_RECORD(iface, struct media_session, IMFMediaSession_iface);
@@ -191,6 +197,11 @@ static struct presentation_clock *impl_from_IMFAsyncCallback(IMFAsyncCallback *i
 static struct sink_notification *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, struct sink_notification, IUnknown_iface);
+}
+
+static struct quality_manager *impl_from_IMFQualityManager(IMFQualityManager *iface)
+{
+    return CONTAINING_RECORD(iface, struct quality_manager, IMFQualityManager_iface);
 }
 
 static HRESULT WINAPI session_op_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
@@ -1539,6 +1550,125 @@ HRESULT WINAPI MFCreatePresentationClock(IMFPresentationClock **clock)
     InitializeCriticalSection(&object->cs);
 
     *clock = &object->IMFPresentationClock_iface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI standard_quality_manager_QueryInterface(IMFQualityManager *iface, REFIID riid, void **out)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IMFQualityManager) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = iface;
+        IMFQualityManager_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported %s.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI standard_quality_manager_AddRef(IMFQualityManager *iface)
+{
+    struct quality_manager *manager = impl_from_IMFQualityManager(iface);
+    ULONG refcount = InterlockedIncrement(&manager->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI standard_quality_manager_Release(IMFQualityManager *iface)
+{
+    struct quality_manager *manager = impl_from_IMFQualityManager(iface);
+    ULONG refcount = InterlockedDecrement(&manager->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        heap_free(manager);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI standard_quality_manager_NotifyTopology(IMFQualityManager *iface, IMFTopology *topology)
+{
+    FIXME("%p, %p stub.\n", iface, topology);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI standard_quality_manager_NotifyPresentationClock(IMFQualityManager *iface,
+        IMFPresentationClock *clock)
+{
+    FIXME("%p, %p stub.\n", iface, clock);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI standard_quality_manager_NotifyProcessInput(IMFQualityManager *iface, IMFTopologyNode *node,
+        LONG input_index, IMFSample *sample)
+{
+    FIXME("%p, %p, %d, %p stub.\n", iface, node, input_index, sample);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI standard_quality_manager_NotifyProcessOutput(IMFQualityManager *iface, IMFTopologyNode *node,
+        LONG output_index, IMFSample *sample)
+{
+    FIXME("%p, %p, %d, %p stub.\n", iface, node, output_index, sample);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI standard_quality_manager_NotifyQualityEvent(IMFQualityManager *iface, IUnknown *object,
+        IMFMediaEvent *event)
+{
+    FIXME("%p, %p, %p stub.\n", iface, object, event);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI standard_quality_manager_Shutdown(IMFQualityManager *iface)
+{
+    FIXME("%p stub.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static IMFQualityManagerVtbl standard_quality_manager_vtbl =
+{
+    standard_quality_manager_QueryInterface,
+    standard_quality_manager_AddRef,
+    standard_quality_manager_Release,
+    standard_quality_manager_NotifyTopology,
+    standard_quality_manager_NotifyPresentationClock,
+    standard_quality_manager_NotifyProcessInput,
+    standard_quality_manager_NotifyProcessOutput,
+    standard_quality_manager_NotifyQualityEvent,
+    standard_quality_manager_Shutdown,
+};
+
+HRESULT WINAPI MFCreateStandardQualityManager(IMFQualityManager **manager)
+{
+    struct quality_manager *object;
+
+    TRACE("%p.\n", manager);
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFQualityManager_iface.lpVtbl = &standard_quality_manager_vtbl;
+    object->refcount = 1;
+
+    *manager = &object->IMFQualityManager_iface;
 
     return S_OK;
 }
