@@ -199,9 +199,6 @@ void strmbase_filter_init(struct strmbase_filter *filter, const IBaseFilterVtbl 
         const CLSID *clsid, const struct strmbase_filter_ops *func_table);
 void strmbase_filter_cleanup(struct strmbase_filter *filter);
 
-/* Enums */
-HRESULT WINAPI EnumMediaTypes_Construct(BasePin *iface, BasePin_GetMediaType enumFunc, BasePin_GetMediaTypeVersion versionFunc, IEnumMediaTypes ** ppEnum);
-
 /* Transform Filter */
 typedef struct TransformFilter
 {

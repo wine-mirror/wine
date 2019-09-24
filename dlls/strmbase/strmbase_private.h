@@ -63,6 +63,8 @@ void QualityControlRender_BeginRender(QualityControlImpl *This, REFERENCE_TIME s
 void QualityControlRender_EndRender(QualityControlImpl *This);
 
 HRESULT enum_pins_create(struct strmbase_filter *filter, IEnumPins **enum_pins);
+HRESULT WINAPI EnumMediaTypes_Construct(BasePin *pin, BasePin_GetMediaType enumFunc,
+        BasePin_GetMediaTypeVersion versionFunc, IEnumMediaTypes **enum_media_types) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI RendererPosPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start);
 HRESULT WINAPI RendererPosPassThru_ResetMediaTime(IUnknown *iface);
