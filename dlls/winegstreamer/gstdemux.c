@@ -52,7 +52,7 @@ struct gstdemux
     struct strmbase_filter filter;
     IAMStreamSelect IAMStreamSelect_iface;
 
-    BasePin sink;
+    struct strmbase_pin sink;
     IAsyncReader *reader;
     IMemAllocator *alloc;
     struct gstdemux_source **ppPins;
@@ -1240,7 +1240,7 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_destroy = gstdemux_destroy,
 };
 
-static HRESULT WINAPI sink_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE *mt)
+static HRESULT WINAPI sink_CheckMediaType(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
     if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream))
         return S_OK;
@@ -1793,13 +1793,13 @@ static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **
     return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI GSTOutPin_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *amt)
+static HRESULT WINAPI GSTOutPin_CheckMediaType(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
 {
     FIXME("(%p) stub\n", base);
     return S_OK;
 }
 
-static HRESULT WINAPI GSTOutPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI GSTOutPin_GetMediaType(struct strmbase_pin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     struct gstdemux_source *This = impl_source_from_IPin(&iface->IPin_iface);
 
@@ -2304,7 +2304,7 @@ void start_dispatch_thread(void)
     CloseHandle(CreateThread(NULL, 0, &dispatch_thread, NULL, 0, NULL));
 }
 
-static HRESULT WINAPI wave_parser_sink_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE *mt)
+static HRESULT WINAPI wave_parser_sink_CheckMediaType(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
     if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream))
         return S_FALSE;
@@ -2413,7 +2413,7 @@ IUnknown * CALLBACK wave_parser_create(IUnknown *outer, HRESULT *phr)
     return &object->filter.IUnknown_inner;
 }
 
-static HRESULT WINAPI avi_splitter_sink_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE *mt)
+static HRESULT WINAPI avi_splitter_sink_CheckMediaType(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
     if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream)
             && IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_Avi))
@@ -2520,7 +2520,7 @@ IUnknown * CALLBACK avi_splitter_create(IUnknown *outer, HRESULT *phr)
     return &object->filter.IUnknown_inner;
 }
 
-static HRESULT WINAPI mpeg_splitter_sink_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE *mt)
+static HRESULT WINAPI mpeg_splitter_sink_CheckMediaType(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
     if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream))
         return S_FALSE;

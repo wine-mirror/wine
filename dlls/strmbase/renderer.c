@@ -211,7 +211,7 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_query_interface = renderer_query_interface,
 };
 
-static HRESULT WINAPI BaseRenderer_Input_CheckMediaType(BasePin *pin, const AM_MEDIA_TYPE *mt)
+static HRESULT WINAPI BaseRenderer_Input_CheckMediaType(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
 {
     BaseRenderer *filter = impl_from_IPin(&pin->IPin_iface);
     return filter->pFuncsTable->pfnCheckMediaType(filter, mt);

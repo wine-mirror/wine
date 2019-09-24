@@ -62,7 +62,7 @@ static inline AVICompressor *impl_from_IBaseFilter(IBaseFilter *iface)
     return impl_from_strmbase_filter(filter);
 }
 
-static inline AVICompressor *impl_from_BasePin(BasePin *pin)
+static inline AVICompressor *impl_from_strmbase_pin(struct strmbase_pin *pin)
 {
     return impl_from_strmbase_filter(pin->filter);
 }
@@ -315,7 +315,7 @@ static const IPersistPropertyBagVtbl PersistPropertyBagVtbl = {
 
 static inline AVICompressor *impl_from_IPin(IPin *iface)
 {
-    return impl_from_strmbase_filter(CONTAINING_RECORD(iface, BasePin, IPin_iface)->filter);
+    return impl_from_strmbase_filter(CONTAINING_RECORD(iface, struct strmbase_pin, IPin_iface)->filter);
 }
 
 static HRESULT WINAPI AVICompressorIn_QueryInterface(IPin *iface, REFIID riid, void **ppv)
@@ -379,9 +379,9 @@ static const IPinVtbl AVICompressorInputPinVtbl = {
     BaseInputPinImpl_NewSegment
 };
 
-static HRESULT WINAPI AVICompressorIn_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI AVICompressorIn_CheckMediaType(struct strmbase_pin *base, const AM_MEDIA_TYPE *pmt)
 {
-    AVICompressor *This = impl_from_BasePin(base);
+    AVICompressor *This = impl_from_strmbase_pin(base);
     VIDEOINFOHEADER *videoinfo;
     HRESULT hres;
     DWORD res;
@@ -406,7 +406,7 @@ static HRESULT WINAPI AVICompressorIn_CheckMediaType(BasePin *base, const AM_MED
     return res == ICERR_OK ? S_OK : S_FALSE;
 }
 
-static HRESULT WINAPI AVICompressorIn_GetMediaType(BasePin *base, int iPosition, AM_MEDIA_TYPE *amt)
+static HRESULT WINAPI AVICompressorIn_GetMediaType(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
 {
     TRACE("(%p)->(%d %p)\n", base, iPosition, amt);
     return S_FALSE;
@@ -414,7 +414,7 @@ static HRESULT WINAPI AVICompressorIn_GetMediaType(BasePin *base, int iPosition,
 
 static HRESULT WINAPI AVICompressorIn_Receive(BaseInputPin *base, IMediaSample *pSample)
 {
-    AVICompressor *This = impl_from_BasePin(&base->pin);
+    AVICompressor *This = impl_from_strmbase_pin(&base->pin);
     VIDEOINFOHEADER *src_videoinfo;
     REFERENCE_TIME start, stop;
     IMediaSample *out_sample;
@@ -533,7 +533,7 @@ static const IPinVtbl AVICompressorOutputPinVtbl = {
     BasePinImpl_NewSegment
 };
 
-static HRESULT WINAPI AVICompressorOut_GetMediaType(BasePin *base, int iPosition, AM_MEDIA_TYPE *amt)
+static HRESULT WINAPI AVICompressorOut_GetMediaType(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
 {
     AVICompressor *This = impl_from_strmbase_filter(base->filter);
 
@@ -557,7 +557,7 @@ static HRESULT WINAPI AVICompressorOut_GetMediaType(BasePin *base, int iPosition
 static HRESULT WINAPI AVICompressorOut_DecideBufferSize(struct strmbase_source *base,
         IMemAllocator *alloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
-    AVICompressor *This = impl_from_BasePin(&base->pin);
+    AVICompressor *This = impl_from_strmbase_pin(&base->pin);
     ALLOCATOR_PROPERTIES actual;
 
     TRACE("(%p)\n", This);

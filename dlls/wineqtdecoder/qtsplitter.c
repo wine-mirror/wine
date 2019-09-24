@@ -137,7 +137,7 @@ typedef struct QTOutPin {
 } QTOutPin;
 
 typedef struct QTInPin {
-    BasePin pin;
+    struct strmbase_pin pin;
     GUID subType;
 
     IAsyncReader *pReader;
@@ -290,7 +290,7 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_destroy = qt_splitter_destroy,
 };
 
-static HRESULT WINAPI sink_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE *mt)
+static HRESULT WINAPI sink_CheckMediaType(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
     QTInPin *pin = impl_from_IPin(&iface->IPin_iface);
 
@@ -1253,7 +1253,7 @@ static inline QTOutPin *impl_QTOutPin_from_IPin( IPin *iface )
     return CONTAINING_RECORD(iface, QTOutPin, pin.pin.IPin_iface);
 }
 
-static inline QTOutPin *impl_QTOutPin_from_BasePin( BasePin *iface )
+static inline QTOutPin *impl_sink_from_strmbase_pin(struct strmbase_pin *iface)
 {
     return CONTAINING_RECORD(iface, QTOutPin, pin.pin);
 }
@@ -1289,15 +1289,15 @@ static HRESULT WINAPI QTOutPin_QueryInterface(IPin *iface, REFIID riid, void **p
     return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI QTOutPin_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *amt)
+static HRESULT WINAPI QTOutPin_CheckMediaType(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
 {
     FIXME("(%p) stub\n", base);
     return S_OK;
 }
 
-static HRESULT WINAPI QTOutPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI QTOutPin_GetMediaType(struct strmbase_pin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
-    QTOutPin *This = impl_QTOutPin_from_BasePin(iface);
+    QTOutPin *This = impl_sink_from_strmbase_pin(iface);
 
     if (iPosition < 0)
         return E_INVALIDARG;

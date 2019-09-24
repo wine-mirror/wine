@@ -648,7 +648,7 @@ static const IBasicVideoVtbl basic_video_vtbl =
 };
 
 HRESULT WINAPI strmbase_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
-        CRITICAL_SECTION *cs, BasePin *pin, const BaseControlVideoFuncTable *func_table)
+        CRITICAL_SECTION *cs, struct strmbase_pin *pin, const BaseControlVideoFuncTable *func_table)
 {
     video->IBasicVideo_iface.lpVtbl = &basic_video_vtbl;
     video->pFilter = filter;

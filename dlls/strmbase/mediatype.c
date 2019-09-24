@@ -81,7 +81,7 @@ typedef struct IEnumMediaTypesImpl
 {
     IEnumMediaTypes IEnumMediaTypes_iface;
     LONG refCount;
-    BasePin *basePin;
+    struct strmbase_pin *basePin;
     ULONG count;
     ULONG uIndex;
 } IEnumMediaTypesImpl;
@@ -93,7 +93,7 @@ static inline IEnumMediaTypesImpl *impl_from_IEnumMediaTypes(IEnumMediaTypes *if
 
 static const struct IEnumMediaTypesVtbl IEnumMediaTypesImpl_Vtbl;
 
-HRESULT enum_media_types_create(BasePin *basePin, IEnumMediaTypes **ppEnum)
+HRESULT enum_media_types_create(struct strmbase_pin *basePin, IEnumMediaTypes **ppEnum)
 {
     IEnumMediaTypesImpl * pEnumMediaTypes = CoTaskMemAlloc(sizeof(IEnumMediaTypesImpl));
 

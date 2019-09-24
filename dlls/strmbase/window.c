@@ -195,7 +195,7 @@ BOOL WINAPI BaseControlWindowImpl_PossiblyEatMessage(BaseWindow *This, UINT uMsg
 
 HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *pControlWindow,
         const IVideoWindowVtbl *lpVtbl, struct strmbase_filter *owner,
-        CRITICAL_SECTION *lock, BasePin* pPin,const BaseWindowFuncTable *pFuncsTable)
+        CRITICAL_SECTION *lock, struct strmbase_pin *pPin, const BaseWindowFuncTable *pFuncsTable)
 {
     HRESULT hr;
 

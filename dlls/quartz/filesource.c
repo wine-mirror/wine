@@ -565,7 +565,7 @@ static inline AsyncReader *impl_from_IPin(IPin *iface)
     return CONTAINING_RECORD(iface, AsyncReader, source.pin.IPin_iface);
 }
 
-static inline AsyncReader *impl_from_BasePin(BasePin *iface)
+static inline AsyncReader *impl_from_strmbase_pin(struct strmbase_pin *iface)
 {
     return CONTAINING_RECORD(iface, AsyncReader, source.pin);
 }
@@ -580,9 +580,9 @@ static inline AsyncReader *impl_from_IAsyncReader(IAsyncReader *iface)
     return CONTAINING_RECORD(iface, AsyncReader, IAsyncReader_iface);
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI FileAsyncReaderPin_CheckMediaType(struct strmbase_pin *iface, const AM_MEDIA_TYPE *pmt)
 {
-    AsyncReader *filter = impl_from_BasePin(iface);
+    AsyncReader *filter = impl_from_strmbase_pin(iface);
 
     if (IsEqualGUID(&pmt->majortype, &filter->pmt->majortype) &&
         IsEqualGUID(&pmt->subtype, &filter->pmt->subtype))
@@ -591,9 +591,9 @@ static HRESULT WINAPI FileAsyncReaderPin_CheckMediaType(BasePin *iface, const AM
     return S_FALSE;
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_GetMediaType(BasePin *iface, int index, AM_MEDIA_TYPE *mt)
+static HRESULT WINAPI FileAsyncReaderPin_GetMediaType(struct strmbase_pin *iface, int index, AM_MEDIA_TYPE *mt)
 {
-    AsyncReader *filter = impl_from_BasePin(iface);
+    AsyncReader *filter = impl_from_strmbase_pin(iface);
 
     if (index < 0)
         return E_INVALIDARG;

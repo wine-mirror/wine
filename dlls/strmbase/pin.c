@@ -27,9 +27,9 @@ static const IMemInputPinVtbl MemInputPin_Vtbl;
 
 typedef HRESULT (*SendPinFunc)( IPin *to, LPVOID arg );
 
-static inline BasePin *impl_from_IPin( IPin *iface )
+static inline struct strmbase_pin *impl_from_IPin(IPin *iface)
 {
-    return CONTAINING_RECORD(iface, BasePin, IPin_iface);
+    return CONTAINING_RECORD(iface, struct strmbase_pin, IPin_iface);
 }
 
 /** Helper function, there are a lot of places where the error code is inherited
@@ -153,7 +153,7 @@ static BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * 
 }
 
 /*** Common Base Pin function */
-HRESULT WINAPI BasePinImpl_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+HRESULT WINAPI BasePinImpl_GetMediaType(struct strmbase_pin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     if (iPosition < 0)
         return E_INVALIDARG;
@@ -162,20 +162,20 @@ HRESULT WINAPI BasePinImpl_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_
 
 ULONG WINAPI BasePinImpl_AddRef(IPin *iface)
 {
-    BasePin *pin = impl_from_IPin(iface);
+    struct strmbase_pin *pin = impl_from_IPin(iface);
     return IBaseFilter_AddRef(&pin->filter->IBaseFilter_iface);
 }
 
 ULONG WINAPI BasePinImpl_Release(IPin *iface)
 {
-    BasePin *pin = impl_from_IPin(iface);
+    struct strmbase_pin *pin = impl_from_IPin(iface);
     return IBaseFilter_Release(&pin->filter->IBaseFilter_iface);
 }
 
 HRESULT WINAPI BasePinImpl_Disconnect(IPin * iface)
 {
+    struct strmbase_pin *This = impl_from_IPin(iface);
     HRESULT hr;
-    BasePin *This = impl_from_IPin(iface);
 
     TRACE("(%p)->()\n", This);
 
@@ -199,8 +199,8 @@ HRESULT WINAPI BasePinImpl_Disconnect(IPin * iface)
 
 HRESULT WINAPI BasePinImpl_ConnectedTo(IPin * iface, IPin ** ppPin)
 {
+    struct strmbase_pin *This = impl_from_IPin(iface);
     HRESULT hr;
-    BasePin *This = impl_from_IPin(iface);
 
     TRACE("(%p)->(%p)\n", This, ppPin);
 
@@ -225,8 +225,8 @@ HRESULT WINAPI BasePinImpl_ConnectedTo(IPin * iface, IPin ** ppPin)
 
 HRESULT WINAPI BasePinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt)
 {
+    struct strmbase_pin *This = impl_from_IPin(iface);
     HRESULT hr;
-    BasePin *This = impl_from_IPin(iface);
 
     TRACE("(%p)->(%p)\n", This, pmt);
 
@@ -250,7 +250,7 @@ HRESULT WINAPI BasePinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt
 
 HRESULT WINAPI BasePinImpl_QueryPinInfo(IPin *iface, PIN_INFO *info)
 {
-    BasePin *pin = impl_from_IPin(iface);
+    struct strmbase_pin *pin = impl_from_IPin(iface);
 
     TRACE("pin %p, info %p.\n", pin, info);
 
@@ -263,7 +263,7 @@ HRESULT WINAPI BasePinImpl_QueryPinInfo(IPin *iface, PIN_INFO *info)
 
 HRESULT WINAPI BasePinImpl_QueryDirection(IPin *iface, PIN_DIRECTION *dir)
 {
-    BasePin *pin = impl_from_IPin(iface);
+    struct strmbase_pin *pin = impl_from_IPin(iface);
 
     TRACE("pin %p, dir %p.\n", pin, dir);
 
@@ -274,7 +274,7 @@ HRESULT WINAPI BasePinImpl_QueryDirection(IPin *iface, PIN_DIRECTION *dir)
 
 HRESULT WINAPI BasePinImpl_QueryId(IPin *iface, WCHAR **id)
 {
-    BasePin *pin = impl_from_IPin(iface);
+    struct strmbase_pin *pin = impl_from_IPin(iface);
 
     TRACE("pin %p, id %p.\n", pin, id);
 
@@ -288,7 +288,7 @@ HRESULT WINAPI BasePinImpl_QueryId(IPin *iface, WCHAR **id)
 
 HRESULT WINAPI BasePinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
 {
-    BasePin *This = impl_from_IPin(iface);
+    struct strmbase_pin *This = impl_from_IPin(iface);
 
     TRACE("(%p)->(%p)\n", iface, pmt);
 
@@ -297,7 +297,7 @@ HRESULT WINAPI BasePinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
 
 HRESULT WINAPI BasePinImpl_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_media_types)
 {
-    BasePin *pin = impl_from_IPin(iface);
+    struct strmbase_pin *pin = impl_from_IPin(iface);
 
     TRACE("iface %p, enum_media_types %p.\n", iface, enum_media_types);
 
@@ -306,7 +306,7 @@ HRESULT WINAPI BasePinImpl_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_me
 
 HRESULT WINAPI BasePinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)
 {
-    BasePin *This = impl_from_IPin(iface);
+    struct strmbase_pin *This = impl_from_IPin(iface);
 
     TRACE("(%p)->(%p, %p)\n", This, apPin, cPin);
 
@@ -315,7 +315,7 @@ HRESULT WINAPI BasePinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin,
 
 HRESULT WINAPI BasePinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
 {
-    BasePin *This = impl_from_IPin(iface);
+    struct strmbase_pin *This = impl_from_IPin(iface);
 
     TRACE("(%p)->(%s, %s, %e)\n", This, wine_dbgstr_longlong(tStart), wine_dbgstr_longlong(tStop), dRate);
 

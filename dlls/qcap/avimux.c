@@ -1152,7 +1152,7 @@ static const ISpecifyPropertyPagesVtbl SpecifyPropertyPagesVtbl = {
     SpecifyPropertyPages_GetPages
 };
 
-static HRESULT WINAPI AviMuxOut_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *amt)
+static HRESULT WINAPI AviMuxOut_CheckMediaType(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
 {
     FIXME("(%p) stub\n", base);
     return S_OK;
@@ -1174,7 +1174,7 @@ static HRESULT WINAPI AviMuxOut_AttemptConnection(struct strmbase_source *base,
     return BaseOutputPinImpl_AttemptConnection(base, pReceivePin, pmt);
 }
 
-static HRESULT WINAPI AviMuxOut_GetMediaType(BasePin *base, int iPosition, AM_MEDIA_TYPE *amt)
+static HRESULT WINAPI AviMuxOut_GetMediaType(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
 {
     TRACE("(%p)->(%d %p)\n", base, iPosition, amt);
 
@@ -1372,7 +1372,7 @@ static const IQualityControlVtbl AviMuxOut_QualityControlVtbl = {
     AviMuxOut_QualityControl_SetSink
 };
 
-static HRESULT WINAPI AviMuxIn_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI AviMuxIn_CheckMediaType(struct strmbase_pin *base, const AM_MEDIA_TYPE *pmt)
 {
     if(IsEqualIID(&pmt->majortype, &MEDIATYPE_Audio) &&
             IsEqualIID(&pmt->formattype, &FORMAT_WaveFormatEx))
@@ -1387,7 +1387,7 @@ static HRESULT WINAPI AviMuxIn_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE
     return S_FALSE;
 }
 
-static HRESULT WINAPI AviMuxIn_GetMediaType(BasePin *base, int iPosition, AM_MEDIA_TYPE *amt)
+static HRESULT WINAPI AviMuxIn_GetMediaType(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
 {
     return S_FALSE;
 }
@@ -1505,15 +1505,13 @@ static const BaseInputPinFuncTable AviMuxIn_BaseInputFuncTable = {
 
 static inline AviMux* impl_from_in_IPin(IPin *iface)
 {
-    BasePin *pin = CONTAINING_RECORD(iface, BasePin, IPin_iface);
+    struct strmbase_pin *pin = CONTAINING_RECORD(iface, struct strmbase_pin, IPin_iface);
     return impl_from_strmbase_filter(pin->filter);
 }
 
 static inline AviMuxIn* AviMuxIn_from_IPin(IPin *iface)
 {
-    BasePin *bp = CONTAINING_RECORD(iface, BasePin, IPin_iface);
-    BaseInputPin *bip = CONTAINING_RECORD(bp, BaseInputPin, pin);
-    return CONTAINING_RECORD(bip, AviMuxIn, pin);
+    return CONTAINING_RECORD(iface, AviMuxIn, pin.pin.IPin_iface);
 }
 
 static HRESULT WINAPI AviMuxIn_QueryInterface(IPin *iface, REFIID riid, void **ppv)

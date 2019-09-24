@@ -45,7 +45,7 @@ static inline TransformFilter *impl_from_sink_IPin(IPin *iface)
     return CONTAINING_RECORD(iface, TransformFilter, sink.pin.IPin_iface);
 }
 
-static HRESULT WINAPI TransformFilter_Input_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI TransformFilter_Input_CheckMediaType(struct strmbase_pin *iface, const AM_MEDIA_TYPE *pmt)
 {
     TransformFilter *pTransform = impl_from_sink_IPin(&iface->IPin_iface);
 
@@ -92,7 +92,7 @@ static inline TransformFilter *impl_from_source_IPin(IPin *iface)
     return CONTAINING_RECORD(iface, TransformFilter, source.pin.IPin_iface);
 }
 
-static HRESULT WINAPI TransformFilter_Output_CheckMediaType(BasePin *This, const AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI TransformFilter_Output_CheckMediaType(struct strmbase_pin *This, const AM_MEDIA_TYPE *pmt)
 {
     TransformFilter *pTransformFilter = impl_from_source_IPin(&This->IPin_iface);
     AM_MEDIA_TYPE* outpmt = &pTransformFilter->pmt;
@@ -110,7 +110,7 @@ static HRESULT WINAPI TransformFilter_Output_DecideBufferSize(struct strmbase_so
     return pTransformFilter->pFuncsTable->pfnDecideBufferSize(pTransformFilter, pAlloc, ppropInputRequest);
 }
 
-static HRESULT WINAPI TransformFilter_Output_GetMediaType(BasePin *This, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI TransformFilter_Output_GetMediaType(struct strmbase_pin *This, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     TransformFilter *pTransform = impl_from_source_IPin(&This->IPin_iface);
 

@@ -507,20 +507,20 @@ static const IKsPropertySetVtbl IKsPropertySet_VTable =
    KSP_QuerySupported
 };
 
-static inline VfwCapture *impl_from_BasePin(BasePin *pin)
+static inline VfwCapture *impl_from_strmbase_pin(struct strmbase_pin *pin)
 {
     return CONTAINING_RECORD(pin, VfwCapture, source.pin);
 }
 
-static HRESULT WINAPI VfwPin_CheckMediaType(BasePin *pin, const AM_MEDIA_TYPE *mt)
+static HRESULT WINAPI VfwPin_CheckMediaType(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
 {
-    VfwCapture *filter = impl_from_BasePin(pin);
+    VfwCapture *filter = impl_from_strmbase_pin(pin);
     return qcap_driver_check_format(filter->driver_info, mt);
 }
 
-static HRESULT WINAPI VfwPin_GetMediaType(BasePin *pin, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI VfwPin_GetMediaType(struct strmbase_pin *pin, int iPosition, AM_MEDIA_TYPE *pmt)
 {
-    VfwCapture *filter = impl_from_BasePin(pin);
+    VfwCapture *filter = impl_from_strmbase_pin(pin);
     AM_MEDIA_TYPE *vfw_pmt;
     HRESULT hr;
 
