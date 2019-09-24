@@ -69,6 +69,7 @@ struct media_session
     IMFMediaEventQueue *event_queue;
     IMFPresentationClock *clock;
     IMFRateControl *clock_rate_control;
+    IMFTopoLoader *topo_loader;
     struct list topologies;
     enum session_state state;
     CRITICAL_SECTION cs;
@@ -329,6 +330,8 @@ static ULONG WINAPI mfsession_Release(IMFMediaSession *iface)
             IMFPresentationClock_Release(session->clock);
         if (session->clock_rate_control)
             IMFRateControl_Release(session->clock_rate_control);
+        if (session->topo_loader)
+            IMFTopoLoader_Release(session->topo_loader);
         DeleteCriticalSection(&session->cs);
         heap_free(session);
     }
@@ -790,6 +793,23 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
     {
         goto failed;
     }
+
+    if (config)
+    {
+        GUID clsid;
+
+        if (SUCCEEDED(IMFAttributes_GetGUID(config, &MF_SESSION_TOPOLOADER, &clsid)))
+        {
+            if (FAILED(hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTopoLoader,
+                    (void **)&object->topo_loader)))
+            {
+                WARN("Failed to create custom topology loader, hr %#x.\n", hr);
+            }
+        }
+    }
+
+    if (!object->topo_loader && FAILED(hr = MFCreateTopoLoader(&object->topo_loader)))
+        goto failed;
 
     *session = &object->IMFMediaSession_iface;
 

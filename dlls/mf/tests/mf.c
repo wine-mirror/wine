@@ -954,6 +954,7 @@ static void test_media_session(void)
     IMFRateControl *rate_control, *rate_control2;
     MFCLOCK_PROPERTIES clock_props;
     IMFRateSupport *rate_support;
+    IMFAttributes *attributes;
     IMFMediaSession *session;
     IMFGetService *gs;
     IMFClock *clock;
@@ -1042,6 +1043,19 @@ todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     IMFMediaSession_Release(session);
+
+    /* Custom topology loader, GUID is not registered. */
+    hr = MFCreateAttributes(&attributes, 1);
+    ok(hr == S_OK, "Failed to create attributes, hr %#x.\n", hr);
+
+    hr = IMFAttributes_SetGUID(attributes, &MF_SESSION_TOPOLOADER, &MF_SESSION_TOPOLOADER);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = MFCreateMediaSession(attributes, &session);
+    ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
+    IMFMediaSession_Release(session);
+
+    IMFAttributes_Release(attributes);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
