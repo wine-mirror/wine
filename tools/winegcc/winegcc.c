@@ -686,7 +686,7 @@ no_compat_defines:
     /* last, but not least, the files */
     for ( j = 0; j < opts->files->size; j++ )
     {
-	if (opts->files->base[j][0] != '-')
+	if (opts->files->base[j][0] != '-' || !opts->files->base[j][1]) /* not an option or bare '-' (i.e. stdin) */
 	    strarray_add(comp_args, opts->files->base[j]);
     }
 
@@ -1447,7 +1447,7 @@ int main(int argc, char **argv)
     /* parse options */
     for ( i = 1 ; i < argc ; i++ ) 
     {
-        if (argv[i][0] == '-')  /* option */
+        if (argv[i][0] == '-' && argv[i][1])  /* option, except '-' alone is stdin, which is a file */
 	{
 	    /* determine if this switch is followed by a separate argument */
 	    next_is_arg = 0;
