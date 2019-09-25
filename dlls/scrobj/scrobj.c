@@ -1013,7 +1013,7 @@ static HRESULT create_scriptlet_instance(struct scriptlet_factory *factory, IDis
     struct scriptlet_instance *obj;
     HRESULT hres;
 
-    if (!(obj = heap_alloc(sizeof(*obj)))) return E_OUTOFMEMORY;
+    if (!(obj = heap_alloc_zero(sizeof(*obj)))) return E_OUTOFMEMORY;
 
     obj->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
     obj->ref = 1;
