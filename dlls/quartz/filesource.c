@@ -580,7 +580,7 @@ static inline AsyncReader *impl_from_IAsyncReader(IAsyncReader *iface)
     return CONTAINING_RECORD(iface, AsyncReader, IAsyncReader_iface);
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_CheckMediaType(struct strmbase_pin *iface, const AM_MEDIA_TYPE *pmt)
+static HRESULT source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *pmt)
 {
     AsyncReader *filter = impl_from_strmbase_pin(iface);
 
@@ -703,13 +703,11 @@ static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(struct strmbase_source
 
 static const struct strmbase_source_ops source_ops =
 {
-    {
-        FileAsyncReaderPin_CheckMediaType,
-        FileAsyncReaderPin_GetMediaType
-    },
-    FileAsyncReaderPin_AttemptConnection,
-    FileAsyncReaderPin_DecideBufferSize,
-    BaseOutputPinImpl_DecideAllocator,
+    .base.pin_query_accept = source_query_accept,
+    .base.pfnGetMediaType = FileAsyncReaderPin_GetMediaType,
+    .pfnAttemptConnection = FileAsyncReaderPin_AttemptConnection,
+    .pfnDecideBufferSize = FileAsyncReaderPin_DecideBufferSize,
+    .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
 static HRESULT WINAPI FileAsyncReader_QueryInterface(IAsyncReader *iface, REFIID iid, void **out)

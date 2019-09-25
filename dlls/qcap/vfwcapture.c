@@ -512,7 +512,7 @@ static inline VfwCapture *impl_from_strmbase_pin(struct strmbase_pin *pin)
     return CONTAINING_RECORD(pin, VfwCapture, source.pin);
 }
 
-static HRESULT WINAPI VfwPin_CheckMediaType(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
+static HRESULT source_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
 {
     VfwCapture *filter = impl_from_strmbase_pin(pin);
     return qcap_driver_check_format(filter->driver_info, mt);
@@ -556,13 +556,11 @@ static HRESULT WINAPI VfwPin_DecideBufferSize(struct strmbase_source *iface,
 
 static const struct strmbase_source_ops source_ops =
 {
-    {
-        VfwPin_CheckMediaType,
-        VfwPin_GetMediaType
-    },
-    BaseOutputPinImpl_AttemptConnection,
-    VfwPin_DecideBufferSize,
-    BaseOutputPinImpl_DecideAllocator,
+    .base.pin_query_accept = source_query_accept,
+    .base.pfnGetMediaType = VfwPin_GetMediaType,
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideBufferSize = VfwPin_DecideBufferSize,
+    .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
 static HRESULT WINAPI VfwPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)

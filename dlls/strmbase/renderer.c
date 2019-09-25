@@ -211,7 +211,7 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_query_interface = renderer_query_interface,
 };
 
-static HRESULT WINAPI BaseRenderer_Input_CheckMediaType(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
+static HRESULT sink_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
 {
     BaseRenderer *filter = impl_from_IPin(&pin->IPin_iface);
     return filter->pFuncsTable->pfnCheckMediaType(filter, mt);
@@ -223,12 +223,11 @@ static HRESULT WINAPI BaseRenderer_Receive(BaseInputPin *pin, IMediaSample *samp
     return BaseRendererImpl_Receive(filter, sample);
 }
 
-static const BaseInputPinFuncTable input_BaseInputFuncTable = {
-    {
-        BaseRenderer_Input_CheckMediaType,
-        BasePinImpl_GetMediaType
-    },
-    BaseRenderer_Receive
+static const BaseInputPinFuncTable input_BaseInputFuncTable =
+{
+    .base.pin_query_accept = sink_query_accept,
+    .base.pfnGetMediaType = BasePinImpl_GetMediaType,
+    .pfnReceive = BaseRenderer_Receive,
 };
 
 

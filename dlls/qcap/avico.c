@@ -379,7 +379,7 @@ static const IPinVtbl AVICompressorInputPinVtbl = {
     BaseInputPinImpl_NewSegment
 };
 
-static HRESULT WINAPI AVICompressorIn_CheckMediaType(struct strmbase_pin *base, const AM_MEDIA_TYPE *pmt)
+static HRESULT sink_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *pmt)
 {
     AVICompressor *This = impl_from_strmbase_pin(base);
     VIDEOINFOHEADER *videoinfo;
@@ -499,12 +499,11 @@ static HRESULT WINAPI AVICompressorIn_Receive(BaseInputPin *base, IMediaSample *
     return hres;
 }
 
-static const BaseInputPinFuncTable AVICompressorBaseInputPinVtbl = {
-    {
-        AVICompressorIn_CheckMediaType,
-        AVICompressorIn_GetMediaType
-    },
-    AVICompressorIn_Receive
+static const BaseInputPinFuncTable AVICompressorBaseInputPinVtbl =
+{
+    .base.pin_query_accept = sink_query_accept,
+    .base.pfnGetMediaType = AVICompressorIn_GetMediaType,
+    .pfnReceive = AVICompressorIn_Receive,
 };
 
 static HRESULT WINAPI AVICompressorOut_QueryInterface(IPin *iface, REFIID riid, void **ppv)

@@ -45,7 +45,7 @@ static inline TransformFilter *impl_from_sink_IPin(IPin *iface)
     return CONTAINING_RECORD(iface, TransformFilter, sink.pin.IPin_iface);
 }
 
-static HRESULT WINAPI TransformFilter_Input_CheckMediaType(struct strmbase_pin *iface, const AM_MEDIA_TYPE *pmt)
+static HRESULT sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *pmt)
 {
     TransformFilter *pTransform = impl_from_sink_IPin(&iface->IPin_iface);
 
@@ -92,7 +92,7 @@ static inline TransformFilter *impl_from_source_IPin(IPin *iface)
     return CONTAINING_RECORD(iface, TransformFilter, source.pin.IPin_iface);
 }
 
-static HRESULT WINAPI TransformFilter_Output_CheckMediaType(struct strmbase_pin *This, const AM_MEDIA_TYPE *pmt)
+static HRESULT source_query_accept(struct strmbase_pin *This, const AM_MEDIA_TYPE *pmt)
 {
     TransformFilter *pTransformFilter = impl_from_source_IPin(&This->IPin_iface);
     AM_MEDIA_TYPE* outpmt = &pTransformFilter->pmt;
@@ -163,23 +163,20 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_destroy = transform_destroy,
 };
 
-static const BaseInputPinFuncTable tf_input_BaseInputFuncTable = {
-    {
-        TransformFilter_Input_CheckMediaType,
-        BasePinImpl_GetMediaType
-    },
-    TransformFilter_Input_Receive
+static const BaseInputPinFuncTable tf_input_BaseInputFuncTable =
+{
+    .base.pin_query_accept = sink_query_accept,
+    .base.pfnGetMediaType = BasePinImpl_GetMediaType,
+    .pfnReceive = TransformFilter_Input_Receive,
 };
 
 static const struct strmbase_source_ops source_ops =
 {
-    {
-        TransformFilter_Output_CheckMediaType,
-        TransformFilter_Output_GetMediaType
-    },
-    BaseOutputPinImpl_AttemptConnection,
-    TransformFilter_Output_DecideBufferSize,
-    BaseOutputPinImpl_DecideAllocator,
+    .base.pin_query_accept = source_query_accept,
+    .base.pfnGetMediaType = TransformFilter_Output_GetMediaType,
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideBufferSize = TransformFilter_Output_DecideBufferSize,
+    .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
 static HRESULT WINAPI TransformFilterImpl_Stop(IBaseFilter *iface)

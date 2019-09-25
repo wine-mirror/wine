@@ -42,15 +42,14 @@ struct strmbase_pin
     const struct BasePinFuncTable* pFuncsTable;
 };
 
-typedef HRESULT (WINAPI *BasePin_CheckMediaType)(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt);
 typedef LONG (WINAPI *BasePin_GetMediaTypeVersion)(struct strmbase_pin *pin);
 typedef HRESULT (WINAPI *BasePin_GetMediaType)(struct strmbase_pin *pin, int index, AM_MEDIA_TYPE *mt);
 
 typedef struct BasePinFuncTable {
-	/* Required for QueryAccept(), Connect(), ReceiveConnection(). */
-	BasePin_CheckMediaType pfnCheckMediaType;
-	/* Required for BasePinImpl_EnumMediaTypes */
-	BasePin_GetMediaType pfnGetMediaType;
+    /* Required for QueryAccept(), Connect(), ReceiveConnection(). */
+    HRESULT (*pin_query_accept)(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt);
+    /* Required for EnumMediaTypes(). */
+    BasePin_GetMediaType pfnGetMediaType;
 } BasePinFuncTable;
 
 struct strmbase_source

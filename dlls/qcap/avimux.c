@@ -1152,7 +1152,7 @@ static const ISpecifyPropertyPagesVtbl SpecifyPropertyPagesVtbl = {
     SpecifyPropertyPages_GetPages
 };
 
-static HRESULT WINAPI AviMuxOut_CheckMediaType(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
+static HRESULT source_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *amt)
 {
     FIXME("(%p) stub\n", base);
     return S_OK;
@@ -1223,13 +1223,10 @@ static HRESULT WINAPI AviMuxOut_DecideAllocator(struct strmbase_source *base,
 
 static const struct strmbase_source_ops source_ops =
 {
-    {
-        AviMuxOut_CheckMediaType,
-        AviMuxOut_GetMediaType
-    },
-    AviMuxOut_AttemptConnection,
-    NULL,
-    AviMuxOut_DecideAllocator,
+    .base.pin_query_accept = source_query_accept,
+    .base.pfnGetMediaType = AviMuxOut_GetMediaType,
+    .pfnAttemptConnection = AviMuxOut_AttemptConnection,
+    .pfnDecideAllocator = AviMuxOut_DecideAllocator,
 };
 
 static inline AviMux *impl_from_out_IPin(IPin *iface)
@@ -1372,7 +1369,7 @@ static const IQualityControlVtbl AviMuxOut_QualityControlVtbl = {
     AviMuxOut_QualityControl_SetSink
 };
 
-static HRESULT WINAPI AviMuxIn_CheckMediaType(struct strmbase_pin *base, const AM_MEDIA_TYPE *pmt)
+static HRESULT sink_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *pmt)
 {
     if(IsEqualIID(&pmt->majortype, &MEDIATYPE_Audio) &&
             IsEqualIID(&pmt->formattype, &FORMAT_WaveFormatEx))
@@ -1495,12 +1492,11 @@ static HRESULT WINAPI AviMuxIn_Receive(BaseInputPin *base, IMediaSample *pSample
     return hr;
 }
 
-static const BaseInputPinFuncTable AviMuxIn_BaseInputFuncTable = {
-    {
-        AviMuxIn_CheckMediaType,
-        AviMuxIn_GetMediaType
-    },
-    AviMuxIn_Receive
+static const BaseInputPinFuncTable AviMuxIn_BaseInputFuncTable =
+{
+    .base.pin_query_accept = sink_query_accept,
+    .base.pfnGetMediaType = AviMuxIn_GetMediaType,
+    .pfnReceive = AviMuxIn_Receive,
 };
 
 static inline AviMux* impl_from_in_IPin(IPin *iface)
