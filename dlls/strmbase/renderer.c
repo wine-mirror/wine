@@ -226,7 +226,7 @@ static HRESULT WINAPI BaseRenderer_Receive(BaseInputPin *pin, IMediaSample *samp
 static const BaseInputPinFuncTable input_BaseInputFuncTable =
 {
     .base.pin_query_accept = sink_query_accept,
-    .base.pfnGetMediaType = BasePinImpl_GetMediaType,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnReceive = BaseRenderer_Receive,
 };
 

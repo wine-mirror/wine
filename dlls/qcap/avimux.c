@@ -1174,7 +1174,7 @@ static HRESULT WINAPI AviMuxOut_AttemptConnection(struct strmbase_source *base,
     return BaseOutputPinImpl_AttemptConnection(base, pReceivePin, pmt);
 }
 
-static HRESULT WINAPI AviMuxOut_GetMediaType(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
+static HRESULT source_get_media_type(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
 {
     TRACE("(%p)->(%d %p)\n", base, iPosition, amt);
 
@@ -1224,7 +1224,7 @@ static HRESULT WINAPI AviMuxOut_DecideAllocator(struct strmbase_source *base,
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = source_query_accept,
-    .base.pfnGetMediaType = AviMuxOut_GetMediaType,
+    .base.pin_get_media_type = source_get_media_type,
     .pfnAttemptConnection = AviMuxOut_AttemptConnection,
     .pfnDecideAllocator = AviMuxOut_DecideAllocator,
 };
@@ -1384,11 +1384,6 @@ static HRESULT sink_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE 
     return S_FALSE;
 }
 
-static HRESULT WINAPI AviMuxIn_GetMediaType(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
-{
-    return S_FALSE;
-}
-
 static HRESULT WINAPI AviMuxIn_Receive(BaseInputPin *base, IMediaSample *pSample)
 {
     AviMux *avimux = impl_from_strmbase_filter(base->pin.filter);
@@ -1495,7 +1490,7 @@ static HRESULT WINAPI AviMuxIn_Receive(BaseInputPin *base, IMediaSample *pSample
 static const BaseInputPinFuncTable AviMuxIn_BaseInputFuncTable =
 {
     .base.pin_query_accept = sink_query_accept,
-    .base.pfnGetMediaType = AviMuxIn_GetMediaType,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnReceive = AviMuxIn_Receive,
 };
 

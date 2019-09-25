@@ -153,7 +153,7 @@ static BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * 
 }
 
 /*** Common Base Pin function */
-HRESULT WINAPI BasePinImpl_GetMediaType(struct strmbase_pin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+HRESULT strmbase_pin_get_media_type(struct strmbase_pin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     if (iPosition < 0)
         return E_INVALIDARG;

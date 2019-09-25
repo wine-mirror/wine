@@ -110,7 +110,7 @@ static HRESULT WINAPI TransformFilter_Output_DecideBufferSize(struct strmbase_so
     return pTransformFilter->pFuncsTable->pfnDecideBufferSize(pTransformFilter, pAlloc, ppropInputRequest);
 }
 
-static HRESULT WINAPI TransformFilter_Output_GetMediaType(struct strmbase_pin *This, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT source_get_media_type(struct strmbase_pin *This, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     TransformFilter *pTransform = impl_from_source_IPin(&This->IPin_iface);
 
@@ -166,14 +166,14 @@ static const struct strmbase_filter_ops filter_ops =
 static const BaseInputPinFuncTable tf_input_BaseInputFuncTable =
 {
     .base.pin_query_accept = sink_query_accept,
-    .base.pfnGetMediaType = BasePinImpl_GetMediaType,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnReceive = TransformFilter_Input_Receive,
 };
 
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = source_query_accept,
-    .base.pfnGetMediaType = TransformFilter_Output_GetMediaType,
+    .base.pin_get_media_type = source_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideBufferSize = TransformFilter_Output_DecideBufferSize,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,

@@ -169,7 +169,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes *iface,
     for (i = 0; i < count && enummt->uIndex + i < enummt->count; i++)
     {
         if (!(mts[i] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE)))
-                || FAILED(enummt->basePin->pFuncsTable->pfnGetMediaType(enummt->basePin, enummt->uIndex + i, mts[i])))
+                || FAILED(enummt->basePin->pFuncsTable->pin_get_media_type(enummt->basePin, enummt->uIndex + i, mts[i])))
         {
             while (i--)
                 DeleteMediaType(mts[i]);
@@ -206,7 +206,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Reset(IEnumMediaTypes * iface)
     TRACE("(%p)->()\n", iface);
 
     i = 0;
-    while (This->basePin->pFuncsTable->pfnGetMediaType(This->basePin, i, &amt) == S_OK)
+    while (This->basePin->pFuncsTable->pin_get_media_type(This->basePin, i, &amt) == S_OK)
     {
         FreeMediaType(&amt);
         i++;

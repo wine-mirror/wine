@@ -406,12 +406,6 @@ static HRESULT sink_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE 
     return res == ICERR_OK ? S_OK : S_FALSE;
 }
 
-static HRESULT WINAPI AVICompressorIn_GetMediaType(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
-{
-    TRACE("(%p)->(%d %p)\n", base, iPosition, amt);
-    return S_FALSE;
-}
-
 static HRESULT WINAPI AVICompressorIn_Receive(BaseInputPin *base, IMediaSample *pSample)
 {
     AVICompressor *This = impl_from_strmbase_pin(&base->pin);
@@ -502,7 +496,7 @@ static HRESULT WINAPI AVICompressorIn_Receive(BaseInputPin *base, IMediaSample *
 static const BaseInputPinFuncTable AVICompressorBaseInputPinVtbl =
 {
     .base.pin_query_accept = sink_query_accept,
-    .base.pfnGetMediaType = AVICompressorIn_GetMediaType,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnReceive = AVICompressorIn_Receive,
 };
 
@@ -532,7 +526,7 @@ static const IPinVtbl AVICompressorOutputPinVtbl = {
     BasePinImpl_NewSegment
 };
 
-static HRESULT WINAPI AVICompressorOut_GetMediaType(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
+static HRESULT source_get_media_type(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
 {
     AVICompressor *This = impl_from_strmbase_filter(base->filter);
 
@@ -580,13 +574,10 @@ static HRESULT WINAPI AVICompressorOut_DecideAllocator(struct strmbase_source *b
 
 static const struct strmbase_source_ops source_ops =
 {
-    {
-        NULL,
-        AVICompressorOut_GetMediaType
-    },
-    BaseOutputPinImpl_AttemptConnection,
-    AVICompressorOut_DecideBufferSize,
-    AVICompressorOut_DecideAllocator,
+    .base.pin_get_media_type = source_get_media_type,
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideBufferSize = AVICompressorOut_DecideBufferSize,
+    .pfnDecideAllocator = AVICompressorOut_DecideAllocator,
 };
 
 IUnknown* WINAPI QCAP_createAVICompressor(IUnknown *outer, HRESULT *phr)

@@ -1250,7 +1250,7 @@ static HRESULT sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE
 static const BasePinFuncTable sink_ops =
 {
     .pin_query_accept = sink_query_accept,
-    .pfnGetMediaType = BasePinImpl_GetMediaType,
+    .pin_get_media_type = strmbase_pin_get_media_type,
 };
 
 static BOOL gstdecoder_init_gst(struct gstdemux *filter)
@@ -1799,7 +1799,7 @@ static HRESULT source_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYP
     return S_OK;
 }
 
-static HRESULT WINAPI GSTOutPin_GetMediaType(struct strmbase_pin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT source_get_media_type(struct strmbase_pin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     struct gstdemux_source *This = impl_source_from_IPin(&iface->IPin_iface);
 
@@ -1907,7 +1907,7 @@ static const IPinVtbl GST_OutputPin_Vtbl = {
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = source_query_accept,
-    .base.pfnGetMediaType = GSTOutPin_GetMediaType,
+    .base.pin_get_media_type = source_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideBufferSize = GSTOutPin_DecideBufferSize,
     .pfnDecideAllocator = GSTOutPin_DecideAllocator,
@@ -2316,7 +2316,7 @@ static HRESULT wave_parser_sink_query_accept(struct strmbase_pin *iface, const A
 static const BasePinFuncTable wave_parser_sink_ops =
 {
     .pin_query_accept = wave_parser_sink_query_accept,
-    .pfnGetMediaType = BasePinImpl_GetMediaType,
+    .pin_get_media_type = strmbase_pin_get_media_type,
 };
 
 static BOOL wave_parser_init_gst(struct gstdemux *filter)
@@ -2422,7 +2422,7 @@ static HRESULT avi_splitter_sink_query_accept(struct strmbase_pin *iface, const 
 static const BasePinFuncTable avi_splitter_sink_ops =
 {
     .pin_query_accept = avi_splitter_sink_query_accept,
-    .pfnGetMediaType = BasePinImpl_GetMediaType,
+    .pin_get_media_type = strmbase_pin_get_media_type,
 };
 
 static BOOL avi_splitter_init_gst(struct gstdemux *filter)
@@ -2534,7 +2534,7 @@ static HRESULT mpeg_splitter_sink_query_accept(struct strmbase_pin *iface, const
 static const BasePinFuncTable mpeg_splitter_sink_ops =
 {
     .pin_query_accept = mpeg_splitter_sink_query_accept,
-    .pfnGetMediaType = BasePinImpl_GetMediaType,
+    .pin_get_media_type = strmbase_pin_get_media_type,
 };
 
 static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)

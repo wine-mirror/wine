@@ -518,7 +518,7 @@ static HRESULT source_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE
     return qcap_driver_check_format(filter->driver_info, mt);
 }
 
-static HRESULT WINAPI VfwPin_GetMediaType(struct strmbase_pin *pin, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT source_get_media_type(struct strmbase_pin *pin, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     VfwCapture *filter = impl_from_strmbase_pin(pin);
     AM_MEDIA_TYPE *vfw_pmt;
@@ -557,7 +557,7 @@ static HRESULT WINAPI VfwPin_DecideBufferSize(struct strmbase_source *iface,
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = source_query_accept,
-    .base.pfnGetMediaType = VfwPin_GetMediaType,
+    .base.pin_get_media_type = source_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideBufferSize = VfwPin_DecideBufferSize,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,

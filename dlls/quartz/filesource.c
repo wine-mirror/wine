@@ -591,7 +591,7 @@ static HRESULT source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TY
     return S_FALSE;
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_GetMediaType(struct strmbase_pin *iface, int index, AM_MEDIA_TYPE *mt)
+static HRESULT source_get_media_type(struct strmbase_pin *iface, int index, AM_MEDIA_TYPE *mt)
 {
     AsyncReader *filter = impl_from_strmbase_pin(iface);
 
@@ -704,7 +704,7 @@ static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(struct strmbase_source
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = source_query_accept,
-    .base.pfnGetMediaType = FileAsyncReaderPin_GetMediaType,
+    .base.pin_get_media_type = source_get_media_type,
     .pfnAttemptConnection = FileAsyncReaderPin_AttemptConnection,
     .pfnDecideBufferSize = FileAsyncReaderPin_DecideBufferSize,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
