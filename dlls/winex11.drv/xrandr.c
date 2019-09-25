@@ -662,6 +662,7 @@ static BOOL is_crtc_primary( RECT primary, const XRRCrtcInfo *crtc )
 
 static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count )
 {
+    static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
     struct x11drv_gpu *gpus = NULL;
     XRRScreenResources *screen_resources = NULL;
     XRRProviderResources *provider_resources = NULL;
@@ -680,9 +681,21 @@ static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count )
     if (!provider_resources)
         goto done;
 
-    gpus = heap_calloc( provider_resources->nproviders, sizeof(*gpus) );
+    gpus = heap_calloc( provider_resources->nproviders ? provider_resources->nproviders : 1, sizeof(*gpus) );
     if (!gpus)
         goto done;
+
+    /* Some XRandR implementations don't support providers.
+     * In this case, report a fake one to try searching adapters in screen resources */
+    if (!provider_resources->nproviders)
+    {
+        WARN("XRandR implementation doesn't report any providers, faking one.\n");
+        lstrcpyW( gpus[0].name, wine_adapterW );
+        *new_gpus = gpus;
+        *count = 1;
+        ret = TRUE;
+        goto done;
+    }
 
     primary_rect = get_primary_rect( screen_resources );
     for (i = 0; i < provider_resources->nproviders; ++i)
@@ -751,6 +764,8 @@ static BOOL xrandr14_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new
     XRRProviderInfo *provider_info = NULL;
     XRRCrtcInfo *enum_crtc_info, *crtc_info = NULL;
     XRROutputInfo *output_info = NULL;
+    RROutput *outputs;
+    INT crtc_count, output_count;
     INT primary_adapter = 0;
     INT adapter_count = 0;
     BOOL mirrored, detached;
@@ -762,19 +777,33 @@ static BOOL xrandr14_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new
     if (!screen_resources)
         goto done;
 
-    provider_info = pXRRGetProviderInfo( gdi_display, screen_resources, gpu_id );
-    if (!provider_info)
-        goto done;
+    if (gpu_id)
+    {
+        provider_info = pXRRGetProviderInfo( gdi_display, screen_resources, gpu_id );
+        if (!provider_info)
+            goto done;
+
+        crtc_count = provider_info->ncrtcs;
+        output_count = provider_info->noutputs;
+        outputs = provider_info->outputs;
+    }
+    /* Fake provider id, search adapters in screen resources */
+    else
+    {
+        crtc_count = screen_resources->ncrtc;
+        output_count = screen_resources->noutput;
+        outputs = screen_resources->outputs;
+    }
 
     /* Actual adapter count could be less */
-    adapters = heap_calloc( provider_info->ncrtcs, sizeof(*adapters) );
+    adapters = heap_calloc( crtc_count, sizeof(*adapters) );
     if (!adapters)
         goto done;
 
     primary_rect = get_primary_rect( screen_resources );
-    for (i = 0; i < provider_info->noutputs; ++i)
+    for (i = 0; i < output_count; ++i)
     {
-        output_info = pXRRGetOutputInfo( gdi_display, screen_resources, provider_info->outputs[i] );
+        output_info = pXRRGetOutputInfo( gdi_display, screen_resources, outputs[i] );
         if (!output_info)
             goto done;
 
@@ -830,7 +859,7 @@ static BOOL xrandr14_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new
         {
             /* Use RROutput as adapter id. The reason of not using RRCrtc is that we need to detect inactive but
              * attached monitors */
-            adapters[adapter_count].id = provider_info->outputs[i];
+            adapters[adapter_count].id = outputs[i];
             if (!detached)
                 adapters[adapter_count].state_flags |= DISPLAY_DEVICE_ATTACHED_TO_DESKTOP;
             if (is_crtc_primary( primary_rect, crtc_info ))
