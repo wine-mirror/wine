@@ -21,7 +21,6 @@
 #ifndef __WINE_WINE_EXCEPTION_H
 #define __WINE_WINE_EXCEPTION_H
 
-#include <setjmp.h>
 #include <windef.h>
 #include <excpt.h>
 
@@ -92,11 +91,7 @@ extern "C" {
 
 #else  /* USE_COMPILER_EXCEPTIONS */
 
-/* jmp_buf definition that should be compatible with the one in msvcrt/setjmp.h */
-
-#if defined(__MINGW32__) || defined(__WINE_SETJMP_H)
-typedef _JUMP_BUFFER __wine_jmp_buf;
-#elif defined(__i386__)
+#ifdef __i386__
 typedef struct { int reg[16]; } __wine_jmp_buf;
 #elif defined(__x86_64__)
 typedef struct { DECLSPEC_ALIGN(16) struct { unsigned __int64 Part[2]; } reg[16]; } __wine_jmp_buf;
