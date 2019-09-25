@@ -586,28 +586,6 @@ static HRESULT WINAPI VfwPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * 
     return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI
-VfwPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
-{
-    VfwCapture *filter = impl_from_IPin(iface);
-    AM_MEDIA_TYPE *pmt;
-    HRESULT hr;
-
-    hr = qcap_driver_get_format(filter->driver_info, &pmt);
-    if (SUCCEEDED(hr)) {
-        hr = BasePinImpl_EnumMediaTypes(iface, ppEnum);
-        DeleteMediaType(pmt);
-    }
-    return hr;
-}
-
-static HRESULT WINAPI
-VfwPin_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)
-{
-    TRACE("(%p)->(%p, %p)\n", iface, apPin, cPin);
-    return E_NOTIMPL;
-}
-
 static const IPinVtbl VfwPin_Vtbl =
 {
     VfwPin_QueryInterface,
@@ -622,8 +600,8 @@ static const IPinVtbl VfwPin_Vtbl =
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
     BasePinImpl_QueryAccept,
-    VfwPin_EnumMediaTypes,
-    VfwPin_QueryInternalConnections,
+    BasePinImpl_EnumMediaTypes,
+    BasePinImpl_QueryInternalConnections,
     BaseOutputPinImpl_EndOfStream,
     BaseOutputPinImpl_BeginFlush,
     BaseOutputPinImpl_EndFlush,
