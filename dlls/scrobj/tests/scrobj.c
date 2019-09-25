@@ -829,7 +829,6 @@ static void test_create_object(void)
     CHECK_CALLED(SetScriptSite);
     CHECK_CALLED(AddNamedItem_scriptlet);
     CHECK_CALLED(AddNamedItem_globals);
-    todo_wine
     CHECK_CALLED(GetScriptDispatch);
     todo_wine
     CHECK_CALLED(GetDispID_vbAddOne);
@@ -1036,7 +1035,6 @@ static void test_create_object(void)
     CHECK_CALLED(SetScriptSite);
     CHECK_CALLED(AddNamedItem_scriptlet);
     CHECK_CALLED(AddNamedItem_globals);
-    todo_wine
     CHECK_CALLED(GetScriptDispatch);
     todo_wine
     CHECK_CALLED(GetDispID_vbAddOne);
@@ -1074,7 +1072,6 @@ static void test_create_object(void)
     CHECK_CALLED(SetScriptSite);
     CHECK_CALLED(AddNamedItem_scriptlet);
     CHECK_CALLED(AddNamedItem_globals);
-    todo_wine
     CHECK_CALLED(GetScriptDispatch);
     todo_wine
     CHECK_CALLED(GetDispID_vbAddOne);

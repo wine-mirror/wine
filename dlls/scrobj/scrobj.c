@@ -139,6 +139,7 @@ struct script_host
 
     IActiveScript *active_script;
     IActiveScriptParse *parser;
+    IDispatchEx *script_dispatch;
     struct scriptlet_instance *object;
     SCRIPTSTATE state;
     BOOL cloned;
@@ -806,6 +807,11 @@ static void detach_script_hosts(struct list *hosts)
         if (host->state != SCRIPTSTATE_UNINITIALIZED) set_script_state(host, SCRIPTSTATE_UNINITIALIZED);
         list_remove(&host->entry);
         host->object = NULL;
+        if (host->script_dispatch)
+        {
+            IDispatchEx_Release(host->script_dispatch);
+            host->script_dispatch = NULL;
+        }
         if (host->parser)
         {
             IActiveScript_Close(host->active_script);
@@ -1025,6 +1031,7 @@ static HRESULT create_scriptlet_instance(struct scriptlet_factory *factory, IDis
 {
     struct script_host *factory_host, *host;
     struct scriptlet_instance *obj;
+    IDispatch *script_dispatch;
     HRESULT hres;
 
     if (!(obj = heap_alloc_zero(sizeof(*obj)))) return E_OUTOFMEMORY;
@@ -1053,6 +1060,17 @@ static HRESULT create_scriptlet_instance(struct scriptlet_factory *factory, IDis
 
         hres = IActiveScript_AddNamedItem(host->active_script, L"globals", SCRIPTITEM_ISVISIBLE);
         if (FAILED(hres)) break;
+
+        hres = IActiveScript_GetScriptDispatch(host->active_script, NULL, &script_dispatch);
+        if (FAILED(hres)) return hres;
+
+        hres = IDispatch_QueryInterface(script_dispatch, &IID_IDispatchEx, (void**)&host->script_dispatch);
+        IDispatch_Release(script_dispatch);
+        if (FAILED(hres))
+        {
+            FIXME("IDispatchEx not supported by script engine\n");
+            return hres;
+        }
     }
 
     if (SUCCEEDED(hres)) hres = parse_scripts(factory, &obj->hosts, TRUE);
