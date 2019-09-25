@@ -3876,6 +3876,35 @@ static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping
     return S_OK;
 }
 
+static const WS_XML_STRING *get_enum_value_name( const WS_ENUM_DESCRIPTION *desc, int value )
+{
+    ULONG i;
+    for (i = 0; i < desc->valueCount; i++)
+    {
+        if (desc->values[i].value == value) return desc->values[i].name;
+    }
+    return NULL;
+}
+
+static HRESULT write_type_enum( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                const WS_ENUM_DESCRIPTION *desc, WS_WRITE_OPTION option,
+                                const void *value, ULONG size )
+{
+    const WS_XML_STRING *name;
+    WS_XML_UTF8_TEXT utf8;
+    const int *ptr;
+    HRESULT hr;
+
+    if (!desc) return E_INVALIDARG;
+    if ((hr = get_value_ptr( option, value, size, sizeof(*ptr), (const void **)&ptr )) != S_OK) return hr;
+    if (!(name = get_enum_value_name( desc, *ptr ))) return E_INVALIDARG;
+
+    utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
+    utf8.value.bytes   = name->bytes;
+    utf8.value.length  = name->length;
+    return write_type_text( writer, mapping, &utf8.text );
+}
+
 static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TYPE type,
                            const void *desc, WS_WRITE_OPTION option, const void *value,
                            ULONG size )
@@ -3938,6 +3967,9 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
 
     case WS_STRUCT_TYPE:
         return write_type_struct( writer, mapping, desc, option, value, size );
+
+    case WS_ENUM_TYPE:
+        return write_type_enum( writer, mapping, desc, option, value, size );
 
     default:
         FIXME( "type %u not supported\n", type );

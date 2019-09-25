@@ -553,6 +553,11 @@ static void test_WsWriteType(void)
     WS_XML_WRITER *writer;
     WS_XML_STRING prefix = {1, (BYTE*)"p"}, localname = {3, (BYTE *)"str"}, ns = {2, (BYTE *)"ns"};
     const WCHAR *val_str;
+    enum {ONE = 1, TWO = 2};
+    WS_XML_STRING one = {3, (BYTE *)"ONE" }, two = {3, (BYTE *)"TWO"};
+    WS_ENUM_VALUE enum_values[] = {{ONE, &one}, {TWO, &two}};
+    WS_ENUM_DESCRIPTION enum_desc;
+    int val_enum;
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -636,6 +641,36 @@ static void test_WsWriteType(void)
     hr = WsWriteEndElement( writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<p:str xmlns:p=\"ns\">test</p:str>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, &prefix, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    enum_desc.values       = enum_values;
+    enum_desc.valueCount   = ARRAY_SIZE(enum_values);
+    enum_desc.maxByteCount = 3;
+    enum_desc.nameIndices  = NULL;
+
+    val_enum = 0;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_ENUM_TYPE, &enum_desc,
+                      WS_WRITE_REQUIRED_VALUE, &val_enum, sizeof(val_enum), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    val_enum = 3;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_ENUM_TYPE, &enum_desc,
+                      WS_WRITE_REQUIRED_VALUE, &val_enum, sizeof(val_enum), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    val_enum = ONE;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_ENUM_TYPE, &enum_desc,
+                      WS_WRITE_REQUIRED_VALUE, &val_enum, sizeof(val_enum), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<p:str xmlns:p=\"ns\">ONE</p:str>", __LINE__ );
 
     WsFreeWriter( writer );
 }
