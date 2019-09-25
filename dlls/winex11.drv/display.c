@@ -472,6 +472,7 @@ void X11DRV_DisplayDevices_Init(BOOL force)
     /* Initialize GPUs */
     if (!handler.pGetGpus(&gpus, &gpu_count))
         goto done;
+    TRACE("GPU count: %d\n", gpu_count);
 
     for (gpu = 0; gpu < gpu_count; gpu++)
     {
@@ -481,11 +482,13 @@ void X11DRV_DisplayDevices_Init(BOOL force)
         /* Initialize adapters */
         if (!handler.pGetAdapters(gpus[gpu].id, &adapters, &adapter_count))
             goto done;
+        TRACE("GPU: %#lx %s, adapter count: %d\n", gpus[gpu].id, wine_dbgstr_w(gpus[gpu].name), adapter_count);
 
         for (adapter = 0; adapter < adapter_count; adapter++)
         {
             if (!handler.pGetMonitors(adapters[adapter].id, &monitors, &monitor_count))
                 goto done;
+            TRACE("adapter: %#lx, monitor count: %d\n", adapters[adapter].id, monitor_count);
 
             if (!X11DRV_InitAdapter(video_hkey, video_index, gpu, adapter, monitor_count,
                                     &gpus[gpu], guidW, driverW, &adapters[adapter]))
@@ -494,6 +497,7 @@ void X11DRV_DisplayDevices_Init(BOOL force)
             /* Initialize monitors */
             for (monitor = 0; monitor < monitor_count; monitor++)
             {
+                TRACE("monitor: %#x %s\n", monitor, wine_dbgstr_w(monitors[monitor].name));
                 if (!X11DRV_InitMonitor(monitor_devinfo, &monitors[monitor], monitor, video_index))
                     goto done;
             }
