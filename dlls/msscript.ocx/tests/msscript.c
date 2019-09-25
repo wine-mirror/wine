@@ -1525,11 +1525,9 @@ static void test_IScriptControl_Eval(void)
         parse_flags = SCRIPTTEXT_ISEXPRESSION;
         script_str = a2bstr("var1 = 1 + 1");
         V_VT(&var) = VT_NULL;
-        V_I4(&var) = 0xdeadbeef;
         hr = IScriptControl_Eval(sc, script_str, &var);
         ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
-        ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
-           V_VT(&var), V_I4(&var));
+        ok(V_VT(&var) == VT_EMPTY, "V_VT(var) = %d.\n", V_VT(&var));
         SysFreeString(script_str);
         CHECK_CALLED(SetScriptState_STARTED);
         CHECK_CALLED(ParseScriptText);
@@ -1657,11 +1655,9 @@ static void test_IScriptControl_AddCode(void)
         parse_flags = SCRIPTTEXT_ISEXPRESSION;
         code_str = a2bstr("var2 = 10 + var1");
         V_VT(&var) = VT_NULL;
-        V_I4(&var) = 0xdeadbeef;
         hr = IScriptControl_Eval(sc, code_str, &var);
         ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
-        ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
-           V_VT(&var), V_I4(&var));
+        ok(V_VT(&var) == VT_EMPTY, "V_VT(var) = %d.\n", V_VT(&var));
         SysFreeString(code_str);
         CHECK_CALLED(ParseScriptText);
 
