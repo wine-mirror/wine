@@ -55,11 +55,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(scrobj);
 
 static HINSTANCE scrobj_instance;
 
+enum member_type
+{
+    MEMBER_METHOD,
+    MEMBER_PROPERTY
+};
+
+#define PROP_GETTER   0x01
+#define PROP_SETTER   0x02
+
 struct scriptlet_member
 {
     struct list entry;
+    enum member_type type;
     WCHAR *name;
-    struct list parameters;
+    union
+    {
+        struct list parameters;
+        unsigned int flags;
+    } u;
 };
 
 struct method_parameter
@@ -1223,9 +1237,13 @@ static HRESULT parse_scriptlet_registration(struct scriptlet_factory *factory)
 
 static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
 {
-    struct scriptlet_member *member;
+    struct scriptlet_member *member, *member_iter;
+    enum member_type member_type;
     XmlNodeType node_type;
+    BOOL empty;
     HRESULT hres;
+
+    TRACE("\n");
 
     if (factory->have_public)
     {
@@ -1246,29 +1264,53 @@ static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
         }
 
         if (is_xml_name(factory, L"method"))
+            member_type = MEMBER_METHOD;
+        else if (is_xml_name(factory, L"property"))
+            member_type = MEMBER_PROPERTY;
+        else
         {
-            hres = IXmlReader_MoveToAttributeByName(factory->xml_reader, L"name", NULL);
-            if (hres != S_OK)
+            FIXME("Unexpected element %s\n", debugstr_xml_name(factory));
+            return E_NOTIMPL;
+        }
+
+        empty = IXmlReader_IsEmptyElement(factory->xml_reader);
+
+        hres = IXmlReader_MoveToAttributeByName(factory->xml_reader, L"name", NULL);
+        if (hres != S_OK)
+        {
+            FIXME("Missing method name\n");
+            return E_FAIL;
+        }
+
+        if (!(member = heap_alloc(sizeof(*member)))) return E_OUTOFMEMORY;
+        member->type = member_type;
+
+        hres = read_xml_value(factory, &member->name);
+        if (FAILED(hres))
+        {
+            heap_free(member);
+            return hres;
+        }
+
+        LIST_FOR_EACH_ENTRY(member_iter, &factory->members, struct scriptlet_member, entry)
+        {
+            if (!wcsicmp(member_iter->name, member->name))
             {
-                FIXME("Missing method name\n");
+                FIXME("Duplicated member %s\n", debugstr_w(member->name));
                 return E_FAIL;
             }
+        }
+        list_add_tail(&factory->members, &member->entry);
 
-            if (!(member = heap_alloc(sizeof(*member)))) return E_OUTOFMEMORY;
+        switch (member_type)
+        {
+        case MEMBER_METHOD:
+            list_init(&member->u.parameters);
 
-            hres = read_xml_value(factory, &member->name);
-            if (FAILED(hres))
-            {
-                heap_free(member);
-                return hres;
-            }
-            list_init(&member->parameters);
-            list_add_tail(&factory->members, &member->entry);
-
+            if (empty) break;
             for (;;)
             {
                 struct method_parameter *parameter;
-                BOOL empty;
 
                 hres = next_xml_node(factory, &node_type);
                 if (FAILED(hres)) return hres;
@@ -1297,14 +1339,58 @@ static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
 
                 hres = read_xml_value(factory, &parameter->name);
                 if (FAILED(hres)) return hres;
-                list_add_tail(&member->parameters, &parameter->entry);
+                list_add_tail(&member->u.parameters, &parameter->entry);
                 if (!empty && FAILED(hres = expect_end_element(factory))) return hres;
             }
-        }
-        else
-        {
-            FIXME("Unexpected element %s\n", debugstr_xml_name(factory));
-            return E_NOTIMPL;
+            break;
+
+        case MEMBER_PROPERTY:
+            member->u.flags = 0;
+
+            if (empty) break;
+            for (;;)
+            {
+                hres = next_xml_node(factory, &node_type);
+                if (FAILED(hres)) return hres;
+                if (node_type == XmlNodeType_EndElement) break;
+                if (node_type != XmlNodeType_Element)
+                {
+                    FIXME("Unexpected node type %u\n", node_type);
+                    return E_FAIL;
+                }
+                if (is_case_xml_name(factory, L"get"))
+                {
+                    if (member->u.flags & PROP_GETTER)
+                    {
+                        FIXME("Duplicated getter\n");
+                        return E_FAIL;
+                    }
+                    member->u.flags |= PROP_GETTER;
+                }
+                else if (is_case_xml_name(factory, L"put"))
+                {
+                    if (member->u.flags & PROP_SETTER)
+                    {
+                        FIXME("Duplicated setter\n");
+                        return E_FAIL;
+                    }
+                    member->u.flags |= PROP_SETTER;
+                }
+                else
+                {
+                    FIXME("Unexpected property element %s\n", debugstr_xml_name(factory));
+                    return E_FAIL;
+                }
+
+                empty = IXmlReader_IsEmptyElement(factory->xml_reader);
+                if (!empty && FAILED(hres = expect_end_element(factory))) return hres;
+            }
+            if (!member->u.flags)
+            {
+                FIXME("No getter or setter\n");
+                return E_NOTIMPL;
+            }
+            break;
         }
         if (FAILED(hres)) return hres;
     }
@@ -1499,12 +1585,15 @@ static ULONG WINAPI scriptlet_factory_Release(IClassFactory *iface)
             struct scriptlet_member *member = LIST_ENTRY(list_head(&This->members), struct scriptlet_member, entry);
             list_remove(&member->entry);
             heap_free(member->name);
-            while (!list_empty(&member->parameters))
+            if (member->type == MEMBER_METHOD)
             {
-                struct method_parameter *parameter = LIST_ENTRY(list_head(&member->parameters), struct method_parameter, entry);
-                list_remove(&parameter->entry);
-                heap_free(parameter->name);
-                heap_free(parameter);
+                while (!list_empty(&member->u.parameters))
+                {
+                    struct method_parameter *parameter = LIST_ENTRY(list_head(&member->u.parameters), struct method_parameter, entry);
+                    list_remove(&parameter->entry);
+                    heap_free(parameter->name);
+                    heap_free(parameter);
+                }
             }
             heap_free(member);
         }
