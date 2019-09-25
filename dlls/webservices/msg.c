@@ -452,16 +452,13 @@ HRESULT WINAPI WsAddressMessage( WS_MESSAGE *handle, const WS_ENDPOINT_ADDRESS *
     }
 
     if (msg->state < WS_MESSAGE_STATE_INITIALIZED || msg->is_addressed) hr = WS_E_INVALID_OPERATION;
-    else
+    else if (addr && addr->url.length)
     {
-        if (addr && addr->url.length)
+        if (!(msg->addr.chars = heap_alloc( addr->url.length * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
+        else
         {
-            if (!(msg->addr.chars = heap_alloc( addr->url.length * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
-            else
-            {
-                memcpy( msg->addr.chars, addr->url.chars, addr->url.length * sizeof(WCHAR) );
-                msg->addr.length = addr->url.length;
-            }
+            memcpy( msg->addr.chars, addr->url.chars, addr->url.length * sizeof(WCHAR) );
+            msg->addr.length = addr->url.length;
         }
     }
     if (hr == S_OK) msg->is_addressed = TRUE;
