@@ -1023,8 +1023,10 @@ static HRESULT WINAPI ScriptControl_Eval(IScriptControl *iface, BSTR expression,
 static HRESULT WINAPI ScriptControl_ExecuteStatement(IScriptControl *iface, BSTR statement)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(statement));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(statement));
+
+    return parse_script_text(This, statement, 0, NULL);
 }
 
 static HRESULT WINAPI ScriptControl_Run(IScriptControl *iface, BSTR procedure_name, SAFEARRAY **parameters, VARIANT *res)
