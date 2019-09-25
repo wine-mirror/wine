@@ -1072,7 +1072,61 @@ static HRESULT WINAPI scriptlet_InvokeEx(IDispatchEx *iface, DISPID id, LCID lci
         VARIANT *res, EXCEPINFO *pei, IServiceProvider *caller)
 {
     struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
-    FIXME("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, pdp, res, pei, caller);
+    struct object_member *member;
+
+    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, pdp, res, pei, caller);
+
+    if (id < 1 || id > This->member_cnt)
+    {
+        WARN("Unknown id %xu\n", id);
+        return DISP_E_MEMBERNOTFOUND;
+    }
+    member = &This->members[id - 1];
+
+    switch (member->type)
+    {
+    case MEMBER_METHOD:
+        if ((flags & ~DISPATCH_PROPERTYGET) != DISPATCH_METHOD)
+        {
+            FIXME("unsupported method flags %x\n", flags);
+            return DISP_E_MEMBERNOTFOUND;
+        }
+        return IDispatchEx_InvokeEx(member->u.method.host->script_dispatch, member->u.method.id, lcid,
+                                    DISPATCH_METHOD, pdp, res, pei, caller);
+    case MEMBER_PROPERTY:
+        if (flags & DISPATCH_PROPERTYGET)
+        {
+            if (!member->u.property.get.host)
+            {
+                FIXME("No %s getter\n", debugstr_w(member->name));
+                return DISP_E_MEMBERNOTFOUND;
+            }
+            return IDispatchEx_InvokeEx(member->u.property.get.host->script_dispatch, member->u.property.get.id, lcid,
+                                        DISPATCH_METHOD, pdp, res, pei, caller);
+        }
+        if (flags & DISPATCH_PROPERTYPUT)
+        {
+            DISPPARAMS dp;
+
+            if (!member->u.property.put.host)
+            {
+                FIXME("No %s setter\n", debugstr_w(member->name));
+                return DISP_E_MEMBERNOTFOUND;
+            }
+            if (pdp->cNamedArgs != 1 || pdp->rgdispidNamedArgs[0] != DISPID_PROPERTYPUT)
+            {
+                FIXME("no propput argument\n");
+                return E_FAIL;
+            }
+            dp = *pdp;
+            dp.cNamedArgs = 0;
+            return IDispatchEx_InvokeEx(member->u.property.put.host->script_dispatch, member->u.property.put.id, lcid,
+                                        DISPATCH_METHOD, &dp, res, pei, caller);
+        }
+
+        FIXME("unsupported flags %x\n", flags);
+    }
+
     return DISP_E_MEMBERNOTFOUND;
 }
 

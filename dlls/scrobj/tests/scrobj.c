@@ -890,11 +890,8 @@ static void test_create_object(void)
     dp.cArgs = 1;
     dp.rgvarg = &v;
     hres = IDispatchEx_InvokeEx(dispex, vb_add_one_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &r, &ei, NULL);
-    todo_wine
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
-    todo_wine
     ok(V_VT(&r) == VT_I4, "V_VT(r) = %d\n", V_VT(&r));
-    todo_wine
     ok(V_I4(&r) == 3, "V_I4(r) = %d\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
@@ -905,11 +902,8 @@ static void test_create_object(void)
     dp.cArgs = 1;
     dp.rgvarg = &v;
     hres = IDispatchEx_InvokeEx(dispex, js_add_two_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &r, &ei, NULL);
-    todo_wine
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
-    todo_wine
     ok(V_VT(&r) == VT_I4, "V_VT(r) = %d\n", V_VT(&r));
-    todo_wine
     ok(V_I4(&r) == 6, "V_I4(r) = %d\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
@@ -921,13 +915,9 @@ static void test_create_object(void)
     dp.rgvarg = &v;
     SET_EXPECT(InvokeEx);
     hres = IDispatchEx_InvokeEx(dispex, wt_test_id, 0x100, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &r, &ei, (void*)0xdeadbeef);
-    todo_wine
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
-    todo_wine
     CHECK_CALLED(InvokeEx);
-    todo_wine
     ok(V_VT(&r) == VT_BOOL, "V_VT(r) = %d\n", V_VT(&r));
-    todo_wine
     ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %d\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
@@ -935,13 +925,9 @@ static void test_create_object(void)
     V_VT(&r) = VT_ERROR;
     SET_EXPECT(InvokeEx);
     hres = IDispatchEx_InvokeEx(dispex, wt_test_id, 0x100, DISPATCH_METHOD, &dp, &r, &ei, (void*)0xdeadbeef);
-    todo_wine
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
-    todo_wine
     CHECK_CALLED(InvokeEx);
-    todo_wine
     ok(V_VT(&r) == VT_BOOL, "V_VT(r) = %d\n", V_VT(&r));
-    todo_wine
     ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %d\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
@@ -953,13 +939,9 @@ static void test_create_object(void)
     dp.rgvarg = &v;
     SET_EXPECT(InvokeEx_get_gsProp);
     hres = IDispatchEx_InvokeEx(dispex, wt_gsprop_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &r, &ei, NULL);
-    todo_wine
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
-    todo_wine
     CHECK_CALLED(InvokeEx_get_gsProp);
-    todo_wine
     ok(V_VT(&r) == VT_BOOL, "V_VT(r) = %d\n", V_VT(&r));
-    todo_wine
     ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %d\n", V_I4(&r));
 
     memset(&ei, 0, sizeof(ei));
@@ -973,13 +955,9 @@ static void test_create_object(void)
     dp.cNamedArgs = 1;
     SET_EXPECT(InvokeEx_put_gsProp);
     hres = IDispatchEx_InvokeEx(dispex, wt_gsprop_id, 0, DISPATCH_PROPERTYPUT, &dp, &r, &ei, NULL);
-    todo_wine
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
-    todo_wine
     CHECK_CALLED(InvokeEx_put_gsProp);
-    todo_wine
     ok(V_VT(&r) == VT_BOOL, "V_VT(r) = %d\n", V_VT(&r));
-    todo_wine
     ok(V_BOOL(&r) == VARIANT_FALSE, "V_I4(r) = %d\n", V_I4(&r));
 
     hres = IDispatchEx_InvokeEx(dispex, wt_test_id, 0x100, DISPATCH_PROPERTYGET, &dp, &r, &ei, (void*)0xdeadbeef);
