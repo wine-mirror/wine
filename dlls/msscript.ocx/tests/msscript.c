@@ -1675,6 +1675,92 @@ static void test_IScriptControl_AddCode(void)
     }
 }
 
+static void test_IScriptControl_ExecuteStatement(void)
+{
+    IScriptControl *sc;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                          &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+    str = a2bstr("1 + 1");
+    hr = IScriptControl_ExecuteStatement(sc, str);
+    ok(hr == E_FAIL, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
+    SysFreeString(str);
+
+    hr = IScriptControl_ExecuteStatement(sc, NULL);
+    ok(hr == E_FAIL, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
+
+    str = a2bstr("jscript");
+    hr = IScriptControl_put_Language(sc, str);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    SysFreeString(str);
+
+    str = a2bstr("1 + 1");
+    hr = IScriptControl_ExecuteStatement(sc, str);
+    ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
+    SysFreeString(str);
+    todo_wine CHECK_ERROR(sc, 0);
+
+    str = a2bstr("invalid syntax");
+    hr = IScriptControl_ExecuteStatement(sc, str);
+    todo_wine ok(hr == 0x800a03ec, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
+    SysFreeString(str);
+    todo_wine CHECK_ERROR(sc, 1004);
+
+    IScriptControl_Release(sc);
+
+    /* custom script engine */
+    if (have_custom_engine)
+    {
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void**)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        str = a2bstr("testscript");
+        hr = IScriptControl_put_Language(sc, str);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        SysFreeString(str);
+
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(ParseScriptText);
+        parse_flags = 0;
+        str = a2bstr("1 + 1");
+        hr = IScriptControl_ExecuteStatement(sc, str);
+        ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
+        SysFreeString(str);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(ParseScriptText);
+
+        SET_EXPECT(ParseScriptText);
+        str = a2bstr("0x100");
+        hr = IScriptControl_ExecuteStatement(sc, str);
+        ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
+        SysFreeString(str);
+        CHECK_CALLED(ParseScriptText);
+
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+        IScriptControl_Release(sc);
+        CHECK_CALLED(Close);
+    }
+}
+
 START_TEST(msscript)
 {
     IUnknown *unk;
@@ -1710,6 +1796,7 @@ START_TEST(msscript)
     test_State();
     test_IScriptControl_Eval();
     test_IScriptControl_AddCode();
+    test_IScriptControl_ExecuteStatement();
 
     init_registry(FALSE);
 
