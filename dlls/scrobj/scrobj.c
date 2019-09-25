@@ -118,12 +118,35 @@ struct scriptlet_factory
     struct list scripts;
 };
 
+struct script_reference
+{
+    struct script_host *host;
+    DISPID id;
+};
+
+struct object_member
+{
+    enum member_type type;
+    BSTR name;
+    union
+    {
+        struct script_reference method;
+        struct
+        {
+            struct script_reference get;
+            struct script_reference put;
+        } property;
+    } u;
+};
+
 struct scriptlet_instance
 {
     IDispatchEx IDispatchEx_iface;
     LONG ref;
     struct list hosts;
     struct scriptlet_global *global;
+    unsigned member_cnt;
+    struct object_member *members;
 };
 
 struct script_host
@@ -705,6 +728,70 @@ static HRESULT parse_scripts(struct scriptlet_factory *factory, struct list *hos
     return S_OK;
 }
 
+static HRESULT lookup_script_properties(struct scriptlet_instance *object, BSTR name, struct script_reference *ret)
+{
+    struct script_host *host;
+    HRESULT hres;
+
+    LIST_FOR_EACH_ENTRY(host, &object->hosts, struct script_host, entry)
+    {
+        hres = IDispatchEx_GetDispID(host->script_dispatch, name, 0, &ret->id);
+        if (FAILED(hres)) continue;
+        ret->host = host;
+        return S_OK;
+    }
+
+    FIXME("Could not find %s in scripts\n", debugstr_w(name));
+    return E_FAIL;
+}
+
+static HRESULT lookup_object_properties(struct scriptlet_instance *object, struct scriptlet_factory *factory)
+{
+    struct scriptlet_member *member;
+    unsigned i = 0, member_cnt = 0;
+    size_t len;
+    BSTR name;
+    HRESULT hres;
+
+    LIST_FOR_EACH_ENTRY(member, &factory->members, struct scriptlet_member, entry)
+        member_cnt++;
+
+    if (!member_cnt) return S_OK;
+
+    if (!(object->members = heap_alloc_zero(member_cnt * sizeof(*object->members)))) return E_OUTOFMEMORY;
+    object->member_cnt = member_cnt;
+
+    LIST_FOR_EACH_ENTRY(member, &factory->members, struct scriptlet_member, entry)
+    {
+        object->members[i].type = member->type;
+        if (!(object->members[i].name = SysAllocString(member->name))) return E_OUTOFMEMORY;
+        switch (member->type)
+        {
+        case MEMBER_METHOD:
+            hres = lookup_script_properties(object, object->members[i].name, &object->members[i].u.method);
+            if (FAILED(hres)) return hres;
+            break;
+        case MEMBER_PROPERTY:
+            len = wcslen(member->name);
+            if (!(name = SysAllocStringLen(NULL, len + 4))) return E_OUTOFMEMORY;
+            wcscpy(name, L"get_");
+            wcscat(name, member->name);
+            hres = lookup_script_properties(object, name, &object->members[i].u.property.get);
+            if (SUCCEEDED(hres))
+            {
+                memcpy(name, L"put", 3 * sizeof(WCHAR));
+                hres = lookup_script_properties(object, name, &object->members[i].u.property.put);
+            }
+            SysFreeString(name);
+            if (FAILED(hres)) return hres;
+            break;
+        }
+        i++;
+    }
+
+    return S_OK;
+}
+
 static HRESULT init_script_host(struct script_host *host, IActiveScript *clone)
 {
     HRESULT hres;
@@ -900,6 +987,10 @@ static ULONG WINAPI scriptlet_Release(IDispatchEx *iface)
 
     if (!ref)
     {
+        unsigned i;
+        for (i = 0; i < This->member_cnt; i++)
+            SysFreeString(This->members[i].name);
+        heap_free(This->members);
         detach_script_hosts(&This->hosts);
         if (This->global) IDispatchEx_Release(&This->global->IDispatchEx_iface);
         heap_free(This);
@@ -1074,6 +1165,7 @@ static HRESULT create_scriptlet_instance(struct scriptlet_factory *factory, IDis
     }
 
     if (SUCCEEDED(hres)) hres = parse_scripts(factory, &obj->hosts, TRUE);
+    if (SUCCEEDED(hres)) hres = lookup_object_properties(obj, factory);
     if (FAILED(hres))
     {
         IDispatchEx_Release(&obj->IDispatchEx_iface);

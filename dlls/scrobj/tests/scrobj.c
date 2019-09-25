@@ -832,11 +832,8 @@ static void test_create_object(void)
     CHECK_CALLED(GetScriptDispatch);
     todo_wine
     CHECK_CALLED(GetDispID_vbAddOne);
-    todo_wine
     CHECK_CALLED(GetDispID_wtTest);
-    todo_wine
     CHECK_CALLED(GetDispID_get_gsProp);
-    todo_wine
     CHECK_CALLED(GetDispID_put_gsProp);
     CHECK_CALLED(SetScriptState_STARTED);
     CHECK_CALLED(ParseScriptText);
@@ -1038,11 +1035,8 @@ static void test_create_object(void)
     CHECK_CALLED(GetScriptDispatch);
     todo_wine
     CHECK_CALLED(GetDispID_vbAddOne);
-    todo_wine
     CHECK_CALLED(GetDispID_wtTest);
-    todo_wine
     CHECK_CALLED(GetDispID_get_gsProp);
-    todo_wine
     CHECK_CALLED(GetDispID_put_gsProp);
     CHECK_CALLED(SetScriptState_STARTED);
     CHECK_CALLED(ParseScriptText);
@@ -1075,11 +1069,8 @@ static void test_create_object(void)
     CHECK_CALLED(GetScriptDispatch);
     todo_wine
     CHECK_CALLED(GetDispID_vbAddOne);
-    todo_wine
     CHECK_CALLED(GetDispID_wtTest);
-    todo_wine
     CHECK_CALLED(GetDispID_get_gsProp);
-    todo_wine
     CHECK_CALLED(GetDispID_put_gsProp);
     CHECK_CALLED(SetScriptState_STARTED);
 
