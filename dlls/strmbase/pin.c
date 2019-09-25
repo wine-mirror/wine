@@ -295,8 +295,15 @@ HRESULT WINAPI BasePinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
 HRESULT WINAPI BasePinImpl_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_media_types)
 {
     struct strmbase_pin *pin = impl_from_IPin(iface);
+    AM_MEDIA_TYPE mt;
+    HRESULT hr;
 
     TRACE("iface %p, enum_media_types %p.\n", iface, enum_media_types);
+
+    if (FAILED(hr = pin->pFuncsTable->pin_get_media_type(pin, 0, &mt)))
+        return hr;
+    if (hr == S_OK)
+        FreeMediaType(&mt);
 
     return enum_media_types_create(pin, enum_media_types);
 }
