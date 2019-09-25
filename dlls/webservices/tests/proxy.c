@@ -361,13 +361,34 @@ static void test_WsReceiveMessage( int port )
     WsFreeMessage( msg );
 }
 
+static WS_HTTP_HEADER_MAPPING mapped_request_header =
+{
+    {19, (BYTE *)"MappedRequestHeader"}
+};
+
+static WS_HTTP_HEADER_MAPPING *request_header_mappings[] =
+{
+    &mapped_request_header
+};
+
+static WS_HTTP_HEADER_MAPPING mapped_response_header =
+{
+    {20, (BYTE *)"MappedResponseHeader"}
+};
+
+static WS_HTTP_HEADER_MAPPING *response_header_mappings[] =
+{
+    &mapped_response_header
+};
+
 static HRESULT create_proxy( int port, WS_SERVICE_PROXY **ret )
 {
     static const WCHAR fmt[] =
         {'h','t','t','p',':','/','/','1','2','7','.','0','.','0','.','1',':','%','u','/',0};
     WS_ENVELOPE_VERSION env_version;
     WS_ADDRESSING_VERSION addr_version;
-    WS_CHANNEL_PROPERTY prop[2];
+    WS_HTTP_MESSAGE_MAPPING mapping;
+    WS_CHANNEL_PROPERTY prop[3];
     WS_ENDPOINT_ADDRESS addr;
     WS_SERVICE_PROXY *proxy;
     WCHAR url[64];
@@ -383,6 +404,17 @@ static HRESULT create_proxy( int port, WS_SERVICE_PROXY **ret )
     prop[1].value     = &addr_version;
     prop[1].valueSize = sizeof(addr_version);
 
+    mapping.requestMappingOptions      = 0;
+    mapping.responseMappingOptions     = 0;
+    mapping.requestHeaderMappings      = request_header_mappings;
+    mapping.requestHeaderMappingCount  = ARRAY_SIZE(request_header_mappings);
+    mapping.responseHeaderMappings     = response_header_mappings;
+    mapping.responseHeaderMappingCount = ARRAY_SIZE(response_header_mappings);
+
+    prop[2].id        = WS_CHANNEL_PROPERTY_HTTP_MESSAGE_MAPPING;
+    prop[2].value     = &mapping;
+    prop[2].valueSize = sizeof(mapping);
+
     *ret = NULL;
     hr = WsCreateServiceProxy( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, NULL,
                                0, prop, ARRAY_SIZE( prop ), &proxy, NULL );
@@ -397,6 +429,38 @@ static HRESULT create_proxy( int port, WS_SERVICE_PROXY **ret )
     return hr;
 }
 
+static HRESULT set_output( WS_XML_WRITER *writer )
+{
+    WS_XML_WRITER_TEXT_ENCODING text = {{ WS_XML_WRITER_ENCODING_TYPE_TEXT }, WS_CHARSET_UTF8 };
+    WS_XML_WRITER_BUFFER_OUTPUT buf = {{ WS_XML_WRITER_OUTPUT_TYPE_BUFFER }};
+    return WsSetOutput( writer, &text.encoding, &buf.output, NULL, 0, NULL );
+}
+
+static void check_output_headers( WS_MESSAGE *msg )
+{
+    WS_XML_WRITER *writer;
+    WS_XML_BUFFER *buf;
+    WS_BYTES bytes;
+    HRESULT hr;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_HEADER_BUFFER, &buf, sizeof(buf), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteXmlBuffer( writer, buf, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &bytes, 0, sizeof(bytes) );
+    hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &bytes, sizeof(bytes), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    WsFreeWriter( writer );
+}
+
 static const char req_test2[] =
     "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>"
     "<req_test2 xmlns=\"ns\"><val>1</val><str>test</str><str>test2</str></req_test2>"
@@ -406,6 +470,32 @@ static const char resp_test2[] =
     "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>"
     "<resp_test2 xmlns=\"ns\"><str>test</str><val>1</val><val>2</val></resp_test2>"
     "</s:Body></s:Envelope>";
+
+static HRESULT CALLBACK send_callback( WS_MESSAGE *msg, WS_HEAP *heap, void *state, WS_ERROR *error )
+{
+    static const WS_XML_STRING header = {19, (BYTE *)"MappedRequestHeader"}, value = {5, (BYTE *)"value"};
+    HRESULT hr;
+
+    hr = WsAddMappedHeader( msg, &header, WS_XML_STRING_TYPE, WS_WRITE_REQUIRED_VALUE, &value, sizeof(value), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_headers( msg );
+    return S_OK;
+}
+
+static HRESULT CALLBACK recv_callback( WS_MESSAGE *msg, WS_HEAP *heap, void *state, WS_ERROR *error )
+{
+    static const WS_XML_STRING header = {20, (BYTE *)"MappedResponseHeader"};
+    static const WCHAR valueW[] = {'v','a','l','u','e',0};
+    WCHAR *str;
+    HRESULT hr;
+
+    check_output_headers( msg );
+    hr = WsGetMappedHeader( msg, &header, WS_SINGLETON_HEADER, 0, WS_WSZ_TYPE, WS_READ_OPTIONAL_POINTER, heap,
+                            &str, sizeof(str), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !lstrcmpW(str, valueW), "wrong value %s\n", wine_dbgstr_w(str) );
+    return S_OK;
+}
 
 static void test_WsCall( int port )
 {
@@ -421,6 +511,9 @@ static void test_WsCall( int port )
     WS_XML_STRING ns = {2, (BYTE *)"ns"};
     HRESULT hr;
     WS_SERVICE_PROXY *proxy;
+    WS_PROXY_MESSAGE_CALLBACK_CONTEXT ctx_send;
+    WS_PROXY_MESSAGE_CALLBACK_CONTEXT ctx_recv;
+    WS_CALL_PROPERTY prop[2];
     WS_OPERATION_DESCRIPTION op;
     WS_MESSAGE_DESCRIPTION input_msg, output_msg;
     WS_ELEMENT_DESCRIPTION input_elem, output_elem;
@@ -511,7 +604,21 @@ static void test_WsCall( int port )
     args[4] = &val_ptr;
     args[5] = &count_ptr;
 
-    hr = WsCall( proxy, &op, args, heap, NULL, 0, NULL, NULL );
+    ctx_send.callback = send_callback;
+    ctx_send.state    = NULL;
+
+    prop[0].id        = WS_CALL_PROPERTY_SEND_MESSAGE_CONTEXT;
+    prop[0].value     = &ctx_send;
+    prop[0].valueSize = sizeof(ctx_send);
+
+    ctx_recv.callback = recv_callback;
+    ctx_recv.state    = NULL;
+
+    prop[1].id        = WS_CALL_PROPERTY_RECEIVE_MESSAGE_CONTEXT;
+    prop[1].value     = &ctx_recv;
+    prop[1].valueSize = sizeof(ctx_recv);
+
+    hr = WsCall( proxy, &op, args, heap, prop, ARRAY_SIZE(prop), NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !lstrcmpW( out.str, testW ), "wrong data\n" );
     ok( out.count == 2, "got %u\n", out.count );
@@ -616,7 +723,7 @@ tests[] =
 static void send_response( int c, const char *status, const char *data, unsigned int len )
 {
     static const char headers[] =
-        "Content-Type: text/xml; charset=utf-8\r\nConnection: close\r\n";
+        "Content-Type: text/xml; charset=utf-8\r\nConnection: close\r\nMappedResponseHeader: value\r\n";
     static const char fmt[] =
         "Content-Length: %u\r\n\r\n";
     char buf[128];
@@ -694,10 +801,11 @@ static DWORD CALLBACK server_proc( void *arg )
                 if (tests[j].req_data)
                 {
                     int data_len = strlen( buf );
-                    ok( tests[j].req_len == data_len, "%u: unexpected data length %u %u\n",
+                    ok( tests[j].req_len == data_len, "%u: got data length %u expected %u\n",
                         j, data_len, tests[j].req_len );
                     if (tests[j].req_len == data_len)
-                        ok( !memcmp( tests[j].req_data, buf, tests[j].req_len ), "%u: unexpected data %s\n", j, buf );
+                        ok( !memcmp( tests[j].req_data, buf, tests[j].req_len ),
+                            "%u: got data '%s' expected '%s'\n", j, buf, tests[j].req_data );
                 }
                 send_response( c, tests[j].resp_status, tests[j].resp_data, tests[j].resp_len );
                 break;

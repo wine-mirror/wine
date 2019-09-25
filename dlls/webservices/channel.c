@@ -330,6 +330,26 @@ static void reset_channel( struct channel *channel )
     }
 }
 
+static void free_header_mappings( WS_HTTP_HEADER_MAPPING **mappings, ULONG count )
+{
+    ULONG i;
+    for (i = 0; i < count; i++) heap_free( mappings[i] );
+    heap_free( mappings );
+}
+
+static void free_message_mapping( const WS_HTTP_MESSAGE_MAPPING *mapping )
+{
+    free_header_mappings( mapping->requestHeaderMappings, mapping->requestHeaderMappingCount );
+    free_header_mappings( mapping->responseHeaderMappings, mapping->responseHeaderMappingCount );
+}
+
+static void free_props( struct channel *channel )
+{
+    struct prop *prop = &channel->prop[WS_CHANNEL_PROPERTY_HTTP_MESSAGE_MAPPING];
+    WS_HTTP_MESSAGE_MAPPING *mapping = (WS_HTTP_MESSAGE_MAPPING *)prop->value;
+    free_message_mapping( mapping );
+}
+
 static void free_channel( struct channel *channel )
 {
     reset_channel( channel );
@@ -338,6 +358,7 @@ static void free_channel( struct channel *channel )
     WsFreeReader( channel->reader );
 
     heap_free( channel->read_buf );
+    free_props( channel );
 
     channel->send_q.cs.DebugInfo->Spare[0] = 0;
     channel->recv_q.cs.DebugInfo->Spare[0] = 0;
@@ -346,6 +367,58 @@ static void free_channel( struct channel *channel )
     DeleteCriticalSection( &channel->recv_q.cs );
     DeleteCriticalSection( &channel->cs );
     heap_free( channel );
+}
+
+static WS_HTTP_HEADER_MAPPING *dup_header_mapping( const WS_HTTP_HEADER_MAPPING *src )
+{
+    WS_HTTP_HEADER_MAPPING *dst;
+
+    if (!(dst = heap_alloc( sizeof(*dst) + src->headerName.length ))) return NULL;
+
+    dst->headerName.bytes     = (BYTE *)(dst + 1);
+    memcpy( dst->headerName.bytes, src->headerName.bytes, src->headerName.length );
+    dst->headerName.length    = src->headerName.length;
+    dst->headerMappingOptions = src->headerMappingOptions;
+    return dst;
+}
+
+static HRESULT dup_message_mapping( const WS_HTTP_MESSAGE_MAPPING *src, WS_HTTP_MESSAGE_MAPPING *dst )
+{
+    ULONG i, size;
+
+    size = src->requestHeaderMappingCount * sizeof(*dst->responseHeaderMappings);
+    if (!(dst->requestHeaderMappings = heap_alloc( size ))) return E_OUTOFMEMORY;
+
+    for (i = 0; i < src->requestHeaderMappingCount; i++)
+    {
+        if (!(dst->requestHeaderMappings[i] = dup_header_mapping( src->requestHeaderMappings[i] )))
+        {
+            free_header_mappings( dst->requestHeaderMappings, i );
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    size = src->responseHeaderMappingCount * sizeof(*dst->responseHeaderMappings);
+    if (!(dst->responseHeaderMappings = heap_alloc( size )))
+    {
+        heap_free( dst->responseHeaderMappings );
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < src->responseHeaderMappingCount; i++)
+    {
+        if (!(dst->responseHeaderMappings[i] = dup_header_mapping( src->responseHeaderMappings[i] )))
+        {
+            free_header_mappings( dst->responseHeaderMappings, i );
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    dst->requestMappingOptions      = src->requestMappingOptions;
+    dst->responseMappingOptions     = src->responseMappingOptions;
+    dst->requestHeaderMappingCount  = src->requestHeaderMappingCount;
+    dst->responseHeaderMappingCount = src->responseHeaderMappingCount;
+    return S_OK;
 }
 
 static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
@@ -390,25 +463,47 @@ static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
 
     for (i = 0; i < count; i++)
     {
-        TRACE( "property id %u value ptr %p size %u\n", properties[i].id, properties[i].value,
-               properties[i].valueSize );
-        if (properties[i].valueSize == sizeof(ULONG) && properties[i].value)
-            TRACE( " value %08x\n", *(ULONG *)properties[i].value );
+        const WS_CHANNEL_PROPERTY *prop = &properties[i];
 
-        switch (properties[i].id)
+        TRACE( "property id %u value %p size %u\n", prop->id, prop->value, prop->valueSize );
+        if (prop->valueSize == sizeof(ULONG) && prop->value) TRACE( " value %08x\n", *(ULONG *)prop->value );
+
+        switch (prop->id)
         {
         case WS_CHANNEL_PROPERTY_ENCODING:
-            if (!properties[i].value || properties[i].valueSize != sizeof(channel->encoding))
+            if (!prop->value || prop->valueSize != sizeof(channel->encoding))
             {
                 free_channel( channel );
                 return E_INVALIDARG;
             }
-            channel->encoding = *(WS_ENCODING *)properties[i].value;
+            channel->encoding = *(WS_ENCODING *)prop->value;
             break;
 
+        case WS_CHANNEL_PROPERTY_HTTP_MESSAGE_MAPPING:
+        {
+            const WS_HTTP_MESSAGE_MAPPING *src = (WS_HTTP_MESSAGE_MAPPING *)prop->value;
+            WS_HTTP_MESSAGE_MAPPING dst;
+
+            if (!prop->value || prop->valueSize != sizeof(*src))
+            {
+                free_channel( channel );
+                return E_INVALIDARG;
+            }
+
+            if ((hr = dup_message_mapping( src, &dst )) != S_OK) return hr;
+
+            if ((hr = prop_set( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_HTTP_MESSAGE_MAPPING, &dst,
+                                sizeof(dst) )) != S_OK)
+            {
+                free_message_mapping( &dst );
+                free_channel( channel );
+                return hr;
+            }
+            break;
+
+        }
         default:
-            if ((hr = prop_set( channel->prop, channel->prop_count, properties[i].id, properties[i].value,
-                                properties[i].valueSize )) != S_OK)
+            if ((hr = prop_set( channel->prop, channel->prop_count, prop->id, prop->value, prop->valueSize )) != S_OK)
             {
                 free_channel( channel );
                 return hr;
@@ -1517,12 +1612,26 @@ static HRESULT init_reader( struct channel *channel )
     return WsSetInput( channel->reader, encoding, input, NULL, 0, NULL );
 }
 
+static const WS_HTTP_MESSAGE_MAPPING *get_http_message_mapping( struct channel *channel )
+{
+    const struct prop *prop = &channel->prop[WS_CHANNEL_PROPERTY_HTTP_MESSAGE_MAPPING];
+    return (const WS_HTTP_MESSAGE_MAPPING *)prop->value;
+}
+
+static HRESULT map_http_response_headers( struct channel *channel, WS_MESSAGE *msg )
+{
+    const WS_HTTP_MESSAGE_MAPPING *mapping = get_http_message_mapping( channel );
+    return message_map_http_response_headers( msg, channel->u.http.request, mapping );
+}
+
 #define INITIAL_READ_BUFFER_SIZE 4096
-static HRESULT receive_message_http( struct channel *channel )
+static HRESULT receive_message_http( struct channel *channel, WS_MESSAGE *msg )
 {
     DWORD len, bytes_read, offset = 0, size = INITIAL_READ_BUFFER_SIZE;
     ULONG max_len;
     HRESULT hr;
+
+    if ((hr = map_http_response_headers( channel, msg )) != S_OK) return hr;
 
     prop_get( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE,
               &max_len, sizeof(max_len) );
@@ -1814,7 +1923,7 @@ static HRESULT receive_message_session( struct channel *channel )
     return S_OK;
 }
 
-static HRESULT receive_message_bytes( struct channel *channel )
+static HRESULT receive_message_bytes( struct channel *channel, WS_MESSAGE *msg )
 {
     HRESULT hr;
     if ((hr = connect_channel( channel )) != S_OK) return hr;
@@ -1822,7 +1931,7 @@ static HRESULT receive_message_bytes( struct channel *channel )
     switch (channel->binding)
     {
     case WS_HTTP_CHANNEL_BINDING:
-        return receive_message_http( channel );
+        return receive_message_http( channel, msg );
 
     case WS_TCP_CHANNEL_BINDING:
         if (channel->type & WS_CHANNEL_TYPE_SESSION)
@@ -1853,7 +1962,7 @@ static HRESULT receive_message_bytes( struct channel *channel )
     }
 }
 
-HRESULT channel_receive_message( WS_CHANNEL *handle )
+HRESULT channel_receive_message( WS_CHANNEL *handle, WS_MESSAGE *msg )
 {
     struct channel *channel = (struct channel *)handle;
     HRESULT hr;
@@ -1866,7 +1975,7 @@ HRESULT channel_receive_message( WS_CHANNEL *handle )
         return E_INVALIDARG;
     }
 
-    if ((hr = receive_message_bytes( channel )) == S_OK) hr = init_reader( channel );
+    if ((hr = receive_message_bytes( channel, msg )) == S_OK) hr = init_reader( channel );
 
     LeaveCriticalSection( &channel->cs );
     return hr;
@@ -1906,7 +2015,7 @@ static HRESULT receive_message( struct channel *channel, WS_MESSAGE *msg, const 
     HRESULT hr;
     ULONG i;
 
-    if ((hr = receive_message_bytes( channel )) != S_OK) return hr;
+    if ((hr = receive_message_bytes( channel, msg )) != S_OK) return hr;
     if ((hr = init_reader( channel )) != S_OK) return hr;
 
     for (i = 0; i < count; i++)
@@ -2148,7 +2257,7 @@ HRESULT WINAPI WsReadMessageStart( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
         return E_INVALIDARG;
     }
 
-    if ((hr = receive_message_bytes( channel )) == S_OK)
+    if ((hr = receive_message_bytes( channel, msg )) == S_OK)
     {
         if ((hr = init_reader( channel )) == S_OK)
             hr = WsReadEnvelopeStart( msg, channel->reader, NULL, NULL, NULL );

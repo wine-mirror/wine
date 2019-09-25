@@ -70,7 +70,7 @@
 @ stub WsGetHeaderAttributes
 @ stdcall WsGetHeapProperty(ptr long ptr long ptr)
 @ stdcall WsGetListenerProperty(ptr long ptr long ptr)
-@ stub WsGetMappedHeader
+@ stdcall WsGetMappedHeader(ptr ptr long long long long ptr ptr long ptr)
 @ stdcall WsGetMessageProperty(ptr long ptr long ptr)
 @ stub WsGetMetadataEndpoints
 @ stub WsGetMetadataProperty

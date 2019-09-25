@@ -455,7 +455,7 @@ static HRESULT receive_message( WS_CHANNEL *channel, WS_MESSAGE *msg, WS_MESSAGE
     HRESULT hr;
 
     if ((hr = message_set_action( msg, desc->action )) != S_OK) return hr;
-    if ((hr = channel_receive_message( channel )) != S_OK) return hr;
+    if ((hr = channel_receive_message( channel, msg )) != S_OK) return hr;
     if ((hr = channel_get_reader( channel, &reader )) != S_OK) return hr;
     return read_message( msg, reader, heap, desc->bodyElementDescription, params, count, args );
 }
