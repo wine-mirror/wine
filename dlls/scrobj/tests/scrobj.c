@@ -106,9 +106,15 @@ DEFINE_EXPECT(Clone);
 DEFINE_EXPECT(GetScriptDispatch);
 DEFINE_EXPECT(GetDispID_vbAddOne);
 DEFINE_EXPECT(GetDispID_wtTest);
+DEFINE_EXPECT(GetDispID_get_gsProp);
+DEFINE_EXPECT(GetDispID_put_gsProp);
 DEFINE_EXPECT(InvokeEx);
+DEFINE_EXPECT(InvokeEx_get_gsProp);
+DEFINE_EXPECT(InvokeEx_put_gsProp);
 
-#define DISPID_WTTEST 100
+#define DISPID_WTTEST      100
+#define DISPID_GET_GSPROP  101
+#define DISPID_PUT_GSPROP  102
 
 static DWORD parse_flags;
 static BOOL support_clone;
@@ -182,6 +188,20 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR name, DWORD 
         *pid = DISPID_WTTEST;
         return S_OK;
     }
+    if (!wcscmp(name, L"get_gsProp"))
+    {
+        CHECK_EXPECT(GetDispID_get_gsProp);
+        ok(!grfdex, "grfdex = %x\n", grfdex);
+        *pid = DISPID_GET_GSPROP;
+        return S_OK;
+    }
+    if (!wcscmp(name, L"put_gsProp"))
+    {
+        CHECK_EXPECT(GetDispID_put_gsProp);
+        ok(!grfdex, "grfdex = %x\n", grfdex);
+        *pid = DISPID_PUT_GSPROP;
+        return S_OK;
+    }
     ok(0, "unexpected name %s\n", wine_dbgstr_w(name));
     return DISP_E_UNKNOWNNAME;
 }
@@ -189,14 +209,35 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR name, DWORD 
 static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *pdp,
         VARIANT *res, EXCEPINFO *pei, IServiceProvider *caller)
 {
-    CHECK_EXPECT(InvokeEx);
-    ok(id == DISPID_WTTEST, "id = %u\n", id);
-    ok(lcid == 0x100, "lcid = %x\n", lcid);
-    ok(flags == DISPATCH_METHOD, "flags = %x\n", flags);
-    ok(caller == (void*)0xdeadbeef, "called = %p\n", caller);
-    V_VT(res) = VT_BOOL;
-    V_BOOL(res) = VARIANT_TRUE;
-    return S_OK;
+    switch (id)
+    {
+    case DISPID_WTTEST:
+        CHECK_EXPECT(InvokeEx);
+        ok(lcid == 0x100, "lcid = %x\n", lcid);
+        ok(flags == DISPATCH_METHOD, "flags = %x\n", flags);
+        ok(caller == (void*)0xdeadbeef, "called = %p\n", caller);
+        V_VT(res) = VT_BOOL;
+        V_BOOL(res) = VARIANT_TRUE;
+        return S_OK;
+    case DISPID_GET_GSPROP:
+        CHECK_EXPECT(InvokeEx_get_gsProp);
+        ok(flags == DISPATCH_METHOD, "flags = %x\n", flags);
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        V_VT(res) = VT_BOOL;
+        V_BOOL(res) = VARIANT_TRUE;
+        return S_OK;
+    case DISPID_PUT_GSPROP:
+        CHECK_EXPECT(InvokeEx_put_gsProp);
+        ok(flags == DISPATCH_METHOD, "flags = %x\n", flags);
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(pdp->cNamedArgs == 0, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        V_VT(res) = VT_BOOL;
+        V_BOOL(res) = VARIANT_FALSE;
+        return S_OK;
+    }
+
+    ok(0, "unexpected id %u\n", id);
+    return E_FAIL;
 }
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR name, DWORD grfdex)
@@ -530,6 +571,8 @@ static HRESULT WINAPI ActiveScript_Clone(IActiveScript *iface, IActiveScript **p
     SET_EXPECT(GetScriptDispatch);
     SET_EXPECT(GetDispID_vbAddOne);
     SET_EXPECT(GetDispID_wtTest);
+    SET_EXPECT(GetDispID_get_gsProp);
+    SET_EXPECT(GetDispID_put_gsProp);
     SET_EXPECT(SetScriptState_STARTED);
     SET_EXPECT(ParseScriptText);
 
@@ -746,7 +789,8 @@ static void register_script_object(BOOL do_register, const WCHAR *file_name)
 
 static void test_create_object(void)
 {
-    DISPID vb_add_one_id, js_add_two_id, wt_test_id, id;
+    DISPID vb_add_one_id, js_add_two_id, wt_test_id, wt_gsprop_id, id;
+    DISPID id_propput = DISPID_PROPERTYPUT;
     IDispatchEx *dispex;
     IClassFactory *cf;
     IDispatch *disp;
@@ -791,6 +835,10 @@ static void test_create_object(void)
     CHECK_CALLED(GetDispID_vbAddOne);
     todo_wine
     CHECK_CALLED(GetDispID_wtTest);
+    todo_wine
+    CHECK_CALLED(GetDispID_get_gsProp);
+    todo_wine
+    CHECK_CALLED(GetDispID_put_gsProp);
     CHECK_CALLED(SetScriptState_STARTED);
     CHECK_CALLED(ParseScriptText);
 
@@ -816,6 +864,12 @@ static void test_create_object(void)
 
     str = SysAllocString(L"wtTest");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &wt_test_id);
+    todo_wine
+    ok(hres == S_OK, "Could not get wtTest id: %08x\n", hres);
+    SysFreeString(str);
+
+    str = SysAllocString(L"gsProp");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &wt_gsprop_id);
     todo_wine
     ok(hres == S_OK, "Could not get wtTest id: %08x\n", hres);
     SysFreeString(str);
@@ -902,6 +956,44 @@ static void test_create_object(void)
     todo_wine
     ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %d\n", V_I4(&r));
 
+    memset(&ei, 0, sizeof(ei));
+    memset(&dp, 0, sizeof(dp));
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 4;
+    V_VT(&r) = VT_ERROR;
+    dp.cArgs = 1;
+    dp.rgvarg = &v;
+    SET_EXPECT(InvokeEx_get_gsProp);
+    hres = IDispatchEx_InvokeEx(dispex, wt_gsprop_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &r, &ei, NULL);
+    todo_wine
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    todo_wine
+    CHECK_CALLED(InvokeEx_get_gsProp);
+    todo_wine
+    ok(V_VT(&r) == VT_BOOL, "V_VT(r) = %d\n", V_VT(&r));
+    todo_wine
+    ok(V_BOOL(&r) == VARIANT_TRUE, "V_I4(r) = %d\n", V_I4(&r));
+
+    memset(&ei, 0, sizeof(ei));
+    memset(&dp, 0, sizeof(dp));
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 4;
+    V_VT(&r) = VT_ERROR;
+    dp.cArgs = 1;
+    dp.rgdispidNamedArgs = &id_propput;
+    dp.rgvarg = &v;
+    dp.cNamedArgs = 1;
+    SET_EXPECT(InvokeEx_put_gsProp);
+    hres = IDispatchEx_InvokeEx(dispex, wt_gsprop_id, 0, DISPATCH_PROPERTYPUT, &dp, &r, &ei, NULL);
+    todo_wine
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    todo_wine
+    CHECK_CALLED(InvokeEx_put_gsProp);
+    todo_wine
+    ok(V_VT(&r) == VT_BOOL, "V_VT(r) = %d\n", V_VT(&r));
+    todo_wine
+    ok(V_BOOL(&r) == VARIANT_FALSE, "V_I4(r) = %d\n", V_I4(&r));
+
     hres = IDispatchEx_InvokeEx(dispex, wt_test_id, 0x100, DISPATCH_PROPERTYGET, &dp, &r, &ei, (void*)0xdeadbeef);
     ok(hres == DISP_E_MEMBERNOTFOUND, "InvokeEx returned: %08x\n", hres);
 
@@ -914,7 +1006,6 @@ static void test_create_object(void)
     IDispatchEx_Release(dispex);
 
     SET_EXPECT(SetScriptState_UNINITIALIZED);
-    todo_wine
     SET_EXPECT(Close);
     IUnknown_Release(unk);
     CHECK_CALLED(SetScriptState_UNINITIALIZED);
@@ -932,6 +1023,8 @@ static void test_create_object(void)
     SET_EXPECT(GetScriptDispatch);
     SET_EXPECT(GetDispID_vbAddOne);
     SET_EXPECT(GetDispID_wtTest);
+    SET_EXPECT(GetDispID_get_gsProp);
+    SET_EXPECT(GetDispID_put_gsProp);
     SET_EXPECT(SetScriptState_STARTED);
     SET_EXPECT(ParseScriptText);
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&unk);
@@ -949,6 +1042,10 @@ static void test_create_object(void)
     CHECK_CALLED(GetDispID_vbAddOne);
     todo_wine
     CHECK_CALLED(GetDispID_wtTest);
+    todo_wine
+    CHECK_CALLED(GetDispID_get_gsProp);
+    todo_wine
+    CHECK_CALLED(GetDispID_put_gsProp);
     CHECK_CALLED(SetScriptState_STARTED);
     CHECK_CALLED(ParseScriptText);
 
@@ -967,6 +1064,8 @@ static void test_create_object(void)
     SET_EXPECT(GetScriptDispatch);
     SET_EXPECT(GetDispID_vbAddOne);
     SET_EXPECT(GetDispID_wtTest);
+    SET_EXPECT(GetDispID_get_gsProp);
+    SET_EXPECT(GetDispID_put_gsProp);
     SET_EXPECT(SetScriptState_STARTED);
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "Could not create scriptlet instance: %08x\n", hres);
@@ -981,6 +1080,10 @@ static void test_create_object(void)
     CHECK_CALLED(GetDispID_vbAddOne);
     todo_wine
     CHECK_CALLED(GetDispID_wtTest);
+    todo_wine
+    CHECK_CALLED(GetDispID_get_gsProp);
+    todo_wine
+    CHECK_CALLED(GetDispID_put_gsProp);
     CHECK_CALLED(SetScriptState_STARTED);
 
     SET_EXPECT(SetScriptState_UNINITIALIZED);

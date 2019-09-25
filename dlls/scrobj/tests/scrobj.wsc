@@ -6,12 +6,14 @@
     <method name="vbAddOne">
       <PARAMETER name="n"></PARAMETER>
     </method>
-    <method name="jsAddTwo">
-      <Parameter name="n"/>
-    </method>
+    <method name="jsAddTwo" />
     <method name="wtTest">
       <Parameter name="i"/>
     </method>
+    <property name="gsProp">
+      <get />
+      <put> </put>
+    </property>
   </public>
   <script language="VBScript">
   <![CDATA[
