@@ -465,31 +465,7 @@ static void rpcrt4_conn_np_cancel_call(RpcConnection *conn)
 
 static int rpcrt4_conn_np_wait_for_incoming_data(RpcConnection *conn)
 {
-    RpcConnection_np *connection = (RpcConnection_np *)conn;
-    FILE_PIPE_PEEK_BUFFER buf;
-    HANDLE event;
-    NTSTATUS status;
-    int ret;
-
-    event = get_np_event(connection);
-    if (!event) return -1;
-
-    status = NtFsControlFile(connection->pipe, event, NULL, NULL, &connection->io_status, FSCTL_PIPE_PEEK, NULL, 0, &buf, sizeof(buf));
-    if (status == STATUS_SUCCESS)
-        ret = 0;
-    else if (status == STATUS_PENDING)
-    {
-        WaitForSingleObject(event, INFINITE);
-        ret = 0;
-    }
-    else
-    {
-        WARN("NtFsControlFile error %08x\n", status);
-        ret = -1;
-    }
-
-    release_np_event(connection, event);
-    return ret;
+    return rpcrt4_conn_np_read(conn, NULL, 0);
 }
 
 static size_t rpcrt4_ncacn_np_get_top_of_tower(unsigned char *tower_data,
