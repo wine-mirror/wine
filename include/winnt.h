@@ -5607,7 +5607,8 @@ typedef struct {
 	BOOLEAN BatteryPresent;
 	BOOLEAN Charging;
 	BOOLEAN Discharging;
-	BOOLEAN Spare1[4];
+	BOOLEAN Spare1[3];
+	BYTE Tag;
 	ULONG MaxCapacity;
 	ULONG RemainingCapacity;
 	ULONG Rate;
