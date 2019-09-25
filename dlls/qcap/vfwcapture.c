@@ -518,14 +518,13 @@ static HRESULT source_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE
     return qcap_driver_check_format(filter->driver_info, mt);
 }
 
-static HRESULT source_get_media_type(struct strmbase_pin *pin, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT source_get_media_type(struct strmbase_pin *pin,
+        unsigned int iPosition, AM_MEDIA_TYPE *pmt)
 {
     VfwCapture *filter = impl_from_strmbase_pin(pin);
     AM_MEDIA_TYPE *vfw_pmt;
     HRESULT hr;
 
-    if (iPosition < 0)
-        return E_INVALIDARG;
     if (iPosition > 0)
         return VFW_S_NO_MORE_ITEMS;
 

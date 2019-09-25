@@ -1174,12 +1174,10 @@ static HRESULT WINAPI AviMuxOut_AttemptConnection(struct strmbase_source *base,
     return BaseOutputPinImpl_AttemptConnection(base, pReceivePin, pmt);
 }
 
-static HRESULT source_get_media_type(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
+static HRESULT source_get_media_type(struct strmbase_pin *base, unsigned int iPosition, AM_MEDIA_TYPE *amt)
 {
     TRACE("(%p)->(%d %p)\n", base, iPosition, amt);
 
-    if(iPosition < 0)
-        return E_INVALIDARG;
     if(iPosition > 0)
         return VFW_S_NO_MORE_ITEMS;
 

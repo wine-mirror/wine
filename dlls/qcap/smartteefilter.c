@@ -179,7 +179,8 @@ static HRESULT sink_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE 
     return S_OK;
 }
 
-static HRESULT sink_get_media_type(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
+static HRESULT sink_get_media_type(struct strmbase_pin *base,
+        unsigned int iPosition, AM_MEDIA_TYPE *amt)
 {
     SmartTeeFilter *This = impl_from_strmbase_pin(base);
     HRESULT hr;
@@ -367,7 +368,8 @@ static HRESULT capture_query_accept(struct strmbase_pin *base, const AM_MEDIA_TY
     return S_OK;
 }
 
-static HRESULT capture_get_media_type(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
+static HRESULT capture_get_media_type(struct strmbase_pin *base,
+        unsigned int iPosition, AM_MEDIA_TYPE *amt)
 {
     SmartTeeFilter *This = impl_from_strmbase_pin(base);
     TRACE("(%p, %d, %p)\n", This, iPosition, amt);
@@ -437,7 +439,8 @@ static HRESULT preview_query_accept(struct strmbase_pin *base, const AM_MEDIA_TY
     return S_OK;
 }
 
-static HRESULT preview_get_media_type(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
+static HRESULT preview_get_media_type(struct strmbase_pin *base,
+        unsigned int iPosition, AM_MEDIA_TYPE *amt)
 {
     SmartTeeFilter *This = impl_from_strmbase_pin(base);
     TRACE("(%p, %d, %p)\n", This, iPosition, amt);

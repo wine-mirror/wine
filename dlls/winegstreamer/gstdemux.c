@@ -1799,14 +1799,9 @@ static HRESULT source_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYP
     return S_OK;
 }
 
-static HRESULT source_get_media_type(struct strmbase_pin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT source_get_media_type(struct strmbase_pin *iface, unsigned int iPosition, AM_MEDIA_TYPE *pmt)
 {
     struct gstdemux_source *This = impl_source_from_IPin(&iface->IPin_iface);
-
-    TRACE("(%p)->(%i, %p)\n", This, iPosition, pmt);
-
-    if (iPosition < 0)
-        return E_INVALIDARG;
 
     if (iPosition > 0)
         return VFW_S_NO_MORE_ITEMS;

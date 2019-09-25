@@ -110,12 +110,10 @@ static HRESULT WINAPI TransformFilter_Output_DecideBufferSize(struct strmbase_so
     return pTransformFilter->pFuncsTable->pfnDecideBufferSize(pTransformFilter, pAlloc, ppropInputRequest);
 }
 
-static HRESULT source_get_media_type(struct strmbase_pin *This, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT source_get_media_type(struct strmbase_pin *This, unsigned int iPosition, AM_MEDIA_TYPE *pmt)
 {
     TransformFilter *pTransform = impl_from_source_IPin(&This->IPin_iface);
 
-    if (iPosition < 0)
-        return E_INVALIDARG;
     if (iPosition > 0)
         return VFW_S_NO_MORE_ITEMS;
     CopyMediaType(pmt, &pTransform->pmt);

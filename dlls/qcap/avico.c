@@ -526,11 +526,9 @@ static const IPinVtbl AVICompressorOutputPinVtbl = {
     BasePinImpl_NewSegment
 };
 
-static HRESULT source_get_media_type(struct strmbase_pin *base, int iPosition, AM_MEDIA_TYPE *amt)
+static HRESULT source_get_media_type(struct strmbase_pin *base, unsigned int iPosition, AM_MEDIA_TYPE *amt)
 {
     AVICompressor *This = impl_from_strmbase_filter(base->filter);
-
-    TRACE("(%p)->(%d %p)\n", base, iPosition, amt);
 
     if(iPosition || !This->videoinfo)
         return S_FALSE;

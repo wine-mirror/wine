@@ -591,13 +591,11 @@ static HRESULT source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TY
     return S_FALSE;
 }
 
-static HRESULT source_get_media_type(struct strmbase_pin *iface, int index, AM_MEDIA_TYPE *mt)
+static HRESULT source_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
 {
     AsyncReader *filter = impl_from_strmbase_pin(iface);
 
-    if (index < 0)
-        return E_INVALIDARG;
-    else if (index > 1)
+    if (index > 1)
         return VFW_S_NO_MORE_ITEMS;
 
     if (index == 0)

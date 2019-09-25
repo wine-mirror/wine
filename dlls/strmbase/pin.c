@@ -152,11 +152,8 @@ static BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * 
             ((bWildcards && (IsEqualGUID(&pmt1->subtype, &GUID_NULL)   || IsEqualGUID(&pmt2->subtype, &GUID_NULL)))   || IsEqualGUID(&pmt1->subtype, &pmt2->subtype)));
 }
 
-/*** Common Base Pin function */
-HRESULT strmbase_pin_get_media_type(struct strmbase_pin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+HRESULT strmbase_pin_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    if (iPosition < 0)
-        return E_INVALIDARG;
     return VFW_S_NO_MORE_ITEMS;
 }
 
