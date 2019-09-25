@@ -346,9 +346,10 @@ struct d2d_bitmap
     LONG refcount;
 
     ID2D1Factory *factory;
-    ID3D10ShaderResourceView *view;
+    ID3D10ShaderResourceView *srv;
     ID3D10RenderTargetView *rtv;
     IDXGISurface *surface;
+    ID3D10Resource *resource;
     D2D1_SIZE_U pixel_size;
     D2D1_PIXEL_FORMAT format;
     float dpi_x;

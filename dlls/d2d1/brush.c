@@ -1295,7 +1295,7 @@ static void d2d_brush_bind_bitmap(struct d2d_brush *brush, ID3D10Device *device,
 {
     HRESULT hr;
 
-    ID3D10Device_PSSetShaderResources(device, brush_idx, 1, &brush->u.bitmap.bitmap->view);
+    ID3D10Device_PSSetShaderResources(device, brush_idx, 1, &brush->u.bitmap.bitmap->srv);
     if (!brush->u.bitmap.sampler_state)
     {
         D3D10_SAMPLER_DESC sampler_desc;
