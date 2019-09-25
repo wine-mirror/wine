@@ -888,6 +888,48 @@ static void test_query_firmware(void)
     HeapFree(GetProcessHeap(), 0, sfti);
 }
 
+static void test_query_battery(void)
+{
+    SYSTEM_BATTERY_STATE bs;
+    NTSTATUS status;
+    DWORD time_left;
+
+    memset(&bs, 0x23, sizeof(bs));
+    status = NtPowerInformation(SystemBatteryState, NULL, 0, &bs, sizeof(bs));
+    if (status == STATUS_NOT_IMPLEMENTED)
+    {
+        skip("SystemBatteryState not implemented\n");
+        return;
+    }
+    ok(status == STATUS_SUCCESS, "expected success\n");
+
+    trace("Battery state:\n");
+    trace("AcOnLine          : %u\n", bs.AcOnLine);
+    trace("BatteryPresent    : %u\n", bs.BatteryPresent);
+    trace("Charging          : %u\n", bs.Charging);
+    trace("Discharging       : %u\n", bs.Discharging);
+    trace("Tag               : %u\n", bs.Tag);
+    trace("MaxCapacity       : %u\n", bs.MaxCapacity);
+    trace("RemainingCapacity : %u\n", bs.RemainingCapacity);
+    trace("Rate              : %d\n", (LONG)bs.Rate);
+    trace("EstimatedTime     : %u\n", bs.EstimatedTime);
+    trace("DefaultAlert1     : %u\n", bs.DefaultAlert1);
+    trace("DefaultAlert2     : %u\n", bs.DefaultAlert2);
+
+    ok(bs.MaxCapacity >= bs.RemainingCapacity,
+       "expected MaxCapacity %u to be greater than or equal to RemainingCapacity %u\n",
+       bs.MaxCapacity, bs.RemainingCapacity);
+
+    if (!bs.BatteryPresent)
+        time_left = 0;
+    else if (!bs.Charging && (LONG)bs.Rate < 0)
+        time_left = 3600 * bs.RemainingCapacity / -(LONG)bs.Rate;
+    else
+        time_left = ~0u;
+    ok(bs.EstimatedTime == time_left,
+       "expected %u minutes remaining got %u minutes\n", time_left, bs.EstimatedTime);
+}
+
 static void test_query_processor_power_info(void)
 {
     NTSTATUS status;
@@ -2373,6 +2415,10 @@ START_TEST(info)
     test_query_logicalprocex();
 
     /* NtPowerInformation */
+
+    /* 0x5 SystemBatteryState */
+    trace("Starting test_query_battery()\n");
+    test_query_battery();
 
     /* 0xb ProcessorInformation */
     trace("Starting test_query_processor_power_info()\n");
