@@ -643,11 +643,7 @@ static void TLB_register_interface(TLIBATTR *libattr, LPOLESTR name, TYPEATTR *t
  *    Success: S_OK
  *    Failure: Status
  */
-HRESULT WINAPI RegisterTypeLib(
-     ITypeLib * ptlib,     /* [in] Pointer to the library*/
-     OLECHAR * szFullPath, /* [in] full Path of the library*/
-     OLECHAR * szHelpDir)  /* [in] dir to the helpfile for the library,
-							 may be NULL*/
+HRESULT WINAPI RegisterTypeLib(ITypeLib *ptlib, const WCHAR *szFullPath, const WCHAR *szHelpDir)
 {
     HRESULT res;
     TLIBATTR *attr;
@@ -725,19 +721,18 @@ HRESULT WINAPI RegisterTypeLib(
         if (res == S_OK && RegCreateKeyExW(key, HELPDIRW, 0, NULL, 0,
             KEY_WRITE, NULL, &subKey, &disposition) == ERROR_SUCCESS)
         {
-            BOOL freeHelpDir = FALSE;
+            BSTR freeHelpDir = NULL;
             OLECHAR* pIndexStr;
 
             /* if we created a new key, and helpDir was null, set the helpdir
                to the directory which contains the typelib. However,
                if we just opened an existing key, we leave the helpdir alone */
             if ((disposition == REG_CREATED_NEW_KEY) && (szHelpDir == NULL)) {
-                szHelpDir = SysAllocString(szFullPath);
+                szHelpDir = freeHelpDir = SysAllocString(szFullPath);
                 pIndexStr = wcsrchr(szHelpDir, '\\');
                 if (pIndexStr) {
                     *pIndexStr = 0;
                 }
-                freeHelpDir = TRUE;
             }
 
             /* if we have an szHelpDir, set it! */
@@ -748,10 +743,8 @@ HRESULT WINAPI RegisterTypeLib(
                 }
             }
 
-            /* tidy up */
-            if (freeHelpDir) SysFreeString(szHelpDir);
+            SysFreeString(freeHelpDir);
             RegCloseKey(subKey);
-
         } else {
             res = E_FAIL;
         }
