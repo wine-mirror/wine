@@ -630,6 +630,7 @@ SOURCES = \
 	tcpmib.h \
 	textserv.h \
 	textstor.idl \
+	threadpoolapiset.h \
 	thumbcache.idl \
 	timezoneapi.h \
 	tlhelp32.h \
