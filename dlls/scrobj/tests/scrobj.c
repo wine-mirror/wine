@@ -848,45 +848,37 @@ static void test_create_object(void)
 
     str = SysAllocString(L"vbAddOne");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &vb_add_one_id);
-    todo_wine
     ok(hres == S_OK, "Could not get vkAddOne id: %08x\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"jsAddTwo");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &js_add_two_id);
-    todo_wine
     ok(hres == S_OK, "Could not get jsAddTwo id: %08x\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"wtTest");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &wt_test_id);
-    todo_wine
     ok(hres == S_OK, "Could not get wtTest id: %08x\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"gsProp");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &wt_gsprop_id);
-    todo_wine
     ok(hres == S_OK, "Could not get wtTest id: %08x\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"vbaddone");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &id);
-    todo_wine
     ok(hres == DISP_E_UNKNOWNNAME, "invalid case returned: %08x\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"vbaddone");
     hres = IDispatchEx_GetDispID(dispex, str, 0, &id);
-    todo_wine
     ok(hres == DISP_E_UNKNOWNNAME, "invalid case returned: %08x\n", hres);
     SysFreeString(str);
 
     str = SysAllocString(L"vbaddone");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &id);
-    todo_wine
     ok(hres == S_OK, "case insensitive returned: %08x\n", hres);
-    todo_wine
     ok(id == vb_add_one_id, "id = %u, expected %u\n", id, vb_add_one_id);
     SysFreeString(str);
 

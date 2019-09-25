@@ -1046,8 +1046,26 @@ static HRESULT WINAPI scriptlet_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 static HRESULT WINAPI scriptlet_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     struct scriptlet_instance *This = impl_from_IDispatchEx(iface);
-    FIXME("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
-    return E_NOTIMPL;
+    unsigned i;
+
+    TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+
+    if (grfdex & ~(fdexNameCaseInsensitive|fdexNameCaseSensitive))
+        FIXME("Unsupported grfdex %x\n", grfdex);
+
+    for (i = 0; i < This->member_cnt; i++)
+    {
+        if (grfdex & fdexNameCaseInsensitive)
+        {
+            if (wcsicmp(This->members[i].name, bstrName)) continue;
+        }
+        else if (wcscmp(This->members[i].name, bstrName)) continue;
+        *pid = i + 1;
+        return S_OK;
+    }
+
+    WARN("Unknown property %s\n", debugstr_w(bstrName));
+    return DISP_E_UNKNOWNNAME;
 }
 
 static HRESULT WINAPI scriptlet_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *pdp,
