@@ -575,7 +575,7 @@ sub update_spec_file($)
         my $func = $descr{name};
         if (!defined $funcs{$func})
         {
-            $funcs{$func} = \%descr unless $commented_out;
+            $funcs{$func} = \%descr unless $commented_out || $name =~ /-/;
             goto done;
         }
 

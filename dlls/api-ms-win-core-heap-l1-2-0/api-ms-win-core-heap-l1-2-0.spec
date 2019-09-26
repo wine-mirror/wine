@@ -1,4 +1,4 @@
-@ stdcall -norelay GetProcessHeap() kernel32.GetProcessHeap
+@ stdcall GetProcessHeap() kernel32.GetProcessHeap
 @ stdcall GetProcessHeaps(long ptr) kernel32.GetProcessHeaps
 @ stdcall HeapAlloc(long long long) kernel32.HeapAlloc
 @ stdcall HeapCompact(long long) kernel32.HeapCompact
