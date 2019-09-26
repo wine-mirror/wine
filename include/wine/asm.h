@@ -33,7 +33,7 @@
 # define __ASM_STDCALL(name,args) __ASM_NAME(name)
 #endif
 
-#ifdef __GCC_HAVE_DWARF2_CFI_ASM
+#if defined(__GCC_HAVE_DWARF2_CFI_ASM) || defined(__APPLE__)
 # define __ASM_CFI(str) str
 #else
 # define __ASM_CFI(str)
