@@ -238,7 +238,7 @@
 @ stdcall CommConfigDialogA(str long ptr)
 @ stdcall CommConfigDialogW(wstr long ptr)
 # @ stub CompareCalendarDates
-@ stdcall CompareFileTime(ptr ptr)
+@ stdcall -import CompareFileTime(ptr ptr)
 @ stdcall CompareStringA(long long str long str long)
 @ stdcall CompareStringW(long long wstr long wstr long)
 @ stdcall CompareStringEx(wstr long wstr long wstr long ptr ptr long)
@@ -465,8 +465,8 @@
 @ stdcall -import FatalAppExitW(long wstr)
 @ stdcall FatalExit(long)
 @ stdcall FileTimeToDosDateTime(ptr ptr ptr)
-@ stdcall FileTimeToLocalFileTime(ptr ptr)
-@ stdcall FileTimeToSystemTime(ptr ptr)
+@ stdcall -import FileTimeToLocalFileTime(ptr ptr)
+@ stdcall -import FileTimeToSystemTime(ptr ptr)
 @ stdcall -import FillConsoleOutputAttribute(long long long long ptr)
 @ stdcall -import FillConsoleOutputCharacterA(long long long long ptr)
 @ stdcall -import FillConsoleOutputCharacterW(long long long long ptr)
@@ -702,7 +702,7 @@
 @ stdcall -import GetLargestConsoleWindowSize(long)
 @ stdcall -import GetLastError()
 @ stub GetLinguistLangSize
-@ stdcall GetLocalTime(ptr)
+@ stdcall -import GetLocalTime(ptr)
 @ stdcall GetLocaleInfoA(long long ptr long)
 @ stdcall GetLocaleInfoW(long long ptr long)
 @ stdcall GetLocaleInfoEx(wstr long ptr long)
@@ -830,10 +830,10 @@
 @ stdcall GetSystemPowerStatus(ptr)
 @ stdcall GetSystemPreferredUILanguages(long ptr ptr ptr)
 @ stdcall GetSystemRegistryQuota(ptr ptr)
-@ stdcall GetSystemTime(ptr)
+@ stdcall -import GetSystemTime(ptr)
 @ stdcall GetSystemTimeAdjustment(ptr ptr ptr)
-@ stdcall GetSystemTimeAsFileTime(ptr) ntdll.NtQuerySystemTime
-@ stdcall GetSystemTimePreciseAsFileTime(ptr)
+@ stdcall -import GetSystemTimeAsFileTime(ptr)
+@ stdcall -import GetSystemTimePreciseAsFileTime(ptr)
 @ stdcall GetSystemTimes(ptr ptr ptr)
 @ stdcall -import GetSystemWindowsDirectoryA(ptr long)
 @ stdcall -import GetSystemWindowsDirectoryW(ptr long)
@@ -1052,7 +1052,7 @@
 # @ stub LoadStringBaseW
 @ stdcall -import LocalAlloc(long long)
 @ stdcall LocalCompact(long)
-@ stdcall LocalFileTimeToFileTime(ptr ptr)
+@ stdcall -import LocalFileTimeToFileTime(ptr ptr)
 @ stdcall LocalFlags(long)
 @ stdcall -import LocalFree(long)
 @ stdcall LocalHandle(ptr)
@@ -1177,7 +1177,7 @@
 # @ stub QueryThreadProfiling
 # @ stub QueryThreadpoolStackInformation
 @ stdcall -arch=x86_64 QueryUmsThreadInformation(ptr long ptr long ptr)
-@ stdcall QueryUnbiasedInterruptTime(ptr)
+@ stdcall -import QueryUnbiasedInterruptTime(ptr)
 @ stub QueryWin31IniFilesMappedToRegistry
 @ stdcall -import QueueUserAPC(ptr long long)
 @ stdcall -import QueueUserWorkItem(ptr ptr long)
@@ -1417,7 +1417,7 @@
 @ stdcall SetLastError(long) RtlSetLastWin32Error
 # @ stub SetLocalPrimaryComputerNameA
 # @ stub SetLocalPrimaryComputerNameW
-@ stdcall SetLocalTime(ptr)
+@ stdcall -import SetLocalTime(ptr)
 @ stdcall SetLocaleInfoA(long long str)
 @ stdcall SetLocaleInfoW(long long wstr)
 @ stdcall SetMailslotInfo(long long)
@@ -1440,7 +1440,7 @@
 @ stdcall -import SetStdHandleEx(long long ptr)
 @ stdcall SetSystemFileCacheSize(long long long)
 @ stdcall SetSystemPowerState(long long)
-@ stdcall SetSystemTime(ptr)
+@ stdcall -import SetSystemTime(ptr)
 @ stdcall SetSystemTimeAdjustment(long long)
 @ stdcall SetTapeParameters(ptr long ptr)
 @ stdcall SetTapePosition(ptr long long long long long)
@@ -1492,7 +1492,7 @@
 @ stdcall -import SuspendThread(long)
 @ stdcall -import SwitchToFiber(ptr)
 @ stdcall -import SwitchToThread()
-@ stdcall SystemTimeToFileTime(ptr ptr)
+@ stdcall -import SystemTimeToFileTime(ptr ptr)
 @ stdcall SystemTimeToTzSpecificLocalTime (ptr ptr ptr)
 # @ stub SystemTimeToTzSpecificLocalTimeEx
 @ stdcall TerminateJobObject(long long)

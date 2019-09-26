@@ -2326,6 +2326,156 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteFileGather( HANDLE file, FILE_SEGMENT_ELEMENT
 
 
 /***********************************************************************
+ * Operations on file times
+ ***********************************************************************/
+
+
+/*********************************************************************
+ *	CompareFileTime   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH CompareFileTime( const FILETIME *x, const FILETIME *y )
+{
+    if (!x || !y) return -1;
+    if (x->dwHighDateTime > y->dwHighDateTime) return 1;
+    if (x->dwHighDateTime < y->dwHighDateTime) return -1;
+    if (x->dwLowDateTime > y->dwLowDateTime) return 1;
+    if (x->dwLowDateTime < y->dwLowDateTime) return -1;
+    return 0;
+}
+
+
+/*********************************************************************
+ *	FileTimeToLocalFileTime   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH FileTimeToLocalFileTime( const FILETIME *utc, FILETIME *local )
+{
+    return set_ntstatus( RtlSystemTimeToLocalTime( (const LARGE_INTEGER *)utc, (LARGE_INTEGER *)local ));
+}
+
+
+/*********************************************************************
+ *	FileTimeToSystemTime   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH FileTimeToSystemTime( const FILETIME *ft, SYSTEMTIME *systime )
+{
+    TIME_FIELDS tf;
+
+    RtlTimeToTimeFields( (const LARGE_INTEGER *)ft, &tf );
+    systime->wYear = tf.Year;
+    systime->wMonth = tf.Month;
+    systime->wDay = tf.Day;
+    systime->wHour = tf.Hour;
+    systime->wMinute = tf.Minute;
+    systime->wSecond = tf.Second;
+    systime->wMilliseconds = tf.Milliseconds;
+    systime->wDayOfWeek = tf.Weekday;
+    return TRUE;
+}
+
+
+/*********************************************************************
+ *	GetLocalTime   (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH GetLocalTime( SYSTEMTIME *systime )
+{
+    LARGE_INTEGER ft, ft2;
+
+    NtQuerySystemTime( &ft );
+    RtlSystemTimeToLocalTime( &ft, &ft2 );
+    FileTimeToSystemTime( (FILETIME *)&ft2, systime );
+}
+
+
+/*********************************************************************
+ *	GetSystemTime   (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH GetSystemTime( SYSTEMTIME *systime )
+{
+    LARGE_INTEGER ft;
+
+    NtQuerySystemTime( &ft );
+    FileTimeToSystemTime( (FILETIME *)&ft, systime );
+}
+
+
+/***********************************************************************
+ *	GetSystemTimeAsFileTime   (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH GetSystemTimeAsFileTime( FILETIME *time )
+{
+    NtQuerySystemTime( (LARGE_INTEGER *)time );
+}
+
+
+/***********************************************************************
+ *	GetSystemTimePreciseAsFileTime   (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH GetSystemTimePreciseAsFileTime( FILETIME *time )
+{
+    LARGE_INTEGER t;
+
+    t.QuadPart = RtlGetSystemTimePrecise();
+    time->dwLowDateTime = t.u.LowPart;
+    time->dwHighDateTime = t.u.HighPart;
+}
+
+
+/*********************************************************************
+ *	LocalFileTimeToFileTime   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH LocalFileTimeToFileTime( const FILETIME *local, FILETIME *utc )
+{
+    return set_ntstatus( RtlLocalTimeToSystemTime( (const LARGE_INTEGER *)local, (LARGE_INTEGER *)utc ));
+}
+
+
+/***********************************************************************
+ *	SetLocalTime   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetLocalTime( const SYSTEMTIME *systime )
+{
+    FILETIME ft;
+    LARGE_INTEGER st;
+
+    if (!SystemTimeToFileTime( systime, &ft )) return FALSE;
+    RtlLocalTimeToSystemTime( (LARGE_INTEGER *)&ft, &st );
+    return set_ntstatus( NtSetSystemTime( &st, NULL ));
+}
+
+
+/***********************************************************************
+ *	SetSystemTime   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetSystemTime( const SYSTEMTIME *systime )
+{
+    FILETIME ft;
+
+    if (!SystemTimeToFileTime( systime, &ft )) return FALSE;
+    return set_ntstatus( NtSetSystemTime( (LARGE_INTEGER *)&ft, NULL ));
+}
+
+
+/*********************************************************************
+ *	SystemTimeToFileTime   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SystemTimeToFileTime( const SYSTEMTIME *systime, FILETIME *ft )
+{
+    TIME_FIELDS tf;
+
+    tf.Year = systime->wYear;
+    tf.Month = systime->wMonth;
+    tf.Day = systime->wDay;
+    tf.Hour = systime->wHour;
+    tf.Minute = systime->wMinute;
+    tf.Second = systime->wSecond;
+    tf.Milliseconds = systime->wMilliseconds;
+    if (RtlTimeFieldsToTime( &tf, (LARGE_INTEGER *)ft )) return TRUE;
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return FALSE;
+}
+
+
+/***********************************************************************
  * I/O controls
  ***********************************************************************/
 

@@ -151,7 +151,7 @@
 @ stdcall CloseThreadpoolWait(ptr) ntdll.TpReleaseWait
 @ stdcall CloseThreadpoolWork(ptr) ntdll.TpReleaseWork
 # @ stub CommitStateAtom
-@ stdcall CompareFileTime(ptr ptr) kernel32.CompareFileTime
+@ stdcall CompareFileTime(ptr ptr)
 # @ stub CompareObjectHandles
 @ stdcall CompareStringA(long long str long str long) kernel32.CompareStringA
 @ stdcall CompareStringEx(wstr long wstr long wstr long ptr ptr long) kernel32.CompareStringEx
@@ -343,8 +343,8 @@
 @ stdcall ExpandEnvironmentStringsW(wstr ptr long)
 @ stdcall FatalAppExitA(long str)
 @ stdcall FatalAppExitW(long wstr)
-@ stdcall FileTimeToLocalFileTime(ptr ptr) kernel32.FileTimeToLocalFileTime
-@ stdcall FileTimeToSystemTime(ptr ptr) kernel32.FileTimeToSystemTime
+@ stdcall FileTimeToLocalFileTime(ptr ptr)
+@ stdcall FileTimeToSystemTime(ptr ptr)
 @ stdcall FillConsoleOutputAttribute(long long long long ptr)
 @ stdcall FillConsoleOutputCharacterA(long long long long ptr)
 @ stdcall FillConsoleOutputCharacterW(long long long long ptr)
@@ -540,7 +540,7 @@
 @ stdcall GetLargestConsoleWindowSize(long)
 @ stdcall GetLastError() kernelbase_GetLastError
 @ stdcall GetLengthSid(ptr)
-@ stdcall GetLocalTime(ptr) kernel32.GetLocalTime
+@ stdcall GetLocalTime(ptr)
 @ stdcall GetLocaleInfoA(long long ptr long) kernel32.GetLocaleInfoA
 @ stdcall GetLocaleInfoEx(wstr long ptr long) kernel32.GetLocaleInfoEx
 @ stub GetLocaleInfoHelper
@@ -695,10 +695,10 @@
 # @ stub GetSystemMetadataPathForPackageFamily
 @ stdcall GetSystemPreferredUILanguages(long ptr ptr ptr) kernel32.GetSystemPreferredUILanguages
 # @ stub GetSystemStateRootFolder
-@ stdcall GetSystemTime(ptr) kernel32.GetSystemTime
+@ stdcall GetSystemTime(ptr)
 @ stdcall GetSystemTimeAdjustment(ptr ptr ptr) kernel32.GetSystemTimeAdjustment
-@ stdcall GetSystemTimeAsFileTime(ptr) kernel32.GetSystemTimeAsFileTime
-@ stdcall GetSystemTimePreciseAsFileTime(ptr) kernel32.GetSystemTimePreciseAsFileTime
+@ stdcall GetSystemTimeAsFileTime(ptr)
+@ stdcall GetSystemTimePreciseAsFileTime(ptr)
 @ stdcall GetSystemTimes(ptr ptr ptr) kernel32.GetSystemTimes
 @ stdcall GetSystemWindowsDirectoryA(ptr long)
 @ stdcall GetSystemWindowsDirectoryW(ptr long)
@@ -934,7 +934,7 @@
 @ stub LoadStringByReference
 @ stdcall LoadStringW(long long ptr long)
 @ stdcall LocalAlloc(long long)
-@ stdcall LocalFileTimeToFileTime(ptr ptr) kernel32.LocalFileTimeToFileTime
+@ stdcall LocalFileTimeToFileTime(ptr ptr)
 @ stdcall LocalFree(long)
 @ stdcall LocalLock(long)
 @ stdcall LocalReAlloc(long long long)
@@ -1215,7 +1215,7 @@
 # @ stub QueryStateContainerItemInfo
 @ stdcall QueryThreadCycleTime(long ptr) kernel32.QueryThreadCycleTime
 @ stub QueryThreadpoolStackInformation
-@ stdcall QueryUnbiasedInterruptTime(ptr) kernel32.QueryUnbiasedInterruptTime
+@ stdcall QueryUnbiasedInterruptTime(ptr) ntdll.RtlQueryUnbiasedInterruptTime
 # @ stub QueryUnbiasedInterruptTimePrecise
 # @ stub QueryVirtualMemoryInformation
 # @ stub QueryWorkingSet
@@ -1447,7 +1447,7 @@
 @ stdcall SetKernelObjectSecurity(long long ptr)
 @ stub SetLastConsoleEventActive
 @ stdcall SetLastError(long) ntdll.RtlSetLastWin32Error
-@ stdcall SetLocalTime(ptr) kernel32.SetLocalTime
+@ stdcall SetLocalTime(ptr)
 @ stdcall SetLocaleInfoW(long long wstr) kernel32.SetLocaleInfoW
 @ stdcall SetNamedPipeHandleState(long ptr ptr ptr)
 @ stdcall SetPriorityClass(long long)
@@ -1476,7 +1476,7 @@
 @ stdcall SetStdHandle(long long)
 @ stdcall SetStdHandleEx(long long ptr)
 @ stdcall SetSystemFileCacheSize(long long long) kernel32.SetSystemFileCacheSize
-@ stdcall SetSystemTime(ptr) kernel32.SetSystemTime
+@ stdcall SetSystemTime(ptr)
 @ stdcall SetSystemTimeAdjustment(long long) kernel32.SetSystemTimeAdjustment
 @ stdcall SetThreadContext(long ptr)
 # @ stub SetThreadDescription
@@ -1591,7 +1591,7 @@
 @ stdcall SuspendThread(long)
 @ stdcall SwitchToFiber(ptr)
 @ stdcall SwitchToThread()
-@ stdcall SystemTimeToFileTime(ptr ptr) kernel32.SystemTimeToFileTime
+@ stdcall SystemTimeToFileTime(ptr ptr)
 @ stdcall SystemTimeToTzSpecificLocalTime(ptr ptr ptr) kernel32.SystemTimeToTzSpecificLocalTime
 @ stub SystemTimeToTzSpecificLocalTimeEx
 @ stdcall TerminateProcess(long long)

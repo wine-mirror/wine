@@ -515,38 +515,6 @@ static BOOL TIME_GetSpecificTimeZoneInfo( const WCHAR *key_name, WORD year,
 
 
 /***********************************************************************
- *              SetLocalTime            (KERNEL32.@)
- *
- *  Set the local time using current time zone and daylight
- *  savings settings.
- *
- * PARAMS
- *  systime [in] The desired local time.
- *
- * RETURNS
- *  Success: TRUE. The time was set.
- *  Failure: FALSE, if the time was invalid or caller does not have
- *           permission to change the time.
- */
-BOOL WINAPI SetLocalTime( const SYSTEMTIME *systime )
-{
-    FILETIME ft;
-    LARGE_INTEGER st, st2;
-    NTSTATUS status;
-
-    if( !SystemTimeToFileTime( systime, &ft ))
-        return FALSE;
-    st.u.LowPart = ft.dwLowDateTime;
-    st.u.HighPart = ft.dwHighDateTime;
-    RtlLocalTimeToSystemTime( &st, &st2 );
-
-    if ((status = NtSetSystemTime(&st2, NULL)))
-        SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
-
-/***********************************************************************
  *           GetSystemTimeAdjustment     (KERNEL32.@)
  *
  *  Get the period between clock interrupts and the amount the clock
@@ -572,34 +540,6 @@ BOOL WINAPI GetSystemTimeAdjustment( PDWORD lpTimeAdjustment, PDWORD lpTimeIncre
     return TRUE;
 }
 
-
-/***********************************************************************
- *              SetSystemTime            (KERNEL32.@)
- *
- *  Set the system time in utc.
- *
- * PARAMS
- *  systime [in] The desired system time.
- *
- * RETURNS
- *  Success: TRUE. The time was set.
- *  Failure: FALSE, if the time was invalid or caller does not have
- *           permission to change the time.
- */
-BOOL WINAPI SetSystemTime( const SYSTEMTIME *systime )
-{
-    FILETIME ft;
-    LARGE_INTEGER t;
-    NTSTATUS status;
-
-    if( !SystemTimeToFileTime( systime, &ft ))
-        return FALSE;
-    t.u.LowPart = ft.dwLowDateTime;
-    t.u.HighPart = ft.dwHighDateTime;
-    if ((status = NtSetSystemTime(&t, NULL)))
-        SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
 
 /***********************************************************************
  *              SetSystemTimeAdjustment  (KERNEL32.@)
@@ -781,27 +721,6 @@ BOOL WINAPI TzSpecificLocalTimeToSystemTime(
     t += (LONGLONG)lBias * 600000000;
     longlong_to_filetime( t, &ft );
     return FileTimeToSystemTime(&ft, lpUniversalTime);
-}
-
-
-/***********************************************************************
- *              GetSystemTimePreciseAsFileTime  (KERNEL32.@)
- *
- *  Get the current time in utc format with greater accuracy.
- *
- *  PARAMS
- *   time [out] Destination for the current utc time
- *
- *  RETURNS
- *   Nothing.
- */
-void WINAPI GetSystemTimePreciseAsFileTime( FILETIME *time )
-{
-    LARGE_INTEGER t;
-
-    t.QuadPart = RtlGetSystemTimePrecise();
-    time->dwLowDateTime = t.u.LowPart;
-    time->dwHighDateTime = t.u.HighPart;
 }
 
 
@@ -1171,167 +1090,6 @@ int WINAPI	SetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType, LPCWST
 }
 
 /*********************************************************************
- *      LocalFileTimeToFileTime                         (KERNEL32.@)
- */
-BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft, LPFILETIME utcft )
-{
-    NTSTATUS status;
-    LARGE_INTEGER local, utc;
-
-    local.u.LowPart = localft->dwLowDateTime;
-    local.u.HighPart = localft->dwHighDateTime;
-    if (!(status = RtlLocalTimeToSystemTime( &local, &utc )))
-    {
-        utcft->dwLowDateTime = utc.u.LowPart;
-        utcft->dwHighDateTime = utc.u.HighPart;
-    }
-    else SetLastError( RtlNtStatusToDosError(status) );
-
-    return !status;
-}
-
-/*********************************************************************
- *      FileTimeToLocalFileTime                         (KERNEL32.@)
- */
-BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft, LPFILETIME localft )
-{
-    NTSTATUS status;
-    LARGE_INTEGER local, utc;
-
-    utc.u.LowPart = utcft->dwLowDateTime;
-    utc.u.HighPart = utcft->dwHighDateTime;
-    if (!(status = RtlSystemTimeToLocalTime( &utc, &local )))
-    {
-        localft->dwLowDateTime = local.u.LowPart;
-        localft->dwHighDateTime = local.u.HighPart;
-    }
-    else SetLastError( RtlNtStatusToDosError(status) );
-
-    return !status;
-}
-
-/*********************************************************************
- *      FileTimeToSystemTime                            (KERNEL32.@)
- */
-BOOL WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
-{
-    TIME_FIELDS tf;
-    LARGE_INTEGER t;
-
-    t.u.LowPart = ft->dwLowDateTime;
-    t.u.HighPart = ft->dwHighDateTime;
-    RtlTimeToTimeFields(&t, &tf);
-
-    syst->wYear = tf.Year;
-    syst->wMonth = tf.Month;
-    syst->wDay = tf.Day;
-    syst->wHour = tf.Hour;
-    syst->wMinute = tf.Minute;
-    syst->wSecond = tf.Second;
-    syst->wMilliseconds = tf.Milliseconds;
-    syst->wDayOfWeek = tf.Weekday;
-    return TRUE;
-}
-
-/*********************************************************************
- *      SystemTimeToFileTime                            (KERNEL32.@)
- */
-BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
-{
-    TIME_FIELDS tf;
-    LARGE_INTEGER t;
-
-    tf.Year = syst->wYear;
-    tf.Month = syst->wMonth;
-    tf.Day = syst->wDay;
-    tf.Hour = syst->wHour;
-    tf.Minute = syst->wMinute;
-    tf.Second = syst->wSecond;
-    tf.Milliseconds = syst->wMilliseconds;
-
-    if( !RtlTimeFieldsToTime(&tf, &t)) {
-        SetLastError( ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    ft->dwLowDateTime = t.u.LowPart;
-    ft->dwHighDateTime = t.u.HighPart;
-    return TRUE;
-}
-
-/*********************************************************************
- *      CompareFileTime                                 (KERNEL32.@)
- *
- * Compare two FILETIME's to each other.
- *
- * PARAMS
- *  x [I] First time
- *  y [I] time to compare to x
- *
- * RETURNS
- *  -1, 0, or 1 indicating that x is less than, equal to, or greater
- *  than y respectively.
- */
-INT WINAPI CompareFileTime( const FILETIME *x, const FILETIME *y )
-{
-    if (!x || !y) return -1;
-
-    if (x->dwHighDateTime > y->dwHighDateTime)
-        return 1;
-    if (x->dwHighDateTime < y->dwHighDateTime)
-        return -1;
-    if (x->dwLowDateTime > y->dwLowDateTime)
-        return 1;
-    if (x->dwLowDateTime < y->dwLowDateTime)
-        return -1;
-    return 0;
-}
-
-/*********************************************************************
- *      GetLocalTime                                    (KERNEL32.@)
- *
- * Get the current local time.
- *
- * PARAMS
- *  systime [O] Destination for current time.
- *
- * RETURNS
- *  Nothing.
- */
-VOID WINAPI GetLocalTime(LPSYSTEMTIME systime)
-{
-    FILETIME lft;
-    LARGE_INTEGER ft, ft2;
-
-    NtQuerySystemTime(&ft);
-    RtlSystemTimeToLocalTime(&ft, &ft2);
-    lft.dwLowDateTime = ft2.u.LowPart;
-    lft.dwHighDateTime = ft2.u.HighPart;
-    FileTimeToSystemTime(&lft, systime);
-}
-
-/*********************************************************************
- *      GetSystemTime                                   (KERNEL32.@)
- *
- * Get the current system time.
- *
- * PARAMS
- *  systime [O] Destination for current time.
- *
- * RETURNS
- *  Nothing.
- */
-VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
-{
-    FILETIME ft;
-    LARGE_INTEGER t;
-
-    NtQuerySystemTime(&t);
-    ft.dwLowDateTime = t.u.LowPart;
-    ft.dwHighDateTime = t.u.HighPart;
-    FileTimeToSystemTime(&ft, systime);
-}
-
-/*********************************************************************
  *      GetDaylightFlag                                   (KERNEL32.@)
  *
  *  Specifies if daylight savings time is in operation.
@@ -1546,17 +1304,6 @@ BOOL WINAPI QueryThreadCycleTime(HANDLE thread, PULONG64 cycle)
         FIXME("(%p,%p): stub!\n", thread, cycle);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
-}
-
-/***********************************************************************
- *           QueryUnbiasedInterruptTime   (KERNEL32.@)
- */
-BOOL WINAPI QueryUnbiasedInterruptTime(ULONGLONG *time)
-{
-    TRACE("(%p)\n", time);
-    if (!time) return FALSE;
-    RtlQueryUnbiasedInterruptTime(time);
-    return TRUE;
 }
 
 /******************************************************************************
