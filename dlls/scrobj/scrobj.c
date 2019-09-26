@@ -1583,7 +1583,12 @@ static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
 static HRESULT parse_scriptlet_script(struct scriptlet_factory *factory, struct scriptlet_script *script)
 {
     XmlNodeType node_type;
+    size_t buf_size, size;
+    WCHAR *new_body;
+    DWORD read;
     HRESULT hres;
+
+    TRACE("\n");
 
     for (;;)
     {
@@ -1621,9 +1626,26 @@ static HRESULT parse_scriptlet_script(struct scriptlet_factory *factory, struct 
         return E_FAIL;
     }
 
-    hres = read_xml_value(factory, &script->body);
-    if (FAILED(hres)) return hres;
+    if (!(script->body = heap_alloc((buf_size = 1024) * sizeof(WCHAR)))) return E_OUTOFMEMORY;
+    size = 0;
 
+    for (;;)
+    {
+        read = 0;
+        hres = IXmlReader_ReadValueChunk(factory->xml_reader, script->body + size, buf_size - size - 1, &read);
+        if (FAILED(hres)) return hres;
+        size += read;
+        if (hres == S_FALSE) break;
+        if (size + 1 == buf_size)
+        {
+            if (!(new_body = heap_realloc(script->body, (buf_size *= 2) * sizeof(WCHAR)))) return E_OUTOFMEMORY;
+            script->body = new_body;
+        }
+    }
+    script->body[size++] = 0;
+    if (size != buf_size) script->body = heap_realloc(script->body, size * sizeof(WCHAR));
+
+    TRACE("body %s\n", debugstr_w(script->body));
     return expect_end_element(factory);
 }
 
