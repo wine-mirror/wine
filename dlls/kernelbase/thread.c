@@ -868,6 +868,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH CreateFiberEx( SIZE_T stack_commit, SIZE_T stack
     if ((status = RtlCreateUserStack( stack_commit, stack_reserve, 0, 1, 1, &stack )))
     {
         SetLastError( RtlNtStatusToDosError(status) );
+        HeapFree( GetProcessHeap(), 0, fiber );
         return NULL;
     }
 
