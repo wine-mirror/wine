@@ -150,16 +150,6 @@ VOID WINAPI GetNativeSystemInfo(
 }
 
 /***********************************************************************
- * 			IsProcessorFeaturePresent	[KERNEL32.@]
- *
- * Determine if the cpu supports a given feature.
- */
-BOOL WINAPI IsProcessorFeaturePresent ( DWORD feature )
-{
-    return RtlIsProcessorFeaturePresent( feature );
-}
-
-/***********************************************************************
  *           K32GetPerformanceInfo (KERNEL32.@)
  */
 BOOL WINAPI K32GetPerformanceInfo(PPERFORMANCE_INFORMATION info, DWORD size)

@@ -200,7 +200,7 @@
 @ stdcall CreateMutexExW(ptr wstr long long)
 @ stdcall CreateMutexW(ptr long wstr)
 @ stdcall CreateNamedPipeW(wstr long long long long long long ptr)
-@ stdcall CreatePipe(ptr ptr ptr long) kernel32.CreatePipe
+@ stdcall CreatePipe(ptr ptr ptr long)
 # @ stub CreatePrivateNamespaceW
 @ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr)
 @ stdcall CreatePrivateObjectSecurityEx(ptr ptr ptr ptr long long long ptr)
@@ -639,7 +639,7 @@
 @ stdcall GetProcessVersion(long) kernel32.GetProcessVersion
 @ stdcall GetProcessWorkingSetSizeEx(long ptr ptr ptr)
 # @ stub GetProcessorSystemCycleTime
-@ stdcall GetProductInfo(long long long long ptr) kernel32.GetProductInfo
+@ stdcall GetProductInfo(long long long long ptr)
 @ stub GetPtrCalData
 @ stub GetPtrCalDataArray
 # @ stub GetPublisherCacheFolder
@@ -864,8 +864,8 @@
 @ stub IsNLSDefinedString
 @ stdcall IsNormalizedString(long wstr long) kernel32.IsNormalizedString
 # @ stub IsProcessCritical
-@ stdcall IsProcessInJob(long long ptr) kernel32.IsProcessInJob
-@ stdcall IsProcessorFeaturePresent(long) kernel32.IsProcessorFeaturePresent
+@ stdcall IsProcessInJob(long long ptr)
+@ stdcall IsProcessorFeaturePresent(long)
 # @ stub IsSideloadingEnabled
 # @ stub IsSideloadingPolicyApplied
 # @ stub IsSyncForegroundPolicyRefresh

@@ -306,7 +306,7 @@
 @ stdcall CreateNamedPipeA(str long long long long long long ptr)
 @ stdcall -import CreateNamedPipeW(wstr long long long long long long ptr)
 # @ stub CreateNlsSecurityDescriptor
-@ stdcall CreatePipe(ptr ptr ptr long)
+@ stdcall -import CreatePipe(ptr ptr ptr long)
 # @ stub CreatePrivateNamespaceA
 # @ stub CreatePrivateNamespaceW
 @ stdcall CreateProcessA(str str ptr ptr long long ptr str ptr ptr)
@@ -795,7 +795,7 @@
 @ stdcall GetProcessVersion(long)
 @ stdcall GetProcessWorkingSetSize(long ptr ptr)
 @ stdcall -import GetProcessWorkingSetSizeEx(long ptr ptr ptr)
-@ stdcall GetProductInfo(long long long long ptr)
+@ stdcall -import GetProductInfo(long long long long ptr)
 @ stub GetProductName
 @ stdcall GetProfileIntA(str str long)
 @ stdcall GetProfileIntW(wstr wstr long)
@@ -981,8 +981,8 @@
 @ stub -i386 IsLSCallback
 # @ stub IsNLSDefinedString
 @ stdcall IsNormalizedString(long wstr long)
-@ stdcall IsProcessInJob(long long ptr)
-@ stdcall IsProcessorFeaturePresent(long)
+@ stdcall -import IsProcessInJob(long long ptr)
+@ stdcall -import IsProcessorFeaturePresent(long)
 @ stub -i386 IsSLCallback
 @ stdcall IsSystemResumeAutomatic()
 @ stdcall -import IsThreadAFiber()

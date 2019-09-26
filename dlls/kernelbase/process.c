@@ -259,6 +259,36 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetProcessWorkingSetSizeEx( HANDLE process, SIZE_T
 }
 
 
+/******************************************************************************
+ *           IsProcessInJob   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsProcessInJob( HANDLE process, HANDLE job, BOOL *result )
+{
+    NTSTATUS status = NtIsProcessInJob( process, job );
+
+    switch (status)
+    {
+    case STATUS_PROCESS_IN_JOB:
+        *result = TRUE;
+        return TRUE;
+    case STATUS_PROCESS_NOT_IN_JOB:
+        *result = FALSE;
+        return TRUE;
+    default:
+        return set_ntstatus( status );
+    }
+}
+
+
+/***********************************************************************
+ *           IsProcessorFeaturePresent   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsProcessorFeaturePresent ( DWORD feature )
+{
+    return RtlIsProcessorFeaturePresent( feature );
+}
+
+
 /**********************************************************************
  *           IsWow64Process   (kernelbase.@)
  */

@@ -1172,6 +1172,56 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateNamedPipeW( LPCWSTR name, DWORD open_mode,
 }
 
 
+/******************************************************************
+ *           CreatePipe   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreatePipe( HANDLE *read_pipe, HANDLE *write_pipe,
+                                          SECURITY_ATTRIBUTES *sa, DWORD size )
+{
+    static unsigned int index;
+    WCHAR name[64];
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK iosb;
+    LARGE_INTEGER timeout;
+
+    *read_pipe = *write_pipe = INVALID_HANDLE_VALUE;
+
+    attr.Length             = sizeof(attr);
+    attr.RootDirectory      = 0;
+    attr.ObjectName         = &nt_name;
+    attr.Attributes         = OBJ_CASE_INSENSITIVE | ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
+    attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (!size) size = 4096;
+
+    timeout.QuadPart = (ULONGLONG)NMPWAIT_USE_DEFAULT_WAIT * -10000;
+
+    /* generate a unique pipe name (system wide) */
+    for (;;)
+    {
+        static const WCHAR fmtW[] = { '\\','?','?','\\','p','i','p','e','\\',
+           'W','i','n','3','2','.','P','i','p','e','s','.','%','0','8','l','u','.','%','0','8','u','\0' };
+
+        swprintf( name, ARRAY_SIZE(name), fmtW, GetCurrentProcessId(), ++index );
+        RtlInitUnicodeString( &nt_name, name );
+        if (!NtCreateNamedPipeFile( read_pipe, GENERIC_READ | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
+                                    &attr, &iosb, FILE_SHARE_WRITE, FILE_OVERWRITE_IF,
+                                    FILE_SYNCHRONOUS_IO_NONALERT,
+                                    FALSE, FALSE, FALSE, 1, size, size, &timeout ))
+            break;
+    }
+    if (!set_ntstatus( NtOpenFile( write_pipe, GENERIC_WRITE | FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr,
+                                   &iosb, 0, FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE )))
+    {
+        NtClose( *read_pipe );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           DisconnectNamedPipe   (kernelbase.@)
  */

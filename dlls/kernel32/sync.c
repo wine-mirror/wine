@@ -382,26 +382,6 @@ BOOL WINAPI AssignProcessToJobObject( HANDLE job, HANDLE process )
     return !status;
 }
 
-/******************************************************************************
- *		IsProcessInJob (KERNEL32.@)
- */
-BOOL WINAPI IsProcessInJob( HANDLE process, HANDLE job, PBOOL result )
-{
-    NTSTATUS status = NtIsProcessInJob( process, job );
-    switch(status)
-    {
-    case STATUS_PROCESS_IN_JOB:
-        *result = TRUE;
-        return TRUE;
-    case STATUS_PROCESS_NOT_IN_JOB:
-        *result = FALSE;
-        return TRUE;
-    default:
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-}
-
 
 /*
  * Timers
@@ -738,75 +718,6 @@ BOOL WINAPI CallNamedPipeA(
 
     return ret;
 }
-
-/******************************************************************
- *		CreatePipe (KERNEL32.@)
- *
- */
-BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
-                        LPSECURITY_ATTRIBUTES sa, DWORD size )
-{
-    static unsigned     index /* = 0 */;
-    WCHAR               name[64];
-    HANDLE              hr, hw;
-    unsigned            in_index = index;
-    UNICODE_STRING      nt_name;
-    OBJECT_ATTRIBUTES   attr;
-    NTSTATUS            status;
-    IO_STATUS_BLOCK     iosb;
-    LARGE_INTEGER       timeout;
-
-    *hReadPipe = *hWritePipe = INVALID_HANDLE_VALUE;
-
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = &nt_name;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE |
-                                    ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
-    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    if (!size) size = 4096;
-
-    timeout.QuadPart = (ULONGLONG)NMPWAIT_USE_DEFAULT_WAIT * -10000;
-    /* generate a unique pipe name (system wide) */
-    do
-    {
-        static const WCHAR nameFmt[] = { '\\','?','?','\\','p','i','p','e',
-         '\\','W','i','n','3','2','.','P','i','p','e','s','.','%','0','8','l',
-         'u','.','%','0','8','u','\0' };
-
-        snprintfW(name, ARRAY_SIZE(name), nameFmt, GetCurrentProcessId(), ++index);
-        RtlInitUnicodeString(&nt_name, name);
-        status = NtCreateNamedPipeFile(&hr, GENERIC_READ | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
-                                       &attr, &iosb, FILE_SHARE_WRITE, FILE_OVERWRITE_IF,
-                                       FILE_SYNCHRONOUS_IO_NONALERT,
-                                       FALSE, FALSE, FALSE, 
-                                       1, size, size, &timeout);
-        if (status)
-        {
-            SetLastError( RtlNtStatusToDosError(status) );
-            hr = INVALID_HANDLE_VALUE;
-        }
-    } while (hr == INVALID_HANDLE_VALUE && index != in_index);
-    /* from completion sakeness, I think system resources might be exhausted before this happens !! */
-    if (hr == INVALID_HANDLE_VALUE) return FALSE;
-
-    status = NtOpenFile(&hw, GENERIC_WRITE | FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, 0,
-                        FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE);
-
-    if (status) 
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        NtClose(hr);
-        return FALSE;
-    }
-
-    *hReadPipe = hr;
-    *hWritePipe = hw;
-    return TRUE;
-}
-
 
 /******************************************************************************
  * CreateMailslotA [KERNEL32.@]

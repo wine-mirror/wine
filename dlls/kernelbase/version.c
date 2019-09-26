@@ -1340,6 +1340,16 @@ DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWS
 
 
 /***********************************************************************
+ *         GetProductInfo   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetProductInfo( DWORD os_major, DWORD os_minor,
+                                              DWORD sp_major, DWORD sp_minor, DWORD *type )
+{
+    return RtlGetProductInfo( os_major, os_minor, sp_major, sp_minor, type );
+}
+
+
+/***********************************************************************
  *         GetVersion   (kernelbase.@)
  */
 DWORD WINAPI GetVersion(void)
