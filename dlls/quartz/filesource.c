@@ -560,11 +560,6 @@ static const IFileSourceFilterVtbl FileSource_Vtbl =
     FileSource_GetCurFile
 };
 
-static inline AsyncReader *impl_from_IPin(IPin *iface)
-{
-    return CONTAINING_RECORD(iface, AsyncReader, source.pin.IPin_iface);
-}
-
 static inline AsyncReader *impl_from_strmbase_pin(struct strmbase_pin *iface)
 {
     return CONTAINING_RECORD(iface, AsyncReader, source.pin);
@@ -605,24 +600,14 @@ static HRESULT source_get_media_type(struct strmbase_pin *iface, unsigned int in
     return S_OK;
 }
 
-/* overridden pin functions */
-
-static HRESULT WINAPI FileAsyncReaderPin_QueryInterface(IPin *iface, REFIID iid, void **out)
+static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
-    AsyncReader *filter = impl_from_IPin(iface);
+    AsyncReader *filter = impl_from_strmbase_pin(iface);
 
-    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
-
-    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IPin))
-        *out = &filter->source.pin.IPin_iface;
-    else if (IsEqualIID(iid, &IID_IAsyncReader))
+    if (IsEqualGUID(iid, &IID_IAsyncReader))
         *out = &filter->IAsyncReader_iface;
     else
-    {
-        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
-        *out = NULL;
         return E_NOINTERFACE;
-    }
 
     IUnknown_AddRef((IUnknown *)*out);
     return S_OK;
@@ -630,7 +615,7 @@ static HRESULT WINAPI FileAsyncReaderPin_QueryInterface(IPin *iface, REFIID iid,
 
 static const IPinVtbl FileAsyncReaderPin_Vtbl = 
 {
-    FileAsyncReaderPin_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseOutputPinImpl_Connect,
@@ -703,6 +688,7 @@ static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = source_query_accept,
     .base.pin_get_media_type = source_get_media_type,
+    .base.pin_query_interface = source_query_interface,
     .pfnAttemptConnection = FileAsyncReaderPin_AttemptConnection,
     .pfnDecideBufferSize = FileAsyncReaderPin_DecideBufferSize,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
