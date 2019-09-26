@@ -7189,6 +7189,51 @@ static void test_GetCharWidthInfo(void)
     ReleaseDC(NULL, hdc);
 }
 
+static int CALLBACK get_char_width_proc(const LOGFONTA *lf,
+        const TEXTMETRICA *tm, DWORD type, LPARAM ctx)
+{
+    HFONT font = CreateFontIndirectA(lf);
+    HDC dc = GetDC(NULL);
+    const char c = 'm';
+    ABCFLOAT abcf;
+    int i, i32;
+    BOOL ret;
+    float f;
+    ABC abc;
+
+    SelectObject(dc, font);
+
+    ret = GetCharWidthFloatA(dc, c, c, &f);
+    ok(ret, "%s: GetCharWidthFloat() failed\n", lf->lfFaceName);
+    ret = GetCharWidth32A(dc, c, c, &i32);
+    ok(ret, "%s: GetCharWidth32A() failed\n", lf->lfFaceName);
+    ret = GetCharWidthA(dc, c, c, &i);
+    ok(ret, "%s: GetCharWidthA() failed\n", lf->lfFaceName);
+    ok(i == i32, "%s: mismatched widths %d/%d\n", lf->lfFaceName, i, i32);
+    ok((float)i / 16.0f == f, "%s: mismatched widths %d/%.8e\n", lf->lfFaceName, i, f);
+
+    ret = GetCharABCWidthsFloatA(dc, c, c, &abcf);
+    ok(ret, "%s: GetCharABCWidths() failed\n", lf->lfFaceName);
+    if (GetCharABCWidthsA(dc, c, c, &abc))
+        ok((float)abc.abcB == abcf.abcfB, "%s: mismatched widths %d/%.8e\n",
+                lf->lfFaceName, abc.abcB, abcf.abcfB);
+
+    ReleaseDC(NULL, dc);
+    DeleteObject(font);
+    return 1;
+}
+
+static void test_char_width(void)
+{
+    HDC dc = GetDC(NULL);
+    LOGFONTA lf = {0};
+
+    lf.lfCharSet = DEFAULT_CHARSET;
+    EnumFontFamiliesExA(dc, &lf, get_char_width_proc, 0, 0);
+
+    ReleaseDC(NULL, dc);
+}
+
 START_TEST(font)
 {
     static const char *test_names[] =
@@ -7271,6 +7316,7 @@ START_TEST(font)
     test_bitmap_font_glyph_index();
     test_GetCharWidthI();
     test_long_names();
+    test_char_width();
 
     /* These tests should be last test until RemoveFontResource
      * is properly implemented.
