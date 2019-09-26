@@ -1451,7 +1451,7 @@
 @ stdcall SetNamedPipeHandleState(long ptr ptr ptr)
 @ stdcall SetPriorityClass(long long)
 @ stdcall SetPrivateObjectSecurity(long ptr ptr ptr long)
-@ stub SetPrivateObjectSecurityEx
+@ stdcall SetPrivateObjectSecurityEx(long ptr ptr long ptr long)
 @ stdcall SetProcessAffinityUpdateMode(long long)
 # @ stub SetProcessDefaultCpuSets
 # @ stub SetProcessGroupAffinity

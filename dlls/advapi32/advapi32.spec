@@ -749,7 +749,7 @@
 # @ stub SetNamedSecurityInfoExW
 @ stdcall SetNamedSecurityInfoW(wstr long long ptr ptr ptr ptr)
 @ stdcall -import SetPrivateObjectSecurity(long ptr ptr ptr long)
-# @ stub SetPrivateObjectSecurityEx
+@ stdcall -import SetPrivateObjectSecurityEx(long ptr ptr long ptr long)
 # @ stub SetSecurityAccessMask
 @ stdcall -import SetSecurityDescriptorControl(ptr long long)
 @ stdcall -import SetSecurityDescriptorDacl(ptr long ptr long)

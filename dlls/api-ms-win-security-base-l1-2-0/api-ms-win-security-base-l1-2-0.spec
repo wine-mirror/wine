@@ -91,7 +91,7 @@
 @ stdcall SetFileSecurityW(wstr long ptr) advapi32.SetFileSecurityW
 @ stdcall SetKernelObjectSecurity(long long ptr) advapi32.SetKernelObjectSecurity
 @ stdcall SetPrivateObjectSecurity(long ptr ptr ptr long) advapi32.SetPrivateObjectSecurity
-@ stub SetPrivateObjectSecurityEx
+@ stdcall SetPrivateObjectSecurityEx(long ptr ptr long ptr long) advapi32.SetPrivateObjectSecurityEx
 @ stub SetSecurityAccessMask
 @ stdcall SetSecurityDescriptorControl(ptr long long) advapi32.SetSecurityDescriptorControl
 @ stdcall SetSecurityDescriptorDacl(ptr long ptr long) advapi32.SetSecurityDescriptorDacl
