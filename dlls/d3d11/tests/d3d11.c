@@ -12719,10 +12719,13 @@ static void test_copy_subresource_region(void)
         check_texture_color(test_context.backbuffer, 0x800000ff, 2);
 
         memset(float_colors, 0, sizeof(float_colors));
+        for (i = 0; i < texture_desc.Width; ++i)
+            ((unsigned int *)float_colors)[i] = 0x45454545;
+
         ID3D11DeviceContext1_UpdateSubresource1(context1, (ID3D11Resource *)dst_texture, 0, NULL,
                 float_colors, 0, 0, 0);
         draw_quad(&test_context);
-        check_texture_color(test_context.backbuffer, 0x00000000, 1);
+        check_texture_color(test_context.backbuffer, 0x45454545, 1);
 
         ID3D11DeviceContext1_CopySubresourceRegion1(context1, (ID3D11Resource *)dst_texture, 0,
                 0, 0, 0, (ID3D11Resource *)src_texture, 0, NULL, 0);
