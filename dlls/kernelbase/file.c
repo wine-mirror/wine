@@ -1534,7 +1534,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetFileInformationByHandleEx( HANDLE handle, FILE_
     {
     case FileStreamInfo:
     case FileCompressionInfo:
-    case FileAttributeTagInfo:
     case FileRemoteProtocolInfo:
     case FileFullDirectoryInfo:
     case FileFullDirectoryRestartInfo:
@@ -1545,6 +1544,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetFileInformationByHandleEx( HANDLE handle, FILE_
         FIXME( "%p, %u, %p, %u\n", handle, class, info, size );
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return FALSE;
+
+    case FileAttributeTagInfo:
+        status = NtQueryInformationFile( handle, &io, info, size, FileAttributeTagInformation );
+        break;
 
     case FileBasicInfo:
         status = NtQueryInformationFile( handle, &io, info, size, FileBasicInformation );
