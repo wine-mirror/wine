@@ -2253,7 +2253,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         0,                                             /* FileQuotaInformation */
         0,                                             /* FileReparsePointInformation */
         sizeof(FILE_NETWORK_OPEN_INFORMATION),         /* FileNetworkOpenInformation */
-        0,                                             /* FileAttributeTagInformation */
+        sizeof(FILE_ATTRIBUTE_TAG_INFORMATION),        /* FileAttributeTagInformation */
         0,                                             /* FileTrackingInformation */
         0,                                             /* FileIdBothDirectoryInformation */
         0,                                             /* FileIdFullDirectoryInformation */
@@ -2469,6 +2469,15 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
             info->VolumeSerialNumber = 0;  /* FIXME */
             memset( &info->FileId, 0, sizeof(info->FileId) );
             *(ULONGLONG *)&info->FileId = st.st_ino;
+        }
+        break;
+    case FileAttributeTagInformation:
+        if (fd_get_file_info( fd, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
+        else
+        {
+            FILE_ATTRIBUTE_TAG_INFORMATION *info = ptr;
+            info->FileAttributes = attr;
+            info->ReparseTag = 0; /* FIXME */
         }
         break;
     default:

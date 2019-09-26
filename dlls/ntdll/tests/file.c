@@ -3673,6 +3673,52 @@ static void test_file_access_information(void)
     CloseHandle( h );
 }
 
+static void test_file_attribute_tag_information(void)
+{
+    FILE_ATTRIBUTE_TAG_INFORMATION info;
+    FILE_BASIC_INFORMATION fbi = {};
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE h;
+
+    if (!(h = create_temp_file(0))) return;
+
+    status = pNtQueryInformationFile( h, &io, &info, sizeof(info) - 1, FileAttributeTagInformation );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %#x\n", status );
+
+    status = pNtQueryInformationFile( (HANDLE)0xdeadbeef, &io, &info, sizeof(info), FileAttributeTagInformation );
+    ok( status == STATUS_INVALID_HANDLE, "got %#x\n", status );
+
+    memset(&info, 0x11, sizeof(info));
+    status = pNtQueryInformationFile( h, &io, &info, sizeof(info), FileAttributeTagInformation );
+    ok( status == STATUS_SUCCESS, "got %#x\n", status );
+    info.FileAttributes &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
+    ok( info.FileAttributes == FILE_ATTRIBUTE_ARCHIVE, "got attributes %#x\n", info.FileAttributes );
+    ok( !info.ReparseTag, "got reparse tag %#x\n", info.ReparseTag );
+
+    fbi.FileAttributes = FILE_ATTRIBUTE_SYSTEM;
+    status = pNtSetInformationFile(h, &io, &fbi, sizeof(fbi), FileBasicInformation);
+    ok( status == STATUS_SUCCESS, "got %#x\n", status );
+
+    memset(&info, 0x11, sizeof(info));
+    status = pNtQueryInformationFile( h, &io, &info, sizeof(info), FileAttributeTagInformation );
+    ok( status == STATUS_SUCCESS, "got %#x\n", status );
+    todo_wine ok( info.FileAttributes == FILE_ATTRIBUTE_SYSTEM, "got attributes %#x\n", info.FileAttributes );
+    ok( !info.ReparseTag, "got reparse tag %#x\n", info.ReparseTag );
+
+    fbi.FileAttributes = FILE_ATTRIBUTE_HIDDEN;
+    status = pNtSetInformationFile(h, &io, &fbi, sizeof fbi, FileBasicInformation);
+    ok( status == STATUS_SUCCESS, "got %#x\n", status );
+
+    memset(&info, 0x11, sizeof(info));
+    status = pNtQueryInformationFile( h, &io, &info, sizeof(info), FileAttributeTagInformation );
+    ok( status == STATUS_SUCCESS, "got %#x\n", status );
+    todo_wine ok( info.FileAttributes == FILE_ATTRIBUTE_HIDDEN, "got attributes %#x\n", info.FileAttributes );
+    ok( !info.ReparseTag, "got reparse tag %#x\n", info.ReparseTag );
+
+    CloseHandle( h );
+}
+
 static void test_file_mode(void)
 {
     UNICODE_STRING file_name, pipe_dev_name, mountmgr_dev_name, mailslot_dev_name;
@@ -4917,6 +4963,7 @@ START_TEST(file)
     test_file_completion_information();
     test_file_id_information();
     test_file_access_information();
+    test_file_attribute_tag_information();
     test_file_mode();
     test_file_readonly_access();
     test_query_volume_information_file();
