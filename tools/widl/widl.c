@@ -302,7 +302,7 @@ static void set_target( const char *target )
 
     if (!(p = strchr( spec, '-' ))) error( "Invalid target specification '%s'\n", target );
     *p++ = 0;
-    for (i = 0; i < sizeof(cpu_names)/sizeof(cpu_names[0]); i++)
+    for (i = 0; i < ARRAY_SIZE( cpu_names ); i++)
     {
         if (!strcmp( cpu_names[i].name, spec ))
         {

@@ -34,6 +34,8 @@ int strendswith(const char* str, const char* end);
 #define __attribute__(X)
 #endif
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
 void parser_error(const char *s) __attribute__((noreturn));
 int parser_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void error_loc(const char *s, ...) __attribute__((format (printf, 1, 2))) __attribute__((noreturn));

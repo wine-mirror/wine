@@ -309,7 +309,7 @@ void add_output_to_resources( const char *type, const char *name )
     size_t data_size = output_buffer_pos;
     size_t header_size = 5 * sizeof(unsigned int) + 2 * sizeof(unsigned short);
 
-    assert( nb_resources < sizeof(resources)/sizeof(resources[0]) );
+    assert( nb_resources < ARRAY_SIZE( resources ));
 
     if (type[0] != '#') header_size += (strlen( type ) + 1) * sizeof(unsigned short);
     else header_size += 2 * sizeof(unsigned short);
