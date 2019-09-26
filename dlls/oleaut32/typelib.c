@@ -6809,7 +6809,165 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
     return S_OK;
 }
 
-#else  /* __arm__ */
+#elif defined(__aarch64__)
+
+extern DWORD_PTR CDECL call_method( void *func, int nb_stk_args, const DWORD_PTR *stk_args, const DWORD_PTR *reg_args );
+extern float CDECL call_float_method( void *func, int nb_stk_args, const DWORD_PTR *stk_args, const DWORD_PTR *reg_args );
+extern double CDECL call_double_method( void *func, int nb_stk_args, const DWORD_PTR *stk_args, const DWORD_PTR *reg_args );
+__ASM_GLOBAL_FUNC( call_method,
+                   "stp x29, x30, [sp, #-16]!\n\t"
+                   "mov x29, sp\n\t"
+                   "sub sp, sp, x1, lsl #3\n\t"
+                   "cbz x1, 2f\n"
+                   "1:\tsub x1, x1, #1\n\t"
+                   "ldr x4, [x2, x1, lsl #3]\n\t"
+                   "str x4, [sp, x1, lsl #3]\n\t"
+                   "cbnz x1, 1b\n"
+                   "2:\tmov x8, x0\n\t"
+                   "mov x9, x3\n\t"
+                   "ldp d0, d1, [x9]\n\t"
+                   "ldp d2, d3, [x9, #0x10]\n\t"
+                   "ldp d4, d5, [x9, #0x20]\n\t"
+                   "ldp d6, d7, [x9, #0x30]\n\t"
+                   "ldp x0, x1, [x9, #0x40]\n\t"
+                   "ldp x2, x3, [x9, #0x50]\n\t"
+                   "ldp x4, x5, [x9, #0x60]\n\t"
+                   "ldp x6, x7, [x9, #0x70]\n\t"
+                   "blr x8\n\t"
+                   "mov sp, x29\n\t"
+                   "ldp x29, x30, [sp], #16\n\t"
+                   "ret" )
+__ASM_GLOBAL_FUNC( call_float_method,
+                   "b " __ASM_NAME("call_method") )
+__ASM_GLOBAL_FUNC( call_double_method,
+                   "b " __ASM_NAME("call_method") )
+
+HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VARTYPE ret_type, UINT count,
+                             VARTYPE *types, VARIANTARG **vargs, VARIANT *result )
+{
+    int argspos;
+    void *func;
+    UINT i;
+    DWORD_PTR *args;
+    struct
+    {
+        union
+        {
+            float f;
+            double d;
+        } fp[8];
+        DWORD_PTR x[8];
+    } regs;
+    int rcount;      /* 64-bit register index count */
+    int fpcount = 0; /* float register index count */
+
+    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
+          instance, offset, cc, ret_type, count, types, vargs, result, V_VT(result));
+
+    if (cc != CC_STDCALL && cc != CC_CDECL)
+    {
+        FIXME("unsupported calling convention %d\n",cc);
+        return E_INVALIDARG;
+    }
+
+    argspos = 0;
+    rcount = 0;
+
+    if (instance)
+    {
+        const FARPROC *vtable = *(FARPROC **)instance;
+        func = vtable[offset/sizeof(void *)];
+        regs.x[rcount++] = (DWORD_PTR)instance; /* the This pointer is always the first parameter */
+    }
+    else func = (void *)offset;
+
+    /* Determine if we need to pass a pointer for the return value as arg 0.  If so, do that */
+    /*  first as it will need to be in the 'x' registers:                                    */
+    switch (ret_type)
+    {
+    case VT_DECIMAL:
+    case VT_VARIANT:
+        regs.x[rcount++] = (DWORD_PTR)result;  /* arg 0 is a pointer to the result */
+        break;
+    case VT_HRESULT:
+        WARN("invalid return type %u\n", ret_type);
+        return E_INVALIDARG;
+    default:
+        break;
+    }
+
+    /* maximum size for an argument is sizeof(VARIANT).  Also allow for return pointer and stack alignment. */
+    args = heap_alloc( sizeof(VARIANT) * count + sizeof(DWORD_PTR) * 4 );
+
+    for (i = 0; i < count; i++)
+    {
+        VARIANT *arg = vargs[i];
+
+        switch (types[i])
+        {
+        case VT_EMPTY:
+            break;
+        case VT_R4:
+            if (fpcount < 8) regs.fp[fpcount++].f = V_R4(arg);
+            else *(float *)&args[argspos++] = V_R4(arg);
+            break;
+        case VT_R8:
+        case VT_DATE:
+            if (fpcount < 8) regs.fp[fpcount++].d = V_R8(arg);
+            else *(double *)&args[argspos++] = V_R8(arg);
+            break;
+        case VT_DECIMAL:
+        case VT_VARIANT:
+            if (rcount < 7)
+            {
+                memcpy( &regs.x[rcount], arg, sizeof(*arg) );
+                rcount += 2;
+            }
+            else
+            {
+                memcpy( &args[argspos], arg, sizeof(*arg) );
+                argspos += 2;
+            }
+            break;
+        case VT_BOOL:  /* VT_BOOL is 16-bit but BOOL is 32-bit, needs to be extended */
+            if (rcount < 8) regs.x[rcount++] = V_BOOL(arg);
+            else args[argspos++] = V_BOOL(arg);
+            break;
+        default:
+            if (rcount < 8) regs.x[rcount++] = V_UI8(arg);
+            else args[argspos++] = V_UI8(arg);
+            break;
+        }
+        TRACE("arg %u: type %s %s\n", i, debugstr_vt(types[i]), debugstr_variant(arg));
+    }
+
+    argspos += (argspos % 2);   /* Make sure stack function alignment is 16-byte */
+
+    switch (ret_type)
+    {
+    case VT_EMPTY:      /* EMPTY = no return value */
+    case VT_DECIMAL:    /* DECIMAL and VARIANT already have a pointer argument passed (see above) */
+    case VT_VARIANT:
+        call_method( func, argspos, args, (DWORD_PTR *)&regs );
+        break;
+    case VT_R4:
+        V_R4(result) = call_float_method( func, argspos, args, (DWORD_PTR *)&regs );
+        break;
+    case VT_R8:
+    case VT_DATE:
+        V_R8(result) = call_double_method( func, argspos, args, (DWORD_PTR *)&regs );
+        break;
+    default:
+        V_UI8(result) = call_method( func, argspos, args, (DWORD_PTR *)&regs );
+        break;
+    }
+    heap_free( args );
+    if (ret_type != VT_VARIANT) V_VT(result) = ret_type;
+    TRACE("retval: %s\n", debugstr_variant(result));
+    return S_OK;
+}
+
+#else  /* __aarch64__ */
 
 HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VARTYPE vtReturn,
                              UINT cActuals, VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult )
