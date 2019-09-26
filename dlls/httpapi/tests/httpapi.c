@@ -614,6 +614,8 @@ static void test_v1_entity_body(void)
     ret = HttpSendHttpResponse(queue, req->RequestId, 0, (HTTP_RESPONSE *)&response, NULL, NULL, NULL, 0, NULL, NULL);
     ok(!ret, "Got error %u.\n", ret);
 
+    memset(response_buffer, 0, sizeof(response_buffer));
+
     ret = recv(s, response_buffer, sizeof(response_buffer), 0);
     ok(ret > 0, "recv() failed.\n");
     if (winetest_debug > 1)
