@@ -32,8 +32,8 @@
 @ stdcall AllocConsole() kernel32.AllocConsole
 @ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
 @ stdcall AllocateLocallyUniqueId(ptr)
-@ stdcall AllocateUserPhysicalPages(long ptr ptr) kernel32.AllocateUserPhysicalPages
-# @ stub AllocateUserPhysicalPagesNuma
+@ stdcall AllocateUserPhysicalPages(long ptr ptr)
+@ stdcall AllocateUserPhysicalPagesNuma(long ptr ptr long)
 # @ stub AppContainerDeriveSidFromMoniker
 # @ stub AppContainerFreeMemory
 # @ stub AppContainerLookupDisplayNameMrtReference
@@ -188,7 +188,7 @@
 @ stdcall CreateFile2(wstr long long long ptr)
 @ stdcall CreateFileA(str long long ptr long long long)
 # @ stub CreateFileMappingFromApp
-@ stub CreateFileMappingNumaW
+@ stdcall CreateFileMappingNumaW(long ptr long long long wstr long)
 @ stdcall CreateFileMappingW(long ptr long long long wstr)
 @ stdcall CreateFileW(wstr long long ptr long long long)
 @ stdcall CreateHardLinkA(str str ptr) kernel32.CreateHardLinkA
@@ -399,7 +399,7 @@
 @ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) ntdll.TpCallbackUnloadDllOnCompletion
 @ stdcall FreeResource(long)
 @ stdcall FreeSid(ptr)
-@ stdcall FreeUserPhysicalPages(long ptr ptr) kernel32.FreeUserPhysicalPages
+@ stdcall FreeUserPhysicalPages(long ptr ptr)
 @ stdcall GenerateConsoleCtrlEvent(long long)
 # @ stub GenerateGPNotificationInternal
 @ stdcall GetACP() kernel32.GetACP
@@ -547,8 +547,8 @@
 @ stdcall GetLocaleInfoW(long long ptr long) kernel32.GetLocaleInfoW
 @ stdcall GetLogicalDriveStringsW(long ptr) kernel32.GetLogicalDriveStringsW
 @ stdcall GetLogicalDrives() kernel32.GetLogicalDrives
-@ stdcall GetLogicalProcessorInformation(ptr ptr) kernel32.GetLogicalProcessorInformation
-@ stdcall GetLogicalProcessorInformationEx(long ptr ptr) kernel32.GetLogicalProcessorInformationEx
+@ stdcall GetLogicalProcessorInformation(ptr ptr)
+@ stdcall GetLogicalProcessorInformationEx(long ptr ptr)
 @ stdcall GetLongPathNameA(str long long)
 @ stdcall GetLongPathNameW(wstr long long)
 # @ stub GetMappedFileNameA
@@ -574,10 +574,9 @@
 @ stdcall GetNamedPipeInfo(long ptr ptr ptr ptr)
 @ stdcall GetNativeSystemInfo(ptr) kernel32.GetNativeSystemInfo
 # @ stub GetNextFgPolicyRefreshInfoInternal
-@ stdcall GetNumaHighestNodeNumber(ptr) kernel32.GetNumaHighestNodeNumber
-@ stdcall GetNumaNodeProcessorMaskEx(long ptr) kernel32.GetNumaNodeProcessorMaskEx
-@ stdcall GetNumaProximityNode(long ptr) kernel32.GetNumaProximityNode
-@ stdcall GetNumaProximityNodeEx(long ptr) kernel32.GetNumaProximityNodeEx
+@ stdcall GetNumaHighestNodeNumber(ptr)
+@ stdcall GetNumaNodeProcessorMaskEx(long ptr)
+@ stdcall GetNumaProximityNodeEx(long ptr)
 @ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long) kernel32.GetNumberFormatEx
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long) kernel32.GetNumberFormatW
 @ stdcall GetNumberOfConsoleInputEvents(long ptr)
@@ -687,7 +686,7 @@
 @ stdcall GetSystemDefaultUILanguage()
 @ stdcall GetSystemDirectoryA(ptr long)
 @ stdcall GetSystemDirectoryW(ptr long)
-@ stdcall GetSystemFileCacheSize(ptr ptr ptr) kernel32.GetSystemFileCacheSize
+@ stdcall GetSystemFileCacheSize(ptr ptr ptr)
 @ stdcall GetSystemFirmwareTable(long long ptr long) kernel32.GetSystemFirmwareTable
 @ stdcall GetSystemInfo(ptr) kernel32.GetSystemInfo
 # @ stub GetSystemMetadataPath
@@ -949,7 +948,7 @@
 @ stdcall MakeSelfRelativeSD(ptr ptr ptr)
 @ stdcall MapGenericMask(ptr ptr)
 # @ stub MapPredefinedHandleInternal
-@ stdcall MapUserPhysicalPages(ptr long ptr) kernel32.MapUserPhysicalPages
+@ stdcall MapUserPhysicalPages(ptr long ptr)
 @ stdcall MapViewOfFile(long long long long long)
 @ stdcall MapViewOfFileEx(long long long long long ptr)
 @ stdcall MapViewOfFileExNuma(long long long long long ptr long)
@@ -1475,7 +1474,7 @@
 # @ stub SetStateVersion
 @ stdcall SetStdHandle(long long)
 @ stdcall SetStdHandleEx(long long ptr)
-@ stdcall SetSystemFileCacheSize(long long long) kernel32.SetSystemFileCacheSize
+@ stdcall SetSystemFileCacheSize(long long long)
 @ stdcall SetSystemTime(ptr)
 @ stdcall SetSystemTimeAdjustment(long long) kernel32.SetSystemTimeAdjustment
 @ stdcall SetThreadContext(long ptr)

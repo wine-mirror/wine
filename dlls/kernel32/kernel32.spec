@@ -150,11 +150,11 @@
 @ stdcall AddVectoredContinueHandler(long ptr) ntdll.RtlAddVectoredContinueHandler
 @ stdcall AddVectoredExceptionHandler(long ptr) ntdll.RtlAddVectoredExceptionHandler
 # @ stub AdjustCalendarDate
-# @ stub AllocateUserPhysicalPagesNuma
 @ stdcall AllocConsole()
 @ stub -i386 AllocLSCallback
 @ stdcall -i386 -private AllocSLCallback(ptr ptr) krnl386.exe16.AllocSLCallback
-@ stdcall AllocateUserPhysicalPages(long ptr ptr)
+@ stdcall -import AllocateUserPhysicalPages(long ptr ptr)
+@ stdcall -import AllocateUserPhysicalPagesNuma(long ptr ptr long)
 @ stdcall ApplicationRecoveryFinished(long)
 @ stdcall ApplicationRecoveryInProgress(ptr)
 @ stdcall -import AreFileApisANSI()
@@ -284,7 +284,7 @@
 @ stdcall -import CreateFileA(str long long ptr long long long)
 @ stdcall CreateFileMappingA(long ptr long long long str)
 # @ stub CreateFileMappingNumaA
-# @ stub CreateFileMappingNumaW
+@ stdcall -import CreateFileMappingNumaW(long ptr long long long wstr long)
 @ stdcall -import CreateFileMappingW(long ptr long long long wstr)
 @ stdcall -import CreateFileW(wstr long long ptr long long long)
 @ stdcall CreateHardLinkA(str str ptr)
@@ -533,7 +533,7 @@
 @ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) ntdll.TpCallbackUnloadDllOnCompletion
 @ stdcall -import FreeResource(long)
 @ stdcall -i386 -private FreeSLCallback(long) krnl386.exe16.FreeSLCallback
-@ stdcall FreeUserPhysicalPages(long ptr ptr)
+@ stdcall -import FreeUserPhysicalPages(long ptr ptr)
 @ stub FreeVirtualBuffer
 @ stdcall -import GenerateConsoleCtrlEvent(long long)
 @ stdcall -i386 -private Get16DLLAddress(long str) krnl386.exe16.Get16DLLAddress
@@ -709,8 +709,8 @@
 @ stdcall GetLogicalDriveStringsA(long ptr)
 @ stdcall GetLogicalDriveStringsW(long ptr)
 @ stdcall GetLogicalDrives()
-@ stdcall GetLogicalProcessorInformation(ptr ptr)
-@ stdcall GetLogicalProcessorInformationEx(long ptr ptr)
+@ stdcall -import GetLogicalProcessorInformation(ptr ptr)
+@ stdcall -import GetLogicalProcessorInformationEx(long ptr ptr)
 @ stdcall -import GetLongPathNameA (str long long)
 # @ stub GetLongPathNameTransactedA
 # @ stub GetLongPathNameTransactedW
@@ -743,15 +743,15 @@
 # @ stub GetNumaAvailableMemory
 @ stdcall GetNumaAvailableMemoryNode(long ptr)
 @ stdcall GetNumaAvailableMemoryNodeEx(long ptr)
-@ stdcall GetNumaHighestNodeNumber(ptr)
+@ stdcall -import GetNumaHighestNodeNumber(ptr)
 # @ stub GetNumaNodeNumberFromHandle
 @ stdcall GetNumaNodeProcessorMask(long ptr)
-@ stdcall GetNumaNodeProcessorMaskEx(long ptr)
+@ stdcall -import GetNumaNodeProcessorMaskEx(long ptr)
 # @ stub GetNumaProcessorMap
 @ stdcall GetNumaProcessorNode(long ptr)
 @ stdcall GetNumaProcessorNodeEx(ptr ptr)
 @ stdcall GetNumaProximityNode(long ptr)
-@ stdcall GetNumaProximityNodeEx(long ptr)
+@ stdcall -import GetNumaProximityNodeEx(long ptr)
 @ stdcall GetNumberFormatA(long long str ptr ptr long)
 @ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long)
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long)
@@ -817,7 +817,7 @@
 @ stdcall GetStringTypeExA(long long str long ptr)
 @ stdcall GetStringTypeExW(long long wstr long ptr)
 @ stdcall GetStringTypeW(long wstr long ptr)
-@ stdcall GetSystemFileCacheSize(ptr ptr ptr)
+@ stdcall -import GetSystemFileCacheSize(ptr ptr ptr)
 @ stdcall -import GetSystemDefaultLCID()
 @ stdcall -import GetSystemDefaultLangID()
 @ stdcall -import GetSystemDefaultLocaleName(ptr long)
@@ -1076,7 +1076,7 @@
 @ stdcall -i386 -private MapLS(ptr) krnl386.exe16.MapLS
 @ stdcall -i386 -private MapSL(long) krnl386.exe16.MapSL
 @ stdcall -i386 -private MapSLFix(long) krnl386.exe16.MapSLFix
-@ stdcall MapUserPhysicalPages(ptr long ptr)
+@ stdcall -import MapUserPhysicalPages(ptr long ptr)
 # @ stub MapUserPhysicalPagesScatter
 @ stdcall -import MapViewOfFile(long long long long long)
 @ stdcall -import MapViewOfFileEx(long long long long long ptr)
@@ -1438,7 +1438,7 @@
 @ stdcall SetSearchPathMode(long)
 @ stdcall -import SetStdHandle(long long)
 @ stdcall -import SetStdHandleEx(long long ptr)
-@ stdcall SetSystemFileCacheSize(long long long)
+@ stdcall -import SetSystemFileCacheSize(long long long)
 @ stdcall SetSystemPowerState(long long)
 @ stdcall -import SetSystemTime(ptr)
 @ stdcall SetSystemTimeAdjustment(long long)

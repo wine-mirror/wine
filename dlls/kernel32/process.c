@@ -3679,66 +3679,6 @@ HANDLE WINAPI KERNEL32_GetCurrentProcess(void)
 }
 
 /***********************************************************************
- *           GetLogicalProcessorInformation     (KERNEL32.@)
- */
-BOOL WINAPI GetLogicalProcessorInformation(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer, PDWORD pBufLen)
-{
-    NTSTATUS status;
-
-    TRACE("(%p,%p)\n", buffer, pBufLen);
-
-    if(!pBufLen)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    status = NtQuerySystemInformation( SystemLogicalProcessorInformation, buffer, *pBufLen, pBufLen);
-
-    if (status == STATUS_INFO_LENGTH_MISMATCH)
-    {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        return FALSE;
-    }
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError( status ) );
-        return FALSE;
-    }
-    return TRUE;
-}
-
-/***********************************************************************
- *           GetLogicalProcessorInformationEx   (KERNEL32.@)
- */
-BOOL WINAPI GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP relationship, SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *buffer, DWORD *len)
-{
-    NTSTATUS status;
-
-    TRACE("(%u,%p,%p)\n", relationship, buffer, len);
-
-    if (!len)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    status = NtQuerySystemInformationEx( SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship),
-        buffer, *len, len );
-    if (status == STATUS_INFO_LENGTH_MISMATCH)
-    {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        return FALSE;
-    }
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError( status ) );
-        return FALSE;
-    }
-    return TRUE;
-}
-
-/***********************************************************************
  *           CmdBatNotification   (KERNEL32.@)
  *
  * Notifies the system that a batch file has started or finished.
@@ -3835,31 +3775,11 @@ HRESULT WINAPI GetApplicationRestartSettings(HANDLE process, WCHAR *cmdline, DWO
 }
 
 /**********************************************************************
- *           GetNumaHighestNodeNumber     (KERNEL32.@)
- */
-BOOL WINAPI GetNumaHighestNodeNumber(PULONG highestnode)
-{
-    *highestnode = 0;
-    FIXME("(%p): semi-stub\n", highestnode);
-    return TRUE;
-}
-
-/**********************************************************************
  *           GetNumaNodeProcessorMask     (KERNEL32.@)
  */
 BOOL WINAPI GetNumaNodeProcessorMask(UCHAR node, PULONGLONG mask)
 {
     FIXME("(%c %p): stub\n", node, mask);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/**********************************************************************
- *           GetNumaNodeProcessorMaskEx     (KERNEL32.@)
- */
-BOOL WINAPI GetNumaNodeProcessorMaskEx(USHORT node, PGROUP_AFFINITY mask)
-{
-    FIXME("(%hu %p): stub\n", node, mask);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -3918,15 +3838,6 @@ BOOL WINAPI GetNumaProcessorNodeEx(PPROCESSOR_NUMBER processor, PUSHORT node_num
  *           GetNumaProximityNode (KERNEL32.@)
  */
 BOOL WINAPI GetNumaProximityNode(ULONG  proximity_id, PUCHAR node_number)
-{
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/***********************************************************************
- *           GetNumaProximityNodeEx (KERNEL32.@)
- */
-BOOL WINAPI GetNumaProximityNodeEx(ULONG  proximity_id, PUSHORT node_number)
 {
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
