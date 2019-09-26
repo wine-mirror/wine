@@ -356,7 +356,7 @@
 @ stdcall DecodeSystemPointer(ptr) ntdll.RtlDecodeSystemPointer
 @ stdcall DefineDosDeviceA(long str str)
 @ stdcall DefineDosDeviceW(long wstr wstr)
-@ stdcall DelayLoadFailureHook(str str)
+@ stdcall -import DelayLoadFailureHook(str str)
 @ stdcall DeleteAtom(long)
 # @ stub DeleteBoundaryDescriptor
 @ stdcall DeleteCriticalSection(ptr) ntdll.RtlDeleteCriticalSection

@@ -244,7 +244,7 @@
 # @ stub DecodeRemotePointer
 @ stdcall DecodeSystemPointer(ptr) ntdll.RtlDecodeSystemPointer
 @ stdcall DefineDosDeviceW(long wstr wstr) kernel32.DefineDosDeviceW
-@ stdcall DelayLoadFailureHook(str str) kernel32.DelayLoadFailureHook
+@ stdcall DelayLoadFailureHook(str str)
 # @ stub DelayLoadFailureHookLookup
 @ stdcall DeleteAce(ptr long)
 # @ stub DeleteBoundaryDescriptor
@@ -1344,7 +1344,7 @@
 @ stdcall ResetEvent(long)
 # @ stub ResetState
 @ stdcall ResetWriteWatch(ptr long)
-@ stdcall ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) kernel32.ResolveDelayLoadedAPI
+@ stdcall -import ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) LdrResolveDelayLoadedAPI
 # @ stub ResolveDelayLoadsFromDll
 @ stdcall ResolveLocaleName(wstr ptr long)
 @ stdcall RestoreLastError(long) ntdll.RtlRestoreLastWin32Error

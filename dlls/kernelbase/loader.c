@@ -42,6 +42,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(module);
  ***********************************************************************/
 
 
+/***********************************************************************
+ *	DelayLoadFailureHook   (kernelbase.@)
+ */
+FARPROC WINAPI DECLSPEC_HOTPATCH DelayLoadFailureHook( LPCSTR name, LPCSTR function )
+{
+    ULONG_PTR args[2];
+
+    if ((ULONG_PTR)function >> 16)
+        ERR( "failed to delay load %s.%s\n", name, function );
+    else
+        ERR( "failed to delay load %s.%u\n", name, LOWORD(function) );
+    args[0] = (ULONG_PTR)name;
+    args[1] = (ULONG_PTR)function;
+    RaiseException( EXCEPTION_WINE_STUB, EH_NONCONTINUABLE, 2, args );
+    return NULL;
+}
+
+
 /****************************************************************************
  *	DisableThreadLibraryCalls   (kernelbase.@)
  */
