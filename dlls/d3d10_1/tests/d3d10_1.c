@@ -410,10 +410,7 @@ static void test_create_shader_resource_view(void)
     ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x\n", hr);
 
     hr = ID3D10Device1_CreateShaderResourceView1(device, (ID3D10Resource *)buffer, &srv_desc, &srview);
-todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        ID3D10ShaderResourceView1_Release(srview);
 
     ID3D10Buffer_Release(buffer);
 
