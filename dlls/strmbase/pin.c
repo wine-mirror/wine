@@ -157,6 +157,31 @@ HRESULT strmbase_pin_get_media_type(struct strmbase_pin *iface, unsigned int ind
     return VFW_S_NO_MORE_ITEMS;
 }
 
+HRESULT WINAPI BasePinImpl_QueryInterface(IPin *iface)
+{
+    struct strmbase_pin *pin = impl_from_IPin(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    *out = NULL;
+
+    if (pin->pFuncsTable->pin_query_interface
+            && SUCCEEDED(hr = pin->pFuncsTable->pin_query_interface(filter, iid, out)))
+        return hr;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IPin))
+        *out = iface;
+    else
+    {
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 ULONG WINAPI BasePinImpl_AddRef(IPin *iface)
 {
     struct strmbase_pin *pin = impl_from_IPin(iface);

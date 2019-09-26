@@ -47,6 +47,7 @@ typedef struct BasePinFuncTable {
     HRESULT (*pin_query_accept)(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt);
     /* Required for EnumMediaTypes(). */
     HRESULT (*pin_get_media_type)(struct strmbase_pin *pin, unsigned int index, AM_MEDIA_TYPE *mt);
+    HRESULT (*pin_query_interface)(struct strmbase_pin *pin, REFIID iid, void **out);
 } BasePinFuncTable;
 
 struct strmbase_source
@@ -97,6 +98,7 @@ typedef struct BaseInputPinFuncTable {
 /* Base Pin */
 HRESULT strmbase_pin_get_media_type(struct strmbase_pin *pin, unsigned int index, AM_MEDIA_TYPE *mt);
 LONG WINAPI BasePinImpl_GetMediaTypeVersion(struct strmbase_pin *pin);
+HRESULT WINAPI BasePinImpl_QueryInterface(IPin *iface, REFIID iid, void **out);
 ULONG WINAPI BasePinImpl_AddRef(IPin *iface);
 ULONG WINAPI BasePinImpl_Release(IPin *iface);
 HRESULT WINAPI BasePinImpl_Disconnect(IPin * iface);
