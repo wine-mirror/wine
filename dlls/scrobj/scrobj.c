@@ -468,7 +468,7 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     }
     else
     {
-        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        WARN("(%p)->(%s %p) interface not supported\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -1324,6 +1324,8 @@ static HRESULT read_xml_value(struct scriptlet_factory *factory, WCHAR **ret)
 static HRESULT parse_scriptlet_registration(struct scriptlet_factory *factory)
 {
     HRESULT hres;
+
+    TRACE("\n");
 
     if (factory->have_registration)
     {
