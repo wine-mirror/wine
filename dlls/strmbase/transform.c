@@ -161,17 +161,47 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_destroy = transform_destroy,
 };
 
+static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    TransformFilter *filter = impl_from_sink_IPin(&iface->IPin_iface);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &filter->sink.IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static const BaseInputPinFuncTable tf_input_BaseInputFuncTable =
 {
     .base.pin_query_accept = sink_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
+    .base.pin_query_interface = sink_query_interface,
     .pfnReceive = TransformFilter_Input_Receive,
 };
+
+static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    TransformFilter *filter = impl_from_source_IPin(&iface->IPin_iface);
+
+    if (IsEqualGUID(iid, &IID_IQualityControl))
+        *out = &filter->qcimpl->IQualityControl_iface;
+    else if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        return IUnknown_QueryInterface(filter->seekthru_unk, iid, out);
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
 
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = source_query_accept,
     .base.pin_get_media_type = source_get_media_type,
+    .base.pin_query_interface = source_query_interface,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideBufferSize = TransformFilter_Output_DecideBufferSize,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
@@ -439,7 +469,7 @@ static HRESULT WINAPI TransformFilter_InputPin_NewSegment(IPin * iface, REFERENC
 
 static const IPinVtbl TransformFilter_InputPin_Vtbl =
 {
-    BaseInputPinImpl_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
@@ -459,30 +489,9 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
     TransformFilter_InputPin_NewSegment
 };
 
-static HRESULT WINAPI transform_source_QueryInterface(IPin *iface, REFIID iid, void **out)
-{
-    TransformFilter *filter = impl_from_source_IPin(iface);
-
-    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IPin))
-        *out = iface;
-    else if (IsEqualGUID(iid, &IID_IQualityControl))
-        *out = &filter->qcimpl->IQualityControl_iface;
-    else if (IsEqualGUID(iid, &IID_IMediaSeeking))
-        return IUnknown_QueryInterface(filter->seekthru_unk, iid, out);
-    else
-    {
-        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
-        *out = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown *)*out);
-    return S_OK;
-}
-
 static const IPinVtbl TransformFilter_OutputPin_Vtbl =
 {
-    transform_source_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseOutputPinImpl_Connect,

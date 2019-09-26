@@ -147,7 +147,7 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndFlush(IPin * iface)
 
 static const IPinVtbl BaseRenderer_InputPin_Vtbl =
 {
-    BaseInputPinImpl_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
@@ -217,6 +217,19 @@ static HRESULT sink_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *
     return filter->pFuncsTable->pfnCheckMediaType(filter, mt);
 }
 
+static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    BaseRenderer *filter = impl_from_IPin(&iface->IPin_iface);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &filter->sink.IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static HRESULT WINAPI BaseRenderer_Receive(BaseInputPin *pin, IMediaSample *sample)
 {
     BaseRenderer *filter = impl_from_IPin(&pin->pin.IPin_iface);
@@ -226,6 +239,7 @@ static HRESULT WINAPI BaseRenderer_Receive(BaseInputPin *pin, IMediaSample *samp
 static const BaseInputPinFuncTable input_BaseInputFuncTable =
 {
     .base.pin_query_accept = sink_query_accept,
+    .base.pin_query_interface = sink_query_interface,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnReceive = BaseRenderer_Receive,
 };
