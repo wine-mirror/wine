@@ -135,7 +135,7 @@
 @ stdcall ClearCommBreak(long)
 @ stdcall ClearCommError(long ptr ptr)
 # @ stub CloseGlobalizationUserSettingsKey
-@ stdcall CloseHandle(long) kernel32.CloseHandle
+@ stdcall CloseHandle(long)
 # @ stub ClosePackageInfo
 # @ stub ClosePrivateNamespace
 # @ stub CloseState
@@ -279,7 +279,7 @@
 # @ stub DsReadNgcKeyW
 # @ stub DsUnBindW
 # @ stub DsWriteNgcKeyW
-@ stdcall DuplicateHandle(long long long ptr long long long) kernel32.DuplicateHandle
+@ stdcall DuplicateHandle(long long long ptr long long long)
 # @ stub DuplicateStateContainerHandle
 @ stdcall DuplicateToken(long long ptr)
 @ stdcall DuplicateTokenEx(long long ptr long long ptr)
@@ -531,7 +531,7 @@
 # @ stub GetGPOListInternalA
 # @ stub GetGPOListInternalW
 @ stdcall GetGeoInfoW(long long ptr long long) kernel32.GetGeoInfoW
-@ stdcall GetHandleInformation(long ptr) kernel32.GetHandleInformation
+@ stdcall GetHandleInformation(long ptr)
 # @ stub GetHivePath
 # @ stub GetIntegratedDisplaySize
 # @ stub GetIsEdpEnabled
@@ -1440,8 +1440,8 @@
 @ stdcall SetFileSecurityW(wstr long ptr)
 @ stdcall SetFileTime(long ptr ptr ptr)
 @ stdcall SetFileValidData(ptr int64)
-@ stdcall SetHandleCount(long) kernel32.SetHandleCount
-@ stdcall SetHandleInformation(long long long) kernel32.SetHandleInformation
+@ stdcall SetHandleCount(long)
+@ stdcall SetHandleInformation(long long long)
 # @ stub SetIsDeveloperModeEnabled
 # @ stub SetIsSideloadingEnabled
 @ stdcall SetKernelObjectSecurity(long long ptr)

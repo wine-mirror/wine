@@ -223,7 +223,7 @@
 @ stdcall -import ClearCommBreak(long)
 @ stdcall -import ClearCommError(long ptr ptr)
 @ stdcall CloseConsoleHandle(long)
-@ stdcall CloseHandle(long)
+@ stdcall -import CloseHandle(long)
 # @ stub ClosePrivateNamespace
 @ stdcall CloseProfileUserMapping()
 @ stub CloseSystemHandle
@@ -385,7 +385,7 @@
 # @ stub DosPathToSessionPathA
 # @ stub DosPathToSessionPathW
 @ stdcall DuplicateConsoleHandle(long long long long)
-@ stdcall DuplicateHandle(long long long ptr long long long)
+@ stdcall -import DuplicateHandle(long long long ptr long long long)
 # @ stub EnableThreadProfiling
 @ stdcall EncodePointer(ptr) ntdll.RtlEncodePointer
 @ stdcall EncodeSystemPointer(ptr) ntdll.RtlEncodeSystemPointer
@@ -695,7 +695,7 @@
 @ stdcall GetGeoInfoA(long long ptr long long)
 @ stdcall GetGeoInfoW(long long ptr long long)
 @ stdcall GetHandleContext(long)
-@ stdcall GetHandleInformation(long ptr)
+@ stdcall -import GetHandleInformation(long ptr)
 @ stub -i386 GetLSCallbackTarget
 @ stub -i386 GetLSCallbackTemplate
 @ stdcall GetLargePageMinimum()
@@ -1411,7 +1411,7 @@
 # @ stub SetFirmwareEnvironmentVariableW
 @ stdcall SetHandleContext(long long)
 @ stdcall SetHandleCount(long)
-@ stdcall SetHandleInformation(long long long)
+@ stdcall -import SetHandleInformation(long long long)
 @ stdcall SetInformationJobObject(long long ptr long)
 @ stub SetLastConsoleEventActive
 @ stdcall SetLastError(long) RtlSetLastWin32Error

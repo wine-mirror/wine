@@ -36,6 +36,12 @@ static inline BOOL is_console_handle(HANDLE h)
     return h != INVALID_HANDLE_VALUE && ((UINT_PTR)h & 3) == 3;
 }
 
+/* map between ntdll handle and kernel32 console handle */
+static inline HANDLE console_handle_map( HANDLE h )
+{
+    return h != INVALID_HANDLE_VALUE ? (HANDLE)((UINT_PTR)h ^ 3) : INVALID_HANDLE_VALUE;
+}
+
 static inline BOOL set_ntstatus( NTSTATUS status )
 {
     if (status) SetLastError( RtlNtStatusToDosError( status ));

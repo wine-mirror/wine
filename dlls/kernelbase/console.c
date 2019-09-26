@@ -56,12 +56,6 @@ static CRITICAL_SECTION console_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 static WCHAR input_exe[MAX_PATH + 1];
 
 
-/* map a real wineserver handle onto a kernel32 console handle */
-static inline HANDLE console_handle_map( HANDLE h )
-{
-    return h != INVALID_HANDLE_VALUE ? (HANDLE)((UINT_PTR)h ^ 3) : INVALID_HANDLE_VALUE;
-}
-
 /* map a kernel32 console handle onto a real wineserver handle */
 static inline obj_handle_t console_handle_unmap( HANDLE h )
 {

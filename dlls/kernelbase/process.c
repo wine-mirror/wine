@@ -42,6 +42,44 @@ static DWORD shutdown_priority = 0x280;
  ***********************************************************************/
 
 
+/*********************************************************************
+ *           CloseHandle   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CloseHandle( HANDLE handle )
+{
+    if (handle == (HANDLE)STD_INPUT_HANDLE)
+        handle = InterlockedExchangePointer( &NtCurrentTeb()->Peb->ProcessParameters->hStdInput, 0 );
+    else if (handle == (HANDLE)STD_OUTPUT_HANDLE)
+        handle = InterlockedExchangePointer( &NtCurrentTeb()->Peb->ProcessParameters->hStdOutput, 0 );
+    else if (handle == (HANDLE)STD_ERROR_HANDLE)
+        handle = InterlockedExchangePointer( &NtCurrentTeb()->Peb->ProcessParameters->hStdError, 0 );
+
+    if (is_console_handle( handle )) handle = console_handle_map( handle );
+    return set_ntstatus( NtClose( handle ));
+}
+
+
+/*********************************************************************
+ *           DuplicateHandle   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH DuplicateHandle( HANDLE source_process, HANDLE source,
+                                               HANDLE dest_process, HANDLE *dest,
+                                               DWORD access, BOOL inherit, DWORD options )
+{
+    if (is_console_handle( source ))
+    {
+        source = console_handle_map( source );
+        if (!set_ntstatus( NtDuplicateObject( source_process, source, dest_process, dest,
+                                              access, inherit ? OBJ_INHERIT : 0, options )))
+            return FALSE;
+        *dest = console_handle_map( *dest );
+        return TRUE;
+    }
+    return set_ntstatus( NtDuplicateObject( source_process, source, dest_process, dest,
+                                            access, inherit ? OBJ_INHERIT : 0, options ));
+}
+
+
 /****************************************************************************
  *           FlushInstructionCache   (kernelbase.@)
  */
@@ -93,6 +131,26 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetExitCodeProcess( HANDLE process, LPDWORD exit_c
     status = NtQueryInformationProcess( process, ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
     if (status && exit_code) *exit_code = pbi.ExitStatus;
     return set_ntstatus( status );
+}
+
+
+/*********************************************************************
+ *           GetHandleInformation   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetHandleInformation( HANDLE handle, DWORD *flags )
+{
+    OBJECT_DATA_INFORMATION info;
+
+    if (!set_ntstatus( NtQueryObject( handle, ObjectDataInformation, &info, sizeof(info), NULL )))
+        return FALSE;
+
+    if (flags)
+    {
+        *flags = 0;
+        if (info.InheritHandle) *flags |= HANDLE_FLAG_INHERIT;
+        if (info.ProtectFromClose) *flags |= HANDLE_FLAG_PROTECT_FROM_CLOSE;
+    }
+    return TRUE;
 }
 
 
@@ -251,6 +309,38 @@ UINT WINAPI DECLSPEC_HOTPATCH SetErrorMode( UINT mode )
     NtSetInformationProcess( GetCurrentProcess(), ProcessDefaultHardErrorMode,
                              &mode, sizeof(mode) );
     return old;
+}
+
+
+/*************************************************************************
+ *           SetHandleCount   (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH SetHandleCount( UINT count )
+{
+    return count;
+}
+
+
+/*********************************************************************
+ *           SetHandleInformation   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
+{
+    OBJECT_DATA_INFORMATION info;
+
+    /* if not setting both fields, retrieve current value first */
+    if ((mask & (HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE)) !=
+        (HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE))
+    {
+        if (!set_ntstatus( NtQueryObject( handle, ObjectDataInformation, &info, sizeof(info), NULL )))
+            return FALSE;
+    }
+    if (mask & HANDLE_FLAG_INHERIT)
+        info.InheritHandle = (flags & HANDLE_FLAG_INHERIT) != 0;
+    if (mask & HANDLE_FLAG_PROTECT_FROM_CLOSE)
+        info.ProtectFromClose = (flags & HANDLE_FLAG_PROTECT_FROM_CLOSE) != 0;
+
+    return set_ntstatus( NtSetInformationObject( handle, ObjectDataInformation, &info, sizeof(info) ));
 }
 
 
