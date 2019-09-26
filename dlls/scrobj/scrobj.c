@@ -1261,8 +1261,18 @@ static const char *debugstr_xml_name(struct scriptlet_factory *factory)
 static HRESULT next_xml_node(struct scriptlet_factory *factory, XmlNodeType *node_type)
 {
     HRESULT hres;
-    do hres = IXmlReader_Read(factory->xml_reader, node_type);
-    while (hres == S_OK && *node_type == XmlNodeType_Whitespace);
+    for (;;)
+    {
+        hres = IXmlReader_Read(factory->xml_reader, node_type);
+        if (FAILED(hres)) break;
+        if (*node_type == XmlNodeType_Whitespace) continue;
+        if (*node_type == XmlNodeType_ProcessingInstruction)
+        {
+            FIXME("Ignoring processing instruction\n");
+            continue;
+        }
+        break;
+    }
     return hres;
 }
 

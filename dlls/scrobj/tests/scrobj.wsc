@@ -4,7 +4,9 @@
   </registration>
   <public>
     <method name="vbAddOne">
-      <PARAMETER name="n"></PARAMETER>
+      <PARAMETER name="n">
+        <?pi xxx="yyy"?>
+      </PARAMETER>
     </method>
     <method name="jsAddTwo" />
     <method name="wtTest">
