@@ -230,6 +230,7 @@ static ULONG add_url(HANDLE queue, const WCHAR *urlW, HTTP_URL_CONTEXT context)
             offsetof(struct http_add_url_params, url[len]), NULL, 0, NULL, &ovl))
         ret = GetLastError();
     CloseHandle(ovl.hEvent);
+    heap_free(params);
     return ret;
 }
 
