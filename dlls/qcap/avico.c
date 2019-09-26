@@ -318,11 +318,6 @@ static inline AVICompressor *impl_from_IPin(IPin *iface)
     return impl_from_strmbase_filter(CONTAINING_RECORD(iface, struct strmbase_pin, IPin_iface)->filter);
 }
 
-static HRESULT WINAPI AVICompressorIn_QueryInterface(IPin *iface, REFIID riid, void **ppv)
-{
-    return BaseInputPinImpl_QueryInterface(iface, riid, ppv);
-}
-
 static HRESULT WINAPI AVICompressorIn_ReceiveConnection(IPin *iface,
         IPin *pConnector, const AM_MEDIA_TYPE *pmt)
 {
@@ -359,7 +354,7 @@ static HRESULT WINAPI AVICompressorIn_Disconnect(IPin *iface)
 }
 
 static const IPinVtbl AVICompressorInputPinVtbl = {
-    AVICompressorIn_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
@@ -404,6 +399,19 @@ static HRESULT sink_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE 
     videoinfo = (VIDEOINFOHEADER*)pmt->pbFormat;
     res = ICCompressQuery(This->hic, &videoinfo->bmiHeader, NULL);
     return res == ICERR_OK ? S_OK : S_FALSE;
+}
+
+static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    AVICompressor *filter = impl_from_strmbase_pin(iface);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &filter->sink.IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static HRESULT WINAPI AVICompressorIn_Receive(BaseInputPin *base, IMediaSample *pSample)
@@ -497,16 +505,12 @@ static const BaseInputPinFuncTable AVICompressorBaseInputPinVtbl =
 {
     .base.pin_query_accept = sink_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
+    .base.pin_query_interface = sink_query_interface,
     .pfnReceive = AVICompressorIn_Receive,
 };
 
-static HRESULT WINAPI AVICompressorOut_QueryInterface(IPin *iface, REFIID riid, void **ppv)
-{
-    return BaseInputPinImpl_QueryInterface(iface, riid, ppv);
-}
-
 static const IPinVtbl AVICompressorOutputPinVtbl = {
-    AVICompressorOut_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseOutputPinImpl_Connect,

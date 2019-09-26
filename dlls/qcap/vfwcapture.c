@@ -82,11 +82,6 @@ static inline VfwCapture *impl_from_IPersistPropertyBag(IPersistPropertyBag *ifa
     return CONTAINING_RECORD(iface, VfwCapture, IPersistPropertyBag_iface);
 }
 
-static inline VfwCapture *impl_from_IPin(IPin *iface)
-{
-    return CONTAINING_RECORD(iface, VfwCapture, source.pin.IPin_iface);
-}
-
 static IPin *vfw_capture_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     VfwCapture *This = impl_from_strmbase_filter(iface);
@@ -536,6 +531,21 @@ static HRESULT source_get_media_type(struct strmbase_pin *pin,
     return hr;
 }
 
+static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    VfwCapture *filter = impl_from_strmbase_pin(iface);
+
+    if (IsEqualGUID(iid, &IID_IKsPropertySet))
+        *out = &filter->IKsPropertySet_iface;
+    else if (IsEqualGUID(iid, &IID_IAMStreamConfig))
+        *out = &filter->IAMStreamConfig_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static HRESULT WINAPI VfwPin_DecideBufferSize(struct strmbase_source *iface,
         IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
@@ -557,38 +567,15 @@ static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = source_query_accept,
     .base.pin_get_media_type = source_get_media_type,
+    .base.pin_query_interface = source_query_interface,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideBufferSize = VfwPin_DecideBufferSize,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
-static HRESULT WINAPI VfwPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
-{
-    VfwCapture *filter = impl_from_IPin(iface);
-
-    TRACE("%s %p\n", debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPin))
-        *ppv = &filter->source.pin.IPin_iface;
-    else if (IsEqualIID(riid, &IID_IKsPropertySet))
-        *ppv = &filter->IKsPropertySet_iface;
-    else if (IsEqualIID(riid, &IID_IAMStreamConfig))
-        *ppv = &filter->IAMStreamConfig_iface;
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    FIXME("No interface for %s!\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
-
 static const IPinVtbl VfwPin_Vtbl =
 {
-    VfwPin_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseOutputPinImpl_Connect,

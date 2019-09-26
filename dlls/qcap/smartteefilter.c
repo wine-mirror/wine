@@ -142,7 +142,7 @@ static const struct strmbase_filter_ops filter_ops =
 };
 
 static const IPinVtbl SmartTeeFilterInputVtbl = {
-    BaseInputPinImpl_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
@@ -192,6 +192,19 @@ static HRESULT sink_get_media_type(struct strmbase_pin *base,
         hr = S_FALSE;
     LeaveCriticalSection(&This->filter.csFilter);
     return hr;
+}
+
+static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    SmartTeeFilter *filter = impl_from_strmbase_pin(iface);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &filter->sink.IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static HRESULT copy_sample(IMediaSample *inputSample, IMemAllocator *allocator, IMediaSample **pOutputSample)
@@ -319,11 +332,12 @@ static const BaseInputPinFuncTable SmartTeeFilterInputFuncs =
 {
     .base.pin_query_accept = sink_query_accept,
     .base.pin_get_media_type = sink_get_media_type,
+    .base.pin_query_interface = sink_query_interface,
     .pfnReceive = SmartTeeFilterInput_Receive,
 };
 
 static const IPinVtbl SmartTeeFilterCaptureVtbl = {
-    BaseOutputPinImpl_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseOutputPinImpl_Connect,
@@ -387,7 +401,7 @@ static const struct strmbase_source_ops capture_ops =
 };
 
 static const IPinVtbl SmartTeeFilterPreviewVtbl = {
-    BaseOutputPinImpl_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseOutputPinImpl_Connect,

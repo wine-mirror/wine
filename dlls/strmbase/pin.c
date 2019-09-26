@@ -362,35 +362,6 @@ static inline struct strmbase_source *impl_source_from_IPin( IPin *iface )
     return CONTAINING_RECORD(iface, struct strmbase_source, pin.IPin_iface);
 }
 
-HRESULT WINAPI BaseOutputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
-{
-    struct strmbase_source *This = impl_source_from_IPin(iface);
-
-    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IPin))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking) ||
-             IsEqualIID(riid, &IID_IQualityControl))
-    {
-        return IBaseFilter_QueryInterface(&This->pin.filter->IBaseFilter_iface, riid, ppv);
-    }
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    FIXME("No interface for %s!\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
 HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
     HRESULT hr;
@@ -756,36 +727,6 @@ void strmbase_source_cleanup(struct strmbase_source *pin)
 static inline BaseInputPin *impl_BaseInputPin_from_IPin( IPin *iface )
 {
     return CONTAINING_RECORD(iface, BaseInputPin, pin.IPin_iface);
-}
-
-HRESULT WINAPI BaseInputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
-{
-    BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
-
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IPin))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IMemInputPin))
-        *ppv = &This->IMemInputPin_iface;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-    {
-        return IBaseFilter_QueryInterface(&This->pin.filter->IBaseFilter_iface, &IID_IMediaSeeking, ppv);
-    }
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    FIXME("No interface for %s!\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
 }
 
 HRESULT WINAPI BaseInputPinImpl_Connect(IPin *iface, IPin *pin, const AM_MEDIA_TYPE *pmt)
