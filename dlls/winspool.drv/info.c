@@ -4435,6 +4435,24 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
     }
 
     switch(Level) {
+    case 1:
+      {
+        PRINTER_INFO_1W *pi1 = (PRINTER_INFO_1W *)pPrinter;
+
+        size = sizeof(PRINTER_INFO_1W);
+        if (size <= cbBuf) {
+            ptr = pPrinter + size;
+            cbBuf -= size;
+            memset(pPrinter, 0, size);
+        } else {
+            pi1 = NULL;
+            cbBuf = 0;
+        }
+        ret = WINSPOOL_GetPrinter_1(hkeyPrinter, pi1, ptr, cbBuf, &needed);
+        needed += size;
+        break;
+      }
+
     case 2:
       {
         PRINTER_INFO_2W *pi2 = (PRINTER_INFO_2W *)pPrinter;
