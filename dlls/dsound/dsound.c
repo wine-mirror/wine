@@ -451,6 +451,12 @@ static HRESULT DirectSoundDevice_CreateSoundBuffer(
             return DSERR_INVALIDPARAM;
         }
 
+        if (dsbd->dwFlags & DSBCAPS_CTRLFX)
+        {
+            WARN("Invalid parameter DSBCAPS_CTRLFX\n");
+            return DSERR_INVALIDPARAM;
+        }
+
         if (device->primary) {
             WARN("Primary Buffer already created\n");
             IDirectSoundBuffer8_AddRef(&device->primary->IDirectSoundBuffer8_iface);

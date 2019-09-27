@@ -1173,6 +1173,55 @@ static void test_COM(void)
     while (IUnknown_Release(unk));
 }
 
+static void test_primary_flags(void)
+{
+    HRESULT rc;
+    IDirectSound8 *dso;
+    IDirectSoundBuffer *primary = NULL;
+    IDirectSoundFXI3DL2Reverb *reverb;
+    DSBUFFERDESC bufdesc;
+    DSCAPS dscaps;
+
+    /* Create a DirectSound8 object */
+    rc = pDirectSoundCreate8(NULL, &dso, NULL);
+    ok(rc == DS_OK || rc==DSERR_NODRIVER, "Failed: %08x\n",rc);
+
+    if (rc!=DS_OK)
+        return;
+
+    rc = IDirectSound8_SetCooperativeLevel(dso, get_hwnd(), DSSCL_PRIORITY);
+    ok(rc == DS_OK,"Failed: %08x\n", rc);
+    if (rc != DS_OK) {
+        IDirectSound8_Release(dso);
+        return;
+    }
+
+    dscaps.dwSize = sizeof(dscaps);
+    rc = IDirectSound8_GetCaps(dso, &dscaps);
+    ok(rc == DS_OK,"Failed: %08x\n", rc);
+    trace("0x%x\n", dscaps.dwFlags);
+
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize = sizeof(bufdesc);
+    bufdesc.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRLFX;
+    rc = IDirectSound8_CreateSoundBuffer(dso, &bufdesc, &primary, NULL);
+    ok(rc == E_INVALIDARG, "got %08x\n", rc);
+
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize = sizeof(bufdesc);
+    bufdesc.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_CTRL3D;
+    rc = IDirectSound8_CreateSoundBuffer(dso, &bufdesc, &primary, NULL);
+    ok((rc == DS_OK && primary != NULL), "Failed to create a primary buffer: %08x\n", rc);
+    if (rc == DS_OK) {
+        rc = IDirectSoundBuffer_QueryInterface(primary, &IID_IDirectSoundFXI3DL2Reverb, (LPVOID*)&reverb);
+        ok(rc==E_NOINTERFACE,"Failed: %08x\n", rc);
+
+        IDirectSoundBuffer_Release(primary);
+    }
+
+    IDirectSound8_Release(dso);
+}
+
 static void test_effects(void)
 {
     HRESULT rc;
@@ -1711,6 +1760,7 @@ START_TEST(dsound8)
             dsound8_tests();
             test_hw_buffers();
             test_first_device();
+            test_primary_flags();
             test_effects();
             test_effects_parameters();
         }
