@@ -1304,7 +1304,6 @@ static int is_linker_arg(const char* arg)
     {
 	case 'R':
 	case 'z':
-	case 'l':
 	case 'u':
 	    return 1;
         case 'W':
@@ -1320,43 +1319,6 @@ static int is_linker_arg(const char* arg)
 
     for (j = 0; j < ARRAY_SIZE(link_switches); j++)
 	if (strcmp(link_switches[j], arg) == 0) return 1;
-
-    return 0;
-}
-
-/*
- *      Target Options
- *          -b machine  -V version
- */
-static int is_target_arg(const char* arg)
-{
-    return arg[1] == 'b' || arg[1] == 'V';
-}
-
-
-/*
- *      Directory Options
- *          -Bprefix  -Idir  -I-  -Ldir  -specs=file
- */
-static int is_directory_arg(const char* arg)
-{
-    return arg[1] == 'B' || arg[1] == 'L' || arg[1] == 'I' || strncmp("-specs=", arg, 7) == 0;
-}
-
-/*
- *      MinGW Options
- *	    -mno-cygwin -mwindows -mconsole -mthreads -municode
- */ 
-static int is_mingw_arg(const char* arg)
-{
-    static const char* mingw_switches[] = 
-    {
-        "-mno-cygwin", "-mwindows", "-mconsole", "-mthreads", "-municode"
-    };
-    unsigned int j;
-
-    for (j = 0; j < ARRAY_SIZE(mingw_switches); j++)
-	if (strcmp(mingw_switches[j], arg) == 0) return 1;
 
     return 0;
 }
@@ -1524,25 +1486,8 @@ int main(int argc, char **argv)
             }
 
 	    /* determine what options go 'as is' to the linker & the compiler */
-	    raw_compiler_arg = raw_linker_arg = 0;
-	    if (is_linker_arg(argv[i])) 
-	    {
-		raw_linker_arg = 1;
-	    }
-	    else 
-	    {
-		if (is_directory_arg(argv[i]) || is_target_arg(argv[i]))
-		    raw_linker_arg = 1;
-		raw_compiler_arg = !is_mingw_arg(argv[i]);
-	    }
-
-	    /* these things we handle explicitly so we don't pass them 'as is' */
-	    if (argv[i][1] == 'l' || argv[i][1] == 'I' || argv[i][1] == 'L')
-		raw_linker_arg = 0;
-	    if (argv[i][1] == 'c' || argv[i][1] == 'L')
-		raw_compiler_arg = 0;
-	    if (argv[i][1] == 'o' || argv[i][1] == 'b' || argv[i][1] == 'V')
-		raw_compiler_arg = raw_linker_arg = 0;
+	    raw_linker_arg = is_linker_arg(argv[i]);
+	    raw_compiler_arg = !raw_linker_arg;
 
 	    /* do a bit of semantic analysis */
             switch (argv[i][1]) 
@@ -1552,14 +1497,18 @@ int main(int argc, char **argv)
 		    if (strendswith(str, "/")) str[strlen(str) - 1] = 0;
                     if (!opts.prefix) opts.prefix = strarray_alloc();
                     strarray_add(opts.prefix, str);
+                    raw_linker_arg = 1;
 		    break;
                 case 'b':
                     parse_target_option( &opts, option_arg );
+                    raw_compiler_arg = 0;
                     break;
                 case 'V':
                     opts.version = xstrdup( option_arg );
+                    raw_compiler_arg = 0;
                     break;
                 case 'c':        /* compile or assemble */
+                    raw_compiler_arg = 0;
 		    if (argv[i][2] == 0) opts.compile_only = 1;
 		    /* fall through */
                 case 'S':        /* generate assembler code */
@@ -1583,24 +1532,45 @@ int main(int argc, char **argv)
                     break;
 		case 'l':
 		    strarray_add(opts.files, strmake("-l%s", option_arg));
+                    raw_compiler_arg = 0;
 		    break;
 		case 'L':
 		    strarray_add(opts.lib_dirs, option_arg);
+                    raw_compiler_arg = 0;
 		    break;
                 case 'M':        /* map file generation */
                     linking = 0;
                     break;
 		case 'm':
 		    if (strcmp("-mno-cygwin", argv[i]) == 0)
+                    {
 			opts.use_msvcrt = 1;
+                        raw_compiler_arg = 0;
+                    }
 		    else if (strcmp("-mwindows", argv[i]) == 0)
+                    {
 			opts.gui_app = 1;
+                        raw_compiler_arg = 0;
+                    }
 		    else if (strcmp("-mconsole", argv[i]) == 0)
+                    {
 			opts.gui_app = 0;
+                        raw_compiler_arg = 0;
+                    }
 		    else if (strcmp("-municode", argv[i]) == 0)
+                    {
 			opts.unicode_app = 1;
+                        raw_compiler_arg = 0;
+                    }
+		    else if (strcmp("-mthreads", argv[i]) == 0)
+                    {
+                        raw_compiler_arg = 0;
+                    }
 		    else if (strcmp("-m16", argv[i]) == 0)
+                    {
 			opts.win16_app = 1;
+                        raw_compiler_arg = 0;
+                    }
 		    else if (strcmp("-m32", argv[i]) == 0)
                     {
                         if (opts.target_cpu == CPU_x86_64)
@@ -1642,12 +1612,15 @@ int main(int argc, char **argv)
                     break;
 		case 'o':
 		    opts.output_name = option_arg;
+                    raw_compiler_arg = 0;
 		    break;
                 case 's':
                     if (strcmp("-static", argv[i]) == 0) 
 			linking = -1;
 		    else if(strcmp("-save-temps", argv[i]) == 0)
 			keep_generated = 1;
+                    else if (strncmp("-specs=", argv[i], 7) == 0)
+                        raw_linker_arg = 1;
 		    else if(strcmp("-shared", argv[i]) == 0)
 		    {
 			opts.shared = 1;
@@ -1723,7 +1696,10 @@ int main(int argc, char **argv)
                     if (strcmp("-static", argv[i]+1) == 0)
                         linking = -1;
                     else if (is_option( argv, i, "--sysroot", &option_arg ))
+                    {
                         opts.sysroot = option_arg;
+                        raw_linker_arg = 1;
+                    }
                     else if (is_option( argv, i, "--target", &option_arg ))
                     {
                         parse_target_option( &opts, option_arg );
