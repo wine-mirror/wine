@@ -1064,6 +1064,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath(IDire
 
 	/* Update description for creating primary buffer */
 	desc.dwFlags |= DSBCAPS_PRIMARYBUFFER;
+	desc.dwFlags &= ~DSBCAPS_CTRLFX;
 	desc.dwBufferBytes = 0;
 	desc.lpwfxFormat = NULL;
 
