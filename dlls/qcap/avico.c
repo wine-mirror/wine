@@ -148,8 +148,8 @@ static HRESULT WINAPI AVICompressor_Run(IBaseFilter *iface, REFERENCE_TIME tStar
     if(This->filter.state == State_Running)
         return S_OK;
 
-    hres = IMemAllocator_Commit(This->source.pAllocator);
-    if(FAILED(hres)) {
+    if (This->source.pAllocator && FAILED(hres = IMemAllocator_Commit(This->source.pAllocator)))
+    {
         FIXME("Commit failed: %08x\n", hres);
         return hres;
     }
