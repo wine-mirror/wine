@@ -6823,7 +6823,7 @@ __ASM_GLOBAL_FUNC( call_method,
                    "ldr x4, [x2, x1, lsl #3]\n\t"
                    "str x4, [sp, x1, lsl #3]\n\t"
                    "cbnz x1, 1b\n"
-                   "2:\tmov x8, x0\n\t"
+                   "2:\tmov x16, x0\n\t"
                    "mov x9, x3\n\t"
                    "ldp d0, d1, [x9]\n\t"
                    "ldp d2, d3, [x9, #0x10]\n\t"
@@ -6833,7 +6833,8 @@ __ASM_GLOBAL_FUNC( call_method,
                    "ldp x2, x3, [x9, #0x50]\n\t"
                    "ldp x4, x5, [x9, #0x60]\n\t"
                    "ldp x6, x7, [x9, #0x70]\n\t"
-                   "blr x8\n\t"
+                   "ldr x8, [x9, #0x80]\n\t"
+                   "blr x16\n\t"
                    "mov sp, x29\n\t"
                    "ldp x29, x30, [sp], #16\n\t"
                    "ret" )
@@ -6856,7 +6857,7 @@ HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VART
             float f;
             double d;
         } fp[8];
-        DWORD_PTR x[8];
+        DWORD_PTR x[9];
     } regs;
     int rcount;      /* 64-bit register index count */
     int fpcount = 0; /* float register index count */
@@ -6887,7 +6888,7 @@ HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VART
     {
     case VT_DECIMAL:
     case VT_VARIANT:
-        regs.x[rcount++] = (DWORD_PTR)result;  /* arg 0 is a pointer to the result */
+        regs.x[8] = (DWORD_PTR)result;  /* x8 is a pointer to the result */
         break;
     case VT_HRESULT:
         WARN("invalid return type %u\n", ret_type);
