@@ -196,6 +196,50 @@ static inline void init_thunk( struct thunk *thunk, unsigned int index )
     thunk->func   = call_stubless_func;
 }
 
+#elif defined(__aarch64__)
+
+extern void call_stubless_func(void);
+__ASM_GLOBAL_FUNC( call_stubless_func,
+                   "stp x29, x30, [sp, #-0x90]!\n\t"
+                   "mov x29, sp\n\t"
+                   "stp d0, d1, [sp, #0x10]\n\t"
+                   "stp d2, d3, [sp, #0x20]\n\t"
+                   "stp d4, d5, [sp, #0x30]\n\t"
+                   "stp d6, d7, [sp, #0x40]\n\t"
+                   "stp x0, x1, [sp, #0x50]\n\t"
+                   "stp x2, x3, [sp, #0x60]\n\t"
+                   "stp x4, x5, [sp, #0x70]\n\t"
+                   "stp x6, x7, [sp, #0x80]\n\t"
+                   "ldr x0, [x0]\n\t"                /* This->lpVtbl */
+                   "ldr x0, [x0, #-16]\n\t"          /* MIDL_STUBLESS_PROXY_INFO */
+                   "ldp x1, x4, [x0, #8]\n\t"        /* info->ProcFormatString, FormatStringOffset */
+                   "ldrh w4, [x4, x16, lsl #1]\n\t"  /* info->FormatStringOffset[index] */
+                   "add x1, x1, x4\n\t"              /* info->ProcFormatString + offset */
+                   "ldr x0, [x0]\n\t"                /* info->pStubDesc */
+                   "add x2, sp, #0x50\n\t"           /* stack */
+                   "add x3, sp, #0x10\n\t"           /* fpu_stack */
+                   "bl " __ASM_NAME("ndr_client_call") "\n\t"
+                   "ldp x29, x30, [sp], #0x90\n\t"
+                   "ret" )
+
+struct thunk
+{
+    DWORD ldr_index;     /* ldr w16, index */
+    DWORD ldr_func;      /* ldr x17, func */
+    DWORD br;            /* br x17 */
+    DWORD index;
+    void *func;
+};
+
+static inline void init_thunk( struct thunk *thunk, unsigned int index )
+{
+    thunk->ldr_index = 0x18000070; /* ldr w16,index */
+    thunk->ldr_func  = 0x58000071; /* ldr x17,func */
+    thunk->br        = 0xd61f0220; /* br x17 */
+    thunk->index     = index;
+    thunk->func      = call_stubless_func;
+}
+
 #else  /* __i386__ */
 
 #warning You must implement stubless proxies for your CPU

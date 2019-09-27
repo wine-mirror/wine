@@ -183,6 +183,23 @@ typedef struct
     DWORD offset;
 } vtbl_method_t;
 
+#elif defined(__aarch64__)
+
+static const DWORD opcodes[] =
+{
+    0xf9401000,   /* ldr x0, [x0,#32] */
+    0xf9400010,   /* ldr x16, [x0] */
+    0x18000071,   /* ldr w17, offset */
+    0xf8716a10,   /* ldr x16, [x16,x17] */
+    0xd61f0200    /* br x16 */
+};
+
+typedef struct
+{
+    DWORD opcodes[ARRAY_SIZE(opcodes)];
+    DWORD offset;
+} vtbl_method_t;
+
 #else
 
 #warning You must implement delegated proxies/stubs for your CPU
