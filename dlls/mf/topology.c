@@ -1726,7 +1726,7 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
         IMFTopology **output_topology, IMFTopology *current_topology)
 {
     struct topology *topology = unsafe_impl_from_IMFTopology(input_topology);
-    IMFMediaSink *sink;
+    IMFStreamSink *sink;
     HRESULT hr;
     size_t i;
 
@@ -1745,9 +1745,9 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
                 if (node->object)
                 {
                     /* Sinks must be bound beforehand. */
-                    if (FAILED(IUnknown_QueryInterface(node->object, &IID_IMFMediaSink, (void **)&sink)))
+                    if (FAILED(IUnknown_QueryInterface(node->object, &IID_IMFStreamSink, (void **)&sink)))
                         return MF_E_TOPO_SINK_ACTIVATES_UNSUPPORTED;
-                    IMFMediaSink_Release(sink);
+                    IMFStreamSink_Release(sink);
                 }
                 break;
             case MF_TOPOLOGY_SOURCESTREAM_NODE:
