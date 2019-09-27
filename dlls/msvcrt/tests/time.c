@@ -609,6 +609,11 @@ static void test_strftime(void)
     ok(gmt_tm != NULL, "gmtime failed\n");
 
     errno = 0xdeadbeef;
+    retA = p_strftime(bufA, 256, "%T", gmt_tm);
+    ok(retA == 0, "expected 0, got %ld\n", retA);
+    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
     retA = p_strftime(NULL, 0, "copy", gmt_tm);
     ok(retA == 0, "expected 0, got %ld\n", retA);
     ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
