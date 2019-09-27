@@ -141,7 +141,7 @@ static HRESULT sink_get_media_type(struct strmbase_pin *base,
     if (iPosition)
         return S_FALSE;
     EnterCriticalSection(&This->filter.csFilter);
-    if (This->sink.pin.pConnectedTo)
+    if (This->sink.pin.peer)
     {
         CopyMediaType(amt, &This->sink.pin.mtCurrent);
         hr = S_OK;
@@ -259,7 +259,7 @@ static HRESULT WINAPI SmartTeeFilterInput_Receive(BaseInputPin *base, IMediaSamp
 
     /* FIXME: we should ideally do each of these in a separate thread */
     EnterCriticalSection(&This->filter.csFilter);
-    if (This->capture.pin.pConnectedTo)
+    if (This->capture.pin.peer)
         hrCapture = copy_sample(inputSample, This->capture.pAllocator, &captureSample);
     LeaveCriticalSection(&This->filter.csFilter);
     if (SUCCEEDED(hrCapture))
@@ -268,7 +268,7 @@ static HRESULT WINAPI SmartTeeFilterInput_Receive(BaseInputPin *base, IMediaSamp
         IMediaSample_Release(captureSample);
 
     EnterCriticalSection(&This->filter.csFilter);
-    if (This->preview.pin.pConnectedTo)
+    if (This->preview.pin.peer)
         hrPreview = copy_sample(inputSample, This->preview.pAllocator, &previewSample);
     LeaveCriticalSection(&This->filter.csFilter);
     /* No timestamps on preview stream: */
@@ -329,7 +329,7 @@ static HRESULT source_get_media_type(struct strmbase_pin *iface,
 
     EnterCriticalSection(&filter->filter.csFilter);
 
-    if (!filter->sink.pin.pConnectedTo)
+    if (!filter->sink.pin.peer)
         hr = VFW_E_NOT_CONNECTED;
     else if (!index)
         CopyMediaType(mt, &filter->sink.pin.mtCurrent);

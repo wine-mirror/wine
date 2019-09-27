@@ -132,7 +132,7 @@ static HRESULT WINAPI basic_video_get_AvgTimePerFrame(IBasicVideo *iface, REFTIM
 
     if (!pAvgTimePerFrame)
         return E_POINTER;
-    if (!This->pPin->pConnectedTo)
+    if (!This->pPin->peer)
         return VFW_E_NOT_CONNECTED;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pAvgTimePerFrame);
@@ -151,7 +151,7 @@ static HRESULT WINAPI basic_video_get_BitRate(IBasicVideo *iface, LONG *pBitRate
 
     if (!pBitRate)
         return E_POINTER;
-    if (!This->pPin->pConnectedTo)
+    if (!This->pPin->peer)
         return VFW_E_NOT_CONNECTED;
 
     vih = This->pFuncsTable->pfnGetVideoFormat(This);
@@ -168,7 +168,7 @@ static HRESULT WINAPI basic_video_get_BitErrorRate(IBasicVideo *iface, LONG *pBi
 
     if (!pBitErrorRate)
         return E_POINTER;
-    if (!This->pPin->pConnectedTo)
+    if (!This->pPin->peer)
         return VFW_E_NOT_CONNECTED;
 
     vih = This->pFuncsTable->pfnGetVideoFormat(This);

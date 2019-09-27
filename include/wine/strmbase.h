@@ -34,7 +34,7 @@ struct strmbase_pin
     struct strmbase_filter *filter;
     PIN_DIRECTION dir;
     WCHAR name[128];
-    IPin *pConnectedTo;
+    IPin *peer;
     AM_MEDIA_TYPE mtCurrent;
     REFERENCE_TIME tStart, tStop;
     double dRate;

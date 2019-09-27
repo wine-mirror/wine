@@ -282,8 +282,8 @@ HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtb
 
 void strmbase_renderer_cleanup(BaseRenderer *filter)
 {
-    if (filter->sink.pin.pConnectedTo)
-        IPin_Disconnect(filter->sink.pin.pConnectedTo);
+    if (filter->sink.pin.peer)
+        IPin_Disconnect(filter->sink.pin.peer);
     IPin_Disconnect(&filter->sink.pin.IPin_iface);
     strmbase_sink_cleanup(&filter->sink);
 
@@ -407,7 +407,7 @@ HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface)
     EnterCriticalSection(&This->csRenderLock);
     {
         RendererPosPassThru_ResetMediaTime(This->pPosition);
-        if (This->sink.pin.pConnectedTo && This->pFuncsTable->renderer_stop_stream)
+        if (This->sink.pin.peer && This->pFuncsTable->renderer_stop_stream)
             This->pFuncsTable->renderer_stop_stream(This);
         This->filter.state = State_Stopped;
         SetEvent(This->state_event);
@@ -431,7 +431,7 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 
     SetEvent(This->state_event);
 
-    if (This->sink.pin.pConnectedTo)
+    if (This->sink.pin.peer)
     {
         This->sink.end_of_stream = FALSE;
     }
@@ -449,7 +449,7 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     if (SUCCEEDED(hr))
     {
         QualityControlRender_Start(This->qcimpl, This->filter.rtStreamStart);
-        if (This->sink.pin.pConnectedTo && This->pFuncsTable->renderer_start_stream)
+        if (This->sink.pin.peer && This->pFuncsTable->renderer_start_stream)
             This->pFuncsTable->renderer_start_stream(This);
         if (This->filter.state == State_Stopped)
             BaseRendererImpl_ClearPendingSample(This);
@@ -473,11 +473,11 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
         {
             if (This->filter.state == State_Stopped)
             {
-                if (This->sink.pin.pConnectedTo)
+                if (This->sink.pin.peer)
                     ResetEvent(This->state_event);
                 This->sink.end_of_stream = FALSE;
             }
-            else if (This->sink.pin.pConnectedTo && This->pFuncsTable->renderer_stop_stream)
+            else if (This->sink.pin.peer && This->pFuncsTable->renderer_stop_stream)
                 This->pFuncsTable->renderer_stop_stream(This);
 
             if (This->filter.state == State_Stopped)

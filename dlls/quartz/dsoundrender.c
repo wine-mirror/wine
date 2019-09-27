@@ -436,7 +436,7 @@ static void dsound_render_start_stream(BaseRenderer *iface)
 
     TRACE("(%p)\n", This);
 
-    if (This->renderer.sink.pin.pConnectedTo)
+    if (This->renderer.sink.pin.peer)
     {
         IDirectSoundBuffer_Play(This->dsbuffer, 0, 0, DSBPLAY_LOOPING);
     }

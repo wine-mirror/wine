@@ -377,7 +377,7 @@ static HRESULT VMR9_maybe_init(struct quartz_vmr *This, BOOL force)
     HRESULT hr;
 
     TRACE("my mode: %u, my window: %p, my last window: %p\n", This->mode, This->baseControlWindow.baseWindow.hWnd, This->hWndClippingWindow);
-    if (This->baseControlWindow.baseWindow.hWnd || !This->renderer.sink.pin.pConnectedTo)
+    if (This->baseControlWindow.baseWindow.hWnd || !This->renderer.sink.pin.peer)
         return S_OK;
 
     if (This->mode == VMR9Mode_Windowless && !This->hWndClippingWindow)
@@ -482,7 +482,7 @@ static HRESULT WINAPI VMR9_BreakConnect(BaseRenderer *This)
 
     if (!pVMR9->mode)
         return S_FALSE;
-     if (This->sink.pin.pConnectedTo && pVMR9->allocator && pVMR9->presenter)
+     if (This->sink.pin.peer && pVMR9->allocator && pVMR9->presenter)
     {
         if (pVMR9->renderer.filter.state != State_Stopped)
         {

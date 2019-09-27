@@ -203,10 +203,10 @@ HRESULT WINAPI BasePinImpl_Disconnect(IPin * iface)
 
     EnterCriticalSection(&This->filter->csFilter);
     {
-        if (This->pConnectedTo)
+        if (This->peer)
         {
-            IPin_Release(This->pConnectedTo);
-            This->pConnectedTo = NULL;
+            IPin_Release(This->peer);
+            This->peer = NULL;
             FreeMediaType(&This->mtCurrent);
             ZeroMemory(&This->mtCurrent, sizeof(This->mtCurrent));
             hr = S_OK;
@@ -228,9 +228,9 @@ HRESULT WINAPI BasePinImpl_ConnectedTo(IPin * iface, IPin ** ppPin)
 
     EnterCriticalSection(&This->filter->csFilter);
     {
-        if (This->pConnectedTo)
+        if (This->peer)
         {
-            *ppPin = This->pConnectedTo;
+            *ppPin = This->peer;
             IPin_AddRef(*ppPin);
             hr = S_OK;
         }
@@ -254,7 +254,7 @@ HRESULT WINAPI BasePinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt
 
     EnterCriticalSection(&This->filter->csFilter);
     {
-        if (This->pConnectedTo)
+        if (This->peer)
         {
             CopyMediaType(pmt, &This->mtCurrent);
             hr = S_OK;
@@ -467,10 +467,10 @@ HRESULT WINAPI BaseOutputPinImpl_Disconnect(IPin * iface)
             IMemInputPin_Release(This->pMemInputPin);
             This->pMemInputPin = NULL;
         }
-        if (This->pin.pConnectedTo)
+        if (This->pin.peer)
         {
-            IPin_Release(This->pin.pConnectedTo);
-            This->pin.pConnectedTo = NULL;
+            IPin_Release(This->pin.peer);
+            This->pin.peer = NULL;
             FreeMediaType(&This->pin.mtCurrent);
             ZeroMemory(&This->pin.mtCurrent, sizeof(This->pin.mtCurrent));
             hr = S_OK;
@@ -517,7 +517,7 @@ HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(struct strmbase_source *This,
 
     TRACE("(%p)->(%p, %p, %p, %x)\n", This, ppSample, tStart, tStop, dwFlags);
 
-    if (!This->pin.pConnectedTo)
+    if (!This->pin.peer)
         hr = VFW_E_NOT_CONNECTED;
     else
     {
@@ -539,7 +539,7 @@ HRESULT WINAPI BaseOutputPinImpl_Deliver(struct strmbase_source *This, IMediaSam
 
     EnterCriticalSection(&This->pin.filter->csFilter);
     {
-        if (!This->pin.pConnectedTo || !This->pMemInputPin)
+        if (!This->pin.peer || !This->pMemInputPin)
             hr = VFW_E_NOT_CONNECTED;
         else
         {
@@ -548,7 +548,7 @@ HRESULT WINAPI BaseOutputPinImpl_Deliver(struct strmbase_source *This, IMediaSam
              * using it. Same with its filter. */
             pMemConnected = This->pMemInputPin;
             IMemInputPin_AddRef(pMemConnected);
-            hr = IPin_QueryPinInfo(This->pin.pConnectedTo, &pinInfo);
+            hr = IPin_QueryPinInfo(This->pin.peer, &pinInfo);
         }
     }
     LeaveCriticalSection(&This->pin.filter->csFilter);
@@ -579,7 +579,7 @@ HRESULT WINAPI BaseOutputPinImpl_Active(struct strmbase_source *This)
 
     EnterCriticalSection(&This->pin.filter->csFilter);
     {
-        if (!This->pin.pConnectedTo || !This->pMemInputPin)
+        if (!This->pin.peer || !This->pMemInputPin)
             hr = VFW_E_NOT_CONNECTED;
         else
             hr = IMemAllocator_Commit(This->pAllocator);
@@ -599,7 +599,7 @@ HRESULT WINAPI BaseOutputPinImpl_Inactive(struct strmbase_source *This)
 
     EnterCriticalSection(&This->pin.filter->csFilter);
     {
-        if (!This->pin.pConnectedTo || !This->pMemInputPin)
+        if (!This->pin.peer || !This->pMemInputPin)
             hr = VFW_E_NOT_CONNECTED;
         else
             hr = IMemAllocator_Decommit(This->pAllocator);
@@ -657,7 +657,7 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *This,
     if ((hr = This->pFuncsTable->base.pin_query_accept(&This->pin, pmt)) != S_OK)
         return hr;
 
-    This->pin.pConnectedTo = pReceivePin;
+    This->pin.peer = pReceivePin;
     IPin_AddRef(pReceivePin);
     CopyMediaType(&This->pin.mtCurrent, pmt);
 
@@ -692,8 +692,8 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *This,
 
     if (FAILED(hr))
     {
-        IPin_Release(This->pin.pConnectedTo);
-        This->pin.pConnectedTo = NULL;
+        IPin_Release(This->pin.peer);
+        This->pin.peer = NULL;
         FreeMediaType(&This->pin.mtCurrent);
     }
 
@@ -747,7 +747,7 @@ HRESULT WINAPI BaseInputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceiveP
 
     EnterCriticalSection(&This->pin.filter->csFilter);
     {
-        if (This->pin.pConnectedTo)
+        if (This->pin.peer)
             hr = VFW_E_ALREADY_CONNECTED;
 
         if (SUCCEEDED(hr) && This->pin.pFuncsTable->pin_query_accept(&This->pin, pmt) != S_OK)
@@ -768,7 +768,7 @@ HRESULT WINAPI BaseInputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceiveP
         if (SUCCEEDED(hr))
         {
             CopyMediaType(&This->pin.mtCurrent, pmt);
-            This->pin.pConnectedTo = pReceivePin;
+            This->pin.peer = pReceivePin;
             IPin_AddRef(pReceivePin);
         }
     }

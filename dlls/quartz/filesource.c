@@ -358,8 +358,8 @@ static void async_reader_destroy(struct strmbase_filter *iface)
     {
         unsigned int i;
 
-        if (filter->source.pin.pConnectedTo)
-            IPin_Disconnect(filter->source.pin.pConnectedTo);
+        if (filter->source.pin.peer)
+            IPin_Disconnect(filter->source.pin.peer);
 
         IPin_Disconnect(&filter->source.pin.IPin_iface);
 
@@ -649,7 +649,7 @@ static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(struct strmbase_sourc
 
     /* FIXME: call queryacceptproc */
 
-    This->pin.pConnectedTo = pReceivePin;
+    This->pin.peer = pReceivePin;
     IPin_AddRef(pReceivePin);
     CopyMediaType(&This->pin.mtCurrent, pmt);
 
@@ -657,8 +657,8 @@ static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(struct strmbase_sourc
 
     if (FAILED(hr))
     {
-        IPin_Release(This->pin.pConnectedTo);
-        This->pin.pConnectedTo = NULL;
+        IPin_Release(This->pin.peer);
+        This->pin.peer = NULL;
         FreeMediaType(&This->pin.mtCurrent);
     }
 

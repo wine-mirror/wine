@@ -470,7 +470,7 @@ static HRESULT WINAPI AviMux_Stop(IBaseFilter *iface)
             return hr;
 
         for(i=0; i<This->input_pin_no; i++) {
-            if(!This->in[i]->pin.pin.pConnectedTo)
+            if(!This->in[i]->pin.pin.peer)
                 continue;
 
             hr = out_seek(This, This->in[i]->ix_off);
@@ -515,7 +515,7 @@ static HRESULT WINAPI AviMux_Stop(IBaseFilter *iface)
             return hr;
 
         for(i=0; i<This->input_pin_no; i++) {
-            if(!This->in[i]->pin.pin.pConnectedTo)
+            if(!This->in[i]->pin.pin.peer)
                 continue;
 
             rl.cb = sizeof(FOURCC) + sizeof(AVISTREAMHEADER) + sizeof(RIFFCHUNK) +
@@ -593,10 +593,10 @@ static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
         IMediaSeeking *ms;
         LONGLONG cur, stop;
 
-        if(!This->in[i]->pin.pin.pConnectedTo)
+        if(!This->in[i]->pin.pin.peer)
             continue;
 
-        hr = IPin_QueryInterface(This->in[i]->pin.pin.pConnectedTo,
+        hr = IPin_QueryInterface(This->in[i]->pin.pin.peer,
                 &IID_IMediaSeeking, (void**)&ms);
         if(FAILED(hr))
             continue;
@@ -632,7 +632,7 @@ static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
     This->stop = -1;
     memset(&This->avih, 0, sizeof(This->avih));
     for(i=0; i<This->input_pin_no; i++) {
-        if(!This->in[i]->pin.pin.pConnectedTo)
+        if(!This->in[i]->pin.pin.peer)
             continue;
 
         This->avih.dwStreams++;
@@ -660,7 +660,7 @@ static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 
     stream_id = 0;
     for(i=0; i<This->input_pin_no; i++) {
-        if(!This->in[i]->pin.pin.pConnectedTo)
+        if(!This->in[i]->pin.pin.peer)
             continue;
 
         This->in[i]->ix_off = This->size;
@@ -815,7 +815,7 @@ static HRESULT WINAPI ConfigInterleaving_put_Mode(
         return E_INVALIDARG;
 
     if(This->mode != mode) {
-        if(This->source.pin.pConnectedTo) {
+        if(This->source.pin.peer) {
             HRESULT hr = IFilterGraph_Reconnect(This->filter.filterInfo.pGraph,
                     &This->source.pin.IPin_iface);
             if(FAILED(hr))
@@ -1267,7 +1267,7 @@ static HRESULT WINAPI AviMuxOut_Connect(IPin *iface,
         return hr;
 
     for(i=0; i<This->input_pin_no; i++) {
-        if(!This->in[i]->pin.pin.pConnectedTo)
+        if(!This->in[i]->pin.pin.peer)
             continue;
 
         hr = IFilterGraph_Reconnect(This->filter.filterInfo.pGraph, &This->in[i]->pin.pin.IPin_iface);

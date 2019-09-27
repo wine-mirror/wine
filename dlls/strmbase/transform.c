@@ -135,12 +135,12 @@ static void transform_destroy(struct strmbase_filter *iface)
 {
     TransformFilter *filter = impl_from_strmbase_filter(iface);
 
-    if (filter->sink.pin.pConnectedTo)
-        IPin_Disconnect(filter->sink.pin.pConnectedTo);
+    if (filter->sink.pin.peer)
+        IPin_Disconnect(filter->sink.pin.peer);
     IPin_Disconnect(&filter->sink.pin.IPin_iface);
 
-    if (filter->source.pin.pConnectedTo)
-        IPin_Disconnect(filter->source.pin.pConnectedTo);
+    if (filter->source.pin.peer)
+        IPin_Disconnect(filter->source.pin.peer);
     IPin_Disconnect(&filter->source.pin.IPin_iface);
 
     strmbase_sink_cleanup(&filter->sink);
@@ -379,8 +379,8 @@ static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
 
     TRACE("iface %p.\n", iface);
 
-    if (filter->source.pin.pConnectedTo)
-        return IPin_EndOfStream(filter->source.pin.pConnectedTo);
+    if (filter->source.pin.peer)
+        return IPin_EndOfStream(filter->source.pin.peer);
     return VFW_E_NOT_CONNECTED;
 }
 

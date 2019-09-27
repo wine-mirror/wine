@@ -340,7 +340,7 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
     This->pInputPin.pin.filter = &This->filter;
     lstrcpynW(This->pInputPin.pin.name, wcsInputPinName, ARRAY_SIZE(This->pInputPin.pin.name));
     This->pInputPin.pin.IPin_iface.lpVtbl = &QT_InputPin_Vtbl;
-    This->pInputPin.pin.pConnectedTo = NULL;
+    This->pInputPin.pin.peer = NULL;
     This->pInputPin.pin.pFuncsTable = &sink_ops;
 
     SourceSeeking_Init(&This->sourceSeeking, &QT_Seeking_Vtbl, QTSplitter_ChangeStop, QTSplitter_ChangeStart, QTSplitter_ChangeRate,  &This->filter.csFilter);
@@ -586,7 +586,7 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
         tStop = time * 10000000;
 
         /* Deliver Audio */
-        if (This->pAudio_Pin && This->pAudio_Pin->pin.pin.pConnectedTo && This->aSession)
+        if (This->pAudio_Pin && This->pAudio_Pin->pin.pin.peer && This->aSession)
         {
             int data_size=0;
             BYTE* ptr;
@@ -802,10 +802,10 @@ static const IBaseFilterVtbl QT_Vtbl = {
 
 static void free_source_pin(QTOutPin *pin)
 {
-    if (pin->pin.pin.pConnectedTo)
+    if (pin->pin.pin.peer)
     {
         if (SUCCEEDED(IMemAllocator_Decommit(pin->pin.pAllocator)))
-            IPin_Disconnect(pin->pin.pin.pConnectedTo);
+            IPin_Disconnect(pin->pin.pin.peer);
         IPin_Disconnect(&pin->pin.pin.IPin_iface);
     }
 
@@ -1064,7 +1064,7 @@ static HRESULT WINAPI QTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, 
     EnterCriticalSection(&filter->filter.csFilter);
     This->pReader = NULL;
 
-    if (This->pin.pConnectedTo)
+    if (This->pin.peer)
         hr = VFW_E_ALREADY_CONNECTED;
     else if (IPin_QueryAccept(iface, pmt) != S_OK)
         hr = VFW_E_TYPE_NOT_ACCEPTED;
@@ -1122,7 +1122,7 @@ static HRESULT WINAPI QTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, 
     if (SUCCEEDED(hr))
     {
         CopyMediaType(&This->pin.mtCurrent, pmt);
-        This->pin.pConnectedTo = pReceivePin;
+        This->pin.peer = pReceivePin;
         IPin_AddRef(pReceivePin);
         hr = IMemAllocator_Commit(This->pAlloc);
     }
@@ -1152,16 +1152,16 @@ static HRESULT WINAPI QTInPin_Disconnect(IPin *iface)
 
     hr = IBaseFilter_GetState(&filter->filter.IBaseFilter_iface, INFINITE, &state);
     EnterCriticalSection(&filter->filter.csFilter);
-    if (This->pin.pConnectedTo)
+    if (This->pin.peer)
     {
         QTSplitter *Parser = impl_from_strmbase_filter(This->pin.filter);
 
         if (SUCCEEDED(hr) && state == State_Stopped)
         {
             IMemAllocator_Decommit(This->pAlloc);
-            IPin_Disconnect(This->pin.pConnectedTo);
-            IPin_Release(This->pin.pConnectedTo);
-            This->pin.pConnectedTo = NULL;
+            IPin_Disconnect(This->pin.peer);
+            IPin_Release(This->pin.peer);
+            This->pin.peer = NULL;
             hr = QT_RemoveOutputPins(Parser);
         }
         else

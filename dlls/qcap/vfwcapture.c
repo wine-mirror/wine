@@ -103,9 +103,9 @@ static void vfw_capture_destroy(struct strmbase_filter *iface)
         qcap_driver_destroy(filter->driver_info);
     }
 
-    if (filter->source.pin.pConnectedTo)
+    if (filter->source.pin.peer)
     {
-        IPin_Disconnect(filter->source.pin.pConnectedTo);
+        IPin_Disconnect(filter->source.pin.peer);
         IPin_Disconnect(&filter->source.pin.IPin_iface);
     }
     strmbase_source_cleanup(&filter->source);
@@ -221,16 +221,16 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
 
     dump_AM_MEDIA_TYPE(pmt);
 
-    if (This->source.pin.pConnectedTo)
+    if (This->source.pin.peer)
     {
-        hr = IPin_QueryAccept(This->source.pin.pConnectedTo, pmt);
+        hr = IPin_QueryAccept(This->source.pin.peer, pmt);
         TRACE("Would accept: %d\n", hr);
         if (hr == S_FALSE)
             return VFW_E_INVALIDMEDIATYPE;
     }
 
     hr = qcap_driver_set_format(This->driver_info, pmt);
-    if (SUCCEEDED(hr) && This->filter.filterInfo.pGraph && This->source.pin.pConnectedTo)
+    if (SUCCEEDED(hr) && This->filter.filterInfo.pGraph && This->source.pin.peer)
     {
         hr = IFilterGraph_Reconnect(This->filter.filterInfo.pGraph, &This->source.pin.IPin_iface);
         if (SUCCEEDED(hr))
