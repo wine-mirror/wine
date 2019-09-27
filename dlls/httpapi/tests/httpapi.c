@@ -534,7 +534,7 @@ static void test_v1_short_buffer(void)
     ok(!ret, "Got error %u.\n", ret);
     ok(req->RequestId == req_id, "Got request ID %s.\n", wine_dbgstr_longlong(req->RequestId));
 
-    CancelIoEx(queue, &ovl);
+    CancelIo(queue);
 
     ret = HttpRemoveUrl(queue, localhost_urlW);
     ok(!ret, "Got error %u.\n", ret);
