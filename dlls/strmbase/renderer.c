@@ -407,7 +407,7 @@ HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface)
     EnterCriticalSection(&This->csRenderLock);
     {
         RendererPosPassThru_ResetMediaTime(This->pPosition);
-        if (This->pFuncsTable->renderer_stop_stream)
+        if (This->sink.pin.pConnectedTo && This->pFuncsTable->renderer_stop_stream)
             This->pFuncsTable->renderer_stop_stream(This);
         This->filter.state = State_Stopped;
         SetEvent(This->state_event);
@@ -449,7 +449,7 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     if (SUCCEEDED(hr))
     {
         QualityControlRender_Start(This->qcimpl, This->filter.rtStreamStart);
-        if (This->pFuncsTable->renderer_start_stream)
+        if (This->sink.pin.pConnectedTo && This->pFuncsTable->renderer_start_stream)
             This->pFuncsTable->renderer_start_stream(This);
         if (This->filter.state == State_Stopped)
             BaseRendererImpl_ClearPendingSample(This);
@@ -477,7 +477,7 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
                     ResetEvent(This->state_event);
                 This->sink.end_of_stream = FALSE;
             }
-            else if (This->pFuncsTable->renderer_stop_stream)
+            else if (This->sink.pin.pConnectedTo && This->pFuncsTable->renderer_stop_stream)
                 This->pFuncsTable->renderer_stop_stream(This);
 
             if (This->filter.state == State_Stopped)
