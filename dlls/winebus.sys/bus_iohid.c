@@ -416,6 +416,10 @@ NTSTATUS iohid_driver_init(void)
 void iohid_driver_unload( void )
 {
     TRACE("Unloading Driver\n");
+
+    if (!run_loop_handle)
+        return;
+
     IOHIDManagerUnscheduleFromRunLoop(hid_manager, run_loop, kCFRunLoopDefaultMode);
     CFRunLoopStop(run_loop);
     WaitForSingleObject(run_loop_handle, INFINITE);
