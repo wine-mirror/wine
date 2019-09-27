@@ -70,6 +70,8 @@ static DWORD map_controllers = 0;
 DEFINE_GUID(GUID_DEVCLASS_SDL, 0x463d60b5,0x802b,0x4bb2,0x8f,0xdb,0x7d,0xa9,0xb9,0x96,0x04,0xd8);
 
 static void *sdl_handle = NULL;
+static HANDLE deviceloop_handle;
+static UINT quit_event = -1;
 
 #ifdef SONAME_LIBSDL2
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
@@ -109,6 +111,8 @@ MAKE_FUNCPTR(SDL_HapticStopAll);
 MAKE_FUNCPTR(SDL_JoystickIsHaptic);
 MAKE_FUNCPTR(SDL_memset);
 MAKE_FUNCPTR(SDL_GameControllerAddMapping);
+MAKE_FUNCPTR(SDL_RegisterEvents);
+MAKE_FUNCPTR(SDL_PushEvent);
 #endif
 static Uint16 (*pSDL_JoystickGetProduct)(SDL_Joystick * joystick);
 static Uint16 (*pSDL_JoystickGetProductVersion)(SDL_Joystick * joystick);
@@ -1075,17 +1079,41 @@ static DWORD CALLBACK deviceloop_thread(void *args)
 
     SetEvent(init_done);
 
-    while (1)
-        while (pSDL_WaitEvent(&event) != 0)
+    while (1) {
+        while (pSDL_WaitEvent(&event) != 0) {
+            if (event.type == quit_event) {
+                TRACE("Device thread exiting\n");
+                return 0;
+            }
             process_device_event(&event);
-
-    TRACE("Device thread exiting\n");
-    return 0;
+        }
+    }
 }
 
 void sdl_driver_unload( void )
 {
+    SDL_Event event;
+
     TRACE("Unload Driver\n");
+
+    if (!deviceloop_handle)
+        return;
+
+    quit_event = pSDL_RegisterEvents(1);
+    if (quit_event == -1) {
+        ERR("error registering quit event\n");
+        return;
+    }
+
+    event.type = quit_event;
+    if (pSDL_PushEvent(&event) != 1) {
+        ERR("error pushing quit event\n");
+        return;
+    }
+
+    WaitForSingleObject(deviceloop_handle, INFINITE);
+    CloseHandle(deviceloop_handle);
+    wine_dlclose(sdl_handle, NULL, 0);
 }
 
 NTSTATUS sdl_driver_init(void)
@@ -1140,6 +1168,8 @@ NTSTATUS sdl_driver_init(void)
         LOAD_FUNCPTR(SDL_JoystickIsHaptic);
         LOAD_FUNCPTR(SDL_memset);
         LOAD_FUNCPTR(SDL_GameControllerAddMapping);
+        LOAD_FUNCPTR(SDL_RegisterEvents);
+        LOAD_FUNCPTR(SDL_PushEvent);
 #undef LOAD_FUNCPTR
         pSDL_JoystickGetProduct = wine_dlsym(sdl_handle, "SDL_JoystickGetProduct", NULL, 0);
         pSDL_JoystickGetProductVersion = wine_dlsym(sdl_handle, "SDL_JoystickGetProductVersion", NULL, 0);
@@ -1162,12 +1192,13 @@ NTSTATUS sdl_driver_init(void)
 
     result = WaitForMultipleObjects(2, events, FALSE, INFINITE);
     CloseHandle(events[0]);
-    CloseHandle(events[1]);
     if (result == WAIT_OBJECT_0)
     {
         TRACE("Initialization successful\n");
+        deviceloop_handle = events[1];
         return STATUS_SUCCESS;
     }
+    CloseHandle(events[1]);
 
 sym_not_found:
     wine_dlclose(sdl_handle, NULL, 0);
