@@ -74,7 +74,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateRemoteThreadEx( HANDLE process, SECURITY_A
 {
     HANDLE handle;
     CLIENT_ID client_id;
-    NTSTATUS status;
     SIZE_T stack_reserve = 0, stack_commit = 0;
 
     if (attributes) FIXME("thread attributes ignored\n");
@@ -82,29 +81,23 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateRemoteThreadEx( HANDLE process, SECURITY_A
     if (flags & STACK_SIZE_PARAM_IS_A_RESERVATION) stack_reserve = stack;
     else stack_commit = stack;
 
-    status = RtlCreateUserThread( process, sa ? sa->lpSecurityDescriptor : NULL, TRUE,
-                                  NULL, stack_reserve, stack_commit,
-                                  (PRTL_THREAD_START_ROUTINE)start, param, &handle, &client_id );
-    if (status == STATUS_SUCCESS)
+    if (!set_ntstatus( RtlCreateUserThread( process, sa ? sa->lpSecurityDescriptor : NULL, TRUE,
+                                            NULL, stack_reserve, stack_commit,
+                                            (PRTL_THREAD_START_ROUTINE)start, param, &handle, &client_id )))
+        return 0;
+
+    if (id) *id = HandleToULong( client_id.UniqueThread );
+    if (sa && sa->nLength >= sizeof(*sa) && sa->bInheritHandle)
+        SetHandleInformation( handle, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT );
+    if (!(flags & CREATE_SUSPENDED))
     {
-        if (id) *id = HandleToULong( client_id.UniqueThread );
-        if (sa && sa->nLength >= sizeof(*sa) && sa->bInheritHandle)
-            SetHandleInformation( handle, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT );
-        if (!(flags & CREATE_SUSPENDED))
+        ULONG ret;
+        if (NtResumeThread( handle, &ret ))
         {
-            ULONG ret;
-            if (NtResumeThread( handle, &ret ))
-            {
-                NtClose( handle );
-                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-                handle = 0;
-            }
+            NtClose( handle );
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            handle = 0;
         }
-    }
-    else
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        handle = 0;
     }
     return handle;
 }
@@ -292,12 +285,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetThreadTimes( HANDLE thread, LPFILETIME creation
                                               LPFILETIME kerneltime, LPFILETIME usertime )
 {
     KERNEL_USER_TIMES times;
-    NTSTATUS status = NtQueryInformationThread( thread, ThreadTimes, &times, sizeof(times), NULL);
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
+
+    if (!set_ntstatus( NtQueryInformationThread( thread, ThreadTimes, &times, sizeof(times), NULL )))
         return FALSE;
-    }
+
     if (creationtime)
     {
         creationtime->dwLowDateTime = times.CreateTime.u.LowPart;
@@ -857,7 +848,6 @@ LPVOID WINAPI DECLSPEC_HOTPATCH CreateFiberEx( SIZE_T stack_commit, SIZE_T stack
 {
     struct fiber_data *fiber;
     INITIAL_TEB stack;
-    NTSTATUS status;
 
     if (!(fiber = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*fiber) )))
     {
@@ -865,9 +855,8 @@ LPVOID WINAPI DECLSPEC_HOTPATCH CreateFiberEx( SIZE_T stack_commit, SIZE_T stack
         return NULL;
     }
 
-    if ((status = RtlCreateUserStack( stack_commit, stack_reserve, 0, 1, 1, &stack )))
+    if (!set_ntstatus( RtlCreateUserStack( stack_commit, stack_reserve, 0, 1, 1, &stack )))
     {
-        SetLastError( RtlNtStatusToDosError(status) );
         HeapFree( GetProcessHeap(), 0, fiber );
         return NULL;
     }

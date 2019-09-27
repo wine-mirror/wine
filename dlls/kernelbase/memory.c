@@ -51,12 +51,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(heap);
 BOOL WINAPI DECLSPEC_HOTPATCH FlushViewOfFile( const void *base, SIZE_T size )
 {
     NTSTATUS status = NtFlushVirtualMemory( GetCurrentProcess(), &base, &size, 0 );
-    if (status)
-    {
-        if (status == STATUS_NOT_MAPPED_DATA) status = STATUS_SUCCESS;
-        else SetLastError( RtlNtStatusToDosError(status) );
-    }
-    return !status;
+
+    if (status == STATUS_NOT_MAPPED_DATA) status = STATUS_SUCCESS;
+    return set_ntstatus( status );
 }
 
 
