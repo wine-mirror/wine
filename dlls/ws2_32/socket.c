@@ -6997,6 +6997,7 @@ static struct WS_addrinfo *addrinfo_WtoA(const struct WS_addrinfoW *ai)
 struct getaddrinfo_args
 {
     OVERLAPPED *overlapped;
+    LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine;
     ADDRINFOEXW **result;
     char *nodename;
     char *servname;
@@ -7007,6 +7008,7 @@ static void WINAPI getaddrinfo_callback(TP_CALLBACK_INSTANCE *instance, void *co
     struct getaddrinfo_args *args = context;
     OVERLAPPED *overlapped = args->overlapped;
     HANDLE event = overlapped->hEvent;
+    LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine = args->completion_routine;
     struct WS_addrinfo *res;
     int ret;
 
@@ -7023,10 +7025,12 @@ static void WINAPI getaddrinfo_callback(TP_CALLBACK_INSTANCE *instance, void *co
     HeapFree(GetProcessHeap(), 0, args);
 
     overlapped->Internal = ret;
+    if (completion_routine) completion_routine(ret, 0, overlapped);
     if (event) SetEvent(event);
 }
 
-static int WS_getaddrinfoW(const WCHAR *nodename, const WCHAR *servname, const struct WS_addrinfo *hints, ADDRINFOEXW **res, OVERLAPPED *overlapped)
+static int WS_getaddrinfoW(const WCHAR *nodename, const WCHAR *servname, const struct WS_addrinfo *hints, ADDRINFOEXW **res,
+                           OVERLAPPED *overlapped, LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine)
 {
     int ret = EAI_MEMORY, len, i;
     char *nodenameA = NULL, *servnameA = NULL;
@@ -7082,8 +7086,15 @@ static int WS_getaddrinfoW(const WCHAR *nodename, const WCHAR *servname, const s
     {
         struct getaddrinfo_args *args;
 
+        if (overlapped->hEvent && completion_routine)
+        {
+            ret = WSAEINVAL;
+            goto end;
+        }
+
         if (!(args = HeapAlloc(GetProcessHeap(), 0, sizeof(*args)))) goto end;
         args->overlapped = overlapped;
+        args->completion_routine = completion_routine;
         args->result = res;
         args->nodename = nodenameA;
         args->servname = servnameA;
@@ -7095,7 +7106,6 @@ static int WS_getaddrinfoW(const WCHAR *nodename, const WCHAR *servname, const s
             ret = GetLastError();
             goto end;
         }
-
 
         if (local_nodenameW != nodename)
             HeapFree(GetProcessHeap(), 0, local_nodenameW);
@@ -7138,12 +7148,10 @@ int WINAPI GetAddrInfoExW(const WCHAR *name, const WCHAR *servname, DWORD namesp
         FIXME("Unsupported hints\n");
     if (timeout)
         FIXME("Unsupported timeout\n");
-    if (completion_routine)
-        FIXME("Unsupported completion_routine\n");
     if (handle)
         FIXME("Unsupported cancel handle\n");
 
-    ret = WS_getaddrinfoW(name, servname, NULL, result, overlapped);
+    ret = WS_getaddrinfoW(name, servname, NULL, result, overlapped, completion_routine);
     if (ret) return ret;
     if (handle) *handle = (HANDLE)0xdeadbeef;
     return 0;
@@ -7181,7 +7189,7 @@ int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hin
 
     *res = NULL;
     if (hints) hintsA = addrinfo_WtoA(hints);
-    ret = WS_getaddrinfoW(nodename, servname, hintsA, &resex, NULL);
+    ret = WS_getaddrinfoW(nodename, servname, hintsA, &resex, NULL, NULL);
     WS_freeaddrinfo(hintsA);
     if (ret) return ret;
 
