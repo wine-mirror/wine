@@ -1166,6 +1166,7 @@ HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
     HANDLE handle;
     FILETIME filetime;
     WORD filedatetime[2];
+    DWORD len;
 
     if (!ofs) return HFILE_ERROR;
 
@@ -1201,7 +1202,13 @@ HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
     /* the watcom 10.6 IDE relies on a valid path returned in ofs->szPathName
        Are there any cases where getting the path here is wrong?
        Uwe Bonnes 1997 Apr 2 */
-    if (!GetFullPathNameA( name, sizeof(ofs->szPathName), ofs->szPathName, NULL )) goto error;
+    len = GetFullPathNameA( name, sizeof(ofs->szPathName), ofs->szPathName, NULL );
+    if (!len) goto error;
+    if (len >= sizeof(ofs->szPathName))
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        goto error;
+    }
 
     /* OF_PARSE simply fills the structure */
 
@@ -1224,8 +1231,13 @@ HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
     {
         /* Now look for the file */
 
-        if (!SearchPathA( NULL, name, NULL, sizeof(ofs->szPathName), ofs->szPathName, NULL ))
+        len = SearchPathA( NULL, name, NULL, sizeof(ofs->szPathName), ofs->szPathName, NULL );
+        if (!len) goto error;
+        if (len >= sizeof(ofs->szPathName))
+        {
+            SetLastError(ERROR_INVALID_DATA);
             goto error;
+        }
 
         TRACE("found %s\n", debugstr_a(ofs->szPathName) );
 
