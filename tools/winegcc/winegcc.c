@@ -723,32 +723,29 @@ static void compile(struct options* opts, const char* lang)
         switch (opts->target_cpu)
         {
         case CPU_x86_64:
+        case CPU_ARM64:
             strarray_add(comp_args, "-D__stdcall=__attribute__((ms_abi))");
-            strarray_add(comp_args, "-D__cdecl=__attribute__((ms_abi))");
-            strarray_add(comp_args, "-D_stdcall=__attribute__((ms_abi))");
-            strarray_add(comp_args, "-D_cdecl=__attribute__((ms_abi))");
-            strarray_add(comp_args, "-D__fastcall=__attribute__((ms_abi))");
-            strarray_add(comp_args, "-D_fastcall=__attribute__((ms_abi))");
+            strarray_add(comp_args, "-D__cdecl=__stdcall");
+            strarray_add(comp_args, "-D__fastcall=__stdcall");
             break;
         case CPU_x86:
             strarray_add(comp_args, "-D__stdcall=__attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))");
             strarray_add(comp_args, "-D__cdecl=__attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))");
-            strarray_add(comp_args, "-D_stdcall=__attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))");
-            strarray_add(comp_args, "-D_cdecl=__attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))");
             strarray_add(comp_args, "-D__fastcall=__attribute__((__fastcall__))");
-            strarray_add(comp_args, "-D_fastcall=__attribute__((__fastcall__))");
             break;
         case CPU_ARM:
-        case CPU_ARM64:
+            strarray_add(comp_args, "-D__stdcall=__attribute__((pcs(\"aapcs-vfp\")))");
+            strarray_add(comp_args, "-D__cdecl=__stdcall");
+            strarray_add(comp_args, "-D__fastcall=__stdcall");
         case CPU_POWERPC:
             strarray_add(comp_args, "-D__stdcall=");
             strarray_add(comp_args, "-D__cdecl=");
-            strarray_add(comp_args, "-D_stdcall=");
-            strarray_add(comp_args, "-D_cdecl=");
             strarray_add(comp_args, "-D__fastcall=");
-            strarray_add(comp_args, "-D_fastcall=");
             break;
         }
+        strarray_add(comp_args, "-D_stdcall=__stdcall");
+        strarray_add(comp_args, "-D_cdecl=__cdecl");
+        strarray_add(comp_args, "-D_fastcall=__fastcall");
 	strarray_add(comp_args, "-D__declspec(x)=__declspec_##x");
 	strarray_add(comp_args, "-D__declspec_align(x)=__attribute__((aligned(x)))");
 	strarray_add(comp_args, "-D__declspec_allocate(x)=__attribute__((section(x)))");
