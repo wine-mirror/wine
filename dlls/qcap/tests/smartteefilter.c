@@ -2154,6 +2154,63 @@ end:
         IEnumMediaTypes_Release(enumMediaTypes);
 }
 
+static void test_unconnected_filter_state(void)
+{
+    IBaseFilter *filter = create_smart_tee();
+    FILTER_STATE state;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Pause(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    todo_wine ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
+    todo_wine ok(state == State_Paused, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Run(filter, 0);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(state == State_Running, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Pause(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    todo_wine ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
+    todo_wine ok(state == State_Paused, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Run(filter, 0);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(state == State_Running, "Got state %u.\n", state);
+
+    hr = IBaseFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_smart_tee_filter_aggregation(void)
 {
     SourceFilter *sourceFilter = create_video_SourceFilter();
@@ -2381,6 +2438,7 @@ START_TEST(smartteefilter)
     test_find_pin();
     test_pin_info();
     test_enum_media_types();
+    test_unconnected_filter_state();
 
     test_smart_tee_filter_aggregation();
     test_smart_tee_filter();
