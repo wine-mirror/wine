@@ -3308,9 +3308,9 @@ static void test_two_dlls_at_same_time(void)
     char path1[MAX_PATH], path2[MAX_PATH];
 
     if (!fill_sxs_info(&dll_1, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE))
-        goto cleanup;
+        goto cleanup1;
     if (!fill_sxs_info(&dll_2, "2", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE))
-        goto cleanup;
+        goto cleanup2;
 
     ok(dll_1.module != dll_2.module, "Libraries are the same\n");
     dll_1.get_path(path1, sizeof(path1));
@@ -3318,13 +3318,14 @@ static void test_two_dlls_at_same_time(void)
     dll_2.get_path(path2, sizeof(path2));
     ok(strcmp(path2, dll_2.path_dll) == 0, "Got '%s', expected '%s'\n", path2, dll_2.path_dll);
 
-cleanup:
-    if (dll_1.module)
-        FreeLibrary(dll_1.module);
+cleanup2:
     if (dll_2.module)
         FreeLibrary(dll_2.module);
-    clean_sxs_info(&dll_1);
     clean_sxs_info(&dll_2);
+cleanup1:
+    if (dll_1.module)
+        FreeLibrary(dll_1.module);
+    clean_sxs_info(&dll_1);
 }
 
 /* Test loading a normal dll and then a sxs dll with the same name */
