@@ -1499,7 +1499,7 @@ static void test_system_memory_buffer(void)
     ok(length == 10, "got %u\n", length);
     ok(max == 1024, "got %u\n", max);
 
-    /* Attempt to lock the bufer twice */
+    /* Attempt to lock the buffer twice */
     hr = IMFMediaBuffer_Lock(buffer, &data2, &max, &length);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(data == data2, "got 0x%08x\n", hr);
