@@ -5133,7 +5133,7 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
      * STopLevelBrowser
      * IHTMLWindow2
      * IInternetProtocol
-     * UrlHostory
+     * UrlHistory
      * IHTMLEditHost
      * IHlinkFrame
      */

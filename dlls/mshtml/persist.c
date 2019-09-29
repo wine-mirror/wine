@@ -354,7 +354,7 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
 
     hres = IMoniker_GetDisplayName(mon, pibc, NULL, &url);
     if(FAILED(hres)) {
-        WARN("GetDiaplayName failed: %08x\n", hres);
+        WARN("GetDisplayName failed: %08x\n", hres);
         return hres;
     }
 

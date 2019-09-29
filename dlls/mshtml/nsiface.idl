@@ -2989,7 +2989,7 @@ interface nsIDOMEvent : nsISupports
     nsresult DuplicatePrivateData();
     nsresult SetTarget(nsIDOMEventTarget *aTarget);
     bool IsDispatchStopped();
-    /*WidgedEvent*/ void *WidgetEventPtr();
+    /*WidgetEvent*/ void *WidgetEventPtr();
     void SetTrusted(bool aTrusted);
     void Serialize(/*IPC::Message*/ void *aMsg, bool aSerializeInterfaceType);
     bool Deserialize(const /*IPC::Message*/ void *aMsg, void **aIter);
