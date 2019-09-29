@@ -1456,7 +1456,7 @@ static void test_GetDefaultPrinter(void)
 
     SetLastError(ERROR_SUCCESS);
     retval = pGetDefaultPrinterA(buffer, &exact);
-    if (!retval || !exact || !strlen(buffer) ||
+    if (!retval || !exact || !*buffer ||
 	(ERROR_SUCCESS != GetLastError())) {
 	if ((ERROR_FILE_NOT_FOUND == GetLastError()) ||
 	    (ERROR_INVALID_NAME == GetLastError()))
