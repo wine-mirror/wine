@@ -663,11 +663,11 @@ static DWORD WINAPI frame_thread(void *arg)
     return hr;
 }
 
-static HANDLE send_frame(IMemInputPin *sink)
+static HANDLE send_frame_time(IMemInputPin *sink, REFERENCE_TIME start_time, unsigned char color)
 {
     struct frame_thread_params *params = heap_alloc(sizeof(*params));
-    REFERENCE_TIME start_time, end_time;
     IMemAllocator *allocator;
+    REFERENCE_TIME end_time;
     IMediaSample *sample;
     HANDLE thread;
     HRESULT hr;
@@ -681,12 +681,12 @@ static HANDLE send_frame(IMemInputPin *sink)
 
     hr = IMediaSample_GetPointer(sample, &data);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    memset(data, 0x55, 32 * 16 * 2);
+    memset(data, color, 32 * 16 * 2);
 
     hr = IMediaSample_SetActualDataLength(sample, 32 * 16 * 2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    start_time = 0;
+    start_time *= 10000000;
     end_time = start_time + 10000000;
     hr = IMediaSample_SetTime(sample, &start_time, &end_time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -697,6 +697,11 @@ static HANDLE send_frame(IMemInputPin *sink)
 
     IMemAllocator_Release(allocator);
     return thread;
+}
+
+static HANDLE send_frame(IMemInputPin *sink)
+{
+    return send_frame_time(sink, 0, 0x55); /* purple */
 }
 
 static HRESULT join_thread_(int line, HANDLE thread)
@@ -912,6 +917,80 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
     IMediaControl_Release(control);
 }
 
+static void test_sample_time(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
+{
+    IMediaControl *control;
+    OAFilterState state;
+    HANDLE thread;
+    HRESULT hr;
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    todo_wine ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+
+    thread = send_frame_time(input, 1, 0x11); /* dark blue */
+
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+
+    hr = IMediaControl_Run(control);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(thread, 500) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Sample time is relative to the time passed to Run(). Thus a sample
+     * stamped at or earlier than 1s will now be displayed immediately, because
+     * that time has already passed.
+     * One may manually verify that all of the frames in this function are
+     * rendered, including (by adding a Sleep() after sending the frame) the
+     * dark and light green frames. Thus the video renderer does not attempt to
+     * drop any frames that it considers late. This remains true if the frames
+     * are marked as discontinuous. */
+
+    hr = join_thread(send_frame_time(input, 1, 0x22)); /* dark green */
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = join_thread(send_frame_time(input, 0, 0x33)); /* light green */
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = join_thread(send_frame_time(input, -2, 0x44)); /* dark red */
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    thread = send_frame_time(input, 2, 0x66); /* orange */
+    ok(WaitForSingleObject(thread, 800) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    thread = send_frame_time(input, 1000000, 0xff); /* white */
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+
+    hr = IPin_BeginFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_EndFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    thread = send_frame_time(input, 1000000, 0xff);
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IMediaControl_Release(control);
+}
+
 static void test_connect_pin(void)
 {
     VIDEOINFOHEADER vih =
@@ -1017,6 +1096,7 @@ static void test_connect_pin(void)
 
     test_filter_state(input, graph);
     test_flushing(pin, input, graph);
+    test_sample_time(pin, input, graph);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
