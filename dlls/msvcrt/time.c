@@ -1197,10 +1197,12 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
         case 'T':
             if(!strftime_int(str, &ret, max, mstm->tm_hour, alternate ? 0 : 2, 0, 23))
                 return 0;
-            str[ret++] = ':';
+            if(ret < max)
+                str[ret++] = ':';
             if(!strftime_int(str, &ret, max, mstm->tm_min, alternate ? 0 : 2, 0, 59))
                 return 0;
-            str[ret++] = ':';
+            if(ret < max)
+                str[ret++] = ':';
             if(!strftime_int(str, &ret, max, mstm->tm_sec, alternate ? 0 : 2, 0, 59))
                 return 0;
             break;
