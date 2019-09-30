@@ -1442,6 +1442,9 @@ Call ok(getVT(Log(CByte(2))) = "VT_R8", "getVT(Log(CByte(2))) = " & getVT(Log(CB
 Call ok(getVT(Date) = "VT_DATE", "getVT(Date) = " & getVT(Date))
 Call ok(getVT(Time) = "VT_DATE", "getVT(Time) = " & getVT(Time))
 
+Call ok(getVT(Day(now)) = "VT_I2", "getVT(Day(now)) = " & getVT(Day(now)))
+Call ok(Day(2) = 1, "Day(time) = " & Day(2))
+
 Sub testRGBError(arg1, arg2, arg3, error_num)
     on error resume next
     Dim x

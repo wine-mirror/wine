@@ -198,6 +198,19 @@ static HRESULT to_string(VARIANT *v, BSTR *ret)
     return S_OK;
 }
 
+static HRESULT to_system_time(VARIANT *v, SYSTEMTIME *st)
+{
+    VARIANT date;
+    HRESULT hres;
+
+    V_VT(&date) = VT_EMPTY;
+    hres = VariantChangeType(&date, v, 0, VT_DATE);
+    if(FAILED(hres))
+        return hres;
+
+    return VariantTimeToSystemTime(V_DATE(&date), st);
+}
+
 static HRESULT set_object_site(script_ctx_t *ctx, IUnknown *obj)
 {
     IObjectWithSite *obj_site;
@@ -1596,8 +1609,13 @@ static HRESULT Global_Time(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
 
 static HRESULT Global_Day(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SYSTEMTIME st;
+    HRESULT hres;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    hres = to_system_time(arg, &st);
+    return FAILED(hres) ? hres : return_short(res, st.wDay);
 }
 
 static HRESULT Global_Month(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
