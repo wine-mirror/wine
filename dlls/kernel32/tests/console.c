@@ -819,9 +819,8 @@ static void testScreenBuffer(HANDLE hConOut)
     /* Trying to set SB handles with various access modes */
     SetLastError(0);
     ok(!SetConsoleActiveScreenBuffer(hConOutRO), "Shouldn't succeed\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE,
-       "GetLastError: expecting %u got %u\n",
-       ERROR_INVALID_HANDLE, GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE || broken(GetLastError() == ERROR_ACCESS_DENIED) /* win10 1809 */,
+       "unexpected last error %u\n", GetLastError());
 
     ok(SetConsoleActiveScreenBuffer(hConOutWT), "Couldn't set new WriteOnly SB\n");
 
@@ -2744,9 +2743,13 @@ static void test_GetConsoleFontSize(HANDLE std_output)
     memset(&c, 10, sizeof(COORD));
     SetLastError(0xdeadbeef);
     c = GetConsoleFontSize(std_output, index);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
-    ok(!c.X, "got %d, expected 0\n", c.X);
-    ok(!c.Y, "got %d, expected 0\n", c.Y);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef) /* win10 1809 */,
+        "unexpected last error %u\n", GetLastError());
+    if (GetLastError() == ERROR_INVALID_PARAMETER)
+    {
+        ok(!c.X, "got %d, expected 0\n", c.X);
+        ok(!c.Y, "got %d, expected 0\n", c.Y);
+    }
 }
 
 static void test_GetLargestConsoleWindowSize(HANDLE std_output)
@@ -2884,12 +2887,14 @@ static void test_GetConsoleFontInfo(HANDLE std_output)
 
     memset(cfi, 0, memsize);
     ret = pGetConsoleFontInfo(std_output, FALSE, num_fonts, cfi);
-    todo_wine ok(ret, "got %d, expected non-zero\n", ret);
-
-    todo_wine ok(cfi[index].dwFontSize.X == win_width, "got %d, expected %d\n",
-                 cfi[index].dwFontSize.X, win_width);
-    todo_wine ok(cfi[index].dwFontSize.Y == win_height, "got %d, expected %d\n",
-                 cfi[index].dwFontSize.Y, win_height);
+    todo_wine ok(ret || broken(!ret) /* win10 1809 */, "got %d, expected non-zero\n", ret);
+    if (ret)
+    {
+        todo_wine ok(cfi[index].dwFontSize.X == win_width, "got %d, expected %d\n",
+                     cfi[index].dwFontSize.X, win_width);
+        todo_wine ok(cfi[index].dwFontSize.Y == win_height, "got %d, expected %d\n",
+                     cfi[index].dwFontSize.Y, win_height);
+    }
 
     for (i = 0; i < num_fonts; i++)
     {
@@ -2918,12 +2923,14 @@ static void test_GetConsoleFontInfo(HANDLE std_output)
 
     memset(cfi, 0, memsize);
     ret = pGetConsoleFontInfo(std_output, TRUE, num_fonts, cfi);
-    todo_wine ok(ret, "got %d, expected non-zero\n", ret);
-
-    todo_wine ok(cfi[index].dwFontSize.X == csbi.dwMaximumWindowSize.X, "got %d, expected %d\n",
-                 cfi[index].dwFontSize.X, csbi.dwMaximumWindowSize.X);
-    todo_wine ok(cfi[index].dwFontSize.Y == csbi.dwMaximumWindowSize.Y, "got %d, expected %d\n",
-                 cfi[index].dwFontSize.Y, csbi.dwMaximumWindowSize.Y);
+    todo_wine ok(ret || broken(!ret) /* win10 1809 */, "got %d, expected non-zero\n", ret);
+    if (ret)
+    {
+        todo_wine ok(cfi[index].dwFontSize.X == csbi.dwMaximumWindowSize.X, "got %d, expected %d\n",
+                     cfi[index].dwFontSize.X, csbi.dwMaximumWindowSize.X);
+        todo_wine ok(cfi[index].dwFontSize.Y == csbi.dwMaximumWindowSize.Y, "got %d, expected %d\n",
+                     cfi[index].dwFontSize.Y, csbi.dwMaximumWindowSize.Y);
+    }
 
     for (i = 0; i < num_fonts; i++)
     {
