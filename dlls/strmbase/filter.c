@@ -302,7 +302,8 @@ void strmbase_filter_init(struct strmbase_filter *filter, const IBaseFilterVtbl 
     filter->refcount = 1;
 
     InitializeCriticalSection(&filter->csFilter);
-    filter->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": strmbase_filter.csFilter");
+    if (filter->csFilter.DebugInfo != (RTL_CRITICAL_SECTION_DEBUG *)-1)
+        filter->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": strmbase_filter.csFilter");
     filter->clsid = *clsid;
     filter->pin_version = 1;
     filter->pFuncsTable = func_table;
@@ -314,6 +315,5 @@ void strmbase_filter_cleanup(struct strmbase_filter *This)
         IReferenceClock_Release(This->pClock);
 
     This->IBaseFilter_iface.lpVtbl = NULL;
-    This->csFilter.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->csFilter);
 }
