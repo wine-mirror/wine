@@ -1887,6 +1887,127 @@ todo_wine
     SysFreeString(str);
     ITextStream_Release(stream);
 
+    /* default read will use Unicode */
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateUseDefault, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    lstrcpyW(buffW, nameW);
+    lstrcatW(buffW, crlfW);
+    lstrcatW(buffW, secondlineW);
+    lstrcatW(buffW, crlfW);
+    str = NULL;
+    hr = ITextStream_Read(stream, 500, &str);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(buffW, str), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    ITextStream_Release(stream);
+
+    /* default append will use Unicode */
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForAppending, VARIANT_FALSE, TristateUseDefault, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = SysAllocString(L"123");
+    hr = ITextStream_Write(stream, str);
+    ok(hr == S_OK, "got %08x\n", hr);
+    SysFreeString(str);
+
+    ITextStream_Release(stream);
+
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    lstrcatW(buffW, L"123");
+    str = NULL;
+    hr = ITextStream_Read(stream, 500, &str);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(buffW, str), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    ITextStream_Release(stream);
+
+    /* default write will use ASCII */
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForWriting, VARIANT_FALSE, TristateUseDefault, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = SysAllocString(L"123");
+    hr = ITextStream_Write(stream, str);
+    ok(hr == S_OK, "got %08x\n", hr);
+    SysFreeString(str);
+
+    ITextStream_Release(stream);
+
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateFalse, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = (void*)0xdeadbeef;
+    hr = ITextStream_Read(stream, 500, &str);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(!wcscmp(str, L"123"), "got %s\n", wine_dbgstr_w(str));
+
+    ITextStream_Release(stream);
+    /* ASCII file, read with default stream */
+    hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    str = SysAllocString(L"test");
+    hr = ITextStream_Write(stream, str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+    ITextStream_Release(stream);
+
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateUseDefault, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = (void*)0xdeadbeef;
+    hr = ITextStream_Read(stream, 500, &str);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(!wcscmp(str, L"test"), "got %s\n", wine_dbgstr_w(str));
+
+    ITextStream_Release(stream);
+
+    /* default append will use Unicode */
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForAppending, VARIANT_FALSE, TristateUseDefault, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = SysAllocString(L"123");
+    hr = ITextStream_Write(stream, str);
+    ok(hr == S_OK, "got %08x\n", hr);
+    SysFreeString(str);
+
+    ITextStream_Release(stream);
+
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateFalse, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = NULL;
+    hr = ITextStream_Read(stream, 500, &str);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(L"test123", str), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    ITextStream_Release(stream);
+
+    /* default write will use ASCII as well */
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForWriting, VARIANT_FALSE, TristateUseDefault, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = SysAllocString(L"test string");
+    hr = ITextStream_Write(stream, str);
+    ok(hr == S_OK, "got %08x\n", hr);
+    SysFreeString(str);
+
+    ITextStream_Release(stream);
+
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateFalse, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = (void*)0xdeadbeef;
+    hr = ITextStream_Read(stream, 500, &str);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(!wcscmp(str, L"test string"), "got %s\n", wine_dbgstr_w(str));
+
+    ITextStream_Release(stream);
+
     /* ASCII file, read with Unicode stream */
     /* 1. one byte content, not enough for Unicode read */
     hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);

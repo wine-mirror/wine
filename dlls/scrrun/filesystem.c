@@ -689,7 +689,7 @@ static const ITextStreamVtbl textstreamvtbl = {
     textstream_Close
 };
 
-static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMode mode, BOOL unicode, ITextStream **ret)
+static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMode mode, Tristate format, ITextStream **ret)
 {
     struct textstream *stream;
     DWORD access = 0;
@@ -704,7 +704,7 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
         access = GENERIC_WRITE;
         break;
     case ForAppending:
-        access = FILE_APPEND_DATA;
+        access = GENERIC_READ | GENERIC_WRITE;
         break;
     default:
         return E_INVALIDARG;
@@ -716,7 +716,6 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
     stream->ITextStream_iface.lpVtbl = &textstreamvtbl;
     stream->ref = 1;
     stream->mode = mode;
-    stream->unicode = unicode;
     stream->first_read = TRUE;
 
     stream->file = CreateFileW(filename, access, 0, NULL, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -732,14 +731,39 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
     else
         stream->size.QuadPart = 0;
 
-    /* Write Unicode BOM */
-    if (unicode && mode == ForWriting && (disposition == CREATE_ALWAYS || disposition == CREATE_NEW)) {
-        DWORD written = 0;
-        BOOL ret = WriteFile(stream->file, &utf16bom, sizeof(utf16bom), &written, NULL);
-        if (!ret || written != sizeof(utf16bom)) {
-            ITextStream_Release(&stream->ITextStream_iface);
-            return create_error(GetLastError());
+    if (mode == ForWriting)
+    {
+        stream->unicode = format == TristateTrue;
+        /* Write Unicode BOM */
+        if (stream->unicode && (disposition == CREATE_ALWAYS || disposition == CREATE_NEW)) {
+            DWORD written = 0;
+            BOOL ret = WriteFile(stream->file, &utf16bom, sizeof(utf16bom), &written, NULL);
+            if (!ret || written != sizeof(utf16bom)) {
+                ITextStream_Release(&stream->ITextStream_iface);
+                return create_error(GetLastError());
+            }
         }
+    }
+    else
+    {
+        if (format == TristateUseDefault)
+        {
+            BYTE buf[64];
+            DWORD read;
+            BOOL ret;
+
+            ret = ReadFile(stream->file, buf, sizeof(buf), &read, NULL);
+            if (!ret) {
+                ITextStream_Release(&stream->ITextStream_iface);
+                return create_error(GetLastError());
+            }
+
+            stream->unicode = IsTextUnicode(buf, read, NULL);
+            if (mode == ForReading) SetFilePointer(stream->file, 0, 0, FILE_BEGIN);
+        }
+        else stream->unicode = format != TristateFalse;
+
+        if (mode == ForAppending) SetFilePointer(stream->file, 0, 0, FILE_END);
     }
 
     init_classinfo(&CLSID_TextStream, (IUnknown *)&stream->ITextStream_iface, &stream->classinfo);
@@ -2811,12 +2835,7 @@ static HRESULT WINAPI file_OpenAsTextStream(IFile *iface, IOMode mode, Tristate 
 
     TRACE("(%p)->(%d %d %p)\n", This, mode, format, stream);
 
-    if (format == TristateUseDefault) {
-        FIXME("default format not handled, defaulting to unicode\n");
-        format = TristateTrue;
-    }
-
-    return create_textstream(This->path, OPEN_EXISTING, mode, format == TristateTrue, stream);
+    return create_textstream(This->path, OPEN_EXISTING, mode, format, stream);
 }
 
 static const IFileVtbl file_vtbl = {
@@ -3851,7 +3870,7 @@ static HRESULT WINAPI filesys_CreateTextFile(IFileSystem3 *iface, BSTR filename,
     TRACE("%p %s %d %d %p\n", iface, debugstr_w(filename), overwrite, unicode, stream);
 
     disposition = overwrite == VARIANT_TRUE ? CREATE_ALWAYS : CREATE_NEW;
-    return create_textstream(filename, disposition, ForWriting, !!unicode, stream);
+    return create_textstream(filename, disposition, ForWriting, unicode ? TristateTrue : TristateFalse, stream);
 }
 
 static HRESULT WINAPI filesys_OpenTextFile(IFileSystem3 *iface, BSTR filename,
@@ -3861,14 +3880,9 @@ static HRESULT WINAPI filesys_OpenTextFile(IFileSystem3 *iface, BSTR filename,
     DWORD disposition;
 
     TRACE("(%p)->(%s %d %d %d %p)\n", iface, debugstr_w(filename), mode, create, format, stream);
+
     disposition = create == VARIANT_TRUE ? OPEN_ALWAYS : OPEN_EXISTING;
-
-    if (format == TristateUseDefault) {
-        FIXME("default format not handled, defaulting to unicode\n");
-        format = TristateTrue;
-    }
-
-    return create_textstream(filename, disposition, mode, format == TristateTrue, stream);
+    return create_textstream(filename, disposition, mode, format, stream);
 }
 
 static HRESULT WINAPI filesys_GetStandardStream(IFileSystem3 *iface,
