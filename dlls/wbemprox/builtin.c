@@ -111,6 +111,8 @@ static const WCHAR class_processor2W[] =
     {'C','I','M','_','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR class_qualifiersW[] =
     {'_','_','Q','U','A','L','I','F','I','E','R','S',0};
+static const WCHAR class_quickfixengineeringW[] =
+    {'W','i','n','3','2','_','Q','u','i','c','k','F','i','x','E','n','g','i','n','e','e','r','i','n','g',0};
 static const WCHAR class_sidW[] =
     {'W','i','n','3','2','_','S','I','D',0};
 static const WCHAR class_sounddeviceW[] =
@@ -268,6 +270,8 @@ static const WCHAR prop_graphicsscoreW[] =
     {'G','r','a','p','h','i','c','s','S','c','o','r','e',0};
 static const WCHAR prop_horizontalresolutionW[] =
     {'H','o','r','i','z','o','n','t','a','l','R','e','s','o','l','u','t','i','o','n',0};
+static const WCHAR prop_hotfixidW[] =
+    {'H','o','t','F','i','x','I','D',0};
 static const WCHAR prop_idW[] =
     {'I','D',0};
 static const WCHAR prop_identificationcodeW[] =
@@ -754,6 +758,11 @@ static const struct column col_qualifier[] =
     { prop_strvalueW,  CIM_STRING },
     { prop_boolvalueW, CIM_BOOLEAN }
 };
+static const struct column col_quickfixengineering[] =
+{
+    { prop_captionW,  CIM_STRING },
+    { prop_hotfixidW, CIM_STRING|COL_FLAG_KEY }
+};
 static const struct column col_service[] =
 {
     { prop_acceptpauseW,      CIM_BOOLEAN },
@@ -920,6 +929,10 @@ static const WCHAR os_serialnumberW[] =
     {'1','2','3','4','5','-','O','E','M','-','1','2','3','4','5','6','7','-','1','2','3','4','5',0};
 static const WCHAR physicalmedia_tagW[] =
     {'\\','\\','.','\\','P','H','Y','S','I','C','A','L','D','R','I','V','E','0',0};
+static const WCHAR quickfixengineering_captionW[] =
+    {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',0};
+static const WCHAR quickfixengineering_hotfixidW[] =
+    {'K','B','1','2','3','4','5','6','7',0};
 static const WCHAR sounddevice_productnameW[] =
     {'W','i','n','e',' ','A','u','d','i','o',' ','D','e','v','i','c','e',0};
 static const WCHAR systemenclosure_systemenclosureW[] =
@@ -1224,6 +1237,11 @@ struct record_qualifier
     const WCHAR *strvalue;
     int          boolvalue;
 };
+struct record_quickfixengineering
+{
+    const WCHAR *caption;
+    const WCHAR *hotfixid;
+};
 struct record_service
 {
     int          accept_pause;
@@ -1363,6 +1381,10 @@ static const struct record_qualifier data_qualifier[] =
 {
     { class_process_getowner_outW, param_userW, CIM_SINT32, FLAVOR_ID, prop_idW, 0 },
     { class_process_getowner_outW, param_domainW, CIM_SINT32, FLAVOR_ID, prop_idW, 1 }
+};
+static const struct record_quickfixengineering data_quickfixengineering[] =
+{
+    { quickfixengineering_captionW, quickfixengineering_hotfixidW },
 };
 static const struct record_sounddevice data_sounddevice[] =
 {
@@ -4443,6 +4465,7 @@ static struct table builtin_classes[] =
     { class_processorW, C(col_processor), 0, 0, NULL, fill_processor },
     { class_processor2W, C(col_processor), 0, 0, NULL, fill_processor },
     { class_qualifiersW, C(col_qualifier), D(data_qualifier) },
+    { class_quickfixengineeringW, C(col_quickfixengineering), D(data_quickfixengineering) },
     { class_serviceW, C(col_service), 0, 0, NULL, fill_service },
     { class_sidW, C(col_sid), 0, 0, NULL, fill_sid },
     { class_sounddeviceW, C(col_sounddevice), D(data_sounddevice) },

@@ -1756,6 +1756,49 @@ static void test_Win32_DisplayControllerConfiguration( IWbemServices *services )
     SysFreeString( wql );
 }
 
+static void test_Win32_QuickFixEngineering( IWbemServices *services )
+{
+    static const WCHAR captionW[] =
+        {'C','a','p','t','i','o','n',0};
+    static const WCHAR hotfixidW[] =
+        {'H','o','t','F','i','x','I','D',0};
+    static const WCHAR queryW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
+         'Q','u','i','c','k','F','i','x','E','n','g','i','n','e','e','r','i','n','g',0};
+    BSTR wql = SysAllocString( wqlW ), query = SysAllocString( queryW );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    HRESULT hr;
+    DWORD count, total = 0;
+    VARIANT caption;
+    CIMTYPE type;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (;;)
+    {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+
+        type = 0xdeadbeef;
+        VariantInit( &caption );
+        hr = IWbemClassObject_Get( obj, captionW, 0, &caption, &type, NULL );
+        ok( hr == S_OK, "failed to get caption %08x\n", hr );
+        ok( V_VT( &caption ) == VT_BSTR || V_VT( &caption ) == VT_NULL /* winxp */,
+            "unexpected variant type 0x%x\n", V_VT( &caption ) );
+        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+
+        check_property( obj, hotfixidW, VT_BSTR, CIM_STRING );
+        IWbemClassObject_Release( obj );
+        if (total++ >= 10) break;
+    }
+
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
 START_TEST(query)
 {
     static const WCHAR cimv2W[] = {'R','O','O','T','\\','C','I','M','V','2',0};
@@ -1804,6 +1847,7 @@ START_TEST(query)
     test_Win32_Process( services, FALSE );
     test_Win32_Process( services, TRUE );
     test_Win32_Processor( services );
+    test_Win32_QuickFixEngineering( services );
     test_Win32_Service( services );
     test_Win32_SystemEnclosure( services );
     test_Win32_VideoController( services );
