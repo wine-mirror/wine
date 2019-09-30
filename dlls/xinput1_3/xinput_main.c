@@ -88,6 +88,9 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputSetState(DWORD index, XINPUT_VIBRATION* vib
  * XInputGetState() in the hook, so we need a wrapper. */
 static DWORD xinput_get_state(DWORD index, XINPUT_STATE *state)
 {
+    if (!state)
+        return ERROR_BAD_ARGUMENTS;
+
     HID_find_gamepads(controllers);
 
     if (index >= XUSER_MAX_COUNT)
