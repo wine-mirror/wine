@@ -1670,8 +1670,13 @@ static HRESULT Global_Minute(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
 
 static HRESULT Global_Second(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SYSTEMTIME st;
+    HRESULT hres;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    hres = to_system_time(arg, &st);
+    return FAILED(hres) ? hres : return_short(res, st.wSecond);
 }
 
 static HRESULT Global_DateValue(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

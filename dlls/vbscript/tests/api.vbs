@@ -1454,6 +1454,8 @@ Call ok(Hour(2.75) = 18, "Hour(2) = " & Hour(2.75))
 Call ok(getVT(Minute(now)) = "VT_I2", "getVT(Minute(now)) = " & getVT(Minute(now)))
 Call ok(Minute(2) = 0, "Minute(2) = " & Minute(2))
 Call ok(Minute(2.02083) = 30, "Minute(2.02083) = " & Minute(2.02083))
+Call ok(getVT(Second(now)) = "VT_I2", "getVT(Second(now)) = " & getVT(Second(now)))
+Call ok(Second(2) = 0, "Second(2) = " & Second(2))
 
 Sub testRGBError(arg1, arg2, arg3, error_num)
     on error resume next
