@@ -88,6 +88,7 @@ static errno_t (__cdecl *p_mbsupr_s)(unsigned char *str, size_t numberOfElements
 static errno_t (__cdecl *p_mbslwr_s)(unsigned char *str, size_t numberOfElements);
 static int (__cdecl *p_wctob)(wint_t);
 static size_t (__cdecl *p_wcrtomb)(char*, wchar_t, mbstate_t*);
+static int (__cdecl *p_wcrtomb_s)(size_t*, char*, size_t, wchar_t, mbstate_t*);
 static int (__cdecl *p_tolower)(int);
 static int (__cdecl *p_towlower)(wint_t);
 static int (__cdecl *p__towlower_l)(wint_t, _locale_t);
@@ -2784,6 +2785,7 @@ static void test_wctomb(void)
     mbstate_t state;
     unsigned char dst[10];
     size_t ret;
+    int err;
 
     if(!p_wcrtomb || !setlocale(LC_ALL, "Japanese_Japan.932")) {
         win_skip("wcrtomb tests\n");
@@ -2812,6 +2814,43 @@ static void test_wctomb(void)
     ok(dst[0] == 0x20, "dst[0] = %x, expected 0x20\n", dst[0]);
 
     ret = p_wcrtomb((char*)dst, 0xffff, NULL);
+    ok(ret == -1, "wcrtomb did not return -1\n");
+    ok(dst[0] == 0x3f, "dst[0] = %x, expected 0x3f\n", dst[0]);
+
+    if(!p_wcrtomb_s) {
+        win_skip("wcrtomb_s tests\n");
+        setlocale(LC_ALL, "C");
+        return;
+    }
+
+    state = 1;
+    dst[2] = 'a';
+    err = p_wcrtomb_s(&ret, (char*)dst, sizeof(dst), 0x3042, &state);
+    ok(!err, "err = %d\n", err);
+    ok(ret == 2, "ret != 2\n");
+    ok(!state, "state != 0\n");
+    ok(dst[0] == 0x82, "dst[0] = %x, expected 0x82\n", dst[0]);
+    ok(dst[1] == 0xa0, "dst[1] = %x, expected 0xa0\n", dst[1]);
+    ok(dst[2] == 'a', "dst[2] != 'a'\n");
+
+    err = p_wcrtomb_s(&ret, (char*)dst, sizeof(dst), 0x3042, NULL);
+    ok(!err, "err = %d\n", err);
+    ok(ret == 2, "ret != 2\n");
+    ok(!state, "state != 0\n");
+    ok(dst[0] == 0x82, "dst[0] = %x, expected 0x82\n", dst[0]);
+    ok(dst[1] == 0xa0, "dst[1] = %x, expected 0xa0\n", dst[1]);
+
+    err = p_wcrtomb_s(&ret, (char*)dst, sizeof(dst), 0x20, NULL);
+    ok(!err, "err = %d\n", err);
+    ok(ret == 1, "ret != 1\n");
+    ok(dst[0] == 0x20, "dst[0] = %x, expected 0x20\n", dst[0]);
+
+    err = p_wcrtomb_s(&ret, NULL, 0, 0x20, NULL);
+    ok(!err, "err = %d\n", err);
+    ok(ret == 1, "ret != 1\n");
+
+    err = p_wcrtomb_s(&ret, (char*)dst, sizeof(dst), 0xffff, NULL);
+    ok(err == EILSEQ, "err = %d\n", err);
     ok(ret == -1, "wcrtomb did not return -1\n");
     ok(dst[0] == 0x3f, "dst[0] = %x, expected 0x3f\n", dst[0]);
 
@@ -3861,6 +3900,7 @@ START_TEST(string)
     p_mbslwr_s = (void*)GetProcAddress(hMsvcrt, "_mbslwr_s");
     p_wctob = (void*)GetProcAddress(hMsvcrt, "wctob");
     p_wcrtomb = (void*)GetProcAddress(hMsvcrt, "wcrtomb");
+    p_wcrtomb_s = (void*)GetProcAddress(hMsvcrt, "wcrtomb_s");
     p_tolower = (void*)GetProcAddress(hMsvcrt, "tolower");
     p_towlower = (void*)GetProcAddress(hMsvcrt, "towlower");
     p__towlower_l = (void*)GetProcAddress(hMsvcrt, "_towlower_l");
