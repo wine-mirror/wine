@@ -200,6 +200,16 @@ static struct named_item *host_get_named_item(ScriptHost *host, const WCHAR *nam
     return NULL;
 }
 
+static HRESULT set_script_state(ScriptHost *host, SCRIPTSTATE state)
+{
+    HRESULT hr;
+
+    hr = IActiveScript_SetScriptState(host->script, state);
+    if (SUCCEEDED(hr))
+        host->script_state = state;
+    return hr;
+}
+
 static inline ScriptControl *impl_from_IScriptControl(IScriptControl *iface)
 {
     return CONTAINING_RECORD(iface, ScriptControl, IScriptControl_iface);
@@ -951,16 +961,6 @@ static HRESULT WINAPI ScriptControl_AddObject(IScriptControl *iface, BSTR name, 
     }
 
 
-    return hr;
-}
-
-static HRESULT set_script_state(ScriptHost *host, SCRIPTSTATE state)
-{
-    HRESULT hr;
-
-    hr = IActiveScript_SetScriptState(host->script, state);
-    if (SUCCEEDED(hr))
-        host->script_state = state;
     return hr;
 }
 
