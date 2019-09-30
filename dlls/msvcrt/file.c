@@ -4834,19 +4834,14 @@ int CDECL MSVCRT_puts(const char *s)
  */
 int CDECL MSVCRT__putws(const MSVCRT_wchar_t *s)
 {
-    static const MSVCRT_wchar_t nl = '\n';
-    MSVCRT_size_t len = strlenW(s);
     int ret;
 
     MSVCRT__lock_file(MSVCRT_stdout);
-    if(MSVCRT__fwrite_nolock(s, sizeof(*s), len, MSVCRT_stdout) != len) {
-        MSVCRT__unlock_file(MSVCRT_stdout);
-        return MSVCRT_EOF;
-    }
-
-    ret = MSVCRT__fwrite_nolock(&nl,sizeof(nl),1,MSVCRT_stdout) == 1 ? 0 : MSVCRT_EOF;
+    ret = MSVCRT_fputws(s, MSVCRT_stdout);
+    if(ret >= 0)
+        ret = MSVCRT__fputwc_nolock('\n', MSVCRT_stdout);
     MSVCRT__unlock_file(MSVCRT_stdout);
-    return ret;
+    return ret >= 0 ? 0 : MSVCRT_WEOF;
 }
 
 /*********************************************************************
