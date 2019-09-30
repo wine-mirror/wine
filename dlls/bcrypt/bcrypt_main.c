@@ -92,44 +92,86 @@ NTSTATUS WINAPI BCryptUnregisterProvider(LPCWSTR provider)
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS WINAPI BCryptEnumAlgorithms(ULONG dwAlgOperations, ULONG *pAlgCount,
-                                     BCRYPT_ALGORITHM_IDENTIFIER **ppAlgList, ULONG dwFlags)
-{
-    FIXME("%08x, %p, %p, %08x - stub\n", dwAlgOperations, pAlgCount, ppAlgList, dwFlags);
-
-    *ppAlgList=NULL;
-    *pAlgCount=0;
-
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 #define MAX_HASH_OUTPUT_BYTES 64
 #define MAX_HASH_BLOCK_BITS 1024
 
+/* ordered by class, keep in sync with enum alg_id */
 static const struct
 {
+    const WCHAR *name;
+    ULONG        class;
     ULONG        object_length;
     ULONG        hash_length;
     ULONG        block_bits;
-    const WCHAR *alg_name;
-    BOOL         symmetric;
 }
-alg_props[] =
+builtin_algorithms[] =
 {
-    /* ALG_ID_AES    */ {  654,    0,    0, BCRYPT_AES_ALGORITHM,    TRUE },
-    /* ALG_ID_MD2    */ {  270,   16,  128, BCRYPT_MD2_ALGORITHM,    FALSE },
-    /* ALG_ID_MD4    */ {  270,   16,  512, BCRYPT_MD4_ALGORITHM,    FALSE },
-    /* ALG_ID_MD5    */ {  274,   16,  512, BCRYPT_MD5_ALGORITHM,    FALSE },
-    /* ALG_ID_RNG    */ {    0,    0,    0, BCRYPT_RNG_ALGORITHM,    FALSE },
-    /* ALG_ID_RSA    */ {    0,    0,    0, BCRYPT_RSA_ALGORITHM,    FALSE },
-    /* ALG_ID_SHA1   */ {  278,   20,  512, BCRYPT_SHA1_ALGORITHM,   FALSE },
-    /* ALG_ID_SHA256 */ {  286,   32,  512, BCRYPT_SHA256_ALGORITHM, FALSE },
-    /* ALG_ID_SHA384 */ {  382,   48, 1024, BCRYPT_SHA384_ALGORITHM, FALSE },
-    /* ALG_ID_SHA512 */ {  382,   64, 1024, BCRYPT_SHA512_ALGORITHM, FALSE },
-    /* ALG_ID_ECDH_P256 */  { 0,   0,     0, BCRYPT_ECDH_P256_ALGORITHM, FALSE },
-    /* ALG_ID_ECDSA_P256 */ { 0,   0,     0, BCRYPT_ECDSA_P256_ALGORITHM, FALSE  },
-    /* ALG_ID_ECDSA_P384 */ { 0,   0,     0, BCRYPT_ECDSA_P384_ALGORITHM, FALSE  },
+    {  BCRYPT_AES_ALGORITHM,        BCRYPT_CIPHER_INTERFACE,                654,    0,    0 },
+    {  BCRYPT_SHA256_ALGORITHM,     BCRYPT_HASH_INTERFACE,                  286,   32,  512 },
+    {  BCRYPT_SHA384_ALGORITHM,     BCRYPT_HASH_INTERFACE,                  382,   48, 1024 },
+    {  BCRYPT_SHA512_ALGORITHM,     BCRYPT_HASH_INTERFACE,                  382,   64, 1024 },
+    {  BCRYPT_SHA1_ALGORITHM,       BCRYPT_HASH_INTERFACE,                  278,   20,  512 },
+    {  BCRYPT_MD5_ALGORITHM,        BCRYPT_HASH_INTERFACE,                  274,   16,  512 },
+    {  BCRYPT_MD4_ALGORITHM,        BCRYPT_HASH_INTERFACE,                  270,   16,  512 },
+    {  BCRYPT_MD2_ALGORITHM,        BCRYPT_HASH_INTERFACE,                  270,   16,  128 },
+    {  BCRYPT_RSA_ALGORITHM,        BCRYPT_ASYMMETRIC_ENCRYPTION_INTERFACE, 0,      0,    0 },
+    {  BCRYPT_ECDH_P256_ALGORITHM,  BCRYPT_SECRET_AGREEMENT_INTERFACE,      0,      0,    0 },
+    {  BCRYPT_RSA_SIGN_ALGORITHM,   BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
+    {  BCRYPT_ECDSA_P256_ALGORITHM, BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
+    {  BCRYPT_ECDSA_P384_ALGORITHM, BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
+    {  BCRYPT_RNG_ALGORITHM,        BCRYPT_RNG_INTERFACE,                   0,      0,    0 },
 };
+
+static BOOL match_operation_type( ULONG type, ULONG class )
+{
+    if (!type) return TRUE;
+    switch (class)
+    {
+    case BCRYPT_CIPHER_INTERFACE:                return type & BCRYPT_CIPHER_OPERATION;
+    case BCRYPT_HASH_INTERFACE:                  return type & BCRYPT_HASH_OPERATION;
+    case BCRYPT_ASYMMETRIC_ENCRYPTION_INTERFACE: return type & BCRYPT_ASYMMETRIC_ENCRYPTION_OPERATION;
+    case BCRYPT_SECRET_AGREEMENT_INTERFACE:      return type & BCRYPT_SECRET_AGREEMENT_OPERATION;
+    case BCRYPT_SIGNATURE_INTERFACE:             return type & BCRYPT_SIGNATURE_OPERATION;
+    case BCRYPT_RNG_INTERFACE:                   return type & BCRYPT_RNG_OPERATION;
+    default: break;
+    }
+    return FALSE;
+}
+
+NTSTATUS WINAPI BCryptEnumAlgorithms( ULONG type, ULONG *ret_count, BCRYPT_ALGORITHM_IDENTIFIER **ret_list, ULONG flags )
+{
+    static const ULONG supported = BCRYPT_CIPHER_OPERATION |\
+                                   BCRYPT_HASH_OPERATION |\
+                                   BCRYPT_ASYMMETRIC_ENCRYPTION_OPERATION |\
+                                   BCRYPT_SECRET_AGREEMENT_OPERATION |\
+                                   BCRYPT_SIGNATURE_OPERATION |\
+                                   BCRYPT_RNG_OPERATION;
+    BCRYPT_ALGORITHM_IDENTIFIER *list;
+    ULONG i, count = 0;
+
+    TRACE( "%08x, %p, %p, %08x\n", type, ret_count, ret_list, flags );
+
+    if (!ret_count || !ret_list || (type & ~supported)) return STATUS_INVALID_PARAMETER;
+
+    for (i = 0; i < ARRAY_SIZE( builtin_algorithms ); i++)
+    {
+        if (match_operation_type( type, builtin_algorithms[i].class )) count++;
+    }
+
+    if (!(list = heap_alloc( count * sizeof(*list) ))) return STATUS_NO_MEMORY;
+
+    for (i = 0; i < ARRAY_SIZE( builtin_algorithms ); i++)
+    {
+        if (!match_operation_type( type, builtin_algorithms[i].class )) continue;
+        list[i].pszName = (WCHAR *)builtin_algorithms[i].name;
+        list[i].dwClass = builtin_algorithms[i].class;
+        list[i].dwFlags = 0;
+    }
+
+    *ret_count = count;
+    *ret_list = list;
+    return STATUS_SUCCESS;
+}
 
 NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE handle, UCHAR *buffer, ULONG count, ULONG flags)
 {
@@ -177,6 +219,7 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR 
     const DWORD supported_flags = BCRYPT_ALG_HANDLE_HMAC_FLAG;
     struct algorithm *alg;
     enum alg_id alg_id;
+    ULONG i;
 
     TRACE( "%p, %s, %s, %08x\n", handle, wine_dbgstr_w(id), wine_dbgstr_w(implementation), flags );
 
@@ -187,25 +230,20 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR 
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (!strcmpW( id, BCRYPT_AES_ALGORITHM )) alg_id = ALG_ID_AES;
-    else if (!strcmpW( id, BCRYPT_MD2_ALGORITHM )) alg_id = ALG_ID_MD2;
-    else if (!strcmpW( id, BCRYPT_MD4_ALGORITHM )) alg_id = ALG_ID_MD4;
-    else if (!strcmpW( id, BCRYPT_MD5_ALGORITHM )) alg_id = ALG_ID_MD5;
-    else if (!strcmpW( id, BCRYPT_RNG_ALGORITHM )) alg_id = ALG_ID_RNG;
-    else if (!strcmpW( id, BCRYPT_RSA_ALGORITHM )) alg_id = ALG_ID_RSA;
-    else if (!strcmpW( id, BCRYPT_RSA_SIGN_ALGORITHM )) alg_id = ALG_ID_RSA;
-    else if (!strcmpW( id, BCRYPT_SHA1_ALGORITHM )) alg_id = ALG_ID_SHA1;
-    else if (!strcmpW( id, BCRYPT_SHA256_ALGORITHM )) alg_id = ALG_ID_SHA256;
-    else if (!strcmpW( id, BCRYPT_SHA384_ALGORITHM )) alg_id = ALG_ID_SHA384;
-    else if (!strcmpW( id, BCRYPT_SHA512_ALGORITHM )) alg_id = ALG_ID_SHA512;
-    else if (!strcmpW( id, BCRYPT_ECDH_P256_ALGORITHM )) alg_id = ALG_ID_ECDH_P256;
-    else if (!strcmpW( id, BCRYPT_ECDSA_P256_ALGORITHM )) alg_id = ALG_ID_ECDSA_P256;
-    else if (!strcmpW( id, BCRYPT_ECDSA_P384_ALGORITHM )) alg_id = ALG_ID_ECDSA_P384;
-    else
+    for (i = 0; i < ARRAY_SIZE( builtin_algorithms ); i++)
+    {
+        if (!strcmpW( id, builtin_algorithms[i].name))
+        {
+            alg_id = i;
+            break;
+        }
+    }
+    if (i == ARRAY_SIZE( builtin_algorithms ))
     {
         FIXME( "algorithm %s not supported\n", debugstr_w(id) );
         return STATUS_NOT_IMPLEMENTED;
     }
+
     if (implementation && strcmpW( implementation, MS_PRIMITIVE_PROVIDER ))
     {
         FIXME( "implementation %s not supported\n", debugstr_w(implementation) );
@@ -398,35 +436,35 @@ static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *
 {
     if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH ))
     {
-        if (!alg_props[id].object_length)
+        if (!builtin_algorithms[id].object_length)
             return STATUS_NOT_SUPPORTED;
         *ret_size = sizeof(ULONG);
         if (size < sizeof(ULONG))
             return STATUS_BUFFER_TOO_SMALL;
         if (buf)
-            *(ULONG *)buf = alg_props[id].object_length;
+            *(ULONG *)buf = builtin_algorithms[id].object_length;
         return STATUS_SUCCESS;
     }
 
     if (!strcmpW( prop, BCRYPT_HASH_LENGTH ))
     {
-        if (!alg_props[id].hash_length)
+        if (!builtin_algorithms[id].hash_length)
             return STATUS_NOT_SUPPORTED;
         *ret_size = sizeof(ULONG);
         if (size < sizeof(ULONG))
             return STATUS_BUFFER_TOO_SMALL;
         if(buf)
-            *(ULONG*)buf = alg_props[id].hash_length;
+            *(ULONG*)buf = builtin_algorithms[id].hash_length;
         return STATUS_SUCCESS;
     }
 
     if (!strcmpW( prop, BCRYPT_ALGORITHM_NAME ))
     {
-        *ret_size = (strlenW(alg_props[id].alg_name)+1)*sizeof(WCHAR);
+        *ret_size = (strlenW(builtin_algorithms[id].name) + 1) * sizeof(WCHAR);
         if (size < *ret_size)
             return STATUS_BUFFER_TOO_SMALL;
         if(buf)
-            memcpy(buf, alg_props[id].alg_name, *ret_size);
+            memcpy(buf, builtin_algorithms[id].name, *ret_size);
         return STATUS_SUCCESS;
     }
 
@@ -616,14 +654,14 @@ static NTSTATUS prepare_hash( struct hash *hash )
 
     /* initialize hmac */
     if ((status = hash_init( &hash->outer, hash->alg_id ))) return status;
-    block_bytes = alg_props[hash->alg_id].block_bits / 8;
+    block_bytes = builtin_algorithms[hash->alg_id].block_bits / 8;
     if (hash->secret_len > block_bytes)
     {
         struct hash_impl temp;
         if ((status = hash_init( &temp, hash->alg_id ))) return status;
         if ((status = hash_update( &temp, hash->alg_id, hash->secret, hash->secret_len ))) return status;
         if ((status = hash_finish( &temp, hash->alg_id, buffer,
-                                   alg_props[hash->alg_id].hash_length ))) return status;
+                                   builtin_algorithms[hash->alg_id].hash_length ))) return status;
     }
     else memcpy( buffer, hash->secret, hash->secret_len );
 
@@ -747,7 +785,7 @@ NTSTATUS WINAPI BCryptFinishHash( BCRYPT_HASH_HANDLE handle, UCHAR *output, ULON
         return STATUS_SUCCESS;
     }
 
-    hash_length = alg_props[hash->alg_id].hash_length;
+    hash_length = builtin_algorithms[hash->alg_id].hash_length;
     if ((status = hash_finish( &hash->inner, hash->alg_id, buffer, hash_length ))) return status;
     if ((status = hash_update( &hash->outer, hash->alg_id, buffer, hash_length ))) return status;
     if ((status = hash_finish( &hash->outer, hash->alg_id, output, size ))) return status;
@@ -790,7 +828,7 @@ NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE algorithm, UCHAR *secret, ULONG se
 #if defined(HAVE_GNUTLS_CIPHER_INIT) || defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
 BOOL key_is_symmetric( struct key *key )
 {
-    return alg_props[key->alg_id].symmetric;
+    return builtin_algorithms[key->alg_id].class == BCRYPT_CIPHER_INTERFACE;
 }
 
 static NTSTATUS key_import( BCRYPT_ALG_HANDLE algorithm, const WCHAR *type, BCRYPT_KEY_HANDLE *key, UCHAR *object,
@@ -1156,7 +1194,8 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         ULONG size;
 
         if (input_len < sizeof(*rsa_blob)) return STATUS_INVALID_PARAMETER;
-        if (alg->id != ALG_ID_RSA || rsa_blob->Magic != BCRYPT_RSAPUBLIC_MAGIC) return STATUS_NOT_SUPPORTED;
+        if ((alg->id != ALG_ID_RSA && alg->id != ALG_ID_RSA_SIGN) || rsa_blob->Magic != BCRYPT_RSAPUBLIC_MAGIC)
+            return STATUS_NOT_SUPPORTED;
 
         if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
         key->hdr.magic = MAGIC_KEY;
@@ -1601,7 +1640,7 @@ NTSTATUS WINAPI BCryptDeriveKeyPBKDF2( BCRYPT_ALG_HANDLE handle, UCHAR *pwd, ULO
 
     if (!alg || alg->hdr.magic != MAGIC_ALG) return STATUS_INVALID_HANDLE;
 
-    hash_len = alg_props[alg->id].hash_length;
+    hash_len = builtin_algorithms[alg->id].hash_length;
     if (dk_len <= 0 || dk_len > ((((ULONGLONG)1) << 32) - 1) * hash_len) return STATUS_INVALID_PARAMETER;
 
     block_count = 1 + ((dk_len - 1) / hash_len); /* ceil(dk_len / hash_len) */

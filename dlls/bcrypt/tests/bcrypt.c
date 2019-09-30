@@ -40,6 +40,7 @@ static NTSTATUS (WINAPI *pBCryptDuplicateHash)(BCRYPT_HASH_HANDLE, BCRYPT_HASH_H
 static NTSTATUS (WINAPI *pBCryptDuplicateKey)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE *, UCHAR *, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptEncrypt)(BCRYPT_KEY_HANDLE, PUCHAR, ULONG, VOID *, PUCHAR, ULONG, PUCHAR, ULONG,
                                          ULONG *, ULONG);
+static NTSTATUS (WINAPI *pBCryptEnumAlgorithms)(ULONG, ULONG *, BCRYPT_ALGORITHM_IDENTIFIER **, ULONG);
 static NTSTATUS (WINAPI *pBCryptEnumContextFunctions)(ULONG, const WCHAR *, ULONG, ULONG *, CRYPT_CONTEXT_FUNCTIONS **);
 static NTSTATUS (WINAPI *pBCryptExportKey)(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG *, ULONG);
 static NTSTATUS (WINAPI *pBCryptFinalizeKeyPair)(BCRYPT_KEY_HANDLE, ULONG);
@@ -2100,6 +2101,33 @@ static void test_BCryptSignHash(void)
     ok(!ret, "got %08x\n", ret);
 }
 
+static void test_BCryptEnumAlgorithms(void)
+{
+    BCRYPT_ALGORITHM_IDENTIFIER *list;
+    NTSTATUS ret;
+    ULONG count;
+
+    ret = pBCryptEnumAlgorithms(0, NULL, NULL, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    ret = pBCryptEnumAlgorithms(0, &count, NULL, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    ret = pBCryptEnumAlgorithms(0, NULL, &list, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    ret = pBCryptEnumAlgorithms(~0u, &count, &list, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    count = 0;
+    list = NULL;
+    ret = pBCryptEnumAlgorithms(0, &count, &list, 0);
+    ok(!ret, "got %08x\n", ret);
+    ok(list != NULL, "NULL list\n");
+    ok(count, "got %u\n", count);
+    pBCryptFreeBuffer( list );
+}
+
 START_TEST(bcrypt)
 {
     HMODULE module;
@@ -2120,6 +2148,7 @@ START_TEST(bcrypt)
     pBCryptDuplicateHash = (void *)GetProcAddress(module, "BCryptDuplicateHash");
     pBCryptDuplicateKey = (void *)GetProcAddress(module, "BCryptDuplicateKey");
     pBCryptEncrypt = (void *)GetProcAddress(module, "BCryptEncrypt");
+    pBCryptEnumAlgorithms = (void *)GetProcAddress(module, "BCryptEnumAlgorithms");
     pBCryptEnumContextFunctions = (void *)GetProcAddress(module, "BCryptEnumContextFunctions");
     pBCryptExportKey = (void *)GetProcAddress(module, "BCryptExportKey");
     pBCryptFinalizeKeyPair = (void *)GetProcAddress(module, "BCryptFinalizeKeyPair");
@@ -2156,6 +2185,7 @@ START_TEST(bcrypt)
     test_ECDH();
     test_BCryptEnumContextFunctions();
     test_BCryptSignHash();
+    test_BCryptEnumAlgorithms();
 
     FreeLibrary(module);
 }

@@ -672,6 +672,7 @@ NTSTATUS key_asymmetric_generate( struct key *key )
     switch (key->alg_id)
     {
     case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
         pk_alg = GNUTLS_PK_RSA;
         bitlen = key->u.a.bitlen;
         break;
@@ -841,6 +842,7 @@ NTSTATUS key_asymmetric_init( struct key *key, struct algorithm *alg, ULONG bitl
     case ALG_ID_ECDSA_P256:
     case ALG_ID_ECDSA_P384:
     case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
         break;
 
     default:
@@ -936,6 +938,7 @@ static NTSTATUS import_gnutls_pubkey( struct key *key, gnutls_pubkey_t *gnutls_k
         return import_gnutls_pubkey_ecc( key, gnutls_key );
 
     case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
         return import_gnutls_pubkey_rsa( key, gnutls_key );
 
     default:
@@ -984,6 +987,7 @@ static NTSTATUS prepare_gnutls_signature( struct key *key, UCHAR *signature, ULO
         return prepare_gnutls_signature_ecc( key, signature, signature_len, gnutls_signature );
 
     case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
         return prepare_gnutls_signature_rsa( key, signature, signature_len, gnutls_signature );
 
     default:
@@ -1024,6 +1028,7 @@ NTSTATUS key_asymmetric_verify( struct key *key, void *padding, UCHAR *hash, ULO
         break;
     }
     case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
     {
         BCRYPT_PKCS1_PADDING_INFO *info = (BCRYPT_PKCS1_PADDING_INFO *)padding;
 
@@ -1076,7 +1081,7 @@ NTSTATUS key_asymmetric_sign( struct key *key, void *padding, UCHAR *input, ULON
     gnutls_datum_t hash, signature;
     int ret;
 
-    if (key->alg_id != ALG_ID_RSA)
+    if (key->alg_id != ALG_ID_RSA && key->alg_id != ALG_ID_RSA_SIGN)
     {
         FIXME( "algorithm %u not supported\n", key->alg_id );
         return STATUS_NOT_IMPLEMENTED;

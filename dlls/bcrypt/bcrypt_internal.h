@@ -115,19 +115,31 @@ struct object
 
 enum alg_id
 {
+    /* cipher */
     ALG_ID_AES,
-    ALG_ID_MD2,
-    ALG_ID_MD4,
-    ALG_ID_MD5,
-    ALG_ID_RNG,
-    ALG_ID_RSA,
-    ALG_ID_SHA1,
+
+    /* hash */
     ALG_ID_SHA256,
     ALG_ID_SHA384,
     ALG_ID_SHA512,
+    ALG_ID_SHA1,
+    ALG_ID_MD5,
+    ALG_ID_MD4,
+    ALG_ID_MD2,
+
+    /* asymmetric encryption */
+    ALG_ID_RSA,
+
+    /* secret agreement */
     ALG_ID_ECDH_P256,
+
+    /* signature */
+    ALG_ID_RSA_SIGN,
     ALG_ID_ECDSA_P256,
     ALG_ID_ECDSA_P384,
+
+    /* rng */
+    ALG_ID_RNG,
 };
 
 enum mode_id
