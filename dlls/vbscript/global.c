@@ -1637,8 +1637,13 @@ static HRESULT Global_Weekday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, V
 
 static HRESULT Global_Year(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SYSTEMTIME st;
+    HRESULT hres;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    hres = to_system_time(arg, &st);
+    return FAILED(hres) ? hres : return_short(res, st.wYear);
 }
 
 static HRESULT Global_Hour(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

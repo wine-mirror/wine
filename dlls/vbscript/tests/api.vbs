@@ -1446,6 +1446,8 @@ Call ok(getVT(Day(now)) = "VT_I2", "getVT(Day(now)) = " & getVT(Day(now)))
 Call ok(Day(2) = 1, "Day(2) = " & Day(2))
 Call ok(getVT(Month(now)) = "VT_I2", "getVT(Month(now)) = " & getVT(Month(now)))
 Call ok(Month(2) = 1, "Month(2) = " & Month(2))
+Call ok(getVT(Year(now)) = "VT_I2", "getVT(Year(now)) = " & getVT(Year(now)))
+Call ok(Year(2) = 1900, "Year(2) = " & Year(2))
 
 Sub testRGBError(arg1, arg2, arg3, error_num)
     on error resume next
