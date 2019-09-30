@@ -737,6 +737,7 @@ static void compile(struct options* opts, const char* lang)
             strarray_add(comp_args, "-D__stdcall=__attribute__((pcs(\"aapcs-vfp\")))");
             strarray_add(comp_args, "-D__cdecl=__stdcall");
             strarray_add(comp_args, "-D__fastcall=__stdcall");
+            break;
         case CPU_POWERPC:
             strarray_add(comp_args, "-D__stdcall=");
             strarray_add(comp_args, "-D__cdecl=");
