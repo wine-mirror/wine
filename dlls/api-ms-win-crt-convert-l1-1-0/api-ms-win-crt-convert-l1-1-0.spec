@@ -102,7 +102,7 @@
 @ cdecl -ret64 strtoull(str ptr long) ucrtbase.strtoull
 @ cdecl -ret64 strtoumax(str ptr long) ucrtbase.strtoumax
 @ cdecl wcrtomb(ptr long ptr) ucrtbase.wcrtomb
-@ stub wcrtomb_s
+@ cdecl wcrtomb_s(ptr ptr long long ptr) ucrtbase.wcrtomb_s
 @ cdecl wcsrtombs(ptr ptr long ptr) ucrtbase.wcsrtombs
 @ cdecl wcsrtombs_s(ptr ptr long ptr long ptr) ucrtbase.wcsrtombs_s
 @ cdecl wcstod(wstr ptr) ucrtbase.wcstod

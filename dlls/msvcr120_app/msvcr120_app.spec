@@ -2108,7 +2108,7 @@
 @ stub vwscanf
 @ stub vwscanf_s
 @ cdecl wcrtomb(ptr long ptr) msvcr120.wcrtomb
-@ stub wcrtomb_s
+@ cdecl wcrtomb_s(ptr ptr long long ptr) msvcr120.wcrtomb_s
 @ cdecl wcscat(wstr wstr) msvcr120.wcscat
 @ cdecl wcscat_s(wstr long wstr) msvcr120.wcscat_s
 @ cdecl wcschr(wstr long) msvcr120.wcschr

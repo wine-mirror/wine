@@ -2553,7 +2553,7 @@
 @ cdecl ungetc(long ptr) MSVCRT_ungetc
 @ cdecl ungetwc(long ptr) MSVCRT_ungetwc
 @ cdecl wcrtomb(ptr long ptr) MSVCRT_wcrtomb
-@ stub wcrtomb_s
+@ cdecl wcrtomb_s(ptr ptr long long ptr) MSVCRT_wcrtomb_s
 @ cdecl wcscat(wstr wstr) ntdll.wcscat
 @ cdecl wcscat_s(wstr long wstr) MSVCRT_wcscat_s
 @ cdecl wcschr(wstr long) MSVCRT_wcschr

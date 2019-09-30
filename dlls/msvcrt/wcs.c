@@ -1822,6 +1822,20 @@ INT CDECL MSVCRT_wctob( MSVCRT_wint_t wchar )
 }
 
 /*********************************************************************
+ *              wcrtomb_s (MSVCRT.@)
+ */
+INT CDECL MSVCRT_wcrtomb_s(MSVCRT_size_t *len, char *mbchar,
+        MSVCRT_size_t size, MSVCRT_wchar_t wch, MSVCRT_mbstate_t *s)
+{
+    int ilen, ret;
+
+    if (s) *s = 0;
+    ret = MSVCRT_wctomb_s(&ilen, mbchar, size, wch);
+    if (len) *len = ilen;
+    return ret;
+}
+
+/*********************************************************************
  *              wcrtomb (MSVCRT.@)
  */
 MSVCRT_size_t CDECL MSVCRT_wcrtomb( char *dst, MSVCRT_wchar_t ch, MSVCRT_mbstate_t *s)
