@@ -2273,6 +2273,8 @@ static DWORD WINAPI dispatch_thread(void *user)
 {
     struct cb_data *cbdata;
 
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
     pthread_mutex_lock(&cb_list_lock);
 
     while(1){
@@ -2287,6 +2289,8 @@ static DWORD WINAPI dispatch_thread(void *user)
     }
 
     pthread_mutex_unlock(&cb_list_lock);
+
+    CoUninitialize();
 
     return 0;
 }

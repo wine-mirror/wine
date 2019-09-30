@@ -760,7 +760,6 @@ static DWORD WINAPI call_RenderFile_multithread(LPVOID lParam)
     HRESULT hr;
 
     hr = IFilterGraph2_RenderFile(graph, filename, NULL);
-todo_wine
     ok(SUCCEEDED(hr), "RenderFile failed: %x\n", hr);
 
     if (SUCCEEDED(hr))
