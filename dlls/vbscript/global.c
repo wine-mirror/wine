@@ -1620,8 +1620,13 @@ static HRESULT Global_Day(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 
 static HRESULT Global_Month(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SYSTEMTIME st;
+    HRESULT hres;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    hres = to_system_time(arg, &st);
+    return FAILED(hres) ? hres : return_short(res, st.wMonth);
 }
 
 static HRESULT Global_Weekday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
