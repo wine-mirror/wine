@@ -41,6 +41,7 @@
 #include "dmutils.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmfile);
+WINE_DECLARE_DEBUG_CHANNEL(dmime);
 
 static HRESULT IDirectMusicUtils_IPersistStream_ParseDescGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc) {
 
@@ -143,7 +144,7 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, 
 
   TRACE("** DM Reference Begin of Load ***\n");
   TRACE("With Desc:\n");
-  debugstr_DMUS_OBJECTDESC(&ref_desc);
+  dump_DMUS_OBJECTDESC(&ref_desc);
 
   {
     LPDIRECTMUSICGETLOADER pGetLoader = NULL;
@@ -430,26 +431,33 @@ static const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask) {
     return debugstr_flags(flagmask, flags, ARRAY_SIZE(flags));
 }
 
-const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
-	if (pDesc) {
-		char buffer[1024], *ptr = buffer;
-		
-		ptr += sprintf(ptr, "DMUS_OBJECTDESC (%p):\n", pDesc);
-		ptr += sprintf(ptr, " - dwSize = 0x%08X\n", pDesc->dwSize);
-		ptr += sprintf(ptr, " - dwValidData = 0x%08X ( %s)\n", pDesc->dwValidData, debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
-		if (pDesc->dwValidData & DMUS_OBJ_CLASS) ptr +=	sprintf(ptr, " - guidClass = %s\n", debugstr_dmguid(&pDesc->guidClass));
-		if (pDesc->dwValidData & DMUS_OBJ_OBJECT) ptr += sprintf(ptr, " - guidObject = %s\n", debugstr_guid(&pDesc->guidObject));
-		if (pDesc->dwValidData & DMUS_OBJ_DATE) ptr += sprintf(ptr, " - ftDate = %s\n", debugstr_filetime (&pDesc->ftDate));
-		if (pDesc->dwValidData & DMUS_OBJ_VERSION) ptr += sprintf(ptr, " - vVersion = %s\n", debugstr_dmversion(&pDesc->vVersion));
-		if (pDesc->dwValidData & DMUS_OBJ_NAME) ptr += sprintf(ptr, " - wszName = %s\n", debugstr_w(pDesc->wszName));
-		if (pDesc->dwValidData & DMUS_OBJ_CATEGORY) ptr += sprintf(ptr, " - wszCategory = %s\n", debugstr_w(pDesc->wszCategory));
-		if (pDesc->dwValidData & DMUS_OBJ_FILENAME) ptr += sprintf(ptr, " - wszFileName = %s\n", debugstr_w(pDesc->wszFileName));
-		if (pDesc->dwValidData & DMUS_OBJ_MEMORY) ptr += sprintf(ptr, " - llMemLength = 0x%s\n  - pbMemData = %p\n",
-		                                                     wine_dbgstr_longlong(pDesc->llMemLength), pDesc->pbMemData);
-		if (pDesc->dwValidData & DMUS_OBJ_STREAM) ptr += sprintf(ptr, " - pStream = %p\n", pDesc->pStream);
-		
-		return wine_dbg_sprintf("%s", buffer);
-	} else {
-		return wine_dbg_sprintf("(NULL)");
-	}
+void dump_DMUS_OBJECTDESC(DMUS_OBJECTDESC *pDesc)
+{
+    if (!TRACE_ON(dmime))
+        return;
+
+    if (pDesc) {
+        TRACE_(dmime)("DMUS_OBJECTDESC (%p):", pDesc);
+        TRACE_(dmime)(" - dwSize = 0x%08X\n", pDesc->dwSize);
+        TRACE_(dmime)(" - dwValidData = 0x%08X ( %s)\n", pDesc->dwValidData, debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
+        if (pDesc->dwValidData & DMUS_OBJ_CLASS)
+            TRACE_(dmime)(" - guidClass = %s\n", debugstr_dmguid(&pDesc->guidClass));
+        if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
+            TRACE_(dmime)(" - guidObject = %s\n", debugstr_guid(&pDesc->guidObject));
+        if (pDesc->dwValidData & DMUS_OBJ_DATE)
+            TRACE_(dmime)(" - ftDate = %s\n", debugstr_filetime (&pDesc->ftDate));
+        if (pDesc->dwValidData & DMUS_OBJ_VERSION)
+            TRACE_(dmime)(" - vVersion = %s\n", debugstr_dmversion(&pDesc->vVersion));
+        if (pDesc->dwValidData & DMUS_OBJ_NAME)
+            TRACE_(dmime)(" - wszName = %s\n", debugstr_w(pDesc->wszName));
+        if (pDesc->dwValidData & DMUS_OBJ_CATEGORY)
+            TRACE_(dmime)(" - wszCategory = %s\n", debugstr_w(pDesc->wszCategory));
+        if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
+            TRACE_(dmime)(" - wszFileName = %s\n", debugstr_w(pDesc->wszFileName));
+        if (pDesc->dwValidData & DMUS_OBJ_MEMORY)
+            TRACE_(dmime)(" - llMemLength = 0x%s\n  - pbMemData = %p\n", wine_dbgstr_longlong(pDesc->llMemLength),
+                    pDesc->pbMemData);
+        if (pDesc->dwValidData & DMUS_OBJ_STREAM)
+            TRACE_(dmime)(" - pStream = %p\n", pDesc->pStream);
+    }
 }

@@ -607,7 +607,7 @@ static HRESULT WINAPI seg_IDirectMusicObject_ParseDescriptor(IDirectMusicObject 
     desc->guidClass = CLSID_DirectMusicSegment;
     desc->dwValidData |= DMUS_OBJ_CLASS;
 
-    TRACE("returning descriptor:\n%s\n", debugstr_DMUS_OBJECTDESC (desc));
+    dump_DMUS_OBJECTDESC(desc);
     return S_OK;
 }
 
