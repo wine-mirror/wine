@@ -46,6 +46,7 @@
 #include "windef.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
+#include "wine/exception.h"
 #include "wine/library.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
@@ -1372,7 +1373,18 @@ done:
 void WINAPI DbgUiRemoteBreakin( void *arg )
 {
     TRACE( "\n" );
-    if (NtCurrentTeb()->Peb->BeingDebugged) DbgBreakPoint();
+    if (NtCurrentTeb()->Peb->BeingDebugged)
+    {
+        __TRY
+        {
+            DbgBreakPoint();
+        }
+        __EXCEPT_ALL
+        {
+            /* do nothing */
+        }
+        __ENDTRY
+    }
     RtlExitUserThread( STATUS_SUCCESS );
 }
 

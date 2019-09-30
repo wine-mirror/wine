@@ -399,7 +399,7 @@ static void wait_for_breakpoint_(unsigned line, struct debugger_context *ctx)
        ctx->ev.u.Exception.ExceptionRecord.ExceptionCode);
 }
 
-static void process_attach_events(struct debugger_context *ctx)
+static void process_attach_events(struct debugger_context *ctx, BOOL pass_exception)
 {
     DEBUG_EVENT ev;
     BOOL ret;
@@ -445,6 +445,13 @@ static void process_attach_events(struct debugger_context *ctx)
        ctx->ev.u.Exception.ExceptionRecord.ExceptionCode);
     ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint, "ExceptionAddress != DbgBreakPoint\n");
 
+    if (pass_exception)
+    {
+        ret = ContinueDebugEvent(ctx->ev.dwProcessId, ctx->ev.dwThreadId, DBG_EXCEPTION_NOT_HANDLED);
+        ok(ret, "ContinueDebugEvent failed, last error %d.\n", GetLastError());
+        ctx->ev.dwDebugEventCode = -1;
+    }
+
     /* flush debug events */
     do next_event(ctx, POLL_EVENT_TIMEOUT);
     while (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx->ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT
@@ -477,7 +484,7 @@ static void doDebugger(int argc, char** argv)
     if (strstr(myARGV[2], "process"))
     {
         strcat(buf, "processing debug messages\n");
-        process_attach_events(&ctx);
+        process_attach_events(&ctx, FALSE);
     }
 
     debug_event=(argc >= 6 ? (HANDLE)(INT_PTR)atol(argv[5]) : NULL);
@@ -1023,7 +1030,7 @@ static void doChildren(int argc, char **argv)
     HeapFree(GetProcessHeap(), 0, cmd);
 }
 
-static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
+static void test_debug_children(const char *name, DWORD flag, BOOL debug_child, BOOL pass_exception)
 {
     const char *arguments = "debugger children";
     struct child_blackbox blackbox;
@@ -1096,7 +1103,7 @@ static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
     {
         DWORD last_thread;
 
-        process_attach_events(&ctx);
+        process_attach_events(&ctx, pass_exception);
         ok(ctx.pid == pi.dwProcessId, "unexpected dwProcessId %x\n", ctx.pid);
 
         ret = DebugBreakProcess(pi.hProcess);
@@ -1118,6 +1125,13 @@ static void test_debug_children(char *name, DWORD flag, BOOL debug_child)
 
         ret = SetEvent(event_attach);
         ok(ret, "SetEvent failed, last error %d.\n", GetLastError());
+
+        if (pass_exception)
+        {
+            ret = ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_EXCEPTION_NOT_HANDLED);
+            ok(ret, "ContinueDebugEvent failed, last error %d.\n", GetLastError());
+            ctx.ev.dwDebugEventCode = -1;
+        }
     }
 
     do next_event(&ctx, WAIT_EVENT_TIMEOUT);
@@ -1487,10 +1501,11 @@ START_TEST(debugger)
         test_ExitCode();
         test_RemoteDebugger();
         test_debug_loop(myARGC, myARGV);
-        test_debug_children(myARGV[0], DEBUG_PROCESS, TRUE);
-        test_debug_children(myARGV[0], DEBUG_ONLY_THIS_PROCESS, FALSE);
-        test_debug_children(myARGV[0], DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS, FALSE);
-        test_debug_children(myARGV[0], 0, FALSE);
+        test_debug_children(myARGV[0], DEBUG_PROCESS, TRUE, FALSE);
+        test_debug_children(myARGV[0], DEBUG_ONLY_THIS_PROCESS, FALSE, FALSE);
+        test_debug_children(myARGV[0], DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS, FALSE, FALSE);
+        test_debug_children(myARGV[0], 0, FALSE, FALSE);
+        test_debug_children(myARGV[0], 0, FALSE, TRUE);
         test_debugger(myARGV[0]);
     }
 }
