@@ -22,12 +22,15 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
-#include "wine/test.h"
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "wine/test.h"
 
 #define HAS_TRAIL_SLASH_A(string) (string[lstrlenA(string)-1]=='\\')
 
@@ -71,6 +74,9 @@ static BOOL  (WINAPI *pNeedCurrentDirectoryForExePathA)(LPCSTR);
 static BOOL  (WINAPI *pNeedCurrentDirectoryForExePathW)(LPCWSTR);
 
 static BOOL  (WINAPI *pSetSearchPathMode)(DWORD);
+static BOOL  (WINAPI *pSetDllDirectoryA)(LPCSTR);
+static NTSTATUS (WINAPI *pRtlGetSearchPath)(LPWSTR*);
+static void (WINAPI *pRtlReleasePath)(LPWSTR);
 
 static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
 static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
@@ -2187,14 +2193,15 @@ static void test_GetFullPathNameW(void)
 
 static void init_pointers(void)
 {
-    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+    HMODULE mod = GetModuleHandleA("kernel32.dll");
 
-#define MAKEFUNC(f) (p##f = (void*)GetProcAddress(hKernel32, #f))
+#define MAKEFUNC(f) (p##f = (void*)GetProcAddress(mod, #f))
     MAKEFUNC(GetLongPathNameA);
     MAKEFUNC(GetLongPathNameW);
     MAKEFUNC(NeedCurrentDirectoryForExePathA);
     MAKEFUNC(NeedCurrentDirectoryForExePathW);
     MAKEFUNC(SetSearchPathMode);
+    MAKEFUNC(SetDllDirectoryA);
     MAKEFUNC(ActivateActCtx);
     MAKEFUNC(CreateActCtxW);
     MAKEFUNC(DeactivateActCtx);
@@ -2202,6 +2209,9 @@ static void init_pointers(void)
     MAKEFUNC(ReleaseActCtx);
     MAKEFUNC(CheckNameLegalDOS8Dot3W);
     MAKEFUNC(CheckNameLegalDOS8Dot3A);
+    mod = GetModuleHandleA("ntdll.dll");
+    MAKEFUNC(RtlGetSearchPath);
+    MAKEFUNC(RtlReleasePath);
 #undef MAKEFUNC
 }
 
@@ -2458,6 +2468,87 @@ static void test_SetSearchPathMode(void)
     RemoveDirectoryA( dir );
 }
 
+static const WCHAR pathW[] = {'P','A','T','H',0};
+
+static void build_search_path( WCHAR *buffer, UINT size, BOOL safe )
+{
+    WCHAR *p;
+    GetModuleFileNameW( NULL, buffer, size );
+    if (!(p = wcsrchr( buffer, '\\' ))) return;
+    *p++ = ';';
+    GetSystemDirectoryW( p, buffer + size - p );
+    p = buffer + lstrlenW(buffer);
+    *p++ = ';';
+    GetSystemDirectoryW( p, buffer + size - p );
+    p = buffer + lstrlenW(buffer) - 2;  /* remove "32" */
+    *p++ = ';';
+    GetWindowsDirectoryW( p, buffer + size - p );
+    p = buffer + lstrlenW(buffer);
+    *p++ = ';';
+    if (!safe)
+    {
+        *p++ = '.';
+        *p++ = ';';
+    }
+    GetEnvironmentVariableW( pathW, p, buffer + size - p );
+}
+
+static BOOL path_equal( const WCHAR *path1, const WCHAR *path2 )
+{
+    for (;;)
+    {
+        while (*path1 && towlower(*path1) == towlower(*path2)) { path1++; path2++; }
+        if (*path1 && *path1 != '\\' && *path1 != ';') return FALSE;
+        while (*path1 && (*path1 == '\\' || *path1 == ';')) path1++;
+        while (*path2 && (*path2 == '\\' || *path2 == ';')) path2++;
+        if (!*path1 && !*path2) return TRUE;
+    }
+}
+
+static void test_RtlGetSearchPath(void)
+{
+    NTSTATUS ret;
+    WCHAR *path;
+    WCHAR buffer[2048], old_path[2048];
+
+    if (!pRtlGetSearchPath)
+    {
+        win_skip( "RtlGetSearchPath isn't available\n" );
+        return;
+    }
+
+    GetEnvironmentVariableW( pathW, old_path, ARRAY_SIZE(old_path) );
+
+    build_search_path( buffer, ARRAY_SIZE(buffer), FALSE );
+    path = (WCHAR *)0xdeadbeef;
+    ret = pRtlGetSearchPath( &path );
+    ok( !ret, "RtlGetSearchPath failed %x\n", ret );
+    ok( path_equal( path, buffer ), "got %s expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(buffer));
+    pRtlReleasePath( path );
+
+    SetEnvironmentVariableA( "PATH", "foo" );
+    build_search_path( buffer, ARRAY_SIZE(buffer), FALSE );
+    path = (WCHAR *)0xdeadbeef;
+    ret = pRtlGetSearchPath( &path );
+    ok( !ret, "RtlGetSearchPath failed %x\n", ret );
+    ok( path_equal( path, buffer ), "got %s expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(buffer));
+    pRtlReleasePath( path );
+
+    if (pSetDllDirectoryA)
+    {
+        ok( pSetDllDirectoryA( "c:\\" ), "SetDllDirectoryA failed\n" );
+        build_search_path( buffer, ARRAY_SIZE(buffer), FALSE );
+        path = (WCHAR *)0xdeadbeef;
+        ret = pRtlGetSearchPath( &path );
+        ok( !ret, "RtlGetSearchPath failed %x\n", ret );
+        ok( path_equal( path, buffer ), "got %s expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(buffer));
+        pRtlReleasePath( path );
+        pSetDllDirectoryA( NULL );
+    }
+
+    SetEnvironmentVariableW( pathW, old_path );
+}
+
 START_TEST(path)
 {
     CHAR origdir[MAX_PATH],curdir[MAX_PATH], curDrive, otherDrive;
@@ -2492,4 +2583,5 @@ START_TEST(path)
     test_GetFullPathNameW();
     test_CheckNameLegalDOS8Dot3();
     test_SetSearchPathMode();
+    test_RtlGetSearchPath();
 }

@@ -700,6 +700,7 @@
 @ stdcall RtlGetProductInfo(long long long long ptr)
 @ stdcall RtlGetProcessHeaps(long ptr)
 @ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr)
+@ stdcall RtlGetSearchPath(ptr)
 # @ stub RtlGetSecurityDescriptorRMControl
 # @ stub RtlGetSetBootStatusData
 @ stdcall -ret64 RtlGetSystemTimePrecise()
@@ -879,6 +880,7 @@
 @ stdcall RtlRegisterWait(ptr ptr ptr ptr long long)
 @ stdcall RtlReleaseActivationContext(ptr)
 @ stub RtlReleaseMemoryStream
+@ stdcall RtlReleasePath(ptr)
 @ stdcall RtlReleasePebLock()
 @ stdcall RtlReleaseRelativeName(ptr)
 @ stdcall RtlReleaseResource(ptr)

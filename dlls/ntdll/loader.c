@@ -68,6 +68,12 @@ typedef void  (CALLBACK *LDRENUMPROC)(LDR_MODULE *, void *, BOOLEAN *);
 const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
                             's','y','s','t','e','m','3','2','\\',0};
 
+/* system search path */
+static const WCHAR system_path[] =
+    {'C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m','3','2',';',
+     'C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m',';',
+     'C',':','\\','w','i','n','d','o','w','s',';',0};
+
 static BOOL imports_fixup_done = FALSE;  /* set once the imports have been fixed up, before attaching them */
 static BOOL process_detaching = FALSE;  /* set on process detach to avoid deadlocks with thread detach */
 static int free_lib_count;   /* recursion depth of LdrUnloadDll calls */
@@ -2062,6 +2068,70 @@ static BOOL is_valid_binary( HMODULE module, const pe_image_info_t *info )
 }
 
 
+/******************************************************************
+ *           get_dll_load_path
+ */
+static NTSTATUS get_dll_load_path( LPCWSTR module, int safe_mode, WCHAR **path )
+{
+    static const WCHAR pathW[] = {'P','A','T','H',0};
+    static const WCHAR dotW[] = {'.',';',0};
+
+    const WCHAR *mod_end = module;
+    UNICODE_STRING name, value;
+    WCHAR *p, *ret;
+    int len = ARRAY_SIZE(system_path), path_len = 0;
+
+    if (module)
+    {
+        if ((p = strrchrW( mod_end, '\\' ))) mod_end = p;
+        if ((p = strrchrW( mod_end, '/' ))) mod_end = p;
+        if (mod_end == module + 2 && module[1] == ':') mod_end++;
+        if (mod_end == module && module[0] && module[1] == ':') mod_end += 2;
+        len += (mod_end - module) + 1;
+    }
+
+    RtlInitUnicodeString( &name, pathW );
+    value.Length = 0;
+    value.MaximumLength = 0;
+    value.Buffer = NULL;
+    if (RtlQueryEnvironmentVariable_U( NULL, &name, &value ) == STATUS_BUFFER_TOO_SMALL)
+        path_len = value.Length;
+
+    len += 2;  /* current directory */
+    if (!(ret = RtlAllocateHeap( GetProcessHeap(), 0, path_len + len * sizeof(WCHAR) )))
+        return STATUS_NO_MEMORY;
+    memcpy( ret, module, (mod_end - module) * sizeof(WCHAR) );
+    p = ret + (mod_end - module);
+    if (p > ret) *p++ = ';';
+    *p = 0;
+    if (!safe_mode) strcatW( ret, dotW );
+    strcatW( ret, system_path );
+    if (safe_mode) strcatW( ret, dotW );
+
+    value.Buffer = ret + strlenW(ret);
+    value.MaximumLength = path_len;
+
+    while (RtlQueryEnvironmentVariable_U( NULL, &name, &value ) == STATUS_BUFFER_TOO_SMALL)
+    {
+        WCHAR *new_ptr;
+
+        /* grow the buffer and retry */
+        path_len = value.Length;
+        if (!(new_ptr = RtlReAllocateHeap( GetProcessHeap(), 0, ret, path_len + len * sizeof(WCHAR) )))
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, ret );
+            return STATUS_NO_MEMORY;
+        }
+        value.Buffer = new_ptr + (value.Buffer - ret);
+        value.MaximumLength = path_len;
+        ret = new_ptr;
+    }
+    value.Buffer[value.Length / sizeof(WCHAR)] = 0;
+    *path = ret;
+    return STATUS_SUCCESS;
+}
+
+
 /***********************************************************************
  *	open_dll_file
  *
@@ -3786,6 +3856,25 @@ NTSTATUS WINAPI RtlSetSearchPathMode( ULONG flags )
         if (interlocked_cmpxchg( (int *)&path_safe_mode, val, prev ) == prev) return STATUS_SUCCESS;
     }
     return STATUS_ACCESS_DENIED;
+}
+
+
+/******************************************************************
+ *           RtlGetSearchPath   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetSearchPath( PWSTR *path )
+{
+    WCHAR *module = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+    return get_dll_load_path( module, path_safe_mode, path );
+}
+
+
+/******************************************************************
+ *           RtlReleasePath   (NTDLL.@)
+ */
+void WINAPI RtlReleasePath( PWSTR path )
+{
+    RtlFreeHeap( GetProcessHeap(), 0, path );
 }
 
 
