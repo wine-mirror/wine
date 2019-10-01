@@ -926,6 +926,7 @@
 @ stub RtlSetPropertyNames
 @ stub RtlSetPropertySetClassId
 @ stdcall RtlSetSaclSecurityDescriptor(ptr long ptr long)
+@ stdcall RtlSetSearchPathMode(long)
 # @ stub RtlSetSecurityDescriptorRMControl
 @ stub RtlSetSecurityObject
 # @ stub RtlSetSecurityObjectEx

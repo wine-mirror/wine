@@ -71,6 +71,7 @@ const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
 static BOOL imports_fixup_done = FALSE;  /* set once the imports have been fixed up, before attaching them */
 static BOOL process_detaching = FALSE;  /* set on process detach to avoid deadlocks with thread detach */
 static int free_lib_count;   /* recursion depth of LdrUnloadDll calls */
+static ULONG path_safe_mode;  /* path mode set by RtlSetSearchPathMode */
 
 struct ldr_notification
 {
@@ -3619,6 +3620,7 @@ static void load_global_options(void)
                                      'C','o','n','t','r','o','l','\\',
                                      'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',0};
     static const WCHAR globalflagW[] = {'G','l','o','b','a','l','F','l','a','g',0};
+    static const WCHAR safesearchW[] = {'S','a','f','e','P','r','o','c','e','s','s','S','e','a','r','c','h','M','o','d','e',0};
     static const WCHAR critsectW[] = {'C','r','i','t','i','c','a','l','S','e','c','t','i','o','n','T','i','m','e','o','u','t',0};
     static const WCHAR heapresW[] = {'H','e','a','p','S','e','g','m','e','n','t','R','e','s','e','r','v','e',0};
     static const WCHAR heapcommitW[] = {'H','e','a','p','S','e','g','m','e','n','t','C','o','m','m','i','t',0};
@@ -3641,21 +3643,22 @@ static void load_global_options(void)
     if (NtOpenKey( &hkey, KEY_QUERY_VALUE, &attr )) return;
 
     query_dword_option( hkey, globalflagW, &NtCurrentTeb()->Peb->NtGlobalFlag );
+    query_dword_option( hkey, safesearchW, &path_safe_mode );
 
-    query_dword_option( hkey, critsectW, &value );
-    NtCurrentTeb()->Peb->CriticalSectionTimeout.QuadPart = (ULONGLONG)value * -10000000;
+    if (!query_dword_option( hkey, critsectW, &value ))
+        NtCurrentTeb()->Peb->CriticalSectionTimeout.QuadPart = (ULONGLONG)value * -10000000;
 
-    query_dword_option( hkey, heapresW, &value );
-    NtCurrentTeb()->Peb->HeapSegmentReserve = value;
+    if (!query_dword_option( hkey, heapresW, &value ))
+        NtCurrentTeb()->Peb->HeapSegmentReserve = value;
 
-    query_dword_option( hkey, heapcommitW, &value );
-    NtCurrentTeb()->Peb->HeapSegmentCommit = value;
+    if (!query_dword_option( hkey, heapcommitW, &value ))
+        NtCurrentTeb()->Peb->HeapSegmentCommit = value;
 
-    query_dword_option( hkey, decommittotalW, &value );
-    NtCurrentTeb()->Peb->HeapDeCommitTotalFreeThreshold = value;
+    if (!query_dword_option( hkey, decommittotalW, &value ))
+        NtCurrentTeb()->Peb->HeapDeCommitTotalFreeThreshold = value;
 
-    query_dword_option( hkey, decommitfreeW, &value );
-    NtCurrentTeb()->Peb->HeapDeCommitFreeBlockThreshold = value;
+    if (!query_dword_option( hkey, decommitfreeW, &value ))
+        NtCurrentTeb()->Peb->HeapDeCommitFreeBlockThreshold = value;
 
     NtClose( hkey );
 }
@@ -3751,6 +3754,38 @@ PVOID WINAPI RtlPcToFileHeader( PVOID pc, PVOID *address )
     RtlLeaveCriticalSection( &loader_section );
     *address = ret;
     return ret;
+}
+
+
+/*************************************************************************
+ *		RtlSetSearchPathMode (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlSetSearchPathMode( ULONG flags )
+{
+    int val;
+
+    switch (flags)
+    {
+    case BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE:
+        val = 1;
+        break;
+    case BASE_SEARCH_PATH_DISABLE_SAFE_SEARCHMODE:
+        val = 0;
+        break;
+    case BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT:
+        interlocked_xchg( (int *)&path_safe_mode, 2 );
+        return STATUS_SUCCESS;
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    for (;;)
+    {
+        int prev = path_safe_mode;
+        if (prev == 2) break;  /* permanently set */
+        if (interlocked_cmpxchg( (int *)&path_safe_mode, val, prev ) == prev) return STATUS_SUCCESS;
+    }
+    return STATUS_ACCESS_DENIED;
 }
 
 
