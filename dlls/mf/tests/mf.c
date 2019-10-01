@@ -1308,7 +1308,6 @@ todo_wine {
     ok(value == MF_TOPOLOGY_RESOLUTION_SUCCEEDED, "Unexpected value %#x.\n", value);
 }
     hr = IMFTopoLoader_Load(loader, full_topology, &topology2, NULL);
-todo_wine
     ok(hr == S_OK, "Failed to resolve topology, hr %#x.\n", hr);
     ok(full_topology != topology2, "Unexpected instance.\n");
 

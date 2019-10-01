@@ -111,6 +111,8 @@ static struct topology_node *unsafe_impl_from_IMFTopologyNode(IMFTopologyNode *i
     return impl_from_IMFTopologyNode(iface);
 }
 
+static struct topology *unsafe_impl_from_IMFTopology(IMFTopology *iface);
+
 static struct topology_loader *impl_from_IMFTopoLoader(IMFTopoLoader *iface)
 {
     return CONTAINING_RECORD(iface, struct topology_loader, IMFTopoLoader_iface);
@@ -574,13 +576,10 @@ static HRESULT topology_get_node_by_id(const struct topology *topology, TOPOID i
     return MF_E_NOT_FOUND;
 }
 
-static HRESULT WINAPI topology_AddNode(IMFTopology *iface, IMFTopologyNode *node_iface)
+static HRESULT topology_add_node(struct topology *topology, IMFTopologyNode *node_iface)
 {
-    struct topology *topology = impl_from_IMFTopology(iface);
     struct topology_node *node = unsafe_impl_from_IMFTopologyNode(node_iface);
     struct topology_node *match;
-
-    TRACE("%p, %p.\n", iface, node_iface);
 
     if (!node)
         return E_POINTER;
@@ -601,6 +600,15 @@ static HRESULT WINAPI topology_AddNode(IMFTopology *iface, IMFTopologyNode *node
     IMFTopologyNode_AddRef(&node->IMFTopologyNode_iface);
 
     return S_OK;
+}
+
+static HRESULT WINAPI topology_AddNode(IMFTopology *iface, IMFTopologyNode *node)
+{
+    struct topology *topology = impl_from_IMFTopology(iface);
+
+    TRACE("%p, %p.\n", iface, node);
+
+    return topology_add_node(topology, node);
 }
 
 static HRESULT WINAPI topology_RemoveNode(IMFTopology *iface, IMFTopologyNode *node)
@@ -672,11 +680,41 @@ static HRESULT WINAPI topology_Clear(IMFTopology *iface)
     return S_OK;
 }
 
-static HRESULT WINAPI topology_CloneFrom(IMFTopology *iface, IMFTopology *src_topology)
+static HRESULT WINAPI topology_CloneFrom(IMFTopology *iface, IMFTopology *src)
 {
-    FIXME("(%p)->(%p)\n", iface, src_topology);
+    struct topology *topology = impl_from_IMFTopology(iface);
+    struct topology *src_topology = unsafe_impl_from_IMFTopology(src);
+    IMFTopologyNode *node;
+    HRESULT hr;
+    size_t i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, src);
+
+    topology_clear(topology);
+
+    /* Clone nodes. */
+    for (i = 0; i < src_topology->nodes.count; ++i)
+    {
+        if (FAILED(hr = MFCreateTopologyNode(src_topology->nodes.nodes[i]->node_type, &node)))
+        {
+            WARN("Failed to create a node, hr %#x.\n", hr);
+            break;
+        }
+
+        if (SUCCEEDED(hr = IMFTopologyNode_CloneFrom(node, &src_topology->nodes.nodes[i]->IMFTopologyNode_iface)))
+            topology_add_node(topology, node);
+
+        IMFTopologyNode_Release(node);
+    }
+
+    FIXME("Clone node connections.\n");
+
+    /* Copy attributes and id. */
+    hr = IMFTopology_CopyAllItems(src, (IMFAttributes *)&topology->IMFTopology_iface);
+    if (SUCCEEDED(hr))
+        topology->id = src_topology->id;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI topology_GetNodeByID(IMFTopology *iface, TOPOID id, IMFTopologyNode **ret)
