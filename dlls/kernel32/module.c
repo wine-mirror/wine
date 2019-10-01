@@ -56,7 +56,6 @@ struct dll_dir_entry
 };
 
 static struct list dll_dir_list = LIST_INIT( dll_dir_list );  /* extra dirs from AddDllDirectory */
-static WCHAR *dll_directory;  /* extra path for SetDllDirectoryW */
 static DWORD default_search_flags;  /* default flags set by SetDefaultDllDirectories */
 
 /* to keep track of LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE file handles */
@@ -82,21 +81,40 @@ static CRITICAL_SECTION dlldir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
  */
 DWORD WINAPI GetDllDirectoryA( DWORD buf_len, LPSTR buffer )
 {
+    UNICODE_STRING str;
+    NTSTATUS status;
+    WCHAR data[MAX_PATH];
     DWORD len;
 
-    RtlEnterCriticalSection( &dlldir_section );
-    len = dll_directory ? FILE_name_WtoA( dll_directory, strlenW(dll_directory), NULL, 0 ) : 0;
+    str.Buffer = data;
+    str.MaximumLength = sizeof(data);
+
+    for (;;)
+    {
+        status = LdrGetDllDirectory( &str );
+        if (status != STATUS_BUFFER_TOO_SMALL) break;
+        if (str.Buffer != data) HeapFree( GetProcessHeap(), 0, str.Buffer );
+        str.MaximumLength = str.Length;
+        if (!(str.Buffer = HeapAlloc( GetProcessHeap(), 0, str.MaximumLength )))
+        {
+            status = STATUS_NO_MEMORY;
+            break;
+        }
+    }
+
+    if (!set_ntstatus( status )) return 0;
+
+    len = FILE_name_WtoA( str.Buffer, str.Length / sizeof(WCHAR), NULL, 0 );
     if (buffer && buf_len > len)
     {
-        if (dll_directory) FILE_name_WtoA( dll_directory, -1, buffer, buf_len );
-        else *buffer = 0;
+        FILE_name_WtoA( str.Buffer, -1, buffer, buf_len );
     }
     else
     {
         len++;  /* for terminating null */
         if (buffer) *buffer = 0;
     }
-    RtlLeaveCriticalSection( &dlldir_section );
+    if (str.Buffer != data) HeapFree( GetProcessHeap(), 0, str.Buffer );
     return len;
 }
 
@@ -106,22 +124,15 @@ DWORD WINAPI GetDllDirectoryA( DWORD buf_len, LPSTR buffer )
  */
 DWORD WINAPI GetDllDirectoryW( DWORD buf_len, LPWSTR buffer )
 {
-    DWORD len;
+    UNICODE_STRING str;
+    NTSTATUS status;
 
-    RtlEnterCriticalSection( &dlldir_section );
-    len = dll_directory ? strlenW( dll_directory ) : 0;
-    if (buffer && buf_len > len)
-    {
-        if (dll_directory) memcpy( buffer, dll_directory, (len + 1) * sizeof(WCHAR) );
-        else *buffer = 0;
-    }
-    else
-    {
-        len++;  /* for terminating null */
-        if (buffer) *buffer = 0;
-    }
-    RtlLeaveCriticalSection( &dlldir_section );
-    return len;
+    str.Buffer = buffer;
+    str.MaximumLength = min( buf_len, UNICODE_STRING_MAX_CHARS ) * sizeof(WCHAR);
+    status = LdrGetDllDirectory( &str );
+    if (status == STATUS_BUFFER_TOO_SMALL) status = STATUS_SUCCESS;
+    if (!set_ntstatus( status )) return 0;
+    return str.Length / sizeof(WCHAR);
 }
 
 
@@ -145,24 +156,10 @@ BOOL WINAPI SetDllDirectoryA( LPCSTR dir )
  */
 BOOL WINAPI SetDllDirectoryW( LPCWSTR dir )
 {
-    WCHAR *newdir = NULL;
+    UNICODE_STRING str;
 
-    if (dir)
-    {
-        DWORD len = (strlenW(dir) + 1) * sizeof(WCHAR);
-        if (!(newdir = HeapAlloc( GetProcessHeap(), 0, len )))
-        {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            return FALSE;
-        }
-        memcpy( newdir, dir, len );
-    }
-
-    RtlEnterCriticalSection( &dlldir_section );
-    HeapFree( GetProcessHeap(), 0, dll_directory );
-    dll_directory = newdir;
-    RtlLeaveCriticalSection( &dlldir_section );
-    return TRUE;
+    RtlInitUnicodeString( &str, dir );
+    return set_ntstatus( LdrSetDllDirectory( &str ));
 }
 
 
@@ -508,7 +505,7 @@ WCHAR *MODULE_get_dll_load_path( LPCWSTR module, int safe_mode )
     const WCHAR *mod_end = NULL;
     UNICODE_STRING name, value;
     WCHAR *p, *ret;
-    int len = 0, path_len = 0;
+    int len = 0, path_len = 0, dlldir_len;
 
     /* adjust length for module name */
 
@@ -534,22 +531,27 @@ WCHAR *MODULE_get_dll_load_path( LPCWSTR module, int safe_mode )
     if (RtlQueryEnvironmentVariable_U( NULL, &name, &value ) == STATUS_BUFFER_TOO_SMALL)
         path_len = value.Length;
 
-    RtlEnterCriticalSection( &dlldir_section );
+    dlldir_len = GetDllDirectoryW( 0, NULL );
+
     if (safe_mode == -1) safe_mode = get_dll_safe_mode();
-    if (dll_directory) len += strlenW(dll_directory) + 1;
+    if (dlldir_len > 1) len += dlldir_len;
     else len += 2;  /* current directory */
     if ((p = ret = HeapAlloc( GetProcessHeap(), 0, path_len + len * sizeof(WCHAR) )))
     {
         if (module) p = append_path_len( p, module, mod_end - module );
 
-        if (dll_directory) p = append_path( p, dll_directory );
+        if (dlldir_len > 1)
+        {
+            GetDllDirectoryW( len - (p - ret), p );
+            p += strlenW(p);
+            *p++ = ';';
+        }
         else if (!safe_mode) p = append_path( p, dotW );
 
         p = append_path( p, system_path );
 
-        if (!dll_directory && safe_mode) p = append_path( p, dotW );
+        if (dlldir_len <= 1 && safe_mode) p = append_path( p, dotW );
     }
-    RtlLeaveCriticalSection( &dlldir_section );
     if (!ret) return NULL;
 
     value.Buffer = p;
@@ -616,7 +618,7 @@ static WCHAR *get_dll_load_path_search_flags( LPCWSTR module, DWORD flags )
     {
         LIST_FOR_EACH_ENTRY( dir, &dll_dir_list, struct dll_dir_entry, entry )
             len += strlenW( dir->dir ) + 1;
-        if (dll_directory) len += strlenW(dll_directory) + 1;
+        len += GetDllDirectoryW( 0, NULL );
     }
 
     if (flags & LOAD_LIBRARY_SEARCH_SYSTEM32) len += GetSystemDirectoryW( NULL, 0 );
@@ -629,7 +631,12 @@ static WCHAR *get_dll_load_path_search_flags( LPCWSTR module, DWORD flags )
         {
             LIST_FOR_EACH_ENTRY( dir, &dll_dir_list, struct dll_dir_entry, entry )
                 p = append_path( p, dir->dir );
-            if (dll_directory) p = append_path( p, dll_directory );
+            GetDllDirectoryW( ret + len - p, p );
+            if (*p)
+            {
+                p += strlenW(p);
+                *p++ = ';';
+            }
         }
         if (flags & LOAD_LIBRARY_SEARCH_SYSTEM32) GetSystemDirectoryW( p, ret + len - p );
         else

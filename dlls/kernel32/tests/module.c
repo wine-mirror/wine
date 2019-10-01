@@ -18,10 +18,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wine/test.h"
-#include <windows.h>
 #include <stdio.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
+#include "winternl.h"
 #include <psapi.h>
+#include "wine/test.h"
 
 static DWORD (WINAPI *pGetDllDirectoryA)(DWORD,LPSTR);
 static DWORD (WINAPI *pGetDllDirectoryW)(DWORD,LPWSTR);
@@ -31,6 +36,9 @@ static BOOL (WINAPI *pRemoveDllDirectory)(DLL_DIRECTORY_COOKIE);
 static BOOL (WINAPI *pSetDefaultDllDirectories)(DWORD);
 static BOOL (WINAPI *pK32GetModuleInformation)(HANDLE process, HMODULE module,
                                                MODULEINFO *modinfo, DWORD cb);
+
+static NTSTATUS (WINAPI *pLdrGetDllDirectory)(UNICODE_STRING*);
+static NTSTATUS (WINAPI *pLdrSetDllDirectory)(UNICODE_STRING*);
 
 static BOOL is_unicode_enabled = TRUE;
 
@@ -601,11 +609,14 @@ static void test_LoadLibraryEx_search_flags(void)
     ok( !mod, "LoadLibrary succeeded\n" );
     ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %u\n", GetLastError() );
 
+    if (0)  /* crashes on win10 */
+    {
     SetLastError( 0xdeadbeef );
     mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_USER_DIRS );
     ok( !mod, "LoadLibrary succeeded\n" );
     ok( GetLastError() == ERROR_MOD_NOT_FOUND || broken(GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
         "wrong error %u\n", GetLastError() );
+    }
 
     SetLastError( 0xdeadbeef );
     mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_SYSTEM32 );
@@ -753,8 +764,8 @@ static void testGetDllDirectory(void)
         bufferW[0] = 'A';
         ret = pGetDllDirectoryW(0, bufferW);
         ok(ret == length + 1, "i=%d, Expected %u, got %u\n", i, length + 1, ret);
-        ok(bufferW[0] == 0 || /* XP, 2003 */
-           broken(bufferW[0] == 'A'), "i=%d, Buffer overflow\n", i);
+        ok(bufferW[0] == 'A' || broken(bufferW[0] == 0), /* XP, 2003 */
+           "i=%d, Buffer overflow\n", i);
 
         /* buffer just one too short */
         bufferA[0] = 'A';
@@ -766,8 +777,8 @@ static void testGetDllDirectory(void)
         bufferW[0] = 'A';
         ret = pGetDllDirectoryW(length, bufferW);
         ok(ret == length + 1, "i=%d, Expected %u, got %u\n", i, length + 1, ret);
-        ok(bufferW[0] == 0 || /* XP, 2003 */
-           broken(bufferW[0] == 'A'), "i=%d, Buffer overflow\n", i);
+        if (length != 0)
+            ok(bufferW[0] == 0, "i=%d, Buffer overflow\n", i);
 
         if (0)
         {
@@ -779,6 +790,30 @@ static void testGetDllDirectory(void)
             ret = pGetDllDirectoryW(length, NULL);
             ok(ret == length + 1, "i=%d, Expected %u, got %u\n", i, length + 1, ret);
         }
+
+        if (pLdrGetDllDirectory)
+        {
+            UNICODE_STRING str;
+            NTSTATUS status;
+            str.Buffer = bufferW;
+            str.MaximumLength = sizeof(bufferW);
+            status = pLdrGetDllDirectory( &str );
+            ok( !status, "LdrGetDllDirectory failed %x\n", status );
+            ok( cmpStrAW( dll_directories[i], bufferW, strlen(dll_directories[i]),
+                          str.Length / sizeof(WCHAR) ), "%u: got %s instead of %s\n",
+                i, wine_dbgstr_w(bufferW), dll_directories[i] );
+            if (dll_directories[i][0])
+            {
+                memset( bufferW, 0xcc, sizeof(bufferW) );
+                str.MaximumLength = (strlen( dll_directories[i] ) - 1) * sizeof(WCHAR);
+                status = pLdrGetDllDirectory( &str );
+                ok( status == STATUS_BUFFER_TOO_SMALL, "%u: LdrGetDllDirectory failed %x\n", i, status );
+                ok( bufferW[0] == 0 && bufferW[1] == 0xcccc,
+                    "%u: buffer %x %x\n", i, bufferW[0], bufferW[1] );
+                length = (strlen( dll_directories[i] ) + 1) * sizeof(WCHAR);
+                ok( str.Length == length, "%u: wrong len %u / %u\n", i, str.Length, length );
+            }
+        }
     }
 
     /* unset whatever we did so following tests won't be affected */
@@ -787,9 +822,9 @@ static void testGetDllDirectory(void)
 
 static void init_pointers(void)
 {
-    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+    HMODULE mod = GetModuleHandleA("kernel32.dll");
 
-#define MAKEFUNC(f) (p##f = (void*)GetProcAddress(hKernel32, #f))
+#define MAKEFUNC(f) (p##f = (void*)GetProcAddress(mod, #f))
     MAKEFUNC(GetDllDirectoryA);
     MAKEFUNC(GetDllDirectoryW);
     MAKEFUNC(SetDllDirectoryA);
@@ -797,6 +832,9 @@ static void init_pointers(void)
     MAKEFUNC(RemoveDllDirectory);
     MAKEFUNC(SetDefaultDllDirectories);
     MAKEFUNC(K32GetModuleInformation);
+    mod = GetModuleHandleA( "ntdll.dll" );
+    MAKEFUNC(LdrGetDllDirectory);
+    MAKEFUNC(LdrSetDllDirectory);
 #undef MAKEFUNC
 
     /* before Windows 7 this was not exported in kernel32 */

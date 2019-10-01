@@ -78,6 +78,7 @@ static BOOL imports_fixup_done = FALSE;  /* set once the imports have been fixed
 static BOOL process_detaching = FALSE;  /* set on process detach to avoid deadlocks with thread detach */
 static int free_lib_count;   /* recursion depth of LdrUnloadDll calls */
 static ULONG path_safe_mode;  /* path mode set by RtlSetSearchPathMode */
+static UNICODE_STRING dll_directory;  /* extra path for LdrSetDllDirectory */
 
 struct ldr_notification
 {
@@ -136,6 +137,15 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": loader_section") }
 };
 static RTL_CRITICAL_SECTION loader_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+static CRITICAL_SECTION dlldir_section;
+static CRITICAL_SECTION_DEBUG dlldir_critsect_debug =
+{
+    0, 0, &dlldir_section,
+    { &dlldir_critsect_debug.ProcessLocksList, &dlldir_critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": dlldir_section") }
+};
+static CRITICAL_SECTION dlldir_section = { &dlldir_critsect_debug, -1, 0, 0, 0, 0 };
 
 static WINE_MODREF *cached_modref;
 static WINE_MODREF *current_modref;
@@ -3824,6 +3834,45 @@ PVOID WINAPI RtlPcToFileHeader( PVOID pc, PVOID *address )
     RtlLeaveCriticalSection( &loader_section );
     *address = ret;
     return ret;
+}
+
+
+/****************************************************************************
+ *		LdrGetDllDirectory  (NTDLL.@)
+ */
+NTSTATUS WINAPI LdrGetDllDirectory( UNICODE_STRING *dir )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    RtlEnterCriticalSection( &dlldir_section );
+    dir->Length = dll_directory.Length + sizeof(WCHAR);
+    if (dir->MaximumLength >= dir->Length) RtlCopyUnicodeString( dir, &dll_directory );
+    else
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+        if (dir->MaximumLength) dir->Buffer[0] = 0;
+    }
+    RtlLeaveCriticalSection( &dlldir_section );
+    return status;
+}
+
+
+/****************************************************************************
+ *		LdrSetDllDirectory  (NTDLL.@)
+ */
+NTSTATUS WINAPI LdrSetDllDirectory( const UNICODE_STRING *dir )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    UNICODE_STRING new;
+
+    if (!dir->Buffer) RtlInitUnicodeString( &new, NULL );
+    else if ((status = RtlDuplicateUnicodeString( 1, dir, &new ))) return status;
+
+    RtlEnterCriticalSection( &dlldir_section );
+    RtlFreeUnicodeString( &dll_directory );
+    dll_directory = new;
+    RtlLeaveCriticalSection( &dlldir_section );
+    return status;
 }
 
 
