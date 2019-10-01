@@ -1578,10 +1578,9 @@ NTSTATUS WINAPI BCryptSetProperty( BCRYPT_HANDLE handle, const WCHAR *prop, UCHA
     }
 }
 
-static NTSTATUS pbkdf2( BCRYPT_ALG_HANDLE algorithm, UCHAR *pwd, ULONG pwd_len, UCHAR *salt, ULONG salt_len,
+static NTSTATUS pbkdf2( BCRYPT_HASH_HANDLE handle, UCHAR *pwd, ULONG pwd_len, UCHAR *salt, ULONG salt_len,
                         ULONGLONG iterations, ULONG i, UCHAR *dst, ULONG hash_len )
 {
-    BCRYPT_HASH_HANDLE handle = NULL;
     NTSTATUS status = STATUS_INVALID_PARAMETER;
     UCHAR bytes[4], *buf;
     ULONG j, k;
@@ -1590,16 +1589,15 @@ static NTSTATUS pbkdf2( BCRYPT_ALG_HANDLE algorithm, UCHAR *pwd, ULONG pwd_len, 
 
     for (j = 0; j < iterations; j++)
     {
-        status = BCryptCreateHash( algorithm, &handle, NULL, 0, pwd, pwd_len, 0 );
-        if (status != STATUS_SUCCESS)
-            goto done;
-
         if (j == 0)
         {
             /* use salt || INT(i) */
             status = BCryptHashData( handle, salt, salt_len, 0 );
             if (status != STATUS_SUCCESS)
-                goto done;
+            {
+                heap_free( buf );
+                return status;
+            }
             bytes[0] = (i >> 24) & 0xff;
             bytes[1] = (i >> 16) & 0xff;
             bytes[2] = (i >> 8) & 0xff;
@@ -1608,21 +1606,22 @@ static NTSTATUS pbkdf2( BCRYPT_ALG_HANDLE algorithm, UCHAR *pwd, ULONG pwd_len, 
         }
         else status = BCryptHashData( handle, buf, hash_len, 0 ); /* use U_j */
         if (status != STATUS_SUCCESS)
-            goto done;
+        {
+            heap_free( buf );
+            return status;
+        }
 
         status = BCryptFinishHash( handle, buf, hash_len, 0 );
         if (status != STATUS_SUCCESS)
-            goto done;
+        {
+            heap_free( buf );
+            return status;
+        }
 
         if (j == 0) memcpy( dst, buf, hash_len );
         else for (k = 0; k < hash_len; k++) dst[k] ^= buf[k];
-
-        BCryptDestroyHash( handle );
-        handle = NULL;
     }
 
-done:
-    BCryptDestroyHash( handle );
     heap_free( buf );
     return status;
 }
@@ -1632,6 +1631,7 @@ NTSTATUS WINAPI BCryptDeriveKeyPBKDF2( BCRYPT_ALG_HANDLE handle, UCHAR *pwd, ULO
 {
     struct algorithm *alg = handle;
     ULONG hash_len, block_count, bytes_left, i;
+    BCRYPT_HASH_HANDLE hash;
     UCHAR *partial;
     NTSTATUS status;
 
@@ -1646,26 +1646,39 @@ NTSTATUS WINAPI BCryptDeriveKeyPBKDF2( BCRYPT_ALG_HANDLE handle, UCHAR *pwd, ULO
     block_count = 1 + ((dk_len - 1) / hash_len); /* ceil(dk_len / hash_len) */
     bytes_left = dk_len - (block_count - 1) * hash_len;
 
+    status = BCryptCreateHash( handle, &hash, NULL, 0, pwd, pwd_len, BCRYPT_HASH_REUSABLE_FLAG );
+    if (status != STATUS_SUCCESS)
+        return status;
+
     /* full blocks */
     for (i = 1; i < block_count; i++)
     {
-        status = pbkdf2( handle, pwd, pwd_len, salt, salt_len, iterations, i, dk + ((i - 1) * hash_len), hash_len );
+        status = pbkdf2( hash, pwd, pwd_len, salt, salt_len, iterations, i, dk + ((i - 1) * hash_len), hash_len );
         if (status != STATUS_SUCCESS)
+        {
+            BCryptDestroyHash( hash );
             return status;
+        }
     }
 
     /* final partial block */
-    if (!(partial = heap_alloc( hash_len ))) return STATUS_NO_MEMORY;
+    if (!(partial = heap_alloc( hash_len )))
+    {
+        BCryptDestroyHash( hash );
+        return STATUS_NO_MEMORY;
+    }
 
-    status = pbkdf2( handle, pwd, pwd_len, salt, salt_len, iterations, block_count, partial, hash_len );
+    status = pbkdf2( hash, pwd, pwd_len, salt, salt_len, iterations, block_count, partial, hash_len );
     if (status != STATUS_SUCCESS)
     {
+        BCryptDestroyHash( hash );
         heap_free( partial );
         return status;
     }
     memcpy( dk + ((block_count - 1) * hash_len), partial, bytes_left );
-    heap_free( partial );
 
+    BCryptDestroyHash( hash );
+    heap_free( partial );
     return STATUS_SUCCESS;
 }
 
