@@ -1170,6 +1170,19 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
             if(!strftime_int(str, &ret, max, mstm->tm_year%100, alternate ? 0 : 2, 0, 99))
                 return 0;
             break;
+        case 'F':
+            tmp = 1900+mstm->tm_year;
+            if(!strftime_int(str, &ret, max, tmp, alternate ? 0 : 4, 0, 9999))
+                return 0;
+            if(ret < max)
+                str[ret++] = '-';
+            if(!strftime_int(str, &ret, max, mstm->tm_mon+1, alternate ? 0 : 2, 1, 12))
+                return 0;
+            if(ret < max)
+                str[ret++] = '-';
+            if(!strftime_int(str, &ret, max, mstm->tm_mday, alternate ? 0 : 2, 0, 31))
+                return 0;
+            break;
 #endif
         case 'H':
             if(!strftime_int(str, &ret, max, mstm->tm_hour, alternate ? 0 : 2, 0, 23))
