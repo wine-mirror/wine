@@ -57,16 +57,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
 VOID WINAPI GetSystemInfo(
 	LPSYSTEM_INFO si	/* [out] Destination for system information, may not be NULL */)
 {
-    NTSTATUS                 nts;
     SYSTEM_CPU_INFORMATION   sci;
 
     TRACE("si=0x%p\n", si);
 
-    if ((nts = NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL )) != STATUS_SUCCESS)
-    {
-        SetLastError(RtlNtStatusToDosError(nts));
-        return;
-    }
+    if (!set_ntstatus( NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL ))) return;
 
     si->u.s.wProcessorArchitecture  = sci.Architecture;
     si->u.s.wReserved               = 0;

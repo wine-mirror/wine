@@ -356,7 +356,6 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR name, LPDWORD type )
 BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 {
     ANSI_STRING app_nameA;
-    NTSTATUS status;
 
     TRACE("%s\n", debugstr_a(lpApplicationName));
 
@@ -366,13 +365,10 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
         return FALSE;
 
     RtlInitAnsiString(&app_nameA, lpApplicationName);
-    status = RtlAnsiStringToUnicodeString(&NtCurrentTeb()->StaticUnicodeString,
-                                          &app_nameA, FALSE);
-    if (!status)
-        return GetBinaryTypeW(NtCurrentTeb()->StaticUnicodeString.Buffer, lpBinaryType);
-
-    SetLastError(RtlNtStatusToDosError(status));
-    return FALSE;
+    if (!set_ntstatus( RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
+                                                     &app_nameA, FALSE )))
+        return FALSE;
+    return GetBinaryTypeW(NtCurrentTeb()->StaticUnicodeString.Buffer, lpBinaryType);
 }
 
 /***********************************************************************
@@ -886,9 +882,6 @@ HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryW(LPCWSTR libnameW)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary(HINSTANCE hLibModule)
 {
-    BOOL                retv = FALSE;
-    NTSTATUS            nts;
-
     if (!hLibModule)
     {
         SetLastError( ERROR_INVALID_HANDLE );
@@ -923,10 +916,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary(HINSTANCE hLibModule)
         return UnmapViewOfFile( ptr );
     }
 
-    if ((nts = LdrUnloadDll( hLibModule )) == STATUS_SUCCESS) retv = TRUE;
-    else SetLastError( RtlNtStatusToDosError( nts ) );
-
-    return retv;
+    return set_ntstatus( LdrUnloadDll( hLibModule ));
 }
 
 /***********************************************************************
@@ -944,7 +934,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary(HINSTANCE hLibModule)
  */
 FARPROC get_proc_address( HMODULE hModule, LPCSTR function )
 {
-    NTSTATUS    nts;
     FARPROC     fp;
 
     if (!hModule) hModule = NtCurrentTeb()->Peb->ImageBaseAddress;
@@ -954,15 +943,12 @@ FARPROC get_proc_address( HMODULE hModule, LPCSTR function )
         ANSI_STRING     str;
 
         RtlInitAnsiString( &str, function );
-        nts = LdrGetProcedureAddress( hModule, &str, 0, (void**)&fp );
+        if (!set_ntstatus( LdrGetProcedureAddress( hModule, &str, 0, (void**)&fp ))) return NULL;
     }
     else
-        nts = LdrGetProcedureAddress( hModule, NULL, LOWORD(function), (void**)&fp );
-    if (nts != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError( nts ) );
-        fp = NULL;
-    }
+        if (!set_ntstatus( LdrGetProcedureAddress( hModule, NULL, LOWORD(function), (void**)&fp )))
+            return NULL;
+
     return fp;
 }
 

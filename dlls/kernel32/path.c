@@ -1136,21 +1136,18 @@ BOOL WINAPI RemoveDirectoryW( LPCWSTR path )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtOpenFile( &handle, DELETE | SYNCHRONIZE, &attr, &io,
-                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
-    if (status != STATUS_SUCCESS)
+    if (!set_ntstatus( NtOpenFile( &handle, DELETE | SYNCHRONIZE, &attr, &io,
+                                   FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                   FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT )))
     {
-        SetLastError( RtlNtStatusToDosError(status) );
         RtlFreeUnicodeString( &nt_name );
         return FALSE;
     }
 
     status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, FALSE );
     RtlFreeUnicodeString( &nt_name );
-    if (status != STATUS_SUCCESS)
+    if (!set_ntstatus( status ))
     {
-        SetLastError( RtlNtStatusToDosError(status) );
         NtClose( handle );
         return FALSE;
     }
@@ -1249,9 +1246,7 @@ UINT WINAPI GetSystemWow64DirectoryA( LPSTR path, UINT count )
  */
 BOOLEAN WINAPI Wow64EnableWow64FsRedirection( BOOLEAN enable )
 {
-    NTSTATUS status = RtlWow64EnableFsRedirection( enable );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+    return set_ntstatus( RtlWow64EnableFsRedirection( enable ));
 }
 
 
@@ -1289,16 +1284,10 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
 {
     UNICODE_STRING nt_name;
     ANSI_STRING unix_name;
-    NTSTATUS status;
     DWORD len;
 
     RtlInitAnsiString( &unix_name, str );
-    status = wine_unix_to_nt_file_name( &unix_name, &nt_name );
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError( status ) );
-        return NULL;
-    }
+    if (!set_ntstatus( wine_unix_to_nt_file_name( &unix_name, &nt_name ))) return NULL;
     if (nt_name.Buffer[5] == ':')
     {
         /* get rid of the \??\ prefix */

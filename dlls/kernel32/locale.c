@@ -1858,9 +1858,7 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
     }
 
     NtClose( hkey );
-
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+    return set_ntstatus( status );
 }
 
 

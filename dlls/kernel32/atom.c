@@ -51,12 +51,10 @@ static RTL_ATOM_TABLE get_local_table(DWORD entries)
 
     if (!local_table)
     {
-        NTSTATUS        status;
         RTL_ATOM_TABLE  table = NULL;
 
-        if ((status = RtlCreateAtomTable( entries, &table )))
-            SetLastError( RtlNtStatusToDosError( status ) );
-        else if (InterlockedCompareExchangePointer((void*)&local_table, table, NULL) != NULL)
+        if (!set_ntstatus( RtlCreateAtomTable( entries, &table ))) return NULL;
+        if (InterlockedCompareExchangePointer((void*)&local_table, table, NULL) != NULL)
             RtlDestroyAtomTable( table );
     }
 
@@ -118,15 +116,7 @@ ATOM WINAPI GlobalAddAtomA( LPCSTR str /* [in] String to add */ )
 	    WCHAR buffer[MAX_ATOM_LEN];
 	    DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), buffer, MAX_ATOM_LEN );
 	    if (!len) SetLastError( ERROR_INVALID_PARAMETER );
-	    else
-	    {
-	        NTSTATUS status = NtAddAtom( buffer, len * sizeof(WCHAR), &atom );
-		if (status)
-		{
-		    SetLastError( RtlNtStatusToDosError( status ) );
-		    atom = 0;
-		}
-	    }
+	    else if (!set_ntstatus( NtAddAtom( buffer, len * sizeof(WCHAR), &atom ))) atom = 0;
 	}
     }
     __EXCEPT_PAGE_FAULT
@@ -163,12 +153,7 @@ ATOM WINAPI AddAtomA( LPCSTR str /* [in] String to add */ )
         if (!len) SetLastError( ERROR_INVALID_PARAMETER );
         else if ((table = get_local_table( 0 )))
         {
-            NTSTATUS status = RtlAddAtomToAtomTable( table, buffer, &atom );
-            if (status)
-            {
-                SetLastError( RtlNtStatusToDosError( status ) );
-                atom = 0;
-            }
+            if (!set_ntstatus( RtlAddAtomToAtomTable( table, buffer, &atom ))) return 0;
         }
     }
     return atom;
@@ -182,13 +167,10 @@ ATOM WINAPI AddAtomA( LPCSTR str /* [in] String to add */ )
 ATOM WINAPI GlobalAddAtomW( LPCWSTR str )
 {
     ATOM        atom = 0;
-    NTSTATUS    status;
 
-    if (!check_integral_atom( str, &atom ) && 
-        (status = NtAddAtom( str, strlenW( str ) * sizeof(WCHAR), &atom )))
+    if (!check_integral_atom( str, &atom ))
     {
-        SetLastError( RtlNtStatusToDosError( status ) );
-        atom = 0;
+        if (!set_ntstatus( NtAddAtom( str, strlenW( str ) * sizeof(WCHAR), &atom ))) return 0;
     }
     return atom;
 }
@@ -206,12 +188,7 @@ ATOM WINAPI AddAtomW( LPCWSTR str )
 
     if (!check_integral_atom( str, &atom ) && (table = get_local_table( 0 )))
     {
-        NTSTATUS status = RtlAddAtomToAtomTable( table, str, &atom );
-        if (status)
-        {
-            SetLastError( RtlNtStatusToDosError( status ) );
-            atom = 0;
-        }
+        if (!set_ntstatus( RtlAddAtomToAtomTable( table, str, &atom ))) return 0;
     }
     return atom;
 }
@@ -231,12 +208,7 @@ ATOM WINAPI GlobalDeleteAtom( ATOM atom /* [in] Atom to delete */ )
 {
     if (atom >= MAXINTATOM)
     {
-        NTSTATUS status = NtDeleteAtom( atom );
-        if (status)
-        {
-            SetLastError( RtlNtStatusToDosError( status ) );
-            return atom;
-        }
+        if (!set_ntstatus( NtDeleteAtom( atom ))) return atom;
     }
     return 0;
 }
@@ -254,18 +226,12 @@ ATOM WINAPI GlobalDeleteAtom( ATOM atom /* [in] Atom to delete */ )
  */
 ATOM WINAPI DeleteAtom( ATOM atom /* [in] Atom to delete */ )
 {
-    NTSTATUS            status;
     RTL_ATOM_TABLE      table;
 
     if (atom >= MAXINTATOM)
     {
         if (!(table = get_local_table( 0 ))) return atom;
-        status = RtlDeleteAtomFromAtomTable( table, atom );
-        if (status)
-        {
-            SetLastError( RtlNtStatusToDosError( status ) );
-            return atom;
-        }
+        if (!set_ntstatus( RtlDeleteAtomFromAtomTable( table, atom ))) return atom;
     }
     return 0;
 }
@@ -290,15 +256,7 @@ ATOM WINAPI GlobalFindAtomA( LPCSTR str /* [in] Pointer to string to search for 
         DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), buffer, MAX_ATOM_LEN );
 
         if (!len) SetLastError( ERROR_INVALID_PARAMETER );
-        else
-        {
-            NTSTATUS status = NtFindAtom( buffer, len * sizeof(WCHAR), &atom );
-            if (status)
-            {
-                SetLastError( RtlNtStatusToDosError( status ) );
-                atom = 0;
-            }
-        }
+        else if (!set_ntstatus( NtFindAtom( buffer, len * sizeof(WCHAR), &atom ))) return 0;
     }
     return atom;
 }
@@ -326,12 +284,7 @@ ATOM WINAPI FindAtomA( LPCSTR str /* [in] Pointer to string to find */ )
         if (!len) SetLastError( ERROR_INVALID_PARAMETER );
         else if ((table = get_local_table( 0 )))
         {
-            NTSTATUS status = RtlLookupAtomInAtomTable( table, buffer, &atom );
-            if (status)
-            {
-                SetLastError( RtlNtStatusToDosError( status ) );
-                atom = 0;
-            }
+            if (!set_ntstatus( RtlLookupAtomInAtomTable( table, buffer, &atom ))) return 0;
         }
     }
     return atom;
@@ -349,12 +302,7 @@ ATOM WINAPI GlobalFindAtomW( LPCWSTR str )
 
     if (!check_integral_atom( str, &atom ))
     {
-        NTSTATUS status = NtFindAtom( str, strlenW( str ) * sizeof(WCHAR), &atom );
-        if (status)
-        {
-            SetLastError( RtlNtStatusToDosError( status ) );
-            atom = 0;
-        }
+        if (!set_ntstatus( NtFindAtom( str, strlenW( str ) * sizeof(WCHAR), &atom ))) return 0;
     }
     return atom;
 }
@@ -368,17 +316,11 @@ ATOM WINAPI GlobalFindAtomW( LPCWSTR str )
 ATOM WINAPI FindAtomW( LPCWSTR str )
 {
     ATOM                atom = 0;
-    NTSTATUS            status;
     RTL_ATOM_TABLE      table;
 
     if ((table = get_local_table( 0 )))
     {
-        status = RtlLookupAtomInAtomTable( table, str, &atom );
-        if (status)
-        {
-            SetLastError( RtlNtStatusToDosError( status ) );
-            atom = 0;
-        }
+        if (!set_ntstatus( RtlLookupAtomInAtomTable( table, str, &atom ))) return 0;
     }
     return atom;
 }
@@ -466,7 +408,6 @@ UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
     char        ptr[sizeof(ATOM_BASIC_INFORMATION) + MAX_ATOM_LEN * sizeof(WCHAR)];
     ATOM_BASIC_INFORMATION*     abi = (ATOM_BASIC_INFORMATION*)ptr;
     ULONG       ptr_size = sizeof(ATOM_BASIC_INFORMATION) + MAX_ATOM_LEN * sizeof(WCHAR);
-    NTSTATUS    status;
     UINT        length = 0;
 
     if (count <= 0)
@@ -474,22 +415,20 @@ UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
         SetLastError( ERROR_MORE_DATA );
         return 0;
     }
-    status = NtQueryInformationAtom( atom, AtomBasicInformation, (void*)ptr, ptr_size, NULL );
-    if (status) SetLastError( RtlNtStatusToDosError( status ) );
-    else
+    if (!set_ntstatus( NtQueryInformationAtom( atom, AtomBasicInformation, (void*)ptr, ptr_size, NULL )))
+        return 0;
+
+    length = min( abi->NameLength / sizeof(WCHAR), count);
+    memcpy( buffer, abi->Name, length * sizeof(WCHAR) );
+    /* yes, the string will not be null terminated if the passed buffer
+     * is one WCHAR too small (and it's not an error)
+     */
+    if (length < abi->NameLength / sizeof(WCHAR))
     {
-        length = min( abi->NameLength / sizeof(WCHAR), count);
-        memcpy( buffer, abi->Name, length * sizeof(WCHAR) );
-        /* yes, the string will not be null terminated if the passed buffer
-         * is one WCHAR too small (and it's not an error)
-         */
-        if (length < abi->NameLength / sizeof(WCHAR))
-        {
-            SetLastError( ERROR_MORE_DATA );
-            length = count;
-        }
-        else if (length < count) buffer[length] = '\0';
+        SetLastError( ERROR_MORE_DATA );
+        length = count;
     }
+    else if (length < count) buffer[length] = '\0';
     return length;
 }
 
@@ -501,7 +440,6 @@ UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
  */
 UINT WINAPI GetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
 {
-    NTSTATUS            status;
     RTL_ATOM_TABLE      table;
     DWORD               length;
     WCHAR               tmp[MAX_ATOM_LEN + 1];
@@ -513,12 +451,7 @@ UINT WINAPI GetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
     }
     if (!(table = get_local_table( 0 ))) return 0;
     length = sizeof(tmp);
-    status = RtlQueryAtomInAtomTable( table, atom, NULL, NULL, tmp, &length );
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError( status ) );
-        return 0;
-    }
+    if (!set_ntstatus( RtlQueryAtomInAtomTable( table, atom, NULL, NULL, tmp, &length ))) return 0;
     length = min(length, (count - 1) * sizeof(WCHAR));
     if (length) memcpy(buffer, tmp, length);
     else SetLastError( ERROR_INSUFFICIENT_BUFFER );

@@ -348,27 +348,14 @@ static BOOL TIME_GetSpecificTimeZoneKey( const WCHAR *key_name, HANDLE *result )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, Time_ZonesW );
-    status = NtOpenKey( &time_zones_key, KEY_READ, &attr );
-    if (status)
-    {
-        WARN("Unable to open the time zones key\n");
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
+    if (!set_ntstatus( NtOpenKey( &time_zones_key, KEY_READ, &attr ))) return FALSE;
 
     attr.RootDirectory = time_zones_key;
     RtlInitUnicodeString( &nameW, key_name );
     status = NtOpenKey( result, KEY_READ, &attr );
 
     NtClose( time_zones_key );
-
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-
-    return TRUE;
+    return set_ntstatus( status );
 }
 
 static BOOL reg_query_value(HKEY hkey, LPCWSTR name, DWORD type, void *data, DWORD count)
@@ -376,19 +363,15 @@ static BOOL reg_query_value(HKEY hkey, LPCWSTR name, DWORD type, void *data, DWO
     UNICODE_STRING nameW;
     char buf[256];
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buf;
-    NTSTATUS status;
 
     if (count > sizeof(buf) - sizeof(KEY_VALUE_PARTIAL_INFORMATION))
         return FALSE;
 
     RtlInitUnicodeString(&nameW, name);
 
-    if ((status = NtQueryValueKey(hkey, &nameW, KeyValuePartialInformation,
-                                  buf, sizeof(buf), &count)))
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
+    if (!set_ntstatus( NtQueryValueKey(hkey, &nameW, KeyValuePartialInformation,
+                                       buf, sizeof(buf), &count)))
         return FALSE;
-    }
 
     if (info->Type != type)
     {
@@ -625,13 +608,8 @@ BOOL WINAPI GetTimeZoneInformationForYear( USHORT wYear,
  */
 BOOL WINAPI SetTimeZoneInformation( const TIME_ZONE_INFORMATION *tzinfo )
 {
-    NTSTATUS status;
-
     TRACE("(%p)\n", tzinfo);
-    status = RtlSetTimeZoneInformation( (const RTL_TIME_ZONE_INFORMATION *)tzinfo );
-    if ( status != STATUS_SUCCESS )
-        SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+    return set_ntstatus( RtlSetTimeZoneInformation( (const RTL_TIME_ZONE_INFORMATION *)tzinfo ));
 }
 
 /***********************************************************************
@@ -1188,18 +1166,13 @@ BOOL WINAPI GetSystemTimes(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFIL
     LARGE_INTEGER idle_time, kernel_time, user_time;
     SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi;
     SYSTEM_BASIC_INFORMATION sbi;
-    NTSTATUS status;
     ULONG ret_size;
     int i;
 
     TRACE("(%p,%p,%p)\n", lpIdleTime, lpKernelTime, lpUserTime);
 
-    status = NtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), &ret_size );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
+    if (!set_ntstatus( NtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), &ret_size )))
         return FALSE;
-    }
 
     sppi = HeapAlloc( GetProcessHeap(), 0,
                       sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * sbi.NumberOfProcessors);
@@ -1209,12 +1182,10 @@ BOOL WINAPI GetSystemTimes(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFIL
         return FALSE;
     }
 
-    status = NtQuerySystemInformation( SystemProcessorPerformanceInformation, sppi, sizeof(*sppi) * sbi.NumberOfProcessors,
-                                       &ret_size );
-    if (status != STATUS_SUCCESS)
+    if (!set_ntstatus( NtQuerySystemInformation( SystemProcessorPerformanceInformation, sppi,
+                                                 sizeof(*sppi) * sbi.NumberOfProcessors, &ret_size )))
     {
         HeapFree( GetProcessHeap(), 0, sppi );
-        SetLastError( RtlNtStatusToDosError(status) );
         return FALSE;
     }
 
@@ -1253,16 +1224,11 @@ BOOL WINAPI GetSystemTimes(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFIL
  */
 DWORD WINAPI GetDynamicTimeZoneInformation(DYNAMIC_TIME_ZONE_INFORMATION *tzinfo)
 {
-    NTSTATUS status;
     HANDLE time_zone_key;
 
     TRACE("(%p)\n", tzinfo);
-    status = RtlQueryDynamicTimeZoneInformation( (RTL_DYNAMIC_TIME_ZONE_INFORMATION*)tzinfo );
-    if ( status != STATUS_SUCCESS )
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
+    if (!set_ntstatus( RtlQueryDynamicTimeZoneInformation( (RTL_DYNAMIC_TIME_ZONE_INFORMATION*)tzinfo )))
         return TIME_ZONE_ID_INVALID;
-    }
 
     if (!TIME_GetSpecificTimeZoneKey( tzinfo->TimeZoneKeyName, &time_zone_key ))
         return TIME_ZONE_ID_INVALID;

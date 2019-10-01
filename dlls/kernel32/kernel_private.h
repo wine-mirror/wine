@@ -44,6 +44,12 @@ static inline obj_handle_t console_handle_unmap(HANDLE h)
     return wine_server_obj_handle( h != INVALID_HANDLE_VALUE ? (HANDLE)((UINT_PTR)h ^ 3) : INVALID_HANDLE_VALUE );
 }
 
+static inline BOOL set_ntstatus( NTSTATUS status )
+{
+    if (status) SetLastError( RtlNtStatusToDosError( status ));
+    return !status;
+}
+
 /* Some Wine specific values for Console inheritance (params->ConsoleHandle) */
 #define KERNEL32_CONSOLE_ALLOC          ((HANDLE)1)
 #define KERNEL32_CONSOLE_SHELL          ((HANDLE)2)

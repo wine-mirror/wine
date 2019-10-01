@@ -3151,18 +3151,12 @@ void WINAPI ExitProcess( DWORD status )
  */
 BOOL WINAPI GetExitCodeProcess( HANDLE hProcess, LPDWORD lpExitCode )
 {
-    NTSTATUS status;
     PROCESS_BASIC_INFORMATION pbi;
 
-    status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi,
-                                       sizeof(pbi), NULL);
-    if (status == STATUS_SUCCESS)
-    {
-        if (lpExitCode) *lpExitCode = pbi.ExitStatus;
-        return TRUE;
-    }
-    SetLastError( RtlNtStatusToDosError(status) );
-    return FALSE;
+    if (!set_ntstatus( NtQueryInformationProcess( hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), NULL )))
+        return FALSE;
+    if (lpExitCode) *lpExitCode = pbi.ExitStatus;
+    return TRUE;
 }
 
 
@@ -3250,16 +3244,8 @@ HANDLE WINAPI CreateSocketHandle(void)
  */
 BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD_PTR affmask )
 {
-    NTSTATUS status;
-
-    status = NtSetInformationProcess(hProcess, ProcessAffinityMask,
-                                     &affmask, sizeof(DWORD_PTR));
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
+    return set_ntstatus( NtSetInformationProcess( hProcess, ProcessAffinityMask,
+                                                  &affmask, sizeof(DWORD_PTR) ));
 }
 
 
@@ -3268,24 +3254,21 @@ BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD_PTR affmask )
  */
 BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess, PDWORD_PTR process_mask, PDWORD_PTR system_mask )
 {
-    NTSTATUS status = STATUS_SUCCESS;
-
     if (process_mask)
     {
-        if ((status = NtQueryInformationProcess( hProcess, ProcessAffinityMask,
-                                                 process_mask, sizeof(*process_mask), NULL )))
-            SetLastError( RtlNtStatusToDosError(status) );
+        if (!set_ntstatus( NtQueryInformationProcess( hProcess, ProcessAffinityMask,
+                                                      process_mask, sizeof(*process_mask), NULL )))
+            return FALSE;
     }
-    if (system_mask && status == STATUS_SUCCESS)
+    if (system_mask)
     {
         SYSTEM_BASIC_INFORMATION info;
 
-        if ((status = NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL )))
-            SetLastError( RtlNtStatusToDosError(status) );
-        else
-            *system_mask = info.ActiveProcessorsAffinityMask;
+        if (!set_ntstatus( NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL )))
+            return FALSE;
+        *system_mask = info.ActiveProcessorsAffinityMask;
     }
-    return !status;
+    return TRUE;
 }
 
 
@@ -3385,12 +3368,7 @@ BOOL WINAPI GetProcessWorkingSetSize(HANDLE process, SIZE_T *minset, SIZE_T *max
  */
 BOOL WINAPI GetProcessIoCounters(HANDLE hProcess, PIO_COUNTERS ioc)
 {
-    NTSTATUS    status;
-
-    status = NtQueryInformationProcess(hProcess, ProcessIoCounters, 
-                                       ioc, sizeof(*ioc), NULL);
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+    return set_ntstatus( NtQueryInformationProcess(hProcess, ProcessIoCounters, ioc, sizeof(*ioc), NULL ));
 }
 
 /******************************************************************
@@ -3492,8 +3470,7 @@ BOOL WINAPI QueryFullProcessImageNameW(HANDLE hProcess, DWORD dwFlags, LPWSTR lp
 
 cleanup:
     HeapFree(GetProcessHeap(), 0, dynamic_buffer);
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+    return set_ntstatus( status );
 }
 
 /***********************************************************************
@@ -3532,10 +3509,9 @@ BOOL WINAPI K32EnumProcesses(DWORD *lpdwProcessIDs, DWORD cb, DWORD *lpcbUsed)
         status = NtQuerySystemInformation(SystemProcessInformation, buf, size, NULL);
     } while(status == STATUS_INFO_LENGTH_MISMATCH);
 
-    if (status != STATUS_SUCCESS)
+    if (!set_ntstatus( status ))
     {
         HeapFree(GetProcessHeap(), 0, buf);
-        SetLastError(RtlNtStatusToDosError(status));
         return FALSE;
     }
 
@@ -3561,18 +3537,9 @@ BOOL WINAPI K32EnumProcesses(DWORD *lpdwProcessIDs, DWORD cb, DWORD *lpcbUsed)
  */
 BOOL WINAPI K32QueryWorkingSet( HANDLE process, LPVOID buffer, DWORD size )
 {
-    NTSTATUS status;
-
     TRACE( "(%p, %p, %d)\n", process, buffer, size );
 
-    status = NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer, size, NULL );
-
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError( status ) );
-        return FALSE;
-    }
-    return TRUE;
+    return set_ntstatus( NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer, size, NULL ));
 }
 
 /***********************************************************************
@@ -3580,18 +3547,9 @@ BOOL WINAPI K32QueryWorkingSet( HANDLE process, LPVOID buffer, DWORD size )
  */
 BOOL WINAPI K32QueryWorkingSetEx( HANDLE process, LPVOID buffer, DWORD size )
 {
-    NTSTATUS status;
-
     TRACE( "(%p, %p, %d)\n", process, buffer, size );
 
-    status = NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer,  size, NULL );
-
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError( status ) );
-        return FALSE;
-    }
-    return TRUE;
+    return set_ntstatus( NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer,  size, NULL ));
 }
 
 /***********************************************************************
@@ -3603,7 +3561,6 @@ BOOL WINAPI K32QueryWorkingSetEx( HANDLE process, LPVOID buffer, DWORD size )
 BOOL WINAPI K32GetProcessMemoryInfo(HANDLE process,
                                     PPROCESS_MEMORY_COUNTERS pmc, DWORD cb)
 {
-    NTSTATUS status;
     VM_COUNTERS vmc;
 
     if (cb < sizeof(PROCESS_MEMORY_COUNTERS))
@@ -3612,14 +3569,8 @@ BOOL WINAPI K32GetProcessMemoryInfo(HANDLE process,
         return FALSE;
     }
 
-    status = NtQueryInformationProcess(process, ProcessVmCounters,
-                                       &vmc, sizeof(vmc), NULL);
-
-    if (status)
-    {
-        SetLastError(RtlNtStatusToDosError(status));
+    if (!set_ntstatus( NtQueryInformationProcess( process, ProcessVmCounters, &vmc, sizeof(vmc), NULL )))
         return FALSE;
-    }
 
     pmc->cb = sizeof(PROCESS_MEMORY_COUNTERS);
     pmc->PageFaultCount = vmc.PageFaultCount;
@@ -3848,31 +3799,25 @@ BOOL WINAPI GetNumaProximityNode(ULONG  proximity_id, PUCHAR node_number)
  */
 BOOL WINAPI GetProcessDEPPolicy(HANDLE process, LPDWORD flags, PBOOL permanent)
 {
-    NTSTATUS status;
     ULONG dep_flags;
 
     TRACE("(%p %p %p)\n", process, flags, permanent);
 
-    status = NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags,
-                                        &dep_flags, sizeof(dep_flags), NULL );
-    if (!status)
+    if (!set_ntstatus( NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags,
+                                                  &dep_flags, sizeof(dep_flags), NULL )))
+        return FALSE;
+
+    if (flags)
     {
-
-        if (flags)
-        {
-            *flags = 0;
-            if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
-                *flags |= PROCESS_DEP_ENABLE;
-            if (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION)
-                *flags |= PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION;
-        }
-
-        if (permanent)
-            *permanent = (dep_flags & MEM_EXECUTE_OPTION_PERMANENT) != 0;
-
+        *flags = 0;
+        if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
+            *flags |= PROCESS_DEP_ENABLE;
+        if (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION)
+            *flags |= PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION;
     }
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+
+    if (permanent) *permanent = (dep_flags & MEM_EXECUTE_OPTION_PERMANENT) != 0;
+    return TRUE;
 }
 
 /**********************************************************************

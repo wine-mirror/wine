@@ -144,12 +144,7 @@ static BOOL open_device_root( LPCWSTR root, HANDLE *handle )
     status = NtOpenFile( handle, SYNCHRONIZE, &attr, &io, 0,
                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
     RtlFreeUnicodeString( &nt_name );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
+    return set_ntstatus( status );
 }
 
 /* query the type of a drive from the mount manager */
@@ -781,19 +776,14 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
 
     /* we couldn't open the device, fallback to default strategy */
 
-    status = NtOpenFile( &handle, SYNCHRONIZE, &attr, &io, 0, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
+    if (!set_ntstatus( NtOpenFile( &handle, SYNCHRONIZE, &attr, &io, 0,
+                                   FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT )))
         goto done;
-    }
+
     status = NtQueryVolumeInformationFile( handle, &io, &info, sizeof(info), FileFsDeviceInformation );
     NtClose( handle );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        goto done;
-    }
+    if (!set_ntstatus( status )) goto done;
+
     if (info.DeviceType == FILE_DEVICE_CD_ROM_FILE_SYSTEM) type = FS_ISO9660;
 
     if (label && label_len) get_filesystem_label( &nt_name, label, label_len );
@@ -1260,11 +1250,7 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
         strcatW( buffer, devname );
         status = read_nt_symlink( buffer, target, bufsize );
         HeapFree( GetProcessHeap(), 0, buffer );
-        if (status)
-        {
-            SetLastError( RtlNtStatusToDosError(status) );
-            return 0;
-        }
+        if (!set_ntstatus( status )) return 0;
         ret = strlenW( target ) + 1;
         if (ret < bufsize) target[ret++] = 0;  /* add an extra null */
         return ret;
@@ -1536,11 +1522,7 @@ BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
 
     status = NtQueryVolumeInformationFile( handle, &io, &info, sizeof(info), FileFsSizeInformation );
     NtClose( handle );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
+    if (!set_ntstatus( status )) return FALSE;
 
     units = info.SectorsPerAllocationUnit * info.BytesPerSector;
     if (total) total->QuadPart = info.TotalAllocationUnits.QuadPart * units;
@@ -1586,11 +1568,7 @@ BOOL WINAPI GetDiskFreeSpaceW( LPCWSTR root, LPDWORD cluster_sectors,
 
     status = NtQueryVolumeInformationFile( handle, &io, &info, sizeof(info), FileFsSizeInformation );
     NtClose( handle );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
+    if (!set_ntstatus( status )) return FALSE;
 
     units = info.SectorsPerAllocationUnit * info.BytesPerSector;
 
@@ -1796,10 +1774,7 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
 
 cleanup:
     HeapFree( GetProcessHeap(), 0, volumenameW );
-
-    if (status != STATUS_SUCCESS)
-        SetLastError( RtlNtStatusToDosError(status) );
-    return (status == STATUS_SUCCESS);
+    return set_ntstatus( status );
 }
 
 
