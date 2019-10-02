@@ -163,8 +163,16 @@ typedef struct {
 } MSVCRT___lc_time_data;
 
 typedef struct MSVCRT_threadlocaleinfostruct {
-    int refcount;
+#if _MSVCR_VER >= 140
+    unsigned short *pctype;
+    int mb_cur_max;
     unsigned int lc_codepage;
+#endif
+
+    int refcount;
+#if _MSVCR_VER < 140
+    unsigned int lc_codepage;
+#endif
     unsigned int lc_collate_cp;
     MSVCRT_ulong lc_handle[6];
     MSVCRT_LC_ID lc_id[6];
@@ -175,14 +183,18 @@ typedef struct MSVCRT_threadlocaleinfostruct {
         int *wrefcount;
     } lc_category[6];
     int lc_clike;
+#if _MSVCR_VER < 140
     int mb_cur_max;
+#endif
     int *lconv_intl_refcount;
     int *lconv_num_refcount;
     int *lconv_mon_refcount;
     struct MSVCRT_lconv *lconv;
     int *ctype1_refcount;
     unsigned short *ctype1;
+#if _MSVCR_VER < 140
     unsigned short *pctype;
+#endif
     unsigned char *pclmap;
     unsigned char *pcumap;
     MSVCRT___lc_time_data *lc_time_curr;
