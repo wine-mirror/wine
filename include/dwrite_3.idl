@@ -84,6 +84,15 @@ typedef enum DWRITE_FONT_AXIS_TAG
     DWRITE_FONT_AXIS_TAG_ITALIC       = 0x6c617469, /* 'ital' */
 } DWRITE_FONT_AXIS_TAG;
 
+typedef enum DWRITE_FONT_SOURCE_TYPE
+{
+    DWRITE_FONT_SOURCE_TYPE_UNKNOWN,
+    DWRITE_FONT_SOURCE_TYPE_PER_MACHINE,
+    DWRITE_FONT_SOURCE_TYPE_PER_USER,
+    DWRITE_FONT_SOURCE_TYPE_APPX_PACKAGE,
+    DWRITE_FONT_SOURCE_TYPE_REMOTE_FONT_PROVIDER
+} DWRITE_FONT_SOURCE_TYPE;
+
 typedef struct DWRITE_FONT_AXIS_VALUE
 {
     DWRITE_FONT_AXIS_TAG axisTag;
@@ -439,6 +448,18 @@ interface IDWriteFontList2 : IDWriteFontList1
 interface IDWriteFontSet2 : IDWriteFontSet1
 {
     HANDLE GetExpirationEvent();
+}
+
+[
+    local,
+    object,
+    uuid(7c073ef2-a7f4-4045-8c32-8ab8ae640f90)
+]
+interface IDWriteFontSet3 : IDWriteFontSet2
+{
+    DWRITE_FONT_SOURCE_TYPE GetFontSourceType(UINT32 index);
+    UINT32 GetFontSourceNameLength(UINT32 index);
+    HRESULT GetFontSourceName(UINT32 index, WCHAR *buffer, UINT32 buffer_size);
 }
 
 [
