@@ -991,6 +991,144 @@ static void test_sample_time(IPin *pin, IMemInputPin *input, IFilterGraph2 *grap
     IMediaControl_Release(control);
 }
 
+static unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
+{
+    LONG_PTR param1, param2;
+    unsigned int ret = 0;
+    HRESULT hr;
+    LONG code;
+
+    while ((hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, timeout)) == S_OK)
+    {
+        if (code == EC_COMPLETE)
+        {
+            ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
+            ok(!param2, "Got param2 %#lx.\n", param2);
+            ret++;
+        }
+        IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
+        timeout = 0;
+    }
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    return ret;
+}
+
+static void test_eos(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
+{
+    IMediaControl *control;
+    IMediaEvent *eventsrc;
+    OAFilterState state;
+    HRESULT hr;
+    BOOL ret;
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&eventsrc);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    hr = join_thread(send_frame(input));
+    todo_wine ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Run(control);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(ret == 1, "Expected EC_COMPLETE.\n");
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    /* We do not receive an EC_COMPLETE notification until the last sample is
+     * done rendering. */
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = join_thread(send_frame(input));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
+    ret = check_ec_complete(eventsrc, 1600);
+    todo_wine ok(ret == 1, "Expected EC_COMPLETE.\n");
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    /* Test sending EOS while flushing. */
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = join_thread(send_frame(input));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_BeginFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_EndOfStream(pin);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = IPin_EndFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    /* Test sending EOS and then flushing or stopping. */
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = join_thread(send_frame(input));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    hr = IPin_BeginFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_EndFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = join_thread(send_frame(input));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    IMediaEvent_Release(eventsrc);
+    IMediaControl_Release(control);
+}
+
 static void test_connect_pin(void)
 {
     VIDEOINFOHEADER vih =
@@ -1097,6 +1235,7 @@ static void test_connect_pin(void)
     test_filter_state(input, graph);
     test_flushing(pin, input, graph);
     test_sample_time(pin, input, graph);
+    test_eos(pin, input, graph);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
