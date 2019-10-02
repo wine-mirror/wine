@@ -1153,6 +1153,13 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
             if(!strftime_str(str, &ret, max, time_data->str.names.mon[mstm->tm_mon]))
                 return 0;
             break;
+#if _MSVCR_VER>=140
+        case 'C':
+            tmp = (1900+mstm->tm_year)/100;
+            if(!strftime_int(str, &ret, max, tmp, alternate ? 0 : 2, 0, 99))
+                return 0;
+            break;
+#endif
         case 'd':
             if(!strftime_int(str, &ret, max, mstm->tm_mday, alternate ? 0 : 2, 0, 31))
                 return 0;

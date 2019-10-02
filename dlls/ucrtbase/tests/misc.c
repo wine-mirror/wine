@@ -895,6 +895,10 @@ static void test_strftime(void)
     char bufA[256];
     size_t retA;
 
+    retA = p_strftime(bufA, sizeof(bufA), "%C", &epoch);
+    ok(retA == 2, "expected 2, got %d\n", (int)retA);
+    ok(!strcmp(bufA, "19"), "got %s\n", bufA);
+
     retA = p_strftime(bufA, sizeof(bufA), "%D", &epoch);
     ok(retA == 8, "expected 8, got %d\n", (int)retA);
     ok(!strcmp(bufA, "01/01/70"), "got %s\n", bufA);
