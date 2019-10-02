@@ -1321,6 +1321,31 @@ static void test_unconnected_filter_state(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_overlay(void)
+{
+    IBaseFilter *filter = create_video_renderer();
+    IOverlay *overlay;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+    HWND hwnd;
+
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    hr = IPin_QueryInterface(pin, &IID_IOverlay, (void **)&overlay);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hwnd = (HWND)0xdeadbeef;
+    hr = IOverlay_GetWindowHandle(overlay, &hwnd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hwnd && hwnd != (HWND)0xdeadbeef, "Got invalid window %p.\n", hwnd);
+
+    IOverlay_Release(overlay);
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(videorenderer)
 {
     CoInitialize(NULL);
@@ -1334,6 +1359,7 @@ START_TEST(videorenderer)
     test_enum_media_types();
     test_unconnected_filter_state();
     test_connect_pin();
+    test_overlay();
 
     CoUninitialize();
 }

@@ -854,8 +854,12 @@ static HRESULT WINAPI overlay_SetColorKey(IOverlay *iface, COLORKEY *key)
 
 static HRESULT WINAPI overlay_GetWindowHandle(IOverlay *iface, HWND *window)
 {
-    FIXME("iface %p, window %p, stub!\n", iface, window);
-    return E_NOTIMPL;
+    VideoRendererImpl *filter = impl_from_IOverlay(iface);
+
+    TRACE("filter %p, window %p.\n", filter, window);
+
+    *window = filter->baseControlWindow.baseWindow.hWnd;
+    return S_OK;
 }
 
 static HRESULT WINAPI overlay_GetClipList(IOverlay *iface, RECT *source, RECT *dest, RGNDATA **region)
