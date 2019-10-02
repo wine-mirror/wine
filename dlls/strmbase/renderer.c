@@ -420,7 +420,6 @@ HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface)
 
 HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
-    HRESULT hr = S_OK;
     BaseRenderer *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)->(%s)\n", This, wine_dbgstr_longlong(tStart));
 
@@ -435,30 +434,18 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     {
         This->sink.end_of_stream = FALSE;
     }
-    else if (This->filter.filterInfo.pGraph)
-    {
-        IMediaEventSink *pEventSink;
-        hr = IFilterGraph_QueryInterface(This->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
-        if (SUCCEEDED(hr))
-        {
-            hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, (LONG_PTR)This);
-            IMediaEventSink_Release(pEventSink);
-        }
-        hr = S_OK;
-    }
-    if (SUCCEEDED(hr))
-    {
-        QualityControlRender_Start(This->qcimpl, This->filter.rtStreamStart);
-        if (This->sink.pin.peer && This->pFuncsTable->renderer_start_stream)
-            This->pFuncsTable->renderer_start_stream(This);
-        if (This->filter.state == State_Stopped)
-            BaseRendererImpl_ClearPendingSample(This);
-        This->filter.state = State_Running;
-    }
+
+    QualityControlRender_Start(This->qcimpl, This->filter.rtStreamStart);
+    if (This->sink.pin.peer && This->pFuncsTable->renderer_start_stream)
+        This->pFuncsTable->renderer_start_stream(This);
+    if (This->filter.state == State_Stopped)
+        BaseRendererImpl_ClearPendingSample(This);
+    This->filter.state = State_Running;
+
 out:
     LeaveCriticalSection(&This->csRenderLock);
 
-    return hr;
+    return S_OK;
 }
 
 HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
