@@ -483,7 +483,10 @@ static HRESULT WINAPI lobbyclient_EnumLocalPrograms(IDirectPlay8LobbyClient *ifa
 
     FIXME("(%p)->(%p %p %p %p 0x%08x)\n", This, guidapplication, enumdata, enumDataSize, items, flags);
 
-    return E_NOTIMPL;
+    if(enumDataSize)
+        *enumDataSize = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI lobbyclient_ConnectApplication(IDirectPlay8LobbyClient *iface, DPL_CONNECT_INFO *connectioninfo,
