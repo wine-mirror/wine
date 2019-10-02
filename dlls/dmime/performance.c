@@ -519,12 +519,16 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_SetGraph(IDirectMusicPerforma
 static HRESULT WINAPI IDirectMusicPerformance8Impl_SetNotificationHandle(IDirectMusicPerformance8 *iface,
         HANDLE hNotification, REFERENCE_TIME rtMinimum)
 {
-  IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
+    IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
 
-  FIXME("(%p, %p, 0x%s): stub\n", This, hNotification, wine_dbgstr_longlong(rtMinimum));
-  This->hNotification = hNotification;
-  if (rtMinimum) This->rtMinimum = rtMinimum;
-  return S_OK;
+    TRACE("(%p, %p, 0x%s)\n", This, hNotification, wine_dbgstr_longlong(rtMinimum));
+
+    This->hNotification = hNotification;
+    if (rtMinimum)
+        This->rtMinimum = rtMinimum;
+    else if (!This->rtMinimum)
+        This->rtMinimum = 20000000; /* 2 seconds */
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_GetNotificationPMsg(IDirectMusicPerformance8 *iface,
