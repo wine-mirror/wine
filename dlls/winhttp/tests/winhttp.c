@@ -1139,7 +1139,7 @@ static void test_secure_connection(void)
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
     err = GetLastError();
     if (!ret && (err == ERROR_WINHTTP_SECURE_FAILURE || err == ERROR_WINHTTP_CANNOT_CONNECT ||
-                 err == ERROR_WINHTTP_TIMEOUT))
+                 err == ERROR_WINHTTP_TIMEOUT || err == SEC_E_ILLEGAL_MESSAGE))
     {
         skip("secure connection failed, skipping remaining secure tests\n");
         goto cleanup;
@@ -1172,6 +1172,11 @@ static void test_secure_connection(void)
     }
 
     ret = WinHttpReceiveResponse(req, NULL);
+    if (!ret && GetLastError() == ERROR_WINHTTP_CONNECTION_ERROR)
+    {
+        skip("connection error, skipping remaining secure tests\n");
+        goto cleanup;
+    }
     ok(ret, "failed to receive response %u\n", GetLastError());
 
     available_size = 0;
@@ -3780,9 +3785,9 @@ static void test_IWinHttpRequest(int port)
     V_VT( &data ) = VT_BSTR;
     V_BSTR( &data ) = SysAllocString( test_dataW );
     hr = IWinHttpRequest_Send( req, data );
-    ok( hr == S_OK || broken(hr == HRESULT_FROM_WIN32(ERROR_WINHTTP_INVALID_SERVER_RESPONSE)),
-        "got %08x\n", hr );
+    ok( hr == S_OK || hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_INVALID_SERVER_RESPONSE ), "got %08x\n", hr );
     SysFreeString( V_BSTR( &data ) );
+    if (hr != S_OK) goto done;
 
     hr = IWinHttpRequest_Open( req, NULL, NULL, empty );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
@@ -4250,14 +4255,14 @@ static void test_IWinHttpRequest(int port)
     SysFreeString( url );
 
     hr = IWinHttpRequest_Send( req, empty );
-    ok( hr == S_OK || broken(hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_INVALID_SERVER_RESPONSE )), "got %08x\n", hr );
-    if (hr == S_OK)
-    {
-        hr = IWinHttpRequest_get_ResponseText( req, &response );
-        ok( hr == S_OK, "got %08x\n", hr );
-        ok( !memcmp(response, data_start, sizeof(data_start)), "got %s\n", wine_dbgstr_wn(response, 32) );
-        SysFreeString( response );
-    }
+    ok( hr == S_OK || hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_INVALID_SERVER_RESPONSE ) ||
+        hr == SEC_E_ILLEGAL_MESSAGE /* winxp */, "got %08x\n", hr );
+    if (hr != S_OK) goto done;
+
+    hr = IWinHttpRequest_get_ResponseText( req, &response );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !memcmp(response, data_start, sizeof(data_start)), "got %s\n", wine_dbgstr_wn(response, 32) );
+    SysFreeString( response );
 
     IWinHttpRequest_Release( req );
 
@@ -4294,8 +4299,8 @@ static void test_IWinHttpRequest(int port)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( status == HTTP_STATUS_DENIED, "got %d\n", status );
 
+done:
     IWinHttpRequest_Release( req );
-
     CoUninitialize();
 }
 
