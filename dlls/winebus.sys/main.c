@@ -182,7 +182,7 @@ static WCHAR *get_device_id(DEVICE_OBJECT *device)
     static const WCHAR formatW[] = {'%','s','\\','v','i','d','_','%','0','4','x',
             '&','p','i','d','_','%','0','4','x',0};
     static const WCHAR format_inputW[] = {'%','s','\\','v','i','d','_','%','0','4','x',
-            '&','p','i','d','_','%','0','4','x','&','%','s','_','%','i',0};
+            '&','p','i','d','_','%','0','4','x','&','%','s','_','%','0','2','i',0};
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
     DWORD len = strlenW(ext->busid) + 34;
     WCHAR *dst;
