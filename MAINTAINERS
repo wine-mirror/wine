@@ -205,10 +205,6 @@ P:	Andrew Eikum <aeikum@codeweavers.com>
 P:	Huw Davies <huw@codeweavers.com>
 F:	dlls/oleaut32/typelib.c
 
-OpenMP
-M:	Sebastian Lackner <sebastian@fds-team.de>
-F:	dlls/vcomp*/
-
 Postscript Driver
 M:	Huw Davies <huw@codeweavers.com>
 F:	dlls/wineps.drv/
@@ -228,14 +224,6 @@ RPC Runtime
 P:	Huw Davies <huw@codeweavers.com>
 F:	dlls/rpcrt4
 F:	tools/widl
-
-Threadpool
-M:	Sebastian Lackner <sebastian@fds-team.de>
-F:	dlls/ntdll/threadpool.c
-
-Timezone database
-M:	Sebastian Lackner <sebastian@fds-team.de>
-F:	loader/wine.inf.in
 
 TWAIN
 P:	Vincent Povirk <vincent@codeweavers.com>
@@ -278,7 +266,6 @@ F:	dlls/wmiutils/
 
 Wine server, IPC
 M:	Alexandre Julliard <julliard@winehq.org>
-P:	Sebastian Lackner <sebastian@fds-team.de>
 P:	Erich E. Hoover <erich.e.hoover@wine-staging.com>
 F:	server/
 
@@ -314,7 +301,6 @@ P:	Alex Henrie <alexhenrie24@gmail.com>
 P:	Andrew Eikum <aeikum@codeweavers.com>
 P:	Huw Davies <huw@codeweavers.com>
 P:	Jacek Caban <jacek@codeweavers.com>
-P:	Sebastian Lackner <sebastian@fds-team.de>
 P:	Vincent Povirk <vincent@codeweavers.com>
 P:	Erich E. Hoover <erich.e.hoover@wine-staging.com>
 F:	*
