@@ -4015,6 +4015,98 @@ static void test_add_source_filter(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static HWND get_renderer_hwnd(IFilterGraph2 *graph)
+{
+    IEnumFilters *enum_filters;
+    IEnumPins *enum_pins;
+    IBaseFilter *filter;
+    IOverlay *overlay;
+    HWND hwnd = NULL;
+    HRESULT hr;
+    IPin *pin;
+
+    hr = IFilterGraph2_EnumFilters(graph, &enum_filters);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    while (IEnumFilters_Next(enum_filters, 1, &filter, NULL) == S_OK)
+    {
+        hr = IBaseFilter_EnumPins(filter, &enum_pins);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IEnumPins_Next(enum_pins, 1, &pin, NULL);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        IEnumPins_Release(enum_pins);
+
+        if (SUCCEEDED(IPin_QueryInterface(pin, &IID_IOverlay, (void **)&overlay)))
+        {
+            hr = IOverlay_GetWindowHandle(overlay, &hwnd);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            IOverlay_Release(overlay);
+        }
+
+        IPin_Release(pin);
+        IBaseFilter_Release(filter);
+    }
+
+    IEnumFilters_Release(enum_filters);
+
+    return hwnd;
+}
+
+static void test_window_threading(void)
+{
+    WCHAR *filename = load_resource(avifile);
+    IFilterGraph2 *graph = create_graph();
+    HRESULT hr;
+    DWORD tid;
+    ULONG ref;
+    HWND hwnd;
+    BOOL ret;
+
+    hr = IFilterGraph2_RenderFile(graph, filename, NULL);
+    if (FAILED(hr))
+    {
+        skip("Cannot render test file, hr %#x.\n", hr);
+        IFilterGraph2_Release(graph);
+        DeleteFileW(filename);
+        return;
+    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    if ((hwnd = get_renderer_hwnd(graph)))
+    {
+        tid = GetWindowThreadProcessId(hwnd, NULL);
+        ok(tid != GetCurrentThreadId(), "Window should have been created on a separate thread.\n");
+
+        /* The thread should be processing messages, or this will hang. */
+        SendMessageA(hwnd, WM_NULL, 0, 0);
+    }
+    else
+        skip("Could not find renderer window.\n");
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    hr = CoCreateInstance(&CLSID_FilterGraphNoThread, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph2, (void **)&graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_RenderFile(graph, filename, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    if ((hwnd = get_renderer_hwnd(graph)))
+    {
+        tid = GetWindowThreadProcessId(hwnd, NULL);
+        todo_wine ok(tid == GetCurrentThreadId(), "Window should be created on main thread.\n");
+    }
+    else
+        skip("Could not find renderer window.\n");
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
 START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -4037,6 +4129,7 @@ START_TEST(filtergraph)
     test_graph_seeking();
     test_default_sync_source();
     test_add_source_filter();
+    test_window_threading();
 
     CoUninitialize();
     test_render_with_multithread();
