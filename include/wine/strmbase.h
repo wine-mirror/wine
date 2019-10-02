@@ -574,6 +574,7 @@ typedef struct BaseRendererFuncTable {
     BaseRenderer_EndFlush pfnEndFlush;
     void (*renderer_destroy)(BaseRenderer *iface);
     HRESULT (*renderer_query_interface)(BaseRenderer *iface, REFIID iid, void **out);
+    HRESULT (*renderer_pin_query_interface)(BaseRenderer *iface, REFIID iid, void **out);
 } BaseRendererFuncTable;
 
 HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSample);

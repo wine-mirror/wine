@@ -220,6 +220,11 @@ static HRESULT sink_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *
 static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
     BaseRenderer *filter = impl_from_IPin(&iface->IPin_iface);
+    HRESULT hr;
+
+    if (filter->pFuncsTable->renderer_pin_query_interface
+            && SUCCEEDED(hr = filter->pFuncsTable->renderer_pin_query_interface(filter, iid, out)))
+        return hr;
 
     if (IsEqualGUID(iid, &IID_IMemInputPin))
         *out = &filter->sink.IMemInputPin_iface;
