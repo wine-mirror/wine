@@ -102,7 +102,7 @@ static void test_interfaces(void)
     IBaseFilter_FindPin(filter, sink_id, &pin);
 
     check_interface(pin, &IID_IMemInputPin, TRUE);
-    todo_wine check_interface(pin, &IID_IOverlay, TRUE);
+    check_interface(pin, &IID_IOverlay, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
     todo_wine check_interface(pin, &IID_IPinConnection, TRUE);
     todo_wine check_interface(pin, &IID_IQualityControl, TRUE);

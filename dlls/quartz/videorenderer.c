@@ -42,6 +42,8 @@ typedef struct VideoRendererImpl
     BaseControlWindow baseControlWindow;
     BaseControlVideo baseControlVideo;
 
+    IOverlay IOverlay_iface;
+
     BOOL init;
     HANDLE hThread;
 
@@ -401,6 +403,19 @@ static HRESULT video_renderer_query_interface(BaseRenderer *iface, REFIID iid, v
     return S_OK;
 }
 
+static HRESULT video_renderer_pin_query_interface(BaseRenderer *iface, REFIID iid, void **out)
+{
+    VideoRendererImpl *filter = impl_from_BaseRenderer(iface);
+
+    if (IsEqualGUID(iid, &IID_IOverlay))
+        *out = &filter->IOverlay_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static void video_renderer_stop_stream(BaseRenderer *iface)
 {
     VideoRendererImpl *This = impl_from_BaseRenderer(iface);
@@ -475,6 +490,7 @@ static const BaseRendererFuncTable BaseFuncTable =
     .pfnEndFlush = VideoRenderer_EndFlush,
     .renderer_destroy = video_renderer_destroy,
     .renderer_query_interface = video_renderer_query_interface,
+    .renderer_pin_query_interface = video_renderer_pin_query_interface,
 };
 
 static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
@@ -783,6 +799,106 @@ static const IVideoWindowVtbl IVideoWindow_VTable =
     BaseControlWindowImpl_IsCursorHidden
 };
 
+static inline VideoRendererImpl *impl_from_IOverlay(IOverlay *iface)
+{
+    return CONTAINING_RECORD(iface, VideoRendererImpl, IOverlay_iface);
+}
+
+static HRESULT WINAPI overlay_QueryInterface(IOverlay *iface, REFIID iid, void **out)
+{
+    VideoRendererImpl *filter = impl_from_IOverlay(iface);
+    return IPin_QueryInterface(&filter->renderer.sink.pin.IPin_iface, iid, out);
+}
+
+static ULONG WINAPI overlay_AddRef(IOverlay *iface)
+{
+    VideoRendererImpl *filter = impl_from_IOverlay(iface);
+    return IPin_AddRef(&filter->renderer.sink.pin.IPin_iface);
+}
+
+static ULONG WINAPI overlay_Release(IOverlay *iface)
+{
+    VideoRendererImpl *filter = impl_from_IOverlay(iface);
+    return IPin_Release(&filter->renderer.sink.pin.IPin_iface);
+}
+
+static HRESULT WINAPI overlay_GetPalette(IOverlay *iface, DWORD *count, PALETTEENTRY **palette)
+{
+    FIXME("iface %p, count %p, palette %p, stub!\n", iface, count, palette);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_SetPalette(IOverlay *iface, DWORD count, PALETTEENTRY *palette)
+{
+    FIXME("iface %p, count %u, palette %p, stub!\n", iface, count, palette);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetDefaultColorKey(IOverlay *iface, COLORKEY *key)
+{
+    FIXME("iface %p, key %p, stub!\n", iface, key);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetColorKey(IOverlay *iface, COLORKEY *key)
+{
+    FIXME("iface %p, key %p, stub!\n", iface, key);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_SetColorKey(IOverlay *iface, COLORKEY *key)
+{
+    FIXME("iface %p, key %p, stub!\n", iface, key);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetWindowHandle(IOverlay *iface, HWND *window)
+{
+    FIXME("iface %p, window %p, stub!\n", iface, window);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetClipList(IOverlay *iface, RECT *source, RECT *dest, RGNDATA **region)
+{
+    FIXME("iface %p, source %p, dest %p, region %p, stub!\n", iface, source, dest, region);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetVideoPosition(IOverlay *iface, RECT *source, RECT *dest)
+{
+    FIXME("iface %p, source %p, dest %p, stub!\n", iface, source, dest);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_Advise(IOverlay *iface, IOverlayNotify *sink, DWORD flags)
+{
+    FIXME("iface %p, sink %p, flags %#x, stub!\n", iface, sink, flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_Unadvise(IOverlay *iface)
+{
+    FIXME("iface %p, stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static const IOverlayVtbl overlay_vtbl =
+{
+    overlay_QueryInterface,
+    overlay_AddRef,
+    overlay_Release,
+    overlay_GetPalette,
+    overlay_SetPalette,
+    overlay_GetDefaultColorKey,
+    overlay_GetColorKey,
+    overlay_SetColorKey,
+    overlay_GetWindowHandle,
+    overlay_GetClipList,
+    overlay_GetVideoPosition,
+    overlay_Advise,
+    overlay_Unadvise,
+};
+
 HRESULT VideoRenderer_create(IUnknown *outer, void **out)
 {
     static const WCHAR sink_name[] = {'I','n',0};
@@ -798,6 +914,8 @@ HRESULT VideoRenderer_create(IUnknown *outer, void **out)
     ZeroMemory(&pVideoRenderer->DestRect, sizeof(RECT));
     ZeroMemory(&pVideoRenderer->WindowPos, sizeof(RECT));
     pVideoRenderer->FullScreenMode = OAFALSE;
+
+    pVideoRenderer->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
     hr = strmbase_renderer_init(&pVideoRenderer->renderer, &VideoRenderer_Vtbl,
             outer, &CLSID_VideoRenderer, sink_name, &BaseFuncTable);
