@@ -3799,7 +3799,9 @@ static void CALLBACK wait_status_callback( HINTERNET handle, DWORD_PTR context, 
         request->error = result->dwError;
         break;
     }
-    default: break;
+    default:
+        request->error = ERROR_SUCCESS;
+        break;
     }
     SetEvent( request->wait );
 }
@@ -4012,18 +4014,17 @@ static DWORD request_wait( struct winhttp_request *request, DWORD timeout )
     switch (err)
     {
     case WAIT_OBJECT_0:
-        ret = ERROR_SUCCESS;
+        ret = request->error;
         break;
     case WAIT_TIMEOUT:
         ret = ERROR_TIMEOUT;
         break;
-    case WAIT_FAILED:
     default:
         ret = GetLastError();
         break;
     }
     EnterCriticalSection( &request->cs );
-    if (!ret) request->proc_running = FALSE;
+    if (err == WAIT_OBJECT_0) request->proc_running = FALSE;
     return ret;
 }
 
@@ -4547,11 +4548,9 @@ static HRESULT WINAPI winhttp_request_WaitForResponse(
         err = ERROR_SUCCESS;
         break;
 
-    case ERROR_SUCCESS:
+    default:
         if (succeeded) *succeeded = VARIANT_TRUE;
         break;
-
-    default: break;
     }
     LeaveCriticalSection( &request->cs );
     return HRESULT_FROM_WIN32( err );
