@@ -5617,12 +5617,15 @@ static const cert_struct_test_t test_winehq_com_cert = {
     "Minnesota\r\n"
     "Saint Paul\r\n"
     "WineHQ\r\n"
+    "IT\r\n"
     "test.winehq.com\r\n"
     "webmaster@winehq.org",
 
     "US\r\n"
     "Minnesota\r\n"
+    "Saint Paul\r\n"
     "WineHQ\r\n"
+    "IT\r\n"
     "test.winehq.com\r\n"
     "webmaster@winehq.org"
 };
@@ -5857,7 +5860,7 @@ static void test_security_flags(void)
     ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
 
     WaitForSingleObject(complete_event, INFINITE);
-    ok(req_error == ERROR_INTERNET_SEC_CERT_REV_FAILED || broken(req_error == ERROR_INTERNET_SEC_CERT_ERRORS),
+    ok(req_error == ERROR_INTERNET_SEC_CERT_ERRORS,
        "req_error = %d\n", req_error);
 
     size = 0;
@@ -5892,7 +5895,7 @@ static void test_security_flags(void)
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
     CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
 
-    if(req_error != ERROR_INTERNET_SEC_CERT_REV_FAILED) {
+    if(req_error != ERROR_INTERNET_SEC_CERT_ERRORS) {
         win_skip("Unexpected cert errors %u, skipping security flags tests\n", req_error);
 
         close_async_handle(ses, 3);
@@ -5906,10 +5909,10 @@ static void test_security_flags(void)
     test_request_flags(req, 8);
     /* IE11 finds both rev failure and invalid CA. Previous versions required rev failure
        to be ignored before invalid CA was reported. */
-    test_secflags_option(req, _SECURITY_FLAG_CERT_REV_FAILED, _SECURITY_FLAG_CERT_INVALID_CA);
+    test_secflags_option(req, _SECURITY_FLAG_CERT_INVALID_CA, _SECURITY_FLAG_CERT_REV_FAILED);
 
     set_secflags(req, FALSE, SECURITY_FLAG_IGNORE_REVOCATION);
-    test_secflags_option(req, _SECURITY_FLAG_CERT_REV_FAILED|SECURITY_FLAG_IGNORE_REVOCATION, _SECURITY_FLAG_CERT_INVALID_CA);
+    test_secflags_option(req, _SECURITY_FLAG_CERT_INVALID_CA|SECURITY_FLAG_IGNORE_REVOCATION, _SECURITY_FLAG_CERT_REV_FAILED);
 
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
@@ -5923,7 +5926,7 @@ static void test_security_flags(void)
     ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
 
     WaitForSingleObject(complete_event, INFINITE);
-    ok(req_error == ERROR_INTERNET_SEC_CERT_ERRORS, "req_error = %d\n", req_error);
+    ok(req_error == ERROR_INTERNET_INVALID_CA || req_error == ERROR_INTERNET_SEC_CERT_ERRORS, "req_error = %d\n", req_error);
 
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
@@ -5934,11 +5937,11 @@ static void test_security_flags(void)
     CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
 
     test_request_flags(req, INTERNET_REQFLAG_NO_HEADERS);
-    test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION|_SECURITY_FLAG_CERT_REV_FAILED|_SECURITY_FLAG_CERT_INVALID_CA, 0);
+    test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION|_SECURITY_FLAG_CERT_INVALID_CA, 0);
     test_security_info("https://test.winehq.com/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
 
     set_secflags(req, FALSE, SECURITY_FLAG_IGNORE_UNKNOWN_CA);
-    test_secflags_option(req, _SECURITY_FLAG_CERT_INVALID_CA|_SECURITY_FLAG_CERT_REV_FAILED
+    test_secflags_option(req, _SECURITY_FLAG_CERT_INVALID_CA
             |SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_UNKNOWN_CA, 0);
     test_http_version(req);
 
@@ -5976,11 +5979,11 @@ static void test_security_flags(void)
 
     test_request_flags(req, 0);
     test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_IGNORE_REVOCATION
-            |SECURITY_FLAG_STRENGTH_STRONG|_SECURITY_FLAG_CERT_REV_FAILED|_SECURITY_FLAG_CERT_INVALID_CA, 0);
+            |SECURITY_FLAG_STRENGTH_STRONG|_SECURITY_FLAG_CERT_INVALID_CA, 0);
 
     test_cert_struct(req, &test_winehq_com_cert);
     test_security_info("https://test.winehq.com/data/some_file.html?q", 0,
-            _SECURITY_FLAG_CERT_INVALID_CA|_SECURITY_FLAG_CERT_REV_FAILED);
+            _SECURITY_FLAG_CERT_INVALID_CA);
 
     res = InternetReadFile(req, buf, sizeof(buf), &size);
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
@@ -6013,7 +6016,7 @@ static void test_security_flags(void)
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
 
     test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_STRENGTH_STRONG
-            |SECURITY_FLAG_IGNORE_REVOCATION|_SECURITY_FLAG_CERT_REV_FAILED|_SECURITY_FLAG_CERT_INVALID_CA, 0);
+            |SECURITY_FLAG_IGNORE_REVOCATION|_SECURITY_FLAG_CERT_INVALID_CA, 0);
     test_http_version(req);
 
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
@@ -6048,7 +6051,7 @@ static void test_security_flags(void)
 
     test_request_flags(req, 0);
     test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_STRENGTH_STRONG
-            |SECURITY_FLAG_IGNORE_REVOCATION|_SECURITY_FLAG_CERT_REV_FAILED|_SECURITY_FLAG_CERT_INVALID_CA, 0);
+            |SECURITY_FLAG_IGNORE_REVOCATION|_SECURITY_FLAG_CERT_INVALID_CA, 0);
 
     res = InternetReadFile(req, buf, sizeof(buf), &size);
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
