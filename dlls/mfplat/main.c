@@ -4763,7 +4763,7 @@ struct resolver_cancel_object
     enum resolved_object_origin origin;
 };
 
-typedef struct source_resolver
+struct source_resolver
 {
     IMFSourceResolver IMFSourceResolver_iface;
     LONG refcount;
@@ -4771,7 +4771,7 @@ typedef struct source_resolver
     IMFAsyncCallback url_callback;
     CRITICAL_SECTION cs;
     struct list pending;
-} mfsourceresolver;
+};
 
 static struct source_resolver *impl_from_IMFSourceResolver(IMFSourceResolver *iface)
 {
@@ -5272,14 +5272,14 @@ static HRESULT resolver_end_create_object(struct source_resolver *resolver, enum
 
 static HRESULT WINAPI source_resolver_QueryInterface(IMFSourceResolver *iface, REFIID riid, void **obj)
 {
-    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+    struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
 
-    TRACE("(%p->(%s, %p)\n", This, debugstr_guid(riid), obj);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IMFSourceResolver) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
-        *obj = &This->IMFSourceResolver_iface;
+        *obj = &resolver->IMFSourceResolver_iface;
     }
     else
     {
@@ -5335,7 +5335,7 @@ static HRESULT WINAPI source_resolver_CreateObjectFromURL(IMFSourceResolver *ifa
     MFASYNCRESULT *data;
     HRESULT hr;
 
-    TRACE("%p, %s, %#x, %p, %p, %p\n", iface, debugstr_w(url), flags, props, obj_type, object);
+    TRACE("%p, %s, %#x, %p, %p, %p.\n", iface, debugstr_w(url), flags, props, obj_type, object);
 
     if (!url || !obj_type || !object)
         return E_POINTER;
