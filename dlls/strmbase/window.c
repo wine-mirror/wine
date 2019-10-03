@@ -141,7 +141,7 @@ HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This)
         ReleaseDC(This->hWnd, This->hDC);
     This->hDC = NULL;
 
-    DestroyWindow(This->hWnd);
+    SendMessageW(This->hWnd, WM_CLOSE, 0, 0);
     This->hWnd = NULL;
 
     return S_OK;
