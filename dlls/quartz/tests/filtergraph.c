@@ -4095,7 +4095,7 @@ static void test_window_threading(void)
     if ((hwnd = get_renderer_hwnd(graph)))
     {
         tid = GetWindowThreadProcessId(hwnd, NULL);
-        todo_wine ok(tid == GetCurrentThreadId(), "Window should be created on main thread.\n");
+        ok(tid == GetCurrentThreadId(), "Window should be created on main thread.\n");
     }
     else
         skip("Could not find renderer window.\n");

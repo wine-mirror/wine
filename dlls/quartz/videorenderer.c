@@ -45,11 +45,8 @@ typedef struct VideoRendererImpl
     IOverlay IOverlay_iface;
 
     BOOL init;
-    HANDLE hThread;
 
-    DWORD ThreadID;
     HANDLE hEvent;
-    BOOL ThreadResult;
     RECT SourceRect;
     RECT DestRect;
     RECT WindowPos;
@@ -83,54 +80,15 @@ static inline VideoRendererImpl *impl_from_BaseControlVideo(BaseControlVideo *if
     return CONTAINING_RECORD(iface, VideoRendererImpl, baseControlVideo);
 }
 
-static DWORD WINAPI MessageLoop(LPVOID lpParameter)
-{
-    VideoRendererImpl* This = lpParameter;
-    MSG msg; 
-    BOOL fGotMessage;
-
-    TRACE("Starting message loop\n");
-
-    if (FAILED(BaseWindowImpl_PrepareWindow(&This->baseControlWindow.baseWindow)))
-    {
-        This->ThreadResult = FALSE;
-        SetEvent(This->hEvent);
-        return 0;
-    }
-
-    This->ThreadResult = TRUE;
-    SetEvent(This->hEvent);
-
-    while ((fGotMessage = GetMessageW(&msg, NULL, 0, 0)) != 0 && fGotMessage != -1)
-    {
-        TranslateMessage(&msg); 
-        DispatchMessageW(&msg);
-    }
-
-    TRACE("End of message loop\n");
-
-    return msg.wParam;
-}
-
 static BOOL CreateRenderingSubsystem(VideoRendererImpl* This)
 {
     This->hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     if (!This->hEvent)
         return FALSE;
 
-    This->hThread = CreateThread(NULL, 0, MessageLoop, This, 0, &This->ThreadID);
-    if (!This->hThread)
+    if (FAILED(BaseWindowImpl_PrepareWindow(&This->baseControlWindow.baseWindow)))
     {
         CloseHandle(This->hEvent);
-        return FALSE;
-    }
-
-    WaitForSingleObject(This->hEvent, INFINITE);
-
-    if (!This->ThreadResult)
-    {
-        CloseHandle(This->hEvent);
-        CloseHandle(This->hThread);
         return FALSE;
     }
 
@@ -379,9 +337,6 @@ static void video_renderer_destroy(BaseRenderer *iface)
 
     BaseControlWindow_Destroy(&filter->baseControlWindow);
     BaseControlVideo_Destroy(&filter->baseControlVideo);
-    PostThreadMessageW(filter->ThreadID, WM_QUIT, 0, 0);
-    WaitForSingleObject(filter->hThread, INFINITE);
-    CloseHandle(filter->hThread);
     CloseHandle(filter->hEvent);
 
     strmbase_renderer_cleanup(&filter->renderer);
