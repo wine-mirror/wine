@@ -3578,7 +3578,12 @@ static void test_passport_auth( int port )
     ok( ret, "got %u\n", GetLastError() );
 
     ret = WinHttpReceiveResponse( req, NULL );
-    ok( ret, "got %u\n", GetLastError() );
+    ok( ret || broken(!ret && GetLastError() == ERROR_WINHTTP_LOGIN_FAILURE) /* winxp */, "got %u\n", GetLastError() );
+    if (!ret && GetLastError() == ERROR_WINHTTP_LOGIN_FAILURE)
+    {
+        win_skip("no support for Passport redirects\n");
+        goto cleanup;
+    }
 
     status = 0xdeadbeef;
     size = sizeof(status);
@@ -3602,6 +3607,7 @@ static void test_passport_auth( int port )
         ok( !lstrcmpW(headersW, buf), "got %s\n", wine_dbgstr_w(buf) );
     }
 
+cleanup:
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
