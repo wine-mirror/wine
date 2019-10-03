@@ -208,6 +208,9 @@ typedef struct _IFilterGraphImpl {
     LONG recursioncount;
     IUnknown *pSite;
     LONG version;
+
+    HANDLE message_thread, message_thread_ret;
+    DWORD message_thread_id;
 } IFilterGraphImpl;
 
 struct enum_filters
@@ -489,6 +492,13 @@ static ULONG WINAPI FilterGraphInner_Release(IUnknown *iface)
 	CloseHandle(This->hEventCompletion);
 	EventsQueue_Destroy(&This->evqueue);
         This->cs.DebugInfo->Spare[0] = 0;
+        if (This->message_thread)
+        {
+            PostThreadMessageW(This->message_thread_id, WM_USER + 1, 0, 0);
+            WaitForSingleObject(This->message_thread, INFINITE);
+            CloseHandle(This->message_thread);
+            CloseHandle(This->message_thread_ret);
+        }
 	DeleteCriticalSection(&This->cs);
 	CoTaskMemFree(This);
     }
@@ -964,6 +974,63 @@ static HRESULT GetFilterInfo(IMoniker* pMoniker, VARIANT* pvar)
     return hr;
 }
 
+struct filter_create_params
+{
+    HRESULT hr;
+    IMoniker *moniker;
+    IBaseFilter *filter;
+};
+
+static DWORD WINAPI message_thread_run(void *ctx)
+{
+    IFilterGraphImpl *graph = ctx;
+    MSG msg;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    for (;;)
+    {
+        GetMessageW(&msg, NULL, 0, 0);
+
+        if (!msg.hwnd && msg.message == WM_USER)
+        {
+            struct filter_create_params *params = (struct filter_create_params *)msg.wParam;
+
+            params->hr = IMoniker_BindToObject(params->moniker, NULL, NULL,
+                    &IID_IBaseFilter, (void **)&params->filter);
+            SetEvent(graph->message_thread_ret);
+        }
+        else if (!msg.hwnd && msg.message == WM_USER + 1)
+        {
+            break;
+        }
+        else
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+
+    CoUninitialize();
+    return 0;
+}
+
+static HRESULT create_filter(IFilterGraphImpl *graph, IMoniker *moniker, IBaseFilter **filter)
+{
+    if (graph->message_thread)
+    {
+        struct filter_create_params params;
+
+        params.moniker = moniker;
+        PostThreadMessageW(graph->message_thread_id, WM_USER, (WPARAM)&params, 0);
+        WaitForSingleObject(graph->message_thread_ret, INFINITE);
+        *filter = params.filter;
+        return params.hr;
+    }
+    else
+        return IMoniker_BindToObject(moniker, NULL, NULL, &IID_IBaseFilter, (void **)filter);
+}
+
 /* Attempt to connect one of the output pins on filter to sink. Helper for
  * FilterGraph2_Connect(). */
 static HRESULT connect_output_pin(IFilterGraphImpl *graph, IBaseFilter *filter, IPin *sink)
@@ -1164,7 +1231,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
             goto error;
         }
 
-        hr = IMoniker_BindToObject(pMoniker, NULL, NULL, &IID_IBaseFilter, (LPVOID*)&pfilter);
+        hr = create_filter(This, pMoniker, &pfilter);
         IMoniker_Release(pMoniker);
         if (FAILED(hr)) {
             WARN("Unable to create filter (%x), trying next one\n", hr);
@@ -1497,7 +1564,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
                 goto error;
             }
 
-            hr = IMoniker_BindToObject(pMoniker, NULL, NULL, &IID_IBaseFilter, (LPVOID*)&pfilter);
+            hr = create_filter(This, pMoniker, &pfilter);
             IMoniker_Release(pMoniker);
             if (FAILED(hr))
             {
@@ -5565,15 +5632,12 @@ static const IUnknownVtbl IInner_VTable =
     FilterGraphInner_Release
 };
 
-/* This is the only function that actually creates a FilterGraph class... */
-HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+static HRESULT filter_graph_common_create(IUnknown *outer, void **out, BOOL threaded)
 {
     IFilterGraphImpl *fimpl;
     HRESULT hr;
 
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
-
-    *ppObj = NULL;
+    *out = NULL;
 
     fimpl = CoTaskMemAlloc(sizeof(*fimpl));
     fimpl->defaultclock = TRUE;
@@ -5617,10 +5681,15 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->recursioncount = 0;
     fimpl->version = 0;
 
-    if (pUnkOuter)
-        fimpl->outer_unk = pUnkOuter;
+    if (threaded)
+    {
+        fimpl->message_thread = CreateThread(NULL, 0, message_thread_run, fimpl, 0, &fimpl->message_thread_id);
+        fimpl->message_thread_ret = CreateEventW(NULL, FALSE, FALSE, NULL);
+    }
     else
-        fimpl->outer_unk = &fimpl->IUnknown_inner;
+        fimpl->message_thread = NULL;
+
+    fimpl->outer_unk = outer ? outer : &fimpl->IUnknown_inner;
 
     /* create Filtermapper aggregated. */
     hr = CoCreateInstance(&CLSID_FilterMapper2, fimpl->outer_unk, CLSCTX_INPROC_SERVER,
@@ -5637,12 +5706,20 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
         return hr;
     }
 
-    *ppObj = &fimpl->IUnknown_inner;
+    *out = &fimpl->IUnknown_inner;
     return S_OK;
 }
 
-HRESULT FilterGraphNoThread_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT filter_graph_create(IUnknown *outer, void **out)
 {
-    FIXME("CLSID_FilterGraphNoThread partially implemented - Forwarding to CLSID_FilterGraph\n");
-    return FilterGraph_create(pUnkOuter, ppObj);
+    TRACE("outer %p, out %p.\n", outer, out);
+
+    return filter_graph_common_create(outer, out, TRUE);
+}
+
+HRESULT filter_graph_no_thread_create(IUnknown *outer, void **out)
+{
+    TRACE("outer %p, out %p.\n", outer, out);
+
+    return filter_graph_common_create(outer, out, FALSE);
 }

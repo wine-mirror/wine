@@ -63,8 +63,8 @@ struct object_creation_info
 static const struct object_creation_info object_creation[] =
 {
     { &CLSID_SeekingPassThru, SeekingPassThru_create },
-    { &CLSID_FilterGraph, FilterGraph_create },
-    { &CLSID_FilterGraphNoThread, FilterGraphNoThread_create },
+    { &CLSID_FilterGraph, filter_graph_create },
+    { &CLSID_FilterGraphNoThread, filter_graph_no_thread_create },
     { &CLSID_FilterMapper, FilterMapper_create },
     { &CLSID_FilterMapper2, FilterMapper2_create },
     { &CLSID_AsyncReader, AsyncReader_create },
