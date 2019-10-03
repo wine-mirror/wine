@@ -907,6 +907,14 @@ static void test_strftime(void)
     ok(retA == 6, "expected 6, got %d\n", (int)retA);
     ok(!strcmp(bufA, "1/1/70"), "got %s\n", bufA);
 
+    retA = p_strftime(bufA, sizeof(bufA), "%e", &epoch);
+    ok(retA == 2, "expected 2, got %d\n", (int)retA);
+    ok(!strcmp(bufA, " 1"), "got %s\n", bufA);
+
+    retA = p_strftime(bufA, sizeof(bufA), "%#e", &epoch);
+    ok(retA == 1, "expected 1, got %d\n", (int)retA);
+    ok(!strcmp(bufA, "1"), "got %s\n", bufA);
+
     retA = p_strftime(bufA, sizeof(bufA), "%F", &epoch);
     ok(retA == 10, "expected 10, got %d\n", (int)retA);
     ok(!strcmp(bufA, "1970-01-01"), "got %s\n", bufA);
