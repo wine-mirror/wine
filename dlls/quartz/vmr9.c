@@ -153,10 +153,6 @@ typedef struct
 
     LONG refCount;
 
-    HANDLE ack;
-    DWORD tid;
-    HANDLE hWndThread;
-
     IDirect3DDevice9 *d3d9_dev;
     IDirect3D9 *d3d9_ptr;
     IDirect3DSurface9 **d3d9_surfaces;
@@ -2238,7 +2234,6 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
     {
         DWORD i;
         TRACE("Destroying\n");
-        CloseHandle(This->ack);
         IDirect3D9_Release(This->d3d9_ptr);
 
         TRACE("Number of surfaces: %u\n", This->num_surfaces);
@@ -2476,32 +2471,6 @@ static HRESULT VMR9_SurfaceAllocator_SetAllocationSettings(VMR9DefaultAllocatorP
     return hr;
 }
 
-static DWORD WINAPI MessageLoop(LPVOID lpParameter)
-{
-    MSG msg;
-    BOOL fGotMessage;
-    VMR9DefaultAllocatorPresenterImpl *This = lpParameter;
-
-    TRACE("Starting message loop\n");
-
-    if (FAILED(BaseWindowImpl_PrepareWindow(&This->pVMR9->baseControlWindow.baseWindow)))
-    {
-        FIXME("Failed to prepare window\n");
-        return FALSE;
-    }
-
-    SetEvent(This->ack);
-    while ((fGotMessage = GetMessageW(&msg, NULL, 0, 0)) != 0 && fGotMessage != -1)
-    {
-        TranslateMessage(&msg);
-        DispatchMessageW(&msg);
-    }
-
-    TRACE("End of message loop\n");
-
-    return 0;
-}
-
 static UINT d3d9_adapter_from_hwnd(IDirect3D9 *d3d9, HWND hwnd, HMONITOR *mon_out)
 {
     UINT d3d9_adapter;
@@ -2533,13 +2502,8 @@ static BOOL CreateRenderingWindow(VMR9DefaultAllocatorPresenterImpl *This, VMR9A
 
     TRACE("(%p)->()\n", This);
 
-    This->hWndThread = CreateThread(NULL, 0, MessageLoop, This, 0, &This->tid);
-    if (!This->hWndThread)
+    if (FAILED(BaseWindowImpl_PrepareWindow(&This->pVMR9->baseControlWindow.baseWindow)))
         return FALSE;
-
-    WaitForSingleObject(This->ack, INFINITE);
-
-    if (!This->pVMR9->baseControlWindow.baseWindow.hWnd) return FALSE;
 
     /* Obtain a monitor and d3d9 device */
     d3d9_adapter = d3d9_adapter_from_hwnd(This->d3d9_ptr, This->pVMR9->baseControlWindow.baseWindow.hWnd, &This->hMon);
@@ -2617,10 +2581,6 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_TerminateDevice(IVMRSurfaceAllocator
         return S_OK;
     }
 
-    SendMessageW(This->pVMR9->baseControlWindow.baseWindow.hWnd, WM_CLOSE, 0, 0);
-    PostThreadMessageW(This->tid, WM_QUIT, 0, 0);
-    WaitForSingleObject(This->hWndThread, INFINITE);
-    This->hWndThread = NULL;
     BaseWindowImpl_DoneWithWindow(&This->pVMR9->baseControlWindow.baseWindow);
 
     return S_OK;
@@ -2839,8 +2799,6 @@ static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *paren
     This->hMon = 0;
     This->d3d9_vertex = NULL;
     This->num_surfaces = 0;
-    This->hWndThread = NULL;
-    This->ack = CreateEventW(NULL, 0, 0, NULL);
     This->SurfaceAllocatorNotify = NULL;
     This->reset = FALSE;
 
