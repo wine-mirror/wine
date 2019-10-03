@@ -78,6 +78,7 @@ static BOOL     (WINAPI *pRemoveDllDirectory)(DLL_DIRECTORY_COOKIE);
 static BOOL     (WINAPI *pSetSearchPathMode)(DWORD);
 static BOOL     (WINAPI *pSetDllDirectoryW)(LPCWSTR);
 static BOOL     (WINAPI *pSetDefaultDllDirectories)(DWORD);
+static NTSTATUS (WINAPI *pRtlGetExePath)(LPCWSTR,LPWSTR*);
 static NTSTATUS (WINAPI *pRtlGetSearchPath)(LPWSTR*);
 static void     (WINAPI *pRtlReleasePath)(LPWSTR);
 static NTSTATUS (WINAPI *pLdrGetDllPath)(LPCWSTR,ULONG,LPWSTR*,LPWSTR*);
@@ -2218,6 +2219,7 @@ static void init_pointers(void)
     MAKEFUNC(CheckNameLegalDOS8Dot3A);
     mod = GetModuleHandleA("ntdll.dll");
     MAKEFUNC(LdrGetDllPath);
+    MAKEFUNC(RtlGetExePath);
     MAKEFUNC(RtlGetSearchPath);
     MAKEFUNC(RtlReleasePath);
 #undef MAKEFUNC
@@ -2570,6 +2572,78 @@ static void test_RtlGetSearchPath(void)
     SetEnvironmentVariableW( pathW, old_path );
 }
 
+static void test_RtlGetExePath(void)
+{
+    static const WCHAR fooW[] = {'\\','f','o','o',0};
+    static const WCHAR emptyW[1];
+    NTSTATUS ret;
+    WCHAR *path;
+    WCHAR buffer[2048], old_path[2048], dlldir[4];
+
+    if (!pRtlGetExePath)
+    {
+        win_skip( "RtlGetExePath isn't available\n" );
+        return;
+    }
+
+    GetEnvironmentVariableW( pathW, old_path, ARRAY_SIZE(old_path) );
+    GetWindowsDirectoryW( buffer, ARRAY_SIZE(buffer) );
+    lstrcpynW( dlldir, buffer, ARRAY_SIZE(dlldir) );
+    SetEnvironmentVariableA( "NoDefaultCurrentDirectoryInExePath", NULL );
+
+    build_search_path( buffer, ARRAY_SIZE(buffer), NULL, FALSE );
+    path = (WCHAR *)0xdeadbeef;
+    ret = pRtlGetExePath( fooW, &path );
+    ok( !ret, "RtlGetExePath failed %x\n", ret );
+    ok( path_equal( path, buffer ), "got %s expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(buffer));
+    pRtlReleasePath( path );
+
+    build_search_path( buffer, ARRAY_SIZE(buffer), NULL, FALSE );
+    path = (WCHAR *)0xdeadbeef;
+    ret = pRtlGetExePath( fooW + 1, &path );
+    ok( !ret, "RtlGetExePath failed %x\n", ret );
+    ok( path_equal( path, buffer ), "got %s expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(buffer));
+    pRtlReleasePath( path );
+
+    SetEnvironmentVariableA( "NoDefaultCurrentDirectoryInExePath", "yes" );
+
+    build_search_path( buffer, ARRAY_SIZE(buffer), NULL, FALSE );
+    path = (WCHAR *)0xdeadbeef;
+    ret = pRtlGetExePath( fooW, &path );
+    ok( !ret, "RtlGetExePath failed %x\n", ret );
+    ok( path_equal( path, buffer ), "got %s expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(buffer));
+    pRtlReleasePath( path );
+
+    build_search_path( buffer, ARRAY_SIZE(buffer), emptyW, TRUE );
+    path = (WCHAR *)0xdeadbeef;
+    ret = pRtlGetExePath( fooW + 1, &path );
+    ok( !ret, "RtlGetExePath failed %x\n", ret );
+    ok( path_equal( path, buffer ), "got %s expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(buffer));
+    pRtlReleasePath( path );
+
+    SetEnvironmentVariableA( "PATH", "foo" );
+    build_search_path( buffer, ARRAY_SIZE(buffer), NULL, FALSE );
+    path = (WCHAR *)0xdeadbeef;
+    ret = pRtlGetExePath( fooW, &path );
+    ok( !ret, "RtlGetExePath failed %x\n", ret );
+    ok( path_equal( path, buffer ), "got %s expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(buffer));
+    pRtlReleasePath( path );
+
+    if (pSetDllDirectoryW)
+    {
+        ok( pSetDllDirectoryW( dlldir ), "SetDllDirectoryW failed\n" );
+        build_search_path( buffer, ARRAY_SIZE(buffer), NULL, FALSE );
+        path = (WCHAR *)0xdeadbeef;
+        ret = pRtlGetExePath( fooW, &path );
+        ok( !ret, "RtlGetExePath failed %x\n", ret );
+        ok( path_equal( path, buffer ), "got %s expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(buffer));
+        pRtlReleasePath( path );
+        pSetDllDirectoryW( NULL );
+    }
+
+    SetEnvironmentVariableW( pathW, old_path );
+}
+
 static void test_LdrGetDllPath(void)
 {
     static const WCHAR fooW[] = {'f','o','o',0};
@@ -2705,5 +2779,6 @@ START_TEST(path)
     test_CheckNameLegalDOS8Dot3();
     test_SetSearchPathMode();
     test_RtlGetSearchPath();
+    test_RtlGetExePath();
     test_LdrGetDllPath();
 }

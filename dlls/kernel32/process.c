@@ -438,11 +438,18 @@ static HANDLE open_exe_file( const WCHAR *name, BOOL *is_64bit )
  */
 static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE *handle )
 {
-    TRACE("looking for %s\n", debugstr_w(name) );
+    WCHAR *load_path;
+    BOOL ret;
 
-    if (!SearchPathW( NULL, name, exeW, buflen, buffer, NULL ) &&
-        /* no builtin found, try native without extension in case it is a Unix app */
-        !SearchPathW( NULL, name, NULL, buflen, buffer, NULL )) return FALSE;
+    if (!set_ntstatus( RtlGetExePath( name, &load_path ))) return FALSE;
+
+    TRACE("looking for %s in %s\n", debugstr_w(name), debugstr_w(load_path) );
+
+    ret = (SearchPathW( load_path, name, exeW, buflen, buffer, NULL ) ||
+           /* no builtin found, try native without extension in case it is a Unix app */
+           SearchPathW( load_path, name, NULL, buflen, buffer, NULL ));
+    RtlReleasePath( load_path );
+    if (!ret) return FALSE;
 
     TRACE( "Trying native exe %s\n", debugstr_w(buffer) );
     *handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
@@ -1412,12 +1419,14 @@ void * CDECL __wine_kernel_init(void)
     {
         BOOL is_64bit;
 
-        if (!SearchPathW( NULL, __wine_main_wargv[0], exeW, MAX_PATH, main_exe_name, NULL ) &&
+        RtlGetExePath( __wine_main_wargv[0], &load_path );
+        if (!SearchPathW( load_path, __wine_main_wargv[0], exeW, MAX_PATH, main_exe_name, NULL ) &&
             !get_builtin_path( __wine_main_wargv[0], exeW, main_exe_name, MAX_PATH, &is_64bit ))
         {
             MESSAGE( "wine: cannot find '%s'\n", __wine_main_argv[0] );
             ExitProcess( GetLastError() );
         }
+        RtlReleasePath( load_path );
         update_library_argv0( main_exe_name );
         if (!build_command_line( __wine_main_wargv )) goto error;
         start_wineboot( boot_events );

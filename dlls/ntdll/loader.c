@@ -4133,6 +4133,31 @@ NTSTATUS WINAPI RtlSetSearchPathMode( ULONG flags )
 
 
 /******************************************************************
+ *           RtlGetExePath   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetExePath( PCWSTR name, PWSTR *path )
+{
+    static const WCHAR emptyW[1];
+    const WCHAR *dlldir = dotW;
+    const WCHAR *module = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+
+    /* same check as NeedCurrentDirectoryForExePathW */
+    if (!strchrW( name, '\\' ))
+    {
+        static const WCHAR env_name[] = {'N','o','D','e','f','a','u','l','t','C','u','r','r','e','n','t',
+                                         'D','i','r','e','c','t','o','r','y','I','n',
+                                         'E','x','e','P','a','t','h',0};
+        UNICODE_STRING name, value = { 0 };
+
+        RtlInitUnicodeString( &name, env_name );
+        if (RtlQueryEnvironmentVariable_U( NULL, &name, &value ) != STATUS_VARIABLE_NOT_FOUND)
+            dlldir = emptyW;
+    }
+    return get_dll_load_path( module, dlldir, FALSE, path );
+}
+
+
+/******************************************************************
  *           RtlGetSearchPath   (NTDLL.@)
  */
 NTSTATUS WINAPI RtlGetSearchPath( PWSTR *path )

@@ -687,6 +687,7 @@
 @ stdcall RtlGetDaclSecurityDescriptor(ptr ptr ptr ptr)
 @ stub RtlGetElementGenericTable
 # @ stub RtlGetElementGenericTableAvl
+@ stdcall RtlGetExePath(wstr ptr)
 # @ stub RtlGetFirstRange
 @ stdcall RtlGetFrame()
 @ stdcall RtlGetFullPathName_U(wstr long ptr ptr)
