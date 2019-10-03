@@ -2470,14 +2470,23 @@ static HRESULT Err_Description(vbdisp_t *This, VARIANT *args, unsigned args_cnt,
 
 static HRESULT Err_HelpContext(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!This->desc)
+        return E_UNEXPECTED;
+
+    if(args_cnt) {
+        FIXME("setter not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    return return_int(res, This->desc->ctx->ei.dwHelpContext);
 }
 
 static HRESULT Err_HelpFile(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return !This->desc ? E_UNEXPECTED : err_string_prop(&This->desc->ctx->ei.bstrHelpFile, args, args_cnt, res);
 }
 
 static HRESULT Err_Number(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
