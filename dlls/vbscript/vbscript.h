@@ -192,7 +192,7 @@ struct _script_ctx_t {
     class_desc_t err_desc;
     vbdisp_t *err_obj;
 
-    HRESULT err_number;
+    EXCEPINFO ei;
 
     dynamic_var_t *global_vars;
     function_t *global_funcs;
@@ -358,6 +358,7 @@ HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,DWORD,vbscode_t**
 HRESULT exec_script(script_ctx_t*,function_t*,vbdisp_t*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
 void release_dynamic_vars(dynamic_var_t*) DECLSPEC_HIDDEN;
 IDispatch *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned) DECLSPEC_HIDDEN;
+void clear_ei(EXCEPINFO*) DECLSPEC_HIDDEN;
 
 typedef struct {
     UINT16 len;

@@ -153,6 +153,7 @@ static void release_script(script_ctx_t *ctx)
     class_desc_t *class_desc;
 
     collect_objects(ctx);
+    clear_ei(&ctx->ei);
 
     release_dynamic_vars(ctx->global_vars);
     ctx->global_vars = NULL;

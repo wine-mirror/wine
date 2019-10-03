@@ -247,6 +247,14 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
     return S_OK;
 }
 
+void clear_ei(EXCEPINFO *ei)
+{
+    SysFreeString(ei->bstrSource);
+    SysFreeString(ei->bstrDescription);
+    SysFreeString(ei->bstrHelpFile);
+    memset(ei, 0, sizeof(*ei));
+}
+
 static inline VARIANT *stack_pop(exec_ctx_t *ctx)
 {
     assert(ctx->top);
@@ -1321,7 +1329,7 @@ static HRESULT interp_errmode(exec_ctx_t *ctx)
     TRACE("%d\n", err_mode);
 
     ctx->resume_next = err_mode;
-    ctx->script->err_number = S_OK;
+    clear_ei(&ctx->script->ei);
     return S_OK;
 }
 
@@ -2158,7 +2166,7 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, vbdisp_t *vbthis, DISPP
         op = exec.instr->op;
         hres = op_funcs[op](&exec);
         if(FAILED(hres)) {
-            ctx->err_number = hres = map_hres(hres);
+            ctx->ei.scode = hres = map_hres(hres);
 
             if(exec.resume_next) {
                 unsigned stack_off;

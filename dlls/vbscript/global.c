@@ -2477,7 +2477,7 @@ static HRESULT Err_Number(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARI
         return E_NOTIMPL;
     }
 
-    hres = This->desc->ctx->err_number;
+    hres = This->desc->ctx->ei.scode;
     return return_int(res, HRESULT_FACILITY(hres) == FACILITY_VBS ? HRESULT_CODE(hres) : hres);
 }
 
@@ -2494,7 +2494,7 @@ static HRESULT Err_Clear(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIA
     if(!This->desc)
         return E_UNEXPECTED;
 
-    This->desc->ctx->err_number = S_OK;
+    clear_ei(&This->desc->ctx->ei);
     return S_OK;
 }
 
