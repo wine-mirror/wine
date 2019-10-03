@@ -2166,7 +2166,14 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, vbdisp_t *vbthis, DISPP
         op = exec.instr->op;
         hres = op_funcs[op](&exec);
         if(FAILED(hres)) {
-            ctx->ei.scode = hres = map_hres(hres);
+            if(hres != SCRIPT_E_RECORDED) {
+                clear_ei(&ctx->ei);
+
+                ctx->ei.scode = hres = map_hres(hres);
+                ctx->ei.bstrDescription = get_vbscript_error_string(hres);
+            }else {
+                hres = ctx->ei.scode;
+            }
 
             if(exec.resume_next) {
                 unsigned stack_off;

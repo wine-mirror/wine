@@ -2445,10 +2445,27 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_VBMSGBOXRTLREADING,     NULL, BP_GET, VT_I4, MB_RTLREADING}
 };
 
+static HRESULT err_string_prop(BSTR *prop, VARIANT *args, unsigned args_cnt, VARIANT *res)
+{
+    BSTR str;
+    HRESULT hres;
+
+    if(!args_cnt)
+        return return_string(res, *prop ? *prop : L"");
+
+    hres = to_string(args, &str);
+    if(FAILED(hres))
+        return hres;
+
+    SysFreeString(*prop);
+    *prop = str;
+    return S_OK;
+}
+
 static HRESULT Err_Description(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return !This->desc ? E_UNEXPECTED : err_string_prop(&This->desc->ctx->ei.bstrDescription, args, args_cnt, res);
 }
 
 static HRESULT Err_HelpContext(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)

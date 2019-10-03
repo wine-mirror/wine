@@ -134,6 +134,7 @@ sub testCStrError()
     Error.clear()
     CStr(null)
     call ok(Err.number = 94, "Err.number = " & Err.number)
+    if isEnglishLang then call ok(Err.description = "Invalid use of Null", "Err.description = " & Err.description)
 end sub
 call testCStrError()
 
@@ -152,6 +153,7 @@ sub testChrError
         call Err.clear()
         call Chr(-1)
         call ok(Err.number = 5, "Err.number = " & Err.number)
+        if isEnglishLang then call ok(Err.description = "Invalid procedure call or argument", "Err.description = " & Err.description)
 
         call Err.clear()
         call Chr(256)
@@ -253,6 +255,8 @@ sub testUBoundError()
     call Err.clear()
     call UBound(arr, 1, 2)
     call ok(Err.number = 450, "Err.number = " & Err.number)
+    if isEnglishLang then call ok(Err.description = "Wrong number of arguments or invalid property assignment", _
+                                  "Err.description = " & Err.description)
 end sub
 call testUBoundError()
 
