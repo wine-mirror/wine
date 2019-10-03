@@ -1522,4 +1522,92 @@ call testAsc(Chr(0), 0)
 if isEnglishLang then testAsc true, 84
 call testAscError()
 
+sub testErrNumber(n)
+    call ok(err.number = n, "err.number = " & err.number & " expected " & n)
+end sub
+
+sub testErrRaise()
+    on error resume next
+    call ok(err.number = 0, "err.number = " & err.number)
+    err.raise 1
+    call ok(err.number = 1, "err.number = " & err.number)
+    err.raise
+    call ok(err.number = 450, "err.number = " & err.number)
+    call testErrNumber(450)
+    err.raise &h10000&
+    call ok(err.number = 5, "err.number = " & err.number)
+
+    err.clear
+    call ok(getVT(err.source) = "VT_BSTR", "err.source = " & err.source)
+    call ok(getVT(err.description) = "VT_BSTR", "err.description = " & err.description)
+    call ok(getVT(err.helpfile) = "VT_BSTR", "err.helpfile = " & err.helpfile)
+    call ok(getVT(err.helpcontext) = "VT_I4", "err.helpcontext = " & err.helpcontext)
+    call ok(err.source = "", "err.source = " & err.source)
+    call ok(err.description = "", "err.description = " & err.description)
+    call ok(err.helpfile = "", "err.helpfile = " & err.helpfile)
+    call ok(err.helpcontext = 0, "err.helpcontext = " & err.helpcontext)
+
+    err.raise 1, "abc"
+    call ok(err.number = 1, "err.number = " & err.number)
+    call ok(err.source = "abc", "err.source = " & err.source)
+    if isEnglishLang then call ok(err.description = "Unknown runtime error", "err.description = " & err.description)
+    call ok(err.helpfile = "", "err.helpfile = " & err.helpfile)
+
+    err.raise 1, 2, "desc", "hf", 1
+    call ok(err.number = 1, "err.number = " & err.number)
+    call ok(getVT(err.source) = "VT_BSTR", "err.source = " & err.source)
+    call ok(err.source = "2", "err.source = " & err.source)
+    call ok(err.description = "desc", "err.description = " & err.description)
+    call ok(err.helpfile = "hf", "err.helpfile = " & err.helpfile)
+    call ok(getVT(err.helpcontext) = "VT_I4", "err.helpcontext = " & err.helpcontext)
+    call ok(err.helpcontext = 1, "err.helpcontext = " & err.helpcontext)
+
+    err.raise 5
+    call ok(err.number = 5, "err.number = " & err.number)
+    call ok(err.source = "2", "err.source = " & err.source)
+    call ok(err.description = "desc", "err.description = " & err.description)
+    call ok(err.helpfile = "hf", "err.helpfile = " & err.helpfile)
+    call ok(getVT(err.helpcontext) = "VT_I4", "err.helpcontext = " & err.helpcontext)
+    call ok(err.helpcontext = 1, "err.helpcontext = " & err.helpcontext)
+
+    err.clear
+    err.raise &h8007000E&
+    call ok(err.number = 7, "err.number = " & err.number)
+    if isEnglishLang then call ok(err.source = "Microsoft VBScript runtime error", "err.source = " & err.source)
+    if isEnglishLang then call ok(err.description = "Out of memory", "err.description = " & err.description)
+    call ok(err.helpfile = "", "err.helpfile = " & err.helpfile)
+    call ok(err.helpcontext = 0, "err.helpcontext = " & err.helpcontext)
+
+    err.clear
+    err.raise 1, "test"
+    err.raise &h8007000E&
+    call ok(err.number = 7, "err.number = " & err.number)
+    call ok(err.source = "test", "err.source = " & err.source)
+    if isEnglishLang then call ok(err.description = "Unknown runtime error", "err.description = " & err.description)
+    call ok(err.helpfile = "", "err.helpfile = " & err.helpfile)
+    call ok(err.helpcontext = 0, "err.helpcontext = " & err.helpcontext)
+
+    err.raise 1, 2, "desc", "hf", 1
+    err.unknownIdent
+    call ok(err.number = 438, "err.number = " & err.number)
+    if isEnglishLang then call ok(err.source = "Microsoft VBScript runtime error", "err.source = " & err.source)
+    if isEnglishLang then call ok(err.description = "Object doesn't support this property or method", _
+                                  "err.description = " & err.description)
+    call ok(err.helpfile = "", "err.helpfile = " & err.helpfile)
+    call ok(err.helpcontext = 0, "err.helpcontext = " & err.helpcontext)
+
+    e = err
+    call ok(getVT(e) = "VT_I4*", "getVT(e) = " & getVT(e))
+    call ok(e = 438, "e = " & e)
+
+    err.raise 1, 2, "desc", "hf", 1
+    on error goto 0
+    call ok(err.number = 0, "err.number = " & err.number)
+    call ok(err.source = "", "err.source = " & err.source)
+    call ok(err.description = "", "err.description = " & err.description)
+    call ok(err.helpfile = "", "err.helpfile = " & err.helpfile)
+    call ok(err.helpcontext = 0, "err.helpcontext = " & err.helpcontext)
+end sub
+call testErrRaise()
+
 Call reportSuccess()
