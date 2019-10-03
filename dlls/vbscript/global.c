@@ -2526,8 +2526,60 @@ static HRESULT Err_Clear(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIA
 
 static HRESULT Err_Raise(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR source = NULL, description = NULL, helpfile = NULL;
+    int code,  helpcontext = 0;
+    HRESULT hres, error;
+
+    TRACE("%s %u...\n", debugstr_variant(args), args_cnt);
+
+    hres = to_int(args, &code);
+    if(FAILED(hres))
+        return hres;
+    if(code > 0 && code > 0xffff)
+        return E_INVALIDARG;
+
+    if(args_cnt >= 2)
+        hres = to_string(args + 1, &source);
+    if(args_cnt >= 3 && SUCCEEDED(hres))
+        hres = to_string(args + 2, &description);
+    if(args_cnt >= 4 && SUCCEEDED(hres))
+        hres = to_string(args + 3, &helpfile);
+    if(args_cnt >= 5 && SUCCEEDED(hres))
+        hres = to_int(args + 4, &helpcontext);
+
+    if(SUCCEEDED(hres) && This->desc) {
+        script_ctx_t *ctx = This->desc->ctx;
+
+        error = (code & ~0xffff) ? map_hres(code) : MAKE_VBSERROR(code);
+
+        if(source) {
+            if(ctx->ei.bstrSource) SysFreeString(ctx->ei.bstrSource);
+            ctx->ei.bstrSource = source;
+        }
+        if(!ctx->ei.bstrSource)
+            ctx->ei.bstrSource = get_vbscript_string(VBS_RUNTIME_ERROR);
+        if(description) {
+            if(ctx->ei.bstrDescription) SysFreeString(ctx->ei.bstrDescription);
+            ctx->ei.bstrDescription = description;
+        }
+        if(!ctx->ei.bstrDescription)
+            ctx->ei.bstrDescription = get_vbscript_error_string(error);
+        if(helpfile) {
+            if(ctx->ei.bstrHelpFile) SysFreeString(ctx->ei.bstrHelpFile);
+            ctx->ei.bstrHelpFile = helpfile;
+        }
+        if(args_cnt >= 5)
+            ctx->ei.dwHelpContext = helpcontext;
+
+        ctx->ei.scode = error;
+        hres = SCRIPT_E_RECORDED;
+    }else {
+        SysFreeString(source);
+        SysFreeString(description);
+        SysFreeString(helpfile);
+    }
+
+    return hres;
 }
 
 static const builtin_prop_t err_props[] = {
@@ -2537,7 +2589,7 @@ static const builtin_prop_t err_props[] = {
     {DISPID_ERR_NUMBER,       Err_Number, BP_GETPUT},
     {DISPID_ERR_SOURCE,       Err_Source, BP_GETPUT},
     {DISPID_ERR_CLEAR,        Err_Clear},
-    {DISPID_ERR_RAISE,        Err_Raise, 0, 5},
+    {DISPID_ERR_RAISE,        Err_Raise, 0, 1, 5},
 };
 
 HRESULT init_global(script_ctx_t *ctx)
