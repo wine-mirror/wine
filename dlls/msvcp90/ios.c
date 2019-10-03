@@ -3374,7 +3374,7 @@ int __thiscall basic_filebuf_char_overflow(basic_filebuf_char *this, int c)
         return !c;
 
     if(!this->cvt)
-        return fwrite(&ch, sizeof(char), 1, this->file) ? c : EOF;
+        return fputc(ch, this->file);
 
     from_next = &ch;
     do {
@@ -4009,7 +4009,7 @@ unsigned short __thiscall basic_filebuf_wchar_overflow(basic_filebuf_wchar *this
         return !c;
 
     if(!this->cvt)
-        return fwrite(&ch, sizeof(wchar_t), 1, this->file) ? c : WEOF;
+        return fputwc(ch, this->file);
 
     from_next = &ch;
     do {
