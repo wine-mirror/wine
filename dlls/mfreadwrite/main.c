@@ -95,7 +95,7 @@ struct media_stream
     enum media_stream_state state;
 };
 
-typedef struct source_reader
+struct source_reader
 {
     IMFSourceReader IMFSourceReader_iface;
     IMFAsyncCallback source_events_callback;
@@ -110,7 +110,7 @@ typedef struct source_reader
     struct media_stream *streams;
     DWORD stream_count;
     CRITICAL_SECTION cs;
-} srcreader;
+};
 
 struct sink_writer
 {
@@ -118,9 +118,9 @@ struct sink_writer
     LONG refcount;
 };
 
-static inline srcreader *impl_from_IMFSourceReader(IMFSourceReader *iface)
+static inline struct source_reader *impl_from_IMFSourceReader(IMFSourceReader *iface)
 {
-    return CONTAINING_RECORD(iface, srcreader, IMFSourceReader_iface);
+    return CONTAINING_RECORD(iface, struct source_reader, IMFSourceReader_iface);
 }
 
 static struct source_reader *impl_from_source_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -481,14 +481,14 @@ static const IMFAsyncCallbackVtbl stream_events_callback_vtbl =
 
 static HRESULT WINAPI src_reader_QueryInterface(IMFSourceReader *iface, REFIID riid, void **out)
 {
-    srcreader *This = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReader(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), out);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
 
     if(IsEqualGUID(riid, &IID_IUnknown) ||
        IsEqualGUID(riid, &IID_IMFSourceReader))
     {
-        *out = &This->IMFSourceReader_iface;
+        *out = &reader->IMFSourceReader_iface;
     }
     else
     {
@@ -503,12 +503,12 @@ static HRESULT WINAPI src_reader_QueryInterface(IMFSourceReader *iface, REFIID r
 
 static ULONG WINAPI src_reader_AddRef(IMFSourceReader *iface)
 {
-    srcreader *This = impl_from_IMFSourceReader(iface);
-    ULONG ref = InterlockedIncrement(&This->refcount);
+    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    ULONG refcount = InterlockedIncrement(&reader->refcount);
 
-    TRACE("(%p) ref=%u\n", This, ref);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
-    return ref;
+    return refcount;
 }
 
 static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
@@ -517,7 +517,7 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
     ULONG refcount = InterlockedDecrement(&reader->refcount);
     unsigned int i;
 
-    TRACE("%p, refcount %d.\n", iface, refcount);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -868,8 +868,8 @@ static HRESULT WINAPI src_reader_ReadSample(IMFSourceReader *iface, DWORD index,
 
 static HRESULT WINAPI src_reader_Flush(IMFSourceReader *iface, DWORD index)
 {
-    srcreader *This = impl_from_IMFSourceReader(iface);
-    FIXME("%p, 0x%08x\n", This, index);
+    FIXME("%p, %#x.\n", iface, index);
+
     return E_NOTIMPL;
 }
 
