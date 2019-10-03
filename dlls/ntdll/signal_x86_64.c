@@ -2876,6 +2876,15 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     struct stack_layout *stack;
     ucontext_t *ucontext = sigcontext;
 
+    stack = (struct stack_layout *)(RSP_sig(ucontext) & ~15);
+
+    /* check for exceptions on the signal stack caused by write watches */
+    if (TRAP_sig(ucontext) == TRAP_x86_PAGEFLT && is_inside_signal_stack( stack ) &&
+        !virtual_handle_fault( siginfo->si_addr, (ERROR_sig(ucontext) >> 1) & 0x09, TRUE ))
+    {
+        return;
+    }
+
     /* check for page fault inside the thread stack */
     if (TRAP_sig(ucontext) == TRAP_x86_PAGEFLT)
     {
