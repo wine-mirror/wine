@@ -65,9 +65,6 @@ extern void FILE_SetDosError(void) DECLSPEC_HIDDEN;
 extern WCHAR *FILE_name_AtoW( LPCSTR name, BOOL alloc ) DECLSPEC_HIDDEN;
 extern DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen ) DECLSPEC_HIDDEN;
 
-/* module.c */
-extern WCHAR *MODULE_get_dll_load_path( LPCWSTR module, int safe_mode ) DECLSPEC_HIDDEN;
-
 extern BOOL NLS_IsUnicodeOnlyLcid(LCID) DECLSPEC_HIDDEN;
 
 /* environ.c */

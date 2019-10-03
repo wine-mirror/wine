@@ -42,6 +42,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(module);
  ***********************************************************************/
 
 
+/****************************************************************************
+ *	AddDllDirectory   (kernelbase.@)
+ */
+DLL_DIRECTORY_COOKIE WINAPI DECLSPEC_HOTPATCH AddDllDirectory( const WCHAR *dir )
+{
+    UNICODE_STRING str;
+    void *cookie;
+
+    RtlInitUnicodeString( &str, dir );
+    if (!set_ntstatus( LdrAddDllDirectory( &str, &cookie ))) return NULL;
+    return cookie;
+}
+
+
 /***********************************************************************
  *	DelayLoadFailureHook   (kernelbase.@)
  */
@@ -222,6 +236,24 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetModuleHandleExW( DWORD flags, LPCWSTR name, HMO
 
     *module = ret;
     return set_ntstatus( status );
+}
+
+
+/****************************************************************************
+ *	RemoveDllDirectory   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH RemoveDllDirectory( DLL_DIRECTORY_COOKIE cookie )
+{
+    return set_ntstatus( LdrRemoveDllDirectory( cookie ));
+}
+
+
+/*************************************************************************
+ *	SetDefaultDllDirectories   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetDefaultDllDirectories( DWORD flags )
+{
+    return set_ntstatus( LdrSetDefaultDllDirectories( flags ));
 }
 
 

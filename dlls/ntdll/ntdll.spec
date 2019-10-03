@@ -71,6 +71,7 @@
 @ stub KiUserExceptionDispatcher
 # @ stub LdrAccessOutOfProcessResource
 @ stdcall LdrAccessResource(long ptr ptr ptr)
+@ stdcall LdrAddDllDirectory(ptr ptr)
 @ stdcall LdrAddRefDll(long ptr)
 # @ stub LdrAlternateResourcesEnabled
 # @ stub LdrCreateOutOfProcessImage
@@ -84,9 +85,10 @@
 # @ stub LdrFindResourceEx_U
 @ stdcall LdrFindResource_U(long ptr long ptr)
 @ stub LdrFlushAlternateResourceModules
+@ stdcall LdrGetDllDirectory(ptr)
 @ stdcall LdrGetDllHandle(wstr long ptr ptr)
 # @ stub LdrGetDllHandleEx
-@ stdcall LdrGetDllDirectory(ptr)
+@ stdcall LdrGetDllPath(wstr long ptr ptr)
 @ stdcall LdrGetProcedureAddress(ptr ptr long ptr)
 # @ stub LdrHotPatchRoutine
 @ stub LdrInitShimEngineDynamic
@@ -98,8 +100,10 @@
 @ stdcall LdrQueryImageFileExecutionOptions(ptr wstr long ptr long ptr)
 @ stdcall LdrQueryProcessModuleInformation(ptr long ptr)
 @ stdcall LdrRegisterDllNotification(long ptr ptr ptr)
+@ stdcall LdrRemoveDllDirectory(ptr)
 @ stdcall LdrResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long)
 @ stub LdrSetAppCompatDllRedirectionCallback
+@ stdcall LdrSetDefaultDllDirectories(long)
 @ stdcall LdrSetDllDirectory(ptr)
 @ stub LdrSetDllManifestProber
 @ stdcall LdrShutdownProcess()
