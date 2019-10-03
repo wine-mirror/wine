@@ -394,7 +394,7 @@
 @ stdcall FreeEnvironmentStringsW(ptr)
 # @ stub FreeGPOListInternalA
 # @ stub FreeGPOListInternalW
-@ stdcall FreeLibrary(long) kernel32.FreeLibrary
+@ stdcall FreeLibrary(long)
 @ stdcall FreeLibraryAndExitThread(long long)
 @ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) ntdll.TpCallbackUnloadDllOnCompletion
 @ stdcall FreeResource(long)
@@ -618,7 +618,7 @@
 # @ stub GetPreviousFgPolicyRefreshInfoInternal
 @ stdcall GetPriorityClass(long)
 @ stdcall GetPrivateObjectSecurity(ptr long ptr long ptr)
-@ stdcall GetProcAddress(long str) kernel32.GetProcAddress
+@ stdcall GetProcAddress(long str)
 # @ stub GetProcAddressForCaller
 # @ stub GetProcessDefaultCpuSets
 # @ stub GetProcessGroupAffinity
@@ -922,10 +922,10 @@
 @ stdcall LeaveCriticalSectionWhenCallbackReturns(ptr ptr) ntdll.TpCallbackLeaveCriticalSectionOnCompletion
 # @ stub LoadAppInitDlls
 # @ stub LoadEnclaveData
-@ stdcall LoadLibraryA(str) kernel32.LoadLibraryA
-@ stdcall LoadLibraryExA( str long long) kernel32.LoadLibraryExA
-@ stdcall LoadLibraryExW(wstr long long) kernel32.LoadLibraryExW
-@ stdcall LoadLibraryW(wstr) kernel32.LoadLibraryW
+@ stdcall LoadLibraryA(str)
+@ stdcall LoadLibraryExA( str long long)
+@ stdcall LoadLibraryExW(wstr long long)
+@ stdcall LoadLibraryW(wstr)
 # @ stub LoadPackagedLibrary
 @ stdcall LoadResource(long long)
 @ stdcall LoadStringA(long long ptr long)

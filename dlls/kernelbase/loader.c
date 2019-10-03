@@ -31,15 +31,159 @@
 #include "winnls.h"
 #include "winternl.h"
 #include "kernelbase.h"
+#include "wine/list.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 
 
+/* to keep track of LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE file handles */
+struct exclusive_datafile
+{
+    struct list entry;
+    HMODULE     module;
+    HANDLE      file;
+};
+static struct list exclusive_datafile_list = LIST_INIT( exclusive_datafile_list );
+
+
 /***********************************************************************
  * Modules
  ***********************************************************************/
+
+
+/******************************************************************
+ *      get_proc_address
+ */
+FARPROC WINAPI get_proc_address( HMODULE module, LPCSTR function )
+{
+    FARPROC proc;
+    ANSI_STRING str;
+
+    if (!module) module = NtCurrentTeb()->Peb->ImageBaseAddress;
+
+    if ((ULONG_PTR)function >> 16)
+    {
+        RtlInitAnsiString( &str, function );
+        if (!set_ntstatus( LdrGetProcedureAddress( module, &str, 0, (void**)&proc ))) return NULL;
+    }
+    else if (!set_ntstatus( LdrGetProcedureAddress( module, NULL, LOWORD(function), (void**)&proc )))
+        return NULL;
+
+    return proc;
+}
+
+
+/******************************************************************
+ *      load_library_as_datafile
+ */
+static BOOL load_library_as_datafile( LPCWSTR load_path, DWORD flags, LPCWSTR name, HMODULE *mod_ret )
+{
+    static const WCHAR dotDLL[] = {'.','d','l','l',0};
+
+    WCHAR filenameW[MAX_PATH];
+    HANDLE mapping, file = INVALID_HANDLE_VALUE;
+    HMODULE module = 0;
+    DWORD protect = PAGE_READONLY;
+
+    *mod_ret = 0;
+
+    if (flags & LOAD_LIBRARY_AS_IMAGE_RESOURCE) protect |= SEC_IMAGE;
+
+    if (SearchPathW( load_path, name, dotDLL, ARRAY_SIZE( filenameW ), filenameW, NULL ))
+    {
+        file = CreateFileW( filenameW, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE,
+                            NULL, OPEN_EXISTING, 0, 0 );
+    }
+    if (file == INVALID_HANDLE_VALUE) return FALSE;
+
+    mapping = CreateFileMappingW( file, NULL, protect, 0, 0, NULL );
+    if (!mapping) goto failed;
+
+    module = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+    CloseHandle( mapping );
+    if (!module) goto failed;
+
+    if (!(flags & LOAD_LIBRARY_AS_IMAGE_RESOURCE))
+    {
+        /* make sure it's a valid PE file */
+        if (!RtlImageNtHeader( module )) goto failed;
+        *mod_ret = (HMODULE)((char *)module + 1); /* set bit 0 for data file module */
+
+        if (flags & LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE)
+        {
+            struct exclusive_datafile *file = HeapAlloc( GetProcessHeap(), 0, sizeof(*file) );
+            if (!file) goto failed;
+            file->module = *mod_ret;
+            file->file   = file;
+            list_add_head( &exclusive_datafile_list, &file->entry );
+            TRACE( "delaying close %p for module %p\n", file->file, file->module );
+            return TRUE;
+        }
+    }
+    else *mod_ret = (HMODULE)((char *)module + 2); /* set bit 1 for image resource module */
+
+    CloseHandle( file );
+    return TRUE;
+
+failed:
+    if (module) UnmapViewOfFile( module );
+    CloseHandle( file );
+    return FALSE;
+}
+
+
+/******************************************************************
+ *      load_library
+ */
+static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
+{
+    const DWORD unsupported_flags = LOAD_IGNORE_CODE_AUTHZ_LEVEL | LOAD_LIBRARY_REQUIRE_SIGNED_TARGET;
+    NTSTATUS status;
+    HMODULE module;
+    WCHAR *load_path, *dummy;
+
+    if (flags & unsupported_flags) FIXME( "unsupported flag(s) used %#08x\n", flags );
+
+    if (!set_ntstatus( LdrGetDllPath( libname->Buffer, flags, &load_path, &dummy ))) return 0;
+
+    if (flags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE |
+                 LOAD_LIBRARY_AS_IMAGE_RESOURCE))
+    {
+        ULONG_PTR magic;
+
+        LdrLockLoaderLock( 0, NULL, &magic );
+        if (!LdrGetDllHandle( load_path, flags, libname, &module ))
+        {
+            LdrAddRefDll( 0, module );
+            LdrUnlockLoaderLock( 0, magic );
+            goto done;
+        }
+        if (load_library_as_datafile( load_path, flags, libname->Buffer, &module ))
+        {
+            LdrUnlockLoaderLock( 0, magic );
+            goto done;
+        }
+        LdrUnlockLoaderLock( 0, magic );
+        flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
+        /* Fallback to normal behaviour */
+    }
+
+    status = LdrLoadDll( load_path, flags, libname, &module );
+    if (status != STATUS_SUCCESS)
+    {
+        module = 0;
+        if (status == STATUS_DLL_NOT_FOUND && (GetVersion() & 0x80000000))
+            SetLastError( ERROR_DLL_NOT_FOUND );
+        else
+            SetLastError( RtlNtStatusToDosError( status ) );
+    }
+done:
+    RtlReleasePath( load_path );
+    return module;
+}
 
 
 /****************************************************************************
@@ -80,6 +224,49 @@ FARPROC WINAPI DECLSPEC_HOTPATCH DelayLoadFailureHook( LPCSTR name, LPCSTR funct
 BOOL WINAPI DECLSPEC_HOTPATCH DisableThreadLibraryCalls( HMODULE module )
 {
     return set_ntstatus( LdrDisableThreadCalloutsForDll( module ));
+}
+
+
+/***********************************************************************
+ *	FreeLibrary   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary( HINSTANCE module )
+{
+    if (!module)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    if ((ULONG_PTR)module & 3) /* this is a datafile module */
+    {
+        void *ptr = (void *)((ULONG_PTR)module & ~3);
+        if (!RtlImageNtHeader( ptr ))
+        {
+            SetLastError( ERROR_BAD_EXE_FORMAT );
+            return FALSE;
+        }
+        if ((ULONG_PTR)module & 1)
+        {
+            struct exclusive_datafile *file;
+            ULONG_PTR magic;
+
+            LdrLockLoaderLock( 0, NULL, &magic );
+            LIST_FOR_EACH_ENTRY( file, &exclusive_datafile_list, struct exclusive_datafile, entry )
+            {
+                if (file->module != module) continue;
+                TRACE( "closing %p for module %p\n", file->file, file->module );
+                CloseHandle( file->file );
+                list_remove( &file->entry );
+                HeapFree( GetProcessHeap(), 0, file );
+                break;
+            }
+            LdrUnlockLoaderLock( 0, magic );
+        }
+        return UnmapViewOfFile( ptr );
+    }
+
+    return set_ntstatus( LdrUnloadDll( module ));
 }
 
 
@@ -236,6 +423,115 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetModuleHandleExW( DWORD flags, LPCWSTR name, HMO
 
     *module = ret;
     return set_ntstatus( status );
+}
+
+
+/***********************************************************************
+ *	GetProcAddress   (kernelbase.@)
+ */
+
+#ifdef __x86_64__
+/*
+ * Work around a Delphi bug on x86_64.  When delay loading a symbol,
+ * Delphi saves rcx, rdx, r8 and r9 to the stack.  It then calls
+ * GetProcAddress(), pops the saved registers and calls the function.
+ * This works fine if all of the parameters are ints.  However, since
+ * it does not save xmm0 - 3, it relies on GetProcAddress() preserving
+ * these registers if the function takes floating point parameters.
+ * This wrapper saves xmm0 - 3 to the stack.
+ */
+__ASM_GLOBAL_FUNC( GetProcAddress,
+                   ".byte 0x48\n\t"  /* hotpatch prolog */
+                   "pushq %rbp\n\t"
+                   __ASM_SEH(".seh_pushreg %rbp\n\t")
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
+                   "movq %rsp,%rbp\n\t"
+                   __ASM_SEH(".seh_setframe %rbp,0\n\t")
+                   __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
+                   "subq $0x60,%rsp\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x60\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   "movaps %xmm0,-0x10(%rbp)\n\t"
+                   "movaps %xmm1,-0x20(%rbp)\n\t"
+                   "movaps %xmm2,-0x30(%rbp)\n\t"
+                   "movaps %xmm3,-0x40(%rbp)\n\t"
+                   "call " __ASM_NAME("get_proc_address") "\n\t"
+                   "movaps -0x40(%rbp), %xmm3\n\t"
+                   "movaps -0x30(%rbp), %xmm2\n\t"
+                   "movaps -0x20(%rbp), %xmm1\n\t"
+                   "movaps -0x10(%rbp), %xmm0\n\t"
+                   "leaq 0(%rbp),%rsp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
+                   "popq %rbp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   __ASM_CFI(".cfi_same_value %rbp\n\t")
+                   "ret" )
+#else /* __x86_64__ */
+
+FARPROC WINAPI DECLSPEC_HOTPATCH GetProcAddress( HMODULE module, LPCSTR function )
+{
+    return get_proc_address( module, function );
+}
+
+#endif /* __x86_64__ */
+
+
+/***********************************************************************
+ *	LoadLibraryA   (kernelbase.@)
+ */
+HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryA( LPCSTR name )
+{
+    return LoadLibraryExA( name, 0, 0 );
+}
+
+
+/***********************************************************************
+ *	LoadLibraryW   (kernelbase.@)
+ */
+HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryW( LPCWSTR name )
+{
+    return LoadLibraryExW( name, 0, 0 );
+}
+
+
+/******************************************************************
+ *	LoadLibraryExA   (kernelbase.@)
+ */
+HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryExA( LPCSTR name, HANDLE file, DWORD flags )
+{
+    WCHAR *nameW;
+
+    if (!(nameW = file_name_AtoW( name, FALSE ))) return 0;
+    return LoadLibraryExW( nameW, file, flags );
+}
+
+
+/***********************************************************************
+ *	LoadLibraryExW   (kernelbase.@)
+ */
+HMODULE WINAPI DECLSPEC_HOTPATCH LoadLibraryExW( LPCWSTR name, HANDLE file, DWORD flags )
+{
+    UNICODE_STRING str;
+    HMODULE module;
+
+    if (!name)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    RtlInitUnicodeString( &str, name );
+    if (str.Buffer[str.Length/sizeof(WCHAR) - 1] != ' ') return load_library( &str, flags );
+
+    /* library name has trailing spaces */
+    RtlCreateUnicodeString( &str, name );
+    while (str.Length > sizeof(WCHAR) && str.Buffer[str.Length/sizeof(WCHAR) - 1] == ' ')
+        str.Length -= sizeof(WCHAR);
+
+    str.Buffer[str.Length/sizeof(WCHAR)] = 0;
+    module = load_library( &str, flags );
+    RtlFreeUnicodeString( &str );
+    return module;
 }
 
 

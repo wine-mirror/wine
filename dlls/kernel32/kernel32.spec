@@ -528,7 +528,7 @@
 @ stdcall -import FreeEnvironmentStringsA(ptr)
 @ stdcall -import FreeEnvironmentStringsW(ptr)
 @ stub -i386 FreeLSCallback
-@ stdcall FreeLibrary(long)
+@ stdcall -import FreeLibrary(long)
 @ stdcall FreeLibraryAndExitThread(long long)
 @ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) ntdll.TpCallbackUnloadDllOnCompletion
 @ stdcall -import FreeResource(long)
@@ -1042,10 +1042,10 @@
 @ stdcall LeaveCriticalSection(ptr) ntdll.RtlLeaveCriticalSection
 @ stdcall LeaveCriticalSectionWhenCallbackReturns(ptr ptr) ntdll.TpCallbackLeaveCriticalSectionOnCompletion
 # @ stub LoadAppInitDlls
-@ stdcall LoadLibraryA(str)
-@ stdcall LoadLibraryExA( str long long)
-@ stdcall LoadLibraryExW(wstr long long)
-@ stdcall LoadLibraryW(wstr)
+@ stdcall -import LoadLibraryA(str)
+@ stdcall -import LoadLibraryExA( str long long)
+@ stdcall -import LoadLibraryExW(wstr long long)
+@ stdcall -import LoadLibraryW(wstr)
 @ stdcall LoadModule(str ptr)
 @ stdcall -import LoadResource(long long)
 # @ stub LoadStringBaseExW
