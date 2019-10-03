@@ -81,10 +81,18 @@ struct media_stream
     IMFMediaStream *stream;
 };
 
+enum source_state
+{
+    SOURCE_STATE_STOPPED = 0,
+    SOURCE_STATE_STARTED,
+    SOURCE_STATE_PAUSED,
+};
+
 struct media_source
 {
     struct list entry;
     IMFMediaSource *source;
+    enum source_state state;
     struct list streams;
 };
 
@@ -1075,10 +1083,25 @@ static HRESULT session_add_media_stream(struct media_source *source, IMFMediaStr
     return S_OK;
 }
 
+static void session_set_source_state(struct media_session *session, IMFMediaSource *source, enum source_state state)
+{
+    struct media_source *cur;
+
+    LIST_FOR_EACH_ENTRY(cur, &session->presentation.sources, struct media_source, entry)
+    {
+        if (source == cur->source)
+        {
+            cur->state = state;
+            break;
+        }
+    }
+}
+
 static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_session *session = impl_from_events_callback_IMFAsyncCallback(iface);
     IMFMediaEventGenerator *event_source;
+    enum source_state source_state;
     IMFMediaEvent *event = NULL;
     MediaEventType event_type;
     struct media_source *cur;
@@ -1111,6 +1134,20 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
 
     switch (event_type)
     {
+        case MESourceStarted:
+        case MESourcePaused:
+        case MESourceStopped:
+            if (event_type == MESourceStarted)
+                source_state = SOURCE_STATE_STARTED;
+            else if (event_type == MESourcePaused)
+                source_state = SOURCE_STATE_PAUSED;
+            else
+                source_state = SOURCE_STATE_STOPPED;
+
+            EnterCriticalSection(&session->cs);
+            session_set_source_state(session, (IMFMediaSource *)event_source, source_state);
+            LeaveCriticalSection(&session->cs);
+            break;
         case MENewStream:
             stream = (IMFMediaStream *)value.punkVal;
 
