@@ -2170,6 +2170,7 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, vbdisp_t *vbthis, DISPP
                 clear_ei(&ctx->ei);
 
                 ctx->ei.scode = hres = map_hres(hres);
+                ctx->ei.bstrSource = get_vbscript_string(VBS_RUNTIME_ERROR);
                 ctx->ei.bstrDescription = get_vbscript_error_string(hres);
             }else {
                 hres = ctx->ei.scode;

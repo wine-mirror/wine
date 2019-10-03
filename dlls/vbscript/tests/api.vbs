@@ -134,6 +134,7 @@ sub testCStrError()
     Error.clear()
     CStr(null)
     call ok(Err.number = 94, "Err.number = " & Err.number)
+    if isEnglishLang then call ok(Err.source = "Microsoft VBScript runtime error", "Err.source = " & Err.source)
     if isEnglishLang then call ok(Err.description = "Invalid use of Null", "Err.description = " & Err.description)
 end sub
 call testCStrError()

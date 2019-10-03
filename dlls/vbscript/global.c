@@ -2500,8 +2500,8 @@ static HRESULT Err_Number(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARI
 
 static HRESULT Err_Source(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return !This->desc ? E_UNEXPECTED : err_string_prop(&This->desc->ctx->ei.bstrSource, args, args_cnt, res);
 }
 
 static HRESULT Err_Clear(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
