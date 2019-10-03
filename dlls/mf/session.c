@@ -75,6 +75,19 @@ enum session_state
     SESSION_STATE_SHUT_DOWN,
 };
 
+struct media_stream
+{
+    struct list entry;
+    IMFMediaStream *stream;
+};
+
+struct media_source
+{
+    struct list entry;
+    IMFMediaSource *source;
+    struct list streams;
+};
+
 struct media_session
 {
     IMFMediaSession IMFMediaSession_iface;
@@ -89,7 +102,11 @@ struct media_session
     IMFRateControl *clock_rate_control;
     IMFTopoLoader *topo_loader;
     IMFQualityManager *quality_manager;
-    IMFTopology *current_topology;
+    struct
+    {
+        IMFTopology *current_topology;
+        struct list sources;
+    } presentation;
     struct list topologies;
     enum session_state state;
     CRITICAL_SECTION cs;
@@ -395,19 +412,48 @@ static IMFTopology *session_get_next_topology(struct media_session *session)
 {
     struct queued_topology *queued;
 
-    if (!session->current_topology)
+    if (!session->presentation.current_topology)
     {
         struct list *head = list_head(&session->topologies);
         if (!head)
             return NULL;
 
         queued = LIST_ENTRY(head, struct queued_topology, entry);
-        session->current_topology = queued->topology;
+        session->presentation.current_topology = queued->topology;
         list_remove(&queued->entry);
         heap_free(queued);
     }
 
-    return session->current_topology;
+    return session->presentation.current_topology;
+}
+
+static void session_clear_presentation(struct media_session *session)
+{
+    struct media_source *source, *source2;
+    struct media_stream *stream, *stream2;
+
+    if (session->presentation.current_topology)
+    {
+        IMFTopology_Release(session->presentation.current_topology);
+        session->presentation.current_topology = NULL;
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(source, source2, &session->presentation.sources, struct media_source, entry)
+    {
+        list_remove(&source->entry);
+
+        LIST_FOR_EACH_ENTRY_SAFE(stream, stream2, &source->streams, struct media_stream, entry)
+        {
+            list_remove(&stream->entry);
+            if (stream->stream)
+                IMFMediaStream_Release(stream->stream);
+            heap_free(stream);
+        }
+
+        if (source->source)
+            IMFMediaSource_Release(source->source);
+        heap_free(source);
+    }
 }
 
 static void session_start(struct media_session *session, const GUID *time_format, const PROPVARIANT *start_position)
@@ -433,13 +479,17 @@ static void session_start(struct media_session *session, const GUID *time_format
 
             for (i = 0; i < count; ++i)
             {
-                if (SUCCEEDED(IMFCollection_GetElement(nodes, i, (IUnknown **)&node)))
+                if (SUCCEEDED(hr = IMFCollection_GetElement(nodes, i, (IUnknown **)&node)))
                 {
                     IMFPresentationDescriptor *pd = NULL;
-                    IMFMediaSource *source = NULL;
+                    struct media_source *source;
 
-                    hr = IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_SOURCE, &IID_IMFMediaSource,
-                            (void **)&source);
+                    if (!(source = heap_alloc_zero(sizeof(*source))))
+                        hr = E_OUTOFMEMORY;
+
+                    if (SUCCEEDED(hr))
+                        hr = IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_SOURCE, &IID_IMFMediaSource,
+                                (void **)&source->source);
 
                     if (SUCCEEDED(hr))
                         hr = IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR,
@@ -447,16 +497,25 @@ static void session_start(struct media_session *session, const GUID *time_format
 
                     /* Subscribe to source events, start it. */
                     if (SUCCEEDED(hr))
-                        hr = IMFMediaSource_BeginGetEvent(source, &session->events_callback, NULL);
+                        hr = IMFMediaSource_BeginGetEvent(source->source, &session->events_callback,
+                                (IUnknown *)source->source);
 
                     if (SUCCEEDED(hr))
-                        hr = IMFMediaSource_Start(source, pd, time_format, start_position);
-
-                    if (source)
-                        IMFMediaSource_Release(source);
+                        hr = IMFMediaSource_Start(source->source, pd, time_format, start_position);
 
                     if (pd)
                         IMFPresentationDescriptor_Release(pd);
+
+                    if (SUCCEEDED(hr))
+                    {
+                        list_add_tail(&session->presentation.sources, &source->entry);
+                    }
+                    else if (source)
+                    {
+                        if (source->source)
+                            IMFMediaSource_Release(source->source);
+                        heap_free(source);
+                    }
 
                     IMFTopologyNode_Release(node);
                 }
@@ -523,8 +582,7 @@ static ULONG WINAPI mfsession_Release(IMFMediaSession *iface)
     if (!refcount)
     {
         session_clear_topologies(session);
-        if (session->current_topology)
-            IMFTopology_Release(session->current_topology);
+        session_clear_presentation(session);
         if (session->event_queue)
             IMFMediaEventQueue_Release(session->event_queue);
         if (session->clock)
@@ -863,14 +921,10 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             if (flags & MFSESSION_SETTOPOLOGY_CLEAR_CURRENT)
             {
                 EnterCriticalSection(&session->cs);
-                if ((topology && topology == session->current_topology) || !topology)
+                if ((topology && topology == session->presentation.current_topology) || !topology)
                 {
                     /* FIXME: stop current topology, queue next one. */
-                    if (session->current_topology)
-                    {
-                        IMFTopology_Release(session->current_topology);
-                        session->current_topology = NULL;
-                    }
+                    session_clear_presentation(session);
                 }
                 else
                     status = S_FALSE;
@@ -907,11 +961,7 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
                         if (flags & MFSESSION_SETTOPOLOGY_IMMEDIATE)
                         {
                             session_clear_topologies(session);
-                            if (session->current_topology)
-                            {
-                                IMFTopology_Release(session->current_topology);
-                                session->current_topology = NULL;
-                            }
+                            session_clear_presentation(session);
                         }
 
                         queued_topology->topology = topology;
@@ -1010,9 +1060,99 @@ static HRESULT WINAPI session_events_callback_GetParameters(IMFAsyncCallback *if
     return E_NOTIMPL;
 }
 
+static HRESULT session_add_media_stream(struct media_source *source, IMFMediaStream *stream)
+{
+    struct media_stream *media_stream;
+
+    if (!(media_stream = heap_alloc_zero(sizeof(*media_stream))))
+        return E_OUTOFMEMORY;
+
+    media_stream->stream = stream;
+    IMFMediaStream_AddRef(media_stream->stream);
+
+    list_add_tail(&source->streams, &media_stream->entry);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
-    return S_OK;
+    struct media_session *session = impl_from_events_callback_IMFAsyncCallback(iface);
+    IMFMediaEventGenerator *event_source;
+    IMFMediaEvent *event = NULL;
+    MediaEventType event_type;
+    struct media_source *cur;
+    IMFMediaSource *source;
+    IMFMediaStream *stream;
+    PROPVARIANT value;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFAsyncResult_GetState(result, (IUnknown **)&event_source)))
+        return hr;
+
+    if (FAILED(hr = IMFMediaEventGenerator_EndGetEvent(event_source, result, &event)))
+    {
+        WARN("Failed to get event from %p, hr %#x.\n", event_source, hr);
+        goto failed;
+    }
+
+    if (FAILED(hr = IMFMediaEvent_GetType(event, &event_type)))
+    {
+        WARN("Failed to get event type, hr %#x.\n", hr);
+        goto failed;
+    }
+
+    value.vt = VT_EMPTY;
+    if (FAILED(hr = IMFMediaEvent_GetValue(event, &value)))
+    {
+        WARN("Failed to get event value, hr %#x.\n", hr);
+        goto failed;
+    }
+
+    switch (event_type)
+    {
+        case MENewStream:
+            stream = (IMFMediaStream *)value.punkVal;
+
+            if (value.vt != VT_UNKNOWN || !stream)
+            {
+                WARN("Unexpected event value.\n");
+                break;
+            }
+
+            if (FAILED(hr = IMFMediaStream_GetMediaSource(stream, &source)))
+                break;
+
+            EnterCriticalSection(&session->cs);
+
+            LIST_FOR_EACH_ENTRY(cur, &session->presentation.sources, struct media_source, entry)
+            {
+                if (source == cur->source)
+                {
+                    hr = session_add_media_stream(cur, stream);
+
+                    if (SUCCEEDED(hr))
+                        hr = IMFMediaStream_BeginGetEvent(stream, &session->events_callback, (IUnknown *)stream);
+
+                    break;
+                }
+            }
+
+            LeaveCriticalSection(&session->cs);
+
+            break;
+        default:
+            ;
+    }
+
+    PropVariantClear(&value);
+
+failed:
+    if (event)
+        IMFMediaEvent_Release(event);
+    IMFMediaEventGenerator_Release(event_source);
+
+    return hr;
 }
 
 static const IMFAsyncCallbackVtbl session_events_callback_vtbl =
@@ -1142,6 +1282,7 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
     object->events_callback.lpVtbl = &session_events_callback_vtbl;
     object->refcount = 1;
     list_init(&object->topologies);
+    list_init(&object->presentation.sources);
     InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
