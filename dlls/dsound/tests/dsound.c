@@ -1089,7 +1089,7 @@ static HRESULT test_notify(LPDIRECTSOUNDBUFFER dsb,
     ok(rc == DS_OK,"Failed %08x\n",rc);
     ok(status == 0 /* Stopped */,"got %08x\n", status);
 
-    ret=WaitForMultipleObjects(count,event,FALSE,0);
+    ret = WaitForMultipleObjects(count, event, FALSE, 3000);
     ok(ret==expected,"expected %d. got %d\n",expected,ret);
 
     return rc;
