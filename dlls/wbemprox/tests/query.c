@@ -1654,6 +1654,7 @@ static void test_Win32_PnPEntity( IWbemServices *services )
                 VariantClear( &val );
             }
         }
+        IWbemClassObject_Release( obj );
     }
 
     SysFreeString( bstr );
