@@ -268,10 +268,7 @@ static HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter *iface, REFERENCE_TIME
         }
 
         if (SUCCEEDED(hr))
-        {
-            This->filter.rtStreamStart = tStart;
             This->filter.state = State_Running;
-        }
     }
     LeaveCriticalSection(&This->csReceive);
 

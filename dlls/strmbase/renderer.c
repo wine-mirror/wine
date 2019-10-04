@@ -363,11 +363,11 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
 
             IReferenceClock_GetTime(This->filter.pClock, &now);
 
-            if (now - This->filter.rtStreamStart - start <= -10000)
+            if (now - This->stream_start - start <= -10000)
             {
                 HANDLE handles[2] = {This->advise_event, This->flush_event};
 
-                IReferenceClock_AdviseTime(This->filter.pClock, This->filter.rtStreamStart,
+                IReferenceClock_AdviseTime(This->filter.pClock, This->stream_start,
                         start, (HEVENT)This->advise_event, &cookie);
 
                 LeaveCriticalSection(&This->csRenderLock);
@@ -429,7 +429,7 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     TRACE("(%p)->(%s)\n", This, wine_dbgstr_longlong(tStart));
 
     EnterCriticalSection(&This->csRenderLock);
-    This->filter.rtStreamStart = tStart;
+    This->stream_start = tStart;
     if (This->filter.state == State_Running)
         goto out;
 
@@ -440,7 +440,7 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
         This->sink.end_of_stream = FALSE;
     }
 
-    QualityControlRender_Start(This->qcimpl, This->filter.rtStreamStart);
+    QualityControlRender_Start(This->qcimpl, This->stream_start);
     if (This->sink.pin.peer && This->pFuncsTable->renderer_start_stream)
         This->pFuncsTable->renderer_start_stream(This);
     if (This->filter.state == State_Stopped)
@@ -547,7 +547,7 @@ HRESULT WINAPI BaseRendererImpl_BeginFlush(BaseRenderer* iface)
 HRESULT WINAPI BaseRendererImpl_EndFlush(BaseRenderer* iface)
 {
     TRACE("(%p)\n", iface);
-    QualityControlRender_Start(iface->qcimpl, iface->filter.rtStreamStart);
+    QualityControlRender_Start(iface->qcimpl, iface->stream_start);
     RendererPosPassThru_ResetMediaTime(iface->pPosition);
     ResetEvent(iface->flush_event);
     return S_OK;

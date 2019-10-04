@@ -1406,10 +1406,6 @@ static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
     if (!This->container)
         return VFW_E_NOT_CONNECTED;
 
-    EnterCriticalSection(&This->filter.csFilter);
-    This->filter.rtStreamStart = tStart;
-    LeaveCriticalSection(&This->filter.csFilter);
-
     gst_element_get_state(This->container, &now, NULL, -1);
     if (now == GST_STATE_PLAYING)
         return S_OK;
@@ -1423,7 +1419,6 @@ static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 
     EnterCriticalSection(&This->filter.csFilter);
     gst_element_set_state(This->container, GST_STATE_PLAYING);
-    This->filter.rtStreamStart = tStart;
 
     for (i = 0; i < This->cStreams; i++) {
         hr = BaseOutputPinImpl_Active(&This->ppPins[i]->pin);

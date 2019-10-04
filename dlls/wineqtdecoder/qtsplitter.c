@@ -753,7 +753,6 @@ static HRESULT WINAPI QT_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
     TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
 
     EnterCriticalSection(&This->csReceive);
-    This->filter.rtStreamStart = tStart;
 
     if (This->pVideo_Pin)
         hr = BaseOutputPinImpl_Active(&This->pVideo_Pin->pin);
