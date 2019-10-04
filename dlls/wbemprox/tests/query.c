@@ -750,7 +750,7 @@ static void test_StdRegProv( IWbemServices *services )
         {'S','o','f','t','w','a','r','e','\\','S','t','d','R','e','g','P','r','o','v','T','e','s','t',0};
     BSTR class = SysAllocString( stdregprovW ), method, name;
     IWbemClassObject *reg, *sig_in, *sig_out, *in, *out;
-    VARIANT defkey, subkey, retval, names, types, value, valuename;
+    VARIANT defkey, subkey, retval, valuename;
     CIMTYPE type;
     HRESULT hr;
     LONG res;
@@ -854,7 +854,6 @@ static void test_StdRegProv( IWbemServices *services )
 
     check_property( out, namesW, VT_BSTR|VT_ARRAY, CIM_STRING|CIM_FLAG_ARRAY );
 
-    VariantClear( &names );
     VariantClear( &subkey );
     IWbemClassObject_Release( in );
     IWbemClassObject_Release( out );
@@ -893,8 +892,6 @@ static void test_StdRegProv( IWbemServices *services )
     check_property( out, namesW, VT_BSTR|VT_ARRAY, CIM_STRING|CIM_FLAG_ARRAY );
     check_property( out, typesW, VT_I4|VT_ARRAY, CIM_SINT32|CIM_FLAG_ARRAY );
 
-    VariantClear( &types );
-    VariantClear( &names );
     VariantClear( &subkey );
     IWbemClassObject_Release( in );
     IWbemClassObject_Release( out );
@@ -937,7 +934,6 @@ static void test_StdRegProv( IWbemServices *services )
 
     check_property( out, valueW, VT_BSTR, CIM_STRING );
 
-    VariantClear( &value );
     VariantClear( &valuename );
     VariantClear( &subkey );
     IWbemClassObject_Release( in );
