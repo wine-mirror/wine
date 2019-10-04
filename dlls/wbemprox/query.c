@@ -632,6 +632,7 @@ done:
     if (query) release_query( query );
     free_path( path );
     SysFreeString( antecedent );
+    heap_free( str );
     return hr;
 }
 
