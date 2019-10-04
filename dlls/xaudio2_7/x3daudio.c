@@ -63,8 +63,13 @@ HRESULT CDECL X3DAudioInitialize(UINT32 chanmask, float speedofsound,
 #endif /* XAUDIO2_VER >= 8 */
 
 #ifdef X3DAUDIO1_VER
+#if X3DAUDIO1_VER <= 2
+void WINAPI LEGACY_X3DAudioInitialize(UINT32 chanmask, float speedofsound,
+        X3DAUDIO_HANDLE handle)
+#else
 void CDECL LEGACY_X3DAudioInitialize(UINT32 chanmask, float speedofsound,
         X3DAUDIO_HANDLE handle)
+#endif
 {
     TRACE("0x%x, %f, %p\n", chanmask, speedofsound, handle);
     F3DAudioInitialize(chanmask, speedofsound, handle);
@@ -72,9 +77,15 @@ void CDECL LEGACY_X3DAudioInitialize(UINT32 chanmask, float speedofsound,
 #endif /* X3DAUDIO1_VER */
 
 #if XAUDIO2_VER >= 8 || defined X3DAUDIO1_VER
+#if defined(X3DAUDIO1_VER) && X3DAUDIO1_VER <= 2
+void WINAPI LEGACY_X3DAudioCalculate(const X3DAUDIO_HANDLE handle,
+        const X3DAUDIO_LISTENER *listener, const X3DAUDIO_EMITTER *emitter,
+        UINT32 flags, X3DAUDIO_DSP_SETTINGS *out)
+#else
 void CDECL X3DAudioCalculate(const X3DAUDIO_HANDLE handle,
         const X3DAUDIO_LISTENER *listener, const X3DAUDIO_EMITTER *emitter,
         UINT32 flags, X3DAUDIO_DSP_SETTINGS *out)
+#endif
 {
     TRACE("%p, %p, %p, 0x%x, %p\n", handle, listener, emitter, flags, out);
     F3DAudioCalculate(
