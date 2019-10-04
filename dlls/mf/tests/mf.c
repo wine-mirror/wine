@@ -1501,6 +1501,9 @@ static void test_presentation_clock(void)
     hr = MFCreatePresentationClock(&clock);
     ok(hr == S_OK, "Failed to create presentation clock, hr %#x.\n", hr);
 
+    hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&rate_control);
+    ok(hr == S_OK, "Failed to get rate control interface, hr %#x.\n", hr);
+
     hr = IMFPresentationClock_GetTimeSource(clock, &time_source);
     ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
 
@@ -1521,7 +1524,7 @@ static void test_presentation_clock(void)
 
     value = 1;
     hr = IMFPresentationClock_GetContinuityKey(clock, &value);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get continuity key, hr %#x.\n", hr);
     ok(value == 0, "Unexpected value %u.\n", value);
 
     hr = IMFPresentationClock_GetProperties(clock, &props);
@@ -1558,6 +1561,19 @@ static void test_presentation_clock(void)
 
     hr = IMFPresentationClock_RemoveClockStateSink(clock, &test_sink);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* State change commands, time source is not set yet. */
+    hr = IMFPresentationClock_Start(clock, 0);
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_Pause(clock);
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_Stop(clock);
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateControl_SetRate(rate_control, FALSE, 0.0f);
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
 
     /* Set default time source. */
     hr = MFCreateSystemTimeSource(&time_source);
@@ -1630,9 +1646,6 @@ static void test_presentation_clock(void)
     ok(time == clock_time, "Unexpected clock time.\n");
 
     IMFPresentationTimeSource_Release(time_source);
-
-    hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&rate_control);
-    ok(hr == S_OK, "Failed to get rate control interface, hr %#x.\n", hr);
 
     hr = IMFRateControl_GetRate(rate_control, NULL, &rate);
     ok(hr == S_OK, "Failed to get clock rate, hr %#x.\n", hr);

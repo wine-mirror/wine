@@ -1923,6 +1923,9 @@ static HRESULT clock_change_state(struct presentation_clock *clock, enum clock_c
     MFTIME system_time;
     HRESULT hr;
 
+    if (!clock->time_source)
+        return MF_E_CLOCK_NO_TIME_SOURCE;
+
     if (command != CLOCK_CMD_SET_RATE && clock->state == states[command] && clock->state != MFCLOCK_STATE_RUNNING)
         return MF_E_CLOCK_STATE_ALREADY_SET;
 
