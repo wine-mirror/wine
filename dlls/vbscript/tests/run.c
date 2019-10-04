@@ -79,6 +79,12 @@ extern const CLSID CLSID_VBScriptRegExp;
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CHECK_NOT_CALLED(func) \
+    do { \
+        ok(!called_ ## func, "unexpected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
 #define CLEAR_CALLED(func) \
     expect_ ## func = called_ ## func = FALSE
 
@@ -2149,7 +2155,7 @@ static void test_parse_errors(void)
         SET_EXPECT(OnScriptError);
         hres = parse_script_ar(invalid_scripts[i]);
         ok(FAILED(hres), "[%u] script did not fail\n", i);
-        todo_wine CHECK_CALLED(OnScriptError);
+        CHECK_CALLED(OnScriptError);
     }
 }
 
@@ -2309,7 +2315,7 @@ static void test_isexpression(void)
     SET_EXPECT(OnScriptError);
     hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
     ok(FAILED(hres), "ParseScriptText did not fail: %08x\n", hres);
-    todo_wine CHECK_CALLED(OnScriptError);
+    CHECK_CALLED(OnScriptError);
     VariantClear(&var);
     SysFreeString(str);
 
@@ -2346,7 +2352,7 @@ static void test_isexpression(void)
     SET_EXPECT(OnScriptError);
     hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
     ok(FAILED(hres), "ParseScriptText did not fail: %08x\n", hres);
-    todo_wine CHECK_CALLED(OnScriptError);
+    CHECK_CALLED(OnScriptError);
     VariantClear(&var);
     SysFreeString(str);
 
@@ -2545,9 +2551,12 @@ static void run_tests(void)
     parse_script_a("Option Explicit\nset test.setobj = testObj");
     CHECK_CALLED(global_setobj_i);
 
+    SET_EXPECT(OnScriptError);
     hres = parse_script_ar("dim x\nx = testObj.rem");
     todo_wine
     ok(hres == S_OK, "use of 'rem' as dot identifier failed: %x08\n", hres);
+    todo_wine
+    CHECK_NOT_CALLED(OnScriptError);
 
     SET_EXPECT(testobj_propget_d);
     SET_EXPECT(testobj_propget_i);
@@ -2593,7 +2602,7 @@ static void run_tests(void)
     SET_EXPECT(OnScriptError);
     hres = parse_script_ar("<!--");
     ok(FAILED(hres), "script didn't fail\n");
-    todo_wine CHECK_CALLED(OnScriptError);
+    CHECK_CALLED(OnScriptError);
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
