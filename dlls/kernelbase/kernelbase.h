@@ -30,6 +30,7 @@ extern void init_startup_info( RTL_USER_PROCESS_PARAMETERS *params ) DECLSPEC_HI
 
 extern const WCHAR windows_dir[] DECLSPEC_HIDDEN;
 extern const WCHAR system_dir[] DECLSPEC_HIDDEN;
+extern HANDLE kernel32_handle DECLSPEC_HIDDEN;
 
 static inline BOOL is_console_handle(HANDLE h)
 {

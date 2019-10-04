@@ -298,7 +298,7 @@
 @ stdcall EnumDateFormatsW(ptr long long) kernel32.EnumDateFormatsW
 # @ stub EnumDeviceDrivers
 @ stdcall EnumDynamicTimeZoneInformation(long ptr)
-@ stdcall EnumLanguageGroupLocalesW(ptr long long ptr) kernel32.EnumLanguageGroupLocalesW
+@ stdcall EnumLanguageGroupLocalesW(ptr long long ptr)
 # @ stub EnumPageFilesA
 # @ stub EnumPageFilesW
 # @ stub EnumProcessModules
@@ -311,16 +311,16 @@
 @ stdcall EnumResourceNamesW(long wstr ptr long)
 @ stdcall EnumResourceTypesExA(long ptr long long long)
 @ stdcall EnumResourceTypesExW(long ptr long long long)
-@ stdcall EnumSystemCodePagesW(ptr long) kernel32.EnumSystemCodePagesW
+@ stdcall EnumSystemCodePagesW(ptr long)
 @ stdcall EnumSystemFirmwareTables(long ptr long) kernel32.EnumSystemFirmwareTables
 @ stdcall EnumSystemGeoID(long long ptr) kernel32.EnumSystemGeoID
-@ stdcall EnumSystemLanguageGroupsW(ptr long ptr) kernel32.EnumSystemLanguageGroupsW
-@ stdcall EnumSystemLocalesA(ptr long) kernel32.EnumSystemLocalesA
-@ stdcall EnumSystemLocalesEx(ptr long long ptr) kernel32.EnumSystemLocalesEx
-@ stdcall EnumSystemLocalesW(ptr long) kernel32.EnumSystemLocalesW
+@ stdcall EnumSystemLanguageGroupsW(ptr long ptr)
+@ stdcall EnumSystemLocalesA(ptr long)
+@ stdcall EnumSystemLocalesEx(ptr long long ptr)
+@ stdcall EnumSystemLocalesW(ptr long)
 @ stdcall EnumTimeFormatsEx(ptr wstr long long) kernel32.EnumTimeFormatsEx
 @ stdcall EnumTimeFormatsW(ptr long long) kernel32.EnumTimeFormatsW
-@ stdcall EnumUILanguagesW(ptr long long) kernel32.EnumUILanguagesW
+@ stdcall EnumUILanguagesW(ptr long long)
 # @ stub EnumerateStateAtomValues
 # @ stub EnumerateStateContainerItems
 @ stub EqualDomainSid
@@ -826,12 +826,12 @@
 @ stub InternalLcidToName
 @ stub Internal_EnumCalendarInfo
 @ stub Internal_EnumDateFormats
-@ stub Internal_EnumLanguageGroupLocales
-@ stub Internal_EnumSystemCodePages
-@ stub Internal_EnumSystemLanguageGroups
+@ stdcall Internal_EnumLanguageGroupLocales(ptr long long ptr long)
+@ stdcall Internal_EnumSystemCodePages(ptr long long)
+@ stdcall Internal_EnumSystemLanguageGroups(ptr long ptr long)
 @ stub Internal_EnumSystemLocales
 @ stub Internal_EnumTimeFormats
-@ stub Internal_EnumUILanguages
+@ stdcall Internal_EnumUILanguages(ptr long long long)
 # @ stub InternetTimeFromSystemTimeA
 # @ stub InternetTimeFromSystemTimeW
 # @ stub InternetTimeToSystemTimeA
@@ -875,7 +875,7 @@
 @ stdcall IsTokenRestricted(long)
 @ stdcall IsValidAcl(ptr)
 @ stdcall IsValidCodePage(long) kernel32.IsValidCodePage
-@ stdcall IsValidLanguageGroup(long long) kernel32.IsValidLanguageGroup
+@ stdcall IsValidLanguageGroup(long long)
 @ stdcall IsValidLocale(long long) kernel32.IsValidLocale
 @ stdcall IsValidLocaleName(wstr) kernel32.IsValidLocaleName
 # @ stub IsValidNLSVersion

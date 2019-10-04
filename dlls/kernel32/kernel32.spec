@@ -403,7 +403,7 @@
 @ stdcall EnumDateFormatsExW(ptr long long)
 @ stdcall EnumDateFormatsW(ptr long long)
 @ stdcall EnumLanguageGroupLocalesA(ptr long long ptr)
-@ stdcall EnumLanguageGroupLocalesW(ptr long long ptr)
+@ stdcall -import EnumLanguageGroupLocalesW(ptr long long ptr)
 @ stdcall EnumResourceLanguagesA(long str str ptr long)
 @ stdcall -import EnumResourceLanguagesExA(long str str ptr long long long)
 @ stdcall -import EnumResourceLanguagesExW(long wstr wstr ptr long long long)
@@ -417,19 +417,19 @@
 @ stdcall -import EnumResourceTypesExW(long ptr long long long)
 @ stdcall EnumResourceTypesW(long ptr long)
 @ stdcall EnumSystemCodePagesA(ptr long)
-@ stdcall EnumSystemCodePagesW(ptr long)
+@ stdcall -import EnumSystemCodePagesW(ptr long)
 @ stdcall EnumSystemFirmwareTables(long ptr long)
 @ stdcall EnumSystemGeoID(long long ptr)
 @ stdcall EnumSystemLanguageGroupsA(ptr long ptr)
-@ stdcall EnumSystemLanguageGroupsW(ptr long ptr)
-@ stdcall EnumSystemLocalesA(ptr long)
-@ stdcall EnumSystemLocalesEx(ptr long long ptr)
-@ stdcall EnumSystemLocalesW(ptr long)
+@ stdcall -import EnumSystemLanguageGroupsW(ptr long ptr)
+@ stdcall -import EnumSystemLocalesA(ptr long)
+@ stdcall -import EnumSystemLocalesEx(ptr long long ptr)
+@ stdcall -import EnumSystemLocalesW(ptr long)
 @ stdcall EnumTimeFormatsA(ptr long long)
 @ stdcall EnumTimeFormatsEx(ptr wstr long long)
 @ stdcall EnumTimeFormatsW(ptr long long)
 @ stdcall EnumUILanguagesA(ptr long long)
-@ stdcall EnumUILanguagesW(ptr long long)
+@ stdcall -import EnumUILanguagesW(ptr long long)
 # @ stub EnumerateLocalComputerNamesA
 # @ stub EnumerateLocalComputerNamesW
 @ stdcall -arch=x86_64 EnterUmsSchedulingMode(ptr)
@@ -990,7 +990,7 @@
 # @ stub IsTimeZoneRedirectionEnabled
 # @ stub IsValidCalDateTime
 @ stdcall IsValidCodePage(long)
-@ stdcall IsValidLanguageGroup(long long)
+@ stdcall -import IsValidLanguageGroup(long long)
 @ stdcall IsValidLocale(long long)
 @ stdcall IsValidLocaleName(wstr)
 # @ stub IsValidUILanguage
