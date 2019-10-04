@@ -1127,18 +1127,19 @@ static HRESULT session_add_media_stream(struct media_source *source, IMFMediaStr
     return S_OK;
 }
 
-static void session_set_source_state(struct media_session *session, IMFMediaSource *source, enum source_state state)
+static BOOL session_set_source_state(struct media_session *session, IMFMediaSource *source, enum source_state state)
 {
     struct media_source *cur;
+    BOOL ret = TRUE;
 
     LIST_FOR_EACH_ENTRY(cur, &session->presentation.sources, struct media_source, entry)
     {
         if (source == cur->source)
-        {
             cur->state = state;
-            break;
-        }
+        ret &= cur->state == state;
     }
+
+    return ret;
 }
 
 static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
@@ -1153,6 +1154,7 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
     IMFMediaStream *stream;
     PROPVARIANT value;
     HRESULT hr;
+    BOOL ret;
 
     if (FAILED(hr = IMFAsyncResult_GetState(result, (IUnknown **)&event_source)))
         return hr;
@@ -1189,7 +1191,12 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
                 source_state = SOURCE_STATE_STOPPED;
 
             EnterCriticalSection(&session->cs);
-            session_set_source_state(session, (IMFMediaSource *)event_source, source_state);
+
+            ret = session_set_source_state(session, (IMFMediaSource *)event_source, source_state);
+            if (ret && event_type == MESourceStarted)
+                session_set_topo_status(session, &session->presentation.current_topology, S_OK,
+                        MF_TOPOSTATUS_STARTED_SOURCE);
+
             LeaveCriticalSection(&session->cs);
             break;
         case MENewStream:
