@@ -582,7 +582,7 @@
 @ cdecl _utime64(str ptr)
 @ cdecl _vscprintf(str ptr) MSVCRT__vscprintf
 @ cdecl _vscwprintf(wstr ptr) MSVCRT__vscwprintf
-@ cdecl _vsnprintf(ptr long str ptr) MSVCRT_vsnprintf
+@ cdecl -norelay _vsnprintf(ptr long str ptr) MSVCRT_vsnprintf
 @ cdecl _vsnwprintf(ptr long wstr ptr) MSVCRT_vsnwprintf
 @ cdecl _waccess(wstr long) MSVCRT__waccess
 @ cdecl _wasctime(ptr) MSVCRT__wasctime

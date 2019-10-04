@@ -1522,7 +1522,7 @@
 @ cdecl _vscwprintf_l(wstr ptr ptr) msvcr120._vscwprintf_l
 @ cdecl _vscwprintf_p(wstr ptr) msvcr120._vscwprintf_p
 @ cdecl _vscwprintf_p_l(wstr ptr ptr) msvcr120._vscwprintf_p_l
-@ cdecl _vsnprintf(ptr long str ptr) msvcr120._vsnprintf
+@ cdecl -norelay _vsnprintf(ptr long str ptr) msvcr120._vsnprintf
 @ cdecl _vsnprintf_c(ptr long str ptr) msvcr120._vsnprintf_c
 @ cdecl _vsnprintf_c_l(ptr long str ptr ptr) msvcr120._vsnprintf_c_l
 @ cdecl _vsnprintf_l(ptr long str ptr ptr) msvcr120._vsnprintf_l
