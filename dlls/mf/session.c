@@ -38,6 +38,7 @@ enum session_command
     SESSION_CMD_CLOSE,
     SESSION_CMD_SET_TOPOLOGY,
     SESSION_CMD_START,
+    SESSION_CMD_PAUSE,
 };
 
 struct session_op
@@ -718,9 +719,19 @@ static HRESULT WINAPI mfsession_Start(IMFMediaSession *iface, const GUID *format
 
 static HRESULT WINAPI mfsession_Pause(IMFMediaSession *iface)
 {
-    FIXME("(%p)\n", iface);
+    struct media_session *session = impl_from_IMFMediaSession(iface);
+    struct session_op *op;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    if (FAILED(hr = create_session_op(SESSION_CMD_PAUSE, &op)))
+        return hr;
+
+    hr = session_submit_command(session, op);
+    IUnknown_Release(&op->IUnknown_iface);
+
+    return hr;
 }
 
 static HRESULT WINAPI mfsession_Stop(IMFMediaSession *iface)
@@ -1010,6 +1021,8 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             session_start(session, &op->u.start.time_format, &op->u.start.start_position);
             break;
         }
+        case SESSION_CMD_PAUSE:
+            break;
         case SESSION_CMD_CLOSE:
             EnterCriticalSection(&session->cs);
             if (session->state != SESSION_STATE_CLOSED)
