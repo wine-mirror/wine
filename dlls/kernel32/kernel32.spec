@@ -1324,8 +1324,8 @@
 @ stdcall -i386 -private -norelay SUnMapLS_IP_EBP_8() krnl386.exe16.SUnMapLS_IP_EBP_8
 @ stdcall -import ScrollConsoleScreenBufferA(long ptr ptr ptr ptr)
 @ stdcall -import ScrollConsoleScreenBufferW(long ptr ptr ptr ptr)
-@ stdcall SearchPathA(str str str long ptr ptr)
-@ stdcall SearchPathW(wstr wstr wstr long ptr ptr)
+@ stdcall -import SearchPathA(str str str long ptr ptr)
+@ stdcall -import SearchPathW(wstr wstr wstr long ptr ptr)
 @ stdcall SetCPGlobal(long)
 @ stdcall SetCalendarInfoA(long long long str)
 @ stdcall SetCalendarInfoW(long long long wstr)

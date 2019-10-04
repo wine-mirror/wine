@@ -92,7 +92,7 @@ static BOOL load_library_as_datafile( LPCWSTR load_path, DWORD flags, LPCWSTR na
 
     if (flags & LOAD_LIBRARY_AS_IMAGE_RESOURCE) protect |= SEC_IMAGE;
 
-    if (SearchPathW( load_path, name, dotDLL, ARRAY_SIZE( filenameW ), filenameW, NULL ))
+    if (SearchPathW( NULL, name, dotDLL, ARRAY_SIZE( filenameW ), filenameW, NULL ))
     {
         file = CreateFileW( filenameW, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE,
                             NULL, OPEN_EXISTING, 0, 0 );

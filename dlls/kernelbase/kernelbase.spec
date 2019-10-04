@@ -1385,8 +1385,8 @@
 # @ stub SaveStateRootFolderPath
 @ stdcall ScrollConsoleScreenBufferA(long ptr ptr ptr ptr)
 @ stdcall ScrollConsoleScreenBufferW(long ptr ptr ptr ptr)
-@ stdcall SearchPathA(str str str long ptr ptr) kernel32.SearchPathA
-@ stdcall SearchPathW(wstr wstr wstr long ptr ptr) kernel32.SearchPathW
+@ stdcall SearchPathA(str str str long ptr ptr)
+@ stdcall SearchPathW(wstr wstr wstr long ptr ptr)
 @ stdcall SetAclInformation(ptr ptr long long)
 # @ stub SetCachedSigningLevel
 @ stdcall SetCalendarInfoW(long long long wstr) kernel32.SetCalendarInfoW
