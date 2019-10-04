@@ -260,7 +260,7 @@ static BOOL run_terminator(vbdisp_t *This)
         return TRUE;
 
     This->ref++;
-    exec_script(This->desc->ctx, This->desc->funcs[This->desc->class_terminate_id].entries[VBDISP_CALLGET],
+    exec_script(This->desc->ctx, FALSE, This->desc->funcs[This->desc->class_terminate_id].entries[VBDISP_CALLGET],
             This, &dp, NULL);
     return !--This->ref;
 }
@@ -426,7 +426,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
                 return DISP_E_MEMBERNOTFOUND;
             }
 
-            return exec_script(This->desc->ctx, func, This, pdp, pvarRes);
+            return exec_script(This->desc->ctx, FALSE, func, This, pdp, pvarRes);
 
         case DISPATCH_METHOD:
         case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
@@ -436,7 +436,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
                 return DISP_E_MEMBERNOTFOUND;
             }
 
-            return exec_script(This->desc->ctx, func, This, pdp, pvarRes);
+            return exec_script(This->desc->ctx, FALSE, func, This, pdp, pvarRes);
         case DISPATCH_PROPERTYPUT:
         case DISPATCH_PROPERTYPUTREF:
         case DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF: {
@@ -461,7 +461,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
                 return DISP_E_MEMBERNOTFOUND;
             }
 
-            hres = exec_script(This->desc->ctx, func, This, &dp, NULL);
+            hres = exec_script(This->desc->ctx, FALSE, func, This, &dp, NULL);
             if(needs_release)
                 VariantClear(&put_val);
             return hres;
@@ -605,7 +605,7 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
 
     if(SUCCEEDED(hres) && desc->class_initialize_id) {
         DISPPARAMS dp = {0};
-        hres = exec_script(desc->ctx, desc->funcs[desc->class_initialize_id].entries[VBDISP_CALLGET],
+        hres = exec_script(desc->ctx, FALSE, desc->funcs[desc->class_initialize_id].entries[VBDISP_CALLGET],
                            vbdisp, &dp, NULL);
     }
 
@@ -621,15 +621,8 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
 static HRESULT Procedure_invoke(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     script_ctx_t *ctx = This->desc->ctx;
-    HRESULT hres;
-
     TRACE("\n");
-
-    IActiveScriptSite_OnEnterScript(ctx->site);
-    hres = exec_script(ctx, This->desc->value_func, NULL, NULL, res);
-    IActiveScriptSite_OnLeaveScript(ctx->site);
-
-    return hres;
+    return exec_script(ctx, TRUE, This->desc->value_func, NULL, NULL, res);
 }
 
 static const builtin_prop_t procedure_props[] = {
@@ -884,9 +877,7 @@ static HRESULT WINAPI ScriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     switch(wFlags) {
     case DISPATCH_METHOD:
     case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
-        IActiveScriptSite_OnEnterScript(This->ctx->site);
-        hres = exec_script(This->ctx, ident->u.func, NULL, pdp, pvarRes);
-        IActiveScriptSite_OnLeaveScript(This->ctx->site);
+        hres = exec_script(This->ctx, TRUE, ident->u.func, NULL, pdp, pvarRes);
         break;
     default:
         FIXME("Unsupported flags %x\n", wFlags);

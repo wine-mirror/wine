@@ -78,15 +78,8 @@ static inline BOOL is_started(VBScript *This)
 
 static HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res)
 {
-    HRESULT hres;
-
     code->pending_exec = FALSE;
-
-    IActiveScriptSite_OnEnterScript(ctx->site);
-    hres = exec_script(ctx, &code->main_code, NULL, NULL, res);
-    IActiveScriptSite_OnLeaveScript(ctx->site);
-
-    return hres;
+    return exec_script(ctx, TRUE, &code->main_code, NULL, NULL, res);
 }
 
 static void exec_queued_code(script_ctx_t *ctx)

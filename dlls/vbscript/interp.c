@@ -588,7 +588,7 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
         break;
     case REF_FUNC:
         vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
-        hres = exec_script(ctx->script, ref.u.f, NULL, &dp, res);
+        hres = exec_script(ctx->script, FALSE, ref.u.f, NULL, &dp, res);
         if(FAILED(hres))
             return hres;
         break;
@@ -2086,7 +2086,7 @@ static void release_exec(exec_ctx_t *ctx)
     heap_free(ctx->stack);
 }
 
-HRESULT exec_script(script_ctx_t *ctx, function_t *func, vbdisp_t *vbthis, DISPPARAMS *dp, VARIANT *res)
+HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbdisp_t *vbthis, DISPPARAMS *dp, VARIANT *res)
 {
     exec_ctx_t exec = {func->code_ctx};
     vbsop_t op;
@@ -2147,6 +2147,9 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, vbdisp_t *vbthis, DISPP
         release_exec(&exec);
         return E_OUTOFMEMORY;
     }
+
+    if(extern_caller)
+        IActiveScriptSite_OnEnterScript(ctx->site);
 
     if(vbthis) {
         exec.this_obj = (IDispatch*)&vbthis->IDispatchEx_iface;
@@ -2219,6 +2222,9 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, vbdisp_t *vbthis, DISPP
     }
 
     assert(!exec.top);
+
+    if(extern_caller)
+        IActiveScriptSite_OnLeaveScript(ctx->site);
 
     if(SUCCEEDED(hres) && res) {
         *res = exec.ret_val;
