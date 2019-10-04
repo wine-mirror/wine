@@ -56,6 +56,8 @@ struct quartz_vmr
     IVMRWindowlessControl IVMRWindowlessControl_iface;
     IVMRWindowlessControl9 IVMRWindowlessControl9_iface;
 
+    IOverlay IOverlay_iface;
+
     IVMRSurfaceAllocatorEx9 *allocator;
     IVMRImagePresenter9 *presenter;
     BOOL allocator_is_ex;
@@ -550,6 +552,19 @@ static HRESULT vmr_query_interface(BaseRenderer *iface, REFIID iid, void **out)
     return S_OK;
 }
 
+static HRESULT vmr_pin_query_interface(BaseRenderer *iface, REFIID iid, void **out)
+{
+    struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
+
+    if (IsEqualGUID(iid, &IID_IOverlay))
+        *out = &filter->IOverlay_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static const BaseRendererFuncTable BaseFuncTable =
 {
     .pfnCheckMediaType = VMR9_CheckMediaType,
@@ -561,6 +576,7 @@ static const BaseRendererFuncTable BaseFuncTable =
     .pfnBreakConnect = VMR9_BreakConnect,
     .renderer_destroy = vmr_destroy,
     .renderer_query_interface = vmr_query_interface,
+    .renderer_pin_query_interface = vmr_pin_query_interface,
 };
 
 static LPWSTR WINAPI VMR9_GetClassWindowStyles(BaseWindow *This, DWORD *pClassStyles, DWORD *pWindowStyles, DWORD *pWindowStylesEx)
@@ -2112,6 +2128,106 @@ static const IVMRSurfaceAllocatorNotify9Vtbl VMR9_SurfaceAllocatorNotify_Vtbl =
     VMR9SurfaceAllocatorNotify_NotifyEvent
 };
 
+static inline struct quartz_vmr *impl_from_IOverlay(IOverlay *iface)
+{
+    return CONTAINING_RECORD(iface, struct quartz_vmr, IOverlay_iface);
+}
+
+static HRESULT WINAPI overlay_QueryInterface(IOverlay *iface, REFIID iid, void **out)
+{
+    struct quartz_vmr *filter = impl_from_IOverlay(iface);
+    return IPin_QueryInterface(&filter->renderer.sink.pin.IPin_iface, iid, out);
+}
+
+static ULONG WINAPI overlay_AddRef(IOverlay *iface)
+{
+    struct quartz_vmr *filter = impl_from_IOverlay(iface);
+    return IPin_AddRef(&filter->renderer.sink.pin.IPin_iface);
+}
+
+static ULONG WINAPI overlay_Release(IOverlay *iface)
+{
+    struct quartz_vmr *filter = impl_from_IOverlay(iface);
+    return IPin_Release(&filter->renderer.sink.pin.IPin_iface);
+}
+
+static HRESULT WINAPI overlay_GetPalette(IOverlay *iface, DWORD *count, PALETTEENTRY **palette)
+{
+    FIXME("iface %p, count %p, palette %p, stub!\n", iface, count, palette);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_SetPalette(IOverlay *iface, DWORD count, PALETTEENTRY *palette)
+{
+    FIXME("iface %p, count %u, palette %p, stub!\n", iface, count, palette);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetDefaultColorKey(IOverlay *iface, COLORKEY *key)
+{
+    FIXME("iface %p, key %p, stub!\n", iface, key);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetColorKey(IOverlay *iface, COLORKEY *key)
+{
+    FIXME("iface %p, key %p, stub!\n", iface, key);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_SetColorKey(IOverlay *iface, COLORKEY *key)
+{
+    FIXME("iface %p, key %p, stub!\n", iface, key);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetWindowHandle(IOverlay *iface, HWND *window)
+{
+    FIXME("iface %p, window %p, stub!\n", iface, window);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetClipList(IOverlay *iface, RECT *source, RECT *dest, RGNDATA **region)
+{
+    FIXME("iface %p, source %p, dest %p, region %p, stub!\n", iface, source, dest, region);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_GetVideoPosition(IOverlay *iface, RECT *source, RECT *dest)
+{
+    FIXME("iface %p, source %p, dest %p, stub!\n", iface, source, dest);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_Advise(IOverlay *iface, IOverlayNotify *sink, DWORD flags)
+{
+    FIXME("iface %p, sink %p, flags %#x, stub!\n", iface, sink, flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI overlay_Unadvise(IOverlay *iface)
+{
+    FIXME("iface %p, stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static const IOverlayVtbl overlay_vtbl =
+{
+    overlay_QueryInterface,
+    overlay_AddRef,
+    overlay_Release,
+    overlay_GetPalette,
+    overlay_SetPalette,
+    overlay_GetDefaultColorKey,
+    overlay_GetColorKey,
+    overlay_SetColorKey,
+    overlay_GetWindowHandle,
+    overlay_GetClipList,
+    overlay_GetVideoPosition,
+    overlay_Advise,
+    overlay_Unadvise,
+};
+
 static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
 {
     static const WCHAR sink_name[] = {'V','M','R',' ','I','n','p','u','t','0',0};
@@ -2149,6 +2265,7 @@ static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
     pVMR->IVMRSurfaceAllocatorNotify9_iface.lpVtbl = &VMR9_SurfaceAllocatorNotify_Vtbl;
     pVMR->IVMRWindowlessControl_iface.lpVtbl = &VMR7_WindowlessControl_Vtbl;
     pVMR->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
+    pVMR->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
     hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, outer, clsid, sink_name, &BaseFuncTable);
     if (FAILED(hr))
