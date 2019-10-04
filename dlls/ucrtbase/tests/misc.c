@@ -938,6 +938,10 @@ static void test_strftime(void)
     retA = p_strftime(bufA, sizeof(bufA), "%#T", &epoch);
     ok(retA == 5, "expected 5, got %d\n", (int)retA);
     ok(!strcmp(bufA, "0:0:0"), "got %s\n", bufA);
+
+    retA = p_strftime(bufA, sizeof(bufA), "%h", &epoch);
+    ok(retA == 3, "expected 3, got %d\n", (int)retA);
+    ok(!strcmp(bufA, "Jan"), "got %s\n", bufA);
 }
 
 static LONG* get_failures_counter(HANDLE *map)

@@ -1142,6 +1142,9 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
                 return 0;
             break;
         case 'b':
+#if _MSVCR_VER>=140
+        case 'h':
+#endif
             if(mstm->tm_mon<0 || mstm->tm_mon>11)
                 goto einval_error;
             if(!strftime_str(str, &ret, max, time_data->str.names.short_mon[mstm->tm_mon]))
