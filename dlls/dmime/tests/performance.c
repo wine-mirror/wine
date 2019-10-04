@@ -454,6 +454,10 @@ static void test_notification_type(void)
 
                 hr = IDirectMusicSegmentState8_GetSegment(segmentstate, &segment);
                 ok(hr == S_OK, "Failed: %08x\n", hr);
+                if (FAILED(hr)) {
+                    IDirectMusicSegmentState8_Release(segmentstate);
+                    break;
+                }
 
                 hr = IDirectMusicSegment_QueryInterface(segment, &IID_IDirectMusicSegment8, (void**)&segment8);
                 ok(hr == S_OK, "Failed: %08x\n", hr);
