@@ -335,24 +335,42 @@ HRESULT parse_path( const WCHAR *str, struct path **ret )
         DWORD server_len = ARRAY_SIZE(server);
 
         p++;
-        if (*p != '\\') return WBEM_E_INVALID_OBJECT_PATH;
+        if (*p != '\\')
+        {
+            heap_free( path );
+            return WBEM_E_INVALID_OBJECT_PATH;
+        }
         p++;
 
         q = p;
         while (*p && *p != '\\') p++;
-        if (!*p) return WBEM_E_INVALID_OBJECT_PATH;
+        if (!*p)
+        {
+            heap_free( path );
+            return WBEM_E_INVALID_OBJECT_PATH;
+        }
 
         len = p - q;
         if (!GetComputerNameW( server, &server_len ) || server_len != len || wcsnicmp( q, server, server_len ))
+        {
+            heap_free( path );
             return WBEM_E_NOT_SUPPORTED;
+        }
 
         q = ++p;
         while (*p && *p != ':') p++;
-        if (!*p) return WBEM_E_INVALID_OBJECT_PATH;
+        if (!*p)
+        {
+            heap_free( path );
+            return WBEM_E_INVALID_OBJECT_PATH;
+        }
 
         len = p - q;
         if (len != ARRAY_SIZE(cimv2W) - 1 || wcsnicmp( q, cimv2W, ARRAY_SIZE(cimv2W) - 1 ))
+        {
+            heap_free( path );
             return WBEM_E_INVALID_NAMESPACE;
+        }
         p++;
     }
 
