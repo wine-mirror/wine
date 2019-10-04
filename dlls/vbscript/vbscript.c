@@ -59,6 +59,12 @@ struct VBScript {
     LCID lcid;
 };
 
+typedef struct {
+    IActiveScriptError IActiveScriptError_iface;
+    LONG ref;
+    EXCEPINFO ei;
+} VBScriptError;
+
 static void change_state(VBScript *This, SCRIPTSTATE state)
 {
     if(This->state == state)
@@ -247,6 +253,118 @@ static void decrease_state(VBScript *This, SCRIPTSTATE state)
         break;
     DEFAULT_UNREACHABLE;
     }
+}
+
+static inline VBScriptError *impl_from_IActiveScriptError(IActiveScriptError *iface)
+{
+    return CONTAINING_RECORD(iface, VBScriptError, IActiveScriptError_iface);
+}
+
+static HRESULT WINAPI VBScriptError_QueryInterface(IActiveScriptError *iface, REFIID riid, void **ppv)
+{
+    VBScriptError *This = impl_from_IActiveScriptError(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptError_iface;
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptError)) {
+        TRACE("(%p)->(IID_IActiveScriptError %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptError_iface;
+    }else {
+        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI VBScriptError_AddRef(IActiveScriptError *iface)
+{
+    VBScriptError *This = impl_from_IActiveScriptError(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI VBScriptError_Release(IActiveScriptError *iface)
+{
+    VBScriptError *This = impl_from_IActiveScriptError(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI VBScriptError_GetExceptionInfo(IActiveScriptError *iface, EXCEPINFO *excepinfo)
+{
+    VBScriptError *This = impl_from_IActiveScriptError(iface);
+
+    TRACE("(%p)->(%p)\n", This, excepinfo);
+
+    *excepinfo = This->ei;
+    excepinfo->bstrSource = SysAllocString(This->ei.bstrSource);
+    excepinfo->bstrDescription = SysAllocString(This->ei.bstrDescription);
+    excepinfo->bstrHelpFile = SysAllocString(This->ei.bstrHelpFile);
+    return S_OK;
+}
+
+static HRESULT WINAPI VBScriptError_GetSourcePosition(IActiveScriptError *iface, DWORD *source_context, ULONG *line, LONG *character)
+{
+    VBScriptError *This = impl_from_IActiveScriptError(iface);
+
+    FIXME("(%p)->(%p %p %p)\n", This, source_context, line, character);
+
+    if(source_context)
+        *source_context = 0;
+    if(line)
+        *line = 0;
+    if(character)
+        *character = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI VBScriptError_GetSourceLineText(IActiveScriptError *iface, BSTR *source)
+{
+    VBScriptError *This = impl_from_IActiveScriptError(iface);
+    FIXME("(%p)->(%p)\n", This, source);
+    return E_NOTIMPL;
+}
+
+static const IActiveScriptErrorVtbl VBScriptErrorVtbl = {
+    VBScriptError_QueryInterface,
+    VBScriptError_AddRef,
+    VBScriptError_Release,
+    VBScriptError_GetExceptionInfo,
+    VBScriptError_GetSourcePosition,
+    VBScriptError_GetSourceLineText
+};
+
+HRESULT report_script_error(script_ctx_t *ctx)
+{
+    VBScriptError *error;
+    HRESULT hres, result;
+
+    if(!(error = heap_alloc(sizeof(*error))))
+        return E_OUTOFMEMORY;
+    error->IActiveScriptError_iface.lpVtbl = &VBScriptErrorVtbl;
+
+    error->ref = 1;
+    error->ei = ctx->ei;
+    memset(&ctx->ei, 0, sizeof(ctx->ei));
+    result = error->ei.scode;
+
+    hres = IActiveScriptSite_OnScriptError(ctx->site, &error->IActiveScriptError_iface);
+    IActiveScriptError_Release(&error->IActiveScriptError_iface);
+    return hres == S_OK ? SCRIPT_E_REPORTED : result;
 }
 
 static inline VBScript *impl_from_IActiveScript(IActiveScript *iface)

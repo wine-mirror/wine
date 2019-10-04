@@ -2223,8 +2223,14 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
 
     assert(!exec.top);
 
-    if(extern_caller)
+    if(extern_caller) {
         IActiveScriptSite_OnLeaveScript(ctx->site);
+        if(FAILED(hres)) {
+            if(!ctx->ei.scode)
+                ctx->ei.scode = hres;
+            hres = report_script_error(ctx);
+        }
+    }
 
     if(SUCCEEDED(hres) && res) {
         *res = exec.ret_val;
