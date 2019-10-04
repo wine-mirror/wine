@@ -550,7 +550,7 @@ static HRESULT WINAPI mfsession_QueryInterface(IMFMediaSession *iface, REFIID ri
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
 
-    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), out);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
 
     if (IsEqualIID(riid, &IID_IMFMediaSession) ||
             IsEqualIID(riid, &IID_IMFMediaEventGenerator) ||
@@ -577,7 +577,7 @@ static ULONG WINAPI mfsession_AddRef(IMFMediaSession *iface)
     struct media_session *session = impl_from_IMFMediaSession(iface);
     ULONG refcount = InterlockedIncrement(&session->refcount);
 
-    TRACE("(%p) refcount=%u\n", iface, refcount);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
     return refcount;
 }
@@ -587,7 +587,7 @@ static ULONG WINAPI mfsession_Release(IMFMediaSession *iface)
     struct media_session *session = impl_from_IMFMediaSession(iface);
     ULONG refcount = InterlockedDecrement(&session->refcount);
 
-    TRACE("(%p) refcount=%u\n", iface, refcount);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -614,7 +614,7 @@ static HRESULT WINAPI mfsession_GetEvent(IMFMediaSession *iface, DWORD flags, IM
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
 
-    TRACE("(%p)->(%#x, %p)\n", iface, flags, event);
+    TRACE("%p, %#x, %p.\n", iface, flags, event);
 
     return IMFMediaEventQueue_GetEvent(session->event_queue, flags, event);
 }
@@ -623,7 +623,7 @@ static HRESULT WINAPI mfsession_BeginGetEvent(IMFMediaSession *iface, IMFAsyncCa
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
 
-    TRACE("(%p)->(%p, %p)\n", iface, callback, state);
+    TRACE("%p, %p, %p.\n", iface, callback, state);
 
     return IMFMediaEventQueue_BeginGetEvent(session->event_queue, callback, state);
 }
@@ -632,7 +632,7 @@ static HRESULT WINAPI mfsession_EndGetEvent(IMFMediaSession *iface, IMFAsyncResu
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
 
-    TRACE("(%p)->(%p, %p)\n", iface, result, event);
+    TRACE("%p, %p, %p.\n", iface, result, event);
 
     return IMFMediaEventQueue_EndGetEvent(session->event_queue, result, event);
 }
@@ -642,7 +642,7 @@ static HRESULT WINAPI mfsession_QueueEvent(IMFMediaSession *iface, MediaEventTyp
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
 
-    TRACE("(%p)->(%d, %s, %#x, %p)\n", iface, event_type, debugstr_guid(ext_type), hr, value);
+    TRACE("%p, %d, %s, %#x, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
 
     return IMFMediaEventQueue_QueueEventParamVar(session->event_queue, event_type, ext_type, hr, value);
 }
@@ -758,7 +758,7 @@ static HRESULT WINAPI mfsession_Close(IMFMediaSession *iface)
     struct session_op *op;
     HRESULT hr;
 
-    TRACE("(%p)\n", iface);
+    TRACE("%p.\n", iface);
 
     if (FAILED(hr = create_session_op(SESSION_CMD_CLOSE, &op)))
         return hr;
@@ -774,7 +774,7 @@ static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
     struct media_session *session = impl_from_IMFMediaSession(iface);
     HRESULT hr = S_OK;
 
-    FIXME("(%p)\n", iface);
+    FIXME("%p.\n", iface);
 
     EnterCriticalSection(&session->cs);
     if (session->state == SESSION_STATE_SHUT_DOWN)
@@ -803,14 +803,14 @@ static HRESULT WINAPI mfsession_GetClock(IMFMediaSession *iface, IMFClock **cloc
 
 static HRESULT WINAPI mfsession_GetSessionCapabilities(IMFMediaSession *iface, DWORD *caps)
 {
-    FIXME("(%p)->(%p)\n", iface, caps);
+    FIXME("%p, %p.\n", iface, caps);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI mfsession_GetFullTopology(IMFMediaSession *iface, DWORD flags, TOPOID id, IMFTopology **topology)
 {
-    FIXME("(%p)->(%#x, %s, %p)\n", iface, flags, wine_dbgstr_longlong(id), topology);
+    FIXME("%p, %#x, %s, %p.\n", iface, flags, wine_dbgstr_longlong(id), topology);
 
     return E_NOTIMPL;
 }
