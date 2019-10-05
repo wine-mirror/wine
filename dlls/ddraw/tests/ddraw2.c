@@ -13878,7 +13878,7 @@ static void test_caps(void)
     }
 
     hr = DirectDrawCreate((GUID *)DDCREATE_EMULATIONONLY, &ddraw1, NULL);
-    ok(hr == (is_ddraw64 ? E_FAIL : DD_OK), "Got unexpected hr %#x.\n", hr);
+    ok(hr == DD_OK || (is_ddraw64 && hr == E_FAIL), "Got unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
     {
         hr = IDirectDraw_QueryInterface(ddraw1, &IID_IDirectDraw2, (void **)&ddraw);

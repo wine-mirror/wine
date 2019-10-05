@@ -12998,7 +12998,7 @@ static void test_caps(void)
     }
 
     hr = DirectDrawCreate((GUID *)DDCREATE_EMULATIONONLY, &ddraw, NULL);
-    ok(hr == (is_ddraw64 ? E_FAIL : DD_OK), "Got unexpected hr %#x.\n", hr);
+    ok(hr == DD_OK || (is_ddraw64 && hr == E_FAIL), "Got unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
     {
         memset(&hal_caps, 0, sizeof(hal_caps));
