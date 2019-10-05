@@ -109,6 +109,16 @@ SECURITY_STATUS WINAPI NCryptGetProperty(NCRYPT_HANDLE object, const WCHAR *prop
     return NTE_NOT_SUPPORTED;
 }
 
+SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_HANDLE decrypt_key,
+                                       const WCHAR *type, NCryptBufferDesc *params, NCRYPT_KEY_HANDLE *key,
+                                       PBYTE data, DWORD datasize, DWORD flags)
+{
+    FIXME("(0x%lx, 0x%lx, %s, %p, %p, %p, %u, 0x%08x): stub\n", provider, decrypt_key,
+                                                                wine_dbgstr_w(type), params,
+                                                                key, data, datasize, flags);
+    return NTE_NOT_SUPPORTED;
+}
+
 SECURITY_STATUS WINAPI NCryptOpenKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_HANDLE *key,
                                      const WCHAR *name, DWORD keyspec, DWORD flags)
 {

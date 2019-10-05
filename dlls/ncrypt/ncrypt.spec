@@ -76,7 +76,7 @@
 @ stdcall NCryptFreeObject(long)
 @ stdcall NCryptGetProperty(ptr wstr ptr long ptr long)
 @ stub NCryptGetProtectionDescriptorInfo
-@ stub NCryptImportKey
+@ stdcall NCryptImportKey(long long wstr ptr ptr ptr long long)
 @ stub NCryptIsAlgSupported
 @ stub NCryptIsKeyHandle
 @ stub NCryptKeyDerivation

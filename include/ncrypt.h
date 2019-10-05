@@ -39,6 +39,18 @@ typedef struct _NCryptAlgorithmName {
     DWORD dwFlags;
 } NCryptAlgorithmName;
 
+typedef struct _NCryptBuffer {
+    ULONG cbBuffer;
+    ULONG BufferType;
+    PVOID pvBuffer;
+} NCryptBuffer, *PNCryptBuffer;
+
+typedef struct _NCryptBufferDesc {
+    ULONG ulVersion;
+    ULONG cBuffers;
+    PNCryptBuffer pBuffers;
+} NCryptBufferDesc, *PNCryptBufferDesc;
+
 typedef struct NCryptKeyName {
     LPWSTR pszName;
     LPWSTR pszAlgid;
