@@ -3611,7 +3611,8 @@ static unsigned int write_type_tfs(FILE *file, const attr_list_t *attrs,
         {
             int ptr_type;
             ptr_type = get_pointer_fc_context(type, attrs, context);
-            if (ptr_type != FC_RP || type_array_is_decl_as_ptr(type))
+            if (type_array_is_decl_as_ptr(type)
+                    || (ptr_type != FC_RP && context == TYPE_CONTEXT_TOPLEVELPARAM))
             {
                 unsigned int absoff = type->typestring_offset;
                 short reloff = absoff - (*typeformat_offset + 2);
