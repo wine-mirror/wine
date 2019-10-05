@@ -76,6 +76,13 @@ SECURITY_STATUS WINAPI NCryptEnumAlgorithms(NCRYPT_PROV_HANDLE provider, DWORD a
     return NTE_NOT_SUPPORTED;
 }
 
+SECURITY_STATUS WINAPI NCryptEnumKeys(NCRYPT_PROV_HANDLE provider, const WCHAR *scope,
+                                      NCryptKeyName **key_name, PVOID *enum_state, DWORD flags)
+{
+    FIXME("(0x%lx, %p, %p, %p, 0x%08x): stub\n", provider, scope, key_name, enum_state, flags);
+    return NTE_NOT_SUPPORTED;
+}
+
 SECURITY_STATUS WINAPI NCryptFinalizeKey(NCRYPT_KEY_HANDLE key, DWORD flags)
 {
     FIXME("(0x%lx, 0x%08x): stub\n", key, flags);

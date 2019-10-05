@@ -39,6 +39,13 @@ typedef struct _NCryptAlgorithmName {
     DWORD dwFlags;
 } NCryptAlgorithmName;
 
+typedef struct NCryptKeyName {
+    LPWSTR pszName;
+    LPWSTR pszAlgid;
+    DWORD dwLegacyKeySpec;
+    DWORD dwFlags;
+} NCryptKeyName;
+
 typedef ULONG_PTR NCRYPT_HANDLE;
 typedef ULONG_PTR NCRYPT_PROV_HANDLE;
 typedef ULONG_PTR NCRYPT_KEY_HANDLE;
