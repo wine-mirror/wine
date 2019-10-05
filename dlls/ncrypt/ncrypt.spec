@@ -63,7 +63,7 @@
 @ stdcall NCryptCreatePersistedKey(long ptr wstr wstr long long)
 @ stub NCryptCreateProtectionDescriptor
 @ stdcall NCryptDecrypt(long ptr long ptr ptr long ptr long)
-@ stub NCryptDeleteKey
+@ stdcall NCryptDeleteKey(long long)
 @ stub NCryptDeriveKey
 @ stub NCryptDuplicateKeyProtectorHandle
 @ stdcall NCryptEncrypt(long ptr long ptr ptr long ptr long)

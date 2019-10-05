@@ -60,6 +60,12 @@ SECURITY_STATUS WINAPI NCryptDecrypt(NCRYPT_KEY_HANDLE key, BYTE *input, DWORD i
     return NTE_NOT_SUPPORTED;
 }
 
+SECURITY_STATUS WINAPI NCryptDeleteKey(NCRYPT_KEY_HANDLE key, DWORD flags)
+{
+    FIXME("(0x%lx, 0x%08x): stub\n", key, flags);
+    return NTE_NOT_SUPPORTED;
+}
+
 SECURITY_STATUS WINAPI NCryptEncrypt(NCRYPT_KEY_HANDLE key, BYTE *input, DWORD insize, void *padding,
                                      BYTE *output, DWORD outsize, DWORD *result, DWORD flags)
 {
