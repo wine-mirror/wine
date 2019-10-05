@@ -3865,16 +3865,13 @@ static unsigned int get_required_buffer_size_type(
         }
 
     case TGT_ARRAY:
-        if (get_pointer_fc(type, attrs, toplevel_param) == FC_RP)
+        switch (get_array_fc(type))
         {
-            switch (get_array_fc(type))
-            {
-            case FC_SMFARRAY:
-            case FC_LGFARRAY:
-                return type_array_get_dim(type) *
-                    get_required_buffer_size_type(type_array_get_element_type(type), name,
-                                                  NULL, FALSE, alignment);
-            }
+        case FC_SMFARRAY:
+        case FC_LGFARRAY:
+            return type_array_get_dim(type) *
+                get_required_buffer_size_type(type_array_get_element_type(type), name,
+                                              NULL, FALSE, alignment);
         }
         break;
 
