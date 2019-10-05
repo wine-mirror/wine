@@ -74,7 +74,7 @@
 @ stdcall NCryptFinalizeKey(long long)
 @ stdcall NCryptFreeBuffer(ptr)
 @ stdcall NCryptFreeObject(long)
-@ stub NCryptGetProperty
+@ stdcall NCryptGetProperty(ptr wstr ptr long ptr long)
 @ stub NCryptGetProtectionDescriptorInfo
 @ stub NCryptImportKey
 @ stub NCryptIsAlgSupported
@@ -90,7 +90,7 @@
 @ stub NCryptRegisterProtectionDescriptorName
 @ stub NCryptSecretAgreement
 @ stub NCryptSetAuditingInterface
-@ stub NCryptSetProperty
+@ stdcall NCryptSetProperty(ptr wstr ptr long long)
 @ stub NCryptSignHash
 @ stub NCryptStreamClose
 @ stub NCryptStreamOpenToProtect
