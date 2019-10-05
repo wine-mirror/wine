@@ -361,11 +361,11 @@ static void test___fpe_flt_rounds(void)
 
     ok((p__controlfp(_RC_UP, _RC_CHOP) & _RC_CHOP) == _RC_UP, "_controlfp(_RC_UP, _RC_CHOP) failed\n");
     ret = p___fpe_flt_rounds();
-    ok(ret == 2 + (sizeof(void*)>sizeof(int)), "__fpe_flt_rounds returned %d\n", ret);
+    ok(ret == 2 || broken(ret == 3) /* w1064v1507 */, "__fpe_flt_rounds returned %d\n", ret);
 
     ok((p__controlfp(_RC_DOWN, _RC_CHOP) & _RC_CHOP) == _RC_DOWN, "_controlfp(_RC_DOWN, _RC_CHOP) failed\n");
     ret = p___fpe_flt_rounds();
-    ok(ret == 3 - (sizeof(void*)>sizeof(int)), "__fpe_flt_rounds returned %d\n", ret);
+    ok(ret == 3 || broken(ret == 2) /* w1064v1507 */, "__fpe_flt_rounds returned %d\n", ret);
 
     ok((p__controlfp(_RC_CHOP, _RC_CHOP) & _RC_CHOP) == _RC_CHOP, "_controlfp(_RC_CHOP, _RC_CHOP) failed\n");
     ret = p___fpe_flt_rounds();

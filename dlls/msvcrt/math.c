@@ -1274,13 +1274,8 @@ int CDECL __fpe_flt_rounds(void)
     switch(fpc) {
         case MSVCRT__RC_CHOP: return 0;
         case MSVCRT__RC_NEAR: return 1;
-#ifdef _WIN64
-        case MSVCRT__RC_UP: return 3;
-        default: return 2;
-#else
         case MSVCRT__RC_UP: return 2;
         default: return 3;
-#endif
     }
 }
 #endif
