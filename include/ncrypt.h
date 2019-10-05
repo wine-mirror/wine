@@ -32,6 +32,13 @@ typedef LONG SECURITY_STATUS;
 #define __SECSTATUS_DEFINED__
 #endif
 
+typedef struct _NCryptAlgorithmName {
+    LPWSTR pszName;
+    DWORD dwClass;
+    DWORD dwAlgOperations;
+    DWORD dwFlags;
+} NCryptAlgorithmName;
+
 typedef ULONG_PTR NCRYPT_HANDLE;
 typedef ULONG_PTR NCRYPT_PROV_HANDLE;
 typedef ULONG_PTR NCRYPT_KEY_HANDLE;

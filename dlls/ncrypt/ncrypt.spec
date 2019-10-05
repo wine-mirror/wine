@@ -67,7 +67,7 @@
 @ stub NCryptDeriveKey
 @ stub NCryptDuplicateKeyProtectorHandle
 @ stdcall NCryptEncrypt(long ptr long ptr ptr long ptr long)
-@ stub NCryptEnumAlgorithms
+@ stdcall NCryptEnumAlgorithms(long long ptr ptr long)
 @ stub NCryptEnumKeys
 @ stub NCryptEnumStorageProviders
 @ stub NCryptExportKey
