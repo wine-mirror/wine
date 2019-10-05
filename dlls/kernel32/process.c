@@ -953,7 +953,7 @@ static BOOL build_command_line( WCHAR **argv )
         has_space=FALSE;
         bcount=0;
         a=*arg;
-        if( !*a ) has_space=TRUE;
+        if( arg == argv || !*a ) has_space=TRUE;
         while (*a!='\0') {
             if (*a=='\\') {
                 bcount++;
@@ -990,7 +990,7 @@ static BOOL build_command_line( WCHAR **argv )
         /* Check for quotes and spaces in this argument */
         has_space=has_quote=FALSE;
         a=*arg;
-        if( !*a ) has_space=TRUE;
+        if( arg == argv || !*a ) has_space=TRUE;
         while (*a!='\0') {
             if (*a==' ' || *a=='\t') {
                 has_space=TRUE;
