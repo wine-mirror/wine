@@ -125,6 +125,13 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
     return NTE_NOT_SUPPORTED;
 }
 
+SECURITY_STATUS WINAPI NCryptIsAlgSupported(NCRYPT_PROV_HANDLE provider, const WCHAR *algid,
+                                            DWORD flags)
+{
+    FIXME("(0x%lx, %s, 0x%08x): stub\n", provider, wine_dbgstr_w(algid), flags);
+    return NTE_NOT_SUPPORTED;
+}
+
 SECURITY_STATUS WINAPI NCryptOpenKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_HANDLE *key,
                                      const WCHAR *name, DWORD keyspec, DWORD flags)
 {
