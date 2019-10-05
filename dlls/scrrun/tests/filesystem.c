@@ -1897,7 +1897,7 @@ todo_wine
     lstrcatW(buffW, crlfW);
     str = NULL;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, str), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -1920,7 +1920,7 @@ todo_wine
     lstrcatW(buffW, L"123");
     str = NULL;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, str), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -1942,7 +1942,7 @@ todo_wine
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
     ok(!wcscmp(str, L"123"), "got %s\n", wine_dbgstr_w(str));
 
     ITextStream_Release(stream);
@@ -1960,7 +1960,7 @@ todo_wine
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
     ok(!wcscmp(str, L"test"), "got %s\n", wine_dbgstr_w(str));
 
     ITextStream_Release(stream);
@@ -1981,7 +1981,7 @@ todo_wine
 
     str = NULL;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
     ok(!lstrcmpW(L"test123", str), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -2003,7 +2003,7 @@ todo_wine
 
     str = (void*)0xdeadbeef;
     hr = ITextStream_Read(stream, 500, &str);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
     ok(!wcscmp(str, L"test string"), "got %s\n", wine_dbgstr_w(str));
 
     ITextStream_Release(stream);
