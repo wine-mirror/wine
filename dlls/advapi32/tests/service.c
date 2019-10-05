@@ -1806,7 +1806,7 @@ static void test_wow64(void)
     ok(ret, "Failed to delete service, error %u.\n", GetLastError());
     CloseServiceHandle(service);
 
-    service = CreateServiceA(manager, "winetestsvc", "winetestsvc", SERVICE_START | DELETE,
+    service = CreateServiceA(manager, "winetestsvc2", "winetestsvc2", SERVICE_START | DELETE,
             SERVICE_KERNEL_DRIVER, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
             "C:\\windows\\system32\\winetestsvc.exe", NULL, NULL, NULL, NULL, NULL);
     ok(!!service, "Failed to create service, error %u.\n", GetLastError());
@@ -1825,7 +1825,7 @@ static void test_wow64(void)
             0, NULL, CREATE_ALWAYS, 0, NULL);
     CloseHandle(file);
 
-    service = CreateServiceA(manager, "winetestsvc", "winetestsvc", SERVICE_START | DELETE,
+    service = CreateServiceA(manager, "winetestsvc3", "winetestsvc3", SERVICE_START | DELETE,
             SERVICE_WIN32_OWN_PROCESS, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
             "C:\\windows\\system32\\winetestsvc.exe service serve", NULL, NULL, NULL, NULL, NULL);
     ok(!!service, "Failed to create service, error %u.\n", GetLastError());
@@ -1837,7 +1837,7 @@ static void test_wow64(void)
     ok(ret, "Failed to delete service, error %u.\n", GetLastError());
     CloseServiceHandle(service);
 
-    service = CreateServiceA(manager, "winetestsvc", "winetestsvc", SERVICE_START | DELETE,
+    service = CreateServiceA(manager, "winetestsvc4", "winetestsvc4", SERVICE_START | DELETE,
             SERVICE_KERNEL_DRIVER, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
             "C:\\windows\\system32\\winetestsvc.exe", NULL, NULL, NULL, NULL, NULL);
     ok(!!service, "Failed to create service, error %u.\n", GetLastError());
