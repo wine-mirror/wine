@@ -89,6 +89,12 @@ SECURITY_STATUS WINAPI NCryptFinalizeKey(NCRYPT_KEY_HANDLE key, DWORD flags)
     return NTE_NOT_SUPPORTED;
 }
 
+SECURITY_STATUS WINAPI NCryptFreeBuffer(PVOID buf)
+{
+    FIXME("(%p): stub\n", buf);
+    return NTE_NOT_SUPPORTED;
+}
+
 SECURITY_STATUS WINAPI NCryptFreeObject(NCRYPT_HANDLE object)
 {
     FIXME("(0x%lx): stub\n", object);

@@ -72,7 +72,7 @@
 @ stub NCryptEnumStorageProviders
 @ stub NCryptExportKey
 @ stdcall NCryptFinalizeKey(long long)
-@ stub NCryptFreeBuffer
+@ stdcall NCryptFreeBuffer(ptr)
 @ stdcall NCryptFreeObject(long)
 @ stub NCryptGetProperty
 @ stub NCryptGetProtectionDescriptorInfo
