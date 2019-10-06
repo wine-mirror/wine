@@ -629,6 +629,7 @@ sub READ_DEFAULTS($)
 sub add_lead_byte($)
 {
     my $ch = shift;
+    return if defined $cp2uni[$ch];
     push @lead_bytes, $ch;
     $cp2uni[$ch] = 0;
 }
@@ -640,10 +641,7 @@ sub add_mapping($$)
     my ($cp, $uni) = @_;
     $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
     $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
-    if ($cp > 0xff && !defined($cp2uni[$cp >> 8]))
-    {
-        add_lead_byte( $cp >> 8 );
-    }
+    if ($cp > 0xff) { add_lead_byte( $cp >> 8 ); }
 }
 
 ################################################################
