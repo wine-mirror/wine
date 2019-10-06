@@ -743,7 +743,7 @@ static HRESULT WINAPI MediaPositionPassThru_put_CurrentPosition(IMediaPosition *
     IMediaPosition *pos;
     HRESULT hr;
 
-    TRACE("(%s)\n", wine_dbgstr_longlong(llTime));
+    TRACE("iface %p, time %.16e.\n", iface, llTime);
 
     hr = get_connected(This, &IID_IMediaPosition, (LPVOID*)&pos);
     if (SUCCEEDED(hr)) {
@@ -797,7 +797,7 @@ static HRESULT WINAPI MediaPositionPassThru_put_StopTime(IMediaPosition *iface, 
     IMediaPosition *pos;
     HRESULT hr;
 
-    TRACE("(%s)\n", wine_dbgstr_longlong(llTime));
+    TRACE("iface %p, time %.16e.\n", iface, llTime);
 
     hr = get_connected(This, &IID_IMediaPosition, (LPVOID*)&pos);
     if (SUCCEEDED(hr)) {
@@ -833,7 +833,7 @@ static HRESULT WINAPI MediaPositionPassThru_put_PrerollTime(IMediaPosition *ifac
     IMediaPosition *pos;
     HRESULT hr;
 
-    TRACE("(%s)\n", wine_dbgstr_longlong(llTime));
+    TRACE("iface %p, time %.16e.\n", iface, llTime);
 
     hr = get_connected(This, &IID_IMediaPosition, (LPVOID*)&pos);
     if (SUCCEEDED(hr)) {

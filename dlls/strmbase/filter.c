@@ -153,7 +153,7 @@ HRESULT WINAPI BaseFilterImpl_Run(IBaseFilter *iface, REFERENCE_TIME start)
 {
     struct strmbase_filter *filter = impl_from_IBaseFilter(iface);
 
-    TRACE("iface %p, start %s.\n", iface, wine_dbgstr_longlong(start));
+    TRACE("iface %p, start %s.\n", iface, debugstr_time(start));
 
     EnterCriticalSection(&filter->csFilter);
     filter->state = State_Running;

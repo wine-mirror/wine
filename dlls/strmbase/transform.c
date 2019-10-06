@@ -254,7 +254,7 @@ static HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter *iface, REFERENCE_TIME
     HRESULT hr = S_OK;
     TransformFilter *This = impl_from_IBaseFilter(iface);
 
-    TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(tStart));
+    TRACE("iface %p, start %s.\n", iface, debugstr_time(tStart));
 
     EnterCriticalSection(&This->csReceive);
     {
@@ -453,7 +453,8 @@ static HRESULT WINAPI TransformFilter_InputPin_NewSegment(IPin * iface, REFERENC
     TransformFilter *pTransform = impl_from_sink_IPin(iface);
     HRESULT hr = S_OK;
 
-    TRACE("(%p)->(%s %s %e)\n", iface, wine_dbgstr_longlong(tStart), wine_dbgstr_longlong(tStop), dRate);
+    TRACE("iface %p, start %s, stop %s, rate %.16e.\n",
+            iface, debugstr_time(tStart), debugstr_time(tStop), dRate);
 
     EnterCriticalSection(&pTransform->filter.csFilter);
     if (pTransform->pFuncsTable->pfnNewSegment)
