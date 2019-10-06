@@ -2601,7 +2601,8 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     if (old_flags != dep_flags)
     {
         ret = NtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &dep_flags, sizeof(dep_flags) );
-        if (ret == STATUS_INVALID_INFO_CLASS) /* Windows 2000 */
+        if (ret == STATUS_INVALID_INFO_CLASS /* Windows 2000 */ ||
+            ret == STATUS_ACCESS_DENIED)
         {
             win_skip( "Skipping DEP tests with ProcessExecuteFlags = %d\n", dep_flags );
             return;
