@@ -124,7 +124,6 @@ static HRESULT sink_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE 
 {
     SmartTeeFilter *This = impl_from_strmbase_pin(base);
     TRACE("(%p, AM_MEDIA_TYPE(%p))\n", This, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
     if (!pmt)
         return VFW_E_TYPE_NOT_ACCEPTED;
     /* We'll take any media type, but the output pins will later

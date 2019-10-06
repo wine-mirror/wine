@@ -325,7 +325,6 @@ static HRESULT WINAPI AVICompressorIn_ReceiveConnection(IPin *iface,
     HRESULT hres;
 
     TRACE("(%p)->(%p AM_MEDIA_TYPE(%p))\n", This, pConnector, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
 
     hres = BaseInputPinImpl_ReceiveConnection(iface, pConnector, pmt);
     if(FAILED(hres))
@@ -382,7 +381,6 @@ static HRESULT sink_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE 
     DWORD res;
 
     TRACE("(%p)->(AM_MEDIA_TYPE(%p))\n", base, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
 
     if(!IsEqualIID(&pmt->majortype, &MEDIATYPE_Video))
         return S_FALSE;

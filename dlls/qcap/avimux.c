@@ -1165,7 +1165,6 @@ static HRESULT WINAPI AviMuxOut_AttemptConnection(struct strmbase_source *base,
     HRESULT hr;
 
     TRACE("(%p)->(%p AM_MEDIA_TYPE(%p))\n", base, pReceivePin, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
 
     hr = IPin_QueryDirection(pReceivePin, &dir);
     if(hr==S_OK && dir!=PINDIR_INPUT)
@@ -1260,7 +1259,6 @@ static HRESULT WINAPI AviMuxOut_Connect(IPin *iface,
     int i;
 
     TRACE("(%p)->(%p AM_MEDIA_TYPE(%p))\n", This, pReceivePin, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
 
     hr = BaseOutputPinImpl_Connect(iface, pReceivePin, pmt);
     if(FAILED(hr))
@@ -1537,7 +1535,6 @@ static HRESULT WINAPI AviMuxIn_ReceiveConnection(IPin *iface,
     HRESULT hr;
 
     TRACE("pin %p, pConnector %p, pmt %p.\n", avimuxin, pConnector, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
 
     if(!pmt)
         return E_POINTER;

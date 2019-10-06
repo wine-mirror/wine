@@ -205,7 +205,8 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
     HRESULT hr;
     VfwCapture *This = impl_from_IAMStreamConfig(iface);
 
-    TRACE("(%p): %p->%p\n", iface, pmt, pmt ? pmt->pbFormat : NULL);
+    TRACE("filter %p, mt %p.\n", This, pmt);
+    strmbase_dump_media_type(pmt);
 
     if (This->filter.state != State_Stopped)
     {
@@ -218,8 +219,6 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
         TRACE("pmt is NULL\n");
         return E_POINTER;
     }
-
-    dump_AM_MEDIA_TYPE(pmt);
 
     if (This->source.pin.peer)
     {
@@ -244,9 +243,13 @@ static HRESULT WINAPI
 AMStreamConfig_GetFormat( IAMStreamConfig *iface, AM_MEDIA_TYPE **pmt )
 {
     VfwCapture *This = impl_from_IAMStreamConfig(iface);
+    HRESULT hr;
 
     TRACE("%p -> (%p)\n", iface, pmt);
-    return qcap_driver_get_format(This->driver_info, pmt);
+    hr = qcap_driver_get_format(This->driver_info, pmt);
+    if (SUCCEEDED(hr))
+        strmbase_dump_media_type(*pmt);
+    return hr;
 }
 
 static HRESULT WINAPI

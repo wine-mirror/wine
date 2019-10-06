@@ -135,7 +135,6 @@ HRESULT qcap_driver_check_format(Capture *device, const AM_MEDIA_TYPE *mt)
 {
     HRESULT hr;
     TRACE("device %p, mt %p.\n", device, mt);
-    dump_AM_MEDIA_TYPE(mt);
 
     if (!mt)
         return E_POINTER;
@@ -251,7 +250,6 @@ HRESULT qcap_driver_get_format(const Capture *capBox, AM_MEDIA_TYPE ** mT)
     vi->bmiHeader.biXPelsPerMeter = 100;
     vi->bmiHeader.biYPelsPerMeter = 100;
     mT[0]->pbFormat = (void *)vi;
-    dump_AM_MEDIA_TYPE(mT[0]);
     return S_OK;
 }
 
