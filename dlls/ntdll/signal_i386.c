@@ -272,8 +272,11 @@ typedef struct trapframe ucontext_t;
 
 #elif defined(__svr4__) || defined(_SCO_DS) || defined(__sun)
 
-#ifdef _SCO_DS
+#if defined(_SCO_DS) || defined(__sun)
 #include <sys/regset.h>
+#endif
+
+#ifdef _SCO_DS
 #define gregs regs
 #endif
 
