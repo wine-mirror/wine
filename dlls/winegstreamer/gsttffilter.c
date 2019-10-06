@@ -509,7 +509,6 @@ static HRESULT WINAPI Gstreamer_Mp3_QueryConnect(TransformFilter *iface, const A
 {
     GstTfImpl *This = (GstTfImpl*)iface;
     TRACE("%p %p\n", This, amt);
-    dump_AM_MEDIA_TYPE(amt);
 
     if ( (!IsEqualGUID(&amt->majortype, &MEDIATYPE_Audio) &&
           !IsEqualGUID(&amt->majortype, &MEDIATYPE_Stream)) ||
@@ -649,7 +648,6 @@ static HRESULT WINAPI Gstreamer_YUV_QueryConnect(TransformFilter *iface, const A
 {
     GstTfImpl *This = (GstTfImpl*)iface;
     TRACE("%p %p\n", This, amt);
-    dump_AM_MEDIA_TYPE(amt);
 
     if (!IsEqualGUID(&amt->majortype, &MEDIATYPE_Video) ||
         (!IsEqualGUID(&amt->formattype, &FORMAT_VideoInfo) &&
@@ -885,7 +883,6 @@ static HRESULT WINAPI Gstreamer_AudioConvert_QueryConnect(TransformFilter *iface
 {
     GstTfImpl *This = (GstTfImpl*)iface;
     TRACE("%p %p\n", This, amt);
-    dump_AM_MEDIA_TYPE(amt);
 
     if (!IsEqualGUID(&amt->majortype, &MEDIATYPE_Audio) ||
         !IsEqualGUID(&amt->subtype, &MEDIASUBTYPE_PCM) ||

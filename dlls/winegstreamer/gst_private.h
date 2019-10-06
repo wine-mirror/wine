@@ -35,9 +35,6 @@
 
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
 
-/* enum media */
-void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
-
 IUnknown * CALLBACK avi_splitter_create(IUnknown *outer, HRESULT *phr) DECLSPEC_HIDDEN;
 IUnknown * CALLBACK mpeg_splitter_create(IUnknown *outer, HRESULT *phr) DECLSPEC_HIDDEN;
 IUnknown * CALLBACK Gstreamer_AudioConvert_create(IUnknown *pUnkOuter, HRESULT *phr);

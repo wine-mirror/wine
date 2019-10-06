@@ -412,15 +412,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     return hr;
 }
 
-/* GStreamer common functions */
-
-void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt)
-{
-    if (!pmt)
-        return;
-    TRACE("\t%s\n\t%s\n\t...\n\t%s\n", debugstr_guid(&pmt->majortype), debugstr_guid(&pmt->subtype), debugstr_guid(&pmt->formattype));
-}
-
 static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ctx)
 {
     BOOL *status = param;

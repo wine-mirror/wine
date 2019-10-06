@@ -1976,7 +1976,7 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
     HRESULT hr = S_OK;
 
     TRACE("filter %p, peer %p, mt %p.\n", filter, pReceivePin, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
+    strmbase_dump_media_type(pmt);
 
     mark_wine_thread();
 
