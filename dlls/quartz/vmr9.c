@@ -214,14 +214,6 @@ static DWORD VMR9_SendSampleData(struct quartz_vmr *This, VMR9PresentationInfo *
         return VFW_E_RUNTIME_ERROR;
     }
 
-    TRACE("biSize = %d\n", bmiHeader->biSize);
-    TRACE("biWidth = %d\n", bmiHeader->biWidth);
-    TRACE("biHeight = %d\n", bmiHeader->biHeight);
-    TRACE("biPlanes = %d\n", bmiHeader->biPlanes);
-    TRACE("biBitCount = %d\n", bmiHeader->biBitCount);
-    TRACE("biCompression = %s\n", debugstr_an((LPSTR)&(bmiHeader->biCompression), 4));
-    TRACE("biSizeImage = %d\n", bmiHeader->biSizeImage);
-
     width = bmiHeader->biWidth;
     height = bmiHeader->biHeight;
 
@@ -342,7 +334,6 @@ static HRESULT WINAPI VMR9_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TY
         VIDEOINFOHEADER *format = (VIDEOINFOHEADER *)pmt->pbFormat;
 
         This->bmiheader = format->bmiHeader;
-        TRACE("Resolution: %dx%d\n", format->bmiHeader.biWidth, format->bmiHeader.biHeight);
         This->VideoWidth = format->bmiHeader.biWidth;
         This->VideoHeight = format->bmiHeader.biHeight;
         SetRect(&This->source_rect, 0, 0, This->VideoWidth, This->VideoHeight);
@@ -352,8 +343,6 @@ static HRESULT WINAPI VMR9_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TY
         VIDEOINFOHEADER2 *format = (VIDEOINFOHEADER2 *)pmt->pbFormat;
 
         This->bmiheader = format->bmiHeader;
-
-        TRACE("Resolution: %dx%d\n", format->bmiHeader.biWidth, format->bmiHeader.biHeight);
         This->VideoWidth = format->bmiHeader.biWidth;
         This->VideoHeight = format->bmiHeader.biHeight;
         SetRect(&This->source_rect, 0, 0, This->VideoWidth, This->VideoHeight);

@@ -400,19 +400,8 @@ static HRESULT WINAPI DSoundRender_DoRenderSample(BaseRenderer *iface, IMediaSam
 
 static HRESULT WINAPI DSoundRender_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TYPE * pmt)
 {
-    WAVEFORMATEX* format;
-
     if (!IsEqualIID(&pmt->majortype, &MEDIATYPE_Audio))
         return S_FALSE;
-
-    format =  (WAVEFORMATEX*)pmt->pbFormat;
-    TRACE("Format = %p\n", format);
-    TRACE("wFormatTag = %x %x\n", format->wFormatTag, WAVE_FORMAT_PCM);
-    TRACE("nChannels = %d\n", format->nChannels);
-    TRACE("nSamplesPerSec = %d\n", format->nSamplesPerSec);
-    TRACE("nAvgBytesPerSec = %d\n", format->nAvgBytesPerSec);
-    TRACE("nBlockAlign = %d\n", format->nBlockAlign);
-    TRACE("wBitsPerSample = %d\n", format->wBitsPerSample);
 
     if (!IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_PCM))
         return S_FALSE;
@@ -451,12 +440,6 @@ static HRESULT WINAPI DSoundRender_CompleteConnect(BaseRenderer * iface, IPin * 
     DSBUFFERDESC buf_desc;
 
     TRACE("(%p)->(%p)\n", This, pReceivePin);
-    dump_AM_MEDIA_TYPE(pmt);
-
-    TRACE("MajorType %s\n", debugstr_guid(&pmt->majortype));
-    TRACE("SubType %s\n", debugstr_guid(&pmt->subtype));
-    TRACE("Format %s\n", debugstr_guid(&pmt->formattype));
-    TRACE("Size %d\n", pmt->cbFormat);
 
     format = (WAVEFORMATEX*)pmt->pbFormat;
 

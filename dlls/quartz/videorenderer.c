@@ -176,14 +176,6 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
         return VFW_E_RUNTIME_ERROR;
     }
 
-    TRACE("biSize = %d\n", bmiHeader->biSize);
-    TRACE("biWidth = %d\n", bmiHeader->biWidth);
-    TRACE("biHeight = %d\n", bmiHeader->biHeight);
-    TRACE("biPlanes = %d\n", bmiHeader->biPlanes);
-    TRACE("biBitCount = %d\n", bmiHeader->biBitCount);
-    TRACE("biCompression = %s\n", debugstr_an((LPSTR)&(bmiHeader->biCompression), 4));
-    TRACE("biSizeImage = %d\n", bmiHeader->biSizeImage);
-
     if (!This->baseControlWindow.baseWindow.hDC) {
         ERR("Cannot get DC from window!\n");
         return E_FAIL;

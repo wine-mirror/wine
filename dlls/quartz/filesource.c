@@ -474,6 +474,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     AsyncReader *This = impl_from_IFileSourceFilter(iface);
 
     TRACE("%p->(%s, %p)\n", This, debugstr_w(pszFileName), pmt);
+    strmbase_dump_media_type(pmt);
 
     if (!pszFileName)
         return E_POINTER;
@@ -645,7 +646,6 @@ static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(struct strmbase_sourc
     HRESULT hr;
 
     TRACE("%p->(%p, %p)\n", This, pReceivePin, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
 
     /* FIXME: call queryacceptproc */
 
