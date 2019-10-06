@@ -26,6 +26,8 @@ void WINAPI FreeMediaType(AM_MEDIA_TYPE * pMediaType);
 AM_MEDIA_TYPE * WINAPI CreateMediaType(AM_MEDIA_TYPE const * pSrc);
 void WINAPI DeleteMediaType(AM_MEDIA_TYPE * pMediaType);
 
+void strmbase_dump_media_type(const AM_MEDIA_TYPE *mt);
+
 /* Pin functions */
 
 struct strmbase_pin

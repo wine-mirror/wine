@@ -135,19 +135,8 @@ out:
     return hr;
 }
 
-static void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt)
-{
-    if (!pmt)
-        return;
-    TRACE("\t%s\n\t%s\n\t...\n\t%s\n", debugstr_guid(&pmt->majortype), debugstr_guid(&pmt->subtype), debugstr_guid(&pmt->formattype));
-}
-
 static BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards)
 {
-    TRACE("pmt1: ");
-    dump_AM_MEDIA_TYPE(pmt1);
-    TRACE("pmt2: ");
-    dump_AM_MEDIA_TYPE(pmt2);
     return (((bWildcards && (IsEqualGUID(&pmt1->majortype, &GUID_NULL) || IsEqualGUID(&pmt2->majortype, &GUID_NULL))) || IsEqualGUID(&pmt1->majortype, &pmt2->majortype)) &&
             ((bWildcards && (IsEqualGUID(&pmt1->subtype, &GUID_NULL)   || IsEqualGUID(&pmt2->subtype, &GUID_NULL)))   || IsEqualGUID(&pmt1->subtype, &pmt2->subtype)));
 }
@@ -257,6 +246,7 @@ HRESULT WINAPI BasePinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt
         if (This->peer)
         {
             CopyMediaType(pmt, &This->mtCurrent);
+            strmbase_dump_media_type(pmt);
             hr = S_OK;
         }
         else
@@ -313,6 +303,7 @@ HRESULT WINAPI BasePinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
     struct strmbase_pin *This = impl_from_IPin(iface);
 
     TRACE("(%p)->(%p)\n", iface, pmt);
+    strmbase_dump_media_type(pmt);
 
     return (This->pFuncsTable->pin_query_accept(This, pmt) == S_OK ? S_OK : S_FALSE);
 }
@@ -369,7 +360,7 @@ HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const
     struct strmbase_source *This = impl_source_from_IPin(iface);
 
     TRACE("(%p)->(%p, %p)\n", This, pReceivePin, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
+    strmbase_dump_media_type(pmt);
 
     if (!pReceivePin)
         return E_POINTER;
@@ -400,7 +391,6 @@ HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const
                 while (S_OK == IEnumMediaTypes_Next(pEnumCandidates, 1, &pmtCandidate, NULL))
                 {
                     assert(pmtCandidate);
-                    dump_AM_MEDIA_TYPE(pmtCandidate);
                     if (!IsEqualGUID(&FORMAT_None, &pmtCandidate->formattype)
                         && !IsEqualGUID(&GUID_NULL, &pmtCandidate->formattype))
                         assert(pmtCandidate->pbFormat);
@@ -427,7 +417,7 @@ HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const
                 while (S_OK == IEnumMediaTypes_Next(pEnumCandidates, 1, &pmtCandidate, &fetched))
                 {
                     assert(pmtCandidate);
-                    dump_AM_MEDIA_TYPE(pmtCandidate);
+                    strmbase_dump_media_type(pmtCandidate);
                     if ((!pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE))
                             && This->pFuncsTable->pfnAttemptConnection(This, pReceivePin, pmtCandidate) == S_OK)
                     {
@@ -653,7 +643,6 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *This,
     IMemAllocator * pMemAlloc = NULL;
 
     TRACE("(%p)->(%p, %p)\n", This, pReceivePin, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
 
     if ((hr = This->pFuncsTable->base.pin_query_accept(&This->pin, pmt)) != S_OK)
         return hr;
@@ -744,7 +733,7 @@ HRESULT WINAPI BaseInputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceiveP
     HRESULT hr = S_OK;
 
     TRACE("(%p)->(%p, %p)\n", This, pReceivePin, pmt);
-    dump_AM_MEDIA_TYPE(pmt);
+    strmbase_dump_media_type(pmt);
 
     EnterCriticalSection(&This->pin.filter->csFilter);
     {

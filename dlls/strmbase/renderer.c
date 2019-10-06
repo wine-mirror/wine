@@ -51,6 +51,7 @@ static HRESULT WINAPI BaseRenderer_InputPin_ReceiveConnection(IPin *iface, IPin 
     HRESULT hr;
 
     TRACE("iface %p, peer %p, mt %p.\n", iface, peer, mt);
+    strmbase_dump_media_type(mt);
 
     EnterCriticalSection(&filter->filter.csFilter);
     hr = BaseInputPinImpl_ReceiveConnection(iface, peer, mt);
@@ -322,6 +323,9 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
 
     if (IMediaSample_GetMediaType(pSample, &pmt) == S_OK)
     {
+        TRACE("Format change.\n");
+        strmbase_dump_media_type(pmt);
+
         if (FAILED(This->pFuncsTable->pfnCheckMediaType(This, pmt)))
         {
             return VFW_E_TYPE_NOT_ACCEPTED;
