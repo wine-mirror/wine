@@ -297,15 +297,24 @@ HRESULT WINAPI BaseControlWindowImpl_put_Caption(IVideoWindow *iface, BSTR strCa
     return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_get_Caption(IVideoWindow *iface, BSTR *strCaption)
+HRESULT WINAPI BaseControlWindowImpl_get_Caption(IVideoWindow *iface, BSTR *caption)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
+    WCHAR *str;
+    int len;
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, strCaption);
+    TRACE("window %p, caption %p.\n", window, caption);
 
-    GetWindowTextW(This->baseWindow.hWnd, (LPWSTR)strCaption, 100);
+    *caption = NULL;
 
-    return S_OK;
+    len = GetWindowTextLengthW(window->baseWindow.hWnd) + 1;
+    if (!(str = heap_alloc(len * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
+
+    GetWindowTextW(window->baseWindow.hWnd, str, len);
+    *caption = SysAllocString(str);
+    heap_free(str);
+    return *caption ? S_OK : E_OUTOFMEMORY;
 }
 
 HRESULT WINAPI BaseControlWindowImpl_put_WindowStyle(IVideoWindow *iface, LONG WindowStyle)
