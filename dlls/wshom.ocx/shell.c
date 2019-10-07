@@ -1297,6 +1297,7 @@ static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style,
     {
         if (waitforprocess)
         {
+            WaitForSingleObject(info.hProcess, INFINITE);
             GetExitCodeProcess(info.hProcess, exit_code);
             CloseHandle(info.hProcess);
         }
