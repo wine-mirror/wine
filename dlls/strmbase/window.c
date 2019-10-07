@@ -558,23 +558,22 @@ HRESULT WINAPI BaseControlWindowImpl_get_Height(IVideoWindow *iface, LONG *pHeig
     return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_put_Owner(IVideoWindow *iface, OAHWND Owner)
+HRESULT WINAPI BaseControlWindowImpl_put_Owner(IVideoWindow *iface, OAHWND owner)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
+    HWND hwnd = window->baseWindow.hWnd;
 
-    TRACE("(%p/%p)->(%08x)\n", This, iface, (DWORD) Owner);
+    TRACE("window %p, owner %#lx.\n", window, owner);
 
-    This->hwndOwner = (HWND)Owner;
-    SetParent(This->baseWindow.hWnd, This->hwndOwner);
-    if (This->baseWindow.WindowStyles & WS_CHILD)
-    {
-        LONG old = GetWindowLongW(This->baseWindow.hWnd, GWL_STYLE);
-        if (old != This->baseWindow.WindowStyles)
-        {
-            SetWindowLongW(This->baseWindow.hWnd, GWL_STYLE, This->baseWindow.WindowStyles);
-            SetWindowPos(This->baseWindow.hWnd,0,0,0,0,0,SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOZORDER);
-        }
-    }
+    /* Make sure we are marked as WS_CHILD before reparenting ourselves, so that
+     * we do not steal focus. LEGO Island depends on this. */
+
+    window->hwndOwner = (HWND)owner;
+    if (owner)
+        SetWindowLongPtrW(hwnd, GWL_STYLE, GetWindowLongPtrW(hwnd, GWL_STYLE) | WS_CHILD);
+    else
+        SetWindowLongPtrW(hwnd, GWL_STYLE, GetWindowLongPtrW(hwnd, GWL_STYLE) & ~WS_CHILD);
+    SetParent(hwnd, (HWND)owner);
 
     return S_OK;
 }

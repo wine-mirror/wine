@@ -1795,9 +1795,9 @@ static void test_video_window_owner(IVideoWindow *window, HWND hwnd, HWND our_hw
     parent = GetAncestor(hwnd, GA_PARENT);
     ok(parent == our_hwnd, "Got parent %p.\n", parent);
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    todo_wine ok((style & WS_CHILD), "Got style %#x.\n", style);
+    ok((style & WS_CHILD), "Got style %#x.\n", style);
 
-    todo_wine ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
     top_hwnd = get_top_window();
     ok(top_hwnd == our_hwnd, "Got top window %p.\n", top_hwnd);
 
