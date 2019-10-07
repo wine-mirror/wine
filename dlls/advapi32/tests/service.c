@@ -1852,7 +1852,6 @@ static void test_wow64(void)
     ret = DeleteFileA("C:\\windows\\sysnative\\winetestsvc.exe");
     ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 
-    CloseServiceHandle(service);
     CloseServiceHandle(manager);
 }
 
