@@ -265,6 +265,52 @@ static struct quality_manager *impl_from_IMFQualityManager(IMFQualityManager *if
     return CONTAINING_RECORD(iface, struct quality_manager, IMFQualityManager_iface);
 }
 
+/* IMFLocalMFTRegistration */
+static HRESULT WINAPI local_mft_registration_QueryInterface(IMFLocalMFTRegistration *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFLocalMFTRegistration) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFLocalMFTRegistration_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unexpected %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI local_mft_registration_AddRef(IMFLocalMFTRegistration *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI local_mft_registration_Release(IMFLocalMFTRegistration *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI local_mft_registration_RegisterMFTs(IMFLocalMFTRegistration *iface, MFT_REGISTRATION_INFO *info,
+        DWORD count)
+{
+    FIXME("%p, %p, %u.\n", iface, info, count);
+
+    return E_NOTIMPL;
+}
+
+static const IMFLocalMFTRegistrationVtbl local_mft_registration_vtbl =
+{
+    local_mft_registration_QueryInterface,
+    local_mft_registration_AddRef,
+    local_mft_registration_Release,
+    local_mft_registration_RegisterMFTs,
+};
+
+static IMFLocalMFTRegistration local_mft_registration = { &local_mft_registration_vtbl };
+
 static HRESULT WINAPI session_op_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IUnknown))
@@ -915,16 +961,18 @@ static HRESULT WINAPI session_get_service_GetService(IMFGetService *iface, REFGU
         {
             *obj = &session->IMFRateControl_iface;
         }
-
-        if (*obj)
-            IUnknown_AddRef((IUnknown *)*obj);
-
-        return *obj ? S_OK : E_NOINTERFACE;
+    }
+    else if (IsEqualGUID(service, &MF_LOCAL_MFT_REGISTRATION_SERVICE))
+    {
+        return IMFLocalMFTRegistration_QueryInterface(&local_mft_registration, riid, obj);
     }
     else
         FIXME("Unsupported service %s.\n", debugstr_guid(service));
 
-    return E_NOTIMPL;
+    if (*obj)
+        IUnknown_AddRef((IUnknown *)*obj);
+
+    return *obj ? S_OK : E_NOINTERFACE;
 }
 
 static const IMFGetServiceVtbl session_get_service_vtbl =

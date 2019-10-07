@@ -952,6 +952,7 @@ static void test_session_events(IMFMediaSession *session)
 static void test_media_session(void)
 {
     IMFRateControl *rate_control, *rate_control2;
+    IMFLocalMFTRegistration *local_reg;
     MFCLOCK_PROPERTIES clock_props;
     IMFRateSupport *rate_support;
     IMFAttributes *attributes;
@@ -980,6 +981,12 @@ static void test_media_session(void)
 
     hr = IMFGetService_GetService(gs, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, (void **)&rate_control);
     ok(hr == S_OK, "Failed to get rate control interface, hr %#x.\n", hr);
+
+    hr = IMFGetService_GetService(gs, &MF_LOCAL_MFT_REGISTRATION_SERVICE, &IID_IMFLocalMFTRegistration,
+            (void **)&local_reg);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Vista */, "Failed to get registration service, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        IMFLocalMFTRegistration_Release(local_reg);
 
     hr = IMFRateSupport_QueryInterface(rate_support, &IID_IMFMediaSession, (void **)&unk);
     ok(hr == S_OK, "Failed to get session interface, hr %#x.\n", hr);
