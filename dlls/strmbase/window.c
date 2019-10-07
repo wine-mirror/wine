@@ -652,7 +652,7 @@ HRESULT WINAPI BaseControlWindowImpl_SetWindowForeground(IVideoWindow *iface, LO
 
     TRACE("(%p/%p)->(%d)\n", This, iface, Focus);
 
-    if ((Focus != FALSE) && (Focus != TRUE))
+    if ((Focus != OAFALSE) && (Focus != OATRUE))
         return E_INVALIDARG;
 
     hr = IPin_ConnectedTo(&This->pPin->IPin_iface, &pPin);
