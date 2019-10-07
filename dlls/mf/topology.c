@@ -89,6 +89,7 @@ struct topology_loader
 struct seq_source
 {
     IMFSequencerSource IMFSequencerSource_iface;
+    IMFMediaSourceTopologyProvider IMFMediaSourceTopologyProvider_iface;
     LONG refcount;
 };
 
@@ -125,6 +126,11 @@ static struct topology_loader *impl_from_IMFTopoLoader(IMFTopoLoader *iface)
 static struct seq_source *impl_from_IMFSequencerSource(IMFSequencerSource *iface)
 {
     return CONTAINING_RECORD(iface, struct seq_source, IMFSequencerSource_iface);
+}
+
+static struct seq_source *impl_from_IMFMediaSourceTopologyProvider(IMFMediaSourceTopologyProvider *iface)
+{
+    return CONTAINING_RECORD(iface, struct seq_source, IMFMediaSourceTopologyProvider_iface);
 }
 
 static HRESULT topology_node_reserve_streams(struct node_streams *streams, DWORD index)
@@ -1875,20 +1881,29 @@ static HRESULT WINAPI seq_source_QueryInterface(IMFSequencerSource *iface, REFII
 {
     struct seq_source *seq_source = impl_from_IMFSequencerSource(iface);
 
-    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), out);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
+
+    *out = NULL;
 
     if (IsEqualIID(riid, &IID_IMFSequencerSource) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
         *out = &seq_source->IMFSequencerSource_iface;
-        IMFSequencerSource_AddRef(iface);
-        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IMFMediaSourceTopologyProvider))
+    {
+        *out = &seq_source->IMFMediaSourceTopologyProvider_iface;
+    }
+    else
+    {
+        WARN("Unimplemented %s.\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
     }
 
-    WARN("Unimplemented %s.\n", debugstr_guid(riid));
-    *out = NULL;
+    if (*out)
+        IUnknown_AddRef((IUnknown *)*out);
 
-    return E_NOINTERFACE;
+    return S_OK;
 }
 
 static ULONG WINAPI seq_source_AddRef(IMFSequencerSource *iface)
@@ -1954,6 +1969,41 @@ static HRESULT WINAPI seq_source_UpdateTopologyFlags(IMFSequencerSource *iface, 
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI seq_source_topology_provider_QueryInterface(IMFMediaSourceTopologyProvider *iface, REFIID riid,
+        void **obj)
+{
+    struct seq_source *seq_source = impl_from_IMFMediaSourceTopologyProvider(iface);
+    return IMFSequencerSource_QueryInterface(&seq_source->IMFSequencerSource_iface, riid, obj);
+}
+
+static ULONG WINAPI seq_source_topology_provider_AddRef(IMFMediaSourceTopologyProvider *iface)
+{
+    struct seq_source *seq_source = impl_from_IMFMediaSourceTopologyProvider(iface);
+    return IMFSequencerSource_AddRef(&seq_source->IMFSequencerSource_iface);
+}
+
+static ULONG WINAPI seq_source_topology_provider_Release(IMFMediaSourceTopologyProvider *iface)
+{
+    struct seq_source *seq_source = impl_from_IMFMediaSourceTopologyProvider(iface);
+    return IMFSequencerSource_Release(&seq_source->IMFSequencerSource_iface);
+}
+
+static HRESULT WINAPI seq_source_topology_provider_GetMediaSourceTopology(IMFMediaSourceTopologyProvider *iface,
+        IMFPresentationDescriptor *pd, IMFTopology **topology)
+{
+    FIXME("%p, %p, %p.\n", iface, pd, topology);
+
+    return E_NOTIMPL;
+}
+
+static const IMFMediaSourceTopologyProviderVtbl seq_source_topology_provider_vtbl =
+{
+    seq_source_topology_provider_QueryInterface,
+    seq_source_topology_provider_AddRef,
+    seq_source_topology_provider_Release,
+    seq_source_topology_provider_GetMediaSourceTopology,
+};
+
 static const IMFSequencerSourceVtbl seqsourcevtbl =
 {
     seq_source_QueryInterface,
@@ -1983,6 +2033,7 @@ HRESULT WINAPI MFCreateSequencerSource(IUnknown *reserved, IMFSequencerSource **
         return E_OUTOFMEMORY;
 
     object->IMFSequencerSource_iface.lpVtbl = &seqsourcevtbl;
+    object->IMFMediaSourceTopologyProvider_iface.lpVtbl = &seq_source_topology_provider_vtbl;
     object->refcount = 1;
 
     *seq_source = &object->IMFSequencerSource_iface;

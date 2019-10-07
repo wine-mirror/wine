@@ -785,8 +785,9 @@ static void test_MFGetService(void)
     ok(unk == (void *)0xdeadbeef, "Unexpected out object.\n");
 }
 
-static void test_MFCreateSequencerSource(void)
+static void test_sequencer_source(void)
 {
+    IMFMediaSourceTopologyProvider *provider;
     IMFSequencerSource *seq_source;
     HRESULT hr;
 
@@ -795,6 +796,10 @@ static void test_MFCreateSequencerSource(void)
 
     hr = MFCreateSequencerSource(NULL, &seq_source);
     ok(hr == S_OK, "Failed to create sequencer source, hr %#x.\n", hr);
+
+    hr = IMFSequencerSource_QueryInterface(seq_source, &IID_IMFMediaSourceTopologyProvider, (void **)&provider);
+    ok(hr == S_OK, "Failed to get provider interface, hr %#x.\n", hr);
+    IMFMediaSourceTopologyProvider_Release(provider);
 
     IMFSequencerSource_Release(seq_source);
 
@@ -2455,7 +2460,7 @@ START_TEST(mf)
     test_topology();
     test_topology_loader();
     test_MFGetService();
-    test_MFCreateSequencerSource();
+    test_sequencer_source();
     test_media_session();
     test_MFShutdownObject();
     test_presentation_clock();
