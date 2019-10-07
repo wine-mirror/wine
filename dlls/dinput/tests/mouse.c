@@ -148,15 +148,20 @@ static void test_acquire(IDirectInputA *pDI, HWND hwnd)
     ok(hr == S_OK && cnt > 0, "GetDeviceData() failed: %08x cnt:%d\n", hr, cnt);
 
     mouse_event(MOUSEEVENTF_MOVE, 10, 10, 0, 0);
-    IDirectInputDevice_Unacquire(pMouse);
+    hr = IDirectInputDevice_Unacquire(pMouse);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
     cnt = 1;
     hr = IDirectInputDevice_GetDeviceData(pMouse, sizeof(mouse_state), &mouse_state, &cnt, 0);
     ok(hr == S_OK && cnt > 0, "GetDeviceData() failed: %08x cnt:%d\n", hr, cnt);
 
-    IDirectInputDevice_Acquire(pMouse);
+    hr = IDirectInputDevice_Acquire(pMouse);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
     mouse_event(MOUSEEVENTF_MOVE, 10, 10, 0, 0);
-    IDirectInputDevice_Unacquire(pMouse);
-    IDirectInputDevice_Acquire(pMouse);
+    hr = IDirectInputDevice_Unacquire(pMouse);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
+
+    hr = IDirectInputDevice_Acquire(pMouse);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
     cnt = 1;
     hr = IDirectInputDevice_GetDeviceData(pMouse, sizeof(mouse_state), &mouse_state, &cnt, 0);
     ok(hr == S_OK && cnt > 0, "GetDeviceData() failed: %08x cnt:%d\n", hr, cnt);
