@@ -3315,6 +3315,9 @@ static void test_change_focus(void)
     HWND hwnd, parent_wnd;
     WNDPROC oldproc;
     MSG msg;
+    POINT orig_pos;
+
+    GetCursorPos(&orig_pos);
 
     parent_wnd = CreateWindowA("ParentWnd", "", WS_OVERLAPPEDWINDOW,
             0, 0, 200, 200, NULL, NULL, GetModuleHandleA(NULL), NULL);
@@ -3329,6 +3332,8 @@ static void test_change_focus(void)
     oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)edit_subclass_proc);
     SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)oldproc);
 
+    SetCursorPos(400, 400);
+
     SetFocus(parent_wnd);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     SetFocus(hwnd);
@@ -3339,6 +3344,8 @@ static void test_change_focus(void)
     SetFocus(parent_wnd);
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     ok_sequence(sequences, COMBINED_SEQ_INDEX, killfocus_combined_seq, "Kill focus", TRUE);
+
+    SetCursorPos(orig_pos.x, orig_pos.y);
 
     DestroyWindow(hwnd);
 }
