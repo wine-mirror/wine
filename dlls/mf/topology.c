@@ -111,6 +111,10 @@ static struct topology_node *unsafe_impl_from_IMFTopologyNode(IMFTopologyNode *i
     return impl_from_IMFTopologyNode(iface);
 }
 
+static HRESULT create_topology_node(MF_TOPOLOGY_TYPE node_type, struct topology_node **node);
+static HRESULT topology_node_connect_output(struct topology_node *node, DWORD output_index,
+        struct topology_node *connection, DWORD input_index);
+
 static struct topology *unsafe_impl_from_IMFTopology(IMFTopology *iface);
 
 static struct topology_loader *impl_from_IMFTopoLoader(IMFTopoLoader *iface)
@@ -568,7 +572,6 @@ static HRESULT topology_get_node_by_id(const struct topology *topology, TOPOID i
         if (topology->nodes.nodes[i]->id == id)
         {
             *node = topology->nodes.nodes[i];
-            IMFTopologyNode_AddRef(&(*node)->IMFTopologyNode_iface);
             return S_OK;
         }
     }
@@ -576,19 +579,15 @@ static HRESULT topology_get_node_by_id(const struct topology *topology, TOPOID i
     return MF_E_NOT_FOUND;
 }
 
-static HRESULT topology_add_node(struct topology *topology, IMFTopologyNode *node_iface)
+static HRESULT topology_add_node(struct topology *topology, struct topology_node *node)
 {
-    struct topology_node *node = unsafe_impl_from_IMFTopologyNode(node_iface);
     struct topology_node *match;
 
     if (!node)
         return E_POINTER;
 
     if (SUCCEEDED(topology_get_node_by_id(topology, node->id, &match)))
-    {
-        IMFTopologyNode_Release(&match->IMFTopologyNode_iface);
         return E_INVALIDARG;
-    }
 
     if (!mf_array_reserve((void **)&topology->nodes.nodes, &topology->nodes.size, topology->nodes.count + 1,
             sizeof(*topology->nodes.nodes)))
@@ -602,11 +601,12 @@ static HRESULT topology_add_node(struct topology *topology, IMFTopologyNode *nod
     return S_OK;
 }
 
-static HRESULT WINAPI topology_AddNode(IMFTopology *iface, IMFTopologyNode *node)
+static HRESULT WINAPI topology_AddNode(IMFTopology *iface, IMFTopologyNode *node_iface)
 {
     struct topology *topology = impl_from_IMFTopology(iface);
+    struct topology_node *node = unsafe_impl_from_IMFTopologyNode(node_iface);
 
-    TRACE("%p, %p.\n", iface, node);
+    TRACE("%p, %p.\n", iface, node_iface);
 
     return topology_add_node(topology, node);
 }
@@ -684,9 +684,9 @@ static HRESULT WINAPI topology_CloneFrom(IMFTopology *iface, IMFTopology *src)
 {
     struct topology *topology = impl_from_IMFTopology(iface);
     struct topology *src_topology = unsafe_impl_from_IMFTopology(src);
-    IMFTopologyNode *node;
+    struct topology_node *node;
+    size_t i, j;
     HRESULT hr;
-    size_t i;
 
     TRACE("%p, %p.\n", iface, src);
 
@@ -695,19 +695,36 @@ static HRESULT WINAPI topology_CloneFrom(IMFTopology *iface, IMFTopology *src)
     /* Clone nodes. */
     for (i = 0; i < src_topology->nodes.count; ++i)
     {
-        if (FAILED(hr = MFCreateTopologyNode(src_topology->nodes.nodes[i]->node_type, &node)))
+        if (FAILED(hr = create_topology_node(src_topology->nodes.nodes[i]->node_type, &node)))
         {
             WARN("Failed to create a node, hr %#x.\n", hr);
             break;
         }
 
-        if (SUCCEEDED(hr = IMFTopologyNode_CloneFrom(node, &src_topology->nodes.nodes[i]->IMFTopologyNode_iface)))
+        if (SUCCEEDED(hr = IMFTopologyNode_CloneFrom(&node->IMFTopologyNode_iface,
+                &src_topology->nodes.nodes[i]->IMFTopologyNode_iface)))
+        {
             topology_add_node(topology, node);
+        }
 
-        IMFTopologyNode_Release(node);
+        IMFTopologyNode_Release(&node->IMFTopologyNode_iface);
     }
 
-    FIXME("Clone node connections.\n");
+    /* Clone connections. */
+    for (i = 0; i < src_topology->nodes.count; ++i)
+    {
+        const struct node_streams *outputs = &src_topology->nodes.nodes[i]->outputs;
+
+        for (j = 0; j < outputs->count; ++j)
+        {
+            DWORD input_index = outputs->streams[j].connection_stream;
+            TOPOID id = outputs->streams[j].connection->id;
+
+            /* Skip node lookup in destination topology, assuming same node order. */
+            if (SUCCEEDED(hr = topology_get_node_by_id(topology, id, &node)))
+                topology_node_connect_output(topology->nodes.nodes[i], j, node, input_index);
+        }
+    }
 
     /* Copy attributes and id. */
     hr = IMFTopology_CopyAllItems(src, (IMFAttributes *)&topology->IMFTopology_iface);
@@ -726,7 +743,10 @@ static HRESULT WINAPI topology_GetNodeByID(IMFTopology *iface, TOPOID id, IMFTop
     TRACE("%p, %p.\n", iface, ret);
 
     if (SUCCEEDED(hr = topology_get_node_by_id(topology, id, &node)))
+    {
         *ret = &node->IMFTopologyNode_iface;
+        IMFTopologyNode_AddRef(*ret);
+    }
     else
         *ret = NULL;
 
@@ -1358,21 +1378,11 @@ static HRESULT WINAPI topology_node_GetOutputCount(IMFTopologyNode *iface, DWORD
     return S_OK;
 }
 
-static HRESULT WINAPI topology_node_ConnectOutput(IMFTopologyNode *iface, DWORD output_index,
-        IMFTopologyNode *peer, DWORD input_index)
+static HRESULT topology_node_connect_output(struct topology_node *node, DWORD output_index,
+        struct topology_node *connection, DWORD input_index)
 {
-    struct topology_node *node = impl_from_IMFTopologyNode(iface);
-    struct topology_node *connection = unsafe_impl_from_IMFTopologyNode(peer);
     struct node_stream *stream;
     HRESULT hr;
-
-    TRACE("%p, %u, %p, %u.\n", iface, output_index, peer, input_index);
-
-    if (!connection)
-    {
-        WARN("External node implementations are not supported.\n");
-        return E_UNEXPECTED;
-    }
 
     if (node->node_type == MF_TOPOLOGY_OUTPUT_NODE || connection->node_type == MF_TOPOLOGY_SOURCESTREAM_NODE)
          return E_FAIL;
@@ -1406,6 +1416,23 @@ static HRESULT WINAPI topology_node_ConnectOutput(IMFTopologyNode *iface, DWORD 
     LeaveCriticalSection(&node->cs);
 
     return hr;
+}
+
+static HRESULT WINAPI topology_node_ConnectOutput(IMFTopologyNode *iface, DWORD output_index,
+        IMFTopologyNode *peer, DWORD input_index)
+{
+    struct topology_node *node = impl_from_IMFTopologyNode(iface);
+    struct topology_node *connection = unsafe_impl_from_IMFTopologyNode(peer);
+
+    TRACE("%p, %u, %p, %u.\n", iface, output_index, peer, input_index);
+
+    if (!connection)
+    {
+        WARN("External node implementations are not supported.\n");
+        return E_UNEXPECTED;
+    }
+
+    return topology_node_connect_output(node, output_index, connection, input_index);
 }
 
 static HRESULT WINAPI topology_node_DisconnectOutput(IMFTopologyNode *iface, DWORD output_index)
@@ -1684,6 +1711,29 @@ static const IMFTopologyNodeVtbl topologynodevtbl =
     topology_node_CloneFrom,
 };
 
+static HRESULT create_topology_node(MF_TOPOLOGY_TYPE node_type, struct topology_node **node)
+{
+    HRESULT hr;
+
+    *node = heap_alloc_zero(sizeof(**node));
+    if (!*node)
+        return E_OUTOFMEMORY;
+
+    (*node)->IMFTopologyNode_iface.lpVtbl = &topologynodevtbl;
+    (*node)->refcount = 1;
+    (*node)->node_type = node_type;
+    hr = MFCreateAttributes(&(*node)->attributes, 0);
+    if (FAILED(hr))
+    {
+        heap_free(*node);
+        return hr;
+    }
+    (*node)->id = ((TOPOID)GetCurrentProcessId() << 32) | InterlockedIncrement(&next_node_id);
+    InitializeCriticalSection(&(*node)->cs);
+
+    return S_OK;
+}
+
 /***********************************************************************
  *      MFCreateTopologyNode (mf.@)
  */
@@ -1692,30 +1742,16 @@ HRESULT WINAPI MFCreateTopologyNode(MF_TOPOLOGY_TYPE node_type, IMFTopologyNode 
     struct topology_node *object;
     HRESULT hr;
 
-    TRACE("(%p)\n", node);
+    TRACE("%d, %p.\n", node_type, node);
 
     if (!node)
         return E_POINTER;
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
-        return E_OUTOFMEMORY;
+    hr = create_topology_node(node_type, &object);
+    if (SUCCEEDED(hr))
+        *node = &object->IMFTopologyNode_iface;
 
-    object->IMFTopologyNode_iface.lpVtbl = &topologynodevtbl;
-    object->refcount = 1;
-    object->node_type = node_type;
-    hr = MFCreateAttributes(&object->attributes, 0);
-    if (FAILED(hr))
-    {
-        heap_free(object);
-        return hr;
-    }
-    object->id = ((TOPOID)GetCurrentProcessId() << 32) | InterlockedIncrement(&next_node_id);
-    InitializeCriticalSection(&object->cs);
-
-    *node = &object->IMFTopologyNode_iface;
-
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI topology_loader_QueryInterface(IMFTopoLoader *iface, REFIID riid, void **out)
