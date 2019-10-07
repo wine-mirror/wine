@@ -462,7 +462,8 @@ HRESULT WINAPI BaseControlWindowImpl_put_Left(IVideoWindow *iface, LONG Left)
     TRACE("(%p/%p)->(%d)\n", This, iface, Left);
 
     GetWindowRect(This->baseWindow.hWnd, &WindowPos);
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, Left, WindowPos.top, 0, 0, SWP_NOZORDER|SWP_NOSIZE))
+    if (!SetWindowPos(This->baseWindow.hWnd, NULL, Left, WindowPos.top, 0, 0,
+            SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE))
         return E_FAIL;
 
     return S_OK;
@@ -487,7 +488,8 @@ HRESULT WINAPI BaseControlWindowImpl_put_Width(IVideoWindow *iface, LONG Width)
 
     TRACE("(%p/%p)->(%d)\n", This, iface, Width);
 
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, 0, 0, Width, This->baseWindow.Height, SWP_NOZORDER|SWP_NOMOVE))
+    if (!SetWindowPos(This->baseWindow.hWnd, NULL, 0, 0, Width, This->baseWindow.Height,
+            SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE))
         return E_FAIL;
 
     This->baseWindow.Width = Width;
@@ -514,7 +516,8 @@ HRESULT WINAPI BaseControlWindowImpl_put_Top(IVideoWindow *iface, LONG Top)
     TRACE("(%p/%p)->(%d)\n", This, iface, Top);
     GetWindowRect(This->baseWindow.hWnd, &WindowPos);
 
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, WindowPos.left, Top, 0, 0, SWP_NOZORDER|SWP_NOSIZE))
+    if (!SetWindowPos(This->baseWindow.hWnd, NULL, WindowPos.left, Top, 0, 0,
+            SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE))
         return E_FAIL;
 
     return S_OK;
@@ -539,7 +542,8 @@ HRESULT WINAPI BaseControlWindowImpl_put_Height(IVideoWindow *iface, LONG Height
 
     TRACE("(%p/%p)->(%d)\n", This, iface, Height);
 
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, 0, 0, This->baseWindow.Width, Height, SWP_NOZORDER|SWP_NOMOVE))
+    if (!SetWindowPos(This->baseWindow.hWnd, NULL, 0, 0, This->baseWindow.Width,
+            Height, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE))
         return E_FAIL;
 
     This->baseWindow.Height = Height;
@@ -675,7 +679,7 @@ HRESULT WINAPI BaseControlWindowImpl_SetWindowPosition(IVideoWindow *iface, LONG
 
     TRACE("(%p/%p)->(%d, %d, %d, %d)\n", This, iface, Left, Top, Width, Height);
 
-    if (!SetWindowPos(This->baseWindow.hWnd, NULL, Left, Top, Width, Height, SWP_NOZORDER))
+    if (!SetWindowPos(This->baseWindow.hWnd, NULL, Left, Top, Width, Height, SWP_NOACTIVATE | SWP_NOZORDER))
         return E_FAIL;
 
     This->baseWindow.Width = Width;

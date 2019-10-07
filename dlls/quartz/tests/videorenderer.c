@@ -1762,9 +1762,9 @@ static void test_video_window_position(IVideoWindow *window, HWND hwnd, HWND our
     ok(rect.right == 400, "Got window right %d.\n", rect.right);
     ok(rect.bottom == 600, "Got window bottom %d.\n", rect.bottom);
 
-    todo_wine ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
     top_hwnd = get_top_window();
-    todo_wine ok(top_hwnd == our_hwnd, "Got top window %p.\n", top_hwnd);
+    ok(top_hwnd == our_hwnd, "Got top window %p.\n", top_hwnd);
 }
 
 static void test_video_window_owner(IVideoWindow *window, HWND hwnd, HWND our_hwnd)
