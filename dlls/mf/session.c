@@ -296,9 +296,21 @@ static ULONG WINAPI local_mft_registration_Release(IMFLocalMFTRegistration *ifac
 static HRESULT WINAPI local_mft_registration_RegisterMFTs(IMFLocalMFTRegistration *iface, MFT_REGISTRATION_INFO *info,
         DWORD count)
 {
-    FIXME("%p, %p, %u.\n", iface, info, count);
+    HRESULT hr = S_OK;
+    DWORD i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %u.\n", iface, info, count);
+
+    for (i = 0; i < count; ++i)
+    {
+        if (FAILED(hr = MFTRegisterLocalByCLSID(&info[i].clsid, &info[i].guidCategory, info[i].pszName,
+                info[i].uiFlags, info[i].cInTypes, info[i].pInTypes, info[i].cOutTypes, info[i].pOutTypes)))
+        {
+            break;
+        }
+    }
+
+    return hr;
 }
 
 static const IMFLocalMFTRegistrationVtbl local_mft_registration_vtbl =
