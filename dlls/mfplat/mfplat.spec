@@ -147,7 +147,7 @@
 @ stub MFTGetInfo
 @ stdcall MFTRegister(int128 int128 wstr long long ptr long ptr ptr)
 @ stdcall MFTRegisterLocal(ptr ptr wstr long long  ptr long ptr)
-@ stub MFTRegisterLocalByCLSID
+@ stdcall MFTRegisterLocalByCLSID(ptr ptr wstr long long ptr long ptr)
 @ stdcall MFTUnregister(int128)
 @ stdcall MFTUnregisterLocal(ptr)
 @ stub MFTUnregisterLocalByCLSID

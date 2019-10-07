@@ -330,6 +330,17 @@ HRESULT WINAPI MFTRegisterLocal(IClassFactory *factory, REFGUID category, LPCWST
     return S_OK;
 }
 
+HRESULT WINAPI MFTRegisterLocalByCLSID(REFCLSID clsid, REFGUID category, LPCWSTR name, UINT32 flags,
+        UINT32 input_count, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 output_count,
+        const MFT_REGISTER_TYPE_INFO *output_types)
+{
+
+    FIXME("%s, %s, %s, %#x, %u, %p, %u, %p.\n", debugstr_guid(clsid), debugstr_guid(category), debugstr_w(name), flags,
+            input_count, input_types, output_count, output_types);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI MFTUnregisterLocal(IClassFactory *factory)
 {
     FIXME("(%p)\n", factory);

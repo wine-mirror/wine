@@ -441,6 +441,9 @@ HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags
 HRESULT WINAPI MFTRegisterLocal(IClassFactory *factory, REFGUID category, LPCWSTR name,
                            UINT32 flags, UINT32 cinput, const MFT_REGISTER_TYPE_INFO *input_types,
                            UINT32 coutput, const MFT_REGISTER_TYPE_INFO* output_types);
+HRESULT WINAPI MFTRegisterLocalByCLSID(REFCLSID clsid, REFGUID category, LPCWSTR name, UINT32 flags,
+        UINT32 input_count, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 output_count,
+        const MFT_REGISTER_TYPE_INFO *output_types);
 HRESULT WINAPI MFRemovePeriodicCallback(DWORD key);
 HRESULT WINAPI MFShutdown(void);
 HRESULT WINAPI MFStartup(ULONG version, DWORD flags);
