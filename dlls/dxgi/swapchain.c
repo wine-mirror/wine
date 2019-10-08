@@ -2880,7 +2880,8 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     if (swapchain_desc->Flags)
         FIXME("Ignoring swapchain flags %#x.\n", swapchain_desc->Flags);
 
-    FIXME("Ignoring refresh rate.\n");
+    if (fullscreen_desc->RefreshRate.Numerator || fullscreen_desc->RefreshRate.Denominator)
+        FIXME("Ignoring refresh rate.\n");
     if (fullscreen_desc->ScanlineOrdering)
         FIXME("Unhandled scanline ordering %#x.\n", fullscreen_desc->ScanlineOrdering);
     if (fullscreen_desc->Scaling)
