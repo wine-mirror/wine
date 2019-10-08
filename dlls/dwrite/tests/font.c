@@ -2365,6 +2365,7 @@ static void test_system_fontcollection(void)
     IDWriteFontCollection *collection, *coll2;
     IDWriteLocalFontFileLoader *localloader;
     IDWriteFontCollection1 *collection1;
+    IDWriteFontCollection3 *collection3;
     IDWriteFactory *factory, *factory2;
     IDWriteFontFileLoader *loader;
     IDWriteFontFamily *family;
@@ -2539,6 +2540,20 @@ static void test_system_fontcollection(void)
     }
     else
         win_skip("IDWriteFontCollection1 is not supported.\n");
+
+    hr = IDWriteFontCollection_QueryInterface(collection, &IID_IDWriteFontCollection3, (void **)&collection3);
+    if (SUCCEEDED(hr))
+    {
+        HANDLE event;
+
+        event = IDWriteFontCollection3_GetExpirationEvent(collection3);
+todo_wine
+        ok(!!event, "Expected event handle.\n");
+
+        IDWriteFontCollection3_Release(collection3);
+    }
+    else
+        win_skip("IDWriteFontCollection3 is not supported.\n");
 
     ref = IDWriteFontCollection_Release(collection);
     ok(ref == 0, "collection not released, %u\n", ref);

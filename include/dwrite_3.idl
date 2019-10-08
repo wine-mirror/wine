@@ -377,7 +377,7 @@ interface IDWriteFontCollection2 : IDWriteFontCollection1
 ]
 interface IDWriteFontCollection3 : IDWriteFontCollection2
 {
-    HANDLE GetExiprationEvent();
+    HANDLE GetExpirationEvent();
 }
 
 [
