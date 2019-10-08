@@ -1628,7 +1628,9 @@ static HRESULT WINAPI topology_node_CloneFrom(IMFTopologyNode *iface, IMFTopolog
 {
     struct topology_node *node = impl_from_IMFTopologyNode(iface);
     MF_TOPOLOGY_TYPE node_type;
+    IMFMediaType *mediatype;
     IUnknown *object;
+    DWORD count, i;
     TOPOID topoid;
     HRESULT hr;
 
@@ -1655,6 +1657,30 @@ static HRESULT WINAPI topology_node_CloneFrom(IMFTopologyNode *iface, IMFTopolog
 
     if (SUCCEEDED(hr))
         node->id = topoid;
+
+    if (SUCCEEDED(IMFTopologyNode_GetInputCount(src_node, &count)))
+    {
+        for (i = 0; i < count; ++i)
+        {
+            if (SUCCEEDED(IMFTopologyNode_GetInputPrefType(src_node, i, &mediatype)))
+            {
+                IMFTopologyNode_SetInputPrefType(iface, i, mediatype);
+                IMFMediaType_Release(mediatype);
+            }
+        }
+    }
+
+    if (SUCCEEDED(IMFTopologyNode_GetOutputCount(src_node, &count)))
+    {
+        for (i = 0; i < count; ++i)
+        {
+            if (SUCCEEDED(IMFTopologyNode_GetOutputPrefType(src_node, i, &mediatype)))
+            {
+                IMFTopologyNode_SetOutputPrefType(iface, i, mediatype);
+                IMFMediaType_Release(mediatype);
+            }
+        }
+    }
 
     LeaveCriticalSection(&node->cs);
 

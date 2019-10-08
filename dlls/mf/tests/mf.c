@@ -656,6 +656,71 @@ static void test_topology(void)
     IMFTopologyNode_Release(node);
     IMFTopologyNode_Release(node2);
 
+    /* Cloning nodes of different types. */
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node2);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_CloneFrom(node, node2);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    IMFTopologyNode_Release(node2);
+
+    /* Cloning preferred types. */
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &node2);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&mediatype);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_SetOutputPrefType(node2, 0, mediatype);
+    ok(hr == S_OK, "Failed to set preferred type, hr %#x.\n", hr);
+
+    /* Vista checks for additional attributes. */
+    hr = IMFTopologyNode_CloneFrom(node, node2);
+    ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Vista */, "Failed to clone a node, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetOutputPrefType(node, 0, &mediatype2);
+    ok(hr == S_OK, "Failed to get preferred type, hr %#x.\n", hr);
+    ok(mediatype == mediatype2, "Unexpected media type.\n");
+
+    IMFMediaType_Release(mediatype2);
+    IMFMediaType_Release(mediatype);
+
+    IMFTopologyNode_Release(node2);
+
+    /* Existing preferred types are not cleared. */
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &node2);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetOutputCount(node, &count);
+    ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected output count.\n");
+
+    hr = IMFTopologyNode_CloneFrom(node, node2);
+    ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Vista */, "Failed to clone a node, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetOutputCount(node, &count);
+    ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected output count.\n");
+
+    hr = IMFTopologyNode_GetOutputPrefType(node, 0, &mediatype2);
+    ok(hr == S_OK, "Failed to get preferred type, hr %#x.\n", hr);
+    ok(!!mediatype2, "Unexpected media type.\n");
+    IMFMediaType_Release(mediatype2);
+
+    hr = IMFTopologyNode_CloneFrom(node2, node);
+    ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Vista */, "Failed to clone a node, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetOutputCount(node2, &count);
+    ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected output count.\n");
+
+    IMFTopologyNode_Release(node2);
+    IMFTopologyNode_Release(node);
+
     IMFTopology_Release(topology);
 }
 
