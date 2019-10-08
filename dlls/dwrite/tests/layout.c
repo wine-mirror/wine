@@ -1702,14 +1702,6 @@ static const struct drawcall_entry draw_ltr_reordered_run_seq[] = {
     { DRAW_LAST_KIND }
 };
 
-static const struct drawcall_entry draw_rtl_reordered_run_seq[] = {
-    { DRAW_GLYPHRUN, {'1','2','3','-','5','2',0}, {'r','u',0}, 6, 2 },
-    { DRAW_GLYPHRUN, {0x64a,0x64f,0x633,0x627,0x648,0x650,0x64a,0}, {'r','u',0}, 7, 1 },
-    { DRAW_GLYPHRUN, {'7','1',0}, {'r','u',0}, 2, 2 },
-    { DRAW_GLYPHRUN, {'.',0}, {'r','u',0}, 1, 1 },
-    { DRAW_LAST_KIND }
-};
-
 static void test_Draw(void)
 {
     static const WCHAR str3W[] = {'1','2','3','-','5','2',0x64a,0x64f,0x633,0x627,0x648,0x650,
@@ -1915,14 +1907,6 @@ todo_wine
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0f, 0.0f);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_ltr_reordered_run_seq, "draw test 11", FALSE);
-
-    hr = IDWriteTextLayout_SetReadingDirection(layout, DWRITE_READING_DIRECTION_RIGHT_TO_LEFT);
-    ok(hr == S_OK, "Failed to set reading direction, hr %#x.\n", hr);
-
-    flush_sequence(sequences, RENDERER_ID);
-    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0f, 0.0f);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok_sequence(sequences, RENDERER_ID, draw_rtl_reordered_run_seq, "draw test 12", FALSE);
 
     IDWriteTextLayout_Release(layout);
 
