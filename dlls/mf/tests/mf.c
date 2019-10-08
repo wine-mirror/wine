@@ -1041,8 +1041,6 @@ todo_wine
 
     IMFGetService_Release(gs);
 
-    test_session_events(session);
-
     IMFMediaSession_Release(session);
 
     hr = MFCreateMediaSession(NULL, &session);
@@ -1076,6 +1074,14 @@ todo_wine
     IMFMediaSession_Release(session);
 
     IMFAttributes_Release(attributes);
+
+    /* Basic events behavior. */
+    hr = MFCreateMediaSession(NULL, &session);
+    ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
+
+    test_session_events(session);
+
+    IMFMediaSession_Release(session);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
