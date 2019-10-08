@@ -2552,6 +2552,38 @@ static void test_quality_manager(void)
     IMFQualityManager_Release(manager);
 }
 
+static void test_sar(void)
+{
+    IMFPresentationTimeSource *time_source;
+    IMFMediaSink *sink;
+    HRESULT hr;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
+
+    hr = MFCreateAudioRenderer(NULL, &sink);
+    if (hr == MF_E_NO_AUDIO_PLAYBACK_DEVICE)
+    {
+        skip("No audio playback device available.\n");
+        CoUninitialize();
+        return;
+    }
+
+todo_wine
+    ok(hr == S_OK, "Failed to create renderer, hr %#x.\n", hr);
+
+if (SUCCEEDED(hr))
+{
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFPresentationTimeSource, (void **)&time_source);
+    ok(hr == S_OK, "Failed to get time source interface, hr %#x.\n", hr);
+    IMFPresentationTimeSource_Release(time_source);
+
+    IMFMediaSink_Release(sink);
+}
+
+    CoUninitialize();
+}
+
 START_TEST(mf)
 {
     test_topology();
@@ -2564,4 +2596,5 @@ START_TEST(mf)
     test_sample_grabber();
     test_video_processor();
     test_quality_manager();
+    test_sar();
 }
