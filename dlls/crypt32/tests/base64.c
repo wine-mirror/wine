@@ -137,12 +137,10 @@ static void encodeAndCompareBase64_A(const BYTE *toEncode, DWORD toEncodeLen,
     ok((!ret && GetLastError() == ERROR_MORE_DATA) || broken(ret) /* XP */, "CryptBinaryToStringA failed %d, error %d.\n",
         ret, GetLastError());
     ok(strLen2 == strLen || broken(strLen2 == strLen - 1), "Expected length %d, got %d\n", strLen, strLen2);
-todo_wine {
     if (header)
         ok(str[0] == header[0], "Unexpected buffer contents %#x.\n", str[0]);
     else
         ok(str[0] == expected[0], "Unexpected buffer contents %#x.\n", str[0]);
-}
     strLen2 = strLen;
     ret = CryptBinaryToStringA(toEncode, toEncodeLen, format, str, &strLen2);
     ok(ret, "CryptBinaryToStringA failed: %d\n", GetLastError());

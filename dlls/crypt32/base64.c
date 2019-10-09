@@ -93,50 +93,53 @@ static BOOL EncodeBinaryToBinaryA(const BYTE *pbBinary,
     return ret;
 }
 
-static LONG encodeBase64A(const BYTE *in_buf, int in_len, LPCSTR sep,
+static DWORD stradd(LPSTR ptr, LPCSTR end, LPCSTR s, DWORD slen)
+{
+    if (ptr + slen > end)
+        slen = end - ptr;
+    memcpy(ptr, s, slen);
+    return slen;
+}
+
+static DWORD encodeBase64A(const BYTE *in_buf, int in_len, LPCSTR sep,
  char* out_buf, DWORD *out_len)
 {
     int div, i;
     const BYTE *d = in_buf;
     int bytes = (in_len*8 + 5)/6, pad_bytes = (bytes % 4) ? 4 - (bytes % 4) : 0;
-    DWORD needed;
     LPSTR ptr;
+    LPCSTR end;
+    char chunk[4];
 
-    TRACE("bytes is %d, pad bytes is %d\n", bytes, pad_bytes);
-    needed = bytes + pad_bytes;
-    needed += (needed / 64 + (needed % 64 ? 1 : 0)) * strlen(sep);
-    needed++;
-
-    if (needed > *out_len)
+    if (!out_buf)
     {
-        *out_len = needed;
-        return ERROR_INSUFFICIENT_BUFFER;
+        TRACE("bytes is %d, pad bytes is %d\n", bytes, pad_bytes);
+        *out_len = bytes + pad_bytes;
+        *out_len += (*out_len / 64 + (*out_len % 64 ? 1 : 0)) * strlen(sep) + 1;
+        return 0;
     }
-    else
-        *out_len = needed;
 
     /* Three bytes of input give 4 chars of output */
     div = in_len / 3;
 
     ptr = out_buf;
+    end = ptr + *out_len;
     i = 0;
-    while (div > 0)
+    while (div > 0 && ptr < end)
     {
         if (i && i % 64 == 0)
-        {
-            strcpy(ptr, sep);
-            ptr += strlen(sep);
-        }
+            ptr += stradd(ptr, end, sep, strlen(sep));
         /* first char is the first 6 bits of the first byte*/
-        *ptr++ = b64[ ( d[0] >> 2) & 0x3f ];
+        chunk[0] = b64[ ( d[0] >> 2) & 0x3f ];
         /* second char is the last 2 bits of the first byte and the first 4
          * bits of the second byte */
-        *ptr++ = b64[ ((d[0] << 4) & 0x30) | (d[1] >> 4 & 0x0f)];
+        chunk[1] = b64[ ((d[0] << 4) & 0x30) | (d[1] >> 4 & 0x0f)];
         /* third char is the last 4 bits of the second byte and the first 2
          * bits of the third byte */
-        *ptr++ = b64[ ((d[1] << 2) & 0x3c) | (d[2] >> 6 & 0x03)];
+        chunk[2] = b64[ ((d[1] << 2) & 0x3c) | (d[2] >> 6 & 0x03)];
         /* fourth char is the remaining 6 bits of the third byte */
-        *ptr++ = b64[   d[2]       & 0x3f];
+        chunk[3] = b64[   d[2]       & 0x3f];
+        ptr += stradd(ptr, end, chunk, 4);
         i += 4;
         d += 3;
         div--;
@@ -146,31 +149,33 @@ static LONG encodeBase64A(const BYTE *in_buf, int in_len, LPCSTR sep,
     {
         case 1:
             /* first char is the first 6 bits of the first byte*/
-            *ptr++ = b64[ ( d[0] >> 2) & 0x3f ];
+            chunk[0] = b64[ ( d[0] >> 2) & 0x3f ];
             /* second char is the last 2 bits of the first byte and the first 4
              * bits of the second byte */
-            *ptr++ = b64[ ((d[0] << 4) & 0x30) | (d[1] >> 4 & 0x0f)];
+            chunk[1] = b64[ ((d[0] << 4) & 0x30) | (d[1] >> 4 & 0x0f)];
             /* third char is the last 4 bits of the second byte padded with
              * two zeroes */
-            *ptr++ = b64[ ((d[1] << 2) & 0x3c) ];
+            chunk[2] = b64[ ((d[1] << 2) & 0x3c) ];
             /* fourth char is a = to indicate one byte of padding */
-            *ptr++ = '=';
+            chunk[3] = '=';
+            ptr += stradd(ptr, end, chunk, 4);
             break;
         case 2:
             /* first char is the first 6 bits of the first byte*/
-            *ptr++ = b64[ ( d[0] >> 2) & 0x3f ];
+            chunk[0] = b64[ ( d[0] >> 2) & 0x3f ];
             /* second char is the last 2 bits of the first byte padded with
              * four zeroes*/
-            *ptr++ = b64[ ((d[0] << 4) & 0x30)];
+            chunk[1] = b64[ ((d[0] << 4) & 0x30)];
             /* third char is = to indicate padding */
-            *ptr++ = '=';
+            chunk[2] = '=';
             /* fourth char is = to indicate padding */
-            *ptr++ = '=';
+            chunk[3] = '=';
+            ptr += stradd(ptr, end, chunk, 4);
             break;
     }
-    strcpy(ptr, sep);
+    ptr += stradd(ptr, end, sep, strlen(sep));
 
-    return ERROR_SUCCESS;
+    return ptr - out_buf;
 }
 
 static BOOL BinaryToBase64A(const BYTE *pbBinary,
@@ -215,26 +220,28 @@ static BOOL BinaryToBase64A(const BYTE *pbBinary,
 
     if (pszString)
     {
+        LPSTR ptr = pszString;
+        DWORD size = *pcchString;
+        LPSTR end = ptr + size;
+
+        if (header)
+        {
+            ptr += stradd(ptr, end, header, strlen(header));
+            ptr += stradd(ptr, end, sep, strlen(sep));
+            size = end - ptr;
+        }
+        ptr += encodeBase64A(pbBinary, cbBinary, sep, ptr, &size);
+        if (trailer)
+        {
+            ptr += stradd(ptr, end, trailer, strlen(trailer));
+            ptr += stradd(ptr, end, sep, strlen(sep));
+        }
+
+        if (ptr < end)
+            *ptr = '\0';
+
         if (charsNeeded <= *pcchString)
         {
-            LPSTR ptr = pszString;
-            DWORD size = charsNeeded;
-
-            if (header)
-            {
-                strcpy(ptr, header);
-                ptr += strlen(ptr);
-                strcpy(ptr, sep);
-                ptr += strlen(sep);
-            }
-            encodeBase64A(pbBinary, cbBinary, sep, ptr, &size);
-            ptr += size - 1;
-            if (trailer)
-            {
-                strcpy(ptr, trailer);
-                ptr += strlen(ptr);
-               strcpy(ptr, sep);
-            }
             *pcchString = charsNeeded - 1;
         }
         else
