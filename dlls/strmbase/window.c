@@ -658,16 +658,13 @@ HRESULT WINAPI BaseControlWindowImpl_SetWindowForeground(IVideoWindow *iface, LO
 {
     BaseControlWindow *window = impl_from_IVideoWindow(iface);
     UINT flags = SWP_NOMOVE | SWP_NOSIZE;
-    IPin* pPin;
-    HRESULT hr;
 
     TRACE("window %p, focus %d.\n", window, focus);
 
     if (focus != OAFALSE && focus != OATRUE)
         return E_INVALIDARG;
 
-    hr = IPin_ConnectedTo(&window->pPin->IPin_iface, &pPin);
-    if ((hr != S_OK) || !pPin)
+    if (!window->pPin->peer)
         return VFW_E_NOT_CONNECTED;
 
     if (!focus)

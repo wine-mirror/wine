@@ -2076,7 +2076,7 @@ static void test_video_window(void)
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
-    todo_wine ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     DestroyWindow(our_hwnd);
 }
 
