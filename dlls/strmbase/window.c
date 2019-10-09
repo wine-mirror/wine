@@ -402,15 +402,22 @@ HRESULT WINAPI BaseControlWindowImpl_put_WindowState(IVideoWindow *iface, LONG W
     return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_get_WindowState(IVideoWindow *iface, LONG *WindowState)
+HRESULT WINAPI BaseControlWindowImpl_get_WindowState(IVideoWindow *iface, LONG *state)
 {
-    WINDOWPLACEMENT place;
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
+    DWORD style;
 
-    place.length = sizeof(place);
-    GetWindowPlacement(This->baseWindow.hWnd, &place);
-    TRACE("(%p/%p)->(%p)\n", This, iface, WindowState);
-    *WindowState = place.showCmd;
+    TRACE("window %p, state %p.\n", window, state);
+
+    style = GetWindowLongPtrW(window->baseWindow.hWnd, GWL_STYLE);
+    if (!(style & WS_VISIBLE))
+        *state = SW_HIDE;
+    else if (style & WS_MINIMIZE)
+        *state = SW_MINIMIZE;
+    else if (style & WS_MAXIMIZE)
+        *state = SW_MAXIMIZE;
+    else
+        *state = SW_SHOW;
 
     return S_OK;
 }

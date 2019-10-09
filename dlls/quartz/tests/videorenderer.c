@@ -1487,7 +1487,7 @@ static void test_video_window_state(IVideoWindow *window, HWND hwnd, HWND our_hw
 
     hr = IVideoWindow_get_WindowState(window, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == SW_HIDE, "Got state %d.\n", state);
+    ok(state == SW_HIDE, "Got state %d.\n", state);
 
     hr = IVideoWindow_get_Visible(window, &state);
     ok(state == OAFALSE, "Got state %d.\n", state);
@@ -1501,7 +1501,7 @@ static void test_video_window_state(IVideoWindow *window, HWND hwnd, HWND our_hw
 
     hr = IVideoWindow_get_WindowState(window, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == SW_SHOW, "Got state %d.\n", state);
+    ok(state == SW_SHOW, "Got state %d.\n", state);
 
     hr = IVideoWindow_get_Visible(window, &state);
     ok(state == OATRUE, "Got state %d.\n", state);
@@ -1518,7 +1518,7 @@ static void test_video_window_state(IVideoWindow *window, HWND hwnd, HWND our_hw
 
     hr = IVideoWindow_get_WindowState(window, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == SW_MINIMIZE, "Got state %d.\n", state);
+    ok(state == SW_MINIMIZE, "Got state %d.\n", state);
 
     hr = IVideoWindow_get_Visible(window, &state);
     ok(state == OATRUE, "Got state %d.\n", state);
@@ -1533,7 +1533,7 @@ static void test_video_window_state(IVideoWindow *window, HWND hwnd, HWND our_hw
 
     hr = IVideoWindow_get_WindowState(window, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == SW_SHOW, "Got state %d.\n", state);
+    ok(state == SW_SHOW, "Got state %d.\n", state);
 
     hr = IVideoWindow_get_Visible(window, &state);
     ok(state == OATRUE, "Got state %d.\n", state);
@@ -1566,7 +1566,7 @@ static void test_video_window_state(IVideoWindow *window, HWND hwnd, HWND our_hw
 
     hr = IVideoWindow_get_WindowState(window, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == SW_HIDE, "Got state %d.\n", state);
+    ok(state == SW_HIDE, "Got state %d.\n", state);
 
     hr = IVideoWindow_get_Visible(window, &state);
     ok(state == OAFALSE, "Got state %d.\n", state);
@@ -1581,7 +1581,7 @@ static void test_video_window_state(IVideoWindow *window, HWND hwnd, HWND our_hw
 
     hr = IVideoWindow_get_WindowState(window, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == SW_SHOW, "Got state %d.\n", state);
+    ok(state == SW_SHOW, "Got state %d.\n", state);
 
     hr = IVideoWindow_get_Visible(window, &state);
     ok(state == OATRUE, "Got state %d.\n", state);
@@ -1596,7 +1596,7 @@ static void test_video_window_state(IVideoWindow *window, HWND hwnd, HWND our_hw
 
     hr = IVideoWindow_get_WindowState(window, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == SW_HIDE, "Got state %d.\n", state);
+    ok(state == SW_HIDE, "Got state %d.\n", state);
 
     hr = IVideoWindow_get_Visible(window, &state);
     ok(state == OAFALSE, "Got state %d.\n", state);
