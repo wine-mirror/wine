@@ -547,14 +547,15 @@ struct fileloader
     IDWriteFontFileLoader *loader;
 };
 
-struct dwritefactory {
+struct dwritefactory
+{
     IDWriteFactory5 IDWriteFactory5_iface;
     LONG ref;
 
     IDWriteFontCollection1 *system_collection;
     IDWriteFontCollection1 *eudc_collection;
     IDWriteGdiInterop1 *gdiinterop;
-    IDWriteFontFallback *fallback;
+    IDWriteFontFallback1 *fallback;
 
     IDWriteFontFileLoader *localfontfileloader;
     struct list localfontfaces;
@@ -1333,19 +1334,20 @@ static HRESULT WINAPI dwritefactory1_CreateCustomRenderingParams(IDWriteFactory5
 
 static HRESULT WINAPI dwritefactory2_GetSystemFontFallback(IDWriteFactory5 *iface, IDWriteFontFallback **fallback)
 {
-    struct dwritefactory *This = impl_from_IDWriteFactory5(iface);
+    struct dwritefactory *factory = impl_from_IDWriteFactory5(iface);
 
-    TRACE("(%p)->(%p)\n", This, fallback);
+    TRACE("%p, %p.\n", iface, fallback);
 
     *fallback = NULL;
 
-    if (!This->fallback) {
-        HRESULT hr = create_system_fontfallback(iface, &This->fallback);
+    if (!factory->fallback)
+    {
+        HRESULT hr = create_system_fontfallback(iface, &factory->fallback);
         if (FAILED(hr))
             return hr;
     }
 
-    *fallback = This->fallback;
+    *fallback = (IDWriteFontFallback *)factory->fallback;
     IDWriteFontFallback_AddRef(*fallback);
     return S_OK;
 }
