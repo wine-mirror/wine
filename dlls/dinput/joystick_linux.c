@@ -168,6 +168,7 @@ static INT find_joystick_devices(void)
         struct JoyDev joydev, *new_joydevs;
         BYTE axes_map[ABS_MAX + 1];
         SHORT btn_map[KEY_MAX - BTN_MISC + 1];
+        BOOL is_stylus = FALSE;
 
         snprintf(joydev.device, sizeof(joydev.device), "%s%d", JOYDEV_NEW, i);
         if ((fd = open(joydev.device, O_RDONLY)) == -1)
@@ -241,10 +242,20 @@ static INT find_joystick_devices(void)
                 case BTN_DEAD:
                     joydev.is_joystick = TRUE;
                     break;
+                case BTN_STYLUS:
+                    is_stylus = TRUE;
+                    break;
                 default:
                     break;
                 }
             }
+        }
+
+        if(is_stylus)
+        {
+            TRACE("Stylus detected. Skipping\n");
+            close(fd);
+            continue;
         }
 
         if (ioctl(fd, JSIOCGAXMAP, axes_map) < 0)
