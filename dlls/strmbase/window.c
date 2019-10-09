@@ -654,29 +654,25 @@ HRESULT WINAPI BaseControlWindowImpl_put_FullScreenMode(IVideoWindow *iface, LON
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_SetWindowForeground(IVideoWindow *iface, LONG Focus)
+HRESULT WINAPI BaseControlWindowImpl_SetWindowForeground(IVideoWindow *iface, LONG focus)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
-    BOOL ret;
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
+    UINT flags = SWP_NOMOVE | SWP_NOSIZE;
     IPin* pPin;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%d)\n", This, iface, Focus);
+    TRACE("window %p, focus %d.\n", window, focus);
 
-    if ((Focus != OAFALSE) && (Focus != OATRUE))
+    if (focus != OAFALSE && focus != OATRUE)
         return E_INVALIDARG;
 
-    hr = IPin_ConnectedTo(&This->pPin->IPin_iface, &pPin);
+    hr = IPin_ConnectedTo(&window->pPin->IPin_iface, &pPin);
     if ((hr != S_OK) || !pPin)
         return VFW_E_NOT_CONNECTED;
 
-    if (Focus)
-        ret = SetForegroundWindow(This->baseWindow.hWnd);
-    else
-        ret = SetWindowPos(This->baseWindow.hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
-
-    if (!ret)
-        return E_FAIL;
+    if (!focus)
+        flags |= SWP_NOACTIVATE;
+    SetWindowPos(window->baseWindow.hWnd, HWND_TOP, 0, 0, 0, 0, flags);
 
     return S_OK;
 }
