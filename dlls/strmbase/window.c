@@ -330,7 +330,8 @@ HRESULT WINAPI BaseControlWindowImpl_put_WindowStyle(IVideoWindow *iface, LONG W
         return E_INVALIDARG;
 
     SetWindowLongW(This->baseWindow.hWnd, GWL_STYLE, WindowStyle);
-    SetWindowPos(This->baseWindow.hWnd,0,0,0,0,0,SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOZORDER);
+    SetWindowPos(This->baseWindow.hWnd, 0, 0, 0, 0, 0,
+            SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
     This->baseWindow.WindowStyles = WindowStyle;
 
     return S_OK;

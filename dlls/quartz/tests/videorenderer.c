@@ -1438,7 +1438,7 @@ static void test_video_window_style(IVideoWindow *window, HWND hwnd, HWND our_hw
     style = GetWindowLongA(hwnd, GWL_STYLE);
     todo_wine ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW), "Got style %#x.\n", style);
 
-    todo_wine ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
 
     hr = IVideoWindow_get_WindowStyleEx(window, &style);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
