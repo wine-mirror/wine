@@ -973,7 +973,7 @@ static void test_GetFolder(void)
     IFolder_Release(folder);
 }
 
-static void test_clone(IEnumVARIANT *enumvar, BOOL position_inherited)
+static void _test_clone(IEnumVARIANT *enumvar, BOOL position_inherited, int line)
 {
     HRESULT hr;
     IEnumVARIANT *clone;
@@ -981,34 +981,34 @@ static void test_clone(IEnumVARIANT *enumvar, BOOL position_inherited)
     VARIANT var, var2;
 
     hr = IEnumVARIANT_Reset(enumvar);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
 
     VariantInit(&var);
     fetched = -1;
     hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(fetched == 1, "got %d\n", fetched);
+    ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
+    ok(fetched == 1, "%d: got %d\n", line, fetched);
 
     /* clone enumerator */
     hr = IEnumVARIANT_Clone(enumvar, &clone);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(clone != enumvar, "got %p, %p\n", enumvar, clone);
+    ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
+    ok(clone != enumvar, "%d: got %p, %p\n", line, enumvar, clone);
 
     /* check if clone inherits position */
     VariantInit(&var2);
     fetched = -1;
     hr = IEnumVARIANT_Next(clone, 1, &var2, &fetched);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(fetched == 1, "got %d\n", fetched);
+    ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
+    ok(fetched == 1, "%d: got %d\n", line, fetched);
     if (!position_inherited)
-        todo_wine ok(V_DISPATCH(&var) == V_DISPATCH(&var2), "values don't match\n");
+        todo_wine ok(V_DISPATCH(&var) == V_DISPATCH(&var2), "%d: values don't match\n", line);
     else
     {
         fetched = -1;
         hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(fetched == 1, "got %d\n", fetched);
-        todo_wine ok(V_DISPATCH(&var) == V_DISPATCH(&var2), "values don't match\n");
+        ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
+        ok(fetched == 1, "%d: got %d\n", line, fetched);
+        todo_wine ok(V_DISPATCH(&var) == V_DISPATCH(&var2), "%d: values don't match\n", line);
     }
 
     VariantClear(&var2);
@@ -1016,8 +1016,9 @@ static void test_clone(IEnumVARIANT *enumvar, BOOL position_inherited)
     IEnumVARIANT_Release(clone);
 
     hr = IEnumVARIANT_Reset(enumvar);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
 }
+#define test_clone(a, b) _test_clone(a, b, __LINE__)
 
 /* Please keep the tests for IFolderCollection and IFileCollection in sync */
 static void test_FolderCollection(void)
