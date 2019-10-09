@@ -203,7 +203,7 @@ HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *pControlWindow,
     if (SUCCEEDED(hr))
     {
         pControlWindow->IVideoWindow_iface.lpVtbl = lpVtbl;
-        pControlWindow->AutoShow = TRUE;
+        pControlWindow->AutoShow = OATRUE;
         pControlWindow->hwndDrain = NULL;
         pControlWindow->hwndOwner = NULL;
         pControlWindow->pFilter = owner;
