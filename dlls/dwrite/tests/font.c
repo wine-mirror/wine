@@ -3897,6 +3897,7 @@ static void test_GetMatchingFonts(void)
     IDWriteFactory *factory;
     IDWriteFontList *fontlist, *fontlist2;
     IDWriteFontList1 *fontlist1;
+    IDWriteFontList2 *fontlist3;
     HRESULT hr;
     ULONG ref;
 
@@ -3970,6 +3971,13 @@ static void test_GetMatchingFonts(void)
     }
     else
         win_skip("IDWriteFontList1 is not supported.\n");
+
+    if (SUCCEEDED(IDWriteFontList_QueryInterface(fontlist, &IID_IDWriteFontList2, (void **)&fontlist3)))
+    {
+        IDWriteFontList2_Release(fontlist3);
+    }
+    else
+        win_skip("IDWriteFontList2 is not supported.\n");
 
     IDWriteFontList_Release(fontlist);
     IDWriteFontFamily_Release(family);
