@@ -240,7 +240,7 @@ static BOOL BinaryToBase64A(const BYTE *pbBinary,
         else
         {
             *pcchString = charsNeeded;
-            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            SetLastError(ERROR_MORE_DATA);
             ret = FALSE;
         }
     }
@@ -460,7 +460,7 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
         else
         {
             *pcchString = charsNeeded;
-            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            SetLastError(ERROR_MORE_DATA);
             ret = FALSE;
         }
     }
