@@ -128,7 +128,7 @@ struct dwrite_fontcollection
 struct dwrite_fontfamily
 {
     IDWriteFontFamily2 IDWriteFontFamily2_iface;
-    IDWriteFontList1 IDWriteFontList1_iface;
+    IDWriteFontList2 IDWriteFontList2_iface;
     LONG refcount;
 
     struct dwrite_fontfamily_data *data;
@@ -294,9 +294,9 @@ static inline struct dwrite_fontfamily *impl_from_IDWriteFontFamily2(IDWriteFont
     return CONTAINING_RECORD(iface, struct dwrite_fontfamily, IDWriteFontFamily2_iface);
 }
 
-static inline struct dwrite_fontfamily *impl_family_from_IDWriteFontList1(IDWriteFontList1 *iface)
+static inline struct dwrite_fontfamily *impl_family_from_IDWriteFontList2(IDWriteFontList2 *iface)
 {
-    return CONTAINING_RECORD(iface, struct dwrite_fontfamily, IDWriteFontList1_iface);
+    return CONTAINING_RECORD(iface, struct dwrite_fontfamily, IDWriteFontList2_iface);
 }
 
 static inline struct dwrite_fontcollection *impl_from_IDWriteFontCollection3(IDWriteFontCollection3 *iface)
@@ -2004,22 +2004,22 @@ static HRESULT WINAPI dwritefontfamily_QueryInterface(IDWriteFontFamily2 *iface,
         IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
-        IDWriteFontFamily2_AddRef(iface);
-        return S_OK;
     }
-
-    if (IsEqualIID(riid, &IID_IDWriteFontList1) ||
+    else if (IsEqualIID(riid, &IID_IDWriteFontList2) ||
+        IsEqualIID(riid, &IID_IDWriteFontList1) ||
         IsEqualIID(riid, &IID_IDWriteFontList))
     {
-        *obj = &family->IDWriteFontList1_iface;
-        IDWriteFontList1_AddRef(&family->IDWriteFontList1_iface);
-        return S_OK;
+        *obj = &family->IDWriteFontList2_iface;
+    }
+    else
+    {
+        WARN("%s not implemented.\n", debugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
     }
 
-    WARN("%s not implemented.\n", debugstr_guid(riid));
-
-    *obj = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*obj);
+    return S_OK;
 }
 
 static ULONG WINAPI dwritefontfamily_AddRef(IDWriteFontFamily2 *iface)
@@ -2329,63 +2329,71 @@ static const IDWriteFontFamily2Vtbl fontfamilyvtbl =
     dwritefontfamily2_GetFontSet,
 };
 
-static HRESULT WINAPI dwritefontfamilylist_QueryInterface(IDWriteFontList1 *iface, REFIID riid, void **obj)
+static HRESULT WINAPI dwritefontfamilylist_QueryInterface(IDWriteFontList2 *iface, REFIID riid, void **obj)
 {
-    struct dwrite_fontfamily *This = impl_family_from_IDWriteFontList1(iface);
-    return dwritefontfamily_QueryInterface(&This->IDWriteFontFamily2_iface, riid, obj);
+    struct dwrite_fontfamily *family = impl_family_from_IDWriteFontList2(iface);
+    return dwritefontfamily_QueryInterface(&family->IDWriteFontFamily2_iface, riid, obj);
 }
 
-static ULONG WINAPI dwritefontfamilylist_AddRef(IDWriteFontList1 *iface)
+static ULONG WINAPI dwritefontfamilylist_AddRef(IDWriteFontList2 *iface)
 {
-    struct dwrite_fontfamily *This = impl_family_from_IDWriteFontList1(iface);
-    return dwritefontfamily_AddRef(&This->IDWriteFontFamily2_iface);
+    struct dwrite_fontfamily *family = impl_family_from_IDWriteFontList2(iface);
+    return dwritefontfamily_AddRef(&family->IDWriteFontFamily2_iface);
 }
 
-static ULONG WINAPI dwritefontfamilylist_Release(IDWriteFontList1 *iface)
+static ULONG WINAPI dwritefontfamilylist_Release(IDWriteFontList2 *iface)
 {
-    struct dwrite_fontfamily *This = impl_family_from_IDWriteFontList1(iface);
-    return dwritefontfamily_Release(&This->IDWriteFontFamily2_iface);
+    struct dwrite_fontfamily *family = impl_family_from_IDWriteFontList2(iface);
+    return dwritefontfamily_Release(&family->IDWriteFontFamily2_iface);
 }
 
-static HRESULT WINAPI dwritefontfamilylist_GetFontCollection(IDWriteFontList1 *iface,
+static HRESULT WINAPI dwritefontfamilylist_GetFontCollection(IDWriteFontList2 *iface,
         IDWriteFontCollection **collection)
 {
-    struct dwrite_fontfamily *This = impl_family_from_IDWriteFontList1(iface);
-    return dwritefontfamily_GetFontCollection(&This->IDWriteFontFamily2_iface, collection);
+    struct dwrite_fontfamily *family = impl_family_from_IDWriteFontList2(iface);
+    return dwritefontfamily_GetFontCollection(&family->IDWriteFontFamily2_iface, collection);
 }
 
-static UINT32 WINAPI dwritefontfamilylist_GetFontCount(IDWriteFontList1 *iface)
+static UINT32 WINAPI dwritefontfamilylist_GetFontCount(IDWriteFontList2 *iface)
 {
-    struct dwrite_fontfamily *This = impl_family_from_IDWriteFontList1(iface);
-    return dwritefontfamily_GetFontCount(&This->IDWriteFontFamily2_iface);
+    struct dwrite_fontfamily *family = impl_family_from_IDWriteFontList2(iface);
+    return dwritefontfamily_GetFontCount(&family->IDWriteFontFamily2_iface);
 }
 
-static HRESULT WINAPI dwritefontfamilylist_GetFont(IDWriteFontList1 *iface, UINT32 index, IDWriteFont **font)
+static HRESULT WINAPI dwritefontfamilylist_GetFont(IDWriteFontList2 *iface, UINT32 index, IDWriteFont **font)
 {
-    struct dwrite_fontfamily *This = impl_family_from_IDWriteFontList1(iface);
-    return dwritefontfamily_GetFont(&This->IDWriteFontFamily2_iface, index, font);
+    struct dwrite_fontfamily *family = impl_family_from_IDWriteFontList2(iface);
+    return dwritefontfamily_GetFont(&family->IDWriteFontFamily2_iface, index, font);
 }
 
-static DWRITE_LOCALITY WINAPI dwritefontfamilylist1_GetFontLocality(IDWriteFontList1 *iface, UINT32 index)
+static DWRITE_LOCALITY WINAPI dwritefontfamilylist1_GetFontLocality(IDWriteFontList2 *iface, UINT32 index)
 {
-    struct dwrite_fontfamily *This = impl_family_from_IDWriteFontList1(iface);
-    return dwritefontfamily1_GetFontLocality(&This->IDWriteFontFamily2_iface, index);
+    struct dwrite_fontfamily *family = impl_family_from_IDWriteFontList2(iface);
+    return dwritefontfamily1_GetFontLocality(&family->IDWriteFontFamily2_iface, index);
 }
 
-static HRESULT WINAPI dwritefontfamilylist1_GetFont(IDWriteFontList1 *iface, UINT32 index, IDWriteFont3 **font)
+static HRESULT WINAPI dwritefontfamilylist1_GetFont(IDWriteFontList2 *iface, UINT32 index, IDWriteFont3 **font)
 {
-    struct dwrite_fontfamily *This = impl_family_from_IDWriteFontList1(iface);
-    return dwritefontfamily1_GetFont(&This->IDWriteFontFamily2_iface, index, font);
+    struct dwrite_fontfamily *family = impl_family_from_IDWriteFontList2(iface);
+    return dwritefontfamily1_GetFont(&family->IDWriteFontFamily2_iface, index, font);
 }
 
-static HRESULT WINAPI dwritefontfamilylist1_GetFontFaceReference(IDWriteFontList1 *iface, UINT32 index,
+static HRESULT WINAPI dwritefontfamilylist1_GetFontFaceReference(IDWriteFontList2 *iface, UINT32 index,
         IDWriteFontFaceReference **reference)
 {
-    struct dwrite_fontfamily *This = impl_family_from_IDWriteFontList1(iface);
-    return dwritefontfamily1_GetFontFaceReference(&This->IDWriteFontFamily2_iface, index, reference);
+    struct dwrite_fontfamily *family = impl_family_from_IDWriteFontList2(iface);
+    return dwritefontfamily1_GetFontFaceReference(&family->IDWriteFontFamily2_iface, index, reference);
 }
 
-static const IDWriteFontList1Vtbl fontfamilylistvtbl = {
+static HRESULT WINAPI dwritefontfamilylist2_GetFontSet(IDWriteFontList2 *iface, IDWriteFontSet1 **fontset)
+{
+    FIXME("%p, %p.\n", iface, fontset);
+
+    return E_NOTIMPL;
+}
+
+static const IDWriteFontList2Vtbl fontfamilylistvtbl =
+{
     dwritefontfamilylist_QueryInterface,
     dwritefontfamilylist_AddRef,
     dwritefontfamilylist_Release,
@@ -2395,6 +2403,7 @@ static const IDWriteFontList1Vtbl fontfamilylistvtbl = {
     dwritefontfamilylist1_GetFontLocality,
     dwritefontfamilylist1_GetFont,
     dwritefontfamilylist1_GetFontFaceReference,
+    dwritefontfamilylist2_GetFontSet,
 };
 
 static HRESULT create_fontfamily(struct dwrite_fontcollection *collection, UINT32 index,
@@ -2409,7 +2418,7 @@ static HRESULT create_fontfamily(struct dwrite_fontcollection *collection, UINT3
         return E_OUTOFMEMORY;
 
     object->IDWriteFontFamily2_iface.lpVtbl = &fontfamilyvtbl;
-    object->IDWriteFontList1_iface.lpVtbl = &fontfamilylistvtbl;
+    object->IDWriteFontList2_iface.lpVtbl = &fontfamilylistvtbl;
     object->refcount = 1;
     object->collection = collection;
     IDWriteFontCollection3_AddRef(&collection->IDWriteFontCollection3_iface);

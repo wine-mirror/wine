@@ -1601,6 +1601,7 @@ if (0) /* crashes on native */
     if (hr == S_OK) {
         IDWriteFontFaceReference *ref, *ref1;
         IDWriteFontList1 *fontlist1;
+        IDWriteFontList2 *fontlist2;
         IDWriteFontList *fontlist;
         IDWriteFont3 *font3;
         IDWriteFont1 *font1;
@@ -1629,6 +1630,15 @@ if (0) /* crashes on native */
             ok(fontlist == (IDWriteFontList *)fontlist1, "Unexpected interface pointer.\n");
             ok(fontlist != (IDWriteFontList *)family1, "Unexpected interface pointer.\n");
             ok(fontlist != (IDWriteFontList *)family, "Unexpected interface pointer.\n");
+
+            if (SUCCEEDED(IDWriteFontFamily1_QueryInterface(family1, &IID_IDWriteFontList2, (void **)&fontlist2)))
+            {
+                ok(fontlist == (IDWriteFontList *)fontlist2, "Unexpected interface pointer.\n");
+                IDWriteFontList2_Release(fontlist2);
+            }
+            else
+                win_skip("IDWriteFontList2 is not supported.\n");
+
             IDWriteFontList1_Release(fontlist1);
             IDWriteFontList_Release(fontlist);
         }
