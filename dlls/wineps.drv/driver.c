@@ -110,8 +110,7 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, const PSDRV_DEVMODE *dm2, PRINTERI
 	    dm1->dmPublic.u1.s1.dmPaperSize = dm2->dmPublic.u1.s1.dmPaperSize;
 	    dm1->dmPublic.u1.s1.dmPaperWidth  = paper_size_from_points( page->PaperDimension->x );
 	    dm1->dmPublic.u1.s1.dmPaperLength = paper_size_from_points( page->PaperDimension->y );
-	    dm1->dmPublic.dmFields &= ~(DM_PAPERLENGTH | DM_PAPERWIDTH);
-	    dm1->dmPublic.dmFields |= DM_PAPERSIZE;
+	    dm1->dmPublic.dmFields |= DM_PAPERSIZE | DM_PAPERWIDTH | DM_PAPERLENGTH;
 	    TRACE("Changing page to %s %d x %d\n", page->FullName,
 		  dm1->dmPublic.u1.s1.dmPaperWidth,
 		  dm1->dmPublic.u1.s1.dmPaperLength );
