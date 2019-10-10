@@ -987,6 +987,10 @@ static DWORD WINAPI message_thread_run(void *ctx)
     IFilterGraphImpl *graph = ctx;
     MSG msg;
 
+    /* Make sure we have a message queue. */
+    PeekMessageW(&msg, NULL, 0, 0, PM_NOREMOVE);
+    SetEvent(graph->message_thread_ret);
+
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     for (;;)
@@ -5686,8 +5690,9 @@ static HRESULT filter_graph_common_create(IUnknown *outer, void **out, BOOL thre
 
     if (threaded)
     {
-        fimpl->message_thread = CreateThread(NULL, 0, message_thread_run, fimpl, 0, &fimpl->message_thread_id);
         fimpl->message_thread_ret = CreateEventW(NULL, FALSE, FALSE, NULL);
+        fimpl->message_thread = CreateThread(NULL, 0, message_thread_run, fimpl, 0, &fimpl->message_thread_id);
+        WaitForSingleObject(fimpl->message_thread_ret, INFINITE);
     }
     else
         fimpl->message_thread = NULL;
