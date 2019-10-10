@@ -512,7 +512,7 @@ static void test_media_event(IFilterGraph2 *graph)
 
     while (!got_eos)
     {
-        if (WaitForSingleObject(event, 1000) == WAIT_TIMEOUT)
+        if (WaitForSingleObject(event, 2000) == WAIT_TIMEOUT)
             break;
 
         while ((hr = IMediaEvent_GetEvent(media_event, &code, &lparam1, &lparam2, 0)) == S_OK)
