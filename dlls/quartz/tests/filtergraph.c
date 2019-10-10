@@ -778,7 +778,7 @@ static void test_render_with_multithread(void)
 
     thread = CreateThread(NULL, 0, call_RenderFile_multithread, graph, 0, NULL);
 
-    ok(WaitForSingleObject(thread, 1000) == WAIT_OBJECT_0, "wait failed\n");
+    ok(!WaitForSingleObject(thread, 10000), "Wait timed out.\n");
     IFilterGraph2_Release(graph);
     CloseHandle(thread);
     CoUninitialize();
