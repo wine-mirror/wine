@@ -1881,7 +1881,7 @@ static void test_video_window_messages(IVideoWindow *window, HWND hwnd, HWND our
     for (i = 0; i < ARRAY_SIZE(drain_tests); ++i)
     {
         SendMessageA(hwnd, drain_tests[i], 0xdeadbeef, 0);
-        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+        ret = PeekMessageA(&msg, 0, drain_tests[i], drain_tests[i], PM_REMOVE);
         ok(ret, "Expected a message.\n");
         ok(msg.hwnd == our_hwnd, "Got hwnd %p.\n", msg.hwnd);
         ok(msg.message == drain_tests[i], "Got message %#x.\n", msg.message);
@@ -1889,7 +1889,7 @@ static void test_video_window_messages(IVideoWindow *window, HWND hwnd, HWND our
         ok(!msg.lParam, "Got lparam %#lx.\n", msg.lParam);
         DispatchMessageA(&msg);
 
-        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+        ret = PeekMessageA(&msg, 0, drain_tests[i], drain_tests[i], PM_REMOVE);
         ok(!ret, "Got unexpected message %#x.\n", msg.message);
     }
 
