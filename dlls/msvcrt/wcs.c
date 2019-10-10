@@ -781,13 +781,13 @@ static int puts_clbk_str_c99_a(void *ctx, int len, const char *str)
         return len;
 
     if(out->len < len) {
-        memcpy(out->buf, str, out->len);
+        memmove(out->buf, str, out->len);
         out->buf += out->len;
         out->len = 0;
         return len;
     }
 
-    memcpy(out->buf, str, len);
+    memmove(out->buf, str, len);
     out->buf += len;
     out->len -= len;
     return len;

@@ -52,13 +52,13 @@ static int FUNC_NAME(puts_clbk_str)(void *ctx, int len, const APICHAR *str)
         return len;
 
     if(out->len < len) {
-        memcpy(out->buf, str, out->len*sizeof(APICHAR));
+        memmove(out->buf, str, out->len*sizeof(APICHAR));
         out->buf += out->len;
         out->len = 0;
         return -1;
     }
 
-    memcpy(out->buf, str, len*sizeof(APICHAR));
+    memmove(out->buf, str, len*sizeof(APICHAR));
     out->buf += len;
     out->len -= len;
     return len;
