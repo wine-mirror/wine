@@ -634,7 +634,17 @@ static void test_strftime(void)
     ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
 
     errno = 0xdeadbeef;
+    retA = p_strftime(bufA, 256, "%n", gmt_tm);
+    ok(retA == 0, "expected 0, got %ld\n", retA);
+    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
     retA = p_strftime(bufA, 256, "%R", gmt_tm);
+    ok(retA == 0, "expected 0, got %ld\n", retA);
+    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    retA = p_strftime(bufA, 256, "%t", gmt_tm);
     ok(retA == 0, "expected 0, got %ld\n", retA);
     ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
 

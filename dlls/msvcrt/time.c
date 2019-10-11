@@ -1225,6 +1225,11 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
             if(!strftime_int(str, &ret, max, mstm->tm_min, alternate ? 0 : 2, 0, 59))
                 return 0;
             break;
+#if _MSVCR_VER>=140
+        case 'n':
+            str[ret++] = '\n';
+            break;
+#endif
         case 'p':
             if(mstm->tm_hour<0 || mstm->tm_hour>23)
                 goto einval_error;
@@ -1247,6 +1252,9 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
                 return 0;
             break;
 #if _MSVCR_VER>=140
+        case 't':
+            str[ret++] = '\t';
+            break;
         case 'T':
             if(!strftime_int(str, &ret, max, mstm->tm_hour, alternate ? 0 : 2, 0, 23))
                 return 0;
