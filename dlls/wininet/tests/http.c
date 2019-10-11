@@ -2053,6 +2053,11 @@ static const char okmsg[] =
 "Server: winetest\r\n"
 "\r\n";
 
+static const char okmsg201[] =
+"HTTP/1.1 201 OK\r\n"
+"Server: winetest\r\n"
+"\r\n";
+
 static const char okmsg2[] =
 "HTTP/1.1 200 OK\r\n"
 "Date: Mon, 01 Dec 2008 13:44:34 GMT\r\n"
@@ -2435,6 +2440,15 @@ static DWORD CALLBACK server_thread(LPVOID param)
         {
             if (strstr(buffer, "Authorization: Basic dXNlcjE6cHdkMQ=="))
                 send(c, okmsg, sizeof okmsg-1, 0);
+            else
+                send(c, noauthmsg, sizeof noauthmsg-1, 0);
+        }
+        if (strstr(buffer, "HEAD /upload4.txt"))
+        {
+            if (strstr(buffer, "Authorization: Bearer dXNlcjE6cHdkMQ=="))
+                send(c, okmsg, sizeof okmsg-1, 0);
+            else if (strstr(buffer, "Authorization: Basic dXNlcjpwd2Q="))
+                send(c, okmsg201, sizeof okmsg-1, 0);
             else
                 send(c, noauthmsg, sizeof noauthmsg-1, 0);
         }
@@ -4677,6 +4691,161 @@ static void test_basic_auth_credentials_different(int port)
     InternetCloseHandle( ses );
 }
 
+/*
+ * Manually set the Authorization for both calls.
+ */
+static void test_basic_auth_credentials_manual(int port)
+{
+    HINTERNET ses, con, req;
+    DWORD status, size;
+    BOOL ret;
+
+    ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+
+    /* Clear the cached credentials */
+    ret = InternetSetOptionA(ses,  INTERNET_OPTION_END_BROWSER_SESSION, NULL, 0);
+    ok(ret, "unexpected failure %u\n", GetLastError());
+
+    con = InternetConnectA( ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0 );
+    ok( con != NULL, "InternetConnectA failed %u\n", GetLastError() );
+
+    req = HttpOpenRequestA( con, "HEAD", "/upload.txt", NULL, NULL, NULL, 0, 0 );
+    ok( req != NULL, "HttpOpenRequestA failed %u\n", GetLastError() );
+
+    /* Set Authorization Header */
+    ret = HttpAddRequestHeadersA(req, "Authorization: Basic dXNlcjpwd2Q=\r\n", ~0u,
+                            HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD);
+    ok(ret, "HttpAddRequestHeaders Failed\n");
+
+    ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
+    ok( ret, "HttpSendRequestA failed %u\n", GetLastError() );
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = HttpQueryInfoA( req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
+    ok( status == 200, "got %u\n", status );
+
+    InternetCloseHandle( req );
+    InternetCloseHandle( con );
+    InternetCloseHandle( ses );
+
+    /* Show manual headers are cached. */
+    ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+
+    con = InternetConnectA( ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0 );
+    ok( con != NULL, "InternetConnectA failed %u\n", GetLastError() );
+
+    req = HttpOpenRequestA( con, "HEAD", "/upload.txt", NULL, NULL, NULL, 0, 0 );
+    ok( req != NULL, "HttpOpenRequestA failed %u\n", GetLastError() );
+
+    ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
+    ok( ret, "HttpSendRequestA failed %u\n", GetLastError() );
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = HttpQueryInfoA( req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
+    ok( status == 401, "got %u\n", status );
+
+    InternetCloseHandle( req );
+    InternetCloseHandle( con );
+    InternetCloseHandle( ses );
+
+    ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+
+    con = InternetConnectA( ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0 );
+    ok( con != NULL, "InternetConnectA failed %u\n", GetLastError() );
+
+    req = HttpOpenRequestA( con, "HEAD", "/upload4.txt", NULL, NULL, NULL, 0, 0 );
+    ok( req != NULL, "HttpOpenRequestA failed %u\n", GetLastError() );
+
+    /* Set Authorization Header */
+    ret = HttpAddRequestHeadersA(req, "Authorization: Bearer dXNlcjE6cHdkMQ==\r\n", ~0u,
+                            HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD);
+    ok(ret, "HttpAddRequestHeaders Failed\n");
+
+    ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
+    ok( ret, "HttpSendRequestA failed %u\n", GetLastError() );
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = HttpQueryInfoA( req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
+    ok( status == 200, "got %u\n", status );
+
+    InternetCloseHandle( req );
+    InternetCloseHandle( con );
+    InternetCloseHandle( ses );
+}
+
+/*
+ * Manually set the Authorization for the bearer call, which shows the cached is used.
+ */
+static void test_basic_auth_credentials_cached_manual(int port)
+{
+    HINTERNET ses, con, req;
+    DWORD status, size;
+    BOOL ret;
+
+    ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+
+    /* Clear the cached credentials */
+    ret = InternetSetOptionA(ses,  INTERNET_OPTION_END_BROWSER_SESSION, NULL, 0);
+    ok(ret, "unexpected failure %u\n", GetLastError());
+
+     con = InternetConnectA( ses, "localhost", port, "user", "pwd",
+                            INTERNET_SERVICE_HTTP, 0, 0 );
+    ok( con != NULL, "InternetConnectA failed %u\n", GetLastError() );
+
+    req = HttpOpenRequestA( con, "HEAD", "/upload.txt", NULL, NULL, NULL, 0, 0 );
+    ok( req != NULL, "HttpOpenRequestA failed %u\n", GetLastError() );
+
+    ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
+    ok( ret, "HttpSendRequestA failed %u\n", GetLastError() );
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = HttpQueryInfoA( req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
+    ok( status == 200, "got %u\n", status );
+
+    InternetCloseHandle( req );
+    InternetCloseHandle( con );
+    InternetCloseHandle( ses );
+
+    ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+
+    con = InternetConnectA( ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0 );
+    ok( con != NULL, "InternetConnectA failed %u\n", GetLastError() );
+
+    req = HttpOpenRequestA( con, "HEAD", "/upload4.txt", NULL, NULL, NULL, 0, 0 );
+    ok( req != NULL, "HttpOpenRequestA failed %u\n", GetLastError() );
+
+    /* Setting an Authorization Header doesn't override the cached one. */
+    ret = HttpAddRequestHeadersA(req, "Authorization: Bearer dXNlcjE6cHdkMQ==\r\n", ~0u,
+                            HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD);
+    ok(ret, "HttpAddRequestHeaders Failed\n");
+
+    ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
+    ok( ret, "HttpSendRequestA failed %u\n", GetLastError() );
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = HttpQueryInfoA( req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
+    ok( status == 201, "got %u\n", status );
+
+    InternetCloseHandle( req );
+    InternetCloseHandle( con );
+    InternetCloseHandle( ses );
+}
+
 static void test_async_read(int port)
 {
     HINTERNET ses, con, req;
@@ -5873,6 +6042,8 @@ static void test_http_connection(void)
     test_basic_auth_credentials_reuse(si.port);
     test_basic_auth_credentials_end_session(si.port);
     test_basic_auth_credentials_different(si.port);
+    test_basic_auth_credentials_manual(si.port);
+    test_basic_auth_credentials_cached_manual(si.port);
     test_async_read(si.port);
     test_http_read(si.port);
     test_connection_break(si.port);
