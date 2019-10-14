@@ -973,7 +973,7 @@ static void test_GetFolder(void)
     IFolder_Release(folder);
 }
 
-static void _test_clone(IEnumVARIANT *enumvar, BOOL position_inherited, int line)
+static void _test_clone(IEnumVARIANT *enumvar, BOOL position_inherited, LONG count, int line)
 {
     HRESULT hr;
     IEnumVARIANT *clone;
@@ -998,17 +998,25 @@ static void _test_clone(IEnumVARIANT *enumvar, BOOL position_inherited, int line
     VariantInit(&var2);
     fetched = -1;
     hr = IEnumVARIANT_Next(clone, 1, &var2, &fetched);
-    ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
-    ok(fetched == 1, "%d: got %d\n", line, fetched);
-    if (!position_inherited)
-        todo_wine ok(V_DISPATCH(&var) == V_DISPATCH(&var2), "%d: values don't match\n", line);
+    if (position_inherited && count == 1)
+    {
+        ok(hr == S_FALSE, "%d: got 0x%08x\n", line, hr);
+        ok(fetched == 0, "%d: got %d\n", line, fetched);
+    }
     else
     {
-        fetched = -1;
-        hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
         ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
         ok(fetched == 1, "%d: got %d\n", line, fetched);
-        todo_wine ok(V_DISPATCH(&var) == V_DISPATCH(&var2), "%d: values don't match\n", line);
+        if (!position_inherited)
+            todo_wine ok(V_DISPATCH(&var) == V_DISPATCH(&var2), "%d: values don't match\n", line);
+        else
+        {
+            fetched = -1;
+            hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
+            ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
+            ok(fetched == 1, "%d: got %d\n", line, fetched);
+            todo_wine ok(V_DISPATCH(&var) == V_DISPATCH(&var2), "%d: values don't match\n", line);
+        }
     }
 
     VariantClear(&var2);
@@ -1018,7 +1026,7 @@ static void _test_clone(IEnumVARIANT *enumvar, BOOL position_inherited, int line
     hr = IEnumVARIANT_Reset(enumvar);
     ok(hr == S_OK, "%d: got 0x%08x\n", line, hr);
 }
-#define test_clone(a, b) _test_clone(a, b, __LINE__)
+#define test_clone(a, b, c) _test_clone(a, b, c, __LINE__)
 
 /* Please keep the tests for IFolderCollection and IFileCollection in sync */
 static void test_FolderCollection(void)
@@ -1115,7 +1123,7 @@ static void test_FolderCollection(void)
     ref2 = GET_REFCOUNT(folders);
     ok(ref2 == ref, "got %d, %d\n", ref2, ref);
 
-    test_clone(enumvar, FALSE);
+    test_clone(enumvar, FALSE, count);
 
     for (i = 0; i < 3; i++)
     {
@@ -1285,7 +1293,7 @@ static void test_FileCollection(void)
     ref2 = GET_REFCOUNT(files);
     ok(ref2 == ref, "got %d, %d\n", ref2, ref);
 
-    test_clone(enumvar, FALSE);
+    test_clone(enumvar, FALSE, count);
 
     for (i = 0; i < 3; i++)
     {
@@ -1399,7 +1407,7 @@ static void test_DriveCollection(void)
     hr = IEnumVARIANT_Skip(enumvar, 1);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
 
-    test_clone(enumvar, TRUE);
+    test_clone(enumvar, TRUE, count);
 
     while (IEnumVARIANT_Next(enumvar, 1, &var, &fetched) == S_OK) {
         IDrive *drive = (IDrive*)V_DISPATCH(&var);
