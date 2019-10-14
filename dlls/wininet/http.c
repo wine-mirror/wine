@@ -4375,8 +4375,7 @@ static BOOL HTTP_ParseTime(SYSTEMTIME *st, LPCWSTR *str)
         ERR("unexpected second in time format %s\n", debugstr_w(ptr));
         return FALSE;
     }
-    ptr = nextPtr + 1;
-    *str = ptr;
+    *str = nextPtr;
     st->wSecond = (WORD)num;
     return TRUE;
 }
