@@ -391,7 +391,6 @@ HRESULT WINAPI BaseWindow_Destroy(BaseWindow *pBaseWindow);
 
 HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This);
 HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This);
-RECT WINAPI BaseWindowImpl_GetDefaultRect(BaseWindow *This);
 LRESULT WINAPI BaseWindowImpl_OnReceiveMessage(BaseWindow *This, HWND hwnd, INT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI BaseWindowImpl_OnSize(BaseWindow *This, LONG Height, LONG Width);
 

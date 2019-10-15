@@ -147,12 +147,6 @@ HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This)
     return S_OK;
 }
 
-RECT WINAPI BaseWindowImpl_GetDefaultRect(BaseWindow *This)
-{
-    static RECT defRect = {0, 0, 800, 600};
-    return defRect;
-}
-
 BOOL WINAPI BaseControlWindowImpl_PossiblyEatMessage(BaseWindow *This, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     BaseControlWindow* pControlWindow = impl_from_BaseWindow(This);
