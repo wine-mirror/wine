@@ -310,13 +310,13 @@ HRESULT WINAPI BaseControlWindowImpl_put_WindowStyle(IVideoWindow *iface, LONG W
     return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_get_WindowStyle(IVideoWindow *iface, LONG *WindowStyle)
+HRESULT WINAPI BaseControlWindowImpl_get_WindowStyle(IVideoWindow *iface, LONG *style)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, WindowStyle);
+    TRACE("window %p, style %p.\n", window, style);
 
-    *WindowStyle = This->baseWindow.WindowStyles;
+    *style = GetWindowLongW(window->baseWindow.hWnd, GWL_STYLE);
 
     return S_OK;
 }
