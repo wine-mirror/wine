@@ -1555,14 +1555,11 @@ static void test_InternetErrorDlg(void)
         /* Handle some special cases */
         switch(i)
         {
-        case ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR:
-        case ERROR_INTERNET_HTTPS_TO_HTTP_ON_REDIR:
+        case ERROR_INTERNET_HTTP_TO_HTTPS_ON_REDIR: /* later 9.x versions */
+        case ERROR_INTERNET_HTTPS_TO_HTTP_ON_REDIR: /* later 9.x versions */
+        case ERROR_INTERNET_SEC_CERT_WEAK_SIGNATURE: /* later 11.x versions */
             if(res == ERROR_CANCELLED)
-            {
-                /* Some windows XP, w2k3 x64, W2K8 */
-                win_skip("Skipping some tests for %d\n", i);
-                continue;
-            }
+                expected = ERROR_CANCELLED;
             break;
         case ERROR_INTERNET_FORTEZZA_LOGIN_NEEDED:
             if(res != expected)
