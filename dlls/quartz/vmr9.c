@@ -606,7 +606,6 @@ static BOOL WINAPI VMR9_OnSize(BaseWindow *This, LONG Width, LONG Height)
 static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
     VMR9_GetClassWindowStyles,
     VMR9_GetDefaultRect,
-    NULL,
     VMR9_OnSize,
 };
 

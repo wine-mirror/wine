@@ -443,7 +443,6 @@ static const BaseRendererFuncTable BaseFuncTable =
 static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
     VideoRenderer_GetClassWindowStyles,
     VideoRenderer_GetDefaultRect,
-    NULL,
     VideoRenderer_OnSize
 };
 

@@ -40,9 +40,6 @@ static LRESULT CALLBACK WndProcW(HWND hwnd, UINT message, WPARAM wparam, LPARAM 
     if (!This)
         return DefWindowProcW(hwnd, message, wparam, lparam);
 
-    if (This->pFuncsTable->pfnOnReceiveMessage)
-        return This->pFuncsTable->pfnOnReceiveMessage(This, hwnd, message, wparam, lparam);
-
     switch (message)
     {
     case WM_KEYDOWN:
