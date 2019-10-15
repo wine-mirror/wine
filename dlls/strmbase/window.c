@@ -32,22 +32,16 @@ static inline BaseControlWindow *impl_from_BaseWindow(BaseWindow *iface)
     return CONTAINING_RECORD(iface, BaseControlWindow, baseWindow);
 }
 
-static LRESULT CALLBACK WndProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK WndProcW(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
     BaseWindow* This = (BaseWindow*)GetWindowLongPtrW(hwnd, 0);
+    BaseControlWindow *window = impl_from_BaseWindow(This);
 
     if (!This)
-        return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+        return DefWindowProcW(hwnd, message, wparam, lparam);
 
     if (This->pFuncsTable->pfnOnReceiveMessage)
-        return This->pFuncsTable->pfnOnReceiveMessage(This, hwnd, uMsg, wParam, lParam);
-    else
-        return BaseWindowImpl_OnReceiveMessage(This, hwnd, uMsg, wParam, lParam);
-}
-
-LRESULT WINAPI BaseWindowImpl_OnReceiveMessage(BaseWindow *This, HWND hwnd, INT message, WPARAM wparam, LPARAM lparam)
-{
-    BaseControlWindow *window = impl_from_BaseWindow(This);
+        return This->pFuncsTable->pfnOnReceiveMessage(This, hwnd, message, wparam, lparam);
 
     switch (message)
     {
