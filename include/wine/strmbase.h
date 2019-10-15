@@ -371,7 +371,6 @@ typedef struct tagBaseWindow
 
 typedef LPWSTR (WINAPI *BaseWindow_GetClassWindowStyles)(BaseWindow *This, DWORD *pClassStyles, DWORD *pWindowStyles, DWORD *pWindowStylesEx);
 typedef RECT (WINAPI *BaseWindow_GetDefaultRect)(BaseWindow *This);
-typedef BOOL (WINAPI *BaseWindow_PossiblyEatMessage)(BaseWindow *This, UINT uMsg, WPARAM wParam, LPARAM lParam);
 typedef LRESULT (WINAPI *BaseWindow_OnReceiveMessage)(BaseWindow *This, HWND hwnd, INT uMsg, WPARAM wParam, LPARAM lParam);
 typedef BOOL (WINAPI *BaseWindow_OnSize)(BaseWindow *This, LONG Height, LONG Width);
 
@@ -382,7 +381,6 @@ typedef struct BaseWindowFuncTable
 	BaseWindow_GetDefaultRect pfnGetDefaultRect;
 	/* Optional, WinProc Related */
 	BaseWindow_OnReceiveMessage pfnOnReceiveMessage;
-	BaseWindow_PossiblyEatMessage pfnPossiblyEatMessage;
 	BaseWindow_OnSize pfnOnSize;
 } BaseWindowFuncTable;
 

@@ -607,7 +607,6 @@ static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
     VMR9_GetClassWindowStyles,
     VMR9_GetDefaultRect,
     NULL,
-    BaseControlWindowImpl_PossiblyEatMessage,
     VMR9_OnSize,
 };
 

@@ -45,21 +45,49 @@ static LRESULT CALLBACK WndProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         return BaseWindowImpl_OnReceiveMessage(This, hwnd, uMsg, wParam, lParam);
 }
 
-LRESULT WINAPI BaseWindowImpl_OnReceiveMessage(BaseWindow *This, HWND hwnd, INT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI BaseWindowImpl_OnReceiveMessage(BaseWindow *This, HWND hwnd, INT message, WPARAM wparam, LPARAM lparam)
 {
-    if (This->pFuncsTable->pfnPossiblyEatMessage && This->pFuncsTable->pfnPossiblyEatMessage(This, uMsg, wParam, lParam))
-        return 0;
+    BaseControlWindow *window = impl_from_BaseWindow(This);
 
-    switch (uMsg)
+    switch (message)
     {
-        case WM_SIZE:
-            if (This->pFuncsTable->pfnOnSize)
-                return This->pFuncsTable->pfnOnSize(This, LOWORD(lParam), HIWORD(lParam));
-            else
-                return BaseWindowImpl_OnSize(This, LOWORD(lParam), HIWORD(lParam));
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_MBUTTONDBLCLK:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MOUSEACTIVATE:
+    case WM_MOUSEMOVE:
+    case WM_NCLBUTTONDBLCLK:
+    case WM_NCLBUTTONDOWN:
+    case WM_NCLBUTTONUP:
+    case WM_NCMBUTTONDBLCLK:
+    case WM_NCMBUTTONDOWN:
+    case WM_NCMBUTTONUP:
+    case WM_NCMOUSEMOVE:
+    case WM_NCRBUTTONDBLCLK:
+    case WM_NCRBUTTONDOWN:
+    case WM_NCRBUTTONUP:
+    case WM_RBUTTONDBLCLK:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+        if (window->hwndDrain)
+        {
+            PostMessageW(window->hwndDrain, message, wparam, lparam);
+            return 0;
+        }
+        break;
+    case WM_SIZE:
+        if (This->pFuncsTable->pfnOnSize)
+            return This->pFuncsTable->pfnOnSize(This, LOWORD(lparam), HIWORD(lparam));
+        else
+            return BaseWindowImpl_OnSize(This, LOWORD(lparam), HIWORD(lparam));
     }
 
-    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+    return DefWindowProcW(hwnd, message, wparam, lparam);
 }
 
 BOOL WINAPI BaseWindowImpl_OnSize(BaseWindow *This, LONG Width, LONG Height)
@@ -145,46 +173,6 @@ HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This)
     This->hWnd = NULL;
 
     return S_OK;
-}
-
-BOOL WINAPI BaseControlWindowImpl_PossiblyEatMessage(BaseWindow *This, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    BaseControlWindow* pControlWindow = impl_from_BaseWindow(This);
-
-    if (pControlWindow->hwndDrain)
-    {
-        switch(uMsg)
-        {
-            case WM_KEYDOWN:
-            case WM_KEYUP:
-            case WM_LBUTTONDBLCLK:
-            case WM_LBUTTONDOWN:
-            case WM_LBUTTONUP:
-            case WM_MBUTTONDBLCLK:
-            case WM_MBUTTONDOWN:
-            case WM_MBUTTONUP:
-            case WM_MOUSEACTIVATE:
-            case WM_MOUSEMOVE:
-            case WM_NCLBUTTONDBLCLK:
-            case WM_NCLBUTTONDOWN:
-            case WM_NCLBUTTONUP:
-            case WM_NCMBUTTONDBLCLK:
-            case WM_NCMBUTTONDOWN:
-            case WM_NCMBUTTONUP:
-            case WM_NCMOUSEMOVE:
-            case WM_NCRBUTTONDBLCLK:
-            case WM_NCRBUTTONDOWN:
-            case WM_NCRBUTTONUP:
-            case WM_RBUTTONDBLCLK:
-            case WM_RBUTTONDOWN:
-            case WM_RBUTTONUP:
-                PostMessageW(pControlWindow->hwndDrain, uMsg, wParam, lParam);
-                return TRUE;
-            default:
-                break;
-        }
-    }
-    return FALSE;
 }
 
 HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *pControlWindow,

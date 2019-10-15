@@ -444,7 +444,6 @@ static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
     VideoRenderer_GetClassWindowStyles,
     VideoRenderer_GetDefaultRect,
     NULL,
-    BaseControlWindowImpl_PossiblyEatMessage,
     VideoRenderer_OnSize
 };
 
