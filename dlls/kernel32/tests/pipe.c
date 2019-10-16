@@ -3941,7 +3941,7 @@ static void test_nowait(void)
 
     /* write one byte larger than the buffer size, should fail */
     SetLastError(0xdeadbeef);
-    todo_wine ok(WriteFile(pipewrite, readbuf, 513, &write, &ol), "WriteFile should succeed\n");
+    ok(WriteFile(pipewrite, readbuf, 513, &write, &ol), "WriteFile should succeed\n");
     /* WriteFile only documents that 'write < sizeof(readbuf)' for this case, but Windows
      * doesn't seem to do partial writes ('write == 0' always)
      */
@@ -3952,32 +3952,32 @@ static void test_nowait(void)
 
     /* overlapped read of 32768, non-blocking write of 512 */
     SetLastError(0xdeadbeef);
-    todo_wine ok(ReadFile(piperead, readbuf, sizeof(readbuf), &read, &ol2) == FALSE, "ReadFile should fail\n");
-    todo_wine ok(GetLastError() == ERROR_IO_PENDING, "got %d should be ERROR_IO_PENDING\n", GetLastError());
+    ok(ReadFile(piperead, readbuf, sizeof(readbuf), &read, &ol2) == FALSE, "ReadFile should fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "got %d should be ERROR_IO_PENDING\n", GetLastError());
     ok(WriteFile(pipewrite, teststring, sizeof(teststring), &write, &ol), "WriteFile should succeed\n");
     ok(write == sizeof(teststring), "got %d\n", write);
     ok(GetOverlappedResult(piperead, &ol2, &read, FALSE), "GetOverlappedResult should succeed\n");
-    todo_wine ok(read == sizeof(teststring), "got %d\n", read);
+    ok(read == sizeof(teststring), "got %d\n", read);
     if (GetOverlappedResult(piperead, &ol2, &read, FALSE) == FALSE)
         CancelIo(piperead);
 
     /* overlapped read of 32768, non-blocking write of 513 */
     SetLastError(0xdeadbeef);
-    todo_wine ok(ReadFile(piperead, readbuf, sizeof(readbuf), &read, &ol2) == FALSE, "ReadFile should fail\n");
-    todo_wine ok(GetLastError() == ERROR_IO_PENDING, "got %d should be ERROR_IO_PENDING\n", GetLastError());
-    todo_wine ok(WriteFile(pipewrite, readbuf, 513, &write, &ol), "WriteFile should succeed\n");
-    todo_wine ok(write == 513, "got %d, write should be %d\n", write, 513);
+    ok(ReadFile(piperead, readbuf, sizeof(readbuf), &read, &ol2) == FALSE, "ReadFile should fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "got %d should be ERROR_IO_PENDING\n", GetLastError());
+    ok(WriteFile(pipewrite, readbuf, 513, &write, &ol), "WriteFile should succeed\n");
+    ok(write == 513, "got %d, write should be %d\n", write, 513);
     ok(GetOverlappedResult(piperead, &ol2, &read, FALSE), "GetOverlappedResult should succeed\n");
-    todo_wine ok(read == 513, "got %d, read should be %d\n", read, 513);
+    ok(read == 513, "got %d, read should be %d\n", read, 513);
     if (GetOverlappedResult(piperead, &ol2, &read, FALSE) == FALSE)
         CancelIo(piperead);
 
     /* overlapped read of 1 byte, non-blocking write of 513 bytes */
     SetLastError(0xdeadbeef);
-    todo_wine ok(ReadFile(piperead, readbuf, 1, &read, &ol2) == FALSE, "ReadFile should fail\n");
-    todo_wine ok(GetLastError() == ERROR_IO_PENDING, "got %d should be ERROR_IO_PENDING\n", GetLastError());
-    todo_wine ok(WriteFile(pipewrite, readbuf, 513, &write, &ol), "WriteFile should succeed\n");
-    todo_wine ok(write == 513, "got %d, write should be %d\n", write, 513);
+    ok(ReadFile(piperead, readbuf, 1, &read, &ol2) == FALSE, "ReadFile should fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "got %d should be ERROR_IO_PENDING\n", GetLastError());
+    ok(WriteFile(pipewrite, readbuf, 513, &write, &ol), "WriteFile should succeed\n");
+    ok(write == 513, "got %d, write should be %d\n", write, 513);
     ok(GetOverlappedResult(piperead, &ol2, &read, FALSE), "GetOverlappedResult should succeed\n");
     ok(read == 1, "got %d, read should be %d\n", read, 1);
     if (GetOverlappedResult(piperead, &ol2, &read, FALSE) == FALSE)
@@ -3985,7 +3985,7 @@ static void test_nowait(void)
     /* read the remaining 512 bytes */
     SetLastError(0xdeadbeef);
     ok(ReadFile(piperead, readbuf, sizeof(readbuf), &read, &ol2), "ReadFile should succeed\n");
-    todo_wine ok(read == 512, "got %d, write should be %d\n", write, 512);
+    ok(read == 512, "got %d, write should be %d\n", write, 512);
     if (GetOverlappedResult(piperead, &ol2, &read, FALSE) == FALSE)
         CancelIo(piperead);
 
@@ -3993,8 +3993,8 @@ static void test_nowait(void)
     SetLastError(0xdeadbeef);
     ok(ReadFile(piperead, readbuf, 1, &read, &ol2) == FALSE, "ReadFile should fail\n");
     ok(GetLastError() == ERROR_IO_PENDING, "got %d should be ERROR_IO_PENDING\n", GetLastError());
-    todo_wine ok(WriteFile(pipewrite, readbuf, 514, &write, &ol), "WriteFile should succeed\n");
-    todo_wine ok(write == 1, "got %d, write should be %d\n", write, 1);
+    ok(WriteFile(pipewrite, readbuf, 514, &write, &ol), "WriteFile should succeed\n");
+    ok(write == 1, "got %d, write should be %d\n", write, 1);
     ok(GetOverlappedResult(piperead, &ol2, &read, FALSE), "GetOverlappedResult should succeed\n");
     ok(read == 1, "got %d, read should be %d\n", read, 1);
     if (GetOverlappedResult(piperead, &ol2, &read, FALSE) == FALSE)
@@ -4002,8 +4002,8 @@ static void test_nowait(void)
 
     /* write the exact buffer size, should succeed */
     SetLastError(0xdeadbeef);
-    todo_wine ok(WriteFile(pipewrite, readbuf, 512, &write, &ol), "WriteFile should succeed\n");
-    todo_wine ok(write == 512, "WriteFile should write the whole buffer\n");
+    ok(WriteFile(pipewrite, readbuf, 512, &write, &ol), "WriteFile should succeed\n");
+    ok(write == 512, "WriteFile should write the whole buffer\n");
     if (GetLastError() == ERROR_IO_PENDING)
         CancelIo(piperead);
 

@@ -363,7 +363,7 @@ static struct pipe_message *queue_message( struct pipe_end *pipe_end, struct ios
     return message;
 }
 
-static void wake_message( struct pipe_message *message )
+static void wake_message( struct pipe_message *message, data_size_t result )
 {
     struct async *async = message->async;
 
@@ -371,7 +371,7 @@ static void wake_message( struct pipe_message *message )
     if (!async) return;
 
     message->iosb->status = STATUS_SUCCESS;
-    message->iosb->result = message->iosb->in_size;
+    message->iosb->result = result;
     async_terminate( async, message->iosb->result ? STATUS_ALERTED : STATUS_SUCCESS );
     release_object( async );
 }
@@ -749,7 +749,7 @@ static void message_queue_read( struct pipe_end *pipe_end, struct iosb *iosb )
     {
         iosb->out_data = message->iosb->in_data;
         message->iosb->in_data = NULL;
-        wake_message( message );
+        wake_message( message, message->iosb->in_size );
         free_message( message );
     }
     else
@@ -773,7 +773,7 @@ static void message_queue_read( struct pipe_end *pipe_end, struct iosb *iosb )
             message->read_pos += writing;
             if (message->read_pos == message->iosb->in_size)
             {
-                wake_message(message);
+                wake_message(message, message->iosb->in_size);
                 free_message(message);
             }
         } while (write_pos < iosb->out_size);
@@ -835,7 +835,14 @@ static void reselect_write_queue( struct pipe_end *pipe_end )
         {
             avail += message->iosb->in_size - message->read_pos;
             if (message->async && (avail <= reader->buffer_size || !message->iosb->in_size))
-                wake_message( message );
+            {
+                wake_message( message, message->iosb->in_size );
+            }
+            else if (message->async && (pipe_end->flags & NAMED_PIPE_NONBLOCKING_MODE))
+            {
+                wake_message( message, message->read_pos );
+                free_message( message );
+            }
         }
     }
 
