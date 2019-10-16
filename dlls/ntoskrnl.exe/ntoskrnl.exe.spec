@@ -1,4 +1,4 @@
-@ stdcall -arch=arm,arm64,x86_64 ExAcquireFastMutex(ptr)
+@ stdcall -arch=!i386 ExAcquireFastMutex(ptr)
 @ stdcall -fastcall ExAcquireFastMutexUnsafe(ptr)
 @ stub ExAcquireRundownProtection
 @ stub ExAcquireRundownProtectionEx
@@ -9,7 +9,7 @@
 @ stdcall -fastcall -arch=i386 ExInterlockedPopEntrySList(ptr ptr) NTOSKRNL_ExInterlockedPopEntrySList
 @ stdcall -fastcall -arch=i386 ExInterlockedPushEntrySList (ptr ptr ptr) NTOSKRNL_ExInterlockedPushEntrySList
 @ stub ExReInitializeRundownProtection
-@ stdcall -arch=arm,arm64,x86_64 ExReleaseFastMutex(ptr)
+@ stdcall -arch=!i386 ExReleaseFastMutex(ptr)
 @ stdcall -fastcall ExReleaseFastMutexUnsafe(ptr)
 @ stdcall -fastcall ExReleaseResourceLite(ptr)
 @ stub ExReleaseRundownProtection
@@ -33,7 +33,7 @@
 @ stdcall -arch=win64 ExpInterlockedPopEntrySList(ptr) RtlInterlockedPopEntrySList
 @ stdcall -arch=win64 ExpInterlockedPushEntrySList(ptr ptr) RtlInterlockedPushEntrySList
 @ stub HalExamineMBR
-@ stdcall -arch=arm,arm64,x86_64 InitializeSListHead(ptr) RtlInitializeSListHead
+@ stdcall -arch=!i386 InitializeSListHead(ptr) RtlInitializeSListHead
 @ stdcall -fastcall InterlockedCompareExchange(ptr long long) NTOSKRNL_InterlockedCompareExchange
 @ stdcall -fastcall InterlockedDecrement(ptr) NTOSKRNL_InterlockedDecrement
 @ stdcall -fastcall InterlockedExchange(ptr long) NTOSKRNL_InterlockedExchange
@@ -48,13 +48,13 @@
 @ stub IoWritePartitionTable
 @ stdcall -fastcall IofCallDriver(ptr ptr)
 @ stdcall -fastcall IofCompleteRequest(ptr long)
-@ stdcall -arch=arm,arm64,x86_64 KeAcquireInStackQueuedSpinLock(ptr ptr)
+@ stdcall -arch=!i386 KeAcquireInStackQueuedSpinLock(ptr ptr)
 @ stdcall -fastcall KeAcquireInStackQueuedSpinLockAtDpcLevel(ptr ptr)
 @ stdcall KeEnterGuardedRegion()
 @ stdcall KeExpandKernelStackAndCallout(ptr ptr long)
 @ stdcall KeExpandKernelStackAndCalloutEx(ptr ptr long long ptr)
 @ stdcall KeLeaveGuardedRegion()
-@ stdcall -arch=arm,arm64,x86_64 KeReleaseInStackQueuedSpinLock(ptr)
+@ stdcall -arch=!i386 KeReleaseInStackQueuedSpinLock(ptr)
 @ stdcall -fastcall KeReleaseInStackQueuedSpinLockFromDpcLevel(ptr)
 @ stub KeSetTimeUpdateNotifyRoutine
 @ stub KefAcquireSpinLockAtDpcLevel
@@ -522,7 +522,7 @@
 @ stdcall Ke386SetIoAccessMap(long ptr)
 @ stub KeAcquireInterruptSpinLock
 @ stdcall KeAcquireSpinLockAtDpcLevel(ptr)
-@ stdcall -arch=arm,arm64,x86_64 KeAcquireSpinLockRaiseToDpc(ptr)
+@ stdcall -arch=!i386 KeAcquireSpinLockRaiseToDpc(ptr)
 @ stub KeAddSystemServiceTable
 @ stdcall KeAreApcsDisabled()
 @ stub KeAttachProcess
@@ -604,7 +604,7 @@
 @ stub KeReleaseMutant
 @ stdcall KeReleaseMutex(ptr long)
 @ stdcall KeReleaseSemaphore(ptr long long long)
-@ stdcall -arch=arm,arm64,x86_64 KeReleaseSpinLock(ptr long)
+@ stdcall -arch=!i386 KeReleaseSpinLock(ptr long)
 @ stdcall KeReleaseSpinLockFromDpcLevel(ptr)
 @ stub KeRemoveByKeyDeviceQueue
 @ stub KeRemoveByKeyDeviceQueueIfBusy
