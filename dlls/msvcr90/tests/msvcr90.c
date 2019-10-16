@@ -135,6 +135,7 @@ static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
 static int (__cdecl *p__vsnwprintf)(wchar_t *buffer,size_t count, const wchar_t *format, __ms_va_list valist);
 static size_t (__cdecl *p___strncnt)(const char *str, size_t count);
+static int (__cdecl *p_swscanf)(const wchar_t *str, const wchar_t* format, ...);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -405,6 +406,7 @@ static BOOL init(void)
     SET(p__memicmp_l, "_memicmp_l");
     SET(p__vsnwprintf, "_vsnwprintf");
     SET(p___strncnt, "__strncnt");
+    SET(p_swscanf, "swscanf");
 
     if (sizeof(void *) == 8)
     {
@@ -1925,6 +1927,17 @@ static void test___strncnt(void)
     }
 }
 
+static void test_swscanf(void)
+{
+
+    wchar_t buffer[100];
+    int ret;
+
+    /* check WEOF */
+    ret = p_swscanf(L" \t\n\n", L"%s", buffer);
+    ok( ret == (short)WEOF, "ret = %d\n", ret );
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -1963,4 +1976,5 @@ START_TEST(msvcr90)
     test__fpieee_flt();
 #endif
     test___strncnt();
+    test_swscanf();
 }

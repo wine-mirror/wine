@@ -487,6 +487,10 @@ _FUNCTION_ {
                         nch = _GETC_(file);
 			if (width>0) width--;
                     }
+                    /* if we have reached the EOF and output nothing then report EOF */
+                    if (nch==_EOF_ && rd==0 && st==0) {
+                        return _EOF_RET;
+                    }
                     /* terminate */
                     if (st && !suppress) *sptr = 0;
                 }
@@ -517,6 +521,12 @@ _FUNCTION_ {
                         nch = _GETC_(file);
 			if (width>0) width--;
                     }
+#if _MSVCR_VER >= 80
+                    /* if we have reached the EOF and output nothing then report EOF */
+                    if (nch==_EOF_ && rd==0 && st==0) {
+                        return _EOF_RET;
+                    }
+#endif
                     /* terminate */
                     if (st && !suppress) *sptr = 0;
                 }
