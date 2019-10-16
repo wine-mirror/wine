@@ -924,13 +924,14 @@ static void free_ximage_bits( struct gdi_image_bits *bits )
     XFree( bits->ptr );
 }
 
-/* only for use on sanitized BITMAPINFO structures */
 static inline int get_dib_info_size( const BITMAPINFO *info, UINT coloruse )
 {
     if (info->bmiHeader.biCompression == BI_BITFIELDS)
         return sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD);
     if (coloruse == DIB_PAL_COLORS)
         return sizeof(BITMAPINFOHEADER) + info->bmiHeader.biClrUsed * sizeof(WORD);
+    if (!info->bmiHeader.biClrUsed && info->bmiHeader.biBitCount <= 8)
+        return FIELD_OFFSET( BITMAPINFO, bmiColors[1 << info->bmiHeader.biBitCount] );
     return FIELD_OFFSET( BITMAPINFO, bmiColors[info->bmiHeader.biClrUsed] );
 }
 
