@@ -918,23 +918,6 @@ static void test__tzset(void)
     _putenv(TZ_env);
 }
 
-static void test_clock(void)
-{
-    static const int THRESH = 100;
-    FILETIME start, cur;
-    int c, expect;
-    BOOL ret;
-
-    ret = GetProcessTimes(GetCurrentProcess(), &start, &cur, &cur, &cur);
-    ok(ret, "GetProcessTimes failed with error: %d\n", GetLastError());
-    GetSystemTimeAsFileTime(&cur);
-    expect = (((LONGLONG)cur.dwHighDateTime<<32)+cur.dwLowDateTime -
-            ((LONGLONG)start.dwHighDateTime<<32)-start.dwLowDateTime) / 10000;
-
-    c = clock();
-    ok(abs(c-expect) < THRESH, "clock() = %d, expected %d\n", c, expect);
-}
-
 START_TEST(time)
 {
     init();
@@ -953,5 +936,4 @@ START_TEST(time)
     test_localtime64_s();
     test_daylight();
     test_asctime();
-    test_clock();
 }

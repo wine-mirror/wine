@@ -107,6 +107,7 @@ typedef struct MSVCRT__exception {
 typedef int (CDECL *MSVCRT_matherr_func)(struct MSVCRT__exception *);
 
 static HMODULE module;
+static LONGLONG crt_init_start, crt_init_end;
 
 static int (CDECL *p_initialize_onexit_table)(MSVCRT__onexit_table_t *table);
 static int (CDECL *p_register_onexit_function)(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func);
@@ -146,6 +147,7 @@ static int (__cdecl *p__close)(int);
 static void* (__cdecl *p__o_malloc)(size_t);
 static size_t (__cdecl *p__msize)(void*);
 static void (__cdecl *p_free)(void*);
+static clock_t (__cdecl *p_clock)(void);
 
 static void test__initialize_onexit_table(void)
 {
@@ -465,7 +467,13 @@ static void test__get_narrow_winmain_command_line(char *path)
 
 static BOOL init(void)
 {
+    FILETIME cur;
+
+    GetSystemTimeAsFileTime(&cur);
+    crt_init_start = ((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime;
     module = LoadLibraryA("ucrtbase.dll");
+    GetSystemTimeAsFileTime(&cur);
+    crt_init_end = ((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime;
 
     if(!module) {
         win_skip("ucrtbase.dll not available\n");
@@ -510,6 +518,7 @@ static BOOL init(void)
     p__o_malloc = (void*)GetProcAddress(module, "_o_malloc");
     p__msize = (void*)GetProcAddress(module, "_msize");
     p_free = (void*)GetProcAddress(module, "free");
+    p_clock = (void*)GetProcAddress(module, "clock");
 
     return TRUE;
 }
@@ -1166,6 +1175,21 @@ static void test__o_malloc(void)
     p_free(m);
 }
 
+static void test_clock(void)
+{
+    static const int thresh = 100;
+    int c, expect_min, expect_max;
+    FILETIME cur;
+
+    GetSystemTimeAsFileTime(&cur);
+    c = p_clock();
+
+    expect_min = (((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime - crt_init_end) / 10000;
+    expect_max = (((LONGLONG)cur.dwHighDateTime << 32) + cur.dwLowDateTime - crt_init_start) / 10000;
+    ok(c > expect_min-thresh && c < expect_max+thresh, "clock() = %d, expected range [%d, %d]\n",
+            c, expect_min, expect_max);
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -1202,4 +1226,5 @@ START_TEST(misc)
     test_quick_exit(arg_v[0]);
     test__stat32();
     test__o_malloc();
+    test_clock();
 }

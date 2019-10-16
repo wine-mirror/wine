@@ -38,6 +38,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 BOOL WINAPI GetDaylightFlag(void);
 
+static LONGLONG init_time;
+
+void msvcrt_init_clock(void)
+{
+    LARGE_INTEGER systime;
+
+    NtQuerySystemTime(&systime);
+    init_time = systime.QuadPart;
+}
+
 static const int MonthLengths[2][12] =
 {
     { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
@@ -712,23 +722,10 @@ int CDECL _wstrtime_s(MSVCRT_wchar_t* time, MSVCRT_size_t size)
  */
 MSVCRT_clock_t CDECL MSVCRT_clock(void)
 {
-    static LONGLONG start_time;
     LARGE_INTEGER systime;
 
-    if(!start_time) {
-        KERNEL_USER_TIMES pti;
-
-        /* while Linux's clock returns user time, Windows' clock
-         * returns wall-clock time from process start.  cache the
-         * process start time since it won't change and to avoid
-         * wineserver round-trip overhead */
-        if(NtQueryInformationProcess(GetCurrentProcess(), ProcessTimes, &pti, sizeof(pti), NULL))
-            return -1;
-        start_time = pti.CreateTime.QuadPart;
-    }
-
     NtQuerySystemTime(&systime);
-    return (systime.QuadPart - start_time) * MSVCRT_CLOCKS_PER_SEC / TICKSPERSEC;
+    return (systime.QuadPart - init_time) / (TICKSPERSEC / MSVCRT_CLOCKS_PER_SEC);
 }
 
 /*********************************************************************

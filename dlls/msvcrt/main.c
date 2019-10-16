@@ -124,6 +124,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 #elif _MSVCR_VER >= 80
     MSVCRT__set_printf_count_output(0);
 #endif
+    msvcrt_init_clock();
     TRACE("finished process init\n");
     break;
   case DLL_THREAD_ATTACH:
