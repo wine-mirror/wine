@@ -4026,7 +4026,7 @@ static void test_nowait(void)
     ol.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     SetLastError(0xdeadbeef);
     ok(ConnectNamedPipe(pipewrite, &ol) == FALSE, "ConnectNamedPipe should fail\n");
-    todo_wine ok(GetLastError() == ERROR_PIPE_LISTENING, "got %d should be ERROR_PIPE_LISTENING\n", GetLastError());
+    ok(GetLastError() == ERROR_PIPE_LISTENING, "got %d should be ERROR_PIPE_LISTENING\n", GetLastError());
     if (GetLastError() == ERROR_IO_PENDING)
         CancelIo(pipewrite);
 
@@ -4044,7 +4044,7 @@ static void test_nowait(void)
     ok(DisconnectNamedPipe(pipewrite) == TRUE, "DisconnectNamedPipe should succeed\n");
     SetLastError(0xdeadbeef);
     ok(ConnectNamedPipe(pipewrite,&ol) == FALSE, "ConnectNamedPipe should fail\n");
-    todo_wine ok(GetLastError() == ERROR_PIPE_LISTENING, "got %d should be ERROR_PIPE_LISTENING\n", GetLastError());
+    ok(GetLastError() == ERROR_PIPE_LISTENING, "got %d should be ERROR_PIPE_LISTENING\n", GetLastError());
     if (GetLastError() == ERROR_IO_PENDING)
         CancelIo(pipewrite);
     ok(CloseHandle(ol.hEvent), "CloseHandle for the event failed\n");

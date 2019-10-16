@@ -1106,6 +1106,11 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
             return 0;
         }
 
+        if (server->pipe_end.flags & NAMED_PIPE_NONBLOCKING_MODE)
+        {
+            set_error( STATUS_PIPE_LISTENING );
+            return 0;
+        }
         queue_async( &server->listen_q, async );
         async_wake_up( &server->pipe_end.pipe->waiters, STATUS_SUCCESS );
         set_error( STATUS_PENDING );
