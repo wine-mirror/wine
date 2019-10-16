@@ -787,11 +787,10 @@ static int ignore_reselect;
 
 static void reselect_write_queue( struct pipe_end *pipe_end );
 
-static void reselect_read_queue( struct pipe_end *pipe_end )
+static void reselect_read_queue( struct pipe_end *pipe_end, int reselect_write )
 {
     struct async *async;
     struct iosb *iosb;
-    int read_done = 0;
 
     ignore_reselect = 1;
     while (!list_empty( &pipe_end->message_queue ) && (async = find_pending_async( &pipe_end->read_q )))
@@ -801,7 +800,7 @@ static void reselect_read_queue( struct pipe_end *pipe_end )
         async_terminate( async, iosb->result ? STATUS_ALERTED : iosb->status );
         release_object( async );
         release_object( iosb );
-        read_done = 1;
+        reselect_write = 1;
     }
     ignore_reselect = 0;
 
@@ -809,7 +808,7 @@ static void reselect_read_queue( struct pipe_end *pipe_end )
     {
         if (list_empty( &pipe_end->message_queue ))
             fd_async_wake_up( pipe_end->connection->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
-        else if (read_done)
+        else if (reselect_write)
             reselect_write_queue( pipe_end->connection );
     }
 }
@@ -841,7 +840,7 @@ static void reselect_write_queue( struct pipe_end *pipe_end )
     }
 
     ignore_reselect = 0;
-    reselect_read_queue( reader );
+    reselect_read_queue( reader, 0 );
 }
 
 static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
@@ -870,7 +869,7 @@ static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
     }
 
     queue_async( &pipe_end->read_q, async );
-    reselect_read_queue( pipe_end );
+    reselect_read_queue( pipe_end, 0 );
     set_error( STATUS_PENDING );
     return 1;
 }
@@ -905,7 +904,7 @@ static int pipe_end_write( struct fd *fd, struct async *async, file_pos_t pos )
 
     message->async = (struct async *)grab_object( async );
     queue_async( &pipe_end->write_q, async );
-    reselect_write_queue( pipe_end );
+    reselect_read_queue( pipe_end->connection, 1 );
     set_error( STATUS_PENDING );
     return 1;
 }
@@ -919,7 +918,7 @@ static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue )
     if (&pipe_end->write_q == queue)
         reselect_write_queue( pipe_end );
     else if (&pipe_end->read_q == queue)
-        reselect_read_queue( pipe_end );
+        reselect_read_queue( pipe_end, 0 );
 }
 
 static enum server_fd_type pipe_end_get_fd_type( struct fd *fd )
@@ -1019,10 +1018,10 @@ static int pipe_end_transceive( struct pipe_end *pipe_end, struct async *async )
     message = queue_message( pipe_end->connection, iosb );
     release_object( iosb );
     if (!message) return 0;
-    reselect_read_queue( pipe_end->connection );
+    reselect_read_queue( pipe_end->connection, 0 );
 
     queue_async( &pipe_end->read_q, async );
-    reselect_read_queue( pipe_end );
+    reselect_read_queue( pipe_end, 0 );
     set_error( STATUS_PENDING );
     return 1;
 }
