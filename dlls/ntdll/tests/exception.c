@@ -170,6 +170,7 @@ static char**   my_argv;
 #define ProcessExecuteFlags 0x22
 #define MEM_EXECUTE_OPTION_DISABLE   0x01
 #define MEM_EXECUTE_OPTION_ENABLE    0x02
+#define MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION 0x04
 #define MEM_EXECUTE_OPTION_PERMANENT 0x08
 #endif
 
@@ -2575,8 +2576,24 @@ static void test_dpe_exceptions(void)
 {
     static const BYTE ret[] = {0xc3};
     DWORD (CDECL *func)(void) = code_mem;
-    DWORD old_prot;
+    DWORD old_prot, val = 0, len = 0xdeadbeef;
+    NTSTATUS status;
     void *handler;
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val, &len );
+    ok( status == STATUS_SUCCESS || status == STATUS_INVALID_PARAMETER, "got status %08x\n", status );
+    if (!status)
+    {
+        ok( len == sizeof(val), "wrong len %u\n", len );
+        ok( val == (MEM_EXECUTE_OPTION_DISABLE | MEM_EXECUTE_OPTION_PERMANENT |
+                    MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION),
+            "wrong val %08x\n", val );
+    }
+    else ok( len == 0xdeadbeef, "wrong len %u\n", len );
+
+    val = MEM_EXECUTE_OPTION_DISABLE;
+    status = pNtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val );
+    ok( status == STATUS_INVALID_PARAMETER, "got status %08x\n", status );
 
     memcpy(code_mem, ret, sizeof(ret));
 

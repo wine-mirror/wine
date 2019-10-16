@@ -57,7 +57,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 
-static ULONG execute_flags = MEM_EXECUTE_OPTION_DISABLE;
+static ULONG execute_flags = MEM_EXECUTE_OPTION_DISABLE | (sizeof(void *) > sizeof(int) ?
+                                                           MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION |
+                                                           MEM_EXECUTE_OPTION_PERMANENT : 0);
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
@@ -679,7 +681,7 @@ NTSTATUS WINAPI NtSetInformationProcess(
         break;
 
     case ProcessExecuteFlags:
-        if (ProcessInformationLength != sizeof(ULONG))
+        if (is_win64 || ProcessInformationLength != sizeof(ULONG))
             return STATUS_INVALID_PARAMETER;
         else if (execute_flags & MEM_EXECUTE_OPTION_PERMANENT)
             return STATUS_ACCESS_DENIED;
