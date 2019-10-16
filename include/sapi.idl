@@ -1025,6 +1025,8 @@ library SpeechLib
 {
     importlib("stdole2.tlb");
 
+#include "sapiaut.idl"
+
     [
         uuid(a910187f-0c7a-45ac-92cc-59edafb77b53),
         helpstring("SpObjectTokenCategory Class"),

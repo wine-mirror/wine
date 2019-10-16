@@ -574,6 +574,7 @@ SOURCES = \
 	rtutils.h \
 	sal.h \
 	sapi.idl \
+	sapiaut.idl \
 	sapiddk.idl \
 	scarderr.h \
 	schannel.h \
