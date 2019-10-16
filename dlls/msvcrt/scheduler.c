@@ -263,6 +263,7 @@ void __cdecl Context_Block(void)
 }
 
 /* ?Yield@Context@Concurrency@@SAXXZ */
+/* ?_Yield@_Context@details@Concurrency@@SAXXZ */
 void __cdecl Context_Yield(void)
 {
     FIXME("()\n");
