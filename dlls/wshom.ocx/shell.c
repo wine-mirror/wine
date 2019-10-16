@@ -698,7 +698,7 @@ static HRESULT WINAPI WshCollection_get_length(IWshCollection *iface, LONG *coun
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WshCollection__NewEnum(IWshCollection *iface, IUnknown *Enum)
+static HRESULT WINAPI WshCollection__NewEnum(IWshCollection *iface, IUnknown **Enum)
 {
     WshCollection *This = impl_from_IWshCollection(iface);
     FIXME("(%p)->(%p): stub\n", This, Enum);
