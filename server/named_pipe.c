@@ -851,6 +851,11 @@ static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
     switch (pipe_end->state)
     {
     case FILE_PIPE_CONNECTED_STATE:
+        if ((pipe_end->flags & NAMED_PIPE_NONBLOCKING_MODE) && list_empty( &pipe_end->message_queue ))
+        {
+            set_error( STATUS_PIPE_EMPTY );
+            return 0;
+        }
         break;
     case FILE_PIPE_DISCONNECTED_STATE:
         set_error( STATUS_PIPE_DISCONNECTED );

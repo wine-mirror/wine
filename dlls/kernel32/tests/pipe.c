@@ -3910,7 +3910,7 @@ static void test_nowait(void)
     ol.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     SetLastError(0xdeadbeef);
     ok(ReadFile(piperead, readbuf, sizeof(readbuf), &read, &ol) == FALSE, "ReadFile should fail\n");
-    todo_wine ok(GetLastError() == ERROR_NO_DATA, "got %d should be ERROR_NO_DATA\n", GetLastError());
+    ok(GetLastError() == ERROR_NO_DATA, "got %d should be ERROR_NO_DATA\n", GetLastError());
     if (GetLastError() == ERROR_IO_PENDING)
         CancelIo(piperead);
 
