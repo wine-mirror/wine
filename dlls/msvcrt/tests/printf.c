@@ -802,6 +802,11 @@ static void test_sprintf( void )
     ok(r==2, "r = %d\n", r);
     ok(!strcmp(buffer, "\x82\xa0"), "failed: \"%s\"\n", buffer);
 
+    strcpy(buffer, " string to copy");
+    r = p_sprintf(buffer, buffer+1);
+    ok(r==14, "r = %d\n", r);
+    ok(!strcmp(buffer, "string to copy"), "failed: \"%s\"\n", buffer);
+
     setlocale(LC_ALL, "C");
 }
 
