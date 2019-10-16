@@ -468,7 +468,7 @@
 @ stub -arch=win64 ?_TryAcquireWrite@_ReaderWriterLock@details@Concurrency@@QEAA_NXZ
 @ stub ?_UnderlyingYield@details@Concurrency@@YAXXZ
 @ cdecl ?_Value@_SpinCount@details@Concurrency@@SAIXZ() msvcr120.?_Value@_SpinCount@details@Concurrency@@SAIXZ
-@ stub ?_Yield@_Context@details@Concurrency@@SAXXZ
+@ cdecl ?_Yield@_Context@details@Concurrency@@SAXXZ() msvcr120.?_Yield@_Context@details@Concurrency@@SAXXZ
 @ stub -arch=i386 ?cancel@agent@Concurrency@@QAE_NXZ
 @ stub -arch=win64 ?cancel@agent@Concurrency@@QEAA_NXZ
 @ stub ?current@location@Concurrency@@SA?AV12@XZ
