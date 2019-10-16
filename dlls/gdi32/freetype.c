@@ -3107,6 +3107,33 @@ static void load_system_fonts(void)
     }
 }
 
+static WCHAR *get_full_path_name(const WCHAR *name)
+{
+    WCHAR *full_path;
+    DWORD len;
+
+    if (!(len = GetFullPathNameW(name, 0, NULL, NULL)))
+    {
+        ERR("GetFullPathNameW() failed, name %s.\n", debugstr_w(name));
+        return NULL;
+    }
+
+    if (!(full_path = HeapAlloc(GetProcessHeap(), 0, len * sizeof(*full_path))))
+    {
+        ERR("Could not get memory.\n");
+        return NULL;
+    }
+
+    if (GetFullPathNameW(name, len, full_path, NULL) != len - 1)
+    {
+        ERR("Unexpected GetFullPathNameW() result, name %s.\n", debugstr_w(name));
+        HeapFree(GetProcessHeap(), 0, full_path);
+        return NULL;
+    }
+
+    return full_path;
+}
+
 /*************************************************************
  *
  * This adds registry entries for any externally loaded fonts
@@ -3121,7 +3148,7 @@ static void update_reg_entries(void)
     DWORD len;
     Family *family;
     Face *face;
-    WCHAR *file, *path;
+    WCHAR *file, *path, *full_path;
     static const WCHAR TrueType[] = {' ','(','T','r','u','e','T','y','p','e',')','\0'};
 
     if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, winnt_font_reg_key,
@@ -3168,11 +3195,22 @@ static void update_reg_entries(void)
             HeapFree( GetProcessHeap(), 0, buffer );
 
             if (path)
+            {
+                if ((full_path = get_full_path_name(path)))
+                {
+                    HeapFree(GetProcessHeap(), 0, path);
+                    path = full_path;
+                }
                 file = path;
+            }
             else if ((file = strrchrW(face->file, '/')))
+            {
                 file++;
+            }
             else
+            {
                 file = face->file;
+            }
 
             len = strlenW(file) + 1;
             RegSetValueExW(winnt_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
