@@ -326,13 +326,14 @@ of a
 specification when an application expects to find the function's
 implementation inside the dll.
 .TP
-.RE
-.BI -arch= cpu\fR[\fB,\fIcpu\fR]
+.B -arch=\fR[\fB!\fR]\fIcpu\fR[\fB,\fIcpu\fR]
 The entry point is only available on the specified CPU
 architecture(s). The names \fBwin32\fR and \fBwin64\fR match all
 32-bit or 64-bit CPU architectures respectively. In 16-bit dlls,
 specifying \fB-arch=win32\fR causes the entry point to be exported
-from the 32-bit wrapper module.
+from the 32-bit wrapper module. A CPU name can be prefixed with
+\fB!\fR to exclude only that specific architecture.
+.RE
 .SS "Function ordinals"
 Syntax:
 .br
