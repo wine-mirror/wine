@@ -110,7 +110,6 @@ HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This)
 
     winclass.lpfnWndProc = WndProcW;
     winclass.cbWndExtra = sizeof(BaseWindow*);
-    winclass.hInstance = This->hInstance;
     winclass.hbrBackground = GetStockObject(BLACK_BRUSH);
     winclass.lpszClassName = class_nameW;
     if (!RegisterClassW(&winclass) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
@@ -121,7 +120,7 @@ HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This)
 
     This->hWnd = CreateWindowExW(0, class_nameW, windownameW, WS_SIZEBOX,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-            NULL, NULL, This->hInstance, NULL);
+            NULL, NULL, NULL, NULL);
 
     if (!This->hWnd)
     {
