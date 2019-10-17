@@ -130,8 +130,6 @@ HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This)
 
     SetWindowLongPtrW(This->hWnd, 0, (LONG_PTR)This);
 
-    This->hDC = GetDC(This->hWnd);
-
     return S_OK;
 }
 
@@ -139,10 +137,6 @@ HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This)
 {
     if (!This->hWnd)
         return S_OK;
-
-    if (This->hDC)
-        ReleaseDC(This->hWnd, This->hDC);
-    This->hDC = NULL;
 
     SendMessageW(This->hWnd, WM_CLOSE, 0, 0);
     This->hWnd = NULL;
