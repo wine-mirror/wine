@@ -1607,6 +1607,11 @@ sub testErrRaise()
     call ok(err.description = "", "err.description = " & err.description)
     call ok(err.helpfile = "", "err.helpfile = " & err.helpfile)
     call ok(err.helpcontext = 0, "err.helpcontext = " & err.helpcontext)
+
+    dim e
+    e = err
+    call ok(getVT(e) = "VT_I4*", "getVT(e) = " & getVT(e))
+    call ok(e = 0, "e = " & e)
 end sub
 call testErrRaise()
 

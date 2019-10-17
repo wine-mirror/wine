@@ -105,6 +105,7 @@ DEFINE_EXPECT(global_propargput_i);
 DEFINE_EXPECT(global_propargput1_d);
 DEFINE_EXPECT(global_propargput1_i);
 DEFINE_EXPECT(global_testoptionalarg_i);
+DEFINE_EXPECT(global_testerrorobject_i);
 DEFINE_EXPECT(collectionobj_newenum_i);
 DEFINE_EXPECT(Next);
 DEFINE_EXPECT(GetWindow);
@@ -136,7 +137,8 @@ DEFINE_EXPECT(OnLeaveScript);
 #define DISPID_GLOBAL_SETOBJ        1019
 #define DISPID_GLOBAL_TODO_WINE_OK  1020
 #define DISPID_GLOBAL_WEEKSTARTDAY  1021
-#define DISPID_GLOBAL_GLOBALCALLBACK 1022
+#define DISPID_GLOBAL_GLOBALCALLBACK  1022
+#define DISPID_GLOBAL_TESTERROROBJECT 1023
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -1197,6 +1199,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_TESTOPTIONALARG;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "testErrorObject")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_TESTERROROBJECT;
+        return S_OK;
+    }
 
     if(strict_dispid_check && strcmp_wa(bstrName, "x"))
         ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
@@ -1618,6 +1625,70 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         IDispatchEx_Release(dispex);
 
         SET_EXPECT(OnLeaveScript);
+        return S_OK;
+    }
+    case DISPID_GLOBAL_TESTERROROBJECT: {
+        ITypeInfo *typeinfo;
+        IDispatchEx *dispex;
+        DISPPARAMS dp;
+        VARIANT v, r;
+        EXCEPINFO ei;
+        IDispatch *disp;
+        WCHAR *names[1];
+        UINT count, i;
+        DISPID id;
+        HRESULT hres;
+
+        static WCHAR props[][32] = { L"clear", L"description", L"helpcontext", L"helpFILE", L"number", L"raise", L"source" };
+
+        CHECK_EXPECT(global_testerrorobject_i);
+
+        ok(wFlags == INVOKE_FUNC, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(!pvarRes, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(pdp->rgvarg) = %d\n", V_VT(pdp->rgvarg));
+        disp = V_DISPATCH(pdp->rgvarg);
+        hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+        ok(hres == E_NOINTERFACE, "Could not get IDispatchEx iface: %08x\n", hres);
+
+        hres = IDispatch_GetTypeInfoCount(disp, &count);
+        ok(hres == S_OK, "GetTypeInfoCount returned: %08x\n", hres);
+        ok(count == 0, "count = %u\n", count);
+
+        hres = IDispatch_GetTypeInfo(disp, 0, 0, &typeinfo);
+        ok(hres == DISP_E_BADINDEX, "GetTypeInfo returned: %08x\n", hres);
+
+        for(i = 0; i < ARRAY_SIZE(props); i++) {
+            names[0] = props[i];
+            hres = IDispatch_GetIDsOfNames(disp, &IID_NULL, names, 1, 0, &id);
+            ok(hres == S_OK, "GetIDsOfNames failed: %08x\n", hres);
+            ok(id == i + 1, "%s id = %u\n", wine_dbgstr_w(props[i]), id);
+        }
+
+        memset(&dp, 0, sizeof(dp));
+        memset(&ei, 0, sizeof(ei));
+        V_VT(&v) = VT_ERROR;
+        hres = IDispatch_Invoke(disp, 5, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v, &ei, NULL);
+        ok(hres == S_OK, "Invoke failed: %08x\n", hres);
+        ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+        ok(V_I4(&v) == 1, "V_I4(v) = %d\n", V_I4(&v));
+        hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v, &ei, NULL);
+        ok(hres == S_OK, "Invoke failed: %08x\n", hres);
+        ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+        ok(V_I4(&v) == 1, "V_I4(v) = %d\n", V_I4(&v));
+
+        dp.rgvarg = &v;
+        V_VT(&v) = VT_I4;
+        V_I4(&v) = 6;
+        V_VT(&r) = VT_EMPTY;
+        hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 6, DISPATCH_METHOD|DISPATCH_PROPERTYGET, &dp, &r, &ei, NULL);
+        ok(hres == S_OK, "Invoke failed: %08x\n", hres);
         return S_OK;
     }
     }
@@ -2278,6 +2349,19 @@ static void test_callbacks(void)
     CHECK_CALLED(OnEnterScript);
     CHECK_CALLED(OnLeaveScript);
     CHECK_CALLED(OnScriptError);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(global_testerrorobject_i);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parser,
+                                              L"on error resume next\n"
+                                              L"err.raise 1\n"
+                                              L"testErrorObject err\n",
+                                              NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(global_testerrorobject_i);
+    CHECK_CALLED(OnLeaveScript);
 
     IDispatchEx_Release(dispex);
 
