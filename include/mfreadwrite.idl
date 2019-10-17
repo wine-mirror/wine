@@ -46,6 +46,13 @@ typedef [v1_enum] enum MF_SOURCE_READER_FLAG
     MF_SOURCE_READERF_ALLEFFECTSREMOVED       = 0x00000200,
 } MF_SOURCE_READER_FLAG;
 
+enum
+{
+    MF_SINK_WRITER_INVALID_STREAM_INDEX = 0xffffffff,
+    MF_SINK_WRITER_ALL_STREAMS          = 0xfffffffe,
+    MF_SINK_WRITER_MEDIASINK            = 0xffffffff,
+};
+
 typedef struct _MF_SINK_WRITER_STATISTICS
 {
     DWORD    cb;
@@ -116,6 +123,20 @@ interface IMFSourceReaderCallback : IUnknown
             [in] IMFMediaEvent *event);
 }
 
+[
+    object,
+    uuid(cf839fe6-8c2a-4dd2-b6ea-c22d6961af05),
+    local
+]
+interface IMFSourceReaderCallback2 : IMFSourceReaderCallback
+{
+    HRESULT OnTransformChange();
+
+    HRESULT OnStreamError(
+            [in] DWORD stream_index,
+            [in] HRESULT status);
+}
+
 interface IMFMediaSource;
 
 [
@@ -136,6 +157,32 @@ interface IMFSourceReader : IUnknown
     HRESULT Flush([in] DWORD index);
     HRESULT GetServiceForStream([in] DWORD index, [in] REFGUID service, [in] REFIID riid, [out] void **object);
     HRESULT GetPresentationAttribute([in] DWORD index, [in] REFGUID guid, [out] PROPVARIANT *attr);
+}
+
+[
+    object,
+    uuid(7b981cf0-560e-4116-9875-b099895f23d7),
+    local
+]
+interface IMFSourceReaderEx : IMFSourceReader
+{
+    HRESULT SetNativeMediaType(
+            [in] DWORD stream_index,
+            [in] IMFMediaType *media_type,
+            [out] DWORD *stream_flags);
+
+    HRESULT AddTransformForStream(
+            [in] DWORD stream_index,
+            [in] IUnknown *transform);
+
+    HRESULT RemoveAllTransformsForStream(
+            [in] DWORD stream_index);
+
+    HRESULT GetTransformForStream(
+            [in] DWORD stream_index,
+            [in] DWORD transform_index,
+            [out] GUID *category,
+            [out] IMFTransform **transform);
 }
 
 [
@@ -167,6 +214,52 @@ interface IMFSinkWriterEx : IMFSinkWriter
 {
     HRESULT GetTransformForStream([in] DWORD index, [in] DWORD tindex, [out] GUID *category,
                                   [out] IMFTransform **transform);
+}
+
+[
+    object,
+    uuid(17c3779e-3cde-4ede-8c60-3899f5f53ad6),
+    local
+]
+interface IMFSinkWriterEncoderConfig : IUnknown
+{
+    HRESULT SetTargetMediaType(
+            [in] DWORD stream_index,
+            [in] IMFMediaType *media_type,
+            [in] IMFAttributes *encoding_parameters);
+
+    HRESULT PlaceEncodingParameters(
+            [in] DWORD stream_index,
+            [in] IMFAttributes *encoding_parameters);
+}
+
+[
+    object,
+    uuid(666f76de-33d2-41b9-a458-29ed0a972c58),
+    local
+]
+interface IMFSinkWriterCallback : IUnknown
+{
+    HRESULT OnFinalize(
+            [in] HRESULT status);
+
+    HRESULT OnMarker(
+            [in] DWORD stream_index,
+            [in] void *context);
+}
+
+[
+    object,
+    uuid(2456bd58-c067-4513-84fe-8d0c88ffdc61),
+    local
+]
+interface IMFSinkWriterCallback2 : IMFSinkWriterCallback
+{
+    HRESULT OnTransformChange();
+
+    HRESULT OnStreamError(
+            [in] DWORD stream_index,
+            [in] HRESULT status);
 }
 
 [
