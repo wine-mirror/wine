@@ -1255,9 +1255,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetNamedPipeHandleState( HANDLE pipe, LPDWORD mode
     IO_STATUS_BLOCK iosb;
     NTSTATUS status = STATUS_SUCCESS;
 
-    /* should be a fixme, but this function is called a lot by the RPC
-     * runtime, and it slows down InstallShield a fair bit. */
-    WARN( "semi-stub: %p %p/%d %p %p\n", pipe, mode, mode ? *mode : 0, count, timeout );
+    TRACE( "%p %p/%d %p %p\n", pipe, mode, mode ? *mode : 0, count, timeout );
+    if (count || timeout) FIXME( "Unsupported arguments\n" );
 
     if (mode)
     {
