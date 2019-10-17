@@ -268,8 +268,7 @@ static const IDispatchVtbl BuiltinDispVtbl = {
     Builtin_Invoke
 };
 
-static HRESULT create_builtin_dispatch(script_ctx_t *ctx, const builtin_prop_t *members, size_t member_cnt,
-                                       ITypeInfo *typeinfo, BuiltinDisp **ret)
+static HRESULT create_builtin_dispatch(script_ctx_t *ctx, const builtin_prop_t *members, size_t member_cnt, BuiltinDisp **ret)
 {
     BuiltinDisp *disp;
 
@@ -281,7 +280,6 @@ static HRESULT create_builtin_dispatch(script_ctx_t *ctx, const builtin_prop_t *
     disp->members = members;
     disp->member_cnt = member_cnt;
     disp->ctx = ctx;
-    disp->typeinfo = typeinfo;
 
     *ret = disp;
     return S_OK;
@@ -2858,14 +2856,9 @@ void detach_global_objects(script_ctx_t *ctx)
 
 HRESULT init_global(script_ctx_t *ctx)
 {
-    ITypeInfo *typeinfo;
     HRESULT hres;
 
-    hres = get_typeinfo(GlobalObj_tid, &typeinfo);
-    if(FAILED(hres))
-        return hres;
-
-    hres = create_builtin_dispatch(ctx, global_props, ARRAY_SIZE(global_props), typeinfo, &ctx->global_obj);
+    hres = create_builtin_dispatch(ctx, global_props, ARRAY_SIZE(global_props), &ctx->global_obj);
     if(FAILED(hres))
         return hres;
 
@@ -2873,9 +2866,5 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = get_typeinfo(ErrObj_tid, &typeinfo);
-    if(FAILED(hres))
-        return hres;
-
-    return create_builtin_dispatch(ctx, err_props, ARRAY_SIZE(err_props), typeinfo, &ctx->err_obj);
+    return create_builtin_dispatch(ctx, err_props, ARRAY_SIZE(err_props), &ctx->err_obj);
 }

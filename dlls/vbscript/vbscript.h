@@ -141,7 +141,6 @@ typedef struct {
     size_t member_cnt;
     const builtin_prop_t *members;
     script_ctx_t *ctx;
-    ITypeInfo *typeinfo;
 } BuiltinDisp;
 
 HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**) DECLSPEC_HIDDEN;
@@ -358,18 +357,6 @@ HRESULT report_script_error(script_ctx_t*) DECLSPEC_HIDDEN;
 void detach_global_objects(script_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT get_builtin_id(BuiltinDisp*,const WCHAR*,DISPID*) DECLSPEC_HIDDEN;
 
-#define TID_LIST \
-    XDIID(ErrObj) \
-    XDIID(GlobalObj)
-
-typedef enum {
-#define XDIID(iface) iface ## _tid,
-TID_LIST
-#undef XDIID
-    LAST_tid
-} tid_t;
-
-HRESULT get_typeinfo(tid_t,ITypeInfo**) DECLSPEC_HIDDEN;
 void release_regexp_typelib(void) DECLSPEC_HIDDEN;
 
 static inline BOOL is_int32(double d)
