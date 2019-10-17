@@ -1610,9 +1610,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         memset(&ei, 0, sizeof(ei));
         hres = IDispatchEx_InvokeEx(dispex, id, 0, DISPATCH_METHOD, &dp, &v, &ei, pspCaller);
         ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
-        todo_wine
         CHECK_CALLED(OnEnterScript);
-        todo_wine
         CHECK_CALLED(OnLeaveScript);
         ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
         ok(V_BOOL(&v) == VARIANT_TRUE, "V_BOOL(v) = %x\n", V_BOOL(&v));

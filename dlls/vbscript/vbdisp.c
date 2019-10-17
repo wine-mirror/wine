@@ -266,7 +266,7 @@ static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern
                 return DISP_E_MEMBERNOTFOUND;
             }
 
-            return exec_script(This->desc->ctx, FALSE, func, This, params, res);
+            return exec_script(This->desc->ctx, extern_caller, func, This, params, res);
 
         case DISPATCH_METHOD:
         case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
@@ -276,7 +276,8 @@ static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern
                 return DISP_E_MEMBERNOTFOUND;
             }
 
-            return exec_script(This->desc->ctx, FALSE, func, This, params, res);
+            return exec_script(This->desc->ctx, extern_caller, func, This, params, res);
+
         case DISPATCH_PROPERTYPUT:
         case DISPATCH_PROPERTYPUTREF:
         case DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF: {
@@ -301,7 +302,7 @@ static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern
                 return DISP_E_MEMBERNOTFOUND;
             }
 
-            hres = exec_script(This->desc->ctx, FALSE, func, This, &dp, NULL);
+            hres = exec_script(This->desc->ctx, extern_caller, func, This, &dp, NULL);
             if(needs_release)
                 VariantClear(&put_val);
             return hres;
@@ -1078,12 +1079,17 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, DISPPARAMS *dp,
 {
     const WORD flags = DISPATCH_METHOD|(retv ? DISPATCH_PROPERTYGET : 0);
     IDispatchEx *dispex;
+    vbdisp_t *vbdisp;
     EXCEPINFO ei;
     HRESULT hres;
 
     memset(&ei, 0, sizeof(ei));
     if(retv)
         V_VT(retv) = VT_EMPTY;
+
+    vbdisp = unsafe_impl_from_IDispatch(disp);
+    if(vbdisp && vbdisp->desc && vbdisp->desc->ctx == ctx)
+        return invoke_vbdisp(vbdisp, id, flags, FALSE, dp, retv);
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(FAILED(hres)) {
@@ -1107,8 +1113,13 @@ HRESULT get_disp_value(script_ctx_t *ctx, IDispatch *disp, VARIANT *v)
 HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, DISPPARAMS *dp)
 {
     IDispatchEx *dispex;
+    vbdisp_t *vbdisp;
     EXCEPINFO ei = {0};
     HRESULT hres;
+
+    vbdisp = unsafe_impl_from_IDispatch(disp);
+    if(vbdisp && vbdisp->desc && vbdisp->desc->ctx == ctx)
+        return invoke_vbdisp(vbdisp, id, flags, FALSE, dp, NULL);
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(SUCCEEDED(hres)) {
