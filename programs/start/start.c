@@ -350,7 +350,7 @@ static BOOL search_path(const WCHAR *firstParam, WCHAR **full_path)
     return FALSE;
 }
 
-int wmain (int argc, WCHAR *argv[])
+int __cdecl wmain (int argc, WCHAR *argv[])
 {
 	SHELLEXECUTEINFOW sei;
 	DWORD creation_flags;

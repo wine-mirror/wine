@@ -88,7 +88,7 @@ static void WINAPI serv_main(DWORD argc, LPWSTR *argv)
     WINE_TRACE( "service stopped\n" );
 }
 
-int main(int argc, char **argv)
+int __cdecl main(int argc, char **argv)
 {
     static const SERVICE_TABLE_ENTRYW servtbl[] = {
         {spoolerW, serv_main},

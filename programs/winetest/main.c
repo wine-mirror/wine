@@ -1237,7 +1237,7 @@ usage (void)
 " -x DIR    Extract tests to DIR (default: .\\wct) and exit\n");
 }
 
-int main( int argc, char *argv[] )
+int __cdecl main( int argc, char *argv[] )
 {
     BOOL (WINAPI *pIsWow64Process)(HANDLE hProcess, PBOOL Wow64Process);
     char *logname = NULL, *outdir = NULL;

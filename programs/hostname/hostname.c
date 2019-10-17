@@ -118,7 +118,7 @@ static int display_computer_name(void)
     return 0;
 }
 
-int wmain(int argc, WCHAR *argv[])
+int __cdecl wmain(int argc, WCHAR *argv[])
 {
     if (argc > 1)
     {

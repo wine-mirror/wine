@@ -211,7 +211,7 @@ static WCHAR *parse_command_line(WCHAR *command_line)
     return NULL;
 }
 
-int wmain(int argc, WCHAR* argv[])
+int __cdecl wmain(int argc, WCHAR* argv[])
 {
     int             i, res, ret = 0;
     BOOL            CallRegister = TRUE;

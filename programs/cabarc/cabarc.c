@@ -591,7 +591,7 @@ static void usage( void )
         "  -v       More verbose output\n" );
 }
 
-int wmain( int argc, WCHAR *argv[] )
+int __cdecl wmain( int argc, WCHAR *argv[] )
 {
     static const WCHAR noneW[] = {'n','o','n','e',0};
     static const WCHAR mszipW[] = {'m','s','z','i','p',0};

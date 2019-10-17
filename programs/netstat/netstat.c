@@ -348,7 +348,7 @@ static NETSTATPROTOCOLS NETSTAT_get_protocol(WCHAR name[])
     return PROT_UNKNOWN;
 }
 
-int wmain(int argc, WCHAR *argv[])
+int __cdecl wmain(int argc, WCHAR *argv[])
 {
     WSADATA wsa_data;
     BOOL output_stats = FALSE;

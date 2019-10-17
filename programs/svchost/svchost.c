@@ -332,7 +332,7 @@ static BOOL LoadGroup(PWCHAR group_name)
 }
 
 /* Load svchost group specified on the command line via the /k option */
-int wmain(int argc, WCHAR *argv[])
+int __cdecl wmain(int argc, WCHAR *argv[])
 {
     int option_index;
 

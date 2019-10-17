@@ -2419,7 +2419,7 @@ void WCMD_free_commands(CMD_LIST *cmds) {
  * winmain().
  */
 
-int wmain (int argc, WCHAR *argvW[])
+int __cdecl wmain (int argc, WCHAR *argvW[])
 {
   int     args;
   WCHAR  *cmdLine = NULL;

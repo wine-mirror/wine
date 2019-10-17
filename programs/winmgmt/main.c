@@ -87,7 +87,7 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
     TRACE( "service stopped\n" );
 }
 
-int wmain( int argc, WCHAR *argv[] )
+int __cdecl wmain( int argc, WCHAR *argv[] )
 {
     static const SERVICE_TABLE_ENTRYW service_table[] =
     {

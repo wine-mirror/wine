@@ -486,7 +486,7 @@ static void usage(void)
 /***********************************************************************
  *           main
  */
-int main( int argc, char *argv[] )
+int __cdecl main( int argc, char *argv[] )
 {
     DWORD count;
     HINSTANCE16 instance;

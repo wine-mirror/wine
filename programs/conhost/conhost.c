@@ -20,7 +20,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(conhost);
 
-int wmain(int argc, WCHAR *argv[])
+int __cdecl wmain(int argc, WCHAR *argv[])
 {
     int i;
 

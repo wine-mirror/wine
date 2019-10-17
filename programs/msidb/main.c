@@ -615,7 +615,7 @@ static int export_tables( struct msidb_state *state )
     return 1;
 }
 
-int wmain( int argc, WCHAR *argv[] )
+int __cdecl wmain( int argc, WCHAR *argv[] )
 {
     struct msidb_state state;
     int i, n = 1;

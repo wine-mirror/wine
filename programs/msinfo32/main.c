@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msinfo);
 
-int wmain(int argc, WCHAR *argv[])
+int __cdecl wmain(int argc, WCHAR *argv[])
 {
     int i;
     WCHAR system_info[64];

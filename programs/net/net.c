@@ -294,7 +294,7 @@ static BOOL arg_is(const WCHAR* str1, const WCHAR* str2)
     return CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, str1, -1, str2, -1) == CSTR_EQUAL;
 }
 
-int wmain(int argc, const WCHAR* argv[])
+int __cdecl wmain(int argc, const WCHAR* argv[])
 {
     static const WCHAR helpW[]={'h','e','l','p',0};
     static const WCHAR shelpW[]={'/','h','e','l','p',0};

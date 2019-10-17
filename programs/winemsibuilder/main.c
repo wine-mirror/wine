@@ -254,7 +254,7 @@ static void show_usage( void )
     );
 }
 
-int wmain( int argc, WCHAR *argv[] )
+int __cdecl wmain( int argc, WCHAR *argv[] )
 {
     if (argc < 3 || argv[1][0] != '-')
     {

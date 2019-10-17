@@ -1267,7 +1267,7 @@ static void load_registry_parameters(void)
     RegCloseKey( key );
 }
 
-int main(int argc, char *argv[])
+int __cdecl main(int argc, char *argv[])
 {
     static const WCHAR service_current_key_str[] = { 'S','Y','S','T','E','M','\\',
         'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',

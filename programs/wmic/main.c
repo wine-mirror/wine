@@ -265,7 +265,7 @@ done:
     return ret;
 }
 
-int wmain(int argc, WCHAR *argv[])
+int __cdecl wmain(int argc, WCHAR *argv[])
 {
     static const WCHAR getW[] = {'g','e','t',0};
     static const WCHAR quitW[] = {'q','u','i','t',0};

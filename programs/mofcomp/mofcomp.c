@@ -23,7 +23,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mofcomp);
 
-int wmain( int argc, const WCHAR *argv[] )
+int __cdecl wmain( int argc, const WCHAR *argv[] )
 {
     WINE_FIXME("stub\n");
     return 0;

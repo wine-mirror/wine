@@ -54,7 +54,7 @@ static int WINAPIV mywprintf(const WCHAR *format, ...)
     return res ? nOut : 0;
 }
 
-int wmain(int argc, WCHAR* argv[])
+int __cdecl wmain(int argc, WCHAR* argv[])
 {
     int i, n=0,doabout=0,doconfigure=0;
 

@@ -212,7 +212,7 @@ static void usage( void )
     exit( 1 );
 }
 
-int wmain( int argc, const WCHAR *argv[] )
+int __cdecl wmain( int argc, const WCHAR *argv[] )
 {
     static const WCHAR createW[] = {'c','r','e','a','t','e',0};
     static const WCHAR descriptionW[] = {'d','e','s','c','r','i','p','t','i','o','n',0};
