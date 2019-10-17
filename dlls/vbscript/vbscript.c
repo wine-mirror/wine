@@ -884,7 +884,8 @@ static HRESULT WINAPI VBScriptParseProcedure_ParseProcedureText(IActiveScriptPar
         CTXARG_T dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags, IDispatch **ppdisp)
 {
     VBScript *This = impl_from_IActiveScriptParseProcedure2(iface);
-    vbscode_t *code;
+    class_desc_t *desc;
+    vbdisp_t *vbdisp;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %s %s %p %s %s %u %x %p)\n", This, debugstr_w(pstrCode), debugstr_w(pstrFormalParams),
@@ -894,11 +895,16 @@ static HRESULT WINAPI VBScriptParseProcedure_ParseProcedureText(IActiveScriptPar
     if(This->thread_id != GetCurrentThreadId() || This->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
-    hres = compile_script(This->ctx, pstrCode, pstrDelimiter, dwFlags, &code);
+    hres = compile_procedure(This->ctx, pstrCode, pstrDelimiter, dwFlags, &desc);
     if(FAILED(hres))
         return hres;
 
-    return create_procedure_disp(This->ctx, code, ppdisp);
+    hres = create_vbdisp(desc, &vbdisp);
+    if(FAILED(hres))
+        return hres;
+
+    *ppdisp = (IDispatch*)&vbdisp->IDispatchEx_iface;
+    return S_OK;
 }
 
 static const IActiveScriptParseProcedure2Vtbl VBScriptParseProcedureVtbl = {

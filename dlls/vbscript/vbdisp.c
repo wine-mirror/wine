@@ -627,45 +627,6 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
     return S_OK;
 }
 
-static HRESULT Procedure_invoke(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
-{
-    script_ctx_t *ctx = This->desc->ctx;
-    TRACE("\n");
-    return exec_script(ctx, TRUE, This->desc->value_func, NULL, NULL, res);
-}
-
-static const builtin_prop_t procedure_props[] = {
-    {DISPID_VALUE,  Procedure_invoke, 0}
-};
-
-HRESULT create_procedure_disp(script_ctx_t *ctx, vbscode_t *code, IDispatch **ret)
-{
-    class_desc_t *desc;
-    vbdisp_t *vbdisp;
-    HRESULT hres;
-
-    desc = heap_alloc_zero(sizeof(*desc));
-    if(!desc)
-        return E_OUTOFMEMORY;
-
-    desc->ctx = ctx;
-    desc->builtin_prop_cnt = ARRAY_SIZE(procedure_props);
-    desc->builtin_props = procedure_props;
-    desc->value_func = &code->main_code;
-
-    hres = create_vbdisp(desc, &vbdisp);
-    if(FAILED(hres)) {
-        heap_free(desc);
-        return hres;
-    }
-
-    desc->next = ctx->procs;
-    ctx->procs = desc;
-
-    *ret = (IDispatch*)&vbdisp->IDispatchEx_iface;
-    return S_OK;
-}
-
 struct _ident_map_t {
     const WCHAR *name;
     BOOL is_var;

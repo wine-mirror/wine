@@ -1926,3 +1926,29 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     *ret = code;
     return S_OK;
 }
+
+HRESULT compile_procedure(script_ctx_t *script, const WCHAR *src, const WCHAR *delimiter, DWORD flags, class_desc_t **ret)
+{
+    class_desc_t *desc;
+    vbscode_t *code;
+    HRESULT hres;
+
+    hres = compile_script(script, src, delimiter, flags, &code);
+    if(FAILED(hres))
+        return hres;
+
+    if(!(desc = compiler_alloc_zero(code, sizeof(*desc))))
+        return E_OUTOFMEMORY;
+    if(!(desc->funcs = compiler_alloc_zero(code, sizeof(*desc->funcs))))
+        return E_OUTOFMEMORY;
+
+    desc->ctx = script;
+    desc->func_cnt = 1;
+    desc->funcs->entries[VBDISP_CALLGET] = &code->main_code;
+
+    desc->next = script->procs;
+    script->procs = desc;
+
+    *ret = desc;
+    return S_OK;
+}

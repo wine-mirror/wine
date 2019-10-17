@@ -154,7 +154,6 @@ HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*) DECLSPEC
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,WORD,DISPPARAMS*) DECLSPEC_HIDDEN;
 HRESULT get_disp_value(script_ctx_t*,IDispatch*,VARIANT*) DECLSPEC_HIDDEN;
 void collect_objects(script_ctx_t*) DECLSPEC_HIDDEN;
-HRESULT create_procedure_disp(script_ctx_t*,vbscode_t*,IDispatch**) DECLSPEC_HIDDEN;
 HRESULT create_script_disp(script_ctx_t*,ScriptDisp**) DECLSPEC_HIDDEN;
 
 HRESULT to_int(VARIANT*,int*) DECLSPEC_HIDDEN;
@@ -356,6 +355,7 @@ struct _vbscode_t {
 
 void release_vbscode(vbscode_t*) DECLSPEC_HIDDEN;
 HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,DWORD,vbscode_t**) DECLSPEC_HIDDEN;
+HRESULT compile_procedure(script_ctx_t*,const WCHAR*,const WCHAR*,DWORD,class_desc_t**) DECLSPEC_HIDDEN;
 HRESULT exec_script(script_ctx_t*,BOOL,function_t*,vbdisp_t*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
 void release_dynamic_vars(dynamic_var_t*) DECLSPEC_HIDDEN;
 IDispatch *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned) DECLSPEC_HIDDEN;
