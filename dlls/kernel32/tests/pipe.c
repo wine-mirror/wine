@@ -3887,7 +3887,7 @@ static void test_wait_pipe(void)
     CloseHandle(ov.hEvent);
 }
 
-static void test_nowait(void)
+static void test_nowait(DWORD pipe_type)
 {
     HANDLE piperead, pipewrite, file;
     OVERLAPPED ol, ol2;
@@ -3897,7 +3897,7 @@ static void test_nowait(void)
 
     /* CreateNamedPipe with PIPE_NOWAIT, and read from empty pipe */
     piperead = CreateNamedPipeA(PIPENAME, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
-        /* dwPipeMode */ PIPE_TYPE_BYTE | PIPE_NOWAIT,
+        /* dwPipeMode */ pipe_type | PIPE_NOWAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 512,
         /* nInBufSize */ 512,
@@ -3925,7 +3925,7 @@ static void test_nowait(void)
 
     /* create write side with PIPE_NOWAIT, read side PIPE_WAIT, and test writes */
     pipewrite = CreateNamedPipeA(PIPENAME, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
-        /* dwPipeMode */ PIPE_TYPE_BYTE | PIPE_NOWAIT,
+        /* dwPipeMode */ pipe_type | PIPE_NOWAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 512,
         /* nInBufSize */ 512,
@@ -3994,9 +3994,23 @@ static void test_nowait(void)
     ok(ReadFile(piperead, readbuf, 1, &read, &ol2) == FALSE, "ReadFile should fail\n");
     ok(GetLastError() == ERROR_IO_PENDING, "got %d should be ERROR_IO_PENDING\n", GetLastError());
     ok(WriteFile(pipewrite, readbuf, 514, &write, &ol), "WriteFile should succeed\n");
-    ok(write == 1, "got %d, write should be %d\n", write, 1);
-    ok(GetOverlappedResult(piperead, &ol2, &read, FALSE), "GetOverlappedResult should succeed\n");
-    ok(read == 1, "got %d, read should be %d\n", read, 1);
+    if (pipe_type == PIPE_TYPE_MESSAGE)
+    {
+        todo_wine
+        ok(write == 0, "got %d\n", write);
+        todo_wine
+        ok(!GetOverlappedResult(piperead, &ol2, &read, FALSE), "GetOverlappedResult should fail\n");
+        todo_wine
+        ok(GetLastError() == ERROR_IO_INCOMPLETE, "got %d should be ERROR_IO_PENDING\n", GetLastError());
+        todo_wine
+        ok(read == 0, "got %d, read should be %d\n", read, 1);
+    }
+    else
+    {
+        ok(write == 1, "got %d\n", write);
+        ok(GetOverlappedResult(piperead, &ol2, &read, FALSE), "GetOverlappedResult should fail\n");
+        ok(read == 1, "got %d, read should be %d\n", read, 1);
+    }
     if (GetOverlappedResult(piperead, &ol2, &read, FALSE) == FALSE)
         CancelIo(piperead);
 
@@ -4015,7 +4029,7 @@ static void test_nowait(void)
 
     /* CreateNamedPipe with PIPE_NOWAIT, test ConnectNamedPipe */
     pipewrite = CreateNamedPipeA(PIPENAME, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
-        /* dwPipeMode */ PIPE_TYPE_BYTE | PIPE_NOWAIT,
+        /* dwPipeMode */ pipe_type | PIPE_NOWAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 512,
         /* nInBufSize */ 512,
@@ -4118,5 +4132,6 @@ START_TEST(pipe)
     test_namedpipe_session_id();
     test_multiple_instances();
     test_wait_pipe();
-    test_nowait();
+    test_nowait(PIPE_TYPE_BYTE);
+    test_nowait(PIPE_TYPE_MESSAGE);
 }
