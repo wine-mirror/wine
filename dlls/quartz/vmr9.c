@@ -589,7 +589,8 @@ static BOOL WINAPI VMR9_OnSize(BaseWindow *This, LONG Width, LONG Height)
         pVMR9->target_rect.top,
         pVMR9->target_rect.right - pVMR9->target_rect.left,
         pVMR9->target_rect.bottom - pVMR9->target_rect.top);
-    return BaseWindowImpl_OnSize(This, Width, Height);
+
+    return TRUE;
 }
 
 static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {

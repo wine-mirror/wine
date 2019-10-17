@@ -381,7 +381,6 @@ HRESULT WINAPI BaseWindow_Destroy(BaseWindow *pBaseWindow);
 
 HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This);
 HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This);
-BOOL WINAPI BaseWindowImpl_OnSize(BaseWindow *This, LONG Height, LONG Width);
 
 enum strmbase_type_id
 {

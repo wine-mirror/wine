@@ -74,18 +74,12 @@ static LRESULT CALLBACK WndProcW(HWND hwnd, UINT message, WPARAM wparam, LPARAM 
     case WM_SIZE:
         if (This->pFuncsTable->pfnOnSize)
             return This->pFuncsTable->pfnOnSize(This, LOWORD(lparam), HIWORD(lparam));
-        else
-            return BaseWindowImpl_OnSize(This, LOWORD(lparam), HIWORD(lparam));
+
+        This->Width = LOWORD(lparam);
+        This->Height = HIWORD(lparam);
     }
 
     return DefWindowProcW(hwnd, message, wparam, lparam);
-}
-
-BOOL WINAPI BaseWindowImpl_OnSize(BaseWindow *This, LONG Width, LONG Height)
-{
-    This->Width = Width;
-    This->Height = Height;
-    return TRUE;
 }
 
 HRESULT WINAPI BaseWindow_Init(BaseWindow *pBaseWindow, const BaseWindowFuncTable* pFuncsTable)
