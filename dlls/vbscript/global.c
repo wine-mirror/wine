@@ -378,7 +378,7 @@ static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, unsigned type, BSTR o
     return return_short(res, ret);
 }
 
-static HRESULT Global_CCur(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_CCur(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     VARIANT v;
     HRESULT hres;
@@ -401,7 +401,7 @@ static HRESULT Global_CCur(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
     return S_OK;
 }
 
-static HRESULT Global_CInt(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_CInt(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     VARIANT v;
     HRESULT hres;
@@ -423,7 +423,7 @@ static HRESULT Global_CInt(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
     }
 }
 
-static HRESULT Global_CLng(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_CLng(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     int i;
     HRESULT hres;
@@ -441,7 +441,7 @@ static HRESULT Global_CLng(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
     return return_int(res, i);
 }
 
-static HRESULT Global_CBool(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_CBool(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     VARIANT v;
     HRESULT hres;
@@ -462,7 +462,7 @@ static HRESULT Global_CBool(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
     return S_OK;
 }
 
-static HRESULT Global_CByte(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_CByte(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     VARIANT v;
     HRESULT hres;
@@ -485,13 +485,13 @@ static HRESULT Global_CByte(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
     return S_OK;
 }
 
-static HRESULT Global_CDate(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_CDate(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_CDbl(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_CDbl(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     VARIANT v;
     HRESULT hres;
@@ -513,7 +513,7 @@ static HRESULT Global_CDbl(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
     }
 }
 
-static HRESULT Global_CSng(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_CSng(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     VARIANT v;
     HRESULT hres;
@@ -534,7 +534,7 @@ static HRESULT Global_CSng(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
    return S_OK;
 }
 
-static HRESULT Global_CStr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_CStr(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     BSTR str;
     HRESULT hres;
@@ -556,7 +556,7 @@ static inline WCHAR hex_char(unsigned n)
     return n < 10 ? '0'+n : 'A'+n-10;
 }
 
-static HRESULT Global_Hex(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Hex(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     WCHAR buf[17], *ptr;
     DWORD n;
@@ -597,7 +597,7 @@ static HRESULT Global_Hex(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return return_string(res, ptr);
 }
 
-static HRESULT Global_Oct(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Oct(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     WCHAR buf[23], *ptr;
@@ -638,7 +638,7 @@ static HRESULT Global_Oct(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return return_string(res, ptr);
 }
 
-static HRESULT Global_VarType(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_VarType(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     VARTYPE vt;
 
@@ -655,13 +655,13 @@ static HRESULT Global_VarType(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, V
     return return_short(res, vt);
 }
 
-static HRESULT Global_IsDate(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_IsDate(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_IsEmpty(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_IsEmpty(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     TRACE("(%s)\n", debugstr_variant(arg));
 
@@ -674,7 +674,7 @@ static HRESULT Global_IsEmpty(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, V
     return S_OK;
 }
 
-static HRESULT Global_IsNull(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_IsNull(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     TRACE("(%s)\n", debugstr_variant(arg));
 
@@ -687,7 +687,7 @@ static HRESULT Global_IsNull(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
     return S_OK;
 }
 
-static HRESULT Global_IsNumeric(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_IsNumeric(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     double d;
@@ -701,13 +701,13 @@ static HRESULT Global_IsNumeric(vbdisp_t *This, VARIANT *arg, unsigned args_cnt,
     return return_bool(res, SUCCEEDED(hres));
 }
 
-static HRESULT Global_IsArray(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_IsArray(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_IsObject(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_IsObject(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     TRACE("(%s)\n", debugstr_variant(arg));
 
@@ -720,7 +720,7 @@ static HRESULT Global_IsObject(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, 
     return S_OK;
 }
 
-static HRESULT Global_Atn(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Atn(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     double d;
@@ -732,7 +732,7 @@ static HRESULT Global_Atn(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return return_double(res, atan(d));
 }
 
-static HRESULT Global_Cos(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Cos(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     double d;
@@ -744,7 +744,7 @@ static HRESULT Global_Cos(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return return_double(res, cos(d));
 }
 
-static HRESULT Global_Sin(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Sin(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     double d;
@@ -756,7 +756,7 @@ static HRESULT Global_Sin(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return return_double(res, sin(d));
 }
 
-static HRESULT Global_Tan(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Tan(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     double d;
@@ -768,7 +768,7 @@ static HRESULT Global_Tan(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return return_double(res, tan(d));
 }
 
-static HRESULT Global_Exp(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Exp(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     double d;
@@ -780,7 +780,7 @@ static HRESULT Global_Exp(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return return_double(res, exp(d));
 }
 
-static HRESULT Global_Log(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Log(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     double d;
@@ -795,7 +795,7 @@ static HRESULT Global_Log(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
         return return_double(res, log(d));
 }
 
-static HRESULT Global_Sqr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Sqr(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     double d;
@@ -810,19 +810,19 @@ static HRESULT Global_Sqr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
         return return_double(res, sqrt(d));
 }
 
-static HRESULT Global_Randomize(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Randomize(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Rnd(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Rnd(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Timer(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Timer(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SYSTEMTIME lt;
     double sec;
@@ -833,13 +833,13 @@ static HRESULT Global_Timer(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
 
 }
 
-static HRESULT Global_LBound(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_LBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_UBound(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_UBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SAFEARRAY *sa;
     HRESULT hres;
@@ -877,7 +877,7 @@ static HRESULT Global_UBound(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
     return return_int(res, ubound);
 }
 
-static HRESULT Global_RGB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_RGB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     int i, color[3];
@@ -899,7 +899,7 @@ static HRESULT Global_RGB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return return_int(res, RGB(color[0], color[1], color[2]));
 }
 
-static HRESULT Global_Len(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Len(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     DWORD len;
     HRESULT hres;
@@ -925,13 +925,13 @@ static HRESULT Global_Len(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return return_int(res, len);
 }
 
-static HRESULT Global_LenB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_LenB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Left(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Left(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     BSTR str, ret, conv_str = NULL;
     int len, str_len;
@@ -969,13 +969,13 @@ static HRESULT Global_Left(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VAR
     return return_bstr(res, ret);
 }
 
-static HRESULT Global_LeftB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_LeftB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Right(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Right(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     BSTR str, ret, conv_str = NULL;
     int len, str_len;
@@ -1013,13 +1013,13 @@ static HRESULT Global_Right(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VA
     return return_bstr(res, ret);
 }
 
-static HRESULT Global_RightB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_RightB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Mid(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Mid(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     int len = -1, start, str_len;
     BSTR str;
@@ -1072,13 +1072,13 @@ static HRESULT Global_Mid(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARI
     return S_OK;
 }
 
-static HRESULT Global_MidB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_MidB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_StrComp(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_StrComp(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     BSTR left, right;
     int mode, ret;
@@ -1121,7 +1121,7 @@ static HRESULT Global_StrComp(vbdisp_t *This, VARIANT *args, unsigned args_cnt, 
     return return_short(res, val);
 }
 
-static HRESULT Global_LCase(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_LCase(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     BSTR str;
     HRESULT hres;
@@ -1152,7 +1152,7 @@ static HRESULT Global_LCase(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
     return S_OK;
 }
 
-static HRESULT Global_UCase(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_UCase(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     BSTR str;
     HRESULT hres;
@@ -1183,7 +1183,7 @@ static HRESULT Global_UCase(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
     return S_OK;
 }
 
-static HRESULT Global_LTrim(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_LTrim(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     BSTR str, conv_str = NULL;
     WCHAR *ptr;
@@ -1210,7 +1210,7 @@ static HRESULT Global_LTrim(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
     return return_bstr(res, str);
 }
 
-static HRESULT Global_RTrim(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_RTrim(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     BSTR str, conv_str = NULL;
     WCHAR *ptr;
@@ -1237,7 +1237,7 @@ static HRESULT Global_RTrim(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
     return return_bstr(res, str);
 }
 
-static HRESULT Global_Trim(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Trim(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     BSTR str, conv_str = NULL;
     WCHAR *begin_ptr, *end_ptr;
@@ -1265,7 +1265,7 @@ static HRESULT Global_Trim(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
     return return_bstr(res, str);
 }
 
-static HRESULT Global_Space(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Space(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     BSTR str;
     int n, i;
@@ -1297,13 +1297,13 @@ static HRESULT Global_Space(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
     return S_OK;
 }
 
-static HRESULT Global_String(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_String(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_InStr(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_InStr(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     VARIANT *startv, *str1v, *str2v;
     BSTR str1, str2;
@@ -1370,25 +1370,25 @@ static HRESULT Global_InStr(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VA
     return return_int(res, ret);
 }
 
-static HRESULT Global_InStrB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_InStrB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_AscB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_AscB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_ChrB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_ChrB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Asc(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Asc(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     BSTR conv_str = NULL, str;
     HRESULT hres = S_OK;
@@ -1421,7 +1421,7 @@ static HRESULT Global_Asc(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 /* The function supports only single-byte and double-byte character sets. It
  * ignores language specified by IActiveScriptSite::GetLCID. The argument needs
  * to be in range of short or unsigned short. */
-static HRESULT Global_Chr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Chr(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     int cp, c, len = 0;
     CPINFO cpi;
@@ -1463,19 +1463,19 @@ static HRESULT Global_Chr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return S_OK;
 }
 
-static HRESULT Global_AscW(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_AscW(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_ChrW(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_ChrW(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Abs(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Abs(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     VARIANT dst;
@@ -1496,7 +1496,7 @@ static HRESULT Global_Abs(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return S_OK;
 }
 
-static HRESULT Global_Fix(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Fix(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     VARIANT dst;
@@ -1517,7 +1517,7 @@ static HRESULT Global_Fix(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return S_OK;
 }
 
-static HRESULT Global_Int(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Int(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
     VARIANT dst;
@@ -1538,7 +1538,7 @@ static HRESULT Global_Int(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return S_OK;
 }
 
-static HRESULT Global_Sgn(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Sgn(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     double v;
     short val;
@@ -1559,7 +1559,7 @@ static HRESULT Global_Sgn(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return return_short(res, val);
 }
 
-static HRESULT Global_Now(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Now(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SYSTEMTIME lt;
     double date;
@@ -1571,7 +1571,7 @@ static HRESULT Global_Now(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return return_date(res, date);
 }
 
-static HRESULT Global_Date(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Date(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SYSTEMTIME lt;
     UDATE ud;
@@ -1589,7 +1589,7 @@ static HRESULT Global_Date(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
     return return_date(res, date);
 }
 
-static HRESULT Global_Time(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Time(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SYSTEMTIME lt;
     UDATE ud;
@@ -1607,7 +1607,7 @@ static HRESULT Global_Time(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
     return return_date(res, time);
 }
 
-static HRESULT Global_Day(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Day(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SYSTEMTIME st;
     HRESULT hres;
@@ -1618,7 +1618,7 @@ static HRESULT Global_Day(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return FAILED(hres) ? hres : return_short(res, st.wDay);
 }
 
-static HRESULT Global_Month(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Month(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SYSTEMTIME st;
     HRESULT hres;
@@ -1629,13 +1629,13 @@ static HRESULT Global_Month(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
     return FAILED(hres) ? hres : return_short(res, st.wMonth);
 }
 
-static HRESULT Global_Weekday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Weekday(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Year(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Year(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SYSTEMTIME st;
     HRESULT hres;
@@ -1646,7 +1646,7 @@ static HRESULT Global_Year(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
     return FAILED(hres) ? hres : return_short(res, st.wYear);
 }
 
-static HRESULT Global_Hour(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Hour(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SYSTEMTIME st;
     HRESULT hres;
@@ -1657,7 +1657,7 @@ static HRESULT Global_Hour(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
     return FAILED(hres) ? hres : return_short(res, st.wHour);
 }
 
-static HRESULT Global_Minute(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Minute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SYSTEMTIME st;
     HRESULT hres;
@@ -1668,7 +1668,7 @@ static HRESULT Global_Minute(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
     return FAILED(hres) ? hres : return_short(res, st.wMinute);
 }
 
-static HRESULT Global_Second(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Second(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SYSTEMTIME st;
     HRESULT hres;
@@ -1679,37 +1679,37 @@ static HRESULT Global_Second(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
     return FAILED(hres) ? hres : return_short(res, st.wSecond);
 }
 
-static HRESULT Global_DateValue(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_DateValue(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_TimeValue(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_TimeValue(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_DateSerial(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_DateSerial(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_TimeSerial(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_TimeSerial(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_InputBox(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_InputBox(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_MsgBox(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_MsgBox(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     BSTR prompt, title = NULL;
     int type = MB_OK;
@@ -1742,7 +1742,7 @@ static HRESULT Global_MsgBox(vbdisp_t *This, VARIANT *args, unsigned args_cnt, V
     return hres;
 }
 
-static HRESULT Global_CreateObject(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_CreateObject(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     IUnknown *obj;
     HRESULT hres;
@@ -1770,7 +1770,7 @@ static HRESULT Global_CreateObject(vbdisp_t *This, VARIANT *arg, unsigned args_c
     return S_OK;
 }
 
-static HRESULT Global_GetObject(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_GetObject(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     IBindCtx *bind_ctx;
     IUnknown *obj_unk;
@@ -1827,25 +1827,25 @@ static HRESULT Global_GetObject(vbdisp_t *This, VARIANT *args, unsigned args_cnt
     return hres;
 }
 
-static HRESULT Global_DateAdd(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_DateAdd(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_DateDiff(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_DateDiff(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_DatePart(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_TypeName(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     static const WCHAR ByteW[]     = {'B', 'y', 't', 'e', 0};
     static const WCHAR IntegerW[]  = {'I', 'n', 't', 'e', 'g', 'e', 'r', 0};
@@ -1895,7 +1895,7 @@ static HRESULT Global_TypeName(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, 
         }
 }
 
-static HRESULT Global_Array(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Array(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     SAFEARRAYBOUND bounds;
     SAFEARRAY *sa;
@@ -1937,37 +1937,37 @@ static HRESULT Global_Array(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
     return S_OK;
 }
 
-static HRESULT Global_Erase(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Erase(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Filter(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Filter(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Join(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Join(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Split(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Split(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Replace(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Replace(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_StrReverse(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_StrReverse(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     WCHAR *ptr1, *ptr2, ch;
     BSTR ret;
@@ -1990,7 +1990,7 @@ static HRESULT Global_StrReverse(vbdisp_t *This, VARIANT *arg, unsigned args_cnt
     return return_bstr(res, ret);
 }
 
-static HRESULT Global_InStrRev(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_InStrRev(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     int start, ret = 0;
     BSTR str1, str2;
@@ -2050,13 +2050,13 @@ static HRESULT Global_InStrRev(vbdisp_t *This, VARIANT *args, unsigned args_cnt,
     return return_int(res, ret);
 }
 
-static HRESULT Global_LoadPicture(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_LoadPicture(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_ScriptEngine(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_ScriptEngine(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     TRACE("%s\n", debugstr_variant(arg));
 
@@ -2065,7 +2065,7 @@ static HRESULT Global_ScriptEngine(vbdisp_t *This, VARIANT *arg, unsigned args_c
     return return_string(res, vbscriptW);
 }
 
-static HRESULT Global_ScriptEngineMajorVersion(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_ScriptEngineMajorVersion(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     TRACE("%s\n", debugstr_variant(arg));
 
@@ -2074,7 +2074,7 @@ static HRESULT Global_ScriptEngineMajorVersion(vbdisp_t *This, VARIANT *arg, uns
     return return_int(res, VBSCRIPT_MAJOR_VERSION);
 }
 
-static HRESULT Global_ScriptEngineMinorVersion(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_ScriptEngineMinorVersion(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     TRACE("%s\n", debugstr_variant(arg));
 
@@ -2083,7 +2083,7 @@ static HRESULT Global_ScriptEngineMinorVersion(vbdisp_t *This, VARIANT *arg, uns
     return return_int(res, VBSCRIPT_MINOR_VERSION);
 }
 
-static HRESULT Global_ScriptEngineBuildVersion(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_ScriptEngineBuildVersion(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     TRACE("%s\n", debugstr_variant(arg));
 
@@ -2092,31 +2092,31 @@ static HRESULT Global_ScriptEngineBuildVersion(vbdisp_t *This, VARIANT *arg, uns
     return return_int(res, VBSCRIPT_BUILD_VERSION);
 }
 
-static HRESULT Global_FormatNumber(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_FormatNumber(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_FormatCurrency(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_FormatCurrency(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_FormatPercent(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_FormatPercent(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_FormatDateTime(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_FormatDateTime(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_WeekdayName(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_WeekdayName(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     int weekday, first_day = 1, abbrev = 0;
     BSTR ret;
@@ -2149,7 +2149,7 @@ static HRESULT Global_WeekdayName(vbdisp_t *This, VARIANT *args, unsigned args_c
     return return_bstr(res, ret);
 }
 
-static HRESULT Global_MonthName(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_MonthName(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     int month, abbrev = 0;
     BSTR ret;
@@ -2176,7 +2176,7 @@ static HRESULT Global_MonthName(vbdisp_t *This, VARIANT *args, unsigned args_cnt
     return return_bstr(res, ret);
 }
 
-static HRESULT Global_Round(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Round(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     double n;
     HRESULT hres;
@@ -2204,37 +2204,37 @@ static HRESULT Global_Round(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
     return return_double(res, round(n));
 }
 
-static HRESULT Global_Escape(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Escape(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Unescape(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Unescape(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Eval(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Eval(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Execute(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Execute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_ExecuteGlobal(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_ExecuteGlobal(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Global_GetRef(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -2462,13 +2462,13 @@ static HRESULT err_string_prop(BSTR *prop, VARIANT *args, unsigned args_cnt, VAR
     return S_OK;
 }
 
-static HRESULT Err_Description(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Err_Description(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
     return !This->desc ? E_UNEXPECTED : err_string_prop(&This->desc->ctx->ei.bstrDescription, args, args_cnt, res);
 }
 
-static HRESULT Err_HelpContext(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Err_HelpContext(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
 
@@ -2483,13 +2483,13 @@ static HRESULT Err_HelpContext(vbdisp_t *This, VARIANT *args, unsigned args_cnt,
     return return_int(res, This->desc->ctx->ei.dwHelpContext);
 }
 
-static HRESULT Err_HelpFile(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Err_HelpFile(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
     return !This->desc ? E_UNEXPECTED : err_string_prop(&This->desc->ctx->ei.bstrHelpFile, args, args_cnt, res);
 }
 
-static HRESULT Err_Number(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Err_Number(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     HRESULT hres;
 
@@ -2507,13 +2507,13 @@ static HRESULT Err_Number(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARI
     return return_int(res, HRESULT_FACILITY(hres) == FACILITY_VBS ? HRESULT_CODE(hres) : hres);
 }
 
-static HRESULT Err_Source(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Err_Source(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
     return !This->desc ? E_UNEXPECTED : err_string_prop(&This->desc->ctx->ei.bstrSource, args, args_cnt, res);
 }
 
-static HRESULT Err_Clear(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Err_Clear(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
 
@@ -2524,7 +2524,7 @@ static HRESULT Err_Clear(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIA
     return S_OK;
 }
 
-static HRESULT Err_Raise(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+static HRESULT Err_Raise(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     BSTR source = NULL, description = NULL, helpfile = NULL;
     int code,  helpcontext = 0;
@@ -2604,7 +2604,7 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = create_vbdisp(&ctx->global_desc, &ctx->global_obj);
+    hres = create_vbdisp(&ctx->global_desc, (vbdisp_t**)&ctx->global_obj);
     if(FAILED(hres))
         return hres;
 
@@ -2620,5 +2620,5 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    return create_vbdisp(&ctx->err_desc, &ctx->err_obj);
+    return create_vbdisp(&ctx->err_desc, (vbdisp_t**)&ctx->err_obj);
 }

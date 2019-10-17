@@ -147,6 +147,8 @@ typedef struct {
     script_ctx_t *ctx;
 } ScriptDisp;
 
+typedef vbdisp_t BuiltinDisp;
+
 HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**) DECLSPEC_HIDDEN;
 HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*) DECLSPEC_HIDDEN;
 HRESULT vbdisp_get_id(vbdisp_t*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*) DECLSPEC_HIDDEN;
@@ -187,10 +189,10 @@ struct _script_ctx_t {
     ScriptDisp *script_obj;
 
     class_desc_t global_desc;
-    vbdisp_t *global_obj;
+    BuiltinDisp *global_obj;
 
     class_desc_t err_desc;
-    vbdisp_t *err_obj;
+    BuiltinDisp *err_obj;
 
     EXCEPINFO ei;
 
