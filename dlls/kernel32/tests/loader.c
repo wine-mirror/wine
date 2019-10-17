@@ -84,6 +84,8 @@ static BOOL (WINAPI *pFlsSetValue)(DWORD, PVOID);
 static PVOID (WINAPI *pFlsGetValue)(DWORD);
 static BOOL (WINAPI *pFlsFree)(DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
+static BOOL (WINAPI *pWow64DisableWow64FsRedirection)(void **);
+static BOOL (WINAPI *pWow64RevertWow64FsRedirection)(void *);
 
 static PVOID RVAToAddr(DWORD_PTR rva, HMODULE module)
 {
@@ -3812,6 +3814,50 @@ static void test_InMemoryOrderModuleList(void)
     ok(entry2 == mark2, "expected entry2 == mark2, got %p and %p\n", entry2, mark2);
 }
 
+static void test_wow64_redirection_for_dll(const char *libname)
+{
+    HMODULE lib;
+    char buf[256];
+
+    if (!GetModuleHandleA(libname))
+    {
+        lib = LoadLibraryExA(libname, NULL, 0);
+        todo_wine ok (broken(lib == NULL) /* Vista/2008 */ ||
+            lib != NULL, "Loading %s should succeed with WOW64 redirection disabled\n", libname);
+        if (lib)
+        {
+            /* Win 7/2008R2 return the un-redirected path (i.e. c:\windows\system32\dwrite.dll), test loading it. */
+            GetModuleFileNameA(lib, buf, sizeof(buf));
+            FreeLibrary(lib);
+            lib = LoadLibraryExA(buf, NULL, 0);
+            ok(lib != NULL, "Loading %s from full path should succeed with WOW64 redirection disabled\n", libname);
+            if (lib)
+                FreeLibrary(lib);
+        }
+    }
+    else
+    {
+        skip("%s was already loaded in the process\n", libname);
+    }
+}
+
+static void test_wow64_redirection(void)
+{
+    void *OldValue;
+
+    if (!is_wow64)
+        return;
+
+    /* Disable FS redirection, then test loading system libraries (pick ones that shouldn't
+     * already be loaded in this process).
+     */
+    ok(pWow64DisableWow64FsRedirection(&OldValue), "Disabling FS redirection failed\n");
+    test_wow64_redirection_for_dll("wlanapi.dll");
+    test_wow64_redirection_for_dll("dxgi.dll");
+    test_wow64_redirection_for_dll("dwrite.dll");
+    ok(pWow64RevertWow64FsRedirection(OldValue), "Re-enabling FS redirection failed\n");
+}
+
 static void test_dll_file( const char *name )
 {
     HMODULE module = GetModuleHandleA( name );
@@ -3897,6 +3943,8 @@ START_TEST(loader)
     pFlsGetValue = (void *)GetProcAddress(kernel32, "FlsGetValue");
     pFlsFree = (void *)GetProcAddress(kernel32, "FlsFree");
     pIsWow64Process = (void *)GetProcAddress(kernel32, "IsWow64Process");
+    pWow64DisableWow64FsRedirection = (void *)GetProcAddress(kernel32, "Wow64DisableWow64FsRedirection");
+    pWow64RevertWow64FsRedirection = (void *)GetProcAddress(kernel32, "Wow64RevertWow64FsRedirection");
     pResolveDelayLoadedAPI = (void *)GetProcAddress(kernel32, "ResolveDelayLoadedAPI");
 
     if (pIsWow64Process) pIsWow64Process( GetCurrentProcess(), &is_wow64 );
@@ -3930,6 +3978,7 @@ START_TEST(loader)
     test_import_resolution();
     test_ExitProcess();
     test_InMemoryOrderModuleList();
+    test_wow64_redirection();
     test_dll_file( "ntdll.dll" );
     test_dll_file( "kernel32.dll" );
     test_dll_file( "advapi32.dll" );
