@@ -360,23 +360,17 @@ typedef struct tagBaseWindow
 	LONG Width;
 	LONG Height;
 	HINSTANCE hInstance;
-	LPWSTR pClassName;
-	DWORD ClassStyles;
-	DWORD WindowStyles;
-	DWORD WindowStylesEx;
 	HDC hDC;
 
 	const struct BaseWindowFuncTable* pFuncsTable;
 } BaseWindow;
 
-typedef LPWSTR (WINAPI *BaseWindow_GetClassWindowStyles)(BaseWindow *This, DWORD *pClassStyles, DWORD *pWindowStyles, DWORD *pWindowStylesEx);
 typedef RECT (WINAPI *BaseWindow_GetDefaultRect)(BaseWindow *This);
 typedef BOOL (WINAPI *BaseWindow_OnSize)(BaseWindow *This, LONG Height, LONG Width);
 
 typedef struct BaseWindowFuncTable
 {
 	/* Required */
-	BaseWindow_GetClassWindowStyles pfnGetClassWindowStyles;
 	BaseWindow_GetDefaultRect pfnGetDefaultRect;
 	/* Optional, WinProc Related */
 	BaseWindow_OnSize pfnOnSize;

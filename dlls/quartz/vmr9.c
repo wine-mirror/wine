@@ -568,17 +568,6 @@ static const BaseRendererFuncTable BaseFuncTable =
     .renderer_pin_query_interface = vmr_pin_query_interface,
 };
 
-static LPWSTR WINAPI VMR9_GetClassWindowStyles(BaseWindow *This, DWORD *pClassStyles, DWORD *pWindowStyles, DWORD *pWindowStylesEx)
-{
-    static WCHAR classnameW[] = { 'I','V','M','R','9',' ','C','l','a','s','s', 0 };
-
-    *pClassStyles = 0;
-    *pWindowStyles = WS_SIZEBOX;
-    *pWindowStylesEx = 0;
-
-    return classnameW;
-}
-
 static RECT WINAPI VMR9_GetDefaultRect(BaseWindow *This)
 {
     struct quartz_vmr* pVMR9 = impl_from_BaseWindow(This);
@@ -604,7 +593,6 @@ static BOOL WINAPI VMR9_OnSize(BaseWindow *This, LONG Width, LONG Height)
 }
 
 static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
-    VMR9_GetClassWindowStyles,
     VMR9_GetDefaultRect,
     VMR9_OnSize,
 };

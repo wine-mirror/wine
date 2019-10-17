@@ -110,33 +110,24 @@ HRESULT WINAPI BaseWindow_Destroy(BaseWindow *This)
 
 HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This)
 {
-    WNDCLASSW winclass;
+    static const WCHAR class_nameW[] = {'w','i','n','e','_','s','t','r','m','b','a','s','e','_','w','i','n','d','o','w',0};
     static const WCHAR windownameW[] = { 'A','c','t','i','v','e','M','o','v','i','e',' ','W','i','n','d','o','w',0 };
+    WNDCLASSW winclass = {0};
 
-    This->pClassName = This->pFuncsTable->pfnGetClassWindowStyles(This, &This->ClassStyles, &This->WindowStyles, &This->WindowStylesEx);
-
-    winclass.style = This->ClassStyles;
     winclass.lpfnWndProc = WndProcW;
-    winclass.cbClsExtra = 0;
     winclass.cbWndExtra = sizeof(BaseWindow*);
     winclass.hInstance = This->hInstance;
-    winclass.hIcon = NULL;
-    winclass.hCursor = NULL;
     winclass.hbrBackground = GetStockObject(BLACK_BRUSH);
-    winclass.lpszMenuName = NULL;
-    winclass.lpszClassName = This->pClassName;
+    winclass.lpszClassName = class_nameW;
     if (!RegisterClassW(&winclass) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
     {
         ERR("Unable to register window class: %u\n", GetLastError());
         return E_FAIL;
     }
 
-    This->hWnd = CreateWindowExW(This->WindowStylesEx,
-                                 This->pClassName, windownameW,
-                                 This->WindowStyles,
-                                 CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                                 CW_USEDEFAULT, NULL, NULL, This->hInstance,
-                                 NULL);
+    This->hWnd = CreateWindowExW(0, class_nameW, windownameW, WS_SIZEBOX,
+            CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+            NULL, NULL, This->hInstance, NULL);
 
     if (!This->hWnd)
     {
@@ -305,7 +296,6 @@ HRESULT WINAPI BaseControlWindowImpl_put_WindowStyle(IVideoWindow *iface, LONG W
     SetWindowLongW(This->baseWindow.hWnd, GWL_STYLE, WindowStyle);
     SetWindowPos(This->baseWindow.hWnd, 0, 0, 0, 0, 0,
             SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
-    This->baseWindow.WindowStyles = WindowStyle;
 
     return S_OK;
 }
