@@ -189,24 +189,7 @@ static void release_script(script_ctx_t *ctx)
         ctx->site = NULL;
     }
 
-    if(ctx->err_obj) {
-        IDispatchEx_Release(&ctx->err_obj->IDispatchEx_iface);
-        ctx->err_obj = NULL;
-    }
-
-    if(ctx->global_obj) {
-        IDispatchEx_Release(&ctx->global_obj->IDispatchEx_iface);
-        ctx->global_obj = NULL;
-    }
-
-    if(ctx->script_obj) {
-        ScriptDisp *script_obj = ctx->script_obj;
-
-        ctx->script_obj = NULL;
-        script_obj->ctx = NULL;
-        IDispatchEx_Release(&script_obj->IDispatchEx_iface);
-    }
-
+    detach_global_objects(ctx);
     heap_pool_free(&ctx->heap);
     heap_pool_init(&ctx->heap);
 }

@@ -2592,6 +2592,27 @@ static const builtin_prop_t err_props[] = {
     {DISPID_ERR_RAISE,        Err_Raise, 0, 1, 5},
 };
 
+void detach_global_objects(script_ctx_t *ctx)
+{
+    if(ctx->err_obj) {
+        IDispatchEx_Release(&ctx->err_obj->IDispatchEx_iface);
+        ctx->err_obj = NULL;
+    }
+
+    if(ctx->global_obj) {
+        IDispatchEx_Release(&ctx->global_obj->IDispatchEx_iface);
+        ctx->global_obj = NULL;
+    }
+
+    if(ctx->script_obj) {
+        ScriptDisp *script_obj = ctx->script_obj;
+
+        ctx->script_obj = NULL;
+        script_obj->ctx = NULL;
+        IDispatchEx_Release(&script_obj->IDispatchEx_iface);
+    }
+}
+
 HRESULT init_global(script_ctx_t *ctx)
 {
     HRESULT hres;
