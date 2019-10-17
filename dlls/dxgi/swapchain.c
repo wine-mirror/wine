@@ -1432,8 +1432,19 @@ static VkResult d3d12_swapchain_record_swapchain_blit(struct d3d12_swapchain *sw
     blit.dstOffsets[0].x = 0;
     blit.dstOffsets[0].y = 0;
     blit.dstOffsets[0].z = 0;
-    blit.dstOffsets[1].x = swapchain->vk_swapchain_width;
-    blit.dstOffsets[1].y = swapchain->vk_swapchain_height;
+    if (swapchain->desc.Scaling == DXGI_SCALING_NONE)
+    {
+        blit.srcOffsets[1].x = min(swapchain->vk_swapchain_width, blit.srcOffsets[1].x);
+        blit.srcOffsets[1].y = min(swapchain->vk_swapchain_height, blit.srcOffsets[1].y);
+        blit.dstOffsets[1].x = blit.srcOffsets[1].x;
+        blit.dstOffsets[1].y = blit.srcOffsets[1].y;
+    }
+    else
+    {
+        /* FIXME: handle DXGI_SCALING_ASPECT_RATIO_STRETCH. */
+        blit.dstOffsets[1].x = swapchain->vk_swapchain_width;
+        blit.dstOffsets[1].y = swapchain->vk_swapchain_height;
+    }
     blit.dstOffsets[1].z = 1;
 
     vk_funcs->p_vkCmdBlitImage(vk_cmd_buffer,
@@ -2873,7 +2884,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
 
     if (swapchain_desc->BufferUsage && swapchain_desc->BufferUsage != DXGI_USAGE_RENDER_TARGET_OUTPUT)
         FIXME("Ignoring buffer usage %#x.\n", swapchain_desc->BufferUsage);
-    if (swapchain_desc->Scaling != DXGI_SCALING_STRETCH)
+    if (swapchain_desc->Scaling != DXGI_SCALING_STRETCH && swapchain_desc->Scaling != DXGI_SCALING_NONE)
         FIXME("Ignoring scaling %#x.\n", swapchain_desc->Scaling);
     if (swapchain_desc->AlphaMode && swapchain_desc->AlphaMode != DXGI_ALPHA_MODE_IGNORE)
         FIXME("Ignoring alpha mode %#x.\n", swapchain_desc->AlphaMode);
