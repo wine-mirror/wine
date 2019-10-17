@@ -155,6 +155,7 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     AM_MEDIA_TYPE amt;
     HRESULT hr = S_OK;
     BITMAPINFOHEADER *bmiHeader;
+    HDC dc;
 
     TRACE("(%p)->(%p, %d)\n", This, data, size);
 
@@ -178,18 +179,15 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
         return VFW_E_RUNTIME_ERROR;
     }
 
-    if (!This->baseControlWindow.baseWindow.hDC) {
-        ERR("Cannot get DC from window!\n");
-        return E_FAIL;
-    }
-
     TRACE("Src Rect: %s\n", wine_dbgstr_rect(&This->SourceRect));
     TRACE("Dst Rect: %s\n", wine_dbgstr_rect(&This->DestRect));
 
-    StretchDIBits(This->baseControlWindow.baseWindow.hDC, This->DestRect.left, This->DestRect.top, This->DestRect.right -This->DestRect.left,
+    dc = GetDC(This->baseControlWindow.baseWindow.hWnd);
+    StretchDIBits(dc, This->DestRect.left, This->DestRect.top, This->DestRect.right -This->DestRect.left,
                   This->DestRect.bottom - This->DestRect.top, This->SourceRect.left, This->SourceRect.top,
                   This->SourceRect.right - This->SourceRect.left, This->SourceRect.bottom - This->SourceRect.top,
                   data, (BITMAPINFO *)bmiHeader, DIB_RGB_COLORS, SRCCOPY);
+    ReleaseDC(This->baseControlWindow.baseWindow.hWnd, dc);
 
     return S_OK;
 }
