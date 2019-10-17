@@ -73,14 +73,6 @@ HRESULT vbdisp_get_id(vbdisp_t *This, BSTR name, vbdisp_invoke_type_t invoke_typ
         }
     }
 
-    if(This->desc->typeinfo) {
-        HRESULT hres;
-
-        hres = ITypeInfo_GetIDsOfNames(This->desc->typeinfo, &name, 1, id);
-        if(SUCCEEDED(hres))
-            return S_OK;
-    }
-
     *id = -1;
     return DISP_E_UNKNOWNNAME;
 }
@@ -169,85 +161,6 @@ static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DI
     return hres;
 }
 
-static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD flags, DISPPARAMS *dp, VARIANT *res)
-{
-    VARIANT args[8];
-    unsigned argn, i;
-
-    switch(flags) {
-    case DISPATCH_PROPERTYGET:
-        if(!(prop->flags & (BP_GET|BP_GETPUT))) {
-            FIXME("property does not support DISPATCH_PROPERTYGET\n");
-            return E_FAIL;
-        }
-        break;
-    case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
-        if(!prop->proc && prop->flags == BP_GET) {
-            const int vt = prop->min_args, val = prop->max_args;
-            switch(vt) {
-            case VT_I2:
-                V_VT(res) = VT_I2;
-                V_I2(res) = val;
-                break;
-            case VT_I4:
-                V_VT(res) = VT_I4;
-                V_I4(res) = val;
-                break;
-            case VT_BSTR: {
-                const string_constant_t *str = (const string_constant_t*)prop->max_args;
-                BSTR ret;
-
-                ret = SysAllocStringLen(str->buf, str->len);
-                if(!ret)
-                    return E_OUTOFMEMORY;
-
-                V_VT(res) = VT_BSTR;
-                V_BSTR(res) = ret;
-                break;
-            }
-            DEFAULT_UNREACHABLE;
-            }
-            return S_OK;
-        }
-        break;
-    case DISPATCH_METHOD:
-        if(prop->flags & (BP_GET|BP_GETPUT)) {
-            FIXME("Call on property\n");
-            return E_FAIL;
-        }
-        break;
-    case DISPATCH_PROPERTYPUT:
-        if(!(prop->flags & BP_GETPUT)) {
-            FIXME("property does not support DISPATCH_PROPERTYPUT\n");
-            return E_FAIL;
-        }
-
-        FIXME("call put\n");
-        return E_NOTIMPL;
-    default:
-        FIXME("unsupported flags %x\n", flags);
-        return E_NOTIMPL;
-    }
-
-    argn = arg_cnt(dp);
-
-    if(argn < prop->min_args || argn > (prop->max_args ? prop->max_args : prop->min_args)) {
-        WARN("invalid number of arguments\n");
-        return MAKE_VBSERROR(VBSE_FUNC_ARITY_MISMATCH);
-    }
-
-    assert(argn < ARRAY_SIZE(args));
-
-    for(i=0; i < argn; i++) {
-        if(V_VT(dp->rgvarg+dp->cArgs-i-1) == (VT_BYREF|VT_VARIANT))
-            args[i] = *V_VARIANTREF(dp->rgvarg+dp->cArgs-i-1);
-        else
-            args[i] = dp->rgvarg[dp->cArgs-i-1];
-    }
-
-    return prop->proc(This, args, dp->cArgs, res);
-}
-
 static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern_caller, DISPPARAMS *params, VARIANT *res)
 {
     if(id < 0)
@@ -313,22 +226,8 @@ static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern
         }
     }
 
-    if(id >= This->desc->prop_cnt + This->desc->func_cnt) {
-        if(This->desc->builtin_prop_cnt) {
-            unsigned min = 0, max = This->desc->builtin_prop_cnt-1, i;
-
-            while(min <= max) {
-                i = (min+max)/2;
-                if(This->desc->builtin_props[i].id == id)
-                    return invoke_builtin(This, This->desc->builtin_props+i, flags, params, res);
-                if(This->desc->builtin_props[i].id < id)
-                    min = i+1;
-                else
-                    max = i-1;
-            }
-        }
+    if(id >= This->desc->prop_cnt + This->desc->func_cnt)
         return DISP_E_MEMBERNOTFOUND;
-    }
 
     TRACE("%p->%s\n", This, debugstr_w(This->desc->props[id - This->desc->func_cnt].name));
     return invoke_variant_prop(This->desc->ctx, This->props+(id-This->desc->func_cnt), flags, params, res);

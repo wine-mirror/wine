@@ -39,9 +39,253 @@ const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
 static const WCHAR emptyW[] = {0};
 static const WCHAR vbscriptW[] = {'V','B','S','c','r','i','p','t',0};
 
+#define BP_GET      1
+#define BP_GETPUT   2
+
+typedef struct {
+    UINT16 len;
+    WCHAR buf[7];
+} string_constant_t;
+
+struct _builtin_prop_t {
+    DISPID id;
+    HRESULT (*proc)(BuiltinDisp*,VARIANT*,unsigned,VARIANT*);
+    DWORD flags;
+    unsigned min_args;
+    UINT_PTR max_args;
+};
+
+static inline BuiltinDisp *impl_from_IDispatch(IDispatch *iface)
+{
+    return CONTAINING_RECORD(iface, BuiltinDisp, IDispatch_iface);
+}
+
+static HRESULT WINAPI Builtin_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    BuiltinDisp *This = impl_from_IDispatch(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IDispatch_iface;
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = &This->IDispatch_iface;
+    }else {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI Builtin_AddRef(IDispatch *iface)
+{
+    BuiltinDisp *This = impl_from_IDispatch(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI Builtin_Release(IDispatch *iface)
+{
+    BuiltinDisp *This = impl_from_IDispatch(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        assert(!This->ctx);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI Builtin_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    BuiltinDisp *This = impl_from_IDispatch(iface);
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI Builtin_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    BuiltinDisp *This = impl_from_IDispatch(iface);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return DISP_E_BADINDEX;
+}
+
 HRESULT get_builtin_id(BuiltinDisp *disp, const WCHAR *name, DISPID *id)
 {
-    return ITypeInfo_GetIDsOfNames(disp->desc->typeinfo, (WCHAR**)&name, 1, id);
+    return ITypeInfo_GetIDsOfNames(disp->typeinfo, (WCHAR**)&name, 1, id);
+}
+
+static HRESULT WINAPI Builtin_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *names, UINT name_cnt,
+                                            LCID lcid, DISPID *ids)
+{
+    BuiltinDisp *This = impl_from_IDispatch(iface);
+    unsigned i;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), names, name_cnt, lcid, ids);
+
+    if(!This->ctx) {
+        FIXME("NULL context\n");
+        return E_UNEXPECTED;
+    }
+
+    for(i = 0; i < name_cnt; i++) {
+        hres = get_builtin_id(This, names[i], &ids[i]);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Builtin_Invoke(IDispatch *iface, DISPID id, REFIID riid, LCID lcid, WORD flags,
+                                     DISPPARAMS *dp, VARIANT *res, EXCEPINFO *ei, UINT *err)
+{
+    BuiltinDisp *This = impl_from_IDispatch(iface);
+    const builtin_prop_t *prop;
+    VARIANT args[8];
+    unsigned argn, i;
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, id, debugstr_guid(riid), lcid, flags, dp, res, ei, err);
+
+    if(!This->ctx) {
+        FIXME("NULL context\n");
+        return E_UNEXPECTED;
+    }
+
+    if(This->member_cnt) {
+        unsigned min = 0, max = This->member_cnt-1, i;
+
+        while(min <= max) {
+            i = (min+max)/2;
+            if(This->members[i].id == id) {
+                id = i;
+                break;
+            }
+            if(This->members[i].id < id)
+                min = i+1;
+            else
+                max = i-1;
+        }
+        if(min > max)
+            return DISP_E_MEMBERNOTFOUND;
+    }
+
+    if(id >= This->member_cnt || (!This->members[id].proc && !This->members[id].flags))
+        return DISP_E_MEMBERNOTFOUND;
+    prop = This->members + id;
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET:
+        if(!(prop->flags & (BP_GET|BP_GETPUT))) {
+            FIXME("property does not support DISPATCH_PROPERTYGET\n");
+            return E_FAIL;
+        }
+        break;
+    case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
+        if(!prop->proc && prop->flags == BP_GET) {
+            const int vt = prop->min_args, val = prop->max_args;
+            switch(vt) {
+            case VT_I2:
+                V_VT(res) = VT_I2;
+                V_I2(res) = val;
+                break;
+            case VT_I4:
+                V_VT(res) = VT_I4;
+                V_I4(res) = val;
+                break;
+            case VT_BSTR: {
+                const string_constant_t *str = (const string_constant_t*)prop->max_args;
+                BSTR ret;
+
+                ret = SysAllocStringLen(str->buf, str->len);
+                if(!ret)
+                    return E_OUTOFMEMORY;
+
+                V_VT(res) = VT_BSTR;
+                V_BSTR(res) = ret;
+                break;
+            }
+            DEFAULT_UNREACHABLE;
+            }
+            return S_OK;
+        }
+        break;
+    case DISPATCH_METHOD:
+        if(prop->flags & (BP_GET|BP_GETPUT)) {
+            FIXME("Call on property\n");
+            return E_FAIL;
+        }
+        break;
+    case DISPATCH_PROPERTYPUT:
+        if(!(prop->flags & BP_GETPUT)) {
+            FIXME("property does not support DISPATCH_PROPERTYPUT\n");
+            return E_FAIL;
+        }
+
+        FIXME("call put\n");
+        return E_NOTIMPL;
+    default:
+        FIXME("unsupported flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    argn = arg_cnt(dp);
+
+    if(argn < prop->min_args || argn > (prop->max_args ? prop->max_args : prop->min_args)) {
+        WARN("invalid number of arguments\n");
+        return MAKE_VBSERROR(VBSE_FUNC_ARITY_MISMATCH);
+    }
+
+    assert(argn < ARRAY_SIZE(args));
+
+    for(i=0; i < argn; i++) {
+        if(V_VT(dp->rgvarg+dp->cArgs-i-1) == (VT_BYREF|VT_VARIANT))
+            args[i] = *V_VARIANTREF(dp->rgvarg+dp->cArgs-i-1);
+        else
+            args[i] = dp->rgvarg[dp->cArgs-i-1];
+    }
+
+    return prop->proc(This, args, dp->cArgs, res);
+}
+
+static const IDispatchVtbl BuiltinDispVtbl = {
+    Builtin_QueryInterface,
+    Builtin_AddRef,
+    Builtin_Release,
+    Builtin_GetTypeInfoCount,
+    Builtin_GetTypeInfo,
+    Builtin_GetIDsOfNames,
+    Builtin_Invoke
+};
+
+static HRESULT create_builtin_dispatch(script_ctx_t *ctx, const builtin_prop_t *members, size_t member_cnt,
+                                       ITypeInfo *typeinfo, BuiltinDisp **ret)
+{
+    BuiltinDisp *disp;
+
+    if(!(disp = heap_alloc(sizeof(*disp))))
+        return E_OUTOFMEMORY;
+
+    disp->IDispatch_iface.lpVtbl = &BuiltinDispVtbl;
+    disp->ref = 1;
+    disp->members = members;
+    disp->member_cnt = member_cnt;
+    disp->ctx = ctx;
+    disp->typeinfo = typeinfo;
+
+    *ret = disp;
+    return S_OK;
 }
 
 static IInternetHostSecurityManager *get_sec_mgr(script_ctx_t *ctx)
@@ -1740,7 +1984,7 @@ static HRESULT Global_MsgBox(BuiltinDisp *This, VARIANT *args, unsigned args_cnt
     }
 
     if(SUCCEEDED(hres))
-        hres = show_msgbox(This->desc->ctx, prompt, type, title, res);
+        hres = show_msgbox(This->ctx, prompt, type, title, res);
 
     SysFreeString(prompt);
     SysFreeString(title);
@@ -1759,7 +2003,7 @@ static HRESULT Global_CreateObject(BuiltinDisp *This, VARIANT *arg, unsigned arg
         return E_INVALIDARG;
     }
 
-    obj = create_object(This->desc->ctx, V_BSTR(arg));
+    obj = create_object(This->ctx, V_BSTR(arg));
     if(!obj)
         return VB_E_CANNOT_CREATE_OBJ;
 
@@ -1791,7 +2035,7 @@ static HRESULT Global_GetObject(BuiltinDisp *This, VARIANT *args, unsigned args_
         return E_NOTIMPL;
     }
 
-    if(This->desc->ctx->safeopt & (INTERFACE_USES_SECURITY_MANAGER|INTERFACESAFE_FOR_UNTRUSTED_DATA)) {
+    if(This->ctx->safeopt & (INTERFACE_USES_SECURITY_MANAGER|INTERFACESAFE_FOR_UNTRUSTED_DATA)) {
         WARN("blocked in current safety mode\n");
         return VB_E_CANNOT_CREATE_OBJ;
     }
@@ -1811,7 +2055,7 @@ static HRESULT Global_GetObject(BuiltinDisp *This, VARIANT *args, unsigned args_
     if(FAILED(hres))
         return hres;
 
-    hres = set_object_site(This->desc->ctx, obj_unk);
+    hres = set_object_site(This->ctx, obj_unk);
     if(FAILED(hres)) {
         IUnknown_Release(obj_unk);
         return hres;
@@ -2470,28 +2714,25 @@ static HRESULT err_string_prop(BSTR *prop, VARIANT *args, unsigned args_cnt, VAR
 static HRESULT Err_Description(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
-    return !This->desc ? E_UNEXPECTED : err_string_prop(&This->desc->ctx->ei.bstrDescription, args, args_cnt, res);
+    return err_string_prop(&This->ctx->ei.bstrDescription, args, args_cnt, res);
 }
 
 static HRESULT Err_HelpContext(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
 
-    if(!This->desc)
-        return E_UNEXPECTED;
-
     if(args_cnt) {
         FIXME("setter not implemented\n");
         return E_NOTIMPL;
     }
 
-    return return_int(res, This->desc->ctx->ei.dwHelpContext);
+    return return_int(res, This->ctx->ei.dwHelpContext);
 }
 
 static HRESULT Err_HelpFile(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
-    return !This->desc ? E_UNEXPECTED : err_string_prop(&This->desc->ctx->ei.bstrHelpFile, args, args_cnt, res);
+    return err_string_prop(&This->ctx->ei.bstrHelpFile, args, args_cnt, res);
 }
 
 static HRESULT Err_Number(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
@@ -2500,32 +2741,26 @@ static HRESULT Err_Number(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, V
 
     TRACE("\n");
 
-    if(!This->desc)
-        return E_UNEXPECTED;
-
     if(args_cnt) {
         FIXME("setter not implemented\n");
         return E_NOTIMPL;
     }
 
-    hres = This->desc->ctx->ei.scode;
+    hres = This->ctx->ei.scode;
     return return_int(res, HRESULT_FACILITY(hres) == FACILITY_VBS ? HRESULT_CODE(hres) : hres);
 }
 
 static HRESULT Err_Source(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
-    return !This->desc ? E_UNEXPECTED : err_string_prop(&This->desc->ctx->ei.bstrSource, args, args_cnt, res);
+    return err_string_prop(&This->ctx->ei.bstrSource, args, args_cnt, res);
 }
 
 static HRESULT Err_Clear(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     TRACE("\n");
 
-    if(!This->desc)
-        return E_UNEXPECTED;
-
-    clear_ei(&This->desc->ctx->ei);
+    clear_ei(&This->ctx->ei);
     return S_OK;
 }
 
@@ -2552,8 +2787,8 @@ static HRESULT Err_Raise(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VA
     if(args_cnt >= 5 && SUCCEEDED(hres))
         hres = to_int(args + 4, &helpcontext);
 
-    if(SUCCEEDED(hres) && This->desc) {
-        script_ctx_t *ctx = This->desc->ctx;
+    if(SUCCEEDED(hres)) {
+        script_ctx_t *ctx = This->ctx;
 
         error = (code & ~0xffff) ? map_hres(code) : MAKE_VBSERROR(code);
 
@@ -2600,12 +2835,14 @@ static const builtin_prop_t err_props[] = {
 void detach_global_objects(script_ctx_t *ctx)
 {
     if(ctx->err_obj) {
-        IDispatchEx_Release(&ctx->err_obj->IDispatchEx_iface);
+        ctx->err_obj->ctx = NULL;
+        IDispatch_Release(&ctx->err_obj->IDispatch_iface);
         ctx->err_obj = NULL;
     }
 
     if(ctx->global_obj) {
-        IDispatchEx_Release(&ctx->global_obj->IDispatchEx_iface);
+        ctx->global_obj->ctx = NULL;
+        IDispatch_Release(&ctx->global_obj->IDispatch_iface);
         ctx->global_obj = NULL;
     }
 
@@ -2620,17 +2857,14 @@ void detach_global_objects(script_ctx_t *ctx)
 
 HRESULT init_global(script_ctx_t *ctx)
 {
+    ITypeInfo *typeinfo;
     HRESULT hres;
 
-    ctx->global_desc.ctx = ctx;
-    ctx->global_desc.builtin_prop_cnt = ARRAY_SIZE(global_props);
-    ctx->global_desc.builtin_props = global_props;
-
-    hres = get_typeinfo(GlobalObj_tid, &ctx->global_desc.typeinfo);
+    hres = get_typeinfo(GlobalObj_tid, &typeinfo);
     if(FAILED(hres))
         return hres;
 
-    hres = create_vbdisp(&ctx->global_desc, (vbdisp_t**)&ctx->global_obj);
+    hres = create_builtin_dispatch(ctx, global_props, ARRAY_SIZE(global_props), typeinfo, &ctx->global_obj);
     if(FAILED(hres))
         return hres;
 
@@ -2638,13 +2872,9 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    ctx->err_desc.ctx = ctx;
-    ctx->err_desc.builtin_prop_cnt = ARRAY_SIZE(err_props);
-    ctx->err_desc.builtin_props = err_props;
-
-    hres = get_typeinfo(ErrObj_tid, &ctx->err_desc.typeinfo);
+    hres = get_typeinfo(ErrObj_tid, &typeinfo);
     if(FAILED(hres))
         return hres;
 
-    return create_vbdisp(&ctx->err_desc, (vbdisp_t**)&ctx->err_obj);
+    return create_builtin_dispatch(ctx, err_props, ARRAY_SIZE(err_props), typeinfo, &ctx->err_obj);
 }

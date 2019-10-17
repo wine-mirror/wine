@@ -177,14 +177,14 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
 
     if(!wcsicmp(name, errW)) {
         ref->type = REF_OBJ;
-        ref->u.obj = (IDispatch*)&ctx->script->err_obj->IDispatchEx_iface;
+        ref->u.obj = &ctx->script->err_obj->IDispatch_iface;
         return S_OK;
     }
 
     hres = get_builtin_id(ctx->script->global_obj, name, &id);
     if(SUCCEEDED(hres)) {
         ref->type = REF_DISP;
-        ref->u.d.disp = (IDispatch*)&ctx->script->global_obj->IDispatchEx_iface;
+        ref->u.d.disp = &ctx->script->global_obj->IDispatch_iface;
         ref->u.d.id = id;
         return S_OK;
     }

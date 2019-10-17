@@ -88,17 +88,6 @@ typedef struct {
     function_t *entries[VBDISP_ANY];
 } vbdisp_funcprop_desc_t;
 
-#define BP_GET      1
-#define BP_GETPUT   2
-
-typedef struct {
-    DISPID id;
-    HRESULT (*proc)(vbdisp_t*,VARIANT*,unsigned,VARIANT*);
-    DWORD flags;
-    unsigned min_args;
-    UINT_PTR max_args;
-} builtin_prop_t;
-
 typedef struct _class_desc_t {
     const WCHAR *name;
     script_ctx_t *ctx;
@@ -114,9 +103,6 @@ typedef struct _class_desc_t {
     unsigned array_cnt;
     array_desc_t *array_descs;
 
-    unsigned builtin_prop_cnt;
-    const builtin_prop_t *builtin_props;
-    ITypeInfo *typeinfo;
     function_t *value_func;
 
     struct _class_desc_t *next;
@@ -147,7 +133,16 @@ typedef struct {
     script_ctx_t *ctx;
 } ScriptDisp;
 
-typedef vbdisp_t BuiltinDisp;
+typedef struct _builtin_prop_t builtin_prop_t;
+
+typedef struct {
+    IDispatch IDispatch_iface;
+    LONG ref;
+    size_t member_cnt;
+    const builtin_prop_t *members;
+    script_ctx_t *ctx;
+    ITypeInfo *typeinfo;
+} BuiltinDisp;
 
 HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**) DECLSPEC_HIDDEN;
 HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*) DECLSPEC_HIDDEN;
@@ -188,10 +183,7 @@ struct _script_ctx_t {
 
     ScriptDisp *script_obj;
 
-    class_desc_t global_desc;
     BuiltinDisp *global_obj;
-
-    class_desc_t err_desc;
     BuiltinDisp *err_obj;
 
     EXCEPINFO ei;
@@ -365,11 +357,6 @@ void clear_ei(EXCEPINFO*) DECLSPEC_HIDDEN;
 HRESULT report_script_error(script_ctx_t*) DECLSPEC_HIDDEN;
 void detach_global_objects(script_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT get_builtin_id(BuiltinDisp*,const WCHAR*,DISPID*) DECLSPEC_HIDDEN;
-
-typedef struct {
-    UINT16 len;
-    WCHAR buf[7];
-} string_constant_t;
 
 #define TID_LIST \
     XDIID(ErrObj) \
