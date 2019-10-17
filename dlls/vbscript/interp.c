@@ -181,7 +181,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         return S_OK;
     }
 
-    hres = vbdisp_get_id(ctx->script->global_obj, name, invoke_type, TRUE, &id);
+    hres = get_builtin_id(ctx->script->global_obj, name, &id);
     if(SUCCEEDED(hres)) {
         ref->type = REF_DISP;
         ref->u.d.disp = (IDispatch*)&ctx->script->global_obj->IDispatchEx_iface;

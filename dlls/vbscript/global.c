@@ -39,6 +39,11 @@ const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
 static const WCHAR emptyW[] = {0};
 static const WCHAR vbscriptW[] = {'V','B','S','c','r','i','p','t',0};
 
+HRESULT get_builtin_id(BuiltinDisp *disp, const WCHAR *name, DISPID *id)
+{
+    return ITypeInfo_GetIDsOfNames(disp->desc->typeinfo, (WCHAR**)&name, 1, id);
+}
+
 static IInternetHostSecurityManager *get_sec_mgr(script_ctx_t *ctx)
 {
     IInternetHostSecurityManager *secmgr;
