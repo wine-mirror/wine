@@ -117,6 +117,7 @@ extern HRESULT MetaDataDispenser_CreateInstance(IUnknown **ppUnk) DECLSPEC_HIDDE
 typedef struct parsed_config_file
 {
     struct list supported_runtimes;
+    LPWSTR private_path;
 } parsed_config_file;
 
 typedef struct supported_runtime
@@ -124,6 +125,8 @@ typedef struct supported_runtime
     struct list entry;
     LPWSTR version;
 } supported_runtime;
+
+extern WCHAR **private_path;
 
 extern HRESULT parse_config_file(LPCWSTR filename, parsed_config_file *result) DECLSPEC_HIDDEN;
 

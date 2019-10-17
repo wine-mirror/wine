@@ -1610,20 +1610,56 @@ static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname
     HRESULT hr;
     MonoAssembly *result=NULL;
     char *stringname=NULL;
+    const char *assemblyname;
     LPWSTR stringnameW;
     int stringnameW_size;
     WCHAR path[MAX_PATH];
     char *pathA;
     MonoImageOpenStatus stat;
     DWORD search_flags;
+    int i;
+    static const WCHAR dotdllW[] = {'.','d','l','l',0};
+    static const WCHAR slashW[] = {'\\',0};
 
     stringname = mono_stringify_assembly_name(aname);
+    assemblyname = mono_assembly_name_get_name(aname);
 
     TRACE("%s\n", debugstr_a(stringname));
 
-    if (!stringname) return NULL;
+    if (!stringname || !assemblyname) return NULL;
 
     search_flags = get_assembly_search_flags(aname);
+    if (private_path)
+    {
+        stringnameW_size = MultiByteToWideChar(CP_UTF8, 0, assemblyname, -1, NULL, 0);
+        stringnameW = HeapAlloc(GetProcessHeap(), 0, stringnameW_size * sizeof(WCHAR));
+        if (stringnameW)
+        {
+            MultiByteToWideChar(CP_UTF8, 0, assemblyname, -1, stringnameW, stringnameW_size);
+            for (i = 0; private_path[i] != NULL; i++)
+            {
+                wcscpy(path, private_path[i]);
+                wcscat(path, slashW);
+                wcscat(path, stringnameW);
+                wcscat(path, dotdllW);
+                pathA = WtoA(path);
+                if (pathA)
+                {
+                    result = mono_assembly_open(pathA, &stat);
+                    if (result)
+                    {
+                        TRACE("found: %s\n", debugstr_w(path));
+                        HeapFree(GetProcessHeap(), 0, pathA);
+                        HeapFree(GetProcessHeap(), 0, stringnameW);
+                        mono_free(stringname);
+                        return result;
+                    }
+                    HeapFree(GetProcessHeap(), 0, pathA);
+                }
+            }
+            HeapFree(GetProcessHeap(), 0, stringnameW);
+        }
+    }
 
     /* FIXME: We should search the given paths before the GAC. */
 

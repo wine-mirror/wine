@@ -58,6 +58,8 @@ static HANDLE dll_fixup_heap; /* using a separate heap so we can have execute pe
 
 static struct list dll_fixups;
 
+WCHAR **private_path = NULL;
+
 struct dll_fixup
 {
     struct list entry;
@@ -1436,6 +1438,8 @@ static void FixupVTable(HMODULE hmodule)
 
 __int32 WINAPI _CorExeMain(void)
 {
+    static const WCHAR dotconfig[] = {'.','c','o','n','f','i','g',0};
+    static const WCHAR scW[] = {';',0};
     int exit_code;
     int argc;
     char **argv;
@@ -1443,12 +1447,14 @@ __int32 WINAPI _CorExeMain(void)
     MonoImage *image;
     MonoImageOpenStatus status;
     MonoAssembly *assembly=NULL;
-    WCHAR filename[MAX_PATH];
+    WCHAR filename[MAX_PATH], config_file[MAX_PATH], *temp, **priv_path;
+    SIZE_T config_file_dir_size;
     char *filenameA;
     ICLRRuntimeInfo *info;
     RuntimeHost *host;
+    parsed_config_file parsed_config;
     HRESULT hr;
-    int i;
+    int i, number_of_private_paths = 0;
 
     get_utf8_args(&argc, &argv);
 
@@ -1468,6 +1474,33 @@ __int32 WINAPI _CorExeMain(void)
 
     FixupVTable(GetModuleHandleW(NULL));
 
+    wcscpy(config_file, filename);
+    wcscat(config_file, dotconfig);
+
+    hr = parse_config_file(config_file, &parsed_config);
+    if (SUCCEEDED(hr) && parsed_config.private_path)
+    {
+        for(i = 0; parsed_config.private_path[i] != 0; i++)
+            if (parsed_config.private_path[i] == ';') number_of_private_paths++;
+        if (parsed_config.private_path[wcslen(parsed_config.private_path) - 1] != ';') number_of_private_paths++;
+        config_file_dir_size = (wcsrchr(config_file, '\\') - config_file) + 1;
+        priv_path = HeapAlloc(GetProcessHeap(), 0, (number_of_private_paths + 1) * sizeof(WCHAR *));
+        /* wcstok ignores trailing semicolons */
+        temp = wcstok(parsed_config.private_path, scW);
+        for (i = 0; i < number_of_private_paths; i++)
+        {
+            priv_path[i] = HeapAlloc(GetProcessHeap(), 0, (config_file_dir_size + wcslen(temp) + 1) * sizeof(WCHAR));
+            memcpy(priv_path[i], config_file, config_file_dir_size * sizeof(WCHAR));
+            wcscpy(priv_path[i] + config_file_dir_size, temp);
+            temp = wcstok(NULL, scW);
+        }
+        priv_path[number_of_private_paths] = NULL;
+        if (InterlockedCompareExchangePointer((void **)&private_path, priv_path, NULL))
+            ERR("private_path was already set\n");
+    }
+
+    free_parsed_config_file(&parsed_config);
+
     hr = get_runtime_info(filename, NULL, NULL, NULL, 0, 0, FALSE, &info);
 
     if (SUCCEEDED(hr))
@@ -1475,15 +1508,7 @@ __int32 WINAPI _CorExeMain(void)
         hr = ICLRRuntimeInfo_GetRuntimeHost(info, &host);
 
         if (SUCCEEDED(hr))
-        {
-            WCHAR config_file[MAX_PATH];
-            static const WCHAR dotconfig[] = {'.','c','o','n','f','i','g',0};
-
-            lstrcpyW(config_file, filename);
-            lstrcatW(config_file, dotconfig);
-
             hr = RuntimeHost_GetDefaultDomain(host, config_file, &domain);
-        }
 
         if (SUCCEEDED(hr))
         {
