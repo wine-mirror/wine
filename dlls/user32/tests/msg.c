@@ -2186,9 +2186,27 @@ static void add_message_(int line, const struct recvd_message *msg)
                 seq->wParam = winpos->flags & 0xffff;
                 /* We are not interested in the flags that don't match under XP and Win9x */
                 seq->wParam &= ~SWP_NOZORDER;
+                seq->lParam = (!!winpos->cx) | ((!!winpos->cy) << 1)
+                        | ((!!winpos->x) << 2) | ((!!winpos->y) << 3);
                 break;
             }
 
+            case WM_NCCALCSIZE:
+                if (msg->wParam)
+                {
+                    NCCALCSIZE_PARAMS *p = (NCCALCSIZE_PARAMS *)msg->lParam;
+                    WINDOWPOS *winpos = p->lppos;
+
+                    sprintf(seq->output, "%s: %p WM_NCCALCSIZE: winpos->cx %u, winpos->cy %u",
+                            msg->descr, msg->hwnd, winpos->cx, winpos->cy);
+                    seq->lParam = (!!winpos->cx) | ((!!winpos->cy) << 1)
+                            | ((!!winpos->x) << 2) | ((!!winpos->y) << 3);
+                }
+                else
+                {
+                    seq->lParam = 0;
+                }
+                break;
             case WM_DRAWITEM:
             {
                 DRAW_ITEM_STRUCT di;
@@ -5664,32 +5682,72 @@ done:
     flush_sequence();
 }
 
+static const struct message WmFrameChanged[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam|lparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE, 0 },
+    { WM_NCCALCSIZE, sent|wparam|lparam, 1, 0xf },
+    { WM_WINDOWPOSCHANGED, sent|wparam|lparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOREDRAW
+            |SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE, 0xf },
+    { WM_GETTEXT, sent|optional },
+    { 0 }
+};
+
+static const struct message WmFrameChanged_move[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam|lparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE, 0 },
+    { WM_NCCALCSIZE, sent|wparam|lparam, 1, 0x3 },
+    { WM_WINDOWPOSCHANGED, sent|wparam|lparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOREDRAW
+            |SWP_NOSIZE|SWP_NOCLIENTSIZE, 0x3 },
+    { WM_MOVE, sent|defwinproc, 0 },
+    { WM_GETTEXT, sent|optional },
+    { 0 }
+};
+
 static void test_setwindowpos(void)
 {
     HWND hwnd;
     RECT rc;
     LRESULT res;
+    const INT X = 50;
+    const INT Y = 50;
     const INT winX = 100;
     const INT winY = 100;
     const INT sysX = GetSystemMetrics(SM_CXMINTRACK);
 
     hwnd = CreateWindowExA(0, "TestWindowClass", NULL, 0,
-                           0, 0, winX, winY, 0,
+                           X, Y, winX, winY, 0,
                            NULL, NULL, 0);
 
     GetWindowRect(hwnd, &rc);
-    expect(sysX, rc.right);
-    expect(winY, rc.bottom);
+    expect(sysX + X, rc.right);
+    expect(winY + Y, rc.bottom);
 
     flush_events();
     flush_sequence();
-    res = SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, winX, winY, 0);
+    res = SetWindowPos(hwnd, HWND_TOPMOST, 50, 50, winX, winY, 0);
     ok_sequence(WmZOrder, "Z-Order", TRUE);
     ok(res == TRUE, "SetWindowPos expected TRUE, got %ld\n", res);
 
     GetWindowRect(hwnd, &rc);
+    expect(sysX + X, rc.right);
+    expect(winY + Y, rc.bottom);
+
+    res = SetWindowPos( hwnd, 0, 0, 0, 0, 0,
+            SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+    ok_sequence(WmFrameChanged, "FrameChanged", FALSE);
+    ok(res == TRUE, "SetWindowPos expected TRUE, got %ld.\n", res);
+
+    GetWindowRect(hwnd, &rc);
+    expect(sysX + X, rc.right);
+    expect(winY + Y, rc.bottom);
+
+    res = SetWindowPos( hwnd, 0, 0, 0, 0, 0,
+            SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+    ok_sequence(WmFrameChanged_move, "FrameChanged", FALSE);
+    ok(res == TRUE, "SetWindowPos expected TRUE, got %ld.\n", res);
+
+    GetWindowRect(hwnd, &rc);
     expect(sysX, rc.right);
     expect(winY, rc.bottom);
+
     DestroyWindow(hwnd);
 }
 
@@ -12884,27 +12942,31 @@ static void test_TrackMouseEvent(void)
 
 
 static const struct message WmSetWindowRgn[] = {
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE },
-    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam|lparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE
+            |SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE, 0 },
+    { WM_NCCALCSIZE, sent|wparam|lparam, 1, 0xf },
     { WM_NCPAINT, sent|optional }, /* wparam != 1 */
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam|lparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE, 0xf },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
 
 static const struct message WmSetWindowRgn_no_redraw[] = {
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW },
-    { WM_NCCALCSIZE, sent|wparam, 1 },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW },
+    { WM_WINDOWPOSCHANGING, sent|wparam|lparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE
+            |SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW, 0 },
+    { WM_NCCALCSIZE, sent|wparam|lparam, 1, 0xf },
+    { WM_WINDOWPOSCHANGED, sent|wparam|lparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW, 0xf },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
 
 static const struct message WmSetWindowRgn_clear[] = {
-    { WM_WINDOWPOSCHANGING, sent/*|wparam*/, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE/*|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE only on some Windows versions */ },
-    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent/*|wparam|lparam*/, SWP_NOACTIVATE|SWP_FRAMECHANGED
+            |SWP_NOSIZE|SWP_NOMOVE/*|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE only on some Windows versions */, 0xf
+            /* Some newer Windows versions set window coordinates instead of zeros in WINDOWPOS structure */},
+    { WM_NCCALCSIZE, sent|wparam|lparam, 1, 0xf },
     { WM_NCPAINT, sent|optional },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional }, /* FIXME: remove optional once Wine is fixed */
