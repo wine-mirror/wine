@@ -57,6 +57,7 @@ struct VBScript {
     script_ctx_t *ctx;
     LONG thread_id;
     LCID lcid;
+    BOOL is_initialized;
 };
 
 typedef struct {
@@ -227,9 +228,7 @@ static void decrease_state(VBScript *This, SCRIPTSTATE state)
             This->site = NULL;
         }
 
-        if(This->ctx)
-            release_script(This->ctx);
-
+        release_script(This->ctx);
         This->thread_id = 0;
         break;
     case SCRIPTSTATE_CLOSED:
@@ -405,11 +404,8 @@ static ULONG WINAPI VBScript_Release(IActiveScript *iface)
     TRACE("(%p) ref=%d\n", iface, ref);
 
     if(!ref) {
-        if(This->ctx) {
-            decrease_state(This, SCRIPTSTATE_CLOSED);
-            destroy_script(This->ctx);
-            This->ctx = NULL;
-        }
+        decrease_state(This, SCRIPTSTATE_CLOSED);
+        destroy_script(This->ctx);
         if(This->site)
             IActiveScriptSite_Release(This->site);
         heap_free(This);
@@ -442,7 +438,7 @@ static HRESULT WINAPI VBScript_SetScriptSite(IActiveScript *iface, IActiveScript
     if(hres == S_OK)
         This->lcid = lcid;
 
-    return This->ctx ? set_ctx_site(This) : S_OK;
+    return This->is_initialized ? set_ctx_site(This) : S_OK;
 }
 
 static HRESULT WINAPI VBScript_GetScriptSite(IActiveScript *iface, REFIID riid,
@@ -470,7 +466,7 @@ static HRESULT WINAPI VBScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE 
         return S_OK;
     }
 
-    if(!This->ctx)
+    if(!This->is_initialized)
         return E_UNEXPECTED;
 
     switch(ss) {
@@ -534,7 +530,7 @@ static HRESULT WINAPI VBScript_AddNamedItem(IActiveScript *iface, LPCOLESTR pstr
 
     TRACE("(%p)->(%s %x)\n", This, debugstr_w(pstrName), dwFlags);
 
-    if(This->thread_id != GetCurrentThreadId() || !This->ctx || This->state == SCRIPTSTATE_CLOSED)
+    if(This->thread_id != GetCurrentThreadId() || This->state == SCRIPTSTATE_CLOSED)
         return E_UNEXPECTED;
 
     if(dwFlags & SCRIPTITEM_GLOBALMEMBERS) {
@@ -597,7 +593,7 @@ static HRESULT WINAPI VBScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR
     if(!ppdisp)
         return E_POINTER;
 
-    if(This->thread_id != GetCurrentThreadId() || !This->ctx || !This->ctx->script_obj) {
+    if(This->thread_id != GetCurrentThreadId() || !This->ctx->script_obj) {
         *ppdisp = NULL;
         return E_UNEXPECTED;
     }
@@ -749,29 +745,14 @@ static ULONG WINAPI VBScriptParse_Release(IActiveScriptParse *iface)
 static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
 {
     VBScript *This = impl_from_IActiveScriptParse(iface);
-    script_ctx_t *ctx, *old_ctx;
 
     TRACE("(%p)\n", This);
 
-    if(This->ctx)
+    if(This->is_initialized)
         return E_UNEXPECTED;
+    This->is_initialized = TRUE;
 
-    ctx = heap_alloc_zero(sizeof(script_ctx_t));
-    if(!ctx)
-        return E_OUTOFMEMORY;
-
-    ctx->safeopt = This->safeopt;
-    heap_pool_init(&ctx->heap);
-    list_init(&ctx->objects);
-    list_init(&ctx->code_list);
-    list_init(&ctx->named_items);
-
-    old_ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
-    if(old_ctx) {
-        destroy_script(ctx);
-        return E_UNEXPECTED;
-    }
-
+    This->ctx->safeopt = This->safeopt;
     return This->site ? set_ctx_site(This) : S_OK;
 }
 
@@ -961,6 +942,7 @@ static const IObjectSafetyVtbl VBScriptSafetyVtbl = {
 
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
+    script_ctx_t *ctx;
     VBScript *ret;
     HRESULT hres;
 
@@ -979,6 +961,18 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
     ret->ref = 1;
     ret->state = SCRIPTSTATE_UNINITIALIZED;
     ret->safeopt = INTERFACE_USES_DISPEX;
+
+    ctx = ret->ctx = heap_alloc_zero(sizeof(*ctx));
+    if(!ctx) {
+        heap_free(ret);
+        return E_OUTOFMEMORY;
+    }
+
+    ctx->safeopt = INTERFACE_USES_DISPEX;
+    heap_pool_init(&ctx->heap);
+    list_init(&ctx->objects);
+    list_init(&ctx->code_list);
+    list_init(&ctx->named_items);
 
     hres = IActiveScript_QueryInterface(&ret->IActiveScript_iface, riid, ppv);
     IActiveScript_Release(&ret->IActiveScript_iface);
