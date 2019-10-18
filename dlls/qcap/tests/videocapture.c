@@ -117,7 +117,6 @@ START_TEST(videocapture)
         if (hr == S_OK)
         {
             test_capture(filter);
-            IBaseFilter_Release(filter);
             ref = IBaseFilter_Release(filter);
             ok(!ref, "Got outstanding refcount %d.\n", ref);
         }
