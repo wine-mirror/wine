@@ -55,7 +55,6 @@ struct VBScript {
     IActiveScriptSite *site;
     script_ctx_t *ctx;
     LONG thread_id;
-    LCID lcid;
     BOOL is_initialized;
 };
 
@@ -133,8 +132,6 @@ IDispatch *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned flag
 static HRESULT set_ctx_site(VBScript *This)
 {
     HRESULT hres;
-
-    This->ctx->lcid = This->lcid;
 
     hres = init_global(This->ctx);
     if(FAILED(hres))
@@ -435,7 +432,7 @@ static HRESULT WINAPI VBScript_SetScriptSite(IActiveScript *iface, IActiveScript
 
     hres = IActiveScriptSite_GetLCID(This->site, &lcid);
     if(hres == S_OK)
-        This->lcid = lcid;
+        This->ctx->lcid = lcid;
 
     return This->is_initialized ? set_ctx_site(This) : S_OK;
 }
