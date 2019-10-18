@@ -1524,7 +1524,12 @@ static NTSTATUS libunwind_virtual_unwind( ULONG64 ip, BOOL* got_info, ULONG64 *f
            ip, (unsigned long)info.start_ip, (unsigned long)info.end_ip, (unsigned long)info.handler,
            (unsigned long)info.lsda, (unsigned long)info.unwind_info );
 
-    rc = unw_step(&cursor);
+    if (!(rc = unw_step( &cursor )))
+    {
+        WARN( "last frame\n" );
+        *got_info = FALSE;
+        return STATUS_SUCCESS;
+    }
     if (rc < 0)
     {
         WARN( "failed to unwind: %d\n", rc );
