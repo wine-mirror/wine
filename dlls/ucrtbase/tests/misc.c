@@ -901,6 +901,7 @@ static void test_asctime(void)
 static void test_strftime(void)
 {
     const struct tm epoch = { 0, 0, 0, 1, 0, 70, 4, 0, 0 };
+    const struct tm tm1 = { 0, 0, 0, 1, 0, 117, 0, 0, 0 };
     char bufA[256];
     size_t retA;
 
@@ -947,6 +948,10 @@ static void test_strftime(void)
     retA = p_strftime(bufA, sizeof(bufA), "%#T", &epoch);
     ok(retA == 5, "expected 5, got %d\n", (int)retA);
     ok(!strcmp(bufA, "0:0:0"), "got %s\n", bufA);
+
+    retA = p_strftime(bufA, sizeof(bufA), "%u", &tm1);
+    ok(retA == 1, "expected 1, got %d\n", (int)retA);
+    ok(!strcmp(bufA, "7"), "got %s\n", bufA);
 
     retA = p_strftime(bufA, sizeof(bufA), "%h", &epoch);
     ok(retA == 3, "expected 3, got %d\n", (int)retA);

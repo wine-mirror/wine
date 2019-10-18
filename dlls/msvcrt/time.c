@@ -1264,6 +1264,11 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
             if(!strftime_int(str, &ret, max, mstm->tm_sec, alternate ? 0 : 2, 0, 59))
                 return 0;
             break;
+        case 'u':
+            tmp = mstm->tm_wday ? mstm->tm_wday : 7;
+            if(!strftime_int(str, &ret, max, tmp, 0, 1, 7))
+                return 0;
+            break;
 #endif
         case 'w':
             if(!strftime_int(str, &ret, max, mstm->tm_wday, 0, 0, 6))
