@@ -52,7 +52,6 @@ struct VBScript {
     LONG ref;
 
     SCRIPTSTATE state;
-    IActiveScriptSite *site;
     script_ctx_t *ctx;
     LONG thread_id;
     BOOL is_initialized;
@@ -70,8 +69,8 @@ static void change_state(VBScript *This, SCRIPTSTATE state)
         return;
 
     This->state = state;
-    if(This->site)
-        IActiveScriptSite_OnStateChange(This->site, state);
+    if(This->ctx->site)
+        IActiveScriptSite_OnStateChange(This->ctx->site, state);
 }
 
 static inline BOOL is_started(VBScript *This)
@@ -136,9 +135,6 @@ static HRESULT set_ctx_site(VBScript *This)
     hres = init_global(This->ctx);
     if(FAILED(hres))
         return hres;
-
-    IActiveScriptSite_AddRef(This->site);
-    This->ctx->site = This->site;
 
     change_state(This, SCRIPTSTATE_INITIALIZED);
     return S_OK;
@@ -218,12 +214,6 @@ static void decrease_state(VBScript *This, SCRIPTSTATE state)
     case SCRIPTSTATE_INITIALIZED:
     case SCRIPTSTATE_UNINITIALIZED:
         change_state(This, state);
-
-        if(This->site) {
-            IActiveScriptSite_Release(This->site);
-            This->site = NULL;
-        }
-
         release_script(This->ctx);
         This->thread_id = 0;
         break;
@@ -402,8 +392,6 @@ static ULONG WINAPI VBScript_Release(IActiveScript *iface)
     if(!ref) {
         decrease_state(This, SCRIPTSTATE_CLOSED);
         destroy_script(This->ctx);
-        if(This->site)
-            IActiveScriptSite_Release(This->site);
         heap_free(This);
     }
 
@@ -421,16 +409,16 @@ static HRESULT WINAPI VBScript_SetScriptSite(IActiveScript *iface, IActiveScript
     if(!pass)
         return E_POINTER;
 
-    if(This->site)
+    if(This->ctx->site)
         return E_UNEXPECTED;
 
     if(InterlockedCompareExchange(&This->thread_id, GetCurrentThreadId(), 0))
         return E_UNEXPECTED;
 
-    This->site = pass;
-    IActiveScriptSite_AddRef(This->site);
+    This->ctx->site = pass;
+    IActiveScriptSite_AddRef(This->ctx->site);
 
-    hres = IActiveScriptSite_GetLCID(This->site, &lcid);
+    hres = IActiveScriptSite_GetLCID(This->ctx->site, &lcid);
     if(hres == S_OK)
         This->ctx->lcid = lcid;
 
@@ -532,7 +520,7 @@ static HRESULT WINAPI VBScript_AddNamedItem(IActiveScript *iface, LPCOLESTR pstr
     if(dwFlags & SCRIPTITEM_GLOBALMEMBERS) {
         IUnknown *unk;
 
-        hres = IActiveScriptSite_GetItemInfo(This->site, pstrName, SCRIPTINFO_IUNKNOWN, &unk, NULL);
+        hres = IActiveScriptSite_GetItemInfo(This->ctx->site, pstrName, SCRIPTINFO_IUNKNOWN, &unk, NULL);
         if(FAILED(hres)) {
             WARN("GetItemInfo failed: %08x\n", hres);
             return hres;
@@ -748,7 +736,7 @@ static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
         return E_UNEXPECTED;
     This->is_initialized = TRUE;
 
-    return This->site ? set_ctx_site(This) : S_OK;
+    return This->ctx->site ? set_ctx_site(This) : S_OK;
 }
 
 static HRESULT WINAPI VBScriptParse_AddScriptlet(IActiveScriptParse *iface,
