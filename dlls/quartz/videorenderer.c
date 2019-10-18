@@ -82,21 +82,6 @@ static inline VideoRendererImpl *impl_from_BaseControlVideo(BaseControlVideo *if
     return CONTAINING_RECORD(iface, VideoRendererImpl, baseControlVideo);
 }
 
-static BOOL CreateRenderingSubsystem(VideoRendererImpl* This)
-{
-    This->hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-    if (!This->hEvent)
-        return FALSE;
-
-    if (FAILED(BaseWindowImpl_PrepareWindow(&This->baseControlWindow.baseWindow)))
-    {
-        CloseHandle(This->hEvent);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
 static void VideoRenderer_AutoShowWindow(VideoRendererImpl *This)
 {
     if (!This->init && (!This->WindowPos.right || !This->WindowPos.top))
@@ -873,8 +858,11 @@ HRESULT VideoRenderer_create(IUnknown *outer, void **out)
     if (FAILED(hr))
         goto fail;
 
-    if (!CreateRenderingSubsystem(pVideoRenderer)) {
-        hr = E_FAIL;
+    pVideoRenderer->hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    if (FAILED(hr = BaseWindowImpl_PrepareWindow(&pVideoRenderer->baseControlWindow.baseWindow)))
+    {
+        CloseHandle(pVideoRenderer->hEvent);
         goto fail;
     }
 
