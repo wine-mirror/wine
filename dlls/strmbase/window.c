@@ -144,9 +144,9 @@ HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This)
     return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *pControlWindow,
+HRESULT WINAPI strmbase_window_init(BaseControlWindow *pControlWindow,
         const IVideoWindowVtbl *lpVtbl, struct strmbase_filter *owner,
-        CRITICAL_SECTION *lock, struct strmbase_pin *pPin, const BaseWindowFuncTable *pFuncsTable)
+        struct strmbase_pin *pPin, const BaseWindowFuncTable *pFuncsTable)
 {
     HRESULT hr;
 
@@ -158,7 +158,6 @@ HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *pControlWindow,
         pControlWindow->hwndDrain = NULL;
         pControlWindow->hwndOwner = NULL;
         pControlWindow->pFilter = owner;
-        pControlWindow->pInterfaceLock = lock;
         pControlWindow->pPin = pPin;
     }
     return hr;

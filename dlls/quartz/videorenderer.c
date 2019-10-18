@@ -846,9 +846,9 @@ HRESULT VideoRenderer_create(IUnknown *outer, void **out)
     if (FAILED(hr))
         goto fail;
 
-    hr = BaseControlWindow_Init(&pVideoRenderer->baseControlWindow, &IVideoWindow_VTable,
-            &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.filter.csFilter,
-            &pVideoRenderer->renderer.sink.pin, &renderer_BaseWindowFuncTable);
+    hr = strmbase_window_init(&pVideoRenderer->baseControlWindow, &IVideoWindow_VTable,
+            &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.sink.pin,
+            &renderer_BaseWindowFuncTable);
     if (FAILED(hr))
         goto fail;
 

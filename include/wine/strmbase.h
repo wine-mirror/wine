@@ -403,12 +403,11 @@ typedef struct tagBaseControlWindow
 	HWND hwndDrain;
 	HWND hwndOwner;
 	struct strmbase_filter *pFilter;
-	CRITICAL_SECTION* pInterfaceLock;
 	struct strmbase_pin *pPin;
 } BaseControlWindow;
 
-HRESULT WINAPI BaseControlWindow_Init(BaseControlWindow *window, const IVideoWindowVtbl *vtbl,
-        struct strmbase_filter *filter, CRITICAL_SECTION *lock, struct strmbase_pin *pin, const BaseWindowFuncTable *ops);
+HRESULT WINAPI strmbase_window_init(BaseControlWindow *window, const IVideoWindowVtbl *vtbl,
+        struct strmbase_filter *filter, struct strmbase_pin *pin, const BaseWindowFuncTable *func_table);
 HRESULT WINAPI BaseControlWindow_Destroy(BaseControlWindow *pControlWindow);
 
 BOOL WINAPI BaseControlWindowImpl_PossiblyEatMessage(BaseWindow *This, UINT uMsg, WPARAM wParam, LPARAM lParam);

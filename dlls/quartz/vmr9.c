@@ -2251,9 +2251,8 @@ static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
     if (FAILED(hr))
         goto fail;
 
-    hr = BaseControlWindow_Init(&pVMR->baseControlWindow, &IVideoWindow_VTable,
-            &pVMR->renderer.filter, &pVMR->renderer.filter.csFilter,
-            &pVMR->renderer.sink.pin, &renderer_BaseWindowFuncTable);
+    hr = strmbase_window_init(&pVMR->baseControlWindow, &IVideoWindow_VTable,
+            &pVMR->renderer.filter, &pVMR->renderer.sink.pin, &renderer_BaseWindowFuncTable);
     if (FAILED(hr))
         goto fail;
 
