@@ -89,8 +89,8 @@ static void test_get_time(void)
     Sleep(100);
     hr = IReferenceClock_GetTime(clock, &time2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(time2 - time1 > 98 * 10000, "Expected about %s, but got %s.\n",
-            wine_dbgstr_longlong(time1 + 98 * 10000), wine_dbgstr_longlong(time2));
+    ok(time2 - time1 > 80 * 10000, "Expected about %s, but got %s.\n",
+            wine_dbgstr_longlong(time1 + 80 * 10000), wine_dbgstr_longlong(time2));
 
     ref = IReferenceClock_Release(clock);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -160,11 +160,11 @@ static void test_advise(void)
 
     hr = IReferenceClock_AdvisePeriodic(clock, current, 500 * 10000, (HSEMAPHORE)semaphore, &cookie);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!WaitForSingleObject(semaphore, 10), "Semaphore should be signaled.\n");
+    ok(!WaitForSingleObject(semaphore, 20), "Semaphore should be signaled.\n");
     for (i = 0; i < 5; ++i)
     {
-        ok(WaitForSingleObject(semaphore, 480) == WAIT_TIMEOUT, "Semaphore should not be signaled.\n");
-        ok(!WaitForSingleObject(semaphore, 40), "Semaphore should be signaled.\n");
+        ok(WaitForSingleObject(semaphore, 460) == WAIT_TIMEOUT, "Semaphore should not be signaled.\n");
+        ok(!WaitForSingleObject(semaphore, 60), "Semaphore should be signaled.\n");
     }
 
     hr = IReferenceClock_Unadvise(clock, cookie);
