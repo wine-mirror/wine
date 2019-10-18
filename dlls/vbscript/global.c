@@ -2486,6 +2486,21 @@ static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
     return E_NOTIMPL;
 }
 
+static HRESULT Global_Err(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+{
+    TRACE("\n");
+
+    if(args_cnt) {
+        FIXME("Setter not supported\n");
+        return E_NOTIMPL;
+    }
+
+    V_VT(res) = VT_DISPATCH;
+    V_DISPATCH(res) = &This->ctx->err_obj->IDispatch_iface;
+    IDispatch_AddRef(V_DISPATCH(res));
+    return S_OK;
+}
+
 static const string_constant_t vbCr          = {1, {'\r'}};
 static const string_constant_t vbCrLf        = {2, {'\r','\n'}};
 static const string_constant_t vbNewLine     = {2, {'\r','\n'}};
@@ -2526,6 +2541,7 @@ static const builtin_prop_t global_props[] = {
     {L"DateValue",                 Global_DateValue, 0, 1},
     {L"Day",                       Global_Day, 0, 1},
     {L"Erase",                     Global_Erase, 0, 1},
+    {L"Err",                       Global_Err, BP_GETPUT},
     {L"Escape",                    Global_Escape, 0, 1},
     {L"Eval",                      Global_Eval, 0, 1},
     {L"Execute",                   Global_Execute, 0, 1},

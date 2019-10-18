@@ -104,8 +104,6 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     DISPID id;
     HRESULT hres;
 
-    static const WCHAR errW[] = {'e','r','r',0};
-
     if(invoke_type == VBDISP_LET
             && (ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET || ctx->func->type == FUNC_DEFGET)
             && !wcsicmp(name, ctx->func->name)) {
@@ -173,12 +171,6 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
             ref->u.f = func;
             return S_OK;
         }
-    }
-
-    if(!wcsicmp(name, errW)) {
-        ref->type = REF_OBJ;
-        ref->u.obj = &ctx->script->err_obj->IDispatch_iface;
-        return S_OK;
     }
 
     hres = get_builtin_id(ctx->script->global_obj, name, &id);
