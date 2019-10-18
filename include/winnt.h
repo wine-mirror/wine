@@ -76,6 +76,16 @@ extern "C" {
 # endif
 #endif
 
+#ifndef DECLSPEC_NOTHROW
+# if defined(_MSC_VER) && (_MSC_VER >= 1200) && !defined(MIDL_PASS)
+#  define DECLSPEC_NOTHROW __declspec(nothrow)
+# elif defined(__GNUC__)
+#  define DECLSPEC_NOTHROW __attribute__((nothrow))
+# else
+#  define DECLSPEC_NOTHROW
+# endif
+#endif
+
 #ifndef DECLSPEC_CACHEALIGN
 # define DECLSPEC_CACHEALIGN DECLSPEC_ALIGN(128)
 #endif

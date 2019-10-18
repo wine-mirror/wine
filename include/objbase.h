@@ -172,12 +172,18 @@
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
 
+#ifdef COM_STDMETHOD_CAN_THROW
+# define COM_DECLSPEC_NOTHROW
+#else
+# define COM_DECLSPEC_NOTHROW DECLSPEC_NOTHROW
+#endif
+
 /* C++ interface */
 
-#define STDMETHOD(method)        virtual HRESULT STDMETHODCALLTYPE method
-#define STDMETHOD_(type,method)  virtual type STDMETHODCALLTYPE method
-#define STDMETHODV(method)       virtual HRESULT STDMETHODVCALLTYPE method
-#define STDMETHODV_(type,method) virtual type STDMETHODVCALLTYPE method
+#define STDMETHOD(method)        virtual COM_DECLSPEC_NOTHROW HRESULT STDMETHODCALLTYPE method
+#define STDMETHOD_(type,method)  virtual COM_DECLSPEC_NOTHROW type STDMETHODCALLTYPE method
+#define STDMETHODV(method)       virtual COM_DECLSPEC_NOTHROW HRESULT STDMETHODVCALLTYPE method
+#define STDMETHODV_(type,method) virtual COM_DECLSPEC_NOTHROW type STDMETHODVCALLTYPE method
 
 #define PURE   = 0
 #define THIS_

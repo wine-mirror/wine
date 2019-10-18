@@ -40,9 +40,16 @@
 #define STDMETHODIMPV_(t)  t STDMETHODVCALLTYPE
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
+
+#ifdef COM_STDMETHOD_CAN_THROW
+# define COM_DECLSPEC_NOTHROW
+#else
+# define COM_DECLSPEC_NOTHROW DECLSPEC_NOTHROW
+#endif
+
 # define interface struct
-# define STDMETHOD(m) virtual HRESULT STDMETHODCALLTYPE m
-# define STDMETHOD_(t,m) virtual t STDMETHODCALLTYPE m
+# define STDMETHOD(m)    virtual COM_DECLSPEC_NOTHROW HRESULT STDMETHODCALLTYPE m
+# define STDMETHOD_(t,m) virtual COM_DECLSPEC_NOTHROW t STDMETHODCALLTYPE m
 # define PURE =0
 # define THIS_
 # define THIS void
