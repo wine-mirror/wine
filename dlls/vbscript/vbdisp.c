@@ -967,6 +967,8 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, DISPPARAMS *dp,
 HRESULT get_disp_value(script_ctx_t *ctx, IDispatch *disp, VARIANT *v)
 {
     DISPPARAMS dp = {NULL};
+    if(!disp)
+        return MAKE_VBSERROR(VBSE_OBJECT_VARIABLE_NOT_SET);
     return disp_call(ctx, disp, DISPID_VALUE, &dp, v);
 }
 

@@ -37,6 +37,7 @@ STRINGTABLE
     VBSE_PERMISSION_DENIED             "Permission denied"
     VBSE_PATH_FILE_ACCESS              "Path/File access error"
     VBSE_PATH_NOT_FOUND                "Path not found"
+    VBSE_OBJECT_VARIABLE_NOT_SET       "Object variable not set"
     VBSE_ILLEGAL_NULL_USE              "Invalid use of Null"
     VBSE_CANT_CREATE_TMP_FILE          "Can't create necessary temporary file"
     VBSE_CANT_CREATE_OBJECT            "ActiveX component can't create object"

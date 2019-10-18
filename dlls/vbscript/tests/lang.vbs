@@ -1354,6 +1354,28 @@ end class
 set x = new RegExp
 Call ok(x.Global = false, "x.Global = " & x.Global)
 
+sub test_nothing_errors
+    dim x
+    on error resume next
+
+    x = 1
+    err.clear
+    x = nothing
+    call ok(err.number = 91, "err.number = " & err.number)
+    call ok(x = 1, "x = " & x)
+
+    err.clear
+    x = not nothing
+    call ok(err.number = 91, "err.number = " & err.number)
+    call ok(x = 1, "x = " & x)
+
+    err.clear
+    x = "" & nothing
+    call ok(err.number = 91, "err.number = " & err.number)
+    call ok(x = 1, "x = " & x)
+end sub
+call test_nothing_errors()
+
 sub test_identifiers
     ' test keywords that can also be a declared identifier
     Dim default
