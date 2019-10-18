@@ -51,7 +51,6 @@ struct VBScript {
 
     LONG ref;
 
-    DWORD safeopt;
     SCRIPTSTATE state;
     IActiveScriptSite *site;
     script_ctx_t *ctx;
@@ -752,7 +751,6 @@ static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
         return E_UNEXPECTED;
     This->is_initialized = TRUE;
 
-    This->ctx->safeopt = This->safeopt;
     return This->site ? set_ctx_site(This) : S_OK;
 }
 
@@ -914,7 +912,7 @@ static HRESULT WINAPI VBScriptSafety_GetInterfaceSafetyOptions(IObjectSafety *if
         return E_POINTER;
 
     *pdwSupportedOptions = SUPPORTED_OPTIONS;
-    *pdwEnabledOptions = This->safeopt;
+    *pdwEnabledOptions = This->ctx->safeopt;
     return S_OK;
 }
 
@@ -928,7 +926,7 @@ static HRESULT WINAPI VBScriptSafety_SetInterfaceSafetyOptions(IObjectSafety *if
     if(dwOptionSetMask & ~SUPPORTED_OPTIONS)
         return E_FAIL;
 
-    This->safeopt = (dwEnabledOptions & dwOptionSetMask) | (This->safeopt & ~dwOptionSetMask) | INTERFACE_USES_DISPEX;
+    This->ctx->safeopt = (dwEnabledOptions & dwOptionSetMask) | (This->ctx->safeopt & ~dwOptionSetMask) | INTERFACE_USES_DISPEX;
     return S_OK;
 }
 
@@ -960,7 +958,6 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
 
     ret->ref = 1;
     ret->state = SCRIPTSTATE_UNINITIALIZED;
-    ret->safeopt = INTERFACE_USES_DISPEX;
 
     ctx = ret->ctx = heap_alloc_zero(sizeof(*ctx));
     if(!ctx) {
