@@ -2860,14 +2860,6 @@ void detach_global_objects(script_ctx_t *ctx)
         IDispatch_Release(&ctx->global_obj->IDispatch_iface);
         ctx->global_obj = NULL;
     }
-
-    if(ctx->script_obj) {
-        ScriptDisp *script_obj = ctx->script_obj;
-
-        ctx->script_obj = NULL;
-        script_obj->ctx = NULL;
-        IDispatchEx_Release(&script_obj->IDispatchEx_iface);
-    }
 }
 
 HRESULT init_global(script_ctx_t *ctx)
@@ -2875,10 +2867,6 @@ HRESULT init_global(script_ctx_t *ctx)
     HRESULT hres;
 
     hres = create_builtin_dispatch(ctx, global_props, ARRAY_SIZE(global_props), &ctx->global_obj);
-    if(FAILED(hres))
-        return hres;
-
-    hres = create_script_disp(ctx, &ctx->script_obj);
     if(FAILED(hres))
         return hres;
 

@@ -182,6 +182,14 @@ static void release_script(script_ctx_t *ctx)
         ctx->site = NULL;
     }
 
+    if(ctx->script_obj) {
+        ScriptDisp *script_obj = ctx->script_obj;
+
+        ctx->script_obj = NULL;
+        script_obj->ctx = NULL;
+        IDispatchEx_Release(&script_obj->IDispatchEx_iface);
+    }
+
     detach_global_objects(ctx);
     heap_pool_free(&ctx->heap);
     heap_pool_init(&ctx->heap);
@@ -415,6 +423,10 @@ static HRESULT WINAPI VBScript_SetScriptSite(IActiveScript *iface, IActiveScript
     if(InterlockedCompareExchange(&This->thread_id, GetCurrentThreadId(), 0))
         return E_UNEXPECTED;
 
+    hres = create_script_disp(This->ctx, &This->ctx->script_obj);
+    if(FAILED(hres))
+        return hres;
+
     This->ctx->site = pass;
     IActiveScriptSite_AddRef(This->ctx->site);
 
@@ -514,7 +526,7 @@ static HRESULT WINAPI VBScript_AddNamedItem(IActiveScript *iface, LPCOLESTR pstr
 
     TRACE("(%p)->(%s %x)\n", This, debugstr_w(pstrName), dwFlags);
 
-    if(This->thread_id != GetCurrentThreadId() || This->state == SCRIPTSTATE_CLOSED)
+    if(This->thread_id != GetCurrentThreadId() || !This->ctx->site)
         return E_UNEXPECTED;
 
     if(dwFlags & SCRIPTITEM_GLOBALMEMBERS) {
