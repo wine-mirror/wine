@@ -128,18 +128,6 @@ IDispatch *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned flag
     return NULL;
 }
 
-static HRESULT set_ctx_site(VBScript *This)
-{
-    HRESULT hres;
-
-    hres = init_global(This->ctx);
-    if(FAILED(hres))
-        return hres;
-
-    change_state(This, SCRIPTSTATE_INITIALIZED);
-    return S_OK;
-}
-
 static void release_script(script_ctx_t *ctx)
 {
     class_desc_t *class_desc;
@@ -434,7 +422,9 @@ static HRESULT WINAPI VBScript_SetScriptSite(IActiveScript *iface, IActiveScript
     if(hres == S_OK)
         This->ctx->lcid = lcid;
 
-    return This->is_initialized ? set_ctx_site(This) : S_OK;
+    if(This->is_initialized)
+        change_state(This, SCRIPTSTATE_INITIALIZED);
+    return S_OK;
 }
 
 static HRESULT WINAPI VBScript_GetScriptSite(IActiveScript *iface, REFIID riid,
@@ -748,7 +738,9 @@ static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
         return E_UNEXPECTED;
     This->is_initialized = TRUE;
 
-    return This->ctx->site ? set_ctx_site(This) : S_OK;
+    if(This->ctx->site)
+        change_state(This, SCRIPTSTATE_INITIALIZED);
+    return S_OK;
 }
 
 static HRESULT WINAPI VBScriptParse_AddScriptlet(IActiveScriptParse *iface,
@@ -967,6 +959,12 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
     list_init(&ctx->objects);
     list_init(&ctx->code_list);
     list_init(&ctx->named_items);
+
+    hres = init_global(ctx);
+    if(FAILED(hres)) {
+        IActiveScript_Release(&ret->IActiveScript_iface);
+        return hres;
+    }
 
     hres = IActiveScript_QueryInterface(&ret->IActiveScript_iface, riid, ppv);
     IActiveScript_Release(&ret->IActiveScript_iface);
