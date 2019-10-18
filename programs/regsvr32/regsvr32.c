@@ -88,6 +88,97 @@ static void WINAPIV output_write(UINT id, ...)
     LocalFree(str);
 }
 
+static LPCWSTR find_arg_start(LPCWSTR cmdline)
+{
+    LPCWSTR s;
+    BOOL in_quotes;
+    int bcount;
+
+    bcount=0;
+    in_quotes=FALSE;
+    s=cmdline;
+    while (1) {
+        if (*s==0 || ((*s=='\t' || *s==' ') && !in_quotes)) {
+            /* end of this command line argument */
+            break;
+        } else if (*s=='\\') {
+            /* '\', count them */
+            bcount++;
+        } else if ((*s=='"') && ((bcount & 1)==0)) {
+            /* unescaped '"' */
+            in_quotes=!in_quotes;
+            bcount=0;
+        } else {
+            /* a regular character */
+            bcount=0;
+        }
+        s++;
+    }
+    return s;
+}
+
+static void reexec_self(void)
+{
+    /* restart current process as 32-bit or 64-bit with same command line */
+    static const WCHAR exe_name[] = {'\\','r','e','g','s','v','r','3','2','.','e','x','e',0};
+#ifndef _WIN64
+    static const WCHAR sysnative[] = {'\\','S','y','s','N','a','t','i','v','e',0};
+    BOOL wow64;
+#endif
+    WCHAR systemdir[MAX_PATH];
+    LPCWSTR args;
+    WCHAR *cmdline;
+    STARTUPINFOW si = {0};
+    PROCESS_INFORMATION pi;
+
+#ifdef _WIN64
+    TRACE("restarting as 32-bit\n");
+    GetSystemWow64DirectoryW(systemdir, MAX_PATH);
+#else
+    TRACE("restarting as 64-bit\n");
+
+    if (!IsWow64Process(GetCurrentProcess(), &wow64) || !wow64)
+    {
+        TRACE("not running in wow64, can't restart as 64-bit\n");
+        return;
+    }
+
+    GetWindowsDirectoryW(systemdir, MAX_PATH);
+    lstrcatW(systemdir, sysnative);
+#endif
+
+    args = find_arg_start(GetCommandLineW());
+
+    cmdline = HeapAlloc(GetProcessHeap(), 0,
+        (lstrlenW(systemdir)+lstrlenW(exe_name)+lstrlenW(args)+1)*sizeof(WCHAR));
+
+    lstrcpyW(cmdline, systemdir);
+    lstrcatW(cmdline, exe_name);
+    lstrcatW(cmdline, args);
+
+    si.cb = sizeof(si);
+
+    if (CreateProcessW(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    {
+        DWORD exit_code;
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        GetExitCodeProcess(pi.hProcess, &exit_code);
+        ExitProcess(exit_code);
+    }
+    else
+    {
+        WINE_TRACE("failed to restart, err=%d\n", GetLastError());
+    }
+
+    HeapFree(GetProcessHeap(), 0, cmdline);
+}
+
+#ifdef _WIN64
+# define ALT_BINARY_TYPE SCS_32BIT_BINARY
+#else
+# define ALT_BINARY_TYPE SCS_64BIT_BINARY
+#endif
+
 /**
  * Loads procedure.
  *
@@ -95,14 +186,22 @@ static void WINAPIV output_write(UINT id, ...)
  * strDll - name of the dll.
  * procName - name of the procedure to load from the dll.
  * DllHandle - a variable that receives the handle of the loaded dll.
+ * firstDll - true if this is the first dll in the command line.
  */
-static VOID *LoadProc(const WCHAR* strDll, const char* procName, HMODULE* DllHandle)
+static VOID *LoadProc(const WCHAR* strDll, const char* procName, HMODULE* DllHandle, BOOL firstDll)
 {
     VOID* (*proc)(void);
 
     *DllHandle = LoadLibraryExW(strDll, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
     if(!*DllHandle)
     {
+        DWORD binary_type;
+        if (firstDll && GetLastError() == ERROR_BAD_EXE_FORMAT &&
+            GetBinaryTypeW(strDll, &binary_type) &&
+            binary_type == ALT_BINARY_TYPE)
+        {
+            reexec_self();
+        }
         output_write(STRING_DLL_LOAD_FAILED, strDll);
         ExitProcess(LOADLIBRARY_FAILED);
     }
@@ -116,13 +215,13 @@ static VOID *LoadProc(const WCHAR* strDll, const char* procName, HMODULE* DllHan
     return proc;
 }
 
-static int RegisterDll(const WCHAR* strDll)
+static int RegisterDll(const WCHAR* strDll, BOOL firstDll)
 {
     HRESULT hr;
     DLLREGISTER pfRegister;
     HMODULE DllHandle = NULL;
 
-    pfRegister = LoadProc(strDll, "DllRegisterServer", &DllHandle);
+    pfRegister = LoadProc(strDll, "DllRegisterServer", &DllHandle, firstDll);
     if (!pfRegister)
         return GETPROCADDRESS_FAILED;
 
@@ -139,13 +238,13 @@ static int RegisterDll(const WCHAR* strDll)
     return 0;
 }
 
-static int UnregisterDll(const WCHAR* strDll)
+static int UnregisterDll(const WCHAR* strDll, BOOL firstDll)
 {
     HRESULT hr;
     DLLUNREGISTER pfUnregister;
     HMODULE DllHandle = NULL;
 
-    pfUnregister = LoadProc(strDll, "DllUnregisterServer", &DllHandle);
+    pfUnregister = LoadProc(strDll, "DllUnregisterServer", &DllHandle, firstDll);
     if (!pfUnregister)
         return GETPROCADDRESS_FAILED;
 
@@ -162,13 +261,13 @@ static int UnregisterDll(const WCHAR* strDll)
     return 0;
 }
 
-static int InstallDll(BOOL install, const WCHAR *strDll, const WCHAR *command_line)
+static int InstallDll(BOOL install, const WCHAR *strDll, const WCHAR *command_line, BOOL firstDll)
 {
     HRESULT hr;
     DLLINSTALL pfInstall;
     HMODULE DllHandle = NULL;
 
-    pfInstall = LoadProc(strDll, "DllInstall", &DllHandle);
+    pfInstall = LoadProc(strDll, "DllInstall", &DllHandle, firstDll);
     if (!pfInstall)
         return GETPROCADDRESS_FAILED;
 
@@ -283,11 +382,12 @@ int wmain(int argc, WCHAR* argv[])
         if (argv[i])
         {
             WCHAR *DllName = argv[i];
+            BOOL firstDll = !DllFound;
             res = 0;
 
             DllFound = TRUE;
             if (CallInstall && Unregister)
-                res = InstallDll(!Unregister, DllName, wsCommandLine);
+                res = InstallDll(!Unregister, DllName, wsCommandLine, firstDll);
 
             /* The Windows version stops processing the current file on the first error. */
             if (res)
@@ -299,9 +399,9 @@ int wmain(int argc, WCHAR* argv[])
             if (!CallInstall || CallRegister)
             {
                 if(Unregister)
-                    res = UnregisterDll(DllName);
+                    res = UnregisterDll(DllName, firstDll);
                 else
-                    res = RegisterDll(DllName);
+                    res = RegisterDll(DllName, firstDll);
             }
 
             if (res)
@@ -311,7 +411,7 @@ int wmain(int argc, WCHAR* argv[])
             }
 
             if (CallInstall && !Unregister)
-                res = InstallDll(!Unregister, DllName, wsCommandLine);
+                res = InstallDll(!Unregister, DllName, wsCommandLine, firstDll);
 
             if (res)
             {
