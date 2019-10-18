@@ -1901,6 +1901,18 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS *pWinpos, const RECT *old_window_rect, c
         params.lppos = &winposCopy;
         winposCopy = *pWinpos;
 
+        if (pWinpos->flags & SWP_NOMOVE)
+        {
+            winposCopy.x = old_window_rect->left;
+            winposCopy.y = old_window_rect->top;
+        }
+
+        if (pWinpos->flags & SWP_NOSIZE)
+        {
+            winposCopy.cx = old_window_rect->right - old_window_rect->left;
+            winposCopy.cy = old_window_rect->bottom - old_window_rect->top;
+        }
+
         wvrFlags = SendMessageW( pWinpos->hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params );
 
         *new_client_rect = params.rgrc[0];
