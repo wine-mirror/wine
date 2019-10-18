@@ -692,6 +692,10 @@ static const int ws_ip_map[][2] =
     MAP_OPTION( IP_MULTICAST_LOOP ),
     MAP_OPTION( IP_ADD_MEMBERSHIP ),
     MAP_OPTION( IP_DROP_MEMBERSHIP ),
+    MAP_OPTION( IP_ADD_SOURCE_MEMBERSHIP ),
+    MAP_OPTION( IP_DROP_SOURCE_MEMBERSHIP ),
+    MAP_OPTION( IP_BLOCK_SOURCE ),
+    MAP_OPTION( IP_UNBLOCK_SOURCE ),
     MAP_OPTION( IP_OPTIONS ),
 #ifdef IP_HDRINCL
     MAP_OPTION( IP_HDRINCL ),
@@ -5772,6 +5776,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     int woptval;
     struct linger linger;
     struct timeval tval;
+    struct ip_mreq_source mreq_source;
 
     TRACE("(socket %04lx, %s, optval %s, optlen %d)\n", s,
           debugstr_sockopt(level, optname), debugstr_optval(optval, optlen),
@@ -5982,6 +5987,22 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     case WS_IPPROTO_IP:
         switch(optname)
         {
+        case WS_IP_ADD_SOURCE_MEMBERSHIP:
+        case WS_IP_DROP_SOURCE_MEMBERSHIP:
+        case WS_IP_BLOCK_SOURCE:
+        case WS_IP_UNBLOCK_SOURCE:
+        {
+            WS_IP_MREQ_SOURCE* val = (void*)optval;
+            mreq_source.imr_interface.s_addr = val->imr_interface.S_un.S_addr;
+            mreq_source.imr_multiaddr.s_addr = val->imr_multiaddr.S_un.S_addr;
+            mreq_source.imr_sourceaddr.s_addr = val->imr_sourceaddr.S_un.S_addr;
+
+            optval = (char*)&mreq_source;
+            optlen = sizeof(mreq_source);
+
+            convert_sockopt(&level, &optname);
+            break;
+        }
         case WS_IP_ADD_MEMBERSHIP:
         case WS_IP_DROP_MEMBERSHIP:
 #ifdef IP_HDRINCL
