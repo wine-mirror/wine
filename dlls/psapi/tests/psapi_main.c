@@ -259,7 +259,7 @@ static void test_GetPerformanceInfo(void)
         ok(ret, "GetPerformanceInfo failed with %d\n", GetLastError());
         ok(info.cb == sizeof(PERFORMANCE_INFORMATION), "got %d\n", info.cb);
 
-        ok(check_with_margin(info.CommitTotal,          sys_performance_info->TotalCommittedPages,  288),
+        ok(check_with_margin(info.CommitTotal,          sys_performance_info->TotalCommittedPages,  2048),
            "expected approximately %ld but got %d\n", info.CommitTotal, sys_performance_info->TotalCommittedPages);
 
         ok(check_with_margin(info.CommitLimit,          sys_performance_info->TotalCommitLimit,     32),
@@ -268,7 +268,7 @@ static void test_GetPerformanceInfo(void)
         ok(check_with_margin(info.CommitPeak,           sys_performance_info->PeakCommitment,       32),
            "expected approximately %ld but got %d\n", info.CommitPeak, sys_performance_info->PeakCommitment);
 
-        ok(check_with_margin(info.PhysicalAvailable,    sys_performance_info->AvailablePages,       512),
+        ok(check_with_margin(info.PhysicalAvailable,    sys_performance_info->AvailablePages,       2048),
            "expected approximately %ld but got %d\n", info.PhysicalAvailable, sys_performance_info->AvailablePages);
 
         /* TODO: info.SystemCache not checked yet - to which field(s) does this value correspond to? */
@@ -322,7 +322,7 @@ static void test_GetPerformanceInfo(void)
         }
         HeapFree(GetProcessHeap(), 0, sys_process_info);
 
-        ok(check_with_margin(info.HandleCount,  handle_count,  256),
+        ok(check_with_margin(info.HandleCount,  handle_count,  512),
            "expected approximately %d but got %d\n", info.HandleCount, handle_count);
 
         ok(check_with_margin(info.ProcessCount, process_count, 4),
