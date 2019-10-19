@@ -3114,6 +3114,16 @@ todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
+    hr = IMediaFilter_Run(filter, 0xdeadf00d);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Running);
+    ok(source.start_time == 0xdeadf00d, "Got time %s.\n", wine_dbgstr_longlong(source.start_time));
+    ok(sink.start_time == 0xdeadf00d, "Got time %s.\n", wine_dbgstr_longlong(sink.start_time));
+
+    hr = IMediaFilter_Pause(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Paused);
+
     hr = IMediaFilter_Stop(filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
@@ -3123,6 +3133,35 @@ todo_wine
     hr = IMediaFilter_Run(filter, 0);
 todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Running);
+    ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
+        "Expected time near %s, got %s.\n",
+        wine_dbgstr_longlong(start_time), wine_dbgstr_longlong(source.start_time));
+    ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
+        wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
+
+    Sleep(600);
+    hr = IMediaFilter_Pause(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Paused);
+
+    hr = IMediaFilter_Run(filter, 0);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Running);
+    ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
+        "Expected time near %s, got %s.\n",
+        wine_dbgstr_longlong(start_time), wine_dbgstr_longlong(source.start_time));
+    ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
+        wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
+
+    hr = IMediaFilter_Pause(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Paused);
+    Sleep(600);
+
+    start_time += 600 * 10000;
+    hr = IMediaFilter_Run(filter, 0);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
         "Expected time near %s, got %s.\n",
