@@ -724,7 +724,6 @@ static void test_GetModuleBaseName(void)
 static void test_ws_functions(void)
 {
     PSAPI_WS_WATCH_INFORMATION wswi[4096];
-    ULONG_PTR pages[4096];
     HANDLE ws_handle;
     char *addr;
     unsigned int i;
@@ -773,22 +772,6 @@ static void test_ws_functions(void)
         goto free_page;
     }
 
-    SetLastError(0xdeadbeef);
-    ret = QueryWorkingSet(hpQI, pages, 4096 * sizeof(ULONG_PTR));
-    todo_wine ok(ret == 1, "failed with %d\n", GetLastError());
-    if(ret == 1)
-    {
-       for(i = 0; i < pages[0]; i++)
-           if((pages[i+1] & ~0xfffL) == (ULONG_PTR)addr)
-	   {
-	       todo_wine ok(ret == 1, "QueryWorkingSet found our page\n");
-	       goto test_gwsc;
-	   }
-       
-       todo_wine ok(0, "QueryWorkingSet didn't find our page\n");
-    }
-
-test_gwsc:
     SetLastError(0xdeadbeef);
     ret = GetWsChanges(hpQI, wswi, sizeof(wswi));
     todo_wine ok(ret == 1, "failed with %d\n", GetLastError());
