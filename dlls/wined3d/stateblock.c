@@ -1462,6 +1462,29 @@ void CDECL wined3d_stateblock_set_sampler_state(struct wined3d_stateblock *state
     stateblock->changed.samplerState[sampler_idx] |= 1u << state;
 }
 
+void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock *stateblock,
+        UINT stage, enum wined3d_texture_stage_state state, DWORD value)
+{
+    TRACE("stateblock %p, stage %u, state %s, value %#x.\n",
+            stateblock, stage, debug_d3dtexturestate(state), value);
+
+    if (state > WINED3D_HIGHEST_TEXTURE_STATE)
+    {
+        WARN("Invalid state %#x passed.\n", state);
+        return;
+    }
+
+    if (stage > WINED3D_MAX_TEXTURES)
+    {
+        WARN("Attempting to set stage %u which is higher than the max stage %u, ignoring.\n",
+                stage, WINED3D_MAX_TEXTURES);
+        return;
+    }
+
+    stateblock->stateblock_state.texture_states[stage][state] = value;
+    stateblock->changed.textureState[stage] |= 1u << state;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union
