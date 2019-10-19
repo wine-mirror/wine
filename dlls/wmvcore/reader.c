@@ -1756,7 +1756,12 @@ static HRESULT WINAPI profile3_GetStreamCount(IWMProfile3 *iface, DWORD *count)
 {
     WMReader *This = impl_from_IWMProfile3(iface);
     FIXME("%p, %p\n", This, count);
-    return E_NOTIMPL;
+
+    if (!count)
+        return E_INVALIDARG;
+
+    *count = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI profile3_GetStream(IWMProfile3 *iface, DWORD index, IWMStreamConfig **config)
