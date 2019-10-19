@@ -2603,7 +2603,9 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_SetSamplerState(IDirect3DDev
     TRACE("iface %p, sampler %u, state %#x, value %#x.\n", iface, sampler, state, value);
 
     wined3d_mutex_lock();
-    wined3d_device_set_sampler_state(device->wined3d_device, sampler, state, value);
+    wined3d_stateblock_set_sampler_state(device->update_state, sampler, state, value);
+    if (!device->recording)
+        wined3d_device_set_sampler_state(device->wined3d_device, sampler, state, value);
     wined3d_mutex_unlock();
 
     return D3D_OK;
