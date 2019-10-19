@@ -44,12 +44,10 @@ static void test_QOSCreateHandle(void)
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
     ver.MajorVersion = 1;
     ver.MinorVersion = 0;
     ret = QOSCreateHandle(&ver, &h);
     todo_wine ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    todo_wine ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ver.MajorVersion = 1;
