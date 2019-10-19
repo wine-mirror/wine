@@ -199,7 +199,7 @@ static void test_create_delete_svc(void)
     CHAR username[UNLEN + 1], domain[MAX_PATH];
     DWORD user_size = UNLEN + 1;
     CHAR account[UNLEN + 3];
-    static const CHAR servicename         [] = "Winetest";
+    static const CHAR servicename         [] = "winetest_create_delete";
     static const CHAR pathname            [] = "we_dont_care.exe";
     static const CHAR empty               [] = "";
     static const CHAR password            [] = "secret";
@@ -428,12 +428,6 @@ static void test_create_delete_svc(void)
     CloseServiceHandle(svc_handle1);
     CloseServiceHandle(scm_handle);
 
-    /* Wait a while. One of the following tests also does a CreateService for the
-     * same servicename and this would result in an ERROR_SERVICE_MARKED_FOR_DELETE
-     * error if we do this too quickly. Vista seems more picky than the others.
-     */
-    Sleep(1000);
-
     /* And a final NULL check */
     SetLastError(0xdeadbeef);
     ret = DeleteService(NULL);
@@ -453,7 +447,7 @@ static void test_get_displayname(void)
     static const WCHAR spoolerW[] = {'S','p','o','o','l','e','r',0};
     static const WCHAR deadbeefW[] = {'D','e','a','d','b','e','e','f',0};
     static const WCHAR abcW[] = {'A','B','C',0};
-    static const CHAR servicename[] = "Winetest";
+    static const CHAR servicename[] = "winetest_displayname";
     static const CHAR pathname[] = "we_dont_care.exe";
 
     /* Having NULL for the size of the buffer will crash on W2K3 */
@@ -725,9 +719,6 @@ static void test_get_displayname(void)
 
     CloseServiceHandle(svc_handle);
     CloseServiceHandle(scm_handle);
-
-    /* Wait a while. Just in case one of the following tests does a CreateService again */
-    Sleep(1000);
 }
 
 static void test_get_servicekeyname(void)
@@ -1861,7 +1852,7 @@ static void test_sequence(void)
     BOOL ret, is_nt4;
     QUERY_SERVICE_CONFIGA *config;
     DWORD given, needed;
-    static const CHAR servicename [] = "Winetest";
+    static const CHAR servicename [] = "winetest_sequence";
     static const CHAR displayname [] = "Winetest dummy service";
     static const CHAR displayname2[] = "Winetest dummy service (2)";
     static const CHAR pathname    [] = "we_dont_care.exe";
@@ -2029,10 +2020,6 @@ static void test_sequence(void)
     ret = DeleteService(svc_handle);
     ok(ret, "Expected success, got error %u\n", GetLastError());
     CloseServiceHandle(svc_handle);
-
-    /* Wait a while. The following test does a CreateService again */
-    Sleep(1000);
-
     CloseServiceHandle(scm_handle);
     HeapFree(GetProcessHeap(), 0, config);
 }
@@ -2046,7 +2033,7 @@ static void test_queryconfig2(void)
     LPSERVICE_DESCRIPTIONA pConfig = (LPSERVICE_DESCRIPTIONA)buffer;
     LPSERVICE_DESCRIPTIONW pConfigW = (LPSERVICE_DESCRIPTIONW)buffer;
     SERVICE_PRESHUTDOWN_INFO preshutdown_info;
-    static const CHAR servicename [] = "Winetest";
+    static const CHAR servicename [] = "winetest_query_config2";
     static const CHAR displayname [] = "Winetest dummy service";
     static const CHAR pathname    [] = "we_dont_care.exe";
     static const CHAR dependencies[] = "Master1\0Master2\0+MasterGroup1\0";
@@ -2304,12 +2291,7 @@ static void test_queryconfig2(void)
 
 cleanup:
     DeleteService(svc_handle);
-
     CloseServiceHandle(svc_handle);
-
-    /* Wait a while. The following test does a CreateService again */
-    Sleep(1000);
-
     CloseServiceHandle(scm_handle);
 }
 
@@ -2512,7 +2494,7 @@ static void test_start_stop(void)
     BOOL ret;
     SC_HANDLE scm_handle, svc_handle;
     DWORD le, is_nt4;
-    static const char servicename[] = "Winetest";
+    static const char servicename[] = "winetest_start_stop";
     char cmd[MAX_PATH+20];
     const char* displayname;
 
@@ -2592,17 +2574,13 @@ cleanup:
         DeleteService(svc_handle);
         CloseServiceHandle(svc_handle);
     }
-
-    /* Wait a while. The following test does a CreateService again */
-    Sleep(1000);
-
     CloseServiceHandle(scm_handle);
 }
 
 static void test_refcount(void)
 {
     SC_HANDLE scm_handle, svc_handle1, svc_handle2, svc_handle3, svc_handle4, svc_handle5;
-    static const CHAR servicename         [] = "Winetest";
+    static const CHAR servicename         [] = "winetest_refcount";
     static const CHAR pathname            [] = "we_dont_care.exe";
     BOOL ret;
 
@@ -2681,10 +2659,6 @@ static void test_refcount(void)
     /* Delete the service */
     ret = DeleteService(svc_handle5);
     ok(ret, "Expected success (err=%d)\n", GetLastError());
-
-    /* Wait a while. Just in case one of the following tests does a CreateService again */
-    Sleep(1000);
-
     CloseServiceHandle(svc_handle5);
     CloseServiceHandle(scm_handle);
 }
