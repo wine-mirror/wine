@@ -204,7 +204,6 @@ typedef struct _IFilterGraphImpl {
     GUID timeformatseek;
     REFERENCE_TIME start_time;
     REFERENCE_TIME pause_time;
-    LONGLONG stop_position;
     LONG recursioncount;
     IUnknown *pSite;
     LONG version;
@@ -2583,9 +2582,8 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *
         (dwCurrentFlags & 0x7) != AM_SEEKING_NoPositioning)
         FIXME("Adjust method %x not handled yet!\n", dwCurrentFlags & 0x7);
 
-    if ((dwStopFlags & 0x7) == AM_SEEKING_AbsolutePositioning)
-        This->stop_position = *pStop;
-    else if ((dwStopFlags & 0x7) != AM_SEEKING_NoPositioning)
+    if ((dwStopFlags & 0x7) != AM_SEEKING_NoPositioning
+            && (dwStopFlags & 0x7) != AM_SEEKING_AbsolutePositioning)
         FIXME("Stop position not handled yet!\n");
 
     if (state == State_Running && !(dwCurrentFlags & AM_SEEKING_NoFlush))
@@ -5702,7 +5700,6 @@ static HRESULT filter_graph_common_create(IUnknown *outer, void **out, BOOL thre
     fimpl->nItfCacheEntries = 0;
     memcpy(&fimpl->timeformatseek, &TIME_FORMAT_MEDIA_TIME, sizeof(GUID));
     fimpl->start_time = fimpl->pause_time = 0;
-    fimpl->stop_position = -1;
     fimpl->punkFilterMapper2 = NULL;
     fimpl->recursioncount = 0;
     fimpl->version = 0;
