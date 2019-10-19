@@ -48,7 +48,6 @@ extern const union cptable cptable_20127;  /* 7-bit ASCII */
 
 static const union cptable *ansi_table = &cptable_20127;
 static const union cptable *oem_table = &cptable_20127;
-static const union cptable* unix_table; /* NULL if UTF8 */
 
 
 /**************************************************************************
@@ -61,28 +60,7 @@ void CDECL __wine_init_codepages( const union cptable *ansi, const union cptable
 {
     ansi_table = ansi;
     oem_table = oem;
-    unix_table = ucp;
     NlsAnsiCodePage = ansi->info.codepage;
-}
-
-int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int dstlen)
-{
-#ifdef __APPLE__
-    /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
-    if (!unix_table) flags |= MB_COMPOSITE;
-#endif
-    return (unix_table) ?
-        wine_cp_mbstowcs( unix_table, flags, src, srclen, dst, dstlen ) :
-        wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
-}
-
-int ntdll_wcstoumbs(DWORD flags, const WCHAR* src, int srclen, char* dst, int dstlen,
-                    const char* defchar, int *used )
-{
-    if (unix_table)
-        return wine_cp_wcstombs( unix_table, flags, src, srclen, dst, dstlen, defchar, used );
-    if (used) *used = 0;  /* all chars are valid for UTF-8 */
-    return wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
 }
 
 /**************************************************************************
