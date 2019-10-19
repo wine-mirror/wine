@@ -55,8 +55,7 @@ static const union cptable *oem_table = &cptable_20127;
  *
  * Set the code page once kernel32 is loaded. Should be done differently.
  */
-void CDECL __wine_init_codepages( const union cptable *ansi, const union cptable *oem,
-                                  const union cptable *ucp)
+void CDECL __wine_init_codepages( const union cptable *ansi, const union cptable *oem )
 {
     ansi_table = ansi;
     oem_table = oem;

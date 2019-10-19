@@ -336,6 +336,12 @@ static void init_unix_codepage(void) { }
 
 #endif  /* __APPLE__ || __ANDROID__ */
 
+UINT CDECL __wine_get_unix_codepage(void)
+{
+    if (!unix_table) return CP_UTF8;
+    return unix_table->info.codepage;
+}
+
 /* check if a given Unicode char is OK in a DOS short name */
 static inline BOOL is_invalid_dos_char( WCHAR ch )
 {

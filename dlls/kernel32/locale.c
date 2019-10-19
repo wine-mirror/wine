@@ -73,79 +73,15 @@ static const union cptable *oem_cptable;
 static const union cptable *mac_cptable;
 static const union cptable *unix_cptable;  /* NULL if UTF8 */
 
-/* Charset to codepage map, sorted by name. */
-static const struct charset_entry
-{
-    const char *charset_name;
-    UINT        codepage;
-} charset_names[] =
-{
-    { "BIG5", 950 },
-    { "CP1250", 1250 },
-    { "CP1251", 1251 },
-    { "CP1252", 1252 },
-    { "CP1253", 1253 },
-    { "CP1254", 1254 },
-    { "CP1255", 1255 },
-    { "CP1256", 1256 },
-    { "CP1257", 1257 },
-    { "CP1258", 1258 },
-    { "CP932", 932 },
-    { "CP936", 936 },
-    { "CP949", 949 },
-    { "CP950", 950 },
-    { "EUCJP", 20932 },
-    { "GB2312", 936 },
-    { "IBM037", 37 },
-    { "IBM1026", 1026 },
-    { "IBM424", 424 },
-    { "IBM437", 437 },
-    { "IBM500", 500 },
-    { "IBM850", 850 },
-    { "IBM852", 852 },
-    { "IBM855", 855 },
-    { "IBM857", 857 },
-    { "IBM860", 860 },
-    { "IBM861", 861 },
-    { "IBM862", 862 },
-    { "IBM863", 863 },
-    { "IBM864", 864 },
-    { "IBM865", 865 },
-    { "IBM866", 866 },
-    { "IBM869", 869 },
-    { "IBM874", 874 },
-    { "IBM875", 875 },
-    { "ISO88591", 28591 },
-    { "ISO885910", 28600 },
-    { "ISO885913", 28603 },
-    { "ISO885914", 28604 },
-    { "ISO885915", 28605 },
-    { "ISO885916", 28606 },
-    { "ISO88592", 28592 },
-    { "ISO88593", 28593 },
-    { "ISO88594", 28594 },
-    { "ISO88595", 28595 },
-    { "ISO88596", 28596 },
-    { "ISO88597", 28597 },
-    { "ISO88598", 28598 },
-    { "ISO88599", 28599 },
-    { "KOI8R", 20866 },
-    { "KOI8U", 21866 },
-    { "UTF8", CP_UTF8 }
-};
-
-
 struct locale_name
 {
     WCHAR  win_name[128];   /* Windows name ("en-US") */
     WCHAR  lang[128];       /* language ("en") (note: buffer contains the other strings too) */
     WCHAR *country;         /* country ("US") */
-    WCHAR *charset;         /* charset ("UTF-8") for Unix format only */
     WCHAR *script;          /* script ("Latn") for Windows format only */
     WCHAR *modifier;        /* modifier or sort order */
     LCID   lcid;            /* corresponding LCID */
-    int    matches;         /* number of elements matching LCID (0..4) */
-    UINT   codepage;        /* codepage corresponding to charset */
+    int    matches;         /* number of elements matching LCID (0..3) */
 };
 
 /* locale ids corresponding to the various Unix locale parameters */
@@ -332,35 +268,6 @@ static const union cptable *get_codepage_table( unsigned int codepage )
 }
 
 
-/***********************************************************************
- *              charset_cmp (internal)
- */
-static int charset_cmp( const void *name, const void *entry )
-{
-    const struct charset_entry *charset = entry;
-    return _strnicmp( name, charset->charset_name, -1 );
-}
-
-/***********************************************************************
- *		find_charset
- */
-static UINT find_charset( const WCHAR *name )
-{
-    const struct charset_entry *entry;
-    char charset_name[16];
-    size_t i, j;
-
-    /* remove punctuation characters from charset name */
-    for (i = j = 0; name[i] && j < sizeof(charset_name)-1; i++)
-        if (isalnum((unsigned char)name[i])) charset_name[j++] = name[i];
-    charset_name[j] = 0;
-
-    entry = bsearch( charset_name, charset_names, ARRAY_SIZE( charset_names ),
-                     sizeof(charset_names[0]), charset_cmp );
-    if (entry) return entry->codepage;
-    return 0;
-}
-
 static LANGID get_default_sublang( LANGID lang )
 {
     switch (lang)
@@ -398,7 +305,7 @@ static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
     {
         if (!strcmpiW( data->win_name, buffer ))
         {
-            matches = 4;  /* everything matches */
+            matches = 3;  /* everything matches */
             goto done;
         }
     }
@@ -442,16 +349,6 @@ static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
         if (lang == get_default_sublang( def_lang )) matches++;
     }
 
-    if (data->codepage)
-    {
-        UINT unix_cp;
-        if (GetLocaleInfoW( lcid, LOCALE_IDEFAULTUNIXCODEPAGE | LOCALE_RETURN_NUMBER,
-                            (LPWSTR)&unix_cp, sizeof(unix_cp)/sizeof(WCHAR) ))
-        {
-            if (unix_cp == data->codepage) matches++;
-        }
-    }
-
     /* FIXME: check sort order */
 
 done:
@@ -460,7 +357,7 @@ done:
         data->lcid = lcid;
         data->matches = matches;
     }
-    return (data->matches < 4);  /* no need to continue for perfect match */
+    return (data->matches < 3);  /* no need to continue for perfect match */
 }
 
 
@@ -483,17 +380,16 @@ static void parse_locale_name( const WCHAR *str, struct locale_name *name )
 
     TRACE("%s\n", debugstr_w(str));
 
-    name->country = name->charset = name->script = name->modifier = NULL;
+    name->country = name->script = name->modifier = NULL;
     name->lcid = MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
     name->matches = 0;
-    name->codepage = 0;
     name->win_name[0] = 0;
     lstrcpynW( name->lang, str, ARRAY_SIZE( name->lang ));
 
     if (!*name->lang)
     {
         name->lcid = LOCALE_INVARIANT;
-        name->matches = 4;
+        name->matches = 3;
         return;
     }
 
@@ -501,7 +397,7 @@ static void parse_locale_name( const WCHAR *str, struct locale_name *name )
     {
         if (!strcmpW( name->lang, posixW ) || !strcmpW( name->lang, cW ))
         {
-            name->matches = 4;  /* perfect match for default English lcid */
+            name->matches = 3;  /* perfect match for default English lcid */
             return;
         }
         strcpyW( name->win_name, name->lang );
@@ -541,7 +437,7 @@ static void parse_locale_name( const WCHAR *str, struct locale_name *name )
         if (p && *p == '.')
         {
             *p++ = 0;
-            name->charset = p;
+            /* charset, ignore */
             p = strchrW( p, '@' );
         }
         if (p)
@@ -550,12 +446,8 @@ static void parse_locale_name( const WCHAR *str, struct locale_name *name )
             name->modifier = p;
         }
 
-        if (name->charset)
-            name->codepage = find_charset( name->charset );
-
         /* rebuild a Windows name if possible */
 
-        if (name->charset) goto done;  /* can't specify charset in Windows format */
         if (name->modifier && strcmpW( name->modifier, latinW ))
             goto done;  /* only Latn script supported for now */
         strcpyW( name->win_name, name->lang );
@@ -962,7 +854,7 @@ void LOCALE_InitRegistry(void)
  * Return a locale identifier string reflecting the Mac locale, in a form
  * that parse_locale_name() will understand.  So, strip out unusual
  * things like script, variant, etc.  Or, rather, just construct it as
- * <lang>[_<country>].UTF-8.
+ * <lang>[_<country>]
  */
 static const char* get_mac_locale(void)
 {
@@ -981,8 +873,6 @@ static const char* get_mac_locale(void)
             locale_string = CFStringCreateCopy(NULL, lang);
 
         CFStringGetCString(locale_string, mac_locale, sizeof(mac_locale), kCFStringEncodingUTF8);
-        strcat(mac_locale, ".UTF-8");
-
         CFRelease(locale);
         CFRelease(locale_string);
     }
@@ -1073,7 +963,6 @@ static const char* get_locale(int category, const char* category_name)
                         else
                             locale_string = CFStringCreateCopy( NULL, lang );
                         CFStringGetCString( locale_string, messages_locale, sizeof(messages_locale), kCFStringEncodingUTF8 );
-                        strcat( messages_locale, ".UTF-8" );
 
                         CFRelease( locale_string );
                         if (locale) CFRelease( locale );
@@ -1100,19 +989,17 @@ static const char* get_locale(int category, const char* category_name)
 /***********************************************************************
  *           setup_unix_locales
  */
-static UINT setup_unix_locales(void)
+static void setup_unix_locales(void)
 {
     struct locale_name locale_name;
     WCHAR buffer[128], ctype_buff[128];
     const char *locale;
-    UINT unix_cp = 0;
 
     if ((locale = get_locale( LC_CTYPE, "LC_CTYPE" )))
     {
         strcpynAtoW( ctype_buff, locale, ARRAY_SIZE( ctype_buff ));
         parse_locale_name( ctype_buff, &locale_name );
         lcid_LC_CTYPE = locale_name.lcid;
-        unix_cp = locale_name.codepage;
     }
     if (!lcid_LC_CTYPE)  /* this one needs a default value */
         lcid_LC_CTYPE = MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
@@ -1149,8 +1036,6 @@ static UINT setup_unix_locales(void)
 #endif
 
 #undef GET_UNIX_LOCALE
-
-    return unix_cp;
 }
 
 
@@ -3652,8 +3537,8 @@ INT WINAPI CompareStringA(LCID lcid, DWORD flags,
  */
 void LOCALE_Init(void)
 {
-    extern void CDECL __wine_init_codepages( const union cptable *ansi_cp, const union cptable *oem_cp,
-                                             const union cptable *unix_cp );
+    extern void CDECL __wine_init_codepages( const union cptable *ansi_cp, const union cptable *oem_cp );
+    extern UINT CDECL __wine_get_unix_codepage(void);
 
     UINT ansi_cp = 1252, oem_cp = 437, mac_cp = 10000, unix_cp;
 
@@ -3677,13 +3562,8 @@ void LOCALE_Init(void)
     }
 #endif /* __APPLE__ */
 
-    unix_cp = setup_unix_locales();
+    setup_unix_locales();
     if (!lcid_LC_MESSAGES) lcid_LC_MESSAGES = lcid_LC_CTYPE;
-
-#ifdef __APPLE__
-    if (!unix_cp)
-        unix_cp = CP_UTF8;  /* default to utf-8 even if we don't get a valid locale */
-#endif
 
     NtSetDefaultUILanguage( LANGIDFROMLCID(lcid_LC_MESSAGES) );
     NtSetDefaultLocale( TRUE, lcid_LC_MESSAGES );
@@ -3694,9 +3574,6 @@ void LOCALE_Init(void)
                     (LPWSTR)&mac_cp, sizeof(mac_cp)/sizeof(WCHAR) );
     GetLocaleInfoW( LOCALE_USER_DEFAULT, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
                     (LPWSTR)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR) );
-    if (!unix_cp)
-        GetLocaleInfoW( LOCALE_USER_DEFAULT, LOCALE_IDEFAULTUNIXCODEPAGE | LOCALE_RETURN_NUMBER,
-                        (LPWSTR)&unix_cp, sizeof(unix_cp)/sizeof(WCHAR) );
 
     if (!(ansi_cptable = wine_cp_get_table( ansi_cp )))
         ansi_cptable = wine_cp_get_table( 1252 );
@@ -3704,13 +3581,10 @@ void LOCALE_Init(void)
         oem_cptable  = wine_cp_get_table( 437 );
     if (!(mac_cptable = wine_cp_get_table( mac_cp )))
         mac_cptable  = wine_cp_get_table( 10000 );
-    if (unix_cp != CP_UTF8)
-    {
-        if (!(unix_cptable = wine_cp_get_table( unix_cp )))
-            unix_cptable  = wine_cp_get_table( 28591 );
-    }
 
-    __wine_init_codepages( ansi_cptable, oem_cptable, unix_cptable );
+    __wine_init_codepages( ansi_cptable, oem_cptable );
+    unix_cp = __wine_get_unix_codepage();
+    if (unix_cp != CP_UTF8) unix_cptable = wine_cp_get_table( unix_cp );
 
     TRACE( "ansi=%03d oem=%03d mac=%03d unix=%03d\n",
            ansi_cptable->info.codepage, oem_cptable->info.codepage,
