@@ -3911,7 +3911,8 @@ static BOOL can_do_https(void)
     ok(req != NULL, "HttpOpenRequest failed\n");
 
     ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
-    ok(ret || broken(GetLastError() == ERROR_INTERNET_CANNOT_CONNECT),
+    ok(ret || broken(GetLastError() == ERROR_INTERNET_CANNOT_CONNECT)
+           || broken(GetLastError() == ERROR_INTERNET_SECURITY_CHANNEL_ERROR) /* WinXP */,
         "request failed: %u\n", GetLastError());
 
     InternetCloseHandle(req);
