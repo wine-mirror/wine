@@ -114,12 +114,12 @@ static BOOL load_library_as_datafile( LPCWSTR load_path, DWORD flags, LPCWSTR na
 
         if (flags & LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE)
         {
-            struct exclusive_datafile *file = HeapAlloc( GetProcessHeap(), 0, sizeof(*file) );
-            if (!file) goto failed;
-            file->module = *mod_ret;
-            file->file   = file;
-            list_add_head( &exclusive_datafile_list, &file->entry );
-            TRACE( "delaying close %p for module %p\n", file->file, file->module );
+            struct exclusive_datafile *datafile = HeapAlloc( GetProcessHeap(), 0, sizeof(*datafile) );
+            if (!datafile) goto failed;
+            datafile->module = *mod_ret;
+            datafile->file   = file;
+            list_add_head( &exclusive_datafile_list, &datafile->entry );
+            TRACE( "delaying close %p for module %p\n", datafile->file, datafile->module );
             return TRUE;
         }
     }
