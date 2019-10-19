@@ -1695,6 +1695,8 @@ static HRESULT parse_scriptlet_file(struct scriptlet_factory *factory, const WCH
     hres = next_xml_node(factory, &node_type);
     if (hres == S_OK && node_type == XmlNodeType_XmlDeclaration)
         hres = next_xml_node(factory, &node_type);
+    if (FAILED(hres))
+        return hres;
 
     if (node_type != XmlNodeType_Element || !is_xml_name(factory, L"component"))
     {
