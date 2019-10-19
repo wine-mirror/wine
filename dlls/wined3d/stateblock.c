@@ -1443,6 +1443,25 @@ void CDECL wined3d_stateblock_set_blend_factor(struct wined3d_stateblock *stateb
     stateblock->changed.blend_state = TRUE;
 }
 
+void CDECL wined3d_stateblock_set_sampler_state(struct wined3d_stateblock *stateblock,
+        UINT sampler_idx, enum wined3d_sampler_state state, DWORD value)
+{
+    TRACE("stateblock %p, sampler_idx %u, state %s, value %#x.\n",
+            stateblock, sampler_idx, debug_d3dsamplerstate(state), value);
+
+    if (sampler_idx >= WINED3DVERTEXTEXTURESAMPLER0 && sampler_idx <= WINED3DVERTEXTEXTURESAMPLER3)
+        sampler_idx -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
+
+    if (sampler_idx >= ARRAY_SIZE(stateblock->stateblock_state.sampler_states))
+    {
+        WARN("Invalid sampler %u.\n", sampler_idx);
+        return;
+    }
+
+    stateblock->stateblock_state.sampler_states[sampler_idx][state] = value;
+    stateblock->changed.samplerState[sampler_idx] |= 1u << state;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union
