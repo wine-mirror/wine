@@ -2466,24 +2466,43 @@ static HRESULT WINAPI MediaSeeking_GetDuration(IMediaSeeking *iface, LONGLONG *p
     return hr;
 }
 
-static HRESULT WINAPI MediaSeeking_GetStopPosition(IMediaSeeking *iface, LONGLONG *pStop)
+static HRESULT WINAPI MediaSeeking_GetStopPosition(IMediaSeeking *iface, LONGLONG *stop)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
-    HRESULT hr = S_OK;
+    IFilterGraphImpl *graph = impl_from_IMediaSeeking(iface);
+    HRESULT hr = E_NOTIMPL, filter_hr;
+    IMediaSeeking *seeking;
+    struct filter *filter;
+    LONGLONG filter_stop;
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, pStop);
+    TRACE("graph %p, stop %p.\n", graph, stop);
 
-    if (!pStop)
+    if (!stop)
         return E_POINTER;
 
-    EnterCriticalSection(&This->cs);
-    if (This->stop_position < 0)
-        /* Stop position not set, use duration instead */
-        hr = IMediaSeeking_GetDuration(iface, pStop);
-    else
-        *pStop = This->stop_position;
-    LeaveCriticalSection(&This->cs);
+    *stop = 0;
 
+    EnterCriticalSection(&graph->cs);
+
+    LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
+    {
+        if (FAILED(IBaseFilter_QueryInterface(filter->filter, &IID_IMediaSeeking, (void **)&seeking)))
+            continue;
+
+        filter_hr = IMediaSeeking_GetStopPosition(seeking, &filter_stop);
+        IMediaSeeking_Release(seeking);
+        if (SUCCEEDED(filter_hr))
+        {
+            hr = S_OK;
+            *stop = max(*stop, filter_stop);
+        }
+        else if (filter_hr != E_NOTIMPL)
+        {
+            LeaveCriticalSection(&graph->cs);
+            return filter_hr;
+        }
+    }
+
+    LeaveCriticalSection(&graph->cs);
     return hr;
 }
 

@@ -3766,31 +3766,31 @@ static void test_graph_seeking(void)
     filter2.seek_stop = 0x65432;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(time == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter2.seek_stop = 0x54321;
     filter1.seek_stop = 0x65432;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(time == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_hr = filter2.seek_hr = 0xbeef;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(time == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_hr = E_NOTIMPL;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(time == 0x54321, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 0x54321, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_hr = 0xdeadbeef;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
-    todo_wine ok(hr == 0xdeadbeef, "Got hr %#x.\n", hr);
+    ok(hr == 0xdeadbeef, "Got hr %#x.\n", hr);
 
     filter1.seek_hr = filter2.seek_hr = E_NOTIMPL;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
     filter1.seek_hr = filter2.seek_hr = S_OK;
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
@@ -3801,7 +3801,7 @@ static void test_graph_seeking(void)
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!current, "Got time %s.\n", wine_dbgstr_longlong(current));
-    todo_wine ok(stop == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(stop));
+    ok(stop == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     current = 0x123;
     stop = 0x321;
