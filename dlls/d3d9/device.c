@@ -2575,7 +2575,9 @@ static HRESULT WINAPI d3d9_device_SetTextureStageState(IDirect3DDevice9Ex *iface
     }
 
     wined3d_mutex_lock();
-    wined3d_device_set_texture_stage_state(device->wined3d_device, stage, tss_lookup[state], value);
+    wined3d_stateblock_set_texture_stage_state(device->update_state, stage, tss_lookup[state], value);
+    if (!device->recording)
+        wined3d_device_set_texture_stage_state(device->wined3d_device, stage, tss_lookup[state], value);
     wined3d_mutex_unlock();
 
     return D3D_OK;
