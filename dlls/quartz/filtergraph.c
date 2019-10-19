@@ -2560,8 +2560,18 @@ struct pos_args {
 static HRESULT WINAPI found_setposition(IFilterGraphImpl *This, IMediaSeeking *seek, DWORD_PTR pargs)
 {
     struct pos_args *args = (void*)pargs;
+    LONGLONG current = args->current ? *args->current : 0, stop = args->stop ? *args->stop : 0;
+    HRESULT hr;
 
-    return IMediaSeeking_SetPositions(seek, args->current, args->curflags, args->stop, args->stopflags);
+    if (SUCCEEDED(hr = IMediaSeeking_SetPositions(seek, &current,
+            args->curflags, &stop, args->stopflags)))
+    {
+        if (args->current && (args->curflags & AM_SEEKING_ReturnTime))
+            *args->current = current;
+        if (args->stop && (args->stopflags & AM_SEEKING_ReturnTime))
+            *args->stop = stop;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *pCurrent,
