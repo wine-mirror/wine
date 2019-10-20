@@ -182,7 +182,7 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
     hr = IDirectInputDevice_Unacquire(pKeyboard);
     ok(SUCCEEDED(hr), "IDirectInputDevice_Unacquire() failed: %08x\n", hr);
 
-    if (pKeyboard) IUnknown_Release(pKeyboard);
+    IUnknown_Release(pKeyboard);
 
     ActivateKeyboardLayout(hkl_orig, 0);
     UnloadKeyboardLayout(hkl);
@@ -272,7 +272,7 @@ static void test_get_prop(IDirectInputA *pDI, HWND hwnd)
     hr = IDirectInputDevice_GetProperty(pKeyboard, DIPROP_RANGE, &diprg.diph);
     ok(hr == DIERR_UNSUPPORTED, "IDirectInputDevice_GetProperty() did not return DIPROP_RANGE but: %08x\n", hr);
 
-    if (pKeyboard) IUnknown_Release(pKeyboard);
+    IUnknown_Release(pKeyboard);
 }
 
 static void test_capabilities(IDirectInputA *pDI, HWND hwnd)

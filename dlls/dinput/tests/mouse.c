@@ -198,7 +198,7 @@ static void test_acquire(IDirectInputA *pDI, HWND hwnd)
     /* Granularity of Y axis should be 1! */
     ok(hr == S_OK && di_op.dwData == 1, "GetProperty(): %08x, dwData: %i but should be 1.\n", hr, di_op.dwData);
 
-    if (pMouse) IUnknown_Release(pMouse);
+    IUnknown_Release(pMouse);
 
     DestroyWindow( hwnd2 );
 }
@@ -259,7 +259,7 @@ static void test_mouse_EnumObjects(IDirectInputA *pDI)
     hr = IDirectInputDevice_EnumObjects(pMouse, EnumAxes, NULL, DIDFT_ALL);
     ok(hr==DI_OK,"IDirectInputDevice_EnumObjects() failed: %08x\n", hr);
 
-    if (pMouse) IUnknown_Release(pMouse);
+    IUnknown_Release(pMouse);
 }
 
 static void mouse_tests(void)

@@ -190,15 +190,15 @@ static BOOL CALLBACK enum_devices(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
         trace("Testing device %p \"%s\"\n", device, lpddi->tszInstanceName);
 
         hr = IUnknown_QueryInterface(device, &IID_IDirectInputDevice2A, (LPVOID*)&obj);
-        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice7A) failed: %08x\n", hr);
+        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice2A) failed: %08x\n", hr);
         test_object_info(obj, data->hwnd);
-        if (obj) IUnknown_Release(obj);
+        IUnknown_Release(obj);
         obj = NULL;
 
         hr = IUnknown_QueryInterface(device, &IID_IDirectInputDevice2W, (LPVOID*)&obj);
-        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice7W) failed: %08x\n", hr);
+        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice2W) failed: %08x\n", hr);
         test_object_info(obj, data->hwnd);
-        if (obj) IUnknown_Release(obj);
+        IUnknown_Release(obj);
 
         IUnknown_Release(device);
     }
