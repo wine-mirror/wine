@@ -1738,7 +1738,7 @@ static void test_GetFamilyNames(void)
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
 
     hr = IDWriteLocalizedStrings_GetString(names, 10, NULL, 0);
-    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
 
     if (0)
         hr = IDWriteLocalizedStrings_GetString(names, 0, NULL, 100);
@@ -1751,12 +1751,12 @@ static void test_GetFamilyNames(void)
     buffer[0] = 1;
     hr = IDWriteLocalizedStrings_GetString(names, 0, buffer, len-1);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
-    ok(buffer[0] == 0, "got %x\n", buffer[0]);
+    ok(buffer[0] == 0 || broken(buffer[0] == 'T'), "Unexpected buffer contents, %#x.\n", buffer[0]);
 
     buffer[0] = 1;
     hr = IDWriteLocalizedStrings_GetString(names, 0, buffer, len);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
-    ok(buffer[0] == 0, "got %x\n", buffer[0]);
+    ok(buffer[0] == 0 || broken(buffer[0] == 'T'), "Unexpected buffer contents, %#x.\n", buffer[0]);
 
     buffer[0] = 0;
     hr = IDWriteLocalizedStrings_GetString(names, 0, buffer, len+1);
