@@ -375,7 +375,7 @@ static void test_PrintDlgExW(void)
 
     /* PrintDlgEx not present before w2k */
     if (!pPrintDlgExW) {
-        skip("PrintDlgExW not available\n");
+        win_skip("PrintDlgExW not available\n");
         return;
     }
 
