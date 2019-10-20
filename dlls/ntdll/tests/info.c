@@ -488,7 +488,7 @@ static void test_query_module(void)
     /* Loop through all the modules/drivers, Wine doesn't get here (yet) */
     for (i = 0; i < ModuleCount ; i++)
     {
-        ok( i == sm->Id, "Id (%d) should have matched %u\n", sm->Id, i);
+        ok( i == sm->LoadOrderIndex, "LoadOrderIndex (%d) should have matched %u\n", sm->LoadOrderIndex, i);
         sm++;
     }
 

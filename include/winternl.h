@@ -2271,14 +2271,14 @@ typedef void (CALLBACK *PLDR_DLL_NOTIFICATION_FUNCTION)(ULONG, LDR_DLL_NOTIFICAT
 
 typedef struct _SYSTEM_MODULE
 {
-    PVOID               Reserved1;                      /* 00/00 */
-    PVOID               Reserved2;                      /* 04/08 */
+    PVOID               Section;                        /* 00/00 */
+    PVOID               MappedBaseAddress;              /* 04/08 */
     PVOID               ImageBaseAddress;               /* 08/10 */
     ULONG               ImageSize;                      /* 0c/18 */
     ULONG               Flags;                          /* 10/1c */
-    WORD                Id;                             /* 14/20 */
-    WORD                Rank;                           /* 16/22 */
-    WORD                Unknown;                        /* 18/24 */
+    WORD                LoadOrderIndex;                 /* 14/20 */
+    WORD                InitOrderIndex;                 /* 16/22 */
+    WORD                LoadCount;                      /* 18/24 */
     WORD                NameOffset;                     /* 1a/26 */
     BYTE                Name[MAXIMUM_FILENAME_LENGTH];  /* 1c/28 */
 } SYSTEM_MODULE, *PSYSTEM_MODULE;

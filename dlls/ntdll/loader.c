@@ -3259,14 +3259,14 @@ NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi,
         size += sizeof(*sm);
         if (size <= buf_size)
         {
-            sm->Reserved1 = 0; /* FIXME */
-            sm->Reserved2 = 0; /* FIXME */
+            sm->Section = 0; /* FIXME */
+            sm->MappedBaseAddress = mod->BaseAddress;
             sm->ImageBaseAddress = mod->BaseAddress;
             sm->ImageSize = mod->SizeOfImage;
             sm->Flags = mod->Flags;
-            sm->Id = id++;
-            sm->Rank = 0; /* FIXME */
-            sm->Unknown = 0; /* FIXME */
+            sm->LoadOrderIndex = id++;
+            sm->InitOrderIndex = 0; /* FIXME */
+            sm->LoadCount = mod->LoadCount;
             str.Length = 0;
             str.MaximumLength = MAXIMUM_FILENAME_LENGTH;
             str.Buffer = (char*)sm->Name;
