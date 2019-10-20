@@ -740,7 +740,7 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     RECT rc, *lprc;
     GpStatus stat;
 
-    TRACE("(%p %d %p %d %p %p)\n", hdc, type, frameRect, frameUnit, desc, metafile);
+    TRACE("(%p %d %s %d %p %p)\n", hdc, type, debugstr_rectf(frameRect), frameUnit, desc, metafile);
 
     if (!hdc || type < EmfTypeEmfOnly || type > EmfTypeEmfPlusDual || !metafile)
         return InvalidParameter;
@@ -885,7 +885,7 @@ GpStatus WINGDIPAPI GdipRecordMetafileStream(IStream *stream, HDC hdc, EmfType t
 {
     GpStatus stat;
 
-    TRACE("(%p %p %d %p %d %p %p)\n", stream, hdc, type, frameRect, frameUnit, desc, metafile);
+    TRACE("(%p %p %d %s %d %p %p)\n", stream, hdc, type, debugstr_rectf(frameRect), frameUnit, desc, metafile);
 
     if (!stream)
         return InvalidParameter;
@@ -4048,7 +4048,7 @@ GpStatus WINGDIPAPI GdipRecordMetafileFileName(GDIPCONST WCHAR* fileName,
                             MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc,
                             GpMetafile **metafile)
 {
-    FIXME("%s %p %d %p %d %s %p stub!\n", debugstr_w(fileName), hdc, type, pFrameRect,
+    FIXME("%s %p %d %s %d %s %p stub!\n", debugstr_w(fileName), hdc, type, debugstr_rectf(pFrameRect),
                                  frameUnit, debugstr_w(desc), metafile);
 
     return NotImplemented;

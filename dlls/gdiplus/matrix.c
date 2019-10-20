@@ -86,7 +86,8 @@ GpStatus WINGDIPAPI GdipCreateMatrix3(GDIPCONST GpRectF *rect,
     GDIPCONST GpPointF *pt, GpMatrix **matrix)
 {
     REAL m11, m12, m21, m22, dx, dy;
-    TRACE("(%p, %p, %p)\n", rect, pt, matrix);
+
+    TRACE("(%s, %p, %p)\n", debugstr_rectf(rect), pt, matrix);
 
     if(!matrix || !pt)
         return InvalidParameter;

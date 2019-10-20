@@ -410,7 +410,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRect(GDIPCONST GpRectF* rect,
 {
     float angle;
 
-    TRACE("(%p, %x, %x, %d, %d, %p)\n", rect, startcolor, endcolor, mode,
+    TRACE("(%s, %x, %x, %d, %d, %p)\n", debugstr_rectf(rect), startcolor, endcolor, mode,
           wrap, line);
 
     if(!line || !rect)
@@ -466,7 +466,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngle(GDIPCONST GpRectF* rect
     REAL sin_angle, cos_angle, sin_cos_angle;
     GpPointF start, end;
 
-    TRACE("(%p, %x, %x, %.2f, %d, %d, %p)\n", rect, startcolor, endcolor, angle, isAngleScalable,
+    TRACE("(%s, %x, %x, %.2f, %d, %d, %p)\n", debugstr_rectf(rect), startcolor, endcolor, angle, isAngleScalable,
           wrap, line);
 
     if (!rect || !line || wrap == WrapModeClamp)
