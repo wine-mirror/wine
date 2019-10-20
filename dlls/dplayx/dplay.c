@@ -2709,7 +2709,7 @@ static HRESULT DP_IF_GetGroupName( IDirectPlayImpl *This, DPID idGroup, void *lp
   if( lpGData->name.u1.lpszShortNameA )
   {
     strcpy( ((char*)lpName)+lpGData->name.dwSize,
-            lpGData->name.u2.lpszLongNameA );
+            lpGData->name.u1.lpszShortNameA );
   }
   else
   {
