@@ -2719,7 +2719,7 @@ static void test_body_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_get_borderTopColor(style, &v);
     ok(hres == S_OK, "get_borderTopColor: %08x\n", hres);
-    ok(!strcmp_wa(V_BSTR(&v), "red"), "expecte red = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!strcmp_wa(V_BSTR(&v), "red"), "expected red = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     hres = IHTMLStyle_put_borderTopColor(style, vDefault);
