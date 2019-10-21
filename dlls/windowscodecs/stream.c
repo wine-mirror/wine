@@ -189,12 +189,11 @@ static HRESULT WINAPI StreamOnMemory_CopyTo(IStream *iface,
     return E_NOTIMPL;
 }
 
-/* Commit isn't implemented in the native windowscodecs DLL either */
 static HRESULT WINAPI StreamOnMemory_Commit(IStream *iface,
     DWORD grfCommitFlags)
 {
     TRACE("(%p, %#x)\n", iface, grfCommitFlags);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 /* Revert isn't implemented in the native windowscodecs DLL either */
@@ -375,7 +374,7 @@ static HRESULT WINAPI StreamOnFileHandle_Commit(IStream *iface,
     DWORD grfCommitFlags)
 {
     TRACE("(%p, %#x)\n", iface, grfCommitFlags);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI StreamOnFileHandle_Revert(IStream *iface)
@@ -655,8 +654,9 @@ static HRESULT WINAPI StreamOnStreamRange_CopyTo(IStream *iface,
 static HRESULT WINAPI StreamOnStreamRange_Commit(IStream *iface,
     DWORD grfCommitFlags)
 {
-    TRACE("(%p, %#x)\n", iface, grfCommitFlags);
-    return E_NOTIMPL;
+    StreamOnStreamRange *This = StreamOnStreamRange_from_IStream(iface);
+    TRACE("(%p, %#x)\n", This, grfCommitFlags);
+    return IStream_Commit(This->stream, grfCommitFlags);
 }
 
 /* Revert isn't implemented in the native windowscodecs DLL either */

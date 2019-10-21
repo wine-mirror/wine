@@ -326,19 +326,19 @@ static void test_StreamOnMemory(void)
 
     /* Commit */
     hr = IWICStream_Commit(pStream, STGC_DEFAULT);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pStream, STGC_OVERWRITE);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pStream, STGC_ONLYIFCURRENT);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pStream, STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pStream, STGC_CONSOLIDATE);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
 
     /* Revert */
@@ -643,19 +643,19 @@ static void test_StreamOnStreamRange(void)
 
     /* Commit */
     hr = IWICStream_Commit(pSubStream, STGC_DEFAULT);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pSubStream, STGC_OVERWRITE);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pSubStream, STGC_ONLYIFCURRENT);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pSubStream, STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(pSubStream, STGC_CONSOLIDATE);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
 
     /* Revert */
@@ -953,19 +953,19 @@ static void test_StreamOnIStream(void)
 
     /* Commit */
     hr = IWICStream_Commit(substream, STGC_DEFAULT);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(substream, STGC_OVERWRITE);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(substream, STGC_ONLYIFCURRENT);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(substream, STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     hr = IWICStream_Commit(substream, STGC_CONSOLIDATE);
-    todo_wine ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
+    ok(broken(hr == E_NOTIMPL) || hr == S_OK, "Commit returned %#x\n", hr);
 
     /* Revert */
     IWICStream_Write(substream, buff + 5, 6, NULL);
