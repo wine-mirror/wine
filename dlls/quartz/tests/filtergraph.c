@@ -3952,7 +3952,7 @@ static void test_graph_seeking(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(time == 12340000, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 12340000, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaFilter_SetSyncSource(filter, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -3968,7 +3968,7 @@ static void test_graph_seeking(void)
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(!current, "Got time %s.\n", wine_dbgstr_longlong(current));
-    todo_wine ok(!stop, "Got time %s.\n", wine_dbgstr_longlong(stop));
+    ok(!stop, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

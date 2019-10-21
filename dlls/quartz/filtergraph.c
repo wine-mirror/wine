@@ -5207,6 +5207,10 @@ static HRESULT WINAPI MediaFilter_Stop(IMediaFilter *iface)
     SendFilterMessage(graph, SendStop, 0);
     graph->state = State_Stopped;
 
+    /* Update the current position, probably to synchronize multiple streams. */
+    IMediaSeeking_SetPositions(&graph->IMediaSeeking_iface, &graph->current_pos,
+            AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
+
     LeaveCriticalSection(&graph->cs);
     return S_OK;
 }
