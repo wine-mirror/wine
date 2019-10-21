@@ -2552,64 +2552,65 @@ static HRESULT WINAPI MediaSeeking_ConvertTimeFormat(IMediaSeeking *iface, LONGL
     return S_OK;
 }
 
-struct pos_args {
-    LONGLONG* current, *stop;
-    DWORD curflags, stopflags;
-};
-
-static HRESULT WINAPI found_setposition(IFilterGraphImpl *This, IMediaSeeking *seek, DWORD_PTR pargs)
+static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *current_ptr,
+        DWORD current_flags, LONGLONG *stop_ptr, DWORD stop_flags)
 {
-    struct pos_args *args = (void*)pargs;
-    LONGLONG current = args->current ? *args->current : 0, stop = args->stop ? *args->stop : 0;
-    HRESULT hr;
-
-    if (SUCCEEDED(hr = IMediaSeeking_SetPositions(seek, &current,
-            args->curflags, &stop, args->stopflags)))
-    {
-        if (args->current && (args->curflags & AM_SEEKING_ReturnTime))
-            *args->current = current;
-        if (args->stop && (args->stopflags & AM_SEEKING_ReturnTime))
-            *args->stop = stop;
-    }
-    return hr;
-}
-
-static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *pCurrent,
-        DWORD dwCurrentFlags, LONGLONG *pStop, DWORD dwStopFlags)
-{
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
-    HRESULT hr = S_OK;
+    IFilterGraphImpl *graph = impl_from_IMediaSeeking(iface);
+    HRESULT hr = E_NOTIMPL, filter_hr;
+    IMediaSeeking *seeking;
+    struct filter *filter;
     FILTER_STATE state;
-    struct pos_args args;
 
-    TRACE("(%p/%p)->(%p, %08x, %p, %08x)\n", This, iface, pCurrent, dwCurrentFlags, pStop, dwStopFlags);
+    TRACE("graph %p, current %s, current_flags %#x, stop %s, stop_flags %#x.\n", graph,
+            current_ptr ? wine_dbgstr_longlong(*current_ptr) : "<null>", current_flags,
+            stop_ptr ? wine_dbgstr_longlong(*stop_ptr): "<null>", stop_flags);
 
-    EnterCriticalSection(&This->cs);
-    state = This->state;
-    TRACE("State: %s\n", state == State_Running ? "Running" : (state == State_Paused ? "Paused" : (state == State_Stopped ? "Stopped" : "UNKNOWN")));
+    if ((current_flags & 0x7) != AM_SEEKING_AbsolutePositioning
+            && (current_flags & 0x7) != AM_SEEKING_NoPositioning)
+        FIXME("Unhandled current_flags %#x.\n", current_flags & 0x7);
 
-    if ((dwCurrentFlags & 0x7) != AM_SEEKING_AbsolutePositioning &&
-        (dwCurrentFlags & 0x7) != AM_SEEKING_NoPositioning)
-        FIXME("Adjust method %x not handled yet!\n", dwCurrentFlags & 0x7);
+    if ((stop_flags & 0x7) != AM_SEEKING_NoPositioning
+            && (stop_flags & 0x7) != AM_SEEKING_AbsolutePositioning)
+        FIXME("Unhandled stop_flags %#x.\n", stop_flags & 0x7);
 
-    if ((dwStopFlags & 0x7) != AM_SEEKING_NoPositioning
-            && (dwStopFlags & 0x7) != AM_SEEKING_AbsolutePositioning)
-        FIXME("Stop position not handled yet!\n");
+    EnterCriticalSection(&graph->cs);
 
-    if (state == State_Running && !(dwCurrentFlags & AM_SEEKING_NoFlush))
-        IMediaControl_Pause(&This->IMediaControl_iface);
-    args.current = pCurrent;
-    args.stop = pStop;
-    args.curflags = dwCurrentFlags;
-    args.stopflags = dwStopFlags;
-    hr = all_renderers_seek(This, found_setposition, (DWORD_PTR)&args);
+    state = graph->state;
+    if (state == State_Running && !(current_flags & AM_SEEKING_NoFlush))
+        IMediaControl_Pause(&graph->IMediaControl_iface);
 
-    if ((dwCurrentFlags & 0x7) != AM_SEEKING_NoPositioning)
-        This->pause_time = This->start_time = -1;
-    if (state == State_Running && !(dwCurrentFlags & AM_SEEKING_NoFlush))
-        IMediaControl_Run(&This->IMediaControl_iface);
-    LeaveCriticalSection(&This->cs);
+    LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
+    {
+        LONGLONG current = current_ptr ? *current_ptr : 0, stop = stop_ptr ? *stop_ptr : 0;
 
+        if (FAILED(IBaseFilter_QueryInterface(filter->filter, &IID_IMediaSeeking, (void **)&seeking)))
+            continue;
+
+        filter_hr = IMediaSeeking_SetPositions(seeking, &current, current_flags, &stop, stop_flags);
+        IMediaSeeking_Release(seeking);
+        if (SUCCEEDED(filter_hr))
+        {
+            hr = S_OK;
+
+            if (current_ptr && (current_flags & AM_SEEKING_ReturnTime))
+                *current_ptr = current;
+            if (stop_ptr && (stop_flags & AM_SEEKING_ReturnTime))
+                *stop_ptr = stop;
+        }
+        else if (filter_hr != E_NOTIMPL)
+        {
+            LeaveCriticalSection(&graph->cs);
+            return filter_hr;
+        }
+    }
+
+    if ((current_flags & 0x7) != AM_SEEKING_NoPositioning)
+        graph->pause_time = graph->start_time = -1;
+
+    if (state == State_Running && !(current_flags & AM_SEEKING_NoFlush))
+        IMediaControl_Run(&graph->IMediaControl_iface);
+
+    LeaveCriticalSection(&graph->cs);
     return hr;
 }
 
