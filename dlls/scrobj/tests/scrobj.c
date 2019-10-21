@@ -634,7 +634,6 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
     ok(!outer, "outer = %p\n", outer);
     ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
     *ppv = &ActiveScript;
-    site = NULL;
     return S_OK;
 }
 
