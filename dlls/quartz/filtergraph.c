@@ -2583,7 +2583,7 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *
     EnterCriticalSection(&graph->cs);
 
     state = graph->state;
-    if (state == State_Running && !(current_flags & AM_SEEKING_NoFlush))
+    if (state == State_Running)
         IMediaControl_Pause(&graph->IMediaControl_iface);
 
     LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
@@ -2616,7 +2616,7 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *
     if ((current_flags & 0x7) != AM_SEEKING_NoPositioning)
         graph->pause_time = graph->start_time = -1;
 
-    if (state == State_Running && !(current_flags & AM_SEEKING_NoFlush))
+    if (state == State_Running)
         IMediaControl_Run(&graph->IMediaControl_iface);
 
     LeaveCriticalSection(&graph->cs);

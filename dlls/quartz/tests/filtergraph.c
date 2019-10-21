@@ -3917,6 +3917,14 @@ static void test_graph_seeking(void)
             "Expected about 1234ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 9000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
+    /* This remains true even if NoFlush is specified. */
+    current = 1000 * 10000;
+    stop = 8000 * 10000;
+    hr = IMediaSeeking_SetPositions(seeking, &current,
+            AM_SEEKING_AbsolutePositioning | AM_SEEKING_NoFlush,
+            &stop, AM_SEEKING_AbsolutePositioning | AM_SEEKING_NoFlush);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     Sleep(100);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
@@ -3928,7 +3936,7 @@ static void test_graph_seeking(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(abs(current - 1334 * 10000) < 40 * 10000,
             "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
-    ok(stop == 9000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
+    ok(stop == 8000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     hr = IMediaControl_Pause(control);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -3946,7 +3954,7 @@ static void test_graph_seeking(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(abs(current - 1334 * 10000) < 40 * 10000,
             "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
-    ok(stop == 9000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
+    ok(stop == 8000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
