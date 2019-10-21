@@ -15632,6 +15632,24 @@ int __cdecl tr2_sys__Equivalent_wchar(WCHAR const* path1, WCHAR const* path2)
     return ret;
 }
 
+/* _Equivalent, msvcp140 version */
+int __cdecl _Equivalent(WCHAR const* path1, WCHAR const* path2)
+{
+    HANDLE h1, h2;
+    int ret;
+
+    TRACE("(%s %s)\n", debugstr_w(path1), debugstr_w(path2));
+
+    h1 = CreateFileW(path1, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    h2 = CreateFileW(path2, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ret = equivalent_handles(h1, h2);
+    CloseHandle(h1);
+    CloseHandle(h2);
+    return ret;
+}
+
 /* ?_Current_get@sys@tr2@std@@YAPA_WAAY0BAE@_W@Z */
 /* ?_Current_get@sys@tr2@std@@YAPEA_WAEAY0BAE@_W@Z */
 WCHAR* __cdecl tr2_sys__Current_get_wchar(WCHAR *current_path)

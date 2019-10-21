@@ -1400,7 +1400,6 @@ static void test_Equivalent(void)
         { f1W, NULL, 0 },
         { f1W, wine_test_dirW, 0 },
         { wine_test_dirW, f1W, 0 },
-        { wine_test_dirW, wine_test_dirW, -1 },
         { f1W_subdir, f2W, 0 },
         { f1W, f1W, 1 },
         { not_existW, f1W, 0 },
@@ -1428,6 +1427,11 @@ static void test_Equivalent(void)
         ok(tests[i].equivalent == val, "_Equivalent(): test %d expect: %d, got %d\n", i+1, tests[i].equivalent, val);
         ok(errno == 0xdeadbeef, "errno = %d\n", errno);
     }
+
+    errno = 0xdeadbeef;
+    val = p_Equivalent(wine_test_dirW, wine_test_dirW);
+    ok(val == 1 || broken(val == -1), "_Equivalent() returned %d, expected %d\n", val, 1);
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
 
     ok(DeleteFileW(f1W), "expect wine_test_dir/f1 to exist\n");
     ok(DeleteFileW(f2W), "expect wine_test_dir/f2 to exist\n");
