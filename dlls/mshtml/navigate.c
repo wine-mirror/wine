@@ -690,7 +690,7 @@ HRESULT read_stream(BSCallback *This, IStream *stream, void *buf, DWORD size, DW
 
     hres = IStream_Read(stream, buf, size, &read_size);
 
-    if(!This->readed && This->bom == BOM_NONE) {
+    if(!This->read && This->bom == BOM_NONE) {
         if(read_size >= 2 && data[0] == 0xff && data[1] == 0xfe) {
             This->bom = BOM_UTF16;
             skip = 2;
@@ -705,7 +705,7 @@ HRESULT read_stream(BSCallback *This, IStream *stream, void *buf, DWORD size, DW
         }
     }
 
-    This->readed += read_size;
+    This->read += read_size;
     *ret_size = read_size;
     return hres;
 }
@@ -1092,7 +1092,7 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
     }
 
     do {
-        BOOL first_read = !This->bsc.readed;
+        BOOL first_read = !This->bsc.read;
 
         hres = read_stream(&This->bsc, stream, This->nsstream->buf+This->nsstream->buf_size,
                 sizeof(This->nsstream->buf)-This->nsstream->buf_size, &read);
@@ -1135,7 +1135,7 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
 
         nsres = nsIStreamListener_OnDataAvailable(This->nslistener,
                 (nsIRequest*)&This->nschannel->nsIHttpChannel_iface, This->nscontext,
-                &This->nsstream->nsIInputStream_iface, This->bsc.readed-This->nsstream->buf_size,
+                &This->nsstream->nsIInputStream_iface, This->bsc.read-This->nsstream->buf_size,
                 This->nsstream->buf_size);
         if(NS_FAILED(nsres))
             ERR("OnDataAvailable failed: %08x\n", nsres);
@@ -1365,7 +1365,7 @@ static HRESULT async_stop_request(nsChannelBSC *This)
 {
     stop_request_task_t *task;
 
-    if(!This->bsc.readed) {
+    if(!This->bsc.read) {
         TRACE("No data read, calling OnStartRequest\n");
         on_start_nsrequest(This);
     }

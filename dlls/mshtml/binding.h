@@ -80,7 +80,7 @@ struct BSCallback {
     LONG ref;
 
     request_data_t request_data;
-    ULONG readed;
+    ULONG read;
     DWORD bindf;
     DWORD bindinfo_options;
     BOOL bindinfo_ready;
