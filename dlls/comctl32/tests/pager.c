@@ -611,7 +611,7 @@ static void notify_generic_text_handler(CHAR **text, INT *text_max)
         send_data = (notify_test_info.test_id == CONVERT_SEND ? test_convert_send_data : test_dont_convert_send_data)
                     + notify_test_info.sub_test_id;
         if (notify_test_info.flags & ZERO_SEND)
-            ok(!lstrcmpA(*text, empty_a), "Code 0x%08x test 0x%08x sub test %d expect empty text, got %s\n",
+            ok(!*text[0], "Code 0x%08x test 0x%08x sub test %d expect empty text, got %s\n",
                notify_test_info.unicode, notify_test_info.test_id, notify_test_info.sub_test_id, *text);
         else if (notify_test_info.flags & CONVERT_SEND)
             ok(!lstrcmpA(send_data->expect_text, *text), "Code 0x%08x test 0x%08x sub test %d expect %s, got %s\n",
@@ -650,7 +650,7 @@ static void notify_generic_text_handler(CHAR **text, INT *text_max)
         break;
     }
     case SEND_EMPTY_IF_NULL:
-        ok(!lstrcmpA(*text, empty_a), "Code 0x%08x test 0x%08x sub test %d expect empty text, got %s\n",
+        ok(!*text[0], "Code 0x%08x test 0x%08x sub test %d expect empty text, got %s\n",
            notify_test_info.unicode, notify_test_info.test_id, notify_test_info.sub_test_id, *text);
         break;
     case DONT_SEND_EMPTY_IF_NULL:
