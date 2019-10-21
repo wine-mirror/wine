@@ -1552,12 +1552,12 @@ HRESULT WINAPI WsRemoveMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
     return hr;
 }
 
-static HRESULT xmlstring_to_wsz( const WS_XML_STRING *str, WS_HEAP *heap, WCHAR **ret )
+static HRESULT xmlstring_to_wsz( const WS_XML_STRING *str, WS_HEAP *heap, WCHAR **ret, int *len )
 {
-    int len = MultiByteToWideChar( CP_UTF8, 0, (char *)str->bytes, str->length, NULL, 0 );
-    if (!(*ret = ws_alloc( heap, (len + 1) * sizeof(WCHAR) ))) return WS_E_QUOTA_EXCEEDED;
-    MultiByteToWideChar( CP_UTF8, 0, (char *)str->bytes, str->length, *ret, len );
-    (*ret)[len] = 0;
+    *len = MultiByteToWideChar( CP_UTF8, 0, (char *)str->bytes, str->length, NULL, 0 );
+    if (!(*ret = ws_alloc( heap, (*len + 1) * sizeof(WCHAR) ))) return WS_E_QUOTA_EXCEEDED;
+    MultiByteToWideChar( CP_UTF8, 0, (char *)str->bytes, str->length, *ret, *len );
+    (*ret)[*len] = 0;
     return S_OK;
 }
 
@@ -1565,9 +1565,10 @@ static HRESULT get_header_value_wsz( struct header *header, WS_READ_OPTION optio
                                      ULONG size )
 {
     WCHAR *str = NULL;
+    int len = 0;
     HRESULT hr;
 
-    if (header && (hr = xmlstring_to_wsz( header->u.text, heap, &str )) != S_OK) return hr;
+    if (header && (hr = xmlstring_to_wsz( header->u.text, heap, &str, &len )) != S_OK) return hr;
 
     switch (option)
     {
@@ -1577,12 +1578,17 @@ static HRESULT get_header_value_wsz( struct header *header, WS_READ_OPTION optio
 
     case WS_READ_OPTIONAL_POINTER:
     case WS_READ_NILLABLE_POINTER:
-        if (size != sizeof(str)) return E_INVALIDARG;
+        if (size != sizeof(str))
+        {
+            ws_free( heap, str, (len + 1) * sizeof(WCHAR) );
+            return E_INVALIDARG;
+        }
         *ret = str;
         break;
 
     default:
         FIXME( "read option %u not supported\n", option );
+        ws_free( heap, str, (len + 1) * sizeof(WCHAR) );
         return E_NOTIMPL;
     }
 
