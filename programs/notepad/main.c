@@ -629,6 +629,8 @@ static void HandleCommandLine(LPWSTR cmdline)
 
     if (*cmdline == delimiter) cmdline++;
 
+    while (*cmdline == ' ') cmdline++;
+
     ptr = cmdline;
     while (*ptr == ' ' || *ptr == '-' || *ptr == '/')
     {
