@@ -34,8 +34,6 @@ static const CHAR test_a[] = "test";
 static const WCHAR test_w[] = L"test";
 /* Double zero so that it's safe to cast it to WCHAR * */
 static const CHAR te_a[] = {'t', 'e', 0, 0};
-static WCHAR empty_w[] = {0};
-static CHAR empty_a[] = {0};
 static const CHAR large_a[] =
     "You should have received a copy of the GNU Lesser General Public License along with this ...";
 static const WCHAR large_w[] =
@@ -132,17 +130,17 @@ static const struct notify_test_send test_dont_convert_send_data[] =
 
 static const struct notify_test_receive test_convert_receive_data[] =
 {
-    {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), NULL, test_a, sizeof(test_a), -1, test_w, ARRAY_SIZE(buffer)},
-    {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), test_a, NULL, 0, -1, test_w, ARRAY_SIZE(buffer)},
-    {NULL, sizeof(empty_w), ARRAY_SIZE(buffer), test_a, NULL, 0, -1, NULL, ARRAY_SIZE(buffer)},
-    {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), large_a, NULL, 0, -1, large_truncated_65_w, ARRAY_SIZE(buffer)},
-    {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), empty_a, 0, 0, 1, empty_w, 1},
+    {L"", sizeof(L""), ARRAY_SIZE(buffer), NULL, test_a, sizeof(test_a), -1, test_w, ARRAY_SIZE(buffer)},
+    {L"", sizeof(L""), ARRAY_SIZE(buffer), test_a, NULL, 0, -1, test_w, ARRAY_SIZE(buffer)},
+    {NULL, sizeof(L""), ARRAY_SIZE(buffer), test_a, NULL, 0, -1, NULL, ARRAY_SIZE(buffer)},
+    {L"", sizeof(L""), ARRAY_SIZE(buffer), large_a, NULL, 0, -1, large_truncated_65_w, ARRAY_SIZE(buffer)},
+    {L"", sizeof(L""), ARRAY_SIZE(buffer), "", 0, 0, 1, L"", 1},
 };
 
 static const struct notify_test_receive test_dont_convert_receive_data[] =
 {
-    {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), NULL, test_a, sizeof(test_a), -1, test_a, ARRAY_SIZE(buffer)},
-    {empty_w, sizeof(empty_w), ARRAY_SIZE(buffer), test_a, NULL, 0, -1, test_a, ARRAY_SIZE(buffer)},
+    {L"", sizeof(L""), ARRAY_SIZE(buffer), NULL, test_a, sizeof(test_a), -1, test_a, ARRAY_SIZE(buffer)},
+    {L"", sizeof(L""), ARRAY_SIZE(buffer), test_a, NULL, 0, -1, test_a, ARRAY_SIZE(buffer)},
 };
 
 static const struct notify_test_tooltip
@@ -165,15 +163,15 @@ static const struct notify_test_tooltip
     const WCHAR *send_lpsztext;
 } test_tooltip_data[] =
 {
-    {NULL, 0, NULL, NULL, empty_w, -1, empty_w},
+    {NULL, 0, NULL, NULL, L"", -1, L""},
     {test_a, sizeof(test_a), NULL, NULL, test_w, -1, test_w},
     {test_a, sizeof(test_a), test_a, NULL, test_w, -1, test_w},
-    {test_a, sizeof(test_a), (CHAR *)1, (HMODULE)0xdeadbeef, empty_w, -1, (WCHAR *)1, (HMODULE)0xdeadbeef},
+    {test_a, sizeof(test_a), (CHAR *)1, (HMODULE)0xdeadbeef, L"", -1, (WCHAR *)1, (HMODULE)0xdeadbeef},
     {test_a, sizeof(test_a), test_a, (HMODULE)0xdeadbeef, test_w, -1, test_w, (HMODULE)0xdeadbeef},
     {NULL, 0, test_a, NULL, test_w, -1, test_w},
     {test_a, 2, test_a, NULL, test_w, -1, test_w},
     {NULL, 0, NULL, NULL, test_w, -1, test_w, NULL, test_a, test_w, sizeof(test_w)},
-    {NULL, 0, NULL, NULL, empty_w, -1, empty_w, NULL, empty_a, NULL, 0, test_w},
+    {NULL, 0, NULL, NULL, L"", -1, L"", NULL, "", NULL, 0, test_w},
     {NULL, 0, large_a, NULL, large_truncated_80_w, sizeof(large_truncated_80_w), large_w}
 };
 
@@ -194,7 +192,7 @@ static const struct notify_test_datetime_format
 } test_datetime_format_data[] =
 {
     {test_w, test_a},
-    {NULL, NULL, NULL, 0, test_a, empty_w, -1, test_w},
+    {NULL, NULL, NULL, 0, test_a, L"", -1, test_w},
     {NULL, NULL, test_a, sizeof(test_a), NULL, test_w, -1, test_w},
     {NULL, NULL, test_a, 2, test_a, (WCHAR *)te_a, -1, test_w},
     {NULL, NULL, NULL, 0, large_a, NULL, 0, large_w}
