@@ -202,14 +202,16 @@ typedef struct _IFilterGraphImpl {
     int nItfCacheEntries;
     BOOL defaultclock;
     GUID timeformatseek;
-    REFERENCE_TIME start_time;
-    REFERENCE_TIME pause_time;
     LONG recursioncount;
     IUnknown *pSite;
     LONG version;
 
     HANDLE message_thread, message_thread_ret;
     DWORD message_thread_id;
+
+    /* Respectively: the last timestamp at which we started streaming, and the
+     * current offset within the stream. */
+    REFERENCE_TIME stream_start, stream_elapsed;
 
     LONGLONG current_pos;
 } IFilterGraphImpl;
@@ -2519,16 +2521,14 @@ static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface, LONG
 
     EnterCriticalSection(&graph->cs);
 
-    if (graph->state == State_Running && graph->refClock && graph->start_time >= 0)
+    if (graph->state == State_Running && graph->refClock)
     {
         REFERENCE_TIME time;
         IReferenceClock_GetTime(graph->refClock, &time);
         if (time)
-            ret += time - graph->start_time;
+            ret += time - graph->stream_start;
     }
 
-    if (graph->pause_time > 0)
-        ret += graph->pause_time;
     LeaveCriticalSection(&graph->cs);
 
     TRACE("Returning %s.\n", wine_dbgstr_longlong(ret));
@@ -2613,8 +2613,11 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *
         }
     }
 
-    if ((current_flags & 0x7) != AM_SEEKING_NoPositioning)
-        graph->pause_time = graph->start_time = -1;
+    if ((current_flags & 0x7) != AM_SEEKING_NoPositioning && graph->refClock)
+    {
+        IReferenceClock_GetTime(graph->refClock, &graph->stream_start);
+        graph->stream_elapsed = 0;
+    }
 
     if (state == State_Running)
         IMediaControl_Run(&graph->IMediaControl_iface);
@@ -5232,13 +5235,13 @@ static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
     if (graph->defaultclock && !graph->refClock)
         IFilterGraph2_SetDefaultSyncSource(&graph->IFilterGraph2_iface);
 
-    if (graph->state == State_Running && graph->refClock && graph->start_time >= 0)
+    if (graph->state == State_Running && graph->refClock)
     {
-        IReferenceClock_GetTime(graph->refClock, &graph->pause_time);
-        graph->current_pos += graph->pause_time - graph->start_time;
+        REFERENCE_TIME time;
+        IReferenceClock_GetTime(graph->refClock, &time);
+        graph->stream_elapsed += time - graph->stream_start;
+        graph->current_pos += graph->stream_elapsed;
     }
-    else
-        graph->pause_time = -1;
 
     SendFilterMessage(graph, SendPause, 0);
     graph->state = State_Paused;
@@ -5250,6 +5253,7 @@ static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
 static HRESULT WINAPI MediaFilter_Run(IMediaFilter *iface, REFERENCE_TIME start)
 {
     IFilterGraphImpl *graph = impl_from_IMediaFilter(iface);
+    REFERENCE_TIME stream_start = start;
 
     TRACE("graph %p, start %s.\n", graph, wine_dbgstr_longlong(start));
 
@@ -5267,19 +5271,13 @@ static HRESULT WINAPI MediaFilter_Run(IMediaFilter *iface, REFERENCE_TIME start)
 
     if (!start && graph->refClock)
     {
-        REFERENCE_TIME now;
-        IReferenceClock_GetTime(graph->refClock, &now);
+        IReferenceClock_GetTime(graph->refClock, &graph->stream_start);
+        stream_start = graph->stream_start - graph->stream_elapsed;
         if (graph->state == State_Stopped)
-            graph->start_time = now + 500000;
-        else if (graph->pause_time >= 0)
-            graph->start_time += now - graph->pause_time;
-        else
-            graph->start_time = now;
+            stream_start += 500000;
     }
-    else
-        graph->start_time = start;
 
-    SendFilterMessage(graph, SendRun, (DWORD_PTR)&graph->start_time);
+    SendFilterMessage(graph, SendRun, (DWORD_PTR)&stream_start);
     graph->state = State_Running;
 
     LeaveCriticalSection(&graph->cs);
@@ -5726,7 +5724,7 @@ static HRESULT filter_graph_common_create(IUnknown *outer, void **out, BOOL thre
     fimpl->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IFilterGraphImpl.cs");
     fimpl->nItfCacheEntries = 0;
     memcpy(&fimpl->timeformatseek, &TIME_FORMAT_MEDIA_TIME, sizeof(GUID));
-    fimpl->start_time = fimpl->pause_time = 0;
+    fimpl->stream_start = fimpl->stream_elapsed = 0;
     fimpl->punkFilterMapper2 = NULL;
     fimpl->recursioncount = 0;
     fimpl->version = 0;
