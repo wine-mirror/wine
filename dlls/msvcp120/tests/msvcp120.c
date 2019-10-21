@@ -1230,6 +1230,7 @@ static void test_tr2_sys__Equivalent(void)
     char temp_path[MAX_PATH], current_path[MAX_PATH];
     WCHAR testW[] = {'t','r','2','_','t','e','s','t','_','d','i','r','/','f','1',0};
     WCHAR testW2[] = {'t','r','2','_','t','e','s','t','_','d','i','r','/','f','2',0};
+    WCHAR test_dirW[] = {'t','r','2','_','t','e','s','t','_','d','i','r',0};
     struct {
         char const *path1;
         char const *path2;
@@ -1273,6 +1274,8 @@ static void test_tr2_sys__Equivalent(void)
     ok(val == 1, "tr2_sys__Equivalent(): expect: 1, got %d\n", val);
     val = p_tr2_sys__Equivalent_wchar(testW, testW2);
     ok(val == 0, "tr2_sys__Equivalent(): expect: 0, got %d\n", val);
+    val = p_tr2_sys__Equivalent_wchar(test_dirW, test_dirW);
+    ok(val == -1, "tr2_sys__Equivalent(): expect: -1, got %d\n", val);
 
     ok(DeleteFileA("tr2_test_dir/f1"), "expect tr2_test_dir/f1 to exist\n");
     ok(DeleteFileA("tr2_test_dir/f2"), "expect tr2_test_dir/f2 to exist\n");
