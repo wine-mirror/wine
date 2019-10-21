@@ -1491,6 +1491,7 @@ static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
             if (!wcsicmp(member_iter->name, member->name))
             {
                 FIXME("Duplicated member %s\n", debugstr_w(member->name));
+                heap_free(member);
                 return E_FAIL;
             }
         }
@@ -1529,11 +1530,11 @@ static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
                     return E_FAIL;
                 }
 
-                if (!(parameter = heap_alloc(sizeof(*parameter)))) return E_OUTOFMEMORY;
+                if (!(parameter = heap_alloc_zero(sizeof(*parameter)))) return E_OUTOFMEMORY;
+                list_add_tail(&member->u.parameters, &parameter->entry);
 
                 hres = read_xml_value(factory, &parameter->name);
                 if (FAILED(hres)) return hres;
-                list_add_tail(&member->u.parameters, &parameter->entry);
                 if (!empty && FAILED(hres = expect_end_element(factory))) return hres;
             }
             break;
