@@ -566,6 +566,18 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
                 d->second = st.wSecond;
                 d->fraction = st.wMilliseconds * 1000000;
             }
+            else
+            {
+                if(swscanf( s, L"%d-%d-%d %d:%d:%d.%d", &d->year, &d->month, &d->day, &d->hour, &d->minute,
+                             &d->second, &d->fraction) != 7)
+                {
+                    hr = DISP_E_TYPEMISMATCH;
+                    *dst_status = DBSTATUS_E_CANTCONVERTVALUE;
+                    *dst_len = get_length(dst_type);
+                }
+                else
+                    hr = S_OK;
+            }
 
             VariantClear(&var);
         }

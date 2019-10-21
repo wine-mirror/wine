@@ -3953,10 +3953,27 @@ static void test_converttotimestamp(void)
     bstr = SysAllocString(strFullW);
     dst_len = 0x1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_BSTR, DBTYPE_DBTIMESTAMP, 0, &dst_len, &bstr, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
-    todo_wine ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
-    todo_wine ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
-    todo_wine ok(!memcmp(&ts1, &dst, sizeof(ts1)), "Wrong timestamp\n");
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(!memcmp(&ts1, &dst, sizeof(ts1)), "Wrong timestamp\n");
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"2013-05-14 02:04:12.017000000");
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_BSTR, DBTYPE_DBTIMESTAMP, 0, &dst_len, &bstr, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(!memcmp(&ts1, &dst, sizeof(ts1)), "Wrong timestamp\n");
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"2013/05/14 02:04:12.01700");
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_BSTR, DBTYPE_DBTIMESTAMP, 0, &dst_len, &bstr, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == DISP_E_TYPEMISMATCH, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_E_CANTCONVERTVALUE, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
     SysFreeString(bstr);
 
     V_VT(&var) = VT_NULL;
