@@ -413,9 +413,7 @@ static BOOL test_wmp(void)
     duration = 0.0;
     hres = IWMPControls_get_currentPosition(controls, &duration);
     ok(hres == S_OK, "IWMPControls_get_currentPosition failed: %08x\n", hres);
-    /* builtin quartz does not handle this currently and resets to 0.0, works
-     * with native quartz */
-    todo_wine ok(duration >= 1.05 /* save some fp errors */, "unexpected value %f\n", duration);
+    ok(duration >= 1.05 /* save some fp errors */, "unexpected value %f\n", duration);
 
     hres = IWMPPlayer4_get_currentMedia(player4, &media);
     ok(hres == S_OK, "IWMPPlayer4_get_currentMedia failed: %08x\n", hres);

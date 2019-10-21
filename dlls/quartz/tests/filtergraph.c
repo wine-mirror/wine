@@ -3838,12 +3838,12 @@ static void test_graph_seeking(void)
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(time == 12340000, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 12340000, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(current == 12340000, "Got time %s.\n", wine_dbgstr_longlong(current));
+    ok(current == 12340000, "Got time %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     current = 0x123;
@@ -3908,12 +3908,12 @@ static void test_graph_seeking(void)
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(abs(time - 1234 * 10000) < 40 * 10000,
+    ok(abs(time - 1234 * 10000) < 40 * 10000,
             "Expected about 1234ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(abs(current - 1234 * 10000) < 40 * 10000,
+    ok(abs(current - 1234 * 10000) < 40 * 10000,
             "Expected about 1234ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 9000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
@@ -3921,12 +3921,12 @@ static void test_graph_seeking(void)
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(abs(time - 1334 * 10000) < 40 * 10000,
+    ok(abs(time - 1334 * 10000) < 40 * 10000,
             "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(abs(current - 1334 * 10000) < 40 * 10000,
+    ok(abs(current - 1334 * 10000) < 40 * 10000,
             "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 9000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
