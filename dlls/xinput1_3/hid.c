@@ -195,6 +195,9 @@ static BOOL init_controller(xinput_controller *controller, PHIDP_PREPARSED_DATA 
     memcpy(private->device_path, device_path, size);
     private->enabled = TRUE;
 
+    memset(&controller->state, 0, sizeof(controller->state));
+    memset(&controller->vibration, 0, sizeof(controller->vibration));
+
     controller->platform_private = private;
     controller->connected = TRUE;
 
