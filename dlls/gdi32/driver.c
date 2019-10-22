@@ -55,7 +55,6 @@ struct graphics_driver
 struct d3dkmt_adapter
 {
     D3DKMT_HANDLE handle;               /* Kernel mode graphics adapter handle */
-    INT ordinal;                        /* Graphics adapter ordinal */
     struct list entry;                  /* List entry */
 };
 
@@ -1339,21 +1338,20 @@ NTSTATUS WINAPI D3DKMTCloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
  */
 NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *desc )
 {
-    static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
+    static const WCHAR displayW[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};
     static D3DKMT_HANDLE handle_start = 0;
     struct d3dkmt_adapter *adapter;
+    WCHAR *end;
+    int id;
 
     TRACE("(%p) semi-stub\n", desc);
 
-    if (!desc)
+    if (!desc || strncmpiW( desc->DeviceName, displayW, ARRAY_SIZE(displayW) ))
         return STATUS_UNSUCCESSFUL;
 
-    /* FIXME: Support multiple monitors */
-    if (lstrcmpiW( desc->DeviceName, display1W ))
-    {
-        FIXME("%s is unsupported\n", wine_dbgstr_w( desc->DeviceName ));
+    id = strtolW( desc->DeviceName + ARRAY_SIZE(displayW), &end, 10 ) - 1;
+    if (*end)
         return STATUS_UNSUCCESSFUL;
-    }
 
     adapter = heap_alloc( sizeof( *adapter ) );
     if (!adapter)
@@ -1362,7 +1360,6 @@ NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDI
     EnterCriticalSection( &driver_section );
     /* D3DKMT_HANDLE is UINT, so we can't use pointer as handle */
     adapter->handle = ++handle_start;
-    adapter->ordinal = 0;
     list_add_tail( &d3dkmt_adapters, &adapter->entry );
     LeaveCriticalSection( &driver_section );
 
@@ -1370,7 +1367,7 @@ NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDI
     /* FIXME: Support AdapterLuid */
     desc->AdapterLuid.LowPart = 0;
     desc->AdapterLuid.HighPart = 0;
-    desc->VidPnSourceId = 0;
+    desc->VidPnSourceId = id;
     return STATUS_SUCCESS;
 }
 
