@@ -21,7 +21,12 @@
 #include "config.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <stdarg.h>
+#include <sys/types.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -41,12 +46,85 @@ static WCHAR empty[] = {0};
 static const UNICODE_STRING empty_str = { 0, sizeof(empty), empty };
 static const UNICODE_STRING null_str = { 0, 0, NULL };
 
+static const WCHAR windows_dir[] = {'C',':','\\','w','i','n','d','o','w','s',0};
+
 static inline SIZE_T get_env_length( const WCHAR *env )
 {
     const WCHAR *end = env;
     while (*end) end += strlenW(end) + 1;
     return end + 1 - env;
 }
+
+/***********************************************************************
+ *           get_current_directory
+ *
+ * Initialize the current directory from the Unix cwd.
+ */
+static void get_current_directory( UNICODE_STRING *dir )
+{
+    const char *pwd;
+    char *cwd;
+    int size;
+
+    dir->Length = 0;
+
+    /* try to get it from the Unix cwd */
+
+    for (size = 1024; ; size *= 2)
+    {
+        if (!(cwd = RtlAllocateHeap( GetProcessHeap(), 0, size ))) break;
+        if (getcwd( cwd, size )) break;
+        RtlFreeHeap( GetProcessHeap(), 0, cwd );
+        if (errno == ERANGE) continue;
+        cwd = NULL;
+        break;
+    }
+
+    /* try to use PWD if it is valid, so that we don't resolve symlinks */
+
+    pwd = getenv( "PWD" );
+    if (cwd)
+    {
+        struct stat st1, st2;
+
+        if (!pwd || stat( pwd, &st1 ) == -1 ||
+            (!stat( cwd, &st2 ) && (st1.st_dev != st2.st_dev || st1.st_ino != st2.st_ino)))
+            pwd = cwd;
+    }
+
+    if (pwd)
+    {
+        ANSI_STRING unix_name;
+        UNICODE_STRING nt_name;
+
+        RtlInitAnsiString( &unix_name, pwd );
+        if (!wine_unix_to_nt_file_name( &unix_name, &nt_name ))
+        {
+            /* skip the \??\ prefix */
+            dir->Length = nt_name.Length - 4 * sizeof(WCHAR);
+            memcpy( dir->Buffer, nt_name.Buffer + 4, dir->Length );
+            RtlFreeUnicodeString( &nt_name );
+        }
+    }
+
+    if (!dir->Length)  /* still not initialized */
+    {
+        MESSAGE("Warning: could not find DOS drive for current working directory '%s', "
+                "starting in the Windows directory.\n", cwd ? cwd : "" );
+        dir->Length = strlenW( windows_dir ) * sizeof(WCHAR);
+        memcpy( dir->Buffer, windows_dir, dir->Length );
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, cwd );
+
+    /* add trailing backslash */
+    if (dir->Buffer[dir->Length / sizeof(WCHAR) - 1] != '\\')
+    {
+        dir->Buffer[dir->Length / sizeof(WCHAR)] = '\\';
+        dir->Length += sizeof(WCHAR);
+    }
+    dir->Buffer[dir->Length / sizeof(WCHAR)] = 0;
+}
+
 
 /******************************************************************************
  *  NtQuerySystemEnvironmentValue		[NTDLL.@]
@@ -554,7 +632,7 @@ void init_user_process_params( SIZE_T data_size )
     WCHAR *src;
     SIZE_T info_size, env_size;
     NTSTATUS status;
-    startup_info_t *info;
+    startup_info_t *info = NULL;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     UNICODE_STRING curdir, dllpath, imagepath, cmdline, title, desktop, shellinfo, runtime;
 
@@ -566,6 +644,8 @@ void init_user_process_params( SIZE_T data_size )
             return;
 
         NtCurrentTeb()->Peb->ProcessParameters = params;
+        get_current_directory( &params->CurrentDirectory.DosPath );
+
         if (isatty(0) || isatty(1) || isatty(2))
             params->ConsoleHandle = (HANDLE)2; /* see kernel32/kernel_private.h */
         if (!isatty(0))
@@ -575,7 +655,7 @@ void init_user_process_params( SIZE_T data_size )
         if (!isatty(2))
             wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdError );
         params->wShowWindow = 1; /* SW_SHOWNORMAL */
-        return;
+        goto done;
     }
 
     if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, data_size ))) return;
@@ -603,7 +683,6 @@ void init_user_process_params( SIZE_T data_size )
     get_unicode_string( &shellinfo, &src, info->shellinfo_len );
     get_unicode_string( &runtime, &src, info->runtime_len );
 
-    curdir.MaximumLength = MAX_PATH * sizeof(WCHAR);  /* current directory needs more space */
     runtime.MaximumLength = runtime.Length;  /* runtime info isn't a real string */
 
     if (RtlCreateProcessParametersEx( &params, &imagepath, &dllpath, &curdir, &cmdline, NULL,
@@ -637,6 +716,13 @@ void init_user_process_params( SIZE_T data_size )
 
 done:
     RtlFreeHeap( GetProcessHeap(), 0, info );
+    if (RtlSetCurrentDirectory_U( &params->CurrentDirectory.DosPath ))
+    {
+        MESSAGE("wine: could not open working directory %s, starting in the Windows directory.\n",
+                debugstr_w( params->CurrentDirectory.DosPath.Buffer ));
+        RtlInitUnicodeString( &curdir, windows_dir );
+        RtlSetCurrentDirectory_U( &curdir );
+    }
 }
 
 

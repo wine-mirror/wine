@@ -1086,78 +1086,6 @@ static BOOL build_command_line( WCHAR **argv )
 
 
 /***********************************************************************
- *           init_current_directory
- *
- * Initialize the current directory from the Unix cwd or the parent info.
- */
-static void init_current_directory( CURDIR *cur_dir )
-{
-    UNICODE_STRING dir_str;
-    const char *pwd;
-    char *cwd;
-    int size;
-
-    /* if we received a cur dir from the parent, try this first */
-
-    if (cur_dir->DosPath.Length)
-    {
-        if (RtlSetCurrentDirectory_U( &cur_dir->DosPath ) == STATUS_SUCCESS) goto done;
-    }
-
-    /* now try to get it from the Unix cwd */
-
-    for (size = 256; ; size *= 2)
-    {
-        if (!(cwd = HeapAlloc( GetProcessHeap(), 0, size ))) break;
-        if (getcwd( cwd, size )) break;
-        HeapFree( GetProcessHeap(), 0, cwd );
-        if (errno == ERANGE) continue;
-        cwd = NULL;
-        break;
-    }
-
-    /* try to use PWD if it is valid, so that we don't resolve symlinks */
-
-    pwd = getenv( "PWD" );
-    if (cwd)
-    {
-        struct stat st1, st2;
-
-        if (!pwd || stat( pwd, &st1 ) == -1 ||
-            (!stat( cwd, &st2 ) && (st1.st_dev != st2.st_dev || st1.st_ino != st2.st_ino)))
-            pwd = cwd;
-    }
-
-    if (pwd)
-    {
-        ANSI_STRING unix_name;
-        UNICODE_STRING nt_name;
-        RtlInitAnsiString( &unix_name, pwd );
-        if (!wine_unix_to_nt_file_name( &unix_name, &nt_name ))
-        {
-            UNICODE_STRING dos_path;
-            /* skip the \??\ prefix, nt_name is 0 terminated */
-            RtlInitUnicodeString( &dos_path, nt_name.Buffer + 4 );
-            RtlSetCurrentDirectory_U( &dos_path );
-            RtlFreeUnicodeString( &nt_name );
-        }
-    }
-
-    if (!cur_dir->DosPath.Length)  /* still not initialized */
-    {
-        MESSAGE("Warning: could not find DOS drive for current working directory '%s', "
-                "starting in the Windows directory.\n", cwd ? cwd : "" );
-        RtlInitUnicodeString( &dir_str, DIR_Windows );
-        RtlSetCurrentDirectory_U( &dir_str );
-    }
-    HeapFree( GetProcessHeap(), 0, cwd );
-
-done:
-    TRACE( "starting in %s %p\n", debugstr_w( cur_dir->DosPath.Buffer ), cur_dir->Handle );
-}
-
-
-/***********************************************************************
  *           init_windows_dirs
  */
 static void init_windows_dirs(void)
@@ -1405,7 +1333,6 @@ void * CDECL __wine_kernel_init(void)
     }
 
     init_windows_dirs();
-    init_current_directory( &params->CurrentDirectory );
 
     set_process_name( __wine_main_argc, __wine_main_argv );
     set_library_wargv( __wine_main_argv );
