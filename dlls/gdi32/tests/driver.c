@@ -600,7 +600,7 @@ static void test_D3DKMTSetVidPnSourceOwner(void)
 
     if (!pD3DKMTSetVidPnSourceOwner || pD3DKMTSetVidPnSourceOwner(&set_owner_desc) == STATUS_PROCEDURE_NOT_FOUND)
     {
-        skip("D3DKMTSetVidPnSourceOwner() is unavailable.\n");
+        win_skip("D3DKMTSetVidPnSourceOwner() is unavailable.\n");
         return;
     }
 
