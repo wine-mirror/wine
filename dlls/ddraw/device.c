@@ -2486,6 +2486,22 @@ static HRESULT WINAPI d3d_device2_GetRenderState(IDirect3DDevice2 *iface,
     return IDirect3DDevice3_GetRenderState(&device->IDirect3DDevice3_iface, state, value);
 }
 
+static void d3d_device_set_render_state(struct d3d_device *device,
+        enum wined3d_render_state state, DWORD value)
+{
+    wined3d_stateblock_set_render_state(device->update_state, state, value);
+    if (!device->recording)
+        wined3d_device_set_render_state(device->wined3d_device, state, value);
+}
+
+static void d3d_device_set_sampler_state(struct d3d_device *device,
+        UINT sampler_idx, enum wined3d_sampler_state state, DWORD value)
+{
+    wined3d_stateblock_set_sampler_state(device->update_state, sampler_idx, state, value);
+    if (!device->recording)
+        wined3d_device_set_sampler_state(device->wined3d_device, sampler_idx, state, value);
+}
+
 /*****************************************************************************
  * IDirect3DDevice7::SetRenderState
  *
@@ -2546,7 +2562,7 @@ static HRESULT d3d_device7_SetRenderState(IDirect3DDevice7 *iface,
                     break;
             }
 
-            wined3d_device_set_sampler_state(device->wined3d_device, 0, WINED3D_SAMP_MAG_FILTER, tex_mag);
+            d3d_device_set_sampler_state(device, 0, WINED3D_SAMP_MAG_FILTER, tex_mag);
             break;
         }
 
@@ -2589,24 +2605,19 @@ static HRESULT d3d_device7_SetRenderState(IDirect3DDevice7 *iface,
                     break;
             }
 
-            wined3d_device_set_sampler_state(device->wined3d_device,
-                    0, WINED3D_SAMP_MIP_FILTER, tex_mip);
-            wined3d_device_set_sampler_state(device->wined3d_device,
-                    0, WINED3D_SAMP_MIN_FILTER, tex_min);
+            d3d_device_set_sampler_state(device, 0, WINED3D_SAMP_MIP_FILTER, tex_mip);
+            d3d_device_set_sampler_state(device, 0, WINED3D_SAMP_MIN_FILTER, tex_min);
             break;
         }
 
         case D3DRENDERSTATE_TEXTUREADDRESS:
-            wined3d_device_set_sampler_state(device->wined3d_device,
-                    0, WINED3D_SAMP_ADDRESS_V, value);
+            d3d_device_set_sampler_state(device, 0, WINED3D_SAMP_ADDRESS_V, value);
             /* Drop through */
         case D3DRENDERSTATE_TEXTUREADDRESSU:
-            wined3d_device_set_sampler_state(device->wined3d_device,
-                    0, WINED3D_SAMP_ADDRESS_U, value);
+            d3d_device_set_sampler_state(device, 0, WINED3D_SAMP_ADDRESS_U, value);
             break;
         case D3DRENDERSTATE_TEXTUREADDRESSV:
-            wined3d_device_set_sampler_state(device->wined3d_device,
-                    0, WINED3D_SAMP_ADDRESS_V, value);
+            d3d_device_set_sampler_state(device, 0, WINED3D_SAMP_ADDRESS_V, value);
             break;
 
         case D3DRENDERSTATE_BORDERCOLOR:
@@ -2623,7 +2634,7 @@ static HRESULT d3d_device7_SetRenderState(IDirect3DDevice7 *iface,
             break;
 
         case D3DRENDERSTATE_ZBIAS:
-            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_DEPTHBIAS, value);
+            d3d_device_set_render_state(device, WINED3D_RS_DEPTHBIAS, value);
             break;
 
         default:
@@ -2635,7 +2646,7 @@ static HRESULT d3d_device7_SetRenderState(IDirect3DDevice7 *iface,
                 break;
             }
 
-            wined3d_device_set_render_state(device->wined3d_device, state, value);
+            d3d_device_set_render_state(device, state, value);
             break;
     }
     wined3d_mutex_unlock();
