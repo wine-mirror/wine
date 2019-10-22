@@ -552,6 +552,91 @@ static void set_library_wargv( char **argv, const UNICODE_STRING *image )
 }
 
 
+/***********************************************************************
+ *           build_command_line
+ *
+ * Build the command line of a process from the argv array.
+ *
+ * Note that it does NOT necessarily include the file name.
+ * Sometimes we don't even have any command line options at all.
+ *
+ * We must quote and escape characters so that the argv array can be rebuilt
+ * from the command line:
+ * - spaces and tabs must be quoted
+ *   'a b'   -> '"a b"'
+ * - quotes must be escaped
+ *   '"'     -> '\"'
+ * - if '\'s are followed by a '"', they must be doubled and followed by '\"',
+ *   resulting in an odd number of '\' followed by a '"'
+ *   '\"'    -> '\\\"'
+ *   '\\"'   -> '\\\\\"'
+ * - '\'s are followed by the closing '"' must be doubled,
+ *   resulting in an even number of '\' followed by a '"'
+ *   ' \'    -> '" \\"'
+ *   ' \\'    -> '" \\\\"'
+ * - '\'s that are not followed by a '"' can be left as is
+ *   'a\b'   == 'a\b'
+ *   'a\\b'  == 'a\\b'
+ */
+static void build_command_line( WCHAR **argv, UNICODE_STRING *cmdline )
+{
+    int len;
+    WCHAR **arg;
+    LPWSTR p;
+
+    len = 1;
+    for (arg = argv; *arg; arg++) len += 3 + 2 * strlenW( *arg );
+    cmdline->MaximumLength = len * sizeof(WCHAR);
+    if (!(cmdline->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, cmdline->MaximumLength ))) return;
+
+    p = cmdline->Buffer;
+    for (arg = argv; *arg; arg++)
+    {
+        BOOL has_space, has_quote;
+        int i, bcount;
+        WCHAR *a;
+
+        /* check for quotes and spaces in this argument */
+        if (arg == argv || !**arg) has_space = TRUE;
+        else has_space = strchrW( *arg, ' ' ) || strchrW( *arg, '\t' );
+        has_quote = strchrW( *arg, '"' ) != NULL;
+
+        /* now transfer it to the command line */
+        if (has_space) *p++ = '"';
+        if (has_quote || has_space)
+        {
+            bcount = 0;
+            for (a = *arg; *a; a++)
+            {
+                if (*a == '\\') bcount++;
+                else
+                {
+                    if (*a == '"') /* double all the '\\' preceding this '"', plus one */
+                        for (i = 0; i <= bcount; i++) *p++ = '\\';
+                    bcount = 0;
+                }
+                *p++ = *a;
+            }
+        }
+        else
+        {
+            strcpyW( p, *arg );
+            p += strlenW( p );
+        }
+        if (has_space)
+        {
+            /* Double all the '\' preceding the closing quote */
+            for (i = 0; i < bcount; i++) *p++ = '\\';
+            *p++ = '"';
+        }
+        *p++ = ' ';
+    }
+    if (p > cmdline->Buffer) p--;  /* remove last space */
+    *p = 0;
+    cmdline->Length = (p - cmdline->Buffer) * sizeof(WCHAR);
+}
+
+
 /******************************************************************************
  *  NtQuerySystemEnvironmentValue		[NTDLL.@]
  */
@@ -1074,6 +1159,7 @@ void init_user_process_params( SIZE_T data_size )
         get_current_directory( &params->CurrentDirectory.DosPath );
         get_image_path( __wine_main_argv[0], &params->ImagePathName );
         set_library_wargv( __wine_main_argv, &params->ImagePathName );
+        build_command_line( __wine_main_wargv, &params->CommandLine );
 
         if (isatty(0) || isatty(1) || isatty(2))
             params->ConsoleHandle = (HANDLE)2; /* see kernel32/kernel_private.h */

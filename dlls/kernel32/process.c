@@ -868,149 +868,6 @@ static void set_library_argv( WCHAR **wargv )
 
 
 /***********************************************************************
- *           build_command_line
- *
- * Build the command line of a process from the argv array.
- *
- * Note that it does NOT necessarily include the file name.
- * Sometimes we don't even have any command line options at all.
- *
- * We must quote and escape characters so that the argv array can be rebuilt
- * from the command line:
- * - spaces and tabs must be quoted
- *   'a b'   -> '"a b"'
- * - quotes must be escaped
- *   '"'     -> '\"'
- * - if '\'s are followed by a '"', they must be doubled and followed by '\"',
- *   resulting in an odd number of '\' followed by a '"'
- *   '\"'    -> '\\\"'
- *   '\\"'   -> '\\\\\"'
- * - '\'s are followed by the closing '"' must be doubled,
- *   resulting in an even number of '\' followed by a '"'
- *   ' \'    -> '" \\"'
- *   ' \\'    -> '" \\\\"'
- * - '\'s that are not followed by a '"' can be left as is
- *   'a\b'   == 'a\b'
- *   'a\\b'  == 'a\\b'
- */
-static BOOL build_command_line( WCHAR **argv )
-{
-    int len;
-    WCHAR **arg;
-    LPWSTR p;
-    RTL_USER_PROCESS_PARAMETERS* rupp = NtCurrentTeb()->Peb->ProcessParameters;
-
-    if (rupp->CommandLine.Buffer) return TRUE; /* already got it from the server */
-
-    len = 0;
-    for (arg = argv; *arg; arg++)
-    {
-        BOOL has_space;
-        int bcount;
-        WCHAR* a;
-
-        has_space=FALSE;
-        bcount=0;
-        a=*arg;
-        if( arg == argv || !*a ) has_space=TRUE;
-        while (*a!='\0') {
-            if (*a=='\\') {
-                bcount++;
-            } else {
-                if (*a==' ' || *a=='\t') {
-                    has_space=TRUE;
-                } else if (*a=='"') {
-                    /* doubling of '\' preceding a '"',
-                     * plus escaping of said '"'
-                     */
-                    len+=2*bcount+1;
-                }
-                bcount=0;
-            }
-            a++;
-        }
-        len+=(a-*arg)+1 /* for the separating space */;
-        if (has_space)
-            len+=2+bcount; /* for the quotes and doubling of '\' preceding the closing quote */
-    }
-
-    if (!(rupp->CommandLine.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR))))
-        return FALSE;
-
-    p = rupp->CommandLine.Buffer;
-    rupp->CommandLine.Length = (len - 1) * sizeof(WCHAR);
-    rupp->CommandLine.MaximumLength = len * sizeof(WCHAR);
-    for (arg = argv; *arg; arg++)
-    {
-        BOOL has_space,has_quote;
-        WCHAR* a;
-        int bcount;
-
-        /* Check for quotes and spaces in this argument */
-        has_space=has_quote=FALSE;
-        a=*arg;
-        if( arg == argv || !*a ) has_space=TRUE;
-        while (*a!='\0') {
-            if (*a==' ' || *a=='\t') {
-                has_space=TRUE;
-                if (has_quote)
-                    break;
-            } else if (*a=='"') {
-                has_quote=TRUE;
-                if (has_space)
-                    break;
-            }
-            a++;
-        }
-
-        /* Now transfer it to the command line */
-        if (has_space)
-            *p++='"';
-        if (has_quote || has_space) {
-            bcount=0;
-            a=*arg;
-            while (*a!='\0') {
-                if (*a=='\\') {
-                    *p++=*a;
-                    bcount++;
-                } else {
-                    if (*a=='"') {
-                        int i;
-
-                        /* Double all the '\\' preceding this '"', plus one */
-                        for (i=0;i<=bcount;i++)
-                            *p++='\\';
-                        *p++='"';
-                    } else {
-                        *p++=*a;
-                    }
-                    bcount=0;
-                }
-                a++;
-            }
-        } else {
-            WCHAR* x = *arg;
-            while ((*p=*x++)) p++;
-        }
-        if (has_space) {
-            int i;
-
-            /* Double all the '\' preceding the closing quote */
-            for (i=0;i<bcount;i++)
-                *p++='\\';
-            *p++='"';
-        }
-        *p++=' ';
-    }
-    if (p > rupp->CommandLine.Buffer)
-        p--;  /* remove last space */
-    *p = '\0';
-
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           init_windows_dirs
  */
 static void init_windows_dirs(void)
@@ -1182,20 +1039,14 @@ void * CDECL __wine_kernel_init(void)
     RtlSetUnhandledExceptionFilter( UnhandledExceptionFilter );
 
     LOCALE_Init();
+    init_windows_dirs();
+    boot_events[0] = boot_events[1] = 0;
 
     if (!peb->ProcessParameters->WindowTitle.Buffer)
     {
         /* convert old configuration to new format */
         convert_old_config();
         got_environment = has_registry_environment();
-    }
-
-    init_windows_dirs();
-    boot_events[0] = boot_events[1] = 0;
-
-    if (!peb->ProcessParameters->WindowTitle.Buffer)
-    {
-        if (!build_command_line( __wine_main_wargv )) goto error;
         start_wineboot( boot_events );
     }
 
@@ -1265,9 +1116,6 @@ void * CDECL __wine_kernel_init(void)
     if (!params->CurrentDirectory.Handle) chdir("/"); /* avoid locking removable devices */
 
     return start_process_wrapper;
-
- error:
-    ExitProcess( GetLastError() );
 }
 
 
