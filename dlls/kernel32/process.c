@@ -1236,28 +1236,15 @@ void * CDECL __wine_kernel_init(void)
     set_library_wargv( __wine_main_argv );
     boot_events[0] = boot_events[1] = 0;
 
-    if (peb->ProcessParameters->ImagePathName.Buffer)
+    if (!peb->ProcessParameters->WindowTitle.Buffer)
     {
-        strcpyW( main_exe_name, peb->ProcessParameters->ImagePathName.Buffer );
-    }
-    else
-    {
-        BOOL is_64bit;
-
-        RtlGetExePath( __wine_main_wargv[0], &load_path );
-        if (!SearchPathW( load_path, __wine_main_wargv[0], exeW, MAX_PATH, main_exe_name, NULL ) &&
-            !get_builtin_path( __wine_main_wargv[0], exeW, main_exe_name, MAX_PATH, &is_64bit ))
-        {
-            MESSAGE( "wine: cannot find '%s'\n", __wine_main_argv[0] );
-            ExitProcess( GetLastError() );
-        }
-        RtlReleasePath( load_path );
         update_library_argv0( main_exe_name );
         if (!build_command_line( __wine_main_wargv )) goto error;
         start_wineboot( boot_events );
     }
 
     /* if there's no extension, append a dot to prevent LoadLibrary from appending .dll */
+    strcpyW( main_exe_name, peb->ProcessParameters->ImagePathName.Buffer );
     p = strrchrW( main_exe_name, '.' );
     if (!p || strchrW( p, '/' ) || strchrW( p, '\\' )) strcatW( main_exe_name, dotW );
 

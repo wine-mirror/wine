@@ -47,6 +47,8 @@ static WCHAR empty[] = {0};
 static const UNICODE_STRING empty_str = { 0, sizeof(empty), empty };
 static const UNICODE_STRING null_str = { 0, 0, NULL };
 
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
+
 static const WCHAR windows_dir[] = {'C',':','\\','w','i','n','d','o','w','s',0};
 
 static inline SIZE_T get_env_length( const WCHAR *env )
@@ -437,6 +439,77 @@ static void get_current_directory( UNICODE_STRING *dir )
         dir->Length += sizeof(WCHAR);
     }
     dir->Buffer[dir->Length / sizeof(WCHAR)] = 0;
+}
+
+
+/***********************************************************************
+ *           is_path_prefix
+ */
+static inline BOOL is_path_prefix( const WCHAR *prefix, const WCHAR *path, const WCHAR *file )
+{
+    DWORD len = strlenW( prefix );
+
+    if (strncmpiW( path, prefix, len )) return FALSE;
+    while (path[len] == '\\') len++;
+    return path + len == file;
+}
+
+
+/***********************************************************************
+ *           get_image_path
+ */
+static void get_image_path( const char *argv0, UNICODE_STRING *path )
+{
+    static const WCHAR exeW[] = {'.','e','x','e',0};
+    WCHAR *load_path, *file_part, *name, full_name[MAX_PATH];
+    DWORD len;
+
+    len = ntdll_umbstowcs( 0, argv0, strlen(argv0) + 1, NULL, 0 );
+    if (!(name = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) goto failed;
+    ntdll_umbstowcs( 0, argv0, strlen(argv0) + 1, name, len );
+
+    if (RtlDetermineDosPathNameType_U( name ) != RELATIVE_PATH ||
+        strchrW( name, '/' ) || strchrW( name, '\\' ))
+    {
+        len = RtlGetFullPathName_U( name, sizeof(full_name), full_name, &file_part );
+        if (!len || len > sizeof(full_name)) goto failed;
+        /* try first without extension */
+        if (RtlDoesFileExists_U( full_name )) goto done;
+        if (len < (MAX_PATH - 4) * sizeof(WCHAR) && !strchrW( file_part, '.' ))
+        {
+            strcatW( file_part, exeW );
+            if (RtlDoesFileExists_U( full_name )) goto done;
+        }
+        /* check for builtin path inside system directory */
+        if (!is_path_prefix( system_dir, full_name, file_part ))
+        {
+            if (!is_win64 && !is_wow64) goto failed;
+            if (!is_path_prefix( syswow64_dir, full_name, file_part )) goto failed;
+        }
+    }
+    else
+    {
+        RtlGetExePath( name, &load_path );
+        len = RtlDosSearchPath_U( load_path, name, exeW, sizeof(full_name), full_name, &file_part );
+        RtlReleasePath( load_path );
+        if (!len || len > sizeof(full_name))
+        {
+            /* build builtin path inside system directory */
+            len = strlenW( system_dir );
+            if (strlenW( name ) >= MAX_PATH - 4 - len) goto failed;
+            strcpyW( full_name, system_dir );
+            strcatW( full_name, name );
+            if (!strchrW( name, '.' )) strcatW( full_name, exeW );
+        }
+    }
+done:
+    RtlCreateUnicodeString( path, full_name );
+    RtlFreeHeap( GetProcessHeap(), 0, name );
+    return;
+
+failed:
+    MESSAGE( "wine: cannot find '%s'\n", argv0 );
+    RtlExitUserProcess( GetLastError() );
 }
 
 
@@ -960,6 +1033,7 @@ void init_user_process_params( SIZE_T data_size )
         NtCurrentTeb()->Peb->ProcessParameters = params;
         params->Environment = build_initial_environment( __wine_get_main_environment() );
         get_current_directory( &params->CurrentDirectory.DosPath );
+        get_image_path( __wine_main_argv[0], &params->ImagePathName );
 
         if (isatty(0) || isatty(1) || isatty(2))
             params->ConsoleHandle = (HANDLE)2; /* see kernel32/kernel_private.h */

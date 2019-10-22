@@ -67,6 +67,8 @@ typedef void  (CALLBACK *LDRENUMPROC)(LDR_MODULE *, void *, BOOLEAN *);
 /* system directory with trailing backslash */
 const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
                             's','y','s','t','e','m','3','2','\\',0};
+const WCHAR syswow64_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
+                              's','y','s','w','o','w','6','4','\\',0};
 
 /* system search path */
 static const WCHAR system_path[] =
