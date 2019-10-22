@@ -39,7 +39,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
  */
 static const REFERENCE_TIME DSoundRenderer_Max_Fill = 150 * 10000;
 
-static const IBaseFilterVtbl DSoundRender_Vtbl;
 static const IBasicAudioVtbl IBasicAudio_Vtbl;
 static const IReferenceClockVtbl IReferenceClock_Vtbl;
 static const IAMDirectSoundVtbl IAMDirectSound_Vtbl;
@@ -610,7 +609,7 @@ HRESULT DSoundRender_create(IUnknown *outer, void **out)
         return E_OUTOFMEMORY;
     ZeroMemory(pDSoundRender, sizeof(DSoundRenderImpl));
 
-    hr = strmbase_renderer_init(&pDSoundRender->renderer, &DSoundRender_Vtbl,
+    hr = strmbase_renderer_init(&pDSoundRender->renderer,
             outer, &CLSID_DSoundRender, sink_name, &BaseFuncTable);
 
     pDSoundRender->IBasicAudio_iface.lpVtbl = &IBasicAudio_Vtbl;
@@ -651,25 +650,6 @@ HRESULT DSoundRender_create(IUnknown *outer, void **out)
 
     return hr;
 }
-
-static const IBaseFilterVtbl DSoundRender_Vtbl =
-{
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseRendererImpl_Stop,
-    BaseRendererImpl_Pause,
-    BaseRendererImpl_Run,
-    BaseRendererImpl_GetState,
-    BaseRendererImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
 
 /*** IUnknown methods ***/
 static HRESULT WINAPI Basicaudio_QueryInterface(IBasicAudio *iface,

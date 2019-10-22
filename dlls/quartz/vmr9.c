@@ -758,25 +758,6 @@ static const BaseControlVideoFuncTable renderer_BaseControlVideoFuncTable = {
     VMR9_SetTargetRect
 };
 
-static const IBaseFilterVtbl VMR_Vtbl =
-{
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseRendererImpl_Stop,
-    BaseRendererImpl_Pause,
-    BaseRendererImpl_Run,
-    BaseRendererImpl_GetState,
-    BaseRendererImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
-
 static const IVideoWindowVtbl IVideoWindow_VTable =
 {
     BaseControlWindowImpl_QueryInterface,
@@ -2247,7 +2228,7 @@ static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
     pVMR->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
     pVMR->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
-    hr = strmbase_renderer_init(&pVMR->renderer, &VMR_Vtbl, outer, clsid, sink_name, &BaseFuncTable);
+    hr = strmbase_renderer_init(&pVMR->renderer, outer, clsid, sink_name, &BaseFuncTable);
     if (FAILED(hr))
         goto fail;
 

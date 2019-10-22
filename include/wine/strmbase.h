@@ -565,19 +565,13 @@ typedef struct BaseRendererFuncTable {
 } BaseRendererFuncTable;
 
 HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSample);
-HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface);
-HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart);
-HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface);
-HRESULT WINAPI BaseRendererImpl_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock);
-HRESULT WINAPI BaseRendererImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState);
 HRESULT WINAPI BaseRendererImpl_EndOfStream(BaseRenderer* iface);
 HRESULT WINAPI BaseRendererImpl_BeginFlush(BaseRenderer* iface);
 HRESULT WINAPI BaseRendererImpl_EndFlush(BaseRenderer* iface);
 HRESULT WINAPI BaseRendererImpl_ClearPendingSample(BaseRenderer *iface);
 
-HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtbl *vtbl,
-        IUnknown *outer, const CLSID *clsid, const WCHAR *sink_name,
-        const BaseRendererFuncTable *func_table);
+HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, IUnknown *outer,
+        const CLSID *clsid, const WCHAR *sink_name, const BaseRendererFuncTable *func_table);
 void strmbase_renderer_cleanup(BaseRenderer *filter);
 
 /* Dll Functions */

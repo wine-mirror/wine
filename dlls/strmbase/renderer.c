@@ -250,15 +250,15 @@ static const BaseInputPinFuncTable input_BaseInputFuncTable =
     .pfnReceive = BaseRenderer_Receive,
 };
 
+static const IBaseFilterVtbl strmbase_renderer_vtbl;
 
-HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, const IBaseFilterVtbl *vtbl,
-        IUnknown *outer, const CLSID *clsid, const WCHAR *sink_name,
-        const BaseRendererFuncTable *pBaseFuncsTable)
+HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, IUnknown *outer,
+        const CLSID *clsid, const WCHAR *sink_name, const BaseRendererFuncTable *pBaseFuncsTable)
 {
     HRESULT hr;
 
     memset(filter, 0, sizeof(*filter));
-    strmbase_filter_init(&filter->filter, vtbl, outer, clsid, &filter_ops);
+    strmbase_filter_init(&filter->filter, &strmbase_renderer_vtbl, outer, clsid, &filter_ops);
 
     filter->pFuncsTable = pBaseFuncsTable;
 
@@ -407,7 +407,7 @@ HRESULT WINAPI BaseRendererImpl_Receive(BaseRenderer *This, IMediaSample * pSamp
     return hr;
 }
 
-HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface)
+static HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter *iface)
 {
     BaseRenderer *This = impl_from_IBaseFilter(iface);
 
@@ -427,7 +427,7 @@ HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter * iface)
     return S_OK;
 }
 
-HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
+static HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 {
     BaseRenderer *This = impl_from_IBaseFilter(iface);
 
@@ -461,7 +461,7 @@ out:
     return S_OK;
 }
 
-HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
+static HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter *iface)
 {
     BaseRenderer *This = impl_from_IBaseFilter(iface);
     HRESULT hr = S_OK;
@@ -497,7 +497,7 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
     return hr;
 }
 
-HRESULT WINAPI BaseRendererImpl_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock)
+static HRESULT WINAPI BaseRendererImpl_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock)
 {
     BaseRenderer *This = impl_from_IBaseFilter(iface);
     HRESULT hr;
@@ -510,7 +510,7 @@ HRESULT WINAPI BaseRendererImpl_SetSyncSource(IBaseFilter *iface, IReferenceCloc
 }
 
 
-HRESULT WINAPI BaseRendererImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
+static HRESULT WINAPI BaseRendererImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
 {
     HRESULT hr;
     BaseRenderer *This = impl_from_IBaseFilter(iface);
@@ -526,6 +526,25 @@ HRESULT WINAPI BaseRendererImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsT
 
     return hr;
 }
+
+static const IBaseFilterVtbl strmbase_renderer_vtbl =
+{
+    BaseFilterImpl_QueryInterface,
+    BaseFilterImpl_AddRef,
+    BaseFilterImpl_Release,
+    BaseFilterImpl_GetClassID,
+    BaseRendererImpl_Stop,
+    BaseRendererImpl_Pause,
+    BaseRendererImpl_Run,
+    BaseRendererImpl_GetState,
+    BaseRendererImpl_SetSyncSource,
+    BaseFilterImpl_GetSyncSource,
+    BaseFilterImpl_EnumPins,
+    BaseFilterImpl_FindPin,
+    BaseFilterImpl_QueryFilterInfo,
+    BaseFilterImpl_JoinFilterGraph,
+    BaseFilterImpl_QueryVendorInfo
+};
 
 HRESULT WINAPI BaseRendererImpl_EndOfStream(BaseRenderer* iface)
 {

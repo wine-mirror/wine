@@ -62,25 +62,6 @@ static const BaseRendererFuncTable RendererFuncTable =
     .renderer_destroy = null_renderer_destroy,
 };
 
-static const IBaseFilterVtbl NullRenderer_Vtbl =
-{
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseRendererImpl_Stop,
-    BaseRendererImpl_Pause,
-    BaseRendererImpl_Run,
-    BaseRendererImpl_GetState,
-    BaseRendererImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
-
 HRESULT NullRenderer_create(IUnknown *outer, void **out)
 {
     static const WCHAR sink_name[] = {'I','n',0};
@@ -92,7 +73,7 @@ HRESULT NullRenderer_create(IUnknown *outer, void **out)
 
     pNullRenderer = CoTaskMemAlloc(sizeof(NullRendererImpl));
 
-    hr = strmbase_renderer_init(&pNullRenderer->renderer, &NullRenderer_Vtbl, outer,
+    hr = strmbase_renderer_init(&pNullRenderer->renderer, outer,
             &CLSID_NullRenderer, sink_name, &RendererFuncTable);
 
     if (FAILED(hr))

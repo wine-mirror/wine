@@ -36,25 +36,6 @@ typedef struct
     BaseRenderer renderer;
 } evr_filter;
 
-static const IBaseFilterVtbl basefilter_vtbl =
-{
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseRendererImpl_Stop,
-    BaseRendererImpl_Pause,
-    BaseRendererImpl_Run,
-    BaseRendererImpl_GetState,
-    BaseRendererImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
-
 static inline evr_filter *impl_from_BaseRenderer(BaseRenderer *iface)
 {
     return CONTAINING_RECORD(iface, evr_filter, renderer);
@@ -98,7 +79,7 @@ HRESULT evr_filter_create(IUnknown *outer, void **out)
     if (!object)
         return E_OUTOFMEMORY;
 
-    strmbase_renderer_init(&object->renderer, &basefilter_vtbl, outer,
+    strmbase_renderer_init(&object->renderer, outer,
             &CLSID_EnhancedVideoRenderer, sink_name, &renderer_ops);
 
     *out = &object->renderer.filter.IUnknown_inner;

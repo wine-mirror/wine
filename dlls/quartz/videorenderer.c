@@ -543,25 +543,6 @@ static const BaseControlVideoFuncTable renderer_BaseControlVideoFuncTable = {
     VideoRenderer_SetTargetRect
 };
 
-static const IBaseFilterVtbl VideoRenderer_Vtbl =
-{
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseRendererImpl_Stop,
-    BaseRendererImpl_Pause,
-    BaseRendererImpl_Run,
-    BaseRendererImpl_GetState,
-    BaseRendererImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
-
 static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface,
                                                      LONG *FullScreenMode)
 {
@@ -777,8 +758,8 @@ HRESULT VideoRenderer_create(IUnknown *outer, void **out)
 
     pVideoRenderer->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
-    hr = strmbase_renderer_init(&pVideoRenderer->renderer, &VideoRenderer_Vtbl,
-            outer, &CLSID_VideoRenderer, sink_name, &BaseFuncTable);
+    hr = strmbase_renderer_init(&pVideoRenderer->renderer, outer,
+            &CLSID_VideoRenderer, sink_name, &BaseFuncTable);
 
     if (FAILED(hr))
         goto fail;
