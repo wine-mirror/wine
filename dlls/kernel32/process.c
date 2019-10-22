@@ -1028,7 +1028,6 @@ void * CDECL __wine_kernel_init(void)
     RTL_USER_PROCESS_PARAMETERS *params = peb->ProcessParameters;
     HANDLE boot_events[2];
     BOOL got_environment = TRUE;
-    WCHAR *load_path, *dummy;
 
     /* Initialize everything */
 
@@ -1057,9 +1056,6 @@ void * CDECL __wine_kernel_init(void)
 
     TRACE( "starting process name=%s argv[0]=%s\n",
            debugstr_w(main_exe_name), debugstr_w(__wine_main_wargv[0]) );
-
-    LdrGetDllPath( main_exe_name, 0, &load_path, &dummy );
-    RtlInitUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->DllPath, load_path );
 
     if (boot_events[0])
     {

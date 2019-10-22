@@ -1140,7 +1140,7 @@ static inline void get_unicode_string( UNICODE_STRING *str, WCHAR **src, UINT le
  */
 void init_user_process_params( SIZE_T data_size )
 {
-    WCHAR *src;
+    WCHAR *src, *load_path, *dummy;
     SIZE_T info_size, env_size;
     NTSTATUS status;
     startup_info_t *info = NULL;
@@ -1160,6 +1160,9 @@ void init_user_process_params( SIZE_T data_size )
         get_image_path( __wine_main_argv[0], &params->ImagePathName );
         set_library_wargv( __wine_main_argv, &params->ImagePathName );
         build_command_line( __wine_main_wargv, &params->CommandLine );
+        LdrGetDllPath( params->ImagePathName.Buffer, 0, &load_path, &dummy );
+        RtlCreateUnicodeString( &params->DllPath, load_path );
+        RtlReleasePath( load_path );
 
         if (isatty(0) || isatty(1) || isatty(2))
             params->ConsoleHandle = (HANDLE)2; /* see kernel32/kernel_private.h */
