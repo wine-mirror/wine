@@ -835,32 +835,15 @@ static void set_wow64_environment(void)
 }
 
 /***********************************************************************
- *              set_library_wargv
+ *              set_library_argv
  *
- * Set the Wine library Unicode argv global variables.
+ * Set the Wine library argv global variables.
  */
-static void set_library_wargv( char **argv )
+static void set_library_argv( WCHAR **wargv )
 {
     int argc;
-    char *q;
-    WCHAR *p;
-    WCHAR **wargv;
+    char *p, **argv;
     DWORD total = 0;
-
-    for (argc = 0; argv[argc]; argc++)
-        total += MultiByteToWideChar( CP_UNIXCP, 0, argv[argc], -1, NULL, 0 );
-
-    wargv = RtlAllocateHeap( GetProcessHeap(), 0,
-                             total * sizeof(WCHAR) + (argc + 1) * sizeof(*wargv) );
-    p = (WCHAR *)(wargv + argc + 1);
-    for (argc = 0; argv[argc]; argc++)
-    {
-        DWORD reslen = MultiByteToWideChar( CP_UNIXCP, 0, argv[argc], -1, p, total );
-        wargv[argc] = p;
-        p += reslen;
-        total -= reslen;
-    }
-    wargv[argc] = NULL;
 
     /* convert argv back from Unicode since it has to be in the Ansi codepage not the Unix one */
 
@@ -868,12 +851,12 @@ static void set_library_wargv( char **argv )
         total += WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, NULL, 0, NULL, NULL );
 
     argv = RtlAllocateHeap( GetProcessHeap(), 0, total + (argc + 1) * sizeof(*argv) );
-    q = (char *)(argv + argc + 1);
+    p = (char *)(argv + argc + 1);
     for (argc = 0; wargv[argc]; argc++)
     {
-        DWORD reslen = WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, q, total, NULL, NULL );
-        argv[argc] = q;
-        q += reslen;
+        DWORD reslen = WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, p, total, NULL, NULL );
+        argv[argc] = p;
+        p += reslen;
         total -= reslen;
     }
     argv[argc] = NULL;
@@ -881,30 +864,6 @@ static void set_library_wargv( char **argv )
     __wine_main_argc = argc;
     __wine_main_argv = argv;
     __wine_main_wargv = wargv;
-}
-
-
-/***********************************************************************
- *              update_library_argv0
- *
- * Update the argv[0] global variable with the binary we have found.
- */
-static void update_library_argv0( const WCHAR *argv0 )
-{
-    DWORD len = strlenW( argv0 );
-
-    if (len > strlenW( __wine_main_wargv[0] ))
-    {
-        __wine_main_wargv[0] = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) );
-    }
-    strcpyW( __wine_main_wargv[0], argv0 );
-
-    len = WideCharToMultiByte( CP_ACP, 0, argv0, -1, NULL, 0, NULL, NULL );
-    if (len > strlen( __wine_main_argv[0] ) + 1)
-    {
-        __wine_main_argv[0] = RtlAllocateHeap( GetProcessHeap(), 0, len );
-    }
-    WideCharToMultiByte( CP_ACP, 0, argv0, -1, __wine_main_argv[0], len, NULL, NULL );
 }
 
 
@@ -1232,13 +1191,10 @@ void * CDECL __wine_kernel_init(void)
     }
 
     init_windows_dirs();
-
-    set_library_wargv( __wine_main_argv );
     boot_events[0] = boot_events[1] = 0;
 
     if (!peb->ProcessParameters->WindowTitle.Buffer)
     {
-        update_library_argv0( main_exe_name );
         if (!build_command_line( __wine_main_wargv )) goto error;
         start_wineboot( boot_events );
     }
@@ -1269,6 +1225,7 @@ void * CDECL __wine_kernel_init(void)
         set_additional_environment();
     }
     set_wow64_environment();
+    set_library_argv( __wine_main_wargv );
 
     if (!(peb->ImageBaseAddress = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES )))
     {

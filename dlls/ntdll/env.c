@@ -513,6 +513,45 @@ failed:
 }
 
 
+/***********************************************************************
+ *              set_library_wargv
+ *
+ * Set the Wine library Unicode argv global variables.
+ */
+static void set_library_wargv( char **argv, const UNICODE_STRING *image )
+{
+    int argc;
+    WCHAR *p, **wargv;
+    DWORD total = 0;
+
+    if (image) total += 1 + image->Length / sizeof(WCHAR);
+    for (argc = (image != NULL); argv[argc]; argc++)
+        total += ntdll_umbstowcs( 0, argv[argc], strlen(argv[argc]) + 1, NULL, 0 );
+
+    wargv = RtlAllocateHeap( GetProcessHeap(), 0,
+                             total * sizeof(WCHAR) + (argc + 1) * sizeof(*wargv) );
+    p = (WCHAR *)(wargv + argc + 1);
+    if (image)
+    {
+        strcpyW( p, image->Buffer );
+        wargv[0] = p;
+        p += 1 + image->Length / sizeof(WCHAR);
+        total -= 1 + image->Length / sizeof(WCHAR);
+    }
+    for (argc = (image != NULL); argv[argc]; argc++)
+    {
+        DWORD reslen = ntdll_umbstowcs( 0, argv[argc], strlen(argv[argc]) + 1, p, total );
+        wargv[argc] = p;
+        p += reslen;
+        total -= reslen;
+    }
+    wargv[argc] = NULL;
+
+    __wine_main_argc = argc;
+    __wine_main_wargv = wargv;
+}
+
+
 /******************************************************************************
  *  NtQuerySystemEnvironmentValue		[NTDLL.@]
  */
@@ -1034,6 +1073,7 @@ void init_user_process_params( SIZE_T data_size )
         params->Environment = build_initial_environment( __wine_get_main_environment() );
         get_current_directory( &params->CurrentDirectory.DosPath );
         get_image_path( __wine_main_argv[0], &params->ImagePathName );
+        set_library_wargv( __wine_main_argv, &params->ImagePathName );
 
         if (isatty(0) || isatty(1) || isatty(2))
             params->ConsoleHandle = (HANDLE)2; /* see kernel32/kernel_private.h */
@@ -1102,6 +1142,8 @@ void init_user_process_params( SIZE_T data_size )
         if (env_size) memcpy( params->Environment, (char *)info + info_size, env_size );
         else params->Environment[0] = 0;
     }
+
+    set_library_wargv( __wine_main_argv, NULL );
 
 done:
     RtlFreeHeap( GetProcessHeap(), 0, info );
