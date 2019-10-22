@@ -66,13 +66,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
-#ifdef __APPLE__
-extern char **__wine_get_main_environment(void);
-#else
-extern char **__wine_main_environ;
-static char **__wine_get_main_environment(void) { return __wine_main_environ; }
-#endif
-
 typedef struct
 {
     LPSTR lpEnvAddress;
@@ -452,52 +445,6 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE 
     *handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
                            NULL, OPEN_EXISTING, 0, 0 );
     return (*handle != INVALID_HANDLE_VALUE);
-}
-
-
-/***********************************************************************
- *           build_initial_environment
- *
- * Build the Win32 environment from the Unix environment
- */
-static BOOL build_initial_environment(void)
-{
-    SIZE_T size = 1;
-    char **e;
-    WCHAR *p, *endptr;
-    void *ptr;
-    char **env = __wine_get_main_environment();
-
-    /* Compute the total size of the Unix environment */
-    for (e = env; *e; e++)
-    {
-        if (is_special_env_var( *e )) continue;
-        size += MultiByteToWideChar( CP_UNIXCP, 0, *e, -1, NULL, 0 );
-    }
-    size *= sizeof(WCHAR);
-
-    if (!(ptr = RtlAllocateHeap( GetProcessHeap(), 0, size ))) return FALSE;
-    NtCurrentTeb()->Peb->ProcessParameters->Environment = p = ptr;
-    endptr = p + size / sizeof(WCHAR);
-
-    /* And fill it with the Unix environment */
-    for (e = env; *e; e++)
-    {
-        char *str = *e;
-
-        /* skip Unix special variables and use the Wine variants instead */
-        if (!strncmp( str, "WINE", 4 ))
-        {
-            if (is_special_env_var( str + 4 )) str += 4;
-            else if (!strncmp( str, "WINEPRELOADRESERVE=", 19 )) continue;  /* skip it */
-        }
-        else if (is_special_env_var( str )) continue;  /* skip it */
-
-        MultiByteToWideChar( CP_UNIXCP, 0, str, -1, p, endptr - p );
-        p += strlenW(p) + 1;
-    }
-    *p = 0;
-    return TRUE;
 }
 
 
@@ -1255,11 +1202,8 @@ void * CDECL __wine_kernel_init(void)
 
     LOCALE_Init();
 
-    if (!params->Environment)
+    if (!peb->ProcessParameters->WindowTitle.Buffer)
     {
-        /* Copy the parent environment */
-        if (!build_initial_environment()) exit(1);
-
         /* convert old configuration to new format */
         convert_old_config();
 

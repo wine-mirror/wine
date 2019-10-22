@@ -35,6 +35,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
@@ -54,6 +55,76 @@ static inline SIZE_T get_env_length( const WCHAR *env )
     while (*end) end += strlenW(end) + 1;
     return end + 1 - env;
 }
+
+#ifdef __APPLE__
+extern char **__wine_get_main_environment(void);
+#else
+extern char **__wine_main_environ;
+static char **__wine_get_main_environment(void) { return __wine_main_environ; }
+#endif
+
+
+/***********************************************************************
+ *           is_special_env_var
+ *
+ * Check if an environment variable needs to be handled specially when
+ * passed through the Unix environment (i.e. prefixed with "WINE").
+ */
+static inline BOOL is_special_env_var( const char *var )
+{
+    return (!strncmp( var, "PATH=", sizeof("PATH=")-1 ) ||
+            !strncmp( var, "PWD=", sizeof("PWD=")-1 ) ||
+            !strncmp( var, "HOME=", sizeof("HOME=")-1 ) ||
+            !strncmp( var, "TEMP=", sizeof("TEMP=")-1 ) ||
+            !strncmp( var, "TMP=", sizeof("TMP=")-1 ) ||
+            !strncmp( var, "QT_", sizeof("QT_")-1 ) ||
+            !strncmp( var, "VK_", sizeof("VK_")-1 ));
+}
+
+
+/***********************************************************************
+ *           build_initial_environment
+ *
+ * Build the Win32 environment from the Unix environment
+ */
+static WCHAR *build_initial_environment( char **env )
+{
+    SIZE_T size = 1;
+    char **e;
+    WCHAR *p, *ptr;
+
+    /* compute the total size of the Unix environment */
+
+    for (e = env; *e; e++)
+    {
+        if (is_special_env_var( *e )) continue;
+        size += ntdll_umbstowcs( 0, *e, strlen(*e) + 1, NULL, 0 );
+    }
+
+    if (!(ptr = RtlAllocateHeap( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return NULL;
+    p = ptr;
+
+    /* and fill it with the Unix environment */
+
+    for (e = env; *e; e++)
+    {
+        char *str = *e;
+
+        /* skip Unix special variables and use the Wine variants instead */
+        if (!strncmp( str, "WINE", 4 ))
+        {
+            if (is_special_env_var( str + 4 )) str += 4;
+            else if (!strncmp( str, "WINEPRELOADRESERVE=", 19 )) continue;  /* skip it */
+        }
+        else if (is_special_env_var( str )) continue;  /* skip it */
+
+        ntdll_umbstowcs( 0, str, strlen(str) + 1, p, size - (p - ptr) );
+        p += strlenW(p) + 1;
+    }
+    *p = 0;
+    return ptr;
+}
+
 
 /***********************************************************************
  *           get_current_directory
@@ -644,6 +715,7 @@ void init_user_process_params( SIZE_T data_size )
             return;
 
         NtCurrentTeb()->Peb->ProcessParameters = params;
+        params->Environment = build_initial_environment( __wine_get_main_environment() );
         get_current_directory( &params->CurrentDirectory.DosPath );
 
         if (isatty(0) || isatty(1) || isatty(2))
