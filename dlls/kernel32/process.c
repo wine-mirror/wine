@@ -1228,9 +1228,7 @@ void * CDECL __wine_kernel_init(void)
     {
         /* convert old configuration to new format */
         convert_old_config();
-
         got_environment = has_registry_environment();
-        set_additional_environment();
     }
 
     init_windows_dirs();

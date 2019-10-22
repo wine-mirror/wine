@@ -206,6 +206,124 @@ static void set_registry_environment( WCHAR **env )
 
 
 /***********************************************************************
+ *           get_registry_value
+ */
+static WCHAR *get_registry_value( WCHAR *env, HKEY hkey, const WCHAR *name )
+{
+    char buffer[1024 * sizeof(WCHAR) + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    DWORD len, size = sizeof(buffer);
+    WCHAR *ret = NULL;
+    UNICODE_STRING nameW;
+
+    RtlInitUnicodeString( &nameW, name );
+    if (NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, buffer, size, &size ))
+        return NULL;
+
+    if (size <= FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data )) return NULL;
+    len = (size - FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data )) / sizeof(WCHAR);
+
+    if (info->Type == REG_EXPAND_SZ)
+    {
+        UNICODE_STRING value, expanded;
+
+        value.MaximumLength = len * sizeof(WCHAR);
+        value.Buffer = (WCHAR *)info->Data;
+        if (!value.Buffer[len - 1]) len--;  /* don't count terminating null if any */
+        value.Length = len * sizeof(WCHAR);
+        expanded.Length = expanded.MaximumLength = 1024 * sizeof(WCHAR);
+        if (!(expanded.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, expanded.MaximumLength )))
+            return NULL;
+        if (!RtlExpandEnvironmentStrings_U( env, &value, &expanded, NULL )) ret = expanded.Buffer;
+        else RtlFreeUnicodeString( &expanded );
+    }
+    else if (info->Type == REG_SZ)
+    {
+        if ((ret = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
+        {
+            memcpy( ret, info->Data, len * sizeof(WCHAR) );
+            ret[len] = 0;
+        }
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           set_additional_environment
+ *
+ * Set some additional environment variables not specified in the registry.
+ */
+static void set_additional_environment( WCHAR **env )
+{
+    static const WCHAR profile_keyW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                         'M','a','c','h','i','n','e','\\',
+                                         'S','o','f','t','w','a','r','e','\\',
+                                         'M','i','c','r','o','s','o','f','t','\\',
+                                         'W','i','n','d','o','w','s',' ','N','T','\\',
+                                         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                         'P','r','o','f','i','l','e','L','i','s','t',0};
+    static const WCHAR computer_keyW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                          'M','a','c','h','i','n','e','\\',
+                                          'S','y','s','t','e','m','\\',
+                                          'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                          'C','o','n','t','r','o','l','\\',
+                                          'C','o','m','p','u','t','e','r','N','a','m','e','\\',
+                                          'A','c','t','i','v','e','C','o','m','p','u','t','e','r','N','a','m','e',0};
+    static const WCHAR computer_valueW[] = {'C','o','m','p','u','t','e','r','N','a','m','e',0};
+    static const WCHAR public_valueW[] = {'P','u','b','l','i','c',0};
+    static const WCHAR computernameW[] = {'C','O','M','P','U','T','E','R','N','A','M','E',0};
+    static const WCHAR allusersW[] = {'A','L','L','U','S','E','R','S','P','R','O','F','I','L','E',0};
+    static const WCHAR programdataW[] = {'P','r','o','g','r','a','m','D','a','t','a',0};
+    static const WCHAR publicW[] = {'P','U','B','L','I','C',0};
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, valW;
+    WCHAR *val;
+    HANDLE hkey;
+
+    /* set the user profile variables */
+
+    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
+    RtlInitUnicodeString( &nameW, profile_keyW );
+    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
+    {
+        if ((val = get_registry_value( *env, hkey, programdataW )))
+        {
+            RtlInitUnicodeString( &valW, val );
+            RtlInitUnicodeString( &nameW, allusersW );
+            RtlSetEnvironmentVariable( env, &nameW, &valW );
+            RtlInitUnicodeString( &nameW, programdataW );
+            RtlSetEnvironmentVariable( env, &nameW, &valW );
+            RtlFreeHeap( GetProcessHeap(), 0, val );
+        }
+        if ((val = get_registry_value( *env, hkey, public_valueW )))
+        {
+            RtlInitUnicodeString( &valW, val );
+            RtlInitUnicodeString( &nameW, publicW );
+            RtlSetEnvironmentVariable( env, &nameW, &valW );
+            RtlFreeHeap( GetProcessHeap(), 0, val );
+        }
+        NtClose( hkey );
+    }
+
+    /* set the computer name */
+
+    RtlInitUnicodeString( &nameW, computer_keyW );
+    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
+    {
+        if ((val = get_registry_value( *env, hkey, computer_valueW )))
+        {
+            RtlInitUnicodeString( &valW, val );
+            RtlInitUnicodeString( &nameW, computernameW );
+            RtlSetEnvironmentVariable( env, &nameW, &valW );
+            RtlFreeHeap( GetProcessHeap(), 0, val );
+        }
+        NtClose( hkey );
+    }
+}
+
+
+/***********************************************************************
  *           build_initial_environment
  *
  * Build the Win32 environment from the Unix environment
@@ -246,6 +364,7 @@ static WCHAR *build_initial_environment( char **env )
     }
     *p = 0;
     set_registry_environment( &ptr );
+    set_additional_environment( &ptr );
     return ptr;
 }
 
