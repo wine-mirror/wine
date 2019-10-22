@@ -737,7 +737,6 @@ static IDXGIAdapter *get_adapter_(unsigned int line, IUnknown *device, BOOL is_d
         hr = IDXGIFactory_QueryInterface(factory, &IID_IDXGIFactory4, (void **)&factory4);
         ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         hr = IDXGIFactory4_EnumAdapterByLuid(factory4, luid, &IID_IDXGIAdapter, (void **)&adapter);
-        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         IDXGIFactory4_Release(factory4);
         IDXGIFactory_Release(factory);
     }
@@ -5512,13 +5511,18 @@ static void test_output_ownership(IUnknown *device, BOOL is_d3d12)
     if (!pD3DKMTCheckVidPnExclusiveOwnership
             || pD3DKMTCheckVidPnExclusiveOwnership(NULL) == STATUS_PROCEDURE_NOT_FOUND)
     {
-        skip("D3DKMTCheckVidPnExclusiveOwnership() is unavailable.\n");
+        win_skip("D3DKMTCheckVidPnExclusiveOwnership() is unavailable.\n");
         return;
     }
 
     get_factory(device, is_d3d12, &factory);
     adapter = get_adapter(device, is_d3d12);
-    ok(!!adapter, "Failed to get adapter.\n");
+    if (!adapter)
+    {
+        skip("Failed to get adapter on Direct3D %d.\n", is_d3d12 ? 12 : 10);
+        IDXGIFactory_Release(factory);
+        return;
+    }
 
     hr = IDXGIAdapter_EnumOutputs(adapter, 0, &output);
     IDXGIAdapter_Release(adapter);

@@ -376,7 +376,7 @@ static void test_D3DKMTCheckVidPnExclusiveOwnership(void)
 
     if (!pD3DKMTCheckVidPnExclusiveOwnership || pD3DKMTCheckVidPnExclusiveOwnership(NULL) == STATUS_PROCEDURE_NOT_FOUND)
     {
-        skip("D3DKMTCheckVidPnExclusiveOwnership() is unavailable.\n");
+        win_skip("D3DKMTCheckVidPnExclusiveOwnership() is unavailable.\n");
         return;
     }
 

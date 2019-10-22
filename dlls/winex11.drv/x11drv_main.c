@@ -877,3 +877,28 @@ done:
     LeaveCriticalSection( &x11drv_section );
     return status;
 }
+
+/**********************************************************************
+ *           X11DRV_D3DKMTCheckVidPnExclusiveOwnership
+ */
+NTSTATUS CDECL X11DRV_D3DKMTCheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc )
+{
+    struct d3dkmt_vidpn_source *source;
+
+    TRACE("(%p)\n", desc);
+
+    if (!desc || !desc->hAdapter)
+        return STATUS_INVALID_PARAMETER;
+
+    EnterCriticalSection( &x11drv_section );
+    LIST_FOR_EACH_ENTRY( source, &d3dkmt_vidpn_sources, struct d3dkmt_vidpn_source, entry )
+    {
+        if (source->id == desc->VidPnSourceId && source->type == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE)
+        {
+            LeaveCriticalSection( &x11drv_section );
+            return STATUS_GRAPHICS_PRESENT_OCCLUDED;
+        }
+    }
+    LeaveCriticalSection( &x11drv_section );
+    return STATUS_SUCCESS;
+}
