@@ -76,12 +76,12 @@ xinput_controller controllers[XUSER_MAX_COUNT] = {
 
 static BOOL verify_and_lock_device(xinput_controller *device)
 {
-    if (!device->connected)
+    if (!device->platform_private)
         return FALSE;
 
     EnterCriticalSection(&device->crit);
 
-    if (!device->connected)
+    if (!device->platform_private)
     {
         LeaveCriticalSection(&device->crit);
         return FALSE;
@@ -166,7 +166,7 @@ static DWORD xinput_get_state(DWORD index, XINPUT_STATE *state)
 
     HID_update_state(&controllers[index], state);
 
-    if (!controllers[index].connected)
+    if (!controllers[index].platform_private)
     {
         /* update_state may have disconnected the controller */
         unlock_device(&controllers[index]);
@@ -211,7 +211,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetKeystroke(DWORD index, DWORD reserved, P
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
-    if (!controllers[index].connected)
+    if (!controllers[index].platform_private)
         return ERROR_DEVICE_NOT_CONNECTED;
 
     return ERROR_NOT_SUPPORTED;
@@ -248,7 +248,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetDSoundAudioDeviceGuids(DWORD index, GUID
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
-    if (!controllers[index].connected)
+    if (!controllers[index].platform_private)
         return ERROR_DEVICE_NOT_CONNECTED;
 
     return ERROR_NOT_SUPPORTED;
@@ -263,7 +263,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetBatteryInformation(DWORD index, BYTE typ
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
-    if (!controllers[index].connected)
+    if (!controllers[index].platform_private)
         return ERROR_DEVICE_NOT_CONNECTED;
 
     return ERROR_NOT_SUPPORTED;

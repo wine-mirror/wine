@@ -20,9 +20,8 @@
 typedef struct _xinput_controller
 {
     CRITICAL_SECTION crit;
-    BOOL connected; /* only TRUE when device is valid; may be used without holding crit */
     XINPUT_CAPABILITIES caps;
-    void *platform_private;
+    void *platform_private; /* non-NULL when device is valid; validity may be read without holding crit */
     XINPUT_STATE state;
     XINPUT_VIBRATION vibration;
 } xinput_controller;

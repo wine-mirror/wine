@@ -199,7 +199,6 @@ static BOOL init_controller(xinput_controller *controller, PHIDP_PREPARSED_DATA 
     memset(&controller->vibration, 0, sizeof(controller->vibration));
 
     controller->platform_private = private;
-    controller->connected = TRUE;
 
     return TRUE;
 }
@@ -256,7 +255,7 @@ void HID_find_gamepads(xinput_controller *devices)
         for (i = 0; i < XUSER_MAX_COUNT; i++)
         {
             struct hid_platform_private *private = devices[i].platform_private;
-            if (devices[i].connected)
+            if (devices[i].platform_private)
             {
                 if (!wcscmp(data->DevicePath, private->device_path))
                     break;
@@ -302,18 +301,17 @@ static void remove_gamepad(xinput_controller *device)
 {
     EnterCriticalSection(&device->crit);
 
-    if (device->connected)
+    if (device->platform_private)
     {
         struct hid_platform_private *private = device->platform_private;
 
-        device->connected = FALSE;
+        device->platform_private = NULL;
 
         CloseHandle(private->device);
         HeapFree(GetProcessHeap(), 0, private->reports[0]);
         HeapFree(GetProcessHeap(), 0, private->reports[1]);
         HeapFree(GetProcessHeap(), 0, private->device_path);
         HidD_FreePreparsedData(private->ppd);
-        device->platform_private = NULL;
         HeapFree(GetProcessHeap(), 0, private);
     }
 
