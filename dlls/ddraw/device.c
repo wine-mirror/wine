@@ -5620,7 +5620,7 @@ static HRESULT d3d_device7_BeginStateBlock(IDirect3DDevice7 *iface)
         return D3DERR_INBEGINSTATEBLOCK;
     }
     if (SUCCEEDED(hr = wined3d_device_begin_stateblock(device->wined3d_device, &stateblock)))
-        device->recording = stateblock;
+        device->update_state = device->recording = stateblock;
     wined3d_mutex_unlock();
 
     return hr_ddraw_from_wined3d(hr);
@@ -5688,6 +5688,7 @@ static HRESULT d3d_device7_EndStateBlock(IDirect3DDevice7 *iface, DWORD *statebl
     }
     wined3d_sb = device->recording;
     device->recording = NULL;
+    device->update_state = device->state;
 
     h = ddraw_allocate_handle(&device->handle_table, wined3d_sb, DDRAW_HANDLE_STATEBLOCK);
     if (h == DDRAW_INVALID_HANDLE)
@@ -6978,12 +6979,15 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw,
     /* This is for convenience. */
     device->wined3d_device = ddraw->wined3d_device;
     wined3d_device_incref(ddraw->wined3d_device);
+    device->update_state = device->state = ddraw->state;
+    wined3d_stateblock_incref(ddraw->state);
 
     /* Render to the back buffer */
     if (FAILED(hr = wined3d_device_set_rendertarget_view(ddraw->wined3d_device,
             0, ddraw_surface_get_rendertarget_view(target), TRUE)))
     {
         ERR("Failed to set render target, hr %#x.\n", hr);
+        wined3d_stateblock_decref(device->state);
         ddraw_handle_table_destroy(&device->handle_table);
         return hr;
     }

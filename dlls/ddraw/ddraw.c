@@ -422,6 +422,7 @@ static void ddraw_destroy(struct ddraw *This)
 
     if (This->wined3d_swapchain)
         ddraw_destroy_swapchain(This);
+    wined3d_stateblock_decref(This->state);
     wined3d_device_decref(This->wined3d_device);
     wined3d_decref(This->wined3d);
 
@@ -5024,6 +5025,14 @@ HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type de
     }
 
     list_init(&ddraw->surface_list);
+
+    if (FAILED(hr = wined3d_stateblock_create(ddraw->wined3d_device, WINED3D_SBT_PRIMARY, &ddraw->state)))
+    {
+        ERR("Failed to create the primary stateblock, hr %#x.\n", hr);
+        wined3d_device_decref(ddraw->wined3d_device);
+        wined3d_decref(ddraw->wined3d);
+        return hr;
+    }
 
     return DD_OK;
 }

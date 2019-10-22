@@ -6081,6 +6081,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 if (ddraw->d3ddevice->recording)
                     wined3d_stateblock_decref(ddraw->d3ddevice->recording);
                 ddraw->d3ddevice->recording = NULL;
+                ddraw->d3ddevice->update_state = ddraw->d3ddevice->state;
             }
 
             wined3d_device_set_render_state(ddraw->wined3d_device, WINED3D_RS_ZENABLE,
