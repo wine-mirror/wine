@@ -550,6 +550,7 @@ typedef HRESULT (WINAPI *BaseRenderer_CompleteConnect) (BaseRenderer *This, IPin
 typedef struct BaseRendererFuncTable {
     BaseRenderer_CheckMediaType pfnCheckMediaType;
     BaseRenderer_DoRenderSample pfnDoRenderSample;
+    void (*renderer_init_stream)(BaseRenderer *iface);
     void (*renderer_start_stream)(BaseRenderer *iface);
     void (*renderer_stop_stream)(BaseRenderer *iface);
     BaseRenderer_ShouldDrawSampleNow  pfnShouldDrawSampleNow;

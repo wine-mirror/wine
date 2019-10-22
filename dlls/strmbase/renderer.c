@@ -438,6 +438,9 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     if (This->filter.state == State_Running)
         goto out;
 
+    if (This->filter.state == State_Stopped && This->pFuncsTable->renderer_init_stream)
+        This->pFuncsTable->renderer_init_stream(This);
+
     SetEvent(This->state_event);
 
     if (This->sink.pin.peer)
@@ -477,6 +480,8 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
                     hr = S_FALSE;
                 }
                 This->sink.end_of_stream = FALSE;
+                if (This->pFuncsTable->renderer_init_stream)
+                    This->pFuncsTable->renderer_init_stream(This);
             }
             else if (This->sink.pin.peer && This->pFuncsTable->renderer_stop_stream)
                 This->pFuncsTable->renderer_stop_stream(This);
