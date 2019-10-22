@@ -34,7 +34,66 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(xinput);
 
-xinput_controller controllers[XUSER_MAX_COUNT];
+/* xinput_crit guards controllers array */
+static CRITICAL_SECTION_DEBUG xinput_critsect_debug =
+{
+    0, 0, &xinput_crit,
+    { &xinput_critsect_debug.ProcessLocksList, &xinput_critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": xinput_crit") }
+};
+CRITICAL_SECTION xinput_crit = { &xinput_critsect_debug, -1, 0, 0, 0, 0 };
+
+static CRITICAL_SECTION_DEBUG controller_critsect_debug[XUSER_MAX_COUNT] =
+{
+    {
+        0, 0, &controllers[0].crit,
+        { &controller_critsect_debug[0].ProcessLocksList, &controller_critsect_debug[0].ProcessLocksList },
+          0, 0, { (DWORD_PTR)(__FILE__ ": controllers[0].crit") }
+    },
+    {
+        0, 0, &controllers[1].crit,
+        { &controller_critsect_debug[1].ProcessLocksList, &controller_critsect_debug[1].ProcessLocksList },
+          0, 0, { (DWORD_PTR)(__FILE__ ": controllers[1].crit") }
+    },
+    {
+        0, 0, &controllers[2].crit,
+        { &controller_critsect_debug[2].ProcessLocksList, &controller_critsect_debug[2].ProcessLocksList },
+          0, 0, { (DWORD_PTR)(__FILE__ ": controllers[2].crit") }
+    },
+    {
+        0, 0, &controllers[3].crit,
+        { &controller_critsect_debug[3].ProcessLocksList, &controller_critsect_debug[3].ProcessLocksList },
+          0, 0, { (DWORD_PTR)(__FILE__ ": controllers[3].crit") }
+    },
+};
+
+xinput_controller controllers[XUSER_MAX_COUNT] = {
+    {{ &controller_critsect_debug[0], -1, 0, 0, 0, 0 }},
+    {{ &controller_critsect_debug[1], -1, 0, 0, 0, 0 }},
+    {{ &controller_critsect_debug[2], -1, 0, 0, 0, 0 }},
+    {{ &controller_critsect_debug[3], -1, 0, 0, 0, 0 }},
+};
+
+static BOOL verify_and_lock_device(xinput_controller *device)
+{
+    if (!device->connected)
+        return FALSE;
+
+    EnterCriticalSection(&device->crit);
+
+    if (!device->connected)
+    {
+        LeaveCriticalSection(&device->crit);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static void unlock_device(xinput_controller *device)
+{
+    LeaveCriticalSection(&device->crit);
+}
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
 {
@@ -65,23 +124,30 @@ void WINAPI DECLSPEC_HOTPATCH XInputEnable(BOOL enable)
 
     for (index = 0; index < XUSER_MAX_COUNT; index ++)
     {
-        if (!controllers[index].connected) continue;
+        if (!verify_and_lock_device(&controllers[index])) continue;
         HID_enable(&controllers[index], enable);
+        unlock_device(&controllers[index]);
     }
 }
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputSetState(DWORD index, XINPUT_VIBRATION* vibration)
 {
+    DWORD ret;
+
     TRACE("(index %u, vibration %p)\n", index, vibration);
 
     HID_find_gamepads(controllers);
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
-    if (!controllers[index].connected)
+    if (!verify_and_lock_device(&controllers[index]))
         return ERROR_DEVICE_NOT_CONNECTED;
 
-    return HID_set_state(&controllers[index], vibration);
+    ret = HID_set_state(&controllers[index], vibration);
+
+    unlock_device(&controllers[index]);
+
+    return ret;
 }
 
 /* Some versions of SteamOverlayRenderer hot-patch XInputGetStateEx() and call
@@ -95,11 +161,19 @@ static DWORD xinput_get_state(DWORD index, XINPUT_STATE *state)
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
-    if (!controllers[index].connected)
+    if (!verify_and_lock_device(&controllers[index]))
         return ERROR_DEVICE_NOT_CONNECTED;
 
-    HID_update_state(&controllers[index]);
-    memcpy(state, &controllers[index].state, sizeof(XINPUT_STATE));
+    HID_update_state(&controllers[index], state);
+
+    if (!controllers[index].connected)
+    {
+        /* update_state may have disconnected the controller */
+        unlock_device(&controllers[index]);
+        return ERROR_DEVICE_NOT_CONNECTED;
+    }
+
+    unlock_device(&controllers[index]);
 
     return ERROR_SUCCESS;
 }
@@ -151,12 +225,19 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetCapabilities(DWORD index, DWORD flags, X
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
-    if (!controllers[index].connected)
-        return ERROR_DEVICE_NOT_CONNECTED;
-    if (flags & XINPUT_FLAG_GAMEPAD && controllers[index].caps.SubType != XINPUT_DEVSUBTYPE_GAMEPAD)
+
+    if (!verify_and_lock_device(&controllers[index]))
         return ERROR_DEVICE_NOT_CONNECTED;
 
+    if (flags & XINPUT_FLAG_GAMEPAD && controllers[index].caps.SubType != XINPUT_DEVSUBTYPE_GAMEPAD)
+    {
+        unlock_device(&controllers[index]);
+        return ERROR_DEVICE_NOT_CONNECTED;
+    }
+
     memcpy(capabilities, &controllers[index].caps, sizeof(*capabilities));
+
+    unlock_device(&controllers[index]);
 
     return ERROR_SUCCESS;
 }

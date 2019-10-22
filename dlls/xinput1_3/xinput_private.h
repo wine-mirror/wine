@@ -19,16 +19,19 @@
 
 typedef struct _xinput_controller
 {
-    BOOL connected;
+    CRITICAL_SECTION crit;
+    BOOL connected; /* only TRUE when device is valid; may be used without holding crit */
     XINPUT_CAPABILITIES caps;
     void *platform_private;
     XINPUT_STATE state;
     XINPUT_VIBRATION vibration;
 } xinput_controller;
 
+CRITICAL_SECTION xinput_crit;
+xinput_controller controllers[XUSER_MAX_COUNT];
 
 void HID_find_gamepads(xinput_controller *devices) DECLSPEC_HIDDEN;
 void HID_destroy_gamepads(xinput_controller *devices) DECLSPEC_HIDDEN;
-void HID_update_state(xinput_controller* device) DECLSPEC_HIDDEN;
+void HID_update_state(xinput_controller* device, XINPUT_STATE *state) DECLSPEC_HIDDEN;
 DWORD HID_set_state(xinput_controller* device, XINPUT_VIBRATION* state) DECLSPEC_HIDDEN;
 void HID_enable(xinput_controller* device, BOOL enable) DECLSPEC_HIDDEN;
