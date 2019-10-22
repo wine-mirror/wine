@@ -37,9 +37,6 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
-#ifdef HAVE_SYS_PRCTL_H
-# include <sys/prctl.h>
-#endif
 #include <sys/types.h>
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>
@@ -1232,68 +1229,6 @@ void WINAPI start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
 
 
 /***********************************************************************
- *           set_process_name
- *
- * Change the process name in the ps output.
- */
-static void set_process_name( int argc, char *argv[] )
-{
-    BOOL shift_strings;
-    char *p, *name;
-    int i;
-
-#ifdef HAVE_SETPROCTITLE
-    setproctitle("-%s", argv[1]);
-    shift_strings = FALSE;
-#else
-    p = argv[0];
-
-    shift_strings = (argc >= 2);
-    for (i = 1; i < argc; i++)
-    {
-        p += strlen(p) + 1;
-        if (p != argv[i])
-        {
-            shift_strings = FALSE;
-            break;
-        }
-    }
-#endif
-
-    if (shift_strings)
-    {
-        int offset = argv[1] - argv[0];
-        char *end = argv[argc-1] + strlen(argv[argc-1]) + 1;
-        memmove( argv[0], argv[1], end - argv[1] );
-        memset( end - offset, 0, offset );
-        for (i = 1; i < argc; i++)
-            argv[i-1] = argv[i] - offset;
-        argv[i-1] = NULL;
-    }
-    else
-    {
-        /* remove argv[0] */
-        memmove( argv, argv + 1, argc * sizeof(argv[0]) );
-    }
-
-    name = argv[0];
-    if ((p = strrchr( name, '\\' ))) name = p + 1;
-    if ((p = strrchr( name, '/' ))) name = p + 1;
-
-#if defined(HAVE_SETPROGNAME)
-    setprogname( name );
-#endif
-
-#ifdef HAVE_PRCTL
-#ifndef PR_SET_NAME
-# define PR_SET_NAME 15
-#endif
-    prctl( PR_SET_NAME, name );
-#endif  /* HAVE_PRCTL */
-}
-
-
-/***********************************************************************
  *           __wine_kernel_init
  *
  * Wine initialisation: load and start the main exe file.
@@ -1334,7 +1269,6 @@ void * CDECL __wine_kernel_init(void)
 
     init_windows_dirs();
 
-    set_process_name( __wine_main_argc, __wine_main_argv );
     set_library_wargv( __wine_main_argv );
     boot_events[0] = boot_events[1] = 0;
 
