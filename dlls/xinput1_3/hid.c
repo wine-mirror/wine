@@ -171,19 +171,34 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
     return TRUE;
 }
 
-static void build_private(struct hid_platform_private *private, PHIDP_PREPARSED_DATA ppd, HIDP_CAPS *caps, HANDLE device, WCHAR *path)
+static BOOL init_controller(xinput_controller *controller, PHIDP_PREPARSED_DATA ppd, HIDP_CAPS *caps, HANDLE device, WCHAR *device_path)
 {
     size_t size;
+    struct hid_platform_private *private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct hid_platform_private));
+
+    if (!VerifyGamepad(ppd, &controller->caps, private, caps))
+    {
+        HeapFree(GetProcessHeap(), 0, private);
+        return FALSE;
+    }
+
+    TRACE("Found gamepad %s\n", debugstr_w(device_path));
+
     private->ppd = ppd;
     private->device = device;
     private->report_length = caps->InputReportByteLength + 1;
     private->current_report = 0;
     private->reports[0] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, private->report_length);
     private->reports[1] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, private->report_length);
-    size = (lstrlenW(path) + 1) * sizeof(WCHAR);
+    size = (lstrlenW(device_path) + 1) * sizeof(WCHAR);
     private->device_path = HeapAlloc(GetProcessHeap(), 0, size);
-    memcpy(private->device_path, path, size);
+    memcpy(private->device_path, device_path, size);
     private->enabled = TRUE;
+
+    controller->platform_private = private;
+    controller->connected = TRUE;
+
+    return TRUE;
 }
 
 void HID_find_gamepads(xinput_controller *devices)
@@ -263,19 +278,10 @@ void HID_find_gamepads(xinput_controller *devices)
              Caps.Usage == HID_USAGE_GENERIC_JOYSTICK ||
              Caps.Usage == 0x8 /* Multi-axis Controller */))
         {
-            struct hid_platform_private *private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct hid_platform_private));
-            if (VerifyGamepad(ppd, &devices[open_device_idx].caps, private, &Caps))
-            {
-                TRACE("Found gamepad %i %s\n", open_device_idx, debugstr_w(data->DevicePath));
-                build_private(private, ppd, &Caps, device, data->DevicePath);
-                devices[open_device_idx].platform_private = private;
-                devices[open_device_idx].connected = TRUE;
-            }
-            else
+            if(!init_controller(&devices[open_device_idx], ppd, &Caps, device, data->DevicePath))
             {
                 CloseHandle(device);
                 HidD_FreePreparsedData(ppd);
-                HeapFree(GetProcessHeap(), 0, private);
             }
         }
         else
