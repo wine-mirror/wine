@@ -24,6 +24,7 @@
 
 #include "mshtmhst.h"
 #include "objsafe.h"
+#include "wchar.h"
 
 #include "wine/debug.h"
 
@@ -1543,10 +1544,37 @@ static HRESULT Global_Space(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     return S_OK;
 }
 
-static HRESULT Global_String(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_String(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    WCHAR ch;
+    int cnt;
+    HRESULT hres;
+
+    TRACE("%s %s\n", debugstr_variant(args), debugstr_variant(args + 1));
+
+    hres = to_int(args, &cnt);
+    if(FAILED(hres))
+        return hres;
+    if(cnt < 0)
+        return E_INVALIDARG;
+
+    if(V_VT(args + 1) != VT_BSTR) {
+        FIXME("Unsupported argument %s\n", debugstr_variant(args+1));
+        return E_NOTIMPL;
+    }
+    if(!SysStringLen(V_BSTR(args + 1)))
+        return E_INVALIDARG;
+    ch = V_BSTR(args + 1)[0];
+
+    if(res) {
+        BSTR str = SysAllocStringLen(NULL, cnt);
+        if(!str)
+            return E_OUTOFMEMORY;
+        wmemset(str, ch, cnt);
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = str;
+    }
+    return S_OK;
 }
 
 static HRESULT Global_InStr(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)

@@ -548,6 +548,34 @@ Call ok(Space(0.5) = "", "Space(0.5) = " & Space(0.5) & """")
 Call ok(Space(1.5) = "  ", "Space(1.5) = " & Space(1.5) & """")
 Call ok(Space("1") = " ", "Space(""1"") = " & Space("1") & """")
 
+sub test_string(cnt, char, exp)
+    call ok(String(cnt, char) = exp, "String(" & cnt & ", """ & char & """ = """ & _
+                                     String(cnt, char) & """ expected """ & exp & """")
+end sub
+
+test_string 3, "x", "xxx"
+test_string 3, "xy", "xxx"
+test_string 1, "z", "z"
+test_string 0, "z", ""
+test_string "3", "xy", "xxx"
+test_string 3, Chr(3), Chr(3)&Chr(3)&Chr(3)
+
+call ok(getVT(String(0, "z")) = "VT_BSTR", "getVT(String(0,z)) = " & getVT(String(0, "z")))
+
+sub test_string_error()
+    on error resume next
+    dim x
+    x = String(-2, "x")
+    call ok(err.number = 5, "err.number = " & err.number)
+    err.clear
+    x = String(3, "")
+    call ok(err.number = 5, "err.number = " & err.number)
+    err.clear
+    x = String(0, "")
+    call ok(err.number = 5, "err.number = " & err.number)
+end sub
+call test_string_error
+
 Sub TestStrReverse(str, ex)
     Call ok(StrReverse(str) = ex, "StrReverse(" & str & ") = " & StrReverse(str))
 End Sub
