@@ -334,18 +334,11 @@ static void video_renderer_stop_stream(BaseRenderer *iface)
         RedrawWindow(This->baseControlWindow.baseWindow.hWnd, NULL, NULL, RDW_INVALIDATE|RDW_ERASE);
 }
 
-static void video_renderer_start_stream(BaseRenderer *iface)
+static void video_renderer_init_stream(BaseRenderer *iface)
 {
-    VideoRendererImpl *This = impl_from_BaseRenderer(iface);
+    VideoRendererImpl *filter = impl_from_BaseRenderer(iface);
 
-    TRACE("(%p)\n", This);
-
-    if (This->renderer.sink.pin.peer
-        && (This->renderer.filter.state == State_Stopped || !This->renderer.sink.end_of_stream))
-    {
-        if (This->renderer.filter.state == State_Stopped)
-            VideoRenderer_AutoShowWindow(This);
-    }
+    VideoRenderer_AutoShowWindow(filter);
 }
 
 static RECT WINAPI VideoRenderer_GetDefaultRect(BaseWindow *iface)
@@ -377,7 +370,7 @@ static const BaseRendererFuncTable BaseFuncTable =
 {
     .pfnCheckMediaType = VideoRenderer_CheckMediaType,
     .pfnDoRenderSample = VideoRenderer_DoRenderSample,
-    .renderer_start_stream = video_renderer_start_stream,
+    .renderer_init_stream = video_renderer_init_stream,
     .renderer_stop_stream = video_renderer_stop_stream,
     .pfnShouldDrawSampleNow = VideoRenderer_ShouldDrawSampleNow,
     .renderer_destroy = video_renderer_destroy,
@@ -550,31 +543,6 @@ static const BaseControlVideoFuncTable renderer_BaseControlVideoFuncTable = {
     VideoRenderer_SetTargetRect
 };
 
-/** IMediaFilter methods **/
-
-static HRESULT WINAPI VideoRenderer_Pause(IBaseFilter * iface)
-{
-    VideoRendererImpl *This = impl_from_IBaseFilter(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    EnterCriticalSection(&This->renderer.csRenderLock);
-    if (This->renderer.filter.state != State_Paused)
-    {
-        if (This->renderer.filter.state == State_Stopped)
-        {
-            This->renderer.sink.end_of_stream = 0;
-            VideoRenderer_AutoShowWindow(This);
-        }
-
-        ResetEvent(This->renderer.flush_event);
-        This->renderer.filter.state = State_Paused;
-    }
-    LeaveCriticalSection(&This->renderer.csRenderLock);
-
-    return S_OK;
-}
-
 static const IBaseFilterVtbl VideoRenderer_Vtbl =
 {
     BaseFilterImpl_QueryInterface,
@@ -582,7 +550,7 @@ static const IBaseFilterVtbl VideoRenderer_Vtbl =
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
     BaseRendererImpl_Stop,
-    VideoRenderer_Pause,
+    BaseRendererImpl_Pause,
     BaseRendererImpl_Run,
     BaseRendererImpl_GetState,
     BaseRendererImpl_SetSyncSource,
