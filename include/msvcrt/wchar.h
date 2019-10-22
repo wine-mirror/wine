@@ -26,8 +26,10 @@ extern "C" {
 #endif
 #endif
 
-#define WCHAR_MIN 0
-#define WCHAR_MAX ((wchar_t)-1)
+#ifndef WCHAR_MIN  /* also in stdint.h */
+#define WCHAR_MIN 0U
+#define WCHAR_MAX 0xffffU
+#endif
 
 #ifndef DECLSPEC_ALIGN
 # if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
