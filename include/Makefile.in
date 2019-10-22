@@ -535,6 +535,7 @@ SOURCES = \
 	reason.h \
 	regstr.h \
 	restartmanager.h \
+	restrictederrorinfo.idl \
 	richedit.h \
 	richole.idl \
 	rmxfguid.h \
