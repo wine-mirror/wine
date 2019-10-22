@@ -461,6 +461,7 @@ out:
 HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
 {
     BaseRenderer *This = impl_from_IBaseFilter(iface);
+    HRESULT hr = S_OK;
 
     TRACE("(%p)->()\n", This);
 
@@ -471,7 +472,10 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
             if (This->filter.state == State_Stopped)
             {
                 if (This->sink.pin.peer)
+                {
                     ResetEvent(This->state_event);
+                    hr = S_FALSE;
+                }
                 This->sink.end_of_stream = FALSE;
             }
             else if (This->sink.pin.peer && This->pFuncsTable->renderer_stop_stream)
@@ -485,7 +489,7 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
     }
     LeaveCriticalSection(&This->csRenderLock);
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT WINAPI BaseRendererImpl_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock)
