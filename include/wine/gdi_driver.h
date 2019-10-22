@@ -21,6 +21,8 @@
 #ifndef __WINE_WINE_GDI_DRIVER_H
 #define __WINE_WINE_GDI_DRIVER_H
 
+#include "winternl.h"
+#include "ddk/d3dkmthk.h"
 #include "wine/list.h"
 
 struct gdi_dc_funcs;
@@ -192,6 +194,8 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pStrokePath)(PHYSDEV);
     BOOL     (CDECL *pUnrealizePalette)(HPALETTE);
     BOOL     (CDECL *pWidenPath)(PHYSDEV);
+    NTSTATUS (CDECL *pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *);
+    NTSTATUS (CDECL *pD3DKMTSetVidPnSourceOwner)(const D3DKMT_SETVIDPNSOURCEOWNER *);
     struct opengl_funcs * (CDECL *wine_get_wgl_driver)(PHYSDEV,UINT);
     const struct vulkan_funcs * (CDECL *wine_get_vulkan_driver)(PHYSDEV,UINT);
 
@@ -200,7 +204,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 50
+#define WINE_GDI_DRIVER_VERSION 51
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

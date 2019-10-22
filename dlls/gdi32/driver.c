@@ -753,6 +753,16 @@ static BOOL CDECL nulldrv_UnrealizePalette( HPALETTE palette )
     return FALSE;
 }
 
+static NTSTATUS CDECL nulldrv_D3DKMTCheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc )
+{
+    return STATUS_PROCEDURE_NOT_FOUND;
+}
+
+static NTSTATUS CDECL nulldrv_D3DKMTSetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc )
+{
+    return STATUS_PROCEDURE_NOT_FOUND;
+}
+
 static struct opengl_funcs * CDECL nulldrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
 {
     return (void *)-1;
@@ -892,6 +902,8 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_StrokePath,                 /* pStrokePath */
     nulldrv_UnrealizePalette,           /* pUnrealizePalette */
     nulldrv_WidenPath,                  /* pWidenPath */
+    nulldrv_D3DKMTCheckVidPnExclusiveOwnership, /* pD3DKMTCheckVidPnExclusiveOwnership */
+    nulldrv_D3DKMTSetVidPnSourceOwner,  /* pD3DKMTSetVidPnSourceOwner */
     nulldrv_wine_get_wgl_driver,        /* wine_get_wgl_driver */
     nulldrv_wine_get_vulkan_driver,     /* wine_get_vulkan_driver */
 
@@ -1422,6 +1434,7 @@ NTSTATUS WINAPI D3DKMTCreateDevice( D3DKMT_CREATEDEVICE *desc )
 NTSTATUS WINAPI D3DKMTDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
 {
     NTSTATUS status = STATUS_INVALID_PARAMETER;
+    D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc;
     struct d3dkmt_device *device;
 
     TRACE("(%p)\n", desc);
@@ -1434,6 +1447,9 @@ NTSTATUS WINAPI D3DKMTDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
     {
         if (device->handle == desc->hDevice)
         {
+            memset( &set_owner_desc, 0, sizeof(set_owner_desc) );
+            set_owner_desc.hDevice = desc->hDevice;
+            D3DKMTSetVidPnSourceOwner( &set_owner_desc );
             list_remove( &device->entry );
             heap_free( device );
             status = STATUS_SUCCESS;
@@ -1452,4 +1468,40 @@ NTSTATUS WINAPI D3DKMTQueryStatistics(D3DKMT_QUERYSTATISTICS *stats)
 {
     FIXME("(%p): stub\n", stats);
     return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *		D3DKMTSetVidPnSourceOwner [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTSetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc )
+{
+    TRACE("(%p)\n", desc);
+
+    if (!get_display_driver()->pD3DKMTSetVidPnSourceOwner)
+        return STATUS_PROCEDURE_NOT_FOUND;
+
+    if (!desc || !desc->hDevice || (desc->VidPnSourceCount && (!desc->pType || !desc->pVidPnSourceId)))
+        return STATUS_INVALID_PARAMETER;
+
+    /* Store the VidPN source ownership info in the graphics driver because
+     * the graphics driver needs to change ownership sometimes. For example,
+     * when a new window is moved to a VidPN source with an exclusive owner,
+     * such an exclusive owner will be released before showing the new window */
+    return get_display_driver()->pD3DKMTSetVidPnSourceOwner( desc );
+}
+
+/******************************************************************************
+ *		D3DKMTCheckVidPnExclusiveOwnership [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTCheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc )
+{
+    TRACE("(%p)\n", desc);
+
+    if (!get_display_driver()->pD3DKMTCheckVidPnExclusiveOwnership)
+        return STATUS_PROCEDURE_NOT_FOUND;
+
+    if (!desc || !desc->hAdapter)
+        return STATUS_INVALID_PARAMETER;
+
+    return get_display_driver()->pD3DKMTCheckVidPnExclusiveOwnership( desc );
 }

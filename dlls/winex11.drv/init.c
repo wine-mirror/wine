@@ -471,6 +471,8 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_StrokePath,                  /* pStrokePath */
     X11DRV_UnrealizePalette,            /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
+    NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
+    NULL,                               /* pD3DKMTSetVidPnSourceOwner */
     X11DRV_wine_get_wgl_driver,         /* wine_get_wgl_driver */
     X11DRV_wine_get_vulkan_driver,      /* wine_get_vulkan_driver */
     GDI_PRIORITY_GRAPHICS_DRV           /* priority */

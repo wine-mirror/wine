@@ -226,6 +226,8 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_StrokePath,                /* pStrokePath */
     NULL,                            /* pUnrealizePalette */
     MFDRV_WidenPath,                 /* pWidenPath */
+    NULL,                            /* pD3DKMTCheckVidPnExclusiveOwnership */
+    NULL,                            /* pD3DKMTSetVidPnSourceOwner */
     NULL,                            /* wine_get_wgl_driver */
     NULL,                            /* wine_get_vulkan_driver */
     GDI_PRIORITY_GRAPHICS_DRV        /* priority */

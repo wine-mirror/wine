@@ -950,6 +950,8 @@ static const struct gdi_dc_funcs emfpath_driver =
     NULL,                               /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
+    NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
+    NULL,                               /* pD3DKMTSetVidPnSourceOwner */
     NULL,                               /* wine_get_wgl_driver */
     NULL,                               /* wine_get_vulkan_driver */
     GDI_PRIORITY_PATH_DRV + 1           /* priority */
