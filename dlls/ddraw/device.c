@@ -5125,18 +5125,20 @@ static HRESULT d3d_device7_SetTextureStageState(IDirect3DDevice7 *iface,
             }
 
             case D3DTSS_ADDRESS:
-                wined3d_device_set_sampler_state(device->wined3d_device, stage, WINED3D_SAMP_ADDRESS_V, value);
+                d3d_device_set_sampler_state(device, stage, WINED3D_SAMP_ADDRESS_V, value);
                 break;
 
             default:
                 break;
         }
 
-        wined3d_device_set_sampler_state(device->wined3d_device, stage, l->u.sampler_state, value);
+        d3d_device_set_sampler_state(device, stage, l->u.sampler_state, value);
     }
     else
     {
-        wined3d_device_set_texture_stage_state(device->wined3d_device, stage, l->u.texture_state, value);
+        wined3d_stateblock_set_texture_stage_state(device->update_state, stage, l->u.texture_state, value);
+        if (!device->recording)
+            wined3d_device_set_texture_stage_state(device->wined3d_device, stage, l->u.texture_state, value);
     }
 
     wined3d_mutex_unlock();
