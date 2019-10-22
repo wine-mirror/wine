@@ -508,6 +508,31 @@ static void set_registry_variables( HANDLE hkey, ULONG type )
 
 
 /***********************************************************************
+ *           has_registry_environment
+ */
+static BOOL has_registry_environment(void)
+{
+    static const WCHAR env_keyW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                     'M','a','c','h','i','n','e','\\',
+                                     'S','y','s','t','e','m','\\',
+                                     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                     'C','o','n','t','r','o','l','\\',
+                                     'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
+                                     'E','n','v','i','r','o','n','m','e','n','t',0};
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HANDLE hkey;
+    BOOL ret;
+
+    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
+    RtlInitUnicodeString( &nameW, env_keyW );
+    ret = !NtOpenKey( &hkey, KEY_READ, &attr );
+    if (ret) NtClose( hkey );
+    return ret;
+}
+
+
+/***********************************************************************
  *           set_registry_environment
  *
  * Set the environment variables specified in the registry.
@@ -519,7 +544,7 @@ static void set_registry_variables( HANDLE hkey, ULONG type )
  * %SystemRoot% which are predefined. But Wine defines these in the
  * registry, so we need two passes.
  */
-static BOOL set_registry_environment( BOOL volatile_only )
+static void set_registry_environment( BOOL volatile_only )
 {
     static const WCHAR env_keyW[] = {'\\','R','e','g','i','s','t','r','y','\\',
                                      'M','a','c','h','i','n','e','\\',
@@ -534,7 +559,6 @@ static BOOL set_registry_environment( BOOL volatile_only )
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     HANDLE hkey;
-    BOOL ret = FALSE;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -550,11 +574,10 @@ static BOOL set_registry_environment( BOOL volatile_only )
         set_registry_variables( hkey, REG_SZ );
         set_registry_variables( hkey, REG_EXPAND_SZ );
         NtClose( hkey );
-        ret = TRUE;
     }
 
     /* then the ones for the current user */
-    if (RtlOpenCurrentUser( KEY_READ, &attr.RootDirectory ) != STATUS_SUCCESS) return ret;
+    if (RtlOpenCurrentUser( KEY_READ, &attr.RootDirectory ) != STATUS_SUCCESS) return;
     RtlInitUnicodeString( &nameW, envW );
     if (!volatile_only && NtOpenKey( &hkey, KEY_READ, &attr ) == STATUS_SUCCESS)
     {
@@ -572,7 +595,6 @@ static BOOL set_registry_environment( BOOL volatile_only )
     }
 
     NtClose( attr.RootDirectory );
-    return ret;
 }
 
 
@@ -1207,7 +1229,7 @@ void * CDECL __wine_kernel_init(void)
         /* convert old configuration to new format */
         convert_old_config();
 
-        got_environment = set_registry_environment( FALSE );
+        got_environment = has_registry_environment();
         set_additional_environment();
     }
 

@@ -83,6 +83,129 @@ static inline BOOL is_special_env_var( const char *var )
 
 
 /***********************************************************************
+ *           set_registry_variables
+ *
+ * Set environment variables by enumerating the values of a key;
+ * helper for set_registry_environment().
+ * Note that Windows happily truncates the value if it's too big.
+ */
+static void set_registry_variables( WCHAR **env, HANDLE hkey, ULONG type )
+{
+    static const WCHAR pathW[] = {'P','A','T','H'};
+    static const WCHAR sep[] = {';',0};
+    UNICODE_STRING env_name, env_value;
+    NTSTATUS status;
+    DWORD size;
+    int index;
+    char buffer[1024*sizeof(WCHAR) + sizeof(KEY_VALUE_FULL_INFORMATION)];
+    WCHAR tmpbuf[1024];
+    UNICODE_STRING tmp;
+    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
+
+    tmp.Buffer = tmpbuf;
+    tmp.MaximumLength = sizeof(tmpbuf);
+
+    for (index = 0; ; index++)
+    {
+        status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                      buffer, sizeof(buffer), &size );
+        if (status != STATUS_SUCCESS && status != STATUS_BUFFER_OVERFLOW) break;
+        if (info->Type != type) continue;
+        env_name.Buffer = info->Name;
+        env_name.Length = env_name.MaximumLength = info->NameLength;
+        env_value.Buffer = (WCHAR *)(buffer + info->DataOffset);
+        env_value.Length = info->DataLength;
+        env_value.MaximumLength = sizeof(buffer) - info->DataOffset;
+        if (env_value.Length && !env_value.Buffer[env_value.Length/sizeof(WCHAR)-1])
+            env_value.Length -= sizeof(WCHAR);  /* don't count terminating null if any */
+        if (!env_value.Length) continue;
+        if (info->Type == REG_EXPAND_SZ)
+        {
+            status = RtlExpandEnvironmentStrings_U( *env, &env_value, &tmp, NULL );
+            if (status != STATUS_SUCCESS && status != STATUS_BUFFER_OVERFLOW) continue;
+            RtlCopyUnicodeString( &env_value, &tmp );
+        }
+        /* PATH is magic */
+        if (env_name.Length == sizeof(pathW) &&
+            !strncmpiW( env_name.Buffer, pathW, ARRAY_SIZE( pathW )) &&
+            !RtlQueryEnvironmentVariable_U( *env, &env_name, &tmp ))
+        {
+            RtlAppendUnicodeToString( &tmp, sep );
+            if (RtlAppendUnicodeStringToString( &tmp, &env_value )) continue;
+            RtlCopyUnicodeString( &env_value, &tmp );
+        }
+        RtlSetEnvironmentVariable( env, &env_name, &env_value );
+    }
+}
+
+
+/***********************************************************************
+ *           set_registry_environment
+ *
+ * Set the environment variables specified in the registry.
+ *
+ * Note: Windows handles REG_SZ and REG_EXPAND_SZ in one pass with the
+ * consequence that REG_EXPAND_SZ cannot be used reliably as it depends
+ * on the order in which the variables are processed. But on Windows it
+ * does not really matter since they only use %SystemDrive% and
+ * %SystemRoot% which are predefined. But Wine defines these in the
+ * registry, so we need two passes.
+ */
+static void set_registry_environment( WCHAR **env )
+{
+    static const WCHAR env_keyW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                     'M','a','c','h','i','n','e','\\',
+                                     'S','y','s','t','e','m','\\',
+                                     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                     'C','o','n','t','r','o','l','\\',
+                                     'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
+                                     'E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR envW[] = {'E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR volatile_envW[] = {'V','o','l','a','t','i','l','e',' ','E','n','v','i','r','o','n','m','e','n','t',0};
+
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HANDLE hkey;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    /* first the system environment variables */
+    RtlInitUnicodeString( &nameW, env_keyW );
+    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
+    {
+        set_registry_variables( env, hkey, REG_SZ );
+        set_registry_variables( env, hkey, REG_EXPAND_SZ );
+        NtClose( hkey );
+    }
+
+    /* then the ones for the current user */
+    if (RtlOpenCurrentUser( KEY_READ, &attr.RootDirectory ) != STATUS_SUCCESS) return;
+    RtlInitUnicodeString( &nameW, envW );
+    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
+    {
+        set_registry_variables( env, hkey, REG_SZ );
+        set_registry_variables( env, hkey, REG_EXPAND_SZ );
+        NtClose( hkey );
+    }
+
+    RtlInitUnicodeString( &nameW, volatile_envW );
+    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
+    {
+        set_registry_variables( env, hkey, REG_SZ );
+        set_registry_variables( env, hkey, REG_EXPAND_SZ );
+        NtClose( hkey );
+    }
+
+    NtClose( attr.RootDirectory );
+}
+
+
+/***********************************************************************
  *           build_initial_environment
  *
  * Build the Win32 environment from the Unix environment
@@ -122,6 +245,7 @@ static WCHAR *build_initial_environment( char **env )
         p += strlenW(p) + 1;
     }
     *p = 0;
+    set_registry_environment( &ptr );
     return ptr;
 }
 
