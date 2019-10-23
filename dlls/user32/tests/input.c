@@ -284,6 +284,13 @@ static BOOL TestASet( HWND hWnd, int nrkev, const KEV kevdwn[], const KEV kevup[
     int i,j,k,l,m,n;
     static int count=0;
     KEV kbuf[MAXKEYEVENTS];
+    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
+    if (!us_kbd)
+    {
+        win_skip( "skipping test with inconsistent results on non-us keyboard\n" );
+        return TRUE;
+    }
+
     assert( nrkev==2 || nrkev==3);
     for(i=0;i<MAXKEYEVENTS;i++) kbuf[i]=0;
     /* two keys involved gives 4 test cases */
@@ -1184,6 +1191,12 @@ static void test_Input_unicode(void)
     HHOOK hook;
     HMODULE hModuleImm32;
     BOOL (WINAPI *pImmDisableIME)(DWORD);
+    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
+    if (!us_kbd)
+    {
+        win_skip( "skipping test with inconsistent results on non-us keyboard\n" );
+        return;
+    }
 
     wclass.lpszClassName = classNameW;
     wclass.style         = CS_HREDRAW | CS_VREDRAW;
