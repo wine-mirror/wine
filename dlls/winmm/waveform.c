@@ -1966,26 +1966,19 @@ static MMRESULT WINMM_BeginPlaying(WINMM_Device *device)
     return MMSYSERR_NOERROR;
 }
 
-static LRESULT WINMM_Pause(HWAVE hwave)
+static LRESULT WINMM_Pause(WINMM_Device *device)
 {
-    WINMM_Device *device = WINMM_GetDeviceFromHWAVE(hwave);
     HRESULT hr;
 
-    TRACE("(%p)\n", hwave);
-
-    if(!WINMM_ValidateAndLock(device))
-        return MMSYSERR_INVALHANDLE;
+    TRACE("(%p)\n", device->handle);
 
     hr = IAudioClient_Stop(device->client);
     if(FAILED(hr)){
-        LeaveCriticalSection(&device->lock);
         WARN("Stop failed: %08x\n", hr);
         return MMSYSERR_ERROR;
     }
 
     device->stopped = FALSE;
-
-    LeaveCriticalSection(&device->lock);
 
     return MMSYSERR_NOERROR;
 }
@@ -2939,9 +2932,21 @@ UINT WINAPI waveOutBreakLoop(HWAVEOUT hWaveOut)
  */
 UINT WINAPI waveOutPause(HWAVEOUT hWaveOut)
 {
+    WINMM_Device *device;
+    MMRESULT mr;
+
     TRACE("(%p)\n", hWaveOut);
 
-    return WINMM_Pause((HWAVE)hWaveOut);
+    device = WINMM_GetDeviceFromHWAVE((HWAVE)hWaveOut);
+
+    if(!WINMM_ValidateAndLock(device))
+        return MMSYSERR_INVALHANDLE;
+
+    mr = WINMM_Pause(device);
+
+    LeaveCriticalSection(&device->lock);
+
+    return mr;
 }
 
 /**************************************************************************
@@ -3573,7 +3578,7 @@ UINT WINAPI waveInStop(HWAVEIN hWaveIn)
     if(!WINMM_ValidateAndLock(device))
         return MMSYSERR_INVALHANDLE;
 
-    hr = WINMM_Pause((HWAVE)hWaveIn);
+    hr = WINMM_Pause(device);
     if(FAILED(hr)){
         LeaveCriticalSection(&device->lock);
         return MMSYSERR_ERROR;
