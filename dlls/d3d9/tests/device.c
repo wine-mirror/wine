@@ -25,7 +25,7 @@
 #define WINVER 0x0602 /* for CURSOR_SUPPRESSED */
 #define COBJMACROS
 #include <d3d9.h>
-#include "wine/test.h"
+#include "utils.h"
 
 struct vec3
 {
@@ -5947,13 +5947,8 @@ static void test_occlusion_query(void)
 
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    wait_query(query);
 
     memset(&data, 0xff, sizeof(data));
     hr = IDirect3DQuery9_GetData(query, &data, data_size, D3DGETDATA_FLUSH);
@@ -6057,13 +6052,7 @@ static void test_occlusion_query(void)
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    wait_query(query);
 
     memset(&data, 0xff, sizeof(data));
     hr = IDirect3DQuery9_GetData(query, &data, sizeof(data), D3DGETDATA_FLUSH);
@@ -6085,13 +6074,7 @@ static void test_occlusion_query(void)
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) == S_OK)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    wait_query(query);
 
     memset(&data, 0xff, sizeof(data));
     hr = IDirect3DQuery9_GetData(query, &data, sizeof(data), D3DGETDATA_FLUSH);
@@ -6119,8 +6102,8 @@ static void test_timestamp_query(void)
          1.0f, -1.0f, 0.0f,
     };
     IDirect3DQuery9 *query, *disjoint_query, *freq_query;
-    unsigned int data_size, i;
     IDirect3DDevice9 *device;
+    unsigned int data_size;
     IDirect3D9 *d3d9;
     ULONG refcount;
     HWND window;
@@ -6183,14 +6166,8 @@ static void test_timestamp_query(void)
     ok(data_size == sizeof(UINT64), "Query data size is %u, 8 expected.\n", data_size);
 
     hr = IDirect3DQuery9_Issue(freq_query, D3DISSUE_END);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(freq_query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    wait_query(freq_query);
 
     memset(freq, 0xff, sizeof(freq));
     hr = IDirect3DQuery9_GetData(freq_query, freq, sizeof(DWORD), D3DGETDATA_FLUSH);
@@ -6235,13 +6212,8 @@ static void test_timestamp_query(void)
 
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    wait_query(query);
 
     memset(timestamp, 0xff, sizeof(timestamp));
     hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(DWORD), D3DGETDATA_FLUSH);
@@ -6259,13 +6231,8 @@ static void test_timestamp_query(void)
 
     hr = IDirect3DQuery9_Issue(disjoint_query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(disjoint_query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    wait_query(disjoint_query);
 
     memset(disjoint, 0xff, sizeof(disjoint));
     hr = IDirect3DQuery9_GetData(disjoint_query, disjoint, sizeof(WORD), D3DGETDATA_FLUSH);
@@ -6287,13 +6254,9 @@ static void test_timestamp_query(void)
 
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    wait_query(query);
+
     hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(timestamp), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
