@@ -1763,15 +1763,16 @@ static const struct tounicode_tests
     WCHAR expect_buf[4];
 } utests[] =
 {
-    { 'A', 0, 0, 1, {'a',0}},
-    { 'A', ctrl, 0, 1, {1, 0}},
-    { 'A', shift|ctrl, 0, 1, {1, 0}},
+    { 0, 0, 'a', 1, {'a',0}},
+    { 0, shift, 'a', 1, {'A',0}},
+    { 0, ctrl, 'a', 1, {1, 0}},
+    { 0, shift|ctrl, 'a', 1, {1, 0}},
     { VK_TAB, ctrl, 0, 0, {}},
     { VK_TAB, shift|ctrl, 0, 0, {}},
     { VK_RETURN, ctrl, 0, 1, {'\n', 0}},
     { VK_RETURN, shift|ctrl, 0, 0, {}},
-    { '4', ctrl, 0, 0, {}},
-    { '4', shift|ctrl, 0, 0, {}},
+    { 0, ctrl, '4', 0, {}},
+    { 0, shift|ctrl, '4', 0, {}},
     { 0, ctrl, '!', 0, {}},
     { 0, ctrl, '\"', 0, {}},
     { 0, ctrl, '#', 0, {}},
