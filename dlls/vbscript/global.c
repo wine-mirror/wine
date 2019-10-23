@@ -1082,8 +1082,40 @@ static HRESULT Global_Timer(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
 
 static HRESULT Global_LBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SAFEARRAY *sa;
+    HRESULT hres;
+    LONG ubound;
+    int dim;
+
+    assert(args_cnt == 1 || args_cnt == 2);
+
+    TRACE("%s %s\n", debugstr_variant(arg), args_cnt == 2 ? debugstr_variant(arg + 1) : "1");
+
+    switch(V_VT(arg)) {
+    case VT_VARIANT|VT_ARRAY:
+        sa = V_ARRAY(arg);
+        break;
+    case VT_VARIANT|VT_ARRAY|VT_BYREF:
+        sa = *V_ARRAYREF(arg);
+        break;
+    default:
+        FIXME("arg %s not supported\n", debugstr_variant(arg));
+        return E_NOTIMPL;
+    }
+
+    if(args_cnt == 2) {
+        hres = to_int(arg + 1, &dim);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        dim = 1;
+    }
+
+    hres = SafeArrayGetLBound(sa, dim, &ubound);
+    if(FAILED(hres))
+        return hres;
+
+    return return_int(res, ubound);
 }
 
 static HRESULT Global_UBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -2597,7 +2629,7 @@ static const builtin_prop_t global_props[] = {
     {L"IsNumeric",                 Global_IsNumeric, 0, 1},
     {L"IsObject",                  Global_IsObject, 0, 1},
     {L"Join",                      Global_Join, 0, 1, 2},
-    {L"LBound",                    Global_LBound, 0, 1},
+    {L"LBound",                    Global_LBound, 0, 1, 2},
     {L"LCase",                     Global_LCase, 0, 1},
     {L"Left",                      Global_Left, 0, 2},
     {L"LeftB",                     Global_LeftB, 0, 2},

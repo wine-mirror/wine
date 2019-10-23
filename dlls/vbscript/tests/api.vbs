@@ -247,6 +247,9 @@ Dim arr2(2, 4)
 Call ok(UBound(arr2) = 2, "UBound(x) = " & UBound(x))
 Call ok(UBound(arr2, 1) = 2, "UBound(x) = " & UBound(x))
 Call ok(UBound(arr2, 2) = 4, "UBound(x) = " & UBound(x))
+Call ok(Lbound(arr2) = 0, "Lbound(x) = " & Lbound(x))
+Call ok(Lbound(arr2, 1) = 0, "Lbound(x) = " & Lbound(x))
+Call ok(Lbound(arr2, 2) = 0, "Lbound(x) = " & Lbound(x))
 
 sub testUBoundError()
     on error resume next
