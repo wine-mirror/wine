@@ -544,10 +544,10 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
 
             switch(V_VT(v)) {
             case VT_ARRAY|VT_BYREF|VT_VARIANT:
-                array = *V_ARRAYREF(ref.u.v);
+                array = *V_ARRAYREF(v);
                 break;
             case VT_ARRAY|VT_VARIANT:
-                array = V_ARRAY(ref.u.v);
+                array = V_ARRAY(v);
                 break;
             case VT_DISPATCH:
                 vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);

@@ -1300,8 +1300,7 @@ Call testarrarg(false, "VT_BOOL*")
 Call testarrarg(Empty, "VT_EMPTY*")
 
 Sub modifyarr(arr)
-    'Following test crashes on wine
-    'Call ok(arr(0) = "not modified", "arr(0) = " & arr(0))
+    Call ok(arr(0) = "not modified", "arr(0) = " & arr(0))
     arr(0) = "modified"
 End Sub
 
