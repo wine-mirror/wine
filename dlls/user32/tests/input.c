@@ -1885,6 +1885,7 @@ static void test_ToAscii(void)
     const BYTE SC_RETURN = 0x1c, SC_A = 0x1e;
     const BYTE HIGHEST_BIT = 0x80;
     int ret;
+    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
 
     memset(state, 0, sizeof(state));
 
@@ -1896,7 +1897,7 @@ static void test_ToAscii(void)
     character = 0;
     ret = ToAscii('A', SC_A, state, &character, 0);
     ok(ret == 1, "ToAscii for character 'A' didn't return 1 (was %i)\n", ret);
-    ok(character == 'a', "ToAscii for character 'A' was %i (expected %i)\n", character, 'a');
+    if (us_kbd) ok(character == 'a', "ToAscii for character 'A' was %i (expected %i)\n", character, 'a');
 
     state[VK_CONTROL] |= HIGHEST_BIT;
     state[VK_LCONTROL] |= HIGHEST_BIT;
