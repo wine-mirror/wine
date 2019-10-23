@@ -1010,8 +1010,9 @@ static void test_notify_generic_text_helper(HWND pager, const struct generic_tex
             if (data->return_text)
             {
                 if (para->flags & CONVERT_RECEIVE)
-                    ok(!lstrcmpW(data->return_text, *para->text), "Code 0x%08x sub test %d expect %s, got %s\n",
-                       para->code_unicode, i, wine_dbgstr_w((WCHAR *)data->return_text), wine_dbgstr_w(*para->text));
+                    ok(!wcsncmp(data->return_text, *para->text, *para->text_max),
+                       "Code 0x%08x sub test %d expect %s, got %s\n", para->code_unicode, i,
+                       wine_dbgstr_w((WCHAR *)data->return_text), wine_dbgstr_w(*para->text));
                 else
                     ok(!lstrcmpA(data->return_text, (CHAR *)*para->text), "Code 0x%08x sub test %d expect %s, got %s\n",
                        para->code_unicode, i, (CHAR *)data->return_text, (CHAR *)*para->text);
