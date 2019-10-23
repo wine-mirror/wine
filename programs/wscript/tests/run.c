@@ -134,7 +134,6 @@ static HRESULT WINAPI Dispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
 static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo,
 	LCID lcid, ITypeInfo **ppTInfo)
 {
-    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
