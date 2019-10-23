@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Jacek Caban for CodeWeavers
+ * Copyright 2019 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1131,6 +1132,64 @@ static void test_RegExp(void)
     IRegExp2_Release(regexp);
 }
 
+static void test_RegExp_Replace(void)
+{
+    static const struct
+    {
+        const char *pattern;
+        const char *replace;
+        const char *source;
+        const char *result;
+        BOOL global;
+    } test[] =
+    {
+        { "abc", "", "123abc456", "123456", FALSE },
+        { "abc", "dcba", "123abc456", "123dcba456", FALSE },
+        { "[\r\n\t\f]+", " ", "\nHello\rNew\fWorld\t!", " Hello\rNew\fWorld\t!", FALSE },
+        { "[\r\n\t\f]+", " ", "\nHello\rNew\fWorld\t!", " Hello New World !", TRUE },
+    };
+    HRESULT hr;
+    IRegExp2 *regexp;
+    VARIANT var;
+    BSTR str, ret, result;
+    int i;
+
+    hr = CoCreateInstance(&CLSID_VBScriptRegExp, NULL,
+                          CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                          &IID_IRegExp2, (void **)&regexp);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("VBScriptRegExp is not registered\n");
+        return;
+    }
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(test); i++)
+    {
+        hr = IRegExp2_put_Global(regexp, test[i].global ? VARIANT_TRUE : VARIANT_FALSE);
+        ok(hr == S_OK, "got %#x\n", hr);
+
+        str = a2bstr(test[i].pattern);
+        hr = IRegExp2_put_Pattern(regexp, str);
+        ok(hr == S_OK, "got %#x\n", hr);
+        SysFreeString(str);
+
+        str = a2bstr(test[i].source);
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = a2bstr(test[i].replace);
+        hr = IRegExp2_Replace(regexp, str, var, &ret);
+        ok(hr == S_OK, "got %#x\n", hr);
+        result = a2bstr(test[i].result);
+        ok(!wcscmp(ret, result), "got %s, expected %s\n", wine_dbgstr_w(ret), wine_dbgstr_w(result));
+        SysFreeString(result);
+        SysFreeString(ret);
+        SysFreeString(V_BSTR(&var));
+        SysFreeString(str);
+    }
+
+    IRegExp2_Release(regexp);
+}
+
 static BOOL check_vbscript(void)
 {
     IActiveScriptParseProcedure2 *vbscript;
@@ -1157,6 +1216,7 @@ START_TEST(vbscript)
         test_named_items();
         test_scriptdisp();
         test_RegExp();
+        test_RegExp_Replace();
     }else {
         win_skip("VBScript engine not available or too old\n");
     }
