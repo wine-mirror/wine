@@ -1,4 +1,5 @@
 MODULE    = uianimation.dll
+IMPORTS   = uuid
 
 EXTRADLLFLAGS = -mno-cygwin
 
