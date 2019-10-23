@@ -462,10 +462,10 @@ static void format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, i
         break;
     case EXCEPTION_ACCESS_VIOLATION:
         if (rec->NumberParameters == 2)
-            len = snprintf( buffer, size, "Unhandled page fault on %s access to 0x%08lx",
+            len = snprintf( buffer, size, "Unhandled page fault on %s access to %p",
                             rec->ExceptionInformation[0] == EXCEPTION_WRITE_FAULT ? "write" :
                             rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT ? "execute" : "read",
-                            rec->ExceptionInformation[1]);
+                            (void *)rec->ExceptionInformation[1]);
         else
             len = snprintf( buffer, size, "Unhandled page fault");
         break;
@@ -476,8 +476,8 @@ static void format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, i
         len = snprintf( buffer, size, "Unhandled ^C");
         break;
     case STATUS_POSSIBLE_DEADLOCK:
-        len = snprintf( buffer, size, "Critical section %08lx wait failed",
-                 rec->ExceptionInformation[0]);
+        len = snprintf( buffer, size, "Critical section %p wait failed",
+                        (void *)rec->ExceptionInformation[0]);
         break;
     case EXCEPTION_WINE_STUB:
         if ((ULONG_PTR)rec->ExceptionInformation[1] >> 16)
