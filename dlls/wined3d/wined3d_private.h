@@ -1961,6 +1961,7 @@ struct wined3d_context
 
     DWORD use_immediate_mode_draw : 1;
     DWORD uses_uavs : 1;
+    DWORD uses_fbo_attached_resources : 1;
     DWORD transform_feedback_active : 1;
     DWORD transform_feedback_paused : 1;
     DWORD fog_coord : 1;
@@ -1969,7 +1970,7 @@ struct wined3d_context
     DWORD destroyed : 1;
     DWORD destroy_delayed : 1;
     DWORD clip_distance_mask : 8; /* WINED3D_MAX_CLIP_DISTANCES, 8 */
-    DWORD padding : 15;
+    DWORD padding : 14;
 
     DWORD constant_update_mask;
     DWORD numbered_array_mask;
@@ -5277,6 +5278,26 @@ static inline void wined3d_context_copy_bo_address(struct wined3d_context *conte
 {
     context->device->adapter->adapter_ops->adapter_copy_bo_address(context,
             dst, dst_bind_flags, src, src_bind_flags, size);
+}
+
+static inline BOOL wined3d_resource_check_fbo_attached(const struct wined3d_state *state,
+        const struct wined3d_resource *resource)
+{
+    struct wined3d_rendertarget_view * const *rts = &state->fb->render_targets[0];
+    unsigned int i;
+
+    if ((resource->bind_flags & WINED3D_BIND_DEPTH_STENCIL)
+            && state->fb->depth_stencil && state->fb->depth_stencil->resource == resource)
+        return TRUE;
+
+    if (!(resource->bind_flags & WINED3D_BIND_RENDER_TARGET))
+        return FALSE;
+
+    for (i = 0; i < MAX_RENDER_TARGET_VIEWS; ++i)
+        if (rts[i] && rts[i]->resource == resource)
+            return TRUE;
+
+    return FALSE;
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */

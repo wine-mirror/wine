@@ -159,6 +159,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_vertex_shader",                ARB_VERTEX_SHADER             },
     {"GL_ARB_vertex_type_2_10_10_10_rev",   ARB_VERTEX_TYPE_2_10_10_10_REV},
     {"GL_ARB_viewport_array",               ARB_VIEWPORT_ARRAY            },
+    {"GL_ARB_texture_barrier",              ARB_TEXTURE_BARRIER           },
 
     /* ATI */
     {"GL_ATI_fragment_shader",              ATI_FRAGMENT_SHADER           },
@@ -228,6 +229,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_NV_vertex_program2",               NV_VERTEX_PROGRAM2            },
     {"GL_NV_vertex_program2_option",        NV_VERTEX_PROGRAM2_OPTION     },
     {"GL_NV_vertex_program3",               NV_VERTEX_PROGRAM3            },
+    {"GL_NV_texture_barrier",               NV_TEXTURE_BARRIER            },
 };
 
 static const struct wined3d_extension_map wgl_extension_map[] =
@@ -2454,6 +2456,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glViewportArrayv)
     USE_GL_FUNC(glViewportIndexedf)
     USE_GL_FUNC(glViewportIndexedfv)
+    /* GL_ARB_texture_barrier */
+    USE_GL_FUNC(glTextureBarrier);
     /* GL_ATI_fragment_shader */
     USE_GL_FUNC(glAlphaFragmentOp1ATI)
     USE_GL_FUNC(glAlphaFragmentOp2ATI)
@@ -2644,6 +2648,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glCombinerParameteriNV)
     USE_GL_FUNC(glCombinerParameterivNV)
     USE_GL_FUNC(glFinalCombinerInputNV)
+    /* GL_NV_texture_barrier */
+    USE_GL_FUNC(glTextureBarrierNV);
     /* WGL extensions */
     USE_GL_FUNC(wglChoosePixelFormatARB)
     USE_GL_FUNC(wglGetExtensionsStringARB)
@@ -3406,6 +3412,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         {ARB_CULL_DISTANCE,                MAKEDWORD_VERSION(4, 5)},
         {ARB_DERIVATIVE_CONTROL,           MAKEDWORD_VERSION(4, 5)},
         {ARB_SHADER_TEXTURE_IMAGE_SAMPLES, MAKEDWORD_VERSION(4, 5)},
+        {ARB_TEXTURE_BARRIER,              MAKEDWORD_VERSION(4, 5)},
 
         {ARB_PIPELINE_STATISTICS_QUERY,    MAKEDWORD_VERSION(4, 6)},
         {ARB_POLYGON_OFFSET_CLAMP,         MAKEDWORD_VERSION(4, 6)},

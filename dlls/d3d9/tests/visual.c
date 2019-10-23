@@ -33,7 +33,7 @@
 
 #define COBJMACROS
 #include <d3d9.h>
-#include "wine/test.h"
+#include "utils.h"
 #include "wine/heap.h"
 
 struct vec2
@@ -26263,6 +26263,166 @@ static void test_draw_mapped_buffer(void)
     DestroyWindow(window);
 }
 
+static void test_sample_attached_rendertarget(void)
+{
+    D3DADAPTER_IDENTIFIER9 identifier;
+    IDirect3DQuery9 *event_query;
+    IDirect3DTexture9 *texture;
+    IDirect3DVertexBuffer9 *vb;
+    IDirect3DPixelShader9 *ps;
+    IDirect3DDevice9 *device;
+    IDirect3DSurface9 *rt;
+    IDirect3D9 *d3d;
+    unsigned int i;
+    ULONG refcount;
+    D3DCOLOR color;
+    BOOL is_warp;
+    HWND window;
+    HRESULT hr;
+    void *data;
+
+    static const struct
+    {
+        struct vec3 posistion;
+        struct vec2 texcoord;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, {0.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.1f}, {0.0f, 1.0f}},
+        {{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{ 1.0f,  1.0f, 0.1f}, {1.0f, 1.0f}},
+    };
+
+    static const DWORD pixel_shader_code[] =
+    {
+        0xffff0200,                                                 /* ps_2_0                 */
+        0x05000051, 0xa00f0000, 0x3e800000, 0x3e800000, 0x3e800000, 0x3e800000,
+                /* def c0, 0.25, 0.25, 0.25, 0.25 */
+        0x0200001f, 0x80000000, 0xb00f0000,                         /* dcl t0                 */
+        0x0200001f, 0x90000000, 0xa00f0800,                         /* dcl_2d s0              */
+        0x03000042, 0x800f0000, 0xb0e40000, 0xa0e40800,             /* texld r0, t0, s0       */
+        0x03000002, 0x800f0000, 0x80e40000, 0xa0e40000,             /* add r0, r0, c0         */
+        0x02000001, 0x800f0800, 0x80e40000,                         /* mov oC0, r0            */
+        0x0000ffff
+    };
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    is_warp = adapter_is_warp(&identifier);
+
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateQuery(device, D3DQUERYTYPE_EVENT, NULL);
+    if (hr == D3DERR_NOTAVAILABLE)
+    {
+        /* Without synchronization native d3d seems to show race condition on
+         * render target update, similar to opengl without using texture barrier. */
+        skip("Event queries are not supported, skipping test.\n");
+        IDirect3DDevice9_Release(device);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+   }
+
+    hr = IDirect3DDevice9_CreateQuery(device, D3DQUERYTYPE_EVENT, &event_query);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DQuery9_Issue(event_query, D3DISSUE_END);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad), D3DUSAGE_DYNAMIC,
+            D3DFVF_XYZ | D3DFVF_TEX1, D3DPOOL_DEFAULT, &vb, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad), &data, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    memcpy(data, quad, sizeof(quad));
+    hr = IDirect3DVertexBuffer9_Unlock(vb);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 0, sizeof(quad[0]));
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 1, D3DUSAGE_RENDERTARGET,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &rt);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x01010101, 0.0, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    check_rt_color(rt, 0x00010101);
+
+    hr = IDirect3DDevice9_CreatePixelShader(device, pixel_shader_code, &ps);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetPixelShader(device, ps);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < 3; ++i)
+    {
+        wait_query(event_query);
+
+        hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 2);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        IDirect3DQuery9_Issue(event_query, D3DISSUE_END);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    color = getPixelColor(device, 0, 0);
+    if (is_warp || color == 0x00010101)
+        skip("Sampling attached render targets is not supported.\n");
+    else
+        check_rt_color(rt, 0x00c1c1c1);
+
+    IDirect3DQuery9_Release(event_query);
+
+    IDirect3DVertexBuffer9_Release(vb);
+
+    IDirect3DPixelShader9_Release(ps);
+    IDirect3DSurface9_Release(rt);
+    IDirect3DTexture9_Release(texture);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
 
 START_TEST(visual)
 {
@@ -26409,4 +26569,5 @@ START_TEST(visual)
     test_desktop_window();
     test_mismatched_sample_types();
     test_draw_mapped_buffer();
+    test_sample_attached_rendertarget();
 }

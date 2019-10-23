@@ -3696,6 +3696,9 @@ static void context_preload_texture(struct wined3d_context *context,
     if (!(texture = state->textures[idx]))
         return;
 
+    if (wined3d_resource_check_fbo_attached(state, &texture->resource))
+        context->uses_fbo_attached_resources = 1;
+
     wined3d_texture_load(texture, context, is_srgb_enabled(state->sampler_states[idx]));
 }
 
@@ -3928,6 +3931,8 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
     const struct wined3d_fb_state *fb = state->fb;
     unsigned int i, base;
     WORD map;
+
+    context->uses_fbo_attached_resources = 0;
 
     if (!have_framebuffer_attachment(gl_info->limits.buffers, fb->render_targets, fb->depth_stencil))
     {
@@ -4982,6 +4987,30 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     {
         GL_EXTCALL(glPatchParameteri(GL_PATCH_VERTICES, state->gl_patch_vertices));
         checkGLcall("glPatchParameteri");
+    }
+
+    if (context->uses_fbo_attached_resources)
+    {
+        static unsigned int fixme_once;
+
+        if (gl_info->supported[ARB_TEXTURE_BARRIER])
+        {
+            GL_EXTCALL(glTextureBarrier());
+        }
+        else if (gl_info->supported[NV_TEXTURE_BARRIER])
+        {
+            GL_EXTCALL(glTextureBarrierNV());
+        }
+        else
+        {
+            if (!fixme_once++)
+                FIXME("Sampling attached render targets is not supported.\n");
+
+            WARN("Sampling attached render targets is not supported, skipping draw.\n");
+            context_release(context);
+            return;
+        }
+        checkGLcall("glTextureBarrier");
     }
 
     if (parameters->indirect)
