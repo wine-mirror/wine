@@ -2239,12 +2239,25 @@ static void wined3d_device_set_shader_resource_view(struct wined3d_device *devic
     if (view == prev)
         return;
 
+    if (view && wined3d_resource_check_fbo_attached(&device->state, view->resource))
+    {
+        WARN("Application is trying to bind resource which is attached as render target.\n");
+        view = NULL;
+    }
+
     if (view)
+    {
         wined3d_shader_resource_view_incref(view);
+        ++view->resource->srv_bind_count_device;
+    }
+
     device->state.shader_resource_view[type][idx] = view;
     wined3d_cs_emit_set_shader_resource_view(device->cs, type, idx, view);
     if (prev)
+    {
+        --prev->resource->srv_bind_count_device;
         wined3d_shader_resource_view_decref(prev);
+    }
 }
 
 void CDECL wined3d_device_set_vs_resource_view(struct wined3d_device *device,
@@ -4977,6 +4990,24 @@ struct wined3d_rendertarget_view * CDECL wined3d_device_get_depth_stencil_view(c
     return device->fb.depth_stencil;
 }
 
+static void wined3d_unbind_srv_for_rtv(struct wined3d_device *device,
+        const struct wined3d_rendertarget_view *view)
+{
+    if (view && view->resource->srv_bind_count_device)
+    {
+        const struct wined3d_resource *resource = view->resource;
+        const struct wined3d_shader_resource_view *srv;
+        unsigned int i, j;
+
+        WARN("Application sets bound resource as render target.\n");
+
+        for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
+            for (j = 0; j < MAX_SHADER_RESOURCE_VIEWS; ++j)
+                if ((srv = device->state.shader_resource_view[i][j]) && srv->resource == resource)
+                    wined3d_device_set_shader_resource_view(device, i, j, NULL);
+    }
+}
+
 HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device,
         unsigned int view_idx, struct wined3d_rendertarget_view *view, BOOL set_viewport)
 {
@@ -5035,6 +5066,8 @@ HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device
     if (prev)
         wined3d_rendertarget_view_decref(prev);
 
+    wined3d_unbind_srv_for_rtv(device, view);
+
     return WINED3D_OK;
 }
 
@@ -5064,6 +5097,8 @@ HRESULT CDECL wined3d_device_set_depth_stencil_view(struct wined3d_device *devic
     wined3d_cs_emit_set_depth_stencil_view(device->cs, view);
     if (prev)
         wined3d_rendertarget_view_decref(prev);
+
+    wined3d_unbind_srv_for_rtv(device, view);
 
     return WINED3D_OK;
 }

@@ -29394,6 +29394,228 @@ static void test_desktop_window(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_sample_attached_rtv(void)
+{
+    ID3D11ShaderResourceView *srv, *srv_test;
+    struct d3d11_test_context test_context;
+    ID3D11RenderTargetView *rtv, *rtvs[2];
+    ID3D11Texture2D *texture, *texture2;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    D3D11_SAMPLER_DESC sampler_desc;
+    ID3D11DeviceContext *context;
+    ID3D11SamplerState *sampler;
+    struct resource_readback rb;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    unsigned int x, y;
+    DWORD color;
+    HRESULT hr;
+
+    static const DWORD ps_ld_code[] =
+    {
+#if 0
+        Texture2D t;
+
+        struct PS_OUTPUT
+        {
+            float4 color0: SV_Target0;
+            float4 color1: SV_Target1;
+        };
+
+        PS_OUTPUT main(float4 position : SV_POSITION)
+        {
+            PS_OUTPUT output;
+            float3 p;
+
+            t.GetDimensions(0, p.x, p.y, p.z);
+            p.z = 0;
+            p *= float3(position.x / 640.0f, position.y / 480.0f, 1.0f);
+            output.color0 = output.color1 = t.Load(int3(p)) + float4(0.25, 0.25, 0.25, 0.25);
+            return output;
+        }
+#endif
+        0x43425844, 0x08dd0517, 0x07d7e538, 0x4cad261f, 0xa2ae5942, 0x00000001, 0x00000200, 0x00000003,
+        0x0000002c, 0x00000060, 0x000000ac, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x00000044, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000038, 0x00000001, 0x00000000, 0x00000003, 0x00000001, 0x0000000f,
+        0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x0000014c, 0x00000040, 0x00000053, 0x04001858,
+        0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065,
+        0x001020f2, 0x00000000, 0x03000065, 0x001020f2, 0x00000001, 0x02000068, 0x00000001, 0x0700003d,
+        0x001000f2, 0x00000000, 0x00004001, 0x00000000, 0x00107e46, 0x00000000, 0x07000038, 0x00100032,
+        0x00000000, 0x00100046, 0x00000000, 0x00101046, 0x00000000, 0x0a000038, 0x00100032, 0x00000000,
+        0x00100046, 0x00000000, 0x00004002, 0x3acccccd, 0x3b088889, 0x00000000, 0x00000000, 0x08000036,
+        0x001000c2, 0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0500001b,
+        0x001000f2, 0x00000000, 0x00100e46, 0x00000000, 0x0700002d, 0x001000f2, 0x00000000, 0x00100e46,
+        0x00000000, 0x00107e46, 0x00000000, 0x0a000000, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000,
+        0x00004002, 0x3e800000, 0x3e800000, 0x3e800000, 0x3e800000, 0x05000036, 0x001020f2, 0x00000000,
+        0x00100e46, 0x00000000, 0x05000036, 0x001020f2, 0x00000001, 0x00100e46, 0x00000000, 0x0100003e,
+    };
+
+    static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.MipLODBias = 0.0f;
+    sampler_desc.MaxAnisotropy = 0;
+    sampler_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampler_desc.BorderColor[0] = 0.0f;
+    sampler_desc.BorderColor[1] = 0.0f;
+    sampler_desc.BorderColor[2] = 0.0f;
+    sampler_desc.BorderColor[3] = 0.0f;
+    sampler_desc.MinLOD = 0.0f;
+    sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_ld_code, sizeof(ps_ld_code), NULL, &ps);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    texture_desc.Width = 64;
+    texture_desc.Height = 64;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    texture_desc.Width = 640;
+    texture_desc.Height = 480;
+
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture2);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampler_desc.MipLODBias = 0.0f;
+    sampler_desc.MinLOD = 0.0f;
+    sampler_desc.MaxLOD = 0.0f;
+
+    hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
+
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture2, NULL, &rtv);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    rtvs[0] = test_context.backbuffer_rtv;
+    rtvs[1] = rtv;
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 2, rtvs, NULL);
+
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+
+    draw_quad(&test_context);
+
+    get_texture_readback(texture2, 0, &rb);
+    for (y = 0; y < 4; ++y)
+    {
+        for (x = 0; x < 4; ++x)
+        {
+            color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
+            ok(compare_color(color, 0x40404040, 2),
+                    "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D11ShaderResourceView_Release(srv);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, red);
+
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture2, NULL, &srv);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* SRV does not get bound if resource is attached as render target. */
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+    ID3D11DeviceContext_PSGetShaderResources(context, 0, 1, &srv_test);
+    ok(!srv_test, "Unexpected SRV %p.\n", srv_test);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
+
+    draw_quad(&test_context);
+    draw_quad(&test_context);
+
+    get_texture_readback(test_context.backbuffer, 0, &rb);
+    for (y = 0; y < 4; ++y)
+    {
+        for (x = 0; x < 4; ++x)
+        {
+            color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
+            ok(compare_color(color, 0x40404040, 2),
+                    "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+        }
+    }
+    release_resource_readback(&rb);
+
+    get_texture_readback(texture2, 0, &rb);
+    for (y = 0; y < 4; ++y)
+    {
+        for (x = 0; x < 4; ++x)
+        {
+            color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
+            ok(compare_color(color, 0x40404040, 2),
+                    "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, NULL);
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+    ID3D11DeviceContext_PSGetShaderResources(context, 0, 1, &srv_test);
+    ok(!!srv_test, "Unexpected SRV %p.\n", srv_test);
+    ID3D11ShaderResourceView_Release(srv_test);
+
+    draw_quad(&test_context);
+    get_texture_readback(test_context.backbuffer, 0, &rb);
+    for (y = 0; y < 4; ++y)
+    {
+        for (x = 0; x < 4; ++x)
+        {
+            color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
+            ok(compare_color(color, 0x80808080, 2),
+                    "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 2, rtvs, NULL);
+
+    /* SRV is reset when the same resource is set as render target. */
+    ID3D11DeviceContext_PSGetShaderResources(context, 0, 1, &srv_test);
+    ok(!srv_test, "Unexpected SRV %p.\n", srv_test);
+
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11ShaderResourceView_Release(srv);
+    ID3D11SamplerState_Release(sampler);
+    ID3D11PixelShader_Release(ps);
+    ID3D11Texture2D_Release(texture2);
+    ID3D11Texture2D_Release(texture);
+    ID3D11SamplerState_Release(sampler);
+
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -29553,6 +29775,7 @@ START_TEST(d3d11)
     queue_test(test_render_a8);
     queue_test(test_standard_pattern);
     queue_test(test_desktop_window);
+    queue_test(test_sample_attached_rtv);
 
     run_queued_tests();
 }

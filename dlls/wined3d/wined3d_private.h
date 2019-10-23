@@ -3423,6 +3423,7 @@ struct wined3d_resource
 {
     LONG ref;
     LONG bind_count;
+    LONG srv_bind_count_device;
     LONG map_count;
     LONG access_count;
     struct wined3d_device *device;
