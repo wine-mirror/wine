@@ -1409,7 +1409,9 @@ static void test_mouse_ll_hook(void)
     ok(pt_old.x == 149 && pt_old.y == 149, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
     mouse_event(MOUSEEVENTF_MOVE, 0, 0, 0, 0);
     GetCursorPos(&pt_old);
-    ok(pt_old.x == 150 && pt_old.y == 150, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
+    ok((pt_old.x == 150 && pt_old.y == 150) ||
+       broken(pt_old.x == 149 && pt_old.y == 149) /* w1064v1809 */,
+       "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
     mouse_event(MOUSEEVENTF_MOVE, 0, 0, 0, 0);
     GetCursorPos(&pt_old);
     todo_wine
