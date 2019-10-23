@@ -6,4 +6,5 @@ C_SRCS = \
 	main.c
 
 IDL_SRCS = \
-	uianimation_reg.idl
+	uianimation_reg.idl \
+	uianimation_typelib.idl
