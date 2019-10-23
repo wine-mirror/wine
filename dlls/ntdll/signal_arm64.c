@@ -508,14 +508,19 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
         return STATUS_INVALID_DISPOSITION;
     }
     rc = unw_get_proc_info( &cursor, &info );
-    if (rc != UNW_ESUCCESS && rc != UNW_ENOINFO)
+    if (rc != UNW_ESUCCESS && rc != -UNW_ENOINFO)
     {
         WARN( "failed to get info: %d\n", rc );
         return STATUS_INVALID_DISPOSITION;
     }
-    if (rc == UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip)
+    if (rc == -UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip)
     {
-        WARN( "no info found for %lx ip %lx-%lx rc %d\n", ip, info.start_ip, info.end_ip, rc );
+        TRACE( "no info found for %lx ip %lx-%lx, assuming leaf function\n",
+               ip, info.start_ip, info.end_ip );
+        *handler = NULL;
+        *frame = context->Sp;
+        context->Pc = context->u.s.Lr;
+        context->Sp = context->Sp + sizeof(ULONG64);
         return STATUS_SUCCESS;
     }
 
@@ -523,14 +528,10 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
            ip, (unsigned long)info.start_ip, (unsigned long)info.end_ip, (unsigned long)info.handler,
            (unsigned long)info.lsda, (unsigned long)info.unwind_info );
 
-    if (!(rc = unw_step( &cursor )))
-    {
-        WARN( "last frame\n" );
-        return STATUS_SUCCESS;
-    }
+    rc = unw_step( &cursor );
     if (rc < 0)
     {
-        WARN( "failed to unwind: %d\n", rc );
+        WARN( "failed to unwind: %d %d\n", rc, UNW_ENOINFO );
         return STATUS_INVALID_DISPOSITION;
     }
 
@@ -571,7 +572,7 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
     unw_get_reg( &cursor, UNW_AARCH64_X30, (unw_word_t *)&context->u.s.Lr );
     unw_get_reg( &cursor, UNW_AARCH64_SP,  (unw_word_t *)&context->Sp );
 
-    TRACE( "next function pc=%016lx\n", context->Pc );
+    TRACE( "next function pc=%016lx%s\n", context->Pc, rc ? "" : " (last frame)" );
     TRACE("  x0=%016lx  x1=%016lx  x2=%016lx  x3=%016lx\n",
           context->u.s.X0, context->u.s.X1, context->u.s.X2, context->u.s.X3 );
     TRACE("  x4=%016lx  x5=%016lx  x6=%016lx  x7=%016lx\n",
