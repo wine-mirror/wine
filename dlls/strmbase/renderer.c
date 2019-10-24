@@ -250,42 +250,6 @@ static const BaseInputPinFuncTable input_BaseInputFuncTable =
     .pfnReceive = BaseRenderer_Receive,
 };
 
-static const IBaseFilterVtbl strmbase_renderer_vtbl;
-
-HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, IUnknown *outer,
-        const CLSID *clsid, const WCHAR *sink_name, const BaseRendererFuncTable *pBaseFuncsTable)
-{
-    HRESULT hr;
-
-    memset(filter, 0, sizeof(*filter));
-    strmbase_filter_init(&filter->filter, &strmbase_renderer_vtbl, outer, clsid, &filter_ops);
-
-    filter->pFuncsTable = pBaseFuncsTable;
-
-    strmbase_sink_init(&filter->sink, &BaseRenderer_InputPin_Vtbl, &filter->filter,
-            sink_name, &input_BaseInputFuncTable, NULL);
-
-    hr = CreatePosPassThru(outer ? outer : (IUnknown *)&filter->filter.IBaseFilter_iface, TRUE,
-            &filter->sink.pin.IPin_iface, &filter->pPosition);
-    if (FAILED(hr))
-    {
-        strmbase_sink_cleanup(&filter->sink);
-        strmbase_filter_cleanup(&filter->filter);
-        return hr;
-    }
-
-    InitializeCriticalSection(&filter->csRenderLock);
-    filter->csRenderLock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": BaseRenderer.csRenderLock");
-    filter->state_event = CreateEventW(NULL, TRUE, TRUE, NULL);
-    filter->advise_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    filter->flush_event = CreateEventW(NULL, TRUE, TRUE, NULL);
-
-    QualityControlImpl_Create(&filter->sink.pin.IPin_iface, &filter->filter.IBaseFilter_iface, &filter->qcimpl);
-    filter->qcimpl->IQualityControl_iface.lpVtbl = &Renderer_QualityControl_Vtbl;
-
-    return S_OK;
-}
-
 void strmbase_renderer_cleanup(BaseRenderer *filter)
 {
     if (filter->sink.pin.peer)
@@ -593,5 +557,39 @@ HRESULT WINAPI BaseRendererImpl_ClearPendingSample(BaseRenderer *iface)
         IMediaSample_Release(iface->pMediaSample);
         iface->pMediaSample = NULL;
     }
+    return S_OK;
+}
+
+HRESULT WINAPI strmbase_renderer_init(BaseRenderer *filter, IUnknown *outer,
+        const CLSID *clsid, const WCHAR *sink_name, const BaseRendererFuncTable *func_table)
+{
+    HRESULT hr;
+
+    memset(filter, 0, sizeof(*filter));
+    strmbase_filter_init(&filter->filter, &strmbase_renderer_vtbl, outer, clsid, &filter_ops);
+
+    filter->pFuncsTable = func_table;
+
+    strmbase_sink_init(&filter->sink, &BaseRenderer_InputPin_Vtbl, &filter->filter,
+            sink_name, &input_BaseInputFuncTable, NULL);
+
+    hr = CreatePosPassThru(outer ? outer : (IUnknown *)&filter->filter.IBaseFilter_iface,
+            TRUE, &filter->sink.pin.IPin_iface, &filter->pPosition);
+    if (FAILED(hr))
+    {
+        strmbase_sink_cleanup(&filter->sink);
+        strmbase_filter_cleanup(&filter->filter);
+        return hr;
+    }
+
+    InitializeCriticalSection(&filter->csRenderLock);
+    filter->csRenderLock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": BaseRenderer.csRenderLock");
+    filter->state_event = CreateEventW(NULL, TRUE, TRUE, NULL);
+    filter->advise_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    filter->flush_event = CreateEventW(NULL, TRUE, TRUE, NULL);
+
+    QualityControlImpl_Create(&filter->sink.pin.IPin_iface, &filter->filter.IBaseFilter_iface, &filter->qcimpl);
+    filter->qcimpl->IQualityControl_iface.lpVtbl = &Renderer_QualityControl_Vtbl;
+
     return S_OK;
 }
