@@ -336,11 +336,11 @@ static void test_EnumObjects(IShellFolder *iFolder)
     /* Don't test for SFGAO_HASSUBFOLDER since we return real state and native cached */
     static const ULONG attrs[5] =
     {
-        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
-        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
-        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM,
-        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM,
-        SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM,
+        SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
+        SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
+        SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY | SFGAO_FILESYSTEM,
+        SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY | SFGAO_FILESYSTEM,
+        SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY | SFGAO_FILESYSTEM,
     };
     static const ULONG full_attrs[5] =
     {
@@ -380,30 +380,28 @@ static void test_EnumObjects(IShellFolder *iFolder)
         ok(hr == iResults[i][j], "Got %x expected [%d]-[%d]=%x\n", hr, i, j, iResults[i][j]);
     }
 
-
-    for (i = 0; i < 5; i++)
+    for (i = 0; i < ARRAY_SIZE(attrs); ++i)
     {
         SFGAOF flags;
-#define SFGAO_VISTA SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY
-        /* Native returns all flags no matter what we ask for */
+
         flags = SFGAO_CANCOPY;
         hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
         flags &= SFGAO_testfor;
-        ok(hr == S_OK, "GetAttributesOf returns %08x\n", hr);
-        ok(flags == (attrs[i]) ||
-           flags == ((attrs[i] & ~SFGAO_CAPABILITYMASK) | SFGAO_VISTA), /* Vista and higher */
-           "GetAttributesOf[%i] got %08x, expected %08x\n", i, flags, attrs[i]);
+        ok(hr == S_OK, "Failed to get item attributes, hr %#x.\n", hr);
+        ok((flags & attrs[i]) == attrs[i], "%i: unexpected attributes got %#x, expected %#x.\n", i, flags, attrs[i]);
 
         flags = SFGAO_testfor;
         hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
         flags &= SFGAO_testfor;
-        ok(hr == S_OK, "GetAttributesOf returns %08x\n", hr);
-        ok(flags == attrs[i], "GetAttributesOf[%i] got %08x, expected %08x\n", i, flags, attrs[i]);
+        ok(hr == S_OK, "Failed to get item attributes, hr %#x.\n", hr);
+        ok(flags == (attrs[i] | SFGAO_CAPABILITYMASK), "%i: unexpected attributes got %#x, expected %#x.\n",
+                i, flags, attrs[i]);
 
         flags = ~0u;
         hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
-        ok(hr == S_OK, "GetAttributesOf returns %08x\n", hr);
-        ok((flags & ~(SFGAO_HASSUBFOLDER|SFGAO_COMPRESSED)) == full_attrs[i], "%d: got %08x expected %08x\n", i, flags, full_attrs[i]);
+        ok(hr == S_OK, "Failed to get item attributes, hr %#x.\n", hr);
+        ok((flags & ~(SFGAO_HASSUBFOLDER|SFGAO_COMPRESSED)) == full_attrs[i], "%d: unexpected attributes %#x, expected %#x\n",
+                i, flags, full_attrs[i]);
     }
 
     for (i=0;i<5;i++)
@@ -5263,7 +5261,7 @@ static void test_SHGetSetFolderCustomSettings(void)
 
     if (!pSHGetSetFolderCustomSettings)
     {
-        win_skip("SHGetSetFolderCustomSetting not exported by name (only by ordinal) for version XP/win2003\n");
+        win_skip("SHGetSetFolderCustomSetting is not available.\n");
         return;
     }
 
@@ -5294,7 +5292,7 @@ static void test_SHGetSetFolderCustomSettings(void)
     todo_wine ok(!lstrcmpiW(iconpathW, fcs.pszIconFile), "Expected %s, got %s\n", wine_dbgstr_w(iconpathW), wine_dbgstr_w(fcs.pszIconFile));
 
     hr = pSHGetSetFolderCustomSettings(&fcs, NULL, FCS_READ);
-    ok(hr == E_FAIL, "Expected E_FAIL, got %#x\n", hr);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
 
     lstrcpyW(bufferW, pathW);
     lstrcatW(bufferW, desktop_iniW);
