@@ -162,7 +162,7 @@ struct strmbase_filter
     CLSID clsid;
     LONG pin_version;
 
-    const struct strmbase_filter_ops *pFuncsTable;
+    const struct strmbase_filter_ops *ops;
 };
 
 struct strmbase_filter_ops
