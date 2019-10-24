@@ -8137,8 +8137,8 @@ static void test_dpi(void)
 
         /* Device context DPI values aren't updated by SetTarget. */
         ID2D1DeviceContext_GetDpi(device_context, &dpi_x, &dpi_y);
-        todo_wine ok(dpi_x == dc_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n", i, dpi_x, dc_dpi_x);
-        todo_wine ok(dpi_y == dc_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n", i, dpi_y, dc_dpi_y);
+        ok(dpi_x == dc_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n", i, dpi_x, dc_dpi_x);
+        ok(dpi_y == dc_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n", i, dpi_y, dc_dpi_y);
 
         ID2D1Bitmap1_Release(bitmap);
     }
@@ -8203,8 +8203,8 @@ static void test_dpi(void)
 
         /* Device context DPI values aren't updated by SetTarget. */
         ID2D1DeviceContext_GetDpi(device_context, &dpi_x, &dpi_y);
-        todo_wine ok(dpi_x == dc_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n", i, dpi_x, dc_dpi_x);
-        todo_wine ok(dpi_y == dc_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n", i, dpi_y, dc_dpi_y);
+        ok(dpi_x == dc_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n", i, dpi_x, dc_dpi_x);
+        ok(dpi_y == dc_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n", i, dpi_y, dc_dpi_y);
 
         ID2D1Bitmap1_Release(bitmap);
     }
@@ -8258,16 +8258,16 @@ static void test_dpi(void)
 
         /* Device context DPI values aren't updated by SetTarget. */
         ID2D1DeviceContext_GetDpi(device_context, &dpi_x, &dpi_y);
-        todo_wine ok(dpi_x == dc_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n", i, dpi_x, dc_dpi_x);
-        todo_wine ok(dpi_y == dc_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n", i, dpi_y, dc_dpi_y);
+        ok(dpi_x == dc_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n", i, dpi_x, dc_dpi_x);
+        ok(dpi_y == dc_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n", i, dpi_y, dc_dpi_y);
 
         ID2D1Bitmap1_Release(bitmap);
     }
 
     ID2D1DeviceContext_SetTarget(device_context, NULL);
     ID2D1DeviceContext_GetDpi(device_context, &dpi_x, &dpi_y);
-    todo_wine ok(dpi_x == dc_dpi_x, "Got unexpected dpi_x %.8e, expected %.8e.\n", dpi_x, dc_dpi_x);
-    todo_wine ok(dpi_y == dc_dpi_y, "Got unexpected dpi_y %.8e, expected %.8e.\n", dpi_y, dc_dpi_y);
+    ok(dpi_x == dc_dpi_x, "Got unexpected dpi_x %.8e, expected %.8e.\n", dpi_x, dc_dpi_x);
+    ok(dpi_y == dc_dpi_y, "Got unexpected dpi_y %.8e, expected %.8e.\n", dpi_y, dc_dpi_y);
 
     ID2D1DeviceContext_Release(device_context);
     IDXGISurface_Release(surface);

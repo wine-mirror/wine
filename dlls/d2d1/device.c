@@ -1940,9 +1940,7 @@ static void d2d_device_context_reset_target(struct d2d_device_context *context)
     ID2D1Bitmap1_Release(&context->target->ID2D1Bitmap1_iface);
     context->target = NULL;
 
-    context->desc.dpiX = 96.0f;
-    context->desc.dpiY = 96.0f;
-
+    /* Note that DPI settings are kept. */
     memset(&context->desc.pixelFormat, 0, sizeof(context->desc.pixelFormat));
     memset(&context->pixel_size, 0, sizeof(context->pixel_size));
 
@@ -1983,8 +1981,6 @@ static void STDMETHODCALLTYPE d2d_device_context_SetTarget(ID2D1DeviceContext *i
     d2d_device_context_reset_target(context);
 
     /* Set sizes and pixel format. */
-    context->desc.dpiX = bitmap_impl->dpi_x;
-    context->desc.dpiY = bitmap_impl->dpi_y;
     context->pixel_size = bitmap_impl->pixel_size;
     context->desc.pixelFormat = bitmap_impl->format;
     context->target = bitmap_impl;
@@ -3770,6 +3766,8 @@ HRESULT d2d_d3d_create_render_target(ID2D1Device *device, IDXGISurface *surface,
         heap_free(object);
         return hr;
     }
+
+    ID2D1DeviceContext_SetDpi(&object->ID2D1DeviceContext_iface, bitmap_desc.dpiX, bitmap_desc.dpiY);
 
     if (surface)
     {
