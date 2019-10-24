@@ -170,6 +170,12 @@ struct strmbase_filter_ops
     IPin *(*filter_get_pin)(struct strmbase_filter *iface, unsigned int index);
     void (*filter_destroy)(struct strmbase_filter *iface);
     HRESULT (*filter_query_interface)(struct strmbase_filter *iface, REFIID iid, void **out);
+
+    HRESULT (*filter_init_stream)(struct strmbase_filter *iface);
+    HRESULT (*filter_start_stream)(struct strmbase_filter *iface, REFERENCE_TIME time);
+    HRESULT (*filter_stop_stream)(struct strmbase_filter *iface);
+    HRESULT (*filter_cleanup_stream)(struct strmbase_filter *iface);
+    HRESULT (*filter_wait_state)(struct strmbase_filter *iface, DWORD timeout);
 };
 
 HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
