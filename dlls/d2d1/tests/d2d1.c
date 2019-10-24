@@ -8046,6 +8046,237 @@ static void test_max_bitmap_size(void)
     ID2D1Factory_Release(factory);
 }
 
+static void test_dpi(void)
+{
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    ID2D1DeviceContext *device_context;
+    IWICImagingFactory *wic_factory;
+    IDXGISwapChain *swapchain;
+    ID3D10Device1 *d3d_device;
+    ID2D1Factory1 *factory;
+    IDXGISurface *surface;
+    ID2D1Bitmap1 *bitmap;
+    float dpi_x, dpi_y;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
+    {
+        float dpi_x, dpi_y;
+        HRESULT hr;
+    }
+    create_dpi_tests[] =
+    {
+        {  0.0f,   0.0f, S_OK},
+        {192.0f,   0.0f, E_INVALIDARG},
+        {  0.0f, 192.0f, E_INVALIDARG},
+        {192.0f, -10.0f, E_INVALIDARG},
+        {-10.0f, 192.0f, E_INVALIDARG},
+        {-10.0f, -10.0f, E_INVALIDARG},
+        { 48.0f,  96.0f, S_OK},
+        { 96.0f,  48.0f, S_OK},
+    };
+    static const float init_dpi_x = 60.0f, init_dpi_y = 288.0f;
+    static const float dc_dpi_x = 120.0f, dc_dpi_y = 144.0f;
+    unsigned int i;
+
+    if (!(d3d_device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        ID3D10Device1_Release(d3d_device);
+        return;
+    }
+
+    window = create_window();
+    swapchain = create_swapchain(d3d_device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    device_context = create_device_context(factory, d3d_device);
+    ok(!!device_context, "Failed to create device context.\n");
+
+    ID2D1DeviceContext_GetDpi(device_context, &dpi_x, &dpi_y);
+    ok(dpi_x == 96.0f, "Got unexpected dpi_x %.8e.\n", dpi_x);
+    ok(dpi_y == 96.0f, "Got unexpected dpi_y %.8e.\n", dpi_y);
+
+    /* DXGI surface */
+    for (i = 0; i < ARRAY_SIZE(create_dpi_tests); ++i)
+    {
+        ID2D1DeviceContext_SetDpi(device_context, init_dpi_x, init_dpi_y);
+
+        bitmap_desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+        bitmap_desc.dpiX = create_dpi_tests[i].dpi_x;
+        bitmap_desc.dpiY = create_dpi_tests[i].dpi_y;
+        bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+        bitmap_desc.colorContext = NULL;
+        hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, surface, &bitmap_desc, &bitmap);
+        /* Native accepts negative DPI values for DXGI surface bitmap. */
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        ID2D1DeviceContext_SetDpi(device_context, dc_dpi_x, dc_dpi_y);
+
+        ID2D1Bitmap1_GetDpi(bitmap, &dpi_x, &dpi_y);
+        todo_wine_if(bitmap_desc.dpiX == 0.0f)
+            ok(dpi_x == bitmap_desc.dpiX, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n",
+                    i, dpi_x, bitmap_desc.dpiX);
+        todo_wine_if(bitmap_desc.dpiY == 0.0f)
+            ok(dpi_y == bitmap_desc.dpiY, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n",
+                    i, dpi_y, bitmap_desc.dpiY);
+
+        ID2D1DeviceContext_BeginDraw(device_context);
+        ID2D1DeviceContext_SetTarget(device_context, (ID2D1Image *)bitmap);
+        hr = ID2D1DeviceContext_EndDraw(device_context, NULL, NULL);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        /* Device context DPI values aren't updated by SetTarget. */
+        ID2D1DeviceContext_GetDpi(device_context, &dpi_x, &dpi_y);
+        todo_wine ok(dpi_x == dc_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n", i, dpi_x, dc_dpi_x);
+        todo_wine ok(dpi_y == dc_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n", i, dpi_y, dc_dpi_y);
+
+        ID2D1Bitmap1_Release(bitmap);
+    }
+
+    /* WIC bitmap */
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICImagingFactory, (void **)&wic_factory);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(create_dpi_tests); ++i)
+    {
+        IWICBitmapSource *wic_bitmap_src;
+        IWICBitmap *wic_bitmap;
+
+        ID2D1DeviceContext_SetDpi(device_context, init_dpi_x, init_dpi_y);
+
+        hr = IWICImagingFactory_CreateBitmap(wic_factory, 16, 16,
+                &GUID_WICPixelFormat32bppPBGRA, WICBitmapCacheOnDemand, &wic_bitmap);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        hr = IWICBitmap_QueryInterface(wic_bitmap, &IID_IWICBitmapSource, (void **)&wic_bitmap_src);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        IWICBitmap_Release(wic_bitmap);
+
+        bitmap_desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+        bitmap_desc.dpiX = create_dpi_tests[i].dpi_x;
+        bitmap_desc.dpiY = create_dpi_tests[i].dpi_y;
+        bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+        bitmap_desc.colorContext = NULL;
+        hr = ID2D1DeviceContext_CreateBitmapFromWicBitmap(device_context, wic_bitmap_src, &bitmap_desc, &bitmap);
+        todo_wine_if(FAILED(create_dpi_tests[i].hr))
+            ok(hr == create_dpi_tests[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n",
+                    i, hr, create_dpi_tests[i].hr);
+        IWICBitmapSource_Release(wic_bitmap_src);
+
+        if (FAILED(hr))
+            continue;
+
+        ID2D1DeviceContext_SetDpi(device_context, dc_dpi_x, dc_dpi_y);
+
+        ID2D1Bitmap1_GetDpi(bitmap, &dpi_x, &dpi_y);
+        if (bitmap_desc.dpiX == 0.0f && bitmap_desc.dpiY == 0.0f)
+        {
+            /* Bitmap DPI values are inherited at creation time. */
+            todo_wine ok(dpi_x == init_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n",
+                    i, dpi_x, init_dpi_x);
+            todo_wine ok(dpi_y == init_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n",
+                    i, dpi_y, init_dpi_y);
+        }
+        else
+        {
+            ok(dpi_x == bitmap_desc.dpiX, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n",
+                    i, dpi_x, bitmap_desc.dpiX);
+            ok(dpi_y == bitmap_desc.dpiY, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n",
+                    i, dpi_y, bitmap_desc.dpiY);
+        }
+
+        ID2D1DeviceContext_BeginDraw(device_context);
+        ID2D1DeviceContext_SetTarget(device_context, (ID2D1Image *)bitmap);
+        hr = ID2D1DeviceContext_EndDraw(device_context, NULL, NULL);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        /* Device context DPI values aren't updated by SetTarget. */
+        ID2D1DeviceContext_GetDpi(device_context, &dpi_x, &dpi_y);
+        todo_wine ok(dpi_x == dc_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n", i, dpi_x, dc_dpi_x);
+        todo_wine ok(dpi_y == dc_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n", i, dpi_y, dc_dpi_y);
+
+        ID2D1Bitmap1_Release(bitmap);
+    }
+    IWICImagingFactory_Release(wic_factory);
+    CoUninitialize();
+
+    /* D2D bitmap */
+    for (i = 0; i < ARRAY_SIZE(create_dpi_tests); ++i)
+    {
+        const D2D1_SIZE_U size = {16, 16};
+
+        ID2D1DeviceContext_SetDpi(device_context, init_dpi_x, init_dpi_y);
+
+        bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+        bitmap_desc.dpiX = create_dpi_tests[i].dpi_x;
+        bitmap_desc.dpiY = create_dpi_tests[i].dpi_y;
+        bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+        bitmap_desc.colorContext = NULL;
+        hr = ID2D1DeviceContext_CreateBitmap(device_context, size, NULL, 0, &bitmap_desc, &bitmap);
+        todo_wine_if(FAILED(create_dpi_tests[i].hr))
+            ok(hr == create_dpi_tests[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n",
+                    i, hr, create_dpi_tests[i].hr);
+
+        if (FAILED(hr))
+            continue;
+
+        ID2D1DeviceContext_SetDpi(device_context, dc_dpi_x, dc_dpi_y);
+
+        ID2D1Bitmap1_GetDpi(bitmap, &dpi_x, &dpi_y);
+        if (bitmap_desc.dpiX == 0.0f && bitmap_desc.dpiY == 0.0f)
+        {
+            /* Bitmap DPI values are inherited at creation time. */
+            todo_wine ok(dpi_x == init_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n",
+                    i, dpi_x, init_dpi_x);
+            todo_wine ok(dpi_y == init_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n",
+                    i, dpi_y, init_dpi_y);
+        }
+        else
+        {
+            ok(dpi_x == bitmap_desc.dpiX, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n",
+                    i, dpi_x, bitmap_desc.dpiX);
+            ok(dpi_y == bitmap_desc.dpiY, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n",
+                    i, dpi_y, bitmap_desc.dpiY);
+        }
+
+        ID2D1DeviceContext_BeginDraw(device_context);
+        ID2D1DeviceContext_SetTarget(device_context, (ID2D1Image *)bitmap);
+        hr = ID2D1DeviceContext_EndDraw(device_context, NULL, NULL);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        /* Device context DPI values aren't updated by SetTarget. */
+        ID2D1DeviceContext_GetDpi(device_context, &dpi_x, &dpi_y);
+        todo_wine ok(dpi_x == dc_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n", i, dpi_x, dc_dpi_x);
+        todo_wine ok(dpi_y == dc_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n", i, dpi_y, dc_dpi_y);
+
+        ID2D1Bitmap1_Release(bitmap);
+    }
+
+    ID2D1DeviceContext_SetTarget(device_context, NULL);
+    ID2D1DeviceContext_GetDpi(device_context, &dpi_x, &dpi_y);
+    todo_wine ok(dpi_x == dc_dpi_x, "Got unexpected dpi_x %.8e, expected %.8e.\n", dpi_x, dc_dpi_x);
+    todo_wine ok(dpi_y == dc_dpi_y, "Got unexpected dpi_y %.8e, expected %.8e.\n", dpi_y, dc_dpi_y);
+
+    ID2D1DeviceContext_Release(device_context);
+    IDXGISurface_Release(surface);
+    IDXGISwapChain_Release(swapchain);
+    ID2D1Factory1_Release(factory);
+    ID3D10Device1_Release(d3d_device);
+    DestroyWindow(window);
+}
+
 START_TEST(d2d1)
 {
     unsigned int argc, i;
@@ -8093,6 +8324,7 @@ START_TEST(d2d1)
     queue_test(test_skew_matrix);
     queue_test(test_command_list);
     queue_test(test_max_bitmap_size);
+    queue_test(test_dpi);
 
     run_queued_tests();
 }
