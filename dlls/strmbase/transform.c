@@ -155,10 +155,48 @@ static void transform_destroy(struct strmbase_filter *iface)
     CoTaskMemFree(filter);
 }
 
+static HRESULT transform_init_stream(struct strmbase_filter *iface)
+{
+    TransformFilter *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection(&filter->csReceive);
+
+    filter->sink.end_of_stream = FALSE;
+    if (filter->pFuncsTable->pfnStartStreaming)
+        hr = filter->pFuncsTable->pfnStartStreaming(filter);
+    if (SUCCEEDED(hr))
+        hr = BaseOutputPinImpl_Active(&filter->source);
+
+    LeaveCriticalSection(&filter->csReceive);
+
+    return hr;
+}
+
+static HRESULT transform_cleanup_stream(struct strmbase_filter *iface)
+{
+    TransformFilter *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection(&filter->csReceive);
+
+    filter->sink.end_of_stream = FALSE;
+    if (filter->pFuncsTable->pfnStopStreaming)
+        hr = filter->pFuncsTable->pfnStopStreaming(filter);
+    if (SUCCEEDED(hr))
+        hr = BaseOutputPinImpl_Inactive(&filter->source);
+
+    LeaveCriticalSection(&filter->csReceive);
+
+    return hr;
+}
+
 static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = transform_get_pin,
     .filter_destroy = transform_destroy,
+    .filter_init_stream = transform_init_stream,
+    .filter_cleanup_stream = transform_cleanup_stream,
 };
 
 static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
@@ -207,73 +245,6 @@ static const struct strmbase_source_ops source_ops =
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
-static HRESULT WINAPI TransformFilterImpl_Stop(IBaseFilter *iface)
-{
-    TransformFilter *This = impl_from_IBaseFilter(iface);
-    HRESULT hr = S_OK;
-
-    TRACE("(%p/%p)\n", This, iface);
-
-    EnterCriticalSection(&This->csReceive);
-    {
-        This->filter.state = State_Stopped;
-        if (This->pFuncsTable->pfnStopStreaming)
-            hr = This->pFuncsTable->pfnStopStreaming(This);
-        if (SUCCEEDED(hr))
-            hr = BaseOutputPinImpl_Inactive(&This->source);
-    }
-    LeaveCriticalSection(&This->csReceive);
-
-    return hr;
-}
-
-static HRESULT WINAPI TransformFilterImpl_Pause(IBaseFilter *iface)
-{
-    TransformFilter *This = impl_from_IBaseFilter(iface);
-    HRESULT hr;
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    EnterCriticalSection(&This->csReceive);
-    {
-        if (This->filter.state == State_Stopped)
-            hr = IBaseFilter_Run(iface, -1);
-        else
-            hr = S_OK;
-
-        if (SUCCEEDED(hr))
-            This->filter.state = State_Paused;
-    }
-    LeaveCriticalSection(&This->csReceive);
-
-    return hr;
-}
-
-static HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
-{
-    HRESULT hr = S_OK;
-    TransformFilter *This = impl_from_IBaseFilter(iface);
-
-    TRACE("iface %p, start %s.\n", iface, debugstr_time(tStart));
-
-    EnterCriticalSection(&This->csReceive);
-    {
-        if (This->filter.state == State_Stopped)
-        {
-            This->sink.end_of_stream = FALSE;
-            if (This->pFuncsTable->pfnStartStreaming)
-                hr = This->pFuncsTable->pfnStartStreaming(This);
-            if (SUCCEEDED(hr))
-                hr = BaseOutputPinImpl_Active(&This->source);
-        }
-
-        if (SUCCEEDED(hr))
-            This->filter.state = State_Running;
-    }
-    LeaveCriticalSection(&This->csReceive);
-
-    return hr;
-}
 
 static const IBaseFilterVtbl transform_vtbl =
 {
@@ -281,9 +252,9 @@ static const IBaseFilterVtbl transform_vtbl =
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
-    TransformFilterImpl_Stop,
-    TransformFilterImpl_Pause,
-    TransformFilterImpl_Run,
+    BaseFilterImpl_Stop,
+    BaseFilterImpl_Pause,
+    BaseFilterImpl_Run,
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
