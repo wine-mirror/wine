@@ -142,7 +142,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
         ok(frames, "Amount of frames locked is 0!\n");
         /* broken: some w7 machines return pad == 0 and DATA_DISCONTINUITY here,
          * AUDCLNT_S_BUFFER_EMPTY above, yet pos == 1-2 * period rather than 0 */
-        ok(pos == sum || broken(pos == period || pos == 2*period),
+        ok(pos == sum || broken(flags & AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY),
            "Position %u expected %u\n", (UINT)pos, sum);
         sum = pos;
     }else if (hr == AUDCLNT_S_BUFFER_EMPTY){
