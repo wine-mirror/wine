@@ -1314,7 +1314,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     dump_fmt(fmt);
 
     if(mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        return AUDCLNT_E_NOT_INITIALIZED;
+        return E_INVALIDARG;
 
     if(flags & ~(AUDCLNT_STREAMFLAGS_CROSSPROCESS |
                 AUDCLNT_STREAMFLAGS_LOOPBACK |
