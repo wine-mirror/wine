@@ -990,6 +990,15 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
         device->index_buffer_size = 0;
     }
 
+    if (!extended)
+    {
+        if (device->recording)
+            wined3d_stateblock_decref(device->recording);
+        device->recording = NULL;
+        device->update_state = device->state;
+        wined3d_stateblock_reset(device->state);
+    }
+
     if (SUCCEEDED(hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc,
             mode ? &wined3d_mode : NULL, reset_enum_callback, !extended)))
     {
@@ -997,10 +1006,6 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
 
         if (!extended)
         {
-            if (device->recording)
-                wined3d_stateblock_decref(device->recording);
-            device->recording = NULL;
-            device->update_state = device->state;
             device->auto_mipmaps = 0;
             wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZENABLE,
                     !!swapchain_desc.enable_auto_depth_stencil);

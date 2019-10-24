@@ -1858,3 +1858,12 @@ HRESULT CDECL wined3d_stateblock_create(struct wined3d_device *device,
 
     return WINED3D_OK;
 }
+
+void CDECL wined3d_stateblock_reset(struct wined3d_stateblock *stateblock)
+{
+    TRACE("stateblock %p.\n", stateblock);
+
+    wined3d_stateblock_state_cleanup(&stateblock->stateblock_state);
+    memset(&stateblock->stateblock_state, 0, sizeof(stateblock->stateblock_state));
+    wined3d_stateblock_state_init(&stateblock->stateblock_state, stateblock->device, WINED3D_STATE_INIT_DEFAULT);
+}
