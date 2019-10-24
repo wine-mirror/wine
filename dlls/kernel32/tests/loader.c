@@ -3822,7 +3822,7 @@ static void test_wow64_redirection_for_dll(const char *libname)
     if (!GetModuleHandleA(libname))
     {
         lib = LoadLibraryExA(libname, NULL, 0);
-        todo_wine ok (broken(lib == NULL) /* Vista/2008 */ ||
+        ok (broken(lib == NULL) /* Vista/2008 */ ||
             lib != NULL, "Loading %s should succeed with WOW64 redirection disabled\n", libname);
         if (lib)
         {
