@@ -95,45 +95,6 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     if (hr != S_OK)
         return;
 
-    frames = 0xabadcafe;
-    data = (void*)0xdeadf00d;
-    flags = 0xabadcafe;
-    pos = qpc = 0xdeadbeef;
-    hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, &flags, &pos, &qpc);
-    ok(hr == AUDCLNT_S_BUFFER_EMPTY, "Initial IAudioCaptureClient_GetBuffer returns %08x\n", hr);
-
-    /* should be empty right after start. Otherwise consume one packet */
-    if(hr == S_OK){
-        hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
-        ok(hr == S_OK, "Releasing buffer returns %08x\n", hr);
-        sum += frames;
-
-        frames = 0xabadcafe;
-        data = (void*)0xdeadf00d;
-        flags = 0xabadcafe;
-        pos = qpc = 0xdeadbeef;
-        hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, &flags, &pos, &qpc);
-        ok(hr == AUDCLNT_S_BUFFER_EMPTY, "Initial IAudioCaptureClient_GetBuffer returns %08x\n", hr);
-    }
-
-    if(hr == AUDCLNT_S_BUFFER_EMPTY){
-        ok(!frames, "frames changed to %u\n", frames);
-        ok(data == (void*)0xdeadf00d, "data changed to %p\n", data);
-        ok(flags == 0xabadcafe, "flags changed to %x\n", flags);
-        ok(pos == 0xdeadbeef, "position changed to %u\n", (UINT)pos);
-        ok(qpc == 0xdeadbeef, "timer changed to %u\n", (UINT)qpc);
-
-        /* GetNextPacketSize yields 0 if no data is yet available
-         * it is not constantly period_size * SamplesPerSec */
-        hr = IAudioCaptureClient_GetNextPacketSize(acc, &next);
-        ok(hr == S_OK, "IAudioCaptureClient_GetNextPacketSize returns %08x\n", hr);
-        ok(!next, "GetNextPacketSize %u\n", next);
-    }
-
-    hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
-    ok(hr == S_OK, "Releasing buffer returns %08x\n", hr);
-    sum += frames;
-
     ok(ResetEvent(handle), "ResetEvent\n");
 
     hr = IAudioCaptureClient_GetNextPacketSize(acc, &next);
@@ -168,6 +129,9 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     hr = IAudioClient_GetDevicePeriod(ac, &period, NULL);
     ok(hr == S_OK, "GetDevicePeriod failed: %08x\n", hr);
     period = MulDiv(period, wfx->nSamplesPerSec, 10000000); /* as in render.c */
+
+    hr = IAudioClient_Start(ac);
+    ok(hr == S_OK, "Start on a stopped stream returns %08x\n", hr);
 
     ok(WaitForSingleObject(handle, 1000) == WAIT_OBJECT_0, "Waiting on event handle failed!\n");
 
@@ -375,37 +339,25 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     ok(hr == S_OK, "Reset on a stopped stream returns %08x\n", hr);
     sum += pad - frames;
 
-    hr = IAudioClient_Start(ac);
-    ok(hr == S_OK, "Start on a stopped stream returns %08x\n", hr);
-
     hr = IAudioClient_GetCurrentPadding(ac, &pad);
     ok(hr == S_OK, "GetCurrentPadding call returns %08x\n", hr);
+    ok(!pad, "reset GCP %u\n", pad);
 
     flags = 0xabadcafe;
     hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, &flags, &pos, &qpc);
-    ok(hr == AUDCLNT_S_BUFFER_EMPTY || /*PulseAudio*/hr == S_OK,
+    ok(hr == AUDCLNT_S_BUFFER_EMPTY,
        "Initial IAudioCaptureClient_GetBuffer returns %08x\n", hr);
 
     trace("Reset   position %d pad %u flags %x, amount of frames locked: %u\n",
           hr==S_OK ? (UINT)pos : -1, pad, flags, frames);
 
-    if(hr == S_OK){
-        /* Only PulseAudio goes here; despite snd_pcm_drop it manages
-         * to fill GetBufferSize with a single snd_pcm_read */
-        trace("Test marked todo: only PulseAudio gets here\n");
-        todo_wine ok(flags & AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY, "expect DISCONTINUITY %x\n", flags);
-        /* Reset zeroes padding, not the position */
-        ok(pos >= sum, "Position %u last %u\n", (UINT)pos, sum);
-        /*sum = pos; check after next GetBuffer */
+    if(SUCCEEDED(hr))
+        IAudioCaptureClient_ReleaseBuffer(acc, frames);
 
-        hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
-        ok(hr == S_OK, "Releasing buffer returns %08x\n", hr);
-        sum += frames;
-    }
-    else if(hr == AUDCLNT_S_BUFFER_EMPTY){
-        ok(!pad, "reset GCP %u\n", pad);
-        Sleep(180);
-    }
+    hr = IAudioClient_Start(ac);
+    ok(hr == S_OK, "Start on a stopped stream returns %08x\n", hr);
+
+    Sleep(180);
 
     hr = IAudioClient_GetCurrentPadding(ac, &pad);
     ok(hr == S_OK, "GetCurrentPadding call returns %08x\n", hr);
@@ -582,9 +534,6 @@ static void test_audioclient(void)
 
     hr = IAudioClient_Stop(ac);
     ok(hr == S_FALSE, "Stop on a stopped stream returns %08x\n", hr);
-
-    hr = IAudioClient_Start(ac);
-    ok(hr == S_OK, "Start on a stopped stream returns %08x\n", hr);
 
     test_capture(ac, handle, pwfx);
 
