@@ -1486,6 +1486,28 @@ void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock 
     stateblock->changed.textureState[stage] |= 1u << state;
 }
 
+void CDECL wined3d_stateblock_set_texture(struct wined3d_stateblock *stateblock,
+        UINT stage, struct wined3d_texture *texture)
+{
+    TRACE("stateblock %p, stage %u, texture %p.\n", stateblock, stage, texture);
+
+    if (stage >= WINED3DVERTEXTEXTURESAMPLER0 && stage <= WINED3DVERTEXTEXTURESAMPLER3)
+        stage -= (WINED3DVERTEXTEXTURESAMPLER0 - WINED3D_MAX_FRAGMENT_SAMPLERS);
+
+    if (stage >= ARRAY_SIZE(stateblock->stateblock_state.textures))
+    {
+        WARN("Ignoring invalid stage %u.\n", stage);
+        return;
+    }
+
+    if (texture)
+        wined3d_texture_incref(texture);
+    if (stateblock->stateblock_state.textures[stage])
+        wined3d_texture_decref(stateblock->stateblock_state.textures[stage]);
+    stateblock->stateblock_state.textures[stage] = texture;
+    stateblock->changed.textures |= 1u << stage;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union
