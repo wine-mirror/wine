@@ -580,7 +580,7 @@ static HRESULT dsound_render_query_interface(struct strmbase_renderer *iface, RE
     return S_OK;
 }
 
-static const BaseRendererFuncTable BaseFuncTable =
+static const struct strmbase_renderer_ops renderer_ops =
 {
     .pfnCheckMediaType = DSoundRender_CheckMediaType,
     .pfnDoRenderSample = DSoundRender_DoRenderSample,
@@ -611,7 +611,7 @@ HRESULT DSoundRender_create(IUnknown *outer, void **out)
     ZeroMemory(pDSoundRender, sizeof(DSoundRenderImpl));
 
     hr = strmbase_renderer_init(&pDSoundRender->renderer,
-            outer, &CLSID_DSoundRender, sink_name, &BaseFuncTable);
+            outer, &CLSID_DSoundRender, sink_name, &renderer_ops);
 
     pDSoundRender->IBasicAudio_iface.lpVtbl = &IBasicAudio_Vtbl;
     pDSoundRender->IReferenceClock_iface.lpVtbl = &IReferenceClock_Vtbl;

@@ -561,14 +561,14 @@ HRESULT WINAPI BaseRendererImpl_ClearPendingSample(struct strmbase_renderer *ifa
 }
 
 HRESULT WINAPI strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,
-        const CLSID *clsid, const WCHAR *sink_name, const BaseRendererFuncTable *func_table)
+        const CLSID *clsid, const WCHAR *sink_name, const struct strmbase_renderer_ops *ops)
 {
     HRESULT hr;
 
     memset(filter, 0, sizeof(*filter));
     strmbase_filter_init(&filter->filter, &strmbase_renderer_vtbl, outer, clsid, &filter_ops);
 
-    filter->pFuncsTable = func_table;
+    filter->pFuncsTable = ops;
 
     strmbase_sink_init(&filter->sink, &BaseRenderer_InputPin_Vtbl, &filter->filter,
             sink_name, &input_BaseInputFuncTable, NULL);

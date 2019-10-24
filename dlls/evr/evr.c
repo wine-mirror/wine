@@ -61,7 +61,7 @@ static HRESULT WINAPI evr_CheckMediaType(struct strmbase_renderer *iface, const 
     return E_NOTIMPL;
 }
 
-static const BaseRendererFuncTable renderer_ops =
+static const struct strmbase_renderer_ops renderer_ops =
 {
     .pfnCheckMediaType = evr_CheckMediaType,
     .pfnDoRenderSample = evr_DoRenderSample,

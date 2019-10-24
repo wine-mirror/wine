@@ -527,7 +527,7 @@ struct strmbase_renderer
     IQualityControl *pQSink;
     struct QualityControlImpl *qcimpl;
 
-    const struct BaseRendererFuncTable *pFuncsTable;
+    const struct strmbase_renderer_ops *pFuncsTable;
 };
 
 typedef HRESULT (WINAPI *BaseRenderer_CheckMediaType)(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt);
@@ -541,7 +541,8 @@ typedef HRESULT (WINAPI *BaseRenderer_EndFlush) (struct strmbase_renderer *iface
 typedef HRESULT (WINAPI *BaseRenderer_BreakConnect) (struct strmbase_renderer *iface);
 typedef HRESULT (WINAPI *BaseRenderer_CompleteConnect) (struct strmbase_renderer *iface, IPin *peer);
 
-typedef struct BaseRendererFuncTable {
+struct strmbase_renderer_ops
+{
     BaseRenderer_CheckMediaType pfnCheckMediaType;
     BaseRenderer_DoRenderSample pfnDoRenderSample;
     void (*renderer_init_stream)(struct strmbase_renderer *iface);
@@ -556,7 +557,7 @@ typedef struct BaseRendererFuncTable {
     void (*renderer_destroy)(struct strmbase_renderer *iface);
     HRESULT (*renderer_query_interface)(struct strmbase_renderer *iface, REFIID iid, void **out);
     HRESULT (*renderer_pin_query_interface)(struct strmbase_renderer *iface, REFIID iid, void **out);
-} BaseRendererFuncTable;
+};
 
 HRESULT WINAPI BaseRendererImpl_BeginFlush(struct strmbase_renderer *filter);
 HRESULT WINAPI BaseRendererImpl_ClearPendingSample(struct strmbase_renderer *filter);
@@ -565,7 +566,7 @@ HRESULT WINAPI BaseRendererImpl_EndFlush(struct strmbase_renderer *filter);
 HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *filter, IMediaSample *sample);
 
 HRESULT WINAPI strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,
-        const CLSID *clsid, const WCHAR *sink_name, const BaseRendererFuncTable *func_table);
+        const CLSID *clsid, const WCHAR *sink_name, const struct strmbase_renderer_ops *ops);
 void strmbase_renderer_cleanup(struct strmbase_renderer *filter);
 
 /* Dll Functions */

@@ -55,7 +55,7 @@ static void null_renderer_destroy(struct strmbase_renderer *iface)
     CoTaskMemFree(filter);
 }
 
-static const BaseRendererFuncTable RendererFuncTable =
+static const struct strmbase_renderer_ops renderer_ops =
 {
     .pfnCheckMediaType = NullRenderer_CheckMediaType,
     .pfnDoRenderSample = NullRenderer_DoRenderSample,
@@ -74,7 +74,7 @@ HRESULT NullRenderer_create(IUnknown *outer, void **out)
     pNullRenderer = CoTaskMemAlloc(sizeof(NullRendererImpl));
 
     hr = strmbase_renderer_init(&pNullRenderer->renderer, outer,
-            &CLSID_NullRenderer, sink_name, &RendererFuncTable);
+            &CLSID_NullRenderer, sink_name, &renderer_ops);
 
     if (FAILED(hr))
         CoTaskMemFree(pNullRenderer);
