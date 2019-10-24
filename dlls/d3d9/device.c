@@ -2489,12 +2489,15 @@ static HRESULT WINAPI d3d9_device_SetTexture(IDirect3DDevice9Ex *iface, DWORD st
     texture_impl = unsafe_impl_from_IDirect3DBaseTexture9(texture);
 
     wined3d_mutex_lock();
-    wined3d_device_set_texture(device->wined3d_device, stage,
+    wined3d_stateblock_set_texture(device->update_state, stage,
             texture_impl ? texture_impl->wined3d_texture : NULL);
     if (!device->recording)
     {
         unsigned int i = stage < 16 || (stage >= D3DVERTEXTEXTURESAMPLER0 && stage <= D3DVERTEXTEXTURESAMPLER3)
                 ? stage < 16 ? stage : stage - D3DVERTEXTEXTURESAMPLER0 + 16 : ~0u;
+
+        wined3d_device_set_texture(device->wined3d_device, stage,
+                texture_impl ? texture_impl->wined3d_texture : NULL);
 
         if (i < D3D9_MAX_TEXTURE_UNITS)
         {
