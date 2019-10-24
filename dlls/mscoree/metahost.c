@@ -124,6 +124,7 @@ MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
 static char* (CDECL *mono_stringify_assembly_name)(MonoAssemblyName *aname);
 MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
 void (CDECL *mono_thread_manage)(void);
+void (CDECL *mono_threads_enter_gc_unsafe_region)(void *stackdata);
 void (CDECL *mono_trace_set_print_handler)(MonoPrintCallback callback);
 void (CDECL *mono_trace_set_printerr_handler)(MonoPrintCallback callback);
 
@@ -224,6 +225,7 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_MONO_FUNCTION(mono_string_new);
         LOAD_MONO_FUNCTION(mono_thread_attach);
         LOAD_MONO_FUNCTION(mono_thread_manage);
+        LOAD_MONO_FUNCTION(mono_threads_enter_gc_unsafe_region);
 
 #undef LOAD_MONO_FUNCTION
 
