@@ -6068,20 +6068,21 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             swapchain_desc.backbuffer_height = mode.height;
             swapchain_desc.backbuffer_format = mode.format_id;
 
-            if (FAILED(hr = wined3d_device_reset(ddraw->wined3d_device,
-                    &swapchain_desc, NULL, ddraw_reset_enum_callback, TRUE)))
-            {
-                ERR("Failed to reset device.\n");
-                heap_free(texture);
-                return hr_ddraw_from_wined3d(hr);
-            }
-
             if (ddraw->d3ddevice)
             {
                 if (ddraw->d3ddevice->recording)
                     wined3d_stateblock_decref(ddraw->d3ddevice->recording);
                 ddraw->d3ddevice->recording = NULL;
                 ddraw->d3ddevice->update_state = ddraw->d3ddevice->state;
+            }
+            wined3d_stateblock_reset(ddraw->state);
+
+            if (FAILED(hr = wined3d_device_reset(ddraw->wined3d_device,
+                    &swapchain_desc, NULL, ddraw_reset_enum_callback, TRUE)))
+            {
+                ERR("Failed to reset device.\n");
+                heap_free(texture);
+                return hr_ddraw_from_wined3d(hr);
             }
 
             wined3d_device_set_render_state(ddraw->wined3d_device, WINED3D_RS_ZENABLE,
