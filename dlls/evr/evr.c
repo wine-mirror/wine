@@ -33,29 +33,29 @@ WINE_DEFAULT_DEBUG_CHANNEL(evr);
 
 typedef struct
 {
-    BaseRenderer renderer;
+    struct strmbase_renderer renderer;
 } evr_filter;
 
-static inline evr_filter *impl_from_BaseRenderer(BaseRenderer *iface)
+static inline evr_filter *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
 {
     return CONTAINING_RECORD(iface, evr_filter, renderer);
 }
 
-static void evr_destroy(BaseRenderer *iface)
+static void evr_destroy(struct strmbase_renderer *iface)
 {
-    evr_filter *filter = impl_from_BaseRenderer(iface);
+    evr_filter *filter = impl_from_strmbase_renderer(iface);
 
     strmbase_renderer_cleanup(&filter->renderer);
     CoTaskMemFree(filter);
 }
 
-static HRESULT WINAPI evr_DoRenderSample(BaseRenderer *iface, IMediaSample *sample)
+static HRESULT WINAPI evr_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *sample)
 {
     FIXME("Not implemented.\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI evr_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TYPE *mt)
+static HRESULT WINAPI evr_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
     FIXME("Not implemented.\n");
     return E_NOTIMPL;

@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 typedef struct VideoRendererImpl
 {
-    BaseRenderer renderer;
+    struct strmbase_renderer renderer;
     BaseControlWindow baseControlWindow;
     BaseControlVideo baseControlVideo;
 
@@ -61,7 +61,7 @@ static inline VideoRendererImpl *impl_from_BaseWindow(BaseWindow *iface)
     return CONTAINING_RECORD(iface, VideoRendererImpl, baseControlWindow.baseWindow);
 }
 
-static inline VideoRendererImpl *impl_from_BaseRenderer(BaseRenderer *iface)
+static inline VideoRendererImpl *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
 {
     return CONTAINING_RECORD(iface, VideoRendererImpl, renderer);
 }
@@ -176,7 +176,8 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     return S_OK;
 }
 
-static HRESULT WINAPI VideoRenderer_ShouldDrawSampleNow(BaseRenderer *This, IMediaSample *pSample, REFERENCE_TIME *pStartTime, REFERENCE_TIME *pEndTime)
+static HRESULT WINAPI VideoRenderer_ShouldDrawSampleNow(struct strmbase_renderer *filter,
+        IMediaSample *pSample, REFERENCE_TIME *start, REFERENCE_TIME *end)
 {
     /* Preroll means the sample isn't shown, this is used for key frames and things like that */
     if (IMediaSample_IsPreroll(pSample) == S_OK)
@@ -184,9 +185,9 @@ static HRESULT WINAPI VideoRenderer_ShouldDrawSampleNow(BaseRenderer *This, IMed
     return S_FALSE;
 }
 
-static HRESULT WINAPI VideoRenderer_DoRenderSample(BaseRenderer* iface, IMediaSample * pSample)
+static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *pSample)
 {
-    VideoRendererImpl *This = impl_from_BaseRenderer(iface);
+    VideoRendererImpl *This = impl_from_strmbase_renderer(iface);
     LPBYTE pbSrcStream = NULL;
     LONG cbSrcStream = 0;
     HRESULT hr;
@@ -235,9 +236,9 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(BaseRenderer* iface, IMediaSa
     return S_OK;
 }
 
-static HRESULT WINAPI VideoRenderer_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI VideoRenderer_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *pmt)
 {
-    VideoRendererImpl *This = impl_from_BaseRenderer(iface);
+    VideoRendererImpl *This = impl_from_strmbase_renderer(iface);
 
     if (!IsEqualIID(&pmt->majortype, &MEDIATYPE_Video))
         return S_FALSE;
@@ -284,9 +285,9 @@ static HRESULT WINAPI VideoRenderer_CheckMediaType(BaseRenderer *iface, const AM
     return S_FALSE;
 }
 
-static void video_renderer_destroy(BaseRenderer *iface)
+static void video_renderer_destroy(struct strmbase_renderer *iface)
 {
-    VideoRendererImpl *filter = impl_from_BaseRenderer(iface);
+    VideoRendererImpl *filter = impl_from_strmbase_renderer(iface);
 
     BaseControlWindow_Destroy(&filter->baseControlWindow);
     BaseControlVideo_Destroy(&filter->baseControlVideo);
@@ -295,9 +296,9 @@ static void video_renderer_destroy(BaseRenderer *iface)
     CoTaskMemFree(filter);
 }
 
-static HRESULT video_renderer_query_interface(BaseRenderer *iface, REFIID iid, void **out)
+static HRESULT video_renderer_query_interface(struct strmbase_renderer *iface, REFIID iid, void **out)
 {
-    VideoRendererImpl *filter = impl_from_BaseRenderer(iface);
+    VideoRendererImpl *filter = impl_from_strmbase_renderer(iface);
 
     if (IsEqualGUID(iid, &IID_IBasicVideo))
         *out = &filter->baseControlVideo.IBasicVideo_iface;
@@ -310,9 +311,9 @@ static HRESULT video_renderer_query_interface(BaseRenderer *iface, REFIID iid, v
     return S_OK;
 }
 
-static HRESULT video_renderer_pin_query_interface(BaseRenderer *iface, REFIID iid, void **out)
+static HRESULT video_renderer_pin_query_interface(struct strmbase_renderer *iface, REFIID iid, void **out)
 {
-    VideoRendererImpl *filter = impl_from_BaseRenderer(iface);
+    VideoRendererImpl *filter = impl_from_strmbase_renderer(iface);
 
     if (IsEqualGUID(iid, &IID_IOverlay))
         *out = &filter->IOverlay_iface;
@@ -323,9 +324,9 @@ static HRESULT video_renderer_pin_query_interface(BaseRenderer *iface, REFIID ii
     return S_OK;
 }
 
-static void video_renderer_stop_stream(BaseRenderer *iface)
+static void video_renderer_stop_stream(struct strmbase_renderer *iface)
 {
-    VideoRendererImpl *This = impl_from_BaseRenderer(iface);
+    VideoRendererImpl *This = impl_from_strmbase_renderer(iface);
 
     TRACE("(%p)->()\n", This);
 
@@ -334,9 +335,9 @@ static void video_renderer_stop_stream(BaseRenderer *iface)
         RedrawWindow(This->baseControlWindow.baseWindow.hWnd, NULL, NULL, RDW_INVALIDATE|RDW_ERASE);
 }
 
-static void video_renderer_init_stream(BaseRenderer *iface)
+static void video_renderer_init_stream(struct strmbase_renderer *iface)
 {
-    VideoRendererImpl *filter = impl_from_BaseRenderer(iface);
+    VideoRendererImpl *filter = impl_from_strmbase_renderer(iface);
 
     VideoRenderer_AutoShowWindow(filter);
 }

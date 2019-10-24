@@ -28,28 +28,28 @@ WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 
 typedef struct NullRendererImpl
 {
-    BaseRenderer renderer;
+    struct strmbase_renderer renderer;
 } NullRendererImpl;
 
-static inline NullRendererImpl *impl_from_BaseRenderer(BaseRenderer *iface)
+static inline NullRendererImpl *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
 {
     return CONTAINING_RECORD(iface, NullRendererImpl, renderer);
 }
 
-static HRESULT WINAPI NullRenderer_DoRenderSample(BaseRenderer *iface, IMediaSample *pMediaSample)
+static HRESULT WINAPI NullRenderer_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *sample)
 {
     return S_OK;
 }
 
-static HRESULT WINAPI NullRenderer_CheckMediaType(BaseRenderer *iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI NullRenderer_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
     TRACE("Not a stub!\n");
     return S_OK;
 }
 
-static void null_renderer_destroy(BaseRenderer *iface)
+static void null_renderer_destroy(struct strmbase_renderer *iface)
 {
-    NullRendererImpl *filter = impl_from_BaseRenderer(iface);
+    NullRendererImpl *filter = impl_from_strmbase_renderer(iface);
 
     strmbase_renderer_cleanup(&filter->renderer);
     CoTaskMemFree(filter);
