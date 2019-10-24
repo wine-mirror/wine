@@ -909,13 +909,15 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
         device->index_buffer_size = 0;
     }
 
+    if (device->recording)
+        wined3d_stateblock_decref(device->recording);
+    device->recording = NULL;
+    device->update_state = device->state;
+    wined3d_stateblock_reset(device->state);
+
     if (SUCCEEDED(hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc,
             NULL, reset_enum_callback, TRUE)))
     {
-        if (device->recording)
-            wined3d_stateblock_decref(device->recording);
-        device->recording = NULL;
-        device->update_state = device->state;
         present_parameters->BackBufferCount = swapchain_desc.backbuffer_count;
         implicit_swapchain = wined3d_swapchain_get_parent(device->implicit_swapchain);
         implicit_swapchain->swap_interval
