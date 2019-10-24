@@ -122,7 +122,8 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
 
     hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, NULL, NULL, NULL);
     ok(hr == E_POINTER, "IAudioCaptureClient_GetBuffer(&ata, &frames, NULL) returns %08x\n", hr);
-    ok((DWORD_PTR)data == 0xdeadf00d, "data is reset to %p\n", data);
+    ok(broken((DWORD_PTR)data == 0xdeadf00d) || /* <= win8 */
+            data == NULL, "data is reset to %p\n", data);
     ok(frames == 0xdeadbeef, "frames is reset to %08x\n", frames);
     ok(flags == 0xabadcafe, "flags is reset to %08x\n", flags);
 
@@ -147,7 +148,8 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
         sum = pos;
     }else if (hr == AUDCLNT_S_BUFFER_EMPTY){
         ok(!frames, "Amount of frames locked with empty buffer is %u!\n", frames);
-        ok(data == (void*)0xdeadf00d, "No data changed to %p\n", data);
+        ok(broken(data == (void*)0xdeadf00d) || /* <= win8 */
+                data == NULL, "No data changed to %p\n", data);
     }
 
     trace("Wait'ed position %d pad %u flags %x, amount of frames locked: %u\n",
@@ -228,7 +230,8 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
         hr = IAudioCaptureClient_GetBuffer(acc, &data2, &frames2, &flags, &pos, &qpc);
         ok(hr == AUDCLNT_E_OUT_OF_ORDER, "Out of order IAudioCaptureClient_GetBuffer returns %08x\n", hr);
         ok(frames2 == 0xabadcafe, "Out of order frames changed to %x\n", frames2);
-        ok(data2 == (void*)0xdeadf00d, "Out of order data changed to %p\n", data2);
+        ok(broken(data2 == (void*)0xdeadf00d) /* <= win8 */ ||
+                data2 == NULL, "Out of order data changed to %p\n", data2);
         ok(flags == 0xabadcafe, "Out of order flags changed to %x\n", flags);
         ok(pos == 0xdeadbeef, "Out of order position changed to %x\n", (UINT)pos);
         ok(qpc == 0xdeadbeef, "Out of order timer changed to %x\n", (UINT)qpc);

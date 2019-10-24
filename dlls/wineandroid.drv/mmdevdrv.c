@@ -1845,7 +1845,12 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     TRACE("(%p)->(%p, %p, %p, %p, %p)\n", This, data, frames, flags,
             devpos, qpcpos);
 
-    if(!data || !frames || !flags)
+    if(!data)
+        return E_POINTER;
+
+    *data = NULL;
+
+    if(!frames || !flags)
         return E_POINTER;
 
     EnterCriticalSection(&This->lock);
