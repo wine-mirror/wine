@@ -8169,9 +8169,8 @@ static void test_dpi(void)
         bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
         bitmap_desc.colorContext = NULL;
         hr = ID2D1DeviceContext_CreateBitmapFromWicBitmap(device_context, wic_bitmap_src, &bitmap_desc, &bitmap);
-        todo_wine_if(FAILED(create_dpi_tests[i].hr))
-            ok(hr == create_dpi_tests[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n",
-                    i, hr, create_dpi_tests[i].hr);
+        ok(hr == create_dpi_tests[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n",
+                i, hr, create_dpi_tests[i].hr);
         IWICBitmapSource_Release(wic_bitmap_src);
 
         if (FAILED(hr))
@@ -8183,10 +8182,8 @@ static void test_dpi(void)
         if (bitmap_desc.dpiX == 0.0f && bitmap_desc.dpiY == 0.0f)
         {
             /* Bitmap DPI values are inherited at creation time. */
-            todo_wine ok(dpi_x == init_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n",
-                    i, dpi_x, init_dpi_x);
-            todo_wine ok(dpi_y == init_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n",
-                    i, dpi_y, init_dpi_y);
+            ok(dpi_x == init_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n", i, dpi_x, init_dpi_x);
+            ok(dpi_y == init_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n", i, dpi_y, init_dpi_y);
         }
         else
         {
@@ -8225,9 +8222,8 @@ static void test_dpi(void)
         bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
         bitmap_desc.colorContext = NULL;
         hr = ID2D1DeviceContext_CreateBitmap(device_context, size, NULL, 0, &bitmap_desc, &bitmap);
-        todo_wine_if(FAILED(create_dpi_tests[i].hr))
-            ok(hr == create_dpi_tests[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n",
-                    i, hr, create_dpi_tests[i].hr);
+        ok(hr == create_dpi_tests[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n",
+                i, hr, create_dpi_tests[i].hr);
 
         if (FAILED(hr))
             continue;
@@ -8238,10 +8234,8 @@ static void test_dpi(void)
         if (bitmap_desc.dpiX == 0.0f && bitmap_desc.dpiY == 0.0f)
         {
             /* Bitmap DPI values are inherited at creation time. */
-            todo_wine ok(dpi_x == init_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n",
-                    i, dpi_x, init_dpi_x);
-            todo_wine ok(dpi_y == init_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n",
-                    i, dpi_y, init_dpi_y);
+            ok(dpi_x == init_dpi_x, "Test %u: Got unexpected dpi_x %.8e, expected %.8e.\n", i, dpi_x, init_dpi_x);
+            ok(dpi_y == init_dpi_y, "Test %u: Got unexpected dpi_y %.8e, expected %.8e.\n", i, dpi_y, init_dpi_y);
         }
         else
         {

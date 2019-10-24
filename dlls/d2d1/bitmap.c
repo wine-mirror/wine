@@ -313,6 +313,7 @@ HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, 
         UINT32 pitch, const D2D1_BITMAP_PROPERTIES1 *desc, struct d2d_bitmap **bitmap)
 {
     D3D10_SUBRESOURCE_DATA resource_data;
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10Texture2D *texture;
     HRESULT hr;
@@ -322,6 +323,18 @@ HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, 
         WARN("Tried to create bitmap with unsupported format {%#x / %#x}.\n",
                 desc->pixelFormat.format, desc->pixelFormat.alphaMode);
         return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
+    }
+
+    if (desc->dpiX == 0.0f && desc->dpiY == 0.0f)
+    {
+        bitmap_desc = *desc;
+        bitmap_desc.dpiX = context->desc.dpiX;
+        bitmap_desc.dpiY = context->desc.dpiY;
+        desc = &bitmap_desc;
+    }
+    else if (desc->dpiX <= 0.0f || desc->dpiY <= 0.0f)
+    {
+        return E_INVALIDARG;
     }
 
     texture_desc.Width = size.width;
