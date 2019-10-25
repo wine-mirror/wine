@@ -419,6 +419,7 @@ static LONG xrandr12_set_current_mode( int mode )
     if (status != RRSetConfigSuccess)
     {
         XUngrabServer( gdi_display );
+        XFlush( gdi_display );
         ERR("Failed to disable CRTC.\n");
         pXRRFreeCrtcInfo( crtc_info );
         pXRRFreeScreenResources( resources );
@@ -440,6 +441,7 @@ static LONG xrandr12_set_current_mode( int mode )
                                 crtc_info->rotation, crtc_info->outputs, crtc_info->noutput );
 
     XUngrabServer( gdi_display );
+    XFlush( gdi_display );
 
     pXRRFreeCrtcInfo( crtc_info );
     pXRRFreeScreenResources( resources );

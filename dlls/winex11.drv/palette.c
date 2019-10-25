@@ -480,6 +480,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
         palette_size = c_min + NB_RESERVED_COLORS;
 
 	XUngrabServer(gdi_display);
+	XFlush(gdi_display);
 
 	TRACE("adjusted size %i colorcells\n", palette_size);
      }
