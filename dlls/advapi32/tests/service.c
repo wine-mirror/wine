@@ -2434,16 +2434,23 @@ static void test_servicenotify(SC_HANDLE scm_handle, const char *servicename)
     data2.notify.dwVersion = SERVICE_NOTIFY_STATUS_CHANGE;
     data2.notify.pfnNotifyCallback = &notify_cb;
     data2.notify.pContext = &data2;
+    data2.phase = PHASE_RUNNING;
+    data2.was_called = FALSE;
 
     dr = pNotifyServiceStatusChangeW(svc, SERVICE_NOTIFY_STOPPED | SERVICE_NOTIFY_RUNNING, &data2.notify);
-    ok(dr == ERROR_SUCCESS || /* win8+ */
-            dr == ERROR_ALREADY_REGISTERED, "NotifyServiceStatusChangeW gave wrong result: %u\n", dr);
-
-    /* should receive no notification because status has not changed.
-     * on win8+, SleepEx quits early but the callback is still not invoked. */
-    dr2 = SleepEx(100, TRUE);
-    ok((dr == ERROR_SUCCESS && dr2 == WAIT_IO_COMPLETION) || /* win8+ */
-            (dr == ERROR_ALREADY_REGISTERED && dr2 == 0), "Got wrong SleepEx result: %u\n", dr);
+    ok(dr == ERROR_ALREADY_REGISTERED || !dr /* Win8+ */, "wrong error %u\n", dr);
+    if (!dr)
+    {
+        dr = SleepEx(100, TRUE);
+        ok(dr == WAIT_IO_COMPLETION, "got %u\n", dr);
+        ok(data2.was_called, "APC was not called\n");
+    }
+    else
+    {
+        dr = SleepEx(100, TRUE);
+        ok(!dr, "got %u\n", dr);
+        ok(!data2.was_called, "APC should not have been called\n");
+    }
     ok(data.was_called == FALSE, "APC should not have been called\n");
 
     memset(&data2.notify, 0, sizeof(data2.notify));
