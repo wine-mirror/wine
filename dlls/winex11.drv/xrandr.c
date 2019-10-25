@@ -1109,12 +1109,12 @@ void X11DRV_XRandR_Init(void)
     {
         handler.name = "XRandR 1.4";
         handler.priority = 200;
-        handler.pGetGpus = xrandr14_get_gpus;
-        handler.pFreeGpus = xrandr14_free_gpus;
-        handler.pGetAdapters = xrandr14_get_adapters;
-        handler.pFreeAdapters = xrandr14_free_adapters;
-        handler.pGetMonitors = xrandr14_get_monitors;
-        handler.pFreeMonitors = xrandr14_free_monitors;
+        handler.get_gpus = xrandr14_get_gpus;
+        handler.get_adapters = xrandr14_get_adapters;
+        handler.get_monitors = xrandr14_get_monitors;
+        handler.free_gpus = xrandr14_free_gpus;
+        handler.free_adapters = xrandr14_free_adapters;
+        handler.free_monitors = xrandr14_free_monitors;
         X11DRV_DisplayDevices_SetHandler( &handler );
 
         pXRRSelectInput( thread_init_display(), root_window,

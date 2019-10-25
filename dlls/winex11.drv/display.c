@@ -470,7 +470,7 @@ void X11DRV_DisplayDevices_Init(BOOL force)
     monitor_devinfo = SetupDiCreateDeviceInfoList(&GUID_DEVCLASS_MONITOR, NULL);
 
     /* Initialize GPUs */
-    if (!handler.pGetGpus(&gpus, &gpu_count))
+    if (!handler.get_gpus(&gpus, &gpu_count))
         goto done;
     TRACE("GPU count: %d\n", gpu_count);
 
@@ -480,13 +480,13 @@ void X11DRV_DisplayDevices_Init(BOOL force)
             goto done;
 
         /* Initialize adapters */
-        if (!handler.pGetAdapters(gpus[gpu].id, &adapters, &adapter_count))
+        if (!handler.get_adapters(gpus[gpu].id, &adapters, &adapter_count))
             goto done;
         TRACE("GPU: %#lx %s, adapter count: %d\n", gpus[gpu].id, wine_dbgstr_w(gpus[gpu].name), adapter_count);
 
         for (adapter = 0; adapter < adapter_count; adapter++)
         {
-            if (!handler.pGetMonitors(adapters[adapter].id, &monitors, &monitor_count))
+            if (!handler.get_monitors(adapters[adapter].id, &monitors, &monitor_count))
                 goto done;
             TRACE("adapter: %#lx, monitor count: %d\n", adapters[adapter].id, monitor_count);
 
@@ -502,12 +502,12 @@ void X11DRV_DisplayDevices_Init(BOOL force)
                     goto done;
             }
 
-            handler.pFreeMonitors(monitors);
+            handler.free_monitors(monitors);
             monitors = NULL;
             video_index++;
         }
 
-        handler.pFreeAdapters(adapters);
+        handler.free_adapters(adapters);
         adapters = NULL;
     }
 
@@ -522,9 +522,9 @@ done:
     ReleaseMutex(mutex);
     CloseHandle(mutex);
     if (gpus)
-        handler.pFreeGpus(gpus);
+        handler.free_gpus(gpus);
     if (adapters)
-        handler.pFreeAdapters(adapters);
+        handler.free_adapters(adapters);
     if (monitors)
-        handler.pFreeMonitors(monitors);
+        handler.free_monitors(monitors);
 }

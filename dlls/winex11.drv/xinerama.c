@@ -338,11 +338,11 @@ void xinerama_init( unsigned int width, unsigned int height )
 
     handler.name = desktop_mode ? "Desktop" : "Xinerama";
     handler.priority = desktop_mode ? 1000 : 100;
-    handler.pGetGpus = xinerama_get_gpus;
-    handler.pGetAdapters = xinerama_get_adapters;
-    handler.pGetMonitors = xinerama_get_monitors;
-    handler.pFreeGpus = xinerama_free_gpus;
-    handler.pFreeAdapters = xinerama_free_adapters;
-    handler.pFreeMonitors = xinerama_free_monitors;
+    handler.get_gpus = xinerama_get_gpus;
+    handler.get_adapters = xinerama_get_adapters;
+    handler.get_monitors = xinerama_get_monitors;
+    handler.free_gpus = xinerama_free_gpus;
+    handler.free_adapters = xinerama_free_adapters;
+    handler.free_monitors = xinerama_free_monitors;
     X11DRV_DisplayDevices_SetHandler( &handler );
 }

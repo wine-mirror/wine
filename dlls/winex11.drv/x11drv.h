@@ -715,34 +715,34 @@ struct x11drv_display_device_handler
     /* A name to tell what host driver is used */
     const char *name;
 
-    /* Higher priority can override handlers with lower proprity */
+    /* Higher priority can override handlers with lower priority */
     INT priority;
 
-    /* pGetGpus will be called to get a list of GPUs. First GPU has to be where the primary adapter is.
+    /* get_gpus will be called to get a list of GPUs. First GPU has to be where the primary adapter is.
      *
      * Return FALSE on failure with parameters unchanged */
-    BOOL (*pGetGpus)(struct x11drv_gpu **gpus, int *count);
+    BOOL (*get_gpus)(struct x11drv_gpu **gpus, int *count);
 
-    /* pGetAdapters will be called to get a list of adapters in EnumDisplayDevices context under a GPU.
+    /* get_adapters will be called to get a list of adapters in EnumDisplayDevices context under a GPU.
      * The first adapter has to be primary if GPU is primary.
      *
      * Return FALSE on failure with parameters unchanged */
-    BOOL (*pGetAdapters)(ULONG_PTR gpu_id, struct x11drv_adapter **adapters, int *count);
+    BOOL (*get_adapters)(ULONG_PTR gpu_id, struct x11drv_adapter **adapters, int *count);
 
-    /* pGetMonitors will be called to get a list of monitors in EnumDisplayDevices context under an adapter.
+    /* get_monitors will be called to get a list of monitors in EnumDisplayDevices context under an adapter.
      * The first monitor has to be primary if adapter is primary.
      *
      * Return FALSE on failure with parameters unchanged */
-    BOOL (*pGetMonitors)(ULONG_PTR adapter_id, struct x11drv_monitor **monitors, int *count);
+    BOOL (*get_monitors)(ULONG_PTR adapter_id, struct x11drv_monitor **monitors, int *count);
 
-    /* pFreeGpus will be called to free a GPU list from pGetGpus */
-    void (*pFreeGpus)(struct x11drv_gpu *gpus);
+    /* free_gpus will be called to free a GPU list from get_gpus */
+    void (*free_gpus)(struct x11drv_gpu *gpus);
 
-    /* pFreeAdapters will be called to free an adapter list from pGetAdapters */
-    void (*pFreeAdapters)(struct x11drv_adapter *adapters);
+    /* free_adapters will be called to free an adapter list from get_adapters */
+    void (*free_adapters)(struct x11drv_adapter *adapters);
 
-    /* pFreeMonitors will be called to free a monitor list from pGetMonitors */
-    void (*pFreeMonitors)(struct x11drv_monitor *monitors);
+    /* free_monitors will be called to free a monitor list from get_monitors */
+    void (*free_monitors)(struct x11drv_monitor *monitors);
 };
 
 extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler) DECLSPEC_HIDDEN;
