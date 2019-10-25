@@ -186,7 +186,7 @@ static void create_dispenser(void)
      * actually initialize. */
     Sleep(200);
     thread = CreateThread(NULL, 0, com_thread, NULL, 0, NULL);
-    ok(!WaitForSingleObject(thread, 1000), "wait failed\n");
+    ok(!WaitForSingleObject(thread, 20000), "wait failed\n");
     GetExitCodeThread(thread, &ret);
     ok(ret == S_OK, "got unexpected hr %#x\n", ret);
 
