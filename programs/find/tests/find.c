@@ -90,7 +90,6 @@ static void check_find_output(const BYTE *child_output, int child_output_len, co
 
     }
 
-    todo_wine_if(out_expected_len != 0)
     ok_(file, line)(strings_are_equal, "\n#################### Expected:\n"
                                        "%s\n"
                                        "#################### But got:\n"
@@ -176,7 +175,6 @@ static void run_find_stdin_(const WCHAR *commandline, const BYTE *input, int inp
 
     check_find_output(child_output, child_output_len, out_expected, out_expected_len, file, line);
 
-    todo_wine_if(exitcode_expected  != 0)
     ok_(file, line)(exitcode == exitcode_expected, "Expected exitcode %d, got %d\n", exitcode_expected, exitcode);
 
     heap_free(child_output);
@@ -227,7 +225,9 @@ static void run_find_stdin_unicode_(const BYTE *input, int input_len, const BYTE
 static void test_errors(void)
 {
     run_find_stdin_str("",       "", "FIND: Parameter format not correct\r\n", 2);
+    todo_wine /* Quotes are not properly passed into wine yet */
     run_find_stdin_str("test",   "", "FIND: Parameter format not correct\r\n", 2);
+    todo_wine /* Quotes are not properly passed into wine yet */
     run_find_stdin_str("\"test", "", "FIND: Parameter format not correct\r\n", 2);
     run_find_stdin_str("\"test\" /XYZ", "", "FIND: Invalid switch\r\n", 2);
 }
@@ -238,6 +238,7 @@ static void test_singleline_without_switches(void)
     run_find_stdin_str("\"test\"",  "",      "",          1);
     run_find_stdin_str("\"test\"",  "test",  "test\r\n",  0);
     run_find_stdin_str("\"test\"",  "test2", "test2\r\n", 0);
+    run_find_stdin_str("\"test\"",  "test\r2", "test\r2\r\n", 0);
     run_find_stdin_str("\"test2\"", "test",  "",          1);
 }
 
@@ -297,6 +298,7 @@ static void test_unicode_support(void)
     run_find_stdin_unicode(str_jap_utf16be_nobom, str_empty, 1);
 
     /* Test utf16le */
+    todo_wine
     run_find_stdin_unicode(str_jap_utf16le_bom, str_jap_utf16le_bom, 0);
 }
 
