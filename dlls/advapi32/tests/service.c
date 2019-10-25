@@ -2275,8 +2275,9 @@ static void test_queryconfig2(void)
     }
     ok(ret, "expected QueryServiceConfig2W to succeed (%d)\n", GetLastError());
     ok(needed == sizeof(preshutdown_info), "needed = %d\n", needed);
-    ok(preshutdown_info.dwPreshutdownTimeout == 180000, "Default PreshutdownTimeout = %d\n",
-            preshutdown_info.dwPreshutdownTimeout);
+    ok(preshutdown_info.dwPreshutdownTimeout == 180000
+            || preshutdown_info.dwPreshutdownTimeout == 10000 /* Win10 1709+ */,
+            "Default PreshutdownTimeout = %d\n", preshutdown_info.dwPreshutdownTimeout);
 
     SetLastError(0xdeadbeef);
     preshutdown_info.dwPreshutdownTimeout = -1;
