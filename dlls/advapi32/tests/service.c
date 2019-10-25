@@ -203,10 +203,9 @@ static void test_create_delete_svc(void)
     static const CHAR pathname            [] = "we_dont_care.exe";
     static const CHAR empty               [] = "";
     static const CHAR password            [] = "secret";
-    BOOL spooler_exists = FALSE;
+    char buffer[200];
+    DWORD size;
     BOOL ret;
-    CHAR display[4096];
-    DWORD display_size = sizeof(display);
 
     /* Get the username and turn it into an account to be used in some tests */
     GetUserNameA(username, &user_size);
@@ -356,42 +355,45 @@ static void test_create_delete_svc(void)
     ok(!svc_handle1, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    /* The service already exists (check first, just in case) */
-    svc_handle1 = OpenServiceA(scm_handle, spooler, GENERIC_READ);
-    if (svc_handle1)
+    /* Test duplicate service names */
+    svc_handle1 = CreateServiceA(scm_handle, "winetest_dupname", "winetest_display", DELETE,
+            SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    ok(!!svc_handle1, "Failed to create service, error %u\n", GetLastError());
+
+    svc_handle2 = CreateServiceA(scm_handle, "winetest_dupname", NULL, 0,
+            SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    ok(!svc_handle2, "Expected failure\n");
+    ok(GetLastError() == ERROR_SERVICE_EXISTS, "Got wrong error %u\n", GetLastError());
+
+    svc_handle2 = CreateServiceA(scm_handle, "winetest_dupname2", "winetest_dupname", DELETE,
+            SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    todo_wine ok(!svc_handle2, "Expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_DUPLICATE_SERVICE_NAME, "Got wrong error %u\n", GetLastError());
+    if (svc_handle2)
     {
-        spooler_exists = TRUE;
-        CloseServiceHandle(svc_handle1);
-        SetLastError(0xdeadbeef);
-        svc_handle1 = CreateServiceA(scm_handle, spooler, NULL, 0, SERVICE_WIN32_OWN_PROCESS,
-                                     SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
-        ok(!svc_handle1, "Expected failure\n");
-        ok(GetLastError() == ERROR_SERVICE_EXISTS, "Expected ERROR_SERVICE_EXISTS, got %d\n", GetLastError());
+        DeleteService(svc_handle2);
+        CloseServiceHandle(svc_handle2);
+    }
+
+    svc_handle2 = CreateServiceA(scm_handle, "winetest_dupname2", "winetest_display", DELETE,
+            SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, 0, pathname, NULL, NULL, NULL, NULL, NULL);
+    if (svc_handle2) /* Win10 1709+ */
+    {
+        size = sizeof(buffer);
+        ret = GetServiceKeyNameA(scm_handle, "winetest_display", buffer, &size);
+        ok(ret, "Failed to get key name, error %u\n", GetLastError());
+        ok(!strcmp(buffer, "winetest_dupname"), "Got wrong name \"%s\"\n", buffer);
+
+        ret = DeleteService(svc_handle2);
+        ok(ret, "Failed to delete service, error %u\n", GetLastError());
+        CloseServiceHandle(svc_handle2);
     }
     else
-        skip("Spooler service doesn't exist\n");
+        ok(GetLastError() == ERROR_DUPLICATE_SERVICE_NAME, "Got wrong error %u\n", GetLastError());
 
-    /* To find an existing displayname we check the 'Spooler' service. Although the registry
-     * doesn't show DisplayName on NT4, this call will return a displayname which is equal
-     * to the servicename and can't be used as well for a new displayname.
-     */
-    if (spooler_exists)
-    {
-        ret = GetServiceDisplayNameA(scm_handle, spooler, display, &display_size);
-
-        if (!ret)
-            skip("Could not retrieve a displayname for the Spooler service\n");
-        else
-        {
-            svc_handle1 = CreateServiceA(scm_handle, servicename, display, 0, SERVICE_WIN32_OWN_PROCESS,
-                                         SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
-            ok(!svc_handle1, "Expected failure for display name '%s'\n", display);
-            ok(GetLastError() == ERROR_DUPLICATE_SERVICE_NAME,
-               "Expected ERROR_DUPLICATE_SERVICE_NAME, got %d\n", GetLastError());
-        }
-    }
-    else
-        skip("Could not retrieve a displayname (Spooler service doesn't exist)\n");
+    ret = DeleteService(svc_handle1);
+    ok(ret, "Failed to delete service, error %u\n", GetLastError());
+    CloseServiceHandle(svc_handle1);
 
     /* Windows doesn't care about the access rights for creation (which makes
      * sense as there is no service yet) as long as there are sufficient
