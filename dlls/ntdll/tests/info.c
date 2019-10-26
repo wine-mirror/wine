@@ -1864,8 +1864,10 @@ static void test_readvirtualmemory(void)
 
     /* illegal local address */
     status = pNtReadVirtualMemory(process, teststring, (void *)0x1234, 12, &readcount);
-    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
-    ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
+    ok( status == STATUS_ACCESS_VIOLATION || broken(status == STATUS_PARTIAL_COPY) /* Win10 */,
+        "Expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
+    if (status == STATUS_ACCESS_VIOLATION)
+        ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
 
     CloseHandle(process);
 }
