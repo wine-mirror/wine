@@ -76,7 +76,6 @@ static INT  test_OnPopContext = SINK_UNEXPECTED;
 static INT  test_KEV_OnSetFocus = SINK_UNEXPECTED;
 static INT  test_ACP_AdviseSink = SINK_UNEXPECTED;
 static INT  test_ACP_UnadviseSink = SINK_UNEXPECTED;
-static INT  test_ACP_GetStatus = SINK_UNEXPECTED;
 static INT  test_ACP_RequestLock = SINK_UNEXPECTED;
 static INT  test_ACP_GetEndACP = SINK_UNEXPECTED;
 static INT  test_ACP_GetSelection = SINK_UNEXPECTED;
@@ -264,7 +263,6 @@ static HRESULT WINAPI TextStoreACP_RequestLock(ITextStoreACP *iface,
 static HRESULT WINAPI TextStoreACP_GetStatus(ITextStoreACP *iface,
     TS_STATUS *pdcs)
 {
-    sink_fire_ok(&test_ACP_GetStatus,"TextStoreACP_GetStatus");
     pdcs->dwDynamicFlags = documentStatus;
     return S_OK;
 }
@@ -2142,11 +2140,9 @@ static void test_TStoApplicationText(void)
 
     documentStatus = TS_SD_READONLY;
     hrSession = 0xfeedface;
-    test_ACP_GetStatus = SINK_EXPECTED;
     hr = ITfContext_RequestEditSession(cxt, tid, es, TF_ES_SYNC|TF_ES_READWRITE, &hrSession);
     ok(SUCCEEDED(hr),"ITfContext_RequestEditSession failed\n");
     ok(hrSession == TS_E_READONLY,"Unexpected hrSession (%x)\n",hrSession);
-    sink_check_ok(&test_ACP_GetStatus,"GetStatus");
 
     /* signal a change to allow readwrite sessions */
     documentStatus = 0;
@@ -2154,7 +2150,6 @@ static void test_TStoApplicationText(void)
     ITextStoreACPSink_OnStatusChange(ACPSink,documentStatus);
     sink_check_ok(&test_ACP_RequestLock,"RequestLock");
 
-    test_ACP_GetStatus = SINK_EXPECTED;
     test_ACP_RequestLock = SINK_EXPECTED;
     test_DoEditSession = SINK_EXPECTED;
     hrSession = 0xfeedface;
@@ -2163,7 +2158,6 @@ static void test_TStoApplicationText(void)
     ok(SUCCEEDED(hr),"ITfContext_RequestEditSession failed\n");
     sink_check_ok(&test_OnEndEdit,"OnEndEdit");
     sink_check_ok(&test_DoEditSession,"DoEditSession");
-    sink_check_ok(&test_ACP_GetStatus,"GetStatus");
     ok(hrSession == 0xdeadcafe,"Unexpected hrSession (%x)\n",hrSession);
 
     if (source)
@@ -2288,11 +2282,9 @@ static void test_AssociateFocus(void)
     test_CurrentFocus = NULL;
     test_PrevFocus = dmorig;
     test_OnSetFocus  = SINK_OPTIONAL; /* Doesn't always fire on Win7 */
-    test_ACP_GetStatus = SINK_OPTIONAL;
     hr = ITfThreadMgr_SetFocus(g_tm,NULL);
     ok(SUCCEEDED(hr),"ITfThreadMgr_SetFocus failed\n");
     sink_check_ok(&test_OnSetFocus,"OnSetFocus");
-    test_ACP_GetStatus = SINK_UNEXPECTED;
     ITfDocumentMgr_Release(dmorig);
 
     hr = ITfThreadMgr_CreateDocumentMgr(g_tm,&dm1);
@@ -2400,7 +2392,6 @@ static void test_AssociateFocus(void)
     test_CurrentFocus = dmorig;
     test_PrevFocus = dm1;
     test_OnSetFocus  = SINK_OPTIONAL; /* Doesn't always fire on Win7+ */
-    test_ACP_GetStatus = SINK_IGNORE;
     ITfThreadMgr_SetFocus(g_tm,dmorig);
     sink_check_ok(&test_OnSetFocus,"OnSetFocus");
 
@@ -2435,7 +2426,6 @@ static void test_AssociateFocus(void)
     test_CurrentFocus = dmorig;
     test_PrevFocus = FOCUS_IGNORE;
     test_OnSetFocus  = SINK_OPTIONAL;
-    test_ACP_GetStatus = SINK_IGNORE;
     ITfThreadMgr_SetFocus(g_tm,dmorig);
     sink_check_ok(&test_OnSetFocus,"OnSetFocus");
 
