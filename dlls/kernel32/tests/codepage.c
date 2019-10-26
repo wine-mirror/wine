@@ -271,7 +271,8 @@ static void test_other_invalid_parameters(void)
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_UTF8, 0, w_string, w_string_len, c_string, c_string_len, c_string, NULL);
-    ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "len=%d error=%x\n", len, GetLastError());
+    ok((len == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
+            || broken(len == 12) /* Win10 1709+ */, "len=%d error=%x\n", len, GetLastError());
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_SYMBOL, 0, w_string, w_string_len, c_string, c_string_len, c_string, NULL);
@@ -286,7 +287,8 @@ static void test_other_invalid_parameters(void)
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_UTF8, 0, w_string, w_string_len, c_string, c_string_len, NULL, &used);
-    ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "len=%d error=%x\n", len, GetLastError());
+    ok((len == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
+            || broken(len == 12) /* Win10 1709+ */, "len=%d error=%x\n", len, GetLastError());
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_SYMBOL, 0, w_string, w_string_len, c_string, c_string_len, NULL, &used);
@@ -304,7 +306,9 @@ static void test_other_invalid_parameters(void)
     /* CP_UTF8, unrecognized flag and used not NULL => ERROR_INVALID_PARAMETER */
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_UTF8, 0x100, w_string, w_string_len, c_string, c_string_len, NULL, &used);
-    ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "len=%d error=%x\n", len, GetLastError());
+    ok(len == 0, "wrong ret %d\n", len);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER
+            || GetLastError() == ERROR_INVALID_FLAGS /* Win10 1709+ */, "wrong error %u\n", GetLastError());
 }
 
 static void test_overlapped_buffers(void)
