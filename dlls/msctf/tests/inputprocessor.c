@@ -61,7 +61,6 @@ static BOOL test_ShouldActivate = FALSE;
 static BOOL test_ShouldDeactivate = FALSE;
 
 static DWORD tmSinkCookie;
-static DWORD tmSinkRefCount;
 static DWORD dmSinkCookie;
 static DWORD documentStatus;
 static DWORD key_trace_sink_cookie, ui_element_sink_cookie, profile_activation_sink_cookie;
@@ -484,11 +483,6 @@ static inline ThreadMgrEventSink *impl_from_ITfThreadMgrEventSink(ITfThreadMgrEv
     return CONTAINING_RECORD(iface, ThreadMgrEventSink, ITfThreadMgrEventSink_iface);
 }
 
-static void ThreadMgrEventSink_Destructor(ThreadMgrEventSink *This)
-{
-    HeapFree(GetProcessHeap(),0,This);
-}
-
 static HRESULT WINAPI ThreadMgrEventSink_QueryInterface(ITfThreadMgrEventSink *iface, REFIID iid, LPVOID *ppvOut)
 {
     *ppvOut = NULL;
@@ -510,20 +504,13 @@ static HRESULT WINAPI ThreadMgrEventSink_QueryInterface(ITfThreadMgrEventSink *i
 static ULONG WINAPI ThreadMgrEventSink_AddRef(ITfThreadMgrEventSink *iface)
 {
     ThreadMgrEventSink *This = impl_from_ITfThreadMgrEventSink(iface);
-    ok (tmSinkRefCount == This->refCount,"ThreadMgrEventSink refcount off %i vs %i\n",This->refCount,tmSinkRefCount);
     return InterlockedIncrement(&This->refCount);
 }
 
 static ULONG WINAPI ThreadMgrEventSink_Release(ITfThreadMgrEventSink *iface)
 {
     ThreadMgrEventSink *This = impl_from_ITfThreadMgrEventSink(iface);
-    ULONG ret;
-
-    ok (tmSinkRefCount == This->refCount,"ThreadMgrEventSink refcount off %i vs %i\n",This->refCount,tmSinkRefCount);
-    ret = InterlockedDecrement(&This->refCount);
-    if (ret == 0)
-        ThreadMgrEventSink_Destructor(This);
-    return ret;
+    return InterlockedDecrement(&This->refCount);
 }
 
 static HRESULT WINAPI ThreadMgrEventSink_OnInitDocumentMgr(ITfThreadMgrEventSink *iface,
@@ -613,20 +600,7 @@ static const ITfThreadMgrEventSinkVtbl ThreadMgrEventSink_ThreadMgrEventSinkVtbl
     ThreadMgrEventSink_OnPopContext
 };
 
-static HRESULT ThreadMgrEventSink_Constructor(IUnknown **ppOut)
-{
-    ThreadMgrEventSink *This;
-
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ThreadMgrEventSink));
-    if (This == NULL)
-        return E_OUTOFMEMORY;
-
-    This->ITfThreadMgrEventSink_iface.lpVtbl = &ThreadMgrEventSink_ThreadMgrEventSinkVtbl;
-    This->refCount = 1;
-
-    *ppOut = (IUnknown*)&This->ITfThreadMgrEventSink_iface;
-    return S_OK;
-}
+static ThreadMgrEventSink thread_mgr_event_sink = {{&ThreadMgrEventSink_ThreadMgrEventSinkVtbl}, 1};
 
 static HRESULT WINAPI TfKeyTraceEventSink_QueryInterface(ITfKeyTraceEventSink *iface, REFIID riid, void **ppv)
 {
@@ -1224,27 +1198,18 @@ static void test_ThreadMgrAdviseSinks(void)
 {
     ITfSource *source = NULL;
     HRESULT hr;
-    IUnknown *sink;
 
     hr = ITfThreadMgr_QueryInterface(g_tm, &IID_ITfSource, (LPVOID*)&source);
     ok(SUCCEEDED(hr),"Failed to get IID_ITfSource for ThreadMgr\n");
     if (!source)
         return;
 
-    hr = ThreadMgrEventSink_Constructor(&sink);
-    ok(hr == S_OK, "got %08x\n", hr);
-    if(FAILED(hr)) return;
-
-    tmSinkRefCount = 1;
     tmSinkCookie = 0;
-    hr = ITfSource_AdviseSink(source,&IID_ITfThreadMgrEventSink, sink, &tmSinkCookie);
+    hr = ITfSource_AdviseSink(source,&IID_ITfThreadMgrEventSink,
+            (IUnknown *)&thread_mgr_event_sink.ITfThreadMgrEventSink_iface, &tmSinkCookie);
     ok(hr == S_OK, "Failed to Advise ITfThreadMgrEventSink\n");
     ok(tmSinkCookie!=0,"Failed to get sink cookie\n");
-
-    /* Advising the sink adds a ref, Releasing here lets the object be deleted
-       when unadvised */
-    tmSinkRefCount = 2;
-    IUnknown_Release(sink);
+    ok(thread_mgr_event_sink.refCount == 2, "Got %d references.\n", thread_mgr_event_sink.refCount);
 
     hr = ITfSource_AdviseSink(source, &IID_ITfKeyTraceEventSink, (IUnknown*)&TfKeyTraceEventSink,
                               &key_trace_sink_cookie);
@@ -1271,9 +1236,10 @@ static void test_ThreadMgrUnadviseSinks(void)
     if (!source)
         return;
 
-    tmSinkRefCount = 1;
+    ok(thread_mgr_event_sink.refCount == 2, "Got %d references.\n", thread_mgr_event_sink.refCount);
     hr = ITfSource_UnadviseSink(source, tmSinkCookie);
     ok(hr == S_OK, "Failed to unadvise ITfThreadMgrEventSink\n");
+    ok(thread_mgr_event_sink.refCount == 1, "Got %d references.\n", thread_mgr_event_sink.refCount);
 
     hr = ITfSource_UnadviseSink(source, key_trace_sink_cookie);
     ok(hr == S_OK, "Failed to unadvise ITfKeyTraceEventSink\n");
