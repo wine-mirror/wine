@@ -36,7 +36,6 @@ HRESULT QualityControlImpl_Create(struct strmbase_pin *pin, QualityControlImpl *
     This = *ppv;
     This->pin = pin;
     This->tonotify = NULL;
-    This->clock = NULL;
     This->current_rstart = This->current_rstop = -1;
     TRACE("-> %p\n", This);
     return S_OK;
@@ -125,13 +124,6 @@ void QualityControlRender_Start(QualityControlImpl *This, REFERENCE_TIME tStart)
     This->qos_handled = TRUE; /* Lie that will be corrected on first adjustment */
 }
 
-
-void QualityControlRender_SetClock(QualityControlImpl *This, IReferenceClock *clock)
-{
-    TRACE("%p %p\n", This, clock);
-    This->clock = clock;
-}
-
 static BOOL QualityControlRender_IsLate(QualityControlImpl *This, REFERENCE_TIME jitter,
                                         REFERENCE_TIME start, REFERENCE_TIME stop)
 {
@@ -168,7 +160,7 @@ void QualityControlRender_DoQOS(QualityControlImpl *priv)
 
     TRACE("%p\n", priv);
 
-    if (!priv->clock || priv->current_rstart < 0)
+    if (!priv->pin->filter->pClock || priv->current_rstart < 0)
         return;
 
     start = priv->current_rstart;
@@ -284,7 +276,7 @@ void QualityControlRender_BeginRender(QualityControlImpl *This, REFERENCE_TIME s
     if (start >= 0)
     {
         REFERENCE_TIME now;
-        IReferenceClock_GetTime(This->clock, &now);
+        IReferenceClock_GetTime(This->pin->filter->pClock, &now);
         This->current_jitter = (now - This->clockstart) - start;
     }
     else
@@ -299,10 +291,10 @@ void QualityControlRender_BeginRender(QualityControlImpl *This, REFERENCE_TIME s
     else
         This->rendered++;
 
-    if (!This->clock)
+    if (!This->pin->filter->pClock)
         return;
 
-    IReferenceClock_GetTime(This->clock, &This->start);
+    IReferenceClock_GetTime(This->pin->filter->pClock, &This->start);
 
     TRACE("Starting at %s.\n", debugstr_time(This->start));
 }
@@ -313,7 +305,8 @@ void QualityControlRender_EndRender(QualityControlImpl *This)
 
     TRACE("%p\n", This);
 
-    if (!This->clock || This->start < 0 || FAILED(IReferenceClock_GetTime(This->clock, &This->stop)))
+    if (!This->pin->filter->pClock || This->start < 0
+            || FAILED(IReferenceClock_GetTime(This->pin->filter->pClock, &This->stop)))
         return;
 
     elapsed = This->start - This->stop;

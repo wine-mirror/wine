@@ -22,11 +22,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
-static inline struct strmbase_renderer *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    return CONTAINING_RECORD(iface, struct strmbase_renderer, filter.IBaseFilter_iface);
-}
-
 static inline struct strmbase_renderer *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, struct strmbase_renderer, filter);
@@ -436,18 +431,6 @@ HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *This, IMediaSa
     return hr;
 }
 
-static HRESULT WINAPI BaseRendererImpl_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock)
-{
-    struct strmbase_renderer *This = impl_from_IBaseFilter(iface);
-    HRESULT hr;
-
-    EnterCriticalSection(&This->filter.csFilter);
-    QualityControlRender_SetClock(This->qcimpl, clock);
-    hr = BaseFilterImpl_SetSyncSource(iface, clock);
-    LeaveCriticalSection(&This->filter.csFilter);
-    return hr;
-}
-
 static const IBaseFilterVtbl strmbase_renderer_vtbl =
 {
     BaseFilterImpl_QueryInterface,
@@ -458,7 +441,7 @@ static const IBaseFilterVtbl strmbase_renderer_vtbl =
     BaseFilterImpl_Pause,
     BaseFilterImpl_Run,
     BaseFilterImpl_GetState,
-    BaseRendererImpl_SetSyncSource,
+    BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
     BaseFilterImpl_FindPin,
