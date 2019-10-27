@@ -27,16 +27,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase_qc);
 
-HRESULT QualityControlImpl_Create(IPin *input, IBaseFilter *self, QualityControlImpl **ppv)
+HRESULT QualityControlImpl_Create(struct strmbase_pin *pin, QualityControlImpl **ppv)
 {
     QualityControlImpl *This;
-    TRACE("%p, %p, %p\n", input, self, ppv);
     *ppv = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(QualityControlImpl));
     if (!*ppv)
         return E_OUTOFMEMORY;
     This = *ppv;
-    This->input = input;
-    This->self = self;
+    This->pin = pin;
     This->tonotify = NULL;
     This->clock = NULL;
     This->current_rstart = This->current_rstop = -1;
@@ -57,19 +55,19 @@ static inline QualityControlImpl *impl_from_IQualityControl(IQualityControl *ifa
 HRESULT WINAPI QualityControlImpl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv)
 {
     QualityControlImpl *This = impl_from_IQualityControl(iface);
-    return IBaseFilter_QueryInterface(This->self, riid, ppv);
+    return IBaseFilter_QueryInterface(&This->pin->filter->IBaseFilter_iface, riid, ppv);
 }
 
 ULONG WINAPI QualityControlImpl_AddRef(IQualityControl *iface)
 {
     QualityControlImpl *This = impl_from_IQualityControl(iface);
-    return IBaseFilter_AddRef(This->self);
+    return IBaseFilter_AddRef(&This->pin->filter->IBaseFilter_iface);
 }
 
 ULONG WINAPI QualityControlImpl_Release(IQualityControl *iface)
 {
     QualityControlImpl *This = impl_from_IQualityControl(iface);
-    return IBaseFilter_Release(This->self);
+    return IBaseFilter_Release(&This->pin->filter->IBaseFilter_iface);
 }
 
 HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm)
@@ -81,19 +79,16 @@ HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *se
         iface, sender, qm.Type, qm.Proportion, debugstr_time(qm.Late), debugstr_time(qm.TimeStamp));
 
     if (This->tonotify)
-        return IQualityControl_Notify(This->tonotify, This->self, qm);
+        return IQualityControl_Notify(This->tonotify, &This->pin->filter->IBaseFilter_iface, qm);
 
-    if (This->input) {
-        IPin *to = NULL;
-        IPin_ConnectedTo(This->input, &to);
-        if (to) {
-            IQualityControl *qc = NULL;
-            IPin_QueryInterface(to, &IID_IQualityControl, (void**)&qc);
-            if (qc) {
-                hr = IQualityControl_Notify(qc, This->self, qm);
-                IQualityControl_Release(qc);
-            }
-            IPin_Release(to);
+    if (This->pin->peer)
+    {
+        IQualityControl *qc = NULL;
+        IPin_QueryInterface(This->pin->peer, &IID_IQualityControl, (void **)&qc);
+        if (qc)
+        {
+            hr = IQualityControl_Notify(qc, &This->pin->filter->IBaseFilter_iface, qm);
+            IQualityControl_Release(qc);
         }
     }
 
@@ -270,7 +265,7 @@ void QualityControlRender_DoQOS(QualityControlImpl *priv)
         q.Late = priv->current_jitter;
         q.TimeStamp = priv->current_rstart;
         TRACE("Late: %s from %s, rate: %g\n", debugstr_time(q.Late), debugstr_time(q.TimeStamp), 1./priv->avg_rate);
-        hr = IQualityControl_Notify(&priv->IQualityControl_iface, priv->self, q);
+        hr = IQualityControl_Notify(&priv->IQualityControl_iface, &priv->pin->filter->IBaseFilter_iface, q);
         priv->qos_handled = hr == S_OK;
     }
 

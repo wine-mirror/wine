@@ -53,8 +53,7 @@ static inline const char *debugstr_time(REFERENCE_TIME time)
 /* Quality Control */
 typedef struct QualityControlImpl {
     IQualityControl IQualityControl_iface;
-    IPin *input;
-    IBaseFilter *self;
+    struct strmbase_pin *pin;
     IQualityControl *tonotify;
 
     /* Render stuff */
@@ -66,7 +65,7 @@ typedef struct QualityControlImpl {
     BOOL qos_handled, is_dropped;
 } QualityControlImpl;
 
-HRESULT QualityControlImpl_Create(IPin *input, IBaseFilter *self, QualityControlImpl **ppv);
+HRESULT QualityControlImpl_Create(struct strmbase_pin *pin, QualityControlImpl **out);
 void QualityControlImpl_Destroy(QualityControlImpl *This);
 HRESULT WINAPI QualityControlImpl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv);
 ULONG WINAPI QualityControlImpl_AddRef(IQualityControl *iface);

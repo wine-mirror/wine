@@ -545,7 +545,7 @@ HRESULT WINAPI strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown
     filter->advise_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     filter->flush_event = CreateEventW(NULL, TRUE, TRUE, NULL);
 
-    QualityControlImpl_Create(&filter->sink.pin.IPin_iface, &filter->filter.IBaseFilter_iface, &filter->qcimpl);
+    QualityControlImpl_Create(&filter->sink.pin, &filter->qcimpl);
     filter->qcimpl->IQualityControl_iface.lpVtbl = &Renderer_QualityControl_Vtbl;
 
     return S_OK;

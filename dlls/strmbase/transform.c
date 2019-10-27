@@ -286,8 +286,7 @@ static HRESULT strmbase_transform_init(IUnknown *outer, const CLSID *clsid,
     strmbase_source_init(&filter->source, &TransformFilter_OutputPin_Vtbl, &filter->filter,
             wcsOutputPinName, &source_ops);
 
-    QualityControlImpl_Create(&filter->sink.pin.IPin_iface,
-            &filter->filter.IBaseFilter_iface, &filter->qcimpl);
+    QualityControlImpl_Create(&filter->sink.pin, &filter->qcimpl);
     filter->qcimpl->IQualityControl_iface.lpVtbl = &TransformFilter_QualityControl_Vtbl;
 
     filter->seekthru_unk = NULL;
@@ -483,7 +482,7 @@ static const IPinVtbl TransformFilter_OutputPin_Vtbl =
 
 static HRESULT WINAPI TransformFilter_QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm) {
     QualityControlImpl *qc = (QualityControlImpl*)iface;
-    TransformFilter *This = impl_from_IBaseFilter(qc->self);
+    TransformFilter *This = impl_from_source_IPin(&qc->pin->IPin_iface);
 
     if (This->pFuncsTable->pfnNotify)
         return This->pFuncsTable->pfnNotify(This, sender, qm);
