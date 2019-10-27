@@ -114,3 +114,25 @@ DWORD WINAPI RmShutdown(DWORD handle, ULONG flags, RM_WRITE_STATUS_CALLBACK stat
     FIXME("%u, 0x%08x, %p stub!\n", handle, flags, status);
     return ERROR_SUCCESS;
 }
+
+/***********************************************************************
+ * RmAddFilter (rstrtmgr.@)
+ */
+DWORD WINAPI RmAddFilter(DWORD handle, LPCWSTR moduleName, RM_UNIQUE_PROCESS *process,
+                         LPCWSTR serviceShortName, RM_FILTER_ACTION filter)
+{
+    FIXME("%u, %s %p %s 0x%08x stub!\n", handle, debugstr_w(moduleName), process,
+        debugstr_w(serviceShortName), filter);
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ * RmRemoveFilter (rstrtmgr.@)
+ */
+DWORD WINAPI RmRemoveFilter(DWORD handle, LPCWSTR moduleName, RM_UNIQUE_PROCESS *process,
+                            LPCWSTR serviceShortName)
+{
+    FIXME("%u, %s %p %s stub!\n", handle, debugstr_w(moduleName), process,
+        debugstr_w(serviceShortName));
+    return ERROR_SUCCESS;
+}
