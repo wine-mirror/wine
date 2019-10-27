@@ -44,36 +44,9 @@ static inline AudioRecord *impl_from_strmbase_filter(struct strmbase_filter *fil
     return CONTAINING_RECORD(filter, AudioRecord, filter);
 }
 
-static inline AudioRecord *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    struct strmbase_filter *filter = CONTAINING_RECORD(iface, struct strmbase_filter, IBaseFilter_iface);
-    return impl_from_strmbase_filter(filter);
-}
-
 static inline AudioRecord *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
 {
     return CONTAINING_RECORD(iface, AudioRecord, IPersistPropertyBag_iface);
-}
-
-static HRESULT WINAPI AudioRecord_Stop(IBaseFilter *iface)
-{
-    AudioRecord *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioRecord_Pause(IBaseFilter *iface)
-{
-    AudioRecord *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AudioRecord_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
-{
-    AudioRecord *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p, %s): stub\n", This, wine_dbgstr_longlong(tStart));
-    return E_NOTIMPL;
 }
 
 static const IBaseFilterVtbl AudioRecordVtbl = {
@@ -81,9 +54,9 @@ static const IBaseFilterVtbl AudioRecordVtbl = {
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
-    AudioRecord_Stop,
-    AudioRecord_Pause,
-    AudioRecord_Run,
+    BaseFilterImpl_Stop,
+    BaseFilterImpl_Pause,
+    BaseFilterImpl_Run,
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
