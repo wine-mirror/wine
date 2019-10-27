@@ -49,6 +49,12 @@ typedef enum _RM_REBOOT_REASON {
     RmRebootReasonDetectedSelf     = 0x0010
 } RM_REBOOT_REASON;
 
+typedef enum _RM_FILTER_ACTION {
+    RmInvalidFilterAction = 0x0000,
+    RmNoRestart           = 0x0001,
+    RmNoShutdown          = 0x0002
+} RM_FILTER_ACTION;
+
 typedef struct {
     DWORD dwProcessId;
     FILETIME ProcessStartTime;
