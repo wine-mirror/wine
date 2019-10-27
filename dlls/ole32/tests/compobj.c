@@ -2450,7 +2450,6 @@ static DWORD CALLBACK release_semaphore_thread( LPVOID arg )
 static DWORD CALLBACK send_message_thread(LPVOID arg)
 {
     HWND hWnd = arg;
-    Sleep(50);
     SendMessageA(hWnd, WM_DDE_FIRST, 0, 0);
     return 0;
 }
@@ -2467,7 +2466,6 @@ static DWORD CALLBACK send_and_post_user_message_thread(void *arg)
 static DWORD CALLBACK post_message_thread(LPVOID arg)
 {
     HWND hWnd = arg;
-    Sleep(50);
     PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
     return 0;
 }
@@ -2931,7 +2929,7 @@ static void test_CoWaitForMultipleHandles(void)
     PostMessageA(hWnd, WM_QUIT, 42, 0);
     thread = CreateThread(NULL, 0, send_message_thread, hWnd, 0, &tid);
     ok(thread != NULL, "CreateThread failed, error %u\n", GetLastError());
-    hr = CoWaitForMultipleHandles(0, 100, 2, handles, &index);
+    hr = CoWaitForMultipleHandles(0, 500, 2, handles, &index);
     ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
     ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
