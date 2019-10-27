@@ -371,36 +371,6 @@ static void SampleGrabber_callback(SG_Impl *This, IMediaSample *sample)
     }
 }
 
-/* IMediaFilter */
-static HRESULT WINAPI
-SampleGrabber_IBaseFilter_Stop(IBaseFilter *iface)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)\n", This);
-    This->filter.state = State_Stopped;
-    return S_OK;
-}
-
-/* IMediaFilter */
-static HRESULT WINAPI
-SampleGrabber_IBaseFilter_Pause(IBaseFilter *iface)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)\n", This);
-    This->filter.state = State_Paused;
-    return S_OK;
-}
-
-/* IMediaFilter */
-static HRESULT WINAPI
-SampleGrabber_IBaseFilter_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)\n", This);
-    This->filter.state = State_Running;
-    return S_OK;
-}
-
 /* IBaseFilter */
 static HRESULT WINAPI
 SampleGrabber_IBaseFilter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *graph, LPCWSTR name)
@@ -1033,9 +1003,9 @@ static const IBaseFilterVtbl IBaseFilter_VTable =
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
-    SampleGrabber_IBaseFilter_Stop,
-    SampleGrabber_IBaseFilter_Pause,
-    SampleGrabber_IBaseFilter_Run,
+    BaseFilterImpl_Stop,
+    BaseFilterImpl_Pause,
+    BaseFilterImpl_Run,
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
