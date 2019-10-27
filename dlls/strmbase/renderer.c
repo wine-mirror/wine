@@ -205,11 +205,76 @@ static HRESULT renderer_query_interface(struct strmbase_filter *iface, REFIID ii
     return E_NOINTERFACE;
 }
 
+static HRESULT renderer_init_stream(struct strmbase_filter *iface)
+{
+    struct strmbase_renderer *filter = impl_from_strmbase_filter(iface);
+
+    if (filter->sink.pin.peer)
+        ResetEvent(filter->state_event);
+    filter->sink.end_of_stream = FALSE;
+    BaseRendererImpl_ClearPendingSample(filter);
+    ResetEvent(filter->flush_event);
+    if (filter->pFuncsTable->renderer_init_stream)
+        filter->pFuncsTable->renderer_init_stream(filter);
+
+    return S_OK;
+}
+
+static HRESULT renderer_start_stream(struct strmbase_filter *iface, REFERENCE_TIME start)
+{
+    struct strmbase_renderer *filter = impl_from_strmbase_filter(iface);
+
+    filter->stream_start = start;
+    SetEvent(filter->state_event);
+    if (filter->sink.pin.peer)
+        filter->sink.end_of_stream = FALSE;
+    QualityControlRender_Start(filter->qcimpl, filter->stream_start);
+    if (filter->sink.pin.peer && filter->pFuncsTable->renderer_start_stream)
+        filter->pFuncsTable->renderer_start_stream(filter);
+
+    return S_OK;
+}
+
+static HRESULT renderer_stop_stream(struct strmbase_filter *iface)
+{
+    struct strmbase_renderer *filter = impl_from_strmbase_filter(iface);
+
+    if (filter->sink.pin.peer && filter->pFuncsTable->renderer_stop_stream)
+        filter->pFuncsTable->renderer_stop_stream(filter);
+
+    return S_OK;
+}
+
+static HRESULT renderer_cleanup_stream(struct strmbase_filter *iface)
+{
+    struct strmbase_renderer *filter = impl_from_strmbase_filter(iface);
+
+    RendererPosPassThru_ResetMediaTime(filter->pPosition);
+    SetEvent(filter->state_event);
+    SetEvent(filter->flush_event);
+
+    return S_OK;
+}
+
+static HRESULT renderer_wait_state(struct strmbase_filter *iface, DWORD timeout)
+{
+    struct strmbase_renderer *filter = impl_from_strmbase_filter(iface);
+
+    if (WaitForSingleObject(filter->state_event, timeout) == WAIT_TIMEOUT)
+        return VFW_S_STATE_INTERMEDIATE;
+    return S_OK;
+}
+
 static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = renderer_get_pin,
     .filter_destroy = renderer_destroy,
     .filter_query_interface = renderer_query_interface,
+    .filter_init_stream = renderer_init_stream,
+    .filter_start_stream = renderer_start_stream,
+    .filter_stop_stream = renderer_stop_stream,
+    .filter_cleanup_stream = renderer_cleanup_stream,
+    .filter_wait_state = renderer_wait_state,
 };
 
 static HRESULT sink_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
@@ -371,96 +436,6 @@ HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *This, IMediaSa
     return hr;
 }
 
-static HRESULT WINAPI BaseRendererImpl_Stop(IBaseFilter *iface)
-{
-    struct strmbase_renderer *This = impl_from_IBaseFilter(iface);
-
-    TRACE("(%p)->()\n", This);
-
-    EnterCriticalSection(&This->csRenderLock);
-    {
-        RendererPosPassThru_ResetMediaTime(This->pPosition);
-        if (This->sink.pin.peer && This->pFuncsTable->renderer_stop_stream)
-            This->pFuncsTable->renderer_stop_stream(This);
-        This->filter.state = State_Stopped;
-        SetEvent(This->state_event);
-        SetEvent(This->flush_event);
-    }
-    LeaveCriticalSection(&This->csRenderLock);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
-{
-    struct strmbase_renderer *This = impl_from_IBaseFilter(iface);
-
-    TRACE("iface %p, start %s.\n", iface, debugstr_time(tStart));
-
-    EnterCriticalSection(&This->csRenderLock);
-    This->stream_start = tStart;
-    if (This->filter.state == State_Running)
-        goto out;
-
-    if (This->filter.state == State_Stopped && This->pFuncsTable->renderer_init_stream)
-        This->pFuncsTable->renderer_init_stream(This);
-
-    SetEvent(This->state_event);
-
-    if (This->sink.pin.peer)
-    {
-        This->sink.end_of_stream = FALSE;
-    }
-
-    QualityControlRender_Start(This->qcimpl, This->stream_start);
-    if (This->sink.pin.peer && This->pFuncsTable->renderer_start_stream)
-        This->pFuncsTable->renderer_start_stream(This);
-    if (This->filter.state == State_Stopped)
-        BaseRendererImpl_ClearPendingSample(This);
-    This->filter.state = State_Running;
-
-out:
-    LeaveCriticalSection(&This->csRenderLock);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter *iface)
-{
-    struct strmbase_renderer *This = impl_from_IBaseFilter(iface);
-    HRESULT hr = S_OK;
-
-    TRACE("(%p)->()\n", This);
-
-    EnterCriticalSection(&This->csRenderLock);
-    {
-     if (This->filter.state != State_Paused)
-        {
-            if (This->filter.state == State_Stopped)
-            {
-                if (This->sink.pin.peer)
-                {
-                    ResetEvent(This->state_event);
-                    hr = S_FALSE;
-                }
-                This->sink.end_of_stream = FALSE;
-                if (This->pFuncsTable->renderer_init_stream)
-                    This->pFuncsTable->renderer_init_stream(This);
-            }
-            else if (This->sink.pin.peer && This->pFuncsTable->renderer_stop_stream)
-                This->pFuncsTable->renderer_stop_stream(This);
-
-            if (This->filter.state == State_Stopped)
-                BaseRendererImpl_ClearPendingSample(This);
-            ResetEvent(This->flush_event);
-            This->filter.state = State_Paused;
-        }
-    }
-    LeaveCriticalSection(&This->csRenderLock);
-
-    return hr;
-}
-
 static HRESULT WINAPI BaseRendererImpl_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock)
 {
     struct strmbase_renderer *This = impl_from_IBaseFilter(iface);
@@ -473,34 +448,16 @@ static HRESULT WINAPI BaseRendererImpl_SetSyncSource(IBaseFilter *iface, IRefere
     return hr;
 }
 
-
-static HRESULT WINAPI BaseRendererImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
-{
-    HRESULT hr;
-    struct strmbase_renderer *This = impl_from_IBaseFilter(iface);
-
-    TRACE("(%p)->(%d, %p)\n", This, dwMilliSecsTimeout, pState);
-
-    if (WaitForSingleObject(This->state_event, dwMilliSecsTimeout) == WAIT_TIMEOUT)
-        hr = VFW_S_STATE_INTERMEDIATE;
-    else
-        hr = S_OK;
-
-    BaseFilterImpl_GetState(iface, dwMilliSecsTimeout, pState);
-
-    return hr;
-}
-
 static const IBaseFilterVtbl strmbase_renderer_vtbl =
 {
     BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
-    BaseRendererImpl_Stop,
-    BaseRendererImpl_Pause,
-    BaseRendererImpl_Run,
-    BaseRendererImpl_GetState,
+    BaseFilterImpl_Stop,
+    BaseFilterImpl_Pause,
+    BaseFilterImpl_Run,
+    BaseFilterImpl_GetState,
     BaseRendererImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
