@@ -460,7 +460,8 @@ static HRESULT compile_call_expression(compile_ctx_t *ctx, call_expression_t *ex
     if(FAILED(hres))
         return hres;
 
-    call = expr->call_expr;
+    for(call = expr->call_expr; call->type == EXPR_BRACKETS; call = ((unary_expression_t*)call)->subexpr);
+
     if(call->type == EXPR_MEMBER)
         return compile_member_expression(ctx, (member_expression_t*)call, arg_cnt, ret_val);
 

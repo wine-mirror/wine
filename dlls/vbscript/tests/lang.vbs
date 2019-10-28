@@ -1279,6 +1279,14 @@ x = Array(1)
 seta0 (x)
 todo_wine_ok x(0) = 1, "x(0) = " & x(0)
 
+x = Array(1)
+call (((seta0))) ((x))
+todo_wine_ok x(0) = 1, "x(0) = " & x(0)
+
+x = Array(1)
+call (((seta0))) (x)
+ok x(0) = 2, "x(0) = " & x(0)
+
 x = Array(Array(3))
 seta0 x(0)
 call ok(x(0)(0) = 2, "x(0)(0) = " & x(0)(0))
@@ -1286,6 +1294,12 @@ call ok(x(0)(0) = 2, "x(0)(0) = " & x(0)(0))
 x = Array(Array(3))
 seta0 (x(0))
 call todo_wine_ok(x(0)(0) = 3, "x(0)(0) = " & x(0)(0))
+
+y = (seta0)(x)
+ok y = 1, "y = " & y
+
+y = ((x))(0)
+ok y = 2, "y = " & y
 
 sub changearg(x)
     x = 2
