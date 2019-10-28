@@ -1211,7 +1211,7 @@ unsigned char* CDECL _mbscpy( unsigned char *dst, const unsigned char *src )
  */
 unsigned char * CDECL _mbsstr(const unsigned char *haystack, const unsigned char *needle)
 {
-    return (unsigned char *)strstr( (const char *)haystack, (const char *)needle );
+    return (unsigned char *)MSVCRT_strstr( (const char *)haystack, (const char *)needle );
 }
 
 /*********************************************************************

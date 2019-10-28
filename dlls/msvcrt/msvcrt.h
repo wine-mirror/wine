@@ -1176,6 +1176,7 @@ int __cdecl      MSVCRT__stricmp(const char*, const char*);
 int __cdecl      MSVCRT__strnicmp(const char*, const char*, MSVCRT_size_t);
 int __cdecl      MSVCRT__strnicoll_l(const char*, const char*, MSVCRT_size_t, MSVCRT__locale_t);
 int __cdecl      MSVCRT__strncoll_l(const char*, const char*, MSVCRT_size_t, MSVCRT__locale_t);
+char* __cdecl    MSVCRT_strstr(const char*, const char*);
 unsigned int __cdecl MSVCRT__get_output_format(void);
 char* __cdecl MSVCRT_strtok_s(char*, const char*, char**);
 

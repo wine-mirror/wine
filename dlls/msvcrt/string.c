@@ -2005,7 +2005,42 @@ int __cdecl MSVCRT__stricmp(const char *s1, const char *s2)
  */
 char* __cdecl MSVCRT_strstr(const char *haystack, const char *needle)
 {
-    return strstr(haystack, needle);
+    MSVCRT_size_t i, j, len, needle_len, lps_len;
+    BYTE lps[256];
+
+    needle_len = MSVCRT_strlen(needle);
+    if (!needle_len) return (char*)haystack;
+    lps_len = needle_len > ARRAY_SIZE(lps) ? ARRAY_SIZE(lps) : needle_len;
+
+    lps[0] = 0;
+    len = 0;
+    i = 1;
+    while (i < lps_len)
+    {
+        if (needle[i] == needle[len]) lps[i++] = ++len;
+        else if (len) len = lps[len-1];
+        else lps[i++] = 0;
+    }
+
+    i = j = 0;
+    while (haystack[i])
+    {
+        while (j < lps_len && haystack[i] && haystack[i] == needle[j])
+        {
+            i++;
+            j++;
+        }
+
+        if (j == needle_len) return (char*)haystack + i - j;
+        else if (j)
+        {
+            if (j == ARRAY_SIZE(lps) && !MSVCRT_strncmp(haystack + i, needle + j, needle_len - j))
+                return (char*)haystack + i - j;
+            j = lps[j-1];
+        }
+        else if (haystack[i]) i++;
+    }
+    return NULL;
 }
 
 /*********************************************************************

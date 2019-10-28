@@ -3897,6 +3897,39 @@ static void test_C_locale(void)
     }
 }
 
+static void test_strstr(void)
+{
+    static char long_str[1024];
+    const struct {
+        const char *haystack;
+        const char *needle;
+        int off;
+    } tests[] = {
+        { "", "", 0 },
+        { "", "a", -1 },
+        { "a", "", 0 },
+        { "aabc", "abc", 1 },
+        { "aaaa", "aaaa", 0 },
+        { "simple", "simple", 0 },
+        { "aaaaxaaaaxaaaa", "aaaaa", -1 },
+        { "aaaaxaaaaxaaaaa", "aaaaa", 10 },
+        { "abcabcdababcdabcdabde", "abcdabd", 13 },
+        { "abababababcabababcababbba", "abababcaba", 4 },
+        { long_str, long_str+1, 0 }
+    };
+    const char *r, *exp;
+    int i;
+
+    memset(long_str, 'a', sizeof(long_str)-1);
+
+    for (i=0; i<ARRAY_SIZE(tests); i++)
+    {
+        r = strstr(tests[i].haystack, tests[i].needle);
+        exp = tests[i].off == -1 ? NULL : tests[i].haystack + tests[i].off;
+        ok(r == exp, "%d) strstr returned %p, expected %p\n", i, r, exp);
+    }
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -4036,4 +4069,5 @@ START_TEST(string)
     test__tcsnicoll();
     test___strncnt();
     test_C_locale();
+    test_strstr();
 }
