@@ -44,6 +44,7 @@ static expression_t *new_new_expression(parser_ctx_t*,const WCHAR*);
 
 static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 static call_expression_t *new_call_expression(parser_ctx_t*,expression_t*,expression_t*);
+static call_expression_t *make_call_expression(parser_ctx_t*,expression_t*,expression_t*);
 
 static void *new_statement(parser_ctx_t*,statement_type_t,size_t);
 static statement_t *new_call_statement(parser_ctx_t*,BOOL,expression_t*);
@@ -130,7 +131,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <expression> NotExpression UnaryExpression AndExpression OrExpression XorExpression EqvExpression SignExpression
 %type <expression> ConstExpression NumericLiteralExpression
 %type <member> MemberExpression
-%type <expression> Arguments_opt ArgumentList ArgumentList_opt Step_opt ExpressionList
+%type <expression> Arguments Arguments_opt ArgumentList ArgumentList_opt Step_opt ExpressionList
 %type <boolean> OptionExplicit_opt DoType
 %type <arg_decl> ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
 %type <func_decl> FunctionDecl PropertyDecl
@@ -186,10 +187,11 @@ Statement
     | SimpleStatement ':'                   { $$ = $1; }
 
 SimpleStatement
-    : MemberExpression ArgumentList_opt     { $$ = new_call_statement(ctx, FALSE, &new_call_expression(ctx, &$1->expr, $2)->expr); CHECK_ERROR; }
+    : CallExpression ArgumentList_opt       { call_expression_t *call_expr = make_call_expression(ctx, $1, $2); CHECK_ERROR;
+                                              $$ = new_call_statement(ctx, FALSE, &call_expr->expr); CHECK_ERROR; };
     | tCALL UnaryExpression                 { $$ = new_call_statement(ctx, TRUE, $2); CHECK_ERROR; }
-    | MemberExpression Arguments_opt '=' Expression
-                                            { $$ = new_assign_statement(ctx, &new_call_expression(ctx, &$1->expr, $2)->expr, $4); CHECK_ERROR; }
+    | CallExpression '=' Expression
+                                            { $$ = new_assign_statement(ctx, $1, $3); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, $2); CHECK_ERROR; }
     | IfStatement                           { $$ = $1; }
     | tWHILE Expression StSep StatementsNl_opt tWEND
@@ -289,12 +291,16 @@ CaseClausules
     | tCASE ExpressionList StSep StatementsNl_opt CaseClausules
                                            { $$ = new_case_clausule(ctx, $2, $4, $5); }
 
-Arguments_opt
-    : EmptyBrackets_opt             { $$ = NULL; }
+Arguments
+    : tEMPTYBRACKETS                { $$ = NULL; }
     | '(' ArgumentList ')'          { $$ = $2; }
 
+Arguments_opt
+    : /* empty */                   { $$ = NULL; }
+    | Arguments                     { $$ = $1; }
+
 ArgumentList_opt
-    : EmptyBrackets_opt             { $$ = NULL; }
+    : /* empty */                   { $$ = NULL; }
     | ArgumentList                  { $$ = $1; }
 
 ArgumentList
@@ -384,8 +390,10 @@ UnaryExpression
     | tNEW Identifier               { $$ = new_new_expression(ctx, $2); CHECK_ERROR; }
 
 CallExpression
-    : PrimaryExpression                 { $$ = $1; }
-    | MemberExpression Arguments_opt    { $$ = &new_call_expression(ctx, &$1->expr, $2)->expr; CHECK_ERROR; }
+    : PrimaryExpression             { $$ = $1; }
+    | MemberExpression              { $$ = &$1->expr; }
+    | CallExpression Arguments      { call_expression_t *expr = new_call_expression(ctx, $1, $2); CHECK_ERROR;
+                                      $$ = &expr->expr; }
 
 LiteralExpression
     : tTRUE                         { $$ = new_bool_expression(ctx, VARIANT_TRUE); CHECK_ERROR; }
@@ -688,6 +696,35 @@ static call_expression_t *new_call_expression(parser_ctx_t *ctx, expression_t *e
 
     call_expr->call_expr = expr;
     call_expr->args = arguments;
+    return call_expr;
+}
+
+static call_expression_t *make_call_expression(parser_ctx_t *ctx, expression_t *callee_expr, expression_t *arguments)
+{
+    call_expression_t *call_expr;
+
+    if(callee_expr->type == EXPR_MEMBER)
+        return new_call_expression(ctx, callee_expr, arguments);
+    if(callee_expr->type != EXPR_CALL) {
+        FIXME("Unhandled for expr type %u\n", callee_expr->type);
+        ctx->hres = E_FAIL;
+        return NULL;
+    }
+    call_expr = (call_expression_t*)callee_expr;
+    if(!call_expr->args) {
+        call_expr->args = arguments;
+    }else if(call_expr->args->next) {
+        FIXME("Invalid syntax: invalid use of parentheses for arguments\n");
+        ctx->hres = E_FAIL;
+        return NULL;
+    }else if(arguments->type != EXPR_NOARG) {
+        FIXME("Invalid syntax: missing comma\n");
+        ctx->hres = E_FAIL;
+        return NULL;
+    }else {
+        call_expr->args->next = arguments->next;
+    }
+
     return call_expr;
 }
 
