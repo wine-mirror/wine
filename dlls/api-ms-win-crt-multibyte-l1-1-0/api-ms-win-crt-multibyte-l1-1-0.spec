@@ -101,7 +101,7 @@
 @ cdecl _mbscpy_s(ptr long str) ucrtbase._mbscpy_s
 @ cdecl _mbscpy_s_l(ptr long str ptr) ucrtbase._mbscpy_s_l
 @ cdecl _mbscspn(str str) ucrtbase._mbscspn
-@ stub _mbscspn_l
+@ cdecl _mbscspn_l(str str ptr) ucrtbase._mbscspn_l
 @ cdecl _mbsdec(ptr ptr) ucrtbase._mbsdec
 @ stub _mbsdec_l
 @ cdecl _mbsdup(str) ucrtbase._mbsdup

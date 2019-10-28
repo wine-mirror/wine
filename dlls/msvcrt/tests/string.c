@@ -553,6 +553,13 @@ static void test_mbsspn( void)
     ret=_mbsspn( str1, empty);
     ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
 
+    ret=_mbscspn( str1, set);
+    ok( ret==0, "_mbscspn returns %d should be 0\n", ret);
+    ret=_mbscspn( str2, set);
+    ok( ret==4, "_mbscspn returns %d should be 4\n", ret);
+    ret=_mbscspn( str1, empty);
+    ok( ret==8, "_mbscspn returns %d should be 8\n", ret);
+
     _setmbcp( 932);
     ret=_mbsspn( mbstr, mbset1);
     ok( ret==8, "_mbsspn returns %d should be 8\n", ret);
@@ -564,6 +571,17 @@ static void test_mbsspn( void)
     ok( ret==2, "_mbsspn returns %d should be 2\n", ret);
     ret=_mbsspn( mbstr, mbset3);
     ok( ret==14, "_mbsspn returns %d should be 14\n", ret);
+
+    ret=_mbscspn( mbstr, mbset1);
+    ok( ret==0, "_mbscspn returns %d should be 0\n", ret);
+    ret=_mbscspn( mbstr, mbset2);
+    ok( ret==0, "_mbscspn returns %d should be 0\n", ret);
+    ret=_mbscspn( mbstr+8, mbset1);
+    ok( ret==2, "_mbscspn returns %d should be 2\n", ret);
+    ret=_mbscspn( mbstr+8, mbset2);
+    ok( ret==0, "_mbscspn returns %d should be 0\n", ret);
+    ret=_mbscspn( mbstr, mbset3);
+    ok( ret==0, "_mbscspn returns %d should be 0\n", ret);
 
     _setmbcp( cp);
 }

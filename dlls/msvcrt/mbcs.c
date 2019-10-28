@@ -156,11 +156,6 @@ static inline unsigned char *u__strnset( unsigned char *s, unsigned char c, MSVC
   return (unsigned char*) MSVCRT__strnset( (char*)s, c, len );
 }
 
-static inline MSVCRT_size_t u_strcspn( const unsigned char *s, const unsigned char *rej )
-{
-  return strcspn( (const char *)s, (const char*)rej );
-}
-
 /*********************************************************************
  *		__p__mbctype (MSVCRT.@)
  */
@@ -2073,13 +2068,39 @@ unsigned char* CDECL _mbsspnp(const unsigned char* string, const unsigned char* 
 }
 
 /*********************************************************************
- *		_mbscspn(MSVCRT.@)
+ *		_mbscspn_l (MSVCRT.@)
+ */
+MSVCRT_size_t CDECL _mbscspn_l(const unsigned char* str,
+        const unsigned char* cmp, MSVCRT__locale_t locale)
+{
+    const unsigned char *p, *q;
+
+    for (p = str; *p; p++)
+    {
+        for (q = cmp; *q; q++)
+        {
+            if (_ismbblead_l(*q, locale))
+            {
+                /* duplicate a bug in native implementation */
+                if (!q[1]) return 0;
+
+                if (p[0] == q[0] && p[1] == q[1])
+                    return p - str;
+                q++;
+            }
+            else if (p[0] == q[0])
+                return p - str;
+        }
+    }
+    return p - str;
+}
+
+/*********************************************************************
+ *		_mbscspn (MSVCRT.@)
  */
 MSVCRT_size_t CDECL _mbscspn(const unsigned char* str, const unsigned char* cmp)
 {
-  if (get_mbcinfo()->ismbcodepage)
-    FIXME("don't handle double character case\n");
-  return u_strcspn(str, cmp);
+    return _mbscspn_l(str, cmp, NULL);
 }
 
 /*********************************************************************
