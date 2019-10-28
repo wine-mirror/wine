@@ -21,6 +21,7 @@ typedef enum {
     EXPR_AND,
     EXPR_BOOL,
     EXPR_BRACKETS,
+    EXPR_CALL,
     EXPR_CONCAT,
     EXPR_DIV,
     EXPR_DOUBLE,
@@ -93,8 +94,13 @@ typedef struct {
     expression_t expr;
     expression_t *obj_expr;
     const WCHAR *identifier;
-    expression_t *args;
 } member_expression_t;
+
+typedef struct {
+    expression_t expr;
+    expression_t *call_expr;
+    expression_t *args;
+} call_expression_t;
 
 typedef enum {
     STAT_ASSIGN,
@@ -129,13 +135,13 @@ typedef struct _statement_t {
 
 typedef struct {
     statement_t stat;
-    member_expression_t *expr;
+    call_expression_t *expr;
     BOOL is_strict;
 } call_statement_t;
 
 typedef struct {
     statement_t stat;
-    member_expression_t *member_expr;
+    call_expression_t *left_expr;
     expression_t *value_expr;
 } assign_statement_t;
 

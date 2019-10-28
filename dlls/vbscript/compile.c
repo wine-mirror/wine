@@ -425,22 +425,17 @@ static HRESULT compile_args(compile_ctx_t *ctx, expression_t *args, unsigned *re
     return S_OK;
 }
 
-static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t *expr, BOOL ret_val)
+static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t *expr, unsigned arg_cnt, BOOL ret_val)
 {
-    unsigned arg_cnt = 0;
     HRESULT hres;
 
-    if(ret_val && !expr->args) {
+    if(ret_val && !arg_cnt) {
         expression_t *const_expr;
 
         const_expr = lookup_const_decls(ctx, expr->identifier, TRUE);
         if(const_expr)
             return compile_expression(ctx, const_expr);
     }
-
-    hres = compile_args(ctx, expr->args, &arg_cnt);
-    if(FAILED(hres))
-        return hres;
 
     if(expr->obj_expr) {
         hres = compile_expression(ctx, expr->obj_expr);
@@ -453,6 +448,22 @@ static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t
     }
 
     return hres;
+}
+
+static HRESULT compile_call_expression(compile_ctx_t *ctx, call_expression_t *expr, BOOL ret_val)
+{
+    unsigned arg_cnt = 0;
+    HRESULT hres;
+
+    hres = compile_args(ctx, expr->args, &arg_cnt);
+    if(FAILED(hres))
+        return hres;
+
+    if(expr->call_expr->type == EXPR_MEMBER)
+        return compile_member_expression(ctx, (member_expression_t*)expr->call_expr, arg_cnt, ret_val);
+
+    FIXME("non-member call expression\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT compile_unary_expression(compile_ctx_t *ctx, unary_expression_t *expr, vbsop_t op)
@@ -492,6 +503,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return push_instr_int(ctx, OP_bool, ((bool_expression_t*)expr)->value);
     case EXPR_BRACKETS:
         return compile_expression(ctx, ((unary_expression_t*)expr)->subexpr);
+    case EXPR_CALL:
+        return compile_call_expression(ctx, (call_expression_t*)expr, TRUE);
     case EXPR_CONCAT:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_concat);
     case EXPR_DIV:
@@ -523,7 +536,7 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
     case EXPR_ME:
         return push_instr(ctx, OP_me) ? S_OK : E_OUTOFMEMORY;
     case EXPR_MEMBER:
-        return compile_member_expression(ctx, (member_expression_t*)expr, TRUE);
+        return compile_member_expression(ctx, (member_expression_t*)expr, 0, TRUE);
     case EXPR_MOD:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_mod);
     case EXPR_MUL:
@@ -931,11 +944,15 @@ static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *
     return S_OK;
 }
 
-static HRESULT compile_assignment(compile_ctx_t *ctx, member_expression_t *member_expr, expression_t *value_expr, BOOL is_set)
+static HRESULT compile_assignment(compile_ctx_t *ctx, call_expression_t *left, expression_t *value_expr, BOOL is_set)
 {
+    member_expression_t *member_expr;
     unsigned args_cnt;
     vbsop_t op;
     HRESULT hres;
+
+    assert(left->call_expr->type == EXPR_MEMBER);
+    member_expr = (member_expression_t*)left->call_expr;
 
     if(member_expr->obj_expr) {
         hres = compile_expression(ctx, member_expr->obj_expr);
@@ -951,7 +968,7 @@ static HRESULT compile_assignment(compile_ctx_t *ctx, member_expression_t *membe
     if(FAILED(hres))
         return hres;
 
-    hres = compile_args(ctx, member_expr->args, &args_cnt);
+    hres = compile_args(ctx, left->args, &args_cnt);
     if(FAILED(hres))
         return hres;
 
@@ -967,7 +984,7 @@ static HRESULT compile_assignment(compile_ctx_t *ctx, member_expression_t *membe
 
 static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *stat, BOOL is_set)
 {
-    return compile_assignment(ctx, stat->member_expr, stat->value_expr, is_set);
+    return compile_assignment(ctx, stat->left_expr, stat->value_expr, is_set);
 }
 
 static HRESULT compile_call_statement(compile_ctx_t *ctx, call_statement_t *stat)
@@ -980,16 +997,16 @@ static HRESULT compile_call_statement(compile_ctx_t *ctx, call_statement_t *stat
         binary_expression_t *eqexpr = (binary_expression_t*)stat->expr->args;
 
         if(eqexpr->left->type == EXPR_BRACKETS) {
-            member_expression_t new_member = *stat->expr;
+            call_expression_t new_call = *stat->expr;
 
             WARN("converting call expr to assign expr\n");
 
-            new_member.args = ((unary_expression_t*)eqexpr->left)->subexpr;
-            return compile_assignment(ctx, &new_member, eqexpr->right, FALSE);
+            new_call.args = ((unary_expression_t*)eqexpr->left)->subexpr;
+            return compile_assignment(ctx, &new_call, eqexpr->right, FALSE);
         }
     }
 
-    hres = compile_member_expression(ctx, stat->expr, FALSE);
+    hres = compile_call_expression(ctx, stat->expr, FALSE);
     if(FAILED(hres))
         return hres;
 

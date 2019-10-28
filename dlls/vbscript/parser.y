@@ -43,11 +43,12 @@ static expression_t *new_binary_expression(parser_ctx_t*,expression_type_t,expre
 static expression_t *new_new_expression(parser_ctx_t*,const WCHAR*);
 
 static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
+static call_expression_t *new_call_expression(parser_ctx_t*,expression_t*,expression_t*);
 
 static void *new_statement(parser_ctx_t*,statement_type_t,size_t);
-static statement_t *new_call_statement(parser_ctx_t*,BOOL,member_expression_t*);
-static statement_t *new_assign_statement(parser_ctx_t*,member_expression_t*,expression_t*);
-static statement_t *new_set_statement(parser_ctx_t*,member_expression_t*,expression_t*);
+static statement_t *new_call_statement(parser_ctx_t*,BOOL,expression_t*);
+static statement_t *new_assign_statement(parser_ctx_t*,expression_t*,expression_t*);
+static statement_t *new_set_statement(parser_ctx_t*,member_expression_t*,expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,dim_decl_t*);
 static statement_t *new_while_statement(parser_ctx_t*,statement_type_t,expression_t*,statement_t*);
 static statement_t *new_forto_statement(parser_ctx_t*,const WCHAR*,expression_t*,expression_t*,expression_t*,statement_t*);
@@ -185,10 +186,10 @@ Statement
     | SimpleStatement ':'                   { $$ = $1; }
 
 SimpleStatement
-    : MemberExpression ArgumentList_opt     { $1->args = $2; $$ = new_call_statement(ctx, FALSE, $1); CHECK_ERROR; }
-    | tCALL MemberExpression Arguments_opt  { $2->args = $3; $$ = new_call_statement(ctx, TRUE, $2); CHECK_ERROR; }
+    : MemberExpression ArgumentList_opt     { $$ = new_call_statement(ctx, FALSE, &new_call_expression(ctx, &$1->expr, $2)->expr); CHECK_ERROR; }
+    | tCALL MemberExpression Arguments_opt  { $$ = new_call_statement(ctx, TRUE, &new_call_expression(ctx, &$2->expr, $3)->expr); CHECK_ERROR; }
     | MemberExpression Arguments_opt '=' Expression
-                                            { $1->args = $2; $$ = new_assign_statement(ctx, $1, $4); CHECK_ERROR; }
+                                            { $$ = new_assign_statement(ctx, &new_call_expression(ctx, &$1->expr, $2)->expr, $4); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, $2); CHECK_ERROR; }
     | IfStatement                           { $$ = $1; }
     | tWHILE Expression StSep StatementsNl_opt tWEND
@@ -207,7 +208,7 @@ SimpleStatement
     | tEXIT tPROPERTY                       { $$ = new_statement(ctx, STAT_EXITPROP, 0); CHECK_ERROR; }
     | tEXIT tSUB                            { $$ = new_statement(ctx, STAT_EXITSUB, 0); CHECK_ERROR; }
     | tSET MemberExpression Arguments_opt '=' Expression
-                                            { $2->args = $3; $$ = new_set_statement(ctx, $2, $5); CHECK_ERROR; }
+                                            { $$ = new_set_statement(ctx, $2, $3, $5); CHECK_ERROR; }
     | tSTOP                                 { $$ = new_statement(ctx, STAT_STOP, 0); CHECK_ERROR; }
     | tON tERROR tRESUME tNEXT              { $$ = new_onerror_statement(ctx, TRUE); CHECK_ERROR; }
     | tON tERROR tGOTO '0'                  { $$ = new_onerror_statement(ctx, FALSE); CHECK_ERROR; }
@@ -384,7 +385,7 @@ UnaryExpression
 
 CallExpression
     : PrimaryExpression                 { $$ = $1; }
-    | MemberExpression Arguments_opt    { $1->args = $2; $$ = &$1->expr; }
+    | MemberExpression Arguments_opt    { $$ = &new_call_expression(ctx, &$1->expr, $2)->expr; CHECK_ERROR; }
 
 LiteralExpression
     : tTRUE                         { $$ = new_bool_expression(ctx, VARIANT_TRUE); CHECK_ERROR; }
@@ -674,8 +675,20 @@ static member_expression_t *new_member_expression(parser_ctx_t *ctx, expression_
 
     expr->obj_expr = obj_expr;
     expr->identifier = identifier;
-    expr->args = NULL;
     return expr;
+}
+
+static call_expression_t *new_call_expression(parser_ctx_t *ctx, expression_t *expr, expression_t *arguments)
+{
+    call_expression_t *call_expr;
+
+    call_expr = new_expression(ctx, EXPR_CALL, sizeof(*call_expr));
+    if(!call_expr)
+        return NULL;
+
+    call_expr->call_expr = expr;
+    call_expr->args = arguments;
+    return call_expr;
 }
 
 static expression_t *new_new_expression(parser_ctx_t *ctx, const WCHAR *identifier)
@@ -703,20 +716,35 @@ static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size
     return stat;
 }
 
-static statement_t *new_call_statement(parser_ctx_t *ctx, BOOL is_strict, member_expression_t *expr)
+static statement_t *new_call_statement(parser_ctx_t *ctx, BOOL is_strict, expression_t *expr)
 {
+    call_expression_t *call_expr = NULL;
     call_statement_t *stat;
 
     stat = new_statement(ctx, STAT_CALL, sizeof(*stat));
     if(!stat)
         return NULL;
 
-    stat->expr = expr;
+    switch(expr->type) {
+    case EXPR_MEMBER:
+        call_expr = new_call_expression(ctx, expr, NULL);
+        break;
+    case EXPR_CALL:
+        call_expr = (call_expression_t*)expr;
+        break;
+    default:
+        FIXME("Unsupported expr type %u\n", expr->type);
+        ctx->hres = E_NOTIMPL;
+    }
+    if(!call_expr)
+        return NULL;
+
+    stat->expr = call_expr;
     stat->is_strict = is_strict;
     return &stat->stat;
 }
 
-static statement_t *new_assign_statement(parser_ctx_t *ctx, member_expression_t *left, expression_t *right)
+static statement_t *new_assign_statement(parser_ctx_t *ctx, expression_t *left, expression_t *right)
 {
     assign_statement_t *stat;
 
@@ -724,12 +752,20 @@ static statement_t *new_assign_statement(parser_ctx_t *ctx, member_expression_t 
     if(!stat)
         return NULL;
 
-    stat->member_expr = left;
     stat->value_expr = right;
+
+    if(left->type == EXPR_CALL) {
+        stat->left_expr = (call_expression_t*)left;
+    }else {
+        stat->left_expr = new_call_expression(ctx, left, NULL);
+        if(!stat->left_expr)
+            return NULL;
+    }
+
     return &stat->stat;
 }
 
-static statement_t *new_set_statement(parser_ctx_t *ctx, member_expression_t *left, expression_t *right)
+static statement_t *new_set_statement(parser_ctx_t *ctx, member_expression_t *left, expression_t *arguments, expression_t *right)
 {
     assign_statement_t *stat;
 
@@ -737,8 +773,11 @@ static statement_t *new_set_statement(parser_ctx_t *ctx, member_expression_t *le
     if(!stat)
         return NULL;
 
-    stat->member_expr = left;
     stat->value_expr = right;
+    stat->left_expr = new_call_expression(ctx, &left->expr, arguments);
+    if(!stat->left_expr)
+        return NULL;
+
     return &stat->stat;
 }
 
