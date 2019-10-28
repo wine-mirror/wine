@@ -3135,7 +3135,9 @@ static HRESULT d3d_device7_SetTransform(IDirect3DDevice7 *iface,
 
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    wined3d_device_set_transform(device->wined3d_device, wined3d_state, (struct wined3d_matrix *)matrix);
+    wined3d_stateblock_set_transform(device->update_state, wined3d_state, (const struct wined3d_matrix *)matrix);
+    if (!device->recording)
+        wined3d_device_set_transform(device->wined3d_device, wined3d_state, (const struct wined3d_matrix *)matrix);
     wined3d_mutex_unlock();
 
     return D3D_OK;
