@@ -515,6 +515,52 @@ static HRESULT array_access(exec_ctx_t *ctx, SAFEARRAY *array, DISPPARAMS *dp, V
     return hres;
 }
 
+static HRESULT variant_call(exec_ctx_t *ctx, VARIANT *v, unsigned arg_cnt, VARIANT *res)
+{
+    SAFEARRAY *array = NULL;
+    DISPPARAMS dp;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(v));
+
+    if(V_VT(v) == (VT_VARIANT|VT_BYREF))
+        v = V_VARIANTREF(v);
+
+    switch(V_VT(v)) {
+    case VT_ARRAY|VT_BYREF|VT_VARIANT:
+        array = *V_ARRAYREF(v);
+        break;
+    case VT_ARRAY|VT_VARIANT:
+        array = V_ARRAY(v);
+        break;
+    case VT_DISPATCH:
+        vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
+        hres = disp_call(ctx->script, V_DISPATCH(v), DISPID_VALUE, &dp, res);
+        break;
+    default:
+        FIXME("unsupported on %s\n", debugstr_variant(v));
+        return E_NOTIMPL;
+    }
+
+    if(array) {
+        if(!res) {
+            FIXME("no res\n");
+            return E_NOTIMPL;
+        }
+
+        vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
+        hres = array_access(ctx, array, &dp, &v);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(res) = VT_BYREF|VT_VARIANT;
+        V_BYREF(res) = v;
+    }
+
+    stack_popn(ctx, arg_cnt);
+    return S_OK;
+}
+
 static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
@@ -523,56 +569,26 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
     ref_t ref;
     HRESULT hres;
 
+    TRACE("%s %u\n", debugstr_w(identifier), arg_cnt);
+
     hres = lookup_identifier(ctx, identifier, VBDISP_CALLGET, &ref);
     if(FAILED(hres))
         return hres;
 
     switch(ref.type) {
     case REF_VAR:
-    case REF_CONST: {
-        VARIANT *v;
+    case REF_CONST:
+        if(arg_cnt)
+            return variant_call(ctx, ref.u.v, arg_cnt, res);
 
         if(!res) {
             FIXME("REF_VAR no res\n");
             return E_NOTIMPL;
         }
 
-        v = V_VT(ref.u.v) == (VT_VARIANT|VT_BYREF) ? V_VARIANTREF(ref.u.v) : ref.u.v;
-
-        if(arg_cnt) {
-            SAFEARRAY *array = NULL;
-
-            switch(V_VT(v)) {
-            case VT_ARRAY|VT_BYREF|VT_VARIANT:
-                array = *V_ARRAYREF(v);
-                break;
-            case VT_ARRAY|VT_VARIANT:
-                array = V_ARRAY(v);
-                break;
-            case VT_DISPATCH:
-                vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
-                hres = disp_call(ctx->script, V_DISPATCH(v), DISPID_VALUE, &dp, res);
-                if(FAILED(hres))
-                    return hres;
-                break;
-            default:
-                FIXME("arguments not implemented\n");
-                return E_NOTIMPL;
-            }
-
-            if(!array)
-                break;
-
-            vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
-            hres = array_access(ctx, array, &dp, &v);
-            if(FAILED(hres))
-                return hres;
-        }
-
         V_VT(res) = VT_BYREF|VT_VARIANT;
-        V_BYREF(res) = v;
+        V_BYREF(res) = V_VT(ref.u.v) == (VT_VARIANT|VT_BYREF) ? V_VARIANTREF(ref.u.v) : ref.u.v;
         break;
-    }
     case REF_DISP:
         vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
         hres = disp_call(ctx->script, ref.u.d.disp, ref.u.d.id, &dp, res);
