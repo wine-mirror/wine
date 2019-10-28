@@ -126,7 +126,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <statement> Statement SimpleStatement StatementNl StatementsNl StatementsNl_opt BodyStatements IfStatement Else_opt
 %type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression CallExpression ExpressionNl_opt
 %type <expression> ConcatExpression AdditiveExpression ModExpression IntdivExpression MultiplicativeExpression ExpExpression
-%type <expression> NotExpression UnaryExpression AndExpression OrExpression XorExpression EqvExpression
+%type <expression> NotExpression UnaryExpression AndExpression OrExpression XorExpression EqvExpression SignExpression
 %type <expression> ConstExpression NumericLiteralExpression
 %type <member> MemberExpression
 %type <expression> Arguments_opt ArgumentList ArgumentList_opt Step_opt ExpressionList
@@ -369,15 +369,18 @@ MultiplicativeExpression
                                                 { $$ = new_binary_expression(ctx, EXPR_DIV, $1, $3); CHECK_ERROR; }
 
 ExpExpression
-    : UnaryExpression                           { $$ = $1; }
-    | ExpExpression '^' UnaryExpression         { $$ = new_binary_expression(ctx, EXPR_EXP, $1, $3); CHECK_ERROR; }
+    : SignExpression                            { $$ = $1; }
+    | ExpExpression '^' SignExpression          { $$ = new_binary_expression(ctx, EXPR_EXP, $1, $3); CHECK_ERROR; }
+
+SignExpression
+    : UnaryExpression               { $$ = $1; }
+    | '-' SignExpression            { $$ = new_unary_expression(ctx, EXPR_NEG, $2); CHECK_ERROR; }
+    | '+' SignExpression            { $$ = $2; }
 
 UnaryExpression
     : LiteralExpression             { $$ = $1; }
     | CallExpression                { $$ = $1; }
     | tNEW Identifier               { $$ = new_new_expression(ctx, $2); CHECK_ERROR; }
-    | '-' UnaryExpression           { $$ = new_unary_expression(ctx, EXPR_NEG, $2); CHECK_ERROR; }
-    | '+' UnaryExpression           { $$ = $2; }
 
 CallExpression
     : PrimaryExpression                 { $$ = $1; }
