@@ -3807,7 +3807,8 @@ NTSTATUS WINAPI FsRtlRegisterFileSystemFilterCallbacks( DRIVER_OBJECT *object, P
  */
 BOOLEAN WINAPI SeSinglePrivilegeCheck(LUID privilege, KPROCESSOR_MODE mode)
 {
-    FIXME("stub: %08x%08x %u\n", privilege.HighPart, privilege.LowPart, mode);
+    static int once;
+    if (!once++) FIXME("stub: %08x%08x %u\n", privilege.HighPart, privilege.LowPart, mode);
     return TRUE;
 }
 
