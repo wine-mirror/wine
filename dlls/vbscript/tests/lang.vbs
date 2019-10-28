@@ -1246,6 +1246,59 @@ next
 x=1
 Call ok(forarr(x) = 2, "forarr(x) = " & forarr(x))
 
+sub accessArr()
+    ok arr(1) = 1, "arr(1) = " & arr(1)
+    arr(1) = 2
+end sub
+arr(1) = 1
+call accessArr
+ok arr(1) = 2, "arr(1) = " & arr(1)
+
+sub accessArr2(x,y)
+    ok arr2(x,y) = 1, "arr2(x,y) = " & arr2(x,y)
+    x = arr2(x,y)
+    arr2(x,y) = 2
+end sub
+arr2(1,2) = 1
+call accessArr2(1, 2)
+ok arr2(1,2) = 2, "arr2(1,2) = " & arr2(1,2)
+
+x = Array(Array(3))
+call ok(x(0)(0) = 3, "x(0)(0) = " & x(0)(0))
+
+function seta0(arr)
+    arr(0) = 2
+    seta0 = 1
+end function
+
+x = Array(1)
+seta0 x
+ok x(0) = 2, "x(0) = " & x(0)
+
+x = Array(1)
+seta0 (x)
+todo_wine_ok x(0) = 1, "x(0) = " & x(0)
+
+x = Array(Array(3))
+seta0 x(0)
+call ok(x(0)(0) = 2, "x(0)(0) = " & x(0)(0))
+
+x = Array(Array(3))
+seta0 (x(0))
+call todo_wine_ok(x(0)(0) = 3, "x(0)(0) = " & x(0)(0))
+
+sub changearg(x)
+    x = 2
+end sub
+
+x = Array(1)
+changearg x(0)
+ok x(0) = 2, "x(0) = " & x(0)
+
+x = Array(1)
+changearg (x(0))
+todo_wine_ok x(0) = 1, "x(0) = " & x(0)
+
 Class ArrClass
     Dim classarr(3)
     Dim classnoarr()
@@ -1477,5 +1530,28 @@ Class EndTestClassWithProperty
     Public x
     Public default Property Get defprop
         defprop = x End Property End Class
+
+class TestPropSyntax
+    public prop
+
+    function getProp()
+        set getProp = prop
+    end function
+
+    public default property get def()
+        def = ""
+    end property
+end class
+
+set x = new TestPropSyntax
+set x.prop = new TestPropSyntax
+set x.prop.prop = new TestPropSyntax
+x.prop.prop.prop = 2
+call ok(x.getProp().getProp.prop = 2, "x.getProp().getProp.prop = " & x.getProp().getProp.prop)
+x.getprop.getprop().prop = 3
+call ok(x.getProp.prop.prop = 3, "x.getProp.prop.prop = " & x.getProp.prop.prop)
+
+ok getVT(x) = "VT_DISPATCH*", "getVT(x) = " & getVT(x)
+todo_wine_ok getVT(x()) = "VT_BSTR", "getVT(x()) = " & getVT(x())
 
 reportSuccess()

@@ -2467,7 +2467,10 @@ static void test_parse_errors(void)
         "Call ok(x, \"wrong case\")\n",
 
         /* Class...End Class  (empty) */
-        "Class C End Class"
+        "Class C End Class",
+
+        /* invalid use of parentheses for call statement */
+        "strcomp(\"x\", \"y\")"
     };
     HRESULT hres;
     UINT i;
