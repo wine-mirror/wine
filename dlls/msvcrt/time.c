@@ -1196,6 +1196,15 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
             if(!strftime_int(str, &ret, max, mstm->tm_mday, alternate ? 0 : 2, 0, 31))
                 return 0;
             break;
+        case 'G':
+            tmp = 1900 + mstm->tm_year;
+            if (mstm->tm_yday - (mstm->tm_wday ? mstm->tm_wday : 7) + 4 < 0)
+                tmp--;
+            else if(mstm->tm_yday - (mstm->tm_wday ? mstm->tm_wday : 7) + 5 > 365 + IsLeapYear(tmp))
+                tmp++;
+            if (!strftime_int(str, &ret, max, tmp, 4, 0, 9999))
+                return 0;
+            break;
 #endif
         case 'H':
             if(!strftime_int(str, &ret, max, mstm->tm_hour, alternate ? 0 : 2, 0, 23))
