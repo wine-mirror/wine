@@ -291,8 +291,8 @@ static UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3
 
             offset += wined3d_type_sizes[type];
         } else if (token_type == D3DVSD_TOKEN_STREAMDATA && (*token & D3DVSD_DATALOADTYPEMASK)) {
-            TRACE(" 0x%08x SKIP(%u)\n", token_type, ((token_type & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
-            offset += sizeof(DWORD) * ((token_type & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
+            TRACE(" 0x%08x SKIP(%u)\n", *token, (*token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
+            offset += sizeof(DWORD) * ((*token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
         }
 
         if (element_count >= 127) {
