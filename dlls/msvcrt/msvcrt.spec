@@ -802,7 +802,7 @@
 # stub _mbsset_s(ptr long long)
 # stub _mbsset_s_l(ptr long long ptr)
 @ cdecl _mbsspn(str str)
-# stub _mbsspn_l(str str ptr)
+@ cdecl _mbsspn_l(str str ptr)
 @ cdecl _mbsspnp(str str)
 # stub _mbsspnp_l(str str ptr)
 @ cdecl _mbsstr(str str)

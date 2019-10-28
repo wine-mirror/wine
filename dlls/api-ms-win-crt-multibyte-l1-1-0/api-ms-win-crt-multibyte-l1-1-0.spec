@@ -178,7 +178,7 @@
 @ stub _mbsset_s
 @ stub _mbsset_s_l
 @ cdecl _mbsspn(str str) ucrtbase._mbsspn
-@ stub _mbsspn_l
+@ cdecl _mbsspn_l(str str ptr) ucrtbase._mbsspn_l
 @ cdecl _mbsspnp(str str) ucrtbase._mbsspnp
 @ stub _mbsspnp_l
 @ cdecl _mbsstr(str str) ucrtbase._mbsstr

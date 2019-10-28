@@ -2021,11 +2021,11 @@ int CDECL _mbsupr_s(unsigned char* s, MSVCRT_size_t len)
   return 0;
 }
 
-
 /*********************************************************************
- *              _mbsspn (MSVCRT.@)
+ *              _mbsspn_l (MSVCRT.@)
  */
-MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* set)
+MSVCRT_size_t CDECL _mbsspn_l(const unsigned char* string,
+        const unsigned char* set, MSVCRT__locale_t locale)
 {
     const unsigned char *p, *q;
 
@@ -2033,7 +2033,7 @@ MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* se
     {
         for (q = set; *q; q++)
         {
-            if (_ismbblead(*q))
+            if (_ismbblead_l(*q, locale))
             {
                 /* duplicate a bug in native implementation */
                 if (!q[1]) break;
@@ -2053,6 +2053,14 @@ MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* se
         if (!*q) break;
     }
     return p - string;
+}
+
+/*********************************************************************
+ *              _mbsspn (MSVCRT.@)
+ */
+MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* set)
+{
+    return _mbsspn_l(string, set, NULL);
 }
 
 /*********************************************************************

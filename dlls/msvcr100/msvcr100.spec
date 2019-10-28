@@ -1184,7 +1184,7 @@
 @ stub _mbsset_s
 @ stub _mbsset_s_l
 @ cdecl _mbsspn(str str)
-@ stub _mbsspn_l
+@ cdecl _mbsspn_l(str str ptr)
 @ cdecl _mbsspnp(str str)
 @ stub _mbsspnp_l
 @ cdecl _mbsstr(str str)
