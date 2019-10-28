@@ -7746,13 +7746,19 @@ static void test_vshader_input(void)
         {{ 0.0f,  0.0f, 0.1f}, 0x00ff8040},
         {{ 1.0f, -1.0f, 0.1f}, 0x00ff8040},
         {{ 1.0f,  0.0f, 0.1f}, 0x00ff8040},
-    },
+    };
+    static const struct
+    {
+        struct vec3 position;
+        struct vec3 dummy; /* testing D3DVSD_SKIP */
+        DWORD diffuse;
+    }
     quad3_color[] =
     {
-        {{-1.0f,  0.0f, 0.1f}, 0x00ff8040},
-        {{-1.0f,  1.0f, 0.1f}, 0x00ff8040},
-        {{ 0.0f,  0.0f, 0.1f}, 0x00ff8040},
-        {{ 0.0f,  1.0f, 0.1f}, 0x00ff8040},
+        {{-1.0f,  0.0f, 0.1f}, {0.0f}, 0x00ff8040},
+        {{-1.0f,  1.0f, 0.1f}, {0.0f}, 0x00ff8040},
+        {{ 0.0f,  0.0f, 0.1f}, {0.0f}, 0x00ff8040},
+        {{ 0.0f,  1.0f, 0.1f}, {0.0f}, 0x00ff8040},
     };
     static const float quad4_color[] =
     {
@@ -7803,6 +7809,7 @@ static void test_vshader_input(void)
     {
         D3DVSD_STREAM(0),
         D3DVSD_REG(0, D3DVSDT_FLOAT3), /* position */
+        D3DVSD_SKIP(3),                /* not used */
         D3DVSD_REG(5, D3DVSDT_D3DCOLOR), /* diffuse */
         D3DVSD_END()
     };
