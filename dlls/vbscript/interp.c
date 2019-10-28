@@ -653,14 +653,33 @@ static HRESULT interp_icallv(exec_ctx_t *ctx)
 
 static HRESULT interp_vcall(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    const unsigned arg_cnt = ctx->instr->arg1.uint;
+    VARIANT res, *v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    v = stack_pop(ctx);
+    hres = variant_call(ctx, v, arg_cnt, &res);
+    VariantClear(v);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &res);
 }
 
 static HRESULT interp_vcallv(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    const unsigned arg_cnt = ctx->instr->arg1.uint;
+    VARIANT *v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    v = stack_pop(ctx);
+    hres = variant_call(ctx, v, arg_cnt, NULL);
+    VariantClear(v);
+    return hres;
 }
 
 static HRESULT do_mcall(exec_ctx_t *ctx, VARIANT *res)
