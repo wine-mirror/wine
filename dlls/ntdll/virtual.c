@@ -134,6 +134,20 @@ static void *address_space_limit = (void *)0x7fffffff0000;
 static void *user_space_limit    = (void *)0x7fffffff0000;
 static void *working_set_limit   = (void *)0x7fffffff0000;
 static void *address_space_start = (void *)0x10000;
+#elif defined(__arm__)
+static const UINT page_shift = 12;
+static const UINT_PTR page_mask = 0xfff;
+static void *address_space_limit = (void *)0xc0000000;
+static void *user_space_limit    = (void *)0x7fff0000;
+static void *working_set_limit   = (void *)0x7fff0000;
+static void *address_space_start = (void *)0x10000;
+#elif defined(__aarch64__)
+static const UINT page_shift = 12;
+static const UINT_PTR page_mask = 0xfff;
+static void *address_space_limit = (void *)0xffffffff0000;
+static void *user_space_limit    = (void *)0x7fffffff0000;
+static void *working_set_limit   = (void *)0x7fffffff0000;
+static void *address_space_start = (void *)0x10000;
 #else
 UINT_PTR page_size = 0;
 static UINT page_shift;
@@ -1828,7 +1842,7 @@ void virtual_init(void)
     struct alloc_virtual_heap alloc_views;
     size_t size;
 
-#if !defined(__i386__) && !defined(__x86_64__)
+#if !defined(__i386__) && !defined(__x86_64__) && !defined(__arm__) && !defined(__aarch64__)
     page_size = sysconf( _SC_PAGESIZE );
     page_mask = page_size - 1;
     /* Make sure we have a power of 2 */
