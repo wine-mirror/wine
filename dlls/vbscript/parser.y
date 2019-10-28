@@ -187,7 +187,7 @@ Statement
 
 SimpleStatement
     : MemberExpression ArgumentList_opt     { $$ = new_call_statement(ctx, FALSE, &new_call_expression(ctx, &$1->expr, $2)->expr); CHECK_ERROR; }
-    | tCALL MemberExpression Arguments_opt  { $$ = new_call_statement(ctx, TRUE, &new_call_expression(ctx, &$2->expr, $3)->expr); CHECK_ERROR; }
+    | tCALL UnaryExpression                 { $$ = new_call_statement(ctx, TRUE, $2); CHECK_ERROR; }
     | MemberExpression Arguments_opt '=' Expression
                                             { $$ = new_assign_statement(ctx, &new_call_expression(ctx, &$1->expr, $2)->expr, $4); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, $2); CHECK_ERROR; }
