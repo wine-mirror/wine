@@ -159,6 +159,29 @@ static void test_swab( void ) {
     ok(memcmp(to,expected3,testsize) == 0, "Testing small size %d returned '%*.*s'\n", testsize, testsize, testsize, to);
 }
 
+static void test_strcspn(void)
+{
+    static const struct {
+        const char *str;
+        const char *rej;
+        int ret;
+    } tests[] = {
+        { "test", "a", 4 },
+        { "test", "e", 1 },
+        { "test", "", 4 },
+        { "", "a", 0 },
+        { "a\xf1", "\xf1", 1 }
+    };
+    int r, i;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        r = strcspn(tests[i].str, tests[i].rej);
+        ok(r == tests[i].ret, "strcspn(\"%s\", \"%s\") = %d, expected %d\n",
+                tests[i].str, tests[i].rej, r, tests[i].ret);
+    }
+}
+
 #if 0      /* use this to generate more tests */
 
 static void test_codepage(int cp)
@@ -3935,6 +3958,7 @@ START_TEST(string)
     /* run tolower tests first */
     test_tolower();
     test_swab();
+    test_strcspn();
     test_mbcp();
     test_mbsspn();
     test_mbsspnp();

@@ -2047,7 +2047,21 @@ int __cdecl MSVCRT__memicmp(const char *s1, const char *s2, MSVCRT_size_t len)
  */
 MSVCRT_size_t __cdecl MSVCRT_strcspn(const char *str, const char *reject)
 {
-    return strcspn( str, reject );
+    BOOL rejects[256];
+    const char *p;
+
+    memset(rejects, 0, sizeof(rejects));
+
+    p = reject;
+    while(*p)
+    {
+        rejects[(unsigned char)*p] = TRUE;
+        p++;
+    }
+
+    p = str;
+    while(*p && !rejects[(unsigned char)*p]) p++;
+    return p - str;
 }
 
 /*********************************************************************
