@@ -2677,6 +2677,8 @@ void __cdecl wined3d_stateblock_set_sampler_state(struct wined3d_stateblock *sta
 void __cdecl wined3d_stateblock_set_texture(struct wined3d_stateblock *stateblock, UINT stage, struct wined3d_texture *texture);
 void __cdecl wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock *stateblock,
         UINT stage, enum wined3d_texture_stage_state state, DWORD value);
+void __cdecl wined3d_stateblock_set_transform(struct wined3d_stateblock *stateblock,
+        enum wined3d_transform_state state, const struct wined3d_matrix *matrix);
 void __cdecl wined3d_stateblock_set_vertex_declaration(struct wined3d_stateblock *stateblock,
         struct wined3d_vertex_declaration *declaration);
 void __cdecl wined3d_stateblock_set_vertex_shader(struct wined3d_stateblock *stateblock, struct wined3d_shader *shader);

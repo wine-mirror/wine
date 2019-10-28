@@ -268,6 +268,7 @@
 @ cdecl wined3d_stateblock_set_sampler_state(ptr long long long)
 @ cdecl wined3d_stateblock_set_texture(ptr long ptr)
 @ cdecl wined3d_stateblock_set_texture_stage_state(ptr long long long)
+@ cdecl wined3d_stateblock_set_transform(ptr long ptr)
 @ cdecl wined3d_stateblock_set_vertex_declaration(ptr ptr)
 @ cdecl wined3d_stateblock_set_vertex_shader(ptr ptr)
 @ cdecl wined3d_stateblock_set_vs_consts_b(ptr long long ptr)
