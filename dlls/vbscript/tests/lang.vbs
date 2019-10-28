@@ -1277,11 +1277,11 @@ ok x(0) = 2, "x(0) = " & x(0)
 
 x = Array(1)
 seta0 (x)
-todo_wine_ok x(0) = 1, "x(0) = " & x(0)
+ok x(0) = 1, "x(0) = " & x(0)
 
 x = Array(1)
 call (((seta0))) ((x))
-todo_wine_ok x(0) = 1, "x(0) = " & x(0)
+ok x(0) = 1, "x(0) = " & x(0)
 
 x = Array(1)
 call (((seta0))) (x)
@@ -1293,7 +1293,7 @@ call ok(x(0)(0) = 2, "x(0)(0) = " & x(0)(0))
 
 x = Array(Array(3))
 seta0 (x(0))
-call todo_wine_ok(x(0)(0) = 3, "x(0)(0) = " & x(0)(0))
+call ok(x(0)(0) = 3, "x(0)(0) = " & x(0)(0))
 
 y = (seta0)(x)
 ok y = 1, "y = " & y
@@ -1311,7 +1311,7 @@ ok x(0) = 2, "x(0) = " & x(0)
 
 x = Array(1)
 changearg (x(0))
-todo_wine_ok x(0) = 1, "x(0) = " & x(0)
+ok x(0) = 1, "x(0) = " & x(0)
 
 Class ArrClass
     Dim classarr(3)
@@ -1377,7 +1377,7 @@ Call ok(arr(0) = "modified", "arr(0) = " & arr(0))
 
 arr(0) = "not modified"
 modifyarr(arr)
-Call todo_wine_ok(arr(0) = "not modified", "arr(0) = " & arr(0))
+Call ok(arr(0) = "not modified", "arr(0) = " & arr(0))
 
 for x = 0 to UBound(arr)
     arr(x) = x

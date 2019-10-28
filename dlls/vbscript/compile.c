@@ -417,6 +417,9 @@ static HRESULT compile_args(compile_ctx_t *ctx, expression_t *args, unsigned *re
         if(FAILED(hres))
             return hres;
 
+        if(args->type == EXPR_BRACKETS && !push_instr(ctx, OP_deref))
+            return E_OUTOFMEMORY;
+
         arg_cnt++;
         args = args->next;
     }

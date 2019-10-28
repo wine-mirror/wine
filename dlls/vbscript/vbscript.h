@@ -224,6 +224,7 @@ typedef enum {
     X(case,           0, ARG_ADDR,    0)          \
     X(concat,         1, 0,           0)          \
     X(const,          1, ARG_BSTR,    0)          \
+    X(deref,          1, 0,           0)          \
     X(dim,            1, ARG_BSTR,    ARG_UINT)   \
     X(div,            1, 0,           0)          \
     X(double,         1, ARG_DOUBLE,  0)          \

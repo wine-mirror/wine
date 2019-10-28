@@ -1028,6 +1028,23 @@ static HRESULT interp_pop(exec_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT interp_deref(exec_ctx_t *ctx)
+{
+    VARIANT copy, *v = stack_top(ctx, 0);
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(v));
+
+    if(V_VT(v) != (VT_BYREF|VT_VARIANT))
+        return S_OK;
+
+    V_VT(&copy) = VT_EMPTY;
+    hres = VariantCopy(&copy, V_VARIANTREF(v));
+    if(SUCCEEDED(hres))
+        *v = copy;
+    return hres;
+}
+
 static HRESULT interp_new(exec_ctx_t *ctx)
 {
     const WCHAR *arg = ctx->instr->arg1.bstr;
