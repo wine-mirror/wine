@@ -14102,7 +14102,7 @@ static void test_lastusedsource(void)
     ok(!lstrcmpA(value, path), "expected \"%s\", got \"%s\"\n", path, value);
     ok(size == lstrlenA(path), "expected %d, got %d\n", lstrlenA(path), size);
 
-    r = MsiInstallProductA("msifile0.msi", "REMOVE=ALL");
+    r = MsiInstallProductA("msifile0.msi", "REMOVE=ALL FULL=1");
     ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
 
     /* separate cabinet file */
@@ -14128,7 +14128,7 @@ static void test_lastusedsource(void)
     ok(!lstrcmpA(value, path), "expected \"%s\", got \"%s\"\n", path, value);
     ok(size == lstrlenA(path), "expected %d, got %d\n", lstrlenA(path), size);
 
-    r = MsiInstallProductA("msifile1.msi", "REMOVE=ALL");
+    r = MsiInstallProductA("msifile1.msi", "REMOVE=ALL FULL=1");
     ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
 
     size = MAX_PATH;
@@ -14153,7 +14153,7 @@ static void test_lastusedsource(void)
     ok(!lstrcmpA(value, path), "expected \"%s\", got \"%s\"\n", path, value);
     ok(size == lstrlenA(path), "expected %d, got %d\n", lstrlenA(path), size);
 
-    r = MsiInstallProductA("msifile2.msi", "REMOVE=ALL");
+    r = MsiInstallProductA("msifile2.msi", "REMOVE=ALL FULL=1");
     ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
 
     size = MAX_PATH;

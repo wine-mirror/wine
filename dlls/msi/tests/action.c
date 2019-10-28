@@ -204,6 +204,7 @@ static const char env_install_exec_seq_dat[] =
     "RegisterProduct\t\t900\n"
     "PublishFeatures\t\t1000\n"
     "PublishProduct\t\t1100\n"
+    "UnpublishFeatures\t\t1150\n"
     "InstallFinalize\t\t1200\n";
 
 static const char env_custom_action_dat[] =
@@ -305,6 +306,7 @@ static const char sss_install_exec_seq_dat[] =
     "RegisterProduct\t\t5500\n"
     "PublishFeatures\t\t5600\n"
     "PublishProduct\t\t5700\n"
+    "UnpublishFeatures\t\t5800\n"
     "InstallFinalize\t\t6000\n";
 
 static const char sss_custom_action_dat[] =
@@ -338,6 +340,7 @@ static const char sds_install_exec_seq_dat[] =
     "RegisterProduct\t\t5500\n"
     "PublishFeatures\t\t5600\n"
     "PublishProduct\t\t5700\n"
+    "UnpublishFeatures\t\t5800\n"
     "InstallFinalize\t\t6000\n";
 
 static const char sds_custom_action_dat[] =
@@ -366,6 +369,7 @@ static const char sis_install_exec_seq_dat[] =
     "RegisterProduct\t\t5500\n"
     "PublishFeatures\t\t5600\n"
     "PublishProduct\t\t5700\n"
+    "UnpublishFeatures\t\t5800\n"
     "InstallFinalize\t\t6000\n";
 
 static const char sis_custom_action_dat[] =
@@ -543,12 +547,12 @@ static const char rem_install_exec_seq_dat[] =
     "InstallValidate\t\t1400\n"
     "InstallInitialize\t\t1500\n"
     "ProcessComponents\t\t1600\n"
-    "UnpublishFeatures\t\t1800\n"
     "RemoveFiles\t\t3500\n"
     "InstallFiles\t\t4000\n"
     "RegisterProduct\t\t6100\n"
     "PublishFeatures\t\t6300\n"
     "PublishProduct\t\t6400\n"
+    "UnpublishFeatures\t\t6500\n"
     "InstallFinalize\t\t6600";
 
 static const char rem_remove_files_dat[] =
@@ -704,6 +708,7 @@ static const char wrv_install_exec_seq_dat[] =
     "RegisterProduct\t\t6100\n"
     "PublishFeatures\t\t6200\n"
     "PublishProduct\t\t6300\n"
+    "UnpublishFeatures\t\t6400\n"
     "InstallFinalize\t\t6600\n";
 
 static const char wrv_custom_action_dat[] =
@@ -858,6 +863,7 @@ static const char sr_install_exec_seq_dat[] =
     "RegisterProduct\t\t5100\n"
     "PublishFeatures\t\t5200\n"
     "PublishProduct\t\t5300\n"
+    "UnpublishFeatures\t\t5400\n"
     "InstallFinalize\t\t6600\n";
 
 static const char sr_custom_action_dat[] =
@@ -916,7 +922,6 @@ static const char font_install_exec_seq_dat[] =
     "InstallValidate\t\t1400\n"
     "InstallInitialize\t\t1500\n"
     "ProcessComponents\t\t1600\n"
-    "UnpublishFeatures\t\t1800\n"
     "RemoveFiles\t\t3500\n"
     "InstallFiles\t\t4000\n"
     "RegisterFonts\t\t4100\n"
@@ -929,6 +934,7 @@ static const char font_install_exec_seq_dat[] =
     "RegisterProduct\t\t6100\n"
     "PublishFeatures\t\t6300\n"
     "PublishProduct\t\t6400\n"
+    "UnpublishFeatures\t\t6500\n"
     "InstallFinalize\t\t6600";
 
 static const char font_custom_action_dat[] =
@@ -1058,6 +1064,7 @@ static const char odbc_install_exec_seq_dat[] =
     "RegisterProduct\t\t5000\n"
     "PublishFeatures\t\t5100\n"
     "PublishProduct\t\t5200\n"
+    "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
 
 static const char odbc_custom_action_dat[] =
@@ -1127,6 +1134,7 @@ static const char tl_install_exec_seq_dat[] =
     "RegisterProduct\t\t5100\n"
     "PublishFeatures\t\t5200\n"
     "PublishProduct\t\t5300\n"
+    "UnpublishFeatures\t\t5400\n"
     "InstallFinalize\t\t6000\n";
 
 static const char tl_custom_action_dat[] =
@@ -1190,6 +1198,7 @@ static const char crs_install_exec_seq_dat[] =
     "RegisterProduct\t\t5000\n"
     "PublishFeatures\t\t5100\n"
     "PublishProduct\t\t5200\n"
+    "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
 
 static const char crs_custom_action_dat[] =
@@ -1253,6 +1262,7 @@ static const char pub_install_exec_seq_dat[] =
     "RegisterProduct\t\t5000\n"
     "PublishFeatures\t\t5100\n"
     "PublishProduct\t\t5200\n"
+    "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
 
 static const char pub_custom_action_dat[] =
@@ -1320,6 +1330,7 @@ static const char rd_install_exec_seq_dat[] =
     "RegisterProduct\t\t5000\n"
     "PublishFeatures\t\t5100\n"
     "PublishProduct\t\t5200\n"
+    "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
 
 static const char rd_custom_action_dat[] =
@@ -1385,6 +1396,7 @@ static const char frp_install_exec_seq_dat[] =
     "RegisterProduct\t\t5000\n"
     "PublishFeatures\t\t5100\n"
     "PublishProduct\t\t5200\n"
+    "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
 
 static const char ini_file_dat[] =
@@ -1445,6 +1457,7 @@ static const char ini_install_exec_seq_dat[] =
     "RegisterProduct\t\t5000\n"
     "PublishFeatures\t\t5100\n"
     "PublishProduct\t\t5200\n"
+    "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
 
 static const char ini_custom_action_dat[] =
@@ -1514,6 +1527,7 @@ static const char rci_install_exec_seq_dat[] =
     "RegisterProduct\t\t5000\n"
     "PublishFeatures\t\t5100\n"
     "PublishProduct\t\t5200\n"
+    "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
 
 static const char rci_custom_action_dat[] =
@@ -1589,6 +1603,7 @@ static const char rei_install_exec_seq_dat[] =
     "RegisterProduct\t\t5000\n"
     "PublishFeatures\t\t5100\n"
     "PublishProduct\t\t5200\n"
+    "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
 
 static const char rei_custom_action_dat[] =
@@ -1691,6 +1706,7 @@ static const char rpi_install_exec_seq_dat[] =
     "RegisterProduct\t\t5000\n"
     "PublishFeatures\t\t5100\n"
     "PublishProduct\t\t5200\n"
+    "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
 
 static const char rpi_custom_action_dat[] =
@@ -1768,6 +1784,7 @@ static const char rmi_install_exec_seq_dat[] =
     "RegisterProduct\t\t5000\n"
     "PublishFeatures\t\t5100\n"
     "PublishProduct\t\t5200\n"
+    "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
 
 static const char rmi_custom_action_dat[] =
@@ -1959,6 +1976,7 @@ static const char rep_install_exec_seq_dat[] =
     "RegisterProduct\t\t5000\n"
     "PublishFeatures\t\t5100\n"
     "PublishProduct\t\t5200\n"
+    "UnpublishFeatures\t\t5300\n"
     "InstallFinalize\t\t6000\n";
 
 static const msi_table env_tables[] =
