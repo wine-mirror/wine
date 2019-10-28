@@ -1153,12 +1153,13 @@ static void test_parents(void)
 
 static void test_output(void)
 {
+    unsigned int mode_count, mode_count_comp, i, last_height, last_width;
+    double last_refresh_rate;
     IDXGIAdapter *adapter;
     IDXGIDevice *device;
     HRESULT hr;
     IDXGIOutput *output;
     ULONG refcount;
-    UINT mode_count, mode_count_comp, i;
     DXGI_MODE_DESC *modes;
 
     if (!(device = create_device(0)))
@@ -1227,9 +1228,38 @@ static void test_output(void)
     ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
     ok(mode_count == mode_count_comp, "Got unexpected mode_count %u, expected %u.\n", mode_count, mode_count_comp);
 
+    last_width = last_height = 0;
+    last_refresh_rate = 0.;
     for (i = 0; i < mode_count; i++)
     {
-        ok(modes[i].Height && modes[i].Width, "Proper mode was expected\n");
+        double refresh_rate = modes[i].RefreshRate.Numerator / (double)modes[i].RefreshRate.Denominator;
+
+        ok(modes[i].Width && modes[i].Height, "Mode %u: Invalid dimensions %ux%u.\n",
+                i, modes[i].Width, modes[i].Height);
+
+        ok(modes[i].Width >= last_width,
+                "Mode %u: Modes should have been sorted, width %u < %u.\n", i, modes[i].Width, last_width);
+        if (modes[i].Width != last_width)
+        {
+            last_width = modes[i].Width;
+            last_height = 0;
+            last_refresh_rate = 0.;
+            continue;
+        }
+
+        ok(modes[i].Height >= last_height,
+                "Mode %u: Modes should have been sorted, height %u < %u.\n", i, modes[i].Height, last_height);
+        if (modes[i].Height != last_height)
+        {
+            last_height = modes[i].Height;
+            last_refresh_rate = 0.;
+            continue;
+        }
+
+        ok(refresh_rate >= last_refresh_rate,
+                "Mode %u: Modes should have been sorted, refresh rate %f < %f.\n", i, refresh_rate, last_refresh_rate);
+        if (refresh_rate != last_refresh_rate)
+            last_refresh_rate = refresh_rate;
     }
 
     mode_count += 5;

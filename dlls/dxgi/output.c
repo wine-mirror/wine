@@ -75,6 +75,25 @@ static HRESULT dxgi_output_find_closest_matching_mode(struct dxgi_output *output
     return hr;
 }
 
+static int dxgi_mode_desc_compare(const void *l, const void *r)
+{
+    const DXGI_MODE_DESC *left = l, *right = r;
+    int a, b;
+
+    if (left->Width != right->Width)
+        return left->Width - right->Width;
+
+    if (left->Height != right->Height)
+        return left->Height - right->Height;
+
+    a = left->RefreshRate.Numerator * right->RefreshRate.Denominator;
+    b = right->RefreshRate.Numerator * left->RefreshRate.Denominator;
+    if (a != b)
+        return a - b;
+
+    return 0;
+}
+
 enum dxgi_mode_struct_version
 {
     DXGI_MODE_STRUCT_VERSION_0,
@@ -150,6 +169,16 @@ static HRESULT dxgi_output_get_display_mode_list(struct dxgi_output *output,
         }
     }
     wined3d_mutex_unlock();
+
+    switch (struct_version)
+    {
+        case DXGI_MODE_STRUCT_VERSION_0:
+            qsort(modes, *mode_count, sizeof(DXGI_MODE_DESC), dxgi_mode_desc_compare);
+            break;
+        case DXGI_MODE_STRUCT_VERSION_1:
+            qsort(modes, *mode_count, sizeof(DXGI_MODE_DESC1), dxgi_mode_desc_compare);
+            break;
+    }
 
     return S_OK;
 }
