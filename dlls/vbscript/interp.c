@@ -635,6 +635,18 @@ static HRESULT interp_icallv(exec_ctx_t *ctx)
     return do_icall(ctx, NULL);
 }
 
+static HRESULT interp_vcall(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT interp_vcallv(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT do_mcall(exec_ctx_t *ctx, VARIANT *res)
 {
     const BSTR identifier = ctx->instr->arg1.bstr;

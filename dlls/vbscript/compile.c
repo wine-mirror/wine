@@ -453,17 +453,22 @@ static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t
 static HRESULT compile_call_expression(compile_ctx_t *ctx, call_expression_t *expr, BOOL ret_val)
 {
     unsigned arg_cnt = 0;
+    expression_t *call;
     HRESULT hres;
 
     hres = compile_args(ctx, expr->args, &arg_cnt);
     if(FAILED(hres))
         return hres;
 
-    if(expr->call_expr->type == EXPR_MEMBER)
-        return compile_member_expression(ctx, (member_expression_t*)expr->call_expr, arg_cnt, ret_val);
+    call = expr->call_expr;
+    if(call->type == EXPR_MEMBER)
+        return compile_member_expression(ctx, (member_expression_t*)call, arg_cnt, ret_val);
 
-    FIXME("non-member call expression\n");
-    return E_NOTIMPL;
+    hres = compile_expression(ctx, call);
+    if(FAILED(hres))
+        return hres;
+
+    return push_instr_uint(ctx, ret_val ? OP_vcall : OP_vcallv, arg_cnt);
 }
 
 static HRESULT compile_unary_expression(compile_ctx_t *ctx, unary_expression_t *expr, vbsop_t op)
