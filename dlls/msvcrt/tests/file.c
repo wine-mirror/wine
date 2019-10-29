@@ -2548,7 +2548,7 @@ static void test__creat(void)
         pos = _tell(fd);
         ok(pos == 6, "expected pos 6 (text mode), got %d\n", pos);
     }
-    ok(_lseek(fd, SEEK_SET, 0) == 0, "_lseek failed\n");
+    ok(_lseek(fd, 0, SEEK_SET) == 0, "_lseek failed\n");
     count = _read(fd, buf, 6);
     ok(count == 4, "_read returned %d, expected 4\n", count);
     count = count > 0 ? count > 4 ? 4 : count : 0;
@@ -2568,7 +2568,7 @@ static void test__creat(void)
         pos = _tell(fd);
         ok(pos == 4, "expected pos 4 (binary mode), got %d\n", pos);
     }
-    ok(_lseek(fd, SEEK_SET, 0) == 0, "_lseek failed\n");
+    ok(_lseek(fd, 0, SEEK_SET) == 0, "_lseek failed\n");
     count = _read(fd, buf, 6);
     ok(count == 4, "_read returned %d, expected 4\n", count);
     count = count > 0 ? count > 4 ? 4 : count : 0;
