@@ -2920,6 +2920,18 @@ static void run_tests(void)
     CHECK_CALLED(global_propargput1_d);
     CHECK_CALLED(global_propargput1_i);
 
+    SET_EXPECT(testobj_propget_d);
+    SET_EXPECT(testobj_propget_i);
+    parse_script_a("dim x\nwith testObj\nx=1+.propget\nend with");
+    CHECK_CALLED(testobj_propget_d);
+    CHECK_CALLED(testobj_propget_i);
+
+    SET_EXPECT(testobj_propput_d);
+    SET_EXPECT(testobj_propput_i);
+    parse_script_a("with testObj\n.propput = 1\nend with");
+    CHECK_CALLED(testobj_propput_d);
+    CHECK_CALLED(testobj_propput_i);
+
     parse_htmlscript_a("<!--");
     parse_htmlscript_a(" -->");
     parse_htmlscript_a("<!--\ndim x\nx=1\n-->\n");

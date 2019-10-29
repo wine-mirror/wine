@@ -1568,4 +1568,19 @@ call ok(x.getProp.prop.prop = 3, "x.getProp.prop.prop = " & x.getProp.prop.prop)
 ok getVT(x) = "VT_DISPATCH*", "getVT(x) = " & getVT(x)
 todo_wine_ok getVT(x()) = "VT_BSTR", "getVT(x()) = " & getVT(x())
 
+with nothing
+end with
+
+set x = new TestPropSyntax
+with x
+     .prop = 1
+     ok .prop = 1, ".prop = "&.prop
+end with
+ok x.prop = 1, "x.prop = " & x.prop
+
+with new TestPropSyntax
+     .prop = 1
+     ok .prop = 1, ".prop = "&.prop
+end with
+
 reportSuccess()
