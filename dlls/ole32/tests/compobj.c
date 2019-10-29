@@ -757,7 +757,6 @@ static void test_CoGetClassObject(void)
         IUnknown_Release(pUnk);
 
         hr = CoGetClassObject(&IID_Testiface7, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
-    todo_wine
         ok(hr == 0x80001235, "Unexpected hr %#x.\n", hr);
 
         hr = CoGetClassObject(&IID_Testiface8, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
