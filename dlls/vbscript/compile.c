@@ -32,6 +32,7 @@ typedef struct _statement_ctx_t {
 
     unsigned while_end_label;
     unsigned for_end_label;
+    unsigned with_stack_offset;
 
     struct _statement_ctx_t *next;
 } statement_ctx_t;
@@ -475,6 +476,21 @@ static HRESULT compile_call_expression(compile_ctx_t *ctx, call_expression_t *ex
     return push_instr_uint(ctx, ret_val ? OP_vcall : OP_vcallv, arg_cnt);
 }
 
+static HRESULT compile_dot_expression(compile_ctx_t *ctx)
+{
+    statement_ctx_t *stat_ctx;
+
+    for(stat_ctx = ctx->stat_ctx; stat_ctx; stat_ctx = stat_ctx->next) {
+        if(!stat_ctx->with_stack_offset)
+            continue;
+
+        return push_instr_uint(ctx, OP_stack, stat_ctx->with_stack_offset - 1);
+    }
+
+    WARN("dot expression outside with statement\n");
+    return push_instr_uint(ctx, OP_stack, ~0);
+}
+
 static HRESULT compile_unary_expression(compile_ctx_t *ctx, unary_expression_t *expr, vbsop_t op)
 {
     HRESULT hres;
@@ -518,6 +534,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_concat);
     case EXPR_DIV:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_div);
+    case EXPR_DOT:
+        return compile_dot_expression(ctx);
     case EXPR_DOUBLE:
         return push_instr_double(ctx, OP_double, ((double_expression_t*)expr)->value);
     case EXPR_EMPTY:
@@ -856,6 +874,26 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
         return E_OUTOFMEMORY;
 
     return S_OK;
+}
+
+static HRESULT compile_with_statement(compile_ctx_t *ctx, with_statement_t *stat)
+{
+    statement_ctx_t with_ctx = { 1 };
+    HRESULT hres;
+
+    hres = compile_expression(ctx, stat->expr);
+    if(FAILED(hres))
+        return hres;
+
+    if(!emit_catch(ctx, 1))
+        return E_OUTOFMEMORY;
+
+    with_ctx.with_stack_offset = stack_offset(ctx) + 1;
+    hres = compile_statement(ctx, &with_ctx, stat->body);
+    if(FAILED(hres))
+        return hres;
+
+    return push_instr_uint(ctx, OP_pop, 1);
 }
 
 static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *stat)
@@ -1319,6 +1357,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_ctx_t *stat_ctx, 
         case STAT_WHILE:
         case STAT_WHILELOOP:
             hres = compile_while_statement(ctx, (while_statement_t*)stat);
+            break;
+        case STAT_WITH:
+            hres = compile_with_statement(ctx, (with_statement_t*)stat);
             break;
         case STAT_RETVAL:
             hres = compile_retval_statement(ctx, (retval_statement_t*)stat);

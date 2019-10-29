@@ -1028,6 +1028,26 @@ static HRESULT interp_pop(exec_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT interp_stack(exec_ctx_t *ctx)
+{
+    const unsigned n = ctx->instr->arg1.uint;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("%#x\n", n);
+
+    if(n == ~0)
+        return MAKE_VBSERROR(505);
+    assert(n < ctx->top);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = VariantCopy(&v, ctx->stack + n);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &v);
+}
+
 static HRESULT interp_deref(exec_ctx_t *ctx)
 {
     VARIANT copy, *v = stack_top(ctx, 0);
