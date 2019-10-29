@@ -351,7 +351,145 @@ static HRESULT manager_create( IUnknown *outer, REFIID iid, void **obj )
     return hr;
 }
 
+/***********************************************************************
+ *          IUIAnimationTimer
+ */
+struct timer
+{
+    IUIAnimationTimer IUIAnimationTimer_iface;
+    LONG ref;
+};
+
+struct timer *impl_from_IUIAnimationTimer( IUIAnimationTimer *iface )
+{
+    return CONTAINING_RECORD( iface, struct timer, IUIAnimationTimer_iface );
+}
+
+static HRESULT WINAPI timer_QueryInterface( IUIAnimationTimer *iface, REFIID iid, void **obj )
+{
+    struct timer *This = impl_from_IUIAnimationTimer( iface );
+
+    TRACE( "(%p)->(%s %p)\n", This, debugstr_guid( iid ), obj );
+
+    if (IsEqualIID( iid, &IID_IUnknown ) ||
+        IsEqualIID( iid, &IID_IUIAnimationTimer ))
+    {
+        IUIAnimationTimer_AddRef( iface );
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME( "interface %s not implemented\n", debugstr_guid( iid ) );
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI timer_AddRef( IUIAnimationTimer *iface )
+{
+    struct timer *This = impl_from_IUIAnimationTimer( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+    return ref;
+}
+
+static ULONG WINAPI timer_Release( IUIAnimationTimer *iface )
+{
+    struct timer *This = impl_from_IUIAnimationTimer( iface );
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+
+    if (!ref)
+        heap_free( This );
+
+    return ref;
+}
+
+static HRESULT WINAPI timer_SetTimerUpdateHandler (IUIAnimationTimer *iface,
+        IUIAnimationTimerUpdateHandler *update_handler,
+        UI_ANIMATION_IDLE_BEHAVIOR idle_behaviour)
+{
+    struct timer *This = impl_from_IUIAnimationTimer( iface );
+    FIXME( "stub (%p)->(%p, %d)\n", This, update_handler, idle_behaviour );
+    return E_NOTIMPL;
+}
+
+ static HRESULT WINAPI timer_SetTimerEventHandler (IUIAnimationTimer *iface,
+        IUIAnimationTimerEventHandler *handler)
+{
+    struct timer *This = impl_from_IUIAnimationTimer( iface );
+    FIXME( "stub (%p)->()\n", This );
+    return S_OK;
+}
+
+static HRESULT WINAPI timer_Enable (IUIAnimationTimer *iface)
+{
+    struct timer *This = impl_from_IUIAnimationTimer( iface );
+    FIXME( "stub (%p)->()\n", This );
+    return S_OK;
+}
+
+static HRESULT WINAPI timer_Disable (IUIAnimationTimer *iface)
+{
+    struct timer *This = impl_from_IUIAnimationTimer( iface );
+    FIXME( "stub (%p)->()\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI timer_IsEnabled (IUIAnimationTimer *iface)
+{
+    struct timer *This = impl_from_IUIAnimationTimer( iface );
+    FIXME( "stub (%p)->()\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI timer_GetTime (IUIAnimationTimer *iface, UI_ANIMATION_SECONDS *seconds)
+{
+    struct timer *This = impl_from_IUIAnimationTimer( iface );
+    FIXME( "stub (%p)->(%p)\n", This, seconds );
+    return S_OK;
+}
+
+static HRESULT WINAPI timer_SetFrameRateThreshold (IUIAnimationTimer *iface, UINT32 frames_per_sec)
+{
+    struct timer *This = impl_from_IUIAnimationTimer( iface );
+    FIXME( "stub (%p)->(%d)\n", This, frames_per_sec );
+    return E_NOTIMPL;
+}
+
+const struct IUIAnimationTimerVtbl timer_vtbl =
+{
+    timer_QueryInterface,
+    timer_AddRef,
+    timer_Release,
+    timer_SetTimerUpdateHandler,
+    timer_SetTimerEventHandler,
+    timer_Enable,
+    timer_Disable,
+    timer_IsEnabled,
+    timer_GetTime,
+    timer_SetFrameRateThreshold,
+};
+
+static HRESULT timer_create( IUnknown *outer, REFIID iid, void **obj )
+{
+    struct timer *This = heap_alloc( sizeof(*This) );
+    HRESULT hr;
+
+    if (!This)
+        return E_OUTOFMEMORY;
+    This->IUIAnimationTimer_iface.lpVtbl = &timer_vtbl;
+    This->ref = 1;
+
+    hr = IUIAnimationTimer_QueryInterface( &This->IUIAnimationTimer_iface, iid, obj );
+
+    IUIAnimationTimer_Release( &This->IUIAnimationTimer_iface );
+    return hr;
+}
+
 static struct class_factory manager_cf = { { &class_factory_vtbl }, manager_create };
+static struct class_factory timer_cf   = { { &class_factory_vtbl }, timer_create };
 
 /******************************************************************
  *             DllGetClassObject
@@ -364,6 +502,8 @@ HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID iid, void **obj )
 
     if (IsEqualCLSID( clsid, &CLSID_UIAnimationManager ))
         cf = &manager_cf.IClassFactory_iface;
+    else if (IsEqualCLSID( clsid, &CLSID_UIAnimationTimer ))
+        cf = &timer_cf.IClassFactory_iface;
 
     if (!cf)
         return CLASS_E_CLASSNOTAVAILABLE;
