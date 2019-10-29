@@ -574,8 +574,6 @@ static const IKsControlVtbl DMSynthImpl_IKsControl_Vtbl = {
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj)
 {
-    static const WCHAR descrW[] = {'M','i','c','r','o','s','o','f','t',' ',
-        'S','y','n','t','h','e','s','i','z','e','r',0};
     IDirectMusicSynth8Impl *obj;
     HRESULT hr;
 
@@ -600,7 +598,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj)
     obj->pCaps.dwMaxVoices = 1000;
     obj->pCaps.dwMaxAudioChannels = 2;
     obj->pCaps.dwEffectFlags = DMUS_EFFECT_REVERB;
-    lstrcpyW(obj->pCaps.wszDescription, descrW);
+    lstrcpyW(obj->pCaps.wszDescription, L"Microsoft Synthesizer");
 
     DMSYNTH_LockModule();
     hr = IDirectMusicSynth8_QueryInterface(&obj->IDirectMusicSynth8_iface, riid, ppobj);
