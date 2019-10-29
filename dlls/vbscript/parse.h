@@ -24,6 +24,7 @@ typedef enum {
     EXPR_CALL,
     EXPR_CONCAT,
     EXPR_DIV,
+    EXPR_DOT,
     EXPR_DOUBLE,
     EXPR_EMPTY,
     EXPR_EQUAL,
@@ -125,6 +126,7 @@ typedef enum {
     STAT_UNTIL,
     STAT_WHILE,
     STAT_WHILELOOP,
+    STAT_WITH,
     STAT_RETVAL
 } statement_type_t;
 
@@ -254,6 +256,12 @@ typedef struct {
     expression_t *expr;
     case_clausule_t *case_clausules;
 } select_statement_t;
+
+typedef struct {
+    statement_t stat;
+    expression_t *expr;
+    statement_t *body;
+} with_statement_t;
 
 typedef struct {
     statement_t stat;

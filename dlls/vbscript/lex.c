@@ -88,6 +88,7 @@ static const struct {
     {L"until",     tUNTIL},
     {L"wend",      tWEND},
     {L"while",     tWHILE},
+    {L"with",      tWITH},
     {L"xor",       tXOR}
 };
 
@@ -379,9 +380,17 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
     case '/':
     case '^':
     case '\\':
-    case '.':
     case '_':
         return *ctx->ptr++;
+    case '.':
+        /*
+         * We need to distinguish between '.' used as part of a member expression and
+         * a beginning of a dot expression (a member expression accessing with statement
+         * expression).
+         */
+        c = ctx->ptr > ctx->code ? ctx->ptr[-1] : '\n';
+        ctx->ptr++;
+        return is_identifier_char(c) || c == ')' ? '.' : tDOT;
     case '-':
         if(ctx->is_html && ctx->ptr[1] == '-' && ctx->ptr[2] == '>')
             return comment_line(ctx);

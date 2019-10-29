@@ -59,6 +59,7 @@ static statement_t *new_function_statement(parser_ctx_t*,function_decl_t*);
 static statement_t *new_onerror_statement(parser_ctx_t*,BOOL);
 static statement_t *new_const_statement(parser_ctx_t*,const_decl_t*);
 static statement_t *new_select_statement(parser_ctx_t*,expression_t*,case_clausule_t*);
+static statement_t *new_with_statement(parser_ctx_t*,expression_t*,statement_t*);
 
 static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,BOOL,dim_list_t*);
 static dim_list_t *new_dim(parser_ctx_t*,unsigned,dim_list_t*);
@@ -107,14 +108,14 @@ static statement_t *link_statements(statement_t*,statement_t*);
 
 %token tEXPRESSION tEOF tNL tEMPTYBRACKETS
 %token tLTEQ tGTEQ tNEQ
-%token tSTOP tME tREM
+%token tSTOP tME tREM tDOT
 %token <string> tTRUE tFALSE
 %token <string> tNOT tAND tOR tXOR tEQV tIMP
 %token <string> tIS tMOD
 %token <string> tCALL tDIM tSUB tFUNCTION tGET tLET tCONST
 %token <string> tIF tELSE tELSEIF tEND tTHEN tEXIT
 %token <string> tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tEACH tIN
-%token <string> tSELECT tCASE
+%token <string> tSELECT tCASE tWITH
 %token <string> tBYREF tBYVAL
 %token <string> tOPTION
 %token <string> tNOTHING tEMPTY tNULL
@@ -221,10 +222,14 @@ SimpleStatement
                                             { $$ = new_foreach_statement(ctx, $3, $5, $7); }
     | tSELECT tCASE Expression StSep CaseClausules tEND tSELECT
                                             { $$ = new_select_statement(ctx, $3, $5); }
+    | tWITH Expression StSep StatementsNl_opt tEND tWITH
+                                            { $$ = new_with_statement(ctx, $2, $4); }
 
 MemberExpression
     : Identifier                            { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
     | CallExpression '.' DotIdentifier      { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
+    | tDOT DotIdentifier                    { expression_t *dot_expr = new_expression(ctx, EXPR_DOT, sizeof(*dot_expr)); CHECK_ERROR;
+                                              $$ = new_member_expression(ctx, dot_expr, $2); CHECK_ERROR; }
 
 DimDeclList
     : DimDecl                               { $$ = $1; }
@@ -943,6 +948,19 @@ static statement_t *new_select_statement(parser_ctx_t *ctx, expression_t *expr, 
 
     stat->expr = expr;
     stat->case_clausules = case_clausules;
+    return &stat->stat;
+}
+
+static statement_t *new_with_statement(parser_ctx_t *ctx, expression_t *expr, statement_t *body)
+{
+    with_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_WITH, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->expr = expr;
+    stat->body = body;
     return &stat->stat;
 }
 
