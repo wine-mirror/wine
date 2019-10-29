@@ -1123,8 +1123,6 @@ static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
     static const UINT8 asfmagic[] = {0x30,0x26,0xb2,0x75,0x8e,0x66,0xcf,0x11,0xa6,0xd9,0x00,0xaa,0x00,0x62,0xce,0x6c};
     static const UINT8 wavmagic[] = { 'R', 'I', 'F', 'F',0x00,0x00,0x00,0x00, 'W', 'A', 'V', 'E', 'f', 'm', 't', ' '};
     static const UINT8 wavmask[]  = {0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
-    static const WCHAR asfW[] = {'.','a','s','f',0};
-    static const WCHAR wavW[] = {'.','w','a','v',0};
     static const struct stream_content_url_hint
     {
         const UINT8 *magic;
@@ -1134,8 +1132,8 @@ static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
     }
     url_hints[] =
     {
-        { asfmagic, sizeof(asfmagic), asfW },
-        { wavmagic, sizeof(wavmagic), wavW, wavmask },
+        { asfmagic, sizeof(asfmagic), L".asf" },
+        { wavmagic, sizeof(wavmagic), L".wav", wavmask },
     };
     UINT8 buffer[4 * sizeof(unsigned int)];
     IMFAttributes *attributes;
