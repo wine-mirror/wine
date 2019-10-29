@@ -47,6 +47,42 @@ static void test_UIAnimationManager(void)
     IUIAnimationManager_Release(manager);
 }
 
+static void test_IUIAnimationTimer(void)
+{
+    HRESULT hr;
+    IUIAnimationTimer *timer;
+
+    hr = CoCreateInstance( &CLSID_UIAnimationTimer, NULL, CLSCTX_ALL, &IID_IUIAnimationTimer, (void**)&timer);
+    if(FAILED(hr))
+    {
+        win_skip("IUIAnimationTimer not found\n");
+        return;
+    }
+
+    hr = IUIAnimationTimer_IsEnabled(timer);
+    todo_wine ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    hr = IUIAnimationTimer_Enable(timer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IUIAnimationTimer_Enable(timer);
+    todo_wine ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    hr = IUIAnimationTimer_IsEnabled(timer);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IUIAnimationTimer_Disable(timer);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IUIAnimationTimer_Disable(timer);
+    todo_wine ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    hr = IUIAnimationTimer_IsEnabled(timer);
+    todo_wine ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    IUIAnimationTimer_Release(timer);
+}
+
 START_TEST(uianimation)
 {
     HRESULT hr;
@@ -57,6 +93,7 @@ START_TEST(uianimation)
         return;
 
     test_UIAnimationManager();
+    test_IUIAnimationTimer();
 
     CoUninitialize();
 }
