@@ -145,19 +145,25 @@ struct progidredirect_data
     ULONG clsid_offset;
 };
 
+enum class_reg_data_origin
+{
+    CLASS_REG_ACTCTX,
+    CLASS_REG_REGISTRY,
+};
+
 struct class_reg_data
 {
+    enum class_reg_data_origin origin;
     union
     {
         struct
         {
-            struct comclassredirect_data *data;
-            void *section;
+            const WCHAR *module_name;
+            DWORD threading_model;
             HANDLE hactctx;
         } actctx;
         HKEY hkey;
     } u;
-    BOOL hkey;
 };
 
 struct registered_psclsid
@@ -1408,7 +1414,7 @@ static BOOL get_object_dll_path(const struct class_reg_data *regdata, WCHAR *dst
 {
     DWORD ret;
 
-    if (regdata->hkey)
+    if (regdata->origin == CLASS_REG_REGISTRY)
     {
 	DWORD keytype;
 	WCHAR src[MAX_PATH];
@@ -1437,12 +1443,10 @@ static BOOL get_object_dll_path(const struct class_reg_data *regdata, WCHAR *dst
     {
         static const WCHAR dllW[] = {'.','d','l','l',0};
         ULONG_PTR cookie;
-        WCHAR *nameW;
 
         *dst = 0;
-        nameW = (WCHAR*)((BYTE*)regdata->u.actctx.section + regdata->u.actctx.data->name_offset);
         ActivateActCtx(regdata->u.actctx.hactctx, &cookie);
-        ret = SearchPathW(NULL, nameW, dllW, dstlen, dst, NULL);
+        ret = SearchPathW(NULL, regdata->u.actctx.module_name, dllW, dstlen, dst, NULL);
         DeactivateActCtx(0, cookie);
         return *dst != 0;
     }
@@ -2990,7 +2994,7 @@ HRESULT WINAPI CoRegisterClassObject(
 
 static enum comclass_threadingmodel get_threading_model(const struct class_reg_data *data)
 {
-    if (data->hkey)
+    if (data->origin == CLASS_REG_REGISTRY)
     {
         static const WCHAR wszThreadingModel[] = {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
         static const WCHAR wszApartment[] = {'A','p','a','r','t','m','e','n','t',0};
@@ -3014,7 +3018,7 @@ static enum comclass_threadingmodel get_threading_model(const struct class_reg_d
         return ThreadingModel_No;
     }
     else
-        return data->u.actctx.data->model;
+        return data->u.actctx.threading_model;
 }
 
 static HRESULT get_inproc_class_object(APARTMENT *apt, const struct class_reg_data *regdata,
@@ -3098,7 +3102,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
     REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo,
     REFIID iid, LPVOID *ppv)
 {
-    struct class_reg_data clsreg;
+    struct class_reg_data clsreg = { 0 };
     IUnknown *regClassObject;
     HRESULT	hres = E_UNEXPECTED;
     APARTMENT  *apt;
@@ -3144,10 +3148,10 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
         {
             struct comclassredirect_data *comclass = (struct comclassredirect_data*)data.lpData;
 
+            clsreg.u.actctx.module_name = (WCHAR *)((BYTE *)data.lpSectionBase + comclass->name_offset);
             clsreg.u.actctx.hactctx = data.hActCtx;
-            clsreg.u.actctx.data = data.lpData;
-            clsreg.u.actctx.section = data.lpSectionBase;
-            clsreg.hkey = FALSE;
+            clsreg.u.actctx.threading_model = comclass->model;
+            clsreg.origin = CLASS_REG_ACTCTX;
 
             hres = get_inproc_class_object(apt, &clsreg, &comclass->clsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
             ReleaseActCtx(data.hActCtx);
@@ -3197,7 +3201,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
         if (SUCCEEDED(hres))
         {
             clsreg.u.hkey = hkey;
-            clsreg.hkey = TRUE;
+            clsreg.origin = CLASS_REG_REGISTRY;
 
             hres = get_inproc_class_object(apt, &clsreg, rclsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
             RegCloseKey(hkey);
@@ -3233,7 +3237,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
         if (SUCCEEDED(hres))
         {
             clsreg.u.hkey = hkey;
-            clsreg.hkey = TRUE;
+            clsreg.origin = CLASS_REG_REGISTRY;
 
             hres = get_inproc_class_object(apt, &clsreg, rclsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
             RegCloseKey(hkey);
@@ -5171,7 +5175,7 @@ HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
         WCHAR dllpath[MAX_PATH+1];
 
         regdata.u.hkey = hkey;
-        regdata.hkey = TRUE;
+        regdata.origin = CLASS_REG_REGISTRY;
 
         if (get_object_dll_path(&regdata, dllpath, ARRAY_SIZE(dllpath)))
         {
