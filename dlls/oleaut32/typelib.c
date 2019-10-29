@@ -6882,23 +6882,8 @@ HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VART
     }
     else func = (void *)offset;
 
-    /* Determine if we need to pass a pointer for the return value as arg 0.  If so, do that */
-    /*  first as it will need to be in the 'x' registers:                                    */
-    switch (ret_type)
-    {
-    case VT_DECIMAL:
-    case VT_VARIANT:
-        regs.x[8] = (DWORD_PTR)result;  /* x8 is a pointer to the result */
-        break;
-    case VT_HRESULT:
-        WARN("invalid return type %u\n", ret_type);
-        return E_INVALIDARG;
-    default:
-        break;
-    }
-
-    /* maximum size for an argument is sizeof(VARIANT).  Also allow for return pointer and stack alignment. */
-    args = heap_alloc( sizeof(VARIANT) * count + sizeof(DWORD_PTR) * 4 );
+    /* maximum size for an argument is 16 */
+    args = heap_alloc( 16 * count );
 
     for (i = 0; i < count; i++)
     {
@@ -6906,8 +6891,6 @@ HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VART
 
         switch (types[i])
         {
-        case VT_EMPTY:
-            break;
         case VT_R4:
             if (fpcount < 8) regs.fp[fpcount++].f = V_R4(arg);
             else *(float *)&args[argspos++] = V_R4(arg);
@@ -6918,7 +6901,6 @@ HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VART
             else *(double *)&args[argspos++] = V_R8(arg);
             break;
         case VT_DECIMAL:
-        case VT_VARIANT:
             if (rcount < 7)
             {
                 memcpy( &regs.x[rcount], arg, sizeof(*arg) );
@@ -6929,6 +6911,10 @@ HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VART
                 memcpy( &args[argspos], arg, sizeof(*arg) );
                 argspos += 2;
             }
+            break;
+        case VT_VARIANT:
+            if (rcount < 8) regs.x[rcount++] = (DWORD_PTR)arg;
+            else args[argspos++] = (DWORD_PTR)arg;
             break;
         case VT_BOOL:  /* VT_BOOL is 16-bit but BOOL is 32-bit, needs to be extended */
             if (rcount < 8) regs.x[rcount++] = V_BOOL(arg);
@@ -6946,9 +6932,12 @@ HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VART
 
     switch (ret_type)
     {
-    case VT_EMPTY:      /* EMPTY = no return value */
-    case VT_DECIMAL:    /* DECIMAL and VARIANT already have a pointer argument passed (see above) */
+    case VT_HRESULT:
+        heap_free( args );
+        return E_INVALIDARG;
+    case VT_DECIMAL:
     case VT_VARIANT:
+        regs.x[8] = (DWORD_PTR)result;  /* x8 is a pointer to the result */
         call_method( func, argspos, args, (DWORD_PTR *)&regs );
         break;
     case VT_R4:

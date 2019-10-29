@@ -1201,17 +1201,37 @@ static HRESULT WINAPI ret_false_func(void)
 
 static const WCHAR testW[] = { 'T','e','s','t',0 };
 
-static void WINAPI variant_func2(VARIANT *ret, VARIANT v1, VARIANT v2)
+static VARIANT WINAPI variant_func2(VARIANT v1, VARIANT v2)
 {
+    VARIANT ret;
+
     ok(V_VT(&v1) == VT_I4, "unexpected %d\n", V_VT(&v1));
     ok(V_I4(&v1) == 2, "unexpected %d\n", V_I4(&v1));
     ok(V_VT(&v2) == VT_BSTR, "unexpected %d\n", V_VT(&v2));
     ok(lstrcmpW(V_BSTR(&v2), testW) == 0, "unexpected %s\n", wine_dbgstr_w(V_BSTR(&v2)));
 
-    V_VT(ret) = VT_UI4;
-    V_I4(ret) = 4321;
+    V_VT(&ret) = VT_UI4;
+    V_I4(&ret) = 4321;
+    return ret;
 }
 
+#ifdef __aarch64__
+static VARIANT WINAPI inst_func2(void *inst, VARIANT v1, VARIANT v2)
+{
+    VARIANT ret;
+
+    ok( (*(void ***)inst)[3] == inst_func2, "wrong ptr %p\n", inst );
+
+    ok(V_VT(&v1) == VT_I4, "unexpected %d\n", V_VT(&v1));
+    ok(V_I4(&v1) == 2, "unexpected %d\n", V_I4(&v1));
+    ok(V_VT(&v2) == VT_BSTR, "unexpected %d\n", V_VT(&v2));
+    ok(lstrcmpW(V_BSTR(&v2), testW) == 0, "unexpected %s\n", wine_dbgstr_w(V_BSTR(&v2)));
+
+    V_VT(&ret) = VT_UI4;
+    V_I4(&ret) = 4321;
+    return ret;
+}
+#else
 static void WINAPI inst_func2(void *inst, VARIANT *ret, VARIANT v1, VARIANT v2)
 {
     ok( (*(void ***)inst)[3] == inst_func2, "wrong ptr %p\n", inst );
@@ -1227,6 +1247,7 @@ static void WINAPI inst_func2(void *inst, VARIANT *ret, VARIANT v1, VARIANT v2)
     V_VT(ret) = VT_UI4;
     V_I4(ret) = 4321;
 }
+#endif
 
 static void *vtable[] = { NULL, NULL, NULL, inst_func };
 static void *vtable2[] = { NULL, NULL, NULL, inst_func2 };
