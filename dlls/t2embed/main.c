@@ -107,8 +107,6 @@ LONG WINAPI TTGetEmbeddingType(HDC hDC, ULONG *status)
 
 LONG WINAPI TTIsEmbeddingEnabledForFacename(LPCSTR facename, BOOL *enabled)
 {
-    static const WCHAR exclusionlistW[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-        'S','h','a','r','e','d',' ','T','o','o','l','s','\\','t','2','e','m','b','e','d',0};
     DWORD index;
     HKEY hkey;
     LONG ret;
@@ -122,7 +120,7 @@ LONG WINAPI TTIsEmbeddingEnabledForFacename(LPCSTR facename, BOOL *enabled)
         return E_PBENABLEDINVALID;
 
     *enabled = TRUE;
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, exclusionlistW, 0, GENERIC_READ, &hkey))
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Shared Tools\\t2embed", 0, GENERIC_READ, &hkey))
         goto out;
 
     *enabled = TRUE;
