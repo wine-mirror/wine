@@ -2583,6 +2583,31 @@ static void test__creat(void)
         p__set_fmode(old_fmode);
 }
 
+static void test_lseek(void)
+{
+    int fd;
+    char testdata[4] = {'a', '\n', 'b', '\n'};
+
+    errno = 0xdeadbeef;
+    ok(_lseek(-42, 0, SEEK_SET) == -1, "expected failure\n");
+    ok(errno == EBADF, "errno = %d\n", errno);
+
+    fd = _creat("_creat.tst", _S_IWRITE);
+    ok(fd > 0, "_creat failed\n");
+    _write(fd, testdata, 4);
+
+    errno = 0xdeadbeef;
+    ok(_lseek(fd, 0, 42) == -1, "expected failure\n");
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ok(_lseek(fd, -42, SEEK_SET) == -1, "expected failure\n");
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    _close(fd);
+    DeleteFileA("_creat.tst");
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -2654,6 +2679,7 @@ START_TEST(file)
     test_write_flush();
     test_close();
     test__creat();
+    test_lseek();
 
     /* Wait for the (_P_NOWAIT) spawned processes to finish to make sure the report
      * file contains lines in the correct order

@@ -1265,6 +1265,7 @@ __int64 CDECL MSVCRT__lseeki64(int fd, __int64 offset, int whence)
 
   if (info->handle == INVALID_HANDLE_VALUE)
   {
+    *MSVCRT__errno() = MSVCRT_EBADF;
     release_ioinfo(info);
     return -1;
   }
