@@ -968,6 +968,14 @@ static void test_strftime(void)
     ok(retA == 1, "expected 1, got %d\n", (int)retA);
     ok(!strcmp(bufA, "\t"), "got %s\n", bufA);
 
+    retA = p_strftime(bufA, sizeof(bufA), "%g", &epoch);
+    ok(retA == 2, "expected 2, got %d\n", (int)retA);
+    ok(!strcmp(bufA, "70"), "got %s\n", bufA);
+
+    retA = p_strftime(bufA, sizeof(bufA), "%g", &tm1);
+    ok(retA == 2, "expected 2, got %d\n", (int)retA);
+    ok(!strcmp(bufA, "16"), "got %s\n", bufA);
+
     retA = p_strftime(bufA, sizeof(bufA), "%G", &epoch);
     ok(retA == 4, "expected 4, got %d\n", (int)retA);
     ok(!strcmp(bufA, "1970"), "got %s\n", bufA);
@@ -980,6 +988,13 @@ static void test_strftime(void)
     {
         __time32_t t = (365*2 + i - 7) * 24 * 60 * 60;
         struct tm tm = *p__gmtime32(&t);
+
+        retA = p_strftime(bufA, sizeof(bufA), "%g", &tm);
+        ok(retA == 2, "%d) retA = %d\n", i, (int)retA);
+        if (i <= 8)
+            ok(!strcmp(bufA, "71"), "%d) got %s, expected 71\n", i, bufA);
+        else
+            ok(!strcmp(bufA, "72"), "%d) got %s, expected 72\n", i, bufA);
 
         retA = p_strftime(bufA, sizeof(bufA), "%G", &tm);
         ok(retA == 4, "%d) retA = %d\n", i, (int)retA);
