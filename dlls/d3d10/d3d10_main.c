@@ -24,6 +24,25 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
+#define WINE_D3D10_TO_STR(x) case x: return #x
+
+static const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type)
+{
+    switch (driver_type)
+    {
+        WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_HARDWARE);
+        WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_REFERENCE);
+        WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_NULL);
+        WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_SOFTWARE);
+        WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_WARP);
+        default:
+            FIXME("Unrecognised D3D10_DRIVER_TYPE %#x.\n", driver_type);
+            return "unrecognised";
+    }
+}
+
+#undef WINE_D3D10_TO_STR
+
 static HRESULT d3d10_create_device(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,
         HMODULE swrast, UINT flags, UINT sdk_version, ID3D10Device **device)
 {

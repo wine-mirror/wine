@@ -41,7 +41,6 @@
 #define D3DERR_INVALIDCALL 0x8876086c
 
 /* TRACE helper functions */
-const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type) DECLSPEC_HIDDEN;
 const char *debug_d3d10_device_state_types(D3D10_DEVICE_STATE_TYPES t) DECLSPEC_HIDDEN;
 
 enum d3d10_effect_object_type
