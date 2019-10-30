@@ -125,7 +125,7 @@ static void test_EnumProcessModules(void)
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess failed: %u\n", GetLastError());
 
-    ret = WaitForInputIdle(pi.hProcess, 1000);
+    ret = WaitForInputIdle(pi.hProcess, 5000);
     ok(!ret, "wait timed out\n");
 
     SetLastError(0xdeadbeef);
@@ -146,7 +146,7 @@ static void test_EnumProcessModules(void)
         ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "CreateProcess failed: %u\n", GetLastError());
 
-        ret = WaitForInputIdle(pi.hProcess, 1000);
+        ret = WaitForInputIdle(pi.hProcess, 5000);
         ok(!ret, "wait timed out\n");
 
         SetLastError(0xdeadbeef);
@@ -180,7 +180,7 @@ todo_wine
         pWow64RevertWow64FsRedirection(cookie);
         ok(ret, "CreateProcess failed: %u\n", GetLastError());
 
-        ret = WaitForInputIdle(pi.hProcess, 1000);
+        ret = WaitForInputIdle(pi.hProcess, 5000);
         ok(!ret, "wait timed out\n");
 
         SetLastError(0xdeadbeef);
