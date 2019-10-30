@@ -3742,6 +3742,12 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         /* The format of the GLSL version string is "major.minor[.release] [vendor info]". */
         sscanf(str, "%u.%u", &major, &minor);
         gl_info->glsl_version = MAKEDWORD_VERSION(major, minor);
+        if (gl_info->glsl_version > MAKEDWORD_VERSION(1, 30) && gl_version < MAKEDWORD_VERSION(3, 0))
+        {
+            WARN("OpenGL version %u.%u too low, limiting GLSL version to 1.30.\n",
+                    gl_version >> 16, gl_version & 0xffff);
+            gl_info->glsl_version = MAKEDWORD_VERSION(1, 30);
+        }
         if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30))
             gl_info->supported[WINED3D_GLSL_130] = TRUE;
     }
