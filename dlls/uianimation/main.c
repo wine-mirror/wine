@@ -119,6 +119,225 @@ static const struct IClassFactoryVtbl class_factory_vtbl =
 };
 
 /***********************************************************************
+ *          IUIAnimationStoryboard
+ */
+struct animation_storyboard
+{
+    IUIAnimationStoryboard IUIAnimationStoryboard_iface;
+    LONG ref;
+};
+
+struct animation_storyboard *impl_from_IUIAnimationStoryboard( IUIAnimationStoryboard *iface )
+{
+    return CONTAINING_RECORD( iface, struct animation_storyboard, IUIAnimationStoryboard_iface );
+}
+
+static HRESULT WINAPI WINAPI animation_storyboard_QueryInterface( IUIAnimationStoryboard *iface,
+                                                 REFIID iid, void **obj )
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+
+    TRACE( "(%p)->(%s %p)\n", This, debugstr_guid( iid ), obj );
+
+    if (IsEqualIID( iid, &IID_IUnknown ) ||
+        IsEqualIID( iid, &IID_IUIAnimationStoryboard ))
+    {
+        IUIAnimationStoryboard_AddRef( iface );
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME( "interface %s not implemented\n", debugstr_guid( iid ) );
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI animation_storyboard_AddRef( IUIAnimationStoryboard *iface )
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+    return ref;
+}
+
+static ULONG WINAPI animation_storyboard_Release( IUIAnimationStoryboard *iface )
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+
+    if (!ref)
+        heap_free( This );
+
+    return ref;
+}
+
+static HRESULT WINAPI animation_storyboard_AddTransition (IUIAnimationStoryboard *iface, IUIAnimationVariable *variable,
+        IUIAnimationTransition *transition)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return S_OK;
+}
+
+static HRESULT WINAPI animation_storyboard_AddKeyframeAtOffset (IUIAnimationStoryboard *iface, UI_ANIMATION_KEYFRAME existingframe,
+        UI_ANIMATION_SECONDS offset, UI_ANIMATION_KEYFRAME *keyframe)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI animation_storyboard_AddKeyframeAfterTransition (IUIAnimationStoryboard *iface,IUIAnimationTransition *transition,
+        UI_ANIMATION_KEYFRAME *keyframe)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return S_OK;
+}
+
+static HRESULT WINAPI animation_storyboard_AddTransitionAtKeyframe (IUIAnimationStoryboard *iface, IUIAnimationVariable *variable,
+        IUIAnimationTransition *transition, UI_ANIMATION_KEYFRAME start_key)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI animation_storyboard_AddTransitionBetweenKeyframes (IUIAnimationStoryboard *iface, IUIAnimationVariable *variable,
+        IUIAnimationTransition *transition, UI_ANIMATION_KEYFRAME start_key, UI_ANIMATION_KEYFRAME end_key)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI animation_storyboard_RepeatBetweenKeyframes (IUIAnimationStoryboard *iface, UI_ANIMATION_KEYFRAME start_key,
+        UI_ANIMATION_KEYFRAME end_key, INT32 count)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return S_OK;
+}
+
+static HRESULT WINAPI animation_storyboard_HoldVariable (IUIAnimationStoryboard *iface,  IUIAnimationVariable *variable)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI animation_storyboard_SetLongestAcceptableDelay (IUIAnimationStoryboard *iface,  UI_ANIMATION_SECONDS delay)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI animation_storyboard_Schedule (IUIAnimationStoryboard *iface, UI_ANIMATION_SECONDS now,
+        UI_ANIMATION_SCHEDULING_RESULT *result)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return 0;
+}
+
+static HRESULT WINAPI animation_storyboard_Conclude (IUIAnimationStoryboard *iface)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI animation_storyboard_Finish (IUIAnimationStoryboard *iface,  UI_ANIMATION_SECONDS deadline)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI animation_storyboard_Abandon (IUIAnimationStoryboard *iface)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI animation_storyboard_SetTag(IUIAnimationStoryboard *iface, IUnknown *object, UINT32 id)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI animation_storyboard_GetTag (IUIAnimationStoryboard *iface, IUnknown **object, UINT32 *id)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI animation_storyboard_GetStatus (IUIAnimationStoryboard *iface, UI_ANIMATION_STORYBOARD_STATUS *status)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI animation_storyboard_GetElapsedTime (IUIAnimationStoryboard *iface,  UI_ANIMATION_SECONDS *elapsed)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI animation_storyboard_SetStoryboardEventHandler (IUIAnimationStoryboard *iface, IUIAnimationStoryboardEventHandler *handler)
+{
+    struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return S_OK;
+}
+
+const struct IUIAnimationStoryboardVtbl animation_storyboard_vtbl =
+{
+    animation_storyboard_QueryInterface,
+    animation_storyboard_AddRef,
+    animation_storyboard_Release,
+    animation_storyboard_AddTransition,
+    animation_storyboard_AddKeyframeAtOffset,
+    animation_storyboard_AddKeyframeAfterTransition,
+    animation_storyboard_AddTransitionAtKeyframe,
+    animation_storyboard_AddTransitionBetweenKeyframes,
+    animation_storyboard_RepeatBetweenKeyframes,
+    animation_storyboard_HoldVariable,
+    animation_storyboard_SetLongestAcceptableDelay,
+    animation_storyboard_Schedule ,
+    animation_storyboard_Conclude ,
+    animation_storyboard_Finish ,
+    animation_storyboard_Abandon,
+    animation_storyboard_SetTag,
+    animation_storyboard_GetTag ,
+    animation_storyboard_GetStatus ,
+    animation_storyboard_GetElapsedTime,
+    animation_storyboard_SetStoryboardEventHandler
+};
+
+static HRESULT animation_storyboard_create( IUIAnimationStoryboard **obj )
+{
+    struct animation_storyboard *This = heap_alloc( sizeof(*This) );
+
+    if (!This) return E_OUTOFMEMORY;
+    This->IUIAnimationStoryboard_iface.lpVtbl = &animation_storyboard_vtbl;
+    This->ref = 1;
+
+    *obj = &This->IUIAnimationStoryboard_iface;
+
+    return S_OK;
+}
+
+/***********************************************************************
  *          IUIAnimationManager
  */
 struct manager
@@ -192,8 +411,8 @@ static HRESULT WINAPI manager_ScheduleTransition( IUIAnimationManager *iface, IU
 static HRESULT WINAPI manager_CreateStoryboard( IUIAnimationManager *iface, IUIAnimationStoryboard **storyboard )
 {
     struct manager *This = impl_from_IUIAnimationManager( iface );
-    FIXME( "stub (%p)->(%p)\n", This, storyboard );
-    return E_NOTIMPL;
+    TRACE( "(%p)->(%p)\n", This, storyboard );
+    return animation_storyboard_create(storyboard);
 }
 
 static HRESULT WINAPI manager_FinishAllStoryboards( IUIAnimationManager *iface, UI_ANIMATION_SECONDS max_time )
