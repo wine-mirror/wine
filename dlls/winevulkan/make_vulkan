@@ -2962,6 +2962,13 @@ class VkRegistry(object):
         for struct in structs:
             struct.set_type_info(self.types)
 
+            # Alias structures have enum values equivalent to those of the
+            # structure which they are aliased against. we need to ignore alias
+            # structs when populating the struct extensions list, otherwise we
+            # will create duplicate case entries.
+            if struct.alias:
+                continue
+
             for structextend in struct.structextends:
                 s = self.types[structextend]["data"]
                 s.struct_extensions.append(struct)
