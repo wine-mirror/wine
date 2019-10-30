@@ -574,9 +574,198 @@ static HRESULT transition_create( IUnknown *outer, REFIID iid, void **obj )
     return hr;
 }
 
+/***********************************************************************
+ *          IUITransitionLibrary
+ */
+struct tr_library
+{
+    IUIAnimationTransitionLibrary IUIAnimationTransitionLibrary_iface;
+    LONG ref;
+};
+
+struct tr_library *impl_from_IUIAnimationTransitionLibrary( IUIAnimationTransitionLibrary *iface )
+{
+    return CONTAINING_RECORD( iface, struct tr_library, IUIAnimationTransitionLibrary_iface );
+}
+
+static HRESULT WINAPI WINAPI tr_library_QueryInterface( IUIAnimationTransitionLibrary *iface,
+                                                 REFIID iid, void **obj )
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+
+    TRACE( "(%p)->(%s %p)\n", This, debugstr_guid( iid ), obj );
+
+    if (IsEqualIID( iid, &IID_IUnknown ) ||
+        IsEqualIID( iid, &IID_IUIAnimationTransitionLibrary ))
+    {
+        IUIAnimationTransitionLibrary_AddRef( iface );
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME( "interface %s not implemented\n", debugstr_guid( iid ) );
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI tr_library_AddRef( IUIAnimationTransitionLibrary *iface )
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+    return ref;
+}
+
+static ULONG WINAPI tr_library_Release( IUIAnimationTransitionLibrary *iface )
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+
+    if (!ref)
+        heap_free( This );
+
+    return ref;
+}
+
+static HRESULT WINAPI tr_library_CreateInstantaneousTransition(IUIAnimationTransitionLibrary *iface,
+        double finalValue, IUIAnimationTransition **transition)
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    FIXME( "stub (%p)->(%f, %p)\n", This, finalValue, transition );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI tr_library_CreateConstantTransition(IUIAnimationTransitionLibrary *iface,
+        double duration, IUIAnimationTransition **transition)
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    FIXME( "stub (%p)->(%f, %p)\n", This, duration, transition );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI tr_library_CreateDiscreteTransition(IUIAnimationTransitionLibrary *iface,
+        double delay, double finalValue, double hold, IUIAnimationTransition **transition)
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI tr_library_CreateLinearTransition(IUIAnimationTransitionLibrary *iface,
+        double duration, double finalValue, IUIAnimationTransition **transition)
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    FIXME( "stub (%p)->(%f, %f, %p)\n", This, duration, finalValue, transition );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI tr_library_CreateLinearTransitionFromSpeed(IUIAnimationTransitionLibrary *iface,
+        double speed, double finalValue, IUIAnimationTransition **transition)
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    FIXME( "stub (%p)->(%f, %f, %p)\n", This, speed, finalValue, transition );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI tr_library_CreateSinusoidalTransitionFromVelocity(IUIAnimationTransitionLibrary *iface,
+        double duration, double period, IUIAnimationTransition **transition)
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    FIXME( "stub (%p)->(%f, %f, %p)\n", This, duration, period, transition );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI tr_library_CreateSinusoidalTransitionFromRange(IUIAnimationTransitionLibrary *iface,
+        double duration, double minimumValue, double maximumValue, double period,
+        UI_ANIMATION_SLOPE slope, IUIAnimationTransition **transition)
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    FIXME( "stub (%p)->(%f, %f, %f, %f, %d, %p)\n", This, duration, minimumValue, maximumValue, period, slope, transition );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI tr_library_CreateAccelerateDecelerateTransition(IUIAnimationTransitionLibrary *iface,
+        double duration, double finalValue, double accelerationRatio, double decelerationRatio,
+        IUIAnimationTransition **transition)
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    FIXME( "stub (%p)->(%f, %f, %f, %f, %p)\n", This, duration, finalValue, accelerationRatio, decelerationRatio, transition );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI tr_library_CreateReversalTransition(IUIAnimationTransitionLibrary *iface, double duration,
+        IUIAnimationTransition **transition)
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    FIXME( "stub (%p)->(%f, %p)\n", This, duration, transition );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI tr_library_CreateCubicTransition(IUIAnimationTransitionLibrary *iface, double duration,
+        double finalValue, double finalVelocity, IUIAnimationTransition **transition)
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    FIXME( "stub (%p)->(%f, %f, %f, %p)\n", This, duration, finalValue, finalVelocity, transition );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI tr_library_CreateSmoothStopTransition(IUIAnimationTransitionLibrary *iface,
+        double maximumDuration, double finalValue, IUIAnimationTransition **transition)
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    FIXME( "stub (%p)->(%f, %f, %p)\n", This, maximumDuration, finalValue, transition );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI tr_library_CreateParabolicTransitionFromAcceleration(IUIAnimationTransitionLibrary *iface,
+        double finalValue, double finalVelocity, double acceleration, IUIAnimationTransition **transition)
+{
+    struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
+    FIXME( "stub (%p)->(  )\n", This );
+    return E_NOTIMPL;
+}
+
+const struct IUIAnimationTransitionLibraryVtbl tr_library_vtbl =
+{
+    tr_library_QueryInterface,
+    tr_library_AddRef,
+    tr_library_Release,
+    tr_library_CreateInstantaneousTransition,
+    tr_library_CreateConstantTransition,
+    tr_library_CreateDiscreteTransition,
+    tr_library_CreateLinearTransition,
+    tr_library_CreateLinearTransitionFromSpeed,
+    tr_library_CreateSinusoidalTransitionFromVelocity,
+    tr_library_CreateSinusoidalTransitionFromRange,
+    tr_library_CreateAccelerateDecelerateTransition,
+    tr_library_CreateReversalTransition,
+    tr_library_CreateCubicTransition,
+    tr_library_CreateSmoothStopTransition,
+    tr_library_CreateParabolicTransitionFromAcceleration,
+};
+
+static HRESULT library_create( IUnknown *outer, REFIID iid, void **obj )
+{
+    struct tr_library *This = heap_alloc( sizeof(*This) );
+    HRESULT hr;
+
+    if (!This) return E_OUTOFMEMORY;
+    This->IUIAnimationTransitionLibrary_iface.lpVtbl = &tr_library_vtbl;
+    This->ref = 1;
+
+    hr = IUIAnimationTransitionLibrary_QueryInterface( &This->IUIAnimationTransitionLibrary_iface, iid, obj );
+
+    IUIAnimationTransitionLibrary_Release( &This->IUIAnimationTransitionLibrary_iface );
+    return hr;
+}
+
 static struct class_factory manager_cf = { { &class_factory_vtbl }, manager_create };
 static struct class_factory timer_cf   = { { &class_factory_vtbl }, timer_create };
 static struct class_factory transition_cf = { { &class_factory_vtbl }, transition_create };
+static struct class_factory library_cf = { { &class_factory_vtbl }, library_create };
 
 /******************************************************************
  *             DllGetClassObject
@@ -593,6 +782,8 @@ HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID iid, void **obj )
         cf = &timer_cf.IClassFactory_iface;
     else if (IsEqualCLSID( clsid, &CLSID_UIAnimationTransitionFactory ))
         cf = &transition_cf.IClassFactory_iface;
+    else if (IsEqualCLSID( clsid, &CLSID_UIAnimationTransitionLibrary ))
+        cf = &library_cf.IClassFactory_iface;
 
     if (!cf)
         return CLASS_E_CLASSNOTAVAILABLE;
