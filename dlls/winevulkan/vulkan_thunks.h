@@ -945,6 +945,7 @@ struct vulkan_device_funcs
     void (*p_vkCmdSetDiscardRectangleEXT)(VkCommandBuffer, uint32_t, uint32_t, const VkRect2D *);
     void (*p_vkCmdSetEvent)(VkCommandBuffer, VkEvent, VkPipelineStageFlags);
     void (*p_vkCmdSetExclusiveScissorNV)(VkCommandBuffer, uint32_t, uint32_t, const VkRect2D *);
+    void (*p_vkCmdSetLineStippleEXT)(VkCommandBuffer, uint32_t, uint16_t);
     void (*p_vkCmdSetLineWidth)(VkCommandBuffer, float);
 #if defined(USE_STRUCT_CONVERSION)
     VkResult (*p_vkCmdSetPerformanceMarkerINTEL)(VkCommandBuffer, const VkPerformanceMarkerInfoINTEL_host *);
@@ -1363,6 +1364,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdSetDiscardRectangleEXT) \
     USE_VK_FUNC(vkCmdSetEvent) \
     USE_VK_FUNC(vkCmdSetExclusiveScissorNV) \
+    USE_VK_FUNC(vkCmdSetLineStippleEXT) \
     USE_VK_FUNC(vkCmdSetLineWidth) \
     USE_VK_FUNC(vkCmdSetPerformanceMarkerINTEL) \
     USE_VK_FUNC(vkCmdSetPerformanceOverrideINTEL) \

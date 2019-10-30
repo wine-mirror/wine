@@ -1546,10 +1546,10 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES_KHR:
         {
-            const VkPhysicalDeviceFloat16Int8FeaturesKHR *in = (const VkPhysicalDeviceFloat16Int8FeaturesKHR *)in_header;
-            VkPhysicalDeviceFloat16Int8FeaturesKHR *out;
+            const VkPhysicalDeviceShaderFloat16Int8FeaturesKHR *in = (const VkPhysicalDeviceShaderFloat16Int8FeaturesKHR *)in_header;
+            VkPhysicalDeviceShaderFloat16Int8FeaturesKHR *out;
 
             if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
 
@@ -2013,6 +2013,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceTextureCompressionASTCHDRFeaturesEXT *in = (const VkPhysicalDeviceTextureCompressionASTCHDRFeaturesEXT *)in_header;
+            VkPhysicalDeviceTextureCompressionASTCHDRFeaturesEXT *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->textureCompressionASTC_HDR = in->textureCompressionASTC_HDR;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_NV:
         {
             const VkPhysicalDeviceCooperativeMatrixFeaturesNV *in = (const VkPhysicalDeviceCooperativeMatrixFeaturesNV *)in_header;
@@ -2062,16 +2078,32 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_FUNCTIONS2_FEATURES_INTEL:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_FUNCTIONS_2_FEATURES_INTEL:
         {
-            const VkPhysicalDeviceShaderIntegerFunctions2INTEL *in = (const VkPhysicalDeviceShaderIntegerFunctions2INTEL *)in_header;
-            VkPhysicalDeviceShaderIntegerFunctions2INTEL *out;
+            const VkPhysicalDeviceShaderIntegerFunctions2FeaturesINTEL *in = (const VkPhysicalDeviceShaderIntegerFunctions2FeaturesINTEL *)in_header;
+            VkPhysicalDeviceShaderIntegerFunctions2FeaturesINTEL *out;
 
             if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
 
             out->sType = in->sType;
             out->pNext = NULL;
             out->shaderIntegerFunctions2 = in->shaderIntegerFunctions2;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceIndexTypeUint8FeaturesEXT *in = (const VkPhysicalDeviceIndexTypeUint8FeaturesEXT *)in_header;
+            VkPhysicalDeviceIndexTypeUint8FeaturesEXT *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->indexTypeUint8 = in->indexTypeUint8;
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -2138,6 +2170,27 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             out->sType = in->sType;
             out->pNext = NULL;
             out->texelBufferAlignment = in->texelBufferAlignment;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceLineRasterizationFeaturesEXT *in = (const VkPhysicalDeviceLineRasterizationFeaturesEXT *)in_header;
+            VkPhysicalDeviceLineRasterizationFeaturesEXT *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->rectangularLines = in->rectangularLines;
+            out->bresenhamLines = in->bresenhamLines;
+            out->smoothLines = in->smoothLines;
+            out->stippledRectangularLines = in->stippledRectangularLines;
+            out->stippledBresenhamLines = in->stippledBresenhamLines;
+            out->stippledSmoothLines = in->stippledSmoothLines;
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -2868,6 +2921,12 @@ static void WINAPI wine_vkCmdSetExclusiveScissorNV(VkCommandBuffer commandBuffer
 {
     TRACE("%p, %u, %u, %p\n", commandBuffer, firstExclusiveScissor, exclusiveScissorCount, pExclusiveScissors);
     commandBuffer->device->funcs.p_vkCmdSetExclusiveScissorNV(commandBuffer->command_buffer, firstExclusiveScissor, exclusiveScissorCount, pExclusiveScissors);
+}
+
+static void WINAPI wine_vkCmdSetLineStippleEXT(VkCommandBuffer commandBuffer, uint32_t lineStippleFactor, uint16_t lineStipplePattern)
+{
+    TRACE("%p, %u, %u\n", commandBuffer, lineStippleFactor, lineStipplePattern);
+    commandBuffer->device->funcs.p_vkCmdSetLineStippleEXT(commandBuffer->command_buffer, lineStippleFactor, lineStipplePattern);
 }
 
 void WINAPI wine_vkCmdSetLineWidth(VkCommandBuffer commandBuffer, float lineWidth)
@@ -4359,6 +4418,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetDiscardRectangleEXT", &wine_vkCmdSetDiscardRectangleEXT},
     {"vkCmdSetEvent", &wine_vkCmdSetEvent},
     {"vkCmdSetExclusiveScissorNV", &wine_vkCmdSetExclusiveScissorNV},
+    {"vkCmdSetLineStippleEXT", &wine_vkCmdSetLineStippleEXT},
     {"vkCmdSetLineWidth", &wine_vkCmdSetLineWidth},
     {"vkCmdSetPerformanceMarkerINTEL", &wine_vkCmdSetPerformanceMarkerINTEL},
     {"vkCmdSetPerformanceOverrideINTEL", &wine_vkCmdSetPerformanceOverrideINTEL},
@@ -4613,7 +4673,9 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_fragment_shader_interlock",
     "VK_EXT_global_priority",
     "VK_EXT_host_query_reset",
+    "VK_EXT_index_type_uint8",
     "VK_EXT_inline_uniform_block",
+    "VK_EXT_line_rasterization",
     "VK_EXT_memory_budget",
     "VK_EXT_memory_priority",
     "VK_EXT_pci_bus_info",
@@ -4628,7 +4690,9 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_shader_subgroup_ballot",
     "VK_EXT_shader_subgroup_vote",
     "VK_EXT_shader_viewport_index_layer",
+    "VK_EXT_subgroup_size_control",
     "VK_EXT_texel_buffer_alignment",
+    "VK_EXT_texture_compression_astc_hdr",
     "VK_EXT_transform_feedback",
     "VK_EXT_validation_cache",
     "VK_EXT_vertex_attribute_divisor",
