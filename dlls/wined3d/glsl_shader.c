@@ -2030,9 +2030,17 @@ static void shader_glsl_declare_shader_outputs(const struct wined3d_gl_info *gl_
     }
 }
 
+static BOOL use_legacy_fragment_output(const struct wined3d_gl_info *gl_info)
+{
+    /* Technically 1.30 does support user-defined fragment shader outputs but
+     * we might not have glBindFragDataLocation() available (i.e. GL version
+     * might be < 3.0). */
+    return gl_info->glsl_version <= MAKEDWORD_VERSION(1, 30);
+}
+
 static const char *get_fragment_output(const struct wined3d_gl_info *gl_info)
 {
-    return needs_legacy_glsl_syntax(gl_info) ? "gl_FragData" : "ps_out";
+    return use_legacy_fragment_output(gl_info) ? "gl_FragData" : "ps_out";
 }
 
 static const char *glsl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
@@ -7545,7 +7553,7 @@ static void shader_glsl_generate_ps_epilogue(const struct wined3d_gl_info *gl_in
     if (reg_maps->sample_mask)
         shader_addline(buffer, "gl_SampleMask[0] = floatBitsToInt(sample_mask);\n");
 
-    if (!needs_legacy_glsl_syntax(gl_info))
+    if (!use_legacy_fragment_output(gl_info))
         shader_glsl_generate_color_output(buffer, gl_info, shader, args, string_buffers);
 }
 
@@ -7650,7 +7658,7 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
         shader_addline(buffer, "    float scale;\n");
         shader_addline(buffer, "} ffp_fog;\n");
 
-        if (needs_legacy_glsl_syntax(gl_info))
+        if (legacy_syntax)
         {
             if (glsl_is_color_reg_read(shader, 0))
                 shader_addline(buffer, "vec4 ffp_varying_diffuse;\n");
@@ -7731,7 +7739,7 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
     if (args->alpha_test_func + 1 != WINED3D_CMP_ALWAYS)
         shader_addline(buffer, "uniform float alpha_test_ref;\n");
 
-    if (!needs_legacy_glsl_syntax(gl_info))
+    if (!use_legacy_fragment_output(gl_info))
     {
         const struct wined3d_shader_signature *output_signature = &shader->output_signature;
 
@@ -9482,7 +9490,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
         shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
 
-    if (!needs_legacy_glsl_syntax(gl_info))
+    if (!use_legacy_fragment_output(gl_info))
     {
         shader_addline(buffer, "vec4 ps_out[1];\n");
         if (shader_glsl_use_explicit_attrib_location(gl_info))
@@ -9793,7 +9801,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     shader_glsl_generate_fog_code(buffer, gl_info, settings->fog);
 
     shader_glsl_generate_alpha_test(buffer, gl_info, alpha_test_func);
-    if (!needs_legacy_glsl_syntax(gl_info))
+    if (!use_legacy_fragment_output(gl_info))
         shader_addline(buffer, "color_out0 = ps_out[0];\n");
 
     shader_addline(buffer, "}\n");
@@ -10338,7 +10346,7 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
         }
         checkGLcall("glBindAttribLocation");
 
-        if (!needs_legacy_glsl_syntax(gl_info))
+        if (!use_legacy_fragment_output(gl_info))
         {
             for (i = 0; i < MAX_RENDER_TARGET_VIEWS; ++i)
             {
@@ -12763,7 +12771,7 @@ static GLuint glsl_blitter_generate_program(struct wined3d_glsl_blitter *blitter
     declare_in_varying(gl_info, buffer, FALSE, "vec3 out_texcoord;\n");
     /* TODO: Declare the out variable with the correct type (and put it in the
      * blitter args). */
-    if (!needs_legacy_glsl_syntax(gl_info))
+    if (!use_legacy_fragment_output(gl_info))
         shader_addline(buffer, "out vec4 ps_out[1];\n");
 
     output = string_buffer_get(&blitter->string_buffers);
@@ -12795,7 +12803,7 @@ static GLuint glsl_blitter_generate_program(struct wined3d_glsl_blitter *blitter
     GL_EXTCALL(glBindAttribLocation(program, 0, "pos"));
     GL_EXTCALL(glBindAttribLocation(program, 1, "texcoord"));
 
-    if (!needs_legacy_glsl_syntax(gl_info))
+    if (!use_legacy_fragment_output(gl_info))
         GL_EXTCALL(glBindFragDataLocation(program, 0, "ps_out"));
 
     GL_EXTCALL(glCompileShader(vshader_id));
