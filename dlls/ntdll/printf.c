@@ -43,8 +43,8 @@ static const SIZE_T size_max = ~(SIZE_T)0 >> 1;
 
 typedef struct pf_output_t
 {
-    int used;
-    int len;
+    SIZE_T used;
+    SIZE_T len;
     BOOL unicode;
     union {
         LPWSTR W;
@@ -68,7 +68,7 @@ typedef struct pf_flags_t
  */
 static inline int pf_output_stringW( pf_output *out, LPCWSTR str, int len )
 {
-    int space = out->len - out->used;
+    SIZE_T space = out->len - out->used;
 
     if( len < 0 )
         len = strlenW( str );
@@ -122,7 +122,7 @@ static inline int pf_output_stringW( pf_output *out, LPCWSTR str, int len )
 
 static inline int pf_output_stringA( pf_output *out, LPCSTR str, int len )
 {
-    int space = out->len - out->used;
+    SIZE_T space = out->len - out->used;
 
     if( len < 0 )
         len = strlen( str );
