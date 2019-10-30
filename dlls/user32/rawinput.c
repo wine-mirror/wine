@@ -33,6 +33,7 @@
 #include "ddk/hidsdi.h"
 #include "wine/debug.h"
 #include "wine/server.h"
+#include "wine/hid.h"
 
 #include "user_private.h"
 
@@ -465,6 +466,23 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE device, UINT command, void *data, UINT
         to_copy_bytes = sizeof(info);
         *data_size = to_copy_bytes;
         to_copy = &info;
+        break;
+
+    case RIDI_PREPARSEDDATA:
+        avail_bytes = *data_size;
+        if (device == WINE_MOUSE_HANDLE ||
+                device == WINE_KEYBOARD_HANDLE)
+        {
+            to_copy_bytes = 0;
+            *data_size = 0;
+            to_copy = NULL;
+        }
+        else
+        {
+            to_copy_bytes = ((WINE_HIDP_PREPARSED_DATA*)hid_device->data)->dwSize;
+            *data_size = to_copy_bytes;
+            to_copy = hid_device->data;
+        }
         break;
 
     default:

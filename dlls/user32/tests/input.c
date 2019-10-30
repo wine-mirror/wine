@@ -55,6 +55,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "ddk/hidsdi.h"
 
 #include "wine/test.h"
 
@@ -1605,6 +1606,7 @@ static void test_GetRawInputDeviceList(void)
     RAWINPUTDEVICELIST devices[32];
     UINT ret, oret, devcount, odevcount, i;
     DWORD err;
+    BOOLEAN br;
 
     SetLastError(0xdeadbeef);
     ret = pGetRawInputDeviceList(NULL, NULL, 0);
@@ -1642,6 +1644,7 @@ static void test_GetRawInputDeviceList(void)
         UINT sz, len;
         RID_DEVICE_INFO info;
         HANDLE file;
+        char *ppd;
 
         /* get required buffer size */
         name[0] = '\0';
@@ -1688,6 +1691,44 @@ static void test_GetRawInputDeviceList(void)
         file = CreateFileW(name, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
         todo_wine_if(info.dwType != RIM_TYPEHID)
             ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u\n", wine_dbgstr_w(name), GetLastError());
+
+        sz = 0;
+        ret = pGetRawInputDeviceInfoW(devices[i].hDevice, RIDI_PREPARSEDDATA, NULL, &sz);
+        ok(ret == 0, "GetRawInputDeviceInfo gave wrong return: %u\n", ret);
+        ok((info.dwType == RIM_TYPEHID && sz != 0) ||
+                (info.dwType != RIM_TYPEHID && sz == 0),
+                "Got wrong PPD size for type 0x%x: %u\n", info.dwType, sz);
+
+        ppd = HeapAlloc(GetProcessHeap(), 0, sz);
+        ret = pGetRawInputDeviceInfoW(devices[i].hDevice, RIDI_PREPARSEDDATA, ppd, &sz);
+        ok(ret == sz, "GetRawInputDeviceInfo gave wrong return: %u, should be %u\n", ret, sz);
+
+        if (file != INVALID_HANDLE_VALUE && ret == sz)
+        {
+            PHIDP_PREPARSED_DATA preparsed;
+
+            if (info.dwType == RIM_TYPEHID)
+            {
+                br = HidD_GetPreparsedData(file, &preparsed);
+                ok(br == TRUE, "HidD_GetPreparsedData failed\n");
+
+                if (br)
+                    ok(!memcmp(preparsed, ppd, sz), "Expected to get same preparsed data\n");
+            }
+            else
+            {
+                /* succeeds on hardware, fails in some VMs */
+                br = HidD_GetPreparsedData(file, &preparsed);
+                todo_wine
+                    ok(br == TRUE || broken(br == FALSE), "HidD_GetPreparsedData failed\n");
+            }
+
+            if (br)
+                HidD_FreePreparsedData(preparsed);
+        }
+
+        HeapFree(GetProcessHeap(), 0, ppd);
+
         CloseHandle(file);
     }
 
