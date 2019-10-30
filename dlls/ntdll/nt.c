@@ -3137,6 +3137,73 @@ static ULONG mhz_from_cpuinfo(void)
 }
 #endif
 
+#ifdef linux
+
+static const char * get_sys_str(const char *path)
+{
+	static char s[16];
+	FILE *f = fopen(path, "r");
+	const char *ret = NULL;
+	if (f)
+	{
+		if (fgets(s, sizeof(s), f))
+			ret = s;
+		fclose(f);
+	}
+	return ret;
+}
+
+static int get_sys_int(const char *path, int def)
+{
+	const char *s = get_sys_str(path);
+	return s ? atoi(s) : def;
+}
+
+static NTSTATUS fill_battery_state(SYSTEM_BATTERY_STATE *bs)
+{
+	char path[64];
+	const char *s;
+	unsigned int i = 0;
+	LONG64 voltage; /* microvolts */
+
+	bs->AcOnLine = get_sys_int("/sys/class/power_supply/AC/online", 1);
+
+	for (;;)
+	{
+		sprintf(path, "/sys/class/power_supply/BAT%u/status", i);
+		s = get_sys_str(path);
+		if (!s) break;
+		bs->Charging |= (strcmp(s, "Charging\n") == 0);
+		bs->Discharging |= (strcmp(s, "Discharging\n") == 0);
+		bs->BatteryPresent = TRUE;
+		i++;
+	}
+
+	if (bs->BatteryPresent)
+	{
+		voltage = get_sys_int("/sys/class/power_supply/BAT0/voltage_now", 0);
+		bs->MaxCapacity = get_sys_int("/sys/class/power_supply/BAT0/charge_full", 0) * voltage / 1e9;
+		bs->RemainingCapacity = get_sys_int("/sys/class/power_supply/BAT0/charge_now", 0) * voltage / 1e9;
+		bs->Rate = -get_sys_int("/sys/class/power_supply/BAT0/current_now", 0) * voltage / 1e9;
+		if (!bs->Charging && (LONG)bs->Rate < 0)
+			bs->EstimatedTime = 3600 * bs->RemainingCapacity / -(LONG)bs->Rate;
+		else
+			bs->EstimatedTime = ~0u;
+	}
+
+	return STATUS_SUCCESS;
+}
+
+#else
+
+static NTSTATUS fill_battery_state(SYSTEM_BATTERY_STATE *)
+{
+	FIXME("SystemBatteryState not implemented on this platform\n");
+	return STATUS_NOT_IMPLEMENTED;
+}
+
+#endif
+
 /******************************************************************************
  *  NtPowerInformation				[NTDLL.@]
  *
@@ -3189,6 +3256,12 @@ NTSTATUS WINAPI NtPowerInformation(
 			PowerCaps->MinDeviceWakeState = PowerSystemUnspecified;
 			PowerCaps->DefaultLowLatencyWake = PowerSystemUnspecified;
 			return STATUS_SUCCESS;
+		}
+		case SystemBatteryState: {
+			if (nOutputBufferSize < sizeof(SYSTEM_BATTERY_STATE))
+				return STATUS_BUFFER_TOO_SMALL;
+			memset(lpOutputBuffer, 0, sizeof(SYSTEM_BATTERY_STATE));
+			return fill_battery_state(lpOutputBuffer);
 		}
 		case SystemExecutionState: {
 			PULONG ExecutionState = lpOutputBuffer;
