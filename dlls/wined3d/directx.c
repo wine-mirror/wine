@@ -72,6 +72,37 @@ void CDECL wined3d_output_release_ownership(const struct wined3d_output *output)
     D3DKMTSetVidPnSourceOwner(&set_owner_desc);
 }
 
+HRESULT CDECL wined3d_output_take_ownership(const struct wined3d_output *output, BOOL exclusive)
+{
+    D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc;
+    D3DKMT_VIDPNSOURCEOWNER_TYPE owner_type;
+    NTSTATUS status;
+
+    TRACE("output %p, exclusive %#x.\n", output, exclusive);
+
+    owner_type = exclusive ? D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE : D3DKMT_VIDPNSOURCEOWNER_SHARED;
+    set_owner_desc.pType = &owner_type;
+    set_owner_desc.pVidPnSourceId = &output->vidpn_source_id;
+    set_owner_desc.VidPnSourceCount = 1;
+    set_owner_desc.hDevice = output->kmt_device;
+    status = D3DKMTSetVidPnSourceOwner(&set_owner_desc);
+
+    switch (status)
+    {
+        case STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE:
+            return DXGI_ERROR_NOT_CURRENTLY_AVAILABLE;
+        case STATUS_INVALID_PARAMETER:
+            return E_INVALIDARG;
+        case STATUS_PROCEDURE_NOT_FOUND:
+            return E_NOINTERFACE;
+        case STATUS_SUCCESS:
+            return S_OK;
+        default:
+            FIXME("Unhandled error %#x.\n", status);
+            return E_FAIL;
+    }
+}
+
 static void wined3d_output_cleanup(const struct wined3d_output *output)
 {
     D3DKMT_DESTROYDEVICE destroy_device_desc;

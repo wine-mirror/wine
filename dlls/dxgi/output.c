@@ -364,9 +364,22 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_WaitForVBlank(IDXGIOutput4 *iface)
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_TakeOwnership(IDXGIOutput4 *iface, IUnknown *device, BOOL exclusive)
 {
-    FIXME("iface %p, device %p, exclusive %d stub!\n", iface, device, exclusive);
+    struct dxgi_output *output = impl_from_IDXGIOutput4(iface);
+    struct wined3d_output *wined3d_output;
+    HRESULT hr = DXGI_ERROR_INVALID_CALL;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, device %p, exclusive %d.\n", iface, device, exclusive);
+
+    if (!device)
+        return DXGI_ERROR_INVALID_CALL;
+
+    wined3d_mutex_lock();
+    if ((wined3d_output = wined3d_get_adapter_output(output->adapter->factory->wined3d,
+            output->adapter->ordinal)))
+        hr = wined3d_output_take_ownership(wined3d_output, exclusive);
+    wined3d_mutex_unlock();
+
+    return hr;
 }
 
 static void STDMETHODCALLTYPE dxgi_output_ReleaseOwnership(IDXGIOutput4 *iface)
