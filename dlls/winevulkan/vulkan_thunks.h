@@ -711,6 +711,21 @@ typedef struct VkPhysicalDeviceProperties2_host
     VkPhysicalDeviceProperties_host properties;
 } VkPhysicalDeviceProperties2_host;
 
+typedef struct VkPipelineExecutableInfoKHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkPipeline pipeline;
+    uint32_t executableIndex;
+} VkPipelineExecutableInfoKHR_host;
+
+typedef struct VkPipelineInfoKHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkPipeline pipeline;
+} VkPipelineInfoKHR_host;
+
 typedef struct VkSparseMemoryBind_host
 {
     VkDeviceSize resourceOffset;
@@ -766,6 +781,14 @@ typedef struct VkBindSparseInfo_host
     uint32_t signalSemaphoreCount;
     const VkSemaphore *pSignalSemaphores;
 } VkBindSparseInfo_host;
+
+typedef struct VkSemaphoreSignalInfoKHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkSemaphore semaphore;
+    uint64_t value;
+} VkSemaphoreSignalInfoKHR_host;
 
 typedef struct VkCopyDescriptorSet_host
 {
@@ -1156,10 +1179,26 @@ struct vulkan_device_funcs
     VkResult (*p_vkGetMemoryHostPointerPropertiesEXT)(VkDevice, VkExternalMemoryHandleTypeFlagBits, const void *, VkMemoryHostPointerPropertiesEXT *);
     VkResult (*p_vkGetPerformanceParameterINTEL)(VkDevice, VkPerformanceParameterTypeINTEL, VkPerformanceValueINTEL *);
     VkResult (*p_vkGetPipelineCacheData)(VkDevice, VkPipelineCache, size_t *, void *);
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult (*p_vkGetPipelineExecutableInternalRepresentationsKHR)(VkDevice, const VkPipelineExecutableInfoKHR_host *, uint32_t *, VkPipelineExecutableInternalRepresentationKHR *);
+#else
+    VkResult (*p_vkGetPipelineExecutableInternalRepresentationsKHR)(VkDevice, const VkPipelineExecutableInfoKHR *, uint32_t *, VkPipelineExecutableInternalRepresentationKHR *);
+#endif
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult (*p_vkGetPipelineExecutablePropertiesKHR)(VkDevice, const VkPipelineInfoKHR_host *, uint32_t *, VkPipelineExecutablePropertiesKHR *);
+#else
+    VkResult (*p_vkGetPipelineExecutablePropertiesKHR)(VkDevice, const VkPipelineInfoKHR *, uint32_t *, VkPipelineExecutablePropertiesKHR *);
+#endif
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult (*p_vkGetPipelineExecutableStatisticsKHR)(VkDevice, const VkPipelineExecutableInfoKHR_host *, uint32_t *, VkPipelineExecutableStatisticKHR *);
+#else
+    VkResult (*p_vkGetPipelineExecutableStatisticsKHR)(VkDevice, const VkPipelineExecutableInfoKHR *, uint32_t *, VkPipelineExecutableStatisticKHR *);
+#endif
     VkResult (*p_vkGetQueryPoolResults)(VkDevice, VkQueryPool, uint32_t, uint32_t, size_t, void *, VkDeviceSize, VkQueryResultFlags);
     void (*p_vkGetQueueCheckpointDataNV)(VkQueue, uint32_t *, VkCheckpointDataNV *);
     VkResult (*p_vkGetRayTracingShaderGroupHandlesNV)(VkDevice, VkPipeline, uint32_t, uint32_t, size_t, void *);
     void (*p_vkGetRenderAreaGranularity)(VkDevice, VkRenderPass, VkExtent2D *);
+    VkResult (*p_vkGetSemaphoreCounterValueKHR)(VkDevice, VkSemaphore, uint64_t *);
     VkResult (*p_vkGetShaderInfoAMD)(VkDevice, VkPipeline, VkShaderStageFlagBits, VkShaderInfoTypeAMD, size_t *, void *);
     VkResult (*p_vkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
     VkResult (*p_vkGetValidationCacheDataEXT)(VkDevice, VkValidationCacheEXT, size_t *, void *);
@@ -1189,6 +1228,11 @@ struct vulkan_device_funcs
     VkResult (*p_vkResetFences)(VkDevice, uint32_t, const VkFence *);
     void (*p_vkResetQueryPoolEXT)(VkDevice, VkQueryPool, uint32_t, uint32_t);
     VkResult (*p_vkSetEvent)(VkDevice, VkEvent);
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult (*p_vkSignalSemaphoreKHR)(VkDevice, const VkSemaphoreSignalInfoKHR_host *);
+#else
+    VkResult (*p_vkSignalSemaphoreKHR)(VkDevice, const VkSemaphoreSignalInfoKHR *);
+#endif
     void (*p_vkTrimCommandPool)(VkDevice, VkCommandPool, VkCommandPoolTrimFlags);
     void (*p_vkTrimCommandPoolKHR)(VkDevice, VkCommandPool, VkCommandPoolTrimFlags);
     void (*p_vkUninitializePerformanceApiINTEL)(VkDevice);
@@ -1201,6 +1245,7 @@ struct vulkan_device_funcs
     void (*p_vkUpdateDescriptorSets)(VkDevice, uint32_t, const VkWriteDescriptorSet *, uint32_t, const VkCopyDescriptorSet *);
 #endif
     VkResult (*p_vkWaitForFences)(VkDevice, uint32_t, const VkFence *, VkBool32, uint64_t);
+    VkResult (*p_vkWaitSemaphoresKHR)(VkDevice, const VkSemaphoreWaitInfoKHR *, uint64_t);
 };
 
 /* For use by vkInstance and children */
@@ -1471,10 +1516,14 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetMemoryHostPointerPropertiesEXT) \
     USE_VK_FUNC(vkGetPerformanceParameterINTEL) \
     USE_VK_FUNC(vkGetPipelineCacheData) \
+    USE_VK_FUNC(vkGetPipelineExecutableInternalRepresentationsKHR) \
+    USE_VK_FUNC(vkGetPipelineExecutablePropertiesKHR) \
+    USE_VK_FUNC(vkGetPipelineExecutableStatisticsKHR) \
     USE_VK_FUNC(vkGetQueryPoolResults) \
     USE_VK_FUNC(vkGetQueueCheckpointDataNV) \
     USE_VK_FUNC(vkGetRayTracingShaderGroupHandlesNV) \
     USE_VK_FUNC(vkGetRenderAreaGranularity) \
+    USE_VK_FUNC(vkGetSemaphoreCounterValueKHR) \
     USE_VK_FUNC(vkGetShaderInfoAMD) \
     USE_VK_FUNC(vkGetSwapchainImagesKHR) \
     USE_VK_FUNC(vkGetValidationCacheDataEXT) \
@@ -1496,6 +1545,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkResetFences) \
     USE_VK_FUNC(vkResetQueryPoolEXT) \
     USE_VK_FUNC(vkSetEvent) \
+    USE_VK_FUNC(vkSignalSemaphoreKHR) \
     USE_VK_FUNC(vkTrimCommandPool) \
     USE_VK_FUNC(vkTrimCommandPoolKHR) \
     USE_VK_FUNC(vkUninitializePerformanceApiINTEL) \
@@ -1503,7 +1553,8 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkUpdateDescriptorSetWithTemplate) \
     USE_VK_FUNC(vkUpdateDescriptorSetWithTemplateKHR) \
     USE_VK_FUNC(vkUpdateDescriptorSets) \
-    USE_VK_FUNC(vkWaitForFences)
+    USE_VK_FUNC(vkWaitForFences) \
+    USE_VK_FUNC(vkWaitSemaphoresKHR)
 
 #define ALL_VK_INSTANCE_FUNCS() \
     USE_VK_FUNC(vkCreateDevice) \
