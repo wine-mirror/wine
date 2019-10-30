@@ -102,6 +102,33 @@ AddReg=\
     VersionInfo.ntamd64,\
     LicenseInformation
 
+[DefaultInstall.ntarm64]
+RegisterDlls=RegisterDllsSection
+WineFakeDlls=FakeDllsWin64,FakeDlls
+WinePreInstall=Wow64
+UpdateInis=SystemIni
+CopyFiles=l_intl_section, inf_section
+AddReg=\
+    Classes,\
+    ContentIndex,\
+    ControlClass,\
+    CurrentVersion,\
+    CurrentVersionWow64,\
+    Debugger,\
+    DirectX,\
+    Fonts,\
+    MCI,\
+    Misc,\
+    Nls,\
+    OLE,\
+    Printing,\
+    Services, \
+    SessionMgr,\
+    Tapi,\
+    Timezones,\
+    VersionInfo.ntamd64,\
+    LicenseInformation
+
 [Wow64Install]
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDllsWow64
@@ -116,6 +143,9 @@ AddReg=\
     Tapi,\
     VersionInfo.ntamd64,\
     LicenseInformation
+
+[Wow64Install.ntarm64]
+WineFakeDlls=FakeDllsWin32
 
 [DefaultInstall.Services]
 AddService=BITS,0,BITSService
@@ -154,6 +184,24 @@ AddService=Winmgmt,0,WinmgmtService
 AddService=wuauserv,0,wuauService
 
 [DefaultInstall.ntamd64.Services]
+AddService=BITS,0,BITSService
+AddService=HTTP,0,HTTPService
+AddService=MSIServer,0,MSIService
+AddService=MountMgr,0x800,MountMgrService
+AddService=RpcSs,0,RpcSsService
+AddService=Spooler,0,SpoolerService
+AddService=StiSvc,0,StiService
+AddService=TermService,0,TerminalServices
+AddService=PlugPlay,0,PlugPlayService
+AddService=FontCache3.0.0.0,0,WPFFontCacheService
+AddService=LanmanServer,0,LanmanServerService
+AddService=FontCache,0,FontCacheService
+AddService=Schedule,0,TaskSchedulerService
+AddService=WineBus,0,WineBusService
+AddService=Winmgmt,0,WinmgmtService
+AddService=wuauserv,0,wuauService
+
+[DefaultInstall.ntarm64.Services]
 AddService=BITS,0,BITSService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
