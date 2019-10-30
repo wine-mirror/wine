@@ -2246,7 +2246,9 @@ static HRESULT WINAPI d3d9_device_SetClipPlane(IDirect3DDevice9Ex *iface, DWORD 
     index = min(index, device->max_user_clip_planes - 1);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_clip_plane(device->wined3d_device, index, (const struct wined3d_vec4 *)plane);
+    hr = wined3d_stateblock_set_clip_plane(device->update_state, index, (const struct wined3d_vec4 *)plane);
+    if (SUCCEEDED(hr) && !device->recording)
+        hr = wined3d_device_set_clip_plane(device->wined3d_device, index, (const struct wined3d_vec4 *)plane);
     wined3d_mutex_unlock();
 
     return hr;
