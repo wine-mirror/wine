@@ -404,80 +404,83 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE device, UINT command, void *data, UINT
     static const WCHAR mouse_name[] = {'\\','\\','?','\\','W','I','N','E','_','M','O','U','S','E',0};
     static const RID_DEVICE_INFO_KEYBOARD keyboard_info = {0, 0, 1, 12, 3, 101};
     static const RID_DEVICE_INFO_MOUSE mouse_info = {1, 5, 0, FALSE};
-    struct hid_device *hid_device;
-    const WCHAR *name = NULL;
-    RID_DEVICE_INFO *info;
-    UINT s;
+
+    RID_DEVICE_INFO info;
+    struct hid_device *hid_device = device;
+    const void *to_copy;
+    UINT to_copy_bytes, avail_bytes;
 
     TRACE("device %p, command %#x, data %p, data_size %p.\n",
             device, command, data, data_size);
 
     if (!data_size) return ~0U;
 
+    /* each case below must set:
+     *     *data_size: length (meaning defined by command) of data we want to copy
+     *     avail_bytes: number of bytes available in user buffer
+     *     to_copy_bytes: number of bytes we want to copy into user buffer
+     *     to_copy: pointer to data we want to copy into user buffer
+     */
     switch (command)
     {
     case RIDI_DEVICENAME:
+        /* for RIDI_DEVICENAME, data_size is in characters, not bytes */
+        avail_bytes = *data_size * sizeof(WCHAR);
         if (device == WINE_MOUSE_HANDLE)
         {
-            s = ARRAY_SIZE(mouse_name);
-            name = mouse_name;
+            *data_size = ARRAY_SIZE(mouse_name);
+            to_copy = mouse_name;
         }
         else if (device == WINE_KEYBOARD_HANDLE)
         {
-            s = ARRAY_SIZE(keyboard_name);
-            name = keyboard_name;
+            *data_size = ARRAY_SIZE(keyboard_name);
+            to_copy = keyboard_name;
         }
         else
         {
-            hid_device = device;
-            s = strlenW(hid_device->path) + 1;
-            name = hid_device->path;
+            *data_size = strlenW(hid_device->path) + 1;
+            to_copy = hid_device->path;
         }
+        to_copy_bytes = *data_size * sizeof(WCHAR);
         break;
+
     case RIDI_DEVICEINFO:
-        s = sizeof(*info);
+        avail_bytes = *data_size;
+        info.cbSize = sizeof(info);
+        if (device == WINE_MOUSE_HANDLE)
+        {
+            info.dwType = RIM_TYPEMOUSE;
+            info.u.mouse = mouse_info;
+        }
+        else if (device == WINE_KEYBOARD_HANDLE)
+        {
+            info.dwType = RIM_TYPEKEYBOARD;
+            info.u.keyboard = keyboard_info;
+        }
+        else
+        {
+            info.dwType = RIM_TYPEHID;
+            info.u.hid = hid_device->info;
+        }
+        to_copy_bytes = sizeof(info);
+        *data_size = to_copy_bytes;
+        to_copy = &info;
         break;
+
     default:
+        FIXME("command %#x not supported\n", command);
         return ~0U;
     }
 
     if (!data)
-    {
-        *data_size = s;
         return 0;
-    }
 
-    if (*data_size < s)
-    {
-        *data_size = s;
+    if (avail_bytes < to_copy_bytes)
         return ~0U;
-    }
 
-    if (command == RIDI_DEVICENAME)
-    {
-        memcpy(data, name, s * sizeof(WCHAR));
-        return s;
-    }
+    memcpy(data, to_copy, to_copy_bytes);
 
-    info = data;
-    info->cbSize = sizeof(*info);
-    if (device == WINE_MOUSE_HANDLE)
-    {
-        info->dwType = RIM_TYPEMOUSE;
-        info->u.mouse = mouse_info;
-    }
-    else if (device == WINE_KEYBOARD_HANDLE)
-    {
-        info->dwType = RIM_TYPEKEYBOARD;
-        info->u.keyboard = keyboard_info;
-    }
-    else
-    {
-        hid_device = device;
-        info->dwType = RIM_TYPEHID;
-        info->u.hid = hid_device->info;
-    }
-    return s;
+    return *data_size;
 }
 
 /***********************************************************************
