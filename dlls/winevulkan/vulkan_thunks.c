@@ -1997,6 +1997,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES_KHR:
+        {
+            const VkPhysicalDeviceImagelessFramebufferFeaturesKHR *in = (const VkPhysicalDeviceImagelessFramebufferFeaturesKHR *)in_header;
+            VkPhysicalDeviceImagelessFramebufferFeaturesKHR *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->imagelessFramebuffer = in->imagelessFramebuffer;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_NV:
         {
             const VkPhysicalDeviceCooperativeMatrixFeaturesNV *in = (const VkPhysicalDeviceCooperativeMatrixFeaturesNV *)in_header;
@@ -4638,6 +4654,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_external_semaphore",
     "VK_KHR_get_memory_requirements2",
     "VK_KHR_image_format_list",
+    "VK_KHR_imageless_framebuffer",
     "VK_KHR_incremental_present",
     "VK_KHR_maintenance1",
     "VK_KHR_maintenance2",
