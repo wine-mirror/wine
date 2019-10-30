@@ -2718,6 +2718,16 @@ class VkRegistry(object):
         elif "value" in enum_elem.keys():
             self.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["value"]))
 
+    @staticmethod
+    def _require_type(type_info):
+        if type_info.is_alias():
+            type_info = type_info.alias
+        type_info.required = True
+        if type(type_info) == VkStruct:
+            for member in type_info.members:
+                if "data" in member.type_info:
+                  VkRegistry._require_type(member.type_info["data"])
+
     def _parse_extensions(self, root):
         """ Parse extensions section and pull in any types and commands for this extensioin. """
         extensions = []
@@ -2771,10 +2781,7 @@ class VkRegistry(object):
 
                 for t in require.findall("type"):
                     type_info = self.types[t.attrib["name"]]["data"]
-                    if type_info.is_alias():
-                        type_info = type_info.alias
-                    type_info.required = True
-
+                    self._require_type(type_info)
                 feature = require.attrib.get("feature")
                 if feature and not self._is_feature_supported(feature):
                     continue
