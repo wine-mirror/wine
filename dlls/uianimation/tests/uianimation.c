@@ -40,7 +40,7 @@ static void test_UIAnimationManager(void)
     }
 
     hr = IUIAnimationManager_CreateAnimationVariable(manager, 1.0f, &variable);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     if (hr == S_OK)
         IUIAnimationVariable_Release(variable);
 
