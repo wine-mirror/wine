@@ -3031,7 +3031,7 @@ static void test_CoWaitForMultipleHandles(void)
 
     /* test message pumping when CoWaitForMultipleHandles is called from non main apartment thread */
     thread = CreateThread(NULL, 0, test_CoWaitForMultipleHandles_thread, handles, 0, &tid);
-    index = WaitForSingleObject(thread, 500);
+    index = WaitForSingleObject(thread, 5000);
     ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(thread);
 
