@@ -803,15 +803,15 @@ msgstr "&Слева:"
 
 #: comdlg32.rc:447 notepad.rc:112
 msgid "&Right:"
-msgstr "&Правое:"
+msgstr "Сп&рава:"
 
 #: comdlg32.rc:449
 msgid "T&op:"
-msgstr "Спр&ава:"
+msgstr "Св&ерху:"
 
 #: comdlg32.rc:451 notepad.rc:114
 msgid "&Bottom:"
-msgstr "&Нижнее:"
+msgstr "С&низу:"
 
 #: comdlg32.rc:455
 msgid "P&rinter..."
