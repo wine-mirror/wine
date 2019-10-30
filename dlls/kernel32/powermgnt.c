@@ -45,19 +45,47 @@ BOOL WINAPI GetDevicePowerState(HANDLE hDevice, BOOL* pfOn)
  */
 BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS ps)
 {
-    WARN("(%p): stub, harmless.\n", ps);
+    SYSTEM_BATTERY_STATE bs;
+    NTSTATUS status;
 
-    if (ps)
+    TRACE("(%p)\n", ps);
+
+    ps->ACLineStatus        = AC_LINE_UNKNOWN;
+    ps->BatteryFlag         = BATTERY_FLAG_UNKNOWN;
+    ps->BatteryLifePercent  = BATTERY_PERCENTAGE_UNKNOWN;
+    ps->SystemStatusFlag    = 0;
+    ps->BatteryLifeTime     = BATTERY_LIFE_UNKNOWN;
+    ps->BatteryFullLifeTime = BATTERY_LIFE_UNKNOWN;
+
+    status = NtPowerInformation(SystemBatteryState, NULL, 0, &bs, sizeof(bs));
+    if (status == STATUS_NOT_IMPLEMENTED) return TRUE;
+    if (FAILED(status)) return FALSE;
+
+    ps->ACLineStatus = bs.AcOnLine;
+
+    if (bs.BatteryPresent)
     {
-        ps->ACLineStatus        = 255;
-        ps->BatteryFlag         = 255;
-        ps->BatteryLifePercent  = 255;
-        ps->SystemStatusFlag    = 0;
-        ps->BatteryLifeTime     = ~0u;
-        ps->BatteryFullLifeTime = ~0u;
-        return TRUE;
+        ps->BatteryLifePercent = bs.MaxCapacity ? bs.RemainingCapacity / bs.MaxCapacity : 100;
+        ps->BatteryLifeTime = bs.EstimatedTime;
+        if (!bs.Charging && (LONG)bs.Rate < 0)
+            ps->BatteryFullLifeTime = 3600 * bs.MaxCapacity / -(LONG)bs.Rate;
+
+        ps->BatteryFlag = 0;
+        if (bs.Charging)
+            ps->BatteryFlag |= BATTERY_FLAG_CHARGING;
+        if (ps->BatteryLifePercent > 66)
+            ps->BatteryFlag |= BATTERY_FLAG_HIGH;
+        if (ps->BatteryLifePercent < 33)
+            ps->BatteryFlag |= BATTERY_FLAG_LOW;
+        if (ps->BatteryLifePercent < 5)
+            ps->BatteryFlag |= BATTERY_FLAG_CRITICAL;
     }
-    return FALSE;
+    else
+    {
+        ps->BatteryFlag = BATTERY_FLAG_NO_BATTERY;
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************
