@@ -488,8 +488,95 @@ static HRESULT timer_create( IUnknown *outer, REFIID iid, void **obj )
     return hr;
 }
 
+/***********************************************************************
+ *          IUIAnimationTransitionFactory
+ */
+struct tr_factory
+{
+    IUIAnimationTransitionFactory IUIAnimationTransitionFactory_iface;
+    LONG ref;
+};
+
+struct tr_factory *impl_from_IUIAnimationTransitionFactory( IUIAnimationTransitionFactory *iface )
+{
+    return CONTAINING_RECORD( iface, struct tr_factory, IUIAnimationTransitionFactory_iface );
+}
+
+static HRESULT WINAPI tr_factory_QueryInterface( IUIAnimationTransitionFactory *iface, REFIID iid, void **obj )
+{
+    struct tr_factory *This = impl_from_IUIAnimationTransitionFactory( iface );
+
+    TRACE( "(%p)->(%s %p)\n", This, debugstr_guid( iid ), obj );
+
+    if (IsEqualIID( iid, &IID_IUnknown ) ||
+        IsEqualIID( iid, &IID_IUIAnimationTransitionFactory ))
+    {
+        IUIAnimationTransitionFactory_AddRef( iface );
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME( "interface %s not implemented\n", debugstr_guid( iid ) );
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI tr_factory_AddRef( IUIAnimationTransitionFactory *iface )
+{
+    struct tr_factory *This = impl_from_IUIAnimationTransitionFactory( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+    return ref;
+}
+
+static ULONG WINAPI tr_factory_Release( IUIAnimationTransitionFactory *iface )
+{
+    struct tr_factory *This = impl_from_IUIAnimationTransitionFactory( iface );
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+
+    if (!ref)
+        heap_free( This );
+
+    return ref;
+}
+
+static HRESULT WINAPI tr_factory_CreateTransition(IUIAnimationTransitionFactory *iface,
+          IUIAnimationInterpolator *interpolator, IUIAnimationTransition **transition)
+{
+    struct tr_factory *This = impl_from_IUIAnimationTransitionFactory( iface );
+    FIXME( "stub (%p)->(%p, %p)\n", This, interpolator, transition );
+    return E_NOTIMPL;
+}
+
+const struct IUIAnimationTransitionFactoryVtbl tr_factory_vtbl =
+{
+    tr_factory_QueryInterface,
+    tr_factory_AddRef,
+    tr_factory_Release,
+    tr_factory_CreateTransition
+};
+
+static HRESULT transition_create( IUnknown *outer, REFIID iid, void **obj )
+{
+    struct tr_factory *This = heap_alloc( sizeof(*This) );
+    HRESULT hr;
+
+    if (!This) return E_OUTOFMEMORY;
+    This->IUIAnimationTransitionFactory_iface.lpVtbl = &tr_factory_vtbl;
+    This->ref = 1;
+
+    hr = IUIAnimationTransitionFactory_QueryInterface( &This->IUIAnimationTransitionFactory_iface, iid, obj );
+
+    IUIAnimationTransitionFactory_Release( &This->IUIAnimationTransitionFactory_iface );
+    return hr;
+}
+
 static struct class_factory manager_cf = { { &class_factory_vtbl }, manager_create };
 static struct class_factory timer_cf   = { { &class_factory_vtbl }, timer_create };
+static struct class_factory transition_cf = { { &class_factory_vtbl }, transition_create };
 
 /******************************************************************
  *             DllGetClassObject
@@ -504,6 +591,8 @@ HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID iid, void **obj )
         cf = &manager_cf.IClassFactory_iface;
     else if (IsEqualCLSID( clsid, &CLSID_UIAnimationTimer ))
         cf = &timer_cf.IClassFactory_iface;
+    else if (IsEqualCLSID( clsid, &CLSID_UIAnimationTransitionFactory ))
+        cf = &transition_cf.IClassFactory_iface;
 
     if (!cf)
         return CLASS_E_CLASSNOTAVAILABLE;
