@@ -29,7 +29,7 @@
 #include "ddk/hidpi.h"
 #include "cfgmgr32.h"
 #include "wine/list.h"
-#include "parse.h"
+#include "wine/hid.h"
 
 #define DEFAULT_POLL_INTERVAL 200
 #define MAX_POLL_INTERVAL_MSEC 10000

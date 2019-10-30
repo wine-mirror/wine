@@ -32,7 +32,7 @@
 
 #include "hidusage.h"
 #include "ddk/hidpi.h"
-#include "parse.h"
+#include "wine/hid.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hidp);
