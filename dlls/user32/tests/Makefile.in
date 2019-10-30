@@ -17,7 +17,6 @@ C_SRCS = \
 	menu.c \
 	monitor.c \
 	msg.c \
-	rawinput.c \
 	resource.c \
 	scroll.c \
 	static.c \
