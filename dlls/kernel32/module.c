@@ -555,6 +555,40 @@ BOOL WINAPI K32EnumProcessModules(HANDLE process, HMODULE *lphModule,
     DWORD size = 0;
     INT ret;
 
+    if (process == GetCurrentProcess())
+    {
+        PPEB_LDR_DATA ldr_data = NtCurrentTeb()->Peb->LdrData;
+        PLIST_ENTRY head = &ldr_data->InLoadOrderModuleList;
+        PLIST_ENTRY entry = head->Flink;
+
+        if (cb && !lphModule)
+        {
+            SetLastError(ERROR_NOACCESS);
+            return FALSE;
+        }
+        while (entry != head)
+        {
+            PLDR_MODULE table_entry = (PLDR_MODULE)
+                ((PBYTE)entry - offsetof(LDR_MODULE, InLoadOrderModuleList));
+            if (cb >= sizeof(HMODULE))
+            {
+                *lphModule++ = table_entry->BaseAddress;
+                cb -= sizeof(HMODULE);
+            }
+            size += sizeof(HMODULE);
+            entry = entry->Flink;
+        }
+
+        if (!needed)
+        {
+            SetLastError(ERROR_NOACCESS);
+            return FALSE;
+        }
+        *needed = size;
+
+        return TRUE;
+    }
+
     if (!init_module_iterator(&iter, process))
         return FALSE;
 
