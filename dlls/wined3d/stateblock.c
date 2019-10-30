@@ -1521,6 +1521,22 @@ void CDECL wined3d_stateblock_set_transform(struct wined3d_stateblock *statebloc
     stateblock->changed.transform[d3dts >> 5] |= 1u << (d3dts & 0x1f);
 }
 
+HRESULT CDECL wined3d_stateblock_set_clip_plane(struct wined3d_stateblock *stateblock,
+        UINT plane_idx, const struct wined3d_vec4 *plane)
+{
+    TRACE("stateblock %p, plane_idx %u, plane %p.\n", stateblock, plane_idx, plane);
+
+    if (plane_idx >= stateblock->device->adapter->d3d_info.limits.max_clip_distances)
+    {
+        TRACE("Application has requested clipplane this device doesn't support.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    stateblock->stateblock_state.clip_planes[plane_idx] = *plane;
+    stateblock->changed.clipplane |= 1u << plane_idx;
+    return S_OK;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union
