@@ -31,6 +31,7 @@ static void test_UIAnimationManager(void)
     HRESULT hr;
     IUIAnimationManager *manager;
     IUIAnimationVariable *variable;
+    IUIAnimationStoryboard *storyboard;
 
     hr = CoCreateInstance( &CLSID_UIAnimationManager, NULL, CLSCTX_ALL, &IID_IUIAnimationManager, (LPVOID*)&manager);
     if(FAILED(hr))
@@ -43,6 +44,11 @@ static void test_UIAnimationManager(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     if (hr == S_OK)
         IUIAnimationVariable_Release(variable);
+
+    hr = IUIAnimationManager_CreateStoryboard(manager, &storyboard);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (hr == S_OK)
+        IUIAnimationStoryboard_Release(storyboard);
 
     IUIAnimationManager_Release(manager);
 }
@@ -83,6 +89,58 @@ static void test_IUIAnimationTimer(void)
     IUIAnimationTimer_Release(timer);
 }
 
+static void test_IUIAnimationTransitionFactory(void)
+{
+    HRESULT hr;
+    IUIAnimationTransitionFactory *factory;
+    IUIAnimationTransition *transition = NULL;
+
+    hr = CoCreateInstance( &CLSID_UIAnimationTransitionFactory, NULL, CLSCTX_ALL,
+                            &IID_IUIAnimationTransitionFactory, (void**)&factory);
+    if (FAILED(hr))
+    {
+        win_skip("IUIAnimationTransitionFactory not found\n");
+        return;
+    }
+
+    hr = IUIAnimationTransitionFactory_CreateTransition(factory, NULL, &transition);
+    todo_wine ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    IUIAnimationTransitionFactory_Release(factory);
+}
+
+static void test_IUIAnimationTransitionLibrary(void)
+{
+    HRESULT hr;
+    IUIAnimationTransitionLibrary *library;
+    IUIAnimationTransition *instantaneous, *linear, *smooth;
+
+    hr = CoCreateInstance( &CLSID_UIAnimationTransitionLibrary, NULL, CLSCTX_ALL,
+                            &IID_IUIAnimationTransitionLibrary, (void**)&library);
+    if (FAILED(hr))
+    {
+        win_skip("IUIAnimationTransitionLibrary not found\n");
+        return;
+    }
+
+    hr = IUIAnimationTransitionLibrary_CreateInstantaneousTransition(library, 100.0, &instantaneous);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    if  (hr == S_OK)
+        IUIAnimationTransition_Release(instantaneous);
+
+    hr = IUIAnimationTransitionLibrary_CreateLinearTransition(library, 500.0, 100.0, &linear);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    if  (hr == S_OK)
+        IUIAnimationTransition_Release(linear);
+
+    hr = IUIAnimationTransitionLibrary_CreateSmoothStopTransition(library, 500.0, 100.0, &smooth);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    if  (hr == S_OK)
+        IUIAnimationTransition_Release(smooth);
+
+    IUIAnimationTransitionLibrary_Release(library);
+}
+
 START_TEST(uianimation)
 {
     HRESULT hr;
@@ -94,6 +152,8 @@ START_TEST(uianimation)
 
     test_UIAnimationManager();
     test_IUIAnimationTimer();
+    test_IUIAnimationTransitionFactory();
+    test_IUIAnimationTransitionLibrary();
 
     CoUninitialize();
 }
