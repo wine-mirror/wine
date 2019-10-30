@@ -1212,6 +1212,10 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
     static const WCHAR nt_platformW[] = {'.','n','t','x','8','6',0};
 #elif defined(__x86_64__)
     static const WCHAR nt_platformW[] = {'.','n','t','a','m','d','6','4',0};
+#elif defined(__arm__)
+    static const WCHAR nt_platformW[] = {'.','n','t','a','r','m',0};
+#elif defined(__aarch64__)
+    static const WCHAR nt_platformW[] = {'.','n','t','a','r','m','6','4',0};
 #else  /* FIXME: other platforms */
     static const WCHAR nt_platformW[] = {'.','n','t',0};
 #endif
