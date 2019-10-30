@@ -42,8 +42,6 @@
 
 /* TRACE helper functions */
 const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type) DECLSPEC_HIDDEN;
-const char *debug_d3d10_shader_variable_class(D3D10_SHADER_VARIABLE_CLASS c) DECLSPEC_HIDDEN;
-const char *debug_d3d10_shader_variable_type(D3D10_SHADER_VARIABLE_TYPE t) DECLSPEC_HIDDEN;
 const char *debug_d3d10_device_state_types(D3D10_DEVICE_STATE_TYPES t) DECLSPEC_HIDDEN;
 
 enum d3d10_effect_object_type
@@ -268,37 +266,5 @@ HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T d
 /* D3D10Core */
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
         unsigned int flags, D3D_FEATURE_LEVEL feature_level, ID3D10Device **device);
-
-#define MAKE_TAG(ch0, ch1, ch2, ch3) \
-    ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
-    ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
-#define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
-#define TAG_FX10 MAKE_TAG('F', 'X', '1', '0')
-#define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
-#define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
-#define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
-
-HRESULT parse_dxbc(const char *data, SIZE_T data_size,
-        HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx) DECLSPEC_HIDDEN;
-
-static inline void read_dword(const char **ptr, DWORD *d)
-{
-    memcpy(d, *ptr, sizeof(*d));
-    *ptr += sizeof(*d);
-}
-
-static inline void write_dword(char **ptr, DWORD d)
-{
-    memcpy(*ptr, &d, sizeof(d));
-    *ptr += sizeof(d);
-}
-
-static inline BOOL require_space(size_t offset, size_t count, size_t size, size_t data_size)
-{
-    return !count || (data_size - offset) / count >= size;
-}
-
-void skip_dword_unknown(const char *location, const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
-void write_dword_unknown(char **ptr, DWORD d) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3D10_PRIVATE_H */
