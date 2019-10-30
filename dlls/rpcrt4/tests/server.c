@@ -2290,7 +2290,7 @@ static void run_server(HANDLE ready_event)
     ret = SetEvent(ready_event);
     ok(ret, "SetEvent failed: %u\n", GetLastError());
 
-    ret = WaitForSingleObject(stop_event, 1000);
+    ret = WaitForSingleObject(stop_event, 5000);
     ok(WAIT_OBJECT_0 == ret, "WaitForSingleObject\n");
 
     status = RpcMgmtWaitServerListen();
