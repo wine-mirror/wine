@@ -62,6 +62,56 @@ const GLenum magLookup[] =
     GL_NEAREST, GL_NEAREST, GL_LINEAR,
 };
 
+void CDECL wined3d_output_release_ownership(const struct wined3d_output *output)
+{
+    D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc = {0};
+
+    TRACE("output %p.\n", output);
+
+    set_owner_desc.hDevice = output->kmt_device;
+    D3DKMTSetVidPnSourceOwner(&set_owner_desc);
+}
+
+static void wined3d_output_cleanup(const struct wined3d_output *output)
+{
+    D3DKMT_DESTROYDEVICE destroy_device_desc;
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+
+    TRACE("output %p.\n", output);
+
+    destroy_device_desc.hDevice = output->kmt_device;
+    D3DKMTDestroyDevice(&destroy_device_desc);
+    close_adapter_desc.hAdapter = output->kmt_adapter;
+    D3DKMTCloseAdapter(&close_adapter_desc);
+}
+
+static HRESULT wined3d_output_init(struct wined3d_output *output, const WCHAR *device_name)
+{
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_desc;
+    D3DKMT_CREATEDEVICE create_device_desc = {{0}};
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+
+    TRACE("output %p, device_name %s.\n", output, wine_dbgstr_w(device_name));
+
+    lstrcpyW(open_adapter_desc.DeviceName, device_name);
+    if (D3DKMTOpenAdapterFromGdiDisplayName(&open_adapter_desc))
+        return E_INVALIDARG;
+
+    create_device_desc.u.hAdapter = open_adapter_desc.hAdapter;
+    if (D3DKMTCreateDevice(&create_device_desc))
+    {
+        close_adapter_desc.hAdapter = open_adapter_desc.hAdapter;
+        D3DKMTCloseAdapter(&close_adapter_desc);
+        return E_FAIL;
+    }
+
+    output->kmt_adapter = open_adapter_desc.hAdapter;
+    output->kmt_device = create_device_desc.hDevice;
+    output->vidpn_source_id = open_adapter_desc.VidPnSourceId;
+
+    return WINED3D_OK;
+}
+
 /* Adjust the amount of used texture memory */
 UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount)
 {
@@ -74,6 +124,7 @@ UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount)
 
 void wined3d_adapter_cleanup(struct wined3d_adapter *adapter)
 {
+    wined3d_output_cleanup(&adapter->output);
     heap_free(adapter->formats);
 }
 
@@ -825,6 +876,16 @@ HRESULT CDECL wined3d_get_output_desc(const struct wined3d *wined3d, unsigned in
     desc->monitor = monitor;
 
     return WINED3D_OK;
+}
+
+struct wined3d_output * CDECL wined3d_get_adapter_output(const struct wined3d *wined3d, unsigned int adapter_idx)
+{
+    TRACE("wined3d %p, adapter_idx %u.\n", wined3d, adapter_idx);
+
+    if (adapter_idx >= wined3d->adapter_count)
+        return NULL;
+
+    return &wined3d->adapters[adapter_idx]->output;
 }
 
 /* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes
@@ -2715,6 +2776,7 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
         const struct wined3d_adapter_ops *adapter_ops)
 {
     DISPLAY_DEVICEW display_device;
+    HRESULT hr;
 
     adapter->ordinal = ordinal;
 
@@ -2722,10 +2784,16 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
     EnumDisplayDevicesW(NULL, ordinal, &display_device, 0);
     TRACE("Display device: %s.\n", debugstr_w(display_device.DeviceName));
     strcpyW(adapter->device_name, display_device.DeviceName);
+    if (FAILED(hr = wined3d_output_init(&adapter->output, adapter->device_name)))
+    {
+        ERR("Failed to initialise output, hr %#x.\n", hr);
+        return FALSE;
+    }
 
     if (!AllocateLocallyUniqueId(&adapter->luid))
     {
         ERR("Failed to set adapter LUID (%#x).\n", GetLastError());
+        wined3d_output_cleanup(&adapter->output);
         return FALSE;
     }
     TRACE("Allocated LUID %08x:%08x for adapter %p.\n",

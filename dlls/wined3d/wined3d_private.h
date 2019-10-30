@@ -2860,6 +2860,13 @@ struct wined3d_adapter_ops
             struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value);
 };
 
+struct wined3d_output
+{
+    D3DKMT_HANDLE kmt_adapter;
+    D3DKMT_HANDLE kmt_device;
+    D3DDDI_VIDEO_PRESENT_SOURCE_ID vidpn_source_id;
+};
+
 /* The adapter structure */
 struct wined3d_adapter
 {
@@ -2870,6 +2877,7 @@ struct wined3d_adapter
     struct wined3d_gl_info  gl_info;
     struct wined3d_d3d_info d3d_info;
     struct wined3d_driver_info driver_info;
+    struct wined3d_output output;
     UINT64 vram_bytes_used;
     GUID driver_uuid;
     GUID device_uuid;

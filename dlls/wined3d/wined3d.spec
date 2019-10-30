@@ -15,6 +15,7 @@
 @ cdecl wined3d_get_adapter_display_mode(ptr long ptr ptr)
 @ cdecl wined3d_get_adapter_identifier(ptr long long ptr)
 @ cdecl wined3d_get_adapter_mode_count(ptr long long long)
+@ cdecl wined3d_get_adapter_output(ptr long ptr)
 @ cdecl wined3d_get_adapter_raster_status(ptr long ptr)
 @ cdecl wined3d_get_device_caps(ptr long long ptr)
 @ cdecl wined3d_get_output_desc(ptr long ptr)
@@ -190,6 +191,8 @@
 @ cdecl wined3d_device_update_sub_resource(ptr ptr long ptr ptr long long long)
 @ cdecl wined3d_device_update_texture(ptr ptr ptr)
 @ cdecl wined3d_device_validate_device(ptr ptr)
+
+@ cdecl wined3d_output_release_ownership(ptr)
 
 @ cdecl wined3d_palette_create(ptr long long ptr ptr)
 @ cdecl wined3d_palette_decref(ptr)

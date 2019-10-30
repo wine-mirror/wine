@@ -371,7 +371,16 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_TakeOwnership(IDXGIOutput4 *iface, 
 
 static void STDMETHODCALLTYPE dxgi_output_ReleaseOwnership(IDXGIOutput4 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct dxgi_output *output = impl_from_IDXGIOutput4(iface);
+    struct wined3d_output *wined3d_output;
+
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_lock();
+    if ((wined3d_output = wined3d_get_adapter_output(output->adapter->factory->wined3d,
+            output->adapter->ordinal)))
+        wined3d_output_release_ownership(wined3d_output);
+    wined3d_mutex_unlock();
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetGammaControlCapabilities(IDXGIOutput4 *iface,
