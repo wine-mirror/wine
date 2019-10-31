@@ -37,6 +37,7 @@ static BOOL (WINAPI *pCreateWellKnownSid)(WELL_KNOWN_SID_TYPE,PSID,PSID,DWORD*);
 static BOOL (WINAPI *pGetEventLogInformation)(HANDLE,DWORD,LPVOID,DWORD,LPDWORD);
 static ULONG (WINAPI *pEventRegister)(const GUID *,PENABLECALLBACK,void *,REGHANDLE *);
 static ULONG (WINAPI *pEventUnregister)(REGHANDLE);
+static ULONG (WINAPI *pEventWriteString)(REGHANDLE,UCHAR,ULONGLONG,const WCHAR *);
 
 static BOOL (WINAPI *pGetComputerNameExA)(COMPUTER_NAME_FORMAT,LPSTR,LPDWORD);
 static BOOL (WINAPI *pWow64DisableWow64FsRedirection)(PVOID *);
@@ -49,6 +50,7 @@ static void init_function_pointers(void)
 
     pCreateWellKnownSid = (void*)GetProcAddress(hadvapi32, "CreateWellKnownSid");
     pGetEventLogInformation = (void*)GetProcAddress(hadvapi32, "GetEventLogInformation");
+    pEventWriteString = (void*)GetProcAddress(hadvapi32, "EventWriteString");
     pEventRegister = (void*)GetProcAddress(hadvapi32, "EventRegister");
     pEventUnregister = (void*)GetProcAddress(hadvapi32, "EventUnregister");
 
@@ -1153,6 +1155,7 @@ static void cleanup_eventlog(void)
 
 static void test_trace_event_params(void)
 {
+    static const WCHAR emptyW[] = {0};
     static const GUID test_guid = {0x57696E65, 0x0000, 0x0000, {0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x01}};
 
     REGHANDLE reg_handle;
@@ -1172,6 +1175,12 @@ static void test_trace_event_params(void)
 
     uret = pEventRegister(&test_guid, NULL, NULL, &reg_handle);
     ok(uret == ERROR_SUCCESS, "EventRegister gave wrong error: %#x\n", uret);
+
+    uret = pEventWriteString(0, 0, 0, emptyW);
+    todo_wine ok(uret == ERROR_INVALID_HANDLE, "EventWriteString gave wrong error: %#x\n", uret);
+
+    uret = pEventWriteString(reg_handle, 0, 0, NULL);
+    todo_wine ok(uret == ERROR_INVALID_PARAMETER, "EventWriteString gave wrong error: %#x\n", uret);
 
     uret = pEventUnregister(0);
     todo_wine ok(uret == ERROR_INVALID_HANDLE, "EventUnregister gave wrong error: %#x\n", uret);
