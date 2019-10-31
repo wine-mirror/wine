@@ -1579,6 +1579,8 @@ enum wined3d_shader_type
 #define WINED3D_VIEW_BUFFER_COUNTER                             0x00000004
 #define WINED3D_VIEW_TEXTURE_CUBE                               0x00000008
 #define WINED3D_VIEW_TEXTURE_ARRAY                              0x00000010
+#define WINED3D_VIEW_READ_ONLY_DEPTH                            0x00000020
+#define WINED3D_VIEW_READ_ONLY_STENCIL                          0x00000040
 
 #define WINED3D_MAX_VIEWPORTS                                   16
 

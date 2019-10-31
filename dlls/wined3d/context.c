@@ -3696,7 +3696,7 @@ static void context_preload_texture(struct wined3d_context *context,
     if (!(texture = state->textures[idx]))
         return;
 
-    if (wined3d_resource_check_fbo_attached(state, &texture->resource))
+    if (wined3d_resource_check_fbo_attached(state, &texture->resource, NULL))
         context->uses_fbo_attached_resources = 1;
 
     wined3d_texture_load(texture, context, is_srgb_enabled(state->sampler_states[idx]));

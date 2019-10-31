@@ -3785,18 +3785,27 @@ static BOOL init_typeless_formats(const struct wined3d_adapter *adapter)
             typeless_format->flags[j] &= ~(WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
         }
 
-        if ((format_id = typeless_depth_stencil_formats[i].depth_view_id)
-                && typeless_depth_stencil_formats[i].separate_depth_view_format)
+        if ((format_id = typeless_depth_stencil_formats[i].depth_view_id))
         {
             if (!(depth_view_format = get_format_internal(adapter, format_id)))
                 return FALSE;
-            copy_format(adapter, depth_view_format, ds_format);
+            if (typeless_depth_stencil_formats[i].separate_depth_view_format)
+            {
+                copy_format(adapter, depth_view_format, ds_format);
+                depth_view_format->stencil_size = 0;
+            }
+            else
+            {
+                depth_view_format->depth_size = ds_format->depth_size;
+            }
         }
         if ((format_id = typeless_depth_stencil_formats[i].stencil_view_id))
         {
             if (!(stencil_view_format = get_format_internal(adapter, format_id)))
                 return FALSE;
             copy_format(adapter, stencil_view_format, ds_format);
+            if (typeless_depth_stencil_formats[i].separate_depth_view_format)
+                stencil_view_format->depth_size = 0;
         }
     }
 

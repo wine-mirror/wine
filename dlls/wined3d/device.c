@@ -2239,7 +2239,7 @@ static void wined3d_device_set_shader_resource_view(struct wined3d_device *devic
     if (view == prev)
         return;
 
-    if (view && wined3d_resource_check_fbo_attached(&device->state, view->resource))
+    if (view && wined3d_resource_check_fbo_attached(&device->state, view->resource, view->format))
     {
         WARN("Application is trying to bind resource which is attached as render target.\n");
         view = NULL;
@@ -4991,7 +4991,7 @@ struct wined3d_rendertarget_view * CDECL wined3d_device_get_depth_stencil_view(c
 }
 
 static void wined3d_unbind_srv_for_rtv(struct wined3d_device *device,
-        const struct wined3d_rendertarget_view *view)
+        const struct wined3d_rendertarget_view *view, BOOL dsv)
 {
     if (view && view->resource->srv_bind_count_device)
     {
@@ -5003,7 +5003,8 @@ static void wined3d_unbind_srv_for_rtv(struct wined3d_device *device,
 
         for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
             for (j = 0; j < MAX_SHADER_RESOURCE_VIEWS; ++j)
-                if ((srv = device->state.shader_resource_view[i][j]) && srv->resource == resource)
+                if ((srv = device->state.shader_resource_view[i][j]) && srv->resource == resource
+                        && (!dsv || wined3d_dsv_srv_conflict(view, srv->format)))
                     wined3d_device_set_shader_resource_view(device, i, j, NULL);
     }
 }
@@ -5066,7 +5067,7 @@ HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device
     if (prev)
         wined3d_rendertarget_view_decref(prev);
 
-    wined3d_unbind_srv_for_rtv(device, view);
+    wined3d_unbind_srv_for_rtv(device, view, FALSE);
 
     return WINED3D_OK;
 }
@@ -5098,7 +5099,7 @@ HRESULT CDECL wined3d_device_set_depth_stencil_view(struct wined3d_device *devic
     if (prev)
         wined3d_rendertarget_view_decref(prev);
 
-    wined3d_unbind_srv_for_rtv(device, view);
+    wined3d_unbind_srv_for_rtv(device, view, TRUE);
 
     return WINED3D_OK;
 }

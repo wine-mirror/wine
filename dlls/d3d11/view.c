@@ -1216,6 +1216,11 @@ static void wined3d_depth_stencil_view_desc_from_d3d11(struct wined3d_view_desc 
         FIXME("Unhandled depth stencil view flags %#x.\n", desc->Flags);
 
     wined3d_desc->flags = 0;
+    if (desc->Flags & D3D11_DSV_READ_ONLY_DEPTH)
+        wined3d_desc->flags |= WINED3D_VIEW_READ_ONLY_DEPTH;
+    if (desc->Flags & D3D11_DSV_READ_ONLY_STENCIL)
+        wined3d_desc->flags |= WINED3D_VIEW_READ_ONLY_STENCIL;
+
     wined3d_desc->u.texture.level_count = 1;
     switch (desc->ViewDimension)
     {

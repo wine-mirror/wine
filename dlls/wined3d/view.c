@@ -65,11 +65,13 @@ static GLenum get_texture_view_target(const struct wined3d_gl_info *gl_info,
         {GL_TEXTURE_1D_ARRAY, 0,                          GL_TEXTURE_1D},
         {GL_TEXTURE_1D_ARRAY, WINED3D_VIEW_TEXTURE_ARRAY, GL_TEXTURE_1D_ARRAY},
     };
+    unsigned int flags = desc->flags & (WINED3D_VIEW_BUFFER_RAW | WINED3D_VIEW_BUFFER_APPEND
+            | WINED3D_VIEW_BUFFER_COUNTER | WINED3D_VIEW_TEXTURE_CUBE | WINED3D_VIEW_TEXTURE_ARRAY);
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(view_types); ++i)
     {
-        if (view_types[i].texture_target != texture_gl->target || view_types[i].view_flags != desc->flags)
+        if (view_types[i].texture_target != texture_gl->target || view_types[i].view_flags != flags)
             continue;
         if (gl_info->supported[view_types[i].extension])
             return view_types[i].view_target;
@@ -77,7 +79,7 @@ static GLenum get_texture_view_target(const struct wined3d_gl_info *gl_info,
         FIXME("Extension %#x not supported.\n", view_types[i].extension);
     }
 
-    FIXME("Unhandled view flags %#x for texture target %#x.\n", desc->flags, texture_gl->target);
+    FIXME("Unhandled view flags %#x for texture target %#x.\n", flags, texture_gl->target);
     return texture_gl->target;
 }
 

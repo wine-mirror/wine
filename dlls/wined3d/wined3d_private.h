@@ -5289,14 +5289,23 @@ static inline void wined3d_context_copy_bo_address(struct wined3d_context *conte
             dst, dst_bind_flags, src, src_bind_flags, size);
 }
 
+static inline BOOL wined3d_dsv_srv_conflict(const struct wined3d_rendertarget_view *dsv,
+        const struct wined3d_format *srv_format)
+{
+    return srv_format && ((srv_format->depth_size && !(dsv->desc.flags & WINED3D_VIEW_READ_ONLY_DEPTH))
+            || (srv_format->stencil_size && !(dsv->desc.flags & WINED3D_VIEW_READ_ONLY_STENCIL)));
+}
+
 static inline BOOL wined3d_resource_check_fbo_attached(const struct wined3d_state *state,
-        const struct wined3d_resource *resource)
+        const struct wined3d_resource *resource, const struct wined3d_format *srv_format)
 {
     struct wined3d_rendertarget_view * const *rts = &state->fb->render_targets[0];
+    const struct wined3d_rendertarget_view *dsv;
     unsigned int i;
 
     if ((resource->bind_flags & WINED3D_BIND_DEPTH_STENCIL)
-            && state->fb->depth_stencil && state->fb->depth_stencil->resource == resource)
+            && (dsv = state->fb->depth_stencil) && dsv->resource == resource
+            && wined3d_dsv_srv_conflict(dsv, srv_format))
         return TRUE;
 
     if (!(resource->bind_flags & WINED3D_BIND_RENDER_TARGET))
