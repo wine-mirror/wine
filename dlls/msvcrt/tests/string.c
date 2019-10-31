@@ -2936,7 +2936,7 @@ static void test_tolower(void)
 
     ch = 0xF4;
     errno = 0xdeadbeef;
-    ret = p_tolower(ch);
+    ret = p_tolower((signed char)ch);
     if(!MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, &ch, 1, &chw, 1) ||
             LCMapStringW(CP_ACP, LCMAP_LOWERCASE, &chw, 1, &lower, 1) != 1 ||
             (len = WideCharToMultiByte(CP_ACP, 0, &lower, 1, &lch, 1, NULL, NULL)) != 1)
@@ -2950,7 +2950,7 @@ static void test_tolower(void)
 
     ch = 0xD0;
     errno = 0xdeadbeef;
-    ret = p_tolower(ch);
+    ret = p_tolower((signed char)ch);
     if(!MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, &ch, 1, &chw, 1) ||
             LCMapStringW(CP_ACP, LCMAP_LOWERCASE, &chw, 1, &lower, 1) != 1 ||
             (len = WideCharToMultiByte(CP_ACP, 0, &lower, 1, &lch, 1, NULL, NULL)) != 1)
@@ -2962,15 +2962,15 @@ static void test_tolower(void)
     if(!len || ret==(unsigned char)lch)
         ok(errno == EILSEQ, "errno = %d\n", errno);
 
-    ret = p_tolower(0xD0);
+    ret = p_tolower((unsigned char)0xD0);
     ok(ret == 0xD0, "ret = %x\n", ret);
 
     ok(setlocale(LC_ALL, "us") != NULL, "setlocale failed\n");
 
-    ret = p_tolower((char)0xD0);
+    ret = p_tolower((signed char)0xD0);
     ok(ret == 0xF0, "ret = %x\n", ret);
 
-    ret = p_tolower(0xD0);
+    ret = p_tolower((unsigned char)0xD0);
     ok(ret == 0xF0, "ret = %x\n", ret);
 
     setlocale(LC_ALL, "C");
