@@ -690,36 +690,6 @@ HRESULT to_uint32(script_ctx_t *ctx, jsval_t val, UINT32 *ret)
     return hres;
 }
 
-static jsstr_t *int_to_string(int i)
-{
-    WCHAR buf[12], *p;
-    BOOL neg = FALSE;
-
-    if(!i) {
-        static const WCHAR zeroW[] = {'0',0};
-        return jsstr_alloc(zeroW);
-    }
-
-    if(i < 0) {
-        neg = TRUE;
-        i = -i;
-    }
-
-    p = buf + ARRAY_SIZE(buf)-1;
-    *p-- = 0;
-    while(i) {
-        *p-- = i%10 + '0';
-        i /= 10;
-    }
-
-    if(neg)
-        *p = '-';
-    else
-        p++;
-
-    return jsstr_alloc(p);
-}
-
 HRESULT double_to_string(double n, jsstr_t **str)
 {
     static const WCHAR InfinityW[] = {'-','I','n','f','i','n','i','t','y',0};
@@ -729,7 +699,9 @@ HRESULT double_to_string(double n, jsstr_t **str)
     }else if(isinf(n)) {
         *str = jsstr_alloc(n<0 ? InfinityW : InfinityW+1);
     }else if(is_int32(n)) {
-        *str = int_to_string(n);
+        WCHAR buf[12];
+        _ltow_s(n, buf, ARRAY_SIZE(buf), 10);
+        *str = jsstr_alloc(buf);
     }else {
         VARIANT strv, v;
         HRESULT hres;
