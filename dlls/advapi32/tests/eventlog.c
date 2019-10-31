@@ -28,12 +28,15 @@
 #include "winreg.h"
 #include "sddl.h"
 #include "wmistr.h"
+#include "evntprov.h"
 #include "evntrace.h"
 
 #include "wine/test.h"
 
 static BOOL (WINAPI *pCreateWellKnownSid)(WELL_KNOWN_SID_TYPE,PSID,PSID,DWORD*);
 static BOOL (WINAPI *pGetEventLogInformation)(HANDLE,DWORD,LPVOID,DWORD,LPDWORD);
+static ULONG (WINAPI *pEventRegister)(const GUID *,PENABLECALLBACK,void *,REGHANDLE *);
+static ULONG (WINAPI *pEventUnregister)(REGHANDLE);
 
 static BOOL (WINAPI *pGetComputerNameExA)(COMPUTER_NAME_FORMAT,LPSTR,LPDWORD);
 static BOOL (WINAPI *pWow64DisableWow64FsRedirection)(PVOID *);
@@ -46,6 +49,8 @@ static void init_function_pointers(void)
 
     pCreateWellKnownSid = (void*)GetProcAddress(hadvapi32, "CreateWellKnownSid");
     pGetEventLogInformation = (void*)GetProcAddress(hadvapi32, "GetEventLogInformation");
+    pEventRegister = (void*)GetProcAddress(hadvapi32, "EventRegister");
+    pEventUnregister = (void*)GetProcAddress(hadvapi32, "EventUnregister");
 
     pGetComputerNameExA = (void*)GetProcAddress(hkernel32, "GetComputerNameExA");
     pWow64DisableWow64FsRedirection = (void*)GetProcAddress(hkernel32, "Wow64DisableWow64FsRedirection");
@@ -1146,6 +1151,35 @@ static void cleanup_eventlog(void)
     ok(bret, "Expected MoveFileEx to succeed: %d\n", GetLastError());
 }
 
+static void test_trace_event_params(void)
+{
+    static const GUID test_guid = {0x57696E65, 0x0000, 0x0000, {0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x01}};
+
+    REGHANDLE reg_handle;
+    ULONG uret;
+
+    if (!pEventRegister)
+    {
+        win_skip("advapi32.EventRegister is missing, skipping trace event tests\n");
+        return;
+    }
+
+    uret = pEventRegister(NULL, NULL, NULL, &reg_handle);
+    todo_wine ok(uret == ERROR_INVALID_PARAMETER, "EventRegister gave wrong error: %#x\n", uret);
+
+    uret = pEventRegister(&test_guid, NULL, NULL, NULL);
+    ok(uret == ERROR_INVALID_PARAMETER, "EventRegister gave wrong error: %#x\n", uret);
+
+    uret = pEventRegister(&test_guid, NULL, NULL, &reg_handle);
+    ok(uret == ERROR_SUCCESS, "EventRegister gave wrong error: %#x\n", uret);
+
+    uret = pEventUnregister(0);
+    todo_wine ok(uret == ERROR_INVALID_HANDLE, "EventUnregister gave wrong error: %#x\n", uret);
+
+    uret = pEventUnregister(reg_handle);
+    ok(uret == ERROR_SUCCESS, "EventUnregister gave wrong error: %#x\n", uret);
+}
+
 static void test_start_trace(void)
 {
     const char sessionname[] = "wine";
@@ -1259,6 +1293,7 @@ START_TEST(eventlog)
     test_openbackup();
     test_read();
     test_clear();
+    test_trace_event_params();
 
     /* Functional tests */
     if (create_new_eventlog())

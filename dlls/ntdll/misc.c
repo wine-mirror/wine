@@ -403,6 +403,8 @@ ULONG WINAPI EtwEventRegister( LPCGUID provider, PENABLECALLBACK callback, PVOID
 {
     FIXME("(%s, %p, %p, %p) stub.\n", debugstr_guid(provider), callback, context, handle);
 
+    if (!handle) return ERROR_INVALID_PARAMETER;
+
     *handle = 0xdeadbeef;
     return ERROR_SUCCESS;
 }
