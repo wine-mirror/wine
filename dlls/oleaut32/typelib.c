@@ -7242,6 +7242,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             UINT cNamedArgs = pDispParams->cNamedArgs;
             DISPID *rgdispidNamedArgs = pDispParams->rgdispidNamedArgs;
             UINT vargs_converted=0;
+            SAFEARRAY *a;
 
             hres = S_OK;
 
@@ -7363,7 +7364,6 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         }
                         else if ((rgvt[i] == (VT_VARIANT | VT_ARRAY) || rgvt[i] == (VT_VARIANT | VT_ARRAY | VT_BYREF)) && func_desc->cParamsOpt < 0)
                         {
-                            SAFEARRAY *a;
                             SAFEARRAYBOUND bound;
                             VARIANT *v;
                             LONG j;
