@@ -120,8 +120,8 @@ static void test_advise(void)
 
     hr = IReferenceClock_AdviseTime(clock, current, 500 * 10000, (HEVENT)event, &cookie);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(WaitForSingleObject(event, 480) == WAIT_TIMEOUT, "Event should not be signaled.\n");
-    ok(!WaitForSingleObject(event, 40), "Event should be signaled.\n");
+    ok(WaitForSingleObject(event, 460) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+    ok(!WaitForSingleObject(event, 80), "Event should be signaled.\n");
 
     hr = IReferenceClock_Unadvise(clock, cookie);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
@@ -133,15 +133,15 @@ static void test_advise(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IReferenceClock_Unadvise(clock, cookie);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(WaitForSingleObject(event, 520) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+    ok(WaitForSingleObject(event, 540) == WAIT_TIMEOUT, "Event should not be signaled.\n");
 
     ResetEvent(event);
     hr = IReferenceClock_GetTime(clock, &current);
     ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
     hr = IReferenceClock_AdviseTime(clock, current + 500 * 10000, 0, (HEVENT)event, &cookie);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(WaitForSingleObject(event, 480) == WAIT_TIMEOUT, "Event should not be signaled.\n");
-    ok(!WaitForSingleObject(event, 40), "Event should be signaled.\n");
+    ok(WaitForSingleObject(event, 460) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+    ok(!WaitForSingleObject(event, 80), "Event should be signaled.\n");
 
     hr = IReferenceClock_GetTime(clock, &current);
     ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
