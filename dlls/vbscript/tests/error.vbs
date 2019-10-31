@@ -457,4 +457,20 @@ end sub
 
 call testVBErrorCodes
 
+on error resume next
+
+throwWithDesc
+ok err.number = &hdeadbeef&, "err.number = " & hex(err.number)
+ok err.description = "test", "err.description = " & err.description
+ok err.helpcontext = 10, "err.helpcontext = " & err.helpcontext
+ok err.helpfile = "test.chm", "err.helpfile = " & err.helpfile
+
+throwWithDesc = 1
+ok err.number = &hdeadbeef&, "err.number = " & hex(err.number)
+ok err.description = "test", "err.description = " & err.description
+ok err.helpcontext = 10, "err.helpcontext = " & err.helpcontext
+ok err.helpfile = "test.chm", "err.helpfile = " & err.helpfile
+
+on error goto 0
+
 call reportSuccess()

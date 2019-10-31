@@ -952,15 +952,21 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, DISPPARAMS *dp,
         return invoke_vbdisp(vbdisp, id, flags, FALSE, dp, retv);
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-    if(FAILED(hres)) {
+    if(SUCCEEDED(hres)) {
+        hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, flags, dp, retv, &ei, NULL /* CALLER_FIXME */);
+        IDispatchEx_Release(dispex);
+    }else {
         UINT err = 0;
 
         TRACE("using IDispatch\n");
-        return IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, flags, dp, retv, &ei, &err);
+        hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, flags, dp, retv, &ei, &err);
     }
 
-    hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, flags, dp, retv, &ei, NULL /* CALLER_FIXME */);
-    IDispatchEx_Release(dispex);
+    if(hres == DISP_E_EXCEPTION) {
+        clear_ei(&ctx->ei);
+        ctx->ei = ei;
+        hres = SCRIPT_E_RECORDED;
+    }
     return hres;
 }
 
@@ -994,5 +1000,10 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, 
         hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, flags, dp, NULL, &ei, &err);
     }
 
+    if(hres == DISP_E_EXCEPTION) {
+        clear_ei(&ctx->ei);
+        ctx->ei = ei;
+        hres = SCRIPT_E_RECORDED;
+    }
     return hres;
 }

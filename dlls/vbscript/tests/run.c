@@ -139,6 +139,7 @@ DEFINE_EXPECT(OnLeaveScript);
 #define DISPID_GLOBAL_WEEKSTARTDAY  1021
 #define DISPID_GLOBAL_GLOBALCALLBACK  1022
 #define DISPID_GLOBAL_TESTERROROBJECT 1023
+#define DISPID_GLOBAL_THROWWITHDESC   1024
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -1105,7 +1106,8 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         { L"testArray",       DISPID_GLOBAL_TESTARRAY },
         { L"throwInt",        DISPID_GLOBAL_THROWINT },
         { L"testOptionalArg", DISPID_GLOBAL_TESTOPTIONALARG },
-        { L"testErrorObject", DISPID_GLOBAL_TESTERROROBJECT }
+        { L"testErrorObject", DISPID_GLOBAL_TESTERROROBJECT },
+        { L"throwWithDesc",   DISPID_GLOBAL_THROWWITHDESC }
     };
 
     test_grfdex(grfdex, fdexNameCaseInsensitive);
@@ -1463,6 +1465,13 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         }
 
         return hres;
+
+    case DISPID_GLOBAL_THROWWITHDESC:
+        pei->scode = 0xdeadbeef;
+        pei->bstrDescription = SysAllocString(L"test");
+        pei->bstrHelpFile = SysAllocString(L"test.chm");
+        pei->dwHelpContext = 10;
+        return DISP_E_EXCEPTION;
     }
 
     case DISPID_GLOBAL_TESTOPTIONALARG: {
