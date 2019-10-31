@@ -1537,6 +1537,15 @@ HRESULT CDECL wined3d_stateblock_set_clip_plane(struct wined3d_stateblock *state
     return S_OK;
 }
 
+void CDECL wined3d_stateblock_set_material(struct wined3d_stateblock *stateblock,
+        const struct wined3d_material *material)
+{
+    TRACE("stateblock %p, material %p.\n", stateblock, material);
+
+    stateblock->stateblock_state.material = *material;
+    stateblock->changed.material = TRUE;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union

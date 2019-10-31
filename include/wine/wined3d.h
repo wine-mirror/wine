@@ -2670,6 +2670,7 @@ void __cdecl wined3d_stateblock_set_blend_factor(struct wined3d_stateblock *stat
         const struct wined3d_color *blend_factor);
 HRESULT __cdecl wined3d_stateblock_set_clip_plane(struct wined3d_stateblock *stateblock,
         UINT plane_idx, const struct wined3d_vec4 *plane);
+void __cdecl wined3d_stateblock_set_material(struct wined3d_stateblock *stateblock, const struct wined3d_material *material);
 void __cdecl wined3d_stateblock_set_pixel_shader(struct wined3d_stateblock *stateblock, struct wined3d_shader *shader);
 HRESULT __cdecl wined3d_stateblock_set_ps_consts_b(struct wined3d_stateblock *stateblock,
         unsigned int start_idx, unsigned int count, const BOOL *constants);
