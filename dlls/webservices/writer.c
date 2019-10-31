@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <float.h>
 #include <math.h>
 
 #include "windef.h"
@@ -1193,12 +1194,12 @@ HRESULT text_to_utf8text( const WS_XML_TEXT *text, const WS_XML_UTF8_TEXT *old, 
     {
         const WS_XML_DOUBLE_TEXT *double_text = (const WS_XML_DOUBLE_TEXT *)text;
         unsigned char buf[32]; /* "-1.1111111111111111E-308", oversized to address Valgrind limitations */
-        unsigned short fpword;
+        unsigned int fpword = _control87( 0, 0 );
         ULONG len;
 
-        if (!set_fpword( 0x37f, &fpword )) return E_NOTIMPL;
+        _control87( _MCW_EM | _RC_NEAR | _PC_64, _MCW_EM | _MCW_RC | _MCW_PC );
         len = format_double( &double_text->value, buf );
-        restore_fpword( fpword );
+        _control87( fpword, _MCW_EM | _MCW_RC | _MCW_PC );
         if (!len) return E_NOTIMPL;
 
         if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;

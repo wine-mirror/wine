@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <assert.h>
+#include <float.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -3723,31 +3724,6 @@ static HRESULT str_to_uint64( const unsigned char *str, ULONG len, UINT64 max, U
     return S_OK;
 }
 
-BOOL set_fpword( unsigned short new, unsigned short *old )
-{
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
-    unsigned short fpword;
-
-    __asm__ __volatile__( "fstcw %0" : "=m" (fpword) );
-    *old = fpword;
-    fpword = new;
-    __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
-    return TRUE;
-#else
-    FIXME( "not implemented\n" );
-    return FALSE;
-#endif
-}
-
-void restore_fpword( unsigned short fpword )
-{
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
-    __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
-#else
-    FIXME( "not implemented\n" );
-#endif
-}
-
 static HRESULT str_to_double( const unsigned char *str, ULONG len, double *ret )
 {
     static const unsigned __int64 nan = 0xfff8000000000000;
@@ -3758,7 +3734,7 @@ static HRESULT str_to_double( const unsigned char *str, ULONG len, double *ret )
     int sign = 1, exp_sign = 1, exp = 0, exp_tmp = 0, neg_exp, i, nb_digits, have_digits;
     unsigned __int64 val = 0, tmp;
     long double exp_val = 1.0, exp_mul = 10.0;
-    unsigned short fpword;
+    unsigned int fpword = _control87( 0, 0 );
 
     while (len && read_isspace( *p )) { p++; len--; }
     while (len && read_isspace( p[len - 1] )) { len--; }
@@ -3789,7 +3765,7 @@ static HRESULT str_to_double( const unsigned char *str, ULONG len, double *ret )
     else if (*p == '+') { p++; len--; };
     if (!len) return S_OK;
 
-    if (!set_fpword( 0x37f, &fpword )) return E_NOTIMPL;
+    _control87( _MCW_EM | _RC_NEAR | _PC_64, _MCW_EM | _MCW_RC | _MCW_PC );
 
     q = p;
     while (len && isdigit( *q )) { q++; len--; }
@@ -3860,7 +3836,7 @@ static HRESULT str_to_double( const unsigned char *str, ULONG len, double *ret )
     hr = S_OK;
 
 done:
-    restore_fpword( fpword );
+    _control87( fpword, _MCW_EM | _MCW_RC | _MCW_PC );
     return hr;
 }
 

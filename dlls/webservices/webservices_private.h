@@ -65,8 +65,6 @@ void free_xml_string( WS_XML_STRING * ) DECLSPEC_HIDDEN;
 HRESULT append_attribute( WS_XML_ELEMENT_NODE *, WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 void free_attribute( WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 WS_TYPE map_value_type( WS_VALUE_TYPE ) DECLSPEC_HIDDEN;
-BOOL set_fpword( unsigned short, unsigned short * ) DECLSPEC_HIDDEN;
-void restore_fpword( unsigned short ) DECLSPEC_HIDDEN;
 ULONG get_type_size( WS_TYPE, const void * ) DECLSPEC_HIDDEN;
 HRESULT read_header( WS_XML_READER *, const WS_XML_STRING *, const WS_XML_STRING *, WS_TYPE,
                      const void *, WS_READ_OPTION, WS_HEAP *, void *, ULONG ) DECLSPEC_HIDDEN;
