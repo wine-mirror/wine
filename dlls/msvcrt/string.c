@@ -616,7 +616,7 @@ int CDECL MSVCRT_strcoll_l( const char* str1, const char* str2, MSVCRT__locale_t
         locinfo = locale->locinfo;
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
-        return strcmp(str1, str2);
+        return MSVCRT_strcmp(str1, str2);
     return CompareStringA(locinfo->lc_handle[MSVCRT_LC_COLLATE], 0, str1, -1, str2, -1)-CSTR_EQUAL;
 }
 
@@ -667,7 +667,7 @@ int CDECL MSVCRT__strncoll_l( const char* str1, const char* str2, MSVCRT_size_t 
         locinfo = locale->locinfo;
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
-        return strncmp(str1, str2, count);
+        return MSVCRT_strncmp(str1, str2, count);
     return CompareStringA(locinfo->lc_handle[MSVCRT_LC_COLLATE], 0,
               str1, MSVCRT_strnlen(str1, count),
               str2, MSVCRT_strnlen(str2, count))-CSTR_EQUAL;
@@ -1943,7 +1943,10 @@ void* __cdecl MSVCRT_memchr(const void *ptr, int c, MSVCRT_size_t n)
  */
 int __cdecl MSVCRT_strcmp(const char *str1, const char *str2)
 {
-    return strcmp(str1, str2);
+    while (*str1 && *str1 == *str2) { str1++; str2++; }
+    if (*str1 > *str2) return 1;
+    if (*str1 < *str2) return -1;
+    return 0;
 }
 
 /*********************************************************************
@@ -1951,7 +1954,11 @@ int __cdecl MSVCRT_strcmp(const char *str1, const char *str2)
  */
 int __cdecl MSVCRT_strncmp(const char *str1, const char *str2, MSVCRT_size_t len)
 {
-    return strncmp(str1, str2, len);
+    if (!len) return 0;
+    while (--len && *str1 && *str1 == *str2) { str1++; str2++; }
+    if (*str1 > *str2) return 1;
+    if (*str1 < *str2) return -1;
+    return 0;
 }
 
 /*********************************************************************
