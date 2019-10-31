@@ -975,7 +975,7 @@ static int __thiscall test_streambuf_overflow(streambuf *this, int ch)
         return EOF;
     if (!test_this->unbuffered)
         test_this->pptr = test_this->pbase + 5;
-    return ch;
+    return (unsigned char)ch;
 }
 
 #ifdef __i386__
@@ -986,11 +986,11 @@ static int __thiscall test_streambuf_underflow(streambuf *this)
 {
     underflow_count++;
     if (test_this->unbuffered) {
-        return (buffer_pos < 23) ? test_get_buffer[buffer_pos++] : EOF;
+        return (buffer_pos < 23) ? (unsigned char)test_get_buffer[buffer_pos++] : EOF;
     } else if (test_this->gptr < test_this->egptr) {
-        return *test_this->gptr;
+        return (unsigned char)*test_this->gptr;
     } else {
-        return get_end ? EOF : *(test_this->gptr = test_this->eback);
+        return get_end ? EOF : (unsigned char)*(test_this->gptr = test_this->eback);
     }
 }
 
@@ -1257,13 +1257,13 @@ static void test_streambuf(void)
     ret = (int) call_func2(p_streambuf_sputc, &sb, 150);
     ok(ret == 150, "wrong return value, expected 150 got %d\n", ret);
     ok(overflow_count == 0, "no call to overflow expected\n");
-    ok(*sb.pbase == -106, "expected -106 in the put area, got %d\n", *sb.pbase);
+    ok((signed char)*sb.pbase == -106, "expected -106 in the put area, got %d\n", *sb.pbase);
     ok(sb.pptr == sb.pbase + 1, "wrong put pointer, expected %p got %p\n", sb.pbase + 1, sb.pptr);
     sb.pptr--;
     ret = (int) call_func2(p_streambuf_sputc, &sb, -50);
     ok(ret == 206, "wrong return value, expected 206 got %d\n", ret);
     ok(overflow_count == 0, "no call to overflow expected\n");
-    ok(*sb.pbase == -50, "expected -50 in the put area, got %d\n", *sb.pbase);
+    ok((signed char)*sb.pbase == -50, "expected -50 in the put area, got %d\n", *sb.pbase);
     ok(sb.pptr == sb.pbase + 1, "wrong put pointer, expected %p got %p\n", sb.pbase + 1, sb.pptr);
     test_this = &sb2;
     ret = (int) call_func2(p_streambuf_sputc, &sb2, 'c');
@@ -1485,7 +1485,7 @@ static void test_streambuf(void)
     ok(sb.gptr == sb.eback + 2, "wrong get pointer, expected %p got %p\n", sb.eback + 2, sb.gptr);
     ok(*sb.gptr == 'A', "expected 'A' in the get area, got %c\n", *sb.gptr);
     ret = (int) call_func2(p_streambuf_pbackfail, &sb, EOF);
-    ok(ret == EOF, "expected EOF got '%c'\n", ret);
+    ok(ret == (char)EOF, "expected EOF got %d\n", ret);
     ok(sb.gptr == sb.eback + 1, "wrong get pointer, expected %p got %p\n", sb.eback + 1, sb.gptr);
     ok((signed char)*sb.gptr == EOF, "expected EOF in the get area, got %c\n", *sb.gptr);
     sb.gptr = sb.eback;
@@ -2462,7 +2462,7 @@ static void test_strstreambuf(void)
     ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
     ssb1.base.gptr = ssb1.base.eback + 1;
     ret = (int) call_func2(p_streambuf_pbackfail, &ssb1.base, EOF);
-    ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
+    ok(ret == (char)EOF, "wrong return, expected EOF got %d\n", ret);
     ok(ssb1.base.gptr == ssb1.base.eback, "wrong get pointer, expected %p got %p\n", ssb1.base.eback, ssb1.base.gptr);
     ok((signed char)*ssb1.base.gptr == EOF, "expected EOF got '%c'\n", *ssb1.base.gptr);
 
@@ -4812,7 +4812,7 @@ static void test_istream(void)
     ok(is1.count == 1, "expected 1 got %d\n", is1.count);
     ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
     ok(fb1.base.gptr == fb1.base.base + 11, "wrong get pointer, expected %p got %p\n", fb1.base.base + 11, fb1.base.gptr);
-    ok(buffer[0] == -50, "expected 0 got %d\n", buffer[0]);
+    ok((signed char)buffer[0] == -50, "expected 0 got %d\n", buffer[0]);
     ok(buffer[1] == 0, "expected 0 got %d\n", buffer[1]);
     *fb1.base.gptr = -50;
     memset(buffer, 'A', sizeof(buffer));
@@ -4911,8 +4911,8 @@ static void test_istream(void)
     ok(is1.count == 2, "expected 2 got %d\n", is1.count);
     ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
     ok(fb1.base.gptr == fb1.base.base + 25, "wrong get pointer, expected %p got %p\n", fb1.base.base + 25, fb1.base.gptr);
-    ok(buffer[0] == -50, "expected -50 got %d\n", buffer[0]);
-    ok(buffer[1] == -40, "expected -40 got %d\n", buffer[1]);
+    ok((signed char)buffer[0] == -50, "expected -50 got %d\n", buffer[0]);
+    ok((signed char)buffer[1] == -40, "expected -40 got %d\n", buffer[1]);
     ok(buffer[2] == 0, "expected 0 got %d\n", buffer[2]);
 
     /* get */
@@ -4978,7 +4978,7 @@ static void test_istream(void)
     ok(is1.count == 0, "expected 0 got %d\n", is1.count);
     ok(is1.base_ios.state == (IOSTATE_eofbit|IOSTATE_failbit), "expected %d got %d\n",
         IOSTATE_eofbit|IOSTATE_failbit, is1.base_ios.state);
-    ok(c == EOF, "expected -1 got %d\n", c);
+    ok((signed char)c == EOF, "expected -1 got %d\n", c);
     is1.base_ios.state = IOSTATE_goodbit;
     fb1.base.eback = fb1.base.gptr = fb1.base.base;
     fb1.base.egptr = fb1.base.base + 30;
@@ -4994,7 +4994,7 @@ static void test_istream(void)
     ok(is1.count == 1, "expected 1 got %d\n", is1.count);
     ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
     ok(fb1.base.gptr == fb1.base.base + 3, "wrong get pointer, expected %p got %p\n", fb1.base.base + 3, fb1.base.gptr);
-    ok(c == -50, "expected %d got %d\n", -50, c);
+    ok((signed char)c == -50, "expected %d got %d\n", -50, c);
     if (0) /* crashes on native */
         pis = call_func2(p_istream_get_char, &is1, NULL);
     fb1.base.gptr = fb1.base.base + 30;
@@ -5004,7 +5004,7 @@ static void test_istream(void)
     ok(is1.base_ios.state == (IOSTATE_eofbit|IOSTATE_failbit), "expected %d got %d\n",
         IOSTATE_eofbit|IOSTATE_failbit, is1.base_ios.state);
     ok(fb1.base.gptr == (char*) 1, "wrong get pointer, expected %p got %p\n", (char*) 1, fb1.base.gptr);
-    ok(c == EOF, "expected -1 got %d\n", c);
+    ok((signed char)c == EOF, "expected -1 got %d\n", c);
     is1.base_ios.state = IOSTATE_failbit;
     pis = call_func2(p_istream_get_char, &is1, NULL);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
@@ -5123,7 +5123,7 @@ static void test_istream(void)
     is1.base_ios.state = IOSTATE_goodbit;
     fb1.base.eback = fb1.base.gptr = fb1.base.base;
     fb1.base.egptr = fb1.base.base + 30;
-    pis = call_func3(p_istream_get_sb, &is1, &fb2.base, 206);
+    pis = call_func3(p_istream_get_sb, &is1, &fb2.base, (char)206);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(is1.count == 30, "expected 30 got %d\n", is1.count);
     ok(is1.base_ios.state == IOSTATE_eofbit, "expected %d got %d\n", IOSTATE_eofbit, is1.base_ios.state);
@@ -5178,7 +5178,7 @@ static void test_istream(void)
     ok(buffer[7] == 0, "expected 0 got %d\n", buffer[7]);
     is1.extract_delim = -1;
     memset(buffer, 'A', sizeof(buffer));
-    pis = call_func4(p_istream_getline, &is1, buffer, 10, 206);
+    pis = call_func4(p_istream_getline, &is1, buffer, 10, (char)206);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
     ok(is1.count == 0, "expected 0 got %d\n", is1.count);
@@ -5352,7 +5352,7 @@ static void test_istream(void)
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
     ok(fb1.base.gptr == fb1.base.base + 14, "wrong get pointer, expected %p got %p\n", fb1.base.base + 14, fb1.base.gptr);
-    ok(*fb1.base.gptr == -40, "expected -40 got %d\n", *fb1.base.gptr);
+    ok((signed char)*fb1.base.gptr == -40, "expected -40 got %d\n", *fb1.base.gptr);
 
     /* read */
     is1.extract_delim = is1.count = 0xabababab;
@@ -5381,7 +5381,7 @@ static void test_istream(void)
     ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
     ok(fb1.base.gptr == fb1.base.base + 30, "wrong get pointer, expected %p got %p\n", fb1.base.base + 30, fb1.base.gptr);
     ok(!strncmp(buffer, fb1.base.base + 10, 20), "unexpected buffer content, got '%s'\n", buffer);
-    ok(buffer[4] == -40, "expected -40 got %d\n", buffer[4]);
+    ok((signed char)buffer[4] == -40, "expected -40 got %d\n", buffer[4]);
     ok(buffer[20] == 'A', "expected 'A' got %d\n", buffer[20]);
     memset(buffer, 'A', sizeof(buffer));
     pis = call_func3(p_istream_read, &is1, buffer, 5);
