@@ -72,7 +72,8 @@ static HRESULT WINAPI Builtin_QueryInterface(IDispatch *iface, REFIID riid, void
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = &This->IDispatch_iface;
     }else {
-        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        if(!IsEqualGUID(riid, &IID_IDispatchEx))
+            WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
         return E_NOINTERFACE;
     }
