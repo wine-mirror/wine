@@ -1717,7 +1717,9 @@ static HRESULT WINAPI d3d8_device_SetMaterial(IDirect3DDevice8 *iface, const D3D
 
     /* Note: D3DMATERIAL8 is compatible with struct wined3d_material. */
     wined3d_mutex_lock();
-    wined3d_device_set_material(device->wined3d_device, (const struct wined3d_material *)material);
+    wined3d_stateblock_set_material(device->update_state, (const struct wined3d_material *)material);
+    if (!device->recording)
+        wined3d_device_set_material(device->wined3d_device, (const struct wined3d_material *)material);
     wined3d_mutex_unlock();
 
     return D3D_OK;
