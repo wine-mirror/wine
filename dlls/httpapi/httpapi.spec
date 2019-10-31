@@ -39,7 +39,7 @@
 @ stub HttpReceiveClientCertificate
 @ stdcall HttpReceiveHttpRequest(ptr int64 long ptr long ptr ptr)
 @ stub HttpReceiveHttpResponse
-@ stub HttpReceiveRequestEntityBody
+@ stdcall HttpReceiveRequestEntityBody(ptr int64 long ptr long ptr ptr)
 @ stub HttpRemoveAllUrlsFromConfigGroup
 @ stdcall HttpRemoveUrl(ptr wstr)
 @ stub HttpRemoveUrlFromConfigGroup

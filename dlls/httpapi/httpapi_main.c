@@ -279,6 +279,20 @@ ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *url)
 }
 
 /***********************************************************************
+ *        HttpReceiveRequestEntityBody     (HTTPAPI.@)
+ */
+ULONG WINAPI HttpReceiveRequestEntityBody(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
+        void *buffer, ULONG size, ULONG *ret_size, OVERLAPPED *ovl)
+{
+    *ret_size = 0;
+
+    FIXME("stub: queue %p, id %s, flags %#x, buffer %p, size %#x, ret_size %p, ovl %p.\n",
+            queue, wine_dbgstr_longlong(id), flags, buffer, size, ret_size, ovl);
+
+    return ERROR_HANDLE_EOF;
+}
+
+/***********************************************************************
  *        HttpReceiveHttpRequest     (HTTPAPI.@)
  */
 ULONG WINAPI HttpReceiveHttpRequest(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
