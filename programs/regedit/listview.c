@@ -38,7 +38,6 @@ DWORD   g_columnToSort = ~0U;
 BOOL    g_invertSort = FALSE;
 WCHAR  *g_currentPath;
 HKEY    g_currentRootKey;
-static  WCHAR *g_valueName;
 static  WCHAR g_szValueNotSet[64];
 
 #define MAX_LIST_COLUMNS (IDS_LIST_COLUMN_LAST - IDS_LIST_COLUMN_FIRST + 1)
@@ -66,16 +65,10 @@ WCHAR *GetValueName(HWND hwndLV)
 {
     INT item;
 
-    if (g_valueName != LPSTR_TEXTCALLBACKW)
-        heap_free(g_valueName);
-    g_valueName = NULL;
-
     item = SendMessageW(hwndLV, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_FOCUSED, 0));
     if (item == -1) return NULL;
 
-    g_valueName = GetItemText(hwndLV, item);
-
-    return g_valueName;
+    return GetItemText(hwndLV, item);
 }
 
 BOOL update_listview_path(const WCHAR *path)
