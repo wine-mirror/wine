@@ -374,6 +374,7 @@ static int stack_pop_bool(exec_ctx_t *ctx, BOOL *b)
         *b = V_BOOL(val.v);
         break;
     case VT_NULL:
+    case VT_EMPTY:
         *b = FALSE;
         break;
     case VT_I2:

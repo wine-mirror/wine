@@ -329,6 +329,14 @@ end if
 while false
 wend
 
+if empty then
+   ok false, "if empty executed"
+end if
+
+while empty
+   ok false, "while empty executed"
+wend
+
 x = 0
 WHILE x < 3 : x = x + 1
 Wend
