@@ -971,16 +971,27 @@ void CDECL _statusfp2( unsigned int *x86_sw, unsigned int *sse2_sw )
  */
 unsigned int CDECL _statusfp(void)
 {
+    unsigned int flags = 0;
 #if defined(__i386__) || defined(__x86_64__)
     unsigned int x86_sw, sse2_sw;
 
     _statusfp2( &x86_sw, &sse2_sw );
     /* FIXME: there's no definition for ambiguous status, just return all status bits for now */
-    return x86_sw | sse2_sw;
+    flags = x86_sw | sse2_sw;
+#elif defined(__aarch64__)
+    unsigned long fpsr;
+
+    __asm__ __volatile__( "mrs %0, fpsr" : "=r" (fpsr) );
+    if (fpsr & 0x1)  flags |= MSVCRT__SW_INVALID;
+    if (fpsr & 0x2)  flags |= MSVCRT__SW_ZERODIVIDE;
+    if (fpsr & 0x4)  flags |= MSVCRT__SW_OVERFLOW;
+    if (fpsr & 0x8)  flags |= MSVCRT__SW_UNDERFLOW;
+    if (fpsr & 0x10) flags |= MSVCRT__SW_INEXACT;
+    if (fpsr & 0x80) flags |= MSVCRT__SW_DENORMAL;
 #else
     FIXME( "not implemented\n" );
-    return 0;
 #endif
+    return flags;
 }
 
 /*********************************************************************
@@ -1012,6 +1023,18 @@ unsigned int CDECL _clearfp(void)
         fpword &= ~0x3f;
         __asm__ __volatile__( "ldmxcsr %0" : : "m" (fpword) );
     }
+#elif defined(__aarch64__)
+    unsigned long fpsr;
+
+    __asm__ __volatile__( "mrs %0, fpsr" : "=r" (fpsr) );
+    if (fpsr & 0x1)  flags |= MSVCRT__SW_INVALID;
+    if (fpsr & 0x2)  flags |= MSVCRT__SW_ZERODIVIDE;
+    if (fpsr & 0x4)  flags |= MSVCRT__SW_OVERFLOW;
+    if (fpsr & 0x8)  flags |= MSVCRT__SW_UNDERFLOW;
+    if (fpsr & 0x10) flags |= MSVCRT__SW_INEXACT;
+    if (fpsr & 0x80) flags |= MSVCRT__SW_DENORMAL;
+    fpsr &= ~0x9f;
+    __asm__ __volatile__( "msr fpsr, %0" :: "r" (fpsr) );
 #else
     FIXME( "not implemented\n" );
 #endif
@@ -1201,17 +1224,48 @@ int CDECL __control87_2( unsigned int newval, unsigned int mask,
  */
 unsigned int CDECL _control87(unsigned int newval, unsigned int mask)
 {
+    unsigned int flags = 0;
 #if defined(__i386__) || defined(__x86_64__)
-    unsigned int x86_cw, sse2_cw;
+    unsigned int sse2_cw;
 
-    __control87_2( newval, mask, &x86_cw, &sse2_cw );
+    __control87_2( newval, mask, &flags, &sse2_cw );
 
-    if ((x86_cw ^ sse2_cw) & (MSVCRT__MCW_EM | MSVCRT__MCW_RC)) x86_cw |= MSVCRT__EM_AMBIGUOUS;
-    return x86_cw;
+    if ((flags ^ sse2_cw) & (MSVCRT__MCW_EM | MSVCRT__MCW_RC)) flags |= MSVCRT__EM_AMBIGUOUS;
+#elif defined(__aarch64__)
+    unsigned long fpcr;
+
+    __asm__ __volatile__( "mrs %0, fpcr" : "=r" (fpcr) );
+    if (!(fpcr & 0x100))  flags |= MSVCRT__EM_INVALID;
+    if (!(fpcr & 0x200))  flags |= MSVCRT__EM_ZERODIVIDE;
+    if (!(fpcr & 0x400))  flags |= MSVCRT__EM_OVERFLOW;
+    if (!(fpcr & 0x800))  flags |= MSVCRT__EM_UNDERFLOW;
+    if (!(fpcr & 0x1000)) flags |= MSVCRT__EM_INEXACT;
+    if (!(fpcr & 0x8000)) flags |= MSVCRT__EM_DENORMAL;
+    switch (fpcr & 0xc00000)
+    {
+    case 0x400000: flags |= MSVCRT__RC_UP; break;
+    case 0x800000: flags |= MSVCRT__RC_DOWN; break;
+    case 0xc00000: flags |= MSVCRT__RC_CHOP; break;
+    }
+    flags = (flags & ~mask) | (newval & mask);
+    fpcr &= ~0xc09f00ul;
+    if (!(flags & MSVCRT__EM_INVALID)) fpcr |= 0x100;
+    if (!(flags & MSVCRT__EM_ZERODIVIDE)) fpcr |= 0x200;
+    if (!(flags & MSVCRT__EM_OVERFLOW)) fpcr |= 0x400;
+    if (!(flags & MSVCRT__EM_UNDERFLOW)) fpcr |= 0x800;
+    if (!(flags & MSVCRT__EM_INEXACT)) fpcr |= 0x1000;
+    if (!(flags & MSVCRT__EM_DENORMAL)) fpcr |= 0x8000;
+    switch (flags & MSVCRT__MCW_RC)
+    {
+    case MSVCRT__RC_CHOP: fpcr |= 0xc00000; break;
+    case MSVCRT__RC_UP:   fpcr |= 0x400000; break;
+    case MSVCRT__RC_DOWN: fpcr |= 0x800000; break;
+    }
+    __asm__ __volatile__( "msr fpcr, %0" :: "r" (fpcr) );
 #else
     FIXME( "not implemented\n" );
-    return 0;
 #endif
+    return flags;
 }
 
 /*********************************************************************
