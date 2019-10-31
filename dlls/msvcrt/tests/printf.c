@@ -90,466 +90,257 @@ static void init( void )
 
 static void test_sprintf( void )
 {
+    struct {
+        const char *format;
+        int r;
+        const char *out;
+        enum {
+            NO_ARG,
+            INT_ARG,
+            ULONGLONG_ARG,
+            DOUBLE_ARG,
+            PTR_ARG
+        } type;
+        int arg_i;
+        ULONGLONG arg_ull;
+        double arg_d;
+        const void *arg_ptr;
+    } tests[] = {
+        { "%+#23.15e", 23, "+7.894561230000000e+008", DOUBLE_ARG, 0, 0, 789456123 },
+        { "%-#23.15e", 23, "7.894561230000000e+008 ", DOUBLE_ARG, 0, 0, 789456123 },
+        { "%#23.15e", 23, " 7.894561230000000e+008", DOUBLE_ARG, 0, 0, 789456123 },
+        { "%#1.1g", 7, "8.e+008", DOUBLE_ARG, 0, 0, 789456123 },
+        { "%I64d", 11, "-8589934591", ULONGLONG_ARG, 0, ((ULONGLONG)0xffffffff)*0xffffffff },
+        { "%+8I64d", 8, "    +100", ULONGLONG_ARG, 0, 100 },
+        { "%+.8I64d", 9, "+00000100", ULONGLONG_ARG, 0, 100 },
+        { "%+10.8I64d", 10, " +00000100", ULONGLONG_ARG, 0, 100 },
+        { "%_1I64d", 6, "_1I64d", ULONGLONG_ARG, 0, 100 },
+        { "%-1.5I64d", 6, "-00100", ULONGLONG_ARG, 0, -100 },
+        { "%5I64d", 5, "  100", ULONGLONG_ARG, 0, 100 },
+        { "%5I64d", 5, " -100", ULONGLONG_ARG, 0, -100 },
+        { "%-5I64d", 5, "100  ", ULONGLONG_ARG, 0, 100 },
+        { "%-5I64d", 5, "-100 ", ULONGLONG_ARG, 0, -100 },
+        { "%-.5I64d", 5, "00100", ULONGLONG_ARG, 0, 100 },
+        { "%-.5I64d", 6, "-00100", ULONGLONG_ARG, 0, -100 },
+        { "%-8.5I64d", 8, "00100   ", ULONGLONG_ARG, 0, 100 },
+        { "%-8.5I64d", 8, "-00100  ", ULONGLONG_ARG, 0, -100 },
+        { "%05I64d", 5, "00100", ULONGLONG_ARG, 0, 100 },
+        { "%05I64d", 5, "-0100", ULONGLONG_ARG, 0, -100 },
+        { "% I64d", 4, " 100", ULONGLONG_ARG, 0, 100 },
+        { "% I64d", 4, "-100", ULONGLONG_ARG, 0, -100 },
+        { "% 5I64d", 5, "  100", ULONGLONG_ARG, 0, 100 },
+        { "% 5I64d", 5, " -100", ULONGLONG_ARG, 0, -100 },
+        { "% .5I64d", 6, " 00100", ULONGLONG_ARG, 0, 100 },
+        { "% .5I64d", 6, "-00100", ULONGLONG_ARG, 0, -100 },
+        { "% 8.5I64d", 8, "   00100", ULONGLONG_ARG, 0, 100 },
+        { "% 8.5I64d", 8, "  -00100", ULONGLONG_ARG, 0, -100 },
+        { "%.0I64d", 0, "", ULONGLONG_ARG },
+        { "%#+21.18I64x", 21, " 0x00ffffffffffffff9c", ULONGLONG_ARG, 0, -100 },
+        { "%#.25I64o", 25, "0001777777777777777777634", ULONGLONG_ARG, 0, -100 },
+        { "%#+24.20I64o", 24, " 01777777777777777777634", ULONGLONG_ARG, 0, -100 },
+        { "%#+18.21I64X", 23, "0X00000FFFFFFFFFFFFFF9C", ULONGLONG_ARG, 0, -100 },
+        { "%#+20.24I64o", 24, "001777777777777777777634", ULONGLONG_ARG, 0, -100 },
+        { "%#+25.22I64u", 25, "   0018446744073709551615", ULONGLONG_ARG, 0, -1 },
+        { "%#+25.22I64u", 25, "   0018446744073709551615", ULONGLONG_ARG, 0, -1 },
+        { "%#+30.25I64u", 30, "     0000018446744073709551615", ULONGLONG_ARG, 0, -1 },
+        { "%+#25.22I64d", 25, "  -0000000000000000000001", ULONGLONG_ARG, 0, -1 },
+        { "%#-8.5I64o", 8, "00144   ", ULONGLONG_ARG, 0, 100 },
+        { "%#-+ 08.5I64d", 8, "+00100  ", ULONGLONG_ARG, 0, 100 },
+        { "%.80I64d", 80,
+            "00000000000000000000000000000000000000000000000000000000000000000000000000000001",
+            ULONGLONG_ARG, 0, 1 },
+        { "% .80I64d", 81,
+            " 00000000000000000000000000000000000000000000000000000000000000000000000000000001",
+            ULONGLONG_ARG, 0, 1 },
+        { "% .80d", 81,
+            " 00000000000000000000000000000000000000000000000000000000000000000000000000000001",
+            INT_ARG, 1 },
+        { "%I", 1, "I", INT_ARG, 1 },
+        { "%I0d", 3, "I0d", INT_ARG, 1 },
+        { "%I64D", 1, "D", ULONGLONG_ARG, 0, -1 },
+        { "%zx", 2, "zx", INT_ARG, 1 },
+        { "% d", 2, " 1", INT_ARG, 1 },
+        { "%+ d", 2, "+1", INT_ARG, 1 },
+        { "%S", 4, "wide", PTR_ARG, 0, 0, 0, L"wide" },
+        { "%04c", 4, "0001", INT_ARG, '1' },
+        { "%-04c", 4, "1   ", INT_ARG, '1' },
+        { "%#012x", 12, "0x0000000001", INT_ARG, 1 },
+        { "%#012x", 12, "000000000000", INT_ARG, 0 },
+        { "%#04.8x", 10, "0x00000001", INT_ARG, 1 },
+        { "%#04.8x", 8, "00000000", INT_ARG, 0 },
+        { "%#-08.2x", 8, "0x01    ", INT_ARG, 1 },
+        { "%#-08.2x", 8, "00      ", INT_ARG, 0 },
+        { "%#.0x", 3, "0x1", INT_ARG, 1 },
+        { "%#.0x", 0, "", INT_ARG, 0 },
+        { "%#08o", 8, "00000001", INT_ARG, 1 },
+        { "%#o", 2, "01", INT_ARG, 1 },
+        { "%#o", 1, "0", INT_ARG, 0 },
+        { "%04s", 4, "0foo", PTR_ARG, 0, 0, 0, "foo" },
+        { "%.1s", 1, "f", PTR_ARG, 0, 0, 0, "foo" },
+        { "hello", 5, "hello", NO_ARG },
+        { "%ws", 4, "wide", PTR_ARG, 0, 0, 0, L"wide" },
+        { "%-10ws", 10, "wide      ", PTR_ARG, 0, 0, 0, L"wide" },
+        { "%10ws", 10, "      wide", PTR_ARG, 0, 0, 0, L"wide" },
+        { "%#+ -03whlls", 4, "wide", PTR_ARG, 0, 0, 0, L"wide" },
+        { "%w0s", 2, "0s", PTR_ARG, 0, 0, 0, L"wide" },
+        { "%w-s", 2, "-s", PTR_ARG, 0, 0, 0, L"wide" },
+        { "%ls", 4, "wide", PTR_ARG, 0, 0, 0, L"wide" },
+        { "%Ls", 8, "not wide", PTR_ARG, 0, 0, 0, "not wide" },
+        { "%b", 1, "b", NO_ARG },
+        { "%3c", 3, "  a", INT_ARG, 'a' },
+        { "%3d", 4, "1234", INT_ARG, 1234 },
+        { "%3h", 0, "", NO_ARG },
+        { "%j%k%m%q%r%t%v%y%z", 9, "jkmqrtvyz", NO_ARG },
+        { "%-1d", 1, "2", INT_ARG, 2 },
+        { "%2.4f", 6, "8.6000", DOUBLE_ARG, 0, 0, 8.6 },
+        { "%0f", 8, "0.600000", DOUBLE_ARG, 0, 0, 0.6 },
+        { "%.0f", 1, "1", DOUBLE_ARG, 0, 0, 0.6 },
+        { "%2.4e", 11, "8.6000e+000", DOUBLE_ARG, 0, 0, 8.6 },
+        { "% 2.4e", 12, " 8.6000e+000", DOUBLE_ARG, 0, 0, 8.6 },
+        { "% 014.4e", 14, " 008.6000e+000", DOUBLE_ARG, 0, 0, 8.6 },
+        { "% 2.4e", 12, "-8.6000e+000", DOUBLE_ARG, 0, 0, -8.6 },
+        { "%+2.4e", 12, "+8.6000e+000", DOUBLE_ARG, 0, 0, 8.6 },
+        { "%2.4g", 3, "8.6", DOUBLE_ARG, 0, 0, 8.6 },
+        { "%-i", 2, "-1", INT_ARG, -1 },
+        { "%-i", 1, "1", INT_ARG, 1 },
+        { "%+i", 2, "+1", INT_ARG, 1 },
+        { "%o", 2, "12", INT_ARG, 10 },
+        { "%s", 6, "(null)", PTR_ARG, 0, 0, 0, NULL },
+        { "%s", 4, "%%%%", PTR_ARG, 0, 0, 0, "%%%%" },
+        { "%u", 10, "4294967295", INT_ARG, -1 },
+        { "%w", 0, "", INT_ARG, -1 },
+        { "%h", 0, "", INT_ARG, -1 },
+        { "%z", 1, "z", INT_ARG, -1 },
+        { "%j", 1, "j", INT_ARG, -1 },
+        { "%F", 0, "", INT_ARG, -1 },
+        { "%N", 0, "", INT_ARG, -1 },
+        { "%H", 1, "H", INT_ARG, -1 },
+        { "x%cx", 3, "xXx", INT_ARG, 0x100+'X' },
+        { "%%0", 2, "%0", NO_ARG },
+        { "%hx", 4, "2345", INT_ARG, 0x12345 },
+        { "%hhx", 3, "123", INT_ARG, 0x123 },
+        { "%hhx", 4, "2345", INT_ARG, 0x12345 },
+        { "%lf", 9, "-1.#IND00", DOUBLE_ARG, 0, 0, IND },
+        { "%lf", 8, "1.#QNAN0", DOUBLE_ARG, 0, 0, NAN },
+        { "%lf", 8, "1.#INF00", DOUBLE_ARG, 0, 0, INFINITY },
+        { "%le", 14, "-1.#IND00e+000", DOUBLE_ARG, 0, 0, IND },
+        { "%le", 13, "1.#QNAN0e+000", DOUBLE_ARG, 0, 0, NAN },
+        { "%le", 13, "1.#INF00e+000", DOUBLE_ARG, 0, 0, INFINITY },
+        { "%lg", 7, "-1.#IND", DOUBLE_ARG, 0, 0, IND },
+        { "%lg", 7, "1.#QNAN", DOUBLE_ARG, 0, 0, NAN },
+        { "%lg", 6, "1.#INF", DOUBLE_ARG, 0, 0, INFINITY },
+        { "%010.2lf", 10, "-000001.#J", DOUBLE_ARG, 0, 0, IND },
+        { "%010.2lf", 10, "0000001.#R", DOUBLE_ARG, 0, 0, NAN },
+        { "%010.2lf", 10, "0000001.#J", DOUBLE_ARG, 0, 0, INFINITY },
+        { "%c", 1, "a", INT_ARG, 'a' },
+        { "%c", 1, "\x82", INT_ARG, 0xa082 },
+        { "%C", 1, "a", INT_ARG, 'a' },
+        { "%C", 0, "", INT_ARG, 0x3042 },
+        { "a%Cb", 2, "ab", INT_ARG, 0x3042 },
+    };
+
     char buffer[100];
-    const char *format;
-    double pnumber=789456123;
-    int x, r;
-    WCHAR wide[] = { 'w','i','d','e',0};
-    WCHAR buf_w[2];
+    int i, x, r = 0;
 
-    format = "%+#23.15e";
-    r = p_sprintf(buffer,format,pnumber);
-    ok(!strcmp(buffer,"+7.894561230000000e+008"),"+#23.15e failed: '%s'\n", buffer);
-    ok( r==23, "return count wrong\n");
+    for (i=0; i<ARRAY_SIZE(tests); i++) {
+        switch(tests[i].type) {
+        case NO_ARG:
+            r = p_sprintf(buffer, tests[i].format);
+            break;
+        case INT_ARG:
+            r = p_sprintf(buffer, tests[i].format, tests[i].arg_i);
+            break;
+        case ULONGLONG_ARG:
+            r = p_sprintf(buffer, tests[i].format, tests[i].arg_ull);
+            break;
+        case DOUBLE_ARG:
+            r = p_sprintf(buffer, tests[i].format, tests[i].arg_d);
+            break;
+        case PTR_ARG:
+            r = p_sprintf(buffer, tests[i].format, tests[i].arg_ptr);
+            break;
+        }
 
-    format = "%-#23.15e";
-    r = p_sprintf(buffer,format,pnumber);
-    ok(!strcmp(buffer,"7.894561230000000e+008 "),"-#23.15e failed: '%s'\n", buffer);
-    ok( r==23, "return count wrong\n");
+        ok(r == tests[i].r, "%d) r = %d, expected %d\n", i, r, tests[i].r);
+        ok(!strcmp(buffer, tests[i].out), "%d) buffer = \"%s\"\n", i, buffer);
+    }
 
-    format = "%#23.15e";
-    r = p_sprintf(buffer,format,pnumber);
-    ok(!strcmp(buffer," 7.894561230000000e+008"),"#23.15e failed: '%s'\n", buffer);
-    ok( r==23, "return count wrong\n");
-
-    format = "%#1.1g";
-    r = p_sprintf(buffer,format,pnumber);
-    ok(!strcmp(buffer,"8.e+008"),"#1.1g failed: '%s'\n", buffer);
-    ok( r==7, "return count wrong\n");
-
-    format = "%I64d";
-    r = p_sprintf(buffer,format,((ULONGLONG)0xffffffff)*0xffffffff);
-    ok(!strcmp(buffer,"-8589934591"),"Problem with long long\n");
-    ok( r==11, "return count wrong\n");
-
-    format = "%+8I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"    +100") && r==8,"+8I64d failed: '%s'\n", buffer);
-
-    format = "%+.8I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"+00000100") && r==9,"+.8I64d failed: '%s'\n", buffer);
-
-    format = "%+10.8I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer," +00000100") && r==10,"+10.8I64d failed: '%s'\n", buffer);
-    format = "%_1I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"_1I64d") && r==6,"_1I64d failed\n");
-
-    format = "%-1.5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer,"-00100") && r==6,"-1.5I64d failed: '%s'\n", buffer);
-
-    format = "%5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"  100") && r==5,"5I64d failed: '%s'\n", buffer);
-
-    format = "%5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer," -100") && r==5,"5I64d failed: '%s'\n", buffer);
-
-    format = "%-5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"100  ") && r==5,"-5I64d failed: '%s'\n", buffer);
-
-    format = "%-5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer,"-100 ") && r==5,"-5I64d failed: '%s'\n", buffer);
-
-    format = "%-.5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"00100") && r==5,"-.5I64d failed: '%s'\n", buffer);
-
-    format = "%-.5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer,"-00100") && r==6,"-.5I64d failed: '%s'\n", buffer);
-
-    format = "%-8.5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"00100   ") && r==8,"-8.5I64d failed: '%s'\n", buffer);
-
-    format = "%-8.5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer,"-00100  ") && r==8,"-8.5I64d failed: '%s'\n", buffer);
-
-    format = "%05I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"00100") && r==5,"05I64d failed: '%s'\n", buffer);
-
-    format = "%05I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer,"-0100") && r==5,"05I64d failed: '%s'\n", buffer);
-
-    format = "% I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer," 100") && r==4,"' I64d' failed: '%s'\n", buffer);
-
-    format = "% I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer,"-100") && r==4,"' I64d' failed: '%s'\n", buffer);
-
-    format = "% 5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"  100") && r==5,"' 5I64d' failed: '%s'\n", buffer);
-
-    format = "% 5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer," -100") && r==5,"' 5I64d' failed: '%s'\n", buffer);
-
-    format = "% .5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer," 00100") && r==6,"' .5I64d' failed: '%s'\n", buffer);
-
-    format = "% .5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer,"-00100") && r==6,"' .5I64d' failed: '%s'\n", buffer);
-
-    format = "% 8.5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"   00100") && r==8,"' 8.5I64d' failed: '%s'\n", buffer);
-
-    format = "% 8.5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer,"  -00100") && r==8,"' 8.5I64d' failed: '%s'\n", buffer);
-
-    format = "%.0I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)0);
-    ok(r==0,".0I64d failed: '%s'\n", buffer);
-
-    format = "%#+21.18I64x";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer," 0x00ffffffffffffff9c") && r==21,"#+21.18I64x failed: '%s'\n", buffer);
-
-    format = "%#.25I64o";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer,"0001777777777777777777634") && r==25,"#.25I64o failed: '%s'\n", buffer);
-
-    format = "%#+24.20I64o";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer," 01777777777777777777634") && r==24,"#+24.20I64o failed: '%s'\n", buffer);
-
-    format = "%#+18.21I64X";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer,"0X00000FFFFFFFFFFFFFF9C") && r==23,"#+18.21I64X failed: '%s '\n", buffer);
-
-    format = "%#+20.24I64o";
-    r = p_sprintf(buffer,format,(LONGLONG)-100);
-    ok(!strcmp(buffer,"001777777777777777777634") && r==24,"#+20.24I64o failed: '%s'\n", buffer);
-
-    format = "%#+25.22I64u";
-    r = p_sprintf(buffer,format,(LONGLONG)-1);
-    ok(!strcmp(buffer,"   0018446744073709551615") && r==25,"#+25.22I64u conversion failed: '%s'\n", buffer);
-
-    format = "%#+25.22I64u";
-    r = p_sprintf(buffer,format,(LONGLONG)-1);
-    ok(!strcmp(buffer,"   0018446744073709551615") && r==25,"#+25.22I64u failed: '%s'\n", buffer);
-
-    format = "%#+30.25I64u";
-    r = p_sprintf(buffer,format,(LONGLONG)-1);
-    ok(!strcmp(buffer,"     0000018446744073709551615") && r==30,"#+30.25I64u failed: '%s'\n", buffer);
-
-    format = "%+#25.22I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)-1);
-    ok(!strcmp(buffer,"  -0000000000000000000001") && r==25,"+#25.22I64d failed: '%s'\n", buffer);
-
-    format = "%#-8.5I64o";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"00144   ") && r==8,"-8.5I64o failed: '%s'\n", buffer);
-
-    format = "%#-+ 08.5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"+00100  ") && r==8,"'#-+ 08.5I64d failed: '%s'\n", buffer);
-
-    format = "%#-+ 08.5I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)100);
-    ok(!strcmp(buffer,"+00100  ") && r==8,"#-+ 08.5I64d failed: '%s'\n", buffer);
-
-    format = "%.80I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)1);
-    ok(r==80,"%s format failed\n", format);
-
-    format = "% .80I64d";
-    r = p_sprintf(buffer,format,(LONGLONG)1);
-    ok(r==81,"%s format failed\n", format);
-
-    format = "% .80d";
-    r = p_sprintf(buffer,format,1);
-    ok(r==81,"%s format failed\n", format);
-
-    format = "%lld";
-    r = p_sprintf(buffer,format,((ULONGLONG)0xffffffff)*0xffffffff);
+    r = p_sprintf(buffer, "%lld", ((ULONGLONG)0xffffffff)*0xffffffff);
     ok( r == 1 || r == 11, "return count wrong %d\n", r);
     if (r == 11)  /* %ll works on Vista */
         ok(!strcmp(buffer, "-8589934591"), "Problem with \"ll\" interpretation '%s'\n", buffer);
     else
         ok(!strcmp(buffer, "1"), "Problem with \"ll\" interpretation '%s'\n", buffer);
 
-    format = "%I";
-    r = p_sprintf(buffer,format,1);
-    ok(!strcmp(buffer, "I"), "Problem with \"I\" interpretation\n");
-    ok( r==1, "return count wrong\n");
-
-    format = "%I0d";
-    r = p_sprintf(buffer,format,1);
-    ok(!strcmp(buffer,"I0d"),"I0d failed\n");
-    ok( r==3, "return count wrong\n");
-
-    format = "%I32d";
-    r = p_sprintf(buffer,format,1);
+    r = p_sprintf(buffer, "%I32d", 1);
     if (r == 1)
-    {
         ok(!strcmp(buffer,"1"),"I32d failed, got '%s'\n",buffer);
-    }
     else
-    {
-        /* Older versions don't grok I32 format */
         ok(r == 4 && !strcmp(buffer,"I32d"),"I32d failed, got '%s',%d\n",buffer,r);
-    }
-
-    format = "%I64D";
-    r = p_sprintf(buffer,format,(LONGLONG)-1);
-    ok(!strcmp(buffer,"D"),"I64D failed: %s\n",buffer);
-    ok( r==1, "return count wrong\n");
-
-    format = "%zx";
-    r = p_sprintf(buffer,format,1);
-    ok(!strcmp(buffer, "zx"), "Problem with \"z\" interpretation\n");
-    ok( r==2, "return count wrong\n");
-
-    format = "% d";
-    r = p_sprintf(buffer,format,1);
-    ok(!strcmp(buffer, " 1"),"Problem with sign place-holder: '%s'\n",buffer);
-    ok( r==2, "return count wrong\n");
-
-    format = "%+ d";
-    r = p_sprintf(buffer,format,1);
-    ok(!strcmp(buffer, "+1"),"Problem with sign flags: '%s'\n",buffer);
-    ok( r==2, "return count wrong\n");
-
-    format = "%S";
-    r = p_sprintf(buffer,format,wide);
-    ok(!strcmp(buffer,"wide"),"Problem with wide string format\n");
-    ok( r==4, "return count wrong\n");
-
-    format = "%04c";
-    r = p_sprintf(buffer,format,'1');
-    ok(!strcmp(buffer,"0001"),"Character not zero-prefixed \"%s\"\n",buffer);
-    ok( r==4, "return count wrong\n");
-
-    format = "%-04c";
-    r = p_sprintf(buffer,format,'1');
-    ok(!strcmp(buffer,"1   "),"Character zero-padded and/or not left-adjusted \"%s\"\n",buffer);
-    ok( r==4, "return count wrong\n");
-
-    format = "%#012x";
-    r = p_sprintf(buffer,format,1);
-    ok(!strcmp(buffer,"0x0000000001"),"Hexadecimal zero-padded \"%s\"\n",buffer);
-    ok( r==12, "return count wrong\n");
-
-    r = p_sprintf(buffer,format,0);
-    ok(!strcmp(buffer,"000000000000"),"Hexadecimal zero-padded \"%s\"\n",buffer);
-    ok( r==12, "return count wrong\n");
-
-    format = "%#04.8x";
-    r = p_sprintf(buffer,format,1);
-    ok(!strcmp(buffer,"0x00000001"), "Hexadecimal zero-padded precision \"%s\"\n",buffer);
-    ok( r==10, "return count wrong\n");
-
-    r = p_sprintf(buffer,format,0);
-    ok(!strcmp(buffer,"00000000"), "Hexadecimal zero-padded precision \"%s\"\n",buffer);
-    ok( r==8, "return count wrong\n");
-
-    format = "%#-08.2x";
-    r = p_sprintf(buffer,format,1);
-    ok(!strcmp(buffer,"0x01    "), "Hexadecimal zero-padded not left-adjusted \"%s\"\n",buffer);
-    ok( r==8, "return count wrong\n");
-
-    r = p_sprintf(buffer,format,0);
-    ok(!strcmp(buffer,"00      "), "Hexadecimal zero-padded not left-adjusted \"%s\"\n",buffer);
-    ok( r==8, "return count wrong\n");
-
-    format = "%#.0x";
-    r = p_sprintf(buffer,format,1);
-    ok(!strcmp(buffer,"0x1"), "Hexadecimal zero-padded zero-precision \"%s\"\n",buffer);
-    ok( r==3, "return count wrong\n");
-
-    r = p_sprintf(buffer,format,0);
-    ok(!strcmp(buffer,""), "Hexadecimal zero-padded zero-precision \"%s\"\n",buffer);
-    ok( r==0, "return count wrong\n");
-
-    format = "%#08o";
-    r = p_sprintf(buffer,format,1);
-    ok(!strcmp(buffer,"00000001"), "Octal zero-padded \"%s\"\n",buffer);
-    ok( r==8, "return count wrong\n");
-
-    format = "%#o";
-    r = p_sprintf(buffer,format,1);
-    ok(!strcmp(buffer,"01"), "Octal zero-padded \"%s\"\n",buffer);
-    ok( r==2, "return count wrong\n");
-
-    r = p_sprintf(buffer,format,0);
-    ok(!strcmp(buffer,"0"), "Octal zero-padded \"%s\"\n",buffer);
-    ok( r==1, "return count wrong\n");
 
     if (sizeof(void *) == 8)
     {
-        format = "%p";
-        r = p_sprintf(buffer,format,(void *)57);
+        r = p_sprintf(buffer, "%p", (void *)57);
         ok(!strcmp(buffer,"0000000000000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
         ok( r==16, "return count wrong\n");
 
-        format = "%#020p";
-        r = p_sprintf(buffer,format,(void *)57);
+        r = p_sprintf(buffer, "%#020p", (void *)57);
         ok(!strcmp(buffer,"  0X0000000000000039"),"Pointer formatted incorrectly\n");
         ok( r==20, "return count wrong\n");
 
-        format = "%Fp";
-        r = p_sprintf(buffer,format,(void *)57);
+        r = p_sprintf(buffer, "%Fp", (void *)57);
         ok(!strcmp(buffer,"0000000000000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
         ok( r==16, "return count wrong\n");
 
-        format = "%Np";
-        r = p_sprintf(buffer,format,(void *)57);
+        r = p_sprintf(buffer, "%Np", (void *)57);
         ok(!strcmp(buffer,"0000000000000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
         ok( r==16, "return count wrong\n");
 
-        format = "%#-020p";
-        r = p_sprintf(buffer,format,(void *)57);
+        r = p_sprintf(buffer, "%#-020p", (void *)57);
         ok(!strcmp(buffer,"0X0000000000000039  "),"Pointer formatted incorrectly\n");
         ok( r==20, "return count wrong\n");
 
-        format = "%Ix %d";
-        r = p_sprintf(buffer,format,(size_t)0x12345678123456,1);
+        r = p_sprintf(buffer, "%Ix %d", (size_t)0x12345678123456,1);
         ok(!strcmp(buffer,"12345678123456 1"),"buffer = %s\n",buffer);
         ok( r==16, "return count wrong\n");
     }
     else
     {
-        format = "%p";
-        r = p_sprintf(buffer,format,(void *)57);
+        r = p_sprintf(buffer, "%p", (void *)57);
         ok(!strcmp(buffer,"00000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
         ok( r==8, "return count wrong\n");
 
-        format = "%#012p";
-        r = p_sprintf(buffer,format,(void *)57);
+        r = p_sprintf(buffer, "%#012p", (void *)57);
         ok(!strcmp(buffer,"  0X00000039"),"Pointer formatted incorrectly\n");
         ok( r==12, "return count wrong\n");
 
-        format = "%Fp";
-        r = p_sprintf(buffer,format,(void *)57);
+        r = p_sprintf(buffer, "%Fp", (void *)57);
         ok(!strcmp(buffer,"00000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
         ok( r==8, "return count wrong\n");
 
-        format = "%Np";
-        r = p_sprintf(buffer,format,(void *)57);
+        r = p_sprintf(buffer, "%Np",(void *)57);
         ok(!strcmp(buffer,"00000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
         ok( r==8, "return count wrong\n");
 
-        format = "%#-012p";
-        r = p_sprintf(buffer,format,(void *)57);
+        r = p_sprintf(buffer, "%#-012p", (void *)57);
         ok(!strcmp(buffer,"0X00000039  "),"Pointer formatted incorrectly\n");
         ok( r==12, "return count wrong\n");
 
-        format = "%Ix %d";
-        r = p_sprintf(buffer,format,0x123456,1);
+        r = p_sprintf(buffer, "%Ix %d", 0x123456, 1);
         ok(!strcmp(buffer,"123456 1"),"buffer = %s\n",buffer);
         ok( r==8, "return count wrong\n");
     }
 
-    format = "%04s";
-    r = p_sprintf(buffer,format,"foo");
-    ok(!strcmp(buffer,"0foo"),"String not zero-prefixed \"%s\"\n",buffer);
-    ok( r==4, "return count wrong\n");
-
-    format = "%.1s";
-    r = p_sprintf(buffer,format,"foo");
+    r = p_sprintf(buffer, "%.*s", 1, "foo");
     ok(!strcmp(buffer,"f"),"Precision ignored \"%s\"\n",buffer);
     ok( r==1, "return count wrong\n");
 
-    format = "%.*s";
-    r = p_sprintf(buffer,format,1,"foo");
-    ok(!strcmp(buffer,"f"),"Precision ignored \"%s\"\n",buffer);
-    ok( r==1, "return count wrong\n");
-
-    format = "%*s";
-    r = p_sprintf(buffer,format,-5,"foo");
+    r = p_sprintf(buffer, "%*s", -5, "foo");
     ok(!strcmp(buffer,"foo  "),"Negative field width ignored \"%s\"\n",buffer);
     ok( r==5, "return count wrong\n");
 
-    format = "hello";
-    r = p_sprintf(buffer, format);
-    ok(!strcmp(buffer,"hello"), "failed\n");
-    ok( r==5, "return count wrong\n");
-
-    format = "%ws";
-    r = p_sprintf(buffer, format, wide);
-    ok(!strcmp(buffer,"wide"), "failed\n");
-    ok( r==4, "return count wrong\n");
-
-    format = "%-10ws";
-    r = p_sprintf(buffer, format, wide );
-    ok(!strcmp(buffer,"wide      "), "failed\n");
-    ok( r==10, "return count wrong\n");
-
-    format = "%10ws";
-    r = p_sprintf(buffer, format, wide );
-    ok(!strcmp(buffer,"      wide"), "failed\n");
-    ok( r==10, "return count wrong\n");
-
-    format = "%#+ -03whlls";
-    r = p_sprintf(buffer, format, wide );
-    ok(!strcmp(buffer,"wide"), "failed\n");
-    ok( r==4, "return count wrong\n");
-
-    format = "%w0s";
-    r = p_sprintf(buffer, format, wide );
-    ok(!strcmp(buffer,"0s"), "failed\n");
-    ok( r==2, "return count wrong\n");
-
-    format = "%w-s";
-    r = p_sprintf(buffer, format, wide );
-    ok(!strcmp(buffer,"-s"), "failed\n");
-    ok( r==2, "return count wrong\n");
-
-    format = "%ls";
-    r = p_sprintf(buffer, format, wide );
-    ok(!strcmp(buffer,"wide"), "failed\n");
-    ok( r==4, "return count wrong\n");
-
-    format = "%Ls";
-    r = p_sprintf(buffer, format, "not wide" );
-    ok(!strcmp(buffer,"not wide"), "failed\n");
-    ok( r==8, "return count wrong\n");
-
-    format = "%b";
-    r = p_sprintf(buffer, format);
-    ok(!strcmp(buffer,"b"), "failed\n");
-    ok( r==1, "return count wrong\n");
-
-    format = "%3c";
-    r = p_sprintf(buffer, format,'a');
-    ok(!strcmp(buffer,"  a"), "failed\n");
-    ok( r==3, "return count wrong\n");
-
-    format = "%3d";
-    r = p_sprintf(buffer, format,1234);
-    ok(!strcmp(buffer,"1234"), "failed\n");
-    ok( r==4, "return count wrong\n");
-
-    format = "%3h";
-    r = p_sprintf(buffer, format);
-    ok(!strcmp(buffer,""), "failed\n");
-    ok( r==0, "return count wrong\n");
-
-    format = "%j%k%m%q%r%t%v%y%z";
-    r = p_sprintf(buffer, format);
-    ok(!strcmp(buffer,"jkmqrtvyz"), "failed\n");
-    ok( r==9, "return count wrong\n");
-
-    format = "asdf%n";
     x = 0;
-    r = p_sprintf(buffer, format, &x );
+    r = p_sprintf(buffer, "asdf%n", &x );
     if (r == -1)
     {
         /* %n format is disabled by default on vista */
@@ -563,78 +354,7 @@ static void test_sprintf( void )
         ok( r==4, "return count wrong: %d\n", r);
     }
 
-    format = "%-1d";
-    r = p_sprintf(buffer, format,2);
-    ok(!strcmp(buffer,"2"), "failed\n");
-    ok( r==1, "return count wrong\n");
-
-    format = "%2.4f";
-    r = p_sprintf(buffer, format,8.6);
-    ok(!strcmp(buffer,"8.6000"), "failed\n");
-    ok( r==6, "return count wrong\n");
-
-    format = "%0f";
-    r = p_sprintf(buffer, format,0.6);
-    ok(!strcmp(buffer,"0.600000"), "failed\n");
-    ok( r==8, "return count wrong\n");
-
-    format = "%.0f";
-    r = p_sprintf(buffer, format,0.6);
-    ok(!strcmp(buffer,"1"), "failed\n");
-    ok( r==1, "return count wrong\n");
-
-    format = "%2.4e";
-    r = p_sprintf(buffer, format,8.6);
-    ok(!strcmp(buffer,"8.6000e+000"), "failed\n");
-    ok( r==11, "return count wrong\n");
-
-    format = "% 2.4e";
-    r = p_sprintf(buffer, format,8.6);
-    ok(!strcmp(buffer," 8.6000e+000"), "failed: %s\n", buffer);
-    ok( r==12, "return count wrong\n");
-
-    format = "% 014.4e";
-    r = p_sprintf(buffer, format,8.6);
-    ok(!strcmp(buffer," 008.6000e+000"), "failed: %s\n", buffer);
-    ok( r==14, "return count wrong\n");
-
-    format = "% 2.4e";
-    r = p_sprintf(buffer, format,-8.6);
-    ok(!strcmp(buffer,"-8.6000e+000"), "failed: %s\n", buffer);
-    ok( r==12, "return count wrong\n");
-
-    format = "%+2.4e";
-    r = p_sprintf(buffer, format,8.6);
-    ok(!strcmp(buffer,"+8.6000e+000"), "failed: %s\n", buffer);
-    ok( r==12, "return count wrong\n");
-
-    format = "%2.4g";
-    r = p_sprintf(buffer, format,8.6);
-    ok(!strcmp(buffer,"8.6"), "failed\n");
-    ok( r==3, "return count wrong\n");
-
-    format = "%-i";
-    r = p_sprintf(buffer, format,-1);
-    ok(!strcmp(buffer,"-1"), "failed\n");
-    ok( r==2, "return count wrong\n");
-
-    format = "%-i";
-    r = p_sprintf(buffer, format,1);
-    ok(!strcmp(buffer,"1"), "failed\n");
-    ok( r==1, "return count wrong\n");
-
-    format = "%+i";
-    r = p_sprintf(buffer, format,1);
-    ok(!strcmp(buffer,"+1"), "failed\n");
-    ok( r==2, "return count wrong\n");
-
-    format = "%o";
-    r = p_sprintf(buffer, format,10);
-    ok(!strcmp(buffer,"12"), "failed\n");
-    ok( r==2, "return count wrong\n");
-
-    format = "%p";
-    r = p_sprintf(buffer, format,0);
+    r = p_sprintf(buffer, "%p", 0);
     if (sizeof(void *) == 8)
     {
         ok(!strcmp(buffer,"0000000000000000"), "failed\n");
@@ -646,145 +366,7 @@ static void test_sprintf( void )
         ok( r==8, "return count wrong\n");
     }
 
-    format = "%s";
-    r = p_sprintf(buffer, format,0);
-    ok(!strcmp(buffer,"(null)"), "failed\n");
-    ok( r==6, "return count wrong\n");
-
-    format = "%s";
-    r = p_sprintf(buffer, format,"%%%%");
-    ok(!strcmp(buffer,"%%%%"), "failed\n");
-    ok( r==4, "return count wrong\n");
-
-    format = "%u";
-    r = p_sprintf(buffer, format,-1);
-    ok(!strcmp(buffer,"4294967295"), "failed\n");
-    ok( r==10, "return count wrong\n");
-
-    format = "%w";
-    r = p_sprintf(buffer, format,-1);
-    ok(!strcmp(buffer,""), "failed\n");
-    ok( r==0, "return count wrong\n");
-
-    format = "%h";
-    r = p_sprintf(buffer, format,-1);
-    ok(!strcmp(buffer,""), "failed\n");
-    ok( r==0, "return count wrong\n");
-
-    format = "%z";
-    r = p_sprintf(buffer, format,-1);
-    ok(!strcmp(buffer,"z"), "failed\n");
-    ok( r==1, "return count wrong\n");
-
-    format = "%j";
-    r = p_sprintf(buffer, format,-1);
-    ok(!strcmp(buffer,"j"), "failed\n");
-    ok( r==1, "return count wrong\n");
-
-    format = "%F";
-    r = p_sprintf(buffer, format,-1);
-    ok(!strcmp(buffer,""), "failed\n");
-    ok( r==0, "return count wrong\n");
-
-    format = "%N";
-    r = p_sprintf(buffer, format,-1);
-    ok(!strcmp(buffer,""), "failed\n");
-    ok( r==0, "return count wrong\n");
-
-    format = "%H";
-    r = p_sprintf(buffer, format,-1);
-    ok(!strcmp(buffer,"H"), "failed\n");
-    ok( r==1, "return count wrong\n");
-
-    format = "x%cx";
-    r = p_sprintf(buffer, format, 0x100+'X');
-    ok(!strcmp(buffer,"xXx"), "failed\n");
-    ok( r==3, "return count wrong\n");
-
-    format = "%%0";
-    r = p_sprintf(buffer, format);
-    ok(!strcmp(buffer,"%0"), "failed: \"%s\"\n", buffer);
-    ok( r==2, "return count wrong\n");
-
-    format = "%hx";
-    r = p_sprintf(buffer, format, 0x12345);
-    ok(!strcmp(buffer,"2345"), "failed \"%s\"\n", buffer);
-
-    format = "%hhx";
-    r = p_sprintf(buffer, format, 0x123);
-    ok(!strcmp(buffer,"123"), "failed: \"%s\"\n", buffer);
-    r = p_sprintf(buffer, format, 0x12345);
-    ok(!strcmp(buffer,"2345"), "failed \"%s\"\n", buffer);
-
-    format = "%lf";
-    r = p_sprintf(buffer, format, IND);
-    ok(r==9, "r = %d\n", r);
-    ok(!strcmp(buffer, "-1.#IND00"), "failed: \"%s\"\n", buffer);
-    r = p_sprintf(buffer, format, NAN);
-    ok(r==8, "r = %d\n", r);
-    ok(!strcmp(buffer, "1.#QNAN0"), "failed: \"%s\"\n", buffer);
-    r = p_sprintf(buffer, format, INFINITY);
-    ok(r==8, "r = %d\n", r);
-    ok(!strcmp(buffer, "1.#INF00"), "failed: \"%s\"\n", buffer);
-
-    format = "%le";
-    r = p_sprintf(buffer, format, IND);
-    ok(r==14, "r = %d\n", r);
-    ok(!strcmp(buffer, "-1.#IND00e+000"), "failed: \"%s\"\n", buffer);
-    r = p_sprintf(buffer, format, NAN);
-    ok(r==13, "r = %d\n", r);
-    ok(!strcmp(buffer, "1.#QNAN0e+000"), "failed: \"%s\"\n", buffer);
-    r = p_sprintf(buffer, format, INFINITY);
-    ok(r==13, "r = %d\n", r);
-    ok(!strcmp(buffer, "1.#INF00e+000"), "failed: \"%s\"\n", buffer);
-
-    format = "%lg";
-    r = p_sprintf(buffer, format, IND);
-    ok(r==7, "r = %d\n", r);
-    ok(!strcmp(buffer, "-1.#IND"), "failed: \"%s\"\n", buffer);
-    r = p_sprintf(buffer, format, NAN);
-    ok(r==7, "r = %d\n", r);
-    ok(!strcmp(buffer, "1.#QNAN"), "failed: \"%s\"\n", buffer);
-    r = p_sprintf(buffer, format, INFINITY);
-    ok(r==6, "r = %d\n", r);
-    ok(!strcmp(buffer, "1.#INF"), "failed: \"%s\"\n", buffer);
-
-    format = "%010.2lf";
-    r = p_sprintf(buffer, format, IND);
-    ok(r==10, "r = %d\n", r);
-    ok(!strcmp(buffer, "-000001.#J"), "failed: \"%s\"\n", buffer);
-    r = p_sprintf(buffer, format, NAN);
-    ok(r==10, "r = %d\n", r);
-    ok(!strcmp(buffer, "0000001.#R"), "failed: \"%s\"\n", buffer);
-    r = p_sprintf(buffer, format, INFINITY);
-    ok(r==10, "r = %d\n", r);
-    ok(!strcmp(buffer, "0000001.#J"), "failed: \"%s\"\n", buffer);
-
-    format = "%c";
-    r = p_sprintf(buffer, format, 'a');
-    ok(r==1, "r = %d\n", r);
-    ok(!strcmp(buffer, "a"), "failed: \"%s\"\n", buffer);
-    r = p_sprintf(buffer, format, 0xa082);
-    ok(r==1, "r = %d\n", r);
-    ok(!strcmp(buffer, "\x82"), "failed: \"%s\"\n", buffer);
-
-    format = "%C";
-    r = p_sprintf(buffer, format, 'a');
-    ok(r==1, "r = %d\n", r);
-    ok(!strcmp(buffer, "a"), "failed: \"%s\"\n", buffer);
-    r = p_sprintf(buffer, format, 0x3042);
-    ok(r==0, "r = %d\n", r);
-    ok(!strcmp(buffer, ""), "failed: \"%s\"\n", buffer);
-
-    format = "a%Cb";
-    r = p_sprintf(buffer, format, 0x3042);
-    ok(r==2, "r = %d\n", r);
-    ok(!strcmp(buffer, "ab"), "failed: \"%s\"\n", buffer);
-
-    format = "%S";
-    buf_w[0] = 0x3042;
-    buf_w[1] = 0;
-    r = p_sprintf(buffer, format, buf_w);
+    r = p_sprintf(buffer, "%S", L"\x3042");
     ok(r==-1 || broken(!r), "r = %d\n", r);
 
     if(!setlocale(LC_ALL, "Japanese_Japan.932")) {
@@ -792,13 +374,11 @@ static void test_sprintf( void )
         return;
     }
 
-    format = "%c";
-    r = p_sprintf(buffer, format, 0xa082);
+    r = p_sprintf(buffer, "%c", 0xa082);
     ok(r==1, "r = %d\n", r);
     ok(!strcmp(buffer, "\x82"), "failed: \"%s\"\n", buffer);
 
-    format = "%C";
-    r = p_sprintf(buffer, format, 0x3042);
+    r = p_sprintf(buffer, "%C", 0x3042);
     ok(r==2, "r = %d\n", r);
     ok(!strcmp(buffer, "\x82\xa0"), "failed: \"%s\"\n", buffer);
 
