@@ -104,33 +104,132 @@ static const WCHAR monitor_hardware_idW[] = {
     'D','e','f','a','u','l','t','_','M','o','n','i','t','o','r',0,0};
 
 static struct x11drv_display_device_handler handler;
+
+/* Cached screen information, protected by screen_section */
+static HKEY video_key;
 static RECT virtual_screen_rect;
 static RECT primary_monitor_rect;
+static FILETIME last_query_screen_time;
+static CRITICAL_SECTION screen_section;
+static CRITICAL_SECTION_DEBUG screen_critsect_debug =
+{
+    0, 0, &screen_section,
+    {&screen_critsect_debug.ProcessLocksList, &screen_critsect_debug.ProcessLocksList},
+     0, 0, {(DWORD_PTR)(__FILE__ ": screen_section")}
+};
+static CRITICAL_SECTION screen_section = {&screen_critsect_debug, -1, 0, 0, 0, 0};
+
+static HANDLE get_display_device_init_mutex(void)
+{
+    static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
+    HANDLE mutex = CreateMutexW(NULL, FALSE, init_mutexW);
+
+    WaitForSingleObject(mutex, INFINITE);
+    return mutex;
+}
+
+static void release_display_device_init_mutex(HANDLE mutex)
+{
+    ReleaseMutex(mutex);
+    CloseHandle(mutex);
+}
+
+/* Update screen rectangle cache from SetupAPI if it's outdated, return FALSE on failure and TRUE on success */
+static BOOL update_screen_cache(void)
+{
+    RECT virtual_rect = {0}, primary_rect = {0}, monitor_rect;
+    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
+    HDEVINFO devinfo = INVALID_HANDLE_VALUE;
+    FILETIME filetime = {0};
+    HANDLE mutex = NULL;
+    DWORD i = 0;
+    INT result;
+    DWORD type;
+    BOOL ret = FALSE;
+
+    EnterCriticalSection(&screen_section);
+    if ((!video_key && RegOpenKeyW(HKEY_LOCAL_MACHINE, video_keyW, &video_key))
+        || RegQueryInfoKeyW(video_key, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &filetime))
+    {
+        LeaveCriticalSection(&screen_section);
+        return FALSE;
+    }
+    result = CompareFileTime(&filetime, &last_query_screen_time);
+    LeaveCriticalSection(&screen_section);
+    if (result < 1)
+        return TRUE;
+
+    mutex = get_display_device_init_mutex();
+
+    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_MONITOR, displayW, NULL, DIGCF_PRESENT);
+    if (devinfo == INVALID_HANDLE_VALUE)
+        goto fail;
+
+    while (SetupDiEnumDeviceInfo(devinfo, i++, &device_data))
+    {
+        if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type,
+                                       (BYTE *)&monitor_rect, sizeof(monitor_rect), NULL, 0))
+            goto fail;
+
+        UnionRect(&virtual_rect, &virtual_rect, &monitor_rect);
+        if (i == 1)
+            primary_rect = monitor_rect;
+    }
+
+    EnterCriticalSection(&screen_section);
+    virtual_screen_rect = virtual_rect;
+    primary_monitor_rect = primary_rect;
+    last_query_screen_time = filetime;
+    LeaveCriticalSection(&screen_section);
+    ret = TRUE;
+fail:
+    SetupDiDestroyDeviceInfoList(devinfo);
+    release_display_device_init_mutex(mutex);
+    if (!ret)
+        WARN("Update screen cache failed!\n");
+    return ret;
+}
 
 POINT virtual_screen_to_root(INT x, INT y)
 {
+    RECT virtual = get_virtual_screen_rect();
     POINT pt;
-    pt.x = x - virtual_screen_rect.left;
-    pt.y = y - virtual_screen_rect.top;
+
+    pt.x = x - virtual.left;
+    pt.y = y - virtual.top;
     return pt;
 }
 
 POINT root_to_virtual_screen(INT x, INT y)
 {
+    RECT virtual = get_virtual_screen_rect();
     POINT pt;
-    pt.x = x + virtual_screen_rect.left;
-    pt.y = y + virtual_screen_rect.top;
+
+    pt.x = x + virtual.left;
+    pt.y = y + virtual.top;
     return pt;
 }
 
 RECT get_virtual_screen_rect(void)
 {
-    return virtual_screen_rect;
+    RECT virtual;
+
+    update_screen_cache();
+    EnterCriticalSection(&screen_section);
+    virtual = virtual_screen_rect;
+    LeaveCriticalSection(&screen_section);
+    return virtual;
 }
 
 RECT get_primary_monitor_rect(void)
 {
-    return primary_monitor_rect;
+    RECT primary;
+
+    update_screen_cache();
+    EnterCriticalSection(&screen_section);
+    primary = primary_monitor_rect;
+    LeaveCriticalSection(&screen_section);
+    return primary;
 }
 
 void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *new_handler)
@@ -321,9 +420,6 @@ static BOOL X11DRV_InitMonitor(HDEVINFO devinfo, const struct x11drv_monitor *mo
     if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, DEVPROP_TYPE_BINARY,
                                    (const BYTE *)&monitor->rc_monitor, sizeof(monitor->rc_monitor), 0))
         goto done;
-    UnionRect(&virtual_screen_rect, &virtual_screen_rect, &monitor->rc_monitor);
-    if (video_index == 0)
-        primary_monitor_rect = monitor->rc_monitor;
     /* RcWork */
     if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCWORK, DEVPROP_TYPE_BINARY,
                                    (const BYTE *)&monitor->rc_work, sizeof(monitor->rc_work), 0))
@@ -347,9 +443,6 @@ static void prepare_devices(HKEY video_hkey)
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
     HDEVINFO devinfo;
     DWORD i = 0;
-
-    SetRectEmpty(&virtual_screen_rect);
-    SetRectEmpty(&primary_monitor_rect);
 
     /* Remove all monitors */
     devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_MONITOR, displayW, NULL, 0);
@@ -399,39 +492,8 @@ static void cleanup_devices(void)
     SetupDiDestroyDeviceInfoList(devinfo);
 }
 
-/* Initialize virtual screen rect and primary monitor rect for current process */
-static void init_screen_rects(void)
-{
-    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
-    HDEVINFO devinfo;
-    DWORD type;
-    DWORD i = 0;
-    RECT rect;
-
-    /* Already initialized */
-    if (!IsRectEmpty(&virtual_screen_rect))
-        return;
-
-    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_MONITOR, displayW, NULL, 0);
-    while (SetupDiEnumDeviceInfo(devinfo, i++, &device_data))
-    {
-        if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCMONITOR, &type, (BYTE *)&rect,
-                                       sizeof(rect), NULL, 0))
-            ERR("Failed to get monitor size property\n");
-
-        UnionRect(&virtual_screen_rect, &virtual_screen_rect, &rect);
-        if (i == 1)
-            primary_monitor_rect = rect;
-    }
-    SetupDiDestroyDeviceInfoList(devinfo);
-
-    TRACE("virtual screen rect:%s primary monitor rect:%s\n", wine_dbgstr_rect(&virtual_screen_rect),
-          wine_dbgstr_rect(&primary_monitor_rect));
-}
-
 void X11DRV_DisplayDevices_Init(BOOL force)
 {
-    static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
     HANDLE mutex;
     struct x11drv_gpu *gpus = NULL;
     struct x11drv_adapter *adapters = NULL;
@@ -445,8 +507,7 @@ void X11DRV_DisplayDevices_Init(BOOL force)
     WCHAR guidW[40];
     WCHAR driverW[1024];
 
-    mutex = CreateMutexW(NULL, FALSE, init_mutexW);
-    WaitForSingleObject(mutex, INFINITE);
+    mutex = get_display_device_init_mutex();
 
     if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, video_keyW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &video_hkey,
                         &disposition))
@@ -457,10 +518,7 @@ void X11DRV_DisplayDevices_Init(BOOL force)
 
     /* Avoid unnecessary reinit */
     if (!force && disposition != REG_CREATED_NEW_KEY)
-    {
-        init_screen_rects();
         goto done;
-    }
 
     TRACE("via %s\n", wine_dbgstr_a(handler.name));
 
@@ -511,16 +569,12 @@ void X11DRV_DisplayDevices_Init(BOOL force)
         adapters = NULL;
     }
 
-    TRACE("virtual screen rect:%s primary monitor rect:%s\n", wine_dbgstr_rect(&virtual_screen_rect),
-          wine_dbgstr_rect(&primary_monitor_rect));
-
 done:
     cleanup_devices();
     SetupDiDestroyDeviceInfoList(monitor_devinfo);
     SetupDiDestroyDeviceInfoList(gpu_devinfo);
     RegCloseKey(video_hkey);
-    ReleaseMutex(mutex);
-    CloseHandle(mutex);
+    release_display_device_init_mutex(mutex);
     if (gpus)
         handler.free_gpus(gpus);
     if (adapters)
