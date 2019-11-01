@@ -51,6 +51,7 @@ static statement_t *new_call_statement(parser_ctx_t*,BOOL,expression_t*);
 static statement_t *new_assign_statement(parser_ctx_t*,expression_t*,expression_t*);
 static statement_t *new_set_statement(parser_ctx_t*,member_expression_t*,expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,dim_decl_t*);
+static statement_t *new_redim_statement(parser_ctx_t*,const WCHAR*,BOOL,expression_t*);
 static statement_t *new_while_statement(parser_ctx_t*,statement_type_t,expression_t*,statement_t*);
 static statement_t *new_forto_statement(parser_ctx_t*,const WCHAR*,expression_t*,expression_t*,expression_t*,statement_t*);
 static statement_t *new_foreach_statement(parser_ctx_t*,const WCHAR*,expression_t*,statement_t*);
@@ -112,7 +113,8 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token <string> tTRUE tFALSE
 %token <string> tNOT tAND tOR tXOR tEQV tIMP
 %token <string> tIS tMOD
-%token <string> tCALL tDIM tSUB tFUNCTION tGET tLET tCONST
+%token <string> tCALL tSUB tFUNCTION tGET tLET tCONST
+%token <string> tDIM tREDIM tPRESERVE
 %token <string> tIF tELSE tELSEIF tEND tTHEN tEXIT
 %token <string> tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tEACH tIN
 %token <string> tSELECT tCASE tWITH
@@ -133,7 +135,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <expression> ConstExpression NumericLiteralExpression
 %type <member> MemberExpression
 %type <expression> Arguments Arguments_opt ArgumentList ArgumentList_opt Step_opt ExpressionList
-%type <boolean> OptionExplicit_opt DoType
+%type <boolean> OptionExplicit_opt DoType Preserve_opt
 %type <arg_decl> ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
 %type <func_decl> FunctionDecl PropertyDecl
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
@@ -194,6 +196,8 @@ SimpleStatement
     | CallExpression '=' Expression
                                             { $$ = new_assign_statement(ctx, $1, $3); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, $2); CHECK_ERROR; }
+    | tREDIM Preserve_opt tIdentifier '(' ArgumentList ')'
+                                            { $$ = new_redim_statement(ctx, $3, $2, $5); CHECK_ERROR; }
     | IfStatement                           { $$ = $1; }
     | tWHILE Expression StSep StatementsNl_opt tWEND
                                             { $$ = new_while_statement(ctx, STAT_WHILE, $2, $4); CHECK_ERROR; }
@@ -230,6 +234,10 @@ MemberExpression
     | CallExpression '.' DotIdentifier      { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
     | tDOT DotIdentifier                    { expression_t *dot_expr = new_expression(ctx, EXPR_DOT, sizeof(*dot_expr)); CHECK_ERROR;
                                               $$ = new_member_expression(ctx, dot_expr, $2); CHECK_ERROR; }
+
+Preserve_opt
+    : /* empty */                           { $$ = FALSE; }
+    | tPRESERVE                             { $$ = TRUE; }
 
 DimDeclList
     : DimDecl                               { $$ = $1; }
@@ -537,6 +545,8 @@ DotIdentifier
     | tRESUME        { $$ = $1; }
     | tGOTO          { $$ = $1; }
     | tWITH          { $$ = $1; }
+    | tREDIM         { $$ = $1; }
+    | tPRESERVE      { $$ = $1; }
 
 /* Most statements accept both new line and ':' as separators */
 StSep
@@ -861,6 +871,20 @@ static statement_t *new_dim_statement(parser_ctx_t *ctx, dim_decl_t *decls)
         return NULL;
 
     stat->dim_decls = decls;
+    return &stat->stat;
+}
+
+static statement_t *new_redim_statement(parser_ctx_t *ctx, const WCHAR *identifier, BOOL preserve, expression_t *dims)
+{
+    redim_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_REDIM, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->identifier = identifier;
+    stat->preserve = preserve;
+    stat->dims = dims;
     return &stat->stat;
 }
 

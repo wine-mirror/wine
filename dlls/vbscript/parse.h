@@ -120,6 +120,7 @@ typedef enum {
     STAT_FUNC,
     STAT_IF,
     STAT_ONERROR,
+    STAT_REDIM,
     STAT_SELECT,
     STAT_SET,
     STAT_STOP,
@@ -164,6 +165,13 @@ typedef struct _dim_statement_t {
     statement_t stat;
     dim_decl_t *dim_decls;
 } dim_statement_t;
+
+typedef struct {
+    statement_t stat;
+    const WCHAR *identifier;
+    BOOL preserve;
+    expression_t *dims;
+} redim_statement_t;
 
 typedef struct _arg_decl_t {
     const WCHAR *name;
