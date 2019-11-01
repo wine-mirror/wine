@@ -1122,6 +1122,23 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
     return S_OK;
 }
 
+static HRESULT compile_redim_statement(compile_ctx_t *ctx, redim_statement_t *stat)
+{
+    unsigned arg_cnt;
+    HRESULT hres;
+
+    if(stat->preserve) {
+        FIXME("Preserving redim not supported\n");
+        return E_NOTIMPL;
+    }
+
+    hres = compile_args(ctx, stat->dims, &arg_cnt);
+    if(FAILED(hres))
+        return hres;
+
+    return push_instr_bstr_uint(ctx, OP_redim, stat->identifier, arg_cnt);
+}
+
 static HRESULT compile_const_statement(compile_ctx_t *ctx, const_statement_t *stat)
 {
     const_decl_t *decl, *next_decl = stat->decls;
@@ -1343,6 +1360,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_ctx_t *stat_ctx, 
             break;
         case STAT_ONERROR:
             hres = compile_onerror_statement(ctx, (onerror_statement_t*)stat);
+            break;
+        case STAT_REDIM:
+            hres = compile_redim_statement(ctx, (redim_statement_t*)stat);
             break;
         case STAT_SELECT:
             hres = compile_select_statement(ctx, (select_statement_t*)stat);

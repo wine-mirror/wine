@@ -1145,6 +1145,71 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT array_bounds_from_stack(exec_ctx_t *ctx, unsigned dim_cnt, SAFEARRAYBOUND **ret)
+{
+    SAFEARRAYBOUND *bounds;
+    unsigned i;
+    int dim;
+    HRESULT hres;
+
+    if(!(bounds = heap_alloc(dim_cnt * sizeof(*bounds))))
+        return E_OUTOFMEMORY;
+
+    for(i = 0; i < dim_cnt; i++) {
+        hres = to_int(stack_top(ctx, dim_cnt - i - 1), &dim);
+        if(FAILED(hres)) {
+            heap_free(bounds);
+            return hres;
+        }
+
+        bounds[i].cElements = dim + 1;
+        bounds[i].lLbound = 0;
+    }
+
+    stack_popn(ctx, dim_cnt);
+    *ret = bounds;
+    return S_OK;
+}
+
+static HRESULT interp_redim(exec_ctx_t *ctx)
+{
+    BSTR identifier = ctx->instr->arg1.bstr;
+    const unsigned dim_cnt = ctx->instr->arg2.uint;
+    SAFEARRAYBOUND *bounds;
+    SAFEARRAY *array;
+    ref_t ref;
+    HRESULT hres;
+
+    TRACE("%s %u\n", debugstr_w(identifier), dim_cnt);
+
+    hres = lookup_identifier(ctx, identifier, VBDISP_LET, &ref);
+    if(FAILED(hres)) {
+        FIXME("lookup %s failed: %08x\n", debugstr_w(identifier), hres);
+        return hres;
+    }
+
+    if(ref.type != REF_VAR) {
+        FIXME("got ref.type = %d\n", ref.type);
+        return E_FAIL;
+    }
+
+    hres = array_bounds_from_stack(ctx, dim_cnt, &bounds);
+    if(FAILED(hres))
+        return hres;
+
+    array = SafeArrayCreate(VT_VARIANT, dim_cnt, bounds);
+    heap_free(bounds);
+    if(!array)
+        return E_OUTOFMEMORY;
+
+    /* FIXME: We should check if we're not modifying an existing static array here */
+
+    VariantClear(ref.u.v);
+    V_VT(ref.u.v) = VT_ARRAY|VT_VARIANT;
+    V_ARRAY(ref.u.v) = array;
+    return S_OK;
+}
+
 static HRESULT interp_step(exec_ctx_t *ctx)
 {
     const BSTR ident = ctx->instr->arg2.bstr;
