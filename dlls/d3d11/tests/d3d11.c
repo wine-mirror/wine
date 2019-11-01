@@ -29403,6 +29403,7 @@ static void test_sample_attached_rtv(void)
     struct d3d11_test_context test_context;
     ID3D11RenderTargetView *rtv, *rtvs[2];
     D3D11_TEXTURE2D_DESC texture_desc;
+    D3D_FEATURE_LEVEL feature_level;
     D3D11_SAMPLER_DESC sampler_desc;
     ID3D11DepthStencilView *dsview;
     ID3D11BlendState *blend_state;
@@ -29485,6 +29486,8 @@ static void test_sample_attached_rtv(void)
 
     device = test_context.device;
     context = test_context.immediate_context;
+
+    feature_level = ID3D11Device_GetFeatureLevel(device);
 
     texture_desc.SampleDesc.Count = 1;
     texture_desc.SampleDesc.Quality = 0;
@@ -29655,6 +29658,16 @@ static void test_sample_attached_rtv(void)
 
     for (i = 0; i < ARRAY_SIZE(ds_tests); ++i)
     {
+        if (ds_tests[i].dsv_flags && feature_level < D3D_FEATURE_LEVEL_11_0)
+        {
+            static unsigned int skip_once;
+
+            if (!skip_once++)
+                skip("Read only depths or stencils are not supported.\n");
+
+            continue;
+        }
+
         texture_desc.Format = ds_tests[i].texture_format;
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &dstexture);
         ok(hr == S_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
