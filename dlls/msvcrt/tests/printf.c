@@ -242,6 +242,8 @@ static void test_sprintf( void )
         { "%C", "a", 0, INT_ARG, 'a' },
         { "%C", "", 0, INT_ARG, 0x3042 },
         { "a%Cb", "ab", 0, INT_ARG, 0x3042 },
+        { "%lld", "-8589934591", "1", ULONGLONG_ARG, 0, ((ULONGLONG)0xffffffff)*0xffffffff },
+        { "%I32d", "1", "I32d", INT_ARG, 1 }
     };
 
     char buffer[100];
@@ -278,19 +280,6 @@ static void test_sprintf( void )
         }
     }
 
-    r = p_sprintf(buffer, "%lld", ((ULONGLONG)0xffffffff)*0xffffffff);
-    ok( r == 1 || r == 11, "return count wrong %d\n", r);
-    if (r == 11)  /* %ll works on Vista */
-        ok(!strcmp(buffer, "-8589934591"), "Problem with \"ll\" interpretation '%s'\n", buffer);
-    else
-        ok(!strcmp(buffer, "1"), "Problem with \"ll\" interpretation '%s'\n", buffer);
-
-    r = p_sprintf(buffer, "%I32d", 1);
-    if (r == 1)
-        ok(!strcmp(buffer,"1"),"I32d failed, got '%s'\n",buffer);
-    else
-        ok(r == 4 && !strcmp(buffer,"I32d"),"I32d failed, got '%s',%d\n",buffer,r);
-
     if (sizeof(void *) == 8)
     {
         r = p_sprintf(buffer, "%p", (void *)57);
@@ -315,6 +304,10 @@ static void test_sprintf( void )
 
         r = p_sprintf(buffer, "%Ix %d", (size_t)0x12345678123456,1);
         ok(!strcmp(buffer,"12345678123456 1"),"buffer = %s\n",buffer);
+        ok( r==16, "return count wrong\n");
+
+        r = p_sprintf(buffer, "%p", 0);
+        ok(!strcmp(buffer,"0000000000000000"), "failed\n");
         ok( r==16, "return count wrong\n");
     }
     else
@@ -342,6 +335,10 @@ static void test_sprintf( void )
         r = p_sprintf(buffer, "%Ix %d", 0x123456, 1);
         ok(!strcmp(buffer,"123456 1"),"buffer = %s\n",buffer);
         ok( r==8, "return count wrong\n");
+
+        r = p_sprintf(buffer, "%p", 0);
+        ok(!strcmp(buffer,"00000000"), "failed\n");
+        ok( r==8, "return count wrong\n");
     }
 
     r = p_sprintf(buffer, "%.*s", 1, "foo");
@@ -365,18 +362,6 @@ static void test_sprintf( void )
         ok(x == 4, "should write to x: %d\n", x);
         ok(!strcmp(buffer,"asdf"), "failed\n");
         ok( r==4, "return count wrong: %d\n", r);
-    }
-
-    r = p_sprintf(buffer, "%p", 0);
-    if (sizeof(void *) == 8)
-    {
-        ok(!strcmp(buffer,"0000000000000000"), "failed\n");
-        ok( r==16, "return count wrong\n");
-    }
-    else
-    {
-        ok(!strcmp(buffer,"00000000"), "failed\n");
-        ok( r==8, "return count wrong\n");
     }
 
     r = p_sprintf(buffer, "%S", L"\x3042");
