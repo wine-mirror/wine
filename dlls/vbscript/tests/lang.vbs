@@ -1621,4 +1621,13 @@ with new TestPropSyntax
      ok .prop = 1, ".prop = "&.prop
 end with
 
+function testsetresult(x, y)
+    set testsetresult = new TestPropSyntax
+    testsetresult.prop = x
+    y = testsetresult.prop + 1
+end function
+
+set x = testsetresult(1, 2)
+ok x.prop = 1, "x.prop = " & x.prop
+
 reportSuccess()
