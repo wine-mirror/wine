@@ -536,6 +536,7 @@ DotIdentifier
     | tON            { $$ = $1; }
     | tRESUME        { $$ = $1; }
     | tGOTO          { $$ = $1; }
+    | tWITH          { $$ = $1; }
 
 /* Most statements accept both new line and ':' as separators */
 StSep

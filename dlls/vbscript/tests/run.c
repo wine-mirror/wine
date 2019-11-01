@@ -855,7 +855,8 @@ static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD
        { L"next",     DISPID_TESTOBJ_KEYWORD },
        { L"on",       DISPID_TESTOBJ_KEYWORD },
        { L"resume",   DISPID_TESTOBJ_KEYWORD },
-       { L"goto",     DISPID_TESTOBJ_KEYWORD }
+       { L"goto",     DISPID_TESTOBJ_KEYWORD },
+       { L"with",     DISPID_TESTOBJ_KEYWORD }
     };
 
     test_grfdex(grfdex, fdexNameCaseInsensitive);

@@ -1522,6 +1522,7 @@ sub test_dotIdentifiers
     Call ok(testObj.on = 10, "testObj.on = " & testObj.on & " expected 10")
     Call ok(testObj.resume = 10, "testObj.resume = " & testObj.resume & " expected 10")
     Call ok(testObj.goto = 10, "testObj.goto = " & testObj.goto & " expected 10")
+    Call ok(testObj.with = 10, "testObj.with = " & testObj.with & " expected 10")
 end sub
 call test_dotIdentifiers
 
