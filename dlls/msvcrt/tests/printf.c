@@ -243,7 +243,11 @@ static void test_sprintf( void )
         { "%C", "", 0, INT_ARG, 0x3042 },
         { "a%Cb", "ab", 0, INT_ARG, 0x3042 },
         { "%lld", "-8589934591", "1", ULONGLONG_ARG, 0, ((ULONGLONG)0xffffffff)*0xffffffff },
-        { "%I32d", "1", "I32d", INT_ARG, 1 }
+        { "%I32d", "1", "I32d", INT_ARG, 1 },
+        { "%.0f", "-2", 0, DOUBLE_ARG, 0, 0, -1.5 },
+        { "%.0f", "-1", 0, TODO_FLAG | DOUBLE_ARG, 0, 0, -0.5 },
+        { "%.0f", "1", 0, TODO_FLAG | DOUBLE_ARG, 0, 0, 0.5 },
+        { "%.0f", "2", 0, DOUBLE_ARG, 0, 0, 1.5 },
     };
 
     char buffer[100];
