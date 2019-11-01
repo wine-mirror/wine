@@ -456,7 +456,12 @@ static HRESULT GetSplitter(MediaDetImpl *This)
             IPin_Release(source_pin);
             goto retry;
         }
-        IEnumPins_Next(pins, 1, &splitter_pin, NULL);
+        if (IEnumPins_Next(pins, 1, &splitter_pin, NULL) != S_OK)
+        {
+            IEnumPins_Release(pins);
+            IPin_Release(source_pin);
+            goto retry;
+        }
         IEnumPins_Release(pins);
 
         hr = IPin_Connect(source_pin, splitter_pin, NULL);
