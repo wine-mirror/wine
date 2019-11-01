@@ -757,7 +757,7 @@ static void test_CoGetClassObject(void)
         IUnknown_Release(pUnk);
 
         hr = CoGetClassObject(&IID_Testiface7, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
-        ok(hr == 0x80001235, "Unexpected hr %#x.\n", hr);
+        ok(hr == 0x80001235 || broken(hr == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND)) /* winxp */, "Unexpected hr %#x.\n", hr);
 
         hr = CoGetClassObject(&IID_Testiface8, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
         ok(hr == REGDB_E_CLASSNOTREG, "Unexpected hr %#x.\n", hr);
@@ -1573,7 +1573,7 @@ static void test_CoRegisterClassObject(void)
     if ((handle = activate_context(actctx_manifest, &ctxcookie)))
     {
         hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)&pcf);
-        ok(hr == 0x80001234, "Unexpected hr %#x.\n", hr);
+        ok(hr == 0x80001234 || broken(hr == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND)) /* winxp */, "Unexpected hr %#x.\n", hr);
 
         deactivate_context(handle, ctxcookie);
     }
