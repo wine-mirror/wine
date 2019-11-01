@@ -516,10 +516,14 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             } else if(*p == 'w')
                 flags.WideString = *p++;
 #if _MSVCR_VER >= 140
-            else if(*p == 'z')
+            else if(*p == 'z' || *p == 't')
                 flags.IntegerNative = *p++;
             else if(*p == 'T')
                 flags.NaturalString = *p++;
+            else if(*p == 'j') {
+                flags.IntegerDouble++;
+                p++;
+            }
 #endif
             else if((*p == 'F' || *p == 'N') && legacy_msvcrt_compat)
                 p++; /* ignore */
