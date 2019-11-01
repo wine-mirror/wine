@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-17 22:50+0900\n"
+"PO-Revision-Date: 2019-11-01 16:21+0900\n"
 "Last-Translator: Byeongsik Jeon <bsjeon@hanmail.net>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -344,7 +344,7 @@ msgstr "마법사"
 
 #: comctl32.rc:84
 msgid "< &Back"
-msgstr "< 이전(&B)"
+msgstr "< 뒤로(&B)"
 
 #: comctl32.rc:85
 msgid "&Next >"
@@ -1260,11 +1260,11 @@ msgstr "Caps Lock 켜짐"
 
 #: crypt32.rc:30
 msgid "Authority Key Identifier"
-msgstr "접근 키 식별자"
+msgstr "권한 키 식별자"
 
 #: crypt32.rc:31
 msgid "Key Attributes"
-msgstr "키 속성"
+msgstr "키 특성"
 
 #: crypt32.rc:32
 msgid "Key Usage Restriction"
@@ -1276,19 +1276,19 @@ msgstr "주제 대체 이름"
 
 #: crypt32.rc:34
 msgid "Issuer Alternative Name"
-msgstr "발행자 대체 이름"
+msgstr "발급자 대체 이름"
 
 #: crypt32.rc:35
 msgid "Basic Constraints"
-msgstr "기본 제약"
+msgstr "기본 제한"
 
 #: crypt32.rc:36
 msgid "Key Usage"
-msgstr "키 사용법"
+msgstr "키 사용"
 
 #: crypt32.rc:37
 msgid "Certificate Policies"
-msgstr "인증 방침"
+msgstr "인증서 정책"
 
 #: crypt32.rc:38
 msgid "Subject Key Identifier"
@@ -1296,15 +1296,15 @@ msgstr "주제 키 식별자"
 
 #: crypt32.rc:39
 msgid "CRL Reason Code"
-msgstr "CRL 분별 코드"
+msgstr "CRL 원인 코드"
 
 #: crypt32.rc:40
 msgid "CRL Distribution Points"
-msgstr "CRL 배포  지점"
+msgstr "CRL 배포 지점"
 
 #: crypt32.rc:41
 msgid "Enhanced Key Usage"
-msgstr "확장된 키 사용법"
+msgstr "확장된 키 사용"
 
 #: crypt32.rc:42
 msgid "Authority Information Access"
@@ -1320,7 +1320,7 @@ msgstr "다음 업데이트 위치"
 
 #: crypt32.rc:45
 msgid "Yes or No Trust"
-msgstr "신뢰(예(Y) 나 아니요(N))"
+msgstr "신뢰하거나 신뢰하지 않음"
 
 #: crypt32.rc:46
 msgid "Email Address"
@@ -1328,15 +1328,15 @@ msgstr "전자메일 주소"
 
 #: crypt32.rc:47
 msgid "Unstructured Name"
-msgstr "비구조화 이름"
+msgstr "구조화되지 않은 이름"
 
 #: crypt32.rc:48
 msgid "Content Type"
-msgstr "내용 형식"
+msgstr "콘텐츠 형식"
 
 #: crypt32.rc:49
 msgid "Message Digest"
-msgstr "내용 요약"
+msgstr "메시지 요약"
 
 #: crypt32.rc:50
 msgid "Signing Time"
@@ -1344,23 +1344,23 @@ msgstr "서명 시간"
 
 #: crypt32.rc:51
 msgid "Counter Sign"
-msgstr "다시 서명"
+msgstr "연대 서명"
 
 #: crypt32.rc:52
 msgid "Challenge Password"
-msgstr "암호 바꾸기"
+msgstr "챌린지 암호"
 
 #: crypt32.rc:53
 msgid "Unstructured Address"
-msgstr "비구조화 주소"
+msgstr "구조화되지 않은 주소"
 
 #: crypt32.rc:54
 msgid "S/MIME Capabilities"
-msgstr "S/MIME  능력"
+msgstr "S/MIME 기능"
 
 #: crypt32.rc:55
 msgid "Prefer Signed Data"
-msgstr "선호하는 사인된 데이터"
+msgstr "서명한 데이터 선호"
 
 #: crypt32.rc:56 cryptdlg.rc:34
 msgctxt "Certification Practice Statement"
@@ -1369,23 +1369,23 @@ msgstr "CPS"
 
 #: crypt32.rc:57 cryptdlg.rc:35
 msgid "User Notice"
-msgstr "사용자 통지"
+msgstr "사용자 알림"
 
 #: crypt32.rc:58
 msgid "On-line Certificate Status Protocol"
-msgstr "온라인 인증 상태 프로토콜"
+msgstr "온라인 인증서 상태 프로토콜"
 
 #: crypt32.rc:59
 msgid "Certification Authority Issuer"
-msgstr "인증서 접근 발행자"
+msgstr "인증 기관 발급자"
 
 #: crypt32.rc:60
 msgid "Certification Template Name"
-msgstr "인증 형판 이름"
+msgstr "인증 서식 이름"
 
 #: crypt32.rc:61
 msgid "Certificate Type"
-msgstr "인증서 형태"
+msgstr "인증서 종류"
 
 #: crypt32.rc:62
 msgid "Certificate Manifold"
@@ -1393,27 +1393,27 @@ msgstr "인증서 사본"
 
 #: crypt32.rc:63
 msgid "Netscape Cert Type"
-msgstr "넷스케이프 인증 형태"
+msgstr "넷스케이프 인증서 형식"
 
 #: crypt32.rc:64
 msgid "Netscape Base URL"
-msgstr "넷스케이프 기본 웹주소"
+msgstr "넷스케이프 기준 URL"
 
 #: crypt32.rc:65
 msgid "Netscape Revocation URL"
-msgstr "넷스케이프 취소 웹주소"
+msgstr "넷스케이프 해지 URL"
 
 #: crypt32.rc:66
 msgid "Netscape CA Revocation URL"
-msgstr "넷스케이프 CA 취소 웹주소"
+msgstr "넷스케이프 CA 해지 URL"
 
 #: crypt32.rc:67
 msgid "Netscape Cert Renewal URL"
-msgstr "넷스케이프 인증서 재개 웹주소"
+msgstr "넷스케이프 인증서 갱신 URL"
 
 #: crypt32.rc:68
 msgid "Netscape CA Policy URL"
-msgstr "넷스케이프 CA 방침 URL"
+msgstr "넷스케이프 CA 정책 URL"
 
 #: crypt32.rc:69
 msgid "Netscape SSL ServerName"
@@ -1421,31 +1421,31 @@ msgstr "넷스케이프 SSL 서버이름"
 
 #: crypt32.rc:70
 msgid "Netscape Comment"
-msgstr "넷스케이프 설명"
+msgstr "넷스케이프 주석"
 
 #: crypt32.rc:71
 msgid "Country/Region"
-msgstr "나라/지역"
+msgstr "국가/지역"
 
 #: crypt32.rc:72
 msgid "Organization"
-msgstr "단체"
+msgstr "조직"
 
 #: crypt32.rc:73
 msgid "Organizational Unit"
-msgstr "단체 단위"
+msgstr "조직 단위"
 
 #: crypt32.rc:74
 msgid "Common Name"
-msgstr "완전한 이름"
+msgstr "일반 이름"
 
 #: crypt32.rc:75
 msgid "Locality"
-msgstr "소재지"
+msgstr "구/군/시"
 
 #: crypt32.rc:76
 msgid "State or Province"
-msgstr "주나 지방"
+msgstr "시/도"
 
 #: crypt32.rc:77
 msgid "Title"
@@ -1457,7 +1457,7 @@ msgstr "이름"
 
 #: crypt32.rc:79
 msgid "Initials"
-msgstr "머릿글자"
+msgstr "이니셜"
 
 #: crypt32.rc:80
 msgid "Surname"
@@ -1465,7 +1465,7 @@ msgstr "성"
 
 #: crypt32.rc:81
 msgid "Domain Component"
-msgstr "주소 구성요소"
+msgstr "주소 구성 요소"
 
 #: crypt32.rc:82
 msgid "Street Address"
@@ -1473,7 +1473,7 @@ msgstr "거리 주소"
 
 #: crypt32.rc:83
 msgid "Serial Number"
-msgstr "시리얼 번호"
+msgstr "일련 번호"
 
 #: crypt32.rc:84
 msgid "CA Version"
@@ -1481,15 +1481,15 @@ msgstr "CA 버전"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
-msgstr "교차 CA 버전"
+msgstr "상호 CA 버전"
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr "직렬화된 서명 일련 번호"
+msgstr "순차적인 서명 일련 번호"
 
 #: crypt32.rc:87
 msgid "Principal Name"
-msgstr "주요한 이름"
+msgstr "주체 이름"
 
 #: crypt32.rc:88
 msgid "Windows Product Update"
@@ -1505,7 +1505,7 @@ msgstr "OS 버전"
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
-msgstr "CSP 등록"
+msgstr "등록 CSP"
 
 #: crypt32.rc:92
 msgid "CRL Number"
@@ -1517,7 +1517,7 @@ msgstr "델타 CRL 표시기"
 
 #: crypt32.rc:94
 msgid "Issuing Distribution Point"
-msgstr "발행자 배포 위치"
+msgstr "배포 지점 발급 중"
 
 #: crypt32.rc:95
 msgid "Freshest CRL"
@@ -1525,31 +1525,31 @@ msgstr "최신 CRL"
 
 #: crypt32.rc:96
 msgid "Name Constraints"
-msgstr "이름 제약"
+msgstr "이름 제약 조건"
 
 #: crypt32.rc:97
 msgid "Policy Mappings"
-msgstr "정책 대응"
+msgstr "정책 매핑"
 
 #: crypt32.rc:98
 msgid "Policy Constraints"
-msgstr "정책 제약"
+msgstr "정책 제약 조건"
 
 #: crypt32.rc:99
 msgid "Cross-Certificate Distribution Points"
-msgstr "상호 인증 분배 위치"
+msgstr "상호 인증서 배포 지점"
 
 #: crypt32.rc:100
 msgid "Application Policies"
-msgstr "프로그램 방침"
+msgstr "프로그램 정책"
 
 #: crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr "프로그램 정책 대응"
+msgstr "프로그램 정책 매핑"
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
-msgstr "프로그램 정책 제약"
+msgstr "프로그램 정책 제약 조건"
 
 #: crypt32.rc:103
 msgid "CMC Data"
@@ -1561,7 +1561,7 @@ msgstr "CMC 응답"
 
 #: crypt32.rc:105
 msgid "Unsigned CMC Request"
-msgstr "서명되지 않은CMC 요청"
+msgstr "서명되지 않은 CMC 요청"
 
 #: crypt32.rc:106
 msgid "CMC Status Info"
@@ -1573,7 +1573,7 @@ msgstr "CMC 확장"
 
 #: crypt32.rc:108
 msgid "CMC Attributes"
-msgstr "CMC 속성"
+msgstr "CMC 특성"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Data"
@@ -1581,27 +1581,27 @@ msgstr "PKCS 7 데이터"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Signed"
-msgstr "PKCS 7 서명"
+msgstr "서명된 PKCS 7"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Enveloped"
-msgstr "PKCS 7 싸개"
+msgstr "포장된 PKCS 7"
 
 #: crypt32.rc:112
 msgid "PKCS 7 Signed Enveloped"
-msgstr "PKCS 7 서명된 싸개"
+msgstr "서명 포장된 PKCS 7"
 
 #: crypt32.rc:113
 msgid "PKCS 7 Digested"
-msgstr "PKCS 7 요약"
+msgstr "요약된 PKCS 7"
 
 #: crypt32.rc:114
 msgid "PKCS 7 Encrypted"
-msgstr "PKCS 7 암호화"
+msgstr "암호화 된 PKCS 7"
 
 #: crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr "이전의 CA 인증 해쉬"
+msgstr "이전 CA 인증서 해시"
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
@@ -1609,27 +1609,27 @@ msgstr "가상 기반 CRL 숫자"
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
-msgstr "다음 CRL 발행"
+msgstr "다음 CRL 게시"
 
 #: crypt32.rc:118
 msgid "CA Encryption Certificate"
-msgstr "CA 암호 인증"
+msgstr "CA 암호화 인증서"
 
 #: crypt32.rc:119 cryptui.rc:148
 msgid "Key Recovery Agent"
-msgstr "키 복구 관리자"
+msgstr "키 복구 에이전트"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
-msgstr "인증 주형 정보"
+msgstr "인증서 서식 정보"
 
 #: crypt32.rc:121
 msgid "Enterprise Root OID"
-msgstr "기업 루트 OID"
+msgstr "엔터프라이즈 루트 OID"
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
-msgstr "더미 사인자"
+msgstr "더미 서명자"
 
 #: crypt32.rc:123
 msgid "Encrypted Private Key"
@@ -1637,23 +1637,23 @@ msgstr "암호화된 개인 키"
 
 #: crypt32.rc:124
 msgid "Published CRL Locations"
-msgstr "발행된 CRL 위치"
+msgstr "게시된 CRL 위치"
 
 #: crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
-msgstr "강제 인증 체인 정책"
+msgstr "인증서 체인 정책 시행"
 
 #: crypt32.rc:126
 msgid "Transaction Id"
-msgstr "처리 아이디"
+msgstr "트랜잭션 ID"
 
 #: crypt32.rc:127
 msgid "Sender Nonce"
-msgstr "임시 발송인"
+msgstr "임시 보낸 사람"
 
 #: crypt32.rc:128
 msgid "Recipient Nonce"
-msgstr "임시 수령인"
+msgstr "임시 받는 사람"
 
 #: crypt32.rc:129
 msgid "Reg Info"
@@ -1661,19 +1661,19 @@ msgstr "등록 정보"
 
 #: crypt32.rc:130
 msgid "Get Certificate"
-msgstr "인증서 얻기"
+msgstr "인증서 가져오기"
 
 #: crypt32.rc:131
 msgid "Get CRL"
-msgstr "CRL 얻기"
+msgstr "CRL 가져오기"
 
 #: crypt32.rc:132
 msgid "Revoke Request"
-msgstr "취소 요청"
+msgstr "요청 해지"
 
 #: crypt32.rc:133
 msgid "Query Pending"
-msgstr "질문하는 중"
+msgstr "대기 중인 쿼리"
 
 #: crypt32.rc:134 cryptui.rc:95
 msgid "Certificate Trust List"
@@ -1681,7 +1681,7 @@ msgstr "인증서 신뢰 목록"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
-msgstr "압축된 키 인증 해쉬"
+msgstr "저장된 키 인증서 해시"
 
 #: crypt32.rc:136
 msgid "Private Key Usage Period"
@@ -1709,23 +1709,23 @@ msgstr "보안 전자메일"
 
 #: crypt32.rc:142
 msgid "Time Stamping"
-msgstr "시간 날인"
+msgstr "타임스탬프"
 
 #: crypt32.rc:143
 msgid "Microsoft Trust List Signing"
-msgstr "마이크로소프트 신뢰 목록 사인"
+msgstr "Microsoft 신뢰 목록 서명"
 
 #: crypt32.rc:144
 msgid "Microsoft Time Stamping"
-msgstr "마이크로소프트 시간 날인"
+msgstr "Microsoft 타임스탬프"
 
 #: crypt32.rc:145
 msgid "IP security end system"
-msgstr "IP 보안 종단 시스템"
+msgstr "IP 보안 최종 시스템"
 
 #: crypt32.rc:146
 msgid "IP security tunnel termination"
-msgstr "IP 보안  터널 종료"
+msgstr "IP 보안 터널 종료"
 
 #: crypt32.rc:147
 msgid "IP security user"
@@ -1733,7 +1733,7 @@ msgstr "IP 보안 사용자"
 
 #: crypt32.rc:148
 msgid "Encrypting File System"
-msgstr "암호화된 파일 시스템"
+msgstr "파일 시스템 암호화"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Windows Hardware Driver Verification"
@@ -1741,15 +1741,15 @@ msgstr "Windows 하드웨어 드라이버 검증"
 
 #: crypt32.rc:150 cryptui.rc:134
 msgid "Windows System Component Verification"
-msgstr "Windows 시스템 구성요소 검증"
+msgstr "Windows 시스템 구성 요소 검증"
 
 #: crypt32.rc:151 cryptui.rc:135
 msgid "OEM Windows System Component Verification"
-msgstr "OEM Windows 시스템 구성요소 검증"
+msgstr "OEM Windows 시스템 구성 요소 검증"
 
 #: crypt32.rc:152 cryptui.rc:136
 msgid "Embedded Windows System Component Verification"
-msgstr "내장 Windows 시스템 구성 요소 확인"
+msgstr "임베디드 Windows 시스템 구성 요소 검증"
 
 #: crypt32.rc:153 cryptui.rc:143
 msgid "Key Pack Licenses"
@@ -1757,19 +1757,19 @@ msgstr "키 팩 라이선스"
 
 #: crypt32.rc:154 cryptui.rc:144
 msgid "License Server Verification"
-msgstr "라이선스 서버 확인"
+msgstr "라이선스 서버 검증"
 
 #: crypt32.rc:155 cryptui.rc:146
 msgid "Smart Card Logon"
-msgstr "스마트 카드 로그인"
+msgstr "스마트 카드 로그온"
 
 #: crypt32.rc:156 cryptui.rc:142
 msgid "Digital Rights"
-msgstr "디지털 저작권"
+msgstr "디지털 권한"
 
 #: crypt32.rc:157 cryptui.rc:138
 msgid "Qualified Subordination"
-msgstr "자격있는 종속"
+msgstr "정규 종속"
 
 #: crypt32.rc:158 cryptui.rc:139
 msgid "Key Recovery"
@@ -1781,7 +1781,7 @@ msgstr "문서 서명"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
-msgstr "IP 보안  IKE 수단"
+msgstr "IP 보안 IKE 중개"
 
 #: crypt32.rc:161 cryptui.rc:132
 msgid "File Recovery"
@@ -1793,23 +1793,23 @@ msgstr "루트 목록 서명자"
 
 #: crypt32.rc:163
 msgid "All application policies"
-msgstr "모든 프로그램의 방침"
+msgstr "전체 프로그램 정책"
 
 #: crypt32.rc:164 cryptui.rc:149
 msgid "Directory Service Email Replication"
-msgstr "디렉터리 서비스 전자메일 응답"
+msgstr "디렉터리 서비스 전자메일 복제"
 
 #: crypt32.rc:165 cryptui.rc:145
 msgid "Certificate Request Agent"
-msgstr "인증 요구 관리자"
+msgstr "인증서 요청 에이전트"
 
 #: crypt32.rc:166 cryptui.rc:141
 msgid "Lifetime Signing"
-msgstr "유효기간"
+msgstr "영구 서명"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
-msgstr "모든 배포 방침"
+msgstr "전체 발급 정책"
 
 #: crypt32.rc:172
 msgid "Trusted Root Certification Authorities"
@@ -1829,7 +1829,7 @@ msgstr "다른 사람"
 
 #: crypt32.rc:176
 msgid "Trusted Publishers"
-msgstr "신뢰할 수 있는 발행자"
+msgstr "신뢰할 수 있는 게시자"
 
 #: crypt32.rc:177
 msgid "Untrusted Certificates"
@@ -1837,15 +1837,15 @@ msgstr "신뢰할 수 없는 인증서"
 
 #: crypt32.rc:182
 msgid "KeyID="
-msgstr "키 아이디="
+msgstr "키ID="
 
 #: crypt32.rc:183
 msgid "Certificate Issuer"
-msgstr "인증서 발행자"
+msgstr "인증서 발급자"
 
 #: crypt32.rc:184
 msgid "Certificate Serial Number="
-msgstr "인증서 시리얼 번호="
+msgstr "인증서 일련 번호="
 
 #: crypt32.rc:185
 msgid "Other Name="
@@ -1861,7 +1861,7 @@ msgstr "DNS 이름="
 
 #: crypt32.rc:188
 msgid "Directory Address"
-msgstr "디렉터리  주소"
+msgstr "디렉터리 주소"
 
 #: crypt32.rc:189
 msgid "URL="
@@ -1885,29 +1885,29 @@ msgstr "알 수 없는 키 사용"
 
 #: crypt32.rc:194
 msgid "Subject Type="
-msgstr "제목 형식="
+msgstr "주제 종류="
 
 #: crypt32.rc:195
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr "CA"
+msgstr "CA(인증기관)"
 
 #: crypt32.rc:196
 msgid "End Entity"
-msgstr "엔티티 끝"
+msgstr "엔티티 종료"
 
 #: crypt32.rc:197
 msgid "Path Length Constraint="
-msgstr "제한된 경로 길이 ="
+msgstr "경로 길이 제한="
 
 #: crypt32.rc:198
 msgctxt "path length"
 msgid "None"
-msgstr "None"
+msgstr "없음"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
-msgstr "정보가 없음"
+msgstr "사용 가능한 정보 없음"
 
 #: crypt32.rc:200
 msgid "Authority Info Access"
@@ -1920,11 +1920,11 @@ msgstr "접근 방법="
 #: crypt32.rc:202
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
-msgstr "OCSP"
+msgstr "OCSP(온라인 인증서 상태 프로토콜)"
 
 #: crypt32.rc:203
 msgid "CA Issuers"
-msgstr "CA 발행자"
+msgstr "CA 발급자"
 
 #: crypt32.rc:204
 msgid "Unknown Access Method"
@@ -1936,11 +1936,11 @@ msgstr "대체 이름"
 
 #: crypt32.rc:206
 msgid "CRL Distribution Point"
-msgstr "CRL 분배 포인트"
+msgstr "CRL 배포 지점"
 
 #: crypt32.rc:207
 msgid "Distribution Point Name"
-msgstr "분배 포인트 이름"
+msgstr "배포 지점 이름"
 
 #: crypt32.rc:208
 msgid "Full Name"
@@ -1956,47 +1956,47 @@ msgstr "CRL 원인="
 
 #: crypt32.rc:211
 msgid "CRL Issuer"
-msgstr "CRL 발행자"
+msgstr "CRL 발급자"
 
 #: crypt32.rc:212
 msgid "Key Compromise"
-msgstr "키 협정"
+msgstr "키 손상"
 
 #: crypt32.rc:213
 msgid "CA Compromise"
-msgstr "CA 협정"
+msgstr "CA 손상"
 
 #: crypt32.rc:214
 msgid "Affiliation Changed"
-msgstr "소속 바꾸기"
+msgstr "소속이 바뀜"
 
 #: crypt32.rc:215
 msgid "Superseded"
-msgstr "대체"
+msgstr "교체됨"
 
 #: crypt32.rc:216
 msgid "Operation Ceased"
-msgstr "작업 중지"
+msgstr "작업 중지됨"
 
 #: crypt32.rc:217
 msgid "Certificate Hold"
-msgstr "인증서 유지"
+msgstr "인증서 대기"
 
 #: crypt32.rc:218
 msgid "Financial Information="
-msgstr "재무 정보="
+msgstr "재정 정보="
 
 #: crypt32.rc:219 taskmgr.rc:397
 msgid "Available"
-msgstr "가능함"
+msgstr "사용 가능함"
 
 #: crypt32.rc:220
 msgid "Not Available"
-msgstr "불가능함"
+msgstr "사용 가능하지 않음"
 
 #: crypt32.rc:221
 msgid "Meets Criteria="
-msgstr "맞는 기준 ="
+msgstr "기준에 부합="
 
 #: crypt32.rc:222 cryptui.rc:166 oleaut32.rc:32 wininet.rc:83 ipconfig.rc:47
 msgid "Yes"
@@ -2008,7 +2008,7 @@ msgstr "아니요"
 
 #: crypt32.rc:224
 msgid "Digital Signature"
-msgstr "전자 서명"
+msgstr "디지털 서명"
 
 #: crypt32.rc:225
 msgid "Non-Repudiation"
@@ -2024,15 +2024,15 @@ msgstr "데이터 암호화"
 
 #: crypt32.rc:228
 msgid "Key Agreement"
-msgstr "키 보증서"
+msgstr "키 계약"
 
 #: crypt32.rc:229
 msgid "Certificate Signing"
-msgstr "증명서 서명"
+msgstr "인증서 서명"
 
 #: crypt32.rc:230
 msgid "Off-line CRL Signing"
-msgstr "오프라인 CRL 사인"
+msgstr "오프라인 CRL 서명"
 
 #: crypt32.rc:231
 msgid "CRL Signing"
@@ -2040,11 +2040,11 @@ msgstr "CRL 서명"
 
 #: crypt32.rc:232
 msgid "Encipher Only"
-msgstr "오직 암호화만 함"
+msgstr "암호화만"
 
 #: crypt32.rc:233
 msgid "Decipher Only"
-msgstr "오직 복호화만"
+msgstr "암호 해독만"
 
 #: crypt32.rc:234
 msgid "SSL Client Authentication"
@@ -2056,7 +2056,7 @@ msgstr "SSL 서버 인증"
 
 #: crypt32.rc:236
 msgid "S/MIME"
-msgstr "S/MIME"
+msgstr "보안메일"
 
 #: crypt32.rc:237
 msgid "Signature"
@@ -2064,19 +2064,19 @@ msgstr "서명"
 
 #: crypt32.rc:238
 msgid "SSL CA"
-msgstr "SSL CA"
+msgstr "SSL 인증기관"
 
 #: crypt32.rc:239
 msgid "S/MIME CA"
-msgstr "S/MIME CA"
+msgstr "보안메일 인증기관"
 
 #: crypt32.rc:240
 msgid "Signature CA"
-msgstr "CA 서명"
+msgstr "서명 인증기관"
 
 #: cryptdlg.rc:30
 msgid "Certificate Policy"
-msgstr "인증 방침"
+msgstr "인증서 정책"
 
 #: cryptdlg.rc:31
 msgid "Policy Identifier: "
@@ -4225,7 +4225,7 @@ msgstr "루트 디렉터리의 하위 디렉터리가 아닙니다.\n"
 
 #: winerror.mc:593
 msgid "Directory is not empty.\n"
-msgstr "디렉터리가 비워 있지 않습니다.\n"
+msgstr "디렉터리가 비어 있지 않습니다.\n"
 
 #: winerror.mc:598
 msgid "Path is in use as a SUBST.\n"
@@ -6793,541 +6793,387 @@ msgstr "메일 보내기"
 
 #: mferror.mc:249 mferror.mc:256
 msgid "Begin request has already been made.\n"
-msgstr ""
+msgstr "시작 요청이 이미 이루어졌습니다.\n"
 
 #: mferror.mc:599
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "UUID 객체를 찾을 수 없습니다.\n"
+msgstr "싱크가 완료되지 않았습니다.\n"
 
 #: mferror.mc:32
-#, fuzzy
-#| msgid "Installation platform not supported.\n"
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "설치 플랫폼을 지원하지 않음.\n"
+msgstr "미디어 기초 플랫폼이 최기화되지 않았습니다.\n"
 
 #: mferror.mc:39
-#, fuzzy
-#| msgid "Byte count too small.\n"
 msgid "Buffer is too small.\n"
-msgstr "바이트 카운트가 너무 작습니다.\n"
+msgstr "버퍼가 너무 작습니다.\n"
 
 #: mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "잘못된 쿼리 구문.\n"
+msgstr "잘못된 요청입니다.\n"
 
 #: mferror.mc:53
-#, fuzzy
-#| msgid "Invalid segment number.\n"
 msgid "Invalid stream number.\n"
-msgstr "올바르지 않은 세그멘트 번호.\n"
+msgstr "스트림 번호가 잘못되었습니다.\n"
 
 #: mferror.mc:60
-#, fuzzy
-#| msgid "Invalid data type.\n"
 msgid "Invalid media type.\n"
-msgstr "올바르지 않은 데이터 형식.\n"
+msgstr "미디어 형식이 잘못되었습니다.\n"
 
 #: mferror.mc:67
-#, fuzzy
-#| msgid "No more entries.\n"
 msgid "No more input is accepted.\n"
-msgstr "더 이상 엔트리가 없습니다.\n"
+msgstr "더 이상 입력이 허용되지 않습니다.\n"
 
 #: mferror.mc:74
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object is not initialized.\n"
-msgstr "UUID 객체를 찾을 수 없습니다.\n"
+msgstr "객체가 초기화되지 않았습니다.\n"
 
 #: mferror.mc:81
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Representation is not supported.\n"
-msgstr "이 작업은 지원하지 않습니다.\n"
+msgstr "표현이 지원되지 않습니다.\n"
 
 #: mferror.mc:88
 msgid "No more types in the list of suggested media types.\n"
-msgstr ""
+msgstr "제안된 미디어 형식 목록에 더 이상 형식이 없습니다.\n"
 
 #: mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원되지 않는 서비스입니다.\n"
 
 #: mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "예기치 않은 네트워크 오류.\n"
+msgstr "예상치 못한 오류입니다.\n"
 
 #: mferror.mc:116
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid type.\n"
-msgstr "올바르지 않은 시간.\n"
+msgstr "올바르지 않은 형식입니다.\n"
 
 #: mferror.mc:123
-#, fuzzy
-#| msgid "Invalid pixel format.\n"
 msgid "Invalid file format.\n"
-msgstr "올바르지 않은 픽셀 형식.\n"
+msgstr "올바르지 않은 파일 형식입니다.\n"
 
 #: mferror.mc:137
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid timestamp.\n"
-msgstr "올바르지 않은 시간.\n"
+msgstr "올바르지 않은 타임스탬프입니다.\n"
 
 #: mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원되지 않는 스키마입니다.\n"
 
 #: mferror.mc:151
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported bytestream type.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원되지 않는 바이트스트림 형식입니다.\n"
 
 #: mferror.mc:158
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported time format.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원되지 않는 시간 형식입니다.\n"
 
 #: mferror.mc:165
 msgid "Timestamp is not set for the sample.\n"
-msgstr ""
+msgstr "이 샘플에 대한 타임스탬프가 설정되지 않았습니다.\n"
 
 #: mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr ""
+msgstr "이 샘플에 대한 기간(duration) 설정이 없습니다.\n"
 
 #: mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "올바르지 않은 데이터.\n"
+msgstr "올바르지 않은 스트림 데이터입니다.\n"
 
 #: mferror.mc:186
-#, fuzzy
-#| msgid "Help not available."
 msgid "Realtime support is not available.\n"
-msgstr "도움말은 가능하지않습니다."
+msgstr "실시간 지원은 가능하지 않습니다.\n"
 
 #: mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원하지 않는 비율(rate).\n"
 
 #: mferror.mc:200
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported thinning.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원하지 않는 세선화(thinning).\n"
 
 #: mferror.mc:207
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Reversing is not supported.\n"
-msgstr "지원되지 않는 요청.\n"
+msgstr "리버싱(reversing)은 지원되지 않습니다.\n"
 
 #: mferror.mc:214
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported rate transition.\n"
-msgstr "지원하지 않는 인증 레벨.\n"
+msgstr "지원하지 않는 비율(rate) 변환.\n"
 
 #: mferror.mc:221
 msgid "Rate change was preempted.\n"
-msgstr ""
+msgstr "비율(rate) 변경이 선점되었습니다.\n"
 
 #: mferror.mc:228
-#, fuzzy
-#| msgid "Object UUID not found.\n"
 msgid "Object or value wasn't found.\n"
-msgstr "UUID 객체를 찾을 수 없습니다.\n"
+msgstr "객체 또는 값을 찾을 수 없습니다.\n"
 
 #: mferror.mc:235
-#, fuzzy
-#| msgid "Help not available."
 msgid "Value is not available.\n"
-msgstr "도움말은 가능하지않습니다."
+msgstr "값을 사용할 수 없습니다.\n"
 
 #: mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "도움말은 가능하지않습니다."
+msgstr "시계를 사용할 수 없습니다.\n"
 
 #: mferror.mc:263
-#, fuzzy
-#| msgid "Extended attributes not supported.\n"
 msgid "Multiple subscribers are not supported.\n"
-msgstr "지원되지 않는 확장 속성.\n"
+msgstr "다중 가입자는 지원되지 않습니다.\n"
 
 #: mferror.mc:270
-#, fuzzy
-#| msgid "The driver was not enabled."
 msgid "The timer was orphaned.\n"
-msgstr "드라이버를 사용할 수 없습니다."
+msgstr "타이머가 고립되었습니다.\n"
 
 #: mferror.mc:277
-#, fuzzy
-#| msgid "Character translation table open failed.\n"
 msgid "State transition is pending.\n"
-msgstr "문자변환테이블 열기 실패.\n"
+msgstr "상태 전환이 보류 중입니다.\n"
 
 #: mferror.mc:284
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Unsupported state transition.\n"
-msgstr "지원하지 않는 인증 레벨.\n"
+msgstr "지원되지 않는 상태 전환.\n"
 
 #: mferror.mc:291
-#, fuzzy
-#| msgid "An internal error has occurred.\n"
 msgid "Unrecoverable error occurred.\n"
-msgstr "내부 오류 발생.\n"
+msgstr "복구할 수 없는 오류가 발생했습니다.\n"
 
 #: mferror.mc:298
 msgid "Sample has too many buffers.\n"
-msgstr ""
+msgstr "샘플에 버퍼가 너무 많습니다.\n"
 
 #: mferror.mc:305
-#, fuzzy
-#| msgid "Temporary directory not writable.\n"
 msgid "Sample is not writable.\n"
-msgstr "임시 디렉터리에 기록할 수 없음.\n"
+msgstr "샘플에 쓰기가 가능하지 않습니다.\n"
 
 #: mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "올바르지 않은 경로.\n"
+msgstr "올바르지 않은 키.\n"
 
 #: mferror.mc:319
-#, fuzzy
-#| msgid "Wrong stub version.\n"
 msgid "Bad startup version.\n"
-msgstr "잘못된 스텁 버전.\n"
+msgstr "잘못된 시작 버전.\n"
 
 #: mferror.mc:326
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported caption.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원하지 않는 자막.\n"
 
 #: mferror.mc:333
-#, fuzzy
-#| msgid "Invalid workstation.\n"
 msgid "Invalid position.\n"
-msgstr "올바르지 않은 워크스테이션.\n"
+msgstr "올바르지 않은 위치.\n"
 
 #: mferror.mc:340
-#, fuzzy
-#| msgid "File not found.\n"
 msgid "Attribute is not found.\n"
-msgstr "파일을 찾을 수 없습니다.\n"
+msgstr "특성을 찾을 수 없습니다.\n"
 
 #: mferror.mc:347
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property type is not allowed.\n"
-msgstr "허용되지 않은 훅 형식.\n"
+msgstr "속성 형식이 허용되지 않습니다.\n"
 
 #: mferror.mc:354
-#, fuzzy
-#| msgid "Operation not supported.\n"
 msgid "Property type is not supported.\n"
-msgstr "이 작업은 지원하지 않습니다.\n"
+msgstr "속성 형식이 지원되지 않습니다.\n"
 
 #: mferror.mc:361
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is empty.\n"
-msgstr "디렉터리가 비워 있지 않습니다.\n"
+msgstr "속성이 비어 있습니다.\n"
 
 #: mferror.mc:368
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is not empty.\n"
-msgstr "디렉터리가 비워 있지 않습니다.\n"
+msgstr "속성이 비어 있지 않습니다.\n"
 
 #: mferror.mc:375
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Vector property is not allowed.\n"
-msgstr "허용되지 않은 훅 형식.\n"
+msgstr "벡터 속성이 허용되지 않습니다.\n"
 
 #: mferror.mc:382
 msgid "Vector property is required.\n"
-msgstr ""
+msgstr "벡터 속성이 필요합니다.\n"
 
 #: mferror.mc:389
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation was cancelled.\n"
-msgstr "작업이 사용자에 위해 취소됨.\n"
+msgstr "작업이 취소되었습니다.\n"
 
 #: mferror.mc:396
-#, fuzzy
-#| msgid "Server not disabled.\n"
 msgid "Bytestream is not seekable.\n"
-msgstr "서버가 가능하지 않지가 않음.\n"
+msgstr "바이트 스트림은 검색할 수 없습니다.\n"
 
 #: mferror.mc:403
 msgid "Platform is disabled in safe mode.\n"
-msgstr ""
+msgstr "안전 모드에서 플랫폼을 사용할 수 없습니다.\n"
 
 #: mferror.mc:410
-#, fuzzy
-#| msgid "Cannot create service thread.\n"
 msgid "Cannot parse bytestream.\n"
-msgstr "서비스 스레드 만들기 실패.\n"
+msgstr "바이트 스트림을 구문 분석할 수 없습니다.\n"
 
 #: mferror.mc:417
 msgid "Mutually exclusive flags passed to source resolver.\n"
-msgstr ""
+msgstr "상호 배타적이 플래그가 소스 확인자로 전달되었습니다.\n"
 
 #: mferror.mc:424
-#, fuzzy
-#| msgid "Unknown interface.\n"
 msgid "Unknown bytestream length.\n"
-msgstr "알 수 없는 인터페이스.\n"
+msgstr "알 수 없는 바이트 스트림 길이입니다.\n"
 
 #: mferror.mc:431
-#, fuzzy
-#| msgid "Invalid index.\n"
 msgid "Invalid work queue index.\n"
-msgstr "올바르지 않은 인덱스.\n"
+msgstr "올바르지 않은 작업 큐 인덱스.\n"
 
 #: mferror.mc:438
-#, fuzzy
-#| msgid "No logon servers available.\n"
 msgid "No events available.\n"
-msgstr "로그온 서버를 이용할 수 없습니다.\n"
+msgstr "사용할 수 있는 이벤트가 없습니다.\n"
 
 #: mferror.mc:445
-#, fuzzy
-#| msgid "Unsupported authorization level.\n"
 msgid "Invalid media source state transition.\n"
-msgstr "지원하지 않는 인증 레벨.\n"
+msgstr "올바르지 않은 미디어 소스 상태 전환.\n"
 
 #: mferror.mc:452
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "End of media stream has been reached.\n"
-msgstr "레지스트리는 복구되었습니다.\n"
+msgstr "미디어 스트림의 끝에 도달했습니다.\n"
 
 #: mferror.mc:459
 msgid "Shutdown() was called.\n"
-msgstr ""
+msgstr "Shutdown()이 호출되었습니다.\n"
 
 #: mferror.mc:466
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media stream has no duration set.\n"
-msgstr "레지스트리는 복구되었습니다.\n"
+msgstr "미디어 스트림에 기간 설정이 없습니다.\n"
 
 #: mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr ""
+msgstr "미디어 형식이 인식되었지만 올바르지 않습니다.\n"
 
 #: mferror.mc:480
-#, fuzzy
-#| msgid "Property set not found.\n"
 msgid "Property wasn't found.\n"
-msgstr "속성 집합을 찾을 수 없습니다.\n"
+msgstr "속성을 찾을 수 없습니다.\n"
 
 #: mferror.mc:487
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is read-only.\n"
-msgstr "디렉터리가 비워 있지 않습니다.\n"
+msgstr "속성이 읽기 전용입니다.\n"
 
 #: mferror.mc:494
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property is not allowed.\n"
-msgstr "허용되지 않은 훅 형식.\n"
+msgstr "속성이 허용되지 않습니다.\n"
 
 #: mferror.mc:501
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is not started.\n"
-msgstr "리소스 사용 중.\n"
+msgstr "미디어 소스가 시작되지 않았습니다.\n"
 
 #: mferror.mc:508
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media format.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원하지 않는 미디어 형식.\n"
 
 #: mferror.mc:515
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Media source is in wrong state.\n"
-msgstr "리소스 사용 중.\n"
+msgstr "미디어 소스가 잘못된 상태에 있습니다.\n"
 
 #: mferror.mc:522
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No media streams were selected.\n"
-msgstr "감지된 데이터가 없습니다.\n"
+msgstr "미디어 스트림이 선택되지 않았습니다.\n"
 
 #: mferror.mc:529
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported media source characteristics.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원되지 않는 미디어 소스 특성입니다.\n"
 
 #: mferror.mc:536
 msgid "Stream sink was removed.\n"
-msgstr ""
+msgstr "스트림 싱크가 제거되었습니다.\n"
 
 #: mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
-msgstr ""
+msgstr "스트림 싱크가 동기화되지 않습니다.\n"
 
 #: mferror.mc:550
-#, fuzzy
-#| msgid "Registry has been recovered.\n"
 msgid "Media sink stream sinks set is fixed.\n"
-msgstr "레지스트리는 복구되었습니다.\n"
+msgstr "미디어 싱크 스트림 싱크 세트가 고정되어 있습니다.\n"
 
 #: mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "도메인은 이미 존재합니다.\n"
+msgstr "스트림 싱크가 이미 존재합니다.\n"
 
 #: mferror.mc:564
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "작업이 사용자에 위해 취소됨.\n"
+msgstr "샘플 할당이 취소되었습니다.\n"
 
 #: mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "디렉터리가 비워 있지 않습니다.\n"
+msgstr "샘플 할당자가 비어 있습니다.\n"
 
 #: mferror.mc:578
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Sink was already stopped.\n"
-msgstr "클래스는 이미 존재합니다.\n"
+msgstr "싱크가 이미 중지되었습니다.\n"
 
 #: mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
-msgstr ""
+msgstr "ASF 파일 싱크에 대한 비트레이트를 알 수 없습니다.\n"
 
 #: mferror.mc:592
-#, fuzzy
-#| msgid "No data detected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "감지된 데이터가 없습니다.\n"
+msgstr "싱크에 대한 스트림이 선택되지 않았습니다.\n"
 
 #: mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "너무 긴 파일 이름.\n"
+msgstr "메타데이터가 너무 깁니다.\n"
 
 #: mferror.mc:613
 msgid "No samples were processed by the sink.\n"
-msgstr ""
+msgstr "싱크가 샘플을 처리하지 않았습니다.\n"
 
 #: mferror.mc:620
 msgid "Sink was not provided with required headers.\n"
-msgstr ""
+msgstr "싱크가 필요한 헤더를 제공하지 않았습니다.\n"
 
 #: mferror.mc:627
-#, fuzzy
-#| msgid "Connection invalid.\n"
 msgid "Optional node is invalid.\n"
-msgstr "올바르지 않은 연결.\n"
+msgstr "선택적 노드가 올바르지 않습니다.\n"
 
 #: mferror.mc:634
-#, fuzzy
-#| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
-msgstr "프린터를 찾을 수 없습니다."
+msgstr "암호 해독기를 찾을 수 없습니다.\n"
 
 #: mferror.mc:641
-#, fuzzy
-#| msgid "Module not found.\n"
 msgid "Codec was not found.\n"
-msgstr "모듈을 찾을 수 없습니다.\n"
+msgstr "코덱을 찾을 수 없습니다.\n"
 
 #: mferror.mc:648
-#, fuzzy
-#| msgid "Cannot get call handle.\n"
 msgid "Cannot connect topology nodes.\n"
-msgstr "호출 핸들을 얻을 수 없습니다.\n"
+msgstr "토폴로지 노드를 연결할 수 없습니다.\n"
 
 #: mferror.mc:655
-#, fuzzy
-#| msgid "Request not supported.\n"
 msgid "Topology request is not supported.\n"
-msgstr "지원되지 않는 요청.\n"
+msgstr "토폴로지 요청이 지원되지 않습니다.\n"
 
 #: mferror.mc:662
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Invalid topology time attributes.\n"
-msgstr "올바르지 않은 그룹 속성.\n"
+msgstr "올바르지 않은 토폴로지 시간 특성.\n"
 
 #: mferror.mc:669
 msgid "Found loops in topology.\n"
-msgstr ""
+msgstr "토폴로지에 루프가 있습니다.\n"
 
 #: mferror.mc:676
-#, fuzzy
-#| msgid "Installation source is missing.\n"
 msgid "Presentation descriptor is missing.\n"
-msgstr "설치 원본이 없음.\n"
+msgstr "프리젠테이션 설명자가 없습니다.\n"
 
 #: mferror.mc:683
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Stream descriptor is missing.\n"
-msgstr "인덱스가 빠짐.\n"
+msgstr "스트림 설명자가 없습니다.\n"
 
 #: mferror.mc:690
-#, fuzzy
-#| msgid "The device is not connected.\n"
 msgid "Stream descriptor is not selected.\n"
-msgstr "장치가 연결되지 않았습니다.\n"
+msgstr "스트림 설명자가 선택되지 않았습니다.\n"
 
 #: mferror.mc:697
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "인덱스가 빠짐.\n"
+msgstr "소스가 없습니다.\n"
 
 #: mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
-msgstr ""
+msgstr "토폴로지 로더가 싱크 활성화를 지원하지 않습니다.\n"
 
 #: mferror.mc:711
 msgid "Clock has no time source set.\n"
-msgstr ""
+msgstr "시계가 시간 소스 설정을 가지고 있지 않습니다.\n"
 
 #: mferror.mc:718
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock state was already set.\n"
-msgstr "클래스는 이미 존재합니다.\n"
+msgstr "시계 상태가 이미 설정되었습니다.\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -11104,16 +10950,12 @@ msgstr ""
 "다."
 
 #: winmm.rc:128
-#, fuzzy
-#| msgid ""
-#| "The specified MIDI port is already in use. Wait until it is free; then "
-#| "try again."
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free, and then "
 "try again."
 msgstr ""
-"저정한 MIDI 포트는 이미 사용 중입니다. 사용할 수 있을 때까지 기다른 다음 다"
-"시 시도하십시오."
+"저정한 MIDI 포트는 이미 사용 중입니다. 사용할 수 있을 때까지 기다렸다가 다시 "
+"시도하십시오."
 
 #: winmm.rc:131
 msgid ""
@@ -11128,16 +10970,12 @@ msgid "An error occurred with the specified port."
 msgstr "지정한 포트에 오류가 발생했습니다."
 
 #: winmm.rc:133
-#, fuzzy
-#| msgid ""
-#| "All multimedia timers are being used by other applications. Quit one of "
-#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications, and then try again."
 msgstr ""
-"모든 멀티미디어 타이머는 다른 프로그램에서 사용되고 있습니다. 이들 프로그램 "
-"중 하나를 종료한 다음 다시 시도하십시오."
+"모든 멀티미디어 타이머는 다른 프로그램에서 사용되고 있습니다. 이 중 하나를 종"
+"료한 다음 다시 시도하십시오."
 
 #: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
@@ -13650,7 +13488,7 @@ msgstr "reg: 인식되지 않는 이스케이프 시퀀스 [\\%1!c!]\n"
 
 #: reg.rc:70
 msgid "REG EXPORT key_name file.reg [/y]\n"
-msgstr "REG EXPORT 키_이름 파일.reg [/y]\n"
+msgstr "REG EXPORT key_name 파일.reg [/y]\n"
 
 #: reg.rc:71
 msgid "reg: Invalid system key [%1]\n"
@@ -15262,7 +15100,7 @@ msgstr "정규 메타파일 보기"
 
 #: view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
-msgstr ""
+msgstr "메타파일 (*.wmf, *.emf)"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -15286,7 +15124,7 @@ msgstr ""
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr "%s 안의 Wine 설정을 업데이트하고 있습니다. 잠시만 기다려주십시오..."
+msgstr "Wine 설정(%s)을 업데이트하고 있습니다. 잠시만 기다려주십시오..."
 
 # 라이선스 문구는 번역하지 않습니다.
 #: winecfg.rc:141
@@ -15433,10 +15271,6 @@ msgid "Drive configuration"
 msgstr "드라이브 구성"
 
 #: winecfg.rc:233
-#, fuzzy
-#| msgid ""
-#| "Failed to connect to the mount manager, the drive configuration cannot be "
-#| "edited."
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
@@ -15727,12 +15561,6 @@ msgid "System drive"
 msgstr "시스템 드라이브"
 
 #: winecfg.rc:76
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete drive C?\n"
-#| "\n"
-#| "Most Windows applications expect drive C to exist, and will die messily "
-#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -15742,8 +15570,8 @@ msgstr ""
 "드라이브 C 항목을 제거하시겠습니까?\n"
 "\n"
 "대부분의 Windows 프로그램은 C 드라이브가 있다고 예상합니다. C 드라이브가 없다"
-"면 비정상적인 방법으로 종료합니다. 계속 진행한다면 반드시 C 드라이브를 다시 "
-"만드십시오!"
+"면 비정상적인 방법으로 종료합니다. 계속 진행려면, C 드라이브를 다시 만드십시"
+"오!"
 
 #: winecfg.rc:77
 msgctxt "Drive letter"
@@ -16812,8 +16640,6 @@ msgid "Text documents (*.txt)"
 msgstr "텍스트 파일 (*.txt)"
 
 #: wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
 msgstr "유니코드 텍스트 문서 (*.txt)"
 
@@ -17019,42 +16845,6 @@ msgid "D"
 msgstr "D"
 
 #: xcopy.rc:81
-#, fuzzy
-#| msgid ""
-#| "XCOPY - Copies source files or directory trees to a destination.\n"
-#| "\n"
-#| "Syntax:\n"
-#| "XCOPY source [destination] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
-#| "\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
-#| "\n"
-#| "Where:\n"
-#| "\n"
-#| "[/I]  Assume directory if destination does not exist and copying two or\n"
-#| "\tmore files.\n"
-#| "[/S]  Copy directories and subdirectories.\n"
-#| "[/E]  Copy directories and subdirectories, including any empty ones.\n"
-#| "[/Q]  Do not list names during copy, that is be quiet.\n"
-#| "[/F]  Show full source and destination names during copy.\n"
-#| "[/L]  Simulate operation, showing names which would be copied.\n"
-#| "[/W]  Prompts before beginning the copy operation.\n"
-#| "[/T]  Creates empty directory structure but does not copy files.\n"
-#| "[/Y]  Suppress prompting when overwriting files.\n"
-#| "[/-Y] Enable prompting when overwriting files.\n"
-#| "[/P]  Prompts on each source file before copying.\n"
-#| "[/N]  Copy using short names.\n"
-#| "[/U]  Copy only files which already exist in destination.\n"
-#| "[/R]  Overwrite any read only files.\n"
-#| "[/H]  Include hidden and system files in the copy.\n"
-#| "[/C]  Continue even if an error occurs during the copy.\n"
-#| "[/A]  Only copy files with archive attribute set.\n"
-#| "[/M]  Only copy files with archive attribute set, removes the\n"
-#| "\tarchive attribute.\n"
-#| "[/K]  Copy file attributes, without this attributes are not preserved.\n"
-#| "[/D | /D:m-d-y] Copy new files or those modified after the supplied "
-#| "date.\n"
-#| "\t\tIf no date is supplied, only copy if destination is older\n"
-#| "\t\tthan source.\n"
-#| "\n"
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
