@@ -872,23 +872,18 @@ static HRESULT interp_set_ident(exec_ctx_t *ctx)
     DISPPARAMS dp;
     HRESULT hres;
 
-    TRACE("%s\n", debugstr_w(arg));
+    TRACE("%s %u\n", debugstr_w(arg), arg_cnt);
 
-    if(arg_cnt) {
-        FIXME("arguments not supported\n");
-        return E_NOTIMPL;
-    }
-
-    hres = stack_assume_disp(ctx, 0, NULL);
+    hres = stack_assume_disp(ctx, arg_cnt, NULL);
     if(FAILED(hres))
         return hres;
 
-    vbstack_to_dp(ctx, 0, TRUE, &dp);
-    hres = assign_ident(ctx, ctx->instr->arg1.bstr, DISPATCH_PROPERTYPUTREF, &dp);
+    vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
+    hres = assign_ident(ctx, arg, DISPATCH_PROPERTYPUTREF, &dp);
     if(FAILED(hres))
         return hres;
 
-    stack_popn(ctx, 1);
+    stack_popn(ctx, arg_cnt + 1);
     return S_OK;
 }
 
