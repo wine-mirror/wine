@@ -64,6 +64,7 @@ static BOOL is_process_limited(void)
         trace("Could not check if the current user is an administrator\n");
         return FALSE;
     }
+    FreeSid(Group);
     if (!IsInGroup)
     {
         if (!AllocateAndInitializeSid(&NtAuthority, 2,
@@ -75,6 +76,7 @@ static BOOL is_process_limited(void)
             trace("Could not check if the current user is a power user\n");
             return FALSE;
         }
+        FreeSid(Group);
         if (!IsInGroup)
         {
             /* Only administrators and power users can be powerful */
