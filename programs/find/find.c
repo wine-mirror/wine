@@ -36,7 +36,7 @@ static BOOL read_char_from_handle(HANDLE handle, char *char_out)
     if (buffer_pos >= buffer_max)
     {
         BOOL success = ReadFile(handle, buffer, 4096, &buffer_max, NULL);
-        if (!success)
+        if (!success || !buffer_max)
             return FALSE;
         buffer_pos = 0;
     }
