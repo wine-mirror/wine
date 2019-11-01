@@ -3196,7 +3196,7 @@ static NTSTATUS fill_battery_state(SYSTEM_BATTERY_STATE *bs)
 
 #else
 
-static NTSTATUS fill_battery_state(SYSTEM_BATTERY_STATE *)
+static NTSTATUS fill_battery_state(SYSTEM_BATTERY_STATE *bs)
 {
 	FIXME("SystemBatteryState not implemented on this platform\n");
 	return STATUS_NOT_IMPLEMENTED;
