@@ -248,6 +248,8 @@ static void test_sprintf( void )
         { "%.0f", "-1", 0, TODO_FLAG | DOUBLE_ARG, 0, 0, -0.5 },
         { "%.0f", "1", 0, TODO_FLAG | DOUBLE_ARG, 0, 0, 0.5 },
         { "%.0f", "2", 0, DOUBLE_ARG, 0, 0, 1.5 },
+        { "%.30f", "0.333333333333333310000000000000", 0, TODO_FLAG | DOUBLE_ARG, 0, 0, 1.0/3.0 },
+        { "%.30lf", "1.414213562373095100000000000000", 0, TODO_FLAG | DOUBLE_ARG, 0, 0, sqrt(2) },
     };
 
     char buffer[100];
