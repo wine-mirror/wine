@@ -3055,6 +3055,7 @@ static void test_wndproc(void)
     ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
             expect_messages->message, expect_messages->window);
     expect_messages = NULL;
+    flush_events();
     SetForegroundWindow(GetDesktopWindow());
     flush_events();
 
