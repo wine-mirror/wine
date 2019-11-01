@@ -241,6 +241,12 @@ void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler
     }
 }
 
+void X11DRV_DisplayDevices_RegisterEventHandlers(void)
+{
+    if (handler.register_event_handlers)
+        handler.register_event_handlers();
+}
+
 /* Initialize a GPU instance and return its GUID string in guid_string and driver value in driver parameter */
 static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT gpu_index, WCHAR *guid_string,
                            WCHAR *driver)

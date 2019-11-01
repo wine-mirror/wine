@@ -1063,10 +1063,29 @@ static void xrandr14_free_monitors( struct x11drv_monitor *monitors )
     heap_free( monitors );
 }
 
-static BOOL xrandr14_device_change_event( HWND hwnd, XEvent *event )
+static BOOL xrandr14_device_change_handler( HWND hwnd, XEvent *event )
 {
-    X11DRV_DisplayDevices_Init( TRUE );
-    return TRUE;
+    if (hwnd == GetDesktopWindow() && GetWindowThreadProcessId( hwnd, NULL ) == GetCurrentThreadId())
+        X11DRV_DisplayDevices_Init( TRUE );
+    return FALSE;
+}
+
+static void xrandr14_register_event_handlers(void)
+{
+    Display *display = thread_init_display();
+    int event_base, error_base;
+
+    if (!pXRRQueryExtension( display, &event_base, &error_base ))
+        return;
+
+    pXRRSelectInput( display, root_window,
+                     RRCrtcChangeNotifyMask | RROutputChangeNotifyMask | RRProviderChangeNotifyMask );
+    X11DRV_register_event_handler( event_base + RRNotify_CrtcChange, xrandr14_device_change_handler,
+                                   "XRandR CrtcChange" );
+    X11DRV_register_event_handler( event_base + RRNotify_OutputChange, xrandr14_device_change_handler,
+                                   "XRandR OutputChange" );
+    X11DRV_register_event_handler( event_base + RRNotify_ProviderChange, xrandr14_device_change_handler,
+                                   "XRandR ProviderChange" );
 }
 
 #endif
@@ -1115,16 +1134,8 @@ void X11DRV_XRandR_Init(void)
         handler.free_gpus = xrandr14_free_gpus;
         handler.free_adapters = xrandr14_free_adapters;
         handler.free_monitors = xrandr14_free_monitors;
+        handler.register_event_handlers = xrandr14_register_event_handlers;
         X11DRV_DisplayDevices_SetHandler( &handler );
-
-        pXRRSelectInput( thread_init_display(), root_window,
-                         RRCrtcChangeNotifyMask | RROutputChangeNotifyMask | RRProviderChangeNotifyMask);
-        X11DRV_register_event_handler( event_base + RRNotify_CrtcChange, xrandr14_device_change_event,
-                                       "XRandR CrtcChange" );
-        X11DRV_register_event_handler( event_base + RRNotify_OutputChange, xrandr14_device_change_event,
-                                       "XRandR OutputChange" );
-        X11DRV_register_event_handler( event_base + RRNotify_ProviderChange, xrandr14_device_change_event,
-                                       "XRandR ProviderChange" );
     }
 #endif
 }

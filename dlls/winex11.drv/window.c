@@ -1833,6 +1833,7 @@ BOOL CDECL X11DRV_CreateWindow( HWND hwnd )
         XFlush( data->display );
         SetPropA( hwnd, clip_window_prop, (HANDLE)data->clip_window );
         X11DRV_InitClipboard();
+        X11DRV_DisplayDevices_RegisterEventHandlers();
     }
     return TRUE;
 }

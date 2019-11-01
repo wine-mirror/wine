@@ -743,10 +743,15 @@ struct x11drv_display_device_handler
 
     /* free_monitors will be called to free a monitor list from get_monitors */
     void (*free_monitors)(struct x11drv_monitor *monitors);
+
+    /* register_event_handlers will be called to register event handlers.
+     * This function pointer is optional and can be NULL when driver doesn't support it */
+    void (*register_event_handlers)(void);
 };
 
 extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_Init(BOOL force) DECLSPEC_HIDDEN;
+extern void X11DRV_DisplayDevices_RegisterEventHandlers(void) DECLSPEC_HIDDEN;
 
 /* XIM support */
 extern BOOL X11DRV_InitXIM( const char *input_style ) DECLSPEC_HIDDEN;
