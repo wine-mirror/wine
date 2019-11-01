@@ -18,7 +18,7 @@
 
 OPTION EXPLICIT  : : DIM W
 
-dim x, y, z
+dim x, y, z, e
 Dim obj
 
 call ok(true, "true is not true?")
@@ -1316,10 +1316,37 @@ end sub
 x = Array(1)
 changearg x(0)
 ok x(0) = 2, "x(0) = " & x(0)
+ok getVT(x) = "VT_ARRAY|VT_VARIANT*", "getVT(x) after redim = " & getVT(x)
 
 x = Array(1)
 changearg (x(0))
 ok x(0) = 1, "x(0) = " & x(0)
+
+x = Array(1)
+redim x(4)
+ok ubound(x) = 4, "ubound(x) = " & ubound(x)
+ok x(0) = empty, "x(0) = " & x(0)
+
+x = 1
+redim x(3)
+ok ubound(x) = 3, "ubound(x) = " & ubound(x)
+
+x = Array(1, 2)
+redim x(-1)
+ok lbound(x) = 0, "lbound(x) = " & lbound(x)
+ok ubound(x) = -1, "ubound(x) = " & ubound(x)
+
+redim x(3, 2)
+ok ubound(x) = 3, "ubound(x) = " & ubound(x)
+ok ubound(x, 1) = 3, "ubound(x, 1) = " & ubound(x, 1)
+ok ubound(x, 2) = 2, "ubound(x, 2) = " & ubound(x, 2) & " expected 2"
+
+dim staticarray(4)
+on error resume next
+redim staticarray(3)
+e = err.number
+on error goto 0
+todo_wine_ok e = 10, "e = " & e
 
 Class ArrClass
     Dim classarr(3)
@@ -1523,6 +1550,8 @@ sub test_dotIdentifiers
     Call ok(testObj.resume = 10, "testObj.resume = " & testObj.resume & " expected 10")
     Call ok(testObj.goto = 10, "testObj.goto = " & testObj.goto & " expected 10")
     Call ok(testObj.with = 10, "testObj.with = " & testObj.with & " expected 10")
+    Call ok(testObj.redim = 10, "testObj.redim = " & testObj.redim & " expected 10")
+    Call ok(testObj.preserve = 10, "testObj.preserve = " & testObj.preserve & " expected 10")
 end sub
 call test_dotIdentifiers
 

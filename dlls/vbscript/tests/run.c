@@ -856,6 +856,8 @@ static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD
        { L"on",       DISPID_TESTOBJ_KEYWORD },
        { L"resume",   DISPID_TESTOBJ_KEYWORD },
        { L"goto",     DISPID_TESTOBJ_KEYWORD },
+       { L"redim",    DISPID_TESTOBJ_KEYWORD },
+       { L"preserve", DISPID_TESTOBJ_KEYWORD },
        { L"with",     DISPID_TESTOBJ_KEYWORD }
     };
 
