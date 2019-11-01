@@ -904,6 +904,7 @@ static void test_strftime(void)
 {
     const struct tm epoch = { 0, 0, 0, 1, 0, 70, 4, 0, 0 };
     const struct tm tm1 = { 0, 0, 0, 1, 0, 117, 0, 0, 0 };
+    const struct tm tm2 = { 0, 0, 14, 1, 0, 121, 6, 0, 0 };
     char bufA[256];
     size_t retA;
     int i;
@@ -964,6 +965,14 @@ static void test_strftime(void)
     ok(retA == 1, "expected 1, got %d\n", (int)retA);
     ok(!strcmp(bufA, "\n"), "got %s\n", bufA);
 
+    retA = p_strftime(bufA, sizeof(bufA), "%r", &epoch);
+    todo_wine ok(retA == 11, "expected 11, got %d\n", (int)retA);
+    todo_wine ok(!strcmp(bufA, "12:00:00 AM"), "got %s\n", bufA);
+
+    retA = p_strftime(bufA, sizeof(bufA), "%r", &tm2);
+    todo_wine ok(retA == 11, "expected 11, got %d\n", (int)retA);
+    todo_wine ok(!strcmp(bufA, "02:00:00 PM"), "got %s\n", bufA);
+
     retA = p_strftime(bufA, sizeof(bufA), "%t", &epoch);
     ok(retA == 1, "expected 1, got %d\n", (int)retA);
     ok(!strcmp(bufA, "\t"), "got %s\n", bufA);
@@ -983,6 +992,18 @@ static void test_strftime(void)
     retA = p_strftime(bufA, sizeof(bufA), "%G", &tm1);
     ok(retA == 4, "expected 4, got %d\n", (int)retA);
     ok(!strcmp(bufA, "2016"), "got %s\n", bufA);
+
+    retA = p_strftime(bufA, sizeof(bufA), "%V", &epoch);
+    todo_wine ok(retA == 2, "expected 2, got %d\n", (int)retA);
+    todo_wine ok(!strcmp(bufA, "01"), "got %s\n", bufA);
+
+    retA = p_strftime(bufA, sizeof(bufA), "%V", &tm1);
+    todo_wine ok(retA == 2, "expected 2, got %d\n", (int)retA);
+    todo_wine ok(!strcmp(bufA, "52"), "got %s\n", bufA);
+
+    retA = p_strftime(bufA, sizeof(bufA), "%V", &tm2);
+    todo_wine ok(retA == 2, "expected 2, got %d\n", (int)retA);
+    todo_wine ok(!strcmp(bufA, "53"), "got %s\n", bufA);
 
     for(i=0; i<14; i++)
     {
