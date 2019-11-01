@@ -2808,6 +2808,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Alaskan Standard Time,"MUI_Dlt",,"@tzres.dll,
 HKLM,%CurrentVersionNT%\Time Zones\Alaskan Standard Time,"MUI_Std",,"@tzres.dll,-50192"
 HKLM,%CurrentVersionNT%\Time Zones\Alaskan Standard Time,"Std",,"Alaskan Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Alaskan Standard Time,"TZI",1,1c,02,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Alaskan Standard Time\Dynamic DST,"2006",1,1c,02,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Alaskan Standard Time\Dynamic DST,"2007",1,1c,02,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Alaskan Standard Time\Dynamic DST,"FirstEntry",0x10001,"2006"
+HKLM,%CurrentVersionNT%\Time Zones\Alaskan Standard Time\Dynamic DST,"LastEntry",0x10001,"2007"
 HKLM,%CurrentVersionNT%\Time Zones\Arab Standard Time,"Display",,"Asia/Riyadh"
 HKLM,%CurrentVersionNT%\Time Zones\Arab Standard Time,"Dlt",,"Arab Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Arab Standard Time,"MUI_Dlt",,"@tzres.dll,-41969"
@@ -2953,6 +2957,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time,"MUI_Dlt",,"@tzres.dll,
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time,"MUI_Std",,"@tzres.dll,-17456"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time,"Std",,"Central Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time,"TZI",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time\Dynamic DST,"2006",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time\Dynamic DST,"2007",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time\Dynamic DST,"FirstEntry",0x10001,"2006"
+HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time\Dynamic DST,"LastEntry",0x10001,"2007"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"Display",,"America/Mexico_City"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"Dlt",,"Central Daylight Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"MUI_Dlt",,"@tzres.dll,-32801"
@@ -3004,6 +3012,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"MUI_Dlt",,"@tzres.dll,
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"MUI_Std",,"@tzres.dll,-30800"
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"Std",,"Eastern Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"TZI",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time\Dynamic DST,"2006",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time\Dynamic DST,"2007",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time\Dynamic DST,"FirstEntry",0x10001,"2006"
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time\Dynamic DST,"LastEntry",0x10001,"2007"
 HKLM,%CurrentVersionNT%\Time Zones\Egypt Standard Time,"Display",,"Africa/Cairo"
 HKLM,%CurrentVersionNT%\Time Zones\Egypt Standard Time,"Dlt",,"Egypt Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Egypt Standard Time,"MUI_Dlt",,"@tzres.dll,-59425"
@@ -3299,6 +3311,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time,"MUI_Dlt",,"@tzres.dll
 HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time,"MUI_Std",,"@tzres.dll,-34352"
 HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time,"Std",,"Mountain Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time,"TZI",1,a4,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time\Dynamic DST,"2006",1,a4,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time\Dynamic DST,"2007",1,a4,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time\Dynamic DST,"FirstEntry",0x10001,"2006"
+HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time\Dynamic DST,"LastEntry",0x10001,"2007"
 HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time (Mexico),"Display",,"America/Chihuahua"
 HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time (Mexico),"Dlt",,"Mountain Daylight Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time (Mexico),"MUI_Dlt",,"@tzres.dll,-7249"
@@ -3368,6 +3384,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"MUI_Dlt",,"@tzres.dll,
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"MUI_Std",,"@tzres.dll,-11232"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"Std",,"Pacific Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time\Dynamic DST,"2006",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time\Dynamic DST,"2007",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time\Dynamic DST,"FirstEntry",0x10001,"2006"
+HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time\Dynamic DST,"LastEntry",0x10001,"2007"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Display",,"America/Tijuana"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Dlt",,"Pacific Daylight Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"MUI_Dlt",,"@tzres.dll,-15585"
