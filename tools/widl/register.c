@@ -321,8 +321,7 @@ void output_typelib_regscript( const typelib_t *typelib )
     if (expr)
     {
         sprintf(id_part, "\\%d", expr->cval);
-        resname = xmalloc( strlen(typelib_name) + 20 );
-        sprintf(resname, "%s\\%d", typelib_name, expr->cval);
+        resname = strmake("%s\\%d", typelib_name, expr->cval);
     }
     put_str( indent, "'%x' { %s = s '%%MODULE%%%s' }\n",
              lcid_expr ? lcid_expr->cval : 0, pointer_size == 8 ? "win64" : "win32", id_part );

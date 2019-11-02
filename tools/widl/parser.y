@@ -2038,11 +2038,8 @@ var_t *find_const(const char *name, int f)
 
 char *gen_name(void)
 {
-  static const char format[] = "__WIDL_%s_generated_name_%08lX";
   static unsigned long n = 0;
   static const char *file_id;
-  static size_t size;
-  char *name;
 
   if (! file_id)
   {
@@ -2052,13 +2049,8 @@ char *gen_name(void)
     for (; *dst; ++dst)
       if (! isalnum((unsigned char) *dst))
         *dst = '_';
-
-    size = sizeof format - 7 + strlen(file_id) + 8;
   }
-
-  name = xmalloc(size);
-  sprintf(name, format, file_id, n++);
-  return name;
+  return strmake("__WIDL_%s_generated_name_%08lX", file_id, n++);
 }
 
 struct allowed_attr
@@ -2727,14 +2719,6 @@ static void check_functions(const type_t *iface, int is_inside_library)
     }
 }
 
-static char *concat_str(const char *prefix, const char *str)
-{
-    char *ret = xmalloc(strlen(prefix) + strlen(str) + 1);
-    strcpy(ret, prefix);
-    strcat(ret, str);
-    return ret;
-}
-
 static int async_iface_attrs(attr_list_t *attrs, const attr_t *attr)
 {
     switch(attr->type)
@@ -2774,7 +2758,7 @@ static void check_async_uuid(type_t *iface)
     if (!inherit)
         error_loc("async_uuid applied to an interface with incompatible parent\n");
 
-    async_iface = get_type(TYPE_INTERFACE, concat_str("Async", iface->name), iface->namespace, 0);
+    async_iface = get_type(TYPE_INTERFACE, strmake("Async%s", iface->name), iface->namespace, 0);
     async_iface->attrs = map_attrs(iface->attrs, async_iface_attrs);
 
     STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
@@ -2791,13 +2775,13 @@ static void check_async_uuid(type_t *iface)
                 finish_args = append_var(finish_args, copy_var(arg, strdup(arg->name), arg_out_attrs));
         }
 
-        begin_func = copy_var(func, concat_str("Begin_", func->name), NULL);
+        begin_func = copy_var(func, strmake("Begin_%s", func->name), NULL);
         begin_func->declspec.type = type_new_function(begin_args);
         begin_func->declspec.type->attrs = func->attrs;
         begin_func->declspec.type->details.function->retval = func->declspec.type->details.function->retval;
         stmts = append_statement(stmts, make_statement_declaration(begin_func));
 
-        finish_func = copy_var(func, concat_str("Finish_", func->name), NULL);
+        finish_func = copy_var(func, strmake("Finish_%s", func->name), NULL);
         finish_func->declspec.type = type_new_function(finish_args);
         finish_func->declspec.type->attrs = func->attrs;
         finish_func->declspec.type->details.function->retval = func->declspec.type->details.function->retval;
