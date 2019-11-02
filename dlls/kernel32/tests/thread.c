@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <float.h>
 
 /* the tests intentionally pass invalid pointers and need an exception handler */
 #define WINE_NO_INLINE_STRING
@@ -1674,40 +1675,42 @@ static void test_ThreadErrorMode(void)
     pSetThreadErrorMode(oldmode, NULL);
 }
 
-#if (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))) || (defined(_MSC_VER) && defined(__i386__))
-static inline void set_fpu_cw(WORD cw)
-{
-#ifdef _MSC_VER
-    __asm { fnclex }
-    __asm { fldcw [cw] }
-#else
-    __asm__ volatile ("fnclex; fldcw %0" : : "m" (cw));
-#endif
-}
-
-static inline WORD get_fpu_cw(void)
-{
-    WORD cw = 0;
-#ifdef _MSC_VER
-    __asm { fnstcw [cw] }
-#else
-    __asm__ volatile ("fnstcw %0" : "=m" (cw));
-#endif
-    return cw;
-}
-
 struct fpu_thread_ctx
 {
-    WORD cw;
+    unsigned int cw;
+    unsigned long fpu_cw;
     HANDLE finished;
 };
+
+static inline unsigned long get_fpu_cw(void)
+{
+#if defined(__i386__) || defined(__x86_64__)
+    WORD cw = 0;
+    unsigned int sse = 0;
+#ifdef _MSC_VER
+    __asm { fnstcw [cw] }
+    __asm { stmxcsr [sse] }
+#else
+    __asm__ volatile ("fnstcw %0" : "=m" (cw));
+    __asm__ volatile ("stmxcsr %0" : "=m" (sse));
+#endif
+    return MAKELONG( cw, sse );
+#elif defined(__aarch64__)
+    unsigned long cw;
+    __asm__ __volatile__( "mrs %0, fpcr" : "=r" (cw) );
+    return cw;
+#else
+    return 0;
+#endif
+}
 
 static DWORD WINAPI fpu_thread(void *param)
 {
     struct fpu_thread_ctx *ctx = param;
     BOOL ret;
 
-    ctx->cw = get_fpu_cw();
+    ctx->cw = _control87( 0, 0 );
+    ctx->fpu_cw = get_fpu_cw();
 
     ret = SetEvent(ctx->finished);
     ok(ret, "SetEvent failed, last error %#x.\n", GetLastError());
@@ -1715,7 +1718,7 @@ static DWORD WINAPI fpu_thread(void *param)
     return 0;
 }
 
-static WORD get_thread_fpu_cw(void)
+static unsigned int get_thread_fpu_cw( unsigned long *fpu_cw )
 {
     struct fpu_thread_ctx ctx;
     DWORD tid, res;
@@ -1734,34 +1737,72 @@ static WORD get_thread_fpu_cw(void)
     ok(!!res, "Failed to close event handle, last error %#x.\n", GetLastError());
 
     CloseHandle(thread);
+    *fpu_cw = ctx.fpu_cw;
     return ctx.cw;
 }
 
 static void test_thread_fpu_cw(void)
 {
-    WORD initial_cw, cw;
-
-    initial_cw = get_fpu_cw();
-    ok(initial_cw == 0x27f, "Expected FPU control word 0x27f, got %#x.\n", initial_cw);
-
-    cw = get_thread_fpu_cw();
-    ok(cw == 0x27f, "Expected FPU control word 0x27f, got %#x.\n", cw);
-
-    set_fpu_cw(0xf60);
-    cw = get_fpu_cw();
-    ok(cw == 0xf60, "Expected FPU control word 0xf60, got %#x.\n", cw);
-
-    cw = get_thread_fpu_cw();
-    ok(cw == 0x27f, "Expected FPU control word 0x27f, got %#x.\n", cw);
-
-    cw = get_fpu_cw();
-    ok(cw == 0xf60, "Expected FPU control word 0xf60, got %#x.\n", cw);
-
-    set_fpu_cw(initial_cw);
-    cw = get_fpu_cw();
-    ok(cw == initial_cw, "Expected FPU control word %#x, got %#x.\n", initial_cw, cw);
-}
+    static const struct { unsigned int cw; unsigned long fpu_cw; } expected_cw[6] =
+    {
+#ifdef __i386__
+        { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f80 ) },
+        { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f80 ) },
+        { _EM_INEXACT | _RC_CHOP | _PC_24, MAKELONG( 0xc60, 0x7000 ) },
+        { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f80 ) },
+        { _EM_INEXACT | _RC_CHOP | _PC_24, MAKELONG( 0xc60, 0x7000 ) },
+        { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f80 ) }
+#elif defined(__x86_64__)
+        { _MCW_EM | _PC_64, MAKELONG( 0x27f, 0x1f80 ) },
+        { _MCW_EM | _PC_64, MAKELONG( 0x27f, 0x1f80 ) },
+        { _EM_INEXACT | _RC_CHOP | _PC_64, MAKELONG( 0x27f, 0x7000 ) },
+        { _MCW_EM | _PC_64, MAKELONG( 0x27f, 0x1f80 ) },
+        { _EM_INEXACT | _RC_CHOP | _PC_64, MAKELONG( 0x27f, 0x7000 ) },
+        { _MCW_EM | _PC_64, MAKELONG( 0x27f, 0x1f80 ) }
+#elif defined(__aarch64__)
+        { _MCW_EM | _PC_64, 0 },
+        { _MCW_EM | _PC_64, 0 },
+        { _EM_INEXACT | _RC_CHOP | _PC_64, 0xc08f00 },
+        { _MCW_EM | _PC_64, 0 },
+        { _EM_INEXACT | _RC_CHOP | _PC_64, 0xc08f00 },
+        { _MCW_EM | _PC_64, 0 }
+#else
+        { 0xdeadbeef, 0xdeadbeef }
 #endif
+    };
+    unsigned int initial_cw, cw;
+    unsigned long fpu_cw;
+
+    fpu_cw = get_fpu_cw();
+    initial_cw = _control87( 0, 0 );
+    ok(initial_cw == expected_cw[0].cw, "expected %#x got %#x\n", expected_cw[0].cw, initial_cw);
+    ok(fpu_cw == expected_cw[0].fpu_cw, "expected %#lx got %#lx\n", expected_cw[0].fpu_cw, fpu_cw);
+
+    cw = get_thread_fpu_cw( &fpu_cw );
+    ok(cw == expected_cw[1].cw, "expected %#x got %#x\n", expected_cw[1].cw, cw);
+    ok(fpu_cw == expected_cw[1].fpu_cw, "expected %#lx got %#lx\n", expected_cw[1].fpu_cw, fpu_cw);
+
+    _control87( _EM_INEXACT | _RC_CHOP | _PC_24, _MCW_EM | _MCW_RC | _MCW_PC );
+    cw = _control87( 0, 0 );
+    fpu_cw = get_fpu_cw();
+    ok(cw == expected_cw[2].cw, "expected %#x got %#x\n", expected_cw[2].cw, cw);
+    ok(fpu_cw == expected_cw[2].fpu_cw, "expected %#lx got %#lx\n", expected_cw[2].fpu_cw, fpu_cw);
+
+    cw = get_thread_fpu_cw( &fpu_cw );
+    ok(cw == expected_cw[3].cw, "expected %#x got %#x\n", expected_cw[3].cw, cw);
+    ok(fpu_cw == expected_cw[3].fpu_cw, "expected %#lx got %#lx\n", expected_cw[3].fpu_cw, fpu_cw);
+
+    cw = _control87( 0, 0 );
+    fpu_cw = get_fpu_cw();
+    ok(cw == expected_cw[4].cw, "expected %#x got %#x\n", expected_cw[4].cw, cw);
+    ok(fpu_cw == expected_cw[4].fpu_cw, "expected %#lx got %#lx\n", expected_cw[4].fpu_cw, fpu_cw);
+
+    _control87( initial_cw, _MCW_EM | _MCW_RC | _MCW_PC );
+    cw = _control87( 0, 0 );
+    fpu_cw = get_fpu_cw();
+    ok(cw == expected_cw[5].cw, "expected %#x got %#x\n", expected_cw[5].cw, cw);
+    ok(fpu_cw == expected_cw[5].fpu_cw, "expected %#lx got %#lx\n", expected_cw[5].fpu_cw, fpu_cw);
+}
 
 static const char manifest_dep[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
@@ -2180,9 +2221,7 @@ START_TEST(thread)
    test_TLS();
    test_FLS();
    test_ThreadErrorMode();
-#if (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))) || (defined(_MSC_VER) && defined(__i386__))
    test_thread_fpu_cw();
-#endif
    test_thread_actctx();
 
    test_threadpool();
