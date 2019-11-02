@@ -1087,7 +1087,7 @@ double CDECL MSVCRT__chgsign(double num)
  *
  * Not exported by native msvcrt, added in msvcr80.
  */
-#if defined(__i386__) || defined(__x86_64__)
+#ifdef __i386__
 int CDECL __control87_2( unsigned int newval, unsigned int mask,
                          unsigned int *x86_cw, unsigned int *sse2_cw )
 {
@@ -1225,12 +1225,55 @@ int CDECL __control87_2( unsigned int newval, unsigned int mask,
 unsigned int CDECL _control87(unsigned int newval, unsigned int mask)
 {
     unsigned int flags = 0;
-#if defined(__i386__) || defined(__x86_64__)
+#ifdef __i386__
     unsigned int sse2_cw;
 
     __control87_2( newval, mask, &flags, &sse2_cw );
 
     if ((flags ^ sse2_cw) & (MSVCRT__MCW_EM | MSVCRT__MCW_RC)) flags |= MSVCRT__EM_AMBIGUOUS;
+#elif defined(__x86_64__)
+    unsigned long fpword;
+
+    __asm__ __volatile__( "stmxcsr %0" : "=m" (fpword) );
+    if (fpword & 0x80)   flags |= MSVCRT__EM_INVALID;
+    if (fpword & 0x100)  flags |= MSVCRT__EM_DENORMAL;
+    if (fpword & 0x200)  flags |= MSVCRT__EM_ZERODIVIDE;
+    if (fpword & 0x400)  flags |= MSVCRT__EM_OVERFLOW;
+    if (fpword & 0x800)  flags |= MSVCRT__EM_UNDERFLOW;
+    if (fpword & 0x1000) flags |= MSVCRT__EM_INEXACT;
+    switch (fpword & 0x6000)
+    {
+    case 0x6000: flags |= MSVCRT__RC_CHOP; break;
+    case 0x4000: flags |= MSVCRT__RC_UP; break;
+    case 0x2000: flags |= MSVCRT__RC_DOWN; break;
+    }
+    switch (fpword & 0x8040)
+    {
+    case 0x0040: flags |= MSVCRT__DN_FLUSH_OPERANDS_SAVE_RESULTS; break;
+    case 0x8000: flags |= MSVCRT__DN_SAVE_OPERANDS_FLUSH_RESULTS; break;
+    case 0x8040: flags |= MSVCRT__DN_FLUSH; break;
+    }
+    flags = (flags & ~mask) | (newval & mask);
+    fpword = 0;
+    if (flags & MSVCRT__EM_INVALID)    fpword |= 0x80;
+    if (flags & MSVCRT__EM_DENORMAL)   fpword |= 0x100;
+    if (flags & MSVCRT__EM_ZERODIVIDE) fpword |= 0x200;
+    if (flags & MSVCRT__EM_OVERFLOW)   fpword |= 0x400;
+    if (flags & MSVCRT__EM_UNDERFLOW)  fpword |= 0x800;
+    if (flags & MSVCRT__EM_INEXACT)    fpword |= 0x1000;
+    switch (flags & MSVCRT__MCW_RC)
+    {
+    case MSVCRT__RC_CHOP: fpword |= 0x6000; break;
+    case MSVCRT__RC_UP:   fpword |= 0x4000; break;
+    case MSVCRT__RC_DOWN: fpword |= 0x2000; break;
+    }
+    switch (flags & MSVCRT__MCW_DN)
+    {
+    case MSVCRT__DN_FLUSH_OPERANDS_SAVE_RESULTS: fpword |= 0x0040; break;
+    case MSVCRT__DN_SAVE_OPERANDS_FLUSH_RESULTS: fpword |= 0x8000; break;
+    case MSVCRT__DN_FLUSH:                       fpword |= 0x8040; break;
+    }
+    __asm__ __volatile__( "ldmxcsr %0" :: "m" (fpword) );
 #elif defined(__aarch64__)
     unsigned long fpcr;
 
