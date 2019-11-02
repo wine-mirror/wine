@@ -159,6 +159,8 @@ static void test_sprintf( void )
             " 00000000000000000000000000000000000000000000000000000000000000000000000000000001",
             0, INT_ARG, 1 },
         { "%I", "I", 0, INT_ARG, 1 },
+        { "%Iq", "Iq", 0, INT_ARG, 1 },
+        { "%Ihd", "Ihd", 0, INT_ARG, 1 },
         { "%I0d", "I0d", 0, INT_ARG, 1 },
         { "%I64D", "D", 0, ULONGLONG_ARG, 0, -1 },
         { "%zx", "1", "zx", TODO_FLAG | INT_ARG, 1 },
@@ -256,6 +258,7 @@ static void test_sprintf( void )
     int i, x, r;
 
     for (i=0; i<ARRAY_SIZE(tests); i++) {
+        memset(buffer, 'x', sizeof(buffer));
         switch(tests[i].type & 0xff) {
         case NO_ARG:
             r = p_sprintf(buffer, tests[i].format);

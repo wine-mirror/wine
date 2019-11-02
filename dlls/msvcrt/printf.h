@@ -509,10 +509,10 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                     p += 3;
                 } else if(*(p+1)=='3' && *(p+2)=='2')
                     p += 3;
-                else if(isdigit(*(p+1)) || !*(p+1))
-                    break;
-                else
+                else if(p[1] && strchr("diouxX", p[1]))
                     flags.IntegerNative = *p++;
+                else
+                    break;
             } else if(*p == 'w')
                 flags.WideString = *p++;
 #if _MSVCR_VER >= 140
