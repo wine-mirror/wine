@@ -65,7 +65,7 @@ static void test_encode(void)
     ok(res == sizeof(info), "res = %ld\n", res);
     ok(info.dwSize == sizeof(info), "dwSize = %d\n", info.dwSize);
     ok(info.fccHandler == FCC('M','R','L','E'), "fccHandler = %x\n", info.fccHandler);
-    todo_wine ok(info.dwFlags == (VIDCF_QUALITY|VIDCF_CRUNCH|VIDCF_TEMPORAL), "dwFlags = %x\n", info.dwFlags);
+    ok(info.dwFlags == (VIDCF_QUALITY|VIDCF_CRUNCH|VIDCF_TEMPORAL), "dwFlags = %x\n", info.dwFlags);
     ok(info.dwVersionICM == ICVERSION, "dwVersionICM = %d\n", info.dwVersionICM);
 
     quality = 0xdeadbeef;
