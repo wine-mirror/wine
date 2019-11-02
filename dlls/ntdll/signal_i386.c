@@ -2716,6 +2716,7 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
     context->Eip    = (DWORD)relay;
     context->FloatSave.ControlWord = 0x27f;
     ((XMM_SAVE_AREA32 *)context->ExtendedRegisters)->ControlWord = 0x27f;
+    ((XMM_SAVE_AREA32 *)context->ExtendedRegisters)->MxCsr = 0x1f80;
 }
 
 
@@ -2741,7 +2742,7 @@ PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
         ctx = (CONTEXT *)((char *)NtCurrentTeb()->Tib.StackBase - 16) - 1;
         init_thread_context( ctx, entry, arg, relay );
     }
-    ctx->ContextFlags = CONTEXT_FULL;
+    ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
     LdrInitializeThunk( ctx, (void **)&ctx->Eax, 0, 0 );
     return ctx;
 }
