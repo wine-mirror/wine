@@ -655,6 +655,8 @@ static HRESULT ShellView_FillList(IShellViewImpl *This)
     {
         if (IncludeObject(This, pidl) == S_OK)
             shellview_add_item(This, pidl);
+        else
+            ILFree(pidl);
     }
 
     SendMessageW(This->hWndList, LVM_SORTITEMS, (WPARAM)This->pSFParent, (LPARAM)ShellView_CompareItems);
