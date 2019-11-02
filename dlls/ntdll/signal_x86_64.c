@@ -4195,12 +4195,13 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
 {
     __asm__( "movw %%cs,%0" : "=m" (context->SegCs) );
     __asm__( "movw %%ss,%0" : "=m" (context->SegSs) );
-    __asm__( "fxsave %0" : "=m" (context->u.FltSave) );
     context->Rcx    = (ULONG_PTR)entry;
     context->Rdx    = (ULONG_PTR)arg;
     context->Rsp    = (ULONG_PTR)NtCurrentTeb()->Tib.StackBase - 0x28;
     context->Rip    = (ULONG_PTR)relay;
     context->EFlags = 0x200;
+    context->u.FltSave.ControlWord = 0x27f;
+    context->u.FltSave.MxCsr = context->MxCsr = 0x1f80;
 }
 
 
