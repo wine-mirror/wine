@@ -639,10 +639,11 @@ static void test_printf_legacy_three_digit_exp(void)
 static void test_printf_c99(void)
 {
     char buf[30];
+    int i;
 
     /* The msvcrt compatibility flag doesn't affect whether 'z' is interpreted
      * as size_t size for integers. */
-     for (int i = 0; i < 2; i++) {
+     for (i = 0; i < 2; i++) {
         unsigned __int64 options = (i == 0) ? 0 :
             UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY;
 
