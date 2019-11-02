@@ -74,6 +74,7 @@ static const char usage[] =
 	"   --po-dir=DIR               Directory containing po files for translations\n"
 	"   --preprocessor             Specifies the preprocessor to use, including arguments\n"
 	"   -r                         Ignored for compatibility with rc\n"
+	"   --sysroot=DIR              Prefix include paths with DIR\n"
 	"   -U, --undefine id          Undefine preprocessor identifier id\n"
 	"   --use-temp-file            Ignored for compatibility with windres\n"
 	"   -v, --verbose              Enable verbose mode\n"
@@ -172,6 +173,7 @@ enum long_options_values
     LONG_OPT_NOTMPFILE,
     LONG_OPT_PO_DIR,
     LONG_OPT_PREPROCESSOR,
+    LONG_OPT_SYSROOT,
     LONG_OPT_VERSION,
     LONG_OPT_DEBUG,
     LONG_OPT_ENDIANNESS,
@@ -197,6 +199,7 @@ static const struct option long_options[] = {
 	{ "pedantic", 0, NULL, LONG_OPT_PEDANTIC },
 	{ "po-dir", 1, NULL, LONG_OPT_PO_DIR },
 	{ "preprocessor", 1, NULL, LONG_OPT_PREPROCESSOR },
+	{ "sysroot", 1, NULL, LONG_OPT_SYSROOT },
 	{ "target", 1, NULL, 'F' },
 	{ "undefine", 1, NULL, 'U' },
 	{ "use-temp-file", 0, NULL, LONG_OPT_TMPFILE },
@@ -335,6 +338,7 @@ int main(int argc,char *argv[])
 	int cmdlen;
         int po_mode = 0;
         char *po_dir = NULL;
+        const char *sysroot = "";
         char **files = xmalloc( argc * sizeof(*files) );
 
 	signal(SIGSEGV, segvhandler);
@@ -383,6 +387,9 @@ int main(int argc,char *argv[])
 		case LONG_OPT_PREPROCESSOR:
 			if (strcmp(optarg, "cat") == 0) no_preprocess = 1;
 			else fprintf(stderr, "-P option not yet supported, ignored.\n");
+			break;
+		case LONG_OPT_SYSROOT:
+			sysroot = xstrdup( optarg );
 			break;
 		case LONG_OPT_VERSION:
 			printf(version_string);
@@ -499,8 +506,14 @@ int main(int argc,char *argv[])
 	/* If we do need to search standard includes, add them to the path */
 	if (stdinc)
 	{
-		wpp_add_include_path(INCLUDEDIR"/msvcrt");
-		wpp_add_include_path(INCLUDEDIR"/windows");
+            static const char *incl_dirs[] = { INCLUDEDIR, "/usr/include", "/usr/local/include" };
+
+            for (i = 0; i < ARRAY_SIZE(incl_dirs); i++)
+            {
+                if (i && !strcmp( incl_dirs[i], incl_dirs[0] )) continue;
+                wpp_add_include_path( strmake( "%s%s/wine/msvcrt", sysroot, incl_dirs[i] ));
+                wpp_add_include_path( strmake( "%s%s/wine/windows", sysroot, incl_dirs[i] ));
+            }
 	}
 
 	/* Kill io buffering when some kind of debuglevel is enabled */
