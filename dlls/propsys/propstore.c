@@ -473,3 +473,19 @@ HRESULT PropertyStore_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv
 
     return ret;
 }
+
+HRESULT WINAPI PSCreatePropertyStoreFromObject(IUnknown *obj, DWORD access, REFIID riid, void **ret)
+{
+    HRESULT hr;
+
+    TRACE("(%p, %d, %s, %p)\n", obj, access, debugstr_guid(riid), ret);
+
+    if (!obj || !ret)
+        return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IPropertyStore) && SUCCEEDED(hr = IUnknown_QueryInterface(obj, riid, ret)))
+        return hr;
+
+    FIXME("Unimplemented for %s.\n", debugstr_guid(riid));
+    return E_NOTIMPL;
+}

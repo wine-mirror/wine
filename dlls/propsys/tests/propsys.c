@@ -29,8 +29,8 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "objbase.h"
 #include "initguid.h"
+#include "objbase.h"
 #include "propsys.h"
 #include "propvarutil.h"
 #include "strsafe.h"
@@ -1919,6 +1919,38 @@ static void  test_propertystore(void)
     IPropertyStore_Release(propstore);
 }
 
+static void test_PSCreatePropertyStoreFromObject(void)
+{
+    IPropertyStore *propstore;
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = PSCreateMemoryPropertyStore(&IID_IPropertyStore, (void **)&propstore);
+    ok(hr == S_OK, "Failed to create property store, hr %#x.\n", hr);
+
+    hr = PSCreatePropertyStoreFromObject(NULL, STGM_READWRITE, &IID_IUnknown, (void **)&unk);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = PSCreatePropertyStoreFromObject((IUnknown *)propstore, STGM_READWRITE, &IID_IUnknown, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = PSCreatePropertyStoreFromObject((IUnknown *)propstore, STGM_READWRITE, &IID_IUnknown, (void **)&unk);
+todo_wine
+    ok(hr == S_OK, "Failed to create wrapper, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(unk != (IUnknown *)propstore, "Unexpected object returned.\n");
+        IUnknown_Release(unk);
+    }
+
+    hr = PSCreatePropertyStoreFromObject((IUnknown *)propstore, STGM_READWRITE, &IID_IPropertyStore, (void **)&unk);
+    ok(hr == S_OK, "Failed to create wrapper, hr %#x.\n", hr);
+    ok(unk == (IUnknown *)propstore, "Unexpected object returned.\n");
+    IUnknown_Release(unk);
+
+    IPropertyStore_Release(propstore);
+}
+
 START_TEST(propsys)
 {
     test_PSStringFromPropertyKey();
@@ -1941,4 +1973,5 @@ START_TEST(propsys)
     test_persistserialized();
     test_PSCreateMemoryPropertyStore();
     test_propertystore();
+    test_PSCreatePropertyStoreFromObject();
 }
