@@ -60,6 +60,8 @@ static const char usage[] =
 "   --local-stubs=file Write empty stubs for call_as/local methods to file\n"
 "   -m32, -m64         Set the target architecture (Win32 or Win64)\n"
 "   -N                 Do not preprocess input\n"
+"   --nostdinc         Do not search the standard include path\n"
+"   --ns_prefix        Prefix namespaces with ABI namespace\n"
 "   --oldnames         Use old naming conventions\n"
 "   -o, --output=NAME  Set the output file name\n"
 "   -Otype             Type of stubs to generate (-Os, -Oi, -Oif)\n"
@@ -69,8 +71,7 @@ static const char usage[] =
 "   --prefix-server=p  Prefix names of server functions with 'p'\n"
 "   -r                 Generate registration script\n"
 "   -robust            Ignored, present for midl compatibility\n"
-"   --winrt            Enable Windows Runtime mode\n"
-"   --ns_prefix        Prefix namespaces with ABI namespace\n"
+"   --sysroot=DIR      Prefix include paths with DIR\n"
 "   -s                 Generate server stub\n"
 "   -t                 Generate typelib\n"
 "   -u                 Generate interface identifiers file\n"
@@ -79,6 +80,7 @@ static const char usage[] =
 "   --win32, --win64   Set the target architecture (Win32 or Win64)\n"
 "   --win32-align n    Set win32 structure alignment to 'n'\n"
 "   --win64-align n    Set win64 structure alignment to 'n'\n"
+"   --winrt            Enable Windows Runtime mode\n"
 "Debug level 'n' is a bitmask with following meaning:\n"
 "    * 0x01 Tell which resource is parsed (verbose mode)\n"
 "    * 0x02 Dump internal structures\n"
@@ -125,6 +127,7 @@ int win32_packing = 8;
 int win64_packing = 8;
 int winrt_mode = 0;
 int use_abi_namespace = 0;
+static int stdinc = 1;
 static enum stub_mode stub_mode = MODE_Os;
 
 char *input_name;
@@ -163,6 +166,7 @@ enum {
     DLLDATA_OPTION,
     DLLDATA_ONLY_OPTION,
     LOCAL_STUBS_OPTION,
+    NOSTDINC_OPTION,
     PREFIX_ALL_OPTION,
     PREFIX_CLIENT_OPTION,
     PREFIX_SERVER_OPTION,
@@ -170,6 +174,7 @@ enum {
     RT_NS_PREFIX,
     RT_OPTION,
     ROBUST_OPTION,
+    SYSROOT_OPTION,
     WIN32_OPTION,
     WIN64_OPTION,
     WIN32_ALIGN_OPTION,
@@ -185,6 +190,7 @@ static const struct option long_options[] = {
     { "dlldata-only", 0, NULL, DLLDATA_ONLY_OPTION },
     { "help", 0, NULL, PRINT_HELP },
     { "local-stubs", 1, NULL, LOCAL_STUBS_OPTION },
+    { "nostdinc", 0, NULL, NOSTDINC_OPTION },
     { "ns_prefix", 0, NULL, RT_NS_PREFIX },
     { "oldnames", 0, NULL, OLDNAMES_OPTION },
     { "output", 0, NULL, 'o' },
@@ -192,6 +198,7 @@ static const struct option long_options[] = {
     { "prefix-client", 1, NULL, PREFIX_CLIENT_OPTION },
     { "prefix-server", 1, NULL, PREFIX_SERVER_OPTION },
     { "robust", 0, NULL, ROBUST_OPTION },
+    { "sysroot", 1, NULL, SYSROOT_OPTION },
     { "target", 0, NULL, 'b' },
     { "winrt", 0, NULL, RT_OPTION },
     { "win32", 0, NULL, WIN32_OPTION },
@@ -567,10 +574,11 @@ void write_id_data(const statement_list_t *stmts)
 
 int main(int argc,char *argv[])
 {
-  int optc;
+  int i, optc;
   int ret = 0;
   int opti = 0;
   char *output_name = NULL;
+  const char *sysroot = "";
 
   signal( SIGTERM, exit_on_signal );
   signal( SIGINT, exit_on_signal );
@@ -593,6 +601,9 @@ int main(int argc,char *argv[])
       do_everything = 0;
       local_stubs_name = xstrdup(optarg);
       break;
+    case NOSTDINC_OPTION:
+      stdinc = 0;
+      break;
     case OLDNAMES_OPTION:
       old_names = 1;
       break;
@@ -614,6 +625,9 @@ int main(int argc,char *argv[])
       break;
     case RT_NS_PREFIX:
       use_abi_namespace = 1;
+      break;
+    case SYSROOT_OPTION:
+      sysroot = xstrdup(optarg);
       break;
     case WIN32_OPTION:
       pointer_size = 4;
@@ -733,9 +747,17 @@ int main(int argc,char *argv[])
     }
   }
 
-#ifdef DEFAULT_INCLUDE_DIR
-  wpp_add_include_path(DEFAULT_INCLUDE_DIR);
-#endif
+  if (stdinc)
+  {
+      static const char *incl_dirs[] = { INCLUDEDIR, "/usr/include", "/usr/local/include" };
+
+      for (i = 0; i < ARRAY_SIZE(incl_dirs); i++)
+      {
+          if (i && !strcmp( incl_dirs[i], incl_dirs[0] )) continue;
+          wpp_add_include_path( strmake( "%s%s/wine/msvcrt", sysroot, incl_dirs[i] ));
+          wpp_add_include_path( strmake( "%s%s/wine/windows", sysroot, incl_dirs[i] ));
+      }
+  }
 
   switch (target_cpu)
   {
