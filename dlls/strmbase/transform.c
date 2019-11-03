@@ -28,7 +28,6 @@ static const WCHAR wcsOutputPinName[] = {'O','u','t',0};
 
 static const IPinVtbl TransformFilter_InputPin_Vtbl;
 static const IPinVtbl TransformFilter_OutputPin_Vtbl;
-static const IQualityControlVtbl TransformFilter_QualityControl_Vtbl;
 
 static inline TransformFilter *impl_from_IBaseFilter( IBaseFilter *iface )
 {
@@ -149,7 +148,6 @@ static void transform_destroy(struct strmbase_filter *iface)
     filter->csReceive.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&filter->csReceive);
     FreeMediaType(&filter->pmt);
-    QualityControlImpl_Destroy(filter->qcimpl);
     IUnknown_Release(filter->seekthru_unk);
     strmbase_filter_cleanup(&filter->filter);
     CoTaskMemFree(filter);
@@ -225,7 +223,7 @@ static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, vo
     TransformFilter *filter = impl_from_source_IPin(&iface->IPin_iface);
 
     if (IsEqualGUID(iid, &IID_IQualityControl))
-        *out = &filter->qcimpl->IQualityControl_iface;
+        *out = &filter->source_IQualityControl_iface;
     else if (IsEqualGUID(iid, &IID_IMediaSeeking))
         return IUnknown_QueryInterface(filter->seekthru_unk, iid, out);
     else
@@ -265,6 +263,80 @@ static const IBaseFilterVtbl transform_vtbl =
     BaseFilterImpl_QueryVendorInfo
 };
 
+static TransformFilter *impl_from_source_IQualityControl(IQualityControl *iface)
+{
+    return CONTAINING_RECORD(iface, TransformFilter, source_IQualityControl_iface);
+}
+
+static HRESULT WINAPI transform_source_qc_QueryInterface(IQualityControl *iface,
+        REFIID iid, void **out)
+{
+    TransformFilter *filter = impl_from_source_IQualityControl(iface);
+    return IPin_QueryInterface(&filter->source.pin.IPin_iface, iid, out);
+}
+
+static ULONG WINAPI transform_source_qc_AddRef(IQualityControl *iface)
+{
+    TransformFilter *filter = impl_from_source_IQualityControl(iface);
+    return IPin_AddRef(&filter->source.pin.IPin_iface);
+}
+
+static ULONG WINAPI transform_source_qc_Release(IQualityControl *iface)
+{
+    TransformFilter *filter = impl_from_source_IQualityControl(iface);
+    return IPin_Release(&filter->source.pin.IPin_iface);
+}
+
+HRESULT WINAPI TransformFilterImpl_Notify(TransformFilter *filter, IBaseFilter *sender, Quality q)
+{
+    IQualityControl *peer;
+    HRESULT hr = S_FALSE;
+
+    if (filter->source_qc_sink)
+        return IQualityControl_Notify(filter->source_qc_sink, &filter->filter.IBaseFilter_iface, q);
+
+    if (filter->sink.pin.peer
+            && SUCCEEDED(IPin_QueryInterface(filter->sink.pin.peer, &IID_IQualityControl, (void **)&peer)))
+    {
+        hr = IQualityControl_Notify(peer, &filter->filter.IBaseFilter_iface, q);
+        IQualityControl_Release(peer);
+    }
+    return hr;
+}
+
+static HRESULT WINAPI transform_source_qc_Notify(IQualityControl *iface,
+        IBaseFilter *sender, Quality q)
+{
+    TransformFilter *filter = impl_from_source_IQualityControl(iface);
+
+    TRACE("filter %p, sender %p, type %#x, proportion %u, late %s, timestamp %s.\n",
+            filter, sender, q.Type, q.Proportion, debugstr_time(q.Late), debugstr_time(q.TimeStamp));
+
+    if (filter->pFuncsTable->pfnNotify)
+        return filter->pFuncsTable->pfnNotify(filter, sender, q);
+    return TransformFilterImpl_Notify(filter, sender, q);
+}
+
+static HRESULT WINAPI transform_source_qc_SetSink(IQualityControl *iface, IQualityControl *sink)
+{
+    TransformFilter *filter = impl_from_source_IQualityControl(iface);
+
+    TRACE("filter %p, sink %p.\n", filter, sink);
+
+    filter->source_qc_sink = sink;
+
+    return S_OK;
+}
+
+static const IQualityControlVtbl source_qc_vtbl =
+{
+    transform_source_qc_QueryInterface,
+    transform_source_qc_AddRef,
+    transform_source_qc_Release,
+    transform_source_qc_Notify,
+    transform_source_qc_SetSink,
+};
+
 static HRESULT strmbase_transform_init(IUnknown *outer, const CLSID *clsid,
         const TransformFilterFuncTable *func_table, TransformFilter *filter)
 {
@@ -285,9 +357,7 @@ static HRESULT strmbase_transform_init(IUnknown *outer, const CLSID *clsid,
 
     strmbase_source_init(&filter->source, &TransformFilter_OutputPin_Vtbl, &filter->filter,
             wcsOutputPinName, &source_ops);
-
-    QualityControlImpl_Create(&filter->sink.pin, &filter->qcimpl);
-    filter->qcimpl->IQualityControl_iface.lpVtbl = &TransformFilter_QualityControl_Vtbl;
+    filter->source_IQualityControl_iface.lpVtbl = &source_qc_vtbl;
 
     filter->seekthru_unk = NULL;
     hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown *)&filter->filter.IBaseFilter_iface,
@@ -333,11 +403,6 @@ HRESULT strmbase_transform_create(LONG filter_size, IUnknown *outer, const CLSID
 
     CoTaskMemFree(pTf);
     return E_FAIL;
-}
-
-HRESULT WINAPI TransformFilterImpl_Notify(TransformFilter *filter, IBaseFilter *sender, Quality qm)
-{
-    return QualityControlImpl_Notify(&filter->qcimpl->IQualityControl_iface, sender, qm);
 }
 
 static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
@@ -478,22 +543,4 @@ static const IPinVtbl TransformFilter_OutputPin_Vtbl =
     BaseOutputPinImpl_BeginFlush,
     BaseOutputPinImpl_EndFlush,
     BasePinImpl_NewSegment
-};
-
-static HRESULT WINAPI TransformFilter_QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm) {
-    QualityControlImpl *qc = (QualityControlImpl*)iface;
-    TransformFilter *This = impl_from_source_IPin(&qc->pin->IPin_iface);
-
-    if (This->pFuncsTable->pfnNotify)
-        return This->pFuncsTable->pfnNotify(This, sender, qm);
-    else
-        return TransformFilterImpl_Notify(This, sender, qm);
-}
-
-static const IQualityControlVtbl TransformFilter_QualityControl_Vtbl = {
-    QualityControlImpl_QueryInterface,
-    QualityControlImpl_AddRef,
-    QualityControlImpl_Release,
-    TransformFilter_QualityControlImpl_Notify,
-    QualityControlImpl_SetSink
 };

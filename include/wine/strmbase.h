@@ -204,14 +204,17 @@ void strmbase_filter_cleanup(struct strmbase_filter *filter);
 typedef struct TransformFilter
 {
     struct strmbase_filter filter;
+
     struct strmbase_source source;
+    IQualityControl source_IQualityControl_iface;
+    IQualityControl *source_qc_sink;
+
     BaseInputPin sink;
 
     AM_MEDIA_TYPE pmt;
     CRITICAL_SECTION csReceive;
 
     const struct TransformFilterFuncTable * pFuncsTable;
-    struct QualityControlImpl *qcimpl;
     /* IMediaSeeking and IMediaPosition are implemented by ISeekingPassThru */
     IUnknown *seekthru_unk;
 } TransformFilter;
