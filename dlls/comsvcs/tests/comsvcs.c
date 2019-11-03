@@ -358,16 +358,13 @@ todo_wine
     ok(hr == MK_E_NOSTORAGE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_Inverse(moniker, &inverse);
-todo_wine
     ok(hr == S_OK, "Failed to create inverse moniker, hr %#x.\n", hr);
-if (SUCCEEDED(hr))
-{
     moniker_type = MKSYS_NONE;
     hr = IMoniker_IsSystemMoniker(inverse, &moniker_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(moniker_type == MKSYS_ANTIMONIKER, "Unexpected moniker type %d.\n", moniker_type);
     IMoniker_Release(inverse);
-}
+
     IMoniker_Release(moniker);
     IBindCtx_Release(bindctx);
 }

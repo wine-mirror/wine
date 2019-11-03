@@ -584,9 +584,9 @@ static HRESULT WINAPI new_moniker_GetTimeOfLastChange(IMoniker *iface, IBindCtx 
 
 static HRESULT WINAPI new_moniker_Inverse(IMoniker *iface, IMoniker **inverse)
 {
-    FIXME("%p, %p.\n", iface, inverse);
+    TRACE("%p, %p.\n", iface, inverse);
 
-    return E_NOTIMPL;
+    return CreateAntiMoniker(inverse);
 }
 
 static HRESULT WINAPI new_moniker_CommonPrefixWith(IMoniker *iface, IMoniker *other, IMoniker **ret)
