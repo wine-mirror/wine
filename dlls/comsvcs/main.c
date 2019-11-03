@@ -55,6 +55,7 @@ struct new_moniker
 {
     IMoniker IMoniker_iface;
     LONG refcount;
+    CLSID clsid;
 };
 
 static HRESULT new_moniker_parse_displayname(IBindCtx *pbc, LPOLESTR name, ULONG *eaten, IMoniker **ret);
@@ -556,9 +557,13 @@ static HRESULT WINAPI new_moniker_IsEqual(IMoniker *iface, IMoniker *other_monik
 
 static HRESULT WINAPI new_moniker_Hash(IMoniker *iface, DWORD *hash)
 {
-    FIXME("%p, %p.\n", iface, hash);
+    struct new_moniker *moniker = impl_from_IMoniker(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, hash);
+
+    *hash = moniker->clsid.Data1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI new_moniker_IsRunning(IMoniker* iface, IBindCtx *pbc, IMoniker *pmkToLeft,
@@ -748,6 +753,7 @@ static HRESULT new_moniker_parse_displayname(IBindCtx *pbc, LPOLESTR name, ULONG
 
     moniker->IMoniker_iface.lpVtbl = &new_moniker_vtbl;
     moniker->refcount = 1;
+    moniker->clsid = guid;
 
     *ret = &moniker->IMoniker_iface;
 

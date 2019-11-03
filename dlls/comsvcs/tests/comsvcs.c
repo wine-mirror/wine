@@ -327,10 +327,9 @@ static void test_new_moniker(void)
     /* Hashing */
     hash = 0;
     hr = IMoniker_Hash(moniker, &hash);
-todo_wine {
     ok(hr == S_OK, "Failed to get a hash, hr %#x.\n", hr);
     ok(hash == 0x20d04fe0, "Unexpected hash value %#x.\n", hash);
-}
+
     moniker_type = MKSYS_CLASSMONIKER;
     hr = IMoniker_IsSystemMoniker(moniker, &moniker_type);
 todo_wine {
