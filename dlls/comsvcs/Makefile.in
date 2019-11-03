@@ -8,4 +8,5 @@ C_SRCS = \
 	main.c
 
 IDL_SRCS = \
+	comsvcs_classes.idl \
 	comsvcs_tlb.idl

@@ -267,6 +267,105 @@ static void create_dispenser(void)
     IDispenserManager_Release(dispenser);
 }
 
+static void test_new_moniker(void)
+{
+    IMoniker *moniker, *inverse, *class_moniker;
+    DWORD moniker_type;
+    IBindCtx *bindctx;
+    FILETIME filetime;
+    DWORD hash, eaten;
+    IUnknown *obj, *obj2;
+    CLSID clsid;
+    HRESULT hr;
+
+    hr = CreateBindCtx(0, &bindctx);
+    ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
+
+    eaten = 0;
+    hr = MkParseDisplayName(bindctx, L"new:20d04fe0-3aea-1069-a2d8-08002b30309d", &eaten, &moniker);
+    ok(hr == S_OK, "Failed to parse display name, hr %#x.\n", hr);
+    ok(eaten == 40, "Unexpected eaten length %u.\n", eaten);
+
+    hr = IMoniker_QueryInterface(moniker, &IID_IParseDisplayName, (void **)&obj);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    /* Object creation. */
+    hr = CLSIDFromProgID(L"new", &clsid);
+    ok(hr == S_OK, "Failed to get clsid, hr %#x.\n", hr);
+
+    hr = CreateClassMoniker(&clsid, &class_moniker);
+    ok(hr == S_OK, "Failed to create class moniker, hr %#x.\n", hr);
+
+    hr = IMoniker_BindToObject(class_moniker, bindctx, NULL, &IID_IParseDisplayName, (void **)&obj);
+    ok(hr == S_OK, "Failed to get parsing interface, hr %#x.\n", hr);
+    IUnknown_Release(obj);
+
+    hr = IMoniker_BindToObject(class_moniker, bindctx, NULL, &IID_IClassFactory, (void **)&obj);
+    ok(hr == S_OK, "Failed to get parsing interface, hr %#x.\n", hr);
+    IUnknown_Release(obj);
+
+    hr = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IParseDisplayName, (void **)&obj);
+    ok(hr == S_OK, "Failed to get parsing interface, hr %#x.\n", hr);
+    IUnknown_Release(obj);
+
+    hr = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void **)&obj);
+    ok(hr == S_OK, "Failed to get parsing interface, hr %#x.\n", hr);
+
+    hr = IUnknown_QueryInterface(obj, &IID_IParseDisplayName, (void **)&obj2);
+    ok(hr == S_OK, "Failed to get parsing interface, hr %#x.\n", hr);
+    IUnknown_Release(obj);
+
+    IMoniker_Release(class_moniker);
+
+    /* Hashing */
+    hash = 0;
+    hr = IMoniker_Hash(moniker, &hash);
+todo_wine {
+    ok(hr == S_OK, "Failed to get a hash, hr %#x.\n", hr);
+    ok(hash == 0x20d04fe0, "Unexpected hash value %#x.\n", hash);
+}
+    moniker_type = MKSYS_CLASSMONIKER;
+    hr = IMoniker_IsSystemMoniker(moniker, &moniker_type);
+todo_wine {
+    ok(hr == S_FALSE || broken(hr == S_OK) /* XP */, "Unexpected hr %#x.\n", hr);
+    ok(moniker_type == MKSYS_NONE, "Unexpected moniker type %d.\n", moniker_type);
+}
+    hr = IMoniker_IsRunning(moniker, NULL, NULL, NULL);
+todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
+todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
+todo_wine
+    ok(hr == MK_E_UNAVAILABLE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&obj);
+todo_wine
+    ok(hr == S_OK, "Failed to bind to object, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(obj);
+
+    hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&obj);
+todo_wine
+    ok(hr == MK_E_NOSTORAGE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_Inverse(moniker, &inverse);
+todo_wine
+    ok(hr == S_OK, "Failed to create inverse moniker, hr %#x.\n", hr);
+if (SUCCEEDED(hr))
+{
+    moniker_type = MKSYS_NONE;
+    hr = IMoniker_IsSystemMoniker(inverse, &moniker_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(moniker_type == MKSYS_ANTIMONIKER, "Unexpected moniker type %d.\n", moniker_type);
+    IMoniker_Release(inverse);
+}
+    IMoniker_Release(moniker);
+    IBindCtx_Release(bindctx);
+}
 
 START_TEST(comsvcs)
 {
@@ -278,6 +377,7 @@ START_TEST(comsvcs)
         return;
 
     create_dispenser();
+    test_new_moniker();
 
     CoUninitialize();
 }

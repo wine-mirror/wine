@@ -29,6 +29,8 @@
 #include "comsvcs.h"
 #include "wine/heap.h"
 #include "wine/debug.h"
+#include "initguid.h"
+#include "comsvcs_classes.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(comsvcs);
 
@@ -49,6 +51,12 @@ typedef struct holder
     IDispenserDriver *driver;
 } holder;
 
+struct new_moniker
+{
+    IMoniker IMoniker_iface;
+    LONG refcount;
+};
+
 static inline dispensermanager *impl_from_IDispenserManager(IDispenserManager *iface)
 {
     return CONTAINING_RECORD(iface, dispensermanager, IDispenserManager_iface);
@@ -57,6 +65,11 @@ static inline dispensermanager *impl_from_IDispenserManager(IDispenserManager *i
 static inline holder *impl_from_IHolder(IHolder *iface)
 {
     return CONTAINING_RECORD(iface, holder, IHolder_iface);
+}
+
+static struct new_moniker *impl_from_IMoniker(IMoniker *iface)
+{
+    return CONTAINING_RECORD(iface, struct new_moniker, IMoniker_iface);
 }
 
 static HRESULT WINAPI holder_QueryInterface(IHolder *iface, REFIID riid, void **object)
@@ -325,7 +338,8 @@ struct IDispenserManagerVtbl dismanager_vtbl =
     dismanager_GetContext
 };
 
-static HRESULT WINAPI comsvcscf_CreateInstance(IClassFactory *cf,IUnknown* outer, REFIID riid,void **object)
+static HRESULT WINAPI dispenser_manager_cf_CreateInstance(IClassFactory *iface, IUnknown* outer, REFIID riid,
+        void **object)
 {
     dispensermanager *dismanager;
     HRESULT ret;
@@ -401,25 +415,357 @@ static HRESULT WINAPI comsvcscf_LockServer(IClassFactory *iface, BOOL fLock)
     return S_OK;
 }
 
-static const struct IClassFactoryVtbl comsvcscf_vtbl =
+static const IClassFactoryVtbl comsvcscf_vtbl =
 {
     comsvcscf_QueryInterface,
     comsvcscf_AddRef,
     comsvcscf_Release,
-    comsvcscf_CreateInstance,
+    dispenser_manager_cf_CreateInstance,
+    comsvcscf_LockServer
+};
+
+static HRESULT WINAPI new_moniker_QueryInterface(IMoniker* iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    if (IsEqualIID(&IID_IUnknown, riid) ||
+        IsEqualIID(&IID_IPersist, riid) ||
+        IsEqualIID(&IID_IPersistStream, riid) ||
+        IsEqualIID(&IID_IMoniker, riid))
+    {
+        *obj = iface;
+    }
+
+    if (*obj)
+    {
+        IUnknown_AddRef((IUnknown *)*obj);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI new_moniker_AddRef(IMoniker* iface)
+{
+    struct new_moniker *moniker = impl_from_IMoniker(iface);
+    ULONG refcount = InterlockedIncrement(&moniker->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI new_moniker_Release(IMoniker* iface)
+{
+    struct new_moniker *moniker = impl_from_IMoniker(iface);
+    ULONG refcount = InterlockedDecrement(&moniker->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+        heap_free(moniker);
+
+    return refcount;
+}
+
+static HRESULT WINAPI new_moniker_GetClassID(IMoniker *iface, CLSID *clsid)
+{
+    FIXME("%p, %p.\n", iface, clsid);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_IsDirty(IMoniker* iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_Load(IMoniker *iface, IStream *stream)
+{
+    FIXME("%p, %p.\n", iface, stream);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_Save(IMoniker *iface, IStream *stream, BOOL clear_dirty)
+{
+    FIXME("%p, %p, %d.\n", iface, stream, clear_dirty);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_GetSizeMax(IMoniker *iface, ULARGE_INTEGER *size)
+{
+    FIXME("%p, %p.\n", iface, size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_BindToObject(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
+        REFIID riid, void **ret)
+{
+    FIXME("%p, %p, %p, %s, %p.\n", iface, pbc, pmkToLeft, debugstr_guid(riid), ret);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft, REFIID riid,
+        void **ret)
+{
+    FIXME("%p, %p, %p, %s, %p.\n", iface, pbc, pmkToLeft, debugstr_guid(riid), ret);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_Reduce(IMoniker *iface, IBindCtx *pbc, DWORD flags, IMoniker **ppmkToLeft,
+        IMoniker **ret)
+{
+    FIXME("%p, %p, %d, %p, %p.\n", iface, pbc, flags, ppmkToLeft, ret);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_ComposeWith(IMoniker *iface, IMoniker *mkRight, BOOL fOnlyIfNotGeneric,
+        IMoniker **ret)
+{
+    FIXME("%p, %p, %d, %p.\n", iface, mkRight, fOnlyIfNotGeneric, ret);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_Enum(IMoniker *iface, BOOL forward, IEnumMoniker **enum_moniker)
+{
+    FIXME("%p, %d, %p.\n", iface, forward, enum_moniker);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_IsEqual(IMoniker *iface, IMoniker *other_moniker)
+{
+    FIXME("%p, %p.\n", iface, other_moniker);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_Hash(IMoniker *iface, DWORD *hash)
+{
+    FIXME("%p, %p.\n", iface, hash);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_IsRunning(IMoniker* iface, IBindCtx *pbc, IMoniker *pmkToLeft,
+        IMoniker *pmkNewlyRunning)
+{
+    FIXME("%p, %p, %p, %p.\n", iface, pbc, pmkToLeft, pmkNewlyRunning);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_GetTimeOfLastChange(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
+        FILETIME *itemtime)
+{
+    FIXME("%p, %p, %p, %p.\n", iface, pbc, pmkToLeft, itemtime);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_Inverse(IMoniker *iface, IMoniker **inverse)
+{
+    FIXME("%p, %p.\n", iface, inverse);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_CommonPrefixWith(IMoniker *iface, IMoniker *other, IMoniker **ret)
+{
+    FIXME("%p, %p, %p.\n", iface, other, ret);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_RelativePathTo(IMoniker *iface, IMoniker *other, IMoniker **ret)
+{
+    FIXME("%p, %p, %p.\n", iface, other, ret);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_GetDisplayName(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
+        LPOLESTR *name)
+{
+    FIXME("%p, %p, %p, %p.\n", iface, pbc, pmkToLeft, name);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_ParseDisplayName(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
+        LPOLESTR name, ULONG *eaten, IMoniker **ret)
+{
+    FIXME("%p, %p, %p, %s, %p, %p.\n", iface, pbc, pmkToLeft, debugstr_w(name), eaten, ret);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI new_moniker_IsSystemMoniker(IMoniker *iface, DWORD *moniker_type)
+{
+    FIXME("%p, %p.\n", iface, moniker_type);
+
+    return E_NOTIMPL;
+}
+
+static const IMonikerVtbl new_moniker_vtbl =
+{
+    new_moniker_QueryInterface,
+    new_moniker_AddRef,
+    new_moniker_Release,
+    new_moniker_GetClassID,
+    new_moniker_IsDirty,
+    new_moniker_Load,
+    new_moniker_Save,
+    new_moniker_GetSizeMax,
+    new_moniker_BindToObject,
+    new_moniker_BindToStorage,
+    new_moniker_Reduce,
+    new_moniker_ComposeWith,
+    new_moniker_Enum,
+    new_moniker_IsEqual,
+    new_moniker_Hash,
+    new_moniker_IsRunning,
+    new_moniker_GetTimeOfLastChange,
+    new_moniker_Inverse,
+    new_moniker_CommonPrefixWith,
+    new_moniker_RelativePathTo,
+    new_moniker_GetDisplayName,
+    new_moniker_ParseDisplayName,
+    new_moniker_IsSystemMoniker
+};
+
+static HRESULT WINAPI new_moniker_parse_QueryInterface(IParseDisplayName *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IParseDisplayName) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IParseDisplayName_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI new_moniker_parse_AddRef(IParseDisplayName *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI new_moniker_parse_Release(IParseDisplayName *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI new_moniker_parse_ParseDisplayName(IParseDisplayName *iface, IBindCtx *pbc, LPOLESTR name,
+        ULONG *eaten, IMoniker **ret)
+{
+    struct new_moniker *moniker;
+
+    FIXME("%p, %p, %s, %p, %p.\n", iface, pbc, debugstr_w(name), eaten, ret);
+
+    moniker = heap_alloc_zero(sizeof(*moniker));
+    if (!moniker)
+        return E_OUTOFMEMORY;
+
+    moniker->IMoniker_iface.lpVtbl = &new_moniker_vtbl;
+    moniker->refcount = 1;
+
+    *ret = &moniker->IMoniker_iface;
+
+    *eaten = lstrlenW(name);
+
+    return S_OK;
+}
+
+static const IParseDisplayNameVtbl new_moniker_parse_vtbl =
+{
+    new_moniker_parse_QueryInterface,
+    new_moniker_parse_AddRef,
+    new_moniker_parse_Release,
+    new_moniker_parse_ParseDisplayName,
+};
+
+static IParseDisplayName new_moniker_parse = { &new_moniker_parse_vtbl };
+
+static HRESULT WINAPI new_moniker_cf_QueryInterface(IClassFactory *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    if (IsEqualGUID(&IID_IUnknown, riid) ||
+            IsEqualGUID(&IID_IClassFactory, riid))
+    {
+        *obj = iface;
+    }
+    else if (IsEqualIID(&IID_IParseDisplayName, riid))
+    {
+        *obj = &new_moniker_parse;
+    }
+
+    if (*obj)
+    {
+        IUnknown_AddRef((IUnknown *)*obj);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI new_moniker_cf_CreateInstance(IClassFactory *iface, IUnknown* outer, REFIID riid, void **object)
+{
+    TRACE("%p, %p, %s, %p.\n", iface, outer, debugstr_guid(riid), object);
+
+    if (outer)
+        FIXME("Aggregation is not supported.\n");
+
+    return IParseDisplayName_QueryInterface(&new_moniker_parse, riid, object);
+}
+
+static const IClassFactoryVtbl newmoniker_cf_vtbl =
+{
+    new_moniker_cf_QueryInterface,
+    comsvcscf_AddRef,
+    comsvcscf_Release,
+    new_moniker_cf_CreateInstance,
     comsvcscf_LockServer
 };
 
 static IClassFactory DispenserManageFactory = { &comsvcscf_vtbl };
+static IClassFactory NewMonikerFactory = { &newmoniker_cf_vtbl };
 
 /******************************************************************
  * DllGetClassObject
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
-    if(IsEqualGUID(&CLSID_DispenserManager, rclsid)) {
+    if(IsEqualGUID(&CLSID_DispenserManager, rclsid))
+    {
         TRACE("(CLSID_DispenserManager %s %p)\n", debugstr_guid(riid), ppv);
         return IClassFactory_QueryInterface(&DispenserManageFactory, riid, ppv);
+    }
+    else if (IsEqualGUID(&CLSID_NewMoniker, rclsid))
+    {
+        TRACE("(CLSID_NewMoniker %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&NewMonikerFactory, riid, ppv);
     }
 
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
