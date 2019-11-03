@@ -268,7 +268,7 @@ static void create_dispenser(void)
 }
 
 
-START_TEST(dispenser)
+START_TEST(comsvcs)
 {
     HRESULT hr;
 
