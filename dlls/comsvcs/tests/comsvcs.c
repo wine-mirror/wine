@@ -332,10 +332,9 @@ static void test_new_moniker(void)
 
     moniker_type = MKSYS_CLASSMONIKER;
     hr = IMoniker_IsSystemMoniker(moniker, &moniker_type);
-todo_wine {
     ok(hr == S_FALSE || broken(hr == S_OK) /* XP */, "Unexpected hr %#x.\n", hr);
     ok(moniker_type == MKSYS_NONE, "Unexpected moniker type %d.\n", moniker_type);
-}
+
     hr = IMoniker_IsRunning(moniker, NULL, NULL, NULL);
 todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);

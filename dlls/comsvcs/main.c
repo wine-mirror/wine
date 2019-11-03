@@ -621,9 +621,11 @@ static HRESULT WINAPI new_moniker_ParseDisplayName(IMoniker *iface, IBindCtx *pb
 
 static HRESULT WINAPI new_moniker_IsSystemMoniker(IMoniker *iface, DWORD *moniker_type)
 {
-    FIXME("%p, %p.\n", iface, moniker_type);
+    TRACE("%p, %p.\n", iface, moniker_type);
 
-    return E_NOTIMPL;
+    *moniker_type = MKSYS_NONE;
+
+    return S_FALSE;
 }
 
 static const IMonikerVtbl new_moniker_vtbl =
