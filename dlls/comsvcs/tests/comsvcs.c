@@ -269,7 +269,7 @@ static void create_dispenser(void)
 
 static void test_new_moniker(void)
 {
-    IMoniker *moniker, *inverse, *class_moniker;
+    IMoniker *moniker, *moniker2, *inverse, *class_moniker;
     DWORD moniker_type;
     IBindCtx *bindctx;
     FILETIME filetime;
@@ -285,6 +285,13 @@ static void test_new_moniker(void)
     hr = MkParseDisplayName(bindctx, L"new:20d04fe0-3aea-1069-a2d8-08002b30309d", &eaten, &moniker);
     ok(hr == S_OK, "Failed to parse display name, hr %#x.\n", hr);
     ok(eaten == 40, "Unexpected eaten length %u.\n", eaten);
+
+    eaten = 0;
+    hr = IMoniker_ParseDisplayName(moniker, bindctx, NULL, (WCHAR *)L"new:20d04fe0-3aea-1069-a2d8-08002b30309d",
+            &eaten, &moniker2);
+    ok(hr == S_OK, "Failed to parse display name, hr %#x.\n", hr);
+    ok(eaten == 40, "Unexpected eaten length %u.\n", eaten);
+    IMoniker_Release(moniker2);
 
     hr = IMoniker_QueryInterface(moniker, &IID_IParseDisplayName, (void **)&obj);
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);

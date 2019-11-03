@@ -57,6 +57,8 @@ struct new_moniker
     LONG refcount;
 };
 
+static HRESULT new_moniker_parse_displayname(IBindCtx *pbc, LPOLESTR name, ULONG *eaten, IMoniker **ret);
+
 static inline dispensermanager *impl_from_IDispenserManager(IDispenserManager *iface)
 {
     return CONTAINING_RECORD(iface, dispensermanager, IDispenserManager_iface);
@@ -607,9 +609,9 @@ static HRESULT WINAPI new_moniker_GetDisplayName(IMoniker *iface, IBindCtx *pbc,
 static HRESULT WINAPI new_moniker_ParseDisplayName(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
         LPOLESTR name, ULONG *eaten, IMoniker **ret)
 {
-    FIXME("%p, %p, %p, %s, %p, %p.\n", iface, pbc, pmkToLeft, debugstr_w(name), eaten, ret);
+    TRACE("%p, %p, %p, %s, %p, %p.\n", iface, pbc, pmkToLeft, debugstr_w(name), eaten, ret);
 
-    return E_NOTIMPL;
+    return new_moniker_parse_displayname(pbc, name, eaten, ret);
 }
 
 static HRESULT WINAPI new_moniker_IsSystemMoniker(IMoniker *iface, DWORD *moniker_type)
@@ -646,6 +648,115 @@ static const IMonikerVtbl new_moniker_vtbl =
     new_moniker_IsSystemMoniker
 };
 
+static const BYTE guid_conv_table[256] =
+{
+    0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x00 */
+    0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x10 */
+    0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x20 */
+    0,   1,   2,   3,   4,   5,   6, 7, 8, 9, 0, 0, 0, 0, 0, 0, /* 0x30 */
+    0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x40 */
+    0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x50 */
+    0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf                             /* 0x60 */
+};
+
+static BOOL is_valid_hex(WCHAR c)
+{
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
+        (c >= 'A' && c <= 'F');
+}
+
+static HRESULT guid_from_string(const WCHAR *s, GUID *ret)
+{
+    BOOL has_brackets;
+    GUID guid = { 0 };
+    int i;
+
+    memset(ret, 0, sizeof(*ret));
+
+    /* Curly brackets are optional. */
+    has_brackets = s[0] == '{';
+
+    if (has_brackets)
+        s++;
+
+    for (i = 0; i < 8; i++)
+    {
+        if (!is_valid_hex(s[i])) return FALSE;
+        guid.Data1 = (guid.Data1 << 4) | guid_conv_table[s[i]];
+    }
+    s += 8;
+
+    if (s[0] != '-') return FALSE;
+    s++;
+
+    for (i = 0; i < 4; i++)
+    {
+        if (!is_valid_hex(s[0])) return FALSE;
+        guid.Data2 = (guid.Data2 << 4) | guid_conv_table[s[i]];
+    }
+    s += 4;
+
+    if (s[0] != '-') return FALSE;
+    s++;
+
+    for (i = 0; i < 4; i++)
+    {
+        if (!is_valid_hex(s[i])) return FALSE;
+        guid.Data3 = (guid.Data3 << 4) | guid_conv_table[s[i]];
+    }
+    s += 4;
+
+    if (s[0] != '-') return FALSE;
+    s++;
+
+    for (i = 0; i < 17; i += 2)
+    {
+        if (i == 4)
+        {
+            if (s[i] != '-') return FALSE;
+            i++;
+        }
+        if (!is_valid_hex(s[i]) || !is_valid_hex(s[i+1])) return FALSE;
+        guid.Data4[i / 2] = guid_conv_table[s[i]] << 4 | guid_conv_table[s[i+1]];
+    }
+    s += 17;
+
+    if (has_brackets && s[0] != '}')
+        return FALSE;
+
+    *ret = guid;
+
+    return TRUE;
+}
+
+static HRESULT new_moniker_parse_displayname(IBindCtx *pbc, LPOLESTR name, ULONG *eaten, IMoniker **ret)
+{
+    struct new_moniker *moniker;
+    GUID guid;
+
+    *ret = NULL;
+
+    if (wcsnicmp(name, L"new:", 4))
+        return MK_E_SYNTAX;
+
+    if (!guid_from_string(name + 4, &guid))
+        return MK_E_SYNTAX;
+
+    moniker = heap_alloc_zero(sizeof(*moniker));
+    if (!moniker)
+        return E_OUTOFMEMORY;
+
+    moniker->IMoniker_iface.lpVtbl = &new_moniker_vtbl;
+    moniker->refcount = 1;
+
+    *ret = &moniker->IMoniker_iface;
+
+    if (eaten)
+        *eaten = lstrlenW(name);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI new_moniker_parse_QueryInterface(IParseDisplayName *iface, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
@@ -676,22 +787,9 @@ static ULONG WINAPI new_moniker_parse_Release(IParseDisplayName *iface)
 static HRESULT WINAPI new_moniker_parse_ParseDisplayName(IParseDisplayName *iface, IBindCtx *pbc, LPOLESTR name,
         ULONG *eaten, IMoniker **ret)
 {
-    struct new_moniker *moniker;
+    TRACE("%p, %p, %s, %p, %p.\n", iface, pbc, debugstr_w(name), eaten, ret);
 
-    FIXME("%p, %p, %s, %p, %p.\n", iface, pbc, debugstr_w(name), eaten, ret);
-
-    moniker = heap_alloc_zero(sizeof(*moniker));
-    if (!moniker)
-        return E_OUTOFMEMORY;
-
-    moniker->IMoniker_iface.lpVtbl = &new_moniker_vtbl;
-    moniker->refcount = 1;
-
-    *ret = &moniker->IMoniker_iface;
-
-    *eaten = lstrlenW(name);
-
-    return S_OK;
+    return new_moniker_parse_displayname(pbc, name, eaten, ret);
 }
 
 static const IParseDisplayNameVtbl new_moniker_parse_vtbl =
