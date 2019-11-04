@@ -173,6 +173,8 @@ static LRESULT (CALLBACK *old_parent_proc)(HWND hwnd, UINT msg, WPARAM wparam, L
 static LPCSTR expected_edit_text;
 static LPCSTR expected_list_text;
 static BOOL selchange_fired;
+static HWND lparam_for_WM_CTLCOLOR;
+static HBRUSH brush_red;
 
 static LRESULT CALLBACK parent_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -202,6 +204,20 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
                 selchange_fired = TRUE;
             }
             break;
+        }
+        break;
+    case WM_CTLCOLOR:
+    case WM_CTLCOLORMSGBOX:
+    case WM_CTLCOLOREDIT:
+    case WM_CTLCOLORLISTBOX:
+    case WM_CTLCOLORBTN:
+    case WM_CTLCOLORDLG:
+    case WM_CTLCOLORSCROLLBAR:
+    case WM_CTLCOLORSTATIC:
+        if (lparam_for_WM_CTLCOLOR)
+        {
+            ok(lparam_for_WM_CTLCOLOR == (HWND)lparam, "Expected %p, got %p\n", lparam_for_WM_CTLCOLOR, (HWND)lparam);
+            return (LRESULT) brush_red;
         }
         break;
     }
@@ -804,8 +820,89 @@ static void test_WS_VSCROLL(void)
     DestroyWindow(hCombo);
 }
 
+static void test_combo_ctlcolor(void)
+{
+    static const int messages[] =
+    {
+        WM_CTLCOLOR,
+        WM_CTLCOLORMSGBOX,
+        WM_CTLCOLOREDIT,
+        WM_CTLCOLORLISTBOX,
+        WM_CTLCOLORBTN,
+        WM_CTLCOLORDLG,
+        WM_CTLCOLORSCROLLBAR,
+        WM_CTLCOLORSTATIC,
+    };
+
+    HBRUSH brush, global_brush;
+    unsigned int i, ret;
+    COMBOBOXINFO info;
+    HWND combo;
+
+    combo = build_combo(CBS_DROPDOWN);
+    ok(!!combo, "Failed to create combo window.\n");
+
+    old_parent_proc = (void *)SetWindowLongPtrA(hMainWnd, GWLP_WNDPROC, (ULONG_PTR)parent_wnd_proc);
+
+    info.cbSize = sizeof(COMBOBOXINFO);
+    ret = GetComboBoxInfo(combo, &info);
+    ok(ret, "Failed to get combobox info structure.\n");
+
+    lparam_for_WM_CTLCOLOR = info.hwndItem;
+
+    /* Parent returns valid brush handle. */
+    for (i = 0; i < ARRAY_SIZE(messages); ++i)
+    {
+        brush = (HBRUSH)SendMessageA(combo, messages[i], 0, (LPARAM)info.hwndItem);
+    todo_wine
+        ok(brush == brush_red, "%u: unexpected brush %p, expected got %p.\n", i, brush, brush_red);
+    }
+
+    /* Parent returns NULL brush. */
+    global_brush = brush_red;
+    brush_red = NULL;
+
+    for (i = 0; i < ARRAY_SIZE(messages); ++i)
+    {
+        brush = (HBRUSH)SendMessageA(combo, messages[i], 0, (LPARAM)info.hwndItem);
+    todo_wine
+        ok(!brush, "%u: unexpected brush %p.\n", i, brush);
+    }
+
+    brush_red = global_brush;
+
+    lparam_for_WM_CTLCOLOR = 0;
+
+    /* Parent does default processing. */
+    for (i = 0; i < ARRAY_SIZE(messages); ++i)
+    {
+        brush = (HBRUSH)SendMessageA(combo, messages[i], 0, (LPARAM)info.hwndItem);
+        ok(!!brush && brush != brush_red, "%u: unexpected brush %p.\n", i, brush);
+    }
+
+    SetWindowLongPtrA(hMainWnd, GWLP_WNDPROC, (ULONG_PTR)old_parent_proc);
+    DestroyWindow(combo);
+
+    /* Combo without a parent. */
+    combo = CreateWindowA("ComboBox", "Combo", CBS_DROPDOWN, 5, 5, 100, 100, NULL, NULL, NULL, 0);
+    ok(!!combo, "Failed to create combo window.\n");
+
+    info.cbSize = sizeof(COMBOBOXINFO);
+    ret = GetComboBoxInfo(combo, &info);
+    ok(ret, "Failed to get combobox info structure.\n");
+
+    for (i = 0; i < ARRAY_SIZE(messages); ++i)
+    {
+        brush = (HBRUSH)SendMessageA(combo, messages[i], 0, (LPARAM)info.hwndItem);
+        ok(!!brush && brush != brush_red, "%u: unexpected brush %p.\n", i, brush);
+    }
+
+    DestroyWindow(combo);
+}
+
 START_TEST(combo)
 {
+    brush_red = CreateSolidBrush(RGB(255, 0, 0));
     hMainWnd = CreateWindowA("static", "Test", WS_OVERLAPPEDWINDOW, 10, 10, 300, 300, NULL, NULL, NULL, 0);
     ShowWindow(hMainWnd, SW_SHOW);
 
@@ -825,6 +922,8 @@ START_TEST(combo)
     test_listbox_styles(CBS_DROPDOWN);
     test_listbox_styles(CBS_DROPDOWNLIST);
     test_listbox_size(CBS_DROPDOWN);
+    test_combo_ctlcolor();
 
     DestroyWindow(hMainWnd);
+    DeleteObject(brush_red);
 }
