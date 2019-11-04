@@ -1544,8 +1544,6 @@ __int32 WINAPI _CorExeMain(void)
 
     if (domain)
     {
-        int dummy;
-        mono_threads_enter_gc_unsafe_region(&dummy);
         mono_thread_manage();
         mono_runtime_quit();
     }
