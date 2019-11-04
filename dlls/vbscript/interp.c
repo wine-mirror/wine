@@ -779,6 +779,11 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *
         if(arg_cnt(dp)) {
             SAFEARRAY *array;
 
+            if(V_VT(v) == VT_DISPATCH) {
+                hres = disp_propput(ctx->script, V_DISPATCH(v), DISPID_VALUE, flags, dp);
+                break;
+            }
+
             if(!(V_VT(v) & VT_ARRAY)) {
                 FIXME("array assign on type %d\n", V_VT(v));
                 return E_FAIL;

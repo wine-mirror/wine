@@ -100,6 +100,7 @@ DEFINE_EXPECT(testobj_propget_i);
 DEFINE_EXPECT(testobj_propput_d);
 DEFINE_EXPECT(testobj_propput_i);
 DEFINE_EXPECT(testobj_value_i);
+DEFINE_EXPECT(testobj_valueput_i);
 DEFINE_EXPECT(global_propargput_d);
 DEFINE_EXPECT(global_propargput_i);
 DEFINE_EXPECT(global_propargput1_d);
@@ -872,29 +873,49 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     switch(id) {
-    case DISPID_VALUE: {
-        VARIANT *arg;
-        int i;
+    case DISPID_VALUE:
+        if(wFlags == (DISPATCH_PROPERTYGET|DISPATCH_METHOD)) {
+            VARIANT *arg;
+            int i;
 
-        CHECK_EXPECT(testobj_value_i);
+            CHECK_EXPECT(testobj_value_i);
 
-        ok(wFlags == (DISPATCH_PROPERTYGET|DISPATCH_METHOD), "wFlags = %x\n", wFlags);
-        ok(pdp != NULL, "pdp == NULL\n");
-        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
-        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
-        ok(pvarRes != NULL, "pvarRes == NULL\n");
-        ok(pei != NULL, "pei == NULL\n");
+            ok(pdp != NULL, "pdp == NULL\n");
+            ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+            ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+            ok(pvarRes != NULL, "pvarRes == NULL\n");
+            ok(pei != NULL, "pei == NULL\n");
 
-        for(i=0; i<pdp->cArgs; i++) {
-            arg = pdp->rgvarg+pdp->cArgs-i-1;
-            ok(V_VT(arg) == VT_I2, "V_VT(arg) = %d\n", V_VT(arg));
-            ok(V_I2(arg) == i+1, "V_I2(arg) = %d\n", V_I2(arg));
+            for(i=0; i<pdp->cArgs; i++) {
+                arg = pdp->rgvarg+pdp->cArgs-i-1;
+                ok(V_VT(arg) == VT_I2, "V_VT(arg) = %d\n", V_VT(arg));
+                ok(V_I2(arg) == i+1, "V_I2(arg) = %d\n", V_I2(arg));
+            }
+
+            V_VT(pvarRes) = VT_I2;
+            V_I2(pvarRes) = pdp->cArgs;
+            return S_OK;
         }
+        if(wFlags == DISPATCH_PROPERTYPUT) {
+            CHECK_EXPECT(testobj_valueput_i);
 
-        V_VT(pvarRes) = VT_I2;
-        V_I2(pvarRes) = pdp->cArgs;
-        return S_OK;
-    }
+            ok(pdp->cArgs == 3, "cArgs = %d\n", pdp->cArgs);
+            ok(pdp->cNamedArgs == 1, "cNamedArgs = %d\n", pdp->cNamedArgs);
+            ok(pdp->rgdispidNamedArgs[0] == DISPID_PROPERTYPUT, "pdp->rgdispidNamedArgs[0] = %d\n", pdp->rgdispidNamedArgs[0]);
+            ok(!pvarRes, "pvarRes != NULL\n");
+            ok(pei != NULL, "pei == NULL\n");
+
+            ok(V_VT(pdp->rgvarg) == VT_I2, "V_VT(args[0]) = %d\n", V_VT(pdp->rgvarg));
+            ok(V_I2(pdp->rgvarg) == 0, "V_I2(args[0]) = %d\n", V_I2(pdp->rgvarg));
+            ok(V_VT(pdp->rgvarg+1) == VT_I2, "V_VT(args[1]) = %d\n", V_VT(pdp->rgvarg+1));
+            ok(V_I2(pdp->rgvarg+1) == 2, "V_I2(args[1]) = %d\n", V_I2(pdp->rgvarg+1));
+            ok(V_VT(pdp->rgvarg+2) == VT_I2, "V_VT(args[2]) = %d\n", V_VT(pdp->rgvarg+2));
+            ok(V_I2(pdp->rgvarg+2) == 1, "V_I2(args[2]) = %d\n", V_I2(pdp->rgvarg+2));
+
+            return S_OK;
+        }
+        ok(0, "wFlags = %x\n", wFlags);
+        break;
     case DISPID_TESTOBJ_PROPGET:
         CHECK_EXPECT(testobj_propget_i);
 
@@ -1419,7 +1440,6 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
     case DISPID_GLOBAL_COUNTER:
         ok(pdp != NULL, "pdp == NULL\n");
-        todo_wine ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
         ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
         ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
@@ -2880,6 +2900,12 @@ static void run_tests(void)
     parse_script_a("with testObj\n.propput = 1\nend with");
     CHECK_CALLED(testobj_propput_d);
     CHECK_CALLED(testobj_propput_i);
+
+    SET_EXPECT(testobj_valueput_i);
+    parse_script_a("dim x\n"
+                   "set x = testObj\n"
+                   "x(counter(), counter()) = counter\n");
+    CHECK_CALLED(testobj_valueput_i);
 
     parse_htmlscript_a("<!--");
     parse_htmlscript_a(" -->");
