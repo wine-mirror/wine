@@ -431,10 +431,10 @@ void CDECL _vcomp_atomic_and_i1(char *dest, char val)
     do old = *dest; while (interlocked_cmpxchg8(dest, old & val, old) != old);
 }
 
-void CDECL _vcomp_atomic_div_i1(char *dest, char val)
+void CDECL _vcomp_atomic_div_i1(signed char *dest, signed char val)
 {
-    char old;
-    do old = *dest; while (interlocked_cmpxchg8(dest, old / val, old) != old);
+    signed char old;
+    do old = *dest; while ((signed char)interlocked_cmpxchg8((char *)dest, old / val, old) != old);
 }
 
 void CDECL _vcomp_atomic_div_ui1(unsigned char *dest, unsigned char val)
@@ -461,10 +461,10 @@ void CDECL _vcomp_atomic_shl_i1(char *dest, unsigned int val)
     do old = *dest; while (interlocked_cmpxchg8(dest, old << val, old) != old);
 }
 
-void CDECL _vcomp_atomic_shr_i1(char *dest, unsigned int val)
+void CDECL _vcomp_atomic_shr_i1(signed char *dest, unsigned int val)
 {
-    char old;
-    do old = *dest; while (interlocked_cmpxchg8(dest, old >> val, old) != old);
+    signed char old;
+    do old = *dest; while ((signed char)interlocked_cmpxchg8((char *)dest, old >> val, old) != old);
 }
 
 void CDECL _vcomp_atomic_shr_ui1(unsigned char *dest, unsigned int val)

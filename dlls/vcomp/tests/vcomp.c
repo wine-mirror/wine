@@ -1549,7 +1549,7 @@ static void test_atomic_integer8(void)
     struct
     {
         void (CDECL *func)(char *, char);
-        char v1, v2, expected;
+        signed char v1, v2, expected;
     }
     tests1[] =
     {
@@ -1566,9 +1566,9 @@ static void test_atomic_integer8(void)
     struct
     {
         void (CDECL *func)(char *, unsigned int);
-        char v1;
+        signed char v1;
         unsigned int v2;
-        char expected;
+        signed char expected;
     }
     tests2[] =
     {
@@ -1616,14 +1616,14 @@ static void test_atomic_integer8(void)
 
     for (i = 0; i < ARRAY_SIZE(tests1); i++)
     {
-        char val = tests1[i].v1;
-        tests1[i].func(&val, tests1[i].v2);
+        signed char val = tests1[i].v1;
+        tests1[i].func((char *)&val, tests1[i].v2);
         ok(val == tests1[i].expected, "test %d: expected val == %d, got %d\n", i, tests1[i].expected, val);
     }
     for (i = 0; i < ARRAY_SIZE(tests2); i++)
     {
-        char val = tests2[i].v1;
-        tests2[i].func(&val, tests2[i].v2);
+        signed char val = tests2[i].v1;
+        tests2[i].func((char *)&val, tests2[i].v2);
         ok(val == tests2[i].expected, "test %d: expected val == %d, got %d\n", i, tests2[i].expected, val);
     }
     for (i = 0; i < ARRAY_SIZE(tests3); i++)
