@@ -172,8 +172,9 @@ static HRESULT WINAPI Builtin_Invoke(IDispatch *iface, DISPID id, REFIID riid, L
 {
     BuiltinDisp *This = impl_from_IDispatch(iface);
     const builtin_prop_t *prop;
-    VARIANT args[8];
+    VARIANT args_buf[8], *args;
     unsigned argn, i;
+    HRESULT hres;
 
     TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, id, debugstr_guid(riid), lcid, flags, dp, res, ei, err);
 
@@ -248,7 +249,13 @@ static HRESULT WINAPI Builtin_Invoke(IDispatch *iface, DISPID id, REFIID riid, L
         return MAKE_VBSERROR(VBSE_FUNC_ARITY_MISMATCH);
     }
 
-    assert(argn < ARRAY_SIZE(args));
+    if(argn <= ARRAY_SIZE(args_buf)) {
+        args = args_buf;
+    }else {
+        args = heap_alloc(argn * sizeof(*args));
+        if(!args)
+            return E_OUTOFMEMORY;
+    }
 
     for(i=0; i < argn; i++) {
         if(V_VT(dp->rgvarg+dp->cArgs-i-1) == (VT_BYREF|VT_VARIANT))
@@ -257,7 +264,10 @@ static HRESULT WINAPI Builtin_Invoke(IDispatch *iface, DISPID id, REFIID riid, L
             args[i] = dp->rgvarg[dp->cArgs-i-1];
     }
 
-    return prop->proc(This, args, dp->cArgs, res);
+    hres = prop->proc(This, args, dp->cArgs, res);
+    if(args != args_buf)
+        heap_free(args);
+    return hres;
 }
 
 static const IDispatchVtbl BuiltinDispVtbl = {

@@ -243,6 +243,11 @@ Call ok(UBound(x) = 2, "UBound(x) = " & UBound(x))
 Call ok(getVT(UBound(x, 1)) = "VT_I4", "getVT(UBound(x, 1)) = " & getVT(UBound(x, 1)))
 Call ok(UBound(x, 1) = 2, "UBound(x) = " & UBound(x, 1))
 
+x = Array(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33)
+ok x(1) = 2, "x(1) = " & x(1)
+ok x(32) = 33, "x(32) = " & x(32)
+ok ubound(x) = 32, "ubound(x) = " & ubound(x)
+
 Dim arr2(2, 4)
 Call ok(UBound(arr2) = 2, "UBound(x) = " & UBound(x))
 Call ok(UBound(arr2, 1) = 2, "UBound(x) = " & UBound(x))
