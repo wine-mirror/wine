@@ -98,7 +98,6 @@ static BOOL lookup_dynamic_vars(dynamic_var_t *var, const WCHAR *name, ref_t *re
 static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_t invoke_type, ref_t *ref)
 {
     named_item_t *item;
-    function_t *func;
     IDispatch *disp;
     unsigned i;
     DISPID id;
@@ -164,7 +163,8 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     if(ctx->func->type != FUNC_GLOBAL && lookup_dynamic_vars(ctx->script->global_vars, name, ref))
         return S_OK;
 
-    for(func = ctx->script->global_funcs; func; func = func->next) {
+    for(i = 0; i < ctx->script->global_funcs_cnt; i++) {
+        function_t *func = ctx->script->global_funcs[i];
         if(!wcsicmp(func->name, name)) {
             ref->type = REF_FUNC;
             ref->u.f = func;

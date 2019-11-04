@@ -138,6 +138,11 @@ static void release_script(script_ctx_t *ctx)
     release_dynamic_vars(ctx->global_vars);
     ctx->global_vars = NULL;
 
+    heap_free(ctx->global_funcs);
+    ctx->global_funcs = NULL;
+    ctx->global_funcs_cnt = 0;
+    ctx->global_funcs_size = 0;
+
     while(!list_empty(&ctx->named_items)) {
         named_item_t *iter = LIST_ENTRY(list_head(&ctx->named_items), named_item_t, entry);
 

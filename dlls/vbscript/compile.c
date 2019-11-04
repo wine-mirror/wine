@@ -1802,15 +1802,15 @@ static BOOL lookup_script_identifier(script_ctx_t *script, const WCHAR *identifi
 {
     class_desc_t *class;
     dynamic_var_t *var;
-    function_t *func;
+    unsigned i;
 
     for(var = script->global_vars; var; var = var->next) {
         if(!wcsicmp(var->name, identifier))
             return TRUE;
     }
 
-    for(func = script->global_funcs; func; func = func->next) {
-        if(!wcsicmp(func->name, identifier))
+    for(i = 0; i < script->global_funcs_cnt; i++) {
+        if(!wcsicmp(script->global_funcs[i]->name, identifier))
             return TRUE;
     }
 
@@ -1914,11 +1914,12 @@ static void release_compiler(compile_ctx_t *ctx)
 
 HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *delimiter, DWORD flags, vbscode_t **ret)
 {
-    function_t *new_func;
+    function_t *new_func, *func_iter;
     function_decl_t *func_decl;
     class_decl_t *class_decl;
     compile_ctx_t ctx;
     vbscode_t *code;
+    size_t cnt;
     HRESULT hres;
 
     if (!src) src = L"";
@@ -1982,12 +1983,22 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
         script->global_vars = ctx.global_vars;
     }
 
-    if(ctx.funcs) {
-        for(new_func = ctx.funcs; new_func->next; new_func = new_func->next);
-
-        new_func->next = script->global_funcs;
-        script->global_funcs = ctx.funcs;
+    cnt = script->global_funcs_cnt;
+    for(func_iter = ctx.funcs; func_iter; func_iter = func_iter->next)
+        cnt++;
+    if(cnt > script->global_funcs_size) {
+        function_t **new_funcs;
+        if(script->global_funcs)
+            new_funcs = heap_realloc(script->global_funcs, cnt * sizeof(*new_funcs));
+        else
+            new_funcs = heap_alloc(cnt * sizeof(*new_funcs));
+        if(!new_funcs)
+            return compile_error(script, E_OUTOFMEMORY);
+        script->global_funcs = new_funcs;
+        script->global_funcs_size = cnt;
     }
+    for(func_iter = ctx.funcs; func_iter; func_iter = func_iter->next)
+        script->global_funcs[script->global_funcs_cnt++] = func_iter;
 
     if(ctx.classes) {
         class_desc_t *class = ctx.classes;

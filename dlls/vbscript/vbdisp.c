@@ -677,7 +677,7 @@ static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
     dynamic_var_t *var;
     ident_map_t *ident;
-    function_t *func;
+    unsigned i;
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
 
@@ -704,7 +704,8 @@ static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
         }
     }
 
-    for(func = This->ctx->global_funcs; func; func = func->next) {
+    for(i = 0; i < This->ctx->global_funcs_cnt; i++) {
+        function_t *func = This->ctx->global_funcs[i];
         if(!wcsicmp(func->name, bstrName)) {
             ident = add_ident(This, func->name);
             if(!ident)

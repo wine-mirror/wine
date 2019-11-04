@@ -187,8 +187,11 @@ struct _script_ctx_t {
 
     EXCEPINFO ei;
 
+    function_t **global_funcs;
+    size_t global_funcs_cnt;
+    size_t global_funcs_size;
+
     dynamic_var_t *global_vars;
-    function_t *global_funcs;
     class_desc_t *classes;
     class_desc_t *procs;
 
