@@ -6007,6 +6007,26 @@ static void test_occlusion_query(void)
     if (broken_occlusion)
         goto done;
 
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "Failed to begin scene, hr %#x.\n", hr);
+    for (i = 0; i < 50000; ++i)
+    {
+        hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    }
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "Failed to end scene, hr %#x.\n", hr);
+
+    wait_query(query);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = IDirect3DQuery9_GetData(query, &data, sizeof(data), D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(data.dword[0] == 0 && data.dword[1] == 0,
+            "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
 
@@ -6060,26 +6080,6 @@ static void test_occlusion_query(void)
     ok((data.dword[0] == expected.dword[0] && data.dword[1] == expected.dword[1])
             || (data.dword[0] == 0xffffffff && !data.dword[1])
             || broken(data.dword[0] < 0xffffffff && !data.dword[1]),
-            "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
-    for (i = 0; i < 50000; ++i)
-    {
-        hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-        hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    }
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
-
-    wait_query(query);
-
-    memset(&data, 0xff, sizeof(data));
-    hr = IDirect3DQuery9_GetData(query, &data, sizeof(data), D3DGETDATA_FLUSH);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(data.dword[0] == 0 && data.dword[1] == 0,
             "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     IDirect3DSurface9_Release(rt);
