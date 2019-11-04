@@ -854,7 +854,6 @@ static void test_combo_ctlcolor(void)
     for (i = 0; i < ARRAY_SIZE(messages); ++i)
     {
         brush = (HBRUSH)SendMessageA(combo, messages[i], 0, (LPARAM)info.hwndItem);
-    todo_wine
         ok(brush == brush_red, "%u: unexpected brush %p, expected got %p.\n", i, brush, brush_red);
     }
 
@@ -865,7 +864,6 @@ static void test_combo_ctlcolor(void)
     for (i = 0; i < ARRAY_SIZE(messages); ++i)
     {
         brush = (HBRUSH)SendMessageA(combo, messages[i], 0, (LPARAM)info.hwndItem);
-    todo_wine
         ok(!brush, "%u: unexpected brush %p.\n", i, brush);
     }
 
