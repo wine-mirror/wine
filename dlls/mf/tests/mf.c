@@ -2584,6 +2584,17 @@ if (SUCCEEDED(hr))
     CoUninitialize();
 }
 
+static void test_evr(void)
+{
+    IMFActivate *activate;
+    HRESULT hr;
+
+    hr = MFCreateVideoRendererActivate(NULL, &activate);
+    ok(hr == S_OK, "Failed to create activate object, hr %#x.\n", hr);
+
+    IMFActivate_Release(activate);
+}
+
 START_TEST(mf)
 {
     test_topology();
@@ -2597,4 +2608,5 @@ START_TEST(mf)
     test_video_processor();
     test_quality_manager();
     test_sar();
+    test_evr();
 }

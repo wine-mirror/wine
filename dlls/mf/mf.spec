@@ -67,7 +67,7 @@
 @ stub MFCreateTranscodeTopology
 @ stub MFCreateUrlmonSchemePlugin
 @ stub MFCreateVideoRenderer
-@ stub MFCreateVideoRendererActivate
+@ stdcall MFCreateVideoRendererActivate(long ptr)
 @ stub MFCreateWMAEncoderActivate
 @ stub MFCreateWMVEncoderActivate
 @ stdcall MFEnumDeviceSources(ptr ptr ptr)
