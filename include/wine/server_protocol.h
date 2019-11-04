@@ -156,7 +156,7 @@ typedef struct
         struct { struct { unsigned __int64 low, high; } fpregs[32]; } x86_64_regs;
         struct { double fpr[32], fpscr; } powerpc_regs;
         struct { unsigned __int64 d[32]; unsigned int fpscr; } arm_regs;
-        struct { unsigned __int64 d[64]; unsigned int fpcr, fpsr; } arm64_regs;
+        struct { struct { unsigned __int64 low, high; } q[32]; unsigned int fpcr, fpsr; } arm64_regs;
     } fp;
     union
     {

@@ -369,7 +369,11 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
     if (flags & CONTEXT_FLOATING_POINT)
     {
         to->flags |= SERVER_CTX_FLOATING_POINT;
-        for (i = 0; i < 64; i++) to->fp.arm64_regs.d[i] = from->V[i / 2].D[i % 2];
+        for (i = 0; i < 32; i++)
+        {
+            to->fp.arm64_regs.q[i].low = from->V[i].s.Low;
+            to->fp.arm64_regs.q[i].high = from->V[i].s.High;
+        }
         to->fp.arm64_regs.fpcr = from->Fpcr;
         to->fp.arm64_regs.fpsr = from->Fpsr;
     }
@@ -414,7 +418,11 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
     if (from->flags & SERVER_CTX_FLOATING_POINT)
     {
         to->ContextFlags |= CONTEXT_FLOATING_POINT;
-        for (i = 0; i < 64; i++) to->V[i / 2].D[i % 2] = from->fp.arm64_regs.d[i];
+        for (i = 0; i < 32; i++)
+        {
+            to->V[i].s.Low = from->fp.arm64_regs.q[i].low;
+            to->V[i].s.High = from->fp.arm64_regs.q[i].high;
+        }
         to->Fpcr = from->fp.arm64_regs.fpcr;
         to->Fpsr = from->fp.arm64_regs.fpsr;
     }

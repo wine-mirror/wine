@@ -727,10 +727,11 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
         }
         if (ctx.flags & SERVER_CTX_FLOATING_POINT)
         {
-            for (i = 0; i < 64; i++)
+            for (i = 0; i < 32; i++)
             {
-                fprintf( stderr, ",d%u=", i );
-                dump_uint64( "", &ctx.fp.arm64_regs.d[i] );
+                fprintf( stderr, ",q%u=", i );
+                dump_uint64( "", &ctx.fp.arm64_regs.q[i].high );
+                dump_uint64( "", &ctx.fp.arm64_regs.q[i].low );
             }
             fprintf( stderr, ",fpcr=%08x,fpsr=%08x", ctx.fp.arm64_regs.fpcr, ctx.fp.arm64_regs.fpsr );
         }
@@ -5602,6 +5603,7 @@ static const struct
     { "PIPE_CLOSING",                STATUS_PIPE_CLOSING },
     { "PIPE_CONNECTED",              STATUS_PIPE_CONNECTED },
     { "PIPE_DISCONNECTED",           STATUS_PIPE_DISCONNECTED },
+    { "PIPE_EMPTY",                  STATUS_PIPE_EMPTY },
     { "PIPE_LISTENING",              STATUS_PIPE_LISTENING },
     { "PIPE_NOT_AVAILABLE",          STATUS_PIPE_NOT_AVAILABLE },
     { "PRIVILEGE_NOT_HELD",          STATUS_PRIVILEGE_NOT_HELD },
