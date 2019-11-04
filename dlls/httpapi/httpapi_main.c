@@ -284,12 +284,37 @@ ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *url)
 ULONG WINAPI HttpReceiveRequestEntityBody(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
         void *buffer, ULONG size, ULONG *ret_size, OVERLAPPED *ovl)
 {
-    *ret_size = 0;
+    struct http_receive_body_params params =
+    {
+        .id = id,
+        .bits = sizeof(void *) * 8,
+    };
+    ULONG ret = ERROR_SUCCESS;
+    OVERLAPPED sync_ovl;
 
-    FIXME("stub: queue %p, id %s, flags %#x, buffer %p, size %#x, ret_size %p, ovl %p.\n",
+    TRACE("queue %p, id %s, flags %#x, buffer %p, size %#x, ret_size %p, ovl %p.\n",
             queue, wine_dbgstr_longlong(id), flags, buffer, size, ret_size, ovl);
 
-    return ERROR_HANDLE_EOF;
+    if (flags)
+        FIXME("Ignoring flags %#x.\n", flags);
+
+    if (!ovl)
+    {
+        sync_ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+        ovl = &sync_ovl;
+    }
+
+    if (!DeviceIoControl(queue, IOCTL_HTTP_RECEIVE_BODY, &params, sizeof(params), buffer, size, NULL, ovl))
+        ret = GetLastError();
+
+    if (ovl == &sync_ovl)
+    {
+        if (!GetOverlappedResult(queue, ovl, ret_size, TRUE))
+            ret = GetLastError();
+        CloseHandle(sync_ovl.hEvent);
+    }
+
+    return ret;
 }
 
 /***********************************************************************

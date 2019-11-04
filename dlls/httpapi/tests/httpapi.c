@@ -546,12 +546,13 @@ static void test_v1_short_buffer(void)
 
 static void test_v1_entity_body(void)
 {
-    char DECLSPEC_ALIGN(8) req_buffer[4096], response_buffer[2048], req_body[2048];
+    char DECLSPEC_ALIGN(8) req_buffer[4096], response_buffer[2048], req_body[2048], recv_body[2000];
     HTTP_REQUEST_V1 *req = (HTTP_REQUEST_V1 *)req_buffer;
     HTTP_RESPONSE_V1 response = {};
     HTTP_DATA_CHUNK chunks[2] = {};
     ULONG ret, chunk_size;
     unsigned int i;
+    OVERLAPPED ovl;
     DWORD ret_size;
     HANDLE queue;
     SOCKET s;
@@ -570,6 +571,8 @@ static void test_v1_entity_body(void)
         "Connection: keep-alive\r\n"
         "Content-Length: 2048\r\n"
         "\r\n";
+
+    ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
 
     for (i = 0; i < sizeof(req_body); ++i)
         req_body[i] = i / 111;
@@ -708,6 +711,119 @@ static void test_v1_entity_body(void)
 
     send_response_v1(queue, req->RequestId, s);
 
+    /* Test HttpReceiveRequestEntityBody(). */
+
+    ret = send(s, post_req, sizeof(post_req), 0);
+    ok(ret == sizeof(post_req), "send() returned %d.\n", ret);
+    Sleep(100);
+
+    ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+
+    ret = HttpReceiveRequestEntityBody(queue, HTTP_NULL_ID, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
+    ok(ret == ERROR_CONNECTION_INVALID, "Got error %u.\n", ret);
+
+    ret_size = 0xdeadbeef;
+    ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(ret_size == 5, "Got size %u.\n", ret_size);
+    ok(!memcmp(recv_body, "ping", 5), "Entity body didn't match.\n");
+
+    ret_size = 0xdeadbeef;
+    ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
+    ok(ret == ERROR_HANDLE_EOF, "Got error %u.\n", ret);
+    ok(ret_size == 0xdeadbeef || !ret_size /* Win10+ */, "Got size %u.\n", ret_size);
+
+    send_response_v1(queue, req->RequestId, s);
+
+    ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
+    ok(ret == ERROR_CONNECTION_INVALID, "Got error %u.\n", ret);
+
+    ret = send(s, post_req, sizeof(post_req), 0);
+    ok(ret == sizeof(post_req), "send() returned %d.\n", ret);
+    Sleep(100);
+
+    ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+
+    memset(recv_body, 0xcc, sizeof(recv_body));
+    ret_size = 0xdeadbeef;
+    ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, 2, &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(ret_size == 2, "Got size %u.\n", ret_size);
+    ok(!memcmp(recv_body, "pi", 2), "Entity body didn't match.\n");
+
+    ret_size = 0xdeadbeef;
+    ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, 4, &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(ret_size == 3, "Got size %u.\n", ret_size);
+    ok(!memcmp(recv_body, "ng", 3), "Entity body didn't match.\n");
+
+    ret_size = 0xdeadbeef;
+    ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
+    ok(ret == ERROR_HANDLE_EOF, "Got error %u.\n", ret);
+    ok(ret_size == 0xdeadbeef || !ret_size /* Win10+ */, "Got size %u.\n", ret_size);
+
+    send_response_v1(queue, req->RequestId, s);
+
+    ret = send(s, post_req, sizeof(post_req), 0);
+    ok(ret == sizeof(post_req), "send() returned %d.\n", ret);
+    Sleep(100);
+
+    ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+
+    memset(recv_body, 0xcc, sizeof(recv_body));
+    ret_size = 0xdeadbeef;
+    ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), NULL, &ovl);
+    ok(!ret || ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
+    ret = GetOverlappedResult(queue, &ovl, &ret_size, TRUE);
+    ok(ret, "Got error %u.\n", GetLastError());
+    ok(ret_size == 5, "Got size %u.\n", ret_size);
+    ok(!memcmp(recv_body, "ping", 5), "Entity body didn't match.\n");
+
+    ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), NULL, &ovl);
+    ok(ret == ERROR_HANDLE_EOF, "Got error %u.\n", ret);
+
+    send_response_v1(queue, req->RequestId, s);
+
+    ret = send(s, post_req, sizeof(post_req), 0);
+    ok(ret == sizeof(post_req), "send() returned %d.\n", ret);
+    Sleep(100);
+
+    ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY,
+            (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+
+    ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), NULL, &ovl);
+    ok(ret == ERROR_HANDLE_EOF, "Got error %u.\n", ret);
+
+    send_response_v1(queue, req->RequestId, s);
+
+    ret = send(s, post_req2, strlen(post_req2), 0);
+    ok(ret == strlen(post_req2), "send() returned %d.\n", ret);
+    ret = send(s, req_body, sizeof(req_body), 0);
+    ok(ret == sizeof(req_body), "send() returned %d.\n", ret);
+
+    Sleep(100);
+
+    ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY,
+            (HTTP_REQUEST *)req, 2000, &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(ret_size == 2000, "Got size %u.\n", ret_size);
+    ok(req->Flags == HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS, "Got flags %#x.\n", req->Flags);
+    chunk_size = req->pEntityChunks[0].FromMemory.BufferLength;
+
+    memset(recv_body, 0xcc, sizeof(recv_body));
+    ret_size = 0xdeadbeef;
+    ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(ret_size == 2048 - chunk_size, "Got size %u.\n", ret_size);
+    ok(!memcmp(recv_body, req_body + chunk_size, ret_size), "Entity body didn't match.\n");
+
+    send_response_v1(queue, req->RequestId, s);
+
+    CloseHandle(ovl.hEvent);
     ret = HttpRemoveUrl(queue, localhost_urlW);
     ok(!ret, "Got error %u.\n", ret);
     closesocket(s);
