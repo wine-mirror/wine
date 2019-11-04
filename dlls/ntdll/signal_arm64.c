@@ -1974,6 +1974,26 @@ __ASM_GLOBAL_FUNC( start_thread,
                    "bl " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
                    /* switch to the initial context */
                    "mov x0, sp\n\t"
+                   "ldp q0, q1, [x0, #0x110]\n\t"      /* context->V[0,1] */
+                   "ldp q2, q3, [x0, #0x130]\n\t"      /* context->V[2,3] */
+                   "ldp q4, q5, [x0, #0x150]\n\t"      /* context->V[4,5] */
+                   "ldp q6, q7, [x0, #0x170]\n\t"      /* context->V[6,7] */
+                   "ldp q8, q9, [x0, #0x190]\n\t"      /* context->V[8,9] */
+                   "ldp q10, q11, [x0, #0x1b0]\n\t"    /* context->V[10,11] */
+                   "ldp q12, q13, [x0, #0x1d0]\n\t"    /* context->V[12,13] */
+                   "ldp q14, q15, [x0, #0x1f0]\n\t"    /* context->V[14,15] */
+                   "ldp q16, q17, [x0, #0x210]\n\t"    /* context->V[16,17] */
+                   "ldp q18, q19, [x0, #0x230]\n\t"    /* context->V[18,19] */
+                   "ldp q20, q21, [x0, #0x250]\n\t"    /* context->V[20,21] */
+                   "ldp q22, q23, [x0, #0x270]\n\t"    /* context->V[22,23] */
+                   "ldp q24, q25, [x0, #0x290]\n\t"    /* context->V[24,25] */
+                   "ldp q26, q27, [x0, #0x2b0]\n\t"    /* context->V[26,27] */
+                   "ldp q28, q29, [x0, #0x2d0]\n\t"    /* context->V[28,29] */
+                   "ldp q30, q31, [x0, #0x2f0]\n\t"    /* context->V[30,31] */
+                   "ldr w1, [x0, #0x310]\n\t"          /* context->Fpcr */
+                   "msr fpcr, x1\n\t"
+                   "ldr w1, [x0, #0x314]\n\t"          /* context->Fpsr */
+                   "msr fpsr, x1\n\t"
                    "ldp x1, x2, [x0, #0x10]\n\t"       /* context->X1,2 */
                    "ldp x3, x4, [x0, #0x20]\n\t"       /* context->X3,4 */
                    "ldp x5, x6, [x0, #0x30]\n\t"       /* context->X5,6 */
