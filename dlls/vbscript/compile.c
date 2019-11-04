@@ -1571,7 +1571,7 @@ static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, functi
     function_t *func;
     HRESULT hres;
 
-    if(lookup_dim_decls(ctx, decl->name) || lookup_funcs_name(ctx, decl->name) || lookup_const_decls(ctx, decl->name, FALSE)) {
+    if(lookup_dim_decls(ctx, decl->name) || lookup_const_decls(ctx, decl->name, FALSE)) {
         FIXME("%s: redefinition\n", debugstr_w(decl->name));
         return E_FAIL;
     }
@@ -1826,18 +1826,10 @@ static HRESULT check_script_collisions(compile_ctx_t *ctx, script_ctx_t *script)
 {
     class_desc_t *class;
     dynamic_var_t *var;
-    function_t *func;
 
     for(var = ctx->global_vars; var; var = var->next) {
         if(lookup_script_identifier(script, var->name)) {
             FIXME("%s: redefined\n", debugstr_w(var->name));
-            return E_FAIL;
-        }
-    }
-
-    for(func = ctx->funcs; func; func = func->next) {
-        if(lookup_script_identifier(script, func->name)) {
-            FIXME("%s: redefined\n", debugstr_w(func->name));
             return E_FAIL;
         }
     }
@@ -1997,8 +1989,18 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
         script->global_funcs = new_funcs;
         script->global_funcs_size = cnt;
     }
-    for(func_iter = ctx.funcs; func_iter; func_iter = func_iter->next)
-        script->global_funcs[script->global_funcs_cnt++] = func_iter;
+    for(func_iter = ctx.funcs; func_iter; func_iter = func_iter->next) {
+        unsigned i;
+        for(i = 0; i < script->global_funcs_cnt; i++) {
+            if(!wcsicmp(script->global_funcs[i]->name, func_iter->name)) {
+                /* global function already exists, replace it */
+                script->global_funcs[i] = func_iter;
+                break;
+            }
+        }
+        if(i == script->global_funcs_cnt)
+            script->global_funcs[script->global_funcs_cnt++] = func_iter;
+    }
 
     if(ctx.classes) {
         class_desc_t *class = ctx.classes;

@@ -886,6 +886,21 @@ Public Function TestSepFunc(ByVal a) : :
 End Function
 Call ok(TestSepFunc(1) = 1, "Function did not return 1")
 
+ok duplicatedfunc() = 2, "duplicatedfunc = " & duplicatedfunc()
+
+function duplicatedfunc
+    ok false, "duplicatedfunc called"
+end function
+
+sub duplicatedfunc
+    ok false, "duplicatedfunc called"
+end sub
+
+function duplicatedfunc
+    duplicatedfunc = 2
+end function
+
+ok duplicatedfunc() = 2, "duplicatedfunc = " & duplicatedfunc()
 
 ' Stop has an effect only in debugging mode
 Stop

@@ -2688,6 +2688,47 @@ static void test_isexpression(void)
     close_script(engine);
 }
 
+static void test_multiple_parse(void)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *script;
+    HRESULT hres;
+
+    script = create_and_init_script(SCRIPTITEM_GLOBALMEMBERS, TRUE);
+
+    hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParseProcedure2 iface: %08x\n", hres);
+
+    hres = IActiveScriptParse_ParseScriptText(parser,
+                                              L"function duplicatedfunc\n"
+                                              L"  ok false, \"duplicatedfunc called\"\n"
+                                              L"end function\n",
+                                              NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+
+    hres = IActiveScriptParse_ParseScriptText(parser,
+                                              L"sub duplicatedfunc\n"
+                                              L"  ok false, \"duplicatedfunc called\"\n"
+                                              L"end sub\n",
+                                              NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+
+    hres = IActiveScriptParse_ParseScriptText(parser,
+                                              L"function duplicatedfunc\n"
+                                              L"  duplicatedfunc = 2\n"
+                                              L"end function\n",
+                                              NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+
+    hres = IActiveScriptParse_ParseScriptText(parser,
+                                              L"ok duplicatedfunc() = 2, \"duplicatedfunc = \" & duplicatedfunc()\n",
+                                              NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+
+    IActiveScriptParse_Release(parser);
+    close_script(script);
+}
+
 static BSTR get_script_from_file(const char *filename)
 {
     DWORD size, len;
@@ -3037,6 +3078,7 @@ static void run_tests(void)
     test_parse_errors();
     test_parse_context();
     test_callbacks();
+    test_multiple_parse();
 }
 
 static BOOL check_vbscript(void)
