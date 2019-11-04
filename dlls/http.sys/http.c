@@ -1159,6 +1159,18 @@ static NTSTATUS http_remove_url(struct request_queue *queue, IRP *irp)
     return STATUS_SUCCESS;
 }
 
+static struct connection *get_connection(HTTP_REQUEST_ID req_id)
+{
+    struct connection *conn;
+
+    LIST_FOR_EACH_ENTRY(conn, &connections, struct connection, entry)
+    {
+        if (conn->req_id == req_id)
+            return conn;
+    }
+    return NULL;
+}
+
 static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
 {
     const struct http_receive_request_params *params = irp->AssociatedIrp.SystemBuffer;
@@ -1170,14 +1182,11 @@ static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
 
     EnterCriticalSection(&http_cs);
 
-    LIST_FOR_EACH_ENTRY(conn, &connections, struct connection, entry)
+    if ((conn = get_connection(params->id)) && conn->available && conn->queue == queue)
     {
-        if (conn->available && conn->queue == queue && params->id == conn->req_id)
-        {
-            ret = complete_irp(conn, irp);
-            LeaveCriticalSection(&http_cs);
-            return ret;
-        }
+        ret = complete_irp(conn, irp);
+        LeaveCriticalSection(&http_cs);
+        return ret;
     }
 
     if (params->id == HTTP_NULL_ID)
@@ -1203,33 +1212,30 @@ static NTSTATUS http_send_response(struct request_queue *queue, IRP *irp)
 
     EnterCriticalSection(&http_cs);
 
-    LIST_FOR_EACH_ENTRY(conn, &connections, struct connection, entry)
+    if ((conn = get_connection(response->id)))
     {
-        if (conn->req_id == response->id)
+        if (send(conn->socket, response->buffer, response->len, 0) >= 0)
         {
-            if (send(conn->socket, response->buffer, response->len, 0) >= 0)
+            conn->queue = NULL;
+            conn->req_id = HTTP_NULL_ID;
+            WSAEventSelect(conn->socket, request_event, FD_READ | FD_CLOSE);
+            irp->IoStatus.Information = response->len;
+            /* We might have another request already in the buffer. */
+            if (parse_request(conn) < 0)
             {
-                conn->queue = NULL;
-                conn->req_id = HTTP_NULL_ID;
-                WSAEventSelect(conn->socket, request_event, FD_READ | FD_CLOSE);
-                irp->IoStatus.Information = response->len;
-                /* We might have another request already in the buffer. */
-                if (parse_request(conn) < 0)
-                {
-                    WARN("Failed to parse request; shutting down connection.\n");
-                    send_400(conn);
-                    close_connection(conn);
-                }
-            }
-            else
-            {
-                ERR("Got error %u; shutting down connection.\n", WSAGetLastError());
+                WARN("Failed to parse request; shutting down connection.\n");
+                send_400(conn);
                 close_connection(conn);
             }
-
-            LeaveCriticalSection(&http_cs);
-            return STATUS_SUCCESS;
         }
+        else
+        {
+            ERR("Got error %u; shutting down connection.\n", WSAGetLastError());
+            close_connection(conn);
+        }
+
+        LeaveCriticalSection(&http_cs);
+        return STATUS_SUCCESS;
     }
 
     LeaveCriticalSection(&http_cs);
