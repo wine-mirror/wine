@@ -190,8 +190,8 @@ static void main_test(void)
 
 static void test_basic_ioctl(void)
 {
+    char inbuf[64], buf[32];
     DWORD written;
-    char buf[32];
     BOOL res;
 
     res = DeviceIoControl(device, IOCTL_WINETEST_BASIC_IOCTL, NULL, 0, buf,
@@ -199,6 +199,13 @@ static void test_basic_ioctl(void)
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
     ok(written == sizeof(teststr), "got size %d\n", written);
     ok(!strcmp(buf, teststr), "got '%s'\n", buf);
+
+    memset(buf, 0, sizeof(buf));
+    res = DeviceIoControl(device, IOCTL_WINETEST_BASIC_IOCTL, inbuf,
+            sizeof(inbuf), buf, 10, &written, NULL);
+    ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    ok(written == 10, "got size %d\n", written);
+    ok(!strcmp(buf, "Wine is no"), "got '%s'\n", buf);
 }
 
 static void test_overlapped(void)

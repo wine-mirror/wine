@@ -721,10 +721,7 @@ static NTSTATUS dispatch_ioctl( struct dispatch_context *context )
             context->in_buff = out_buff;
         }
         else
-        {
             out_buff = context->in_buff;
-            out_size = context->in_size;
-        }
     }
 
     irp = IoBuildDeviceIoControlRequest( context->params.ioctl.code, device, context->in_buff,
