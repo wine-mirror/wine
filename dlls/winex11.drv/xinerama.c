@@ -75,20 +75,6 @@ void query_work_area( RECT *rc_work )
     }
 }
 
-static void query_desktop_work_area( RECT *rc_work )
-{
-    static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
-    RECT rect;
-    HWND hwnd = FindWindowW( trayW, NULL );
-
-    if (!hwnd || !IsWindowVisible( hwnd )) return;
-    if (!GetWindowRect( hwnd, &rect )) return;
-    if (rect.top) rc_work->bottom = rect.top;
-    else rc_work->top = rect.bottom;
-    TRACE( "found tray %p %s work area %s\n", hwnd,
-           wine_dbgstr_rect( &rect ), wine_dbgstr_rect( rc_work ));
-}
-
 #ifdef SONAME_LIBXINERAMA
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -304,22 +290,19 @@ void xinerama_init( unsigned int width, unsigned int height )
 {
     struct x11drv_display_device_handler handler;
     MONITORINFOEXW *primary;
-    BOOL desktop_mode = FALSE;
     int i;
     RECT rect;
 
-    SetRect( &rect, 0, 0, width, height );
+    if (is_virtual_desktop())
+        return;
 
-    if (is_virtual_desktop() || !query_screens())
+    SetRect( &rect, 0, 0, width, height );
+    if (!query_screens())
     {
         default_monitor.rcWork = default_monitor.rcMonitor = rect;
-        if (!is_virtual_desktop())
-            query_work_area( &default_monitor.rcWork );
-        else
-            query_desktop_work_area( &default_monitor.rcWork );
+        query_work_area( &default_monitor.rcWork );
         nb_monitors = 1;
         monitors = &default_monitor;
-        desktop_mode = TRUE;
     }
 
     primary = get_primary();
@@ -336,8 +319,8 @@ void xinerama_init( unsigned int width, unsigned int height )
                (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
     }
 
-    handler.name = desktop_mode ? "Desktop" : "Xinerama";
-    handler.priority = desktop_mode ? 1000 : 100;
+    handler.name = "Xinerama";
+    handler.priority = 100;
     handler.get_gpus = xinerama_get_gpus;
     handler.get_adapters = xinerama_get_adapters;
     handler.get_monitors = xinerama_get_monitors;

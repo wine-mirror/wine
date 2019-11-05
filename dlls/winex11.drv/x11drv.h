@@ -753,6 +753,8 @@ struct x11drv_display_device_handler
 extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_Init(BOOL force) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_RegisterEventHandlers(void) DECLSPEC_HIDDEN;
+/* Display device handler used in virtual desktop mode */
+extern struct x11drv_display_device_handler desktop_handler DECLSPEC_HIDDEN;
 
 /* XIM support */
 extern BOOL X11DRV_InitXIM( const char *input_style ) DECLSPEC_HIDDEN;

@@ -27,6 +27,7 @@
 /* avoid conflict with field names in included win32 headers */
 #undef Status
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
@@ -36,6 +37,8 @@ static unsigned int dd_mode_count;
 
 static unsigned int max_width;
 static unsigned int max_height;
+static unsigned int desktop_width;
+static unsigned int desktop_height;
 
 static struct screen_size {
     unsigned int width;
@@ -146,6 +149,88 @@ static LONG X11DRV_desktop_SetCurrentMode(int mode)
     return DISP_CHANGE_SUCCESSFUL;
 }
 
+static void query_desktop_work_area( RECT *rc_work )
+{
+    static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
+    RECT rect;
+    HWND hwnd = FindWindowW( trayW, NULL );
+
+    if (!hwnd || !IsWindowVisible( hwnd )) return;
+    if (!GetWindowRect( hwnd, &rect )) return;
+    if (rect.top) rc_work->bottom = rect.top;
+    else rc_work->top = rect.bottom;
+    TRACE( "found tray %p %s work area %s\n", hwnd, wine_dbgstr_rect( &rect ), wine_dbgstr_rect( rc_work ) );
+}
+
+static BOOL X11DRV_desktop_get_gpus( struct x11drv_gpu **new_gpus, int *count )
+{
+    static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
+    struct x11drv_gpu *gpu;
+
+    gpu = heap_calloc( 1, sizeof(*gpu) );
+    if (!gpu) return FALSE;
+
+    lstrcpyW( gpu->name, wine_adapterW );
+    *new_gpus = gpu;
+    *count = 1;
+    return TRUE;
+}
+
+static void X11DRV_desktop_free_gpus( struct x11drv_gpu *gpus )
+{
+    heap_free( gpus );
+}
+
+/* TODO: Support multi-head virtual desktop */
+static BOOL X11DRV_desktop_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new_adapters, int *count )
+{
+    struct x11drv_adapter *adapter;
+
+    adapter = heap_calloc( 1, sizeof(*adapter) );
+    if (!adapter) return FALSE;
+
+    adapter->state_flags = DISPLAY_DEVICE_PRIMARY_DEVICE;
+    if (desktop_width && desktop_height)
+        adapter->state_flags |= DISPLAY_DEVICE_ATTACHED_TO_DESKTOP;
+
+    *new_adapters = adapter;
+    *count = 1;
+    return TRUE;
+}
+
+static void X11DRV_desktop_free_adapters( struct x11drv_adapter *adapters )
+{
+    heap_free( adapters );
+}
+
+static BOOL X11DRV_desktop_get_monitors( ULONG_PTR adapter_id, struct x11drv_monitor **new_monitors, int *count )
+{
+    static const WCHAR generic_nonpnp_monitorW[] = {
+        'G','e','n','e','r','i','c',' ',
+        'N','o','n','-','P','n','P',' ','M','o','n','i','t','o','r',0};
+    struct x11drv_monitor *monitor;
+
+    monitor = heap_calloc( 1, sizeof(*monitor) );
+    if (!monitor) return FALSE;
+
+    lstrcpyW( monitor->name, generic_nonpnp_monitorW );
+    SetRect( &monitor->rc_monitor, 0, 0, desktop_width, desktop_height );
+    SetRect( &monitor->rc_work, 0, 0, desktop_width, desktop_height );
+    query_desktop_work_area( &monitor->rc_work );
+    monitor->state_flags = DISPLAY_DEVICE_ATTACHED;
+    if (desktop_width && desktop_height)
+        monitor->state_flags |= DISPLAY_DEVICE_ACTIVE;
+
+    *new_monitors = monitor;
+    *count = 1;
+    return TRUE;
+}
+
+static void X11DRV_desktop_free_monitors( struct x11drv_monitor *monitors )
+{
+    heap_free( monitors );
+}
+
 /***********************************************************************
  *		X11DRV_init_desktop
  *
@@ -157,8 +242,19 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
 
     root_window = win;
     managed_mode = FALSE;  /* no managed windows in desktop mode */
+    desktop_width = width;
+    desktop_height = height;
 
-    xinerama_init( width, height );
+    /* Initialize virtual desktop mode display device handler */
+    desktop_handler.name = "Virtual Desktop";
+    desktop_handler.get_gpus = X11DRV_desktop_get_gpus;
+    desktop_handler.get_adapters = X11DRV_desktop_get_adapters;
+    desktop_handler.get_monitors = X11DRV_desktop_get_monitors;
+    desktop_handler.free_gpus = X11DRV_desktop_free_gpus;
+    desktop_handler.free_adapters = X11DRV_desktop_free_adapters;
+    desktop_handler.free_monitors = X11DRV_desktop_free_monitors;
+    desktop_handler.register_event_handlers = NULL;
+    TRACE("Display device functions are now handled by: Virtual Desktop\n");
     X11DRV_DisplayDevices_Init( TRUE );
 
     primary_rect = get_primary_monitor_rect();
@@ -311,8 +407,8 @@ void X11DRV_resize_desktop( unsigned int width, unsigned int height )
     struct desktop_resize_data resize_data;
 
     resize_data.old_virtual_rect = get_virtual_screen_rect();
-
-    xinerama_init( width, height );
+    desktop_width = width;
+    desktop_height = height;
     X11DRV_DisplayDevices_Init( TRUE );
     resize_data.new_virtual_rect = get_virtual_screen_rect();
 
