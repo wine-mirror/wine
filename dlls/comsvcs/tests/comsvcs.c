@@ -270,13 +270,17 @@ static void create_dispenser(void)
 static void test_new_moniker(void)
 {
     IMoniker *moniker, *moniker2, *inverse, *class_moniker;
+    IUnknown *obj, *obj2;
+    ULARGE_INTEGER size;
     DWORD moniker_type;
     IBindCtx *bindctx;
     FILETIME filetime;
     DWORD hash, eaten;
-    IUnknown *obj, *obj2;
+    IStream *stream;
+    HGLOBAL hglobal;
     CLSID clsid;
     HRESULT hr;
+    void *ptr;
 
     hr = CreateBindCtx(0, &bindctx);
     ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
@@ -371,6 +375,44 @@ todo_wine
     hr = IMoniker_Enum(moniker, FALSE, (IEnumMoniker **)&obj);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(obj == NULL, "Unexpected return value.\n");
+
+    /* Serialization. */
+    hr = IMoniker_GetSizeMax(moniker, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    size.QuadPart = 0;
+    hr = IMoniker_GetSizeMax(moniker, &size);
+    ok(hr == S_OK, "Failed to get size, hr %#x.\n", hr);
+    ok(size.QuadPart == (sizeof(GUID) + 2 * sizeof(DWORD)), "Unexpected size %s.\n",
+            wine_dbgstr_longlong(size.QuadPart));
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
+
+    hr = IMoniker_Save(moniker, stream, FALSE);
+    ok(hr == S_OK, "Failed to save moniker, hr %#x.\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &hglobal);
+    ok(hr == S_OK, "Failed to get a handle, hr %#x.\n", hr);
+
+    ptr = GlobalLock(hglobal);
+    ok(!!ptr, "Failed to get data pointer.\n");
+
+    hr = CLSIDFromString(L"{20d04fe0-3aea-1069-a2d8-08002b30309d}", &clsid);
+    ok(hr == S_OK, "Failed to get CLSID, hr %#x.\n", hr);
+    ok(IsEqualGUID((GUID *)ptr, &clsid), "Unexpected buffer content.\n");
+    ok(*(DWORD *)((BYTE *)ptr + sizeof(GUID)) == 0, "Unexpected buffer content.\n");
+    ok(*(DWORD *)((BYTE *)ptr + sizeof(GUID) + sizeof(DWORD)) == 0, "Unexpected buffer content.\n");
+
+    GlobalUnlock(hglobal);
+
+    IStream_Release(stream);
+
+    hr = IMoniker_IsDirty(moniker);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMoniker_GetClassID(moniker, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     IMoniker_Release(moniker);
     IBindCtx_Release(bindctx);

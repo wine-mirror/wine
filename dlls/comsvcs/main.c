@@ -476,37 +476,76 @@ static ULONG WINAPI new_moniker_Release(IMoniker* iface)
 
 static HRESULT WINAPI new_moniker_GetClassID(IMoniker *iface, CLSID *clsid)
 {
-    FIXME("%p, %p.\n", iface, clsid);
+    TRACE("%p, %p.\n", iface, clsid);
 
-    return E_NOTIMPL;
+    if (!clsid)
+        return E_POINTER;
+
+    *clsid = CLSID_NewMoniker;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI new_moniker_IsDirty(IMoniker* iface)
 {
-    FIXME("%p.\n", iface);
+    TRACE("%p.\n", iface);
 
-    return E_NOTIMPL;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI new_moniker_Load(IMoniker *iface, IStream *stream)
 {
-    FIXME("%p, %p.\n", iface, stream);
+    struct new_moniker *moniker = impl_from_IMoniker(iface);
+    ULARGE_INTEGER pad;
+    CLSID clsid;
+    HRESULT hr;
+    DWORD len;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, stream);
+
+    hr = IStream_Read(stream, &clsid, sizeof(clsid), &len);
+    if (FAILED(hr))
+        return hr;
+
+    pad.QuadPart = 1;
+    hr = IStream_Read(stream, &pad, sizeof(pad), &len);
+    if (FAILED(hr))
+        return hr;
+
+    if (pad.QuadPart != 0)
+        return E_FAIL;
+
+    moniker->clsid = clsid;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI new_moniker_Save(IMoniker *iface, IStream *stream, BOOL clear_dirty)
 {
-    FIXME("%p, %p, %d.\n", iface, stream, clear_dirty);
+    struct new_moniker *moniker = impl_from_IMoniker(iface);
+    static const ULARGE_INTEGER pad;
+    ULONG written;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %d.\n", iface, stream, clear_dirty);
+
+    hr = IStream_Write(stream, &moniker->clsid, sizeof(moniker->clsid), &written);
+    if (SUCCEEDED(hr))
+        hr = IStream_Write(stream, &pad, sizeof(pad), &written);
+
+    return hr;
 }
 
 static HRESULT WINAPI new_moniker_GetSizeMax(IMoniker *iface, ULARGE_INTEGER *size)
 {
-    FIXME("%p, %p.\n", iface, size);
+    TRACE("%p, %p.\n", iface, size);
 
-    return E_NOTIMPL;
+    if (!size)
+        return E_POINTER;
+
+    size->QuadPart = sizeof(CLSID) + 2 * sizeof(DWORD);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI new_moniker_BindToObject(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
