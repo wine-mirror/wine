@@ -14218,8 +14218,8 @@ static void test_SetActiveWindow(void)
 
     trace("SetActiveWindow(0)\n");
     ret = SetActiveWindow(0);
-    ok( ret == popup, "Failed to SetActiveWindow(0)\n");
-    ok_sequence(SetActiveWindowSeq0, "SetActiveWindow(0)", FALSE);
+    ok( ret == popup || broken(ret == 0) /* w1064v1809 */, "Failed to SetActiveWindow(0), ret:%p\n", ret);
+    if (ret == popup) ok_sequence(SetActiveWindowSeq0, "SetActiveWindow(0)", FALSE);
     flush_sequence();
 
     trace("SetActiveWindow(hwnd), hwnd visible\n");
