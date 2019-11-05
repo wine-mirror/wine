@@ -84,6 +84,12 @@ enum media_stream_state
     STREAM_STATE_EOS,
 };
 
+enum media_source_state
+{
+    SOURCE_STATE_STOPPED = 0,
+    SOURCE_STATE_STARTED,
+};
+
 struct media_stream
 {
     IMFMediaStream *stream;
@@ -107,6 +113,7 @@ struct source_reader
     DWORD first_video_stream_index;
     IMFSourceReaderCallback *async_callback;
     BOOL shutdown_on_release;
+    enum media_source_state source_state;
     struct media_stream *streams;
     DWORD stream_count;
     CRITICAL_SECTION cs;
@@ -268,6 +275,30 @@ static HRESULT source_reader_new_stream_handler(struct source_reader *reader, IM
     return hr;
 }
 
+static HRESULT source_reader_source_state_handler(struct source_reader *reader, MediaEventType event_type)
+{
+    enum media_source_state state;
+
+    switch (event_type)
+    {
+        case MESourceStarted:
+            state = SOURCE_STATE_STARTED;
+            break;
+        case MESourceStopped:
+            state = SOURCE_STATE_STOPPED;
+            break;
+        default:
+            WARN("Unhandled state %d.\n", event_type);
+            return E_FAIL;
+    }
+
+    EnterCriticalSection(&reader->cs);
+    reader->source_state = state;
+    LeaveCriticalSection(&reader->cs);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI source_reader_source_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct source_reader *reader = impl_from_source_callback_IMFAsyncCallback(iface);
@@ -291,6 +322,11 @@ static HRESULT WINAPI source_reader_source_events_callback_Invoke(IMFAsyncCallba
     {
         case MENewStream:
             hr = source_reader_new_stream_handler(reader, event);
+            break;
+        case MESourceStarted:
+        case MESourcePaused:
+        case MESourceStopped:
+            hr = source_reader_source_state_handler(reader, event_type);
             break;
         default:
             ;
