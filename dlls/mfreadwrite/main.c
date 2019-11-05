@@ -591,10 +591,20 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
     return refcount;
 }
 
+static HRESULT source_reader_get_stream_selection(const struct source_reader *reader, DWORD index, BOOL *selected)
+{
+    IMFStreamDescriptor *sd;
+
+    if (FAILED(IMFPresentationDescriptor_GetStreamDescriptorByIndex(reader->descriptor, index, selected, &sd)))
+        return MF_E_INVALIDSTREAMNUMBER;
+    IMFStreamDescriptor_Release(sd);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI src_reader_GetStreamSelection(IMFSourceReader *iface, DWORD index, BOOL *selected)
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
-    IMFStreamDescriptor *sd;
 
     TRACE("%p, %#x, %p.\n", iface, index, selected);
 
@@ -610,11 +620,7 @@ static HRESULT WINAPI src_reader_GetStreamSelection(IMFSourceReader *iface, DWOR
             ;
     }
 
-    if (FAILED(IMFPresentationDescriptor_GetStreamDescriptorByIndex(reader->descriptor, index, selected, &sd)))
-        return MF_E_INVALIDSTREAMNUMBER;
-    IMFStreamDescriptor_Release(sd);
-
-    return S_OK;
+    return source_reader_get_stream_selection(reader, index, selected);
 }
 
 static HRESULT WINAPI src_reader_SetStreamSelection(IMFSourceReader *iface, DWORD index, BOOL selected)
@@ -820,6 +826,7 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
     struct media_stream *stream;
     DWORD stream_index;
     HRESULT hr = S_OK;
+    BOOL selected;
 
     if (!stream_flags || !sample)
         return E_POINTER;
@@ -841,12 +848,16 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
             stream_index = index;
     }
 
-    if (stream_index >= reader->stream_count)
+    /* Can't read from deselected streams. */
+    if (SUCCEEDED(hr = source_reader_get_stream_selection(reader, stream_index, &selected)) && !selected)
+        hr = MF_E_INVALIDREQUEST;
+
+    if (FAILED(hr))
     {
         *stream_flags = MF_SOURCE_READERF_ERROR;
         if (actual_index)
             *actual_index = index;
-        return MF_E_INVALIDSTREAMNUMBER;
+        return hr;
     }
 
     if (actual_index)
