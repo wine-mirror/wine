@@ -3025,6 +3025,12 @@ static void run_tests(void)
     parse_script_a("testOptionalArg 1,,2");
     CHECK_CALLED(global_testoptionalarg_i);
 
+    parse_script_a("sub x()\n"
+                   "    dim y\n"
+                   "    y = cint(3)\n"
+                   "end sub\n"
+                   "x\n");
+
     strict_dispid_check = FALSE;
 
     SET_EXPECT(testobj_value_i);

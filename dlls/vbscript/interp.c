@@ -139,14 +139,14 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
                     return S_OK;
                 }
             }
-        }
 
-        hres = disp_get_id(ctx->this_obj, name, invoke_type, TRUE, &id);
-        if(SUCCEEDED(hres)) {
-            ref->type = REF_DISP;
-            ref->u.d.disp = ctx->this_obj;
-            ref->u.d.id = id;
-            return S_OK;
+            hres = vbdisp_get_id(ctx->vbthis, name, invoke_type, TRUE, &id);
+            if(SUCCEEDED(hres)) {
+                ref->type = REF_DISP;
+                ref->u.d.disp = (IDispatch*)&ctx->vbthis->IDispatchEx_iface;
+                ref->u.d.id = id;
+                return S_OK;
+            }
         }
     }
 
