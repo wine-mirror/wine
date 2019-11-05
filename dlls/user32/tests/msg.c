@@ -14375,6 +14375,7 @@ static void test_dbcs_wm_char(void)
                            WS_OVERLAPPEDWINDOW, 100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create overlapped window\n");
     ok (hwnd2 != 0, "Failed to create overlapped window\n");
+    flush_events();
     flush_sequence();
 
     memset( wmCharSeq, 0, sizeof(wmCharSeq) );
