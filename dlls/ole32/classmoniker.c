@@ -142,7 +142,7 @@ static ULONG WINAPI ClassMoniker_Release(IMoniker* iface)
  ******************************************************************************/
 static HRESULT WINAPI ClassMoniker_GetClassID(IMoniker* iface,CLSID *pClassID)
 {
-    TRACE("(%p,%p),stub!\n",iface,pClassID);
+    TRACE("(%p, %p)\n", iface, pClassID);
 
     if (pClassID==NULL)
         return E_POINTER;
