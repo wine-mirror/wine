@@ -87,6 +87,19 @@ static inline BOOL is_special_env_var( const char *var )
 
 
 /***********************************************************************
+ *           set_env_var
+ */
+static void set_env_var( WCHAR **env, const WCHAR *name, const WCHAR *val )
+{
+    UNICODE_STRING nameW, valW;
+
+    RtlInitUnicodeString( &nameW, name );
+    RtlInitUnicodeString( &valW, val );
+    RtlSetEnvironmentVariable( env, &nameW, &valW );
+}
+
+
+/***********************************************************************
  *           set_registry_variables
  *
  * Set environment variables by enumerating the values of a key;
@@ -278,7 +291,7 @@ static void set_additional_environment( WCHAR **env )
     static const WCHAR programdataW[] = {'P','r','o','g','r','a','m','D','a','t','a',0};
     static const WCHAR publicW[] = {'P','U','B','L','I','C',0};
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW, valW;
+    UNICODE_STRING nameW;
     WCHAR *val;
     HANDLE hkey;
 
@@ -290,18 +303,13 @@ static void set_additional_environment( WCHAR **env )
     {
         if ((val = get_registry_value( *env, hkey, programdataW )))
         {
-            RtlInitUnicodeString( &valW, val );
-            RtlInitUnicodeString( &nameW, allusersW );
-            RtlSetEnvironmentVariable( env, &nameW, &valW );
-            RtlInitUnicodeString( &nameW, programdataW );
-            RtlSetEnvironmentVariable( env, &nameW, &valW );
+            set_env_var( env, allusersW, val );
+            set_env_var( env, programdataW, val );
             RtlFreeHeap( GetProcessHeap(), 0, val );
         }
         if ((val = get_registry_value( *env, hkey, public_valueW )))
         {
-            RtlInitUnicodeString( &valW, val );
-            RtlInitUnicodeString( &nameW, publicW );
-            RtlSetEnvironmentVariable( env, &nameW, &valW );
+            set_env_var( env, publicW, val );
             RtlFreeHeap( GetProcessHeap(), 0, val );
         }
         NtClose( hkey );
@@ -314,13 +322,139 @@ static void set_additional_environment( WCHAR **env )
     {
         if ((val = get_registry_value( *env, hkey, computer_valueW )))
         {
-            RtlInitUnicodeString( &valW, val );
-            RtlInitUnicodeString( &nameW, computernameW );
-            RtlSetEnvironmentVariable( env, &nameW, &valW );
+            set_env_var( env, computernameW, val );
             RtlFreeHeap( GetProcessHeap(), 0, val );
         }
         NtClose( hkey );
     }
+}
+
+
+/* set an environment variable for one of the wine path variables */
+static void set_wine_path_variable( WCHAR **env, const WCHAR *name, const char *unix_path )
+{
+    UNICODE_STRING nt_name, var_name;
+    ANSI_STRING unix_name;
+
+    RtlInitUnicodeString( &var_name, name );
+    if (unix_path)
+    {
+        RtlInitAnsiString( &unix_name, unix_path );
+        if (wine_unix_to_nt_file_name( &unix_name, &nt_name )) return;
+        RtlSetEnvironmentVariable( env, &var_name, &nt_name );
+        RtlFreeUnicodeString( &nt_name );
+    }
+    else RtlSetEnvironmentVariable( env, &var_name, NULL );
+}
+
+
+/***********************************************************************
+ *           set_wow64_environment
+ *
+ * Set the environment variables that change across 32/64/Wow64.
+ */
+static void set_wow64_environment( WCHAR **env )
+{
+    static WCHAR archW[]    = {'P','R','O','C','E','S','S','O','R','_','A','R','C','H','I','T','E','C','T','U','R','E',0};
+    static WCHAR arch6432W[] = {'P','R','O','C','E','S','S','O','R','_','A','R','C','H','I','T','E','W','6','4','3','2',0};
+    static const WCHAR x86W[] = {'x','8','6',0};
+    static const WCHAR versionW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                     'M','a','c','h','i','n','e','\\',
+                                     'S','o','f','t','w','a','r','e','\\',
+                                     'M','i','c','r','o','s','o','f','t','\\',
+                                     'W','i','n','d','o','w','s','\\',
+                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
+    static const WCHAR progdirW[]   = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',0};
+    static const WCHAR progdir86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',' ','(','x','8','6',')',0};
+    static const WCHAR progfilesW[] = {'P','r','o','g','r','a','m','F','i','l','e','s',0};
+    static const WCHAR progw6432W[] = {'P','r','o','g','r','a','m','W','6','4','3','2',0};
+    static const WCHAR commondirW[]   = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r',0};
+    static const WCHAR commondir86W[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r',' ','(','x','8','6',')',0};
+    static const WCHAR commonfilesW[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','F','i','l','e','s',0};
+    static const WCHAR commonw6432W[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','W','6','4','3','2',0};
+    static const WCHAR winedlldirW[] = {'W','I','N','E','D','L','L','D','I','R','%','u',0};
+    static const WCHAR winehomedirW[] = {'W','I','N','E','H','O','M','E','D','I','R',0};
+    static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
+    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
+    static const WCHAR wineconfigdirW[] = {'W','I','N','E','C','O','N','F','I','G','D','I','R',0};
+
+    WCHAR buf[64];
+    UNICODE_STRING arch_strW = { sizeof(archW) - sizeof(WCHAR), sizeof(archW), archW };
+    UNICODE_STRING arch6432_strW = { sizeof(arch6432W) - sizeof(WCHAR), sizeof(arch6432W), arch6432W };
+    UNICODE_STRING valW = { 0, sizeof(buf), buf };
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    const char *path;
+    WCHAR *val;
+    HANDLE hkey;
+    DWORD i;
+
+    /* set the Wine paths */
+
+    set_wine_path_variable( env, winedatadirW, wine_get_data_dir() );
+    set_wine_path_variable( env, winehomedirW, getenv("HOME") );
+    set_wine_path_variable( env, winebuilddirW, wine_get_build_dir() );
+    set_wine_path_variable( env, wineconfigdirW, wine_get_config_dir() );
+    for (i = 0; (path = wine_dll_enum_load_path( i )); i++)
+    {
+        sprintfW( buf, winedlldirW, i );
+        set_wine_path_variable( env, buf, path );
+    }
+    sprintfW( buf, winedlldirW, i );
+    set_wine_path_variable( env, buf, NULL );
+
+    /* set the PROCESSOR_ARCHITECTURE variable */
+
+    if (!RtlQueryEnvironmentVariable_U( *env, &arch6432_strW, &valW ))
+    {
+        if (is_win64)
+        {
+            RtlSetEnvironmentVariable( env, &arch_strW, &valW );
+            RtlSetEnvironmentVariable( env, &arch6432_strW, NULL );
+        }
+    }
+    else if (!RtlQueryEnvironmentVariable_U( *env, &arch_strW, &valW ))
+    {
+        if (is_wow64)
+        {
+            RtlSetEnvironmentVariable( env, &arch6432_strW, &valW );
+            RtlInitUnicodeString( &nameW, x86W );
+            RtlSetEnvironmentVariable( env, &arch_strW, &nameW );
+        }
+    }
+
+    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
+    RtlInitUnicodeString( &nameW, versionW );
+    if (NtOpenKey( &hkey, KEY_READ | KEY_WOW64_64KEY, &attr )) return;
+
+    /* set the ProgramFiles variables */
+
+    if ((val = get_registry_value( *env, hkey, progdirW )))
+    {
+        if (is_win64 || is_wow64) set_env_var( env, progw6432W, val );
+        if (is_win64 || !is_wow64) set_env_var( env, progfilesW, val );
+        RtlFreeHeap( GetProcessHeap(), 0, val );
+    }
+    if (is_wow64 && (val = get_registry_value( *env, hkey, progdir86W )))
+    {
+        set_env_var( env, progfilesW, val );
+        RtlFreeHeap( GetProcessHeap(), 0, val );
+    }
+
+    /* set the CommonProgramFiles variables */
+
+    if ((val = get_registry_value( *env, hkey, commondirW )))
+    {
+        if (is_win64 || is_wow64) set_env_var( env, commonw6432W, val );
+        if (is_win64 || !is_wow64) set_env_var( env, commonfilesW, val );
+        RtlFreeHeap( GetProcessHeap(), 0, val );
+    }
+    if (is_wow64 && (val = get_registry_value( *env, hkey, commondir86W )))
+    {
+        set_env_var( env, commonfilesW, val );
+        RtlFreeHeap( GetProcessHeap(), 0, val );
+    }
+    NtClose( hkey );
 }
 
 
@@ -1319,6 +1453,7 @@ done:
         RtlInitUnicodeString( &curdir, windows_dir );
         RtlSetCurrentDirectory_U( &curdir );
     }
+    set_wow64_environment( &params->Environment );
 }
 
 
