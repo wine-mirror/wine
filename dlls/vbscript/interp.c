@@ -31,7 +31,6 @@ typedef struct {
     instr_t *instr;
     script_ctx_t *script;
     function_t *func;
-    IDispatch *this_obj;
     vbdisp_t *vbthis;
 
     VARIANT *args;
@@ -1446,13 +1445,21 @@ static HRESULT interp_stop(exec_ctx_t *ctx)
 
 static HRESULT interp_me(exec_ctx_t *ctx)
 {
+    IDispatch *disp;
     VARIANT v;
 
     TRACE("\n");
 
-    IDispatch_AddRef(ctx->this_obj);
+    if(ctx->vbthis)
+        disp = (IDispatch*)&ctx->vbthis->IDispatchEx_iface;
+    else if(ctx->script->host_global)
+        disp = ctx->script->host_global;
+    else
+        disp = (IDispatch*)&ctx->script->script_obj->IDispatchEx_iface;
+
+    IDispatch_AddRef(disp);
     V_VT(&v) = VT_DISPATCH;
-    V_DISPATCH(&v) = ctx->this_obj;
+    V_DISPATCH(&v) = disp;
     return stack_push(ctx, &v);
 }
 
@@ -2205,8 +2212,8 @@ static void release_exec(exec_ctx_t *ctx)
     VariantClear(&ctx->ret_val);
     release_dynamic_vars(ctx->dynamic_vars);
 
-    if(ctx->this_obj)
-        IDispatch_Release(ctx->this_obj);
+    if(ctx->vbthis)
+        IDispatchEx_Release(&ctx->vbthis->IDispatchEx_iface);
 
     if(ctx->args) {
         for(i=0; i < ctx->func->arg_cnt; i++)
@@ -2301,14 +2308,9 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
         IActiveScriptSite_OnEnterScript(ctx->site);
 
     if(vbthis) {
-        exec.this_obj = (IDispatch*)&vbthis->IDispatchEx_iface;
+        IDispatchEx_AddRef(&vbthis->IDispatchEx_iface);
         exec.vbthis = vbthis;
-    }else if (ctx->host_global) {
-        exec.this_obj = ctx->host_global;
-    }else {
-        exec.this_obj = (IDispatch*)&ctx->script_obj->IDispatchEx_iface;
     }
-    IDispatch_AddRef(exec.this_obj);
 
     exec.instr = exec.code->instrs + func->code_off;
     exec.script = ctx;
