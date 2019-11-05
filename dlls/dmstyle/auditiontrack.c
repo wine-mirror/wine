@@ -121,9 +121,13 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_Play(IDirectMusicTrack8 *iface, voi
 static HRESULT WINAPI IDirectMusicTrack8Impl_GetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
         MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam)
 {
-        IDirectMusicAuditionTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
-	return S_OK;
+    IDirectMusicAuditionTrack *This = impl_from_IDirectMusicTrack8(iface);
+    FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
+
+    if (!rguidType)
+        return E_POINTER;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicTrack8Impl_SetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
