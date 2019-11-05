@@ -271,6 +271,7 @@ static void test_new_moniker(void)
 {
     IMoniker *moniker, *moniker2, *inverse, *class_moniker;
     IUnknown *obj, *obj2;
+    BIND_OPTS2 bind_opts;
     ULARGE_INTEGER size;
     DWORD moniker_type;
     IBindCtx *bindctx;
@@ -415,6 +416,18 @@ todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     IMoniker_Release(moniker);
+
+    /* Full path to create new object, using progid. */
+    memset(&bind_opts, 0, sizeof(bind_opts));
+    bind_opts.cbStruct = sizeof(bind_opts);
+    bind_opts.dwClassContext = CLSCTX_INPROC_SERVER;
+
+    hr = CoGetObject(L"new:msxml2.domdocument", (BIND_OPTS *)&bind_opts, &IID_IXMLDOMDocument, (void **)&obj);
+todo_wine
+    ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(obj);
+
     IBindCtx_Release(bindctx);
 }
 

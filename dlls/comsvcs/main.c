@@ -790,7 +790,7 @@ static HRESULT new_moniker_parse_displayname(IBindCtx *pbc, LPOLESTR name, ULONG
     if (wcsnicmp(name, L"new:", 4))
         return MK_E_SYNTAX;
 
-    if (!guid_from_string(name + 4, &guid))
+    if (!guid_from_string(name + 4, &guid) && FAILED(CLSIDFromProgID(name + 4, &guid)))
         return MK_E_SYNTAX;
 
     moniker = heap_alloc_zero(sizeof(*moniker));
