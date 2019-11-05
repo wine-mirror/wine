@@ -449,156 +449,6 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE 
 
 
 /***********************************************************************
- *           set_registry_variables
- *
- * Set environment variables by enumerating the values of a key;
- * helper for set_registry_environment().
- * Note that Windows happily truncates the value if it's too big.
- */
-static void set_registry_variables( HANDLE hkey, ULONG type )
-{
-    static const WCHAR pathW[] = {'P','A','T','H'};
-    static const WCHAR sep[] = {';',0};
-    UNICODE_STRING env_name, env_value;
-    NTSTATUS status;
-    DWORD size;
-    int index;
-    char buffer[1024*sizeof(WCHAR) + sizeof(KEY_VALUE_FULL_INFORMATION)];
-    WCHAR tmpbuf[1024];
-    UNICODE_STRING tmp;
-    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
-
-    tmp.Buffer = tmpbuf;
-    tmp.MaximumLength = sizeof(tmpbuf);
-
-    for (index = 0; ; index++)
-    {
-        status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
-                                      buffer, sizeof(buffer), &size );
-        if (status != STATUS_SUCCESS && status != STATUS_BUFFER_OVERFLOW)
-            break;
-        if (info->Type != type)
-            continue;
-        env_name.Buffer = info->Name;
-        env_name.Length = env_name.MaximumLength = info->NameLength;
-        env_value.Buffer = (WCHAR *)(buffer + info->DataOffset);
-        env_value.Length = info->DataLength;
-        env_value.MaximumLength = sizeof(buffer) - info->DataOffset;
-        if (env_value.Length && !env_value.Buffer[env_value.Length/sizeof(WCHAR)-1])
-            env_value.Length -= sizeof(WCHAR);  /* don't count terminating null if any */
-        if (!env_value.Length) continue;
-        if (info->Type == REG_EXPAND_SZ)
-        {
-            status = RtlExpandEnvironmentStrings_U( NULL, &env_value, &tmp, NULL );
-            if (status != STATUS_SUCCESS && status != STATUS_BUFFER_OVERFLOW) continue;
-            RtlCopyUnicodeString( &env_value, &tmp );
-        }
-        /* PATH is magic */
-        if (env_name.Length == sizeof(pathW) &&
-            !strncmpiW( env_name.Buffer, pathW, ARRAY_SIZE( pathW )) &&
-            !RtlQueryEnvironmentVariable_U( NULL, &env_name, &tmp ))
-        {
-            RtlAppendUnicodeToString( &tmp, sep );
-            if (RtlAppendUnicodeStringToString( &tmp, &env_value )) continue;
-            RtlCopyUnicodeString( &env_value, &tmp );
-        }
-        RtlSetEnvironmentVariable( NULL, &env_name, &env_value );
-    }
-}
-
-
-/***********************************************************************
- *           has_registry_environment
- */
-static BOOL has_registry_environment(void)
-{
-    static const WCHAR env_keyW[] = {'\\','R','e','g','i','s','t','r','y','\\',
-                                     'M','a','c','h','i','n','e','\\',
-                                     'S','y','s','t','e','m','\\',
-                                     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                     'C','o','n','t','r','o','l','\\',
-                                     'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
-                                     'E','n','v','i','r','o','n','m','e','n','t',0};
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    HANDLE hkey;
-    BOOL ret;
-
-    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
-    RtlInitUnicodeString( &nameW, env_keyW );
-    ret = !NtOpenKey( &hkey, KEY_READ, &attr );
-    if (ret) NtClose( hkey );
-    return ret;
-}
-
-
-/***********************************************************************
- *           set_registry_environment
- *
- * Set the environment variables specified in the registry.
- *
- * Note: Windows handles REG_SZ and REG_EXPAND_SZ in one pass with the
- * consequence that REG_EXPAND_SZ cannot be used reliably as it depends
- * on the order in which the variables are processed. But on Windows it
- * does not really matter since they only use %SystemDrive% and
- * %SystemRoot% which are predefined. But Wine defines these in the
- * registry, so we need two passes.
- */
-static void set_registry_environment( BOOL volatile_only )
-{
-    static const WCHAR env_keyW[] = {'\\','R','e','g','i','s','t','r','y','\\',
-                                     'M','a','c','h','i','n','e','\\',
-                                     'S','y','s','t','e','m','\\',
-                                     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                     'C','o','n','t','r','o','l','\\',
-                                     'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
-                                     'E','n','v','i','r','o','n','m','e','n','t',0};
-    static const WCHAR envW[] = {'E','n','v','i','r','o','n','m','e','n','t',0};
-    static const WCHAR volatile_envW[] = {'V','o','l','a','t','i','l','e',' ','E','n','v','i','r','o','n','m','e','n','t',0};
-
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    HANDLE hkey;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    /* first the system environment variables */
-    RtlInitUnicodeString( &nameW, env_keyW );
-    if (!volatile_only && NtOpenKey( &hkey, KEY_READ, &attr ) == STATUS_SUCCESS)
-    {
-        set_registry_variables( hkey, REG_SZ );
-        set_registry_variables( hkey, REG_EXPAND_SZ );
-        NtClose( hkey );
-    }
-
-    /* then the ones for the current user */
-    if (RtlOpenCurrentUser( KEY_READ, &attr.RootDirectory ) != STATUS_SUCCESS) return;
-    RtlInitUnicodeString( &nameW, envW );
-    if (!volatile_only && NtOpenKey( &hkey, KEY_READ, &attr ) == STATUS_SUCCESS)
-    {
-        set_registry_variables( hkey, REG_SZ );
-        set_registry_variables( hkey, REG_EXPAND_SZ );
-        NtClose( hkey );
-    }
-
-    RtlInitUnicodeString( &nameW, volatile_envW );
-    if (NtOpenKey( &hkey, KEY_READ, &attr ) == STATUS_SUCCESS)
-    {
-        set_registry_variables( hkey, REG_SZ );
-        set_registry_variables( hkey, REG_EXPAND_SZ );
-        NtClose( hkey );
-    }
-
-    NtClose( attr.RootDirectory );
-}
-
-
-/***********************************************************************
  *           get_reg_value
  */
 static WCHAR *get_reg_value( HKEY hkey, const WCHAR *name )
@@ -657,71 +507,6 @@ static void set_wine_path_variable( const WCHAR *name, const char *unix_path )
     else RtlSetEnvironmentVariable( NULL, &var_name, NULL );
 }
 
-
-/***********************************************************************
- *           set_additional_environment
- *
- * Set some additional environment variables not specified in the registry.
- */
-static void set_additional_environment(void)
-{
-    static const WCHAR profile_keyW[] = {'\\','R','e','g','i','s','t','r','y','\\',
-                                         'M','a','c','h','i','n','e','\\',
-                                         'S','o','f','t','w','a','r','e','\\',
-                                         'M','i','c','r','o','s','o','f','t','\\',
-                                         'W','i','n','d','o','w','s',' ','N','T','\\',
-                                         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                         'P','r','o','f','i','l','e','L','i','s','t',0};
-    static const WCHAR profiles_valueW[] = {'P','r','o','f','i','l','e','s','D','i','r','e','c','t','o','r','y',0};
-    static const WCHAR public_valueW[] = {'P','u','b','l','i','c',0};
-    static const WCHAR computernameW[] = {'C','O','M','P','U','T','E','R','N','A','M','E',0};
-    static const WCHAR allusersW[] = {'A','L','L','U','S','E','R','S','P','R','O','F','I','L','E',0};
-    static const WCHAR programdataW[] = {'P','r','o','g','r','a','m','D','a','t','a',0};
-    static const WCHAR publicW[] = {'P','U','B','L','I','C',0};
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    WCHAR *profile_dir = NULL, *program_data_dir = NULL, *public_dir = NULL;
-    WCHAR buf[32];
-    HANDLE hkey;
-    DWORD len;
-
-    /* ComputerName */
-    len = ARRAY_SIZE( buf );
-    if (GetComputerNameW( buf, &len ))
-        SetEnvironmentVariableW( computernameW, buf );
-
-    /* set the ALLUSERSPROFILE variables */
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, profile_keyW );
-    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
-    {
-        profile_dir = get_reg_value( hkey, profiles_valueW );
-        program_data_dir = get_reg_value( hkey, programdataW );
-        public_dir = get_reg_value( hkey, public_valueW );
-        NtClose( hkey );
-    }
-
-    if (program_data_dir)
-    {
-        SetEnvironmentVariableW( allusersW, program_data_dir );
-        SetEnvironmentVariableW( programdataW, program_data_dir );
-    }
-
-    if (public_dir)
-    {
-        SetEnvironmentVariableW( publicW, public_dir );
-    }
-
-    HeapFree( GetProcessHeap(), 0, profile_dir );
-    HeapFree( GetProcessHeap(), 0, program_data_dir );
-    HeapFree( GetProcessHeap(), 0, public_dir );
-}
 
 /***********************************************************************
  *           set_wow64_environment
@@ -883,61 +668,6 @@ static void init_windows_dirs(void)
 }
 
 
-/***********************************************************************
- *           start_wineboot
- *
- * Start the wineboot process if necessary. Return the handles to wait on.
- */
-static void start_wineboot( HANDLE handles[2] )
-{
-    static const WCHAR wineboot_eventW[] = {'_','_','w','i','n','e','b','o','o','t','_','e','v','e','n','t',0};
-
-    handles[1] = 0;
-    if (!(handles[0] = CreateEventW( NULL, TRUE, FALSE, wineboot_eventW )))
-    {
-        ERR( "failed to create wineboot event, expect trouble\n" );
-        return;
-    }
-    if (GetLastError() != ERROR_ALREADY_EXISTS)  /* we created it */
-    {
-        static const WCHAR wineboot[] = {'\\','w','i','n','e','b','o','o','t','.','e','x','e',0};
-        static const WCHAR args[] = {' ','-','-','i','n','i','t',0};
-        STARTUPINFOW si;
-        PROCESS_INFORMATION pi;
-        void *redir;
-        WCHAR app[MAX_PATH];
-        WCHAR cmdline[MAX_PATH + ARRAY_SIZE( wineboot ) + ARRAY_SIZE( args )];
-
-        memset( &si, 0, sizeof(si) );
-        si.cb = sizeof(si);
-        si.dwFlags = STARTF_USESTDHANDLES;
-        si.hStdInput  = 0;
-        si.hStdOutput = 0;
-        si.hStdError  = GetStdHandle( STD_ERROR_HANDLE );
-
-        GetSystemDirectoryW( app, MAX_PATH - ARRAY_SIZE( wineboot ));
-        lstrcatW( app, wineboot );
-
-        Wow64DisableWow64FsRedirection( &redir );
-        strcpyW( cmdline, app );
-        strcatW( cmdline, args );
-        if (CreateProcessW( app, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi ))
-        {
-            TRACE( "started wineboot pid %04x tid %04x\n", pi.dwProcessId, pi.dwThreadId );
-            CloseHandle( pi.hThread );
-            handles[1] = pi.hProcess;
-        }
-        else
-        {
-            ERR( "failed to start wineboot, err %u\n", GetLastError() );
-            CloseHandle( handles[0] );
-            handles[0] = 0;
-        }
-        Wow64RevertWow64FsRedirection( redir );
-    }
-}
-
-
 #ifdef __i386__
 extern DWORD call_process_entry( PEB *peb, LPTHREAD_START_ROUTINE entry );
 __ASM_GLOBAL_FUNC( call_process_entry,
@@ -1026,8 +756,6 @@ void * CDECL __wine_kernel_init(void)
     WCHAR *p, main_exe_name[MAX_PATH+1];
     PEB *peb = NtCurrentTeb()->Peb;
     RTL_USER_PROCESS_PARAMETERS *params = peb->ProcessParameters;
-    HANDLE boot_events[2];
-    BOOL got_environment = TRUE;
 
     /* Initialize everything */
 
@@ -1039,15 +767,7 @@ void * CDECL __wine_kernel_init(void)
 
     LOCALE_Init();
     init_windows_dirs();
-    boot_events[0] = boot_events[1] = 0;
-
-    if (!peb->ProcessParameters->WindowTitle.Buffer)
-    {
-        /* convert old configuration to new format */
-        convert_old_config();
-        got_environment = has_registry_environment();
-        start_wineboot( boot_events );
-    }
+    convert_old_config();
 
     /* if there's no extension, append a dot to prevent LoadLibrary from appending .dll */
     strcpyW( main_exe_name, peb->ProcessParameters->ImagePathName.Buffer );
@@ -1057,20 +777,6 @@ void * CDECL __wine_kernel_init(void)
     TRACE( "starting process name=%s argv[0]=%s\n",
            debugstr_w(main_exe_name), debugstr_w(__wine_main_wargv[0]) );
 
-    if (boot_events[0])
-    {
-        DWORD timeout = 2 * 60 * 1000, count = 1;
-
-        if (boot_events[1]) count++;
-        if (!got_environment) timeout = 5 * 60 * 1000;  /* initial prefix creation can take longer */
-        if (WaitForMultipleObjects( count, boot_events, FALSE, timeout ) == WAIT_TIMEOUT)
-            ERR( "boot event wait timed out\n" );
-        CloseHandle( boot_events[0] );
-        if (boot_events[1]) CloseHandle( boot_events[1] );
-        /* reload environment now that wineboot has run */
-        set_registry_environment( got_environment );
-        set_additional_environment();
-    }
     set_wow64_environment();
     set_library_argv( __wine_main_wargv );
 

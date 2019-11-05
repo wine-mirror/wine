@@ -1278,13 +1278,15 @@ int __cdecl main( int argc, char *argv[] )
     static const WCHAR RunOnceW[] = {'R','u','n','O','n','c','e',0};
     static const WCHAR RunServicesW[] = {'R','u','n','S','e','r','v','i','c','e','s',0};
     static const WCHAR RunServicesOnceW[] = {'R','u','n','S','e','r','v','i','c','e','s','O','n','c','e',0};
-    static const WCHAR wineboot_eventW[] = {'_','_','w','i','n','e','b','o','o','t','_','e','v','e','n','t',0};
+    static const WCHAR wineboot_eventW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
+                                            '\\','_','_','w','i','n','e','b','o','o','t','_','e','v','e','n','t',0};
 
     /* First, set the current directory to SystemRoot */
     int i, j;
     BOOL end_session, force, init, kill, restart, shutdown, update;
     HANDLE event;
-    SECURITY_ATTRIBUTES sa;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
     BOOL is_wow64;
 
     end_session = force = init = kill = restart = shutdown = update = FALSE;
@@ -1362,10 +1364,10 @@ int __cdecl main( int argc, char *argv[] )
 
     if (shutdown) return 0;
 
-    sa.nLength = sizeof(sa);
-    sa.lpSecurityDescriptor = NULL;
-    sa.bInheritHandle = TRUE;  /* so that services.exe inherits it */
-    event = CreateEventW( &sa, TRUE, FALSE, wineboot_eventW );
+    /* create event to be inherited by services.exe */
+    InitializeObjectAttributes( &attr, &nameW, OBJ_OPENIF | OBJ_INHERIT, 0, NULL );
+    RtlInitUnicodeString( &nameW, wineboot_eventW );
+    NtCreateEvent( &event, EVENT_ALL_ACCESS, &attr, NotificationEvent, 0 );
 
     ResetEvent( event );  /* in case this is a restart */
 

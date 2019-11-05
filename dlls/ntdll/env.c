@@ -51,6 +51,8 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 static const WCHAR windows_dir[] = {'C',':','\\','w','i','n','d','o','w','s',0};
 
+static BOOL first_prefix_start;  /* first ever process start in this prefix? */
+
 static inline SIZE_T get_env_length( const WCHAR *env )
 {
     const WCHAR *end = env;
@@ -153,7 +155,7 @@ static void set_registry_variables( WCHAR **env, HANDLE hkey, ULONG type )
  * %SystemRoot% which are predefined. But Wine defines these in the
  * registry, so we need two passes.
  */
-static void set_registry_environment( WCHAR **env )
+static BOOL set_registry_environment( WCHAR **env, BOOL first_time )
 {
     static const WCHAR env_keyW[] = {'\\','R','e','g','i','s','t','r','y','\\',
                                      'M','a','c','h','i','n','e','\\',
@@ -168,27 +170,23 @@ static void set_registry_environment( WCHAR **env )
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     HANDLE hkey;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
+    BOOL ret = FALSE;
 
     /* first the system environment variables */
+    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
     RtlInitUnicodeString( &nameW, env_keyW );
-    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
+    if (first_time && !NtOpenKey( &hkey, KEY_READ, &attr ))
     {
         set_registry_variables( env, hkey, REG_SZ );
         set_registry_variables( env, hkey, REG_EXPAND_SZ );
         NtClose( hkey );
     }
+    else ret = TRUE;
 
     /* then the ones for the current user */
-    if (RtlOpenCurrentUser( KEY_READ, &attr.RootDirectory ) != STATUS_SUCCESS) return;
+    if (RtlOpenCurrentUser( KEY_READ, &attr.RootDirectory ) != STATUS_SUCCESS) return ret;
     RtlInitUnicodeString( &nameW, envW );
-    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
+    if (first_time && !NtOpenKey( &hkey, KEY_READ, &attr ))
     {
         set_registry_variables( env, hkey, REG_SZ );
         set_registry_variables( env, hkey, REG_EXPAND_SZ );
@@ -204,6 +202,7 @@ static void set_registry_environment( WCHAR **env )
     }
 
     NtClose( attr.RootDirectory );
+    return ret;
 }
 
 
@@ -365,7 +364,7 @@ static WCHAR *build_initial_environment( char **env )
         p += strlenW(p) + 1;
     }
     *p = 0;
-    set_registry_environment( &ptr );
+    first_prefix_start = set_registry_environment( &ptr, TRUE );
     set_additional_environment( &ptr );
     return ptr;
 }
@@ -1133,6 +1132,81 @@ static inline void get_unicode_string( UNICODE_STRING *str, WCHAR **src, UINT le
     *src += len / sizeof(WCHAR);
 }
 
+
+/***********************************************************************
+ *           run_wineboot
+ */
+static void run_wineboot( WCHAR **env )
+{
+    static const WCHAR wineboot_eventW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
+                                            '\\','_','_','w','i','n','e','b','o','o','t','_','e','v','e','n','t',0};
+    static const WCHAR wineboot[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
+                                     's','y','s','t','e','m','3','2','\\',
+                                     'w','i','n','e','b','o','o','t','.','e','x','e',0};
+    static const WCHAR cmdline[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
+                                    's','y','s','t','e','m','3','2','\\',
+                                    'w','i','n','e','b','o','o','t','.','e','x','e',' ',
+                                    '-','-','i','n','i','t',0};
+    UNICODE_STRING nameW, cmdlineW, dllpathW;
+    RTL_USER_PROCESS_PARAMETERS *params;
+    RTL_USER_PROCESS_INFORMATION info;
+    WCHAR *load_path, *dummy;
+    OBJECT_ATTRIBUTES attr;
+    LARGE_INTEGER timeout;
+    HANDLE handles[2];
+    NTSTATUS status;
+    ULONG redir = 0;
+    int count = 1;
+
+    RtlInitUnicodeString( &nameW, wineboot_eventW );
+    InitializeObjectAttributes( &attr, &nameW, OBJ_OPENIF, 0, NULL );
+
+    status = NtCreateEvent( &handles[0], EVENT_ALL_ACCESS, &attr, NotificationEvent, 0 );
+    if (status == STATUS_OBJECT_NAME_EXISTS) goto wait;
+    if (status)
+    {
+        ERR( "failed to create wineboot event, expect trouble\n" );
+        return;
+    }
+    LdrGetDllPath( wineboot + 4, LOAD_WITH_ALTERED_SEARCH_PATH, &load_path, &dummy );
+    RtlInitUnicodeString( &nameW, wineboot + 4 );
+    RtlInitUnicodeString( &dllpathW, load_path );
+    RtlInitUnicodeString( &cmdlineW, cmdline );
+    RtlCreateProcessParametersEx( &params, &nameW, &dllpathW, NULL, &cmdlineW, *env, NULL, NULL,
+                                  NULL, NULL, PROCESS_PARAMS_FLAG_NORMALIZED );
+    params->hStdInput  = 0;
+    params->hStdOutput = 0;
+    params->hStdError  = NtCurrentTeb()->Peb->ProcessParameters->hStdError;
+
+    RtlInitUnicodeString( &nameW, wineboot );
+    RtlWow64EnableFsRedirectionEx( TRUE, &redir );
+    status = RtlCreateUserProcess( &nameW, OBJ_CASE_INSENSITIVE, params,
+                                   NULL, NULL, 0, FALSE, 0, 0, &info );
+    RtlWow64EnableFsRedirection( !redir );
+    RtlReleasePath( load_path );
+    RtlDestroyProcessParameters( params );
+    if (status)
+    {
+        ERR( "failed to start wineboot %x\n", status );
+        NtClose( handles[0] );
+        return;
+    }
+    NtResumeThread( info.Thread, NULL );
+    NtClose( info.Thread );
+    handles[count++] = info.Process;
+
+wait:
+    timeout.QuadPart = (ULONGLONG)(first_prefix_start ? 5 : 2) * 60 * 1000 * -10000;
+    if (NtWaitForMultipleObjects( count, handles, TRUE, FALSE, &timeout ) == WAIT_TIMEOUT)
+        ERR( "boot event wait timed out\n" );
+    while (count) NtClose( handles[--count] );
+
+    /* reload environment now that wineboot has run */
+    set_registry_environment( env, first_prefix_start );
+    set_additional_environment( env );
+}
+
+
 /***********************************************************************
  *           init_user_process_params
  *
@@ -1173,6 +1247,8 @@ void init_user_process_params( SIZE_T data_size )
         if (!isatty(2))
             wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdError );
         params->wShowWindow = 1; /* SW_SHOWNORMAL */
+
+        run_wineboot( &params->Environment );
         goto done;
     }
 
