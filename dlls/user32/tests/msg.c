@@ -9179,6 +9179,7 @@ static void test_accelerators(void)
     HACCEL hAccel;
     HWND hwnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                                 100, 100, 200, 200, 0, 0, 0, NULL);
+    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
     BOOL ret;
 
     assert(hwnd != 0);
@@ -9200,6 +9201,12 @@ static void test_accelerators(void)
     flush_events();
     pump_msg_loop(hwnd, 0);
     flush_sequence();
+
+    if (!us_kbd)
+    {
+        skip("skipping ascii VK events on non-us keyboard\n");
+        goto done;
+    }
 
     trace("testing VK_N press/release\n");
     flush_sequence();
@@ -15247,6 +15254,7 @@ static void test_menu_messages(void)
     HMENU hmenu, hmenu_popup;
     HWND hwnd;
     DWORD style;
+    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
 
     if (!pGetMenuInfo || !pSetMenuInfo)
     {
@@ -15292,6 +15300,12 @@ static void test_menu_messages(void)
     ok(hmenu_popup != 0, "GetSubMenu returned 0 for submenu 0\n");
     style = get_menu_style(hmenu_popup);
     ok(style == 0, "expected 0, got %u\n", style);
+
+    if (!us_kbd)
+    {
+        skip("skipping ascii VK events on non-us keyboard\n");
+        goto done;
+    }
 
     /* Alt+E, Enter */
     trace("testing a popup menu command\n");
