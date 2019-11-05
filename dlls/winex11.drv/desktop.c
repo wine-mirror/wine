@@ -238,12 +238,14 @@ static void X11DRV_desktop_free_monitors( struct x11drv_monitor *monitors )
  */
 void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
 {
-    RECT primary_rect;
+    RECT primary_rect = get_host_primary_monitor_rect();
 
     root_window = win;
     managed_mode = FALSE;  /* no managed windows in desktop mode */
     desktop_width = width;
     desktop_height = height;
+    max_width = primary_rect.right;
+    max_height = primary_rect.bottom;
 
     /* Initialize virtual desktop mode display device handler */
     desktop_handler.name = "Virtual Desktop";
@@ -256,10 +258,6 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
     desktop_handler.register_event_handlers = NULL;
     TRACE("Display device functions are now handled by: Virtual Desktop\n");
     X11DRV_DisplayDevices_Init( TRUE );
-
-    primary_rect = get_primary_monitor_rect();
-    max_width = primary_rect.right - primary_rect.left;
-    max_height = primary_rect.bottom - primary_rect.top;
 
     /* initialize the available resolutions */
     dd_modes = X11DRV_Settings_SetHandlers("desktop", 

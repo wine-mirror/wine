@@ -233,6 +233,27 @@ RECT get_primary_monitor_rect(void)
     return primary;
 }
 
+/* Get the primary monitor rect from the host system */
+RECT get_host_primary_monitor_rect(void)
+{
+    INT gpu_count, adapter_count, monitor_count;
+    struct x11drv_gpu *gpus = NULL;
+    struct x11drv_adapter *adapters = NULL;
+    struct x11drv_monitor *monitors = NULL;
+    RECT rect = {0};
+
+    /* The first monitor is always primary */
+    if (host_handler.get_gpus(&gpus, &gpu_count) && gpu_count &&
+        host_handler.get_adapters(gpus[0].id, &adapters, &adapter_count) && adapter_count &&
+        host_handler.get_monitors(adapters[0].id, &monitors, &monitor_count) && monitor_count)
+        rect = monitors[0].rc_monitor;
+
+    if (gpus) host_handler.free_gpus(gpus);
+    if (adapters) host_handler.free_adapters(adapters);
+    if (monitors) host_handler.free_monitors(monitors);
+    return rect;
+}
+
 void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *new_handler)
 {
     if (new_handler->priority > host_handler.priority)
