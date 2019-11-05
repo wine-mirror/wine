@@ -1135,6 +1135,32 @@ static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int soc
 }
 
 
+/***************************************************************************
+ *	is_builtin_path
+ */
+static BOOL is_builtin_path( UNICODE_STRING *path, BOOL *is_64bit )
+{
+    static const WCHAR systemW[] = {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\',
+                                    's','y','s','t','e','m','3','2','\\'};
+    static const WCHAR wow64W[] = {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\',
+                                   's','y','s','w','o','w','6','4'};
+
+    *is_64bit = is_win64;
+    if (path->Length > sizeof(systemW) && !strncmpiW( path->Buffer, systemW, ARRAY_SIZE(systemW) ))
+    {
+        if (is_wow64 && !ntdll_get_thread_data()->wow64_redir) *is_64bit = TRUE;
+        return TRUE;
+    }
+    if ((is_win64 || is_wow64) && path->Length > sizeof(wow64W) &&
+        !strncmpiW( path->Buffer, wow64W, ARRAY_SIZE(wow64W) ))
+    {
+        *is_64bit = FALSE;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
 /***********************************************************************
  *           get_pe_file_info
  */
@@ -1148,7 +1174,29 @@ static NTSTATUS get_pe_file_info( UNICODE_STRING *path, ULONG attributes,
 
     InitializeObjectAttributes( &attr, path, attributes, 0, 0 );
     if ((status = NtOpenFile( handle, GENERIC_READ, &attr, &io,
-                              FILE_SHARE_READ | FILE_SHARE_DELETE, 0 ))) return status;
+                              FILE_SHARE_READ | FILE_SHARE_DELETE, 0 )))
+    {
+        BOOL is_64bit;
+
+        if (is_builtin_path( path, &is_64bit ))
+        {
+            TRACE( "assuming %u-bit builtin for %s\n", is_64bit ? 64 : 32, debugstr_us(path));
+            memset( info, 0, sizeof(*info) );
+            /* assume current arch */
+#if defined(__i386__) || defined(__x86_64__)
+            info->cpu = is_64bit ? CPU_x86_64 : CPU_x86;
+#elif defined(__powerpc__)
+            info->cpu = CPU_POWERPC;
+#elif defined(__arm__)
+            info->cpu = CPU_ARM;
+#elif defined(__aarch64__)
+            info->cpu = CPU_ARM64;
+#endif
+            *handle = 0;
+            return STATUS_SUCCESS;
+        }
+        return status;
+    }
 
     if (!(status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
                                     SECTION_MAP_READ | SECTION_MAP_EXECUTE,
@@ -1355,10 +1403,10 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
         process_handle = thread_handle = 0;
         status = STATUS_SUCCESS;
     }
-    else status = err ? err : ERROR_INTERNAL_ERROR;
+    else status = err ? err : STATUS_INTERNAL_ERROR;
 
 done:
-    NtClose( file_handle );
+    if (file_handle) NtClose( file_handle );
     if (process_info) NtClose( process_info );
     if (process_handle) NtClose( process_handle );
     if (thread_handle) NtClose( thread_handle );
