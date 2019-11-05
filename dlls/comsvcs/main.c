@@ -577,9 +577,9 @@ static HRESULT WINAPI new_moniker_IsRunning(IMoniker* iface, IBindCtx *pbc, IMon
 static HRESULT WINAPI new_moniker_GetTimeOfLastChange(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
         FILETIME *itemtime)
 {
-    FIXME("%p, %p, %p, %p.\n", iface, pbc, pmkToLeft, itemtime);
+    TRACE("%p, %p, %p, %p.\n", iface, pbc, pmkToLeft, itemtime);
 
-    return E_NOTIMPL;
+    return MK_E_UNAVAILABLE;
 }
 
 static HRESULT WINAPI new_moniker_Inverse(IMoniker *iface, IMoniker **inverse)

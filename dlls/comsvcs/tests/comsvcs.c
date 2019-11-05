@@ -344,7 +344,6 @@ todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
-todo_wine
     ok(hr == MK_E_UNAVAILABLE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&obj);
