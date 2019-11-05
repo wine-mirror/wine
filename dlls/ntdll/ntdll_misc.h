@@ -86,7 +86,6 @@ extern void virtual_init_threading(void) DECLSPEC_HIDDEN;
 extern void fill_cpu_info(void) DECLSPEC_HIDDEN;
 extern void heap_set_debug_flags( HANDLE handle ) DECLSPEC_HIDDEN;
 extern void init_user_process_params( SIZE_T data_size ) DECLSPEC_HIDDEN;
-extern void update_user_process_params( const UNICODE_STRING *image ) DECLSPEC_HIDDEN;
 
 /* server support */
 extern timeout_t server_start_time DECLSPEC_HIDDEN;

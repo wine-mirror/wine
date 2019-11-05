@@ -4268,7 +4268,6 @@ void __wine_process_init(void)
     }
 
     NtCurrentTeb()->Peb->LoaderLock = &loader_section;
-    update_user_process_params( &wm->ldr.FullDllName );
     version_init( wm->ldr.FullDllName.Buffer );
     virtual_set_large_address_space();
 

@@ -1357,19 +1357,31 @@ void init_user_process_params( SIZE_T data_size )
 
     if (!data_size)
     {
-        if (RtlCreateProcessParametersEx( &params, &null_str, &null_str, &empty_str, &null_str, NULL,
-                                          &null_str, &null_str, &null_str, &null_str,
+        RTL_USER_PROCESS_PARAMETERS initial_params = {0};
+        WCHAR *env, curdir_buffer[MAX_PATH];
+
+        NtCurrentTeb()->Peb->ProcessParameters = &initial_params;
+        initial_params.Environment = build_initial_environment( __wine_get_main_environment() );
+        curdir.Buffer = curdir_buffer;
+        curdir.MaximumLength = sizeof(curdir_buffer);
+        get_current_directory( &curdir );
+        initial_params.CurrentDirectory.DosPath = curdir;
+        get_image_path( __wine_main_argv[0], &initial_params.ImagePathName );
+        set_library_wargv( __wine_main_argv, &initial_params.ImagePathName );
+        build_command_line( __wine_main_wargv, &cmdline );
+        LdrGetDllPath( initial_params.ImagePathName.Buffer, 0, &load_path, &dummy );
+        RtlInitUnicodeString( &dllpath, load_path );
+
+        env = initial_params.Environment;
+        initial_params.Environment = NULL;  /* avoid copying it */
+        if (RtlCreateProcessParametersEx( &params, &initial_params.ImagePathName, &dllpath, &curdir,
+                                          &cmdline, NULL, &initial_params.ImagePathName, NULL, NULL, NULL,
                                           PROCESS_PARAMS_FLAG_NORMALIZED ))
             return;
 
+        params->Environment = env;
         NtCurrentTeb()->Peb->ProcessParameters = params;
-        params->Environment = build_initial_environment( __wine_get_main_environment() );
-        get_current_directory( &params->CurrentDirectory.DosPath );
-        get_image_path( __wine_main_argv[0], &params->ImagePathName );
-        set_library_wargv( __wine_main_argv, &params->ImagePathName );
-        build_command_line( __wine_main_wargv, &params->CommandLine );
-        LdrGetDllPath( params->ImagePathName.Buffer, 0, &load_path, &dummy );
-        RtlCreateUnicodeString( &params->DllPath, load_path );
+        RtlFreeUnicodeString( &cmdline );
         RtlReleasePath( load_path );
 
         if (isatty(0) || isatty(1) || isatty(2))
@@ -1454,45 +1466,4 @@ done:
         RtlSetCurrentDirectory_U( &curdir );
     }
     set_wow64_environment( &params->Environment );
-}
-
-
-/***********************************************************************
- *           update_user_process_params
- *
- * Rebuild the RTL_USER_PROCESS_PARAMETERS structure once we have initialized all the fields.
- */
-void update_user_process_params( const UNICODE_STRING *image )
-{
-    RTL_USER_PROCESS_PARAMETERS *params, *cur_params = NtCurrentTeb()->Peb->ProcessParameters;
-    UNICODE_STRING title = cur_params->WindowTitle;
-    WCHAR *env = cur_params->Environment;
-
-    cur_params->Environment = NULL;  /* avoid copying it */
-    if (!title.Buffer) title = *image;
-    if (RtlCreateProcessParametersEx( &params, image, &cur_params->DllPath, NULL,
-                                      &cur_params->CommandLine, NULL, &title, &cur_params->Desktop,
-                                      &cur_params->ShellInfo, &cur_params->RuntimeInfo,
-                                      PROCESS_PARAMS_FLAG_NORMALIZED ))
-        return;
-
-    params->DebugFlags      = cur_params->DebugFlags;
-    params->ConsoleHandle   = cur_params->ConsoleHandle;
-    params->ConsoleFlags    = cur_params->ConsoleFlags;
-    params->hStdInput       = cur_params->hStdInput;
-    params->hStdOutput      = cur_params->hStdOutput;
-    params->hStdError       = cur_params->hStdError;
-    params->dwX             = cur_params->dwX;
-    params->dwY             = cur_params->dwY;
-    params->dwXSize         = cur_params->dwXSize;
-    params->dwYSize         = cur_params->dwYSize;
-    params->dwXCountChars   = cur_params->dwXCountChars;
-    params->dwYCountChars   = cur_params->dwYCountChars;
-    params->dwFillAttribute = cur_params->dwFillAttribute;
-    params->dwFlags         = cur_params->dwFlags;
-    params->wShowWindow     = cur_params->wShowWindow;
-    params->Environment     = env;
-
-    RtlFreeHeap( GetProcessHeap(), 0, cur_params );
-    NtCurrentTeb()->Peb->ProcessParameters = params;
 }
