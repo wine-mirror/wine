@@ -107,7 +107,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
     double dbl;
 }
 
-%token tEXPRESSION tEOF tNL tEMPTYBRACKETS
+%token tEXPRESSION tEOF tNL tEMPTYBRACKETS tEXPRLBRACKET
 %token tLTEQ tGTEQ tNEQ
 %token tSTOP tME tREM tDOT
 %token <string> tTRUE tFALSE
@@ -427,7 +427,7 @@ IntegerValue
     | tInt                          { $$ = $1; }
 
 PrimaryExpression
-    : '(' Expression ')'            { $$ = new_unary_expression(ctx, EXPR_BRACKETS, $2); }
+    : tEXPRLBRACKET Expression ')'            { $$ = new_unary_expression(ctx, EXPR_BRACKETS, $2); }
     | tME                           { $$ = new_expression(ctx, EXPR_ME, 0); CHECK_ERROR; }
 
 ClassDeclaration
@@ -729,18 +729,28 @@ static call_expression_t *make_call_expression(parser_ctx_t *ctx, expression_t *
     call_expr = (call_expression_t*)callee_expr;
     if(!call_expr->args) {
         call_expr->args = arguments;
-    }else if(call_expr->args->next) {
+        return call_expr;
+    }
+
+    if(call_expr->args->next) {
         FIXME("Invalid syntax: invalid use of parentheses for arguments\n");
         ctx->hres = E_FAIL;
         return NULL;
-    }else if(arguments->type != EXPR_NOARG) {
+    }
+
+    call_expr->args = new_unary_expression(ctx, EXPR_BRACKETS, call_expr->args);
+    if(!call_expr->args)
+        return NULL;
+    if(!arguments)
+        return call_expr;
+
+    if(arguments->type != EXPR_NOARG) {
         FIXME("Invalid syntax: missing comma\n");
         ctx->hres = E_FAIL;
         return NULL;
-    }else {
-        call_expr->args->next = arguments->next;
     }
 
+    call_expr->args->next = arguments->next;
     return call_expr;
 }
 

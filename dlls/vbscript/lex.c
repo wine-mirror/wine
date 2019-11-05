@@ -409,7 +409,13 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
             ctx->ptr++;
             return tEMPTYBRACKETS;
         }
-        return '(';
+        /*
+         * Parser can't predict if bracket is part of argument expression or an argument
+         * in call expression. We predict it here instead.
+         */
+        if(ctx->last_token == tIdentifier || ctx->last_token == ')')
+            return '(';
+        return tEXPRLBRACKET;
     case '"':
         return parse_string_literal(ctx, lval);
     case '&':

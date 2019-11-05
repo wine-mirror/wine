@@ -1645,4 +1645,23 @@ end function
 set x = testsetresult(1, 2)
 ok x.prop = 1, "x.prop = " & x.prop
 
+set arr(0) = new TestPropSyntax
+arr(0).prop = 1
+ok arr(0).prop = 1, "arr(0) = " & arr(0).prop
+
+function f2(x,y)
+end function
+
+f2 1 = 1, 2
+
+function f1(x)
+    ok x = true, "x = " & x
+end function
+
+f1 1 = 1
+f1 1 = (1)
+f1 not 1 = 0
+
+arr (0) = 2 xor -2
+
 reportSuccess()
