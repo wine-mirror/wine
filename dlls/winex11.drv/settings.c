@@ -146,7 +146,7 @@ static LONG X11DRV_nores_SetCurrentMode(int mode)
 /* default handler only gets the current X desktop resolution */
 void X11DRV_Settings_Init(void)
 {
-    RECT primary = get_primary_monitor_rect();
+    RECT primary = get_host_primary_monitor_rect();
     X11DRV_Settings_SetHandlers("NoRes", 
                                 X11DRV_nores_GetCurrentMode, 
                                 X11DRV_nores_SetCurrentMode, 
