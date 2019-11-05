@@ -827,7 +827,7 @@ static void focus_out( Display *display , HWND hwnd )
     x11drv_thread_data()->last_focus = hwnd;
     if ((xic = X11DRV_get_ic( hwnd ))) XUnsetICFocus( xic );
 
-    if (root_window != DefaultRootWindow(display))
+    if (is_virtual_desktop())
     {
         if (hwnd == GetDesktopWindow()) reset_clipping_window();
         return;

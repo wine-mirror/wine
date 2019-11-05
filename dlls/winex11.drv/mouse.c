@@ -572,7 +572,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     {
         RECT virtual_rect = get_virtual_screen_rect();
         if (!EqualRect( &rect, &virtual_rect )) return FALSE;
-        if (root_window != DefaultRootWindow( gdi_display )) return FALSE;
+        if (is_virtual_desktop()) return FALSE;
     }
     TRACE( "win %p clipping fullscreen\n", hwnd );
     return grab_clipping_window( &rect );

@@ -1099,7 +1099,7 @@ void X11DRV_XRandR_Init(void)
 
     if (major) return; /* already initialized? */
     if (!usexrandr) return; /* disabled in config */
-    if (root_window != DefaultRootWindow( gdi_display )) return;
+    if (is_virtual_desktop()) return;
     if (!(ret = load_xrandr())) return;  /* can't load the Xrandr library */
 
     /* see if Xrandr is available */

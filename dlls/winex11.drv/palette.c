@@ -217,7 +217,7 @@ int X11DRV_PALETTE_Init(void)
 	    {
 	        X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_PRIVATE;
 
-	        if( root_window != DefaultRootWindow(gdi_display) )
+	        if (is_virtual_desktop())
 	        {
 		    win_attr.colormap = default_colormap;
 		    XChangeWindowAttributes( gdi_display, root_window, CWColormap, &win_attr );

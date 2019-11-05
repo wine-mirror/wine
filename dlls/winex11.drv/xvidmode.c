@@ -210,7 +210,7 @@ void X11DRV_XF86VM_Init(void)
 #endif /* X_XF86VidModeSetGammaRamp */
 
   /* retrieve modes */
-  if (usexvidmode && root_window == DefaultRootWindow( gdi_display ))
+  if (usexvidmode && !is_virtual_desktop())
   {
       X11DRV_expect_error(gdi_display, XVidModeErrorHandler, NULL);
       ok = pXF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes, &real_xf86vm_modes);

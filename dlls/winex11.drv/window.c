@@ -2474,7 +2474,7 @@ static BOOL hide_icon( struct x11drv_win_data *data )
 
     if (data->managed) return TRUE;
     /* hide icons in desktop mode when the taskbar is active */
-    if (root_window == DefaultRootWindow( gdi_display )) return FALSE;
+    if (!is_virtual_desktop()) return FALSE;
     return IsWindowVisible( FindWindowW( trayW, NULL ));
 }
 
@@ -2781,7 +2781,7 @@ static BOOL is_netwm_supported( Display *display, Atom atom )
  */
 static LRESULT start_screensaver(void)
 {
-    if (root_window == DefaultRootWindow(gdi_display))
+    if (!is_virtual_desktop())
     {
         const char *argv[3] = { "xdg-screensaver", "activate", NULL };
         int pid = _spawnvp( _P_DETACH, argv[0], argv );

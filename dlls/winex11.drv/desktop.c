@@ -77,6 +77,12 @@ static struct screen_size {
 #define _NET_WM_STATE_REMOVE 0
 #define _NET_WM_STATE_ADD 1
 
+/* Return TRUE if Wine is currently in virtual desktop mode */
+BOOL is_virtual_desktop(void)
+{
+    return root_window != DefaultRootWindow( gdi_display );
+}
+
 /* create the mode structures */
 static void make_modes(void)
 {
@@ -268,7 +274,7 @@ static void update_desktop_fullscreen( unsigned int width, unsigned int height)
     Display *display = thread_display();
     XEvent xev;
 
-    if (!display || root_window == DefaultRootWindow( display )) return;
+    if (!display || !is_virtual_desktop()) return;
 
     xev.xclient.type = ClientMessage;
     xev.xclient.window = root_window;

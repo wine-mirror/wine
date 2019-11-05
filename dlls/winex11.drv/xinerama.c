@@ -310,10 +310,10 @@ void xinerama_init( unsigned int width, unsigned int height )
 
     SetRect( &rect, 0, 0, width, height );
 
-    if (root_window != DefaultRootWindow( gdi_display ) || !query_screens())
+    if (is_virtual_desktop() || !query_screens())
     {
         default_monitor.rcWork = default_monitor.rcMonitor = rect;
-        if (root_window == DefaultRootWindow( gdi_display ))
+        if (!is_virtual_desktop())
             query_work_area( &default_monitor.rcWork );
         else
             query_desktop_work_area( &default_monitor.rcWork );
