@@ -2196,6 +2196,7 @@ static DWORD WINAPI create_static_win(void *arg)
 {
     struct thread_data *thread_data = arg;
     HWND win;
+    MSG msg;
 
     win = CreateWindowA("static", "static", WS_VISIBLE | WS_POPUP,
             100, 100, 100, 100, 0, NULL, NULL, NULL);
@@ -2204,6 +2205,7 @@ static DWORD WINAPI create_static_win(void *arg)
             GWLP_WNDPROC, (LONG_PTR)static_hook_proc);
     thread_data->win = win;
 
+    while (wait_for_message(&msg)) DispatchMessageA(&msg);
     SetEvent(thread_data->start_event);
     wait_for_event(thread_data->end_event, 5000);
     return 0;
