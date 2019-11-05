@@ -109,26 +109,26 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         return S_OK;
     }
 
-    for(i=0; i < ctx->func->var_cnt; i++) {
-        if(!wcsicmp(ctx->func->vars[i].name, name)) {
-            ref->type = REF_VAR;
-            ref->u.v = ctx->vars+i;
-            return TRUE;
-        }
-    }
-
-    for(i=0; i < ctx->func->arg_cnt; i++) {
-        if(!wcsicmp(ctx->func->args[i].name, name)) {
-            ref->type = REF_VAR;
-            ref->u.v = ctx->args+i;
-            return S_OK;
-        }
-    }
-
-    if(lookup_dynamic_vars(ctx->func->type == FUNC_GLOBAL ? ctx->script->global_vars : ctx->dynamic_vars, name, ref))
-        return S_OK;
-
     if(ctx->func->type != FUNC_GLOBAL) {
+        for(i=0; i < ctx->func->var_cnt; i++) {
+            if(!wcsicmp(ctx->func->vars[i].name, name)) {
+                ref->type = REF_VAR;
+                ref->u.v = ctx->vars+i;
+                return TRUE;
+            }
+        }
+
+        for(i=0; i < ctx->func->arg_cnt; i++) {
+            if(!wcsicmp(ctx->func->args[i].name, name)) {
+                ref->type = REF_VAR;
+                ref->u.v = ctx->args+i;
+                return S_OK;
+            }
+        }
+
+        if(lookup_dynamic_vars(ctx->dynamic_vars, name, ref))
+            return S_OK;
+
         if(ctx->vbthis) {
             /* FIXME: Bind such identifier while generating bytecode. */
             for(i=0; i < ctx->vbthis->desc->prop_cnt; i++) {
@@ -159,7 +159,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
     }
 
-    if(ctx->func->type != FUNC_GLOBAL && lookup_dynamic_vars(ctx->script->global_vars, name, ref))
+    if(lookup_dynamic_vars(ctx->script->global_vars, name, ref))
         return S_OK;
 
     for(i = 0; i < ctx->script->global_funcs_cnt; i++) {
