@@ -281,7 +281,6 @@ BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
     XSetWindowAttributes win_attr;
     Window win;
     Display *display = thread_init_display();
-    RECT rect;
     WCHAR name[MAX_PATH];
 
     if (!GetUserObjectInformationW( GetThreadDesktop( GetCurrentThreadId() ),
@@ -308,18 +307,17 @@ BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
                          0, 0, width, height, 0, default_visual.depth, InputOutput, default_visual.visual,
                          CWEventMask | CWCursor | CWColormap, &win_attr );
     if (!win) return FALSE;
+    if (!create_desktop_win_data( win )) return FALSE;
 
-    SetRect( &rect, 0, 0, width, height );
-    if (is_window_rect_fullscreen( &rect ))
+    X11DRV_init_desktop( win, width, height );
+    if (is_desktop_fullscreen())
     {
         TRACE("setting desktop to fullscreen\n");
         XChangeProperty( display, win, x11drv_atom(_NET_WM_STATE), XA_ATOM, 32,
             PropModeReplace, (unsigned char*)&x11drv_atom(_NET_WM_STATE_FULLSCREEN),
             1);
     }
-    if (!create_desktop_win_data( win )) return FALSE;
     XFlush( display );
-    X11DRV_init_desktop( win, width, height );
     return TRUE;
 }
 
