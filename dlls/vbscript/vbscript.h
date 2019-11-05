@@ -373,6 +373,7 @@ static inline BOOL is_int32(double d)
 }
 
 HRESULT create_regexp(IDispatch**) DECLSPEC_HIDDEN;
+BSTR string_replace(BSTR,BSTR,BSTR,int,int) DECLSPEC_HIDDEN;
 
 HRESULT map_hres(HRESULT) DECLSPEC_HIDDEN;
 

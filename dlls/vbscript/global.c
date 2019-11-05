@@ -2278,10 +2278,80 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Replace(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Replace(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR string, find = NULL, replace = NULL, ret;
+    int from = 1, cnt = -1;
+    HRESULT hres = S_OK;
+
+    TRACE("%s %s %s %u...\n", debugstr_variant(args), debugstr_variant(args+1), debugstr_variant(args+2), args_cnt);
+
+    assert(3 <= args_cnt && args_cnt <= 6);
+    if(V_VT(args) != VT_BSTR) {
+        hres = to_string(args, &string);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        string = V_BSTR(args);
+    }
+
+    if(V_VT(args+1) != VT_BSTR) {
+        hres = to_string(args+1, &find);
+        if(FAILED(hres))
+            goto error;
+    }else {
+        find = V_BSTR(args+1);
+    }
+
+    if(V_VT(args+2) != VT_BSTR) {
+        hres = to_string(args+2, &replace);
+        if(FAILED(hres))
+            goto error;
+    }else {
+        replace = V_BSTR(args+2);
+    }
+
+    if(args_cnt >= 4) {
+        hres = to_int(args+3, &from);
+        if(FAILED(hres))
+            goto error;
+        if(from < 1) {
+            hres = E_INVALIDARG;
+            goto error;
+        }
+    }
+
+    if(args_cnt >= 5) {
+        hres = to_int(args+4, &cnt);
+        if(FAILED(hres))
+            goto error;
+        if(cnt < -1) {
+            hres = E_INVALIDARG;
+            goto error;
+        }
+    }
+
+    if(args_cnt == 6)
+        FIXME("copare argument not supported\n");
+
+    ret = string_replace(string, find, replace, from - 1, cnt);
+    if(!ret) {
+        hres = E_OUTOFMEMORY;
+    }else if(res) {
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = ret;
+    }else {
+        SysFreeString(ret);
+    }
+
+error:
+    if(V_VT(args) != VT_BSTR)
+        SysFreeString(string);
+    if(V_VT(args+1) != VT_BSTR)
+        SysFreeString(find);
+    if(V_VT(args+2) != VT_BSTR)
+        SysFreeString(replace);
+    return hres;
 }
 
 static HRESULT Global_StrReverse(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

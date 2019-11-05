@@ -1629,6 +1629,48 @@ static const IRegExp2Vtbl RegExp2Vtbl = {
     RegExp2_Replace
 };
 
+BSTR string_replace(BSTR string, BSTR find, BSTR replace, int from, int cnt)
+{
+    const WCHAR *ptr, *string_end;
+    strbuf_t buf = { NULL, 0, 0 };
+    size_t replace_len, find_len;
+    BSTR ret = NULL;
+    HRESULT hres = S_OK;
+
+    string_end = string + SysStringLen(string);
+    ptr = from > SysStringLen(string) ? string_end : string + from;
+
+    find_len = SysStringLen(find);
+    replace_len = SysStringLen(replace);
+    if(!replace_len)
+        cnt = 0;
+
+    while(string_end - ptr >= find_len && cnt && find_len) {
+        if(memcmp(ptr, find, find_len * sizeof(WCHAR))) {
+            hres = strbuf_append(&buf, ptr, 1);
+            if(FAILED(hres))
+                break;
+            ptr++;
+        }else {
+            hres = strbuf_append(&buf, replace, replace_len);
+            if(FAILED(hres))
+                break;
+            ptr += find_len;
+            if(cnt != -1)
+                cnt--;
+        }
+    }
+
+    if(SUCCEEDED(hres)) {
+        hres = strbuf_append(&buf, ptr, string_end - ptr);
+        if(SUCCEEDED(hres))
+            ret = SysAllocStringLen(buf.buf, buf.len);
+    }
+
+    heap_free(buf.buf);
+    return ret;
+}
+
 static inline RegExp2 *impl_from_IRegExp(IRegExp *iface)
 {
     return CONTAINING_RECORD(iface, RegExp2, IRegExp_iface);
