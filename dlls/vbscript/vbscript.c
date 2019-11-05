@@ -457,7 +457,7 @@ static HRESULT WINAPI VBScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE 
         return S_OK;
     }
 
-    if(!This->is_initialized)
+    if(!This->is_initialized || !This->ctx->site)
         return E_UNEXPECTED;
 
     switch(ss) {

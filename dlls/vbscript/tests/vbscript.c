@@ -713,6 +713,11 @@ static void test_vbscript_uninitializing(void)
 
     test_no_script_dispatch(script);
 
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_STARTED);
+    ok(hres == E_UNEXPECTED, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_INITIALIZED);
+    ok(hres == E_UNEXPECTED, "SetScriptState(SCRIPTSTATE_INITIALIZED) failed: %08x\n", hres);
+
     SET_EXPECT(GetLCID);
     SET_EXPECT(OnStateChange_INITIALIZED);
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
