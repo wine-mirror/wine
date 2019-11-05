@@ -708,11 +708,8 @@ static void test_ROT(void)
         ROTFLAGS_REGISTRATIONKEEPSALIVE|ROTFLAGS_ALLOWANYCLIENT,
         (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
     todo_wine {
-    ok(hr == CO_E_WRONG_SERVER_IDENTITY ||
-       broken(hr == S_OK) /* Win9x */,
-       "IRunningObjectTable_Register should have returned CO_E_WRONG_SERVER_IDENTITY instead of 0x%08x\n", hr);
+    ok(hr == CO_E_WRONG_SERVER_IDENTITY, "Unexpected hr %#x.\n", hr);
     }
-    if (hr == S_OK) IRunningObjectTable_Revoke(pROT, dwCookie);
 
     hr = IRunningObjectTable_Register(pROT, 0xdeadbeef,
         (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
@@ -919,8 +916,8 @@ static void test_MkParseDisplayName(void)
     eaten = 0xdeadbeef;
     pmk = (IMoniker *)0xdeadbeef;
     hr = MkParseDisplayName(pbc, wszNonExistentProgId, &eaten, &pmk);
-    ok(hr == MK_E_SYNTAX || hr == MK_E_CANTOPENFILE /* Win9x */,
-        "MkParseDisplayName should have failed with MK_E_SYNTAX or MK_E_CANTOPENFILE instead of 0x%08x\n", hr);
+todo_wine
+    ok(hr == MK_E_SYNTAX, "Unexpected hr %#x.\n", hr);
     ok(eaten == 0, "Processed character count should have been 0 instead of %u\n", eaten);
     ok(pmk == NULL, "Output moniker pointer should have been NULL instead of %p\n", pmk);
 
@@ -929,8 +926,8 @@ static void test_MkParseDisplayName(void)
     eaten = 0xdeadbeef;
     pmk = (IMoniker *)0xdeadbeef;
     hr = MkParseDisplayName(pbc, wszDisplayNameClsid, &eaten, &pmk);
-    ok(hr == MK_E_SYNTAX || hr == MK_E_CANTOPENFILE /* Win9x */,
-        "MkParseDisplayName should have failed with MK_E_SYNTAX or MK_E_CANTOPENFILE instead of 0x%08x\n", hr);
+todo_wine
+    ok(hr == MK_E_SYNTAX, "Unexpected hr %#x.\n", hr);
     ok(eaten == 0, "Processed character count should have been 0 instead of %u\n", eaten);
     ok(pmk == NULL, "Output moniker pointer should have been NULL instead of %p\n", pmk);
 
@@ -1009,8 +1006,8 @@ static void test_MkParseDisplayName(void)
     eaten = 0xdeadbeef;
     pmk = (IMoniker *)0xdeadbeef;
     hr = MkParseDisplayName(pbc, wszDisplayNameProgIdFail, &eaten, &pmk);
-    ok(hr == MK_E_SYNTAX || hr == MK_E_CANTOPENFILE /* Win9x */,
-        "MkParseDisplayName with ProgId without marker should fail with MK_E_SYNTAX or MK_E_CANTOPENFILE instead of 0x%08x\n", hr);
+todo_wine
+    ok(hr == MK_E_SYNTAX, "Unexpected hr %#x.\n", hr);
     ok(eaten == 0, "Processed character count should have been 0 instead of %u\n", eaten);
     ok(pmk == NULL, "Output moniker pointer should have been NULL instead of %p\n", pmk);
 
@@ -2054,11 +2051,6 @@ static void test_save_load_filemoniker(void)
 
 START_TEST(moniker)
 {
-    if (!GetProcAddress(GetModuleHandleA("ole32.dll"), "CoRegisterSurrogateEx")) {
-        win_skip("skipping test on win9x\n");
-        return;
-    }
-
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     test_ROT();
