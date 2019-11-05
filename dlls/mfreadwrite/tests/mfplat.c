@@ -894,19 +894,15 @@ todo_wine
 
     /* Return values are delivered to callback only. */
     hr = IMFSourceReader_ReadSample(reader, 0, 0, &actual_index, &stream_flags, &timestamp, &sample);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IMFSourceReader_ReadSample(reader, 0, 0, NULL, &stream_flags, &timestamp, &sample);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IMFSourceReader_ReadSample(reader, 0, 0, NULL, NULL, &timestamp, &sample);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IMFSourceReader_ReadSample(reader, 0, 0, NULL, NULL, NULL, &sample);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     IMFSourceReader_Release(reader);
