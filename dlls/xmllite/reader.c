@@ -2438,7 +2438,7 @@ static HRESULT reader_parse_cdata(xmlreader *reader)
         else
         {
             reader_skipn(reader, 1);
-            ptr++;
+            ptr = reader_get_ptr(reader);
         }
     }
 
