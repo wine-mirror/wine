@@ -1105,7 +1105,7 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl,
     LPSTR filename, shortname;
     WIN32_FIND_DATAA * pfd;
 
-    TRACE_(shell)("sf=%p pidl=%p 0x%04x %p 0x%04x stub\n",psf,pidl,nFormat,dest,len);
+    TRACE_(shell)("%p, %p, %d, %p, %d.\n", psf, pidl, nFormat, dest, len);
 
     pdump(pidl);
     if (!psf || !dest)
@@ -1163,7 +1163,7 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl,
     LPSTR filename, shortname;
     WIN32_FIND_DATAW * pfd = dest;
 
-    TRACE_(shell)("sf=%p pidl=%p 0x%04x %p 0x%04x stub\n",psf,pidl,nFormat,dest,len);
+    TRACE_(shell)("%p, %p, %d, %p, %d.\n", psf, pidl, nFormat, dest, len);
 
     pdump(pidl);
 
