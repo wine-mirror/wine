@@ -364,6 +364,14 @@ todo_wine
     ok(moniker_type == MKSYS_ANTIMONIKER, "Unexpected moniker type %d.\n", moniker_type);
     IMoniker_Release(inverse);
 
+    hr = IMoniker_Enum(moniker, FALSE, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    obj = (IUnknown *)moniker;
+    hr = IMoniker_Enum(moniker, FALSE, (IEnumMoniker **)&obj);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(obj == NULL, "Unexpected return value.\n");
+
     IMoniker_Release(moniker);
     IBindCtx_Release(bindctx);
 }

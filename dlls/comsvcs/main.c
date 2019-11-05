@@ -543,9 +543,14 @@ static HRESULT WINAPI new_moniker_ComposeWith(IMoniker *iface, IMoniker *mkRight
 
 static HRESULT WINAPI new_moniker_Enum(IMoniker *iface, BOOL forward, IEnumMoniker **enum_moniker)
 {
-    FIXME("%p, %d, %p.\n", iface, forward, enum_moniker);
+    TRACE("%p, %d, %p.\n", iface, forward, enum_moniker);
 
-    return E_NOTIMPL;
+    if (!enum_moniker)
+        return E_POINTER;
+
+    *enum_moniker = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI new_moniker_IsEqual(IMoniker *iface, IMoniker *other_moniker)
