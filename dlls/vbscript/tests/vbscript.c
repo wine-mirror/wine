@@ -796,6 +796,35 @@ static void test_vbscript_uninitializing(void)
 
     test_state(script, SCRIPTSTATE_INITIALIZED);
 
+    SET_EXPECT(OnStateChange_STARTED);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_STARTED);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_INITIALIZED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_INITIALIZED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hres);
+
+    SET_EXPECT(OnStateChange_CLOSED);
+    hres = IActiveScript_Close(script);
+    ok(hres == S_OK, "Close failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    test_state(script, SCRIPTSTATE_CLOSED);
+
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    test_state(script, SCRIPTSTATE_INITIALIZED);
+
     SET_EXPECT(OnStateChange_CLOSED);
     hres = IActiveScript_Close(script);
     ok(hres == S_OK, "Close failed: %08x\n", hres);

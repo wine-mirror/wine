@@ -207,14 +207,13 @@ static void decrease_state(VBScript *This, SCRIPTSTATE state)
         /* FALLTHROUGH */
     case SCRIPTSTATE_STARTED:
     case SCRIPTSTATE_DISCONNECTED:
-        if(This->state == SCRIPTSTATE_DISCONNECTED)
-            change_state(This, SCRIPTSTATE_INITIALIZED);
-        if(state == SCRIPTSTATE_INITIALIZED)
-            break;
+        change_state(This, SCRIPTSTATE_INITIALIZED);
         /* FALLTHROUGH */
     case SCRIPTSTATE_INITIALIZED:
     case SCRIPTSTATE_UNINITIALIZED:
         change_state(This, state);
+        if(state == SCRIPTSTATE_INITIALIZED)
+            break;
         release_script(This->ctx);
         This->thread_id = 0;
         break;
@@ -469,7 +468,7 @@ static HRESULT WINAPI VBScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE 
         exec_queued_code(This->ctx);
         break;
     case SCRIPTSTATE_INITIALIZED:
-        FIXME("unimplemented SCRIPTSTATE_INITIALIZED\n");
+        decrease_state(This, SCRIPTSTATE_INITIALIZED);
         return S_OK;
     case SCRIPTSTATE_DISCONNECTED:
         FIXME("unimplemented SCRIPTSTATE_DISCONNECTED\n");
