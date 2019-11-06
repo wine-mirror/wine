@@ -367,10 +367,12 @@ static void set_wow64_environment( WCHAR **env )
     static const WCHAR progdirW[]   = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',0};
     static const WCHAR progdir86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',' ','(','x','8','6',')',0};
     static const WCHAR progfilesW[] = {'P','r','o','g','r','a','m','F','i','l','e','s',0};
+    static const WCHAR progfiles86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','(','x','8','6',')',0};
     static const WCHAR progw6432W[] = {'P','r','o','g','r','a','m','W','6','4','3','2',0};
     static const WCHAR commondirW[]   = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r',0};
     static const WCHAR commondir86W[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r',' ','(','x','8','6',')',0};
     static const WCHAR commonfilesW[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','F','i','l','e','s',0};
+    static const WCHAR commonfiles86W[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','F','i','l','e','s','(','8','6',')',0};
     static const WCHAR commonw6432W[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','W','6','4','3','2',0};
     static const WCHAR winedlldirW[] = {'W','I','N','E','D','L','L','D','I','R','%','u',0};
     static const WCHAR winehomedirW[] = {'W','I','N','E','H','O','M','E','D','I','R',0};
@@ -435,9 +437,10 @@ static void set_wow64_environment( WCHAR **env )
         if (is_win64 || !is_wow64) set_env_var( env, progfilesW, val );
         RtlFreeHeap( GetProcessHeap(), 0, val );
     }
-    if (is_wow64 && (val = get_registry_value( *env, hkey, progdir86W )))
+    if ((val = get_registry_value( *env, hkey, progdir86W )))
     {
-        set_env_var( env, progfilesW, val );
+        if (is_win64 || is_wow64) set_env_var( env, progfiles86W, val );
+        if (is_wow64) set_env_var( env, progfilesW, val );
         RtlFreeHeap( GetProcessHeap(), 0, val );
     }
 
@@ -449,9 +452,10 @@ static void set_wow64_environment( WCHAR **env )
         if (is_win64 || !is_wow64) set_env_var( env, commonfilesW, val );
         RtlFreeHeap( GetProcessHeap(), 0, val );
     }
-    if (is_wow64 && (val = get_registry_value( *env, hkey, commondir86W )))
+    if ((val = get_registry_value( *env, hkey, commondir86W )))
     {
-        set_env_var( env, commonfilesW, val );
+        if (is_win64 || is_wow64) set_env_var( env, commonfiles86W, val );
+        if (is_wow64) set_env_var( env, commonfilesW, val );
         RtlFreeHeap( GetProcessHeap(), 0, val );
     }
     NtClose( hkey );
