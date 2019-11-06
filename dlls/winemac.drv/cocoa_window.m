@@ -1289,6 +1289,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                     }
                     else
                     {
+                        [self setStyleMask:([self styleMask] | NSMiniaturizableWindowMask)];
                         [super miniaturize:nil];
                         discard |= event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
                                    event_mask_for_type(WINDOW_GOT_FOCUS) |
@@ -1763,6 +1764,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
             if (pendingMinimize)
             {
+                [self setStyleMask:([self styleMask] | NSMiniaturizableWindowMask)];
                 [super miniaturize:nil];
                 pendingMinimize = FALSE;
             }
