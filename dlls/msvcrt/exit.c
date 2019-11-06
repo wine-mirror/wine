@@ -290,10 +290,10 @@ unsigned int CDECL MSVCRT__set_abort_behavior(unsigned int flags, unsigned int m
 void CDECL MSVCRT__wassert(const MSVCRT_wchar_t* str, const MSVCRT_wchar_t* file, unsigned int line)
 {
   static const MSVCRT_wchar_t assertion_failed[] = {'A','s','s','e','r','t','i','o','n',' ','f','a','i','l','e','d','!',0};
-  static const MSVCRT_wchar_t format_msgbox[] = {'F','i','l','e',':',' ','%','s','\n','L','i','n','e',':',' ','%','d',
-      '\n','\n','E','x','p','r','e','s','s','i','o','n',':',' ','\"','%','s','\"',0};
+  static const MSVCRT_wchar_t format_msgbox[] = {'F','i','l','e',':',' ','%','l','s','\n','L','i','n','e',':',' ','%','d',
+      '\n','\n','E','x','p','r','e','s','s','i','o','n',':',' ','\"','%','l','s','\"',0};
   static const MSVCRT_wchar_t format_console[] = {'A','s','s','e','r','t','i','o','n',' ','f','a','i','l','e','d',':',' ',
-      '%','s',',',' ','f','i','l','e',' ','%','s',',',' ','l','i','n','e',' ','%','d','\n','\n',0};
+      '%','l','s',',',' ','f','i','l','e',' ','%','l','s',',',' ','l','i','n','e',' ','%','d','\n','\n',0};
 
   TRACE("(%s,%s,%d)\n", debugstr_w(str), debugstr_w(file), line);
 
