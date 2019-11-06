@@ -187,8 +187,8 @@ void CDECL MSVCRT__exit(int exitcode)
 /* Print out an error message with an option to debug */
 static void DoMessageBoxW(const MSVCRT_wchar_t *lead, const MSVCRT_wchar_t *message)
 {
-  static const MSVCRT_wchar_t message_format[] = {'%','s','\n','\n','P','r','o','g','r','a','m',':',' ','%','s','\n',
-    '%','s','\n','\n','P','r','e','s','s',' ','O','K',' ','t','o',' ','e','x','i','t',' ','t','h','e',' ',
+  static const MSVCRT_wchar_t message_format[] = {'%','l','s','\n','\n','P','r','o','g','r','a','m',':',' ','%','l','s','\n',
+    '%','l','s','\n','\n','P','r','e','s','s',' ','O','K',' ','t','o',' ','e','x','i','t',' ','t','h','e',' ',
     'p','r','o','g','r','a','m',',',' ','o','r',' ','C','a','n','c','e','l',' ','t','o',' ','s','t','a','r','t',' ',
     't','h','e',' ','W','i','n','e',' ','d','e','b','u','g','g','e','r','.','\n',0};
   static const WCHAR title[] =
