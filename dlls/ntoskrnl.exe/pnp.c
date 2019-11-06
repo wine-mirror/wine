@@ -827,6 +827,9 @@ static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
         /* Nothing to do. */
         irp->IoStatus.u.Status = STATUS_SUCCESS;
         break;
+    case IRP_MN_QUERY_CAPABILITIES:
+        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        break;
     case IRP_MN_QUERY_ID:
     {
         BUS_QUERY_ID_TYPE type = stack->Parameters.QueryId.IdType;
