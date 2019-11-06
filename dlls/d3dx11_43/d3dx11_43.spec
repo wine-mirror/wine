@@ -39,6 +39,6 @@
 @ stub D3DX11PreprocessShaderFromResourceA
 @ stub D3DX11PreprocessShaderFromResourceW
 @ stub D3DX11SHProjectCubeMap
-@ stub D3DX11SaveTextureToFileA
-@ stub D3DX11SaveTextureToFileW
+@ stdcall D3DX11SaveTextureToFileA(ptr ptr long str)
+@ stdcall D3DX11SaveTextureToFileW(ptr ptr long wstr)
 @ stdcall D3DX11SaveTextureToMemory(ptr ptr long ptr long)
