@@ -758,6 +758,7 @@ void compilation_message(struct compilation_messages *msg, const char *fmt, __ms
     }
 }
 
+#ifdef D3D_COMPILER_VERSION
 BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var)
 {
     struct hlsl_ir_var *var;
@@ -2327,3 +2328,4 @@ void add_function_decl(struct wine_rb_tree *funcs, char *name, struct hlsl_ir_fu
     func->intrinsic = intrinsic;
     wine_rb_put(funcs, func->name, &func->entry);
 }
+#endif

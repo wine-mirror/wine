@@ -21,6 +21,7 @@
 #include "initguid.h"
 #include "d3dcompiler_private.h"
 #include "winternl.h"
+#include "d3d10.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
@@ -94,6 +95,7 @@ struct d3dcompiler_shader_reflection_constant_buffer
 struct d3dcompiler_shader_reflection
 {
     ID3D11ShaderReflection ID3D11ShaderReflection_iface;
+    ID3D10ShaderReflection ID3D10ShaderReflection_iface;
     LONG refcount;
 
     DWORD target;
@@ -1806,6 +1808,138 @@ err_out:
 
     return hr;
 }
+
+/* d3d10 reflection methods. */
+#ifndef D3D_COMPILER_VERSION
+static inline struct d3dcompiler_shader_reflection *impl_from_ID3D10ShaderReflection(ID3D10ShaderReflection *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3dcompiler_shader_reflection, ID3D10ShaderReflection_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_QueryInterface(ID3D10ShaderReflection *iface,
+        REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_ID3D10ShaderReflection) || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_shader_reflection_AddRef(ID3D10ShaderReflection *iface)
+{
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D10ShaderReflection(iface);
+    ULONG refcount = InterlockedIncrement(&reflection->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", reflection, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_shader_reflection_Release(ID3D10ShaderReflection *iface)
+{
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D10ShaderReflection(iface);
+    ULONG refcount = InterlockedDecrement(&reflection->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", reflection, refcount);
+
+    if (!refcount)
+        heap_free(reflection);
+
+    return refcount;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetDesc(ID3D10ShaderReflection *iface,
+        D3D10_SHADER_DESC *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+
+    return E_NOTIMPL;
+}
+
+static struct ID3D10ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3d10_shader_reflection_GetConstantBufferByIndex(
+        ID3D10ShaderReflection *iface, UINT index)
+{
+    FIXME("iface %p, index %u stub!\n", iface, index);
+
+    return NULL;
+}
+
+static struct ID3D10ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3d10_shader_reflection_GetConstantBufferByName(
+        ID3D10ShaderReflection *iface, const char *name)
+{
+    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+
+    return NULL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetResourceBindingDesc(ID3D10ShaderReflection *iface,
+        UINT index, D3D10_SHADER_INPUT_BIND_DESC *desc)
+{
+    FIXME("iface %p, index %u, desc %p stub!\n", iface, index, desc);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetInputParameterDesc(ID3D10ShaderReflection *iface,
+        UINT index, D3D10_SIGNATURE_PARAMETER_DESC *desc)
+{
+    FIXME("iface %p, index %u, desc %p stub!\n", iface, index, desc);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetOutputParameterDesc(ID3D10ShaderReflection *iface,
+        UINT index, D3D10_SIGNATURE_PARAMETER_DESC *desc)
+{
+    FIXME("iface %p, index %u, desc %p stub!\n", iface, index, desc);
+
+    return E_NOTIMPL;
+}
+
+static const struct ID3D10ShaderReflectionVtbl d3d10_shader_reflection_vtbl =
+{
+    d3d10_shader_reflection_QueryInterface,
+    d3d10_shader_reflection_AddRef,
+    d3d10_shader_reflection_Release,
+    d3d10_shader_reflection_GetDesc,
+    d3d10_shader_reflection_GetConstantBufferByIndex,
+    d3d10_shader_reflection_GetConstantBufferByName,
+    d3d10_shader_reflection_GetResourceBindingDesc,
+    d3d10_shader_reflection_GetInputParameterDesc,
+    d3d10_shader_reflection_GetOutputParameterDesc,
+};
+
+HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10ShaderReflection **reflector)
+{
+    struct d3dcompiler_shader_reflection *object;
+
+    FIXME("data %p, data_size %lu, reflector %p stub!\n", data, data_size, reflector);
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+    {
+        ERR("Failed to allocate D3D10 shader reflection object memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->ID3D10ShaderReflection_iface.lpVtbl = &d3d10_shader_reflection_vtbl;
+    object->refcount = 1;
+
+    *reflector = &object->ID3D10ShaderReflection_iface;
+
+    TRACE("Created ID3D10ShaderReflection %p.\n", object);
+
+    return S_OK;
+}
+#endif
 
 HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void **reflector)
 {

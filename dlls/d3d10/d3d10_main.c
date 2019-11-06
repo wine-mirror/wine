@@ -316,25 +316,3 @@ const char * WINAPI D3D10GetPixelShaderProfile(ID3D10Device *device)
 
     return "ps_4_0";
 }
-
-HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10ShaderReflection **reflector)
-{
-    struct d3d10_shader_reflection *object;
-
-    FIXME("data %p, data_size %lu, reflector %p stub!\n", data, data_size, reflector);
-
-    if (!(object = heap_alloc_zero(sizeof(*object))))
-    {
-        ERR("Failed to allocate D3D10 shader reflection object memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    object->ID3D10ShaderReflection_iface.lpVtbl = &d3d10_shader_reflection_vtbl;
-    object->refcount = 1;
-
-    *reflector = &object->ID3D10ShaderReflection_iface;
-
-    TRACE("Created ID3D10ShaderReflection %p\n", object);
-
-    return S_OK;
-}
