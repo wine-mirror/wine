@@ -93,6 +93,15 @@ static BOOL get_reg_value(WCHAR *env, HKEY hkey, const WCHAR *name, WCHAR *val, 
     return FALSE;
 }
 
+static void set_env_var( WCHAR **env, const WCHAR *name, const WCHAR *val )
+{
+    UNICODE_STRING nameW, valW;
+
+    RtlInitUnicodeString( &nameW, name );
+    RtlInitUnicodeString( &valW, val );
+    RtlSetEnvironmentVariable( env, &nameW, &valW );
+}
+
 static void set_registry_variables(WCHAR **env, HKEY hkey, DWORD type, BOOL set_path)
 {
     UNICODE_STRING us_name, us_value;
@@ -124,25 +133,17 @@ static void set_registry_variables(WCHAR **env, HKEY hkey, DWORD type, BOOL set_
                 continue;
 
             value[size] = ';';
-            RtlInitUnicodeString(&us_value, value);
-            RtlSetEnvironmentVariable(env, &us_name, &us_value);
+            set_env_var(env, name, value);
             continue;
         }
 
-        if (!get_reg_value(*env, hkey, name, value, sizeof(value)))
-            continue;
-
-        if(!value[0])
-            continue;
-
-        RtlInitUnicodeString(&us_value, value);
-        RtlSetEnvironmentVariable(env, &us_name, &us_value);
+        if (get_reg_value(*env, hkey, name, value, sizeof(value)) && value[0])
+            set_env_var(env, name, value);
     }
 }
 
 static void set_wow64_environment(WCHAR **env)
 {
-    UNICODE_STRING nameW, valueW;
     WCHAR buf[64];
     HKEY hkey;
     BOOL is_win64 = (sizeof(void *) > sizeof(int));
@@ -158,66 +159,26 @@ static void set_wow64_environment(WCHAR **env)
 
     if (get_reg_value(*env, hkey, L"ProgramFilesDir", buf, sizeof(buf)))
     {
-        if (is_win64 || is_wow64)
-        {
-            RtlInitUnicodeString(&nameW, L"ProgramW6432");
-            RtlInitUnicodeString(&valueW, buf);
-            RtlSetEnvironmentVariable(env, &nameW, &valueW);
-        }
-        if (is_win64 || !is_wow64)
-        {
-            RtlInitUnicodeString(&nameW, L"ProgramFiles");
-            RtlInitUnicodeString(&valueW, buf);
-            RtlSetEnvironmentVariable(env, &nameW, &valueW);
-        }
+        if (is_win64 || is_wow64) set_env_var(env, L"ProgramW6432", buf);
+        if (is_win64 || !is_wow64) set_env_var(env, L"ProgramFiles", buf);
     }
     if (get_reg_value(*env, hkey, L"ProgramFilesDir (x86)", buf, sizeof(buf)))
     {
-        if (is_win64 || is_wow64)
-        {
-            RtlInitUnicodeString(&nameW, L"ProgramFiles(x86)");
-            RtlInitUnicodeString(&valueW, buf);
-            RtlSetEnvironmentVariable(env, &nameW, &valueW);
-        }
-        if (is_wow64)
-        {
-            RtlInitUnicodeString(&nameW, L"ProgramFiles");
-            RtlInitUnicodeString(&valueW, buf);
-            RtlSetEnvironmentVariable(env, &nameW, &valueW);
-        }
+        if (is_win64 || is_wow64) set_env_var(env, L"ProgramFiles(x86)", buf);
+        if (is_wow64) set_env_var(env, L"ProgramFiles", buf);
     }
 
     /* set the CommonProgramFiles variables */
 
     if (get_reg_value(*env, hkey, L"CommonFilesDir", buf, sizeof(buf)))
     {
-        if (is_win64 || is_wow64)
-        {
-            RtlInitUnicodeString(&nameW, L"CommonProgramW6432");
-            RtlInitUnicodeString(&valueW, buf);
-            RtlSetEnvironmentVariable(env, &nameW, &valueW);
-        }
-        if (is_win64 || !is_wow64)
-        {
-            RtlInitUnicodeString(&nameW, L"CommonProgramFiles");
-            RtlInitUnicodeString(&valueW, buf);
-            RtlSetEnvironmentVariable(env, &nameW, &valueW);
-        }
+        if (is_win64 || is_wow64) set_env_var(env, L"CommonProgramW6432", buf);
+        if (is_win64 || !is_wow64) set_env_var(env, L"CommonProgramFiles", buf);
     }
     if (get_reg_value(*env, hkey, L"CommonFilesDir (x86)", buf, sizeof(buf)))
     {
-        if (is_win64 || is_wow64)
-        {
-            RtlInitUnicodeString(&nameW, L"CommonProgramFiles(x86)");
-            RtlInitUnicodeString(&valueW, buf);
-            RtlSetEnvironmentVariable(env, &nameW, &valueW);
-        }
-        if (is_wow64)
-        {
-            RtlInitUnicodeString(&nameW, L"CommonProgramFiles");
-            RtlInitUnicodeString(&valueW, buf);
-            RtlSetEnvironmentVariable(env, &nameW, &valueW);
-        }
+        if (is_win64 || is_wow64) set_env_var(env, L"CommonProgramFiles(x86)", buf);
+        if (is_wow64) set_env_var(env, L"CommonProgramFiles", buf);
     }
 
     RegCloseKey(hkey);
@@ -230,7 +191,6 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
     static const WCHAR profile_keyW[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList";
 
     WCHAR *env, buf[UNICODE_STRING_MAX_CHARS], profiles_dir[MAX_PATH];
-    UNICODE_STRING us_name, us_val;
     DWORD len;
     HKEY hkey, hsubkey;
 
@@ -256,9 +216,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
             WARN("SystemRoot variable not set\n");
         }
     }
-    RtlInitUnicodeString(&us_name, L"SystemRoot");
-    RtlInitUnicodeString(&us_val, buf);
-    RtlSetEnvironmentVariable(&env, &us_name, &us_val);
+    set_env_var(&env, L"SystemRoot", buf);
 
     if (!GetEnvironmentVariableW(L"SystemDrive", buf, UNICODE_STRING_MAX_CHARS))
     {
@@ -268,9 +226,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
             WARN("SystemDrive variable not set\n");
         }
     }
-    RtlInitUnicodeString(&us_name, L"SystemDrive");
-    RtlInitUnicodeString(&us_val, buf);
-    RtlSetEnvironmentVariable(&env, &us_name, &us_val);
+    set_env_var(&env, L"SystemDrive", buf);
 
     set_registry_variables(&env, hkey, REG_SZ, !bInherit);
     set_registry_variables(&env, hkey, REG_EXPAND_SZ, !bInherit);
@@ -302,11 +258,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
             }
 
             if (get_reg_value(env, hkey, L"Public", buf, UNICODE_STRING_MAX_CHARS))
-            {
-                RtlInitUnicodeString(&us_name, L"ALLUSERSPROFILE");
-                RtlInitUnicodeString(&us_val, buf);
-                RtlSetEnvironmentVariable(&env, &us_name, &us_val);
-            }
+                set_env_var(&env, L"ALLUSERSPROFILE", buf);
         }
         else
         {
@@ -318,11 +270,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
 
     len = ARRAY_SIZE(buf);
     if (GetComputerNameW(buf, &len))
-    {
-        RtlInitUnicodeString(&us_name, L"COMPUTERNAME");
-        RtlInitUnicodeString(&us_val, buf);
-        RtlSetEnvironmentVariable(&env, &us_name, &us_val);
-    }
+        set_env_var(&env, L"COMPUTERNAME", buf);
 
     set_wow64_environment(&env);
 
@@ -335,9 +283,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
             {
                 wcscpy(buf, profiles_dir);
                 wcscat(buf, L"Default");
-                RtlInitUnicodeString(&us_name, L"USERPROFILE");
-                RtlInitUnicodeString(&us_val, buf);
-                RtlSetEnvironmentVariable(&env, &us_name, &us_val);
+                set_env_var(&env, L"USERPROFILE", buf);
             }
         }
 
@@ -368,16 +314,8 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
         if (LookupAccountSidW(NULL, token_user->User.Sid,
                     buf+len, &size, NULL, &tmp, &use))
         {
-            RtlInitUnicodeString(&us_name, L"USERNAME");
-            RtlInitUnicodeString(&us_val, buf+len);
-            RtlSetEnvironmentVariable(&env, &us_name, &us_val);
-
-            if (len)
-            {
-                RtlInitUnicodeString(&us_name, L"USERPROFILE");
-                RtlInitUnicodeString(&us_val, buf);
-                RtlSetEnvironmentVariable(&env, &us_name, &us_val);
-            }
+            set_env_var(&env, L"USERNAME", buf+len);
+            if (len) set_env_var(&env, L"USERPROFILE", buf);
         }
 
         HeapFree(GetProcessHeap(), 0, token_user);
