@@ -1083,6 +1083,7 @@ HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *
     }
 
     TRACE("not found %s\n", debugstr_w(name));
+    *id = DISPID_UNKNOWN;
     return DISP_E_UNKNOWNNAME;
 }
 
