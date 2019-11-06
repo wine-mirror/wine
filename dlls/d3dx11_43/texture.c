@@ -63,6 +63,24 @@ HRESULT WINAPI D3DX11CreateTextureFromMemory(ID3D11Device *device, const void *d
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI D3DX11SaveTextureToFileW(ID3D11DeviceContext *context, ID3D11Resource *texture,
+        D3DX11_IMAGE_FILE_FORMAT format, const WCHAR *filename)
+{
+    FIXME("context %p, texture %p, format %u, filename %s stub!\n",
+            context, texture, format, debugstr_w(filename));
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX11SaveTextureToFileA(ID3D11DeviceContext *context, ID3D11Resource *texture,
+        D3DX11_IMAGE_FILE_FORMAT format, const char *filename)
+{
+    FIXME("context %p, texture %p, format %u, filename %s stub!\n",
+            context, texture, format, debugstr_a(filename));
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DX11SaveTextureToMemory(ID3D11DeviceContext *context, ID3D11Resource *texture,
         D3DX11_IMAGE_FILE_FORMAT format, ID3D10Blob **buffer, UINT flags)
 {
