@@ -231,7 +231,7 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
         FIXME("NULL ctx\n");
     }
 
-    if(state == SCRIPTSTATE_UNINITIALIZED)
+    if(state == SCRIPTSTATE_UNINITIALIZED || state == SCRIPTSTATE_CLOSED)
         This->thread_id = 0;
 
     if(This->site) {
