@@ -281,7 +281,7 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
 
     if (!GetEnvironmentVariableW(SystemDriveW, buf, UNICODE_STRING_MAX_CHARS))
     {
-        if (!get_reg_value(env, hkey, SystemRootW, buf, UNICODE_STRING_MAX_CHARS))
+        if (!get_reg_value(env, hkey, SystemDriveW, buf, UNICODE_STRING_MAX_CHARS))
         {
             buf[0] = 0;
             WARN("SystemDrive variable not set\n");
