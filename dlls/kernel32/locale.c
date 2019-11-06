@@ -3996,12 +3996,22 @@ static const struct geoinfo_t *get_geoinfo_dataptr(GEOID geoid)
 
 /******************************************************************************
  *           GetUserGeoID (KERNEL32.@)
+ *
+ * Retrieves the ID of the user's geographic nation or region.
+ *
+ * PARAMS
+ *   geoclass [I] One of GEOCLASS_NATION or GEOCLASS_REGION (SYSGEOCLASS enum from "winnls.h").
+ *
+ * RETURNS
+ *   SUCCESS: The ID of the specified geographic class.
+ *   FAILURE: GEOID_NOT_AVAILABLE.
  */
 GEOID WINAPI GetUserGeoID(GEOCLASS geoclass)
 {
     GEOID ret = GEOID_NOT_AVAILABLE;
     static const WCHAR geoW[] = {'G','e','o',0};
     static const WCHAR nationW[] = {'N','a','t','i','o','n',0};
+    static const WCHAR regionW[] = {'R','e','g','i','o','n',0};
     WCHAR bufferW[40], *end;
     HANDLE hkey, hsubkey = 0;
     UNICODE_STRING keyW;
@@ -4009,20 +4019,26 @@ GEOID WINAPI GetUserGeoID(GEOCLASS geoclass)
     DWORD count = sizeof(bufferW);
     RtlInitUnicodeString(&keyW, nationW);
 
-    if (!(hkey = create_registry_key())) return ret;
-
-    switch (geoclass) {
+    switch (geoclass)
+    {
     case GEOCLASS_NATION:
-        if ((hsubkey = NLS_RegOpenKey(hkey, geoW)))
-        {
-            if ((NtQueryValueKey(hsubkey, &keyW, KeyValuePartialInformation,
-                                 bufferW, count, &count) == STATUS_SUCCESS ) && info->DataLength)
-                ret = strtolW((const WCHAR*)info->Data, &end, 10);
-        }
+        RtlInitUnicodeString(&keyW, nationW);
         break;
     case GEOCLASS_REGION:
-        FIXME("GEOCLASS_REGION not handled yet\n");
+        RtlInitUnicodeString(&keyW, regionW);
         break;
+    default:
+        WARN("Unknown geoclass %d\n", geoclass);
+        return ret;
+    }
+
+    if (!(hkey = create_registry_key())) return ret;
+
+    if ((hsubkey = NLS_RegOpenKey(hkey, geoW)))
+    {
+        if((NtQueryValueKey(hsubkey, &keyW, KeyValuePartialInformation,
+                            bufferW, count, &count) == STATUS_SUCCESS ) && info->DataLength)
+            ret = strtolW((const WCHAR*)info->Data, &end, 10);
     }
 
     NtClose(hkey);
@@ -4032,16 +4048,33 @@ GEOID WINAPI GetUserGeoID(GEOCLASS geoclass)
 
 /******************************************************************************
  *           SetUserGeoID (KERNEL32.@)
+ *
+ * Sets the ID of the user's geographic location.
+ *
+ * PARAMS
+ *   geoid [I] The geographic ID to be set.
+ *
+ * RETURNS
+ *   SUCCESS: TRUE.
+ *   FAILURE: FALSE. GetLastError() will return ERROR_INVALID_PARAMETER if the ID was invalid.
  */
 BOOL WINAPI SetUserGeoID(GEOID geoid)
 {
+    const struct geoinfo_t *geoinfo = get_geoinfo_dataptr(geoid);
     static const WCHAR geoW[] = {'G','e','o',0};
     static const WCHAR nationW[] = {'N','a','t','i','o','n',0};
+    static const WCHAR regionW[] = {'R','e','g','i','o','n',0};
     static const WCHAR formatW[] = {'%','i',0};
     UNICODE_STRING nameW, keyW;
     WCHAR bufferW[10];
     OBJECT_ATTRIBUTES attr;
     HANDLE hkey;
+
+    if (!geoinfo)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 
     if (!(hkey = create_registry_key())) return FALSE;
 
@@ -4052,16 +4085,19 @@ BOOL WINAPI SetUserGeoID(GEOID geoid)
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString(&nameW, geoW);
-    RtlInitUnicodeString(&keyW, nationW);
+
+    if (geoinfo->kind == LOCATION_NATION)
+        RtlInitUnicodeString(&keyW, nationW);
+    else
+        RtlInitUnicodeString(&keyW, regionW);
 
     if (NtCreateKey(&hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL) != STATUS_SUCCESS)
-
     {
         NtClose(attr.RootDirectory);
         return FALSE;
     }
 
-    sprintfW(bufferW, formatW, geoid);
+    sprintfW(bufferW, formatW, geoinfo->id);
     NtSetValueKey(hkey, &keyW, 0, REG_SZ, bufferW, (strlenW(bufferW) + 1) * sizeof(WCHAR));
     NtClose(attr.RootDirectory);
     NtClose(hkey);
