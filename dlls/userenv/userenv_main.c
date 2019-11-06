@@ -171,11 +171,20 @@ static void set_wow64_environment(WCHAR **env)
             RtlSetEnvironmentVariable(env, &nameW, &valueW);
         }
     }
-    if (is_wow64 && get_reg_value(*env, hkey, L"ProgramFilesDir (x86)", buf, sizeof(buf)))
+    if (get_reg_value(*env, hkey, L"ProgramFilesDir (x86)", buf, sizeof(buf)))
     {
-        RtlInitUnicodeString(&nameW, L"ProgramFiles");
-        RtlInitUnicodeString(&valueW, buf);
-        RtlSetEnvironmentVariable(env, &nameW, &valueW);
+        if (is_win64 || is_wow64)
+        {
+            RtlInitUnicodeString(&nameW, L"ProgramFiles(x86)");
+            RtlInitUnicodeString(&valueW, buf);
+            RtlSetEnvironmentVariable(env, &nameW, &valueW);
+        }
+        if (is_wow64)
+        {
+            RtlInitUnicodeString(&nameW, L"ProgramFiles");
+            RtlInitUnicodeString(&valueW, buf);
+            RtlSetEnvironmentVariable(env, &nameW, &valueW);
+        }
     }
 
     /* set the CommonProgramFiles variables */
@@ -195,11 +204,20 @@ static void set_wow64_environment(WCHAR **env)
             RtlSetEnvironmentVariable(env, &nameW, &valueW);
         }
     }
-    if (is_wow64 && get_reg_value(*env, hkey, L"CommonFilesDir (x86)", buf, sizeof(buf)))
+    if (get_reg_value(*env, hkey, L"CommonFilesDir (x86)", buf, sizeof(buf)))
     {
-        RtlInitUnicodeString(&nameW, L"CommonProgramFiles");
-        RtlInitUnicodeString(&valueW, buf);
-        RtlSetEnvironmentVariable(env, &nameW, &valueW);
+        if (is_win64 || is_wow64)
+        {
+            RtlInitUnicodeString(&nameW, L"CommonProgramFiles(x86)");
+            RtlInitUnicodeString(&valueW, buf);
+            RtlSetEnvironmentVariable(env, &nameW, &valueW);
+        }
+        if (is_wow64)
+        {
+            RtlInitUnicodeString(&nameW, L"CommonProgramFiles");
+            RtlInitUnicodeString(&valueW, buf);
+            RtlSetEnvironmentVariable(env, &nameW, &valueW);
+        }
     }
 
     RegCloseKey(hkey);

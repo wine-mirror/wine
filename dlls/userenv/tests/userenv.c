@@ -104,6 +104,8 @@ static void test_create_env(void)
         { "USERPROFILE" }
     };
     static const struct profile_item common_win64_vars[] = {
+        { "ProgramFiles(x86)" },
+        { "CommonProgramFiles(x86)" },
         { "ProgramW6432" },
         { "CommonProgramW6432" }
     };
