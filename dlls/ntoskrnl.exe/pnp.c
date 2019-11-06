@@ -226,10 +226,12 @@ static void load_function_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINF
         return;
     }
 
+    TRACE("Calling AddDevice routine %p.\n", driver_obj->DriverExtension->AddDevice);
     if (driver_obj->DriverExtension->AddDevice)
         status = driver_obj->DriverExtension->AddDevice( driver_obj, device );
     else
         status = STATUS_NOT_IMPLEMENTED;
+    TRACE("AddDevice routine %p returned %#x.\n", driver_obj->DriverExtension->AddDevice, status);
 
     ObDereferenceObject( driver_obj );
 
