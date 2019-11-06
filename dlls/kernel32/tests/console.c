@@ -2865,6 +2865,14 @@ static void test_GetConsoleFontInfo(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = pGetConsoleFontInfo(NULL, FALSE, 0, cfi);
     ok(!ret, "got %d, expected zero\n", ret);
+    if (GetLastError() == LOWORD(E_NOTIMPL) /* win10 1709+ */ ||
+        broken(GetLastError() == ERROR_GEN_FAILURE) /* win10 1607 */)
+    {
+        skip("GetConsoleFontInfo is not implemented\n");
+        SetConsoleScreenBufferSize(std_output, orig_sb_size);
+        HeapFree(GetProcessHeap(), 0, cfi);
+        return;
+    }
     todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -2887,14 +2895,11 @@ static void test_GetConsoleFontInfo(HANDLE std_output)
 
     memset(cfi, 0, memsize);
     ret = pGetConsoleFontInfo(std_output, FALSE, num_fonts, cfi);
-    todo_wine ok(ret || broken(!ret) /* win10 1809 */, "got %d, expected non-zero\n", ret);
-    if (ret)
-    {
-        todo_wine ok(cfi[index].dwFontSize.X == win_width, "got %d, expected %d\n",
-                     cfi[index].dwFontSize.X, win_width);
-        todo_wine ok(cfi[index].dwFontSize.Y == win_height, "got %d, expected %d\n",
-                     cfi[index].dwFontSize.Y, win_height);
-    }
+    todo_wine ok(ret, "got %d, expected non-zero\n", ret);
+    todo_wine ok(cfi[index].dwFontSize.X == win_width, "got %d, expected %d\n",
+                 cfi[index].dwFontSize.X, win_width);
+    todo_wine ok(cfi[index].dwFontSize.Y == win_height, "got %d, expected %d\n",
+                 cfi[index].dwFontSize.Y, win_height);
 
     for (i = 0; i < num_fonts; i++)
     {
@@ -2923,14 +2928,11 @@ static void test_GetConsoleFontInfo(HANDLE std_output)
 
     memset(cfi, 0, memsize);
     ret = pGetConsoleFontInfo(std_output, TRUE, num_fonts, cfi);
-    todo_wine ok(ret || broken(!ret) /* win10 1809 */, "got %d, expected non-zero\n", ret);
-    if (ret)
-    {
-        todo_wine ok(cfi[index].dwFontSize.X == csbi.dwMaximumWindowSize.X, "got %d, expected %d\n",
-                     cfi[index].dwFontSize.X, csbi.dwMaximumWindowSize.X);
-        todo_wine ok(cfi[index].dwFontSize.Y == csbi.dwMaximumWindowSize.Y, "got %d, expected %d\n",
-                     cfi[index].dwFontSize.Y, csbi.dwMaximumWindowSize.Y);
-    }
+    todo_wine ok(ret, "got %d, expected non-zero\n", ret);
+    todo_wine ok(cfi[index].dwFontSize.X == csbi.dwMaximumWindowSize.X, "got %d, expected %d\n",
+                 cfi[index].dwFontSize.X, csbi.dwMaximumWindowSize.X);
+    todo_wine ok(cfi[index].dwFontSize.Y == csbi.dwMaximumWindowSize.Y, "got %d, expected %d\n",
+                 cfi[index].dwFontSize.Y, csbi.dwMaximumWindowSize.Y);
 
     for (i = 0; i < num_fonts; i++)
     {
