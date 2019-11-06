@@ -106,7 +106,6 @@ static const USER_DRIVER *load_driver(void)
 
         GET_USER_FUNC(ActivateKeyboardLayout);
         GET_USER_FUNC(Beep);
-        GET_USER_FUNC(GetAsyncKeyState);
         GET_USER_FUNC(GetKeyNameText);
         GET_USER_FUNC(GetKeyboardLayout);
         GET_USER_FUNC(GetKeyboardLayoutList);
@@ -204,11 +203,6 @@ static HKL CDECL nulldrv_ActivateKeyboardLayout( HKL layout, UINT flags )
 
 static void CDECL nulldrv_Beep(void)
 {
-}
-
-static SHORT CDECL nulldrv_GetAsyncKeyState( INT key )
-{
-    return -1;
 }
 
 static UINT CDECL nulldrv_GetKeyboardLayoutList( INT size, HKL *layouts )
@@ -494,7 +488,6 @@ static USER_DRIVER null_driver =
     /* keyboard functions */
     nulldrv_ActivateKeyboardLayout,
     nulldrv_Beep,
-    nulldrv_GetAsyncKeyState,
     nulldrv_GetKeyNameText,
     nulldrv_GetKeyboardLayout,
     nulldrv_GetKeyboardLayoutList,
@@ -564,11 +557,6 @@ static HKL CDECL loaderdrv_ActivateKeyboardLayout( HKL layout, UINT flags )
 static void CDECL loaderdrv_Beep(void)
 {
     load_driver()->pBeep();
-}
-
-static SHORT CDECL loaderdrv_GetAsyncKeyState( INT key )
-{
-    return load_driver()->pGetAsyncKeyState( key );
 }
 
 static INT CDECL loaderdrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
@@ -715,7 +703,6 @@ static USER_DRIVER lazy_load_driver =
     /* keyboard functions */
     loaderdrv_ActivateKeyboardLayout,
     loaderdrv_Beep,
-    loaderdrv_GetAsyncKeyState,
     loaderdrv_GetKeyNameText,
     loaderdrv_GetKeyboardLayout,
     loaderdrv_GetKeyboardLayoutList,
