@@ -402,7 +402,12 @@ void WINAPI IoInvalidateDeviceRelations( DEVICE_OBJECT *device_object, DEVICE_RE
 NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROPERTY property,
                                      ULONG length, void *buffer, ULONG *needed )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
+    WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
+    DWORD sp_property = -1;
+    NTSTATUS status;
+    HDEVINFO set;
+
     TRACE("device %p, property %u, length %u, buffer %p, needed %p.\n",
             device, property, length, buffer, needed);
 
@@ -430,7 +435,7 @@ NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROP
                 status = STATUS_BUFFER_TOO_SMALL;
 
             ExFreePool( id );
-            break;
+            return status;
         }
         case DevicePropertyPhysicalDeviceObjectName:
         {
@@ -465,11 +470,81 @@ NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROP
                     *needed = 0;
             }
             HeapFree(GetProcessHeap(), 0, name);
-            break;
+            return status;
         }
+        case DevicePropertyDeviceDescription:
+            sp_property = SPDRP_DEVICEDESC;
+            break;
+        case DevicePropertyHardwareID:
+            sp_property = SPDRP_HARDWAREID;
+            break;
+        case DevicePropertyCompatibleIDs:
+            sp_property = SPDRP_COMPATIBLEIDS;
+            break;
+        case DevicePropertyClassName:
+            sp_property = SPDRP_CLASS;
+            break;
+        case DevicePropertyClassGuid:
+            sp_property = SPDRP_CLASSGUID;
+            break;
+        case DevicePropertyManufacturer:
+            sp_property = SPDRP_MFG;
+            break;
+        case DevicePropertyFriendlyName:
+            sp_property = SPDRP_FRIENDLYNAME;
+            break;
+        case DevicePropertyLocationInformation:
+            sp_property = SPDRP_LOCATION_INFORMATION;
+            break;
+        case DevicePropertyBusTypeGuid:
+            sp_property = SPDRP_BUSTYPEGUID;
+            break;
+        case DevicePropertyLegacyBusType:
+            sp_property = SPDRP_LEGACYBUSTYPE;
+            break;
+        case DevicePropertyBusNumber:
+            sp_property = SPDRP_BUSNUMBER;
+            break;
+        case DevicePropertyAddress:
+            sp_property = SPDRP_ADDRESS;
+            break;
+        case DevicePropertyUINumber:
+            sp_property = SPDRP_UI_NUMBER;
+            break;
+        case DevicePropertyInstallState:
+            sp_property = SPDRP_INSTALL_STATE;
+            break;
+        case DevicePropertyRemovalPolicy:
+            sp_property = SPDRP_REMOVAL_POLICY;
+            break;
         default:
             FIXME("Unhandled property %u.\n", property);
+            return STATUS_NOT_IMPLEMENTED;
     }
+
+    if ((status = get_device_instance_id( device, device_instance_id )))
+        return status;
+
+    if ((set = SetupDiCreateDeviceInfoList( &GUID_NULL, NULL )) == INVALID_HANDLE_VALUE)
+    {
+        ERR("Failed to create device list, error %#x.\n", GetLastError());
+        return GetLastError();
+    }
+
+    if (!SetupDiOpenDeviceInfoW( set, device_instance_id, NULL, 0, &sp_device))
+    {
+        ERR("Failed to open device, error %#x.\n", GetLastError());
+        SetupDiDestroyDeviceInfoList( set );
+        return GetLastError();
+    }
+
+    if (SetupDiGetDeviceRegistryPropertyW( set, &sp_device, sp_property, NULL, buffer, length, needed ))
+        status = STATUS_SUCCESS;
+    else
+        status = GetLastError();
+
+    SetupDiDestroyDeviceInfoList( set );
+
     return status;
 }
 
