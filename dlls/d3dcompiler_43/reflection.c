@@ -1694,9 +1694,6 @@ static HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_refl
     HRESULT hr;
     unsigned int i;
 
-    reflection->ID3D11ShaderReflection_iface.lpVtbl = &d3dcompiler_shader_reflection_vtbl;
-    reflection->refcount = 1;
-
     wine_rb_init(&reflection->types, d3dcompiler_shader_reflection_type_compare);
 
     hr = dxbc_parse(data, data_size, &src_dxbc);
@@ -1921,8 +1918,9 @@ static const struct ID3D10ShaderReflectionVtbl d3d10_shader_reflection_vtbl =
 HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10ShaderReflection **reflector)
 {
     struct d3dcompiler_shader_reflection *object;
+    HRESULT hr;
 
-    FIXME("data %p, data_size %lu, reflector %p stub!\n", data, data_size, reflector);
+    TRACE("data %p, data_size %lu, reflector %p.\n", data, data_size, reflector);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
     {
@@ -1932,6 +1930,14 @@ HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10Shad
 
     object->ID3D10ShaderReflection_iface.lpVtbl = &d3d10_shader_reflection_vtbl;
     object->refcount = 1;
+
+    hr = d3dcompiler_shader_reflection_init(object, data, data_size);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize shader reflection.\n");
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
 
     *reflector = &object->ID3D10ShaderReflection_iface;
 
@@ -1970,6 +1976,9 @@ HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
+
+    object->ID3D11ShaderReflection_iface.lpVtbl = &d3dcompiler_shader_reflection_vtbl;
+    object->refcount = 1;
 
     hr = d3dcompiler_shader_reflection_init(object, data, data_size);
     if (FAILED(hr))
