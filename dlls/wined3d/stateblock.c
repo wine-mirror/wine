@@ -1546,6 +1546,15 @@ void CDECL wined3d_stateblock_set_material(struct wined3d_stateblock *stateblock
     stateblock->changed.material = TRUE;
 }
 
+void CDECL wined3d_stateblock_set_viewport(struct wined3d_stateblock *stateblock,
+        const struct wined3d_viewport *viewport)
+{
+    TRACE("stateblock %p, viewport %p.\n", stateblock, viewport);
+
+    stateblock->stateblock_state.viewport = *viewport;
+    stateblock->changed.viewport = TRUE;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union

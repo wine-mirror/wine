@@ -2692,6 +2692,7 @@ void __cdecl wined3d_stateblock_set_transform(struct wined3d_stateblock *statebl
 void __cdecl wined3d_stateblock_set_vertex_declaration(struct wined3d_stateblock *stateblock,
         struct wined3d_vertex_declaration *declaration);
 void __cdecl wined3d_stateblock_set_vertex_shader(struct wined3d_stateblock *stateblock, struct wined3d_shader *shader);
+void __cdecl wined3d_stateblock_set_viewport(struct wined3d_stateblock *stateblock, const struct wined3d_viewport *viewport);
 HRESULT __cdecl wined3d_stateblock_set_vs_consts_b(struct wined3d_stateblock *stateblock,
         unsigned int start_idx, unsigned int count, const BOOL *constants);
 HRESULT __cdecl wined3d_stateblock_set_vs_consts_f(struct wined3d_stateblock *stateblock,
