@@ -131,14 +131,19 @@ IDispatch *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned flag
 static void release_script(script_ctx_t *ctx)
 {
     class_desc_t *class_desc;
+    unsigned i;
 
     collect_objects(ctx);
     clear_ei(&ctx->ei);
 
-    release_dynamic_vars(ctx->global_vars);
-    ctx->global_vars = NULL;
+    for(i = 0; i < ctx->global_vars_cnt; i++)
+        VariantClear(&ctx->global_vars[i]->v);
 
+    heap_free(ctx->global_vars);
     heap_free(ctx->global_funcs);
+    ctx->global_vars = NULL;
+    ctx->global_vars_cnt = 0;
+    ctx->global_vars_size = 0;
     ctx->global_funcs = NULL;
     ctx->global_funcs_cnt = 0;
     ctx->global_funcs_size = 0;

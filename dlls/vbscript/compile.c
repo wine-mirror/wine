@@ -1787,11 +1787,10 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 static BOOL lookup_script_identifier(script_ctx_t *script, const WCHAR *identifier)
 {
     class_desc_t *class;
-    dynamic_var_t *var;
     unsigned i;
 
-    for(var = script->global_vars; var; var = var->next) {
-        if(!wcsicmp(var->name, identifier))
+    for(i = 0; i < script->global_vars_cnt; i++) {
+        if(!wcsicmp(script->global_vars[i]->name, identifier))
             return TRUE;
     }
 
@@ -1895,6 +1894,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     function_t *new_func, *func_iter;
     function_decl_t *func_decl;
     class_decl_t *class_decl;
+    dynamic_var_t *var_iter;
     compile_ctx_t ctx;
     vbscode_t *code;
     size_t cnt;
@@ -1952,13 +1952,19 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
         return compile_error(script, hres);
     }
 
-    if(ctx.global_vars) {
-        dynamic_var_t *var;
-
-        for(var = ctx.global_vars; var->next; var = var->next);
-
-        var->next = script->global_vars;
-        script->global_vars = ctx.global_vars;
+    cnt = script->global_vars_cnt;
+    for(var_iter = ctx.global_vars; var_iter; var_iter = var_iter->next)
+        cnt++;
+    if(cnt > script->global_vars_size) {
+        dynamic_var_t **new_vars;
+        if(script->global_vars)
+            new_vars = heap_realloc(script->global_vars, cnt * sizeof(*new_vars));
+        else
+            new_vars = heap_alloc(cnt * sizeof(*new_vars));
+        if(!new_vars)
+            return compile_error(script, E_OUTOFMEMORY);
+        script->global_vars = new_vars;
+        script->global_vars_size = cnt;
     }
 
     cnt = script->global_funcs_cnt;
@@ -1975,6 +1981,10 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
         script->global_funcs = new_funcs;
         script->global_funcs_size = cnt;
     }
+
+    for(var_iter = ctx.global_vars; var_iter; var_iter = var_iter->next)
+        script->global_vars[script->global_vars_cnt++] = var_iter;
+
     for(func_iter = ctx.funcs; func_iter; func_iter = func_iter->next) {
         unsigned i;
         for(i = 0; i < script->global_funcs_cnt; i++) {

@@ -675,7 +675,6 @@ static HRESULT WINAPI ScriptDisp_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
-    dynamic_var_t *var;
     ident_map_t *ident;
     unsigned i;
 
@@ -691,7 +690,8 @@ static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
         }
     }
 
-    for(var = This->ctx->global_vars; var; var = var->next) {
+    for(i = 0; i < This->ctx->global_vars_cnt; i++) {
+        dynamic_var_t *var = This->ctx->global_vars[i];
         if(!wcsicmp(var->name, bstrName)) {
             ident = add_ident(This, var->name);
             if(!ident)

@@ -94,6 +94,22 @@ static BOOL lookup_dynamic_vars(dynamic_var_t *var, const WCHAR *name, ref_t *re
     return FALSE;
 }
 
+static BOOL lookup_global_vars(script_ctx_t *script, const WCHAR *name, ref_t *ref)
+{
+    dynamic_var_t **vars = script->global_vars;
+    size_t i, cnt = script->global_vars_cnt;
+
+    for(i = 0; i < cnt; i++) {
+        if(!wcsicmp(vars[i]->name, name)) {
+            ref->type = vars[i]->is_const ? REF_CONST : REF_VAR;
+            ref->u.v = &vars[i]->v;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_t invoke_type, ref_t *ref)
 {
     named_item_t *item;
@@ -159,7 +175,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
     }
 
-    if(lookup_dynamic_vars(ctx->script->global_vars, name, ref))
+    if(lookup_global_vars(ctx->script, name, ref))
         return S_OK;
 
     for(i = 0; i < ctx->script->global_funcs_cnt; i++) {
@@ -227,8 +243,19 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
     V_VT(&new_var->v) = VT_EMPTY;
 
     if(ctx->func->type == FUNC_GLOBAL) {
-        new_var->next = ctx->script->global_vars;
-        ctx->script->global_vars = new_var;
+        size_t cnt = ctx->script->global_vars_cnt + 1;
+        if(cnt > ctx->script->global_vars_size) {
+            dynamic_var_t **new_vars;
+            if(ctx->script->global_vars)
+                new_vars = heap_realloc(ctx->script->global_vars, cnt * 2 * sizeof(*new_vars));
+            else
+                new_vars = heap_alloc(cnt * 2 * sizeof(*new_vars));
+            if(!new_vars)
+                return E_OUTOFMEMORY;
+            ctx->script->global_vars = new_vars;
+            ctx->script->global_vars_size = cnt * 2;
+        }
+        ctx->script->global_vars[ctx->script->global_vars_cnt++] = new_var;
     }else {
         new_var->next = ctx->dynamic_vars;
         ctx->dynamic_vars = new_var;
@@ -1118,14 +1145,14 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
     assert(array_id < ctx->func->array_cnt);
 
     if(ctx->func->type == FUNC_GLOBAL) {
-        dynamic_var_t *var;
-        for(var = ctx->script->global_vars; var; var = var->next) {
-            if(!wcsicmp(var->name, ident))
+        unsigned i;
+        for(i = 0; i < ctx->script->global_vars_cnt; i++) {
+            if(!wcsicmp(ctx->script->global_vars[i]->name, ident))
                 break;
         }
-        assert(var != NULL);
-        v = &var->v;
-        array_ref = &var->array;
+        assert(i < ctx->script->global_vars_cnt);
+        v = &ctx->script->global_vars[i]->v;
+        array_ref = &ctx->script->global_vars[i]->array;
     }else {
         ref_t ref;
 
