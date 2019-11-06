@@ -1711,7 +1711,7 @@ COORD WINAPI GetConsoleFontSize(HANDLE hConsole, DWORD index)
 BOOL WINAPI GetConsoleFontInfo(HANDLE hConsole, BOOL maximize, DWORD numfonts, CONSOLE_FONT_INFO *info)
 {
     FIXME("(%p %d %u %p): stub!\n", hConsole, maximize, numfonts, info);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    SetLastError(LOWORD(E_NOTIMPL) /* win10 1709+ */);
     return FALSE;
 }
 
