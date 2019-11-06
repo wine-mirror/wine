@@ -821,6 +821,9 @@ static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
 
     switch (stack->MinorFunction)
     {
+    case IRP_MN_QUERY_DEVICE_RELATIONS:
+        /* The FDO above already handled this, so return the same status. */
+        break;
     case IRP_MN_START_DEVICE:
     case IRP_MN_SURPRISE_REMOVAL:
     case IRP_MN_REMOVE_DEVICE:
