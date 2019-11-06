@@ -1857,9 +1857,46 @@ static ULONG STDMETHODCALLTYPE d3d10_shader_reflection_Release(ID3D10ShaderRefle
 static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetDesc(ID3D10ShaderReflection *iface,
         D3D10_SHADER_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D10ShaderReflection(iface);
 
-    return E_NOTIMPL;
+    FIXME("iface %p, desc %p partial stub!\n", iface, desc);
+
+    if (!desc)
+    {
+        WARN("Invalid argument specified.\n");
+        return E_FAIL;
+    }
+
+    desc->Version = reflection->version;
+    desc->Creator = reflection->creator;
+    desc->Flags = reflection->flags;
+    desc->ConstantBuffers = reflection->constant_buffer_count;
+    desc->BoundResources = reflection->bound_resource_count;
+    desc->InputParameters = reflection->isgn ? reflection->isgn->element_count : 0;
+    desc->OutputParameters = reflection->osgn ? reflection->osgn->element_count : 0;
+    desc->InstructionCount = reflection->instruction_count;
+    desc->TempRegisterCount = reflection->temp_register_count;
+    desc->TempArrayCount = reflection->temp_array_count;
+    desc->DefCount = 0;
+    desc->DclCount = reflection->dcl_count;
+    desc->TextureNormalInstructions = reflection->texture_normal_instructions;
+    desc->TextureLoadInstructions = reflection->texture_load_instructions;
+    desc->TextureCompInstructions = reflection->texture_comp_instructions;
+    desc->TextureBiasInstructions = reflection->texture_bias_instructions;
+    desc->TextureGradientInstructions = reflection->texture_gradient_instructions;
+    desc->FloatInstructionCount = reflection->float_instruction_count;
+    desc->IntInstructionCount = reflection->int_instruction_count;
+    desc->UintInstructionCount = reflection->uint_instruction_count;
+    desc->StaticFlowControlCount = reflection->static_flow_control_count;
+    desc->DynamicFlowControlCount = reflection->dynamic_flow_control_count;
+    desc->MacroInstructionCount = 0;
+    desc->ArrayInstructionCount = reflection->array_instruction_count;
+    desc->CutInstructionCount = reflection->cut_instruction_count;
+    desc->EmitInstructionCount = reflection->emit_instruction_count;
+    desc->GSOutputTopology = reflection->gs_output_topology;
+    desc->GSMaxOutputVertexCount = reflection->gs_max_output_vertex_count;
+
+    return S_OK;
 }
 
 static struct ID3D10ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3d10_shader_reflection_GetConstantBufferByIndex(
