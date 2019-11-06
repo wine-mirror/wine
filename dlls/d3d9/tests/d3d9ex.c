@@ -3124,6 +3124,7 @@ static void test_wndproc(void)
                 "Expected IsIconic %u, got %u, i=%u.\n", tests[i].iconic, IsIconic(focus_window), i);
 
         ShowWindow(focus_window, SW_SHOWNOACTIVATE);
+        flush_events();
         ShowWindow(focus_window, SW_SHOWMINNOACTIVE);
         flush_events();
 
