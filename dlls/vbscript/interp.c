@@ -223,6 +223,7 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
     memcpy(str, name, size);
     new_var->name = str;
     new_var->is_const = is_const;
+    new_var->array = NULL;
     V_VT(&new_var->v) = VT_EMPTY;
 
     if(ctx->func->type == FUNC_GLOBAL) {
@@ -1108,43 +1109,61 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
     const BSTR ident = ctx->instr->arg1.bstr;
     const unsigned array_id = ctx->instr->arg2.uint;
     const array_desc_t *array_desc;
-    ref_t ref;
+    SAFEARRAY **array_ref;
+    VARIANT *v;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(ident));
 
     assert(array_id < ctx->func->array_cnt);
-    if(!ctx->arrays) {
-        ctx->arrays = heap_alloc_zero(ctx->func->array_cnt * sizeof(SAFEARRAY*));
-        if(!ctx->arrays)
-            return E_OUTOFMEMORY;
+
+    if(ctx->func->type == FUNC_GLOBAL) {
+        dynamic_var_t *var;
+        for(var = ctx->script->global_vars; var; var = var->next) {
+            if(!wcsicmp(var->name, ident))
+                break;
+        }
+        assert(var != NULL);
+        v = &var->v;
+        array_ref = &var->array;
+    }else {
+        ref_t ref;
+
+        if(!ctx->arrays) {
+            ctx->arrays = heap_alloc_zero(ctx->func->array_cnt * sizeof(SAFEARRAY*));
+            if(!ctx->arrays)
+                return E_OUTOFMEMORY;
+        }
+
+        hres = lookup_identifier(ctx, ident, VBDISP_LET, &ref);
+        if(FAILED(hres)) {
+            FIXME("lookup %s failed: %08x\n", debugstr_w(ident), hres);
+            return hres;
+        }
+
+        if(ref.type != REF_VAR) {
+            FIXME("got ref.type = %d\n", ref.type);
+            return E_FAIL;
+        }
+
+        v = ref.u.v;
+        array_ref = ctx->arrays + array_id;
     }
 
-    hres = lookup_identifier(ctx, ident, VBDISP_LET, &ref);
-    if(FAILED(hres)) {
-        FIXME("lookup %s failed: %08x\n", debugstr_w(ident), hres);
-        return hres;
-    }
-
-    if(ref.type != REF_VAR) {
-        FIXME("got ref.type = %d\n", ref.type);
-        return E_FAIL;
-    }
-
-    if(ctx->arrays[array_id]) {
+    if(*array_ref) {
         FIXME("Array already initialized\n");
         return E_FAIL;
     }
 
     array_desc = ctx->func->array_descs + array_id;
     if(array_desc->dim_cnt) {
-        ctx->arrays[array_id] = SafeArrayCreate(VT_VARIANT, array_desc->dim_cnt, array_desc->bounds);
-        if(!ctx->arrays[array_id])
+        *array_ref = SafeArrayCreate(VT_VARIANT, array_desc->dim_cnt, array_desc->bounds);
+        if(!*array_ref)
             return E_OUTOFMEMORY;
     }
 
-    V_VT(ref.u.v) = VT_ARRAY|VT_BYREF|VT_VARIANT;
-    V_ARRAYREF(ref.u.v) = ctx->arrays+array_id;
+    V_VT(v) = VT_ARRAY|VT_BYREF|VT_VARIANT;
+    V_ARRAYREF(v) = array_ref;
     return S_OK;
 }
 
@@ -2201,6 +2220,8 @@ void release_dynamic_vars(dynamic_var_t *var)
 {
     while(var) {
         VariantClear(&var->v);
+        if(var->array)
+            SafeArrayDestroy(var->array);
         var = var->next;
     }
 }
