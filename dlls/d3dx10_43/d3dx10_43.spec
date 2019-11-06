@@ -54,7 +54,7 @@
 @ stdcall D3DX10GetImageInfoFromMemory(ptr long ptr ptr ptr)
 @ stub D3DX10GetImageInfoFromResourceA(long str ptr ptr ptr)
 @ stub D3DX10GetImageInfoFromResourceW(long wstr ptr ptr ptr)
-@ stub D3DX10LoadTextureFromTexture(ptr ptr ptr)
+@ stdcall D3DX10LoadTextureFromTexture(ptr ptr ptr)
 @ stub D3DX10PreprocessShaderFromFileA(str ptr ptr ptr ptr ptr)
 @ stub D3DX10PreprocessShaderFromFileW(wstr ptr ptr ptr ptr ptr)
 @ stdcall D3DX10PreprocessShaderFromMemory(ptr long str ptr ptr ptr ptr ptr ptr)
