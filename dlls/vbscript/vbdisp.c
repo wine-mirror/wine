@@ -24,6 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
+#define DISPID_FUNCTION_MASK 0x20000000
 #define FDEX_VERSION_MASK 0xf0000000
 
 static inline BOOL is_func_id(vbdisp_t *This, DISPID id)
@@ -526,49 +527,6 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
     return S_OK;
 }
 
-struct _ident_map_t {
-    const WCHAR *name;
-    BOOL is_var;
-    union {
-        dynamic_var_t *var;
-        function_t *func;
-    } u;
-};
-
-static inline DISPID ident_to_id(ScriptDisp *This, ident_map_t *ident)
-{
-    return (ident-This->ident_map)+1;
-}
-
-static inline ident_map_t *id_to_ident(ScriptDisp *This, DISPID id)
-{
-    return 0 < id && id <= This->ident_map_cnt ? This->ident_map+id-1 : NULL;
-}
-
-static ident_map_t *add_ident(ScriptDisp *This, const WCHAR *name)
-{
-    ident_map_t *ret;
-
-    if(!This->ident_map_size) {
-        This->ident_map = heap_alloc(4 * sizeof(*This->ident_map));
-        if(!This->ident_map)
-            return NULL;
-        This->ident_map_size = 4;
-    }else if(This->ident_map_cnt == This->ident_map_size) {
-        ident_map_t *new_map;
-
-        new_map = heap_realloc(This->ident_map, 2*This->ident_map_size*sizeof(*new_map));
-        if(!new_map)
-            return NULL;
-        This->ident_map = new_map;
-        This->ident_map_size *= 2;
-    }
-
-    ret = This->ident_map + This->ident_map_cnt++;
-    ret->name = name;
-    return ret;
-}
-
 static inline ScriptDisp *ScriptDisp_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, ScriptDisp, IDispatchEx_iface);
@@ -616,7 +574,6 @@ static ULONG WINAPI ScriptDisp_Release(IDispatchEx *iface)
 
     if(!ref) {
         assert(!This->ctx);
-        heap_free(This->ident_map);
         heap_free(This);
     }
 
@@ -675,7 +632,6 @@ static HRESULT WINAPI ScriptDisp_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
-    ident_map_t *ident;
     unsigned i;
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
@@ -683,37 +639,16 @@ static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     if(!This->ctx)
         return E_UNEXPECTED;
 
-    for(ident = This->ident_map; ident < This->ident_map+This->ident_map_cnt; ident++) {
-        if(!wcsicmp(ident->name, bstrName)) {
-            *pid = ident_to_id(This, ident);
-            return S_OK;
-        }
-    }
-
     for(i = 0; i < This->ctx->global_vars_cnt; i++) {
-        dynamic_var_t *var = This->ctx->global_vars[i];
-        if(!wcsicmp(var->name, bstrName)) {
-            ident = add_ident(This, var->name);
-            if(!ident)
-                return E_OUTOFMEMORY;
-
-            ident->is_var = TRUE;
-            ident->u.var = var;
-            *pid = ident_to_id(This, ident);
+        if(!wcsicmp(This->ctx->global_vars[i]->name, bstrName)) {
+            *pid = i + 1;
             return S_OK;
         }
     }
 
     for(i = 0; i < This->ctx->global_funcs_cnt; i++) {
-        function_t *func = This->ctx->global_funcs[i];
-        if(!wcsicmp(func->name, bstrName)) {
-            ident = add_ident(This, func->name);
-            if(!ident)
-                return E_OUTOFMEMORY;
-
-            ident->is_var = FALSE;
-            ident->u.func = func;
-            *pid =  ident_to_id(This, ident);
+        if(!wcsicmp(This->ctx->global_funcs[i]->name, bstrName)) {
+            *pid = i + 1 + DISPID_FUNCTION_MASK;
             return S_OK;
         }
     }
@@ -726,35 +661,40 @@ static HRESULT WINAPI ScriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
-    ident_map_t *ident;
     HRESULT hres;
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
-    ident = id_to_ident(This, id);
-    if(!ident)
-        return DISP_E_MEMBERNOTFOUND;
+    if (id & DISPID_FUNCTION_MASK)
+    {
+        id &= ~DISPID_FUNCTION_MASK;
+        if (id > This->ctx->global_funcs_cnt)
+            return DISP_E_MEMBERNOTFOUND;
 
-    if(ident->is_var) {
-        if(ident->u.var->is_const) {
-            FIXME("const not supported\n");
-            return E_NOTIMPL;
+        switch (wFlags)
+        {
+        case DISPATCH_METHOD:
+        case DISPATCH_METHOD | DISPATCH_PROPERTYGET:
+            hres = exec_script(This->ctx, TRUE, This->ctx->global_funcs[id - 1], NULL, pdp, pvarRes);
+            break;
+        default:
+            FIXME("Unsupported flags %x\n", wFlags);
+            hres = E_NOTIMPL;
         }
 
-        return invoke_variant_prop(This->ctx, &ident->u.var->v, wFlags, pdp, pvarRes);
+        return hres;
     }
 
-    switch(wFlags) {
-    case DISPATCH_METHOD:
-    case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
-        hres = exec_script(This->ctx, TRUE, ident->u.func, NULL, pdp, pvarRes);
-        break;
-    default:
-        FIXME("Unsupported flags %x\n", wFlags);
-        hres = E_NOTIMPL;
+    if (id > This->ctx->global_vars_cnt)
+        return DISP_E_MEMBERNOTFOUND;
+
+    if (This->ctx->global_vars[id - 1]->is_const)
+    {
+        FIXME("const not supported\n");
+        return E_NOTIMPL;
     }
 
-    return hres;
+    return invoke_variant_prop(This->ctx, &This->ctx->global_vars[id - 1]->v, wFlags, pdp, pvarRes);
 }
 
 static HRESULT WINAPI ScriptDisp_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
