@@ -106,6 +106,8 @@ NTSTATUS key_symmetric_init( struct key *key, struct algorithm *alg, const UCHAR
     key->u.s.mode        = alg->mode;
     key->u.s.ref_encrypt = NULL;        /* initialized on first use */
     key->u.s.ref_decrypt = NULL;
+    key->u.s.vector      = NULL;
+    key->u.s.vector_len  = 0;
 
     return STATUS_SUCCESS;
 }
@@ -122,32 +124,50 @@ static CCMode get_cryptor_mode( struct key *key )
     }
 }
 
-NTSTATUS key_symmetric_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
+NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG vector_len )
 {
-    CCCryptorStatus status;
-    CCMode mode;
-
-    if (!(mode = get_cryptor_mode( key ))) return STATUS_NOT_SUPPORTED;
-
-    if (key->u.s.ref_encrypt)
+    if (key->u.s.ref_encrypt && (!is_zero_vector( vector, vector_len ) ||
+        !is_equal_vector( key->u.s.vector, key->u.s.vector_len, vector, vector_len )))
     {
+        TRACE( "invalidating cryptor handles\n" );
         CCCryptorRelease( key->u.s.ref_encrypt );
         key->u.s.ref_encrypt = NULL;
-    }
-    if (key->u.s.ref_decrypt)
-    {
+
         CCCryptorRelease( key->u.s.ref_decrypt );
         key->u.s.ref_decrypt = NULL;
     }
 
-    if ((status = CCCryptorCreateWithMode( kCCEncrypt, mode, kCCAlgorithmAES128, ccNoPadding, iv, key->u.s.secret,
-                                           key->u.s.secret_len, NULL, 0, 0, 0, &key->u.s.ref_encrypt )) != kCCSuccess)
+    heap_free( key->u.s.vector );
+    key->u.s.vector = NULL;
+    key->u.s.vector_len = 0;
+    if (vector)
+    {
+        if (!(key->u.s.vector = heap_alloc( vector_len ))) return STATUS_NO_MEMORY;
+        memcpy( key->u.s.vector, vector, vector_len );
+        key->u.s.vector_len = vector_len;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS init_cryptor_handles( struct key *key )
+{
+    CCCryptorStatus status;
+    CCMode mode;
+
+    if (key->u.s.ref_encrypt) return STATUS_SUCCESS;
+    if (!(mode = get_cryptor_mode( key ))) return STATUS_NOT_SUPPORTED;
+
+    if ((status = CCCryptorCreateWithMode( kCCEncrypt, mode, kCCAlgorithmAES128, ccNoPadding, key->u.s.vector,
+                                           key->u.s.secret, key->u.s.secret_len, NULL, 0, 0, 0,
+                                           &key->u.s.ref_encrypt )) != kCCSuccess)
     {
         WARN( "CCCryptorCreateWithMode failed %d\n", status );
         return STATUS_INTERNAL_ERROR;
     }
-    if ((status = CCCryptorCreateWithMode( kCCDecrypt, mode, kCCAlgorithmAES128, ccNoPadding, iv, key->u.s.secret,
-                                           key->u.s.secret_len, NULL, 0, 0, 0, &key->u.s.ref_decrypt )) != kCCSuccess)
+    if ((status = CCCryptorCreateWithMode( kCCDecrypt, mode, kCCAlgorithmAES128, ccNoPadding, key->u.s.vector,
+                                           key->u.s.secret, key->u.s.secret_len, NULL, 0, 0, 0,
+                                           &key->u.s.ref_decrypt )) != kCCSuccess)
     {
         WARN( "CCCryptorCreateWithMode failed %d\n", status );
         CCCryptorRelease( key->u.s.ref_encrypt );
@@ -167,6 +187,10 @@ NTSTATUS key_symmetric_set_auth_data( struct key *key, UCHAR *auth_data, ULONG l
 NTSTATUS key_symmetric_encrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output, ULONG output_len  )
 {
     CCCryptorStatus status;
+    NTSTATUS ret;
+
+    if ((ret = init_cryptor_handles( key ))) return ret;
+
     if ((status = CCCryptorUpdate( key->u.s.ref_encrypt, input, input_len, output, output_len, NULL  )) != kCCSuccess)
     {
         WARN( "CCCryptorUpdate failed %d\n", status );
@@ -178,6 +202,10 @@ NTSTATUS key_symmetric_encrypt( struct key *key, const UCHAR *input, ULONG input
 NTSTATUS key_symmetric_decrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output, ULONG output_len )
 {
     CCCryptorStatus status;
+    NTSTATUS ret;
+
+    if ((ret = init_cryptor_handles( key ))) return ret;
+
     if ((status = CCCryptorUpdate( key->u.s.ref_decrypt, input, input_len, output, output_len, NULL  )) != kCCSuccess)
     {
         WARN( "CCCryptorUpdate failed %d\n", status );
@@ -235,6 +263,7 @@ NTSTATUS key_destroy( struct key *key )
 {
     if (key->u.s.ref_encrypt) CCCryptorRelease( key->u.s.ref_encrypt );
     if (key->u.s.ref_decrypt) CCCryptorRelease( key->u.s.ref_decrypt );
+    heap_free( key->u.s.vector );
     heap_free( key->u.s.secret );
     heap_free( key );
     return STATUS_SUCCESS;

@@ -831,6 +831,21 @@ BOOL key_is_symmetric( struct key *key )
     return builtin_algorithms[key->alg_id].class == BCRYPT_CIPHER_INTERFACE;
 }
 
+BOOL is_zero_vector( const UCHAR *vector, ULONG len )
+{
+    ULONG i;
+    if (!vector) return FALSE;
+    for (i = 0; i < len; i++) if (vector[i]) return FALSE;
+    return TRUE;
+}
+
+BOOL is_equal_vector( const UCHAR *vector, ULONG len, const UCHAR *vector2, ULONG len2 )
+{
+    if (!vector && !vector2) return TRUE;
+    if (len != len2) return FALSE;
+    return !memcmp( vector, vector2, len );
+}
+
 static NTSTATUS key_import( BCRYPT_ALG_HANDLE algorithm, const WCHAR *type, BCRYPT_KEY_HANDLE *key, UCHAR *object,
                             ULONG object_len, UCHAR *input, ULONG input_len )
 {
@@ -965,7 +980,7 @@ static NTSTATUS key_encrypt( struct key *key,  UCHAR *input, ULONG input_len, vo
         if (auth_info->dwFlags & BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG)
             FIXME( "call chaining not implemented\n" );
 
-        if ((status = key_symmetric_set_params( key, auth_info->pbNonce, auth_info->cbNonce )))
+        if ((status = key_symmetric_set_vector( key, auth_info->pbNonce, auth_info->cbNonce )))
             return status;
 
         *ret_len = input_len;
@@ -980,7 +995,6 @@ static NTSTATUS key_encrypt( struct key *key,  UCHAR *input, ULONG input_len, vo
         return key_symmetric_get_tag( key, auth_info->pbTag, auth_info->cbTag );
     }
 
-    if ((status = key_symmetric_set_params( key, iv, iv_len ))) return status;
     *ret_len = input_len;
 
     if (flags & BCRYPT_BLOCK_PADDING)
@@ -991,6 +1005,7 @@ static NTSTATUS key_encrypt( struct key *key,  UCHAR *input, ULONG input_len, vo
     if (!output) return STATUS_SUCCESS;
     if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
     if (key->u.s.mode == MODE_ID_ECB && iv) return STATUS_INVALID_PARAMETER;
+    if ((status = key_symmetric_set_vector( key, iv, iv_len ))) return status;
 
     src = input;
     dst = output;
@@ -998,7 +1013,7 @@ static NTSTATUS key_encrypt( struct key *key,  UCHAR *input, ULONG input_len, vo
     {
         if ((status = key_symmetric_encrypt( key, src, key->u.s.block_size, dst, key->u.s.block_size )))
             return status;
-        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_params( key, NULL, 0 ))) return status;
+        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_vector( key, NULL, 0 ))) return status;
         bytes_left -= key->u.s.block_size;
         src += key->u.s.block_size;
         dst += key->u.s.block_size;
@@ -1033,7 +1048,7 @@ static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, voi
         if (!auth_info->pbTag) return STATUS_INVALID_PARAMETER;
         if (auth_info->cbTag < 12 || auth_info->cbTag > 16) return STATUS_INVALID_PARAMETER;
 
-        if ((status = key_symmetric_set_params( key, auth_info->pbNonce, auth_info->cbNonce )))
+        if ((status = key_symmetric_set_vector( key, auth_info->pbNonce, auth_info->cbNonce )))
             return status;
 
         *ret_len = input_len;
@@ -1051,8 +1066,6 @@ static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, voi
         return STATUS_SUCCESS;
     }
 
-    if ((status = key_symmetric_set_params( key, iv, iv_len ))) return status;
-
     *ret_len = input_len;
 
     if (input_len & (key->u.s.block_size - 1)) return STATUS_INVALID_BUFFER_SIZE;
@@ -1066,6 +1079,7 @@ static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, voi
     else if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
 
     if (key->u.s.mode == MODE_ID_ECB && iv) return STATUS_INVALID_PARAMETER;
+    if ((status = key_symmetric_set_vector( key, iv, iv_len ))) return status;
 
     src = input;
     dst = output;
@@ -1073,7 +1087,7 @@ static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, voi
     {
         if ((status = key_symmetric_decrypt( key, src, key->u.s.block_size, dst, key->u.s.block_size )))
             return status;
-        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_params( key, NULL, 0 ))) return status;
+        if (key->u.s.mode == MODE_ID_ECB && (status = key_symmetric_set_vector( key, NULL, 0 ))) return status;
         bytes_left -= key->u.s.block_size;
         src += key->u.s.block_size;
         dst += key->u.s.block_size;

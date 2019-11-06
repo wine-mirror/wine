@@ -441,6 +441,8 @@ NTSTATUS key_symmetric_init( struct key *key, struct algorithm *alg, const UCHAR
     key->alg_id         = alg->id;
     key->u.s.mode       = alg->mode;
     key->u.s.handle     = 0;        /* initialized on first use */
+    key->u.s.vector     = NULL;
+    key->u.s.vector_len = 0;
 
     return STATUS_SUCCESS;
 }
@@ -475,30 +477,45 @@ static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
     }
 }
 
-NTSTATUS key_symmetric_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
+NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG vector_len )
+{
+    if (key->u.s.handle && (!is_zero_vector( vector, vector_len ) ||
+        !is_equal_vector( key->u.s.vector, key->u.s.vector_len, vector, vector_len )))
+    {
+        TRACE( "invalidating cipher handle\n" );
+        pgnutls_cipher_deinit( key->u.s.handle );
+        key->u.s.handle = NULL;
+    }
+
+    heap_free( key->u.s.vector );
+    key->u.s.vector = NULL;
+    key->u.s.vector_len = 0;
+    if (vector)
+    {
+        if (!(key->u.s.vector = heap_alloc( vector_len ))) return STATUS_NO_MEMORY;
+        memcpy( key->u.s.vector, vector, vector_len );
+        key->u.s.vector_len = vector_len;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS init_cipher_handle( struct key *key )
 {
     gnutls_cipher_algorithm_t cipher;
     gnutls_datum_t secret, vector;
     int ret;
 
-    if (key->u.s.handle)
-    {
-        pgnutls_cipher_deinit( key->u.s.handle );
-        key->u.s.handle = NULL;
-    }
-
-    if ((cipher = get_gnutls_cipher( key )) == GNUTLS_CIPHER_UNKNOWN)
-        return STATUS_NOT_SUPPORTED;
+    if (key->u.s.handle) return STATUS_SUCCESS;
+    if ((cipher = get_gnutls_cipher( key )) == GNUTLS_CIPHER_UNKNOWN) return STATUS_NOT_SUPPORTED;
 
     secret.data = key->u.s.secret;
     secret.size = key->u.s.secret_len;
-    if (iv)
-    {
-        vector.data = iv;
-        vector.size = iv_len;
-    }
 
-    if ((ret = pgnutls_cipher_init( &key->u.s.handle, cipher, &secret, iv ? &vector : NULL )))
+    vector.data = key->u.s.vector;
+    vector.size = key->u.s.vector_len;
+
+    if ((ret = pgnutls_cipher_init( &key->u.s.handle, cipher, &secret, key->u.s.vector ? &vector : NULL )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -509,8 +526,12 @@ NTSTATUS key_symmetric_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
 
 NTSTATUS key_symmetric_set_auth_data( struct key *key, UCHAR *auth_data, ULONG len )
 {
+    NTSTATUS status;
     int ret;
+
     if (!auth_data) return STATUS_SUCCESS;
+    if ((status = init_cipher_handle( key ))) return status;
+
     if ((ret = pgnutls_cipher_add_auth( key->u.s.handle, auth_data, len )))
     {
         pgnutls_perror( ret );
@@ -521,7 +542,11 @@ NTSTATUS key_symmetric_set_auth_data( struct key *key, UCHAR *auth_data, ULONG l
 
 NTSTATUS key_symmetric_encrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output, ULONG output_len )
 {
+    NTSTATUS status;
     int ret;
+
+    if ((status = init_cipher_handle( key ))) return status;
+
     if ((ret = pgnutls_cipher_encrypt2( key->u.s.handle, input, input_len, output, output_len )))
     {
         pgnutls_perror( ret );
@@ -532,7 +557,11 @@ NTSTATUS key_symmetric_encrypt( struct key *key, const UCHAR *input, ULONG input
 
 NTSTATUS key_symmetric_decrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output, ULONG output_len  )
 {
+    NTSTATUS status;
     int ret;
+
+    if ((status = init_cipher_handle( key ))) return status;
+
     if ((ret = pgnutls_cipher_decrypt2( key->u.s.handle, input, input_len, output, output_len )))
     {
         pgnutls_perror( ret );
@@ -543,7 +572,11 @@ NTSTATUS key_symmetric_decrypt( struct key *key, const UCHAR *input, ULONG input
 
 NTSTATUS key_symmetric_get_tag( struct key *key, UCHAR *tag, ULONG len )
 {
+    NTSTATUS status;
     int ret;
+
+    if ((status = init_cipher_handle( key ))) return status;
+
     if ((ret = pgnutls_cipher_tag( key->u.s.handle, tag, len )))
     {
         pgnutls_perror( ret );
@@ -1128,6 +1161,7 @@ NTSTATUS key_destroy( struct key *key )
     if (key_is_symmetric( key ))
     {
         if (key->u.s.handle) pgnutls_cipher_deinit( key->u.s.handle );
+        heap_free( key->u.s.vector );
         heap_free( key->u.s.secret );
     }
     else
