@@ -2311,16 +2311,12 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetDesc(IDXGISwapChain3 *iface,
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers(IDXGISwapChain3 *iface,
+static HRESULT d3d12_swapchain_resize_buffers(struct d3d12_swapchain *swapchain,
         UINT buffer_count, UINT width, UINT height, DXGI_FORMAT format, UINT flags)
 {
-    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
     DXGI_SWAP_CHAIN_DESC1 *desc, new_desc;
     unsigned int i;
     ULONG refcount;
-
-    TRACE("iface %p, buffer_count %u, width %u, height %u, format %s, flags %#x.\n",
-            iface, buffer_count, width, height, debug_dxgi_format(format), flags);
 
     if (flags)
         FIXME("Ignoring flags %#x.\n", flags);
@@ -2371,6 +2367,17 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers(IDXGISwapChain3 *
     d3d12_swapchain_destroy_buffers(swapchain, TRUE);
     swapchain->desc = new_desc;
     return d3d12_swapchain_recreate_vulkan_swapchain(swapchain);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers(IDXGISwapChain3 *iface,
+        UINT buffer_count, UINT width, UINT height, DXGI_FORMAT format, UINT flags)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+
+    TRACE("iface %p, buffer_count %u, width %u, height %u, format %s, flags %#x.\n",
+            iface, buffer_count, width, height, debug_dxgi_format(format), flags);
+
+    return d3d12_swapchain_resize_buffers(swapchain, buffer_count, width, height, format, flags);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeTarget(IDXGISwapChain3 *iface,
@@ -2642,11 +2649,26 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers1(IDXGISwapChain3 
         UINT buffer_count, UINT width, UINT height, DXGI_FORMAT format, UINT flags,
         const UINT *node_mask, IUnknown * const *present_queue)
 {
-    FIXME("iface %p, buffer_count %u, width %u, height %u, format %s, flags %#x, "
-            "node_mask %p, present_queue %p stub!\n",
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
+    size_t i, count;
+
+    TRACE("iface %p, buffer_count %u, width %u, height %u, format %s, flags %#x, "
+            "node_mask %p, present_queue %p.\n",
             iface, buffer_count, width, height, debug_dxgi_format(format), flags, node_mask, present_queue);
 
-    return E_NOTIMPL;
+    if (!node_mask || !present_queue)
+        return DXGI_ERROR_INVALID_CALL;
+
+    count = buffer_count ? buffer_count : swapchain->desc.BufferCount;
+    for (i = 0; i < count; ++i)
+    {
+        if (node_mask[i] > 1 || !present_queue[i])
+            return DXGI_ERROR_INVALID_CALL;
+        if ((ID3D12CommandQueue*)present_queue[i] != swapchain->command_queue)
+            FIXME("Ignoring present queue %p.\n", present_queue[i]);
+    }
+
+    return d3d12_swapchain_resize_buffers(swapchain, buffer_count, width, height, format, flags);
 }
 
 static const struct IDXGISwapChain3Vtbl d3d12_swapchain_vtbl =
