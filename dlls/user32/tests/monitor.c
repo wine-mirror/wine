@@ -81,8 +81,6 @@ static int monitor_count = 0;
 
 static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *device, DWORD flags)
 {
-    char video_name[32];
-    char video_value[128];
     char buffer[128];
     int number;
     int vendor_id;
@@ -90,10 +88,7 @@ static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *de
     int subsys_id;
     int revision_id;
     size_t length;
-    HKEY hkey;
     HDC hdc;
-    DWORD size;
-    LSTATUS ls;
 
     adapter_count++;
 
@@ -102,25 +97,10 @@ static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *de
        device->DeviceName);
 
     /* DeviceKey */
-    /* win7 is the only OS version where \Device\Video? value in HLKM\HARDWARE\DEVICEMAP\VIDEO are not in order with adapter index. */
-    if (GetVersion() != 0x1db10106 || !strcmp(winetest_platform, "wine"))
-    {
-        sprintf(video_name, "\\Device\\Video%d", index);
-        ls = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "HARDWARE\\DEVICEMAP\\VIDEO", 0, KEY_READ, &hkey);
-        ok(!ls, "#%d: failed to open registry, error: %#x\n", index, ls);
-        if (!ls)
-        {
-            memset(video_value, 0, sizeof(video_value));
-            size = sizeof(video_value);
-            ls = RegQueryValueExA(hkey, video_name, NULL, NULL, (unsigned char *)video_value, &size);
-            ok(!ls, "#%d: failed to get registry value, error: %#x\n", index, ls);
-            RegCloseKey(hkey);
-            ok(!strcmp(video_value, device->DeviceKey), "#%d: wrong DeviceKey: %s\n", index, device->DeviceKey);
-        }
-    }
-    else
-        ok(sscanf(device->DeviceKey, "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Video\\%[^\\]\\%04d", buffer, &number) == 2,
-           "#%d: wrong DeviceKey %s\n", index, device->DeviceKey);
+    /* \Device\Video? value in HLKM\HARDWARE\DEVICEMAP\VIDEO are not necessarily in order with adapter index.
+     * Check format only */
+    ok(sscanf(device->DeviceKey, "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Video\\%[^\\]\\%04d", buffer, &number) == 2,
+       "#%d: wrong DeviceKey %s\n", index, device->DeviceKey);
 
     /* DeviceString */
     length = strlen(device->DeviceString);
@@ -159,9 +139,8 @@ static void test_enumdisplaydevices_adapter(int index, const DISPLAY_DEVICEA *de
 }
 
 static void test_enumdisplaydevices_monitor(int adapter_index, int monitor_index, const char *adapter_name,
-                                            const DISPLAY_DEVICEA *device, DWORD flags)
+                                            DISPLAY_DEVICEA *device, DWORD flags)
 {
-    static const char device_id_prefix[] = "MONITOR\\Default_Monitor\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\";
     static const char device_key_prefix[] = "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Class"
                                             "\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\";
     char monitor_name[32];
@@ -186,24 +165,22 @@ static void test_enumdisplaydevices_monitor(int adapter_index, int monitor_index
            device->StateFlags);
 
     /* DeviceID */
-    lstrcpynA(buffer, device->DeviceID, sizeof(device_id_prefix));
+    CharLowerA(device->DeviceID);
     if (flags & EDD_GET_DEVICE_INTERFACE_NAME)
-    {   /* HKLM\SYSTEM\CurrentControlSet\Enum\DISPLAY\Default_Monitor\4&2abfaa30&0&UID0 GUID_DEVINTERFACE_MONITOR
-         *                                                   ^                ^                     ^
-         * Expect format                  \\?\DISPLAY#Default_Monitor#4&2abfaa30&0&UID0#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7} */
+    {   /* HKLM\SYSTEM\CurrentControlSet\Enum\DISPLAY\[monitor name]\[instance id] GUID_DEVINTERFACE_MONITOR
+         *                                                  ^             ^                     ^
+         * Expect format                  \\?\DISPLAY#[monitor name]#[instance id]#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7} */
         ok(strlen(device->DeviceID) == 0 || /* vista ~ win7 */
-            sscanf(device->DeviceID, "\\\\?\\DISPLAY#Default_Monitor#%[^#]#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}", buffer) == 1 || /* win8+ */
-            (!lstrcmpiA(buffer, device_id_prefix) &&
-             sscanf(device->DeviceID + sizeof(device_id_prefix) - 1, "%04d", &number) == 1), /* XP/2003 ignores EDD_GET_DEVICE_INTERFACE_NAME */
-            "#%d: wrong DeviceID : %s\n", monitor_index, device->DeviceID);
+           sscanf(device->DeviceID, "\\\\?\\display#%[^#]#%[^#]#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}", buffer, buffer) == 2 || /* win8+ */
+           sscanf(device->DeviceID, "monitor\\%[^\\]\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\%04d", buffer, &number) == 2, /* XP/2003 ignores EDD_GET_DEVICE_INTERFACE_NAME */
+           "#%d: wrong DeviceID : %s\n", monitor_index, device->DeviceID);
     }
     else
     {
-        /* Expect HarewareID value data + Driver value data in HKLM\SYSTEM\CurrentControlSet\Enum\DISPLAY\Default_Monitor\{Instance} */
+        /* Expect HarewareID value data + Driver value data in HKLM\SYSTEM\CurrentControlSet\Enum\DISPLAY\[monitor name]\{instance} */
         /* But we don't know which monitor instance this belongs to, so check format instead */
-        ok(!lstrcmpiA(buffer, device_id_prefix), "#%d wrong DeviceID : %s\n", monitor_index, device->DeviceID);
-        ok(sscanf(device->DeviceID + sizeof(device_id_prefix) - 1, "%04d", &number) == 1,
-           "#%d wrong DeviceID : %s\n", monitor_index, device->DeviceID);
+        ok(sscanf(device->DeviceID, "monitor\\%[^\\]\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\%04d", buffer, &number) == 2,
+           "#%d: wrong DeviceID : %s\n", monitor_index, device->DeviceID);
     }
 
     /* DeviceKey */
