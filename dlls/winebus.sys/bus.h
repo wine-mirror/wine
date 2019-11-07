@@ -54,3 +54,4 @@ DWORD check_bus_option(const UNICODE_STRING *option, DWORD default_value) DECLSP
 BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
 
 HANDLE driver_key DECLSPEC_HIDDEN;
+DEVICE_OBJECT *bus_pdo DECLSPEC_HIDDEN;

@@ -318,24 +318,17 @@ static void start_device( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *
     }
 }
 
-static void handle_bus_relations( DEVICE_OBJECT *device )
+static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
 {
     static const WCHAR infpathW[] = {'I','n','f','P','a','t','h',0};
 
     SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
     WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
     BOOL need_driver = TRUE;
-    HDEVINFO set;
     HKEY key;
-
-    /* We could (should?) do a full IRP_MN_QUERY_DEVICE_RELATIONS query,
-     * but we don't have to, we have the DEVICE_OBJECT of the new device
-     * so we can simply handle the process here */
 
     if (get_device_instance_id( device, device_instance_id ))
         return;
-
-    set = SetupDiCreateDeviceInfoList( NULL, NULL );
 
     if (!SetupDiCreateDeviceInfoW( set, device_instance_id, &GUID_NULL, NULL, NULL, 0, &sp_device )
             && !SetupDiOpenDeviceInfoW( set, device_instance_id, NULL, 0, &sp_device ))
@@ -364,17 +357,88 @@ static void handle_bus_relations( DEVICE_OBJECT *device )
     }
 
     start_device( device, set, &sp_device );
-
-    SetupDiDestroyDeviceInfoList( set );
 }
 
 static void remove_device( DEVICE_OBJECT *device )
 {
+    struct wine_device *wine_device = CONTAINING_RECORD(device, struct wine_device, device_obj);
+
     TRACE("Removing device %p.\n", device);
+
+    if (wine_device->children)
+    {
+        ULONG i;
+        for (i = 0; i < wine_device->children->Count; ++i)
+            remove_device( wine_device->children->Objects[i] );
+    }
 
     send_power_irp( device, PowerDeviceD3 );
     send_pnp_irp( device, IRP_MN_SURPRISE_REMOVAL );
     send_pnp_irp( device, IRP_MN_REMOVE_DEVICE );
+}
+
+static BOOL device_in_list( const DEVICE_RELATIONS *list, const DEVICE_OBJECT *device )
+{
+    ULONG i;
+    for (i = 0; i < list->Count; ++i)
+    {
+        if (list->Objects[i] == device)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static void handle_bus_relations( DEVICE_OBJECT *parent )
+{
+    struct wine_device *wine_parent = CONTAINING_RECORD(parent, struct wine_device, device_obj);
+    SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
+    DEVICE_RELATIONS *relations;
+    IO_STATUS_BLOCK irp_status;
+    IO_STACK_LOCATION *irpsp;
+    NTSTATUS status;
+    HDEVINFO set;
+    IRP *irp;
+    ULONG i;
+
+    TRACE( "(%p)\n", parent );
+
+    set = SetupDiCreateDeviceInfoList( NULL, NULL );
+
+    parent = IoGetAttachedDevice( parent );
+
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, parent, NULL, 0, NULL, NULL, &irp_status )))
+    {
+        SetupDiDestroyDeviceInfoList( set );
+        return;
+    }
+
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->MinorFunction = IRP_MN_QUERY_DEVICE_RELATIONS;
+    irpsp->Parameters.QueryDeviceRelations.Type = BusRelations;
+    if ((status = send_device_irp( parent, irp, (ULONG_PTR *)&relations )))
+    {
+        ERR("Failed to enumerate child devices, status %#x.\n", status);
+        SetupDiDestroyDeviceInfoList( set );
+        return;
+    }
+
+    TRACE("Got %u devices.\n", relations->Count);
+
+    for (i = 0; i < relations->Count; ++i)
+    {
+        DEVICE_OBJECT *child = relations->Objects[i];
+
+        if (!wine_parent->children || !device_in_list( wine_parent->children, child ))
+        {
+            TRACE("Adding new device %p.\n", child);
+            enumerate_new_device( child, set );
+        }
+    }
+
+    ExFreePool( wine_parent->children );
+    wine_parent->children = relations;
+
+    SetupDiDestroyDeviceInfoList( set );
 }
 
 /***********************************************************************

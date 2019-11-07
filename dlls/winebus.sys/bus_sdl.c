@@ -996,7 +996,7 @@ static void try_add_device(unsigned int index)
             HeapFree(GetProcessHeap(), 0, serial);
             return;
         }
-        IoInvalidateDeviceRelations(device, BusRelations);
+        IoInvalidateDeviceRelations(bus_pdo, BusRelations);
     }
     else
     {

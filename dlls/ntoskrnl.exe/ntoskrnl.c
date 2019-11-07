@@ -1471,6 +1471,7 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
 {
     static const WCHAR auto_format[] = {'\\','D','e','v','i','c','e','\\','%','0','8','x',0};
     NTSTATUS status;
+    struct wine_device *wine_device;
     DEVICE_OBJECT *device;
     HANDLE manager = get_device_manager();
     static unsigned int auto_idx = 0;
@@ -1479,11 +1480,12 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
     TRACE( "(%p, %u, %s, %u, %x, %u, %p)\n",
            driver, ext_size, debugstr_us(name), type, characteristics, exclusive, ret_device );
 
-    if (!(device = alloc_kernel_object( IoDeviceObjectType, NULL, sizeof(DEVICE_OBJECT) + ext_size, 1 )))
+    if (!(wine_device = alloc_kernel_object( IoDeviceObjectType, NULL, sizeof(struct wine_device) + ext_size, 1 )))
         return STATUS_NO_MEMORY;
+    device = &wine_device->device_obj;
 
     device->DriverObject    = driver;
-    device->DeviceExtension = device + 1;
+    device->DeviceExtension = wine_device + 1;
     device->DeviceType      = type;
     device->StackSize       = 1;
 
@@ -1549,9 +1551,11 @@ void WINAPI IoDeleteDevice( DEVICE_OBJECT *device )
 
     if (status == STATUS_SUCCESS)
     {
+        struct wine_device *wine_device = CONTAINING_RECORD(device, struct wine_device, device_obj);
         DEVICE_OBJECT **prev = &device->DriverObject->DeviceObject;
         while (*prev && *prev != device) prev = &(*prev)->NextDevice;
         if (*prev) *prev = (*prev)->NextDevice;
+        ExFreePool( wine_device->children );
         ObDereferenceObject( device );
     }
 }

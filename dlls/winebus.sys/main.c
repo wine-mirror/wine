@@ -89,7 +89,8 @@ static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *mouse_obj;
 
 /* The root-enumerated device stack. */
-static DEVICE_OBJECT *bus_pdo, *bus_fdo;
+DEVICE_OBJECT *bus_pdo;
+static DEVICE_OBJECT *bus_fdo;
 
 HANDLE driver_key;
 
@@ -560,7 +561,7 @@ static void mouse_device_create(void)
 
     mouse_obj = bus_create_hid_device(busidW, 0, 0, -1, 0, 0, busidW, FALSE,
             &wine_mouse_class, &mouse_vtbl, 0);
-    IoInvalidateDeviceRelations(mouse_obj, BusRelations);
+    IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
 
 static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
@@ -572,6 +573,9 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
     switch (irpsp->MinorFunction)
     {
+    case IRP_MN_QUERY_DEVICE_RELATIONS:
+        irp->IoStatus.u.Status = handle_IRP_MN_QUERY_DEVICE_RELATIONS(irp);
+        break;
     case IRP_MN_START_DEVICE:
         mouse_device_create();
 
@@ -613,11 +617,6 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
     switch (irpsp->MinorFunction)
     {
-        case IRP_MN_QUERY_DEVICE_RELATIONS:
-            TRACE("IRP_MN_QUERY_DEVICE_RELATIONS\n");
-            status = handle_IRP_MN_QUERY_DEVICE_RELATIONS(irp);
-            irp->IoStatus.u.Status = status;
-            break;
         case IRP_MN_QUERY_ID:
             TRACE("IRP_MN_QUERY_ID\n");
             status = handle_IRP_MN_QUERY_ID(device, irp);

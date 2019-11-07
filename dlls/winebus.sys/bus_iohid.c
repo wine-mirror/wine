@@ -357,7 +357,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
         struct platform_private *private = impl_from_DEVICE_OBJECT(device);
         private->device = IOHIDDevice;
         private->buffer = NULL;
-        IoInvalidateDeviceRelations(device, BusRelations);
+        IoInvalidateDeviceRelations(bus_pdo, BusRelations);
     }
 }
 
