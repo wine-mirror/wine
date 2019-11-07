@@ -1914,10 +1914,9 @@ static int futimens( int fd, const struct timespec spec[2] )
 #define UTIME_OMIT ((1 << 30) - 2)
 #endif
 
-static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_INTEGER *atime )
+static BOOL set_file_times_precise( int fd, const LARGE_INTEGER *mtime,
+        const LARGE_INTEGER *atime, NTSTATUS *status )
 {
-    NTSTATUS status = STATUS_SUCCESS;
-
 #ifdef HAVE_FUTIMENS
     struct timespec tv[2];
 
@@ -1933,12 +1932,29 @@ static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_
         tv[1].tv_sec = mtime->QuadPart / 10000000 - SECS_1601_TO_1970;
         tv[1].tv_nsec = (mtime->QuadPart % 10000000) * 100;
     }
-    if (futimens( fd, tv ) == -1) status = FILE_GetNtStatus();
+#ifdef __APPLE__
+    if (!&futimens) return FALSE;
+#endif
+    if (futimens( fd, tv ) == -1) *status = FILE_GetNtStatus();
+    else *status = STATUS_SUCCESS;
+    return TRUE;
+#else
+    return FALSE;
+#endif
+}
 
-#elif defined(HAVE_FUTIMES) || defined(HAVE_FUTIMESAT)
+static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_INTEGER *atime )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+#if defined(HAVE_FUTIMES) || defined(HAVE_FUTIMESAT)
     struct timeval tv[2];
     struct stat st;
+#endif
 
+    if (set_file_times_precise( fd, mtime, atime, &status ))
+        return status;
+
+#if defined(HAVE_FUTIMES) || defined(HAVE_FUTIMESAT)
     if (!atime->QuadPart || !mtime->QuadPart)
     {
 
