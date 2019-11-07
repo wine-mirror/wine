@@ -161,7 +161,6 @@ AddService=FontCache3.0.0.0,0,WPFFontCacheService
 AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
-AddService=WineBus,0,WineBusService
 AddService=Winmgmt,0,WinmgmtService
 AddService=wuauserv,0,wuauService
 
@@ -179,7 +178,6 @@ AddService=FontCache3.0.0.0,0,WPFFontCacheService
 AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
-AddService=WineBus,0,WineBusService
 AddService=Winmgmt,0,WinmgmtService
 AddService=wuauserv,0,wuauService
 
@@ -197,7 +195,6 @@ AddService=FontCache3.0.0.0,0,WPFFontCacheService
 AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
-AddService=WineBus,0,WineBusService
 AddService=Winmgmt,0,WinmgmtService
 AddService=wuauserv,0,wuauService
 
@@ -3618,15 +3615,6 @@ DisplayName="Remote Procedure Call (RPC)"
 ServiceBinary="%11%\rpcss.exe"
 ServiceType=32
 StartType=3
-ErrorControl=1
-
-[WineBusService]
-Description="Wine Platform Bus Kernel"
-DisplayName="Platform Bus Kernel"
-ServiceBinary="%12%\winebus.sys"
-LoadOrderGroup="WinePlugPlay"
-ServiceType=1
-StartType=2
 ErrorControl=1
 
 [SpoolerService]
