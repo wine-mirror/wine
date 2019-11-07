@@ -193,13 +193,10 @@ static void release_script(script_ctx_t *ctx)
     heap_pool_init(&ctx->heap);
 }
 
-static void destroy_script(script_ctx_t *ctx)
+static void release_code_list(script_ctx_t *ctx)
 {
     while(!list_empty(&ctx->code_list))
         release_vbscode(LIST_ENTRY(list_head(&ctx->code_list), vbscode_t, entry));
-
-    release_script(ctx);
-    heap_free(ctx);
 }
 
 static void decrease_state(VBScript *This, SCRIPTSTATE state)
@@ -221,6 +218,8 @@ static void decrease_state(VBScript *This, SCRIPTSTATE state)
             break;
         release_script(This->ctx);
         This->thread_id = 0;
+        if(state == SCRIPTSTATE_CLOSED)
+            release_code_list(This->ctx);
         break;
     case SCRIPTSTATE_CLOSED:
         break;
@@ -396,7 +395,7 @@ static ULONG WINAPI VBScript_Release(IActiveScript *iface)
 
     if(!ref) {
         decrease_state(This, SCRIPTSTATE_CLOSED);
-        destroy_script(This->ctx);
+        heap_free(This->ctx);
         heap_free(This);
     }
 
