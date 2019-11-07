@@ -772,8 +772,12 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
         CloseHandle( handle );
         goto fill_fs_info;
     }
-    else TRACE( "cannot open device %s: %x\n", debugstr_w(nt_name.Buffer), status );
-
+    else
+    {
+        TRACE( "cannot open device %s: %x\n", debugstr_w(nt_name.Buffer), status );
+        if (status == STATUS_ACCESS_DENIED)
+            MESSAGE( "wine: Read access denied for device %s, FS volume label and serial are not available.\n", debugstr_w(nt_name.Buffer) );
+    }
     /* we couldn't open the device, fallback to default strategy */
 
     if (!set_ntstatus( NtOpenFile( &handle, SYNCHRONIZE, &attr, &io, 0,
