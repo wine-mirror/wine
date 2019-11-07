@@ -69,6 +69,8 @@
 #include <shobjidl.h>
 #include <shlwapi.h>
 #include <shellapi.h>
+#include <setupapi.h>
+#include <newdev.h>
 #include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
@@ -1121,6 +1123,57 @@ static HANDLE start_rundll32( const WCHAR *inf_path, BOOL wow64 )
     return pi.hProcess;
 }
 
+static void install_root_pnp_devices(void)
+{
+    static const struct
+    {
+        const char *name;
+        const char *hardware_id;
+        const char *infpath;
+    }
+    root_devices[] =
+    {
+        {"root\\wine\\winebus", "root\\winebus\0", "C:\\windows\\inf\\winebus.inf"},
+    };
+    SP_DEVINFO_DATA device = {sizeof(device)};
+    unsigned int i;
+    HDEVINFO set;
+
+    if ((set = SetupDiCreateDeviceInfoList( NULL, NULL )) == INVALID_HANDLE_VALUE)
+    {
+        WINE_ERR("Failed to create device info list, error %#x.\n", GetLastError());
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(root_devices); ++i)
+    {
+        if (!SetupDiCreateDeviceInfoA( set, root_devices[i].name, &GUID_NULL, NULL, NULL, 0, &device))
+        {
+            if (GetLastError() != ERROR_DEVINST_ALREADY_EXISTS)
+                WINE_ERR("Failed to create device %s, error %#x.\n", debugstr_a(root_devices[i].name), GetLastError());
+            continue;
+        }
+
+        if (!SetupDiSetDeviceRegistryPropertyA(set, &device, SPDRP_HARDWAREID,
+                (const BYTE *)root_devices[i].hardware_id, (strlen(root_devices[i].hardware_id) + 2) * sizeof(WCHAR)))
+        {
+            WINE_ERR("Failed to set hardware id for %s, error %#x.\n", debugstr_a(root_devices[i].name), GetLastError());
+            continue;
+        }
+
+        if (!SetupDiCallClassInstaller(DIF_REGISTERDEVICE, set, &device))
+        {
+            WINE_ERR("Failed to register device %s, error %#x.\n", debugstr_a(root_devices[i].name), GetLastError());
+            continue;
+        }
+
+        if (!UpdateDriverForPlugAndPlayDevicesA(NULL, root_devices[i].hardware_id, root_devices[i].infpath, 0, NULL))
+            WINE_ERR("Failed to install drivers for %s, error %#x.\n", debugstr_a(root_devices[i].name), GetLastError());
+    }
+
+    SetupDiDestroyDeviceInfoList(set);
+}
+
 /* execute rundll32 on the wine.inf file if necessary */
 static void update_wineprefix( BOOL force )
 {
@@ -1164,6 +1217,8 @@ static void update_wineprefix( BOOL force )
             }
             DestroyWindow( hwnd );
         }
+        install_root_pnp_devices();
+
         WINE_MESSAGE( "wine: configuration in '%s' has been updated.\n", prettyprint_configdir() );
     }
 
