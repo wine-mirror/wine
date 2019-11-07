@@ -388,6 +388,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetThreadContext( HANDLE thread, const CONTEXT *co
 
 
 /***********************************************************************
+ *           SetThreadDescription   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ SetThreadDescription( HANDLE thread, PCWSTR description )
+{
+    FIXME( "(%p %s): stub\n", thread, debugstr_w( description ));
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
  *           SetThreadErrorMode   (kernelbase.@)
  */
 BOOL WINAPI SetThreadErrorMode( DWORD mode, DWORD *old )
