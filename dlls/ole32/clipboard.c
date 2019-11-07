@@ -788,7 +788,7 @@ static HRESULT get_data_from_stream(IDataObject *data, FORMATETC *fmt, HGLOBAL *
         if(FAILED(hr)) goto error;
 
         offs.QuadPart = 0;
-        IStream_Seek(med.u.pstm, offs, STREAM_SEEK_CUR, &pos);
+        IStream_Seek(med.u.pstm, offs, STREAM_SEEK_END, &pos);
         IStream_Seek(med.u.pstm, offs, STREAM_SEEK_SET, NULL);
         hr = IStream_CopyTo(med.u.pstm, stm, pos, NULL, NULL);
         ReleaseStgMedium(&med);
