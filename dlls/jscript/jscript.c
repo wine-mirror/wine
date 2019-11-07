@@ -60,8 +60,7 @@ typedef struct {
 
     IActiveScriptSite *site;
 
-    bytecode_t *queue_head;
-    bytecode_t *queue_tail;
+    struct list queued_code;
 } JScript;
 
 void script_release(script_ctx_t *ctx)
@@ -117,27 +116,19 @@ static HRESULT exec_global_code(JScript *This, bytecode_t *code)
 
 static void clear_script_queue(JScript *This)
 {
-    bytecode_t *iter, *iter2;
-
-    if(!This->queue_head)
-        return;
-
-    iter = This->queue_head;
-    while(iter) {
-        iter2 = iter->next;
-        iter->next = NULL;
+    while(!list_empty(&This->queued_code))
+    {
+        bytecode_t *iter = LIST_ENTRY(list_head(&This->queued_code), bytecode_t, entry);
+        list_remove(&iter->entry);
         release_bytecode(iter);
-        iter = iter2;
     }
-
-    This->queue_head = This->queue_tail = NULL;
 }
 
 static void exec_queued_code(JScript *This)
 {
     bytecode_t *iter;
 
-    for(iter = This->queue_head; iter; iter = iter->next)
+    LIST_FOR_EACH_ENTRY(iter, &This->queued_code, bytecode_t, entry)
         exec_global_code(This, iter);
 
     clear_script_queue(This);
@@ -793,10 +784,7 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
      * script is executed immediately, even if it's not in started state yet.
      */
     if(!pvarResult && !is_started(This->ctx)) {
-        if(This->queue_tail)
-            This->queue_tail = This->queue_tail->next = code;
-        else
-            This->queue_head = This->queue_tail = code;
+        list_add_tail(&This->queued_code, &code->entry);
         return S_OK;
     }
 
@@ -1089,6 +1077,7 @@ HRESULT create_jscript_object(BOOL is_encode, REFIID riid, void **ppv)
     ret->ref = 1;
     ret->safeopt = INTERFACE_USES_DISPEX;
     ret->is_encode = is_encode;
+    list_init(&ret->queued_code);
 
     hres = IActiveScript_QueryInterface(&ret->IActiveScript_iface, riid, ppv);
     IActiveScript_Release(&ret->IActiveScript_iface);

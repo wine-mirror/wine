@@ -185,7 +185,7 @@ typedef struct _bytecode_t {
     unsigned str_pool_size;
     unsigned str_cnt;
 
-    struct _bytecode_t *next;
+    struct list entry;
 } bytecode_t;
 
 HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,BOOL,BOOL,bytecode_t**) DECLSPEC_HIDDEN;
