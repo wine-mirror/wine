@@ -493,18 +493,105 @@ static NTSTATUS handle_IRP_MN_QUERY_ID(DEVICE_OBJECT *device, IRP *irp)
     return status;
 }
 
+static NTSTATUS mouse_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *ret_length)
+{
+    TRACE("buffer %p, length %u.\n", buffer, length);
+
+    *ret_length = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
+    if (length < sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL))
+        return STATUS_BUFFER_TOO_SMALL;
+
+    memcpy(buffer, REPORT_HEADER, sizeof(REPORT_HEADER));
+    memcpy(buffer + sizeof(REPORT_HEADER), REPORT_TAIL, sizeof(REPORT_TAIL));
+    buffer[IDX_HEADER_PAGE] = HID_USAGE_PAGE_GENERIC;
+    buffer[IDX_HEADER_USAGE] = HID_USAGE_GENERIC_MOUSE;
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS mouse_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
+{
+    static const WCHAR nameW[] = {'W','i','n','e',' ','H','I','D',' ','m','o','u','s','e',0};
+    if (index != HID_STRING_ID_IPRODUCT)
+        return STATUS_NOT_IMPLEMENTED;
+    if (length < ARRAY_SIZE(nameW))
+        return STATUS_BUFFER_TOO_SMALL;
+    strcpyW(buffer, nameW);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS mouse_begin_report_processing(DEVICE_OBJECT *device)
+{
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS mouse_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+{
+    FIXME("id %u, stub!\n", id);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS mouse_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+{
+    FIXME("id %u, stub!\n", id);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS mouse_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+{
+    FIXME("id %u, stub!\n", id);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static const platform_vtbl mouse_vtbl =
+{
+    .get_reportdescriptor = mouse_get_reportdescriptor,
+    .get_string = mouse_get_string,
+    .begin_report_processing = mouse_begin_report_processing,
+    .set_output_report = mouse_set_output_report,
+    .get_feature_report = mouse_get_feature_report,
+    .set_feature_report = mouse_set_feature_report,
+};
+
+static void mouse_device_create(void)
+{
+    static const GUID wine_mouse_class = {0xdfe2580e,0x52fd,0x453d,{0xa2,0xc1,0x33,0x81,0xf2,0x32,0x68,0x4c}};
+    static const WCHAR busidW[] = {'W','I','N','E','M','O','U','S','E',0};
+
+    mouse_obj = bus_create_hid_device(busidW, 0, 0, -1, 0, 0, busidW, FALSE,
+            &wine_mouse_class, &mouse_vtbl, 0);
+    IoInvalidateDeviceRelations(mouse_obj, BusRelations);
+}
+
 static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
+    static const WCHAR SDL_enabledW[] = {'E','n','a','b','l','e',' ','S','D','L',0};
+    static const UNICODE_STRING SDL_enabled = {sizeof(SDL_enabledW) - sizeof(WCHAR), sizeof(SDL_enabledW), (WCHAR*)SDL_enabledW};
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
     NTSTATUS ret;
 
     switch (irpsp->MinorFunction)
     {
     case IRP_MN_START_DEVICE:
+        mouse_device_create();
+
+        if (check_bus_option(&SDL_enabled, 1))
+        {
+            if (sdl_driver_init() == STATUS_SUCCESS)
+                return STATUS_SUCCESS;
+        }
+        udev_driver_init();
+        iohid_driver_init();
+        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        break;
     case IRP_MN_SURPRISE_REMOVAL:
         irp->IoStatus.u.Status = STATUS_SUCCESS;
         break;
     case IRP_MN_REMOVE_DEVICE:
+        udev_driver_unload();
+        iohid_driver_unload();
+        sdl_driver_unload();
+
         irp->IoStatus.u.Status = STATUS_SUCCESS;
         IoSkipCurrentIrpStackLocation(irp);
         ret = IoCallDriver(bus_pdo, irp);
@@ -900,86 +987,11 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *p
 
 static void WINAPI driver_unload(DRIVER_OBJECT *driver)
 {
-    udev_driver_unload();
-    iohid_driver_unload();
-    sdl_driver_unload();
     NtClose(driver_key);
-}
-
-static NTSTATUS mouse_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *ret_length)
-{
-    TRACE("buffer %p, length %u.\n", buffer, length);
-
-    *ret_length = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
-    if (length < sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL))
-        return STATUS_BUFFER_TOO_SMALL;
-
-    memcpy(buffer, REPORT_HEADER, sizeof(REPORT_HEADER));
-    memcpy(buffer + sizeof(REPORT_HEADER), REPORT_TAIL, sizeof(REPORT_TAIL));
-    buffer[IDX_HEADER_PAGE] = HID_USAGE_PAGE_GENERIC;
-    buffer[IDX_HEADER_USAGE] = HID_USAGE_GENERIC_MOUSE;
-
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS mouse_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
-{
-    static const WCHAR nameW[] = {'W','i','n','e',' ','H','I','D',' ','m','o','u','s','e',0};
-    if (index != HID_STRING_ID_IPRODUCT)
-        return STATUS_NOT_IMPLEMENTED;
-    if (length < ARRAY_SIZE(nameW))
-        return STATUS_BUFFER_TOO_SMALL;
-    strcpyW(buffer, nameW);
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS mouse_begin_report_processing(DEVICE_OBJECT *device)
-{
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS mouse_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
-{
-    FIXME("id %u, stub!\n", id);
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS mouse_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
-{
-    FIXME("id %u, stub!\n", id);
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS mouse_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
-{
-    FIXME("id %u, stub!\n", id);
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static const platform_vtbl mouse_vtbl =
-{
-    .get_reportdescriptor = mouse_get_reportdescriptor,
-    .get_string = mouse_get_string,
-    .begin_report_processing = mouse_begin_report_processing,
-    .set_output_report = mouse_set_output_report,
-    .get_feature_report = mouse_get_feature_report,
-    .set_feature_report = mouse_set_feature_report,
-};
-
-static void mouse_device_create(void)
-{
-    static const GUID wine_mouse_class = {0xdfe2580e,0x52fd,0x453d,{0xa2,0xc1,0x33,0x81,0xf2,0x32,0x68,0x4c}};
-    static const WCHAR busidW[] = {'W','I','N','E','M','O','U','S','E',0};
-
-    mouse_obj = bus_create_hid_device(busidW, 0, 0, -1, 0, 0, busidW, FALSE,
-            &wine_mouse_class, &mouse_vtbl, 0);
-    IoInvalidateDeviceRelations(mouse_obj, BusRelations);
 }
 
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
-    static const WCHAR SDL_enabledW[] = {'E','n','a','b','l','e',' ','S','D','L',0};
-    static const UNICODE_STRING SDL_enabled = {sizeof(SDL_enabledW) - sizeof(WCHAR), sizeof(SDL_enabledW), (WCHAR*)SDL_enabledW};
     OBJECT_ATTRIBUTES attr = {0};
     NTSTATUS ret;
 
@@ -997,16 +1009,6 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = hid_internal_dispatch;
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
-
-    mouse_device_create();
-
-    if (check_bus_option(&SDL_enabled, 1))
-    {
-        if (sdl_driver_init() == STATUS_SUCCESS)
-            return STATUS_SUCCESS;
-    }
-    udev_driver_init();
-    iohid_driver_init();
 
     return STATUS_SUCCESS;
 }
