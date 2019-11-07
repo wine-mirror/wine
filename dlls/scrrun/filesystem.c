@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <limits.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -122,9 +123,12 @@ struct textstream {
 
     IOMode mode;
     BOOL unicode;
-    BOOL first_read;
     LARGE_INTEGER size;
     HANDLE file;
+
+    BOOL eof;
+    WCHAR *read_buf;
+    size_t read_buf_size;
 };
 
 enum iotype {
@@ -272,6 +276,7 @@ static ULONG WINAPI textstream_Release(ITextStream *iface)
 
     if (!ref)
     {
+        if (This->read_buf_size) heap_free(This->read_buf);
         CloseHandle(This->file);
         heap_free(This);
     }
@@ -355,7 +360,6 @@ static HRESULT WINAPI textstream_get_Column(ITextStream *iface, LONG *column)
 static HRESULT WINAPI textstream_get_AtEndOfStream(ITextStream *iface, VARIANT_BOOL *eos)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    LARGE_INTEGER pos, dist;
 
     TRACE("(%p)->(%p)\n", This, eos);
 
@@ -367,11 +371,7 @@ static HRESULT WINAPI textstream_get_AtEndOfStream(ITextStream *iface, VARIANT_B
         return CTL_E_BADFILEMODE;
     }
 
-    dist.QuadPart = 0;
-    if (!SetFilePointerEx(This->file, dist, &pos, FILE_CURRENT))
-        return E_FAIL;
-
-    *eos = This->size.QuadPart == pos.QuadPart ? VARIANT_TRUE : VARIANT_FALSE;
+    *eos = (This->eof && !This->read_buf_size) ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
 }
 
@@ -382,67 +382,89 @@ static HRESULT WINAPI textstream_get_AtEndOfLine(ITextStream *iface, VARIANT_BOO
     return E_NOTIMPL;
 }
 
-/*
-   Reads 'toread' bytes from a file, converts if needed
-   BOM is skipped if 'bof' is set.
- */
-static HRESULT textstream_read(struct textstream *stream, LONG toread, BOOL bof, BSTR *text)
+static HRESULT append_read_data(struct textstream *stream, const char *buf, size_t buf_size)
 {
-    HRESULT hr = S_OK;
-    DWORD read;
-    char *buff;
-    BOOL ret;
+    LARGE_INTEGER revert;
+    size_t len;
+    WCHAR *new_buf;
 
-    if (toread == 0) {
-        *text = SysAllocStringLen(NULL, 0);
-        return *text ? S_FALSE : E_OUTOFMEMORY;
+    revert.QuadPart = 0;
+    if (stream->unicode)
+    {
+        len = buf_size / sizeof(WCHAR);
+        if (buf_size & 1) revert.QuadPart = -1;
     }
-
-    if (toread < sizeof(WCHAR))
-        return CTL_E_ENDOFFILE;
-
-    buff = heap_alloc(toread);
-    if (!buff)
-        return E_OUTOFMEMORY;
-
-    ret = ReadFile(stream->file, buff, toread, &read, NULL);
-    if (!ret || toread != read) {
-        WARN("failed to read from file %d, %d, error %d\n", read, toread, GetLastError());
-        heap_free(buff);
-        return E_FAIL;
-    }
-
-    if (stream->unicode) {
-        int i = 0;
-
-        /* skip BOM */
-        if (bof && *(WCHAR*)buff == utf16bom) {
-            read -= sizeof(WCHAR);
-            i += sizeof(WCHAR);
+    else
+    {
+        for (len = 0; len < buf_size; len++)
+        {
+            if (!IsDBCSLeadByte(buf[len])) continue;
+            if (len + 1 == buf_size)
+            {
+                revert.QuadPart = -1;
+                buf_size--;
+                break;
+            }
+            len++;
         }
-
-        *text = SysAllocStringLen(read ? (WCHAR*)&buff[i] : NULL, read/sizeof(WCHAR));
-        if (!*text) hr = E_OUTOFMEMORY;
+        len = MultiByteToWideChar(CP_ACP, 0, buf, buf_size, NULL, 0);
     }
-    else {
-        INT len = MultiByteToWideChar(CP_ACP, 0, buff, read, NULL, 0);
-        *text = SysAllocStringLen(NULL, len);
-        if (*text)
-            MultiByteToWideChar(CP_ACP, 0, buff, read, *text, len);
-        else
-            hr = E_OUTOFMEMORY;
-    }
-    heap_free(buff);
+    if (!len)
+        return S_OK;
+    if (revert.QuadPart)
+        SetFilePointerEx(stream->file, revert, NULL, FILE_CURRENT);
 
-    return hr;
+    if (!stream->read_buf_size)
+        new_buf = heap_alloc(len * sizeof(WCHAR));
+    else
+        new_buf = heap_realloc(stream->read_buf, (len + stream->read_buf_size) * sizeof(WCHAR));
+    if (!new_buf) return E_OUTOFMEMORY;
+
+    if (stream->unicode)
+        memcpy(new_buf + stream->read_buf_size, buf, len * sizeof(WCHAR));
+    else
+        MultiByteToWideChar(CP_ACP, 0, buf, buf_size, new_buf + stream->read_buf_size, len);
+    stream->read_buf = new_buf;
+    stream->read_buf_size += len;
+    return S_OK;
+}
+
+static HRESULT read_more_data(struct textstream *stream)
+{
+    char buf[256];
+    DWORD read;
+
+    if (stream->eof) return S_OK;
+
+    if (!ReadFile(stream->file, buf, sizeof(buf), &read, NULL))
+    {
+        ITextStream_Release(&stream->ITextStream_iface);
+        return create_error(GetLastError());
+    }
+
+    stream->eof = read != sizeof(buf);
+    return append_read_data(stream, buf, read);
+}
+
+static BOOL read_from_buffer(struct textstream *stream, size_t len, BSTR *ret, size_t skip)
+{
+    assert(len + skip <= stream->read_buf_size);
+
+    if (!(*ret = SysAllocStringLen(stream->read_buf, len))) return FALSE;
+
+    len += skip;
+    stream->read_buf_size -= len;
+    if (stream->read_buf_size)
+        memmove(stream->read_buf, stream->read_buf + len, stream->read_buf_size * sizeof(WCHAR));
+    else
+        heap_free(stream->read_buf);
+    return TRUE;
 }
 
 static HRESULT WINAPI textstream_Read(ITextStream *iface, LONG len, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    LARGE_INTEGER start, end, dist;
-    DWORD toread;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE("(%p)->(%d %p)\n", This, len, text);
 
@@ -456,35 +478,22 @@ static HRESULT WINAPI textstream_Read(ITextStream *iface, LONG len, BSTR *text)
     if (textstream_check_iomode(This, IORead))
         return CTL_E_BADFILEMODE;
 
-    if (!This->first_read) {
-        VARIANT_BOOL eos;
-
-        /* check for EOF */
-        hr = ITextStream_get_AtEndOfStream(iface, &eos);
-        if (FAILED(hr))
+    while (!This->eof && len > This->read_buf_size)
+    {
+        if (FAILED(hr = read_more_data(This)))
             return hr;
-
-        if (eos == VARIANT_TRUE)
-            return CTL_E_ENDOFFILE;
     }
 
-    /* read everything from current position */
-    dist.QuadPart = 0;
-    SetFilePointerEx(This->file, dist, &start, FILE_CURRENT);
-    SetFilePointerEx(This->file, dist, &end, FILE_END);
-    toread = end.QuadPart - start.QuadPart;
-    /* rewind back */
-    dist.QuadPart = start.QuadPart;
-    SetFilePointerEx(This->file, dist, NULL, FILE_BEGIN);
+    if (This->eof && !This->read_buf_size)
+        return CTL_E_ENDOFFILE;
 
-    This->first_read = FALSE;
-    if (This->unicode) len *= sizeof(WCHAR);
+    if (len > This->read_buf_size)
+    {
+        len = This->read_buf_size;
+        hr = S_FALSE;
+    }
 
-    hr = textstream_read(This, min(toread, len), start.QuadPart == 0, text);
-    if (FAILED(hr))
-        return hr;
-    else
-        return toread <= len ? S_FALSE : S_OK;
+    return read_from_buffer(This, len, text, 0) ? hr : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI textstream_ReadLine(ITextStream *iface, BSTR *text)
@@ -516,8 +525,6 @@ static HRESULT WINAPI textstream_ReadLine(ITextStream *iface, BSTR *text)
 static HRESULT WINAPI textstream_ReadAll(ITextStream *iface, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    LARGE_INTEGER start, end, dist;
-    DWORD toread;
     HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, text);
@@ -529,31 +536,16 @@ static HRESULT WINAPI textstream_ReadAll(ITextStream *iface, BSTR *text)
     if (textstream_check_iomode(This, IORead))
         return CTL_E_BADFILEMODE;
 
-    if (!This->first_read) {
-        VARIANT_BOOL eos;
-
-        /* check for EOF */
-        hr = ITextStream_get_AtEndOfStream(iface, &eos);
-        if (FAILED(hr))
+    while (!This->eof)
+    {
+        if (FAILED(hr = read_more_data(This)))
             return hr;
-
-        if (eos == VARIANT_TRUE)
-            return CTL_E_ENDOFFILE;
     }
 
-    /* read everything from current position */
-    dist.QuadPart = 0;
-    SetFilePointerEx(This->file, dist, &start, FILE_CURRENT);
-    SetFilePointerEx(This->file, dist, &end, FILE_END);
-    toread = end.QuadPart - start.QuadPart;
-    /* rewind back */
-    dist.QuadPart = start.QuadPart;
-    SetFilePointerEx(This->file, dist, NULL, FILE_BEGIN);
+    if (This->eof && !This->read_buf_size)
+        return CTL_E_ENDOFFILE;
 
-    This->first_read = FALSE;
-
-    hr = textstream_read(This, toread, start.QuadPart == 0, text);
-    return FAILED(hr) ? hr : S_FALSE;
+    return read_from_buffer(This, This->read_buf_size, text, 0) ? S_FALSE : E_OUTOFMEMORY;
 }
 
 static HRESULT textstream_writestr(struct textstream *stream, BSTR text)
@@ -693,6 +685,7 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
 {
     struct textstream *stream;
     DWORD access = 0;
+    HRESULT hr;
 
     /* map access mode */
     switch (mode)
@@ -716,7 +709,9 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
     stream->ITextStream_iface.lpVtbl = &textstreamvtbl;
     stream->ref = 1;
     stream->mode = mode;
-    stream->first_read = TRUE;
+    stream->eof = FALSE;
+    stream->read_buf = NULL;
+    stream->read_buf_size = 0;
 
     stream->file = CreateFileW(filename, access, 0, NULL, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
     if (stream->file == INVALID_HANDLE_VALUE)
@@ -746,24 +741,38 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
     }
     else
     {
-        if (format == TristateUseDefault)
-        {
-            BYTE buf[64];
-            DWORD read;
-            BOOL ret;
+        DWORD read, buf_offset = 0;
+        BYTE buf[64];
 
-            ret = ReadFile(stream->file, buf, sizeof(buf), &read, NULL);
-            if (!ret) {
+        if (format == TristateUseDefault || mode == ForReading)
+        {
+            if (!ReadFile(stream->file, buf, sizeof(buf), &read, NULL))
+            {
                 ITextStream_Release(&stream->ITextStream_iface);
                 return create_error(GetLastError());
             }
-
-            stream->unicode = IsTextUnicode(buf, read, NULL);
-            if (mode == ForReading) SetFilePointer(stream->file, 0, 0, FILE_BEGIN);
         }
-        else stream->unicode = format != TristateFalse;
 
-        if (mode == ForAppending) SetFilePointer(stream->file, 0, 0, FILE_END);
+        if (format == TristateUseDefault)
+            stream->unicode = IsTextUnicode(buf, read, NULL);
+        else
+            stream->unicode = format != TristateFalse;
+
+        if (mode == ForReading)
+        {
+            if (stream->unicode && read >= 2 && buf[0] == 0xff && buf[1] == 0xfe)
+                buf_offset += 2; /* skip utf16 BOM */
+
+            hr = append_read_data(stream, (const char *)buf + buf_offset, read - buf_offset);
+            if (FAILED(hr))
+            {
+                ITextStream_Release(&stream->ITextStream_iface);
+                return hr;
+            }
+
+            stream->eof = read != sizeof(buf);
+        }
+        else SetFilePointer(stream->file, 0, 0, FILE_END);
     }
 
     init_classinfo(&CLSID_TextStream, (IUnknown *)&stream->ITextStream_iface, &stream->classinfo);
