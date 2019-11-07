@@ -19,6 +19,7 @@
 #include "wine/debug.h"
 
 #include "wincon.h"
+#include "stdlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(chcp);
 
@@ -31,8 +32,19 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         printf("Active code page: %d\n", GetConsoleCP());
         return 0;
     }
+    else if (argc == 2)
+    {
+        int codepage = _wtoi(argv[1]);
+        int success = SetConsoleCP(codepage) && SetConsoleOutputCP(codepage);
 
-    WINE_FIXME("stub:");
+        if (!success)
+        {
+            printf("Invalid code page\n");
+        }
+        return !success;
+    }
+
+    WINE_FIXME("unexpected arguments:");
     for (i = 0; i < argc; i++)
         WINE_FIXME(" %s", wine_dbgstr_w(argv[i]));
     WINE_FIXME("\n");
