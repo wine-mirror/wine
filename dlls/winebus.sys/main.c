@@ -25,13 +25,7 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
 #include "winternl.h"
-#include "winreg.h"
-#include "setupapi.h"
-#include "cfgmgr32.h"
 #include "winioctl.h"
 #include "hidusage.h"
 #include "ddk/wdm.h"
@@ -46,8 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
-
-static const WCHAR backslashW[] = {'\\',0};
 
 struct product_desc
 {
@@ -223,23 +215,20 @@ static WCHAR *get_compatible_ids(DEVICE_OBJECT *device)
 
 DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
                                      WORD input, DWORD version, DWORD uid, const WCHAR *serialW, BOOL is_gamepad,
-                                     const GUID *class, const platform_vtbl *vtbl, DWORD platform_data_size)
+                                     const platform_vtbl *vtbl, DWORD platform_data_size)
 {
     static const WCHAR device_name_fmtW[] = {'\\','D','e','v','i','c','e','\\','%','s','#','%','p',0};
-    WCHAR *id, instance[MAX_DEVICE_ID_LEN];
     struct device_extension *ext;
     struct pnp_device *pnp_dev;
     DEVICE_OBJECT *device;
     UNICODE_STRING nameW;
     WCHAR dev_name[256];
-    HDEVINFO devinfo;
-    SP_DEVINFO_DATA data = {sizeof(data)};
     NTSTATUS status;
     DWORD length;
 
-    TRACE("(%s, %04x, %04x, %04x, %u, %u, %s, %u, %s, %p, %u)\n",
+    TRACE("(%s, %04x, %04x, %04x, %u, %u, %s, %u, %p, %u)\n",
             debugstr_w(busidW), vid, pid, input, version, uid, debugstr_w(serialW),
-            is_gamepad, debugstr_guid(class), vtbl, platform_data_size);
+            is_gamepad, vtbl, platform_data_size);
 
     if (!(pnp_dev = HeapAlloc(GetProcessHeap(), 0, sizeof(*pnp_dev))))
         return NULL;
@@ -286,41 +275,6 @@ DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
     list_add_tail(&pnp_devset, &pnp_dev->entry);
 
     LeaveCriticalSection(&device_list_cs);
-
-    devinfo = SetupDiCreateDeviceInfoList(class, NULL);
-    if (devinfo == INVALID_HANDLE_VALUE)
-    {
-        ERR("failed to create device info list, error %#x\n", GetLastError());
-        goto error;
-    }
-
-    if (!(id = get_device_id(device)))
-    {
-        ERR("failed to generate instance id\n");
-        goto error;
-    }
-    strcpyW(instance, id);
-    ExFreePool(id);
-
-    if (!(id = get_instance_id(device)))
-    {
-        ERR("failed to generate instance id\n");
-        goto error;
-    }
-    strcatW(instance, backslashW);
-    strcatW(instance, id);
-    ExFreePool(id);
-
-    if (SetupDiCreateDeviceInfoW(devinfo, instance, class, NULL, NULL, DICD_INHERIT_CLASSDRVS, &data))
-    {
-        if (!SetupDiRegisterDeviceInfo(devinfo, &data, 0, NULL, NULL, NULL))
-            ERR("failed to register device info, error %#x\n", GetLastError());
-    }
-    else if (GetLastError() != ERROR_DEVINST_ALREADY_EXISTS)
-        ERR("failed to create device info, error %#x\n", GetLastError());
-
-error:
-    SetupDiDestroyDeviceInfoList(devinfo);
     return device;
 }
 
@@ -556,11 +510,9 @@ static const platform_vtbl mouse_vtbl =
 
 static void mouse_device_create(void)
 {
-    static const GUID wine_mouse_class = {0xdfe2580e,0x52fd,0x453d,{0xa2,0xc1,0x33,0x81,0xf2,0x32,0x68,0x4c}};
     static const WCHAR busidW[] = {'W','I','N','E','M','O','U','S','E',0};
 
-    mouse_obj = bus_create_hid_device(busidW, 0, 0, -1, 0, 0, busidW, FALSE,
-            &wine_mouse_class, &mouse_vtbl, 0);
+    mouse_obj = bus_create_hid_device(busidW, 0, 0, -1, 0, 0, busidW, FALSE, &mouse_vtbl, 0);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
 

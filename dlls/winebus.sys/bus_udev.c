@@ -98,10 +98,6 @@ static int deviceloop_control[2];
 static const WCHAR hidraw_busidW[] = {'H','I','D','R','A','W',0};
 static const WCHAR lnxev_busidW[] = {'L','N','X','E','V',0};
 
-#include "initguid.h"
-DEFINE_GUID(GUID_DEVCLASS_HIDRAW, 0x3def44ad,0x242e,0x46e5,0x82,0x6d,0x70,0x72,0x13,0xf3,0xaa,0x81);
-DEFINE_GUID(GUID_DEVCLASS_LINUXEVENT, 0x1b932c0d,0xfea7,0x42cd,0x8e,0xaa,0x0e,0x48,0x79,0xb6,0x9e,0xaa);
-
 struct platform_private
 {
     struct udev_device *udev_device;
@@ -1241,13 +1237,13 @@ static void try_add_device(struct udev_device *dev)
     if (strcmp(subsystem, "hidraw") == 0)
     {
         device = bus_create_hid_device(hidraw_busidW, vid, pid, input, version, 0, serial, is_gamepad,
-                                       &GUID_DEVCLASS_HIDRAW, &hidraw_vtbl, sizeof(struct platform_private));
+                                       &hidraw_vtbl, sizeof(struct platform_private));
     }
 #ifdef HAS_PROPER_INPUT_HEADER
     else if (strcmp(subsystem, "input") == 0)
     {
         device = bus_create_hid_device(lnxev_busidW, vid, pid, input, version, 0, serial, is_gamepad,
-                                       &GUID_DEVCLASS_LINUXEVENT, &lnxev_vtbl, sizeof(struct wine_input_private));
+                                       &lnxev_vtbl, sizeof(struct wine_input_private));
     }
 #endif
 

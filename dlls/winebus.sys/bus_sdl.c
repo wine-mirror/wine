@@ -66,9 +66,6 @@ static const WCHAR sdl_busidW[] = {'S','D','L','J','O','Y',0};
 
 static DWORD map_controllers = 0;
 
-#include "initguid.h"
-DEFINE_GUID(GUID_DEVCLASS_SDL, 0x463d60b5,0x802b,0x4bb2,0x8f,0xdb,0x7d,0xa9,0xb9,0x96,0x04,0xd8);
-
 static void *sdl_handle = NULL;
 static HANDLE deviceloop_handle;
 static UINT quit_event = -1;
@@ -974,9 +971,8 @@ static void try_add_device(unsigned int index)
     if (is_xbox_gamepad)
         input = 0;
 
-    device = bus_create_hid_device(sdl_busidW, vid, pid,
-            input, version, index, serial, is_xbox_gamepad, &GUID_DEVCLASS_SDL,
-            &sdl_vtbl, sizeof(struct platform_private));
+    device = bus_create_hid_device(sdl_busidW, vid, pid, input, version, index,
+            serial, is_xbox_gamepad, &sdl_vtbl, sizeof(struct platform_private));
 
     if (device)
     {

@@ -102,9 +102,6 @@ static HANDLE run_loop_handle;
 
 static const WCHAR busidW[] = {'I','O','H','I','D',0};
 
-#include "initguid.h"
-DEFINE_GUID(GUID_DEVCLASS_IOHID, 0x989D309D,0x0470,0x4E1A,0x89,0x38,0x50,0x1F,0x42,0xBD,0x9A,0xCD);
-
 struct platform_private
 {
     IOHIDDeviceRef device;
@@ -348,7 +345,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
         input = 0;
 
     device = bus_create_hid_device(busidW, vid, pid, input,
-            version, uid, str?serial_string:NULL, is_gamepad, &GUID_DEVCLASS_IOHID,
+            version, uid, str ? serial_string : NULL, is_gamepad,
             &iohid_vtbl, sizeof(struct platform_private));
     if (!device)
         ERR("Failed to create device\n");
