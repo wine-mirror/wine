@@ -31,7 +31,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
-#ifdef HAVE_PNG_H
+#ifdef SONAME_LIBPNG
 #include <png.h>
 #endif
 
