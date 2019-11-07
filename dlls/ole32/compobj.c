@@ -4027,18 +4027,18 @@ done:
 
 /******************************************************************************
  *		CoGetCurrentProcess	[OLE32.@]
- *
- * Gets the current process ID.
- *
- * RETURNS
- *  The current process ID.
- *
- * NOTES
- *   Is DWORD really the correct return type for this function?
  */
 DWORD WINAPI CoGetCurrentProcess(void)
 {
-	return GetCurrentProcessId();
+    struct oletls *info = COM_CurrentInfo();
+
+    if (!info)
+        return 0;
+
+    if (!info->thread_seqid)
+        info->thread_seqid = rpcss_get_next_seqid();
+
+    return info->thread_seqid;
 }
 
 /***********************************************************************

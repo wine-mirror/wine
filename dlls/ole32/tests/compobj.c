@@ -3893,6 +3893,31 @@ static void test_implicit_mta(void)
     CoUninitialize();
 }
 
+static DWORD WINAPI co_get_current_process_thread(void *param)
+{
+    DWORD *id = param;
+
+    *id = CoGetCurrentProcess();
+    return 0;
+}
+
+static void test_CoGetCurrentProcess(void)
+{
+    DWORD id, id2;
+    HANDLE thread;
+
+    id = CoGetCurrentProcess();
+    ok(!!id && id != GetCurrentProcessId() && id != GetCurrentThreadId(), "Unexpected result %d.\n", id);
+
+    id2 = 0;
+    thread = CreateThread(NULL, 0, co_get_current_process_thread, &id2, 0, NULL);
+    ok(thread != NULL, "Failed to create test thread.\n");
+    ok(!WaitForSingleObject(thread, 10000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    ok(id2 && id2 != id, "Unexpected id from another thread.\n");
+}
+
 START_TEST(compobj)
 {
     init_funcs();
@@ -3949,5 +3974,7 @@ START_TEST(compobj)
     test_CoGetInstanceFromFile();
     test_GlobalOptions();
     test_implicit_mta();
+    test_CoGetCurrentProcess();
+
     DeleteFileA( testlib );
 }
