@@ -10,6 +10,7 @@ SOURCES = \
 	wine.man.in \
 	wine.pl.UTF-8.man.in \
 	wine_info.plist.in \
+	winebus.inf.in \
 	winehid.inf.in
 
 PROGRAMS = $(WINELOADER_PROGRAMS)
