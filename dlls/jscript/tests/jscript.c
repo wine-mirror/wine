@@ -56,6 +56,9 @@ static const CLSID CLSID_JScriptEncode =
 #define SET_EXPECT(func) \
     expect_ ## func = 1
 
+#define SET_EXPECT_MULTI(func, num) \
+    expect_ ## func = num
+
 #define CHECK_EXPECT2(func) \
     do { \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
@@ -71,6 +74,12 @@ static const CLSID CLSID_JScriptEncode =
 #define CHECK_CALLED(func) \
     do { \
         ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = 0; \
+    }while(0)
+
+#define CHECK_CALLED_MULTI(func, num) \
+    do { \
+        ok(called_ ## func == num, "expected " #func " %d times (got %d)\n", num, called_ ## func); \
         expect_ ## func = called_ ## func = 0; \
     }while(0)
 
@@ -275,6 +284,23 @@ static IDispatchEx *get_script_dispatch(IActiveScript *script)
     IDispatch_Release(disp);
     ok(hres == S_OK, "Could not get IDispatch iface: %08x\n", hres);
     return dispex;
+}
+
+#define get_disp_id(a,b,c,d) _get_disp_id(__LINE__,a,b,c,d)
+static void _get_disp_id(unsigned line, IDispatchEx *dispex, const char *name, HRESULT exhr, DISPID *id)
+{
+    DISPID id2;
+    HRESULT hr;
+    BSTR str;
+
+    str = a2bstr(name);
+    hr = IDispatchEx_GetDispID(dispex, str, 0, id);
+    ok_(__FILE__,line)(hr == exhr, "GetDispID(%s) returned %08x, expected %08x\n", name, hr, exhr);
+
+    hr = IDispatchEx_GetIDsOfNames(dispex, &IID_NULL, &str, 1, 0, &id2);
+    SysFreeString(str);
+    ok_(__FILE__,line)(hr == exhr, "GetIDsOfNames(%s) returned %08x, expected %08x\n", name, hr, exhr);
+    ok_(__FILE__,line)(*id == id2, "GetIDsOfNames(%s) id != id2\n", name);
 }
 
 static void test_no_script_dispatch(IActiveScript *script)
@@ -664,6 +690,233 @@ static void test_aggregation(void)
     ok(!unk || broken(unk != NULL), "unk = %p\n", unk);
 }
 
+static void test_code_persistence(void)
+{
+    IActiveScriptParse *parse;
+    IActiveScript *script;
+    IDispatchEx *dispex;
+    VARIANT var;
+    HRESULT hr;
+    DISPID id;
+    ULONG ref;
+
+    script = create_jscript();
+
+    hr = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parse);
+    ok(hr == S_OK, "Could not get IActiveScriptParse iface: %08x\n", hr);
+    test_state(script, SCRIPTSTATE_UNINITIALIZED);
+    test_safety((IUnknown*)script);
+
+    SET_EXPECT(GetLCID);
+    hr = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08x\n", hr);
+    CHECK_CALLED(GetLCID);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hr = IActiveScriptParse_InitNew(parse);
+    ok(hr == S_OK, "InitNew failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    test_state(script, SCRIPTSTATE_INITIALIZED);
+
+    hr = IActiveScriptParse_ParseScriptText(parse,
+                                            L"var x = 1;\n"
+                                            L"var y = 2;\n",
+                                            NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+
+    hr = IActiveScriptParse_ParseScriptText(parse,
+                                            L"var z = 3;\n"
+                                            L"var y = 42;\n"
+                                            L"var v = 10;\n",
+                                            NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+
+    /* Pending code does not add identifiers to the global scope */
+    dispex = get_script_dispatch(script);
+    id = 0;
+    get_disp_id(dispex, "x", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    id = 0;
+    get_disp_id(dispex, "y", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    id = 0;
+    get_disp_id(dispex, "z", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    IDispatchEx_Release(dispex);
+
+    /* Uninitialized state removes code without SCRIPTTEXT_ISPERSISTENT */
+    SET_EXPECT(OnStateChange_UNINITIALIZED);
+    hr = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_UNINITIALIZED);
+    test_no_script_dispatch(script);
+
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hr = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08x\n", hr);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    hr = IActiveScriptParse_ParseScriptText(parse, L"v = 20;\n", NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    SET_EXPECT_MULTI(OnEnterScript, 2);
+    SET_EXPECT_MULTI(OnLeaveScript, 2);
+    hr = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+    CHECK_CALLED_MULTI(OnEnterScript, 2);
+    CHECK_CALLED_MULTI(OnLeaveScript, 2);
+    test_state(script, SCRIPTSTATE_CONNECTED);
+
+    dispex = get_script_dispatch(script);
+    id = 0;
+    get_disp_id(dispex, "x", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    id = 0;
+    get_disp_id(dispex, "y", S_OK, &id);
+    ok(id != -1, "id = -1\n");
+    id = 0;
+    get_disp_id(dispex, "z", S_OK, &id);
+    ok(id != -1, "id = -1\n");
+    IDispatchEx_Release(dispex);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parse, L"y", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    ok(V_VT(&var) == VT_I4 && V_I2(&var) == 42, "V_VT(y) = %d, V_I2(y) = %d\n", V_VT(&var), V_I2(&var));
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parse, L"v", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    ok(V_VT(&var) == VT_I4 && V_I2(&var) == 20, "V_VT(var) = %d, V_I2(var) = %d\n", V_VT(&var), V_I2(&var));
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    /* Uninitialized state does not remove persistent code, even if it was executed */
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_UNINITIALIZED);
+    hr = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_UNINITIALIZED);
+    test_no_script_dispatch(script);
+
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hr = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08x\n", hr);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    dispex = get_script_dispatch(script);
+    id = 0;
+    get_disp_id(dispex, "z", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    IDispatchEx_Release(dispex);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    test_state(script, SCRIPTSTATE_CONNECTED);
+
+    dispex = get_script_dispatch(script);
+    id = 0;
+    get_disp_id(dispex, "z", S_OK, &id);
+    ok(id != -1, "id = -1\n");
+    IDispatchEx_Release(dispex);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parse, L"y", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    ok(V_VT(&var) == VT_I4 && V_I2(&var) == 42, "V_VT(y) = %d, V_I2(y) = %d\n", V_VT(&var), V_I2(&var));
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parse, L"v", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    ok(V_VT(&var) == VT_I4 && V_I2(&var) == 10, "V_VT(var) = %d, V_I2(var) = %d\n", V_VT(&var), V_I2(&var));
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_UNINITIALIZED);
+    hr = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_UNINITIALIZED);
+
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hr = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08x\n", hr);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    hr = IActiveScriptParse_ParseScriptText(parse, L"y = 2;\n", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+
+    /* Closing the script engine removes all code (even if it's pending and persistent) */
+    SET_EXPECT(OnStateChange_CLOSED);
+    hr = IActiveScript_Close(script);
+    ok(hr == S_OK, "Close failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_CLOSED);
+    test_state(script, SCRIPTSTATE_CLOSED);
+    test_no_script_dispatch(script);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(GetLCID);
+    hr = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(GetLCID);
+    test_state(script, SCRIPTSTATE_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hr = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+    test_state(script, SCRIPTSTATE_CONNECTED);
+
+    dispex = get_script_dispatch(script);
+    id = 0;
+    get_disp_id(dispex, "y", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    id = 0;
+    get_disp_id(dispex, "z", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    IDispatchEx_Release(dispex);
+
+    IActiveScriptParse_Release(parse);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_CLOSED);
+    ref = IActiveScript_Release(script);
+    ok(!ref, "ref = %d\n", ref);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_CLOSED);
+}
+
 static BOOL check_jscript(void)
 {
     IActiveScriptProperty *script_prop;
@@ -687,6 +940,7 @@ START_TEST(jscript)
         test_jscript2();
         test_jscript_uninitializing();
         test_aggregation();
+        test_code_persistence();
 
         trace("Testing JScriptEncode object...\n");
         engine_clsid = &CLSID_JScriptEncode;
