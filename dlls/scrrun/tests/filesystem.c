@@ -1734,6 +1734,7 @@ static void test_ReadAll(void)
     hr = ITextStream_ReadLine(stream, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(str != NULL, "got %p\n", str);
+    ok(!wcscmp(str, nameW), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     lstrcpyW(buffW, secondlineW);
@@ -2034,6 +2035,75 @@ static void test_Read(void)
     DeleteFileW(nameW);
     RemoveDirectoryW(dirW);
     SysFreeString(nameW);
+}
+
+static void test_ReadLine(void)
+{
+    WCHAR path[MAX_PATH], dir[MAX_PATH];
+    ITextStream *stream;
+    unsigned int i;
+    HANDLE file;
+    DWORD size;
+    HRESULT hr;
+    BSTR str;
+    BOOL ret;
+
+    const char data[] = "first line\r\nsecond\n\n\rt\r\re \rst\n";
+
+    get_temp_filepath(L"test.txt", path, dir);
+
+    ret = CreateDirectoryW(dir, NULL);
+    ok(ret, "got %d, %d\n", ret, GetLastError());
+
+    file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+            FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
+
+    for (i = 0; i < 1000; i++)
+        WriteFile(file, data, strlen(data), &size, NULL);
+    CloseHandle(file);
+
+    str = SysAllocString(path);
+    hr = IFileSystem3_OpenTextFile(fs3, str, ForReading, VARIANT_FALSE, TristateFalse, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    for (i = 0; i < 1000; i++)
+    {
+        hr = ITextStream_ReadLine(stream, &str);
+        ok(hr == S_OK, "ReadLine failed: %08x\n", hr);
+        ok(!wcscmp(str, L"first line"), "ReadLine returned %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hr = ITextStream_ReadLine(stream, &str);
+        ok(hr == S_OK, "ReadLine failed: %08x\n", hr);
+        ok(!wcscmp(str, L"second"), "ReadLine returned %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hr = ITextStream_ReadLine(stream, &str);
+        ok(hr == S_OK, "ReadLine failed: %08x\n", hr);
+        ok(!*str, "ReadLine returned %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hr = ITextStream_ReadLine(stream, &str);
+        ok(hr == S_OK, "ReadLine failed: %08x\n", hr);
+        ok(!wcscmp(str, L"\rt\r\re \rst"), "ReadLine returned %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+    }
+
+    str = NULL;
+    hr = ITextStream_ReadLine(stream, &str);
+    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(!str, "ReadLine returned %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    ITextStream_Release(stream);
+
+    ret = DeleteFileW(path);
+    ok(ret, "DeleteFile failed: %u\n", GetLastError());
+
+    ret = RemoveDirectoryW(dir);
+    ok(ret, "RemoveDirectory failed: %u\n", GetLastError());
 }
 
 struct driveexists_test {
@@ -2403,6 +2473,7 @@ START_TEST(filesystem)
     test_WriteLine();
     test_ReadAll();
     test_Read();
+    test_ReadLine();
     test_DriveExists();
     test_GetDriveName();
     test_GetDrive();
