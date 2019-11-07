@@ -28,6 +28,7 @@
 #include "winsvc.h"
 #include "irot.h"
 #include "epm.h"
+#include "irpcss.h"
 
 #include "wine/debug.h"
 
@@ -37,6 +38,13 @@ static WCHAR rpcssW[] = {'R','p','c','S','s',0};
 static HANDLE exit_event;
 static SERVICE_STATUS_HANDLE service_handle;
 
+HRESULT __cdecl irpcss_get_thread_seq_id(handle_t h, DWORD *id)
+{
+    static LONG thread_seq_id;
+    *id = InterlockedIncrement(&thread_seq_id);
+    return S_OK;
+}
+
 static RPC_STATUS RPCSS_Initialize(void)
 {
     static unsigned short irot_protseq[] = IROT_PROTSEQ;
@@ -45,6 +53,8 @@ static RPC_STATUS RPCSS_Initialize(void)
     static unsigned short epm_endpoint[] = {'\\','p','i','p','e','\\','e','p','m','a','p','p','e','r',0};
     static unsigned short epm_protseq_lrpc[] = {'n','c','a','l','r','p','c',0};
     static unsigned short epm_endpoint_lrpc[] = {'e','p','m','a','p','p','e','r',0};
+    static unsigned short irpcss_protseq[] = IRPCSS_PROTSEQ;
+    static unsigned short irpcss_endpoint[] = IRPCSS_ENDPOINT;
     static const struct protseq_map
     {
         unsigned short *protseq;
@@ -54,11 +64,13 @@ static RPC_STATUS RPCSS_Initialize(void)
         { epm_protseq, epm_endpoint },
         { epm_protseq_lrpc, epm_endpoint_lrpc },
         { irot_protseq, irot_endpoint },
+        { irpcss_protseq, irpcss_endpoint },
     };
     RPC_IF_HANDLE ifspecs[] =
     {
         epm_v3_0_s_ifspec,
         Irot_v0_2_s_ifspec,
+        Irpcss_v0_0_s_ifspec,
     };
     RPC_STATUS status;
     int i, j;

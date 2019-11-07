@@ -10,4 +10,5 @@ C_SRCS = \
 
 IDL_SRCS = \
 	epm.idl \
-	irot.idl
+	irot.idl \
+	irpcss.idl
