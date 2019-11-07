@@ -220,12 +220,11 @@ static void set_process_name( int argc, char *argv[] )
  *
  * NOTES: The first allocated TEB on NT is at 0x7ffde000.
  */
-void thread_init(void)
+TEB *thread_init(void)
 {
     TEB *teb;
     void *addr;
-    BOOL suspend;
-    SIZE_T size, info_size;
+    SIZE_T size;
     LARGE_INTEGER now;
     NTSTATUS status;
     struct ntdll_thread_data *thread_data;
@@ -299,21 +298,7 @@ void thread_init(void)
     signal_init_thread( teb );
     virtual_init_threading();
     debug_init();
-
-    /* setup the server connection */
-    server_init_process();
-    info_size = server_init_thread( peb, &suspend );
-
-    /* create the process heap */
-    if (!(peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL )))
-    {
-        MESSAGE( "wine: failed to create the process heap\n" );
-        exit(1);
-    }
-
     set_process_name( __wine_main_argc, __wine_main_argv );
-    init_directories();
-    init_user_process_params( info_size );
 
     /* initialize time values in user_shared_data */
     NtQuerySystemTime( &now );
@@ -323,10 +308,9 @@ void thread_init(void)
     user_shared_data->u.TickCount.High2Time = user_shared_data->u.TickCount.High1Time;
     user_shared_data->TickCountLowDeprecated = user_shared_data->u.TickCount.LowPart;
     user_shared_data->TickCountMultiplier = 1 << 24;
-
     fill_cpu_info();
 
-    NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
+    return teb;
 }
 
 

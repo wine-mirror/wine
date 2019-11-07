@@ -4234,8 +4234,22 @@ void __wine_process_init(void)
     UNICODE_STRING nt_name;
     void * (CDECL *init_func)(void);
     INITIAL_TEB stack;
+    BOOL suspend;
+    SIZE_T info_size;
+    TEB *teb = thread_init();
+    PEB *peb = teb->Peb;
 
-    thread_init();
+    /* setup the server connection */
+    server_init_process();
+    info_size = server_init_thread( peb, &suspend );
+
+    peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
+    peb->LoaderLock = &loader_section;
+
+    init_directories();
+    init_user_process_params( info_size );
+
+    NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
 
     /* retrieve current umask */
     FILE_umask = umask(0777);
@@ -4263,7 +4277,7 @@ void __wine_process_init(void)
 
     kernel32_start_process = init_func();
 
-    wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
+    wm = get_modref( peb->ImageBaseAddress );
     assert( wm );
     if (wm->ldr.Flags & LDR_IMAGE_IS_DLL)
     {
@@ -4271,24 +4285,18 @@ void __wine_process_init(void)
         exit(1);
     }
 
-    NtCurrentTeb()->Peb->LoaderLock = &loader_section;
     virtual_set_large_address_space();
 
     /* the main exe needs to be the first in the load order list */
     RemoveEntryList( &wm->ldr.InLoadOrderModuleList );
-    InsertHeadList( &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList, &wm->ldr.InLoadOrderModuleList );
+    InsertHeadList( &peb->LdrData->InLoadOrderModuleList, &wm->ldr.InLoadOrderModuleList );
     RemoveEntryList( &wm->ldr.InMemoryOrderModuleList );
-    InsertHeadList( &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderModuleList );
+    InsertHeadList( &peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderModuleList );
 
-    if ((status = virtual_alloc_thread_stack( &stack, 0, 0, NULL )) != STATUS_SUCCESS)
-    {
-        ERR( "Main exe initialization for %s failed, status %x\n",
-             debugstr_w(wm->ldr.FullDllName.Buffer), status );
-        NtTerminateProcess( GetCurrentProcess(), status );
-    }
-    NtCurrentTeb()->Tib.StackBase = stack.StackBase;
-    NtCurrentTeb()->Tib.StackLimit = stack.StackLimit;
-    NtCurrentTeb()->DeallocationStack = stack.DeallocationStack;
+    virtual_alloc_thread_stack( &stack, 0, 0, NULL );
+    teb->Tib.StackBase = stack.StackBase;
+    teb->Tib.StackLimit = stack.StackLimit;
+    teb->DeallocationStack = stack.DeallocationStack;
 
     server_init_process_done();
 }
