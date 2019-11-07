@@ -18,11 +18,19 @@
 
 #include "wine/debug.h"
 
+#include "wincon.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(chcp);
 
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
     int i;
+
+    if (argc == 1)
+    {
+        printf("Active code page: %d\n", GetConsoleCP());
+        return 0;
+    }
 
     WINE_FIXME("stub:");
     for (i = 0; i < argc; i++)
