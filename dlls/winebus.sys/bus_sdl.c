@@ -902,7 +902,7 @@ static void try_remove_device(SDL_JoystickID id)
     sdl_controller = private->sdl_controller;
     sdl_haptic = private->sdl_haptic;
 
-    IoInvalidateDeviceRelations(device, RemovalRelations);
+    IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 
     bus_remove_hid_device(device);
 

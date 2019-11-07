@@ -1297,7 +1297,7 @@ static void try_remove_device(struct udev_device *dev)
 #endif
     if (!device) return;
 
-    IoInvalidateDeviceRelations(device, RemovalRelations);
+    IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 
     private = impl_from_DEVICE_OBJECT(device);
 

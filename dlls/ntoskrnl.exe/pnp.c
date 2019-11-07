@@ -435,6 +435,21 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
         }
     }
 
+    if (wine_parent->children)
+    {
+        for (i = 0; i < wine_parent->children->Count; ++i)
+        {
+            DEVICE_OBJECT *child = wine_parent->children->Objects[i];
+
+            if (!device_in_list( relations, child ))
+            {
+                TRACE("Removing device %p.\n", child);
+                remove_device( child );
+            }
+            ObDereferenceObject( child );
+        }
+    }
+
     ExFreePool( wine_parent->children );
     wine_parent->children = relations;
 
@@ -452,9 +467,6 @@ void WINAPI IoInvalidateDeviceRelations( DEVICE_OBJECT *device_object, DEVICE_RE
     {
         case BusRelations:
             handle_bus_relations( device_object );
-            break;
-        case RemovalRelations:
-            remove_device( device_object );
             break;
         default:
             FIXME("Unhandled relation %#x.\n", type);
