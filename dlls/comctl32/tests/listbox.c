@@ -769,11 +769,27 @@ static void test_listbox_height(void)
     r = SendMessageA(hList, LB_GETITEMHEIGHT, 0, 0 );
     ok( r == 20, "height wrong\n");
 
+    /* Before Windows 10 1709 (or 1703?) the item height was limited to 255.
+     * Since then, with comctl32 V6 the limit is 65535.
+     */
     r = SendMessageA( hList, LB_SETITEMHEIGHT, 0, MAKELPARAM( 256, 0 ));
-    ok( r == -1, "Failed to set item height, %d.\n", r);
+    ok(r == 0 || broken(r == -1), "Failed to set item height, %d.\n", r);
+    if (r == -1)
+    {
+        r = SendMessageA(hList, LB_GETITEMHEIGHT, 0, 0 );
+        ok( r == 20, "Unexpected item height %d.\n", r);
+    }
+    else
+    {
+        r = SendMessageA(hList, LB_GETITEMHEIGHT, 0, 0 );
+        ok( r == 256, "Unexpected item height %d.\n", r);
 
-    r = SendMessageA(hList, LB_GETITEMHEIGHT, 0, 0 );
-    ok( r == 20, "Unexpected item height %d.\n", r);
+        r = SendMessageA( hList, LB_SETITEMHEIGHT, 0, MAKELPARAM( 65535, 0 ));
+        ok(r == 0, "Failed to set item height, %d.\n", r);
+
+        r = SendMessageA(hList, LB_GETITEMHEIGHT, 0, 0 );
+        ok( r == 65535, "Unexpected item height %d.\n", r);
+    }
 
     r = SendMessageA( hList, LB_SETITEMHEIGHT, 0, MAKELPARAM( 0xff, 0 ));
     ok( r == 0, "send message failed\n");

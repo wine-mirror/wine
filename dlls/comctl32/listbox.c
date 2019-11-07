@@ -1280,7 +1280,7 @@ static LRESULT LISTBOX_GetItemHeight( const LB_DESCR *descr, INT index )
  */
 static LRESULT LISTBOX_SetItemHeight( LB_DESCR *descr, INT index, INT height, BOOL repaint )
 {
-    if (height > MAXBYTE)
+    if (height > MAXWORD)
         return -1;
 
     if (!height) height = 1;
