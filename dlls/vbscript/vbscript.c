@@ -188,7 +188,6 @@ static void release_script(script_ctx_t *ctx)
         IDispatchEx_Release(&script_obj->IDispatchEx_iface);
     }
 
-    detach_global_objects(ctx);
     heap_pool_free(&ctx->heap);
     heap_pool_init(&ctx->heap);
 }
@@ -395,6 +394,7 @@ static ULONG WINAPI VBScript_Release(IActiveScript *iface)
 
     if(!ref) {
         decrease_state(This, SCRIPTSTATE_CLOSED);
+        detach_global_objects(This->ctx);
         heap_free(This->ctx);
         heap_free(This);
     }
