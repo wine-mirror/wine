@@ -1280,6 +1280,8 @@ void processJob(BackgroundCopyJobImpl *job)
         if (done)
         {
             transitionJobState(job, BG_JOB_STATE_QUEUED, BG_JOB_STATE_TRANSFERRED);
+            if (job->callback && (job->notify_flags & BG_NOTIFY_JOB_TRANSFERRED))
+                IBackgroundCopyCallback2_JobTransferred(job->callback, (IBackgroundCopyJob*)&job->IBackgroundCopyJob3_iface);
             return;
         }
 
