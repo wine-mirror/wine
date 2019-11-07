@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <assert.h>
+#include <wchar.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -499,10 +500,11 @@ static HRESULT WINAPI textstream_Read(ITextStream *iface, LONG len, BSTR *text)
 static HRESULT WINAPI textstream_ReadLine(ITextStream *iface, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    VARIANT_BOOL eos;
-    HRESULT hr;
+    unsigned int skip = 0;
+    const WCHAR *nl;
+    HRESULT hr = S_OK;
 
-    FIXME("(%p)->(%p): stub\n", This, text);
+    TRACE("(%p)->(%p)\n", This, text);
 
     if (!text)
         return E_POINTER;
@@ -511,15 +513,28 @@ static HRESULT WINAPI textstream_ReadLine(ITextStream *iface, BSTR *text)
     if (textstream_check_iomode(This, IORead))
         return CTL_E_BADFILEMODE;
 
-    /* check for EOF */
-    hr = ITextStream_get_AtEndOfStream(iface, &eos);
-    if (FAILED(hr))
-        return hr;
+    while (!(nl = wmemchr(This->read_buf, '\n', This->read_buf_size)) && !This->eof)
+    {
+        if (FAILED(hr = read_more_data(This)))
+            return hr;
+    }
 
-    if (eos == VARIANT_TRUE)
+    if (This->eof && !This->read_buf_size)
         return CTL_E_ENDOFFILE;
 
-    return E_NOTIMPL;
+    if (!nl)
+    {
+        nl = This->read_buf + This->read_buf_size;
+        hr = S_FALSE;
+    }
+    else if (nl > This->read_buf && nl[-1] == '\r')
+    {
+        nl--;
+        skip = 2;
+    }
+    else skip = 1;
+
+    return read_from_buffer(This, nl - This->read_buf, text, skip) ? hr : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI textstream_ReadAll(ITextStream *iface, BSTR *text)
