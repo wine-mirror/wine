@@ -1162,6 +1162,112 @@ static BOOL is_builtin_path( UNICODE_STRING *path, BOOL *is_64bit )
 
 
 /***********************************************************************
+ *           get_so_file_info
+ */
+static BOOL get_so_file_info( HANDLE handle, pe_image_info_t *info )
+{
+    union
+    {
+        struct
+        {
+            unsigned char magic[4];
+            unsigned char class;
+            unsigned char data;
+            unsigned char version;
+            unsigned char ignored1[9];
+            unsigned short type;
+            unsigned short machine;
+            unsigned char ignored2[8];
+            unsigned int phoff;
+            unsigned char ignored3[12];
+            unsigned short phnum;
+        } elf;
+        struct
+        {
+            unsigned char magic[4];
+            unsigned char class;
+            unsigned char data;
+            unsigned char ignored1[10];
+            unsigned short type;
+            unsigned short machine;
+            unsigned char ignored2[12];
+            unsigned __int64 phoff;
+            unsigned char ignored3[16];
+            unsigned short phnum;
+        } elf64;
+        struct
+        {
+            unsigned int magic;
+            unsigned int cputype;
+            unsigned int cpusubtype;
+            unsigned int filetype;
+        } macho;
+        IMAGE_DOS_HEADER mz;
+    } header;
+
+    IO_STATUS_BLOCK io;
+    LARGE_INTEGER offset;
+
+    offset.QuadPart = 0;
+    if (NtReadFile( handle, 0, NULL, NULL, &io, &header, sizeof(header), &offset, 0 )) return FALSE;
+    if (io.Information != sizeof(header)) return FALSE;
+
+    if (!memcmp( header.elf.magic, "\177ELF", 4 ))
+    {
+        unsigned int type;
+        unsigned short phnum;
+
+        if (header.elf.version != 1 /* EV_CURRENT */) return FALSE;
+#ifdef WORDS_BIGENDIAN
+        if (header.elf.data != 2 /* ELFDATA2MSB */) return FALSE;
+#else
+        if (header.elf.data != 1 /* ELFDATA2LSB */) return FALSE;
+#endif
+        switch (header.elf.machine)
+        {
+        case 3:   info->cpu = CPU_x86; break;
+        case 20:  info->cpu = CPU_POWERPC; break;
+        case 40:  info->cpu = CPU_ARM; break;
+        case 62:  info->cpu = CPU_x86_64; break;
+        case 183: info->cpu = CPU_ARM64; break;
+        }
+        if (header.elf.type != 3 /* ET_DYN */) return FALSE;
+        if (header.elf.class == 2 /* ELFCLASS64 */)
+        {
+            offset.QuadPart = header.elf64.phoff;
+            phnum = header.elf64.phnum;
+        }
+        else
+        {
+            offset.QuadPart = header.elf.phoff;
+            phnum = header.elf.phnum;
+        }
+        while (phnum--)
+        {
+            if (NtReadFile( handle, 0, NULL, NULL, &io, &type, sizeof(type), &offset, 0 )) return FALSE;
+            if (io.Information < sizeof(type)) return FALSE;
+            if (type == 3 /* PT_INTERP */) return FALSE;
+            offset.QuadPart += (header.elf.class == 2) ? 56 : 32;
+        }
+        return TRUE;
+    }
+    else if (header.macho.magic == 0xfeedface || header.macho.magic == 0xfeedfacf)
+    {
+        switch (header.macho.cputype)
+        {
+        case 0x00000007: info->cpu = CPU_x86; break;
+        case 0x01000007: info->cpu = CPU_x86_64; break;
+        case 0x0000000c: info->cpu = CPU_ARM; break;
+        case 0x0100000c: info->cpu = CPU_ARM64; break;
+        case 0x00000012: info->cpu = CPU_POWERPC; break;
+        }
+        if (header.macho.filetype == 8) return TRUE;
+    }
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           get_pe_file_info
  */
 static NTSTATUS get_pe_file_info( UNICODE_STRING *path, ULONG attributes,
@@ -1172,16 +1278,16 @@ static NTSTATUS get_pe_file_info( UNICODE_STRING *path, ULONG attributes,
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
 
+    memset( info, 0, sizeof(*info) );
     InitializeObjectAttributes( &attr, path, attributes, 0, 0 );
     if ((status = NtOpenFile( handle, GENERIC_READ, &attr, &io,
-                              FILE_SHARE_READ | FILE_SHARE_DELETE, 0 )))
+                              FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT )))
     {
         BOOL is_64bit;
 
         if (is_builtin_path( path, &is_64bit ))
         {
             TRACE( "assuming %u-bit builtin for %s\n", is_64bit ? 64 : 32, debugstr_us(path));
-            memset( info, 0, sizeof(*info) );
             /* assume current arch */
 #if defined(__i386__) || defined(__x86_64__)
             info->cpu = is_64bit ? CPU_x86_64 : CPU_x86;
@@ -1211,6 +1317,10 @@ static NTSTATUS get_pe_file_info( UNICODE_STRING *path, ULONG attributes,
         }
         SERVER_END_REQ;
         NtClose( mapping );
+    }
+    else if (status == STATUS_INVALID_IMAGE_NOT_MZ)
+    {
+        if (get_so_file_info( *handle, info )) return STATUS_SUCCESS;
     }
     return status;
 }
@@ -1341,12 +1451,11 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
         switch (status)
         {
         case STATUS_INVALID_IMAGE_WIN_64:
-            ERR( "64-bit application %s not supported in 32-bit prefix\n",
-                 debugstr_us( &params->ImagePathName ));
+            ERR( "64-bit application %s not supported in 32-bit prefix\n", debugstr_us(path) );
             break;
         case STATUS_INVALID_IMAGE_FORMAT:
             ERR( "%s not supported on this installation (%s binary)\n",
-                 debugstr_us( &params->ImagePathName ), cpu_names[pe_info.cpu] );
+                 debugstr_us(path), cpu_names[pe_info.cpu] );
             break;
         }
         goto done;
