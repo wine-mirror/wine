@@ -1189,6 +1189,8 @@ static void test_char_from_pos(void)
 {
     int lo, hi, mid, ret, i;
     HWND hwEdit;
+    HDC dc;
+    SIZE size;
 
     hwEdit = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
     SendMessageA(hwEdit, WM_SETTEXT, 0, (LPARAM)"aa");
@@ -1320,6 +1322,24 @@ static void test_char_from_pos(void)
 
     ret = SendMessageA(hwEdit, EM_POSFROMCHAR, 2, 0);
     ok(-1 == ret, "expected -1 got %d\n", ret);
+    DestroyWindow(hwEdit);
+
+    /* Scrolled to the right with partially visible line, position on next line. */
+    hwEdit = create_editcontrol(ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
+
+    dc = GetDC(hwEdit);
+    GetTextExtentPoint32A(dc, "w", 1, &size);
+    ReleaseDC(hwEdit, dc);
+
+    SetWindowPos(hwEdit, NULL, 0, 0, size.cx * 15, size.cy * 5, SWP_NOMOVE | SWP_NOZORDER);
+    SendMessageA(hwEdit, WM_SETTEXT, 0, (LPARAM)"wwwwwwwwwwwwwwwwwwww\r\n\r\n");
+    SendMessageA(hwEdit, EM_SETSEL, 40, 40);
+
+    lo = (short)SendMessageA(hwEdit, EM_POSFROMCHAR, 22, 0);
+    ret = (short)SendMessageA(hwEdit, EM_POSFROMCHAR, 20, 0);
+    ret -= 20 * size.cx; /* Calculate expected position, 20 characters back. */
+    ok(ret == lo, "Unexpected position %d vs %d.\n", lo, ret);
+
     DestroyWindow(hwEdit);
 }
 
