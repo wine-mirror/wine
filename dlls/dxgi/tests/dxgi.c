@@ -3534,6 +3534,8 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
 {
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
     DXGI_SWAP_EFFECT swap_effect;
+    IDXGISwapChain3 *swapchain3;
+    IUnknown *present_queue[2];
     IDXGISwapChain *swapchain;
     ID3D12Resource *resource;
     ID3D10Texture2D *texture;
@@ -3541,6 +3543,7 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
     IDXGISurface *surface;
     IDXGIFactory *factory;
     RECT client_rect, r;
+    UINT node_mask[2];
     ULONG refcount;
     HWND window;
     BOOL ret;
@@ -3802,6 +3805,41 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
             "Got unexpected SwapEffect %#x.\n", swapchain_desc.SwapEffect);
     ok(!swapchain_desc.Flags,
             "Got unexpected Flags %#x.\n", swapchain_desc.Flags);
+
+    node_mask[0] = 1;
+    node_mask[1] = 1;
+    present_queue[0] = device;
+    present_queue[1] = device;
+    if (IDXGISwapChain_QueryInterface(swapchain, &IID_IDXGISwapChain3, (void **)&swapchain3) == E_NOINTERFACE)
+    {
+        skip("IDXGISwapChain3 is not supported.\n");
+    }
+    else if (!is_d3d12)
+    {
+        hr = IDXGISwapChain3_ResizeBuffers1(swapchain3, 2, 320, 240, DXGI_FORMAT_B8G8R8A8_UNORM, 0, node_mask, present_queue);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Expected DXGI_ERROR_INVALID_CALL, got hr %#x.\n", hr);
+        IDXGISwapChain3_Release(swapchain3);
+    }
+    else
+    {
+        hr = IDXGISwapChain3_ResizeBuffers1(swapchain3, 2, 320, 240, DXGI_FORMAT_B8G8R8A8_UNORM, 0, node_mask, present_queue);
+        ok(hr == S_OK, "Failed to resize buffers, hr %#x.\n", hr);
+        hr = IDXGISwapChain3_ResizeBuffers1(swapchain3, 2, 320, 240, DXGI_FORMAT_B8G8R8A8_UNORM, 0, NULL, present_queue);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Expected DXGI_ERROR_INVALID_CALL, got hr %#x.\n", hr);
+        hr = IDXGISwapChain3_ResizeBuffers1(swapchain3, 2, 320, 240, DXGI_FORMAT_B8G8R8A8_UNORM, 0, NULL, NULL);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Expected DXGI_ERROR_INVALID_CALL, got hr %#x.\n", hr);
+        hr = IDXGISwapChain3_ResizeBuffers1(swapchain3, 0, 320, 240, DXGI_FORMAT_B8G8R8A8_UNORM, 0, NULL, NULL);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Expected DXGI_ERROR_INVALID_CALL, got hr %#x.\n", hr);
+        node_mask[0] = 2;
+        node_mask[1] = 2;
+        hr = IDXGISwapChain3_ResizeBuffers1(swapchain3, 2, 320, 240, DXGI_FORMAT_B8G8R8A8_UNORM, 0, node_mask, present_queue);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Expected DXGI_ERROR_INVALID_CALL, got hr %#x.\n", hr);
+        /* Windows validates node masks even when the buffer count is zero. It defaults to the current buffer count.
+         * NULL queues cause some Windows versions to crash. */
+        hr = IDXGISwapChain3_ResizeBuffers1(swapchain3, 0, 320, 240, DXGI_FORMAT_B8G8R8A8_UNORM, 0, node_mask, present_queue);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Expected DXGI_ERROR_INVALID_CALL, got hr %#x.\n", hr);
+        IDXGISwapChain3_Release(swapchain3);
+    }
 
     IDXGISwapChain_Release(swapchain);
     DestroyWindow(window);
