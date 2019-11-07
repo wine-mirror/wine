@@ -3225,6 +3225,7 @@ static void test_dpi_mapping(void)
     ULONG_PTR i, j, k;
     WINDOWPLACEMENT wpl_orig, wpl;
     HMONITOR monitor;
+    INT monitor_count;
     MONITORINFO mon_info;
     DPI_AWARENESS_CONTEXT context;
 
@@ -3235,6 +3236,7 @@ static void test_dpi_mapping(void)
     }
     context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
     GetWindowRect( GetDesktopWindow(), &desktop );
+    monitor_count = GetSystemMetrics( SM_CMONITORS );
     for (i = DPI_AWARENESS_UNAWARE; i <= DPI_AWARENESS_PER_MONITOR_AWARE; i++)
     {
         pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
@@ -3247,9 +3249,12 @@ static void test_dpi_mapping(void)
         SetRect( &rect, 0, 0, GetSystemMetrics( SM_CXSCREEN ), GetSystemMetrics( SM_CYSCREEN ));
         ok( EqualRect( &expect, &rect ), "%lu: wrong desktop rect %s expected %s\n",
             i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
-        SetRect( &rect, 0, 0, GetSystemMetrics( SM_CXVIRTUALSCREEN ), GetSystemMetrics( SM_CYVIRTUALSCREEN ));
-        ok( EqualRect( &expect, &rect ), "%lu: wrong virt desktop rect %s expected %s\n",
-            i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+        if (monitor_count < 2)
+        {
+            SetRect( &rect, 0, 0, GetSystemMetrics( SM_CXVIRTUALSCREEN ), GetSystemMetrics( SM_CYVIRTUALSCREEN ));
+            ok( EqualRect( &expect, &rect ), "%lu: wrong virt desktop rect %s expected %s\n",
+                i, wine_dbgstr_rect(&rect), wine_dbgstr_rect(&expect) );
+        }
         SetRect( &rect, 0, 0, 1, 1 );
         monitor = MonitorFromRect( &rect, MONITOR_DEFAULTTOPRIMARY );
         ok( monitor != 0, "failed to get monitor\n" );
