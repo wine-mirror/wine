@@ -3644,81 +3644,6 @@ BOOL WINAPI InvalidateNLSCache(void)
 }
 
 /******************************************************************************
- *           GetUserGeoID (KERNEL32.@)
- */
-GEOID WINAPI GetUserGeoID( GEOCLASS GeoClass )
-{
-    GEOID ret = GEOID_NOT_AVAILABLE;
-    static const WCHAR geoW[] = {'G','e','o',0};
-    static const WCHAR nationW[] = {'N','a','t','i','o','n',0};
-    WCHAR bufferW[40], *end;
-    DWORD count;
-    HANDLE hkey, hSubkey = 0;
-    UNICODE_STRING keyW;
-    const KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)bufferW;
-    RtlInitUnicodeString( &keyW, nationW );
-    count = sizeof(bufferW);
-
-    if(!(hkey = create_registry_key())) return ret;
-
-    switch( GeoClass ){
-    case GEOCLASS_NATION:
-        if ((hSubkey = NLS_RegOpenKey(hkey, geoW)))
-        {
-            if((NtQueryValueKey(hSubkey, &keyW, KeyValuePartialInformation,
-                                bufferW, count, &count) == STATUS_SUCCESS ) && info->DataLength)
-                ret = strtolW((LPCWSTR)info->Data, &end, 10);
-        }
-        break;
-    case GEOCLASS_REGION:
-        FIXME("GEOCLASS_REGION not handled yet\n");
-        break;
-    }
-
-    NtClose(hkey);
-    if (hSubkey) NtClose(hSubkey);
-    return ret;
-}
-
-/******************************************************************************
- *           SetUserGeoID (KERNEL32.@)
- */
-BOOL WINAPI SetUserGeoID( GEOID GeoID )
-{
-    static const WCHAR geoW[] = {'G','e','o',0};
-    static const WCHAR nationW[] = {'N','a','t','i','o','n',0};
-    static const WCHAR formatW[] = {'%','i',0};
-    UNICODE_STRING nameW,keyW;
-    WCHAR bufferW[10];
-    OBJECT_ATTRIBUTES attr;
-    HANDLE hkey;
-
-    if(!(hkey = create_registry_key())) return FALSE;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = hkey;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, geoW );
-    RtlInitUnicodeString( &keyW, nationW );
-
-    if (NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ) != STATUS_SUCCESS)
-
-    {
-        NtClose(attr.RootDirectory);
-        return FALSE;
-    }
-
-    sprintfW(bufferW, formatW, GeoID);
-    NtSetValueKey(hkey, &keyW, 0, REG_SZ, bufferW, (strlenW(bufferW) + 1) * sizeof(WCHAR));
-    NtClose(attr.RootDirectory);
-    NtClose(hkey);
-    return TRUE;
-}
-
-/******************************************************************************
  *           EnumUILanguagesA (KERNEL32.@)
  */
 BOOL WINAPI EnumUILanguagesA( UILANGUAGE_ENUMPROCA proc, DWORD flags, LONG_PTR param )
@@ -4067,6 +3992,80 @@ static const struct geoinfo_t *get_geoinfo_dataptr(GEOID geoid)
     }
 
     return NULL;
+}
+
+/******************************************************************************
+ *           GetUserGeoID (KERNEL32.@)
+ */
+GEOID WINAPI GetUserGeoID(GEOCLASS geoclass)
+{
+    GEOID ret = GEOID_NOT_AVAILABLE;
+    static const WCHAR geoW[] = {'G','e','o',0};
+    static const WCHAR nationW[] = {'N','a','t','i','o','n',0};
+    WCHAR bufferW[40], *end;
+    HANDLE hkey, hsubkey = 0;
+    UNICODE_STRING keyW;
+    const KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)bufferW;
+    DWORD count = sizeof(bufferW);
+    RtlInitUnicodeString(&keyW, nationW);
+
+    if (!(hkey = create_registry_key())) return ret;
+
+    switch (geoclass) {
+    case GEOCLASS_NATION:
+        if ((hsubkey = NLS_RegOpenKey(hkey, geoW)))
+        {
+            if ((NtQueryValueKey(hsubkey, &keyW, KeyValuePartialInformation,
+                                 bufferW, count, &count) == STATUS_SUCCESS ) && info->DataLength)
+                ret = strtolW((const WCHAR*)info->Data, &end, 10);
+        }
+        break;
+    case GEOCLASS_REGION:
+        FIXME("GEOCLASS_REGION not handled yet\n");
+        break;
+    }
+
+    NtClose(hkey);
+    if (hsubkey) NtClose(hsubkey);
+    return ret;
+}
+
+/******************************************************************************
+ *           SetUserGeoID (KERNEL32.@)
+ */
+BOOL WINAPI SetUserGeoID(GEOID geoid)
+{
+    static const WCHAR geoW[] = {'G','e','o',0};
+    static const WCHAR nationW[] = {'N','a','t','i','o','n',0};
+    static const WCHAR formatW[] = {'%','i',0};
+    UNICODE_STRING nameW, keyW;
+    WCHAR bufferW[10];
+    OBJECT_ATTRIBUTES attr;
+    HANDLE hkey;
+
+    if (!(hkey = create_registry_key())) return FALSE;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString(&nameW, geoW);
+    RtlInitUnicodeString(&keyW, nationW);
+
+    if (NtCreateKey(&hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL) != STATUS_SUCCESS)
+
+    {
+        NtClose(attr.RootDirectory);
+        return FALSE;
+    }
+
+    sprintfW(bufferW, formatW, geoid);
+    NtSetValueKey(hkey, &keyW, 0, REG_SZ, bufferW, (strlenW(bufferW) + 1) * sizeof(WCHAR));
+    NtClose(attr.RootDirectory);
+    NtClose(hkey);
+    return TRUE;
 }
 
 /******************************************************************************
