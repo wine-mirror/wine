@@ -608,7 +608,8 @@ void * CDECL __wine_kernel_init(void)
 
     set_library_argv( __wine_main_wargv );
 
-    if (!(peb->ImageBaseAddress = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES )))
+    if (!peb->ImageBaseAddress &&
+        !(peb->ImageBaseAddress = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES )))
     {
         DWORD_PTR args[1];
         WCHAR msgW[1024];
@@ -1500,7 +1501,6 @@ static BOOL create_process( HANDLE hFile, LPSECURITY_ATTRIBUTES psa, LPSECURITY_
     DWORD startup_info_size;
     int socketfd[2];
     pid_t pid;
-    int err;
 
     /* create the socket for the new process */
 
@@ -1629,13 +1629,13 @@ static BOOL create_process( HANDLE hFile, LPSECURITY_ATTRIBUTES psa, LPSECURITY_
         req->info = wine_server_obj_handle( process_info );
         wine_server_call( req );
         success = reply->success;
-        err = reply->exit_code;
+        status = reply->exit_code;
     }
     SERVER_END_REQ;
 
     if (!success)
     {
-        SetLastError( err ? err : ERROR_INTERNAL_ERROR );
+        SetLastError( status ? RtlNtStatusToDosError(status) : ERROR_INTERNAL_ERROR );
         goto error;
     }
     CloseHandle( process_info );

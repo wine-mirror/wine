@@ -1386,7 +1386,7 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
     char *unixdir = NULL, *winedebug = NULL;
     startup_info_t *startup_info = NULL;
     ULONG startup_info_size, env_size;
-    int err, socketfd[2] = { -1, -1 };
+    int socketfd[2] = { -1, -1 };
     OBJECT_ATTRIBUTES attr;
     pe_image_info_t pe_info;
 
@@ -1496,7 +1496,7 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
         req->info = wine_server_obj_handle( process_info );
         wine_server_call( req );
         success = reply->success;
-        err = reply->exit_code;
+        status = reply->exit_code;
     }
     SERVER_END_REQ;
 
@@ -1512,7 +1512,7 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
         process_handle = thread_handle = 0;
         status = STATUS_SUCCESS;
     }
-    else status = err ? err : STATUS_INTERNAL_ERROR;
+    else if (!status) status = STATUS_INTERNAL_ERROR;
 
 done:
     if (file_handle) NtClose( file_handle );
