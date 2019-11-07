@@ -169,6 +169,7 @@ local_ref_t *lookup_local(const function_code_t*,const WCHAR*) DECLSPEC_HIDDEN;
 
 typedef struct _bytecode_t {
     LONG ref;
+    BOOL is_persistent;
 
     instr_t *instrs;
     heap_pool_t heap;

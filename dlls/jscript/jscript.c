@@ -60,6 +60,7 @@ typedef struct {
 
     IActiveScriptSite *site;
 
+    struct list persistent_code;
     struct list queued_code;
 } JScript;
 
@@ -119,6 +120,19 @@ static void clear_script_queue(JScript *This)
     while(!list_empty(&This->queued_code))
     {
         bytecode_t *iter = LIST_ENTRY(list_head(&This->queued_code), bytecode_t, entry);
+        list_remove(&iter->entry);
+        if (iter->is_persistent)
+            list_add_tail(&This->persistent_code, &iter->entry);
+        else
+            release_bytecode(iter);
+    }
+}
+
+static void clear_persistent_code_list(JScript *This)
+{
+    while(!list_empty(&This->queued_code))
+    {
+        bytecode_t *iter = LIST_ENTRY(list_head(&This->persistent_code), bytecode_t, entry);
         list_remove(&iter->entry);
         release_bytecode(iter);
     }
@@ -209,6 +223,7 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
             /* FALLTHROUGH */
         case SCRIPTSTATE_UNINITIALIZED:
             change_state(This, state);
+            clear_script_queue(This);
             break;
         default:
             assert(0);
@@ -463,6 +478,7 @@ static HRESULT WINAPI JScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE s
             return E_UNEXPECTED;
 
         decrease_state(This, SCRIPTSTATE_UNINITIALIZED);
+        list_move_tail(&This->queued_code, &This->persistent_code);
         return S_OK;
     }
 
@@ -515,6 +531,7 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
         return E_UNEXPECTED;
 
     decrease_state(This, SCRIPTSTATE_CLOSED);
+    clear_persistent_code_list(This);
     return S_OK;
 }
 
@@ -779,6 +796,8 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
         return hres;
     }
 
+    code->is_persistent = (dwFlags & SCRIPTTEXT_ISPERSISTENT) != 0;
+
     /*
      * Although pvarResult is not really used without SCRIPTTEXT_ISEXPRESSION flag, if it's not NULL,
      * script is executed immediately, even if it's not in started state yet.
@@ -789,7 +808,12 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     }
 
     hres = exec_global_code(This, code);
-    release_bytecode(code);
+
+    if(code->is_persistent)
+        list_add_tail(&This->persistent_code, &code->entry);
+    else
+        release_bytecode(code);
+
     if(FAILED(hres))
         return hres;
 
@@ -1077,6 +1101,7 @@ HRESULT create_jscript_object(BOOL is_encode, REFIID riid, void **ppv)
     ret->ref = 1;
     ret->safeopt = INTERFACE_USES_DISPEX;
     ret->is_encode = is_encode;
+    list_init(&ret->persistent_code);
     list_init(&ret->queued_code);
 
     hres = IActiveScript_QueryInterface(&ret->IActiveScript_iface, riid, ppv);
