@@ -51,27 +51,27 @@ static const CLSID CLSID_JScriptEncode =
     {0xf414c262,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
 
 #define DEFINE_EXPECT(func) \
-    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+    static int expect_ ## func = 0, called_ ## func = 0
 
 #define SET_EXPECT(func) \
-    expect_ ## func = TRUE
+    expect_ ## func = 1
 
 #define CHECK_EXPECT2(func) \
     do { \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
-        called_ ## func = TRUE; \
+        called_ ## func++; \
     }while(0)
 
 #define CHECK_EXPECT(func) \
     do { \
         CHECK_EXPECT2(func); \
-        expect_ ## func = FALSE; \
+        expect_ ## func--; \
     }while(0)
 
 #define CHECK_CALLED(func) \
     do { \
         ok(called_ ## func, "expected " #func "\n"); \
-        expect_ ## func = called_ ## func = FALSE; \
+        expect_ ## func = called_ ## func = 0; \
     }while(0)
 
 DEFINE_EXPECT(GetLCID);
