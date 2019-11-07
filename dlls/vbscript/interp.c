@@ -2274,7 +2274,7 @@ static void release_exec(exec_ctx_t *ctx)
     }
 
     if(ctx->arrays) {
-        for(i=0; i < ctx->func->var_cnt; i++) {
+        for(i=0; i < ctx->func->array_cnt; i++) {
             if(ctx->arrays[i])
                 SafeArrayDestroy(ctx->arrays[i]);
         }
