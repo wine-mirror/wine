@@ -2032,6 +2032,32 @@ static void test_Read(void)
 
     ITextStream_Release(stream);
 
+    /* ASCII file, read with Unicode stream */
+    /* 3. one byte content, 2 are interpreted as a character, 3rd is lost */
+    hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    str = SysAllocString(L"abc");
+    hr = ITextStream_Write(stream, str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+    ITextStream_Release(stream);
+
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = NULL;
+    hr = ITextStream_Read(stream, 500, &str);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
+    ok(SysStringLen(str) == 1, "len = %u\n", SysStringLen(str));
+    SysFreeString(str);
+
+    str = (void*)0xdeadbeef;
+    hr = ITextStream_Read(stream, 500, &str);
+    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(str == NULL, "got %p\n", str);
+
+    ITextStream_Release(stream);
+
     DeleteFileW(nameW);
     RemoveDirectoryW(dirW);
     SysFreeString(nameW);
