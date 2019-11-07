@@ -485,7 +485,7 @@ static BOOL parse_win_version( HANDLE hkey )
 /**********************************************************************
  *         version_init
  */
-void version_init( const WCHAR *appname )
+void version_init(void)
 {
     static const WCHAR configW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e',0};
     static const WCHAR appdefaultsW[] = {'A','p','p','D','e','f','a','u','l','t','s','\\',0};
@@ -493,6 +493,8 @@ void version_init( const WCHAR *appname )
     UNICODE_STRING nameW;
     HANDLE root, hkey, config_key;
     BOOL got_win_ver = FALSE;
+    const WCHAR *p, *appname = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+    WCHAR appversion[MAX_PATH+20];
 
     current_version = &VersionData[WIN7];
 
@@ -511,26 +513,21 @@ void version_init( const WCHAR *appname )
     if (!config_key) goto done;
 
     /* open AppDefaults\\appname key */
-    if (appname && *appname)
+
+    if ((p = strrchrW( appname, '/' ))) appname = p + 1;
+    if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
+
+    strcpyW( appversion, appdefaultsW );
+    strcatW( appversion, appname );
+    RtlInitUnicodeString( &nameW, appversion );
+    attr.RootDirectory = config_key;
+
+    /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe */
+    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
     {
-        const WCHAR *p;
-        WCHAR appversion[MAX_PATH+20];
-
-        if ((p = strrchrW( appname, '/' ))) appname = p + 1;
-        if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
-
-        strcpyW( appversion, appdefaultsW );
-        strcatW( appversion, appname );
-        RtlInitUnicodeString( &nameW, appversion );
-        attr.RootDirectory = config_key;
-
-        /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe */
-        if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
-        {
-            TRACE( "getting version from %s\n", debugstr_w(appversion) );
-            got_win_ver = parse_win_version( hkey );
-            NtClose( hkey );
-        }
+        TRACE( "getting version from %s\n", debugstr_w(appversion) );
+        got_win_ver = parse_win_version( hkey );
+        NtClose( hkey );
     }
 
     if (!got_win_ver)

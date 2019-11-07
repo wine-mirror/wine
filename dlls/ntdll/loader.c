@@ -3832,28 +3832,33 @@ static void load_global_options(void)
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &name_str, sessionW );
 
-    if (NtOpenKey( &hkey, KEY_QUERY_VALUE, &attr )) return;
+    if (!NtOpenKey( &hkey, KEY_QUERY_VALUE, &attr ))
+    {
+        query_dword_option( hkey, globalflagW, &NtCurrentTeb()->Peb->NtGlobalFlag );
+        query_dword_option( hkey, safesearchW, &path_safe_mode );
+        query_dword_option( hkey, safedllmodeW, &dll_safe_mode );
 
-    query_dword_option( hkey, globalflagW, &NtCurrentTeb()->Peb->NtGlobalFlag );
-    query_dword_option( hkey, safesearchW, &path_safe_mode );
-    query_dword_option( hkey, safedllmodeW, &dll_safe_mode );
+        if (!query_dword_option( hkey, critsectW, &value ))
+            NtCurrentTeb()->Peb->CriticalSectionTimeout.QuadPart = (ULONGLONG)value * -10000000;
 
-    if (!query_dword_option( hkey, critsectW, &value ))
-        NtCurrentTeb()->Peb->CriticalSectionTimeout.QuadPart = (ULONGLONG)value * -10000000;
+        if (!query_dword_option( hkey, heapresW, &value ))
+            NtCurrentTeb()->Peb->HeapSegmentReserve = value;
 
-    if (!query_dword_option( hkey, heapresW, &value ))
-        NtCurrentTeb()->Peb->HeapSegmentReserve = value;
+        if (!query_dword_option( hkey, heapcommitW, &value ))
+            NtCurrentTeb()->Peb->HeapSegmentCommit = value;
 
-    if (!query_dword_option( hkey, heapcommitW, &value ))
-        NtCurrentTeb()->Peb->HeapSegmentCommit = value;
+        if (!query_dword_option( hkey, decommittotalW, &value ))
+            NtCurrentTeb()->Peb->HeapDeCommitTotalFreeThreshold = value;
 
-    if (!query_dword_option( hkey, decommittotalW, &value ))
-        NtCurrentTeb()->Peb->HeapDeCommitTotalFreeThreshold = value;
+        if (!query_dword_option( hkey, decommitfreeW, &value ))
+            NtCurrentTeb()->Peb->HeapDeCommitFreeBlockThreshold = value;
 
-    if (!query_dword_option( hkey, decommitfreeW, &value ))
-        NtCurrentTeb()->Peb->HeapDeCommitFreeBlockThreshold = value;
-
-    NtClose( hkey );
+        NtClose( hkey );
+    }
+    LdrQueryImageFileExecutionOptions( &NtCurrentTeb()->Peb->ProcessParameters->ImagePathName,
+                                       globalflagW, REG_DWORD, &NtCurrentTeb()->Peb->NtGlobalFlag,
+                                       sizeof(DWORD), NULL );
+    heap_set_debug_flags( GetProcessHeap() );
 }
 
 
@@ -4223,8 +4228,6 @@ void __wine_process_init(void)
     static const WCHAR kernel32W[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
                                       's','y','s','t','e','m','3','2','\\',
                                       'k','e','r','n','e','l','3','2','.','d','l','l',0};
-    static const WCHAR globalflagW[] = {'G','l','o','b','a','l','F','l','a','g',0};
-
     WINE_MODREF *wm;
     NTSTATUS status;
     ANSI_STRING func_name;
@@ -4239,6 +4242,7 @@ void __wine_process_init(void)
     umask( FILE_umask );
 
     load_global_options();
+    version_init();
 
     /* setup the load callback and create ntdll modref */
     wine_dll_set_callback( load_builtin_callback );
@@ -4268,12 +4272,7 @@ void __wine_process_init(void)
     }
 
     NtCurrentTeb()->Peb->LoaderLock = &loader_section;
-    version_init( wm->ldr.FullDllName.Buffer );
     virtual_set_large_address_space();
-
-    LdrQueryImageFileExecutionOptions( &wm->ldr.FullDllName, globalflagW, REG_DWORD,
-                                       &NtCurrentTeb()->Peb->NtGlobalFlag, sizeof(DWORD), NULL );
-    heap_set_debug_flags( GetProcessHeap() );
 
     /* the main exe needs to be the first in the load order list */
     RemoveEntryList( &wm->ldr.InLoadOrderModuleList );

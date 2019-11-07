@@ -77,7 +77,7 @@ extern void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL s
 extern void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN signal_exit_thread( int status ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN signal_exit_process( int status ) DECLSPEC_HIDDEN;
-extern void version_init( const WCHAR *appname ) DECLSPEC_HIDDEN;
+extern void version_init(void) DECLSPEC_HIDDEN;
 extern void debug_init(void) DECLSPEC_HIDDEN;
 extern void thread_init(void) DECLSPEC_HIDDEN;
 extern void actctx_init(void) DECLSPEC_HIDDEN;
