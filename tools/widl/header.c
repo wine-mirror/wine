@@ -180,18 +180,16 @@ static void write_namespace_end(FILE *header, struct namespace *namespace)
 
 const char *get_name(const var_t *v)
 {
-    static char buffer[256];
-
+    static char *buffer;
+    free( buffer );
     if (is_attr( v->attrs, ATTR_PROPGET ))
-        strcpy( buffer, "get_" );
-    else if (is_attr( v->attrs, ATTR_PROPPUT ))
-        strcpy( buffer, "put_" );
-    else if (is_attr( v->attrs, ATTR_PROPPUTREF ))
-        strcpy( buffer, "putref_" );
-    else
-        buffer[0] = 0;
-    strcat( buffer, v->name );
-    return buffer;
+        return buffer = strmake( "get_%s", v->name );
+    if (is_attr( v->attrs, ATTR_PROPPUT ))
+        return buffer = strmake( "put_%s", v->name );
+    if (is_attr( v->attrs, ATTR_PROPPUTREF ))
+        return buffer = strmake( "putref_%s", v->name );
+    buffer = NULL;
+    return v->name;
 }
 
 static void write_fields(FILE *h, var_list_t *fields)
