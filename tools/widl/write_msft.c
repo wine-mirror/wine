@@ -342,11 +342,14 @@ static int ctl2_encode_string(
 	const char *string,        /* [I] The string to encode. */
 	char **result)             /* [O] A pointer to a pointer to receive the encoded string. */
 {
-    int length;
-    static char converted_string[0x104];
+    char *converted_string;
+    size_t length, size;
     int offset;
 
     length = strlen(string);
+    size = (length + 5) & ~3;
+    if (length < 3) size += 4;
+    converted_string = xmalloc(size);
     memcpy(converted_string + 2, string, length);
 
 #ifdef WORDS_BIGENDIAN
@@ -365,8 +368,7 @@ static int ctl2_encode_string(
     for (offset = (4 - (length + 2)) & 3; offset; offset--) converted_string[length + offset + 1] = 0x57;
 
     *result = converted_string;
-
-    return (length + 5) & ~3;
+    return size;
 }
 
 /****************************************************************************
@@ -604,6 +606,7 @@ static int ctl2_alloc_string(
 
     string_space = typelib->typelib_segment_data[MSFT_SEG_STRING] + offset;
     memcpy(string_space, encoded_string, length);
+    free(encoded_string);
 
     return offset;
 }
@@ -684,6 +687,7 @@ static int alloc_importfile(
     importfile->lcid = typelib->typelib_header.lcid2;
     importfile->version = major_version | (minor_version << 16);
     memcpy(&importfile->filename, encoded_string, length);
+    free(encoded_string);
 
     return offset;
 }
