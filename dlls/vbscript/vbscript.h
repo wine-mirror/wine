@@ -341,6 +341,7 @@ struct _vbscode_t {
     BOOL option_explicit;
 
     BOOL pending_exec;
+    BOOL is_persistent;
     function_t main_code;
     IDispatch *context;
 
@@ -348,6 +349,8 @@ struct _vbscode_t {
     unsigned bstr_pool_size;
     unsigned bstr_cnt;
     heap_pool_t heap;
+
+    class_desc_t *last_class;
 
     struct list entry;
 };

@@ -1997,7 +1997,10 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
 
         class->next = script->classes;
         script->classes = ctx.classes;
+        code->last_class = class;
     }
+
+    code->is_persistent = (flags & SCRIPTTEXT_ISPERSISTENT) != 0;
 
     if(TRACE_ON(vbscript_disas))
         dump_code(&ctx);
@@ -2016,7 +2019,7 @@ HRESULT compile_procedure(script_ctx_t *script, const WCHAR *src, const WCHAR *d
     vbscode_t *code;
     HRESULT hres;
 
-    hres = compile_script(script, src, delimiter, flags, &code);
+    hres = compile_script(script, src, delimiter, flags & ~SCRIPTTEXT_ISPERSISTENT, &code);
     if(FAILED(hres))
         return hres;
 

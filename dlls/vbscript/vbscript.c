@@ -130,6 +130,7 @@ IDispatch *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned flag
 
 static void release_script(script_ctx_t *ctx)
 {
+    vbscode_t *code, *code_next;
     class_desc_t *class_desc;
     unsigned i;
 
@@ -147,6 +148,17 @@ static void release_script(script_ctx_t *ctx)
     ctx->global_funcs = NULL;
     ctx->global_funcs_cnt = 0;
     ctx->global_funcs_size = 0;
+
+    LIST_FOR_EACH_ENTRY_SAFE(code, code_next, &ctx->code_list, vbscode_t, entry)
+    {
+        if(code->is_persistent)
+        {
+            code->pending_exec = TRUE;
+            if(code->last_class) code->last_class->next = NULL;
+        }
+        else
+            release_vbscode(code);
+    }
 
     while(!list_empty(&ctx->named_items)) {
         named_item_t *iter = LIST_ENTRY(list_head(&ctx->named_items), named_item_t, entry);
