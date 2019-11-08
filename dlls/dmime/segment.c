@@ -170,7 +170,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_GetTrack(IDirectMusicSegment8 *if
   IPersistStream* pCLSIDStream = NULL;
   HRESULT hr = S_OK;
 
-  TRACE("(%p, %s, %d, 0x%x, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, ppTrack);
+  TRACE("(%p, %s, %#x, %#x, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, ppTrack);
 
   if (NULL == ppTrack) {
     return E_POINTER;
@@ -243,12 +243,12 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_InsertTrack(IDirectMusicSegment8 
   LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
   LPDMUS_PRIVATE_SEGMENT_TRACK pNewSegTrack = NULL;
 
-  TRACE("(%p, %p, %d)\n", This, pTrack, dwGroupBits);
+  TRACE("(%p, %p, %#x)\n", This, pTrack, dwGroupBits);
 
   LIST_FOR_EACH (pEntry, &This->Tracks) {
     i++;
     pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
-    TRACE(" - #%u: %p -> %d,%p\n", i, pIt, pIt->dwGroupBits, pIt->pTrack);
+    TRACE(" - #%u: %p -> %#x, %p\n", i, pIt, pIt->dwGroupBits, pIt->pTrack);
     if (NULL != pIt && pIt->pTrack == pTrack) {
       ERR("(%p, %p): track is already in list\n", This, pTrack);
       return E_FAIL;
@@ -424,7 +424,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_SetParam(IDirectMusicSegment8 *if
         REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, void *pParam)
 {
   IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
-  FIXME("(%p, %s, %d, %d, %d, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
+  FIXME("(%p, %s, %#x, %d, %d, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
   return S_OK;
 }
 
@@ -503,7 +503,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_SetTrackConfig(IDirectMusicSegmen
         DWORD dwFlagsOff)
 {
         IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
-	FIXME("(%p, %s, %d, %d, %d, %d): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
+	FIXME("(%p, %s, %#x, %d, %d, %d): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
 	return S_OK;
 }
 
