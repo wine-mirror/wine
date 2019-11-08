@@ -4100,6 +4100,7 @@ else
 fonts \
 loader/l_intl.nls \
 loader/wine.inf \
+loader/winebus.inf \
 loader/winehid.inf \
 programs/msidb/msidb \
 programs/msiexec/msiexec \
