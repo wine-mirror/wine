@@ -2738,15 +2738,6 @@ AC_CHECK_FUNCS(\
 )
 LIBS="$ac_save_LIBS"
 
-dnl Check for __builtin_clz
-AC_CACHE_CHECK([for __builtin_clz], ac_cv_have___builtin_clz,
-               AC_LINK_IFELSE([AC_LANG_PROGRAM(,[[return __builtin_clz(1)]])],
-               [ac_cv_have___builtin_clz="yes"], [ac_cv_have___builtin_clz="no"]))
-if test "$ac_cv_have___builtin_clz" = "yes"
-then
-    AC_DEFINE(HAVE___BUILTIN_CLZ, 1, [Define to 1 if you have the `__builtin_clz' built-in function.])
-fi
-
 dnl Check for __builtin_popcount
 AC_CACHE_CHECK([for __builtin_popcount], ac_cv_have___builtin_popcount,
                AC_LINK_IFELSE([AC_LANG_PROGRAM(,[[return __builtin_popcount(1)]])],
