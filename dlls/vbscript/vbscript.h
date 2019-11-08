@@ -373,6 +373,11 @@ static inline BOOL is_int32(double d)
     return INT32_MIN <= d && d <= INT32_MAX && (double)(int)d == d;
 }
 
+static inline BOOL is_digit(WCHAR c)
+{
+    return '0' <= c && c <= '9';
+}
+
 HRESULT create_regexp(IDispatch**) DECLSPEC_HIDDEN;
 BSTR string_replace(BSTR,BSTR,BSTR,int,int) DECLSPEC_HIDDEN;
 

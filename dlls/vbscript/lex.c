@@ -214,7 +214,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
     if(*ctx->ptr == '0' && !('0' <= ctx->ptr[1] && ctx->ptr[1] <= '9') && ctx->ptr[1] != '.')
         return *ctx->ptr++;
 
-    while(ctx->ptr < ctx->end && iswdigit(*ctx->ptr)) {
+    while(ctx->ptr < ctx->end && is_digit(*ctx->ptr)) {
         hlp = d*10 + *(ctx->ptr++) - '0';
         if(d>MAXLONGLONG/10 || hlp<0) {
             exp++;
@@ -223,7 +223,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
         else
             d = hlp;
     }
-    while(ctx->ptr < ctx->end && iswdigit(*ctx->ptr)) {
+    while(ctx->ptr < ctx->end && is_digit(*ctx->ptr)) {
         exp++;
         ctx->ptr++;
     }
@@ -232,7 +232,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
         use_int = FALSE;
         ctx->ptr++;
 
-        while(ctx->ptr < ctx->end && iswdigit(*ctx->ptr)) {
+        while(ctx->ptr < ctx->end && is_digit(*ctx->ptr)) {
             hlp = d*10 + *(ctx->ptr++) - '0';
             if(d>MAXLONGLONG/10 || hlp<0)
                 break;
@@ -240,7 +240,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
             d = hlp;
             exp--;
         }
-        while(ctx->ptr < ctx->end && iswdigit(*ctx->ptr))
+        while(ctx->ptr < ctx->end && is_digit(*ctx->ptr))
             ctx->ptr++;
     }
 
@@ -255,7 +255,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
             ctx->ptr++;
         }
 
-        if(!iswdigit(*ctx->ptr)) {
+        if(!is_digit(*ctx->ptr)) {
             FIXME("Invalid numeric literal\n");
             return 0;
         }
@@ -266,7 +266,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
             e = e*10 + *(ctx->ptr++) - '0';
             if(sign == -1 && -e+exp < -(INT_MAX/100)) {
                 /* The literal will be rounded to 0 anyway. */
-                while(iswdigit(*ctx->ptr))
+                while(is_digit(*ctx->ptr))
                     ctx->ptr++;
                 *(double*)ret = 0;
                 return tDouble;
@@ -276,7 +276,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
                 FIXME("Invalid numeric literal\n");
                 return 0;
             }
-        } while(iswdigit(*ctx->ptr));
+        } while(is_digit(*ctx->ptr));
 
         exp += sign*e;
     }

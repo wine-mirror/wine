@@ -1560,14 +1560,14 @@ static HRESULT WINAPI RegExp2_Replace(IRegExp2 *iface, BSTR source, VARIANT repl
             default: {
                 DWORD idx;
 
-                if(!iswdigit(ptr[1])) {
+                if(!is_digit(ptr[1])) {
                     hres = strbuf_append(&buf, ptr, 1);
                     prev_ptr = ptr + 1;
                     break;
                 }
 
                 idx = ptr[1] - '0';
-                if(iswdigit(ptr[2]) && idx * 10 + (ptr[2] - '0') <= state->paren_count) {
+                if(is_digit(ptr[2]) && idx * 10 + (ptr[2] - '0') <= state->paren_count) {
                     idx = idx * 10 + (ptr[2] - '0');
                     prev_ptr = ptr + 3;
                 }else if(idx && idx <= state->paren_count) {
