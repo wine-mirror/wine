@@ -3721,9 +3721,12 @@ static HRESULT WINAPI d3d9_device_SetIndices(IDirect3DDevice9Ex *iface, IDirect3
         wined3d_buffer = ib->wined3d_buffer;
 
     wined3d_mutex_lock();
-    wined3d_device_set_index_buffer(device->wined3d_device, wined3d_buffer, ib ? ib->format : WINED3DFMT_UNKNOWN, 0);
+    wined3d_stateblock_set_index_buffer(device->update_state, wined3d_buffer, ib ? ib->format : WINED3DFMT_UNKNOWN);
     if (!device->recording)
+    {
+        wined3d_device_set_index_buffer(device->wined3d_device, wined3d_buffer, ib ? ib->format : WINED3DFMT_UNKNOWN, 0);
         device->sysmem_ib = ib && ib->draw_buffer;
+    }
     wined3d_mutex_unlock();
 
     return D3D_OK;
