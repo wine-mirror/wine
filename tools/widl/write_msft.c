@@ -291,27 +291,27 @@ static int ctl2_encode_name(
 	const char *name,          /* [I] The name string to encode. */
 	char **result)             /* [O] A pointer to a pointer to receive the encoded name. */
 {
-    int length;
-    static char converted_name[0x104];
+    char *converted_name;
+    size_t length, size;
     int offset;
     int value;
 
     length = strlen(name);
+    size = (length + 7) & ~3;
+    converted_name = xmalloc(size + 1);
     memcpy(converted_name + 4, name, length);
-
     converted_name[length + 4] = 0;
-
 
     value = lhash_val_of_name_sys(typelib->typelib_header.varflags & 0x0f, typelib->typelib_header.lcid, converted_name + 4);
 
 #ifdef WORDS_BIGENDIAN
     converted_name[3] = length & 0xff;
-    converted_name[2] = 0x00;
+    converted_name[2] = length >> 8;
     converted_name[1] = value;
     converted_name[0] = value >> 8;
 #else
     converted_name[0] = length & 0xff;
-    converted_name[1] = 0x00;
+    converted_name[1] = length >> 8;
     converted_name[2] = value;
     converted_name[3] = value >> 8;
 #endif
@@ -320,7 +320,7 @@ static int ctl2_encode_name(
 
     *result = converted_name;
 
-    return (length + 7) & ~3;
+    return size;
 }
 
 /****************************************************************************
@@ -548,7 +548,11 @@ static int ctl2_alloc_name(
     length = ctl2_encode_name(typelib, name, &encoded_name);
 
     offset = ctl2_find_name(typelib, encoded_name);
-    if (offset != -1) return offset;
+    if (offset != -1)
+    {
+        free(encoded_name);
+        return offset;
+    }
 
     offset = ctl2_alloc_segment(typelib, MSFT_SEG_NAME, length + 8, 0);
 
@@ -565,6 +569,7 @@ static int ctl2_alloc_name(
     typelib->typelib_header.nametablecount += 1;
     typelib->typelib_header.nametablechars += *encoded_name;
 
+    free(encoded_name);
     return offset;
 }
 
