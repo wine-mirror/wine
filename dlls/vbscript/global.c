@@ -2948,19 +2948,19 @@ static HRESULT Err_Raise(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VA
         error = (code & ~0xffff) ? map_hres(code) : MAKE_VBSERROR(code);
 
         if(source) {
-            if(ctx->ei.bstrSource) SysFreeString(ctx->ei.bstrSource);
+            SysFreeString(ctx->ei.bstrSource);
             ctx->ei.bstrSource = source;
         }
         if(!ctx->ei.bstrSource)
             ctx->ei.bstrSource = get_vbscript_string(VBS_RUNTIME_ERROR);
         if(description) {
-            if(ctx->ei.bstrDescription) SysFreeString(ctx->ei.bstrDescription);
+            SysFreeString(ctx->ei.bstrDescription);
             ctx->ei.bstrDescription = description;
         }
         if(!ctx->ei.bstrDescription)
             ctx->ei.bstrDescription = get_vbscript_error_string(error);
         if(helpfile) {
-            if(ctx->ei.bstrHelpFile) SysFreeString(ctx->ei.bstrHelpFile);
+            SysFreeString(ctx->ei.bstrHelpFile);
             ctx->ei.bstrHelpFile = helpfile;
         }
         if(args_cnt >= 5)
