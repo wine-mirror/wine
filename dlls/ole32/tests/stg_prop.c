@@ -669,10 +669,125 @@ static void testFmtId(void)
     }
 }
 
+static void test_propertyset_storage_enum(void)
+{
+    IPropertyStorage *prop_storage, *prop_storage2;
+    IPropertySetStorage *ps_storage;
+    IEnumSTATPROPSETSTG *ps_enum;
+    WCHAR filename[MAX_PATH];
+    STATPROPSETSTG psstg;
+    DWORD ret, fetched;
+    IStorage *storage;
+    FILETIME ftime;
+    HRESULT hr;
+
+    ret = GetTempFileNameW(L".", L"stg", 0, filename);
+    ok(ret, "Failed to get temporary file name.\n");
+
+    hr = StgCreateDocfile(filename, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
+    ok(hr == S_OK, "Failed to crate storage, hr %#x.\n", hr);
+
+    hr = StgCreatePropSetStg(storage, 0, &ps_storage);
+    ok(hr == S_OK, "Failed to create property set storage, hr %#x.\n", hr);
+
+    hr = IPropertySetStorage_Create(ps_storage, &FMTID_SummaryInformation, &IID_IUnknown, PROPSETFLAG_ANSI,
+            STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE, &prop_storage);
+    ok(hr == S_OK, "Failed to create property storage, hr %#x.\n", hr);
+
+    hr = IPropertyStorage_Stat(prop_storage, &psstg);
+    ok(hr == S_OK, "Failed to get prop storage stats, hr %#x.\n", hr);
+todo_wine
+    ok(IsEqualCLSID(&psstg.clsid, &IID_IUnknown), "Unexpected storage clsid %s.\n", wine_dbgstr_guid(&psstg.clsid));
+
+    hr = IPropertySetStorage_Enum(ps_storage, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IPropertySetStorage_Enum(ps_storage, &ps_enum);
+    ok(hr == S_OK, "Failed to get enum object, hr %#x.\n", hr);
+
+    memset(&psstg, 0, sizeof(psstg));
+    hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
+    ok(hr == S_OK, "Failed to get enum item, hr %#x.\n", hr);
+    ok(fetched == 1, "Unexpected fetched count.\n");
+    ok(IsEqualCLSID(&psstg.fmtid, &FMTID_SummaryInformation), "Unexpected fmtid %s.\n",
+            wine_dbgstr_guid(&psstg.fmtid));
+    ok(psstg.mtime.dwHighDateTime == 0 && psstg.mtime.dwLowDateTime == 0, "Unexpected mtime %#x / %#x.\n",
+            psstg.mtime.dwHighDateTime, psstg.mtime.dwLowDateTime);
+
+    memset(&ftime, 0, sizeof(ftime));
+    ftime.dwLowDateTime = 1;
+    hr = IPropertyStorage_SetTimes(prop_storage, NULL, NULL, &ftime);
+todo_wine
+    ok(hr == S_OK, "Failed to set storage times, hr %#x.\n", hr);
+
+    hr = IEnumSTATPROPSETSTG_Reset(ps_enum);
+    ok(hr == S_OK, "Failed to reset enumerator, hr %#x.\n", hr);
+    memset(&psstg, 0, sizeof(psstg));
+    hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
+    ok(hr == S_OK, "Failed to get enum item, hr %#x.\n", hr);
+    ok(fetched == 1, "Unexpected fetched count.\n");
+    ok(IsEqualCLSID(&psstg.fmtid, &FMTID_SummaryInformation), "Unexpected fmtid %s.\n",
+            wine_dbgstr_guid(&psstg.fmtid));
+    ok(psstg.mtime.dwHighDateTime == 0 && psstg.mtime.dwLowDateTime == 0, "Unexpected mtime %#x / %#x.\n",
+            psstg.mtime.dwHighDateTime, psstg.mtime.dwLowDateTime);
+    hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IPropertySetStorage_Create(ps_storage, &FMTID_SummaryInformation, &IID_IUnknown, PROPSETFLAG_ANSI,
+            STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE, &prop_storage2);
+    ok(hr == S_OK, "Failed to create property storage, hr %#x.\n", hr);
+
+    hr = IEnumSTATPROPSETSTG_Reset(ps_enum);
+    ok(hr == S_OK, "Failed to reset enumerator, hr %#x.\n", hr);
+    hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
+    ok(hr == S_OK, "Failed to get enum item, hr %#x.\n", hr);
+    ok(fetched == 1, "Unexpected fetched count.\n");
+    hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
+    ok(hr == S_FALSE, "Failed to get enum item, hr %#x.\n", hr);
+
+    /* Skipping. */
+    hr = IEnumSTATPROPSETSTG_Reset(ps_enum);
+    ok(hr == S_OK, "Failed to reset enumerator, hr %#x.\n", hr);
+    hr = IEnumSTATPROPSETSTG_Skip(ps_enum, 2);
+todo_wine
+    ok(hr == S_FALSE, "Failed to skip, hr %#x.\n", hr);
+    hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
+todo_wine
+    ok(hr == S_FALSE, "Failed to get enum item, hr %#x.\n", hr);
+
+    hr = IEnumSTATPROPSETSTG_Reset(ps_enum);
+    ok(hr == S_OK, "Failed to reset enumerator, hr %#x.\n", hr);
+    hr = IEnumSTATPROPSETSTG_Skip(ps_enum, 1);
+    ok(hr == S_OK, "Failed to skip, hr %#x.\n", hr);
+    hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
+todo_wine
+    ok(hr == S_FALSE, "Failed to get enum item, hr %#x.\n", hr);
+
+    hr = IEnumSTATPROPSETSTG_Reset(ps_enum);
+    ok(hr == S_OK, "Failed to reset enumerator, hr %#x.\n", hr);
+todo_wine {
+    hr = IEnumSTATPROPSETSTG_Skip(ps_enum, 0);
+    ok(hr == S_FALSE, "Failed to skip, hr %#x.\n", hr);
+    hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
+    ok(hr == S_FALSE, "Failed to get enum item, hr %#x.\n", hr);
+}
+    IEnumSTATPROPSETSTG_Release(ps_enum);
+
+    IPropertyStorage_Release(prop_storage2);
+    IPropertyStorage_Release(prop_storage);
+
+    IPropertySetStorage_Release(ps_storage);
+    IStorage_Release(storage);
+
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete storage file.\n");
+}
+
 START_TEST(stg_prop)
 {
     init_function_pointers();
     testProps();
     testCodepage();
     testFmtId();
+    test_propertyset_storage_enum();
 }

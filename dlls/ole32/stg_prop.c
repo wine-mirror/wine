@@ -51,6 +51,7 @@
 #include "winuser.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "dictionary.h"
 #include "storage32.h"
 #include "enumx.h"
@@ -142,9 +143,7 @@ static HRESULT PropertyStorage_StringCopy(LPCSTR src, LCID srcCP, LPSTR *dst,
  LCID targetCP);
 
 static const IPropertyStorageVtbl IPropertyStorage_Vtbl;
-static const IEnumSTATPROPSETSTGVtbl IEnumSTATPROPSETSTG_Vtbl;
 static const IEnumSTATPROPSTGVtbl IEnumSTATPROPSTG_Vtbl;
-static HRESULT create_EnumSTATPROPSETSTG(StorageImpl *, IEnumSTATPROPSETSTG**);
 static HRESULT create_EnumSTATPROPSTG(PropertyStorage_impl *, IEnumSTATPROPSTG**);
 
 /***********************************************************************
@@ -2143,6 +2142,201 @@ static HRESULT PropertyStorage_ConstructEmpty(IStream *stm,
  * Implementation of IPropertySetStorage
  */
 
+struct enum_stat_propset_stg
+{
+    IEnumSTATPROPSETSTG IEnumSTATPROPSETSTG_iface;
+    LONG refcount;
+    STATPROPSETSTG *stats;
+    size_t current;
+    size_t count;
+};
+
+static struct enum_stat_propset_stg *impl_from_IEnumSTATPROPSETSTG(IEnumSTATPROPSETSTG *iface)
+{
+    return CONTAINING_RECORD(iface, struct enum_stat_propset_stg, IEnumSTATPROPSETSTG_iface);
+}
+
+static HRESULT WINAPI enum_stat_propset_stg_QueryInterface(IEnumSTATPROPSETSTG *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IEnumSTATPROPSETSTG) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IEnumSTATPROPSETSTG_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI enum_stat_propset_stg_AddRef(IEnumSTATPROPSETSTG *iface)
+{
+    struct enum_stat_propset_stg *psenum = impl_from_IEnumSTATPROPSETSTG(iface);
+    LONG refcount = InterlockedIncrement(&psenum->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI enum_stat_propset_stg_Release(IEnumSTATPROPSETSTG *iface)
+{
+    struct enum_stat_propset_stg *psenum = impl_from_IEnumSTATPROPSETSTG(iface);
+    LONG refcount = InterlockedDecrement(&psenum->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        heap_free(psenum->stats);
+        heap_free(psenum);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI enum_stat_propset_stg_Next(IEnumSTATPROPSETSTG *iface, ULONG celt,
+    STATPROPSETSTG *ret, ULONG *fetched)
+{
+    struct enum_stat_propset_stg *psenum = impl_from_IEnumSTATPROPSETSTG(iface);
+    ULONG count = 0;
+
+    TRACE("%p, %u, %p, %p.\n", iface, celt, ret, fetched);
+
+    if (psenum->current == ~0u)
+        psenum->current = 0;
+
+    while (count < celt && psenum->current < psenum->count)
+        ret[count++] = psenum->stats[psenum->current++];
+
+    if (fetched)
+        *fetched = count;
+
+    return count < celt ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI enum_stat_propset_stg_Skip(IEnumSTATPROPSETSTG *iface, ULONG celt)
+{
+    FIXME("%p, %u.\n", iface, celt);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_stat_propset_stg_Reset(IEnumSTATPROPSETSTG *iface)
+{
+    struct enum_stat_propset_stg *psenum = impl_from_IEnumSTATPROPSETSTG(iface);
+
+    TRACE("%p.\n", iface);
+
+    psenum->current = ~0u;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_stat_propset_stg_Clone(IEnumSTATPROPSETSTG *iface, IEnumSTATPROPSETSTG **ppenum)
+{
+    FIXME("%p, %p.\n", iface, ppenum);
+
+    return E_NOTIMPL;
+}
+
+static const IEnumSTATPROPSETSTGVtbl enum_stat_propset_stg_vtbl =
+{
+    enum_stat_propset_stg_QueryInterface,
+    enum_stat_propset_stg_AddRef,
+    enum_stat_propset_stg_Release,
+    enum_stat_propset_stg_Next,
+    enum_stat_propset_stg_Skip,
+    enum_stat_propset_stg_Reset,
+    enum_stat_propset_stg_Clone,
+};
+
+static HRESULT create_enum_stat_propset_stg(StorageImpl *storage, IEnumSTATPROPSETSTG **ret)
+{
+    IStorage *stg = &storage->base.IStorage_iface;
+    IEnumSTATSTG *penum = NULL;
+    STATSTG stat;
+    ULONG count;
+    HRESULT hr;
+
+    struct enum_stat_propset_stg *enum_obj;
+
+    enum_obj = heap_alloc_zero(sizeof(*enum_obj));
+    if (!enum_obj)
+        return E_OUTOFMEMORY;
+
+    enum_obj->IEnumSTATPROPSETSTG_iface.lpVtbl = &enum_stat_propset_stg_vtbl;
+    enum_obj->refcount = 1;
+
+    /* add all the property set elements into a list */
+    hr = IStorage_EnumElements(stg, 0, NULL, 0, &penum);
+    if (FAILED(hr))
+        goto done;
+
+    /* Allocate stats array and fill it. */
+    while ((hr = IEnumSTATSTG_Next(penum, 1, &stat, &count)) == S_OK)
+    {
+        enum_obj->count++;
+        CoTaskMemFree(stat.pwcsName);
+    }
+
+    if (FAILED(hr))
+        goto done;
+
+    enum_obj->stats = heap_alloc(enum_obj->count * sizeof(*enum_obj->stats));
+    if (!enum_obj->stats)
+    {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+    enum_obj->count = 0;
+
+    if (FAILED(hr = IEnumSTATSTG_Reset(penum)))
+        goto done;
+
+    while (IEnumSTATSTG_Next(penum, 1, &stat, &count) == S_OK)
+    {
+        if (!stat.pwcsName)
+            continue;
+
+        if (stat.pwcsName[0] == 5 && stat.type == STGTY_STREAM)
+        {
+            STATPROPSETSTG *ptr = &enum_obj->stats[enum_obj->count++];
+
+            PropStgNameToFmtId(stat.pwcsName, &ptr->fmtid);
+
+            TRACE("adding %s - %s.\n", debugstr_w(stat.pwcsName), debugstr_guid(&ptr->fmtid));
+
+            ptr->mtime = stat.mtime;
+            ptr->atime = stat.atime;
+            ptr->ctime = stat.ctime;
+            ptr->grfFlags = stat.grfMode;
+            ptr->clsid = stat.clsid;
+        }
+        CoTaskMemFree(stat.pwcsName);
+    }
+
+done:
+
+    if (penum)
+        IEnumSTATSTG_Release(penum);
+
+    if (SUCCEEDED(hr))
+    {
+        *ret = &enum_obj->IEnumSTATPROPSETSTG_iface;
+    }
+    else
+    {
+        *ret = NULL;
+        IEnumSTATPROPSETSTG_Release(&enum_obj->IEnumSTATPROPSETSTG_iface);
+    }
+
+    return hr;
+}
+
 /************************************************************************
  * IPropertySetStorage_fnQueryInterface (IUnknown)
  *
@@ -2310,124 +2504,16 @@ static HRESULT WINAPI IPropertySetStorage_fnDelete(
     return IStorage_DestroyElement(&This->base.IStorage_iface, name);
 }
 
-/************************************************************************
- * IPropertySetStorage_fnEnum (IPropertySetStorage)
- */
-static HRESULT WINAPI IPropertySetStorage_fnEnum(
-    IPropertySetStorage *ppstg,
-    IEnumSTATPROPSETSTG** ppenum)
+static HRESULT WINAPI IPropertySetStorage_fnEnum(IPropertySetStorage *iface, IEnumSTATPROPSETSTG **enum_obj)
 {
-    StorageImpl *This = impl_from_IPropertySetStorage(ppstg);
-    return create_EnumSTATPROPSETSTG(This, ppenum);
-}
+    StorageImpl *storage = impl_from_IPropertySetStorage(iface);
 
-/************************************************************************
- * Implement IEnumSTATPROPSETSTG using enumx
- */
-static HRESULT WINAPI IEnumSTATPROPSETSTG_fnQueryInterface(
-    IEnumSTATPROPSETSTG *iface,
-    REFIID riid,
-    void** ppvObject)
-{
-    return enumx_QueryInterface((enumx_impl*)iface, riid, ppvObject);
-}
+    TRACE("%p, %p.\n", iface, enum_obj);
 
-static ULONG WINAPI IEnumSTATPROPSETSTG_fnAddRef(
-    IEnumSTATPROPSETSTG *iface)
-{
-    return enumx_AddRef((enumx_impl*)iface);
-}
+    if (!enum_obj)
+        return E_INVALIDARG;
 
-static ULONG WINAPI IEnumSTATPROPSETSTG_fnRelease(
-    IEnumSTATPROPSETSTG *iface)
-{
-    return enumx_Release((enumx_impl*)iface);
-}
-
-static HRESULT WINAPI IEnumSTATPROPSETSTG_fnNext(
-    IEnumSTATPROPSETSTG *iface,
-    ULONG celt,
-    STATPROPSETSTG *rgelt,
-    ULONG *pceltFetched)
-{
-    return enumx_Next((enumx_impl*)iface, celt, rgelt, pceltFetched);
-}
-
-static HRESULT WINAPI IEnumSTATPROPSETSTG_fnSkip(
-    IEnumSTATPROPSETSTG *iface,
-    ULONG celt)
-{
-    return enumx_Skip((enumx_impl*)iface, celt);
-}
-
-static HRESULT WINAPI IEnumSTATPROPSETSTG_fnReset(
-    IEnumSTATPROPSETSTG *iface)
-{
-    return enumx_Reset((enumx_impl*)iface);
-}
-
-static HRESULT WINAPI IEnumSTATPROPSETSTG_fnClone(
-    IEnumSTATPROPSETSTG *iface,
-    IEnumSTATPROPSETSTG **ppenum)
-{
-    return enumx_Clone((enumx_impl*)iface, (enumx_impl**)ppenum);
-}
-
-static HRESULT create_EnumSTATPROPSETSTG(
-    StorageImpl *This,
-    IEnumSTATPROPSETSTG** ppenum)
-{
-    IStorage *stg = &This->base.IStorage_iface;
-    IEnumSTATSTG *penum = NULL;
-    STATSTG stat;
-    ULONG count;
-    HRESULT r;
-    STATPROPSETSTG statpss;
-    enumx_impl *enumx;
-
-    TRACE("%p %p\n", This, ppenum);
-
-    enumx = enumx_allocate(&IID_IEnumSTATPROPSETSTG,
-                           &IEnumSTATPROPSETSTG_Vtbl,
-                           sizeof (STATPROPSETSTG));
-
-    /* add all the property set elements into a list */
-    r = IStorage_EnumElements(stg, 0, NULL, 0, &penum);
-    if (FAILED(r))
-    {
-        enumx_Release(enumx);
-        return E_OUTOFMEMORY;
-    }
-
-    while (1)
-    {
-        count = 0;
-        r = IEnumSTATSTG_Next(penum, 1, &stat, &count);
-        if (FAILED(r))
-            break;
-        if (!count)
-            break;
-        if (!stat.pwcsName)
-            continue;
-        if (stat.pwcsName[0] == 5 && stat.type == STGTY_STREAM)
-        {
-            PropStgNameToFmtId(stat.pwcsName, &statpss.fmtid);
-            TRACE("adding %s (%s)\n", debugstr_w(stat.pwcsName),
-                  debugstr_guid(&statpss.fmtid));
-            statpss.mtime = stat.mtime;
-            statpss.atime = stat.atime;
-            statpss.ctime = stat.ctime;
-            statpss.grfFlags = stat.grfMode;
-            statpss.clsid = stat.clsid;
-            enumx_add_element(enumx, &statpss);
-        }
-        CoTaskMemFree(stat.pwcsName);
-    }
-    IEnumSTATSTG_Release(penum);
-
-    *ppenum = (IEnumSTATPROPSETSTG*) enumx;
-
-    return S_OK;
+    return create_enum_stat_propset_stg(storage, enum_obj);
 }
 
 /************************************************************************
@@ -2548,17 +2634,6 @@ static const IPropertyStorageVtbl IPropertyStorage_Vtbl =
     IPropertyStorage_fnSetTimes,
     IPropertyStorage_fnSetClass,
     IPropertyStorage_fnStat,
-};
-
-static const IEnumSTATPROPSETSTGVtbl IEnumSTATPROPSETSTG_Vtbl =
-{
-    IEnumSTATPROPSETSTG_fnQueryInterface,
-    IEnumSTATPROPSETSTG_fnAddRef,
-    IEnumSTATPROPSETSTG_fnRelease,
-    IEnumSTATPROPSETSTG_fnNext,
-    IEnumSTATPROPSETSTG_fnSkip,
-    IEnumSTATPROPSETSTG_fnReset,
-    IEnumSTATPROPSETSTG_fnClone,
 };
 
 static const IEnumSTATPROPSTGVtbl IEnumSTATPROPSTG_Vtbl =
