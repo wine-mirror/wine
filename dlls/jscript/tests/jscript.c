@@ -95,18 +95,6 @@ DEFINE_EXPECT(OnLeaveScript);
 
 static const CLSID *engine_clsid = &CLSID_JScript;
 
-static BSTR a2bstr(const char *str)
-{
-    BSTR ret;
-    int len;
-
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len-1);
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-
-    return ret;
-}
-
 #define test_state(s,ss) _test_state(__LINE__,s,ss)
 static void _test_state(unsigned line, IActiveScript *script, SCRIPTSTATE exstate)
 {
@@ -240,12 +228,12 @@ static void test_script_dispatch(IDispatchEx *dispex)
     VARIANT v;
     HRESULT hres;
 
-    str = a2bstr("ActiveXObject");
+    str = SysAllocString(L"ActiveXObject");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &id);
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
 
-    str = a2bstr("Math");
+    str = SysAllocString(L"Math");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &id);
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
@@ -257,7 +245,7 @@ static void test_script_dispatch(IDispatchEx *dispex)
     ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(v) = NULL\n");
     VariantClear(&v);
 
-    str = a2bstr("String");
+    str = SysAllocString(L"String");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseSensitive, &id);
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
@@ -287,20 +275,22 @@ static IDispatchEx *get_script_dispatch(IActiveScript *script)
 }
 
 #define get_disp_id(a,b,c,d) _get_disp_id(__LINE__,a,b,c,d)
-static void _get_disp_id(unsigned line, IDispatchEx *dispex, const char *name, HRESULT exhr, DISPID *id)
+static void _get_disp_id(unsigned line, IDispatchEx *dispex, const WCHAR *name, HRESULT exhr, DISPID *id)
 {
     DISPID id2;
     HRESULT hr;
     BSTR str;
 
-    str = a2bstr(name);
+    str = SysAllocString(name);
     hr = IDispatchEx_GetDispID(dispex, str, 0, id);
-    ok_(__FILE__,line)(hr == exhr, "GetDispID(%s) returned %08x, expected %08x\n", name, hr, exhr);
+    ok_(__FILE__,line)(hr == exhr, "GetDispID(%s) returned %08x, expected %08x\n",
+                       wine_dbgstr_w(name), hr, exhr);
 
     hr = IDispatchEx_GetIDsOfNames(dispex, &IID_NULL, &str, 1, 0, &id2);
     SysFreeString(str);
-    ok_(__FILE__,line)(hr == exhr, "GetIDsOfNames(%s) returned %08x, expected %08x\n", name, hr, exhr);
-    ok_(__FILE__,line)(*id == id2, "GetIDsOfNames(%s) id != id2\n", name);
+    ok_(__FILE__,line)(hr == exhr, "GetIDsOfNames(%s) returned %08x, expected %08x\n",
+                       wine_dbgstr_w(name), hr, exhr);
+    ok_(__FILE__,line)(*id == id2, "GetIDsOfNames(%s) id != id2\n", wine_dbgstr_w(name));
 }
 
 static void test_no_script_dispatch(IActiveScript *script)
@@ -734,13 +724,13 @@ static void test_code_persistence(void)
     /* Pending code does not add identifiers to the global scope */
     dispex = get_script_dispatch(script);
     id = 0;
-    get_disp_id(dispex, "x", DISP_E_UNKNOWNNAME, &id);
+    get_disp_id(dispex, L"x", DISP_E_UNKNOWNNAME, &id);
     ok(id == -1, "id = %d, expected -1\n", id);
     id = 0;
-    get_disp_id(dispex, "y", DISP_E_UNKNOWNNAME, &id);
+    get_disp_id(dispex, L"y", DISP_E_UNKNOWNNAME, &id);
     ok(id == -1, "id = %d, expected -1\n", id);
     id = 0;
-    get_disp_id(dispex, "z", DISP_E_UNKNOWNNAME, &id);
+    get_disp_id(dispex, L"z", DISP_E_UNKNOWNNAME, &id);
     ok(id == -1, "id = %d, expected -1\n", id);
     IDispatchEx_Release(dispex);
 
@@ -773,13 +763,13 @@ static void test_code_persistence(void)
 
     dispex = get_script_dispatch(script);
     id = 0;
-    get_disp_id(dispex, "x", DISP_E_UNKNOWNNAME, &id);
+    get_disp_id(dispex, L"x", DISP_E_UNKNOWNNAME, &id);
     ok(id == -1, "id = %d, expected -1\n", id);
     id = 0;
-    get_disp_id(dispex, "y", S_OK, &id);
+    get_disp_id(dispex, L"y", S_OK, &id);
     ok(id != -1, "id = -1\n");
     id = 0;
-    get_disp_id(dispex, "z", S_OK, &id);
+    get_disp_id(dispex, L"z", S_OK, &id);
     ok(id != -1, "id = -1\n");
     IDispatchEx_Release(dispex);
 
@@ -819,7 +809,7 @@ static void test_code_persistence(void)
 
     dispex = get_script_dispatch(script);
     id = 0;
-    get_disp_id(dispex, "z", DISP_E_UNKNOWNNAME, &id);
+    get_disp_id(dispex, L"z", DISP_E_UNKNOWNNAME, &id);
     ok(id == -1, "id = %d, expected -1\n", id);
     IDispatchEx_Release(dispex);
 
@@ -835,7 +825,7 @@ static void test_code_persistence(void)
 
     dispex = get_script_dispatch(script);
     id = 0;
-    get_disp_id(dispex, "z", S_OK, &id);
+    get_disp_id(dispex, L"z", S_OK, &id);
     ok(id != -1, "id = -1\n");
     IDispatchEx_Release(dispex);
 
@@ -898,10 +888,10 @@ static void test_code_persistence(void)
 
     dispex = get_script_dispatch(script);
     id = 0;
-    get_disp_id(dispex, "y", DISP_E_UNKNOWNNAME, &id);
+    get_disp_id(dispex, L"y", DISP_E_UNKNOWNNAME, &id);
     ok(id == -1, "id = %d, expected -1\n", id);
     id = 0;
-    get_disp_id(dispex, "z", DISP_E_UNKNOWNNAME, &id);
+    get_disp_id(dispex, L"z", DISP_E_UNKNOWNNAME, &id);
     ok(id == -1, "id = %d, expected -1\n", id);
     IDispatchEx_Release(dispex);
 
