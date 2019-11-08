@@ -1563,6 +1563,20 @@ void CDECL wined3d_stateblock_set_scissor_rect(struct wined3d_stateblock *stateb
     stateblock->changed.scissorRect = TRUE;
 }
 
+void CDECL wined3d_stateblock_set_index_buffer(struct wined3d_stateblock *stateblock,
+        struct wined3d_buffer *buffer, enum wined3d_format_id format_id)
+{
+    TRACE("stateblock %p, buffer %p, format %s.\n", stateblock, buffer, debug_d3dformat(format_id));
+
+    if (buffer)
+        wined3d_buffer_incref(buffer);
+    if (stateblock->stateblock_state.index_buffer)
+        wined3d_buffer_decref(stateblock->stateblock_state.index_buffer);
+    stateblock->stateblock_state.index_buffer = buffer;
+    stateblock->stateblock_state.index_format = format_id;
+    stateblock->changed.indices = TRUE;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union

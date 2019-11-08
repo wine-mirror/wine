@@ -265,6 +265,7 @@
 @ cdecl wined3d_stateblock_reset(ptr)
 @ cdecl wined3d_stateblock_set_blend_factor(ptr ptr)
 @ cdecl wined3d_stateblock_set_clip_plane(ptr long ptr)
+@ cdecl wined3d_stateblock_set_index_buffer(ptr ptr long)
 @ cdecl wined3d_stateblock_set_material(ptr ptr)
 @ cdecl wined3d_stateblock_set_pixel_shader(ptr ptr)
 @ cdecl wined3d_stateblock_set_ps_consts_b(ptr long long ptr)
