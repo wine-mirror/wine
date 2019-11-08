@@ -263,6 +263,7 @@
 @ cdecl wined3d_stateblock_decref(ptr)
 @ cdecl wined3d_stateblock_incref(ptr)
 @ cdecl wined3d_stateblock_reset(ptr)
+@ cdecl wined3d_stateblock_set_base_vertex_index(ptr long)
 @ cdecl wined3d_stateblock_set_blend_factor(ptr ptr)
 @ cdecl wined3d_stateblock_set_clip_plane(ptr long ptr)
 @ cdecl wined3d_stateblock_set_index_buffer(ptr ptr long)

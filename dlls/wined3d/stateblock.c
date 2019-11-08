@@ -1577,6 +1577,13 @@ void CDECL wined3d_stateblock_set_index_buffer(struct wined3d_stateblock *stateb
     stateblock->changed.indices = TRUE;
 }
 
+void CDECL wined3d_stateblock_set_base_vertex_index(struct wined3d_stateblock *stateblock, INT base_index)
+{
+    TRACE("stateblock %p, base_index %d.\n", stateblock, base_index);
+
+    stateblock->stateblock_state.base_vertex_index = base_index;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union
