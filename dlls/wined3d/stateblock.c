@@ -1555,6 +1555,14 @@ void CDECL wined3d_stateblock_set_viewport(struct wined3d_stateblock *stateblock
     stateblock->changed.viewport = TRUE;
 }
 
+void CDECL wined3d_stateblock_set_scissor_rect(struct wined3d_stateblock *stateblock, const RECT *rect)
+{
+    TRACE("stateblock %p, rect %s.\n", stateblock, wine_dbgstr_rect(rect));
+
+    stateblock->stateblock_state.scissor_rect = *rect;
+    stateblock->changed.scissorRect = TRUE;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union

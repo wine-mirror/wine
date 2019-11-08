@@ -2684,6 +2684,7 @@ void __cdecl wined3d_stateblock_set_render_state(struct wined3d_stateblock *stat
         enum wined3d_render_state state, DWORD value);
 void __cdecl wined3d_stateblock_set_sampler_state(struct wined3d_stateblock *stateblock,
         UINT sampler_idx, enum wined3d_sampler_state state, DWORD value);
+void __cdecl wined3d_stateblock_set_scissor_rect(struct wined3d_stateblock *stateblock, const RECT *rect);
 void __cdecl wined3d_stateblock_set_texture(struct wined3d_stateblock *stateblock, UINT stage, struct wined3d_texture *texture);
 void __cdecl wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock *stateblock,
         UINT stage, enum wined3d_texture_stage_state state, DWORD value);
