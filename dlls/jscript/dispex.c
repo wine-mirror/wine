@@ -239,7 +239,7 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
         const WCHAR *ptr;
         unsigned idx = 0;
 
-        for(ptr = name; iswdigit(*ptr) && idx < 0x10000; ptr++)
+        for(ptr = name; is_digit(*ptr) && idx < 0x10000; ptr++)
             idx = idx*10 + (*ptr-'0');
         if(!*ptr && idx < This->builtin_info->idx_length(This)) {
             prop = alloc_prop(This, name, PROP_IDX, This->builtin_info->idx_put ? PROPF_WRITABLE : 0);

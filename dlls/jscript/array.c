@@ -1191,10 +1191,10 @@ static void Array_on_put(jsdisp_t *dispex, const WCHAR *name)
     const WCHAR *ptr = name;
     DWORD id = 0;
 
-    if(!iswdigit(*ptr))
+    if(!is_digit(*ptr))
         return;
 
-    while(*ptr && iswdigit(*ptr)) {
+    while(*ptr && is_digit(*ptr)) {
         id = id*10 + (*ptr-'0');
         ptr++;
     }

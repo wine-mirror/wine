@@ -904,14 +904,14 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
                     default: {
                         DWORD idx;
 
-                        if(!iswdigit(ptr2[1])) {
+                        if(!is_digit(ptr2[1])) {
                             hres = strbuf_append(&ret, ptr2, 1);
                             ptr = ptr2+1;
                             break;
                         }
 
                         idx = ptr2[1] - '0';
-                        if(iswdigit(ptr2[2]) && idx*10 + (ptr2[2]-'0') <= match->paren_count) {
+                        if(is_digit(ptr2[2]) && idx*10 + (ptr2[2]-'0') <= match->paren_count) {
                             idx = idx*10 + (ptr[2]-'0');
                             ptr = ptr2+3;
                         }else if(idx && idx <= match->paren_count) {

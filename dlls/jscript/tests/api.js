@@ -1442,6 +1442,7 @@ ok(isNaN(parseFloat('not a number')), "parseFloat('not a number') is not NaN");
 ok(parseFloat('+13.2e-3') === 13.2e-3, "parseFloat('+13.2e-3') = " + parseFloat('+13.2e-3'));
 ok(parseFloat('.12') === 0.12, "parseFloat('.12') = " + parseFloat('.12'));
 ok(parseFloat('1e') === 1, "parseFloat('1e') = " + parseFloat('1e'));
+ok(isNaN(parseFloat('\uff16')), "parseFloat('\\uD835') is not NaN");
 
 tmp = Math.min(1);
 ok(tmp === 1, "Math.min(1) = " + tmp);

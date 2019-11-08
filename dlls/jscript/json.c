@@ -260,7 +260,7 @@ static HRESULT parse_json_value(json_parse_ctx_t *ctx, jsval_t *r)
             skip_spaces(ctx);
         }
 
-        if(*ctx->ptr == '0' && ctx->ptr + 1 < ctx->end && iswdigit(ctx->ptr[1]))
+        if(*ctx->ptr == '0' && ctx->ptr + 1 < ctx->end && is_digit(ctx->ptr[1]))
             break;
 
         hres = parse_decimal(&ctx->ptr, ctx->end, &n);

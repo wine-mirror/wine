@@ -354,6 +354,11 @@ HRESULT decode_source(WCHAR*) DECLSPEC_HIDDEN;
 HRESULT double_to_string(double,jsstr_t**) DECLSPEC_HIDDEN;
 BOOL is_finite(double) DECLSPEC_HIDDEN;
 
+static inline BOOL is_digit(WCHAR c)
+{
+    return '0' <= c && c <= '9';
+}
+
 typedef struct named_item_t {
     IDispatch *disp;
     DWORD flags;
