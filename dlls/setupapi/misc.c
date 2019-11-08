@@ -1073,6 +1073,7 @@ done:
         if (buffer_size >= size)
         {
             lstrcpyW( dest, target );
+            if (filepart) *filepart = wcsrchr( dest, '\\' ) + 1;
         }
         else
         {
@@ -1081,7 +1082,6 @@ done:
         }
     }
 
-    if (filepart) *filepart = wcsrchr( target, '\\' ) + 1;
     if (required_size) *required_size = size;
     if (ret) SetLastError(ERROR_SUCCESS);
 
