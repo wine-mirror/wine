@@ -323,7 +323,7 @@
 @ stdcall EnumUILanguagesW(ptr long long)
 # @ stub EnumerateStateAtomValues
 # @ stub EnumerateStateContainerItems
-@ stub EqualDomainSid
+@ stdcall EqualDomainSid(ptr ptr ptr)
 @ stdcall EqualPrefixSid(ptr ptr)
 @ stdcall EqualSid(ptr ptr)
 @ stdcall EscapeCommFunction(long long)

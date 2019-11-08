@@ -130,6 +130,7 @@ static NTSTATUS (WINAPI *pNtCreateFile)(PHANDLE,ACCESS_MASK,POBJECT_ATTRIBUTES,P
 static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)(LPCWSTR,PUNICODE_STRING,PWSTR*,CURDIR*);
 static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING,PCANSI_STRING,BOOLEAN);
 static BOOL     (WINAPI *pGetWindowsAccountDomainSid)(PSID,PSID,DWORD*);
+static BOOL     (WINAPI *pEqualDomainSid)(PSID,PSID,BOOL*);
 static void     (WINAPI *pRtlInitAnsiString)(PANSI_STRING,PCSZ);
 static NTSTATUS (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
 static PSID_IDENTIFIER_AUTHORITY (WINAPI *pGetSidIdentifierAuthority)(PSID);
@@ -218,6 +219,7 @@ static void init(void)
     pGetAclInformation = (void *)GetProcAddress(hmod, "GetAclInformation");
     pGetAce = (void *)GetProcAddress(hmod, "GetAce");
     pGetWindowsAccountDomainSid = (void *)GetProcAddress(hmod, "GetWindowsAccountDomainSid");
+    pEqualDomainSid = (void *)GetProcAddress(hmod, "EqualDomainSid");
     pGetSidIdentifierAuthority = (void *)GetProcAddress(hmod, "GetSidIdentifierAuthority");
     pDuplicateTokenEx = (void *)GetProcAddress(hmod, "DuplicateTokenEx");
     pGetExplicitEntriesFromAclW = (void *)GetProcAddress(hmod, "GetExplicitEntriesFromAclW");
@@ -7570,6 +7572,81 @@ static void test_BuildSecurityDescriptorW(void)
     LocalFree(new_sd);
 }
 
+static void test_EqualDomainSid(void)
+{
+    SID_IDENTIFIER_AUTHORITY ident = { SECURITY_NT_AUTHORITY };
+    char sid_buffer[SECURITY_MAX_SID_SIZE], sid_buffer2[SECURITY_MAX_SID_SIZE];
+    PSID domainsid, sid = sid_buffer, sid2 = sid_buffer2;
+    DWORD size;
+    BOOL ret, equal;
+    unsigned int i;
+
+    if (!pEqualDomainSid)
+    {
+        win_skip("EqualDomainSid not available\n");
+        return;
+    }
+
+    if (!pCreateWellKnownSid)
+    {
+        win_skip("CreateWellKnownSid not available\n");
+        return;
+    }
+
+    ret = AllocateAndInitializeSid(&ident, 6, SECURITY_NT_NON_UNIQUE, 12, 23, 34, 45, 56, 0, 0, &domainsid);
+    ok(ret, "AllocateAndInitializeSid error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pEqualDomainSid(NULL, NULL, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_SID, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pEqualDomainSid(domainsid, domainsid, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(well_known_sid_values); i++)
+    {
+        SID *pisid = sid;
+
+        size = sizeof(sid_buffer);
+        if (!pCreateWellKnownSid(i, NULL, sid, &size))
+        {
+            trace("Well known SID %u not supported\n", i);
+            continue;
+        }
+
+        equal = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        ret = pEqualDomainSid(sid, domainsid, &equal);
+        if (pisid->SubAuthority[0] != SECURITY_BUILTIN_DOMAIN_RID)
+        {
+            ok(!ret, "%u: got %d\n", i, ret);
+            ok(GetLastError() == ERROR_NON_DOMAIN_SID, "%u: got %u\n", i, GetLastError());
+            ok(equal == 0xdeadbeef, "%u: got %d\n", i, equal);
+            continue;
+        }
+
+        ok(ret, "%u: got %d\n", i, ret);
+        ok(GetLastError() == 0, "%u: got %u\n", i, GetLastError());
+        ok(equal == 0, "%u: got %d\n", i, equal);
+
+        size = sizeof(sid_buffer2);
+        ret = pCreateWellKnownSid(i, well_known_sid_values[i].without_domain ? NULL : domainsid, sid2, &size);
+        ok(ret, "%u: CreateWellKnownSid error %u\n", i, GetLastError());
+
+        equal = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        ret = pEqualDomainSid(sid, sid2, &equal);
+        ok(ret, "%u: got %d\n", i, ret);
+        ok(GetLastError() == 0, "%u: got %u\n", i, GetLastError());
+        ok(equal == 1, "%u: got %d\n", i, equal);
+    }
+
+    FreeSid(domainsid);
+}
+
 START_TEST(security)
 {
     init();
@@ -7606,6 +7683,7 @@ START_TEST(security)
     test_PrivateObjectSecurity();
     test_acls();
     test_GetWindowsAccountDomainSid();
+    test_EqualDomainSid();
     test_GetSecurityInfo();
     test_GetSidSubAuthority();
     test_CheckTokenMembership();

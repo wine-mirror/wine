@@ -762,6 +762,8 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define ERROR_NOT_SUPPORTED_ON_SBS                         1254
 #define ERROR_SERVER_SHUTDOWN_IN_PROGRESS                  1255
 #define ERROR_HOST_DOWN                                    1256
+#define ERROR_NON_ACCOUNT_SID                              1257
+#define ERROR_NON_DOMAIN_SID                               1258
 #define ERROR_ACCESS_DISABLED_BY_POLICY                    1260
 #define ERROR_REG_NAT_CONSUMPTION                          1261
 #define ERROR_PKINIT_FAILURE                               1263

@@ -35,7 +35,7 @@
 @ stdcall DestroyPrivateObjectSecurity(ptr) advapi32.DestroyPrivateObjectSecurity
 @ stdcall DuplicateToken(long long ptr) advapi32.DuplicateToken
 @ stdcall DuplicateTokenEx(long long ptr long long ptr) advapi32.DuplicateTokenEx
-@ stub EqualDomainSid
+@ stdcall EqualDomainSid(ptr ptr ptr) advapi32.EqualDomainSid
 @ stdcall EqualPrefixSid(ptr ptr) advapi32.EqualPrefixSid
 @ stdcall EqualSid(ptr ptr) advapi32.EqualSid
 @ stdcall EventActivityIdControl(long ptr) advapi32.EventActivityIdControl

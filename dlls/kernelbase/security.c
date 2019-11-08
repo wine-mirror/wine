@@ -275,6 +275,61 @@ BOOL WINAPI EqualSid( PSID sid1, PSID sid2 )
 }
 
 /******************************************************************************
+ * EqualDomainSid   (kernelbase.@)
+ */
+BOOL WINAPI EqualDomainSid( PSID sid1, PSID sid2, BOOL *equal )
+{
+    MAX_SID builtin_sid, domain_sid1, domain_sid2;
+    DWORD size;
+
+    TRACE( "(%p,%p,%p)\n", sid1, sid2, equal );
+
+    if (!IsValidSid( sid1 ) || !IsValidSid( sid2 ))
+    {
+        SetLastError( ERROR_INVALID_SID );
+        return FALSE;
+    }
+
+    if (!equal)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    size = sizeof(domain_sid1);
+    if (GetWindowsAccountDomainSid( sid1, &domain_sid1, &size ))
+    {
+        size = sizeof(domain_sid2);
+        if (GetWindowsAccountDomainSid( sid2, &domain_sid2, &size ))
+        {
+            *equal = EqualSid( &domain_sid1, &domain_sid2 );
+            SetLastError( 0 );
+            return TRUE;
+        }
+    }
+
+    size = sizeof(builtin_sid);
+    if (!CreateWellKnownSid( WinBuiltinDomainSid, NULL, &builtin_sid, &size ))
+        return FALSE;
+
+    if (!memcmp(GetSidIdentifierAuthority( sid1 )->Value, builtin_sid.IdentifierAuthority.Value, sizeof(builtin_sid.IdentifierAuthority.Value)) &&
+        !memcmp(GetSidIdentifierAuthority( sid2 )->Value, builtin_sid.IdentifierAuthority.Value, sizeof(builtin_sid.IdentifierAuthority.Value)))
+    {
+        if (*GetSidSubAuthorityCount( sid1 ) != 0 && *GetSidSubAuthorityCount( sid2 ) != 0 &&
+            (*GetSidSubAuthority( sid1, 0 ) == SECURITY_BUILTIN_DOMAIN_RID ||
+             *GetSidSubAuthority( sid2, 0 ) == SECURITY_BUILTIN_DOMAIN_RID))
+        {
+            *equal = EqualSid( sid1, sid2 );
+            SetLastError( 0 );
+            return TRUE;
+        }
+    }
+
+    SetLastError( ERROR_NON_DOMAIN_SID );
+    return FALSE;
+}
+
+/******************************************************************************
  * FreeSid   (kernelbase.@)
  */
 void * WINAPI FreeSid( PSID pSid )

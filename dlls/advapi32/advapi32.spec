@@ -281,7 +281,7 @@
 @ stdcall EnumServicesStatusW (long long long ptr long ptr ptr ptr)
 @ stdcall EnumerateTraceGuids(ptr long ptr)
 # @ stub EnumerateTraceGuidsEx
-# @ stub EqualDomainSid
+@ stdcall -import EqualDomainSid(ptr ptr ptr)
 @ stdcall -import EqualPrefixSid(ptr ptr)
 @ stdcall -import EqualSid(ptr ptr)
 # @ stub EventAccessControl
