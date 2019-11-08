@@ -1424,6 +1424,38 @@ static void test_effects(void)
     while (IDirectSound8_Release(dso));
 }
 
+static void test_dsfx_interfaces(const char *test_prefix, IUnknown *dmo, REFGUID refguid)
+{
+    HRESULT rc;
+    IMediaObject *mediaobject;
+    IMediaObjectInPlace *inplace;
+    IUnknown *parent;
+
+    rc = IUnknown_QueryInterface(dmo, &IID_IMediaObject, (void**)&mediaobject);
+    ok(rc == DS_OK, "%s: Failed: %08x\n", test_prefix, rc);
+    if (rc == DS_OK)
+    {
+        rc = IMediaObject_QueryInterface(mediaobject, refguid, (void**)&parent);
+        ok(rc == S_OK, "%s: got: %08x\n", test_prefix, rc);
+        ok(dmo == parent, "%s: Objects not equal\n", test_prefix);
+        IUnknown_Release(parent);
+
+        IMediaObject_Release(mediaobject);
+    }
+
+    rc = IUnknown_QueryInterface(dmo, &IID_IMediaObjectInPlace, (void**)&inplace);
+    ok(rc == DS_OK, "%s: Failed: %08x\n", test_prefix, rc);
+    if (rc == DS_OK)
+    {
+        rc = IMediaObjectInPlace_QueryInterface(inplace, refguid, (void**)&parent);
+        ok(rc == S_OK, "%s: got: %08x\n", test_prefix, rc);
+        ok(dmo == parent, "%s: Objects not equal\n", test_prefix);
+        IUnknown_Release(parent);
+
+        IMediaObjectInPlace_Release(inplace);
+    }
+}
+
 static void test_echo_parameters(IDirectSoundBuffer8 *secondary8)
 {
     HRESULT rc;
@@ -1445,6 +1477,8 @@ static void test_echo_parameters(IDirectSoundBuffer8 *secondary8)
             ok(params.fRightDelay == 500.0f,"got %f\n", params.fRightDelay);
             ok(params.lPanDelay == 0, "got %d\n", params.lPanDelay);
         }
+
+        test_dsfx_interfaces("FXEcho", (IUnknown *)echo, &IID_IDirectSoundFXEcho);
 
         IDirectSoundFXEcho_Release(echo);
     }
@@ -1468,6 +1502,8 @@ static void test_gargle_parameters(IDirectSoundBuffer8 *secondary8)
             ok(params.dwRateHz == 20, "got %d\n", params.dwRateHz);
             ok(params.dwWaveShape == DSFXGARGLE_WAVE_TRIANGLE, "got %d\n", params.dwWaveShape);
         }
+
+        test_dsfx_interfaces("FXGargle", (IUnknown *)gargle, &IID_IDirectSoundFXGargle);
 
         IDirectSoundFXGargle_Release(gargle);
     }
@@ -1497,6 +1533,8 @@ static void test_chorus_parameters(IDirectSoundBuffer8 *secondary8)
             ok(params.lPhase == 3, "got %d\n", params.lPhase);
         }
 
+        test_dsfx_interfaces("FXChorus", (IUnknown *)chorus, &IID_IDirectSoundFXChorus);
+
         IDirectSoundFXChorus_Release(chorus);
     }
 }
@@ -1525,6 +1563,8 @@ static void test_flanger_parameters(IDirectSoundBuffer8 *secondary8)
             ok(params.lPhase == 2, "got %d\n", params.lPhase);
         }
 
+        test_dsfx_interfaces("FXFlanger", (IUnknown *)flanger, &IID_IDirectSoundFXFlanger);
+
         IDirectSoundFXFlanger_Release(flanger);
     }
 }
@@ -1550,6 +1590,8 @@ static void test_distortion_parameters(IDirectSoundBuffer8 *secondary8)
             ok(params.fPostEQBandwidth == 2400.0f, "got %f\n", params.fPostEQBandwidth);
             ok(params.fPreLowpassCutoff == 3675.0f, "got %f\n", params.fPreLowpassCutoff);
         }
+
+        test_dsfx_interfaces("FXDistortion", (IUnknown *)distortion, &IID_IDirectSoundFXDistortion);
 
         IDirectSoundFXDistortion_Release(distortion);
     }
@@ -1577,6 +1619,8 @@ static void test_compressor_parameters(IDirectSoundBuffer8 *secondary8)
             ok(params.fPredelay == 4.0f, "got %f\n", params.fPredelay);
         }
 
+        test_dsfx_interfaces("FXCompressor", (IUnknown *)compressor, &IID_IDirectSoundFXCompressor);
+
         IDirectSoundFXCompressor_Release(compressor);
     }
 }
@@ -1600,6 +1644,8 @@ static void test_parameq_parameters(IDirectSoundBuffer8 *secondary8)
             ok(params.fBandwidth == 12.0f, "got %f\n", params.fBandwidth);
             ok(params.fGain == 0.0f, "got %f\n", params.fGain);
         }
+
+        test_dsfx_interfaces("FXParamEq", (IUnknown *)parameq, &IID_IDirectSoundFXParamEq);
 
         IDirectSoundFXParamEq_Release(parameq);
     }
@@ -1631,6 +1677,8 @@ static void test_reverb_parameters(IDirectSoundBuffer8 *secondary8)
             ok(params.flDensity == 100.0f, "got %f\n", params.flDensity);
             ok(params.flHFReference == 5000.0f, "got %f\n", params.flHFReference);
         }
+
+        test_dsfx_interfaces("FXI3DL2Reverb", (IUnknown *)reverb, &IID_IDirectSoundFXI3DL2Reverb);
 
         IDirectSoundFXI3DL2Reverb_Release(reverb);
     }
