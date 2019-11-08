@@ -16626,7 +16626,7 @@ static void test_surface_format_conversion_alpha(void)
         {FMT_RGBX,     rgbx_data,     FMT_DXT2,     dxt2_data, TRUE},
         {FMT_RGBA,     rgba_data,     FMT_DXT3,     dxt2_data},
         {FMT_RGBX,     rgbx_data,     FMT_DXT3,     dxt2_data, TRUE},
-        {FMT_DXT1,     dxt1_data,     FMT_DXT2,     dxt2_data, TRUE},
+        {FMT_DXT1,     dxt1_data,     FMT_DXT2,     dxt2_data},
         {FMT_DXT1,     dxt1_data,     FMT_RGBA,     rgba_data},
         {FMT_DXT1,     dxt1_data,     FMT_RGBX,     rgba_data},
         {FMT_DXT3,     dxt2_data,     FMT_RGBA,     rgba_data},

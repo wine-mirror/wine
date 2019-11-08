@@ -2043,7 +2043,9 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
         bo.addr += src_box->left * src_format->byte_count;
     }
 
-    decompress = dst_texture->resource.format_flags & WINED3DFMT_FLAG_DECOMPRESS;
+    decompress = (dst_texture->resource.format_flags & WINED3DFMT_FLAG_DECOMPRESS)
+            || (src_format->decompress && src_format->id != dst_texture->resource.format->id);
+
     if (src_format->upload || decompress)
     {
         const struct wined3d_format *compressed_format = src_format;
