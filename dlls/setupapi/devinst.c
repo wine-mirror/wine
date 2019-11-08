@@ -4545,6 +4545,20 @@ BOOL WINAPI SetupDiBuildDriverInfoList(HDEVINFO devinfo, SP_DEVINFO_DATA *device
         }
     }
 
+    if (device->driver_count)
+    {
+        WCHAR classname[MAX_CLASS_NAME_LEN], guidstr[39];
+        GUID class;
+
+        if (SetupDiGetINFClassW(device->drivers[0].inf_path, &class, classname, ARRAY_SIZE(classname), NULL))
+        {
+            device_data->ClassGuid = device->class = class;
+            SETUPDI_GuidToString(&class, guidstr);
+            RegSetValueExW(device->key, L"ClassGUID", 0, REG_SZ, (BYTE *)guidstr, sizeof(guidstr));
+            RegSetValueExW(device->key, L"Class", 0, REG_SZ, (BYTE *)classname, wcslen(classname) * sizeof(WCHAR));
+        }
+    }
+
     return TRUE;
 }
 
