@@ -258,6 +258,7 @@ static void test_get_prop(IDirectInputA *pDI, HWND hwnd)
     HRESULT hr;
     IDirectInputDeviceA *pKeyboard = NULL;
     DIPROPRANGE diprg;
+    DIPROPDWORD vidpid;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
     ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
@@ -271,6 +272,15 @@ static void test_get_prop(IDirectInputA *pDI, HWND hwnd)
 
     hr = IDirectInputDevice_GetProperty(pKeyboard, DIPROP_RANGE, &diprg.diph);
     ok(hr == DIERR_UNSUPPORTED, "IDirectInputDevice_GetProperty() did not return DIPROP_RANGE but: %08x\n", hr);
+
+    memset(&vidpid, 0, sizeof(vidpid));
+    vidpid.diph.dwSize       = sizeof(DIPROPDWORD);
+    vidpid.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    vidpid.diph.dwHow        = DIPH_DEVICE;
+    vidpid.diph.dwObj        = 0;
+
+    hr = IDirectInputDevice_GetProperty(pKeyboard, DIPROP_VIDPID, &vidpid.diph);
+    ok(hr == DIERR_UNSUPPORTED, "got %08x\n", hr);
 
     IUnknown_Release(pKeyboard);
 }
