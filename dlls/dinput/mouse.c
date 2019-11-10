@@ -652,7 +652,8 @@ static HRESULT WINAPI SysMouseWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
 		
 		break;
 	    }
-
+            case (DWORD_PTR) DIPROP_VIDPID:
+                return DIERR_UNSUPPORTED;
 	    default:
                 return IDirectInputDevice2WImpl_GetProperty(iface, rguid, pdiph);
         }

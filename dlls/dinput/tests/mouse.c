@@ -198,6 +198,14 @@ static void test_acquire(IDirectInputA *pDI, HWND hwnd)
     /* Granularity of Y axis should be 1! */
     ok(hr == S_OK && di_op.dwData == 1, "GetProperty(): %08x, dwData: %i but should be 1.\n", hr, di_op.dwData);
 
+    memset(&di_op, 0, sizeof(di_op));
+    di_op.diph.dwSize       = sizeof(DIPROPDWORD);
+    di_op.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    di_op.diph.dwHow        = DIPH_DEVICE;
+    di_op.diph.dwObj        = 0;
+    hr = IDirectInputDevice_GetProperty(pMouse, DIPROP_VIDPID, &di_op.diph);
+    ok(hr == DIERR_UNSUPPORTED, "got %08x\n", hr);
+
     IUnknown_Release(pMouse);
 
     DestroyWindow( hwnd2 );
