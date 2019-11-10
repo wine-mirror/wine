@@ -225,7 +225,9 @@ static void test_ExtCreateRegion(void)
     hrgn = ExtCreateRegion(NULL, sizeof(RGNDATAHEADER) - 1, &rgn.data);
     todo_wine
     ok(!hrgn, "ExtCreateRegion should fail\n");
-    ok(GetLastError() == 0xdeadbeef, "0xdeadbeef, got %u\n", GetLastError());
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+       broken(GetLastError() == 0xdeadbeef), "0xdeadbeef, got %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(NULL, sizeof(rgn), &rgn.data);
@@ -237,31 +239,11 @@ static void test_ExtCreateRegion(void)
     SetRectEmpty(&rgn.data.rdh.rcBound);
     memcpy(rgn.data.Buffer, &rc, sizeof(rc));
 
-    /* With a single rect this seems to work... */
-    SetLastError(0xdeadbeef);
-    hrgn = ExtCreateRegion(NULL, sizeof(RGNDATAHEADER) + sizeof(RECT) - 1, &rgn.data);
-    ok(hrgn != 0, "ExtCreateRegion error %u\n", GetLastError());
-    verify_region(hrgn, &rc);
-    DeleteObject(hrgn);
-
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(NULL, sizeof(rgn), &rgn.data);
     ok(hrgn != 0, "ExtCreateRegion error %u\n", GetLastError());
     verify_region(hrgn, &rc);
     DeleteObject(hrgn);
-
-    rgn.data.rdh.dwSize = sizeof(rgn.data.rdh) + 1;
-
-    SetLastError(0xdeadbeef);
-    hrgn = ExtCreateRegion(NULL, 1, &rgn.data);
-    ok(hrgn != 0 ||
-       broken(GetLastError() == 0xdeadbeef), /* NT4 */
-       "ExtCreateRegion error %u\n", GetLastError());
-    if(hrgn)
-    {
-        verify_region(hrgn, &rc);
-        DeleteObject(hrgn);
-    }
 
     xform.eM11 = 0.5; /* 50% width */
     xform.eM12 = 0.0;
@@ -269,8 +251,6 @@ static void test_ExtCreateRegion(void)
     xform.eM22 = 0.5; /* 50% height */
     xform.eDx = 20.0;
     xform.eDy = 40.0;
-
-    rgn.data.rdh.dwSize = sizeof(rgn.data.rdh);
 
     SetLastError(0xdeadbeef);
     hrgn = ExtCreateRegion(&xform, sizeof(rgn), &rgn.data);
