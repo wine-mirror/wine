@@ -277,7 +277,7 @@ static HRESULT WINAPI IPersistStreamImpl_GetClassID(IPersistStream *iface, CLSID
 
 static HRESULT WINAPI IPersistStreamImpl_IsDirty(IPersistStream *iface)
 {
-	return E_NOTIMPL;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
