@@ -317,6 +317,8 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
     /* Crashes
     ret = funcs->pfnObjectTrust(NULL);
      */
+
+    data.cbStruct = sizeof(data);
     data.pSigState = &sig_state;
     data.pWintrustData = &wintrust_data;
     data.padwTrustStepErrors =
