@@ -182,13 +182,10 @@ static void test_ExtCreateRegion(void)
     HRGN hrgn;
     XFORM xform;
 
-    if (0) /* crashes under Win9x */
-    {
-        SetLastError(0xdeadbeef);
-        hrgn = ExtCreateRegion(NULL, 0, NULL);
-        ok(!hrgn, "ExtCreateRegion should fail\n");
-        ok(GetLastError() == ERROR_INVALID_PARAMETER, "ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
-    }
+    SetLastError(0xdeadbeef);
+    hrgn = ExtCreateRegion(NULL, 0, NULL);
+    ok(!hrgn, "ExtCreateRegion should fail\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     rgn.data.rdh.dwSize = 0;
     rgn.data.rdh.iType = 0;
@@ -286,9 +283,7 @@ static void test_GetClipRgn(void)
 
     /* Test calling GetClipRgn with a valid device context and NULL region. */
     ret = GetClipRgn(hdc, NULL);
-    ok(ret == 0 ||
-       ret == -1 /* Win9x */,
-       "Expected GetClipRgn to return 0, got %d\n", ret);
+    ok(ret == 0, "Expected GetClipRgn to return 0, got %d\n", ret);
 
     /* Initialize the test regions. */
     hrgn = CreateRectRgn(100, 100, 100, 100);
@@ -340,9 +335,7 @@ static void test_GetClipRgn(void)
        "Expected SelectClipRgn to return SIMPLEREGION, got %d\n", ret);
 
     ret = GetClipRgn(hdc, NULL);
-    ok(ret == 0 ||
-       ret == -1 /* Win9x */,
-       "Expected GetClipRgn to return 0, got %d\n", ret);
+    ok(ret == 0, "Expected GetClipRgn to return 0, got %d\n", ret);
 
     ret = GetClipRgn(hdc, hrgn3);
     ok(ret == 0, "Expected GetClipRgn to return 0, got %d\n", ret);
