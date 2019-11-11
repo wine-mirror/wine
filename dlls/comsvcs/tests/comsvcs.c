@@ -42,7 +42,6 @@
 
 #define CHECK_EXPECT2(func) \
     do { \
-    trace(#func "\n"); \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
         called_ ## func = TRUE; \
     }while(0)
@@ -94,7 +93,6 @@ static HRESULT WINAPI driver_QueryInterface(IDispenserDriver *iface, REFIID riid
 
 static ULONG WINAPI driver_AddRef(IDispenserDriver *iface)
 {
-    trace("AddRef\n");
     return 2;
 }
 
