@@ -57,6 +57,7 @@ struct new_moniker
     IROTData IROTData_iface;
     LONG refcount;
     CLSID clsid;
+    WCHAR *progid;
 };
 
 static HRESULT new_moniker_parse_displayname(IBindCtx *pbc, LPOLESTR name, ULONG *eaten, IMoniker **ret);
@@ -481,7 +482,10 @@ static ULONG WINAPI new_moniker_Release(IMoniker* iface)
     TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        heap_free(moniker->progid);
         heap_free(moniker);
+    }
 
     return refcount;
 }
@@ -508,10 +512,10 @@ static HRESULT WINAPI new_moniker_IsDirty(IMoniker* iface)
 static HRESULT WINAPI new_moniker_Load(IMoniker *iface, IStream *stream)
 {
     struct new_moniker *moniker = impl_from_IMoniker(iface);
-    ULARGE_INTEGER pad;
+    DWORD progid_len = 0, len, pad = ~0u;
+    WCHAR *progid = NULL;
     CLSID clsid;
     HRESULT hr;
-    DWORD len;
 
     TRACE("%p, %p.\n", iface, stream);
 
@@ -519,29 +523,49 @@ static HRESULT WINAPI new_moniker_Load(IMoniker *iface, IStream *stream)
     if (FAILED(hr))
         return hr;
 
-    pad.QuadPart = 1;
-    hr = IStream_Read(stream, &pad, sizeof(pad), &len);
-    if (FAILED(hr))
-        return hr;
+    if (SUCCEEDED(hr))
+        hr = IStream_Read(stream, &progid_len, sizeof(progid_len), &len);
 
-    if (pad.QuadPart != 0)
-        return E_FAIL;
+    if (SUCCEEDED(hr) && progid_len)
+    {
+        if (!(progid = heap_alloc(progid_len)))
+           return E_OUTOFMEMORY;
+        hr = IStream_Read(stream, progid, progid_len, &len);
+    }
 
-    moniker->clsid = clsid;
+    /* Skip terminator. */
+    if (SUCCEEDED(hr))
+        hr = IStream_Read(stream, &pad, sizeof(pad), &len);
 
-    return S_OK;
+    if (SUCCEEDED(hr) && pad == 0)
+    {
+        moniker->clsid = clsid;
+        heap_free(moniker->progid);
+        moniker->progid = progid;
+        progid = NULL;
+    }
+
+    heap_free(progid);
+
+    return hr;
 }
 
 static HRESULT WINAPI new_moniker_Save(IMoniker *iface, IStream *stream, BOOL clear_dirty)
 {
     struct new_moniker *moniker = impl_from_IMoniker(iface);
-    static const ULARGE_INTEGER pad;
-    ULONG written;
+    ULONG written, pad = 0, progid_len = 0;
     HRESULT hr;
 
     TRACE("%p, %p, %d.\n", iface, stream, clear_dirty);
 
+    if (moniker->progid)
+        progid_len = lstrlenW(moniker->progid) * sizeof(WCHAR);
+
     hr = IStream_Write(stream, &moniker->clsid, sizeof(moniker->clsid), &written);
+    if (SUCCEEDED(hr))
+        hr = IStream_Write(stream, &progid_len, sizeof(progid_len), &written);
+    if (SUCCEEDED(hr) && progid_len)
+        hr = IStream_Write(stream, moniker->progid, progid_len, &written);
     if (SUCCEEDED(hr))
         hr = IStream_Write(stream, &pad, sizeof(pad), &written);
 
@@ -550,12 +574,16 @@ static HRESULT WINAPI new_moniker_Save(IMoniker *iface, IStream *stream, BOOL cl
 
 static HRESULT WINAPI new_moniker_GetSizeMax(IMoniker *iface, ULARGE_INTEGER *size)
 {
+    struct new_moniker *moniker = impl_from_IMoniker(iface);
+
     TRACE("%p, %p.\n", iface, size);
 
     if (!size)
         return E_POINTER;
 
     size->QuadPart = sizeof(CLSID) + 2 * sizeof(DWORD);
+    if (moniker->progid)
+        size->QuadPart += lstrlenW(moniker->progid) * sizeof(WCHAR);
 
     return S_OK;
 }
@@ -867,15 +895,21 @@ static HRESULT guid_from_string(const WCHAR *s, GUID *ret)
 static HRESULT new_moniker_parse_displayname(IBindCtx *pbc, LPOLESTR name, ULONG *eaten, IMoniker **ret)
 {
     struct new_moniker *moniker;
+    WCHAR *progid = NULL, *str;
     GUID guid;
 
     *ret = NULL;
 
     if (wcsnicmp(name, L"new:", 4))
         return MK_E_SYNTAX;
+    str = name + 4;
 
-    if (!guid_from_string(name + 4, &guid) && FAILED(CLSIDFromProgID(name + 4, &guid)))
-        return MK_E_SYNTAX;
+    if (!guid_from_string(str, &guid))
+    {
+        if (FAILED(CLSIDFromProgID(str, &guid)))
+            return MK_E_SYNTAX;
+        progid = str;
+    }
 
     moniker = heap_alloc_zero(sizeof(*moniker));
     if (!moniker)
@@ -885,6 +919,15 @@ static HRESULT new_moniker_parse_displayname(IBindCtx *pbc, LPOLESTR name, ULONG
     moniker->IROTData_iface.lpVtbl = &new_moniker_rotdata_vtbl;
     moniker->refcount = 1;
     moniker->clsid = guid;
+    if (progid)
+    {
+        if (!(moniker->progid = heap_alloc((lstrlenW(progid) + 1) * sizeof(WCHAR))))
+        {
+            IMoniker_Release(&moniker->IMoniker_iface);
+            return E_OUTOFMEMORY;
+        }
+        lstrcpyW(moniker->progid, progid);
+    }
 
     *ret = &moniker->IMoniker_iface;
 

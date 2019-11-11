@@ -293,23 +293,90 @@ static void create_dispenser(void)
     IDispenserManager_Release(dispenser);
 }
 
+static void test_new_moniker_serialize(const WCHAR *clsid, const WCHAR *progid, IMoniker *moniker)
+{
+    DWORD expected_size, progid_len = 0;
+    ULARGE_INTEGER size;
+    IStream *stream;
+    HGLOBAL hglobal;
+    CLSID guid;
+    HRESULT hr;
+    DWORD *ptr;
+
+    hr = IMoniker_GetSizeMax(moniker, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    expected_size = sizeof(GUID) + 2 * sizeof(DWORD);
+    if (progid)
+    {
+        progid_len = lstrlenW(progid) * sizeof(*progid);
+        expected_size += progid_len;
+    }
+
+    size.QuadPart = 0;
+    hr = IMoniker_GetSizeMax(moniker, &size);
+    ok(hr == S_OK, "Failed to get size, hr %#x.\n", hr);
+    ok(size.QuadPart == expected_size, "Unexpected size %s, expected %#x.\n", wine_dbgstr_longlong(size.QuadPart),
+            expected_size);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
+
+    hr = IMoniker_Save(moniker, stream, FALSE);
+    ok(hr == S_OK, "Failed to save moniker, hr %#x.\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &hglobal);
+    ok(hr == S_OK, "Failed to get a handle, hr %#x.\n", hr);
+
+    ptr = GlobalLock(hglobal);
+    ok(!!ptr, "Failed to get data pointer.\n");
+
+    hr = CLSIDFromString(clsid, &guid);
+    ok(hr == S_OK, "Failed to get CLSID, hr %#x.\n", hr);
+    ok(IsEqualGUID((GUID *)ptr, &guid), "Unexpected buffer content.\n");
+    ptr += sizeof(GUID)/sizeof(DWORD);
+
+    /* Serialization format:
+
+       GUID guid;
+       DWORD progid_len;
+       WCHAR progid[progid_len/2];
+       DWORD null;
+    */
+
+    if (progid)
+    {
+        ok(*ptr == progid_len, "Unexpected progid length.\n");
+        ptr++;
+        ok(!memcmp(ptr, progid, progid_len), "Unexpected progid.\n");
+        ptr += progid_len / sizeof(DWORD);
+    }
+    else
+    {
+        ok(*ptr == 0, "Unexpected progid length.\n");
+        ptr++;
+    }
+    ok(*ptr == 0, "Unexpected terminator.\n");
+
+    GlobalUnlock(hglobal);
+
+    IStream_Release(stream);
+}
+
 static void test_new_moniker(void)
 {
     IMoniker *moniker, *moniker2, *inverse, *class_moniker, *moniker_left;
     IRunningObjectTable *rot;
     IUnknown *obj, *obj2;
     BIND_OPTS2 bind_opts;
-    ULARGE_INTEGER size;
     DWORD moniker_type;
     IROTData *rot_data;
     IBindCtx *bindctx;
     FILETIME filetime;
     DWORD hash, eaten;
-    IStream *stream;
-    HGLOBAL hglobal;
     CLSID clsid;
     HRESULT hr;
-    void *ptr;
+    WCHAR *str;
 
     hr = CreateBindCtx(0, &bindctx);
     ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
@@ -424,36 +491,7 @@ todo_wine
     ok(obj == NULL, "Unexpected return value.\n");
 
     /* Serialization. */
-    hr = IMoniker_GetSizeMax(moniker, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
-
-    size.QuadPart = 0;
-    hr = IMoniker_GetSizeMax(moniker, &size);
-    ok(hr == S_OK, "Failed to get size, hr %#x.\n", hr);
-    ok(size.QuadPart == (sizeof(GUID) + 2 * sizeof(DWORD)), "Unexpected size %s.\n",
-            wine_dbgstr_longlong(size.QuadPart));
-
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
-
-    hr = IMoniker_Save(moniker, stream, FALSE);
-    ok(hr == S_OK, "Failed to save moniker, hr %#x.\n", hr);
-
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "Failed to get a handle, hr %#x.\n", hr);
-
-    ptr = GlobalLock(hglobal);
-    ok(!!ptr, "Failed to get data pointer.\n");
-
-    hr = CLSIDFromString(L"{20d04fe0-3aea-1069-a2d8-08002b30309d}", &clsid);
-    ok(hr == S_OK, "Failed to get CLSID, hr %#x.\n", hr);
-    ok(IsEqualGUID((GUID *)ptr, &clsid), "Unexpected buffer content.\n");
-    ok(*(DWORD *)((BYTE *)ptr + sizeof(GUID)) == 0, "Unexpected buffer content.\n");
-    ok(*(DWORD *)((BYTE *)ptr + sizeof(GUID) + sizeof(DWORD)) == 0, "Unexpected buffer content.\n");
-
-    GlobalUnlock(hglobal);
-
-    IStream_Release(stream);
+    test_new_moniker_serialize(L"{20d04fe0-3aea-1069-a2d8-08002b30309d}", NULL, moniker);
 
     hr = IMoniker_IsDirty(moniker);
     ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
@@ -482,6 +520,15 @@ todo_wine
     hr = MkParseDisplayName(bindctx, L"new:msxml2.domdocument", &eaten, &moniker);
     ok(hr == S_OK, "Failed to parse display name, hr %#x.\n", hr);
     ok(eaten, "Unexpected eaten length %u.\n", eaten);
+
+    hr = CLSIDFromProgID(L"msxml2.domdocument", &clsid);
+    ok(hr == S_OK, "Failed to get clsid, hr %#x.\n", hr);
+
+    hr = StringFromCLSID(&clsid, &str);
+    ok(hr == S_OK, "Failed to get guid string, hr %#x.\n", hr);
+
+    test_new_moniker_serialize(str, L"msxml2.domdocument", moniker);
+    CoTaskMemFree(str);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&obj);
     ok(hr == S_OK, "Failed to bind to object, hr %#x.\n", hr);
