@@ -217,7 +217,7 @@ static void release_script(script_ctx_t *ctx)
     clear_ei(&ctx->ei);
 
     for(i = 0; i < ctx->global_vars_cnt; i++)
-        VariantClear(&ctx->global_vars[i]->v);
+        release_dynamic_var(ctx->global_vars[i]);
 
     heap_free(ctx->global_vars);
     heap_free(ctx->global_funcs);

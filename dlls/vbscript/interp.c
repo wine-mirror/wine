@@ -2243,22 +2243,22 @@ OP_LIST
 #undef X
 };
 
-void release_dynamic_vars(dynamic_var_t *var)
+void release_dynamic_var(dynamic_var_t *var)
 {
-    while(var) {
-        VariantClear(&var->v);
-        if(var->array)
-            SafeArrayDestroy(var->array);
-        var = var->next;
-    }
+    VariantClear(&var->v);
+    if(var->array)
+        SafeArrayDestroy(var->array);
 }
 
 static void release_exec(exec_ctx_t *ctx)
 {
+    dynamic_var_t *var;
     unsigned i;
 
     VariantClear(&ctx->ret_val);
-    release_dynamic_vars(ctx->dynamic_vars);
+
+    for(var = ctx->dynamic_vars; var; var = var->next)
+        release_dynamic_var(var);
 
     if(ctx->vbthis)
         IDispatchEx_Release(&ctx->vbthis->IDispatchEx_iface);
