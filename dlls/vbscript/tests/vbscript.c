@@ -58,6 +58,9 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #define SET_EXPECT(func) \
     expect_ ## func = 1
 
+#define SET_EXPECT_MULTI(func, num) \
+    expect_ ## func = num
+
 #define CHECK_EXPECT2(func) \
     do { \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
@@ -73,6 +76,12 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #define CHECK_CALLED(func) \
     do { \
         ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = 0; \
+    }while(0)
+
+#define CHECK_CALLED_MULTI(func, num) \
+    do { \
+        ok(called_ ## func == num, "expected " #func " %d times (got %d)\n", num, called_ ## func); \
         expect_ ## func = called_ ## func = 0; \
     }while(0)
 
@@ -622,6 +631,233 @@ static void test_scriptdisp(void)
 
     ref = IActiveScript_Release(vbscript);
     ok(!ref, "ref = %d\n", ref);
+}
+
+static void test_code_persistence(void)
+{
+    IActiveScriptParse *parser;
+    IDispatchEx *script_disp;
+    IActiveScript *vbscript;
+    VARIANT var;
+    HRESULT hr;
+    DISPID id;
+    ULONG ref;
+
+    vbscript = create_vbscript();
+
+    hr = IActiveScript_QueryInterface(vbscript, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hr == S_OK, "Could not get IActiveScriptParse iface: %08x\n", hr);
+    test_state(vbscript, SCRIPTSTATE_UNINITIALIZED);
+    test_safety(vbscript);
+
+    SET_EXPECT(GetLCID);
+    hr = IActiveScript_SetScriptSite(vbscript, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08x\n", hr);
+    CHECK_CALLED(GetLCID);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hr = IActiveScriptParse_InitNew(parser);
+    ok(hr == S_OK, "InitNew failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    test_state(vbscript, SCRIPTSTATE_INITIALIZED);
+
+    hr = IActiveScriptParse_ParseScriptText(parser, L""
+        "x = 1\n"
+        "dim y\ny = 2\n",
+        NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+
+    hr = IActiveScriptParse_ParseScriptText(parser, L""
+        "dim z\n"
+        "y = 42\n"
+        "var = 10\n",
+        NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+
+    /* Pending code does not add identifiers to the global scope */
+    script_disp = get_script_dispatch(vbscript);
+    id = 0;
+    get_disp_id(script_disp, "x", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    id = 0;
+    get_disp_id(script_disp, "y", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    id = 0;
+    get_disp_id(script_disp, "z", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    IDispatchEx_Release(script_disp);
+
+    /* Uninitialized state removes code without SCRIPTTEXT_ISPERSISTENT */
+    SET_EXPECT(OnStateChange_UNINITIALIZED);
+    hr = IActiveScript_SetScriptState(vbscript, SCRIPTSTATE_UNINITIALIZED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_UNINITIALIZED);
+    test_no_script_dispatch(vbscript);
+
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hr = IActiveScript_SetScriptSite(vbscript, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08x\n", hr);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    hr = IActiveScriptParse_ParseScriptText(parser, L"var = 20\n", NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    SET_EXPECT_MULTI(OnEnterScript, 2);
+    SET_EXPECT_MULTI(OnLeaveScript, 2);
+    hr = IActiveScript_SetScriptState(vbscript, SCRIPTSTATE_CONNECTED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+    CHECK_CALLED_MULTI(OnEnterScript, 2);
+    CHECK_CALLED_MULTI(OnLeaveScript, 2);
+    test_state(vbscript, SCRIPTSTATE_CONNECTED);
+
+    script_disp = get_script_dispatch(vbscript);
+    id = 0;
+    get_disp_id(script_disp, "x", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    id = 0;
+    get_disp_id(script_disp, "y", S_OK, &id);
+    ok(id != -1, "id = -1\n");
+    id = 0;
+    get_disp_id(script_disp, "z", S_OK, &id);
+    ok(id != -1, "id = -1\n");
+    IDispatchEx_Release(script_disp);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parser, L"y", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    ok(V_VT(&var) == VT_I2 && V_I2(&var) == 42, "V_VT(y) = %d, V_I2(y) = %d\n", V_VT(&var), V_I2(&var));
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parser, L"var", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    ok(V_VT(&var) == VT_I2 && V_I2(&var) == 20, "V_VT(var) = %d, V_I2(var) = %d\n", V_VT(&var), V_I2(&var));
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    /* Uninitialized state does not remove persistent code, even if it was executed */
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_UNINITIALIZED);
+    hr = IActiveScript_SetScriptState(vbscript, SCRIPTSTATE_UNINITIALIZED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_UNINITIALIZED);
+    test_no_script_dispatch(vbscript);
+
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hr = IActiveScript_SetScriptSite(vbscript, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08x\n", hr);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    script_disp = get_script_dispatch(vbscript);
+    id = 0;
+    get_disp_id(script_disp, "z", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    IDispatchEx_Release(script_disp);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScript_SetScriptState(vbscript, SCRIPTSTATE_CONNECTED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    test_state(vbscript, SCRIPTSTATE_CONNECTED);
+
+    script_disp = get_script_dispatch(vbscript);
+    id = 0;
+    get_disp_id(script_disp, "z", S_OK, &id);
+    ok(id != -1, "id = -1\n");
+    IDispatchEx_Release(script_disp);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parser, L"y", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    ok(V_VT(&var) == VT_I2 && V_I2(&var) == 42, "V_VT(y) = %d, V_I2(y) = %d\n", V_VT(&var), V_I2(&var));
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parser, L"var", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    ok(V_VT(&var) == VT_I2 && V_I2(&var) == 10, "V_VT(var) = %d, V_I2(var) = %d\n", V_VT(&var), V_I2(&var));
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_UNINITIALIZED);
+    hr = IActiveScript_SetScriptState(vbscript, SCRIPTSTATE_UNINITIALIZED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_UNINITIALIZED);
+
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hr = IActiveScript_SetScriptSite(vbscript, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08x\n", hr);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    hr = IActiveScriptParse_ParseScriptText(parser, L"dim y\ny = 2\n", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+
+    /* Closing the script engine removes all code (even if it's pending and persistent) */
+    SET_EXPECT(OnStateChange_CLOSED);
+    hr = IActiveScript_Close(vbscript);
+    ok(hr == S_OK, "Close failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_CLOSED);
+    test_state(vbscript, SCRIPTSTATE_CLOSED);
+    test_no_script_dispatch(vbscript);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(GetLCID);
+    hr = IActiveScript_SetScriptSite(vbscript, &ActiveScriptSite);
+    ok(hr == S_OK, "SetScriptSite failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(GetLCID);
+    test_state(vbscript, SCRIPTSTATE_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hr = IActiveScript_SetScriptState(vbscript, SCRIPTSTATE_CONNECTED);
+    ok(hr == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hr);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+    test_state(vbscript, SCRIPTSTATE_CONNECTED);
+
+    script_disp = get_script_dispatch(vbscript);
+    id = 0;
+    get_disp_id(script_disp, "y", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    id = 0;
+    get_disp_id(script_disp, "z", DISP_E_UNKNOWNNAME, &id);
+    ok(id == -1, "id = %d, expected -1\n", id);
+    IDispatchEx_Release(script_disp);
+
+    IActiveScriptParse_Release(parser);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_CLOSED);
+    ref = IActiveScript_Release(vbscript);
+    ok(!ref, "ref = %d\n", ref);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_CLOSED);
 }
 
 static void test_vbscript(void)
@@ -1249,6 +1485,7 @@ START_TEST(vbscript)
         test_vbscript_initializing();
         test_named_items();
         test_scriptdisp();
+        test_code_persistence();
         test_RegExp();
         test_RegExp_Replace();
     }else {
