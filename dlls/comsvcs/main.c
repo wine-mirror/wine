@@ -551,9 +551,42 @@ static HRESULT WINAPI new_moniker_GetSizeMax(IMoniker *iface, ULARGE_INTEGER *si
 static HRESULT WINAPI new_moniker_BindToObject(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
         REFIID riid, void **ret)
 {
-    FIXME("%p, %p, %p, %s, %p.\n", iface, pbc, pmkToLeft, debugstr_guid(riid), ret);
+    struct new_moniker *moniker = impl_from_IMoniker(iface);
+    IClassActivator *activator;
+    IClassFactory *factory;
+    BIND_OPTS2 bindopts;
+    MULTI_QI qi;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p, %s, %p.\n", iface, pbc, pmkToLeft, debugstr_guid(riid), ret);
+
+    bindopts.cbStruct = sizeof(bindopts);
+    if (FAILED(hr = IBindCtx_GetBindOptions(pbc, (BIND_OPTS *)&bindopts)))
+        return hr;
+
+    if (!pmkToLeft)
+    {
+        qi.pIID = riid;
+        qi.pItf = NULL;
+        qi.hr = S_OK;
+        hr = CoCreateInstanceEx(&moniker->clsid, NULL, bindopts.dwClassContext, bindopts.pServerInfo, 1, &qi);
+        *ret = qi.pItf;
+    }
+    else
+    {
+        if (SUCCEEDED(hr = IMoniker_BindToObject(pmkToLeft, pbc, NULL, &IID_IClassActivator, (void **)&activator)))
+        {
+            hr = IClassActivator_GetClassObject(activator, &moniker->clsid, bindopts.dwClassContext, bindopts.locale, riid, ret);
+            IClassActivator_Release(activator);
+        }
+        else if (SUCCEEDED(hr = IMoniker_BindToObject(pmkToLeft, pbc, NULL, &IID_IClassFactory, (void **)&factory)))
+        {
+            hr = IClassFactory_CreateInstance(factory, NULL, riid, ret);
+            IClassFactory_Release(factory);
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI new_moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft, REFIID riid,

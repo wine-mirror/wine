@@ -352,10 +352,8 @@ todo_wine
     ok(hr == MK_E_UNAVAILABLE, "Unexpected hr %#x.\n", hr);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&obj);
-todo_wine
     ok(hr == S_OK, "Failed to bind to object, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IUnknown_Release(obj);
+    IUnknown_Release(obj);
 
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&obj);
 todo_wine
@@ -423,10 +421,8 @@ todo_wine
     bind_opts.dwClassContext = CLSCTX_INPROC_SERVER;
 
     hr = CoGetObject(L"new:msxml2.domdocument", (BIND_OPTS *)&bind_opts, &IID_IXMLDOMDocument, (void **)&obj);
-todo_wine
     ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IUnknown_Release(obj);
+    IUnknown_Release(obj);
 
     IBindCtx_Release(bindctx);
 }
