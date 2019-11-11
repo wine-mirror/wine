@@ -803,7 +803,6 @@ struct rawinput_device
 /* Execute a process, replacing the current one */
 @REQ(exec_process)
     int          socket_fd;      /* file descriptor for process socket */
-    obj_handle_t exe_file;       /* file handle for main exe */
     client_cpu_t cpu;            /* CPU that the new process will use */
 @END
 

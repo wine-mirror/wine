@@ -1265,7 +1265,6 @@ static void dump_new_process_reply( const struct new_process_reply *req )
 static void dump_exec_process_request( const struct exec_process_request *req )
 {
     fprintf( stderr, " socket_fd=%d", req->socket_fd );
-    fprintf( stderr, ", exe_file=%04x", req->exe_file );
     dump_client_cpu( ", cpu=", &req->cpu );
 }
 

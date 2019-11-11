@@ -1430,8 +1430,7 @@ static NTSTATUS alloc_object_attributes( const SECURITY_ATTRIBUTES *attr, struct
  *
  * Replace the existing process by exec'ing a new one.
  */
-static BOOL replace_process( HANDLE handle, const RTL_USER_PROCESS_PARAMETERS *params,
-                             const pe_image_info_t *pe_info )
+static BOOL replace_process( const RTL_USER_PROCESS_PARAMETERS *params, const pe_image_info_t *pe_info )
 {
     NTSTATUS status;
     int socketfd[2];
@@ -1454,7 +1453,6 @@ static BOOL replace_process( HANDLE handle, const RTL_USER_PROCESS_PARAMETERS *p
     SERVER_START_REQ( exec_process )
     {
         req->socket_fd      = socketfd[1];
-        req->exe_file       = wine_server_obj_handle( handle );
         req->cpu            = pe_info->cpu;
         status = wine_server_call( req );
     }
@@ -2124,11 +2122,11 @@ static void exec_process( LPCWSTR name )
                debugstr_w(name), is_64bit_arch(pe_info.cpu) ? 64 : 32,
                wine_dbgstr_longlong(pe_info.base), wine_dbgstr_longlong(pe_info.base + pe_info.map_size),
                cpu_names[pe_info.cpu] );
-        replace_process( hFile, params, &pe_info );
+        replace_process( params, &pe_info );
         break;
     case BINARY_UNIX_LIB:
         TRACE( "%s is a Unix library, starting as Winelib app\n", debugstr_w(name) );
-        replace_process( hFile, params, &pe_info );
+        replace_process( params, &pe_info );
         break;
     case BINARY_UNKNOWN:
         /* check for .com or .pif extension */
@@ -2138,7 +2136,7 @@ static void exec_process( LPCWSTR name )
     case BINARY_WIN16:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
         if (!(new_params = get_vdm_params( params, &pe_info ))) break;
-        replace_process( 0, new_params, &pe_info );
+        replace_process( new_params, &pe_info );
         RtlDestroyProcessParameters( new_params );
         break;
     default:

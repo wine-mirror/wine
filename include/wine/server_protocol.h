@@ -795,8 +795,8 @@ struct exec_process_request
 {
     struct request_header __header;
     int          socket_fd;
-    obj_handle_t exe_file;
     client_cpu_t cpu;
+    char __pad_20[4];
 };
 struct exec_process_reply
 {
@@ -6691,6 +6691,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 588
+#define SERVER_PROTOCOL_VERSION 589
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
