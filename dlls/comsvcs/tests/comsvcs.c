@@ -58,6 +58,15 @@ DEFINE_EXPECT(driver_DestroyResource);
 DEFINE_EXPECT(driver_ResetResource);
 DEFINE_EXPECT(driver_Release);
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+}
+
 HRESULT driver_DestroyResource_ret = S_OK;
 
 static HRESULT WINAPI driver_QueryInterface(IDispenserDriver *iface, REFIID riid, void **object)
@@ -270,6 +279,7 @@ static void create_dispenser(void)
 static void test_new_moniker(void)
 {
     IMoniker *moniker, *moniker2, *inverse, *class_moniker;
+    IRunningObjectTable *rot;
     IUnknown *obj, *obj2;
     BIND_OPTS2 bind_opts;
     ULARGE_INTEGER size;
@@ -422,6 +432,32 @@ todo_wine
 
     hr = CoGetObject(L"new:msxml2.domdocument", (BIND_OPTS *)&bind_opts, &IID_IXMLDOMDocument, (void **)&obj);
     ok(hr == S_OK, "Failed to create object, hr %#x.\n", hr);
+    IUnknown_Release(obj);
+
+    IBindCtx_Release(bindctx);
+
+    /* Returned object is not bound to context. */
+    hr = CreateBindCtx(0, &bindctx);
+    ok(hr == S_OK, "Failed to create bind context, hr %#x.\n", hr);
+
+    eaten = 0;
+    hr = MkParseDisplayName(bindctx, L"new:msxml2.domdocument", &eaten, &moniker);
+    ok(hr == S_OK, "Failed to parse display name, hr %#x.\n", hr);
+    ok(eaten, "Unexpected eaten length %u.\n", eaten);
+
+    hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&obj);
+    ok(hr == S_OK, "Failed to bind to object, hr %#x.\n", hr);
+    EXPECT_REF(obj, 1);
+
+    hr = IBindCtx_GetRunningObjectTable(bindctx, &rot);
+    ok(hr == S_OK, "Failed to get rot, hr %#x.\n", hr);
+
+    hr = IRunningObjectTable_GetObject(rot, moniker, &obj2);
+todo_wine
+    ok(hr == MK_E_UNAVAILABLE, "Unexpected hr %#x.\n", hr);
+
+    IRunningObjectTable_Release(rot);
+
     IUnknown_Release(obj);
 
     IBindCtx_Release(bindctx);
