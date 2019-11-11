@@ -301,6 +301,7 @@ static void test_new_moniker(void)
     BIND_OPTS2 bind_opts;
     ULARGE_INTEGER size;
     DWORD moniker_type;
+    IROTData *rot_data;
     IBindCtx *bindctx;
     FILETIME filetime;
     DWORD hash, eaten;
@@ -317,6 +318,10 @@ static void test_new_moniker(void)
     hr = MkParseDisplayName(bindctx, L"new:20d04fe0-3aea-1069-a2d8-08002b30309d", &eaten, &moniker);
     ok(hr == S_OK, "Failed to parse display name, hr %#x.\n", hr);
     ok(eaten == 40, "Unexpected eaten length %u.\n", eaten);
+
+    hr = IMoniker_QueryInterface(moniker, &IID_IROTData, (void **)&rot_data);
+    ok(hr == S_OK, "Failed to get IROTData, hr %#x.\n", hr);
+    IROTData_Release(rot_data);
 
     eaten = 0;
     hr = IMoniker_ParseDisplayName(moniker, bindctx, NULL, (WCHAR *)L"new:20d04fe0-3aea-1069-a2d8-08002b30309d",

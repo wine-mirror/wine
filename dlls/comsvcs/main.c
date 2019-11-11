@@ -54,6 +54,7 @@ typedef struct holder
 struct new_moniker
 {
     IMoniker IMoniker_iface;
+    IROTData IROTData_iface;
     LONG refcount;
     CLSID clsid;
 };
@@ -73,6 +74,11 @@ static inline holder *impl_from_IHolder(IHolder *iface)
 static struct new_moniker *impl_from_IMoniker(IMoniker *iface)
 {
     return CONTAINING_RECORD(iface, struct new_moniker, IMoniker_iface);
+}
+
+static struct new_moniker *impl_from_IROTData(IROTData *iface)
+{
+    return CONTAINING_RECORD(iface, struct new_moniker, IROTData_iface);
 }
 
 static HRESULT WINAPI holder_QueryInterface(IHolder *iface, REFIID riid, void **object)
@@ -429,6 +435,8 @@ static const IClassFactoryVtbl comsvcscf_vtbl =
 
 static HRESULT WINAPI new_moniker_QueryInterface(IMoniker* iface, REFIID riid, void **obj)
 {
+    struct new_moniker *moniker = impl_from_IMoniker(iface);
+
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     *obj = NULL;
@@ -439,6 +447,10 @@ static HRESULT WINAPI new_moniker_QueryInterface(IMoniker* iface, REFIID riid, v
         IsEqualIID(&IID_IMoniker, riid))
     {
         *obj = iface;
+    }
+    else if (IsEqualIID(&IID_IROTData, riid))
+    {
+        *obj = &moniker->IROTData_iface;
     }
 
     if (*obj)
@@ -738,6 +750,39 @@ static const IMonikerVtbl new_moniker_vtbl =
     new_moniker_IsSystemMoniker
 };
 
+static HRESULT WINAPI new_moniker_rotdata_QueryInterface(IROTData *iface, REFIID riid, void **obj)
+{
+    struct new_moniker *moniker = impl_from_IROTData(iface);
+    return IMoniker_QueryInterface(&moniker->IMoniker_iface, riid, obj);
+}
+
+static ULONG WINAPI new_moniker_rotdata_AddRef(IROTData *iface)
+{
+    struct new_moniker *moniker = impl_from_IROTData(iface);
+    return IMoniker_AddRef(&moniker->IMoniker_iface);
+}
+
+static ULONG WINAPI new_moniker_rotdata_Release(IROTData *iface)
+{
+    struct new_moniker *moniker = impl_from_IROTData(iface);
+    return IMoniker_Release(&moniker->IMoniker_iface);
+}
+
+static HRESULT WINAPI new_moniker_rotdata_GetComparisonData(IROTData *iface, byte *data, ULONG data_len, ULONG *length)
+{
+    FIXME("%p, %p, %u, %p.\n", iface, data, data_len, length);
+
+    return E_NOTIMPL;
+}
+
+static const IROTDataVtbl new_moniker_rotdata_vtbl =
+{
+    new_moniker_rotdata_QueryInterface,
+    new_moniker_rotdata_AddRef,
+    new_moniker_rotdata_Release,
+    new_moniker_rotdata_GetComparisonData,
+};
+
 static const BYTE guid_conv_table[256] =
 {
     0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x00 */
@@ -837,6 +882,7 @@ static HRESULT new_moniker_parse_displayname(IBindCtx *pbc, LPOLESTR name, ULONG
         return E_OUTOFMEMORY;
 
     moniker->IMoniker_iface.lpVtbl = &new_moniker_vtbl;
+    moniker->IROTData_iface.lpVtbl = &new_moniker_rotdata_vtbl;
     moniker->refcount = 1;
     moniker->clsid = guid;
 
