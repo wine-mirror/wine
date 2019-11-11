@@ -295,7 +295,7 @@ static void create_dispenser(void)
 
 static void test_new_moniker(void)
 {
-    IMoniker *moniker, *moniker2, *inverse, *class_moniker;
+    IMoniker *moniker, *moniker2, *inverse, *class_moniker, *moniker_left;
     IRunningObjectTable *rot;
     IUnknown *obj, *obj2;
     BIND_OPTS2 bind_opts;
@@ -355,6 +355,22 @@ static void test_new_moniker(void)
     IUnknown_Release(obj);
 
     IMoniker_Release(class_moniker);
+
+    /* Reducing. */
+    moniker_left = (void *)0xdeadbeef;
+    hr = IMoniker_Reduce(moniker, bindctx, MKRREDUCE_ONE, &moniker_left, &moniker2);
+    ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
+    ok(moniker_left == (void *)0xdeadbeef, "Unexpected left moniker.\n");
+    ok(moniker2 == moniker, "Unexpected returned moniker.\n");
+    IMoniker_Release(moniker2);
+
+    hr = IMoniker_Reduce(moniker, bindctx, MKRREDUCE_ONE, NULL, &moniker2);
+    ok(hr == MK_S_REDUCED_TO_SELF, "Unexpected hr %#x.\n", hr);
+    ok(moniker2 == moniker, "Unexpected returned moniker.\n");
+    IMoniker_Release(moniker2);
+
+    hr = IMoniker_Reduce(moniker, bindctx, MKRREDUCE_ONE, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     /* Hashing */
     hash = 0;

@@ -600,9 +600,15 @@ static HRESULT WINAPI new_moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, 
 static HRESULT WINAPI new_moniker_Reduce(IMoniker *iface, IBindCtx *pbc, DWORD flags, IMoniker **ppmkToLeft,
         IMoniker **ret)
 {
-    FIXME("%p, %p, %d, %p, %p.\n", iface, pbc, flags, ppmkToLeft, ret);
+    TRACE("%p, %p, %d, %p, %p.\n", iface, pbc, flags, ppmkToLeft, ret);
 
-    return E_NOTIMPL;
+    if (!ret)
+        return E_POINTER;
+
+    *ret = iface;
+    IMoniker_AddRef(iface);
+
+    return MK_S_REDUCED_TO_SELF;
 }
 
 static HRESULT WINAPI new_moniker_ComposeWith(IMoniker *iface, IMoniker *mkRight, BOOL fOnlyIfNotGeneric,
