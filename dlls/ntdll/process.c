@@ -39,6 +39,10 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#include <pthread.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -1036,6 +1040,55 @@ static const char *get_alternate_loader( char **ret_env )
 }
 
 
+#ifdef __APPLE__
+/***********************************************************************
+ *           terminate_main_thread
+ *
+ * On some versions of Mac OS X, the execve system call fails with
+ * ENOTSUP if the process has multiple threads.  Wine is always multi-
+ * threaded on Mac OS X because it specifically reserves the main thread
+ * for use by the system frameworks (see apple_main_thread() in
+ * libs/wine/loader.c).  So, when we need to exec without first forking,
+ * we need to terminate the main thread first.  We do this by installing
+ * a custom run loop source onto the main run loop and signaling it.
+ * The source's "perform" callback is pthread_exit and it will be
+ * executed on the main thread, terminating it.
+ *
+ * Returns TRUE if there's still hope the main thread has terminated or
+ * will soon.  Return FALSE if we've given up.
+ */
+static BOOL terminate_main_thread(void)
+{
+    static int delayms;
+
+    if (!delayms)
+    {
+        CFRunLoopSourceContext source_context = { 0 };
+        CFRunLoopSourceRef source;
+
+        source_context.perform = pthread_exit;
+        if (!(source = CFRunLoopSourceCreate( NULL, 0, &source_context )))
+            return FALSE;
+
+        CFRunLoopAddSource( CFRunLoopGetMain(), source, kCFRunLoopCommonModes );
+        CFRunLoopSourceSignal( source );
+        CFRunLoopWakeUp( CFRunLoopGetMain() );
+        CFRelease( source );
+
+        delayms = 20;
+    }
+
+    if (delayms > 1000)
+        return FALSE;
+
+    usleep(delayms * 1000);
+    delayms *= 2;
+
+    return TRUE;
+}
+#endif
+
+
 /***********************************************************************
  *           set_stdio_fd
  */
@@ -1132,6 +1185,50 @@ static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int soc
     RtlFreeHeap( GetProcessHeap(), 0, wineloader );
     RtlFreeHeap( GetProcessHeap(), 0, argv );
     return status;
+}
+
+
+/***********************************************************************
+ *           exec_loader
+ */
+static NTSTATUS exec_loader( const UNICODE_STRING *cmdline, int socketfd, const pe_image_info_t *pe_info )
+{
+    char *wineloader = NULL;
+    const char *loader = NULL;
+    char **argv;
+    char preloader_reserve[64], socket_env[64];
+    ULONGLONG res_start = pe_info->base;
+    ULONGLONG res_end   = pe_info->base + pe_info->map_size;
+
+    if (!(argv = build_argv( cmdline, 1 ))) return STATUS_NO_MEMORY;
+
+    if (!is_win64 ^ !is_64bit_arch( pe_info->cpu ))
+        loader = get_alternate_loader( &wineloader );
+
+    /* Reset signals that we previously set to SIG_IGN */
+    signal( SIGPIPE, SIG_DFL );
+
+    sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
+    sprintf( preloader_reserve, "WINEPRELOADRESERVE=%x%08x-%x%08x",
+             (ULONG)(res_start >> 32), (ULONG)res_start, (ULONG)(res_end >> 32), (ULONG)res_end );
+
+    putenv( preloader_reserve );
+    putenv( socket_env );
+    if (wineloader) putenv( wineloader );
+
+    do
+    {
+        wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
+    }
+#ifdef __APPLE__
+    while (errno == ENOTSUP && terminate_main_thread());
+#else
+    while (0);
+#endif
+
+    RtlFreeHeap( GetProcessHeap(), 0, wineloader );
+    RtlFreeHeap( GetProcessHeap(), 0, argv );
+    return STATUS_INVALID_IMAGE_FORMAT;
 }
 
 
@@ -1364,6 +1461,88 @@ static char *get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
     RtlFreeUnicodeString( &nt_name );
     if (status && status != STATUS_NO_SUCH_FILE) return NULL;
     return unix_name.Buffer;
+}
+
+
+/***********************************************************************
+ *           restart_process
+ */
+NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
+{
+    static const WCHAR argsW[] = {'%','s','%','s',' ','-','-','a','p','p','-','n','a','m','e',' ','"','%','s','"',' ','%','s',0};
+    static const WCHAR winevdm[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
+    static const WCHAR comW[] = {'.','c','o','m',0};
+    static const WCHAR pifW[] = {'.','p','i','f',0};
+
+    int socketfd[2];
+    WCHAR *p, *cmdline;
+    UNICODE_STRING strW;
+    pe_image_info_t pe_info;
+    HANDLE handle;
+
+    /* check for .com or .pif extension */
+    if (status == STATUS_INVALID_IMAGE_NOT_MZ &&
+        (p = strrchrW( params->ImagePathName.Buffer, '.' )) &&
+        (!strcmpiW( p, comW ) || !strcmpiW( p, pifW )))
+        status = STATUS_INVALID_IMAGE_WIN_16;
+
+    switch (status)
+    {
+    case STATUS_CONFLICTING_ADDRESSES:
+    case STATUS_NO_MEMORY:
+    case STATUS_INVALID_IMAGE_FORMAT:
+    case STATUS_INVALID_IMAGE_NOT_MZ:
+        if (getenv( "WINEPRELOADRESERVE" ))
+            return status;
+        if ((status = RtlDosPathNameToNtPathName_U_WithStatus( params->ImagePathName.Buffer, &strW,
+                                                               NULL, NULL )))
+            return status;
+        if ((status = get_pe_file_info( &strW, OBJ_CASE_INSENSITIVE, &handle, &pe_info )))
+            return status;
+        strW = params->CommandLine;
+        break;
+    case STATUS_INVALID_IMAGE_WIN_16:
+    case STATUS_INVALID_IMAGE_NE_FORMAT:
+    case STATUS_INVALID_IMAGE_PROTECT:
+        cmdline = RtlAllocateHeap( GetProcessHeap(), 0,
+                                   (strlenW(system_dir) + strlenW(winevdm) + 16 +
+                                    strlenW(params->ImagePathName.Buffer) +
+                                    strlenW(params->CommandLine.Buffer)) * sizeof(WCHAR));
+        if (!cmdline) return STATUS_NO_MEMORY;
+        sprintfW( cmdline, argsW, (is_win64 || is_wow64) ? syswow64_dir : system_dir,
+                  winevdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );
+        RtlInitUnicodeString( &strW, cmdline );
+        memset( &pe_info, 0, sizeof(pe_info) );
+        pe_info.cpu = CPU_x86;
+        break;
+    default:
+        return status;
+    }
+
+    /* exec the new process */
+
+    if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1) return STATUS_TOO_MANY_OPENED_FILES;
+#ifdef SO_PASSCRED
+    else
+    {
+        int enable = 1;
+        setsockopt( socketfd[0], SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
+    }
+#endif
+    wine_server_send_fd( socketfd[1] );
+    close( socketfd[1] );
+
+    SERVER_START_REQ( exec_process )
+    {
+        req->socket_fd = socketfd[1];
+        req->cpu       = pe_info.cpu;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    if (!status) status = exec_loader( &strW, socketfd[0], &pe_info );
+    close( socketfd[0] );
+    return status;
 }
 
 

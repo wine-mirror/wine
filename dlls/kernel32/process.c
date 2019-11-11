@@ -104,8 +104,6 @@ static WCHAR winevdm[] = {'C',':','\\','w','i','n','d','o','w','s',
 
 static const char * const cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
 
-static void exec_process( LPCWSTR name );
-
 /* return values for get_binary_info */
 enum binary_type
 {
@@ -580,9 +578,7 @@ void WINAPI start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
 void * CDECL __wine_kernel_init(void)
 {
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
-    static const WCHAR dotW[] = {'.',0};
 
-    WCHAR *p, main_exe_name[MAX_PATH+1];
     PEB *peb = NtCurrentTeb()->Peb;
     RTL_USER_PROCESS_PARAMETERS *params = peb->ProcessParameters;
 
@@ -597,52 +593,7 @@ void * CDECL __wine_kernel_init(void)
     LOCALE_Init();
     init_windows_dirs();
     convert_old_config();
-
-    /* if there's no extension, append a dot to prevent LoadLibrary from appending .dll */
-    strcpyW( main_exe_name, peb->ProcessParameters->ImagePathName.Buffer );
-    p = strrchrW( main_exe_name, '.' );
-    if (!p || strchrW( p, '/' ) || strchrW( p, '\\' )) strcatW( main_exe_name, dotW );
-
-    TRACE( "starting process name=%s argv[0]=%s\n",
-           debugstr_w(main_exe_name), debugstr_w(__wine_main_wargv[0]) );
-
     set_library_argv( __wine_main_wargv );
-
-    if (!peb->ImageBaseAddress &&
-        !(peb->ImageBaseAddress = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES )))
-    {
-        DWORD_PTR args[1];
-        WCHAR msgW[1024];
-        char msg[1024];
-        DWORD error = GetLastError();
-
-        /* if Win16/DOS format, or unavailable address, exec a new process with the proper setup */
-        if (error == ERROR_BAD_EXE_FORMAT ||
-            error == ERROR_INVALID_ADDRESS ||
-            error == ERROR_NOT_ENOUGH_MEMORY)
-        {
-            if (!getenv("WINEPRELOADRESERVE")) exec_process( main_exe_name );
-            /* if we get back here, it failed */
-        }
-        else if (error == ERROR_MOD_NOT_FOUND)
-        {
-            if (!strcmpiW( main_exe_name, winevdm ) && __wine_main_argc > 3)
-            {
-                /* args 1 and 2 are --app-name full_path */
-                MESSAGE( "wine: could not run %s: 16-bit/DOS support missing\n",
-                         debugstr_w(__wine_main_wargv[3]) );
-                ExitProcess( ERROR_BAD_EXE_FORMAT );
-            }
-            MESSAGE( "wine: cannot find %s\n", debugstr_w(main_exe_name) );
-            ExitProcess( ERROR_FILE_NOT_FOUND );
-        }
-        args[0] = (DWORD_PTR)main_exe_name;
-        FormatMessageW( FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                        NULL, error, 0, msgW, ARRAY_SIZE( msgW ), (__ms_va_list *)args );
-        WideCharToMultiByte( CP_UNIXCP, 0, msgW, -1, msg, sizeof(msg), NULL, NULL );
-        MESSAGE( "wine: %s", msg );
-        ExitProcess( error );
-    }
 
     if (!params->CurrentDirectory.Handle) chdir("/"); /* avoid locking removable devices */
 
@@ -1175,54 +1126,6 @@ static const char *get_alternate_loader( char **ret_env )
     return loader;
 }
 
-#ifdef __APPLE__
-/***********************************************************************
- *           terminate_main_thread
- *
- * On some versions of Mac OS X, the execve system call fails with
- * ENOTSUP if the process has multiple threads.  Wine is always multi-
- * threaded on Mac OS X because it specifically reserves the main thread
- * for use by the system frameworks (see apple_main_thread() in
- * libs/wine/loader.c).  So, when we need to exec without first forking,
- * we need to terminate the main thread first.  We do this by installing
- * a custom run loop source onto the main run loop and signaling it.
- * The source's "perform" callback is pthread_exit and it will be
- * executed on the main thread, terminating it.
- *
- * Returns TRUE if there's still hope the main thread has terminated or
- * will soon.  Return FALSE if we've given up.
- */
-static BOOL terminate_main_thread(void)
-{
-    static int delayms;
-
-    if (!delayms)
-    {
-        CFRunLoopSourceContext source_context = { 0 };
-        CFRunLoopSourceRef source;
-
-        source_context.perform = pthread_exit;
-        if (!(source = CFRunLoopSourceCreate( NULL, 0, &source_context )))
-            return FALSE;
-
-        CFRunLoopAddSource( CFRunLoopGetMain(), source, kCFRunLoopCommonModes );
-        CFRunLoopSourceSignal( source );
-        CFRunLoopWakeUp( CFRunLoopGetMain() );
-        CFRelease( source );
-
-        delayms = 20;
-    }
-
-    if (delayms > 1000)
-        return FALSE;
-
-    usleep(delayms * 1000);
-    delayms *= 2;
-
-    return TRUE;
-}
-#endif
-
 
 /***********************************************************************
  *           set_stdio_fd
@@ -1319,49 +1222,6 @@ static pid_t spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int socket
     return pid;
 }
 
-/***********************************************************************
- *           exec_loader
- */
-static NTSTATUS exec_loader( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
-                             const pe_image_info_t *pe_info )
-{
-    char *wineloader = NULL;
-    const char *loader = NULL;
-    char **argv;
-    char preloader_reserve[64], socket_env[64];
-    ULONGLONG res_start = pe_info->base;
-    ULONGLONG res_end   = pe_info->base + pe_info->map_size;
-
-    if (!(argv = build_argv( &params->CommandLine, 1 ))) return STATUS_NO_MEMORY;
-
-    if (!is_win64 ^ !is_64bit_arch( pe_info->cpu ))
-        loader = get_alternate_loader( &wineloader );
-
-    /* Reset signals that we previously set to SIG_IGN */
-    signal( SIGPIPE, SIG_DFL );
-
-    sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
-    sprintf( preloader_reserve, "WINEPRELOADRESERVE=%x%08x-%x%08x",
-             (ULONG)(res_start >> 32), (ULONG)res_start, (ULONG)(res_end >> 32), (ULONG)res_end );
-
-    putenv( preloader_reserve );
-    putenv( socket_env );
-    if (wineloader) putenv( wineloader );
-
-    do
-    {
-        wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
-    }
-#ifdef __APPLE__
-    while (errno == ENOTSUP && terminate_main_thread());
-#else
-    while (0);
-#endif
-
-    HeapFree( GetProcessHeap(), 0, wineloader );
-    HeapFree( GetProcessHeap(), 0, argv );
-    return STATUS_INVALID_IMAGE_FORMAT;
-}
 
 /* creates a struct security_descriptor and contained information in one contiguous piece of memory */
 static NTSTATUS alloc_object_attributes( const SECURITY_ATTRIBUTES *attr, struct object_attributes **ret,
@@ -1424,59 +1284,6 @@ static NTSTATUS alloc_object_attributes( const SECURITY_ATTRIBUTES *attr, struct
     *ret_len = len;
     return STATUS_SUCCESS;
 }
-
-/***********************************************************************
- *           replace_process
- *
- * Replace the existing process by exec'ing a new one.
- */
-static BOOL replace_process( const RTL_USER_PROCESS_PARAMETERS *params, const pe_image_info_t *pe_info )
-{
-    NTSTATUS status;
-    int socketfd[2];
-
-    if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1)
-    {
-        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
-        return FALSE;
-    }
-#ifdef SO_PASSCRED
-    else
-    {
-        int enable = 1;
-        setsockopt( socketfd[0], SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
-    }
-#endif
-    wine_server_send_fd( socketfd[1] );
-    close( socketfd[1] );
-
-    SERVER_START_REQ( exec_process )
-    {
-        req->socket_fd      = socketfd[1];
-        req->cpu            = pe_info->cpu;
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    switch (status)
-    {
-    case STATUS_INVALID_IMAGE_WIN_64:
-        ERR( "64-bit application %s not supported in 32-bit prefix\n",
-             debugstr_w( params->ImagePathName.Buffer ));
-        break;
-    case STATUS_INVALID_IMAGE_FORMAT:
-        ERR( "%s not supported on this installation (%s binary)\n",
-             debugstr_w( params->ImagePathName.Buffer ), cpu_names[pe_info->cpu] );
-        break;
-    case STATUS_SUCCESS:
-        status = exec_loader( params, socketfd[0], pe_info );
-        break;
-    }
-    close( socketfd[0] );
-    SetLastError( RtlNtStatusToDosError( status ));
-    return FALSE;
-}
-
 
 /***********************************************************************
  *           create_process
@@ -1870,7 +1677,7 @@ BOOL WINAPI CreateProcessInternalW( HANDLE token, LPCWSTR app_name, LPWSTR cmd_l
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     pe_image_info_t pe_info;
     enum binary_type type;
-    BOOL is_64bit;
+    BOOL is_64bit = FALSE;
 
     /* Process the AppName and/or CmdLine to get module name and path */
 
@@ -2091,59 +1898,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessAsUserW( HANDLE token, LPCWSTR app_na
 {
     return CreateProcessInternalW( token, app_name, cmd_line, process_attr, thread_attr,
                                    inherit, flags, env, cur_dir, startup_info, info, NULL );
-}
-
-
-/**********************************************************************
- *       exec_process
- */
-static void exec_process( LPCWSTR name )
-{
-    HANDLE hFile;
-    WCHAR *p;
-    STARTUPINFOW startup_info = { sizeof(startup_info) };
-    RTL_USER_PROCESS_PARAMETERS *params, *new_params;
-    pe_image_info_t pe_info;
-    BOOL is_64bit;
-
-    hFile = open_exe_file( name, &is_64bit );
-    if (!hFile || hFile == INVALID_HANDLE_VALUE) return;
-
-    if (!(params = create_process_params( name, GetCommandLineW(), NULL, NULL, 0, &startup_info )))
-        return;
-
-    /* Determine executable type */
-
-    switch (get_binary_info( hFile, &pe_info ))
-    {
-    case BINARY_PE:
-        if (pe_info.image_charact & IMAGE_FILE_DLL) break;
-        TRACE( "starting %s as Win%d binary (%s-%s, %s)\n",
-               debugstr_w(name), is_64bit_arch(pe_info.cpu) ? 64 : 32,
-               wine_dbgstr_longlong(pe_info.base), wine_dbgstr_longlong(pe_info.base + pe_info.map_size),
-               cpu_names[pe_info.cpu] );
-        replace_process( params, &pe_info );
-        break;
-    case BINARY_UNIX_LIB:
-        TRACE( "%s is a Unix library, starting as Winelib app\n", debugstr_w(name) );
-        replace_process( params, &pe_info );
-        break;
-    case BINARY_UNKNOWN:
-        /* check for .com or .pif extension */
-        if (!(p = strrchrW( name, '.' ))) break;
-        if (strcmpiW( p, comW ) && strcmpiW( p, pifW )) break;
-        /* fall through */
-    case BINARY_WIN16:
-        TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
-        if (!(new_params = get_vdm_params( params, &pe_info ))) break;
-        replace_process( new_params, &pe_info );
-        RtlDestroyProcessParameters( new_params );
-        break;
-    default:
-        break;
-    }
-    CloseHandle( hFile );
-    RtlDestroyProcessParameters( params );
 }
 
 

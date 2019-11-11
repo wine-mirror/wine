@@ -4286,22 +4286,41 @@ void __wine_process_init(void)
     {
         peb->ImageBaseAddress = wm->ldr.BaseAddress;
         TRACE( "main exe loaded %s at %p\n", debugstr_us(&params->ImagePathName), peb->ImageBaseAddress );
+        if (wm->ldr.Flags & LDR_IMAGE_IS_DLL)
+        {
+            MESSAGE( "wine: %s is a dll, not an executable\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
+            NtTerminateProcess( GetCurrentProcess(), STATUS_INVALID_IMAGE_FORMAT );
+        }
     }
-    else if (info_size)
+    else
     {
-        WARN( "failed to load %s status %x\n", debugstr_us(&params->ImagePathName), status );
+        if (!info_size) status = restart_process( params, status );
+        switch (status)
+        {
+        case STATUS_INVALID_IMAGE_WIN_64:
+            ERR( "%s 64-bit application not supported in 32-bit prefix\n",
+                 debugstr_us(&params->ImagePathName) );
+            break;
+        case STATUS_INVALID_IMAGE_WIN_16:
+        case STATUS_INVALID_IMAGE_NE_FORMAT:
+        case STATUS_INVALID_IMAGE_PROTECT:
+            ERR( "%s 16-bit application not supported on this system\n",
+                 debugstr_us(&params->ImagePathName) );
+            break;
+        case STATUS_INVALID_IMAGE_FORMAT:
+            ERR( "%s not supported on this system\n", debugstr_us(&params->ImagePathName) );
+            break;
+        case STATUS_DLL_NOT_FOUND:
+            ERR( "%s not found\n", debugstr_us(&params->ImagePathName) );
+            break;
+        default:
+            ERR( "failed to load %s, error %x\n", debugstr_us(&params->ImagePathName), status );
+            break;
+        }
         NtTerminateProcess( GetCurrentProcess(), status );
     }
 
     kernel32_start_process = init_func();
-
-    wm = get_modref( peb->ImageBaseAddress );
-    assert( wm );
-    if (wm->ldr.Flags & LDR_IMAGE_IS_DLL)
-    {
-        MESSAGE( "wine: %s is a dll, not an executable\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
-        NtTerminateProcess( GetCurrentProcess(), STATUS_INVALID_IMAGE_FORMAT );
-    }
 
     virtual_set_large_address_space();
 
