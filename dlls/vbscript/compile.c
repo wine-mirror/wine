@@ -1759,6 +1759,7 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 static BOOL lookup_script_identifier(script_ctx_t *script, const WCHAR *identifier)
 {
     class_desc_t *class;
+    vbscode_t *code;
     unsigned i;
 
     for(i = 0; i < script->global_vars_cnt; i++) {
@@ -1774,6 +1775,30 @@ static BOOL lookup_script_identifier(script_ctx_t *script, const WCHAR *identifi
     for(class = script->classes; class; class = class->next) {
         if(!wcsicmp(class->name, identifier))
             return TRUE;
+    }
+
+    LIST_FOR_EACH_ENTRY(code, &script->code_list, vbscode_t, entry) {
+        unsigned var_cnt = code->main_code.var_cnt;
+        var_desc_t *vars = code->main_code.vars;
+        function_t *func;
+
+        if(!code->pending_exec)
+            continue;
+
+        for(i = 0; i < var_cnt; i++) {
+            if(!wcsicmp(vars[i].name, identifier))
+                return TRUE;
+        }
+
+        for(func = code->funcs; func; func = func->next) {
+            if(!wcsicmp(func->name, identifier))
+                return TRUE;
+        }
+
+        for(class = code->classes; class; class = class->next) {
+            if(!wcsicmp(class->name, identifier))
+                return TRUE;
+        }
     }
 
     return FALSE;
@@ -1864,13 +1889,11 @@ static void release_compiler(compile_ctx_t *ctx)
 
 HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *delimiter, DWORD flags, vbscode_t **ret)
 {
-    function_t *new_func, *func_iter;
     function_decl_t *func_decl;
     class_decl_t *class_decl;
+    function_t *new_func;
     compile_ctx_t ctx;
     vbscode_t *code;
-    size_t cnt;
-    unsigned i;
     HRESULT hres;
 
     if (!src) src = L"";
@@ -1920,79 +1943,6 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     if(FAILED(hres)) {
         release_compiler(&ctx);
         return compile_error(script, hres);
-    }
-
-    cnt = script->global_vars_cnt + ctx.code->main_code.var_cnt;
-    if(cnt > script->global_vars_size) {
-        dynamic_var_t **new_vars;
-        if(script->global_vars)
-            new_vars = heap_realloc(script->global_vars, cnt * sizeof(*new_vars));
-        else
-            new_vars = heap_alloc(cnt * sizeof(*new_vars));
-        if(!new_vars)
-            return compile_error(script, E_OUTOFMEMORY);
-        script->global_vars = new_vars;
-        script->global_vars_size = cnt;
-    }
-
-    cnt = script->global_funcs_cnt;
-    for(func_iter = ctx.code->funcs; func_iter; func_iter = func_iter->next)
-        cnt++;
-    if(cnt > script->global_funcs_size) {
-        function_t **new_funcs;
-        if(script->global_funcs)
-            new_funcs = heap_realloc(script->global_funcs, cnt * sizeof(*new_funcs));
-        else
-            new_funcs = heap_alloc(cnt * sizeof(*new_funcs));
-        if(!new_funcs)
-            return compile_error(script, E_OUTOFMEMORY);
-        script->global_funcs = new_funcs;
-        script->global_funcs_size = cnt;
-    }
-
-    for(i = 0; i < ctx.code->main_code.var_cnt; i++) {
-        dynamic_var_t *var = compiler_alloc(ctx.code, sizeof(*var));
-        if(!var) {
-            release_compiler(&ctx);
-            return compile_error(script, E_OUTOFMEMORY);
-        }
-
-        var->name = ctx.code->main_code.vars[i].name;
-        V_VT(&var->v) = VT_EMPTY;
-        var->is_const = FALSE;
-        var->array = NULL;
-
-        script->global_vars[script->global_vars_cnt + i] = var;
-    }
-
-    script->global_vars_cnt += ctx.code->main_code.var_cnt;
-
-    for(func_iter = ctx.code->funcs; func_iter; func_iter = func_iter->next) {
-        unsigned i;
-        for(i = 0; i < script->global_funcs_cnt; i++) {
-            if(!wcsicmp(script->global_funcs[i]->name, func_iter->name)) {
-                /* global function already exists, replace it */
-                script->global_funcs[i] = func_iter;
-                break;
-            }
-        }
-        if(i == script->global_funcs_cnt)
-            script->global_funcs[script->global_funcs_cnt++] = func_iter;
-    }
-
-    if(ctx.code->classes) {
-        class_desc_t *class = ctx.code->classes;
-
-        while(1) {
-            class->ctx = script;
-            if(!class->next)
-                break;
-            class = class->next;
-        }
-
-        class->next = script->classes;
-        script->classes = ctx.code->classes;
-        code->last_class = class;
     }
 
     code->is_persistent = (flags & SCRIPTTEXT_ISPERSISTENT) != 0;

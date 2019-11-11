@@ -82,6 +82,85 @@ static inline BOOL is_started(VBScript *This)
 
 static HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res)
 {
+    function_t *func_iter, **new_funcs;
+    dynamic_var_t *var, **new_vars;
+    size_t cnt, i;
+
+    cnt = ctx->global_vars_cnt + code->main_code.var_cnt;
+    if (cnt > ctx->global_vars_size)
+    {
+        if (ctx->global_vars)
+            new_vars = heap_realloc(ctx->global_vars, cnt * sizeof(*new_vars));
+        else
+            new_vars = heap_alloc(cnt * sizeof(*new_vars));
+        if (!new_vars)
+            return E_OUTOFMEMORY;
+        ctx->global_vars = new_vars;
+        ctx->global_vars_size = cnt;
+    }
+
+    cnt = ctx->global_funcs_cnt;
+    for (func_iter = code->funcs; func_iter; func_iter = func_iter->next)
+        cnt++;
+    if (cnt > ctx->global_funcs_size)
+    {
+        if (ctx->global_funcs)
+            new_funcs = heap_realloc(ctx->global_funcs, cnt * sizeof(*new_funcs));
+        else
+            new_funcs = heap_alloc(cnt * sizeof(*new_funcs));
+        if (!new_funcs)
+            return E_OUTOFMEMORY;
+        ctx->global_funcs = new_funcs;
+        ctx->global_funcs_size = cnt;
+    }
+
+    for (i = 0; i < code->main_code.var_cnt; i++)
+    {
+        if (!(var = heap_pool_alloc(&ctx->heap, sizeof(*var))))
+            return E_OUTOFMEMORY;
+
+        var->name = code->main_code.vars[i].name;
+        V_VT(&var->v) = VT_EMPTY;
+        var->is_const = FALSE;
+        var->array = NULL;
+
+        ctx->global_vars[ctx->global_vars_cnt + i] = var;
+    }
+
+    ctx->global_vars_cnt += code->main_code.var_cnt;
+
+    for (func_iter = code->funcs; func_iter; func_iter = func_iter->next)
+    {
+        for (i = 0; i < ctx->global_funcs_cnt; i++)
+        {
+            if (!wcsicmp(ctx->global_funcs[i]->name, func_iter->name))
+            {
+                /* global function already exists, replace it */
+                ctx->global_funcs[i] = func_iter;
+                break;
+            }
+        }
+        if (i == ctx->global_funcs_cnt)
+            ctx->global_funcs[ctx->global_funcs_cnt++] = func_iter;
+    }
+
+    if (code->classes)
+    {
+        class_desc_t *class = code->classes;
+
+        while (1)
+        {
+            class->ctx = ctx;
+            if (!class->next)
+                break;
+            class = class->next;
+        }
+
+        class->next = ctx->classes;
+        ctx->classes = code->classes;
+        code->last_class = class;
+    }
+
     code->pending_exec = FALSE;
     return exec_script(ctx, TRUE, &code->main_code, NULL, NULL, res);
 }
