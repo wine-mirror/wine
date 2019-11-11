@@ -101,15 +101,15 @@ static HRESULT WINAPI d3d8_RegisterSoftwareDevice(IDirect3D8 *iface, void *init_
 static UINT WINAPI d3d8_GetAdapterCount(IDirect3D8 *iface)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
-    HRESULT hr;
+    UINT count;
 
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_count(d3d8->wined3d);
+    count = wined3d_get_adapter_count(d3d8->wined3d);
     wined3d_mutex_unlock();
 
-    return hr;
+    return count;
 }
 
 static HRESULT WINAPI d3d8_GetAdapterIdentifier(IDirect3D8 *iface, UINT adapter,
@@ -146,16 +146,16 @@ static HRESULT WINAPI d3d8_GetAdapterIdentifier(IDirect3D8 *iface, UINT adapter,
 static UINT WINAPI d3d8_GetAdapterModeCount(IDirect3D8 *iface, UINT adapter)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
-    HRESULT hr;
+    UINT count;
 
     TRACE("iface %p, adapter %u.\n", iface, adapter);
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_mode_count(d3d8->wined3d, adapter,
+    count = wined3d_get_adapter_mode_count(d3d8->wined3d, adapter,
             WINED3DFMT_UNKNOWN, WINED3D_SCANLINE_ORDERING_UNKNOWN);
     wined3d_mutex_unlock();
 
-    return hr;
+    return count;
 }
 
 static HRESULT WINAPI d3d8_EnumAdapterModes(IDirect3D8 *iface, UINT adapter, UINT mode_idx, D3DDISPLAYMODE *mode)
