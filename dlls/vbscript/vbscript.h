@@ -350,6 +350,7 @@ struct _vbscode_t {
     unsigned bstr_cnt;
     heap_pool_t heap;
 
+    function_t *funcs;
     class_desc_t *classes;
     class_desc_t *last_class;
 

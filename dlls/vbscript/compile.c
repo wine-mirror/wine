@@ -61,7 +61,6 @@ typedef struct {
     const_decl_t *global_consts;
 
     function_t *func;
-    function_t *funcs;
     function_decl_t *func_decls;
 } compile_ctx_t;
 
@@ -1517,7 +1516,7 @@ static BOOL lookup_funcs_name(compile_ctx_t *ctx, const WCHAR *name)
 {
     function_t *iter;
 
-    for(iter = ctx->funcs; iter; iter = iter->next) {
+    for(iter = ctx->code->funcs; iter; iter = iter->next) {
         if(!wcsicmp(iter->name, name))
             return TRUE;
     }
@@ -1884,7 +1883,6 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     if(!ctx.code)
         return compile_error(script, E_OUTOFMEMORY);
 
-    ctx.funcs = NULL;
     ctx.func_decls = NULL;
     ctx.labels = NULL;
     ctx.global_consts = NULL;
@@ -1906,8 +1904,8 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
             return compile_error(script, hres);
         }
 
-        new_func->next = ctx.funcs;
-        ctx.funcs = new_func;
+        new_func->next = ctx.code->funcs;
+        ctx.code->funcs = new_func;
     }
 
     for(class_decl = ctx.parser.class_decls; class_decl; class_decl = class_decl->next) {
@@ -1938,7 +1936,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     }
 
     cnt = script->global_funcs_cnt;
-    for(func_iter = ctx.funcs; func_iter; func_iter = func_iter->next)
+    for(func_iter = ctx.code->funcs; func_iter; func_iter = func_iter->next)
         cnt++;
     if(cnt > script->global_funcs_size) {
         function_t **new_funcs;
@@ -1969,7 +1967,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
 
     script->global_vars_cnt += ctx.code->main_code.var_cnt;
 
-    for(func_iter = ctx.funcs; func_iter; func_iter = func_iter->next) {
+    for(func_iter = ctx.code->funcs; func_iter; func_iter = func_iter->next) {
         unsigned i;
         for(i = 0; i < script->global_funcs_cnt; i++) {
             if(!wcsicmp(script->global_funcs[i]->name, func_iter->name)) {
