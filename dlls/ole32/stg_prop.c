@@ -10,6 +10,7 @@
  * Copyright 1999 Thuy Nguyen
  * Copyright 2005 Mike McCormack
  * Copyright 2005 Juan Lang
+ * Copyright 2006 Mike McCormack
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -54,7 +55,6 @@
 #include "wine/heap.h"
 #include "dictionary.h"
 #include "storage32.h"
-#include "enumx.h"
 #include "oleauto.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(storage);
@@ -143,8 +143,6 @@ static HRESULT PropertyStorage_StringCopy(LPCSTR src, LCID srcCP, LPSTR *dst,
  LCID targetCP);
 
 static const IPropertyStorageVtbl IPropertyStorage_Vtbl;
-static const IEnumSTATPROPSTGVtbl IEnumSTATPROPSTG_Vtbl;
-static HRESULT create_EnumSTATPROPSTG(PropertyStorage_impl *, IEnumSTATPROPSTG**);
 
 /***********************************************************************
  * Implementation of IPropertyStorage
@@ -173,6 +171,174 @@ struct tagPropertyStorage_impl
 static inline PropertyStorage_impl *impl_from_IPropertyStorage(IPropertyStorage *iface)
 {
     return CONTAINING_RECORD(iface, PropertyStorage_impl, IPropertyStorage_iface);
+}
+
+struct enum_stat_prop_stg
+{
+    IEnumSTATPROPSTG IEnumSTATPROPSTG_iface;
+    LONG refcount;
+    STATPROPSTG *stats;
+    size_t current;
+    size_t count;
+};
+
+static struct enum_stat_prop_stg *impl_from_IEnumSTATPROPSTG(IEnumSTATPROPSTG *iface)
+{
+    return CONTAINING_RECORD(iface, struct enum_stat_prop_stg, IEnumSTATPROPSTG_iface);
+}
+
+static HRESULT WINAPI enum_stat_prop_stg_QueryInterface(IEnumSTATPROPSTG *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IEnumSTATPROPSTG) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IEnumSTATPROPSTG_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI enum_stat_prop_stg_AddRef(IEnumSTATPROPSTG *iface)
+{
+    struct enum_stat_prop_stg *penum = impl_from_IEnumSTATPROPSTG(iface);
+    LONG refcount = InterlockedIncrement(&penum->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI enum_stat_prop_stg_Release(IEnumSTATPROPSTG *iface)
+{
+    struct enum_stat_prop_stg *penum = impl_from_IEnumSTATPROPSTG(iface);
+    LONG refcount = InterlockedDecrement(&penum->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        heap_free(penum->stats);
+        heap_free(penum);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI enum_stat_prop_stg_Next(IEnumSTATPROPSTG *iface, ULONG celt, STATPROPSTG *ret, ULONG *fetched)
+{
+    struct enum_stat_prop_stg *penum = impl_from_IEnumSTATPROPSTG(iface);
+    ULONG count = 0;
+
+    TRACE("%p, %u, %p, %p.\n", iface, celt, ret, fetched);
+
+    if (penum->current == ~0u)
+        penum->current = 0;
+
+    while (count < celt && penum->current < penum->count)
+        ret[count++] = penum->stats[penum->current++];
+
+    if (fetched)
+        *fetched = count;
+
+    return count < celt ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI enum_stat_prop_stg_Skip(IEnumSTATPROPSTG *iface, ULONG celt)
+{
+    FIXME("%p, %u.\n", iface, celt);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_stat_prop_stg_Reset(IEnumSTATPROPSTG *iface)
+{
+    struct enum_stat_prop_stg *penum = impl_from_IEnumSTATPROPSTG(iface);
+
+    TRACE("%p.\n", iface);
+
+    penum->current = ~0u;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_stat_prop_stg_Clone(IEnumSTATPROPSTG *iface, IEnumSTATPROPSTG **ppenum)
+{
+    FIXME("%p, %p.\n", iface, ppenum);
+
+    return E_NOTIMPL;
+}
+
+static const IEnumSTATPROPSTGVtbl enum_stat_prop_stg_vtbl =
+{
+    enum_stat_prop_stg_QueryInterface,
+    enum_stat_prop_stg_AddRef,
+    enum_stat_prop_stg_Release,
+    enum_stat_prop_stg_Next,
+    enum_stat_prop_stg_Skip,
+    enum_stat_prop_stg_Reset,
+    enum_stat_prop_stg_Clone,
+};
+
+static BOOL prop_enum_stat(const void *k, const void *v, void *extra, void *arg)
+{
+    struct enum_stat_prop_stg *stg = arg;
+    PROPID propid = PtrToUlong(k);
+    const PROPVARIANT *prop = v;
+    STATPROPSTG *dest;
+
+    dest = &stg->stats[stg->count];
+
+    dest->lpwstrName = NULL;
+    dest->propid = propid;
+    dest->vt = prop->vt;
+    stg->count++;
+
+    return TRUE;
+}
+
+static BOOL prop_enum_stat_count(const void *k, const void *v, void *extra, void *arg)
+{
+    DWORD *count = arg;
+
+    *count += 1;
+
+    return TRUE;
+}
+
+static HRESULT create_enum_stat_prop_stg(PropertyStorage_impl *storage, IEnumSTATPROPSTG **ret)
+{
+    struct enum_stat_prop_stg *enum_obj;
+    DWORD count;
+
+    enum_obj = heap_alloc_zero(sizeof(*enum_obj));
+    if (!enum_obj)
+        return E_OUTOFMEMORY;
+
+    enum_obj->IEnumSTATPROPSTG_iface.lpVtbl = &enum_stat_prop_stg_vtbl;
+    enum_obj->refcount = 1;
+
+    count = 0;
+    dictionary_enumerate(storage->propid_to_prop, prop_enum_stat_count, &count);
+
+    if (count)
+    {
+        if (!(enum_obj->stats = heap_alloc(sizeof(*enum_obj->stats) * count)))
+        {
+            IEnumSTATPROPSTG_Release(&enum_obj->IEnumSTATPROPSTG_iface);
+            return E_OUTOFMEMORY;
+        }
+
+        dictionary_enumerate(storage->propid_to_prop, prop_enum_stat, enum_obj);
+    }
+
+    *ret = &enum_obj->IEnumSTATPROPSTG_iface;
+
+    return S_OK;
 }
 
 /************************************************************************
@@ -853,12 +1019,13 @@ static HRESULT WINAPI IPropertyStorage_fnRevert(
 /************************************************************************
  * IPropertyStorage_fnEnum (IPropertyStorage)
  */
-static HRESULT WINAPI IPropertyStorage_fnEnum(
-    IPropertyStorage* iface,
-    IEnumSTATPROPSTG** ppenum)
+static HRESULT WINAPI IPropertyStorage_fnEnum(IPropertyStorage *iface, IEnumSTATPROPSTG **ppenum)
 {
-    PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
-    return create_EnumSTATPROPSTG(This, ppenum);
+    PropertyStorage_impl *storage = impl_from_IPropertyStorage(iface);
+
+    TRACE("%p, %p.\n", iface, ppenum);
+
+    return create_enum_stat_prop_stg(storage, ppenum);
 }
 
 /************************************************************************
@@ -2516,93 +2683,6 @@ static HRESULT WINAPI IPropertySetStorage_fnEnum(IPropertySetStorage *iface, IEn
     return create_enum_stat_propset_stg(storage, enum_obj);
 }
 
-/************************************************************************
- * Implement IEnumSTATPROPSTG using enumx
- */
-static HRESULT WINAPI IEnumSTATPROPSTG_fnQueryInterface(
-    IEnumSTATPROPSTG *iface,
-    REFIID riid,
-    void** ppvObject)
-{
-    return enumx_QueryInterface((enumx_impl*)iface, riid, ppvObject);
-}
-
-static ULONG WINAPI IEnumSTATPROPSTG_fnAddRef(
-    IEnumSTATPROPSTG *iface)
-{
-    return enumx_AddRef((enumx_impl*)iface);
-}
-
-static ULONG WINAPI IEnumSTATPROPSTG_fnRelease(
-    IEnumSTATPROPSTG *iface)
-{
-    return enumx_Release((enumx_impl*)iface);
-}
-
-static HRESULT WINAPI IEnumSTATPROPSTG_fnNext(
-    IEnumSTATPROPSTG *iface,
-    ULONG celt,
-    STATPROPSTG *rgelt,
-    ULONG *pceltFetched)
-{
-    return enumx_Next((enumx_impl*)iface, celt, rgelt, pceltFetched);
-}
-
-static HRESULT WINAPI IEnumSTATPROPSTG_fnSkip(
-    IEnumSTATPROPSTG *iface,
-    ULONG celt)
-{
-    return enumx_Skip((enumx_impl*)iface, celt);
-}
-
-static HRESULT WINAPI IEnumSTATPROPSTG_fnReset(
-    IEnumSTATPROPSTG *iface)
-{
-    return enumx_Reset((enumx_impl*)iface);
-}
-
-static HRESULT WINAPI IEnumSTATPROPSTG_fnClone(
-    IEnumSTATPROPSTG *iface,
-    IEnumSTATPROPSTG **ppenum)
-{
-    return enumx_Clone((enumx_impl*)iface, (enumx_impl**)ppenum);
-}
-
-static BOOL prop_enum_stat(const void *k, const void *v, void *extra, void *arg)
-{
-    enumx_impl *enumx = arg;
-    PROPID propid = PtrToUlong(k);
-    const PROPVARIANT *prop = v;
-    STATPROPSTG stat;
-
-    stat.lpwstrName = NULL;
-    stat.propid = propid;
-    stat.vt = prop->vt;
-
-    enumx_add_element(enumx, &stat);
-
-    return TRUE;
-}
-
-static HRESULT create_EnumSTATPROPSTG(
-    PropertyStorage_impl *This,
-    IEnumSTATPROPSTG** ppenum)
-{
-    enumx_impl *enumx;
-
-    TRACE("%p %p\n", This, ppenum);
-
-    enumx = enumx_allocate(&IID_IEnumSTATPROPSTG,
-                           &IEnumSTATPROPSTG_Vtbl,
-                           sizeof (STATPROPSTG));
-
-    dictionary_enumerate(This->propid_to_prop, prop_enum_stat, enumx);
-
-    *ppenum = (IEnumSTATPROPSTG*) enumx;
-
-    return S_OK;
-}
-
 /***********************************************************************
  * vtables
  */
@@ -2634,17 +2714,6 @@ static const IPropertyStorageVtbl IPropertyStorage_Vtbl =
     IPropertyStorage_fnSetTimes,
     IPropertyStorage_fnSetClass,
     IPropertyStorage_fnStat,
-};
-
-static const IEnumSTATPROPSTGVtbl IEnumSTATPROPSTG_Vtbl =
-{
-    IEnumSTATPROPSTG_fnQueryInterface,
-    IEnumSTATPROPSTG_fnAddRef,
-    IEnumSTATPROPSTG_fnRelease,
-    IEnumSTATPROPSTG_fnNext,
-    IEnumSTATPROPSTG_fnSkip,
-    IEnumSTATPROPSTG_fnReset,
-    IEnumSTATPROPSTG_fnClone,
 };
 
 /***********************************************************************
