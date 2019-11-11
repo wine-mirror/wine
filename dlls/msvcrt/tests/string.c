@@ -3930,6 +3930,28 @@ static void test_strstr(void)
     }
 }
 
+static void test_iswdigit(void)
+{
+    static const struct {
+        WCHAR c;
+        int r;
+    } tests[] = {
+        { '0', C1_DIGIT },
+        { '9', C1_DIGIT },
+        { 'a', 0 },
+        { 0xff16, C1_DIGIT },
+        { 0x0660, C1_DIGIT },
+        { 0x0ce6, C1_DIGIT }
+    };
+    int i, r;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        r = iswdigit(tests[i].c);
+        ok(r == tests[i].r, "iswdigit returned %x for %x\n", r, tests[i].c);
+    }
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -4070,4 +4092,5 @@ START_TEST(string)
     test___strncnt();
     test_C_locale();
     test_strstr();
+    test_iswdigit();
 }
