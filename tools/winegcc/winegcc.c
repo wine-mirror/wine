@@ -226,6 +226,7 @@ struct options
     strarray* compiler_args;
     strarray* winebuild_args;
     strarray* files;
+    strarray* delayimports;
 };
 
 #ifdef __i386__
@@ -1164,6 +1165,12 @@ static void build(struct options* opts)
     for ( j = 0 ; j < opts->winebuild_args->size ; j++ )
         strarray_add(spec_args, opts->winebuild_args->base[j]);
 
+    if (!is_pe)
+    {
+        for (j = 0; j < opts->delayimports->size; j++)
+            strarray_add(spec_args, strmake("-d%s", opts->delayimports->base[j]));
+    }
+
     /* add resource files */
     for ( j = 0; j < files->size; j++ )
 	if (files->base[j][1] == 'r') strarray_add(spec_args, files->base[j]);
@@ -1202,6 +1209,12 @@ static void build(struct options* opts)
 	strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
 
     strarray_add(link_args, spec_o_name);
+
+    if (is_pe)
+    {
+        for (j = 0; j < opts->delayimports->size; j++)
+            strarray_add(spec_args, strmake("-Wl,-delayload,%s", opts->delayimports->base[j]));
+    }
 
     for ( j = 0; j < files->size; j++ )
     {
@@ -1423,6 +1436,7 @@ int main(int argc, char **argv)
     opts.linker_args = strarray_alloc();
     opts.compiler_args = strarray_alloc();
     opts.winebuild_args = strarray_alloc();
+    opts.delayimports = strarray_alloc();
     opts.pic = 1;
 
     /* determine the processor type */
@@ -1670,6 +1684,11 @@ int main(int argc, char **argv)
                             if (!strcmp(Wl->base[j], "--subsystem") && j < Wl->size - 1)
                             {
                                 opts.subsystem = strdup( Wl->base[++j] );
+                                continue;
+                            }
+                            if (!strcmp(Wl->base[j], "-delayload") && j < Wl->size - 1)
+                            {
+                                strarray_add( opts.delayimports, Wl->base[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl->base[j], "-static")) linking = -1;
