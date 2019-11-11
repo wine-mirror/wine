@@ -575,6 +575,19 @@ static char *get_extension( char *filename )
 
 
 /*******************************************************************
+ *         get_base_name
+ */
+static const char *get_base_name( const char *name )
+{
+    char *base;
+    if (!strchr( name, '.' )) return name;
+    base = strdup( name );
+    *strrchr( base, '.' ) = 0;
+    return base;
+}
+
+
+/*******************************************************************
  *         replace_extension
  */
 static char *replace_extension( const char *name, const char *old_ext, const char *new_ext )
@@ -2172,7 +2185,7 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
 
     for (i = 0; i < imports.count; i++)
     {
-        const char *name = imports.str[i];
+        const char *name = get_base_name( imports.str[i] );
         const char *lib = NULL;
 
         for (j = 0; j < top_makefile->subdirs.count; j++)
@@ -3211,7 +3224,8 @@ static void output_module( struct makefile *make )
         if (*dll_ext)
         {
             for (i = 0; i < make->delayimports.count; i++)
-                strarray_add( &all_libs, strmake( "-Wb,-d%s", make->delayimports.str[i] ));
+                strarray_add( &all_libs, strmake( "-Wl,-delayload,%s%s", make->delayimports.str[i],
+                                                  strchr( make->delayimports.str[i], '.' ) ? "" : ".dll" ));
             strarray_add( &make->all_targets, strmake( "%s%s", make->module, dll_ext ));
             strarray_add( &make->all_targets, strmake( "%s.fake", make->module ));
             add_install_rule( make, make->module, strmake( "%s%s", make->module, dll_ext ),
@@ -4235,7 +4249,7 @@ static void load_sources( struct makefile *make )
 
     if (!*dll_ext || make->is_cross)
         for (i = 0; i < make->delayimports.count; i++)
-            strarray_add_uniq( &delay_import_libs, make->delayimports.str[i] );
+            strarray_add_uniq( &delay_import_libs, get_base_name( make->delayimports.str[i] ));
 }
 
 

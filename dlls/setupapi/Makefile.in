@@ -2,7 +2,7 @@ EXTRADEFS = -D_SETUPAPI_
 MODULE    = setupapi.dll
 IMPORTLIB = setupapi
 IMPORTS   = uuid version advapi32 rpcrt4
-DELAYIMPORTS = shell32 wintrust ole32 winspool comdlg32 user32
+DELAYIMPORTS = shell32 wintrust ole32 winspool.drv comdlg32 user32
 
 EXTRADLLFLAGS = -mno-cygwin
 

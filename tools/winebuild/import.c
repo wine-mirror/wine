@@ -371,7 +371,7 @@ void add_import_dll( const char *name, const char *filename )
     imp->dll_name = spec->file_name ? spec->file_name : dll_name;
     imp->c_name = make_c_identifier( imp->dll_name );
 
-    if (is_delayed_import( dll_name ))
+    if (is_delayed_import( imp->dll_name ))
         list_add_tail( &dll_delayed, &imp->entry );
     else
         list_add_tail( &dll_imports, &imp->entry );
