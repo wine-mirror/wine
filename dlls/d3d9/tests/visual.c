@@ -26393,7 +26393,7 @@ static void test_sample_attached_rendertarget(void)
 
         hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 2);
         ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-        IDirect3DQuery9_Issue(event_query, D3DISSUE_END);
+        hr = IDirect3DQuery9_Issue(event_query, D3DISSUE_END);
         ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     }
 
