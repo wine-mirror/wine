@@ -67,7 +67,16 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
 }
 
-HRESULT driver_DestroyResource_ret = S_OK;
+struct test_driver
+{
+    IDispenserDriver IDispenserDriver_iface;
+    HRESULT destroy_resource_hr;
+};
+
+static struct test_driver *impl_from_IDispenserDriver(IDispenserDriver *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_driver, IDispenserDriver_iface);
+}
 
 static HRESULT WINAPI driver_QueryInterface(IDispenserDriver *iface, REFIID riid, void **object)
 {
@@ -125,8 +134,9 @@ static HRESULT WINAPI driver_ResetResource(IDispenserDriver *iface, const RESID 
 
 static HRESULT WINAPI driver_DestroyResource(IDispenserDriver *iface, const RESID resid)
 {
+    struct test_driver *driver = impl_from_IDispenserDriver(iface);
     todo_wine CHECK_EXPECT2(driver_DestroyResource);
-    return driver_DestroyResource_ret;
+    return driver->destroy_resource_hr;
 }
 
 static HRESULT WINAPI driver_DestroyResourceS(IDispenserDriver *iface, const SRESID resid)
@@ -149,7 +159,11 @@ static const struct IDispenserDriverVtbl driver_vtbl =
     driver_DestroyResourceS
 };
 
-static IDispenserDriver DispenserDriver = { &driver_vtbl };
+static void init_test_driver(struct test_driver *driver)
+{
+    driver->IDispenserDriver_iface.lpVtbl = &driver_vtbl;
+    driver->destroy_resource_hr = S_OK;
+}
 
 static DWORD WINAPI com_thread(void *arg)
 {
@@ -174,6 +188,7 @@ static void create_dispenser(void)
     RESID resid;
     DWORD ret;
     BSTR str;
+    struct test_driver driver;
 
     hr = CoCreateInstance( &CLSID_DispenserManager, NULL, CLSCTX_ALL, &IID_IDispenserManager, (void**)&dispenser);
     ok(hr == S_OK, "Failed to create object 0x%08x\n", hr);
@@ -188,7 +203,9 @@ static void create_dispenser(void)
     GetExitCodeThread(thread, &ret);
     ok(ret == CO_E_NOTINITIALIZED, "got unexpected hr %#x\n", ret);
 
-    hr = IDispenserManager_RegisterDispenser(dispenser, &DispenserDriver, pool0, &holder1);
+    init_test_driver(&driver);
+
+    hr = IDispenserManager_RegisterDispenser(dispenser, &driver.IDispenserDriver_iface, pool0, &holder1);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* The above call creates an MTA thread, but we need to wait for it to
@@ -199,11 +216,11 @@ static void create_dispenser(void)
     GetExitCodeThread(thread, &ret);
     ok(ret == S_OK, "got unexpected hr %#x\n", ret);
 
-    hr = IDispenserManager_RegisterDispenser(dispenser, &DispenserDriver, pool0, &holder2);
+    hr = IDispenserManager_RegisterDispenser(dispenser, &driver.IDispenserDriver_iface, pool0, &holder2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(holder1 != holder2, "same holder object returned\n");
 
-    hr = IDispenserManager_RegisterDispenser(dispenser, &DispenserDriver, pool1, &holder3);
+    hr = IDispenserManager_RegisterDispenser(dispenser, &driver.IDispenserDriver_iface, pool1, &holder3);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     if(holder1)
@@ -254,14 +271,14 @@ static void create_dispenser(void)
         todo_wine CHECK_CALLED(driver_ResetResource);
 
         /* DestroyResource return doesn't directly affect the Holder Close return value */
-        driver_DestroyResource_ret = E_FAIL;
+        driver.destroy_resource_hr = E_FAIL;
         SET_EXPECT(driver_DestroyResource);
         SET_EXPECT(driver_Release);
         hr = IHolder_Close(holder2);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         CHECK_CALLED(driver_Release);
         CHECK_CALLED(driver_DestroyResource);
-        driver_DestroyResource_ret = S_OK;
+        driver.destroy_resource_hr = S_OK;
         IHolder_Release(holder2);
     }
     if(holder3)
