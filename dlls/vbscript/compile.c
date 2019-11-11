@@ -63,8 +63,6 @@ typedef struct {
     function_t *func;
     function_t *funcs;
     function_decl_t *func_decls;
-
-    class_desc_t *classes;
 } compile_ctx_t;
 
 static HRESULT compile_expression(compile_ctx_t*,expression_t*);
@@ -1586,7 +1584,7 @@ static BOOL lookup_class_name(compile_ctx_t *ctx, const WCHAR *name)
 {
     class_desc_t *iter;
 
-    for(iter = ctx->classes; iter; iter = iter->next) {
+    for(iter = ctx->code->classes; iter; iter = iter->next) {
         if(!wcsicmp(iter->name, name))
             return TRUE;
     }
@@ -1754,8 +1752,8 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
         }
     }
 
-    class_desc->next = ctx->classes;
-    ctx->classes = class_desc;
+    class_desc->next = ctx->code->classes;
+    ctx->code->classes = class_desc;
     return S_OK;
 }
 
@@ -1795,7 +1793,7 @@ static HRESULT check_script_collisions(compile_ctx_t *ctx, script_ctx_t *script)
         }
     }
 
-    for(class = ctx->classes; class; class = class->next) {
+    for(class = ctx->code->classes; class; class = class->next) {
         if(lookup_script_identifier(script, class->name)) {
             FIXME("%s: redefined\n", debugstr_w(class->name));
             return E_FAIL;
@@ -1888,7 +1886,6 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
 
     ctx.funcs = NULL;
     ctx.func_decls = NULL;
-    ctx.classes = NULL;
     ctx.labels = NULL;
     ctx.global_consts = NULL;
     ctx.stat_ctx = NULL;
@@ -1985,8 +1982,8 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
             script->global_funcs[script->global_funcs_cnt++] = func_iter;
     }
 
-    if(ctx.classes) {
-        class_desc_t *class = ctx.classes;
+    if(ctx.code->classes) {
+        class_desc_t *class = ctx.code->classes;
 
         while(1) {
             class->ctx = script;
@@ -1996,7 +1993,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
         }
 
         class->next = script->classes;
-        script->classes = ctx.classes;
+        script->classes = ctx.code->classes;
         code->last_class = class;
     }
 
