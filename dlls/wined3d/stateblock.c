@@ -1584,6 +1584,33 @@ void CDECL wined3d_stateblock_set_base_vertex_index(struct wined3d_stateblock *s
     stateblock->stateblock_state.base_vertex_index = base_index;
 }
 
+HRESULT CDECL wined3d_stateblock_set_stream_source(struct wined3d_stateblock *stateblock,
+        UINT stream_idx, struct wined3d_buffer *buffer, UINT offset, UINT stride)
+{
+    struct wined3d_stream_state *stream;
+
+    TRACE("stateblock %p, stream_idx %u, buffer %p, stride %u.\n",
+            stateblock, stream_idx, buffer, stride);
+
+    if (stream_idx >= WINED3D_MAX_STREAMS)
+    {
+        WARN("Stream index %u out of range.\n", stream_idx);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    stream = &stateblock->stateblock_state.streams[stream_idx];
+
+    if (buffer)
+        wined3d_buffer_incref(buffer);
+    if (stream->buffer)
+        wined3d_buffer_decref(stream->buffer);
+    stream->buffer = buffer;
+    stream->stride = stride;
+    stream->offset = offset;
+    stateblock->changed.streamSource |= 1u << stream_idx;
+    return WINED3D_OK;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union
