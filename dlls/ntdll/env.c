@@ -509,6 +509,74 @@ static WCHAR *build_initial_environment( char **env )
 
 
 /***********************************************************************
+ *           build_envp
+ *
+ * Build the environment of a new child process.
+ */
+char **build_envp( const WCHAR *envW )
+{
+    static const char * const unix_vars[] = { "PATH", "TEMP", "TMP", "HOME" };
+    char **envp;
+    char *env, *p;
+    int count = 1, length, lenW;
+    unsigned int i;
+
+    lenW = get_env_length( envW );
+    length = ntdll_wcstoumbs( 0, envW, lenW, NULL, 0, NULL, NULL );
+    if (!(env = RtlAllocateHeap( GetProcessHeap(), 0, length ))) return NULL;
+    ntdll_wcstoumbs( 0, envW, lenW, env, length, NULL, NULL );
+
+    for (p = env; *p; p += strlen(p) + 1)
+        if (is_special_env_var( p )) length += 4; /* prefix it with "WINE" */
+
+    for (i = 0; i < ARRAY_SIZE( unix_vars ); i++)
+    {
+        if (!(p = getenv(unix_vars[i]))) continue;
+        length += strlen(unix_vars[i]) + strlen(p) + 2;
+        count++;
+    }
+
+    if ((envp = RtlAllocateHeap( GetProcessHeap(), 0, count * sizeof(*envp) + length )))
+    {
+        char **envptr = envp;
+        char *dst = (char *)(envp + count);
+
+        /* some variables must not be modified, so we get them directly from the unix env */
+        for (i = 0; i < ARRAY_SIZE( unix_vars ); i++)
+        {
+            if (!(p = getenv( unix_vars[i] ))) continue;
+            *envptr++ = strcpy( dst, unix_vars[i] );
+            strcat( dst, "=" );
+            strcat( dst, p );
+            dst += strlen(dst) + 1;
+        }
+
+        /* now put the Windows environment strings */
+        for (p = env; *p; p += strlen(p) + 1)
+        {
+            if (*p == '=') continue;  /* skip drive curdirs, this crashes some unix apps */
+            if (!strncmp( p, "WINEPRELOADRESERVE=", sizeof("WINEPRELOADRESERVE=")-1 )) continue;
+            if (!strncmp( p, "WINELOADERNOEXEC=", sizeof("WINELOADERNOEXEC=")-1 )) continue;
+            if (!strncmp( p, "WINESERVERSOCKET=", sizeof("WINESERVERSOCKET=")-1 )) continue;
+            if (is_special_env_var( p ))  /* prefix it with "WINE" */
+            {
+                *envptr++ = strcpy( dst, "WINE" );
+                strcat( dst, p );
+            }
+            else
+            {
+                *envptr++ = strcpy( dst, p );
+            }
+            dst += strlen(dst) + 1;
+        }
+        *envptr = 0;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, env );
+    return envp;
+}
+
+
+/***********************************************************************
  *           get_current_directory
  *
  * Initialize the current directory from the Unix cwd.

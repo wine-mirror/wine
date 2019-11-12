@@ -1466,6 +1466,101 @@ static char *get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
 
 
 /***********************************************************************
+ *           fork_and_exec
+ *
+ * Fork and exec a new Unix binary, checking for errors.
+ */
+static NTSTATUS fork_and_exec( UNICODE_STRING *path, const RTL_USER_PROCESS_PARAMETERS *params )
+{
+    pid_t pid;
+    int fd[2], stdin_fd = -1, stdout_fd = -1;
+    char **argv, **envp;
+    char *unixdir;
+    ANSI_STRING unix_name;
+    NTSTATUS status;
+
+    status = wine_nt_to_unix_file_name( path, &unix_name, FILE_OPEN, FALSE );
+    if (status) return status;
+
+#ifdef HAVE_PIPE2
+    if (pipe2( fd, O_CLOEXEC ) == -1)
+#endif
+    {
+        if (pipe(fd) == -1)
+        {
+            RtlFreeAnsiString( &unix_name );
+            return STATUS_TOO_MANY_OPENED_FILES;
+        }
+        fcntl( fd[0], F_SETFD, FD_CLOEXEC );
+        fcntl( fd[1], F_SETFD, FD_CLOEXEC );
+    }
+
+    wine_server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL );
+    wine_server_handle_to_fd( params->hStdOutput, FILE_WRITE_DATA, &stdout_fd, NULL );
+
+    argv = build_argv( &params->CommandLine, 0 );
+    envp = build_envp( params->Environment );
+    unixdir = get_unix_curdir( params );
+
+    if (!(pid = fork()))  /* child */
+    {
+        if (!(pid = fork()))  /* grandchild */
+        {
+            close( fd[0] );
+
+            if (params->ConsoleFlags ||
+                params->ConsoleHandle == (HANDLE)1 /* KERNEL32_CONSOLE_ALLOC */ ||
+                (params->hStdInput == INVALID_HANDLE_VALUE && params->hStdOutput == INVALID_HANDLE_VALUE))
+            {
+                setsid();
+                set_stdio_fd( -1, -1 );  /* close stdin and stdout */
+            }
+            else set_stdio_fd( stdin_fd, stdout_fd );
+
+            if (stdin_fd != -1) close( stdin_fd );
+            if (stdout_fd != -1) close( stdout_fd );
+
+            /* Reset signals that we previously set to SIG_IGN */
+            signal( SIGPIPE, SIG_DFL );
+
+            if (unixdir) chdir( unixdir );
+
+            if (argv && envp) execve( unix_name.Buffer, argv, envp );
+        }
+
+        if (pid <= 0)  /* grandchild if exec failed or child if fork failed */
+        {
+            status = FILE_GetNtStatus();
+            write( fd[1], &status, sizeof(status) );
+            _exit(1);
+        }
+
+        _exit(0); /* child if fork succeeded */
+    }
+    close( fd[1] );
+
+    if (pid != -1)
+    {
+        /* reap child */
+        pid_t wret;
+        do {
+            wret = waitpid(pid, NULL, 0);
+        } while (wret < 0 && errno == EINTR);
+        read( fd[0], &status, sizeof(status) );  /* if we read something, exec or second fork failed */
+    }
+    else status = FILE_GetNtStatus();
+
+    close( fd[0] );
+    if (stdin_fd != -1) close( stdin_fd );
+    if (stdout_fd != -1) close( stdout_fd );
+    RtlFreeHeap( GetProcessHeap(), 0, argv );
+    RtlFreeHeap( GetProcessHeap(), 0, envp );
+    RtlFreeAnsiString( &unix_name );
+    return status;
+}
+
+
+/***********************************************************************
  *           restart_process
  */
 NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
@@ -1575,7 +1670,15 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
     TRACE( "%s image %s cmdline %s\n", debugstr_us( path ),
            debugstr_us( &params->ImagePathName ), debugstr_us( &params->CommandLine ));
 
-    if ((status = get_pe_file_info( path, attributes, &file_handle, &pe_info ))) goto done;
+    if ((status = get_pe_file_info( path, attributes, &file_handle, &pe_info )))
+    {
+        if (status == STATUS_INVALID_IMAGE_NOT_MZ && !fork_and_exec( path, params ))
+        {
+            memset( info, 0, sizeof(*info) );
+            return STATUS_SUCCESS;
+        }
+        goto done;
+    }
     if (!(startup_info = create_startup_info( params, &startup_info_size ))) goto done;
     env_size = get_env_size( params, &winedebug );
     unixdir = get_unix_curdir( params );
