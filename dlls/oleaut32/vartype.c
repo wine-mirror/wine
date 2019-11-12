@@ -7657,7 +7657,7 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
   /* Parse the string into our structure */
   while (*strIn)
   {
-    if (iswdigit(*strIn))
+    if ('0' <= *strIn && *strIn <= '9')
     {
       if (dp.dwCount >= 6)
       {

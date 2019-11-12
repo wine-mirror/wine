@@ -1312,6 +1312,7 @@ static void test_VarParseNumFromStr(void)
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
   NUMPARSE np;
   BYTE rgb[128];
+  WCHAR str[128];
 
   /** No flags **/
 
@@ -1734,6 +1735,11 @@ static void test_VarParseNumFromStr(void)
   CONVERT("0.10", NUMPRS_STD);
   EXPECT(1,NUMPRS_STD,NUMPRS_DECIMAL,4,0,-1);
   EXPECT2(1,0);
+
+  str[0] = 0x0660;
+  str[1] = 0;
+  hres = pVarParseNumFromStr(str, lcid, LOCALE_NOUSEROVERRIDE, &np, rgb);
+  ok(hres == DISP_E_TYPEMISMATCH, "VarParseNumFromStr returned %08x\n", hres);
 }
 
 static HRESULT (WINAPI *pVarNumFromParseNum)(NUMPARSE*,BYTE*,ULONG,VARIANT*);
