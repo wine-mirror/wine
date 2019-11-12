@@ -2289,6 +2289,9 @@ WINBASEAPI VOID        WINAPI GetSystemTimePreciseAsFileTime(LPFILETIME);
 WINBASEAPI UINT        WINAPI GetSystemWindowsDirectoryA(LPSTR,UINT);
 WINBASEAPI UINT        WINAPI GetSystemWindowsDirectoryW(LPWSTR,UINT);
 #define                       GetSystemWindowsDirectory WINELIB_NAME_AW(GetSystemWindowsDirectory)
+WINBASEAPI UINT        WINAPI GetSystemWow64Directory2A(LPSTR,UINT,WORD);
+WINBASEAPI UINT        WINAPI GetSystemWow64Directory2W(LPWSTR,UINT,WORD);
+#define                       GetSystemWow64Directory2 WINELIB_NAME_AW(GetSystemWow64Directory2)
 WINBASEAPI UINT        WINAPI GetSystemWow64DirectoryA(LPSTR,UINT);
 WINBASEAPI UINT        WINAPI GetSystemWow64DirectoryW(LPWSTR,UINT);
 #define                       GetSystemWow64Directory WINELIB_NAME_AW(GetSystemWow64Directory)

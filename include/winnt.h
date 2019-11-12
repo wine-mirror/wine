@@ -2874,6 +2874,7 @@ typedef struct _IMAGE_VXD_HEADER {
 
 /* These are the settings of the Machine field. */
 #define	IMAGE_FILE_MACHINE_UNKNOWN	0
+#define	IMAGE_FILE_MACHINE_TARGET_HOST  0x0001
 #define	IMAGE_FILE_MACHINE_I860		0x014d
 #define	IMAGE_FILE_MACHINE_I386		0x014c
 #define	IMAGE_FILE_MACHINE_R3000	0x0162

@@ -701,8 +701,8 @@
 @ stdcall GetSystemTimes(ptr ptr ptr) kernel32.GetSystemTimes
 @ stdcall GetSystemWindowsDirectoryA(ptr long)
 @ stdcall GetSystemWindowsDirectoryW(ptr long)
-# @ stub GetSystemWow64Directory2A
-# @ stub GetSystemWow64Directory2W
+@ stdcall GetSystemWow64Directory2A(ptr long long)
+@ stdcall GetSystemWow64Directory2W(ptr long long)
 @ stdcall GetSystemWow64DirectoryA(ptr long) kernel32.GetSystemWow64DirectoryA
 @ stdcall GetSystemWow64DirectoryW(ptr long) kernel32.GetSystemWow64DirectoryW
 # @ stub GetTargetPlatformContext

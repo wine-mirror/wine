@@ -57,6 +57,19 @@ static void WINAPI read_write_apc( void *apc_user, PIO_STATUS_BLOCK io, ULONG re
     func( RtlNtStatusToDosError( io->u.Status ), io->Information, (LPOVERLAPPED)io );
 }
 
+static const WCHAR *get_machine_wow64_dir( WORD machine )
+{
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_TARGET_HOST: return system_dir;
+    case IMAGE_FILE_MACHINE_I386:        return L"C:\\windows\\syswow64";
+    case IMAGE_FILE_MACHINE_ARMNT:       return L"C:\\windows\\sysarm32";
+    case IMAGE_FILE_MACHINE_AMD64:       return L"C:\\windows\\sysx8664";
+    case IMAGE_FILE_MACHINE_ARM64:       return L"C:\\windows\\sysarm64";
+    default: return NULL;
+    }
+}
+
 
 /***********************************************************************
  * Operations on file names
@@ -191,6 +204,21 @@ done:
     RtlFreeHeap( GetProcessHeap(), 0, info );
     RtlReleaseActivationContext( data.hActCtx );
     return status;
+}
+
+
+/***********************************************************************
+ *           copy_filename
+ */
+static DWORD copy_filename( const WCHAR *name, WCHAR *buffer, DWORD len )
+{
+    UINT ret = lstrlenW( name ) + 1;
+    if (buffer && len >= ret)
+    {
+        lstrcpyW( buffer, name );
+        ret--;
+    }
+    return ret;
 }
 
 
@@ -1211,13 +1239,7 @@ UINT WINAPI DECLSPEC_HOTPATCH GetSystemDirectoryA( LPSTR path, UINT count )
  */
 UINT WINAPI DECLSPEC_HOTPATCH GetSystemDirectoryW( LPWSTR path, UINT count )
 {
-    UINT len = lstrlenW( system_dir ) + 1;
-    if (path && count >= len)
-    {
-        lstrcpyW( path, system_dir );
-        len--;
-    }
-    return len;
+    return copy_filename( system_dir, path, count );
 }
 
 
@@ -1236,6 +1258,28 @@ UINT WINAPI DECLSPEC_HOTPATCH GetSystemWindowsDirectoryA( LPSTR path, UINT count
 UINT WINAPI DECLSPEC_HOTPATCH GetSystemWindowsDirectoryW( LPWSTR path, UINT count )
 {
     return GetWindowsDirectoryW( path, count );
+}
+
+
+/***********************************************************************
+ *	GetSystemWow64Directory2A   (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH GetSystemWow64Directory2A( LPSTR path, UINT count, WORD machine )
+{
+    const WCHAR *dir = get_machine_wow64_dir( machine );
+
+    return dir ? copy_filename_WtoA( dir, path, count ) : 0;
+}
+
+
+/***********************************************************************
+ *	GetSystemWow64Directory2W   (kernelbase.@)
+ */
+UINT WINAPI DECLSPEC_HOTPATCH GetSystemWow64Directory2W( LPWSTR path, UINT count, WORD machine )
+{
+    const WCHAR *dir = get_machine_wow64_dir( machine );
+
+    return dir ? copy_filename( dir, path, count ) : 0;
 }
 
 
@@ -1413,13 +1457,7 @@ UINT WINAPI DECLSPEC_HOTPATCH GetWindowsDirectoryA( LPSTR path, UINT count )
  */
 UINT WINAPI DECLSPEC_HOTPATCH GetWindowsDirectoryW( LPWSTR path, UINT count )
 {
-    UINT len = lstrlenW( windows_dir ) + 1;
-    if (path && count >= len)
-    {
-        lstrcpyW( path, windows_dir );
-        len--;
-    }
-    return len;
+    return copy_filename( windows_dir, path, count );
 }
 
 
