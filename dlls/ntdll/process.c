@@ -967,6 +967,7 @@ static startup_info_t *create_startup_info( const RTL_USER_PROCESS_PARAMETERS *p
 
     if (!(info = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) return NULL;
 
+    info->debug_flags   = params->DebugFlags;
     info->console_flags = params->ConsoleFlags;
     info->console       = wine_server_obj_handle( params->ConsoleHandle );
     info->hstdin        = wine_server_obj_handle( params->hStdInput );
@@ -1606,7 +1607,7 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
     SERVER_START_REQ( new_process )
     {
         req->inherit_all    = inherit;
-        req->create_flags   = 0;
+        req->create_flags   = params->DebugFlags; /* hack: creation flags stored in DebugFlags for now */
         req->socket_fd      = socketfd[1];
         req->exe_file       = wine_server_obj_handle( file_handle );
         req->access         = PROCESS_ALL_ACCESS;
