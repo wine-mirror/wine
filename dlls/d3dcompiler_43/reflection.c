@@ -1807,7 +1807,7 @@ err_out:
 }
 
 /* d3d10 reflection methods. */
-#ifndef D3D_COMPILER_VERSION
+#if !D3D_COMPILER_VERSION
 static inline struct d3dcompiler_shader_reflection *impl_from_ID3D10ShaderReflection(ID3D10ShaderReflection *iface)
 {
     return CONTAINING_RECORD(iface, struct d3dcompiler_shader_reflection, ID3D10ShaderReflection_iface);

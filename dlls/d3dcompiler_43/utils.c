@@ -758,7 +758,7 @@ void compilation_message(struct compilation_messages *msg, const char *fmt, __ms
     }
 }
 
-#ifdef D3D_COMPILER_VERSION
+#if D3D_COMPILER_VERSION
 BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var)
 {
     struct hlsl_ir_var *var;
