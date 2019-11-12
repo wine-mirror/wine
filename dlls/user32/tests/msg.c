@@ -11355,12 +11355,14 @@ struct sendmsg_info
     HWND  hwnd;
     DWORD timeout;
     DWORD ret;
+    HANDLE ready;
 };
 
 static DWORD CALLBACK send_msg_thread( LPVOID arg )
 {
     struct sendmsg_info *info = arg;
     SetLastError( 0xdeadbeef );
+    SetEvent( info->ready );
     info->ret = SendMessageTimeoutA( info->hwnd, WM_USER, 0, 0, 0, info->timeout, NULL );
     if (!info->ret) ok( GetLastError() == ERROR_TIMEOUT ||
                         broken(GetLastError() == 0),  /* win9x */
@@ -11390,6 +11392,7 @@ static void test_SendMessageTimeout(void)
     DWORD tid;
     BOOL is_win9x;
 
+    info.ready = CreateEventA( NULL, 0, 0, NULL );
     info.hwnd = CreateWindowA( "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
                                100, 100, 200, 200, 0, 0, 0, NULL);
     flush_events();
@@ -11397,7 +11400,9 @@ static void test_SendMessageTimeout(void)
 
     info.timeout = 1000;
     info.ret = 0xdeadbeef;
+    ResetEvent( info.ready );
     thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
+    WaitForSingleObject( info.ready, INFINITE );
     wait_for_thread( thread );
     CloseHandle( thread );
     ok( info.ret == 1, "SendMessageTimeout failed\n" );
@@ -11405,7 +11410,9 @@ static void test_SendMessageTimeout(void)
 
     info.timeout = 1;
     info.ret = 0xdeadbeef;
+    ResetEvent( info.ready );
     thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
+    WaitForSingleObject( info.ready, INFINITE );
     Sleep(100);  /* SendMessageTimeout should time out here */
     wait_for_thread( thread );
     CloseHandle( thread );
@@ -11415,7 +11422,9 @@ static void test_SendMessageTimeout(void)
     /* 0 means infinite timeout (but not on win9x) */
     info.timeout = 0;
     info.ret = 0xdeadbeef;
+    ResetEvent( info.ready );
     thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
+    WaitForSingleObject( info.ready, INFINITE );
     Sleep(100);
     wait_for_thread( thread );
     CloseHandle( thread );
@@ -11426,7 +11435,9 @@ static void test_SendMessageTimeout(void)
     /* timeout is treated as signed despite the prototype (but not on win9x) */
     info.timeout = 0x7fffffff;
     info.ret = 0xdeadbeef;
+    ResetEvent( info.ready );
     thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
+    WaitForSingleObject( info.ready, INFINITE );
     Sleep(100);
     wait_for_thread( thread );
     CloseHandle( thread );
@@ -11435,7 +11446,9 @@ static void test_SendMessageTimeout(void)
 
     info.timeout = 0x80000000;
     info.ret = 0xdeadbeef;
+    ResetEvent( info.ready );
     thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
+    WaitForSingleObject( info.ready, INFINITE );
     Sleep(100);
     wait_for_thread( thread );
     CloseHandle( thread );
@@ -11454,7 +11467,9 @@ static void test_SendMessageTimeout(void)
     SetWindowLongPtrA( info.hwnd, GWLP_WNDPROC, (LONG_PTR)send_msg_delay_proc );
     info.timeout = 100;
     info.ret = 0xdeadbeef;
+    ResetEvent( info.ready );
     thread = CreateThread( NULL, 0, send_msg_thread, &info, 0, &tid );
+    WaitForSingleObject( info.ready, INFINITE );
     wait_for_thread( thread );
     CloseHandle( thread );
     /* we should time out but still get the message */
@@ -11462,6 +11477,7 @@ static void test_SendMessageTimeout(void)
     ok_sequence( WmUser, "WmUser", FALSE );
 
     DestroyWindow( info.hwnd );
+    CloseHandle( info.ready );
 }
 
 
