@@ -34,6 +34,10 @@ static const WCHAR D3DCOMPILER_DLL_W[] = {'d','3','d','c','o','m','p','i','l','e
 #define D3DCOMPILER_DLL_A  "d3dcompiler_47.dll"
 #define D3DCOMPILER_DLL    WINELIB_NAME_AW(D3DCOMPILER_DLL_)
 
+#ifndef D3D_COMPILER_VERSION
+#define D3D_COMPILER_VERSION 47
+#endif
+
 #define D3DCOMPILE_DEBUG                                0x00000001
 #define D3DCOMPILE_SKIP_VALIDATION                      0x00000002
 #define D3DCOMPILE_SKIP_OPTIMIZATION                    0x00000004
