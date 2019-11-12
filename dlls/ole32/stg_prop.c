@@ -177,6 +177,7 @@ struct enum_stat_prop_stg
 {
     IEnumSTATPROPSTG IEnumSTATPROPSTG_iface;
     LONG refcount;
+    PropertyStorage_impl *storage;
     STATPROPSTG *stats;
     size_t current;
     size_t count;
@@ -222,6 +223,7 @@ static ULONG WINAPI enum_stat_prop_stg_Release(IEnumSTATPROPSTG *iface)
 
     if (!refcount)
     {
+        IPropertyStorage_Release(&penum->storage->IPropertyStorage_iface);
         heap_free(penum->stats);
         heap_free(penum);
     }
@@ -233,6 +235,7 @@ static HRESULT WINAPI enum_stat_prop_stg_Next(IEnumSTATPROPSTG *iface, ULONG cel
 {
     struct enum_stat_prop_stg *penum = impl_from_IEnumSTATPROPSTG(iface);
     ULONG count = 0;
+    WCHAR *name;
 
     TRACE("%p, %u, %p, %p.\n", iface, celt, ret, fetched);
 
@@ -240,7 +243,19 @@ static HRESULT WINAPI enum_stat_prop_stg_Next(IEnumSTATPROPSTG *iface, ULONG cel
         penum->current = 0;
 
     while (count < celt && penum->current < penum->count)
-        ret[count++] = penum->stats[penum->current++];
+    {
+        *ret = penum->stats[penum->current++];
+
+        if (dictionary_find(penum->storage->propid_to_name, UlongToPtr(ret->propid), (void **)&name))
+        {
+            SIZE_T size = (lstrlenW(name) + 1) * sizeof(WCHAR);
+            ret->lpwstrName = CoTaskMemAlloc(size);
+            if (ret->lpwstrName)
+                memcpy(ret->lpwstrName, name, size);
+        }
+        ret++;
+        count++;
+    }
 
     if (fetched)
         *fetched = count;
@@ -321,6 +336,8 @@ static HRESULT create_enum_stat_prop_stg(PropertyStorage_impl *storage, IEnumSTA
 
     enum_obj->IEnumSTATPROPSTG_iface.lpVtbl = &enum_stat_prop_stg_vtbl;
     enum_obj->refcount = 1;
+    enum_obj->storage = storage;
+    IPropertyStorage_AddRef(&storage->IPropertyStorage_iface);
 
     count = 0;
     dictionary_enumerate(storage->propid_to_prop, prop_enum_stat_count, &count);
