@@ -12420,7 +12420,7 @@ static void test_PeekMessage3(void)
     /* GetMessage() and PeekMessage(..., PM_REMOVE) should prefer messages which
      * were already seen. */
 
-    SetTimer(hwnd, 1, 0, NULL);
+    SetTimer(hwnd, 1, 100, NULL);
     while (!PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE));
     ok(msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
     PostMessageA(hwnd, WM_USER, 0, 0);
@@ -12436,7 +12436,7 @@ static void test_PeekMessage3(void)
     ret = PeekMessageA(&msg, NULL, 0, 0, 0);
     ok(!ret, "expected PeekMessage to return FALSE, got %u\n", ret);
 
-    SetTimer(hwnd, 1, 0, NULL);
+    SetTimer(hwnd, 1, 100, NULL);
     while (!PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE));
     ok(msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
     PostMessageA(hwnd, WM_USER, 0, 0);
@@ -12451,7 +12451,7 @@ static void test_PeekMessage3(void)
 
     /* It doesn't matter if a message range is specified or not. */
 
-    SetTimer(hwnd, 1, 0, NULL);
+    SetTimer(hwnd, 1, 100, NULL);
     while (!PeekMessageA(&msg, NULL, WM_TIMER, WM_TIMER, PM_NOREMOVE));
     ok(msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
     PostMessageA(hwnd, WM_USER, 0, 0);
@@ -12467,7 +12467,7 @@ static void test_PeekMessage3(void)
     /* But not if the post messages were added before the PeekMessage() call. */
 
     PostMessageA(hwnd, WM_USER, 0, 0);
-    SetTimer(hwnd, 1, 0, NULL);
+    SetTimer(hwnd, 1, 100, NULL);
     while (!PeekMessageA(&msg, NULL, WM_TIMER, WM_TIMER, PM_NOREMOVE));
     ok(msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
     ret = GetMessageA(&msg, NULL, 0, 0);
@@ -12480,7 +12480,7 @@ static void test_PeekMessage3(void)
     /* More complicated test with multiple messages. */
 
     PostMessageA(hwnd, WM_USER, 0, 0);
-    SetTimer(hwnd, 1, 0, NULL);
+    SetTimer(hwnd, 1, 100, NULL);
     while (!PeekMessageA(&msg, NULL, WM_TIMER, WM_TIMER, PM_NOREMOVE));
     ok(msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
     PostMessageA(hwnd, WM_USER + 1, 0, 0);
