@@ -5532,14 +5532,23 @@ static void test_SetDIBitsToDevice_RLE8(void)
     info->bmiHeader.biWidth = 2;
     ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
     ok( ret == 8, "got %d\n", ret );
-    for (i = 0; i < 64; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+    if (dib_bits[0] == 0xaaaaaaaa)
+    {
+        win_skip("SetDIBitsToDevice is broken on Windows 2008.\n");
+        goto cleanup;
+    }
+    for (i = 0; i < 64; i += 8)
+    {
+        ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+        ok( dib_bits[i+1] == bottom_up[i+1], "%d: got %08x\n", i+1, dib_bits[i+1] );
+    }
     memset( dib_bits, 0xaa, 64 * 4 );
 
     info->bmiHeader.biWidth  = 8;
     info->bmiHeader.biHeight = 2;
     ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, rle8_data, info, DIB_RGB_COLORS );
     ok( ret == 2, "got %d\n", ret );
-    for (i = 0; i < 64; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
+    for (i = 0; i < 16; i++) ok( dib_bits[i] == bottom_up[i], "%d: got %08x\n", i, dib_bits[i] );
     memset( dib_bits, 0xaa, 64 * 4 );
 
     info->bmiHeader.biHeight = 9;
@@ -5671,6 +5680,7 @@ static void test_SetDIBitsToDevice_RLE8(void)
     for (i = 40; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
     memset( dib_bits, 0xaa, 64 * 4 );
 
+cleanup:
     DeleteDC( hdc );
     DeleteObject( dib );
     HeapFree( GetProcessHeap(), 0, info );
