@@ -296,16 +296,31 @@ static const D3D11_SIGNATURE_PARAMETER_DESC test_reflection_desc_vs_resultout[] 
     {"SV_InstanceID", 0, 6, D3D_NAME_UNDEFINED, D3D_REGISTER_COMPONENT_UINT32, 0x1, 0xe, 0},
 };
 
+struct D3D11_SIGNATURE_PARAMETER_DESC_46
+{
+    const char *SemanticName;
+    UINT SemanticIndex;
+    UINT Register;
+    D3D_NAME SystemValueType;
+    D3D_REGISTER_COMPONENT_TYPE ComponentType;
+    BYTE Mask;
+    BYTE ReadWriteMask;
+    UINT Stream;
+    D3D_MIN_PRECISION MinPrecision;
+};
+
 static void test_reflection_desc_vs(void)
 {
-    HRESULT hr;
-    ULONG count;
-    ID3D11ShaderReflection *ref11;
-    D3D11_SHADER_DESC sdesc11 = {0};
-    D3D11_SIGNATURE_PARAMETER_DESC desc = {0};
+    struct D3D11_SIGNATURE_PARAMETER_DESC_46 desc_46 = {0};
     const D3D11_SIGNATURE_PARAMETER_DESC *pdesc;
-    UINT ret;
+    D3D11_SIGNATURE_PARAMETER_DESC desc = {0};
+    D3D_MIN_PRECISION expected_min_prec;
+    D3D11_SHADER_DESC sdesc11 = {0};
+    ID3D11ShaderReflection *ref11;
     unsigned int i;
+    ULONG count;
+    HRESULT hr;
+    UINT ret;
 
     hr = pD3DReflect(test_reflection_desc_vs_blob, test_reflection_desc_vs_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
@@ -368,6 +383,16 @@ static void test_reflection_desc_vs(void)
     ok(ret == 0, "GetMovcInstructionCount failed, got %u, expected %u\n", ret, 0);
 
     /* GetIn/OutputParameterDesc */
+    desc_46.MinPrecision = ~0u;
+    hr = ref11->lpVtbl->GetInputParameterDesc(ref11, 0, (D3D11_SIGNATURE_PARAMETER_DESC *)&desc_46);
+#if D3D_COMPILER_VERSION >= 46
+    expected_min_prec = 0;
+#else
+    expected_min_prec = ~0u;
+#endif
+    ok(desc_46.MinPrecision == expected_min_prec, "Got MinPrecision %#x, expected %#x.\n",
+            desc_46.MinPrecision, expected_min_prec);
+
     for (i = 0; i < ARRAY_SIZE(test_reflection_desc_vs_resultin); ++i)
     {
         pdesc = &test_reflection_desc_vs_resultin[i];
