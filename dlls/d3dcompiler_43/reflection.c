@@ -2005,13 +2005,21 @@ HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void 
     if (temp[6] != data_size)
     {
         WARN("Wrong size supplied.\n");
+#if D3D_COMPILER_VERSION >= 46
+        return D3DERR_INVALIDCALL;
+#else
         return E_FAIL;
+#endif
     }
 
     if (!IsEqualGUID(riid, &IID_ID3D11ShaderReflection))
     {
         WARN("Wrong riid %s, accept only %s!\n", debugstr_guid(riid), debugstr_guid(&IID_ID3D11ShaderReflection));
+#if D3D_COMPILER_VERSION >= 46
+        return E_INVALIDARG;
+#else
         return E_NOINTERFACE;
+#endif
     }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
