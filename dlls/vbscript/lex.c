@@ -358,7 +358,9 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
         return parse_numeric_literal(ctx, lval);
 
     if(iswalpha(c)) {
-        int ret = check_keywords(ctx, lval);
+        int ret = 0;
+        if(ctx->last_token != '.' && ctx->last_token != tDOT)
+            ret = check_keywords(ctx, lval);
         if(!ret)
             return parse_identifier(ctx, lval);
         if(ret != tREM)

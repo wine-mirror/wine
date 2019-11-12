@@ -1514,7 +1514,7 @@ call test_identifiers()
 
 sub test_dotIdentifiers
     ' test keywords that can also be an identifier after a dot
-    ' Call ok(testObj.rem = 10, "testObj.rem = " & testObj.rem & " expected 10")
+    Call ok(testObj.rem = 10, "testObj.rem = " & testObj.rem & " expected 10")
     Call ok(testObj.true = 10, "testObj.true = " & testObj.true & " expected 10")
     Call ok(testObj.false = 10, "testObj.false = " & testObj.false & " expected 10")
     Call ok(testObj.not = 10, "testObj.not = " & testObj.not & " expected 10")
@@ -1567,6 +1567,9 @@ sub test_dotIdentifiers
     Call ok(testObj.with = 10, "testObj.with = " & testObj.with & " expected 10")
     Call ok(testObj.redim = 10, "testObj.redim = " & testObj.redim & " expected 10")
     Call ok(testObj.preserve = 10, "testObj.preserve = " & testObj.preserve & " expected 10")
+    Call ok(testObj.property = 10, "testObj.property = " & testObj.property & " expected 10")
+    Call ok(testObj.me = 10, "testObj.me = " & testObj.me & " expected 10")
+    Call ok(testObj.stop = 10, "testObj.stop = " & testObj.stop & " expected 10")
 end sub
 call test_dotIdentifiers
 

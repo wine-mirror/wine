@@ -859,7 +859,10 @@ static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD
        { L"goto",     DISPID_TESTOBJ_KEYWORD },
        { L"redim",    DISPID_TESTOBJ_KEYWORD },
        { L"preserve", DISPID_TESTOBJ_KEYWORD },
-       { L"with",     DISPID_TESTOBJ_KEYWORD }
+       { L"with",     DISPID_TESTOBJ_KEYWORD },
+       { L"property", DISPID_TESTOBJ_KEYWORD },
+       { L"me",       DISPID_TESTOBJ_KEYWORD },
+       { L"stop",     DISPID_TESTOBJ_KEYWORD }
     };
 
     test_grfdex(grfdex, fdexNameCaseInsensitive);
@@ -2881,12 +2884,8 @@ static void run_tests(void)
     parse_script_a("Option Explicit\nset test.setobj = testObj");
     CHECK_CALLED(global_setobj_i);
 
-    SET_EXPECT(OnScriptError);
     hres = parse_script_ar("dim x\nx = testObj.rem");
-    todo_wine
     ok(hres == S_OK, "use of 'rem' as dot identifier failed: %x08\n", hres);
-    todo_wine
-    CHECK_NOT_CALLED(OnScriptError);
 
     SET_EXPECT(testobj_propget_d);
     SET_EXPECT(testobj_propget_i);
@@ -2947,6 +2946,8 @@ static void run_tests(void)
                    "set x = testObj\n"
                    "x(counter(), counter()) = counter\n");
     CHECK_CALLED(testobj_valueput_i);
+
+    parse_script_a("dim x\nx = testObj.property(1)");
 
     parse_htmlscript_a("<!--");
     parse_htmlscript_a(" -->");
