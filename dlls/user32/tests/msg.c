@@ -16315,6 +16315,7 @@ static void test_WaitForInputIdle( char *argv0 )
             CloseHandle( pi.hThread );
         }
     }
+    CloseHandle( end_event );
     CloseHandle( start_event );
     PostThreadMessageA( id, WM_QUIT, 0, 0 );
     WaitForSingleObject( thread, 10000 );
