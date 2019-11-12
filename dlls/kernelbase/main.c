@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(kernelbase);
 
 
 HANDLE kernel32_handle = 0;
+BOOL is_wow64 = FALSE;
 
 /***********************************************************************
  *           DllMain
@@ -44,6 +45,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     if (reason == DLL_PROCESS_ATTACH)
     {
         DisableThreadLibraryCalls( hinst );
+        IsWow64Process( GetCurrentProcess(), &is_wow64 );
         kernel32_handle = GetModuleHandleA( "kernel32.dll" );
         init_startup_info( NtCurrentTeb()->Peb->ProcessParameters );
     }

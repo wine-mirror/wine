@@ -850,48 +850,6 @@ UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
 
 
 /***********************************************************************
- *           GetSystemWow64DirectoryW   (KERNEL32.@)
- *
- * As seen on MSDN
- * - On Win32 we should return ERROR_CALL_NOT_IMPLEMENTED
- * - On Win64 we should return the SysWow64 (system64) directory
- */
-UINT WINAPI GetSystemWow64DirectoryW( LPWSTR path, UINT count )
-{
-    UINT len;
-
-    if (!DIR_SysWow64)
-    {
-        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-        return 0;
-    }
-    len = strlenW( DIR_SysWow64 ) + 1;
-    if (path && count >= len)
-    {
-        strcpyW( path, DIR_SysWow64 );
-        len--;
-    }
-    return len;
-}
-
-
-/***********************************************************************
- *           GetSystemWow64DirectoryA   (KERNEL32.@)
- *
- * See comment for GetWindowsWow64DirectoryW.
- */
-UINT WINAPI GetSystemWow64DirectoryA( LPSTR path, UINT count )
-{
-    if (!DIR_SysWow64)
-    {
-        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-        return 0;
-    }
-    return copy_filename_WtoA( DIR_SysWow64, path, count );
-}
-
-
-/***********************************************************************
  *           Wow64EnableWow64FsRedirection   (KERNEL32.@)
  */
 BOOLEAN WINAPI Wow64EnableWow64FsRedirection( BOOLEAN enable )

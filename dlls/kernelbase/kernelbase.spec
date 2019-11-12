@@ -703,8 +703,8 @@
 @ stdcall GetSystemWindowsDirectoryW(ptr long)
 @ stdcall GetSystemWow64Directory2A(ptr long long)
 @ stdcall GetSystemWow64Directory2W(ptr long long)
-@ stdcall GetSystemWow64DirectoryA(ptr long) kernel32.GetSystemWow64DirectoryA
-@ stdcall GetSystemWow64DirectoryW(ptr long) kernel32.GetSystemWow64DirectoryW
+@ stdcall GetSystemWow64DirectoryA(ptr long)
+@ stdcall GetSystemWow64DirectoryW(ptr long)
 # @ stub GetTargetPlatformContext
 @ stdcall GetTempFileNameA(str str long ptr)
 @ stdcall GetTempFileNameW(wstr wstr long ptr)

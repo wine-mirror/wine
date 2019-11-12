@@ -1262,6 +1262,34 @@ UINT WINAPI DECLSPEC_HOTPATCH GetSystemWindowsDirectoryW( LPWSTR path, UINT coun
 
 
 /***********************************************************************
+ *	GetSystemWow64DirectoryA   (kernelbase.@)
+ */
+UINT WINAPI /* DECLSPEC_HOTPATCH */ GetSystemWow64DirectoryA( LPSTR path, UINT count )
+{
+    if (!is_win64 && !is_wow64)
+    {
+        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+        return 0;
+    }
+    return copy_filename_WtoA( get_machine_wow64_dir( IMAGE_FILE_MACHINE_I386 ), path, count );
+}
+
+
+/***********************************************************************
+ *	GetSystemWow64DirectoryW   (kernelbase.@)
+ */
+UINT WINAPI /* DECLSPEC_HOTPATCH */ GetSystemWow64DirectoryW( LPWSTR path, UINT count )
+{
+    if (!is_win64 && !is_wow64)
+    {
+        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+        return 0;
+    }
+    return copy_filename( get_machine_wow64_dir( IMAGE_FILE_MACHINE_I386 ), path, count );
+}
+
+
+/***********************************************************************
  *	GetSystemWow64Directory2A   (kernelbase.@)
  */
 UINT WINAPI DECLSPEC_HOTPATCH GetSystemWow64Directory2A( LPSTR path, UINT count, WORD machine )

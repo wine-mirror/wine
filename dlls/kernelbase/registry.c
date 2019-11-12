@@ -108,8 +108,6 @@ static struct list reg_mui_cache = LIST_INIT(reg_mui_cache); /* MRU */
 static unsigned int reg_mui_cache_count;
 #define REG_MUI_CACHE_SIZE 8
 
-static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
-
 /* check if value type needs string conversion (Ansi<->Unicode) */
 static inline BOOL is_string( DWORD type )
 {
