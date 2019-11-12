@@ -205,12 +205,12 @@
 @ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr)
 @ stdcall CreatePrivateObjectSecurityEx(ptr ptr ptr ptr long long long ptr)
 @ stdcall CreatePrivateObjectSecurityWithMultipleInheritance(ptr ptr ptr ptr long long long long ptr)
-@ stdcall CreateProcessA(str str ptr ptr long long ptr str ptr ptr) kernel32.CreateProcessA
-@ stdcall CreateProcessAsUserA(long str str ptr ptr long long ptr str ptr ptr) kernel32.CreateProcessAsUserA
-@ stdcall CreateProcessAsUserW(long wstr wstr ptr ptr long long ptr wstr ptr ptr) kernel32.CreateProcessAsUserW
-@ stdcall CreateProcessInternalA(long str str ptr ptr long long ptr str ptr ptr ptr) kernel32.CreateProcessInternalA
-@ stdcall CreateProcessInternalW(long wstr wstr ptr ptr long long ptr wstr ptr ptr ptr) kernel32.CreateProcessInternalW
-@ stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr) kernel32.CreateProcessW
+@ stdcall CreateProcessA(str str ptr ptr long long ptr str ptr ptr)
+@ stdcall CreateProcessAsUserA(long str str ptr ptr long long ptr str ptr ptr)
+@ stdcall CreateProcessAsUserW(long wstr wstr ptr ptr long long ptr wstr ptr ptr)
+@ stdcall CreateProcessInternalA(long str str ptr ptr long long ptr str ptr ptr ptr)
+@ stdcall CreateProcessInternalW(long wstr wstr ptr ptr long long ptr wstr ptr ptr ptr)
+@ stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr)
 @ stdcall CreateRemoteThread(long ptr long ptr long long ptr)
 @ stdcall CreateRemoteThreadEx(long ptr long ptr ptr long ptr ptr)
 @ stdcall CreateRestrictedToken(long long long ptr long ptr long ptr ptr)

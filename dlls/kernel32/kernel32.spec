@@ -309,13 +309,13 @@
 @ stdcall -import CreatePipe(ptr ptr ptr long)
 # @ stub CreatePrivateNamespaceA
 # @ stub CreatePrivateNamespaceW
-@ stdcall CreateProcessA(str str ptr ptr long long ptr str ptr ptr)
-@ stdcall CreateProcessAsUserA(long str str ptr ptr long long ptr str ptr ptr)
-@ stdcall CreateProcessAsUserW(long wstr wstr ptr ptr long long ptr wstr ptr ptr)
-@ stdcall CreateProcessInternalA(long str str ptr ptr long long ptr str ptr ptr ptr)
-@ stdcall CreateProcessInternalW(long wstr wstr ptr ptr long long ptr wstr ptr ptr ptr)
+@ stdcall -import CreateProcessA(str str ptr ptr long long ptr str ptr ptr)
+@ stdcall -import CreateProcessAsUserA(long str str ptr ptr long long ptr str ptr ptr)
+@ stdcall -import CreateProcessAsUserW(long wstr wstr ptr ptr long long ptr wstr ptr ptr)
+@ stdcall -import CreateProcessInternalA(long str str ptr ptr long long ptr str ptr ptr ptr)
+@ stdcall -import CreateProcessInternalW(long wstr wstr ptr ptr long long ptr wstr ptr ptr ptr)
 # @ stub CreateProcessInternalWSecure
-@ stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr)
+@ stdcall -import CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr)
 @ stdcall -import CreateRemoteThread(long ptr long ptr long long ptr)
 @ stdcall -import CreateRemoteThreadEx(long ptr long ptr ptr long ptr ptr)
 @ stdcall CreateSemaphoreA(ptr long long str)

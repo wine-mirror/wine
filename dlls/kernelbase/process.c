@@ -42,6 +42,279 @@ static DWORD shutdown_priority = 0x280;
  ***********************************************************************/
 
 
+/***********************************************************************
+ *           find_exe_file
+ */
+static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, DWORD buflen )
+{
+    WCHAR *load_path;
+    BOOL ret;
+
+    if (!set_ntstatus( RtlGetExePath( name, &load_path ))) return FALSE;
+
+    TRACE( "looking for %s in %s\n", debugstr_w(name), debugstr_w(load_path) );
+
+    ret = (SearchPathW( load_path, name, L".exe", buflen, buffer, NULL ) ||
+           /* not found, try without extension in case it is a Unix app */
+           SearchPathW( load_path, name, NULL, buflen, buffer, NULL ));
+    RtlReleasePath( load_path );
+    return ret;
+}
+
+
+/*************************************************************************
+ *               get_file_name
+ *
+ * Helper for CreateProcess: retrieve the file name to load from the
+ * app name and command line. Store the file name in buffer, and
+ * return a possibly modified command line.
+ */
+static WCHAR *get_file_name( WCHAR *cmdline, WCHAR *buffer, DWORD buflen )
+{
+    WCHAR *name, *pos, *first_space, *ret = NULL;
+    const WCHAR *p;
+
+    /* first check for a quoted file name */
+
+    if (cmdline[0] == '"' && (p = wcschr( cmdline + 1, '"' )))
+    {
+        int len = p - cmdline - 1;
+        /* extract the quoted portion as file name */
+        if (!(name = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return NULL;
+        memcpy( name, cmdline + 1, len * sizeof(WCHAR) );
+        name[len] = 0;
+
+        if (!find_exe_file( name, buffer, buflen )) goto done;
+        ret = cmdline;  /* no change necessary */
+        goto done;
+    }
+
+    /* now try the command-line word by word */
+
+    if (!(name = RtlAllocateHeap( GetProcessHeap(), 0, (lstrlenW(cmdline) + 1) * sizeof(WCHAR) )))
+        return NULL;
+    pos = name;
+    p = cmdline;
+    first_space = NULL;
+
+    for (;;)
+    {
+        while (*p && *p != ' ' && *p != '\t') *pos++ = *p++;
+        *pos = 0;
+        if (find_exe_file( name, buffer, buflen ))
+        {
+            ret = cmdline;
+            break;
+        }
+        if (!first_space) first_space = pos;
+        if (!(*pos++ = *p++)) break;
+    }
+
+    if (!ret)
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+    }
+    else if (first_space)  /* build a new command-line with quotes */
+    {
+        if (!(ret = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(cmdline) + 3) * sizeof(WCHAR) )))
+            goto done;
+        swprintf( ret, lstrlenW(cmdline) + 3, L"\"%s\"%s", name, p );
+    }
+
+ done:
+    RtlFreeHeap( GetProcessHeap(), 0, name );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           create_process_params
+ */
+static RTL_USER_PROCESS_PARAMETERS *create_process_params( const WCHAR *filename, const WCHAR *cmdline,
+                                                           const WCHAR *cur_dir, void *env, DWORD flags,
+                                                           const STARTUPINFOW *startup )
+{
+    RTL_USER_PROCESS_PARAMETERS *params;
+    UNICODE_STRING imageW, dllpathW, curdirW, cmdlineW, titleW, desktopW, runtimeW, newdirW;
+    WCHAR imagepath[MAX_PATH];
+    WCHAR *load_path, *dummy, *envW = env;
+
+    if (!GetLongPathNameW( filename, imagepath, MAX_PATH )) lstrcpynW( imagepath, filename, MAX_PATH );
+    if (!GetFullPathNameW( imagepath, MAX_PATH, imagepath, NULL )) lstrcpynW( imagepath, filename, MAX_PATH );
+
+    if (env && !(flags & CREATE_UNICODE_ENVIRONMENT))  /* convert environment to unicode */
+    {
+        char *e = env;
+        DWORD lenW;
+
+        while (*e) e += strlen(e) + 1;
+        e++;  /* final null */
+        lenW = MultiByteToWideChar( CP_ACP, 0, env, e - (char *)env, NULL, 0 );
+        if ((envW = RtlAllocateHeap( GetProcessHeap(), 0, lenW * sizeof(WCHAR) )))
+            MultiByteToWideChar( CP_ACP, 0, env, e - (char *)env, envW, lenW );
+    }
+
+    newdirW.Buffer = NULL;
+    if (cur_dir)
+    {
+        if (RtlDosPathNameToNtPathName_U( cur_dir, &newdirW, NULL, NULL ))
+            cur_dir = newdirW.Buffer + 4;  /* skip \??\ prefix */
+        else
+            cur_dir = NULL;
+    }
+    LdrGetDllPath( imagepath, LOAD_WITH_ALTERED_SEARCH_PATH, &load_path, &dummy );
+    RtlInitUnicodeString( &imageW, imagepath );
+    RtlInitUnicodeString( &dllpathW, load_path );
+    RtlInitUnicodeString( &curdirW, cur_dir );
+    RtlInitUnicodeString( &cmdlineW, cmdline );
+    RtlInitUnicodeString( &titleW, startup->lpTitle ? startup->lpTitle : imagepath );
+    RtlInitUnicodeString( &desktopW, startup->lpDesktop );
+    runtimeW.Buffer = (WCHAR *)startup->lpReserved2;
+    runtimeW.Length = runtimeW.MaximumLength = startup->cbReserved2;
+    if (RtlCreateProcessParametersEx( &params, &imageW, &dllpathW, cur_dir ? &curdirW : NULL,
+                                      &cmdlineW, envW, &titleW, &desktopW,
+                                      NULL, &runtimeW, PROCESS_PARAMS_FLAG_NORMALIZED ))
+    {
+        RtlReleasePath( load_path );
+        if (envW != env) RtlFreeHeap( GetProcessHeap(), 0, envW );
+        return NULL;
+    }
+    RtlReleasePath( load_path );
+
+    if (flags & CREATE_NEW_PROCESS_GROUP) params->ConsoleFlags = 1;
+    if (flags & CREATE_NEW_CONSOLE) params->ConsoleHandle = (HANDLE)1; /* KERNEL32_CONSOLE_ALLOC */
+
+    if (startup->dwFlags & STARTF_USESTDHANDLES)
+    {
+        params->hStdInput  = startup->hStdInput;
+        params->hStdOutput = startup->hStdOutput;
+        params->hStdError  = startup->hStdError;
+    }
+    else if (flags & DETACHED_PROCESS)
+    {
+        params->hStdInput  = INVALID_HANDLE_VALUE;
+        params->hStdOutput = INVALID_HANDLE_VALUE;
+        params->hStdError  = INVALID_HANDLE_VALUE;
+    }
+    else
+    {
+        params->hStdInput  = NtCurrentTeb()->Peb->ProcessParameters->hStdInput;
+        params->hStdOutput = NtCurrentTeb()->Peb->ProcessParameters->hStdOutput;
+        params->hStdError  = NtCurrentTeb()->Peb->ProcessParameters->hStdError;
+    }
+
+    if (flags & CREATE_NEW_CONSOLE)
+    {
+        /* this is temporary (for console handles). We have no way to control that the handle is invalid in child process otherwise */
+        if (is_console_handle(params->hStdInput))  params->hStdInput  = INVALID_HANDLE_VALUE;
+        if (is_console_handle(params->hStdOutput)) params->hStdOutput = INVALID_HANDLE_VALUE;
+        if (is_console_handle(params->hStdError))  params->hStdError  = INVALID_HANDLE_VALUE;
+    }
+    else
+    {
+        if (is_console_handle(params->hStdInput))  params->hStdInput  = (HANDLE)((UINT_PTR)params->hStdInput & ~3);
+        if (is_console_handle(params->hStdOutput)) params->hStdOutput = (HANDLE)((UINT_PTR)params->hStdOutput & ~3);
+        if (is_console_handle(params->hStdError))  params->hStdError  = (HANDLE)((UINT_PTR)params->hStdError & ~3);
+    }
+
+    params->dwX             = startup->dwX;
+    params->dwY             = startup->dwY;
+    params->dwXSize         = startup->dwXSize;
+    params->dwYSize         = startup->dwYSize;
+    params->dwXCountChars   = startup->dwXCountChars;
+    params->dwYCountChars   = startup->dwYCountChars;
+    params->dwFillAttribute = startup->dwFillAttribute;
+    params->dwFlags         = startup->dwFlags;
+    params->wShowWindow     = startup->wShowWindow;
+
+    if (envW != env) RtlFreeHeap( GetProcessHeap(), 0, envW );
+    return params;
+}
+
+
+/***********************************************************************
+ *           create_nt_process
+ */
+static NTSTATUS create_nt_process( SECURITY_ATTRIBUTES *psa, SECURITY_ATTRIBUTES *tsa,
+                                   BOOL inherit, DWORD flags, RTL_USER_PROCESS_PARAMETERS *params,
+                                   RTL_USER_PROCESS_INFORMATION *info )
+{
+    NTSTATUS status;
+    UNICODE_STRING nameW;
+
+    if (!params->ImagePathName.Buffer[0]) return STATUS_OBJECT_PATH_NOT_FOUND;
+    status = RtlDosPathNameToNtPathName_U_WithStatus( params->ImagePathName.Buffer, &nameW, NULL, NULL );
+    if (!status)
+    {
+        params->DebugFlags = flags;  /* hack, cf. RtlCreateUserProcess implementation */
+        status = RtlCreateUserProcess( &nameW, OBJ_CASE_INSENSITIVE, params,
+                                       psa ? psa->lpSecurityDescriptor : NULL,
+                                       tsa ? tsa->lpSecurityDescriptor : NULL,
+                                       0, inherit, 0, 0, info );
+        RtlFreeUnicodeString( &nameW );
+    }
+    return status;
+}
+
+
+/***********************************************************************
+ *           create_vdm_process
+ */
+static NTSTATUS create_vdm_process( SECURITY_ATTRIBUTES *psa, SECURITY_ATTRIBUTES *tsa,
+                                    BOOL inherit, DWORD flags, RTL_USER_PROCESS_PARAMETERS *params,
+                                    RTL_USER_PROCESS_INFORMATION *info )
+{
+    const WCHAR *winevdm = (is_win64 || is_wow64 ?
+                            L"C:\\windows\\syswow64\\winevdm.exe" :
+                            L"C:\\windows\\system32\\winevdm.exe");
+    WCHAR *newcmdline;
+    NTSTATUS status;
+    UINT len;
+
+    len = (lstrlenW(params->ImagePathName.Buffer) + lstrlenW(params->CommandLine.Buffer) +
+           lstrlenW(winevdm) + 16);
+
+    if (!(newcmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        return STATUS_NO_MEMORY;
+
+    swprintf( newcmdline, len, L"%s --app-name \"%s\" %s",
+              winevdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );
+    RtlInitUnicodeString( &params->ImagePathName, winevdm );
+    RtlInitUnicodeString( &params->CommandLine, newcmdline );
+    status = create_nt_process( psa, tsa, inherit, flags, params, info );
+    HeapFree( GetProcessHeap(), 0, newcmdline );
+    return status;
+}
+
+
+/***********************************************************************
+ *           create_cmd_process
+ */
+static NTSTATUS create_cmd_process( SECURITY_ATTRIBUTES *psa, SECURITY_ATTRIBUTES *tsa,
+                                    BOOL inherit, DWORD flags, RTL_USER_PROCESS_PARAMETERS *params,
+                                    RTL_USER_PROCESS_INFORMATION *info )
+{
+    WCHAR comspec[MAX_PATH];
+    WCHAR *newcmdline;
+    NTSTATUS status;
+    UINT len;
+
+    if (!GetEnvironmentVariableW( L"COMSPEC", comspec, ARRAY_SIZE( comspec )))
+        lstrcpyW( comspec, L"C:\\windows\\system32\\cmd.exe" );
+
+    len = lstrlenW(comspec) + 7 + lstrlenW(params->CommandLine.Buffer) + 2;
+    if (!(newcmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        return STATUS_NO_MEMORY;
+
+    swprintf( newcmdline, len, L"%s /s/c \"%s\"", comspec, params->CommandLine.Buffer );
+    RtlInitUnicodeString( &params->ImagePathName, comspec );
+    RtlInitUnicodeString( &params->CommandLine, newcmdline );
+    status = create_nt_process( psa, tsa, inherit, flags, params, info );
+    RtlFreeHeap( GetProcessHeap(), 0, newcmdline );
+    return status;
+}
+
+
 /*********************************************************************
  *           CloseHandle   (kernelbase.@)
  */
@@ -56,6 +329,212 @@ BOOL WINAPI DECLSPEC_HOTPATCH CloseHandle( HANDLE handle )
 
     if (is_console_handle( handle )) handle = console_handle_map( handle );
     return set_ntstatus( NtClose( handle ));
+}
+
+
+/**********************************************************************
+ *           CreateProcessAsUserA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessAsUserA( HANDLE token, const char *app_name, char *cmd_line,
+                                                    SECURITY_ATTRIBUTES *process_attr,
+                                                    SECURITY_ATTRIBUTES *thread_attr,
+                                                    BOOL inherit, DWORD flags, void *env,
+                                                    const char *cur_dir, STARTUPINFOA *startup_info,
+                                                    PROCESS_INFORMATION *info )
+{
+    return CreateProcessInternalA( token, app_name, cmd_line, process_attr, thread_attr,
+                                   inherit, flags, env, cur_dir, startup_info, info, NULL );
+}
+
+
+/**********************************************************************
+ *           CreateProcessAsUserW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessAsUserW( HANDLE token, const WCHAR *app_name, WCHAR *cmd_line,
+                                                    SECURITY_ATTRIBUTES *process_attr,
+                                                    SECURITY_ATTRIBUTES *thread_attr,
+                                                    BOOL inherit, DWORD flags, void *env,
+                                                    const WCHAR *cur_dir, STARTUPINFOW *startup_info,
+                                                    PROCESS_INFORMATION *info )
+{
+    return CreateProcessInternalW( token, app_name, cmd_line, process_attr, thread_attr,
+                                   inherit, flags, env, cur_dir, startup_info, info, NULL );
+}
+
+
+/**********************************************************************
+ *           CreateProcessInternalA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalA( HANDLE token, const char *app_name, char *cmd_line,
+                                                      SECURITY_ATTRIBUTES *process_attr,
+                                                      SECURITY_ATTRIBUTES *thread_attr,
+                                                      BOOL inherit, DWORD flags, void *env,
+                                                      const char *cur_dir, STARTUPINFOA *startup_info,
+                                                      PROCESS_INFORMATION *info, HANDLE *new_token )
+{
+    BOOL ret = FALSE;
+    WCHAR *app_nameW = NULL, *cmd_lineW = NULL, *cur_dirW = NULL;
+    UNICODE_STRING desktopW, titleW;
+    STARTUPINFOW infoW;
+
+    desktopW.Buffer = NULL;
+    titleW.Buffer = NULL;
+    if (app_name && !(app_nameW = file_name_AtoW( app_name, TRUE ))) goto done;
+    if (cmd_line && !(cmd_lineW = file_name_AtoW( cmd_line, TRUE ))) goto done;
+    if (cur_dir && !(cur_dirW = file_name_AtoW( cur_dir, TRUE ))) goto done;
+
+    if (startup_info->lpDesktop) RtlCreateUnicodeStringFromAsciiz( &desktopW, startup_info->lpDesktop );
+    if (startup_info->lpTitle) RtlCreateUnicodeStringFromAsciiz( &titleW, startup_info->lpTitle );
+
+    memcpy( &infoW, startup_info, sizeof(infoW) );
+    infoW.lpDesktop = desktopW.Buffer;
+    infoW.lpTitle = titleW.Buffer;
+
+    ret = CreateProcessInternalW( token, app_nameW, cmd_lineW, process_attr, thread_attr,
+                                  inherit, flags, env, cur_dirW, &infoW, info, new_token );
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, app_nameW );
+    RtlFreeHeap( GetProcessHeap(), 0, cmd_lineW );
+    RtlFreeHeap( GetProcessHeap(), 0, cur_dirW );
+    RtlFreeUnicodeString( &desktopW );
+    RtlFreeUnicodeString( &titleW );
+    return ret;
+}
+
+
+/**********************************************************************
+ *           CreateProcessInternalW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR *app_name, WCHAR *cmd_line,
+                                                      SECURITY_ATTRIBUTES *process_attr,
+                                                      SECURITY_ATTRIBUTES *thread_attr,
+                                                      BOOL inherit, DWORD flags, void *env,
+                                                      const WCHAR *cur_dir, STARTUPINFOW *startup_info,
+                                                      PROCESS_INFORMATION *info, HANDLE *new_token )
+{
+    WCHAR name[MAX_PATH];
+    WCHAR *p, *tidy_cmdline = cmd_line;
+    RTL_USER_PROCESS_PARAMETERS *params = NULL;
+    RTL_USER_PROCESS_INFORMATION rtl_info;
+    NTSTATUS status;
+
+    /* Process the AppName and/or CmdLine to get module name and path */
+
+    TRACE( "app %s cmdline %s\n", debugstr_w(app_name), debugstr_w(cmd_line) );
+
+    if (token) FIXME( "Creating a process with a token is not yet implemented\n" );
+    if (new_token) FIXME( "No support for returning created process token\n" );
+
+    if (app_name)
+    {
+        if (!cmd_line || !cmd_line[0]) /* no command-line, create one */
+        {
+            if (!(tidy_cmdline = RtlAllocateHeap( GetProcessHeap(), 0, (lstrlenW(app_name)+3) * sizeof(WCHAR) )))
+                return FALSE;
+            swprintf( tidy_cmdline, lstrlenW(app_name) + 3, L"\"%s\"", app_name );
+        }
+    }
+    else
+    {
+        if (!(tidy_cmdline = get_file_name( cmd_line, name, ARRAY_SIZE(name) ))) return FALSE;
+        app_name = name;
+    }
+
+    /* Warn if unsupported features are used */
+
+    if (flags & (IDLE_PRIORITY_CLASS | HIGH_PRIORITY_CLASS | REALTIME_PRIORITY_CLASS |
+                 CREATE_DEFAULT_ERROR_MODE | CREATE_NO_WINDOW |
+                 PROFILE_USER | PROFILE_KERNEL | PROFILE_SERVER))
+        WARN( "(%s,...): ignoring some flags in %x\n", debugstr_w(app_name), flags );
+
+    if (cur_dir)
+    {
+        DWORD attr = GetFileAttributesW( cur_dir );
+        if (attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            status = STATUS_NOT_A_DIRECTORY;
+            goto done;
+        }
+    }
+
+    info->hThread = info->hProcess = 0;
+    info->dwProcessId = info->dwThreadId = 0;
+
+    if (!(params = create_process_params( app_name, tidy_cmdline, cur_dir, env, flags, startup_info )))
+    {
+        status = STATUS_NO_MEMORY;
+        goto done;
+    }
+
+    status = create_nt_process( process_attr, thread_attr, inherit, flags, params, &rtl_info );
+    switch (status)
+    {
+    case STATUS_SUCCESS:
+        break;
+    case STATUS_INVALID_IMAGE_WIN_16:
+    case STATUS_INVALID_IMAGE_NE_FORMAT:
+    case STATUS_INVALID_IMAGE_PROTECT:
+        TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(app_name) );
+        status = create_vdm_process( process_attr, thread_attr, inherit, flags, params, &rtl_info );
+        break;
+    case STATUS_INVALID_IMAGE_NOT_MZ:
+        /* check for .com or .bat extension */
+        if (!(p = wcsrchr( app_name, '.' ))) break;
+        if (!wcsicmp( p, L".com" ) || !wcsicmp( p, L".pif" ))
+        {
+            TRACE( "starting %s as DOS binary\n", debugstr_w(app_name) );
+            status = create_vdm_process( process_attr, thread_attr, inherit, flags, params, &rtl_info );
+        }
+        else if (!wcsicmp( p, L".bat" ) || !wcsicmp( p, L".cmd" ))
+        {
+            TRACE( "starting %s as batch binary\n", debugstr_w(app_name) );
+            status = create_cmd_process( process_attr, thread_attr, inherit, flags, params, &rtl_info );
+        }
+        break;
+    }
+
+    if (!status)
+    {
+        info->hProcess    = rtl_info.Process;
+        info->hThread     = rtl_info.Thread;
+        info->dwProcessId = HandleToUlong( rtl_info.ClientId.UniqueProcess );
+        info->dwThreadId  = HandleToUlong( rtl_info.ClientId.UniqueThread );
+        if (!(flags & CREATE_SUSPENDED)) NtResumeThread( rtl_info.Thread, NULL );
+        TRACE( "started process pid %04x tid %04x\n", info->dwProcessId, info->dwThreadId );
+    }
+
+ done:
+    RtlDestroyProcessParameters( params );
+    if (tidy_cmdline != cmd_line) HeapFree( GetProcessHeap(), 0, tidy_cmdline );
+    return set_ntstatus( status );
+}
+
+
+/**********************************************************************
+ *           CreateProcessA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessA( const char *app_name, char *cmd_line,
+                                              SECURITY_ATTRIBUTES *process_attr,
+                                              SECURITY_ATTRIBUTES *thread_attr, BOOL inherit,
+                                              DWORD flags, void *env, const char *cur_dir,
+                                              STARTUPINFOA *startup_info, PROCESS_INFORMATION *info )
+{
+    return CreateProcessInternalA( NULL, app_name, cmd_line, process_attr, thread_attr,
+                                   inherit, flags, env, cur_dir, startup_info, info, NULL );
+}
+
+
+/**********************************************************************
+ *           CreateProcessW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( const WCHAR *app_name, WCHAR *cmd_line,
+                                              SECURITY_ATTRIBUTES *process_attr,
+                                              SECURITY_ATTRIBUTES *thread_attr, BOOL inherit, DWORD flags,
+                                              void *env, const WCHAR *cur_dir, STARTUPINFOW *startup_info,
+                                              PROCESS_INFORMATION *info )
+{
+    return CreateProcessInternalW( NULL, app_name, cmd_line, process_attr, thread_attr,
+                                   inherit, flags, env, cur_dir, startup_info, info, NULL );
 }
 
 
