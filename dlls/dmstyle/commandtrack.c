@@ -39,7 +39,7 @@ static inline IDirectMusicCommandTrack *impl_from_IDirectMusicTrack8(IDirectMusi
     return CONTAINING_RECORD(iface, IDirectMusicCommandTrack, IDirectMusicTrack8_iface);
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_QueryInterface(IDirectMusicTrack8 *iface, REFIID riid,
+static HRESULT WINAPI command_track_QueryInterface(IDirectMusicTrack8 *iface, REFIID riid,
         void **ret_iface)
 {
     IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -62,7 +62,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_QueryInterface(IDirectMusicTrack8 *
     return S_OK;
 }
 
-static ULONG WINAPI IDirectMusicTrack8Impl_AddRef(IDirectMusicTrack8 *iface)
+static ULONG WINAPI command_track_AddRef(IDirectMusicTrack8 *iface)
 {
     IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedIncrement(&This->ref);
@@ -72,7 +72,7 @@ static ULONG WINAPI IDirectMusicTrack8Impl_AddRef(IDirectMusicTrack8 *iface)
     return ref;
 }
 
-static ULONG WINAPI IDirectMusicTrack8Impl_Release(IDirectMusicTrack8 *iface)
+static ULONG WINAPI command_track_Release(IDirectMusicTrack8 *iface)
 {
     IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedDecrement(&This->ref);
@@ -87,15 +87,14 @@ static ULONG WINAPI IDirectMusicTrack8Impl_Release(IDirectMusicTrack8 *iface)
     return ref;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_Init(IDirectMusicTrack8 *iface,
-        IDirectMusicSegment *pSegment)
+static HRESULT WINAPI command_track_Init(IDirectMusicTrack8 *iface, IDirectMusicSegment *pSegment)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
 	FIXME("(%p, %p): stub\n", This, pSegment);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_InitPlay(IDirectMusicTrack8 *iface,
+static HRESULT WINAPI command_track_InitPlay(IDirectMusicTrack8 *iface,
         IDirectMusicSegmentState *pSegmentState, IDirectMusicPerformance *pPerformance,
         void **ppStateData, DWORD dwVirtualTrack8ID, DWORD dwFlags)
 {
@@ -104,14 +103,14 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_InitPlay(IDirectMusicTrack8 *iface,
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_EndPlay(IDirectMusicTrack8 *iface, void *pStateData)
+static HRESULT WINAPI command_track_EndPlay(IDirectMusicTrack8 *iface, void *pStateData)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
 	FIXME("(%p, %p): stub\n", This, pStateData);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_Play(IDirectMusicTrack8 *iface, void *pStateData,
+static HRESULT WINAPI command_track_Play(IDirectMusicTrack8 *iface, void *pStateData,
         MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags,
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
@@ -120,7 +119,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_Play(IDirectMusicTrack8 *iface, voi
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_GetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
+static HRESULT WINAPI command_track_GetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
         MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam)
 {
     IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -132,7 +131,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_GetParam(IDirectMusicTrack8 *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_SetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
+static HRESULT WINAPI command_track_SetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
         MUSIC_TIME mtTime, void *pParam)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -140,8 +139,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_SetParam(IDirectMusicTrack8 *iface,
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_IsParamSupported(IDirectMusicTrack8 *iface,
-        REFGUID rguidType)
+static HRESULT WINAPI command_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID rguidType)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
 
@@ -161,7 +159,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_IsParamSupported(IDirectMusicTrack8
 	return DMUS_E_TYPE_UNSUPPORTED;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_AddNotificationType(IDirectMusicTrack8 *iface,
+static HRESULT WINAPI command_track_AddNotificationType(IDirectMusicTrack8 *iface,
         REFGUID rguidNotificationType)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -169,7 +167,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_AddNotificationType(IDirectMusicTra
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_RemoveNotificationType(IDirectMusicTrack8 *iface,
+static HRESULT WINAPI command_track_RemoveNotificationType(IDirectMusicTrack8 *iface,
         REFGUID rguidNotificationType)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -177,7 +175,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_RemoveNotificationType(IDirectMusic
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_Clone(IDirectMusicTrack8 *iface, MUSIC_TIME mtStart,
+static HRESULT WINAPI command_track_Clone(IDirectMusicTrack8 *iface, MUSIC_TIME mtStart,
         MUSIC_TIME mtEnd, IDirectMusicTrack **ppTrack)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -185,7 +183,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_Clone(IDirectMusicTrack8 *iface, MU
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_PlayEx(IDirectMusicTrack8 *iface, void *pStateData,
+static HRESULT WINAPI command_track_PlayEx(IDirectMusicTrack8 *iface, void *pStateData,
         REFERENCE_TIME rtStart, REFERENCE_TIME rtEnd, REFERENCE_TIME rtOffset, DWORD dwFlags,
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
@@ -195,8 +193,8 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_PlayEx(IDirectMusicTrack8 *iface, v
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_GetParamEx(IDirectMusicTrack8 *iface,
-        REFGUID rguidType, REFERENCE_TIME rtTime, REFERENCE_TIME *prtNext, void *pParam,
+static HRESULT WINAPI command_track_GetParamEx(IDirectMusicTrack8 *iface, REFGUID rguidType,
+        REFERENCE_TIME rtTime, REFERENCE_TIME *prtNext, void *pParam,
         void *pStateData, DWORD dwFlags)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -205,8 +203,8 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_GetParamEx(IDirectMusicTrack8 *ifac
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_SetParamEx(IDirectMusicTrack8 *iface,
-        REFGUID rguidType, REFERENCE_TIME rtTime, void *pParam, void *pStateData, DWORD dwFlags)
+static HRESULT WINAPI command_track_SetParamEx(IDirectMusicTrack8 *iface, REFGUID rguidType,
+        REFERENCE_TIME rtTime, void *pParam, void *pStateData, DWORD dwFlags)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
 	FIXME("(%p, %s, 0x%s, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
@@ -214,7 +212,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_SetParamEx(IDirectMusicTrack8 *ifac
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
+static HRESULT WINAPI command_track_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
         DWORD trackgroup, IDirectMusicTrack **track)
 {
     IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -223,8 +221,8 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_Compose(IDirectMusicTrack8 *iface, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_Join(IDirectMusicTrack8 *iface,
-        IDirectMusicTrack *pNewTrack, MUSIC_TIME mtJoin, IUnknown *pContext, DWORD dwTrackGroup,
+static HRESULT WINAPI command_track_Join(IDirectMusicTrack8 *iface, IDirectMusicTrack *pNewTrack,
+        MUSIC_TIME mtJoin, IUnknown *pContext, DWORD dwTrackGroup,
         IDirectMusicTrack **ppResultTrack)
 {
         IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
@@ -233,24 +231,24 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_Join(IDirectMusicTrack8 *iface,
 }
 
 static const IDirectMusicTrack8Vtbl dmtrack8_vtbl = {
-    IDirectMusicTrack8Impl_QueryInterface,
-    IDirectMusicTrack8Impl_AddRef,
-    IDirectMusicTrack8Impl_Release,
-    IDirectMusicTrack8Impl_Init,
-    IDirectMusicTrack8Impl_InitPlay,
-    IDirectMusicTrack8Impl_EndPlay,
-    IDirectMusicTrack8Impl_Play,
-    IDirectMusicTrack8Impl_GetParam,
-    IDirectMusicTrack8Impl_SetParam,
-    IDirectMusicTrack8Impl_IsParamSupported,
-    IDirectMusicTrack8Impl_AddNotificationType,
-    IDirectMusicTrack8Impl_RemoveNotificationType,
-    IDirectMusicTrack8Impl_Clone,
-    IDirectMusicTrack8Impl_PlayEx,
-    IDirectMusicTrack8Impl_GetParamEx,
-    IDirectMusicTrack8Impl_SetParamEx,
-    IDirectMusicTrack8Impl_Compose,
-    IDirectMusicTrack8Impl_Join
+    command_track_QueryInterface,
+    command_track_AddRef,
+    command_track_Release,
+    command_track_Init,
+    command_track_InitPlay,
+    command_track_EndPlay,
+    command_track_Play,
+    command_track_GetParam,
+    command_track_SetParam,
+    command_track_IsParamSupported,
+    command_track_AddNotificationType,
+    command_track_RemoveNotificationType,
+    command_track_Clone,
+    command_track_PlayEx,
+    command_track_GetParamEx,
+    command_track_SetParamEx,
+    command_track_Compose,
+    command_track_Join
 };
 
 static inline IDirectMusicCommandTrack *impl_from_IPersistStream(IPersistStream *iface)
