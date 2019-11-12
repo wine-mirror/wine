@@ -1665,6 +1665,7 @@ static inline void *MmGetSystemAddressForMdlSafe(MDL *mdl, ULONG priority)
         return MmMapLockedPagesSpecifyCache(mdl, KernelMode, MmCached, NULL, FALSE, priority);
 }
 
+void    FASTCALL ObfReferenceObject(void*);
 void      WINAPI ObDereferenceObject(void*);
 USHORT    WINAPI ObGetFilterVersion(void);
 NTSTATUS  WINAPI ObRegisterCallbacks(POB_CALLBACK_REGISTRATION*, void**);

@@ -62,8 +62,6 @@ static void *create_caller_thread;
 
 static PETHREAD create_irp_thread;
 
-void WINAPI ObfReferenceObject( void *obj );
-
 NTSTATUS WINAPI ZwQueryInformationProcess(HANDLE,PROCESSINFOCLASS,void*,ULONG,ULONG*);
 
 static void kvprintf(const char *format, __ms_va_list ap)

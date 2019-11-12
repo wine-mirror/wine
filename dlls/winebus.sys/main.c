@@ -31,6 +31,7 @@
 #include "ddk/wdm.h"
 #include "ddk/hidport.h"
 #include "ddk/hidtypes.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
@@ -40,6 +41,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
+
+#if defined(__i386__) && !defined(_WIN32)
+
+extern void * WINAPI wrap_fastcall_func1( void *func, const void *a );
+__ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
+                   "popl %ecx\n\t"
+                   "popl %eax\n\t"
+                   "xchgl (%esp),%ecx\n\t"
+                   "jmp *%eax" );
+
+#define call_fastcall_func1(func,a) wrap_fastcall_func1(func,a)
+
+#else
+
+#define call_fastcall_func1(func,a) func(a)
+
+#endif
 
 struct product_desc
 {
@@ -381,6 +399,7 @@ static NTSTATUS build_device_relations(DEVICE_RELATIONS **devices)
     LIST_FOR_EACH_ENTRY(ptr, &pnp_devset, struct pnp_device, entry)
     {
         (*devices)->Objects[i] = ptr->device;
+        call_fastcall_func1(ObfReferenceObject, ptr->device);
         i++;
     }
     LeaveCriticalSection(&device_list_cs);
