@@ -1611,6 +1611,36 @@ HRESULT CDECL wined3d_stateblock_set_stream_source(struct wined3d_stateblock *st
     return WINED3D_OK;
 }
 
+HRESULT CDECL wined3d_stateblock_set_stream_source_freq(struct wined3d_stateblock *stateblock,
+        UINT stream_idx, UINT divider)
+{
+    struct wined3d_stream_state *stream;
+
+    TRACE("stateblock %p, stream_idx %u, divider %#x.\n", stateblock, stream_idx, divider);
+
+    if ((divider & WINED3DSTREAMSOURCE_INSTANCEDATA) && (divider & WINED3DSTREAMSOURCE_INDEXEDDATA))
+    {
+        WARN("INSTANCEDATA and INDEXEDDATA were set, returning D3DERR_INVALIDCALL.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    if ((divider & WINED3DSTREAMSOURCE_INSTANCEDATA) && !stream_idx)
+    {
+        WARN("INSTANCEDATA used on stream 0, returning D3DERR_INVALIDCALL.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    if (!divider)
+    {
+        WARN("Divider is 0, returning D3DERR_INVALIDCALL.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    stream = &stateblock->stateblock_state.streams[stream_idx];
+    stream->flags = divider & (WINED3DSTREAMSOURCE_INSTANCEDATA | WINED3DSTREAMSOURCE_INDEXEDDATA);
+    stream->frequency = divider & 0x7fffff;
+    stateblock->changed.streamFreq |= 1u << stream_idx;
+    return WINED3D_OK;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union

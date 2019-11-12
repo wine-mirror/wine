@@ -2690,6 +2690,7 @@ void __cdecl wined3d_stateblock_set_sampler_state(struct wined3d_stateblock *sta
 void __cdecl wined3d_stateblock_set_scissor_rect(struct wined3d_stateblock *stateblock, const RECT *rect);
 HRESULT __cdecl wined3d_stateblock_set_stream_source(struct wined3d_stateblock *stateblock,
         UINT stream_idx, struct wined3d_buffer *buffer, UINT offset, UINT stride);
+HRESULT __cdecl wined3d_stateblock_set_stream_source_freq(struct wined3d_stateblock *stateblock, UINT stream_idx, UINT divider);
 void __cdecl wined3d_stateblock_set_texture(struct wined3d_stateblock *stateblock, UINT stage, struct wined3d_texture *texture);
 void __cdecl wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock *stateblock,
         UINT stage, enum wined3d_texture_stage_state state, DWORD value);
