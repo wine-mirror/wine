@@ -2085,7 +2085,8 @@ static BOOL ignore_message( UINT message )
             message == WM_TIMECHANGE ||
             message == WM_DISPLAYCHANGE ||
             message == WM_DEVICECHANGE ||
-            message == WM_DWMNCRENDERINGCHANGED);
+            message == WM_DWMNCRENDERINGCHANGED ||
+            message == WM_WININICHANGE);
 }
 
 static unsigned hash_Ly_W(const WCHAR *str)
