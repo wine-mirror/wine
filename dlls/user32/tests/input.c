@@ -1873,6 +1873,16 @@ static void test_key_map(void)
                vkey, numpad_scan);
         }
     }
+
+    /* test the scan code prefixes of the right variant of a keys */
+    s = MapVirtualKeyExA(VK_RCONTROL, MAPVK_VK_TO_VSC, kl);
+    ok(s >> 8 == 0x00, "Scan code prefixes should not be returned when not using MAPVK_VK_TO_VSC_EX %#1x\n", s >> 8);
+    s = MapVirtualKeyExA(VK_RCONTROL, MAPVK_VK_TO_VSC_EX, kl);
+    ok(s >> 8 == 0xE0 || broken(s == 0), "Scan code prefix for VK_RCONTROL should be 0xE0 when MAPVK_VK_TO_VSC_EX is set, was %#1x\n", s >> 8);
+    s = MapVirtualKeyExA(VK_RMENU, MAPVK_VK_TO_VSC_EX, kl);
+    ok(s >> 8 == 0xE0 || broken(s == 0), "Scan code prefix for VK_RMENU should be 0xE0 when MAPVK_VK_TO_VSC_EX is set, was %#1x\n", s >> 8);
+    s = MapVirtualKeyExA(VK_RSHIFT, MAPVK_VK_TO_VSC_EX, kl);
+    ok(s >> 8 == 0x00 || broken(s == 0), "The scan code shouldn't have a prefix, got %#1x\n", s >> 8);
 }
 
 #define shift 1
