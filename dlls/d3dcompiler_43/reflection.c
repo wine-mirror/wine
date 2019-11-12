@@ -475,17 +475,17 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetResourceBindin
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetInputParameterDesc(
         ID3D11ShaderReflection *iface, UINT index, D3D11_SIGNATURE_PARAMETER_DESC *desc)
 {
-    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D11ShaderReflection(iface);
 
     TRACE("iface %p, index %u, desc %p\n", iface, index, desc);
 
-    if (!desc || !This->isgn || index >= This->isgn->element_count)
+    if (!desc || !reflection->isgn || index >= reflection->isgn->element_count)
     {
         WARN("Invalid argument specified\n");
         return E_INVALIDARG;
     }
 
-    *desc = This->isgn->elements[index];
+    *desc = reflection->isgn->elements[index];
 
     return S_OK;
 }
@@ -493,17 +493,17 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetInputParameter
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetOutputParameterDesc(
         ID3D11ShaderReflection *iface, UINT index, D3D11_SIGNATURE_PARAMETER_DESC *desc)
 {
-    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D11ShaderReflection(iface);
 
     TRACE("iface %p, index %u, desc %p\n", iface, index, desc);
 
-    if (!desc || !This->osgn || index >= This->osgn->element_count)
+    if (!desc || !reflection->osgn || index >= reflection->osgn->element_count)
     {
         WARN("Invalid argument specified\n");
         return E_INVALIDARG;
     }
 
-    *desc = This->osgn->elements[index];
+    *desc = reflection->osgn->elements[index];
 
     return S_OK;
 }
@@ -511,17 +511,17 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetOutputParamete
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetPatchConstantParameterDesc(
         ID3D11ShaderReflection *iface, UINT index, D3D11_SIGNATURE_PARAMETER_DESC *desc)
 {
-    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D11ShaderReflection(iface);
 
     TRACE("iface %p, index %u, desc %p\n", iface, index, desc);
 
-    if (!desc || !This->pcsg || index >= This->pcsg->element_count)
+    if (!desc || !reflection->pcsg || index >= reflection->pcsg->element_count)
     {
         WARN("Invalid argument specified\n");
         return E_INVALIDARG;
     }
 
-    *desc = This->pcsg->elements[index];
+    *desc = reflection->pcsg->elements[index];
 
     return S_OK;
 }
@@ -1621,6 +1621,10 @@ static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *
         UINT name_offset;
         DWORD mask;
 
+#if D3D_COMPILER_VERSION >= 46
+        /* FIXME */
+        d[i].MinPrecision = D3D_MIN_PRECISION_DEFAULT;
+#endif
         if (element_size == D3DCOMPILER_SIGNATURE_ELEMENT_SIZE7)
         {
             read_dword(&ptr, &d[i].Stream);
