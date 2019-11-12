@@ -722,7 +722,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
 
     attr.RootDirectory = iface_key;
     RtlInitUnicodeString( &string, controlW );
-    ret = NtCreateKey( &control_key, KEY_SET_VALUE, &attr, 0, NULL, 0, NULL );
+    ret = NtCreateKey( &control_key, KEY_SET_VALUE, &attr, 0, NULL, REG_OPTION_VOLATILE, NULL );
     NtClose( iface_key );
     if (ret)
         return ret;
