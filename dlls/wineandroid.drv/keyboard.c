@@ -932,6 +932,11 @@ UINT CDECL ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl )
             break;
         }
         if (code < ARRAY_SIZE( vkey_to_scancode )) ret = vkey_to_scancode[code];
+
+        /* set scan code prefix */
+        if (maptype == MAPVK_VK_TO_VSC_EX &&
+            (code == VK_RCONTROL || code == VK_RMENU))
+            ret |= 0xe000;
         break;
     case MAPVK_VSC_TO_VK:
     case MAPVK_VSC_TO_VK_EX:
