@@ -9059,8 +9059,8 @@ static const struct message WmShiftMouseButton[] = {
     { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_SHIFT, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_SHIFT, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_SHIFT, 0xc0000001 },
-    { WM_LBUTTONUP, wparam|optional, MK_SHIFT, 0 }, /* >= w1064v1809 */
-    { WM_LBUTTONUP, sent|wparam|optional, MK_SHIFT, 0 }, /* >= w1064v1809 */
+    { WM_LBUTTONUP, optional, 0, 0 }, /* >= w1064v1809 */
+    { WM_LBUTTONUP, sent|optional, 0, 0 }, /* >= w1064v1809 */
     { 0 }
 };
 static const struct message WmF1Seq[] = {
