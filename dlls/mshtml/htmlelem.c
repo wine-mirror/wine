@@ -700,7 +700,7 @@ static HRESULT HTMLRectCollection_get_dispid(DispatchEx *dispex, BSTR name, DWOR
     DWORD idx = 0;
     WCHAR *ptr;
 
-    for(ptr = name; *ptr && iswdigit(*ptr); ptr++)
+    for(ptr = name; *ptr && is_digit(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
     if(*ptr)
         return DISP_E_UNKNOWNNAME;
@@ -6061,7 +6061,7 @@ static HRESULT HTMLFiltersCollection_get_dispid(DispatchEx *dispex, BSTR name, D
     WCHAR *ptr;
     int idx = 0;
 
-    for(ptr = name; *ptr && iswdigit(*ptr); ptr++)
+    for(ptr = name; *ptr && is_digit(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
     if(*ptr)
         return DISP_E_UNKNOWNNAME;

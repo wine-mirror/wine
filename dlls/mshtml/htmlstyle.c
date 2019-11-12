@@ -871,7 +871,7 @@ static void fix_px_value(nsAString *nsstr)
         if(!*ptr)
             break;
 
-        while(*ptr && iswdigit(*ptr))
+        while(*ptr && is_digit(*ptr))
             ptr++;
 
         if(!*ptr || iswspace(*ptr)) {
@@ -1096,7 +1096,7 @@ static HRESULT get_nsstyle_property_var(nsIDOMCSSStyleDeclaration *nsstyle, styl
             ptr++;
         }
 
-        while(iswdigit(*ptr))
+        while(is_digit(*ptr))
             i = i*10 + (*ptr++ - '0');
 
         if(!*ptr) {
@@ -1228,7 +1228,7 @@ static HRESULT get_nsstyle_pixel_val(HTMLStyle *This, styleid_t sid, LONG *p)
 
             if(*ptr == '.') {
                 /* Skip all digits. We have tests showing that we should not round the value. */
-                while(iswdigit(*++ptr));
+                while(is_digit(*++ptr));
             }
         }
 
@@ -2953,11 +2953,11 @@ static void update_filter(HTMLStyle *This)
 
                     ptr2 += ARRAY_SIZE(opacityW);
 
-                    while(iswdigit(*ptr2))
+                    while(is_digit(*ptr2))
                         fval = fval*10.0f + (float)(*ptr2++ - '0');
 
                     if(*ptr2 == '.') {
-                        while(iswdigit(*++ptr2)) {
+                        while(is_digit(*++ptr2)) {
                             fval += e * (float)(*ptr2++ - '0');
                             e *= 0.1f;
                         }

@@ -1021,9 +1021,9 @@ static HRESULT nsstr_to_truncated_bstr(const nsAString *nsstr, BSTR *ret_ptr)
 
     nsAString_GetData(nsstr, &str);
 
-    for(ptr = str; iswdigit(*ptr); ptr++);
+    for(ptr = str; is_digit(*ptr); ptr++);
     if(*ptr == '.') {
-        for(end = ptr++; iswdigit(*ptr); ptr++);
+        for(end = ptr++; is_digit(*ptr); ptr++);
         if(*ptr)
             end = NULL;
     }

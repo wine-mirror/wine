@@ -1363,6 +1363,11 @@ static inline VARIANT_BOOL variant_bool(BOOL b)
     return b ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
+static inline BOOL is_digit(WCHAR c)
+{
+    return '0' <= c && c <= '9';
+}
+
 #ifdef __i386__
 extern void *call_thiscall_func;
 #endif

@@ -109,16 +109,16 @@ static PRUnichar *handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *
     while(iswspace(*ptr))
         ptr++;
 
-    if(!iswdigit(*ptr))
+    if(!is_digit(*ptr))
         return NULL;
-    while(iswdigit(*ptr))
+    while(is_digit(*ptr))
         majorv = majorv*10 + (*ptr++ - '0');
 
     if(*ptr == '.') {
         ptr++;
-        if(!iswdigit(*ptr))
+        if(!is_digit(*ptr))
             return NULL;
-        while(iswdigit(*ptr))
+        while(is_digit(*ptr))
             minorv = minorv*10 + (*ptr++ - '0');
     }
 

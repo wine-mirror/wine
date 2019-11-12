@@ -562,7 +562,7 @@ static HRESULT HTMLElementCollection_get_dispid(DispatchEx *dispex, BSTR name, D
     if(!*name)
         return DISP_E_UNKNOWNNAME;
 
-    for(ptr = name; *ptr && iswdigit(*ptr); ptr++)
+    for(ptr = name; *ptr && is_digit(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
 
     if(*ptr) {

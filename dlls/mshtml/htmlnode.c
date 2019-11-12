@@ -373,7 +373,7 @@ static HRESULT HTMLDOMChildrenCollection_get_dispid(DispatchEx *dispex, BSTR nam
     DWORD idx=0;
     UINT32 len = 0;
 
-    for(ptr = name; *ptr && iswdigit(*ptr); ptr++)
+    for(ptr = name; *ptr && is_digit(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
     if(*ptr)
         return DISP_E_UNKNOWNNAME;
