@@ -962,6 +962,12 @@ static const struct message WmShowPopupExtremeLocationSeq[] = {
     { HCBT_ACTIVATE, hook },
     { WM_WINDOWPOSCHANGING, sent|optional },
     { WM_QUERYNEWPALETTE, sent|optional },
+
+    /* occasionally received on test machines */
+    { WM_NCPAINT, sent|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|optional },
+
     { WM_ACTIVATEAPP, sent },
     { WM_NCACTIVATE, sent },
     { WM_ACTIVATE, sent },
@@ -7879,6 +7885,7 @@ static const struct message WmParentPaintNc[] = {
     { WM_NCPAINT, sent|beginpaint },
     { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
     { WM_ERASEBKGND, sent|beginpaint|optional },
+    { WM_GETMINMAXINFO, sent|optional },
     { 0 }
 };
 
@@ -12731,6 +12738,7 @@ static void test_notify_message(void)
 }
 
 static const struct message WmMouseHoverSeq[] = {
+    { WM_GETMINMAXINFO, sent|optional }, /* sometimes seen on w1064v1809 */
     { WM_MOUSEACTIVATE, sent|optional },  /* we can get those when moving the mouse in focus-follow-mouse mode under X11 */
     { WM_MOUSEACTIVATE, sent|optional },
     { WM_TIMER, sent|optional }, /* XP sends it */
@@ -13762,6 +13770,7 @@ static const struct message WmCreateDialogParamSeq_4[] = {
     { WM_QUERYNEWPALETTE, sent|parent|optional }, /* TODO: this message should not be sent */
     { WM_WINDOWPOSCHANGING, sent|parent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
     { WM_WINDOWPOSCHANGING, sent|parent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGED, sent|parent|wparam|optional, SWP_NOREDRAW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { WM_ACTIVATEAPP, sent|parent|wparam, 1 },
     { WM_NCACTIVATE, sent|parent },
     { WM_ACTIVATE, sent|parent|wparam, 1 },
@@ -17745,6 +17754,10 @@ static const struct message WmRestoreMinimizedSeq[] =
     { WM_ACTIVATE, sent|wparam|defwinproc, 1 },
     { WM_PAINT, sent| optional },
     { WM_SETFOCUS, sent|defwinproc|optional },
+    { HCBT_KEYSKIPPED, hook|optional },
+    { WM_KEYUP, sent|optional },
+    { HCBT_KEYSKIPPED, hook|optional },
+    { WM_SYSKEYUP, sent|optional },
     { HCBT_KEYSKIPPED, hook|optional },
     { WM_KEYUP, sent|optional },
     { HCBT_KEYSKIPPED, hook|optional },
