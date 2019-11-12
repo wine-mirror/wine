@@ -20255,6 +20255,7 @@ wine_fn_config_makefile dlls/d3dcompiler_43 enable_d3dcompiler_43
 wine_fn_config_makefile dlls/d3dcompiler_43/tests enable_tests
 wine_fn_config_makefile dlls/d3dcompiler_46 enable_d3dcompiler_46
 wine_fn_config_makefile dlls/d3dcompiler_47 enable_d3dcompiler_47
+wine_fn_config_makefile dlls/d3dcompiler_47/tests enable_tests
 wine_fn_config_makefile dlls/d3dim enable_d3dim
 wine_fn_config_makefile dlls/d3drm enable_d3drm
 wine_fn_config_makefile dlls/d3drm/tests enable_tests

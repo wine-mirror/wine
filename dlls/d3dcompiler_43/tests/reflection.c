@@ -75,11 +75,11 @@ static DWORD test_reflection_blob[] = {
 
 static void test_reflection_references(void)
 {
-    HRESULT hr;
-    ULONG count;
     ID3D11ShaderReflection *ref11, *ref11_test;
-    ID3D10ShaderReflection *ref10;
     ID3D10ShaderReflection1 *ref10_1;
+    ID3D10ShaderReflection *ref10;
+    HRESULT hr, expected;
+    ULONG count;
 
     hr = pD3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed, got %x, expected %x\n", hr, S_OK);
@@ -100,11 +100,16 @@ static void test_reflection_references(void)
     ok(count == 0, "Release failed %u\n", count);
 
     /* check invalid cases */
+#if D3D_COMPILER_VERSION >= 46
+    expected = E_INVALIDARG;
+#else
+    expected = E_NOINTERFACE;
+#endif
     hr = pD3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D10ShaderReflection, (void **)&ref10);
-    ok(hr == E_NOINTERFACE, "D3DReflect failed, got %x, expected %x\n", hr, E_NOINTERFACE);
+    ok(hr == expected, "D3DReflect failed, got %x, expected %x\n", hr, expected);
 
     hr = pD3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
-    ok(hr == E_NOINTERFACE, "D3DReflect failed, got %x, expected %x\n", hr, E_NOINTERFACE);
+    ok(hr == expected, "D3DReflect failed, got %x, expected %x\n", hr, expected);
 
     hr = pD3DReflect(NULL, test_reflection_blob[6], &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
     ok(hr == D3DERR_INVALIDCALL, "D3DReflect failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
@@ -116,20 +121,25 @@ static void test_reflection_references(void)
     hr = pD3DReflect(test_reflection_blob, 31, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
     ok(hr == D3DERR_INVALIDCALL, "D3DReflect failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
 
+#if D3D_COMPILER_VERSION >= 46
+    expected = D3DERR_INVALIDCALL;
+#else
+    expected = E_FAIL;
+#endif
     hr = pD3DReflect(test_reflection_blob,  32, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
-    ok(hr == E_FAIL, "D3DReflect failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == expected, "Got %x, expected %x.\n", hr, expected);
 
     hr = pD3DReflect(test_reflection_blob, test_reflection_blob[6]-1, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
-    ok(hr == E_FAIL, "D3DReflect failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == expected, "Got %x, expected %x.\n", hr, expected);
 
     hr = pD3DReflect(test_reflection_blob,  31, &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == D3DERR_INVALIDCALL, "D3DReflect failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got %x, expected %x.\n", hr, D3DERR_INVALIDCALL);
 
     hr = pD3DReflect(test_reflection_blob,  32, &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == E_FAIL, "D3DReflect failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == expected, "Got %x, expected %x.\n", hr, expected);
 
     hr = pD3DReflect(test_reflection_blob,  test_reflection_blob[6]-1, &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == E_FAIL, "D3DReflect failed, got %x, expected %x\n", hr, E_FAIL);
+    ok(hr == expected, "Got %x, expected %x.\n", hr, expected);
 }
 
 /*
@@ -1509,11 +1519,17 @@ static void test_reflection_constant_buffer(void)
     ok(count == 0, "Release failed %u\n", count);
 }
 
-static BOOL load_d3dcompiler(void)
+static BOOL load_d3dreflect(void)
 {
+#if D3D_COMPILER_VERSION == 47
+    static const char filename[] = "d3dcompiler_47.dll";
+#else
+    static const char filename[] = "d3dcompiler_43.dll";
+#endif
     HMODULE module;
 
-    if (!(module = LoadLibraryA("d3dcompiler_43.dll"))) return FALSE;
+    if (!(module = LoadLibraryA(filename)))
+        return FALSE;
 
     pD3DReflect = (void*)GetProcAddress(module, "D3DReflect");
     return TRUE;
@@ -1521,9 +1537,9 @@ static BOOL load_d3dcompiler(void)
 
 START_TEST(reflection)
 {
-    if (!load_d3dcompiler())
+    if (!load_d3dreflect())
     {
-        win_skip("Could not load d3dcompiler_43.dll\n");
+        win_skip("Could not load DLL.\n");
         return;
     }
 
