@@ -17466,6 +17466,7 @@ static DWORD WINAPI SendMessage_thread_1(void *param)
 
     trace("thread: call SendMessage\n");
     SendMessageA(wnd_event->hwnd, WM_USER+2, 0, 0);
+    SetEvent(wnd_event->stop_event);
 
     trace("thread: call SendMessage\n");
     SendMessageA(wnd_event->hwnd, WM_USER+3, 0, 0);
@@ -17492,6 +17493,7 @@ static DWORD WINAPI SendMessage_thread_2(void *param)
 
     trace("thread: call SendMessage\n");
     SendMessageA(wnd_event->hwnd, WM_USER+2, 0, 0);
+    SetEvent(wnd_event->stop_event);
 
     trace("thread: call SendMessage\n");
     SendMessageA(wnd_event->hwnd, WM_USER+3, 0, 0);
@@ -17508,6 +17510,7 @@ static void test_SendMessage_other_thread(int thread_n)
     MSG msg;
 
     wnd_event.start_event = CreateEventA(NULL, 0, 0, NULL);
+    wnd_event.stop_event = CreateEventA(NULL, 0, 0, NULL);
 
     wnd_event.hwnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
                                      100, 100, 200, 200, 0, 0, 0, NULL);
@@ -17541,6 +17544,10 @@ static void test_SendMessage_other_thread(int thread_n)
     ok(msg.message == WM_USER, "expected WM_USER, got %04x\n", msg.message);
     DispatchMessageA(&msg);
     ok_sequence(send_message_1, "SendMessage from other thread 1", thread_n == 2);
+
+    ret = WaitForSingleObject(wnd_event.stop_event, 100);
+    todo_wine_if (thread_n == 2)
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed, ret:%x\n", ret);
 
     /* intentionally yield */
     MsgWaitForMultipleObjects(0, NULL, FALSE, 100, qs_all_input);
@@ -17578,6 +17585,9 @@ todo_wine_if (thread_n == 2)
 
     flush_events();
     flush_sequence();
+
+    CloseHandle(wnd_event.start_event);
+    CloseHandle(wnd_event.stop_event);
 }
 
 static LRESULT CALLBACK insendmessage_wnd_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
