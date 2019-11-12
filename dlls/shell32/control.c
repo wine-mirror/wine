@@ -637,7 +637,7 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 		    hWnd, NULL, hInst, panel);
     if (!panel->hWnd) return;
 
-    while (GetMessageW(&msg, panel->hWnd, 0, 0)) {
+    while (GetMessageW(&msg, 0, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
