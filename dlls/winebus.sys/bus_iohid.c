@@ -368,6 +368,7 @@ static void handle_RemovalCallback(void *context, IOReturn result, void *sender,
     device = bus_find_hid_device(&iohid_vtbl, IOHIDDevice);
     if (device)
     {
+        bus_unlink_hid_device(device);
         IoInvalidateDeviceRelations(bus_pdo, BusRelations);
         bus_remove_hid_device(device);
     }

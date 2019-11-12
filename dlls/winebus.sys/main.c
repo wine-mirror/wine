@@ -346,6 +346,16 @@ DEVICE_OBJECT* bus_enumerate_hid_devices(const platform_vtbl *vtbl, enum_func fu
     return ret;
 }
 
+void bus_unlink_hid_device(DEVICE_OBJECT *device)
+{
+    struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
+    struct pnp_device *pnp_device = ext->pnp_device;
+
+    EnterCriticalSection(&device_list_cs);
+    list_remove(&pnp_device->entry);
+    LeaveCriticalSection(&device_list_cs);
+}
+
 void bus_remove_hid_device(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
@@ -354,10 +364,6 @@ void bus_remove_hid_device(DEVICE_OBJECT *device)
     IRP *irp;
 
     TRACE("(%p)\n", device);
-
-    EnterCriticalSection(&device_list_cs);
-    list_remove(&pnp_device->entry);
-    LeaveCriticalSection(&device_list_cs);
 
     /* Cancel pending IRPs */
     EnterCriticalSection(&ext->report_cs);

@@ -1259,6 +1259,7 @@ static void try_add_device(struct udev_device *dev)
                 ERR("Building report descriptor failed, removing device\n");
                 close(fd);
                 udev_device_unref(dev);
+                bus_unlink_hid_device(device);
                 bus_remove_hid_device(device);
                 HeapFree(GetProcessHeap(), 0, serial);
                 return;
@@ -1293,6 +1294,7 @@ static void try_remove_device(struct udev_device *dev)
 #endif
     if (!device) return;
 
+    bus_unlink_hid_device(device);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 
     private = impl_from_DEVICE_OBJECT(device);

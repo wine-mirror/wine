@@ -899,6 +899,7 @@ static void try_remove_device(SDL_JoystickID id)
     sdl_controller = private->sdl_controller;
     sdl_haptic = private->sdl_haptic;
 
+    bus_unlink_hid_device(device);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 
     bus_remove_hid_device(device);
@@ -988,6 +989,7 @@ static void try_add_device(unsigned int index)
         if (!rc)
         {
             ERR("Building report descriptor failed, removing device\n");
+            bus_unlink_hid_device(device);
             bus_remove_hid_device(device);
             HeapFree(GetProcessHeap(), 0, serial);
             return;
