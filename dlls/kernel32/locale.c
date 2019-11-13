@@ -489,7 +489,6 @@ static LCID convert_default_lcid( LCID lcid, LCTYPE lctype )
         case LOCALE_IDEFAULTCODEPAGE:
         case LOCALE_IDEFAULTEBCDICCODEPAGE:
         case LOCALE_IDEFAULTMACCODEPAGE:
-        case LOCALE_IDEFAULTUNIXCODEPAGE:
             default_id = lcid_LC_CTYPE;
             break;
 

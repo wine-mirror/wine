@@ -338,8 +338,6 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 
 #define LOCALE_NAME_USER_DEFAULT    NULL
 
-#define LOCALE_IDEFAULTUNIXCODEPAGE   0x1030 /* Wine extension */
-
 #define NORM_IGNORECASE            0x00000001
 #define NORM_IGNORENONSPACE        0x00000002
 #define NORM_IGNORESYMBOLS         0x00000004
