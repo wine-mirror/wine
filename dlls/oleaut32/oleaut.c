@@ -829,7 +829,7 @@ static BOOL actctx_get_typelib_module(REFIID iid, WCHAR *module, DWORD len)
 static HRESULT reg_get_typelib_module(REFIID iid, WCHAR *module, DWORD len)
 {
     REGSAM opposite = (sizeof(void*) == 8) ? KEY_WOW64_32KEY : KEY_WOW64_64KEY;
-    char tlguid[200], typelibkey[300], interfacekey[300], ver[100], tlfn[260];
+    char tlguid[200], typelibkey[316], interfacekey[300], ver[100], tlfn[260];
     DWORD tlguidlen, verlen, type;
     LONG tlfnlen, err;
     BOOL is_wow64;
