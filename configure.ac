@@ -1085,6 +1085,8 @@ then
           esac
         done
 
+        WINE_TRY_CFLAGS([-Wl,-delayload,autoconftest.dll], [AC_SUBST(DELAYLOADFLAG,["-Wl,-delayload,"])])
+
         if test "x$enable_maintainer_mode" = xyes
         then
             WINE_TRY_CROSSCFLAGS([-Werror])

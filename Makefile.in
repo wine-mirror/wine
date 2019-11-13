@@ -70,6 +70,7 @@ CROSSTARGET     = @CROSSTARGET@
 SUBDIRS         = @SUBDIRS@
 RUNTESTFLAGS    = -q -P wine
 MAKEDEP         = $(TOOLSDIR)/tools/makedep$(TOOLSEXT)
+DELAYLOADFLAG   = @DELAYLOADFLAG@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 SED_CMD         = LC_ALL=C sed -e 's,@bindir\@,${bindir},g' -e 's,@dlldir\@,${dlldir},g' -e 's,@srcdir\@,${srcdir},g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' -e 's,@PACKAGE_VERSION\@,@PACKAGE_VERSION@,g'
 LDRPATH_INSTALL = @LDRPATH_INSTALL@
