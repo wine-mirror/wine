@@ -6105,7 +6105,6 @@ static void test_so_statistics_query(void)
         get_query_data(context, query, &data, sizeof(data));
         ok(!data.NumPrimitivesWritten, "Got unexpected NumPrimitivesWritten: %u.\n",
                 (unsigned int)data.NumPrimitivesWritten);
-        if (0)
         todo_wine_if(query_desc.Query == D3D11_QUERY_SO_STATISTICS || query_desc.Query == D3D11_QUERY_SO_STATISTICS_STREAM0)
         ok(!data.PrimitivesStorageNeeded, "Got unexpected PrimitivesStorageNeeded: %u.\n",
                 (unsigned int)data.PrimitivesStorageNeeded);
@@ -6116,7 +6115,6 @@ static void test_so_statistics_query(void)
         get_query_data(context, query, &data, sizeof(data));
         ok(!data.NumPrimitivesWritten, "Got unexpected NumPrimitivesWritten: %u.\n",
                 (unsigned int)data.NumPrimitivesWritten);
-        if (0)
         todo_wine_if(query_desc.Query == D3D11_QUERY_SO_STATISTICS || query_desc.Query == D3D11_QUERY_SO_STATISTICS_STREAM0)
         ok(!data.PrimitivesStorageNeeded, "Got unexpected PrimitivesStorageNeeded: %u.\n",
                 (unsigned int)data.PrimitivesStorageNeeded);
@@ -20221,18 +20219,18 @@ static void test_ps_cs_uav_binding(void)
     check_texture_float(ps_texture, 0.0f, 2);
     draw_quad(&test_context);
     check_texture_float(cs_texture, 1.0f, 2);
-    if (0) check_texture_float(ps_texture, 1.0f, 2);
+    check_texture_float(ps_texture, 1.0f, 2);
 
     input.x = 0.5f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cs_cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
     check_texture_float(cs_texture, 0.5f, 2);
-    if (0) check_texture_float(ps_texture, 1.0f, 2);
+    check_texture_float(ps_texture, 1.0f, 2);
     input.x = 2.0f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)ps_cb, 0, NULL, &input, 0, 0);
     draw_quad(&test_context);
     check_texture_float(cs_texture, 0.5f, 2);
-    if (0) check_texture_float(ps_texture, 2.0f, 2);
+    check_texture_float(ps_texture, 2.0f, 2);
 
     input.x = 8.0f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cs_cb, 0, NULL, &input, 0, 0);
@@ -20240,10 +20238,10 @@ static void test_ps_cs_uav_binding(void)
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)ps_cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
     check_texture_float(cs_texture, 8.0f, 2);
-    if (0) check_texture_float(ps_texture, 2.0f, 2);
+    check_texture_float(ps_texture, 2.0f, 2);
     draw_quad(&test_context);
     check_texture_float(cs_texture, 8.0f, 2);
-    if (0) check_texture_float(ps_texture, 4.0f, 2);
+    check_texture_float(ps_texture, 4.0f, 2);
 
     ID3D11ComputeShader_Release(cs);
     ID3D11PixelShader_Release(ps);
@@ -26461,7 +26459,6 @@ static void test_format_compatibility(void)
             colour = get_readback_color(&rb, x, y, 0);
             expected = test_data[i].success && x >= texel_dwords && y
                     ? bitmap_data[j - (4 + texel_dwords)] : initial_data[j];
-            if (0)
             ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
                     i, colour, x, y, expected);
         }
@@ -26476,7 +26473,6 @@ static void test_format_compatibility(void)
             y = j / 4;
             colour = get_readback_color(&rb, x, y, 0);
             expected = test_data[i].success ? bitmap_data[j] : initial_data[j];
-            if (0)
             ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
                     i, colour, x, y, expected);
         }
@@ -27603,7 +27599,6 @@ static void test_generate_mips(void)
             {
                 color = get_readback_color(&rb, expected[k].pos.x, expected[k].pos.y, 0);
                 expected_color = tests[j].expected_mips ? expected[k].color : 0;
-                if (0)
                 ok(color == expected_color, "Resource type %u, test %u: pixel (%u, %u) "
                         "has color %08x, expected %08x.\n",
                         i, j, expected[k].pos.x, expected[k].pos.y, color, expected_color);

@@ -9542,10 +9542,8 @@ static void test_vidmem_accounting(void)
     }
     vidmem_end = IDirect3DDevice9_GetAvailableTextureMem(device);
 
-    todo_wine
     ok(vidmem_start > vidmem_end, "Expected available texture memory to decrease during texture creation.\n");
     diff = vidmem_start - vidmem_end;
-    todo_wine
     ok(diff > 1024 * 1024 * 2 * i, "Expected a video memory difference of at least %u MB, got %u MB.\n",
             2 * i, diff / 1024 / 1024);
 
