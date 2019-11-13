@@ -1576,7 +1576,7 @@ static void test_itemedit(void)
     DWORD r;
     HWND edit;
     TVITEMA item;
-    CHAR buffA[20];
+    CHAR buffA[500];
     HWND hTree;
 
     hTree = create_treeview_control(0);
@@ -1675,8 +1675,41 @@ static void test_itemedit(void)
     ok(IsWindow(edit), "Expected valid handle\n");
     r = SendMessageA(edit, EM_GETLIMITTEXT, 0, 0);
     expect(MAX_PATH - 1, r);
+    /* WM_SETTEXT can set more... */
+    memset(buffA, 'a', ARRAY_SIZE(buffA));
+    buffA[ARRAY_SIZE(buffA)-1] = 0;
+    r = SetWindowTextA(edit, buffA);
+    expect(TRUE, r);
+    r = GetWindowTextA(edit, buffA, ARRAY_SIZE(buffA));
+    expect(ARRAY_SIZE(buffA) - 1, r);
+    /* ...but it's trimmed to MAX_PATH chars when editing ends */
     r = SendMessageA(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
     expect(0, r);
+    item.mask = TVIF_TEXT;
+    item.hItem = hRoot;
+    item.pszText = buffA;
+    item.cchTextMax = ARRAY_SIZE(buffA);
+    r = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, r);
+    todo_wine expect(MAX_PATH - 1, strlen(item.pszText));
+
+    /* We can't get around that MAX_PATH limit by increasing EM_SETLIMITTEXT */
+    edit = (HWND)SendMessageA(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
+    ok(IsWindow(edit), "Expected valid handle\n");
+    SendMessageA(edit, EM_SETLIMITTEXT, ARRAY_SIZE(buffA)-1, 0);
+    memset(buffA, 'a', ARRAY_SIZE(buffA));
+    buffA[ARRAY_SIZE(buffA)-1] = 0;
+    r = SetWindowTextA(edit, buffA);
+    expect(TRUE, r);
+    r = SendMessageA(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
+    expect(0, r);
+    item.mask = TVIF_TEXT;
+    item.hItem = hRoot;
+    item.pszText = buffA;
+    item.cchTextMax = ARRAY_SIZE(buffA);
+    r = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, r);
+    todo_wine expect(MAX_PATH - 1, strlen(item.pszText));
 
     DestroyWindow(hTree);
 }
