@@ -430,6 +430,9 @@ static void test_invalid_parameter_handler(void)
 
     ret = p__set_invalid_parameter_handler(NULL);
     ok(ret == global_invalid_parameter_handler, "ret = %p\n", ret);
+
+    ret = p__set_invalid_parameter_handler(global_invalid_parameter_handler);
+    ok(!ret, "ret != NULL\n");
 }
 
 static void test__get_narrow_winmain_command_line(char *path)
@@ -539,8 +542,6 @@ static void test__sopen_dispatch(void)
     p__close(fd);
     unlink(tempf);
 
-    p__set_invalid_parameter_handler(global_invalid_parameter_handler);
-
     SET_EXPECT(global_invalid_parameter_handler);
     fd = 0;
     ret = p_sopen_dispatch(tempf, _O_CREAT, _SH_DENYWR, 0xff, &fd, 1);
@@ -552,8 +553,6 @@ static void test__sopen_dispatch(void)
         p__close(fd);
         unlink(tempf);
     }
-
-    p__set_invalid_parameter_handler(NULL);
 
     free(tempf);
 }
@@ -578,8 +577,6 @@ static void test__sopen_s(void)
     p__close(fd);
     unlink(tempf);
 
-    p__set_invalid_parameter_handler(global_invalid_parameter_handler);
-
     /* _sopen_s() invokes invalid parameter handler on invalid pmode */
     SET_EXPECT(global_invalid_parameter_handler);
     fd = 0;
@@ -587,7 +584,6 @@ static void test__sopen_s(void)
     ok(ret == EINVAL, "got %d\n", ret);
     ok(fd == -1, "got fd %d\n", fd);
     CHECK_CALLED(global_invalid_parameter_handler);
-    p__set_invalid_parameter_handler(NULL);
 
     free(tempf);
 }
