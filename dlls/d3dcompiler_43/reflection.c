@@ -1922,9 +1922,19 @@ static struct ID3D10ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3d10_sha
 static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetResourceBindingDesc(ID3D10ShaderReflection *iface,
         UINT index, D3D10_SHADER_INPUT_BIND_DESC *desc)
 {
-    FIXME("iface %p, index %u, desc %p stub!\n", iface, index, desc);
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D10ShaderReflection(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
+
+    if (!desc || index >= reflection->bound_resource_count)
+    {
+        WARN("Invalid argument specified.\n");
+        return E_INVALIDARG;
+    }
+
+    memcpy(desc, &reflection->bound_resources[index], sizeof(*desc));
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetInputParameterDesc(ID3D10ShaderReflection *iface,
