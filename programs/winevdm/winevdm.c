@@ -305,7 +305,7 @@ static VOID pif_cmd( char *filename, char *cmdline)
 { 
     HANDLE hFile;
     char progpath[MAX_PATH];
-    char buf[128];
+    char buf[308];
     char progname[64];
     char title[31];
     char optparams[65];
