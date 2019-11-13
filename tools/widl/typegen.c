@@ -4286,7 +4286,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
             {
                 print_file(file, indent, "if (%s%s)\n", local_var_prefix, var->name);
                 indent++;
-                print_file(file, indent, "__frame->_StubMsg.pfnFree(%s%s);\n", local_var_prefix, var->name);
+                print_file(file, indent, "__frame->_StubMsg.pfnFree((void*)%s%s);\n", local_var_prefix, var->name);
             }
         }
         else
@@ -4361,7 +4361,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                 print_phase_function(file, indent, array_type, local_var_prefix, phase, var, start_offset);
                 print_file(file, indent, "if (%s%s)\n", local_var_prefix, var->name);
                 indent++;
-                print_file(file, indent, "__frame->_StubMsg.pfnFree(%s%s);\n", local_var_prefix, var->name);
+                print_file(file, indent, "__frame->_StubMsg.pfnFree((void*)%s%s);\n", local_var_prefix, var->name);
                 break;
             }
         }
@@ -4463,7 +4463,7 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
                 {
                     print_file(file, indent, "if (%s%s)\n", local_var_prefix, var->name);
                     indent++;
-                    print_file(file, indent, "__frame->_StubMsg.pfnFree(%s%s);\n", local_var_prefix, var->name);
+                    print_file(file, indent, "__frame->_StubMsg.pfnFree((void*)%s%s);\n", local_var_prefix, var->name);
                     indent--;
                 }
                 break;
