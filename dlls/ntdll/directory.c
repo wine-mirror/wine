@@ -30,8 +30,6 @@
 #endif
 #include <errno.h>
 #include <fcntl.h>
-#include <locale.h>
-#include <langinfo.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
@@ -169,8 +167,6 @@ struct file_identity
 static struct file_identity ignored_files[MAX_IGNORED_FILES];
 static unsigned int ignored_files_count;
 
-static const union cptable *unix_table; /* NULL if UTF8 */
-
 union file_directory_info
 {
     ULONG                              next;
@@ -232,115 +228,6 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static RTL_CRITICAL_SECTION dir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-
-#if !defined(__APPLE__) && !defined(__ANDROID__)  /* these platforms always use UTF-8 */
-
-/* charset to codepage map, sorted by name */
-static const struct { const char *name; UINT cp; } charset_names[] =
-{
-    { "ANSIX341968", 20127 },
-    { "BIG5", 950 },
-    { "BIG5HKSCS", 950 },
-    { "CP1250", 1250 },
-    { "CP1251", 1251 },
-    { "CP1252", 1252 },
-    { "CP1253", 1253 },
-    { "CP1254", 1254 },
-    { "CP1255", 1255 },
-    { "CP1256", 1256 },
-    { "CP1257", 1257 },
-    { "CP1258", 1258 },
-    { "CP932", 932 },
-    { "CP936", 936 },
-    { "CP949", 949 },
-    { "CP950", 950 },
-    { "EUCJP", 20932 },
-    { "EUCKR", 949 },
-    { "GB18030", 936  /* 54936 */ },
-    { "GB2312", 936 },
-    { "GBK", 936 },
-    { "IBM037", 37 },
-    { "IBM1026", 1026 },
-    { "IBM424", 424 },
-    { "IBM437", 437 },
-    { "IBM500", 500 },
-    { "IBM850", 850 },
-    { "IBM852", 852 },
-    { "IBM855", 855 },
-    { "IBM857", 857 },
-    { "IBM860", 860 },
-    { "IBM861", 861 },
-    { "IBM862", 862 },
-    { "IBM863", 863 },
-    { "IBM864", 864 },
-    { "IBM865", 865 },
-    { "IBM866", 866 },
-    { "IBM869", 869 },
-    { "IBM874", 874 },
-    { "IBM875", 875 },
-    { "ISO88591", 28591 },
-    { "ISO885910", 28600 },
-    { "ISO885911", 28601 },
-    { "ISO885913", 28603 },
-    { "ISO885914", 28604 },
-    { "ISO885915", 28605 },
-    { "ISO885916", 28606 },
-    { "ISO88592", 28592 },
-    { "ISO88593", 28593 },
-    { "ISO88594", 28594 },
-    { "ISO88595", 28595 },
-    { "ISO88596", 28596 },
-    { "ISO88597", 28597 },
-    { "ISO88598", 28598 },
-    { "ISO88599", 28599 },
-    { "KOI8R", 20866 },
-    { "KOI8U", 21866 },
-    { "TIS620", 28601 },
-    { "UTF8", CP_UTF8 }
-};
-
-static void init_unix_codepage(void)
-{
-    char charset_name[16];
-    const char *name;
-    size_t i, j;
-    int min = 0, max = ARRAY_SIZE(charset_names) - 1;
-
-    setlocale( LC_CTYPE, "" );
-    if (!(name = nl_langinfo( CODESET ))) return;
-
-    /* remove punctuation characters from charset name */
-    for (i = j = 0; name[i] && j < sizeof(charset_name)-1; i++)
-        if (isalnum((unsigned char)name[i])) charset_name[j++] = name[i];
-    charset_name[j] = 0;
-
-    while (min <= max)
-    {
-        int pos = (min + max) / 2;
-        int res = _strnicmp( charset_names[pos].name, charset_name, -1 );
-        if (!res)
-        {
-            if (charset_names[pos].cp == CP_UTF8) return;
-            unix_table = wine_cp_get_table( charset_names[pos].cp );
-            return;
-        }
-        if (res > 0) max = pos - 1;
-        else min = pos + 1;
-    }
-    ERR( "unrecognized charset '%s'\n", name );
-}
-
-#else  /* __APPLE__ || __ANDROID__ */
-
-static void init_unix_codepage(void) { }
-
-#endif  /* __APPLE__ || __ANDROID__ */
-
-UINT CDECL __wine_get_unix_codepage(void)
-{
-    if (!unix_table) return CP_UTF8;
-    return unix_table->info.codepage;
-}
 
 /* check if a given Unicode char is OK in a DOS short name */
 static inline BOOL is_invalid_dos_char( WCHAR ch )
@@ -506,26 +393,6 @@ static void free_dir_data( struct dir_data *data )
     }
     RtlFreeHeap( GetProcessHeap(), 0, data->names );
     RtlFreeHeap( GetProcessHeap(), 0, data );
-}
-
-int ntdll_umbstowcs( DWORD flags, const char *src, int srclen, WCHAR *dst, int dstlen )
-{
-#ifdef __APPLE__
-    /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
-    flags |= MB_COMPOSITE;
-#endif
-    return unix_table ?
-        wine_cp_mbstowcs( unix_table, flags, src, srclen, dst, dstlen ) :
-        wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
-}
-
-int ntdll_wcstoumbs( DWORD flags, const WCHAR *src, int srclen, char *dst, int dstlen,
-                     const char *defchar, int *used )
-{
-    if (unix_table)
-        return wine_cp_wcstombs( unix_table, flags, src, srclen, dst, dstlen, defchar, used );
-    if (used) *used = 0;  /* all chars are valid for UTF-8 */
-    return wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
 }
 
 
@@ -2452,7 +2319,6 @@ static int get_redirect_path( char *unix_name, int pos, const WCHAR *name, int l
  */
 void init_directories(void)
 {
-    init_unix_codepage();
 #ifndef _WIN64
     if (is_wow64) init_redirects();
 #endif

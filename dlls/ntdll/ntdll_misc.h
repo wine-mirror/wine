@@ -85,6 +85,7 @@ extern void virtual_init(void) DECLSPEC_HIDDEN;
 extern void virtual_init_threading(void) DECLSPEC_HIDDEN;
 extern void fill_cpu_info(void) DECLSPEC_HIDDEN;
 extern void heap_set_debug_flags( HANDLE handle ) DECLSPEC_HIDDEN;
+extern void init_unix_codepage(void) DECLSPEC_HIDDEN;
 extern void init_user_process_params( SIZE_T data_size ) DECLSPEC_HIDDEN;
 extern char **build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;
 extern NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status ) DECLSPEC_HIDDEN;
@@ -200,7 +201,8 @@ extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
 extern NTSTATUS NTDLL_AddCompletion( HANDLE hFile, ULONG_PTR CompletionValue,
                                      NTSTATUS CompletionStatus, ULONG Information, BOOL async) DECLSPEC_HIDDEN;
 
-/* code pages */
+/* locale */
+extern LCID user_lcid, system_lcid;
 extern int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int dstlen) DECLSPEC_HIDDEN;
 extern int ntdll_wcstoumbs(DWORD flags, const WCHAR* src, int srclen, char* dst, int dstlen,
                            const char* defchar, int *used ) DECLSPEC_HIDDEN;

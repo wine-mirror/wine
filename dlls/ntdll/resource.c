@@ -40,15 +40,13 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "ntdll_misc.h"
 #include "wine/asm.h"
 #include "wine/exception.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
-
-static LCID user_lcid, system_lcid;
-static LANGID user_ui_language, system_ui_language;
 
 #define IS_INTRESOURCE(x)       (((ULONG_PTR)(x) >> 16) == 0)
 
@@ -448,60 +446,5 @@ NTSTATUS WINAPI RtlFormatMessage( LPWSTR Message, UCHAR MaxWidth,
     FIXME("(%s, %u, %s, %s, %s, %p, %p, %d)\n", debugstr_w(Message),
         MaxWidth, IgnoreInserts ? "TRUE" : "FALSE", Ansi ? "TRUE" : "FALSE",
         ArgumentIsArray ? "TRUE" : "FALSE", Arguments, Buffer, BufferSize);
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *	NtQueryDefaultLocale  (NTDLL.@)
- */
-NTSTATUS WINAPI NtQueryDefaultLocale( BOOLEAN user, LCID *lcid )
-{
-    *lcid = user ? user_lcid : system_lcid;
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *	NtSetDefaultLocale  (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetDefaultLocale( BOOLEAN user, LCID lcid )
-{
-    if (user) user_lcid = lcid;
-    else
-    {
-        system_lcid = lcid;
-        system_ui_language = LANGIDFROMLCID(lcid); /* there is no separate call to set it */
-    }
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *	NtQueryDefaultUILanguage  (NTDLL.@)
- */
-NTSTATUS WINAPI NtQueryDefaultUILanguage( LANGID *lang )
-{
-    *lang = user_ui_language;
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *	NtSetDefaultUILanguage  (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetDefaultUILanguage( LANGID lang )
-{
-    user_ui_language = lang;
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *	NtQueryInstallUILanguage  (NTDLL.@)
- */
-NTSTATUS WINAPI NtQueryInstallUILanguage( LANGID *lang )
-{
-    *lang = system_ui_language;
     return STATUS_SUCCESS;
 }
