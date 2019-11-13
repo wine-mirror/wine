@@ -16539,6 +16539,7 @@ static void test_surface_format_conversion_alpha(void)
         const char *name;
         unsigned int block_size, x_blocks, y_blocks;
         DWORD support_flag;
+        BOOL broken_software_blit;
     }
     formats[] =
     {
@@ -16561,7 +16562,10 @@ static void test_surface_format_conversion_alpha(void)
                 sizeof(DDPIXELFORMAT), DDPF_RGB, 0,
                 {16}, {0x0000f800}, {0x000007e0}, {0x0000001f}, {0x00000000}
             },
-            "R5G6B5", 2, 4, 4,
+            "R5G6B5", 2, 4, 4, 0, TRUE,
+            /* Looks broken for sysmem texture convertions on Windows (at
+             * least with hardware device), the result is either error from
+             * _Blt() or a copy of the source data without any conversion. */
         },
         {
             {
@@ -16602,6 +16606,18 @@ static void test_surface_format_conversion_alpha(void)
 
     static const struct
     {
+        DWORD src_caps, dst_caps;
+    }
+    test_caps[] =
+    {
+        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY,  DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY},
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY},
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY},
+        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY,  DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY},
+    };
+
+    static const struct
+    {
         enum test_format_id src_format;
         const void *src_data;
         enum test_format_id dst_format;
@@ -16636,11 +16652,12 @@ static void test_surface_format_conversion_alpha(void)
     const struct test_format *src_format, *dst_format;
     IDirectDrawSurface7 *src_surf, *dst_surf;
     DDSURFACEDESC2 surface_desc, lock;
-    unsigned int i, x, y, pitch;
+    unsigned int i, j, x, y, pitch;
     IDirect3DDevice7 *device;
     DWORD supported_fmts;
     IDirectDraw7 *ddraw;
     ULONG refcount;
+    BOOL is_wine;
     HWND window;
     BOOL passed;
     HRESULT hr;
@@ -16662,12 +16679,13 @@ static void test_surface_format_conversion_alpha(void)
             &supported_fmts);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
+    is_wine = !strcmp(winetest_platform, "wine");
+
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     surface_desc.dwWidth = 4;
     surface_desc.dwHeight = 4;
-    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY;
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -16685,63 +16703,85 @@ static void test_surface_format_conversion_alpha(void)
             continue;
         }
 
-        U4(surface_desc).ddpfPixelFormat = src_format->fmt;
-        hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src_surf, NULL);
-        ok(hr == DD_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
-
-        U4(surface_desc).ddpfPixelFormat = dst_format->fmt;
-        hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst_surf, NULL);
-        ok(hr == DD_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
-
-        memset(&lock, 0, sizeof(lock));
-        lock.dwSize = sizeof(lock);
-        hr = IDirectDrawSurface7_Lock(src_surf, NULL, &lock, 0, NULL);
-        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
-        pitch = U1(lock).lPitch;
-        for (y = 0; y < src_format->y_blocks; ++y)
-            memcpy((BYTE*)lock.lpSurface + y * pitch,
-                (BYTE *)tests[i].src_data + y * src_format->x_blocks * src_format->block_size,
-                src_format->block_size * src_format->x_blocks);
-        hr = IDirectDrawSurface7_Unlock(src_surf, NULL);
-        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
-
-        hr = IDirectDrawSurface7_Blt(dst_surf, NULL, src_surf, NULL, DDBLT_WAIT, NULL);
-        ok(hr == DD_OK, "Test %s -> %s, got unexpected hr %#x.\n",
-                src_format->name, dst_format->name, hr);
-
-        memset(&lock, 0, sizeof(lock));
-        lock.dwSize = sizeof(lock);
-        hr = IDirectDrawSurface7_Lock(dst_surf, NULL, &lock, 0, NULL);
-        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
-        pitch = U1(lock).lPitch;
-
-        for (y = 0; y < dst_format->y_blocks; ++y)
+        for (j = 0; j < ARRAY_SIZE(test_caps); ++j)
         {
-            const void *expected_data = tests[i].expected_data;
+            if (!is_wine && ((test_caps[j].src_caps | test_caps[j].dst_caps) & DDSCAPS_SYSTEMMEMORY)
+                    && (src_format->broken_software_blit || dst_format->broken_software_blit))
+                continue;
 
-            passed = !memcmp((BYTE*)lock.lpSurface + y * pitch,
-                    (BYTE *)expected_data + y * dst_format->x_blocks * dst_format->block_size,
-                    dst_format->block_size * dst_format->x_blocks);
-            todo_wine_if(tests[i].todo)
-            ok(passed, "Test %s -> %s, row %u, unexpected surface data.\n",
-                    src_format->name, dst_format->name, y);
+            U4(surface_desc).ddpfPixelFormat = src_format->fmt;
+            surface_desc.ddsCaps.dwCaps = test_caps[j].src_caps;
+            hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src_surf, NULL);
+            ok(hr == DD_OK, "Test (%u, %u), got unexpected hr %#x.\n", j, i, hr);
 
-            if (!passed && !(!strcmp(winetest_platform, "wine") && tests[i].todo))
+            U4(surface_desc).ddpfPixelFormat = dst_format->fmt;
+            surface_desc.ddsCaps.dwCaps = test_caps[j].dst_caps;
+            hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst_surf, NULL);
+            ok(hr == DD_OK, "Test (%u, %u), got unexpected hr %#x.\n", j, i, hr);
+
+            memset(&lock, 0, sizeof(lock));
+            lock.dwSize = sizeof(lock);
+            hr = IDirectDrawSurface7_Lock(src_surf, NULL, &lock, 0, NULL);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+            pitch = U1(lock).lPitch;
+            for (y = 0; y < src_format->y_blocks; ++y)
             {
-                for (x = 0; x < dst_format->x_blocks * dst_format->block_size / 4; ++x)
-                    trace("Test %u, x %u, y %u, got 0x%08x, expected 0x%08x.\n", i, x, y,
-                            *(unsigned int *)((BYTE *)lock.lpSurface + y * pitch + x * 4),
-                            *(unsigned int *)((BYTE *)expected_data + y * dst_format->x_blocks
-                            * dst_format->block_size + x * 4));
+                memcpy((BYTE *)lock.lpSurface + y * pitch,
+                        (BYTE *)tests[i].src_data + y * src_format->x_blocks * src_format->block_size,
+                        src_format->block_size * src_format->x_blocks);
             }
-            if (!passed)
-                break;
-        }
-        hr = IDirectDrawSurface7_Unlock(dst_surf, NULL);
-        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+            hr = IDirectDrawSurface7_Unlock(src_surf, NULL);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
-        IDirectDrawSurface7_Release(dst_surf);
-        IDirectDrawSurface7_Release(src_surf);
+            hr = IDirectDrawSurface7_Blt(dst_surf, NULL, src_surf, NULL, DDBLT_WAIT, NULL);
+            if (!is_wine && FAILED(hr))
+            {
+                /* Some software blits are rejected on Windows. */
+                IDirectDrawSurface7_Release(dst_surf);
+                IDirectDrawSurface7_Release(src_surf);
+                skip("Skipping test (%u, %u), cannot blit %s -> %s, hr %#x.\n", j, i,
+                        src_format->name, dst_format->name, hr);
+                continue;
+            }
+            ok(hr == DD_OK, "Test (%u, %s -> %s), got unexpected hr %#x.\n", j,
+                    src_format->name, dst_format->name, hr);
+
+            memset(&lock, 0, sizeof(lock));
+            lock.dwSize = sizeof(lock);
+            hr = IDirectDrawSurface7_Lock(dst_surf, NULL, &lock, 0, NULL);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+            pitch = U1(lock).lPitch;
+
+            for (y = 0; y < dst_format->y_blocks; ++y)
+            {
+                const void *expected_data = tests[i].expected_data;
+
+                passed = !memcmp((BYTE*)lock.lpSurface + y * pitch,
+                        (BYTE *)expected_data + y * dst_format->x_blocks * dst_format->block_size,
+                        dst_format->block_size * dst_format->x_blocks);
+                todo_wine_if(tests[i].todo)
+                ok(passed, "Test (%u, %s -> %s), row %u, unexpected surface data.\n", j,
+                        src_format->name, dst_format->name, y);
+
+                if (!passed && !(is_wine && tests[i].todo))
+                {
+                    for (x = 0; x < dst_format->x_blocks * dst_format->block_size / 4; ++x)
+                    {
+                        trace("Test (%u, %u), x %u, y %u, got 0x%08x, expected 0x%08x.\n", j, i, x, y,
+                                *(unsigned int *)((BYTE *)lock.lpSurface + y * pitch + x * 4),
+                                *(unsigned int *)((BYTE *)expected_data + y * dst_format->x_blocks
+                                * dst_format->block_size + x * 4));
+                    }
+                }
+                if (!passed)
+                    break;
+            }
+            hr = IDirectDrawSurface7_Unlock(dst_surf, NULL);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+            IDirectDrawSurface7_Release(dst_surf);
+            IDirectDrawSurface7_Release(src_surf);
+        }
     }
 
     IDirect3DDevice7_Release(device);
