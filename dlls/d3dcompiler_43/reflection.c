@@ -44,6 +44,7 @@ struct d3dcompiler_shader_signature
 struct d3dcompiler_shader_reflection_type
 {
     ID3D11ShaderReflectionType ID3D11ShaderReflectionType_iface;
+    ID3D10ShaderReflectionType ID3D10ShaderReflectionType_iface;
 
     DWORD id;
     struct wine_rb_entry entry;
@@ -65,6 +66,7 @@ struct d3dcompiler_shader_reflection_type_member
 struct d3dcompiler_shader_reflection_variable
 {
     ID3D11ShaderReflectionVariable ID3D11ShaderReflectionVariable_iface;
+    ID3D10ShaderReflectionVariable ID3D10ShaderReflectionVariable_iface;
 
     struct d3dcompiler_shader_reflection_constant_buffer *constant_buffer;
     struct d3dcompiler_shader_reflection_type *type;
@@ -79,6 +81,7 @@ struct d3dcompiler_shader_reflection_variable
 struct d3dcompiler_shader_reflection_constant_buffer
 {
     ID3D11ShaderReflectionConstantBuffer ID3D11ShaderReflectionConstantBuffer_iface;
+    ID3D10ShaderReflectionConstantBuffer ID3D10ShaderReflectionConstantBuffer_iface;
 
     struct d3dcompiler_shader_reflection *reflection;
 
@@ -147,11 +150,28 @@ static const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_
 static const struct ID3D11ShaderReflectionVariableVtbl d3dcompiler_shader_reflection_variable_vtbl;
 static const struct ID3D11ShaderReflectionTypeVtbl d3dcompiler_shader_reflection_type_vtbl;
 
+static const struct ID3D10ShaderReflectionConstantBufferVtbl d3d10_shader_reflection_constant_buffer_vtbl;
+static const struct ID3D10ShaderReflectionVariableVtbl d3d10_shader_reflection_variable_vtbl;
+static const struct ID3D10ShaderReflectionTypeVtbl d3d10_shader_reflection_type_vtbl;
+
 /* null objects - needed for invalid calls */
-static struct d3dcompiler_shader_reflection_constant_buffer null_constant_buffer = {{&d3dcompiler_shader_reflection_constant_buffer_vtbl}};
-static struct d3dcompiler_shader_reflection_type null_type = {{&d3dcompiler_shader_reflection_type_vtbl}};
-static struct d3dcompiler_shader_reflection_variable null_variable = {{&d3dcompiler_shader_reflection_variable_vtbl},
-    &null_constant_buffer, &null_type};
+static struct d3dcompiler_shader_reflection_constant_buffer null_constant_buffer =
+{
+    {&d3dcompiler_shader_reflection_constant_buffer_vtbl},
+    {&d3d10_shader_reflection_constant_buffer_vtbl}
+};
+static struct d3dcompiler_shader_reflection_type null_type =
+{
+    {&d3dcompiler_shader_reflection_type_vtbl},
+    {&d3d10_shader_reflection_type_vtbl}
+};
+static struct d3dcompiler_shader_reflection_variable null_variable =
+{
+    {&d3dcompiler_shader_reflection_variable_vtbl},
+    {&d3d10_shader_reflection_variable_vtbl},
+    &null_constant_buffer,
+    &null_type
+};
 
 static BOOL copy_name(const char *ptr, char **name)
 {
@@ -1507,6 +1527,7 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
             struct d3dcompiler_shader_reflection_constant_buffer *cb = &constant_buffers[i];
 
             cb->ID3D11ShaderReflectionConstantBuffer_iface.lpVtbl = &d3dcompiler_shader_reflection_constant_buffer_vtbl;
+            cb->ID3D10ShaderReflectionConstantBuffer_iface.lpVtbl = &d3d10_shader_reflection_constant_buffer_vtbl;
             cb->reflection = r;
 
             read_dword(&ptr, &offset);
@@ -1984,6 +2005,64 @@ static const struct ID3D10ShaderReflectionVtbl d3d10_shader_reflection_vtbl =
     d3d10_shader_reflection_GetResourceBindingDesc,
     d3d10_shader_reflection_GetInputParameterDesc,
     d3d10_shader_reflection_GetOutputParameterDesc,
+};
+
+static inline struct d3dcompiler_shader_reflection_constant_buffer *impl_from_ID3D10ShaderReflectionConstantBuffer(
+        ID3D10ShaderReflectionConstantBuffer *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3dcompiler_shader_reflection_constant_buffer,
+            ID3D10ShaderReflectionConstantBuffer_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_constant_buffer_GetDesc(
+        ID3D10ShaderReflectionConstantBuffer *iface, D3D10_SHADER_BUFFER_DESC *desc)
+{
+    struct d3dcompiler_shader_reflection_constant_buffer *cb = impl_from_ID3D10ShaderReflectionConstantBuffer(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    if (cb == &null_constant_buffer)
+    {
+        WARN("Null constant buffer specified.\n");
+        return E_FAIL;
+    }
+
+    if (!desc)
+    {
+        WARN("Invalid argument specified.\n");
+        return E_FAIL;
+    }
+
+    desc->Name = cb->name;
+    desc->Type = cb->type;
+    desc->Variables = cb->variable_count;
+    desc->Size = cb->size;
+    desc->uFlags = cb->flags;
+
+    return S_OK;
+}
+
+static ID3D10ShaderReflectionVariable * STDMETHODCALLTYPE d3d10_shader_reflection_constant_buffer_GetVariableByIndex(
+        ID3D10ShaderReflectionConstantBuffer *iface, UINT index)
+{
+    FIXME("iface %p, index %d stub!\n", iface, index);
+
+    return &null_variable.ID3D10ShaderReflectionVariable_iface;
+}
+
+static ID3D10ShaderReflectionVariable * STDMETHODCALLTYPE d3d10_shader_reflection_constant_buffer_GetVariableByName(
+        ID3D10ShaderReflectionConstantBuffer *iface, const char *name)
+{
+    FIXME("iface %p, name %s stub!\n", iface, name);
+
+    return &null_variable.ID3D10ShaderReflectionVariable_iface;
+}
+
+static const struct ID3D10ShaderReflectionConstantBufferVtbl d3d10_shader_reflection_constant_buffer_vtbl =
+{
+    d3d10_shader_reflection_constant_buffer_GetDesc,
+    d3d10_shader_reflection_constant_buffer_GetVariableByIndex,
+    d3d10_shader_reflection_constant_buffer_GetVariableByName,
 };
 
 HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10ShaderReflection **reflector)
