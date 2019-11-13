@@ -1320,7 +1320,13 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                 break;
               }
 
-            case TVN_ENDLABELEDITA: return TRUE;
+            case TVN_ENDLABELEDITA:
+              {
+                NMTVDISPINFOA *disp = (NMTVDISPINFOA *)lParam;
+                if (disp->item.mask & TVIF_TEXT)
+                    todo_wine ok(disp->item.cchTextMax == MAX_PATH, "cchTextMax is %d\n", disp->item.cchTextMax);
+                return TRUE;
+              }
             case TVN_ITEMEXPANDINGA:
               {
                 UINT newmask = pTreeView->itemNew.mask & ~TVIF_CHILDREN;
