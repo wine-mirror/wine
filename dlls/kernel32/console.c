@@ -1627,7 +1627,7 @@ DWORD WINAPI GetNumberOfConsoleFonts(void)
 BOOL WINAPI SetConsoleFont(HANDLE hConsole, DWORD index)
 {
     FIXME("(%p, %u): stub!\n", hConsole, index);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    SetLastError(LOWORD(E_NOTIMPL) /* win10 1709+ */);
     return FALSE;
 }
 

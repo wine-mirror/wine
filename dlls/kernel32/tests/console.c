@@ -2973,12 +2973,12 @@ static void test_SetConsoleFont(HANDLE std_output)
         skip("SetConsoleFont is not implemented\n");
         return;
     }
-    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pSetConsoleFont(GetStdHandle(STD_INPUT_HANDLE), 0);
     ok(!ret, "got %d, expected zero\n", ret);
-    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
 
     pGetNumberOfConsoleFonts = (void *)GetProcAddress(hmod, "GetNumberOfConsoleFonts");
     if (!pGetNumberOfConsoleFonts)
