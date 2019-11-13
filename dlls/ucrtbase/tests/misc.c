@@ -898,134 +898,66 @@ static void test_asctime(void)
 
 static void test_strftime(void)
 {
+    const struct {
+       const char *format;
+       const char *ret;
+       struct tm tm;
+       BOOL todo;
+    } tests[] = {
+        {"%C", "19", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%D", "01/01/70", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#D", "1/1/70", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%e", " 1", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#e", "1", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%F", "1970-01-01", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#F", "1970-1-1", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%R", "00:00", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#R", "0:0", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%T", "00:00:00", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#T", "0:0:0", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%u", "7", { 0, 0, 0, 1, 0, 117, 0, 0, 0 }},
+        {"%h", "Jan", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%n", "\n", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%r", "12:00:00 AM", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }, TRUE},
+        {"%r", "02:00:00 PM", { 0, 0, 14, 1, 0, 121, 6, 0, 0 }, TRUE},
+        {"%t", "\t", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%g", "70", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%g", "16", { 0, 0, 0, 1, 0, 117, 0, 0, 0 }},
+        {"%G", "1970", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%G", "2016", { 0, 0, 0, 1, 0, 117, 0, 0, 0 }},
+        {"%V", "01", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }, TRUE},
+        {"%V", "52", { 0, 0, 0, 1, 0, 117, 0, 0, 0 }, TRUE},
+        {"%V", "53", { 0, 0, 14, 1, 0, 121, 6, 0, 0 }, TRUE},
+        {"%g", "71", { 0, 0, 0, 2, 0, 72, 0, 1, 0 }},
+        {"%g", "72", { 0, 0, 0, 3, 0, 72, 1, 2, 0 }},
+        {"%G", "1971", { 0, 0, 0, 2, 0, 72, 0, 1, 0 }},
+        {"%G", "1972", { 0, 0, 0, 3, 0, 72, 1, 2, 0 }},
+    };
+
     const struct tm epoch = { 0, 0, 0, 1, 0, 70, 4, 0, 0 };
-    const struct tm tm1 = { 0, 0, 0, 1, 0, 117, 0, 0, 0 };
-    const struct tm tm2 = { 0, 0, 14, 1, 0, 121, 6, 0, 0 };
-    char bufA[256];
-    size_t retA;
-    int i;
+    char buf[256];
+    int i, ret;
 
-    retA = p_strftime(bufA, sizeof(bufA), "%C", &epoch);
-    ok(retA == 2, "expected 2, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "19"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%D", &epoch);
-    ok(retA == 8, "expected 8, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "01/01/70"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%#D", &epoch);
-    ok(retA == 6, "expected 6, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "1/1/70"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%e", &epoch);
-    ok(retA == 2, "expected 2, got %d\n", (int)retA);
-    ok(!strcmp(bufA, " 1"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%#e", &epoch);
-    ok(retA == 1, "expected 1, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "1"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%F", &epoch);
-    ok(retA == 10, "expected 10, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "1970-01-01"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%#F", &epoch);
-    ok(retA == 8, "expected 8, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "1970-1-1"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%R", &epoch);
-    ok(retA == 5, "expected 5, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "00:00"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%#R", &epoch);
-    ok(retA == 3, "expected 3, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "0:0"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%T", &epoch);
-    ok(retA == 8, "expected 8, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "00:00:00"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%#T", &epoch);
-    ok(retA == 5, "expected 5, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "0:0:0"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%u", &tm1);
-    ok(retA == 1, "expected 1, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "7"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%h", &epoch);
-    ok(retA == 3, "expected 3, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "Jan"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%n", &epoch);
-    ok(retA == 1, "expected 1, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "\n"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%r", &epoch);
-    todo_wine ok(retA == 11, "expected 11, got %d\n", (int)retA);
-    todo_wine ok(!strcmp(bufA, "12:00:00 AM"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%r", &tm2);
-    todo_wine ok(retA == 11, "expected 11, got %d\n", (int)retA);
-    todo_wine ok(!strcmp(bufA, "02:00:00 PM"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%t", &epoch);
-    ok(retA == 1, "expected 1, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "\t"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%g", &epoch);
-    ok(retA == 2, "expected 2, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "70"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%g", &tm1);
-    ok(retA == 2, "expected 2, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "16"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%G", &epoch);
-    ok(retA == 4, "expected 4, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "1970"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%G", &tm1);
-    ok(retA == 4, "expected 4, got %d\n", (int)retA);
-    ok(!strcmp(bufA, "2016"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%V", &epoch);
-    todo_wine ok(retA == 2, "expected 2, got %d\n", (int)retA);
-    todo_wine ok(!strcmp(bufA, "01"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%V", &tm1);
-    todo_wine ok(retA == 2, "expected 2, got %d\n", (int)retA);
-    todo_wine ok(!strcmp(bufA, "52"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%V", &tm2);
-    todo_wine ok(retA == 2, "expected 2, got %d\n", (int)retA);
-    todo_wine ok(!strcmp(bufA, "53"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, sizeof(bufA), "%z", &tm2);
-    ok(retA == 5, "expected 5, got %d\n", (int)retA);
-    ok((bufA[0] == '+' || bufA[0] == '-') &&
-        isdigit(bufA[1]) && isdigit(bufA[2]) &&
-        isdigit(bufA[3]) && isdigit(bufA[4]), "got %s\n", bufA);
-
-    for(i=0; i<14; i++)
+    for (i=0; i<ARRAY_SIZE(tests); i++)
     {
-        __time32_t t = (365*2 + i - 7) * 24 * 60 * 60;
-        struct tm tm = *p__gmtime32(&t);
+        todo_wine_if(tests[i].todo) {
+            if (!tests[i].ret[0])
+                SET_EXPECT(global_invalid_parameter_handler);
+            ret = p_strftime(buf, sizeof(buf), tests[i].format, &tests[i].tm);
+            if (!tests[i].ret[0])
+                CHECK_CALLED(global_invalid_parameter_handler);
 
-        retA = p_strftime(bufA, sizeof(bufA), "%g", &tm);
-        ok(retA == 2, "%d) retA = %d\n", i, (int)retA);
-        if (i <= 8)
-            ok(!strcmp(bufA, "71"), "%d) got %s, expected 71\n", i, bufA);
-        else
-            ok(!strcmp(bufA, "72"), "%d) got %s, expected 72\n", i, bufA);
-
-        retA = p_strftime(bufA, sizeof(bufA), "%G", &tm);
-        ok(retA == 4, "%d) retA = %d\n", i, (int)retA);
-        if (i <= 8)
-            ok(!strcmp(bufA, "1971"), "%d) got %s, expected 1971\n", i, bufA);
-        else
-            ok(!strcmp(bufA, "1972"), "%d) got %s, expected 1972\n", i, bufA);
+            ok(ret == strlen(tests[i].ret), "%d) ret = %d\n", i, ret);
+            ok(!strcmp(buf, tests[i].ret), "%d) buf = \"%s\", expected \"%s\"\n",
+                    i, buf, tests[i].ret);
+        }
     }
+
+    ret = p_strftime(buf, sizeof(buf), "%z", &epoch);
+    ok(ret == 5, "expected 5, got %d\n", ret);
+    ok((buf[0] == '+' || buf[0] == '-') &&
+        isdigit(buf[1]) && isdigit(buf[2]) &&
+        isdigit(buf[3]) && isdigit(buf[4]), "got %s\n", buf);
 }
 
 static LONG* get_failures_counter(HANDLE *map)
