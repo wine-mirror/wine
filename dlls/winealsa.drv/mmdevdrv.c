@@ -631,7 +631,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
 static snd_config_t *make_handle_underrun_config(const char *name)
 {
     snd_config_t *lconf, *dev_node, *hu_node, *type_node;
-    char dev_node_name[64];
+    char dev_node_name[260];
     const char *type_str;
     int err;
 
