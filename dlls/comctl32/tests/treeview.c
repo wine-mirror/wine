@@ -1327,7 +1327,7 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                 NMTVDISPINFOA *disp = (NMTVDISPINFOA *)lParam;
                 if (disp->item.mask & TVIF_TEXT)
                 {
-                    todo_wine ok(disp->item.cchTextMax == MAX_PATH, "cchTextMax is %d\n", disp->item.cchTextMax);
+                    ok(disp->item.cchTextMax == MAX_PATH, "cchTextMax is %d\n", disp->item.cchTextMax);
                     if (g_endedit_overwrite_contents)
                         strcpy(disp->item.pszText, g_endedit_overwrite_contents);
                     if (g_endedit_overwrite_ptr)
@@ -1705,7 +1705,7 @@ static void test_itemedit(void)
     item.cchTextMax = ARRAY_SIZE(buffA);
     r = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, r);
-    todo_wine expect(MAX_PATH - 1, strlen(item.pszText));
+    expect(MAX_PATH - 1, strlen(item.pszText));
 
     /* We can't get around that MAX_PATH limit by increasing EM_SETLIMITTEXT */
     edit = (HWND)SendMessageA(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
@@ -1723,7 +1723,7 @@ static void test_itemedit(void)
     item.cchTextMax = ARRAY_SIZE(buffA);
     r = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, r);
-    todo_wine expect(MAX_PATH - 1, strlen(item.pszText));
+    expect(MAX_PATH - 1, strlen(item.pszText));
 
     /* Overwriting of pszText contents in TVN_ENDLABELEDIT */
     edit = (HWND)SendMessageA(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
@@ -1757,7 +1757,7 @@ static void test_itemedit(void)
     item.cchTextMax = ARRAY_SIZE(buffA);
     r = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, r);
-    todo_wine expect(0, strcmp(item.pszText, "<new_ptr>"));
+    expect(0, strcmp(item.pszText, "<new_ptr>"));
 
     DestroyWindow(hTree);
 }
