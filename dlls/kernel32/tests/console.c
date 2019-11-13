@@ -2967,6 +2967,12 @@ static void test_SetConsoleFont(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = pSetConsoleFont(NULL, 0);
     ok(!ret, "got %d, expected zero\n", ret);
+    if (GetLastError() == LOWORD(E_NOTIMPL) /* win10 1709+ */ ||
+        broken(GetLastError() == ERROR_GEN_FAILURE) /* win10 1607 */)
+    {
+        skip("SetConsoleFont is not implemented\n");
+        return;
+    }
     todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
