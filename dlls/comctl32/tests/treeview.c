@@ -43,6 +43,7 @@ static BOOL g_disp_A_to_W;
 static BOOL g_disp_set_stateimage;
 static BOOL g_beginedit_alter_text;
 static const char *g_endedit_overwrite_contents;
+static char *g_endedit_overwrite_ptr;
 static HFONT g_customdraw_font;
 static BOOL g_v6;
 
@@ -1329,6 +1330,8 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                     todo_wine ok(disp->item.cchTextMax == MAX_PATH, "cchTextMax is %d\n", disp->item.cchTextMax);
                     if (g_endedit_overwrite_contents)
                         strcpy(disp->item.pszText, g_endedit_overwrite_contents);
+                    if (g_endedit_overwrite_ptr)
+                        disp->item.pszText = g_endedit_overwrite_ptr;
                 }
                 return TRUE;
               }
@@ -1738,6 +1741,23 @@ static void test_itemedit(void)
     r = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, r);
     expect(0, strcmp(item.pszText, "<new_contents>"));
+
+    /* Overwriting of pszText pointer in TVN_ENDLABELEDIT */
+    edit = (HWND)SendMessageA(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
+    ok(IsWindow(edit), "Expected valid handle\n");
+    r = SetWindowTextA(edit, "old");
+    expect(TRUE, r);
+    g_endedit_overwrite_ptr = (char*) "<new_ptr>";
+    r = SendMessageA(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
+    expect(0, r);
+    g_endedit_overwrite_ptr = NULL;
+    item.mask = TVIF_TEXT;
+    item.hItem = hRoot;
+    item.pszText = buffA;
+    item.cchTextMax = ARRAY_SIZE(buffA);
+    r = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, r);
+    todo_wine expect(0, strcmp(item.pszText, "<new_ptr>"));
 
     DestroyWindow(hTree);
 }
