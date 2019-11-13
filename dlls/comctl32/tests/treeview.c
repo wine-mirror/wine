@@ -1667,6 +1667,17 @@ static void test_itemedit(void)
     GetWindowTextA(edit, buffA, ARRAY_SIZE(buffA));
     ok(!strcmp(buffA, "<edittextaltered>"), "got string %s\n", buffA);
 
+    r = SendMessageA(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
+    expect(0, r);
+
+    /* How much text can be typed? */
+    edit = (HWND)SendMessageA(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
+    ok(IsWindow(edit), "Expected valid handle\n");
+    r = SendMessageA(edit, EM_GETLIMITTEXT, 0, 0);
+    todo_wine expect(MAX_PATH - 1, r);
+    r = SendMessageA(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
+    expect(0, r);
+
     DestroyWindow(hTree);
 }
 
