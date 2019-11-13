@@ -489,6 +489,7 @@ _FUNCTION_ {
                     }
                     /* if we have reached the EOF and output nothing then report EOF */
                     if (nch==_EOF_ && rd==0 && st==0) {
+                        _UNLOCK_FILE_(file);
                         return _EOF_RET;
                     }
                     /* terminate */
@@ -524,6 +525,7 @@ _FUNCTION_ {
 #if _MSVCR_VER >= 80
                     /* if we have reached the EOF and output nothing then report EOF */
                     if (nch==_EOF_ && rd==0 && st==0) {
+                        _UNLOCK_FILE_(file);
                         return _EOF_RET;
                     }
 #endif
