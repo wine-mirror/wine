@@ -1674,7 +1674,7 @@ static void test_itemedit(void)
     edit = (HWND)SendMessageA(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
     ok(IsWindow(edit), "Expected valid handle\n");
     r = SendMessageA(edit, EM_GETLIMITTEXT, 0, 0);
-    todo_wine expect(MAX_PATH - 1, r);
+    expect(MAX_PATH - 1, r);
     r = SendMessageA(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
     expect(0, r);
 
