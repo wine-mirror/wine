@@ -1963,6 +1963,79 @@ static void wined3d_texture_gl_upload_bo(const struct wined3d_format *src_format
     }
 }
 
+static const struct d3dfmt_alpha_fixup
+{
+    enum wined3d_format_id format_id, conv_format_id;
+}
+formats_src_alpha_fixup[] =
+{
+    {WINED3DFMT_B8G8R8X8_UNORM, WINED3DFMT_B8G8R8A8_UNORM},
+    {WINED3DFMT_B5G5R5X1_UNORM, WINED3DFMT_B5G5R5A1_UNORM},
+    {WINED3DFMT_B4G4R4X4_UNORM, WINED3DFMT_B4G4R4A4_UNORM},
+};
+
+static enum wined3d_format_id wined3d_get_alpha_fixup_format(enum wined3d_format_id format_id,
+        const struct wined3d_format *dst_format)
+{
+    unsigned int i;
+
+    if (!(dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
+            && !dst_format->alpha_size)
+        return WINED3DFMT_UNKNOWN;
+
+    for (i = 0; i < ARRAY_SIZE(formats_src_alpha_fixup); ++i)
+    {
+        if (formats_src_alpha_fixup[i].format_id == format_id)
+            return formats_src_alpha_fixup[i].conv_format_id;
+    }
+
+    return WINED3DFMT_UNKNOWN;
+}
+
+static void wined3d_fixup_alpha(const struct wined3d_format *format, const uint8_t *src,
+        unsigned int src_row_pitch, uint8_t *dst, unsigned int dst_row_pitch,
+        unsigned int width, unsigned int height)
+{
+    unsigned int byte_count, alpha_mask;
+    unsigned int x, y;
+
+    byte_count = format->byte_count;
+    alpha_mask = ((1u << format->alpha_size) - 1) << format->alpha_offset;
+
+    switch (byte_count)
+    {
+        case 2:
+            for (y = 0; y < height; ++y)
+            {
+                const uint16_t *src_row = (const uint16_t *)&src[y * src_row_pitch];
+                uint16_t *dst_row = (uint16_t *)&dst[y * dst_row_pitch];
+
+                for (x = 0; x < width; ++x)
+                {
+                    dst_row[x] = src_row[x] | alpha_mask;
+                }
+            }
+            break;
+
+        case 4:
+            for (y = 0; y < height; ++y)
+            {
+                const uint32_t *src_row = (const uint32_t *)&src[y * src_row_pitch];
+                uint32_t *dst_row = (uint32_t *)&dst[y * dst_row_pitch];
+
+                for (x = 0; x < width; ++x)
+                {
+                    dst_row[x] = src_row[x] | alpha_mask;
+                }
+            }
+            break;
+
+        default:
+            ERR("Unsupported byte count %u.\n", byte_count);
+            break;
+    }
+}
+
 static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
         const struct wined3d_const_bo_address *src_bo_addr, const struct wined3d_format *src_format,
         const struct wined3d_box *src_box, unsigned int src_row_pitch, unsigned int src_slice_pitch,
@@ -1970,16 +2043,16 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
         unsigned int dst_x, unsigned int dst_y, unsigned int dst_z)
 {
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    enum wined3d_format_id alpha_fixup_format_id = WINED3DFMT_UNKNOWN;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     unsigned int update_w = src_box->right - src_box->left;
     unsigned int update_h = src_box->bottom - src_box->top;
     unsigned int update_d = src_box->back - src_box->front;
     struct wined3d_bo_address bo;
     unsigned int level;
+    BOOL srgb = FALSE;
     BOOL decompress;
     GLenum target;
-
-    BOOL srgb = FALSE;
 
     TRACE("context %p, src_bo_addr %s, src_format %s, src_box %s, src_row_pitch %u, src_slice_pitch %u, "
             "dst_texture %p, dst_sub_resource_idx %u, dst_location %s, dst_x %u, dst_y %u, dst_z %u.\n",
@@ -2046,7 +2119,9 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
     decompress = (dst_texture->resource.format_flags & WINED3DFMT_FLAG_DECOMPRESS)
             || (src_format->decompress && src_format->id != dst_texture->resource.format->id);
 
-    if (src_format->upload || decompress)
+    if (src_format->upload || decompress
+            || (alpha_fixup_format_id = wined3d_get_alpha_fixup_format(src_format->id,
+            dst_texture->resource.format)) != WINED3DFMT_UNKNOWN)
     {
         const struct wined3d_format *compressed_format = src_format;
         unsigned int dst_row_pitch, dst_slice_pitch;
@@ -2058,6 +2133,11 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
         if (decompress)
         {
             src_format = wined3d_resource_get_decompress_format(&dst_texture->resource);
+        }
+        else if (alpha_fixup_format_id != WINED3DFMT_UNKNOWN)
+        {
+            src_format = wined3d_get_format(context->device->adapter, alpha_fixup_format_id, 0);
+            assert(!!src_format);
         }
         else
         {
@@ -2085,6 +2165,9 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
             if (decompress)
                 compressed_format->decompress(src_mem, converted_mem, src_row_pitch, src_slice_pitch,
                         dst_row_pitch, dst_slice_pitch, update_w, update_h, 1);
+            else if (alpha_fixup_format_id != WINED3DFMT_UNKNOWN)
+                wined3d_fixup_alpha(src_format, src_mem, src_row_pitch, converted_mem, dst_row_pitch,
+                        update_w, update_h);
             else
                 src_format->upload(src_mem, converted_mem, src_row_pitch, src_slice_pitch,
                         dst_row_pitch, dst_slice_pitch, update_w, update_h, 1);
