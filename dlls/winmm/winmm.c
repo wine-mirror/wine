@@ -54,6 +54,7 @@
 #include "winemm.h"
 
 #include "wine/debug.h"
+#include "wine/rbtree.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
@@ -72,12 +73,16 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 CRITICAL_SECTION WINMM_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static struct wine_rb_tree wine_midi_streams;
+static int wine_midi_stream_compare(const void *key, const struct wine_rb_entry *entry);
+
 /**************************************************************************
  * 			WINMM_CreateIData			[internal]
  */
 static	BOOL	WINMM_CreateIData(HINSTANCE hInstDLL)
 {
     hWinMM32Instance = hInstDLL;
+    wine_rb_init(&wine_midi_streams, wine_midi_stream_compare);
     psLastEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     return psLastEvent != NULL;
 }
@@ -924,6 +929,8 @@ typedef struct WINE_MIDIStream {
     WORD			status;
     HANDLE			hEvent;
     LPMIDIHDR			lpMidiHdr;
+    DWORD			dwStreamID;
+    struct wine_rb_entry	entry;
 } WINE_MIDIStream;
 
 #define WINE_MSM_HEADER		(WM_USER+0)
@@ -935,12 +942,50 @@ typedef struct WINE_MIDIStream {
 #define MSM_STATUS_PAUSED	WINE_MSM_PAUSE
 #define MSM_STATUS_PLAYING	WINE_MSM_RESUME
 
+static int wine_midi_stream_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    WINE_MIDIStream *stream = WINE_RB_ENTRY_VALUE(entry, struct WINE_MIDIStream, entry);
+    return memcmp(key, &stream->dwStreamID, sizeof(stream->dwStreamID));
+}
+
+static WINE_MIDIStream *wine_midi_stream_allocate(void)
+{
+    DWORD stream_id = 1;
+    WINE_MIDIStream *stream = NULL;
+
+    EnterCriticalSection(&WINMM_cs);
+
+    while (stream_id < 0xFFFFFFFF && wine_rb_get(&wine_midi_streams, &stream_id))
+        stream_id++;
+
+    if (stream_id < 0xFFFFFFFF &&
+        (stream = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_MIDIStream))))
+    {
+        stream->dwStreamID = stream_id;
+        wine_rb_put(&wine_midi_streams, &stream_id, &stream->entry);
+    }
+
+    LeaveCriticalSection(&WINMM_cs);
+    return stream;
+}
+
+static void wine_midi_stream_free(WINE_MIDIStream *stream)
+{
+    EnterCriticalSection(&WINMM_cs);
+
+    wine_rb_remove(&wine_midi_streams, &stream->entry);
+    HeapFree(GetProcessHeap(), 0, stream);
+
+    LeaveCriticalSection(&WINMM_cs);
+}
+
 /**************************************************************************
  * 				MMSYSTEM_GetMidiStream		[internal]
  */
 static	BOOL	MMSYSTEM_GetMidiStream(HMIDISTRM hMidiStrm, WINE_MIDIStream** lpMidiStrm, WINE_MIDI** lplpwm)
 {
     WINE_MIDI* lpwm = (LPWINE_MIDI)MMDRV_Get(hMidiStrm, MMDRV_MIDIOUT, FALSE);
+    struct wine_rb_entry *entry;
 
     if (lplpwm)
 	*lplpwm = lpwm;
@@ -949,7 +994,10 @@ static	BOOL	MMSYSTEM_GetMidiStream(HMIDISTRM hMidiStrm, WINE_MIDIStream** lpMidi
 	return FALSE;
     }
 
-    *lpMidiStrm = (WINE_MIDIStream*)lpwm->mod.rgIds.dwStreamID;
+    EnterCriticalSection(&WINMM_cs);
+    if ((entry = wine_rb_get(&wine_midi_streams, &lpwm->mod.rgIds.dwStreamID)))
+        *lpMidiStrm = WINE_RB_ENTRY_VALUE(entry, struct WINE_MIDIStream, entry);
+    LeaveCriticalSection(&WINMM_cs);
 
     return *lpMidiStrm != NULL;
 }
@@ -1106,7 +1154,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 #endif
             if (((LPMIDIEVENT)lpData)->dwStreamID != 0 &&
                 ((LPMIDIEVENT)lpData)->dwStreamID != 0xFFFFFFFF &&
-                ((LPMIDIEVENT)lpData)->dwStreamID != (DWORD)lpMidiStrm) {
+                ((LPMIDIEVENT)lpData)->dwStreamID != lpMidiStrm->dwStreamID) {
                 FIXME("Dropping bad %s lpMidiHdr (streamID=%08x)\n",
                       (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular",
                       ((LPMIDIEVENT)lpData)->dwStreamID);
@@ -1301,7 +1349,7 @@ MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
     if(!ret) {
         lpMidiStrm->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&lpMidiStrm->lock);
-        HeapFree(GetProcessHeap(), 0, lpMidiStrm);
+        wine_midi_stream_free(lpMidiStrm);
     }
 
     return midiOutClose((HMIDIOUT)hMidiStrm);
@@ -1330,7 +1378,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     if (ret != MMSYSERR_NOERROR)
 	return ret;
 
-    lpMidiStrm = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_MIDIStream));
+    lpMidiStrm = wine_midi_stream_allocate();
     if (!lpMidiStrm)
 	return MMSYSERR_NOMEM;
 
@@ -1341,7 +1389,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     lpMidiStrm->status = MSM_STATUS_PAUSED;
     lpMidiStrm->dwElapsedMS = 0;
 
-    mosm.dwStreamID = (DWORD)lpMidiStrm;
+    mosm.dwStreamID = lpMidiStrm->dwStreamID;
     /* FIXME: the correct value is not allocated yet for MAPPER */
     mosm.wDeviceID  = *lpuDeviceID;
     lpwm = MIDI_OutAlloc(&hMidiOut, &dwCallback, &dwInstance, &fdwOpen, 1, &mosm);
