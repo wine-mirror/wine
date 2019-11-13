@@ -16504,6 +16504,321 @@ static void test_d32_support(void)
     DestroyWindow(window);
 }
 
+static void test_surface_format_conversion_alpha(void)
+{
+    static const unsigned int rgba_data[4 * 4] =
+    {
+        0xff00ff00, 0xff0000ff, 0xff0000ff, 0xff0000ff,
+        0xff0000ff, 0xff00ff00, 0xff0000ff, 0xff0000ff,
+        0xff00ff00, 0xff0000ff, 0xff00ff00, 0xff0000ff,
+        0xff00ff00, 0xff0000ff, 0xff0000ff, 0xff00ff00,
+    };
+    static const unsigned int rgbx_data[4 * 4] =
+    {
+        0x0000ff00, 0x000000ff, 0x000000ff, 0x000000ff,
+        0x000000ff, 0x0000ff00, 0x000000ff, 0x000000ff,
+        0x0000ff00, 0x000000ff, 0x0000ff00, 0x000000ff,
+        0x0000ff00, 0x000000ff, 0x000000ff, 0x0000ff00,
+    };
+    static const unsigned short int r5g6b5_data[4 * 4] =
+    {
+        0x07e0, 0x001f, 0x001f, 0x001f,
+        0x001f, 0x07e0, 0x001f, 0x001f,
+        0x07e0, 0x001f, 0x07e0, 0x001f,
+        0x07e0, 0x001f, 0x001f, 0x07e0,
+    };
+    static const unsigned short int r5g5b5x1_data[4 * 4] =
+    {
+        0x03e0, 0x001f, 0x001f, 0x001f,
+        0x001f, 0x03e0, 0x001f, 0x001f,
+        0x03e0, 0x001f, 0x03e0, 0x001f,
+        0x03e0, 0x001f, 0x001f, 0x03e0,
+    };
+    static const unsigned short int r5g5b5a1_data[4 * 4] =
+    {
+        0x83e0, 0x801f, 0x801f, 0x801f,
+        0x801f, 0x83e0, 0x801f, 0x801f,
+        0x83e0, 0x801f, 0x83e0, 0x801f,
+        0x83e0, 0x801f, 0x801f, 0x83e0,
+    };
+    static const unsigned int dxt1_data[8] =
+    {
+        0x001f07e0, 0x14445154,
+    };
+    static const unsigned int dxt2_data[16] =
+    {
+        0xffffffff, 0xffffffff, 0x001f07e0, 0x14445154,
+    };
+
+    enum test_format_id
+    {
+        FMT_RGBA,
+        FMT_RGBX,
+        FMT_R5G6B5,
+        FMT_R5G5B5X1,
+        FMT_R5G5B5A1,
+        FMT_DXT1,
+        FMT_DXT2,
+        FMT_DXT3,
+    };
+
+    static const struct test_format
+    {
+        DDPIXELFORMAT fmt;
+        const char *name;
+        unsigned int block_size, x_blocks, y_blocks;
+        DWORD support_flag;
+        BOOL broken_software_blit;
+    }
+    formats[] =
+    {
+        {
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
+                {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
+            },
+            "RGBA", 4, 4, 4,
+        },
+        {
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB, 0,
+                {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0x00000000}
+            },
+            "RGBX", 4, 4, 4,
+        },
+        {
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB, 0,
+                {16}, {0x0000f800}, {0x000007e0}, {0x0000001f}, {0x00000000}
+            },
+            "R5G6B5", 2, 4, 4, 0, TRUE,
+            /* Looks broken for sysmem texture convertions on Windows (at
+             * least with hardware device), the result is either error from
+             * _Blt() or a copy of the source data without any conversion. */
+        },
+        {
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB, 0,
+                {16}, {0x00007c00}, {0x000003e0}, {0x0000001f}, {0x00000000}
+            },
+            "R5G5B5X1", 2, 4, 4,
+        },
+        {
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
+                {16}, {0x00007c00}, {0x000003e0}, {0x0000001f}, {0x00008000}
+            },
+            "R5G5B5A1", 2, 4, 4,
+        },
+        {
+            {
+                sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '1'),
+                {0}, {0}, {0}, {0}, {0}
+            },
+            "DXT1", 8, 1, 1, SUPPORT_DXT1,
+        },
+        {
+            {
+                sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '2'),
+                {0}, {0}, {0}, {0}, {0}
+            },
+            "DXT2", 16, 1, 1, SUPPORT_DXT2,
+        },
+        {
+            {
+                sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '3'),
+                {0}, {0}, {0}, {0}, {0}
+            },
+            "DXT3", 16, 1, 1, SUPPORT_DXT3,
+        },
+    };
+
+    static const struct
+    {
+        DWORD src_caps, dst_caps;
+    }
+    test_caps[] =
+    {
+        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY,  DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY},
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY},
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY},
+        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY,  DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY},
+    };
+
+    static const struct
+    {
+        enum test_format_id src_format;
+        const void *src_data;
+        enum test_format_id dst_format;
+        const void *expected_data;
+        BOOL todo;
+    }
+    tests[] =
+    {
+#if 0
+        /* The following 3 tests give different results on AMD and NVIDIA on Windows, disabling. */
+        {FMT_RGBX,     rgbx_data,     FMT_RGBA,     rgba_data},
+        {FMT_RGBA,     rgba_data,     FMT_RGBX,     rgbx_data},
+        {FMT_R5G5B5X1, r5g5b5x1_data, FMT_RGBA,     rgba_data},
+#endif
+        {FMT_R5G6B5,   r5g6b5_data,   FMT_RGBA,     rgba_data},
+        {FMT_R5G6B5,   r5g6b5_data,   FMT_R5G5B5A1, r5g5b5a1_data},
+        {FMT_R5G5B5X1, r5g5b5x1_data, FMT_R5G5B5A1, r5g5b5x1_data, TRUE},
+        {FMT_R5G5B5A1, r5g5b5a1_data, FMT_R5G6B5,   r5g6b5_data},
+        {FMT_RGBA,     rgba_data,     FMT_DXT1,     dxt1_data},
+        {FMT_RGBX,     rgbx_data,     FMT_DXT1,     dxt1_data},
+        {FMT_RGBA,     rgba_data,     FMT_DXT2,     dxt2_data},
+        {FMT_RGBX,     rgbx_data,     FMT_DXT2,     dxt2_data},
+        {FMT_RGBA,     rgba_data,     FMT_DXT3,     dxt2_data},
+        {FMT_RGBX,     rgbx_data,     FMT_DXT3,     dxt2_data},
+        {FMT_DXT1,     dxt1_data,     FMT_DXT2,     dxt2_data},
+        {FMT_DXT1,     dxt1_data,     FMT_RGBA,     rgba_data},
+        {FMT_DXT1,     dxt1_data,     FMT_RGBX,     rgba_data},
+        {FMT_DXT3,     dxt2_data,     FMT_RGBA,     rgba_data},
+        {FMT_DXT3,     dxt2_data,     FMT_RGBX,     rgba_data},
+    };
+
+    const struct test_format *src_format, *dst_format;
+    IDirectDrawSurface4 *src_surf, *dst_surf;
+    DDSURFACEDESC2 surface_desc, lock;
+    unsigned int i, j, x, y, pitch;
+    IDirect3DDevice3 *device;
+    DWORD supported_fmts;
+    IDirectDraw4 *ddraw;
+    ULONG refcount;
+    BOOL is_wine;
+    HWND window;
+    BOOL passed;
+    HRESULT hr;
+
+    window = create_window();
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_EnumTextureFormats(device, test_block_formats_creation_cb,
+            &supported_fmts);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    is_wine = !strcmp(winetest_platform, "wine");
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    surface_desc.dwWidth = 4;
+    surface_desc.dwHeight = 4;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        src_format = &formats[tests[i].src_format];
+        dst_format = &formats[tests[i].dst_format];
+
+        if (~supported_fmts & dst_format->support_flag)
+        {
+            skip("%s format is not supported, skipping test %u.\n", dst_format->name, i);
+            continue;
+        }
+        if (~supported_fmts & src_format->support_flag)
+        {
+            skip("%s format is not supported, skipping test %u.\n", src_format->name, i);
+            continue;
+        }
+
+        for (j = 0; j < ARRAY_SIZE(test_caps); ++j)
+        {
+            if (!is_wine && ((test_caps[j].src_caps | test_caps[j].dst_caps) & DDSCAPS_SYSTEMMEMORY)
+                    && (src_format->broken_software_blit || dst_format->broken_software_blit))
+                continue;
+
+            U4(surface_desc).ddpfPixelFormat = src_format->fmt;
+            surface_desc.ddsCaps.dwCaps = test_caps[j].src_caps;
+            hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &src_surf, NULL);
+            ok(hr == DD_OK, "Test (%u, %u), got unexpected hr %#x.\n", j, i, hr);
+
+            U4(surface_desc).ddpfPixelFormat = dst_format->fmt;
+            surface_desc.ddsCaps.dwCaps = test_caps[j].dst_caps;
+            hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &dst_surf, NULL);
+            ok(hr == DD_OK, "Test (%u, %u), got unexpected hr %#x.\n", j, i, hr);
+
+            memset(&lock, 0, sizeof(lock));
+            lock.dwSize = sizeof(lock);
+            hr = IDirectDrawSurface4_Lock(src_surf, NULL, &lock, 0, NULL);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+            pitch = U1(lock).lPitch;
+            for (y = 0; y < src_format->y_blocks; ++y)
+            {
+                memcpy((BYTE *)lock.lpSurface + y * pitch,
+                        (BYTE *)tests[i].src_data + y * src_format->x_blocks * src_format->block_size,
+                        src_format->block_size * src_format->x_blocks);
+            }
+            hr = IDirectDrawSurface4_Unlock(src_surf, NULL);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+            hr = IDirectDrawSurface4_Blt(dst_surf, NULL, src_surf, NULL, DDBLT_WAIT, NULL);
+            if (!is_wine && FAILED(hr))
+            {
+                /* Some software blits are rejected on Windows. */
+                IDirectDrawSurface4_Release(dst_surf);
+                IDirectDrawSurface4_Release(src_surf);
+                skip("Skipping test (%u, %u), cannot blit %s -> %s, hr %#x.\n", j, i,
+                        src_format->name, dst_format->name, hr);
+                continue;
+            }
+            ok(hr == DD_OK, "Test (%u, %s -> %s), got unexpected hr %#x.\n", j,
+                    src_format->name, dst_format->name, hr);
+
+            memset(&lock, 0, sizeof(lock));
+            lock.dwSize = sizeof(lock);
+            hr = IDirectDrawSurface4_Lock(dst_surf, NULL, &lock, 0, NULL);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+            pitch = U1(lock).lPitch;
+
+            for (y = 0; y < dst_format->y_blocks; ++y)
+            {
+                const void *expected_data = tests[i].expected_data;
+
+                passed = !memcmp((BYTE*)lock.lpSurface + y * pitch,
+                        (BYTE *)expected_data + y * dst_format->x_blocks * dst_format->block_size,
+                        dst_format->block_size * dst_format->x_blocks);
+                todo_wine_if(tests[i].todo)
+                ok(passed, "Test (%u, %s -> %s), row %u, unexpected surface data.\n", j,
+                        src_format->name, dst_format->name, y);
+
+                if (!passed && !(is_wine && tests[i].todo))
+                {
+                    for (x = 0; x < dst_format->x_blocks * dst_format->block_size / 4; ++x)
+                    {
+                        trace("Test (%u, %u), x %u, y %u, got 0x%08x, expected 0x%08x.\n", j, i, x, y,
+                                *(unsigned int *)((BYTE *)lock.lpSurface + y * pitch + x * 4),
+                                *(unsigned int *)((BYTE *)expected_data + y * dst_format->x_blocks
+                                * dst_format->block_size + x * 4));
+                    }
+                }
+                if (!passed)
+                    break;
+            }
+            hr = IDirectDrawSurface4_Unlock(dst_surf, NULL);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+            IDirectDrawSurface4_Release(dst_surf);
+            IDirectDrawSurface4_Release(src_surf);
+        }
+    }
+
+    IDirect3DDevice3_Release(device);
+    refcount = IDirectDraw4_Release(ddraw);
+    ok(!refcount, "%u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -16638,4 +16953,5 @@ START_TEST(ddraw4)
     test_clipper_refcount();
     test_caps();
     test_d32_support();
+    test_surface_format_conversion_alpha();
 }
