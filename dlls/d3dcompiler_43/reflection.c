@@ -1930,17 +1930,37 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetResourceBindingDesc(
 static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetInputParameterDesc(ID3D10ShaderReflection *iface,
         UINT index, D3D10_SIGNATURE_PARAMETER_DESC *desc)
 {
-    FIXME("iface %p, index %u, desc %p stub!\n", iface, index, desc);
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D10ShaderReflection(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
+
+    if (!desc || !reflection->isgn || index >= reflection->isgn->element_count)
+    {
+        WARN("Invalid argument specified.\n");
+        return E_INVALIDARG;
+    }
+
+    memcpy(desc, &reflection->isgn->elements[index], sizeof(*desc));
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetOutputParameterDesc(ID3D10ShaderReflection *iface,
         UINT index, D3D10_SIGNATURE_PARAMETER_DESC *desc)
 {
-    FIXME("iface %p, index %u, desc %p stub!\n", iface, index, desc);
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D10ShaderReflection(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, desc %p.\n", iface, index, desc);
+
+    if (!desc || !reflection->osgn || index >= reflection->osgn->element_count)
+    {
+        WARN("Invalid argument specified.\n");
+        return E_INVALIDARG;
+    }
+
+    memcpy(desc, &reflection->osgn->elements[index], sizeof(*desc));
+
+    return S_OK;
 }
 
 static const struct ID3D10ShaderReflectionVtbl d3d10_shader_reflection_vtbl =
