@@ -1033,6 +1033,30 @@ static inline BOOL strftime_time(char *str, MSVCRT_size_t *pos, MSVCRT_size_t ma
     return TRUE;
 }
 
+static inline BOOL strftime_tzdiff(char *str, MSVCRT_size_t *pos, MSVCRT_size_t max, BOOL is_dst)
+{
+    MSVCRT_long tz = MSVCRT___timezone + (is_dst ? MSVCRT__dstbias : 0);
+    MSVCRT_size_t len;
+    char sign;
+
+    if(tz < 0) {
+        sign = '+';
+        tz = -tz;
+    }else {
+        sign = '-';
+    }
+
+    len = MSVCRT__snprintf(str+*pos, max-*pos, "%c%02u%02u", sign, tz/60/60, tz/60%60);
+    if(len == -1) {
+        *str = 0;
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return FALSE;
+    }
+
+    *pos += len;
+    return TRUE;
+}
+
 static inline BOOL strftime_str(char *str, MSVCRT_size_t *pos, MSVCRT_size_t max, char *src)
 {
     MSVCRT_size_t len = strlen(src);
@@ -1300,6 +1324,12 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
                 return 0;
             break;
         case 'z':
+#if _MSVCR_VER>=140
+            MSVCRT__tzset();
+            if(!strftime_tzdiff(str, &ret, max, mstm->tm_isdst))
+                return 0;
+            break;
+#endif
         case 'Z':
             MSVCRT__tzset();
             if(MSVCRT__get_tzname(&tmp, str+ret, max-ret, mstm->tm_isdst ? 1 : 0))

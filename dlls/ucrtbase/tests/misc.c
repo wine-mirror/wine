@@ -1001,6 +1001,12 @@ static void test_strftime(void)
     todo_wine ok(retA == 2, "expected 2, got %d\n", (int)retA);
     todo_wine ok(!strcmp(bufA, "53"), "got %s\n", bufA);
 
+    retA = p_strftime(bufA, sizeof(bufA), "%z", &tm2);
+    ok(retA == 5, "expected 5, got %d\n", (int)retA);
+    ok((bufA[0] == '+' || bufA[0] == '-') &&
+        isdigit(bufA[1]) && isdigit(bufA[2]) &&
+        isdigit(bufA[3]) && isdigit(bufA[4]), "got %s\n", bufA);
+
     for(i=0; i<14; i++)
     {
         __time32_t t = (365*2 + i - 7) * 24 * 60 * 60;
