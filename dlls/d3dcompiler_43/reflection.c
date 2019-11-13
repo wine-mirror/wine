@@ -1353,6 +1353,7 @@ static HRESULT d3dcompiler_parse_variables(struct d3dcompiler_shader_reflection_
         DWORD offset;
 
         v->ID3D11ShaderReflectionVariable_iface.lpVtbl = &d3dcompiler_shader_reflection_variable_vtbl;
+        v->ID3D10ShaderReflectionVariable_iface.lpVtbl = &d3d10_shader_reflection_variable_vtbl;
         v->constant_buffer = cb;
 
         read_dword(&ptr, &offset);
@@ -2093,6 +2094,53 @@ static const struct ID3D10ShaderReflectionConstantBufferVtbl d3d10_shader_reflec
     d3d10_shader_reflection_constant_buffer_GetDesc,
     d3d10_shader_reflection_constant_buffer_GetVariableByIndex,
     d3d10_shader_reflection_constant_buffer_GetVariableByName,
+};
+
+static inline struct d3dcompiler_shader_reflection_variable *impl_from_ID3D10ShaderReflectionVariable(ID3D10ShaderReflectionVariable *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3dcompiler_shader_reflection_variable, ID3D10ShaderReflectionVariable_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_variable_GetDesc(ID3D10ShaderReflectionVariable *iface,
+        D3D10_SHADER_VARIABLE_DESC *desc)
+{
+    struct d3dcompiler_shader_reflection_variable *var = impl_from_ID3D10ShaderReflectionVariable(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    if (var == &null_variable)
+    {
+        WARN("Null variable specified.\n");
+        return E_FAIL;
+    }
+
+    if (!desc)
+    {
+        WARN("Invalid argument specified.\n");
+        return E_FAIL;
+    }
+
+    desc->Name = var->name;
+    desc->StartOffset = var->start_offset;
+    desc->Size = var->size;
+    desc->uFlags = var->flags;
+    desc->DefaultValue = var->default_value;
+
+    return S_OK;
+}
+
+static ID3D10ShaderReflectionType * STDMETHODCALLTYPE d3d10_shader_reflection_variable_GetType(
+        ID3D10ShaderReflectionVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return &null_type.ID3D10ShaderReflectionType_iface;
+}
+
+static const struct ID3D10ShaderReflectionVariableVtbl d3d10_shader_reflection_variable_vtbl =
+{
+    d3d10_shader_reflection_variable_GetDesc,
+    d3d10_shader_reflection_variable_GetType,
 };
 
 HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10ShaderReflection **reflector)
