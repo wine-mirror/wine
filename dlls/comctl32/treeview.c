@@ -3971,6 +3971,7 @@ TREEVIEW_EditLabel(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
     infoPtr->wpEditOrig = (WNDPROC)SetWindowLongPtrW(hwndEdit, GWLP_WNDPROC,
 						  (DWORD_PTR)
 						  TREEVIEW_Edit_SubclassProc);
+    SendMessageW(hwndEdit, EM_SETLIMITTEXT, MAX_PATH - 1, 0);
     if (hItem->pszText)
         SetWindowTextW(hwndEdit, hItem->pszText);
 
