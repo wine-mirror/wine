@@ -379,7 +379,7 @@ static void __cdecl global_invalid_parameter_handler(
         const wchar_t *expression, const wchar_t *function,
         const wchar_t *file, unsigned line, uintptr_t arg)
 {
-    CHECK_EXPECT(global_invalid_parameter_handler);
+    CHECK_EXPECT2(global_invalid_parameter_handler);
 }
 
 static void __cdecl thread_invalid_parameter_handler(
@@ -928,6 +928,10 @@ static void test_strftime(void)
         {"%V", "01", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }, TRUE},
         {"%V", "52", { 0, 0, 0, 1, 0, 117, 0, 0, 0 }, TRUE},
         {"%V", "53", { 0, 0, 14, 1, 0, 121, 6, 0, 0 }, TRUE},
+        {"%y", "", { 0, 0, 0, 0, 0, -1901, 0, 0, 0 }},
+        {"%y", "00", { 0, 0, 0, 0, 0, -1900, 0, 0, 0 }},
+        {"%y", "99", { 0, 0, 0, 0, 0, 8099, 0, 0, 0 }},
+        {"%y", "", { 0, 0, 0, 0, 0, 8100, 0, 0, 0 }},
         {"%g", "71", { 0, 0, 0, 2, 0, 72, 0, 1, 0 }},
         {"%g", "72", { 0, 0, 0, 3, 0, 72, 1, 2, 0 }},
         {"%G", "1971", { 0, 0, 0, 2, 0, 72, 0, 1, 0 }},

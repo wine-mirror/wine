@@ -1316,7 +1316,14 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
                 return 0;
             break;
         case 'y':
-            if(!strftime_int(str, &ret, max, mstm->tm_year%100, alternate ? 0 : 2, 0, 99))
+#if _MSVCR_VER>=140
+            if(!MSVCRT_CHECK_PMT(mstm->tm_year>=-1900 && mstm->tm_year<=8099))
+                goto einval_error;
+            tmp = (mstm->tm_year+1900)%100;
+#else
+            tmp = mstm->tm_year%100;
+#endif
+            if(!strftime_int(str, &ret, max, tmp, alternate ? 0 : 2, 0, 99))
                 return 0;
             break;
         case 'Y':
