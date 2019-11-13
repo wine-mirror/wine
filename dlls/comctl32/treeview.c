@@ -3997,8 +3997,8 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
     TREEVIEW_ITEM *editedItem = infoPtr->editItem;
     NMTVDISPINFOW tvdi;
     BOOL bCommit;
-    WCHAR tmpText[1024] = { '\0' };
-    WCHAR *newText = tmpText;
+    WCHAR tmpText[MAX_PATH] = { '\0' };
+    WCHAR *newText;
     int iLength = 0;
 
     if (!IsWindow(infoPtr->hwndEdit)) return FALSE;
@@ -4011,18 +4011,13 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
     if (!bCancel)
     {
         if (!infoPtr->bNtfUnicode)
-            iLength = GetWindowTextA(infoPtr->hwndEdit, (LPSTR)tmpText, 1023);
+            iLength = GetWindowTextA(infoPtr->hwndEdit, (LPSTR)tmpText, ARRAY_SIZE(tmpText));
         else
-            iLength = GetWindowTextW(infoPtr->hwndEdit, tmpText, 1023);
-
-	if (iLength >= 1023)
-	{
-	    ERR("Insufficient space to retrieve new item label\n");
-	}
+            iLength = GetWindowTextW(infoPtr->hwndEdit, tmpText, ARRAY_SIZE(tmpText));
 
         tvdi.item.mask = TVIF_TEXT;
 	tvdi.item.pszText = tmpText;
-	tvdi.item.cchTextMax = iLength + 1;
+	tvdi.item.cchTextMax = ARRAY_SIZE(tmpText);
     }
     else
     {
@@ -4036,11 +4031,13 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
     {
         if (!infoPtr->bNtfUnicode)
         {
-            DWORD len = MultiByteToWideChar( CP_ACP, 0, (LPSTR)tmpText, -1, NULL, 0 );
+            DWORD len = MultiByteToWideChar( CP_ACP, 0, (LPSTR)tvdi.item.pszText, -1, NULL, 0 );
             newText = heap_alloc(len * sizeof(WCHAR));
-            MultiByteToWideChar( CP_ACP, 0, (LPSTR)tmpText, -1, newText, len );
+            MultiByteToWideChar( CP_ACP, 0, (LPSTR)tvdi.item.pszText, -1, newText, len );
             iLength = len - 1;
         }
+        else
+            newText = tvdi.item.pszText;
 
         if (strcmpW(newText, editedItem->pszText) != 0)
         {
