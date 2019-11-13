@@ -1943,9 +1943,31 @@ static struct ID3D10ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3d10_sha
 static struct ID3D10ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3d10_shader_reflection_GetConstantBufferByName(
         ID3D10ShaderReflection *iface, const char *name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D10ShaderReflection(iface);
+    unsigned int i;
 
-    return NULL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    if (!name)
+    {
+        WARN("Invalid argument specified.\n");
+        return &null_constant_buffer.ID3D10ShaderReflectionConstantBuffer_iface;
+    }
+
+    for (i = 0; i < reflection->constant_buffer_count; ++i)
+    {
+        struct d3dcompiler_shader_reflection_constant_buffer *d = &reflection->constant_buffers[i];
+
+        if (!strcmp(d->name, name))
+        {
+            TRACE("Returning ID3D10ShaderReflectionConstantBuffer %p.\n", d);
+            return &d->ID3D10ShaderReflectionConstantBuffer_iface;
+        }
+    }
+
+    WARN("Invalid name specified.\n");
+
+    return &null_constant_buffer.ID3D10ShaderReflectionConstantBuffer_iface;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_GetResourceBindingDesc(ID3D10ShaderReflection *iface,
