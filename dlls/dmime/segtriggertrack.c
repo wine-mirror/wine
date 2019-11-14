@@ -21,6 +21,8 @@
 #include "dmime_private.h"
 #include "dmobject.h"
 
+#include "wine/heap.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
@@ -81,7 +83,19 @@ static ULONG WINAPI segment_track_Release(IDirectMusicTrack8 *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (!ref) {
-        HeapFree(GetProcessHeap(), 0, This);
+        struct list *cursor, *cursor2;
+        DMUS_PRIVATE_SEGMENT_ITEM *item;
+
+        LIST_FOR_EACH_SAFE(cursor, cursor2, &This->Items) {
+            item = LIST_ENTRY(cursor, DMUS_PRIVATE_SEGMENT_ITEM, entry);
+            list_remove(cursor);
+
+            if (item->pObject)
+                IDirectMusicObject_Release(item->pObject);
+            heap_free(item);
+        }
+
+        heap_free(This);
         DMIME_UnlockModule();
     }
 
