@@ -2077,9 +2077,17 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_constant_buffer_GetDesc
 static ID3D10ShaderReflectionVariable * STDMETHODCALLTYPE d3d10_shader_reflection_constant_buffer_GetVariableByIndex(
         ID3D10ShaderReflectionConstantBuffer *iface, UINT index)
 {
-    FIXME("iface %p, index %d stub!\n", iface, index);
+    struct d3dcompiler_shader_reflection_constant_buffer *cb = impl_from_ID3D10ShaderReflectionConstantBuffer(iface);
 
-    return &null_variable.ID3D10ShaderReflectionVariable_iface;
+    TRACE("iface %p, index %u.\n", iface, index);
+
+    if (index >= cb->variable_count)
+    {
+        WARN("Invalid index specified.\n");
+        return &null_variable.ID3D10ShaderReflectionVariable_iface;
+    }
+
+    return &cb->variables[index].ID3D10ShaderReflectionVariable_iface;
 }
 
 static ID3D10ShaderReflectionVariable * STDMETHODCALLTYPE d3d10_shader_reflection_constant_buffer_GetVariableByName(
