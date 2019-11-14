@@ -2697,9 +2697,15 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x54 */
         &FOLDERID_ProgramFilesX64,
+#ifdef _WIN64
+        CSIDL_Type_CurrVer,
+        ProgramFilesDirW,
+        Program_FilesW,
+#else
         CSIDL_Type_NonExistent,
         NULL,
         NULL,
+#endif
 
         KF_CATEGORY_FIXED, /* category */
         ProgramFilesX64W, /* name */
@@ -2717,9 +2723,15 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x55 */
         &FOLDERID_ProgramFilesCommonX64,
+#ifdef _WIN64
+        CSIDL_Type_CurrVer,
+        ProgramFilesCommonX64W,
+        Program_Files_Common_FilesW,
+#else
         CSIDL_Type_NonExistent,
         NULL,
         NULL,
+#endif
 
         KF_CATEGORY_FIXED, /* category */
         ProgramFilesCommonX64W, /* name */

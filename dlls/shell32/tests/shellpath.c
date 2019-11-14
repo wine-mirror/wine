@@ -1932,6 +1932,28 @@ if (0) { /* crashes */
 
     hr = pSHGetFolderPathEx(&FOLDERID_Desktop, 0, NULL, buffer, len + 1);
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+
+    path = NULL;
+    hr = pSHGetKnownFolderPath(&FOLDERID_ProgramFilesX64, 0, NULL, &path);
+#ifdef _WIN64
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(path != NULL, "path not set\n");
+    CoTaskMemFree(path);
+#else
+    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
+    ok(path == NULL, "path set\n");
+#endif
+
+    path = NULL;
+    hr = pSHGetKnownFolderPath(&FOLDERID_ProgramFilesCommonX64, 0, NULL, &path);
+#ifdef _WIN64
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+    ok(path != NULL, "path not set\n");
+    CoTaskMemFree(path);
+#else
+    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
+    ok(path == NULL, "path set\n");
+#endif
 }
 
 static BOOL is_in_strarray(const WCHAR *needle, const char *hay)
