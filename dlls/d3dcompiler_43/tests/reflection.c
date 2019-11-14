@@ -908,27 +908,28 @@ static const DWORD test_reflection_desc_ps_output_blob_5[] = {
 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 };
 
-static const DWORD *test_reflection_desc_ps_output_blob[] = {
-    test_reflection_desc_ps_output_blob_0,
-    test_reflection_desc_ps_output_blob_1,
-    test_reflection_desc_ps_output_blob_2,
-    test_reflection_desc_ps_output_blob_3,
-    test_reflection_desc_ps_output_blob_4,
-    test_reflection_desc_ps_output_blob_5,
-};
-
-static const D3D11_SIGNATURE_PARAMETER_DESC test_reflection_desc_ps_output_result[] =
-{
-    {"SV_Target", 3, 3, D3D_NAME_TARGET, D3D_REGISTER_COMPONENT_FLOAT32, 0xf, 0, 0},
-    {"SV_DepthLessEqual", 0, 0xffffffff, D3D_NAME_DEPTH_LESS_EQUAL, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0},
-    {"SV_DepthGreaterEqual", 0, 0xffffffff, D3D11_NAME_DEPTH_GREATER_EQUAL, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0},
-    {"sV_DePtH", 0, 0xffffffff, D3D_NAME_DEPTH, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0},
-    {"SV_Depth", 0, 0xffffffff, D3D_NAME_DEPTH, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0},
-    {"SV_COVERAGE", 0, 0xffffffff, D3D_NAME_COVERAGE, D3D_REGISTER_COMPONENT_UINT32, 0x1, 0xe, 0},
-};
-
 static void test_reflection_desc_ps_output(void)
 {
+    static const struct test_reflection_desc_ps_output_test
+    {
+        const DWORD *blob;
+        D3D11_SIGNATURE_PARAMETER_DESC desc;
+    }
+    tests[] =
+    {
+        {test_reflection_desc_ps_output_blob_0,
+        {"SV_Target", 3, 3, D3D_NAME_TARGET, D3D_REGISTER_COMPONENT_FLOAT32, 0xf, 0, 0}},
+        {test_reflection_desc_ps_output_blob_1,
+        {"SV_DepthLessEqual", 0, 0xffffffff, D3D_NAME_DEPTH_LESS_EQUAL, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0}},
+        {test_reflection_desc_ps_output_blob_2,
+        {"SV_DepthGreaterEqual", 0, 0xffffffff, D3D11_NAME_DEPTH_GREATER_EQUAL, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0}},
+        {test_reflection_desc_ps_output_blob_3,
+        {"sV_DePtH", 0, 0xffffffff, D3D_NAME_DEPTH, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0}},
+        {test_reflection_desc_ps_output_blob_4,
+        {"SV_Depth", 0, 0xffffffff, D3D_NAME_DEPTH, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0}},
+        {test_reflection_desc_ps_output_blob_5,
+        {"SV_COVERAGE", 0, 0xffffffff, D3D_NAME_COVERAGE, D3D_REGISTER_COMPONENT_UINT32, 0x1, 0xe, 0}},
+    };
     HRESULT hr;
     ULONG count;
     ID3D11ShaderReflection *ref11;
@@ -936,12 +937,12 @@ static void test_reflection_desc_ps_output(void)
     const D3D11_SIGNATURE_PARAMETER_DESC *pdesc;
     unsigned int i;
 
-    for (i = 0; i < ARRAY_SIZE(test_reflection_desc_ps_output_result); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        hr = pD3DReflect(test_reflection_desc_ps_output_blob[i], test_reflection_desc_ps_output_blob[i][6], &IID_ID3D11ShaderReflection, (void **)&ref11);
-        ok(hr == S_OK, "(%u): D3DReflect failed %x\n", i, hr);
+        hr = pD3DReflect(tests[i].blob, tests[i].blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+        ok(hr == S_OK, "(%u): got unexpected hr %x.\n", i, hr);
 
-        pdesc = &test_reflection_desc_ps_output_result[i];
+        pdesc = &tests[i].desc;
 
         hr = ref11->lpVtbl->GetOutputParameterDesc(ref11, 0, &desc);
         ok(hr == S_OK, "(%u): GetOutputParameterDesc failed, got %x, expected %x\n", i, hr, S_OK);
@@ -1050,7 +1051,8 @@ static void test_reflection_bound_resources(void)
     const D3D11_SHADER_INPUT_BIND_DESC *pdesc;
     unsigned int i;
 
-    hr = pD3DReflect(test_reflection_bound_resources_blob, test_reflection_bound_resources_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = pD3DReflect(test_reflection_bound_resources_blob, test_reflection_bound_resources_blob[6],
+            &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
 
     /* check invalid cases */
