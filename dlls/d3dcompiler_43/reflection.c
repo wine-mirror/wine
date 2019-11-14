@@ -2133,9 +2133,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_variable_GetDesc(ID3D10
 static ID3D10ShaderReflectionType * STDMETHODCALLTYPE d3d10_shader_reflection_variable_GetType(
         ID3D10ShaderReflectionVariable *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3dcompiler_shader_reflection_variable *var = impl_from_ID3D10ShaderReflectionVariable(iface);
 
-    return &null_type.ID3D10ShaderReflectionType_iface;
+    TRACE("iface %p.\n", iface);
+
+    return &var->type->ID3D10ShaderReflectionType_iface;
 }
 
 static const struct ID3D10ShaderReflectionVariableVtbl d3d10_shader_reflection_variable_vtbl =
