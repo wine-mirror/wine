@@ -1640,6 +1640,44 @@ HRESULT CDECL wined3d_stateblock_set_stream_source_freq(struct wined3d_statebloc
     stateblock->changed.streamFreq |= 1u << stream_idx;
     return WINED3D_OK;
 }
+HRESULT CDECL wined3d_stateblock_set_light(struct wined3d_stateblock *stateblock,
+        UINT light_idx, const struct wined3d_light *light)
+{
+    struct wined3d_light_info *object = NULL;
+
+    TRACE("stateblock %p, light_idx %u, light %p.\n", stateblock, light_idx, light);
+
+    /* Check the parameter range. Need for speed most wanted sets junk lights
+     * which confuse the GL driver. */
+    if (!light)
+        return WINED3DERR_INVALIDCALL;
+
+    switch (light->type)
+    {
+        case WINED3D_LIGHT_POINT:
+        case WINED3D_LIGHT_SPOT:
+        case WINED3D_LIGHT_GLSPOT:
+            /* Incorrect attenuation values can cause the gl driver to crash.
+             * Happens with Need for speed most wanted. */
+            if (light->attenuation0 < 0.0f || light->attenuation1 < 0.0f || light->attenuation2 < 0.0f)
+            {
+                WARN("Attenuation is negative, returning WINED3DERR_INVALIDCALL.\n");
+                return WINED3DERR_INVALIDCALL;
+            }
+            break;
+
+        case WINED3D_LIGHT_DIRECTIONAL:
+        case WINED3D_LIGHT_PARALLELPOINT:
+            /* Ignores attenuation */
+            break;
+
+        default:
+            WARN("Light type out of range, returning WINED3DERR_INVALIDCALL.\n");
+            return WINED3DERR_INVALIDCALL;
+    }
+
+    return wined3d_light_state_set_light(&stateblock->stateblock_state.light_state, light_idx, light, &object);
+}
 
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {

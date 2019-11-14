@@ -2675,6 +2675,8 @@ HRESULT __cdecl wined3d_stateblock_set_clip_plane(struct wined3d_stateblock *sta
         UINT plane_idx, const struct wined3d_vec4 *plane);
 void __cdecl wined3d_stateblock_set_index_buffer(struct wined3d_stateblock *stateblock,
         struct wined3d_buffer *index_buffer, enum wined3d_format_id format_id);
+HRESULT __cdecl wined3d_stateblock_set_light(struct wined3d_stateblock *stateblock,
+        UINT light_idx, const struct wined3d_light *light);
 void __cdecl wined3d_stateblock_set_material(struct wined3d_stateblock *stateblock, const struct wined3d_material *material);
 void __cdecl wined3d_stateblock_set_pixel_shader(struct wined3d_stateblock *stateblock, struct wined3d_shader *shader);
 HRESULT __cdecl wined3d_stateblock_set_ps_consts_b(struct wined3d_stateblock *stateblock,
