@@ -673,7 +673,7 @@ static HRESULT WINAPI VBScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR
 {
     VBScript *This = impl_from_IActiveScript(iface);
 
-    TRACE("(%p)->(%p)\n", This, ppdisp);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(pstrItemName), ppdisp);
 
     if(!ppdisp)
         return E_POINTER;
