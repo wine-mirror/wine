@@ -1312,6 +1312,7 @@ static struct d3dcompiler_shader_reflection_type *get_reflection_type(struct d3d
         return NULL;
 
     type->ID3D11ShaderReflectionType_iface.lpVtbl = &d3dcompiler_shader_reflection_type_vtbl;
+    type->ID3D10ShaderReflectionType_iface.lpVtbl = &d3d10_shader_reflection_type_vtbl;
     type->id = offset;
     type->reflection = reflection;
 
@@ -2141,6 +2142,112 @@ static const struct ID3D10ShaderReflectionVariableVtbl d3d10_shader_reflection_v
 {
     d3d10_shader_reflection_variable_GetDesc,
     d3d10_shader_reflection_variable_GetType,
+};
+
+static inline struct d3dcompiler_shader_reflection_type *impl_from_ID3D10ShaderReflectionType(
+        ID3D10ShaderReflectionType *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3dcompiler_shader_reflection_type, ID3D10ShaderReflectionType_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_shader_reflection_type_GetDesc(ID3D10ShaderReflectionType *iface,
+        D3D10_SHADER_TYPE_DESC *desc)
+{
+    struct d3dcompiler_shader_reflection_type *type = impl_from_ID3D10ShaderReflectionType(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    if (type == &null_type)
+    {
+        WARN("Null type specified.\n");
+        return E_FAIL;
+    }
+
+    if (!desc)
+    {
+        WARN("Invalid argument specified.\n");
+        return E_FAIL;
+    }
+
+    memcpy(desc, &type->desc, sizeof(*desc));
+
+    return S_OK;
+}
+
+static ID3D10ShaderReflectionType * STDMETHODCALLTYPE d3d10_shader_reflection_type_GetMemberTypeByIndex(
+        ID3D10ShaderReflectionType *iface, UINT index)
+{
+    struct d3dcompiler_shader_reflection_type *type = impl_from_ID3D10ShaderReflectionType(iface);
+
+    TRACE("iface %p, index %u.\n", iface, index);
+
+    if (index >= type->desc.Members)
+    {
+        WARN("Invalid index specified.\n");
+        return &null_type.ID3D10ShaderReflectionType_iface;
+    }
+
+    return &type->members[index].type->ID3D10ShaderReflectionType_iface;
+}
+
+static ID3D10ShaderReflectionType * STDMETHODCALLTYPE d3d10_shader_reflection_type_GetMemberTypeByName(
+        ID3D10ShaderReflectionType *iface, const char *name)
+{
+    struct d3dcompiler_shader_reflection_type *type = impl_from_ID3D10ShaderReflectionType(iface);
+    unsigned int i;
+
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    if (!name)
+    {
+        WARN("Invalid argument specified.\n");
+        return &null_type.ID3D10ShaderReflectionType_iface;
+    }
+
+    for (i = 0; i < type->desc.Members; ++i)
+    {
+        struct d3dcompiler_shader_reflection_type_member *member = &type->members[i];
+
+        if (!strcmp(member->name, name))
+        {
+            TRACE("Returning ID3D10ShaderReflectionType %p.\n", member->type);
+            return &member->type->ID3D10ShaderReflectionType_iface;
+        }
+    }
+
+    WARN("Invalid name specified.\n");
+
+    return &null_type.ID3D10ShaderReflectionType_iface;
+}
+
+static const char * STDMETHODCALLTYPE d3d10_shader_reflection_type_GetMemberTypeName(
+        ID3D10ShaderReflectionType *iface, UINT index)
+{
+    struct d3dcompiler_shader_reflection_type *type = impl_from_ID3D10ShaderReflectionType(iface);
+
+    TRACE("iface %p, index %u.\n", iface, index);
+
+    if (type == &null_type)
+    {
+        WARN("Null type specified.\n");
+        return "$Invalid";
+    }
+
+    if (index >= type->desc.Members)
+    {
+        WARN("Invalid index specified.\n");
+        return NULL;
+    }
+
+    return type->members[index].name;
+}
+
+static const struct ID3D10ShaderReflectionTypeVtbl d3d10_shader_reflection_type_vtbl =
+{
+    d3d10_shader_reflection_type_GetDesc,
+    d3d10_shader_reflection_type_GetMemberTypeByIndex,
+    d3d10_shader_reflection_type_GetMemberTypeByName,
+    d3d10_shader_reflection_type_GetMemberTypeName,
 };
 
 HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10ShaderReflection **reflector)
