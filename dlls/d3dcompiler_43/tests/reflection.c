@@ -38,7 +38,18 @@
  */
 #define D3DERR_INVALIDCALL 0x8876086c
 
+#if D3D_COMPILER_VERSION
 static HRESULT (WINAPI *pD3DReflect)(const void *, SIZE_T, REFIID, void **);
+#endif
+
+static HRESULT call_reflect(const void *data, SIZE_T data_size, REFIID riid, void **reflection)
+{
+#if D3D_COMPILER_VERSION
+    return pD3DReflect(data, data_size, riid, reflection);
+#else
+    return D3D10ReflectShader(data, data_size, (ID3D10ShaderReflection **)reflection);
+#endif
+}
 
 /* Creator string for comparison - Version 9.29.952.3111 (43) */
 static DWORD shader_creator[] = {
@@ -46,6 +57,7 @@ static DWORD shader_creator[] = {
 0x39207265, 0x2e39322e, 0x2e323539, 0x31313133, 0xababab00,
 };
 
+#if D3D_COMPILER_VERSION
 /*
  * fxc.exe /E VS /Tvs_4_0 /Fx
  */
@@ -141,6 +153,7 @@ static void test_reflection_references(void)
     hr = pD3DReflect(test_reflection_blob,  test_reflection_blob[6]-1, &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == expected, "Got %x, expected %x.\n", hr, expected);
 }
+#endif
 
 /*
  * fxc.exe /E VS /Tvs_4_1 /Fx
@@ -320,9 +333,11 @@ static void test_reflection_desc_vs(void)
     unsigned int i;
     ULONG count;
     HRESULT hr;
+#if D3D_COMPILER_VERSION
     UINT ret;
+#endif
 
-    hr = pD3DReflect(test_reflection_desc_vs_blob, test_reflection_desc_vs_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = call_reflect(test_reflection_desc_vs_blob, test_reflection_desc_vs_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
 
     hr = ref11->lpVtbl->GetDesc(ref11, NULL);
@@ -370,6 +385,7 @@ static void test_reflection_desc_vs(void)
     ok(sdesc11.cInterlockedInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.cInterlockedInstructions, 0);
     ok(sdesc11.cTextureStoreInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.cTextureStoreInstructions, 0);
 
+#if D3D_COMPILER_VERSION
     ret = ref11->lpVtbl->GetBitwiseInstructionCount(ref11);
     ok(ret == 0, "GetBitwiseInstructionCount failed, got %u, expected %u\n", ret, 0);
 
@@ -381,6 +397,7 @@ static void test_reflection_desc_vs(void)
 
     ret = ref11->lpVtbl->GetMovcInstructionCount(ref11);
     ok(ret == 0, "GetMovcInstructionCount failed, got %u, expected %u\n", ret, 0);
+#endif
 
     /* GetIn/OutputParameterDesc */
     desc_46.MinPrecision = ~0u;
@@ -616,10 +633,13 @@ static void test_reflection_desc_ps(void)
     D3D11_SHADER_DESC sdesc11 = {0};
     D3D11_SIGNATURE_PARAMETER_DESC desc = {0};
     const D3D11_SIGNATURE_PARAMETER_DESC *pdesc;
-    UINT ret;
+    D3D_NAME expected;
     unsigned int i;
+#if D3D_COMPILER_VERSION
+    UINT ret;
+#endif
 
-    hr = pD3DReflect(test_reflection_desc_ps_blob, test_reflection_desc_ps_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = call_reflect(test_reflection_desc_ps_blob, test_reflection_desc_ps_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
 
     hr = ref11->lpVtbl->GetDesc(ref11, &sdesc11);
@@ -664,6 +684,7 @@ static void test_reflection_desc_ps(void)
     ok(sdesc11.cInterlockedInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.cInterlockedInstructions, 0);
     ok(sdesc11.cTextureStoreInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.cTextureStoreInstructions, 0);
 
+#if D3D_COMPILER_VERSION
     ret = ref11->lpVtbl->GetBitwiseInstructionCount(ref11);
     ok(ret == 0, "GetBitwiseInstructionCount failed, got %u, expected %u\n", ret, 0);
 
@@ -675,6 +696,7 @@ static void test_reflection_desc_ps(void)
 
     ret = ref11->lpVtbl->GetMovcInstructionCount(ref11);
     ok(ret == 0, "GetMovcInstructionCount failed, got %u, expected %u\n", ret, 0);
+#endif
 
     /* check invalid Get*ParameterDesc cases*/
     hr = ref11->lpVtbl->GetInputParameterDesc(ref11, 0, NULL);
@@ -689,8 +711,10 @@ static void test_reflection_desc_ps(void)
     hr = ref11->lpVtbl->GetOutputParameterDesc(ref11, 0xffffffff, &desc);
     ok(hr == E_INVALIDARG, "GetOutputParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
 
+#if D3D_COMPILER_VERSION
     hr = ref11->lpVtbl->GetPatchConstantParameterDesc(ref11, 0, &desc);
     ok(hr == E_INVALIDARG, "GetPatchConstantParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
+#endif
 
     /* GetIn/OutputParameterDesc */
     for (i = 0; i < ARRAY_SIZE(test_reflection_desc_ps_resultin); ++i)
@@ -731,8 +755,14 @@ static void test_reflection_desc_ps(void)
                 i, desc.SemanticIndex, pdesc->SemanticIndex);
         ok(desc.Register == pdesc->Register, "GetOutputParameterDesc(%u) Register failed, got %u, expected %u\n",
                 i, desc.Register, pdesc->Register);
-        ok(desc.SystemValueType == pdesc->SystemValueType, "GetOutputParameterDesc(%u) SystemValueType failed, got %x, expected %x\n",
-                i, desc.SystemValueType, pdesc->SystemValueType);
+#if D3D_COMPILER_VERSION
+        expected = pdesc->SystemValueType;
+#else
+        expected = D3D_NAME_UNDEFINED;
+        todo_wine
+#endif
+        ok(desc.SystemValueType == expected, "(%u): got unexpected SystemValueType %#x, expected %#x.\n",
+                i, desc.SystemValueType, expected);
         ok(desc.ComponentType == pdesc->ComponentType, "GetOutputParameterDesc(%u) ComponentType failed, got %x, expected %x\n",
                 i, desc.ComponentType, pdesc->ComponentType);
         ok(desc.Mask == pdesc->Mask, "GetOutputParameterDesc(%u) Mask failed, got %x, expected %x\n",
@@ -914,32 +944,41 @@ static void test_reflection_desc_ps_output(void)
     {
         const DWORD *blob;
         D3D11_SIGNATURE_PARAMETER_DESC desc;
+        BOOL d3d10;
     }
     tests[] =
     {
         {test_reflection_desc_ps_output_blob_0,
-        {"SV_Target", 3, 3, D3D_NAME_TARGET, D3D_REGISTER_COMPONENT_FLOAT32, 0xf, 0, 0}},
+        {"SV_Target", 3, 3, D3D_NAME_TARGET, D3D_REGISTER_COMPONENT_FLOAT32, 0xf, 0, 0}, TRUE},
         {test_reflection_desc_ps_output_blob_1,
-        {"SV_DepthLessEqual", 0, 0xffffffff, D3D_NAME_DEPTH_LESS_EQUAL, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0}},
+        {"SV_DepthLessEqual", 0, 0xffffffff, D3D_NAME_DEPTH_LESS_EQUAL, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0}, FALSE},
         {test_reflection_desc_ps_output_blob_2,
-        {"SV_DepthGreaterEqual", 0, 0xffffffff, D3D11_NAME_DEPTH_GREATER_EQUAL, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0}},
+        {"SV_DepthGreaterEqual", 0, 0xffffffff, D3D11_NAME_DEPTH_GREATER_EQUAL, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0}, FALSE},
         {test_reflection_desc_ps_output_blob_3,
-        {"sV_DePtH", 0, 0xffffffff, D3D_NAME_DEPTH, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0}},
+        {"sV_DePtH", 0, 0xffffffff, D3D_NAME_DEPTH, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0}, FALSE},
         {test_reflection_desc_ps_output_blob_4,
-        {"SV_Depth", 0, 0xffffffff, D3D_NAME_DEPTH, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0}},
+        {"SV_Depth", 0, 0xffffffff, D3D_NAME_DEPTH, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0}, TRUE},
         {test_reflection_desc_ps_output_blob_5,
-        {"SV_COVERAGE", 0, 0xffffffff, D3D_NAME_COVERAGE, D3D_REGISTER_COMPONENT_UINT32, 0x1, 0xe, 0}},
+        {"SV_COVERAGE", 0, 0xffffffff, D3D_NAME_COVERAGE, D3D_REGISTER_COMPONENT_UINT32, 0x1, 0xe, 0}, FALSE},
     };
     HRESULT hr;
     ULONG count;
     ID3D11ShaderReflection *ref11;
     D3D11_SIGNATURE_PARAMETER_DESC desc = {0};
     const D3D11_SIGNATURE_PARAMETER_DESC *pdesc;
+    D3D_NAME expected;
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        hr = pD3DReflect(tests[i].blob, tests[i].blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+        hr = call_reflect(tests[i].blob, tests[i].blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+        if (!D3D_COMPILER_VERSION && !tests[i].d3d10)
+        {
+            todo_wine ok(hr == E_INVALIDARG, "(%u): got unexpected hr %x.\n", i, hr);
+            if (SUCCEEDED(hr))
+                ref11->lpVtbl->Release(ref11);
+            continue;
+        }
         ok(hr == S_OK, "(%u): got unexpected hr %x.\n", i, hr);
 
         pdesc = &tests[i].desc;
@@ -953,8 +992,14 @@ static void test_reflection_desc_ps_output(void)
                 i, desc.SemanticIndex, pdesc->SemanticIndex);
         ok(desc.Register == pdesc->Register, "(%u): GetOutputParameterDesc Register failed, got %u, expected %u\n",
                 i, desc.Register, pdesc->Register);
-        ok(desc.SystemValueType == pdesc->SystemValueType, "(%u): GetOutputParameterDesc SystemValueType failed, got %x, expected %x\n",
-                i, desc.SystemValueType, pdesc->SystemValueType);
+#if D3D_COMPILER_VERSION
+        expected = pdesc->SystemValueType;
+#else
+        expected = D3D_NAME_UNDEFINED;
+        todo_wine
+#endif
+        ok(desc.SystemValueType == expected, "(%u): Got unexpected SystemValueType %#x, expected %x.\n",
+                i, desc.SystemValueType, expected);
         ok(desc.ComponentType == pdesc->ComponentType, "(%u): GetOutputParameterDesc ComponentType failed, got %x, expected %x\n",
                 i, desc.ComponentType, pdesc->ComponentType);
         ok(desc.Mask == pdesc->Mask, "(%u): GetOutputParameterDesc Mask failed, got %x, expected %x\n",
@@ -1050,8 +1095,9 @@ static void test_reflection_bound_resources(void)
     D3D11_SHADER_INPUT_BIND_DESC desc;
     const D3D11_SHADER_INPUT_BIND_DESC *pdesc;
     unsigned int i;
+    UINT expected;
 
-    hr = pD3DReflect(test_reflection_bound_resources_blob, test_reflection_bound_resources_blob[6],
+    hr = call_reflect(test_reflection_bound_resources_blob, test_reflection_bound_resources_blob[6],
             &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
 
@@ -1062,6 +1108,7 @@ static void test_reflection_bound_resources(void)
     hr = ref11->lpVtbl->GetResourceBindingDesc(ref11, 0xffffffff, &desc);
     ok(hr == E_INVALIDARG, "GetResourceBindingDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
 
+#if D3D_COMPILER_VERSION
     hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, NULL, &desc);
     ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed, got %x, expected %x\n", hr, E_INVALIDARG);
 
@@ -1073,6 +1120,7 @@ static void test_reflection_bound_resources(void)
 
     hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, "invalid", &desc);
     ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed, got %x, expected %x\n", hr, E_INVALIDARG);
+#endif
 
     /* GetResourceBindingDesc */
     for (i = 0; i < ARRAY_SIZE(test_reflection_bound_resources_result); ++i)
@@ -1090,8 +1138,14 @@ static void test_reflection_bound_resources(void)
                 i, desc.BindPoint, pdesc->BindPoint);
         ok(desc.BindCount == pdesc->BindCount, "GetResourceBindingDesc(%u) BindCount failed, got %u, expected %u\n",
                 i, desc.BindCount, pdesc->BindCount);
-        ok(desc.uFlags == pdesc->uFlags, "GetResourceBindingDesc(%u) uFlags failed, got %u, expected %u\n",
-                i, desc.uFlags, pdesc->uFlags);
+#if D3D_COMPILER_VERSION
+        expected = pdesc->uFlags;
+#else
+        expected = 0;
+        todo_wine_if(pdesc->uFlags)
+#endif
+        ok(desc.uFlags == expected, "(%u): Got unexpected uFlags %#x, expected %#x.\n",
+                i, desc.uFlags, expected);
         ok(desc.ReturnType == pdesc->ReturnType, "GetResourceBindingDesc(%u) ReturnType failed, got %x, expected %x\n",
                 i, desc.ReturnType, pdesc->ReturnType);
         ok(desc.Dimension == pdesc->Dimension, "GetResourceBindingDesc(%u) Dimension failed, got %x, expected %x\n",
@@ -1100,6 +1154,7 @@ static void test_reflection_bound_resources(void)
                 i, desc.NumSamples, pdesc->NumSamples);
     }
 
+#if D3D_COMPILER_VERSION
     /* GetResourceBindingDescByName */
     for (i = 0; i < ARRAY_SIZE(test_reflection_bound_resources_result); ++i)
     {
@@ -1125,11 +1180,13 @@ static void test_reflection_bound_resources(void)
         ok(desc.NumSamples == pdesc->NumSamples, "GetResourceBindingDescByName(%u) NumSamples failed, got %u, expected %u\n",
                 i, desc.NumSamples, pdesc->NumSamples);
     }
+#endif
 
     count = ref11->lpVtbl->Release(ref11);
     ok(count == 0, "Release failed %u\n", count);
 }
 
+#if D3D_COMPILER_VERSION
 /*
  * fxc.exe /E PS /Tps_5_0 /Fx
  */
@@ -1269,7 +1326,8 @@ static void test_reflection_constant_buffer(void)
     unsigned int i;
     LPCSTR string;
 
-    hr = pD3DReflect(test_reflection_constant_buffer_blob, test_reflection_constant_buffer_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    hr = call_reflect(test_reflection_constant_buffer_blob, test_reflection_constant_buffer_blob[6],
+            &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
 
     hr = ref11->lpVtbl->GetDesc(ref11, &sdesc);
@@ -1545,20 +1603,23 @@ static void test_reflection_constant_buffer(void)
     count = ref11->lpVtbl->Release(ref11);
     ok(count == 0, "Release failed %u\n", count);
 }
+#endif
 
 static BOOL load_d3dreflect(void)
 {
 #if D3D_COMPILER_VERSION == 47
     static const char filename[] = "d3dcompiler_47.dll";
-#else
+#elif D3D_COMPILER_VERSION
     static const char filename[] = "d3dcompiler_43.dll";
 #endif
+#if D3D_COMPILER_VERSION
     HMODULE module;
 
     if (!(module = LoadLibraryA(filename)))
         return FALSE;
 
     pD3DReflect = (void*)GetProcAddress(module, "D3DReflect");
+#endif
     return TRUE;
 }
 
@@ -1570,10 +1631,14 @@ START_TEST(reflection)
         return;
     }
 
+#if D3D_COMPILER_VERSION
     test_reflection_references();
+#endif
     test_reflection_desc_vs();
     test_reflection_desc_ps();
     test_reflection_desc_ps_output();
     test_reflection_bound_resources();
+#if D3D_COMPILER_VERSION
     test_reflection_constant_buffer();
+#endif
 }
