@@ -1793,7 +1793,7 @@ static void test_wow64(void)
     ok(!!service, "Failed to create service, error %u.\n", GetLastError());
     ret = StartServiceA(service, 0, NULL);
     ok(!ret, "Expected failure.\n");
-    todo_wine ok(GetLastError() == ERROR_BAD_EXE_FORMAT, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == ERROR_BAD_EXE_FORMAT, "Got error %u.\n", GetLastError());
 
     ret = DeleteService(service);
     ok(ret, "Failed to delete service, error %u.\n", GetLastError());
