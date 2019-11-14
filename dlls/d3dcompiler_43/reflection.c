@@ -2093,7 +2093,29 @@ static ID3D10ShaderReflectionVariable * STDMETHODCALLTYPE d3d10_shader_reflectio
 static ID3D10ShaderReflectionVariable * STDMETHODCALLTYPE d3d10_shader_reflection_constant_buffer_GetVariableByName(
         ID3D10ShaderReflectionConstantBuffer *iface, const char *name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, name);
+    struct d3dcompiler_shader_reflection_constant_buffer *cb = impl_from_ID3D10ShaderReflectionConstantBuffer(iface);
+    unsigned int i;
+
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    if (!name)
+    {
+        WARN("Invalid argument specified.\n");
+        return &null_variable.ID3D10ShaderReflectionVariable_iface;
+    }
+
+    for (i = 0; i < cb->variable_count; ++i)
+    {
+        struct d3dcompiler_shader_reflection_variable *v = &cb->variables[i];
+
+        if (!strcmp(v->name, name))
+        {
+            TRACE("Returning ID3D10ShaderReflectionVariable %p.\n", v);
+            return &v->ID3D10ShaderReflectionVariable_iface;
+        }
+    }
+
+    WARN("Invalid name specified.\n");
 
     return &null_variable.ID3D10ShaderReflectionVariable_iface;
 }
