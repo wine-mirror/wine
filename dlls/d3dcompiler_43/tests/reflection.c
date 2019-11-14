@@ -118,10 +118,12 @@ static void test_reflection_references(void)
     expected = E_NOINTERFACE;
 #endif
     hr = pD3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D10ShaderReflection, (void **)&ref10);
-    ok(hr == expected, "D3DReflect failed, got %x, expected %x\n", hr, expected);
+    ok(hr == expected || broken(hr == E_NOINTERFACE) /* Windows 8 */,
+       "D3DReflect failed, got %x, expected %x\n", hr, expected);
 
     hr = pD3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
-    ok(hr == expected, "D3DReflect failed, got %x, expected %x\n", hr, expected);
+    ok(hr == expected || broken(hr == E_NOINTERFACE) /* Windows 8 */,
+       "D3DReflect failed, got %x, expected %x\n", hr, expected);
 
     hr = pD3DReflect(NULL, test_reflection_blob[6], &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
     ok(hr == D3DERR_INVALIDCALL, "D3DReflect failed, got %x, expected %x\n", hr, D3DERR_INVALIDCALL);
