@@ -136,14 +136,17 @@ static HRESULT WINAPI segment_track_SetParam(IDirectMusicTrack8 *iface, REFGUID 
 	return S_OK;
 }
 
-static HRESULT WINAPI segment_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID rguidType)
+static HRESULT WINAPI segment_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID type)
 {
-        IDirectMusicSegTriggerTrack *This = impl_from_IDirectMusicTrack8(iface);
+    IDirectMusicSegTriggerTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
-	/* didn't find any params */
-	TRACE("param unsupported\n");
-	return DMUS_E_TYPE_UNSUPPORTED;
+    TRACE("(%p, %s)\n", This, debugstr_dmguid(type));
+
+    if (IsEqualGUID(type, &GUID_IDirectMusicStyle))
+        return S_OK;
+
+    TRACE("param unsupported\n");
+    return DMUS_E_TYPE_UNSUPPORTED;
 }
 
 static HRESULT WINAPI segment_track_AddNotificationType(IDirectMusicTrack8 *iface,

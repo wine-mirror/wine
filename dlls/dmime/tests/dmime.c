@@ -565,6 +565,16 @@ static void test_track(void)
             ok(hr == E_NOTIMPL, "IDirectMusicTrack_SetParam failed: %08x\n", hr);
             hr = IDirectMusicTrack_IsParamSupported(dmt, NULL);
             ok(hr == E_NOTIMPL, "IDirectMusicTrack_IsParamSupported failed: %08x\n", hr);
+
+            hr = IDirectMusicTrack_IsParamSupported(dmt, &GUID_IDirectMusicStyle);
+            ok(hr == E_NOTIMPL, "got: %08x\n", hr);
+        }
+        else {
+            hr = IDirectMusicTrack_IsParamSupported(dmt, &GUID_IDirectMusicStyle);
+            if (class[i].clsid == &CLSID_DirectMusicSegmentTriggerTrack)
+                ok(hr == S_OK, "got: %08x\n", hr);
+            else
+                ok(hr == DMUS_E_TYPE_UNSUPPORTED, "got: %08x\n", hr);
         }
         if (class[i].clsid != &CLSID_DirectMusicMarkerTrack &&
                 class[i].clsid != &CLSID_DirectMusicTimeSigTrack) {
