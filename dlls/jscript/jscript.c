@@ -606,7 +606,7 @@ static HRESULT WINAPI JScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR 
 {
     JScript *This = impl_from_IActiveScript(iface);
 
-    TRACE("(%p)->(%p)\n", This, ppdisp);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(pstrItemName), ppdisp);
 
     if(!ppdisp)
         return E_POINTER;
