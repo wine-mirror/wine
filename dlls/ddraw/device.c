@@ -6431,7 +6431,9 @@ static HRESULT d3d_device7_LightEnable(IDirect3DDevice7 *iface, DWORD light_idx,
     TRACE("iface %p, light_idx %u, enabled %#x.\n", iface, light_idx, enabled);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_light_enable(device->wined3d_device, light_idx, enabled);
+    hr = wined3d_stateblock_set_light_enable(device->update_state, light_idx, enabled);
+    if (SUCCEEDED(hr) && !device->recording)
+        hr = wined3d_device_set_light_enable(device->wined3d_device, light_idx, enabled);
     wined3d_mutex_unlock();
 
     return hr_ddraw_from_wined3d(hr);
