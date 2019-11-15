@@ -1099,7 +1099,7 @@ static void test_coop_level_d3d_state(void)
     hr = IDirect3DDevice7_EndScene(device);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     color = get_surface_color(rt, 320, 240);
-    todo_wine ok(compare_color(color, 0x0000ff80, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x0000ff80, 1), "Got unexpected color 0x%08x.\n", color);
 
     IDirectDrawSurface7_Release(surface);
     IDirectDrawSurface7_Release(rt);

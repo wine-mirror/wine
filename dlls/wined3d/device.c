@@ -1142,6 +1142,8 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
 
     wined3d_cs_emit_reset_state(device->cs);
     state_cleanup(&device->state);
+    memset(&device->state, 0, sizeof(device->state));
+    state_init(&device->state, &device->fb, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);
     for (i = 0; i < device->adapter->d3d_info.limits.max_rt_count; ++i)
     {
         wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
