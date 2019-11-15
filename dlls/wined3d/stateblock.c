@@ -1679,6 +1679,24 @@ HRESULT CDECL wined3d_stateblock_set_light(struct wined3d_stateblock *stateblock
     return wined3d_light_state_set_light(&stateblock->stateblock_state.light_state, light_idx, light, &object);
 }
 
+HRESULT CDECL wined3d_stateblock_set_light_enable(struct wined3d_stateblock *stateblock, UINT light_idx, BOOL enable)
+{
+    struct wined3d_light_info *light_info;
+    HRESULT hr;
+
+    TRACE("stateblock %p, light_idx %u, enable %#x.\n", stateblock, light_idx, enable);
+
+    if (!(light_info = wined3d_light_state_get_light(&stateblock->stateblock_state.light_state, light_idx)))
+    {
+        if (FAILED(hr = wined3d_light_state_set_light(&stateblock->stateblock_state.light_state, light_idx,
+                &WINED3D_default_light, &light_info)))
+            return hr;
+    }
+    wined3d_light_state_enable_light(&stateblock->stateblock_state.light_state,
+            &stateblock->device->adapter->d3d_info, light_info, enable);
+    return S_OK;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union
