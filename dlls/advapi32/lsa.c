@@ -62,6 +62,33 @@ static void dumpLsaAttributes(const LSA_OBJECT_ATTRIBUTES *oa)
     }
 }
 
+static const char *debugstr_InformationClass( POLICY_INFORMATION_CLASS class )
+{
+    static const char * const names[] =
+    {
+        NULL,
+        "PolicyAuditLogInformation",
+        "PolicyAuditEventsInformation",
+        "PolicyPrimaryDomainInformation",
+        "PolicyPdAccountInformation",
+        "PolicyAccountDomainInformation",
+        "PolicyLsaServerRoleInformation",
+        "PolicyReplicaSourceInformation",
+        "PolicyDefaultQuotaInformation",
+        "PolicyModificationInformation",
+        "PolicyAuditFullSetInformation",
+        "PolicyAuditFullQueryInformation",
+        "PolicyDnsDomainInformation",
+        "PolicyDnsDomainInformationInt",
+        "PolicyLocalAccountDomainInformation",
+        "PolicyMachineAccountInformation",
+        "PolicyMachineAccountInformation2",
+    };
+
+    if (class < ARRAY_SIZE(names) && names[class]) return names[class];
+    return wine_dbg_sprintf( "%u", class );
+}
+
 static void* ADVAPI_GetDomainName(unsigned sz, unsigned ofs)
 {
     HKEY key;
@@ -779,7 +806,7 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
     IN POLICY_INFORMATION_CLASS InformationClass,
     OUT PVOID *Buffer)
 {
-    TRACE("(%p,0x%08x,%p)\n", PolicyHandle, InformationClass, Buffer);
+    TRACE("(%p,%s,%p)\n", PolicyHandle, debugstr_InformationClass(InformationClass), Buffer);
 
     if(!Buffer) return STATUS_INVALID_PARAMETER;
     switch (InformationClass)
@@ -1016,7 +1043,7 @@ NTSTATUS WINAPI LsaSetInformationPolicy(
     IN POLICY_INFORMATION_CLASS InformationClass,
     IN PVOID Buffer)
 {
-    FIXME("(%p,0x%08x,%p) stub\n", PolicyHandle, InformationClass, Buffer);
+    FIXME("(%p,%s,%p) stub\n", PolicyHandle, debugstr_InformationClass(InformationClass), Buffer);
 
     return STATUS_UNSUCCESSFUL;
 }
