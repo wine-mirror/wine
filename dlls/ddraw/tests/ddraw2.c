@@ -929,6 +929,14 @@ static void test_coop_level_d3d_state(void)
     HWND window;
     HRESULT hr;
 
+    static D3DLVERTEX quad[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.0f}, 0, {0x800000ff}},
+        {{-1.0f}, { 1.0f}, {0.0f}, 0, {0x800000ff}},
+        {{ 1.0f}, {-1.0f}, {0.0f}, 0, {0x800000ff}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, 0, {0x800000ff}},
+    };
+
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
@@ -943,6 +951,11 @@ static void test_coop_level_d3d_state(void)
     background = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
     viewport = create_viewport(device, 0, 0, 640, 480);
     viewport_set_background(device, viewport, background);
+
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_DESTBLEND, D3DBLEND_DESTALPHA);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
@@ -984,11 +997,22 @@ static void test_coop_level_d3d_state(void)
     hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, &value);
     ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
     ok(!!value, "Got unexpected alpha blend enable state %#x.\n", value);
-    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
     ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
     color = get_surface_color(rt, 320, 240);
     ok(compare_color(color, 0x0000ff00, 1) || broken(compare_color(color, 0x00000000, 1)),
             "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice2_BeginScene(device);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DVT_LVERTEX, quad, ARRAY_SIZE(quad), 0);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice2_EndScene(device);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    todo_wine ok(compare_color(color, 0x0000ff80, 1), "Got unexpected color 0x%08x.\n", color);
 
     destroy_viewport(device, viewport);
     destroy_material(background);

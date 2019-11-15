@@ -1002,6 +1002,19 @@ static void test_coop_level_d3d_state(void)
     HWND window;
     HRESULT hr;
 
+    static struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0x800000ff},
+        {{-1.0f,  1.0f, 0.1f}, 0x800000ff},
+        {{ 1.0f, -1.0f, 0.1f}, 0x800000ff},
+        {{ 1.0f,  1.0f, 0.1f}, 0x800000ff},
+    };
+
     window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
@@ -1009,6 +1022,13 @@ static void test_coop_level_d3d_state(void)
         DestroyWindow(window);
         return;
     }
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_DESTBLEND, D3DBLEND_DESTALPHA);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -1066,10 +1086,20 @@ static void test_coop_level_d3d_state(void)
     hr = IDirect3DDevice7_GetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, &value);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     ok(!!value, "Got unexpected alpha blend enable state %#x.\n", value);
-    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0f, 0);
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ff00, 1.0f, 0);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     color = get_surface_color(rt, 320, 240);
     ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
+            D3DFVF_XYZ | D3DFVF_DIFFUSE, quad, ARRAY_SIZE(quad), 0);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_EndScene(device);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    todo_wine ok(compare_color(color, 0x0000ff80, 1), "Got unexpected color 0x%08x.\n", color);
 
     IDirectDrawSurface7_Release(surface);
     IDirectDrawSurface7_Release(rt);
