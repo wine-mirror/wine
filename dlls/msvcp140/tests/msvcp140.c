@@ -786,8 +786,9 @@ static void test_Current_set(void)
 
 static void test_Stat(void)
 {
-    int i, perms, ret;
+    int i, perms, expected_perms, ret;
     HANDLE file;
+    DWORD attr;
     enum file_type val;
     WCHAR test_dirW[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r',0};
     WCHAR test_f1W[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','/','f','1',0};
@@ -889,10 +890,12 @@ static void test_Stat(void)
     }
 
     GetSystemDirectoryW(sys_path, MAX_PATH);
+    attr = GetFileAttributesW(sys_path);
+    expected_perms = (attr & FILE_ATTRIBUTE_READONLY) ? 0555 : 0777;
     perms = 0xdeadbeef;
     val = p_Stat(sys_path, &perms);
     ok(directory_file == val, "_Stat(): expect: regular, got %d\n", val);
-    ok(0777 == perms, "_Stat(): perms expect: 0777, got 0%o\n", perms);
+    ok(perms == expected_perms, "_Stat(): perms expect: 0%o, got 0%o\n", expected_perms, perms);
 
     if(ret) {
         todo_wine ok(DeleteFileW(test_f1_linkW), "expect wine_test_dir/f1_link to exist\n");
