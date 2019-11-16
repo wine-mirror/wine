@@ -38,8 +38,6 @@ struct strmbase_pin
     WCHAR name[128];
     IPin *peer;
     AM_MEDIA_TYPE mtCurrent;
-    REFERENCE_TIME tStart, tStop;
-    double dRate;
 
     const struct BasePinFuncTable* pFuncsTable;
 };

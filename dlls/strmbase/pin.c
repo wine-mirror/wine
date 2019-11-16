@@ -333,16 +333,10 @@ HRESULT WINAPI BasePinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin,
     return E_NOTIMPL; /* to tell caller that all input pins connected to all output pins */
 }
 
-HRESULT WINAPI BasePinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
+HRESULT WINAPI BasePinImpl_NewSegment(IPin * iface, REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
 {
-    struct strmbase_pin *This = impl_from_IPin(iface);
-
     TRACE("iface %p, start %s, stop %s, rate %.16e.\n",
-            iface, debugstr_time(tStart), debugstr_time(tStop), dRate);
-
-    This->tStart = tStart;
-    This->tStop = tStop;
-    This->dRate = dRate;
+            iface, debugstr_time(start), debugstr_time(stop), rate);
 
     return S_OK;
 }
@@ -696,7 +690,6 @@ void strmbase_source_init(struct strmbase_source *pin, const IPinVtbl *vtbl, str
 {
     memset(pin, 0, sizeof(*pin));
     pin->pin.IPin_iface.lpVtbl = vtbl;
-    pin->pin.dRate = 1.0;
     pin->pin.filter = filter;
     pin->pin.dir = PINDIR_OUTPUT;
     lstrcpyW(pin->pin.name, name);
@@ -843,17 +836,16 @@ static HRESULT deliver_newsegment(IPin *pin, LPVOID data)
     return IPin_NewSegment(pin, args->tStart, args->tStop, args->rate);
 }
 
-HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
+HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
 {
-    BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
     newsegmentargs args;
 
     TRACE("iface %p, start %s, stop %s, rate %.16e.\n",
-            iface, debugstr_time(tStart), debugstr_time(tStop), dRate);
+            iface, debugstr_time(start), debugstr_time(stop), rate);
 
-    args.tStart = This->pin.tStart = tStart;
-    args.tStop = This->pin.tStop = tStop;
-    args.rate = This->pin.dRate = dRate;
+    args.tStart = start;
+    args.tStop = stop;
+    args.rate = rate;
 
     return SendFurther( iface, deliver_newsegment, &args, NULL );
 }
@@ -994,7 +986,6 @@ void strmbase_sink_init(BaseInputPin *pin, const IPinVtbl *vtbl, struct strmbase
 {
     memset(pin, 0, sizeof(*pin));
     pin->pin.IPin_iface.lpVtbl = vtbl;
-    pin->pin.dRate = 1.0;
     pin->pin.filter = filter;
     pin->pin.dir = PINDIR_INPUT;
     lstrcpyW(pin->pin.name, name);
