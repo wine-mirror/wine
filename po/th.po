@@ -53,9 +53,9 @@ msgstr ""
 msgid "Support Information"
 msgstr "รายละเอียด"
 
-#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
-#: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:388 comdlg32.rc:422
-#: comdlg32.rc:453 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
+#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:233
+#: comdlg32.rc:263 comdlg32.rc:307 comdlg32.rc:390 comdlg32.rc:424
+#: comdlg32.rc:455 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
 #: cryptui.rc:462 dinput.rc:37 ieframe.rc:96 localui.rc:44 localui.rc:57
 #: mpr.rc:49 msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
 #: oledlg.rc:94 serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300
@@ -131,10 +131,10 @@ msgid "&Install"
 msgstr ""
 
 #: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:45 comctl32.rc:72
-#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
-#: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
-#: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:389 comdlg32.rc:423
-#: comdlg32.rc:454 comdlg32.rc:479 comdlg32.rc:505 comdlg32.rc:528 credui.rc:53
+#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:172 comdlg32.rc:194
+#: comdlg32.rc:212 comdlg32.rc:234 comdlg32.rc:264 comdlg32.rc:308
+#: comdlg32.rc:330 comdlg32.rc:350 comdlg32.rc:391 comdlg32.rc:425
+#: comdlg32.rc:456 comdlg32.rc:481 comdlg32.rc:507 comdlg32.rc:530 credui.rc:53
 #: cryptui.rc:269 cryptui.rc:281 cryptui.rc:371 cryptui.rc:463 dinput.rc:38
 #: ieframe.rc:97 inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50
 #: msacm32.rc:54 mshtml.rc:48 mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63
@@ -316,11 +316,11 @@ msgstr ""
 msgid "Properties for %s"
 msgstr "คุณสมบัติของ %s"
 
-#: comctl32.rc:73 comdlg32.rc:264
+#: comctl32.rc:73 comdlg32.rc:265
 msgid "&Apply"
 msgstr "มีผลทันที"
 
-#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:307 user32.rc:88
+#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:309 user32.rc:88
 msgid "Help"
 msgstr "ช่วยเหลีอ"
 
@@ -353,9 +353,9 @@ msgstr "ปิด"
 msgid "R&eset"
 msgstr "แก้ออก"
 
-#: comctl32.rc:102 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
-#: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:390 comdlg32.rc:424
-#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:529 ieframe.rc:58 msacm32.rc:52
+#: comctl32.rc:102 comdlg32.rc:173 comdlg32.rc:195 comdlg32.rc:266
+#: comdlg32.rc:331 comdlg32.rc:351 comdlg32.rc:392 comdlg32.rc:426
+#: comdlg32.rc:482 comdlg32.rc:508 comdlg32.rc:531 ieframe.rc:58 msacm32.rc:52
 #: oledlg.rc:96 shell32.rc:128 clock.rc:44 notepad.rc:60 notepad.rc:119
 #: oleview.rc:72 progman.rc:55 progman.rc:108 progman.rc:126 progman.rc:144
 #: progman.rc:160 progman.rc:184 progman.rc:202 progman.rc:219 regedit.rc:77
@@ -435,433 +435,439 @@ msgstr "วันนี้:"
 msgid "Go to today"
 msgstr "ไปถึงวันนี้"
 
-#: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:460 comdlg32.rc:485
-#: comdlg32.rc:512 shell32.rc:167 oleview.rc:101
+#: comdlg32.rc:158 comdlg32.rc:171 comdlg32.rc:462 comdlg32.rc:487
+#: comdlg32.rc:514 shell32.rc:167 oleview.rc:101
 msgid "Open"
 msgstr "เปิด"
 
-#: comdlg32.rc:160 comdlg32.rc:182
+#: comdlg32.rc:161 comdlg32.rc:183
 msgid "File &Name:"
 msgstr "ชื่อแฟ้ม:"
 
-#: comdlg32.rc:163 comdlg32.rc:185
+#: comdlg32.rc:164 comdlg32.rc:186
 msgid "&Directories:"
 msgstr "ไดเรกทอรี:"
 
-#: comdlg32.rc:166 comdlg32.rc:188
+#: comdlg32.rc:167 comdlg32.rc:189
 msgid "List Files of &Type:"
 msgstr "ตัวกรอง:"
 
-#: comdlg32.rc:168 comdlg32.rc:190
+#: comdlg32.rc:169 comdlg32.rc:191
 msgid "Dri&ves:"
 msgstr "ดิสก์:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: comdlg32.rc:174 comdlg32.rc:196 shell32.rc:370 shell32.rc:407
 #: winefile.rc:172
 msgid "&Read Only"
 msgstr "อ่านอย่างเดียว"
 
-#: comdlg32.rc:179
+#: comdlg32.rc:180
 msgid "Save As..."
 msgstr "บันทืกเป็น..."
 
-#: comdlg32.rc:192 comdlg32.rc:145
+#: comdlg32.rc:193 comdlg32.rc:146
 msgid "Save As"
 msgstr "บันทืก"
 
-#: comdlg32.rc:201 comdlg32.rc:210 comdlg32.rc:356 comdlg32.rc:54 hhctrl.rc:49
+#: comdlg32.rc:202 comdlg32.rc:211 comdlg32.rc:358 comdlg32.rc:55 hhctrl.rc:49
 #: wordpad.rc:173
 msgid "Print"
 msgstr "พิมพ์"
 
-#: comdlg32.rc:204
+#: comdlg32.rc:205
 msgid "Printer:"
 msgstr "เครื่องพิมพ์:"
 
-#: comdlg32.rc:206 comdlg32.rc:373
+#: comdlg32.rc:207 comdlg32.rc:375
 msgid "Print range"
 msgstr "ย่อ"
 
-#: comdlg32.rc:207 comdlg32.rc:374 regedit.rc:268
+#: comdlg32.rc:208 comdlg32.rc:376 regedit.rc:268
 msgid "&All"
 msgstr "ทั้งหมด"
 
-#: comdlg32.rc:208
+#: comdlg32.rc:209
 msgid "S&election"
 msgstr "ย่อส่วนทีใช้"
 
-#: comdlg32.rc:209
+#: comdlg32.rc:210
 msgid "&Pages"
 msgstr "หนา"
 
-#: comdlg32.rc:212 comdlg32.rc:234
+#: comdlg32.rc:213 comdlg32.rc:235
 msgid "&Setup"
 msgstr "ปรับแต่ง"
 
-#: comdlg32.rc:213
+#: comdlg32.rc:214
 msgid "&From:"
 msgstr "จาก:"
 
-#: comdlg32.rc:214
+#: comdlg32.rc:215
 msgid "&To:"
 msgstr "ส่งถึง:"
 
-#: comdlg32.rc:215 wineps.rc:42
+#: comdlg32.rc:216 wineps.rc:42
 msgid "Print &Quality:"
 msgstr "คุฌภาพการใช้:"
 
-#: comdlg32.rc:217
+#: comdlg32.rc:218
 msgid "Print to Fi&le"
 msgstr "พิมพ์เป็นแฟ้ม"
 
-#: comdlg32.rc:218
+#: comdlg32.rc:219
 msgid "Condensed"
 msgstr "ย่อ"
 
-#: comdlg32.rc:224 comdlg32.rc:395
+#: comdlg32.rc:225 comdlg32.rc:397
 msgid "Print Setup"
 msgstr "ปรับแค่งเครื่องพิมพ์"
 
-#: comdlg32.rc:227 comdlg32.rc:359 comdlg32.rc:398
+#: comdlg32.rc:228 comdlg32.rc:361 comdlg32.rc:400
 msgid "Printer"
 msgstr "เครื่องพิมพ์"
 
-#: comdlg32.rc:228
+#: comdlg32.rc:229
 msgid "&Default Printer"
 msgstr "เครื่องพิมพ์&Default"
 
-#: comdlg32.rc:229
+#: comdlg32.rc:230
 msgid "[none]"
 msgstr "[ไม่ได้เลือก]"
 
-#: comdlg32.rc:230
+#: comdlg32.rc:231
 msgid "Specific &Printer"
 msgstr "เครื่องพิมพ์Specific"
 
-#: comdlg32.rc:235 comdlg32.rc:417 comdlg32.rc:441 wineps.rc:34
+#: comdlg32.rc:236 comdlg32.rc:419 comdlg32.rc:443 wineps.rc:34
 msgid "Orientation"
 msgstr "ทีศทางการวาง"
 
-#: comdlg32.rc:236
+#: comdlg32.rc:237
 msgid "Po&rtrait"
 msgstr "การตั้ง"
 
-#: comdlg32.rc:237 comdlg32.rc:443 wineps.rc:37
+#: comdlg32.rc:238 comdlg32.rc:445 wineps.rc:37
 msgid "&Landscape"
 msgstr "แนวนอน"
 
-#: comdlg32.rc:240 comdlg32.rc:411 comdlg32.rc:436 wineps.rc:28
+#: comdlg32.rc:241 comdlg32.rc:413 comdlg32.rc:438 wineps.rc:28
 msgid "Paper"
 msgstr "กระดาษ"
 
-#: comdlg32.rc:241
+#: comdlg32.rc:242
 msgid "Si&ze"
 msgstr "ขนาด"
 
-#: comdlg32.rc:242
+#: comdlg32.rc:243
 msgid "&Source"
 msgstr "จาก"
 
-#: comdlg32.rc:250 wineconsole.rc:85
+#: comdlg32.rc:251 wineconsole.rc:85
 msgid "Font"
 msgstr "ต้วอักษร"
 
-#: comdlg32.rc:253
+#: comdlg32.rc:254
 msgid "&Font:"
 msgstr "ต้วอักษร:"
 
-#: comdlg32.rc:256
+#: comdlg32.rc:257
 msgid "Font St&yle:"
 msgstr "รูปแบบต้วอักษร:"
 
-#: comdlg32.rc:259 comdlg32.rc:437 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
 msgid "&Size:"
 msgstr "ขนาด:"
 
-#: comdlg32.rc:266
+#: comdlg32.rc:267
 msgid "Effects"
 msgstr ""
 
-#: comdlg32.rc:267
+#: comdlg32.rc:268
 msgid "Stri&keout"
 msgstr ""
 
-#: comdlg32.rc:268
+#: comdlg32.rc:269
 msgid "&Underline"
 msgstr "ขีดเส้นใต้"
 
-#: comdlg32.rc:269 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:292
 msgid "&Color:"
 msgstr "สี:"
 
-#: comdlg32.rc:272
+#: comdlg32.rc:273
 msgid "Sample"
 msgstr "ตัวอย่าง"
 
-#: comdlg32.rc:274
+#: comdlg32.rc:275
 msgid "Scr&ipt:"
 msgstr ""
 
-#: comdlg32.rc:282
+#: comdlg32.rc:283 comdlg32.rc:288
 msgid "Color"
 msgstr "สี"
 
-#: comdlg32.rc:285
+#: comdlg32.rc:286
 msgid "&Basic Colors:"
 msgstr ""
 
-#: comdlg32.rc:286
+#: comdlg32.rc:287
 msgid "&Custom Colors:"
 msgstr "'สีที่กําหนดเอง':"
 
-#: comdlg32.rc:287 comdlg32.rc:310
-msgid "Color |  Sol&id"
-msgstr "สี |  มั่นคง"
+#: comdlg32.rc:289
+msgid "|S&olid"
+msgstr ""
 
-#: comdlg32.rc:288
+#: comdlg32.rc:290
 msgid "&Red:"
 msgstr "สีแดง:"
 
-#: comdlg32.rc:290
+#: comdlg32.rc:292
 msgid "&Green:"
 msgstr "สีเขียว:"
 
-#: comdlg32.rc:292
+#: comdlg32.rc:294
 msgid "&Blue:"
 msgstr "สีฟ้า:"
 
-#: comdlg32.rc:294
+#: comdlg32.rc:296
 msgid "&Hue:"
 msgstr "&H:"
 
-#: comdlg32.rc:296
+#: comdlg32.rc:298
 #, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&S:"
 
-#: comdlg32.rc:298
+#: comdlg32.rc:300
 #, fuzzy
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&L:"
 
-#: comdlg32.rc:308
+#: comdlg32.rc:310
 msgid "&Add to Custom Colors"
 msgstr "เพิ่มเข้าไป 'สีที่กําหนดเอง'"
 
-#: comdlg32.rc:309
+#: comdlg32.rc:311
 msgid "&Define Custom Colors >>"
 msgstr "ปรับแต่ง 'สีที่กําหนดเอง' >>"
 
-#: comdlg32.rc:316 regedit.rc:275 regedit.rc:285
+#: comdlg32.rc:312
+#, fuzzy
+msgctxt "Solid"
+msgid "&o"
+msgstr "ไม่ใช่"
+
+#: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
 msgstr "ค้นหา"
 
-#: comdlg32.rc:319 comdlg32.rc:338
+#: comdlg32.rc:321 comdlg32.rc:340
 msgid "Fi&nd What:"
 msgstr "ข้อความทีค้นหา:"
 
-#: comdlg32.rc:321 comdlg32.rc:342
+#: comdlg32.rc:323 comdlg32.rc:344
 msgid "Match &Whole Word Only"
 msgstr "ตรงกันทุกตัวอักษร"
 
-#: comdlg32.rc:322 comdlg32.rc:343
+#: comdlg32.rc:324 comdlg32.rc:345
 msgid "Match &Case"
 msgstr "พิจารณาตัวเล็ก-ใหญ่"
 
-#: comdlg32.rc:323 joy.rc:71
+#: comdlg32.rc:325 joy.rc:71
 msgid "Direction"
 msgstr "ทาง"
 
-#: comdlg32.rc:324 view.rc:42
+#: comdlg32.rc:326 view.rc:42
 msgid "&Up"
 msgstr "ขึ้น"
 
-#: comdlg32.rc:325 view.rc:43
+#: comdlg32.rc:327 view.rc:43
 msgid "&Down"
 msgstr "ลง"
 
-#: comdlg32.rc:327 comdlg32.rc:345
+#: comdlg32.rc:329 comdlg32.rc:347
 msgid "&Find Next"
 msgstr "ค้นหาต่อไป"
 
-#: comdlg32.rc:335
+#: comdlg32.rc:337
 msgid "Replace"
 msgstr "แทนที"
 
-#: comdlg32.rc:340
+#: comdlg32.rc:342
 msgid "Re&place With:"
 msgstr "การแทนทีข้อความ:"
 
-#: comdlg32.rc:346
+#: comdlg32.rc:348
 msgid "&Replace"
 msgstr "แทนที"
 
-#: comdlg32.rc:347
+#: comdlg32.rc:349
 msgid "Replace &All"
 msgstr "แทนทีทังหมด"
 
-#: comdlg32.rc:361 comdlg32.rc:401 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
+#: comdlg32.rc:363 comdlg32.rc:403 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
 #: clock.rc:31 wineconsole.rc:30
 msgid "&Properties"
 msgstr "ปรับแต่งนาฬิกา"
 
-#: comdlg32.rc:362
+#: comdlg32.rc:364
 msgid "Print to fi&le"
 msgstr "พิมพ์เป็นแฟ้ม"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
+#: comdlg32.rc:365 comdlg32.rc:401 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "ชื่อ:"
 
-#: comdlg32.rc:364 comdlg32.rc:402
+#: comdlg32.rc:366 comdlg32.rc:404
 msgid "Status:"
 msgstr "อาการเครื่อง:"
 
-#: comdlg32.rc:366 comdlg32.rc:404
+#: comdlg32.rc:368 comdlg32.rc:406
 msgid "Type:"
 msgstr "แบบ:"
 
-#: comdlg32.rc:368 comdlg32.rc:406
+#: comdlg32.rc:370 comdlg32.rc:408
 msgid "Where:"
 msgstr "ทีไหน:"
 
-#: comdlg32.rc:370 comdlg32.rc:408
+#: comdlg32.rc:372 comdlg32.rc:410
 msgid "Comment:"
 msgstr "ข้อความ:"
 
-#: comdlg32.rc:375
+#: comdlg32.rc:377
 msgid "Pa&ges"
 msgstr "หนา"
 
-#: comdlg32.rc:376
+#: comdlg32.rc:378
 msgid "&Selection"
 msgstr "ย่อส่วนทีใช้"
 
-#: comdlg32.rc:379
+#: comdlg32.rc:381
 msgid "&from:"
 msgstr "จาก:"
 
-#: comdlg32.rc:380
+#: comdlg32.rc:382
 msgid "&to:"
 msgstr "ส่งถึง:"
 
-#: comdlg32.rc:382
+#: comdlg32.rc:384
 msgid "Copies"
 msgstr "สําเนา"
 
-#: comdlg32.rc:383
+#: comdlg32.rc:385
 msgid "Number of &copies:"
 msgstr "กี่สําเนา:"
 
-#: comdlg32.rc:385
+#: comdlg32.rc:387
 msgid "C&ollate"
 msgstr "จัดเรียงตามลําดับ"
 
-#: comdlg32.rc:412 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:300
 msgid "Si&ze:"
 msgstr "ขนาด:"
 
-#: comdlg32.rc:414
+#: comdlg32.rc:416
 msgid "&Source:"
 msgstr "จากไหน:"
 
-#: comdlg32.rc:419
+#: comdlg32.rc:421
 msgid "P&ortrait"
 msgstr "การตั้ง"
 
-#: comdlg32.rc:420
+#: comdlg32.rc:422
 msgid "L&andscape"
 msgstr "แนวนอน"
 
-#: comdlg32.rc:430
+#: comdlg32.rc:432
 msgid "Setup Page"
 msgstr "ปรับแต่ง"
 
-#: comdlg32.rc:439
+#: comdlg32.rc:441
 msgid "&Tray:"
 msgstr "ถาด:"
 
-#: comdlg32.rc:442 wineps.rc:35
+#: comdlg32.rc:444 wineps.rc:35
 msgid "&Portrait"
 msgstr "การตั้ง"
 
-#: comdlg32.rc:445
+#: comdlg32.rc:447
 msgid "L&eft:"
 msgstr "ซ้าย:"
 
-#: comdlg32.rc:447 notepad.rc:112
+#: comdlg32.rc:449 notepad.rc:112
 msgid "&Right:"
 msgstr "ขวา:"
 
-#: comdlg32.rc:449
+#: comdlg32.rc:451
 msgid "T&op:"
 msgstr "บน:"
 
-#: comdlg32.rc:451 notepad.rc:114
+#: comdlg32.rc:453 notepad.rc:114
 msgid "&Bottom:"
 msgstr "ล่าง:"
 
-#: comdlg32.rc:455
+#: comdlg32.rc:457
 msgid "P&rinter..."
 msgstr "เครื่องพิมพ์..."
 
-#: comdlg32.rc:463 comdlg32.rc:488
+#: comdlg32.rc:465 comdlg32.rc:490
 msgid "Look &in:"
 msgstr "ดูข้างใน:"
 
-#: comdlg32.rc:469 comdlg32.rc:495
+#: comdlg32.rc:471 comdlg32.rc:497
 msgid "File &name:"
 msgstr "ชื่อแฟ้ม:"
 
-#: comdlg32.rc:473 comdlg32.rc:499
+#: comdlg32.rc:475 comdlg32.rc:501
 msgid "Files of &type:"
 msgstr "ตัวกรอง:"
 
-#: comdlg32.rc:476 comdlg32.rc:502
+#: comdlg32.rc:478 comdlg32.rc:504
 msgid "Open as &read-only"
 msgstr "อ่านอย่างเดียว"
 
-#: comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:522 shdoclc.rc:127 shell32.rc:99
+#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:524 shdoclc.rc:127 shell32.rc:99
 msgid "&Open"
 msgstr "เปิด"
 
-#: comdlg32.rc:515
+#: comdlg32.rc:517
 #, fuzzy
 msgid "File name:"
 msgstr "แฟ้ม"
 
-#: comdlg32.rc:518
+#: comdlg32.rc:520
 #, fuzzy
 msgid "Files of type:"
 msgstr "ตัวกรอง:"
 
-#: comdlg32.rc:32
+#: comdlg32.rc:33
 msgid "File not found"
 msgstr "ไม่พบแฟ้ม"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:34
 msgid "Please verify that the correct file name was given"
 msgstr ""
 
-#: comdlg32.rc:34
+#: comdlg32.rc:35
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
 
-#: comdlg32.rc:35
+#: comdlg32.rc:36
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
 msgstr ""
 
-#: comdlg32.rc:36
+#: comdlg32.rc:37
 msgid "Invalid character(s) in path"
 msgstr ""
 
-#: comdlg32.rc:37
+#: comdlg32.rc:38
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
@@ -869,134 +875,134 @@ msgstr ""
 "ในชื่อแฟ้มใช้ไมได้ต้วนี้:\n"
 "                          / : < > |"
 
-#: comdlg32.rc:38
+#: comdlg32.rc:39
 msgid "Path does not exist"
 msgstr "ไม่พบไดเรกทอรี"
 
-#: comdlg32.rc:39
+#: comdlg32.rc:40
 msgid "File does not exist"
 msgstr "ไม่พบแฟ้ม"
 
-#: comdlg32.rc:40
+#: comdlg32.rc:41
 msgid "The selection contains a non-folder object"
 msgstr ""
 
-#: comdlg32.rc:45
+#: comdlg32.rc:46
 msgid "Up One Level"
 msgstr "ขึ้นหนึ่งระดับ"
 
-#: comdlg32.rc:46
+#: comdlg32.rc:47
 msgid "Create New Folder"
 msgstr "สร้างไดเรกทอรีใหม่"
 
-#: comdlg32.rc:47
+#: comdlg32.rc:48
 msgid "List"
 msgstr "กําหนด"
 
-#: comdlg32.rc:48 cryptui.rc:201
+#: comdlg32.rc:49 cryptui.rc:201
 msgid "Details"
 msgstr "รายละเอียด"
 
-#: comdlg32.rc:49
+#: comdlg32.rc:50
 msgid "Browse to Desktop"
 msgstr "ค้นหารายการพื้นที่ทำงาน"
 
-#: comdlg32.rc:113
+#: comdlg32.rc:114
 msgid "Regular"
 msgstr ""
 
-#: comdlg32.rc:114
+#: comdlg32.rc:115
 msgid "Bold"
 msgstr ""
 
-#: comdlg32.rc:115
+#: comdlg32.rc:116
 msgid "Italic"
 msgstr ""
 
-#: comdlg32.rc:116
+#: comdlg32.rc:117
 msgid "Bold Italic"
 msgstr ""
 
-#: comdlg32.rc:121 wordpad.rc:125
+#: comdlg32.rc:122 wordpad.rc:125
 msgid "Black"
 msgstr "สีดํา"
 
-#: comdlg32.rc:122 wordpad.rc:126
+#: comdlg32.rc:123 wordpad.rc:126
 msgid "Maroon"
 msgstr "สีเลืดหมู"
 
-#: comdlg32.rc:123 wordpad.rc:127
+#: comdlg32.rc:124 wordpad.rc:127
 msgid "Green"
 msgstr "สีเขียว"
 
-#: comdlg32.rc:124 wordpad.rc:128
+#: comdlg32.rc:125 wordpad.rc:128
 msgid "Olive"
 msgstr "สีเขียวเข้ม"
 
-#: comdlg32.rc:125 wordpad.rc:129
+#: comdlg32.rc:126 wordpad.rc:129
 msgid "Navy"
 msgstr "สีนําเงิน"
 
-#: comdlg32.rc:126 wordpad.rc:130
+#: comdlg32.rc:127 wordpad.rc:130
 msgid "Purple"
 msgstr "สีม่วง"
 
-#: comdlg32.rc:127 wordpad.rc:131
+#: comdlg32.rc:128 wordpad.rc:131
 msgid "Teal"
 msgstr "สีเขียวอมนําเงินข้ม"
 
-#: comdlg32.rc:128 wordpad.rc:132
+#: comdlg32.rc:129 wordpad.rc:132
 msgid "Gray"
 msgstr "สีเทา"
 
-#: comdlg32.rc:129 wordpad.rc:133
+#: comdlg32.rc:130 wordpad.rc:133
 msgid "Silver"
 msgstr "สีเงิน"
 
-#: comdlg32.rc:130 wordpad.rc:134
+#: comdlg32.rc:131 wordpad.rc:134
 msgid "Red"
 msgstr "สีแดง"
 
-#: comdlg32.rc:131 wordpad.rc:135
+#: comdlg32.rc:132 wordpad.rc:135
 msgid "Lime"
 msgstr "สีเขียวออ่น"
 
-#: comdlg32.rc:132 wordpad.rc:136
+#: comdlg32.rc:133 wordpad.rc:136
 msgid "Yellow"
 msgstr "สีเหลือง"
 
-#: comdlg32.rc:133 wordpad.rc:137
+#: comdlg32.rc:134 wordpad.rc:137
 msgid "Blue"
 msgstr "สีฟ้า"
 
-#: comdlg32.rc:134 wordpad.rc:138
+#: comdlg32.rc:135 wordpad.rc:138
 msgid "Fuchsia"
 msgstr ""
 
-#: comdlg32.rc:135 wordpad.rc:139
+#: comdlg32.rc:136 wordpad.rc:139
 msgid "Aqua"
 msgstr "สีฟ้าออ่น"
 
-#: comdlg32.rc:136 wordpad.rc:140
+#: comdlg32.rc:137 wordpad.rc:140
 msgid "White"
 msgstr "สีขาว"
 
-#: comdlg32.rc:56
+#: comdlg32.rc:57
 msgid "Unreadable Entry"
 msgstr "อ่านรายการไมได้"
 
-#: comdlg32.rc:58
+#: comdlg32.rc:59
 #, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr "กรุณาเลื่อกหมายเลขระวาง %d ถึง %d"
 
-#: comdlg32.rc:60
+#: comdlg32.rc:61
 msgid "The 'from' entry cannot exceed the 'to' entry."
 msgstr "'จาก' ต่องเป็นน้อยก่วะ 'ส่งถึง'"
 
-#: comdlg32.rc:62
+#: comdlg32.rc:63
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
@@ -1004,198 +1010,198 @@ msgstr ""
 "ขอบกระดาษใหญ่เกินไป\n"
 "กรุณาเลื่อกใหม่"
 
-#: comdlg32.rc:64
+#: comdlg32.rc:65
 msgid "The 'Number of copies' field cannot be empty."
 msgstr ""
 
-#: comdlg32.rc:66
+#: comdlg32.rc:67
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
 
-#: comdlg32.rc:67
+#: comdlg32.rc:68
 msgid "A printer error occurred."
 msgstr "ความปิดเครื่องพิมพ์"
 
-#: comdlg32.rc:68
+#: comdlg32.rc:69
 msgid "No default printer defined."
 msgstr "ไมมีเครื่องพิมพ์ปกติ"
 
-#: comdlg32.rc:69
+#: comdlg32.rc:70
 msgid "Cannot find the printer."
 msgstr "ไม่พบเครื่องพิมพ์"
 
-#: comdlg32.rc:70 progman.rc:76
+#: comdlg32.rc:71 progman.rc:76
 msgid "Out of memory."
 msgstr "ความจํา์หมด"
 
-#: comdlg32.rc:71
+#: comdlg32.rc:72
 msgid "An error occurred."
 msgstr "เกิดความปิดพลาด"
 
-#: comdlg32.rc:72
+#: comdlg32.rc:73
 msgid "Unknown printer driver."
 msgstr "ไม่รู้จักดไร์เวอร์์เครื่องพิมพ์"
 
-#: comdlg32.rc:75
+#: comdlg32.rc:76
 msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
 
-#: comdlg32.rc:141
+#: comdlg32.rc:142
 msgid "Select a font size between %1!d! and %2!d! points."
 msgstr ""
 
-#: comdlg32.rc:142 ieframe.rc:35
+#: comdlg32.rc:143 ieframe.rc:35
 msgid "&Save"
 msgstr ""
 
-#: comdlg32.rc:143
+#: comdlg32.rc:144
 #, fuzzy
 msgid "Save &in:"
 msgstr "บันทืกเป็น..."
 
-#: comdlg32.rc:144
+#: comdlg32.rc:145
 msgid "Save"
 msgstr ""
 
-#: comdlg32.rc:146
+#: comdlg32.rc:147
 #, fuzzy
 msgid "Open File"
 msgstr "แฟ้ม"
 
-#: comdlg32.rc:147
+#: comdlg32.rc:148
 #, fuzzy
 msgid "Select Folder"
 msgstr "เลือกทั้งหมด\tCtrl+A"
 
-#: comdlg32.rc:148
+#: comdlg32.rc:149
 msgid "Font size has to be a number."
 msgstr ""
 
-#: comdlg32.rc:83 oleview.rc:98
+#: comdlg32.rc:84 oleview.rc:98
 msgid "Ready"
 msgstr "พร้อม"
 
-#: comdlg32.rc:84
+#: comdlg32.rc:85
 msgid "Paused; "
 msgstr "ชะลอ; "
 
-#: comdlg32.rc:85
+#: comdlg32.rc:86
 msgid "Error; "
 msgstr "ความปิด; "
 
-#: comdlg32.rc:86
+#: comdlg32.rc:87
 msgid "Pending deletion; "
 msgstr "กําลังจะลบ; "
 
-#: comdlg32.rc:87
+#: comdlg32.rc:88
 msgid "Paper jam; "
 msgstr "กระดาษติด; "
 
-#: comdlg32.rc:88
+#: comdlg32.rc:89
 msgid "Out of paper; "
 msgstr "กระดาษหมด; "
 
-#: comdlg32.rc:89
+#: comdlg32.rc:90
 msgid "Feed paper manual; "
 msgstr ""
 
-#: comdlg32.rc:90
+#: comdlg32.rc:91
 msgid "Paper problem; "
 msgstr ""
 
-#: comdlg32.rc:91
+#: comdlg32.rc:92
 msgid "Printer offline; "
 msgstr "เครื่องพิมพ์ปิด; "
 
-#: comdlg32.rc:92
+#: comdlg32.rc:93
 msgid "I/O Active; "
 msgstr ""
 
-#: comdlg32.rc:93
+#: comdlg32.rc:94
 msgid "Busy; "
 msgstr "ยุ่ง; "
 
-#: comdlg32.rc:94
+#: comdlg32.rc:95
 msgid "Printing; "
 msgstr "กํมลังพิมพ์; "
 
-#: comdlg32.rc:95
+#: comdlg32.rc:96
 msgid "Output tray is full; "
 msgstr "ถาดเต็ม; "
 
-#: comdlg32.rc:96
+#: comdlg32.rc:97
 msgid "Not available; "
 msgstr "ใช้ไม่ได้ตอนนี้; "
 
-#: comdlg32.rc:97
+#: comdlg32.rc:98
 msgid "Waiting; "
 msgstr "เครื่องพิมพ์รออยู่; "
 
-#: comdlg32.rc:98
+#: comdlg32.rc:99
 msgid "Processing; "
 msgstr "กําลังทํางาน; "
 
-#: comdlg32.rc:99
+#: comdlg32.rc:100
 msgid "Initializing; "
 msgstr "กํมลังะเร็ม; "
 
-#: comdlg32.rc:100
+#: comdlg32.rc:101
 msgid "Warming up; "
 msgstr "กํมลังะพรอม; "
 
-#: comdlg32.rc:101
+#: comdlg32.rc:102
 msgid "Toner low; "
 msgstr "หมึกจะหมด; "
 
-#: comdlg32.rc:102
+#: comdlg32.rc:103
 msgid "No toner; "
 msgstr "หมึกหมดแล้ว; "
 
-#: comdlg32.rc:103
+#: comdlg32.rc:104
 msgid "Page punt; "
 msgstr ""
 
-#: comdlg32.rc:104
+#: comdlg32.rc:105
 msgid "Interrupted by user; "
 msgstr "ผู้ใช้ยกเลิก; "
 
-#: comdlg32.rc:105
+#: comdlg32.rc:106
 msgid "Out of memory; "
 msgstr "ความจําเครื่องพิมพ์หมด; "
 
-#: comdlg32.rc:106
+#: comdlg32.rc:107
 msgid "The printer door is open; "
 msgstr "ประตูเครื่องพิมพ์เปิด; "
 
-#: comdlg32.rc:107
+#: comdlg32.rc:108
 msgid "Print server unknown; "
 msgstr "ไม่รู้จักเสอร์เวอร์์; "
 
-#: comdlg32.rc:108
+#: comdlg32.rc:109
 msgid "Power save mode; "
 msgstr "ใช้ไฟ้น้อย; "
 
-#: comdlg32.rc:77
+#: comdlg32.rc:78
 msgid "Default Printer; "
 msgstr "เครื่องพิมพ์ปกติ; "
 
-#: comdlg32.rc:78
+#: comdlg32.rc:79
 msgid "There are %d documents in the queue"
 msgstr "มี %d แฟ้มรออยู่"
 
-#: comdlg32.rc:79
+#: comdlg32.rc:80
 msgid "Margins [inches]"
 msgstr "ขอบกระดาษ [นิ้ว]"
 
-#: comdlg32.rc:80
+#: comdlg32.rc:81
 msgid "Margins [mm]"
 msgstr "ขอบกระดาษ [มม.]"
 
-#: comdlg32.rc:81 sane.rc:33
+#: comdlg32.rc:82 sane.rc:33
 #, fuzzy
 msgctxt "unit: millimeters"
 msgid "mm"

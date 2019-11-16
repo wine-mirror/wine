@@ -56,9 +56,9 @@ msgstr "&Ukloni"
 msgid "Support Information"
 msgstr "Podrška"
 
-#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:232
-#: comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:388 comdlg32.rc:422
-#: comdlg32.rc:453 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
+#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:71 comctl32.rc:55 comdlg32.rc:233
+#: comdlg32.rc:263 comdlg32.rc:307 comdlg32.rc:390 comdlg32.rc:424
+#: comdlg32.rc:455 credui.rc:52 cryptui.rc:268 cryptui.rc:280 cryptui.rc:370
 #: cryptui.rc:462 dinput.rc:37 ieframe.rc:96 localui.rc:44 localui.rc:57
 #: mpr.rc:49 msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
 #: oledlg.rc:94 serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300
@@ -137,10 +137,10 @@ msgid "&Install"
 msgstr "&Instaliraj"
 
 #: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:45 comctl32.rc:72
-#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:171 comdlg32.rc:193
-#: comdlg32.rc:211 comdlg32.rc:233 comdlg32.rc:263 comdlg32.rc:306
-#: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:389 comdlg32.rc:423
-#: comdlg32.rc:454 comdlg32.rc:479 comdlg32.rc:505 comdlg32.rc:528 credui.rc:53
+#: comctl32.rc:87 comctl32.rc:56 comdlg32.rc:172 comdlg32.rc:194
+#: comdlg32.rc:212 comdlg32.rc:234 comdlg32.rc:264 comdlg32.rc:308
+#: comdlg32.rc:330 comdlg32.rc:350 comdlg32.rc:391 comdlg32.rc:425
+#: comdlg32.rc:456 comdlg32.rc:481 comdlg32.rc:507 comdlg32.rc:530 credui.rc:53
 #: cryptui.rc:269 cryptui.rc:281 cryptui.rc:371 cryptui.rc:463 dinput.rc:38
 #: ieframe.rc:97 inetcpl.rc:81 localui.rc:45 localui.rc:58 mpr.rc:50
 #: msacm32.rc:54 mshtml.rc:48 mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63
@@ -343,11 +343,11 @@ msgstr ""
 msgid "Properties for %s"
 msgstr "Svojstva za %s"
 
-#: comctl32.rc:73 comdlg32.rc:264
+#: comctl32.rc:73 comdlg32.rc:265
 msgid "&Apply"
 msgstr "&Primeni"
 
-#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:307 user32.rc:88
+#: comctl32.rc:74 comctl32.rc:88 comdlg32.rc:309 user32.rc:88
 msgid "Help"
 msgstr "Pomoć"
 
@@ -380,9 +380,9 @@ msgstr "&Zatvori"
 msgid "R&eset"
 msgstr "&Poništi"
 
-#: comctl32.rc:102 comdlg32.rc:172 comdlg32.rc:194 comdlg32.rc:265
-#: comdlg32.rc:329 comdlg32.rc:349 comdlg32.rc:390 comdlg32.rc:424
-#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:529 ieframe.rc:58 msacm32.rc:52
+#: comctl32.rc:102 comdlg32.rc:173 comdlg32.rc:195 comdlg32.rc:266
+#: comdlg32.rc:331 comdlg32.rc:351 comdlg32.rc:392 comdlg32.rc:426
+#: comdlg32.rc:482 comdlg32.rc:508 comdlg32.rc:531 ieframe.rc:58 msacm32.rc:52
 #: oledlg.rc:96 shell32.rc:128 clock.rc:44 notepad.rc:60 notepad.rc:119
 #: oleview.rc:72 progman.rc:55 progman.rc:108 progman.rc:126 progman.rc:144
 #: progman.rc:160 progman.rc:184 progman.rc:202 progman.rc:219 regedit.rc:77
@@ -465,46 +465,46 @@ msgstr "Danas:"
 msgid "Go to today"
 msgstr "Pređi na današnji dan"
 
-#: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:460 comdlg32.rc:485
-#: comdlg32.rc:512 shell32.rc:167 oleview.rc:101
+#: comdlg32.rc:158 comdlg32.rc:171 comdlg32.rc:462 comdlg32.rc:487
+#: comdlg32.rc:514 shell32.rc:167 oleview.rc:101
 msgid "Open"
 msgstr "Otvori"
 
-#: comdlg32.rc:160 comdlg32.rc:182
+#: comdlg32.rc:161 comdlg32.rc:183
 #, fuzzy
 msgid "File &Name:"
 msgstr "&Datoteka"
 
-#: comdlg32.rc:163 comdlg32.rc:185
+#: comdlg32.rc:164 comdlg32.rc:186
 msgid "&Directories:"
 msgstr ""
 
-#: comdlg32.rc:166 comdlg32.rc:188
+#: comdlg32.rc:167 comdlg32.rc:189
 #, fuzzy
 msgid "List Files of &Type:"
 msgstr "Po &vrsti"
 
-#: comdlg32.rc:168 comdlg32.rc:190
+#: comdlg32.rc:169 comdlg32.rc:191
 msgid "Dri&ves:"
 msgstr ""
 
-#: comdlg32.rc:173 comdlg32.rc:195 shell32.rc:370 shell32.rc:407
+#: comdlg32.rc:174 comdlg32.rc:196 shell32.rc:370 shell32.rc:407
 #: winefile.rc:172
 #, fuzzy
 msgid "&Read Only"
 msgstr "Spremno"
 
-#: comdlg32.rc:179
+#: comdlg32.rc:180
 #, fuzzy
 msgid "Save As..."
 msgstr "&Sačuvaj kao..."
 
-#: comdlg32.rc:192 comdlg32.rc:145
+#: comdlg32.rc:193 comdlg32.rc:146
 #, fuzzy
 msgid "Save As"
 msgstr "Sačuvaj kao"
 
-#: comdlg32.rc:201 comdlg32.rc:210 comdlg32.rc:356 comdlg32.rc:54 hhctrl.rc:49
+#: comdlg32.rc:202 comdlg32.rc:211 comdlg32.rc:358 comdlg32.rc:55 hhctrl.rc:49
 #: wordpad.rc:173
 #, fuzzy
 msgid "Print"
@@ -514,7 +514,7 @@ msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "Štampanje"
 
-#: comdlg32.rc:204
+#: comdlg32.rc:205
 #, fuzzy
 msgid "Printer:"
 msgstr ""
@@ -523,58 +523,58 @@ msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "Štampanje"
 
-#: comdlg32.rc:206 comdlg32.rc:373
+#: comdlg32.rc:207 comdlg32.rc:375
 #, fuzzy
 msgid "Print range"
 msgstr "&Štampaj objekat"
 
-#: comdlg32.rc:207 comdlg32.rc:374 regedit.rc:268
+#: comdlg32.rc:208 comdlg32.rc:376 regedit.rc:268
 msgid "&All"
 msgstr ""
 
-#: comdlg32.rc:208
+#: comdlg32.rc:209
 #, fuzzy
 msgid "S&election"
 msgstr "Odabir teksta"
 
-#: comdlg32.rc:209
+#: comdlg32.rc:210
 #, fuzzy
 msgid "&Pages"
 msgstr "Nagore"
 
-#: comdlg32.rc:212 comdlg32.rc:234
+#: comdlg32.rc:213 comdlg32.rc:235
 #, fuzzy
 msgid "&Setup"
 msgstr "Postavke strane"
 
-#: comdlg32.rc:213
+#: comdlg32.rc:214
 msgid "&From:"
 msgstr ""
 
-#: comdlg32.rc:214
+#: comdlg32.rc:215
 msgid "&To:"
 msgstr ""
 
-#: comdlg32.rc:215 wineps.rc:42
+#: comdlg32.rc:216 wineps.rc:42
 #, fuzzy
 msgid "Print &Quality:"
 msgstr "&Kvalitet sažimanja:"
 
-#: comdlg32.rc:217
+#: comdlg32.rc:218
 #, fuzzy
 msgid "Print to Fi&le"
 msgstr "Štampanje na datoteku"
 
-#: comdlg32.rc:218
+#: comdlg32.rc:219
 msgid "Condensed"
 msgstr ""
 
-#: comdlg32.rc:224 comdlg32.rc:395
+#: comdlg32.rc:225 comdlg32.rc:397
 #, fuzzy
 msgid "Print Setup"
 msgstr "Postavke &štampe..."
 
-#: comdlg32.rc:227 comdlg32.rc:359 comdlg32.rc:398
+#: comdlg32.rc:228 comdlg32.rc:361 comdlg32.rc:400
 #, fuzzy
 msgid "Printer"
 msgstr ""
@@ -583,233 +583,240 @@ msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "Štampanje"
 
-#: comdlg32.rc:228
+#: comdlg32.rc:229
 #, fuzzy
 msgid "&Default Printer"
 msgstr "Podrazumevani štampač; "
 
-#: comdlg32.rc:229
+#: comdlg32.rc:230
 msgid "[none]"
 msgstr ""
 
-#: comdlg32.rc:230
+#: comdlg32.rc:231
 msgid "Specific &Printer"
 msgstr ""
 
-#: comdlg32.rc:235 comdlg32.rc:417 comdlg32.rc:441 wineps.rc:34
+#: comdlg32.rc:236 comdlg32.rc:419 comdlg32.rc:443 wineps.rc:34
 #, fuzzy
 msgid "Orientation"
 msgstr "Beleške..."
 
-#: comdlg32.rc:236
+#: comdlg32.rc:237
 msgid "Po&rtrait"
 msgstr ""
 
-#: comdlg32.rc:237 comdlg32.rc:443 wineps.rc:37
+#: comdlg32.rc:238 comdlg32.rc:445 wineps.rc:37
 msgid "&Landscape"
 msgstr ""
 
-#: comdlg32.rc:240 comdlg32.rc:411 comdlg32.rc:436 wineps.rc:28
+#: comdlg32.rc:241 comdlg32.rc:413 comdlg32.rc:438 wineps.rc:28
 #, fuzzy
 msgid "Paper"
 msgstr "Ulaz za papir; "
 
-#: comdlg32.rc:241
+#: comdlg32.rc:242
 #, fuzzy
 msgid "Si&ze"
 msgstr "Veli&čina:"
 
-#: comdlg32.rc:242
+#: comdlg32.rc:243
 #, fuzzy
 msgid "&Source"
 msgstr "Izvor:"
 
-#: comdlg32.rc:250 wineconsole.rc:85
+#: comdlg32.rc:251 wineconsole.rc:85
 #, fuzzy
 msgid "Font"
 msgstr "Fontovi"
 
-#: comdlg32.rc:253
+#: comdlg32.rc:254
 #, fuzzy
 msgid "&Font:"
 msgstr "Fontovi"
 
-#: comdlg32.rc:256
+#: comdlg32.rc:257
 msgid "Font St&yle:"
 msgstr ""
 
-#: comdlg32.rc:259 comdlg32.rc:437 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
 msgid "&Size:"
 msgstr "&Veličina:"
 
-#: comdlg32.rc:266
+#: comdlg32.rc:267
 msgid "Effects"
 msgstr ""
 
-#: comdlg32.rc:267
+#: comdlg32.rc:268
 msgid "Stri&keout"
 msgstr ""
 
-#: comdlg32.rc:268
+#: comdlg32.rc:269
 msgid "&Underline"
 msgstr ""
 
-#: comdlg32.rc:269 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:292
 msgid "&Color:"
 msgstr "&Boja:"
 
-#: comdlg32.rc:272
+#: comdlg32.rc:273
 msgid "Sample"
 msgstr ""
 
-#: comdlg32.rc:274
+#: comdlg32.rc:275
 msgid "Scr&ipt:"
 msgstr ""
 
-#: comdlg32.rc:282
+#: comdlg32.rc:283 comdlg32.rc:288
 #, fuzzy
 msgid "Color"
 msgstr "&Kolona"
 
-#: comdlg32.rc:285
+#: comdlg32.rc:286
 #, fuzzy
 msgid "&Basic Colors:"
 msgstr "&Boja:"
 
-#: comdlg32.rc:286
+#: comdlg32.rc:287
 #, fuzzy
 msgid "&Custom Colors:"
 msgstr "&Boja:"
 
-#: comdlg32.rc:287 comdlg32.rc:310
-msgid "Color |  Sol&id"
-msgstr ""
-
-#: comdlg32.rc:288
-msgid "&Red:"
+#: comdlg32.rc:289
+msgid "|S&olid"
 msgstr ""
 
 #: comdlg32.rc:290
+msgid "&Red:"
+msgstr ""
+
+#: comdlg32.rc:292
 #, fuzzy
 msgid "&Green:"
 msgstr "Zelena"
 
-#: comdlg32.rc:292
+#: comdlg32.rc:294
 #, fuzzy
 msgid "&Blue:"
 msgstr "Plava"
 
-#: comdlg32.rc:294
+#: comdlg32.rc:296
 msgid "&Hue:"
 msgstr ""
 
-#: comdlg32.rc:296
+#: comdlg32.rc:298
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr ""
 
-#: comdlg32.rc:298
+#: comdlg32.rc:300
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr ""
 
-#: comdlg32.rc:308
+#: comdlg32.rc:310
 msgid "&Add to Custom Colors"
 msgstr ""
 
-#: comdlg32.rc:309
+#: comdlg32.rc:311
 msgid "&Define Custom Colors >>"
 msgstr ""
 
-#: comdlg32.rc:316 regedit.rc:275 regedit.rc:285
+#: comdlg32.rc:312
+#, fuzzy
+#| msgid "&No"
+msgctxt "Solid"
+msgid "&o"
+msgstr "&Ne"
+
+#: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
 msgstr ""
 
-#: comdlg32.rc:319 comdlg32.rc:338
+#: comdlg32.rc:321 comdlg32.rc:340
 msgid "Fi&nd What:"
 msgstr ""
 
-#: comdlg32.rc:321 comdlg32.rc:342
+#: comdlg32.rc:323 comdlg32.rc:344
 msgid "Match &Whole Word Only"
 msgstr ""
 
-#: comdlg32.rc:322 comdlg32.rc:343
+#: comdlg32.rc:324 comdlg32.rc:345
 msgid "Match &Case"
 msgstr ""
 
-#: comdlg32.rc:323 joy.rc:71
+#: comdlg32.rc:325 joy.rc:71
 #, fuzzy
 msgid "Direction"
 msgstr "Opis"
 
-#: comdlg32.rc:324 view.rc:42
+#: comdlg32.rc:326 view.rc:42
 msgid "&Up"
 msgstr ""
 
-#: comdlg32.rc:325 view.rc:43
+#: comdlg32.rc:327 view.rc:43
 msgid "&Down"
 msgstr ""
 
-#: comdlg32.rc:327 comdlg32.rc:345
+#: comdlg32.rc:329 comdlg32.rc:347
 msgid "&Find Next"
 msgstr ""
 
-#: comdlg32.rc:335
+#: comdlg32.rc:337
 msgid "Replace"
 msgstr ""
 
-#: comdlg32.rc:340
+#: comdlg32.rc:342
 msgid "Re&place With:"
 msgstr ""
 
-#: comdlg32.rc:346
+#: comdlg32.rc:348
 #, fuzzy
 msgid "&Replace"
 msgstr "&Zameni...\tCtrl+H"
 
-#: comdlg32.rc:347
+#: comdlg32.rc:349
 #, fuzzy
 msgid "Replace &All"
 msgstr "Izaberi &sve"
 
-#: comdlg32.rc:361 comdlg32.rc:401 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
+#: comdlg32.rc:363 comdlg32.rc:403 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
 #: clock.rc:31 wineconsole.rc:30
 msgid "&Properties"
 msgstr "&Svojstva"
 
-#: comdlg32.rc:362
+#: comdlg32.rc:364
 #, fuzzy
 msgid "Print to fi&le"
 msgstr "Štampanje na datoteku"
 
-#: comdlg32.rc:363 comdlg32.rc:399 msacm32.rc:34 winefile.rc:137
+#: comdlg32.rc:365 comdlg32.rc:401 msacm32.rc:34 winefile.rc:137
 msgid "&Name:"
 msgstr "&Naziv:"
 
-#: comdlg32.rc:364 comdlg32.rc:402
+#: comdlg32.rc:366 comdlg32.rc:404
 #, fuzzy
 msgid "Status:"
 msgstr "Stanje"
 
-#: comdlg32.rc:366 comdlg32.rc:404
+#: comdlg32.rc:368 comdlg32.rc:406
 #, fuzzy
 msgid "Type:"
 msgstr "&Ukucaj:"
 
-#: comdlg32.rc:368 comdlg32.rc:406
+#: comdlg32.rc:370 comdlg32.rc:408
 msgid "Where:"
 msgstr ""
 
-#: comdlg32.rc:370 comdlg32.rc:408
+#: comdlg32.rc:372 comdlg32.rc:410
 #, fuzzy
 msgid "Comment:"
 msgstr "Komentari:"
 
-#: comdlg32.rc:375
+#: comdlg32.rc:377
 msgid "Pa&ges"
 msgstr ""
 
-#: comdlg32.rc:376
+#: comdlg32.rc:378
 #, fuzzy
 msgid "&Selection"
 msgstr ""
@@ -818,87 +825,87 @@ msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "&Izaberi"
 
-#: comdlg32.rc:379
+#: comdlg32.rc:381
 msgid "&from:"
 msgstr ""
 
-#: comdlg32.rc:380
+#: comdlg32.rc:382
 msgid "&to:"
 msgstr ""
 
-#: comdlg32.rc:382
+#: comdlg32.rc:384
 msgid "Copies"
 msgstr ""
 
-#: comdlg32.rc:383
+#: comdlg32.rc:385
 msgid "Number of &copies:"
 msgstr ""
 
-#: comdlg32.rc:385
+#: comdlg32.rc:387
 msgid "C&ollate"
 msgstr ""
 
-#: comdlg32.rc:412 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:300
 msgid "Si&ze:"
 msgstr "Veli&čina:"
 
-#: comdlg32.rc:414
+#: comdlg32.rc:416
 #, fuzzy
 msgid "&Source:"
 msgstr "Izvor:"
 
-#: comdlg32.rc:419
+#: comdlg32.rc:421
 msgid "P&ortrait"
 msgstr ""
 
-#: comdlg32.rc:420
+#: comdlg32.rc:422
 msgid "L&andscape"
 msgstr ""
 
-#: comdlg32.rc:430
+#: comdlg32.rc:432
 msgid "Setup Page"
 msgstr ""
 
-#: comdlg32.rc:439
+#: comdlg32.rc:441
 msgid "&Tray:"
 msgstr ""
 
-#: comdlg32.rc:442 wineps.rc:35
+#: comdlg32.rc:444 wineps.rc:35
 msgid "&Portrait"
 msgstr ""
 
-#: comdlg32.rc:445
+#: comdlg32.rc:447
 #, fuzzy
 msgid "L&eft:"
 msgstr "&Levo:"
 
-#: comdlg32.rc:447 notepad.rc:112
+#: comdlg32.rc:449 notepad.rc:112
 msgid "&Right:"
 msgstr "&Desno:"
 
-#: comdlg32.rc:449
+#: comdlg32.rc:451
 msgid "T&op:"
 msgstr ""
 
-#: comdlg32.rc:451 notepad.rc:114
+#: comdlg32.rc:453 notepad.rc:114
 msgid "&Bottom:"
 msgstr "&Dno:"
 
-#: comdlg32.rc:455
+#: comdlg32.rc:457
 #, fuzzy
 msgid "P&rinter..."
 msgstr "Štampaj..."
 
-#: comdlg32.rc:463 comdlg32.rc:488
+#: comdlg32.rc:465 comdlg32.rc:490
 msgid "Look &in:"
 msgstr ""
 
-#: comdlg32.rc:469 comdlg32.rc:495
+#: comdlg32.rc:471 comdlg32.rc:497
 #, fuzzy
 msgid "File &name:"
 msgstr "&Datoteka"
 
-#: comdlg32.rc:473 comdlg32.rc:499
+#: comdlg32.rc:475 comdlg32.rc:501
 #, fuzzy
 msgid "Files of &type:"
 msgstr ""
@@ -907,20 +914,20 @@ msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "&Fajl"
 
-#: comdlg32.rc:476 comdlg32.rc:502
+#: comdlg32.rc:478 comdlg32.rc:504
 msgid "Open as &read-only"
 msgstr ""
 
-#: comdlg32.rc:478 comdlg32.rc:504 comdlg32.rc:522 shdoclc.rc:127 shell32.rc:99
+#: comdlg32.rc:480 comdlg32.rc:506 comdlg32.rc:524 shdoclc.rc:127 shell32.rc:99
 msgid "&Open"
 msgstr "&Otvori"
 
-#: comdlg32.rc:515
+#: comdlg32.rc:517
 #, fuzzy
 msgid "File name:"
 msgstr "&Datoteka"
 
-#: comdlg32.rc:518
+#: comdlg32.rc:520
 #, fuzzy
 msgid "Files of type:"
 msgstr ""
@@ -929,15 +936,15 @@ msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "&Fajl"
 
-#: comdlg32.rc:32
+#: comdlg32.rc:33
 msgid "File not found"
 msgstr "Datoteka nije pronađena"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:34
 msgid "Please verify that the correct file name was given"
 msgstr "Proverite naziv datoteke"
 
-#: comdlg32.rc:34
+#: comdlg32.rc:35
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
@@ -945,7 +952,7 @@ msgstr ""
 "Datoteka ne postoji.\n"
 "Želite li da je napravite?"
 
-#: comdlg32.rc:35
+#: comdlg32.rc:36
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
@@ -953,11 +960,11 @@ msgstr ""
 "Datoteka već postoji.\n"
 "Želite li da je zamenite?"
 
-#: comdlg32.rc:36
+#: comdlg32.rc:37
 msgid "Invalid character(s) in path"
 msgstr "Neispravan znak u putanji"
 
-#: comdlg32.rc:37
+#: comdlg32.rc:38
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
@@ -965,123 +972,123 @@ msgstr ""
 "Naziv datoteke ne sme sadržati sledeće znakove:\n"
 "                          / : < > |"
 
-#: comdlg32.rc:38
+#: comdlg32.rc:39
 msgid "Path does not exist"
 msgstr "Putanja ne postoji"
 
-#: comdlg32.rc:39
+#: comdlg32.rc:40
 msgid "File does not exist"
 msgstr "Datoteka ne postoji"
 
-#: comdlg32.rc:40
+#: comdlg32.rc:41
 msgid "The selection contains a non-folder object"
 msgstr ""
 
-#: comdlg32.rc:45
+#: comdlg32.rc:46
 msgid "Up One Level"
 msgstr "Jedan nivo gore"
 
-#: comdlg32.rc:46
+#: comdlg32.rc:47
 msgid "Create New Folder"
 msgstr "Napravi novu fasciklu"
 
-#: comdlg32.rc:47
+#: comdlg32.rc:48
 msgid "List"
 msgstr "Spisak"
 
-#: comdlg32.rc:48 cryptui.rc:201
+#: comdlg32.rc:49 cryptui.rc:201
 msgid "Details"
 msgstr "Detalji"
 
-#: comdlg32.rc:49
+#: comdlg32.rc:50
 msgid "Browse to Desktop"
 msgstr "Potraži na radnoj površini"
 
-#: comdlg32.rc:113
+#: comdlg32.rc:114
 msgid "Regular"
 msgstr "Obično"
 
-#: comdlg32.rc:114
+#: comdlg32.rc:115
 msgid "Bold"
 msgstr "Podebljano"
 
-#: comdlg32.rc:115
+#: comdlg32.rc:116
 msgid "Italic"
 msgstr "Ukošeno"
 
-#: comdlg32.rc:116
+#: comdlg32.rc:117
 msgid "Bold Italic"
 msgstr "Podebljano ukošeno"
 
-#: comdlg32.rc:121 wordpad.rc:125
+#: comdlg32.rc:122 wordpad.rc:125
 msgid "Black"
 msgstr "Crna"
 
-#: comdlg32.rc:122 wordpad.rc:126
+#: comdlg32.rc:123 wordpad.rc:126
 msgid "Maroon"
 msgstr "Kestenjasta"
 
-#: comdlg32.rc:123 wordpad.rc:127
+#: comdlg32.rc:124 wordpad.rc:127
 msgid "Green"
 msgstr "Zelena"
 
-#: comdlg32.rc:124 wordpad.rc:128
+#: comdlg32.rc:125 wordpad.rc:128
 msgid "Olive"
 msgstr "Maslinasta"
 
-#: comdlg32.rc:125 wordpad.rc:129
+#: comdlg32.rc:126 wordpad.rc:129
 msgid "Navy"
 msgstr "Tamno plava"
 
-#: comdlg32.rc:126 wordpad.rc:130
+#: comdlg32.rc:127 wordpad.rc:130
 msgid "Purple"
 msgstr "Ljubičasta"
 
-#: comdlg32.rc:127 wordpad.rc:131
+#: comdlg32.rc:128 wordpad.rc:131
 msgid "Teal"
 msgstr "Zelenkasta"
 
-#: comdlg32.rc:128 wordpad.rc:132
+#: comdlg32.rc:129 wordpad.rc:132
 msgid "Gray"
 msgstr "Siva"
 
-#: comdlg32.rc:129 wordpad.rc:133
+#: comdlg32.rc:130 wordpad.rc:133
 msgid "Silver"
 msgstr "Srebrna"
 
-#: comdlg32.rc:130 wordpad.rc:134
+#: comdlg32.rc:131 wordpad.rc:134
 msgid "Red"
 msgstr "Crvena"
 
-#: comdlg32.rc:131 wordpad.rc:135
+#: comdlg32.rc:132 wordpad.rc:135
 msgid "Lime"
 msgstr "Limun zelena"
 
-#: comdlg32.rc:132 wordpad.rc:136
+#: comdlg32.rc:133 wordpad.rc:136
 msgid "Yellow"
 msgstr "Žuta"
 
-#: comdlg32.rc:133 wordpad.rc:137
+#: comdlg32.rc:134 wordpad.rc:137
 msgid "Blue"
 msgstr "Plava"
 
-#: comdlg32.rc:134 wordpad.rc:138
+#: comdlg32.rc:135 wordpad.rc:138
 msgid "Fuchsia"
 msgstr "Roze-ljubičasta"
 
-#: comdlg32.rc:135 wordpad.rc:139
+#: comdlg32.rc:136 wordpad.rc:139
 msgid "Aqua"
 msgstr "Svetlo plava"
 
-#: comdlg32.rc:136 wordpad.rc:140
+#: comdlg32.rc:137 wordpad.rc:140
 msgid "White"
 msgstr "Bela"
 
-#: comdlg32.rc:56
+#: comdlg32.rc:57
 msgid "Unreadable Entry"
 msgstr "Unos je nečitljiv"
 
-#: comdlg32.rc:58
+#: comdlg32.rc:59
 #, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
@@ -1090,11 +1097,11 @@ msgstr ""
 "Ova vrednost ne leži na opsegu strane.\n"
 "Unesite vrednost između %d i %d."
 
-#: comdlg32.rc:60
+#: comdlg32.rc:61
 msgid "The 'from' entry cannot exceed the 'to' entry."
 msgstr "Unos „od“ ne sme biti posle „do“ unosa."
 
-#: comdlg32.rc:62
+#: comdlg32.rc:63
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
@@ -1102,12 +1109,12 @@ msgstr ""
 "Margine se preklapaju ili prelaze van granica papira.\n"
 "Ponovo unesite margine."
 
-#: comdlg32.rc:64
+#: comdlg32.rc:65
 #, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
 msgstr "Vrednost za „Broj primeraka“ ne sme biti prazna."
 
-#: comdlg32.rc:66
+#: comdlg32.rc:67
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
@@ -1115,31 +1122,31 @@ msgstr ""
 "Ovoliki broj primeraka nije podržan od strane Vašeg štampača.\n"
 "Unesite vrednost između 1 i %d."
 
-#: comdlg32.rc:67
+#: comdlg32.rc:68
 msgid "A printer error occurred."
 msgstr "Došlo je do greške u štampaču."
 
-#: comdlg32.rc:68
+#: comdlg32.rc:69
 msgid "No default printer defined."
 msgstr "Podrazumevani štampač nije izabran."
 
-#: comdlg32.rc:69
+#: comdlg32.rc:70
 msgid "Cannot find the printer."
 msgstr "Štampač nije pronađen."
 
-#: comdlg32.rc:70 progman.rc:76
+#: comdlg32.rc:71 progman.rc:76
 msgid "Out of memory."
 msgstr "Nema više memorije."
 
-#: comdlg32.rc:71
+#: comdlg32.rc:72
 msgid "An error occurred."
 msgstr "Došlo je do greške."
 
-#: comdlg32.rc:72
+#: comdlg32.rc:73
 msgid "Unknown printer driver."
 msgstr "Veznik za štampač nije prepoznat."
 
-#: comdlg32.rc:75
+#: comdlg32.rc:76
 msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
@@ -1147,158 +1154,158 @@ msgstr ""
 "Pre podešavanja strane i štampanja, morate da instalirate upravljački "
 "program. Instalirajte ga i pokušajte ponovo."
 
-#: comdlg32.rc:141
+#: comdlg32.rc:142
 #, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
 msgstr "Izaberite veličinu fonta između %d i %d tačaka."
 
-#: comdlg32.rc:142 ieframe.rc:35
+#: comdlg32.rc:143 ieframe.rc:35
 msgid "&Save"
 msgstr "&Sačuvaj"
 
-#: comdlg32.rc:143
+#: comdlg32.rc:144
 msgid "Save &in:"
 msgstr "Sačuvaj &u:"
 
-#: comdlg32.rc:144
+#: comdlg32.rc:145
 msgid "Save"
 msgstr "Sačuvaj"
 
-#: comdlg32.rc:146
+#: comdlg32.rc:147
 msgid "Open File"
 msgstr "Otvori datoteku"
 
-#: comdlg32.rc:147
+#: comdlg32.rc:148
 #, fuzzy
 #| msgid "New Folder"
 msgid "Select Folder"
 msgstr "Nova fascikla"
 
-#: comdlg32.rc:148
+#: comdlg32.rc:149
 msgid "Font size has to be a number."
 msgstr ""
 
-#: comdlg32.rc:83 oleview.rc:98
+#: comdlg32.rc:84 oleview.rc:98
 msgid "Ready"
 msgstr "Spremno"
 
-#: comdlg32.rc:84
+#: comdlg32.rc:85
 msgid "Paused; "
 msgstr "Pauzirano; "
 
-#: comdlg32.rc:85
+#: comdlg32.rc:86
 msgid "Error; "
 msgstr "Greška; "
 
-#: comdlg32.rc:86
+#: comdlg32.rc:87
 msgid "Pending deletion; "
 msgstr "Čeka na brisanje; "
 
-#: comdlg32.rc:87
+#: comdlg32.rc:88
 msgid "Paper jam; "
 msgstr "Ulaz za papir; "
 
-#: comdlg32.rc:88
+#: comdlg32.rc:89
 msgid "Out of paper; "
 msgstr "Nema papira; "
 
-#: comdlg32.rc:89
+#: comdlg32.rc:90
 msgid "Feed paper manual; "
 msgstr "Dodajte papir; "
 
-#: comdlg32.rc:90
+#: comdlg32.rc:91
 msgid "Paper problem; "
 msgstr "Problem s papirom; "
 
-#: comdlg32.rc:91
+#: comdlg32.rc:92
 msgid "Printer offline; "
 msgstr "Štampač nije povezan; "
 
-#: comdlg32.rc:92
+#: comdlg32.rc:93
 msgid "I/O Active; "
 msgstr "I/O aktivan; "
 
-#: comdlg32.rc:93
+#: comdlg32.rc:94
 msgid "Busy; "
 msgstr "Zauzet; "
 
-#: comdlg32.rc:94
+#: comdlg32.rc:95
 msgid "Printing; "
 msgstr "Štampa; "
 
-#: comdlg32.rc:95
+#: comdlg32.rc:96
 msgid "Output tray is full; "
 msgstr "Izlaz je pun; "
 
-#: comdlg32.rc:96
+#: comdlg32.rc:97
 msgid "Not available; "
 msgstr "Nedostupno; "
 
-#: comdlg32.rc:97
+#: comdlg32.rc:98
 msgid "Waiting; "
 msgstr "Čekanje; "
 
-#: comdlg32.rc:98
+#: comdlg32.rc:99
 msgid "Processing; "
 msgstr "Obrađivanje; "
 
-#: comdlg32.rc:99
+#: comdlg32.rc:100
 msgid "Initializing; "
 msgstr "Pokretanje; "
 
-#: comdlg32.rc:100
+#: comdlg32.rc:101
 msgid "Warming up; "
 msgstr "Zagrevanje; "
 
-#: comdlg32.rc:101
+#: comdlg32.rc:102
 msgid "Toner low; "
 msgstr "Toner je pri kraju; "
 
-#: comdlg32.rc:102
+#: comdlg32.rc:103
 msgid "No toner; "
 msgstr "Nema tonera; "
 
-#: comdlg32.rc:103
+#: comdlg32.rc:104
 msgid "Page punt; "
 msgstr "Funta strane; "
 
-#: comdlg32.rc:104
+#: comdlg32.rc:105
 msgid "Interrupted by user; "
 msgstr "Prekinuto od strane korisnika; "
 
-#: comdlg32.rc:105
+#: comdlg32.rc:106
 msgid "Out of memory; "
 msgstr "Nema više memorije; "
 
-#: comdlg32.rc:106
+#: comdlg32.rc:107
 msgid "The printer door is open; "
 msgstr "Ulaz na štampaču je otvoren; "
 
-#: comdlg32.rc:107
+#: comdlg32.rc:108
 msgid "Print server unknown; "
 msgstr "Server za štampanje nije poznat; "
 
-#: comdlg32.rc:108
+#: comdlg32.rc:109
 msgid "Power save mode; "
 msgstr "Režim za uštedu struje; "
 
-#: comdlg32.rc:77
+#: comdlg32.rc:78
 msgid "Default Printer; "
 msgstr "Podrazumevani štampač; "
 
-#: comdlg32.rc:78
+#: comdlg32.rc:79
 msgid "There are %d documents in the queue"
 msgstr "%d dokumenata je u redu za čekanje"
 
-#: comdlg32.rc:79
+#: comdlg32.rc:80
 msgid "Margins [inches]"
 msgstr "Margine (u inčima)"
 
-#: comdlg32.rc:80
+#: comdlg32.rc:81
 msgid "Margins [mm]"
 msgstr "Margine (u milimetrima)"
 
-#: comdlg32.rc:81 sane.rc:33
+#: comdlg32.rc:82 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
