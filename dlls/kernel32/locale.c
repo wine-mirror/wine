@@ -59,6 +59,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 #define WC_FLAGSMASK (WC_DISCARDNS|WC_SEPCHARS|WC_DEFAULTCHAR|WC_ERR_INVALID_CHARS|\
                       WC_COMPOSITECHECK|WC_NO_BEST_FIT_CHARS)
 
+extern BOOL WINAPI Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc, LCID lcid, CALID id,
+                                              CALTYPE type, BOOL unicode, BOOL ex,
+                                              BOOL exex, LPARAM lparam );
 extern BOOL WINAPI Internal_EnumDateFormats( DATEFMT_ENUMPROCW proc, LCID lcid, DWORD flags, BOOL unicode,
                                              BOOL ex, BOOL exex, LPARAM lparam );
 extern BOOL WINAPI Internal_EnumLanguageGroupLocales( LANGGROUPLOCALE_ENUMPROCW proc, LGRPID id,
@@ -3626,6 +3629,22 @@ BOOL WINAPI EnumLanguageGroupLocalesA( LANGGROUPLOCALE_ENUMPROCA proc, LGRPID id
                                        DWORD flags, LONG_PTR param )
 {
     return Internal_EnumLanguageGroupLocales( (LANGGROUPLOCALE_ENUMPROCW)proc, id, flags, param, FALSE );
+}
+
+/******************************************************************************
+ *		EnumCalendarInfoA	[KERNEL32.@]
+ */
+BOOL WINAPI EnumCalendarInfoA( CALINFO_ENUMPROCA proc, LCID lcid, CALID id, CALTYPE type )
+{
+    return Internal_EnumCalendarInfo( (CALINFO_ENUMPROCW)proc, lcid, id, type, FALSE, FALSE, FALSE, 0 );
+}
+
+/******************************************************************************
+ *		EnumCalendarInfoExA	[KERNEL32.@]
+ */
+BOOL WINAPI EnumCalendarInfoExA( CALINFO_ENUMPROCEXA proc, LCID lcid, CALID id, CALTYPE type )
+{
+    return Internal_EnumCalendarInfo( (CALINFO_ENUMPROCW)proc, lcid, id, type, FALSE, TRUE, FALSE, 0 );
 }
 
 /**************************************************************************

@@ -290,9 +290,9 @@
 # @ stub EnterCriticalPolicySectionInternal
 @ stdcall EnterCriticalSection(ptr) ntdll.RtlEnterCriticalSection
 # @ stub EnterSynchronizationBarrier
-@ stdcall EnumCalendarInfoExEx(ptr wstr long wstr long long) kernel32.EnumCalendarInfoExEx
-@ stdcall EnumCalendarInfoExW(ptr long long long) kernel32.EnumCalendarInfoExW
-@ stdcall EnumCalendarInfoW(ptr long long long) kernel32.EnumCalendarInfoW
+@ stdcall EnumCalendarInfoExEx(ptr wstr long wstr long long)
+@ stdcall EnumCalendarInfoExW(ptr long long long)
+@ stdcall EnumCalendarInfoW(ptr long long long)
 @ stdcall EnumDateFormatsExEx(ptr wstr long long)
 @ stdcall EnumDateFormatsExW(ptr long long)
 @ stdcall EnumDateFormatsW(ptr long long)
@@ -824,7 +824,7 @@
 @ stdcall -fastcall InterlockedPushListSList(ptr ptr ptr long) ntdll.RtlInterlockedPushListSList
 @ stdcall InterlockedPushListSListEx(ptr ptr ptr long) ntdll.RtlInterlockedPushListSListEx
 @ stub InternalLcidToName
-@ stub Internal_EnumCalendarInfo
+@ stdcall Internal_EnumCalendarInfo(ptr long long long long long long long)
 @ stdcall Internal_EnumDateFormats(ptr long long long long long long)
 @ stdcall Internal_EnumLanguageGroupLocales(ptr long long ptr long)
 @ stdcall Internal_EnumSystemCodePages(ptr long long)

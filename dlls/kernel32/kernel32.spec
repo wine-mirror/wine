@@ -394,9 +394,9 @@
 @ stdcall EnterCriticalSection(ptr) ntdll.RtlEnterCriticalSection
 @ stdcall EnumCalendarInfoA(ptr long long long)
 @ stdcall EnumCalendarInfoExA(ptr long long long)
-@ stdcall EnumCalendarInfoExEx(ptr wstr long wstr long long)
-@ stdcall EnumCalendarInfoExW(ptr long long long)
-@ stdcall EnumCalendarInfoW(ptr long long long)
+@ stdcall -import EnumCalendarInfoExEx(ptr wstr long wstr long long)
+@ stdcall -import EnumCalendarInfoExW(ptr long long long)
+@ stdcall -import EnumCalendarInfoW(ptr long long long)
 @ stdcall EnumDateFormatsA(ptr long long)
 @ stdcall EnumDateFormatsExA(ptr long long)
 @ stdcall -import EnumDateFormatsExEx(ptr wstr long long)

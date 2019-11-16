@@ -53,6 +53,62 @@ static const WCHAR locales_key[] =
 static const WCHAR altsort_key[] = {'A','l','t','e','r','n','a','t','e',' ','S','o','r','t','s',0};
 
 
+/* Note: the Internal_ functions are not documented. The number of parameters
+ * should be correct, but their exact meaning may not.
+ */
+
+/******************************************************************************
+ *	Internal_EnumCalendarInfo   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc, LCID lcid, CALID id,
+                                                         CALTYPE type, BOOL unicode, BOOL ex,
+                                                         BOOL exex, LPARAM lparam )
+{
+    WCHAR buffer[256];
+    DWORD optional;
+    INT ret;
+
+    if (!proc)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (id == ENUM_ALL_CALENDARS)
+    {
+        if (!GetLocaleInfoW( lcid, LOCALE_ICALENDARTYPE | LOCALE_RETURN_NUMBER,
+                             (WCHAR *)&id, sizeof(id) / sizeof(WCHAR) )) return FALSE;
+        if (!GetLocaleInfoW( lcid, LOCALE_IOPTIONALCALENDAR | LOCALE_RETURN_NUMBER,
+                             (WCHAR *)&optional, sizeof(optional) / sizeof(WCHAR) )) optional = 0;
+    }
+
+    for (;;)
+    {
+        if (type & CAL_RETURN_NUMBER)
+            ret = GetCalendarInfoW( lcid, id, type, NULL, 0, (LPDWORD)buffer );
+        else if (unicode)
+            ret = GetCalendarInfoW( lcid, id, type, buffer, ARRAY_SIZE(buffer), NULL );
+        else
+        {
+            WCHAR bufW[256];
+            ret = GetCalendarInfoW( lcid, id, type, bufW, ARRAY_SIZE(bufW), NULL );
+            if (ret) WideCharToMultiByte( CP_ACP, 0, bufW, -1, (char *)buffer, sizeof(buffer), NULL, NULL );
+        }
+
+        if (ret)
+        {
+            if (exex) ret = ((CALINFO_ENUMPROCEXEX)proc)( buffer, id, NULL, lparam );
+            else if (ex) ret = ((CALINFO_ENUMPROCEXW)proc)( buffer, id );
+            else ret = proc( buffer );
+        }
+        if (!ret) break;
+        if (!optional) break;
+        id = optional;
+    }
+    return TRUE;
+}
+
+
 /**************************************************************************
  *	Internal_EnumDateFormats   (kernelbase.@)
  */
@@ -350,6 +406,36 @@ INT WINAPI DECLSPEC_HOTPATCH CompareStringOrdinal( const WCHAR *str1, INT len1,
     if (ret < 0) return CSTR_LESS_THAN;
     if (ret > 0) return CSTR_GREATER_THAN;
     return CSTR_EQUAL;
+}
+
+
+/******************************************************************************
+ *	EnumCalendarInfoW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH EnumCalendarInfoW( CALINFO_ENUMPROCW proc, LCID lcid,
+                                                 CALID id, CALTYPE type )
+{
+    return Internal_EnumCalendarInfo( proc, lcid, id, type, TRUE, FALSE, FALSE, 0 );
+}
+
+
+/******************************************************************************
+ *	EnumCalendarInfoExW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH EnumCalendarInfoExW( CALINFO_ENUMPROCEXW proc, LCID lcid,
+                                                   CALID id, CALTYPE type )
+{
+    return Internal_EnumCalendarInfo( (CALINFO_ENUMPROCW)proc, lcid, id, type, TRUE, TRUE, FALSE, 0 );
+}
+
+/******************************************************************************
+ *	EnumCalendarInfoExEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH EnumCalendarInfoExEx( CALINFO_ENUMPROCEXEX proc, LPCWSTR locale, CALID id,
+                                                    LPCWSTR reserved, CALTYPE type, LPARAM lparam )
+{
+    LCID lcid = LocaleNameToLCID( locale, 0 );
+    return Internal_EnumCalendarInfo( (CALINFO_ENUMPROCW)proc, lcid, id, type, TRUE, TRUE, TRUE, lparam );
 }
 
 
