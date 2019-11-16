@@ -293,9 +293,9 @@
 @ stdcall EnumCalendarInfoExEx(ptr wstr long wstr long long) kernel32.EnumCalendarInfoExEx
 @ stdcall EnumCalendarInfoExW(ptr long long long) kernel32.EnumCalendarInfoExW
 @ stdcall EnumCalendarInfoW(ptr long long long) kernel32.EnumCalendarInfoW
-@ stdcall EnumDateFormatsExEx(ptr wstr long long) kernel32.EnumDateFormatsExEx
-@ stdcall EnumDateFormatsExW(ptr long long) kernel32.EnumDateFormatsExW
-@ stdcall EnumDateFormatsW(ptr long long) kernel32.EnumDateFormatsW
+@ stdcall EnumDateFormatsExEx(ptr wstr long long)
+@ stdcall EnumDateFormatsExW(ptr long long)
+@ stdcall EnumDateFormatsW(ptr long long)
 # @ stub EnumDeviceDrivers
 @ stdcall EnumDynamicTimeZoneInformation(long ptr)
 @ stdcall EnumLanguageGroupLocalesW(ptr long long ptr)
@@ -825,7 +825,7 @@
 @ stdcall InterlockedPushListSListEx(ptr ptr ptr long) ntdll.RtlInterlockedPushListSListEx
 @ stub InternalLcidToName
 @ stub Internal_EnumCalendarInfo
-@ stub Internal_EnumDateFormats
+@ stdcall Internal_EnumDateFormats(ptr long long long long long long)
 @ stdcall Internal_EnumLanguageGroupLocales(ptr long long ptr long)
 @ stdcall Internal_EnumSystemCodePages(ptr long long)
 @ stdcall Internal_EnumSystemLanguageGroups(ptr long ptr long)

@@ -53,6 +53,60 @@ static const WCHAR locales_key[] =
 static const WCHAR altsort_key[] = {'A','l','t','e','r','n','a','t','e',' ','S','o','r','t','s',0};
 
 
+/**************************************************************************
+ *	Internal_EnumDateFormats   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumDateFormats( DATEFMT_ENUMPROCW proc, LCID lcid, DWORD flags,
+                                                        BOOL unicode, BOOL ex, BOOL exex, LPARAM lparam )
+{
+    WCHAR buffer[256];
+    LCTYPE lctype;
+    CALID cal_id;
+    INT ret;
+
+    if (!proc)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (!GetLocaleInfoW( lcid, LOCALE_ICALENDARTYPE|LOCALE_RETURN_NUMBER,
+                         (LPWSTR)&cal_id, sizeof(cal_id)/sizeof(WCHAR) ))
+        return FALSE;
+
+    switch (flags & ~LOCALE_USE_CP_ACP)
+    {
+    case 0:
+    case DATE_SHORTDATE:
+        lctype = LOCALE_SSHORTDATE;
+        break;
+    case DATE_LONGDATE:
+        lctype = LOCALE_SLONGDATE;
+        break;
+    case DATE_YEARMONTH:
+        lctype = LOCALE_SYEARMONTH;
+        break;
+    default:
+        FIXME( "unknown date format 0x%08x\n", flags );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    lctype |= flags & LOCALE_USE_CP_ACP;
+    if (unicode)
+        ret = GetLocaleInfoW( lcid, lctype, buffer, ARRAY_SIZE(buffer) );
+    else
+        ret = GetLocaleInfoA( lcid, lctype, (char *)buffer, sizeof(buffer) );
+
+    if (ret)
+    {
+        if (exex) ((DATEFMT_ENUMPROCEXEX)proc)( buffer, cal_id, lparam );
+        else if (ex) ((DATEFMT_ENUMPROCEXW)proc)( buffer, cal_id );
+        else proc( buffer );
+    }
+    return TRUE;
+}
+
+
 /******************************************************************************
  *	Internal_EnumLanguageGroupLocales   (kernelbase.@)
  */
@@ -252,6 +306,35 @@ INT WINAPI DECLSPEC_HOTPATCH CompareStringOrdinal( const WCHAR *str1, INT len1,
     if (ret < 0) return CSTR_LESS_THAN;
     if (ret > 0) return CSTR_GREATER_THAN;
     return CSTR_EQUAL;
+}
+
+
+/**************************************************************************
+ *	EnumDateFormatsW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH EnumDateFormatsW( DATEFMT_ENUMPROCW proc, LCID lcid, DWORD flags )
+{
+    return Internal_EnumDateFormats( proc, lcid, flags, TRUE, FALSE, FALSE, 0 );
+}
+
+
+/**************************************************************************
+ *	EnumDateFormatsExW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH EnumDateFormatsExW( DATEFMT_ENUMPROCEXW proc, LCID lcid, DWORD flags )
+{
+    return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, lcid, flags, TRUE, TRUE, FALSE, 0 );
+}
+
+
+/**************************************************************************
+ *	EnumDateFormatsExEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH EnumDateFormatsExEx( DATEFMT_ENUMPROCEXEX proc, const WCHAR *locale,
+                                                   DWORD flags, LPARAM lparam )
+{
+    LCID lcid = LocaleNameToLCID( locale, 0 );
+    return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, lcid, flags, TRUE, TRUE, TRUE, lparam );
 }
 
 

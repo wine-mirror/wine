@@ -59,6 +59,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 #define WC_FLAGSMASK (WC_DISCARDNS|WC_SEPCHARS|WC_DEFAULTCHAR|WC_ERR_INVALID_CHARS|\
                       WC_COMPOSITECHECK|WC_NO_BEST_FIT_CHARS)
 
+extern BOOL WINAPI Internal_EnumDateFormats( DATEFMT_ENUMPROCW proc, LCID lcid, DWORD flags, BOOL unicode,
+                                             BOOL ex, BOOL exex, LPARAM lparam );
 extern BOOL WINAPI Internal_EnumLanguageGroupLocales( LANGGROUPLOCALE_ENUMPROCW proc, LGRPID id,
                                                       DWORD flags, LONG_PTR param, BOOL unicode );
 extern BOOL WINAPI Internal_EnumSystemCodePages( CODEPAGE_ENUMPROCW proc, DWORD flags, BOOL unicode );
@@ -3622,6 +3624,28 @@ BOOL WINAPI EnumLanguageGroupLocalesA( LANGGROUPLOCALE_ENUMPROCA proc, LGRPID id
                                        DWORD flags, LONG_PTR param )
 {
     return Internal_EnumLanguageGroupLocales( (LANGGROUPLOCALE_ENUMPROCW)proc, id, flags, param, FALSE );
+}
+
+/**************************************************************************
+ *              EnumDateFormatsExA    (KERNEL32.@)
+ *
+ * FIXME: MSDN mentions only LOCALE_USE_CP_ACP, should we handle
+ * LOCALE_NOUSEROVERRIDE here as well?
+ */
+BOOL WINAPI EnumDateFormatsExA(DATEFMT_ENUMPROCEXA proc, LCID lcid, DWORD flags)
+{
+    return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, lcid, flags, FALSE, TRUE, FALSE, 0 );
+}
+
+/**************************************************************************
+ *              EnumDateFormatsA	(KERNEL32.@)
+ *
+ * FIXME: MSDN mentions only LOCALE_USE_CP_ACP, should we handle
+ * LOCALE_NOUSEROVERRIDE here as well?
+ */
+BOOL WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA proc, LCID lcid, DWORD flags)
+{
+    return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, lcid, flags, FALSE, FALSE, FALSE, 0 );
 }
 
 /******************************************************************************
