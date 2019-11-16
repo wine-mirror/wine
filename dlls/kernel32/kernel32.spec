@@ -556,8 +556,8 @@
 # @ stub GetCalendarDaysInMonth
 # @ stub GetCalendarDifferenceInDays
 @ stdcall GetCalendarInfoA(long long long ptr long ptr)
-@ stdcall GetCalendarInfoW(long long long ptr long ptr)
-@ stdcall GetCalendarInfoEx(wstr long ptr long ptr long ptr)
+@ stdcall -import GetCalendarInfoW(long long long ptr long ptr)
+@ stdcall -import GetCalendarInfoEx(wstr long ptr long ptr long ptr)
 # @ stub GetCalendarMonthsInYear
 # @ stub GetCalendarSupportedDateRange
 # @ stub GetCalendarWeekNumber
@@ -1328,7 +1328,7 @@
 @ stdcall -import SearchPathW(wstr wstr wstr long ptr ptr)
 @ stdcall SetCPGlobal(long)
 @ stdcall SetCalendarInfoA(long long long str)
-@ stdcall SetCalendarInfoW(long long long wstr)
+@ stdcall -import SetCalendarInfoW(long long long wstr)
 # @ stub SetClientTimeZoneInformation
 # @ stub SetComPlusPackageInstallStatus
 @ stdcall -import SetCommBreak(long)

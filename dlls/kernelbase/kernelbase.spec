@@ -425,8 +425,8 @@
 @ stdcall GetCPInfoExW(long long ptr) kernel32.GetCPInfoExW
 # @ stub GetCachedSigningLevel
 @ stub GetCalendar
-@ stdcall GetCalendarInfoEx(wstr long ptr long ptr long ptr) kernel32.GetCalendarInfoEx
-@ stdcall GetCalendarInfoW(long long long ptr long ptr) kernel32.GetCalendarInfoW
+@ stdcall GetCalendarInfoEx(wstr long ptr long ptr long ptr)
+@ stdcall GetCalendarInfoW(long long long ptr long ptr)
 @ stdcall GetCommConfig(long ptr ptr)
 @ stdcall GetCommMask(long ptr)
 @ stdcall GetCommModemStatus(long ptr)
@@ -1389,7 +1389,7 @@
 @ stdcall SearchPathW(wstr wstr wstr long ptr ptr)
 @ stdcall SetAclInformation(ptr ptr long long)
 # @ stub SetCachedSigningLevel
-@ stdcall SetCalendarInfoW(long long long wstr) kernel32.SetCalendarInfoW
+@ stdcall SetCalendarInfoW(long long long wstr)
 # @ stub SetClientDynamicTimeZoneInformation
 # @ stub SetClientTimeZoneInformation
 @ stdcall SetCommBreak(long)
