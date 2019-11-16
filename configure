@@ -20841,6 +20841,7 @@ wine_fn_config_makefile dlls/system.drv16 enable_win16
 wine_fn_config_makefile dlls/t2embed enable_t2embed
 wine_fn_config_makefile dlls/t2embed/tests enable_tests
 wine_fn_config_makefile dlls/tapi32 enable_tapi32
+wine_fn_config_makefile dlls/tapi32/tests enable_tests
 wine_fn_config_makefile dlls/taskschd enable_taskschd
 wine_fn_config_makefile dlls/taskschd/tests enable_tests
 wine_fn_config_makefile dlls/tdh enable_tdh

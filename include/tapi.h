@@ -761,7 +761,7 @@ typedef struct linemessage_tag {
   DWORD_PTR dwParam3;
 } LINEMESSAGE, *LPLINEMESSAGE;
 
-typedef void (CALLBACK *LINECALLBACK)(DWORD, DWORD, DWORD, DWORD, DWORD, DWORD);
+typedef void (CALLBACK *LINECALLBACK)(DWORD, DWORD, DWORD_PTR, DWORD_PTR, DWORD_PTR, DWORD_PTR);
 
 typedef struct _PHONEAPP {
   int dummy;
