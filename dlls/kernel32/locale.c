@@ -66,6 +66,8 @@ extern BOOL WINAPI Internal_EnumLanguageGroupLocales( LANGGROUPLOCALE_ENUMPROCW 
 extern BOOL WINAPI Internal_EnumSystemCodePages( CODEPAGE_ENUMPROCW proc, DWORD flags, BOOL unicode );
 extern BOOL WINAPI Internal_EnumSystemLanguageGroups( LANGUAGEGROUP_ENUMPROCW proc, DWORD flags,
                                                       LONG_PTR param, BOOL unicode );
+extern BOOL WINAPI Internal_EnumTimeFormats( TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags,
+                                             BOOL unicode, BOOL ex, LPARAM lparam );
 extern BOOL WINAPI Internal_EnumUILanguages( UILANGUAGE_ENUMPROCW proc, DWORD flags,
                                              LONG_PTR param, BOOL unicode );
 
@@ -3646,6 +3648,23 @@ BOOL WINAPI EnumDateFormatsExA(DATEFMT_ENUMPROCEXA proc, LCID lcid, DWORD flags)
 BOOL WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA proc, LCID lcid, DWORD flags)
 {
     return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, lcid, flags, FALSE, FALSE, FALSE, 0 );
+}
+
+/**************************************************************************
+ *              EnumTimeFormatsA	(KERNEL32.@)
+ *
+ * FIXME: MSDN mentions only LOCALE_USE_CP_ACP, should we handle
+ * LOCALE_NOUSEROVERRIDE here as well?
+ */
+BOOL WINAPI EnumTimeFormatsA( TIMEFMT_ENUMPROCA proc, LCID lcid, DWORD flags )
+{
+    /* EnumTimeFormatsA doesn't support flags, EnumTimeFormatsW does. */
+    if (flags & ~LOCALE_USE_CP_ACP)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return FALSE;
+    }
+    return Internal_EnumTimeFormats( (TIMEFMT_ENUMPROCW)proc, lcid, flags, FALSE, FALSE, 0 );
 }
 
 /******************************************************************************

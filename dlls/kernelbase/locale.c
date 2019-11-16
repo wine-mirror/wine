@@ -244,6 +244,50 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumSystemLanguageGroups( LANGUAGEGROUP_E
 }
 
 
+/**************************************************************************
+ *	Internal_EnumTimeFormats   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumTimeFormats( TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags,
+                                                        BOOL unicode, BOOL ex, LPARAM lparam )
+{
+    WCHAR buffer[256];
+    LCTYPE lctype;
+    INT ret;
+
+    if (!proc)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    switch (flags & ~LOCALE_USE_CP_ACP)
+    {
+    case 0:
+        lctype = LOCALE_STIMEFORMAT;
+        break;
+    case TIME_NOSECONDS:
+        lctype = LOCALE_SSHORTTIME;
+        break;
+    default:
+        FIXME( "Unknown time format %x\n", flags );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    lctype |= flags & LOCALE_USE_CP_ACP;
+    if (unicode)
+        ret = GetLocaleInfoW( lcid, lctype, buffer, ARRAY_SIZE(buffer) );
+    else
+        ret = GetLocaleInfoA( lcid, lctype, (char *)buffer, sizeof(buffer) );
+
+    if (ret)
+    {
+        if (ex) ((TIMEFMT_ENUMPROCEX)proc)( buffer, lparam );
+        else proc( buffer );
+    }
+    return TRUE;
+}
+
+
 /******************************************************************************
  *	Internal_EnumUILanguages   (kernelbase.@)
  */
@@ -472,6 +516,26 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesEx( LOCALE_ENUMPROCEX proc, DWORD
     RegCloseKey( altkey );
     RegCloseKey( key );
     return TRUE;
+}
+
+
+/**************************************************************************
+ *	EnumTimeFormatsW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH EnumTimeFormatsW( TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags )
+{
+    return Internal_EnumTimeFormats( proc, lcid, flags, TRUE, FALSE, 0 );
+}
+
+
+/**************************************************************************
+ *	EnumTimeFormatsEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH EnumTimeFormatsEx( TIMEFMT_ENUMPROCEX proc, const WCHAR *locale,
+                                                 DWORD flags, LPARAM lparam )
+{
+    LCID lcid = LocaleNameToLCID( locale, 0 );
+    return Internal_EnumTimeFormats( (TIMEFMT_ENUMPROCW)proc, lcid, flags, TRUE, TRUE, lparam );
 }
 
 

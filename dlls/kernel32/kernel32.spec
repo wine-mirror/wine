@@ -426,8 +426,8 @@
 @ stdcall -import EnumSystemLocalesEx(ptr long long ptr)
 @ stdcall -import EnumSystemLocalesW(ptr long)
 @ stdcall EnumTimeFormatsA(ptr long long)
-@ stdcall EnumTimeFormatsEx(ptr wstr long long)
-@ stdcall EnumTimeFormatsW(ptr long long)
+@ stdcall -import EnumTimeFormatsEx(ptr wstr long long)
+@ stdcall -import EnumTimeFormatsW(ptr long long)
 @ stdcall EnumUILanguagesA(ptr long long)
 @ stdcall -import EnumUILanguagesW(ptr long long)
 # @ stub EnumerateLocalComputerNamesA

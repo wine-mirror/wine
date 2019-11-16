@@ -318,8 +318,8 @@
 @ stdcall EnumSystemLocalesA(ptr long)
 @ stdcall EnumSystemLocalesEx(ptr long long ptr)
 @ stdcall EnumSystemLocalesW(ptr long)
-@ stdcall EnumTimeFormatsEx(ptr wstr long long) kernel32.EnumTimeFormatsEx
-@ stdcall EnumTimeFormatsW(ptr long long) kernel32.EnumTimeFormatsW
+@ stdcall EnumTimeFormatsEx(ptr wstr long long)
+@ stdcall EnumTimeFormatsW(ptr long long)
 @ stdcall EnumUILanguagesW(ptr long long)
 # @ stub EnumerateStateAtomValues
 # @ stub EnumerateStateContainerItems
@@ -830,7 +830,7 @@
 @ stdcall Internal_EnumSystemCodePages(ptr long long)
 @ stdcall Internal_EnumSystemLanguageGroups(ptr long ptr long)
 @ stub Internal_EnumSystemLocales
-@ stub Internal_EnumTimeFormats
+@ stdcall Internal_EnumTimeFormats(ptr long long long long long)
 @ stdcall Internal_EnumUILanguages(ptr long long long)
 # @ stub InternetTimeFromSystemTimeA
 # @ stub InternetTimeFromSystemTimeW
