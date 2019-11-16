@@ -60,6 +60,7 @@ SOURCES = \
 	cmdtxt.idl \
 	cmnquery.idl \
 	colinf.idl \
+	colordlg.h \
 	comcat.idl \
 	commctrl.h \
 	commctrl.rh \
