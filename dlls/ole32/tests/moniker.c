@@ -1049,36 +1049,33 @@ todo_wine
     ok_ole_success(hr, CreateBindCtx);
 
     hr = CreateFileMoniker(wszFileName1, &pmk1);
-    ok(hr==0, "CreateFileMoniker for file hr=%08x\n", hr);
+    ok(hr == S_OK, "Failed to create file moniker, hr %#x.\n", hr);
     hr = CreateFileMoniker(wszFileName2, &pmk2);
-    ok(hr==0, "CreateFileMoniker for file hr=%08x\n", hr);
+    ok(hr == S_OK, "Failed to create file moniker, hr %#x.\n", hr);
     hr = IBindCtx_GetRunningObjectTable(pbc, &pprot);
-    ok(hr==0, "IBindCtx_GetRunningObjectTable hr=%08x\n", hr);
+    ok(hr == S_OK, "Failed to get ROT, hr %#x.\n", hr);
 
     /* Check EnumMoniker before registering */
     hr = IRunningObjectTable_EnumRunning(pprot, &spEM1);
-    ok(hr==0, "IRunningObjectTable_EnumRunning hr=%08x\n", hr);
-    hr = IEnumMoniker_QueryInterface(spEM1, &IID_IUnknown, (void*) &lpEM1);
+    ok(hr == S_OK, "Failed to get enum object, hr %#x.\n", hr);
+    hr = IEnumMoniker_QueryInterface(spEM1, &IID_IUnknown, (void *)&lpEM1);
     /* Register a couple of Monikers and check is ok */
-    ok(hr==0, "IEnumMoniker_QueryInterface hr %08x %p\n", hr, lpEM1);
-    
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
     matchCnt = count_moniker_matches(pbc, spEM1);
     trace("Number of matches is %i\n", matchCnt);
 
     grflags= grflags | ROTFLAGS_REGISTRATIONKEEPSALIVE;
     hr = IRunningObjectTable_Register(pprot, grflags, lpEM1, pmk1, &pdwReg1);
-    ok(hr==0, "IRunningObjectTable_Register hr=%08x %p %08x %p %p %d\n",
-        hr, pprot, grflags, lpEM1, pmk1, pdwReg1);
+    ok(hr == S_OK, "Failed to register object, hr %#x.\n", hr);
 
-    trace("IROT::Register\n");
     grflags=0;
     grflags= grflags | ROTFLAGS_REGISTRATIONKEEPSALIVE;
     hr = IRunningObjectTable_Register(pprot, grflags, lpEM1, pmk2, &pdwReg2);
-    ok(hr==0, "IRunningObjectTable_Register hr=%08x %p %08x %p %p %d\n", hr,
-       pprot, grflags, lpEM1, pmk2, pdwReg2);
+    ok(hr == S_OK, "Failed to register object, hr %#x.\n", hr);
 
     hr = IRunningObjectTable_EnumRunning(pprot, &spEM2);
-    ok(hr==0, "IRunningObjectTable_EnumRunning hr=%08x\n", hr);
+    ok(hr == S_OK, "Failed to get enum object, hr %#x.\n", hr);
 
     matchCnt = count_moniker_matches(pbc, spEM2);
     ok(matchCnt==2, "Number of matches should be equal to 2 not %i\n", matchCnt);
@@ -1094,8 +1091,10 @@ todo_wine
     matchCnt = count_moniker_matches(pbc, spEM3);
     ok(matchCnt==2, "Number of matches should be equal to 2 not %i\n", matchCnt);
 
-    IRunningObjectTable_Revoke(pprot,pdwReg1);
-    IRunningObjectTable_Revoke(pprot,pdwReg2);
+    hr = IRunningObjectTable_Revoke(pprot,pdwReg1);
+    ok(hr == S_OK, "Failed to revoke, hr %#x.\n", hr);
+    hr = IRunningObjectTable_Revoke(pprot,pdwReg2);
+    ok(hr == S_OK, "Failed to revoke, hr %#x.\n", hr);
     IUnknown_Release(lpEM1);
     IEnumMoniker_Release(spEM1);
     IEnumMoniker_Release(spEM2);
