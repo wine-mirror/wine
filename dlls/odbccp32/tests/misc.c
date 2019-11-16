@@ -643,6 +643,11 @@ static void test_SQLGetInstalledDrivers(void)
     ok(!ret, "got %d\n", ret);
     check_error(ODBC_ERROR_INVALID_BUFF_LEN);
 
+    ret = SQLGetInstalledDrivers(buffer, 10, NULL);
+    ok(ret, "got %d\n", ret);
+    ok(strlen(buffer) == 8, "got len %u\n", lstrlenA(buffer));
+    ok(!buffer[9], "buffer not doubly null-terminated\n");
+
     ret = SQLGetInstalledDrivers(buffer, 10, &written);
     ok(ret, "got %d\n", ret);
     ok(strlen(buffer) == 8, "got len %u\n", lstrlenA(buffer));

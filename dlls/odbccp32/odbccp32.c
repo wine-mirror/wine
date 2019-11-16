@@ -583,7 +583,8 @@ BOOL WINAPI SQLGetInstalledDrivers(char *buf, WORD size, WORD *sizeout)
         return FALSE;
     }
 
-    *sizeout = WideCharToMultiByte(CP_ACP, 0, wbuf, written, NULL, 0, NULL, NULL);
+    if (sizeout)
+        *sizeout = WideCharToMultiByte(CP_ACP, 0, wbuf, written, NULL, 0, NULL, NULL);
     WideCharToMultiByte(CP_ACP, 0, wbuf, written, buf, size, NULL, NULL);
 
     heap_free(wbuf);
