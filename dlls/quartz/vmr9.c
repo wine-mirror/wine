@@ -2239,8 +2239,7 @@ static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
         goto fail;
 
     hr = strmbase_video_init(&pVMR->baseControlVideo, &pVMR->renderer.filter,
-            &pVMR->renderer.filter.csFilter, &pVMR->renderer.sink.pin,
-            &renderer_BaseControlVideoFuncTable);
+            &pVMR->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
     if (FAILED(hr))
         goto fail;
 

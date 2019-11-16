@@ -477,7 +477,6 @@ typedef struct tagBaseControlVideo
 	IBasicVideo IBasicVideo_iface;
 
 	struct strmbase_filter *pFilter;
-	CRITICAL_SECTION* pInterfaceLock;
 	struct strmbase_pin *pPin;
 
 	const struct BaseControlVideoFuncTable* pFuncsTable;
@@ -509,7 +508,7 @@ typedef struct BaseControlVideoFuncTable {
 } BaseControlVideoFuncTable;
 
 HRESULT WINAPI strmbase_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
-        CRITICAL_SECTION *cs, struct strmbase_pin *pin, const BaseControlVideoFuncTable *func_table);
+        struct strmbase_pin *pin, const BaseControlVideoFuncTable *func_table);
 HRESULT WINAPI BaseControlVideo_Destroy(BaseControlVideo *pControlVideo);
 #endif
 #endif
