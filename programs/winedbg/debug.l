@@ -187,6 +187,7 @@ STRING     \"[^\n"]+\"
 <INFO_CMD,BD_CMD>display|displa|displ|disp|dis|di|d	{ BEGIN(NOCMD); return tDISPLAY; }
 <INITIAL>undisplay|undispla|undispl|undisp|undis|undi|und	{ BEGIN(NOCMD); return tUNDISPLAY; }
 <INITIAL>delete|delet|dele|del		{ BEGIN(BD_CMD); return tDELETE; }
+<INITIAL>thread|threa|thre|thr|th	{ BEGIN(NOCMD); return tTHREAD; }
 <INITIAL,NOPROCESS>quit|qui|qu|q	{ BEGIN(NOCMD); return tQUIT; }
 <INITIAL>set|se				{ BEGIN(NOCMD); return tSET; }
 <INITIAL>x				{ BEGIN(FORMAT_EXPECTED); return tEXAM; }

@@ -66,7 +66,7 @@ void print_help(void)
             "  show dir                               dir <path>",
             "  set <reg> = <expr>                     set *<addr> = <expr>",
             "  pass                                   whatis",
-            "  info (see 'help info' for options)",
+            "  info (see 'help info' for options)     thread <tid>",
 
             "The 'x' command accepts repeat counts and formats (including 'i') in the",
             "same way that gdb does.\n",

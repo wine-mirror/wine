@@ -427,6 +427,7 @@ extern enum sym_get_lval symbol_picker_scoped(const char* name, const struct sgv
 extern void             dbg_run_debuggee(const char* args);
 extern void             dbg_wait_next_exception(DWORD cont, int count, int mode);
 extern enum dbg_start   dbg_active_attach(int argc, char* argv[]);
+extern BOOL             dbg_set_curr_thread(DWORD tid);
 extern enum dbg_start   dbg_active_launch(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_auto(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_minidump(int argc, char* argv[]);

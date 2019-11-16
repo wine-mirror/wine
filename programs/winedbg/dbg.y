@@ -139,6 +139,7 @@ command:
     | tWHATIS expr_lvalue       { dbg_printf("type = "); types_print_type(&$2.type, FALSE); dbg_printf("\n"); }
     | tATTACH tNUM     		{ dbg_attach_debuggee($2); dbg_active_wait_for_first_exception(); }
     | tDETACH                   { dbg_curr_process->process_io->close_process(dbg_curr_process, FALSE); }
+    | tTHREAD tNUM              { dbg_set_curr_thread($2); }
     | tKILL                     { dbg_curr_process->process_io->close_process(dbg_curr_process, TRUE); }
     | tMINIDUMP pathname        { minidump_write($2, (dbg_curr_thread && dbg_curr_thread->in_exception) ? &dbg_curr_thread->excpt_record : NULL);}
     | tECHO tSTRING             { dbg_printf("%s\n", $2); }

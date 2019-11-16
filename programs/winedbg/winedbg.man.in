@@ -116,6 +116,9 @@ IDs can be obtained using the \fBinfo\ process\fR command.  Note the
 .IP 
 .IP \fBdetach\fR
 Detach from a Wine-process.
+.IP \fBthread\ \fIN\fR
+Change the current thread to \fIN\fR (its Windows TID, numeric or hexadecimal).
+.IP
 .PP
 \fIHelp commands\fR
 .IP \fBhelp\fR

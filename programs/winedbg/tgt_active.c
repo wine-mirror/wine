@@ -98,6 +98,29 @@ static unsigned dbg_fetch_context(void)
     return TRUE;
 }
 
+BOOL dbg_set_curr_thread(DWORD tid)
+{
+    struct dbg_thread* thread;
+
+    if (!dbg_curr_process)
+    {
+        dbg_printf("No process loaded\n");
+        return FALSE;
+    }
+
+    thread = dbg_get_thread(dbg_curr_process, tid);
+    if (thread)
+    {
+        dbg_curr_thread = thread;
+        dbg_fetch_context();
+        stack_fetch_frames(&dbg_context);
+        dbg_curr_tid = tid;
+        return TRUE;
+    }
+    dbg_printf("No such thread\n");
+    return thread != NULL;
+}
+
 /***********************************************************************
  *              dbg_exception_prolog
  *
