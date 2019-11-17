@@ -4171,10 +4171,10 @@ BOOL WINAPI SetUserGeoID(GEOID geoid)
 INT WINAPI GetGeoInfoW(GEOID geoid, GEOTYPE geotype, LPWSTR data, int data_len, LANGID lang)
 {
     const struct geoinfo_t *ptr;
-    const WCHAR *str = NULL;
     WCHAR buffW[12];
-    LONG val = 0;
-    INT len;
+    const WCHAR *str = buffW;
+    int len;
+    static const WCHAR fmtW[] = {'%','d',0};
 
     TRACE("%d %d %p %d %d\n", geoid, geotype, data, data_len, lang);
 
@@ -4185,20 +4185,20 @@ INT WINAPI GetGeoInfoW(GEOID geoid, GEOTYPE geotype, LPWSTR data, int data_len, 
 
     switch (geotype) {
     case GEO_NATION:
-        val = geoid;
+        sprintfW(buffW, fmtW, ptr->id);
         break;
     case GEO_ISO_UN_NUMBER:
-        val = ptr->uncode;
+        sprintfW(buffW, fmtW, ptr->uncode);
         break;
     case GEO_PARENT:
-        val = ptr->parent;
+        sprintfW(buffW, fmtW, ptr->parent);
         break;
     case GEO_ISO2:
-    case GEO_ISO3:
-    {
-        str = geotype == GEO_ISO2 ? ptr->iso2W : ptr->iso3W;
+        str = ptr->iso2W;
         break;
-    }
+    case GEO_ISO3:
+        str = ptr->iso3W;
+        break;
     case GEO_RFC1766:
     case GEO_LCID:
     case GEO_FRIENDLYNAME:
@@ -4214,12 +4214,6 @@ INT WINAPI GetGeoInfoW(GEOID geoid, GEOTYPE geotype, LPWSTR data, int data_len, 
         WARN("unrecognized type %d\n", geotype);
         SetLastError(ERROR_INVALID_FLAGS);
         return 0;
-    }
-
-    if (val) {
-        static const WCHAR fmtW[] = {'%','d',0};
-        sprintfW(buffW, fmtW, val);
-        str = buffW;
     }
 
     len = strlenW(str) + 1;
