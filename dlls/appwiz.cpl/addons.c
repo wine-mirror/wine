@@ -63,8 +63,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 
 typedef struct {
     const char *version;
-    const char *file_name;
-    const char *subdir_name;
+    const WCHAR *file_name;
+    const WCHAR *subdir_name;
     const char *sha;
     const char *url_default;
     const char *config_key;
@@ -79,8 +79,8 @@ typedef struct {
 static const addon_info_t addons_info[] = {
     {
         GECKO_VERSION,
-        "wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".msi",
-        "gecko",
+        L"wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".msi",
+        L"gecko",
         GECKO_SHA,
         "http://source.winehq.org/winegecko.php",
         "MSHTML", "GeckoUrl", "GeckoCabDir",
@@ -88,8 +88,8 @@ static const addon_info_t addons_info[] = {
     },
     {
         MONO_VERSION,
-        "wine-mono-" MONO_VERSION ".msi",
-        "mono",
+        L"wine-mono-" MONO_VERSION ".msi",
+        L"mono",
         MONO_SHA,
         "http://source.winehq.org/winemono.php",
         "Dotnet", "MonoUrl", "MonoCabDir",
@@ -198,28 +198,23 @@ static enum install_res install_file(const WCHAR *file_name)
     return INSTALL_OK;
 }
 
-static enum install_res install_from_dos_file(const WCHAR *dir, const char *subdir, const char *file_name)
+static enum install_res install_from_dos_file(const WCHAR *dir, const WCHAR *subdir, const WCHAR *file_name)
 {
-    static const WCHAR ntprefixW[] = {'\\','?','?','\\',0};
     WCHAR *path;
     enum install_res ret;
     int len = lstrlenW( dir );
     int size = len + 1;
 
-    size += MultiByteToWideChar( CP_UNIXCP, 0, subdir, -1, NULL, 0 );
-    size += MultiByteToWideChar( CP_UNIXCP, 0, file_name, -1, NULL, 0 );
+    size += lstrlenW( subdir ) + lstrlenW( file_name ) + 2;
     if (!(path = heap_alloc( size * sizeof(WCHAR) ))) return INSTALL_FAILED;
 
     lstrcpyW( path, dir );
-    if (!wcsncmp( path, ntprefixW, wcslen(ntprefixW) ))  path[1] = '\\';  /* change \??\ into \\?\ */
+    if (!wcsncmp( path, L"\\??\\", 4 ))  path[1] = '\\';  /* change \??\ into \\?\ */
     if (len && path[len-1] != '/' && path[len-1] != '\\') path[len++] = '\\';
 
-    if (*subdir)
-    {
-        len += MultiByteToWideChar( CP_UNIXCP, 0, subdir, -1, path + len, size - len );
-        path[len - 1] = '\\';
-    }
-    MultiByteToWideChar( CP_UNIXCP, 0, file_name, -1, path + len, size - len );
+    lstrcpyW( path + len, subdir );
+    lstrcatW( path, L"\\" );
+    lstrcatW( path, file_name );
 
     if (GetFileAttributesW( path ) == INVALID_FILE_ATTRIBUTES)
     {
@@ -234,7 +229,7 @@ static enum install_res install_from_dos_file(const WCHAR *dir, const char *subd
     return ret;
 }
 
-static enum install_res install_from_unix_file(const char *dir, const char *subdir, const char *file_name)
+static enum install_res install_from_unix_file(const char *dir, const WCHAR *subdir, const WCHAR *file_name)
 {
     WCHAR *dos_dir;
     enum install_res ret = INSTALL_NEXT;
@@ -290,7 +285,7 @@ static enum install_res install_from_registered_dir(void)
         return INSTALL_FAILED;
     }
 
-    ret = install_from_unix_file(package_dir, "", addon->file_name);
+    ret = install_from_unix_file(package_dir, L"", addon->file_name);
 
     heap_free(package_dir);
     return ret;
@@ -357,8 +352,7 @@ static WCHAR *get_cache_file_name(BOOL ensure_exists)
         return NULL;
     }
 
-    size = lstrlenW( cache_dir ) + ARRAY_SIZE(wineW);
-    size += MultiByteToWideChar( CP_UNIXCP, 0, addon->file_name, -1, NULL, 0 );
+    size = lstrlenW( cache_dir ) + ARRAY_SIZE(wineW) + lstrlenW( addon->file_name ) + 1;
     if (!(ret = heap_alloc( size * sizeof(WCHAR) )))
     {
         heap_free( cache_dir );
@@ -376,7 +370,7 @@ static WCHAR *get_cache_file_name(BOOL ensure_exists)
     }
     len = lstrlenW( ret );
     ret[len++] = '\\';
-    MultiByteToWideChar( CP_UNIXCP, 0, addon->file_name, -1, ret + len, size - len );
+    lstrcpyW( ret + len, addon->file_name );
 
     TRACE( "got %s\n", debugstr_w(ret) );
     return ret;
