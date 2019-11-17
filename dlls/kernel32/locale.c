@@ -3945,12 +3945,12 @@ static const struct geoinfo_t geoinfodata[] = {
     { 300, {'A','I',0}, {'A','I','A',0}, 10039880, 660 }, /* Anguilla */
     { 301, {'A','Q',0}, {'A','T','A',0}, 39070,  10 }, /* Antarctica */
     { 302, {'A','W',0}, {'A','B','W',0}, 10039880, 533 }, /* Aruba */
-    { 303, {'X','X',0}, {'X','X',0}, 39070 }, /* Ascension Island */
+    { 303, {'X','X',0}, {'X','X',0}, 343 }, /* Ascension Island */
     { 304, {'X','X',0}, {'X','X',0}, 10210825 }, /* Ashmore and Cartier Islands */
     { 305, {'X','X',0}, {'X','X',0}, 161832256 }, /* Baker Island */
     { 306, {'B','V',0}, {'B','V','T',0}, 39070,  74 }, /* Bouvet Island */
     { 307, {'K','Y',0}, {'C','Y','M',0}, 10039880, 136 }, /* Cayman Islands */
-    { 308, {'X','X',0}, {'X','X',0}, 10210824, 0, LOCATION_BOTH }, /* Channel Islands */
+    { 308, {'X','X',0}, {'X','X',0}, 10210824, 830, LOCATION_BOTH }, /* Channel Islands */
     { 309, {'C','X',0}, {'C','X','R',0}, 12, 162 }, /* Christmas Island */
     { 310, {'X','X',0}, {'X','X',0}, 27114 }, /* Clipperton Island */
     { 311, {'C','C',0}, {'C','C','K',0}, 10210825, 166 }, /* Cocos (Keeling) Islands */
@@ -3986,48 +3986,49 @@ static const struct geoinfo_t geoinfodata[] = {
     { 343, {'S','H',0}, {'S','H','N',0}, 42483, 654 }, /* St. Helena */
     { 346, {'X','X',0}, {'X','X',0}, 337 }, /* Tinian Island */
     { 347, {'T','K',0}, {'T','K','L',0}, 26286, 772 }, /* Tokelau */
-    { 348, {'X','X',0}, {'X','X',0}, 39070 }, /* Tristan da Cunha */
+    { 348, {'X','X',0}, {'X','X',0}, 343 }, /* Tristan da Cunha */
     { 349, {'T','C',0}, {'T','C','A',0}, 10039880, 796 }, /* Turks and Caicos Islands */
     { 351, {'V','G',0}, {'V','G','B',0}, 10039880,  92 }, /* Virgin Islands, British */
     { 352, {'W','F',0}, {'W','L','F',0}, 26286, 876 }, /* Wallis and Futuna */
-    { 742, {'X','X',0}, {'X','X',0}, 39070, 0, LOCATION_REGION }, /* Africa */
-    { 2129, {'X','X',0}, {'X','X',0}, 39070, 0, LOCATION_REGION }, /* Asia */
-    { 10541, {'X','X',0}, {'X','X',0}, 39070, 0, LOCATION_REGION }, /* Europe */
+    { 742, {'X','X',0}, {'X','X',0}, 39070, 2, LOCATION_REGION }, /* Africa */
+    { 2129, {'X','X',0}, {'X','X',0}, 39070, 142, LOCATION_REGION }, /* Asia */
+    { 10541, {'X','X',0}, {'X','X',0}, 39070, 150, LOCATION_REGION }, /* Europe */
     { 15126, {'I','M',0}, {'I','M','N',0}, 10039882, 833 }, /* Man, Isle of */
     { 19618, {'M','K',0}, {'M','K','D',0}, 47610, 807 }, /* Macedonia, Former Yugoslav Republic of */
-    { 20900, {'X','X',0}, {'X','X',0}, 27114, 0, LOCATION_REGION }, /* Melanesia */
-    { 21206, {'X','X',0}, {'X','X',0}, 27114, 0, LOCATION_REGION }, /* Micronesia */
+    { 20900, {'X','X',0}, {'X','X',0}, 27114, 54, LOCATION_REGION }, /* Melanesia */
+    { 21206, {'X','X',0}, {'X','X',0}, 27114, 57, LOCATION_REGION }, /* Micronesia */
     { 21242, {'X','X',0}, {'X','X',0}, 161832256 }, /* Midway Islands */
-    { 23581, {'X','X',0}, {'X','X',0}, 10026358, 0, LOCATION_REGION }, /* Northern America */
-    { 26286, {'X','X',0}, {'X','X',0}, 27114, 0, LOCATION_REGION }, /* Polynesia */
-    { 27082, {'X','X',0}, {'X','X',0}, 161832257, 0, LOCATION_REGION }, /* Central America */
-    { 27114, {'X','X',0}, {'X','X',0}, 39070, 0, LOCATION_REGION }, /* Oceania */
+    { 23581, {'X','X',0}, {'X','X',0}, 10026358, 21, LOCATION_REGION }, /* Northern America */
+    { 26286, {'X','X',0}, {'X','X',0}, 27114, 61, LOCATION_REGION }, /* Polynesia */
+    { 27082, {'X','X',0}, {'X','X',0}, 161832257, 13, LOCATION_REGION }, /* Central America */
+    { 27114, {'X','X',0}, {'X','X',0}, 39070, 9, LOCATION_REGION }, /* Oceania */
     { 30967, {'S','X',0}, {'S','X','M',0}, 10039880, 534 }, /* Sint Maarten (Dutch part) */
-    { 31396, {'X','X',0}, {'X','X',0}, 161832257, 0, LOCATION_REGION }, /* South America */
+    { 31396, {'X','X',0}, {'X','X',0}, 161832257, 5, LOCATION_REGION }, /* South America */
     { 31706, {'M','F',0}, {'M','A','F',0}, 10039880, 663 }, /* Saint Martin (French part) */
-    { 39070, {'X','X',0}, {'X','X',0}, 39070, 0, LOCATION_REGION }, /* World */
-    { 42483, {'X','X',0}, {'X','X',0}, 742, 0, LOCATION_REGION }, /* Western Africa */
-    { 42484, {'X','X',0}, {'X','X',0}, 742, 0, LOCATION_REGION }, /* Middle Africa */
-    { 42487, {'X','X',0}, {'X','X',0}, 742, 0, LOCATION_REGION }, /* Northern Africa */
-    { 47590, {'X','X',0}, {'X','X',0}, 2129, 0, LOCATION_REGION }, /* Central Asia */
-    { 47599, {'X','X',0}, {'X','X',0}, 2129, 0, LOCATION_REGION }, /* South-Eastern Asia */
-    { 47600, {'X','X',0}, {'X','X',0}, 2129, 0, LOCATION_REGION }, /* Eastern Asia */
-    { 47603, {'X','X',0}, {'X','X',0}, 742, 0, LOCATION_REGION }, /* Eastern Africa */
-    { 47609, {'X','X',0}, {'X','X',0}, 10541, 0, LOCATION_REGION }, /* Eastern Europe */
-    { 47610, {'X','X',0}, {'X','X',0}, 10541, 0, LOCATION_REGION }, /* Southern Europe */
-    { 47611, {'X','X',0}, {'X','X',0}, 2129, 0, LOCATION_REGION }, /* Middle East */
-    { 47614, {'X','X',0}, {'X','X',0}, 2129, 0, LOCATION_REGION }, /* Southern Asia */
+    { 39070, {'X','X',0}, {'X','X',0}, 39070, 1, LOCATION_REGION }, /* World */
+    { 42483, {'X','X',0}, {'X','X',0}, 742, 11, LOCATION_REGION }, /* Western Africa */
+    { 42484, {'X','X',0}, {'X','X',0}, 742, 17, LOCATION_REGION }, /* Middle Africa */
+    { 42487, {'X','X',0}, {'X','X',0}, 742, 15, LOCATION_REGION }, /* Northern Africa */
+    { 47590, {'X','X',0}, {'X','X',0}, 2129, 143, LOCATION_REGION }, /* Central Asia */
+    { 47599, {'X','X',0}, {'X','X',0}, 2129, 35, LOCATION_REGION }, /* South-Eastern Asia */
+    { 47600, {'X','X',0}, {'X','X',0}, 2129, 30, LOCATION_REGION }, /* Eastern Asia */
+    { 47603, {'X','X',0}, {'X','X',0}, 742, 14, LOCATION_REGION }, /* Eastern Africa */
+    { 47609, {'X','X',0}, {'X','X',0}, 10541, 151, LOCATION_REGION }, /* Eastern Europe */
+    { 47610, {'X','X',0}, {'X','X',0}, 10541, 39, LOCATION_REGION }, /* Southern Europe */
+    { 47611, {'X','X',0}, {'X','X',0}, 2129, 145, LOCATION_REGION }, /* Middle East */
+    { 47614, {'X','X',0}, {'X','X',0}, 2129, 34, LOCATION_REGION }, /* Southern Asia */
     { 7299303, {'T','L',0}, {'T','L','S',0}, 47599, 626 }, /* Democratic Republic of Timor-Leste */
-    { 10026358, {'X','X',0}, {'X','X',0}, 39070, 0, LOCATION_REGION }, /* Americas */
+    { 9914689, {'X','K',0}, {'X','K','S',0}, 47610, 906 }, /* Kosovo */
+    { 10026358, {'X','X',0}, {'X','X',0}, 39070, 19, LOCATION_REGION }, /* Americas */
     { 10028789, {'A','X',0}, {'A','L','A',0}, 10039882, 248 }, /* Åland Islands */
-    { 10039880, {'X','X',0}, {'X','X',0}, 161832257, 0, LOCATION_REGION }, /* Caribbean */
-    { 10039882, {'X','X',0}, {'X','X',0}, 10541, 0, LOCATION_REGION }, /* Northern Europe */
-    { 10039883, {'X','X',0}, {'X','X',0}, 742, 0, LOCATION_REGION }, /* Southern Africa */
-    { 10210824, {'X','X',0}, {'X','X',0}, 10541, 0, LOCATION_REGION }, /* Western Europe */
-    { 10210825, {'X','X',0}, {'X','X',0}, 27114, 0, LOCATION_REGION }, /* Australia and New Zealand */
+    { 10039880, {'X','X',0}, {'X','X',0}, 161832257, 29, LOCATION_REGION }, /* Caribbean */
+    { 10039882, {'X','X',0}, {'X','X',0}, 10541, 154, LOCATION_REGION }, /* Northern Europe */
+    { 10039883, {'X','X',0}, {'X','X',0}, 742, 18, LOCATION_REGION }, /* Southern Africa */
+    { 10210824, {'X','X',0}, {'X','X',0}, 10541, 155, LOCATION_REGION }, /* Western Europe */
+    { 10210825, {'X','X',0}, {'X','X',0}, 27114, 53, LOCATION_REGION }, /* Australia and New Zealand */
     { 161832015, {'B','L',0}, {'B','L','M',0}, 10039880, 652 }, /* Saint Barthélemy */
     { 161832256, {'U','M',0}, {'U','M','I',0}, 27114, 581 }, /* U.S. Minor Outlying Islands */
-    { 161832257, {'X','X',0}, {'X','X',0}, 10026358, 0, LOCATION_REGION }, /* Latin America and the Caribbean */
+    { 161832257, {'X','X',0}, {'X','X',0}, 10026358, 419, LOCATION_REGION }, /* Latin America and the Caribbean */
 };
 
 static const struct geoinfo_t *get_geoinfo_dataptr(GEOID geoid)
