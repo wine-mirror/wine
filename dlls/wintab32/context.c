@@ -178,9 +178,9 @@ int TABLET_PostTabletMessage(LPOPENCONTEXT newcontext, UINT msg, WPARAM wParam,
 static inline DWORD ScaleForContext(DWORD In, LONG InOrg, LONG InExt, LONG OutOrg, LONG OutExt)
 {
     if (((InExt > 0 )&&(OutExt > 0)) || ((InExt<0) && (OutExt < 0)))
-        return ((In - InOrg) * abs(OutExt) / abs(InExt)) + OutOrg;
+        return MulDiv(In - InOrg, abs(OutExt), abs(InExt)) + OutOrg;
     else
-        return ((abs(InExt) - (In - InOrg))*abs(OutExt) / abs(InExt)) + OutOrg;
+        return MulDiv(abs(InExt) - (In - InOrg), abs(OutExt), abs(InExt)) + OutOrg;
 }
 
 LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd)
