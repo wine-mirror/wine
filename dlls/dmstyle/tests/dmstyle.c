@@ -244,22 +244,61 @@ static void test_track(void)
     CLSID classid;
     ULARGE_INTEGER size;
     HRESULT hr;
+#define X(guid)        &guid, #guid
+    const struct {
+        REFGUID type;
+        const char *name;
+    } param_types[] = {
+        { X(GUID_BandParam) },
+        { X(GUID_ChordParam) },
+        { X(GUID_Clear_All_Bands) },
+        { X(GUID_CommandParam) },
+        { X(GUID_CommandParam2) },
+        { X(GUID_CommandParamNext) },
+        { X(GUID_ConnectToDLSCollection) },
+        { X(GUID_Disable_Auto_Download) },
+        { X(GUID_DisableTempo) },
+        { X(GUID_DisableTimeSig) },
+        { X(GUID_Download) },
+        { X(GUID_DownloadToAudioPath) },
+        { X(GUID_Enable_Auto_Download) },
+        { X(GUID_EnableTempo) },
+        { X(GUID_EnableTimeSig) },
+        { X(GUID_IDirectMusicBand) },
+        { X(GUID_IDirectMusicChordMap) },
+        { X(GUID_IDirectMusicStyle) },
+        { X(GUID_MuteParam) },
+        { X(GUID_Play_Marker) },
+        { X(GUID_RhythmParam) },
+        { X(GUID_SeedVariations) },
+        { X(GUID_StandardMIDIFile) },
+        { X(GUID_TempoParam) },
+        { X(GUID_TimeSignature) },
+        { X(GUID_Unload) },
+        { X(GUID_UnloadFromAudioPath) },
+        { X(GUID_Valid_Start_Time) },
+        { X(GUID_Variations) }
+    };
+#undef X
 #define X(class)        &CLSID_ ## class, #class
     const struct {
         REFCLSID clsid;
         const char *name;
         BOOL has_save;
         BOOL has_join;
+        /* bitfields with supported param types */
+        unsigned int has_params;
+        unsigned int todo_params;
     } class[] = {
-        { X(DirectMusicAuditionTrack), TRUE, FALSE },
-        { X(DirectMusicChordTrack), TRUE, TRUE },
-        { X(DirectMusicCommandTrack), TRUE, TRUE },
-        { X(DirectMusicMotifTrack), FALSE, FALSE },
-        { X(DirectMusicMuteTrack), TRUE, FALSE },
-        { X(DirectMusicStyleTrack), FALSE, TRUE },
+        { X(DirectMusicAuditionTrack), TRUE, FALSE, 0x18204200, 0x18204200 },
+        { X(DirectMusicChordTrack), TRUE, TRUE, 0x100002, 1 },
+        { X(DirectMusicCommandTrack), TRUE, TRUE, 0x38, 0 },
+        { X(DirectMusicMotifTrack), FALSE, FALSE, 0x8204200, 0 },
+        { X(DirectMusicMuteTrack), TRUE, FALSE, 0x40000, 0 },
+        { X(DirectMusicStyleTrack), FALSE, TRUE, 0x1224200, 0 },
     };
 #undef X
-    unsigned int i;
+    unsigned int i, j;
 
     for (i = 0; i < ARRAY_SIZE(class); i++) {
         trace("Testing %s\n", class[i].name);
@@ -287,6 +326,19 @@ static void test_track(void)
 
         hr = IDirectMusicTrack8_IsParamSupported(dmt8, NULL);
         ok(hr == E_POINTER, "IDirectMusicTrack8_IsParamSupported failed: %08x\n", hr);
+        for (j = 0; j < ARRAY_SIZE(param_types); j++) {
+            hr = IDirectMusicTrack8_IsParamSupported(dmt8, param_types[j].type);
+            if (class[i].has_params & (1 << j))
+                todo_wine_if(class[i].todo_params & (1 << j))
+                    ok(hr == S_OK, "IsParamSupported(%s) failed: %08x, expected S_OK\n",
+                            param_types[j].name, hr);
+            else
+                todo_wine_if(class[i].todo_params & (1 << j))
+                    ok(hr == DMUS_E_TYPE_UNSUPPORTED,
+                            "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
+                            param_types[j].name, hr);
+        }
+
         if (class[i].clsid == &CLSID_DirectMusicMuteTrack) {
             hr = IDirectMusicTrack8_AddNotificationType(dmt8, NULL);
             ok(hr == E_NOTIMPL, "IDirectMusicTrack8_AddNotificationType failed: %08x\n", hr);
