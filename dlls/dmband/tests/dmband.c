@@ -181,6 +181,44 @@ static void test_bandtrack(void)
     CLSID class;
     ULARGE_INTEGER size;
     HRESULT hr;
+#define X(guid)        &guid, #guid
+    const struct {
+        REFGUID type;
+        const char *name;
+        BOOL supported;
+    } param_types[] = {
+        { X(GUID_BandParam), TRUE },
+        { X(GUID_ChordParam), FALSE },
+        { X(GUID_Clear_All_Bands), TRUE },
+        { X(GUID_CommandParam), FALSE },
+        { X(GUID_CommandParam2), FALSE },
+        { X(GUID_CommandParamNext), FALSE },
+        { X(GUID_ConnectToDLSCollection), TRUE },
+        { X(GUID_Disable_Auto_Download), TRUE },
+        { X(GUID_DisableTempo), FALSE },
+        { X(GUID_DisableTimeSig), FALSE },
+        { X(GUID_Download), TRUE },
+        { X(GUID_DownloadToAudioPath), TRUE },
+        { X(GUID_Enable_Auto_Download), TRUE },
+        { X(GUID_EnableTempo), FALSE },
+        { X(GUID_EnableTimeSig), FALSE },
+        { X(GUID_IDirectMusicBand), TRUE },
+        { X(GUID_IDirectMusicChordMap), FALSE },
+        { X(GUID_IDirectMusicStyle), FALSE },
+        { X(GUID_MuteParam), FALSE },
+        { X(GUID_Play_Marker), FALSE },
+        { X(GUID_RhythmParam), FALSE },
+        { X(GUID_SeedVariations), FALSE },
+        { X(GUID_StandardMIDIFile), TRUE },
+        { X(GUID_TempoParam), FALSE },
+        { X(GUID_TimeSignature), FALSE },
+        { X(GUID_Unload), TRUE },
+        { X(GUID_UnloadFromAudioPath), TRUE },
+        { X(GUID_Valid_Start_Time), FALSE },
+        { X(GUID_Variations), FALSE },
+    };
+#undef X
+    unsigned int i;
 
     hr = CoCreateInstance(&CLSID_DirectMusicBandTrack, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicTrack8, (void**)&dmt8);
@@ -203,8 +241,20 @@ static void test_bandtrack(void)
     hr = IDirectMusicTrack8_SetParam(dmt8, NULL, 0, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_SetParam failed: %08x\n", hr);
     }
+
     hr = IDirectMusicTrack8_IsParamSupported(dmt8, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_IsParamSupported failed: %08x\n", hr);
+    for (i = 0; i < ARRAY_SIZE(param_types); i++) {
+        hr = IDirectMusicTrack8_IsParamSupported(dmt8, param_types[i].type);
+        if (param_types[i].supported)
+            ok(hr == S_OK, "IsParamSupported(%s) failed: %08x, expected S_OK\n",
+                    param_types[i].name, hr);
+        else
+            ok(hr == DMUS_E_TYPE_UNSUPPORTED,
+                    "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
+                    param_types[i].name, hr);
+    }
+
     hr = IDirectMusicTrack8_AddNotificationType(dmt8, NULL);
     ok(hr == E_NOTIMPL, "IDirectMusicTrack8_AddNotificationType failed: %08x\n", hr);
     hr = IDirectMusicTrack8_RemoveNotificationType(dmt8, NULL);
