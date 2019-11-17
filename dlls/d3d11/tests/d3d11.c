@@ -19422,9 +19422,9 @@ static void test_uav_load(void)
 #define R32_FLOAT    DXGI_FORMAT_R32_FLOAT
 #define R32_UINT     DXGI_FORMAT_R32_UINT
 #define R32_SINT     DXGI_FORMAT_R32_SINT
-        {&ps_ld_2d_float,    &float_2d,   {R32_FLOAT, TEX_2D,       0},          {}, (const DWORD *)float_data},
-        {&ps_ld_2d_uint,     &uint_2d,    {R32_UINT,  TEX_2D,       0},          {}, (const DWORD *)uint_data},
-        {&ps_ld_2d_int,      &int_2d,     {R32_SINT,  TEX_2D,       0},          {}, (const DWORD *)int_data},
+        {&ps_ld_2d_float,    &float_2d,   {R32_FLOAT, TEX_2D,       0},         {0}, (const DWORD *)float_data},
+        {&ps_ld_2d_uint,     &uint_2d,    {R32_UINT,  TEX_2D,       0},         {0}, (const DWORD *)uint_data},
+        {&ps_ld_2d_int,      &int_2d,     {R32_SINT,  TEX_2D,       0},         {0}, (const DWORD *)int_data},
         {&ps_ld_2d_uint_arr, &uint2d_arr, {R32_UINT,  TEX_2D_ARRAY, 0, 0, ~0u}, {0}, (const DWORD *)uint_data},
         {&ps_ld_2d_uint_arr, &uint2d_arr, {R32_UINT,  TEX_2D_ARRAY, 0, 0, ~0u}, {1}, (const DWORD *)uint_data2},
         {&ps_ld_2d_uint_arr, &uint2d_arr, {R32_UINT,  TEX_2D_ARRAY, 0, 0, ~0u}, {2}, (const DWORD *)uint_data3},
