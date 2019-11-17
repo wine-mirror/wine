@@ -136,20 +136,27 @@ static HRESULT WINAPI wave_track_SetParam(IDirectMusicTrack8 *iface, REFGUID rgu
 	return S_OK;
 }
 
-static HRESULT WINAPI wave_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID rguidType)
+static HRESULT WINAPI wave_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID type)
 {
-        IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
+    IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
+    static const REFGUID valid[] = {
+        &GUID_Disable_Auto_Download,
+        &GUID_Download,
+        &GUID_DownloadToAudioPath,
+        &GUID_Enable_Auto_Download,
+        &GUID_Unload,
+        &GUID_UnloadFromAudioPath
+    };
+    unsigned int i;
 
-	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
-	if (IsEqualGUID (rguidType, &GUID_Disable_Auto_Download)
-		|| IsEqualGUID (rguidType, &GUID_Download)
-		|| IsEqualGUID (rguidType, &GUID_DownloadToAudioPath)
-		|| IsEqualGUID (rguidType, &GUID_Enable_Auto_Download)) {
-		TRACE("param supported\n");
-		return S_OK;
-	}
-	TRACE("param unsupported\n");
-	return DMUS_E_TYPE_UNSUPPORTED;
+    TRACE("(%p, %s)\n", This, debugstr_dmguid(type));
+
+    for (i = 0; i < ARRAY_SIZE(valid); i++)
+        if (IsEqualGUID(type, valid[i]))
+            return S_OK;
+
+    TRACE("param unsupported\n");
+    return DMUS_E_TYPE_UNSUPPORTED;
 }
 
 static HRESULT WINAPI wave_track_AddNotificationType(IDirectMusicTrack8 *iface, REFGUID notiftype)
