@@ -138,6 +138,47 @@ __ASM_GLOBAL_FUNC(interlocked_xchg_add,
 
 #elif defined(__x86_64__)
 
+#if defined(_MSC_VER)
+
+#include <intrin.h>
+
+int interlocked_cmpxchg(int *dest, int xchg, int compare)
+{
+    return _InterlockedCompareExchange(dest, xchg, compare);
+}
+
+void *interlocked_cmpxchg_ptr(void **dest, void *xchg, void *compare)
+{
+    return _InterlockedCompareExchangePointer(dest, xchg, compare);
+}
+
+__int64 interlocked_cmpxchg64(__int64 *dest, __int64 xchg, __int64 compare)
+{
+    return _InterlockedCompareExchange64(dest, xchg, compare);
+}
+
+int interlocked_xchg(int *dest, int val)
+{
+    return _InterlockedExchange(dest, val);
+}
+
+void *interlocked_xchg_ptr(void **dest, void *val)
+{
+    return _InterlockedExchangePointer(dest, val);
+}
+
+int interlocked_xchg_add(int *dest, int incr)
+{
+    return _InterlockedExchangeAdd(dest, incr);
+}
+
+int interlocked_cmpxchg128(__int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare)
+{
+    return _InterlockedCompareExchange128(dest, xchg_high, xchg_low, compare);
+}
+
+#else
+
 __ASM_GLOBAL_FUNC(interlocked_cmpxchg,
                   "mov %edx, %eax\n\t"
                   "lock cmpxchgl %esi,(%rdi)\n\t"
@@ -179,6 +220,7 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg128,
                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                   __ASM_CFI(".cfi_same_value %rbx\n\t")
                   "ret")
+#endif
 
 #elif defined(__powerpc__)
 
