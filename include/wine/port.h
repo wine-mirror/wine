@@ -58,9 +58,15 @@
 #ifdef _MSC_VER
 
 #define ftruncate chsize
-#define isfinite(x) _finite(x)
-#define isinf(x) (!(_finite(x) || _isnan(x)))
-#define isnan(x) _isnan(x)
+#ifndef isfinite
+# define isfinite(x) _finite(x)
+#endif
+#ifndef isinf
+# define isinf(x) (!(_finite(x) || _isnan(x)))
+#endif
+#ifndef isnan
+# define isnan(x) _isnan(x)
+#endif
 #define popen _popen
 #define pclose _pclose
 #define snprintf _snprintf
