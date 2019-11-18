@@ -839,7 +839,7 @@ interface ISpVoice : ISpEventSource
                 [out] SPVOICESTATUS *status,
                 [out, string] WCHAR **bookmark);
 
-    HRESULT Skip([in,string] WCHAR* type, [in] long items, [out] ULONG *skipped);
+    HRESULT Skip([in,string] const WCHAR *type, [in] long items, [out] ULONG *skipped);
 
     HRESULT SetPriority([in] SPVPRIORITY priority);
     HRESULT GetPriority([out] SPVPRIORITY* priority);
@@ -1046,5 +1046,14 @@ library SpeechLib
     {
         /*[default] interface ISpeechRecognizer;*/
         interface ISpRecognizer;
+    };
+
+    [
+        uuid(96749377-3391-11d2-9ee3-00c04f797396)
+    ]
+    coclass SpVoice
+    {
+        interface ISpVoice;
+        [default] interface ISpeechVoice;
     };
 }
