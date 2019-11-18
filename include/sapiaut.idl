@@ -2005,3 +2005,32 @@ interface ISpeechRecognizer : IDispatch
                                 [out,retval] ISpeechObjectTokens **tokens);
 
 }
+
+typedef enum SpeechStreamFileMode
+{
+    SSFMOpenForRead = SPFM_OPEN_READONLY,
+    SSFMOpenReadWrite = SPFM_OPEN_READWRITE,
+    SSFMCreate = SPFM_CREATE,
+    SSFMCreateForWrite = SPFM_CREATE_ALWAYS,
+} SpeechStreamFileMode;
+
+typedef [hidden] enum DISPID_SpeechFileStream
+{
+    DISPID_SFSOpen = 100,
+    DISPID_SFSClose
+} DISPID_SpeechFileStream;
+
+[
+    object,
+    uuid(af67f125-ab39-4e93-b4a2-cc2e66e182a7),
+    dual,
+    pointer_default(unique)
+]
+interface ISpeechFileStream : ISpeechBaseStream
+{
+    [id(DISPID_SFSOpen)]
+    HRESULT Open([in] BSTR filename, [in, defaultvalue(SSFMOpenForRead)] SpeechStreamFileMode mode,
+                 [in, defaultvalue(0)] VARIANT_BOOL events);
+    [id(DISPID_SFSClose)]
+    HRESULT Close(void);
+};

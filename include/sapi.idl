@@ -483,6 +483,15 @@ typedef [restricted, hidden] struct SPRECORESULTTIMES
     ULONGLONG ullStart;
 } SPRECORESULTTIMES;
 
+typedef [hidden] enum SPFILEMODE
+{
+    SPFM_OPEN_READONLY,
+    SPFM_OPEN_READWRITE,
+    SPFM_CREATE,
+    SPFM_CREATE_ALWAYS,
+    SPFM_NUM_MODES
+} SPFILEMODE;
+
 cpp_quote("#if defined(__GNUC__)")
 
 cpp_quote("#define SPCAT_AUDIOOUT (const WCHAR []){ 'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\\\','S','O','F','T','W','A','R','E','\\\\','M','i','c','r','o','s','o','f','t','\\\\','S','p','e','e','c','h','\\\\','A','u','d','i','o','O','u','t','p','u','t',0 }")
@@ -1017,6 +1026,22 @@ interface ISpRecognizer : ISpProperties
 };
 
 [
+    object,
+    uuid(12e3cca9-7518-44c5-a5e7-ba5a79cb929e),
+    pointer_default(unique),
+    local,
+    restricted
+]
+interface ISpStream : ISpStreamFormat
+{
+    HRESULT SetBaseStream([in] IStream *stream, [in] REFGUID format, [in] const WAVEFORMATEX *wave);
+    HRESULT GetBaseStream([out] IStream **stream);
+    HRESULT BindToFile([in] LPCWSTR filename, [in] SPFILEMODE mode, [in] const GUID *format,
+                       const WAVEFORMATEX *wave, [in] ULONGLONG interest);
+    HRESULT Close();
+}
+
+[
     helpstring("Speech Object Library"),
     uuid(c866ca3a-32f7-11d2-9602-00c04f8ee628),
     version(5.4)
@@ -1055,5 +1080,14 @@ library SpeechLib
     {
         interface ISpVoice;
         [default] interface ISpeechVoice;
+    };
+
+    [
+        uuid(947812b3-2ae1-4644-ba86-9e90ded7ec91),
+    ]
+    coclass SpFileStream
+    {
+        interface ISpStream;
+        [default] interface ISpeechFileStream;
     };
 }

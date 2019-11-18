@@ -106,6 +106,7 @@ static const struct IClassFactoryVtbl class_factory_vtbl =
 };
 
 static struct class_factory data_key_cf       = { { &class_factory_vtbl }, data_key_create };
+static struct class_factory file_stream_cf    = { { &class_factory_vtbl }, file_stream_create };
 static struct class_factory speech_voice_cf   = { { &class_factory_vtbl }, speech_voice_create };
 static struct class_factory token_category_cf = { { &class_factory_vtbl }, token_category_create };
 static struct class_factory token_enum_cf     = { { &class_factory_vtbl }, token_enum_create };
@@ -121,6 +122,8 @@ HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID iid, void **obj )
 
     if (IsEqualCLSID( clsid, &CLSID_SpDataKey ))
         cf = &data_key_cf.IClassFactory_iface;
+    else if (IsEqualCLSID( clsid, &CLSID_SpFileStream ))
+        cf = &file_stream_cf.IClassFactory_iface;
     else if (IsEqualCLSID( clsid, &CLSID_SpObjectTokenCategory ))
         cf = &token_category_cf.IClassFactory_iface;
     else if (IsEqualCLSID( clsid, &CLSID_SpObjectTokenEnum ))
