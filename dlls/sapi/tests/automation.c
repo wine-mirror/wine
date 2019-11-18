@@ -30,6 +30,7 @@ static void test_interfaces(void)
     ISpeechFileStream *filestream;
     ISpeechBaseStream *basestream;
     IDispatch *dispatch;
+    ISpStream *spstrem;
     IUnknown *unk;
     HRESULT hr;
 
@@ -52,6 +53,11 @@ static void test_interfaces(void)
     ok(hr == S_OK, "Failed to create ISpeechBaseStream interface: %#x.\n", hr);
     ISpeechBaseStream_Release(basestream);
 
+    hr = CoCreateInstance(&CLSID_SpFileStream, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ISpStream, (void **)&spstrem);
+    ok(hr == S_OK, "Failed to create ISpStream interface: %#x.\n", hr);
+
+    ISpStream_Release(spstrem);
     ISpeechFileStream_Release(filestream);
 }
 

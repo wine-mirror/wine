@@ -37,12 +37,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(sapi);
 struct file_stream
 {
     ISpeechFileStream ISpeechFileStream_iface;
+    ISpStream ISpStream_iface;
     LONG ref;
 };
 
 static inline struct file_stream *impl_from_ISpeechFileStream(ISpeechFileStream *iface)
 {
     return CONTAINING_RECORD(iface, struct file_stream, ISpeechFileStream_iface);
+}
+
+static inline struct file_stream *impl_from_ISpStream(ISpStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct file_stream, ISpStream_iface);
 }
 
 /* ISpeechFileStream interface */
@@ -57,6 +63,8 @@ static HRESULT WINAPI file_stream_QueryInterface(ISpeechFileStream *iface, REFII
         IsEqualIID(iid, &IID_ISpeechBaseStream) ||
         IsEqualIID(iid, &IID_ISpeechFileStream))
         *obj = &This->ISpeechFileStream_iface;
+    else if (IsEqualIID(iid, &IID_ISpStream))
+        *obj = &This->ISpStream_iface;
     else
     {
         *obj = NULL;
@@ -194,6 +202,177 @@ const static ISpeechFileStreamVtbl file_stream_vtbl =
     file_stream_Close
 };
 
+/* ISpStream interface */
+static HRESULT WINAPI spstream_QueryInterface(ISpStream *iface, REFIID iid, void **obj)
+{
+    struct file_stream *This = impl_from_ISpStream(iface);
+
+    TRACE("(%p, %s, %p).\n", iface, debugstr_guid(iid), obj);
+
+    return ISpeechFileStream_QueryInterface(&This->ISpeechFileStream_iface, iid, obj);
+}
+
+static ULONG WINAPI spstream_AddRef(ISpStream *iface)
+{
+    struct file_stream *This = impl_from_ISpStream(iface);
+
+    TRACE("(%p).\n", iface);
+
+    return ISpeechFileStream_AddRef(&This->ISpeechFileStream_iface);
+}
+
+static ULONG WINAPI spstream_Release(ISpStream *iface)
+{
+    struct file_stream *This = impl_from_ISpStream(iface);
+
+    TRACE("(%p).\n", iface);
+
+    return ISpeechFileStream_Release(&This->ISpeechFileStream_iface);
+}
+
+static HRESULT WINAPI spstream_Read(ISpStream *iface, void *pv, ULONG cb, ULONG *read)
+{
+    FIXME("(%p, %p, %d, %p): stub.\n", iface, pv, cb, read);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_Write(ISpStream *iface, const void *pv, ULONG cb, ULONG *written)
+{
+    FIXME("(%p, %p, %d, %p): stub.\n", iface, pv, cb, written);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_Seek(ISpStream *iface, LARGE_INTEGER mode, DWORD origin, ULARGE_INTEGER *position)
+{
+    FIXME("(%p, %s, %d, %p): stub.\n", iface, wine_dbgstr_longlong(mode.QuadPart), origin, position);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_SetSize(ISpStream *iface, ULARGE_INTEGER size)
+{
+    FIXME("(%p, %s): stub.\n", iface, wine_dbgstr_longlong(size.QuadPart));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_CopyTo(ISpStream *iface, IStream *stream, ULARGE_INTEGER cb,
+                                      ULARGE_INTEGER *read, ULARGE_INTEGER *written)
+{
+    FIXME("(%p, %p, %s, %p, %p): stub.\n", iface, stream, wine_dbgstr_longlong(cb.QuadPart),
+          read, written);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_Commit(ISpStream *iface, DWORD flag)
+{
+    FIXME("(%p, %d): stub.\n", iface, flag);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_Revert(ISpStream *iface)
+{
+    FIXME("(%p): stub.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_LockRegion(ISpStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER cb, DWORD type)
+{
+    FIXME("(%p, %s, %s, %d): stub.\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+          wine_dbgstr_longlong(cb.QuadPart), type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_UnlockRegion(ISpStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER cb, DWORD type)
+{
+    FIXME("(%p, %s, %s, %d): stub.\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+          wine_dbgstr_longlong(cb.QuadPart), type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_Stat(ISpStream *iface, STATSTG *statstg, DWORD flag)
+{
+    FIXME("(%p, %p, %d): stub.\n", iface, statstg, flag);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_Clone(ISpStream *iface, IStream **stream)
+{
+    FIXME("(%p, %p): stub.\n", iface, stream);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_GetFormat(ISpStream *iface, GUID *format, WAVEFORMATEX **wave)
+{
+    FIXME("(%p, %p, %p): stub.\n", iface, format, wave);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_SetBaseStream(ISpStream *iface, IStream *stream, REFGUID format,
+                                             const WAVEFORMATEX *wave)
+{
+    FIXME("(%p, %p, %s, %p): stub.\n", iface, stream, debugstr_guid(format), wave);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_GetBaseStream(ISpStream *iface, IStream **stream)
+{
+    FIXME("(%p, %p): stub.\n", iface, stream);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_BindToFile(ISpStream *iface, LPCWSTR filename, SPFILEMODE mode,
+                                          const GUID *format, const WAVEFORMATEX* wave,
+                                          ULONGLONG interest)
+{
+    FIXME("(%p, %s, %d, %s, %p, %s): stub.\n", iface, debugstr_w(filename), mode, debugstr_guid(format),
+          wave, wine_dbgstr_longlong(interest));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI spstream_Close(ISpStream *iface)
+{
+    FIXME("(%p): stub.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+const static ISpStreamVtbl spstream_vtbl =
+{
+    spstream_QueryInterface,
+    spstream_AddRef,
+    spstream_Release,
+    spstream_Read,
+    spstream_Write,
+    spstream_Seek,
+    spstream_SetSize,
+    spstream_CopyTo,
+    spstream_Commit,
+    spstream_Revert,
+    spstream_LockRegion,
+    spstream_UnlockRegion,
+    spstream_Stat,
+    spstream_Clone,
+    spstream_GetFormat,
+    spstream_SetBaseStream,
+    spstream_GetBaseStream,
+    spstream_BindToFile,
+    spstream_Close
+};
+
 HRESULT file_stream_create(IUnknown *outer, REFIID iid, void **obj)
 {
     struct file_stream *This = heap_alloc(sizeof(*This));
@@ -201,6 +380,7 @@ HRESULT file_stream_create(IUnknown *outer, REFIID iid, void **obj)
 
     if (!This) return E_OUTOFMEMORY;
     This->ISpeechFileStream_iface.lpVtbl = &file_stream_vtbl;
+    This->ISpStream_iface.lpVtbl = &spstream_vtbl;
     This->ref = 1;
 
     hr = ISpeechFileStream_QueryInterface(&This->ISpeechFileStream_iface, iid, obj);
