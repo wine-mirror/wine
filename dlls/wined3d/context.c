@@ -2033,9 +2033,27 @@ static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context
 
     if (!wined3d_context_gl_set_pixel_format(context_gl))
     {
-        ERR("Failed to set pixel format %d on device context %p.\n", context_gl->pixel_format, context_gl->dc);
         context_release(context);
-        return FALSE;
+
+        if (context_gl->dc_is_private)
+        {
+            ERR("Failed to set pixel format %d on device context %p.\n", context_gl->pixel_format, context_gl->dc);
+
+            return FALSE;
+        }
+
+        WARN("Failed to set pixel format %d on device context %p, trying backup DC.\n",
+                context_gl->pixel_format, context_gl->dc);
+
+        wined3d_release_dc(context_gl->window, context_gl->dc);
+        if (!(context_gl->dc = wined3d_swapchain_gl_get_backup_dc(swapchain_gl)))
+        {
+            ERR("Failed to retrieve the backup device context.\n");
+            return E_FAIL;
+        }
+        context_gl->dc_is_private = TRUE;
+
+        return wined3d_context_gl_create_wgl_ctx(context_gl, swapchain_gl);
     }
 
     share_ctx = device->context_count ? wined3d_context_gl(device->contexts[0])->gl_ctx : NULL;
