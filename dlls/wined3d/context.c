@@ -1935,16 +1935,152 @@ HRESULT wined3d_context_no3d_init(struct wined3d_context *context_no3d, struct w
     return WINED3D_OK;
 }
 
-HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wined3d_swapchain_gl *swapchain_gl)
+static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context_gl,
+        struct wined3d_swapchain_gl *swapchain_gl)
 {
-    const struct wined3d_format *color_format, *ds_format;
+    const struct wined3d_format *colour_format, *ds_format;
     struct wined3d_context *context = &context_gl->c;
-    const struct wined3d_d3d_info *d3d_info;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_resource *target;
+    struct wined3d_adapter *adapter;
     unsigned int target_bind_flags;
     struct wined3d_device *device;
     HGLRC ctx, share_ctx;
+    unsigned int i;
+
+    device = context->device;
+    adapter = device->adapter;
+    gl_info = &adapter->gl_info;
+
+    target = &context->current_rt.texture->resource;
+    target_bind_flags = target->bind_flags;
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
+    {
+        static const enum wined3d_format_id ds_formats[] =
+        {
+            WINED3DFMT_D24_UNORM_S8_UINT,
+            WINED3DFMT_D32_UNORM,
+            WINED3DFMT_R24_UNORM_X8_TYPELESS,
+            WINED3DFMT_D16_UNORM,
+            WINED3DFMT_S1_UINT_D15_UNORM,
+        };
+
+        colour_format = target->format;
+
+        /* In case of ORM_BACKBUFFER, make sure to request an alpha component for
+         * X4R4G4B4/X8R8G8B8 as we might need it for the backbuffer. */
+        if (colour_format->id == WINED3DFMT_B4G4R4X4_UNORM)
+            colour_format = wined3d_get_format(adapter, WINED3DFMT_B4G4R4A4_UNORM, target_bind_flags);
+        else if (colour_format->id == WINED3DFMT_B8G8R8X8_UNORM)
+            colour_format = wined3d_get_format(adapter, WINED3DFMT_B8G8R8A8_UNORM, target_bind_flags);
+
+        /* DirectDraw supports 8bit paletted render targets and these are used by
+         * old games like StarCraft and C&C. Most modern hardware doesn't support
+         * 8bit natively so we perform some form of 8bit -> 32bit conversion. The
+         * conversion (ab)uses the alpha component for storing the palette index.
+         * For this reason we require a format with 8bit alpha, so request
+         * A8R8G8B8. */
+        if (colour_format->id == WINED3DFMT_P8_UINT)
+            colour_format = wined3d_get_format(adapter, WINED3DFMT_B8G8R8A8_UNORM, target_bind_flags);
+
+        /* Try to find a pixel format which matches our requirements. */
+        if (!swapchain_gl->s.ds_format)
+        {
+            for (i = 0; i < ARRAY_SIZE(ds_formats); ++i)
+            {
+                ds_format = wined3d_get_format(adapter, ds_formats[i], WINED3D_BIND_DEPTH_STENCIL);
+                if ((context_gl->pixel_format = context_choose_pixel_format(device,
+                        context_gl->dc, colour_format, ds_format, TRUE)))
+                {
+                    swapchain_gl->s.ds_format = ds_format;
+                    break;
+                }
+
+                TRACE("Depth stencil format %s is not supported, trying next format.\n",
+                        debug_d3dformat(ds_format->id));
+            }
+        }
+        else
+        {
+            context_gl->pixel_format = context_choose_pixel_format(device,
+                    context_gl->dc, colour_format, swapchain_gl->s.ds_format, TRUE);
+        }
+    }
+    else
+    {
+        /* When using FBOs for off-screen rendering, we only use the drawable for
+         * presentation blits, and don't do any rendering to it. That means we
+         * don't need depth or stencil buffers, and can mostly ignore the render
+         * target format. This wouldn't necessarily be quite correct for 10bpc
+         * display modes, but we don't currently support those.
+         * Using the same format regardless of the colour/depth/stencil targets
+         * makes it much less likely that different wined3d instances will set
+         * conflicting pixel formats. */
+        colour_format = wined3d_get_format(adapter, WINED3DFMT_B8G8R8A8_UNORM, target_bind_flags);
+        ds_format = wined3d_get_format(adapter, WINED3DFMT_UNKNOWN, WINED3D_BIND_DEPTH_STENCIL);
+        context_gl->pixel_format = context_choose_pixel_format(device,
+                context_gl->dc, colour_format, ds_format, FALSE);
+    }
+
+    if (!context_gl->pixel_format)
+    {
+        ERR("Failed to choose pixel format.\n");
+        return FALSE;
+    }
+
+    wined3d_context_gl_enter(context_gl);
+
+    if (!wined3d_context_gl_set_pixel_format(context_gl))
+    {
+        ERR("Failed to set pixel format %d on device context %p.\n", context_gl->pixel_format, context_gl->dc);
+        context_release(context);
+        return FALSE;
+    }
+
+    share_ctx = device->context_count ? wined3d_context_gl(device->contexts[0])->gl_ctx : NULL;
+    if (gl_info->p_wglCreateContextAttribsARB)
+    {
+        if (!(ctx = context_create_wgl_attribs(gl_info, context_gl->dc, share_ctx)))
+        {
+            ERR("Failed to create a WGL context.\n");
+            context_release(context);
+            return FALSE;
+        }
+    }
+    else
+    {
+        if (!(ctx = wglCreateContext(context_gl->dc)))
+        {
+            ERR("Failed to create a WGL context.\n");
+            context_release(context);
+            return FALSE;
+        }
+
+        if (share_ctx && !wglShareLists(share_ctx, ctx))
+        {
+            ERR("wglShareLists(%p, %p) failed, last error %#x.\n", share_ctx, ctx, GetLastError());
+            context_release(context);
+            if (!wglDeleteContext(ctx))
+                ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, GetLastError());
+            return FALSE;
+        }
+    }
+
+    context_gl->dc_has_format = TRUE;
+    context_gl->needs_set = 1;
+    context_gl->valid = 1;
+    context_gl->gl_ctx = ctx;
+
+    return TRUE;
+}
+
+HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wined3d_swapchain_gl *swapchain_gl)
+{
+    struct wined3d_context *context = &context_gl->c;
+    const struct wined3d_d3d_info *d3d_info;
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_device *device;
     unsigned int i;
 
     TRACE("context_gl %p, swapchain %p.\n", context_gl, swapchain_gl);
@@ -2023,132 +2159,20 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
             sizeof(*context_gl->texture_type))))
         goto fail;
 
-    target = &context->current_rt.texture->resource;
-    target_bind_flags = target->bind_flags;
-
-    if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
-    {
-        static const enum wined3d_format_id ds_formats[] =
-        {
-            WINED3DFMT_D24_UNORM_S8_UINT,
-            WINED3DFMT_D32_UNORM,
-            WINED3DFMT_R24_UNORM_X8_TYPELESS,
-            WINED3DFMT_D16_UNORM,
-            WINED3DFMT_S1_UINT_D15_UNORM,
-        };
-
-        color_format = target->format;
-
-        /* In case of ORM_BACKBUFFER, make sure to request an alpha component for
-         * X4R4G4B4/X8R8G8B8 as we might need it for the backbuffer. */
-        if (color_format->id == WINED3DFMT_B4G4R4X4_UNORM)
-            color_format = wined3d_get_format(device->adapter, WINED3DFMT_B4G4R4A4_UNORM, target_bind_flags);
-        else if (color_format->id == WINED3DFMT_B8G8R8X8_UNORM)
-            color_format = wined3d_get_format(device->adapter, WINED3DFMT_B8G8R8A8_UNORM, target_bind_flags);
-
-        /* DirectDraw supports 8bit paletted render targets and these are used by
-         * old games like StarCraft and C&C. Most modern hardware doesn't support
-         * 8bit natively so we perform some form of 8bit -> 32bit conversion. The
-         * conversion (ab)uses the alpha component for storing the palette index.
-         * For this reason we require a format with 8bit alpha, so request
-         * A8R8G8B8. */
-        if (color_format->id == WINED3DFMT_P8_UINT)
-            color_format = wined3d_get_format(device->adapter, WINED3DFMT_B8G8R8A8_UNORM, target_bind_flags);
-
-        /* Try to find a pixel format which matches our requirements. */
-        if (!swapchain_gl->s.ds_format)
-        {
-            for (i = 0; i < ARRAY_SIZE(ds_formats); ++i)
-            {
-                ds_format = wined3d_get_format(device->adapter, ds_formats[i], WINED3D_BIND_DEPTH_STENCIL);
-                if ((context_gl->pixel_format = context_choose_pixel_format(device,
-                        context_gl->dc, color_format, ds_format, TRUE)))
-                {
-                    swapchain_gl->s.ds_format = ds_format;
-                    break;
-                }
-
-                TRACE("Depth stencil format %s is not supported, trying next format.\n",
-                        debug_d3dformat(ds_format->id));
-            }
-        }
-        else
-        {
-            context_gl->pixel_format = context_choose_pixel_format(device,
-                    context_gl->dc, color_format, swapchain_gl->s.ds_format, TRUE);
-        }
-    }
-    else
-    {
-        /* When using FBOs for off-screen rendering, we only use the drawable for
-         * presentation blits, and don't do any rendering to it. That means we
-         * don't need depth or stencil buffers, and can mostly ignore the render
-         * target format. This wouldn't necessarily be quite correct for 10bpc
-         * display modes, but we don't currently support those.
-         * Using the same format regardless of the color/depth/stencil targets
-         * makes it much less likely that different wined3d instances will set
-         * conflicting pixel formats. */
-        color_format = wined3d_get_format(device->adapter, WINED3DFMT_B8G8R8A8_UNORM, target_bind_flags);
-        ds_format = wined3d_get_format(device->adapter, WINED3DFMT_UNKNOWN, WINED3D_BIND_DEPTH_STENCIL);
-        context_gl->pixel_format = context_choose_pixel_format(device,
-                context_gl->dc, color_format, ds_format, FALSE);
-    }
-
-    if (!context_gl->pixel_format)
+    if (!wined3d_context_gl_create_wgl_ctx(context_gl, swapchain_gl))
         goto fail;
 
-    wined3d_context_gl_enter(context_gl);
+    /* Set up the context defaults. */
 
-    if (!wined3d_context_gl_set_pixel_format(context_gl))
-    {
-        ERR("Failed to set pixel format %d on device context %p.\n", context_gl->pixel_format, context_gl->dc);
-        context_release(context);
-        goto fail;
-    }
-
-    share_ctx = device->context_count ? wined3d_context_gl(device->contexts[0])->gl_ctx : NULL;
-    if (gl_info->p_wglCreateContextAttribsARB)
-    {
-        if (!(ctx = context_create_wgl_attribs(gl_info, context_gl->dc, share_ctx)))
-        {
-            context_release(context);
-            goto fail;
-        }
-    }
-    else
-    {
-        if (!(ctx = wglCreateContext(context_gl->dc)))
-        {
-            ERR("Failed to create a WGL context.\n");
-            context_release(context);
-            goto fail;
-        }
-
-        if (share_ctx && !wglShareLists(share_ctx, ctx))
-        {
-            ERR("wglShareLists(%p, %p) failed, last error %#x.\n", share_ctx, ctx, GetLastError());
-            context_release(context);
-            if (!wglDeleteContext(ctx))
-                ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, GetLastError());
-            goto fail;
-        }
-    }
-
-    context->render_offscreen = wined3d_resource_is_offscreen(target);
+    context->render_offscreen = wined3d_resource_is_offscreen(&context->current_rt.texture->resource);
     context_gl->draw_buffers_mask = context_generate_rt_mask(GL_BACK);
-    context_gl->valid = 1;
 
-    context_gl->gl_ctx = ctx;
-    context_gl->dc_has_format = TRUE;
-    context_gl->needs_set = 1;
-
-    /* Set up the context defaults */
     if (!wined3d_context_gl_set_current(context_gl))
     {
         ERR("Cannot activate context to set up defaults.\n");
         context_release(context);
-        if (!wglDeleteContext(ctx))
-            ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, GetLastError());
+        if (!wglDeleteContext(context_gl->gl_ctx))
+            ERR("wglDeleteContext(%p) failed, last error %#x.\n", context_gl->gl_ctx, GetLastError());
         goto fail;
     }
 
