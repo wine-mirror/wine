@@ -7624,7 +7624,7 @@ static void test_surface_attachment(void)
     hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface2);
     todo_wine ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
-        IDirectDrawSurface4_DeleteAttachedSurface(surface1, 0, surface3);
+        IDirectDrawSurface4_DeleteAttachedSurface(surface1, 0, surface2);
     hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface3);
     ok(hr == D3D_OK, "Failed to attach depth buffer, hr %#x.\n", hr);
     hr = IDirectDrawSurface4_DeleteAttachedSurface(surface1, 0, surface3);
@@ -16622,7 +16622,7 @@ static void test_surface_format_conversion_alpha(void)
                 {16}, {0x0000f800}, {0x000007e0}, {0x0000001f}, {0x00000000}
             },
             "R5G6B5", 2, 4, 4, 0, TRUE,
-            /* Looks broken for sysmem texture convertions on Windows (at
+            /* Looks broken for sysmem texture conversions on Windows (at
              * least with hardware device), the result is either error from
              * _Blt() or a copy of the source data without any conversion. */
         },

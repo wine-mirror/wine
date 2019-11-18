@@ -5083,7 +5083,7 @@ static void test_surface_attachment(void)
     hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface2);
     todo_wine ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
-        IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface3);
+        IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface2);
     hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface3);
     ok(hr == D3D_OK, "Failed to attach depth buffer, hr %#x.\n", hr);
     hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface3);
