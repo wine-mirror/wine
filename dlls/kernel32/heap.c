@@ -30,33 +30,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#include <time.h>
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_SYSCTL_H
-#include <sys/sysctl.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_MACH_MACH_H
-#include <mach/mach.h>
-#endif
-
-#ifdef sun
-/* FIXME:  Unfortunately swapctl can't be used with largefile.... */
-# undef _FILE_OFFSET_BITS
-# define _FILE_OFFSET_BITS 32
-# ifdef HAVE_SYS_RESOURCE_H
-#  include <sys/resource.h>
-# endif
-# ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h>
-# endif
-# include <sys/swap.h>
-#endif
-
 
 #include "windef.h"
 #include "winbase.h"
@@ -66,8 +39,7 @@
 #include "wine/exception.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(heap);
-WINE_DECLARE_DEBUG_CHANNEL(globalmem);
+WINE_DEFAULT_DEBUG_CHANNEL(globalmem);
 
 /* address where we try to map the system heap */
 #define SYSTEM_HEAP_BASE  ((void*)0x80000000)
@@ -590,227 +562,6 @@ SIZE_T WINAPI LocalSize(
 }
 
 
-
-/***********************************************************************
- *           GlobalMemoryStatusEx   (KERNEL32.@)
- * A version of GlobalMemoryStatus that can deal with memory over 4GB
- *
- * RETURNS
- *	TRUE
- */
-BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
-{
-    static MEMORYSTATUSEX	cached_memstatus;
-    static int cache_lastchecked = 0;
-    SYSTEM_INFO si;
-#ifdef linux
-    FILE *f;
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
-    DWORDLONG total;
-#ifdef __APPLE__
-    unsigned int val;
-#else
-    unsigned long val;
-#endif
-    int mib[2];
-    size_t size_sys;
-#ifdef HW_MEMSIZE
-    uint64_t val64;
-#endif
-#ifdef VM_SWAPUSAGE
-    struct xsw_usage swap;
-#endif
-#elif defined(sun)
-    unsigned long pagesize,maxpages,freepages,swapspace,swapfree;
-    struct anoninfo swapinf;
-    int rval;
-#endif
-
-    if (lpmemex->dwLength != sizeof(*lpmemex))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    if (time(NULL)==cache_lastchecked) {
-	*lpmemex = cached_memstatus;
-	return TRUE;
-    }
-    cache_lastchecked = time(NULL);
-
-    lpmemex->dwMemoryLoad     = 0;
-    lpmemex->ullTotalPhys     = 16*1024*1024;
-    lpmemex->ullAvailPhys     = 16*1024*1024;
-    lpmemex->ullTotalPageFile = 16*1024*1024;
-    lpmemex->ullAvailPageFile = 16*1024*1024;
-
-#ifdef linux
-    f = fopen( "/proc/meminfo", "r" );
-    if (f)
-    {
-        char buffer[256];
-        unsigned long value;
-
-        lpmemex->ullTotalPhys = lpmemex->ullAvailPhys = 0;
-        lpmemex->ullTotalPageFile = lpmemex->ullAvailPageFile = 0;
-        while (fgets( buffer, sizeof(buffer), f ))
-        {
-            if (sscanf(buffer, "MemTotal: %lu", &value))
-                lpmemex->ullTotalPhys = (ULONG64)value*1024;
-            else if (sscanf(buffer, "MemFree: %lu", &value))
-                lpmemex->ullAvailPhys = (ULONG64)value*1024;
-            else if (sscanf(buffer, "SwapTotal: %lu", &value))
-                lpmemex->ullTotalPageFile = (ULONG64)value*1024;
-            else if (sscanf(buffer, "SwapFree: %lu", &value))
-                lpmemex->ullAvailPageFile = (ULONG64)value*1024;
-            else if (sscanf(buffer, "Buffers: %lu", &value))
-                lpmemex->ullAvailPhys += (ULONG64)value*1024;
-            else if (sscanf(buffer, "Cached: %lu", &value))
-                lpmemex->ullAvailPhys += (ULONG64)value*1024;
-        }
-        fclose( f );
-    }
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
-    total = 0;
-    lpmemex->ullAvailPhys = 0;
-
-    mib[0] = CTL_HW;
-#ifdef HW_MEMSIZE
-    mib[1] = HW_MEMSIZE;
-    size_sys = sizeof(val64);
-    if (!sysctl(mib, 2, &val64, &size_sys, NULL, 0) && size_sys == sizeof(val64) && val64)
-        total = val64;
-#endif
-
-#ifdef HAVE_MACH_MACH_H
-    {
-        host_name_port_t host = mach_host_self();
-        mach_msg_type_number_t count;
-
-#ifdef HOST_VM_INFO64_COUNT
-        vm_size_t page_size;
-        vm_statistics64_data_t vm_stat;
-
-        count = HOST_VM_INFO64_COUNT;
-        if (host_statistics64(host, HOST_VM_INFO64, (host_info64_t)&vm_stat, &count) == KERN_SUCCESS &&
-            host_page_size(host, &page_size) == KERN_SUCCESS)
-            lpmemex->ullAvailPhys = (vm_stat.free_count + vm_stat.inactive_count) * (DWORDLONG)page_size;
-#endif
-        if (!total)
-        {
-            host_basic_info_data_t info;
-            count = HOST_BASIC_INFO_COUNT;
-            if (host_info(host, HOST_BASIC_INFO, (host_info_t)&info, &count) == KERN_SUCCESS)
-                total = info.max_mem;
-        }
-
-        mach_port_deallocate(mach_task_self(), host);
-    }
-#endif
-
-    if (!total)
-    {
-        mib[1] = HW_PHYSMEM;
-        size_sys = sizeof(val);
-        if (!sysctl(mib, 2, &val, &size_sys, NULL, 0) && size_sys == sizeof(val) && val)
-            total = val;
-    }
-
-    if (total)
-        lpmemex->ullTotalPhys = total;
-
-    if (!lpmemex->ullAvailPhys)
-    {
-        mib[1] = HW_USERMEM;
-        size_sys = sizeof(val);
-        if (!sysctl(mib, 2, &val, &size_sys, NULL, 0) && size_sys == sizeof(val) && val)
-            lpmemex->ullAvailPhys = val;
-    }
-
-    if (!lpmemex->ullAvailPhys)
-        lpmemex->ullAvailPhys = lpmemex->ullTotalPhys;
-
-    lpmemex->ullTotalPageFile = lpmemex->ullAvailPhys;
-    lpmemex->ullAvailPageFile = lpmemex->ullAvailPhys;
-
-#ifdef VM_SWAPUSAGE
-    mib[0] = CTL_VM;
-    mib[1] = VM_SWAPUSAGE;
-    size_sys = sizeof(swap);
-    if (!sysctl(mib, 2, &swap, &size_sys, NULL, 0) && size_sys == sizeof(swap))
-    {
-        lpmemex->ullTotalPageFile = swap.xsu_total;
-        lpmemex->ullAvailPageFile = swap.xsu_avail;
-    }
-#endif
-#elif defined ( sun )
-    pagesize=sysconf(_SC_PAGESIZE);
-    maxpages=sysconf(_SC_PHYS_PAGES);
-    freepages=sysconf(_SC_AVPHYS_PAGES);
-    rval=swapctl(SC_AINFO, &swapinf);
-    if(rval >-1)
-    {
-        swapspace=swapinf.ani_max*pagesize;
-        swapfree=swapinf.ani_free*pagesize;
-    }else
-    {
-
-        WARN("Swap size cannot be determined , assuming equal to physical memory\n");
-        swapspace=maxpages*pagesize;
-        swapfree=maxpages*pagesize;
-    }
-    lpmemex->ullTotalPhys=pagesize*maxpages;
-    lpmemex->ullAvailPhys = pagesize*freepages;
-    lpmemex->ullTotalPageFile = swapspace;
-    lpmemex->ullAvailPageFile = swapfree;
-#endif
-
-    if (lpmemex->ullTotalPhys)
-    {
-        lpmemex->dwMemoryLoad = (lpmemex->ullTotalPhys-lpmemex->ullAvailPhys)
-                                  / (lpmemex->ullTotalPhys / 100);
-    }
-
-    /* Win98 returns only the swapsize in ullTotalPageFile/ullAvailPageFile,
-       WinXP returns the size of physical memory + swapsize;
-       mimic the behavior of XP.
-       Note: Project2k refuses to start if it sees less than 1Mb of free swap.
-    */
-    lpmemex->ullTotalPageFile += lpmemex->ullTotalPhys;
-    lpmemex->ullAvailPageFile += lpmemex->ullAvailPhys;
-
-    /* Titan Quest refuses to run if TotalPageFile <= ullTotalPhys */
-    if(lpmemex->ullTotalPageFile == lpmemex->ullTotalPhys)
-    {
-        lpmemex->ullTotalPhys -= 1;
-        lpmemex->ullAvailPhys -= 1;
-    }
-
-    /* FIXME: should do something for other systems */
-    GetSystemInfo(&si);
-    lpmemex->ullTotalVirtual  = (ULONG_PTR)si.lpMaximumApplicationAddress-(ULONG_PTR)si.lpMinimumApplicationAddress;
-    /* FIXME: we should track down all the already allocated VM pages and subtract them, for now arbitrarily remove 64KB so that it matches NT */
-    lpmemex->ullAvailVirtual  = lpmemex->ullTotalVirtual-64*1024;
-
-    /* MSDN says about AvailExtendedVirtual: Size of unreserved and uncommitted
-       memory in the extended portion of the virtual address space of the calling
-       process, in bytes.
-       However, I don't know what this means, so set it to zero :(
-    */
-    lpmemex->ullAvailExtendedVirtual = 0;
-
-    cached_memstatus = *lpmemex;
-
-    TRACE_(globalmem)("<-- LPMEMORYSTATUSEX: dwLength %d, dwMemoryLoad %d, ullTotalPhys %s, ullAvailPhys %s,"
-          " ullTotalPageFile %s, ullAvailPageFile %s, ullTotalVirtual %s, ullAvailVirtual %s\n",
-          lpmemex->dwLength, lpmemex->dwMemoryLoad, wine_dbgstr_longlong(lpmemex->ullTotalPhys),
-          wine_dbgstr_longlong(lpmemex->ullAvailPhys), wine_dbgstr_longlong(lpmemex->ullTotalPageFile),
-          wine_dbgstr_longlong(lpmemex->ullAvailPageFile), wine_dbgstr_longlong(lpmemex->ullTotalVirtual),
-          wine_dbgstr_longlong(lpmemex->ullAvailVirtual) );
-
-    return TRUE;
-}
-
 /***********************************************************************
  *           GlobalMemoryStatus   (KERNEL32.@)
  * Provides information about the status of the memory, so apps can tell
@@ -884,30 +635,9 @@ VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpBuffer )
         if (lpBuffer->dwAvailPageFile > MAXLONG) lpBuffer->dwAvailPageFile = MAXLONG;
     }
 
-    TRACE_(globalmem)("Length %u, MemoryLoad %u, TotalPhys %lx, AvailPhys %lx,"
+    TRACE("Length %u, MemoryLoad %u, TotalPhys %lx, AvailPhys %lx,"
           " TotalPageFile %lx, AvailPageFile %lx, TotalVirtual %lx, AvailVirtual %lx\n",
           lpBuffer->dwLength, lpBuffer->dwMemoryLoad, lpBuffer->dwTotalPhys,
           lpBuffer->dwAvailPhys, lpBuffer->dwTotalPageFile, lpBuffer->dwAvailPageFile,
           lpBuffer->dwTotalVirtual, lpBuffer->dwAvailVirtual );
-}
-
-/***********************************************************************
- *           GetPhysicallyInstalledSystemMemory   (KERNEL32.@)
- */
-BOOL WINAPI GetPhysicallyInstalledSystemMemory(ULONGLONG *total_memory)
-{
-    MEMORYSTATUSEX memstatus;
-
-    FIXME("stub: %p\n", total_memory);
-
-    if (!total_memory)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    memstatus.dwLength = sizeof(memstatus);
-    GlobalMemoryStatusEx(&memstatus);
-    *total_memory = memstatus.ullTotalPhys / 1024;
-    return TRUE;
 }

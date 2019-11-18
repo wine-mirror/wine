@@ -614,7 +614,7 @@
 # @ stub GetPackageVolumeSisPath
 # @ stub GetPackagesByPackageFamily
 # @ stub GetPerformanceInfo
-@ stdcall GetPhysicallyInstalledSystemMemory(ptr) kernel32.GetPhysicallyInstalledSystemMemory
+@ stdcall GetPhysicallyInstalledSystemMemory(ptr)
 # @ stub GetPreviousFgPolicyRefreshInfoInternal
 @ stdcall GetPriorityClass(long)
 @ stdcall GetPrivateObjectSecurity(ptr long ptr long ptr)
@@ -767,7 +767,7 @@
 # @ stub GetXStateFeaturesMask
 @ stdcall GlobalAlloc(long long)
 @ stdcall GlobalFree(long)
-@ stdcall GlobalMemoryStatusEx(ptr) kernel32.GlobalMemoryStatusEx
+@ stdcall GlobalMemoryStatusEx(ptr)
 # @ stub GuardCheckLongJumpTarget
 # @ stub HasPolicyForegroundProcessingCompletedInternal
 @ stdcall HashData(ptr long ptr long)

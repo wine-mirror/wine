@@ -38,6 +38,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(heap);
+WINE_DECLARE_DEBUG_CHANNEL(virtual);
 
 
 /***********************************************************************
@@ -813,6 +814,82 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeUserPhysicalPages( HANDLE process, ULONG_PTR *
     *pages = 0;
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
+}
+
+
+/***********************************************************************
+ *             GetPhysicallyInstalledSystemMemory   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetPhysicallyInstalledSystemMemory( ULONGLONG *memory )
+{
+    MEMORYSTATUSEX status;
+
+    if (!memory)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    status.dwLength = sizeof(status);
+    GlobalMemoryStatusEx( &status );
+    *memory = status.ullTotalPhys / 1024;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *             GlobalMemoryStatusEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GlobalMemoryStatusEx( MEMORYSTATUSEX *status )
+{
+    static MEMORYSTATUSEX cached_status;
+    static DWORD last_check;
+    SYSTEM_BASIC_INFORMATION basic_info;
+    SYSTEM_PERFORMANCE_INFORMATION perf_info;
+
+    if (status->dwLength != sizeof(*status))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if ((NtGetTickCount() - last_check) < 1000)
+    {
+	*status = cached_status;
+	return TRUE;
+    }
+    last_check = NtGetTickCount();
+
+    if (!set_ntstatus( NtQuerySystemInformation( SystemBasicInformation,
+                                                 &basic_info, sizeof(basic_info), NULL )) ||
+        !set_ntstatus( NtQuerySystemInformation( SystemPerformanceInformation,
+                                                 &perf_info, sizeof(perf_info), NULL)))
+        return FALSE;
+
+    status->dwMemoryLoad     = 0;
+    status->ullTotalPhys     = perf_info.TotalCommitLimit;
+    status->ullAvailPhys     = perf_info.AvailablePages;
+    status->ullTotalPageFile = perf_info.TotalCommitLimit + 1; /* Titan Quest refuses to run if TotalPageFile <= TotalPhys */
+    status->ullAvailPageFile = status->ullTotalPageFile - perf_info.TotalCommittedPages - perf_info.AvailablePages;
+    status->ullTotalVirtual  = (ULONG_PTR)basic_info.HighestUserAddress - (ULONG_PTR)basic_info.LowestUserAddress;
+    status->ullAvailVirtual  = status->ullTotalVirtual - 64 * 1024;  /* FIXME */
+    status->ullAvailExtendedVirtual = 0;
+
+    status->ullTotalPhys     *= basic_info.PageSize;
+    status->ullAvailPhys     *= basic_info.PageSize;
+    status->ullTotalPageFile *= basic_info.PageSize;
+    status->ullAvailPageFile *= basic_info.PageSize;
+
+    if (status->ullTotalPhys)
+        status->dwMemoryLoad = (status->ullTotalPhys - status->ullAvailPhys) / (status->ullTotalPhys / 100);
+
+    TRACE_(virtual)( "MemoryLoad %d, TotalPhys %s, AvailPhys %s, TotalPageFile %s,"
+                     "AvailPageFile %s, TotalVirtual %s, AvailVirtual %s\n",
+                    status->dwMemoryLoad, wine_dbgstr_longlong(status->ullTotalPhys),
+                    wine_dbgstr_longlong(status->ullAvailPhys), wine_dbgstr_longlong(status->ullTotalPageFile),
+                    wine_dbgstr_longlong(status->ullAvailPageFile), wine_dbgstr_longlong(status->ullTotalVirtual),
+                    wine_dbgstr_longlong(status->ullAvailVirtual) );
+
+    cached_status = *status;
+    return TRUE;
 }
 
 
