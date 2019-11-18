@@ -751,7 +751,9 @@ static struct device *create_device(struct DeviceInfoSet *set,
 {
     const DWORD one = 1;
     struct device *device;
-    WCHAR guidstr[39];
+    WCHAR guidstr[MAX_GUID_STRING_LEN];
+    WCHAR class_name[MAX_CLASS_NAME_LEN];
+    DWORD size;
 
     TRACE("%p, %s, %s, %d\n", set, debugstr_guid(class),
         debugstr_w(instanceid), phantom);
@@ -795,6 +797,12 @@ static struct device *create_device(struct DeviceInfoSet *set,
     SETUPDI_GuidToString(class, guidstr);
     SETUPDI_SetDeviceRegistryPropertyW(device, SPDRP_CLASSGUID,
         (const BYTE *)guidstr, sizeof(guidstr));
+
+    if (SetupDiClassNameFromGuidW(class, class_name, ARRAY_SIZE(class_name), NULL))
+    {
+        size = (lstrlenW(class_name) + 1) * sizeof(WCHAR);
+        SETUPDI_SetDeviceRegistryPropertyW(device, SPDRP_CLASS, (const BYTE *)class_name, size);
+    }
 
     TRACE("Created new device %p.\n", device);
     return device;
