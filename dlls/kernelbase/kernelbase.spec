@@ -312,7 +312,7 @@
 @ stdcall EnumResourceTypesExA(long ptr long long long)
 @ stdcall EnumResourceTypesExW(long ptr long long long)
 @ stdcall EnumSystemCodePagesW(ptr long)
-@ stdcall EnumSystemFirmwareTables(long ptr long) kernel32.EnumSystemFirmwareTables
+@ stdcall EnumSystemFirmwareTables(long ptr long)
 @ stdcall EnumSystemGeoID(long long ptr) kernel32.EnumSystemGeoID
 @ stdcall EnumSystemLanguageGroupsW(ptr long ptr)
 @ stdcall EnumSystemLocalesA(ptr long)
@@ -536,7 +536,7 @@
 # @ stub GetIntegratedDisplaySize
 # @ stub GetIsEdpEnabled
 @ stdcall GetKernelObjectSecurity(long long ptr long ptr)
-@ stdcall GetLargePageMinimum() kernel32.GetLargePageMinimum
+@ stdcall GetLargePageMinimum()
 @ stdcall GetLargestConsoleWindowSize(long)
 @ stdcall GetLastError() kernelbase_GetLastError
 @ stdcall GetLengthSid(ptr)
@@ -572,7 +572,7 @@
 @ stub GetNamedPipeClientComputerNameW
 @ stdcall GetNamedPipeHandleStateW(long ptr ptr ptr ptr wstr long) kernel32.GetNamedPipeHandleStateW
 @ stdcall GetNamedPipeInfo(long ptr ptr ptr ptr)
-@ stdcall GetNativeSystemInfo(ptr) kernel32.GetNativeSystemInfo
+@ stdcall GetNativeSystemInfo(ptr)
 # @ stub GetNextFgPolicyRefreshInfoInternal
 @ stdcall GetNumaHighestNodeNumber(ptr)
 @ stdcall GetNumaNodeProcessorMaskEx(long ptr)
@@ -687,8 +687,8 @@
 @ stdcall GetSystemDirectoryA(ptr long)
 @ stdcall GetSystemDirectoryW(ptr long)
 @ stdcall GetSystemFileCacheSize(ptr ptr ptr)
-@ stdcall GetSystemFirmwareTable(long long ptr long) kernel32.GetSystemFirmwareTable
-@ stdcall GetSystemInfo(ptr) kernel32.GetSystemInfo
+@ stdcall GetSystemFirmwareTable(long long ptr long)
+@ stdcall GetSystemInfo(ptr)
 # @ stub GetSystemMetadataPath
 # @ stub GetSystemMetadataPathForPackage
 # @ stub GetSystemMetadataPathForPackageFamily

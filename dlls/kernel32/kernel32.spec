@@ -418,7 +418,7 @@
 @ stdcall EnumResourceTypesW(long ptr long)
 @ stdcall EnumSystemCodePagesA(ptr long)
 @ stdcall -import EnumSystemCodePagesW(ptr long)
-@ stdcall EnumSystemFirmwareTables(long ptr long)
+@ stdcall -import EnumSystemFirmwareTables(long ptr long)
 @ stdcall EnumSystemGeoID(long long ptr)
 @ stdcall EnumSystemLanguageGroupsA(ptr long ptr)
 @ stdcall -import EnumSystemLanguageGroupsW(ptr long ptr)
@@ -698,7 +698,7 @@
 @ stdcall -import GetHandleInformation(long ptr)
 @ stub -i386 GetLSCallbackTarget
 @ stub -i386 GetLSCallbackTemplate
-@ stdcall GetLargePageMinimum()
+@ stdcall -import GetLargePageMinimum()
 @ stdcall -import GetLargestConsoleWindowSize(long)
 @ stdcall -import GetLastError()
 @ stub GetLinguistLangSize
@@ -734,7 +734,7 @@
 @ stdcall -import GetNamedPipeInfo(long ptr ptr ptr ptr)
 @ stdcall GetNamedPipeServerProcessId(long ptr)
 @ stdcall GetNamedPipeServerSessionId(long ptr)
-@ stdcall GetNativeSystemInfo(ptr)
+@ stdcall -import GetNativeSystemInfo(ptr)
 @ stdcall -arch=x86_64 GetNextUmsListItem(ptr)
 @ stub GetNextVDMCommand
 @ stub GetNlsSectionName
@@ -825,8 +825,8 @@
 @ stdcall GetSystemDEPPolicy()
 @ stdcall GetSystemDirectoryA(ptr long)
 @ stdcall GetSystemDirectoryW(ptr long)
-@ stdcall GetSystemFirmwareTable(long long ptr long)
-@ stdcall GetSystemInfo(ptr)
+@ stdcall -import GetSystemFirmwareTable(long long ptr long)
+@ stdcall -import GetSystemInfo(ptr)
 @ stdcall GetSystemPowerStatus(ptr)
 @ stdcall GetSystemPreferredUILanguages(long ptr ptr ptr)
 @ stdcall GetSystemRegistryQuota(ptr ptr)

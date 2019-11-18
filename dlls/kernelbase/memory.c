@@ -27,6 +27,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -55,6 +56,104 @@ BOOL WINAPI DECLSPEC_HOTPATCH FlushViewOfFile( const void *base, SIZE_T size )
 
     if (status == STATUS_NOT_MAPPED_DATA) status = STATUS_SUCCESS;
     return set_ntstatus( status );
+}
+
+
+/***********************************************************************
+ *          GetLargePageMinimum   (kernelbase.@)
+ */
+SIZE_T WINAPI GetLargePageMinimum(void)
+{
+    return 2 * 1024 * 1024;
+}
+
+
+/***********************************************************************
+ *          GetNativeSystemInfo   (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH GetNativeSystemInfo( SYSTEM_INFO *si )
+{
+    GetSystemInfo( si );
+    if (!is_wow64) return;
+    switch (si->u.s.wProcessorArchitecture)
+    {
+    case PROCESSOR_ARCHITECTURE_INTEL:
+        si->u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
+        si->dwProcessorType = PROCESSOR_AMD_X8664;
+        break;
+    default:
+        FIXME( "Add the proper information for %d in wow64 mode\n", si->u.s.wProcessorArchitecture );
+    }
+}
+
+
+/***********************************************************************
+ *          GetSystemInfo   (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH GetSystemInfo( SYSTEM_INFO *si )
+{
+    SYSTEM_BASIC_INFORMATION basic_info;
+    SYSTEM_CPU_INFORMATION cpu_info;
+
+    if (!set_ntstatus( NtQuerySystemInformation( SystemBasicInformation,
+                                                 &basic_info, sizeof(basic_info), NULL )) ||
+        !set_ntstatus( NtQuerySystemInformation( SystemCpuInformation,
+                                                 &cpu_info, sizeof(cpu_info), NULL )))
+        return;
+
+    si->u.s.wProcessorArchitecture  = cpu_info.Architecture;
+    si->u.s.wReserved               = 0;
+    si->dwPageSize                  = basic_info.PageSize;
+    si->lpMinimumApplicationAddress = basic_info.LowestUserAddress;
+    si->lpMaximumApplicationAddress = basic_info.HighestUserAddress;
+    si->dwActiveProcessorMask       = basic_info.ActiveProcessorsAffinityMask;
+    si->dwNumberOfProcessors        = basic_info.NumberOfProcessors;
+    si->dwAllocationGranularity     = basic_info.AllocationGranularity;
+    si->wProcessorLevel             = cpu_info.Level;
+    si->wProcessorRevision          = cpu_info.Revision;
+
+    switch (cpu_info.Architecture)
+    {
+    case PROCESSOR_ARCHITECTURE_INTEL:
+        switch (cpu_info.Level)
+        {
+        case 3:  si->dwProcessorType = PROCESSOR_INTEL_386;     break;
+        case 4:  si->dwProcessorType = PROCESSOR_INTEL_486;     break;
+        case 5:
+        case 6:  si->dwProcessorType = PROCESSOR_INTEL_PENTIUM; break;
+        default: si->dwProcessorType = PROCESSOR_INTEL_PENTIUM; break;
+        }
+        break;
+    case PROCESSOR_ARCHITECTURE_PPC:
+        switch (cpu_info.Level)
+        {
+        case 1:  si->dwProcessorType = PROCESSOR_PPC_601;       break;
+        case 3:
+        case 6:  si->dwProcessorType = PROCESSOR_PPC_603;       break;
+        case 4:  si->dwProcessorType = PROCESSOR_PPC_604;       break;
+        case 9:  si->dwProcessorType = PROCESSOR_PPC_604;       break;
+        case 20: si->dwProcessorType = PROCESSOR_PPC_620;       break;
+        default: si->dwProcessorType = 0;
+        }
+        break;
+    case PROCESSOR_ARCHITECTURE_AMD64:
+        si->dwProcessorType = PROCESSOR_AMD_X8664;
+        break;
+    case PROCESSOR_ARCHITECTURE_ARM:
+        switch (cpu_info.Level)
+        {
+        case 4:  si->dwProcessorType = PROCESSOR_ARM_7TDMI;     break;
+        default: si->dwProcessorType = PROCESSOR_ARM920;
+        }
+        break;
+    case PROCESSOR_ARCHITECTURE_ARM64:
+        si->dwProcessorType = 0;
+        break;
+    default:
+        FIXME( "Unknown processor architecture %x\n", cpu_info.Architecture );
+        si->dwProcessorType = 0;
+        break;
+    }
 }
 
 
@@ -1024,4 +1123,52 @@ LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAllocExNuma( HANDLE process, void *addr, 
 {
     if (node) FIXME( "Ignoring preferred node %u\n", node );
     return VirtualAllocEx( process, addr, size, type, protect );
+}
+
+
+/***********************************************************************
+ * Firmware functions
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *             EnumSystemFirmwareTable   (kernelbase.@)
+ */
+UINT WINAPI EnumSystemFirmwareTables( DWORD provider, void *buffer, DWORD size )
+{
+    FIXME( "(0x%08x, %p, %d)\n", provider, buffer, size );
+    return 0;
+}
+
+
+/***********************************************************************
+ *             GetSystemFirmwareTable   (kernelbase.@)
+ */
+UINT WINAPI GetSystemFirmwareTable( DWORD provider, DWORD id, void *buffer, DWORD size )
+{
+    SYSTEM_FIRMWARE_TABLE_INFORMATION *info;
+    ULONG buffer_size = offsetof( SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer ) + size;
+
+    TRACE( "(0x%08x, 0x%08x, %p, %d)\n", provider, id, buffer, size );
+
+    if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, buffer_size )))
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        return 0;
+    }
+
+    info->ProviderSignature = provider;
+    info->Action = SystemFirmwareTable_Get;
+    info->TableID = id;
+
+    if (set_ntstatus( NtQuerySystemInformation( SystemFirmwareTableInformation,
+                                                info, buffer_size, &buffer_size )))
+    {
+        buffer_size -= offsetof( SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer );
+        if (buffer_size <= size) memcpy( buffer, info->TableBuffer, buffer_size );
+    }
+    else buffer_size = 0;
+
+    HeapFree( GetProcessHeap(), 0, info );
+    return buffer_size;
 }
