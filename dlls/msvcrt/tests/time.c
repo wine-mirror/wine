@@ -588,13 +588,59 @@ static void test_daylight(void)
 
 static void test_strftime(void)
 {
+    const struct {
+        const char *format;
+    } tests_einval[] = {
+        {"%C"},
+        {"%D"},
+        {"%e"},
+        {"%F"},
+        {"%h"},
+        {"%n"},
+        {"%R"},
+        {"%t"},
+        {"%T"},
+        {"%u"},
+    };
+
+    const struct {
+        const char *format;
+        const char *ret;
+        struct tm tm;
+        BOOL todo;
+    } tests[] = {
+        {"e%#%e", "e%e", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%c", "01/01/70 00:00:00", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%c", "02/30/70 00:00:00", { 0, 0, 0, 30, 1, 70, 4, 0, 0 }, TRUE},
+        {"%x", "01/01/70", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%X", "00:00:00", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%a", "Thu", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%A", "Thursday", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%b", "Jan", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%B", "January", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%d", "01", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#d", "1", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%H", "00", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%I", "12", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%j", "001", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%m", "01", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%#M", "0", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%p", "AM", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%U", "00", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%W", "00", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%U", "01", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        {"%W", "00", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        {"%U", "53", { 0, 0, 0, 1, 0, 70, 0, 365, 0 }},
+        {"%W", "52", { 0, 0, 0, 1, 0, 70, 0, 365, 0 }},
+    };
+
     static const wchar_t cW[] = { '%','c',0 };
-    static const char expected[] = "01/01/70 00:00:00";
     time_t gmt;
     struct tm* gmt_tm;
     char buf[256], bufA[256];
     WCHAR bufW[256];
     long retA, retW;
+    int i;
 
     if (!p_strftime || !p_wcsftime || !p_gmtime)
     {
@@ -608,55 +654,13 @@ static void test_strftime(void)
     gmt_tm = p_gmtime(&gmt);
     ok(gmt_tm != NULL, "gmtime failed\n");
 
-    errno = 0xdeadbeef;
-    retA = p_strftime(bufA, 256, "%C", gmt_tm);
-    ok(retA == 0, "expected 0, got %ld\n", retA);
-    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
-
-    errno = 0xdeadbeef;
-    retA = p_strftime(bufA, 256, "%D", gmt_tm);
-    ok(retA == 0, "expected 0, got %ld\n", retA);
-    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
-
-    errno = 0xdeadbeef;
-    retA = p_strftime(bufA, 256, "%e", gmt_tm);
-    ok(retA == 0, "expected 0, got %ld\n", retA);
-    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
-
-    errno = 0xdeadbeef;
-    retA = p_strftime(bufA, 256, "%F", gmt_tm);
-    ok(retA == 0, "expected 0, got %ld\n", retA);
-    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
-
-    errno = 0xdeadbeef;
-    retA = p_strftime(bufA, 256, "%h", gmt_tm);
-    ok(retA == 0, "expected 0, got %ld\n", retA);
-    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
-
-    errno = 0xdeadbeef;
-    retA = p_strftime(bufA, 256, "%n", gmt_tm);
-    ok(retA == 0, "expected 0, got %ld\n", retA);
-    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
-
-    errno = 0xdeadbeef;
-    retA = p_strftime(bufA, 256, "%R", gmt_tm);
-    ok(retA == 0, "expected 0, got %ld\n", retA);
-    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
-
-    errno = 0xdeadbeef;
-    retA = p_strftime(bufA, 256, "%t", gmt_tm);
-    ok(retA == 0, "expected 0, got %ld\n", retA);
-    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
-
-    errno = 0xdeadbeef;
-    retA = p_strftime(bufA, 256, "%T", gmt_tm);
-    ok(retA == 0, "expected 0, got %ld\n", retA);
-    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
-
-    errno = 0xdeadbeef;
-    retA = p_strftime(bufA, 256, "%u", gmt_tm);
-    ok(retA == 0, "expected 0, got %ld\n", retA);
-    ok(errno==EINVAL || broken(errno==0xdeadbeef), "errno = %d\n", errno);
+    for (i=0; i<ARRAY_SIZE(tests_einval); i++)
+    {
+        errno = 0xdeadbeef;
+        retA = p_strftime(bufA, 256, tests_einval[i].format, gmt_tm);
+        ok(retA == 0, "%d) ret = %ld\n", i, retA);
+        ok(errno==EINVAL || broken(errno==0xdeadbeef), "%d) errno = %d\n", i, errno);
+    }
 
     errno = 0xdeadbeef;
     retA = p_strftime(NULL, 0, "copy", gmt_tm);
@@ -691,14 +695,17 @@ static void test_strftime(void)
         ok(errno == EINVAL, "errno = %d\n", errno);
     }
 
-    retA = p_strftime(bufA, 256, "e%#%e", gmt_tm);
-    ok(retA == 3, "expected 3, got %ld\n", retA);
-    ok(!strcmp(bufA, "e%e"), "got %s\n", bufA);
+    for (i=0; i<ARRAY_SIZE(tests); i++)
+    {
+        retA = p_strftime(bufA, 256, tests[i].format, &tests[i].tm);
+        todo_wine_if(tests[i].todo) {
+            ok(retA == strlen(tests[i].ret), "%d) ret = %ld\n", i, retA);
+            ok(!strcmp(bufA, tests[i].ret), "%d) buf = \"%s\", expected \"%s\"\n",
+                    i, bufA, tests[i].ret);
+        }
+    }
 
     retA = p_strftime(bufA, 256, "%c", gmt_tm);
-    ok(retA == 17, "expected 17, got %ld\n", retA);
-    ok(strcmp(bufA, expected) == 0, "expected %s, got %s\n", expected, bufA);
-
     retW = p_wcsftime(bufW, 256, cW, gmt_tm);
     ok(retW == 17, "expected 17, got %ld\n", retW);
     ok(retA == retW, "expected %ld, got %ld\n", retA, retW);
@@ -706,96 +713,6 @@ static void test_strftime(void)
     retA = WideCharToMultiByte(CP_ACP, 0, bufW, retW, buf, 256, NULL, NULL);
     buf[retA] = 0;
     ok(strcmp(bufA, buf) == 0, "expected %s, got %s\n", bufA, buf);
-
-    retA = p_strftime(bufA, 256, "%x", gmt_tm);
-    ok(retA == 8, "expected 8, got %ld\n", retA);
-    ok(!strcmp(bufA, "01/01/70"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%X", gmt_tm);
-    ok(retA == 8, "expected 8, got %ld\n", retA);
-    ok(!strcmp(bufA, "00:00:00"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%a", gmt_tm);
-    ok(retA == 3, "expected 3, got %ld\n", retA);
-    ok(!strcmp(bufA, "Thu"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%A", gmt_tm);
-    ok(retA == 8, "expected 8, got %ld\n", retA);
-    ok(!strcmp(bufA, "Thursday"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%b", gmt_tm);
-    ok(retA == 3, "expected 3, got %ld\n", retA);
-    ok(!strcmp(bufA, "Jan"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%B", gmt_tm);
-    ok(retA == 7, "expected 7, got %ld\n", retA);
-    ok(!strcmp(bufA, "January"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%d", gmt_tm);
-    ok(retA == 2, "expected 2, got %ld\n", retA);
-    ok(!strcmp(bufA, "01"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%#d", gmt_tm);
-    ok(retA == 1, "expected 1, got %ld\n", retA);
-    ok(!strcmp(bufA, "1"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%H", gmt_tm);
-    ok(retA == 2, "expected 2, got %ld\n", retA);
-    ok(!strcmp(bufA, "00"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%I", gmt_tm);
-    ok(retA == 2, "expected 2, got %ld\n", retA);
-    ok(!strcmp(bufA, "12"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%j", gmt_tm);
-    ok(retA == 3, "expected 3, got %ld\n", retA);
-    ok(!strcmp(bufA, "001"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%m", gmt_tm);
-    ok(retA == 2, "expected 2, got %ld\n", retA);
-    ok(!strcmp(bufA, "01"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%#M", gmt_tm);
-    ok(retA == 1, "expected 1, got %ld\n", retA);
-    ok(!strcmp(bufA, "0"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%p", gmt_tm);
-    ok(retA == 2, "expected 2, got %ld\n", retA);
-    ok(!strcmp(bufA, "AM"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%U", gmt_tm);
-    ok(retA == 2, "expected 2, got %ld\n", retA);
-    ok(!strcmp(bufA, "00"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%W", gmt_tm);
-    ok(retA == 2, "expected 2, got %ld\n", retA);
-    ok(!strcmp(bufA, "00"), "got %s\n", bufA);
-
-    gmt_tm->tm_wday = 0;
-    retA = p_strftime(bufA, 256, "%U", gmt_tm);
-    ok(retA == 2, "expected 2, got %ld\n", retA);
-    ok(!strcmp(bufA, "01"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%W", gmt_tm);
-    ok(retA == 2, "expected 2, got %ld\n", retA);
-    ok(!strcmp(bufA, "00"), "got %s\n", bufA);
-
-    gmt_tm->tm_yday = 365;
-    retA = p_strftime(bufA, 256, "%U", gmt_tm);
-    ok(retA == 2, "expected 2, got %ld\n", retA);
-    ok(!strcmp(bufA, "53"), "got %s\n", bufA);
-
-    retA = p_strftime(bufA, 256, "%W", gmt_tm);
-    ok(retA == 2, "expected 2, got %ld\n", retA);
-    ok(!strcmp(bufA, "52"), "got %s\n", bufA);
-
-    gmt_tm->tm_mon = 1;
-    gmt_tm->tm_mday = 30;
-    retA = p_strftime(bufA, 256, "%c", gmt_tm);
-    todo_wine {
-        ok(retA == 17, "expected 17, got %ld\n", retA);
-        ok(!strcmp(bufA, "02/30/70 00:00:00"), "got %s\n", bufA);
-    }
 
     if(!setlocale(LC_ALL, "Japanese_Japan.932")) {
         win_skip("Japanese_Japan.932 locale not available\n");
