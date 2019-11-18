@@ -4981,6 +4981,19 @@ static void test_EnumSystemGeoID(void)
         ret = pEnumSystemGeoID(GEOCLASS_REGION, 0, test_geoid_enumproc2);
         ok(ret && geoidenum_count > 0, "got %d, count %d\n", ret, geoidenum_count);
     }
+
+    geoidenum_count = 0;
+    ret = pEnumSystemGeoID(GEOCLASS_ALL, 39070, test_geoid_enumproc2);
+    if (ret == 0)
+        win_skip("GEOCLASS_ALL is not supported in EnumSystemGeoID.\n");
+    else
+    {
+        ok(ret && geoidenum_count > 0, "got %d, count %d\n", ret, geoidenum_count);
+
+        geoidenum_count = 0;
+        ret = pEnumSystemGeoID(GEOCLASS_ALL, 0, test_geoid_enumproc2);
+        ok(ret && geoidenum_count > 0, "got %d, count %d\n", ret, geoidenum_count);
+    }
 }
 
 struct invariant_entry {

@@ -4247,16 +4247,28 @@ INT WINAPI GetGeoInfoA(GEOID geoid, GEOTYPE geotype, LPSTR data, int data_len, L
 /******************************************************************************
  *           EnumSystemGeoID    (KERNEL32.@)
  *
- * Call a users function for every location available on the system.
+ * Calls a user's function for every location available on the system.
  *
  * PARAMS
- *  geoclass   [I] Type of information desired (SYSGEOTYPE enum from "winnls.h")
- *  parent     [I] GEOID for the parent
- *  enumproc   [I] Callback function to call for each location
+ *  geoclass   [I] Type of location desired (SYSGEOTYPE enum from "winnls.h")
+ *  parent     [I] GeoID for the parent
+ *  enumproc   [I] Callback function to call for each location (prototype in "winnls.h")
  *
  * RETURNS
  *  Success: TRUE.
  *  Failure: FALSE. Use GetLastError() to determine the cause.
+ *
+ * NOTES
+ *  The enumproc function returns TRUE to continue enumerating
+ *  or FALSE to interrupt the enumeration.
+ *
+ *  On failure, GetLastError() returns one of the following values:
+ *   - ERROR_INVALID_PARAMETER: no callback function was provided.
+ *   - ERROR_INVALID_FLAGS: the location type was invalid.
+ *
+ * TODO
+ *  On Windows 10, this function filters out those locations which
+ *  simultaneously lack ISO and UN codes (e.g. Johnson Atoll).
  */
 BOOL WINAPI EnumSystemGeoID(GEOCLASS geoclass, GEOID parent, GEO_ENUMPROC enumproc)
 {
@@ -4269,7 +4281,7 @@ BOOL WINAPI EnumSystemGeoID(GEOCLASS geoclass, GEOID parent, GEO_ENUMPROC enumpr
         return FALSE;
     }
 
-    if (geoclass != GEOCLASS_NATION && geoclass != GEOCLASS_REGION) {
+    if (geoclass != GEOCLASS_NATION && geoclass != GEOCLASS_REGION && geoclass != GEOCLASS_ALL) {
         SetLastError(ERROR_INVALID_FLAGS);
         return FALSE;
     }
@@ -4277,9 +4289,10 @@ BOOL WINAPI EnumSystemGeoID(GEOCLASS geoclass, GEOID parent, GEO_ENUMPROC enumpr
     for (i = 0; i < ARRAY_SIZE(geoinfodata); i++) {
         const struct geoinfo_t *ptr = &geoinfodata[i];
 
-        if (geoclass == GEOCLASS_NATION && (ptr->kind == LOCATION_REGION))
+        if (geoclass == GEOCLASS_NATION && (ptr->kind != LOCATION_NATION))
             continue;
 
+        /* LOCATION_BOTH counts as region. */
         if (geoclass == GEOCLASS_REGION && (ptr->kind == LOCATION_NATION))
             continue;
 
