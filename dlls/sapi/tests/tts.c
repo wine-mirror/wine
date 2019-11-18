@@ -36,7 +36,8 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
 
 static void test_interfaces(void)
 {
-    ISpeechVoice *speech_voice;
+    ISpeechVoice *speech_voice, *speech_voice2;
+    ISpVoice *spvoice, *spvoice2;
     IDispatch *dispatch;
     IUnknown *unk;
     HRESULT hr;
@@ -59,6 +60,27 @@ static void test_interfaces(void)
     EXPECT_REF(unk, 1);
     EXPECT_REF(speech_voice, 1);
     IUnknown_Release(unk);
+
+    hr = CoCreateInstance(&CLSID_SpVoice, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ISpVoice, (void **)&spvoice);
+    ok(hr == S_OK, "Failed to create ISpVoice interface: %#x.\n", hr);
+    EXPECT_REF(spvoice, 1);
+    EXPECT_REF(speech_voice, 1);
+
+    hr = ISpVoice_QueryInterface(spvoice, &IID_ISpeechVoice, (void **)&speech_voice2);
+    ok(hr == S_OK, "ISpVoice_QueryInterface failed: %#x.\n", hr);
+    EXPECT_REF(speech_voice2, 2);
+    EXPECT_REF(spvoice, 2);
+    EXPECT_REF(speech_voice, 1);
+    ISpeechVoice_Release(speech_voice2);
+
+    hr = ISpeechVoice_QueryInterface(speech_voice, &IID_ISpVoice, (void **)&spvoice2);
+    ok(hr == S_OK, "ISpeechVoice_QueryInterface failed: %#x.\n", hr);
+    EXPECT_REF(speech_voice, 2);
+    EXPECT_REF(spvoice2, 2);
+    EXPECT_REF(spvoice, 1);
+    ISpVoice_Release(spvoice2);
+    ISpVoice_Release(spvoice);
 
     ISpeechVoice_Release(speech_voice);
 }
