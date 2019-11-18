@@ -717,3 +717,17 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationW(
 
     return TRUE;
 }
+
+/***********************************************************************
+ *      SetupGetInfDriverStoreLocationW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupGetInfDriverStoreLocationW(
+    PCWSTR FileName, PSP_ALTPLATFORM_INFO AlternativePlatformInfo,
+    PCWSTR LocaleName, PWSTR ReturnBuffer, DWORD ReturnBufferSize,
+    PDWORD RequiredSize)
+{
+    FIXME("stub: %s %p %s %p %u %p\n", debugstr_w(FileName), AlternativePlatformInfo, debugstr_w(LocaleName), ReturnBuffer, ReturnBufferSize, RequiredSize);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

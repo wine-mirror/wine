@@ -421,6 +421,7 @@
 @ stdcall SetupGetFileCompressionInfoW(wstr ptr ptr ptr ptr)
 @ stdcall SetupGetFileQueueCount(long long ptr)
 @ stdcall SetupGetFileQueueFlags(long ptr)
+@ stdcall SetupGetInfDriverStoreLocationW(wstr ptr wstr ptr long ptr)
 @ stdcall SetupGetInfFileListA(str long ptr long ptr)
 @ stdcall SetupGetInfFileListW(wstr long ptr long ptr)
 @ stdcall SetupGetInfInformationA(ptr long ptr long ptr)
