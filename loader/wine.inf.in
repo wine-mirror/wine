@@ -510,6 +510,10 @@ HKLM,System\CurrentControlSet\Control\ContentIndex\Language\Neutral,"Locale",0x1
 [ControlClass]
 HKLM,System\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318},,,"Disk drives"
 HKLM,System\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318},"Class",,"DiskDrive"
+HKLM,System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318},,,"Display adapters"
+HKLM,System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318},"Class",,"Display"
+HKLM,System\CurrentControlSet\Control\Class\{4d36e96e-e325-11ce-bfc1-08002be10318},,,"Monitors"
+HKLM,System\CurrentControlSet\Control\Class\{4d36e96e-e325-11ce-bfc1-08002be10318},"Class",,"Monitor"
 HKLM,System\CurrentControlSet\Control\Class\{4d36e978-e325-11ce-bfc1-08002be10318},,,"Ports (COM & LPT)"
 HKLM,System\CurrentControlSet\Control\Class\{4d36e978-e325-11ce-bfc1-08002be10318},"Class",,"Ports"
 HKLM,System\CurrentControlSet\Control\Class\{4d36e97d-e325-11ce-bfc1-08002be10318},,,"System devices"
