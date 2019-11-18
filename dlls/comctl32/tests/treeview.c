@@ -1695,7 +1695,7 @@ static void test_itemedit(void)
     r = SetWindowTextA(edit, buffA);
     expect(TRUE, r);
     r = GetWindowTextA(edit, buffA, ARRAY_SIZE(buffA));
-    expect(ARRAY_SIZE(buffA) - 1, r);
+    ok( r == ARRAY_SIZE(buffA) - 1, "got %d\n", r );
     /* ...but it's trimmed to MAX_PATH chars when editing ends */
     r = SendMessageA(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
     expect(0, r);
@@ -1705,7 +1705,7 @@ static void test_itemedit(void)
     item.cchTextMax = ARRAY_SIZE(buffA);
     r = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, r);
-    expect(MAX_PATH - 1, strlen(item.pszText));
+    expect(MAX_PATH - 1, lstrlenA(item.pszText));
 
     /* We can't get around that MAX_PATH limit by increasing EM_SETLIMITTEXT */
     edit = (HWND)SendMessageA(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
@@ -1723,7 +1723,7 @@ static void test_itemedit(void)
     item.cchTextMax = ARRAY_SIZE(buffA);
     r = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, r);
-    expect(MAX_PATH - 1, strlen(item.pszText));
+    expect(MAX_PATH - 1, lstrlenA(item.pszText));
 
     /* Overwriting of pszText contents in TVN_ENDLABELEDIT */
     edit = (HWND)SendMessageA(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
