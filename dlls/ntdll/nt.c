@@ -50,6 +50,19 @@
 #endif
 #include <time.h>
 
+#ifdef sun
+/* FIXME:  Unfortunately swapctl can't be used with largefile.... */
+# undef _FILE_OFFSET_BITS
+# define _FILE_OFFSET_BITS 32
+# ifdef HAVE_SYS_RESOURCE_H
+#  include <sys/resource.h>
+# endif
+# ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+# endif
+# include <sys/swap.h>
+#endif
+
 #define NONAMELESSUNION
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -2347,6 +2360,139 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
 
 #endif
 
+static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
+{
+    unsigned long long totalram = 0, freeram = 0, totalswap = 0, freeswap = 0;
+    FILE *fp;
+
+    memset( info, 0, sizeof(*info) );
+
+    if ((fp = fopen("/proc/uptime", "r")))
+    {
+        double uptime, idle_time;
+
+        fscanf(fp, "%lf %lf", &uptime, &idle_time);
+        fclose(fp);
+        info->IdleTime.QuadPart = 10000000 * idle_time;
+    }
+    else
+    {
+        static ULONGLONG idle;
+        /* many programs expect IdleTime to change so fake change */
+        info->IdleTime.QuadPart = ++idle;
+    }
+
+#ifdef linux
+    if ((fp = fopen("/proc/meminfo", "r")))
+    {
+        unsigned long long value;
+        char line[64];
+
+        while (fgets(line, sizeof(line), fp))
+        {
+            if(sscanf(line, "MemTotal: %llu kB", &value) == 1)
+                totalram += value * 1024;
+            else if(sscanf(line, "MemFree: %llu kB", &value) == 1)
+                freeram += value * 1024;
+            else if(sscanf(line, "SwapTotal: %llu kB", &value) == 1)
+                totalswap += value * 1024;
+            else if(sscanf(line, "SwapFree: %llu kB", &value) == 1)
+                freeswap += value * 1024;
+            else if (sscanf(line, "Buffers: %llu", &value))
+                freeram += value * 1024;
+            else if (sscanf(line, "Cached: %llu", &value))
+                freeram += value * 1024;
+        }
+        fclose(fp);
+    }
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || \
+    defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+    {
+#ifdef __APPLE__
+        unsigned int val;
+#else
+        unsigned long val;
+#endif
+        int mib[2];
+        size_t size_sys;
+
+        mib[0] = CTL_HW;
+#ifdef HW_MEMSIZE
+        {
+            uint64_t val64;
+            mib[1] = HW_MEMSIZE;
+            size_sys = sizeof(val64);
+            if (!sysctl(mib, 2, &val64, &size_sys, NULL, 0) && size_sys == sizeof(val64)) totalram = val64;
+        }
+#endif
+
+#ifdef HAVE_MACH_MACH_H
+        {
+            host_name_port_t host = mach_host_self();
+            mach_msg_type_number_t count;
+#ifdef HOST_VM_INFO64_COUNT
+            vm_statistics64_data_t vm_stat;
+
+            count = HOST_VM_INFO64_COUNT;
+            if (host_statistics64(host, HOST_VM_INFO64, (host_info64_t)&vm_stat, &count) == KERN_SUCCESS)
+                freeram = (vm_stat.free_count + vm_stat.inactive_count) * (ULONGLONG)page_size;
+#endif
+            if (!totalram)
+            {
+                host_basic_info_data_t info;
+                count = HOST_BASIC_INFO_COUNT;
+                if (host_info(host, HOST_BASIC_INFO, (host_info_t)&info, &count) == KERN_SUCCESS)
+                    totalram = info.max_mem;
+            }
+            mach_port_deallocate(mach_task_self(), host);
+        }
+#endif
+
+        if (!totalram)
+        {
+            mib[1] = HW_PHYSMEM;
+            size_sys = sizeof(val);
+            if (!sysctl(mib, 2, &val, &size_sys, NULL, 0) && size_sys == sizeof(val)) totalram = val;
+        }
+        if (!freeram)
+        {
+            mib[1] = HW_USERMEM;
+            size_sys = sizeof(val);
+            if (!sysctl(mib, 2, &val, &size_sys, NULL, 0) && size_sys == sizeof(val)) freeram = val;
+        }
+#ifdef VM_SWAPUSAGE
+        {
+            struct xsw_usage swap;
+            mib[0] = CTL_VM;
+            mib[1] = VM_SWAPUSAGE;
+            size_sys = sizeof(swap);
+            if (!sysctl(mib, 2, &swap, &size_sys, NULL, 0) && size_sys == sizeof(swap))
+            {
+                totalswap = swap.xsu_total;
+                freeswap = swap.xsu_avail;
+            }
+        }
+#endif
+    }
+#elif defined( sun )
+    {
+        struct anoninfo swapinf;
+        int rval;
+        totalram = sysconf(_SC_PHYS_PAGES) * (ULONGLONG)page_size;
+        freeram = sysconf(_SC_AVPHYS_PAGES) * (ULONGLONG)page_size;
+        rval = swapctl(SC_AINFO, &swapinf);
+        if (rval > -1)
+        {
+            totalswap = swapinf.ani_max * (ULONGLONG)page_size;
+            freeswap = swapinf.ani_free * (ULONGLONG)page_size;
+        }
+    }
+#endif
+    info->AvailablePages      = freeram / page_size;
+    info->TotalCommittedPages = (totalram + totalswap - freeram - freeswap) / page_size;
+    info->TotalCommitLimit    = (totalram + totalswap) / page_size;
+}
+
 /***********************************************************************
  * RtlIsProcessorFeaturePresent [NTDLL.@]
  */
@@ -2415,58 +2561,9 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         {
             SYSTEM_PERFORMANCE_INFORMATION spi;
             static BOOL fixme_written = FALSE;
-            FILE *fp;
 
-            memset(&spi, 0 , sizeof(spi));
+            get_performance_info( &spi );
             len = sizeof(spi);
-
-            spi.Reserved3 = 0x7fffffff; /* Available paged pool memory? */
-
-            if ((fp = fopen("/proc/uptime", "r")))
-            {
-                double uptime, idle_time;
-
-                fscanf(fp, "%lf %lf", &uptime, &idle_time);
-                fclose(fp);
-                spi.IdleTime.QuadPart = 10000000 * idle_time;
-            }
-            else
-            {
-                static ULONGLONG idle;
-                /* many programs expect IdleTime to change so fake change */
-                spi.IdleTime.QuadPart = ++idle;
-            }
-
-            if ((fp = fopen("/proc/meminfo", "r")))
-            {
-                unsigned long long totalram = 0, freeram = 0, totalswap = 0, freeswap = 0;
-                char line[64];
-                while (fgets(line, sizeof(line), fp))
-                {
-                   if(sscanf(line, "MemTotal: %llu kB", &totalram) == 1)
-                   {
-                       totalram *= 1024;
-                   }
-                   else if(sscanf(line, "MemFree: %llu kB", &freeram) == 1)
-                   {
-                       freeram *= 1024;
-                   }
-                   else if(sscanf(line, "SwapTotal: %llu kB", &totalswap) == 1)
-                   {
-                       totalswap *= 1024;
-                   }
-                   else if(sscanf(line, "SwapFree: %llu kB", &freeswap) == 1)
-                   {
-                       freeswap *= 1024;
-                       break;
-                   }
-                }
-                fclose(fp);
-
-                spi.AvailablePages      = freeram / page_size;
-                spi.TotalCommittedPages = (totalram + totalswap - freeram - freeswap) / page_size;
-                spi.TotalCommitLimit    = (totalram + totalswap) / page_size;
-            }
 
             if (Length >= len)
             {
