@@ -38,6 +38,7 @@ struct speech_voice
 {
     ISpeechVoice ISpeechVoice_iface;
     ISpVoice ISpVoice_iface;
+    IConnectionPointContainer IConnectionPointContainer_iface;
     LONG ref;
 };
 
@@ -49,6 +50,11 @@ static inline struct speech_voice *impl_from_ISpeechVoice(ISpeechVoice *iface)
 static inline struct speech_voice *impl_from_ISpVoice(ISpVoice *iface)
 {
     return CONTAINING_RECORD(iface, struct speech_voice, ISpVoice_iface);
+}
+
+static inline struct speech_voice *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
+{
+    return CONTAINING_RECORD(iface, struct speech_voice, IConnectionPointContainer_iface);
 }
 
 /* ISpeechVoice interface */
@@ -64,6 +70,8 @@ static HRESULT WINAPI speech_voice_QueryInterface(ISpeechVoice *iface, REFIID ii
         *obj = &This->ISpeechVoice_iface;
     else if (IsEqualIID(iid, &IID_ISpVoice))
         *obj = &This->ISpVoice_iface;
+    else if (IsEqualIID(iid, &IID_IConnectionPointContainer))
+        *obj = &This->IConnectionPointContainer_iface;
     else
     {
         *obj = NULL;
@@ -726,6 +734,59 @@ static const ISpVoiceVtbl spvoice_vtbl =
     spvoice_DisplayUI
 };
 
+/* IConnectionPointContainer interface */
+static HRESULT WINAPI container_QueryInterface(IConnectionPointContainer *iface, REFIID iid, void **obj)
+{
+    struct speech_voice *This = impl_from_IConnectionPointContainer(iface);
+
+    TRACE("(%p, %s %p).\n", iface, debugstr_guid(iid), obj);
+
+    return ISpeechVoice_QueryInterface(&This->ISpeechVoice_iface, iid, obj);
+}
+
+static ULONG WINAPI container_AddRef(IConnectionPointContainer *iface)
+{
+    struct speech_voice *This = impl_from_IConnectionPointContainer(iface);
+
+    TRACE("(%p).\n", iface);
+
+    return ISpeechVoice_AddRef(&This->ISpeechVoice_iface);
+}
+
+static ULONG WINAPI container_Release(IConnectionPointContainer *iface)
+{
+    struct speech_voice *This = impl_from_IConnectionPointContainer(iface);
+
+    TRACE("(%p).\n", iface);
+
+    return ISpeechVoice_Release(&This->ISpeechVoice_iface);
+}
+
+static HRESULT WINAPI container_EnumConnectionPoints(IConnectionPointContainer *iface,
+                                                     IEnumConnectionPoints **enum_cp)
+{
+    FIXME("(%p, %p): stub.\n", iface, enum_cp);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI container_FindConnectionPoint(IConnectionPointContainer *iface, REFIID riid,
+                                                    IConnectionPoint **cp)
+{
+    FIXME("(%p, %s, %p): stub.\n", iface, debugstr_guid(riid), cp);
+
+    return E_NOTIMPL;
+}
+
+const static IConnectionPointContainerVtbl container_vtbl =
+{
+    container_QueryInterface,
+    container_AddRef,
+    container_Release,
+    container_EnumConnectionPoints,
+    container_FindConnectionPoint
+};
+
 HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
 {
     struct speech_voice *This = heap_alloc(sizeof(*This));
@@ -734,6 +795,7 @@ HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
     if (!This) return E_OUTOFMEMORY;
     This->ISpeechVoice_iface.lpVtbl = &speech_voice_vtbl;
     This->ISpVoice_iface.lpVtbl = &spvoice_vtbl;
+    This->IConnectionPointContainer_iface.lpVtbl = &container_vtbl;
     This->ref = 1;
 
     hr = ISpeechVoice_QueryInterface(&This->ISpeechVoice_iface, iid, obj);

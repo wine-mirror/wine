@@ -37,6 +37,7 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
 static void test_interfaces(void)
 {
     ISpeechVoice *speech_voice, *speech_voice2;
+    IConnectionPointContainer *container;
     ISpVoice *spvoice, *spvoice2;
     IDispatch *dispatch;
     IUnknown *unk;
@@ -81,6 +82,13 @@ static void test_interfaces(void)
     EXPECT_REF(spvoice, 1);
     ISpVoice_Release(spvoice2);
     ISpVoice_Release(spvoice);
+
+    hr = ISpeechVoice_QueryInterface(speech_voice, &IID_IConnectionPointContainer,
+                                     (void **)&container);
+    ok(hr == S_OK, "ISpeechVoice_QueryInterface failed: %#x.\n", hr);
+    EXPECT_REF(speech_voice, 2);
+    EXPECT_REF(container, 2);
+    IConnectionPointContainer_Release(container);
 
     ISpeechVoice_Release(speech_voice);
 }
