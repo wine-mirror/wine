@@ -120,12 +120,32 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_Play(IDirectMusicTrack8 *iface, voi
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTrack8Impl_GetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam)
+static HRESULT WINAPI IDirectMusicTrack8Impl_GetParam(IDirectMusicTrack8 *iface, REFGUID type,
+        MUSIC_TIME time, MUSIC_TIME *next, void *param)
 {
-        IDirectMusicStyleTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
-	return S_OK;
+    IDirectMusicStyleTrack *This = impl_from_IDirectMusicTrack8(iface);
+    struct list *item = NULL;
+
+    FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(type), time, next, param);
+
+    if (!type)
+        return E_POINTER;
+
+    if (IsEqualGUID(&GUID_IDirectMusicStyle, type)) {
+        LIST_FOR_EACH (item, &This->Items) {
+            DMUS_PRIVATE_STYLE_ITEM *style = LIST_ENTRY(item, DMUS_PRIVATE_STYLE_ITEM, entry);
+            if (style->pObject) {
+                IDirectMusicStyle8_AddRef(style->pObject);
+                *((IDirectMusicStyle8**)param) = style->pObject;
+
+                return S_OK;
+            }
+        }
+
+        return DMUS_E_NOT_FOUND;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicTrack8Impl_SetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
