@@ -530,6 +530,17 @@ static void *d3d8_get_object(struct d3d8_handle_table *t, DWORD handle, enum d3d
     return entry->object;
 }
 
+static void device_reset_viewport_state(struct d3d8_device *device)
+{
+    struct wined3d_viewport vp;
+    RECT rect;
+
+    wined3d_device_get_viewports(device->wined3d_device, NULL, &vp);
+    wined3d_stateblock_set_viewport(device->state, &vp);
+    wined3d_device_get_scissor_rects(device->wined3d_device, NULL, &rect);
+    wined3d_stateblock_set_scissor_rect(device->state, &rect);
+}
+
 static HRESULT WINAPI d3d8_device_QueryInterface(IDirect3DDevice8 *iface, REFIID riid, void **out)
 {
     TRACE("iface %p, riid %s, out %p.\n",
@@ -928,6 +939,7 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_POINTSIZE_MIN, 0);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZENABLE,
                 !!swapchain_desc.enable_auto_depth_stencil);
+        device_reset_viewport_state(device);
         device->device_state = D3D8_DEVICE_STATE_OK;
     }
     else
@@ -1473,8 +1485,13 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
     if (SUCCEEDED(hr))
     {
         rtv = render_target ? d3d8_surface_acquire_rendertarget_view(rt_impl) : NULL;
-        if (render_target && FAILED(hr = wined3d_device_set_rendertarget_view(device->wined3d_device, 0, rtv, TRUE)))
-            wined3d_device_set_depth_stencil_view(device->wined3d_device, original_dsv);
+        if (render_target)
+        {
+            if (SUCCEEDED(hr = wined3d_device_set_rendertarget_view(device->wined3d_device, 0, rtv, TRUE)))
+                device_reset_viewport_state(device);
+            else
+                wined3d_device_set_depth_stencil_view(device->wined3d_device, original_dsv);
+        }
         d3d8_surface_release_rendertarget_view(rt_impl, rtv);
     }
 
@@ -3719,6 +3736,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
     wined3d_device_set_render_state(device->wined3d_device,
             WINED3D_RS_ZENABLE, !!swapchain_desc.enable_auto_depth_stencil);
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_POINTSIZE_MIN, 0);
+    device_reset_viewport_state(device);
     wined3d_mutex_unlock();
 
     present_parameters_from_wined3d_swapchain_desc(parameters,
