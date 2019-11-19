@@ -4281,6 +4281,8 @@ void __wine_process_init(void)
         exit(1);
     }
 
+    init_locale( wm->ldr.BaseAddress );
+
     params = peb->ProcessParameters;
     if (!(status = load_dll( params->DllPath.Buffer, params->ImagePathName.Buffer, NULL,
                              DONT_RESOLVE_DLL_REFERENCES, &wm )))

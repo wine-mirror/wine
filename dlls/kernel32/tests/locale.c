@@ -30,11 +30,14 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "winternl.h"
 
 static const WCHAR upper_case[] = {'\t','J','U','S','T','!',' ','A',',',' ','T','E','S','T',';',' ','S','T','R','I','N','G',' ','1','/','*','+','-','.','\r','\n',0};
 static const WCHAR lower_case[] = {'\t','j','u','s','t','!',' ','a',',',' ','t','e','s','t',';',' ','s','t','r','i','n','g',' ','1','/','*','+','-','.','\r','\n',0};
@@ -83,6 +86,7 @@ static BOOL (WINAPI *pEnumUILanguagesA)(UILANGUAGE_ENUMPROCA, DWORD, LONG_PTR);
 static BOOL (WINAPI *pEnumSystemLocalesEx)(LOCALE_ENUMPROCEX, DWORD, LPARAM, LPVOID);
 static INT (WINAPI *pLCMapStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPWSTR, INT, LPNLSVERSIONINFO, LPVOID, LPARAM);
 static LCID (WINAPI *pLocaleNameToLCID)(LPCWSTR, DWORD);
+static NTSTATUS (WINAPI *pRtlLocaleNameToLcid)(LPCWSTR, LCID *, DWORD);
 static INT  (WINAPI *pLCIDToLocaleName)(LCID, LPWSTR, INT, DWORD);
 static INT (WINAPI *pFoldStringA)(DWORD, LPCSTR, INT, LPSTR, INT);
 static INT (WINAPI *pFoldStringW)(DWORD, LPCWSTR, INT, LPWSTR, INT);
@@ -148,6 +152,7 @@ static void InitFunctionPointers(void)
 
   mod = GetModuleHandleA("ntdll");
   X(RtlUpcaseUnicodeChar);
+  X(RtlLocaleNameToLcid);
 #undef X
 }
 
@@ -2792,9 +2797,12 @@ static const struct neutralsublang_name_t neutralsublang_names[] = {
 
 static void test_LocaleNameToLCID(void)
 {
-    LCID lcid;
+    LCID lcid, expect;
+    NTSTATUS status;
     INT ret;
     WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
+    const struct neutralsublang_name_t *ptr;
+
     static const WCHAR enW[] = {'e','n',0};
     static const WCHAR esesW[] = {'e','s','-','e','s',0};
     static const WCHAR zhHansW[] = {'z','h','-','H','a','n','s',0};
@@ -2853,9 +2861,7 @@ static void test_LocaleNameToLCID(void)
        broken(lcid == 0) /* Vista */, "got 0x%04x\n", lcid);
     if (lcid)
     {
-        const struct neutralsublang_name_t *ptr = neutralsublang_names;
-
-        while (*ptr->name)
+        for (ptr = neutralsublang_names; *ptr->name; ptr++)
         {
             lcid = pLocaleNameToLCID(ptr->name, 0);
             todo_wine_if (ptr->todo)
@@ -2868,7 +2874,6 @@ static void test_LocaleNameToLCID(void)
             ok(!lstrcmpW(ptr->sname, buffer), "%s: got wrong locale name %s\n",
                 wine_dbgstr_w(ptr->name), wine_dbgstr_w(buffer));
 
-            ptr++;
         }
 
         /* zh-Hant has LCID 0x7c04, but LocaleNameToLCID actually returns 0x0c04, which is the LCID of zh-HK */
@@ -2919,6 +2924,70 @@ static void test_LocaleNameToLCID(void)
         ok(!lstrcmpW(zhcnW, buffer), "%s: got wrong locale name %s\n",
            wine_dbgstr_w(zhhansW), wine_dbgstr_w(buffer));
     }
+
+    if (pRtlLocaleNameToLcid)
+    {
+        status = pRtlLocaleNameToLcid( LOCALE_NAME_USER_DEFAULT, &lcid, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+        status = pRtlLocaleNameToLcid( LOCALE_NAME_SYSTEM_DEFAULT, &lcid, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+        status = pRtlLocaleNameToLcid( invalidW, &lcid, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+
+        lcid = 0;
+        status = pRtlLocaleNameToLcid( LOCALE_NAME_INVARIANT, &lcid, 0 );
+        ok( !status, "failed error %x\n", status );
+        ok( lcid == LANG_INVARIANT, "got %08x\n", lcid );
+
+        lcid = 0;
+        status = pRtlLocaleNameToLcid( localeW, &lcid, 0 );
+        ok( !status, "failed error %x\n", status );
+        ok( lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), "got %08x\n", lcid );
+
+        lcid = 0;
+        status = pRtlLocaleNameToLcid( esesW, &lcid, 0 );
+        ok( !status, "failed error %x\n", status );
+        ok( lcid == MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_MODERN), "got %08x\n", lcid );
+
+        lcid = 0;
+        status = pRtlLocaleNameToLcid( enW, &lcid, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+        status = pRtlLocaleNameToLcid( enW, &lcid, 1 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+        status = pRtlLocaleNameToLcid( enW, &lcid, 2 );
+        ok( !status, "failed error %x\n", status );
+        ok( lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL), "got %08x\n", lcid );
+        status = pRtlLocaleNameToLcid( L"en-RR", &lcid, 2 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+        status = pRtlLocaleNameToLcid( L"en-Latn-RR", &lcid, 2 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %x\n", status );
+
+        for (ptr = neutralsublang_names; *ptr->name; ptr++)
+        {
+            switch (LANGIDFROMLCID(ptr->lcid))
+            {
+            case MAKELANGID( LANG_SERBIAN, SUBLANG_SERBIAN_SERBIA_LATIN): expect = LANG_SERBIAN_NEUTRAL; break;
+            case MAKELANGID( LANG_SERBIAN, SUBLANG_SERBIAN_SERBIA_CYRILLIC): expect = 0x6c1a; break;
+            case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED ): expect = 0x7804; break;
+            case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG ): expect = LANG_CHINESE_TRADITIONAL; break;
+            default: expect = MAKELANGID( PRIMARYLANGID(ptr->lcid), SUBLANG_NEUTRAL ); break;
+            }
+
+            status = pRtlLocaleNameToLcid( ptr->name, &lcid, 2 );
+            ok( !status || broken(ptr->lcid == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)), /* vista */
+                "%s failed error %x\n", wine_dbgstr_w(ptr->name), status );
+            todo_wine_if(ptr->todo)
+            if (!status) ok( lcid == expect, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
+                             wine_dbgstr_w(ptr->name), lcid, expect );
+            status = pRtlLocaleNameToLcid( ptr->sname, &lcid, 0 );
+            ok( !status || broken(ptr->lcid == MAKELANGID(LANG_SERBIAN, SUBLANG_SERBIAN_SERBIA_LATIN)), /* vista */
+                "%s failed error %x\n", wine_dbgstr_w(ptr->name), status );
+            todo_wine_if(ptr->todo)
+            if (!status) ok( lcid == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
+                             wine_dbgstr_w(ptr->name), lcid, ptr->lcid );
+        }
+    }
+    else win_skip( "RtlLocaleNameToLcid not available\n" );
 }
 
 /* this requires collation table patch to make it MS compatible */

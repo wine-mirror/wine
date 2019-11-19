@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSUNION
 #include "config.h"
 #include "wine/port.h"
 
@@ -37,7 +38,29 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 LCID user_lcid = 0, system_lcid = 0;
 
 static LANGID user_ui_language, system_ui_language;
+static HMODULE kernel32_handle;
 static const union cptable *unix_table; /* NULL if UTF8 */
+
+static NTSTATUS load_string( ULONG id, LANGID lang, WCHAR *buffer, ULONG len )
+{
+    const IMAGE_RESOURCE_DATA_ENTRY *data;
+    LDR_RESOURCE_INFO info;
+    NTSTATUS status;
+    WCHAR *p;
+    int i;
+
+    info.Type = 6; /* RT_STRING */
+    info.Name = (id >> 4) + 1;
+    info.Language = lang;
+    if ((status = LdrFindResource_U( kernel32_handle, &info, 3, &data ))) return status;
+    p = (WCHAR *)((char *)kernel32_handle + data->OffsetToData);
+    for (i = 0; i < (id & 0x0f); i++) p += *p + 1;
+    if (*p >= len) return STATUS_BUFFER_TOO_SMALL;
+    memcpy( buffer, p + 1, *p * sizeof(WCHAR) );
+    buffer[*p] = 0;
+    return STATUS_SUCCESS;
+}
+
 
 #if !defined(__APPLE__) && !defined(__ANDROID__)  /* these platforms always use UTF-8 */
 
@@ -143,6 +166,12 @@ void init_unix_codepage(void) { }
 #endif  /* __APPLE__ || __ANDROID__ */
 
 
+void init_locale( HMODULE module )
+{
+    kernel32_handle = module;
+}
+
+
 /******************************************************************
  *      ntdll_umbstowcs
  */
@@ -232,5 +261,118 @@ NTSTATUS WINAPI NtSetDefaultUILanguage( LANGID lang )
 NTSTATUS WINAPI NtQueryInstallUILanguage( LANGID *lang )
 {
     *lang = system_ui_language;
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************
+ *      RtlLocaleNameToLcid   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags )
+{
+    /* locale name format is: lang[-script][-country][_modifier] */
+
+    static const WCHAR sepW[] = {'-','_',0};
+
+    const IMAGE_RESOURCE_DIRECTORY *resdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
+    LDR_RESOURCE_INFO info;
+    WCHAR buf[LOCALE_NAME_MAX_LENGTH];
+    WCHAR lang[LOCALE_NAME_MAX_LENGTH]; /* language ("en") (note: buffer contains the other strings too) */
+    WCHAR *country = NULL; /* country ("US") */
+    WCHAR *script = NULL; /* script ("Latn") */
+    WCHAR *p;
+    int i;
+
+    if (!name) return STATUS_INVALID_PARAMETER_1;
+
+    if (!name[0])
+    {
+        *lcid = LANG_INVARIANT;
+        goto found;
+    }
+    if (strlenW( name ) >= LOCALE_NAME_MAX_LENGTH) return STATUS_INVALID_PARAMETER_1;
+    strcpyW( lang, name );
+
+    if ((p = strpbrkW( lang, sepW )) && *p == '-')
+    {
+        *p++ = 0;
+        country = p;
+        if ((p = strpbrkW( p, sepW )) && *p == '-')
+        {
+            *p++ = 0;
+            script = country;
+            country = p;
+            p = strpbrkW( p, sepW );
+        }
+        if (p) *p = 0;  /* FIXME: modifier is ignored */
+        /* second value can be script or country, check length to resolve the ambiguity */
+        if (!script && strlenW( country ) == 4)
+        {
+            script = country;
+            country = NULL;
+        }
+    }
+
+    info.Type = 6; /* RT_STRING */
+    info.Name = (LOCALE_SNAME >> 4) + 1;
+    if (LdrFindResourceDirectory_U( kernel32_handle, &info, 2, &resdir ))
+        return STATUS_INVALID_PARAMETER_1;
+
+    et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
+    for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
+    {
+        LANGID id = et[i].u.Id;
+
+        if (PRIMARYLANGID(id) == LANG_NEUTRAL) continue;
+
+        if (!load_string( LOCALE_SNAME, id, buf, ARRAY_SIZE(buf) ) && !strcmpiW( name, buf ))
+        {
+            *lcid = MAKELCID( id, SORT_DEFAULT );  /* FIXME: handle sort order */
+            goto found;
+        }
+
+        if (load_string( LOCALE_SISO639LANGNAME, id, buf, ARRAY_SIZE(buf) ) || strcmpiW( lang, buf ))
+            continue;
+
+        if (script)
+        {
+            unsigned int len = strlenW( script );
+            if (load_string( LOCALE_SSCRIPTS, id, buf, ARRAY_SIZE(buf) )) continue;
+            p = buf;
+            while (*p)
+            {
+                if (!strncmpiW( p, script, len ) && (!p[len] || p[len] == ';')) break;
+                if (!(p = strchrW( p, ';'))) break;
+                p++;
+            }
+            if (!p || !*p) continue;
+        }
+
+        if (!country && (flags & 2))
+        {
+            if (!script) id = MAKELANGID( PRIMARYLANGID(id), LANG_NEUTRAL );
+            switch (id)
+            {
+            case MAKELANGID( LANG_CHINESE, SUBLANG_NEUTRAL ):
+            case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SINGAPORE ):
+                *lcid = MAKELCID( 0x7804, SORT_DEFAULT );
+                break;
+            case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL ):
+            case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_MACAU ):
+            case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG ):
+                *lcid = MAKELCID( 0x7c04, SORT_DEFAULT );
+                break;
+            default:
+                *lcid = MAKELANGID( PRIMARYLANGID(id), SUBLANG_NEUTRAL );
+                break;
+            }
+            goto found;
+        }
+    }
+    return STATUS_INVALID_PARAMETER_1;
+
+found:
+    TRACE( "%s -> %04x\n", debugstr_w(name), *lcid );
     return STATUS_SUCCESS;
 }
