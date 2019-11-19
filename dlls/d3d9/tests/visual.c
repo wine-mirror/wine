@@ -4931,7 +4931,8 @@ done:
     DestroyWindow(window);
 }
 
-static void check_rect(struct surface_readback *rb, RECT r, const char *message)
+#define check_rect(a, b, c) check_rect_(__LINE__, a, b, c)
+static void check_rect_(unsigned int line, struct surface_readback *rb, RECT r, const char *message)
 {
     LONG x_coords[2][2] =
     {
@@ -4965,7 +4966,7 @@ static void check_rect(struct surface_readback *rb, RECT r, const char *message)
             if (!all_match)
                 break;
         }
-        ok(all_match, "%s: pixel (%d, %d) has color %08x.\n", message, x, y, color);
+        ok_(__FILE__, line)(all_match, "%s: pixel (%d, %d) has color %08x.\n", message, x, y, color);
         return;
     }
 
@@ -4984,7 +4985,7 @@ static void check_rect(struct surface_readback *rb, RECT r, const char *message)
                     if (x < 0 || x >= 640 || y < 0 || y >= 480)
                         continue;
                     color = get_readback_color(rb, x, y);
-                    ok(color == expected, "%s: pixel (%d, %d) has color %08x, expected %08x.\n",
+                    ok_(__FILE__, line)(color == expected, "%s: pixel (%d, %d) has color %08x, expected %08x.\n",
                             message, x, y, color, expected);
                 }
             }
@@ -14358,28 +14359,32 @@ static void test_viewport(void)
     static const struct
     {
         D3DVIEWPORT9 vp;
+        float expected_z;
         RECT expected_rect;
         const char *message;
     }
     tests[] =
     {
-        {{  0,   0,  640,  480}, {  0, 120, 479, 359}, "Viewport (0, 0) - (640, 480)"},
-        {{  0,   0,  320,  240}, {  0,  60, 239, 179}, "Viewport (0, 0) - (320, 240)"},
-        {{  0,   0, 1280,  960}, {  0, 240, 639, 479}, "Viewport (0, 0) - (1280, 960)"},
-        {{  0,   0, 2000, 1600}, {  0, 400, 639, 479}, "Viewport (0, 0) - (2000, 1600)"},
-        {{100, 100,  640,  480}, {100, 220, 579, 459}, "Viewport (100, 100) - (640, 480)"},
-        {{  0,   0, 8192, 8192}, {-10, -10, -10, -10}, "Viewport (0, 0) - (8192, 8192)"},
+        {{  0,   0,  640,  480}, 0.001f, {  0, 120, 479, 359}, "Viewport (0, 0) - (640, 480)"},
+        {{  0,   0,  640,  480, 0.5f, 0.0f}, 0.501f,
+                {  0, 120, 479, 359}, "Viewport (0, 0, 0.5) - (640, 480, 0.0)"},
+        {{  0,   0,  320,  240}, 0.001f, {  0,  60, 239, 179}, "Viewport (0, 0) - (320, 240)"},
+        {{  0,   0, 1280,  960}, 0.001f, {  0, 240, 639, 479}, "Viewport (0, 0) - (1280, 960)"},
+        {{  0,   0, 2000, 1600}, 0.001f, {  0, 400, 639, 479}, "Viewport (0, 0) - (2000, 1600)"},
+        {{100, 100,  640,  480}, 0.001f, {100, 220, 579, 459}, "Viewport (100, 100) - (640, 480)"},
+        {{  0,   0, 8192, 8192}, 0.001f, {-10, -10, -10, -10}, "Viewport (0, 0) - (8192, 8192)"},
         /* AMD HD 2600 on XP draws nothing visible for this one. */
         /* {{  0,   0, 8192,  480}, {-10, -10,  -1,  -1}, "(0, 0) - (8192, 480) viewport"}, */
     };
     static const struct vec3 quad[] =
     {
-        {-1.5f, -0.5f, 0.1f},
-        {-1.5f,  0.5f, 0.1f},
-        { 0.5f, -0.5f, 0.1f},
-        { 0.5f,  0.5f, 0.1f},
+        {-1.5f, -0.5f, 1.0f},
+        {-1.5f,  0.5f, 1.0f},
+        { 0.5f, -0.5f, 1.0f},
+        { 0.5f,  0.5f, 1.0f},
     };
     IDirect3DSurface9 *backbuffer;
+    const float z_eps = 0.0001;
     struct surface_readback rb;
     IDirect3DDevice9 *device;
     BOOL draw_succeeded;
@@ -14399,13 +14404,15 @@ static void test_viewport(void)
     }
 
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
-    ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
-    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     /* This crashes on Windows. */
     if (0)
@@ -14413,26 +14420,47 @@ static void test_viewport(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000, 1.0f, 0);
-        ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000,
+                tests[i].expected_z - z_eps, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DDevice9_SetViewport(device, &tests[i].vp);
-        ok(SUCCEEDED(hr), "Failed to set the viewport, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_GREATER);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
         hr = IDirect3DDevice9_BeginScene(device);
-        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
-        ok(SUCCEEDED(hr) || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
-        draw_succeeded = SUCCEEDED(hr);
+        ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+        draw_succeeded = hr == D3D_OK;
         hr = IDirect3DDevice9_EndScene(device);
-        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-        if (draw_succeeded)
-        {
-            get_rt_readback(backbuffer, &rb);
-            check_rect(&rb, tests[i].expected_rect, tests[i].message);
-            release_surface_readback(&rb);
-        }
+        if (!draw_succeeded)
+            continue;
+
+        get_rt_readback(backbuffer, &rb);
+        check_rect(&rb, tests[i].expected_rect, tests[i].message);
+        release_surface_readback(&rb);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000,
+                tests[i].expected_z + z_eps, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_LESS);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        get_rt_readback(backbuffer, &rb);
+        check_rect(&rb, tests[i].expected_rect, tests[i].message);
+        release_surface_readback(&rb);
     }
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
