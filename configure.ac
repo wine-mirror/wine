@@ -436,6 +436,8 @@ AC_CHECK_HEADERS(\
 	OpenCL/opencl.h \
 	QuickTime/ImageCompression.h \
 	Security/Security.h \
+	SystemConfiguration/SCDynamicStoreCopyDHCPInfo.h \
+	SystemConfiguration/SCNetworkConfiguration.h \
 	alias.h \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -759,6 +761,7 @@ case $host_os in
     AC_SUBST(APPLICATIONSERVICES_LIBS,"-framework ApplicationServices")
     AC_SUBST(CORESERVICES_LIBS,"-framework CoreServices")
     AC_SUBST(APPKIT_LIBS,"-framework AppKit")
+    AC_SUBST(SYSTEMCONFIGURATION_LIBS,"-framework SystemConfiguration")
 
     WINELOADER_LDFLAGS="-Wl,-pie,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
 

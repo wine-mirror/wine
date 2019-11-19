@@ -724,6 +724,7 @@ OPENAL_LIBS
 COREAUDIO_LIBS
 SECURITY_LIBS
 DISKARBITRATION_LIBS
+SYSTEMCONFIGURATION_LIBS
 APPKIT_LIBS
 CORESERVICES_LIBS
 APPLICATIONSERVICES_LIBS
@@ -7356,6 +7357,8 @@ for ac_header in \
 	OpenCL/opencl.h \
 	QuickTime/ImageCompression.h \
 	Security/Security.h \
+	SystemConfiguration/SCDynamicStoreCopyDHCPInfo.h \
+	SystemConfiguration/SCNetworkConfiguration.h \
 	alias.h \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -8654,6 +8657,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     CORESERVICES_LIBS="-framework CoreServices"
 
     APPKIT_LIBS="-framework AppKit"
+
+    SYSTEMCONFIGURATION_LIBS="-framework SystemConfiguration"
 
 
     WINELOADER_LDFLAGS="-Wl,-pie,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
@@ -19841,6 +19846,7 @@ FORCEFEEDBACK_LIBS = $FORCEFEEDBACK_LIBS
 APPLICATIONSERVICES_LIBS = $APPLICATIONSERVICES_LIBS
 CORESERVICES_LIBS = $CORESERVICES_LIBS
 APPKIT_LIBS = $APPKIT_LIBS
+SYSTEMCONFIGURATION_LIBS = $SYSTEMCONFIGURATION_LIBS
 DISKARBITRATION_LIBS = $DISKARBITRATION_LIBS
 SECURITY_LIBS = $SECURITY_LIBS
 COREAUDIO_LIBS = $COREAUDIO_LIBS
