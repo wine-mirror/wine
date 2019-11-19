@@ -964,46 +964,6 @@ char ** CDECL __p__tzname(void)
 #define STRFTIME_TD(td, name) td->wstr.names.name
 #endif
 
-static inline BOOL strftime_date(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_size_t max,
-        BOOL alternate, const struct MSVCRT_tm *mstm, MSVCRT___lc_time_data *time_data)
-{
-    STRFTIME_CHAR *format;
-    SYSTEMTIME st;
-    MSVCRT_size_t ret;
-    LCID lcid;
-
-    st.wYear = mstm->tm_year + 1900;
-    st.wMonth = mstm->tm_mon + 1;
-    st.wDayOfWeek = mstm->tm_wday;
-    st.wDay = mstm->tm_mday;
-    st.wHour = mstm->tm_hour;
-    st.wMinute = mstm->tm_min;
-    st.wSecond = mstm->tm_sec;
-    st.wMilliseconds = 0;
-
-#if _MSVCR_VER < 110
-    lcid = time_data->lcid;
-#else
-    lcid = LocaleNameToLCID(time_data->locname, 0);
-#endif
-
-    format = alternate ? STRFTIME_TD(time_data, date) : STRFTIME_TD(time_data, short_date);
-    ret = STRFTIME_FUNC(GetDateFormat)(lcid, 0, &st, format, NULL, 0);
-    if(ret && ret<max-*pos)
-        ret = STRFTIME_FUNC(GetDateFormat)(lcid, 0, &st, format, str+*pos, max-*pos);
-    if(!ret) {
-        *str = 0;
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return FALSE;
-    }else if(ret > max-*pos) {
-        *str = 0;
-        *MSVCRT__errno() = MSVCRT_ERANGE;
-        return FALSE;
-    }
-    *pos += ret-1;
-    return TRUE;
-}
-
 static inline BOOL strftime_time(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_size_t max,
         const struct MSVCRT_tm *mstm, MSVCRT___lc_time_data *time_data)
 {
@@ -1043,10 +1003,11 @@ static inline BOOL strftime_time(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_
     return TRUE;
 }
 
-static inline BOOL strftime_str(STRFTIME_CHAR *str, MSVCRT_size_t *pos,
-        MSVCRT_size_t max, STRFTIME_CHAR *src)
+#define strftime_str(a,b,c,d) strftime_nstr(a,b,c,d,MSVCRT_SIZE_MAX)
+static inline BOOL strftime_nstr(STRFTIME_CHAR *str, MSVCRT_size_t *pos,
+        MSVCRT_size_t max, const STRFTIME_CHAR *src, MSVCRT_size_t len)
 {
-    while(*src)
+    while(*src && len)
     {
         if(*pos >= max) {
             *str = 0;
@@ -1057,6 +1018,7 @@ static inline BOOL strftime_str(STRFTIME_CHAR *str, MSVCRT_size_t *pos,
         str[*pos] = *src;
         src++;
         *pos += 1;
+        len--;
     }
     return TRUE;
 }
@@ -1088,6 +1050,102 @@ static inline BOOL strftime_int(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_s
 
     *pos += len;
     return TRUE;
+}
+
+static inline BOOL strftime_format(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_size_t max,
+        const struct MSVCRT_tm *mstm, MSVCRT___lc_time_data *time_data, const STRFTIME_CHAR *format)
+{
+    MSVCRT_size_t count;
+    BOOL ret = TRUE;
+
+    while(*format && ret)
+    {
+        count = 1;
+        while(format[0] == format[count]) count++;
+
+        switch(*format) {
+        case '\'':
+            if(count % 2 == 0) break;
+
+            format += count;
+            count = 0;
+            while(format[count] && format[count] != '\'') count++;
+
+            ret = strftime_nstr(str, pos, max, format, count);
+            if(!ret) return FALSE;
+            if(format[count] == '\'') count++;
+            break;
+        case 'd':
+            switch(count) {
+            case 1:
+            case 2:
+                ret = strftime_int(str, pos, max, mstm->tm_mday, count==1 ? 0 : 2, 0, 31);
+                break;
+            case 3:
+                ret = strftime_str(str, pos, max, STRFTIME_TD(time_data, short_wday)[mstm->tm_wday]);
+                break;
+            default:
+                ret = strftime_nstr(str, pos, max, format, count-4);
+                if(ret)
+                    ret = strftime_str(str, pos, max, STRFTIME_TD(time_data, wday)[mstm->tm_wday]);
+                break;
+            }
+            break;
+        case 'M':
+            switch(count) {
+            case 1:
+            case 2:
+                ret = strftime_int(str, pos, max, mstm->tm_mon+1, count==1 ? 0 : 2, 1, 12);
+                break;
+            case 3:
+                ret = strftime_str(str, pos, max, STRFTIME_TD(time_data, short_mon)[mstm->tm_mon]);
+                break;
+            default:
+                ret = strftime_nstr(str, pos, max, format, count-4);
+                if(ret)
+                    ret = strftime_str(str, pos, max, STRFTIME_TD(time_data, mon)[mstm->tm_mon]);
+                break;
+            }
+            break;
+        case 'y':
+            if(count > 1)
+            {
+#if _MSVCR_VER>=140
+                if(!MSVCRT_CHECK_PMT(mstm->tm_year >= -1900 && mstm->tm_year <= 8099))
+#else
+                if(!MSVCRT_CHECK_PMT(mstm->tm_year >= 0))
+#endif
+                {
+                    *str = 0;
+                    return FALSE;
+                }
+            }
+
+            switch(count) {
+            case 1:
+                ret = strftime_nstr(str, pos, max, format, 1);
+                break;
+            case 2:
+            case 3:
+                ret = strftime_nstr(str, pos, max, format, count-2);
+                if(ret)
+                    ret = strftime_int(str, pos, max, (mstm->tm_year+1900)%100, 2, 0, 99);
+                break;
+            default:
+                ret = strftime_nstr(str, pos, max, format, count-4);
+                if(ret)
+                    ret = strftime_int(str, pos, max, mstm->tm_year+1900, 4, 0, 9999);
+                break;
+            }
+            break;
+        default:
+            ret = strftime_nstr(str, pos, max, format, count);
+            break;
+        }
+        format += count;
+    }
+
+    return ret;
 }
 
 static inline BOOL strftime_tzdiff(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_size_t max, BOOL is_dst)
@@ -1151,7 +1209,8 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
 
         switch(*format) {
         case 'c':
-            if(!strftime_date(str, &ret, max, alternate, mstm, time_data))
+            if(!strftime_format(str, &ret, max, mstm, time_data,
+                    alternate ? STRFTIME_TD(time_data, date) : STRFTIME_TD(time_data, short_date)))
                 return 0;
             if(ret < max)
                 str[ret++] = ' ';
@@ -1159,7 +1218,8 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
                 return 0;
             break;
         case 'x':
-            if(!strftime_date(str, &ret, max, alternate, mstm, time_data))
+            if(!strftime_format(str, &ret, max, mstm, time_data,
+                    alternate ? STRFTIME_TD(time_data, date) : STRFTIME_TD(time_data, short_date)))
                 return 0;
             break;
         case 'X':
