@@ -48,33 +48,6 @@ static const WCHAR fooW[] = {'f','o','o',0};
 static const WCHAR emptyW[] = {0};
 static const WCHAR invalidW[] = {'i','n','v','a','l','i','d',0};
 
-static inline unsigned int strlenW( const WCHAR *str )
-{
-    const WCHAR *s = str;
-    while (*s) s++;
-    return s - str;
-}
-
-static inline int strncmpW( const WCHAR *str1, const WCHAR *str2, int n )
-{
-    if (n <= 0) return 0;
-    while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
-}
-
-static inline WCHAR *strchrW( const WCHAR *str, WCHAR ch )
-{
-    do { if (*str == ch) return (WCHAR *)str; } while (*str++);
-    return NULL;
-}
-
-static inline BOOL isdigitW( WCHAR wc )
-{
-    WORD type;
-    GetStringTypeW( CT_CTYPE1, &wc, 1, &type );
-    return type & C1_DIGIT;
-}
-
 /* Some functions are only in later versions of kernel32.dll */
 static WORD enumCount;
 
@@ -171,7 +144,7 @@ static void InitFunctionPointers(void)
    MultiByteToWideChar(CP_ACP,0,y,-1,Expected,ARRAY_SIZE(Expected)); \
    SetLastError(0xdeadbeef); buffer[0] = '\0'
 #define EXPECT_LENW ok(ret == lstrlenW(Expected)+1, "Expected Len %d, got %d\n", lstrlenW(Expected)+1, ret)
-#define EXPECT_EQW  ok(strncmpW(buffer, Expected, strlenW(Expected)) == 0, "Bad conversion\n")
+#define EXPECT_EQW  ok(wcsncmp(buffer, Expected, lstrlenW(Expected)) == 0, "Bad conversion\n")
 
 #define NUO LOCALE_NOUSEROVERRIDE
 
@@ -681,7 +654,7 @@ static void test_GetTimeFormatEx(void)
 
   STRINGSW("m1s2m3s4", ""); /* TIME_NOMINUTESORSECONDS/complex format */
   ret = pGetTimeFormatEx(localeW, TIME_NOMINUTESORSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret == strlenW(buffer)+1, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
+  ok(ret == lstrlenW(buffer)+1, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   EXPECT_LENW; EXPECT_EQW;
 
   STRINGSW("", "8:56 AM"); /* TIME_NOSECONDS/Default format */
@@ -701,7 +674,7 @@ static void test_GetTimeFormatEx(void)
 
   STRINGSW("s1s2s3", ""); /* Duplicate tokens */
   ret = pGetTimeFormatEx(localeW, TIME_NOSECONDS, &curtime, input, buffer, ARRAY_SIZE(buffer));
-  ok(ret == strlenW(buffer)+1, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
+  ok(ret == lstrlenW(buffer)+1, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
   EXPECT_LENW; EXPECT_EQW;
 
   STRINGSW("t/tt", "A/AM"); /* AM time marker */
@@ -3346,6 +3319,7 @@ static void test_FoldStringA(void)
 static void test_FoldStringW(void)
 {
   int ret;
+  WORD type;
   unsigned int i, j;
   WCHAR src[256], dst[256], ch, prev_ch = 1;
   static const DWORD badFlags[] =
@@ -3564,10 +3538,11 @@ static void test_FoldStringW(void)
       ret = pFoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
       ok(ret == 2, "Expected ret == 2, got %d, error %d\n", ret, GetLastError());
 
-      ok(dst[0] == ch || strchrW(outOfSequenceDigits, ch) ||
+      ok(dst[0] == ch || wcschr(outOfSequenceDigits, ch) ||
          (ch >= 0xa8e0 && ch <= 0xa8e9),  /* combining Devanagari on Win8 */
          "MAP_FOLDDIGITS: ch 0x%04x Expected unchanged got %04x\n", ch, dst[0]);
-      ok(!isdigitW(ch) || strchrW(outOfSequenceDigits, ch) ||
+      GetStringTypeW( CT_CTYPE1, &ch, 1, &type );
+      ok(!(type & C1_DIGIT) || wcschr(outOfSequenceDigits, ch) ||
          broken( ch >= 0xbf0 && ch <= 0xbf2 ), /* win2k */
          "char %04x should not be a digit\n", ch );
     }
@@ -3595,7 +3570,7 @@ static void test_FoldStringW(void)
          broken( dst[0] == ch ) ||  /* old Windows versions don't have all mappings */
          (digitRanges[j] == 0x3020 && dst[0] == ch) || /* Hangzhou not present in all Windows versions */
          (digitRanges[j] == 0x0F29 && dst[0] == ch) || /* Tibetan not present in all Windows versions */
-         strchrW(noDigitAvailable, c),
+         wcschr(noDigitAvailable, c),
          "MAP_FOLDDIGITS: ch %04x Expected %04x got %04x\n",
          ch, '0' + digitRanges[j] - ch, dst[0]);
     }
@@ -5908,22 +5883,22 @@ static void test_NormalizeString(void)
             if (dstlen)
             {
                 dstlen = pNormalizeString( norm_forms[i], ptest->str, -1, dst, dstlen );
-                ok(dstlen == strlenW( dst )+1, "%s:%d: Copied length differed: was %d, should be %d\n",
-                   wine_dbgstr_w(ptest->str), i, dstlen, strlenW( dst )+1);
-                str_cmp = strncmpW( ptest->expected[i], dst, dstlen+1 );
+                ok(dstlen == lstrlenW( dst )+1, "%s:%d: Copied length differed: was %d, should be %d\n",
+                   wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW( dst )+1);
+                str_cmp = wcsncmp( ptest->expected[i], dst, dstlen+1 );
 todo_wine_if(ptest->todo[i])
                 ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
                     wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
             }
 
-            dstlen = pNormalizeString( norm_forms[i], ptest->str, strlenW(ptest->str), NULL, 0 );
+            dstlen = pNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), NULL, 0 );
             if (dstlen)
             {
                 memset(dst, 0, sizeof(dst));
-                dstlen = pNormalizeString( norm_forms[i], ptest->str, strlenW(ptest->str), dst, dstlen );
-                ok(dstlen == strlenW( dst ), "%s:%d: Copied length differed: was %d, should be %d\n",
-                   wine_dbgstr_w(ptest->str), i, dstlen, strlenW( dst ));
-                str_cmp = strncmpW( ptest->expected[i], dst, dstlen );
+                dstlen = pNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), dst, dstlen );
+                ok(dstlen == lstrlenW( dst ), "%s:%d: Copied length differed: was %d, should be %d\n",
+                   wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW( dst ));
+                str_cmp = wcsncmp( ptest->expected[i], dst, dstlen );
 todo_wine_if(ptest->todo[i])
                 ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
                     wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
