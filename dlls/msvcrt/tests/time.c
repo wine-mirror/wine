@@ -36,6 +36,20 @@
 #define MINSPERHOUR        60
 #define HOURSPERDAY        24
 
+typedef struct {
+    const char *short_wday[7];
+    const char *wday[7];
+    const char *short_mon[12];
+    const char *mon[12];
+    const char *am;
+    const char *pm;
+    const char *short_date;
+    const char *date;
+    const char *time;
+    LCID lcid;
+    int  unk[2];
+} __lc_time_data;
+
 static __time32_t (__cdecl *p_mkgmtime32)(struct tm*);
 static struct tm* (__cdecl *p_gmtime32)(__time32_t*);
 static struct tm* (__cdecl *p_gmtime)(time_t*);
@@ -50,6 +64,7 @@ static long*      (__cdecl *p___p__dstbias)(void);
 static long*      (__cdecl *p__dstbias)(void);
 static long*      (__cdecl *p___p__timezone)(void);
 static size_t     (__cdecl *p_strftime)(char *, size_t, const char *, const struct tm *);
+static size_t (__cdecl *p__Strftime)(char*, size_t, const char*, const struct tm*, void*);
 static size_t     (__cdecl *p_wcsftime)(wchar_t *, size_t, const wchar_t *, const struct tm *);
 static char*      (__cdecl *p_asctime)(const struct tm *);
 
@@ -71,6 +86,7 @@ static void init(void)
     p__dstbias = (void*)GetProcAddress(hmod, "__dstbias");
     p___p__timezone = (void*)GetProcAddress(hmod, "__p__timezone");
     p_strftime = (void*)GetProcAddress(hmod, "strftime");
+    p__Strftime = (void*)GetProcAddress(hmod, "_Strftime");
     p_wcsftime = (void*)GetProcAddress(hmod, "wcsftime");
     p_asctime = (void*)GetProcAddress(hmod, "asctime");
 }
@@ -640,6 +656,76 @@ static void test_strftime(void)
         {"%W", "52", { 0, 0, 0, 1, 0, 70, 0, 365, 0 }},
     };
 
+    const struct {
+        const char *format;
+        const char *ret;
+        const char *short_date;
+        const char *date;
+        const char *time;
+        struct tm tm;
+        BOOL todo;
+    } tests_td[] = {
+        { "%c", "x z", "x", "y", "z", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#c", "y z", "x", "y", "z", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "m1", 0, 0, "MMM", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "1", 0, 0, "h", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "01", 0, 0, "hh", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "h01", 0, 0, "hhh", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "hh01", 0, 0, "hhhh", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "1", 0, 0, "H", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "01", 0, 0, "HH", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "H13", 0, 0, "HHH", { 0, 0, 13, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "0", 0, 0, "m", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "00", 0, 0, "mm", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "m00", 0, 0, "mmm", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "t", 0, 0, "t", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "tam", 0, 0, "tt", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "tam", 0, 0, "ttttttttt", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "tam", 0, 0, "a", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "tam", 0, 0, "aaaaa", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "tam", 0, 0, "A", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "tam", 0, 0, "AAAAA", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "1", "d", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "01", "dd", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "d1", "ddd", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "day1", "dddd", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "dday1", "ddddd", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "1", "M", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "01", "MM", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "m1", "MMM", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "mon1", "MMMM", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "Mmon1", "MMMMM", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "y", "y", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "70", "yy", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "y70", "yyy", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "1970", "yyyy", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "y1970", "yyyyy", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "ggggggggggg", "ggggggggggg", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "1", 0, "d", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "01", 0, "dd", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "d1", 0, "ddd", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "day1", 0, "dddd", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "dday1", 0, "ddddd", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "1", 0, "M", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "01", 0, "MM", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "m1", 0, "MMM", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "mon1", 0, "MMMM", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "Mmon1", 0, "MMMMM", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "y", 0, "y", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "70", 0, "yy", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "y70", 0, "yyy", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "1970", 0, "yyyy", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "y1970", 0, "yyyyy", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+    };
+
+    __lc_time_data time_data = {
+        { "d1", "d2", "d3", "d4", "d5", "d6", "d7" },
+        { "day1", "day2", "day3", "day4", "day5", "day6", "day7" },
+        { "m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "m9", "m10", "m11", "m12" },
+        { "mon1", "mon2", "mon3", "mon4", "mon5", "mon6", "mon7", "mon8", "mon9", "mon10", "mon11", "mon12" },
+        "tam", "tpm"
+    };
+
     static const wchar_t cW[] = { '%','c',0 };
     time_t gmt;
     struct tm* gmt_tm;
@@ -729,6 +815,27 @@ static void test_strftime(void)
     retA = p_strftime(bufA, 256, "\x82%c", gmt_tm);
     ok(retA == 3, "expected 3, got %ld\n", retA);
     ok(!strcmp(bufA, "\x82%c"), "got %s\n", bufA);
+
+    setlocale(LC_ALL, "C");
+    if(!p__Strftime) {
+        win_skip("_Strftime is not available\n");
+        return;
+    }
+
+    /* TODO: find meaning of unk[0] */
+    time_data.unk[0] = 1;
+    for (i=0; i<ARRAY_SIZE(tests_td); i++)
+    {
+        time_data.short_date = tests_td[i].short_date;
+        time_data.date = tests_td[i].date;
+        time_data.time = tests_td[i].time;
+        retA = p__Strftime(buf, sizeof(buf), tests_td[i].format, &tests_td[i].tm, &time_data);
+        ok(retA == strlen(buf), "%d) ret = %ld\n", i, retA);
+        todo_wine_if(tests_td[i].todo) {
+            ok(!strcmp(buf, tests_td[i].ret), "%d) buf = \"%s\", expected \"%s\"\n",
+                    i, buf, tests_td[i].ret);
+        }
+    }
 }
 
 static void test_asctime(void)
