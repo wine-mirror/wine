@@ -29,11 +29,6 @@ static const WCHAR wcsOutputPinName[] = {'O','u','t',0};
 static const IPinVtbl TransformFilter_InputPin_Vtbl;
 static const IPinVtbl TransformFilter_OutputPin_Vtbl;
 
-static inline TransformFilter *impl_from_IBaseFilter( IBaseFilter *iface )
-{
-    return CONTAINING_RECORD(iface, TransformFilter, filter.IBaseFilter_iface);
-}
-
 static inline TransformFilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, TransformFilter, filter);
