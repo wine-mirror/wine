@@ -104,6 +104,29 @@ typedef struct MSVCRT__exception {
     double  retval;
 } MSVCRT__exception;
 
+typedef struct {
+    const char *short_wday[7];
+    const char *wday[7];
+    const char *short_mon[12];
+    const char *mon[12];
+    const char *am;
+    const char *pm;
+    const char *short_date;
+    const char *date;
+    const char *time;
+    int  unk[2];
+    const wchar_t *short_wdayW[7];
+    const wchar_t *wdayW[7];
+    const wchar_t *short_monW[12];
+    const wchar_t *monW[12];
+    const wchar_t *amW;
+    const wchar_t *pmW;
+    const wchar_t *short_dateW;
+    const wchar_t *dateW;
+    const wchar_t *timeW;
+    const wchar_t *locnameW;
+} __lc_time_data;
+
 typedef int (CDECL *MSVCRT_matherr_func)(struct MSVCRT__exception *);
 
 static HMODULE module;
@@ -138,6 +161,7 @@ static void (CDECL *p___setusermatherr)(MSVCRT_matherr_func);
 static int* (CDECL *p_errno)(void);
 static char* (CDECL *p_asctime)(const struct tm *);
 static size_t (__cdecl *p_strftime)(char *, size_t, const char *, const struct tm *);
+static size_t (__cdecl *p__Strftime)(char*, size_t, const char*, const struct tm*, void*);
 static struct tm*  (__cdecl *p__gmtime32)(const __time32_t*);
 static void (CDECL *p_exit)(int);
 static int (CDECL *p__crt_atexit)(void (CDECL*)(void));
@@ -513,6 +537,7 @@ static BOOL init(void)
     p_errno = (void*)GetProcAddress(module, "_errno");
     p_asctime = (void*)GetProcAddress(module, "asctime");
     p_strftime = (void*)GetProcAddress(module, "strftime");
+    p__Strftime = (void*)GetProcAddress(module, "_Strftime");
     p__gmtime32 = (void*)GetProcAddress(module, "_gmtime32");
     p__crt_atexit = (void*)GetProcAddress(module, "_crt_atexit");
     p_exit = (void*)GetProcAddress(module, "exit");
@@ -949,6 +974,81 @@ static void test_strftime(void)
         {"%X", "23:59:60", { 60, 59, 23, 1, 0, 70, 4, 0, 0 }, TRUE},
     };
 
+    const struct {
+        const char *format;
+        const char *ret;
+        const wchar_t *short_date;
+        const wchar_t *date;
+        const wchar_t *time;
+        struct tm tm;
+        BOOL todo;
+    } tests_td[] = {
+        { "%c", "x z", L"x", L"y", L"z", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#c", "y z", L"x", L"y", L"z", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "M1", 0, 0, L"MMM", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "1", 0, 0, L"h", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "01", 0, 0, L"hh", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "h01", 0, 0, L"hhh", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "hh01", 0, 0, L"hhhh", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "1", 0, 0, L"H", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "01", 0, 0, L"HH", { 0, 0, 1, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "H13", 0, 0, L"HHH", { 0, 0, 13, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "0", 0, 0, L"m", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "00", 0, 0, L"mm", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%X", "m00", 0, 0, L"mmm", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "T", 0, 0, L"t", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "TAM", 0, 0, L"tt", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "TAM", 0, 0, L"ttttttttt", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "TAM", 0, 0, L"a", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "TAM", 0, 0, L"aaaaa", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "TAM", 0, 0, L"A", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%X", "TAM", 0, 0, L"AAAAA", { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "1", L"d", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "01", L"dd", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "D1", L"ddd", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "Day1", L"dddd", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "dDay1", L"ddddd", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "1", L"M", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "01", L"MM", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "M1", L"MMM", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "Mon1", L"MMMM", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "MMon1", L"MMMMM", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "y", L"y", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "70", L"yy", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "y70", L"yyy", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "1970", L"yyyy", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%x", "y1970", L"yyyyy", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%x", "ggggggggggg", L"ggggggggggg", 0, 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "1", 0, L"d", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "01", 0, L"dd", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "D1", 0, L"ddd", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "Day1", 0, L"dddd", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "dDay1", 0, L"ddddd", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "1", 0, L"M", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "01", 0, L"MM", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "M1", 0, L"MMM", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "Mon1", 0, L"MMMM", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "MMon1", 0, L"MMMMM", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "y", 0, L"y", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "70", 0, L"yy", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "y70", 0, L"yyy", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+        { "%#x", "1970", 0, L"yyyy", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }},
+        { "%#x", "y1970", 0, L"yyyyy", 0, { 0, 0, 0, 1, 0, 70, 0, 0, 0 }, TRUE},
+    };
+
+    __lc_time_data time_data = {
+        { "d1", "d2", "d3", "d4", "d5", "d6", "d7" },
+        { "day1", "day2", "day3", "day4", "day5", "day6", "day7" },
+        { "m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "m9", "m10", "m11", "m12" },
+        { "mon1", "mon2", "mon3", "mon4", "mon5", "mon6", "mon7", "mon8", "mon9", "mon10", "mon11", "mon12" },
+        "tam", "tpm", 0, 0, 0, { 1, 0 },
+        { L"D1", L"D2", L"D3", L"D4", L"D5", L"D6", L"D7" },
+        { L"Day1", L"Day2", L"Day3", L"Day4", L"Day5", L"Day6", L"Day7" },
+        { L"M1", L"M2", L"M3", L"M4", L"M5", L"M6", L"M7", L"M8", L"M9", L"M10", L"M11", L"M12" },
+        { L"Mon1", L"Mon2", L"Mon3", L"Mon4", L"Mon5", L"Mon6", L"Mon7", L"Mon8", L"Mon9", L"Mon10", L"Mon11", L"Mon12" },
+        L"TAM", L"TPM"
+    };
+
     const struct tm epoch = { 0, 0, 0, 1, 0, 70, 4, 0, 0 };
     char buf[256];
     int i, ret;
@@ -973,6 +1073,19 @@ static void test_strftime(void)
     ok((buf[0] == '+' || buf[0] == '-') &&
         isdigit(buf[1]) && isdigit(buf[2]) &&
         isdigit(buf[3]) && isdigit(buf[4]), "got %s\n", buf);
+
+    for (i=0; i<ARRAY_SIZE(tests_td); i++)
+    {
+        time_data.short_dateW = tests_td[i].short_date;
+        time_data.dateW = tests_td[i].date;
+        time_data.timeW = tests_td[i].time;
+        ret = p__Strftime(buf, sizeof(buf), tests_td[i].format, &tests_td[i].tm, &time_data);
+        ok(ret == strlen(buf), "%d) ret = %d\n", i, ret);
+        todo_wine_if(tests_td[i].todo) {
+            ok(!strcmp(buf, tests_td[i].ret), "%d) buf = \"%s\", expected \"%s\"\n",
+                    i, buf, tests_td[i].ret);
+        }
+    }
 }
 
 static LONG* get_failures_counter(HANDLE *map)
