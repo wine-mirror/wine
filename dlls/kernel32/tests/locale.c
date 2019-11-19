@@ -249,7 +249,6 @@ struct neutralsublang_name2_t {
     LCID lcid;
     LCID lcid_broken;
     WCHAR sname_broken[15];
-    int todo;
 };
 
 static const struct neutralsublang_name2_t neutralsublang_names2[] = {
@@ -266,7 +265,7 @@ static const struct neutralsublang_name2_t neutralsublang_names2[] = {
       MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH), SORT_DEFAULT) /* vista */,
       {'e','s','-','E','S','_','t','r','a','d','n','l',0} },
     { {'g','a',0}, {'g','a','-','I','E',0},
-      MAKELCID(MAKELANGID(LANG_IRISH, SUBLANG_IRISH_IRELAND), SORT_DEFAULT), 0, {0}, 0x3 },
+      MAKELCID(MAKELANGID(LANG_IRISH, SUBLANG_IRISH_IRELAND), SORT_DEFAULT), 0, {0} },
     { {'i','t',0}, {'i','t','-','I','T',0},
       MAKELCID(MAKELANGID(LANG_ITALIAN, SUBLANG_ITALIAN), SORT_DEFAULT) },
     { {'m','s',0}, {'m','s','-','M','Y',0},
@@ -349,16 +348,14 @@ static void test_GetLocaleInfoW(void)
 
           val = 0;
           GetLocaleInfoW(lcid, LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (WCHAR*)&val, sizeof(val)/sizeof(WCHAR));
-          todo_wine_if (ptr->todo & 0x1)
-              ok(val == ptr->lcid || (val && broken(val == ptr->lcid_broken)), "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
-                  wine_dbgstr_w(ptr->name), val, ptr->lcid);
+          ok(val == ptr->lcid || (val && broken(val == ptr->lcid_broken)), "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
+             wine_dbgstr_w(ptr->name), val, ptr->lcid);
 
           /* now check LOCALE_SNAME */
           GetLocaleInfoW(lcid, LOCALE_SNAME, bufferW, ARRAY_SIZE(bufferW));
-          todo_wine_if (ptr->todo & 0x2)
-              ok(!lstrcmpW(bufferW, ptr->sname) ||
-                 (*ptr->sname_broken && broken(!lstrcmpW(bufferW, ptr->sname_broken))),
-                  "%s: got %s\n", wine_dbgstr_w(ptr->name), wine_dbgstr_w(bufferW));
+          ok(!lstrcmpW(bufferW, ptr->sname) ||
+             (*ptr->sname_broken && broken(!lstrcmpW(bufferW, ptr->sname_broken))),
+             "%s: got %s\n", wine_dbgstr_w(ptr->name), wine_dbgstr_w(bufferW));
           ptr++;
       }
   }
@@ -2885,7 +2882,7 @@ static void test_LocaleNameToLCID(void)
         /* check that 0x7c04 also works and is mapped to zh-HK */
         ret = pLCIDToLocaleName(MAKELANGID(LANG_CHINESE_TRADITIONAL, SUBLANG_CHINESE_TRADITIONAL),
                 buffer, ARRAY_SIZE(buffer), 0);
-        todo_wine ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhHantW), ret);
+        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhHantW), ret);
         ok(!lstrcmpW(zhhkW, buffer), "%s: got wrong locale name %s\n",
            wine_dbgstr_w(zhHantW), wine_dbgstr_w(buffer));
 
@@ -3563,25 +3560,67 @@ static void test_FoldStringW(void)
 #define LCID_OK(l) \
   ok(lcid == l, "Expected lcid = %08x, got %08x\n", l, lcid)
 #define MKLCID(x,y,z) MAKELCID(MAKELANGID(x, y), z)
-#define LCID_RES(src, res) lcid = ConvertDefaultLocale(src); LCID_OK(res)
+#define LCID_RES(src, res) do { lcid = ConvertDefaultLocale(src); LCID_OK(res); } while (0)
 #define TEST_LCIDLANG(a,b) LCID_RES(MAKELCID(a,b), MAKELCID(a,b))
 #define TEST_LCID(a,b,c) LCID_RES(MKLCID(a,b,c), MKLCID(a,b,c))
 
 static void test_ConvertDefaultLocale(void)
 {
-  LCID lcid;
+    /* some languages use a different default than SUBLANG_DEFAULT */
+    static const struct { WORD lang, sublang; } nondefault_langs[] =
+    {
+        { LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED },
+        { LANG_SPANISH, SUBLANG_SPANISH_MODERN },
+        { LANG_IRISH, SUBLANG_IRISH_IRELAND },
+        { LANG_BENGALI, SUBLANG_BENGALI_BANGLADESH },
+        { LANG_SINDHI, SUBLANG_SINDHI_AFGHANISTAN },
+        { LANG_INUKTITUT, SUBLANG_INUKTITUT_CANADA_LATIN },
+        { LANG_TAMAZIGHT, SUBLANG_TAMAZIGHT_ALGERIA_LATIN },
+        { LANG_FULAH, SUBLANG_FULAH_SENEGAL },
+        { LANG_TIGRINYA, SUBLANG_TIGRINYA_ERITREA }
+    };
+    LCID lcid;
+    unsigned int i;
 
   /* Doesn't change lcid, even if non default sublang/sort used */
   TEST_LCID(LANG_ENGLISH,  SUBLANG_ENGLISH_US, SORT_DEFAULT);
   TEST_LCID(LANG_ENGLISH,  SUBLANG_ENGLISH_UK, SORT_DEFAULT);
   TEST_LCID(LANG_JAPANESE, SUBLANG_DEFAULT,    SORT_DEFAULT);
   TEST_LCID(LANG_JAPANESE, SUBLANG_DEFAULT,    SORT_JAPANESE_UNICODE);
+  lcid = ConvertDefaultLocale( MKLCID( LANG_JAPANESE, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE ));
+  ok( lcid == MKLCID( LANG_JAPANESE, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE ) ||
+      broken( lcid == MKLCID( LANG_JAPANESE, SUBLANG_DEFAULT, SORT_JAPANESE_UNICODE )), /* <= vista */
+          "Expected lcid = %08x got %08x\n",
+      MKLCID( LANG_JAPANESE, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE ), lcid );
+  lcid = ConvertDefaultLocale( MKLCID( LANG_IRISH, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE ));
+  ok( lcid == MKLCID( LANG_IRISH, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE ) ||
+      broken( lcid == MKLCID( LANG_IRISH, SUBLANG_DEFAULT, SORT_JAPANESE_UNICODE )), /* <= vista */
+          "Expected lcid = %08x got %08x\n",
+      MKLCID( LANG_IRISH, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE ), lcid );
 
   /* SUBLANG_NEUTRAL -> SUBLANG_DEFAULT */
   LCID_RES(MKLCID(LANG_ENGLISH,  SUBLANG_NEUTRAL, SORT_DEFAULT),
            MKLCID(LANG_ENGLISH,  SUBLANG_DEFAULT, SORT_DEFAULT));
   LCID_RES(MKLCID(LANG_JAPANESE, SUBLANG_NEUTRAL, SORT_DEFAULT),
            MKLCID(LANG_JAPANESE, SUBLANG_DEFAULT, SORT_DEFAULT));
+  for (i = 0; i < ARRAY_SIZE(nondefault_langs); i++)
+  {
+      lcid = ConvertDefaultLocale( MAKELANGID( nondefault_langs[i].lang, SUBLANG_NEUTRAL ));
+      ok( lcid == MAKELANGID( nondefault_langs[i].lang, nondefault_langs[i].sublang ) ||
+          broken( lcid == MAKELANGID( nondefault_langs[i].lang, SUBLANG_DEFAULT )) ||  /* <= vista */
+          broken( lcid == MAKELANGID( nondefault_langs[i].lang, SUBLANG_NEUTRAL )),  /* w7 */
+          "Expected lcid = %08x got %08x\n",
+          MAKELANGID( nondefault_langs[i].lang, nondefault_langs[i].sublang ), lcid );
+  }
+  lcid = ConvertDefaultLocale( 0x7804 );
+  ok( lcid == MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED ) ||
+      broken( lcid == 0x7804 ),  /* <= vista */
+      "Expected lcid = %08x got %08x\n", MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED ), lcid );
+  lcid = ConvertDefaultLocale( 0x7c04 );
+  ok( lcid == MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG ) ||
+      broken( lcid == 0x7c04 ) ||  /* winxp */
+      broken( lcid == 0x0404 ),  /* vista */
+      "Expected lcid = %08x got %08x\n", MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG ), lcid );
 
   /* Invariant language is not treated specially */
   TEST_LCID(LANG_INVARIANT, SUBLANG_DEFAULT, SORT_DEFAULT);
@@ -5056,6 +5095,7 @@ static void test_invariant(void)
     static const char lang[]  = "Invariant Language (Invariant Country)";
     static const char cntry[] = "Invariant Country";
     static const char sortm[] = "Math Alphanumerics";
+    static const char sortms[] = "Maths Alphanumerics";
     static const char sortd[] = "Default"; /* win2k3 */
 
     ret = GetLocaleInfoA(LOCALE_INVARIANT, NUO|LOCALE_SLANGUAGE, buffer, sizeof(buffer));
@@ -5069,13 +5109,8 @@ static void test_invariant(void)
     ok(!strcmp(buffer, cntry), "Expected %s, got '%s'\n", cntry, buffer);
 
     ret = GetLocaleInfoA(LOCALE_INVARIANT, NUO|LOCALE_SSORTNAME, buffer, sizeof(buffer));
-    if (ret == lstrlenA(sortm)+1)
-        ok(!strcmp(buffer, sortm), "Expected %s, got '%s'\n", sortm, buffer);
-    else if (ret == lstrlenA(sortd)+1) /* win2k3 */
-        ok(!strcmp(buffer, sortd), "Expected %s, got '%s'\n", sortd, buffer);
-    else
-        ok(0, "Expected ret == %d or %d, got %d, error %d\n",
-            lstrlenA(sortm)+1, lstrlenA(sortd)+1, ret, GetLastError());
+    ok(ret, "Failed err %d\n", GetLastError());
+    ok(!strcmp(buffer, sortm) || !strcmp(buffer, sortd) || !strcmp(buffer, sortms), "Got '%s'\n", buffer);
   }
 }
 

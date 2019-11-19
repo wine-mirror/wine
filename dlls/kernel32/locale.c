@@ -2501,28 +2501,41 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
  */
 LCID WINAPI ConvertDefaultLocale( LCID lcid )
 {
-    LANGID langid;
-
     switch (lcid)
     {
     case LOCALE_INVARIANT:
-        /* keep as-is */
-        break;
+        return lcid; /* keep as-is */
     case LOCALE_SYSTEM_DEFAULT:
-        lcid = GetSystemDefaultLCID();
-        break;
+        return GetSystemDefaultLCID();
     case LOCALE_USER_DEFAULT:
     case LOCALE_NEUTRAL:
-        lcid = GetUserDefaultLCID();
-        break;
+        return GetUserDefaultLCID();
+    case MAKELANGID( LANG_CHINESE, SUBLANG_NEUTRAL ):
+    case MAKELANGID( LANG_CHINESE, 0x1e ):
+        return MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED );
+    case MAKELANGID( LANG_CHINESE, 0x1f ):
+        return MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG );
+    case MAKELANGID( LANG_SPANISH, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_SPANISH, SUBLANG_SPANISH_MODERN );
+    case MAKELANGID( LANG_IRISH, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_IRISH, SUBLANG_IRISH_IRELAND );
+    case MAKELANGID( LANG_BENGALI, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_BENGALI, SUBLANG_BENGALI_BANGLADESH );
+    case MAKELANGID( LANG_SINDHI, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_SINDHI, SUBLANG_SINDHI_AFGHANISTAN );
+    case MAKELANGID( LANG_INUKTITUT, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_INUKTITUT, SUBLANG_INUKTITUT_CANADA_LATIN );
+    case MAKELANGID( LANG_TAMAZIGHT, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_TAMAZIGHT, SUBLANG_TAMAZIGHT_ALGERIA_LATIN );
+    case MAKELANGID( LANG_FULAH, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_FULAH, SUBLANG_FULAH_SENEGAL );
+    case MAKELANGID( LANG_TIGRINYA, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_TIGRINYA, SUBLANG_TIGRINYA_ERITREA );
     default:
         /* Replace SUBLANG_NEUTRAL with SUBLANG_DEFAULT */
-        langid = LANGIDFROMLCID(lcid);
-        if (SUBLANGID(langid) == SUBLANG_NEUTRAL)
-        {
-          langid = get_default_sublang( langid );
-          lcid = MAKELCID(langid, SORTIDFROMLCID(lcid));
-        }
+        if (SUBLANGID(lcid) == SUBLANG_NEUTRAL && SORTIDFROMLCID(lcid) == SORT_DEFAULT)
+            lcid = MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_DEFAULT );
+        break;
     }
     return lcid;
 }
