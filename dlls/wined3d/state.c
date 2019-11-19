@@ -4037,6 +4037,7 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
     struct wined3d_viewport vp[WINED3D_MAX_VIEWPORTS];
+    float min_z, max_z;
 
     if (gl_info->supported[ARB_VIEWPORT_ARRAY])
     {
@@ -4048,8 +4049,9 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
         get_viewports(context, state, state->viewport_count, vp);
         for (i = 0; i < state->viewport_count; ++i)
         {
-            depth_ranges[i * 2]     = vp[i].min_z;
-            depth_ranges[i * 2 + 1] = vp[i].max_z;
+            wined3d_viewport_get_z_range(&vp[i], &min_z, &max_z);
+            depth_ranges[i * 2] = min_z;
+            depth_ranges[i * 2 + 1] = max_z;
 
             viewports[i * 4]     = vp[i].x;
             viewports[i * 4 + 1] = vp[i].y;
@@ -4073,7 +4075,8 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
     else
     {
         get_viewports(context, state, 1, vp);
-        gl_info->gl_ops.gl.p_glDepthRange(vp[0].min_z, vp[0].max_z);
+        wined3d_viewport_get_z_range(&vp[0], &min_z, &max_z);
+        gl_info->gl_ops.gl.p_glDepthRange(min_z, max_z);
         gl_info->gl_ops.gl.p_glViewport(vp[0].x, vp[0].y, vp[0].width, vp[0].height);
     }
     checkGLcall("setting clip space and viewport");
@@ -4090,6 +4093,7 @@ static void viewport_miscpart_cc(struct wined3d_context *context,
     GLdouble depth_ranges[2 * WINED3D_MAX_VIEWPORTS];
     GLfloat viewports[4 * WINED3D_MAX_VIEWPORTS];
     unsigned int i, reset_count = 0;
+    float min_z, max_z;
 
     get_viewports(context, state, state->viewport_count, vp);
 
@@ -4097,8 +4101,9 @@ static void viewport_miscpart_cc(struct wined3d_context *context,
 
     for (i = 0; i < state->viewport_count; ++i)
     {
-        depth_ranges[i * 2]     = vp[i].min_z;
-        depth_ranges[i * 2 + 1] = vp[i].max_z;
+        wined3d_viewport_get_z_range(&vp[i], &min_z, &max_z);
+        depth_ranges[i * 2] = min_z;
+        depth_ranges[i * 2 + 1] = max_z;
 
         viewports[i * 4] = vp[i].x + pixel_center_offset;
         viewports[i * 4 + 1] = vp[i].y + pixel_center_offset;

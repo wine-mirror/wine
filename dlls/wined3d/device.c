@@ -3565,6 +3565,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     struct lights_settings ls;
     unsigned int vertex_size;
     BOOL do_clip, lighting;
+    float min_z, max_z;
     unsigned int i;
     BYTE *dest_ptr;
     HRESULT hr;
@@ -3648,6 +3649,8 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     init_transformed_lights(&ls, state, device->adapter->d3d_info.wined3d_creation_flags
             & WINED3D_LEGACY_FFP_LIGHTING, lighting);
 
+    wined3d_viewport_get_z_range(&vp, &min_z, &max_z);
+
     for (i = 0; i < dwCount; ++i)
     {
         const struct wined3d_stream_info_element *position_element = &stream_info->elements[WINED3D_FFP_POSITION];
@@ -3720,11 +3723,11 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 
                 x *= vp.width / 2;
                 y *= vp.height / 2;
-                z *= vp.max_z - vp.min_z;
+                z *= max_z - min_z;
 
                 x += vp.width / 2 + vp.x;
                 y += vp.height / 2 + vp.y;
-                z += vp.min_z;
+                z += min_z;
 
                 rhw = 1 / rhw;
             } else {

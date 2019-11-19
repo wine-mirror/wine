@@ -5319,6 +5319,14 @@ static inline BOOL wined3d_resource_check_fbo_attached(const struct wined3d_stat
     return FALSE;
 }
 
+static inline void wined3d_viewport_get_z_range(const struct wined3d_viewport *vp, float *min_z, float *max_z)
+{
+    *min_z = vp->min_z;
+
+    /* The magic constant is derived from tests. */
+    *max_z = max(vp->max_z, vp->min_z + 0.001f);
+}
+
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
 #define WINED3D_OPENGL_WINDOW_CLASS_NAME "WineD3D_OpenGL"
 

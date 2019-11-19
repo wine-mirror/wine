@@ -277,7 +277,8 @@ static D3DCOLOR get_surface_color(IDirectDrawSurface7 *surface, UINT x, UINT y)
     return color;
 }
 
-static void check_rect(IDirectDrawSurface7 *surface, RECT r, const char *message)
+#define check_rect(a, b, c) check_rect_(__LINE__, a, b, c)
+static void check_rect_(unsigned int line, IDirectDrawSurface7 *surface, RECT r, const char *message)
 {
     LONG x_coords[2][2] =
     {
@@ -308,7 +309,7 @@ static void check_rect(IDirectDrawSurface7 *surface, RECT r, const char *message
                     if (x < 0 || x >= 640 || y < 0 || y >= 480)
                         continue;
                     color = get_surface_color(surface, x, y);
-                    ok(color == expected, "%s: Pixel (%d, %d) has color %08x, expected %08x.\n",
+                    ok_(__FILE__, line)(color == expected, "%s: Pixel (%d, %d) has color %08x, expected %08x.\n",
                             message, x, y, color, expected);
                 }
             }
@@ -543,17 +544,17 @@ static void test_process_vertices(void)
     }
 
     hr = IDirect3DDevice7_GetDirect3D(device, &d3d7);
-    ok(SUCCEEDED(hr), "Failed to get Direct3D7 interface, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&vb_desc, 0, sizeof(vb_desc));
     vb_desc.dwSize = sizeof(vb_desc);
     vb_desc.dwFVF = D3DFVF_XYZ;
     vb_desc.dwNumVertices = 4;
     hr = IDirect3D7_CreateVertexBuffer(d3d7, &vb_desc, &src_vb, 0);
-    ok(SUCCEEDED(hr), "Failed to create source vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DVertexBuffer7_Lock(src_vb, 0, (void **)&src_data, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock source vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     src_data[0].x = 0.0f;
     src_data[0].y = 0.0f;
     src_data[0].z = 0.0f;
@@ -567,7 +568,7 @@ static void test_process_vertices(void)
     src_data[3].y = -0.5f;
     src_data[3].z = 0.25f;
     hr = IDirect3DVertexBuffer7_Unlock(src_vb);
-    ok(SUCCEEDED(hr), "Failed to unlock source vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&vb_desc, 0, sizeof(vb_desc));
     vb_desc.dwSize = sizeof(vb_desc);
@@ -575,7 +576,7 @@ static void test_process_vertices(void)
     vb_desc.dwNumVertices = 4;
     /* MSDN says that the last parameter must be 0 - check that. */
     hr = IDirect3D7_CreateVertexBuffer(d3d7, &vb_desc, &dst_vb1, 4);
-    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&vb_desc, 0, sizeof(vb_desc));
     vb_desc.dwSize = sizeof(vb_desc);
@@ -583,7 +584,7 @@ static void test_process_vertices(void)
     vb_desc.dwNumVertices = 5;
     /* MSDN says that the last parameter must be 0 - check that. */
     hr = IDirect3D7_CreateVertexBuffer(d3d7, &vb_desc, &dst_vb2, 12345678);
-    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&vp, 0, sizeof(vp));
     vp.dwX = 64;
@@ -593,15 +594,15 @@ static void test_process_vertices(void)
     vp.dvMinZ = 0.0f;
     vp.dvMaxZ = 1.0f;
     hr = IDirect3DDevice7_SetViewport(device, &vp);
-    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DVertexBuffer7_ProcessVertices(dst_vb1, D3DVOP_TRANSFORM, 0, 4, src_vb, 0, device, 0);
-    ok(SUCCEEDED(hr), "Failed to process vertices, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DVertexBuffer7_ProcessVertices(dst_vb2, D3DVOP_TRANSFORM, 0, 4, src_vb, 0, device, 0);
-    ok(SUCCEEDED(hr), "Failed to process vertices, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DVertexBuffer7_Lock(dst_vb1, 0, (void **)&dst_data, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock destination vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     ok(compare_vec4(&dst_data[0], +1.280e+2f, +1.280e+2f, +0.000e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[0].x, dst_data[0].y, dst_data[0].z, dst_data[0].w);
@@ -615,10 +616,10 @@ static void test_process_vertices(void)
             "Got unexpected vertex 3 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[3].x, dst_data[3].y, dst_data[3].z, dst_data[3].w);
     hr = IDirect3DVertexBuffer7_Unlock(dst_vb1);
-    ok(SUCCEEDED(hr), "Failed to unlock destination vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DVertexBuffer7_Lock(dst_vb2, 0, (void **)&dst_data2, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock destination vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     /* Small thing without much practical meaning, but I stumbled upon it,
      * so let's check for it: If the output vertex buffer has no RHW value,
      * the RHW value of the last vertex is written into the next vertex. */
@@ -626,7 +627,62 @@ static void test_process_vertices(void)
             "Got unexpected vertex 4 {%.8e, %.8e, %.8e}.\n",
             dst_data2[4].x, dst_data2[4].y, dst_data2[4].z);
     hr = IDirect3DVertexBuffer7_Unlock(dst_vb2);
-    ok(SUCCEEDED(hr), "Failed to unlock destination vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Test degenerate viewport z ranges. */
+    vp.dvMinZ = 0.0f;
+    vp.dvMaxZ = 0.0f;
+    hr = IDirect3DDevice7_SetViewport(device, &vp);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer7_ProcessVertices(dst_vb1, D3DVOP_TRANSFORM, 0, 4, src_vb, 0, device, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer7_ProcessVertices(dst_vb2, D3DVOP_TRANSFORM, 0, 4, src_vb, 0, device, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer7_Lock(dst_vb1, 0, (void **)&dst_data, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    ok(compare_vec4(&dst_data[0], +1.280e+2f, +1.280e+2f, +0.000e+0f, +1.000e+0f, 4096),
+            "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
+            dst_data[0].x, dst_data[0].y, dst_data[0].z, dst_data[0].w);
+    ok(compare_vec4(&dst_data[1], +1.920e+2f, +6.400e+1f, +1.000e-3f, +1.000e+0f, 4096),
+            "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
+            dst_data[1].x, dst_data[1].y, dst_data[1].z, dst_data[1].w);
+    ok(compare_vec4(&dst_data[2], +6.400e+1f, +1.920e+2f, +5.000e-4f, +1.000e+0f, 4096),
+            "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
+            dst_data[2].x, dst_data[2].y, dst_data[2].z, dst_data[2].w);
+    ok(compare_vec4(&dst_data[3], +1.600e+2f, +1.600e+2f, +2.500e-4f, +1.000e+0f, 4096),
+            "Got unexpected vertex 3 {%.8e, %.8e, %.8e, %.8e}.\n",
+            dst_data[3].x, dst_data[3].y, dst_data[3].z, dst_data[3].w);
+    hr = IDirect3DVertexBuffer7_Unlock(dst_vb1);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    vp.dvMinZ = 1.0f;
+    vp.dvMaxZ = 0.0f;
+    hr = IDirect3DDevice7_SetViewport(device, &vp);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer7_ProcessVertices(dst_vb1, D3DVOP_TRANSFORM, 0, 4, src_vb, 0, device, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer7_ProcessVertices(dst_vb2, D3DVOP_TRANSFORM, 0, 4, src_vb, 0, device, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer7_Lock(dst_vb1, 0, (void **)&dst_data, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    ok(compare_vec4(&dst_data[0], +1.280e+2f, +1.280e+2f, +1.000e+0f, +1.000e+0f, 4096),
+            "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
+            dst_data[0].x, dst_data[0].y, dst_data[0].z, dst_data[0].w);
+    ok(compare_vec4(&dst_data[1], +1.920e+2f, +6.400e+1f, +1.001e+0f, +1.000e+0f, 4096),
+            "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
+            dst_data[1].x, dst_data[1].y, dst_data[1].z, dst_data[1].w);
+    ok(compare_vec4(&dst_data[2], +6.400e+1f, +1.920e+2f, +1.0005e+0f, +1.000e+0f, 4096),
+            "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
+            dst_data[2].x, dst_data[2].y, dst_data[2].z, dst_data[2].w);
+    ok(compare_vec4(&dst_data[3], +1.600e+2f, +1.600e+2f, +1.00025e+0f, +1.000e+0f, 4096),
+            "Got unexpected vertex 3 {%.8e, %.8e, %.8e, %.8e}.\n",
+            dst_data[3].x, dst_data[3].y, dst_data[3].z, dst_data[3].w);
+    hr = IDirect3DVertexBuffer7_Unlock(dst_vb1);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     /* Try a more complicated viewport, same vertices. */
     memset(&vp, 0, sizeof(vp));
@@ -637,13 +693,13 @@ static void test_process_vertices(void)
     vp.dvMinZ = -2.0f;
     vp.dvMaxZ = 4.0f;
     hr = IDirect3DDevice7_SetViewport(device, &vp);
-    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DVertexBuffer7_ProcessVertices(dst_vb1, D3DVOP_TRANSFORM, 0, 4, src_vb, 0, device, 0);
-    ok(SUCCEEDED(hr), "Failed to process vertices, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DVertexBuffer7_Lock(dst_vb1, 0, (void **)&dst_data, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock destination vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     ok(compare_vec4(&dst_data[0], +1.330e+2f, +7.000e+1f, -2.000e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[0].x, dst_data[0].y, dst_data[0].z, dst_data[0].w);
@@ -657,20 +713,20 @@ static void test_process_vertices(void)
             "Got unexpected vertex 3 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[3].x, dst_data[3].y, dst_data[3].z, dst_data[3].w);
     hr = IDirect3DVertexBuffer7_Unlock(dst_vb1);
-    ok(SUCCEEDED(hr), "Failed to unlock destination vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, &world);
-    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_VIEW, &view);
-    ok(SUCCEEDED(hr), "Failed to set view transform, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &proj);
-    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DVertexBuffer7_ProcessVertices(dst_vb1, D3DVOP_TRANSFORM, 0, 4, src_vb, 0, device, 0);
-    ok(SUCCEEDED(hr), "Failed to process vertices, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DVertexBuffer7_Lock(dst_vb1, 0, (void **)&dst_data, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock destination vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     ok(compare_vec4(&dst_data[0], +2.560e+2f, +7.000e+1f, -2.000e+0f, +3.333e-1f, 4096),
             "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[0].x, dst_data[0].y, dst_data[0].z, dst_data[0].w);
@@ -684,7 +740,7 @@ static void test_process_vertices(void)
             "Got unexpected vertex 3 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[3].x, dst_data[3].y, dst_data[3].z, dst_data[3].w);
     hr = IDirect3DVertexBuffer7_Unlock(dst_vb1);
-    ok(SUCCEEDED(hr), "Failed to unlock destination vertex buffer, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     IDirect3DVertexBuffer7_Release(dst_vb2);
     IDirect3DVertexBuffer7_Release(dst_vb1);
@@ -14877,24 +14933,27 @@ static void test_viewport(void)
     static struct
     {
         D3DVIEWPORT7 vp;
+        float expected_z;
         RECT expected_rect;
         const char *message;
     }
     tests[] =
     {
-        {{  0,   0,  640,  480}, {  0, 120, 479, 359}, "Viewport (0, 0) - (640, 480)"},
-        {{  0,   0,  320,  240}, {  0,  60, 239, 179}, "Viewport (0, 0) - (320, 240)"},
-        {{  0,   0, 1280,  960}, {  0, 240, 639, 479}, "Viewport (0, 0) - (1280, 960)"},
-        {{  0,   0, 2000, 1600}, {-10, -10, -10, -10}, "Viewport (0, 0) - (2000, 1600)"},
-        {{100, 100,  640,  480}, {100, 220, 579, 459}, "Viewport (100, 100) - (640, 480)"},
-        {{  0,   0, 8192, 8192}, {-10, -10, -10, -10}, "Viewport (0, 0) - (8192, 8192)"},
+        {{  0,   0,  640,  480}, 0.001f, {  0, 120, 479, 359}, "Viewport (0, 0) - (640, 480)"},
+        {{  0,   0,  640,  480, 0.5f, 0.0f}, 0.501f,
+                {0, 120, 479, 359}, "Viewport (0, 0, 0.5) - (640, 480, 0.0)"},
+        {{  0,   0,  320,  240}, 0.001f, {  0,  60, 239, 179}, "Viewport (0, 0) - (320, 240)"},
+        {{  0,   0, 1280,  960}, 0.001f, {  0, 240, 639, 479}, "Viewport (0, 0) - (1280, 960)"},
+        {{  0,   0, 2000, 1600}, 0.001f, {-10, -10, -10, -10}, "Viewport (0, 0) - (2000, 1600)"},
+        {{100, 100,  640,  480}, 0.001f, {100, 220, 579, 459}, "Viewport (100, 100) - (640, 480)"},
+        {{  0,   0, 8192, 8192}, 0.001f, {-10, -10, -10, -10}, "Viewport (0, 0) - (8192, 8192)"},
     };
     static struct vec3 quad[] =
     {
-        {-1.5f, -0.5f, 0.1f},
-        {-1.5f,  0.5f, 0.1f},
-        { 0.5f, -0.5f, 0.1f},
-        { 0.5f,  0.5f, 0.1f},
+        {-1.5f, -0.5f, 1.0f},
+        {-1.5f,  0.5f, 1.0f},
+        { 0.5f, -0.5f, 1.0f},
+        { 0.5f,  0.5f, 1.0f},
     };
     static const struct vec2 rt_sizes[] =
     {
@@ -14902,6 +14961,7 @@ static void test_viewport(void)
     };
     IDirectDrawSurface7 *rt, *ds;
     DDSURFACEDESC2 surface_desc;
+    const float z_eps = 0.0001;
     IDirect3DDevice7 *device;
     IDirectDraw7 *ddraw;
     DDPIXELFORMAT z_fmt;
@@ -14921,18 +14981,16 @@ static void test_viewport(void)
     }
 
     hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get Direct3D7 interface, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **)&ddraw);
-    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     IDirect3D7_Release(d3d);
 
-    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable depth test, hr %#x.\n", hr);
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice7_SetViewport(device, NULL);
-    ok(hr == E_INVALIDARG, "Setting NULL viewport data returned unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     ds = get_depth_stencil(device);
     memset(&surface_desc, 0, sizeof(surface_desc));
@@ -14951,56 +15009,79 @@ static void test_viewport(void)
             surface_desc.dwHeight = rt_sizes[i].y;
             surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
             hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &rt, NULL);
-            ok(SUCCEEDED(hr), "Failed to create render target, hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x (i %u).\n", hr, i);
 
             surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
             surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
             U4(surface_desc).ddpfPixelFormat = z_fmt;
             hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &ds, NULL);
-            ok(SUCCEEDED(hr), "Failed to create depth buffer, hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x (i %u).\n", hr, i);
             hr = IDirectDrawSurface7_AddAttachedSurface(rt, ds);
-            ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x (i %u).\n", hr, i);
 
             hr = IDirect3DDevice7_SetRenderTarget(device, rt, 0);
-            ok(SUCCEEDED(hr), "Failed to set render target, hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x (i %u).\n", hr, i);
         }
         else
         {
             hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
-            ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x (i %u).\n", hr, i);
         }
 
         for (j = 0; j < ARRAY_SIZE(tests); ++j)
         {
-            hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 1.0f, 0);
-            ok(SUCCEEDED(hr), "Failed to clear, hr %#x (i %u, j %u).\n", hr, i, j);
+            hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000,
+                    tests[j].expected_z - z_eps, 0);
+            ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZFUNC, D3DCMP_GREATER);
+            ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+
+            hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, !i);
+            ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
 
             hr = IDirect3DDevice7_SetViewport(device, &tests[j].vp);
             if (tests[j].vp.dwX + tests[j].vp.dwWidth > rt_sizes[i].x
                     || tests[j].vp.dwY + tests[j].vp.dwHeight > rt_sizes[i].y)
             {
-                ok(hr == E_INVALIDARG, "Setting the viewport returned unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+                ok(hr == E_INVALIDARG, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
                 continue;
             }
             else
             {
-                ok(SUCCEEDED(hr), "Failed to set the viewport, hr %#x (i %u, j %u).\n", hr, i, j);
+                ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
             }
 
             hr = IDirect3DDevice7_BeginScene(device);
-            ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
             hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, quad, 4, 0);
-            ok(SUCCEEDED(hr), "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
             hr = IDirect3DDevice7_EndScene(device);
-            ok(SUCCEEDED(hr), "Failed to end scene, hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
 
             check_rect(rt, tests[j].expected_rect, tests[j].message);
+
+            if (!i)
+            {
+                hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000,
+                        tests[j].expected_z + z_eps, 0);
+                ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+                hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZFUNC, D3DCMP_LESS);
+                ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+
+                hr = IDirect3DDevice7_BeginScene(device);
+                ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+                hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, quad, 4, 0);
+                ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+                hr = IDirect3DDevice7_EndScene(device);
+                ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+
+                check_rect(rt, tests[j].expected_rect, tests[j].message);
+            }
         }
 
         hr = IDirectDrawSurface7_DeleteAttachedSurface(rt, 0, ds);
-        ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x (i %u).\n", hr, i);
+        ok(hr == DD_OK, "Got unexpected hr %#x (i %u).\n", hr, i);
         IDirectDrawSurface7_Release(ds);
-
         IDirectDrawSurface7_Release(rt);
     }
 
