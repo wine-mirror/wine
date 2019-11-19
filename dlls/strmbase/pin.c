@@ -196,8 +196,8 @@ HRESULT WINAPI BasePinImpl_Disconnect(IPin * iface)
         {
             IPin_Release(This->peer);
             This->peer = NULL;
-            FreeMediaType(&This->mtCurrent);
-            ZeroMemory(&This->mtCurrent, sizeof(This->mtCurrent));
+            FreeMediaType(&This->mt);
+            ZeroMemory(&This->mt, sizeof(This->mt));
             hr = S_OK;
         }
         else
@@ -245,7 +245,7 @@ HRESULT WINAPI BasePinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt
     {
         if (This->peer)
         {
-            CopyMediaType(pmt, &This->mtCurrent);
+            CopyMediaType(pmt, &This->mt);
             strmbase_dump_media_type(pmt);
             hr = S_OK;
         }
@@ -456,8 +456,8 @@ HRESULT WINAPI BaseOutputPinImpl_Disconnect(IPin * iface)
         {
             IPin_Release(This->pin.peer);
             This->pin.peer = NULL;
-            FreeMediaType(&This->pin.mtCurrent);
-            ZeroMemory(&This->pin.mtCurrent, sizeof(This->pin.mtCurrent));
+            FreeMediaType(&This->pin.mt);
+            ZeroMemory(&This->pin.mt, sizeof(This->pin.mt));
             hr = S_OK;
         }
         else
@@ -643,7 +643,7 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *This,
 
     This->pin.peer = pReceivePin;
     IPin_AddRef(pReceivePin);
-    CopyMediaType(&This->pin.mtCurrent, pmt);
+    CopyMediaType(&This->pin.mt, pmt);
 
     hr = IPin_ReceiveConnection(pReceivePin, &This->pin.IPin_iface, pmt);
 
@@ -678,7 +678,7 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *This,
     {
         IPin_Release(This->pin.peer);
         This->pin.peer = NULL;
-        FreeMediaType(&This->pin.mtCurrent);
+        FreeMediaType(&This->pin.mt);
     }
 
     TRACE(" -- %x\n", hr);
@@ -699,7 +699,7 @@ void strmbase_source_init(struct strmbase_source *pin, const IPinVtbl *vtbl, str
 
 void strmbase_source_cleanup(struct strmbase_source *pin)
 {
-    FreeMediaType(&pin->pin.mtCurrent);
+    FreeMediaType(&pin->pin.mt);
     if (pin->pAllocator)
         IMemAllocator_Release(pin->pAllocator);
     pin->pAllocator = NULL;
@@ -750,7 +750,7 @@ HRESULT WINAPI BaseInputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceiveP
 
         if (SUCCEEDED(hr))
         {
-            CopyMediaType(&This->pin.mtCurrent, pmt);
+            CopyMediaType(&This->pin.mt, pmt);
             This->pin.peer = pReceivePin;
             IPin_AddRef(pReceivePin);
         }
@@ -999,7 +999,7 @@ void strmbase_sink_init(BaseInputPin *pin, const IPinVtbl *vtbl, struct strmbase
 
 void strmbase_sink_cleanup(BaseInputPin *pin)
 {
-    FreeMediaType(&pin->pin.mtCurrent);
+    FreeMediaType(&pin->pin.mt);
     if (pin->pAllocator)
         IMemAllocator_Release(pin->pAllocator);
     pin->pAllocator = NULL;

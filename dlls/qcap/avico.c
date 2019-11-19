@@ -470,7 +470,7 @@ static HRESULT WINAPI AVICompressorIn_Receive(BaseInputPin *base, IMediaSample *
     if((This->driver_flags & VIDCF_TEMPORAL) && !(This->driver_flags & VIDCF_FASTTEMPORALC))
         FIXME("Unsupported temporal compression\n");
 
-    src_videoinfo = (VIDEOINFOHEADER *)This->sink.pin.mtCurrent.pbFormat;
+    src_videoinfo = (VIDEOINFOHEADER *)This->sink.pin.mt.pbFormat;
     This->videoinfo->bmiHeader.biSizeImage = This->max_frame_size;
     res = ICCompress(This->hic, sync_point ? ICCOMPRESS_KEYFRAME : 0, &This->videoinfo->bmiHeader, buf,
             &src_videoinfo->bmiHeader, ptr, 0, &comp_flags, This->frame_cnt, 0, 0, NULL, NULL);
@@ -539,7 +539,7 @@ static HRESULT source_get_media_type(struct strmbase_pin *base, unsigned int iPo
     amt->subtype = MEDIASUBTYPE_PCM;
     amt->bFixedSizeSamples = FALSE;
     amt->bTemporalCompression = (This->driver_flags & VIDCF_TEMPORAL) != 0;
-    amt->lSampleSize = This->sink.pin.mtCurrent.lSampleSize;
+    amt->lSampleSize = This->sink.pin.mt.lSampleSize;
     amt->formattype = FORMAT_VideoInfo;
     amt->pUnk = NULL;
     amt->cbFormat = This->videoinfo_size;

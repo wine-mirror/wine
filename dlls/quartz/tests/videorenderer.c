@@ -574,14 +574,14 @@ static HRESULT WINAPI testsource_AttemptConnection(struct strmbase_source *iface
 
     iface->pin.peer = peer;
     IPin_AddRef(peer);
-    CopyMediaType(&iface->pin.mtCurrent, mt);
+    CopyMediaType(&iface->pin.mt, mt);
 
     if (FAILED(hr = IPin_ReceiveConnection(peer, &iface->pin.IPin_iface, mt)))
     {
         ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
         IPin_Release(peer);
         iface->pin.peer = NULL;
-        FreeMediaType(&iface->pin.mtCurrent);
+        FreeMediaType(&iface->pin.mt);
     }
 
     return hr;

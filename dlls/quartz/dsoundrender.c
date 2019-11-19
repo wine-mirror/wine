@@ -92,14 +92,14 @@ static inline DSoundRenderImpl *impl_from_IAMDirectSound(IAMDirectSound *iface)
 }
 
 static REFERENCE_TIME time_from_pos(DSoundRenderImpl *This, DWORD pos) {
-    WAVEFORMATEX *wfx = (WAVEFORMATEX *)This->renderer.sink.pin.mtCurrent.pbFormat;
+    WAVEFORMATEX *wfx = (WAVEFORMATEX *)This->renderer.sink.pin.mt.pbFormat;
     REFERENCE_TIME ret = 10000000;
     ret = ret * pos / wfx->nAvgBytesPerSec;
     return ret;
 }
 
 static DWORD pos_from_time(DSoundRenderImpl *This, REFERENCE_TIME time) {
-    WAVEFORMATEX *wfx = (WAVEFORMATEX *)This->renderer.sink.pin.mtCurrent.pbFormat;
+    WAVEFORMATEX *wfx = (WAVEFORMATEX *)This->renderer.sink.pin.mt.pbFormat;
     REFERENCE_TIME ret = time;
     ret *= wfx->nAvgBytesPerSec;
     ret /= 10000000;
@@ -108,7 +108,7 @@ static DWORD pos_from_time(DSoundRenderImpl *This, REFERENCE_TIME time) {
 }
 
 static void DSoundRender_UpdatePositions(DSoundRenderImpl *This, DWORD *seqwritepos, DWORD *minwritepos) {
-    WAVEFORMATEX *wfx = (WAVEFORMATEX *)This->renderer.sink.pin.mtCurrent.pbFormat;
+    WAVEFORMATEX *wfx = (WAVEFORMATEX *)This->renderer.sink.pin.mt.pbFormat;
     BYTE *buf1, *buf2;
     DWORD size1, size2, playpos, writepos, old_writepos, old_playpos, adv;
     BOOL writepos_set = This->writepos < This->buf_size;
@@ -146,7 +146,7 @@ static void DSoundRender_UpdatePositions(DSoundRenderImpl *This, DWORD *seqwrite
 
 static HRESULT DSoundRender_GetWritePos(DSoundRenderImpl *This, DWORD *ret_writepos, REFERENCE_TIME write_at, DWORD *pfree, DWORD *skip)
 {
-    WAVEFORMATEX *wfx = (WAVEFORMATEX *)This->renderer.sink.pin.mtCurrent.pbFormat;
+    WAVEFORMATEX *wfx = (WAVEFORMATEX *)This->renderer.sink.pin.mt.pbFormat;
     DWORD writepos, min_writepos, playpos;
     REFERENCE_TIME max_lag = 50 * 10000;
     REFERENCE_TIME min_lag = 25 * 10000;
@@ -314,7 +314,7 @@ static HRESULT WINAPI DSoundRender_PrepareReceive(struct strmbase_renderer *ifac
 
     if (IMediaSample_GetMediaType(pSample, &amt) == S_OK)
     {
-        AM_MEDIA_TYPE *orig = &This->renderer.sink.pin.mtCurrent;
+        AM_MEDIA_TYPE *orig = &This->renderer.sink.pin.mt;
         WAVEFORMATEX *origfmt = (WAVEFORMATEX *)orig->pbFormat;
         WAVEFORMATEX *newfmt = (WAVEFORMATEX *)amt->pbFormat;
 
@@ -434,7 +434,7 @@ static void dsound_render_start_stream(struct strmbase_renderer *iface)
 static HRESULT WINAPI DSoundRender_CompleteConnect(struct strmbase_renderer *iface, IPin *pReceivePin)
 {
     DSoundRenderImpl *This = impl_from_strmbase_renderer(iface);
-    const AM_MEDIA_TYPE *pmt = &This->renderer.sink.pin.mtCurrent;
+    const AM_MEDIA_TYPE *pmt = &This->renderer.sink.pin.mt;
     HRESULT hr = S_OK;
     WAVEFORMATEX *format;
     DSBUFFERDESC buf_desc;
@@ -937,7 +937,7 @@ static HRESULT WINAPI ReferenceClock_GetTime(IReferenceClock *iface,
         DWORD writepos1, writepos2;
         EnterCriticalSection(&This->renderer.filter.csFilter);
         DSoundRender_UpdatePositions(This, &writepos1, &writepos2);
-        if (This->renderer.sink.pin.mtCurrent.pbFormat)
+        if (This->renderer.sink.pin.mt.pbFormat)
         {
             *pTime = This->play_time + time_from_pos(This, This->last_playpos);
             hr = S_OK;

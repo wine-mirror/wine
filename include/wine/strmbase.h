@@ -37,7 +37,7 @@ struct strmbase_pin
     PIN_DIRECTION dir;
     WCHAR name[128];
     IPin *peer;
-    AM_MEDIA_TYPE mtCurrent;
+    AM_MEDIA_TYPE mt;
 
     const struct BasePinFuncTable* pFuncsTable;
 };

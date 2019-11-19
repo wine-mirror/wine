@@ -142,7 +142,7 @@ static HRESULT sink_get_media_type(struct strmbase_pin *base,
     EnterCriticalSection(&This->filter.csFilter);
     if (This->sink.pin.peer)
     {
-        CopyMediaType(amt, &This->sink.pin.mtCurrent);
+        CopyMediaType(amt, &This->sink.pin.mt);
         hr = S_OK;
     }
     else
@@ -331,7 +331,7 @@ static HRESULT source_get_media_type(struct strmbase_pin *iface,
     if (!filter->sink.pin.peer)
         hr = VFW_E_NOT_CONNECTED;
     else if (!index)
-        CopyMediaType(mt, &filter->sink.pin.mtCurrent);
+        CopyMediaType(mt, &filter->sink.pin.mt);
     else
         hr = VFW_S_NO_MORE_ITEMS;
 

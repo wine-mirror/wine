@@ -198,7 +198,7 @@ static DWORD VMR9_SendSampleData(struct quartz_vmr *This, VMR9PresentationInfo *
 
     TRACE("%p %p %d\n", This, data, size);
 
-    amt = &This->renderer.sink.pin.mtCurrent;
+    amt = &This->renderer.sink.pin.mt;
 
     if (IsEqualIID(&amt->formattype, &FORMAT_VideoInfo))
     {
@@ -609,7 +609,7 @@ static HRESULT WINAPI VMR9_GetSourceRect(BaseControlVideo* This, RECT *pSourceRe
 static HRESULT WINAPI VMR9_GetStaticImage(BaseControlVideo* This, LONG *pBufferSize, LONG *pDIBImage)
 {
     struct quartz_vmr* pVMR9 = impl_from_BaseControlVideo(This);
-    AM_MEDIA_TYPE *amt = &pVMR9->renderer.sink.pin.mtCurrent;
+    AM_MEDIA_TYPE *amt = &pVMR9->renderer.sink.pin.mt;
     BITMAPINFOHEADER *bmiHeader;
     LONG needed_size;
     char *ptr;
@@ -679,7 +679,7 @@ static VIDEOINFOHEADER* WINAPI VMR9_GetVideoFormat(BaseControlVideo* This)
 
     TRACE("(%p/%p)\n", pVMR9, This);
 
-    pmt = &pVMR9->renderer.sink.pin.mtCurrent;
+    pmt = &pVMR9->renderer.sink.pin.mt;
     if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)) {
         return (VIDEOINFOHEADER*)pmt->pbFormat;
     } else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2)) {

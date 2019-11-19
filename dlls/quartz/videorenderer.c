@@ -394,7 +394,7 @@ static HRESULT WINAPI VideoRenderer_GetSourceRect(BaseControlVideo* iface, RECT 
 static HRESULT WINAPI VideoRenderer_GetStaticImage(BaseControlVideo* iface, LONG *pBufferSize, LONG *pDIBImage)
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
-    AM_MEDIA_TYPE *amt = &This->renderer.sink.pin.mtCurrent;
+    AM_MEDIA_TYPE *amt = &This->renderer.sink.pin.mt;
     BITMAPINFOHEADER *bmiHeader;
     LONG needed_size;
     char *ptr;
@@ -464,7 +464,7 @@ static VIDEOINFOHEADER* WINAPI VideoRenderer_GetVideoFormat(BaseControlVideo* if
 
     TRACE("(%p/%p)\n", This, iface);
 
-    pmt = &This->renderer.sink.pin.mtCurrent;
+    pmt = &This->renderer.sink.pin.mt;
     if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)) {
         return (VIDEOINFOHEADER*)pmt->pbFormat;
     } else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2)) {

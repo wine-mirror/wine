@@ -1416,7 +1416,7 @@ static HRESULT WINAPI AviMuxIn_Receive(BaseInputPin *base, IMediaSample *pSample
         size = IMediaSample_GetActualDataLength(pSample);
     }
 
-    if(!avimuxin->pin.pin.mtCurrent.bTemporalCompression)
+    if(!avimuxin->pin.pin.mt.bTemporalCompression)
         flags |= AM_SAMPLE_SPLICEPOINT;
 
     hr = IMediaSample_GetTime(pSample, &start, &stop);

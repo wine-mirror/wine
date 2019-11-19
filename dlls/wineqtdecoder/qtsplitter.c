@@ -241,7 +241,7 @@ static void qt_splitter_destroy(struct strmbase_filter *iface)
         IPin_Release(peer);
     }
 
-    FreeMediaType(&filter->pInputPin.pin.mtCurrent);
+    FreeMediaType(&filter->pInputPin.pin.mt);
     if (filter->pInputPin.pAlloc)
         IMemAllocator_Release(filter->pInputPin.pAlloc);
     filter->pInputPin.pAlloc = NULL;
@@ -1120,7 +1120,7 @@ static HRESULT WINAPI QTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, 
 
     if (SUCCEEDED(hr))
     {
-        CopyMediaType(&This->pin.mtCurrent, pmt);
+        CopyMediaType(&This->pin.mt, pmt);
         This->pin.peer = pReceivePin;
         IPin_AddRef(pReceivePin);
         hr = IMemAllocator_Commit(This->pAlloc);
