@@ -137,18 +137,30 @@ static HRESULT WINAPI audition_track_SetParam(IDirectMusicTrack8 *iface, REFGUID
 	return S_OK;
 }
 
-static HRESULT WINAPI audition_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID rguidType)
+static HRESULT WINAPI audition_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID type)
 {
-        IDirectMusicAuditionTrack *This = impl_from_IDirectMusicTrack8(iface);
+    IDirectMusicAuditionTrack *This = impl_from_IDirectMusicTrack8(iface);
+    static const GUID *valid[] = {
+        &GUID_DisableTimeSig,
+        &GUID_EnableTimeSig,
+        &GUID_SeedVariations,
+        &GUID_Valid_Start_Time,
+        &GUID_Variations
+    };
+    unsigned int i;
 
-	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
 
-        if (!rguidType)
-                return E_POINTER;
+    TRACE("(%p, %s)\n", This, debugstr_dmguid(type));
 
-	/* didn't find any params */
-	TRACE("param unsupported\n");
-	return DMUS_E_TYPE_UNSUPPORTED;
+    if (!type)
+        return E_POINTER;
+
+    for (i = 0; i < ARRAY_SIZE(valid); i++)
+        if (IsEqualGUID(type, valid[i]))
+            return S_OK;
+
+    TRACE("param unsupported\n");
+    return DMUS_E_TYPE_UNSUPPORTED;
 }
 
 static HRESULT WINAPI audition_track_AddNotificationType(IDirectMusicTrack8 *iface,

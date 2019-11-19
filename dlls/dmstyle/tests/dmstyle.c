@@ -286,16 +286,15 @@ static void test_track(void)
         const char *name;
         BOOL has_save;
         BOOL has_join;
-        /* bitfields with supported param types */
+        /* bitfield with supported param types */
         unsigned int has_params;
-        unsigned int todo_params;
     } class[] = {
-        { X(DirectMusicAuditionTrack), TRUE, FALSE, 0x18204200, 0x18204200 },
-        { X(DirectMusicChordTrack), TRUE, TRUE, 0x100002, 0 },
-        { X(DirectMusicCommandTrack), TRUE, TRUE, 0x38, 0 },
-        { X(DirectMusicMotifTrack), FALSE, FALSE, 0x8204200, 0 },
-        { X(DirectMusicMuteTrack), TRUE, FALSE, 0x40000, 0 },
-        { X(DirectMusicStyleTrack), FALSE, TRUE, 0x1224200, 0 },
+        { X(DirectMusicAuditionTrack), TRUE, FALSE, 0x18204200 },
+        { X(DirectMusicChordTrack), TRUE, TRUE, 0x100002 },
+        { X(DirectMusicCommandTrack), TRUE, TRUE, 0x38 },
+        { X(DirectMusicMotifTrack), FALSE, FALSE, 0x8204200 },
+        { X(DirectMusicMuteTrack), TRUE, FALSE, 0x40000 },
+        { X(DirectMusicStyleTrack), FALSE, TRUE, 0x1224200 },
     };
 #undef X
     unsigned int i, j;
@@ -329,9 +328,8 @@ static void test_track(void)
         for (j = 0; j < ARRAY_SIZE(param_types); j++) {
             hr = IDirectMusicTrack8_IsParamSupported(dmt8, param_types[j].type);
             if (class[i].has_params & (1 << j))
-                todo_wine_if(class[i].todo_params & (1 << j))
-                    ok(hr == S_OK, "IsParamSupported(%s) failed: %08x, expected S_OK\n",
-                            param_types[j].name, hr);
+                ok(hr == S_OK, "IsParamSupported(%s) failed: %08x, expected S_OK\n",
+                        param_types[j].name, hr);
             else
                 ok(hr == DMUS_E_TYPE_UNSUPPORTED,
                         "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
