@@ -1182,32 +1182,12 @@ BOOL WINAPI GetUserPreferredUILanguages( DWORD flags, ULONG *count, WCHAR *buffe
  */
 LCID WINAPI LocaleNameToLCID( LPCWSTR name, DWORD flags )
 {
-    struct locale_name locale_name;
-    static int once;
+    LCID lcid;
 
-    if (flags && !once++)
-        FIXME( "unsupported flags %x\n", flags );
-
-    if (name == LOCALE_NAME_USER_DEFAULT)
-        return GetUserDefaultLCID();
-
-    /* string parsing */
-    parse_locale_name( name, &locale_name );
-
-    TRACE( "found lcid %x for %s, matches %d\n",
-           locale_name.lcid, debugstr_w(name), locale_name.matches );
-
-    if (!locale_name.matches)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-
-    if (locale_name.matches == 1)
-        WARN( "locale %s not recognized, defaulting to %s\n",
-              debugstr_w(name), debugstr_w(locale_name.lang) );
-
-    return locale_name.lcid;
+    if (!name) return GetUserDefaultLCID();
+    if (!set_ntstatus( RtlLocaleNameToLcid( name, &lcid, 2 ))) return 0;
+    if (!(flags & LOCALE_ALLOW_NEUTRAL_NAMES)) lcid = ConvertDefaultLocale( lcid );
+    return lcid;
 }
 
 
@@ -2570,18 +2550,9 @@ BOOL WINAPI IsValidLocale( LCID lcid, DWORD flags )
  */
 BOOL WINAPI IsValidLocaleName( LPCWSTR locale )
 {
-    struct locale_name locale_name;
+    LCID lcid;
 
-    if (!locale)
-        return FALSE;
-
-    /* string parsing */
-    parse_locale_name( locale, &locale_name );
-
-    TRACE( "found lcid %x for %s, matches %d\n",
-           locale_name.lcid, debugstr_w(locale), locale_name.matches );
-
-    return locale_name.matches > 0;
+    return !RtlLocaleNameToLcid( locale, &lcid, 2 );
 }
 
 /******************************************************************************

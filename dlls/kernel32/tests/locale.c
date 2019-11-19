@@ -2856,6 +2856,9 @@ static void test_LocaleNameToLCID(void)
     ok(lcid == MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_MODERN), SORT_DEFAULT), "Got wrong lcid for es-es: 0x%x\n", lcid);
 
     /* english neutral name */
+    lcid = pLocaleNameToLCID(enW, LOCALE_ALLOW_NEUTRAL_NAMES);
+    ok(lcid == MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL), SORT_DEFAULT) ||
+       broken(lcid == 0) /* Vista */, "got 0x%04x\n", lcid);
     lcid = pLocaleNameToLCID(enW, 0);
     ok(lcid == MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT) ||
        broken(lcid == 0) /* Vista */, "got 0x%04x\n", lcid);
@@ -2871,6 +2874,7 @@ static void test_LocaleNameToLCID(void)
             *buffer = 0;
             ret = pLCIDToLocaleName(lcid, buffer, ARRAY_SIZE(buffer), 0);
             ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(ptr->name), ret);
+            todo_wine_if (ptr->todo)
             ok(!lstrcmpW(ptr->sname, buffer), "%s: got wrong locale name %s\n",
                 wine_dbgstr_w(ptr->name), wine_dbgstr_w(buffer));
 
@@ -4740,6 +4744,7 @@ static void test_GetLocaleInfoEx(void)
 static void test_IsValidLocaleName(void)
 {
     static const WCHAR enusW[] = {'e','n','-','U','S',0};
+    static const WCHAR enW[] = {'e','n',0};
     static const WCHAR zzW[] = {'z','z',0};
     static const WCHAR zz_zzW[] = {'z','z','-','Z','Z',0};
     static const WCHAR zzzzW[] = {'z','z','z','z',0};
@@ -4753,6 +4758,8 @@ static void test_IsValidLocaleName(void)
 
     ret = pIsValidLocaleName(enusW);
     ok(ret, "IsValidLocaleName failed\n");
+    ret = pIsValidLocaleName(enW);
+    ok(ret || broken(!ret), "IsValidLocaleName failed\n");
     ret = pIsValidLocaleName(zzW);
     ok(!ret || broken(ret), "IsValidLocaleName should have failed\n");
     ret = pIsValidLocaleName(zz_zzW);
