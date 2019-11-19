@@ -366,58 +366,50 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_RemoveNotificationType(IDirectMus
 }
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_GetParam(IDirectMusicSegment8 *iface,
-        REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME *pmtNext,
-        void *pParam)
+        REFGUID type, DWORD group, DWORD index, MUSIC_TIME time, MUSIC_TIME *next,
+        void *param)
 {
-  IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
-  CLSID pIt_clsid;
-  struct list* pEntry = NULL;
-  IDirectMusicTrack* pTrack = NULL;
-  IPersistStream* pCLSIDStream = NULL;
-  LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
-  HRESULT hr = S_OK;
+    IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
+    struct list *item;
+    IDirectMusicTrack *track;
+    DMUS_PRIVATE_SEGMENT_TRACK *segment;
+    HRESULT hr;
 
-  FIXME("(%p, %s, 0x%x, %d, %d, %p, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
-  
-  if (DMUS_SEG_ANYTRACK == dwIndex) {
-    
-    LIST_FOR_EACH (pEntry, &This->Tracks) {
-      pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
+    FIXME("(%p, %s, 0x%x, %d, %d, %p, %p) Semi-stub\n", This, debugstr_dmguid(type), group,
+                index, time, next, param);
 
-      hr = IDirectMusicTrack_QueryInterface(pIt->pTrack, &IID_IPersistStream, (void**) &pCLSIDStream);
-      if (FAILED(hr)) {
-	ERR("(%p): object %p don't implement IPersistStream Interface. Expect a crash (critical problem)\n", This, pIt->pTrack);
-	continue ;
-      }
+    if (index == DMUS_SEG_ANYTRACK || group == 0xffffffff) {
+        if (group == 0xffffffff && index != DMUS_SEG_ANYTRACK)
+            WARN("Any group doesnt have DMUS_SEG_ANYTRACK index.\n");
 
-      TRACE(" - %p -> 0x%x,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
+        LIST_FOR_EACH (item, &This->Tracks) {
+            segment = LIST_ENTRY(item, DMUS_PRIVATE_SEGMENT_TRACK, entry);
 
-      if (0xFFFFFFFF != dwGroupBits && 0 == (pIt->dwGroupBits & dwGroupBits)) continue ;
-      hr = IPersistStream_GetClassID(pCLSIDStream, &pIt_clsid);
-      IPersistStream_Release(pCLSIDStream); pCLSIDStream = NULL;
-      if (FAILED(hr)) {
-	ERR("(%p): non-implemented GetClassID for object %p\n", This, pIt->pTrack);
-	continue ;
-      }
-      if (FALSE == IsEqualGUID(&pIt_clsid, rguidType)) continue ;
-      if (FAILED(IDirectMusicTrack_IsParamSupported(pIt->pTrack, rguidType))) continue ;
-      hr = IDirectMusicTrack_GetParam(pIt->pTrack, rguidType, mtTime, pmtNext, pParam);
-      if (SUCCEEDED(hr)) return hr;
+            TRACE(" - %p -> 0x%x,%p\n", segment, segment->dwGroupBits, segment->pTrack);
+
+            if (group != 0xffffffff && !(segment->dwGroupBits & group))
+                continue;
+            if (FAILED(IDirectMusicTrack_IsParamSupported(segment->pTrack, type)))
+                continue;
+            hr = IDirectMusicTrack_GetParam(segment->pTrack, type, time, next, param);
+            if (SUCCEEDED(hr))
+                return hr;
+        }
+
+        WARN("(%p): not found\n", This);
+        return DMUS_E_TRACK_NOT_FOUND;
     }
-    ERR("(%p): not found\n", This);
-    return DMUS_E_TRACK_NOT_FOUND;
-  } 
 
-  hr = IDirectMusicSegment8Impl_GetTrack(iface, &GUID_NULL, dwGroupBits, dwIndex, &pTrack);
-  if (FAILED(hr)) {
-    ERR("(%p): not found\n", This);
-    return DMUS_E_TRACK_NOT_FOUND;
-  }
+    hr = IDirectMusicSegment8Impl_GetTrack(iface, &GUID_NULL, group, index, &track);
+    if (FAILED(hr)) {
+        ERR("(%p): not found\n", This);
+        return DMUS_E_TRACK_NOT_FOUND;
+    }
 
-  hr = IDirectMusicTrack_GetParam(pTrack, rguidType, mtTime, pmtNext, pParam);
-  IDirectMusicTrack_Release(pTrack); pTrack = NULL;
+    hr = IDirectMusicTrack_GetParam(track, type, time, next, param);
+    IDirectMusicTrack_Release(track);
 
-  return hr;
+    return hr;
 }
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_SetParam(IDirectMusicSegment8 *iface,
