@@ -136,30 +136,23 @@ static void VideoRenderer_AutoShowWindow(VideoRendererImpl *This)
 
 static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, DWORD size)
 {
-    AM_MEDIA_TYPE amt;
-    HRESULT hr = S_OK;
+    const AM_MEDIA_TYPE *amt = &This->renderer.sink.pin.mt;
     BITMAPINFOHEADER *bmiHeader;
     HDC dc;
 
     TRACE("(%p)->(%p, %d)\n", This, data, size);
 
-    hr = IPin_ConnectionMediaType(&This->renderer.sink.pin.IPin_iface, &amt);
-    if (FAILED(hr)) {
-        ERR("Unable to retrieve media type\n");
-        return hr;
-    }
-
-    if (IsEqualIID(&amt.formattype, &FORMAT_VideoInfo))
+    if (IsEqualGUID(&amt->formattype, &FORMAT_VideoInfo))
     {
-        bmiHeader = &((VIDEOINFOHEADER *)amt.pbFormat)->bmiHeader;
+        bmiHeader = &((VIDEOINFOHEADER *)amt->pbFormat)->bmiHeader;
     }
-    else if (IsEqualIID(&amt.formattype, &FORMAT_VideoInfo2))
+    else if (IsEqualGUID(&amt->formattype, &FORMAT_VideoInfo2))
     {
-        bmiHeader = &((VIDEOINFOHEADER2 *)amt.pbFormat)->bmiHeader;
+        bmiHeader = &((VIDEOINFOHEADER2 *)amt->pbFormat)->bmiHeader;
     }
     else
     {
-        FIXME("Unknown type %s\n", debugstr_guid(&amt.subtype));
+        FIXME("Unknown subtype %s.\n", debugstr_guid(&amt->subtype));
         return VFW_E_RUNTIME_ERROR;
     }
 
