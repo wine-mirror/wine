@@ -234,12 +234,9 @@ static void qt_splitter_destroy(struct strmbase_filter *iface)
 
     EnterCriticalSection(&filter->csReceive);
     /* Don't need to clean up output pins, disconnecting input pin will do that */
-    IPin_ConnectedTo(&filter->pInputPin.pin.IPin_iface, &peer);
-    if (peer)
-    {
-        IPin_Disconnect(peer);
-        IPin_Release(peer);
-    }
+
+    if (filter->pInputPin.pin.peer)
+        IPin_Disconnect(filter->pInputPin.pin.peer);
 
     FreeMediaType(&filter->pInputPin.pin.mt);
     if (filter->pInputPin.pAlloc)
