@@ -1141,7 +1141,7 @@ static void PropertyStorage_PropNameDestroy(void *k, void *d, void *extra)
 static int PropertyStorage_PropCompare(const void *a, const void *b,
  void *extra)
 {
-    TRACE("(%d, %d)\n", PtrToUlong(a), PtrToUlong(b));
+    TRACE("(%u, %u)\n", PtrToUlong(a), PtrToUlong(b));
     return PtrToUlong(a) - PtrToUlong(b);
 }
 
