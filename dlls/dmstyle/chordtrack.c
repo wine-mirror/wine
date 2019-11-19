@@ -140,23 +140,20 @@ static HRESULT WINAPI chord_track_SetParam(IDirectMusicTrack8 *iface, REFGUID rg
   return S_OK;
 }
 
-static HRESULT WINAPI chord_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID rguidType)
+static HRESULT WINAPI chord_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID type)
 {
-  IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
-  
-  TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
+    IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
 
-  if (!rguidType)
-    return E_POINTER;
+    TRACE("(%p, %s)\n", This, debugstr_dmguid(type));
 
-  if (IsEqualGUID (rguidType, &GUID_BandParam)
-      || IsEqualGUID (rguidType, &GUID_ChordParam)
-      || IsEqualGUID (rguidType, &GUID_RhythmParam)) {
-    TRACE("param supported\n");
-    return S_OK;
-  }
-  TRACE("param unsupported\n");
-  return DMUS_E_TYPE_UNSUPPORTED;
+    if (!type)
+        return E_POINTER;
+
+    if (IsEqualGUID(type, &GUID_ChordParam) || IsEqualGUID(type, &GUID_RhythmParam))
+        return S_OK;
+
+    TRACE("param unsupported\n");
+    return DMUS_E_TYPE_UNSUPPORTED;
 }
 
 static HRESULT WINAPI chord_track_AddNotificationType(IDirectMusicTrack8 *iface,

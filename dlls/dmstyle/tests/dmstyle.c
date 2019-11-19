@@ -291,7 +291,7 @@ static void test_track(void)
         unsigned int todo_params;
     } class[] = {
         { X(DirectMusicAuditionTrack), TRUE, FALSE, 0x18204200, 0x18204200 },
-        { X(DirectMusicChordTrack), TRUE, TRUE, 0x100002, 1 },
+        { X(DirectMusicChordTrack), TRUE, TRUE, 0x100002, 0 },
         { X(DirectMusicCommandTrack), TRUE, TRUE, 0x38, 0 },
         { X(DirectMusicMotifTrack), FALSE, FALSE, 0x8204200, 0 },
         { X(DirectMusicMuteTrack), TRUE, FALSE, 0x40000, 0 },
@@ -333,10 +333,9 @@ static void test_track(void)
                     ok(hr == S_OK, "IsParamSupported(%s) failed: %08x, expected S_OK\n",
                             param_types[j].name, hr);
             else
-                todo_wine_if(class[i].todo_params & (1 << j))
-                    ok(hr == DMUS_E_TYPE_UNSUPPORTED,
-                            "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
-                            param_types[j].name, hr);
+                ok(hr == DMUS_E_TYPE_UNSUPPORTED,
+                        "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
+                        param_types[j].name, hr);
         }
 
         if (class[i].clsid == &CLSID_DirectMusicMuteTrack) {
