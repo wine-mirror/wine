@@ -36,6 +36,14 @@
 #include "mountmgr.h"
 #include "winnls.h"
 #include "excpt.h"
+#define USE_WS_PREFIX
+#include "winsock2.h"
+#include "ws2ipdef.h"
+#include "nldef.h"
+#include "netioapi.h"
+#include "inaddr.h"
+#include "ip2string.h"
+#include "dhcpcsdk.h"
 
 #include "wine/library.h"
 #include "wine/exception.h"
@@ -45,9 +53,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
 #ifdef SONAME_LIBDBUS_1
 
-#define DBUS_FUNCS \
+#define DBUS_FUNCS               \
     DO_FUNC(dbus_bus_add_match); \
     DO_FUNC(dbus_bus_get); \
+    DO_FUNC(dbus_bus_get_private); \
     DO_FUNC(dbus_bus_remove_match); \
     DO_FUNC(dbus_connection_add_filter); \
     DO_FUNC(dbus_connection_read_write_dispatch); \
@@ -760,6 +769,269 @@ void initialize_dbus(void)
         if (!load_dbus_functions()) return;
     if (!(handle = CreateThread( NULL, 0, dbus_thread, NULL, 0, NULL ))) return;
     CloseHandle( handle );
+}
+
+/* The udisks dispatch loop will block all threads using the same connection, so we'll
+   use a private connection. Multiple threads can make methods calls at the same time
+   on the same connection, according to the documentation.
+ */
+static DBusConnection *dhcp_connection;
+static DBusConnection *get_dhcp_connection(void)
+{
+    if (!dhcp_connection)
+    {
+        DBusError error;
+        p_dbus_error_init( &error );
+        if (!(dhcp_connection = p_dbus_bus_get_private( DBUS_BUS_SYSTEM, &error )))
+        {
+            WARN( "failed to get system dbus connection: %s\n", error.message );
+            p_dbus_error_free( &error );
+        }
+    }
+    return dhcp_connection;
+}
+
+static DBusMessage *device_by_iface_request( const char *iface )
+{
+    DBusMessage *request, *reply;
+    DBusMessageIter iter;
+    DBusError error;
+
+    request = p_dbus_message_new_method_call( "org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager",
+                                              "org.freedesktop.NetworkManager", "GetDeviceByIpIface" );
+    if (!request) return NULL;
+
+    p_dbus_message_iter_init_append( request, &iter );
+    p_dbus_message_iter_append_basic( &iter, DBUS_TYPE_STRING, &iface );
+
+    p_dbus_error_init( &error );
+    reply = p_dbus_connection_send_with_reply_and_block( get_dhcp_connection(), request, -1, &error );
+    p_dbus_message_unref( request );
+    if (!reply)
+    {
+        WARN( "failed: %s\n", error.message );
+        p_dbus_error_free( &error );
+        return NULL;
+    }
+
+    p_dbus_error_free( &error );
+    return reply;
+}
+
+#define IF_NAMESIZE 16
+static BOOL map_adapter_name( const WCHAR *name, char *unix_name, DWORD len )
+{
+    WCHAR unix_nameW[IF_NAMESIZE];
+    UNICODE_STRING str;
+    GUID guid;
+
+    RtlInitUnicodeString( &str, name );
+    if (!RtlGUIDFromString( &str, &guid ))
+    {
+        NET_LUID luid;
+        if (ConvertInterfaceGuidToLuid( &guid, &luid ) ||
+            ConvertInterfaceLuidToNameW( &luid, unix_nameW, ARRAY_SIZE(unix_nameW) )) return FALSE;
+
+        name = unix_nameW;
+    }
+    return WideCharToMultiByte( CP_UNIXCP, 0, name, -1, unix_name, len, NULL, NULL ) != 0;
+}
+
+static DBusMessage *dhcp4_config_request( const WCHAR *adapter )
+{
+    static const char *device = "org.freedesktop.NetworkManager.Device";
+    static const char *dhcp4_config = "Dhcp4Config";
+    char iface[IF_NAMESIZE];
+    DBusMessage *request, *reply;
+    DBusMessageIter iter;
+    DBusError error;
+    const char *path = NULL;
+
+    if (!map_adapter_name( adapter, iface, sizeof(iface) )) return NULL;
+    if (!(reply = device_by_iface_request( iface ))) return NULL;
+
+    p_dbus_message_iter_init( reply, &iter );
+    if (p_dbus_message_iter_get_arg_type( &iter ) == DBUS_TYPE_OBJECT_PATH) p_dbus_message_iter_get_basic( &iter, &path );
+    p_dbus_message_unref( reply );
+    if (!path) return NULL;
+
+    request = p_dbus_message_new_method_call( "org.freedesktop.NetworkManager", path,
+                                              "org.freedesktop.DBus.Properties", "Get" );
+    if (!request) return NULL;
+
+    p_dbus_message_iter_init_append( request, &iter );
+    p_dbus_message_iter_append_basic( &iter, DBUS_TYPE_STRING, &device );
+    p_dbus_message_iter_append_basic( &iter, DBUS_TYPE_STRING, &dhcp4_config );
+
+    p_dbus_error_init( &error );
+    reply = p_dbus_connection_send_with_reply_and_block( get_dhcp_connection(), request, -1, &error );
+    p_dbus_message_unref( request );
+    if (!reply)
+    {
+        WARN( "failed: %s\n", error.message );
+        p_dbus_error_free( &error );
+        return NULL;
+    }
+
+    p_dbus_error_free( &error );
+    return reply;
+}
+
+static DBusMessage *dhcp4_config_options_request( const WCHAR *adapter )
+{
+    static const char *dhcp4_config = "org.freedesktop.NetworkManager.DHCP4Config";
+    static const char *options = "Options";
+    DBusMessage *request, *reply;
+    DBusMessageIter iter, sub;
+    DBusError error;
+    const char *path = NULL;
+
+    if (!(reply = dhcp4_config_request( adapter ))) return NULL;
+
+    p_dbus_message_iter_init( reply, &iter );
+    if (p_dbus_message_iter_get_arg_type( &iter ) == DBUS_TYPE_VARIANT)
+    {
+        p_dbus_message_iter_recurse( &iter, &sub );
+        p_dbus_message_iter_get_basic( &sub, &path );
+    }
+    if (!path)
+    {
+        p_dbus_message_unref( reply );
+        return NULL;
+    }
+
+    request = p_dbus_message_new_method_call( "org.freedesktop.NetworkManager", path,
+                                              "org.freedesktop.DBus.Properties", "Get" );
+    p_dbus_message_unref( reply );
+    if (!request) return NULL;
+
+    p_dbus_message_iter_init_append( request, &iter );
+    p_dbus_message_iter_append_basic( &iter, DBUS_TYPE_STRING, &dhcp4_config );
+    p_dbus_message_iter_append_basic( &iter, DBUS_TYPE_STRING, &options );
+
+    p_dbus_error_init( &error );
+    reply = p_dbus_connection_send_with_reply_and_block( get_dhcp_connection(), request, -1, &error );
+    p_dbus_message_unref( request );
+    if (!reply)
+    {
+        p_dbus_error_free( &error );
+        return NULL;
+    }
+
+    p_dbus_error_free( &error );
+    return reply;
+}
+
+static const char *dhcp4_config_option_next_dict_entry( DBusMessageIter *iter, DBusMessageIter *variant )
+{
+    DBusMessageIter sub;
+    const char *name;
+
+    if (p_dbus_message_iter_get_arg_type( iter ) != DBUS_TYPE_DICT_ENTRY) return NULL;
+    p_dbus_message_iter_recurse( iter, &sub );
+    p_dbus_message_iter_next( iter );
+    p_dbus_message_iter_get_basic( &sub, &name );
+    p_dbus_message_iter_next( &sub );
+    p_dbus_message_iter_recurse( &sub, variant );
+    return name;
+}
+
+static DBusMessage *dhcp4_config_option_request( const WCHAR *adapter, const char *option, const char **value )
+{
+    DBusMessage *reply;
+    DBusMessageIter iter, variant;
+    const char *name;
+
+    if (!(reply = dhcp4_config_options_request( adapter ))) return NULL;
+
+    *value = NULL;
+    p_dbus_message_iter_init( reply, &iter );
+    if (p_dbus_message_iter_get_arg_type( &iter ) == DBUS_TYPE_VARIANT)
+    {
+        p_dbus_message_iter_recurse( &iter, &iter );
+        if (p_dbus_message_iter_get_arg_type( &iter ) == DBUS_TYPE_ARRAY)
+        {
+            p_dbus_message_iter_recurse( &iter, &iter );
+            while ((name = dhcp4_config_option_next_dict_entry( &iter, &variant )))
+            {
+                if (!strcmp( name, option ))
+                {
+                    p_dbus_message_iter_get_basic( &variant, value );
+                    break;
+                }
+            }
+        }
+    }
+
+    return reply;
+}
+
+static const char *map_option( ULONG option )
+{
+    switch (option)
+    {
+    case OPTION_SUBNET_MASK:         return "subnet_mask";
+    case OPTION_ROUTER_ADDRESS:      return "next_server";
+    case OPTION_HOST_NAME:           return "host_name";
+    case OPTION_DOMAIN_NAME:         return "domain_name";
+    case OPTION_BROADCAST_ADDRESS:   return "broadcast_address";
+    case OPTION_MSFT_IE_PROXY:       return "wpad";
+    default:
+        FIXME( "unhandled option %u\n", option );
+        return "";
+    }
+}
+
+ULONG get_dhcp_request_param( const WCHAR *adapter, struct mountmgr_dhcp_request_param *param, char *buf, ULONG offset,
+                              ULONG size )
+{
+    DBusMessage *reply;
+    const char *value;
+    ULONG ret = 0;
+
+    param->offset = param->size = 0;
+
+    if (!(reply = dhcp4_config_option_request( adapter, map_option(param->id), &value ))) return 0;
+
+    switch (param->id)
+    {
+    case OPTION_SUBNET_MASK:
+    case OPTION_ROUTER_ADDRESS:
+    case OPTION_BROADCAST_ADDRESS:
+    {
+        IN_ADDR *ptr = (IN_ADDR *)(buf + offset);
+        if (value && size >= sizeof(IN_ADDR) && !RtlIpv4StringToAddressA( value, TRUE, NULL, ptr ))
+        {
+            param->offset = offset;
+            param->size   = sizeof(*ptr);
+            TRACE( "returning %08x\n", *(DWORD *)ptr );
+        }
+        ret = sizeof(*ptr);
+        break;
+    }
+    case OPTION_HOST_NAME:
+    case OPTION_DOMAIN_NAME:
+    case OPTION_MSFT_IE_PROXY:
+    {
+        char *ptr = buf + offset;
+        int len = value ? strlen( value ) : 0;
+        if (len && size >= len)
+        {
+            memcpy( ptr, value, len );
+            param->offset = offset;
+            param->size   = len;
+            TRACE( "returning %s\n", debugstr_an(ptr, len) );
+        }
+        ret = len;
+        break;
+    }
+    default:
+        FIXME( "option %u not supported\n", param->id );
+        break;
+    }
+
+    p_dbus_message_unref( reply );
+    return ret;
 }
 
 #else  /* SONAME_LIBDBUS_1 */

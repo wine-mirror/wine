@@ -359,6 +359,35 @@ done:
     return status;
 }
 
+/* implementation of IOCTL_MOUNTMGR_QUERY_DHCP_REQUEST_PARAMS */
+static NTSTATUS query_dhcp_request_params( void *buff, SIZE_T insize,
+                                           SIZE_T outsize, IO_STATUS_BLOCK *iosb )
+{
+    struct mountmgr_dhcp_request_params *query = buff;
+    ULONG i, offset;
+
+    /* sanity checks */
+    if (FIELD_OFFSET(struct mountmgr_dhcp_request_params, params[query->count]) > insize ||
+        !memchrW( query->adapter, 0, ARRAY_SIZE(query->adapter) )) return STATUS_INVALID_PARAMETER;
+    for (i = 0; i < query->count; i++)
+        if (query->params[i].offset + query->params[i].size > insize) return STATUS_INVALID_PARAMETER;
+
+    offset = FIELD_OFFSET(struct mountmgr_dhcp_request_params, params[query->count]);
+    for (i = 0; i < query->count; i++)
+    {
+        offset += get_dhcp_request_param( query->adapter, &query->params[i], buff, offset, outsize - offset );
+        if (offset > outsize)
+        {
+            if (offset >= sizeof(query->size)) query->size = offset;
+            iosb->Information = sizeof(query->size);
+            return STATUS_MORE_ENTRIES;
+        }
+    }
+
+    iosb->Information = offset;
+    return STATUS_SUCCESS;
+}
+
 /* handler for ioctls on the mount manager device */
 static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
@@ -402,6 +431,17 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
                                                    irpsp->Parameters.DeviceIoControl.InputBufferLength,
                                                    irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                                    &irp->IoStatus );
+        break;
+    case IOCTL_MOUNTMGR_QUERY_DHCP_REQUEST_PARAMS:
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_dhcp_request_params))
+        {
+            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        irp->IoStatus.u.Status = query_dhcp_request_params( irp->AssociatedIrp.SystemBuffer,
+                                                            irpsp->Parameters.DeviceIoControl.InputBufferLength,
+                                                            irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                                            &irp->IoStatus );
         break;
     default:
         FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
