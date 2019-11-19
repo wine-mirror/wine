@@ -177,6 +177,8 @@ VOID WINAPI OutputQueue_SendAnyway(OutputQueue *pOutputQueue)
 
 VOID WINAPI OutputQueue_EOS(OutputQueue *pOutputQueue)
 {
+    IPin *peer;
+
     EnterCriticalSection(&pOutputQueue->csQueue);
     if (pOutputQueue->hThread)
     {
@@ -191,16 +193,8 @@ VOID WINAPI OutputQueue_EOS(OutputQueue *pOutputQueue)
         qev->pSample = NULL;
         list_add_tail(&pOutputQueue->SampleList, &qev->entry);
     }
-    else
-    {
-        IPin* ppin = NULL;
-        IPin_ConnectedTo(&pOutputQueue->pInputPin->pin.IPin_iface, &ppin);
-        if (ppin)
-        {
-            IPin_EndOfStream(ppin);
-            IPin_Release(ppin);
-        }
-    }
+    else if ((peer = pOutputQueue->pInputPin->pin.peer))
+        IPin_EndOfStream(peer);
     LeaveCriticalSection(&pOutputQueue->csQueue);
     /* Covers sending the Event to the worker Thread */
     OutputQueue_SendAnyway(pOutputQueue);
@@ -259,13 +253,9 @@ DWORD WINAPI OutputQueueImpl_ThreadProc(OutputQueue *pOutputQueue)
                     QueuedEvent *qev = LIST_ENTRY(cursor, QueuedEvent, entry);
                     if (qev->type == EOS_PACKET)
                     {
-                        IPin* ppin = NULL;
-                        IPin_ConnectedTo(&pOutputQueue->pInputPin->pin.IPin_iface, &ppin);
-                        if (ppin)
-                        {
-                            IPin_EndOfStream(ppin);
-                            IPin_Release(ppin);
-                        }
+                        IPin *peer;
+                        if ((peer = pOutputQueue->pInputPin->pin.peer))
+                            IPin_EndOfStream(peer);
                     }
                     else if (qev->type == SAMPLE_PACKET)
                         break;
