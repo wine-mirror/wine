@@ -2080,6 +2080,11 @@ static void test_mbstowcs(void)
         return;
     }
 
+    err = pmbstowcs_s(&ret, wOut, 1, mSimple, _TRUNCATE);
+    ok(err == STRUNCATE, "err = %d\n", err);
+    ok(ret == 1, "mbstowcs_s did not return 0\n");
+    ok(!wOut[0], "wOut[0] = %d\n", wOut[0]);
+
     err = pmbstowcs_s(&ret, wOut, 6, mSimple, _TRUNCATE);
     ok(err == 0, "err = %d\n", err);
     ok(ret == 5, "mbstowcs_s did not return 5\n");

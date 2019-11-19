@@ -2425,6 +2425,7 @@ int CDECL MSVCRT__mbstowcs_s_l(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr,
         MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
     MSVCRT_size_t conv;
+    int err = 0;
 
     if(!wcstr && !size) {
         conv = MSVCRT__mbstowcs_l(NULL, mbstr, 0, locale);
@@ -2447,9 +2448,10 @@ int CDECL MSVCRT__mbstowcs_s_l(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr,
     conv = MSVCRT__mbstowcs_l(wcstr, mbstr, conv, locale);
     if(conv<size)
         wcstr[conv++] = '\0';
-    else if(conv==size && (count==MSVCRT__TRUNCATE || wcstr[conv-1]=='\0'))
+    else if(conv==size && count==MSVCRT__TRUNCATE && wcstr[conv-1]!='\0') {
         wcstr[conv-1] = '\0';
-    else {
+        err = MSVCRT_STRUNCATE;
+    }else if(conv==size && wcstr[conv-1]!='\0') {
         MSVCRT_INVALID_PMT("wcstr[size] is too small", MSVCRT_ERANGE);
         if(size)
             wcstr[0] = '\0';
@@ -2458,7 +2460,7 @@ int CDECL MSVCRT__mbstowcs_s_l(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr,
 
     if(ret)
         *ret = conv;
-    return 0;
+    return err;
 }
 
 /*********************************************************************
