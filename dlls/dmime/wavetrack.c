@@ -139,7 +139,7 @@ static HRESULT WINAPI wave_track_SetParam(IDirectMusicTrack8 *iface, REFGUID rgu
 static HRESULT WINAPI wave_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID type)
 {
     IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-    static const REFGUID valid[] = {
+    static const GUID *valid[] = {
         &GUID_Disable_Auto_Download,
         &GUID_Download,
         &GUID_DownloadToAudioPath,
