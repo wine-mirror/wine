@@ -366,6 +366,13 @@ HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const
 
     EnterCriticalSection(&This->pin.filter->csFilter);
     {
+        if (This->pin.filter->state != State_Stopped)
+        {
+            LeaveCriticalSection(&This->pin.filter->csFilter);
+            WARN("Filter is not stopped; returning VFW_E_NOT_STOPPED.\n");
+            return VFW_E_NOT_STOPPED;
+        }
+
         /* if we have been a specific type to connect with, then we can either connect
          * with that or fail. We cannot choose different AM_MEDIA_TYPE */
         if (pmt && !IsEqualGUID(&pmt->majortype, &GUID_NULL) && !IsEqualGUID(&pmt->subtype, &GUID_NULL))
@@ -447,6 +454,13 @@ HRESULT WINAPI BaseOutputPinImpl_Disconnect(IPin * iface)
 
     EnterCriticalSection(&This->pin.filter->csFilter);
     {
+        if (This->pin.filter->state != State_Stopped)
+        {
+            LeaveCriticalSection(&This->pin.filter->csFilter);
+            WARN("Filter is not stopped; returning VFW_E_NOT_STOPPED.\n");
+            return VFW_E_NOT_STOPPED;
+        }
+
         if (This->pMemInputPin)
         {
             IMemInputPin_Release(This->pMemInputPin);
@@ -730,6 +744,13 @@ HRESULT WINAPI BaseInputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceiveP
 
     EnterCriticalSection(&This->pin.filter->csFilter);
     {
+        if (This->pin.filter->state != State_Stopped)
+        {
+            LeaveCriticalSection(&This->pin.filter->csFilter);
+            WARN("Filter is not stopped; returning VFW_E_NOT_STOPPED.\n");
+            return VFW_E_NOT_STOPPED;
+        }
+
         if (This->pin.peer)
             hr = VFW_E_ALREADY_CONNECTED;
 
