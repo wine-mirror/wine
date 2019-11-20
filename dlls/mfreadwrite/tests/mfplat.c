@@ -891,6 +891,19 @@ todo_wine
     ok(!!sample, "Expected sample object.\n");
     IMFSample_Release(sample);
 
+    /* Request from deselected stream. */
+    hr = IMFSourceReader_SetStreamSelection(reader, 1, FALSE);
+    ok(hr == S_OK, "Failed to select a stream, hr %#x.\n", hr);
+
+    actual_index = 0;
+    stream_flags = 0;
+    hr = IMFSourceReader_ReadSample(reader, 1, 0, &actual_index, &stream_flags, &timestamp, &sample);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+    ok(actual_index == 1, "Unexpected stream index %u\n", actual_index);
+    ok(stream_flags == MF_SOURCE_READERF_ERROR, "Unexpected stream flags %#x.\n", stream_flags);
+    ok(timestamp == 0, "Unexpected timestamp.\n");
+    ok(!sample, "Expected sample object.\n");
+
     IMFSourceReader_Release(reader);
     IMFMediaSource_Release(source);
 

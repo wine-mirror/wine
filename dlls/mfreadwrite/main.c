@@ -894,6 +894,8 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
         *stream_flags = MF_SOURCE_READERF_ERROR;
         if (actual_index)
             *actual_index = index;
+        if (timestamp)
+            *timestamp = 0;
         return hr;
     }
 
