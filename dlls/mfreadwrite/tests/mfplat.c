@@ -351,10 +351,11 @@ static HRESULT WINAPI test_source_Start(IMFMediaSource *iface, IMFPresentationDe
     PROPVARIANT var;
     int i;
 
-todo_wine {
-    ok(time_format && IsEqualGUID(time_format, &GUID_NULL), "Unexpected time format %s.\n", wine_dbgstr_guid(time_format));
-    ok(start_position && (start_position->vt == VT_I8 || start_position->vt == VT_EMPTY), "Unexpected position type.\n");
-}
+    ok(time_format && IsEqualGUID(time_format, &GUID_NULL), "Unexpected time format %s.\n",
+            wine_dbgstr_guid(time_format));
+    ok(start_position && (start_position->vt == VT_I8 || start_position->vt == VT_EMPTY),
+            "Unexpected position type.\n");
+
     EnterCriticalSection(&source->cs);
 
     event_type = source->state == SOURCE_RUNNING ? MESourceSeeked : MESourceStarted;
@@ -823,16 +824,6 @@ static void test_source_reader_from_media_source(void)
     source = create_test_source();
     ok(!!source, "Failed to create test source.\n");
 
-    callback = create_async_callback();
-
-    hr = MFCreateAttributes(&attributes, 1);
-    ok(hr == S_OK, "Failed to create attributes object, hr %#x.\n", hr);
-
-    hr = IMFAttributes_SetUnknown(attributes, &MF_SOURCE_READER_ASYNC_CALLBACK,
-            (IUnknown *)&callback->IMFSourceReaderCallback_iface);
-    ok(hr == S_OK, "Failed to set attribute value, hr %#x.\n", hr);
-    IMFSourceReaderCallback_Release(&callback->IMFSourceReaderCallback_iface);
-
     hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
     ok(hr == S_OK, "Failed to create source reader, hr %#x.\n", hr);
 
@@ -882,9 +873,40 @@ todo_wine
     IMFSourceReader_Release(reader);
     IMFMediaSource_Release(source);
 
+    /* Request from stream 0. */
+    source = create_test_source();
+    ok(!!source, "Failed to create test source.\n");
+
+    hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
+    ok(hr == S_OK, "Failed to create source reader, hr %#x.\n", hr);
+
+    hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
+    ok(hr == S_OK, "Failed to select a stream, hr %#x.\n", hr);
+
+    hr = IMFSourceReader_ReadSample(reader, 0, 0, &actual_index, &stream_flags, &timestamp, &sample);
+    ok(hr == S_OK, "Failed to get a sample, hr %#x.\n", hr);
+    ok(actual_index == 0, "Unexpected stream index %u\n", actual_index);
+    ok(!stream_flags, "Unexpected stream flags %#x.\n", stream_flags);
+    ok(timestamp == 123, "Unexpected timestamp.\n");
+    ok(!!sample, "Expected sample object.\n");
+    IMFSample_Release(sample);
+
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+
     /* Async mode. */
     source = create_test_source();
     ok(!!source, "Failed to create test source.\n");
+
+    callback = create_async_callback();
+
+    hr = MFCreateAttributes(&attributes, 1);
+    ok(hr == S_OK, "Failed to create attributes object, hr %#x.\n", hr);
+
+    hr = IMFAttributes_SetUnknown(attributes, &MF_SOURCE_READER_ASYNC_CALLBACK,
+            (IUnknown *)&callback->IMFSourceReaderCallback_iface);
+    ok(hr == S_OK, "Failed to set attribute value, hr %#x.\n", hr);
+    IMFSourceReaderCallback_Release(&callback->IMFSourceReaderCallback_iface);
 
     hr = MFCreateSourceReaderFromMediaSource(source, attributes, &reader);
     ok(hr == S_OK, "Failed to create source reader, hr %#x.\n", hr);

@@ -99,6 +99,8 @@ struct media_stream
     CONDITION_VARIABLE sample_event;
     struct list samples;
     enum media_stream_state state;
+    BOOL selected;
+    BOOL presented;
 };
 
 struct source_reader
@@ -820,6 +822,41 @@ static IMFSample *media_stream_pop_sample(struct media_stream *stream, DWORD *st
     return ret;
 }
 
+static HRESULT source_reader_start_source(struct source_reader *reader)
+{
+    BOOL selection_changed = FALSE;
+    PROPVARIANT position;
+    HRESULT hr = S_OK;
+    DWORD i;
+
+    if (reader->source_state == SOURCE_STATE_STARTED)
+    {
+        for (i = 0; i < reader->stream_count; ++i)
+        {
+            if (FAILED(hr = source_reader_get_stream_selection(reader, i, &reader->streams[i].selected)))
+                return hr;
+            selection_changed = reader->streams[i].selected ^ reader->streams[i].presented;
+            if (selection_changed)
+                break;
+        }
+    }
+
+    position.u.hVal.QuadPart = 0;
+    if (reader->source_state != SOURCE_STATE_STARTED || selection_changed)
+    {
+        position.vt = reader->source_state == SOURCE_STATE_STARTED ? VT_EMPTY : VT_I8;
+
+        /* Update cached stream selection if descriptor was accepted. */
+        if (SUCCEEDED(hr = IMFMediaSource_Start(reader->source, reader->descriptor, &GUID_NULL, &position)))
+        {
+            for (i = 0; i < reader->stream_count; ++i)
+                reader->streams[i].presented = reader->streams[i].selected;
+        }
+    }
+
+    return hr;
+}
+
 static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD index, DWORD flags, DWORD *actual_index,
         DWORD *stream_flags, LONGLONG *timestamp, IMFSample **sample)
 {
@@ -867,20 +904,23 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
 
     EnterCriticalSection(&stream->cs);
 
-    if (!(flags & MF_SOURCE_READER_CONTROLF_DRAIN))
+    if (SUCCEEDED(hr = source_reader_start_source(reader)))
     {
-        while (list_empty(&stream->samples) && stream->state != STREAM_STATE_EOS)
+        if (!(flags & MF_SOURCE_READER_CONTROLF_DRAIN))
         {
-            if (stream->stream)
+            while (list_empty(&stream->samples) && stream->state != STREAM_STATE_EOS)
             {
-                if (FAILED(hr = IMFMediaStream_RequestSample(stream->stream, NULL)))
-                    WARN("Sample request failed, hr %#x.\n", hr);
+                if (stream->stream)
+                {
+                    if (FAILED(hr = IMFMediaStream_RequestSample(stream->stream, NULL)))
+                        WARN("Sample request failed, hr %#x.\n", hr);
+                }
+                SleepConditionVariableCS(&stream->sample_event, &stream->cs, INFINITE);
             }
-            SleepConditionVariableCS(&stream->sample_event, &stream->cs, INFINITE);
         }
-    }
 
-    *sample = media_stream_pop_sample(stream, stream_flags);
+        *sample = media_stream_pop_sample(stream, stream_flags);
+    }
 
     LeaveCriticalSection(&stream->cs);
 
@@ -912,9 +952,6 @@ static HRESULT WINAPI src_reader_ReadSample(IMFSourceReader *iface, DWORD index,
     HRESULT hr;
 
     TRACE("%p, %#x, %#x, %p, %p, %p, %p\n", iface, index, flags, actual_index, stream_flags, timestamp, sample);
-
-    /* FIXME: probably should happen once */
-    IMFMediaSource_Start(reader->source, reader->descriptor, NULL, NULL);
 
     if (reader->async_callback)
     {
