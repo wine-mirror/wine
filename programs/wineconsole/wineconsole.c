@@ -458,6 +458,9 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
             req->max_height = (r.bottom - r.top - GetSystemMetrics(SM_CYCAPTION)) / cfg->cell_height;
             req->font_width = cfg->cell_width;
             req->font_height = cfg->cell_height;
+            req->font_weight = cfg->font_weight;
+            req->font_pitch_family = FIXED_PITCH | FF_DONTCARE;
+            wine_server_add_data( req, cfg->face_name, lstrlenW(cfg->face_name) * sizeof(WCHAR) );
             wine_server_call( req );
         }
         SERVER_END_REQ;

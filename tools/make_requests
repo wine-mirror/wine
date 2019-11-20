@@ -216,7 +216,13 @@ sub PARSE_REQUESTS()
                 next;
             }
 
-            if (/^\s*VARARG\((\w+),(\w+),(\w+)\)/)
+            if (/^\s*VARARG\((\w+),(\w+),(\d+)\)/)
+            {
+                $var = $1;
+                $type = "dump_varargs_$2( \"%s\", min(cur_size,$3) )";
+                s!(VARARG\(.*\)\s*;)!/* $1 */!;
+            }
+            elsif (/^\s*VARARG\((\w+),(\w+),(\w+)\)/)
             {
                 $var = $1;
                 $type = "dump_varargs_" . $2 . "( \"%s\", min(cur_size,req->" . $3 . ") )";

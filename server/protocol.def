@@ -1633,7 +1633,10 @@ struct console_renderer_event
     short int    max_height;
     short int    font_width;    /* font size (width x height) */
     short int    font_height;
-    VARARG(colors,uints);       /* color table */
+    short int    font_weight;   /* font weight */
+    short int    font_pitch_family; /* font pitch & family */
+    VARARG(colors,uints,64);    /* color table */
+    VARARG(face_name,unicode_str);  /* font face name */
 @END
 #define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x0001
 #define SET_CONSOLE_OUTPUT_INFO_CURSOR_POS      0x0002

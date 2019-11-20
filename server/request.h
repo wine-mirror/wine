@@ -1204,6 +1204,8 @@ C_ASSERT( FIELD_OFFSET(struct set_console_output_info_request, max_width) == 44 
 C_ASSERT( FIELD_OFFSET(struct set_console_output_info_request, max_height) == 46 );
 C_ASSERT( FIELD_OFFSET(struct set_console_output_info_request, font_width) == 48 );
 C_ASSERT( FIELD_OFFSET(struct set_console_output_info_request, font_height) == 50 );
+C_ASSERT( FIELD_OFFSET(struct set_console_output_info_request, font_weight) == 52 );
+C_ASSERT( FIELD_OFFSET(struct set_console_output_info_request, font_pitch_family) == 54 );
 C_ASSERT( sizeof(struct set_console_output_info_request) == 56 );
 C_ASSERT( FIELD_OFFSET(struct get_console_output_info_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_console_output_info_request) == 16 );
