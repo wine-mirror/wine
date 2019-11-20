@@ -323,7 +323,7 @@ static void test_pin_info(void)
     CoTaskMemFree(id);
 
     hr = IPin_QueryInternalConnections(pin, NULL, &count);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     IPin_Release(pin);
 
@@ -462,6 +462,7 @@ static void test_media_types(void)
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
     todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+    if (hr == S_OK) IEnumMediaTypes_Release(enummt);
 
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

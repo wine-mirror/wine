@@ -33,181 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 
-static const WCHAR pin_in_name[] = { 'I', 'n', 0 };
-
-static IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype, BOOL past);
-
-/* Single media type enumerator */
-typedef struct _ME_Impl {
-    IEnumMediaTypes IEnumMediaTypes_iface;
-    LONG refCount;
-    BOOL past;
-    AM_MEDIA_TYPE mtype;
-} ME_Impl;
-
-
-/* IEnumMediaTypes interface implementation */
-
-static inline ME_Impl *impl_from_IEnumMediaTypes(IEnumMediaTypes *iface)
-{
-    return CONTAINING_RECORD(iface, ME_Impl, IEnumMediaTypes_iface);
-}
-
-static HRESULT WINAPI Single_IEnumMediaTypes_QueryInterface(IEnumMediaTypes *iface, REFIID riid,
-        void **ret_iface)
-{
-    ME_Impl *This = impl_from_IEnumMediaTypes(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ret_iface);
-
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IEnumMediaTypes)) {
-        *ret_iface = iface;
-        IEnumMediaTypes_AddRef(iface);
-        return S_OK;
-    }
-    *ret_iface = NULL;
-    WARN("(%p, %s,%p): not found\n", This, debugstr_guid(riid), ret_iface);
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI Single_IEnumMediaTypes_AddRef(IEnumMediaTypes *iface)
-{
-    ME_Impl *This = impl_from_IEnumMediaTypes(iface);
-    ULONG refCount = InterlockedIncrement(&This->refCount);
-
-    TRACE("(%p) new ref = %u\n", This, refCount);
-    return refCount;
-}
-
-static ULONG WINAPI Single_IEnumMediaTypes_Release(IEnumMediaTypes *iface)
-{
-    ME_Impl *This = impl_from_IEnumMediaTypes(iface);
-    ULONG refCount = InterlockedDecrement(&This->refCount);
-
-    TRACE("(%p) new ref = %u\n", This, refCount);
-    if (refCount == 0)
-    {
-        CoTaskMemFree(This->mtype.pbFormat);
-        CoTaskMemFree(This);
-    }
-    return refCount;
-}
-
-/* IEnumMediaTypes */
-static HRESULT WINAPI Single_IEnumMediaTypes_Next(IEnumMediaTypes *iface, ULONG nTypes,
-        AM_MEDIA_TYPE **types, ULONG *fetched)
-{
-    ME_Impl *This = impl_from_IEnumMediaTypes(iface);
-    ULONG count = 0;
-
-    TRACE("(%p)->(%u, %p, %p)\n", This, nTypes, types, fetched);
-    if (!nTypes)
-        return E_INVALIDARG;
-    if (!types || ((nTypes != 1) && !fetched))
-        return E_POINTER;
-    if (!This->past && !IsEqualGUID(&This->mtype.majortype,&GUID_NULL)) {
-        AM_MEDIA_TYPE *mtype = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
-        *mtype = This->mtype;
-        if (mtype->cbFormat) {
-            mtype->pbFormat = CoTaskMemAlloc(mtype->cbFormat);
-            CopyMemory(mtype->pbFormat, This->mtype.pbFormat, mtype->cbFormat);
-        }
-        *types = mtype;
-        This->past = TRUE;
-        count = 1;
-    }
-    if (fetched)
-        *fetched = count;
-    return (count == nTypes) ? S_OK : S_FALSE;
-}
-
-static HRESULT WINAPI Single_IEnumMediaTypes_Skip(IEnumMediaTypes *iface, ULONG nTypes)
-{
-    ME_Impl *This = impl_from_IEnumMediaTypes(iface);
-
-    TRACE("(%p)->(%u)\n", This, nTypes);
-    if (nTypes)
-        This->past = TRUE;
-    return This->past ? S_FALSE : S_OK;
-}
-
-static HRESULT WINAPI Single_IEnumMediaTypes_Reset(IEnumMediaTypes *iface)
-{
-    ME_Impl *This = impl_from_IEnumMediaTypes(iface);
-
-    TRACE("(%p)->()\n", This);
-    This->past = FALSE;
-    return S_OK;
-}
-
-static HRESULT WINAPI Single_IEnumMediaTypes_Clone(IEnumMediaTypes *iface, IEnumMediaTypes **me)
-{
-    ME_Impl *This = impl_from_IEnumMediaTypes(iface);
-
-    TRACE("(%p)->(%p)\n", This, me);
-    if (!me)
-        return E_POINTER;
-    *me = mediaenum_create(&This->mtype, This->past);
-    if (!*me)
-        return E_OUTOFMEMORY;
-    return S_OK;
-}
-
-
-/* Virtual tables and constructor */
-
-static const IEnumMediaTypesVtbl IEnumMediaTypes_VTable =
-{
-    Single_IEnumMediaTypes_QueryInterface,
-    Single_IEnumMediaTypes_AddRef,
-    Single_IEnumMediaTypes_Release,
-    Single_IEnumMediaTypes_Next,
-    Single_IEnumMediaTypes_Skip,
-    Single_IEnumMediaTypes_Reset,
-    Single_IEnumMediaTypes_Clone,
-};
-
-static IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype, BOOL past)
-{
-    ME_Impl *obj = CoTaskMemAlloc(sizeof(ME_Impl));
-
-    if (!obj)
-        return NULL;
-    ZeroMemory(obj, sizeof(*obj));
-    obj->IEnumMediaTypes_iface.lpVtbl = &IEnumMediaTypes_VTable;
-    obj->refCount = 1;
-    obj->past = past;
-    if (mtype) {
-        obj->mtype = *mtype;
-        obj->mtype.pUnk = NULL;
-        if (mtype->cbFormat) {
-            obj->mtype.pbFormat = CoTaskMemAlloc(mtype->cbFormat);
-            CopyMemory(obj->mtype.pbFormat, mtype->pbFormat, mtype->cbFormat);
-        }
-        else
-            obj->mtype.pbFormat = NULL;
-    }
-    else
-        obj->mtype.majortype = GUID_NULL;
-
-    return &obj->IEnumMediaTypes_iface;
-}
-
-
-/* Sample Grabber pin implementation */
-typedef struct _SG_Pin {
-    IPin IPin_iface;
-    PIN_DIRECTION dir;
-    WCHAR const *name;
-    struct _SG_Impl *sg;
-    IPin *pair;
-} SG_Pin;
-
-static inline SG_Pin *impl_from_IPin(IPin *iface)
-{
-    return CONTAINING_RECORD(iface, SG_Pin, IPin_iface);
-}
-
 /* Sample Grabber filter implementation */
 typedef struct _SG_Impl {
     struct strmbase_filter filter;
@@ -218,7 +43,7 @@ typedef struct _SG_Impl {
     IUnknown *seekthru_unk;
     IMemInputPin *memOutput;
 
-    SG_Pin pin_in;
+    struct strmbase_sink sink;
     AM_MEDIA_TYPE mtype;
     IMemInputPin IMemInputPin_iface;
     IMemAllocator *allocator;
@@ -280,7 +105,7 @@ static IPin *sample_grabber_get_pin(struct strmbase_filter *iface, unsigned int 
     SG_Impl *filter = impl_from_strmbase_filter(iface);
 
     if (index == 0)
-        return &filter->pin_in.IPin_iface;
+        return &filter->sink.pin.IPin_iface;
     else if (index == 1)
         return &filter->source.pin.IPin_iface;
     return NULL;
@@ -455,7 +280,7 @@ SampleGrabber_ISampleGrabber_GetConnectedMediaType(ISampleGrabber *iface, AM_MED
     TRACE("(%p)->(%p)\n", This, type);
     if (!type)
         return E_POINTER;
-    if (!This->pin_in.pair)
+    if (!This->sink.pin.peer)
         return VFW_E_NOT_CONNECTED;
     *type = This->mtype;
     if (type->cbFormat) {
@@ -492,7 +317,7 @@ SampleGrabber_ISampleGrabber_GetCurrentBuffer(ISampleGrabber *iface, LONG *bufSi
     if (!bufSize)
         return E_POINTER;
     EnterCriticalSection(&This->filter.csFilter);
-    if (!This->pin_in.pair)
+    if (!This->sink.pin.peer)
         ret = VFW_E_NOT_CONNECTED;
     else if (This->bufferLen < 0)
         ret = E_INVALIDARG;
@@ -538,19 +363,19 @@ SampleGrabber_ISampleGrabber_SetCallback(ISampleGrabber *iface, ISampleGrabberCB
 static HRESULT WINAPI SampleGrabber_IMemInputPin_QueryInterface(IMemInputPin *iface, REFIID iid, void **out)
 {
     SG_Impl *filter = impl_from_IMemInputPin(iface);
-    return IPin_QueryInterface(&filter->pin_in.IPin_iface, iid, out);
+    return IPin_QueryInterface(&filter->sink.pin.IPin_iface, iid, out);
 }
 
 static ULONG WINAPI SampleGrabber_IMemInputPin_AddRef(IMemInputPin *iface)
 {
     SG_Impl *filter = impl_from_IMemInputPin(iface);
-    return IPin_AddRef(&filter->pin_in.IPin_iface);
+    return IPin_AddRef(&filter->sink.pin.IPin_iface);
 }
 
 static ULONG WINAPI SampleGrabber_IMemInputPin_Release(IMemInputPin *iface)
 {
     SG_Impl *filter = impl_from_IMemInputPin(iface);
-    return IPin_Release(&filter->pin_in.IPin_iface);
+    return IPin_Release(&filter->sink.pin.IPin_iface);
 }
 
 /* IMemInputPin */
@@ -642,67 +467,19 @@ SampleGrabber_IMemInputPin_ReceiveCanBlock(IMemInputPin *iface)
     return This->memOutput ? IMemInputPin_ReceiveCanBlock(This->memOutput) : S_OK;
 }
 
-static HRESULT WINAPI sample_grabber_sink_QueryInterface(IPin *iface, REFIID iid, void **out)
-{
-    SG_Pin *pin = impl_from_IPin(iface);
-
-    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
-
-    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IPin))
-    {
-        *out = iface;
-    }
-    else if (IsEqualGUID(iid, &IID_IMemInputPin))
-    {
-        *out = &pin->sg->IMemInputPin_iface;
-    }
-    else
-    {
-        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
-        *out = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown *)*out);
-    return S_OK;
-}
-
-/* IUnknown */
-static ULONG WINAPI
-SampleGrabber_IPin_AddRef(IPin *iface)
-{
-    SG_Pin *This = impl_from_IPin(iface);
-    return ISampleGrabber_AddRef(&This->sg->ISampleGrabber_iface);
-}
-
-/* IUnknown */
-static ULONG WINAPI
-SampleGrabber_IPin_Release(IPin *iface)
-{
-    SG_Pin *This = impl_from_IPin(iface);
-    return ISampleGrabber_Release(&This->sg->ISampleGrabber_iface);
-}
-
-/* IPin - input pin */
-static HRESULT WINAPI
-SampleGrabber_In_IPin_Connect(IPin *iface, IPin *receiver, const AM_MEDIA_TYPE *mtype)
-{
-    WARN("(%p, %p): unexpected\n", receiver, mtype);
-    return E_UNEXPECTED;
-}
-
 /* IPin - input pin */
 static HRESULT WINAPI
 SampleGrabber_In_IPin_ReceiveConnection(IPin *iface, IPin *connector, const AM_MEDIA_TYPE *type)
 {
-    SG_Pin *This = impl_from_IPin(iface);
+    SG_Impl *filter = CONTAINING_RECORD(iface, SG_Impl, sink.pin.IPin_iface);
 
-    TRACE("(%p)->(%p, %p)\n", This, connector, type);
+    TRACE("filter %p, connector %p, type %p.\n", filter, connector, type);
+
     if (!connector)
         return E_POINTER;
-    if (This->pair)
+    if (filter->sink.pin.peer)
         return VFW_E_ALREADY_CONNECTED;
-    if (This->sg->filter.state != State_Stopped)
+    if (filter->filter.state != State_Stopped)
         return VFW_E_NOT_STOPPED;
     if (type) {
 	TRACE("Media type: %s/%s ssize: %u format: %s (%u bytes)\n",
@@ -713,204 +490,25 @@ SampleGrabber_In_IPin_ReceiveConnection(IPin *iface, IPin *connector, const AM_M
 	    !IsEqualGUID(&type->formattype, &GUID_NULL) &&
 	    !type->pbFormat)
 	    return VFW_E_INVALIDMEDIATYPE;
-	if (!IsEqualGUID(&This->sg->mtype.majortype,&GUID_NULL) &&
-	    !IsEqualGUID(&This->sg->mtype.majortype,&type->majortype))
+	if (!IsEqualGUID(&filter->mtype.majortype,&GUID_NULL) &&
+	    !IsEqualGUID(&filter->mtype.majortype,&type->majortype))
 	    return VFW_E_TYPE_NOT_ACCEPTED;
-	if (!IsEqualGUID(&This->sg->mtype.subtype,&MEDIASUBTYPE_None) &&
-	    !IsEqualGUID(&This->sg->mtype.subtype,&type->subtype))
+	if (!IsEqualGUID(&filter->mtype.subtype,&MEDIASUBTYPE_None) &&
+	    !IsEqualGUID(&filter->mtype.subtype,&type->subtype))
 	    return VFW_E_TYPE_NOT_ACCEPTED;
-	if (!IsEqualGUID(&This->sg->mtype.formattype,&GUID_NULL) &&
-	    !IsEqualGUID(&This->sg->mtype.formattype,&FORMAT_None) &&
-	    !IsEqualGUID(&This->sg->mtype.formattype,&type->formattype))
+	if (!IsEqualGUID(&filter->mtype.formattype,&GUID_NULL) &&
+	    !IsEqualGUID(&filter->mtype.formattype,&FORMAT_None) &&
+	    !IsEqualGUID(&filter->mtype.formattype,&type->formattype))
 	    return VFW_E_TYPE_NOT_ACCEPTED;
-        CoTaskMemFree(This->sg->mtype.pbFormat);
-        This->sg->mtype = *type;
-        This->sg->mtype.pUnk = NULL;
-        if (type->cbFormat) {
-            This->sg->mtype.pbFormat = CoTaskMemAlloc(type->cbFormat);
-            CopyMemory(This->sg->mtype.pbFormat, type->pbFormat, type->cbFormat);
-        }
-        else
-            This->sg->mtype.pbFormat = NULL;
+
+        FreeMediaType(&filter->mtype);
+        CopyMediaType(&filter->mtype, type);
+        CopyMediaType(&filter->sink.pin.mt, type);
     }
-    This->pair = connector;
-    TRACE("(%p) Accepted IPin %p\n", This, connector);
+    IPin_AddRef(filter->sink.pin.peer = connector);
+
     return S_OK;
 }
-
-/* IPin - input pin */
-static HRESULT WINAPI
-SampleGrabber_In_IPin_Disconnect(IPin *iface)
-{
-    SG_Pin *This = impl_from_IPin(iface);
-
-    TRACE("(%p)->() pair = %p\n", This, This->pair);
-    if (This->sg->filter.state != State_Stopped)
-        return VFW_E_NOT_STOPPED;
-    if (This->pair) {
-        This->pair = NULL;
-        return S_OK;
-    }
-    return S_FALSE;
-}
-
-/* IPin */
-static HRESULT WINAPI
-SampleGrabber_IPin_ConnectedTo(IPin *iface, IPin **pin)
-{
-    SG_Pin *This = impl_from_IPin(iface);
-
-    TRACE("(%p)->(%p) pair = %p\n", This, pin, This->pair);
-    if (!pin)
-        return E_POINTER;
-    *pin = This->pair;
-    if (*pin) {
-        IPin_AddRef(*pin);
-        return S_OK;
-    }
-    return VFW_E_NOT_CONNECTED;
-}
-
-/* IPin */
-static HRESULT WINAPI
-SampleGrabber_IPin_ConnectionMediaType(IPin *iface, AM_MEDIA_TYPE *mtype)
-{
-    SG_Pin *This = impl_from_IPin(iface);
-
-    TRACE("(%p)->(%p)\n", This, mtype);
-    if (!mtype)
-        return E_POINTER;
-    if (!This->pair)
-        return VFW_E_NOT_CONNECTED;
-    *mtype = This->sg->mtype;
-    if (mtype->cbFormat) {
-        mtype->pbFormat = CoTaskMemAlloc(mtype->cbFormat);
-        CopyMemory(mtype->pbFormat, This->sg->mtype.pbFormat, mtype->cbFormat);
-    }
-    return S_OK;
-}
-
-/* IPin */
-static HRESULT WINAPI
-SampleGrabber_IPin_QueryPinInfo(IPin *iface, PIN_INFO *info)
-{
-    SG_Pin *This = impl_from_IPin(iface);
-
-    TRACE("(%p)->(%p)\n", This, info);
-    if (!info)
-        return E_POINTER;
-    info->pFilter = &This->sg->filter.IBaseFilter_iface;
-    IBaseFilter_AddRef(info->pFilter);
-    info->dir = This->dir;
-    lstrcpynW(info->achName,This->name,MAX_PIN_NAME);
-    return S_OK;
-}
-
-/* IPin */
-static HRESULT WINAPI
-SampleGrabber_IPin_QueryDirection(IPin *iface, PIN_DIRECTION *dir)
-{
-    SG_Pin *This = impl_from_IPin(iface);
-
-    TRACE("(%p)->(%p)\n", This, dir);
-    if (!dir)
-        return E_POINTER;
-    *dir = This->dir;
-    return S_OK;
-}
-
-/* IPin */
-static HRESULT WINAPI
-SampleGrabber_IPin_QueryId(IPin *iface, LPWSTR *id)
-{
-    SG_Pin *This = impl_from_IPin(iface);
-
-    int len;
-    TRACE("(%p)->(%p)\n", This, id);
-    if (!id)
-        return E_POINTER;
-    len = sizeof(WCHAR)*(1+lstrlenW(This->name));
-    *id = CoTaskMemAlloc(len);
-    CopyMemory(*id, This->name, len);
-    return S_OK;
-}
-
-/* IPin */
-static HRESULT WINAPI
-SampleGrabber_IPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *mtype)
-{
-    TRACE("(%p)\n", mtype);
-    return S_OK;
-}
-
-/* IPin */
-static HRESULT WINAPI
-SampleGrabber_IPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **mtypes)
-{
-    SG_Pin *This = impl_from_IPin(iface);
-
-    TRACE("(%p)->(%p)\n", This, mtypes);
-    if (!mtypes)
-        return E_POINTER;
-    *mtypes = mediaenum_create(This->sg->pin_in.pair ? &This->sg->mtype : NULL, FALSE);
-    return *mtypes ? S_OK : E_OUTOFMEMORY;
-}
-
-/* IPin - input pin */
-static HRESULT WINAPI
-SampleGrabber_In_IPin_QueryInternalConnections(IPin *iface, IPin **pins, ULONG *nPins)
-{
-    SG_Pin *This = impl_from_IPin(iface);
-
-    TRACE("(%p)->(%p, %p) size = %u\n", This, pins, nPins, (nPins ? *nPins : 0));
-    if (!nPins)
-        return E_POINTER;
-    if (*nPins) {
-	if (!pins)
-	    return E_POINTER;
-        IPin_AddRef(&This->sg->source.pin.IPin_iface);
-        *pins = &This->sg->source.pin.IPin_iface;
-	*nPins = 1;
-	return S_OK;
-    }
-    *nPins = 1;
-    return S_FALSE;
-}
-
-/* IPin */
-static HRESULT WINAPI
-SampleGrabber_IPin_EndOfStream(IPin *iface)
-{
-    FIXME(": stub\n");
-    return S_OK;
-}
-
-/* IPin */
-static HRESULT WINAPI
-SampleGrabber_IPin_BeginFlush(IPin *iface)
-{
-    FIXME(": stub\n");
-    return S_OK;
-}
-
-/* IPin */
-static HRESULT WINAPI
-SampleGrabber_IPin_EndFlush(IPin *iface)
-{
-    FIXME(": stub\n");
-    return S_OK;
-}
-
-/* IPin */
-static HRESULT WINAPI
-SampleGrabber_IPin_NewSegment(IPin *iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double rate)
-{
-    FIXME(": stub\n");
-    return S_OK;
-}
-
-
-/* SampleGrabber vtables and constructor */
 
 static const IBaseFilterVtbl IBaseFilter_VTable =
 {
@@ -958,26 +556,69 @@ static const IMemInputPinVtbl IMemInputPin_VTable =
     SampleGrabber_IMemInputPin_ReceiveCanBlock,
 };
 
-static const IPinVtbl IPin_In_VTable =
+static const IPinVtbl sink_vtbl =
 {
-    sample_grabber_sink_QueryInterface,
-    SampleGrabber_IPin_AddRef,
-    SampleGrabber_IPin_Release,
-    SampleGrabber_In_IPin_Connect,
+    BasePinImpl_QueryInterface,
+    BasePinImpl_AddRef,
+    BasePinImpl_Release,
+    BaseInputPinImpl_Connect,
     SampleGrabber_In_IPin_ReceiveConnection,
-    SampleGrabber_In_IPin_Disconnect,
-    SampleGrabber_IPin_ConnectedTo,
-    SampleGrabber_IPin_ConnectionMediaType,
-    SampleGrabber_IPin_QueryPinInfo,
-    SampleGrabber_IPin_QueryDirection,
-    SampleGrabber_IPin_QueryId,
-    SampleGrabber_IPin_QueryAccept,
-    SampleGrabber_IPin_EnumMediaTypes,
-    SampleGrabber_In_IPin_QueryInternalConnections,
-    SampleGrabber_IPin_EndOfStream,
-    SampleGrabber_IPin_BeginFlush,
-    SampleGrabber_IPin_EndFlush,
-    SampleGrabber_IPin_NewSegment,
+    BasePinImpl_Disconnect,
+    BasePinImpl_ConnectedTo,
+    BasePinImpl_ConnectionMediaType,
+    BasePinImpl_QueryPinInfo,
+    BasePinImpl_QueryDirection,
+    BasePinImpl_QueryId,
+    BasePinImpl_QueryAccept,
+    BasePinImpl_EnumMediaTypes,
+    BasePinImpl_QueryInternalConnections,
+    BaseInputPinImpl_EndOfStream,
+    BaseInputPinImpl_BeginFlush,
+    BaseInputPinImpl_EndFlush,
+    BaseInputPinImpl_NewSegment
+};
+
+static inline SG_Impl *impl_from_sink_pin(struct strmbase_pin *iface)
+{
+    return CONTAINING_RECORD(iface, SG_Impl, sink.pin);
+}
+
+static HRESULT sample_grabber_sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    SG_Impl *filter = impl_from_sink_pin(iface);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &filter->IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static HRESULT sample_grabber_sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    return S_OK;
+}
+
+static HRESULT sample_grabber_sink_get_media_type(struct strmbase_pin *iface,
+        unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    SG_Impl *filter = impl_from_sink_pin(iface);
+
+    if (!index)
+    {
+        CopyMediaType(mt, &filter->mtype);
+        return S_OK;
+    }
+    return VFW_S_NO_MORE_ITEMS;
+}
+
+static const struct strmbase_sink_ops sink_ops =
+{
+    .base.pin_query_interface = sample_grabber_sink_query_interface,
+    .base.pin_query_accept = sample_grabber_sink_query_accept,
+    .base.pin_get_media_type = sample_grabber_sink_get_media_type,
 };
 
 static inline SG_Impl *impl_from_source_pin(struct strmbase_pin *iface)
@@ -1097,12 +738,8 @@ HRESULT SampleGrabber_create(IUnknown *outer, void **out)
     strmbase_filter_init(&obj->filter, &IBaseFilter_VTable, outer, &CLSID_SampleGrabber, &filter_ops);
     obj->ISampleGrabber_iface.lpVtbl = &ISampleGrabber_VTable;
     obj->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
-    obj->pin_in.IPin_iface.lpVtbl = &IPin_In_VTable;
-    obj->pin_in.dir = PINDIR_INPUT;
-    obj->pin_in.name = pin_in_name;
-    obj->pin_in.sg = obj;
-    obj->pin_in.pair = NULL;
 
+    strmbase_sink_init(&obj->sink, &sink_vtbl, &obj->filter, L"In", &sink_ops, NULL);
     strmbase_source_init(&obj->source, &source_vtbl, &obj->filter, L"Out", &source_ops);
 
     obj->mtype.majortype = GUID_NULL;
@@ -1121,7 +758,7 @@ HRESULT SampleGrabber_create(IUnknown *outer, void **out)
     if(hr)
         return hr;
     IUnknown_QueryInterface(obj->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-    ISeekingPassThru_Init(passthru, FALSE, &obj->pin_in.IPin_iface);
+    ISeekingPassThru_Init(passthru, FALSE, &obj->sink.pin.IPin_iface);
     ISeekingPassThru_Release(passthru);
 
     *out = &obj->filter.IUnknown_inner;
