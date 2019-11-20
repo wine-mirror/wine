@@ -3555,10 +3555,6 @@ void LOCALE_Init(void)
     setup_unix_locales();
     if (!lcid_LC_MESSAGES) lcid_LC_MESSAGES = lcid_LC_CTYPE;
 
-    NtSetDefaultUILanguage( LANGIDFROMLCID(lcid_LC_MESSAGES) );
-    NtSetDefaultLocale( TRUE, lcid_LC_MESSAGES );
-    NtSetDefaultLocale( FALSE, lcid_LC_CTYPE );
-
     ansi_cp = get_lcid_codepage( LOCALE_USER_DEFAULT );
     GetLocaleInfoW( LOCALE_USER_DEFAULT, LOCALE_IDEFAULTMACCODEPAGE | LOCALE_RETURN_NUMBER,
                     (LPWSTR)&mac_cp, sizeof(mac_cp)/sizeof(WCHAR) );
