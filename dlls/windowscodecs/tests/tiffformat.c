@@ -405,7 +405,6 @@ static void test_QueryCapability(void)
                                      WICBitmapDecoderCapabilityCanDecodeSomeImages;
     DWORD capability;
     LARGE_INTEGER pos;
-    ULARGE_INTEGER cur_pos;
     UINT frame_count;
 
     stream = create_stream(&tiff_1bpp_data, sizeof(tiff_1bpp_data));
@@ -442,11 +441,9 @@ static void test_QueryCapability(void)
     ok(hr == S_OK, "GetFrame error %#x\n", hr);
     IWICBitmapFrameDecode_Release(frame);
 
-    pos.QuadPart = 0;
-    hr = IStream_Seek(stream, pos, SEEK_CUR, &cur_pos);
+    pos.QuadPart = 5;
+    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
-    ok(cur_pos.QuadPart > 4 && cur_pos.QuadPart < sizeof(tiff_1bpp_data),
-       "current stream pos is at %x/%x\n", cur_pos.u.LowPart, cur_pos.u.HighPart);
 
     hr = IWICBitmapDecoder_QueryCapability(decoder, stream, &capability);
     ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, got %#x\n", hr);
@@ -456,6 +453,7 @@ static void test_QueryCapability(void)
 
     IWICBitmapDecoder_Release(decoder);
 
+    /* CreateDecoderFromStream fails if seeked past the start */
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
 todo_wine
     ok(hr == WINCODEC_ERR_COMPONENTNOTFOUND, "expected WINCODEC_ERR_COMPONENTNOTFOUND, got %#x\n", hr);
