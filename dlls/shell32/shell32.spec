@@ -338,7 +338,7 @@
 @ stdcall SHBrowseForFolderW(ptr)
 @ stdcall SHChangeNotify (long long ptr ptr)
 @ stub SHChangeNotifySuspendResume
-@ stdcall SHCreateQueryCancelAutoPlayMoniker(ptr)
+@ stdcall SHCreateDataObject(ptr long ptr ptr ptr ptr)
 @ stdcall SHCreateDefaultContextMenu(ptr ptr ptr)
 @ stdcall SHCreateDirectoryExA(long str ptr)
 @ stdcall SHCreateDirectoryExW(long wstr ptr)
@@ -347,6 +347,7 @@
 @ stdcall SHCreateItemInKnownFolder(ptr long wstr ptr ptr)
 @ stdcall SHCreateItemFromRelativeName(ptr wstr ptr ptr ptr)
 @ stub SHCreateProcessAsUserW
+@ stdcall SHCreateQueryCancelAutoPlayMoniker(ptr)
 @ stdcall SHCreateShellItem(ptr ptr ptr ptr)
 @ stdcall SHCreateShellItemArray(ptr ptr long ptr ptr)
 @ stdcall SHCreateShellItemArrayFromDataObject(ptr ptr ptr)

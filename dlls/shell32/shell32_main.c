@@ -1258,3 +1258,13 @@ HRESULT WINAPI SHQueryUserNotificationState(QUERY_USER_NOTIFICATION_STATE *state
     *state = QUNS_ACCEPTS_NOTIFICATIONS;
     return S_OK;
 }
+
+/***********************************************************************
+ *              SHCreateDataObject (SHELL32.@)
+ */
+HRESULT WINAPI SHCreateDataObject(PCIDLIST_ABSOLUTE pidl_folder, UINT count, PCUITEMID_CHILD_ARRAY pidl_array,
+                                  IDataObject *object, REFIID riid, void **ppv)
+{
+    FIXME("%p %d %p %p %s %p: stub\n", pidl_folder, count, pidl_array, object, debugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
