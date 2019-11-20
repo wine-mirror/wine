@@ -608,7 +608,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *
 	do {
 		DMUS_OBJECTDESC Desc;
 		DM_STRUCT_INIT(&Desc);
-		Desc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_DATE;
+		Desc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_FILENAME | DMUS_OBJ_DATE;
 		Desc.guidClass = *rguidClass;
 		lstrcpyW (Desc.wszFileName, FileData.cFileName);
 		FileTimeToLocalFileTime (&FileData.ftCreationTime, &Desc.ftDate);
