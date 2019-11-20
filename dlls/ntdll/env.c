@@ -526,7 +526,7 @@ char **build_envp( const WCHAR *envW )
     if (!(env = RtlAllocateHeap( GetProcessHeap(), 0, length ))) return NULL;
     ntdll_wcstoumbs( 0, envW, lenW, env, length, NULL, NULL );
 
-    for (p = env; *p; p += strlen(p) + 1)
+    for (p = env; *p; p += strlen(p) + 1, count++)
         if (is_special_env_var( p )) length += 4; /* prefix it with "WINE" */
 
     for (i = 0; i < ARRAY_SIZE( unix_vars ); i++)
