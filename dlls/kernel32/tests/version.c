@@ -738,7 +738,6 @@ static void test_GetSystemFirmwareTable(void)
 
     expected_len -= min_sfti_len;
     len = pGetSystemFirmwareTable(RSMB, 0, NULL, 0);
-todo_wine
     ok(len == expected_len, "Expected length %u, got %u\n", expected_len, len);
 
     smbios_table = HeapAlloc(GetProcessHeap(), 0, expected_len);

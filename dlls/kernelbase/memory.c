@@ -1161,13 +1161,10 @@ UINT WINAPI GetSystemFirmwareTable( DWORD provider, DWORD id, void *buffer, DWOR
     info->Action = SystemFirmwareTable_Get;
     info->TableID = id;
 
-    if (set_ntstatus( NtQuerySystemInformation( SystemFirmwareTableInformation,
-                                                info, buffer_size, &buffer_size )))
-    {
-        buffer_size -= offsetof( SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer );
-        if (buffer_size <= size) memcpy( buffer, info->TableBuffer, buffer_size );
-    }
-    else buffer_size = 0;
+    set_ntstatus( NtQuerySystemInformation( SystemFirmwareTableInformation,
+                                            info, buffer_size, &buffer_size ));
+    buffer_size -= offsetof( SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer );
+    if (buffer_size <= size) memcpy( buffer, info->TableBuffer, buffer_size );
 
     HeapFree( GetProcessHeap(), 0, info );
     return buffer_size;
