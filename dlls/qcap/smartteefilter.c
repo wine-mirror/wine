@@ -285,7 +285,7 @@ static HRESULT WINAPI SmartTeeFilterInput_Receive(struct strmbase_sink *base, IM
         return hrPreview;
 }
 
-static const BaseInputPinFuncTable SmartTeeFilterInputFuncs =
+static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
     .base.pin_get_media_type = sink_get_media_type,
@@ -418,8 +418,7 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
     memset(object, 0, sizeof(*object));
 
     strmbase_filter_init(&object->filter, &SmartTeeFilterVtbl, outer, &CLSID_SmartTee, &filter_ops);
-    strmbase_sink_init(&object->sink, &SmartTeeFilterInputVtbl, &object->filter,
-            inputW, &SmartTeeFilterInputFuncs, NULL);
+    strmbase_sink_init(&object->sink, &SmartTeeFilterInputVtbl, &object->filter, inputW, &sink_ops, NULL);
     hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMemAllocator, (void **)&object->sink.pAllocator);
     if (FAILED(hr))

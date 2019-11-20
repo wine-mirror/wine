@@ -84,16 +84,17 @@ struct strmbase_sink
     BOOL flushing, end_of_stream;
     IMemAllocator *preferred_allocator;
 
-    const struct BaseInputPinFuncTable *pFuncsTable;
+    const struct strmbase_sink_ops *pFuncsTable;
 };
 
 typedef HRESULT (WINAPI *BaseInputPin_Receive)(struct strmbase_sink *This, IMediaSample *pSample);
 
-typedef struct BaseInputPinFuncTable {
+struct strmbase_sink_ops
+{
 	BasePinFuncTable base;
 	/* Optional */
 	BaseInputPin_Receive pfnReceive;
-} BaseInputPinFuncTable;
+};
 
 /* Base Pin */
 HRESULT strmbase_pin_get_media_type(struct strmbase_pin *pin, unsigned int index, AM_MEDIA_TYPE *mt);
@@ -143,7 +144,7 @@ HRESULT WINAPI BaseInputPinImpl_EndFlush(IPin * iface);
 HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
 void strmbase_sink_init(struct strmbase_sink *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
-        const WCHAR *name, const BaseInputPinFuncTable *func_table, IMemAllocator *allocator);
+        const WCHAR *name, const struct strmbase_sink_ops *ops, IMemAllocator *allocator);
 void strmbase_sink_cleanup(struct strmbase_sink *pin);
 
 struct strmbase_filter

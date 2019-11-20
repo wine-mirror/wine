@@ -210,7 +210,7 @@ static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void
     return S_OK;
 }
 
-static const BaseInputPinFuncTable tf_input_BaseInputFuncTable =
+static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
@@ -353,7 +353,7 @@ static HRESULT strmbase_transform_init(IUnknown *outer, const CLSID *clsid,
     ZeroMemory(&filter->pmt, sizeof(filter->pmt));
 
     strmbase_sink_init(&filter->sink, &TransformFilter_InputPin_Vtbl, &filter->filter,
-            wcsInputPinName, &tf_input_BaseInputFuncTable, NULL);
+            wcsInputPinName, &sink_ops, NULL);
 
     strmbase_source_init(&filter->source, &TransformFilter_OutputPin_Vtbl, &filter->filter,
             wcsOutputPinName, &source_ops);

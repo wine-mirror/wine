@@ -1483,7 +1483,7 @@ static HRESULT WINAPI AviMuxIn_Receive(struct strmbase_sink *base, IMediaSample 
     return hr;
 }
 
-static const BaseInputPinFuncTable AviMuxIn_BaseInputFuncTable =
+static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
@@ -1944,8 +1944,7 @@ static HRESULT create_input_pin(AviMux *avimux)
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    strmbase_sink_init(&object->pin, &AviMuxIn_PinVtbl, &avimux->filter, name,
-            &AviMuxIn_BaseInputFuncTable, NULL);
+    strmbase_sink_init(&object->pin, &AviMuxIn_PinVtbl, &avimux->filter, name, &sink_ops, NULL);
     object->pin.IMemInputPin_iface.lpVtbl = &AviMuxIn_MemInputPinVtbl;
     object->IAMStreamControl_iface.lpVtbl = &AviMuxIn_AMStreamControlVtbl;
     object->IPropertyBag_iface.lpVtbl = &AviMuxIn_PropertyBagVtbl;

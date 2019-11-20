@@ -302,7 +302,7 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
     return BaseRendererImpl_Receive(filter, sample);
 }
 
-static const BaseInputPinFuncTable input_BaseInputFuncTable =
+static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
     .base.pin_query_interface = sink_query_interface,
@@ -511,7 +511,7 @@ HRESULT WINAPI strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown
     filter->pFuncsTable = ops;
 
     strmbase_sink_init(&filter->sink, &BaseRenderer_InputPin_Vtbl, &filter->filter,
-            sink_name, &input_BaseInputFuncTable, NULL);
+            sink_name, &sink_ops, NULL);
 
     hr = CreatePosPassThru(outer ? outer : (IUnknown *)&filter->filter.IBaseFilter_iface,
             TRUE, &filter->sink.pin.IPin_iface, &filter->pPosition);

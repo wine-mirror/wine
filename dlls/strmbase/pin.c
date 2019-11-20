@@ -1001,7 +1001,7 @@ static const IMemInputPinVtbl MemInputPin_Vtbl =
 };
 
 void strmbase_sink_init(struct strmbase_sink *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
-        const WCHAR *name, const BaseInputPinFuncTable *func_table, IMemAllocator *allocator)
+        const WCHAR *name, const struct strmbase_sink_ops *func_table, IMemAllocator *allocator)
 {
     memset(pin, 0, sizeof(*pin));
     pin->pin.IPin_iface.lpVtbl = vtbl;

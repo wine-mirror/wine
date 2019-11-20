@@ -499,7 +499,7 @@ static HRESULT WINAPI AVICompressorIn_Receive(struct strmbase_sink *base, IMedia
     return hres;
 }
 
-static const BaseInputPinFuncTable AVICompressorBaseInputPinVtbl =
+static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
@@ -597,7 +597,7 @@ IUnknown* WINAPI QCAP_createAVICompressor(IUnknown *outer, HRESULT *phr)
     compressor->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
 
     strmbase_sink_init(&compressor->sink, &AVICompressorInputPinVtbl,
-            &compressor->filter, sink_name, &AVICompressorBaseInputPinVtbl, NULL);
+            &compressor->filter, sink_name, &sink_ops, NULL);
     strmbase_source_init(&compressor->source, &AVICompressorOutputPinVtbl,
             &compressor->filter, source_name, &source_ops);
 
