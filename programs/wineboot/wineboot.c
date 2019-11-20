@@ -61,6 +61,7 @@
 #include <unistd.h>
 #include <windows.h>
 #include <winternl.h>
+#include <sddl.h>
 #include <wine/svcctl.h>
 #include <wine/asm.h>
 #include <wine/debug.h>
@@ -1174,6 +1175,47 @@ static void install_root_pnp_devices(void)
     SetupDiDestroyDeviceInfoList(set);
 }
 
+static void update_user_profile(void)
+{
+    static const WCHAR profile_list[] = {'S','o','f','t','w','a','r','e','\\',
+                                         'M','i','c','r','o','s','o','f','t','\\',
+                                         'W','i','n','d','o','w','s',' ','N','T','\\',
+                                         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                         'P','r','o','f','i','l','e','L','i','s','t',0};
+    static const WCHAR profile_image_path[] = {'P','r','o','f','i','l','e','I','m','a','g','e','P','a','t','h',0};
+    char token_buf[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD) * SID_MAX_SUB_AUTHORITIES];
+    HANDLE token;
+    WCHAR profile[MAX_PATH], *sid;
+    DWORD size;
+    HKEY hkey, profile_hkey;
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &token))
+        return;
+
+    size = sizeof(token_buf);
+    GetTokenInformation(token, TokenUser, token_buf, size, &size);
+    CloseHandle(token);
+
+    ConvertSidToStringSidW(((TOKEN_USER *)token_buf)->User.Sid, &sid);
+
+    if (!RegCreateKeyExW(HKEY_LOCAL_MACHINE, profile_list, 0, NULL, 0,
+                         KEY_ALL_ACCESS, NULL, &hkey, NULL))
+    {
+        if (!RegCreateKeyExW(hkey, sid, 0, NULL, 0,
+                             KEY_ALL_ACCESS, NULL, &profile_hkey, NULL))
+        {
+            if (SHGetSpecialFolderPathW(NULL, profile, CSIDL_PROFILE, TRUE))
+                set_reg_value(profile_hkey, profile_image_path, profile);
+
+            RegCloseKey(profile_hkey);
+        }
+
+        RegCloseKey(hkey);
+    }
+
+    LocalFree(sid);
+}
+
 /* execute rundll32 on the wine.inf file if necessary */
 static void update_wineprefix( BOOL force )
 {
@@ -1218,6 +1260,7 @@ static void update_wineprefix( BOOL force )
             DestroyWindow( hwnd );
         }
         install_root_pnp_devices();
+        update_user_profile();
 
         WINE_MESSAGE( "wine: configuration in '%s' has been updated.\n", prettyprint_configdir() );
     }
