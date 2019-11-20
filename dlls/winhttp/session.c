@@ -20,14 +20,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#ifdef HAVE_CORESERVICES_CORESERVICES_H
-#define GetCurrentThread MacGetCurrentThread
-#define LoadResource MacLoadResource
-#include <CoreServices/CoreServices.h>
-#undef GetCurrentThread
-#undef LoadResource
-#endif
-
 #include "windef.h"
 #include "winbase.h"
 #include "winsock2.h"
@@ -36,6 +28,8 @@
 #include "winhttp.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "iphlpapi.h"
+#include "dhcpcsdk.h"
 #define COBJMACROS
 #include "ole2.h"
 #include "dispex.h"
@@ -1310,6 +1304,80 @@ BOOL WINAPI WinHttpSetOption( HINTERNET handle, DWORD option, LPVOID buffer, DWO
     return ret;
 }
 
+static IP_ADAPTER_ADDRESSES *get_adapters(void)
+{
+    ULONG err, size = 1024, flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
+                                    GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_FRIENDLY_NAME;
+    IP_ADAPTER_ADDRESSES *tmp, *ret;
+
+    if (!(ret = heap_alloc( size ))) return NULL;
+    err = GetAdaptersAddresses( AF_UNSPEC, flags, NULL, ret, &size );
+    while (err == ERROR_BUFFER_OVERFLOW)
+    {
+        if (!(tmp = heap_realloc( ret, size ))) break;
+        ret = tmp;
+        err = GetAdaptersAddresses( AF_UNSPEC, flags, NULL, ret, &size );
+    }
+    if (err == ERROR_SUCCESS) return ret;
+    heap_free( ret );
+    return NULL;
+}
+
+static WCHAR *detect_autoproxyconfig_url_dhcp(void)
+{
+    IP_ADAPTER_ADDRESSES *adapters, *ptr;
+    DHCPCAPI_PARAMS_ARRAY send_params, recv_params;
+    DHCPCAPI_PARAMS param;
+    WCHAR name[MAX_ADAPTER_NAME_LENGTH + 1], *ret = NULL;
+    DWORD err, size;
+    BYTE *tmp, *buf = NULL;
+
+    if (!(adapters = get_adapters())) return NULL;
+
+    memset( &send_params, 0, sizeof(send_params) );
+    memset( &param, 0, sizeof(param) );
+    param.OptionId = OPTION_MSFT_IE_PROXY;
+    recv_params.nParams = 1;
+    recv_params.Params  = &param;
+
+    for (ptr = adapters; ptr; ptr = ptr->Next)
+    {
+        MultiByteToWideChar( CP_ACP, 0, ptr->AdapterName, -1, name, ARRAY_SIZE(name) );
+        TRACE( "adapter '%s' type %u dhcpv4 enabled %d\n", wine_dbgstr_w(name), ptr->IfType, ptr->Dhcpv4Enabled );
+
+        if (ptr->IfType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
+        /* FIXME: also skip adapters where DHCP is disabled */
+
+        size = 256;
+        if (!(buf = heap_alloc( size ))) goto done;
+        err = DhcpRequestParams( DHCPCAPI_REQUEST_SYNCHRONOUS, NULL, name, NULL, send_params, recv_params,
+                                 buf, &size, NULL );
+        while (err == ERROR_MORE_DATA)
+        {
+            if (!(tmp = heap_realloc( buf, size ))) goto done;
+            buf = tmp;
+            err = DhcpRequestParams( DHCPCAPI_REQUEST_SYNCHRONOUS, NULL, name, NULL, send_params, recv_params,
+                                     buf, &size, NULL );
+        }
+        if (err == ERROR_SUCCESS && param.nBytesData)
+        {
+            int len = MultiByteToWideChar( CP_ACP, 0, (const char *)param.Data, param.nBytesData, NULL, 0 );
+            if ((ret = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+            {
+                MultiByteToWideChar( CP_ACP, 0,  (const char *)param.Data, param.nBytesData, ret, len );
+                ret[len] = 0;
+            }
+            TRACE("returning %s\n", debugstr_w(ret));
+            break;
+        }
+    }
+
+done:
+    heap_free( buf );
+    heap_free( adapters );
+    return ret;
+}
+
 static char *get_computer_name( COMPUTER_NAME_FORMAT format )
 {
     char *ret;
@@ -1362,50 +1430,57 @@ static WCHAR *build_wpad_url( const char *hostname, const struct addrinfo *ai )
     return ret;
 }
 
-static BOOL get_system_proxy_autoconfig_url( char *buf, DWORD buflen )
+static WCHAR *detect_autoproxyconfig_url_dns(void)
 {
-#if defined(MAC_OS_X_VERSION_10_6) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-    CFDictionaryRef settings = CFNetworkCopySystemProxySettings();
-    const void *ref;
-    BOOL ret = FALSE;
+    char *fqdn, *domain, *p;
+    WCHAR *ret;
 
-    if (!settings) return FALSE;
+    if (!(fqdn = get_computer_name( ComputerNamePhysicalDnsFullyQualified ))) return NULL;
+    if (!(domain = get_computer_name( ComputerNamePhysicalDnsDomain )))
+    {
+        heap_free( fqdn );
+        return NULL;
+    }
+    p = fqdn;
+    while ((p = strchr( p, '.' )) && is_domain_suffix( p + 1, domain ))
+    {
+        char *name;
+        struct addrinfo *ai;
+        int res;
 
-    if (!(ref = CFDictionaryGetValue( settings, kCFNetworkProxiesProxyAutoConfigURLString )))
-    {
-        CFRelease( settings );
-        return FALSE;
+        if (!(name = heap_alloc( sizeof("wpad") + strlen(p) )))
+        {
+            heap_free( fqdn );
+            heap_free( domain );
+            return NULL;
+        }
+        strcpy( name, "wpad" );
+        strcat( name, p );
+        res = getaddrinfo( name, NULL, NULL, &ai );
+        if (!res)
+        {
+            ret = build_wpad_url( name, ai );
+            freeaddrinfo( ai );
+            if (ret)
+            {
+                TRACE("returning %s\n", debugstr_w(ret));
+                heap_free( name );
+                break;
+            }
+        }
+       heap_free( name );
+       p++;
     }
-    if (CFStringGetCString( ref, buf, buflen, kCFStringEncodingASCII ))
-    {
-        TRACE( "returning %s\n", debugstr_a(buf) );
-        ret = TRUE;
-    }
-    CFRelease( settings );
+    heap_free( domain );
+    heap_free( fqdn );
     return ret;
-#else
-    static BOOL first = TRUE;
-    if (first)
-    {
-        FIXME( "no support on this platform\n" );
-        first = FALSE;
-    }
-    else
-        TRACE( "no support on this platform\n" );
-    return FALSE;
-#endif
 }
-
-#define INTERNET_MAX_URL_LENGTH 2084
 
 /***********************************************************************
  *          WinHttpDetectAutoProxyConfigUrl (winhttp.@)
  */
 BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
 {
-    BOOL ret = FALSE;
-    char system_url[INTERNET_MAX_URL_LENGTH + 1];
-
     TRACE("0x%08x, %p\n", flags, url);
 
     if (!flags || !url)
@@ -1413,71 +1488,22 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    if (get_system_proxy_autoconfig_url( system_url, sizeof(system_url) ))
-    {
-        WCHAR *urlW;
-
-        if (!(urlW = strdupAW( system_url ))) return FALSE;
-        *url = urlW;
-        SetLastError( ERROR_SUCCESS );
-        return TRUE;
-    }
+    *url = NULL;
     if (flags & WINHTTP_AUTO_DETECT_TYPE_DHCP)
     {
-        static int fixme_shown;
-        if (!fixme_shown++) FIXME("discovery via DHCP not supported\n");
+        *url = detect_autoproxyconfig_url_dhcp();
     }
     if (flags & WINHTTP_AUTO_DETECT_TYPE_DNS_A)
     {
-        char *fqdn, *domain, *p;
-
-        if (!(fqdn = get_computer_name( ComputerNamePhysicalDnsFullyQualified ))) return FALSE;
-        if (!(domain = get_computer_name( ComputerNamePhysicalDnsDomain )))
-        {
-            heap_free( fqdn );
-            return FALSE;
-        }
-        p = fqdn;
-        while ((p = strchr( p, '.' )) && is_domain_suffix( p + 1, domain ))
-        {
-            struct addrinfo *ai;
-            char *name;
-            int res;
-
-            if (!(name = heap_alloc( sizeof("wpad") + strlen(p) )))
-            {
-                heap_free( fqdn );
-                heap_free( domain );
-                return FALSE;
-            }
-            strcpy( name, "wpad" );
-            strcat( name, p );
-            res = getaddrinfo( name, NULL, NULL, &ai );
-            if (!res)
-            {
-                *url = build_wpad_url( name, ai );
-                freeaddrinfo( ai );
-                if (*url)
-                {
-                    TRACE("returning %s\n", debugstr_w(*url));
-                    heap_free( name );
-                    ret = TRUE;
-                    break;
-                }
-            }
-            heap_free( name );
-            p++;
-        }
-        heap_free( domain );
-        heap_free( fqdn );
+        if (!*url) *url = detect_autoproxyconfig_url_dns();
     }
-    if (!ret)
+    if (!*url)
     {
         SetLastError( ERROR_WINHTTP_AUTODETECTION_FAILED );
-        *url = NULL;
+        return FALSE;
     }
-    else SetLastError( ERROR_SUCCESS );
-    return ret;
+    SetLastError( ERROR_SUCCESS );
+    return TRUE;
 }
 
 static const WCHAR Connections[] = {
