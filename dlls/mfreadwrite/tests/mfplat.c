@@ -309,17 +309,22 @@ static HRESULT WINAPI test_source_CreatePresentationDescriptor(IMFMediaSource *i
     {
         for (i = 0; i < ARRAY_SIZE(source->streams); ++i)
         {
-            MFCreateMediaType(&media_type);
+            hr = MFCreateMediaType(&media_type);
+            ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
 
-            IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
-            IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+            hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+            ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+            hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+            ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
 
-            MFCreateStreamDescriptor(i, 1, &media_type, &sds[i]);
+            hr = MFCreateStreamDescriptor(i, 1, &media_type, &sds[i]);
+            ok(hr == S_OK, "Failed to create stream descriptor, hr %#x.\n", hr);
 
             IMFMediaType_Release(media_type);
         }
 
-        MFCreatePresentationDescriptor(ARRAY_SIZE(sds), sds, &source->pd);
+        hr = MFCreatePresentationDescriptor(ARRAY_SIZE(sds), sds, &source->pd);
+        ok(hr == S_OK, "Failed to create presentation descriptor, hr %#x.\n", hr);
         for (i = 0; i < ARRAY_SIZE(sds); ++i)
             IMFStreamDescriptor_Release(sds[i]);
 
@@ -349,6 +354,7 @@ static HRESULT WINAPI test_source_Start(IMFMediaSource *iface, IMFPresentationDe
     struct test_source *source = impl_from_IMFMediaSource(iface);
     MediaEventType event_type;
     PROPVARIANT var;
+    HRESULT hr;
     int i;
 
     ok(time_format && IsEqualGUID(time_format, &GUID_NULL), "Unexpected time format %s.\n",
@@ -359,7 +365,8 @@ static HRESULT WINAPI test_source_Start(IMFMediaSource *iface, IMFPresentationDe
     EnterCriticalSection(&source->cs);
 
     event_type = source->state == SOURCE_RUNNING ? MESourceSeeked : MESourceStarted;
-    IMFMediaEventQueue_QueueEventParamVar(source->event_queue, event_type, &GUID_NULL, S_OK, NULL);
+    hr = IMFMediaEventQueue_QueueEventParamVar(source->event_queue, event_type, &GUID_NULL, S_OK, NULL);
+    ok(hr == S_OK, "Failed to queue event, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(source->streams); ++i)
     {
@@ -370,11 +377,13 @@ static HRESULT WINAPI test_source_Start(IMFMediaSource *iface, IMFPresentationDe
         var.punkVal = (IUnknown *)&source->streams[i]->IMFMediaStream_iface;
         event_type = source->streams[i]->is_new ? MENewStream : MEUpdatedStream;
         source->streams[i]->is_new = FALSE;
-        IMFMediaEventQueue_QueueEventParamVar(source->event_queue, event_type, &GUID_NULL, S_OK, &var);
+        hr = IMFMediaEventQueue_QueueEventParamVar(source->event_queue, event_type, &GUID_NULL, S_OK, &var);
+        ok(hr == S_OK, "Failed to queue event, hr %#x.\n", hr);
 
         event_type = source->state == SOURCE_RUNNING ? MEStreamSeeked : MEStreamStarted;
-        IMFMediaEventQueue_QueueEventParamVar(source->streams[i]->event_queue, event_type, &GUID_NULL,
+        hr = IMFMediaEventQueue_QueueEventParamVar(source->streams[i]->event_queue, event_type, &GUID_NULL,
                 S_OK, NULL);
+        ok(hr == S_OK, "Failed to queue event, hr %#x.\n", hr);
     }
 
     source->state = SOURCE_RUNNING;
@@ -399,8 +408,10 @@ static HRESULT WINAPI test_source_Pause(IMFMediaSource *iface)
 static HRESULT WINAPI test_source_Shutdown(IMFMediaSource *iface)
 {
     struct test_source *source = impl_from_IMFMediaSource(iface);
+    HRESULT hr;
 
-    IMFMediaEventQueue_Shutdown(source->event_queue);
+    hr = IMFMediaEventQueue_Shutdown(source->event_queue);
+    ok(hr == S_OK, "Failed to shut down event queue, hr %#x.\n", hr);
 
     return S_OK;
 }
