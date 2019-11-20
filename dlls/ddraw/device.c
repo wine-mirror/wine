@@ -6961,6 +6961,17 @@ enum wined3d_depth_buffer_type d3d_device_update_depth_stencil(struct d3d_device
     return WINED3D_ZB_TRUE;
 }
 
+static void ddraw_reset_viewport_state(struct ddraw *ddraw)
+{
+    struct wined3d_viewport vp;
+    RECT rect;
+
+    wined3d_device_get_viewports(ddraw->wined3d_device, NULL, &vp);
+    wined3d_stateblock_set_viewport(ddraw->state, &vp);
+    wined3d_device_get_scissor_rects(ddraw->wined3d_device, NULL, &rect);
+    wined3d_stateblock_set_scissor_rect(ddraw->state, &rect);
+}
+
 static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw,
         struct ddraw_surface *target, IUnknown *rt_iface, UINT version, IUnknown *outer_unknown)
 {
@@ -7039,6 +7050,7 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw,
         IDirect3DDevice3_SetRenderState(&device->IDirect3DDevice3_iface,
                 D3DRENDERSTATE_TEXTUREMAPBLEND, D3DTBLEND_MODULATE);
     }
+    ddraw_reset_viewport_state(ddraw);
     return D3D_OK;
 }
 
