@@ -32,11 +32,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#ifdef __APPLE__
-# include <CoreFoundation/CFLocale.h>
-# include <CoreFoundation/CFString.h>
-#endif
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -79,28 +74,6 @@ static const union cptable *ansi_cptable;
 static const union cptable *oem_cptable;
 static const union cptable *mac_cptable;
 static const union cptable *unix_cptable;  /* NULL if UTF8 */
-
-struct locale_name
-{
-    WCHAR  win_name[128];   /* Windows name ("en-US") */
-    WCHAR  lang[128];       /* language ("en") (note: buffer contains the other strings too) */
-    WCHAR *country;         /* country ("US") */
-    WCHAR *script;          /* script ("Latn") for Windows format only */
-    WCHAR *modifier;        /* modifier or sort order */
-    LCID   lcid;            /* corresponding LCID */
-    int    matches;         /* number of elements matching LCID (0..3) */
-};
-
-/* locale ids corresponding to the various Unix locale parameters */
-static LCID lcid_LC_COLLATE;
-static LCID lcid_LC_CTYPE;
-static LCID lcid_LC_MESSAGES;
-static LCID lcid_LC_MONETARY;
-static LCID lcid_LC_NUMERIC;
-static LCID lcid_LC_TIME;
-static LCID lcid_LC_PAPER;
-static LCID lcid_LC_MEASUREMENT;
-static LCID lcid_LC_TELEPHONE;
 
 static const WCHAR iCalendarTypeW[] = {'i','C','a','l','e','n','d','a','r','T','y','p','e',0};
 static const WCHAR iCountryW[] = {'i','C','o','u','n','t','r','y',0};
@@ -275,353 +248,6 @@ static const union cptable *get_codepage_table( unsigned int codepage )
 }
 
 
-static LANGID get_default_sublang( LANGID lang )
-{
-    switch (lang)
-    {
-    case MAKELANGID( LANG_SPANISH, SUBLANG_NEUTRAL ):
-        return MAKELANGID( LANG_SPANISH, SUBLANG_SPANISH_MODERN );
-    case MAKELANGID( LANG_CHINESE, SUBLANG_NEUTRAL ):
-        return MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED );
-    case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SINGAPORE ):
-        return MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED );
-    case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL ):
-    case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_MACAU ):
-        return MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG );
-    }
-    if (SUBLANGID( lang ) == SUBLANG_NEUTRAL) lang = MAKELANGID( PRIMARYLANGID(lang), SUBLANG_DEFAULT );
-    return lang;
-}
-
-/***********************************************************************
- *           find_locale_id_callback
- */
-static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
-                                              LPCWSTR name, LANGID lang, LPARAM lParam )
-{
-    struct locale_name *data = (struct locale_name *)lParam;
-    WCHAR buffer[128];
-    int matches = 0;
-    LCID lcid = MAKELCID( lang, SORT_DEFAULT );  /* FIXME: handle sort order */
-
-    if (PRIMARYLANGID(lang) == LANG_NEUTRAL) return TRUE; /* continue search */
-
-    /* first check exact name */
-    if (data->win_name[0] &&
-        GetLocaleInfoW( lcid, LOCALE_SNAME | LOCALE_NOUSEROVERRIDE, buffer, ARRAY_SIZE( buffer )))
-    {
-        if (!strcmpiW( data->win_name, buffer ))
-        {
-            matches = 3;  /* everything matches */
-            goto done;
-        }
-    }
-
-    if (!GetLocaleInfoW( lcid, LOCALE_SISO639LANGNAME | LOCALE_NOUSEROVERRIDE,
-                         buffer, ARRAY_SIZE( buffer )))
-        return TRUE;
-    if (strcmpiW( buffer, data->lang )) return TRUE;
-    matches++;  /* language name matched */
-
-    if (data->script)
-    {
-        if (GetLocaleInfoW( lcid, LOCALE_SSCRIPTS | LOCALE_NOUSEROVERRIDE,
-                            buffer, ARRAY_SIZE( buffer )))
-        {
-            const WCHAR *p = buffer;
-            unsigned int len = strlenW( data->script );
-            while (*p)
-            {
-                if (!strncmpiW( p, data->script, len ) && (!p[len] || p[len] == ';')) break;
-                if (!(p = strchrW( p, ';'))) goto done;
-                p++;
-            }
-            if (!*p) goto done;
-            matches++;  /* script matched */
-        }
-    }
-
-    if (data->country)
-    {
-        if (GetLocaleInfoW( lcid, LOCALE_SISO3166CTRYNAME|LOCALE_NOUSEROVERRIDE,
-                            buffer, ARRAY_SIZE( buffer )))
-        {
-            if (strcmpiW( buffer, data->country )) goto done;
-            matches++;  /* country name matched */
-        }
-    }
-    else  /* match default language */
-    {
-        LANGID def_lang = data->script ? lang : MAKELANGID( PRIMARYLANGID(lang), LANG_NEUTRAL );
-        if (lang == get_default_sublang( def_lang )) matches++;
-    }
-
-    /* FIXME: check sort order */
-
-done:
-    if (matches > data->matches)
-    {
-        data->lcid = lcid;
-        data->matches = matches;
-    }
-    return (data->matches < 3);  /* no need to continue for perfect match */
-}
-
-
-/***********************************************************************
- *		parse_locale_name
- *
- * Parse a locale name into a struct locale_name, handling both Windows and Unix formats.
- * Unix format is: lang[_country][.charset][@modifier]
- * Windows format is: lang[-script][-country][_modifier]
- */
-static void parse_locale_name( const WCHAR *str, struct locale_name *name )
-{
-    static const WCHAR sepW[] = {'-','_','.','@',0};
-    static const WCHAR winsepW[] = {'-','_',0};
-    static const WCHAR posixW[] = {'P','O','S','I','X',0};
-    static const WCHAR cW[] = {'C',0};
-    static const WCHAR latinW[] = {'l','a','t','i','n',0};
-    static const WCHAR latnW[] = {'-','L','a','t','n',0};
-    WCHAR *p;
-
-    TRACE("%s\n", debugstr_w(str));
-
-    name->country = name->script = name->modifier = NULL;
-    name->lcid = MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
-    name->matches = 0;
-    name->win_name[0] = 0;
-    lstrcpynW( name->lang, str, ARRAY_SIZE( name->lang ));
-
-    if (!*name->lang)
-    {
-        name->lcid = LOCALE_INVARIANT;
-        name->matches = 3;
-        return;
-    }
-
-    if (!(p = strpbrkW( name->lang, sepW )))
-    {
-        if (!strcmpW( name->lang, posixW ) || !strcmpW( name->lang, cW ))
-        {
-            name->matches = 3;  /* perfect match for default English lcid */
-            return;
-        }
-        strcpyW( name->win_name, name->lang );
-    }
-    else if (*p == '-')  /* Windows format */
-    {
-        strcpyW( name->win_name, name->lang );
-        *p++ = 0;
-        name->country = p;
-        if ((p = strpbrkW( p, winsepW )) && *p == '-')
-        {
-            *p++ = 0;
-            name->script = name->country;
-            name->country = p;
-            p = strpbrkW( p, winsepW );
-        }
-        if (p)
-        {
-            *p++ = 0;
-            name->modifier = p;
-        }
-        /* second value can be script or country, check length to resolve the ambiguity */
-        if (!name->script && strlenW( name->country ) == 4)
-        {
-            name->script = name->country;
-            name->country = NULL;
-        }
-    }
-    else  /* Unix format */
-    {
-        if (*p == '_')
-        {
-            *p++ = 0;
-            name->country = p;
-            p = strpbrkW( p, sepW + 2 );
-        }
-        if (p && *p == '.')
-        {
-            *p++ = 0;
-            /* charset, ignore */
-            p = strchrW( p, '@' );
-        }
-        if (p)
-        {
-            *p++ = 0;
-            name->modifier = p;
-        }
-
-        /* rebuild a Windows name if possible */
-
-        if (name->modifier && strcmpW( name->modifier, latinW ))
-            goto done;  /* only Latn script supported for now */
-        strcpyW( name->win_name, name->lang );
-        if (name->modifier) strcatW( name->win_name, latnW );
-        if (name->country)
-        {
-            p = name->win_name + strlenW(name->win_name);
-            *p++ = '-';
-            strcpyW( p, name->country );
-        }
-    }
-done:
-    EnumResourceLanguagesW( kernel32_handle, (LPCWSTR)RT_STRING, (LPCWSTR)LOCALE_ILANGUAGE,
-                            find_locale_id_callback, (LPARAM)name );
-}
-
-
-/***********************************************************************
- *           convert_default_lcid
- *
- * Get the default LCID to use for a given lctype in GetLocaleInfo.
- */
-static LCID convert_default_lcid( LCID lcid, LCTYPE lctype )
-{
-    if (lcid == LOCALE_SYSTEM_DEFAULT ||
-        lcid == LOCALE_USER_DEFAULT ||
-        lcid == LOCALE_NEUTRAL)
-    {
-        LCID default_id = 0;
-
-        switch(lctype & 0xffff)
-        {
-        case LOCALE_SSORTNAME:
-            default_id = lcid_LC_COLLATE;
-            break;
-
-        case LOCALE_FONTSIGNATURE:
-        case LOCALE_IDEFAULTANSICODEPAGE:
-        case LOCALE_IDEFAULTCODEPAGE:
-        case LOCALE_IDEFAULTEBCDICCODEPAGE:
-        case LOCALE_IDEFAULTMACCODEPAGE:
-            default_id = lcid_LC_CTYPE;
-            break;
-
-        case LOCALE_ICURRDIGITS:
-        case LOCALE_ICURRENCY:
-        case LOCALE_IINTLCURRDIGITS:
-        case LOCALE_INEGCURR:
-        case LOCALE_INEGSEPBYSPACE:
-        case LOCALE_INEGSIGNPOSN:
-        case LOCALE_INEGSYMPRECEDES:
-        case LOCALE_IPOSSEPBYSPACE:
-        case LOCALE_IPOSSIGNPOSN:
-        case LOCALE_IPOSSYMPRECEDES:
-        case LOCALE_SCURRENCY:
-        case LOCALE_SINTLSYMBOL:
-        case LOCALE_SMONDECIMALSEP:
-        case LOCALE_SMONGROUPING:
-        case LOCALE_SMONTHOUSANDSEP:
-        case LOCALE_SNATIVECURRNAME:
-            default_id = lcid_LC_MONETARY;
-            break;
-
-        case LOCALE_IDIGITS:
-        case LOCALE_IDIGITSUBSTITUTION:
-        case LOCALE_ILZERO:
-        case LOCALE_INEGNUMBER:
-        case LOCALE_SDECIMAL:
-        case LOCALE_SGROUPING:
-        case LOCALE_SNAN:
-        case LOCALE_SNATIVEDIGITS:
-        case LOCALE_SNEGATIVESIGN:
-        case LOCALE_SNEGINFINITY:
-        case LOCALE_SPOSINFINITY:
-        case LOCALE_SPOSITIVESIGN:
-        case LOCALE_STHOUSAND:
-            default_id = lcid_LC_NUMERIC;
-            break;
-
-        case LOCALE_ICALENDARTYPE:
-        case LOCALE_ICENTURY:
-        case LOCALE_IDATE:
-        case LOCALE_IDAYLZERO:
-        case LOCALE_IFIRSTDAYOFWEEK:
-        case LOCALE_IFIRSTWEEKOFYEAR:
-        case LOCALE_ILDATE:
-        case LOCALE_IMONLZERO:
-        case LOCALE_IOPTIONALCALENDAR:
-        case LOCALE_ITIME:
-        case LOCALE_ITIMEMARKPOSN:
-        case LOCALE_ITLZERO:
-        case LOCALE_S1159:
-        case LOCALE_S2359:
-        case LOCALE_SABBREVDAYNAME1:
-        case LOCALE_SABBREVDAYNAME2:
-        case LOCALE_SABBREVDAYNAME3:
-        case LOCALE_SABBREVDAYNAME4:
-        case LOCALE_SABBREVDAYNAME5:
-        case LOCALE_SABBREVDAYNAME6:
-        case LOCALE_SABBREVDAYNAME7:
-        case LOCALE_SABBREVMONTHNAME1:
-        case LOCALE_SABBREVMONTHNAME2:
-        case LOCALE_SABBREVMONTHNAME3:
-        case LOCALE_SABBREVMONTHNAME4:
-        case LOCALE_SABBREVMONTHNAME5:
-        case LOCALE_SABBREVMONTHNAME6:
-        case LOCALE_SABBREVMONTHNAME7:
-        case LOCALE_SABBREVMONTHNAME8:
-        case LOCALE_SABBREVMONTHNAME9:
-        case LOCALE_SABBREVMONTHNAME10:
-        case LOCALE_SABBREVMONTHNAME11:
-        case LOCALE_SABBREVMONTHNAME12:
-        case LOCALE_SABBREVMONTHNAME13:
-        case LOCALE_SDATE:
-        case LOCALE_SDAYNAME1:
-        case LOCALE_SDAYNAME2:
-        case LOCALE_SDAYNAME3:
-        case LOCALE_SDAYNAME4:
-        case LOCALE_SDAYNAME5:
-        case LOCALE_SDAYNAME6:
-        case LOCALE_SDAYNAME7:
-        case LOCALE_SDURATION:
-        case LOCALE_SLONGDATE:
-        case LOCALE_SMONTHNAME1:
-        case LOCALE_SMONTHNAME2:
-        case LOCALE_SMONTHNAME3:
-        case LOCALE_SMONTHNAME4:
-        case LOCALE_SMONTHNAME5:
-        case LOCALE_SMONTHNAME6:
-        case LOCALE_SMONTHNAME7:
-        case LOCALE_SMONTHNAME8:
-        case LOCALE_SMONTHNAME9:
-        case LOCALE_SMONTHNAME10:
-        case LOCALE_SMONTHNAME11:
-        case LOCALE_SMONTHNAME12:
-        case LOCALE_SMONTHNAME13:
-        case LOCALE_SSHORTDATE:
-        case LOCALE_SSHORTESTDAYNAME1:
-        case LOCALE_SSHORTESTDAYNAME2:
-        case LOCALE_SSHORTESTDAYNAME3:
-        case LOCALE_SSHORTESTDAYNAME4:
-        case LOCALE_SSHORTESTDAYNAME5:
-        case LOCALE_SSHORTESTDAYNAME6:
-        case LOCALE_SSHORTESTDAYNAME7:
-        case LOCALE_STIME:
-        case LOCALE_STIMEFORMAT:
-        case LOCALE_SYEARMONTH:
-            default_id = lcid_LC_TIME;
-            break;
-
-        case LOCALE_IPAPERSIZE:
-            default_id = lcid_LC_PAPER;
-            break;
-
-        case LOCALE_IMEASURE:
-            default_id = lcid_LC_MEASUREMENT;
-            break;
-
-        case LOCALE_ICOUNTRY:
-            default_id = lcid_LC_TELEPHONE;
-            break;
-        }
-        if (default_id) lcid = default_id;
-    }
-    return ConvertDefaultLocale( lcid );
-}
-
 /***********************************************************************
  *           is_genitive_name_supported
  *
@@ -732,12 +358,6 @@ void LOCALE_InitRegistry(void)
     static const WCHAR maccpW[] = {'M','A','C','C','P',0};
     static const WCHAR localeW[] = {'L','o','c','a','l','e',0};
     static const WCHAR lc_ctypeW[] = { 'L','C','_','C','T','Y','P','E',0 };
-    static const WCHAR lc_monetaryW[] = { 'L','C','_','M','O','N','E','T','A','R','Y',0 };
-    static const WCHAR lc_numericW[] = { 'L','C','_','N','U','M','E','R','I','C',0 };
-    static const WCHAR lc_timeW[] = { 'L','C','_','T','I','M','E',0 };
-    static const WCHAR lc_measurementW[] = { 'L','C','_','M','E','A','S','U','R','E','M','E','N','T',0 };
-    static const WCHAR lc_telephoneW[] = { 'L','C','_','T','E','L','E','P','H','O','N','E',0 };
-    static const WCHAR lc_paperW[] = { 'L','C','_','P','A','P','E','R',0};
     static const struct
     {
         LPCWSTR name;
@@ -750,8 +370,7 @@ void LOCALE_InitRegistry(void)
     static const LCTYPE lc_messages_values[] = {
       LOCALE_SABBREVLANGNAME,
       LOCALE_SCOUNTRY,
-      LOCALE_SLIST };
-    static const LCTYPE lc_monetary_values[] = {
+      LOCALE_SLIST,
       LOCALE_SCURRENCY,
       LOCALE_ICURRENCY,
       LOCALE_INEGCURR,
@@ -759,8 +378,7 @@ void LOCALE_InitRegistry(void)
       LOCALE_ILZERO,
       LOCALE_SMONDECIMALSEP,
       LOCALE_SMONGROUPING,
-      LOCALE_SMONTHOUSANDSEP };
-    static const LCTYPE lc_numeric_values[] = {
+      LOCALE_SMONTHOUSANDSEP,
       LOCALE_SDECIMAL,
       LOCALE_STHOUSAND,
       LOCALE_IDIGITS,
@@ -769,8 +387,7 @@ void LOCALE_InitRegistry(void)
       LOCALE_INEGNUMBER,
       LOCALE_SNEGATIVESIGN,
       LOCALE_SPOSITIVESIGN,
-      LOCALE_SGROUPING };
-    static const LCTYPE lc_time_values[] = {
+      LOCALE_SGROUPING,
       LOCALE_S1159,
       LOCALE_S2359,
       LOCALE_STIME,
@@ -785,10 +402,10 @@ void LOCALE_InitRegistry(void)
       LOCALE_IFIRSTWEEKOFYEAR,
       LOCALE_STIMEFORMAT,
       LOCALE_SYEARMONTH,
-      LOCALE_IDATE };
-    static const LCTYPE lc_measurement_values[] = { LOCALE_IMEASURE };
-    static const LCTYPE lc_telephone_values[] = { LOCALE_ICOUNTRY };
-    static const LCTYPE lc_paper_values[] = { LOCALE_IPAPERSIZE };
+      LOCALE_IDATE,
+      LOCALE_IMEASURE,
+      LOCALE_ICOUNTRY,
+      LOCALE_IPAPERSIZE };
 
     UNICODE_STRING nameW;
     WCHAR bufferW[80];
@@ -799,22 +416,10 @@ void LOCALE_InitRegistry(void)
     if (!(hkey = create_registry_key()))
         return;  /* don't do anything if we can't create the registry key */
 
-    locale_update_registry( hkey, localeW, lcid_LC_MESSAGES, lc_messages_values,
+    locale_update_registry( hkey, localeW, lcid, lc_messages_values,
                             ARRAY_SIZE( lc_messages_values ));
-    locale_update_registry( hkey, lc_monetaryW, lcid_LC_MONETARY, lc_monetary_values,
-                            ARRAY_SIZE( lc_monetary_values ));
-    locale_update_registry( hkey, lc_numericW, lcid_LC_NUMERIC, lc_numeric_values,
-                            ARRAY_SIZE( lc_numeric_values ));
-    locale_update_registry( hkey, lc_timeW, lcid_LC_TIME, lc_time_values,
-                            ARRAY_SIZE( lc_time_values ));
-    locale_update_registry( hkey, lc_measurementW, lcid_LC_MEASUREMENT, lc_measurement_values,
-                            ARRAY_SIZE( lc_measurement_values ));
-    locale_update_registry( hkey, lc_telephoneW, lcid_LC_TELEPHONE, lc_telephone_values,
-                            ARRAY_SIZE( lc_telephone_values ));
-    locale_update_registry( hkey, lc_paperW, lcid_LC_PAPER, lc_paper_values,
-                            ARRAY_SIZE( lc_paper_values ));
 
-    if (locale_update_registry( hkey, lc_ctypeW, lcid_LC_CTYPE, NULL, 0 ))
+    if (locale_update_registry( hkey, lc_ctypeW, GetSystemDefaultLCID(), NULL, 0 ))
     {
         static const WCHAR codepageW[] =
             {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
@@ -850,198 +455,6 @@ void LOCALE_InitRegistry(void)
     }
 
     NtClose( hkey );
-}
-
-
-#ifdef __APPLE__
-/***********************************************************************
- *           get_mac_locale
- *
- * Return a locale identifier string reflecting the Mac locale, in a form
- * that parse_locale_name() will understand.  So, strip out unusual
- * things like script, variant, etc.  Or, rather, just construct it as
- * <lang>[_<country>]
- */
-static const char* get_mac_locale(void)
-{
-    static char mac_locale[50];
-
-    if (!mac_locale[0])
-    {
-        CFLocaleRef locale = CFLocaleCopyCurrent();
-        CFStringRef lang = CFLocaleGetValue( locale, kCFLocaleLanguageCode );
-        CFStringRef country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
-        CFStringRef locale_string;
-
-        if (country)
-            locale_string = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@_%@"), lang, country);
-        else
-            locale_string = CFStringCreateCopy(NULL, lang);
-
-        CFStringGetCString(locale_string, mac_locale, sizeof(mac_locale), kCFStringEncodingUTF8);
-        CFRelease(locale);
-        CFRelease(locale_string);
-    }
-
-    return mac_locale;
-}
-
-
-/***********************************************************************
- *           has_env
- */
-static BOOL has_env(const char* name)
-{
-    const char* value = getenv( name );
-    return value && value[0];
-}
-#endif
-
-
-/***********************************************************************
- *           get_locale
- *
- * Get the locale identifier for a given category.  On most platforms,
- * this is just a thin wrapper around setlocale().  On OS X, though, it
- * is common for the Mac locale settings to not be supported by the C
- * library.  So, we sometimes override the result with the Mac locale.
- */
-static const char* get_locale(int category, const char* category_name)
-{
-    const char* ret = setlocale(category, NULL);
-
-#ifdef __ANDROID__
-    if (!strcmp(ret, "C"))
-    {
-        ret = getenv( category_name );
-        if (!ret || !ret[0]) ret = getenv( "LC_ALL" );
-        if (!ret || !ret[0]) ret = "C";
-    }
-#endif
-
-#ifdef __APPLE__
-    /* If LC_ALL is set, respect it as a user override.
-       If LC_* is set, respect it as a user override, except if it's LC_CTYPE
-       and equal to UTF-8.  That's because, when the Mac locale isn't supported
-       by the C library, Terminal.app sets LC_CTYPE=UTF-8 and doesn't set LANG.
-       parse_locale_name() doesn't handle that properly, so we override that
-       with the Mac locale (which uses UTF-8 for the charset, anyway).
-       Otherwise:
-       For LC_MESSAGES, we override the C library because the user language
-       setting is separate from the locale setting on which LANG was based.
-       If the C library didn't get anything better from LANG than C or POSIX,
-       override that.  That probably means the Mac locale isn't supported by
-       the C library. */
-    if (!has_env( "LC_ALL" ) &&
-        ((category == LC_CTYPE && !strcmp( ret, "UTF-8" )) ||
-         (!has_env( category_name ) &&
-          (category == LC_MESSAGES || !strcmp( ret, "C" ) || !strcmp( ret, "POSIX" )))))
-    {
-        const char* override = get_mac_locale();
-
-        if (category == LC_MESSAGES)
-        {
-            /* Retrieve the preferred language as chosen in System Preferences. */
-            static char messages_locale[50];
-
-            if (!messages_locale[0])
-            {
-                CFArrayRef preferred_langs = CFLocaleCopyPreferredLanguages();
-                if (preferred_langs && CFArrayGetCount( preferred_langs ))
-                {
-                    CFStringRef preferred_lang = CFArrayGetValueAtIndex( preferred_langs, 0 );
-                    CFDictionaryRef components = CFLocaleCreateComponentsFromLocaleIdentifier( NULL, preferred_lang );
-                    if (components)
-                    {
-                        CFStringRef lang = CFDictionaryGetValue( components, kCFLocaleLanguageCode );
-                        CFStringRef country = CFDictionaryGetValue( components, kCFLocaleCountryCode );
-                        CFLocaleRef locale = NULL;
-                        CFStringRef locale_string;
-
-                        if (!country)
-                        {
-                            locale = CFLocaleCopyCurrent();
-                            country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
-                        }
-
-                        if (country)
-                            locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@_%@"), lang, country );
-                        else
-                            locale_string = CFStringCreateCopy( NULL, lang );
-                        CFStringGetCString( locale_string, messages_locale, sizeof(messages_locale), kCFStringEncodingUTF8 );
-
-                        CFRelease( locale_string );
-                        if (locale) CFRelease( locale );
-                        CFRelease( components );
-                    }
-                }
-                if (preferred_langs)
-                    CFRelease( preferred_langs );
-            }
-
-            if (messages_locale[0])
-                override = messages_locale;
-        }
-
-        TRACE( "%s is %s; overriding with %s\n", category_name, debugstr_a(ret), debugstr_a(override) );
-        ret = override;
-    }
-#endif
-
-    return ret;
-}
-
-
-/***********************************************************************
- *           setup_unix_locales
- */
-static void setup_unix_locales(void)
-{
-    struct locale_name locale_name;
-    WCHAR buffer[128], ctype_buff[128];
-    const char *locale;
-
-    if ((locale = get_locale( LC_CTYPE, "LC_CTYPE" )))
-    {
-        strcpynAtoW( ctype_buff, locale, ARRAY_SIZE( ctype_buff ));
-        parse_locale_name( ctype_buff, &locale_name );
-        lcid_LC_CTYPE = locale_name.lcid;
-    }
-    if (!lcid_LC_CTYPE)  /* this one needs a default value */
-        lcid_LC_CTYPE = MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
-
-    TRACE( "got lcid %04x (%d matches) for LC_CTYPE=%s\n",
-           locale_name.lcid, locale_name.matches, debugstr_a(locale) );
-
-#define GET_UNIX_LOCALE(cat) do \
-    if ((locale = get_locale( cat, #cat ))) \
-    { \
-        strcpynAtoW( buffer, locale, ARRAY_SIZE(buffer) ); \
-        if (!strcmpW( buffer, ctype_buff )) lcid_##cat = lcid_LC_CTYPE; \
-        else { \
-            parse_locale_name( buffer, &locale_name );  \
-            lcid_##cat = locale_name.lcid; \
-            TRACE( "got lcid %04x (%d matches) for " #cat "=%s\n",        \
-                   locale_name.lcid, locale_name.matches, debugstr_a(locale) ); \
-        } \
-    } while (0)
-
-    GET_UNIX_LOCALE( LC_COLLATE );
-    GET_UNIX_LOCALE( LC_MESSAGES );
-    GET_UNIX_LOCALE( LC_MONETARY );
-    GET_UNIX_LOCALE( LC_NUMERIC );
-    GET_UNIX_LOCALE( LC_TIME );
-#ifdef LC_PAPER
-    GET_UNIX_LOCALE( LC_PAPER );
-#endif
-#ifdef LC_MEASUREMENT
-    GET_UNIX_LOCALE( LC_MEASUREMENT );
-#endif
-#ifdef LC_TELEPHONE
-    GET_UNIX_LOCALE( LC_TELEPHONE );
-#endif
-
-#undef GET_UNIX_LOCALE
 }
 
 
@@ -1412,7 +825,6 @@ static int get_value_base_by_lctype( LCTYPE lctype )
  */
 INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
 {
-    LANGID lang_id;
     HRSRC hrsrc;
     HGLOBAL hmem;
     INT ret;
@@ -1434,8 +846,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
 
     if (!len) buffer = NULL;
 
-    lcid = convert_default_lcid( lcid, lctype );
-
+    lcid = ConvertDefaultLocale( lcid );
     lcflags = lctype & LOCALE_LOCALEINFOFLAGSMASK;
     lctype &= 0xffff;
 
@@ -1443,8 +854,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
 
     /* first check for overrides in the registry */
 
-    if (!(lcflags & LOCALE_NOUSEROVERRIDE) &&
-        lcid == convert_default_lcid( LOCALE_USER_DEFAULT, lctype ))
+    if (!(lcflags & LOCALE_NOUSEROVERRIDE) && lcid == ConvertDefaultLocale( LOCALE_USER_DEFAULT ))
     {
         struct registry_value *value = get_locale_registry_value(lctype);
 
@@ -1481,13 +891,8 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
 
     /* now load it from kernel resources */
 
-    lang_id = LANGIDFROMLCID( lcid );
-
-    /* replace SUBLANG_NEUTRAL by SUBLANG_DEFAULT */
-    if (SUBLANGID(lang_id) == SUBLANG_NEUTRAL) lang_id = get_default_sublang( lang_id );
-
     if (!(hrsrc = FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING,
-                                   ULongToPtr((lctype >> 4) + 1), lang_id )))
+                                   ULongToPtr((lctype >> 4) + 1), lcid )))
     {
         SetLastError( ERROR_INVALID_FLAGS );  /* no such lctype */
         return 0;
@@ -3532,33 +2937,10 @@ void LOCALE_Init(void)
 
     UINT ansi_cp = 1252, oem_cp = 437, mac_cp = 10000, unix_cp;
 
-    setlocale( LC_ALL, "" );
-
-#ifdef __APPLE__
-    /* MacOS doesn't set the locale environment variables so we have to do it ourselves */
-    if (!has_env("LANG"))
-    {
-        const char* mac_locale = get_mac_locale();
-
-        setenv( "LANG", mac_locale, 1 );
-        if (setlocale( LC_ALL, "" ))
-            TRACE( "setting LANG to '%s'\n", mac_locale );
-        else
-        {
-            /* no C library locale matching Mac locale; don't pass garbage to children */
-            unsetenv("LANG");
-            TRACE( "Mac locale %s is not supported by the C library\n", debugstr_a(mac_locale) );
-        }
-    }
-#endif /* __APPLE__ */
-
-    setup_unix_locales();
-    if (!lcid_LC_MESSAGES) lcid_LC_MESSAGES = lcid_LC_CTYPE;
-
-    ansi_cp = get_lcid_codepage( LOCALE_USER_DEFAULT );
-    GetLocaleInfoW( LOCALE_USER_DEFAULT, LOCALE_IDEFAULTMACCODEPAGE | LOCALE_RETURN_NUMBER,
+    ansi_cp = get_lcid_codepage( LOCALE_SYSTEM_DEFAULT );
+    GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTMACCODEPAGE | LOCALE_RETURN_NUMBER,
                     (LPWSTR)&mac_cp, sizeof(mac_cp)/sizeof(WCHAR) );
-    GetLocaleInfoW( LOCALE_USER_DEFAULT, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
+    GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
                     (LPWSTR)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR) );
 
     if (!(ansi_cptable = wine_cp_get_table( ansi_cp )))
@@ -3575,8 +2957,6 @@ void LOCALE_Init(void)
     TRACE( "ansi=%03d oem=%03d mac=%03d unix=%03d\n",
            ansi_cptable->info.codepage, oem_cptable->info.codepage,
            mac_cptable->info.codepage, unix_cp );
-
-    setlocale(LC_NUMERIC, "C");  /* FIXME: oleaut32 depends on this */
 }
 
 static HANDLE NLS_RegOpenKey(HANDLE hRootKey, LPCWSTR szKeyName)
