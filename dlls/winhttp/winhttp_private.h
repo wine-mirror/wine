@@ -314,7 +314,7 @@ static inline WCHAR *strdupAW( const char *src )
     WCHAR *dst = NULL;
     if (src)
     {
-        DWORD len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
+        int len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
         if ((dst = heap_alloc( len * sizeof(WCHAR) )))
             MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
     }
@@ -341,7 +341,7 @@ static inline char *strdupWA_sized( const WCHAR *src, DWORD size )
         int len = WideCharToMultiByte( CP_ACP, 0, src, size, NULL, 0, NULL, NULL ) + 1;
         if ((dst = heap_alloc( len )))
         {
-            WideCharToMultiByte( CP_ACP, 0, src, len, dst, size, NULL, NULL );
+            WideCharToMultiByte( CP_ACP, 0, src, size, dst, len, NULL, NULL );
             dst[len - 1] = 0;
         }
     }
