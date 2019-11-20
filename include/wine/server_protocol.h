@@ -2119,7 +2119,11 @@ struct get_console_output_info_reply
     short int    max_height;
     short int    font_width;
     short int    font_height;
-    /* VARARG(colors,uints); */
+    short int    font_weight;
+    short int    font_pitch_family;
+    /* VARARG(colors,uints,64); */
+    /* VARARG(face_name,unicode_str); */
+    char __pad_44[4];
 };
 
 
@@ -6693,6 +6697,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 590
+#define SERVER_PROTOCOL_VERSION 591
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

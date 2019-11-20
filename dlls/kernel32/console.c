@@ -1639,17 +1639,28 @@ BOOL WINAPI SetConsoleKeyShortcuts(BOOL set, BYTE keys, VOID *a, DWORD b)
 }
 
 
-BOOL WINAPI GetCurrentConsoleFont(HANDLE hConsole, BOOL maxwindow, LPCONSOLE_FONT_INFO fontinfo)
+BOOL WINAPI GetCurrentConsoleFontEx(HANDLE hConsole, BOOL maxwindow, CONSOLE_FONT_INFOEX *fontinfo)
 {
     BOOL ret;
+    struct
+    {
+        unsigned int color_map[16];
+        WCHAR face_name[LF_FACESIZE];
+    } data;
 
-    memset(fontinfo, 0, sizeof(CONSOLE_FONT_INFO));
+    if (fontinfo->cbSize != sizeof(CONSOLE_FONT_INFOEX))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 
     SERVER_START_REQ(get_console_output_info)
     {
         req->handle = console_handle_unmap(hConsole);
+        wine_server_set_reply( req, &data, sizeof(data) - sizeof(WCHAR) );
         if ((ret = !wine_server_call_err(req)))
         {
+            fontinfo->nFont = 0;
             if (maxwindow)
             {
                 fontinfo->dwFontSize.X = min(reply->width, reply->max_width);
@@ -1660,9 +1671,36 @@ BOOL WINAPI GetCurrentConsoleFont(HANDLE hConsole, BOOL maxwindow, LPCONSOLE_FON
                 fontinfo->dwFontSize.X = reply->win_right - reply->win_left + 1;
                 fontinfo->dwFontSize.Y = reply->win_bottom - reply->win_top + 1;
             }
+            if (wine_server_reply_size( reply ) > sizeof(data.color_map))
+            {
+                data_size_t len = wine_server_reply_size( reply ) - sizeof(data.color_map);
+                memcpy( fontinfo->FaceName, data.face_name, len );
+                fontinfo->FaceName[len / sizeof(WCHAR)] = 0;
+            }
+            else
+                fontinfo->FaceName[0] = 0;
+            fontinfo->FontFamily = reply->font_pitch_family;
+            fontinfo->FontWeight = reply->font_weight;
         }
     }
     SERVER_END_REQ;
+    return ret;
+}
+
+BOOL WINAPI GetCurrentConsoleFont(HANDLE hConsole, BOOL maxwindow, CONSOLE_FONT_INFO *fontinfo)
+{
+    BOOL ret;
+    CONSOLE_FONT_INFOEX res;
+
+    res.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+
+    ret = GetCurrentConsoleFontEx(hConsole, maxwindow, &res);
+    if(ret)
+    {
+        fontinfo->nFont = res.nFont;
+        fontinfo->dwFontSize.X = res.dwFontSize.X;
+        fontinfo->dwFontSize.Y = res.dwFontSize.Y;
+    }
     return ret;
 }
 
