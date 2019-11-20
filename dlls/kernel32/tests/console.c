@@ -2694,6 +2694,104 @@ static void test_GetCurrentConsoleFont(HANDLE std_output)
        "got %d, expected %d\n", cfi.dwFontSize.Y, csbi.dwMaximumWindowSize.Y);
 }
 
+static void test_GetCurrentConsoleFontEx(HANDLE std_output)
+{
+    HANDLE hmod;
+    BOOL (WINAPI *pGetCurrentConsoleFontEx)(HANDLE, BOOL, CONSOLE_FONT_INFOEX *);
+    CONSOLE_FONT_INFO cfi;
+    CONSOLE_FONT_INFOEX cfix;
+    BOOL ret;
+    HANDLE std_input = GetStdHandle(STD_INPUT_HANDLE);
+
+    hmod = GetModuleHandleA("kernel32.dll");
+    pGetCurrentConsoleFontEx = (void *)GetProcAddress(hmod, "GetCurrentConsoleFontEx");
+    if (!pGetCurrentConsoleFontEx)
+    {
+        win_skip("GetCurrentConsoleFontEx is not available\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(NULL, FALSE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(NULL, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(std_input, FALSE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(std_input, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(std_output, FALSE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(std_output, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    cfix.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(NULL, FALSE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(NULL, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(std_input, FALSE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(std_input, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(std_output, FALSE, &cfix);
+    ok(ret, "got %d, expected non-zero\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+
+    memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
+    SetLastError(0xdeadbeef);
+    ret = GetCurrentConsoleFont(std_output, FALSE, &cfi);
+    ok(ret, "got %d, expected non-zero\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+
+    ok(cfix.dwFontSize.X == cfi.dwFontSize.X, "expected values to match\n");
+    ok(cfix.dwFontSize.Y == cfi.dwFontSize.Y, "expected values to match\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(std_output, TRUE, &cfix);
+    ok(ret, "got %d, expected non-zero\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+
+    memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
+    SetLastError(0xdeadbeef);
+    ret = GetCurrentConsoleFont(std_output, TRUE, &cfi);
+    ok(ret, "got %d, expected non-zero\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+
+    ok(cfix.dwFontSize.X == cfi.dwFontSize.X, "expected values to match\n");
+    ok(cfix.dwFontSize.Y == cfi.dwFontSize.Y, "expected values to match\n");
+}
+
 static void test_GetConsoleFontSize(HANDLE std_output)
 {
     COORD c;
@@ -3294,6 +3392,7 @@ START_TEST(console)
     test_ReadConsoleOutputCharacterW(hConOut);
     test_ReadConsoleOutputAttribute(hConOut);
     test_GetCurrentConsoleFont(hConOut);
+    test_GetCurrentConsoleFontEx(hConOut);
     test_GetConsoleFontSize(hConOut);
     test_GetLargestConsoleWindowSize(hConOut);
     test_GetConsoleFontInfo(hConOut);
