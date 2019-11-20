@@ -17,20 +17,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#define NONAMELESSUNION
-#include "ws2tcpip.h"
-#include <stdarg.h>
-#include <stdio.h>
 #include <assert.h>
+#include <stdarg.h>
 
+#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
+#include "ws2tcpip.h"
 #include "winhttp.h"
 #include "schannel.h"
 
 #include "wine/debug.h"
-#include "wine/library.h"
 #include "winhttp_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
@@ -207,7 +204,9 @@ struct netconn *netconn_create( struct hostdata *host, const struct sockaddr_sto
         addr_len = sizeof(struct sockaddr_in6);
         break;
     default:
-        assert(0);
+        ERR( "unhandled family %u\n", conn->sockaddr.ss_family );
+        heap_free( conn );
+        return NULL;
     }
 
     if (timeout > 0) set_blocking( conn, FALSE );
@@ -374,7 +373,7 @@ BOOL netconn_secure_connect( struct netconn *conn, WCHAR *hostname, DWORD securi
     heap_free(read_buf);
 
     if(status != SEC_E_OK || res != ERROR_SUCCESS) {
-        WARN("Failed to initialize security context failed: %08x\n", status);
+        WARN("Failed to initialize security context: %08x\n", status);
         heap_free(conn->ssl_buf);
         conn->ssl_buf = NULL;
         DeleteSecurityContext(&ctx);

@@ -19,13 +19,8 @@
 #ifndef _WINE_WINHTTP_PRIVATE_H_
 #define _WINE_WINHTTP_PRIVATE_H_
 
-#ifndef __WINE_CONFIG_H
-# error You must include config.h to use this header
-#endif
-
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 #include "ole2.h"
 #include "sspi.h"
@@ -304,8 +299,8 @@ static inline WCHAR *strdupW( const WCHAR *src )
     WCHAR *dst;
 
     if (!src) return NULL;
-    dst = heap_alloc( (strlenW( src ) + 1) * sizeof(WCHAR) );
-    if (dst) strcpyW( dst, src );
+    dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) );
+    if (dst) lstrcpyW( dst, src );
     return dst;
 }
 

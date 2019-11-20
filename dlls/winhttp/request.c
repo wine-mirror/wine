@@ -19,14 +19,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
-#include "config.h"
-#include "ws2tcpip.h"
-#include <stdarg.h>
 #include <assert.h>
+#include <stdarg.h>
+#include <wchar.h>
 
+#define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
+#include "ws2tcpip.h"
 #include "ole2.h"
 #include "initguid.h"
 #include "httprequest.h"
@@ -300,7 +300,7 @@ static struct header *parse_header( const WCHAR *string )
     int len;
 
     p = string;
-    if (!(q = strchrW( p, ':' )))
+    if (!(q = wcschr( p, ':' )))
     {
         WARN("no ':' in line %s\n", debugstr_w(string));
         return NULL;
@@ -331,7 +331,7 @@ static struct header *parse_header( const WCHAR *string )
 
     q++; /* skip past colon */
     while (*q == ' ') q++;
-    len = strlenW( q );
+    len = lstrlenW( q );
 
     if (!(header->value = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
@@ -352,7 +352,7 @@ static int get_header_index( struct request *request, const WCHAR *field, int re
 
     for (index = 0; index < request->num_headers; index++)
     {
-        if (strcmpiW( request->headers[index].field, field )) continue;
+        if (wcsicmp( request->headers[index].field, field )) continue;
         if (request_only && !request->headers[index].is_request) continue;
         if (!request_only && request->headers[index].is_request) continue;
 
@@ -438,8 +438,8 @@ BOOL process_header( struct request *request, const WCHAR *field, const WCHAR *v
             int len, len_orig, len_value;
             struct header *header = &request->headers[index];
 
-            len_orig = strlenW( header->value );
-            len_value = strlenW( value );
+            len_orig = lstrlenW( header->value );
+            len_value = lstrlenW( value );
 
             len = len_orig + len_value + 2;
             if (!(tmp = heap_realloc( header->value, (len + 1) * sizeof(WCHAR) ))) return FALSE;
@@ -469,7 +469,7 @@ BOOL add_request_headers( struct request *request, const WCHAR *headers, DWORD l
     WCHAR *buffer, *p, *q;
     struct header *header;
 
-    if (len == ~0u) len = strlenW( headers );
+    if (len == ~0u) len = lstrlenW( headers );
     if (!len) return TRUE;
     if (!(buffer = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return FALSE;
     memcpy( buffer, headers, len * sizeof(WCHAR) );
@@ -548,24 +548,24 @@ static WCHAR *build_absolute_request_path( struct request *request, const WCHAR 
     static const WCHAR fmt[] = {'%','s',':','/','/','%','s',0};
     const WCHAR *scheme;
     WCHAR *ret;
-    int len;
+    int len, offset;
 
     scheme = (request->netconn ? request->netconn->secure : (request->hdr.flags & WINHTTP_FLAG_SECURE)) ? https : http;
 
-    len = strlenW( scheme ) + strlenW( request->connect->hostname ) + 4; /* '://' + nul */
+    len = lstrlenW( scheme ) + lstrlenW( request->connect->hostname ) + 4; /* '://' + nul */
     if (request->connect->hostport) len += 6; /* ':' between host and port, up to 5 for port */
 
-    len += strlenW( request->path );
+    len += lstrlenW( request->path );
     if ((ret = heap_alloc( len * sizeof(WCHAR) )))
     {
-        len = sprintfW( ret, fmt, scheme, request->connect->hostname );
+        offset = swprintf( ret, len, fmt, scheme, request->connect->hostname );
         if (request->connect->hostport)
         {
             static const WCHAR port_fmt[] = {':','%','u',0};
-            len += sprintfW( ret + len, port_fmt, request->connect->hostport );
+            offset += swprintf( ret + offset, len - offset, port_fmt, request->connect->hostport );
         }
-        strcpyW( ret + len, request->path );
-        if (path) *path = ret + len;
+        lstrcpyW( ret + offset, request->path );
+        if (path) *path = ret + offset;
     }
 
     return ret;
@@ -578,39 +578,39 @@ static WCHAR *build_request_string( struct request *request )
     WCHAR *path, *ret;
     unsigned int i, len;
 
-    if (!strcmpiW( request->connect->hostname, request->connect->servername )) path = request->path;
+    if (!wcsicmp( request->connect->hostname, request->connect->servername )) path = request->path;
     else if (!(path = build_absolute_request_path( request, NULL ))) return NULL;
 
-    len = strlenW( request->verb ) + 1 /* ' ' */;
-    len += strlenW( path ) + 1 /* ' ' */;
-    len += strlenW( request->version );
+    len = lstrlenW( request->verb ) + 1 /* ' ' */;
+    len += lstrlenW( path ) + 1 /* ' ' */;
+    len += lstrlenW( request->version );
 
     for (i = 0; i < request->num_headers; i++)
     {
         if (request->headers[i].is_request)
-            len += strlenW( request->headers[i].field ) + strlenW( request->headers[i].value ) + 4; /* '\r\n: ' */
+            len += lstrlenW( request->headers[i].field ) + lstrlenW( request->headers[i].value ) + 4; /* '\r\n: ' */
     }
     len += 4; /* '\r\n\r\n' */
 
     if ((ret = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
-        strcpyW( ret, request->verb );
-        strcatW( ret, spaceW );
-        strcatW( ret, path );
-        strcatW( ret, spaceW );
-        strcatW( ret, request->version );
+        lstrcpyW( ret, request->verb );
+        lstrcatW( ret, spaceW );
+        lstrcatW( ret, path );
+        lstrcatW( ret, spaceW );
+        lstrcatW( ret, request->version );
 
         for (i = 0; i < request->num_headers; i++)
         {
             if (request->headers[i].is_request)
             {
-                strcatW( ret, crlfW );
-                strcatW( ret, request->headers[i].field );
-                strcatW( ret, colonW );
-                strcatW( ret, request->headers[i].value );
+                lstrcatW( ret, crlfW );
+                lstrcatW( ret, request->headers[i].field );
+                lstrcatW( ret, colonW );
+                lstrcatW( ret, request->headers[i].value );
             }
         }
-        strcatW( ret, twocrlfW );
+        lstrcatW( ret, twocrlfW );
     }
 
     if (path != request->path) heap_free( path );
@@ -681,7 +681,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
             headers = request->raw_headers;
 
         if (!headers) return FALSE;
-        len = strlenW( headers ) * sizeof(WCHAR);
+        len = lstrlenW( headers ) * sizeof(WCHAR);
         if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
             len += sizeof(WCHAR);
@@ -698,7 +698,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         return ret;
     }
     case WINHTTP_QUERY_VERSION:
-        len = strlenW( request->version ) * sizeof(WCHAR);
+        len = lstrlenW( request->version ) * sizeof(WCHAR);
         if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
             len += sizeof(WCHAR);
@@ -706,7 +706,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         }
         else
         {
-            strcpyW( buffer, request->version );
+            lstrcpyW( buffer, request->version );
             TRACE("returning string: %s\n", debugstr_w(buffer));
             ret = TRUE;
         }
@@ -714,7 +714,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         return ret;
 
     case WINHTTP_QUERY_STATUS_TEXT:
-        len = strlenW( request->status_text ) * sizeof(WCHAR);
+        len = lstrlenW( request->status_text ) * sizeof(WCHAR);
         if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
             len += sizeof(WCHAR);
@@ -722,7 +722,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         }
         else
         {
-            strcpyW( buffer, request->status_text );
+            lstrcpyW( buffer, request->status_text );
             TRACE("returning string: %s\n", debugstr_w(buffer));
             ret = TRUE;
         }
@@ -730,7 +730,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         return ret;
 
     case WINHTTP_QUERY_REQUEST_METHOD:
-        len = strlenW( request->verb ) * sizeof(WCHAR);
+        len = lstrlenW( request->verb ) * sizeof(WCHAR);
         if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
             len += sizeof(WCHAR);
@@ -738,7 +738,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         }
         else
         {
-            strcpyW( buffer, request->verb );
+            lstrcpyW( buffer, request->verb );
             TRACE("returning string: %s\n", debugstr_w(buffer));
             ret = TRUE;
         }
@@ -780,7 +780,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         else
         {
             int *number = buffer;
-            *number = atoiW( header->value );
+            *number = wcstol( header->value, NULL, 10 );
             TRACE("returning number: %d\n", *number);
             ret = TRUE;
         }
@@ -803,7 +803,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
     }
     else if (header->value)
     {
-        len = strlenW( header->value ) * sizeof(WCHAR);
+        len = lstrlenW( header->value ) * sizeof(WCHAR);
         if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
             len += sizeof(WCHAR);
@@ -811,7 +811,7 @@ static BOOL query_headers( struct request *request, DWORD level, const WCHAR *na
         }
         else
         {
-            strcpyW( buffer, header->value );
+            lstrcpyW( buffer, header->value );
             TRACE("returning string: %s\n", debugstr_w(buffer));
             ret = TRUE;
         }
@@ -885,7 +885,7 @@ static DWORD auth_scheme_from_header( const WCHAR *header )
 
     for (i = 0; i < ARRAY_SIZE( auth_schemes ); i++)
     {
-        if (!strncmpiW( header, auth_schemes[i].str, auth_schemes[i].len ) &&
+        if (!wcsnicmp( header, auth_schemes[i].str, auth_schemes[i].len ) &&
             (header[auth_schemes[i].len] == ' ' || !header[auth_schemes[i].len])) return auth_schemes[i].scheme;
     }
     return 0;
@@ -1194,8 +1194,8 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
         if (!username || !password) return FALSE;
         if ((!authinfo && !(authinfo = alloc_authinfo())) || authinfo->finished) return FALSE;
 
-        userlen = WideCharToMultiByte( CP_UTF8, 0, username, strlenW( username ), NULL, 0, NULL, NULL );
-        passlen = WideCharToMultiByte( CP_UTF8, 0, password, strlenW( password ), NULL, 0, NULL, NULL );
+        userlen = WideCharToMultiByte( CP_UTF8, 0, username, lstrlenW( username ), NULL, 0, NULL, NULL );
+        passlen = WideCharToMultiByte( CP_UTF8, 0, password, lstrlenW( password ), NULL, 0, NULL, NULL );
 
         authinfo->data_len = userlen + 1 + passlen;
         if (!(authinfo->data = heap_alloc( authinfo->data_len ))) return FALSE;
@@ -1228,7 +1228,7 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
 
             first = TRUE;
             domain = (WCHAR *)username;
-            user = strchrW( username, '\\' );
+            user = wcschr( username, '\\' );
 
             if (user) user++;
             else
@@ -1238,11 +1238,11 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
             }
             id.Flags          = SEC_WINNT_AUTH_IDENTITY_UNICODE;
             id.User           = user;
-            id.UserLength     = strlenW( user );
+            id.UserLength     = lstrlenW( user );
             id.Domain         = domain;
             id.DomainLength   = domain ? user - domain - 1 : 0;
             id.Password       = (WCHAR *)password;
-            id.PasswordLength = strlenW( password );
+            id.PasswordLength = lstrlenW( password );
 
             status = AcquireCredentialsHandleW( NULL, (SEC_WCHAR *)auth_schemes[scheme].str,
                                                 SECPKG_CRED_OUTBOUND, NULL, &id, NULL, NULL,
@@ -1268,8 +1268,8 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
         }
         else if (authinfo->finished) return FALSE;
 
-        if ((strlenW( auth_value ) < auth_schemes[authinfo->scheme].len ||
-            strncmpiW( auth_value, auth_schemes[authinfo->scheme].str, auth_schemes[authinfo->scheme].len )))
+        if ((lstrlenW( auth_value ) < auth_schemes[authinfo->scheme].len ||
+            wcsnicmp( auth_value, auth_schemes[authinfo->scheme].str, auth_schemes[authinfo->scheme].len )))
         {
             ERR("authentication scheme changed from %s to %s\n",
                 debugstr_w(auth_schemes[authinfo->scheme].str), debugstr_w(auth_value));
@@ -1288,7 +1288,7 @@ static BOOL do_authorization( struct request *request, DWORD target, DWORD schem
         p = auth_value + auth_schemes[scheme].len;
         if (*p == ' ')
         {
-            int len = strlenW( ++p );
+            int len = lstrlenW( ++p );
             in.cbBuffer = decode_base64( p, len, NULL );
             if (!(in.pvBuffer = heap_alloc( in.cbBuffer ))) {
                 destroy_authinfo( authinfo );
@@ -1368,10 +1368,10 @@ static WCHAR *build_proxy_connect_string( struct request *request )
     static const WCHAR twocrlfW[] = {'\r','\n','\r','\n',0};
     WCHAR *ret, *host;
     unsigned int i;
-    int len;
+    int len = lstrlenW( request->connect->hostname ) + 7;
 
-    if (!(host = heap_alloc( (strlenW( request->connect->hostname ) + 7) * sizeof(WCHAR) ))) return NULL;
-    len = sprintfW( host, fmtW, request->connect->hostname, request->connect->hostport );
+    if (!(host = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+    len = swprintf( host, len, fmtW, request->connect->hostname, request->connect->hostport );
 
     len += ARRAY_SIZE(connectW);
     len += ARRAY_SIZE(http1_1);
@@ -1379,29 +1379,29 @@ static WCHAR *build_proxy_connect_string( struct request *request )
     for (i = 0; i < request->num_headers; i++)
     {
         if (request->headers[i].is_request)
-            len += strlenW( request->headers[i].field ) + strlenW( request->headers[i].value ) + 4; /* '\r\n: ' */
+            len += lstrlenW( request->headers[i].field ) + lstrlenW( request->headers[i].value ) + 4; /* '\r\n: ' */
     }
     len += 4; /* '\r\n\r\n' */
 
     if ((ret = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
-        strcpyW( ret, connectW );
-        strcatW( ret, spaceW );
-        strcatW( ret, host );
-        strcatW( ret, spaceW );
-        strcatW( ret, http1_1 );
+        lstrcpyW( ret, connectW );
+        lstrcatW( ret, spaceW );
+        lstrcatW( ret, host );
+        lstrcatW( ret, spaceW );
+        lstrcatW( ret, http1_1 );
 
         for (i = 0; i < request->num_headers; i++)
         {
             if (request->headers[i].is_request)
             {
-                strcatW( ret, crlfW );
-                strcatW( ret, request->headers[i].field );
-                strcatW( ret, colonW );
-                strcatW( ret, request->headers[i].value );
+                lstrcatW( ret, crlfW );
+                lstrcatW( ret, request->headers[i].field );
+                lstrcatW( ret, colonW );
+                lstrcatW( ret, request->headers[i].value );
             }
         }
-        strcatW( ret, twocrlfW );
+        lstrcatW( ret, twocrlfW );
     }
 
     heap_free( host );
@@ -1599,7 +1599,7 @@ static BOOL open_connection( struct request *request )
 
     LIST_FOR_EACH_ENTRY( iter, &connection_pool, struct hostdata, entry )
     {
-        if (iter->port == port && !strcmpW( connect->servername, iter->hostname ) && !is_secure == !iter->secure)
+        if (iter->port == port && !wcscmp( connect->servername, iter->hostname ) && !is_secure == !iter->secure)
         {
             host = iter;
             host->ref++;
@@ -1656,7 +1656,7 @@ static BOOL open_connection( struct request *request )
 
     if (!connect->resolved)
     {
-        len = strlenW( host->hostname ) + 1;
+        len = lstrlenW( host->hostname ) + 1;
         send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, host->hostname, len );
 
         if (!netconn_resolve( host->hostname, port, &connect->sockaddr, request->resolve_timeout ))
@@ -1671,7 +1671,7 @@ static BOOL open_connection( struct request *request )
             release_host( host );
             return FALSE;
         }
-        len = strlenW( addressW ) + 1;
+        len = lstrlenW( addressW ) + 1;
         send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, addressW, len );
     }
 
@@ -1701,7 +1701,7 @@ static BOOL open_connection( struct request *request )
         if (is_secure)
         {
             if (connect->session->proxy_server &&
-                strcmpiW( connect->hostname, connect->servername ))
+                wcsicmp( connect->hostname, connect->servername ))
             {
                 if (!secure_proxy_connect( request ))
                 {
@@ -1726,7 +1726,7 @@ static BOOL open_connection( struct request *request )
             }
         }
 
-        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, strlenW(addressW) + 1 );
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, lstrlenW(addressW) + 1 );
     }
     else
     {
@@ -1778,9 +1778,9 @@ static BOOL add_host_header( struct request *request, DWORD modifier )
     {
         return process_header( request, attr_host, connect->hostname, modifier, TRUE );
     }
-    len = strlenW( connect->hostname ) + 7; /* sizeof(":65335") */
+    len = lstrlenW( connect->hostname ) + 7; /* sizeof(":65335") */
     if (!(host = heap_alloc( len * sizeof(WCHAR) ))) return FALSE;
-    sprintfW( host, fmt, connect->hostname, port );
+    swprintf( host, len, fmt, connect->hostname, port );
     ret = process_header( request, attr_host, host, modifier, TRUE );
     heap_free( host );
     return ret;
@@ -1933,9 +1933,9 @@ static void finished_reading( struct request *request )
     else if (query_headers( request, WINHTTP_QUERY_CONNECTION, NULL, connection, &size, NULL ) ||
              query_headers( request, WINHTTP_QUERY_PROXY_CONNECTION, NULL, connection, &size, NULL ))
     {
-        if (!strcmpiW( connection, closeW )) close = TRUE;
+        if (!wcsicmp( connection, closeW )) close = TRUE;
     }
-    else if (!strcmpW( request->version, http1_0 )) close = TRUE;
+    else if (!wcscmp( request->version, http1_0 )) close = TRUE;
     if (close)
     {
         close_connection( request );
@@ -2092,7 +2092,7 @@ static DWORD str_to_wire( const WCHAR *src, int src_len, char *dst, enum escape_
     DWORD len;
     char *utf8;
 
-    if (src_len < 0) src_len = strlenW( src );
+    if (src_len < 0) src_len = lstrlenW( src );
     len = WideCharToMultiByte( CP_UTF8, 0, src, src_len, NULL, 0, NULL, NULL );
     if (!(utf8 = heap_alloc( len ))) return 0;
 
@@ -2111,16 +2111,16 @@ static char *build_wire_path( struct request *request, DWORD *ret_len )
     enum escape_flags path_flags, query_flags;
     char *ret;
 
-    if (!strcmpiW( request->connect->hostname, request->connect->servername )) start = full_path = request->path;
+    if (!wcsicmp( request->connect->hostname, request->connect->servername )) start = full_path = request->path;
     else if (!(full_path = build_absolute_request_path( request, &start ))) return NULL;
 
-    len = strlenW( full_path );
-    if ((path = strchrW( start, '/' )))
+    len = lstrlenW( full_path );
+    if ((path = wcschr( start, '/' )))
     {
-        len_path = strlenW( path );
-        if ((query = strchrW( path, '?' )))
+        len_path = lstrlenW( path );
+        if ((query = wcschr( path, '?' )))
         {
-            len_query = strlenW( query );
+            len_query = lstrlenW( query );
             len_path -= len_query;
         }
     }
@@ -2222,10 +2222,10 @@ static BOOL send_request( struct request *request, const WCHAR *headers, DWORD h
     if (request->creds[TARGET_SERVER][SCHEME_BASIC].username)
         do_authorization( request, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC );
 
-    if (total_len || (request->verb && !strcmpW( request->verb, postW )))
+    if (total_len || (request->verb && !wcscmp( request->verb, postW )))
     {
         WCHAR length[21]; /* decimal long int + null */
-        sprintfW( length, length_fmt, total_len );
+        swprintf( length, ARRAY_SIZE(length), length_fmt, total_len );
         process_header( request, attr_content_length, length, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
     }
     if (!(request->hdr.disable_flags & WINHTTP_DISABLE_KEEP_ALIVE))
@@ -2315,7 +2315,7 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD heade
         return FALSE;
     }
 
-    if (headers && !headers_len) headers_len = strlenW( headers );
+    if (headers && !headers_len) headers_len = lstrlenW( headers );
 
     if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
@@ -2452,7 +2452,7 @@ static DWORD set_content_length( struct request *request, DWORD status )
     WCHAR encoding[20];
     DWORD buflen = sizeof(request->content_length);
 
-    if (status == HTTP_STATUS_NO_CONTENT || status == HTTP_STATUS_NOT_MODIFIED || !strcmpW( request->verb, headW ))
+    if (status == HTTP_STATUS_NO_CONTENT || status == HTTP_STATUS_NOT_MODIFIED || !wcscmp( request->verb, headW ))
         request->content_length = 0;
     else
     {
@@ -2462,7 +2462,7 @@ static DWORD set_content_length( struct request *request, DWORD status )
 
         buflen = sizeof(encoding);
         if (query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, encoding, &buflen, NULL ) &&
-            !strcmpiW( encoding, chunkedW ))
+            !wcsicmp( encoding, chunkedW ))
         {
             request->content_length = ~0u;
             request->read_chunked = TRUE;
@@ -2520,7 +2520,7 @@ static BOOL read_reply( struct request *request )
     static const WCHAR crlf[] = {'\r','\n',0};
 
     char buffer[MAX_REPLY_LEN];
-    DWORD buflen, len, offset, crlf_len = 2; /* strlenW(crlf) */
+    DWORD buflen, len, offset, crlf_len = 2; /* lstrlenW(crlf) */
     char *status_code, *status_text;
     WCHAR *versionW, *status_textW, *raw_headers;
     WCHAR status_codeW[4]; /* sizeof("nnn") */
@@ -2621,7 +2621,7 @@ static void record_cookies( struct request *request )
     for (i = 0; i < request->num_headers; i++)
     {
         struct header *set_cookie = &request->headers[i];
-        if (!strcmpiW( set_cookie->field, attr_set_cookie ) && !set_cookie->is_request)
+        if (!wcsicmp( set_cookie->field, attr_set_cookie ) && !set_cookie->is_request)
         {
             set_cookies( request, set_cookie->value );
         }
@@ -2670,12 +2670,12 @@ static BOOL handle_redirect( struct request *request, DWORD status )
         }
         else
         {
-            if ((p = strrchrW( request->path, '/' ))) *p = 0;
-            len = strlenW( request->path ) + 1 + len_loc;
+            if ((p = wcsrchr( request->path, '/' ))) *p = 0;
+            len = lstrlenW( request->path ) + 1 + len_loc;
             if (!(path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
-            strcpyW( path, request->path );
-            strcatW( path, slashW );
-            memcpy( path + strlenW(path), location, len_loc * sizeof(WCHAR) );
+            lstrcpyW( path, request->path );
+            lstrcatW( path, slashW );
+            memcpy( path + lstrlenW(path), location, len_loc * sizeof(WCHAR) );
             path[len_loc] = 0;
         }
         heap_free( request->path );
@@ -2705,7 +2705,7 @@ static BOOL handle_redirect( struct request *request, DWORD status )
         hostname[len] = 0;
 
         port = uc.nPort ? uc.nPort : (uc.nScheme == INTERNET_SCHEME_HTTPS ? 443 : 80);
-        if (strcmpiW( connect->hostname, hostname ) || connect->serverport != port)
+        if (wcsicmp( connect->hostname, hostname ) || connect->serverport != port)
         {
             heap_free( connect->hostname );
             connect->hostname = hostname;
@@ -2739,7 +2739,7 @@ static BOOL handle_redirect( struct request *request, DWORD status )
     if ((index = get_header_index( request, attr_content_type, 0, TRUE )) >= 0) delete_header( request, index );
     if ((index = get_header_index( request, attr_content_length, 0, TRUE )) >= 0 ) delete_header( request, index );
 
-    if (status != HTTP_STATUS_REDIRECT_KEEP_VERB && !strcmpW( request->verb, postW ))
+    if (status != HTTP_STATUS_REDIRECT_KEEP_VERB && !wcscmp( request->verb, postW ))
     {
         heap_free( request->verb );
         request->verb = strdupW( getW );
@@ -2762,7 +2762,7 @@ static BOOL is_passport_request( struct request *request )
     if (!(request->connect->session->passport_flags & WINHTTP_ENABLE_PASSPORT_AUTH) ||
         !query_headers( request, WINHTTP_QUERY_WWW_AUTHENTICATE, NULL, buf, &len, NULL )) return FALSE;
 
-    if (!strncmpiW( buf, passportW, ARRAY_SIZE(passportW) ) &&
+    if (!wcsnicmp( buf, passportW, ARRAY_SIZE(passportW) ) &&
         (buf[ARRAY_SIZE(passportW)] == ' ' || !buf[ARRAY_SIZE(passportW)])) return TRUE;
 
     return FALSE;
@@ -2772,7 +2772,7 @@ static BOOL handle_passport_redirect( struct request *request )
 {
     static const WCHAR status401W[] = {'4','0','1',0};
     DWORD flags = WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE;
-    int i, len = strlenW( request->raw_headers );
+    int i, len = lstrlenW( request->raw_headers );
     WCHAR *p = request->raw_headers;
 
     if (!process_header( request, attr_status, status401W, flags, FALSE )) return FALSE;
@@ -3677,14 +3677,14 @@ static HRESULT WINAPI winhttp_request_SetRequestHeader(
         err = ERROR_WINHTTP_CANNOT_CALL_AFTER_SEND;
         goto done;
     }
-    len = strlenW( header ) + 4;
-    if (value) len += strlenW( value );
+    len = lstrlenW( header ) + 4;
+    if (value) len += lstrlenW( value );
     if (!(str = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
         err = ERROR_OUTOFMEMORY;
         goto done;
     }
-    sprintfW( str, fmtW, header, value ? value : emptyW );
+    swprintf( str, len + 1, fmtW, header, value ? value : emptyW );
     if (!WinHttpAddRequestHeaders( request->hrequest, str, len,
                                    WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE ))
     {
@@ -3843,7 +3843,7 @@ static HRESULT request_receive( struct winhttp_request *request )
         return HRESULT_FROM_WIN32( GetLastError() );
     }
     if ((err = wait_for_completion( request ))) return HRESULT_FROM_WIN32( err );
-    if (!strcmpW( request->verb, headW ))
+    if (!wcscmp( request->verb, headW ))
     {
         request->state = REQUEST_STATE_RESPONSE_RECEIVED;
         return S_OK;
@@ -3920,9 +3920,9 @@ static void request_set_utf8_content_type( struct winhttp_request *request )
     WCHAR headerW[64];
     int len;
 
-    len = sprintfW( headerW, fmtW, attr_content_type, text_plainW );
+    len = swprintf( headerW, ARRAY_SIZE(headerW), fmtW, attr_content_type, text_plainW );
     WinHttpAddRequestHeaders( request->hrequest, headerW, len, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW );
-    len = sprintfW( headerW, fmtW, attr_content_type, charset_utf8W );
+    len = swprintf( headerW, ARRAY_SIZE(headerW), fmtW, attr_content_type, charset_utf8W );
     WinHttpAddRequestHeaders( request->hrequest, headerW, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
 }
 
@@ -3936,14 +3936,14 @@ static HRESULT request_send( struct winhttp_request *request )
     DWORD err;
 
     if ((err = request_set_parameters( request ))) return HRESULT_FROM_WIN32( err );
-    if (strcmpW( request->verb, getW ))
+    if (wcscmp( request->verb, getW ))
     {
         VariantInit( &data );
         if (V_VT( &request->data ) == VT_BSTR)
         {
             UINT cp = CP_ACP;
             const WCHAR *str = V_BSTR( &request->data );
-            int i, len = strlenW( str );
+            int i, len = lstrlenW( str );
 
             for (i = 0; i < len; i++)
             {
@@ -4153,14 +4153,14 @@ static DWORD request_get_codepage( struct winhttp_request *request, UINT *codepa
         {
             return GetLastError();
         }
-        if ((p = strstrW( buffer, charsetW )))
+        if ((p = wcsstr( buffer, charsetW )))
         {
-            p += strlenW( charsetW );
+            p += lstrlenW( charsetW );
             while (*p == ' ') p++;
             if (*p++ == '=')
             {
                 while (*p == ' ') p++;
-                if (!strcmpiW( p, utf8W )) *codepage = CP_UTF8;
+                if (!wcsicmp( p, utf8W )) *codepage = CP_UTF8;
             }
         }
         heap_free( buffer );
@@ -4506,7 +4506,7 @@ static HRESULT WINAPI winhttp_request_put_Option(
             request->url_codepage = V_UI4( &cp );
             TRACE("URL codepage: %u\n", request->url_codepage);
         }
-        else if (V_VT( &value ) == VT_BSTR && !strcmpiW( V_BSTR( &value ), utf8W ))
+        else if (V_VT( &value ) == VT_BSTR && !wcsicmp( V_BSTR( &value ), utf8W ))
         {
             TRACE("URL codepage: UTF-8\n");
             request->url_codepage = CP_UTF8;

@@ -16,9 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <stdarg.h>
-#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -379,7 +377,7 @@ static BOOL domain_matches(LPCWSTR server, LPCWSTR domain)
     static const WCHAR localW[] = { '<','l','o','c','a','l','>',0 };
     BOOL ret = FALSE;
 
-    if (!strcmpiW( domain, localW ) && !strchrW( server, '.' ))
+    if (!wcsicmp( domain, localW ) && !wcschr( server, '.' ))
         ret = TRUE;
     else if (*domain == '*')
     {
@@ -391,12 +389,12 @@ static BOOL domain_matches(LPCWSTR server, LPCWSTR domain)
              * the wildcard exactly.  E.g. if the wildcard is *.a.b, and the
              * hostname is www.foo.a.b, it matches, but a.b does not.
              */
-            dot = strchrW( server, '.' );
+            dot = wcschr( server, '.' );
             if (dot)
             {
-                int len = strlenW( dot + 1 );
+                int len = lstrlenW( dot + 1 );
 
-                if (len > strlenW( domain + 2 ))
+                if (len > lstrlenW( domain + 2 ))
                 {
                     LPCWSTR ptr;
 
@@ -404,8 +402,8 @@ static BOOL domain_matches(LPCWSTR server, LPCWSTR domain)
                      * could be a subdomain.  Compare the last portion of the
                      * server's domain.
                      */
-                    ptr = dot + len + 1 - strlenW( domain + 2 );
-                    if (!strcmpiW( ptr, domain + 2 ))
+                    ptr = dot + len + 1 - lstrlenW( domain + 2 );
+                    if (!wcsicmp( ptr, domain + 2 ))
                     {
                         /* This is only a match if the preceding character is
                          * a '.', i.e. that it is a matching domain.  E.g.
@@ -416,12 +414,12 @@ static BOOL domain_matches(LPCWSTR server, LPCWSTR domain)
                     }
                 }
                 else
-                    ret = !strcmpiW( dot + 1, domain + 2 );
+                    ret = !wcsicmp( dot + 1, domain + 2 );
             }
         }
     }
     else
-        ret = !strcmpiW( server, domain );
+        ret = !wcsicmp( server, domain );
     return ret;
 }
 
@@ -438,9 +436,9 @@ static BOOL should_bypass_proxy(struct session *session, LPCWSTR server)
     do {
         LPCWSTR tmp = ptr;
 
-        ptr = strchrW( ptr, ';' );
+        ptr = wcschr( ptr, ';' );
         if (!ptr)
-            ptr = strchrW( tmp, ' ' );
+            ptr = wcschr( tmp, ' ' );
         if (ptr)
         {
             if (ptr - tmp < MAX_HOST_NAME_LENGTH)
@@ -468,9 +466,9 @@ BOOL set_server_for_hostname( struct connect *connect, const WCHAR *server, INTE
     {
         LPCWSTR colon;
 
-        if ((colon = strchrW( session->proxy_server, ':' )))
+        if ((colon = wcschr( session->proxy_server, ':' )))
         {
-            if (!connect->servername || strncmpiW( connect->servername,
+            if (!connect->servername || wcsnicmp( connect->servername,
                 session->proxy_server, colon - session->proxy_server - 1 ))
             {
                 heap_free( connect->servername );
@@ -485,14 +483,14 @@ BOOL set_server_for_hostname( struct connect *connect, const WCHAR *server, INTE
                     (colon - session->proxy_server) * sizeof(WCHAR) );
                 connect->servername[colon - session->proxy_server] = 0;
                 if (*(colon + 1))
-                    connect->serverport = atoiW( colon + 1 );
+                    connect->serverport = wcstol( colon + 1, NULL, 10 );
                 else
                     connect->serverport = INTERNET_DEFAULT_PORT;
             }
         }
         else
         {
-            if (!connect->servername || strcmpiW( connect->servername,
+            if (!connect->servername || wcsicmp( connect->servername,
                 session->proxy_server ))
             {
                 heap_free( connect->servername );
@@ -635,7 +633,7 @@ static void request_destroy( struct object_header *hdr )
 static void str_to_buffer( WCHAR *buffer, const WCHAR *str, LPDWORD buflen )
 {
     int len = 0;
-    if (str) len = strlenW( str );
+    if (str) len = lstrlenW( str );
     if (buffer && *buflen > len)
     {
         if (str) memcpy( buffer, str, len * sizeof(WCHAR) );
@@ -1075,13 +1073,13 @@ static BOOL add_accept_types_header( struct request *request, const WCHAR **type
 
 static WCHAR *get_request_path( const WCHAR *object )
 {
-    int len = object ? strlenW(object) : 0;
+    int len = object ? lstrlenW(object) : 0;
     WCHAR *p, *ret;
 
     if (!object || object[0] != '/') len++;
     if (!(p = ret = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return NULL;
     if (!object || object[0] != '/') *p++ = '/';
-    if (object) strcpyW( p, object );
+    if (object) lstrcpyW( p, object );
     ret[len] = 0;
     return ret;
 }
@@ -1421,12 +1419,12 @@ static WCHAR *build_wpad_url( const char *hostname, const struct addrinfo *ai )
 
     if (!reverse_lookup( ai, name, sizeof(name) )) hostname = name;
 
-    len = strlenW( httpW ) + strlen( hostname ) + strlenW( wpadW );
+    len = lstrlenW( httpW ) + strlen( hostname ) + lstrlenW( wpadW );
     if (!(ret = p = GlobalAlloc( 0, (len + 1) * sizeof(WCHAR) ))) return NULL;
-    strcpyW( p, httpW );
-    p += strlenW( httpW );
+    lstrcpyW( p, httpW );
+    p += lstrlenW( httpW );
     while (*hostname) { *p++ = *hostname++; }
-    strcpyW( p, wpadW );
+    lstrcpyW( p, wpadW );
     return ret;
 }
 
@@ -2007,9 +2005,9 @@ BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
 
         if (info->dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY)
         {
-            size += strlenW( info->lpszProxy );
+            size += lstrlenW( info->lpszProxy );
             if (info->lpszProxyBypass)
-                size += strlenW( info->lpszProxyBypass );
+                size += lstrlenW( info->lpszProxyBypass );
         }
         buf = heap_alloc( size );
         if (buf)
@@ -2025,14 +2023,14 @@ BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
                 BYTE *dst;
 
                 hdr->flags = PROXY_TYPE_PROXY;
-                *len++ = strlenW( info->lpszProxy );
+                *len++ = lstrlenW( info->lpszProxy );
                 for (dst = (BYTE *)len, src = info->lpszProxy; *src;
                     src++, dst++)
                     *dst = *src;
                 len = (DWORD *)dst;
                 if (info->lpszProxyBypass)
                 {
-                    *len++ = strlenW( info->lpszProxyBypass );
+                    *len++ = lstrlenW( info->lpszProxyBypass );
                     for (dst = (BYTE *)len, src = info->lpszProxyBypass; *src;
                         src++, dst++)
                         *dst = *src;
@@ -2176,7 +2174,7 @@ BOOL WINAPI WinHttpTimeFromSystemTime( const SYSTEMTIME *time, LPWSTR string )
         return FALSE;
     }
 
-    sprintfW( string, format,
+    swprintf( string, WINHTTP_TIME_FORMAT_BUFSIZE / sizeof(WCHAR), format,
               wkday[time->wDayOfWeek],
               time->wDay,
               month[time->wMonth - 1],
@@ -2215,15 +2213,15 @@ BOOL WINAPI WinHttpTimeToSystemTime( LPCWSTR string, SYSTEMTIME *time )
 
     SetLastError( ERROR_SUCCESS );
 
-    while (*s && !isalphaW( *s )) s++;
+    while (*s && !iswalpha( *s )) s++;
     if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return TRUE;
     time->wDayOfWeek = 7;
 
     for (i = 0; i < 7; i++)
     {
-        if (toupperW( wkday[i][0] ) == toupperW( s[0] ) &&
-            toupperW( wkday[i][1] ) == toupperW( s[1] ) &&
-            toupperW( wkday[i][2] ) == toupperW( s[2] ) )
+        if (towupper( wkday[i][0] ) == towupper( s[0] ) &&
+            towupper( wkday[i][1] ) == towupper( s[1] ) &&
+            towupper( wkday[i][2] ) == towupper( s[2] ) )
         {
             time->wDayOfWeek = i;
             break;
@@ -2231,19 +2229,19 @@ BOOL WINAPI WinHttpTimeToSystemTime( LPCWSTR string, SYSTEMTIME *time )
     }
 
     if (time->wDayOfWeek > 6) return TRUE;
-    while (*s && !isdigitW( *s )) s++;
-    time->wDay = strtolW( s, &end, 10 );
+    while (*s && !iswdigit( *s )) s++;
+    time->wDay = wcstol( s, &end, 10 );
     s = end;
 
-    while (*s && !isalphaW( *s )) s++;
+    while (*s && !iswalpha( *s )) s++;
     if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return TRUE;
     time->wMonth = 0;
 
     for (i = 0; i < 12; i++)
     {
-        if (toupperW( month[i][0]) == toupperW( s[0] ) &&
-            toupperW( month[i][1]) == toupperW( s[1] ) &&
-            toupperW( month[i][2]) == toupperW( s[2] ) )
+        if (towupper( month[i][0]) == towupper( s[0] ) &&
+            towupper( month[i][1]) == towupper( s[1] ) &&
+            towupper( month[i][2]) == towupper( s[2] ) )
         {
             time->wMonth = i + 1;
             break;
@@ -2251,24 +2249,24 @@ BOOL WINAPI WinHttpTimeToSystemTime( LPCWSTR string, SYSTEMTIME *time )
     }
     if (time->wMonth == 0) return TRUE;
 
-    while (*s && !isdigitW( *s )) s++;
+    while (*s && !iswdigit( *s )) s++;
     if (*s == '\0') return TRUE;
-    time->wYear = strtolW( s, &end, 10 );
+    time->wYear = wcstol( s, &end, 10 );
     s = end;
 
-    while (*s && !isdigitW( *s )) s++;
+    while (*s && !iswdigit( *s )) s++;
     if (*s == '\0') return TRUE;
-    time->wHour = strtolW( s, &end, 10 );
+    time->wHour = wcstol( s, &end, 10 );
     s = end;
 
-    while (*s && !isdigitW( *s )) s++;
+    while (*s && !iswdigit( *s )) s++;
     if (*s == '\0') return TRUE;
-    time->wMinute = strtolW( s, &end, 10 );
+    time->wMinute = wcstol( s, &end, 10 );
     s = end;
 
-    while (*s && !isdigitW( *s )) s++;
+    while (*s && !iswdigit( *s )) s++;
     if (*s == '\0') return TRUE;
-    time->wSecond = strtolW( s, &end, 10 );
+    time->wSecond = wcstol( s, &end, 10 );
 
     time->wMilliseconds = 0;
     return TRUE;
