@@ -25,7 +25,6 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <sys/time.h>
 #ifdef SONAME_LIBDBUS_1
 # include <dbus/dbus.h>
 #endif
@@ -771,6 +770,8 @@ void initialize_dbus(void)
     CloseHandle( handle );
 }
 
+#if !defined(HAVE_SYSTEMCONFIGURATION_SCDYNAMICSTORECOPYDHCPINFO_H) || !defined(HAVE_SYSTEMCONFIGURATION_SCNETWORKCONFIGURATION_H)
+
 /* The udisks dispatch loop will block all threads using the same connection, so we'll
    use a private connection. Multiple threads can make methods calls at the same time
    on the same connection, according to the documentation.
@@ -1033,6 +1034,7 @@ ULONG get_dhcp_request_param( const WCHAR *adapter, struct mountmgr_dhcp_request
     p_dbus_message_unref( reply );
     return ret;
 }
+#endif
 
 #else  /* SONAME_LIBDBUS_1 */
 
