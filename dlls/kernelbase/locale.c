@@ -41,17 +41,124 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 #define CALINFO_MAX_YEAR 2029
 
-static const WCHAR codepages_key[] =
-{ 'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-  '\\','C','o','n','t','r','o','l','\\','N','l','s','\\','C','o','d','e','P','a','g','e',0};
-static const WCHAR language_groups_key[] =
-{ 'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-  '\\','C','o','n','t','r','o','l','\\','N','l','s',
-  '\\','L','a','n','g','u','a','g','e',' ','G','r','o','u','p','s',0 };
-static const WCHAR locales_key[] =
-{ 'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-  '\\','C','o','n','t','r','o','l','\\','N','l','s','\\','L','o','c','a','l','e',0};
-static const WCHAR altsort_key[] = {'A','l','t','e','r','n','a','t','e',' ','S','o','r','t','s',0};
+static HANDLE kernel32_handle;
+
+static const struct registry_value
+{
+    DWORD           lctype;
+    const WCHAR    *name;
+} registry_values[] =
+{
+    { LOCALE_ICALENDARTYPE, L"iCalendarType" },
+    { LOCALE_ICURRDIGITS, L"iCurrDigits" },
+    { LOCALE_ICURRENCY, L"iCurrency" },
+    { LOCALE_IDIGITS, L"iDigits" },
+    { LOCALE_IFIRSTDAYOFWEEK, L"iFirstDayOfWeek" },
+    { LOCALE_IFIRSTWEEKOFYEAR, L"iFirstWeekOfYear" },
+    { LOCALE_ILZERO, L"iLZero" },
+    { LOCALE_IMEASURE, L"iMeasure" },
+    { LOCALE_INEGCURR, L"iNegCurr" },
+    { LOCALE_INEGNUMBER, L"iNegNumber" },
+    { LOCALE_IPAPERSIZE, L"iPaperSize" },
+    { LOCALE_ITIME, L"iTime" },
+    { LOCALE_S1159, L"s1159" },
+    { LOCALE_S2359, L"s2359" },
+    { LOCALE_SCURRENCY, L"sCurrency" },
+    { LOCALE_SDATE, L"sDate" },
+    { LOCALE_SDECIMAL, L"sDecimal" },
+    { LOCALE_SGROUPING, L"sGrouping" },
+    { LOCALE_SLIST, L"sList" },
+    { LOCALE_SLONGDATE, L"sLongDate" },
+    { LOCALE_SMONDECIMALSEP, L"sMonDecimalSep" },
+    { LOCALE_SMONGROUPING, L"sMonGrouping" },
+    { LOCALE_SMONTHOUSANDSEP, L"sMonThousandSep" },
+    { LOCALE_SNEGATIVESIGN, L"sNegativeSign" },
+    { LOCALE_SPOSITIVESIGN, L"sPositiveSign" },
+    { LOCALE_SSHORTDATE, L"sShortDate" },
+    { LOCALE_STHOUSAND, L"sThousand" },
+    { LOCALE_STIME, L"sTime" },
+    { LOCALE_STIMEFORMAT, L"sTimeFormat" },
+    { LOCALE_SYEARMONTH, L"sYearMonth" },
+    /* The following are not listed under MSDN as supported,
+     * but seem to be used and also stored in the registry.
+     */
+    { LOCALE_SNAME, L"LocaleName" },
+    { LOCALE_ICOUNTRY, L"iCountry" },
+    { LOCALE_IDATE, L"iDate" },
+    { LOCALE_ILDATE, L"iLDate" },
+    { LOCALE_ITLZERO, L"iTLZero" },
+    { LOCALE_SCOUNTRY, L"sCountry" },
+    { LOCALE_SABBREVLANGNAME, L"sLanguage" },
+    { LOCALE_IDIGITSUBSTITUTION, L"Numshape" },
+    { LOCALE_SNATIVEDIGITS, L"sNativeDigits" },
+    { LOCALE_ITIMEMARKPOSN, L"iTimePrefix" },
+};
+
+static UINT ansi_cp = 1252;
+static UINT oem_cp = 437;
+static UINT mac_cp = 10000;
+static HKEY intl_key;
+static HKEY nls_key;
+
+
+/***********************************************************************
+ *		init_locale
+ */
+void init_locale(void)
+{
+    LCID lcid = GetUserDefaultLCID();
+    WCHAR bufferW[80];
+    DWORD count, i;
+    HKEY hkey;
+
+    kernel32_handle = GetModuleHandleW( L"kernel32.dll" );
+
+    GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                    (WCHAR *)&ansi_cp, sizeof(ansi_cp)/sizeof(WCHAR) );
+    GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTMACCODEPAGE | LOCALE_RETURN_NUMBER,
+                    (WCHAR *)&mac_cp, sizeof(mac_cp)/sizeof(WCHAR) );
+    GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
+                    (WCHAR *)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR) );
+
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Nls",
+                     0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &nls_key, NULL );
+    RegCreateKeyExW( HKEY_CURRENT_USER, L"Control Panel\\International",
+                     0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &intl_key, NULL );
+
+    /* Update registry contents if the user locale has changed.
+     * This simulates the action of the Windows control panel. */
+
+    count = sizeof(bufferW);
+    if (!RegQueryValueExW( intl_key, L"Locale", NULL, NULL, (BYTE *)bufferW, &count ))
+    {
+        if (wcstoul( bufferW, NULL, 16 ) == lcid) return;  /* already set correctly */
+        TRACE( "updating registry, locale changed %s -> %08x\n", debugstr_w(bufferW), lcid );
+    }
+    else TRACE( "updating registry, locale changed none -> %08x\n", lcid );
+    swprintf( bufferW, ARRAY_SIZE(bufferW), L"%08x", lcid );
+    RegSetValueExW( intl_key, L"Locale", 0, REG_SZ,
+                    (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
+
+    for (i = 0; i < ARRAY_SIZE(registry_values); i++)
+    {
+        GetLocaleInfoW( LOCALE_USER_DEFAULT, registry_values[i].lctype | LOCALE_NOUSEROVERRIDE,
+                        bufferW, ARRAY_SIZE( bufferW ));
+        RegSetValueExW( intl_key, registry_values[i].name, 0, REG_SZ,
+                        (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
+    }
+
+    if (!RegCreateKeyExW( nls_key, L"Codepage",
+                          0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+    {
+        count = swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03d", ansi_cp );
+        RegSetValueExW( hkey, L"ACP", 0, REG_SZ, (BYTE *)bufferW, (count + 1) * sizeof(WCHAR) );
+        count = swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03d", oem_cp );
+        RegSetValueExW( hkey, L"OEMCP", 0, REG_SZ, (BYTE *)bufferW, (count + 1) * sizeof(WCHAR) );
+        count = swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03d", mac_cp );
+        RegSetValueExW( hkey, L"MACCP", 0, REG_SZ, (BYTE *)bufferW, (count + 1) * sizeof(WCHAR) );
+        RegCloseKey( hkey );
+    }
+}
 
 
 /* Note: the Internal_ functions are not documented. The number of parameters
@@ -181,8 +288,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumLanguageGroupLocales( LANGGROUPLOCALE
         return FALSE;
     }
 
-    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, locales_key, 0, KEY_READ, &key )) return FALSE;
-    if (RegOpenKeyExW( key, altsort_key, 0, KEY_READ, &altkey )) altkey = 0;
+    if (RegOpenKeyExW( nls_key, L"Locale", 0, KEY_READ, &key )) return FALSE;
+    if (RegOpenKeyExW( key, L"Alternate Sorts", 0, KEY_READ, &altkey )) altkey = 0;
 
     for (;;)
     {
@@ -222,7 +329,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumSystemCodePages( CODEPAGE_ENUMPROCW p
     DWORD name_len, type, index = 0;
     HKEY key;
 
-    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, codepages_key, 0, KEY_READ, &key )) return FALSE;
+    if (RegOpenKeyExW( nls_key, L"Codepage", 0, KEY_READ, &key )) return FALSE;
 
     for (;;)
     {
@@ -273,7 +380,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumSystemLanguageGroups( LANGUAGEGROUP_E
         return FALSE;
     }
 
-    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, language_groups_key, 0, KEY_READ, &key )) return FALSE;
+    if (RegOpenKeyExW( nls_key, L"Language Groups", 0, KEY_READ, &key )) return FALSE;
 
     for (;;)
     {
@@ -366,7 +473,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumUILanguages( UILANGUAGE_ENUMPROCW pro
 	return FALSE;
     }
 
-    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, locales_key, 0, KEY_READ, &key )) return FALSE;
+    if (RegOpenKeyExW( nls_key, L"Locale", 0, KEY_READ, &key )) return FALSE;
 
     for (;;)
     {
@@ -516,7 +623,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesA( LOCALE_ENUMPROCA proc, DWORD f
     DWORD name_len, type, index = 0;
     HKEY key;
 
-    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, locales_key, 0, KEY_READ, &key )) return FALSE;
+    if (RegOpenKeyExW( nls_key, L"Locale", 0, KEY_READ, &key )) return FALSE;
 
     for (;;)
     {
@@ -540,7 +647,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesW( LOCALE_ENUMPROCW proc, DWORD f
     DWORD name_len, type, index = 0;
     HKEY key;
 
-    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, locales_key, 0, KEY_READ, &key )) return FALSE;
+    if (RegOpenKeyExW( nls_key, L"Locale", 0, KEY_READ, &key )) return FALSE;
 
     for (;;)
     {
@@ -572,8 +679,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesEx( LOCALE_ENUMPROCEX proc, DWORD
         return FALSE;
     }
 
-    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, locales_key, 0, KEY_READ, &key )) return FALSE;
-    if (RegOpenKeyExW( key, altsort_key, 0, KEY_READ, &altkey )) altkey = 0;
+    if (RegOpenKeyExW( nls_key, L"Locale", 0, KEY_READ, &key )) return FALSE;
+    if (RegOpenKeyExW( key, L"Alternate Sorts", 0, KEY_READ, &altkey )) altkey = 0;
 
     for (;;)
     {
@@ -680,7 +787,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsValidLanguageGroup( LGRPID id, DWORD flags )
     BOOL ret = FALSE;
     HKEY key;
 
-    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, language_groups_key, 0, KEY_READ, &key )) return FALSE;
+    if (RegOpenKeyExW( nls_key, L"Language Groups", 0, KEY_READ, &key )) return FALSE;
 
     swprintf( name, ARRAY_SIZE(name), format, id );
     if (!RegQueryValueExW( key, name, NULL, &type, (BYTE *)value, &value_len ) && type == REG_SZ)

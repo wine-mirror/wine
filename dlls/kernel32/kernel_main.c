@@ -85,9 +85,6 @@ static BOOL process_attach( HMODULE module )
 
     NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
 
-    /* Setup registry locale information */
-    LOCALE_InitRegistry();
-
     /* Setup registry timezone information */
     TIMEZONE_InitRegistry();
 

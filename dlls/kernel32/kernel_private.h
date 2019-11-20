@@ -74,7 +74,6 @@ extern void COMPUTERNAME_Init(void) DECLSPEC_HIDDEN;
 
 /* locale.c */
 extern void LOCALE_Init(void) DECLSPEC_HIDDEN;
-extern void LOCALE_InitRegistry(void) DECLSPEC_HIDDEN;
 
 /* time.c */
 extern void TIMEZONE_InitRegistry(void) DECLSPEC_HIDDEN;
