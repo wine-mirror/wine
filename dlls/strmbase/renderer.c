@@ -296,7 +296,7 @@ static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void
     return S_OK;
 }
 
-static HRESULT WINAPI BaseRenderer_Receive(BaseInputPin *pin, IMediaSample *sample)
+static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSample *sample)
 {
     struct strmbase_renderer *filter = impl_from_IPin(&pin->pin.IPin_iface);
     return BaseRendererImpl_Receive(filter, sample);

@@ -37,7 +37,7 @@ typedef struct {
     struct strmbase_filter filter;
     IPersistPropertyBag IPersistPropertyBag_iface;
 
-    BaseInputPin sink;
+    struct strmbase_sink sink;
     struct strmbase_source source;
 
     DWORD fcc_handler;
@@ -412,7 +412,7 @@ static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void
     return S_OK;
 }
 
-static HRESULT WINAPI AVICompressorIn_Receive(BaseInputPin *base, IMediaSample *pSample)
+static HRESULT WINAPI AVICompressorIn_Receive(struct strmbase_sink *base, IMediaSample *pSample)
 {
     AVICompressor *This = impl_from_strmbase_pin(&base->pin);
     VIDEOINFOHEADER *src_videoinfo;

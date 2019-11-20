@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 #define ALIGN(x) ((x+1)/2*2)
 
 typedef struct {
-    BaseInputPin pin;
+    struct strmbase_sink pin;
     IAMStreamControl IAMStreamControl_iface;
     IPropertyBag IPropertyBag_iface;
     IQualityControl IQualityControl_iface;
@@ -1380,7 +1380,7 @@ static HRESULT sink_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE 
     return S_FALSE;
 }
 
-static HRESULT WINAPI AviMuxIn_Receive(BaseInputPin *base, IMediaSample *pSample)
+static HRESULT WINAPI AviMuxIn_Receive(struct strmbase_sink *base, IMediaSample *pSample)
 {
     AviMux *avimux = impl_from_strmbase_filter(base->pin.filter);
     AviMuxIn *avimuxin = CONTAINING_RECORD(base, AviMuxIn, pin);
@@ -1698,8 +1698,7 @@ static const IAMStreamControlVtbl AviMuxIn_AMStreamControlVtbl = {
 
 static inline AviMuxIn* AviMuxIn_from_IMemInputPin(IMemInputPin *iface)
 {
-    BaseInputPin *bip = CONTAINING_RECORD(iface, BaseInputPin, IMemInputPin_iface);
-    return CONTAINING_RECORD(bip, AviMuxIn, pin);
+    return CONTAINING_RECORD(iface, AviMuxIn, pin.IMemInputPin_iface);
 }
 
 static HRESULT WINAPI AviMuxIn_MemInputPin_QueryInterface(

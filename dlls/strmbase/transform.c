@@ -57,7 +57,7 @@ static HRESULT sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE
     return S_OK;
 }
 
-static HRESULT WINAPI TransformFilter_Input_Receive(BaseInputPin *This, IMediaSample *pInSample)
+static HRESULT WINAPI TransformFilter_Input_Receive(struct strmbase_sink *This, IMediaSample *pInSample)
 {
     TransformFilter *pTransform = impl_from_sink_IPin(&This->pin.IPin_iface);
     HRESULT hr;

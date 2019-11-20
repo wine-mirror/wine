@@ -719,11 +719,9 @@ void strmbase_source_cleanup(struct strmbase_source *pin)
     pin->pAllocator = NULL;
 }
 
-/*** Input Pin implementation ***/
-
-static inline BaseInputPin *impl_BaseInputPin_from_IPin( IPin *iface )
+static struct strmbase_sink *impl_sink_from_IPin(IPin *iface)
 {
-    return CONTAINING_RECORD(iface, BaseInputPin, pin.IPin_iface);
+    return CONTAINING_RECORD(iface, struct strmbase_sink, pin.IPin_iface);
 }
 
 HRESULT WINAPI BaseInputPinImpl_Connect(IPin *iface, IPin *pin, const AM_MEDIA_TYPE *pmt)
@@ -735,7 +733,7 @@ HRESULT WINAPI BaseInputPinImpl_Connect(IPin *iface, IPin *pin, const AM_MEDIA_T
 
 HRESULT WINAPI BaseInputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
-    BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
+    struct strmbase_sink *This = impl_sink_from_IPin(iface);
     PIN_DIRECTION pindirReceive;
     HRESULT hr = S_OK;
 
@@ -788,8 +786,8 @@ static HRESULT deliver_endofstream(IPin* pin, LPVOID unused)
 
 HRESULT WINAPI BaseInputPinImpl_EndOfStream(IPin * iface)
 {
+    struct strmbase_sink *This = impl_sink_from_IPin(iface);
     HRESULT hr = S_OK;
-    BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
 
     TRACE("(%p)->()\n", This);
 
@@ -812,7 +810,7 @@ static HRESULT deliver_beginflush(IPin* pin, LPVOID unused)
 
 HRESULT WINAPI BaseInputPinImpl_BeginFlush(IPin * iface)
 {
-    BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
+    struct strmbase_sink *This = impl_sink_from_IPin(iface);
     HRESULT hr;
     TRACE("(%p) semi-stub\n", This);
 
@@ -832,7 +830,7 @@ static HRESULT deliver_endflush(IPin* pin, LPVOID unused)
 
 HRESULT WINAPI BaseInputPinImpl_EndFlush(IPin * iface)
 {
-    BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
+    struct strmbase_sink *This = impl_sink_from_IPin(iface);
     HRESULT hr;
     TRACE("(%p)->()\n", This);
 
@@ -873,35 +871,35 @@ HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME start, R
 
 /*** IMemInputPin implementation ***/
 
-static inline BaseInputPin *impl_from_IMemInputPin( IMemInputPin *iface )
+static inline struct strmbase_sink *impl_from_IMemInputPin(IMemInputPin *iface)
 {
-    return CONTAINING_RECORD(iface, BaseInputPin, IMemInputPin_iface);
+    return CONTAINING_RECORD(iface, struct strmbase_sink, IMemInputPin_iface);
 }
 
 static HRESULT WINAPI MemInputPin_QueryInterface(IMemInputPin * iface, REFIID riid, LPVOID * ppv)
 {
-    BaseInputPin *This = impl_from_IMemInputPin(iface);
+    struct strmbase_sink *This = impl_from_IMemInputPin(iface);
 
     return IPin_QueryInterface(&This->pin.IPin_iface, riid, ppv);
 }
 
 static ULONG WINAPI MemInputPin_AddRef(IMemInputPin * iface)
 {
-    BaseInputPin *This = impl_from_IMemInputPin(iface);
+    struct strmbase_sink *This = impl_from_IMemInputPin(iface);
 
     return IPin_AddRef(&This->pin.IPin_iface);
 }
 
 static ULONG WINAPI MemInputPin_Release(IMemInputPin * iface)
 {
-    BaseInputPin *This = impl_from_IMemInputPin(iface);
+    struct strmbase_sink *This = impl_from_IMemInputPin(iface);
 
     return IPin_Release(&This->pin.IPin_iface);
 }
 
 static HRESULT WINAPI MemInputPin_GetAllocator(IMemInputPin * iface, IMemAllocator ** ppAllocator)
 {
-    BaseInputPin *This = impl_from_IMemInputPin(iface);
+    struct strmbase_sink *This = impl_from_IMemInputPin(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppAllocator);
 
@@ -914,7 +912,7 @@ static HRESULT WINAPI MemInputPin_GetAllocator(IMemInputPin * iface, IMemAllocat
 
 static HRESULT WINAPI MemInputPin_NotifyAllocator(IMemInputPin * iface, IMemAllocator * pAllocator, BOOL bReadOnly)
 {
-    BaseInputPin *This = impl_from_IMemInputPin(iface);
+    struct strmbase_sink *This = impl_from_IMemInputPin(iface);
 
     TRACE("(%p/%p)->(%p, %d)\n", This, iface, pAllocator, bReadOnly);
 
@@ -942,7 +940,7 @@ static HRESULT WINAPI MemInputPin_NotifyAllocator(IMemInputPin * iface, IMemAllo
 
 static HRESULT WINAPI MemInputPin_GetAllocatorRequirements(IMemInputPin * iface, ALLOCATOR_PROPERTIES * pProps)
 {
-    BaseInputPin *This = impl_from_IMemInputPin(iface);
+    struct strmbase_sink *This = impl_from_IMemInputPin(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pProps);
 
@@ -953,7 +951,7 @@ static HRESULT WINAPI MemInputPin_GetAllocatorRequirements(IMemInputPin * iface,
 
 static HRESULT WINAPI MemInputPin_Receive(IMemInputPin * iface, IMediaSample * pSample)
 {
-    BaseInputPin *This = impl_from_IMemInputPin(iface);
+    struct strmbase_sink *This = impl_from_IMemInputPin(iface);
     HRESULT hr = S_FALSE;
 
     /* this trace commented out for performance reasons */
@@ -965,8 +963,8 @@ static HRESULT WINAPI MemInputPin_Receive(IMemInputPin * iface, IMediaSample * p
 
 static HRESULT WINAPI MemInputPin_ReceiveMultiple(IMemInputPin * iface, IMediaSample ** pSamples, LONG nSamples, LONG *nSamplesProcessed)
 {
+    struct strmbase_sink *This = impl_from_IMemInputPin(iface);
     HRESULT hr = S_OK;
-    BaseInputPin *This = impl_from_IMemInputPin(iface);
 
     TRACE("(%p/%p)->(%p, %d, %p)\n", This, iface, pSamples, nSamples, nSamplesProcessed);
 
@@ -982,7 +980,7 @@ static HRESULT WINAPI MemInputPin_ReceiveMultiple(IMemInputPin * iface, IMediaSa
 
 static HRESULT WINAPI MemInputPin_ReceiveCanBlock(IMemInputPin * iface)
 {
-    BaseInputPin *This = impl_from_IMemInputPin(iface);
+    struct strmbase_sink *This = impl_from_IMemInputPin(iface);
 
     TRACE("(%p/%p)->()\n", This, iface);
 
@@ -1002,7 +1000,7 @@ static const IMemInputPinVtbl MemInputPin_Vtbl =
     MemInputPin_ReceiveCanBlock
 };
 
-void strmbase_sink_init(BaseInputPin *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
+void strmbase_sink_init(struct strmbase_sink *pin, const IPinVtbl *vtbl, struct strmbase_filter *filter,
         const WCHAR *name, const BaseInputPinFuncTable *func_table, IMemAllocator *allocator)
 {
     memset(pin, 0, sizeof(*pin));
@@ -1018,7 +1016,7 @@ void strmbase_sink_init(BaseInputPin *pin, const IPinVtbl *vtbl, struct strmbase
     pin->IMemInputPin_iface.lpVtbl = &MemInputPin_Vtbl;
 }
 
-void strmbase_sink_cleanup(BaseInputPin *pin)
+void strmbase_sink_cleanup(struct strmbase_sink *pin)
 {
     FreeMediaType(&pin->pin.mt);
     if (pin->pAllocator)

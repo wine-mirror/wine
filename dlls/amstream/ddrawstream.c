@@ -33,13 +33,6 @@ static const WCHAR sink_id[] = {'I','{','A','3','5','F','F','5','6','A',
 static HRESULT ddrawstreamsample_create(IDirectDrawMediaStream *parent, IDirectDrawSurface *surface,
     const RECT *rect, IDirectDrawStreamSample **ddraw_stream_sample);
 
-struct ddraw_stream;
-
-typedef struct {
-    BaseInputPin pin;
-    struct ddraw_stream *parent;
-} DirectDrawMediaStreamInputPin;
-
 struct ddraw_stream
 {
     IAMMediaStream IAMMediaStream_iface;

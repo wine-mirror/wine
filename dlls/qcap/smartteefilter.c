@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
 typedef struct {
     struct strmbase_filter filter;
-    BaseInputPin sink;
+    struct strmbase_sink sink;
     struct strmbase_source capture, preview;
 } SmartTeeFilter;
 
@@ -242,7 +242,7 @@ end:
     return hr;
 }
 
-static HRESULT WINAPI SmartTeeFilterInput_Receive(BaseInputPin *base, IMediaSample *inputSample)
+static HRESULT WINAPI SmartTeeFilterInput_Receive(struct strmbase_sink *base, IMediaSample *inputSample)
 {
     SmartTeeFilter *This = impl_from_strmbase_pin(&base->pin);
     IMediaSample *captureSample = NULL;
