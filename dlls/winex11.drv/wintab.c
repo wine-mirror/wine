@@ -929,13 +929,20 @@ static BOOL button_event( HWND hwnd, XEvent *event )
     gMsgPacket.pkTime = EVENT_x11_time_to_win32_time(button->time);
     gMsgPacket.pkSerialNumber = gSerial++;
     gMsgPacket.pkCursor = curnum;
-    gMsgPacket.pkX = button->axis_data[0];
-    gMsgPacket.pkY = button->axis_data[1];
-    gMsgPacket.pkOrientation.orAzimuth = figure_deg(button->axis_data[3],button->axis_data[4]);
-    gMsgPacket.pkOrientation.orAltitude = ((1000 - 15 * max(abs(button->axis_data[3]),
-                                                            abs(button->axis_data[4])))
-                                           * (gMsgPacket.pkStatus & TPS_INVERT?-1:1));
-    gMsgPacket.pkNormalPressure = button->axis_data[2];
+    if (button->axes_count > 0) {
+        gMsgPacket.pkX = button->axis_data[0];
+        gMsgPacket.pkY = button->axis_data[1];
+        gMsgPacket.pkOrientation.orAzimuth = figure_deg(button->axis_data[3],button->axis_data[4]);
+        gMsgPacket.pkOrientation.orAltitude = ((1000 - 15 * max(abs(button->axis_data[3]),
+                                                                abs(button->axis_data[4])))
+                                               * (gMsgPacket.pkStatus & TPS_INVERT?-1:1));
+        gMsgPacket.pkNormalPressure = button->axis_data[2];
+    } else {
+        gMsgPacket.pkX = last_packet.pkX;
+        gMsgPacket.pkY = last_packet.pkY;
+        gMsgPacket.pkOrientation = last_packet.pkOrientation;
+        gMsgPacket.pkNormalPressure = last_packet.pkNormalPressure;
+    }
     gMsgPacket.pkButtons = get_button_state(curnum);
     gMsgPacket.pkChanged = get_changed_state(&gMsgPacket);
     SendMessageW(hwndTabletDefault,WT_PACKET,gMsgPacket.pkSerialNumber,(LPARAM)hwnd);
