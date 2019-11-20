@@ -5780,20 +5780,6 @@ static void test_D3DKMTCreateDCFromMemory( void )
            test_data[i].name, create_desc.hBitmap);
 
         create_desc.Height = 7;
-        create_desc.Width = 0;
-        status = pD3DKMTCreateDCFromMemory( &create_desc );
-        ok(status == test_data[i].status, "%s: Got unexpected status %#x, expected %#x.\n",
-           test_data[i].name, status, test_data[i].status);
-        if (status == STATUS_SUCCESS)
-        {
-            destroy_desc.hDc = create_desc.hDc;
-            destroy_desc.hBitmap = create_desc.hBitmap;
-            status = pD3DKMTDestroyDCFromMemory( &destroy_desc );
-            ok(status == STATUS_SUCCESS, "%s: Got unexpected status %#x.\n", test_data[i].name, status);
-            create_desc.hDc = (void *)0x010baade;
-            create_desc.hBitmap = (void *)0x020baade;
-        }
-
         create_desc.Pitch = 0;
         status = pD3DKMTCreateDCFromMemory( &create_desc );
         ok(status == STATUS_INVALID_PARAMETER, "%s: Got unexpected status %#x.\n",
