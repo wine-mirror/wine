@@ -58,6 +58,6 @@ extern const char *debugstr_fourcc (DWORD fourcc) DECLSPEC_HIDDEN;
 extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
 
 /* dump whole DMUS_OBJECTDESC struct */
-extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
+extern void dump_DMUS_OBJECTDESC(DMUS_OBJECTDESC *pDesc) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DMUTILS_H */
