@@ -907,7 +907,6 @@ static void test_waittxempty(void)
             S(U(ovl_write)).Offset = 0;
             S(U(ovl_write)).OffsetHigh = 0;
             ovl_write.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-            before = GetTickCount();
             SetLastError(0xdeadbeef);
             res = WriteFile(hcom, tbuf, sizeof(tbuf), &bytes, &ovl_write);
             ok((!res && GetLastError() == ERROR_IO_PENDING) || (res && bytes == sizeof(tbuf)),
