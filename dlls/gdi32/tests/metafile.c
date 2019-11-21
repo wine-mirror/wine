@@ -2082,7 +2082,9 @@ static void test_mf_Blank(void)
     ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
     type = GetObjectType(hMetafile);
     ok(type == OBJ_METAFILE, "CloseMetaFile created object with type %d\n", type);
-    ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
+    type = GetObjectType(hdcMetafile);
+    ok(type == 0 || broken(type == OBJ_METADC) /* win10 >=1607 */,
+       "CloseMetaFile has to destroy metafile hdc (%d)\n", type);
 
     if (compare_mf_bits (hMetafile, MF_BLANK_BITS, sizeof(MF_BLANK_BITS),
         "mf_blank") != 0)
@@ -2249,6 +2251,7 @@ static void test_mf_Graphics(void)
     HDC hdcMetafile;
     HMETAFILE hMetafile;
     POINT oldpoint;
+    INT type;
     BOOL ret;
 
     hdcMetafile = CreateMetaFileA(NULL);
@@ -2275,7 +2278,9 @@ static void test_mf_Graphics(void)
 
     hMetafile = CloseMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
-    ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
+    type = GetObjectType(hdcMetafile);
+    ok(type == 0 || broken(type == OBJ_METADC) /* win10 >=1607 */,
+       "CloseMetaFile has to destroy metafile hdc (%d)\n", type);
 
     if (compare_mf_bits (hMetafile, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS),
         "mf_Graphics") != 0)
@@ -2296,6 +2301,7 @@ static void test_mf_PatternBrush(void)
     LOGBRUSH *orig_lb;
     HBRUSH hBrush;
     BOOL ret;
+    INT type;
 
     orig_lb = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LOGBRUSH));
 
@@ -2316,7 +2322,9 @@ static void test_mf_PatternBrush(void)
 
     hMetafile = CloseMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
-    ok(!GetObjectType(hdcMetafile), "CloseMetaFile has to destroy metafile hdc\n");
+    type = GetObjectType(hdcMetafile);
+    ok(type == 0 || broken(type == OBJ_METADC) /* win10 >=1607 */,
+       "CloseMetaFile has to destroy metafile hdc (%d)\n", type);
 
     if (compare_mf_bits (hMetafile, MF_PATTERN_BRUSH_BITS, sizeof(MF_PATTERN_BRUSH_BITS),
         "mf_Pattern_Brush") != 0)
