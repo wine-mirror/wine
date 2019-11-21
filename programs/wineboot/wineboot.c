@@ -1204,9 +1204,10 @@ static void update_user_profile(void)
         if (!RegCreateKeyExW(hkey, sid, 0, NULL, 0,
                              KEY_ALL_ACCESS, NULL, &profile_hkey, NULL))
         {
+            DWORD flags = 0;
             if (SHGetSpecialFolderPathW(NULL, profile, CSIDL_PROFILE, TRUE))
                 set_reg_value(profile_hkey, profile_image_path, profile);
-
+            RegSetValueExW( profile_hkey, L"Flags", 0, REG_DWORD, (const BYTE *)&flags, sizeof(flags) );
             RegCloseKey(profile_hkey);
         }
 
