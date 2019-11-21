@@ -191,27 +191,34 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
 
 };
 
-static const char * const WinVersionNames[NB_WINDOWS_VERSIONS] =
-{ /* no spaces in here ! */
-    "win20",                      /* WIN20 */
-    "win30",                      /* WIN30 */
-    "win31",                      /* WIN31 */
-    "win95",                      /* WIN95 */
-    "win98",                      /* WIN98 */
-    "winme",                      /* WINME */
-    "nt351",                      /* NT351 */
-    "nt40",                       /* NT40 */
-    "win2000,win2k,nt2k,nt2000",  /* NT2K */
-    "winxp",                      /* WINXP */
-    "winxp64",                    /* WINXP64 */
-    "win2003,win2k3",             /* WIN2K3 */
-    "vista,winvista",             /* WINVISTA*/
-    "win2008,win2k8",             /* WIN2K8 */
-    "win2008r2,win2k8r2",         /* WIN2K8R2 */
-    "win7",                       /* WIN7 */
-    "win8",                       /* WIN8 */
-    "win81",                      /* WIN81 */
-    "win10",                      /* WIN10 */
+static const struct { WCHAR name[12]; WINDOWS_VERSION ver; } version_names[] =
+{
+    { {'w','i','n','2','0',0}, WIN20 },
+    { {'w','i','n','3','0',0}, WIN30 },
+    { {'w','i','n','3','1',0}, WIN31 },
+    { {'w','i','n','9','5',0}, WIN95 },
+    { {'w','i','n','9','8',0}, WIN98 },
+    { {'w','i','n','m','e',0}, WINME },
+    { {'n','t','3','5','1',0}, NT351 },
+    { {'n','t','4','0',0}, NT40 },
+    { {'w','i','n','2','0','0','0',0}, NT2K },
+    { {'w','i','n','2','k',0}, NT2K },
+    { {'n','t','2','k',0}, NT2K },
+    { {'n','t','2','0','0','0',0}, NT2K },
+    { {'w','i','n','x','p',0}, WINXP },
+    { {'w','i','n','x','p','6','4',0}, WINXP64 },
+    { {'w','i','n','2','0','0','3',0}, WIN2K3 },
+    { {'w','i','n','2','k','3',0}, WIN2K3 },
+    { {'v','i','s','t','a',0}, WINVISTA },
+    { {'w','i','n','v','i','s','t','a',0}, WINVISTA },
+    { {'w','i','n','2','0','0','8',0}, WIN2K8 },
+    { {'w','i','n','2','k','8',0}, WIN2K8 },
+    { {'w','i','n','2','0','0','8','r','2',0}, WIN2K8R2 },
+    { {'w','i','n','2','k','8','r','2',0}, WIN2K8R2 },
+    { {'w','i','n','7',0}, WIN7 },
+    { {'w','i','n','8',0}, WIN8 },
+    { {'w','i','n','8','1',0}, WIN81 },
+    { {'w','i','n','1','0',0}, WIN10 },
 };
 
 
@@ -438,46 +445,26 @@ static BOOL parse_win_version( HANDLE hkey )
     static const WCHAR VersionW[] = {'V','e','r','s','i','o','n',0};
 
     UNICODE_STRING valueW;
-    char tmp[64], buffer[50];
+    WCHAR *name, tmp[64];
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)tmp;
-    DWORD count, len;
-    int i;
+    DWORD i, count;
 
     RtlInitUnicodeString( &valueW, VersionW );
-    if (NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
+    if (NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp) - sizeof(WCHAR), &count ))
         return FALSE;
 
-    RtlUnicodeToMultiByteN( buffer, sizeof(buffer)-1, &len, (WCHAR *)info->Data, info->DataLength );
-    buffer[len] = 0;
+    name = (WCHAR *)info->Data;
+    name[info->DataLength / sizeof(WCHAR)] = 0;
 
-    for (i = 0; i < NB_WINDOWS_VERSIONS; i++)
+    for (i = 0; i < ARRAY_SIZE(version_names); i++)
     {
-        const char *p, *pCurr = WinVersionNames[i];
-        /* iterate through all winver aliases separated by comma */
-        do {
-            p = strchr(pCurr, ',');
-            len = p ? p - pCurr : strlen(pCurr);
-            if ( (!strncmp( pCurr, buffer, len )) && (buffer[len] == 0) )
-            {
-                current_version = &VersionData[i];
-                TRACE( "got win version %s\n", WinVersionNames[i] );
-                return TRUE;
-            }
-            pCurr = p+1;
-        } while (p);
+        if (strcmpW( version_names[i].name, name )) continue;
+        current_version = &VersionData[version_names[i].ver];
+        TRACE( "got win version %s\n", debugstr_w(version_names[i].name) );
+        return TRUE;
     }
 
-    MESSAGE("Invalid Windows version value '%s' specified in config file.\n", buffer );
-    MESSAGE("Valid versions are:" );
-    for (i = 0; i < NB_WINDOWS_VERSIONS; i++)
-    {
-        /* only list the first, "official" alias in case of aliases */
-        const char *pCurr = WinVersionNames[i];
-        const char *p = strchr(pCurr, ',');
-        len = (p) ? p - pCurr : strlen(pCurr);
-
-        MESSAGE(" '%.*s'%c", (int)len, pCurr, (i == NB_WINDOWS_VERSIONS - 1) ? '\n' : ',' );
-    }
+    ERR( "Invalid Windows version value %s specified in config file.\n", debugstr_w(name) );
     return FALSE;
 }
 
