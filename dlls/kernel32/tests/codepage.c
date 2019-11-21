@@ -1126,7 +1126,7 @@ static void test_threadcp(void)
 
         cp = 0xdeadbeef;
         GetLocaleInfoA(lcids[i].lcid, LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER, (LPSTR)&cp, sizeof(cp));
-        ok(cp == lcids[i].threadcp, "wrong codepage %u for lcid %04x, should be %u\n", cp, lcids[i].threadcp, cp);
+        ok(cp == lcids[i].threadcp, "wrong codepage %u for lcid %04x, should be %u\n", cp, lcids[i].lcid, lcids[i].threadcp);
 
         /* GetCPInfoEx/GetCPInfo - CP_ACP */
         SetLastError(0xdeadbeef);
