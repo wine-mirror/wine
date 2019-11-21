@@ -85,6 +85,8 @@ static LANGID (WINAPI *pSetThreadUILanguage)(LANGID);
 static LANGID (WINAPI *pGetThreadUILanguage)(VOID);
 static INT (WINAPI *pNormalizeString)(NORM_FORM, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pFindStringOrdinal)(DWORD, LPCWSTR lpStringSource, INT, LPCWSTR, INT, BOOL);
+static NTSTATUS (WINAPI *pRtlNormalizeString)(ULONG, LPCWSTR, INT, LPWSTR, INT*);
+static NTSTATUS (WINAPI *pRtlIsNormalizedString)(ULONG, LPCWSTR, INT, BOOLEAN*);
 
 static void InitFunctionPointers(void)
 {
@@ -126,6 +128,8 @@ static void InitFunctionPointers(void)
   mod = GetModuleHandleA("ntdll");
   X(RtlUpcaseUnicodeChar);
   X(RtlLocaleNameToLcid);
+  X(RtlNormalizeString);
+  X(RtlIsNormalizedString);
 #undef X
 }
 
@@ -5838,7 +5842,6 @@ static void test_NormalizeString(void)
     struct test_data_normal {
         const WCHAR *str;
         const WCHAR *expected[4];
-        BOOL todo[4];
     };
     static const struct test_data_normal test_arr[] =
     {
@@ -5869,6 +5872,7 @@ static void test_NormalizeString(void)
     const struct test_data_normal *ptest = test_arr;
     const int norm_forms[] = { NormalizationC, NormalizationD, NormalizationKC, NormalizationKD };
     WCHAR dst[80];
+    NTSTATUS status;
     int dstlen;
 
     if (!pNormalizeString)
@@ -5876,6 +5880,7 @@ static void test_NormalizeString(void)
         win_skip("NormalizeString is not available.\n");
         return;
     }
+    if (!pRtlNormalizeString) win_skip("RtlNormalizeString is not available.\n");
 
     dstlen = pNormalizeString( NormalizationD, ptest->str, -1, dst, 1 );
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Should have failed with ERROR_INSUFFICIENT_BUFFER\n");
@@ -5899,7 +5904,6 @@ static void test_NormalizeString(void)
                 ok(dstlen == lstrlenW( dst )+1, "%s:%d: Copied length differed: was %d, should be %d\n",
                    wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW( dst )+1);
                 str_cmp = wcsncmp( ptest->expected[i], dst, dstlen+1 );
-todo_wine_if(ptest->todo[i])
                 ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
                     wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
             }
@@ -5912,9 +5916,28 @@ todo_wine_if(ptest->todo[i])
                 ok(dstlen == lstrlenW( dst ), "%s:%d: Copied length differed: was %d, should be %d\n",
                    wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW( dst ));
                 str_cmp = wcsncmp( ptest->expected[i], dst, dstlen );
-todo_wine_if(ptest->todo[i])
                 ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
                     wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
+            }
+
+            if (pRtlNormalizeString)
+            {
+                BOOLEAN ret = FALSE;
+
+                dstlen = 0;
+                status = pRtlNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), NULL, &dstlen );
+                ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
+                memset(dst, 0, sizeof(dst));
+                status = pRtlNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), dst, &dstlen );
+                ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
+                ok(dstlen == lstrlenW( dst ), "%s:%d: Copied length differed: was %d, should be %d\n",
+                   wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW( dst ));
+                str_cmp = wcsncmp( ptest->expected[i], dst, dstlen );
+                ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
+                    wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
+                status = pRtlIsNormalizedString( norm_forms[i], dst, dstlen, &ret );
+                todo_wine ok( !status, "%s:%d: failed %x\n", wine_dbgstr_w(ptest->str), i, status );
+                todo_wine ok( ret, "%s:%d: not normalized\n", wine_dbgstr_w(ptest->str), i );
             }
         }
         ptest++;

@@ -862,7 +862,7 @@
 # @ stub IsGlobalizationUserSettingsKeyRedirected
 @ stdcall IsInternetESCEnabled()
 @ stub IsNLSDefinedString
-@ stdcall IsNormalizedString(long wstr long) kernel32.IsNormalizedString
+@ stdcall IsNormalizedString(long wstr long)
 # @ stub IsProcessCritical
 @ stdcall IsProcessInJob(long long ptr)
 @ stdcall IsProcessorFeaturePresent(long)
@@ -972,7 +972,7 @@
 @ stub NlsUpdateSystemLocale
 @ stub NlsValidateLocale
 @ stub NlsWriteEtwEvent
-@ stdcall NormalizeString(long wstr long ptr long) kernel32.NormalizeString
+@ stdcall NormalizeString(long wstr long ptr long)
 @ stub NotifyMountMgr
 @ stub NotifyRedirectedStringChange
 @ stdcall ObjectCloseAuditAlarmW(wstr ptr long)

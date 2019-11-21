@@ -980,7 +980,7 @@
 @ stdcall -import IsDebuggerPresent()
 @ stub -i386 IsLSCallback
 # @ stub IsNLSDefinedString
-@ stdcall IsNormalizedString(long wstr long)
+@ stdcall -import IsNormalizedString(long wstr long)
 @ stdcall -import IsProcessInJob(long long ptr)
 @ stdcall -import IsProcessorFeaturePresent(long)
 @ stub -i386 IsSLCallback
@@ -1105,7 +1105,7 @@
 # @ stub NlsUpdateLocale
 # @ stub NlsUpdateSystemLocale
 # @ stub NlsWriteEtwEvent
-@ stdcall NormalizeString(long wstr long ptr long)
+@ stdcall -import NormalizeString(long wstr long ptr long)
 # @ stub NotifyMountMgr
 @ stub NotifyNLSUserCache
 # @ stub NotifyUILanguageChange

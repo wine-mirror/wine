@@ -538,3 +538,73 @@ found:
     TRACE( "%s -> %04x\n", debugstr_w(name), *lcid );
     return STATUS_SUCCESS;
 }
+
+
+/******************************************************************************
+ *      RtlIsNormalizedString   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlIsNormalizedString( ULONG form, const WCHAR *str, INT len, BOOLEAN *res )
+{
+    FIXME( "%x %p %d\n", form, str, len );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
+ *      RtlNormalizeString   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, WCHAR *dst, INT *dst_len )
+{
+    int flags = 0, compose = 0;
+    unsigned int res, buf_len;
+    WCHAR *buf = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    TRACE( "%x %s %d %p %d\n", form, debugstr_wn(src, src_len), src_len, dst, *dst_len );
+
+    if (src_len == -1) src_len = strlenW(src) + 1;
+
+    if (form == NormalizationKC || form == NormalizationKD) flags |= WINE_DECOMPOSE_COMPAT;
+    if (form == NormalizationC || form == NormalizationKC) compose = 1;
+    if (compose || *dst_len) flags |= WINE_DECOMPOSE_REORDER;
+
+    if (!compose && *dst_len)
+    {
+        res = wine_decompose_string( flags, src, src_len, dst, *dst_len );
+        if (!res)
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
+            goto done;
+        }
+        buf = dst;
+    }
+    else
+    {
+        buf_len = src_len * 4;
+        do
+        {
+            WCHAR *old_buf = buf;
+
+            if (!buf) buf = RtlAllocateHeap( GetProcessHeap(), 0, buf_len );
+            else buf = RtlReAllocateHeap( GetProcessHeap(), 0, buf, buf_len );
+            if (!buf)
+            {
+                RtlFreeHeap( GetProcessHeap(), 0, old_buf );
+                return STATUS_NO_MEMORY;
+            }
+            res = wine_decompose_string( flags, src, src_len, buf, buf_len );
+            buf_len *= 2;
+        } while (!res);
+    }
+
+    if (compose)
+    {
+        res = wine_compose_string( buf, res );
+        if (*dst_len >= res) memcpy( dst, buf, res * sizeof(WCHAR) );
+    }
+
+done:
+    if (buf != dst) RtlFreeHeap( GetProcessHeap(), 0, buf );
+    *dst_len = res;
+    return status;
+}

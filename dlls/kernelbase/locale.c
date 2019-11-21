@@ -1084,6 +1084,28 @@ LANGID WINAPI DECLSPEC_HOTPATCH GetUserDefaultUILanguage(void)
 
 
 /******************************************************************************
+ *	IsNormalizedString   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsNormalizedString( NORM_FORM form, const WCHAR *str, INT len )
+{
+    BOOLEAN res;
+    if (!set_ntstatus( RtlIsNormalizedString( form, str, len, &res ))) res = FALSE;
+    return res;
+}
+
+
+/******************************************************************************
+ *	NormalizeString   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH NormalizeString(NORM_FORM form, const WCHAR *src, INT src_len,
+                                             WCHAR *dst, INT dst_len)
+{
+    set_ntstatus( RtlNormalizeString( form, src, src_len, dst, &dst_len ));
+    return dst_len;
+}
+
+
+/******************************************************************************
  *	ResolveLocaleName   (kernelbase.@)
  */
 INT WINAPI DECLSPEC_HOTPATCH ResolveLocaleName( LPCWSTR name, LPWSTR buffer, INT len )
