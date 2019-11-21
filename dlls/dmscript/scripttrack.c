@@ -149,20 +149,22 @@ static HRESULT WINAPI script_track_IsParamSupported(IDirectMusicTrack8 *iface, R
 	return DMUS_E_TYPE_UNSUPPORTED;
 }
 
-static HRESULT WINAPI script_track_AddNotificationType(IDirectMusicTrack8 *iface,
-        REFGUID rguidNotificationType)
+static HRESULT WINAPI script_track_AddNotificationType(IDirectMusicTrack8 *iface, REFGUID type)
 {
-	DirectMusicScriptTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
-	return S_OK;
+    DirectMusicScriptTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(type));
+
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI script_track_RemoveNotificationType(IDirectMusicTrack8 *iface,
-        REFGUID rguidNotificationType)
+static HRESULT WINAPI script_track_RemoveNotificationType(IDirectMusicTrack8 *iface, REFGUID type)
 {
-	DirectMusicScriptTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
-	return S_OK;
+    DirectMusicScriptTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(type));
+
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI script_track_Clone(IDirectMusicTrack8 *iface, MUSIC_TIME mtStart,
@@ -202,21 +204,25 @@ static HRESULT WINAPI script_track_SetParamEx(IDirectMusicTrack8 *iface, REFGUID
 	return S_OK;
 }
 
-static HRESULT WINAPI script_track_Compose(IDirectMusicTrack8 *iface, IUnknown *pContext,
-        DWORD dwTrackGroup, IDirectMusicTrack **ppResultTrack)
+static HRESULT WINAPI script_track_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
+        DWORD group, IDirectMusicTrack **res_track)
 {
-	DirectMusicScriptTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %d, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
-	return S_OK;
+    DirectMusicScriptTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %p, %d, %p): method not implemented\n", This, context, group, res_track);
+
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI script_track_Join(IDirectMusicTrack8 *iface, IDirectMusicTrack *pNewTrack,
-        MUSIC_TIME mtJoin, IUnknown *pContext, DWORD dwTrackGroup,
-        IDirectMusicTrack **ppResultTrack)
+static HRESULT WINAPI script_track_Join(IDirectMusicTrack8 *iface, IDirectMusicTrack *track2,
+        MUSIC_TIME join, IUnknown *context, DWORD group, IDirectMusicTrack **res_track)
 {
-	DirectMusicScriptTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %d, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
-	return S_OK;
+    DirectMusicScriptTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %p, %d, %p, %d, %p): method not implemented\n", This, track2, join, context,
+            group, res_track);
+
+    return E_NOTIMPL;
 }
 
 static const IDirectMusicTrack8Vtbl dmtrack8_vtbl = {
