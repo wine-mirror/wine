@@ -1220,6 +1220,77 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     IMediaControl_Release(control);
 }
 
+static void test_flushing(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
+{
+    IMemAllocator *allocator;
+    IMediaControl *control;
+    OAFilterState state;
+    HANDLE thread;
+    HRESULT hr;
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IMemAllocator_Release(allocator);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    thread = send_frame(input);
+    todo_wine ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_BeginFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    thread = send_frame(input);
+    hr = join_thread(thread);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IPin_EndFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* We dropped the sample we were holding, so now we need a new one... */
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    todo_wine ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+
+    thread = send_frame(input);
+    todo_wine ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+
+    hr = IMediaControl_Run(control);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_BeginFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    thread = send_frame(input);
+    hr = join_thread(thread);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IPin_EndFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    thread = send_frame(input);
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IMediaControl_Release(control);
+}
+
 static void test_connect_pin(void)
 {
     VIDEOINFOHEADER vih =
@@ -1353,6 +1424,7 @@ static void test_connect_pin(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     test_filter_state(input, graph);
+    test_flushing(pin, input, graph);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
