@@ -956,52 +956,11 @@ char ** CDECL __p__tzname(void)
 
 #if _MSVCR_VER <= 90
 #define STRFTIME_CHAR char
-#define STRFTIME_FUNC(name) name ## A
 #define STRFTIME_TD(td, name) td->str.names.name
 #else
 #define STRFTIME_CHAR MSVCRT_wchar_t
-#define STRFTIME_FUNC(name) name ## W
 #define STRFTIME_TD(td, name) td->wstr.names.name
 #endif
-
-static inline BOOL strftime_time(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_size_t max,
-        const struct MSVCRT_tm *mstm, MSVCRT___lc_time_data *time_data)
-{
-    SYSTEMTIME st;
-    MSVCRT_size_t ret;
-    LCID lcid;
-
-    st.wYear = mstm->tm_year + 1900;
-    st.wMonth = mstm->tm_mon + 1;
-    st.wDayOfWeek = mstm->tm_wday;
-    st.wDay = mstm->tm_mday;
-    st.wHour = mstm->tm_hour;
-    st.wMinute = mstm->tm_min;
-    st.wSecond = mstm->tm_sec;
-    st.wMilliseconds = 0;
-
-#if _MSVCR_VER < 110
-    lcid = time_data->lcid;
-#else
-    lcid = LocaleNameToLCID(time_data->locname, 0);
-#endif
-
-    ret = STRFTIME_FUNC(GetTimeFormat)(lcid, 0, &st, STRFTIME_TD(time_data, time), NULL, 0);
-    if(ret && ret<max-*pos)
-        ret = STRFTIME_FUNC(GetTimeFormat)(lcid, 0, &st, STRFTIME_TD(time_data, time),
-                str+*pos, max-*pos);
-    if(!ret) {
-        *str = 0;
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return FALSE;
-    }else if(ret > max-*pos) {
-        *str = 0;
-        *MSVCRT__errno() = MSVCRT_ERANGE;
-        return FALSE;
-    }
-    *pos += ret-1;
-    return TRUE;
-}
 
 #define strftime_str(a,b,c,d) strftime_nstr(a,b,c,d,MSVCRT_SIZE_MAX)
 static inline BOOL strftime_nstr(STRFTIME_CHAR *str, MSVCRT_size_t *pos,
@@ -1154,6 +1113,48 @@ static inline BOOL strftime_format(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCR
                 break;
             }
             break;
+        case 'h':
+            if(!MSVCRT_CHECK_PMT(mstm->tm_hour>=0 && mstm->tm_hour<=23))
+            {
+                *str = 0;
+                return FALSE;
+            }
+            if(count > 2)
+                ret = strftime_nstr(str, pos, max, format, count-2);
+            if(ret)
+                ret = strftime_int(str, pos, max, (mstm->tm_hour + 11) % 12 + 1,
+                        count == 1 ? 0 : 2, 1, 12);
+            break;
+        case 'H':
+            if(count > 2)
+                ret = strftime_nstr(str, pos, max, format, count-2);
+            if(ret)
+                ret = strftime_int(str, pos, max, mstm->tm_hour, count == 1 ? 0 : 2, 0, 23);
+            break;
+        case 'm':
+            if(count > 2)
+                ret = strftime_nstr(str, pos, max, format, count-2);
+            if(ret)
+                ret = strftime_int(str, pos, max, mstm->tm_min, count == 1 ? 0 : 2, 0, 59);
+            break;
+        case 's':
+            if(count > 2)
+                ret = strftime_nstr(str, pos, max, format, count-2);
+            if(ret)
+                ret = strftime_int(str, pos, max, mstm->tm_sec, count == 1 ? 0 : 2, 0, 59);
+            break;
+        case 'a':
+        case 'A':
+        case 't':
+            if(!MSVCRT_CHECK_PMT(mstm->tm_hour>=0 && mstm->tm_hour<=23))
+            {
+                *str = 0;
+                return FALSE;
+            }
+            ret = strftime_nstr(str, pos, max,
+                    mstm->tm_hour < 12 ? STRFTIME_TD(time_data, am) : STRFTIME_TD(time_data, pm),
+                    (*format == 't' && count == 1) ? 1 : MSVCRT_SIZE_MAX);
+            break;
         default:
             ret = strftime_nstr(str, pos, max, format, count);
             break;
@@ -1230,7 +1231,7 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
                 return 0;
             if(ret < max)
                 str[ret++] = ' ';
-            if(!strftime_time(str, &ret, max, mstm, time_data))
+            if(!strftime_format(str, &ret, max, mstm, time_data, STRFTIME_TD(time_data, time)))
                 return 0;
             break;
         case 'x':
@@ -1239,7 +1240,7 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
                 return 0;
             break;
         case 'X':
-            if(!strftime_time(str, &ret, max, mstm, time_data))
+            if(!strftime_format(str, &ret, max, mstm, time_data, STRFTIME_TD(time_data, time)))
                 return 0;
             break;
         case 'a':
