@@ -443,20 +443,6 @@ BOOL WINAPI GetUserPreferredUILanguages( DWORD flags, ULONG *count, WCHAR *buffe
     return get_dummy_preferred_ui_language( flags, count, buffer, size );
 }
 
-/***********************************************************************
- *           LocaleNameToLCID  (KERNEL32.@)
- */
-LCID WINAPI LocaleNameToLCID( LPCWSTR name, DWORD flags )
-{
-    LCID lcid;
-
-    if (!name) return GetUserDefaultLCID();
-    if (!set_ntstatus( RtlLocaleNameToLcid( name, &lcid, 2 ))) return 0;
-    if (!(flags & LOCALE_ALLOW_NEUTRAL_NAMES)) lcid = ConvertDefaultLocale( lcid );
-    return lcid;
-}
-
-
 /******************************************************************************
  *		get_locale_registry_value
  *
@@ -588,83 +574,6 @@ static INT get_registry_locale_info( struct registry_value *registry_value, LPWS
     return ret;
 }
 
-
-/******************************************************************************
- *		GetLocaleInfoA (KERNEL32.@)
- *
- * Get information about an aspect of a locale.
- *
- * PARAMS
- *  lcid   [I] LCID of the locale
- *  lctype [I] LCTYPE_ flags from "winnls.h"
- *  buffer [O] Destination for the information
- *  len    [I] Length of buffer in characters
- *
- * RETURNS
- *  Success: The size of the data requested. If buffer is non-NULL, it is filled
- *           with the information.
- *  Failure: 0. Use GetLastError() to determine the cause.
- *
- * NOTES
- *  - LOCALE_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
- *  - The string returned is NUL terminated, except for LOCALE_FONTSIGNATURE,
- *    which is a bit string.
- */
-INT WINAPI GetLocaleInfoA( LCID lcid, LCTYPE lctype, LPSTR buffer, INT len )
-{
-    WCHAR *bufferW;
-    INT lenW, ret;
-
-    TRACE( "(lcid=0x%x,lctype=0x%x,%p,%d)\n", lcid, lctype, buffer, len );
-
-    if (len < 0 || (len && !buffer))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-    if (((lctype & ~LOCALE_LOCALEINFOFLAGSMASK) == LOCALE_SSHORTTIME) ||
-         (lctype & LOCALE_RETURN_GENITIVE_NAMES))
-    {
-        SetLastError( ERROR_INVALID_FLAGS );
-        return 0;
-    }
-
-    if (!len) buffer = NULL;
-
-    if (!(lenW = GetLocaleInfoW( lcid, lctype, NULL, 0 ))) return 0;
-
-    if (!(bufferW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) )))
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return 0;
-    }
-    if ((ret = GetLocaleInfoW( lcid, lctype, bufferW, lenW )))
-    {
-        if ((lctype & LOCALE_RETURN_NUMBER) ||
-            ((lctype & ~LOCALE_LOCALEINFOFLAGSMASK) == LOCALE_FONTSIGNATURE))
-        {
-            /* it's not an ASCII string, just bytes */
-            ret *= sizeof(WCHAR);
-            if (buffer)
-            {
-                if (ret <= len) memcpy( buffer, bufferW, ret );
-                else
-                {
-                    SetLastError( ERROR_INSUFFICIENT_BUFFER );
-                    ret = 0;
-                }
-            }
-        }
-        else
-        {
-            UINT codepage = CP_ACP;
-            if (!(lctype & LOCALE_USE_CP_ACP)) codepage = get_lcid_codepage( lcid );
-            ret = WideCharToMultiByte( codepage, 0, bufferW, ret, buffer, len, NULL, NULL );
-        }
-    }
-    HeapFree( GetProcessHeap(), 0, bufferW );
-    return ret;
-}
 
 static int get_value_base_by_lctype( LCTYPE lctype )
 {
@@ -812,39 +721,6 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
 }
 
 /******************************************************************************
- *           GetLocaleInfoEx (KERNEL32.@)
- */
-INT WINAPI GetLocaleInfoEx(LPCWSTR locale, LCTYPE info, LPWSTR buffer, INT len)
-{
-    LCID lcid = LocaleNameToLCID(locale, 0);
-
-    TRACE("%s, lcid=0x%x, 0x%x\n", debugstr_w(locale), lcid, info);
-
-    if (!lcid) return 0;
-
-    /* special handling for neutral locale names */
-    if (locale && strlenW(locale) == 2)
-    {
-        switch (info & ~LOCALE_LOCALEINFOFLAGSMASK)
-        {
-        case LOCALE_SNAME:
-            if (len && len < 3)
-            {
-                SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                return 0;
-            }
-            if (len) strcpyW(buffer, locale);
-            return 3;
-        case LOCALE_SPARENT:
-            if (len) buffer[0] = 0;
-            return 1;
-        }
-    }
-
-    return GetLocaleInfoW(lcid, info, buffer, len);
-}
-
-/******************************************************************************
  *		SetLocaleInfoA	[KERNEL32.@]
  *
  * Set information about an aspect of a locale.
@@ -987,24 +863,6 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
 
 
 /******************************************************************************
- *              GetACP   (KERNEL32.@)
- *
- * Get the current Ansi code page Id for the system.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *    The current Ansi code page identifier for the system.
- */
-UINT WINAPI GetACP(void)
-{
-    assert( ansi_cptable );
-    return ansi_cptable->info.codepage;
-}
-
-
-/******************************************************************************
  *              SetCPGlobal   (KERNEL32.@)
  *
  * Set the current Ansi code page Id for the system.
@@ -1022,24 +880,6 @@ UINT WINAPI SetCPGlobal( UINT acp )
 
     if (new_cptable) ansi_cptable = new_cptable;
     return ret;
-}
-
-
-/***********************************************************************
- *              GetOEMCP   (KERNEL32.@)
- *
- * Get the current OEM code page Id for the system.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *    The current OEM code page identifier for the system.
- */
-UINT WINAPI GetOEMCP(void)
-{
-    assert( oem_cptable );
-    return oem_cptable->info.codepage;
 }
 
 
@@ -1721,97 +1561,6 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
     return ret;
 }
 
-
-/******************************************************************************
- *		ConvertDefaultLocale (KERNEL32.@)
- *
- * Convert a default locale identifier into a real identifier.
- *
- * PARAMS
- *  lcid [I] LCID identifier of the locale to convert
- *
- * RETURNS
- *  lcid unchanged, if not a default locale or its sublanguage is
- *   not SUBLANG_NEUTRAL.
- *  GetSystemDefaultLCID(), if lcid == LOCALE_SYSTEM_DEFAULT.
- *  GetUserDefaultLCID(), if lcid == LOCALE_USER_DEFAULT or LOCALE_NEUTRAL.
- *  Otherwise, lcid with sublanguage changed to SUBLANG_DEFAULT.
- */
-LCID WINAPI ConvertDefaultLocale( LCID lcid )
-{
-    switch (lcid)
-    {
-    case LOCALE_INVARIANT:
-        return lcid; /* keep as-is */
-    case LOCALE_SYSTEM_DEFAULT:
-        return GetSystemDefaultLCID();
-    case LOCALE_USER_DEFAULT:
-    case LOCALE_NEUTRAL:
-        return GetUserDefaultLCID();
-    case MAKELANGID( LANG_CHINESE, SUBLANG_NEUTRAL ):
-    case MAKELANGID( LANG_CHINESE, 0x1e ):
-        return MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED );
-    case MAKELANGID( LANG_CHINESE, 0x1f ):
-        return MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG );
-    case MAKELANGID( LANG_SPANISH, SUBLANG_NEUTRAL ):
-        return MAKELANGID( LANG_SPANISH, SUBLANG_SPANISH_MODERN );
-    case MAKELANGID( LANG_IRISH, SUBLANG_NEUTRAL ):
-        return MAKELANGID( LANG_IRISH, SUBLANG_IRISH_IRELAND );
-    case MAKELANGID( LANG_BENGALI, SUBLANG_NEUTRAL ):
-        return MAKELANGID( LANG_BENGALI, SUBLANG_BENGALI_BANGLADESH );
-    case MAKELANGID( LANG_SINDHI, SUBLANG_NEUTRAL ):
-        return MAKELANGID( LANG_SINDHI, SUBLANG_SINDHI_AFGHANISTAN );
-    case MAKELANGID( LANG_INUKTITUT, SUBLANG_NEUTRAL ):
-        return MAKELANGID( LANG_INUKTITUT, SUBLANG_INUKTITUT_CANADA_LATIN );
-    case MAKELANGID( LANG_TAMAZIGHT, SUBLANG_NEUTRAL ):
-        return MAKELANGID( LANG_TAMAZIGHT, SUBLANG_TAMAZIGHT_ALGERIA_LATIN );
-    case MAKELANGID( LANG_FULAH, SUBLANG_NEUTRAL ):
-        return MAKELANGID( LANG_FULAH, SUBLANG_FULAH_SENEGAL );
-    case MAKELANGID( LANG_TIGRINYA, SUBLANG_NEUTRAL ):
-        return MAKELANGID( LANG_TIGRINYA, SUBLANG_TIGRINYA_ERITREA );
-    default:
-        /* Replace SUBLANG_NEUTRAL with SUBLANG_DEFAULT */
-        if (SUBLANGID(lcid) == SUBLANG_NEUTRAL && SORTIDFROMLCID(lcid) == SORT_DEFAULT)
-            lcid = MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_DEFAULT );
-        break;
-    }
-    return lcid;
-}
-
-
-/******************************************************************************
- *           IsValidLocale   (KERNEL32.@)
- *
- * Determine if a locale is valid.
- *
- * PARAMS
- *  lcid  [I] LCID of the locale to check
- *  flags [I] LCID_SUPPORTED = Valid, LCID_INSTALLED = Valid and installed on the system
- *
- * RETURNS
- *  TRUE,  if lcid is valid,
- *  FALSE, otherwise.
- *
- * NOTES
- *  Wine does not currently make the distinction between supported and installed. All
- *  languages supported are installed by default.
- */
-BOOL WINAPI IsValidLocale( LCID lcid, DWORD flags )
-{
-    /* check if language is registered in the kernel32 resources */
-    return FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING,
-                            (LPCWSTR)LOCALE_ILANGUAGE, LANGIDFROMLCID(lcid)) != 0;
-}
-
-/******************************************************************************
- *           IsValidLocaleName   (KERNEL32.@)
- */
-BOOL WINAPI IsValidLocaleName( LPCWSTR locale )
-{
-    LCID lcid;
-
-    return !RtlLocaleNameToLcid( locale, &lcid, 2 );
-}
 
 /******************************************************************************
  *           GetStringTypeW    (KERNEL32.@)

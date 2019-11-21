@@ -159,7 +159,7 @@
 @ stdcall CompareStringW(long long wstr long wstr long) kernel32.CompareStringW
 @ stdcall ConnectNamedPipe(long ptr)
 @ stdcall ContinueDebugEvent(long long long)
-@ stdcall ConvertDefaultLocale(long) kernel32.ConvertDefaultLocale
+@ stdcall ConvertDefaultLocale(long)
 @ stdcall ConvertFiberToThread()
 @ stdcall ConvertThreadToFiber(ptr)
 @ stdcall ConvertThreadToFiberEx(ptr long)
@@ -402,7 +402,7 @@
 @ stdcall FreeUserPhysicalPages(long ptr ptr)
 @ stdcall GenerateConsoleCtrlEvent(long long)
 # @ stub GenerateGPNotificationInternal
-@ stdcall GetACP() kernel32.GetACP
+@ stdcall GetACP()
 @ stdcall GetAcceptLanguagesA(ptr ptr)
 @ stdcall GetAcceptLanguagesW(ptr ptr)
 @ stdcall GetAce(ptr long ptr)
@@ -541,8 +541,8 @@
 @ stdcall GetLastError() kernelbase_GetLastError
 @ stdcall GetLengthSid(ptr)
 @ stdcall GetLocalTime(ptr)
-@ stdcall GetLocaleInfoA(long long ptr long) kernel32.GetLocaleInfoA
-@ stdcall GetLocaleInfoEx(wstr long ptr long) kernel32.GetLocaleInfoEx
+@ stdcall GetLocaleInfoA(long long ptr long)
+@ stdcall GetLocaleInfoEx(wstr long ptr long)
 @ stub GetLocaleInfoHelper
 @ stdcall GetLocaleInfoW(long long ptr long) kernel32.GetLocaleInfoW
 @ stdcall GetLogicalDriveStringsW(long ptr) kernel32.GetLogicalDriveStringsW
@@ -580,7 +580,7 @@
 @ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long) kernel32.GetNumberFormatEx
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long) kernel32.GetNumberFormatW
 @ stdcall GetNumberOfConsoleInputEvents(long ptr)
-@ stdcall GetOEMCP() kernel32.GetOEMCP
+@ stdcall GetOEMCP()
 # @ stub GetOsManufacturingMode
 # @ stub GetOsSafeBootMode
 @ stdcall GetOverlappedResult(long ptr ptr long)
@@ -876,8 +876,8 @@
 @ stdcall IsValidAcl(ptr)
 @ stdcall IsValidCodePage(long) kernel32.IsValidCodePage
 @ stdcall IsValidLanguageGroup(long long)
-@ stdcall IsValidLocale(long long) kernel32.IsValidLocale
-@ stdcall IsValidLocaleName(wstr) kernel32.IsValidLocaleName
+@ stdcall IsValidLocale(long long)
+@ stdcall IsValidLocaleName(wstr)
 # @ stub IsValidNLSVersion
 @ stub IsValidRelativeSecurityDescriptor
 @ stdcall IsValidSecurityDescriptor(ptr)
@@ -938,7 +938,7 @@
 @ stdcall LocalLock(long)
 @ stdcall LocalReAlloc(long long long)
 @ stdcall LocalUnlock(long)
-@ stdcall LocaleNameToLCID(wstr long) kernel32.LocaleNameToLCID
+@ stdcall LocaleNameToLCID(wstr long)
 # @ stub LocateXStateFeature
 @ stdcall LockFile(long long long long long)
 @ stdcall LockFileEx(long long long long long ptr)

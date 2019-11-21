@@ -248,7 +248,7 @@
 @ stub ConsoleSubst
 @ stdcall -import ContinueDebugEvent(long long long)
 # @ stub ConvertCalDateTimeToSystemTime
-@ stdcall ConvertDefaultLocale (long)
+@ stdcall -import ConvertDefaultLocale (long)
 @ stdcall -import ConvertFiberToThread()
 # @ stub ConvertNLSDayOfWeekToWin32DayOfWeek
 # @ stub ConvertSystemTimeToCalDateTime
@@ -537,7 +537,7 @@
 @ stub FreeVirtualBuffer
 @ stdcall -import GenerateConsoleCtrlEvent(long long)
 @ stdcall -i386 -private Get16DLLAddress(long str) krnl386.exe16.Get16DLLAddress
-@ stdcall GetACP()
+@ stdcall -import GetACP()
 @ stdcall GetActiveProcessorCount(long)
 @ stdcall GetActiveProcessorGroupCount()
 # @ stub GetApplicationRecoveryCallback
@@ -703,9 +703,9 @@
 @ stdcall -import GetLastError()
 @ stub GetLinguistLangSize
 @ stdcall -import GetLocalTime(ptr)
-@ stdcall GetLocaleInfoA(long long ptr long)
+@ stdcall -import GetLocaleInfoA(long long ptr long)
 @ stdcall GetLocaleInfoW(long long ptr long)
-@ stdcall GetLocaleInfoEx(wstr long ptr long)
+@ stdcall -import GetLocaleInfoEx(wstr long ptr long)
 @ stdcall GetLogicalDriveStringsA(long ptr)
 @ stdcall GetLogicalDriveStringsW(long ptr)
 @ stdcall GetLogicalDrives()
@@ -758,7 +758,7 @@
 @ stdcall GetNumberOfConsoleFonts()
 @ stdcall -import GetNumberOfConsoleInputEvents(long ptr)
 @ stdcall GetNumberOfConsoleMouseButtons(ptr)
-@ stdcall GetOEMCP()
+@ stdcall -import GetOEMCP()
 @ stdcall -import GetOverlappedResult(long ptr ptr long)
 @ stdcall GetUserPreferredUILanguages(long ptr ptr ptr)
 @ stdcall GetPackageFullName(long ptr ptr)
@@ -991,8 +991,8 @@
 # @ stub IsValidCalDateTime
 @ stdcall IsValidCodePage(long)
 @ stdcall -import IsValidLanguageGroup(long long)
-@ stdcall IsValidLocale(long long)
-@ stdcall IsValidLocaleName(wstr)
+@ stdcall -import IsValidLocale(long long)
+@ stdcall -import IsValidLocaleName(wstr)
 # @ stub IsValidUILanguage
 @ stdcall -import IsWow64Process(ptr ptr)
 @ stdcall K32EmptyWorkingSet(long)
@@ -1061,7 +1061,7 @@
 @ stdcall LocalShrink(long long)
 @ stdcall LocalSize(long)
 @ stdcall -import LocalUnlock(long)
-@ stdcall LocaleNameToLCID(wstr long)
+@ stdcall -import LocaleNameToLCID(wstr long)
 # @ stub LocateXStateFeature
 @ stdcall -import LockFile(long long long long long)
 @ stdcall -import LockFileEx(long long long long long ptr)

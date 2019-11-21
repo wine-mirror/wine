@@ -4,9 +4,9 @@
  * Copyright 1995 Martin von Loewis
  * Copyright 1998 David Lee Lambert
  * Copyright 2000 Julio César Gázquez
- * Copyright 2002 Alexandre Julliard for CodeWeavers
  * Copyright 2003 Jon Griffiths
  * Copyright 2005 Dmitry Timoshkov
+ * Copyright 2002, 2019 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -158,6 +158,17 @@ void init_locale(void)
         RegSetValueExW( hkey, L"MACCP", 0, REG_SZ, (BYTE *)bufferW, (count + 1) * sizeof(WCHAR) );
         RegCloseKey( hkey );
     }
+}
+
+
+static UINT get_lcid_codepage( LCID lcid, ULONG flags )
+{
+    UINT ret = CP_ACP;
+
+    if (!(flags & LOCALE_USE_CP_ACP) && lcid != GetSystemDefaultLCID())
+        GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                        (WCHAR *)&ret, sizeof(ret)/sizeof(WCHAR) );
+    return ret;
 }
 
 
@@ -518,6 +529,51 @@ INT WINAPI DECLSPEC_HOTPATCH CompareStringOrdinal( const WCHAR *str1, INT len1,
 
 
 /******************************************************************************
+ *	ConvertDefaultLocale   (kernelbase.@)
+ */
+LCID WINAPI DECLSPEC_HOTPATCH ConvertDefaultLocale( LCID lcid )
+{
+    switch (lcid)
+    {
+    case LOCALE_INVARIANT:
+        return lcid; /* keep as-is */
+    case LOCALE_SYSTEM_DEFAULT:
+        return GetSystemDefaultLCID();
+    case LOCALE_USER_DEFAULT:
+    case LOCALE_NEUTRAL:
+        return GetUserDefaultLCID();
+    case MAKELANGID( LANG_CHINESE, SUBLANG_NEUTRAL ):
+    case MAKELANGID( LANG_CHINESE, 0x1e ):
+        return MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED );
+    case MAKELANGID( LANG_CHINESE, 0x1f ):
+        return MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG );
+    case MAKELANGID( LANG_SPANISH, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_SPANISH, SUBLANG_SPANISH_MODERN );
+    case MAKELANGID( LANG_IRISH, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_IRISH, SUBLANG_IRISH_IRELAND );
+    case MAKELANGID( LANG_BENGALI, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_BENGALI, SUBLANG_BENGALI_BANGLADESH );
+    case MAKELANGID( LANG_SINDHI, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_SINDHI, SUBLANG_SINDHI_AFGHANISTAN );
+    case MAKELANGID( LANG_INUKTITUT, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_INUKTITUT, SUBLANG_INUKTITUT_CANADA_LATIN );
+    case MAKELANGID( LANG_TAMAZIGHT, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_TAMAZIGHT, SUBLANG_TAMAZIGHT_ALGERIA_LATIN );
+    case MAKELANGID( LANG_FULAH, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_FULAH, SUBLANG_FULAH_SENEGAL );
+    case MAKELANGID( LANG_TIGRINYA, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_TIGRINYA, SUBLANG_TIGRINYA_ERITREA );
+    default:
+        /* Replace SUBLANG_NEUTRAL with SUBLANG_DEFAULT */
+        if (SUBLANGID(lcid) == SUBLANG_NEUTRAL && SORTIDFROMLCID(lcid) == SORT_DEFAULT)
+            lcid = MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_DEFAULT );
+        break;
+    }
+    return lcid;
+}
+
+
+/******************************************************************************
  *	EnumCalendarInfoW   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH EnumCalendarInfoW( CALINFO_ENUMPROCW proc, LCID lcid,
@@ -777,36 +833,11 @@ INT WINAPI DECLSPEC_HOTPATCH FindStringOrdinal( DWORD flag, const WCHAR *src, IN
 
 
 /******************************************************************************
- *	IsValidLanguageGroup   (kernelbase.@)
+ *	GetACP   (kernelbase.@)
  */
-BOOL WINAPI DECLSPEC_HOTPATCH IsValidLanguageGroup( LGRPID id, DWORD flags )
+UINT WINAPI GetACP(void)
 {
-    static const WCHAR format[] = { '%','x',0 };
-    WCHAR name[10], value[10];
-    DWORD type, value_len = sizeof(value);
-    BOOL ret = FALSE;
-    HKEY key;
-
-    if (RegOpenKeyExW( nls_key, L"Language Groups", 0, KEY_READ, &key )) return FALSE;
-
-    swprintf( name, ARRAY_SIZE(name), format, id );
-    if (!RegQueryValueExW( key, name, NULL, &type, (BYTE *)value, &value_len ) && type == REG_SZ)
-        ret = (flags & LGRPID_SUPPORTED) || wcstoul( value, NULL, 10 );
-
-    RegCloseKey( key );
-    return ret;
-}
-
-
-/***********************************************************************
- *	LCIDToLocaleName   (kernelbase.@)
- */
-INT WINAPI DECLSPEC_HOTPATCH LCIDToLocaleName( LCID lcid, LPWSTR name, INT count, DWORD flags )
-{
-    static int once;
-    if (flags && !once++) FIXME( "unsupported flags %x\n", flags );
-
-    return GetLocaleInfoW( lcid, LOCALE_SNAME | LOCALE_NOUSEROVERRIDE, name, count );
+    return ansi_cp;
 }
 
 
@@ -1003,6 +1034,87 @@ INT WINAPI DECLSPEC_HOTPATCH GetCalendarInfoEx( const WCHAR *locale, CALID calen
 }
 
 
+/******************************************************************************
+ *	GetLocaleInfoA   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoA( LCID lcid, LCTYPE lctype, char *buffer, INT len )
+{
+    WCHAR *bufferW;
+    INT lenW, ret;
+
+    TRACE( "lcid=0x%x lctype=0x%x %p %d\n", lcid, lctype, buffer, len );
+
+    if (len < 0 || (len && !buffer))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (LOWORD(lctype) == LOCALE_SSHORTTIME || (lctype & LOCALE_RETURN_GENITIVE_NAMES))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    if (LOWORD(lctype) == LOCALE_FONTSIGNATURE || (lctype & LOCALE_RETURN_NUMBER))
+        return GetLocaleInfoW( lcid, lctype, (WCHAR *)buffer, len / sizeof(WCHAR) ) * sizeof(WCHAR);
+
+    if (!(lenW = GetLocaleInfoW( lcid, lctype, NULL, 0 ))) return 0;
+
+    if (!(bufferW = RtlAllocateHeap( GetProcessHeap(), 0, lenW * sizeof(WCHAR) )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return 0;
+    }
+    ret = GetLocaleInfoW( lcid, lctype, bufferW, lenW );
+    if (ret) ret = WideCharToMultiByte( get_lcid_codepage( lcid, lctype ), 0,
+                                        bufferW, ret, buffer, len, NULL, NULL );
+    RtlFreeHeap( GetProcessHeap(), 0, bufferW );
+    return ret;
+}
+
+
+/******************************************************************************
+ *	GetLocaleInfoEx   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoEx( const WCHAR *locale, LCTYPE info, WCHAR *buffer, INT len )
+{
+    LCID lcid = LocaleNameToLCID( locale, 0 );
+
+    TRACE( "%s lcid=0x%x 0x%x\n", debugstr_w(locale), lcid, info );
+
+    if (!lcid) return 0;
+
+    /* special handling for neutral locale names */
+    if (locale && lstrlenW( locale ) == 2)
+    {
+        switch (LOWORD( info ))
+        {
+        case LOCALE_SNAME:
+            if (len && len < 3)
+            {
+                SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                return 0;
+            }
+            if (len) lstrcpyW( buffer, locale );
+            return 3;
+        case LOCALE_SPARENT:
+            if (len) buffer[0] = 0;
+            return 1;
+        }
+    }
+    return GetLocaleInfoW( lcid, info, buffer, len );
+}
+
+
+/******************************************************************************
+ *	GetOEMCP   (kernelbase.@)
+ */
+UINT WINAPI GetOEMCP(void)
+{
+    return oem_cp;
+}
+
+
 /***********************************************************************
  *	GetSystemDefaultLCID   (kernelbase.@)
  */
@@ -1091,6 +1203,75 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsNormalizedString( NORM_FORM form, const WCHAR *s
     BOOLEAN res;
     if (!set_ntstatus( RtlIsNormalizedString( form, str, len, &res ))) res = FALSE;
     return res;
+}
+
+
+/******************************************************************************
+ *	IsValidLanguageGroup   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsValidLanguageGroup( LGRPID id, DWORD flags )
+{
+    WCHAR name[10], value[10];
+    DWORD type, value_len = sizeof(value);
+    BOOL ret = FALSE;
+    HKEY key;
+
+    if (RegOpenKeyExW( nls_key, L"Language Groups", 0, KEY_READ, &key )) return FALSE;
+
+    swprintf( name, ARRAY_SIZE(name), L"%x", id );
+    if (!RegQueryValueExW( key, name, NULL, &type, (BYTE *)value, &value_len ) && type == REG_SZ)
+        ret = (flags & LGRPID_SUPPORTED) || wcstoul( value, NULL, 10 );
+
+    RegCloseKey( key );
+    return ret;
+}
+
+
+/******************************************************************************
+ *	IsValidLocale   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsValidLocale( LCID lcid, DWORD flags )
+{
+    /* check if language is registered in the kernel32 resources */
+    return FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING,
+                            ULongToPtr( (LOCALE_ILANGUAGE >> 4) + 1 ), LANGIDFROMLCID(lcid)) != 0;
+}
+
+
+/******************************************************************************
+ *	IsValidLocaleName   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsValidLocaleName( const WCHAR *locale )
+{
+    LCID lcid;
+
+    return !RtlLocaleNameToLcid( locale, &lcid, 2 );
+}
+
+
+/***********************************************************************
+ *	LCIDToLocaleName   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH LCIDToLocaleName( LCID lcid, WCHAR *name, INT count, DWORD flags )
+{
+    static int once;
+    if (flags && !once++) FIXME( "unsupported flags %x\n", flags );
+
+    return GetLocaleInfoW( lcid, LOCALE_SNAME | LOCALE_NOUSEROVERRIDE, name, count );
+}
+
+
+/***********************************************************************
+ *	LocaleNameToLCID   (kernelbase.@)
+ */
+LCID WINAPI DECLSPEC_HOTPATCH LocaleNameToLCID( const WCHAR *name, DWORD flags )
+{
+    LCID lcid;
+
+    if (!name) return GetUserDefaultLCID();
+    if (!set_ntstatus( RtlLocaleNameToLcid( name, &lcid, 2 ))) return 0;
+    if (!(flags & LOCALE_ALLOW_NEUTRAL_NAMES)) lcid = ConvertDefaultLocale( lcid );
+    return lcid;
 }
 
 
