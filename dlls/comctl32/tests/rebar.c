@@ -499,6 +499,7 @@ static void test_layout(void)
     REBARBANDINFOA rbi;
     HIMAGELIST himl;
     REBARINFO ri;
+    int count;
 
     rbsize_results_init();
 
@@ -660,9 +661,27 @@ static void test_layout(void)
     SendMessageA(hRebar, RB_INSERTBANDA, -1, (LPARAM)&rbi);
     check_sizes();
 
-    rbsize_results_free();
     DestroyWindow(hRebar);
     pImageList_Destroy(himl);
+
+    /* One hidden band. */
+    hRebar = create_rebar_control();
+
+    rbi.cbSize = REBARBANDINFOA_V6_SIZE;
+    rbi.fMask = RBBIM_STYLE | RBBIM_SIZE | RBBIM_CHILDSIZE | RBBIM_CHILD;
+    rbi.fStyle = RBBS_HIDDEN;
+    rbi.cx = 200;
+    rbi.cxMinChild = 100;
+    rbi.cyMinChild = 30;
+    rbi.hwndChild = NULL;
+
+    SendMessageA(hRebar, RB_INSERTBANDA, -1, (LPARAM)&rbi);
+    count = SendMessageA(hRebar, RB_GETROWCOUNT, 0, 0);
+    ok(!count, "Unexpected row count %d.\n", count);
+
+    DestroyWindow(hRebar);
+
+    rbsize_results_free();
 }
 
 #if 0       /* use this to generate more tests */

@@ -1298,8 +1298,8 @@ static int REBAR_SetBandsHeight(const REBAR_INFO *infoPtr, INT iBeginBand, INT i
     REBAR_BAND *lpBand;
     int yMaxHeight = 0;
     int yPos = yStart;
-    int row = REBAR_GetBand(infoPtr, iBeginBand)->iRow;
-    int i;
+    int row, i;
+
     for (i = iBeginBand; i < iEndBand; i = next_visible(infoPtr, i))
     {
         lpBand = REBAR_GetBand(infoPtr, i);
@@ -1307,6 +1307,8 @@ static int REBAR_SetBandsHeight(const REBAR_INFO *infoPtr, INT iBeginBand, INT i
         yMaxHeight = max(yMaxHeight, lpBand->cyMinBand);
     }
     TRACE("Bands [%d; %d) height: %d\n", iBeginBand, iEndBand, yMaxHeight);
+
+    row = iBeginBand < iEndBand ? REBAR_GetBand(infoPtr, iBeginBand)->iRow : 0;
 
     for (i = iBeginBand; i < iEndBand; i = next_visible(infoPtr, i))
     {
