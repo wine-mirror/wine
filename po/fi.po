@@ -621,7 +621,7 @@ msgstr "&Muokatut värit:"
 
 #: comdlg32.rc:289
 msgid "|S&olid"
-msgstr ""
+msgstr "|&Tasainen"
 
 #: comdlg32.rc:290
 msgid "&Red:"
@@ -658,11 +658,9 @@ msgid "&Define Custom Colors >>"
 msgstr "M&äärittele väri >>"
 
 #: comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "&Ei"
+msgstr "&T"
 
 #: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
