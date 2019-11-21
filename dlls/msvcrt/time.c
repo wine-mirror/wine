@@ -1076,6 +1076,14 @@ static inline BOOL strftime_format(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCR
             if(format[count] == '\'') count++;
             break;
         case 'd':
+            if(count > 2)
+            {
+                if(!MSVCRT_CHECK_PMT(mstm->tm_wday>=0 && mstm->tm_wday<=6))
+                {
+                    *str = 0;
+                    return FALSE;
+                }
+            }
             switch(count) {
             case 1:
             case 2:
@@ -1092,6 +1100,14 @@ static inline BOOL strftime_format(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCR
             }
             break;
         case 'M':
+            if(count > 2)
+            {
+                if(!MSVCRT_CHECK_PMT(mstm->tm_mon>=0 && mstm->tm_mon<=11))
+                {
+                    *str = 0;
+                    return FALSE;
+                }
+            }
             switch(count) {
             case 1:
             case 2:
