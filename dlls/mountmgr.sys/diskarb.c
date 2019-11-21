@@ -25,7 +25,6 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <sys/time.h>
 #ifdef HAVE_DISKARBITRATION_DISKARBITRATION_H
 #include <DiskArbitration/DiskArbitration.h>
 #endif
