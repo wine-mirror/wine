@@ -5407,6 +5407,8 @@ static void test_AWR_flags(void)
                 style, exstyle, wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &rect2 ));
             if (pAdjustWindowRectExForDpi)
             {
+                SetRect( &rect, 100, 100, 200, 200 );
+                rect2 = rect;
                 pAdjustWindowRectExForDpi( &rect, style, FALSE, exstyle, 192 );
                 wine_AdjustWindowRectExForDpi( &rect2, style, FALSE, exstyle, 192 );
                 ok( EqualRect( &rect, &rect2 ), "%08x %08x rects do not match: win %s wine %s\n",
