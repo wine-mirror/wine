@@ -173,7 +173,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc,
                                                          BOOL exex, LPARAM lparam )
 {
     WCHAR buffer[256];
-    DWORD optional;
+    DWORD optional = 0;
     INT ret;
 
     if (!proc)
