@@ -960,6 +960,56 @@ static void testfilter_init(struct testfilter *filter)
     strmbase_source_init(&filter->source, &testsource_vtbl, &filter->filter, L"", &testsource_ops);
 }
 
+static void test_allocator(IMemInputPin *input)
+{
+    IMemAllocator *req_allocator, *ret_allocator;
+    ALLOCATOR_PROPERTIES props, req_props;
+    HRESULT hr;
+
+    hr = IMemInputPin_GetAllocatorRequirements(input, &props);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &ret_allocator);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    if (hr == S_OK)
+    {
+        hr = IMemAllocator_GetProperties(ret_allocator, &props);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(!props.cBuffers, "Got %d buffers.\n", props.cBuffers);
+        ok(!props.cbBuffer, "Got size %d.\n", props.cbBuffer);
+        ok(!props.cbAlign, "Got alignment %d.\n", props.cbAlign);
+        ok(!props.cbPrefix, "Got prefix %d.\n", props.cbPrefix);
+
+        hr = IMemInputPin_NotifyAllocator(input, ret_allocator, TRUE);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        req_props.cBuffers = 1;
+        req_props.cbBuffer = 32 * 16 * 4;
+        req_props.cbAlign = 1;
+        req_props.cbPrefix = 0;
+        hr = IMemAllocator_SetProperties(ret_allocator, &req_props, &props);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(props.cBuffers == 1, "Got %d buffers.\n", props.cBuffers);
+        ok(props.cbBuffer == 32 * 16 * 4, "Got size %d.\n", props.cbBuffer);
+        ok(props.cbAlign == 1, "Got alignment %d.\n", props.cbAlign);
+        ok(!props.cbPrefix, "Got prefix %d.\n", props.cbPrefix);
+
+        IMemAllocator_Release(ret_allocator);
+    }
+
+    hr = IMemInputPin_NotifyAllocator(input, NULL, TRUE);
+    todo_wine ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMemAllocator, (void **)&req_allocator);
+
+    hr = IMemInputPin_NotifyAllocator(input, req_allocator, TRUE);
+    todo_wine ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    IMemAllocator_Release(req_allocator);
+}
+
 static void test_connect_pin(void)
 {
     VIDEOINFOHEADER vih =
@@ -981,6 +1031,7 @@ static void test_connect_pin(void)
     IBaseFilter *filter = create_vmr7(VMRMode_Windowed);
     IFilterGraph2 *graph = create_graph();
     struct testfilter source;
+    IMemInputPin *input;
     AM_MEDIA_TYPE mt;
     IPin *pin, *peer;
     unsigned int i;
@@ -1073,6 +1124,10 @@ static void test_connect_pin(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
 
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
+
+    test_allocator(input);
+
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_Disconnect(graph, pin);
@@ -1088,6 +1143,7 @@ static void test_connect_pin(void)
     hr = IPin_ConnectionMediaType(pin, &mt);
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
+    IMemInputPin_Release(input);
     IPin_Release(pin);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
