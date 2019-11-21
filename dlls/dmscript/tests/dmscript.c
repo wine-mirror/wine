@@ -203,18 +203,87 @@ static void test_dmscript(void)
 
 static void test_scripttrack(void)
 {
-    IDirectMusicTrack *dmt;
+    IDirectMusicTrack8 *dmt;
     IPersistStream *ps;
     CLSID class;
     ULARGE_INTEGER size;
     HRESULT hr;
+#define X(guid)        &guid, #guid
+    const struct {
+        REFGUID type;
+        const char *name;
+    } unsupported[] = {
+        { X(GUID_BandParam) },
+        { X(GUID_ChordParam) },
+        { X(GUID_Clear_All_Bands) },
+        { X(GUID_CommandParam) },
+        { X(GUID_CommandParam2) },
+        { X(GUID_CommandParamNext) },
+        { X(GUID_ConnectToDLSCollection) },
+        { X(GUID_Disable_Auto_Download) },
+        { X(GUID_DisableTempo) },
+        { X(GUID_DisableTimeSig) },
+        { X(GUID_Download) },
+        { X(GUID_DownloadToAudioPath) },
+        { X(GUID_Enable_Auto_Download) },
+        { X(GUID_EnableTempo) },
+        { X(GUID_EnableTimeSig) },
+        { X(GUID_IDirectMusicBand) },
+        { X(GUID_IDirectMusicChordMap) },
+        { X(GUID_IDirectMusicStyle) },
+        { X(GUID_MuteParam) },
+        { X(GUID_Play_Marker) },
+        { X(GUID_RhythmParam) },
+        { X(GUID_SeedVariations) },
+        { X(GUID_StandardMIDIFile) },
+        { X(GUID_TempoParam) },
+        { X(GUID_TimeSignature) },
+        { X(GUID_Unload) },
+        { X(GUID_UnloadFromAudioPath) },
+        { X(GUID_Valid_Start_Time) },
+        { X(GUID_Variations) },
+    };
+#undef X
+    unsigned int i;
 
     hr = CoCreateInstance(&CLSID_DirectMusicScriptTrack, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IDirectMusicTrack, (void**)&dmt);
+            &IID_IDirectMusicTrack8, (void**)&dmt);
     ok(hr == S_OK, "DirectMusicScriptTrack create failed: %08x, expected S_OK\n", hr);
 
+    /* IDirectMusicTrack8 */
+    todo_wine {
+    hr = IDirectMusicTrack8_Init(dmt, NULL);
+    ok(hr == E_POINTER, "IDirectMusicTrack8_Init failed: %08x\n", hr);
+    hr = IDirectMusicTrack8_InitPlay(dmt, NULL, NULL, NULL, 0, 0);
+    ok(hr == E_POINTER, "IDirectMusicTrack8_InitPlay failed: %08x\n", hr);
+    hr = IDirectMusicTrack8_EndPlay(dmt, NULL);
+    ok(hr == E_POINTER, "IDirectMusicTrack8_EndPlay failed: %08x\n", hr);
+    hr = IDirectMusicTrack8_Play(dmt, NULL, 0, 0, 0, 0, NULL, NULL, 0);
+    ok(hr == E_POINTER, "IDirectMusicTrack8_Play failed: %08x\n", hr);
+    hr = IDirectMusicTrack8_GetParam(dmt, NULL, 0, NULL, NULL);
+    ok(hr == DMUS_E_GET_UNSUPPORTED, "IDirectMusicTrack8_GetParam failed: %08x\n", hr);
+    }
+    for (i = 0; i < ARRAY_SIZE(unsupported); i++) {
+        hr = IDirectMusicTrack8_IsParamSupported(dmt, unsupported[i].type);
+        ok(hr == DMUS_E_TYPE_UNSUPPORTED,
+                "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
+                    unsupported[i].name, hr);
+    }
+    hr = IDirectMusicTrack8_AddNotificationType(dmt, NULL);
+    ok(hr == E_NOTIMPL, "IDirectMusicTrack8_AddNotificationType failed: %08x\n", hr);
+    hr = IDirectMusicTrack8_RemoveNotificationType(dmt, NULL);
+    ok(hr == E_NOTIMPL, "IDirectMusicTrack8_RemoveNotificationType failed: %08x\n", hr);
+    hr = IDirectMusicTrack8_Clone(dmt, 0, 0, NULL);
+    todo_wine ok(hr == E_POINTER, "IDirectMusicTrack8_Clone failed: %08x\n", hr);
+    hr = IDirectMusicTrack8_PlayEx(dmt, NULL, 0, 0, 0, 0, NULL, NULL, 0);
+    todo_wine ok(hr == E_POINTER, "IDirectMusicTrack8_PlayEx failed: %08x\n", hr);
+    hr = IDirectMusicTrack8_Compose(dmt, NULL, 0, NULL);
+    ok(hr == E_NOTIMPL, "IDirectMusicTrack8_Compose failed: %08x\n", hr);
+    hr = IDirectMusicTrack8_Join(dmt, NULL, 0, NULL, 0, NULL);
+    ok(hr == E_NOTIMPL, "IDirectMusicTrack8_Join failed: %08x\n", hr);
+
     /* IPersistStream */
-    hr = IDirectMusicTrack_QueryInterface(dmt, &IID_IPersistStream, (void**)&ps);
+    hr = IDirectMusicTrack8_QueryInterface(dmt, &IID_IPersistStream, (void**)&ps);
     ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
 
     hr = IPersistStream_GetClassID(ps, NULL);
@@ -233,7 +302,7 @@ static void test_scripttrack(void)
     hr = IPersistStream_Save(ps, NULL, TRUE);
     ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
 
-    while (IDirectMusicTrack_Release(dmt));
+    while (IDirectMusicTrack8_Release(dmt));
 }
 
 struct chunk {
