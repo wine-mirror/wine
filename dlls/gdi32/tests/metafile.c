@@ -994,7 +994,7 @@ static void test_mf_SaveDC(void)
     ok(ret, "ret = %d\n", ret);
 
     hMetafile = CloseMetaFile(hdcMetafile);
-    ok(hMetafile != 0, "CloseEnhMetaFile error %d\n", GetLastError());
+    ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
 
     ret = DeleteMetaFile(hMetafile);
     ok( ret, "DeleteMetaFile error %d\n", GetLastError());
