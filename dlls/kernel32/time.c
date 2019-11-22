@@ -47,6 +47,7 @@
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "kernel_private.h"
 #include "wine/unicode.h"
@@ -381,24 +382,6 @@ static BOOL reg_query_value(HKEY hkey, LPCWSTR name, DWORD type, void *data, DWO
     return TRUE;
 }
 
-static BOOL reg_load_mui_string(HKEY hkey, LPCWSTR value, LPWSTR buffer, DWORD size)
-{
-    static const WCHAR advapi32W[] = {'a','d','v','a','p','i','3','2','.','d','l','l',0};
-    DWORD (WINAPI *pRegLoadMUIStringW)(HKEY, LPCWSTR, LPWSTR, DWORD, DWORD *, DWORD, LPCWSTR);
-    HMODULE hDll;
-    BOOL ret = FALSE;
-
-    hDll = LoadLibraryExW(advapi32W, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
-    if (hDll) {
-        pRegLoadMUIStringW = (void *)GetProcAddress(hDll, "RegLoadMUIStringW");
-        if (pRegLoadMUIStringW &&
-            !pRegLoadMUIStringW(hkey, value, buffer, size, NULL, 0, DIR_System))
-            ret = TRUE;
-        FreeLibrary(hDll);
-    }
-    return ret;
-}
-
 /***********************************************************************
  *  TIME_GetSpecificTimeZoneInfo
  *
@@ -438,14 +421,14 @@ static BOOL TIME_GetSpecificTimeZoneInfo( const WCHAR *key_name, WORD year,
     if (!TIME_GetSpecificTimeZoneKey( key_name, &time_zone_key ))
         return FALSE;
 
-    if (!reg_load_mui_string( time_zone_key, mui_stdW, tzinfo->StandardName, sizeof(tzinfo->StandardName) ) &&
+    if (RegLoadMUIStringW( time_zone_key, mui_stdW, tzinfo->StandardName, sizeof(tzinfo->StandardName), NULL, 0, DIR_System ) &&
         !reg_query_value( time_zone_key, stdW, REG_SZ, tzinfo->StandardName, sizeof(tzinfo->StandardName) ))
     {
         NtClose( time_zone_key );
         return FALSE;
     }
 
-    if (!reg_load_mui_string( time_zone_key, mui_dltW, tzinfo->DaylightName, sizeof(tzinfo->DaylightName) ) &&
+    if (RegLoadMUIStringW( time_zone_key, mui_dltW, tzinfo->DaylightName, sizeof(tzinfo->DaylightName), NULL, 0, DIR_System ) &&
         !reg_query_value( time_zone_key, dltW, REG_SZ, tzinfo->DaylightName, sizeof(tzinfo->DaylightName) ))
     {
         NtClose( time_zone_key );
@@ -1005,8 +988,8 @@ DWORD WINAPI GetDynamicTimeZoneInformation(DYNAMIC_TIME_ZONE_INFORMATION *tzinfo
 
     if (!TIME_GetSpecificTimeZoneKey( tzinfo->TimeZoneKeyName, &time_zone_key ))
         return TIME_ZONE_ID_INVALID;
-    reg_load_mui_string( time_zone_key, mui_stdW, tzinfo->StandardName, sizeof(tzinfo->StandardName) );
-    reg_load_mui_string( time_zone_key, mui_dltW, tzinfo->DaylightName, sizeof(tzinfo->DaylightName) );
+    RegLoadMUIStringW( time_zone_key, mui_stdW, tzinfo->StandardName, sizeof(tzinfo->StandardName), NULL, 0, DIR_System );
+    RegLoadMUIStringW( time_zone_key, mui_dltW, tzinfo->DaylightName, sizeof(tzinfo->DaylightName), NULL, 0, DIR_System );
     NtClose( time_zone_key );
 
     return TIME_ZoneID( (TIME_ZONE_INFORMATION*)tzinfo );
