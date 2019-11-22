@@ -356,14 +356,14 @@ static BOOL fetch_value(const char* addr, unsigned sz, int* value)
 
     switch (sz)
     {
-    case 8:
+    case 1:
         if (!dbg_read_memory(addr, &value8, sizeof(value8))) return FALSE;
         *value = value8;
         break;
-    case 16:
+    case 2:
         if (!dbg_read_memory(addr, &value16, sizeof(value16))) return FALSE;
         *value = value16;
-    case 32:
+    case 4:
         if (!dbg_read_memory(addr, value, sizeof(*value))) return FALSE;
         break;
     default: return FALSE;
