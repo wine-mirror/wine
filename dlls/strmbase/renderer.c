@@ -394,14 +394,21 @@ HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *This, IMediaSa
             if (now - This->stream_start - start <= -10000)
             {
                 HANDLE handles[2] = {This->advise_event, This->flush_event};
+                DWORD ret;
 
                 IReferenceClock_AdviseTime(This->filter.pClock, This->stream_start,
                         start, (HEVENT)This->advise_event, &cookie);
 
                 LeaveCriticalSection(&This->csRenderLock);
 
-                WaitForMultipleObjects(2, handles, FALSE, INFINITE);
+                ret = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
                 IReferenceClock_Unadvise(This->filter.pClock, cookie);
+
+                if (ret == 1)
+                {
+                    TRACE("Flush signaled, discarding current sample.\n");
+                    return S_OK;
+                }
 
                 EnterCriticalSection(&This->csRenderLock);
             }
