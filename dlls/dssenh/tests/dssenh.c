@@ -261,7 +261,7 @@ static const struct keylength_test dssDH_keylength[] = {
 };
 
 static const struct keylength_test dssENH_keylength[] = {
-    /* min 512 max 1024 (AT_KEYEXCHANGE max 4096), increment by 64*/
+    /* min 512 max 1024 (AT_KEYEXCHANGE, CALG_DH_EPHEM, CALG_DH_SF max 4096), increment by 64*/
     {AT_KEYEXCHANGE, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_KEYEXCHANGE, 512 << 16, TRUE},
     {AT_KEYEXCHANGE, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
@@ -285,12 +285,16 @@ static const struct keylength_test dssENH_keylength[] = {
     {CALG_DH_EPHEM, 768 << 16, TRUE},
     {CALG_DH_EPHEM, 1024 << 16, TRUE},
     {CALG_DH_EPHEM, 1040 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DH_EPHEM, 1088 << 16, TRUE},
+    {CALG_DH_EPHEM, 4160 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DH_SF, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DH_SF, 512 << 16, TRUE},
     {CALG_DH_SF, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
     {CALG_DH_SF, 768 << 16, TRUE},
     {CALG_DH_SF, 1024 << 16, TRUE},
     {CALG_DH_SF, 1032 << 16, FALSE, NTE_BAD_FLAGS},
+    {CALG_DH_SF, 1088 << 16, TRUE},
+    {CALG_DH_SF, 4160 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 512 << 16, TRUE},
     {CALG_DSS_SIGN, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS, STATUS_INVALID_PARAMETER}, /* WinNT4 and Win2k */
