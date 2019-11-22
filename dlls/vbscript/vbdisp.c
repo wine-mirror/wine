@@ -527,6 +527,254 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
     return S_OK;
 }
 
+typedef struct {
+    ITypeInfo ITypeInfo_iface;
+    LONG ref;
+} ScriptTypeInfo;
+
+static inline ScriptTypeInfo *ScriptTypeInfo_from_ITypeInfo(ITypeInfo *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptTypeInfo, ITypeInfo_iface);
+}
+
+static HRESULT WINAPI ScriptTypeInfo_QueryInterface(ITypeInfo *iface, REFIID riid, void **ppv)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    if (IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ITypeInfo, riid))
+        *ppv = &This->ITypeInfo_iface;
+    else
+    {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI ScriptTypeInfo_AddRef(ITypeInfo *iface)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ScriptTypeInfo_Release(ITypeInfo *iface)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref)
+    {
+        heap_free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetTypeAttr(ITypeInfo *iface, TYPEATTR **ppTypeAttr)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%p)\n", This, ppTypeAttr);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetTypeComp(ITypeInfo *iface, ITypeComp **ppTComp)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%p)\n", This, ppTComp);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetFuncDesc(ITypeInfo *iface, UINT index, FUNCDESC **ppFuncDesc)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%u %p)\n", This, index, ppFuncDesc);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetVarDesc(ITypeInfo *iface, UINT index, VARDESC **ppVarDesc)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%u %p)\n", This, index, ppVarDesc);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetNames(ITypeInfo *iface, MEMBERID memid, BSTR *rgBstrNames,
+        UINT cMaxNames, UINT *pcNames)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%d %p %u %p)\n", This, memid, rgBstrNames, cMaxNames, pcNames);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetRefTypeOfImplType(ITypeInfo *iface, UINT index, HREFTYPE *pRefType)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%u %p)\n", This, index, pRefType);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetImplTypeFlags(ITypeInfo *iface, UINT index, INT *pImplTypeFlags)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%u %p)\n", This, index, pImplTypeFlags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetIDsOfNames(ITypeInfo *iface, LPOLESTR *rgszNames, UINT cNames,
+        MEMBERID *pMemId)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%p %u %p)\n", This, rgszNames, cNames, pMemId);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_Invoke(ITypeInfo *iface, PVOID pvInstance, MEMBERID memid, WORD wFlags,
+        DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%p %d %d %p %p %p %p)\n", This, pvInstance, memid, wFlags,
+          pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetDocumentation(ITypeInfo *iface, MEMBERID memid, BSTR *pBstrName,
+        BSTR *pBstrDocString, DWORD *pdwHelpContext, BSTR *pBstrHelpFile)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%d %p %p %p %p)\n", This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetDllEntry(ITypeInfo *iface, MEMBERID memid, INVOKEKIND invKind,
+        BSTR *pBstrDllName, BSTR *pBstrName, WORD *pwOrdinal)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%d %d %p %p %p)\n", This, memid, invKind, pBstrDllName, pBstrName, pwOrdinal);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetRefTypeInfo(ITypeInfo *iface, HREFTYPE hRefType, ITypeInfo **ppTInfo)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%x %p)\n", This, hRefType, ppTInfo);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_AddressOfMember(ITypeInfo *iface, MEMBERID memid, INVOKEKIND invKind, PVOID *ppv)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%d %d %p)\n", This, memid, invKind, ppv);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_CreateInstance(ITypeInfo *iface, IUnknown *pUnkOuter, REFIID riid, PVOID *ppvObj)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%p %s %p)\n", This, pUnkOuter, debugstr_guid(riid), ppvObj);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetMops(ITypeInfo *iface, MEMBERID memid, BSTR *pBstrMops)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%d %p)\n", This, memid, pBstrMops);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeInfo_GetContainingTypeLib(ITypeInfo *iface, ITypeLib **ppTLib, UINT *pIndex)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%p %p)\n", This, ppTLib, pIndex);
+
+    return E_NOTIMPL;
+}
+
+static void WINAPI ScriptTypeInfo_ReleaseTypeAttr(ITypeInfo *iface, TYPEATTR *pTypeAttr)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%p)\n", This, pTypeAttr);
+}
+
+static void WINAPI ScriptTypeInfo_ReleaseFuncDesc(ITypeInfo *iface, FUNCDESC *pFuncDesc)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%p)\n", This, pFuncDesc);
+}
+
+static void WINAPI ScriptTypeInfo_ReleaseVarDesc(ITypeInfo *iface, VARDESC *pVarDesc)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+
+    FIXME("(%p)->(%p)\n", This, pVarDesc);
+}
+
+static const ITypeInfoVtbl ScriptTypeInfoVtbl = {
+    ScriptTypeInfo_QueryInterface,
+    ScriptTypeInfo_AddRef,
+    ScriptTypeInfo_Release,
+    ScriptTypeInfo_GetTypeAttr,
+    ScriptTypeInfo_GetTypeComp,
+    ScriptTypeInfo_GetFuncDesc,
+    ScriptTypeInfo_GetVarDesc,
+    ScriptTypeInfo_GetNames,
+    ScriptTypeInfo_GetRefTypeOfImplType,
+    ScriptTypeInfo_GetImplTypeFlags,
+    ScriptTypeInfo_GetIDsOfNames,
+    ScriptTypeInfo_Invoke,
+    ScriptTypeInfo_GetDocumentation,
+    ScriptTypeInfo_GetDllEntry,
+    ScriptTypeInfo_GetRefTypeInfo,
+    ScriptTypeInfo_AddressOfMember,
+    ScriptTypeInfo_CreateInstance,
+    ScriptTypeInfo_GetMops,
+    ScriptTypeInfo_GetContainingTypeLib,
+    ScriptTypeInfo_ReleaseTypeAttr,
+    ScriptTypeInfo_ReleaseFuncDesc,
+    ScriptTypeInfo_ReleaseVarDesc
+};
+
 static inline ScriptDisp *ScriptDisp_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, ScriptDisp, IDispatchEx_iface);
@@ -590,12 +838,24 @@ static HRESULT WINAPI ScriptDisp_GetTypeInfoCount(IDispatchEx *iface, UINT *pcti
     return S_OK;
 }
 
-static HRESULT WINAPI ScriptDisp_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LCID lcid,
-                                              ITypeInfo **ppTInfo)
+static HRESULT WINAPI ScriptDisp_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LCID lcid, ITypeInfo **ret)
 {
     ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
-    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-    return E_NOTIMPL;
+    ScriptTypeInfo *type_info;
+
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ret);
+
+    if(iTInfo)
+        return DISP_E_BADINDEX;
+
+    if(!(type_info = heap_alloc(sizeof(*type_info))))
+        return E_OUTOFMEMORY;
+
+    type_info->ITypeInfo_iface.lpVtbl = &ScriptTypeInfoVtbl;
+    type_info->ref = 1;
+
+    *ret = &type_info->ITypeInfo_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptDisp_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
