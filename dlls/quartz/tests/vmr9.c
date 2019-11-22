@@ -1110,7 +1110,7 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    todo_wine ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1143,7 +1143,7 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    todo_wine ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
     hr = IMediaControl_Run(control);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1169,7 +1169,7 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    todo_wine ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
     hr = IMediaControl_Run(control);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1244,7 +1244,7 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     thread = send_frame(input);
-    todo_wine ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1268,7 +1268,7 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
     todo_wine ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
 
     thread = send_frame(input);
-    todo_wine ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
     hr = IMediaControl_Run(control);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
