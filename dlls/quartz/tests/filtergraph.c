@@ -3163,7 +3163,7 @@ todo_wine
     check_filter_state(graph, State_Paused);
     Sleep(600);
 
-    start_time += 600 * 10000;
+    start_time += 550 * 10000;
     hr = IMediaFilter_Run(filter, 0);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
@@ -3929,12 +3929,12 @@ static void test_graph_seeking(void)
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(abs(time - 1334 * 10000) < 40 * 10000,
+    ok(abs(time - 1334 * 10000) < 80 * 10000,
             "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(abs(current - 1334 * 10000) < 40 * 10000,
+    ok(abs(current - 1334 * 10000) < 80 * 10000,
             "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 8000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
@@ -3947,12 +3947,12 @@ static void test_graph_seeking(void)
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(abs(time - 1334 * 10000) < 40 * 10000,
+    ok(abs(time - 1334 * 10000) < 80 * 10000,
             "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(abs(current - 1334 * 10000) < 40 * 10000,
+    ok(abs(current - 1334 * 10000) < 80 * 10000,
             "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 8000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
