@@ -54,6 +54,12 @@ static const int MonthLengths[2][12] =
     { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 };
 
+#if _MSVCR_VER>=140
+static const int MAX_SECONDS = 60;
+#else
+static const int MAX_SECONDS = 59;
+#endif
+
 static inline BOOL IsLeapYear(int Year)
 {
     return Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0);
@@ -1141,7 +1147,7 @@ static inline BOOL strftime_format(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCR
             if(count > 2)
                 ret = strftime_nstr(str, pos, max, format, count-2);
             if(ret)
-                ret = strftime_int(str, pos, max, mstm->tm_sec, count == 1 ? 0 : 2, 0, 59);
+                ret = strftime_int(str, pos, max, mstm->tm_sec, count == 1 ? 0 : 2, 0, MAX_SECONDS);
             break;
         case 'a':
         case 'A':
@@ -1381,7 +1387,7 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
             break;
 #endif
         case 'S':
-            if(!strftime_int(str, &ret, max, mstm->tm_sec, alternate ? 0 : 2, 0, 59))
+            if(!strftime_int(str, &ret, max, mstm->tm_sec, alternate ? 0 : 2, 0, MAX_SECONDS))
                 return 0;
             break;
 #if _MSVCR_VER>=140
@@ -1397,7 +1403,7 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
                 return 0;
             if(ret < max)
                 str[ret++] = ':';
-            if(!strftime_int(str, &ret, max, mstm->tm_sec, alternate ? 0 : 2, 0, 59))
+            if(!strftime_int(str, &ret, max, mstm->tm_sec, alternate ? 0 : 2, 0, MAX_SECONDS))
                 return 0;
             break;
         case 'u':
