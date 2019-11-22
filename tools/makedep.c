@@ -2387,6 +2387,24 @@ static void output_symlink_rule( const char *src_name, const char *link_name )
 
 
 /*******************************************************************
+ *         output_srcdir_symlink
+ *
+ * Output rule to create a symlink back to the source directory, for source files
+ * that are needed at run-time.
+ */
+static void output_srcdir_symlink( struct makefile *make, const char *obj )
+{
+    char *src_file;
+
+    if (!make->src_dir) return;
+    src_file = src_dir_path( make, obj );
+    output( "%s: %s\n", obj, src_file );
+    output_symlink_rule( src_file, obj );
+    strarray_add( &make->all_targets, obj );
+}
+
+
+/*******************************************************************
  *         output_install_commands
  */
 static void output_install_commands( struct makefile *make, const struct makefile *submake,
@@ -2862,7 +2880,10 @@ static void output_source_sfd( struct makefile *make, struct incl_file *source, 
         if (!(source->file->flags & FLAG_SFD_FONTS)) output( "all: %s\n", ttf_file );
     }
     if (source->file->flags & FLAG_INSTALL)
+    {
         add_install_rule( make, source->name, ttf_obj, strmake( "D$(fontdir)/%s", ttf_obj ));
+        output_srcdir_symlink( make, ttf_obj );
+    }
 
     if (source->file->flags & FLAG_SFD_FONTS)
     {
@@ -2913,6 +2934,7 @@ static void output_source_nls( struct makefile *make, struct incl_file *source, 
 {
     add_install_rule( make, source->name, source->name,
                       strmake( "D$(datadir)/wine/%s", source->name ));
+    output_srcdir_symlink( make, strmake( "%s.nls", obj ));
 }
 
 

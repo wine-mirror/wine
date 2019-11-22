@@ -282,14 +282,12 @@ AC_DEFUN([WINE_APPEND_RULE],[AC_REQUIRE([WINE_CONFIG_HELPERS])wine_fn_append_rul
 
 dnl **** Create symlinks from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_SYMLINK(target,src,files,enable,srcfile)
+dnl Usage: WINE_CONFIG_SYMLINK(target,src,enable)
 dnl
 AC_DEFUN([WINE_CONFIG_SYMLINK],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-m4_ifval([$4],[if test $4; then
-])m4_foreach([f],[$3],
-[AC_CONFIG_LINKS(m4_ifval([$1],[$1/])f[:]m4_ifval([$2],[$2/])m4_ifval([$5],[$5],f))])dnl
-m4_if([$1],[$2],[test "$srcdir" = "." || ])dnl
-wine_fn_config_symlink[]m4_foreach([f],[$3],[ ]m4_ifval([$1],[$1/])f)m4_ifval([$4],[
+m4_ifval([$3],[if test $3; then
+])AC_CONFIG_LINKS([$1:$2])dnl
+wine_fn_config_symlink[ $1]m4_ifval([$3],[
 fi])[]dnl
 ])])
 

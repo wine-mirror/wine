@@ -19947,16 +19947,6 @@ Makefile: $srcdir/Makefile.in config.status \$(MAKEDEP)
 depend: \$(MAKEDEP) dummy
 	\$(MAKEDEP)"
 
-if test "x$enable_fonts" != xno; then
-ac_config_links="$ac_config_links fonts/marlett.ttf:fonts/marlett.ttf"
-ac_config_links="$ac_config_links fonts/symbol.ttf:fonts/symbol.ttf"
-ac_config_links="$ac_config_links fonts/tahoma.ttf:fonts/tahoma.ttf"
-ac_config_links="$ac_config_links fonts/tahomabd.ttf:fonts/tahomabd.ttf"
-ac_config_links="$ac_config_links fonts/wingding.ttf:fonts/wingding.ttf"
-test "$srcdir" = "." || wine_fn_config_symlink fonts/marlett.ttf fonts/symbol.ttf fonts/tahoma.ttf fonts/tahomabd.ttf fonts/wingding.ttf
-fi
-ac_config_links="$ac_config_links loader/l_intl.nls:loader/l_intl.nls"
-test "$srcdir" = "." || wine_fn_config_symlink loader/l_intl.nls
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
 if test "x$enable_win64" != xno -o -n "$with_wine64"; then
@@ -21973,12 +21963,6 @@ do
   case $ac_config_target in
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "include/stamp-h") CONFIG_COMMANDS="$CONFIG_COMMANDS include/stamp-h" ;;
-    "fonts/marlett.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/marlett.ttf:fonts/marlett.ttf" ;;
-    "fonts/symbol.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/symbol.ttf:fonts/symbol.ttf" ;;
-    "fonts/tahoma.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahoma.ttf:fonts/tahoma.ttf" ;;
-    "fonts/tahomabd.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahomabd.ttf:fonts/tahomabd.ttf" ;;
-    "fonts/wingding.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/wingding.ttf:fonts/wingding.ttf" ;;
-    "loader/l_intl.nls") CONFIG_LINKS="$CONFIG_LINKS loader/l_intl.nls:loader/l_intl.nls" ;;
     "wine") CONFIG_LINKS="$CONFIG_LINKS wine:tools/winewrapper" ;;
     "wine64") CONFIG_LINKS="$CONFIG_LINKS wine64:tools/winewrapper" ;;
     "tools/makedep") CONFIG_COMMANDS="$CONFIG_COMMANDS tools/makedep" ;;
