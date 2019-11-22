@@ -1051,9 +1051,6 @@ static BOOL do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style,
             VersionSizeTarget = GetFileVersionInfoSizeW(target,&zero);
         }
 
-        TRACE("SizeTarget %i ... SizeSource %i\n",VersionSizeTarget,
-                VersionSizeSource);
-
         if (VersionSizeSource && VersionSizeTarget)
         {
             LPVOID VersionSource;
@@ -1143,7 +1140,7 @@ static BOOL do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style,
     if (docopy)
     {
         rc = CopyFileW(source,target,FALSE);
-        TRACE("Did copy... rc was %i\n",rc);
+        if (!rc) WARN( "failed to copy, err %u\n", GetLastError() );
     }
     else
         SetLastError(ERROR_SUCCESS);
@@ -1468,6 +1465,24 @@ BOOL WINAPI SetupCommitFileQueueW( HWND owner, HSPFILEQ handle, PSP_FILE_CALLBAC
                         handler( context, SPFILENOTIFY_ENDCOPY, (UINT_PTR)&paths, 0 );
                         break;
                     }
+                    paths.Win32Error = GetLastError();
+                    if (paths.Win32Error == ERROR_PATH_NOT_FOUND ||
+                        paths.Win32Error == ERROR_FILE_NOT_FOUND)
+                        continue;
+
+                    newpath[0] = 0;
+                    op_result = handler( context, SPFILENOTIFY_COPYERROR, (UINT_PTR)&paths, (UINT_PTR)newpath );
+                    if (op_result == FILEOP_ABORT)
+                        goto done;
+                    else if (op_result == FILEOP_SKIP)
+                        break;
+                    else if (op_result == FILEOP_NEWPATH)
+                    {
+                        lstrcpyW(op->media->root, newpath);
+                        build_filepathsW(op, &paths);
+                    }
+                    else if (op_result != FILEOP_DOIT)
+                        FIXME("Unhandled return value %#x.\n", op_result);
                 }
             }
             else
