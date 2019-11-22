@@ -879,7 +879,7 @@ typedef struct phonestatus_tag {
     DWORD dwDevSpecificOffset;
 } PHONESTATUS, *LPPHONESTATUS;
 
-typedef void (CALLBACK *PHONECALLBACK)(HANDLE, DWORD, DWORD, DWORD, DWORD, DWORD);
+typedef void (CALLBACK *PHONECALLBACK)(DWORD, DWORD, DWORD_PTR, DWORD_PTR, DWORD_PTR, DWORD_PTR);
 
 typedef struct varstring_tag {
     DWORD dwTotalSize;
