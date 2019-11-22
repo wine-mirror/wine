@@ -1190,6 +1190,7 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
 {
     MSVCRT_size_t ret, tmp;
     BOOL alternate;
+    int year = mstm ? mstm->tm_year + 1900 : -1;
 
     if(!str || !format) {
         if(str && max)
@@ -1272,8 +1273,9 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
             break;
 #if _MSVCR_VER>=140
         case 'C':
-            tmp = (1900+mstm->tm_year)/100;
-            if(!strftime_int(str, &ret, max, tmp, alternate ? 0 : 2, 0, 99))
+            if(!MSVCRT_CHECK_PMT(year>=0 && year<=9999))
+                goto einval_error;
+            if(!strftime_int(str, &ret, max, year/100, alternate ? 0 : 2, 0, 99))
                 return 0;
             break;
 #endif
@@ -1283,6 +1285,8 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
             break;
 #if _MSVCR_VER>=140
         case 'D':
+            if(!MSVCRT_CHECK_PMT(year>=0 && year<=9999))
+                goto einval_error;
             if(!strftime_int(str, &ret, max, mstm->tm_mon+1, alternate ? 0 : 2, 1, 12))
                 return 0;
             if(ret < max)
@@ -1291,7 +1295,7 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
                 return 0;
             if(ret < max)
                 str[ret++] = '/';
-            if(!strftime_int(str, &ret, max, mstm->tm_year%100, alternate ? 0 : 2, 0, 99))
+            if(!strftime_int(str, &ret, max, year%100, alternate ? 0 : 2, 0, 99))
                 return 0;
             break;
         case 'e':
@@ -1301,8 +1305,7 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
                 str[ret-2] = ' ';
             break;
         case 'F':
-            tmp = 1900+mstm->tm_year;
-            if(!strftime_int(str, &ret, max, tmp, alternate ? 0 : 4, 0, 9999))
+            if(!strftime_int(str, &ret, max, year, alternate ? 0 : 4, 0, 9999))
                 return 0;
             if(ret < max)
                 str[ret++] = '-';
@@ -1315,7 +1318,7 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
             break;
         case 'g':
         case 'G':
-            tmp = 1900 + mstm->tm_year;
+            tmp = year;
             if (mstm->tm_yday - (mstm->tm_wday ? mstm->tm_wday : 7) + 4 < 0)
                 tmp--;
             else if(mstm->tm_yday - (mstm->tm_wday ? mstm->tm_wday : 7) + 5 > 365 + IsLeapYear(tmp))
@@ -1409,18 +1412,16 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
             break;
         case 'y':
 #if _MSVCR_VER>=140
-            if(!MSVCRT_CHECK_PMT(mstm->tm_year>=-1900 && mstm->tm_year<=8099))
-                goto einval_error;
-            tmp = (mstm->tm_year+1900)%100;
+            if(!MSVCRT_CHECK_PMT(year>=0 && year<=9999))
 #else
-            tmp = mstm->tm_year%100;
+            if(!MSVCRT_CHECK_PMT(year>=1900))
 #endif
-            if(!strftime_int(str, &ret, max, tmp, alternate ? 0 : 2, 0, 99))
+                goto einval_error;
+            if(!strftime_int(str, &ret, max, year%100, alternate ? 0 : 2, 0, 99))
                 return 0;
             break;
         case 'Y':
-            tmp = 1900+mstm->tm_year;
-            if(!strftime_int(str, &ret, max, tmp, alternate ? 0 : 4, 0, 9999))
+            if(!strftime_int(str, &ret, max, year, alternate ? 0 : 4, 0, 9999))
                 return 0;
             break;
         case 'z':
