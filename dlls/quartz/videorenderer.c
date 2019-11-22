@@ -149,7 +149,6 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
     const AM_MEDIA_TYPE *mt = &filter->renderer.sink.pin.mt;
     LPBYTE pbSrcStream = NULL;
     BITMAPINFOHEADER *bih;
-    LONG cbSrcStream = 0;
     HRESULT hr;
     HDC dc;
 
@@ -161,23 +160,6 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
         ERR("Cannot get pointer to sample data (%x)\n", hr);
         return hr;
     }
-
-    cbSrcStream = IMediaSample_GetActualDataLength(pSample);
-
-    TRACE("val %p %d\n", pbSrcStream, cbSrcStream);
-
-#if 0 /* For debugging purpose */
-    {
-        int i;
-        for(i = 0; i < cbSrcStream; i++)
-        {
-            if ((i!=0) && !(i%16))
-                TRACE("\n");
-                TRACE("%02x ", pbSrcStream[i]);
-        }
-        TRACE("\n");
-    }
-#endif
 
     if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
         bih = &((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
