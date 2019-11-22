@@ -1344,12 +1344,10 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
                 return 0;
             break;
         case 'I':
-            tmp = mstm->tm_hour;
-            if(tmp > 12)
-                tmp -= 12;
-            else if(!tmp)
-                tmp = 12;
-            if(!strftime_int(str, &ret, max, tmp, alternate ? 0 : 2, 1, 12))
+            if(!MSVCRT_CHECK_PMT(mstm->tm_hour>=0 && mstm->tm_hour<=23))
+                goto einval_error;
+            if(!strftime_int(str, &ret, max, (mstm->tm_hour + 11) % 12 + 1,
+                        alternate ? 0 : 2, 1, 12))
                 return 0;
             break;
         case 'j':
