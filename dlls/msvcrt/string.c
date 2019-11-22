@@ -350,9 +350,8 @@ static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale
     else
         locinfo = locale->locinfo;
 
-    /* FIXME: use *_l functions */
     p = str;
-    while(isspace(*p))
+    while(MSVCRT__isspace_l((unsigned char)*p, locale))
         p++;
 
     if(*p == '-') {
@@ -957,7 +956,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
     if (!MSVCRT_CHECK_PMT(base == 0 || base >= 2)) return 0;
     if (!MSVCRT_CHECK_PMT(base <= 36)) return 0;
 
-    while(isspace(*nptr)) nptr++;
+    while(MSVCRT__isspace_l((unsigned char)*nptr, locale)) nptr++;
 
     if(*nptr == '-') {
         negative = TRUE;
@@ -1050,7 +1049,7 @@ int __cdecl MSVCRT_atoi(const char *str)
     if(!str)
         return 0;
 
-    while(isspace(*str)) str++;
+    while(MSVCRT__isspace_l((unsigned char)*str, NULL)) str++;
 
     if(*str == '+') {
         str++;
@@ -1209,7 +1208,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
     if (!MSVCRT_CHECK_PMT(base == 0 || base >= 2)) return 0;
     if (!MSVCRT_CHECK_PMT(base <= 36)) return 0;
 
-    while(isspace(*nptr)) nptr++;
+    while(MSVCRT__isspace_l((unsigned char)*nptr, locale)) nptr++;
 
     if(*nptr == '-') {
         negative = TRUE;
