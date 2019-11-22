@@ -1405,6 +1405,8 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
                 return 0;
             break;
         case 'u':
+            if(!MSVCRT_CHECK_PMT(mstm->tm_wday>=0 && mstm->tm_wday<=6))
+                goto einval_error;
             tmp = mstm->tm_wday ? mstm->tm_wday : 7;
             if(!strftime_int(str, &ret, max, tmp, 0, 1, 7))
                 return 0;
