@@ -125,9 +125,9 @@ static void _test_strtod_str(int line, const char* string, double value, int len
     double d;
     d = p_strtod(string, &end);
     if (local_isnan(value))
-        ok_(__FILE__, line)(local_isnan(d), "d = %lf (\"%s\")\n", d, string);
+        ok_(__FILE__, line)(local_isnan(d), "d = %.16le (\"%s\")\n", d, string);
     else
-        ok_(__FILE__, line)(d == value, "d = %lf (\"%s\")\n", d, string);
+        ok_(__FILE__, line)(d == value, "d = %.16le (\"%s\")\n", d, string);
     ok_(__FILE__, line)(end == string + length, "incorrect end (%d, \"%s\")\n", (int)(end - string), string);
 }
 
@@ -162,6 +162,17 @@ static void test_strtod(void)
     test_strtod_str("0x1.1p1", 2.125, 7);
     test_strtod_str("0x1.A", 1.625, 5);
     test_strtod_str("0x1p1a", 2, 5);
+    test_strtod_str("0xp3", 0, 1);
+    test_strtod_str("0x.", 0, 1);
+    test_strtod_str("0x.8", 0.5, 4);
+    test_strtod_str("0x.8p", 0.5, 4);
+    test_strtod_str("0x0p10000000000000000000000000", 0, 30);
+    test_strtod_str("0x1p-1026", 1.3906711615670009e-309, 9);
+
+    test_strtod_str("0x1ffffffffffffe.80000000000000000000", 9007199254740990.0, 37);
+    test_strtod_str("0x1ffffffffffffe.80000000000000000001", 9007199254740991.0, 37);
+    test_strtod_str("0x1fffffffffffff.80000000000000000000", 9007199254740992.0, 37);
+    test_strtod_str("0x1fffffffffffff.80000000000000000001", 9007199254740992.0, 37);
 }
 
 static void test__memicmp(void)
