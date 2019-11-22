@@ -134,7 +134,7 @@ static void VideoRenderer_AutoShowWindow(VideoRendererImpl *This)
         ShowWindow(This->baseControlWindow.baseWindow.hWnd, SW_SHOW);
 }
 
-static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, DWORD size)
+static void VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, DWORD size)
 {
     const AM_MEDIA_TYPE *amt = &This->renderer.sink.pin.mt;
     BITMAPINFOHEADER *bmiHeader;
@@ -150,11 +150,6 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     {
         bmiHeader = &((VIDEOINFOHEADER2 *)amt->pbFormat)->bmiHeader;
     }
-    else
-    {
-        FIXME("Unknown subtype %s.\n", debugstr_guid(&amt->subtype));
-        return VFW_E_RUNTIME_ERROR;
-    }
 
     TRACE("Src Rect: %s\n", wine_dbgstr_rect(&This->SourceRect));
     TRACE("Dst Rect: %s\n", wine_dbgstr_rect(&This->DestRect));
@@ -165,8 +160,6 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
                   This->SourceRect.right - This->SourceRect.left, This->SourceRect.bottom - This->SourceRect.top,
                   data, (BITMAPINFO *)bmiHeader, DIB_RGB_COLORS, SRCCOPY);
     ReleaseDC(This->baseControlWindow.baseWindow.hWnd, dc);
-
-    return S_OK;
 }
 
 static HRESULT WINAPI VideoRenderer_ShouldDrawSampleNow(struct strmbase_renderer *filter,
