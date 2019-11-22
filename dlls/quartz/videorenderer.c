@@ -134,34 +134,6 @@ static void VideoRenderer_AutoShowWindow(VideoRendererImpl *This)
         ShowWindow(This->baseControlWindow.baseWindow.hWnd, SW_SHOW);
 }
 
-static void VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, DWORD size)
-{
-    const AM_MEDIA_TYPE *amt = &This->renderer.sink.pin.mt;
-    BITMAPINFOHEADER *bmiHeader;
-    HDC dc;
-
-    TRACE("(%p)->(%p, %d)\n", This, data, size);
-
-    if (IsEqualGUID(&amt->formattype, &FORMAT_VideoInfo))
-    {
-        bmiHeader = &((VIDEOINFOHEADER *)amt->pbFormat)->bmiHeader;
-    }
-    else if (IsEqualGUID(&amt->formattype, &FORMAT_VideoInfo2))
-    {
-        bmiHeader = &((VIDEOINFOHEADER2 *)amt->pbFormat)->bmiHeader;
-    }
-
-    TRACE("Src Rect: %s\n", wine_dbgstr_rect(&This->SourceRect));
-    TRACE("Dst Rect: %s\n", wine_dbgstr_rect(&This->DestRect));
-
-    dc = GetDC(This->baseControlWindow.baseWindow.hWnd);
-    StretchDIBits(dc, This->DestRect.left, This->DestRect.top, This->DestRect.right -This->DestRect.left,
-                  This->DestRect.bottom - This->DestRect.top, This->SourceRect.left, This->SourceRect.top,
-                  This->SourceRect.right - This->SourceRect.left, This->SourceRect.bottom - This->SourceRect.top,
-                  data, (BITMAPINFO *)bmiHeader, DIB_RGB_COLORS, SRCCOPY);
-    ReleaseDC(This->baseControlWindow.baseWindow.hWnd, dc);
-}
-
 static HRESULT WINAPI VideoRenderer_ShouldDrawSampleNow(struct strmbase_renderer *filter,
         IMediaSample *pSample, REFERENCE_TIME *start, REFERENCE_TIME *end)
 {
@@ -173,12 +145,15 @@ static HRESULT WINAPI VideoRenderer_ShouldDrawSampleNow(struct strmbase_renderer
 
 static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *pSample)
 {
-    VideoRendererImpl *This = impl_from_strmbase_renderer(iface);
+    VideoRendererImpl *filter = impl_from_strmbase_renderer(iface);
+    const AM_MEDIA_TYPE *mt = &filter->renderer.sink.pin.mt;
     LPBYTE pbSrcStream = NULL;
+    BITMAPINFOHEADER *bih;
     LONG cbSrcStream = 0;
     HRESULT hr;
+    HDC dc;
 
-    TRACE("(%p)->(%p)\n", This, pSample);
+    TRACE("filter %p, sample %p.\n", filter, pSample);
 
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
@@ -204,21 +179,21 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
     }
 #endif
 
-    if (This->renderer.filter.state == State_Paused)
-    {
-        VideoRenderer_SendSampleData(This, pbSrcStream, cbSrcStream);
-        if (This->renderer.filter.state == State_Paused)
-        {
-            /* Flushing */
-            return S_OK;
-        }
-        if (This->renderer.filter.state == State_Stopped)
-        {
-            return VFW_E_WRONG_STATE;
-        }
-    } else {
-        VideoRenderer_SendSampleData(This, pbSrcStream, cbSrcStream);
-    }
+    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        bih = &((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
+    else
+        bih = &((VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
+
+    dc = GetDC(filter->baseControlWindow.baseWindow.hWnd);
+    StretchDIBits(dc, filter->DestRect.left, filter->DestRect.top,
+            filter->DestRect.right - filter->DestRect.left,
+            filter->DestRect.bottom - filter->DestRect.top,
+            filter->SourceRect.left, filter->SourceRect.top,
+            filter->SourceRect.right - filter->SourceRect.left,
+            filter->SourceRect.bottom - filter->SourceRect.top,
+            pbSrcStream, (BITMAPINFO *)bih, DIB_RGB_COLORS, SRCCOPY);
+    ReleaseDC(filter->baseControlWindow.baseWindow.hWnd, dc);
+
     return S_OK;
 }
 
