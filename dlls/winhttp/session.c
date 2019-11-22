@@ -374,10 +374,9 @@ static const struct object_vtbl connect_vtbl =
 
 static BOOL domain_matches(LPCWSTR server, LPCWSTR domain)
 {
-    static const WCHAR localW[] = { '<','l','o','c','a','l','>',0 };
     BOOL ret = FALSE;
 
-    if (!wcsicmp( domain, localW ) && !wcschr( server, '.' ))
+    if (!wcsicmp( domain, L"<local>" ) && !wcschr( server, '.' ))
         ret = TRUE;
     else if (*domain == '*')
     {
@@ -1059,13 +1058,12 @@ static const struct object_vtbl request_vtbl =
 
 static BOOL add_accept_types_header( struct request *request, const WCHAR **types )
 {
-    static const WCHAR acceptW[] = {'A','c','c','e','p','t',0};
     static const DWORD flags = WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_COALESCE_WITH_COMMA;
 
     if (!types) return TRUE;
     while (*types)
     {
-        if (!process_header( request, acceptW, *types, flags, TRUE )) return FALSE;
+        if (!process_header( request, L"Accept", *types, flags, TRUE )) return FALSE;
         types++;
     }
     return TRUE;
@@ -1141,11 +1139,11 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     request->receive_timeout = connect->session->receive_timeout;
     request->receive_response_timeout = connect->session->receive_response_timeout;
 
-    if (!verb || !verb[0]) verb = getW;
+    if (!verb || !verb[0]) verb = L"GET";
     if (!(request->verb = strdupW( verb ))) goto end;
     if (!(request->path = get_request_path( object ))) goto end;
 
-    if (!version || !version[0]) version = http1_1;
+    if (!version || !version[0]) version = L"HTTP/1.1";
     if (!(request->version = strdupW( version ))) goto end;
     if (!(add_accept_types_header( request, types ))) goto end;
 
@@ -1408,8 +1406,6 @@ static int reverse_lookup( const struct addrinfo *ai, char *hostname, size_t len
 
 static WCHAR *build_wpad_url( const char *hostname, const struct addrinfo *ai )
 {
-    static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
-    static const WCHAR wpadW[] = {'/','w','p','a','d','.','d','a','t',0};
     char name[NI_MAXHOST];
     WCHAR *ret, *p;
     int len;
@@ -1419,12 +1415,12 @@ static WCHAR *build_wpad_url( const char *hostname, const struct addrinfo *ai )
 
     if (!reverse_lookup( ai, name, sizeof(name) )) hostname = name;
 
-    len = lstrlenW( httpW ) + strlen( hostname ) + lstrlenW( wpadW );
+    len = lstrlenW( L"http://" ) + strlen( hostname ) + lstrlenW( L"/wpad.dat" );
     if (!(ret = p = GlobalAlloc( 0, (len + 1) * sizeof(WCHAR) ))) return NULL;
-    lstrcpyW( p, httpW );
-    p += lstrlenW( httpW );
+    lstrcpyW( p, L"http://" );
+    p += lstrlenW( L"http://" );
     while (*hostname) { *p++ = *hostname++; }
-    lstrcpyW( p, wpadW );
+    lstrcpyW( p, L"/wpad.dat" );
     return ret;
 }
 
@@ -1504,15 +1500,9 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
     return TRUE;
 }
 
-static const WCHAR Connections[] = {
-    'S','o','f','t','w','a','r','e','\\',
-    'M','i','c','r','o','s','o','f','t','\\',
-    'W','i','n','d','o','w','s','\\',
-    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-    'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
-    'C','o','n','n','e','c','t','i','o','n','s',0 };
-static const WCHAR WinHttpSettings[] = {
-    'W','i','n','H','t','t','p','S','e','t','t','i','n','g','s',0 };
+static const WCHAR path_connections[] =
+    L"Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Connections";
+
 static const DWORD WINHTTP_SETTINGS_MAGIC = 0x18;
 static const DWORD WININET_SETTINGS_MAGIC = 0x46;
 static const DWORD PROXY_TYPE_DIRECT         = 1;
@@ -1548,12 +1538,12 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
 
     TRACE("%p\n", info);
 
-    l = RegOpenKeyExW( HKEY_LOCAL_MACHINE, Connections, 0, KEY_READ, &key );
+    l = RegOpenKeyExW( HKEY_LOCAL_MACHINE, path_connections, 0, KEY_READ, &key );
     if (!l)
     {
         DWORD type, size = 0;
 
-        l = RegQueryValueExW( key, WinHttpSettings, NULL, &type, NULL, &size );
+        l = RegQueryValueExW( key, L"WinHttpSettings", NULL, &type, NULL, &size );
         if (!l && type == REG_BINARY &&
             size >= sizeof(struct connection_settings_header) + 2 * sizeof(DWORD))
         {
@@ -1565,7 +1555,7 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
                     (struct connection_settings_header *)buf;
                 DWORD *len = (DWORD *)(hdr + 1);
 
-                l = RegQueryValueExW( key, WinHttpSettings, NULL, NULL, buf,
+                l = RegQueryValueExW( key, L"WinHttpSettings", NULL, NULL, buf,
                     &size );
                 if (!l && hdr->magic == WINHTTP_SETTINGS_MAGIC &&
                     hdr->unknown == 0)
@@ -1668,8 +1658,6 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
  */
 BOOL WINAPI WinHttpGetIEProxyConfigForCurrentUser( WINHTTP_CURRENT_USER_IE_PROXY_CONFIG *config )
 {
-    static const WCHAR settingsW[] =
-        {'D','e','f','a','u','l','t','C','o','n','n','e','c','t','i','o','n','S','e','t','t','i','n','g','s',0};
     HKEY hkey = NULL;
     struct connection_settings_header *hdr = NULL;
     DWORD type, offset, len, size = 0;
@@ -1685,15 +1673,15 @@ BOOL WINAPI WinHttpGetIEProxyConfigForCurrentUser( WINHTTP_CURRENT_USER_IE_PROXY
     memset( config, 0, sizeof(*config) );
     config->fAutoDetect = TRUE;
 
-    if (RegOpenKeyExW( HKEY_CURRENT_USER, Connections, 0, KEY_READ, &hkey ) ||
-        RegQueryValueExW( hkey, settingsW, NULL, &type, NULL, &size ) ||
+    if (RegOpenKeyExW( HKEY_CURRENT_USER, path_connections, 0, KEY_READ, &hkey ) ||
+        RegQueryValueExW( hkey, L"DefaultConnectionSettings", NULL, &type, NULL, &size ) ||
         type != REG_BINARY || size < sizeof(struct connection_settings_header))
     {
         ret = TRUE;
         goto done;
     }
     if (!(hdr = heap_alloc( size ))) goto done;
-    if (RegQueryValueExW( hkey, settingsW, NULL, &type, (BYTE *)hdr, &size ) ||
+    if (RegQueryValueExW( hkey, L"DefaultConnectionSettings", NULL, &type, (BYTE *)hdr, &size ) ||
         hdr->magic != WININET_SETTINGS_MAGIC)
     {
         ret = TRUE;
@@ -1782,8 +1770,7 @@ static BOOL parse_script_result( const char *result, WINHTTP_PROXY_INFO *info )
 
 static char *download_script( const WCHAR *url, DWORD *out_size )
 {
-    static const WCHAR typeW[] = {'*','/','*',0};
-    static const WCHAR *acceptW[] = {typeW, NULL};
+    static const WCHAR *acceptW[] = {L"*/*", NULL};
     HINTERNET ses, con = NULL, req = NULL;
     WCHAR *hostname;
     URL_COMPONENTSW uc;
@@ -1996,7 +1983,7 @@ BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
         return FALSE;
     }
 
-    l = RegCreateKeyExW( HKEY_LOCAL_MACHINE, Connections, 0, NULL, 0,
+    l = RegCreateKeyExW( HKEY_LOCAL_MACHINE, path_connections, 0, NULL, 0,
         KEY_WRITE, NULL, &key, NULL );
     if (!l)
     {
@@ -2044,7 +2031,7 @@ BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
                 *len++ = 0;
                 *len++ = 0;
             }
-            l = RegSetValueExW( key, WinHttpSettings, 0, REG_BINARY, buf, size );
+            l = RegSetValueExW( key, L"WinHttpSettings", 0, REG_BINARY, buf, size );
             if (!l)
                 ret = TRUE;
             heap_free( buf );
@@ -2150,22 +2137,15 @@ BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int 
 }
 
 static const WCHAR wkday[7][4] =
-    {{'S','u','n', 0}, {'M','o','n', 0}, {'T','u','e', 0}, {'W','e','d', 0},
-     {'T','h','u', 0}, {'F','r','i', 0}, {'S','a','t', 0}};
+    {L"Sun", L"Mon", L"Tue", L"Wed", L"Thu", L"Fri", L"Sat"};
 static const WCHAR month[12][4] =
-    {{'J','a','n', 0}, {'F','e','b', 0}, {'M','a','r', 0}, {'A','p','r', 0},
-     {'M','a','y', 0}, {'J','u','n', 0}, {'J','u','l', 0}, {'A','u','g', 0},
-     {'S','e','p', 0}, {'O','c','t', 0}, {'N','o','v', 0}, {'D','e','c', 0}};
+    {L"Jan", L"Feb", L"Mar", L"Apr", L"May", L"Jun", L"Jul", L"Aug", L"Sep", L"Oct", L"Nov", L"Dec"};
 
 /***********************************************************************
  *           WinHttpTimeFromSystemTime (WININET.@)
  */
 BOOL WINAPI WinHttpTimeFromSystemTime( const SYSTEMTIME *time, LPWSTR string )
 {
-    static const WCHAR format[] =
-        {'%','s',',',' ','%','0','2','d',' ','%','s',' ','%','4','d',' ','%','0',
-         '2','d',':','%','0','2','d',':','%','0','2','d',' ','G','M','T', 0};
-
     TRACE("%p, %p\n", time, string);
 
     if (!time || !string)
@@ -2174,7 +2154,8 @@ BOOL WINAPI WinHttpTimeFromSystemTime( const SYSTEMTIME *time, LPWSTR string )
         return FALSE;
     }
 
-    swprintf( string, WINHTTP_TIME_FORMAT_BUFSIZE / sizeof(WCHAR), format,
+    swprintf( string, WINHTTP_TIME_FORMAT_BUFSIZE / sizeof(WCHAR),
+              L"%s, %02d %s %4d %02d:%02d:%02d GMT",
               wkday[time->wDayOfWeek],
               time->wDay,
               month[time->wMonth - 1],

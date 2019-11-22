@@ -262,8 +262,6 @@ static struct attr *parse_attr( const WCHAR *str, int *used )
 
 BOOL set_cookies( struct request *request, const WCHAR *cookies )
 {
-    static const WCHAR pathW[] = {'p','a','t','h',0};
-    static const WCHAR domainW[] = {'d','o','m','a','i','n',0};
     BOOL ret = FALSE;
     WCHAR *buffer, *p;
     WCHAR *cookie_domain = NULL, *cookie_path = NULL;
@@ -287,12 +285,12 @@ BOOL set_cookies( struct request *request, const WCHAR *cookies )
     len = lstrlenW( p );
     while (len && (attr = parse_attr( p, &used )))
     {
-        if (!wcsicmp( attr->name, domainW ))
+        if (!wcsicmp( attr->name, L"domain" ))
         {
             domain = attr;
             cookie_domain = attr->value;
         }
-        else if (!wcsicmp( attr->name, pathW ))
+        else if (!wcsicmp( attr->name, L"path" ))
         {
             path = attr;
             cookie_path = attr->value;
