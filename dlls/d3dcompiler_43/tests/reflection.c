@@ -434,7 +434,7 @@ static void test_reflection_desc_vs(void)
         ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "GetInputParameterDesc(%u) ReadWriteMask failed, got %x, expected %x\n",
                 i, desc.ReadWriteMask, pdesc->ReadWriteMask);
         ok(desc.Stream == pdesc->Stream, "GetInputParameterDesc(%u) Stream failed, got %u, expected %u\n",
-                i, desc.Stream, pdesc->ReadWriteMask);
+                i, desc.Stream, pdesc->Stream);
     }
 
     for (i = 0; i < ARRAY_SIZE(test_reflection_desc_vs_resultout); ++i)
@@ -459,7 +459,7 @@ static void test_reflection_desc_vs(void)
         ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "GetOutputParameterDesc(%u) ReadWriteMask failed, got %x, expected %x\n",
                 i, desc.ReadWriteMask, pdesc->ReadWriteMask);
         ok(desc.Stream == pdesc->Stream, "GetOutputParameterDesc(%u) Stream failed, got %u, expected %u\n",
-                i, desc.Stream, pdesc->ReadWriteMask);
+                i, desc.Stream, pdesc->Stream);
     }
 
     count = ref11->lpVtbl->Release(ref11);
@@ -741,7 +741,7 @@ static void test_reflection_desc_ps(void)
         ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "GetInputParameterDesc(%u) ReadWriteMask failed, got %x, expected %x\n",
                 i, desc.ReadWriteMask, pdesc->ReadWriteMask);
         ok(desc.Stream == pdesc->Stream, "GetInputParameterDesc(%u) Stream failed, got %u, expected %u\n",
-                i, desc.Stream, pdesc->ReadWriteMask);
+                i, desc.Stream, pdesc->Stream);
     }
 
     for (i = 0; i < ARRAY_SIZE(test_reflection_desc_ps_resultout); ++i)
@@ -772,7 +772,7 @@ static void test_reflection_desc_ps(void)
         ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "GetOutputParameterDesc(%u) ReadWriteMask failed, got %x, expected %x\n",
                 i, desc.ReadWriteMask, pdesc->ReadWriteMask);
         ok(desc.Stream == pdesc->Stream, "GetOutputParameterDesc(%u) Stream failed, got %u, expected %u\n",
-                i, desc.Stream, pdesc->ReadWriteMask);
+                i, desc.Stream, pdesc->Stream);
     }
 
     count = ref11->lpVtbl->Release(ref11);
@@ -1009,7 +1009,7 @@ static void test_reflection_desc_ps_output(void)
         ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "(%u): GetOutputParameterDesc ReadWriteMask failed, got %x, expected %x\n",
                 i, desc.ReadWriteMask, pdesc->ReadWriteMask);
         ok(desc.Stream == pdesc->Stream, "(%u): GetOutputParameterDesc Stream failed, got %u, expected %u\n",
-                i, desc.Stream, pdesc->ReadWriteMask);
+                i, desc.Stream, pdesc->Stream);
 
         count = ref11->lpVtbl->Release(ref11);
         ok(count == 0, "(%u): Release failed %u\n", i, count);
