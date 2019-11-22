@@ -92,6 +92,7 @@ DEFINE_EXPECT(GetBindString_USER_AGENT);
 DEFINE_EXPECT(GetBindString_POST_COOKIE);
 DEFINE_EXPECT(GetBindString_URL);
 DEFINE_EXPECT(GetBindString_ROOTDOC_URL);
+DEFINE_EXPECT(GetBindString_SAMESITE_COOKIE_LEVEL);
 DEFINE_EXPECT(QueryService_HttpNegotiate);
 DEFINE_EXPECT(QueryService_InternetProtocol);
 DEFINE_EXPECT(QueryService_HttpSecurity);
@@ -662,8 +663,10 @@ static void call_continue(PROTOCOLDATA *protocol_data)
             todo_wine CHECK_CALLED(ReportProgress_SENDINGREQUEST);
         else if (tested_protocol != HTTPS_TEST)
             CHECK_CALLED(ReportProgress_SENDINGREQUEST);
-        if(test_redirect && !(bindinfo_options & BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS))
+        if(test_redirect && !(bindinfo_options & BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS)) {
             CHECK_CALLED(ReportProgress_REDIRECTING);
+            CLEAR_CALLED(GetBindString_SAMESITE_COOKIE_LEVEL); /* New in IE11 */
+        }
         state = test_async_req ? STATE_SENDINGREQUEST : STATE_STARTDOWNLOADING;
     }
 
@@ -1506,6 +1509,10 @@ static HRESULT WINAPI BindInfo_GetBindString(IInternetBindInfo *iface, ULONG ulS
         ok(cEl == 1, "cEl=%d, expected 1\n", cEl);
         return E_NOTIMPL;
     case BINDSTRING_ENTERPRISE_ID:
+        ok(cEl == 1, "cEl=%d, expected 1\n", cEl);
+        return E_NOTIMPL;
+    case BINDSTRING_SAMESITE_COOKIE_LEVEL:
+        CHECK_EXPECT(GetBindString_SAMESITE_COOKIE_LEVEL);
         ok(cEl == 1, "cEl=%d, expected 1\n", cEl);
         return E_NOTIMPL;
     default:
@@ -3375,8 +3382,10 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
             SET_EXPECT(ReportProgress_CONNECTING);
         }
         SET_EXPECT(ReportProgress_SENDINGREQUEST);
-        if(test_redirect && !(bindinfo_options & BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS))
+        if(test_redirect && !(bindinfo_options & BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS)) {
             SET_EXPECT(ReportProgress_REDIRECTING);
+            SET_EXPECT(GetBindString_SAMESITE_COOKIE_LEVEL); /* New in IE11 */
+        }
         SET_EXPECT(ReportProgress_PROXYDETECTING);
         if(prot == HTTP_TEST)
             SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
