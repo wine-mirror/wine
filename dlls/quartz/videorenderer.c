@@ -54,6 +54,8 @@ typedef struct VideoRendererImpl
     LONG FullScreenMode;
 
     DWORD saved_style;
+
+    HANDLE run_event;
 } VideoRendererImpl;
 
 static inline VideoRendererImpl *impl_from_BaseWindow(BaseWindow *iface)
@@ -176,6 +178,15 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
             pbSrcStream, (BITMAPINFO *)bih, DIB_RGB_COLORS, SRCCOPY);
     ReleaseDC(filter->baseControlWindow.baseWindow.hWnd, dc);
 
+    if (filter->renderer.filter.state == State_Paused)
+    {
+        const HANDLE events[2] = {filter->run_event, filter->renderer.flush_event};
+
+        LeaveCriticalSection(&filter->renderer.csRenderLock);
+        WaitForMultipleObjects(2, events, FALSE, INFINITE);
+        EnterCriticalSection(&filter->renderer.csRenderLock);
+    }
+
     return S_OK;
 }
 
@@ -234,7 +245,7 @@ static void video_renderer_destroy(struct strmbase_renderer *iface)
 
     BaseControlWindow_Destroy(&filter->baseControlWindow);
     BaseControlVideo_Destroy(&filter->baseControlVideo);
-
+    CloseHandle(filter->run_event);
     strmbase_renderer_cleanup(&filter->renderer);
     CoTaskMemFree(filter);
 }
@@ -267,6 +278,13 @@ static HRESULT video_renderer_pin_query_interface(struct strmbase_renderer *ifac
     return S_OK;
 }
 
+static void video_renderer_start_stream(struct strmbase_renderer *iface)
+{
+    VideoRendererImpl *filter = impl_from_strmbase_renderer(iface);
+
+    SetEvent(filter->run_event);
+}
+
 static void video_renderer_stop_stream(struct strmbase_renderer *iface)
 {
     VideoRendererImpl *This = impl_from_strmbase_renderer(iface);
@@ -276,6 +294,8 @@ static void video_renderer_stop_stream(struct strmbase_renderer *iface)
     if (This->baseControlWindow.AutoShow)
         /* Black it out */
         RedrawWindow(This->baseControlWindow.baseWindow.hWnd, NULL, NULL, RDW_INVALIDATE|RDW_ERASE);
+
+    ResetEvent(This->run_event);
 }
 
 static void video_renderer_init_stream(struct strmbase_renderer *iface)
@@ -315,6 +335,7 @@ static const struct strmbase_renderer_ops renderer_ops =
     .pfnCheckMediaType = VideoRenderer_CheckMediaType,
     .pfnDoRenderSample = VideoRenderer_DoRenderSample,
     .renderer_init_stream = video_renderer_init_stream,
+    .renderer_start_stream = video_renderer_start_stream,
     .renderer_stop_stream = video_renderer_stop_stream,
     .pfnShouldDrawSampleNow = VideoRenderer_ShouldDrawSampleNow,
     .renderer_destroy = video_renderer_destroy,
@@ -721,6 +742,8 @@ HRESULT VideoRenderer_create(IUnknown *outer, void **out)
 
     if (FAILED(hr = BaseWindowImpl_PrepareWindow(&pVideoRenderer->baseControlWindow.baseWindow)))
         goto fail;
+
+    pVideoRenderer->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     *out = &pVideoRenderer->renderer.filter.IUnknown_inner;
     return S_OK;
