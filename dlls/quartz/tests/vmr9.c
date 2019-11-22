@@ -1340,6 +1340,7 @@ static void test_connect_pin(void)
     IFilterGraph2_AddFilter(graph, filter, NULL);
 
     IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
 
     for (i = 0; i < ARRAY_SIZE(subtype_tests); ++i)
     {
@@ -1410,8 +1411,6 @@ static void test_connect_pin(void)
     hr = IPin_ConnectionMediaType(pin, &mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
-
-    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
 
     test_allocator(input);
 
