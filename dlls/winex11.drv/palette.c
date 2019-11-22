@@ -293,19 +293,19 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap( const PALETTEENTRY *sys_pal_template
     {
        if( i < NB_RESERVED_COLORS/2 )
        {
-         color.red   = sys_pal_template[i].peRed * 65535 / 255;
-         color.green = sys_pal_template[i].peGreen * 65535 / 255;
-         color.blue  = sys_pal_template[i].peBlue * 65535 / 255;
-	 COLOR_sysPal[i] = sys_pal_template[i];
+         color.red   = sys_pal_template[i].peRed * (65535 / 255);
+         color.green = sys_pal_template[i].peGreen * (65535 / 255);
+         color.blue  = sys_pal_template[i].peBlue * (65535 / 255);
+         COLOR_sysPal[i] = sys_pal_template[i];
          COLOR_sysPal[i].peFlags |= PC_SYS_USED;
        }
        else if( i >= palette_size - NB_RESERVED_COLORS/2 )
        {
-	 int j = NB_RESERVED_COLORS + i - palette_size;
-         color.red   = sys_pal_template[j].peRed * 65535 / 255;
-         color.green = sys_pal_template[j].peGreen * 65535 / 255;
-         color.blue  = sys_pal_template[j].peBlue * 65535 / 255;
-	 COLOR_sysPal[i] = sys_pal_template[j];
+         int j = NB_RESERVED_COLORS + i - palette_size;
+         color.red   = sys_pal_template[j].peRed * (65535 / 255);
+         color.green = sys_pal_template[j].peGreen * (65535 / 255);
+         color.blue  = sys_pal_template[j].peBlue * (65535 / 255);
+         COLOR_sysPal[i] = sys_pal_template[j];
          COLOR_sysPal[i].peFlags |= PC_SYS_USED;
        }
 
@@ -633,9 +633,9 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
 	 {
 	   XColor color;
 	   color.pixel = (X11DRV_PALETTE_PaletteToXPixel)? X11DRV_PALETTE_PaletteToXPixel[idx] : idx;
-	   color.red = COLOR_sysPal[idx].peRed << 8;
-	   color.green = COLOR_sysPal[idx].peGreen << 8;
-	   color.blue =  COLOR_sysPal[idx].peBlue << 8;
+	   color.red = COLOR_sysPal[idx].peRed * (65535 / 255);
+	   color.green = COLOR_sysPal[idx].peGreen * (65535 / 255);
+	   color.blue = COLOR_sysPal[idx].peBlue * (65535 / 255);
 	   color.flags = DoRed | DoGreen | DoBlue;
 	   XStoreColor(gdi_display, default_colormap, &color);
 	 }
@@ -1156,9 +1156,9 @@ UINT CDECL X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary )
                     X11DRV_PALETTE_firstFree = X11DRV_PALETTE_freeList[index];
 
                     color.pixel = (X11DRV_PALETTE_PaletteToXPixel) ? X11DRV_PALETTE_PaletteToXPixel[index] : index;
-                    color.red = entries[i].peRed << 8;
-                    color.green = entries[i].peGreen << 8;
-                    color.blue = entries[i].peBlue << 8;
+                    color.red = entries[i].peRed * (65535 / 255);
+                    color.green = entries[i].peGreen * (65535 / 255);
+                    color.blue = entries[i].peBlue * (65535 / 255);
                     color.flags = DoRed | DoGreen | DoBlue;
                     XStoreColor(gdi_display, default_colormap, &color);
 
