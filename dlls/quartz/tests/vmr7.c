@@ -1048,9 +1048,9 @@ static HANDLE send_frame(IMemInputPin *sink)
 
     hr = IMediaSample_GetPointer(sample, &data);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    memset(data, 0x55, 32 * 16 * 4);
+    memset(data, 0x55, IMediaSample_GetSize(sample));
 
-    hr = IMediaSample_SetActualDataLength(sample, 32 * 16 * 4);
+    hr = IMediaSample_SetActualDataLength(sample, IMediaSample_GetSize(sample));
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     start_time = 0;
@@ -1350,6 +1350,10 @@ static void test_connect_pin(void)
     {
         vih.bmiHeader.biBitCount = 24;
         hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+        /* w7u is also rather buggy with its allocator. Requesting a size of
+         * 32 * 16 * 4 succeeds and returns that size from SetProperties(), but
+         * the actual samples only have a size of 32 * 16 * 3. */
+        req_props.cbBuffer = 32 * 16 * 3;
     }
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
