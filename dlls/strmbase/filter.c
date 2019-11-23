@@ -250,24 +250,16 @@ HRESULT WINAPI BaseFilterImpl_EnumPins(IBaseFilter *iface, IEnumPins **enum_pins
 HRESULT WINAPI BaseFilterImpl_FindPin(IBaseFilter *iface, const WCHAR *id, IPin **ret)
 {
     struct strmbase_filter *This = impl_from_IBaseFilter(iface);
+    struct strmbase_pin *pin;
     unsigned int i;
-    PIN_INFO info;
-    HRESULT hr;
-    IPin *pin;
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_w(id), ret);
 
     for (i = 0; (pin = This->ops->filter_get_pin(This, i)); ++i)
     {
-        hr = IPin_QueryPinInfo(pin, &info);
-        if (FAILED(hr))
-            return hr;
-
-        if (info.pFilter) IBaseFilter_Release(info.pFilter);
-
-        if (!lstrcmpW(id, info.achName))
+        if (!lstrcmpW(id, pin->name))
         {
-            IPin_AddRef(*ret = pin);
+            IPin_AddRef(*ret = &pin->IPin_iface);
             return S_OK;
         }
     }

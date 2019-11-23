@@ -166,7 +166,7 @@ struct strmbase_filter
 
 struct strmbase_filter_ops
 {
-    IPin *(*filter_get_pin)(struct strmbase_filter *iface, unsigned int index);
+    struct strmbase_pin *(*filter_get_pin)(struct strmbase_filter *iface, unsigned int index);
     void (*filter_destroy)(struct strmbase_filter *iface);
     HRESULT (*filter_query_interface)(struct strmbase_filter *iface, REFIID iid, void **out);
 

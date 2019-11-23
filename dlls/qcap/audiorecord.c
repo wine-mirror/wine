@@ -67,7 +67,7 @@ static const IBaseFilterVtbl AudioRecordVtbl = {
     BaseFilterImpl_QueryVendorInfo
 };
 
-static IPin *audio_record_get_pin(struct strmbase_filter *iface, unsigned int index)
+static struct strmbase_pin *audio_record_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     FIXME("iface %p, index %u, stub!\n", iface, index);
     return NULL;

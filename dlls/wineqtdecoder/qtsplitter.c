@@ -208,21 +208,21 @@ static inline QTInPin *impl_from_IPin(IPin *iface)
  * Base Filter
  */
 
-static IPin *qt_splitter_get_pin(struct strmbase_filter *base, unsigned int index)
+static struct strmbase_pin *qt_splitter_get_pin(struct strmbase_filter *base, unsigned int index)
 {
     QTSplitter *filter = impl_from_strmbase_filter(base);
 
     if (index == 0)
-        return &filter->pInputPin.pin.IPin_iface;
+        return &filter->pInputPin.pin;
     else if (index == 1)
     {
         if (filter->pVideo_Pin)
-            return &filter->pVideo_Pin->pin.pin.IPin_iface;
+            return &filter->pVideo_Pin->pin.pin;
         else if (filter->pAudio_Pin)
-            return &filter->pAudio_Pin->pin.pin.IPin_iface;
+            return &filter->pAudio_Pin->pin.pin;
     }
     else if (index == 2 && filter->pVideo_Pin && filter->pAudio_Pin)
-        return &filter->pAudio_Pin->pin.pin.IPin_iface;
+        return &filter->pAudio_Pin->pin.pin;
 
     return NULL;
 }

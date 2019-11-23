@@ -519,11 +519,11 @@ static inline struct testfilter *impl_from_BaseFilter(struct strmbase_filter *if
     return CONTAINING_RECORD(iface, struct testfilter, filter);
 }
 
-static IPin *testfilter_get_pin(struct strmbase_filter *iface, unsigned int index)
+static struct strmbase_pin *testfilter_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     struct testfilter *filter = impl_from_BaseFilter(iface);
     if (!index)
-        return &filter->source.pin.IPin_iface;
+        return &filter->source.pin;
     return NULL;
 }
 

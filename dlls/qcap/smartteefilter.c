@@ -69,16 +69,16 @@ static const IBaseFilterVtbl SmartTeeFilterVtbl = {
     BaseFilterImpl_QueryVendorInfo
 };
 
-static IPin *smart_tee_get_pin(struct strmbase_filter *iface, unsigned int index)
+static struct strmbase_pin *smart_tee_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     SmartTeeFilter *filter = impl_from_strmbase_filter(iface);
 
     if (index == 0)
-        return &filter->sink.pin.IPin_iface;
+        return &filter->sink.pin;
     else if (index == 1)
-        return &filter->capture.pin.IPin_iface;
+        return &filter->capture.pin;
     else if (index == 2)
-        return &filter->preview.pin.IPin_iface;
+        return &filter->preview.pin;
     return NULL;
 }
 

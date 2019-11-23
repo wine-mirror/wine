@@ -82,14 +82,14 @@ static inline VfwCapture *impl_from_IPersistPropertyBag(IPersistPropertyBag *ifa
     return CONTAINING_RECORD(iface, VfwCapture, IPersistPropertyBag_iface);
 }
 
-static IPin *vfw_capture_get_pin(struct strmbase_filter *iface, unsigned int index)
+static struct strmbase_pin *vfw_capture_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     VfwCapture *This = impl_from_strmbase_filter(iface);
 
     if (index >= 1)
         return NULL;
 
-    return &This->source.pin.IPin_iface;
+    return &This->source.pin;
 }
 
 static void vfw_capture_destroy(struct strmbase_filter *iface)

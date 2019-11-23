@@ -163,12 +163,12 @@ static const IPinVtbl BaseRenderer_InputPin_Vtbl =
     BaseInputPinImpl_NewSegment
 };
 
-static IPin *renderer_get_pin(struct strmbase_filter *iface, unsigned int index)
+static struct strmbase_pin *renderer_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     struct strmbase_renderer *filter = impl_from_strmbase_filter(iface);
 
     if (index == 0)
-        return &filter->sink.pin.IPin_iface;
+        return &filter->sink.pin;
     return NULL;
 }
 

@@ -100,14 +100,14 @@ static void SampleGrabber_cleanup(SG_Impl *This)
         IUnknown_Release(This->seekthru_unk);
 }
 
-static IPin *sample_grabber_get_pin(struct strmbase_filter *iface, unsigned int index)
+static struct strmbase_pin *sample_grabber_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     SG_Impl *filter = impl_from_strmbase_filter(iface);
 
     if (index == 0)
-        return &filter->sink.pin.IPin_iface;
+        return &filter->sink.pin;
     else if (index == 1)
-        return &filter->source.pin.IPin_iface;
+        return &filter->source.pin;
     return NULL;
 }
 

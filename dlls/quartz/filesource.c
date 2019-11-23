@@ -341,12 +341,12 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
     return FALSE;
 }
 
-static IPin *async_reader_get_pin(struct strmbase_filter *iface, unsigned int index)
+static struct strmbase_pin *async_reader_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     AsyncReader *filter = impl_from_strmbase_filter(iface);
 
     if (!index && filter->pszFileName)
-        return &filter->source.pin.IPin_iface;
+        return &filter->source.pin;
     return NULL;
 }
 

@@ -114,14 +114,14 @@ static HRESULT source_get_media_type(struct strmbase_pin *This, unsigned int iPo
     return S_OK;
 }
 
-static IPin *transform_get_pin(struct strmbase_filter *iface, unsigned int index)
+static struct strmbase_pin *transform_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     TransformFilter *filter = impl_from_strmbase_filter(iface);
 
     if (index == 0)
-        return &filter->sink.pin.IPin_iface;
+        return &filter->sink.pin;
     else if (index == 1)
-        return &filter->source.pin.IPin_iface;
+        return &filter->source.pin;
     return NULL;
 }
 

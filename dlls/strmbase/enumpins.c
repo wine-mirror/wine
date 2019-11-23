@@ -42,7 +42,6 @@ static const struct IEnumPinsVtbl IEnumPinsImpl_Vtbl;
 HRESULT enum_pins_create(struct strmbase_filter *base, IEnumPins **out)
 {
     IEnumPinsImpl *object;
-    IPin *pin;
 
     if (!out)
         return E_POINTER;
@@ -59,7 +58,7 @@ HRESULT enum_pins_create(struct strmbase_filter *base, IEnumPins **out)
     IBaseFilter_AddRef(&base->IBaseFilter_iface);
     object->Version = base->pin_version;
 
-    while ((pin = base->ops->filter_get_pin(base, object->count)))
+    while (base->ops->filter_get_pin(base, object->count))
         ++object->count;
 
     TRACE("Created enumerator %p.\n", object);
@@ -137,12 +136,12 @@ static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin **
 
     for (i = 0; i < cPins; ++i)
     {
-        IPin *pin = This->base->ops->filter_get_pin(This->base, This->uIndex + i);
+        struct strmbase_pin *pin = This->base->ops->filter_get_pin(This->base, This->uIndex + i);
 
         if (!pin)
             break;
 
-        IPin_AddRef(ppPins[i] = pin);
+        IPin_AddRef(ppPins[i] = &pin->IPin_iface);
     }
 
     if (pcFetched)
@@ -173,14 +172,13 @@ static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins *iface, ULONG count)
 static HRESULT WINAPI IEnumPinsImpl_Reset(IEnumPins *iface)
 {
     IEnumPinsImpl *enum_pins = impl_from_IEnumPins(iface);
-    IPin *pin;
 
     TRACE("iface %p.\n", iface);
 
     if (enum_pins->Version != enum_pins->base->pin_version)
     {
         enum_pins->count = 0;
-        while ((pin = enum_pins->base->ops->filter_get_pin(enum_pins->base, enum_pins->count)))
+        while (enum_pins->base->ops->filter_get_pin(enum_pins->base, enum_pins->count))
             ++enum_pins->count;
     }
 

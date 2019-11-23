@@ -1188,14 +1188,14 @@ static inline struct gstdemux_source *impl_from_IMediaSeeking(IMediaSeeking *ifa
     return CONTAINING_RECORD(iface, struct gstdemux_source, seek.IMediaSeeking_iface);
 }
 
-static IPin *gstdemux_get_pin(struct strmbase_filter *base, unsigned int index)
+static struct strmbase_pin *gstdemux_get_pin(struct strmbase_filter *base, unsigned int index)
 {
     struct gstdemux *filter = impl_from_strmbase_filter(base);
 
     if (!index)
-        return &filter->sink.IPin_iface;
+        return &filter->sink;
     else if (index <= filter->cStreams)
-        return &filter->ppPins[index - 1]->pin.pin.IPin_iface;
+        return &filter->ppPins[index - 1]->pin.pin;
     return NULL;
 }
 

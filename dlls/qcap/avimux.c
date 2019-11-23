@@ -113,14 +113,14 @@ static inline AviMux* impl_from_strmbase_filter(struct strmbase_filter *filter)
     return CONTAINING_RECORD(filter, AviMux, filter);
 }
 
-static IPin *avi_mux_get_pin(struct strmbase_filter *iface, unsigned int index)
+static struct strmbase_pin *avi_mux_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     AviMux *filter = impl_from_strmbase_filter(iface);
 
     if (!index)
-        return &filter->source.pin.IPin_iface;
+        return &filter->source.pin;
     else if (index <= filter->input_pin_no)
-        return &filter->in[index - 1]->pin.pin.IPin_iface;
+        return &filter->in[index - 1]->pin.pin;
     return NULL;
 }
 
