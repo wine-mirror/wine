@@ -2112,7 +2112,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
         }
 
         info->data_len = io.Information;
-        if (!has_wildcard || info->data_len < info->data_size - max_entry_size)
+        if (!has_wildcard)
         {
             if (has_wildcard)  /* release unused buffer space */
                 HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY,
