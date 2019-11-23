@@ -1200,48 +1200,48 @@
 @ stdcall -import ReadFileScatter(long ptr long ptr ptr)
 @ stdcall -import ReadProcessMemory(long ptr ptr long ptr)
 # @ stub ReadThreadProfilingData
-@ stdcall -private RegCloseKey(long) advapi32.RegCloseKey
-@ stdcall -private RegCreateKeyExA(long str long ptr long long ptr ptr ptr) advapi32.RegCreateKeyExA
-@ stdcall -private RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr) advapi32.RegCreateKeyExW
-@ stdcall -private RegDeleteKeyExA(long str long long) advapi32.RegDeleteKeyExA
-@ stdcall -private RegDeleteKeyExW(long wstr long long) advapi32.RegDeleteKeyExW
-@ stdcall -private RegDeleteTreeA(long str) advapi32.RegDeleteTreeA
-@ stdcall -private RegDeleteTreeW(long wstr) advapi32.RegDeleteTreeW
-@ stdcall -private RegDeleteValueA(long str) advapi32.RegDeleteValueA
-@ stdcall -private RegDeleteValueW(long wstr) advapi32.RegDeleteValueW
+@ stdcall -private -import RegCloseKey(long)
+@ stdcall -private -import RegCreateKeyExA(long str long ptr long long ptr ptr ptr)
+@ stdcall -private -import RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr)
+@ stdcall -private -import RegDeleteKeyExA(long str long long)
+@ stdcall -private -import RegDeleteKeyExW(long wstr long long)
+@ stdcall -private -import RegDeleteTreeA(long str)
+@ stdcall -private -import RegDeleteTreeW(long wstr)
+@ stdcall -private -import RegDeleteValueA(long str)
+@ stdcall -private -import RegDeleteValueW(long wstr)
 # stub RegDisablePredefinedCacheEx
-@ stdcall -private RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumKeyExA
-@ stdcall -private RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumKeyExW
-@ stdcall -private RegEnumValueA(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumValueA
-@ stdcall -private RegEnumValueW(long long ptr ptr ptr ptr ptr ptr) advapi32.RegEnumValueW
-@ stdcall -private RegFlushKey(long) advapi32.RegFlushKey
-@ stdcall -private RegGetKeySecurity(long long ptr ptr) advapi32.RegGetKeySecurity
-@ stdcall -private RegGetValueA(long str str long ptr ptr ptr) advapi32.RegGetValueA
-@ stdcall -private RegGetValueW(long wstr wstr long ptr ptr ptr) advapi32.RegGetValueW
+@ stdcall -private -import RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr)
+@ stdcall -private -import RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr)
+@ stdcall -private -import RegEnumValueA(long long ptr ptr ptr ptr ptr ptr)
+@ stdcall -private -import RegEnumValueW(long long ptr ptr ptr ptr ptr ptr)
+@ stdcall -private -import RegFlushKey(long)
+@ stdcall -private -import RegGetKeySecurity(long long ptr ptr)
+@ stdcall -private -import RegGetValueA(long str str long ptr ptr ptr)
+@ stdcall -private -import RegGetValueW(long wstr wstr long ptr ptr ptr)
 # stub RegKrnGetGlobalState
 # stub RegKrnInitialize
-@ stdcall -private RegLoadKeyA(long str str) advapi32.RegLoadKeyA
-@ stdcall -private RegLoadKeyW(long wstr wstr) advapi32.RegLoadKeyW
-@ stdcall -private RegLoadMUIStringA(long str str long ptr long str) advapi32.RegLoadMUIStringA
-@ stdcall -private RegLoadMUIStringW(long wstr wstr long ptr long wstr) advapi32.RegLoadMUIStringW
-@ stdcall -private RegNotifyChangeKeyValue(long long long long long) advapi32.RegNotifyChangeKeyValue
-@ stdcall -private RegOpenCurrentUser(long ptr) advapi32.RegOpenCurrentUser
-@ stdcall -private RegOpenKeyExA(long str long long ptr) advapi32.RegOpenKeyExA
-@ stdcall -private RegOpenKeyExW(long wstr long long ptr) advapi32.RegOpenKeyExW
-@ stdcall -private RegOpenUserClassesRoot(ptr long long ptr) advapi32.RegOpenUserClassesRoot
-@ stdcall -private RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) advapi32.RegQueryInfoKeyA
-@ stdcall -private RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) advapi32.RegQueryInfoKeyW
-@ stdcall -private RegQueryValueExA(long str ptr ptr ptr ptr) advapi32.RegQueryValueExA
-@ stdcall -private RegQueryValueExW(long wstr ptr ptr ptr ptr) advapi32.RegQueryValueExW
-@ stdcall -private RegRestoreKeyA(long str long) advapi32.RegRestoreKeyA
-@ stdcall -private RegRestoreKeyW(long wstr long) advapi32.RegRestoreKeyW
-# stub RegSaveKeyExA
-# stub RegSaveKeyExW
-@ stdcall -private RegSetKeySecurity(long long ptr) advapi32.RegSetKeySecurity
-@ stdcall -private RegSetValueExA(long str long long ptr long) advapi32.RegSetValueExA
-@ stdcall -private RegSetValueExW(long wstr long long ptr long) advapi32.RegSetValueExW
-@ stdcall -private RegUnLoadKeyA(long str) advapi32.RegUnLoadKeyA
-@ stdcall -private RegUnLoadKeyW(long wstr) advapi32.RegUnLoadKeyW
+@ stdcall -private -import RegLoadKeyA(long str str)
+@ stdcall -private -import RegLoadKeyW(long wstr wstr)
+@ stdcall -private -import RegLoadMUIStringA(long str str long ptr long str)
+@ stdcall -private -import RegLoadMUIStringW(long wstr wstr long ptr long wstr)
+@ stdcall -private -import RegNotifyChangeKeyValue(long long long long long)
+@ stdcall -private -import RegOpenCurrentUser(long ptr)
+@ stdcall -private -import RegOpenKeyExA(long str long long ptr)
+@ stdcall -private -import RegOpenKeyExW(long wstr long long ptr)
+@ stdcall -private -import RegOpenUserClassesRoot(ptr long long ptr)
+@ stdcall -private -import RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall -private -import RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall -private -import RegQueryValueExA(long str ptr ptr ptr ptr)
+@ stdcall -private -import RegQueryValueExW(long wstr ptr ptr ptr ptr)
+@ stdcall -private -import RegRestoreKeyA(long str long)
+@ stdcall -private -import RegRestoreKeyW(long wstr long)
+@ stdcall -private -import RegSaveKeyExA(long str ptr long)
+@ stdcall -private -import RegSaveKeyExW(long wstr ptr long)
+@ stdcall -private -import RegSetKeySecurity(long long ptr)
+@ stdcall -private -import RegSetValueExA(long str long long ptr long)
+@ stdcall -private -import RegSetValueExW(long wstr long long ptr long)
+@ stdcall -private -import RegUnLoadKeyA(long str)
+@ stdcall -private -import RegUnLoadKeyW(long wstr)
 @ stdcall RegisterApplicationRecoveryCallback(ptr ptr long long)
 @ stdcall RegisterApplicationRestart(wstr long)
 @ stub RegisterConsoleIME
