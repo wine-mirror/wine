@@ -59,6 +59,16 @@ static HRESULT WINAPI TransformFilter_Input_Receive(struct strmbase_sink *This, 
 
     TRACE("%p\n", This);
 
+    /* We do not expect pin connection state to change while the filter is
+     * running. This guarantee is necessary, since otherwise we would have to
+     * take the filter lock, and we can't take the filter lock from a streaming
+     * thread. */
+    if (!pTransform->source.pMemInputPin)
+    {
+        WARN("Source is not connected, returning VFW_E_NOT_CONNECTED.\n");
+        return VFW_E_NOT_CONNECTED;
+    }
+
     EnterCriticalSection(&pTransform->csReceive);
     if (pTransform->filter.state == State_Stopped)
     {
