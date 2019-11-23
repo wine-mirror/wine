@@ -202,10 +202,7 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
 
         TRACE("Sample stop time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
 
-        LeaveCriticalSection(&This->tf.csReceive);
         hr = IMemInputPin_Receive(This->tf.source.pMemInputPin, pOutSample);
-        EnterCriticalSection(&This->tf.csReceive);
-
         if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
             if (FAILED(hr))
                 ERR("Error sending sample (%x)\n", hr);
