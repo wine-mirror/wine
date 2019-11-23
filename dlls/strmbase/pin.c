@@ -56,82 +56,18 @@ static HRESULT updatehres( HRESULT original, HRESULT new )
  * If the pin given is an input pin, the message will be sent downstream to other input pins
  * If the pin given is an output pin, the message will be sent upstream to other output pins
  */
-static HRESULT SendFurther( IPin *from, SendPinFunc fnMiddle, LPVOID arg, SendPinFunc fnEnd )
+static HRESULT SendFurther(struct strmbase_sink *sink, SendPinFunc func, void *arg)
 {
-    PIN_INFO pin_info;
-    ULONG amount = 0;
+    struct strmbase_pin *pin;
     HRESULT hr = S_OK;
-    HRESULT hr_return = S_OK;
-    IEnumPins *enumpins = NULL;
-    BOOL foundend = TRUE;
-    PIN_DIRECTION from_dir;
+    unsigned int i;
 
-    IPin_QueryDirection( from, &from_dir );
-
-    hr = IPin_QueryInternalConnections( from, NULL, &amount );
-    if (hr != E_NOTIMPL && amount)
-        FIXME("Use QueryInternalConnections!\n");
-
-    pin_info.pFilter = NULL;
-    hr = IPin_QueryPinInfo( from, &pin_info );
-    if (FAILED(hr))
-        goto out;
-
-    hr = IBaseFilter_EnumPins( pin_info.pFilter, &enumpins );
-    if (FAILED(hr))
-        goto out;
-
-    hr = IEnumPins_Reset( enumpins );
-    while (hr == S_OK) {
-        IPin *pin = NULL;
-        hr = IEnumPins_Next( enumpins, 1, &pin, NULL );
-        if (hr == VFW_E_ENUM_OUT_OF_SYNC)
-        {
-            hr = IEnumPins_Reset( enumpins );
-            continue;
-        }
-        if (pin)
-        {
-            PIN_DIRECTION dir;
-
-            IPin_QueryDirection( pin, &dir );
-            if (dir != from_dir)
-            {
-                IPin *connected = NULL;
-
-                foundend = FALSE;
-                IPin_ConnectedTo( pin, &connected );
-                if (connected)
-                {
-                    HRESULT hr_local;
-
-                    hr_local = fnMiddle( connected, arg );
-                    hr_return = updatehres( hr_return, hr_local );
-                    IPin_Release(connected);
-                }
-            }
-            IPin_Release( pin );
-        }
-        else
-        {
-            hr = S_OK;
-            break;
-        }
+    for (i = 0; (pin = sink->pin.filter->ops->filter_get_pin(sink->pin.filter, i)); ++i)
+    {
+        if (pin->dir == PINDIR_OUTPUT && pin->peer)
+            hr = updatehres(hr, func(pin->peer, arg));
     }
 
-    if (!foundend)
-        hr = hr_return;
-    else if (fnEnd) {
-        HRESULT hr_local;
-
-        hr_local = fnEnd( from, arg );
-        hr_return = updatehres( hr_return, hr_local );
-    }
-    IEnumPins_Release(enumpins);
-
-out:
-    if (pin_info.pFilter)
-        IBaseFilter_Release( pin_info.pFilter );
     return hr;
 }
 
@@ -799,7 +735,7 @@ HRESULT WINAPI BaseInputPinImpl_EndOfStream(IPin * iface)
     LeaveCriticalSection(&This->pin.filter->csFilter);
 
     if (hr == S_OK)
-        hr = SendFurther( iface, deliver_endofstream, NULL, NULL );
+        hr = SendFurther(This, deliver_endofstream, NULL);
     return hr;
 }
 
@@ -817,7 +753,7 @@ HRESULT WINAPI BaseInputPinImpl_BeginFlush(IPin * iface)
     EnterCriticalSection(&This->pin.filter->csFilter);
     This->flushing = TRUE;
 
-    hr = SendFurther( iface, deliver_beginflush, NULL, NULL );
+    hr = SendFurther(This, deliver_beginflush, NULL);
     LeaveCriticalSection(&This->pin.filter->csFilter);
 
     return hr;
@@ -837,7 +773,7 @@ HRESULT WINAPI BaseInputPinImpl_EndFlush(IPin * iface)
     EnterCriticalSection(&This->pin.filter->csFilter);
     This->flushing = This->end_of_stream = FALSE;
 
-    hr = SendFurther( iface, deliver_endflush, NULL, NULL );
+    hr = SendFurther(This, deliver_endflush, NULL);
     LeaveCriticalSection(&This->pin.filter->csFilter);
 
     return hr;
@@ -857,6 +793,7 @@ static HRESULT deliver_newsegment(IPin *pin, LPVOID data)
 
 HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
 {
+    struct strmbase_sink *pin = impl_sink_from_IPin(iface);
     newsegmentargs args;
 
     TRACE("iface %p, start %s, stop %s, rate %.16e.\n",
@@ -866,7 +803,7 @@ HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME start, R
     args.tStop = stop;
     args.rate = rate;
 
-    return SendFurther( iface, deliver_newsegment, &args, NULL );
+    return SendFurther(pin, deliver_newsegment, &args);
 }
 
 /*** IMemInputPin implementation ***/
