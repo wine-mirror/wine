@@ -974,7 +974,7 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
 } SYSTEM_INFORMATION_CLASS, *PSYSTEM_INFORMATION_CLASS;
 
 typedef enum _THREADINFOCLASS {
-    ThreadBasicInformation,
+    ThreadBasicInformation = 0,
     ThreadTimes,
     ThreadPriority,
     ThreadBasePriority,
@@ -1008,6 +1008,7 @@ typedef enum _THREADINFOCLASS {
     ThreadUmsInformation,
     ThreadCounterProfiling,
     ThreadIdealProcessorEx,
+    ThreadDescription = 38,
     MaxThreadInfoClass
 } THREADINFOCLASS;
 
@@ -1026,6 +1027,12 @@ typedef struct _THREAD_DESCRIPTOR_INFORMATION
     DWORD       Selector;
     LDT_ENTRY   Entry;
 } THREAD_DESCRIPTOR_INFORMATION, *PTHREAD_DESCRIPTOR_INFORMATION;
+
+typedef struct _THREAD_DESCRIPTION_INFORMATION
+{
+    DWORD  Length;
+    WCHAR *Description;
+} THREAD_DESCRIPTION_INFORMATION, *PTHREAD_DESCRIPTION_INFORMATION;
 
 typedef struct _KERNEL_USER_TIMES {
     LARGE_INTEGER  CreateTime;
