@@ -23,7 +23,6 @@
 #include "winbase.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #include "opc_private.h"
 
@@ -467,7 +466,7 @@ static IUri *opc_part_uri_get_rels_uri(IUri *uri)
         return NULL;
     }
 
-    end = strrchrW(path, '/');
+    end = wcsrchr(path, '/');
     if (end && end >= path + ARRAY_SIZE(relsdirW) - 1)
         start = end - ARRAY_SIZE(relsdirW) + 1;
     if (!start)
@@ -476,7 +475,7 @@ static IUri *opc_part_uri_get_rels_uri(IUri *uri)
     /* Test if it's already relationships uri. */
     if (len > ARRAY_SIZE(relsextW))
     {
-        if (!strcmpW(path + len - ARRAY_SIZE(relsextW) + 1, relsextW))
+        if (!wcscmp(path + len - ARRAY_SIZE(relsextW) + 1, relsextW))
         {
             if (start && !memcmp(start, relsdirW, ARRAY_SIZE(relsdirW) - sizeof(WCHAR)))
             {
@@ -500,9 +499,9 @@ static IUri *opc_part_uri_get_rels_uri(IUri *uri)
         ret[start - path] = 0;
     }
 
-    strcatW(ret, relsdirW);
-    strcatW(ret, end);
-    strcatW(ret, relsextW);
+    lstrcatW(ret, relsdirW);
+    lstrcatW(ret, end);
+    lstrcatW(ret, relsextW);
 
     if (FAILED(hr = CreateUri(ret, Uri_CREATE_ALLOW_RELATIVE, 0, &rels_uri)))
         WARN("Failed to create rels uri, hr %#x.\n", hr);
