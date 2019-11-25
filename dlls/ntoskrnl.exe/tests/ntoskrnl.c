@@ -208,6 +208,18 @@ static void test_basic_ioctl(void)
     ok(!strcmp(buf, "Wine is no"), "got '%s'\n", buf);
 }
 
+static void test_mismatched_status_ioctl(void)
+{
+    DWORD written;
+    char buf[32];
+    BOOL res;
+
+    res = DeviceIoControl(device, IOCTL_WINETEST_MISMATCHED_STATUS, NULL, 0, buf,
+                          sizeof(buf), &written, NULL);
+    todo_wine ok(res, "DeviceIoControl failed: %u\n", GetLastError());
+    todo_wine ok(!strcmp(buf, teststr), "got '%s'\n", buf);
+}
+
 static void test_overlapped(void)
 {
     OVERLAPPED overlapped, overlapped2, *o;
@@ -514,6 +526,7 @@ START_TEST(ntoskrnl)
     ok(device != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
 
     test_basic_ioctl();
+    test_mismatched_status_ioctl();
     main_test();
     test_overlapped();
     test_load_driver(service2);

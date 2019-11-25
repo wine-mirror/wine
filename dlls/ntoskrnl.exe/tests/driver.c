@@ -1855,6 +1855,34 @@ static NTSTATUS test_load_driver_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG
         return ZwUnloadDriver(&name);
 }
 
+static NTSTATUS test_mismatched_status_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *info)
+{
+    ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
+    char *buffer = irp->UserBuffer;
+
+    if (!buffer)
+    {
+        irp->IoStatus.Status = STATUS_ACCESS_VIOLATION;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_ACCESS_VIOLATION;
+    }
+
+    if (length < sizeof(teststr))
+    {
+        irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    memcpy(buffer, teststr, sizeof(teststr));
+
+    /* This is deliberate; some broken drivers do this */
+    *info = 0;
+    irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS WINAPI driver_Create(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
@@ -1916,6 +1944,8 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             IoDetachDevice(lower_device);
             status = STATUS_SUCCESS;
             break;
+        case IOCTL_WINETEST_MISMATCHED_STATUS:
+            return test_mismatched_status_ioctl(irp, stack, &irp->IoStatus.Information);
         default:
             break;
     }
