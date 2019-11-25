@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "wine/library.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wininet.h"

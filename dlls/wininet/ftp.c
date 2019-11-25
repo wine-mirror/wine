@@ -834,8 +834,8 @@ static HINTERNET FTP_FtpFindFirstFileW(ftp_session_t *lpwfs,
     if (lpszSearchFile)
     {
         LPCWSTR name = lpszSearchFile, p;
-        if ((p = strrchrW( name, '\\' ))) name = p + 1;
-        if ((p = strrchrW( name, '/' ))) name = p + 1;
+        if ((p = wcsrchr( name, '\\' ))) name = p + 1;
+        if ((p = wcsrchr( name, '/' ))) name = p + 1;
         if (name != lpszSearchFile)
         {
             lpszSearchPath = heap_strndupW(lpszSearchFile, name - lpszSearchFile);
@@ -2480,7 +2480,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     list_add_head( &hIC->hdr.children, &lpwfs->hdr.entry );
 
     if(hIC->proxy && hIC->accessType == INTERNET_OPEN_TYPE_PROXY) {
-        if(strchrW(hIC->proxy, ' '))
+        if(wcschr(hIC->proxy, ' '))
             FIXME("Several proxies not implemented.\n");
         if(hIC->proxyBypass)
             FIXME("Proxy bypass is ignored.\n");
@@ -2497,7 +2497,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
             /* Nothing in the registry, get the username and use that as the password */
             if (!GetUserNameW(szPassword, &len)) {
                 /* Should never get here, but use an empty password as failsafe */
-                strcpyW(szPassword, szEmpty);
+                lstrcpyW(szPassword, szEmpty);
             }
         }
         RegCloseKey(key);
@@ -2525,7 +2525,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     }
         
     INTERNET_SendCallback(&hIC->hdr, dwContext, INTERNET_STATUS_RESOLVING_NAME,
-        (LPWSTR) lpszServerName, (strlenW(lpszServerName)+1) * sizeof(WCHAR));
+        (LPWSTR) lpszServerName, (lstrlenW(lpszServerName)+1) * sizeof(WCHAR));
 
     sock_namelen = sizeof(socketAddr);
     if (!GetAddress(lpszServerName, lpwfs->serverport, (struct sockaddr *)&socketAddr, &sock_namelen, szaddr))
@@ -3098,7 +3098,7 @@ static BOOL FTP_SendPort(ftp_session_t *lpwfs)
     BOOL bSuccess = FALSE;
     TRACE("\n");
 
-    sprintfW(szIPAddress, szIPFormat,
+    swprintf(szIPAddress, ARRAY_SIZE(szIPAddress), szIPFormat,
 	 lpwfs->lstnSocketAddress.sin_addr.S_un.S_addr&0x000000FF,
         (lpwfs->lstnSocketAddress.sin_addr.S_un.S_addr&0x0000FF00)>>8,
         (lpwfs->lstnSocketAddress.sin_addr.S_un.S_addr&0x00FF0000)>>16,

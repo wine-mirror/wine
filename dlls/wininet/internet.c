@@ -26,8 +26,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include "winsock2.h"
 #include "ws2ipdef.h"
 
@@ -37,6 +35,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <assert.h>
+#include <wchar.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -57,8 +56,6 @@
 
 #include "internet.h"
 #include "resource.h"
-
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
@@ -397,11 +394,11 @@ WCHAR *INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto)
     {
         LPCWSTR end, equal;
 
-        if (!(end = strchrW(ptr, ' ')))
-            end = ptr + strlenW(ptr);
-        if ((equal = strchrW(ptr, '=')) && equal < end &&
-             equal - ptr == strlenW(proto) &&
-             !strncmpiW(proto, ptr, strlenW(proto)))
+        if (!(end = wcschr(ptr, ' ')))
+            end = ptr + lstrlenW(ptr);
+        if ((equal = wcschr(ptr, '=')) && equal < end &&
+             equal - ptr == lstrlenW(proto) &&
+             !wcsnicmp(proto, ptr, lstrlenW(proto)))
         {
             ret = heap_strndupW(equal + 1, end - equal - 1);
             TRACE("found proxy for %s: %s\n", debugstr_w(proto), debugstr_w(ret));
@@ -418,9 +415,9 @@ WCHAR *INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto)
     {
         LPCWSTR end;
 
-        if (!(end = strchrW(ptr, ' ')))
-            end = ptr + strlenW(ptr);
-        if (!strchrW(ptr, '='))
+        if (!(end = wcschr(ptr, ' ')))
+            end = ptr + lstrlenW(ptr);
+        if (!wcschr(ptr, '='))
         {
             ret = heap_strndupW(ptr, end - ptr);
             TRACE("found proxy for %s: %s\n", debugstr_w(proto), debugstr_w(ret));
@@ -510,7 +507,7 @@ static BOOL parse_proxy_url( proxyinfo_t *info, const WCHAR *url )
         return TRUE;
     }
     if (!(info->proxy = heap_alloc( (uc.dwHostNameLength + 12) * sizeof(WCHAR) ))) return FALSE;
-    sprintfW( info->proxy, fmt, uc.dwHostNameLength, uc.lpszHostName, uc.nPort );
+    swprintf( info->proxy, uc.dwHostNameLength + 12, fmt, uc.dwHostNameLength, uc.lpszHostName, uc.nPort );
 
     if (!uc.dwUserNameLength) info->proxyUsername = NULL;
     else if (!(info->proxyUsername = heap_strndupW( uc.lpszUserName, uc.dwUserNameLength )))
@@ -593,13 +590,13 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
             RegQueryValueExW( key, szProxyServer, NULL, &type, (BYTE*)szProxy, &len );
 
             /* find the http proxy, and strip away everything else */
-            p = strstrW( szProxy, szHttp );
+            p = wcsstr( szProxy, szHttp );
             if (p)
             {
                 p += lstrlenW( szHttp );
                 lstrcpyW( szProxy, p );
             }
-            p = strchrW( szProxy, ';' );
+            p = wcschr( szProxy, ';' );
             if (p) *p = 0;
 
             FreeProxyInfo( lpwpi );
@@ -826,14 +823,14 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         bufsize = *size;
 
         if (unicode) {
-            DWORD len = ai->agent ? strlenW(ai->agent) : 0;
+            DWORD len = ai->agent ? lstrlenW(ai->agent) : 0;
 
             *size = (len + 1) * sizeof(WCHAR);
             if(!buffer || bufsize < *size)
                 return ERROR_INSUFFICIENT_BUFFER;
 
             if (ai->agent)
-                strcpyW(buffer, ai->agent);
+                lstrcpyW(buffer, ai->agent);
             else
                 *(WCHAR *)buffer = 0;
             /* If the buffer is copied, the returned length doesn't include
@@ -1619,7 +1616,7 @@ static INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, DWORD nMaxCmp)
         return INTERNET_SCHEME_UNKNOWN;
 
     for (i = 0; i < ARRAY_SIZE(url_schemes); i++)
-        if (!strncmpiW(lpszScheme, url_schemes[i], nMaxCmp))
+        if (!wcsnicmp(lpszScheme, url_schemes[i], nMaxCmp))
             return INTERNET_SCHEME_FIRST + i;
 
     return INTERNET_SCHEME_UNKNOWN;
@@ -1647,7 +1644,7 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
     LPCWSTR lpszcp = NULL, lpszNetLoc;
 
     TRACE("(%s %u %x %p)\n",
-          lpszUrl ? debugstr_wn(lpszUrl, dwUrlLength ? dwUrlLength : strlenW(lpszUrl)) : "(null)",
+          lpszUrl ? debugstr_wn(lpszUrl, dwUrlLength ? dwUrlLength : lstrlenW(lpszUrl)) : "(null)",
           dwUrlLength, dwFlags, lpUC);
 
     if (!lpszUrl || !*lpszUrl || !lpUC)
@@ -1655,7 +1652,7 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (!dwUrlLength) dwUrlLength = strlenW(lpszUrl);
+    if (!dwUrlLength) dwUrlLength = lstrlenW(lpszUrl);
 
     if (dwFlags & ICU_DECODE)
     {
@@ -1694,7 +1691,7 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
     /* Determine if the URI is absolute. */
     while (lpszap - lpszUrl < dwUrlLength)
     {
-        if (isalnumW(*lpszap) || *lpszap == '+' || *lpszap == '.' || *lpszap == '-')
+        if (iswalnum(*lpszap) || *lpszap == '+' || *lpszap == '.' || *lpszap == '-')
         {
             lpszap++;
             continue;
@@ -1721,9 +1718,9 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
     lpUC->nPort = INTERNET_INVALID_PORT_NUMBER;
 
     /* Parse <params> */
-    lpszParam = memchrW(lpszap, '?', dwUrlLength - (lpszap - lpszUrl));
+    lpszParam = wmemchr(lpszap, '?', dwUrlLength - (lpszap - lpszUrl));
     if(!lpszParam)
-        lpszParam = memchrW(lpszap, '#', dwUrlLength - (lpszap - lpszUrl));
+        lpszParam = wmemchr(lpszap, '#', dwUrlLength - (lpszap - lpszUrl));
 
     if(!set_url_component(&lpUC->lpszExtraInfo, &lpUC->dwExtraInfoLength,
                           lpszParam, lpszParam ? dwUrlLength-(lpszParam-lpszUrl) : 0))
@@ -1743,7 +1740,7 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
     {
         lpszcp += 2;
 
-        lpszNetLoc = memchrW(lpszcp, '/', dwUrlLength - (lpszcp - lpszUrl));
+        lpszNetLoc = wmemchr(lpszcp, '/', dwUrlLength - (lpszcp - lpszUrl));
         if (lpszParam)
         {
             if (lpszNetLoc)
@@ -1763,7 +1760,7 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
             /* [<user>[<:password>]@]<host>[:<port>] */
             /* First find the user and password if they exist */
 
-            lpszHost = memchrW(lpszcp, '@', dwUrlLength - (lpszcp - lpszUrl));
+            lpszHost = wmemchr(lpszcp, '@', dwUrlLength - (lpszcp - lpszUrl));
             if (lpszHost == NULL || lpszHost > lpszNetLoc)
             {
                 /* username and password not specified. */
@@ -1829,7 +1826,7 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
                     if(!set_url_component(&lpUC->lpszHostName, &lpUC->dwHostNameLength, lpszHost, lpszPort - lpszHost))
                         return FALSE;
                     if (lpszPort != lpszNetLoc)
-                        lpUC->nPort = atoiW(++lpszPort);
+                        lpUC->nPort = wcstol(++lpszPort, NULL, 10);
                     else switch (lpUC->nScheme)
                     {
                     case INTERNET_SCHEME_HTTP:
@@ -1877,7 +1874,7 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
             /* Leave the parameter list in lpszUrlPath.  Strip off any trailing
              * newlines if necessary.
              */
-            LPWSTR lpsznewline = memchrW(lpszcp, '\n', dwUrlLength - (lpszcp - lpszUrl));
+            LPWSTR lpsznewline = wmemchr(lpszcp, '\n', dwUrlLength - (lpszcp - lpszUrl));
             if (lpsznewline != NULL)
                 len = lpsznewline - lpszcp;
             else
@@ -3347,7 +3344,7 @@ BOOL WINAPI InternetTimeFromSystemTimeW( const SYSTEMTIME* time, DWORD format, L
         return FALSE;
     }
 
-    sprintfW( string, date,
+    swprintf( string, size, date,
               WININET_wkday[time->wDayOfWeek],
               time->wDay,
               WININET_month[time->wMonth - 1],
@@ -3398,15 +3395,13 @@ BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD r
      *  a SYSTEMTIME structure.
      */
 
-    while (*s && !isalphaW( *s )) s++;
+    while (*s && !iswalpha( *s )) s++;
     if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return TRUE;
     time->wDayOfWeek = 7;
 
     for (i = 0; i < 7; i++)
     {
-        if (toupperW( WININET_wkday[i][0] ) == toupperW( s[0] ) &&
-            toupperW( WININET_wkday[i][1] ) == toupperW( s[1] ) &&
-            toupperW( WININET_wkday[i][2] ) == toupperW( s[2] ) )
+        if (!wcsnicmp( WININET_wkday[i], s, 3 ))
         {
             time->wDayOfWeek = i;
             break;
@@ -3414,19 +3409,17 @@ BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD r
     }
 
     if (time->wDayOfWeek > 6) return TRUE;
-    while (*s && !isdigitW( *s )) s++;
-    time->wDay = strtolW( s, &end, 10 );
+    while (*s && !iswdigit( *s )) s++;
+    time->wDay = wcstol( s, &end, 10 );
     s = end;
 
-    while (*s && !isalphaW( *s )) s++;
+    while (*s && !iswalpha( *s )) s++;
     if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return TRUE;
     time->wMonth = 0;
 
     for (i = 0; i < 12; i++)
     {
-        if (toupperW( WININET_month[i][0]) == toupperW( s[0] ) &&
-            toupperW( WININET_month[i][1]) == toupperW( s[1] ) &&
-            toupperW( WININET_month[i][2]) == toupperW( s[2] ) )
+        if (!wcsnicmp( WININET_month[i], s, 3 ))
         {
             time->wMonth = i + 1;
             break;
@@ -3434,24 +3427,24 @@ BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD r
     }
     if (time->wMonth == 0) return TRUE;
 
-    while (*s && !isdigitW( *s )) s++;
+    while (*s && !iswdigit( *s )) s++;
     if (*s == '\0') return TRUE;
-    time->wYear = strtolW( s, &end, 10 );
+    time->wYear = wcstol( s, &end, 10 );
     s = end;
 
-    while (*s && !isdigitW( *s )) s++;
+    while (*s && !iswdigit( *s )) s++;
     if (*s == '\0') return TRUE;
-    time->wHour = strtolW( s, &end, 10 );
+    time->wHour = wcstol( s, &end, 10 );
     s = end;
 
-    while (*s && !isdigitW( *s )) s++;
+    while (*s && !iswdigit( *s )) s++;
     if (*s == '\0') return TRUE;
-    time->wMinute = strtolW( s, &end, 10 );
+    time->wMinute = wcstol( s, &end, 10 );
     s = end;
 
-    while (*s && !isdigitW( *s )) s++;
+    while (*s && !iswdigit( *s )) s++;
     if (*s == '\0') return TRUE;
-    time->wSecond = strtolW( s, &end, 10 );
+    time->wSecond = wcstol( s, &end, 10 );
     s = end;
 
     time->wMilliseconds = 0;
@@ -3626,7 +3619,7 @@ static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
     urlComponents.dwPasswordLength = 1;
     urlComponents.dwUrlPathLength = 1;
     urlComponents.dwExtraInfoLength = 1;
-    if(!InternetCrackUrlW(lpszUrl, strlenW(lpszUrl), 0, &urlComponents))
+    if(!InternetCrackUrlW(lpszUrl, lstrlenW(lpszUrl), 0, &urlComponents))
 	return NULL;
 
     if ((urlComponents.nScheme == INTERNET_SCHEME_HTTP || urlComponents.nScheme == INTERNET_SCHEME_HTTPS) &&
@@ -4174,7 +4167,7 @@ BOOL WINAPI InternetCombineUrlW(LPCWSTR lpszBaseUrl, LPCWSTR lpszRelativeUrl,
 #define MAX_WORD_DIGITS 5
 
 #define URL_GET_COMP_LENGTH(url, component) ((url)->dw##component##Length ? \
-    (url)->dw##component##Length : strlenW((url)->lpsz##component))
+    (url)->dw##component##Length : lstrlenW((url)->lpsz##component))
 #define URL_GET_COMP_LENGTHA(url, component) ((url)->dw##component##Length ? \
     (url)->dw##component##Length : strlen((url)->lpsz##component))
 
@@ -4246,7 +4239,7 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
         if (nScheme == INTERNET_SCHEME_DEFAULT)
             nScheme = INTERNET_SCHEME_HTTP;
         scheme = INTERNET_GetSchemeString(nScheme);
-        *lpdwUrlLength += strlenW(scheme);
+        *lpdwUrlLength += lstrlenW(scheme);
     }
 
     (*lpdwUrlLength)++; /* ':' */
@@ -4437,6 +4430,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
 {
     DWORD dwLen;
     INTERNET_SCHEME nScheme;
+    WCHAR *start = lpszUrl;
 
     static const WCHAR slashSlashW[] = {'/','/'};
     static const WCHAR fmtW[] = {'%','u',0};
@@ -4481,7 +4475,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
             nScheme = INTERNET_SCHEME_HTTP;
 
         scheme = INTERNET_GetSchemeString(nScheme);
-        dwLen = strlenW(scheme);
+        dwLen = lstrlenW(scheme);
         memcpy(lpszUrl, scheme, dwLen * sizeof(WCHAR));
         lpszUrl += dwLen;
     }
@@ -4526,7 +4520,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
         {
             *lpszUrl = ':';
             lpszUrl++;
-            lpszUrl += sprintfW(lpszUrl, fmtW, lpUrlComponents->nPort);
+            lpszUrl += swprintf(lpszUrl, *lpdwUrlLength - (lpszUrl - start), fmtW, lpUrlComponents->nPort);
         }
 
         /* add slash between hostname and path if necessary */
