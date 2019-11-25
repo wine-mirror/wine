@@ -101,6 +101,7 @@ static DBusConnection *connection;
     DO_FUNC(libhal_ctx_set_device_removed); \
     DO_FUNC(libhal_ctx_shutdown); \
     DO_FUNC(libhal_device_get_property_bool); \
+    DO_FUNC(libhal_device_get_property_int); \
     DO_FUNC(libhal_device_get_property_string); \
     DO_FUNC(libhal_device_add_property_watch); \
     DO_FUNC(libhal_device_remove_property_watch); \
@@ -318,7 +319,7 @@ static void udisks_new_device( const char *udi )
 
     if (device)
     {
-        if (removable) add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr );
+        if (removable) add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr, NULL );
         else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr );
     }
 
@@ -484,7 +485,7 @@ static void udisks2_add_device( const char *udi, DBusMessageIter *dict, DBusMess
     }
     if (device)
     {
-        if (removable) add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr );
+        if (removable) add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr, NULL );
         else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr );
     }
 }
@@ -582,6 +583,178 @@ static DBusHandlerResult udisks_filter( DBusConnection *ctx, DBusMessage *msg, v
 
 #ifdef SONAME_LIBHAL
 
+static BOOL hal_get_ide_parameters( LibHalContext *ctx, const char *udi, SCSI_ADDRESS *scsi_addr, UCHAR *devtype, char *ident, size_t ident_size )
+{
+    DBusError error;
+    char *parent = NULL;
+    char *type = NULL;
+    char *model = NULL;
+    int host, chan;
+    BOOL ret = FALSE;
+
+    p_dbus_error_init( &error );
+
+    if (!(parent = p_libhal_device_get_property_string( ctx, udi, "info.parent", &error )))
+        goto done;
+    if ((host = p_libhal_device_get_property_int( ctx, parent, "ide.host", &error )) < 0)
+        goto done;
+    if ((chan = p_libhal_device_get_property_int( ctx, parent, "ide.channel", &error )) < 0)
+        goto done;
+
+    ret = TRUE;
+
+    if (devtype)
+    {
+        if (!(type = p_libhal_device_get_property_string( ctx, udi, "storage.drive_type", &error )))
+            *devtype = SCSI_UNKNOWN_PERIPHERAL;
+        else if (!strcmp( type, "disk" ) || !strcmp( type, "floppy" ))
+            *devtype = SCSI_DISK_PERIPHERAL;
+        else if (!strcmp( type, "tape" ))
+            *devtype = SCSI_TAPE_PERIPHERAL;
+        else if (!strcmp( type, "cdrom" ))
+            *devtype = SCSI_CDROM_PERIPHERAL;
+        else if (!strcmp( type, "raid" ))
+            *devtype = SCSI_ARRAY_PERIPHERAL;
+        else
+            *devtype = SCSI_UNKNOWN_PERIPHERAL;
+    }
+
+    if (ident)
+    {
+        if (!(model = p_libhal_device_get_property_string( ctx, udi, "storage.model", &error )))
+            p_dbus_error_free( &error );  /* ignore error */
+        else
+            lstrcpynA( ident, model, ident_size );
+    }
+
+    scsi_addr->PortNumber = host;
+    scsi_addr->PathId = 0;
+    scsi_addr->TargetId = chan;
+    scsi_addr->Lun = 0;
+
+done:
+    if (model) p_libhal_free_string( model );
+    if (type) p_libhal_free_string( type );
+    if (parent) p_libhal_free_string( parent );
+    p_dbus_error_free( &error );
+    return ret;
+}
+
+static BOOL hal_get_scsi_parameters( LibHalContext *ctx, const char *udi, SCSI_ADDRESS *scsi_addr, UCHAR *devtype, char *ident, size_t ident_size )
+{
+    DBusError error;
+    char *type = NULL;
+    char *vendor = NULL;
+    char *model = NULL;
+    int host, bus, target, lun;
+    BOOL ret = FALSE;
+
+    p_dbus_error_init( &error );
+
+    if ((host = p_libhal_device_get_property_int( ctx, udi, "scsi.host", &error )) < 0)
+        goto done;
+    if ((bus = p_libhal_device_get_property_int( ctx, udi, "scsi.bus", &error )) < 0)
+        goto done;
+    if ((target = p_libhal_device_get_property_int( ctx, udi, "scsi.target", &error )) < 0)
+        goto done;
+    if ((lun = p_libhal_device_get_property_int( ctx, udi, "scsi.lun", &error )) < 0)
+        goto done;
+
+    ret = TRUE;
+    scsi_addr->PortNumber = host;
+    scsi_addr->PathId = bus;
+    scsi_addr->TargetId = target;
+    scsi_addr->Lun = lun;
+
+    if (ident)
+    {
+        if (!(vendor = p_libhal_device_get_property_string( ctx, udi, "scsi.vendor", &error )))
+            p_dbus_error_free( &error );  /* ignore error */
+        if (!(model = p_libhal_device_get_property_string( ctx, udi, "scsi.model", &error )))
+            p_dbus_error_free( &error );  /* ignore error */
+        snprintf( ident, ident_size, "%-8s%-16s", vendor ? vendor : "WINE", model ? model : "SCSI" );
+    }
+
+    if (devtype)
+    {
+        if (!(type = p_libhal_device_get_property_string( ctx, udi, "scsi.type", &error )))
+        {
+            *devtype = SCSI_UNKNOWN_PERIPHERAL;
+            goto done;
+        }
+        if (!strcmp( type, "disk" ))
+            *devtype = SCSI_DISK_PERIPHERAL;
+        else if (!strcmp( type, "tape" ))
+            *devtype = SCSI_TAPE_PERIPHERAL;
+        else if (!strcmp( type, "printer" ))
+            *devtype = SCSI_PRINTER_PERIPHERAL;
+        else if (!strcmp( type, "processor" ))
+            *devtype = SCSI_PROCESSOR_PERIPHERAL;
+        else if (!strcmp( type, "cdrom" ))
+            *devtype = SCSI_CDROM_PERIPHERAL;
+        else if (!strcmp( type, "scanner" ))
+            *devtype = SCSI_SCANNER_PERIPHERAL;
+        else if (!strcmp( type, "medium_changer" ))
+            *devtype = SCSI_MEDIUM_CHANGER_PERIPHERAL;
+        else if (!strcmp( type, "comm" ))
+            *devtype = SCSI_COMMS_PERIPHERAL;
+        else if (!strcmp( type, "raid" ))
+            *devtype = SCSI_ARRAY_PERIPHERAL;
+        else
+            *devtype = SCSI_UNKNOWN_PERIPHERAL;
+    }
+
+done:
+    if (type) p_libhal_free_string( type );
+    if (vendor) p_libhal_free_string( vendor );
+    if (model) p_libhal_free_string( model );
+    p_dbus_error_free( &error );
+    return ret;
+}
+
+static void hal_new_ide_device( LibHalContext *ctx, const char *udi )
+{
+    SCSI_ADDRESS scsi_addr;
+    UCHAR devtype;
+    char ident[40];
+
+    if (!hal_get_ide_parameters( ctx, udi, &scsi_addr, &devtype, ident, sizeof(ident) )) return;
+    create_scsi_entry( &scsi_addr, 255, devtype == SCSI_CDROM_PERIPHERAL ? "atapi" : "WINE SCSI", devtype, ident, NULL );
+}
+
+static void hal_set_device_name( LibHalContext *ctx, const char *udi, const UNICODE_STRING *devname )
+{
+    DBusError error;
+    SCSI_ADDRESS scsi_addr;
+    char *parent = NULL;
+
+    p_dbus_error_init( &error );
+
+    if (!hal_get_ide_parameters( ctx, udi, &scsi_addr, NULL, NULL, 0 ))
+    {
+        if (!(parent = p_libhal_device_get_property_string( ctx, udi, "info.parent", &error )))
+            goto done;
+        if (!hal_get_scsi_parameters( ctx, parent, &scsi_addr, NULL, NULL, 0 ))
+            goto done;
+    }
+    set_scsi_device_name( &scsi_addr, devname );
+
+done:
+    if (parent) p_libhal_free_string( parent );
+    p_dbus_error_free( &error );
+}
+
+static void hal_new_scsi_device( LibHalContext *ctx, const char *udi )
+{
+    SCSI_ADDRESS scsi_addr;
+    UCHAR devtype;
+    char ident[40];
+
+    if (!hal_get_scsi_parameters( ctx, udi, &scsi_addr, &devtype, ident, sizeof(ident) )) return;
+    /* FIXME: get real controller Id for SCSI */
+    create_scsi_entry( &scsi_addr, 255, "WINE SCSI", devtype, ident, NULL );
+}
+
 /* HAL callback for new device */
 static void hal_new_device( LibHalContext *ctx, const char *udi )
 {
@@ -595,6 +768,9 @@ static void hal_new_device( LibHalContext *ctx, const char *udi )
     enum device_type drive_type;
 
     p_dbus_error_init( &error );
+
+    hal_new_scsi_device( ctx, udi );
+    hal_new_ide_device( ctx, udi );
 
     if (!(device = p_libhal_device_get_property_string( ctx, udi, "block.device", &error )))
         goto done;
@@ -619,7 +795,10 @@ static void hal_new_device( LibHalContext *ctx, const char *udi )
 
     if (p_libhal_device_get_property_bool( ctx, parent, "storage.removable", &error ))
     {
-        add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr );
+        UNICODE_STRING devname;
+
+        add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr, &devname );
+        hal_set_device_name( ctx, parent, &devname );
         /* add property watch for mount point */
         p_libhal_device_add_property_watch( ctx, udi, &error );
     }

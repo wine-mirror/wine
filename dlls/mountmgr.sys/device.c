@@ -25,7 +25,11 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <sys/time.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 
 #define NONAMELESSUNION
 
@@ -60,6 +64,12 @@ static const WCHAR drives_keyW[] = {'S','o','f','t','w','a','r','e','\\',
                                     'W','i','n','e','\\','D','r','i','v','e','s',0};
 static const WCHAR ports_keyW[] = {'S','o','f','t','w','a','r','e','\\',
                                    'W','i','n','e','\\','P','o','r','t','s',0};
+static const WCHAR scsi_keyW[] = {'H','A','R','D','W','A','R','E','\\','D','E','V','I','C','E','M','A','P','\\','S','c','s','i',0};
+static const WCHAR scsi_port_keyW[] = {'S','c','s','i',' ','P','o','r','t',' ','%','d',0};
+static const WCHAR scsi_bus_keyW[] = {'S','c','s','i',' ','B','u','s',' ','%','d',0};
+static const WCHAR target_id_keyW[] = {'T','a','r','g','e','t',' ','I','d',' ','%','d',0};
+static const WCHAR lun_keyW[] = {'L','o','g','i','c','a','l',' ','U','n','i','t',' ','I','d',' ','%','d',0};
+static const WCHAR devnameW[] = {'D','e','v','i','c','e','N','a','m','e',0};
 
 struct disk_device
 {
@@ -686,6 +696,144 @@ static void create_drive_devices(void)
     RtlFreeHeap( GetProcessHeap(), 0, path );
 }
 
+/* open the "Logical Unit" key for a given SCSI address */
+static HKEY get_scsi_device_lun_key( SCSI_ADDRESS *scsi_addr )
+{
+    WCHAR dataW[50];
+    HKEY scsi_key, port_key, bus_key, target_key, lun_key;
+
+    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, scsi_keyW, 0, KEY_READ|KEY_WRITE, &scsi_key )) return NULL;
+
+    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), scsi_port_keyW, scsi_addr->PortNumber );
+    if (RegCreateKeyExW( scsi_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &port_key, NULL )) return NULL;
+    RegCloseKey( scsi_key );
+
+    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), scsi_bus_keyW, scsi_addr->PathId );
+    if (RegCreateKeyExW( port_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &bus_key, NULL )) return NULL;
+    RegCloseKey( port_key );
+
+    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), target_id_keyW, scsi_addr->TargetId );
+    if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return NULL;
+    RegCloseKey( bus_key );
+
+    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), lun_keyW, scsi_addr->Lun );
+    if (RegCreateKeyExW( target_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &lun_key, NULL )) return NULL;
+    RegCloseKey( target_key );
+
+    return lun_key;
+}
+
+/* fill in the "Logical Unit" key for a given SCSI address */
+void create_scsi_entry( SCSI_ADDRESS *scsi_addr, UINT init_id, const char *driver, UINT type, const char *model, const UNICODE_STRING *dev )
+{
+    static UCHAR tape_no = 0;
+    static const WCHAR tapeW[] = {'T','a','p','e','%','d',0};
+    static const WCHAR init_id_keyW[] = {'I','n','i','t','i','a','t','o','r',' ','I','d',' ','%','d',0};
+    static const WCHAR driverW[] = {'D','r','i','v','e','r',0};
+    static const WCHAR bus_time_scanW[] = {'F','i','r','s','t','B','u','s','T','i','m','e','S','c','a','n','I','n','M','s',0};
+    static const WCHAR typeW[] = {'T','y','p','e',0};
+    static const WCHAR identW[] = {'I','d','e','n','t','i','f','i','e','r',0};
+
+    WCHAR dataW[50];
+    DWORD sizeW;
+    DWORD value;
+    const char *data;
+    HKEY scsi_key;
+    HKEY port_key;
+    HKEY bus_key;
+    HKEY target_key;
+    HKEY lun_key;
+
+    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, scsi_keyW, 0, KEY_READ|KEY_WRITE, &scsi_key )) return;
+
+    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), scsi_port_keyW, scsi_addr->PortNumber );
+    if (RegCreateKeyExW( scsi_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &port_key, NULL )) return;
+    RegCloseKey( scsi_key );
+
+    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, driver, strlen(driver)+1);
+    RegSetValueExW( port_key, driverW, 0, REG_SZ, (const BYTE *)dataW, sizeW );
+    value = 10;
+    RegSetValueExW( port_key, bus_time_scanW, 0, REG_DWORD, (const BYTE *)&value, sizeof(value));
+
+    value = 0;
+
+    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), scsi_bus_keyW, scsi_addr->PathId );
+    if (RegCreateKeyExW( port_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &bus_key, NULL )) return;
+    RegCloseKey( port_key );
+
+    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), init_id_keyW, init_id );
+    if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return;
+    RegCloseKey( target_key );
+
+    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), target_id_keyW, scsi_addr->TargetId );
+    if (RegCreateKeyExW( bus_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &target_key, NULL )) return;
+    RegCloseKey( bus_key );
+
+    snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), lun_keyW, scsi_addr->Lun );
+    if (RegCreateKeyExW( target_key, dataW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &lun_key, NULL )) return;
+    RegCloseKey( target_key );
+
+    switch (type)
+    {
+    case SCSI_DISK_PERIPHERAL:              data = "DiskPeripheral"; break;
+    case SCSI_TAPE_PERIPHERAL:              data = "TapePeripheral"; break;
+    case SCSI_PRINTER_PERIPHERAL:           data = "PrinterPeripheral"; break;
+    case SCSI_WORM_PERIPHERAL:              data = "WormPeripheral"; break;
+    case SCSI_CDROM_PERIPHERAL:             data = "CdRomPeripheral"; break;
+    case SCSI_SCANNER_PERIPHERAL:           data = "ScannerPeripheral"; break;
+    case SCSI_OPTICAL_DISK_PERIPHERAL:      data = "OpticalDiskPeripheral"; break;
+    case SCSI_MEDIUM_CHANGER_PERIPHERAL:    data = "MediumChangerPeripheral"; break;
+    case SCSI_COMMS_PERIPHERAL:             data = "CommunicationsPeripheral"; break;
+    case SCSI_ASC_GRAPHICS_PERIPHERAL:
+    case SCSI_ASC_GRAPHICS2_PERIPHERAL:     data = "ASCPrePressGraphicsPeripheral"; break;
+    case SCSI_ARRAY_PERIPHERAL:             data = "ArrayPeripheral"; break;
+    case SCSI_ENCLOSURE_PERIPHERAL:         data = "EnclosurePeripheral"; break;
+    case SCSI_REDUCED_DISK_PERIPHERAL:      data = "RBCPeripheral"; break;
+    case SCSI_CARD_READER_PERIPHERAL:       data = "CardReaderPeripheral"; break;
+    case SCSI_BRIDGE_PERIPHERAL:            data = "BridgePeripheral"; break;
+    case SCSI_OBJECT_STORAGE_PERIPHERAL:    /* Object-based storage devices */
+    case SCSI_DRIVE_CONTROLLER_PERIPHERAL:  /* Automation/drive controllers */
+    case SCSI_REDUCED_CDROM_PERIPHERAL:     /* Reduced-commands MM devices */
+    case SCSI_PROCESSOR_PERIPHERAL:         /* Processor devices (considered to be "Other" by Windows) */
+    default:                                data = "OtherPeripheral"; break;
+    }
+    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, data, strlen(data)+1);
+    RegSetValueExW( lun_key, typeW, 0, REG_SZ, (const BYTE *)dataW, sizeW );
+
+    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, model, strlen(model)+1);
+    RegSetValueExW( lun_key, identW, 0, REG_SZ, (const BYTE *)dataW, sizeW );
+
+    if (dev)
+    {
+        WCHAR *buffer = memchrW( dev->Buffer+1, '\\', dev->Length )+1;
+        ULONG length = dev->Length - (buffer - dev->Buffer)*sizeof(WCHAR);
+        RegSetValueExW( lun_key, devnameW, 0, REG_SZ, (const BYTE *)buffer, length );
+    }
+    else if (type == SCSI_TAPE_PERIPHERAL)
+    {
+        snprintfW( dataW, sizeof(dataW)/sizeof(*dataW), tapeW, tape_no++ );
+        RegSetValueExW( lun_key, devnameW, 0, REG_SZ, (const BYTE *)dataW, strlenW( dataW ) );
+    }
+
+    RegCloseKey( lun_key );
+}
+
+/* set the "DeviceName" for a given SCSI address */
+void set_scsi_device_name( SCSI_ADDRESS *scsi_addr, const UNICODE_STRING *dev )
+{
+    HKEY lun_key;
+    WCHAR *buffer;
+    ULONG length;
+
+    lun_key = get_scsi_device_lun_key( scsi_addr );
+    buffer = memchrW( dev->Buffer+1, '\\', dev->Length )+1;
+    length = dev->Length - (buffer - dev->Buffer)*sizeof(WCHAR);
+    RegSetValueExW( lun_key, devnameW, 0, REG_SZ, (const BYTE *)buffer, length );
+
+    RegCloseKey( lun_key );
+}
+
+
 /* create a new disk volume */
 NTSTATUS add_volume( const char *udi, const char *device, const char *mount_point,
                      enum device_type type, const GUID *guid )
@@ -736,7 +884,8 @@ NTSTATUS remove_volume( const char *udi )
 
 /* create a new dos drive */
 NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
-                         const char *mount_point, enum device_type type, const GUID *guid )
+                         const char *mount_point, enum device_type type, const GUID *guid,
+                         UNICODE_STRING *devname )
 {
     char *path, *p;
     HKEY hkey;
@@ -811,6 +960,8 @@ found:
     }
 
     if (udi) notify = drive->drive;
+
+    if (devname) *devname = volume->device->name;
 
 done:
     if (volume) release_volume( volume );

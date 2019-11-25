@@ -268,7 +268,7 @@ static NTSTATUS define_unix_drive( const void *in_buff, SIZE_T insize )
         case DRIVE_RAMDISK:   type = DEVICE_RAMDISK; break;
         case DRIVE_FIXED:     type = DEVICE_HARDDISK_VOL; break;
         }
-        return add_dos_device( letter - 'a', NULL, device, mount_point, type, NULL );
+        return add_dos_device( letter - 'a', NULL, device, mount_point, type, NULL, NULL );
     }
     else
     {
@@ -461,6 +461,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     static const WCHAR harddiskW[] = {'\\','D','r','i','v','e','r','\\','H','a','r','d','d','i','s','k',0};
     static const WCHAR driver_serialW[] = {'\\','D','r','i','v','e','r','\\','S','e','r','i','a','l',0};
     static const WCHAR driver_parallelW[] = {'\\','D','r','i','v','e','r','\\','P','a','r','a','l','l','e','l',0};
+    static const WCHAR devicemapW[] = {'H','A','R','D','W','A','R','E','\\','D','E','V','I','C','E','M','A','P','\\','S','c','s','i',0};
 
 #ifdef _WIN64
     static const WCHAR qualified_ports_keyW[] = {'\\','R','E','G','I','S','T','R','Y','\\',
@@ -475,6 +476,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     UNICODE_STRING nameW, linkW;
     DEVICE_OBJECT *device;
+    HKEY devicemap_key;
     NTSTATUS status;
 
     TRACE( "%s\n", debugstr_w(path->Buffer) );
@@ -493,6 +495,10 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, mounted_devicesW, 0, NULL,
                      REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &mount_key, NULL );
+
+    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, devicemapW, 0, NULL, REG_OPTION_VOLATILE,
+                          KEY_ALL_ACCESS, NULL, &devicemap_key, NULL ))
+        RegCloseKey( devicemap_key );
 
     RtlInitUnicodeString( &nameW, harddiskW );
     status = IoCreateDriver( &nameW, harddisk_driver_entry );

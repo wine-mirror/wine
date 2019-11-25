@@ -89,7 +89,7 @@ static void appeared_callback( DADiskRef disk, void *context )
            device, mount_point, wine_dbgstr_guid(guid_ptr) );
 
     if ((ref = CFDictionaryGetValue( dict, CFSTR("DAMediaRemovable") )) && CFBooleanGetValue( ref ))
-        add_dos_device( -1, device, device, mount_point, type, guid_ptr );
+        add_dos_device( -1, device, device, mount_point, type, guid_ptr, NULL );
     else
         if (guid_ptr) add_volume( device, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr );
 

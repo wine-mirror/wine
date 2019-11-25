@@ -214,7 +214,6 @@ void * CDECL __wine_kernel_init(void)
     RtlSetUnhandledExceptionFilter( UnhandledExceptionFilter );
 
     LOCALE_Init();
-    convert_old_config();
     set_library_argv( __wine_main_wargv );
 
     if (!params->CurrentDirectory.Handle) chdir("/"); /* avoid locking removable devices */
