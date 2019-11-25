@@ -78,6 +78,14 @@ HRESULT WINAPI GetDpiForMonitor(HMONITOR monitor, MONITOR_DPI_TYPE type, UINT *x
     return HRESULT_FROM_WIN32( GetLastError() );
 }
 
+HRESULT WINAPI GetScaleFactorForMonitor(HMONITOR monitor, DEVICE_SCALE_FACTOR *scale)
+{
+    FIXME("(%p %p): stub\n", monitor, scale);
+
+    *scale = SCALE_100_PERCENT;
+    return S_OK;
+}
+
 HRESULT WINAPI _IStream_Read(IStream *stream, void *dest, ULONG size)
 {
     ULONG read;
