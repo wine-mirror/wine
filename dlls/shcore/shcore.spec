@@ -12,7 +12,7 @@
 @ stdcall GetProcessDpiAwareness(long ptr)
 @ stdcall GetProcessReference(ptr)
 @ stub GetScaleFactorForDevice
-@ stub GetScaleFactorForMonitor
+@ stdcall GetScaleFactorForMonitor(long ptr)
 @ stub IStream_Copy
 @ stdcall IStream_Read(ptr ptr long) _IStream_Read
 @ stub IStream_ReadStr
