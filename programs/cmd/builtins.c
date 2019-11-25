@@ -3713,7 +3713,7 @@ static int WCMD_peeknumber(VARSTACK **varstack) {
     if (!thisvar->isnum) {
       WCHAR tmpstr[MAXSTRING];
       if (GetEnvironmentVariableW(thisvar->variable, tmpstr, MAXSTRING)) {
-        result = wcstoul(tmpstr,NULL,0);
+        result = wcstol(tmpstr,NULL,0);
       }
       WINE_TRACE("Envvar %s converted to %d\n", wine_dbgstr_w(thisvar->variable), result);
     } else {
