@@ -913,7 +913,7 @@ static void test_dibsections(void)
 static void test_dib_formats(void)
 {
     BITMAPINFO *bi;
-    char data[256];
+    char data[2048];  /* 2 x 2 pixels, max 64 bits-per-pixel, max 64 planes */
     void *bits;
     int planes, bpp, compr, format;
     HBITMAP hdib, hbmp;
