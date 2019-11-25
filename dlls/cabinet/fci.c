@@ -30,14 +30,12 @@ There is still some work to be done:
 
 */
 
-
-
-#include "config.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "windef.h"
 #include "winbase.h"

@@ -1,6 +1,8 @@
 MODULE    = cabinet.dll
 IMPORTLIB = cabinet
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	cabinet_main.c \
 	deflate.c \
