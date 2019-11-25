@@ -1693,7 +1693,7 @@ static BOOL sysfs_count_list_elements(const char *filename, DWORD *result)
 
 /* for 'data', max_len is the array count. for 'dataex', max_len is in bytes */
 static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data,
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **dataex, DWORD *max_len)
+        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **dataex, DWORD *max_len, DWORD relation)
 {
     static const char core_info[] = "/sys/devices/system/cpu/cpu%u/topology/%s";
     static const char cache_info[] = "/sys/devices/system/cpu/cpu%u/cache/index%u/%s";
@@ -1703,6 +1703,9 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
     DWORD len = 0, beg, end, i, j, r, num_cpus = 0, max_cpus = 0;
     char op, name[MAX_PATH];
     ULONG_PTR all_cpus_mask = 0;
+
+    if (relation != RelationAll)
+        FIXME("Relationship filtering not implemented: 0x%x\n", relation);
 
     /* On systems with a large number of CPU cores (32 or 64 depending on 32-bit or 64-bit),
      * we have issues parsing processor information:
@@ -1913,7 +1916,7 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
 #elif defined(__APPLE__)
 /* for 'data', max_len is the array count. for 'dataex', max_len is in bytes */
 static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data,
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **dataex, DWORD *max_len)
+        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **dataex, DWORD *max_len, DWORD relation)
 {
     DWORD pkgs_no, cores_no, lcpu_no, lcpu_per_core, cores_per_package, assoc, len = 0;
     DWORD cache_ctrs[10] = {0};
@@ -1922,6 +1925,9 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
     LONGLONG cache_size, cache_line_size, cache_sharing[10];
     size_t size;
     DWORD p,i,j,k;
+
+    if (relation != RelationAll)
+        FIXME("Relationship filtering not implemented: 0x%x\n", relation);
 
     lcpu_no = NtCurrentTeb()->Peb->NumberOfProcessors;
 
@@ -2048,7 +2054,7 @@ static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
 }
 #else
 static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data,
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **dataex, DWORD *max_len)
+        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **dataex, DWORD *max_len, DWORD relation)
 {
     FIXME("stub\n");
     return STATUS_NOT_IMPLEMENTED;
@@ -2970,7 +2976,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 break;
             }
 
-            ret = create_logical_proc_info(&buf, NULL, &len);
+            ret = create_logical_proc_info(&buf, NULL, &len, RelationAll);
             if( ret != STATUS_SUCCESS )
             {
                 RtlFreeHeap(GetProcessHeap(), 0, buf);
@@ -3059,9 +3065,6 @@ NTSTATUS WINAPI NtQuerySystemInformationEx(SYSTEM_INFORMATION_CLASS SystemInform
                 break;
             }
 
-            if (*(DWORD*)Query != RelationAll)
-                FIXME("Relationship filtering not implemented: 0x%x\n", *(DWORD*)Query);
-
             len = 3 * sizeof(*buf);
             buf = RtlAllocateHeap(GetProcessHeap(), 0, len);
             if (!buf)
@@ -3070,7 +3073,7 @@ NTSTATUS WINAPI NtQuerySystemInformationEx(SYSTEM_INFORMATION_CLASS SystemInform
                 break;
             }
 
-            ret = create_logical_proc_info(NULL, &buf, &len);
+            ret = create_logical_proc_info(NULL, &buf, &len, *(DWORD*)Query);
             if (ret != STATUS_SUCCESS)
             {
                 RtlFreeHeap(GetProcessHeap(), 0, buf);
@@ -3082,7 +3085,7 @@ NTSTATUS WINAPI NtQuerySystemInformationEx(SYSTEM_INFORMATION_CLASS SystemInform
                 if (!SystemInformation)
                     ret = STATUS_ACCESS_VIOLATION;
                 else
-                    memcpy( SystemInformation, buf, len);
+                    memcpy(SystemInformation, buf, len);
             }
             else
                 ret = STATUS_INFO_LENGTH_MISMATCH;
