@@ -25,6 +25,9 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #ifdef HAVE_DISKARBITRATION_DISKARBITRATION_H
 #include <DiskArbitration/DiskArbitration.h>
 #endif
@@ -46,14 +49,30 @@ WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
 #ifdef HAVE_DISKARBITRATION_DISKARBITRATION_H
 
+typedef struct
+{
+    uint64_t bus;
+    uint64_t port;
+    uint64_t target;
+    uint64_t lun;
+} dk_scsi_identify_t;
+
+#define DKIOCSCSIIDENTIFY _IOR('d', 254, dk_scsi_identify_t)
+
 static void appeared_callback( DADiskRef disk, void *context )
 {
     CFDictionaryRef dict = DADiskCopyDescription( disk );
     const void *ref;
     char device[64];
     char mount_point[PATH_MAX];
+    char model[64];
+    size_t model_len = 0;
     GUID guid, *guid_ptr = NULL;
     enum device_type type = DEVICE_UNKNOWN;
+    UINT pdtype = 0;
+    SCSI_ADDRESS scsi_addr;
+    UNICODE_STRING devname;
+    int fd;
 
     if (!dict) return;
 
@@ -77,21 +96,77 @@ static void appeared_callback( DADiskRef disk, void *context )
     if ((ref = CFDictionaryGetValue( dict, CFSTR("DAMediaKind") )))
     {
         if (!CFStringCompare( ref, CFSTR("IOCDMedia"), 0 ))
+        {
             type = DEVICE_CDROM;
+            pdtype = 5;
+        }
         if (!CFStringCompare( ref, CFSTR("IODVDMedia"), 0 ) ||
             !CFStringCompare( ref, CFSTR("IOBDMedia"), 0 ))
+        {
             type = DEVICE_DVD;
+            pdtype = 5;
+        }
         if (!CFStringCompare( ref, CFSTR("IOMedia"), 0 ))
             type = DEVICE_HARDDISK;
+    }
+
+    if ((ref = CFDictionaryGetValue( dict, CFSTR("DADeviceVendor") )))
+    {
+        CFIndex i;
+
+        CFStringGetCString( ref, model, sizeof(model), kCFStringEncodingASCII );
+        model_len += CFStringGetLength( ref );
+        /* Pad to 8 characters */
+        for (i = 0; i < (CFIndex)8 - CFStringGetLength( ref ); ++i)
+            model[model_len++] = ' ';
+    }
+    if ((ref = CFDictionaryGetValue( dict, CFSTR("DADeviceModel") )))
+    {
+        CFIndex i;
+
+        CFStringGetCString( ref, model+model_len, sizeof(model)-model_len, kCFStringEncodingASCII );
+        model_len += CFStringGetLength( ref );
+        /* Pad to 16 characters */
+        for (i = 0; i < (CFIndex)16 - CFStringGetLength( ref ); ++i)
+            model[model_len++] = ' ';
+    }
+    if ((ref = CFDictionaryGetValue( dict, CFSTR("DADeviceRevision") )))
+    {
+        CFIndex i;
+
+        CFStringGetCString( ref, model+model_len, sizeof(model)-model_len, kCFStringEncodingASCII );
+        model_len += CFStringGetLength( ref );
+        /* Pad to 4 characters */
+        for (i = 0; i < (CFIndex)4 - CFStringGetLength( ref ); ++i)
+            model[model_len++] = ' ';
     }
 
     TRACE( "got mount notification for '%s' on '%s' uuid %s\n",
            device, mount_point, wine_dbgstr_guid(guid_ptr) );
 
+    devname.Buffer = NULL;
     if ((ref = CFDictionaryGetValue( dict, CFSTR("DAMediaRemovable") )) && CFBooleanGetValue( ref ))
-        add_dos_device( -1, device, device, mount_point, type, guid_ptr, NULL );
+        add_dos_device( -1, device, device, mount_point, type, guid_ptr, &devname );
     else
         if (guid_ptr) add_volume( device, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr );
+
+    if ((fd = open( device, O_RDONLY )) >= 0)
+    {
+        dk_scsi_identify_t dsi;
+
+        if (ioctl( fd, DKIOCSCSIIDENTIFY, &dsi ) >= 0)
+        {
+            scsi_addr.PortNumber = dsi.bus;
+            scsi_addr.PathId = dsi.port;
+            scsi_addr.TargetId = dsi.target;
+            scsi_addr.Lun = dsi.lun;
+
+            /* FIXME: get real controller Id for SCSI */
+            /* FIXME: get real driver name */
+            create_scsi_entry( &scsi_addr, 255, "WINE SCSI", pdtype, model, &devname );
+        }
+        close( fd );
+    }
 
 done:
     CFRelease( dict );
