@@ -996,9 +996,8 @@ static inline BOOL strftime_int(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_s
 #endif
     MSVCRT_size_t len;
 
-    if(src<l || src>h) {
+    if(!MSVCRT_CHECK_PMT(src>=l && src<=h)) {
         *str = 0;
-        *MSVCRT__errno() = MSVCRT_EINVAL;
         return FALSE;
     }
 
