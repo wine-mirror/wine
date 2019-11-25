@@ -38,15 +38,13 @@ There is still some work to be done:
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_ZLIB
-# include <zlib.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winternl.h"
 #include "fci.h"
+#include "zlib.h"
 #include "cabinet.h"
 #include "wine/list.h"
 #include "wine/debug.h"
@@ -909,8 +907,6 @@ static cab_UWORD compress_NONE( FCI_Int *fci )
     return fci->cdata_in;
 }
 
-#ifdef HAVE_ZLIB
-
 static void *zalloc( void *opaque, unsigned int items, unsigned int size )
 {
     FCI_Int *fci = opaque;
@@ -946,8 +942,6 @@ static cab_UWORD compress_MSZIP( FCI_Int *fci )
     deflateEnd( &stream );
     return stream.total_out + 2;
 }
-
-#endif  /* HAVE_ZLIB */
 
 
 /***********************************************************************
@@ -1421,11 +1415,9 @@ BOOL __cdecl FCIAddFile(
       switch (typeCompress)
       {
       case tcompTYPE_MSZIP:
-#ifdef HAVE_ZLIB
           p_fci_internal->compression = tcompTYPE_MSZIP;
           p_fci_internal->compress    = compress_MSZIP;
           break;
-#endif
       default:
           FIXME( "compression %x not supported, defaulting to none\n", typeCompress );
           /* fall through */
