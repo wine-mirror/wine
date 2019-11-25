@@ -73,7 +73,7 @@
  *          object-file-name  -llibrary -nostartfiles  -nodefaultlibs
  *          -nostdlib -s  -static  -static-libgcc  -static-libstdc++
  *          -shared  -shared-libgcc  -symbolic  -Wl,option
- *          -Xlinker option -u symbol --image-base
+ *          -Xlinker option -u symbol --image-base -fuse-ld
  *
  *      Directory Options
  *          -Bprefix  -Idir  -I-  -Ldir  -specs=file
@@ -1328,6 +1328,9 @@ static int is_linker_arg(const char* arg)
 	    break;
 	case 'a':
 	    if (strcmp("-arch", arg) == 0) return 1;
+	    break;
+	case 'f':
+	    if (strncmp("-fuse-ld=", arg, 9) == 0) return 1;
 	    break;
     }
 
