@@ -350,12 +350,13 @@ static HRESULT WINAPI d3d_viewport_GetViewport(IDirect3DViewport3 *iface, D3DVIE
         vp1.dwY = viewport->viewports.vp2.dwY;
         vp1.dwWidth = viewport->viewports.vp2.dwWidth;
         vp1.dwHeight = viewport->viewports.vp2.dwHeight;
-        vp1.dvMaxX = 0.0f;
-        vp1.dvMaxY = 0.0f;
-        vp1.dvScaleX = 0.0f;
-        vp1.dvScaleY = 0.0f;
-        vp1.dvMinZ = viewport->viewports.vp2.dvMinZ;
-        vp1.dvMaxZ = viewport->viewports.vp2.dvMaxZ;
+
+        vp1.dvScaleX = vp1.dwWidth / viewport->viewports.vp2.dvClipWidth;
+        vp1.dvScaleY = vp1.dwHeight / viewport->viewports.vp2.dvClipHeight;
+        vp1.dvMaxX = viewport->viewports.vp2.dvClipWidth + viewport->viewports.vp2.dvClipX;
+        vp1.dvMaxY = viewport->viewports.vp2.dvClipY;
+        vp1.dvMinZ = 0.0f;
+        vp1.dvMaxZ = 1.0f;
         memcpy(vp, &vp1, size);
     }
 

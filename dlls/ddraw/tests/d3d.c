@@ -991,21 +991,21 @@ static void ViewportTest(void)
     ret_vp1_data.dwSize = sizeof(vp1_data);
 
     hr = IDirect3DViewport2_GetViewport(Viewport2, &ret_vp1_data);
-    ok(hr == D3D_OK, "IDirect3DViewport2_GetViewport returned %08x\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    ok(ret_vp1_data.dwX == vp2_data.dwX, "dwX is %u, expected %u\n", ret_vp1_data.dwX, vp2_data.dwX);
-    ok(ret_vp1_data.dwY == vp2_data.dwY, "dwY is %u, expected %u\n", ret_vp1_data.dwY, vp2_data.dwY);
-    ok(ret_vp1_data.dwWidth == vp2_data.dwWidth, "dwWidth is %u, expected %u\n", ret_vp1_data.dwWidth, vp2_data.dwWidth);
-    ok(ret_vp1_data.dwHeight == vp2_data.dwHeight, "dwHeight is %u, expected %u\n", ret_vp1_data.dwHeight, vp2_data.dwHeight);
-    ok(ret_vp1_data.dvMaxX == vp1_data.dvMaxX, "dvMaxX is %f, expected %f\n", ret_vp1_data.dvMaxX, vp1_data.dvMaxX);
-    ok(ret_vp1_data.dvMaxY == vp1_data.dvMaxY, "dvMaxY is %f, expected %f\n", ret_vp1_data.dvMaxY, vp1_data.dvMaxY);
-    todo_wine ok(ret_vp1_data.dvScaleX == infinity, "dvScaleX is %f, expected %f\n", ret_vp1_data.dvScaleX, infinity);
-    todo_wine ok(ret_vp1_data.dvScaleY == infinity, "dvScaleY is %f, expected %f\n", ret_vp1_data.dvScaleY, infinity);
-    todo_wine ok(ret_vp1_data.dvMinZ == 0.0, "dvMinZ is %f, expected 0.0\n", ret_vp1_data.dvMinZ);
-    todo_wine ok(ret_vp1_data.dvMaxZ == 1.0, "dvMaxZ is %f, expected 1.0\n", ret_vp1_data.dvMaxZ);
+    ok(ret_vp1_data.dwX == vp2_data.dwX, "dwX is %u, expected %u.\n", ret_vp1_data.dwX, vp2_data.dwX);
+    ok(ret_vp1_data.dwY == vp2_data.dwY, "dwY is %u, expected %u.\n", ret_vp1_data.dwY, vp2_data.dwY);
+    ok(ret_vp1_data.dwWidth == vp2_data.dwWidth, "dwWidth is %u, expected %u.\n", ret_vp1_data.dwWidth, vp2_data.dwWidth);
+    ok(ret_vp1_data.dwHeight == vp2_data.dwHeight, "dwHeight is %u, expected %u.\n", ret_vp1_data.dwHeight, vp2_data.dwHeight);
+    ok(ret_vp1_data.dvMaxX == vp1_data.dvMaxX, "dvMaxX is %f, expected %f.\n", ret_vp1_data.dvMaxX, vp1_data.dvMaxX);
+    ok(ret_vp1_data.dvMaxY == vp1_data.dvMaxY, "dvMaxY is %f, expected %f.\n", ret_vp1_data.dvMaxY, vp1_data.dvMaxY);
+    ok(ret_vp1_data.dvScaleX == infinity, "dvScaleX is %f, expected %f.\n", ret_vp1_data.dvScaleX, infinity);
+    ok(ret_vp1_data.dvScaleY == infinity, "dvScaleY is %f, expected %f.\n", ret_vp1_data.dvScaleY, infinity);
+    ok(ret_vp1_data.dvMinZ == 0.0, "dvMinZ is %f, expected 0.0.\n", ret_vp1_data.dvMinZ);
+    ok(ret_vp1_data.dvMaxZ == 1.0, "dvMaxZ is %f, expected 1.0.\n", ret_vp1_data.dvMaxZ);
 
     hr = IDirect3DViewport2_SetViewport2(Viewport2, &vp2_data);
-    ok(hr == D3D_OK, "IDirect3DViewport2_SetViewport2 returned %08x\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&ret_vp2_data, 0xff, sizeof(ret_vp2_data));
     ret_vp2_data.dwSize = sizeof(vp2_data);
