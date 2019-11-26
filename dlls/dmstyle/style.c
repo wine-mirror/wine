@@ -108,7 +108,25 @@ static ULONG WINAPI IDirectMusicStyle8Impl_Release(IDirectMusicStyle8 *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (!ref) {
-        HeapFree(GetProcessHeap(), 0, This);
+        struct style_band *band, *band2;
+        struct style_motif *motif, *motif2;
+        struct style_partref_item *item, *item2;
+
+        LIST_FOR_EACH_ENTRY_SAFE(band, band2, &This->bands, struct style_band, entry) {
+            list_remove(&band->entry);
+            if (band->pBand)
+                IDirectMusicBand_Release(band->pBand);
+            heap_free(band);
+        }
+        LIST_FOR_EACH_ENTRY_SAFE(motif, motif2, &This->motifs, struct style_motif, entry) {
+            list_remove(&motif->entry);
+            LIST_FOR_EACH_ENTRY_SAFE(item, item2, &motif->Items, struct style_partref_item, entry) {
+                list_remove(&item->entry);
+                heap_free(item);
+            }
+            heap_free(motif);
+        }
+        heap_free(This);
         DMSTYLE_UnlockModule();
     }
 
