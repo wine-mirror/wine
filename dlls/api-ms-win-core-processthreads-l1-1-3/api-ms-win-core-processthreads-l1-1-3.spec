@@ -1,7 +1,7 @@
 @ stub GetProcessDefaultCpuSets
 @ stub GetProcessInformation
 @ stub GetSystemCpuSetInformation
-@ stub GetThreadDescription
+@ stdcall GetThreadDescription(long ptr) kernel32.GetThreadDescription
 @ stub GetThreadSelectedCpuSets
 @ stub SetProcessDefaultCpuSets
 @ stub SetProcessInformation

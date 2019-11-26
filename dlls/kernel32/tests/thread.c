@@ -2125,7 +2125,7 @@ static void test_thread_description(void)
 
     if (!pGetThreadDescription)
     {
-        skip("Thread description API is not supported.\n");
+        win_skip("Thread description API is not supported.\n");
         return;
     }
 

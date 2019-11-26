@@ -711,7 +711,7 @@
 @ stdcall GetTempPathA(long ptr)
 @ stdcall GetTempPathW(long ptr)
 @ stdcall GetThreadContext(long ptr)
-# @ stub GetThreadDescription
+@ stdcall GetThreadDescription(long ptr)
 @ stdcall GetThreadErrorMode()
 @ stdcall GetThreadGroupAffinity(long ptr)
 @ stdcall GetThreadIOPendingFlag(long ptr)

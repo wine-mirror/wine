@@ -847,6 +847,7 @@
 @ stdcall -import GetTempPathA(long ptr)
 @ stdcall -import GetTempPathW(long ptr)
 @ stdcall -import GetThreadContext(long ptr)
+@ stdcall -import GetThreadDescription(long ptr)
 @ stdcall -import GetThreadErrorMode()
 @ stdcall -import GetThreadGroupAffinity(long ptr)
 @ stdcall -import GetThreadIOPendingFlag(long ptr)

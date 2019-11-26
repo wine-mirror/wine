@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <limits.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -33,6 +34,7 @@
 #include "wine/exception.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 
@@ -390,12 +392,64 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetThreadContext( HANDLE thread, const CONTEXT *co
 /***********************************************************************
  *           SetThreadDescription   (kernelbase.@)
  */
-HRESULT WINAPI /* DECLSPEC_HOTPATCH */ SetThreadDescription( HANDLE thread, PCWSTR description )
+HRESULT WINAPI DECLSPEC_HOTPATCH SetThreadDescription( HANDLE thread, PCWSTR description )
 {
-    FIXME( "(%p %s): stub\n", thread, debugstr_w( description ));
-    return E_NOTIMPL;
+    THREAD_DESCRIPTION_INFORMATION info;
+    int length;
+
+    TRACE( "(%p, %s)\n", thread, debugstr_w( description ));
+
+    length = description ? lstrlenW( description ) * sizeof(WCHAR) : 0;
+
+    if (length > USHRT_MAX)
+        return HRESULT_FROM_NT(STATUS_INVALID_PARAMETER);
+
+    info.Length = length << 16 | length;
+    info.Description = (WCHAR *)description;
+
+    return HRESULT_FROM_NT(NtSetInformationThread( thread, ThreadDescription, &info, sizeof(info) ));
 }
 
+/***********************************************************************
+ *           GetThreadDescription   (kernelbase.@)
+ */
+HRESULT WINAPI DECLSPEC_HOTPATCH GetThreadDescription( HANDLE thread, WCHAR **description )
+{
+    THREAD_DESCRIPTION_INFORMATION *info;
+    NTSTATUS status;
+    ULONG length;
+
+    TRACE( "(%p, %p)\n", thread, description );
+
+    *description = NULL;
+
+    length = 0;
+    status = NtQueryInformationThread( thread, ThreadDescription, NULL, 0, &length );
+    if (status != STATUS_BUFFER_TOO_SMALL)
+        return HRESULT_FROM_NT(status);
+
+    if (!(info = heap_alloc( length )))
+        return HRESULT_FROM_NT(STATUS_NO_MEMORY);
+
+    status = NtQueryInformationThread( thread, ThreadDescription, info, length, &length );
+    if (!status)
+    {
+        length = info->Length & 0xffff;
+
+        if (!(*description = LocalAlloc( 0, length + sizeof(WCHAR))))
+            status = STATUS_NO_MEMORY;
+        else
+        {
+            if (length)
+                memcpy(*description, info->Description, length);
+            (*description)[length / sizeof(WCHAR)] = 0;
+        }
+    }
+
+    heap_free(info);
+
+    return HRESULT_FROM_NT(status);
+}
 
 /***********************************************************************
  *           SetThreadErrorMode   (kernelbase.@)
