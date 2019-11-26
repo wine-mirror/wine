@@ -581,6 +581,7 @@ int __cdecl wmain (int argc, WCHAR *argv[])
                     ZeroMemory(&startup_info, sizeof(startup_info));
                     startup_info.cb = sizeof(startup_info);
                     startup_info.wShowWindow = sei.nShow;
+                    startup_info.dwFlags |= STARTF_USESHOWWINDOW;
                     startup_info.lpTitle = title;
 
                     if (!CreateProcessW(
