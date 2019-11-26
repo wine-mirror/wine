@@ -524,6 +524,86 @@ static void test_segment(void)
     while (IDirectMusicSegment_Release(dms));
 }
 
+static void _add_track(IDirectMusicSegment8 *seg, REFCLSID class, const char *name, DWORD group)
+{
+    IDirectMusicTrack *track;
+    HRESULT hr;
+
+    hr = CoCreateInstance(class, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicTrack,
+            (void**)&track);
+    ok(hr == S_OK, "%s create failed: %08x, expected S_OK\n", name, hr);
+    hr = IDirectMusicSegment8_InsertTrack(seg, track, group);
+    if (group)
+        ok(hr == S_OK, "Inserting %s failed: %08x, expected S_OK\n", name, hr);
+    else
+        ok(hr == E_INVALIDARG, "Inserting %s failed: %08x, expected E_INVALIDARG\n", name, hr);
+    IDirectMusicTrack_Release(track);
+}
+
+#define add_track(seg, class, group) _add_track(seg, &CLSID_DirectMusic ## class, #class, group)
+
+static void _expect_track(IDirectMusicSegment8 *seg, REFCLSID expect, const char *name, DWORD group,
+        DWORD index)
+{
+    IDirectMusicTrack *track;
+    IPersistStream *ps;
+    CLSID class;
+    HRESULT hr;
+
+    hr = IDirectMusicSegment8_GetTrack(seg, &GUID_NULL, group, index, &track);
+    if (!expect) {
+        ok(hr == DMUS_E_NOT_FOUND, "GetTrack failed: %08x, expected DMUS_E_NOT_FOUND\n", hr);
+        return;
+    }
+
+    ok(hr == S_OK, "GetTrack failed: %08x, expected S_OK\n", hr);
+    hr = IDirectMusicTrack_QueryInterface(track, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    hr = IPersistStream_GetClassID(ps, &class);
+    ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    ok(IsEqualGUID(&class, expect), "For group %#x index %u: Expected class %s got %s\n",
+            group, index, name, wine_dbgstr_guid(&class));
+
+    IPersistStream_Release(ps);
+    IDirectMusicTrack_Release(track);
+}
+
+#define expect_track(seg, class, group, index) _expect_track(seg, &CLSID_DirectMusic ## class, #class, group, index)
+
+static void test_track_identify(void)
+{
+    IDirectMusicSegment8 *seg;
+    IDirectMusicTrack *track;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegment8, (void**)&seg);
+    ok(hr == S_OK, "DirectMusicSegment create failed: %08x, expected S_OK\n", hr);
+
+    add_track(seg, LyricsTrack, 0x0);         /* failure */
+    add_track(seg, LyricsTrack, 0x1);         /* idx 0 group 1 */
+    add_track(seg, ParamControlTrack, 0x3);   /* idx 1 group 1, idx 0 group 2 */
+    add_track(seg, SegmentTriggerTrack, 0x2); /* idx 1 group 2 */
+    add_track(seg, SeqTrack, 0x1);            /* idx 2 group 1 */
+    add_track(seg, TempoTrack, 0x7);          /* idx 3 group 1, idx 2 group 2, idx 0 group 3 */
+
+    hr = IDirectMusicSegment8_GetTrack(seg, &GUID_NULL, 0, 0, &track);
+    ok(hr == DMUS_E_NOT_FOUND, "GetTrack failed: %08x, expected DMUS_E_NOT_FOUND\n", hr);
+
+    expect_track(seg, LyricsTrack, 0x1, 0);
+    expect_track(seg, ParamControlTrack, 0x1, 1);
+    expect_track(seg, SeqTrack, 0x1, 2);
+    expect_track(seg, TempoTrack, 0x1, 3);
+    _expect_track(seg, NULL, "", 0x1, 4);
+    expect_track(seg, ParamControlTrack, 0x2, 0);
+    expect_track(seg, SegmentTriggerTrack, 0x3, 2);  /* groups 1+2 combined index */
+    expect_track(seg, SeqTrack, 0x3, 3);             /* groups 1+2 combined index */
+    expect_track(seg, TempoTrack, 0x7, 4);           /* groups 1+2+3 combined index */
+    expect_track(seg, TempoTrack, 0xffffffff, 4);    /* all groups combined index */
+
+    IDirectMusicSegment8_Release(seg);
+}
+
 static void test_track(void)
 {
     IDirectMusicTrack *dmt;
@@ -956,6 +1036,7 @@ START_TEST(dmime)
     test_audiopathconfig();
     test_graph();
     test_segment();
+    test_track_identify();
     test_track();
     test_parsedescriptor();
 
