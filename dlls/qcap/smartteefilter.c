@@ -261,8 +261,8 @@ static HRESULT WINAPI SmartTeeFilterInput_Receive(struct strmbase_sink *base, IM
     if (This->capture.pin.peer)
         hrCapture = copy_sample(inputSample, This->capture.pAllocator, &captureSample);
     LeaveCriticalSection(&This->filter.csFilter);
-    if (SUCCEEDED(hrCapture))
-        hrCapture = BaseOutputPinImpl_Deliver(&This->capture, captureSample);
+    if (SUCCEEDED(hrCapture) && This->capture.pMemInputPin)
+        hrCapture = IMemInputPin_Receive(This->capture.pMemInputPin, captureSample);
     if (captureSample)
         IMediaSample_Release(captureSample);
 
@@ -273,8 +273,8 @@ static HRESULT WINAPI SmartTeeFilterInput_Receive(struct strmbase_sink *base, IM
     /* No timestamps on preview stream: */
     if (SUCCEEDED(hrPreview))
         hrPreview = IMediaSample_SetTime(previewSample, NULL, NULL);
-    if (SUCCEEDED(hrPreview))
-        hrPreview = BaseOutputPinImpl_Deliver(&This->preview, previewSample);
+    if (SUCCEEDED(hrPreview) && This->preview.pMemInputPin)
+        hrPreview = IMemInputPin_Receive(This->preview.pMemInputPin, previewSample);
     if (previewSample)
         IMediaSample_Release(previewSample);
 
