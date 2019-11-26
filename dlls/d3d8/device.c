@@ -1902,7 +1902,14 @@ static HRESULT WINAPI d3d8_device_BeginStateBlock(IDirect3DDevice8 *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    if (SUCCEEDED(hr = wined3d_device_begin_stateblock(device->wined3d_device, &stateblock)))
+    if (device->recording)
+    {
+        wined3d_mutex_unlock();
+        WARN("Trying to begin a stateblock while recording, returning D3DERR_INBEGINSTATEBLOCK.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (SUCCEEDED(hr = wined3d_stateblock_create(device->wined3d_device, WINED3D_SBT_RECORDED, &stateblock)))
         device->update_state = device->recording = stateblock;
     wined3d_mutex_unlock();
 
@@ -1913,7 +1920,6 @@ static HRESULT WINAPI d3d8_device_EndStateBlock(IDirect3DDevice8 *iface, DWORD *
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_stateblock *stateblock;
-    HRESULT hr;
 
     TRACE("iface %p, token %p.\n", iface, token);
 
@@ -1921,14 +1927,14 @@ static HRESULT WINAPI d3d8_device_EndStateBlock(IDirect3DDevice8 *iface, DWORD *
      * of memory later and cause locking problems)
      */
     wined3d_mutex_lock();
-    hr = wined3d_device_end_stateblock(device->wined3d_device);
-    if (FAILED(hr))
+    if (!device->recording)
     {
-        WARN("Failed to end the state block, %#x.\n", hr);
         wined3d_mutex_unlock();
-        return hr;
+        WARN("Trying to end a stateblock, but no stateblock is being recorded.\n");
+        return D3DERR_INVALIDCALL;
     }
     stateblock = device->recording;
+    wined3d_stateblock_init_contained_states(stateblock);
     device->recording = NULL;
     device->update_state = device->state;
 
@@ -1947,7 +1953,7 @@ static HRESULT WINAPI d3d8_device_EndStateBlock(IDirect3DDevice8 *iface, DWORD *
 
     TRACE("Returning %#x (%p).\n", *token, stateblock);
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_ApplyStateBlock(IDirect3DDevice8 *iface, DWORD token)

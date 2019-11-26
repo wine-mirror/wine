@@ -9665,20 +9665,12 @@ static void test_draw_primitive(void)
 
     hr = IDirect3DDevice8_GetStreamSource(device, 0, &current_vb, &stride);
     ok(SUCCEEDED(hr), "GetStreamSource failed, hr %#x.\n", hr);
-todo_wine {
     ok(!current_vb, "Unexpected vb %p.\n", current_vb);
     ok(!stride, "Unexpected stride %u.\n", stride);
-}
-    if (current_vb)
-        IDirect3DVertexBuffer8_Release(current_vb);
     hr = IDirect3DDevice8_GetIndices(device, &current_ib, &base_vertex_index);
     ok(SUCCEEDED(hr), "GetIndices failed, hr %#x.\n", hr);
-todo_wine {
     ok(!current_ib, "Unexpected index buffer %p.\n", current_ib);
     ok(!base_vertex_index, "Unexpected base vertex index %u.\n", base_vertex_index);
-}
-    if (current_ib)
-        IDirect3DIndexBuffer8_Release(current_ib);
 
     hr = IDirect3DDevice8_CaptureStateBlock(device, stateblock);
     ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
