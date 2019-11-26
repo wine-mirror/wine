@@ -184,7 +184,7 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
         IMediaSample_SetMediaTime(pOutSample, NULL, NULL);
 
     LeaveCriticalSection(&This->tf.csReceive);
-    hr = BaseOutputPinImpl_Deliver(&This->tf.source, pOutSample);
+    hr = IMemInputPin_Receive(This->tf.source.pMemInputPin, pOutSample);
     EnterCriticalSection(&This->tf.csReceive);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);
