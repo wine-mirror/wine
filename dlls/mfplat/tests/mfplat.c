@@ -1712,6 +1712,8 @@ todo_wine
 todo_wine
     ok(count == 1, "Unexpected buffer count %u.\n", count);
 
+    IMFMediaBuffer_Release(buffer);
+
     IMFSample_Release(sample);
 }
 
