@@ -1837,10 +1837,53 @@ static void test_viewport_object(void)
             "Got unexpected values %g, %g, %g, %g, %g, %g.\n",
             vp.dvMaxX, vp.dvMaxY, vp.dvScaleX, vp.dvScaleY, vp.dvMinZ, vp.dvMaxZ);
 
+    vp.dwSize = sizeof(vp);
+    vp.dvMinZ = 0.5f;
+    vp.dvMaxZ = 2.0f;
+    hr = IDirect3DViewport3_SetViewport(viewport3, &vp);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&vp2, 0xff, sizeof(vp2));
+    vp2.dwSize = sizeof(vp2);
+    hr = IDirect3DViewport3_GetViewport2(viewport3, &vp2);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    ok(vp2.dvClipX == 0.75f && vp2.dvClipY == 1.0f && vp2.dvClipWidth == -1.5f
+            && vp2.dvClipHeight == 2.0f && vp2.dvMinZ == 0.0f && vp2.dvMaxZ == 1.0f,
+            "Got unexpected values %g, %g, %g, %g, %g, %g.\n",
+            vp2.dvClipX, vp2.dvClipY, vp2.dvClipWidth, vp2.dvClipHeight, vp2.dvMinZ, vp2.dvMaxZ);
+
+    vp.dvMaxX = 4.5f;
+    vp.dvMaxY = -1.75f;
+    vp.dvScaleX = 192.0f;
+    vp.dvScaleY = -240.0f;
+    vp.dvMinZ = 2.0f;
+    vp.dvMaxZ = 0.5f;
+
+    hr = IDirect3DViewport3_SetViewport(viewport3, &vp);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&vp2, 0xff, sizeof(vp2));
+    vp2.dwSize = sizeof(vp2);
+    hr = IDirect3DViewport3_GetViewport2(viewport3, &vp2);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    ok(vp2.dvClipX == -1.25f && vp2.dvClipY == -0.75f && vp2.dvClipWidth == 2.5f
+            && vp2.dvClipHeight == -1.5f && vp2.dvMinZ == 0.0f && vp2.dvMaxZ == 1.0f,
+            "Got unexpected values %g, %g, %g, %g, %g, %g.\n",
+            vp2.dvClipX, vp2.dvClipY, vp2.dvClipWidth, vp2.dvClipHeight, vp2.dvMinZ, vp2.dvMaxZ);
+
     /* Destroying the device removes the viewport and releases the reference */
     IDirect3DDevice3_Release(device);
     ref = get_refcount((IUnknown *) viewport3);
     ok(ref == 1, "Got unexpected refcount %u.\n", ref);
+
+    memset(&vp2, 0xff, sizeof(vp2));
+    vp2.dwSize = sizeof(vp2);
+    hr = IDirect3DViewport3_GetViewport2(viewport3, &vp2);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    ok(vp2.dvClipX == -1.25f && vp2.dvClipY == -0.75f && vp2.dvClipWidth == 2.5f
+            && vp2.dvClipHeight == -1.5f && vp2.dvMinZ == 0.0f && vp2.dvMaxZ == 1.0f,
+            "Got unexpected values %g, %g, %g, %g, %g, %g.\n",
+            vp2.dvClipX, vp2.dvClipY, vp2.dvClipWidth, vp2.dvClipHeight, vp2.dvMinZ, vp2.dvMaxZ);
 
     vp.dwSize = sizeof(vp);
     hr = IDirect3DViewport3_SetViewport(viewport3, &vp);

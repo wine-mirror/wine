@@ -1050,25 +1050,29 @@ static void ViewportTest(void)
     ret_vp2_data.dwSize = sizeof(vp2_data);
 
     hr = IDirect3DViewport2_GetViewport2(Viewport2, &ret_vp2_data);
-    ok(hr == D3D_OK, "IDirect3DViewport2_GetViewport2 returned %08x\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    ok(ret_vp2_data.dwX == vp1_data.dwX, "dwX is %u, expected %u\n", ret_vp2_data.dwX, vp1_data.dwX);
-    ok(ret_vp2_data.dwY == vp1_data.dwY, "dwY is %u, expected %u\n", ret_vp2_data.dwY, vp1_data.dwY);
-    ok(ret_vp2_data.dwWidth == vp1_data.dwWidth, "dwWidth is %u, expected %u\n", ret_vp2_data.dwWidth, vp1_data.dwWidth);
-    ok(ret_vp2_data.dwHeight == vp1_data.dwHeight, "dwHeight is %u, expected %u\n", ret_vp2_data.dwHeight, vp1_data.dwHeight);
-    ok(ret_vp2_data.dvClipX == vp2_data.dvClipX, "dvClipX is %f, expected %f\n", ret_vp2_data.dvClipX, vp2_data.dvClipX);
-    ok(ret_vp2_data.dvClipY == vp2_data.dvClipY, "dvClipY is %f, expected %f\n", ret_vp2_data.dvClipY, vp2_data.dvClipY);
-    ok(ret_vp2_data.dvClipWidth == vp2_data.dvClipWidth, "dvClipWidth is %f, expected %f\n",
+    ok(ret_vp2_data.dwX == vp1_data.dwX, "dwX is %u, expected %u.\n", ret_vp2_data.dwX, vp1_data.dwX);
+    ok(ret_vp2_data.dwY == vp1_data.dwY, "dwY is %u, expected %u.\n", ret_vp2_data.dwY, vp1_data.dwY);
+    ok(ret_vp2_data.dwWidth == vp1_data.dwWidth, "dwWidth is %u, expected %u.\n",
+            ret_vp2_data.dwWidth, vp1_data.dwWidth);
+    ok(ret_vp2_data.dwHeight == vp1_data.dwHeight, "dwHeight is %u, expected %u.\n",
+            ret_vp2_data.dwHeight, vp1_data.dwHeight);
+    todo_wine ok(ret_vp2_data.dvClipX == vp2_data.dvClipX, "dvClipX is %f, expected %f.\n",
+            ret_vp2_data.dvClipX, vp2_data.dvClipX);
+    todo_wine ok(ret_vp2_data.dvClipY == vp2_data.dvClipY, "dvClipY is %f, expected %f.\n",
+            ret_vp2_data.dvClipY, vp2_data.dvClipY);
+    todo_wine ok(ret_vp2_data.dvClipWidth == vp2_data.dvClipWidth, "dvClipWidth is %f, expected %f.\n",
         ret_vp2_data.dvClipWidth, vp2_data.dvClipWidth);
-    ok(ret_vp2_data.dvClipHeight == vp2_data.dvClipHeight, "dvClipHeight is %f, expected %f\n",
+    todo_wine ok(ret_vp2_data.dvClipHeight == vp2_data.dvClipHeight, "dvClipHeight is %f, expected %f.\n",
         ret_vp2_data.dvClipHeight, vp2_data.dvClipHeight);
-    ok(ret_vp2_data.dvMinZ == 0.0, "dvMinZ is %f, expected 0.0\n", ret_vp2_data.dvMinZ);
-    ok(ret_vp2_data.dvMaxZ == 1.0, "dvMaxZ is %f, expected 1.0\n", ret_vp2_data.dvMaxZ);
+    ok(ret_vp2_data.dvMinZ == 0.0, "dvMinZ is %f, expected 0.0.\n", ret_vp2_data.dvMinZ);
+    ok(ret_vp2_data.dvMaxZ == 1.0, "dvMaxZ is %f, expected 1.0.\n", ret_vp2_data.dvMaxZ);
 
     IDirect3DViewport2_Release(Viewport2);
 
     hr = IDirect3DDevice_DeleteViewport(Direct3DDevice1, Viewport);
-    ok(hr == D3D_OK, "IDirect3DDevice_DeleteViewport returned %08x\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 }
 
 static void Direct3D1Test(void)
