@@ -40,6 +40,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
+enum nls_section_type
+{
+    NLS_SECTION_CASEMAP = 10,
+    NLS_SECTION_CODEPAGE = 11,
+    NLS_SECTION_NORMALIZE = 12
+};
+
 LCID user_lcid = 0, system_lcid = 0;
 
 static LANGID user_ui_language, system_ui_language;
@@ -64,6 +71,137 @@ static NTSTATUS load_string( ULONG id, LANGID lang, WCHAR *buffer, ULONG len )
     memcpy( buffer, p + 1, *p * sizeof(WCHAR) );
     buffer[*p] = 0;
     return STATUS_SUCCESS;
+}
+
+
+static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
+{
+    static const WCHAR pathfmtW[] = {'\\','?','?','\\','%','s','%','s',0};
+    static const WCHAR keyfmtW[] =
+    {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
+     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+     'C','o','n','t','r','o','l','\\','N','l','s','\\','%','s',0};
+    static const WCHAR cpW[] = {'C','o','d','e','p','a','g','e',0};
+    static const WCHAR normW[] = {'N','o','r','m','a','l','i','z','a','t','i','o','n',0};
+    static const WCHAR langW[] = {'L','a','n','g','u','a','g','e',0};
+    static const WCHAR cpfmtW[] = {'%','u',0};
+    static const WCHAR normfmtW[] = {'%','x',0};
+    static const WCHAR langfmtW[] = {'%','0','4','x',0};
+    static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
+    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
+    static const WCHAR dataprefixW[] = {'\\',0};
+    static const WCHAR buildprefixW[] = {'\\','l','o','a','d','e','r','\\',0};
+    static const WCHAR cpdefaultW[] = {'c','_','%','0','3','d','.','n','l','s',0};
+    static const WCHAR intlW[] = {'l','_','i','n','t','l','.','n','l','s',0};
+    static const WCHAR normnfcW[] = {'n','o','r','m','n','f','c','.','n','l','s',0};
+    static const WCHAR normnfdW[] = {'n','o','r','m','n','f','d','.','n','l','s',0};
+    static const WCHAR normnfkcW[] = {'n','o','r','m','n','f','k','c','.','n','l','s',0};
+    static const WCHAR normnfkdW[] = {'n','o','r','m','n','f','k','d','.','n','l','s',0};
+
+    DWORD size;
+    HANDLE handle;
+    NTSTATUS status;
+    IO_STATUS_BLOCK io;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, valueW;
+    WCHAR buffer[MAX_PATH], value[10];
+    const WCHAR *name = NULL, *prefix = buildprefixW;
+    KEY_VALUE_PARTIAL_INFORMATION *info;
+
+    /* get filename from registry */
+
+    switch (type)
+    {
+    case NLS_SECTION_CASEMAP:
+        if (id) return STATUS_UNSUCCESSFUL;
+        sprintfW( buffer, keyfmtW, langW );
+        sprintfW( value, langfmtW, LANGIDFROMLCID(system_lcid) );
+        break;
+    case NLS_SECTION_CODEPAGE:
+        sprintfW( buffer, keyfmtW, cpW );
+        sprintfW( value, cpfmtW, id );
+        break;
+    case NLS_SECTION_NORMALIZE:
+        sprintfW( buffer, keyfmtW, normW );
+        sprintfW( value, normfmtW, id );
+        break;
+    default:
+        return STATUS_INVALID_PARAMETER_1;
+    }
+    RtlInitUnicodeString( &nameW, buffer );
+    RtlInitUnicodeString( &valueW, value );
+    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
+    if ((status = NtOpenKey( &handle, KEY_READ, &attr ))) return status;
+    info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    size = sizeof(buffer) - sizeof(WCHAR);
+    status = NtQueryValueKey( handle, &valueW, KeyValuePartialInformation, info, size, &size );
+    NtClose( handle );
+    if (!status)
+    {
+        ((WCHAR *)info->Data)[info->DataLength / sizeof(WCHAR)] = 0;
+        name = (WCHAR *)info->Data;
+    }
+    else  /* otherwise some hardcoded defaults */
+    {
+        switch (type)
+        {
+        case NLS_SECTION_CASEMAP:
+            name = intlW;
+            break;
+        case NLS_SECTION_CODEPAGE:
+            sprintfW( buffer, cpdefaultW, id );
+            name = buffer;
+            break;
+        case NLS_SECTION_NORMALIZE:
+            switch (id)
+            {
+            case NormalizationC: name = normnfcW; break;
+            case NormalizationD: name = normnfdW; break;
+            case NormalizationKC: name = normnfkcW; break;
+            case NormalizationKD: name = normnfkdW; break;
+            }
+            break;
+        }
+        if (!name) return status;
+    }
+
+    /* try to open file in system dir */
+
+    valueW.MaximumLength = (strlenW(name) + strlenW(system_dir) + 5) * sizeof(WCHAR);
+    if (!(valueW.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, valueW.MaximumLength )))
+        return STATUS_NO_MEMORY;
+    valueW.Length = sprintfW( valueW.Buffer, pathfmtW, system_dir, name ) * sizeof(WCHAR);
+    InitializeObjectAttributes( &attr, &valueW, 0, 0, NULL );
+    status = NtOpenFile( file, GENERIC_READ, &attr, &io, FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_ALERT );
+    if (!status) TRACE( "found %s\n", debugstr_w( valueW.Buffer ));
+    RtlFreeUnicodeString( &valueW );
+    if (status != STATUS_OBJECT_NAME_NOT_FOUND) return status;
+
+    /* not found, try in build or data dir */
+
+    RtlInitUnicodeString( &nameW, winebuilddirW );
+    valueW.MaximumLength = 0;
+    if (RtlQueryEnvironmentVariable_U( NULL, &nameW, &valueW ) != STATUS_BUFFER_TOO_SMALL)
+    {
+        RtlInitUnicodeString( &nameW, winedatadirW );
+        prefix = dataprefixW;
+        if (RtlQueryEnvironmentVariable_U( NULL, &nameW, &valueW ) != STATUS_BUFFER_TOO_SMALL)
+            return status;
+    }
+    valueW.MaximumLength = valueW.Length + sizeof(buildprefixW) + strlenW(name) * sizeof(WCHAR);
+    if (!(valueW.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, valueW.MaximumLength )))
+        return STATUS_NO_MEMORY;
+    if (!RtlQueryEnvironmentVariable_U( NULL, &nameW, &valueW ))
+    {
+        strcatW( valueW.Buffer, prefix );
+        strcatW( valueW.Buffer, name );
+        valueW.Length = strlenW(valueW.Buffer) * sizeof(WCHAR);
+        InitializeObjectAttributes( &attr, &valueW, 0, 0, NULL );
+        status = NtOpenFile( file, GENERIC_READ, &attr, &io, FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_ALERT );
+        if (!status) TRACE( "found %s\n", debugstr_w( valueW.Buffer ));
+    }
+    RtlFreeUnicodeString( &valueW );
+    return status;
 }
 
 
@@ -424,6 +562,35 @@ NTSTATUS WINAPI NtQueryInstallUILanguage( LANGID *lang )
 {
     *lang = system_ui_language;
     return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *      NtGetNlsSectionPtr   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtGetNlsSectionPtr( ULONG type, ULONG id, void *unknown, void **ptr, SIZE_T *size )
+{
+    FILE_END_OF_FILE_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    HANDLE file;
+    NTSTATUS status;
+
+    if ((status = open_nls_data_file( type, id, &file ))) return status;
+    if ((status = NtQueryInformationFile( file, &io, &info, sizeof(info), FileEndOfFileInformation )))
+        goto done;
+    /* FIXME: return a heap block instead of a file mapping for now */
+    if (!(*ptr = RtlAllocateHeap( GetProcessHeap(), 0, info.EndOfFile.QuadPart )))
+    {
+        status = STATUS_NO_MEMORY;
+        goto done;
+    }
+    status = NtReadFile( file, 0, NULL, NULL, &io, *ptr, info.EndOfFile.QuadPart, NULL, NULL );
+    if (!status && io.Information != info.EndOfFile.QuadPart) status = STATUS_INVALID_FILE_FOR_SECTION;
+    if (!status) *size = io.Information;
+    else RtlFreeHeap( GetProcessHeap(), 0, *ptr );
+done:
+    NtClose( file );
+    return status;
 }
 
 
