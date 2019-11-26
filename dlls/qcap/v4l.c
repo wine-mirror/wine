@@ -433,7 +433,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
             }
 
             Resize(capBox, pTarget, image_data);
-            hr = BaseOutputPinImpl_Deliver(capBox->pin, pSample);
+            hr = IMemInputPin_Receive(capBox->pin->pMemInputPin, pSample);
             TRACE("%p -> Frame %u: %x\n", capBox, ++framecount, hr);
             IMediaSample_Release(pSample);
         }
@@ -465,7 +465,7 @@ HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
 
     capBox->stopped = FALSE;
 
-    if (*state == State_Stopped)
+    if (*state == State_Stopped && capBox->pin->pin.peer)
     {
         *state = State_Running;
         if (!capBox->iscommitted)
