@@ -283,7 +283,7 @@ static void stateblock_savedstates_set_vertex(struct wined3d_saved_states *state
     memset(states->vs_consts_f, TRUE, sizeof(BOOL) * num_constants);
 }
 
-void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
+void CDECL wined3d_stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
 {
     const struct wined3d_d3d_info *d3d_info = &stateblock->device->adapter->d3d_info;
     unsigned int i, j;
@@ -2032,7 +2032,7 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
             break;
     }
 
-    stateblock_init_contained_states(stateblock);
+    wined3d_stateblock_init_contained_states(stateblock);
     wined3d_stateblock_capture(stateblock);
 
     /* According to the tests, stream offset is not updated in the captured state if

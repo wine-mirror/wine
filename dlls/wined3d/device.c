@@ -4131,7 +4131,7 @@ HRESULT CDECL wined3d_device_end_stateblock(struct wined3d_device *device)
         return WINED3DERR_INVALIDCALL;
     }
 
-    stateblock_init_contained_states(stateblock);
+    wined3d_stateblock_init_contained_states(stateblock);
 
     wined3d_stateblock_decref(device->recording);
     device->recording = NULL;

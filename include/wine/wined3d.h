@@ -2667,6 +2667,7 @@ HRESULT __cdecl wined3d_stateblock_create(struct wined3d_device *device,
         enum wined3d_stateblock_type type, struct wined3d_stateblock **stateblock);
 ULONG __cdecl wined3d_stateblock_decref(struct wined3d_stateblock *stateblock);
 ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
+void __cdecl wined3d_stateblock_init_contained_states(struct wined3d_stateblock *stateblock);
 void __cdecl wined3d_stateblock_reset(struct wined3d_stateblock *stateblock);
 void __cdecl wined3d_stateblock_set_base_vertex_index(struct wined3d_stateblock *stateblock, INT base_index);
 void __cdecl wined3d_stateblock_set_blend_factor(struct wined3d_stateblock *stateblock,

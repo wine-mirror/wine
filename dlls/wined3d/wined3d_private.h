@@ -3974,8 +3974,6 @@ struct wined3d_stateblock
     unsigned int              num_contained_sampler_states;
 };
 
-void stateblock_init_contained_states(struct wined3d_stateblock *stateblock) DECLSPEC_HIDDEN;
-
 void wined3d_stateblock_state_init(struct wined3d_stateblock_state *state,
         const struct wined3d_device *device, DWORD flags) DECLSPEC_HIDDEN;
 void wined3d_stateblock_state_cleanup(struct wined3d_stateblock_state *state) DECLSPEC_HIDDEN;
