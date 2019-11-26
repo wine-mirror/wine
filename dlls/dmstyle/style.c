@@ -158,12 +158,37 @@ static HRESULT WINAPI IDirectMusicStyle8Impl_GetDefaultBand(IDirectMusicStyle8 *
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_EnumMotif(IDirectMusicStyle8 *iface, DWORD dwIndex,
-        WCHAR *pwszName)
+static HRESULT WINAPI IDirectMusicStyle8Impl_EnumMotif(IDirectMusicStyle8 *iface, DWORD index,
+        WCHAR *name)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %d, %p): stub\n", This, dwIndex, pwszName);
-	return S_OK;
+    IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
+    const struct style_motif *motif = NULL;
+    const struct list *cursor;
+    unsigned int i = 0;
+
+    TRACE("(%p, %u, %p)\n", This, index, name);
+
+    if (!name)
+        return E_POINTER;
+
+    /* index is zero based */
+    LIST_FOR_EACH(cursor, &This->motifs) {
+        if (i == index) {
+            motif = LIST_ENTRY(cursor, struct style_motif, entry);
+            break;
+        }
+        i++;
+    }
+    if (!motif)
+        return S_FALSE;
+
+    if (motif->desc.dwValidData & DMUS_OBJ_NAME)
+        lstrcpynW(name, motif->desc.wszName, DMUS_MAX_NAME);
+    else
+        name[0] = 0;
+
+    TRACE("returning name: %s\n", debugstr_w(name));
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicStyle8Impl_GetMotif(IDirectMusicStyle8 *iface, WCHAR *pwszName,
