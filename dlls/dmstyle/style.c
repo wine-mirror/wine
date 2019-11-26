@@ -32,8 +32,8 @@ typedef struct IDirectMusicStyle8Impl {
     struct dmobject dmobj;
     LONG ref;
     DMUS_IO_STYLE style;
-    struct list Motifs;
-    struct list Bands;
+    struct list motifs;
+    struct list bands;
 } IDirectMusicStyle8Impl;
 
 static inline IDirectMusicStyle8Impl *impl_from_IDirectMusicStyle8(IDirectMusicStyle8 *iface)
@@ -539,7 +539,7 @@ static HRESULT parse_pattern_list(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHU
 	ERR(": no more memory\n");
 	return  E_OUTOFMEMORY;
       }
-      list_add_tail (&This->Motifs, &pNewMotif->entry);
+      list_add_tail(&This->motifs, &pNewMotif->entry);
 
       IStream_Read (pStm, &pNewMotif->pattern, Chunk.dwSize, NULL);
       /** TODO trace pattern */
@@ -739,7 +739,7 @@ static HRESULT parse_style_form(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHUNK
 	  }
 	  pNewBand->pBand = pBand;
 	  IDirectMusicBand_AddRef(pBand);
-	  list_add_tail (&This->Bands, &pNewBand->entry);
+	  list_add_tail(&This->bands, &pNewBand->entry);
 
 	  IDirectMusicTrack_Release(pBand); pBand = NULL;  /* now we can release it as it's inserted */
 	
@@ -893,8 +893,8 @@ HRESULT WINAPI create_dmstyle(REFIID lpcGUID, void **ppobj)
   dmobject_init(&obj->dmobj, &CLSID_DirectMusicStyle, (IUnknown *)&obj->IDirectMusicStyle8_iface);
   obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
   obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
-  list_init (&obj->Bands);
-  list_init (&obj->Motifs);
+  list_init(&obj->bands);
+  list_init(&obj->motifs);
 
   DMSTYLE_LockModule();
   hr = IDirectMusicStyle8_QueryInterface(&obj->IDirectMusicStyle8_iface, lpcGUID, ppobj);
