@@ -1006,7 +1006,8 @@ struct get_thread_info_reply
     int          exit_code;
     int          priority;
     int          last;
-    char __pad_52[4];
+    data_size_t  desc_len;
+    /* VARARG(desc,unicode_str); */
 };
 
 
@@ -1034,16 +1035,18 @@ struct set_thread_info_request
     affinity_t   affinity;
     client_ptr_t entry_point;
     obj_handle_t token;
+    /* VARARG(desc,unicode_str); */
     char __pad_44[4];
 };
 struct set_thread_info_reply
 {
     struct reply_header __header;
 };
-#define SET_THREAD_INFO_PRIORITY   0x01
-#define SET_THREAD_INFO_AFFINITY   0x02
-#define SET_THREAD_INFO_TOKEN      0x04
-#define SET_THREAD_INFO_ENTRYPOINT 0x08
+#define SET_THREAD_INFO_PRIORITY    0x01
+#define SET_THREAD_INFO_AFFINITY    0x02
+#define SET_THREAD_INFO_TOKEN       0x04
+#define SET_THREAD_INFO_ENTRYPOINT  0x08
+#define SET_THREAD_INFO_DESCRIPTION 0x10
 
 
 
@@ -6697,6 +6700,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 591
+#define SERVER_PROTOCOL_VERSION 592
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1423,6 +1423,8 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     fprintf( stderr, ", exit_code=%d", req->exit_code );
     fprintf( stderr, ", priority=%d", req->priority );
     fprintf( stderr, ", last=%d", req->last );
+    fprintf( stderr, ", desc_len=%u", req->desc_len );
+    dump_varargs_unicode_str( ", desc=", cur_size );
 }
 
 static void dump_get_thread_times_request( const struct get_thread_times_request *req )
@@ -1444,6 +1446,7 @@ static void dump_set_thread_info_request( const struct set_thread_info_request *
     dump_uint64( ", affinity=", &req->affinity );
     dump_uint64( ", entry_point=", &req->entry_point );
     fprintf( stderr, ", token=%04x", req->token );
+    dump_varargs_unicode_str( ", desc=", cur_size );
 }
 
 static void dump_get_dll_info_request( const struct get_dll_info_request *req )

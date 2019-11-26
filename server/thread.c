@@ -201,6 +201,8 @@ static inline void init_thread_structure( struct thread *thread )
     thread->suspend         = 0;
     thread->desktop_users   = 0;
     thread->token           = NULL;
+    thread->desc            = NULL;
+    thread->desc_len        = 0;
 
     thread->creation_time = current_time;
     thread->exit_time     = 0;
@@ -336,6 +338,7 @@ static void cleanup_thread( struct thread *thread )
             thread->inflight[i].client = thread->inflight[i].server = -1;
         }
     }
+    free( thread->desc );
     thread->req_data = NULL;
     thread->reply_data = NULL;
     thread->request_fd = NULL;
@@ -344,6 +347,8 @@ static void cleanup_thread( struct thread *thread )
     thread->context = NULL;
     thread->suspend_context = NULL;
     thread->desktop = 0;
+    thread->desc = NULL;
+    thread->desc_len = 0;
 }
 
 /* destroy a thread when its refcount is 0 */
@@ -551,6 +556,28 @@ static void set_thread_info( struct thread *thread,
         security_set_thread_token( thread, req->token );
     if (req->mask & SET_THREAD_INFO_ENTRYPOINT)
         thread->entry_point = req->entry_point;
+    if (req->mask & SET_THREAD_INFO_DESCRIPTION)
+    {
+        WCHAR *desc;
+        data_size_t desc_len = get_req_data_size();
+
+        if (desc_len)
+        {
+            if ((desc = mem_alloc( desc_len )))
+            {
+                memcpy( desc, get_req_data(), desc_len );
+                free( thread->desc );
+                thread->desc = desc;
+                thread->desc_len = desc_len;
+            }
+        }
+        else
+        {
+            free( thread->desc );
+            thread->desc = NULL;
+            thread->desc_len = 0;
+        }
+    }
 }
 
 /* stop a thread (at the Unix level) */
@@ -1436,6 +1463,15 @@ DECL_HANDLER(get_thread_info)
         reply->priority       = thread->priority;
         reply->affinity       = thread->affinity;
         reply->last           = thread->process->running_threads == 1;
+        reply->desc_len       = thread->desc_len;
+
+        if (thread->desc && get_reply_max_size())
+        {
+            if (thread->desc_len <= get_reply_max_size())
+                set_reply_data( thread->desc, thread->desc_len );
+            else
+                set_error( STATUS_BUFFER_TOO_SMALL );
+        }
 
         release_object( thread );
     }

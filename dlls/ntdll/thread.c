@@ -1115,6 +1115,36 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         *(BOOL*)data = FALSE;
         if (ret_len) *ret_len = sizeof(BOOL);
         return STATUS_SUCCESS;
+    case ThreadDescription:
+        {
+            THREAD_DESCRIPTION_INFORMATION *info = data;
+            data_size_t len, desc_len = 0;
+            WCHAR *ptr;
+
+            len = length >= sizeof(*info) ? length - sizeof(*info) : 0;
+            ptr = info ? (WCHAR *)(info + 1) : NULL;
+
+            SERVER_START_REQ( get_thread_info )
+            {
+                req->handle = wine_server_obj_handle( handle );
+                if (ptr) wine_server_set_reply( req, ptr, len );
+                status = wine_server_call( req );
+                desc_len = reply->desc_len;
+            }
+            SERVER_END_REQ;
+
+            if (!info)
+                status = STATUS_BUFFER_TOO_SMALL;
+            else if (status == STATUS_SUCCESS)
+            {
+                info->Length = desc_len << 16 | desc_len;
+                info->Description = ptr;
+            }
+
+            if (ret_len && (status == STATUS_SUCCESS || status == STATUS_BUFFER_TOO_SMALL))
+                *ret_len = sizeof(*info) + desc_len;
+        }
+        return status;
     case ThreadPriority:
     case ThreadBasePriority:
     case ThreadImpersonationToken:
@@ -1265,6 +1295,28 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
                 req->handle   = wine_server_obj_handle( handle );
                 req->affinity = req_aff->Mask;
                 req->mask     = SET_THREAD_INFO_AFFINITY;
+                status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        }
+        return status;
+    case ThreadDescription:
+        {
+            const THREAD_DESCRIPTION_INFORMATION *info = data;
+            data_size_t desc_len;
+
+            if (length != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
+            if (!info) return STATUS_ACCESS_VIOLATION;
+
+            desc_len = info->Length & 0xffff;
+            if (info->Length >> 16 != desc_len) return STATUS_INVALID_PARAMETER;
+            if (info->Length && !info->Description) return STATUS_ACCESS_VIOLATION;
+
+            SERVER_START_REQ( set_thread_info )
+            {
+                req->handle = wine_server_obj_handle( handle );
+                req->mask   = SET_THREAD_INFO_DESCRIPTION;
+                wine_server_add_data( req, info->Description, desc_len );
                 status = wine_server_call( req );
             }
             SERVER_END_REQ;

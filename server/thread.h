@@ -88,6 +88,8 @@ struct thread
     timeout_t              exit_time;     /* Thread exit time */
     struct token          *token;         /* security token associated with this thread */
     struct list            kernel_object; /* list of kernel object pointers */
+    data_size_t            desc_len;      /* thread description length in bytes */
+    WCHAR                 *desc;          /* thread description string */
 };
 
 struct thread_snapshot
