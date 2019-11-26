@@ -71,9 +71,14 @@ enum nls_section_type
     NLS_SECTION_NORMALIZE = 12
 };
 
+UINT NlsAnsiCodePage = 0;
+BYTE NlsMbCodePageTag = 0;
+BYTE NlsMbOemCodePageTag = 0;
+
 LCID user_lcid = 0, system_lcid = 0;
 
 static LANGID user_ui_language, system_ui_language;
+static NLSTABLEINFO nls_info;
 static HMODULE kernel32_handle;
 static const union cptable *unix_table; /* NULL if UTF8 */
 
@@ -649,6 +654,30 @@ void WINAPI RtlInitCodePageTable( USHORT *ptr, CPTABLEINFO *info )
         info->DBCSCodePage = 0;
         info->DBCSOffsets  = NULL;
     }
+}
+
+
+/**************************************************************************
+ *      RtlInitNlsTables   (NTDLL.@)
+ */
+void WINAPI RtlInitNlsTables( USHORT *ansi, USHORT *oem, USHORT *casetable, NLSTABLEINFO *info )
+{
+    RtlInitCodePageTable( ansi, &info->AnsiTableInfo );
+    RtlInitCodePageTable( oem, &info->OemTableInfo );
+    info->UpperCaseTable = casetable + 2;
+    info->LowerCaseTable = casetable + casetable[1] + 2;
+}
+
+
+/**************************************************************************
+ *      RtlResetRtlTranslations   (NTDLL.@)
+ */
+void WINAPI RtlResetRtlTranslations( const NLSTABLEINFO *info )
+{
+    NlsAnsiCodePage     = info->AnsiTableInfo.CodePage;
+    NlsMbCodePageTag    = info->AnsiTableInfo.DBCSCodePage;
+    NlsMbOemCodePageTag = info->OemTableInfo.DBCSCodePage;
+    nls_info = *info;
 }
 
 

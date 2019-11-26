@@ -731,7 +731,7 @@
 @ stdcall RtlInitAnsiStringEx(ptr str)
 @ stdcall RtlInitCodePageTable(ptr ptr)
 # @ stub RtlInitMemoryStream
-@ stub RtlInitNlsTables
+@ stdcall RtlInitNlsTables(ptr ptr ptr ptr)
 # @ stub RtlInitOutOfProcessMemoryStream
 @ stdcall RtlInitString(ptr str)
 @ stdcall RtlInitUnicodeString(ptr wstr)
@@ -901,7 +901,7 @@
 @ stub RtlRemoteCall
 @ stdcall RtlRemoveVectoredContinueHandler(ptr)
 @ stdcall RtlRemoveVectoredExceptionHandler(ptr)
-@ stub RtlResetRtlTranslations
+@ stdcall RtlResetRtlTranslations(ptr)
 @ stdcall -arch=x86_64 RtlRestoreContext(ptr ptr)
 @ stdcall RtlRestoreLastWin32Error(long) RtlSetLastWin32Error
 @ stub RtlRevertMemoryStream

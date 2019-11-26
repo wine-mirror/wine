@@ -40,10 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #define GUID_STRING_LENGTH    38
 
-UINT NlsAnsiCodePage = 0;
-BYTE NlsMbCodePageTag = 0;
-BYTE NlsMbOemCodePageTag = 0;
-
 extern const union cptable cptable_20127;  /* 7-bit ASCII */
 
 static const union cptable *ansi_table = &cptable_20127;
@@ -59,7 +55,6 @@ void CDECL __wine_init_codepages( const union cptable *ansi, const union cptable
 {
     ansi_table = ansi;
     oem_table = oem;
-    NlsAnsiCodePage = ansi->info.codepage;
 }
 
 /**************************************************************************
