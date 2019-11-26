@@ -123,7 +123,6 @@ HRESULT WINAPI BaseOutputPinImpl_EndFlush(IPin * iface);
 
 HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(struct strmbase_source *pin,
         IMediaSample **sample, REFERENCE_TIME *start, REFERENCE_TIME *stop, DWORD flags);
-HRESULT WINAPI BaseOutputPinImpl_Deliver(struct strmbase_source *pin, IMediaSample *sample);
 HRESULT WINAPI BaseOutputPinImpl_Active(struct strmbase_source *pin);
 HRESULT WINAPI BaseOutputPinImpl_Inactive(struct strmbase_source *pin);
 HRESULT WINAPI BaseOutputPinImpl_InitAllocator(struct strmbase_source *pin, IMemAllocator **allocator);

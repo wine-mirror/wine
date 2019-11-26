@@ -465,46 +465,6 @@ HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(struct strmbase_source *This,
     return hr;
 }
 
-/* replaces OutputPin_SendSample */
-HRESULT WINAPI BaseOutputPinImpl_Deliver(struct strmbase_source *This, IMediaSample *pSample)
-{
-    IMemInputPin * pMemConnected = NULL;
-    PIN_INFO pinInfo;
-    HRESULT hr;
-
-    EnterCriticalSection(&This->pin.filter->csFilter);
-    {
-        if (!This->pin.peer || !This->pMemInputPin)
-            hr = VFW_E_NOT_CONNECTED;
-        else
-        {
-            /* we don't have the lock held when using This->pMemInputPin,
-             * so we need to AddRef it to stop it being deleted while we are
-             * using it. Same with its filter. */
-            pMemConnected = This->pMemInputPin;
-            IMemInputPin_AddRef(pMemConnected);
-            hr = IPin_QueryPinInfo(This->pin.peer, &pinInfo);
-        }
-    }
-    LeaveCriticalSection(&This->pin.filter->csFilter);
-
-    if (SUCCEEDED(hr))
-    {
-        /* NOTE: if we are in a critical section when Receive is called
-         * then it causes some problems (most notably with the native Video
-         * Renderer) if we are re-entered for whatever reason */
-        hr = IMemInputPin_Receive(pMemConnected, pSample);
-
-        /* If the filter's destroyed, tell upstream to stop sending data */
-        if(IBaseFilter_Release(pinInfo.pFilter) == 0 && SUCCEEDED(hr))
-            hr = S_FALSE;
-    }
-    if (pMemConnected)
-        IMemInputPin_Release(pMemConnected);
-
-    return hr;
-}
-
 /* replaces OutputPin_CommitAllocator */
 HRESULT WINAPI BaseOutputPinImpl_Active(struct strmbase_source *This)
 {
