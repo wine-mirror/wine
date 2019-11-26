@@ -2203,6 +2203,29 @@ typedef enum _SYSDBG_COMMAND {
   SysDbgWriteBusData
 } SYSDBG_COMMAND, *PSYSDBG_COMMAND;
 
+typedef struct _CPTABLEINFO
+{
+    USHORT  CodePage;
+    USHORT  MaximumCharacterSize;
+    USHORT  DefaultChar;
+    USHORT  UniDefaultChar;
+    USHORT  TransDefaultChar;
+    USHORT  TransUniDefaultChar;
+    USHORT  DBCSCodePage;
+    UCHAR   LeadByte[12];
+    USHORT *MultiByteTable;
+    void   *WideCharTable;
+    USHORT *DBCSRanges;
+    USHORT *DBCSOffsets;
+} CPTABLEINFO, *PCPTABLEINFO;
+
+typedef struct _NLSTABLEINFO
+{
+    CPTABLEINFO OemTableInfo;
+    CPTABLEINFO AnsiTableInfo;
+    USHORT     *UpperCaseTable;
+    USHORT     *LowerCaseTable;
+} NLSTABLEINFO, *PNLSTABLEINFO;
 
 /*************************************************************************
  * Loader structures
@@ -2758,6 +2781,7 @@ NTSYSAPI NTSTATUS  WINAPI RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL);
 NTSYSAPI void      WINAPI RtlInitString(PSTRING,PCSZ);
 NTSYSAPI void      WINAPI RtlInitAnsiString(PANSI_STRING,PCSZ);
 NTSYSAPI NTSTATUS  WINAPI RtlInitAnsiStringEx(PANSI_STRING,PCSZ);
+NTSYSAPI void      WINAPI RtlInitCodePageTable(USHORT*,CPTABLEINFO*);
 NTSYSAPI void      WINAPI RtlInitUnicodeString(PUNICODE_STRING,PCWSTR);
 NTSYSAPI NTSTATUS  WINAPI RtlInitUnicodeStringEx(PUNICODE_STRING,PCWSTR);
 NTSYSAPI void      WINAPI RtlInitializeBitMap(PRTL_BITMAP,PULONG,ULONG);

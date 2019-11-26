@@ -40,6 +40,30 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
+/* NLS file format:
+ *
+ * header:
+ *   WORD      offset to cp2uni table in words
+ *   WORD      CodePage
+ *   WORD      MaximumCharacterSize
+ *   BYTE[2]   DefaultChar
+ *   WORD      UniDefaultChar
+ *   WORD      TransDefaultChar
+ *   WORD      TransUniDefaultChar
+ *   BYTE[12]  LeadByte
+ * cp2uni table:
+ *   WORD      offset to uni2cp table in words
+ *   WORD[256] cp2uni table
+ *   WORD      glyph table size
+ *   WORD[glyph_table_size] glyph table
+ *   WORD      number of lead byte ranges
+ *   WORD[256] lead byte offsets in words
+ *   WORD[leadbytes][256] cp2uni table for lead bytes
+ * uni2cp table:
+ *   WORD      0 / 4
+ *   BYTE[65536] / WORD[65536]  uni2cp table
+ */
+
 enum nls_section_type
 {
     NLS_SECTION_CASEMAP = 10,
@@ -591,6 +615,40 @@ NTSTATUS WINAPI NtGetNlsSectionPtr( ULONG type, ULONG id, void *unknown, void **
 done:
     NtClose( file );
     return status;
+}
+
+
+/******************************************************************
+ *      RtlInitCodePageTable   (NTDLL.@)
+ */
+void WINAPI RtlInitCodePageTable( USHORT *ptr, CPTABLEINFO *info )
+{
+    USHORT hdr_size = ptr[0];
+
+    info->CodePage             = ptr[1];
+    info->MaximumCharacterSize = ptr[2];
+    info->DefaultChar          = ptr[3];
+    info->UniDefaultChar       = ptr[4];
+    info->TransDefaultChar     = ptr[5];
+    info->TransUniDefaultChar  = ptr[6];
+    memcpy( info->LeadByte, ptr + 7, sizeof(info->LeadByte) );
+    ptr += hdr_size;
+
+    info->WideCharTable = ptr + ptr[0] + 1;
+    info->MultiByteTable = ++ptr;
+    ptr += 256;
+    if (*ptr++) ptr += 256;  /* glyph table */
+    info->DBCSRanges = ptr;
+    if (*ptr)  /* dbcs ranges */
+    {
+        info->DBCSCodePage = 1;
+        info->DBCSOffsets  = ptr + 1;
+    }
+    else
+    {
+        info->DBCSCodePage = 0;
+        info->DBCSOffsets  = NULL;
+    }
 }
 
 

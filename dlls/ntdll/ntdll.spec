@@ -729,7 +729,7 @@
 @ stdcall RtlImpersonateSelf(long)
 @ stdcall RtlInitAnsiString(ptr str)
 @ stdcall RtlInitAnsiStringEx(ptr str)
-@ stub RtlInitCodePageTable
+@ stdcall RtlInitCodePageTable(ptr ptr)
 # @ stub RtlInitMemoryStream
 @ stub RtlInitNlsTables
 # @ stub RtlInitOutOfProcessMemoryStream

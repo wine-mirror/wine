@@ -1079,7 +1079,7 @@
 @ stdcall RtlImageDirectoryEntryToData(long long long ptr)
 @ stdcall RtlImageNtHeader(long)
 @ stdcall RtlInitAnsiString(ptr str)
-@ stub RtlInitCodePageTable
+@ stdcall RtlInitCodePageTable(ptr ptr) ntdll.RtlInitCodePageTable
 @ stdcall RtlInitString(ptr str)
 @ stdcall RtlInitUnicodeString(ptr wstr)
 @ stdcall RtlInitializeBitMap(ptr ptr long)
