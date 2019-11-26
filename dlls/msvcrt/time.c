@@ -1170,6 +1170,7 @@ static inline BOOL strftime_format(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCR
     return ret;
 }
 
+#if _MSVCR_VER>=140
 static inline BOOL strftime_tzdiff(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_size_t max, BOOL is_dst)
 {
     MSVCRT_long tz = MSVCRT___timezone + (is_dst ? MSVCRT__dstbias : 0);
@@ -1188,6 +1189,7 @@ static inline BOOL strftime_tzdiff(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCR
         return FALSE;
     return strftime_int(str, pos, max, tz/60%60, 2, 0, 59);
 }
+#endif
 
 static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
         const STRFTIME_CHAR *format, const struct MSVCRT_tm *mstm,
