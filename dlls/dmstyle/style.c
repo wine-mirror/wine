@@ -20,9 +20,32 @@
 
 #include "dmstyle_private.h"
 #include "dmobject.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmstyle);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
+
+struct style_band {
+    struct list entry;
+    IDirectMusicBand *pBand;
+};
+
+struct style_partref_item {
+    struct list entry;
+    DMUS_OBJECTDESC desc;
+    DMUS_IO_PARTREF part_ref;
+};
+
+struct style_motif {
+    struct list entry;
+    DWORD dwRhythm;
+    DMUS_IO_PATTERN pattern;
+    DMUS_OBJECTDESC desc;
+    /** optional for motifs */
+    DMUS_IO_MOTIFSETTINGS settings;
+    IDirectMusicBand *pBand;
+    struct list Items;
+};
 
 /*****************************************************************************
  * IDirectMusicStyleImpl implementation
@@ -283,14 +306,13 @@ static HRESULT load_band(IStream *pClonedStream, IDirectMusicBand **ppBand)
 }
 
 static HRESULT parse_part_ref_list(DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm,
-        DMUS_PRIVATE_STYLE_MOTIF *pNewMotif)
+        struct style_motif *pNewMotif)
 {
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
-
-  LPDMUS_PRIVATE_STYLE_PARTREF_ITEM pNewItem = NULL;
+  struct style_partref_item *pNewItem = NULL;
 
 
   if (pChunk->fccID != DMUS_FOURCC_PARTREF_LIST) {
@@ -308,7 +330,7 @@ static HRESULT parse_part_ref_list(DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm,
     switch (Chunk.fccID) {
     case DMUS_FOURCC_PARTREF_CHUNK: {
       TRACE_(dmfile)(": PartRef chunk\n");
-      pNewItem = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_STYLE_PARTREF_ITEM));
+      pNewItem = heap_alloc_zero(sizeof(*pNewItem));
       if (!pNewItem) {
 	ERR(": no more memory\n");
 	return E_OUTOFMEMORY;
@@ -514,9 +536,8 @@ static HRESULT parse_pattern_list(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHU
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
-
   IDirectMusicBand* pBand = NULL;
-  LPDMUS_PRIVATE_STYLE_MOTIF pNewMotif = NULL;
+  struct style_motif *pNewMotif = NULL;
 
   if (pChunk->fccID != DMUS_FOURCC_PATTERN_LIST) {
     ERR_(dmfile)(": %s chunk should be a PATTERN list\n", debugstr_fourcc (pChunk->fccID));
@@ -534,7 +555,7 @@ static HRESULT parse_pattern_list(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHU
     case DMUS_FOURCC_PATTERN_CHUNK: {
       TRACE_(dmfile)(": Pattern chunk\n");
       /** alloc new motif entry */
-      pNewMotif = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_STYLE_MOTIF));
+      pNewMotif = heap_alloc_zero(sizeof(*pNewMotif));
       if (NULL == pNewMotif) {
 	ERR(": no more memory\n");
 	return  E_OUTOFMEMORY;
@@ -715,7 +736,7 @@ static HRESULT parse_style_form(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHUNK
 	switch (Chunk.fccID) {
 	case DMUS_FOURCC_BAND_FORM: { 
 	  LPSTREAM pClonedStream = NULL;
-	  LPDMUS_PRIVATE_STYLE_BAND pNewBand;
+          struct style_band *pNewBand;
 
 	  TRACE_(dmfile)(": BAND RIFF\n");
 	  
@@ -731,8 +752,8 @@ static HRESULT parse_style_form(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHUNK
 	    return hr;
 	  }
 	  IStream_Release (pClonedStream);
-	  
-	  pNewBand = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_STYLE_BAND));
+
+          pNewBand = heap_alloc_zero(sizeof(*pNewBand));
 	  if (NULL == pNewBand) {
 	    ERR(": no more memory\n");
 	    return  E_OUTOFMEMORY;
