@@ -37,6 +37,7 @@
 # include <mach/machine.h>
 #endif
 #ifdef HAVE_IOKIT_IOKITLIB_H
+# include <CoreFoundation/CoreFoundation.h>
 # include <IOKit/IOKitLib.h>
 # include <IOKit/pwr_mgt/IOPM.h>
 # include <IOKit/pwr_mgt/IOPMLib.h>
