@@ -1408,44 +1408,35 @@ static LRESULT COMBO_GetTextA( LPHEADCOMBO lphc, INT count, LPSTR buf )
  * This function sets window positions according to the updated
  * component placement struct.
  */
-static void CBResetPos(
-  LPHEADCOMBO lphc,
-  const RECT  *rectEdit,
-  const RECT  *rectLB,
-  BOOL        bRedraw)
+static void CBResetPos(HEADCOMBO *combo, BOOL redraw)
 {
-   BOOL	bDrop = (CB_GETTYPE(lphc) != CBS_SIMPLE);
+    BOOL drop = CB_GETTYPE(combo) != CBS_SIMPLE;
 
-   /* NOTE: logs sometimes have WM_LBUTTONUP before a cascade of
-    * sizing messages */
+    /* NOTE: logs sometimes have WM_LBUTTONUP before a cascade of
+     * sizing messages */
+    if (combo->wState & CBF_EDIT)
+        SetWindowPos(combo->hWndEdit, 0, combo->textRect.left, combo->textRect.top,
+                combo->textRect.right - combo->textRect.left,
+                combo->textRect.bottom - combo->textRect.top,
+                SWP_NOZORDER | SWP_NOACTIVATE | (drop ? SWP_NOREDRAW : 0));
 
-   if( lphc->wState & CBF_EDIT )
-     SetWindowPos( lphc->hWndEdit, 0,
-		   rectEdit->left, rectEdit->top,
-		   rectEdit->right - rectEdit->left,
-		   rectEdit->bottom - rectEdit->top,
-                       SWP_NOZORDER | SWP_NOACTIVATE | ((bDrop) ? SWP_NOREDRAW : 0) );
+    SetWindowPos(combo->hWndLBox, 0, combo->droppedRect.left, combo->droppedRect.top,
+            combo->droppedRect.right - combo->droppedRect.left,
+            combo->droppedRect.bottom - combo->droppedRect.top,
+            SWP_NOACTIVATE | SWP_NOZORDER | (drop ? SWP_NOREDRAW : 0));
 
-   SetWindowPos( lphc->hWndLBox, 0,
-		 rectLB->left, rectLB->top,
-                 rectLB->right - rectLB->left,
-		 rectLB->bottom - rectLB->top,
-		   SWP_NOACTIVATE | SWP_NOZORDER | ((bDrop) ? SWP_NOREDRAW : 0) );
+    if (drop)
+    {
+        if (combo->wState & CBF_DROPPED)
+        {
+           combo->wState &= ~CBF_DROPPED;
+           ShowWindow(combo->hWndLBox, SW_HIDE);
+        }
 
-   if( bDrop )
-   {
-       if( lphc->wState & CBF_DROPPED )
-       {
-           lphc->wState &= ~CBF_DROPPED;
-           ShowWindow( lphc->hWndLBox, SW_HIDE );
-       }
-
-       if( bRedraw && !(lphc->wState & CBF_NOREDRAW) )
-           RedrawWindow( lphc->self, NULL, 0,
-                           RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW );
-   }
+        if (redraw && !(combo->wState & CBF_NOREDRAW))
+            RedrawWindow(combo->self, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW);
+    }
 }
-
 
 /***********************************************************************
  *           COMBO_Size
@@ -1491,7 +1482,7 @@ static void COMBO_Size( LPHEADCOMBO lphc )
 
   CBCalcPlacement(lphc);
 
-  CBResetPos( lphc, &lphc->textRect, &lphc->droppedRect, FALSE );
+  CBResetPos(lphc, FALSE);
 }
 
 
@@ -1519,7 +1510,7 @@ static void COMBO_Font( LPHEADCOMBO lphc, HFONT hFont, BOOL bRedraw )
   {
     CBCalcPlacement(lphc);
 
-    CBResetPos( lphc, &lphc->textRect, &lphc->droppedRect, TRUE );
+    CBResetPos(lphc, TRUE);
   }
   else
   {
@@ -1548,7 +1539,7 @@ static LRESULT COMBO_SetItemHeight( LPHEADCOMBO lphc, INT index, INT height )
 	 {
 	   CBCalcPlacement(lphc);
 
-	   CBResetPos( lphc, &lphc->textRect, &lphc->droppedRect, TRUE );
+	   CBResetPos(lphc, TRUE);
 	 }
 	 else
 	 {
