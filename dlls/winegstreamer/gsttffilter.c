@@ -205,7 +205,7 @@ GstFlowReturn got_data(GstPad *pad, GstObject *parent, GstBuffer *buf)
     IMediaSample_SetSyncPoint(sample, !GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DELTA_UNIT));
     IMediaSample_SetActualDataLength(sample, gst_buffer_get_size(buf));
 
-    hr = BaseOutputPinImpl_Deliver(&This->tf.source, sample);
+    hr = IMemInputPin_Receive(This->tf.source.pMemInputPin, sample);
     IMediaSample_Release(sample);
     gst_buffer_unref(buf);
     if (FAILED(hr))
