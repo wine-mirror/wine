@@ -1651,7 +1651,8 @@ HRESULT attributes_SetGUID(struct attributes *attributes, REFGUID key, REFGUID v
 {
     PROPVARIANT attrval;
 
-    InitPropVariantFromCLSID(value, &attrval);
+    attrval.vt = VT_CLSID;
+    attrval.u.puuid = (CLSID *)value;
     return attributes_set_item(attributes, key, &attrval);
 }
 
