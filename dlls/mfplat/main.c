@@ -1349,14 +1349,23 @@ HRESULT attributes_GetDouble(struct attributes *attributes, REFGUID key, double 
 
 HRESULT attributes_GetGUID(struct attributes *attributes, REFGUID key, GUID *value)
 {
-    PROPVARIANT attrval;
-    HRESULT hr;
+    struct attribute *attribute;
+    HRESULT hr = S_OK;
 
-    PropVariantInit(&attrval);
-    attrval.vt = VT_CLSID;
-    hr = attributes_get_item(attributes, key, &attrval);
-    if (SUCCEEDED(hr))
-        *value = *attrval.u.puuid;
+    EnterCriticalSection(&attributes->cs);
+
+    attribute = attributes_find_item(attributes, key, NULL);
+    if (attribute)
+    {
+        if (attribute->value.vt == MF_ATTRIBUTE_GUID)
+            *value = *attribute->value.u.puuid;
+        else
+            hr = MF_E_INVALIDTYPE;
+    }
+    else
+        hr = MF_E_ATTRIBUTENOTFOUND;
+
+    LeaveCriticalSection(&attributes->cs);
 
     return hr;
 }
