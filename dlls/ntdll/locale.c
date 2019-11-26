@@ -234,6 +234,88 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
 }
 
 
+static USHORT *build_cptable( const union cptable *src, SIZE_T *size )
+{
+    unsigned int i, leadbytes = 0;
+    USHORT *data, *ptr;
+
+    *size = 13 + 1 + 256 + 1 + 1 + 1;
+    if (src->info.char_size == 2)
+    {
+        for (i = leadbytes = 0; i < 256; i++) if (src->dbcs.cp2uni_leadbytes[i]) leadbytes++;
+        *size += 256 + 256 * leadbytes;
+        *size += 65536;
+        *size *= sizeof(USHORT);
+    }
+    else
+    {
+        if (src->sbcs.cp2uni_glyphs != src->sbcs.cp2uni) *size += 256;
+        *size *= sizeof(USHORT);
+        *size += 65536;
+    }
+    if (!(data = RtlAllocateHeap( GetProcessHeap(), 0, *size ))) return NULL;
+    ptr = data;
+    ptr[0] = 0x0d;
+    ptr[1] = src->info.codepage;
+    ptr[2] = src->info.char_size;
+    ptr[3] = (src->info.def_char & 0xff00 ?
+              RtlUshortByteSwap( src->info.def_char ) : src->info.def_char);
+    ptr[4] = src->info.def_unicode_char;
+
+    if (src->info.char_size == 2)
+    {
+        USHORT off = src->dbcs.cp2uni_leadbytes[src->info.def_char >> 8] * 256;
+        ptr[5] = src->dbcs.cp2uni[off + (src->info.def_char & 0xff)];
+
+        ptr[6] = src->dbcs.uni2cp_low[src->dbcs.uni2cp_high[src->info.def_unicode_char >> 8]
+                                      + (src->info.def_unicode_char & 0xff)];
+
+        ptr += 7;
+        memcpy( ptr, src->dbcs.lead_bytes, 12 );
+        ptr += 6;
+        *ptr++ = 256 + 3 + (leadbytes + 1) * 256;
+        for (i = 0; i < 256; i++) *ptr++ = (src->dbcs.cp2uni_leadbytes[i] ? 0 : src->dbcs.cp2uni[i]);
+        *ptr++ = 0;
+        for (i = 0; i < 12; i++) if (!src->dbcs.lead_bytes[i]) break;
+        *ptr++ = i / 2;
+        for (i = 0; i < 256; i++) *ptr++ = 256 * src->dbcs.cp2uni_leadbytes[i];
+        for (i = 0; i < leadbytes; i++, ptr += 256)
+            memcpy( ptr, src->dbcs.cp2uni + 256 * (i + 1), 256 * sizeof(USHORT) );
+        *ptr++ = 4;
+        for (i = 0; i < 65536; i++)
+            ptr[i] = src->dbcs.uni2cp_low[src->dbcs.uni2cp_high[i >> 8] + (i & 0xff)];
+    }
+    else
+    {
+        char *uni2cp;
+
+        ptr[5] = src->sbcs.cp2uni[src->info.def_char];
+        ptr[6] = src->sbcs.uni2cp_low[src->sbcs.uni2cp_high[src->info.def_unicode_char >> 8]
+                                      + (src->info.def_unicode_char & 0xff)];
+
+        ptr += 7;
+        memset( ptr, 0, 12 );
+        ptr += 6;
+        *ptr++ = 256 + 3 + (src->sbcs.cp2uni_glyphs != src->sbcs.cp2uni ? 256 : 0);
+        memcpy( ptr, src->sbcs.cp2uni, 256 * sizeof(USHORT) );
+        ptr += 256;
+        if (src->sbcs.cp2uni_glyphs != src->sbcs.cp2uni)
+        {
+            *ptr++ = 256;
+            memcpy( ptr + 1, src->sbcs.cp2uni_glyphs, 256 );
+            ptr += 256;
+        }
+        else *ptr++ = 0;
+        *ptr++ = 0;
+        *ptr++ = 0;
+        uni2cp = (char *)ptr;
+        for (i = 0; i < 65536; i++)
+            uni2cp[i] = src->sbcs.uni2cp_low[src->sbcs.uni2cp_high[i >> 8] + (i & 0xff)];
+    }
+    return data;
+}
+
+
 #if !defined(__APPLE__) && !defined(__ANDROID__)  /* these platforms always use UTF-8 */
 
 /* charset to codepage map, sorted by name */
@@ -604,7 +686,17 @@ NTSTATUS WINAPI NtGetNlsSectionPtr( ULONG type, ULONG id, void *unknown, void **
     HANDLE file;
     NTSTATUS status;
 
-    if ((status = open_nls_data_file( type, id, &file ))) return status;
+    if ((status = open_nls_data_file( type, id, &file )))
+    {
+        /* FIXME: special case for codepage table, generate it from the libwine data */
+        if (type == NLS_SECTION_CODEPAGE)
+        {
+            const union cptable *table = wine_cp_get_table( id );
+            if (table && (*ptr = build_cptable( table, size ))) return STATUS_SUCCESS;
+        }
+        return status;
+    }
+
     if ((status = NtQueryInformationFile( file, &io, &info, sizeof(info), FileEndOfFileInformation )))
         goto done;
     /* FIXME: return a heap block instead of a file mapping for now */
