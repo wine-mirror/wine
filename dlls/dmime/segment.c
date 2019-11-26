@@ -235,7 +235,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_GetTrackGroup(IDirectMusicSegment
 }
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_InsertTrack(IDirectMusicSegment8 *iface,
-        IDirectMusicTrack *pTrack, DWORD dwGroupBits)
+        IDirectMusicTrack *pTrack, DWORD group)
 {
   IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
   DWORD i = 0;
@@ -243,7 +243,10 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_InsertTrack(IDirectMusicSegment8 
   LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
   LPDMUS_PRIVATE_SEGMENT_TRACK pNewSegTrack = NULL;
 
-  TRACE("(%p, %p, %#x)\n", This, pTrack, dwGroupBits);
+  TRACE("(%p, %p, %#x)\n", This, pTrack, group);
+
+  if (!group)
+    return E_INVALIDARG;
 
   LIST_FOR_EACH (pEntry, &This->Tracks) {
     i++;
@@ -259,7 +262,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_InsertTrack(IDirectMusicSegment8 
   if (NULL == pNewSegTrack)
     return  E_OUTOFMEMORY;
 
-  pNewSegTrack->dwGroupBits = dwGroupBits;
+  pNewSegTrack->dwGroupBits = group;
   pNewSegTrack->pTrack = pTrack;
   IDirectMusicTrack_Init(pTrack, (IDirectMusicSegment *)iface);
   IDirectMusicTrack_AddRef(pTrack);
