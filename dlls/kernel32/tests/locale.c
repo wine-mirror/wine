@@ -87,6 +87,8 @@ static INT (WINAPI *pNormalizeString)(NORM_FORM, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pFindStringOrdinal)(DWORD, LPCWSTR lpStringSource, INT, LPCWSTR, INT, BOOL);
 static NTSTATUS (WINAPI *pRtlNormalizeString)(ULONG, LPCWSTR, INT, LPWSTR, INT*);
 static NTSTATUS (WINAPI *pRtlIsNormalizedString)(ULONG, LPCWSTR, INT, BOOLEAN*);
+static NTSTATUS (WINAPI *pNtGetNlsSectionPtr)(ULONG,ULONG,void*,void**,SIZE_T*);
+static void (WINAPI *pRtlInitCodePageTable)(USHORT*,CPTABLEINFO*);
 
 static void InitFunctionPointers(void)
 {
@@ -130,6 +132,8 @@ static void InitFunctionPointers(void)
   X(RtlLocaleNameToLcid);
   X(RtlNormalizeString);
   X(RtlIsNormalizedString);
+  X(NtGetNlsSectionPtr);
+  X(RtlInitCodePageTable);
 #undef X
 }
 
@@ -1572,7 +1576,7 @@ static void test_GetNumberFormatA(void)
   if (IsValidLocale(lcid, 0))
   {
     STRINGSA("-12345","-12 345,00"); /* Try French formatting */
-    Expected[3] = 160; /* Non breaking space */
+    Expected[3] = (char)160; /* Non breaking space */
     ret = GetNumberFormatA(lcid, NUO, input, NULL, buffer, ARRAY_SIZE(buffer));
     ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
     EXPECT_LENA; EXPECT_EQA;
@@ -4092,6 +4096,7 @@ static void test_EnumTimeFormatsW(void)
             GetLastError());
     }
 }
+
 static void test_GetCPInfo(void)
 {
     BOOL ret;
@@ -4135,6 +4140,115 @@ static void test_GetCPInfo(void)
         ok(cpinfo.MaxCharSize == 4 || broken(cpinfo.MaxCharSize == 3) /* win9x */,
            "expected 4, got %u\n", cpinfo.MaxCharSize);
     }
+
+    if (pNtGetNlsSectionPtr)
+    {
+        CPTABLEINFO table;
+        NTSTATUS status;
+        void *ptr, *ptr2;
+        SIZE_T size;
+        int i;
+
+        for (i = 0; i < 100; i++)
+        {
+            ptr = NULL;
+            size = 0;
+            status = pNtGetNlsSectionPtr( i, 9999, NULL, &ptr, &size );
+            switch (i)
+            {
+            case 9:  /* unknown */
+            case 13: /* unknown */
+                ok( status == STATUS_INVALID_PARAMETER_1 || status == STATUS_INVALID_PARAMETER_3, /* vista */
+                    "%u: failed %x\n", i, status );
+                break;
+            case 10:  /* casemap */
+                ok( status == STATUS_INVALID_PARAMETER_1 || status == STATUS_UNSUCCESSFUL,
+                    "%u: failed %x\n", i, status );
+                break;
+            case 11:  /* codepage */
+            case 12:  /* normalization */
+                ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "%u: failed %x\n", i, status );
+                break;
+            default:
+                ok( status == STATUS_INVALID_PARAMETER_1, "%u: failed %x\n", i, status );
+                break;
+            }
+        }
+
+        /* casemap table */
+
+        status = pNtGetNlsSectionPtr( 10, 0, NULL, &ptr, &size );
+        if (status != STATUS_INVALID_PARAMETER_1)
+        {
+            ok( !status, "failed %x\n", status );
+            ok( size > 0x1000 && size <= 0x8000 , "wrong size %lx\n", size );
+            status = pNtGetNlsSectionPtr( 10, 0, NULL, &ptr2, &size );
+            ok( ptr != ptr2, "got same pointer\n" );
+            ret = UnmapViewOfFile( ptr );
+            todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+            ret = UnmapViewOfFile( ptr2 );
+            todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+        }
+
+        /* codepage tables */
+
+        ptr = (void *)0xdeadbeef;
+        size = 0xdeadbeef;
+        status = pNtGetNlsSectionPtr( 11, 437, NULL, &ptr, &size );
+        ok( !status, "failed %x\n", status );
+        ok( size > 0x10000 && size <= 0x20000, "wrong size %lx\n", size );
+        memset( &table, 0xcc, sizeof(table) );
+        if (pRtlInitCodePageTable)
+        {
+            pRtlInitCodePageTable( ptr, &table );
+            ok( table.CodePage == 437, "wrong codepage %u\n", table.CodePage );
+            ok( table.MaximumCharacterSize == 1, "wrong char size %u\n", table.MaximumCharacterSize );
+            ok( table.DefaultChar == '?', "wrong default char %x\n", table.DefaultChar );
+            ok( !table.DBCSCodePage, "wrong dbcs %u\n", table.DBCSCodePage );
+        }
+        ret = UnmapViewOfFile( ptr );
+        todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+
+        status = pNtGetNlsSectionPtr( 11, 932, NULL, &ptr, &size );
+        ok( !status, "failed %x\n", status );
+        ok( size > 0x20000 && size <= 0x30000, "wrong size %lx\n", size );
+        memset( &table, 0xcc, sizeof(table) );
+        if (pRtlInitCodePageTable)
+        {
+            pRtlInitCodePageTable( ptr, &table );
+            ok( table.CodePage == 932, "wrong codepage %u\n", table.CodePage );
+            ok( table.MaximumCharacterSize == 2, "wrong char size %u\n", table.MaximumCharacterSize );
+            ok( table.DefaultChar == '?', "wrong default char %x\n", table.DefaultChar );
+            ok( table.DBCSCodePage == TRUE, "wrong dbcs %u\n", table.DBCSCodePage );
+        }
+        ret = UnmapViewOfFile( ptr );
+        todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+
+        /* normalization tables */
+
+        for (i = 0; i < 100; i++)
+        {
+            status = pNtGetNlsSectionPtr( 12, i, NULL, &ptr, &size );
+            switch (i)
+            {
+            case NormalizationC:
+            case NormalizationD:
+            case NormalizationKC:
+            case NormalizationKD:
+            case 13:  /* IDN */
+                todo_wine ok( !status, "%u: failed %x\n", i, status );
+                if (status) break;
+                ok( size > 0x8000 && size <= 0x30000 , "wrong size %lx\n", size );
+                ret = UnmapViewOfFile( ptr );
+                ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+                break;
+            default:
+                ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "%u: failed %x\n", i, status );
+                break;
+            }
+        }
+    }
+    else win_skip( "NtGetNlsSectionPtr not supported\n" );
 }
 
 /*
