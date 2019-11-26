@@ -758,7 +758,7 @@ TREEVIEW_UpdateDispInfo(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
 	else {
 	    int len = max(lstrlenW(callback.item.pszText) + 1,
 			  TEXT_CALLBACK_SIZE);
-	    LPWSTR newText = heap_realloc(item->pszText, len);
+	    LPWSTR newText = heap_realloc(item->pszText, len*sizeof(WCHAR));
 
 	    TRACE("returned wstr %s, len=%d\n",
 		  debugstr_w(callback.item.pszText), len);
