@@ -415,6 +415,7 @@ static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void
 static HRESULT WINAPI AVICompressorIn_Receive(struct strmbase_sink *base, IMediaSample *pSample)
 {
     AVICompressor *This = impl_from_strmbase_pin(&base->pin);
+    IMemInputPin *meminput = This->source.pMemInputPin;
     VIDEOINFOHEADER *src_videoinfo;
     REFERENCE_TIME start, stop;
     IMediaSample *out_sample;
@@ -428,6 +429,12 @@ static HRESULT WINAPI AVICompressorIn_Receive(struct strmbase_sink *base, IMedia
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", base, pSample);
+
+    if (!meminput)
+    {
+        WARN("Source is not connected, returning VFW_E_NOT_CONNECTED.\n");
+        return VFW_E_NOT_CONNECTED;
+    }
 
     if(!This->hic) {
         FIXME("Driver not loaded\n");
@@ -490,7 +497,7 @@ static HRESULT WINAPI AVICompressorIn_Receive(struct strmbase_sink *base, IMedia
     else
         IMediaSample_SetMediaTime(out_sample, NULL, NULL);
 
-    hres = BaseOutputPinImpl_Deliver(&This->source, out_sample);
+    hres = IMemInputPin_Receive(meminput, out_sample);
     if(FAILED(hres))
         WARN("Deliver failed: %08x\n", hres);
 
