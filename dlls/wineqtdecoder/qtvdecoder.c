@@ -235,9 +235,7 @@ static void trackingCallback(
         IMediaSample_SetTime(pOutSample, &tStart, &tStop);
     }
 
-    LeaveCriticalSection(&This->tf.csReceive);
     hr = IMemInputPin_Receive(This->tf.source.pMemInputPin, pOutSample);
-    EnterCriticalSection(&This->tf.csReceive);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);
 
