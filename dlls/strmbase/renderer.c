@@ -89,14 +89,11 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndOfStream(IPin * iface)
 
     EnterCriticalSection(&pFilter->csRenderLock);
     EnterCriticalSection(&pFilter->filter.csFilter);
-    hr = BaseInputPinImpl_EndOfStream(iface);
-    if (SUCCEEDED(hr))
-    {
-        if (pFilter->pFuncsTable->pfnEndOfStream)
-            hr = pFilter->pFuncsTable->pfnEndOfStream(pFilter);
-        else
-            hr = BaseRendererImpl_EndOfStream(pFilter);
-    }
+    pFilter->eos = TRUE;
+    if (pFilter->pFuncsTable->pfnEndOfStream)
+        hr = pFilter->pFuncsTable->pfnEndOfStream(pFilter);
+    else
+        hr = BaseRendererImpl_EndOfStream(pFilter);
     LeaveCriticalSection(&pFilter->filter.csFilter);
     LeaveCriticalSection(&pFilter->csRenderLock);
     return hr;
@@ -128,6 +125,7 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndFlush(IPin * iface)
 
     EnterCriticalSection(&pFilter->csRenderLock);
     EnterCriticalSection(&pFilter->filter.csFilter);
+    pFilter->eos = FALSE;
     hr = BaseInputPinImpl_EndFlush(iface);
     if (SUCCEEDED(hr))
     {
@@ -206,7 +204,7 @@ static HRESULT renderer_init_stream(struct strmbase_filter *iface)
 
     if (filter->sink.pin.peer)
         ResetEvent(filter->state_event);
-    filter->sink.end_of_stream = FALSE;
+    filter->eos = FALSE;
     BaseRendererImpl_ClearPendingSample(filter);
     ResetEvent(filter->flush_event);
     if (filter->pFuncsTable->renderer_init_stream)
@@ -222,7 +220,7 @@ static HRESULT renderer_start_stream(struct strmbase_filter *iface, REFERENCE_TI
     filter->stream_start = start;
     SetEvent(filter->state_event);
     if (filter->sink.pin.peer)
-        filter->sink.end_of_stream = FALSE;
+        filter->eos = FALSE;
     QualityControlRender_Start(filter->qcimpl, filter->stream_start);
     if (filter->sink.pin.peer && filter->pFuncsTable->renderer_start_stream)
         filter->pFuncsTable->renderer_start_stream(filter);
@@ -339,7 +337,7 @@ HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *This, IMediaSa
 
     TRACE("(%p)->%p\n", This, pSample);
 
-    if (This->sink.end_of_stream || This->sink.flushing)
+    if (This->eos || This->sink.flushing)
         return S_FALSE;
 
     if (This->filter.state == State_Stopped)

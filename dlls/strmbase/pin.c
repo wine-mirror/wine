@@ -690,8 +690,6 @@ HRESULT WINAPI BaseInputPinImpl_EndOfStream(IPin * iface)
     EnterCriticalSection(&This->pin.filter->csFilter);
     if (This->flushing)
         hr = S_FALSE;
-    else
-        This->end_of_stream = TRUE;
     LeaveCriticalSection(&This->pin.filter->csFilter);
 
     if (hr == S_OK)
@@ -731,7 +729,7 @@ HRESULT WINAPI BaseInputPinImpl_EndFlush(IPin * iface)
     TRACE("(%p)->()\n", This);
 
     EnterCriticalSection(&This->pin.filter->csFilter);
-    This->flushing = This->end_of_stream = FALSE;
+    This->flushing = FALSE;
 
     hr = SendFurther(This, deliver_endflush, NULL);
     LeaveCriticalSection(&This->pin.filter->csFilter);

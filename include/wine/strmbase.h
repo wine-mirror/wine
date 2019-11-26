@@ -81,7 +81,7 @@ struct strmbase_sink
 
     IMemInputPin IMemInputPin_iface;
     IMemAllocator *pAllocator;
-    BOOL flushing, end_of_stream;
+    BOOL flushing;
     IMemAllocator *preferred_allocator;
 
     const struct strmbase_sink_ops *pFuncsTable;
@@ -534,6 +534,8 @@ struct strmbase_renderer
     struct QualityControlImpl *qcimpl;
 
     const struct strmbase_renderer_ops *pFuncsTable;
+
+    BOOL eos;
 };
 
 typedef HRESULT (WINAPI *BaseRenderer_CheckMediaType)(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt);

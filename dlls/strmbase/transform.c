@@ -76,7 +76,7 @@ static HRESULT WINAPI TransformFilter_Input_Receive(struct strmbase_sink *This, 
         return VFW_E_WRONG_STATE;
     }
 
-    if (This->end_of_stream || This->flushing)
+    if (This->flushing)
     {
         LeaveCriticalSection(&pTransform->csReceive);
         return S_FALSE;
@@ -165,7 +165,6 @@ static HRESULT transform_init_stream(struct strmbase_filter *iface)
 
     EnterCriticalSection(&filter->csReceive);
 
-    filter->sink.end_of_stream = FALSE;
     if (filter->pFuncsTable->pfnStartStreaming)
         hr = filter->pFuncsTable->pfnStartStreaming(filter);
     if (SUCCEEDED(hr))
@@ -183,7 +182,6 @@ static HRESULT transform_cleanup_stream(struct strmbase_filter *iface)
 
     EnterCriticalSection(&filter->csReceive);
 
-    filter->sink.end_of_stream = FALSE;
     if (filter->pFuncsTable->pfnStopStreaming)
         hr = filter->pFuncsTable->pfnStopStreaming(filter);
     if (SUCCEEDED(hr))
