@@ -45,7 +45,9 @@
     ValidateTargetInfo)
 #define SECPKG_FUNCTION_TABLE_SIZE_6 FIELD_OFFSET(SECPKG_FUNCTION_TABLE, \
     PostLogonUser)
-#define SECPKG_FUNCTION_TABLE_SIZE_7 sizeof(SECPKG_FUNCTION_TABLE)
+#define SECPKG_FUNCTION_TABLE_SIZE_7 FIELD_OFFSET(SECPKG_FUNCTION_TABLE, \
+    GetRemoteCredGuardLogonBuffer)
+#define SECPKG_FUNCTION_TABLE_SIZE_8 sizeof(SECPKG_FUNCTION_TABLE)
 
 #define LSA_BASE_CAPS ( \
     SECPKG_FLAG_INTEGRITY         | \
@@ -156,6 +158,8 @@ static PSECPKG_FUNCTION_TABLE getNextSecPkgTable(PSECPKG_FUNCTION_TABLE pTable,
         size = SECPKG_FUNCTION_TABLE_SIZE_6;
     else if (Version == SECPKG_INTERFACE_VERSION_7)
         size = SECPKG_FUNCTION_TABLE_SIZE_7;
+    else if (Version == SECPKG_INTERFACE_VERSION_8)
+        size = SECPKG_FUNCTION_TABLE_SIZE_8;
     else {
         ok(FALSE, "Unknown package version 0x%x\n", Version);
         return NULL;
