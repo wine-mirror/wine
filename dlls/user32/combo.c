@@ -574,9 +574,12 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
  *
  * Paint combo button (normal, pressed, and disabled states).
  */
-static void CBPaintButton( LPHEADCOMBO lphc, HDC hdc, RECT rectButton)
+static void CBPaintButton(HEADCOMBO *lphc, HDC hdc)
 {
     UINT buttonState = DFCS_SCROLLCOMBOBOX;
+
+    if (IsRectEmpty(&lphc->buttonRect))
+        return;
 
     if( lphc->wState & CBF_NOREDRAW )
       return;
@@ -588,7 +591,7 @@ static void CBPaintButton( LPHEADCOMBO lphc, HDC hdc, RECT rectButton)
     if (CB_DISABLED(lphc))
 	buttonState |= DFCS_INACTIVE;
 
-    DrawFrameControl(hdc, &rectButton, DFC_SCROLL, buttonState);
+    DrawFrameControl(hdc, &lphc->buttonRect, DFC_SCROLL, buttonState);
 }
 
 /***********************************************************************
@@ -816,11 +819,7 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
        * In non 3.1 look, there is a sunken border on the combobox
        */
       CBPaintBorder(lphc->self, lphc, hDC);
-
-      if( !IsRectEmpty(&lphc->buttonRect) )
-      {
-	CBPaintButton(lphc, hDC, lphc->buttonRect);
-      }
+      CBPaintButton(lphc, hDC);
 
       /* paint the edit control padding area */
       if (CB_GETTYPE(lphc) != CBS_DROPDOWNLIST)
