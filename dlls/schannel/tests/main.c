@@ -141,7 +141,7 @@ static void testInitialize(void)
 static PSECPKG_FUNCTION_TABLE getNextSecPkgTable(PSECPKG_FUNCTION_TABLE pTable,
                                                  ULONG Version)
 {
-    size_t size;
+    int detectedVersion = 0, size;
     PSECPKG_FUNCTION_TABLE pNextTable;
 
     if (Version == SECPKG_INTERFACE_VERSION)
@@ -166,15 +166,41 @@ static PSECPKG_FUNCTION_TABLE getNextSecPkgTable(PSECPKG_FUNCTION_TABLE pTable,
     }
 
     pNextTable = (PSECPKG_FUNCTION_TABLE)((PBYTE)pTable + size);
-    /* Win7 function tables appear to be SECPKG_INTERFACE_VERSION_6 format,
-       but unfortunately SpLsaModeInitialize returns SECPKG_INTERFACE_VERSION_3.
-       We detect that by comparing the "Initialize" pointer from the old table
-       to the "FreeCredentialsHandle" pointer of the new table. These functions
-       have different numbers of arguments, so they can't possibly point to the
-       same implementation */
-    if (broken((void *) pTable->Initialize == (void *) pNextTable->FreeCredentialsHandle &&
-               pNextTable->FreeCredentialsHandle != NULL))
+
+    /* For any version of Windows beyond Vista SpLsaModeInitialize returns
+       SECPKG_INTERFACE_VERSION_3, so try detecting the actual version here
+       by iterating until we find the Intitalize function */
+    if (broken((void *) pTable->Initialize != (void *) pNextTable->Initialize &&
+               pTable->Initialize != NULL))
     {
+        for (size = 1; size <= SECPKG_FUNCTION_TABLE_SIZE_8; size++)
+        {
+            pNextTable = (PSECPKG_FUNCTION_TABLE)((PBYTE)pTable + size);
+            if ((void *) pTable->Initialize == (void *) pNextTable->Initialize)
+            {
+                if (size == SECPKG_FUNCTION_TABLE_SIZE_1)
+                    detectedVersion = 1;
+                else if (size == SECPKG_FUNCTION_TABLE_SIZE_2)
+                    detectedVersion = 2;
+                else if (size == SECPKG_FUNCTION_TABLE_SIZE_3)
+                    detectedVersion = 3;
+                else if (size == SECPKG_FUNCTION_TABLE_SIZE_4)
+                    detectedVersion = 4;
+                else if (size == SECPKG_FUNCTION_TABLE_SIZE_5)
+                    detectedVersion = 5;
+                else if (size == SECPKG_FUNCTION_TABLE_SIZE_6)
+                    detectedVersion = 6;
+                else if (size == SECPKG_FUNCTION_TABLE_SIZE_7)
+                    detectedVersion = 7;
+                else if (size == SECPKG_FUNCTION_TABLE_SIZE_8)
+                    detectedVersion = 8;
+                else
+                    trace("Unknown package version with size %u\n", size);
+                if (detectedVersion > 0)
+                    trace("Detected SECPKG_INTERFACE_VERSION_%d\n", detectedVersion);
+                return pNextTable;
+            }
+        }
         win_skip("Invalid function pointers for next package\n");
         return NULL;
     }
