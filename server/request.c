@@ -529,6 +529,10 @@ unsigned int get_tick_count(void)
     static mach_timebase_info_data_t timebase;
 
     if (!timebase.denom) mach_timebase_info( &timebase );
+#ifdef HAVE_MACH_CONTINUOUS_TIME
+    if (&mach_continuous_time != NULL)
+        return mach_continuous_time() * timebase.numer / timebase.denom / 1000000;
+#endif
     return mach_absolute_time() * timebase.numer / timebase.denom / 1000000;
 #elif defined(HAVE_CLOCK_GETTIME)
     struct timespec ts;

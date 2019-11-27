@@ -2171,6 +2171,7 @@ AC_CHECK_FUNCS(\
 	getopt_long_only \
 	kqueue \
 	lstat \
+	mach_continuous_time \
 	pipe2 \
 	poll \
 	port_create \
