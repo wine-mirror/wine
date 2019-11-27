@@ -766,16 +766,13 @@ static void CBPaintText(
 /***********************************************************************
  *           CBPaintBorder
  */
-static void CBPaintBorder(
-  HWND            hwnd,
-  const HEADCOMBO *lphc,
-  HDC             hdc)
+static void CBPaintBorder(const HEADCOMBO *lphc, HDC hdc)
 {
   RECT clientRect;
 
   if (CB_GETTYPE(lphc) != CBS_SIMPLE)
   {
-    GetClientRect(hwnd, &clientRect);
+    GetClientRect(lphc->self, &clientRect);
   }
   else
   {
@@ -818,7 +815,7 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
       /*
        * In non 3.1 look, there is a sunken border on the combobox
        */
-      CBPaintBorder(lphc->self, lphc, hDC);
+      CBPaintBorder(lphc, hDC);
       CBPaintButton(lphc, hDC);
 
       /* paint the edit control padding area */
