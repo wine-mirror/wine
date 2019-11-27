@@ -421,8 +421,8 @@
 # @ stub GetAppliedGPOListInternalW
 @ stub GetCPFileNameFromRegistry
 @ stub GetCPHashNode
-@ stdcall GetCPInfo(long ptr) kernel32.GetCPInfo
-@ stdcall GetCPInfoExW(long long ptr) kernel32.GetCPInfoExW
+@ stdcall GetCPInfo(long ptr)
+@ stdcall GetCPInfoExW(long long ptr)
 # @ stub GetCachedSigningLevel
 @ stub GetCalendar
 @ stdcall GetCalendarInfoEx(wstr long ptr long ptr long ptr)
@@ -853,8 +853,8 @@
 @ stdcall IsCharUpperA(long)
 @ stdcall IsCharUpperW(long)
 @ stdcall IsCharXDigitW(long)
-@ stdcall IsDBCSLeadByte(long) kernel32.IsDBCSLeadByte
-@ stdcall IsDBCSLeadByteEx(long long) kernel32.IsDBCSLeadByteEx
+@ stdcall IsDBCSLeadByte(long)
+@ stdcall IsDBCSLeadByteEx(long long)
 @ stdcall IsDebuggerPresent()
 # @ stub IsDeveloperModeEnabled
 # @ stub IsDeveloperModePolicyApplied
@@ -874,7 +874,7 @@
 # @ stub IsTimeZoneRedirectionEnabled
 @ stdcall IsTokenRestricted(long)
 @ stdcall IsValidAcl(ptr)
-@ stdcall IsValidCodePage(long) kernel32.IsValidCodePage
+@ stdcall IsValidCodePage(long)
 @ stdcall IsValidLanguageGroup(long long)
 @ stdcall IsValidLocale(long long)
 @ stdcall IsValidLocaleName(wstr)

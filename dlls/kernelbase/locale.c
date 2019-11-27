@@ -94,11 +94,101 @@ static const struct registry_value
     { LOCALE_ITIMEMARKPOSN, L"iTimePrefix" },
 };
 
+static const struct { UINT cp; const WCHAR *name; } codepage_names[] =
+{
+    { 37,    L"IBM EBCDIC US Canada" },
+    { 424,   L"IBM EBCDIC Hebrew" },
+    { 437,   L"OEM United States" },
+    { 500,   L"IBM EBCDIC International" },
+    { 737,   L"OEM Greek 437G" },
+    { 775,   L"OEM Baltic" },
+    { 850,   L"OEM Multilingual Latin 1" },
+    { 852,   L"OEM Slovak Latin 2" },
+    { 855,   L"OEM Cyrillic" },
+    { 856,   L"Hebrew PC" },
+    { 857,   L"OEM Turkish" },
+    { 860,   L"OEM Portuguese" },
+    { 861,   L"OEM Icelandic" },
+    { 862,   L"OEM Hebrew" },
+    { 863,   L"OEM Canadian French" },
+    { 864,   L"OEM Arabic" },
+    { 865,   L"OEM Nordic" },
+    { 866,   L"OEM Russian" },
+    { 869,   L"OEM Greek" },
+    { 874,   L"ANSI/OEM Thai" },
+    { 875,   L"IBM EBCDIC Greek" },
+    { 878,   L"Russian KOI8" },
+    { 932,   L"ANSI/OEM Japanese Shift-JIS" },
+    { 936,   L"ANSI/OEM Simplified Chinese GBK" },
+    { 949,   L"ANSI/OEM Korean Unified Hangul" },
+    { 950,   L"ANSI/OEM Traditional Chinese Big5" },
+    { 1006,  L"IBM Arabic" },
+    { 1026,  L"IBM EBCDIC Latin 5 Turkish" },
+    { 1250,  L"ANSI Eastern Europe" },
+    { 1251,  L"ANSI Cyrillic" },
+    { 1252,  L"ANSI Latin 1" },
+    { 1253,  L"ANSI Greek" },
+    { 1254,  L"ANSI Turkish" },
+    { 1255,  L"ANSI Hebrew" },
+    { 1256,  L"ANSI Arabic" },
+    { 1257,  L"ANSI Baltic" },
+    { 1258,  L"ANSI/OEM Viet Nam" },
+    { 1361,  L"Korean Johab" },
+    { 10000, L"Mac Roman" },
+    { 10001, L"Mac Japanese" },
+    { 10002, L"Mac Traditional Chinese" },
+    { 10003, L"Mac Korean" },
+    { 10004, L"Mac Arabic" },
+    { 10005, L"Mac Hebrew" },
+    { 10006, L"Mac Greek" },
+    { 10007, L"Mac Cyrillic" },
+    { 10008, L"Mac Simplified Chinese" },
+    { 10010, L"Mac Romanian" },
+    { 10017, L"Mac Ukrainian" },
+    { 10021, L"Mac Thai" },
+    { 10029, L"Mac Latin 2" },
+    { 10079, L"Mac Icelandic" },
+    { 10081, L"Mac Turkish" },
+    { 10082, L"Mac Croatian" },
+    { 20127, L"US-ASCII (7bit)" },
+    { 20866, L"Russian KOI8" },
+    { 20932, L"EUC-JP" },
+    { 21866, L"Ukrainian KOI8" },
+    { 28591, L"ISO 8859-1 Latin 1" },
+    { 28592, L"ISO 8859-2 Latin 2 (East European)" },
+    { 28593, L"ISO 8859-3 Latin 3 (South European)" },
+    { 28594, L"ISO 8859-4 Latin 4 (Baltic old)" },
+    { 28595, L"ISO 8859-5 Cyrillic" },
+    { 28596, L"ISO 8859-6 Arabic" },
+    { 28597, L"ISO 8859-7 Greek" },
+    { 28598, L"ISO 8859-8 Hebrew" },
+    { 28599, L"ISO 8859-9 Latin 5 (Turkish)" },
+    { 28600, L"ISO 8859-10 Latin 6 (Nordic)" },
+    { 28601, L"ISO 8859-11 Latin (Thai)" },
+    { 28603, L"ISO 8859-13 Latin 7 (Baltic)" },
+    { 28604, L"ISO 8859-14 Latin 8 (Celtic)" },
+    { 28605, L"ISO 8859-15 Latin 9 (Euro)" },
+    { 28606, L"ISO 8859-16 Latin 10 (Balkan)" },
+    { 65000, L"Unicode (UTF-7)" },
+    { 65001, L"Unicode (UTF-8)" }
+};
+
 static NLSTABLEINFO nls_info;
 static UINT mac_cp = 10000;
 static HKEY intl_key;
 static HKEY nls_key;
 
+static CPTABLEINFO codepages[128];
+static unsigned int nb_codepages;
+
+static CRITICAL_SECTION locale_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &locale_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": locale_section") }
+};
+static CRITICAL_SECTION locale_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /***********************************************************************
  *		init_locale
@@ -182,6 +272,56 @@ static UINT get_lcid_codepage( LCID lcid, ULONG flags )
         GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
                         (WCHAR *)&ret, sizeof(ret)/sizeof(WCHAR) );
     return ret;
+}
+
+
+static const CPTABLEINFO *get_codepage_table( UINT codepage )
+{
+    unsigned int i;
+    USHORT *ptr;
+    SIZE_T size;
+
+    switch (codepage)
+    {
+    case CP_ACP:
+        return &nls_info.AnsiTableInfo;
+    case CP_OEMCP:
+        return &nls_info.OemTableInfo;
+    case CP_MACCP:
+        codepage = mac_cp;
+        break;
+    case CP_THREAD_ACP:
+        if (NtCurrentTeb()->CurrentLocale == GetUserDefaultLCID()) return &nls_info.AnsiTableInfo;
+        codepage = get_lcid_codepage( NtCurrentTeb()->CurrentLocale, 0 );
+        if (!codepage) return &nls_info.AnsiTableInfo;
+        break;
+    default:
+        if (codepage == nls_info.AnsiTableInfo.CodePage) return &nls_info.AnsiTableInfo;
+        if (codepage == nls_info.OemTableInfo.CodePage) return &nls_info.OemTableInfo;
+        break;
+    }
+
+    RtlEnterCriticalSection( &locale_section );
+
+    for (i = 0; i < nb_codepages; i++) if (codepages[i].CodePage == codepage) goto done;
+
+    if (i == ARRAY_SIZE( codepages ))
+    {
+        RtlLeaveCriticalSection( &locale_section );
+        ERR( "too many codepages\n" );
+        return NULL;
+    }
+    if (NtGetNlsSectionPtr( 11, codepage, NULL, (void **)&ptr, &size ))
+    {
+        RtlLeaveCriticalSection( &locale_section );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    RtlInitCodePageTable( ptr, &codepages[i] );
+    nb_codepages++;
+done:
+    RtlLeaveCriticalSection( &locale_section );
+    return &codepages[i];
 }
 
 
@@ -855,6 +995,97 @@ UINT WINAPI GetACP(void)
 
 
 /***********************************************************************
+ *	GetCPInfo   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetCPInfo( UINT codepage, CPINFO *cpinfo )
+{
+    const CPTABLEINFO *table;
+
+    if (!cpinfo)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    switch (codepage)
+    {
+    case CP_UTF7:
+    case CP_UTF8:
+        cpinfo->DefaultChar[0] = 0x3f;
+        cpinfo->DefaultChar[1] = 0;
+        cpinfo->LeadByte[0] = cpinfo->LeadByte[1] = 0;
+        cpinfo->MaxCharSize = (codepage == CP_UTF7) ? 5 : 4;
+        break;
+    default:
+        if (!(table = get_codepage_table( codepage ))) return FALSE;
+        cpinfo->MaxCharSize = table->MaximumCharacterSize;
+        memcpy( cpinfo->DefaultChar, &table->DefaultChar, sizeof(cpinfo->DefaultChar) );
+        memcpy( cpinfo->LeadByte, table->LeadByte, sizeof(cpinfo->LeadByte) );
+        break;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *	GetCPInfoExW   (kernelbase.@)
+ */
+BOOL WINAPI GetCPInfoExW( UINT codepage, DWORD flags, CPINFOEXW *cpinfo )
+{
+    const CPTABLEINFO *table;
+    int min, max, pos;
+
+    if (!cpinfo)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    switch (codepage)
+    {
+    case CP_UTF7:
+        cpinfo->DefaultChar[0] = 0x3f;
+        cpinfo->DefaultChar[1] = 0;
+        cpinfo->LeadByte[0] = cpinfo->LeadByte[1] = 0;
+        cpinfo->MaxCharSize = 5;
+        cpinfo->CodePage = CP_UTF7;
+        cpinfo->UnicodeDefaultChar = 0x3f;
+        break;
+    case CP_UTF8:
+        cpinfo->DefaultChar[0] = 0x3f;
+        cpinfo->DefaultChar[1] = 0;
+        cpinfo->LeadByte[0] = cpinfo->LeadByte[1] = 0;
+        cpinfo->MaxCharSize = 4;
+        cpinfo->CodePage = CP_UTF8;
+        cpinfo->UnicodeDefaultChar = 0x3f;
+        break;
+    default:
+        if (!(table = get_codepage_table( codepage ))) return FALSE;
+        cpinfo->MaxCharSize = table->MaximumCharacterSize;
+        memcpy( cpinfo->DefaultChar, &table->DefaultChar, sizeof(cpinfo->DefaultChar) );
+        memcpy( cpinfo->LeadByte, table->LeadByte, sizeof(cpinfo->LeadByte) );
+        cpinfo->CodePage = table->CodePage;
+        cpinfo->UnicodeDefaultChar = table->UniDefaultChar;
+        break;
+    }
+
+    min = 0;
+    max = ARRAY_SIZE(codepage_names) - 1;
+    cpinfo->CodePageName[0] = 0;
+    while (min <= max)
+    {
+        pos = (min + max) / 2;
+        if (codepage_names[pos].cp < cpinfo->CodePage) min = pos + 1;
+        else if (codepage_names[pos].cp > cpinfo->CodePage) max = pos - 1;
+        else
+        {
+            wcscpy( cpinfo->CodePageName, codepage_names[pos].name );
+            break;
+        }
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
  *	GetCalendarInfoW   (kernelbase.@)
  */
 INT WINAPI DECLSPEC_HOTPATCH GetCalendarInfoW( LCID lcid, CALID calendar, CALTYPE type,
@@ -1209,6 +1440,25 @@ LANGID WINAPI DECLSPEC_HOTPATCH GetUserDefaultUILanguage(void)
 
 
 /******************************************************************************
+ *	IsDBCSLeadByte   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsDBCSLeadByte( BYTE testchar )
+{
+    return nls_info.AnsiTableInfo.DBCSCodePage && nls_info.AnsiTableInfo.DBCSOffsets[testchar];
+}
+
+
+/******************************************************************************
+ *	IsDBCSLeadByteEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
+{
+    const CPTABLEINFO *table = get_codepage_table( codepage );
+    return table && table->DBCSCodePage && table->DBCSOffsets[testchar];
+}
+
+
+/******************************************************************************
  *	IsNormalizedString   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsNormalizedString( NORM_FORM form, const WCHAR *str, INT len )
@@ -1216,6 +1466,27 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsNormalizedString( NORM_FORM form, const WCHAR *s
     BOOLEAN res;
     if (!set_ntstatus( RtlIsNormalizedString( form, str, len, &res ))) res = FALSE;
     return res;
+}
+
+
+/******************************************************************************
+ *	IsValidCodePage   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsValidCodePage( UINT codepage )
+{
+    switch (codepage)
+    {
+    case CP_ACP:
+    case CP_OEMCP:
+    case CP_MACCP:
+    case CP_THREAD_ACP:
+        return FALSE;
+    case CP_UTF7:
+    case CP_UTF8:
+        return TRUE;
+    default:
+        return get_codepage_table( codepage ) != NULL;
+    }
 }
 
 

@@ -548,9 +548,9 @@
 @ stdcall GetBinaryTypeA(str ptr)
 @ stdcall GetBinaryTypeW(wstr ptr)
 # @ stub GetCPFileNameFromRegistry
-@ stdcall GetCPInfo(long ptr)
+@ stdcall -import GetCPInfo(long ptr)
 @ stdcall GetCPInfoExA(long long ptr)
-@ stdcall GetCPInfoExW(long long ptr)
+@ stdcall -import GetCPInfoExW(long long ptr)
 # @ stub GetCalendarDateFormat
 # @ stub GetCalendarDateFormatEx
 # @ stub GetCalendarDaysInMonth
@@ -976,8 +976,8 @@
 # @ stub IsCalendarLeapDay
 # @ stub IsCalendarLeapMonth
 # @ stub IsCalendarLeapYear
-@ stdcall IsDBCSLeadByte(long)
-@ stdcall IsDBCSLeadByteEx(long long)
+@ stdcall -import IsDBCSLeadByte(long)
+@ stdcall -import IsDBCSLeadByteEx(long long)
 @ stdcall -import IsDebuggerPresent()
 @ stub -i386 IsLSCallback
 # @ stub IsNLSDefinedString
@@ -990,7 +990,7 @@
 @ stdcall IsThreadpoolTimerSet(ptr) ntdll.TpIsTimerSet
 # @ stub IsTimeZoneRedirectionEnabled
 # @ stub IsValidCalDateTime
-@ stdcall IsValidCodePage(long)
+@ stdcall -import IsValidCodePage(long)
 @ stdcall -import IsValidLanguageGroup(long long)
 @ stdcall -import IsValidLocale(long long)
 @ stdcall -import IsValidLocaleName(wstr)
