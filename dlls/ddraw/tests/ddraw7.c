@@ -14649,7 +14649,7 @@ static void test_depth_readback(void)
                  *
                  * Geforce 7 GPUs work only with D16. D24 and D24S8 return 0, D24X8 broken data.
                  *
-                 * Geforce 9 GPUs return return broken data for D16 that resembles the expected data in
+                 * Geforce 9 GPUs return broken data for D16 that resembles the expected data in
                  * the lower 8 bits and has 0xff in the upper 8 bits. D24X8 works, D24 and D24S8 return
                  * 0x00ffffff.
                  *
