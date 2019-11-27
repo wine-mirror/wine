@@ -1397,7 +1397,13 @@ typedef enum {
     SLDF_FORCE_NO_LINKTRACK = 0x00040000,
     SLDF_ENABLE_TARGET_METADATA = 0x00080000,
     SLDF_DISABLE_KNOWNFOLDER_RELATIVE_TRACKING = 0x00200000,
-    SLDF_VALID = 0x003ff7ff,
+    SDLF_NO_KF_ALIAS = 0x00400000,
+    SDLF_ALLOW_LINK_TO_LINK = 0x00800000,
+    SDLF_UNALIAS_ON_SAVE = 0x01000000,
+    SDLF_PREFER_ENVIRONMENT_PATH = 0x02000000,
+    SDLF_KEEP_LOCAL_IDLIST_FOR_UNC_TARGET = 0x04000000,
+    SDLF_PERSIST_VOLUME_ID_ACTIVE = 0x08000000,
+    SLDF_VALID = 0x0ffff7ff,
     SLDF_RESERVED = 0x80000000,
 } SHELL_LINK_DATA_FLAGS;
 
@@ -1406,6 +1412,35 @@ typedef struct tagDATABLOCKHEADER
     DWORD cbSize;
     DWORD dwSignature;
 } DATABLOCK_HEADER, *LPDATABLOCK_HEADER, *LPDBLIST;
+
+typedef struct {
+    DATABLOCK_HEADER dbh;
+    WORD wFillAttribute;
+    WORD wPopupFillAttribute;
+    COORD dwScreenBufferSize;
+    COORD dwWindowSize;
+    COORD dwWindowOrigin;
+    DWORD nFont;
+    DWORD nInputBufferSize;
+    COORD dwFontSize;
+    UINT uFontFamily;
+    UINT uFontWeight;
+    WCHAR FaceName[LF_FACESIZE];
+    UINT uCursorSize;
+    BOOL bFullScreen;
+    BOOL bQuickEdit;
+    BOOL bInsertMode;
+    BOOL bAutoPosition;
+    UINT uHistoryBufferSize;
+    UINT uNumberOfHistoryBuffers;
+    BOOL bHistoryNoDup;
+    COLORREF ColorTable[16];
+} NT_CONSOLE_PROPS, *LPNT_CONSOLE_PROPS;
+
+typedef struct {
+    DATABLOCK_HEADER dbh;
+    UINT uCodePage;
+} NT_FE_CONSOLE_PROPS, *LPNT_FE_CONSOLE_PROPS;
 
 typedef struct {
     DATABLOCK_HEADER dbh;
