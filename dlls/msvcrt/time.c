@@ -1343,6 +1343,19 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
             }
             break;
         }
+        case 'V':
+        {
+            int iso_year = year;
+            int iso_days = mstm->tm_yday - (mstm->tm_wday ? mstm->tm_wday : 7) + 4;
+            if (iso_days < 0)
+                iso_days += 365 + IsLeapYear(--iso_year);
+            else if(iso_days >= 365 + IsLeapYear(iso_year))
+                iso_days -= 365 + IsLeapYear(iso_year++);
+
+            if(!strftime_int(str, &ret, max, iso_days/7 + 1, alternate ? 0 : 2, 0, 53))
+                return 0;
+            break;
+        }
 #endif
         case 'H':
             if(!strftime_int(str, &ret, max, mstm->tm_hour, alternate ? 0 : 2, 0, 23))
