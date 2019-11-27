@@ -176,17 +176,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION cache_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-/* Copy Ascii string to Unicode without using codepages */
-static inline void strcpynAtoW( WCHAR *dst, const char *src, size_t n )
-{
-    while (n > 1 && *src)
-    {
-        *dst++ = (unsigned char)*src++;
-        n--;
-    }
-    if (n) *dst = 0;
-}
-
 extern const unsigned short wctype_table[] DECLSPEC_HIDDEN;
 extern const unsigned short nameprep_char_type[] DECLSPEC_HIDDEN;
 extern const WCHAR nameprep_mapping[] DECLSPEC_HIDDEN;
