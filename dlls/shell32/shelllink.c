@@ -73,15 +73,16 @@ typedef struct _LINK_HEADER
 	GUID     MagicGuid;	/* 0x04 is CLSID_ShellLink */
 	DWORD    dwFlags;	/* 0x14 describes elements following */
 	DWORD    dwFileAttr;	/* 0x18 attributes of the target file */
-	FILETIME Time1;		/* 0x1c */
-	FILETIME Time2;		/* 0x24 */
-	FILETIME Time3;		/* 0x2c */
-	DWORD    dwFileLength;	/* 0x34 File length */
-	DWORD    nIcon;		/* 0x38 icon number */
-	DWORD	fStartup;	/* 0x3c startup type */
-	DWORD	wHotKey;	/* 0x40 hotkey */
-	DWORD	Unknown5;	/* 0x44 */
-	DWORD	Unknown6;	/* 0x48 */
+	FILETIME CreationTime;	/* 0x1c creation time of target file */
+	FILETIME AccessTime;	/* 0x24 access time of target file */
+	FILETIME WriteTime;	/* 0x2c write time of target file */
+	DWORD    dwFileSize;	/* 0x34 File size of target file */
+	DWORD    nIcon;		/* 0x38 icon number or index */
+	DWORD	fStartup;	/* 0x3c startup type or window state of application */
+	WORD	wHotKey;	/* 0x40 hotkey */
+	WORD	Reserved1;	/* 0x42 reserved = 0 */
+	DWORD	Reserved2;	/* 0x44 reserved = 0 */
+	DWORD	Reserved3;	/* 0x48 reserved = 0 */
 } LINK_HEADER, * PLINK_HEADER;
 
 #define SHLINK_LOCAL  0
@@ -134,9 +135,9 @@ typedef struct
 	/* data structures according to the information in the link */
 	LPITEMIDLIST	pPidl;
 	WORD		wHotKey;
-	SYSTEMTIME	time1;
-	SYSTEMTIME	time2;
-	SYSTEMTIME	time3;
+	SYSTEMTIME	CreationTime;
+	SYSTEMTIME	AccessTime;
+	SYSTEMTIME	WriteTime;
 
 	DWORD         iShowCmd;
 	LPWSTR        sIcoPath;
@@ -774,20 +775,20 @@ static HRESULT WINAPI IPersistStream_fnLoad(
     heap_free(This->sComponent);
     This->sComponent = NULL;
         
-    This->wHotKey = (WORD)hdr.wHotKey;
+    This->wHotKey = hdr.wHotKey;
     This->iIcoNdx = hdr.nIcon;
-    FileTimeToSystemTime (&hdr.Time1, &This->time1);
-    FileTimeToSystemTime (&hdr.Time2, &This->time2);
-    FileTimeToSystemTime (&hdr.Time3, &This->time3);
+    FileTimeToSystemTime (&hdr.CreationTime, &This->CreationTime);
+    FileTimeToSystemTime (&hdr.AccessTime, &This->AccessTime);
+    FileTimeToSystemTime (&hdr.WriteTime, &This->WriteTime);
     if (TRACE_ON(shell))
     {
         WCHAR sTemp[MAX_PATH];
-        GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &This->time1, NULL, sTemp, ARRAY_SIZE(sTemp));
-        TRACE("-- time1: %s\n", debugstr_w(sTemp) );
-        GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &This->time2, NULL, sTemp, ARRAY_SIZE(sTemp));
-        TRACE("-- time2: %s\n", debugstr_w(sTemp) );
-        GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &This->time3, NULL, sTemp, ARRAY_SIZE(sTemp));
-        TRACE("-- time3: %s\n", debugstr_w(sTemp) );
+        GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &This->CreationTime, NULL, sTemp, ARRAY_SIZE(sTemp));
+        TRACE("-- CreationTime: %s\n", debugstr_w(sTemp) );
+        GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &This->AccessTime, NULL, sTemp, ARRAY_SIZE(sTemp));
+        TRACE("-- AccessTime: %s\n", debugstr_w(sTemp) );
+        GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &This->WriteTime, NULL, sTemp, ARRAY_SIZE(sTemp));
+        TRACE("-- WriteTime: %s\n", debugstr_w(sTemp) );
     }
 
     /* load all the new stuff */
@@ -1041,9 +1042,9 @@ static HRESULT WINAPI IPersistStream_fnSave(
     if( This->sComponent )
         header.dwFlags |= SLDF_HAS_DARWINID;
 
-    SystemTimeToFileTime ( &This->time1, &header.Time1 );
-    SystemTimeToFileTime ( &This->time2, &header.Time2 );
-    SystemTimeToFileTime ( &This->time3, &header.Time3 );
+    SystemTimeToFileTime ( &This->CreationTime, &header.CreationTime );
+    SystemTimeToFileTime ( &This->AccessTime, &header.AccessTime );
+    SystemTimeToFileTime ( &This->WriteTime, &header.WriteTime );
 
     /* write the Shortcut header */
     r = IStream_Write( stm, &header, sizeof(header), &count );
