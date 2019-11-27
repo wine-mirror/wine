@@ -1325,24 +1325,9 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
             break;
         case 'g':
         case 'G':
-        {
-            int iso_year = year;
             if(!MSVCRT_CHECK_PMT(year>=0 && year<=9999))
                 goto einval_error;
-            if (mstm->tm_yday - (mstm->tm_wday ? mstm->tm_wday : 7) + 4 < 0)
-                iso_year--;
-            else if(mstm->tm_yday - (mstm->tm_wday ? mstm->tm_wday : 7) + 5 > 365 + IsLeapYear(iso_year))
-                iso_year++;
-            if(*format == 'G')
-            {
-                if (!strftime_int(str, &ret, max, iso_year, 4, 0, 9999))
-                     return 0;
-            } else {
-                if (!strftime_int(str, &ret, max, iso_year%100, 2, 0, 99))
-                     return 0;
-            }
-            break;
-        }
+            /* fall through */
         case 'V':
         {
             int iso_year = year;
@@ -1352,8 +1337,16 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
             else if(iso_days >= 365 + IsLeapYear(iso_year))
                 iso_days -= 365 + IsLeapYear(iso_year++);
 
-            if(!strftime_int(str, &ret, max, iso_days/7 + 1, alternate ? 0 : 2, 0, 53))
-                return 0;
+            if(*format == 'G') {
+                if(!strftime_int(str, &ret, max, iso_year, 4, 0, 9999))
+                    return 0;
+            } else if(*format == 'g') {
+                if(!strftime_int(str, &ret, max, iso_year%100, 2, 0, 99))
+                    return 0;
+            } else {
+                if(!strftime_int(str, &ret, max, iso_days/7 + 1, alternate ? 0 : 2, 0, 53))
+                    return 0;
+            }
             break;
         }
 #endif
