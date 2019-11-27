@@ -181,9 +181,7 @@ static LRESULT COMBO_NCDestroy( HEADCOMBO *lphc )
  * This height was determined through experimentation.
  * CBCalcPlacement will add 2*COMBO_YBORDERSIZE pixels for the border
  */
-static INT CBGetTextAreaHeight(
-  HWND        hwnd,
-  LPHEADCOMBO lphc)
+static INT CBGetTextAreaHeight(HEADCOMBO *lphc)
 {
   INT iTextItemHeight;
 
@@ -194,7 +192,7 @@ static INT CBGetTextAreaHeight(
   else
   {
     TEXTMETRICW tm;
-    HDC         hDC       = GetDC(hwnd);
+    HDC         hDC       = GetDC(lphc->self);
     HFONT       hPrevFont = 0;
     INT         baseUnitY;
 
@@ -208,7 +206,7 @@ static INT CBGetTextAreaHeight(
     if( hPrevFont )
       SelectObject( hDC, hPrevFont );
 
-    ReleaseDC(hwnd, hDC);
+    ReleaseDC(lphc->self, hDC);
 
     iTextItemHeight = baseUnitY + 4;
   }
@@ -228,7 +226,7 @@ static INT CBGetTextAreaHeight(
     /*
      * We use the client rect for the width of the item.
      */
-    GetClientRect(hwnd, &clientRect);
+    GetClientRect(lphc->self, &clientRect);
 
     lphc->wState &= ~CBF_MEASUREITEM;
 
@@ -282,7 +280,7 @@ static void CBForceDummyResize(
   RECT windowRect;
   int newComboHeight;
 
-  newComboHeight = CBGetTextAreaHeight(lphc->self,lphc) + 2*COMBO_YBORDERSIZE();
+  newComboHeight = CBGetTextAreaHeight(lphc) + 2*COMBO_YBORDERSIZE();
 
   GetWindowRect(lphc->self, &windowRect);
 
@@ -316,7 +314,7 @@ static void CBCalcPlacement(HEADCOMBO *combo)
     InflateRect(&combo->textRect, -COMBO_XBORDERSIZE(), -COMBO_YBORDERSIZE());
 
     /* Chop off the bottom part to fit with the height of the text area. */
-    combo->textRect.bottom = combo->textRect.top + CBGetTextAreaHeight(combo->self, combo);
+    combo->textRect.bottom = combo->textRect.top + CBGetTextAreaHeight(combo);
 
     /* The button starts the same vertical position as the text area. */
     combo->buttonRect = combo->textRect;
@@ -1398,7 +1396,7 @@ static void COMBO_Size( LPHEADCOMBO lphc )
     GetWindowRect(lphc->self, &rc);
     curComboHeight = rc.bottom - rc.top;
     curComboWidth = rc.right - rc.left;
-    newComboHeight = CBGetTextAreaHeight(lphc->self, lphc) + 2*COMBO_YBORDERSIZE();
+    newComboHeight = CBGetTextAreaHeight(lphc) + 2*COMBO_YBORDERSIZE();
 
     /*
      * Resizing a combobox has another side effect, it resizes the dropped
@@ -1945,7 +1943,7 @@ static LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam
     case CB_GETITEMHEIGHT:
         if ((INT)wParam >= 0) /* listbox item */
             return SendMessageW(lphc->hWndLBox, LB_GETITEMHEIGHT, wParam, 0);
-        return  CBGetTextAreaHeight(hwnd, lphc);
+        return  CBGetTextAreaHeight(lphc);
 
     case CB_RESETCONTENT:
         SendMessageW(lphc->hWndLBox, LB_RESETCONTENT, 0, 0);
