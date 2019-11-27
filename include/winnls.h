@@ -411,6 +411,8 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 #define DATE_YEARMONTH          0x08  /* Year/month format */
 #define DATE_LTRREADING         0x10  /* Add LTR reading marks */
 #define DATE_RTLREADING         0x20  /* Add RTL reading marks */
+#define DATE_AUTOLAYOUT         0x40  /* Add LTR or RTL reading marks automatically */
+#define DATE_MONTHDAY           0x80  /* Month/day format */
 
 #define TIME_FORCE24HOURFORMAT  0x08  /* Always use 24 hour clock */
 #define TIME_NOTIMEMARKER       0x04  /* show no AM/PM */
