@@ -3283,7 +3283,6 @@ struct wined3d_device
 
     struct wined3d_state state;
     struct wined3d_stateblock_state stateblock_state;
-    struct wined3d_stateblock_state *update_stateblock_state;
 
     /* Internal use fields  */
     struct wined3d_device_creation_parameters create_parms;
