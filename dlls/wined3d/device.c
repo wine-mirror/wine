@@ -529,8 +529,6 @@ void wined3d_device_cleanup(struct wined3d_device *device)
     if (device->swapchain_count)
         wined3d_device_uninit_3d(device);
 
-    wined3d_stateblock_state_cleanup(&device->stateblock_state);
-
     wined3d_cs_destroy(device->cs);
 
     for (i = 0; i < ARRAY_SIZE(device->multistate_funcs); ++i)
@@ -4763,12 +4761,10 @@ HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device
         state->viewports[0].max_z = 1.0f;
         state->viewport_count = 1;
         wined3d_cs_emit_set_viewports(device->cs, 1, state->viewports);
-        device->stateblock_state.viewport = state->viewports[0];
 
         SetRect(&state->scissor_rects[0], 0, 0, view->width, view->height);
         state->scissor_rect_count = 1;
         wined3d_cs_emit_set_scissor_rects(device->cs, 1, state->scissor_rects);
-        device->stateblock_state.scissor_rect = state->scissor_rects[0];
     }
 
     prev = device->fb.render_targets[view_idx];
@@ -5103,7 +5099,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             wined3d_texture_decref(device->cursor_texture);
             device->cursor_texture = NULL;
         }
-        wined3d_stateblock_state_cleanup(&device->stateblock_state);
         state_unbind_resources(&device->state);
     }
 
@@ -5300,7 +5295,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
     if (reset_state)
     {
-        TRACE("Resetting stateblock.\n");
+        TRACE("Resetting state.\n");
         wined3d_cs_emit_reset_state(device->cs);
         state_cleanup(&device->state);
 
@@ -5309,8 +5304,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
         memset(&device->state, 0, sizeof(device->state));
         state_init(&device->state, &device->fb, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);
-        memset(&device->stateblock_state, 0, sizeof(device->stateblock_state));
-        wined3d_stateblock_state_init(&device->stateblock_state, device, WINED3D_STATE_INIT_DEFAULT);
 
         device_init_swapchain_state(device, swapchain);
         if (wined3d_settings.logo)
@@ -5559,7 +5552,6 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
     }
 
     state_init(&device->state, &device->fb, &adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);
-    wined3d_stateblock_state_init(&device->stateblock_state, device, WINED3D_STATE_INIT_DEFAULT);
 
     device->max_frame_latency = 3;
 
@@ -5567,7 +5559,6 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
     {
         WARN("Failed to create command stream.\n");
         state_cleanup(&device->state);
-        wined3d_stateblock_state_cleanup(&device->stateblock_state);
         hr = E_FAIL;
         goto err;
     }
