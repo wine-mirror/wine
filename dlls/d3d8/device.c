@@ -1905,7 +1905,7 @@ static HRESULT WINAPI d3d8_device_BeginStateBlock(IDirect3DDevice8 *iface)
     if (device->recording)
     {
         wined3d_mutex_unlock();
-        WARN("Trying to begin a stateblock while recording, returning D3DERR_INBEGINSTATEBLOCK.\n");
+        WARN("Trying to begin a stateblock while recording, returning D3DERR_INVALIDCALL.\n");
         return D3DERR_INVALIDCALL;
     }
 
