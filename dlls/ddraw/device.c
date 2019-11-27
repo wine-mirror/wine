@@ -5642,7 +5642,7 @@ static HRESULT d3d_device7_BeginStateBlock(IDirect3DDevice7 *iface)
         WARN("Trying to begin a stateblock while recording, returning D3DERR_INBEGINSTATEBLOCK.\n");
         return D3DERR_INBEGINSTATEBLOCK;
     }
-    if (SUCCEEDED(hr = wined3d_stateblock_create(device->wined3d_device, WINED3D_SBT_RECORDED, &stateblock)))
+    if (SUCCEEDED(hr = wined3d_stateblock_create(device->wined3d_device, NULL, WINED3D_SBT_RECORDED, &stateblock)))
         device->update_state = device->recording = stateblock;
     wined3d_mutex_unlock();
 
@@ -5822,7 +5822,7 @@ static HRESULT d3d_device7_ApplyStateBlock(IDirect3DDevice7 *iface, DWORD stateb
         return D3DERR_INVALIDSTATEBLOCK;
     }
 
-    wined3d_stateblock_apply(wined3d_sb);
+    wined3d_stateblock_apply(wined3d_sb, device->state);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -5882,7 +5882,7 @@ static HRESULT d3d_device7_CaptureStateBlock(IDirect3DDevice7 *iface, DWORD stat
         return D3DERR_INVALIDSTATEBLOCK;
     }
 
-    wined3d_stateblock_capture(wined3d_sb);
+    wined3d_stateblock_capture(wined3d_sb, device->state);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -6012,7 +6012,7 @@ static HRESULT d3d_device7_CreateStateBlock(IDirect3DDevice7 *iface,
     }
 
     /* The D3DSTATEBLOCKTYPE enum is fine here. */
-    hr = wined3d_stateblock_create(device->wined3d_device, type, &wined3d_sb);
+    hr = wined3d_stateblock_create(device->wined3d_device, device->state, type, &wined3d_sb);
     if (FAILED(hr))
     {
         WARN("Failed to create stateblock, hr %#x.\n", hr);

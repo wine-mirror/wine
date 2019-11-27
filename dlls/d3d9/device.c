@@ -2407,7 +2407,7 @@ static HRESULT WINAPI d3d9_device_BeginStateBlock(IDirect3DDevice9Ex *iface)
         return D3DERR_INVALIDCALL;
     }
 
-    if (SUCCEEDED(hr = wined3d_stateblock_create(device->wined3d_device, WINED3D_SBT_RECORDED, &stateblock)))
+    if (SUCCEEDED(hr = wined3d_stateblock_create(device->wined3d_device, device->state, WINED3D_SBT_RECORDED, &stateblock)))
         device->update_state = device->recording = stateblock;
     wined3d_mutex_unlock();
 
@@ -4593,7 +4593,7 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
     if (flags & D3DCREATE_ADAPTERGROUP_DEVICE)
         count = caps.NumberOfAdaptersInGroup;
 
-    if (FAILED(hr = wined3d_stateblock_create(device->wined3d_device, WINED3D_SBT_PRIMARY, &device->state)))
+    if (FAILED(hr = wined3d_stateblock_create(device->wined3d_device, NULL, WINED3D_SBT_PRIMARY, &device->state)))
     {
         ERR("Failed to create the primary stateblock, hr %#x.\n", hr);
         wined3d_device_decref(device->wined3d_device);

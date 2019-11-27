@@ -255,9 +255,9 @@
 @ cdecl wined3d_shader_resource_view_get_parent(ptr)
 @ cdecl wined3d_shader_resource_view_incref(ptr)
 
-@ cdecl wined3d_stateblock_apply(ptr)
-@ cdecl wined3d_stateblock_capture(ptr)
-@ cdecl wined3d_stateblock_create(ptr long ptr)
+@ cdecl wined3d_stateblock_apply(ptr ptr)
+@ cdecl wined3d_stateblock_capture(ptr ptr)
+@ cdecl wined3d_stateblock_create(ptr ptr long ptr)
 @ cdecl wined3d_stateblock_decref(ptr)
 @ cdecl wined3d_stateblock_incref(ptr)
 @ cdecl wined3d_stateblock_init_contained_states(ptr)

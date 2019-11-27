@@ -1909,7 +1909,7 @@ static HRESULT WINAPI d3d8_device_BeginStateBlock(IDirect3DDevice8 *iface)
         return D3DERR_INVALIDCALL;
     }
 
-    if (SUCCEEDED(hr = wined3d_stateblock_create(device->wined3d_device, WINED3D_SBT_RECORDED, &stateblock)))
+    if (SUCCEEDED(hr = wined3d_stateblock_create(device->wined3d_device, NULL, WINED3D_SBT_RECORDED, &stateblock)))
         device->update_state = device->recording = stateblock;
     wined3d_mutex_unlock();
 
@@ -1985,7 +1985,7 @@ static HRESULT WINAPI d3d8_device_ApplyStateBlock(IDirect3DDevice8 *iface, DWORD
         wined3d_mutex_unlock();
         return D3DERR_INVALIDCALL;
     }
-    wined3d_stateblock_apply(stateblock);
+    wined3d_stateblock_apply(stateblock, device->state);
     device->sysmem_vb = 0;
     for (i = 0; i < D3D8_MAX_STREAMS; ++i)
     {
@@ -2025,7 +2025,7 @@ static HRESULT WINAPI d3d8_device_CaptureStateBlock(IDirect3DDevice8 *iface, DWO
         wined3d_mutex_unlock();
         return D3DERR_INVALIDCALL;
     }
-    wined3d_stateblock_capture(stateblock);
+    wined3d_stateblock_capture(stateblock, device->state);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -2081,7 +2081,7 @@ static HRESULT WINAPI d3d8_device_CreateStateBlock(IDirect3DDevice8 *iface,
         WARN("Trying to create a stateblock while recording, returning D3DERR_INVALIDCALL.\n");
         return D3DERR_INVALIDCALL;
     }
-    hr = wined3d_stateblock_create(device->wined3d_device, (enum wined3d_stateblock_type)type, &stateblock);
+    hr = wined3d_stateblock_create(device->wined3d_device, device->state, (enum wined3d_stateblock_type)type, &stateblock);
     if (FAILED(hr))
     {
         wined3d_mutex_unlock();
@@ -3685,7 +3685,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
         return hr;
     }
 
-    if (FAILED(hr = wined3d_stateblock_create(device->wined3d_device, WINED3D_SBT_PRIMARY, &device->state)))
+    if (FAILED(hr = wined3d_stateblock_create(device->wined3d_device, NULL, WINED3D_SBT_PRIMARY, &device->state)))
     {
         ERR("Failed to create primary stateblock, hr %#x.\n", hr);
         wined3d_device_decref(device->wined3d_device);

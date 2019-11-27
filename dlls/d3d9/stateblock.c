@@ -106,7 +106,7 @@ static HRESULT WINAPI d3d9_stateblock_Capture(IDirect3DStateBlock9 *iface)
         WARN("Trying to capture stateblock while recording, returning D3DERR_INVALIDCALL.\n");
         return D3DERR_INVALIDCALL;
     }
-    wined3d_stateblock_capture(stateblock->wined3d_stateblock);
+    wined3d_stateblock_capture(stateblock->wined3d_stateblock, device->state);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -134,7 +134,7 @@ static HRESULT WINAPI d3d9_stateblock_Apply(IDirect3DStateBlock9 *iface)
         WARN("Trying to apply stateblock while recording, returning D3DERR_INVALIDCALL.\n");
         return D3DERR_INVALIDCALL;
     }
-    wined3d_stateblock_apply(stateblock->wined3d_stateblock);
+    wined3d_stateblock_apply(stateblock->wined3d_stateblock, device->state);
     device->sysmem_vb = 0;
     for (i = 0; i < D3D9_MAX_STREAMS; ++i)
     {
@@ -193,7 +193,7 @@ HRESULT stateblock_init(struct d3d9_stateblock *stateblock, struct d3d9_device *
     else
     {
         wined3d_mutex_lock();
-        hr = wined3d_stateblock_create(device->wined3d_device,
+        hr = wined3d_stateblock_create(device->wined3d_device, device->state,
                 (enum wined3d_stateblock_type)type, &stateblock->wined3d_stateblock);
         wined3d_mutex_unlock();
         if (FAILED(hr))
