@@ -307,111 +307,70 @@ static void CBForceDummyResize(
  *
  * Set up component coordinates given valid lphc->RectCombo.
  */
-static void CBCalcPlacement(
-  HWND        hwnd,
-  LPHEADCOMBO lphc,
-  LPRECT      lprEdit,
-  LPRECT      lprButton,
-  LPRECT      lprLB)
+static void CBCalcPlacement(HEADCOMBO *combo)
 {
-  /*
-   * Again, start with the client rectangle.
-   */
-  GetClientRect(hwnd, lprEdit);
+    /* Start with the client rectangle. */
+    GetClientRect(combo->self, &combo->textRect);
 
-  /*
-   * Remove the borders
-   */
-  InflateRect(lprEdit, -COMBO_XBORDERSIZE(), -COMBO_YBORDERSIZE());
+    /* Remove the borders */
+    InflateRect(&combo->textRect, -COMBO_XBORDERSIZE(), -COMBO_YBORDERSIZE());
 
-  /*
-   * Chop off the bottom part to fit with the height of the text area.
-   */
-  lprEdit->bottom = lprEdit->top + CBGetTextAreaHeight(hwnd, lphc);
+    /* Chop off the bottom part to fit with the height of the text area. */
+    combo->textRect.bottom = combo->textRect.top + CBGetTextAreaHeight(combo->self, combo);
 
-  /*
-   * The button starts the same vertical position as the text area.
-   */
-  CopyRect(lprButton, lprEdit);
+    /* The button starts the same vertical position as the text area. */
+    combo->buttonRect = combo->textRect;
 
-  /*
-   * If the combobox is "simple" there is no button.
-   */
-  if( CB_GETTYPE(lphc) == CBS_SIMPLE )
-    lprButton->left = lprButton->right = lprButton->bottom = 0;
-  else
-  {
-    /*
-     * Let's assume the combobox button is the same width as the
-     * scrollbar button.
-     * size the button horizontally and cut-off the text area.
-     */
-    lprButton->left = lprButton->right - GetSystemMetrics(SM_CXVSCROLL);
-    lprEdit->right  = lprButton->left;
-  }
-
-  /*
-   * In the case of a dropdown, there is an additional spacing between the
-   * text area and the button.
-   */
-  if( CB_GETTYPE(lphc) == CBS_DROPDOWN )
-  {
-    lprEdit->right -= COMBO_EDITBUTTONSPACE();
-  }
-
-  /*
-   * If we have an edit control, we space it away from the borders slightly.
-   */
-  if (CB_GETTYPE(lphc) != CBS_DROPDOWNLIST)
-  {
-    InflateRect(lprEdit, -EDIT_CONTROL_PADDING(), -EDIT_CONTROL_PADDING());
-  }
-
-  /*
-   * Adjust the size of the listbox popup.
-   */
-  if( CB_GETTYPE(lphc) == CBS_SIMPLE )
-  {
-    /*
-     * Use the client rectangle to initialize the listbox rectangle
-     */
-    GetClientRect(hwnd, lprLB);
-
-    /*
-     * Then, chop-off the top part.
-     */
-    lprLB->top = lprEdit->bottom + COMBO_YBORDERSIZE();
-  }
-  else
-  {
-    /*
-     * Make sure the dropped width is as large as the combobox itself.
-     */
-    if (lphc->droppedWidth < (lprButton->right + COMBO_XBORDERSIZE()))
+    /* If the combobox is "simple" there is no button. */
+    if (CB_GETTYPE(combo) == CBS_SIMPLE)
+        combo->buttonRect.left = combo->buttonRect.right = combo->buttonRect.bottom = 0;
+    else
     {
-      lprLB->right  = lprLB->left + (lprButton->right + COMBO_XBORDERSIZE());
+        /*
+         * Let's assume the combobox button is the same width as the
+         * scrollbar button.
+         * size the button horizontally and cut-off the text area.
+         */
+        combo->buttonRect.left = combo->buttonRect.right - GetSystemMetrics(SM_CXVSCROLL);
+        combo->textRect.right = combo->buttonRect.left;
+    }
 
-      /*
-       * In the case of a dropdown, the popup listbox is offset to the right.
-       * so, we want to make sure it's flush with the right side of the
-       * combobox
-       */
-      if( CB_GETTYPE(lphc) == CBS_DROPDOWN )
-	lprLB->right -= COMBO_EDITBUTTONSPACE();
+    /* In the case of a dropdown, there is an additional spacing between the text area and the button. */
+    if (CB_GETTYPE(combo) == CBS_DROPDOWN)
+        combo->textRect.right -= COMBO_EDITBUTTONSPACE();
+
+    /* If we have an edit control, we space it away from the borders slightly. */
+    if (CB_GETTYPE(combo) != CBS_DROPDOWNLIST)
+        InflateRect(&combo->textRect, -EDIT_CONTROL_PADDING(), -EDIT_CONTROL_PADDING());
+
+    /* Adjust the size of the listbox popup. */
+    if (CB_GETTYPE(combo) == CBS_SIMPLE)
+    {
+        GetClientRect(combo->self, &combo->droppedRect);
+        combo->droppedRect.top = combo->textRect.bottom + COMBO_YBORDERSIZE();
     }
     else
-       lprLB->right = lprLB->left + lphc->droppedWidth;
-  }
+    {
+        /* Make sure the dropped width is as large as the combobox itself. */
+        if (combo->droppedWidth < (combo->buttonRect.right + COMBO_XBORDERSIZE()))
+        {
+            combo->droppedRect.right = combo->droppedRect.left + (combo->buttonRect.right + COMBO_XBORDERSIZE());
 
-  /* don't allow negative window width */
-  if (lprEdit->right < lprEdit->left)
-    lprEdit->right = lprEdit->left;
+            /* In the case of a dropdown, the popup listbox is offset to the right. We want to make sure it's flush
+               with the right side of the combobox */
+            if (CB_GETTYPE(combo) == CBS_DROPDOWN)
+                combo->droppedRect.right -= COMBO_EDITBUTTONSPACE();
+        }
+        else
+            combo->droppedRect.right = combo->droppedRect.left + combo->droppedWidth;
+    }
 
-  TRACE("\ttext\t= (%s)\n", wine_dbgstr_rect(lprEdit));
+    /* Disallow negative window width */
+    if (combo->textRect.right < combo->textRect.left)
+        combo->textRect.right = combo->textRect.left;
 
-  TRACE("\tbutton\t= (%s)\n", wine_dbgstr_rect(lprButton));
-
-  TRACE("\tlbox\t= (%s)\n", wine_dbgstr_rect(lprLB));
+    TRACE("text %s, button %s, lbox %s.\n", wine_dbgstr_rect(&combo->textRect), wine_dbgstr_rect(&combo->buttonRect),
+            wine_dbgstr_rect(&combo->droppedRect));
 }
 
 /***********************************************************************
@@ -472,7 +431,7 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
        * recalculated.
        */
       GetClientRect( hwnd, &lphc->droppedRect );
-      CBCalcPlacement(hwnd, lphc, &lphc->textRect, &lphc->buttonRect, &lphc->droppedRect );
+      CBCalcPlacement(lphc);
 
       /*
        * Adjust the position of the popup listbox if it's necessary
@@ -1472,11 +1431,7 @@ static void COMBO_Size( LPHEADCOMBO lphc )
             SWP_NOZORDER|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOREDRAW);
   }
 
-  CBCalcPlacement(lphc->self,
-		  lphc,
-		  &lphc->textRect,
-		  &lphc->buttonRect,
-		  &lphc->droppedRect);
+  CBCalcPlacement(lphc);
 
   CBResetPos( lphc, &lphc->textRect, &lphc->droppedRect, TRUE );
 }
@@ -1504,11 +1459,7 @@ static void COMBO_Font( LPHEADCOMBO lphc, HFONT hFont, BOOL bRedraw )
    */
   if ( CB_GETTYPE(lphc) == CBS_SIMPLE)
   {
-    CBCalcPlacement(lphc->self,
-		    lphc,
-		    &lphc->textRect,
-		    &lphc->buttonRect,
-		    &lphc->droppedRect);
+    CBCalcPlacement(lphc);
 
     CBResetPos( lphc, &lphc->textRect, &lphc->droppedRect, TRUE );
   }
@@ -1537,11 +1488,7 @@ static LRESULT COMBO_SetItemHeight( LPHEADCOMBO lphc, INT index, INT height )
 	  */
 	 if ( CB_GETTYPE(lphc) == CBS_SIMPLE)
 	 {
-	   CBCalcPlacement(lphc->self,
-			   lphc,
-			   &lphc->textRect,
-			   &lphc->buttonRect,
-			   &lphc->droppedRect);
+	   CBCalcPlacement(lphc);
 
 	   CBResetPos( lphc, &lphc->textRect, &lphc->droppedRect, TRUE );
 	 }
@@ -2049,7 +1996,7 @@ static LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam
             lphc->droppedWidth = 0;
 
         /* recalculate the combobox area */
-        CBCalcPlacement(hwnd, lphc, &lphc->textRect, &lphc->buttonRect, &lphc->droppedRect );
+        CBCalcPlacement(lphc);
 
         /* fall through */
     case CB_GETDROPPEDWIDTH:
