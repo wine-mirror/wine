@@ -1325,20 +1325,24 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
             break;
         case 'g':
         case 'G':
-            tmp = year;
+        {
+            int iso_year = year;
+            if(!MSVCRT_CHECK_PMT(year>=0 && year<=9999))
+                goto einval_error;
             if (mstm->tm_yday - (mstm->tm_wday ? mstm->tm_wday : 7) + 4 < 0)
-                tmp--;
-            else if(mstm->tm_yday - (mstm->tm_wday ? mstm->tm_wday : 7) + 5 > 365 + IsLeapYear(tmp))
-                tmp++;
+                iso_year--;
+            else if(mstm->tm_yday - (mstm->tm_wday ? mstm->tm_wday : 7) + 5 > 365 + IsLeapYear(iso_year))
+                iso_year++;
             if(*format == 'G')
             {
-                if (!strftime_int(str, &ret, max, tmp, 4, 0, 9999))
+                if (!strftime_int(str, &ret, max, iso_year, 4, 0, 9999))
                      return 0;
             } else {
-                if (!strftime_int(str, &ret, max, tmp%100, 2, 0, 99))
+                if (!strftime_int(str, &ret, max, iso_year%100, 2, 0, 99))
                      return 0;
             }
             break;
+        }
 #endif
         case 'H':
             if(!strftime_int(str, &ret, max, mstm->tm_hour, alternate ? 0 : 2, 0, 23))
