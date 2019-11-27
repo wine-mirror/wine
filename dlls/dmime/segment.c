@@ -224,7 +224,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_GetTrackGroup(IDirectMusicSegment
 
   LIST_FOR_EACH (pEntry, &This->Tracks) {
     pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
-    TRACE(" - %p -> %d,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
+    TRACE(" - %p -> %#x, %p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
     if (NULL != pIt && pIt->pTrack == pTrack) {
       *pdwGroupBits = pIt->dwGroupBits;
       return S_OK;
@@ -637,7 +637,7 @@ static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, IStream *stream,
         return hr;
     TRACE("Found DMUS_IO_TRACK_HEADER\n");
     TRACE("\tclass: %s\n", debugstr_guid (&thdr.guidClassID));
-    TRACE("\tdwGroup: %d\n", thdr.dwGroup);
+    TRACE("\tdwGroup: %#x\n", thdr.dwGroup);
     TRACE("\tckid: %s\n", debugstr_fourcc (thdr.ckid));
     TRACE("\tfccType: %s\n", debugstr_fourcc (thdr.fccType));
 
