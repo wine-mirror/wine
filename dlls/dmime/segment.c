@@ -624,6 +624,7 @@ static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, IStream *stream,
     IPersistStream *ps = NULL;
     IStream *clone;
     DMUS_IO_TRACK_HEADER thdr;
+    DMUS_IO_TRACK_EXTRAS_HEADER txhdr;
     HRESULT hr;
 
     TRACE("Parsing track form in %p: %s\n", stream, debugstr_chunk(riff));
@@ -654,8 +655,11 @@ static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, IStream *stream,
                  chunk.type == thdr.fccType))
             break;
 
-        if (chunk.id == DMUS_FOURCC_TRACK_EXTRAS_CHUNK)
+        if (chunk.id == DMUS_FOURCC_TRACK_EXTRAS_CHUNK &&
+                SUCCEEDED(stream_chunk_get_data(stream, &chunk, &txhdr, sizeof(txhdr)))) {
             FIXME("DMUS_IO_TRACK_EXTRAS_HEADER chunk not handled\n");
+            TRACE("dwFlags: %#x, dwPriority: %u\n", txhdr.dwFlags, txhdr.dwPriority);
+        }
     }
     if (hr != S_OK)
         return hr == S_FALSE ? DMUS_E_TRACK_NOT_FOUND : hr;
