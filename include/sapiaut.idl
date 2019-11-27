@@ -1956,7 +1956,7 @@ interface ISpeechRecognizer : IDispatch
     HRESULT State([out,retval] SpeechRecognizerState *state);
 
     [propget, id(DISPID_SRStatus)]
-    HRESULT Status([out,retval] ISpeechRecognizerStatus **satus);
+    HRESULT Status([out,retval] ISpeechRecognizerStatus **status);
 
     [propputref, id(DISPID_SRProfile)]
     HRESULT Profile([in,defaultvalue(0)] ISpeechObjectToken *profile);
