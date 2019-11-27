@@ -94,8 +94,7 @@ static const struct registry_value
     { LOCALE_ITIMEMARKPOSN, L"iTimePrefix" },
 };
 
-static UINT ansi_cp = 1252;
-static UINT oem_cp = 437;
+static NLSTABLEINFO nls_info;
 static UINT mac_cp = 10000;
 static HKEY intl_key;
 static HKEY nls_key;
@@ -106,9 +105,12 @@ static HKEY nls_key;
  */
 void init_locale(void)
 {
+    UINT ansi_cp = 0, oem_cp = 0;
+    USHORT *ansi_ptr, *oem_ptr, *casemap_ptr;
     LCID lcid = GetUserDefaultLCID();
     WCHAR bufferW[80];
     DWORD count, i;
+    SIZE_T size;
     HKEY hkey;
 
     kernel32_handle = GetModuleHandleW( L"kernel32.dll" );
@@ -119,6 +121,17 @@ void init_locale(void)
                     (WCHAR *)&mac_cp, sizeof(mac_cp)/sizeof(WCHAR) );
     GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
                     (WCHAR *)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR) );
+
+    NtGetNlsSectionPtr( 10, 0, 0, (void **)&casemap_ptr, &size );
+    if (!ansi_cp || NtGetNlsSectionPtr( 11, ansi_cp, NULL, (void **)&ansi_ptr, &size ))
+        NtGetNlsSectionPtr( 11, 1252, NULL, (void **)&ansi_ptr, &size );
+    if (!oem_cp || NtGetNlsSectionPtr( 11, oem_cp, 0, (void **)&oem_ptr, &size ))
+        NtGetNlsSectionPtr( 11, 437, NULL, (void **)&oem_ptr, &size );
+    NtCurrentTeb()->Peb->AnsiCodePageData = ansi_ptr;
+    NtCurrentTeb()->Peb->OemCodePageData = oem_ptr;
+    NtCurrentTeb()->Peb->UnicodeCaseTableData = casemap_ptr;
+    RtlInitNlsTables( ansi_ptr, oem_ptr, casemap_ptr, &nls_info );
+    RtlResetRtlTranslations( &nls_info );
 
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Nls",
                      0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &nls_key, NULL );
@@ -163,7 +176,7 @@ void init_locale(void)
 
 static UINT get_lcid_codepage( LCID lcid, ULONG flags )
 {
-    UINT ret = CP_ACP;
+    UINT ret = GetACP();
 
     if (!(flags & LOCALE_USE_CP_ACP) && lcid != GetSystemDefaultLCID())
         GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
@@ -837,7 +850,7 @@ INT WINAPI DECLSPEC_HOTPATCH FindStringOrdinal( DWORD flag, const WCHAR *src, IN
  */
 UINT WINAPI GetACP(void)
 {
-    return ansi_cp;
+    return nls_info.AnsiTableInfo.CodePage;
 }
 
 
@@ -1111,7 +1124,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoEx( const WCHAR *locale, LCTYPE info, 
  */
 UINT WINAPI GetOEMCP(void)
 {
-    return oem_cp;
+    return nls_info.OemTableInfo.CodePage;
 }
 
 
