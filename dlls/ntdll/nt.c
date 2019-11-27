@@ -79,6 +79,7 @@
 #include "ddk/wdm.h"
 
 #ifdef __APPLE__
+#include <mach/mach.h>
 #include <mach/mach_init.h>
 #include <mach/mach_host.h>
 #include <mach/vm_map.h>
