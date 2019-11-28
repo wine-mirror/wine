@@ -520,10 +520,6 @@ static HRESULT WINAPI DSoundRender_EndFlush(struct strmbase_renderer *iface)
 {
     DSoundRenderImpl *This = impl_from_strmbase_renderer(iface);
 
-    TRACE("\n");
-
-    BaseRendererImpl_EndFlush(iface);
-
     if (This->dsbuffer)
     {
         LPBYTE buffer;

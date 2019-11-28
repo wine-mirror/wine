@@ -569,7 +569,6 @@ struct strmbase_renderer_ops
 
 HRESULT WINAPI BaseRendererImpl_ClearPendingSample(struct strmbase_renderer *filter);
 HRESULT WINAPI BaseRendererImpl_EndOfStream(struct strmbase_renderer *filter);
-HRESULT WINAPI BaseRendererImpl_EndFlush(struct strmbase_renderer *filter);
 HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *filter, IMediaSample *sample);
 
 HRESULT WINAPI strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,

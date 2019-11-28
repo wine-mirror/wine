@@ -130,10 +130,12 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndFlush(IPin * iface)
     hr = BaseInputPinImpl_EndFlush(iface);
     if (SUCCEEDED(hr))
     {
+        QualityControlRender_Start(pFilter->qcimpl, pFilter->stream_start);
+        RendererPosPassThru_ResetMediaTime(pFilter->pPosition);
+        ResetEvent(pFilter->flush_event);
+
         if (pFilter->pFuncsTable->pfnEndFlush)
             hr = pFilter->pFuncsTable->pfnEndFlush(pFilter);
-        else
-            hr = BaseRendererImpl_EndFlush(pFilter);
     }
     LeaveCriticalSection(&pFilter->filter.csFilter);
     LeaveCriticalSection(&pFilter->csRenderLock);
@@ -477,15 +479,6 @@ HRESULT WINAPI BaseRendererImpl_EndOfStream(struct strmbase_renderer *iface)
     SetEvent(iface->state_event);
 
     return hr;
-}
-
-HRESULT WINAPI BaseRendererImpl_EndFlush(struct strmbase_renderer *iface)
-{
-    TRACE("(%p)\n", iface);
-    QualityControlRender_Start(iface->qcimpl, iface->stream_start);
-    RendererPosPassThru_ResetMediaTime(iface->pPosition);
-    ResetEvent(iface->flush_event);
-    return S_OK;
 }
 
 HRESULT WINAPI BaseRendererImpl_ClearPendingSample(struct strmbase_renderer *iface)
