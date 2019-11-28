@@ -9637,7 +9637,7 @@ typedef struct
  *
  *     Memory allocated for pData must be freed by the caller
  */
-static HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *pData, BOOL bStrem1)
+static HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *pData, BOOL bStream1)
 {
 	DWORD dwSize;
 	HRESULT hRes = S_OK;
@@ -9698,7 +9698,7 @@ static HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM
 					}
 				}
 			}
-			if(bStrem1)
+			if(bStream1)
 			{
 				dwSize = pOleStream->lpstbl->Get(pOleStream, (void *)&(pData->dwOleObjFileNameLength), sizeof(pData->dwOleObjFileNameLength));
 				if(dwSize != sizeof(pData->dwOleObjFileNameLength))
@@ -9752,7 +9752,7 @@ static HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM
 
 			if(hRes == S_OK) /* I don't know what this 8 byte information is. We have to figure out */
 			{
-				if(!bStrem1) /* if it is a second OLE stream data */
+				if(!bStream1) /* if it is a second OLE stream data */
 				{
 					pData->dwDataLength -= 8;
 					dwSize = pOleStream->lpstbl->Get(pOleStream, pData->strUnknown, sizeof(pData->strUnknown));
