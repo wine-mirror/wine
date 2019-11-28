@@ -2329,6 +2329,7 @@ static HRESULT WINAPI d3d9_device_GetRenderState(IDirect3DDevice9Ex *iface,
         D3DRENDERSTATETYPE state, DWORD *value)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    const struct wined3d_stateblock_state *device_state;
     struct wined3d_color factor;
 
     TRACE("iface %p, state %#x, value %p.\n", iface, state, value);
@@ -2344,7 +2345,8 @@ static HRESULT WINAPI d3d9_device_GetRenderState(IDirect3DDevice9Ex *iface,
     }
 
     wined3d_mutex_lock();
-    *value = wined3d_device_get_render_state(device->wined3d_device, state);
+    device_state = wined3d_stateblock_get_state(device->state);
+    *value = device_state->rs[state];
     wined3d_mutex_unlock();
 
     return D3D_OK;
