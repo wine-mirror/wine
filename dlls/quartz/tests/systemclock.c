@@ -26,11 +26,18 @@ static ULONGLONG (WINAPI *pGetTickCount64)(void);
 
 static IReferenceClock *create_system_clock(void)
 {
-    IReferenceClock *filter = NULL;
+    IReferenceClock *clock = NULL;
     HRESULT hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IReferenceClock, (void **)&filter);
+            &IID_IReferenceClock, (void **)&clock);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    return filter;
+    return clock;
+}
+
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
 }
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
@@ -60,6 +67,100 @@ static void test_interfaces(void)
 
     ref = IReferenceClock_Release(clock);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static const GUID test_iid = {0x33333333};
+static LONG outer_ref = 1;
+
+static HRESULT WINAPI outer_QueryInterface(IUnknown *iface, REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IReferenceClock)
+            || IsEqualGUID(iid, &test_iid))
+    {
+        *out = (IUnknown *)0xdeadbeef;
+        return S_OK;
+    }
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI outer_AddRef(IUnknown *iface)
+{
+    return InterlockedIncrement(&outer_ref);
+}
+
+static ULONG WINAPI outer_Release(IUnknown *iface)
+{
+    return InterlockedDecrement(&outer_ref);
+}
+
+static const IUnknownVtbl outer_vtbl =
+{
+    outer_QueryInterface,
+    outer_AddRef,
+    outer_Release,
+};
+
+static IUnknown test_outer = {&outer_vtbl};
+
+static void test_aggregation(void)
+{
+    IReferenceClock *clock, *clock2;
+    IUnknown *unk, *unk2;
+    HRESULT hr;
+    ULONG ref;
+
+    clock = (IReferenceClock *)0xdeadbeef;
+    hr = CoCreateInstance(&CLSID_SystemClock, &test_outer, CLSCTX_INPROC_SERVER,
+            &IID_IReferenceClock, (void **)&clock);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(!clock, "Got interface %p.\n", clock);
+
+    hr = CoCreateInstance(&CLSID_SystemClock, &test_outer, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
+    ref = get_refcount(unk);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+
+    ref = IUnknown_AddRef(unk);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+
+    ref = IUnknown_Release(unk);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
+    IUnknown_Release(unk2);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IReferenceClock, (void **)&clock);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IReferenceClock_QueryInterface(clock, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
+
+    hr = IReferenceClock_QueryInterface(clock, &IID_IReferenceClock, (void **)&clock2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(clock2 == (IReferenceClock *)0xdeadbeef, "Got unexpected IReferenceClock %p.\n", clock2);
+
+    hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
+
+    hr = IReferenceClock_QueryInterface(clock, &test_iid, (void **)&unk2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
+
+    IReferenceClock_Release(clock);
+    ref = IUnknown_Release(unk);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 }
 
 static void test_get_time(void)
@@ -185,6 +286,7 @@ START_TEST(systemclock)
     pGetTickCount64 = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetTickCount64");
 
     test_interfaces();
+    test_aggregation();
     test_get_time();
     test_advise();
 
