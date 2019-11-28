@@ -455,7 +455,7 @@ void dump_DMUS_OBJECTDESC(DMUS_OBJECTDESC *pDesc)
         if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
             TRACE_(dmime)(" - wszFileName = %s\n", debugstr_w(pDesc->wszFileName));
         if (pDesc->dwValidData & DMUS_OBJ_MEMORY)
-            TRACE_(dmime)(" - llMemLength = 0x%s\n  - pbMemData = %p\n", wine_dbgstr_longlong(pDesc->llMemLength),
+            TRACE_(dmime)(" - llMemLength = 0x%s - pbMemData = %p\n", wine_dbgstr_longlong(pDesc->llMemLength),
                     pDesc->pbMemData);
         if (pDesc->dwValidData & DMUS_OBJ_STREAM)
             TRACE_(dmime)(" - pStream = %p\n", pDesc->pStream);
