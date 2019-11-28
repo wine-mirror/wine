@@ -545,9 +545,12 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
  *
  * Paint combo button (normal, pressed, and disabled states).
  */
-static void CBPaintButton( LPHEADCOMBO lphc, HDC hdc, RECT rectButton)
+static void CBPaintButton(HEADCOMBO *lphc, HDC hdc)
 {
     UINT buttonState = DFCS_SCROLLCOMBOBOX;
+
+    if (IsRectEmpty(&lphc->buttonRect))
+        return;
 
     if( lphc->wState & CBF_NOREDRAW )
       return;
@@ -559,7 +562,7 @@ static void CBPaintButton( LPHEADCOMBO lphc, HDC hdc, RECT rectButton)
     if (CB_DISABLED(lphc))
 	buttonState |= DFCS_INACTIVE;
 
-    DrawFrameControl(hdc, &rectButton, DFC_SCROLL, buttonState);
+    DrawFrameControl(hdc, &lphc->buttonRect, DFC_SCROLL, buttonState);
 }
 
 /***********************************************************************
@@ -815,8 +818,7 @@ static LRESULT COMBO_Paint(HEADCOMBO *lphc, HDC hdc)
      */
     CBPaintBorder(lphc->self, lphc, hdc);
 
-    if (!IsRectEmpty(&lphc->buttonRect))
-        CBPaintButton(lphc, hdc, lphc->buttonRect);
+    CBPaintButton(lphc, hdc);
 
     /* paint the edit control padding area */
     if (CB_GETTYPE(lphc) != CBS_DROPDOWNLIST)
