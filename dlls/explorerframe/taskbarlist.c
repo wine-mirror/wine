@@ -216,7 +216,7 @@ static HRESULT STDMETHODCALLTYPE taskbar_list_ThumbBarSetImageList(ITaskbarList4
 {
     FIXME("iface %p, hwnd %p, himl %p stub!\n", iface, hwnd, himl);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE taskbar_list_SetOverlayIcon(ITaskbarList4 *iface,
