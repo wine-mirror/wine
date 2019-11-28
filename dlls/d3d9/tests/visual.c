@@ -26311,7 +26311,7 @@ static void test_sample_attached_rendertarget(void)
 
     static const struct
     {
-        struct vec3 posistion;
+        struct vec3 position;
         struct vec2 texcoord;
     }
     quad[] =
