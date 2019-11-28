@@ -1386,6 +1386,34 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
                 return 0;
             break;
 #if _MSVCR_VER>=140
+        case 'r':
+            if(time_data == MSVCRT_locale->locinfo->lc_time_curr)
+            {
+                if(!MSVCRT_CHECK_PMT(mstm->tm_hour>=0 && mstm->tm_hour<=23))
+                    goto einval_error;
+                if(!strftime_int(str, &ret, max, (mstm->tm_hour + 11) % 12 + 1,
+                            alternate ? 0 : 2, 1, 12))
+                    return 0;
+                if(ret < max)
+                    str[ret++] = ':';
+                if(!strftime_int(str, &ret, max, mstm->tm_min, alternate ? 0 : 2, 0, 59))
+                    return 0;
+                if(ret < max)
+                    str[ret++] = ':';
+                if(!strftime_int(str, &ret, max, mstm->tm_sec, alternate ? 0 : 2, 0, MAX_SECONDS))
+                    return 0;
+                if(ret < max)
+                    str[ret++] = ' ';
+                if(!strftime_str(str, &ret, max, mstm->tm_hour<12 ?
+                            STRFTIME_TD(time_data, am) : STRFTIME_TD(time_data, pm)))
+                    return 0;
+            }
+            else
+            {
+                if(!strftime_format(str, &ret, max, mstm, time_data, STRFTIME_TD(time_data, time)))
+                    return 0;
+            }
+            break;
         case 'R':
             if(!strftime_int(str, &ret, max, mstm->tm_hour, alternate ? 0 : 2, 0, 23))
                 return 0;
