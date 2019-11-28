@@ -1738,7 +1738,7 @@ static void PropertyStorage_MakePropertyIdOffset(DWORD propid, DWORD dwOffset,
      offsetof(PROPERTYIDOFFSET, dwOffset), dwOffset);
 }
 
-static inline HRESULT PropertStorage_WriteWStringToStream(IStream *stm,
+static inline HRESULT PropertyStorage_WriteWStringToStream(IStream *stm,
  LPCWSTR str, DWORD len, DWORD *written)
 {
 #ifdef WORDS_BIGENDIAN
@@ -1788,7 +1788,7 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
         if (FAILED(c->hr))
             goto end;
         c->bytesWritten += sizeof(DWORD);
-        c->hr = PropertStorage_WriteWStringToStream(This->stm, key, keyLen,
+        c->hr = PropertyStorage_WriteWStringToStream(This->stm, key, keyLen,
          &count);
         if (FAILED(c->hr))
             goto end;
