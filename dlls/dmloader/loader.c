@@ -191,8 +191,18 @@ static struct cache_entry *find_cache_object(IDirectMusicLoaderImpl *This, DMUS_
     if (desc->dwValidData & DMUS_OBJ_STREAM)
         FIXME("Finding DMUS_OBJ_STREAM cached objects currently not supported.\n");
 
-    if (desc->dwValidData & DMUS_OBJ_MEMORY)
-        FIXME("Finding DMUS_OBJ_MEMORY cached objects currently not supported.\n");
+    if (desc->dwValidData & DMUS_OBJ_MEMORY) {
+        LIST_FOR_EACH_ENTRY(existing, &This->cache, struct cache_entry, entry) {
+            if (existing->Desc.dwValidData & DMUS_OBJ_MEMORY &&
+                    desc->llMemLength == existing->Desc.llMemLength &&
+                    (desc->pbMemData == existing->Desc.pbMemData ||
+                    !memcmp(desc->pbMemData, existing->Desc.pbMemData, desc->llMemLength)) ) {
+                TRACE("Found by DMUS_OBJ_MEMORY (%d)\n",
+                    desc->pbMemData == existing->Desc.pbMemData);
+                return existing;
+            }
+        }
+    }
 
     if ((desc->dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) ==
             (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) {
