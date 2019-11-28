@@ -88,13 +88,11 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndOfStream(IPin * iface)
     TRACE("iface %p.\n", iface);
 
     EnterCriticalSection(&pFilter->csRenderLock);
-    EnterCriticalSection(&pFilter->filter.csFilter);
     pFilter->eos = TRUE;
     if (pFilter->pFuncsTable->pfnEndOfStream)
         hr = pFilter->pFuncsTable->pfnEndOfStream(pFilter);
     else
         hr = BaseRendererImpl_EndOfStream(pFilter);
-    LeaveCriticalSection(&pFilter->filter.csFilter);
     LeaveCriticalSection(&pFilter->csRenderLock);
     return hr;
 }
