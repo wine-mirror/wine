@@ -1534,7 +1534,7 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
     LONG l;
     HKEY key;
     BOOL got_from_reg = FALSE, direct = TRUE;
-    char *envproxy;
+    WCHAR *envproxy;
 
     TRACE("%p\n", info);
 
@@ -1610,37 +1610,30 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
         }
         RegCloseKey( key );
     }
-    if (!got_from_reg && (envproxy = getenv( "http_proxy" )))
+    if (!got_from_reg && (envproxy = _wgetenv( L"http_proxy" )))
     {
-        char *colon, *http_proxy = NULL;
+        WCHAR *colon, *http_proxy = NULL;
 
-        if (!(colon = strchr( envproxy, ':' ))) http_proxy = envproxy;
+        if (!(colon = wcschr( envproxy, ':' ))) http_proxy = envproxy;
         else
         {
             if (*(colon + 1) == '/' && *(colon + 2) == '/')
             {
                 /* It's a scheme, check that it's http */
-                if (!strncmp( envproxy, "http://", 7 )) http_proxy = envproxy + 7;
-                else WARN("unsupported scheme in $http_proxy: %s\n", envproxy);
+                if (!wcsncmp( envproxy, L"http://", 7 )) http_proxy = envproxy + 7;
+                else WARN("unsupported scheme in $http_proxy: %s\n", debugstr_w(envproxy));
             }
             else http_proxy = envproxy;
         }
 
         if (http_proxy && http_proxy[0])
         {
-            WCHAR *http_proxyW;
-            int len;
-
-            len = MultiByteToWideChar( CP_UNIXCP, 0, http_proxy, -1, NULL, 0 );
-            if ((http_proxyW = GlobalAlloc( 0, len * sizeof(WCHAR))))
-            {
-                MultiByteToWideChar( CP_UNIXCP, 0, http_proxy, -1, http_proxyW, len );
-                direct = FALSE;
-                info->dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-                info->lpszProxy = http_proxyW;
-                info->lpszProxyBypass = NULL;
-                TRACE("http proxy (from environment) = %s\n", debugstr_w(info->lpszProxy));
-            }
+            direct = FALSE;
+            info->dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+            info->lpszProxy = GlobalAlloc( 0, (lstrlenW(http_proxy) + 1) * sizeof(WCHAR) );
+            wcscpy( info->lpszProxy, http_proxy );
+            info->lpszProxyBypass = NULL;
+            TRACE("http proxy (from environment) = %s\n", debugstr_w(info->lpszProxy));
         }
     }
     if (direct)
