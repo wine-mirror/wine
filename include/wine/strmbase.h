@@ -567,7 +567,6 @@ struct strmbase_renderer_ops
     HRESULT (*renderer_pin_query_interface)(struct strmbase_renderer *iface, REFIID iid, void **out);
 };
 
-HRESULT WINAPI BaseRendererImpl_BeginFlush(struct strmbase_renderer *filter);
 HRESULT WINAPI BaseRendererImpl_ClearPendingSample(struct strmbase_renderer *filter);
 HRESULT WINAPI BaseRendererImpl_EndOfStream(struct strmbase_renderer *filter);
 HRESULT WINAPI BaseRendererImpl_EndFlush(struct strmbase_renderer *filter);
