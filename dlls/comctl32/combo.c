@@ -736,16 +736,13 @@ static void CBPaintText(HEADCOMBO *lphc, HDC hdc_paint)
 /***********************************************************************
  *           CBPaintBorder
  */
-static void CBPaintBorder(
-  HWND            hwnd,
-  const HEADCOMBO *lphc,
-  HDC             hdc)
+static void CBPaintBorder(const HEADCOMBO *lphc, HDC hdc)
 {
   RECT clientRect;
 
   if (CB_GETTYPE(lphc) != CBS_SIMPLE)
   {
-    GetClientRect(hwnd, &clientRect);
+    GetClientRect(lphc->self, &clientRect);
   }
   else
   {
@@ -816,7 +813,7 @@ static LRESULT COMBO_Paint(HEADCOMBO *lphc, HDC hdc)
     /*
      * In non 3.1 look, there is a sunken border on the combobox
      */
-    CBPaintBorder(lphc->self, lphc, hdc);
+    CBPaintBorder(lphc, hdc);
 
     CBPaintButton(lphc, hdc);
 
