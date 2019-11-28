@@ -160,17 +160,19 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
     RtlInitUnicodeString( &nameW, buffer );
     RtlInitUnicodeString( &valueW, value );
     InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
-    if ((status = NtOpenKey( &handle, KEY_READ, &attr ))) return status;
-    info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
-    size = sizeof(buffer) - sizeof(WCHAR);
-    status = NtQueryValueKey( handle, &valueW, KeyValuePartialInformation, info, size, &size );
-    NtClose( handle );
-    if (!status)
+    if (!(status = NtOpenKey( &handle, KEY_READ, &attr )))
     {
-        ((WCHAR *)info->Data)[info->DataLength / sizeof(WCHAR)] = 0;
-        name = (WCHAR *)info->Data;
+        info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+        size = sizeof(buffer) - sizeof(WCHAR);
+        if (!(status = NtQueryValueKey( handle, &valueW, KeyValuePartialInformation, info, size, &size )))
+        {
+            ((WCHAR *)info->Data)[info->DataLength / sizeof(WCHAR)] = 0;
+            name = (WCHAR *)info->Data;
+        }
+        NtClose( handle );
     }
-    else  /* otherwise some hardcoded defaults */
+
+    if (!name)  /* otherwise some hardcoded defaults */
     {
         switch (type)
         {
