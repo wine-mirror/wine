@@ -1444,7 +1444,7 @@ static void test_tr2_sys__Copy_file(void)
         ok(errno == 0xdeadbeef, "test_tr2_sys__Copy_file(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
         if(ret == ERROR_SUCCESS)
             ok(p_tr2_sys__File_size(tests[i].source) == p_tr2_sys__File_size(tests[i].dest),
-                    "test_tr2_sys__Copy_file(): test %d failed, two files' size are not equal\n", i+1);
+                    "test_tr2_sys__Copy_file(): test %d failed, mismatched file sizes\n", i+1);
     }
     ret = p_tr2_sys__Copy_file_wchar(testW, testW2, TRUE);
     ok(ret == ERROR_SUCCESS, "test_tr2_sys__Copy_file_wchar() expect ERROR_SUCCESS, got %d\n", ret);
@@ -1886,7 +1886,7 @@ static void test_tr2_sys__Link(void)
         ok(errno == 0xdeadbeef, "tr2_sys__Link(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
         if(ret == ERROR_SUCCESS)
             ok(p_tr2_sys__File_size(tests[i].existing_path) == p_tr2_sys__File_size(tests[i].new_path),
-                    "tr2_sys__Link(): test %d failed, two files' size are not equal\n", i+1);
+                    "tr2_sys__Link(): test %d failed, mismatched file sizes\n", i+1);
     }
 
     ok(DeleteFileA("f1"), "expect f1 to exist\n");
