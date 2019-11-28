@@ -184,7 +184,7 @@ HRESULT WINAPI SetInteractionConfigurationInteractionContext(HINTERACTIONCONTEXT
         UINT32 count, const INTERACTION_CONTEXT_CONFIGURATION *configuration);
 
 HRESULT WINAPI GetPropertyInteractionContext(HINTERACTIONCONTEXT context,
-        INTERACTION_CONTEXT_PROPERTY proerty, UINT32 *value);
+        INTERACTION_CONTEXT_PROPERTY property, UINT32 *value);
 HRESULT WINAPI SetPropertyInteractionContext(HINTERACTIONCONTEXT context,
         INTERACTION_CONTEXT_PROPERTY property, UINT32 value);
 
