@@ -335,21 +335,19 @@ static INT_PTR CDECL list_notify( FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pf
         nameW = strdupAtoW( (pfdin->attribs & _A_NAME_IS_UTF) ? CP_UTF8 : CP_ACP, pfdin->psz1 );
         if (match_files( nameW ))
         {
-            char *nameU = strdupWtoA( CP_UNIXCP, nameW );
             if (opt_verbose)
             {
-                char attrs[] = "rxash";
+                WCHAR attrs[] = L"rxash";
                 if (!(pfdin->attribs & _A_RDONLY)) attrs[0] = '-';
                 if (!(pfdin->attribs & _A_EXEC))   attrs[1] = '-';
                 if (!(pfdin->attribs & _A_ARCH))   attrs[2] = '-';
                 if (!(pfdin->attribs & _A_SYSTEM)) attrs[3] = '-';
                 if (!(pfdin->attribs & _A_HIDDEN)) attrs[4] = '-';
-                printf( " %s %9u  %04u/%02u/%02u %02u:%02u:%02u  ", attrs, pfdin->cb,
+                wprintf( L" %s %9u  %04u/%02u/%02u %02u:%02u:%02u  ", attrs, pfdin->cb,
                         (pfdin->date >> 9) + 1980, (pfdin->date >> 5) & 0x0f, pfdin->date & 0x1f,
                         pfdin->time >> 11, (pfdin->time >> 5) & 0x3f, (pfdin->time & 0x1f) * 2 );
             }
-            printf( "%s\n", nameU );
-            cab_free( nameU );
+            wprintf( L"%s\n", nameW );
         }
         cab_free( nameW );
         return 0;
@@ -404,12 +402,7 @@ static INT_PTR CDECL extract_notify( FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION
 
         if (match_files( file ))
         {
-            if (opt_verbose)
-            {
-                char *nameU = strdupWtoA( CP_UNIXCP, path );
-                printf( "extracting %s\n", nameU );
-                cab_free( nameU );
-            }
+            if (opt_verbose) wprintf( L"extracting %s\n", path );
             create_directories( path );
             /* FIXME: check for existing file and overwrite mode */
             ret = (INT_PTR)CreateFileW( path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -628,8 +621,7 @@ int __cdecl wmain( int argc, WCHAR *argv[] )
             else if (!wcscmp( argv[1], mszipW )) opt_compression = tcompTYPE_MSZIP;
             else
             {
-                char *arg = strdupWtoA( CP_ACP, argv[1] );
-                WINE_MESSAGE( "cabarc: Unknown compression type '%s'\n", arg);
+                WINE_MESSAGE( "cabarc: Unknown compression type %s\n", debugstr_w(argv[1]));
                 return 1;
             }
             break;
