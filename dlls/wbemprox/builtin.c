@@ -2600,7 +2600,7 @@ struct association
     WCHAR *ref2;
 };
 
-static void free_assocations( struct association *assoc, UINT count )
+static void free_associations( struct association *assoc, UINT count )
 {
     UINT i;
     if (!assoc) return;
@@ -2652,7 +2652,7 @@ static struct association *get_diskdrivetodiskpartition_pairs( UINT *count )
     *count = query->view->result_count;
 
 done:
-    if (!ret) free_assocations( ret, query->view->result_count );
+    if (!ret) free_associations( ret, query->view->result_count );
     free_query( query );
     free_query( query2 );
     return ret;
@@ -2668,12 +2668,12 @@ static enum fill_status fill_diskdrivetodiskpartition( struct table *table, cons
     if (!(assoc = get_diskdrivetodiskpartition_pairs( &count ))) return FILL_STATUS_FAILED;
     if (!count)
     {
-        free_assocations( assoc, count );
+        free_associations( assoc, count );
         return FILL_STATUS_UNFILTERED;
     }
     if (!resize_table( table, count, sizeof(*rec) ))
     {
-        free_assocations( assoc, count );
+        free_associations( assoc, count );
         return FILL_STATUS_FAILED;
     }
 
@@ -2953,7 +2953,7 @@ static struct association *get_logicaldisktopartition_pairs( UINT *count )
     *count = query->view->result_count;
 
 done:
-    if (!ret) free_assocations( ret, query->view->result_count );
+    if (!ret) free_associations( ret, query->view->result_count );
     free_query( query );
     free_query( query2 );
     return ret;
@@ -2969,12 +2969,12 @@ static enum fill_status fill_logicaldisktopartition( struct table *table, const 
     if (!(assoc = get_logicaldisktopartition_pairs( &count ))) return FILL_STATUS_FAILED;
     if (!count)
     {
-        free_assocations( assoc, count );
+        free_associations( assoc, count );
         return FILL_STATUS_UNFILTERED;
     }
     if (!resize_table( table, count, sizeof(*rec) ))
     {
-        free_assocations( assoc, count );
+        free_associations( assoc, count );
         return FILL_STATUS_FAILED;
     }
 
