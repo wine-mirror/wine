@@ -384,7 +384,7 @@
 @ stdcall FlushInstructionCache(long long long)
 @ stdcall FlushProcessWriteBuffers() kernel32.FlushProcessWriteBuffers
 @ stdcall FlushViewOfFile(ptr long)
-@ stdcall FoldStringW(long wstr long ptr long) kernel32.FoldStringW
+@ stdcall FoldStringW(long wstr long ptr long)
 # @ stub ForceSyncFgPolicyInternal
 # @ stub FormatApplicationUserModelId
 @ stdcall FormatMessageA(long ptr long long ptr long ptr) kernel32.FormatMessageA

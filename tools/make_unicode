@@ -1808,9 +1808,9 @@ sub dump_vertical($)
 
 ################################################################
 # dump the digit folding tables
-sub dump_digit_folding($)
+sub dump_digit_folding($$)
 {
-    my $filename = shift;
+    my ($filename, $compat) = @_;
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
     print "Building $filename\n";
     print OUTPUT "/* Unicode digit folding mappings */\n";
@@ -1819,8 +1819,11 @@ sub dump_digit_folding($)
     print OUTPUT "#include \"windef.h\"\n\n";
 
     dump_case_table( "DECLSPEC_HIDDEN wine_digitmap",  @digitmap_table );
-    print OUTPUT "\n";
-    dump_case_table( "DECLSPEC_HIDDEN wine_compatmap", @compatmap_table );
+    if ($compat)
+    {
+        print OUTPUT "\n";
+        dump_case_table( "DECLSPEC_HIDDEN wine_compatmap", @compatmap_table );
+    }
     close OUTPUT;
     save_file($filename);
 }
@@ -2891,7 +2894,8 @@ dump_bidi_dir_table( "dlls/gdi32/direction.c" );
 dump_bidi_dir_table( "dlls/usp10/direction.c" );
 dump_bidi_dir_table( "dlls/dwrite/direction.c" );
 dump_string_type_table( "dlls/kernel32/wctype.c" );
-dump_digit_folding( "libs/port/digitmap.c" );
+dump_digit_folding( "libs/port/digitmap.c", 1 );
+dump_digit_folding( "dlls/kernelbase/digitmap.c", 0 );
 dump_combining_class( "libs/port/combclass.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );
 dump_mirroring( "dlls/dwrite/mirror.c" );

@@ -6,6 +6,7 @@ EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -mno-cygwin
 C_SRCS = \
 	console.c \
 	debug.c \
+	digitmap.c \
 	file.c \
 	loader.c \
 	locale.c \

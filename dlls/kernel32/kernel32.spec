@@ -521,7 +521,7 @@
 @ stdcall FlushProcessWriteBuffers()
 @ stdcall -import FlushViewOfFile(ptr long)
 @ stdcall FoldStringA(long str long ptr long)
-@ stdcall FoldStringW(long wstr long ptr long)
+@ stdcall -import FoldStringW(long wstr long ptr long)
 @ stdcall FormatMessageA(long ptr long long ptr long ptr)
 @ stdcall FormatMessageW(long ptr long long ptr long ptr)
 @ stdcall FreeConsole()
