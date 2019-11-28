@@ -500,20 +500,7 @@ static HRESULT WINAPI DSoundRender_BreakConnect(struct strmbase_renderer *iface)
 static HRESULT WINAPI DSoundRender_EndOfStream(struct strmbase_renderer *iface)
 {
     DSoundRenderImpl *This = impl_from_strmbase_renderer(iface);
-    HRESULT hr;
-
-    TRACE("(%p)->()\n",iface);
-
-    hr = BaseRendererImpl_EndOfStream(iface);
-    if (hr != S_OK)
-    {
-        ERR("%08x\n", hr);
-        return hr;
-    }
-
-    hr = DSoundRender_HandleEndOfStream(This);
-
-    return hr;
+    return DSoundRender_HandleEndOfStream(This);
 }
 
 static HRESULT WINAPI DSoundRender_EndFlush(struct strmbase_renderer *iface)

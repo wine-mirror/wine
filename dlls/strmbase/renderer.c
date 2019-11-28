@@ -82,18 +82,29 @@ static HRESULT WINAPI BaseRenderer_InputPin_Disconnect(IPin * iface)
 
 static HRESULT WINAPI BaseRenderer_InputPin_EndOfStream(IPin * iface)
 {
-    struct strmbase_renderer *pFilter = impl_from_IPin(iface);
-    HRESULT hr;
+    struct strmbase_renderer *filter = impl_from_IPin(iface);
+    IFilterGraph *graph = filter->filter.filterInfo.pGraph;
+    IMediaEventSink *event_sink;
+    HRESULT hr = S_OK;
 
     TRACE("iface %p.\n", iface);
 
-    EnterCriticalSection(&pFilter->csRenderLock);
-    pFilter->eos = TRUE;
-    if (pFilter->pFuncsTable->pfnEndOfStream)
-        hr = pFilter->pFuncsTable->pfnEndOfStream(pFilter);
-    else
-        hr = BaseRendererImpl_EndOfStream(pFilter);
-    LeaveCriticalSection(&pFilter->csRenderLock);
+    EnterCriticalSection(&filter->csRenderLock);
+    filter->eos = TRUE;
+
+    if (graph && SUCCEEDED(IFilterGraph_QueryInterface(graph,
+            &IID_IMediaEventSink, (void **)&event_sink)))
+    {
+        IMediaEventSink_Notify(event_sink, EC_COMPLETE, S_OK,
+                (LONG_PTR)&filter->filter.IBaseFilter_iface);
+        IMediaEventSink_Release(event_sink);
+    }
+    RendererPosPassThru_EOS(filter->pPosition);
+    SetEvent(filter->state_event);
+
+    if (filter->pFuncsTable->pfnEndOfStream)
+        hr = filter->pFuncsTable->pfnEndOfStream(filter);
+    LeaveCriticalSection(&filter->csRenderLock);
     return hr;
 }
 
@@ -457,29 +468,6 @@ static const IBaseFilterVtbl strmbase_renderer_vtbl =
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo
 };
-
-HRESULT WINAPI BaseRendererImpl_EndOfStream(struct strmbase_renderer *iface)
-{
-    IMediaEventSink* pEventSink;
-    IFilterGraph *graph;
-    HRESULT hr = S_OK;
-
-    TRACE("(%p)\n", iface);
-
-    graph = iface->filter.filterInfo.pGraph;
-    if (graph)
-    {        hr = IFilterGraph_QueryInterface(iface->filter.filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
-        if (SUCCEEDED(hr))
-        {
-            hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, (LONG_PTR)iface);
-            IMediaEventSink_Release(pEventSink);
-        }
-    }
-    RendererPosPassThru_EOS(iface->pPosition);
-    SetEvent(iface->state_event);
-
-    return hr;
-}
 
 HRESULT WINAPI BaseRendererImpl_ClearPendingSample(struct strmbase_renderer *iface)
 {
