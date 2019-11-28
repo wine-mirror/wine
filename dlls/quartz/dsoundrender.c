@@ -44,8 +44,8 @@ typedef struct DSoundRenderImpl
     struct strmbase_renderer renderer;
 
     IBasicAudio IBasicAudio_iface;
-    IReferenceClock IReferenceClock_iface;
     IAMDirectSound IAMDirectSound_iface;
+    IUnknown *system_clock;
 
     IDirectSound8 *dsound;
     LPDIRECTSOUNDBUFFER dsbuffer;
@@ -57,9 +57,6 @@ typedef struct DSoundRenderImpl
 
     LONG volume;
     LONG pan;
-
-    DWORD threadid;
-    HANDLE advisethread, thread_wait;
 } DSoundRenderImpl;
 
 static inline DSoundRenderImpl *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
@@ -75,11 +72,6 @@ static inline DSoundRenderImpl *impl_from_IBaseFilter(IBaseFilter *iface)
 static inline DSoundRenderImpl *impl_from_IBasicAudio(IBasicAudio *iface)
 {
     return CONTAINING_RECORD(iface, DSoundRenderImpl, IBasicAudio_iface);
-}
-
-static inline DSoundRenderImpl *impl_from_IReferenceClock(IReferenceClock *iface)
-{
-    return CONTAINING_RECORD(iface, DSoundRenderImpl, IReferenceClock_iface);
 }
 
 static inline DSoundRenderImpl *impl_from_IAMDirectSound(IAMDirectSound *iface)
@@ -145,16 +137,12 @@ static HRESULT DSoundRender_GetWritePos(DSoundRenderImpl *This, DWORD *ret_write
     WAVEFORMATEX *wfx = (WAVEFORMATEX *)This->renderer.sink.pin.mt.pbFormat;
     DWORD writepos, min_writepos, playpos;
     REFERENCE_TIME max_lag = 50 * 10000;
-    REFERENCE_TIME min_lag = 25 * 10000;
     REFERENCE_TIME cur, writepos_t, delta_t;
 
     DSoundRender_UpdatePositions(This, &writepos, &min_writepos);
     playpos = This->last_playpos;
-    if (This->renderer.filter.pClock == &This->IReferenceClock_iface) {
-        max_lag = min_lag;
-        cur = This->play_time + time_from_pos(This, playpos);
-        cur -= This->renderer.stream_start;
-    } else if (This->renderer.filter.pClock) {
+    if (This->renderer.filter.pClock)
+    {
         IReferenceClock_GetTime(This->renderer.filter.pClock, &cur);
         cur -= This->renderer.stream_start;
     } else
@@ -479,13 +467,6 @@ static HRESULT WINAPI DSoundRender_BreakConnect(struct strmbase_renderer *iface)
 
     TRACE("(%p)->()\n", iface);
 
-    if (This->threadid) {
-        PostThreadMessageW(This->threadid, WM_APP, 0, 0);
-        LeaveCriticalSection(&This->renderer.filter.csFilter);
-        WaitForSingleObject(This->advisethread, INFINITE);
-        EnterCriticalSection(&This->renderer.filter.csFilter);
-        CloseHandle(This->advisethread);
-    }
     if (This->dsbuffer)
         IDirectSoundBuffer_Release(This->dsbuffer);
     This->dsbuffer = NULL;
@@ -522,13 +503,6 @@ static void dsound_render_destroy(struct strmbase_renderer *iface)
 {
     DSoundRenderImpl *filter = impl_from_strmbase_renderer(iface);
 
-    if (filter->threadid)
-    {
-        PostThreadMessageW(filter->threadid, WM_APP, 0, 0);
-        WaitForSingleObject(filter->advisethread, INFINITE);
-        CloseHandle(filter->advisethread);
-    }
-
     if (filter->dsbuffer)
         IDirectSoundBuffer_Release(filter->dsbuffer);
     filter->dsbuffer = NULL;
@@ -547,7 +521,7 @@ static HRESULT dsound_render_query_interface(struct strmbase_renderer *iface, RE
     if (IsEqualGUID(iid, &IID_IBasicAudio))
         *out = &filter->IBasicAudio_iface;
     else if (IsEqualGUID(iid, &IID_IReferenceClock))
-        *out = &filter->IReferenceClock_iface;
+        return IUnknown_QueryInterface(filter->system_clock, iid, out);
     else if (IsEqualGUID(iid, &IID_IAMDirectSound))
         *out = &filter->IAMDirectSound_iface;
     else
@@ -725,262 +699,6 @@ static const IBasicAudioVtbl IBasicAudio_Vtbl =
     Basicaudio_get_Balance
 };
 
-struct dsoundrender_timer {
-    struct dsoundrender_timer *next;
-    REFERENCE_TIME start;
-    REFERENCE_TIME periodicity;
-    HANDLE handle;
-    DWORD cookie;
-};
-static LONG cookie_counter = 1;
-
-static DWORD WINAPI DSoundAdviseThread(LPVOID lpParam) {
-    DSoundRenderImpl *This = lpParam;
-    struct dsoundrender_timer head = {NULL};
-    MSG msg;
-
-    TRACE("(%p): Main Loop\n", This);
-
-    PeekMessageW(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
-    SetEvent(This->thread_wait);
-
-    while (1)
-    {
-        HRESULT hr;
-        REFERENCE_TIME curtime = 0;
-        BOOL ret;
-        struct dsoundrender_timer *prev = &head, *cur;
-
-        hr = IReferenceClock_GetTime(&This->IReferenceClock_iface, &curtime);
-        if (SUCCEEDED(hr)) {
-            TRACE("Time: %s\n", wine_dbgstr_longlong(curtime));
-            while (prev->next) {
-                cur = prev->next;
-                if (cur->start > curtime) {
-                    TRACE("Skipping %p\n", cur);
-                    prev = cur;
-                } else if (cur->periodicity) {
-                    while (cur->start <= curtime) {
-                        cur->start += cur->periodicity;
-                        ReleaseSemaphore(cur->handle, 1, NULL);
-                    }
-                    prev = cur;
-                } else {
-                    struct dsoundrender_timer *next = cur->next;
-                    TRACE("Firing %p %s < %s\n", cur, wine_dbgstr_longlong(cur->start), wine_dbgstr_longlong(curtime));
-                    SetEvent(cur->handle);
-                    HeapFree(GetProcessHeap(), 0, cur);
-                    prev->next = next;
-                }
-            }
-        }
-        if (!head.next)
-            ret = GetMessageW(&msg, INVALID_HANDLE_VALUE, WM_APP, WM_APP + 4);
-        else
-            ret = PeekMessageW(&msg, INVALID_HANDLE_VALUE, WM_APP, WM_APP + 4, PM_REMOVE);
-        while (ret) {
-            switch (LOWORD(msg.message) - WM_APP) {
-                case 0: TRACE("Exiting\n"); return 0;
-                case 1:
-                case 2: {
-                    struct dsoundrender_timer *t = (struct dsoundrender_timer *)msg.wParam;
-                    if (LOWORD(msg.message) - WM_APP == 1)
-                        TRACE("Adding one-shot timer %p\n", t);
-                    else
-                        TRACE("Adding periodic timer %p\n", t);
-                    t->next = head.next;
-                    head.next = t;
-                    break;
-                }
-                case 3:
-                    prev = &head;
-                    while (prev->next) {
-                        cur = prev->next;
-                        if (cur->cookie == msg.wParam) {
-                            struct dsoundrender_timer *next = cur->next;
-                            HeapFree(GetProcessHeap(), 0, cur);
-                            prev->next = next;
-                            break;
-                        }
-                        prev = cur;
-                    }
-                    break;
-            }
-            ret = PeekMessageW(&msg, INVALID_HANDLE_VALUE, WM_APP, WM_APP + 4, PM_REMOVE);
-        }
-        MsgWaitForMultipleObjects(0, NULL, 5, QS_POSTMESSAGE, 0);
-    }
-    return 0;
-}
-
-/*** IUnknown methods ***/
-static HRESULT WINAPI ReferenceClock_QueryInterface(IReferenceClock *iface,
-						REFIID riid,
-						LPVOID*ppvObj)
-{
-    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
-
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
-
-    return BaseFilterImpl_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppvObj);
-}
-
-static ULONG WINAPI ReferenceClock_AddRef(IReferenceClock *iface)
-{
-    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return BaseFilterImpl_AddRef(&This->renderer.filter.IBaseFilter_iface);
-}
-
-static ULONG WINAPI ReferenceClock_Release(IReferenceClock *iface)
-{
-    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
-
-    TRACE("(%p/%p)->()\n", This, iface);
-
-    return BaseFilterImpl_Release(&This->renderer.filter.IBaseFilter_iface);
-}
-
-/*** IReferenceClock methods ***/
-static HRESULT WINAPI ReferenceClock_GetTime(IReferenceClock *iface,
-                                             REFERENCE_TIME *pTime)
-{
-    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
-    HRESULT hr = E_FAIL;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pTime);
-    if (!pTime)
-        return E_POINTER;
-
-    if (This->dsbuffer) {
-        DWORD writepos1, writepos2;
-        EnterCriticalSection(&This->renderer.filter.csFilter);
-        DSoundRender_UpdatePositions(This, &writepos1, &writepos2);
-        if (This->renderer.sink.pin.mt.pbFormat)
-        {
-            *pTime = This->play_time + time_from_pos(This, This->last_playpos);
-            hr = S_OK;
-        }
-        else
-        {
-            ERR("pInputPin Disconnected\n");
-            hr = E_FAIL;
-        }
-        LeaveCriticalSection(&This->renderer.filter.csFilter);
-    }
-    if (FAILED(hr))
-        WARN("Could not get reference time (%x)!\n", hr);
-
-    return hr;
-}
-
-static HRESULT WINAPI ReferenceClock_AdviseTime(IReferenceClock *iface,
-                                                REFERENCE_TIME rtBaseTime,
-                                                REFERENCE_TIME rtStreamTime,
-                                                HEVENT hEvent,
-                                                DWORD_PTR *pdwAdviseCookie)
-{
-    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
-    REFERENCE_TIME when = rtBaseTime + rtStreamTime;
-    REFERENCE_TIME future;
-    TRACE("(%p/%p)->(%s, %s, %p, %p)\n", This, iface, wine_dbgstr_longlong(rtBaseTime), wine_dbgstr_longlong(rtStreamTime), (void*)hEvent, pdwAdviseCookie);
-
-    if (when <= 0)
-        return E_INVALIDARG;
-
-    if (!pdwAdviseCookie)
-        return E_POINTER;
-
-    EnterCriticalSection(&This->renderer.filter.csFilter);
-    future = when - This->play_time;
-    if (!This->threadid && This->dsbuffer) {
-        This->thread_wait = CreateEventW(0, 0, 0, 0);
-        This->advisethread = CreateThread(NULL, 0, DSoundAdviseThread, This, 0, &This->threadid);
-        WaitForSingleObject(This->thread_wait, INFINITE);
-        CloseHandle(This->thread_wait);
-    }
-    LeaveCriticalSection(&This->renderer.filter.csFilter);
-    /* If it's in the past or the next millisecond, trigger immediately  */
-    if (future <= 10000) {
-        SetEvent((HANDLE)hEvent);
-        *pdwAdviseCookie = 0;
-    } else {
-        struct dsoundrender_timer *t = HeapAlloc(GetProcessHeap(), 0, sizeof(*t));
-        t->next = NULL;
-        t->start = when;
-        t->periodicity = 0;
-        t->handle = (HANDLE)hEvent;
-        t->cookie = InterlockedIncrement(&cookie_counter);
-        PostThreadMessageW(This->threadid, WM_APP+1, (WPARAM)t, 0);
-        *pdwAdviseCookie = t->cookie;
-    }
-
-    return S_OK;
-}
-
-static HRESULT WINAPI ReferenceClock_AdvisePeriodic(IReferenceClock *iface,
-                                                    REFERENCE_TIME rtStartTime,
-                                                    REFERENCE_TIME rtPeriodTime,
-                                                    HSEMAPHORE hSemaphore,
-                                                    DWORD_PTR *pdwAdviseCookie)
-{
-    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
-    struct dsoundrender_timer *t;
-
-    TRACE("(%p/%p)->(%s, %s, %p, %p)\n", This, iface, wine_dbgstr_longlong(rtStartTime), wine_dbgstr_longlong(rtPeriodTime), (void*)hSemaphore, pdwAdviseCookie);
-
-    if (rtStartTime <= 0 || rtPeriodTime <= 0)
-        return E_INVALIDARG;
-
-    if (!pdwAdviseCookie)
-        return E_POINTER;
-
-    EnterCriticalSection(&This->renderer.filter.csFilter);
-    if (!This->threadid && This->dsbuffer) {
-        This->thread_wait = CreateEventW(0, 0, 0, 0);
-        This->advisethread = CreateThread(NULL, 0, DSoundAdviseThread, This, 0, &This->threadid);
-        WaitForSingleObject(This->thread_wait, INFINITE);
-        CloseHandle(This->thread_wait);
-    }
-    LeaveCriticalSection(&This->renderer.filter.csFilter);
-
-    t = HeapAlloc(GetProcessHeap(), 0, sizeof(*t));
-    t->next = NULL;
-    t->start = rtStartTime;
-    t->periodicity = rtPeriodTime;
-    t->handle = (HANDLE)hSemaphore;
-    t->cookie = InterlockedIncrement(&cookie_counter);
-    PostThreadMessageW(This->threadid, WM_APP+1, (WPARAM)t, 0);
-    *pdwAdviseCookie = t->cookie;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI ReferenceClock_Unadvise(IReferenceClock *iface,
-                                              DWORD_PTR dwAdviseCookie)
-{
-    DSoundRenderImpl *This = impl_from_IReferenceClock(iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, (void*)dwAdviseCookie);
-    if (!This->advisethread || !dwAdviseCookie)
-        return S_FALSE;
-    PostThreadMessageW(This->threadid, WM_APP+3, dwAdviseCookie, 0);
-    return S_OK;
-}
-
-static const IReferenceClockVtbl IReferenceClock_Vtbl =
-{
-    ReferenceClock_QueryInterface,
-    ReferenceClock_AddRef,
-    ReferenceClock_Release,
-    ReferenceClock_GetTime,
-    ReferenceClock_AdviseTime,
-    ReferenceClock_AdvisePeriodic,
-    ReferenceClock_Unadvise
-};
-
 /*** IUnknown methods ***/
 static HRESULT WINAPI AMDirectSound_QueryInterface(IAMDirectSound *iface,
 						REFIID riid,
@@ -1121,12 +839,20 @@ HRESULT dsound_render_create(IUnknown *outer, void **out)
         return hr;
     }
 
+    if (FAILED(hr = QUARTZ_CreateSystemClock(&object->renderer.filter.IUnknown_inner,
+            (void **)&object->system_clock)))
+    {
+        strmbase_renderer_cleanup(&object->renderer);
+        CoTaskMemFree(object);
+        return hr;
+    }
+
     object->IBasicAudio_iface.lpVtbl = &IBasicAudio_Vtbl;
-    object->IReferenceClock_iface.lpVtbl = &IReferenceClock_Vtbl;
     object->IAMDirectSound_iface.lpVtbl = &IAMDirectSound_Vtbl;
 
     if (FAILED(hr = DirectSoundCreate8(NULL, &object->dsound, NULL)))
     {
+        IUnknown_Release(object->system_clock);
         strmbase_renderer_cleanup(&object->renderer);
         CoTaskMemFree(object);
         return hr;
@@ -1136,6 +862,7 @@ HRESULT dsound_render_create(IUnknown *outer, void **out)
             GetDesktopWindow(), DSSCL_PRIORITY)))
     {
         IDirectSound8_Release(object->dsound);
+        IUnknown_Release(object->system_clock);
         strmbase_renderer_cleanup(&object->renderer);
         CoTaskMemFree(object);
         return hr;
