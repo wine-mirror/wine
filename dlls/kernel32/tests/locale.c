@@ -3429,23 +3429,15 @@ static void test_FoldStringW(void)
   static const WCHAR foldczone_src[] =
   {
     'W',    'i',    'n',    'e',    0x0348, 0x0551, 0x1323, 0x280d,
-    0xff37, 0xff49, 0xff4e, 0xff45, '\0'
+    0xff37, 0xff49, 0xff4e, 0xff45, 0x3c5, 0x308, 0x6a, 0x30c, 0xa0, 0xaa, 0
   };
   static const WCHAR foldczone_dst[] =
   {
-    'W','i','n','e',0x0348,0x0551,0x1323,0x280d,'W','i','n','e','\0'
+    'W','i','n','e',0x0348,0x0551,0x1323,0x280d,'W','i','n','e',0x3cb,0x1f0,' ','a',0
   };
-  static const WCHAR foldczone_todo_src[] =
+  static const WCHAR foldczone_broken_dst[] =
   {
-      0x3c5,0x308,0x6a,0x30c,0xa0,0xaa,0
-  };
-  static const WCHAR foldczone_todo_dst[] =
-  {
-      0x3cb,0x1f0,' ','a',0
-  };
-  static const WCHAR foldczone_todo_broken_dst[] =
-  {
-      0x3cb,0x1f0,0xa0,0xaa,0
+    'W','i','n','e',0x0348,0x0551,0x1323,0x280d,'W','i','n','e',0x3cb,0x1f0,0xa0,0xaa,0
   };
   static const WCHAR ligatures_src[] =
   {
@@ -3589,14 +3581,9 @@ static void test_FoldStringW(void)
   SetLastError(0);
   ret = pFoldStringW(MAP_FOLDCZONE, foldczone_src, -1, dst, 256);
   ok(ret == ARRAY_SIZE(foldczone_dst), "Got %d, error %d\n", ret, GetLastError());
-  ok(!memcmp(dst, foldczone_dst, sizeof(foldczone_dst)),
+  ok(!memcmp(dst, foldczone_dst, sizeof(foldczone_dst))
+     || broken(!memcmp(dst, foldczone_broken_dst, sizeof(foldczone_broken_dst))),
      "MAP_FOLDCZONE: Expanded incorrectly\n");
-
-  ret = pFoldStringW(MAP_FOLDCZONE|MAP_PRECOMPOSED, foldczone_todo_src, -1, dst, 256);
-  todo_wine ok(ret == ARRAY_SIZE(foldczone_todo_dst), "Got %d, error %d\n", ret, GetLastError());
-  todo_wine ok(!memcmp(dst, foldczone_todo_dst, sizeof(foldczone_todo_dst))
-          || broken(!memcmp(dst, foldczone_todo_broken_dst, sizeof(foldczone_todo_broken_dst))),
-          "MAP_FOLDCZONE: Expanded incorrectly (%s)\n", wine_dbgstr_w(dst));
 
   /* MAP_EXPAND_LIGATURES */
   SetLastError(0);
@@ -4439,7 +4426,6 @@ static void test_IdnToNameprepUnicode(void)
         const WCHAR out[64];
         DWORD flags;
         DWORD err;
-        DWORD todo;
     } test_data[] = {
         {
             5, {'t','e','s','t',0},
@@ -4481,20 +4467,20 @@ static void test_IdnToNameprepUnicode(void)
             0, 0, {0},
             IDN_USE_STD3_ASCII_RULES, ERROR_INVALID_NAME
         },
-        { /* FoldString is not working as expected when MAP_FOLDCZONE is specified (composition+compatibility) */
+        {
             10, {'T',0xdf,0x130,0x143,0x37a,0x6a,0x30c,' ',0xaa,0},
             12, 12, {'t','s','s','i',0x307,0x144,' ',0x3b9,0x1f0,' ','a',0},
-            0, 0xdeadbeef, TRUE
+            0, 0xdeadbeef
         },
         {
             11, {'t',0xad,0x34f,0x1806,0x180b,0x180c,0x180d,0x200b,0x200c,0x200d,0},
             2, 0, {'t',0},
             0, 0xdeadbeef
         },
-        { /* Another example of incorrectly working FoldString (composition) */
+        {
             2, {0x3b0, 0},
             2, 2, {0x3b0, 0},
-            0, 0xdeadbeef, TRUE
+            0, 0xdeadbeef,
         },
         {
             2, {0x221, 0},
@@ -4580,9 +4566,7 @@ static void test_IdnToNameprepUnicode(void)
                 buf, ARRAY_SIZE(buf));
         err = GetLastError();
 
-        todo_wine_if (test_data[i].todo)
-            ok(ret == test_data[i].ret ||
-                    broken(ret == test_data[i].broken_ret), "%d) ret = %d\n", i, ret);
+        ok(ret == test_data[i].ret || broken(ret == test_data[i].broken_ret), "%d: ret = %d\n", i, ret);
 
         if(ret != test_data[i].ret)
             continue;
