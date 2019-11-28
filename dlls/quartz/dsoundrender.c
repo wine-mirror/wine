@@ -39,10 +39,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
  */
 static const REFERENCE_TIME DSoundRenderer_Max_Fill = 150 * 10000;
 
-static const IBasicAudioVtbl IBasicAudio_Vtbl;
-static const IReferenceClockVtbl IReferenceClock_Vtbl;
-static const IAMDirectSoundVtbl IAMDirectSound_Vtbl;
-
 typedef struct DSoundRenderImpl
 {
     struct strmbase_renderer renderer;
@@ -577,62 +573,6 @@ static const struct strmbase_renderer_ops renderer_ops =
     .renderer_query_interface = dsound_render_query_interface,
 };
 
-HRESULT DSoundRender_create(IUnknown *outer, void **out)
-{
-    static const WCHAR sink_name[] = {'A','u','d','i','o',' ','I','n','p','u','t',' ','p','i','n',' ','(','r','e','n','d','e','r','e','d',')',0};
-
-    HRESULT hr;
-    DSoundRenderImpl * pDSoundRender;
-
-    *out = NULL;
-
-    pDSoundRender = CoTaskMemAlloc(sizeof(DSoundRenderImpl));
-    if (!pDSoundRender)
-        return E_OUTOFMEMORY;
-    ZeroMemory(pDSoundRender, sizeof(DSoundRenderImpl));
-
-    hr = strmbase_renderer_init(&pDSoundRender->renderer,
-            outer, &CLSID_DSoundRender, sink_name, &renderer_ops);
-
-    pDSoundRender->IBasicAudio_iface.lpVtbl = &IBasicAudio_Vtbl;
-    pDSoundRender->IReferenceClock_iface.lpVtbl = &IReferenceClock_Vtbl;
-    pDSoundRender->IAMDirectSound_iface.lpVtbl = &IAMDirectSound_Vtbl;
-
-    if (SUCCEEDED(hr))
-    {
-        hr = DirectSoundCreate8(NULL, &pDSoundRender->dsound, NULL);
-        if (FAILED(hr))
-            ERR("Cannot create Direct Sound object (%x)\n", hr);
-        else
-            hr = IDirectSound8_SetCooperativeLevel(pDSoundRender->dsound, GetDesktopWindow(), DSSCL_PRIORITY);
-        if (SUCCEEDED(hr)) {
-            IDirectSoundBuffer *buf;
-            DSBUFFERDESC buf_desc;
-            memset(&buf_desc,0,sizeof(DSBUFFERDESC));
-            buf_desc.dwSize = sizeof(DSBUFFERDESC);
-            buf_desc.dwFlags = DSBCAPS_PRIMARYBUFFER;
-            hr = IDirectSound8_CreateSoundBuffer(pDSoundRender->dsound, &buf_desc, &buf, NULL);
-            if (SUCCEEDED(hr)) {
-                IDirectSoundBuffer_Play(buf, 0, 0, DSBPLAY_LOOPING);
-                IDirectSoundBuffer_Release(buf);
-            }
-            hr = S_OK;
-        }
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        *out = &pDSoundRender->renderer.filter.IUnknown_inner;
-    }
-    else
-    {
-        strmbase_renderer_cleanup(&pDSoundRender->renderer);
-        CoTaskMemFree(pDSoundRender);
-    }
-
-    return hr;
-}
-
 /*** IUnknown methods ***/
 static HRESULT WINAPI Basicaudio_QueryInterface(IBasicAudio *iface,
 						REFIID riid,
@@ -1158,3 +1098,58 @@ static const IAMDirectSoundVtbl IAMDirectSound_Vtbl =
     AMDirectSound_SetFocusWindow,
     AMDirectSound_GetFocusWindow
 };
+
+HRESULT dsound_render_create(IUnknown *outer, void **out)
+{
+    static const DSBUFFERDESC buffer_desc = {
+        .dwSize = sizeof(DSBUFFERDESC),
+        .dwFlags = DSBCAPS_PRIMARYBUFFER,
+    };
+
+    IDirectSoundBuffer *buffer;
+    DSoundRenderImpl *object;
+    HRESULT hr;
+
+    if (!(object = CoTaskMemAlloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
+    memset(object, 0, sizeof(*object));
+
+    if (FAILED(hr = strmbase_renderer_init(&object->renderer, outer,
+            &CLSID_DSoundRender, L"Audio Input pin (rendered)", &renderer_ops)))
+    {
+        CoTaskMemFree(object);
+        return hr;
+    }
+
+    object->IBasicAudio_iface.lpVtbl = &IBasicAudio_Vtbl;
+    object->IReferenceClock_iface.lpVtbl = &IReferenceClock_Vtbl;
+    object->IAMDirectSound_iface.lpVtbl = &IAMDirectSound_Vtbl;
+
+    if (FAILED(hr = DirectSoundCreate8(NULL, &object->dsound, NULL)))
+    {
+        strmbase_renderer_cleanup(&object->renderer);
+        CoTaskMemFree(object);
+        return hr;
+    }
+
+    if (FAILED(hr = IDirectSound8_SetCooperativeLevel(object->dsound,
+            GetDesktopWindow(), DSSCL_PRIORITY)))
+    {
+        IDirectSound8_Release(object->dsound);
+        strmbase_renderer_cleanup(&object->renderer);
+        CoTaskMemFree(object);
+        return hr;
+    }
+
+    if (SUCCEEDED(hr = IDirectSound8_CreateSoundBuffer(object->dsound,
+            &buffer_desc, &buffer, NULL)))
+    {
+        IDirectSoundBuffer_Play(buffer, 0, 0, DSBPLAY_LOOPING);
+        IDirectSoundBuffer_Release(buffer);
+    }
+
+    TRACE("Created DirectSound renderer %p.\n", object);
+    *out = &object->renderer.filter.IUnknown_inner;
+
+    return S_OK;
+}
