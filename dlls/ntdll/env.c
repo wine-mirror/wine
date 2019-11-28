@@ -622,8 +622,17 @@ static void get_current_directory( UNICODE_STRING *dir )
         if (!wine_unix_to_nt_file_name( &unix_name, &nt_name ))
         {
             /* skip the \??\ prefix */
-            dir->Length = nt_name.Length - 4 * sizeof(WCHAR);
-            memcpy( dir->Buffer, nt_name.Buffer + 4, dir->Length );
+            if (nt_name.Length > 6 * sizeof(WCHAR*) && nt_name.Buffer[5] == ':')
+            {
+                dir->Length = nt_name.Length - 4 * sizeof(WCHAR);
+                memcpy( dir->Buffer, nt_name.Buffer + 4, dir->Length );
+            }
+            else  /* change \??\ to \\?\ */
+            {
+                dir->Length = nt_name.Length;
+                memcpy( dir->Buffer, nt_name.Buffer, dir->Length );
+                dir->Buffer[1] = '\\';
+            }
             RtlFreeUnicodeString( &nt_name );
         }
     }
