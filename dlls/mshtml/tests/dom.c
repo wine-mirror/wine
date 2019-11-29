@@ -2058,7 +2058,7 @@ static IHTMLDOMAttribute *_create_attr(unsigned line, IUnknown *unk, const char 
     HRESULT hres;
 
     hres = IHTMLDocument5_createAttribute(doc, str, &attr);
-    ok_(__FILE__,line)(hres == S_OK, "createAttribute dailed: %08x\n", hres);
+    ok_(__FILE__,line)(hres == S_OK, "createAttribute failed: %08x\n", hres);
     SysFreeString(str);
     IHTMLDocument5_Release(doc);
 
