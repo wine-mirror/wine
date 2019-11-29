@@ -228,7 +228,7 @@ static void test__wenviron(void)
         if ((*p_wenviron)[i])
         {
             ok( wenvp[i] != NULL, "Expected environment block pointer element to be non-NULL\n" );
-            ok( !winetest_strcmpW((*p_wenviron)[i], wenvp[i]),
+            ok( !wcscmp((*p_wenviron)[i], wenvp[i]),
                 "Expected _wenviron and environment block pointer strings (%s vs. %s) to match\n",
                 wine_dbgstr_w((*p_wenviron)[i]), wine_dbgstr_w(wenvp[i]) );
         }
