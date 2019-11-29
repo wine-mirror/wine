@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-10-27 21:38+0900\n"
+"PO-Revision-Date: 2019-11-29 22:03+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -615,7 +615,7 @@ msgstr "文字セット(&I):"
 
 #: comdlg32.rc:283 comdlg32.rc:288
 msgid "Color"
-msgstr "色の設定"
+msgstr "色"
 
 #: comdlg32.rc:286
 msgid "&Basic Colors:"
@@ -627,7 +627,7 @@ msgstr "作成した色(&C):"
 
 #: comdlg32.rc:289
 msgid "|S&olid"
-msgstr ""
+msgstr "|純色(&O)"
 
 #: comdlg32.rc:290
 msgid "&Red:"
@@ -664,11 +664,9 @@ msgid "&Define Custom Colors >>"
 msgstr "色の作成(&D) >>"
 
 #: comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "いいえ(&N)"
+msgstr "&o"
 
 #: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
