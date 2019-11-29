@@ -2003,20 +2003,37 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFileType( HANDLE file )
 BOOL WINAPI DECLSPEC_HOTPATCH GetOverlappedResult( HANDLE file, LPOVERLAPPED overlapped,
                                                    LPDWORD result, BOOL wait )
 {
-    NTSTATUS status;
+    return GetOverlappedResultEx( file, overlapped, result, wait ? INFINITE : 0, FALSE );
+}
 
-    TRACE( "(%p %p %p %x)\n", file, overlapped, result, wait );
+
+/***********************************************************************
+ *	GetOverlappedResultEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetOverlappedResultEx( HANDLE file, OVERLAPPED *overlapped,
+                                                     DWORD *result, DWORD timeout, BOOL alertable )
+{
+    NTSTATUS status;
+    DWORD ret;
+
+    TRACE( "(%p %p %p %u %d)\n", file, overlapped, result, timeout, alertable );
 
     status = overlapped->Internal;
     if (status == STATUS_PENDING)
     {
-        if (!wait)
+        if (!timeout)
         {
             SetLastError( ERROR_IO_INCOMPLETE );
             return FALSE;
         }
-        if (WaitForSingleObject( overlapped->hEvent ? overlapped->hEvent : file, INFINITE ) == WAIT_FAILED)
+        ret = WaitForSingleObjectEx( overlapped->hEvent ? overlapped->hEvent : file, timeout, alertable );
+        if (ret == WAIT_FAILED)
             return FALSE;
+        else if (ret)
+        {
+            SetLastError( ret );
+            return FALSE;
+        }
 
         status = overlapped->Internal;
         if (status == STATUS_PENDING) status = STATUS_SUCCESS;

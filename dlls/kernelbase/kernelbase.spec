@@ -584,7 +584,7 @@
 # @ stub GetOsManufacturingMode
 # @ stub GetOsSafeBootMode
 @ stdcall GetOverlappedResult(long ptr ptr long)
-# @ stub GetOverlappedResultEx
+@ stdcall GetOverlappedResultEx(long ptr ptr long long)
 # @ stub GetPackageApplicationContext
 # @ stub GetPackageApplicationIds
 # @ stub GetPackageApplicationProperty

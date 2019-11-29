@@ -42,6 +42,7 @@ static BOOL (WINAPI *pGetNamedPipeClientProcessId)(HANDLE,ULONG*);
 static BOOL (WINAPI *pGetNamedPipeServerProcessId)(HANDLE,ULONG*);
 static BOOL (WINAPI *pGetNamedPipeClientSessionId)(HANDLE,ULONG*);
 static BOOL (WINAPI *pGetNamedPipeServerSessionId)(HANDLE,ULONG*);
+static BOOL (WINAPI *pGetOverlappedResultEx)(HANDLE,OVERLAPPED *,DWORD *,DWORD,BOOL);
 
 static BOOL user_apc_ran;
 static void CALLBACK user_apc(ULONG_PTR param)
@@ -4065,6 +4066,57 @@ static void test_nowait(DWORD pipe_type)
     ok(CloseHandle(pipewrite), "CloseHandle for the write pipe failed\n");
 }
 
+static void test_GetOverlappedResultEx(void)
+{
+    HANDLE client, server;
+    OVERLAPPED ovl;
+    char buffer[8000];
+    DWORD ret_size;
+    BOOL ret;
+
+    if (!pGetOverlappedResultEx)
+    {
+        win_skip("GetOverlappedResultEx() is not available\n");
+        return;
+    }
+
+    create_overlapped_pipe(PIPE_TYPE_BYTE, &client, &server);
+
+    overlapped_write_async(client, buffer, sizeof(buffer), &ovl);
+
+    user_apc_ran = FALSE;
+    QueueUserAPC(user_apc, GetCurrentThread(), 0);
+
+    SetLastError(0xdeadbeef);
+    ret = pGetOverlappedResultEx(client, &ovl, &ret_size, 0, FALSE);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_IO_INCOMPLETE, "wrong error %u\n", GetLastError());
+    ok(!user_apc_ran, "APC should not have run\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pGetOverlappedResultEx(client, &ovl, &ret_size, 0, TRUE);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_IO_INCOMPLETE, "wrong error %u\n", GetLastError());
+    ok(!user_apc_ran, "APC should not have run\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pGetOverlappedResultEx(client, &ovl, &ret_size, 10, FALSE);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == WAIT_TIMEOUT, "wrong error %u\n", GetLastError());
+    ok(!user_apc_ran, "APC should not have run\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pGetOverlappedResultEx(client, &ovl, &ret_size, 10, TRUE);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == WAIT_IO_COMPLETION, "wrong error %u\n", GetLastError());
+    ok(user_apc_ran, "APC should have run\n");
+
+    CloseHandle(ovl.hEvent);
+
+    CloseHandle(client);
+    CloseHandle(server);
+}
+
 START_TEST(pipe)
 {
     char **argv;
@@ -4080,6 +4132,7 @@ START_TEST(pipe)
     pGetNamedPipeServerProcessId = (void *) GetProcAddress(hmod, "GetNamedPipeServerProcessId");
     pGetNamedPipeClientSessionId = (void *) GetProcAddress(hmod, "GetNamedPipeClientSessionId");
     pGetNamedPipeServerSessionId = (void *) GetProcAddress(hmod, "GetNamedPipeServerSessionId");
+    pGetOverlappedResultEx = (void *)GetProcAddress(hmod, "GetOverlappedResultEx");
 
     argc = winetest_get_mainargs(&argv);
 
@@ -4134,4 +4187,5 @@ START_TEST(pipe)
     test_wait_pipe();
     test_nowait(PIPE_TYPE_BYTE);
     test_nowait(PIPE_TYPE_MESSAGE);
+    test_GetOverlappedResultEx();
 }

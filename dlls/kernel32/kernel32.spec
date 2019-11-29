@@ -760,6 +760,7 @@
 @ stdcall GetNumberOfConsoleMouseButtons(ptr)
 @ stdcall -import GetOEMCP()
 @ stdcall -import GetOverlappedResult(long ptr ptr long)
+@ stdcall -import GetOverlappedResultEx(long ptr ptr long long)
 @ stdcall GetUserPreferredUILanguages(long ptr ptr ptr)
 @ stdcall GetPackageFullName(long ptr ptr)
 @ stdcall -import GetPhysicallyInstalledSystemMemory(ptr)
