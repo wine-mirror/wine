@@ -7350,7 +7350,9 @@ static void test_GetPaletteEntries(void)
 
 static void test_TranslateColorGlyphRun(void)
 {
+    IDWriteColorGlyphRunEnumerator1 *layers1;
     IDWriteColorGlyphRunEnumerator *layers;
+    const DWRITE_COLOR_GLYPH_RUN1 *colorrun1;
     const DWRITE_COLOR_GLYPH_RUN *colorrun;
     IDWriteFontFace2 *fontface2;
     IDWriteFontFace *fontface;
@@ -7416,6 +7418,13 @@ static void test_TranslateColorGlyphRun(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(layers != NULL, "got %p\n", layers);
 
+    hr = IDWriteColorGlyphRunEnumerator_QueryInterface(layers, &IID_IDWriteColorGlyphRunEnumerator1, (void **)&layers1);
+    if (FAILED(hr))
+    {
+        layers1 = NULL;
+        win_skip("IDWriteColorGlyphRunEnumerator1 is not supported.\n");
+    }
+
     for (;;) {
         hasrun = FALSE;
         hr = IDWriteColorGlyphRunEnumerator_MoveNext(layers, &hasrun);
@@ -7431,13 +7440,32 @@ static void test_TranslateColorGlyphRun(void)
         ok(colorrun->glyphRun.glyphCount > 0, "got wrong glyph count %u\n", colorrun->glyphRun.glyphCount);
         ok(colorrun->glyphRun.glyphIndices != NULL, "got null glyph indices %p\n", colorrun->glyphRun.glyphIndices);
         ok(colorrun->glyphRun.glyphAdvances != NULL, "got null glyph advances %p\n", colorrun->glyphRun.glyphAdvances);
+
+        if (layers1)
+        {
+            hr = IDWriteColorGlyphRunEnumerator1_GetCurrentRun(layers1, &colorrun1);
+            ok(hr == S_OK, "Failed to get color runt, hr %#x.\n", hr);
+            ok(colorrun1->glyphRun.fontFace != NULL, "Unexpected fontface %p.\n", colorrun1->glyphRun.fontFace);
+            ok(colorrun1->glyphRun.fontEmSize == 20.0f, "Unexpected font size %f.\n", colorrun1->glyphRun.fontEmSize);
+            ok(colorrun1->glyphRun.glyphCount > 0, "Unexpected glyph count %u\n", colorrun1->glyphRun.glyphCount);
+            ok(colorrun1->glyphRun.glyphIndices != NULL, "Unexpected indices array.\n");
+            ok(colorrun1->glyphRun.glyphAdvances != NULL, "Unexpected advances array.\n");
+        }
     }
 
     /* iterated all way through */
     hr = IDWriteColorGlyphRunEnumerator_GetCurrentRun(layers, &colorrun);
     ok(hr == E_NOT_VALID_STATE, "got 0x%08x\n", hr);
 
+    if (layers1)
+    {
+        hr = IDWriteColorGlyphRunEnumerator1_GetCurrentRun(layers1, &colorrun1);
+        ok(hr == E_NOT_VALID_STATE, "Unexpected hr %#x.\n", hr);
+    }
+
     IDWriteColorGlyphRunEnumerator_Release(layers);
+    if (layers1)
+        IDWriteColorGlyphRunEnumerator1_Release(layers1);
 
     hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace2, (void**)&fontface2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
