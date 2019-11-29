@@ -1251,7 +1251,7 @@ void WINAPI IoReleaseRemoveLockAndWaitEx( IO_REMOVE_LOCK *lock, void *tag, ULONG
 
     lock->Common.Removed = TRUE;
 
-    if (!(count = InterlockedDecrement( &lock->Common.IoCount )) && lock->Common.Removed)
+    if (!(count = InterlockedDecrement( &lock->Common.IoCount )))
         KeSetEvent( &lock->Common.RemoveEvent, IO_NO_INCREMENT, FALSE );
     else if (count < 0)
         ERR("Lock %p is not acquired!\n", lock);
