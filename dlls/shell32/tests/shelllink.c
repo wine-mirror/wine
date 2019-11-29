@@ -496,9 +496,7 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
         {
             IMalloc *pmalloc;
 
-            lok(!winetest_strcmpW(path, str), "Expected %s, got %s\n",
-                wine_dbgstr_w(path), wine_dbgstr_w(str));
-
+            lok(!wcscmp(path, str), "Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
             SHGetMalloc(&pmalloc);
             IMalloc_Free(pmalloc, str);
         }
@@ -554,9 +552,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
     {
         IMalloc *pmalloc;
 
-        lok(!winetest_strcmpW(path, str), "Expected %s, got %s\n",
-            wine_dbgstr_w(path), wine_dbgstr_w(str));
-
+        lok(!wcscmp(path, str), "Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
         SHGetMalloc(&pmalloc);
         IMalloc_Free(pmalloc, str);
     }
