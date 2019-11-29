@@ -901,8 +901,10 @@ static IUnknown *create_test_effect(void)
 static void test_CreateTextLayout(void)
 {
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
-    IDWriteTextLayout2 *layout2;
+    IDWriteTextLayout4 *layout4;
+    IDWriteTextLayout2 *layout2 = NULL;
     IDWriteTextLayout *layout;
+    IDWriteTextFormat3 *format3;
     IDWriteTextFormat *format;
     IDWriteFactory *factory;
     HRESULT hr;
@@ -991,11 +993,21 @@ static void test_CreateTextLayout(void)
 
         IDWriteTextFormat1_Release(format1);
         IDWriteTextFormat_Release(format);
-        IDWriteTextLayout2_Release(layout2);
     }
     else
         win_skip("IDWriteTextLayout2 is not supported.\n");
 
+    if (layout2 && SUCCEEDED(IDWriteTextLayout2_QueryInterface(layout2, &IID_IDWriteTextLayout4, (void **)&layout4)))
+    {
+        hr = IDWriteTextLayout4_QueryInterface(layout4, &IID_IDWriteTextFormat3, (void **)&format3);
+        ok(hr == S_OK, "Failed to get text format, hr %#x.\n", hr);
+        IDWriteTextFormat3_Release(format3);
+    }
+    else
+        win_skip("IDWriteTextLayout4 is not supported.\n");
+
+    if (layout2)
+        IDWriteTextLayout2_Release(layout2);
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
