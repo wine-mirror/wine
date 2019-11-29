@@ -2151,7 +2151,7 @@ static void test_get_containing_output(void)
         {
             ret = SetWindowPos(swapchain_desc.OutputWindow, 0, points[i].x, points[i].y,
                     0, 0, SWP_NOSIZE | SWP_NOZORDER);
-            ok(ret, "Faled to set window position.\n");
+            ok(ret, "Failed to set window position.\n");
 
             monitor = MonitorFromWindow(swapchain_desc.OutputWindow, MONITOR_DEFAULTTONEAREST);
             ok(!!monitor, "Failed to get monitor from window.\n");
