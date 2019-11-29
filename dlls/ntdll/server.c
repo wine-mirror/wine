@@ -1139,7 +1139,7 @@ static int setup_config_dir(void)
 
     if (chdir( config_dir ) == -1)
     {
-        if (errno != ENOENT) fatal_perror( "chdir to %s\n", config_dir );
+        if (errno != ENOENT) fatal_perror( "chdir to %s", config_dir );
 
         if ((p = strrchr( config_dir, '/' )) && p != config_dir)
         {
@@ -1156,7 +1156,7 @@ static int setup_config_dir(void)
         }
 
         mkdir( config_dir, 0777 );
-        if (chdir( config_dir ) == -1) fatal_perror( "chdir to %s\n", config_dir );
+        if (chdir( config_dir ) == -1) fatal_perror( "chdir to %s", config_dir );
 
         MESSAGE( "wine: created the configuration directory '%s'\n", config_dir );
     }
@@ -1164,7 +1164,7 @@ static int setup_config_dir(void)
     if (mkdir( "dosdevices", 0777 ) == -1)
     {
         if (errno == EEXIST) goto done;
-        fatal_perror( "cannot create %s/dosdevices\n", config_dir );
+        fatal_perror( "cannot create %s/dosdevices", config_dir );
     }
 
     /* create the drive symlinks */
