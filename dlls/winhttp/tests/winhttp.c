@@ -3651,7 +3651,7 @@ static void test_credentials(void)
     size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PROXY_USERNAME, &buffer, &size);
     ok(ret, "failed to query proxy username %u\n", GetLastError());
-    ok(!winetest_strcmpW(buffer, proxy_userW), "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(!wcscmp(buffer, proxy_userW), "unexpected result %s\n", wine_dbgstr_w(buffer));
     ok(size == lstrlenW(proxy_userW) * sizeof(WCHAR), "unexpected result %u\n", size);
 
     size = ARRAY_SIZE(buffer);
@@ -3672,7 +3672,7 @@ static void test_credentials(void)
     size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PROXY_PASSWORD, &buffer, &size);
     ok(ret, "failed to query proxy password %u\n", GetLastError());
-    ok(!winetest_strcmpW(buffer, proxy_passW), "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(!wcscmp(buffer, proxy_passW), "unexpected result %s\n", wine_dbgstr_w(buffer));
     ok(size == lstrlenW(proxy_passW) * sizeof(WCHAR), "unexpected result %u\n", size);
 
     ret = WinHttpSetOption(req, WINHTTP_OPTION_USERNAME, userW, lstrlenW(userW));
@@ -3681,7 +3681,7 @@ static void test_credentials(void)
     size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_USERNAME, &buffer, &size);
     ok(ret, "failed to query username %u\n", GetLastError());
-    ok(!winetest_strcmpW(buffer, userW), "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(!wcscmp(buffer, userW), "unexpected result %s\n", wine_dbgstr_w(buffer));
     ok(size == lstrlenW(userW) * sizeof(WCHAR), "unexpected result %u\n", size);
 
     ret = WinHttpSetOption(req, WINHTTP_OPTION_PASSWORD, passW, lstrlenW(passW));
@@ -3690,7 +3690,7 @@ static void test_credentials(void)
     size = ARRAY_SIZE(buffer);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PASSWORD, &buffer, &size);
     ok(ret, "failed to query password %u\n", GetLastError());
-    ok(!winetest_strcmpW(buffer, passW), "unexpected result %s\n", wine_dbgstr_w(buffer));
+    ok(!wcscmp(buffer, passW), "unexpected result %s\n", wine_dbgstr_w(buffer));
     ok(size == lstrlenW(passW) * sizeof(WCHAR), "unexpected result %u\n", size);
 
     WinHttpCloseHandle(req);
