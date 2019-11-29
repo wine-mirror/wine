@@ -11040,21 +11040,7 @@ static void test_colorkey_precision(void)
         {{ 1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},
         {{ 1.0f,  1.0f, 0.0f}, {1.0f, 0.0f}},
     };
-    IDirect3DDevice7 *device;
-    IDirect3D7 *d3d;
-    IDirectDraw7 *ddraw;
-    IDirectDrawSurface7 *rt;
-    HWND window;
-    HRESULT hr;
-    IDirectDrawSurface7 *src, *dst, *texture;
-    DDSURFACEDESC2 surface_desc, lock_desc;
-    ULONG refcount;
-    D3DCOLOR color;
-    unsigned int t, c;
-    DDCOLORKEY ckey;
-    DDBLTFX fx;
-    DWORD data[4] = {0}, color_mask;
-    BOOL is_nvidia, is_warp;
+
     static const struct
     {
         unsigned int max, shift, bpp, clear;
@@ -11097,6 +11083,22 @@ static void test_colorkey_precision(void)
         },
     };
 
+    IDirectDrawSurface7 *src, *dst, *texture;
+    DDSURFACEDESC2 surface_desc, lock_desc;
+    DWORD data[4] = {0}, color_mask;
+    IDirect3DDevice7 *device;
+    IDirectDrawSurface7 *rt;
+    IDirectDraw7 *ddraw;
+    unsigned int t, c;
+    DDCOLORKEY ckey;
+    IDirect3D7 *d3d;
+    BOOL is_nvidia;
+    ULONG refcount;
+    D3DCOLOR color;
+    HWND window;
+    HRESULT hr;
+    DDBLTFX fx;
+
     window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
@@ -11106,40 +11108,43 @@ static void test_colorkey_precision(void)
     }
 
     hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get Direct3D7 interface, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **)&ddraw);
-    ok(SUCCEEDED(hr), "Failed to get DirectDraw7 interface, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     IDirect3D7_Release(d3d);
     hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     is_nvidia = ddraw_is_nvidia(ddraw);
     /* The Windows 8 WARP driver has plenty of false negatives in X8R8G8B8
      * (color key doesn't match although the values are equal), and a false
      * positive when the color key is 0 and the texture contains the value 1.
-     * I don't want to mark this broken unconditionally since this would
-     * essentially disable the test on Windows. Also on random occasions
-     * 254 == 255 and 255 != 255.*/
-    is_warp = ddraw_is_warp(ddraw);
+     * Also on random occasions 254 == 255 and 255 != 255.
+     * Crashes on Windows 10 WARP. */
+    if (ddraw_is_warp(ddraw))
+    {
+        win_skip("Skipping test on WARP driver.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable z-buffering, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_COLORKEYENABLE, TRUE);
-    ok(SUCCEEDED(hr), "Failed to enable color keying, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     /* Multiply the texture read result with 0, that way the result color if the key doesn't
      * match is constant. In theory color keying works without reading the texture result
      * (meaning we could just op=arg1, arg1=tfactor), but the Geforce7 Windows driver begs
      * to differ. */
     hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-    ok(SUCCEEDED(hr), "Failed to set color op, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-    ok(SUCCEEDED(hr), "Failed to set color arg, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
-    ok(SUCCEEDED(hr), "Failed to set color arg, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_TEXTUREFACTOR, 0x00000000);
-    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
@@ -11164,9 +11169,9 @@ static void test_colorkey_precision(void)
         /* Windows XP (at least with the r200 driver, other drivers untested) produces
          * garbage when doing color keyed texture->texture blits. */
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src, NULL);
-        ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst, NULL);
-        ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
         U5(fx).dwFillColor = tests[t].clear;
         /* On the w8 testbot (WARP driver) the blit result has different values in the
@@ -11184,15 +11189,15 @@ static void test_colorkey_precision(void)
             surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = c << tests[t].shift;
             surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue = c << tests[t].shift;
             hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &texture, NULL);
-            ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirect3DDevice7_SetTexture(device, 0, texture);
-            ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             hr = IDirectDrawSurface7_Blt(dst, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-            ok(SUCCEEDED(hr), "Failed to clear destination surface, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             hr = IDirectDrawSurface7_Lock(src, NULL, &lock_desc, DDLOCK_WAIT, NULL);
-            ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             switch (tests[t].bpp)
             {
                 case 4:
@@ -11210,21 +11215,21 @@ static void test_colorkey_precision(void)
                     break;
             }
             hr = IDirectDrawSurface7_Unlock(src, 0);
-            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirectDrawSurface7_Blt(texture, NULL, src, NULL, DDBLT_WAIT, NULL);
-            ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             ckey.dwColorSpaceLowValue = c << tests[t].shift;
             ckey.dwColorSpaceHighValue = c << tests[t].shift;
             hr = IDirectDrawSurface7_SetColorKey(src, DDCKEY_SRCBLT, &ckey);
-            ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYSRC | DDBLT_WAIT, NULL);
-            ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             /* Don't make this read only, it somehow breaks the detection of the Nvidia bug below. */
             hr = IDirectDrawSurface7_Lock(dst, NULL, &lock_desc, DDLOCK_WAIT, NULL);
-            ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             switch (tests[t].bpp)
             {
                 case 4:
@@ -11242,7 +11247,7 @@ static void test_colorkey_precision(void)
                     break;
             }
             hr = IDirectDrawSurface7_Unlock(dst, 0);
-            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             if (!c)
             {
@@ -11284,38 +11289,34 @@ static void test_colorkey_precision(void)
                         (c + 1) << tests[t].shift, data[2], tests[t].name, c);
 
             hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x0000ff00, 1.0f, 0);
-            ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             hr = IDirect3DDevice7_BeginScene(device);
-            ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_TEX1, quad, 4, 0);
-            ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirect3DDevice7_EndScene(device);
-            ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             color = get_surface_color(rt, 80, 240);
+
             if (!c)
-                ok(compare_color(color, 0x0000ff00, 1) || broken(is_warp && compare_color(color, 0x00000000, 1)),
-                        "Got unexpected color 0x%08x, format %s, c=%u.\n",
+                ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x, format %s, c=%u.\n",
                         color, tests[t].name, c);
             else
-                ok(compare_color(color, 0x00000000, 1) || broken(is_warp && compare_color(color, 0x0000ff00, 1)),
-                        "Got unexpected color 0x%08x, format %s, c=%u.\n",
+                ok(compare_color(color, 0x00000000, 1), "Got unexpected color 0x%08x, format %s, c=%u.\n",
                         color, tests[t].name, c);
 
             color = get_surface_color(rt, 240, 240);
-            ok(compare_color(color, 0x0000ff00, 1) || broken(is_warp && compare_color(color, 0x00000000, 1)),
-                    "Got unexpected color 0x%08x, format %s, c=%u.\n",
+            ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x, format %s, c=%u.\n",
                     color, tests[t].name, c);
 
             color = get_surface_color(rt, 400, 240);
             if (c == tests[t].max)
-                ok(compare_color(color, 0x0000ff00, 1) || broken(is_warp && compare_color(color, 0x00000000, 1)),
-                        "Got unexpected color 0x%08x, format %s, c=%u.\n",
+                ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x, format %s, c=%u.\n",
                         color, tests[t].name, c);
             else
-                ok(compare_color(color, 0x00000000, 1) || broken(is_warp && compare_color(color, 0x0000ff00, 1)),
-                        "Got unexpected color 0x%08x, format %s, c=%u.\n",
+                ok(compare_color(color, 0x00000000, 1), "Got unexpected color 0x%08x, format %s, c=%u.\n",
                         color, tests[t].name, c);
 
             IDirectDrawSurface7_Release(texture);
