@@ -66,12 +66,10 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
     LONGLONG tStart = -1, tStop = -1, tMed;
     LONGLONG mtStart = -1, mtStop = -1, mtMed;
 
-    EnterCriticalSection(&This->tf.csReceive);
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
-        LeaveCriticalSection(&This->tf.csReceive);
         return hr;
     }
 
@@ -107,7 +105,6 @@ static HRESULT WINAPI ACMWrapper_Receive(TransformFilter *tf, IMediaSample *pSam
         if (FAILED(hr))
         {
             ERR("Unable to get delivery buffer (%x)\n", hr);
-            LeaveCriticalSection(&This->tf.csReceive);
             return hr;
         }
         IMediaSample_SetPreroll(pOutSample, preroll);
@@ -224,7 +221,6 @@ error:
     This->lasttime_real = tStop;
     This->lasttime_sent = tMed;
 
-    LeaveCriticalSection(&This->tf.csReceive);
     return hr;
 }
 

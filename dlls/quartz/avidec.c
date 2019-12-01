@@ -111,12 +111,11 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     LONGLONG tStart, tStop;
     DWORD flags = 0;
 
-    EnterCriticalSection(&This->tf.csReceive);
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
-        goto error;
+        return hr;
     }
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
@@ -129,7 +128,7 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->tf.source, &pOutSample, NULL, NULL, 0);
     if (FAILED(hr)) {
         ERR("Unable to get delivery buffer (%x)\n", hr);
-        goto error;
+        return hr;
     }
 
     hr = IMediaSample_SetActualDataLength(pOutSample, 0);
@@ -138,13 +137,14 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     hr = IMediaSample_GetPointer(pOutSample, &pbDstStream);
     if (FAILED(hr)) {
 	ERR("Unable to get pointer to buffer (%x)\n", hr);
-	goto error;
+        IMediaSample_Release(pOutSample);
+        return hr;
     }
     cbDstStream = IMediaSample_GetSize(pOutSample);
     if (cbDstStream < This->pBihOut->biSizeImage) {
         ERR("Sample size is too small %d < %d\n", cbDstStream, This->pBihOut->biSizeImage);
-        hr = E_FAIL;
-        goto error;
+        IMediaSample_Release(pOutSample);
+        return E_FAIL;
     }
 
     if (IMediaSample_IsPreroll(pSample) == S_OK)
@@ -161,8 +161,8 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
 
     /* Drop sample if it's intended to be dropped */
     if (flags & ICDECOMPRESS_HURRYUP) {
-        hr = S_OK;
-        goto error;
+        IMediaSample_Release(pOutSample);
+        return S_OK;
     }
 
     IMediaSample_SetActualDataLength(pOutSample, This->pBihOut->biSizeImage);
@@ -187,11 +187,7 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);
 
-error:
-    if (pOutSample)
-        IMediaSample_Release(pOutSample);
-
-    LeaveCriticalSection(&This->tf.csReceive);
+    IMediaSample_Release(pOutSample);
     return hr;
 }
 

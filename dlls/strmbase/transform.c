@@ -82,12 +82,12 @@ static HRESULT WINAPI TransformFilter_Input_Receive(struct strmbase_sink *This, 
         return S_FALSE;
     }
 
-    LeaveCriticalSection(&pTransform->csReceive);
     if (pTransform->pFuncsTable->pfnReceive)
         hr = pTransform->pFuncsTable->pfnReceive(pTransform, pInSample);
     else
         hr = S_FALSE;
 
+    LeaveCriticalSection(&pTransform->csReceive);
     return hr;
 }
 

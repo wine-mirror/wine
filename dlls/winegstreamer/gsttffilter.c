@@ -227,7 +227,6 @@ static HRESULT WINAPI Gstreamer_transform_ProcessData(TransformFilter *iface, IM
 
     mark_wine_thread();
 
-    EnterCriticalSection(&This->tf.csReceive);
     IMediaSample_GetPointer(sample, &data);
 
     IMediaSample_AddRef(sample);
@@ -235,7 +234,6 @@ static HRESULT WINAPI Gstreamer_transform_ProcessData(TransformFilter *iface, IM
     buf = gst_buffer_new_wrapped_full(0, data, bufsize, 0, bufsize, sample, release_sample_wrapper);
     if (!buf) {
         IMediaSample_Release(sample);
-        LeaveCriticalSection(&This->tf.csReceive);
         return S_OK;
     }
 
@@ -259,7 +257,6 @@ static HRESULT WINAPI Gstreamer_transform_ProcessData(TransformFilter *iface, IM
         GST_BUFFER_FLAG_SET(buf, GST_BUFFER_FLAG_LIVE);
     if (IMediaSample_IsSyncPoint(sample) != S_OK)
         GST_BUFFER_FLAG_SET(buf, GST_BUFFER_FLAG_DELTA_UNIT);
-    LeaveCriticalSection(&This->tf.csReceive);
     ret = gst_pad_push(This->my_src, buf);
     if (ret)
         WARN("Sending returned: %i\n", ret);
