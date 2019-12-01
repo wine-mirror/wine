@@ -3248,7 +3248,7 @@ struct wined3d_stateblock_state
     struct wined3d_viewport viewport;
     RECT scissor_rect;
 
-    struct wined3d_light_state light_state;
+    struct wined3d_light_state *light_state;
 };
 
 struct wined3d_device
@@ -3947,7 +3947,9 @@ struct wined3d_stateblock
 
     /* Array indicating whether things have been set or changed */
     struct wined3d_saved_states changed;
+
     struct wined3d_stateblock_state stateblock_state;
+    struct wined3d_light_state light_state;
 
     /* Contained state management */
     DWORD                     contained_render_states[WINEHIGHEST_RENDER_STATE + 1];
