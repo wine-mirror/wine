@@ -1698,6 +1698,11 @@ HRESULT CDECL wined3d_stateblock_set_light_enable(struct wined3d_stateblock *sta
     return S_OK;
 }
 
+const struct wined3d_stateblock_state * CDECL wined3d_stateblock_get_state(const struct wined3d_stateblock *stateblock)
+{
+    return &stateblock->stateblock_state;
+}
+
 static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union

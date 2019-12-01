@@ -259,6 +259,7 @@
 @ cdecl wined3d_stateblock_capture(ptr ptr)
 @ cdecl wined3d_stateblock_create(ptr ptr long ptr)
 @ cdecl wined3d_stateblock_decref(ptr)
+@ cdecl wined3d_stateblock_get_state(ptr)
 @ cdecl wined3d_stateblock_incref(ptr)
 @ cdecl wined3d_stateblock_init_contained_states(ptr)
 @ cdecl wined3d_stateblock_reset(ptr)

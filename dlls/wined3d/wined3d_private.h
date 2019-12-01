@@ -272,14 +272,8 @@ static inline enum complex_fixup get_complex_fixup(struct color_fixup_desc fixup
 }
 
 /* Device caps */
-#define WINED3D_MAX_STREAMS         16
-#define WINED3D_MAX_TEXTURES        8
-#define WINED3D_MAX_FRAGMENT_SAMPLERS 16
-#define WINED3D_MAX_VERTEX_SAMPLERS 4
-#define WINED3D_MAX_COMBINED_SAMPLERS (WINED3D_MAX_FRAGMENT_SAMPLERS + WINED3D_MAX_VERTEX_SAMPLERS)
 #define WINED3D_MAX_ACTIVE_LIGHTS   8
 #define WINED3D_MAX_SOFTWARE_ACTIVE_LIGHTS 32
-#define WINED3D_MAX_CLIP_DISTANCES  8
 #define MAX_CONSTANT_BUFFERS        15
 #define MAX_SAMPLER_OBJECTS         16
 #define MAX_SHADER_RESOURCE_VIEWS   128
@@ -699,10 +693,6 @@ enum wined3d_shader_conditional_op
 #define MAX_REG_INPUT 32
 #define MAX_REG_OUTPUT 32
 #define WINED3D_MAX_CBS 15
-#define WINED3D_MAX_CONSTS_B 16
-#define WINED3D_MAX_CONSTS_I 16
-#define WINED3D_MAX_VS_CONSTS_F 256
-#define WINED3D_MAX_PS_CONSTS_F 224
 
 /* FIXME: This needs to go up to 2048 for
  * Shader model 3 according to msdn (and for software shaders) */
@@ -1503,8 +1493,6 @@ static inline void wined3d_colour_srgb_from_linear(struct wined3d_color *colour_
     colour_srgb->b = wined3d_srgb_from_linear(colour->b);
     colour_srgb->a = colour->a;
 }
-
-#define WINED3D_HIGHEST_TRANSFORM_STATE WINED3D_TS_WORLD_MATRIX(255) /* Highest value in wined3d_transform_state. */
 
 void wined3d_check_gl_call(const struct wined3d_gl_info *gl_info,
         const char *file, unsigned int line, const char *name) DECLSPEC_HIDDEN;
@@ -3122,15 +3110,6 @@ struct wined3d_stream_output
     UINT offset;
 };
 
-struct wined3d_stream_state
-{
-    struct wined3d_buffer *buffer;
-    UINT offset;
-    UINT stride;
-    UINT frequency;
-    UINT flags;
-};
-
 #define LIGHTMAP_SIZE 43
 #define LIGHTMAP_HASHFUNC(x) ((x) % LIGHTMAP_SIZE)
 
@@ -3216,40 +3195,6 @@ struct wined3d_dummy_textures
 /* Multithreaded flag. Removed from the public header to signal that
  * wined3d_device_create() ignores it. */
 #define WINED3DCREATE_MULTITHREADED 0x00000004
-
-struct wined3d_stateblock_state
-{
-    struct wined3d_vertex_declaration *vertex_declaration;
-    struct wined3d_stream_state streams[WINED3D_MAX_STREAMS + 1];
-    struct wined3d_buffer *index_buffer;
-    enum wined3d_format_id index_format;
-    int base_vertex_index;
-
-    struct wined3d_shader *vs;
-    struct wined3d_vec4 vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
-    struct wined3d_ivec4 vs_consts_i[WINED3D_MAX_CONSTS_I];
-    BOOL vs_consts_b[WINED3D_MAX_CONSTS_B];
-
-    struct wined3d_shader *ps;
-    struct wined3d_vec4 ps_consts_f[WINED3D_MAX_PS_CONSTS_F];
-    struct wined3d_ivec4 ps_consts_i[WINED3D_MAX_CONSTS_I];
-    BOOL ps_consts_b[WINED3D_MAX_CONSTS_B];
-
-    DWORD rs[WINEHIGHEST_RENDER_STATE + 1];
-    struct wined3d_color blend_factor;
-
-    struct wined3d_texture *textures[WINED3D_MAX_COMBINED_SAMPLERS];
-    DWORD sampler_states[WINED3D_MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
-    DWORD texture_states[WINED3D_MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
-
-    struct wined3d_matrix transforms[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
-    struct wined3d_vec4 clip_planes[WINED3D_MAX_CLIP_DISTANCES];
-    struct wined3d_material material;
-    struct wined3d_viewport viewport;
-    RECT scissor_rect;
-
-    struct wined3d_light_state *light_state;
-};
 
 struct wined3d_device
 {
