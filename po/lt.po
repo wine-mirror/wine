@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-05-22 21:25+0300\n"
+"PO-Revision-Date: 2019-12-01 13:42+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Virtaal 0.7.1\n"
+"X-Generator: Poedit 2.2.4\n"
 "X-Project-Style: default\n"
 
 #: appwiz.rc:58
@@ -626,7 +626,7 @@ msgstr "Pr&itaikytos spalvos:"
 
 #: comdlg32.rc:289
 msgid "|S&olid"
-msgstr ""
+msgstr "|&Vientisa"
 
 #: comdlg32.rc:290
 msgid "&Red:"
@@ -663,11 +663,9 @@ msgid "&Define Custom Colors >>"
 msgstr "Api&brėžti pritaikytas spalvas >>"
 
 #: comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "&Ne"
+msgstr "&V"
 
 #: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
@@ -3870,7 +3868,7 @@ msgstr "Trūksta atminties.\n"
 
 #: winerror.mc:103
 msgid "Invalid drive.\n"
-msgstr "neteisingas diskas.\n"
+msgstr "Neteisingas diskas.\n"
 
 #: winerror.mc:108
 msgid "Can't delete current directory.\n"
