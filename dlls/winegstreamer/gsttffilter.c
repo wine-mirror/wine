@@ -272,9 +272,7 @@ static HRESULT WINAPI Gstreamer_transform_ProcessEnd(TransformFilter *iface)
 
     mark_wine_thread();
 
-    LeaveCriticalSection(&This->tf.csReceive);
     ret = gst_element_set_state(This->filter, GST_STATE_READY);
-    EnterCriticalSection(&This->tf.csReceive);
     TRACE("Returned: %i\n", ret);
     return S_OK;
 }
