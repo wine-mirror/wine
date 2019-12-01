@@ -495,12 +495,10 @@ static HRESULT WINAPI TransformFilter_InputPin_NewSegment(IPin * iface, REFERENC
     TRACE("iface %p, start %s, stop %s, rate %.16e.\n",
             iface, debugstr_time(tStart), debugstr_time(tStop), dRate);
 
-    EnterCriticalSection(&pTransform->filter.csFilter);
     if (pTransform->pFuncsTable->pfnNewSegment)
         hr = pTransform->pFuncsTable->pfnNewSegment(pTransform, tStart, tStop, dRate);
     if (SUCCEEDED(hr))
         hr = BaseInputPinImpl_NewSegment(iface, tStart, tStop, dRate);
-    LeaveCriticalSection(&pTransform->filter.csFilter);
     return hr;
 }
 
