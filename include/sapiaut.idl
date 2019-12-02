@@ -1784,7 +1784,7 @@ interface ISpeechRecoGrammar : IDispatch
     HRESULT CmdLoadFromObject([in]const BSTR classid, [in] const BSTR grammarname, [in, defaultvalue(SLOStatic)] SpeechLoadOption option);
 
     [id(DISPID_SRGCmdLoadFromResource)]
-    HRESULT CmdLoadFromResource([in]long mod, [in] VARIANT name, [in] VARIANT yype, [in] SpeechLanguageId language,
+    HRESULT CmdLoadFromResource([in]long mod, [in] VARIANT name, [in] VARIANT type, [in] SpeechLanguageId language,
             [in, defaultvalue(SLOStatic)] SpeechLoadOption option);
 
     [id(DISPID_SRGCmdLoadFromMemory)]
