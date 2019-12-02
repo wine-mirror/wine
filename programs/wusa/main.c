@@ -41,6 +41,7 @@ struct installer_state
     BOOL quiet;
     struct list tempdirs;
     struct list assemblies;
+    struct list updates;
 };
 
 static void * CDECL cabinet_alloc(ULONG cb)
@@ -317,6 +318,7 @@ static void installer_cleanup(struct installer_state *state)
 {
     struct installer_tempdir *tempdir, *tempdir2;
     struct assembly_entry *assembly, *assembly2;
+    struct dependency_entry *dependency, *dependency2;
 
     LIST_FOR_EACH_ENTRY_SAFE(tempdir, tempdir2, &state->tempdirs, struct installer_tempdir, entry)
     {
@@ -329,6 +331,11 @@ static void installer_cleanup(struct installer_state *state)
     {
         list_remove(&assembly->entry);
         free_assembly(assembly);
+    }
+    LIST_FOR_EACH_ENTRY_SAFE(dependency, dependency2, &state->updates, struct dependency_entry, entry)
+    {
+        list_remove(&dependency->entry);
+        free_dependency(dependency);
     }
 }
 
@@ -397,6 +404,7 @@ static BOOL install_msu(const WCHAR *filename, struct installer_state *state)
 
     list_init(&state->tempdirs);
     list_init(&state->assemblies);
+    list_init(&state->updates);
     CoInitialize(NULL);
 
     TRACE("Processing msu file %s\n", debugstr_w(filename));
@@ -426,6 +434,44 @@ static BOOL install_msu(const WCHAR *filename, struct installer_state *state)
         }
         while (FindNextFileW(search, &data));
         FindClose(search);
+    }
+
+    /* load all update descriptions */
+    if (!(path = path_combine(temp_path, L"*.xml"))) goto done;
+    search = FindFirstFileW(path, &data);
+    heap_free(path);
+
+    if (search != INVALID_HANDLE_VALUE)
+    {
+        do
+        {
+            if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+            if (!(path = path_combine(temp_path, data.cFileName))) continue;
+            if (!load_update(path, &state->updates))
+                ERR("Failed to load all updates from %s, ignoring\n", debugstr_w(path));
+            heap_free(path);
+        }
+        while (FindNextFileW(search, &data));
+        FindClose(search);
+    }
+
+    /* dump package information (for debugging) */
+    if (TRACE_ON(wusa))
+    {
+        struct dependency_entry *dependency;
+        struct assembly_entry *assembly;
+
+        TRACE("List of updates:\n");
+        LIST_FOR_EACH_ENTRY(dependency, &state->updates, struct dependency_entry, entry)
+            TRACE(" * %s\n", debugstr_w(dependency->identity.name));
+
+        TRACE("List of manifests (with dependencies):\n");
+        LIST_FOR_EACH_ENTRY(assembly, &state->assemblies, struct assembly_entry, entry)
+        {
+            TRACE(" * %s\n", debugstr_w(assembly->identity.name));
+            LIST_FOR_EACH_ENTRY(dependency, &assembly->dependencies, struct dependency_entry, entry)
+                TRACE("   -> %s\n", debugstr_w(dependency->identity.name));
+        }
     }
 
     ret = TRUE;

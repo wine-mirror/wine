@@ -565,3 +565,109 @@ done:
     IXMLDOMElement_Release(root);
     return entry;
 }
+
+/* <unattend><servicing><package> */
+static BOOL read_update_package(IXMLDOMElement *child, WCHAR *tagname, void *context)
+{
+    struct dependency_entry *entry;
+    struct list *update_list = context;
+
+    if (!wcscmp(tagname, L"source")) return TRUE;
+    if (wcscmp(tagname, L"assemblyIdentity"))
+    {
+        TRACE("Ignoring unexpected tag %s\n", debugstr_w(tagname));
+        return TRUE;
+    }
+
+    if ((entry = alloc_dependency()))
+    {
+        if (read_identity(child, &entry->identity))
+        {
+            TRACE("Found update %s\n", debugstr_w(entry->identity.name));
+            list_add_tail(update_list, &entry->entry);
+            return TRUE;
+        }
+        free_dependency(entry);
+    }
+
+    return FALSE;
+}
+
+static BOOL iter_update_package(IXMLDOMElement *root, struct list *update_list)
+{
+    return call_xml_callbacks(root, read_update_package, update_list);
+}
+
+/* <unattend><servicing> */
+static BOOL read_servicing(IXMLDOMElement *child, WCHAR *tagname, void *context)
+{
+    struct list *update_list = context;
+    WCHAR *action;
+    BOOL ret = TRUE;
+
+    if (wcscmp(tagname, L"package"))
+    {
+        FIXME("Ignoring unexpected tag %s\n", debugstr_w(tagname));
+        return TRUE;
+    }
+
+    if (!(action = get_xml_attribute(child, L"action")))
+    {
+        FIXME("Servicing tag doesn't specify action\n");
+        return FALSE;
+    }
+
+    if (!wcscmp(action, L"install"))
+        ret = iter_update_package(child, update_list);
+    else
+        FIXME("action %s not supported\n", debugstr_w(action));
+
+    heap_free(action);
+    return ret;
+}
+
+static BOOL iter_servicing(IXMLDOMElement *root, struct list *update_list)
+{
+    return call_xml_callbacks(root, read_servicing, update_list);
+}
+
+/* <unattend> */
+static BOOL read_unattend(IXMLDOMElement *child, WCHAR *tagname, void *context)
+{
+    struct list *update_list = context;
+
+    if (wcscmp(tagname, L"servicing"))
+    {
+        FIXME("Ignoring unexpected tag %s\n", debugstr_w(tagname));
+        return TRUE;
+    }
+
+    return iter_servicing(child, update_list);
+
+}
+
+static BOOL iter_unattend(IXMLDOMElement *root, struct list *update_list)
+{
+    return call_xml_callbacks(root, read_unattend, update_list);
+}
+
+BOOL load_update(const WCHAR *filename, struct list *update_list)
+{
+    IXMLDOMElement *root = NULL;
+    BOOL ret = FALSE;
+
+    TRACE("Reading update %s\n", debugstr_w(filename));
+
+    if (!(root = load_xml(filename))) return FALSE;
+    if (!check_xml_tagname(root, L"unattend"))
+    {
+        FIXME("Didn't find unattend root node?\n");
+        goto done;
+    }
+
+    ret = iter_unattend(root, update_list);
+
+done:
+    IXMLDOMElement_Release(root);
+    return ret;
+}

@@ -74,7 +74,9 @@ struct assembly_entry
 };
 
 void free_assembly(struct assembly_entry *entry) DECLSPEC_HIDDEN;
+void free_dependency(struct dependency_entry *entry) DECLSPEC_HIDDEN;
 struct assembly_entry *load_manifest(const WCHAR *filename) DECLSPEC_HIDDEN;
+BOOL load_update(const WCHAR *filename, struct list *update_list) DECLSPEC_HIDDEN;
 
 static void *heap_alloc(size_t len) __WINE_ALLOC_SIZE(1);
 static inline void *heap_alloc(size_t len)
