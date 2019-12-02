@@ -1643,6 +1643,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
     unsigned int texture_level;
     HRESULT hr = WINED3D_OK;
     BOOL same_sub_resource;
+    BOOL upload = FALSE;
     DWORD map_binding;
     const BYTE *sbase;
     const BYTE *sbuf;
@@ -1662,6 +1663,11 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         src_format = dst_format;
     if (wined3d_format_is_typeless(dst_format) && dst_format->id == src_format->typeless_id)
         dst_format = src_format;
+
+    src_height = src_box->bottom - src_box->top;
+    src_width = src_box->right - src_box->left;
+    dst_height = dst_box->bottom - dst_box->top;
+    dst_width = dst_box->right - dst_box->left;
 
     dst_range.offset = 0;
     dst_range.size = dst_texture->sub_resources[dst_sub_resource_idx].size;
@@ -1684,6 +1690,15 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
     else
     {
         same_sub_resource = FALSE;
+        upload = dst_format->flags[dst_texture->resource.gl_type] & WINED3DFMT_FLAG_BLOCKS
+                && (dst_width != src_width || dst_height != src_height);
+
+        if (upload)
+        {
+            dst_format = src_format->flags[dst_texture->resource.gl_type] & WINED3DFMT_FLAG_BLOCKS
+                    ? wined3d_get_format(device->adapter, WINED3DFMT_B8G8R8A8_UNORM, 0) : src_format;
+        }
+
         if (!(flags & WINED3D_BLT_RAW) && dst_format->id != src_format->id)
         {
             if (!(converted_texture = surface_convert_format(src_texture, src_sub_resource_idx, dst_format)))
@@ -1707,25 +1722,31 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         src_map.data = wined3d_context_map_bo_address(context, &src_data,
                 src_texture->sub_resources[src_sub_resource_idx].size, 0, WINED3D_MAP_READ);
 
-        map_binding = dst_texture->resource.map_binding;
-        texture_level = dst_sub_resource_idx % dst_texture->level_count;
-        if (!wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, context, map_binding))
-            ERR("Failed to load the destination sub-resource into %s.\n", wined3d_debug_location(map_binding));
-        wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~map_binding);
-        wined3d_texture_get_pitch(dst_texture, texture_level, &dst_map.row_pitch, &dst_map.slice_pitch);
-        wined3d_texture_get_memory(dst_texture, dst_sub_resource_idx, &dst_data, map_binding);
-        dst_map.data = wined3d_context_map_bo_address(context, &dst_data,
-                dst_texture->sub_resources[dst_sub_resource_idx].size, 0, WINED3D_MAP_WRITE);
+        if (upload)
+        {
+            wined3d_format_calculate_pitch(dst_format, 1, dst_box->right, dst_box->bottom,
+                    &dst_map.row_pitch, &dst_map.slice_pitch);
+            dst_map.data = heap_alloc(dst_map.slice_pitch);
+        }
+        else
+        {
+            map_binding = dst_texture->resource.map_binding;
+            texture_level = dst_sub_resource_idx % dst_texture->level_count;
+            if (!wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, context, map_binding))
+                ERR("Failed to load the destination sub-resource into %s.\n", wined3d_debug_location(map_binding));
+
+            wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~map_binding);
+            wined3d_texture_get_pitch(dst_texture, texture_level, &dst_map.row_pitch, &dst_map.slice_pitch);
+            wined3d_texture_get_memory(dst_texture, dst_sub_resource_idx, &dst_data, map_binding);
+            dst_map.data = wined3d_context_map_bo_address(context, &dst_data,
+                    dst_texture->sub_resources[dst_sub_resource_idx].size, 0, WINED3D_MAP_WRITE);
+        }
     }
     src_fmt_flags = src_format->flags[src_texture->resource.gl_type];
     dst_fmt_flags = dst_format->flags[dst_texture->resource.gl_type];
     flags &= ~WINED3D_BLT_RAW;
 
     bpp = dst_format->byte_count;
-    src_height = src_box->bottom - src_box->top;
-    src_width = src_box->right - src_box->left;
-    dst_height = dst_box->bottom - dst_box->top;
-    dst_width = dst_box->right - dst_box->left;
     row_byte_count = dst_width * bpp;
 
     sbase = (BYTE *)src_map.data
@@ -1743,13 +1764,6 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         {
             FIXME("Only plain blits supported on compressed surfaces.\n");
             hr = E_NOTIMPL;
-            goto release;
-        }
-
-        if (src_height != dst_height || src_width != dst_width)
-        {
-            WARN("Stretching not supported on compressed surfaces.\n");
-            hr = WINED3DERR_INVALIDCALL;
             goto release;
         }
 
@@ -2093,7 +2107,33 @@ error:
         FIXME("    Unsupported flags %#x.\n", flags);
 
 release:
-    wined3d_context_unmap_bo_address(context, &dst_data, 0, 1, &dst_range);
+    if (upload && hr == WINED3D_OK)
+    {
+        struct wined3d_bo_address data;
+
+        data.buffer_object = 0;
+        data.addr = dst_map.data;
+
+        texture_level = dst_sub_resource_idx % dst_texture->level_count;
+
+        wined3d_texture_prepare_location(dst_texture, texture_level, context, WINED3D_LOCATION_TEXTURE_RGB);
+        dst_texture->texture_ops->texture_upload_data(context, wined3d_const_bo_address(&data), dst_format,
+                dst_box, dst_map.row_pitch, dst_map.slice_pitch, dst_texture, texture_level,
+                WINED3D_LOCATION_TEXTURE_RGB, dst_box->left, dst_box->top, 0);
+
+        wined3d_texture_validate_location(dst_texture, texture_level, WINED3D_LOCATION_TEXTURE_RGB);
+        wined3d_texture_invalidate_location(dst_texture, texture_level, ~WINED3D_LOCATION_TEXTURE_RGB);
+    }
+
+    if (upload)
+    {
+        heap_free(dst_map.data);
+    }
+    else
+    {
+        wined3d_context_unmap_bo_address(context, &dst_data, 0, 1, &dst_range);
+    }
+
     if (!same_sub_resource)
         wined3d_context_unmap_bo_address(context, &src_data, 0, 0, NULL);
     if (SUCCEEDED(hr) && dst_texture->swapchain && dst_texture->swapchain->front_buffer == dst_texture)
