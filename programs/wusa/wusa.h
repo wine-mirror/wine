@@ -17,10 +17,75 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+enum
+{
+    ASSEMBLY_STATUS_NONE,
+    ASSEMBLY_STATUS_IN_PROGRESS,
+    ASSEMBLY_STATUS_INSTALLED,
+};
+
+struct assembly_identity
+{
+    WCHAR *name;
+    WCHAR *version;
+    WCHAR *architecture;
+    WCHAR *language;
+    WCHAR *pubkey_token;
+};
+
+struct dependency_entry
+{
+    struct list              entry;
+    struct assembly_identity identity;
+};
+
+struct fileop_entry
+{
+    struct list  entry;
+    WCHAR       *source;
+    WCHAR       *target;
+};
+
+struct registrykv_entry
+{
+    struct list  entry;
+    WCHAR       *name;
+    WCHAR       *value_type;
+    WCHAR       *value;
+};
+
+struct registryop_entry
+{
+    struct list  entry;
+    WCHAR       *key;
+    struct list  keyvalues;
+};
+
+struct assembly_entry
+{
+    struct list               entry;
+    DWORD                     status;
+    WCHAR                    *filename;
+    WCHAR                    *displayname;
+    struct assembly_identity  identity;
+    struct list               dependencies;
+    struct list               fileops;
+    struct list               registryops;
+};
+
+void free_assembly(struct assembly_entry *entry) DECLSPEC_HIDDEN;
+struct assembly_entry *load_manifest(const WCHAR *filename) DECLSPEC_HIDDEN;
+
 static void *heap_alloc(size_t len) __WINE_ALLOC_SIZE(1);
 static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static void *heap_alloc_zero(size_t len) __WINE_ALLOC_SIZE(1);
+static inline void *heap_alloc_zero(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
 }
 
 static inline BOOL heap_free(void *mem)

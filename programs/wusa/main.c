@@ -40,6 +40,7 @@ struct installer_state
     BOOL norestart;
     BOOL quiet;
     struct list tempdirs;
+    struct list assemblies;
 };
 
 static void * CDECL cabinet_alloc(ULONG cb)
@@ -315,6 +316,7 @@ static BOOL delete_directory(const WCHAR *path)
 static void installer_cleanup(struct installer_state *state)
 {
     struct installer_tempdir *tempdir, *tempdir2;
+    struct assembly_entry *assembly, *assembly2;
 
     LIST_FOR_EACH_ENTRY_SAFE(tempdir, tempdir2, &state->tempdirs, struct installer_tempdir, entry)
     {
@@ -323,14 +325,79 @@ static void installer_cleanup(struct installer_state *state)
         heap_free(tempdir->path);
         heap_free(tempdir);
     }
+    LIST_FOR_EACH_ENTRY_SAFE(assembly, assembly2, &state->assemblies, struct assembly_entry, entry)
+    {
+        list_remove(&assembly->entry);
+        free_assembly(assembly);
+    }
+}
+
+static BOOL str_ends_with(const WCHAR *str, const WCHAR *suffix)
+{
+    DWORD str_len = lstrlenW(str), suffix_len = lstrlenW(suffix);
+    if (suffix_len > str_len) return FALSE;
+    return !wcsicmp(str + str_len - suffix_len, suffix);
+}
+
+static BOOL load_assemblies_from_cab(const WCHAR *filename, struct installer_state *state)
+{
+    struct assembly_entry *assembly;
+    const WCHAR *temp_path;
+    WIN32_FIND_DATAW data;
+    HANDLE search;
+    WCHAR *path;
+
+    TRACE("Processing cab file %s\n", debugstr_w(filename));
+
+    if (!(temp_path = create_temp_directory(state))) return FALSE;
+    if (!extract_cabinet(filename, temp_path))
+    {
+        ERR("Failed to extract %s\n", debugstr_w(filename));
+        return FALSE;
+    }
+
+    if (!(path = path_combine(temp_path, L"_manifest_.cix.xml"))) return FALSE;
+    if (GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES)
+    {
+        FIXME("Cabinet uses proprietary msdelta file compression which is not (yet) supported\n");
+        FIXME("Installation of msu file will most likely fail\n");
+    }
+    heap_free(path);
+
+    if (!(path = path_combine(temp_path, L"*"))) return FALSE;
+    search = FindFirstFileW(path, &data);
+    heap_free(path);
+
+    if (search != INVALID_HANDLE_VALUE)
+    {
+        do
+        {
+            if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+            if (!str_ends_with(data.cFileName, L".manifest") &&
+                !str_ends_with(data.cFileName, L".mum")) continue;
+            if (!(path = path_combine(temp_path, data.cFileName))) continue;
+            if ((assembly = load_manifest(path)))
+                list_add_tail(&state->assemblies, &assembly->entry);
+            heap_free(path);
+        }
+        while (FindNextFileW(search, &data));
+        FindClose(search);
+    }
+
+    return TRUE;
 }
 
 static BOOL install_msu(const WCHAR *filename, struct installer_state *state)
 {
     const WCHAR *temp_path;
+    WIN32_FIND_DATAW data;
+    HANDLE search;
+    WCHAR *path;
     BOOL ret = FALSE;
 
     list_init(&state->tempdirs);
+    list_init(&state->assemblies);
+    CoInitialize(NULL);
 
     TRACE("Processing msu file %s\n", debugstr_w(filename));
 
@@ -339,6 +406,26 @@ static BOOL install_msu(const WCHAR *filename, struct installer_state *state)
     {
         ERR("Failed to extract %s\n", debugstr_w(filename));
         goto done;
+    }
+
+    /* load all manifests from contained cabinet archives */
+    if (!(path = path_combine(temp_path, L"*.cab"))) goto done;
+    search = FindFirstFileW(path, &data);
+    heap_free(path);
+
+    if (search != INVALID_HANDLE_VALUE)
+    {
+        do
+        {
+            if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+            if (!wcsicmp(data.cFileName, L"WSUSSCAN.cab")) continue;
+            if (!(path = path_combine(temp_path, data.cFileName))) continue;
+            if (!load_assemblies_from_cab(path, state))
+                ERR("Failed to load all manifests from %s, ignoring\n", debugstr_w(path));
+            heap_free(path);
+        }
+        while (FindNextFileW(search, &data));
+        FindClose(search);
     }
 
     ret = TRUE;
