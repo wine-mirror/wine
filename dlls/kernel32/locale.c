@@ -2810,7 +2810,7 @@ static const struct geoinfo_t *get_geoinfo_dataptr(GEOID geoid)
  */
 GEOID WINAPI GetUserGeoID(GEOCLASS geoclass)
 {
-    GEOID ret = GEOID_NOT_AVAILABLE;
+    GEOID ret = 39070;
     static const WCHAR geoW[] = {'G','e','o',0};
     static const WCHAR nationW[] = {'N','a','t','i','o','n',0};
     static const WCHAR regionW[] = {'R','e','g','i','o','n',0};
@@ -2831,7 +2831,7 @@ GEOID WINAPI GetUserGeoID(GEOCLASS geoclass)
         break;
     default:
         WARN("Unknown geoclass %d\n", geoclass);
-        return ret;
+        return GEOID_NOT_AVAILABLE;
     }
 
     if (!(hkey = create_registry_key())) return ret;
