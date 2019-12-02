@@ -901,14 +901,14 @@ HRESULT factory_get_cached_fontface(IDWriteFactory5 *iface, IDWriteFontFile * co
         const void *cached_key;
         IDWriteFontFile *file;
 
-        cached_face_index = IDWriteFontFace4_GetIndex(cached->fontface);
-        cached_simulations = IDWriteFontFace4_GetSimulations(cached->fontface);
+        cached_face_index = IDWriteFontFace5_GetIndex(cached->fontface);
+        cached_simulations = IDWriteFontFace5_GetSimulations(cached->fontface);
 
         /* skip earlier */
         if (cached_face_index != index || cached_simulations != simulations)
             continue;
 
-        hr = IDWriteFontFace4_GetFiles(cached->fontface, &count, &file);
+        hr = IDWriteFontFace5_GetFiles(cached->fontface, &count, &file);
         if (FAILED(hr))
             break;
 
@@ -917,8 +917,9 @@ HRESULT factory_get_cached_fontface(IDWriteFactory5 *iface, IDWriteFontFile * co
         if (FAILED(hr))
             break;
 
-        if (cached_key_size == key_size && !memcmp(cached_key, key, key_size)) {
-            if (FAILED(hr = IDWriteFontFace4_QueryInterface(cached->fontface, riid, obj)))
+        if (cached_key_size == key_size && !memcmp(cached_key, key, key_size))
+        {
+            if (FAILED(hr = IDWriteFontFace5_QueryInterface(cached->fontface, riid, obj)))
                 WARN("Failed to get %s from fontface, hr %#x.\n", debugstr_guid(riid), hr);
 
             TRACE("returning cached fontface %p\n", cached->fontface);
@@ -932,7 +933,7 @@ HRESULT factory_get_cached_fontface(IDWriteFactory5 *iface, IDWriteFontFile * co
 }
 
 struct fontfacecached *factory_cache_fontface(IDWriteFactory5 *iface, struct list *fontfaces,
-        IDWriteFontFace4 *fontface)
+        IDWriteFontFace5 *fontface)
 {
     struct dwritefactory *factory = impl_from_IDWriteFactory5(iface);
     struct fontfacecached *cached;
@@ -1011,7 +1012,7 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory5 *iface, DWRIT
     desc.index = index;
     desc.simulations = simulations;
     desc.font_data = NULL;
-    hr = create_fontface(&desc, fontfaces, (IDWriteFontFace4 **)fontface);
+    hr = create_fontface(&desc, fontfaces, (IDWriteFontFace5 **)fontface);
 
 failed:
     IDWriteFontFileStream_Release(stream);

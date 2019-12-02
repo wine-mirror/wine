@@ -2440,7 +2440,7 @@ void opentype_colr_next_glyph(const struct dwrite_fonttable *colr, struct dwrite
     }
 }
 
-BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
+BOOL opentype_has_vertical_variants(IDWriteFontFace5 *fontface)
 {
     const struct gpos_gsub_header *header;
     const struct ot_feature_list *featurelist;
@@ -2452,7 +2452,7 @@ BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
     UINT32 size;
     HRESULT hr;
 
-    hr = IDWriteFontFace4_TryGetFontTable(fontface, MS_GSUB_TAG, &data, &size, &context, &exists);
+    hr = IDWriteFontFace5_TryGetFontTable(fontface, MS_GSUB_TAG, &data, &size, &context, &exists);
     if (FAILED(hr) || !exists)
         return FALSE;
 
@@ -2510,12 +2510,12 @@ BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
         }
     }
 
-    IDWriteFontFace4_ReleaseFontTable(fontface, context);
+    IDWriteFontFace5_ReleaseFontTable(fontface, context);
 
     return ret;
 }
 
-static BOOL opentype_has_font_table(IDWriteFontFace4 *fontface, UINT32 tag)
+static BOOL opentype_has_font_table(IDWriteFontFace5 *fontface, UINT32 tag)
 {
     BOOL exists = FALSE;
     const void *data;
@@ -2523,17 +2523,17 @@ static BOOL opentype_has_font_table(IDWriteFontFace4 *fontface, UINT32 tag)
     UINT32 size;
     HRESULT hr;
 
-    hr = IDWriteFontFace4_TryGetFontTable(fontface, tag, &data, &size, &context, &exists);
+    hr = IDWriteFontFace5_TryGetFontTable(fontface, tag, &data, &size, &context, &exists);
     if (FAILED(hr))
         return FALSE;
 
     if (exists)
-        IDWriteFontFace4_ReleaseFontTable(fontface, context);
+        IDWriteFontFace5_ReleaseFontTable(fontface, context);
 
     return exists;
 }
 
-static unsigned int opentype_get_sbix_formats(IDWriteFontFace4 *fontface)
+static unsigned int opentype_get_sbix_formats(IDWriteFontFace5 *fontface)
 {
     unsigned int num_strikes, num_glyphs, i, j, ret = 0;
     const struct sbix_header *sbix_header;
@@ -2547,7 +2547,7 @@ static unsigned int opentype_get_sbix_formats(IDWriteFontFace4 *fontface)
 
     num_glyphs = table_read_be_word(&table, FIELD_OFFSET(struct maxp, num_glyphs));
 
-    IDWriteFontFace4_ReleaseFontTable(fontface, table.context);
+    IDWriteFontFace5_ReleaseFontTable(fontface, table.context);
 
     memset(&table, 0, sizeof(table));
     table.exists = TRUE;
@@ -2600,12 +2600,12 @@ static unsigned int opentype_get_sbix_formats(IDWriteFontFace4 *fontface)
         }
     }
 
-    IDWriteFontFace4_ReleaseFontTable(fontface, table.context);
+    IDWriteFontFace5_ReleaseFontTable(fontface, table.context);
 
     return ret;
 }
 
-static unsigned int opentype_get_cblc_formats(IDWriteFontFace4 *fontface)
+static unsigned int opentype_get_cblc_formats(IDWriteFontFace5 *fontface)
 {
     const unsigned int format_mask = DWRITE_GLYPH_IMAGE_FORMATS_PNG |
             DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8;
@@ -2637,12 +2637,12 @@ static unsigned int opentype_get_cblc_formats(IDWriteFontFace4 *fontface)
         }
     }
 
-    IDWriteFontFace4_ReleaseFontTable(fontface, cblc.context);
+    IDWriteFontFace5_ReleaseFontTable(fontface, cblc.context);
 
     return ret;
 }
 
-UINT32 opentype_get_glyph_image_formats(IDWriteFontFace4 *fontface)
+UINT32 opentype_get_glyph_image_formats(IDWriteFontFace5 *fontface)
 {
     UINT32 ret = DWRITE_GLYPH_IMAGE_FORMATS_NONE;
 
