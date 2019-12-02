@@ -29,6 +29,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wusa);
 
+struct strbuf
+{
+    WCHAR *buf;
+    DWORD pos;
+    DWORD len;
+};
+
 struct installer_tempdir
 {
     struct list entry;
@@ -394,6 +401,508 @@ static BOOL load_assemblies_from_cab(const WCHAR *filename, struct installer_sta
     return TRUE;
 }
 
+static BOOL compare_assembly_string(const WCHAR *str1, const WCHAR *str2)
+{
+    return !wcscmp(str1, str2) || !wcscmp(str1, L"*") || !wcscmp(str2, L"*");
+}
+
+static struct assembly_entry *lookup_assembly(struct list *manifest_list, struct assembly_identity *identity)
+{
+    struct assembly_entry *assembly;
+
+    LIST_FOR_EACH_ENTRY(assembly, manifest_list, struct assembly_entry, entry)
+    {
+        if (wcsicmp(assembly->identity.name, identity->name)) continue;
+        if (!compare_assembly_string(assembly->identity.architecture, identity->architecture)) continue;
+        if (!compare_assembly_string(assembly->identity.language, identity->language)) continue;
+        if (!compare_assembly_string(assembly->identity.pubkey_token, identity->pubkey_token)) continue;
+        if (!compare_assembly_string(assembly->identity.version, identity->version))
+        {
+            WARN("Ignoring version difference for %s (expected %s, found %s)\n",
+                 debugstr_w(identity->name), debugstr_w(identity->version), debugstr_w(assembly->identity.version));
+        }
+        return assembly;
+    }
+
+    return NULL;
+}
+
+static WCHAR *get_assembly_source(struct assembly_entry *assembly)
+{
+    WCHAR *p, *path = strdupW(assembly->filename);
+    if (path && (p = wcsrchr(path, '.'))) *p = 0;
+    return path;
+}
+
+static BOOL strbuf_init(struct strbuf *buf)
+{
+    buf->pos = 0;
+    buf->len = 64;
+    buf->buf = heap_alloc(buf->len * sizeof(WCHAR));
+    return buf->buf != NULL;
+}
+
+static void strbuf_free(struct strbuf *buf)
+{
+    heap_free(buf->buf);
+    buf->buf = NULL;
+}
+
+static BOOL strbuf_append(struct strbuf *buf, const WCHAR *str, DWORD len)
+{
+    DWORD new_len;
+    WCHAR *new_buf;
+
+    if (!buf->buf) return FALSE;
+    if (!str) return TRUE;
+
+    if (len == ~0U) len = lstrlenW(str);
+    if (buf->pos + len + 1 > buf->len)
+    {
+        new_len = max(buf->pos + len + 1, buf->len * 2);
+        new_buf = heap_realloc(buf->buf, new_len * sizeof(WCHAR));
+        if (!new_buf)
+        {
+            strbuf_free(buf);
+            return FALSE;
+        }
+        buf->buf = new_buf;
+        buf->len = new_len;
+    }
+
+    memcpy(&buf->buf[buf->pos], str, len * sizeof(WCHAR));
+    buf->buf[buf->pos + len] = 0;
+    buf->pos += len;
+    return TRUE;
+}
+
+static WCHAR *lookup_expression(struct assembly_entry *assembly, const WCHAR *key)
+{
+    WCHAR path[MAX_PATH];
+
+    if (!wcscmp(key, L"runtime.system32"))
+    {
+#ifdef __x86_64__
+        if (!wcscmp(assembly->identity.architecture, L"x86"))
+        {
+            GetSystemWow64DirectoryW(path, ARRAY_SIZE(path));
+            return strdupW(path);
+        }
+#endif
+        GetSystemDirectoryW(path, ARRAY_SIZE(path));
+        return strdupW(path);
+    }
+    if (!wcscmp(key, L"runtime.windows"))
+    {
+        GetWindowsDirectoryW(path, ARRAY_SIZE(path));
+        return strdupW(path);
+    }
+
+    FIXME("Unknown expression %s\n", debugstr_w(key));
+    return NULL;
+}
+
+static WCHAR *expand_expression(struct assembly_entry *assembly, const WCHAR *expression)
+{
+    const WCHAR *pos, *next;
+    WCHAR *key, *value;
+    struct strbuf buf;
+
+    if (!expression || !strbuf_init(&buf)) return NULL;
+
+    for (pos = expression; (next = wcsstr(pos, L"$(")); pos = next + 1)
+    {
+        strbuf_append(&buf, pos, next - pos);
+        pos = next + 2;
+        if (!(next = wcsstr(pos, L")")))
+        {
+            strbuf_append(&buf, L"$(", 2);
+            break;
+        }
+
+        if (!(key = strdupWn(pos, next - pos))) goto error;
+        value = lookup_expression(assembly, key);
+        heap_free(key);
+        if (!value) goto error;
+        strbuf_append(&buf, value, ~0U);
+        heap_free(value);
+    }
+
+    strbuf_append(&buf, pos, ~0U);
+    return buf.buf;
+
+error:
+    FIXME("Couldn't resolve expression %s\n", debugstr_w(expression));
+    strbuf_free(&buf);
+    return NULL;
+}
+
+static BOOL install_files_copy(struct assembly_entry *assembly, const WCHAR *source_path, struct fileop_entry *fileop, BOOL dryrun)
+{
+    WCHAR *target_path, *target, *source = NULL;
+    BOOL ret = FALSE;
+
+    if (!(target_path = expand_expression(assembly, fileop->target))) return FALSE;
+    if (!(target = path_combine(target_path, fileop->source))) goto error;
+    if (!(source = path_combine(source_path, fileop->source))) goto error;
+
+    if (dryrun)
+    {
+        if (!(ret = PathFileExistsW(source)))
+        {
+            ERR("Required file %s not found\n", debugstr_w(source));
+            goto error;
+        }
+    }
+    else
+    {
+        TRACE("Copying %s -> %s\n", debugstr_w(source), debugstr_w(target));
+
+        if (!create_parent_directory(target))
+        {
+            ERR("Failed to create parent directory for %s\n", debugstr_w(target));
+            goto error;
+        }
+        if (!(ret = CopyFileExW(source, target, NULL, NULL, NULL, 0)))
+        {
+            ERR("Failed to copy %s to %s\n", debugstr_w(source), debugstr_w(target));
+            goto error;
+        }
+    }
+
+error:
+    heap_free(target_path);
+    heap_free(target);
+    heap_free(source);
+    return ret;
+}
+
+static BOOL install_files(struct assembly_entry *assembly, BOOL dryrun)
+{
+    struct fileop_entry *fileop;
+    WCHAR *source_path;
+    BOOL ret = TRUE;
+
+    if (!(source_path = get_assembly_source(assembly)))
+    {
+        ERR("Failed to get assembly source directory\n");
+        return FALSE;
+    }
+
+    LIST_FOR_EACH_ENTRY(fileop, &assembly->fileops, struct fileop_entry, entry)
+    {
+        if (!(ret = install_files_copy(assembly, source_path, fileop, dryrun))) break;
+    }
+
+    heap_free(source_path);
+    return ret;
+}
+
+static WCHAR *split_registry_key(WCHAR *key, HKEY *root)
+{
+    DWORD size;
+    WCHAR *p;
+
+    if (!(p = wcschr(key, '\\'))) return NULL;
+    size = p - key;
+
+    if (lstrlenW(L"HKEY_CLASSES_ROOT") == size && !wcsncmp(key, L"HKEY_CLASSES_ROOT", size))
+        *root = HKEY_CLASSES_ROOT;
+    else if (lstrlenW(L"HKEY_CURRENT_CONFIG") == size && !wcsncmp(key, L"HKEY_CURRENT_CONFIG", size))
+        *root = HKEY_CURRENT_CONFIG;
+    else if (lstrlenW(L"HKEY_CURRENT_USER") == size && !wcsncmp(key, L"HKEY_CURRENT_USER", size))
+        *root = HKEY_CURRENT_USER;
+    else if (lstrlenW(L"HKEY_LOCAL_MACHINE") == size && !wcsncmp(key, L"HKEY_LOCAL_MACHINE", size))
+        *root = HKEY_LOCAL_MACHINE;
+    else if (lstrlenW(L"HKEY_USERS") == size && !wcsncmp(key, L"HKEY_USERS", size))
+        *root = HKEY_USERS;
+    else
+    {
+        FIXME("Unknown root key %s\n", debugstr_wn(key, size));
+        return NULL;
+    }
+
+    return p + 1;
+}
+
+static BOOL install_registry_string(struct assembly_entry *assembly, HKEY key, struct registrykv_entry *registrykv, DWORD type, BOOL dryrun)
+{
+    DWORD value_size;
+    WCHAR *value = expand_expression(assembly, registrykv->value);
+    BOOL ret = TRUE;
+
+    if (registrykv->value && !value)
+        return FALSE;
+
+    value_size = value ? (lstrlenW(value) + 1) * sizeof(WCHAR) : 0;
+    if (!dryrun && RegSetValueExW(key, registrykv->name, 0, type, (void *)value, value_size))
+    {
+        ERR("Failed to set registry key %s\n", debugstr_w(registrykv->name));
+        ret = FALSE;
+    }
+
+    heap_free(value);
+    return ret;
+}
+
+static WCHAR *parse_multisz(const WCHAR *input, DWORD *size)
+{
+    const WCHAR *pos, *next;
+    struct strbuf buf;
+
+    *size = 0;
+    if (!input || !input[0] || !strbuf_init(&buf)) return NULL;
+
+    for (pos = input; pos[0] == '"'; pos++)
+    {
+        pos++;
+        if (!(next = wcsstr(pos, L"\""))) goto error;
+        strbuf_append(&buf, pos, next - pos);
+        strbuf_append(&buf, L"", ARRAY_SIZE(L""));
+
+        pos = next + 1;
+        if (!pos[0]) break;
+        if (pos[0] != ',')
+        {
+            FIXME("Error while parsing REG_MULTI_SZ string: Expected comma but got '%c'\n", pos[0]);
+            goto error;
+        }
+    }
+
+    if (pos[0])
+    {
+        FIXME("Error while parsing REG_MULTI_SZ string: Garbage at end of string\n");
+        goto error;
+    }
+
+    strbuf_append(&buf, L"", ARRAY_SIZE(L""));
+    *size = buf.pos * sizeof(WCHAR);
+    return buf.buf;
+
+error:
+    strbuf_free(&buf);
+    return NULL;
+}
+
+static BOOL install_registry_multisz(struct assembly_entry *assembly, HKEY key, struct registrykv_entry *registrykv, BOOL dryrun)
+{
+    DWORD value_size;
+    WCHAR *value = parse_multisz(registrykv->value, &value_size);
+    BOOL ret = TRUE;
+
+    if (registrykv->value && registrykv->value[0] && !value)
+        return FALSE;
+
+    if (!dryrun && RegSetValueExW(key, registrykv->name, 0, REG_MULTI_SZ, (void *)value, value_size))
+    {
+        ERR("Failed to set registry key %s\n", debugstr_w(registrykv->name));
+        ret = FALSE;
+    }
+
+    heap_free(value);
+    return ret;
+}
+
+static BOOL install_registry_dword(struct assembly_entry *assembly, HKEY key, struct registrykv_entry *registrykv, BOOL dryrun)
+{
+    DWORD value = registrykv->value_type ? wcstoul(registrykv->value_type, NULL, 16) : 0;
+    BOOL ret = TRUE;
+
+    if (!dryrun && RegSetValueExW(key, registrykv->name, 0, REG_DWORD, (void *)&value, sizeof(value)))
+    {
+        ERR("Failed to set registry key %s\n", debugstr_w(registrykv->name));
+        ret = FALSE;
+    }
+
+    return ret;
+}
+
+static BYTE *parse_hex(const WCHAR *input, DWORD *size)
+{
+    WCHAR number[3] = {0, 0, 0};
+    BYTE *output, *p;
+    int length;
+
+    *size = 0;
+    if (!input) return NULL;
+    length = lstrlenW(input);
+    if (length & 1) return NULL;
+    length >>= 1;
+
+    if (!(output = heap_alloc(length))) return NULL;
+    for (p = output; *input; input += 2)
+    {
+        number[0] = input[0];
+        number[1] = input[1];
+        *p++ = wcstoul(number, 0, 16);
+    }
+    *size = length;
+    return output;
+}
+
+static BOOL install_registry_binary(struct assembly_entry *assembly, HKEY key, struct registrykv_entry *registrykv, BOOL dryrun)
+{
+    DWORD value_size;
+    BYTE *value = parse_hex(registrykv->value, &value_size);
+    BOOL ret = TRUE;
+
+    if (registrykv->value && !value)
+        return FALSE;
+
+    if (!dryrun && RegSetValueExW(key, registrykv->name, 0, REG_BINARY, value, value_size))
+    {
+        ERR("Failed to set registry key %s\n", debugstr_w(registrykv->name));
+        ret = FALSE;
+    }
+
+    heap_free(value);
+    return ret;
+}
+
+static BOOL install_registry_value(struct assembly_entry *assembly, HKEY key, struct registrykv_entry *registrykv, BOOL dryrun)
+{
+    TRACE("Setting registry key %s = %s\n", debugstr_w(registrykv->name), debugstr_w(registrykv->value));
+
+    if (!wcscmp(registrykv->value_type, L"REG_SZ"))
+        return install_registry_string(assembly, key, registrykv, REG_SZ, dryrun);
+    if (!wcscmp(registrykv->value_type, L"REG_EXPAND_SZ"))
+        return install_registry_string(assembly, key, registrykv, REG_EXPAND_SZ, dryrun);
+    if (!wcscmp(registrykv->value_type, L"REG_MULTI_SZ"))
+        return install_registry_multisz(assembly, key, registrykv, dryrun);
+    if (!wcscmp(registrykv->value_type, L"REG_DWORD"))
+        return install_registry_dword(assembly, key, registrykv, dryrun);
+    if (!wcscmp(registrykv->value_type, L"REG_BINARY"))
+        return install_registry_binary(assembly, key, registrykv, dryrun);
+
+    FIXME("Unsupported registry value type %s\n", debugstr_w(registrykv->value_type));
+    return FALSE;
+}
+
+static BOOL install_registry(struct assembly_entry *assembly, BOOL dryrun)
+{
+    struct registryop_entry *registryop;
+    struct registrykv_entry *registrykv;
+    HKEY root, subkey;
+    WCHAR *path;
+    REGSAM sam = KEY_ALL_ACCESS;
+    BOOL ret = TRUE;
+
+#ifdef __x86_64__
+    if (!wcscmp(assembly->identity.architecture, L"x86")) sam |= KEY_WOW64_32KEY;
+#endif
+
+    LIST_FOR_EACH_ENTRY(registryop, &assembly->registryops, struct registryop_entry, entry)
+    {
+        if (!(path = split_registry_key(registryop->key, &root)))
+        {
+            ret = FALSE;
+            break;
+        }
+
+        TRACE("Processing registry key %s\n", debugstr_w(registryop->key));
+
+        if (!dryrun && RegCreateKeyExW(root, path, 0, NULL, 0, sam, NULL, &subkey, NULL))
+        {
+            ERR("Failed to open registry key %s\n", debugstr_w(registryop->key));
+            ret = FALSE;
+            break;
+        }
+
+        LIST_FOR_EACH_ENTRY(registrykv, &registryop->keyvalues, struct registrykv_entry, entry)
+        {
+            if (!(ret = install_registry_value(assembly, subkey, registrykv, dryrun))) break;
+        }
+
+        if (!dryrun) RegCloseKey(subkey);
+        if (!ret) break;
+    }
+
+    return ret;
+}
+
+static BOOL install_assembly(struct list *manifest_list, struct assembly_identity *identity, BOOL dryrun)
+{
+    struct dependency_entry *dependency;
+    struct assembly_entry *assembly;
+    const WCHAR *name;
+
+    if (!(assembly = lookup_assembly(manifest_list, identity)))
+    {
+        FIXME("Assembly %s not found\n", debugstr_w(identity->name));
+        return FALSE;
+    }
+
+    name = assembly->identity.name;
+
+    if (assembly->status == ASSEMBLY_STATUS_INSTALLED)
+    {
+        TRACE("Assembly %s already installed\n", debugstr_w(name));
+        return TRUE;
+    }
+    if (assembly->status == ASSEMBLY_STATUS_IN_PROGRESS)
+    {
+        ERR("Assembly %s caused circular dependency\n", debugstr_w(name));
+        return FALSE;
+    }
+
+#ifdef __i386__
+    if (!wcscmp(assembly->identity.architecture, L"amd64"))
+    {
+        ERR("Cannot install amd64 assembly in 32-bit prefix\n");
+        return FALSE;
+    }
+#endif
+
+    assembly->status = ASSEMBLY_STATUS_IN_PROGRESS;
+
+    LIST_FOR_EACH_ENTRY(dependency, &assembly->dependencies, struct dependency_entry, entry)
+    {
+        if (!install_assembly(manifest_list, &dependency->identity, dryrun)) return FALSE;
+    }
+
+    TRACE("Installing assembly %s%s\n", debugstr_w(name), dryrun ? " (dryrun)" : "");
+
+    if (!install_files(assembly, dryrun))
+    {
+        ERR("Failed to install all files for %s\n", debugstr_w(name));
+        return FALSE;
+    }
+
+    if (!install_registry(assembly, dryrun))
+    {
+        ERR("Failed to install registry keys for %s\n", debugstr_w(name));
+        return FALSE;
+    }
+
+    TRACE("Installation of %s finished\n", debugstr_w(name));
+
+    assembly->status = ASSEMBLY_STATUS_INSTALLED;
+    return TRUE;
+}
+
+static BOOL install_updates(struct installer_state *state, BOOL dryrun)
+{
+    struct dependency_entry *dependency;
+    LIST_FOR_EACH_ENTRY(dependency, &state->updates, struct dependency_entry, entry)
+    {
+        if (!install_assembly(&state->assemblies, &dependency->identity, dryrun))
+        {
+            ERR("Failed to install update %s\n", debugstr_w(dependency->identity.name));
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+static void set_assembly_status(struct list *manifest_list, DWORD status)
+{
+    struct assembly_entry *assembly;
+    LIST_FOR_EACH_ENTRY(assembly, manifest_list, struct assembly_entry, entry)
+    {
+        assembly->status = status;
+    }
+}
+
 static BOOL install_msu(const WCHAR *filename, struct installer_state *state)
 {
     const WCHAR *temp_path;
@@ -474,6 +983,29 @@ static BOOL install_msu(const WCHAR *filename, struct installer_state *state)
         }
     }
 
+    if (list_empty(&state->updates))
+    {
+        ERR("No updates found, probably incompatible MSU file format?\n");
+        goto done;
+    }
+
+    /* perform dry run */
+    set_assembly_status(&state->assemblies, ASSEMBLY_STATUS_NONE);
+    if (!install_updates(state, TRUE))
+    {
+        ERR("Dry run failed, aborting installation\n");
+        goto done;
+    }
+
+    /* installation */
+    set_assembly_status(&state->assemblies, ASSEMBLY_STATUS_NONE);
+    if (!install_updates(state, FALSE))
+    {
+        ERR("Installation failed\n");
+        goto done;
+    }
+
+    TRACE("Installation finished\n");
     ret = TRUE;
 
 done:
@@ -481,11 +1013,41 @@ done:
     return ret;
 }
 
+static void restart_as_x86_64(void)
+{
+    WCHAR filename[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si;
+    DWORD exit_code = 1;
+    void *redir;
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    GetModuleFileNameW(0, filename, MAX_PATH);
+
+    Wow64DisableWow64FsRedirection(&redir);
+    if (CreateProcessW(filename, GetCommandLineW(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    {
+        TRACE("Restarting %s\n", wine_dbgstr_w(filename));
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        GetExitCodeProcess(pi.hProcess, &exit_code);
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }
+    else ERR("Failed to restart 64-bit %s, err %u\n", wine_dbgstr_w(filename), GetLastError());
+    Wow64RevertWow64FsRedirection(redir);
+
+    ExitProcess(exit_code);
+}
+
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
     struct installer_state state;
     const WCHAR *filename = NULL;
+    BOOL is_wow64;
     int i;
+
+    if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64) restart_as_x86_64();
 
     state.norestart = FALSE;
     state.quiet = FALSE;
