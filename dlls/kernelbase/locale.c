@@ -239,7 +239,8 @@ void init_locale(void)
     USHORT *ansi_ptr, *oem_ptr, *casemap_ptr;
     LCID lcid = GetUserDefaultLCID();
     WCHAR bufferW[80];
-    DWORD count, i;
+    GEOID geoid = GEOID_NOT_AVAILABLE;
+    DWORD count, dispos, i;
     SIZE_T size;
     HKEY hkey;
 
@@ -268,6 +269,17 @@ void init_locale(void)
     RegCreateKeyExW( HKEY_CURRENT_USER, L"Control Panel\\International",
                      0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &intl_key, NULL );
 
+    if (!RegCreateKeyExW( intl_key, L"Geo", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, &dispos ))
+    {
+        if (dispos == REG_CREATED_NEW_KEY)
+        {
+            GetLocaleInfoW( LOCALE_USER_DEFAULT, LOCALE_IGEOID | LOCALE_RETURN_NUMBER,
+                            (WCHAR *)&geoid, sizeof(geoid) / sizeof(WCHAR) );
+            SetUserGeoID( geoid );
+        }
+        RegCloseKey( hkey );
+    }
+
     /* Update registry contents if the user locale has changed.
      * This simulates the action of the Windows control panel. */
 
@@ -288,6 +300,13 @@ void init_locale(void)
                         bufferW, ARRAY_SIZE( bufferW ));
         RegSetValueExW( intl_key, registry_values[i].name, 0, REG_SZ,
                         (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
+    }
+
+    if (geoid == GEOID_NOT_AVAILABLE)
+    {
+        GetLocaleInfoW( LOCALE_USER_DEFAULT, LOCALE_IGEOID | LOCALE_RETURN_NUMBER,
+                        (WCHAR *)&geoid, sizeof(geoid) / sizeof(WCHAR) );
+        SetUserGeoID( geoid );
     }
 
     if (!RegCreateKeyExW( nls_key, L"Codepage",
