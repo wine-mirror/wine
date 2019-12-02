@@ -35,6 +35,7 @@ static const DWORD pixel_states_render[] =
     WINED3D_RS_ALPHAREF,
     WINED3D_RS_ALPHATESTENABLE,
     WINED3D_RS_ANTIALIASEDLINEENABLE,
+    WINED3D_RS_BLENDFACTOR,
     WINED3D_RS_BLENDOP,
     WINED3D_RS_BLENDOPALPHA,
     WINED3D_RS_BACK_STENCILFAIL,
@@ -208,7 +209,6 @@ static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, 
     states->pixelShader = 1;
     states->vertexShader = 1;
     states->scissorRect = 1;
-    states->blend_state = 1;
 
     /* Fixed size arrays */
     states->streamSource = 0xffff;
@@ -236,7 +236,6 @@ static void stateblock_savedstates_set_pixel(struct wined3d_saved_states *states
     unsigned int i;
 
     states->pixelShader = 1;
-    states->blend_state = 1;
 
     for (i = 0; i < ARRAY_SIZE(pixel_states_render); ++i)
     {
@@ -903,15 +902,6 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
         stateblock->stateblock_state.scissor_rect = state->scissor_rect;
     }
 
-    if (stateblock->changed.blend_state
-            && memcmp(&state->blend_factor, &stateblock->stateblock_state.blend_factor,
-                    sizeof(stateblock->stateblock_state.blend_factor)))
-    {
-        TRACE("Updating blend factor.\n");
-
-        stateblock->stateblock_state.blend_factor = state->blend_factor;
-    }
-
     map = stateblock->changed.streamSource;
     for (i = 0; map; map >>= 1, ++i)
     {
@@ -1129,7 +1119,14 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         enum wined3d_render_state rs = stateblock->contained_render_states[i];
 
         state->rs[rs] = stateblock->stateblock_state.rs[rs];
-        wined3d_device_set_render_state(device, rs, stateblock->stateblock_state.rs[rs]);
+        if (rs == WINED3D_RS_BLENDFACTOR)
+        {
+            struct wined3d_color color;
+            wined3d_color_from_d3dcolor(&color, stateblock->stateblock_state.rs[rs]);
+            wined3d_device_set_blend_state(device, NULL, &color);
+        }
+        else
+            wined3d_device_set_render_state(device, rs, stateblock->stateblock_state.rs[rs]);
     }
 
     /* Texture states. */
@@ -1207,12 +1204,6 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         state->scissor_rect = stateblock->stateblock_state.scissor_rect;
 
         wined3d_device_set_scissor_rects(device, 1, &stateblock->stateblock_state.scissor_rect);
-    }
-
-    if (stateblock->changed.blend_state)
-    {
-        state->blend_factor = stateblock->stateblock_state.blend_factor;
-        wined3d_device_set_blend_state(device, NULL, &stateblock->stateblock_state.blend_factor);
     }
 
     map = stateblock->changed.streamSource;
@@ -1435,15 +1426,6 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
 
     stateblock->stateblock_state.rs[state] = value;
     stateblock->changed.renderState[state >> 5] |= 1u << (state & 0x1f);
-}
-
-void CDECL wined3d_stateblock_set_blend_factor(struct wined3d_stateblock *stateblock,
-        const struct wined3d_color *blend_factor)
-{
-    TRACE("stateblock %p, blend_factor %p.\n", stateblock, blend_factor);
-
-    stateblock->stateblock_state.blend_factor = *blend_factor;
-    stateblock->changed.blend_state = TRUE;
 }
 
 void CDECL wined3d_stateblock_set_sampler_state(struct wined3d_stateblock *stateblock,
@@ -1827,6 +1809,7 @@ static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], c
     rs[WINED3D_RS_COLORWRITEENABLE1] = 0x0000000f;
     rs[WINED3D_RS_COLORWRITEENABLE2] = 0x0000000f;
     rs[WINED3D_RS_COLORWRITEENABLE3] = 0x0000000f;
+    rs[WINED3D_RS_BLENDFACTOR] = 0xffffffff;
     rs[WINED3D_RS_SRGBWRITEENABLE] = 0;
     rs[WINED3D_RS_DEPTHBIAS] = 0;
     rs[WINED3D_RS_WRAP8] = 0;
@@ -1970,11 +1953,6 @@ static void stateblock_state_init_default(struct wined3d_stateblock_state *state
     }
 
     init_default_sampler_states(state->sampler_states);
-
-    state->blend_factor.r = 1.0f;
-    state->blend_factor.g = 1.0f;
-    state->blend_factor.b = 1.0f;
-    state->blend_factor.a = 1.0f;
 
     for (i = 0; i < WINED3D_MAX_STREAMS; ++i)
         state->streams[i].frequency = 1;

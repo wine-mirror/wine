@@ -384,6 +384,7 @@ enum wined3d_render_state
     WINED3D_RS_COLORWRITEENABLE1            = 190,
     WINED3D_RS_COLORWRITEENABLE2            = 191,
     WINED3D_RS_COLORWRITEENABLE3            = 192,
+    WINED3D_RS_BLENDFACTOR                  = 193,
     WINED3D_RS_SRGBWRITEENABLE              = 194,
     WINED3D_RS_DEPTHBIAS                    = 195,
     WINED3D_RS_WRAP8                        = 198,
@@ -2151,7 +2152,6 @@ struct wined3d_stateblock_state
     BOOL ps_consts_b[WINED3D_MAX_CONSTS_B];
 
     DWORD rs[WINEHIGHEST_RENDER_STATE + 1];
-    struct wined3d_color blend_factor;
 
     struct wined3d_texture *textures[WINED3D_MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[WINED3D_MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
@@ -2726,8 +2726,6 @@ ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
 void __cdecl wined3d_stateblock_init_contained_states(struct wined3d_stateblock *stateblock);
 void __cdecl wined3d_stateblock_reset(struct wined3d_stateblock *stateblock);
 void __cdecl wined3d_stateblock_set_base_vertex_index(struct wined3d_stateblock *stateblock, INT base_index);
-void __cdecl wined3d_stateblock_set_blend_factor(struct wined3d_stateblock *stateblock,
-        const struct wined3d_color *blend_factor);
 HRESULT __cdecl wined3d_stateblock_set_clip_plane(struct wined3d_stateblock *stateblock,
         UINT plane_idx, const struct wined3d_vec4 *plane);
 void __cdecl wined3d_stateblock_set_index_buffer(struct wined3d_stateblock *stateblock,
