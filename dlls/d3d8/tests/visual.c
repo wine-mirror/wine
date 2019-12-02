@@ -5441,6 +5441,15 @@ static void add_dirty_rect_test(void)
     HRESULT hr;
 
     static const RECT part_rect = {96, 96, 160, 160};
+    static const RECT oob_rect[] =
+    {
+        {  0,   0, 200, 300},
+        {  0,   0, 300, 200},
+        {100, 100,  10,  10},
+        {200, 300,  10,  10},
+        {300, 200, 310, 210},
+        {  0,   0,   0,   0},
+    };
 
     window = create_window();
     d3d = Direct3DCreate8(D3D_SDK_VERSION);
@@ -5783,6 +5792,17 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
     hr = IDirect3DTexture8_AddDirtyRect(tex_managed, NULL);
     ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
+
+    /* Test out-of-bounds regions. */
+    for (i = 0; i < ARRAY_SIZE(oob_rect); ++i)
+    {
+        hr = IDirect3DTexture8_AddDirtyRect(tex_src_red, &oob_rect[i]);
+        todo_wine ok(hr == D3DERR_INVALIDCALL, "[%u] Got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DTexture8_LockRect(tex_src_red, 0, &locked_rect, &oob_rect[i], 0);
+        ok(SUCCEEDED(hr), "[%u] Got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DTexture8_UnlockRect(tex_src_red, 0);
+        ok(SUCCEEDED(hr), "[%u] Got unexpected hr %#x.\n", i, hr);
+    }
 
     IDirect3DSurface8_Release(surface_dst2);
     IDirect3DSurface8_Release(surface_managed1);
