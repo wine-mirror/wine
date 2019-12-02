@@ -4984,11 +4984,43 @@ static void test_GetGeoInfo(void)
     ok(!strcmp(buffA, "RU"), "got %s\n", buffA);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d\n", GetLastError());
 
-    /* GEO_NATION returns GEOID in a string form */
+    /* GEO_NATION returns GEOID in a string form, but only for GEOCLASS_NATION-type IDs */
+    ret = pGetGeoInfoA(203, GEO_NATION, buffA, 20, 0); /* GEOCLASS_NATION */
+    ok(ret == 4, "GEO_NATION of nation: expected 4, got %d\n", ret);
+    ok(!strcmp(buffA, "203"), "GEO_NATION of nation: expected 203, got %s\n", buffA);
+
     buffA[0] = 0;
-    ret = pGetGeoInfoA(203, GEO_NATION, buffA, 20, 0);
-    ok(ret == 4, "got %d\n", ret);
-    ok(!strcmp(buffA, "203"), "got %s\n", buffA);
+    ret = pGetGeoInfoA(39070, GEO_NATION, buffA, 20, 0); /* GEOCLASS_REGION */
+    ok(ret == 0, "GEO_NATION of region: expected 0, got %d\n", ret);
+    ok(*buffA == 0, "GEO_NATION of region: expected empty string, got %s\n", buffA);
+
+    buffA[0] = 0;
+    ret = pGetGeoInfoA(333, GEO_NATION, buffA, 20, 0); /* LOCATION_BOTH internal Wine type */
+    ok(ret == 0 ||
+       broken(ret == 4) /* Win7 and older */,
+       "GEO_NATION of LOCATION_BOTH: expected 0, got %d\n", ret);
+    ok(*buffA == 0 ||
+       broken(!strcmp(buffA, "333")) /* Win7 and older */,
+       "GEO_NATION of LOCATION_BOTH: expected empty string, got %s\n", buffA);
+
+    /* GEO_ID is like GEO_NATION but works for any ID */
+    buffA[0] = 0;
+    ret = pGetGeoInfoA(203, GEO_ID, buffA, 20, 0); /* GEOCLASS_NATION */
+    if (ret == 0)
+        win_skip("GEO_ID not supported.\n");
+    else
+    {
+        ok(ret == 4, "GEO_ID: expected 4, got %d\n", ret);
+        ok(!strcmp(buffA, "203"), "GEO_ID: expected 203, got %s\n", buffA);
+
+        ret = pGetGeoInfoA(47610, GEO_ID, buffA, 20, 0); /* GEOCLASS_REGION */
+        ok(ret == 6, "got %d\n", ret);
+        ok(!strcmp(buffA, "47610"), "got %s\n", buffA);
+
+        ret = pGetGeoInfoA(333, GEO_ID, buffA, 20, 0); /* LOCATION_BOTH internal Wine type */
+        ok(ret == 4, "got %d\n", ret);
+        ok(!strcmp(buffA, "333"), "got %s\n", buffA);
+    }
 
     /* GEO_PARENT */
     buffA[0] = 0;

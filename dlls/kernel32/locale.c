@@ -2908,6 +2908,34 @@ BOOL WINAPI SetUserGeoID(GEOID geoid)
 
 /******************************************************************************
  *           GetGeoInfoW (KERNEL32.@)
+ *
+ * Retrieves information about a geographic location by its GeoID.
+ *
+ * PARAMS
+ *   geoid    [I] The GeoID of the location of interest.
+ *   geotype  [I] The type of information to be retrieved (SYSGEOTYPE enum from "winnls.h").
+ *   data     [O] The output buffer to store the information.
+ *   data_len [I] The length of the buffer, measured in WCHARs and including the null terminator.
+ *   lang     [I] Language identifier. Must be 0 unless geotype is GEO_RFC1766 or GEO_LCID.
+ *
+ * RETURNS
+ *   Success: The number of WCHARs (including null) written to the buffer -or-
+ *            if no buffer was provided, the minimum length required to hold the full data.
+ *   Failure: Zero. Call GetLastError() to determine the cause.
+ *
+ * NOTES
+ *   On failure, GetLastError() will return one of the following values:
+ *     - ERROR_INVALID_PARAMETER: the GeoID provided was invalid.
+ *     - ERROR_INVALID_FLAGS: the specified geotype was invalid.
+ *     - ERROR_INSUFFICIENT_BUFFER: the provided buffer was too small to hold the full data.
+ *     - ERROR_CALL_NOT_IMPLEMENTED: (Wine implementation) we don't handle that geotype yet.
+ *
+ *   The list of available GeoIDs can be retrieved with EnumSystemGeoID(),
+ *   or call GetUserGeoID() to retrieve the user's current location.
+ *
+ * TODO
+ *   Currently, we only handle the following geotypes: GEO_ID, GEO_ISO2, GEO_ISO3,
+ *   GEO_ISO_UN_NUMBER, GEO_PARENT and GEO_NATION.
  */
 INT WINAPI GetGeoInfoW(GEOID geoid, GEOTYPE geotype, LPWSTR data, int data_len, LANGID lang)
 {
@@ -2926,6 +2954,9 @@ INT WINAPI GetGeoInfoW(GEOID geoid, GEOTYPE geotype, LPWSTR data, int data_len, 
 
     switch (geotype) {
     case GEO_NATION:
+        if (ptr->kind != LOCATION_NATION) return 0;
+        /* fall through */
+    case GEO_ID:
         sprintfW(buffW, fmtW, ptr->id);
         break;
     case GEO_ISO_UN_NUMBER:
