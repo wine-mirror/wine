@@ -9234,6 +9234,81 @@ todo_wine
     ok(ref == 0, "factory not released, %u\n", ref);
 }
 
+static void test_font_resource(void)
+{
+    IDWriteFontFaceReference1 *reference, *reference2;
+    IDWriteFontResource *resource, *resource2;
+    IDWriteFontFile *fontfile, *fontfile2;
+    IDWriteFontFace5 *fontface5;
+    IDWriteFontFace *fontface;
+    IDWriteFactory6 *factory;
+    UINT32 count, index;
+    HRESULT hr;
+    ULONG ref;
+
+    if (!(factory = create_factory_iid(&IID_IDWriteFactory6)))
+    {
+        skip("IDWriteFactory6 is not supported.\n");
+        return;
+    }
+
+    fontface = create_fontface((IDWriteFactory *)factory);
+
+    count = 1;
+    hr = IDWriteFontFace_GetFiles(fontface, &count, &fontfile);
+    ok(hr == S_OK, "Failed to get file object, hr %#x.\n", hr);
+
+    hr = IDWriteFactory6_CreateFontResource(factory, fontfile, 0, &resource);
+    ok(hr == S_OK, "Failed to create font resource, hr %#x.\n", hr);
+
+    hr = IDWriteFactory6_CreateFontResource(factory, fontfile, 0, &resource2);
+    ok(hr == S_OK, "Failed to create font resource, hr %#x.\n", hr);
+    ok(resource != resource2, "Unexpected instance.\n");
+    IDWriteFontResource_Release(resource2);
+
+    hr = IDWriteFontResource_GetFontFile(resource, &fontfile2);
+    ok(hr == S_OK, "Failed to get font file, hr %#x.\n", hr);
+    ok(fontfile2 == fontfile, "Unexpected file instance.\n");
+    IDWriteFontFile_Release(fontfile2);
+
+    index = IDWriteFontResource_GetFontFaceIndex(resource);
+    ok(!index, "Unexpected index %u.\n", index);
+
+    hr = IDWriteFontResource_CreateFontFaceReference(resource, DWRITE_FONT_SIMULATIONS_NONE, NULL, 0, &reference);
+    ok(hr == S_OK, "Failed to create reference object, hr %#x.\n", hr);
+
+    hr = IDWriteFontResource_CreateFontFaceReference(resource, DWRITE_FONT_SIMULATIONS_NONE, NULL, 0, &reference2);
+    ok(hr == S_OK, "Failed to create reference object, hr %#x.\n", hr);
+    ok(reference != reference2, "Unexpected reference instance.\n");
+    IDWriteFontFaceReference1_Release(reference2);
+    IDWriteFontFaceReference1_Release(reference);
+
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace5, (void **)&fontface5);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
+    hr = IDWriteFontFace5_GetFontResource(fontface5, &resource2);
+    ok(hr == S_OK, "Failed to get font resource, hr %#x.\n", hr);
+    ok(resource != resource2, "Unexpected resource instance.\n");
+    IDWriteFontResource_Release(resource);
+
+    hr = IDWriteFontFace5_GetFontResource(fontface5, &resource);
+    ok(hr == S_OK, "Failed to get font resource, hr %#x.\n", hr);
+    ok(resource != resource2, "Unexpected resource instance.\n");
+    EXPECT_REF(resource, 1);
+
+    IDWriteFontResource_Release(resource);
+    IDWriteFontResource_Release(resource2);
+
+    IDWriteFontFace5_Release(fontface5);
+
+    IDWriteFontResource_Release(resource);
+    IDWriteFontFile_Release(fontfile);
+
+    IDWriteFontFace_Release(fontface);
+    ref = IDWriteFactory6_Release(factory);
+    ok(ref == 0, "Factory wasn't released, %u.\n", ref);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -9301,6 +9376,7 @@ START_TEST(font)
     test_localfontfileloader();
     test_AnalyzeContainerType();
     test_fontsetbuilder();
+    test_font_resource();
 
     IDWriteFactory_Release(factory);
 }
