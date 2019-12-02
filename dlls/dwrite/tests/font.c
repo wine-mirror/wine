@@ -9248,7 +9248,7 @@ static void test_font_resource(void)
 
     if (!(factory = create_factory_iid(&IID_IDWriteFactory6)))
     {
-        skip("IDWriteFactory6 is not supported.\n");
+        win_skip("IDWriteFactory6 is not supported.\n");
         return;
     }
 
@@ -9259,7 +9259,16 @@ static void test_font_resource(void)
     ok(hr == S_OK, "Failed to get file object, hr %#x.\n", hr);
 
     hr = IDWriteFactory6_CreateFontResource(factory, fontfile, 0, &resource);
+todo_wine
     ok(hr == S_OK, "Failed to create font resource, hr %#x.\n", hr);
+
+    if (FAILED(hr))
+    {
+        IDWriteFactory6_Release(factory);
+        IDWriteFontFile_Release(fontfile);
+        IDWriteFontFace_Release(fontface);
+        return;
+    }
 
     hr = IDWriteFactory6_CreateFontResource(factory, fontfile, 0, &resource2);
     ok(hr == S_OK, "Failed to create font resource, hr %#x.\n", hr);
