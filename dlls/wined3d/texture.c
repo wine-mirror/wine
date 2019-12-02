@@ -1838,7 +1838,14 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
     }
 
     if (dirty_region)
+    {
+        if (FAILED(wined3d_texture_check_box_dimensions(texture, 0, dirty_region)))
+        {
+            WARN("Invalid dirty_region %s specified.\n", debug_box(dirty_region));
+            return WINED3DERR_INVALIDCALL;
+        }
         FIXME("Ignoring dirty_region %s.\n", debug_box(dirty_region));
+    }
 
     wined3d_cs_emit_add_dirty_texture_region(texture->resource.device->cs, texture, layer);
 

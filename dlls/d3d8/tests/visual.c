@@ -5797,7 +5797,7 @@ static void add_dirty_rect_test(void)
     for (i = 0; i < ARRAY_SIZE(oob_rect); ++i)
     {
         hr = IDirect3DTexture8_AddDirtyRect(tex_src_red, &oob_rect[i]);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "[%u] Got unexpected hr %#x.\n", i, hr);
+        ok(hr == D3DERR_INVALIDCALL, "[%u] Got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DTexture8_LockRect(tex_src_red, 0, &locked_rect, &oob_rect[i], 0);
         ok(SUCCEEDED(hr), "[%u] Got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DTexture8_UnlockRect(tex_src_red, 0);
