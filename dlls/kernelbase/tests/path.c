@@ -797,7 +797,7 @@ static void test_PathCchAddBackslashEx(void)
         }
         else
         {
-            ok(ptrW == NULL, "%u: unexpecred end pointer.\n", i);
+            ok(ptrW == NULL, "%u: unexpected end pointer.\n", i);
             ok(remaining == 0, "%u: unexpected remaining buffer length.\n", i);
         }
     }
