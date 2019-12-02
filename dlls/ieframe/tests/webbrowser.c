@@ -283,7 +283,7 @@ static void _test_ready_state(unsigned line, READYSTATE exstate, VARIANT_BOOL ex
     hres = IWebBrowser2_get_Busy(wb, &busy);
     if(expect_busy != BUSY_FAIL) {
         ok_(__FILE__,line)(hres == S_OK, "get_ReadyState failed: %08x\n", hres);
-        ok_(__FILE__,line)(busy == expect_busy, "Busy = %x, exoected %x for ready state %d\n",
+        ok_(__FILE__,line)(busy == expect_busy, "Busy = %x, expected %x for ready state %d\n",
                            busy, expect_busy, state);
     }else {
         todo_wine
