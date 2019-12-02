@@ -132,7 +132,7 @@ struct animation_storyboard *impl_from_IUIAnimationStoryboard( IUIAnimationStory
     return CONTAINING_RECORD( iface, struct animation_storyboard, IUIAnimationStoryboard_iface );
 }
 
-static HRESULT WINAPI WINAPI animation_storyboard_QueryInterface( IUIAnimationStoryboard *iface,
+static HRESULT WINAPI animation_storyboard_QueryInterface( IUIAnimationStoryboard *iface,
                                                  REFIID iid, void **obj )
 {
     struct animation_storyboard *This = impl_from_IUIAnimationStoryboard( iface );
@@ -352,7 +352,7 @@ struct animation_var *impl_from_IUIAnimationVariable( IUIAnimationVariable *ifac
     return CONTAINING_RECORD( iface, struct animation_var, IUIAnimationVariable_iface );
 }
 
-static HRESULT WINAPI WINAPI animation_var_QueryInterface( IUIAnimationVariable *iface,
+static HRESULT WINAPI animation_var_QueryInterface( IUIAnimationVariable *iface,
                                                  REFIID iid, void **obj )
 {
     struct animation_var *This = impl_from_IUIAnimationVariable( iface );
@@ -998,7 +998,7 @@ struct tr_library *impl_from_IUIAnimationTransitionLibrary( IUIAnimationTransiti
     return CONTAINING_RECORD( iface, struct tr_library, IUIAnimationTransitionLibrary_iface );
 }
 
-static HRESULT WINAPI WINAPI tr_library_QueryInterface( IUIAnimationTransitionLibrary *iface,
+static HRESULT WINAPI tr_library_QueryInterface( IUIAnimationTransitionLibrary *iface,
                                                  REFIID iid, void **obj )
 {
     struct tr_library *This = impl_from_IUIAnimationTransitionLibrary( iface );
