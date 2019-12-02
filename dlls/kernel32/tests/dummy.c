@@ -14,7 +14,7 @@ BOOL WINAPI DllMain(HINSTANCE instance_new, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
-WINAPI void get_path(char *buffer, int buffer_size)
+void WINAPI get_path(char *buffer, int buffer_size)
 {
     GetModuleFileNameA(instance, buffer, buffer_size);
 }
