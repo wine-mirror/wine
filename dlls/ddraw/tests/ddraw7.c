@@ -16902,6 +16902,225 @@ static void test_surface_format_conversion_alpha(void)
     DestroyWindow(window);
 }
 
+static void test_compressed_surface_stretch(void)
+{
+    static const struct
+    {
+        unsigned int src_width, src_height;
+        unsigned int dst_width, dst_height;
+        unsigned int src_x, src_y;
+        unsigned int dst_x, dst_y;
+        BOOL todo_src, todo_dst;
+    }
+    test_sizes[] =
+    {
+        {4, 4, 8, 8},
+        {8, 8, 4, 4},
+        {4, 4, 2, 2, 0, 0, 0, 0, FALSE, TRUE},
+        {4, 4, 6, 6, 0, 0, 0, 0, FALSE, TRUE},
+        {4, 4, 8, 8, 2, 2, 2, 2, TRUE, TRUE},
+    };
+
+    static const struct
+    {
+        DWORD src_caps, dst_caps;
+    }
+    test_caps[] =
+    {
+#if 0
+        /* Broken on Windows. */
+        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY,  DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY},
+#endif
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY},
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY},
+        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY,  DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY},
+    };
+
+    static struct
+    {
+        DDPIXELFORMAT fmt;
+        const char *name;
+        DWORD support_flag;
+    }
+    test_formats[] =
+    {
+        {
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
+                {16}, {0x00007c00}, {0x000003e0}, {0x0000001f}, {0x00008000}
+            },
+            "R5G5B5A1",
+        },
+        {
+            {
+                sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '1'),
+                {0}, {0}, {0}, {0}, {0}
+            },
+            "DXT1", SUPPORT_DXT1,
+        },
+        {
+            {
+                sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '3'),
+                {0}, {0}, {0}, {0}, {0}
+            },
+            "DXT3", SUPPORT_DXT3,
+        },
+    };
+
+    unsigned int i, j, k, l, x, y, pitch;
+    DDSURFACEDESC2 rb_surface_desc, src_surface_desc, dst_surface_desc, lock;
+    IDirectDrawSurface7 *src_surf, *dst_surf, *rb_surf;
+    IDirect3DDevice7 *device;
+    RECT src_rect, dst_rect;
+    DWORD supported_fmts;
+    unsigned short *data;
+    IDirectDraw7 *ddraw;
+    ULONG refcount;
+    HWND window;
+    BOOL passed;
+    DDBLTFX fx;
+    HRESULT hr;
+
+    window = create_window();
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_EnumTextureFormats(device, test_block_formats_creation_cb,
+            &supported_fmts);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&src_surface_desc, 0, sizeof(src_surface_desc));
+    src_surface_desc.dwSize = sizeof(src_surface_desc);
+    src_surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    dst_surface_desc = src_surface_desc;
+
+    memset(&rb_surface_desc, 0, sizeof(rb_surface_desc));
+    rb_surface_desc.dwSize = sizeof(rb_surface_desc);
+    rb_surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    U4(rb_surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(rb_surface_desc).ddpfPixelFormat);
+    U4(rb_surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    U1(U4(rb_surface_desc).ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(U4(rb_surface_desc).ddpfPixelFormat).dwRBitMask = 0x00007c00;
+    U3(U4(rb_surface_desc).ddpfPixelFormat).dwGBitMask = 0x000003e0;
+    U4(U4(rb_surface_desc).ddpfPixelFormat).dwBBitMask = 0x0000001f;
+    U5(U4(rb_surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0x00008000;
+    rb_surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY;
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+
+    for (i = 0; i < ARRAY_SIZE(test_caps); ++i)
+    {
+        src_surface_desc.ddsCaps.dwCaps = test_caps[i].src_caps;
+        dst_surface_desc.ddsCaps.dwCaps = test_caps[i].dst_caps;
+
+        for (j = 0; j < ARRAY_SIZE(test_sizes); ++j)
+        {
+            SetRect(&src_rect, test_sizes[j].src_x, test_sizes[j].src_y,
+                    test_sizes[j].src_width, test_sizes[j].src_height);
+            SetRect(&dst_rect, test_sizes[j].dst_x, test_sizes[j].dst_y,
+                    test_sizes[j].dst_width, test_sizes[j].dst_height);
+
+            src_surface_desc.dwWidth = test_sizes[j].src_width;
+            src_surface_desc.dwHeight = test_sizes[j].src_height;
+
+            dst_surface_desc.dwWidth = (test_sizes[j].dst_width + 3) & ~3;
+            dst_surface_desc.dwHeight = (test_sizes[j].dst_height + 3) & ~3;
+
+            rb_surface_desc.dwWidth = max(src_surface_desc.dwWidth, dst_surface_desc.dwWidth);
+            rb_surface_desc.dwHeight = max(src_surface_desc.dwHeight, dst_surface_desc.dwHeight);
+
+            hr = IDirectDraw7_CreateSurface(ddraw, &rb_surface_desc, &rb_surf, NULL);
+            ok(hr == DD_OK, "Test (%u, %u), got unexpected hr %#x.\n", i, j, hr);
+
+            for (k = 0; k < ARRAY_SIZE(test_formats); ++k)
+            {
+                U4(src_surface_desc).ddpfPixelFormat = test_formats[k].fmt;
+                hr = IDirectDraw7_CreateSurface(ddraw, &src_surface_desc, &src_surf, NULL);
+                ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#x.\n", i, j, k, l, hr);
+
+                U5(fx).dwFillColor = 0x801f;
+                hr = IDirectDrawSurface7_Blt(rb_surf, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+                ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#x.\n", i, j, k, l, hr);
+
+                hr = IDirectDrawSurface7_Blt(src_surf, &src_rect, rb_surf, &src_rect, DDBLT_WAIT, NULL);
+
+                todo_wine_if(test_formats[k].fmt.dwFlags == DDPF_FOURCC && test_sizes[j].todo_src)
+                ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#x.\n", i, j, k, l, hr);
+                if (FAILED(hr))
+                {
+                    IDirectDrawSurface7_Release(src_surf);
+                    continue;
+                }
+
+                for (l = 0; l < ARRAY_SIZE(test_formats); ++l)
+                {
+                    if (~supported_fmts & test_formats[l].support_flag)
+                    {
+                        skip("%s format is not supported, skipping test %u.\n", test_formats[l].name, i);
+                        continue;
+                    }
+
+                    U4(dst_surface_desc).ddpfPixelFormat = test_formats[l].fmt;
+
+                    hr = IDirectDraw7_CreateSurface(ddraw, &dst_surface_desc, &dst_surf, NULL);
+                    ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#x.\n", i, j, k, l, hr);
+
+                    hr = IDirectDrawSurface7_Blt(dst_surf, &dst_rect, src_surf, &src_rect, DDBLT_WAIT, NULL);
+                    todo_wine_if(test_formats[l].fmt.dwFlags == DDPF_FOURCC && test_sizes[j].todo_dst)
+                    ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#x.\n", i, j, k, l, hr);
+                    if (FAILED(hr))
+                    {
+                        IDirectDrawSurface7_Release(dst_surf);
+                        continue;
+                    }
+
+                    U5(fx).dwFillColor = 0xffffffff;
+                    hr = IDirectDrawSurface7_Blt(rb_surf, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+                    ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#x.\n", i, j, k, l, hr);
+
+                    hr = IDirectDrawSurface7_Blt(rb_surf, &dst_rect, dst_surf, &dst_rect, DDBLT_WAIT, NULL);
+                    ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#x.\n", i, j, k, l, hr);
+                    hr = IDirectDrawSurface7_Lock(rb_surf, NULL, &lock, 0, NULL);
+                    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+                    pitch = U1(lock).lPitch;
+
+                    passed = TRUE;
+                    for (y = dst_rect.top; y < dst_rect.bottom && passed; ++y)
+                    {
+                        data = (unsigned short *)((BYTE *)lock.lpSurface + y * pitch);
+
+                        for (x = dst_rect.left; x < dst_rect.right && passed; ++x)
+                        {
+                            passed = data[x] == 0x801f;
+                            ok(passed, "Test (%u, %u, %u, %u), x %u, y %u, "
+                                    "got unexpected colour 0x%04x.\n", i, j, k, l, x, y, data[x]);
+                        }
+                    }
+                    hr = IDirectDrawSurface7_Unlock(rb_surf, NULL);
+                    IDirectDrawSurface7_Release(dst_surf);
+                }
+                IDirectDrawSurface7_Release(src_surf);
+            }
+            IDirectDrawSurface7_Release(rb_surf);
+        }
+    }
+
+    IDirect3DDevice7_Release(device);
+    refcount = IDirectDraw7_Release(ddraw);
+    ok(!refcount, "%u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     DDDEVICEIDENTIFIER2 identifier;
@@ -17051,4 +17270,5 @@ START_TEST(ddraw7)
     test_caps();
     test_d32_support();
     test_surface_format_conversion_alpha();
+    test_compressed_surface_stretch();
 }
