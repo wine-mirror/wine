@@ -33,7 +33,6 @@ typedef struct IDirectMusicTempoTrack {
     IDirectMusicTrack8 IDirectMusicTrack8_iface;
     struct dmobject dmobj;  /* IPersistStream only */
     LONG ref;
-    BOOL enabled;
     struct list Items;
 } IDirectMusicTempoTrack;
 
@@ -174,9 +173,6 @@ static HRESULT WINAPI tempo_track_GetParam(IDirectMusicTrack8 *iface, REFGUID rg
   if (FAILED(hr)) {
     return hr;
   }
-  if (FALSE == This->enabled) {
-    return DMUS_E_TYPE_DISABLED;
-  }
 
   if (NULL != pmtNext) *pmtNext = 0;
   prm->mtTime = 0;
@@ -223,9 +219,6 @@ static HRESULT WINAPI tempo_track_IsParamSupported(IDirectMusicTrack8 *iface, RE
       || IsEqualGUID (rguidType, &GUID_TempoParam)) {
     TRACE("param supported\n");
     return S_OK;
-  }
-  if (FALSE == This->enabled) {
-    return DMUS_E_TYPE_DISABLED;
   }
   TRACE("param unsupported\n");
   return DMUS_E_TYPE_UNSUPPORTED;
@@ -405,7 +398,6 @@ HRESULT WINAPI create_dmtempotrack(REFIID lpcGUID, void **ppobj)
     dmobject_init(&track->dmobj, &CLSID_DirectMusicTempoTrack,
                   (IUnknown *)&track->IDirectMusicTrack8_iface);
     track->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
-    track->enabled = TRUE;
     list_init(&track->Items);
 
     DMIME_LockModule();
