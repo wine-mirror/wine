@@ -103,6 +103,12 @@ static NTSTATUS load_string( ULONG id, LANGID lang, WCHAR *buffer, ULONG len )
 }
 
 
+static WCHAR casemap( USHORT *table, WCHAR ch )
+{
+    return ch + table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0x0f)];
+}
+
+
 static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
 {
     static const WCHAR pathfmtW[] = {'\\','?','?','\\','%','s','%','s',0};
@@ -772,6 +778,113 @@ void WINAPI RtlResetRtlTranslations( const NLSTABLEINFO *info )
     NlsMbCodePageTag    = info->AnsiTableInfo.DBCSCodePage;
     NlsMbOemCodePageTag = info->OemTableInfo.DBCSCodePage;
     nls_info = *info;
+}
+
+
+/**************************************************************************
+ *	RtlCustomCPToUnicodeN   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlCustomCPToUnicodeN( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, DWORD *reslen,
+                                       const char *src, DWORD srclen )
+{
+    DWORD i, ret;
+
+    dstlen /= sizeof(WCHAR);
+    if (info->DBCSOffsets)
+    {
+        for (i = dstlen; srclen && i; i--, srclen--, src++, dst++)
+        {
+            USHORT off = info->DBCSOffsets[(unsigned char)*src];
+            if (off && srclen > 1 && src[1])
+            {
+                src++;
+                srclen--;
+                *dst = info->MultiByteTable[off + (unsigned char)*src];
+            }
+            else *dst = info->MultiByteTable[(unsigned char)*src];
+        }
+        ret = dstlen - i;
+    }
+    else
+    {
+        ret = min( srclen, dstlen );
+        for (i = 0; i < ret; i++) dst[i] = info->MultiByteTable[(unsigned char)src[i]];
+    }
+    if (reslen) *reslen = ret * sizeof(WCHAR);
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *	RtlUnicodeToCustomCPN   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlUnicodeToCustomCPN( CPTABLEINFO *info, char *dst, DWORD dstlen, DWORD *reslen,
+                                       const WCHAR *src, DWORD srclen )
+{
+    DWORD i, ret;
+
+    srclen /= sizeof(WCHAR);
+    if (info->DBCSCodePage)
+    {
+        WCHAR *uni2cp = info->WideCharTable;
+
+        for (i = dstlen; srclen && i; i--, srclen--, src++)
+        {
+            if (uni2cp[*src] & 0xff00)
+            {
+                if (i == 1) break;  /* do not output a partial char */
+                i--;
+                *dst++ = uni2cp[*src] >> 8;
+            }
+            *dst++ = (char)uni2cp[*src];
+        }
+        ret = dstlen - i;
+    }
+    else
+    {
+        char *uni2cp = info->WideCharTable;
+        ret = min( srclen, dstlen );
+        for (i = 0; i < ret; i++) dst[i] = uni2cp[src[i]];
+    }
+    if (reslen) *reslen = ret;
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *	RtlUpcaseUnicodeToCustomCPN   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlUpcaseUnicodeToCustomCPN( CPTABLEINFO *info, char *dst, DWORD dstlen, DWORD *reslen,
+                                             const WCHAR *src, DWORD srclen )
+{
+    DWORD i, ret;
+
+    srclen /= sizeof(WCHAR);
+    if (info->DBCSCodePage)
+    {
+        WCHAR *uni2cp = info->WideCharTable;
+
+        for (i = dstlen; srclen && i; i--, srclen--, src++)
+        {
+            WCHAR ch = casemap( nls_info.UpperCaseTable, *src );
+            if (uni2cp[ch] & 0xff00)
+            {
+                if (i == 1) break;  /* do not output a partial char */
+                i--;
+                *dst++ = uni2cp[ch] >> 8;
+            }
+            *dst++ = (char)uni2cp[ch];
+        }
+        ret = dstlen - i;
+    }
+    else
+    {
+        char *uni2cp = info->WideCharTable;
+        ret = min( srclen, dstlen );
+        for (i = 0; i < ret; i++) dst[i] = uni2cp[casemap( nls_info.UpperCaseTable, src[i] )];
+    }
+    if (reslen) *reslen = ret;
+    return STATUS_SUCCESS;
 }
 
 
