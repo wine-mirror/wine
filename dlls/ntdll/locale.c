@@ -142,6 +142,13 @@ static WCHAR casemap( USHORT *table, WCHAR ch )
 }
 
 
+static WCHAR casemap_ascii( WCHAR ch )
+{
+    if (ch >= 'a' && ch <= 'z') ch -= 'a' - 'A';
+    return ch;
+}
+
+
 static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
 {
     static const WCHAR pathfmtW[] = {'\\','?','?','\\','%','s','%','s',0};
@@ -832,6 +839,60 @@ WCHAR WINAPI RtlAnsiCharToUnicodeChar( char **ansi )
 }
 
 
+/******************************************************************************
+ *	RtlCompareUnicodeStrings   (NTDLL.@)
+ */
+LONG WINAPI RtlCompareUnicodeStrings( const WCHAR *s1, SIZE_T len1, const WCHAR *s2, SIZE_T len2,
+                                      BOOLEAN case_insensitive )
+{
+    LONG ret = 0;
+    SIZE_T len = min( len1, len2 );
+
+    if (case_insensitive)
+    {
+        if (nls_info.UpperCaseTable)
+        {
+            while (!ret && len--) ret = casemap( nls_info.UpperCaseTable, *s1++ ) -
+                                        casemap( nls_info.UpperCaseTable, *s2++ );
+        }
+        else  /* locale not setup yet */
+        {
+            while (!ret && len--) ret = casemap_ascii( *s1++ ) - casemap_ascii( *s2++ );
+        }
+    }
+    else
+    {
+        while (!ret && len--) ret = *s1++ - *s2++;
+    }
+    if (!ret) ret = len1 - len2;
+    return ret;
+}
+
+
+/**************************************************************************
+ *	RtlPrefixUnicodeString   (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlPrefixUnicodeString( const UNICODE_STRING *s1, const UNICODE_STRING *s2,
+                                       BOOLEAN ignore_case )
+{
+    unsigned int i;
+
+    if (s1->Length > s2->Length) return FALSE;
+    if (ignore_case)
+    {
+        for (i = 0; i < s1->Length / sizeof(WCHAR); i++)
+            if (casemap( nls_info.UpperCaseTable, s1->Buffer[i] ) !=
+                casemap( nls_info.UpperCaseTable, s2->Buffer[i] )) return FALSE;
+    }
+    else
+    {
+        for (i = 0; i < s1->Length / sizeof(WCHAR); i++)
+            if (s1->Buffer[i] != s2->Buffer[i]) return FALSE;
+    }
+    return TRUE;
+}
+
+
 /**************************************************************************
  *	RtlCustomCPToUnicodeN   (NTDLL.@)
  */
@@ -1002,6 +1063,68 @@ NTSTATUS WINAPI RtlUnicodeToOemN( char *dst, DWORD dstlen, DWORD *reslen,
 
 
 /**************************************************************************
+ *	RtlDowncaseUnicodeChar   (NTDLL.@)
+ */
+WCHAR WINAPI RtlDowncaseUnicodeChar( WCHAR wch )
+{
+    return casemap( nls_info.LowerCaseTable, wch );
+}
+
+
+/**************************************************************************
+ *	RtlDowncaseUnicodeString   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlDowncaseUnicodeString( UNICODE_STRING *dest, const UNICODE_STRING *src,
+                                          BOOLEAN alloc )
+{
+    DWORD i, len = src->Length;
+
+    if (alloc)
+    {
+        dest->MaximumLength = len;
+        if (!(dest->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len ))) return STATUS_NO_MEMORY;
+    }
+    else if (len > dest->MaximumLength) return STATUS_BUFFER_OVERFLOW;
+
+    for (i = 0; i < len / sizeof(WCHAR); i++)
+        dest->Buffer[i] = casemap( nls_info.LowerCaseTable, src->Buffer[i] );
+    dest->Length = len;
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *	RtlUpcaseUnicodeChar   (NTDLL.@)
+ */
+WCHAR WINAPI RtlUpcaseUnicodeChar( WCHAR wch )
+{
+    return casemap( nls_info.UpperCaseTable, wch );
+}
+
+
+/**************************************************************************
+ *	RtlUpcaseUnicodeString   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlUpcaseUnicodeString( UNICODE_STRING *dest, const UNICODE_STRING *src,
+                                        BOOLEAN alloc )
+{
+    DWORD i, len = src->Length;
+
+    if (alloc)
+    {
+        dest->MaximumLength = len;
+        if (!(dest->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len ))) return STATUS_NO_MEMORY;
+    }
+    else if (len > dest->MaximumLength) return STATUS_BUFFER_OVERFLOW;
+
+    for (i = 0; i < len / sizeof(WCHAR); i++)
+        dest->Buffer[i] = casemap( nls_info.UpperCaseTable, src->Buffer[i] );
+    dest->Length = len;
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
  *	RtlUpcaseUnicodeToCustomCPN   (NTDLL.@)
  */
 NTSTATUS WINAPI RtlUpcaseUnicodeToCustomCPN( CPTABLEINFO *info, char *dst, DWORD dstlen, DWORD *reslen,
@@ -1034,6 +1157,39 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToCustomCPN( CPTABLEINFO *info, char *dst, DWORD
         for (i = 0; i < ret; i++) dst[i] = uni2cp[casemap( nls_info.UpperCaseTable, src[i] )];
     }
     if (reslen) *reslen = ret;
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *	RtlUpcaseUnicodeToMultiByteN   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlUpcaseUnicodeToMultiByteN( char *dst, DWORD dstlen, DWORD *reslen,
+                                              const WCHAR *src, DWORD srclen )
+{
+    return RtlUpcaseUnicodeToCustomCPN( &nls_info.AnsiTableInfo, dst, dstlen, reslen, src, srclen );
+}
+
+
+/**************************************************************************
+ *	RtlUpcaseUnicodeToOemN   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( char *dst, DWORD dstlen, DWORD *reslen,
+                                        const WCHAR *src, DWORD srclen )
+{
+    if (nls_info.OemTableInfo.WideCharTable)
+        return RtlUpcaseUnicodeToCustomCPN( &nls_info.OemTableInfo, dst, dstlen, reslen, src, srclen );
+
+    /* locale not setup yet */
+    dstlen = min( srclen / sizeof(WCHAR), dstlen );
+    if (reslen) *reslen = dstlen;
+    while (dstlen--)
+    {
+        WCHAR ch = *src++;
+        if (ch > 0x7f) ch = '?';
+        else ch = casemap_ascii( ch );
+        *dst++ = ch;
+    }
     return STATUS_SUCCESS;
 }
 
