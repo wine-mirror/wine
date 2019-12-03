@@ -2834,20 +2834,15 @@ static NTSTATUS parse_manifest( struct actctx_loader* acl, struct assembly_ident
     }
     else
     {
-        /* let's assume utf-8 for now */
-        int len = wine_utf8_mbstowcs( 0, buffer, size, NULL, 0 );
+        DWORD len;
         WCHAR *new_buff;
 
-        if (len == -1)
-        {
-            FIXME( "utf-8 conversion failed\n" );
-            return STATUS_SXS_CANT_GEN_ACTCTX;
-        }
-        if (!(new_buff = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-            return STATUS_NO_MEMORY;
-        wine_utf8_mbstowcs( 0, buffer, size, new_buff, len );
+        /* let's assume utf-8 for now */
+        RtlUTF8ToUnicodeN( NULL, 0, &len, buffer, size );
+        if (!(new_buff = RtlAllocateHeap( GetProcessHeap(), 0, len ))) return STATUS_NO_MEMORY;
+        RtlUTF8ToUnicodeN( new_buff, len, &len, buffer, size );
         xmlbuf.ptr = new_buff;
-        xmlbuf.end = xmlbuf.ptr + len;
+        xmlbuf.end = xmlbuf.ptr + len / sizeof(WCHAR);
         status = parse_manifest_buffer( acl, assembly, ai, &xmlbuf );
         RtlFreeHeap( GetProcessHeap(), 0, new_buff );
     }

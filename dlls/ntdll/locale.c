@@ -636,13 +636,19 @@ void init_locale( HMODULE module )
  */
 int ntdll_umbstowcs( DWORD flags, const char *src, int srclen, WCHAR *dst, int dstlen )
 {
-#ifdef __APPLE__
-    /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
-    flags |= MB_COMPOSITE;
+    DWORD reslen;
+    NTSTATUS status;
+
+    if (unix_table) return wine_cp_mbstowcs( unix_table, flags, src, srclen, dst, dstlen );
+
+    if (!dstlen) dst = NULL;
+    status = RtlUTF8ToUnicodeN( dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
+    if (status && status != STATUS_SOME_NOT_MAPPED) return 0;
+    reslen /= sizeof(WCHAR);
+#ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
+    if (reslen && dst) RtlNormalizeString( NormalizationC, dst, reslen, dst, (int *)&reslen );
 #endif
-    return unix_table ?
-        wine_cp_mbstowcs( unix_table, flags, src, srclen, dst, dstlen ) :
-        wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
+    return reslen;
 }
 
 
@@ -652,10 +658,16 @@ int ntdll_umbstowcs( DWORD flags, const char *src, int srclen, WCHAR *dst, int d
 int ntdll_wcstoumbs( DWORD flags, const WCHAR *src, int srclen, char *dst, int dstlen,
                      const char *defchar, int *used )
 {
-    if (unix_table)
-        return wine_cp_wcstombs( unix_table, flags, src, srclen, dst, dstlen, defchar, used );
+    DWORD reslen;
+    NTSTATUS status;
+
+    if (unix_table) return wine_cp_wcstombs( unix_table, flags, src, srclen, dst, dstlen, defchar, used );
+
     if (used) *used = 0;  /* all chars are valid for UTF-8 */
-    return wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
+    if (!dstlen) dst = NULL;
+    status = RtlUnicodeToUTF8N( dst, dstlen, &reslen, src, srclen * sizeof(WCHAR) );
+    if (status && status != STATUS_SOME_NOT_MAPPED) return 0;
+    return reslen;
 }
 
 
