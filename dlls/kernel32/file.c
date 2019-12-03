@@ -273,10 +273,25 @@ DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen )
     DWORD ret;
 
     if (srclen < 0) srclen = strlenW( src ) + 1;
-    if (!AreFileApisANSI())
-        RtlUnicodeToOemN( dest, destlen, &ret, src, srclen * sizeof(WCHAR) );
+    if (!destlen)
+    {
+        if (!AreFileApisANSI())
+        {
+            UNICODE_STRING strW;
+            strW.Buffer = (WCHAR *)src;
+            strW.Length = srclen * sizeof(WCHAR);
+            ret = RtlUnicodeStringToOemSize( &strW ) - 1;
+        }
+        else
+            RtlUnicodeToMultiByteSize( &ret, src, srclen * sizeof(WCHAR) );
+    }
     else
-        RtlUnicodeToMultiByteN( dest, destlen, &ret, src, srclen * sizeof(WCHAR) );
+    {
+        if (!AreFileApisANSI())
+            RtlUnicodeToOemN( dest, destlen, &ret, src, srclen * sizeof(WCHAR) );
+        else
+            RtlUnicodeToMultiByteN( dest, destlen, &ret, src, srclen * sizeof(WCHAR) );
+    }
     return ret;
 }
 
