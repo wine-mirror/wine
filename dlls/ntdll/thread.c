@@ -1115,6 +1115,27 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         *(BOOL*)data = FALSE;
         if (ret_len) *ret_len = sizeof(BOOL);
         return STATUS_SUCCESS;
+    case ThreadSuspendCount:
+        {
+            ULONG count = 0;
+
+            if (length != sizeof(ULONG)) return STATUS_INFO_LENGTH_MISMATCH;
+            if (!data) return STATUS_ACCESS_VIOLATION;
+
+            SERVER_START_REQ( get_thread_info )
+            {
+                req->handle = wine_server_obj_handle( handle );
+                req->tid_in = 0;
+                if (!(status = wine_server_call( req )))
+                    count = reply->suspend_count;
+            }
+            SERVER_END_REQ;
+
+            if (!status)
+                *(ULONG *)data = count;
+
+            return status;
+        }
     case ThreadDescription:
         {
             THREAD_DESCRIPTION_INFORMATION *info = data;

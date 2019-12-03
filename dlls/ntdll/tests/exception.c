@@ -50,6 +50,7 @@ static ULONG     (WINAPI *pRtlRemoveVectoredContinueHandler)(PVOID handler);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
 static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
+static NTSTATUS  (WINAPI *pNtQueryInformationThread)(HANDLE, THREADINFOCLASS, PVOID, ULONG, PULONG);
 static NTSTATUS  (WINAPI *pNtSetInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG);
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static NTSTATUS  (WINAPI *pNtClose)(HANDLE);
@@ -3163,11 +3164,34 @@ static DWORD WINAPI suspend_thread_test( void *arg )
     return 0;
 }
 
-static void test_suspend_thread(void)
+static void test_suspend_count(HANDLE hthread, ULONG expected_count, int line)
 {
-    HANDLE thread, event;
+    static BOOL supported = TRUE;
     NTSTATUS status;
     ULONG count;
+
+    if (!supported)
+        return;
+
+    count = ~0u;
+    status = pNtQueryInformationThread(hthread, ThreadSuspendCount, &count, sizeof(count), NULL);
+    if (status)
+    {
+        win_skip("ThreadSuspendCount is not supported.\n");
+        supported = FALSE;
+        return;
+    }
+
+    ok_(__FILE__, line)(!status, "Failed to get suspend count, status %#x.\n", status);
+    ok_(__FILE__, line)(count == expected_count, "Unexpected suspend count %u.\n", count);
+}
+
+static void test_suspend_thread(void)
+{
+#define TEST_SUSPEND_COUNT(thread, count) test_suspend_count((thread), (count), __LINE__)
+    HANDLE thread, event;
+    ULONG count, len;
+    NTSTATUS status;
     DWORD ret;
 
     status = NtSuspendThread(0, NULL);
@@ -3184,6 +3208,31 @@ static void test_suspend_thread(void)
     ret = WaitForSingleObject(thread, 0);
     ok(ret == WAIT_TIMEOUT, "Unexpected status %d.\n", ret);
 
+    status = pNtQueryInformationThread(thread, ThreadSuspendCount, &count, sizeof(count), NULL);
+    if (!status)
+    {
+        status = pNtQueryInformationThread(thread, ThreadSuspendCount, NULL, sizeof(count), NULL);
+        ok(status == STATUS_ACCESS_VIOLATION, "Unexpected status %#x.\n", status);
+
+        status = pNtQueryInformationThread(thread, ThreadSuspendCount, &count, sizeof(count) / 2, NULL);
+        ok(status == STATUS_INFO_LENGTH_MISMATCH, "Unexpected status %#x.\n", status);
+
+        len = 123;
+        status = pNtQueryInformationThread(thread, ThreadSuspendCount, &count, sizeof(count) / 2, &len);
+        ok(status == STATUS_INFO_LENGTH_MISMATCH, "Unexpected status %#x.\n", status);
+        ok(len == 123, "Unexpected info length %u.\n", len);
+
+        len = 123;
+        status = pNtQueryInformationThread(thread, ThreadSuspendCount, NULL, 0, &len);
+        ok(status == STATUS_INFO_LENGTH_MISMATCH, "Unexpected status %#x.\n", status);
+        ok(len == 123, "Unexpected info length %u.\n", len);
+
+        count = 10;
+        status = pNtQueryInformationThread(0, ThreadSuspendCount, &count, sizeof(count), NULL);
+        ok(status, "Unexpected status %#x.\n", status);
+        ok(count == 10, "Unexpected suspend count %u.\n", count);
+    }
+
     status = NtResumeThread(thread, NULL);
     ok(!status, "Unexpected status %#x.\n", status);
 
@@ -3191,24 +3240,35 @@ static void test_suspend_thread(void)
     ok(!status, "Unexpected status %#x.\n", status);
     ok(count == 0, "Unexpected suspended count %u.\n", count);
 
+    TEST_SUSPEND_COUNT(thread, 0);
+
     status = NtSuspendThread(thread, NULL);
     ok(!status, "Failed to suspend a thread, status %#x.\n", status);
+
+    TEST_SUSPEND_COUNT(thread, 1);
 
     status = NtSuspendThread(thread, &count);
     ok(!status, "Failed to suspend a thread, status %#x.\n", status);
     ok(count == 1, "Unexpected suspended count %u.\n", count);
 
+    TEST_SUSPEND_COUNT(thread, 2);
+
     status = NtResumeThread(thread, &count);
     ok(!status, "Failed to resume a thread, status %#x.\n", status);
     ok(count == 2, "Unexpected suspended count %u.\n", count);
 
+    TEST_SUSPEND_COUNT(thread, 1);
+
     status = NtResumeThread(thread, NULL);
     ok(!status, "Failed to resume a thread, status %#x.\n", status);
+
+    TEST_SUSPEND_COUNT(thread, 0);
 
     SetEvent(event);
     WaitForSingleObject(thread, INFINITE);
 
     CloseHandle(thread);
+#undef TEST_SUSPEND_COUNT
 }
 
 static const char *suspend_process_event_name = "suspend_process_event";
@@ -3418,6 +3478,7 @@ START_TEST(exception)
     X(RtlAddVectoredContinueHandler);
     X(RtlRemoveVectoredContinueHandler);
     X(NtQueryInformationProcess);
+    X(NtQueryInformationThread);
     X(NtSetInformationProcess);
     X(NtSuspendProcess);
     X(NtResumeProcess);

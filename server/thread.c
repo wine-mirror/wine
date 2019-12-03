@@ -1463,6 +1463,7 @@ DECL_HANDLER(get_thread_info)
         reply->priority       = thread->priority;
         reply->affinity       = thread->affinity;
         reply->last           = thread->process->running_threads == 1;
+        reply->suspend_count  = thread->suspend;
         reply->desc_len       = thread->desc_len;
 
         if (thread->desc && get_reply_max_size())

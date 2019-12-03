@@ -1006,8 +1006,10 @@ struct get_thread_info_reply
     int          exit_code;
     int          priority;
     int          last;
+    int          suspend_count;
     data_size_t  desc_len;
     /* VARARG(desc,unicode_str); */
+    char __pad_60[4];
 };
 
 
@@ -6700,6 +6702,6 @@ union generic_reply
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 592
+#define SERVER_PROTOCOL_VERSION 593
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
