@@ -712,10 +712,20 @@ static void test_track(void)
                     else if (class[i].clsid == &CLSID_DirectMusicWaveTrack)
                         expect_getparam(dmt, param_types[j].type, param_types[j].name,
                                 DMUS_E_GET_UNSUPPORTED);
-                } else
+                } else {
                     ok(hr == DMUS_E_TYPE_UNSUPPORTED,
                             "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
                             param_types[j].name, hr);
+                    expect_getparam(dmt, param_types[j].type, param_types[j].name,
+                            DMUS_E_GET_UNSUPPORTED);
+                    if (class[i].clsid == &CLSID_DirectMusicWaveTrack)
+                        expect_setparam(dmt, param_types[j].type, param_types[j].name,
+                                DMUS_E_TYPE_UNSUPPORTED);
+                    else
+                        expect_setparam(dmt, param_types[j].type, param_types[j].name,
+                                DMUS_E_SET_UNSUPPORTED);
+                }
+
                 /* GetParam / SetParam for IsParamSupported supported types */
                 if (class[i].clsid == &CLSID_DirectMusicTimeSigTrack) {
                     expect_getparam(dmt, &GUID_DisableTimeSig, "GUID_DisableTimeSig",
