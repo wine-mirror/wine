@@ -88,11 +88,6 @@ struct gstdemux_source
     SourceSeeking seek;
 };
 
-static inline struct gstdemux *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    return CONTAINING_RECORD(iface, struct gstdemux, filter.IBaseFilter_iface);
-}
-
 static inline struct gstdemux *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, struct gstdemux, filter);
@@ -1232,10 +1227,123 @@ static void gstdemux_destroy(struct strmbase_filter *iface)
     heap_free(filter);
 }
 
+static HRESULT gstdemux_init_stream(struct strmbase_filter *iface)
+{
+    struct gstdemux *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr = VFW_E_NOT_CONNECTED, pin_hr;
+    GstStateChangeReturn ret;
+    unsigned int i;
+
+    if (!filter->container)
+        return VFW_E_NOT_CONNECTED;
+
+    if (filter->no_more_pads_event)
+        ResetEvent(filter->no_more_pads_event);
+
+    if ((ret = gst_element_set_state(filter->container, GST_STATE_PAUSED)) == GST_STATE_CHANGE_FAILURE)
+    {
+        ERR("Failed to pause stream.\n");
+        return E_FAIL;
+    }
+
+    /* Make sure that all of our pads are connected before returning, lest we
+     * e.g. try to seek and fail. */
+    if (filter->no_more_pads_event)
+        WaitForSingleObject(filter->no_more_pads_event, INFINITE);
+
+    for (i = 0; i < filter->cStreams; ++i)
+    {
+        if (SUCCEEDED(pin_hr = BaseOutputPinImpl_Active(&filter->ppPins[i]->pin)))
+            hr = pin_hr;
+    }
+    return hr;
+}
+
+static HRESULT gstdemux_start_stream(struct strmbase_filter *iface, REFERENCE_TIME time)
+{
+    struct gstdemux *filter = impl_from_strmbase_filter(iface);
+    GstStateChangeReturn ret;
+
+    if (!filter->container)
+        return VFW_E_NOT_CONNECTED;
+
+    if ((ret = gst_element_set_state(filter->container, GST_STATE_PLAYING)) == GST_STATE_CHANGE_FAILURE)
+    {
+        ERR("Failed to play stream.\n");
+        return E_FAIL;
+    }
+    else if (ret == GST_STATE_CHANGE_ASYNC)
+        return S_FALSE;
+    return S_OK;
+}
+
+static HRESULT gstdemux_stop_stream(struct strmbase_filter *iface)
+{
+    struct gstdemux *filter = impl_from_strmbase_filter(iface);
+    GstStateChangeReturn ret;
+
+    if (!filter->container)
+        return VFW_E_NOT_CONNECTED;
+
+    if ((ret = gst_element_set_state(filter->container, GST_STATE_PAUSED)) == GST_STATE_CHANGE_FAILURE)
+    {
+        ERR("Failed to pause stream.\n");
+        return E_FAIL;
+    }
+    else if (ret == GST_STATE_CHANGE_ASYNC)
+        return S_FALSE;
+    return S_OK;
+}
+
+static HRESULT gstdemux_cleanup_stream(struct strmbase_filter *iface)
+{
+    struct gstdemux *filter = impl_from_strmbase_filter(iface);
+    GstStateChangeReturn ret;
+
+    if (!filter->container)
+        return S_OK;
+
+    filter->ignore_flush = TRUE;
+    if ((ret = gst_element_set_state(filter->container, GST_STATE_READY)) == GST_STATE_CHANGE_FAILURE)
+    {
+        ERR("Failed to pause stream.\n");
+        return E_FAIL;
+    }
+    gst_element_get_state(filter->container, NULL, NULL, GST_CLOCK_TIME_NONE);
+    filter->ignore_flush = FALSE;
+
+    return S_OK;
+}
+
+static HRESULT gstdemux_wait_state(struct strmbase_filter *iface, DWORD timeout)
+{
+    struct gstdemux *filter = impl_from_strmbase_filter(iface);
+    GstStateChangeReturn ret;
+
+    if (!filter->container)
+        return S_OK;
+
+    ret = gst_element_get_state(filter->container, NULL, NULL,
+            timeout == INFINITE ? GST_CLOCK_TIME_NONE : timeout * 1000);
+    if (ret == GST_STATE_CHANGE_FAILURE)
+    {
+        ERR("Failed to get state.\n");
+        return E_FAIL;
+    }
+    else if (ret == GST_STATE_CHANGE_ASYNC)
+        return VFW_S_STATE_INTERMEDIATE;
+    return S_OK;
+}
+
 static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = gstdemux_get_pin,
     .filter_destroy = gstdemux_destroy,
+    .filter_init_stream = gstdemux_init_stream,
+    .filter_start_stream = gstdemux_start_stream,
+    .filter_stop_stream = gstdemux_stop_stream,
+    .filter_cleanup_stream = gstdemux_cleanup_stream,
+    .filter_wait_state = gstdemux_wait_state,
 };
 
 static HRESULT sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
@@ -1345,139 +1453,15 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     return &object->filter.IUnknown_inner;
 }
 
-static HRESULT WINAPI GST_Stop(IBaseFilter *iface)
-{
-    struct gstdemux *This = impl_from_IBaseFilter(iface);
-
-    TRACE("(%p)\n", This);
-
-    mark_wine_thread();
-
-    if (This->container) {
-        This->ignore_flush = TRUE;
-        gst_element_set_state(This->container, GST_STATE_READY);
-        gst_element_get_state(This->container, NULL, NULL, -1);
-        This->ignore_flush = FALSE;
-    }
-    return S_OK;
-}
-
-static HRESULT WINAPI GST_Pause(IBaseFilter *iface)
-{
-    struct gstdemux *This = impl_from_IBaseFilter(iface);
-    HRESULT hr = S_OK;
-    GstState now;
-    GstStateChangeReturn ret;
-
-    TRACE("(%p)\n", This);
-
-    if (!This->container)
-        return VFW_E_NOT_CONNECTED;
-
-    mark_wine_thread();
-
-    gst_element_get_state(This->container, &now, NULL, -1);
-    if (now == GST_STATE_PAUSED)
-        return S_OK;
-    if (now != GST_STATE_PLAYING)
-        hr = IBaseFilter_Run(iface, -1);
-    if (FAILED(hr))
-        return hr;
-    ret = gst_element_set_state(This->container, GST_STATE_PAUSED);
-    if (ret == GST_STATE_CHANGE_ASYNC)
-        hr = S_FALSE;
-    return hr;
-}
-
-static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
-{
-    struct gstdemux *This = impl_from_IBaseFilter(iface);
-    HRESULT hr = S_OK;
-    ULONG i;
-    GstState now;
-    HRESULT hr_any = VFW_E_NOT_CONNECTED;
-
-    TRACE("(%p)->(%s)\n", This, wine_dbgstr_longlong(tStart));
-
-    mark_wine_thread();
-
-    if (!This->container)
-        return VFW_E_NOT_CONNECTED;
-
-    gst_element_get_state(This->container, &now, NULL, -1);
-    if (now == GST_STATE_PLAYING)
-        return S_OK;
-    if (now == GST_STATE_PAUSED) {
-        GstStateChangeReturn ret;
-        ret = gst_element_set_state(This->container, GST_STATE_PLAYING);
-        if (ret == GST_STATE_CHANGE_ASYNC)
-            return S_FALSE;
-        return S_OK;
-    }
-
-    EnterCriticalSection(&This->filter.csFilter);
-
-    if (This->no_more_pads_event)
-        ResetEvent(This->no_more_pads_event);
-
-    gst_element_set_state(This->container, GST_STATE_PLAYING);
-
-    /* Make sure that all of our pads are connected before returning, lest we
-     * e.g. try to seek and fail. */
-    if (This->no_more_pads_event)
-        WaitForSingleObject(This->no_more_pads_event, INFINITE);
-
-    for (i = 0; i < This->cStreams; i++) {
-        hr = BaseOutputPinImpl_Active(&This->ppPins[i]->pin);
-        if (SUCCEEDED(hr)) {
-            hr_any = hr;
-        }
-    }
-    hr = hr_any;
-    LeaveCriticalSection(&This->filter.csFilter);
-
-    return hr;
-}
-
-static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
-{
-    struct gstdemux *This = impl_from_IBaseFilter(iface);
-    HRESULT hr = S_OK;
-    GstState now, pending;
-    GstStateChangeReturn ret;
-
-    TRACE("(%p)->(%d, %p)\n", This, dwMilliSecsTimeout, pState);
-
-    mark_wine_thread();
-
-    if (!This->container) {
-        *pState = State_Stopped;
-        return S_OK;
-    }
-
-    ret = gst_element_get_state(This->container, &now, &pending, dwMilliSecsTimeout == INFINITE ? -1 : dwMilliSecsTimeout * 1000);
-
-    if (ret == GST_STATE_CHANGE_ASYNC)
-        hr = VFW_S_STATE_INTERMEDIATE;
-    else
-        pending = now;
-
-    switch (pending) {
-        case GST_STATE_PAUSED: *pState = State_Paused; return hr;
-        case GST_STATE_PLAYING: *pState = State_Running; return hr;
-        default: *pState = State_Stopped; return hr;
-    }
-}
-
 static const IBaseFilterVtbl GST_Vtbl = {
     BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
-    GST_Stop,
-    GST_Pause,
-    GST_Run,
-    GST_GetState,
+    BaseFilterImpl_Stop,
+    BaseFilterImpl_Pause,
+    BaseFilterImpl_Run,
+    BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
@@ -2617,6 +2601,11 @@ static const struct strmbase_filter_ops mpeg_splitter_ops =
     .filter_query_interface = mpeg_splitter_query_interface,
     .filter_get_pin = gstdemux_get_pin,
     .filter_destroy = gstdemux_destroy,
+    .filter_init_stream = gstdemux_init_stream,
+    .filter_start_stream = gstdemux_start_stream,
+    .filter_stop_stream = gstdemux_stop_stream,
+    .filter_cleanup_stream = gstdemux_cleanup_stream,
+    .filter_wait_state = gstdemux_wait_state,
 };
 
 IUnknown * CALLBACK mpeg_splitter_create(IUnknown *outer, HRESULT *phr)
