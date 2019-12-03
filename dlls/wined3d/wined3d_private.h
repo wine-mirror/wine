@@ -3563,7 +3563,7 @@ struct wined3d_texture
         unsigned int map_count;
         uint32_t map_flags;
         DWORD locations;
-        GLuint buffer_object;
+        uintptr_t buffer_object;
     } *sub_resources;
 };
 

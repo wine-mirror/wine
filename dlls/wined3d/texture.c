@@ -477,13 +477,15 @@ void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int su
 static void wined3d_texture_remove_buffer_object(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info)
 {
-    GLuint *buffer_object = &texture->sub_resources[sub_resource_idx].buffer_object;
+    uintptr_t *buffer_object = &texture->sub_resources[sub_resource_idx].buffer_object;
+    GLuint bo;
 
-    GL_EXTCALL(glDeleteBuffers(1, buffer_object));
+    bo = *buffer_object;
+    GL_EXTCALL(glDeleteBuffers(1, &bo));
     checkGLcall("glDeleteBuffers");
 
     TRACE("Deleted buffer object %u for texture %p, sub-resource %u.\n",
-            *buffer_object, texture, sub_resource_idx);
+            bo, texture, sub_resource_idx);
 
     wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_BUFFER);
     *buffer_object = 0;
@@ -1670,19 +1672,20 @@ static void wined3d_texture_prepare_buffer_object(struct wined3d_texture *textur
         unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_texture_sub_resource *sub_resource;
+    GLuint bo;
 
     sub_resource = &texture->sub_resources[sub_resource_idx];
     if (sub_resource->buffer_object)
         return;
 
-    GL_EXTCALL(glGenBuffers(1, &sub_resource->buffer_object));
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, sub_resource->buffer_object));
+    GL_EXTCALL(glGenBuffers(1, &bo));
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bo));
     GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, sub_resource->size, NULL, GL_STREAM_DRAW));
     GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
     checkGLcall("Create buffer object");
 
-    TRACE("Created buffer object %u for texture %p, sub-resource %u.\n",
-            sub_resource->buffer_object, texture, sub_resource_idx);
+    sub_resource->buffer_object = bo;
+    TRACE("Created buffer object %u for texture %p, sub-resource %u.\n", bo, texture, sub_resource_idx);
 }
 
 static void wined3d_texture_force_reload(struct wined3d_texture *texture)
