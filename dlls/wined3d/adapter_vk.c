@@ -466,6 +466,7 @@ static void adapter_vk_uninit_3d(struct wined3d_device *device)
 
     device->blitter->ops->blitter_destroy(device->blitter, NULL);
 
+    wined3d_cs_finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
     device_context_remove(device, &context_vk->c);
     device->shader_backend->shader_free_private(device, NULL);
     wined3d_context_vk_cleanup(context_vk);
