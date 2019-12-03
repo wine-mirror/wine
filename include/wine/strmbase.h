@@ -272,10 +272,13 @@ typedef struct SourceSeeking
 	double dRate;
 	LONGLONG llCurrent, llStop, llDuration;
 	GUID timeformat;
-	PCRITICAL_SECTION crst;
+	CRITICAL_SECTION cs;
 } SourceSeeking;
 
-HRESULT SourceSeeking_Init(SourceSeeking *pSeeking, const IMediaSeekingVtbl *Vtbl, SourceSeeking_ChangeStop fnChangeStop, SourceSeeking_ChangeStart fnChangeStart, SourceSeeking_ChangeRate fnChangeRate, PCRITICAL_SECTION crit_sect);
+HRESULT strmbase_seeking_init(SourceSeeking *seeking, const IMediaSeekingVtbl *vtbl,
+        SourceSeeking_ChangeStop fnChangeStop, SourceSeeking_ChangeStart fnChangeStart,
+        SourceSeeking_ChangeRate fnChangeRate);
+void strmbase_seeking_cleanup(SourceSeeking *seeking);
 
 HRESULT WINAPI SourceSeekingImpl_GetCapabilities(IMediaSeeking * iface, DWORD * pCapabilities);
 HRESULT WINAPI SourceSeekingImpl_CheckCapabilities(IMediaSeeking * iface, DWORD * pCapabilities);

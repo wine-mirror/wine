@@ -1869,6 +1869,7 @@ static void free_source_pin(struct gstdemux_source *pin)
     FreeMediaType(&pin->mt);
     gst_segment_free(pin->segment);
 
+    strmbase_seeking_cleanup(&pin->seek);
     strmbase_source_cleanup(&pin->pin);
     heap_free(pin);
 }
@@ -1921,8 +1922,8 @@ static struct gstdemux_source *create_pin(struct gstdemux *filter, const WCHAR *
     pin->segment = gst_segment_new();
     gst_segment_init(pin->segment, GST_FORMAT_TIME);
     pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
-    SourceSeeking_Init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop,
-            GST_ChangeCurrent, GST_ChangeRate, &filter->filter.csFilter);
+    strmbase_seeking_init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop,
+            GST_ChangeCurrent, GST_ChangeRate);
     BaseFilterImpl_IncrementPinVersion(&filter->filter);
 
     sprintf(pad_name, "qz_sink_%u", filter->cStreams);

@@ -340,7 +340,8 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
     This->pInputPin.pin.peer = NULL;
     This->pInputPin.pin.pFuncsTable = &sink_ops;
 
-    SourceSeeking_Init(&This->sourceSeeking, &QT_Seeking_Vtbl, QTSplitter_ChangeStop, QTSplitter_ChangeStart, QTSplitter_ChangeRate,  &This->filter.csFilter);
+    strmbase_seeking_init(&This->sourceSeeking, &QT_Seeking_Vtbl,
+            QTSplitter_ChangeStop, QTSplitter_ChangeStart, QTSplitter_ChangeRate);
 
     *phr = S_OK;
     return &This->filter.IUnknown_inner;
