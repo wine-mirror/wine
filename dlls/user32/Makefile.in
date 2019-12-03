@@ -1,7 +1,7 @@
 EXTRADEFS = -D_USER32_ -D_WINABLE_
 MODULE    = user32.dll
 IMPORTLIB = user32
-IMPORTS   = gdi32 version advapi32
+IMPORTS   = gdi32 version advapi32 kernelbase
 EXTRAINCL = $(PNG_CFLAGS)
 DELAYIMPORTS = hid imm32 setupapi usp10
 
