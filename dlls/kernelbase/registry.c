@@ -915,7 +915,7 @@ LSTATUS WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDW
     NTSTATUS status;
     char buffer[256], *buf_ptr = buffer;
     KEY_FULL_INFORMATION *info = (KEY_FULL_INFORMATION *)buffer;
-    DWORD total_size, len;
+    DWORD total_size;
 
     TRACE( "(%p,%p,%d,%p,%p,%p,%p,%p,%p,%p,%p)\n", hkey, class, class_len ? *class_len : 0,
            reserved, subkeys, max_subkey, values, max_value, max_data, security, modif );
@@ -940,19 +940,21 @@ LSTATUS WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDW
 
         if (status) goto done;
 
-        len = 0;
-        if (class && class_len) len = *class_len;
-        RtlUnicodeToMultiByteN( class, len, class_len,
-                                (WCHAR *)(buf_ptr + info->ClassOffset), info->ClassLength );
-        if (len)
+        if (class && class_len && *class_len)
         {
-            if (*class_len + 1 > len)
+            DWORD len = *class_len;
+            RtlUnicodeToMultiByteN( class, len, class_len,
+                                    (WCHAR *)(buf_ptr + info->ClassOffset), info->ClassLength );
+            if (*class_len == len)
             {
                 status = STATUS_BUFFER_OVERFLOW;
                 *class_len -= 1;
             }
             class[*class_len] = 0;
         }
+        else if (class_len)
+            RtlUnicodeToMultiByteSize( class_len,
+                                       (WCHAR *)(buf_ptr + info->ClassOffset), info->ClassLength );
     }
     else status = STATUS_SUCCESS;
 
