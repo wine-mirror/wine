@@ -103,6 +103,24 @@ static NTSTATUS load_string( ULONG id, LANGID lang, WCHAR *buffer, ULONG len )
 }
 
 
+static DWORD mbtowc_size( const CPTABLEINFO *info, LPCSTR str, UINT len )
+{
+    DWORD res;
+
+    if (!info->DBCSCodePage) return len;
+
+    for (res = 0; len; len--, str++, res++)
+    {
+        if (info->DBCSOffsets[(unsigned char)*str] && len > 1)
+        {
+            str++;
+            len--;
+        }
+    }
+    return res;
+}
+
+
 static WCHAR casemap( USHORT *table, WCHAR ch )
 {
     return ch + table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0x0f)];
@@ -782,6 +800,24 @@ void WINAPI RtlResetRtlTranslations( const NLSTABLEINFO *info )
 
 
 /**************************************************************************
+ *      RtlAnsiCharToUnicodeChar   (NTDLL.@)
+ */
+WCHAR WINAPI RtlAnsiCharToUnicodeChar( char **ansi )
+{
+    if (nls_info.AnsiTableInfo.DBCSOffsets)
+    {
+        USHORT off = nls_info.AnsiTableInfo.DBCSOffsets[(unsigned char)**ansi];
+        if (off && (*ansi)[1])
+        {
+            (*ansi)++;
+            return nls_info.AnsiTableInfo.MultiByteTable[off + (unsigned char)*(*ansi)++];
+        }
+    }
+    return nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)*(*ansi)++];
+}
+
+
+/**************************************************************************
  *	RtlCustomCPToUnicodeN   (NTDLL.@)
  */
 NTSTATUS WINAPI RtlCustomCPToUnicodeN( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, DWORD *reslen,
@@ -848,6 +884,53 @@ NTSTATUS WINAPI RtlUnicodeToCustomCPN( CPTABLEINFO *info, char *dst, DWORD dstle
     }
     if (reslen) *reslen = ret;
     return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *	RtlMultiByteToUnicodeN   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlMultiByteToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen,
+                                        const char *src, DWORD srclen )
+{
+    if (nls_info.AnsiTableInfo.WideCharTable)
+        return RtlCustomCPToUnicodeN( &nls_info.AnsiTableInfo, dst, dstlen, reslen, src, srclen );
+
+    /* locale not setup yet */
+    dstlen = min( srclen, dstlen / sizeof(WCHAR) );
+    if (reslen) *reslen = dstlen * sizeof(WCHAR);
+    while (dstlen--) *dst++ = *src++ & 0x7f;
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *      RtlMultiByteToUnicodeSize   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlMultiByteToUnicodeSize( DWORD *size, const char *str, DWORD len )
+{
+    *size = mbtowc_size( &nls_info.AnsiTableInfo, str, len ) * sizeof(WCHAR);
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *	RtlOemToUnicodeN   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlOemToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen,
+                                  const char *src, DWORD srclen )
+{
+    return RtlCustomCPToUnicodeN( &nls_info.OemTableInfo, dst, dstlen, reslen, src, srclen );
+}
+
+
+/**************************************************************************
+ *      RtlOemStringToUnicodeSize   (NTDLL.@)
+ *      RtlxOemStringToUnicodeSize  (NTDLL.@)
+ */
+DWORD WINAPI RtlOemStringToUnicodeSize( const STRING *str )
+{
+    return (mbtowc_size( &nls_info.OemTableInfo, str->Buffer, str->Length ) + 1) * sizeof(WCHAR);
 }
 
 

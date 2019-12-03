@@ -605,35 +605,6 @@ NTSTATUS WINAPI RtlEqualDomainName(const UNICODE_STRING *left,
 }
 
 
-/**************************************************************************
- *      RtlAnsiCharToUnicodeChar   (NTDLL.@)
- *
- * Converts the first ansi character to a unicode character.
- *
- * PARAMS
- *  ansi [I/O] Pointer to the ansi string.
- *
- * RETURNS
- *  Unicode representation of the first character in the ansi string.
- *
- * NOTES
- *  Upon successful completion, the char pointer ansi points to is
- *  incremented by the size of the character.
- */
-WCHAR WINAPI RtlAnsiCharToUnicodeChar(LPSTR *ansi)
-{
-    WCHAR str;
-    DWORD charSize = sizeof(CHAR);
-
-    if (wine_is_dbcs_leadbyte(ansi_table, **ansi))
-        charSize++;
-
-    RtlMultiByteToUnicodeN(&str, sizeof(WCHAR), NULL, *ansi, charSize);
-    *ansi += charSize;
-
-    return str;
-}
-
 /*
         COPY BETWEEN ANSI_STRING or UNICODE_STRING
         there is no parameter checking, it just crashes
@@ -799,46 +770,6 @@ NTSTATUS WINAPI RtlUnicodeStringToOemString( STRING *oem,
     RtlUnicodeToOemN( oem->Buffer, oem->Length, NULL, uni->Buffer, uni->Length );
     oem->Buffer[oem->Length] = 0;
     return ret;
-}
-
-
-/**************************************************************************
- *	RtlMultiByteToUnicodeN   (NTDLL.@)
- *
- * Converts a multi-byte string to a Unicode string.
- *
- * RETURNS
- *  NTSTATUS code
- *
- * NOTES
- *  Performs a partial copy if dst is too small.
- */
-NTSTATUS WINAPI RtlMultiByteToUnicodeN( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
-                                        LPCSTR src, DWORD srclen )
-{
-
-    int ret = wine_cp_mbstowcs( ansi_table, 0, src, srclen, dst, dstlen/sizeof(WCHAR) );
-    if (reslen)
-        *reslen = (ret >= 0) ? ret*sizeof(WCHAR) : dstlen; /* overflow -> we filled up to dstlen */
-    return STATUS_SUCCESS;
-}
-
-
-/**************************************************************************
- *	RtlOemToUnicodeN   (NTDLL.@)
- *
- * Converts a multi-byte string in the OEM code page to a Unicode string.
- *
- * RETURNS
- *  NTSTATUS code
- */
-NTSTATUS WINAPI RtlOemToUnicodeN( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
-                                  LPCSTR src, DWORD srclen )
-{
-    int ret = wine_cp_mbstowcs( oem_table, 0, src, srclen, dst, dstlen/sizeof(WCHAR) );
-    if (reslen)
-        *reslen = (ret >= 0) ? ret*sizeof(WCHAR) : dstlen; /* overflow -> we filled up to dstlen */
-    return STATUS_SUCCESS;
 }
 
 
@@ -1254,26 +1185,6 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
 
 
 /**************************************************************************
- *      RtlOemStringToUnicodeSize   (NTDLL.@)
- *      RtlxOemStringToUnicodeSize  (NTDLL.@)
- *
- * Calculate the size in bytes necessary for the Unicode conversion of str,
- * including the terminating '\0'.
- *
- * PARAMS
- *  str [I] String to calculate the size of
- *
- * RETURNS
- *  The calculated size.
- */
-UINT WINAPI RtlOemStringToUnicodeSize( const STRING *str )
-{
-    int ret = wine_cp_mbstowcs( oem_table, 0, str->Buffer, str->Length, NULL, 0 );
-    return (ret + 1) * sizeof(WCHAR);
-}
-
-
-/**************************************************************************
  *      RtlAnsiStringToUnicodeSize   (NTDLL.@)
  *      RtlxAnsiStringToUnicodeSize  (NTDLL.@)
  *
@@ -1291,27 +1202,6 @@ DWORD WINAPI RtlAnsiStringToUnicodeSize( const STRING *str )
     DWORD ret;
     RtlMultiByteToUnicodeSize( &ret, str->Buffer, str->Length );
     return ret + sizeof(WCHAR);
-}
-
-
-/**************************************************************************
- *      RtlMultiByteToUnicodeSize   (NTDLL.@)
- *
- * Compute the size in bytes necessary for the Unicode conversion of str,
- * without the terminating '\0'.
- *
- * PARAMS
- *  size [O] Destination for size
- *  str  [I] String to calculate the size of
- *  len  [I] Length of str
- *
- * RETURNS
- *  STATUS_SUCCESS.
- */
-NTSTATUS WINAPI RtlMultiByteToUnicodeSize( DWORD *size, LPCSTR str, UINT len )
-{
-    *size = wine_cp_mbstowcs( ansi_table, 0, str, len, NULL, 0 ) * sizeof(WCHAR);
-    return STATUS_SUCCESS;
 }
 
 
