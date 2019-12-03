@@ -404,8 +404,8 @@ HRESULT WINAPI DECLSPEC_HOTPATCH SetThreadDescription( HANDLE thread, PCWSTR des
     if (length > USHRT_MAX)
         return HRESULT_FROM_NT(STATUS_INVALID_PARAMETER);
 
-    info.Length = length << 16 | length;
-    info.Description = (WCHAR *)description;
+    info.Description.Length = info.Description.MaximumLength = length;
+    info.Description.Buffer = (WCHAR *)description;
 
     return HRESULT_FROM_NT(NtSetInformationThread( thread, ThreadDescription, &info, sizeof(info) ));
 }
@@ -434,15 +434,13 @@ HRESULT WINAPI DECLSPEC_HOTPATCH GetThreadDescription( HANDLE thread, WCHAR **de
     status = NtQueryInformationThread( thread, ThreadDescription, info, length, &length );
     if (!status)
     {
-        length = info->Length & 0xffff;
-
-        if (!(*description = LocalAlloc( 0, length + sizeof(WCHAR))))
+        if (!(*description = LocalAlloc( 0, info->Description.Length + sizeof(WCHAR))))
             status = STATUS_NO_MEMORY;
         else
         {
-            if (length)
-                memcpy(*description, info->Description, length);
-            (*description)[length / sizeof(WCHAR)] = 0;
+            if (info->Description.Length)
+                memcpy(*description, info->Description.Buffer, info->Description.Length);
+            (*description)[info->Description.Length / sizeof(WCHAR)] = 0;
         }
     }
 
