@@ -814,13 +814,17 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
 
     TRACE("%p %p %p\n", This, bin, pad);
 
-    EnterCriticalSection(&This->filter.csFilter);
     for (x = 0; x < This->cStreams; ++x) {
         if (This->ppPins[x]->their_src == pad)
             break;
     }
     if (x == This->cStreams)
-        goto out;
+    {
+        char *name = gst_pad_get_name(pad);
+        WARN("No pin matching pad %s found.\n", debugstr_a(name));
+        g_free(name);
+        return;
+    }
 
     pin = This->ppPins[x];
 
@@ -831,9 +835,6 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
 
     gst_object_unref(pin->their_src);
     pin->their_src = NULL;
-out:
-    TRACE("Removed %i/%i\n", x, This->cStreams);
-    LeaveCriticalSection(&This->filter.csFilter);
 }
 
 static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *This)
@@ -971,7 +972,6 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
         return;
     }
 
-    EnterCriticalSection(&This->filter.csFilter);
     for (x = 0; x < This->cStreams; ++x) {
         struct gstdemux_source *pin = This->ppPins[x];
         if (!pin->their_src) {
@@ -986,13 +986,11 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
                 pin->their_src = pad;
                 gst_object_ref(pin->their_src);
                 TRACE("Relinked\n");
-                LeaveCriticalSection(&This->filter.csFilter);
                 return;
             }
         }
     }
     init_new_decoded_pad(bin, pad, This);
-    LeaveCriticalSection(&This->filter.csFilter);
 }
 
 static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
