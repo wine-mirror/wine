@@ -234,20 +234,20 @@ struct vid_mode
 };
 
 static const struct vid_mode vid_modes_test[] = {
-    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY, 0},
-    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT |                 DM_DISPLAYFREQUENCY, 1},
-    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL                      , 0},
-    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT                                      , 1},
-    {640, 480, 0, 0,                                DM_BITSPERPEL                      , 0},
-    {640, 480, 0, 0,                                                DM_DISPLAYFREQUENCY, 0},
+    {1024, 768, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY, 0},
+    {1024, 768, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT |                 DM_DISPLAYFREQUENCY, 1},
+    {1024, 768, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL                      , 0},
+    {1024, 768, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT                                      , 1},
+    {1024, 768, 0, 0,                                DM_BITSPERPEL                      , 0},
+    {1024, 768, 0, 0,                                                DM_DISPLAYFREQUENCY, 0},
 
     {0, 0, 0, 0, DM_PELSWIDTH, 0},
     {0, 0, 0, 0, DM_PELSHEIGHT, 0},
 
-    {640, 480, 0, 0, DM_PELSWIDTH, 0},
-    {640, 480, 0, 0, DM_PELSHEIGHT, 0},
-    {  0, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT, 0},
-    {640,   0, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT, 0},
+    {1024, 768, 0, 0, DM_PELSWIDTH, 0},
+    {1024, 768, 0, 0, DM_PELSHEIGHT, 0},
+    {   0, 768, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT, 0},
+    {1024,   0, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT, 0},
 
     /* the following test succeeds under XP SP3
     {0, 0, 0, 0, DM_DISPLAYFREQUENCY, 0}
