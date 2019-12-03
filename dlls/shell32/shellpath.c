@@ -4366,6 +4366,12 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
                 case IDS_MYVIDEOS:
                     lstrcpyW(wszSubPath, My_VideosW);
                     break;
+                case IDS_DOWNLOADS:
+                    lstrcpyW(wszSubPath, DownloadsW);
+                    break;
+                case IDS_TEMPLATES:
+                    lstrcpyW(wszSubPath, TemplatesW);
+                    break;
                 default:
                     ERR("LoadString(%d) failed!\n", LOWORD(pwszSubPath));
                     return FALSE;
@@ -4392,21 +4398,21 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
 /******************************************************************************
  * _SHCreateSymbolicLinks  [Internal]
  * 
- * Sets up symbol links for various shell folders to point into the users home
+ * Sets up symbol links for various shell folders to point into the user's home
  * directory. We do an educated guess about what the user would probably want:
  * - If there is a 'My Documents' directory in $HOME, the user probably wants
- *   wine's 'My Documents' to point there. Furthermore, we imply that the user
- *   is a Windows lover and has no problem with wine creating 'My Pictures',
- *   'My Music' and 'My Videos' subfolders under '$HOME/My Documents', if those
- *   do not already exits. We put appropriate symbolic links in place for those,
- *   too.
+ *   wine's 'My Documents' to point there. Furthermore, we infer that the user
+ *   is a Windows lover and has no problem with wine creating subfolders for
+ *   'My Pictures', 'My Music', 'My Videos' etc. under '$HOME/My Documents', if
+ *   those do not already exist. We put appropriate symbolic links in place for
+ *   those, too.
  * - If there is no 'My Documents' directory in $HOME, we let 'My Documents'
  *   point directly to $HOME. We assume the user to be a unix hacker who does not
  *   want wine to create anything anywhere besides the .wine directory. So, if
  *   there already is a 'My Music' directory in $HOME, we symlink the 'My Music'
  *   shell folder to it. But if not, then we check XDG_MUSIC_DIR - "well known"
  *   directory, and try to link to that. If that fails, then we symlink to
- *   $HOME directly. The same holds fo 'My Pictures' and 'My Videos'.
+ *   $HOME directly. The same holds for 'My Pictures', 'My Videos' etc.
  * - The Desktop shell folder is symlinked to XDG_DESKTOP_DIR. If that does not
  *   exist, then we try '$HOME/Desktop'. If that does not exist, then we leave
  *   it alone.
@@ -4414,10 +4420,18 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
  */
 static void _SHCreateSymbolicLinks(void)
 {
-    UINT aidsMyStuff[] = { IDS_MYPICTURES, IDS_MYVIDEOS, IDS_MYMUSIC }, i;
-    const WCHAR* MyOSXStuffW[] = { PicturesW, MoviesW, MusicW };
-    int acsidlMyStuff[] = { CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC };
-    static const char * const xdg_dirs[] = { "PICTURES", "VIDEOS", "MUSIC", "DOCUMENTS", "DESKTOP" };
+    static const UINT aidsMyStuff[] = {
+        IDS_MYPICTURES, IDS_MYVIDEOS, IDS_MYMUSIC, IDS_DOWNLOADS, IDS_TEMPLATES
+    };
+    static const WCHAR * const MyOSXStuffW[] = {
+        PicturesW, MoviesW, MusicW, DownloadsW, TemplatesW
+    };
+    static const int acsidlMyStuff[] = {
+        CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC, CSIDL_DOWNLOADS, CSIDL_TEMPLATES
+    };
+    static const char * const xdg_dirs[] = {
+        "PICTURES", "VIDEOS", "MUSIC", "DOWNLOAD", "TEMPLATES", "DOCUMENTS", "DESKTOP"
+    };
     static const unsigned int num = ARRAY_SIZE(xdg_dirs);
     WCHAR wszTempPath[MAX_PATH];
     char szPersonalTarget[FILENAME_MAX], *pszPersonal;
@@ -4428,6 +4442,7 @@ static void _SHCreateSymbolicLinks(void)
     HRESULT hr;
     char ** xdg_results;
     char * xdg_desktop_dir;
+    UINT i;
 
     /* Create all necessary profile sub-dirs up to 'My Documents' and get the unix path. */
     hr = SHGetFolderPathW(NULL, CSIDL_PERSONAL|CSIDL_FLAG_CREATE, NULL,
@@ -4449,9 +4464,9 @@ static void _SHCreateSymbolicLinks(void)
             if (_SHAppendToUnixPath(szPersonalTarget, MAKEINTRESOURCEW(IDS_PERSONAL)) &&
                 !stat(szPersonalTarget, &statFolder) && S_ISDIR(statFolder.st_mode))
             {
-                /* '$HOME/My Documents' exists. Create 'My Pictures',
-                 * 'My Videos' and 'My Music' subfolders or fail silently if
-                 * they already exist.
+                /* '$HOME/My Documents' exists. Create subfolders for
+                 * 'My Pictures', 'My Videos', 'My Music' etc. or fail silently
+                 * if they already exist.
                  */
                 for (i = 0; i < ARRAY_SIZE(aidsMyStuff); i++)
                 {
@@ -4489,8 +4504,9 @@ static void _SHCreateSymbolicLinks(void)
     }
     else
     {
-        /* '$HOME' doesn't exist. Create 'My Pictures', 'My Videos' and 'My Music' subdirs
-         * in '%USERPROFILE%\\My Documents' or fail silently if they already exist. */
+        /* '$HOME' doesn't exist. Create subdirs for 'My Pictures', 'My Videos',
+         * 'My Music' etc. in '%USERPROFILE%\My Documents' or fail silently if
+         * they already exist. */
         pszHome = NULL;
         strcpy(szPersonalTarget, pszPersonal);
         for (i = 0; i < ARRAY_SIZE(aidsMyStuff); i++) {
@@ -4500,7 +4516,7 @@ static void _SHCreateSymbolicLinks(void)
         }
     }
 
-    /* Create symbolic links for 'My Pictures', 'My Videos' and 'My Music'. */
+    /* Create symbolic links for 'My Pictures', 'My Videos', 'My Music' etc. */
     for (i=0; i < ARRAY_SIZE(aidsMyStuff); i++)
     {
         /* Create the current 'My Whatever' folder and get its unix path. */
@@ -6136,7 +6152,7 @@ HRESULT SHELL_RegisterShellFolders(void)
     HRESULT hr;
 
     /* Set up '$HOME' targeted symlinks for 'My Documents', 'My Pictures',
-     * 'My Videos', 'My Music' and 'Desktop' in advance, so that the
+     * 'My Videos', 'My Music', 'Desktop' etc. in advance, so that the
      * _SHRegister*ShellFolders() functions will find everything nice and clean
      * and thus will not attempt to create them in the profile directory. */
     _SHCreateSymbolicLinks();
