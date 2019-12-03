@@ -981,6 +981,7 @@
 @ stdcall RtlTryAcquireSRWLockExclusive(ptr)
 @ stdcall RtlTryAcquireSRWLockShared(ptr)
 @ stdcall RtlTryEnterCriticalSection(ptr)
+@ stdcall RtlUTF8ToUnicodeN(ptr long ptr ptr long)
 @ cdecl -i386 -norelay RtlUlongByteSwap() NTDLL_RtlUlongByteSwap
 @ cdecl -ret64 RtlUlonglongByteSwap(int64)
 # @ stub RtlUnhandledExceptionFilter2

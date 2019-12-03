@@ -1307,6 +1307,120 @@ found:
 }
 
 
+/* helper for the various utf8 mbstowcs functions */
+static unsigned int decode_utf8_char( unsigned char ch, const char **str, const char *strend )
+{
+    /* number of following bytes in sequence based on first byte value (for bytes above 0x7f) */
+    static const char utf8_length[128] =
+    {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x80-0x8f */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x90-0x9f */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xa0-0xaf */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xb0-0xbf */
+        0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xc0-0xcf */
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xd0-0xdf */
+        2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 0xe0-0xef */
+        3,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0  /* 0xf0-0xff */
+    };
+
+    /* first byte mask depending on UTF-8 sequence length */
+    static const unsigned char utf8_mask[4] = { 0x7f, 0x1f, 0x0f, 0x07 };
+
+    unsigned int len = utf8_length[ch - 0x80];
+    unsigned int res = ch & utf8_mask[len];
+    const char *end = *str + len;
+
+    if (end > strend)
+    {
+        *str = end;
+        return ~0;
+    }
+    switch (len)
+    {
+    case 3:
+        if ((ch = end[-3] ^ 0x80) >= 0x40) break;
+        res = (res << 6) | ch;
+        (*str)++;
+        if (res < 0x10) break;
+    case 2:
+        if ((ch = end[-2] ^ 0x80) >= 0x40) break;
+        res = (res << 6) | ch;
+        if (res >= 0x110000 >> 6) break;
+        (*str)++;
+        if (res < 0x20) break;
+        if (res >= 0xd800 >> 6 && res <= 0xdfff >> 6) break;
+    case 1:
+        if ((ch = end[-1] ^ 0x80) >= 0x40) break;
+        res = (res << 6) | ch;
+        (*str)++;
+        if (res < 0x80) break;
+        return res;
+    }
+    return ~0;
+}
+
+
+/**************************************************************************
+ *	RtlUTF8ToUnicodeN   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlUTF8ToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen, const char *src, DWORD srclen )
+{
+    unsigned int res, len;
+    NTSTATUS status = STATUS_SUCCESS;
+    const char *srcend = src + srclen;
+    WCHAR *dstend;
+
+    if (!src) return STATUS_INVALID_PARAMETER_4;
+    if (!reslen) return STATUS_INVALID_PARAMETER;
+
+    dstlen /= sizeof(WCHAR);
+    dstend = dst + dstlen;
+    if (!dst)
+    {
+        for (len = 0; src < srcend; len++)
+        {
+            unsigned char ch = *src++;
+            if (ch < 0x80) continue;
+            if ((res = decode_utf8_char( ch, &src, srcend )) > 0x10ffff)
+                status = STATUS_SOME_NOT_MAPPED;
+            else
+                if (res > 0xffff) len++;
+        }
+        *reslen = len * sizeof(WCHAR);
+        return status;
+    }
+
+    while ((dst < dstend) && (src < srcend))
+    {
+        unsigned char ch = *src++;
+        if (ch < 0x80)  /* special fast case for 7-bit ASCII */
+        {
+            *dst++ = ch;
+            continue;
+        }
+        if ((res = decode_utf8_char( ch, &src, srcend )) <= 0xffff)
+        {
+            *dst++ = res;
+        }
+        else if (res <= 0x10ffff)  /* we need surrogates */
+        {
+            res -= 0x10000;
+            *dst++ = 0xd800 | (res >> 10);
+            if (dst == dstend) break;
+            *dst++ = 0xdc00 | (res & 0x3ff);
+        }
+        else
+        {
+            *dst++ = 0xfffd;
+            status = STATUS_SOME_NOT_MAPPED;
+        }
+    }
+    if (src < srcend) status = STATUS_BUFFER_TOO_SMALL;  /* overflow */
+    *reslen = (dstlen - (dstend - dst)) * sizeof(WCHAR);
+    return status;
+}
+
+
 /* get the next char value taking surrogates into account */
 static inline unsigned int get_surrogate_value( const WCHAR *src, unsigned int srclen )
 {
