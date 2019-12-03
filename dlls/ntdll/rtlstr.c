@@ -42,15 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 
 /**************************************************************************
- *	__wine_init_codepages   (NTDLL.@)
- *
- * Set the code page once kernel32 is loaded. Should be done differently.
- */
-void CDECL __wine_init_codepages( const union cptable *ansi, const union cptable *oem )
-{
-}
-
-/**************************************************************************
  *      RtlInitAnsiString   (NTDLL.@)
  *
  * Initializes a buffered ansi string.

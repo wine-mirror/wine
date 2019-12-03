@@ -1567,7 +1567,6 @@
 @ cdecl wine_get_host_version(ptr ptr) NTDLL_wine_get_host_version
 
 # Codepages
-@ cdecl __wine_init_codepages(ptr ptr)
 @ cdecl __wine_get_unix_codepage()
 
 # signal handling

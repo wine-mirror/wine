@@ -2314,7 +2314,6 @@ INT WINAPI CompareStringA(LCID lcid, DWORD flags,
  */
 void LOCALE_Init(void)
 {
-    extern void CDECL __wine_init_codepages( const union cptable *ansi_cp, const union cptable *oem_cp );
     extern UINT CDECL __wine_get_unix_codepage(void);
 
     UINT ansi_cp = 1252, oem_cp = 437, mac_cp = 10000, unix_cp;
@@ -2332,7 +2331,6 @@ void LOCALE_Init(void)
     if (!(mac_cptable = wine_cp_get_table( mac_cp )))
         mac_cptable  = wine_cp_get_table( 10000 );
 
-    __wine_init_codepages( ansi_cptable, oem_cptable );
     unix_cp = __wine_get_unix_codepage();
     if (unix_cp != CP_UTF8) unix_cptable = wine_cp_get_table( unix_cp );
 
