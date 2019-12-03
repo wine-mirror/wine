@@ -604,6 +604,26 @@ static void test_track_identify(void)
     IDirectMusicSegment8_Release(seg);
 }
 
+static void expect_getparam(IDirectMusicTrack *track, REFGUID type, const char *name,
+        HRESULT expect)
+{
+    HRESULT hr;
+    char buf[64] = { 0 };
+
+    hr = IDirectMusicTrack8_GetParam(track, type, 0, NULL, buf);
+    ok(hr == expect, "GetParam(%s) failed: %08x, expected %08x\n", name, hr, expect);
+}
+
+static void expect_setparam(IDirectMusicTrack *track, REFGUID type, const char *name,
+        HRESULT expect)
+{
+    HRESULT hr;
+    char buf[64] = { 0 };
+
+    hr = IDirectMusicTrack8_SetParam(track, type, 0, buf);
+    ok(hr == expect, "SetParam(%s) failed: %08x, expected %08x\n", name, hr, expect);
+}
+
 static void test_track(void)
 {
     IDirectMusicTrack *dmt;
@@ -679,10 +699,15 @@ static void test_track(void)
         if (class[i].has_params != ~0) {
             for (j = 0; j < ARRAY_SIZE(param_types); j++) {
                 hr = IDirectMusicTrack8_IsParamSupported(dmt, param_types[j].type);
-                if (class[i].has_params & (1 << j))
+                if (class[i].has_params & (1 << j)) {
                     ok(hr == S_OK, "IsParamSupported(%s) failed: %08x, expected S_OK\n",
                             param_types[j].name, hr);
-                else
+                    if (class[i].clsid == &CLSID_DirectMusicSegmentTriggerTrack) {
+                        expect_getparam(dmt, param_types[j].type, param_types[j].name,
+                                DMUS_E_GET_UNSUPPORTED);
+                        expect_setparam(dmt, param_types[j].type, param_types[j].name, S_OK);
+                    }
+                } else
                     ok(hr == DMUS_E_TYPE_UNSUPPORTED,
                             "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
                             param_types[j].name, hr);
