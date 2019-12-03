@@ -1118,38 +1118,14 @@ ULONG CDECL wined3d_texture_incref(struct wined3d_texture *texture)
 
 static void wined3d_texture_destroy_object(void *object)
 {
-    const struct wined3d_gl_info *gl_info = NULL;
     struct wined3d_texture *texture = object;
-    struct wined3d_context *context = NULL;
     struct wined3d_dc_info *dc_info;
     unsigned int sub_count;
-    GLuint buffer_object;
     unsigned int i;
 
     TRACE("texture %p.\n", texture);
 
     sub_count = texture->level_count * texture->layer_count;
-    for (i = 0; i < sub_count; ++i)
-    {
-        if (!(buffer_object = texture->sub_resources[i].buffer_object))
-            continue;
-
-        TRACE("Deleting buffer object %u.\n", buffer_object);
-
-        /* We may not be able to get a context in
-         * wined3d_texture_destroy_object() in general, but if a buffer object
-         * was previously created we can. */
-        if (!context)
-        {
-            context = context_acquire(texture->resource.device, NULL, 0);
-            gl_info = wined3d_context_gl(context)->gl_info;
-        }
-
-        GL_EXTCALL(glDeleteBuffers(1, &buffer_object));
-    }
-
-    if (context)
-        context_release(context);
 
     if ((dc_info = texture->dc_info))
     {

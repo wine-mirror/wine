@@ -4765,17 +4765,39 @@ static void wined3d_texture_gl_destroy_object(void *object)
 {
     struct wined3d_renderbuffer_entry *entry, *entry2;
     struct wined3d_texture_gl *texture_gl = object;
+    struct wined3d_context *context = NULL;
     const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
     struct wined3d_device *device;
+    unsigned int sub_count, i;
+    GLuint buffer_object;
 
     TRACE("texture_gl %p.\n", texture_gl);
+
+    sub_count = texture_gl->t.level_count * texture_gl->t.layer_count;
+    for (i = 0; i < sub_count; ++i)
+    {
+        if (!(buffer_object = texture_gl->t.sub_resources[i].buffer_object))
+            continue;
+
+        TRACE("Deleting buffer object %u.\n", buffer_object);
+
+        if (!context)
+        {
+            context = context_acquire(texture_gl->t.resource.device, NULL, 0);
+            gl_info = wined3d_context_gl(context)->gl_info;
+        }
+
+        GL_EXTCALL(glDeleteBuffers(1, &buffer_object));
+    }
 
     if (!list_empty(&texture_gl->renderbuffers))
     {
         device = texture_gl->t.resource.device;
-        context = context_acquire(device, NULL, 0);
-        gl_info = wined3d_context_gl(context)->gl_info;
+        if (!context)
+        {
+            context = context_acquire(device, NULL, 0);
+            gl_info = wined3d_context_gl(context)->gl_info;
+        }
 
         LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &texture_gl->renderbuffers, struct wined3d_renderbuffer_entry, entry)
         {
@@ -4784,9 +4806,10 @@ static void wined3d_texture_gl_destroy_object(void *object)
             gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
             heap_free(entry);
         }
-
-        context_release(context);
     }
+
+    if (context)
+        context_release(context);
 
     wined3d_texture_gl_unload_texture(texture_gl);
 
