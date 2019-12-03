@@ -1416,7 +1416,16 @@ static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
     }
 
     EnterCriticalSection(&This->filter.csFilter);
+
+    if (This->no_more_pads_event)
+        ResetEvent(This->no_more_pads_event);
+
     gst_element_set_state(This->container, GST_STATE_PLAYING);
+
+    /* Make sure that all of our pads are connected before returning, lest we
+     * e.g. try to seek and fail. */
+    if (This->no_more_pads_event)
+        WaitForSingleObject(This->no_more_pads_event, INFINITE);
 
     for (i = 0; i < This->cStreams; i++) {
         hr = BaseOutputPinImpl_Active(&This->ppPins[i]->pin);
