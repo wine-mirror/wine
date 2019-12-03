@@ -86,39 +86,6 @@ const WCHAR DIR_System[] = {'C',':','\\','w','i','n','d','o','w','s',
 #define PDB32_WIN32S_PROC   0x8000  /* Win32s process */
 
 
-/***********************************************************************
- *              set_library_argv
- *
- * Set the Wine library argv global variables.
- */
-static void set_library_argv( WCHAR **wargv )
-{
-    int argc;
-    char *p, **argv;
-    DWORD total = 0;
-
-    /* convert argv back from Unicode since it has to be in the Ansi codepage not the Unix one */
-
-    for (argc = 0; wargv[argc]; argc++)
-        total += WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, NULL, 0, NULL, NULL );
-
-    argv = RtlAllocateHeap( GetProcessHeap(), 0, total + (argc + 1) * sizeof(*argv) );
-    p = (char *)(argv + argc + 1);
-    for (argc = 0; wargv[argc]; argc++)
-    {
-        DWORD reslen = WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, p, total, NULL, NULL );
-        argv[argc] = p;
-        p += reslen;
-        total -= reslen;
-    }
-    argv[argc] = NULL;
-
-    __wine_main_argc = argc;
-    __wine_main_argv = argv;
-    __wine_main_wargv = wargv;
-}
-
-
 #ifdef __i386__
 extern DWORD call_process_entry( PEB *peb, LPTHREAD_START_ROUTINE entry );
 __ASM_GLOBAL_FUNC( call_process_entry,
@@ -214,7 +181,6 @@ void * CDECL __wine_kernel_init(void)
     RtlSetUnhandledExceptionFilter( UnhandledExceptionFilter );
 
     LOCALE_Init();
-    set_library_argv( __wine_main_wargv );
 
     if (!params->CurrentDirectory.Handle) chdir("/"); /* avoid locking removable devices */
 

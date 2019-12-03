@@ -29,6 +29,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wincon.h"
 #include "winternl.h"
 
@@ -77,12 +78,43 @@ static void set_entry_point( HMODULE module, const char *name, DWORD rva )
 
 
 /***********************************************************************
+ *              set_library_argv
+ *
+ * Set the Wine library argv global variable.
+ */
+static void set_library_argv( WCHAR **wargv )
+{
+    int argc;
+    char *p, **argv;
+    DWORD total = 0;
+
+    /* convert argv back from Unicode since it has to be in the Ansi codepage not the Unix one */
+
+    for (argc = 0; wargv[argc]; argc++)
+        total += WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, NULL, 0, NULL, NULL );
+
+    argv = RtlAllocateHeap( GetProcessHeap(), 0, total + (argc + 1) * sizeof(*argv) );
+    p = (char *)(argv + argc + 1);
+    for (argc = 0; wargv[argc]; argc++)
+    {
+        DWORD reslen = WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, p, total, NULL, NULL );
+        argv[argc] = p;
+        p += reslen;
+        total -= reslen;
+    }
+    argv[argc] = NULL;
+    __wine_main_argv = argv;
+}
+
+
+/***********************************************************************
  *           KERNEL process initialisation routine
  */
 static BOOL process_attach( HMODULE module )
 {
     RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
 
+    set_library_argv( __wine_main_wargv );
     NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
 
     /* Setup registry timezone information */
