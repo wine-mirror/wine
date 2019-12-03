@@ -3245,6 +3245,7 @@ HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **byt
 {
     struct bytestream *object;
     LARGE_INTEGER position;
+    STATSTG stat;
     HRESULT hr;
 
     TRACE("%p, %p.\n", stream, bytestream);
@@ -3270,6 +3271,16 @@ HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **byt
     IStream_AddRef(object->stream);
     position.QuadPart = 0;
     IStream_Seek(object->stream, position, STREAM_SEEK_SET, NULL);
+
+    if (SUCCEEDED(IStream_Stat(object->stream, &stat, 0)))
+    {
+        if (stat.pwcsName)
+        {
+            IMFAttributes_SetString(&object->attributes.IMFAttributes_iface, &MF_BYTESTREAM_ORIGIN_NAME,
+                    stat.pwcsName);
+            CoTaskMemFree(stat.pwcsName);
+        }
+    }
 
     *bytestream = &object->IMFByteStream_iface;
 
