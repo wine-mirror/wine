@@ -2942,6 +2942,7 @@ static void wined3d_texture_gl_unload(struct wined3d_resource *resource)
     UINT sub_count = texture_gl->t.level_count * texture_gl->t.layer_count;
     struct wined3d_renderbuffer_entry *entry, *entry2;
     struct wined3d_device *device = resource->device;
+    unsigned int location = resource->map_binding;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     UINT i;
@@ -2951,14 +2952,17 @@ static void wined3d_texture_gl_unload(struct wined3d_resource *resource)
     context = context_acquire(device, NULL, 0);
     gl_info = wined3d_context_gl(context)->gl_info;
 
+    if (location == WINED3D_LOCATION_BUFFER)
+        location = WINED3D_LOCATION_SYSMEM;
+
     for (i = 0; i < sub_count; ++i)
     {
         struct wined3d_texture_sub_resource *sub_resource = &texture_gl->t.sub_resources[i];
 
         if (resource->access & WINED3D_RESOURCE_ACCESS_CPU
-                && wined3d_texture_load_location(&texture_gl->t, i, context, resource->map_binding))
+                && wined3d_texture_load_location(&texture_gl->t, i, context, location))
         {
-            wined3d_texture_invalidate_location(&texture_gl->t, i, ~resource->map_binding);
+            wined3d_texture_invalidate_location(&texture_gl->t, i, ~location);
         }
         else
         {
