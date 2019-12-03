@@ -1100,18 +1100,29 @@ NTSTATUS WINAPI RtlDowncaseUnicodeString(
  * NOTES
  *  writes terminating 0
  */
-NTSTATUS WINAPI RtlUpcaseUnicodeStringToAnsiString( STRING *dst,
-                                                    const UNICODE_STRING *src,
+NTSTATUS WINAPI RtlUpcaseUnicodeStringToAnsiString( STRING *ansi,
+                                                    const UNICODE_STRING *uni,
                                                     BOOLEAN doalloc )
 {
-    NTSTATUS ret;
-    UNICODE_STRING upcase;
+    NTSTATUS ret = STATUS_SUCCESS;
+    DWORD len = RtlUnicodeStringToAnsiSize( uni );
 
-    if (!(ret = RtlUpcaseUnicodeString( &upcase, src, TRUE )))
+    ansi->Length = len - 1;
+    if (doalloc)
     {
-        ret = RtlUnicodeStringToAnsiString( dst, &upcase, doalloc );
-        RtlFreeUnicodeString( &upcase );
+        ansi->MaximumLength = len;
+        if (!(ansi->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len )))
+            return STATUS_NO_MEMORY;
     }
+    else if (ansi->MaximumLength < len)
+    {
+        if (!ansi->MaximumLength) return STATUS_BUFFER_OVERFLOW;
+        ansi->Length = ansi->MaximumLength - 1;
+        ret = STATUS_BUFFER_OVERFLOW;
+    }
+
+    RtlUpcaseUnicodeToMultiByteN( ansi->Buffer, ansi->Length, NULL, uni->Buffer, uni->Length );
+    ansi->Buffer[ansi->Length] = 0;
     return ret;
 }
 
@@ -1128,18 +1139,29 @@ NTSTATUS WINAPI RtlUpcaseUnicodeStringToAnsiString( STRING *dst,
  * NOTES
  *  writes terminating 0
  */
-NTSTATUS WINAPI RtlUpcaseUnicodeStringToOemString( STRING *dst,
-                                                   const UNICODE_STRING *src,
+NTSTATUS WINAPI RtlUpcaseUnicodeStringToOemString( STRING *oem,
+                                                   const UNICODE_STRING *uni,
                                                    BOOLEAN doalloc )
 {
-    NTSTATUS ret;
-    UNICODE_STRING upcase;
+    NTSTATUS ret = STATUS_SUCCESS;
+    DWORD len = RtlUnicodeStringToAnsiSize( uni );
 
-    if (!(ret = RtlUpcaseUnicodeString( &upcase, src, TRUE )))
+    oem->Length = len - 1;
+    if (doalloc)
     {
-        ret = RtlUnicodeStringToOemString( dst, &upcase, doalloc );
-        RtlFreeUnicodeString( &upcase );
+        oem->MaximumLength = len;
+        if (!(oem->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len )))
+            return STATUS_NO_MEMORY;
     }
+    else if (oem->MaximumLength < len)
+    {
+        if (!oem->MaximumLength) return STATUS_BUFFER_OVERFLOW;
+        oem->Length = oem->MaximumLength - 1;
+        ret = STATUS_BUFFER_OVERFLOW;
+    }
+
+    RtlUpcaseUnicodeToOemN( oem->Buffer, oem->Length, NULL, uni->Buffer, uni->Length );
+    oem->Buffer[oem->Length] = 0;
     return ret;
 }
 
@@ -1160,38 +1182,22 @@ NTSTATUS WINAPI RtlUpcaseUnicodeStringToCountedOemString( STRING *oem,
                                                           const UNICODE_STRING *uni,
                                                           BOOLEAN doalloc )
 {
-    NTSTATUS ret;
-    UNICODE_STRING upcase;
-    WCHAR tmp[32];
+    NTSTATUS ret = STATUS_SUCCESS;
+    DWORD len = RtlUnicodeStringToOemSize( uni ) - 1;
 
-    upcase.Buffer = tmp;
-    upcase.MaximumLength = sizeof(tmp);
-    ret = RtlUpcaseUnicodeString( &upcase, uni, FALSE );
-    if (ret == STATUS_BUFFER_OVERFLOW) ret = RtlUpcaseUnicodeString( &upcase, uni, TRUE );
-
-    if (!ret)
+    oem->Length = len;
+    if (doalloc)
     {
-        DWORD len = RtlUnicodeStringToOemSize( &upcase ) - 1;
-        oem->Length = len;
-        if (doalloc)
-        {
-            oem->MaximumLength = len;
-            if (!(oem->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len )))
-            {
-                ret = STATUS_NO_MEMORY;
-                goto done;
-            }
-        }
-        else if (oem->MaximumLength < len)
-        {
-            ret = STATUS_BUFFER_OVERFLOW;
-            oem->Length = oem->MaximumLength;
-            if (!oem->MaximumLength) goto done;
-        }
-        RtlUnicodeToOemN( oem->Buffer, oem->Length, NULL, upcase.Buffer, upcase.Length );
-    done:
-        if (upcase.Buffer != tmp) RtlFreeUnicodeString( &upcase );
+        oem->MaximumLength = len;
+        if (!(oem->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len ))) return STATUS_NO_MEMORY;
     }
+    else if (oem->MaximumLength < len)
+    {
+        ret = STATUS_BUFFER_OVERFLOW;
+        oem->Length = oem->MaximumLength;
+        if (!oem->MaximumLength) return ret;
+    }
+    RtlUpcaseUnicodeToOemN( oem->Buffer, oem->Length, NULL, uni->Buffer, uni->Length );
     return ret;
 }
 
