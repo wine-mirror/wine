@@ -1030,6 +1030,32 @@ static int utf7_mbstowcs(const char *src, int srclen, WCHAR *dst, int dstlen)
     return dest_index;
 }
 
+static int mbstowcs_utf8( DWORD flags, LPCSTR src, INT srclen, LPWSTR dst, INT dstlen )
+{
+    DWORD reslen;
+    NTSTATUS status;
+
+    if (flags & ~MB_FLAGSMASK)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+    if (!dstlen) dst = NULL;
+    status = RtlUTF8ToUnicodeN( dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
+    if (status == STATUS_SOME_NOT_MAPPED)
+    {
+        if (flags & MB_ERR_INVALID_CHARS)
+        {
+            SetLastError( ERROR_NO_UNICODE_TRANSLATION );
+            return 0;
+        }
+    }
+    else if (!set_ntstatus( status )) reslen = 0;
+
+    return reslen / sizeof(WCHAR);
+}
+
+
 /***********************************************************************
  *              MultiByteToWideChar   (KERNEL32.@)
  *
@@ -1085,24 +1111,19 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
         }
         ret = utf7_mbstowcs( src, srclen, dst, dstlen );
         break;
+    case CP_UTF8:
+        return mbstowcs_utf8( flags, src, srclen, dst, dstlen );
     case CP_UNIXCP:
         if (unix_cptable)
         {
             ret = wine_cp_mbstowcs( unix_cptable, flags, src, srclen, dst, dstlen );
             break;
         }
-#ifdef __APPLE__
-        flags |= MB_COMPOSITE;  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
+        ret = mbstowcs_utf8( flags, src, srclen, dst, dstlen );
+#ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
+        if (ret && dstlen) ret = wine_compose_string( dst, ret );
 #endif
-        /* fall through */
-    case CP_UTF8:
-        if (flags & ~MB_FLAGSMASK)
-        {
-            SetLastError( ERROR_INVALID_FLAGS );
-            return 0;
-        }
-        ret = wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
-        break;
+        return ret;
     default:
         if (!(table = get_codepage_table( page )))
         {
@@ -1254,6 +1275,30 @@ static int utf7_wcstombs(const WCHAR *src, int srclen, char *dst, int dstlen)
     return dest_index;
 }
 
+static int wcstombs_utf8( DWORD flags, LPCWSTR src, INT srclen, LPSTR dst, INT dstlen )
+{
+    DWORD reslen;
+    NTSTATUS status;
+
+    if (flags & ~WC_FLAGSMASK)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+    if (!dstlen) dst = NULL;
+    status = RtlUnicodeToUTF8N( dst, dstlen, &reslen, src, srclen * sizeof(WCHAR) );
+    if (status == STATUS_SOME_NOT_MAPPED)
+    {
+        if (flags & WC_ERR_INVALID_CHARS)
+        {
+            SetLastError( ERROR_NO_UNICODE_TRANSLATION );
+            return 0;
+        }
+    }
+    else if (!set_ntstatus( status )) reslen = 0;
+    return reslen;
+}
+
 /***********************************************************************
  *              WideCharToMultiByte   (KERNEL32.@)
  *
@@ -1329,26 +1374,17 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
             ret = wine_cp_wcstombs( unix_cptable, flags, src, srclen, dst, dstlen,
                                     defchar, used ? &used_tmp : NULL );
             if (used) *used = used_tmp;
+            break;
         }
-        else
-        {
-            ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
-            if (used) *used = FALSE;
-        }
-        break;
+        if (used) *used = FALSE;
+        return wcstombs_utf8( flags, src, srclen, dst, dstlen );
     case CP_UTF8:
         if (defchar || used)
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
-        if (flags & ~WC_FLAGSMASK)
-        {
-            SetLastError( ERROR_INVALID_FLAGS );
-            return 0;
-        }
-        ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
-        break;
+        return wcstombs_utf8( flags, src, srclen, dst, dstlen );
     default:
         if (!(table = get_codepage_table( page )))
         {

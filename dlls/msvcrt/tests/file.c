@@ -1336,9 +1336,9 @@ static void test_file_write_read( void )
       /* test invalid utf8 sequence */
       lseek(tempfd, 5, SEEK_SET);
       ret = _read(tempfd, btext, sizeof(btext));
-      todo_wine ok(ret == 10, "_read returned %d, expected 10\n", ret);
+      ok(ret == 10, "_read returned %d, expected 10\n", ret);
       /* invalid char should be replaced by U+FFFD in MultiByteToWideChar */
-      todo_wine ok(!memcmp(btext, "\xfd\xff", 2), "invalid UTF8 character was not replaced by U+FFFD\n");
+      ok(!memcmp(btext, "\xfd\xff", 2), "invalid UTF8 character was not replaced by U+FFFD\n");
       ok(!memcmp(btext+ret-8, "\x62\x00\x7c\x01\x0d\x00\x0a\x00", 8), "btext is incorrect\n");
       _close(tempfd);
   }

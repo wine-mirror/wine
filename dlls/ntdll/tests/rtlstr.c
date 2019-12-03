@@ -2028,8 +2028,8 @@ static const struct unicode_to_utf8_test unicode_to_utf8[] = {
     { { '-',0xfeff,'-',0xfffe,'-',0 }, "-\xEF\xBB\xBF-\xEF\xBF\xBE-", STATUS_SUCCESS },
     { { 0xfeff,'-',0 }, "\xEF\xBB\xBF-", STATUS_SUCCESS },
     { { 0xfffe,'-',0 }, "\xEF\xBF\xBE-", STATUS_SUCCESS },
-    /* invalid code point */
-    { { 0xffff,'-',0 }, "\xEF\xBF\xBF-", STATUS_SUCCESS },
+    /* invalid code points */
+    { { 0xfffd, '-', 0xfffe, '-', 0xffff,'-',0 }, "\xEF\xBF\xBD-\xEF\xBF\xBE-\xEF\xBF\xBF-", STATUS_SUCCESS },
     /* canonically equivalent representations -- no normalization should happen */
     { { '-',0x1e09,'-',0 }, "-\xE1\xB8\x89-", STATUS_SUCCESS },
     { { '-',0x0107,0x0327,'-',0 }, "-\xC4\x87\xCC\xA7-", STATUS_SUCCESS },
@@ -2086,7 +2086,7 @@ static void test_RtlUnicodeToUTF8N(void)
     const unsigned char special_expected[] = { 'X',0xc2,0x80,0xef,0xbf,0xbd,0 };
     unsigned int input_len;
     const unsigned int test_count = ARRAY_SIZE(unicode_to_utf8);
-    unsigned int i;
+    unsigned int i, ret;
 
     if (!pRtlUnicodeToUTF8N)
     {
@@ -2227,6 +2227,14 @@ static void test_RtlUnicodeToUTF8N(void)
            i, bytes_out, buffer, unicode_to_utf8[i].expected);
         ok(buffer[bytes_out] == 0x55,
            "(test %d): behind string: 0x%x\n", i, buffer[bytes_out]);
+        memset(buffer, 0x55, sizeof(buffer));
+        ret = WideCharToMultiByte( CP_UTF8, 0, unicode_to_utf8[i].unicode, lstrlenW(unicode_to_utf8[i].unicode),
+                                   buffer, sizeof(buffer), NULL, NULL );
+        ok( ret == strlen(unicode_to_utf8[i].expected), "(test %d): wrong len %u\n", i, ret );
+        ok(!memcmp(buffer, unicode_to_utf8[i].expected, ret),
+           "(test %d): got \"%.*s\", expected \"%s\"\n",
+           i, ret, buffer, unicode_to_utf8[i].expected);
+        ok(buffer[ret] == 0x55, "(test %d): behind string: 0x%x\n", i, buffer[ret]);
 
         /* same test but include the null terminator */
         bytes_out = 0x55555555;
@@ -2245,6 +2253,30 @@ static void test_RtlUnicodeToUTF8N(void)
            i, bytes_out, buffer, unicode_to_utf8[i].expected);
         ok(buffer[bytes_out] == 0x55,
            "(test %d): behind string: 0x%x\n", i, buffer[bytes_out]);
+        memset(buffer, 0x55, sizeof(buffer));
+        ret = WideCharToMultiByte( CP_UTF8, 0, unicode_to_utf8[i].unicode, -1, buffer, sizeof(buffer), NULL, NULL );
+        ok( ret == strlen(unicode_to_utf8[i].expected) + 1, "(test %d): wrong len %u\n", i, ret );
+        ok(!memcmp(buffer, unicode_to_utf8[i].expected, ret),
+           "(test %d): got \"%.*s\", expected \"%s\"\n",
+           i, ret, buffer, unicode_to_utf8[i].expected);
+        ok(buffer[ret] == 0x55, "(test %d): behind string: 0x%x\n", i, buffer[ret]);
+        SetLastError( 0xdeadbeef );
+        memset(buffer, 0x55, sizeof(buffer));
+        ret = WideCharToMultiByte( CP_UTF8, WC_ERR_INVALID_CHARS, unicode_to_utf8[i].unicode, -1,
+                                   buffer, sizeof(buffer), NULL, NULL );
+        if (unicode_to_utf8[i].status == STATUS_SOME_NOT_MAPPED)
+        {
+            ok( ret == 0, "(test %d): wrong len %u\n", i, ret );
+            ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION, "(test %d): wrong error %u\n", i, GetLastError() );
+            ret = strlen(unicode_to_utf8[i].expected) + 1;
+        }
+        else
+            ok( ret == strlen(unicode_to_utf8[i].expected) + 1, "(test %d): wrong len %u\n", i, ret );
+
+        ok(!memcmp(buffer, unicode_to_utf8[i].expected, ret),
+           "(test %d): got \"%.*s\", expected \"%s\"\n",
+           i, ret, buffer, unicode_to_utf8[i].expected);
+        ok(buffer[ret] == 0x55, "(test %d): behind string: 0x%x\n", i, buffer[ret]);
     }
 }
 
@@ -2329,9 +2361,8 @@ static const struct utf8_to_unicode_test utf8_to_unicode[] = {
     { "-\xEF\xBB\xBF-\xEF\xBF\xBE-", { '-',0xfeff,'-',0xfffe,'-',0 }, STATUS_SUCCESS },
     { "\xEF\xBB\xBF-", { 0xfeff,'-',0 }, STATUS_SUCCESS },
     { "\xEF\xBF\xBE-", { 0xfffe,'-',0 }, STATUS_SUCCESS },
-    /* invalid code point */
-       /* 0xffff */
-    { "\xEF\xBF\xBF-", { 0xffff,'-',0 }, STATUS_SUCCESS },
+    /* invalid code points */
+    { "\xEF\xBF\xBD-\xEF\xBF\xBE-\xEF\xBF\xBF-", { 0xfffd,'-',0xfffe,'-',0xffff,'-',0 }, STATUS_SUCCESS },
     /* canonically equivalent representations -- no normalization should happen */
     { "-\xE1\xB8\x89-", { '-',0x1e09,'-',0 }, STATUS_SUCCESS },
     { "-\xC4\x87\xCC\xA7-", { '-',0x0107,0x0327,'-',0 }, STATUS_SUCCESS },
@@ -2388,7 +2419,7 @@ static void test_RtlUTF8ToUnicodeN(void)
     const WCHAR special_expected[] = { 'X',0x80,0xd800,0xdc00,0 };
     unsigned int input_len;
     const unsigned int test_count = ARRAY_SIZE(utf8_to_unicode);
-    unsigned int i;
+    unsigned int i, ret;
 
     if (!pRtlUTF8ToUnicodeN)
     {
@@ -2497,8 +2528,17 @@ static void test_RtlUTF8ToUnicodeN(void)
         ok(!memcmp(buffer, utf8_to_unicode[i].expected, bytes_out),
            "(test %d): got %s, expected %s\n",
            i, wine_dbgstr_wn(buffer, bytes_out / sizeof(WCHAR)), wine_dbgstr_w(utf8_to_unicode[i].expected));
-        ok(buffer[bytes_out] == 0x5555,
-           "(test %d): behind string: 0x%x\n", i, buffer[bytes_out]);
+        ok(buffer[bytes_out / sizeof(WCHAR)] == 0x5555,
+           "(test %d): behind string: 0x%x\n", i, buffer[bytes_out / sizeof(WCHAR)]);
+        memset(buffer, 0x55, sizeof(buffer));
+        ret = MultiByteToWideChar( CP_UTF8, 0, utf8_to_unicode[i].utf8, strlen(utf8_to_unicode[i].utf8),
+                                   buffer, ARRAY_SIZE(buffer) );
+        ok( ret == lstrlenW(utf8_to_unicode[i].expected), "(test %d): wrong len %u\n", i, ret );
+        ok(!memcmp(buffer, utf8_to_unicode[i].expected, lstrlenW(utf8_to_unicode[i].expected) * sizeof(WCHAR)),
+           "(test %d): got %s, expected %s\n",
+           i, wine_dbgstr_wn(buffer, ret), wine_dbgstr_w(utf8_to_unicode[i].expected));
+        ok(buffer[ret] == 0x5555,
+           "(test %d): behind string: 0x%x\n", i, buffer[ret]);
 
         /* same test but include the null terminator */
         bytes_out = 0x55555555;
@@ -2515,8 +2555,36 @@ static void test_RtlUTF8ToUnicodeN(void)
         ok(!memcmp(buffer, utf8_to_unicode[i].expected, bytes_out),
            "(test %d): got %s, expected %s\n",
            i, wine_dbgstr_wn(buffer, bytes_out / sizeof(WCHAR)), wine_dbgstr_w(utf8_to_unicode[i].expected));
-        ok(buffer[bytes_out] == 0x5555,
-           "(test %d): behind string: 0x%x\n", i, buffer[bytes_out]);
+        ok(buffer[bytes_out / sizeof(WCHAR)] == 0x5555,
+           "(test %d): behind string: 0x%x\n", i, buffer[bytes_out / sizeof(WCHAR)]);
+
+        memset(buffer, 0x55, sizeof(buffer));
+        ret = MultiByteToWideChar( CP_UTF8, 0, utf8_to_unicode[i].utf8, -1, buffer, ARRAY_SIZE(buffer) );
+        ok( ret == lstrlenW(utf8_to_unicode[i].expected) + 1, "(test %d): wrong len %u\n", i, ret );
+        ok(!memcmp(buffer, utf8_to_unicode[i].expected, ret * sizeof(WCHAR)),
+           "(test %d): got %s, expected %s\n",
+           i, wine_dbgstr_wn(buffer, ret), wine_dbgstr_w(utf8_to_unicode[i].expected));
+        ok(buffer[ret] == 0x5555,
+           "(test %d): behind string: 0x%x\n", i, buffer[ret]);
+
+        SetLastError( 0xdeadbeef );
+        memset(buffer, 0x55, sizeof(buffer));
+        ret = MultiByteToWideChar( CP_UTF8, MB_ERR_INVALID_CHARS,
+                                   utf8_to_unicode[i].utf8, -1, buffer, ARRAY_SIZE(buffer) );
+        if (utf8_to_unicode[i].status == STATUS_SOME_NOT_MAPPED)
+        {
+            ok( ret == 0, "(test %d): wrong len %u\n", i, ret );
+            ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION, "(test %d): wrong error %u\n", i, GetLastError() );
+            ret = lstrlenW(utf8_to_unicode[i].expected) + 1;
+        }
+        else
+            ok( ret == lstrlenW(utf8_to_unicode[i].expected) + 1, "(test %d): wrong len %u\n", i, ret );
+
+        ok(!memcmp(buffer, utf8_to_unicode[i].expected, ret * sizeof(WCHAR)),
+           "(test %d): got %s, expected %s\n",
+           i, wine_dbgstr_wn(buffer, ret), wine_dbgstr_w(utf8_to_unicode[i].expected));
+        ok(buffer[ret] == 0x5555,
+           "(test %d): behind string: 0x%x\n", i, buffer[ret]);
     }
 }
 
