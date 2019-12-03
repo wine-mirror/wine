@@ -28,6 +28,7 @@
 
 static HMODULE hdll;
 static LONG (WINAPI *pGetDisplayConfigBufferSizes)(UINT32,UINT32*,UINT32*);
+static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 
 static void init_function_pointers(void)
 {
@@ -39,6 +40,7 @@ static void init_function_pointers(void)
       trace("GetProcAddress(%s) failed\n", #func);
 
     GET_PROC(GetDisplayConfigBufferSizes)
+    GET_PROC(SetThreadDpiAwarenessContext)
 
 #undef GET_PROC
 }
@@ -254,6 +256,7 @@ static const struct vid_mode vid_modes_test[] = {
 
 static void test_ChangeDisplaySettingsEx(void)
 {
+    DPI_AWARENESS_CONTEXT context = NULL;
     DEVMODEA dm;
     DEVMODEW dmW;
     DWORD width;
@@ -328,6 +331,11 @@ static void test_ChangeDisplaySettingsEx(void)
            res == DISP_CHANGE_BADMODE /* XP SP3 */,
            "ChangeDisplaySettingsExW returned %d\n", res);
 
+    /* Test clip rectangle after resolution changes */
+    /* GetClipCursor always returns result in physical pixels but GetSystemMetrics(SM_CX/CYVIRTUALSCREEN) are not.
+     * Set per-monitor aware context so that virtual screen rectangles are in physical pixels */
+    if (pSetThreadDpiAwarenessContext)
+        context = pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
 
@@ -384,6 +392,8 @@ static void test_ChangeDisplaySettingsEx(void)
             ClipCursor(&virt);
         }
     }
+    if (pSetThreadDpiAwarenessContext && context)
+        pSetThreadDpiAwarenessContext(context);
     res = ChangeDisplaySettingsExA(NULL, NULL, NULL, CDS_RESET, NULL);
     ok(res == DISP_CHANGE_SUCCESSFUL, "Failed to reset default resolution: %d\n", res);
 }
