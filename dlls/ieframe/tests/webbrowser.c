@@ -420,7 +420,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
                 CHECK_EXPECT2(Exec_SETDOWNLOADSTATE_1);
                 break;
             default:
-                ok(0, "unexpevted V_I4(pvaIn)=%d\n", V_I4(pvaIn));
+                ok(0, "unexpected V_I4(pvaIn)=%d\n", V_I4(pvaIn));
             }
             return S_OK;
         case OLECMDID_UPDATECOMMANDS:
