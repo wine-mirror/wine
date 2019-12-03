@@ -2152,11 +2152,8 @@ static void test_RtlUnicodeToUTF8N(void)
     length_expect(0, 0, STATUS_SUCCESS);
     length_expect(1, 1, STATUS_SUCCESS);
     length_expect(2, 3, STATUS_SUCCESS);
-todo_wine
-{
     length_expect(3, 6, STATUS_SOME_NOT_MAPPED);
     length_expect(4, 7, STATUS_SOME_NOT_MAPPED);
-}
 #undef length_expect
 
     for (i = 0; i <= 6; i++)
@@ -2164,20 +2161,14 @@ todo_wine
         memset(buffer, 0x55, sizeof(buffer));
         bytes_out = 0xdeadbeef;
         status = pRtlUnicodeToUTF8N(buffer, i, &bytes_out, special_string, sizeof(special_string));
-todo_wine_if (i == 4 || i == 5 || i == 6)
         ok(status == STATUS_BUFFER_TOO_SMALL, "%d: status = 0x%x\n", i, status);
-todo_wine_if (bytes_out != special_string_len[i])
         ok(bytes_out == special_string_len[i], "%d: expected %u, got %u\n", i, special_string_len[i], bytes_out);
-todo_wine_if (i == 6)
         ok(memcmp(buffer, special_expected, special_string_len[i]) == 0, "%d: bad conversion\n", i);
     }
 
     status = pRtlUnicodeToUTF8N(buffer, 7, &bytes_out, special_string, sizeof(special_string));
-todo_wine
     ok(status == STATUS_SOME_NOT_MAPPED, "status = 0x%x\n", status);
-todo_wine
     ok(bytes_out == special_string_len[7], "expected %u, got %u\n", special_string_len[7], bytes_out);
-todo_wine
     ok(memcmp(buffer, special_expected, 7) == 0, "bad conversion\n");
 
     /* conversion behavior with varying input length */
@@ -2225,19 +2216,15 @@ todo_wine
         status = pRtlUnicodeToUTF8N(
             buffer, sizeof(buffer), &bytes_out,
             unicode_to_utf8[i].unicode, lstrlenW(unicode_to_utf8[i].unicode) * sizeof(WCHAR));
-todo_wine_if(unicode_to_utf8[i].status == STATUS_SOME_NOT_MAPPED)
         ok(status == unicode_to_utf8[i].status,
            "(test %d): status is 0x%x, expected 0x%x\n",
            i, status, unicode_to_utf8[i].status);
-todo_wine_if(i == 9 || i == 10 || i == 11)
-{
         ok(bytes_out == strlen(unicode_to_utf8[i].expected),
            "(test %d): bytes_out is %u, expected %u\n",
            i, bytes_out, lstrlenA(unicode_to_utf8[i].expected));
         ok(!memcmp(buffer, unicode_to_utf8[i].expected, bytes_out),
            "(test %d): got \"%.*s\", expected \"%s\"\n",
            i, bytes_out, buffer, unicode_to_utf8[i].expected);
-}
         ok(buffer[bytes_out] == 0x55,
            "(test %d): behind string: 0x%x\n", i, buffer[bytes_out]);
 
@@ -2247,8 +2234,6 @@ todo_wine_if(i == 9 || i == 10 || i == 11)
         status = pRtlUnicodeToUTF8N(
             buffer, sizeof(buffer), &bytes_out,
             unicode_to_utf8[i].unicode, (lstrlenW(unicode_to_utf8[i].unicode) + 1) * sizeof(WCHAR));
-todo_wine_if(i == 9 || i == 10 || i == 11)
-{
         ok(status == unicode_to_utf8[i].status,
            "(test %d): status is 0x%x, expected 0x%x\n",
            i, status, unicode_to_utf8[i].status);
@@ -2258,7 +2243,6 @@ todo_wine_if(i == 9 || i == 10 || i == 11)
         ok(!memcmp(buffer, unicode_to_utf8[i].expected, bytes_out),
            "(test %d): got \"%.*s\", expected \"%s\"\n",
            i, bytes_out, buffer, unicode_to_utf8[i].expected);
-}
         ok(buffer[bytes_out] == 0x55,
            "(test %d): behind string: 0x%x\n", i, buffer[bytes_out]);
     }

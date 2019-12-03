@@ -1307,6 +1307,117 @@ found:
 }
 
 
+/* get the next char value taking surrogates into account */
+static inline unsigned int get_surrogate_value( const WCHAR *src, unsigned int srclen )
+{
+    if (src[0] >= 0xd800 && src[0] <= 0xdfff)  /* surrogate pair */
+    {
+        if (src[0] > 0xdbff || /* invalid high surrogate */
+            srclen <= 1 ||     /* missing low surrogate */
+            src[1] < 0xdc00 || src[1] > 0xdfff) /* invalid low surrogate */
+            return 0;
+        return 0x10000 + ((src[0] & 0x3ff) << 10) + (src[1] & 0x3ff);
+    }
+    return src[0];
+}
+
+
+/**************************************************************************
+ *	RtlUnicodeToUTF8N   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlUnicodeToUTF8N( char *dst, DWORD dstlen, DWORD *reslen, const WCHAR *src, DWORD srclen )
+{
+    char *end;
+    unsigned int val, len;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (!src) return STATUS_INVALID_PARAMETER_4;
+    if (!reslen) return STATUS_INVALID_PARAMETER;
+    if (dst && (srclen & 1)) return STATUS_INVALID_PARAMETER_5;
+
+    srclen /= sizeof(WCHAR);
+
+    if (!dst)
+    {
+        for (len = 0; srclen; srclen--, src++)
+        {
+            if (*src < 0x80) len++;  /* 0x00-0x7f: 1 byte */
+            else if (*src < 0x800) len += 2;  /* 0x80-0x7ff: 2 bytes */
+            else
+            {
+                if (!(val = get_surrogate_value( src, srclen )))
+                {
+                    val = 0xfffd;
+                    status = STATUS_SOME_NOT_MAPPED;
+                }
+                if (val < 0x10000) len += 3; /* 0x800-0xffff: 3 bytes */
+                else   /* 0x10000-0x10ffff: 4 bytes */
+                {
+                    len += 4;
+                    src++;
+                    srclen--;
+                }
+            }
+        }
+        *reslen = len;
+        return status;
+    }
+
+    for (end = dst + dstlen; srclen; srclen--, src++)
+    {
+        WCHAR ch = *src;
+
+        if (ch < 0x80)  /* 0x00-0x7f: 1 byte */
+        {
+            if (dst > end - 1) break;
+            *dst++ = ch;
+            continue;
+        }
+        if (ch < 0x800)  /* 0x80-0x7ff: 2 bytes */
+        {
+            if (dst > end - 2) break;
+            dst[1] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[0] = 0xc0 | ch;
+            dst += 2;
+            continue;
+        }
+        if (!(val = get_surrogate_value( src, srclen )))
+        {
+            val = 0xfffd;
+            status = STATUS_SOME_NOT_MAPPED;
+        }
+        if (val < 0x10000)  /* 0x800-0xffff: 3 bytes */
+        {
+            if (dst > end - 3) break;
+            dst[2] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[1] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[0] = 0xe0 | val;
+            dst += 3;
+        }
+        else   /* 0x10000-0x10ffff: 4 bytes */
+        {
+            if (dst > end - 4) break;
+            dst[3] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[2] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[1] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[0] = 0xf0 | val;
+            dst += 4;
+            src++;
+            srclen--;
+        }
+    }
+    if (srclen) status = STATUS_BUFFER_TOO_SMALL;
+    *reslen = dstlen - (end - dst);
+    return status;
+}
+
+
 /******************************************************************************
  *      RtlIsNormalizedString   (NTDLL.@)
  */
