@@ -1546,5 +1546,6 @@ done:
         RtlInitUnicodeString( &curdir, windows_dir );
         RtlSetCurrentDirectory_U( &curdir );
     }
+    if (!params->CurrentDirectory.Handle) chdir("/"); /* avoid locking removable devices */
     set_wow64_environment( &params->Environment );
 }

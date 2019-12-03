@@ -284,6 +284,8 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
  */
 void debug_init(void)
 {
+    setbuf( stdout, NULL );
+    setbuf( stderr, NULL );
     ntdll_get_thread_data()->debug_info = &initial_info;
     init_done = TRUE;
 }

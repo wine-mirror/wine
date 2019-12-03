@@ -170,19 +170,10 @@ void * CDECL __wine_kernel_init(void)
 {
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
 
-    PEB *peb = NtCurrentTeb()->Peb;
-    RTL_USER_PROCESS_PARAMETERS *params = peb->ProcessParameters;
-
-    /* Initialize everything */
-
-    setbuf(stdout,NULL);
-    setbuf(stderr,NULL);
     kernel32_handle = GetModuleHandleW(kernel32W);
     RtlSetUnhandledExceptionFilter( UnhandledExceptionFilter );
 
     LOCALE_Init();
-
-    if (!params->CurrentDirectory.Handle) chdir("/"); /* avoid locking removable devices */
 
     return start_process_wrapper;
 }
