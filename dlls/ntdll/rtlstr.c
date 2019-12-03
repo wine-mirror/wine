@@ -40,11 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #define GUID_STRING_LENGTH    38
 
-extern const union cptable cptable_20127;  /* 7-bit ASCII */
-
-static const union cptable *ansi_table = &cptable_20127;
-static const union cptable *oem_table = &cptable_20127;
-
 
 /**************************************************************************
  *	__wine_init_codepages   (NTDLL.@)
@@ -53,8 +48,6 @@ static const union cptable *oem_table = &cptable_20127;
  */
 void CDECL __wine_init_codepages( const union cptable *ansi, const union cptable *oem )
 {
-    ansi_table = ansi;
-    oem_table = oem;
 }
 
 /**************************************************************************
@@ -774,44 +767,6 @@ NTSTATUS WINAPI RtlUnicodeStringToOemString( STRING *oem,
 
 
 /**************************************************************************
- *	RtlUnicodeToMultiByteN   (NTDLL.@)
- *
- * Converts a Unicode string to a multi-byte string in the ANSI code page.
- *
- * RETURNS
- *  NTSTATUS code
- */
-NTSTATUS WINAPI RtlUnicodeToMultiByteN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
-                                        LPCWSTR src, DWORD srclen )
-{
-    int ret = wine_cp_wcstombs( ansi_table, 0, src, srclen / sizeof(WCHAR),
-                                dst, dstlen, NULL, NULL );
-    if (reslen)
-        *reslen = (ret >= 0) ? ret : dstlen; /* overflow -> we filled up to dstlen */
-    return STATUS_SUCCESS;
-}
-
-
-/**************************************************************************
- *	RtlUnicodeToOemN   (NTDLL.@)
- *
- * Converts a Unicode string to a multi-byte string in the OEM code page.
- *
- * RETURNS
- *  NTSTATUS code
- */
-NTSTATUS WINAPI RtlUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
-                                  LPCWSTR src, DWORD srclen )
-{
-    int ret = wine_cp_wcstombs( oem_table, 0, src, srclen / sizeof(WCHAR),
-                                dst, dstlen, NULL, NULL );
-    if (reslen)
-        *reslen = (ret >= 0) ? ret : dstlen; /* overflow -> we filled up to dstlen */
-    return STATUS_SUCCESS;
-}
-
-
-/**************************************************************************
  *	RtlUnicodeToUTF8N   (NTDLL.@)
  *
  * Converts a Unicode string to a UTF-8 string.
@@ -1206,27 +1161,6 @@ DWORD WINAPI RtlAnsiStringToUnicodeSize( const STRING *str )
 
 
 /**************************************************************************
- *      RtlUnicodeToMultiByteSize   (NTDLL.@)
- *
- * Calculate the size in bytes necessary for the multibyte conversion of str,
- * without the terminating '\0'.
- *
- * PARAMS
- *  size [O] Destination for size
- *  str  [I] String to calculate the size of
- *  len  [I] Length of str
- *
- * RETURNS
- *  STATUS_SUCCESS.
- */
-NTSTATUS WINAPI RtlUnicodeToMultiByteSize( PULONG size, LPCWSTR str, ULONG len )
-{
-    *size = wine_cp_wcstombs( ansi_table, 0, str, len / sizeof(WCHAR), NULL, 0, NULL, NULL );
-    return STATUS_SUCCESS;
-}
-
-
-/**************************************************************************
  *      RtlUnicodeStringToAnsiSize   (NTDLL.@)
  *      RtlxUnicodeStringToAnsiSize  (NTDLL.@)
  *
@@ -1244,26 +1178,6 @@ DWORD WINAPI RtlUnicodeStringToAnsiSize( const UNICODE_STRING *str )
     DWORD ret;
     RtlUnicodeToMultiByteSize( &ret, str->Buffer, str->Length );
     return ret + 1;
-}
-
-
-/**************************************************************************
- *      RtlUnicodeStringToOemSize   (NTDLL.@)
- *      RtlxUnicodeStringToOemSize  (NTDLL.@)
- *
- * Calculate the size in bytes necessary for the OEM conversion of str,
- * including the terminating '\0'.
- *
- * PARAMS
- *  str [I] String to calculate the size of
- *
- * RETURNS
- *  The calculated size.
- */
-DWORD WINAPI RtlUnicodeStringToOemSize( const UNICODE_STRING *str )
-{
-    return wine_cp_wcstombs( oem_table, 0, str->Buffer, str->Length / sizeof(WCHAR),
-                             NULL, 0, NULL, NULL ) + 1;
 }
 
 

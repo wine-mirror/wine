@@ -121,6 +121,21 @@ static DWORD mbtowc_size( const CPTABLEINFO *info, LPCSTR str, UINT len )
 }
 
 
+static DWORD wctomb_size( const CPTABLEINFO *info, LPCWSTR str, UINT len )
+{
+    if (info->DBCSCodePage)
+    {
+        WCHAR *uni2cp = info->WideCharTable;
+        DWORD res;
+
+        for (res = 0; len; len--, str++, res++)
+            if (uni2cp[*str] & 0xff00) res++;
+        return res;
+    }
+    else return len;
+}
+
+
 static WCHAR casemap( USHORT *table, WCHAR ch )
 {
     return ch + table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0x0f)];
@@ -931,6 +946,58 @@ NTSTATUS WINAPI RtlOemToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen,
 DWORD WINAPI RtlOemStringToUnicodeSize( const STRING *str )
 {
     return (mbtowc_size( &nls_info.OemTableInfo, str->Buffer, str->Length ) + 1) * sizeof(WCHAR);
+}
+
+
+/**************************************************************************
+ *      RtlUnicodeStringToOemSize   (NTDLL.@)
+ *      RtlxUnicodeStringToOemSize  (NTDLL.@)
+ */
+DWORD WINAPI RtlUnicodeStringToOemSize( const UNICODE_STRING *str )
+{
+    return wctomb_size( &nls_info.OemTableInfo, str->Buffer, str->Length / sizeof(WCHAR) ) + 1;
+}
+
+
+/**************************************************************************
+ *	RtlUnicodeToMultiByteN   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlUnicodeToMultiByteN( char *dst, DWORD dstlen, DWORD *reslen,
+                                        const WCHAR *src, DWORD srclen )
+{
+    if (nls_info.AnsiTableInfo.WideCharTable)
+        return RtlUnicodeToCustomCPN( &nls_info.AnsiTableInfo, dst, dstlen, reslen, src, srclen );
+
+    /* locale not setup yet */
+    dstlen = min( srclen / sizeof(WCHAR), dstlen );
+    if (reslen) *reslen = dstlen;
+    while (dstlen--)
+    {
+        WCHAR ch = *src++;
+        if (ch > 0x7f) ch = '?';
+        *dst++ = ch;
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *      RtlUnicodeToMultiByteSize   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlUnicodeToMultiByteSize( DWORD *size, const WCHAR *str, DWORD len )
+{
+    *size = wctomb_size( &nls_info.AnsiTableInfo, str, len / sizeof(WCHAR) );
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *	RtlUnicodeToOemN   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlUnicodeToOemN( char *dst, DWORD dstlen, DWORD *reslen,
+                                  const WCHAR *src, DWORD srclen )
+{
+    return RtlUnicodeToCustomCPN( &nls_info.OemTableInfo, dst, dstlen, reslen, src, srclen );
 }
 
 
