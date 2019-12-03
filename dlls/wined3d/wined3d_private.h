@@ -5235,8 +5235,8 @@ static inline void wined3d_context_copy_bo_address(struct wined3d_context *conte
 static inline BOOL wined3d_dsv_srv_conflict(const struct wined3d_rendertarget_view *dsv,
         const struct wined3d_format *srv_format)
 {
-    return !srv_format || (srv_format->depth_size && !(dsv->desc.flags & WINED3D_VIEW_READ_ONLY_DEPTH))
-            || (srv_format->stencil_size && !(dsv->desc.flags & WINED3D_VIEW_READ_ONLY_STENCIL));
+    return !srv_format || (srv_format->red_size && !(dsv->desc.flags & WINED3D_VIEW_READ_ONLY_DEPTH))
+            || (srv_format->green_size && !(dsv->desc.flags & WINED3D_VIEW_READ_ONLY_STENCIL));
 }
 
 static inline BOOL wined3d_resource_check_fbo_attached(const struct wined3d_state *state,

@@ -151,13 +151,13 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_R32G32B32_TYPELESS,        32, 32, 32,  0,   0, 32, 64,  0,   12,   0,     0},
     {WINED3DFMT_R16G16B16A16_TYPELESS,     16, 16, 16, 16,   0, 16, 32, 48,    8,   0,     0},
     {WINED3DFMT_R32G32_TYPELESS,           32, 32,  0,  0,   0, 32,  0,  0,    8,   0,     0},
-    {WINED3DFMT_R32G8X24_TYPELESS,          0,  0,  0,  0,   0,  0,  0,  0,    8,  32,     8},
+    {WINED3DFMT_R32G8X24_TYPELESS,         32,  8,  0,  0,   0,  0,  0,  0,    8,   0,     0},
     {WINED3DFMT_R10G10B10A2_TYPELESS,      10, 10, 10,  2,   0, 10, 20, 30,    4,   0,     0},
     {WINED3DFMT_R10G10B10X2_TYPELESS,      10, 10, 10,  0,   0, 10, 20,  0,    4,   0,     0},
     {WINED3DFMT_R8G8B8A8_TYPELESS,          8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
     {WINED3DFMT_R16G16_TYPELESS,           16, 16,  0,  0,   0, 16,  0,  0,    4,   0,     0},
     {WINED3DFMT_R32_TYPELESS,              32,  0,  0,  0,   0,  0,  0,  0,    4,   0,     0},
-    {WINED3DFMT_R24G8_TYPELESS,             0,  0,  0,  0,   0,  0,  0,  0,    4,  24,     8},
+    {WINED3DFMT_R24G8_TYPELESS,            24,  8,  0,  0,   0,  0,  0,  0,    4,   0,     0},
     {WINED3DFMT_R8G8_TYPELESS,              8,  8,  0,  0,   0,  8,  0,  0,    2,   0,     0},
     {WINED3DFMT_R16_TYPELESS,              16,  0,  0,  0,   0,  0,  0,  0,    2,   0,     0},
     {WINED3DFMT_R8_TYPELESS,                8,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
@@ -220,9 +220,9 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_R32G32_UINT,              WINED3DFMT_R32G32_TYPELESS,       "UU"},
     {WINED3DFMT_R32G32_SINT,              WINED3DFMT_R32G32_TYPELESS,       "II"},
     {WINED3DFMT_R32G32_FLOAT,             WINED3DFMT_R32G32_TYPELESS,       "FF"},
-    {WINED3DFMT_R32_FLOAT_X8X24_TYPELESS, WINED3DFMT_R32G8X24_TYPELESS,     "DX"},
-    {WINED3DFMT_X32_TYPELESS_G8X24_UINT,  WINED3DFMT_R32G8X24_TYPELESS,     "XS"},
-    {WINED3DFMT_D32_FLOAT_S8X24_UINT,     WINED3DFMT_R32G8X24_TYPELESS,     "DS"},
+    {WINED3DFMT_R32_FLOAT_X8X24_TYPELESS, WINED3DFMT_R32G8X24_TYPELESS,     "FXX"},
+    {WINED3DFMT_X32_TYPELESS_G8X24_UINT,  WINED3DFMT_R32G8X24_TYPELESS,     "XUX"},
+    {WINED3DFMT_D32_FLOAT_S8X24_UINT,     WINED3DFMT_R32G8X24_TYPELESS,     "DSX"},
     {WINED3DFMT_R10G10B10A2_SNORM,        WINED3DFMT_R10G10B10A2_TYPELESS,  "iiii"},
     {WINED3DFMT_R10G10B10A2_UINT,         WINED3DFMT_R10G10B10A2_TYPELESS,  "UUUU"},
     {WINED3DFMT_R10G10B10A2_UNORM,        WINED3DFMT_R10G10B10A2_TYPELESS,  "uuuu"},
@@ -242,8 +242,8 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_R32_FLOAT,                WINED3DFMT_R32_TYPELESS,          "F"},
     {WINED3DFMT_R32_UINT,                 WINED3DFMT_R32_TYPELESS,          "U"},
     {WINED3DFMT_R32_SINT,                 WINED3DFMT_R32_TYPELESS,          "I"},
-    {WINED3DFMT_R24_UNORM_X8_TYPELESS,    WINED3DFMT_R24G8_TYPELESS,        "DX"},
-    {WINED3DFMT_X24_TYPELESS_G8_UINT,     WINED3DFMT_R24G8_TYPELESS,        "XS"},
+    {WINED3DFMT_R24_UNORM_X8_TYPELESS,    WINED3DFMT_R24G8_TYPELESS,        "uX"},
+    {WINED3DFMT_X24_TYPELESS_G8_UINT,     WINED3DFMT_R24G8_TYPELESS,        "XU"},
     {WINED3DFMT_D24_UNORM_S8_UINT,        WINED3DFMT_R24G8_TYPELESS,        "DS"},
     {WINED3DFMT_R8G8_SNORM,               WINED3DFMT_R8G8_TYPELESS,         "ii"},
     {WINED3DFMT_R8G8_UNORM,               WINED3DFMT_R8G8_TYPELESS,         "uu"},
@@ -2099,6 +2099,12 @@ static BOOL init_format_base_info(struct wined3d_adapter *adapter)
                 format->depth_size = format->red_size;
                 format->red_size = format->red_offset = 0;
             }
+
+            if (channel_type == WINED3D_CHANNEL_TYPE_STENCIL && !format->stencil_size)
+            {
+                format->stencil_size = format->green_size;
+                format->green_size = format->green_offset = 0;
+            }
         }
 
         format->component_count = component_count;
@@ -3785,27 +3791,24 @@ static BOOL init_typeless_formats(const struct wined3d_adapter *adapter)
             typeless_format->flags[j] &= ~(WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
         }
 
-        if ((format_id = typeless_depth_stencil_formats[i].depth_view_id))
+        if ((format_id = typeless_depth_stencil_formats[i].depth_view_id)
+                && typeless_depth_stencil_formats[i].separate_depth_view_format)
         {
             if (!(depth_view_format = get_format_internal(adapter, format_id)))
                 return FALSE;
-            if (typeless_depth_stencil_formats[i].separate_depth_view_format)
-            {
-                copy_format(adapter, depth_view_format, ds_format);
-                depth_view_format->stencil_size = 0;
-            }
-            else
-            {
-                depth_view_format->depth_size = ds_format->depth_size;
-            }
+            copy_format(adapter, depth_view_format, ds_format);
+            depth_view_format->red_size = depth_view_format->depth_size;
+            depth_view_format->depth_size = 0;
+            depth_view_format->stencil_size = 0;
         }
         if ((format_id = typeless_depth_stencil_formats[i].stencil_view_id))
         {
             if (!(stencil_view_format = get_format_internal(adapter, format_id)))
                 return FALSE;
             copy_format(adapter, stencil_view_format, ds_format);
-            if (typeless_depth_stencil_formats[i].separate_depth_view_format)
-                stencil_view_format->depth_size = 0;
+            stencil_view_format->green_size = stencil_view_format->stencil_size;
+            stencil_view_format->depth_size = 0;
+            stencil_view_format->stencil_size = 0;
         }
     }
 
