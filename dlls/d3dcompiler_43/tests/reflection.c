@@ -433,8 +433,14 @@ static void test_reflection_desc_vs(void)
                 i, desc.Mask, pdesc->Mask);
         ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "GetInputParameterDesc(%u) ReadWriteMask failed, got %x, expected %x\n",
                 i, desc.ReadWriteMask, pdesc->ReadWriteMask);
-        ok(desc.Stream == pdesc->Stream, "GetInputParameterDesc(%u) Stream failed, got %u, expected %u\n",
-                i, desc.Stream, pdesc->Stream);
+        /* The Stream field of D3D11_SIGNATURE_PARAMETER_DESC is in the
+         * trailing padding of the D3D10_SIGNATURE_PARAMETER_DESC struct on
+         * 64-bits and thus undefined. Don't test it. */
+        if (D3D_COMPILER_VERSION)
+            ok(desc.Stream == pdesc->Stream, "(%u): got unexpected Stream %u, expected %u.\n",
+                    i, desc.Stream, pdesc->Stream);
+        else if (sizeof(void *) == 4)
+            ok(!desc.Stream, "(%u): got unexpected Stream %u.\n", i, desc.Stream);
     }
 
     for (i = 0; i < ARRAY_SIZE(test_reflection_desc_vs_resultout); ++i)
@@ -458,8 +464,11 @@ static void test_reflection_desc_vs(void)
                 i, desc.Mask, pdesc->Mask);
         ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "GetOutputParameterDesc(%u) ReadWriteMask failed, got %x, expected %x\n",
                 i, desc.ReadWriteMask, pdesc->ReadWriteMask);
-        ok(desc.Stream == pdesc->Stream, "GetOutputParameterDesc(%u) Stream failed, got %u, expected %u\n",
-                i, desc.Stream, pdesc->Stream);
+        if (D3D_COMPILER_VERSION)
+            ok(desc.Stream == pdesc->Stream, "(%u): got unexpected Stream %u, expected %u.\n",
+                    i, desc.Stream, pdesc->Stream);
+        else if (sizeof(void *) == 4)
+            ok(!desc.Stream, "(%u): got unexpected Stream %u.\n", i, desc.Stream);
     }
 
     count = ref11->lpVtbl->Release(ref11);
@@ -740,8 +749,11 @@ static void test_reflection_desc_ps(void)
                 i, desc.Mask, pdesc->Mask);
         ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "GetInputParameterDesc(%u) ReadWriteMask failed, got %x, expected %x\n",
                 i, desc.ReadWriteMask, pdesc->ReadWriteMask);
-        ok(desc.Stream == pdesc->Stream, "GetInputParameterDesc(%u) Stream failed, got %u, expected %u\n",
-                i, desc.Stream, pdesc->Stream);
+        if (D3D_COMPILER_VERSION)
+            ok(desc.Stream == pdesc->Stream, "(%u): got unexpected Stream %u, expected %u.\n",
+                    i, desc.Stream, pdesc->Stream);
+        else if (sizeof(void *) == 4)
+            ok(!desc.Stream, "(%u): got unexpected Stream %u.\n", i, desc.Stream);
     }
 
     for (i = 0; i < ARRAY_SIZE(test_reflection_desc_ps_resultout); ++i)
@@ -771,8 +783,11 @@ static void test_reflection_desc_ps(void)
                 i, desc.Mask, pdesc->Mask);
         ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "GetOutputParameterDesc(%u) ReadWriteMask failed, got %x, expected %x\n",
                 i, desc.ReadWriteMask, pdesc->ReadWriteMask);
-        ok(desc.Stream == pdesc->Stream, "GetOutputParameterDesc(%u) Stream failed, got %u, expected %u\n",
-                i, desc.Stream, pdesc->Stream);
+        if (D3D_COMPILER_VERSION)
+            ok(desc.Stream == pdesc->Stream, "(%u): got unexpected Stream %u, expected %u.\n",
+                    i, desc.Stream, pdesc->Stream);
+        else if (sizeof(void *) == 4)
+            ok(!desc.Stream, "(%u): got unexpected Stream %u.\n", i, desc.Stream);
     }
 
     count = ref11->lpVtbl->Release(ref11);
@@ -1008,8 +1023,11 @@ static void test_reflection_desc_ps_output(void)
                 i, desc.Mask, pdesc->Mask);
         ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "(%u): GetOutputParameterDesc ReadWriteMask failed, got %x, expected %x\n",
                 i, desc.ReadWriteMask, pdesc->ReadWriteMask);
-        ok(desc.Stream == pdesc->Stream, "(%u): GetOutputParameterDesc Stream failed, got %u, expected %u\n",
-                i, desc.Stream, pdesc->Stream);
+        if (D3D_COMPILER_VERSION)
+            ok(desc.Stream == pdesc->Stream, "(%u): got unexpected Stream %u, expected %u.\n",
+                    i, desc.Stream, pdesc->Stream);
+        else if (sizeof(void *) == 4)
+            ok(!desc.Stream, "(%u): got unexpected Stream %u.\n", i, desc.Stream);
 
         count = ref11->lpVtbl->Release(ref11);
         ok(count == 0, "(%u): Release failed %u\n", i, count);
