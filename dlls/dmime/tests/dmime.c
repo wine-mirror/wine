@@ -716,6 +716,15 @@ static void test_track(void)
                     ok(hr == DMUS_E_TYPE_UNSUPPORTED,
                             "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
                             param_types[j].name, hr);
+                /* GetParam / SetParam for IsParamSupported supported types */
+                if (class[i].clsid == &CLSID_DirectMusicTimeSigTrack) {
+                    expect_getparam(dmt, &GUID_DisableTimeSig, "GUID_DisableTimeSig",
+                                DMUS_E_GET_UNSUPPORTED);
+                    expect_getparam(dmt, &GUID_EnableTimeSig, "GUID_EnableTimeSig",
+                                DMUS_E_GET_UNSUPPORTED);
+                    expect_setparam(dmt, &GUID_TimeSignature, "GUID_TimeSignature",
+                                DMUS_E_SET_UNSUPPORTED);
+                }
             }
         } else {
             hr = IDirectMusicTrack_GetParam(dmt, NULL, 0, NULL, NULL);
