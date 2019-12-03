@@ -706,7 +706,9 @@ static void test_track(void)
                         expect_getparam(dmt, param_types[j].type, param_types[j].name,
                                 DMUS_E_GET_UNSUPPORTED);
                         expect_setparam(dmt, param_types[j].type, param_types[j].name, S_OK);
-                    }
+                    } else if (class[i].clsid == &CLSID_DirectMusicMarkerTrack)
+                        expect_setparam(dmt, param_types[j].type, param_types[j].name,
+                                DMUS_E_SET_UNSUPPORTED);
                 } else
                     ok(hr == DMUS_E_TYPE_UNSUPPORTED,
                             "IsParamSupported(%s) failed: %08x, expected DMUS_E_TYPE_UNSUPPORTED\n",
