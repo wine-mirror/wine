@@ -153,52 +153,43 @@ static HRESULT WINAPI tempo_track_Play(IDirectMusicTrack8 *iface, void *pStateDa
   return S_OK;
 }
 
-static HRESULT WINAPI tempo_track_GetParam(IDirectMusicTrack8 *iface, REFGUID rguidType,
-        MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam)
+static HRESULT WINAPI tempo_track_GetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
+        MUSIC_TIME *next, void *param)
 {
-  IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
+    IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
+    DMUS_PRIVATE_TEMPO_ITEM *item = NULL;
+    DMUS_TEMPO_PARAM *prm = param;
 
-  HRESULT hr = S_OK;
-  struct list* pEntry = NULL;
-  LPDMUS_PRIVATE_TEMPO_ITEM pIt = NULL;
-  DMUS_TEMPO_PARAM* prm = pParam;
+    TRACE("(%p, %s, %d, %p, %p)\n", This, debugstr_dmguid(type), time, next, param);
 
-  FIXME("(%p, %s, %d, %p, %p): almost stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
+    if (!param)
+        return E_POINTER;
+    if (!IsEqualGUID(type, &GUID_TempoParam))
+        return DMUS_E_GET_UNSUPPORTED;
 
-  if (NULL == pParam) {
-    return E_POINTER;
-  }
+    FIXME("Partial support for GUID_TempoParam\n");
 
-  hr = IDirectMusicTrack_IsParamSupported (iface, rguidType);
-  if (FAILED(hr)) {
-    return hr;
-  }
+    if (next)
+        *next = 0;
+    prm->mtTime = 0;
+    prm->dblTempo = 0.123456;
 
-  if (NULL != pmtNext) *pmtNext = 0;
-  prm->mtTime = 0;
-  prm->dblTempo = 0.123456;
-
-  LIST_FOR_EACH (pEntry, &This->Items) {
-    pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_TEMPO_ITEM, entry);
-    /*TRACE(" - %p -> 0x%lx,%p\n", pIt, pIt->item.lTime, pIt->item.dblTempo);*/
-    if (pIt->item.lTime <= mtTime) {
-      MUSIC_TIME ofs = pIt->item.lTime - mtTime;
-      if (ofs > prm->mtTime) {
-	prm->mtTime = ofs;
-	prm->dblTempo = pIt->item.dblTempo;
-      }	
-      if (NULL != pmtNext && pIt->item.lTime > mtTime) {
-	if (pIt->item.lTime < *pmtNext) {
-	  *pmtNext = pIt->item.lTime;
-	}
-      }
+    LIST_FOR_EACH_ENTRY(item, &This->Items, DMUS_PRIVATE_TEMPO_ITEM, entry) {
+        if (item->item.lTime <= time) {
+            MUSIC_TIME ofs = item->item.lTime - time;
+            if (ofs > prm->mtTime) {
+                prm->mtTime = ofs;
+                prm->dblTempo = item->item.dblTempo;
+            }
+            if (next && item->item.lTime > time && item->item.lTime < *next)
+                *next = item->item.lTime;
+        }
     }
-  }
-  
-  if (0.123456 == prm->dblTempo) {
-    return DMUS_E_NOT_FOUND;
-  }
-  return S_OK;
+
+    if (0.123456 == prm->dblTempo)
+        return DMUS_E_NOT_FOUND;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI tempo_track_SetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,

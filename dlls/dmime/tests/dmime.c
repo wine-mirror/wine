@@ -724,6 +724,11 @@ static void test_track(void)
                                 DMUS_E_GET_UNSUPPORTED);
                     expect_setparam(dmt, &GUID_TimeSignature, "GUID_TimeSignature",
                                 DMUS_E_SET_UNSUPPORTED);
+                } else if (class[i].clsid == &CLSID_DirectMusicTempoTrack) {
+                    expect_getparam(dmt, &GUID_DisableTempo, "GUID_DisableTempo",
+                                DMUS_E_GET_UNSUPPORTED);
+                    expect_getparam(dmt, &GUID_EnableTempo, "GUID_EnableTempo",
+                                DMUS_E_GET_UNSUPPORTED);
                 }
             }
         } else {
