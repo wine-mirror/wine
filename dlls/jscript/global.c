@@ -629,7 +629,7 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         if(is_uri_unescaped(*ptr) || is_uri_reserved(*ptr) || *ptr == '#') {
             len++;
         }else {
-            i = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL)*3;
+            i = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ptr, 1, NULL, 0, NULL, NULL)*3;
             if(!i) {
                 jsstr_release(str);
                 return throw_uri_error(ctx, JS_E_INVALID_URI_CHAR, NULL);
@@ -649,7 +649,7 @@ static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         if(is_uri_unescaped(*ptr) || is_uri_reserved(*ptr) || *ptr == '#') {
             *rptr++ = *ptr;
         }else {
-            len = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, buf, sizeof(buf), NULL, NULL);
+            len = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ptr, 1, buf, sizeof(buf), NULL, NULL);
             for(i=0; i<len; i++) {
                 *rptr++ = '%';
                 *rptr++ = int_to_char((BYTE)buf[i] >> 4);
@@ -703,7 +703,7 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
                 val += hex_to_int(ptr[i*3+1])<<4;
                 buf[i] = val;
 
-                res = MultiByteToWideChar(CP_UTF8, 0, buf, i+1, &out, 1);
+                res = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, buf, i+1, &out, 1);
                 if(res)
                     break;
             }
@@ -734,7 +734,7 @@ static HRESULT JSGlobal_decodeURI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
                 val += hex_to_int(ptr[i*3+1])<<4;
                 buf[i] = val;
 
-                res = MultiByteToWideChar(CP_UTF8, 0, buf, i+1, ret, 1);
+                res = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, buf, i+1, ret, 1);
                 if(res)
                     break;
             }
@@ -780,7 +780,7 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
         if(is_uri_unescaped(*ptr))
             len++;
         else {
-            size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL);
+            size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ptr, 1, NULL, 0, NULL, NULL);
             if(!size) {
                 jsstr_release(str);
                 return throw_uri_error(ctx, JS_E_INVALID_URI_CHAR, NULL);
@@ -799,7 +799,7 @@ static HRESULT JSGlobal_encodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
         if(is_uri_unescaped(*ptr)) {
             *ret++ = *ptr;
         }else {
-            size = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, buf, sizeof(buf), NULL, NULL);
+            size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ptr, 1, buf, sizeof(buf), NULL, NULL);
             for(i=0; i<size; i++) {
                 *ret++ = '%';
                 *ret++ = int_to_char((BYTE)buf[i] >> 4);
