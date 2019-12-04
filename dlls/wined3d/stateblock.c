@@ -1505,6 +1505,20 @@ void CDECL wined3d_stateblock_set_transform(struct wined3d_stateblock *statebloc
     stateblock->changed.transform[d3dts >> 5] |= 1u << (d3dts & 0x1f);
 }
 
+void CDECL wined3d_stateblock_multiply_transform(struct wined3d_stateblock *stateblock,
+        enum wined3d_transform_state d3dts, const struct wined3d_matrix *matrix)
+{
+    struct wined3d_matrix *mat = &stateblock->stateblock_state.transforms[d3dts];
+
+    TRACE("stateblock %p, state %s, matrix %p.\n", stateblock, debug_d3dtstype(d3dts), matrix);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_11, matrix->_12, matrix->_13, matrix->_14);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_21, matrix->_22, matrix->_23, matrix->_24);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_31, matrix->_32, matrix->_33, matrix->_34);
+    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_41, matrix->_42, matrix->_43, matrix->_44);
+
+    multiply_matrix(mat, mat, matrix);
+}
+
 HRESULT CDECL wined3d_stateblock_set_clip_plane(struct wined3d_stateblock *stateblock,
         UINT plane_idx, const struct wined3d_vec4 *plane)
 {

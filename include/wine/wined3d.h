@@ -2724,6 +2724,8 @@ ULONG __cdecl wined3d_stateblock_decref(struct wined3d_stateblock *stateblock);
 const struct wined3d_stateblock_state * __cdecl wined3d_stateblock_get_state(const struct wined3d_stateblock *stateblock);
 ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
 void __cdecl wined3d_stateblock_init_contained_states(struct wined3d_stateblock *stateblock);
+void __cdecl wined3d_stateblock_multiply_transform(struct wined3d_stateblock *stateblock,
+        enum wined3d_transform_state state, const struct wined3d_matrix *matrix);
 void __cdecl wined3d_stateblock_reset(struct wined3d_stateblock *stateblock);
 void __cdecl wined3d_stateblock_set_base_vertex_index(struct wined3d_stateblock *stateblock, INT base_index);
 HRESULT __cdecl wined3d_stateblock_set_clip_plane(struct wined3d_stateblock *stateblock,
