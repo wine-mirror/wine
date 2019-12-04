@@ -3349,6 +3349,8 @@ static HRESULT d3d_device7_MultiplyTransform(IDirect3DDevice7 *iface,
 
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
+    wined3d_stateblock_multiply_transform(device->state,
+            wined3d_state, (struct wined3d_matrix *)matrix);
     wined3d_device_multiply_transform(device->wined3d_device,
             wined3d_state, (struct wined3d_matrix *)matrix);
     wined3d_mutex_unlock();
