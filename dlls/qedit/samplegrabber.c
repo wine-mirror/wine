@@ -66,11 +66,6 @@ static inline SG_Impl *impl_from_strmbase_filter(struct strmbase_filter *iface)
     return CONTAINING_RECORD(iface, SG_Impl, filter);
 }
 
-static inline SG_Impl *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    return CONTAINING_RECORD(iface, SG_Impl, filter.IBaseFilter_iface);
-}
-
 static inline SG_Impl *impl_from_ISampleGrabber(ISampleGrabber *iface)
 {
     return CONTAINING_RECORD(iface, SG_Impl, ISampleGrabber_iface);
@@ -197,22 +192,6 @@ static void SampleGrabber_callback(SG_Impl *This, IMediaSample *sample)
             This->grabberMethod = -1;
     }
 }
-
-/* IBaseFilter */
-static HRESULT WINAPI
-SampleGrabber_IBaseFilter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *graph, LPCWSTR name)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-
-    TRACE("(%p)->(%p, %s)\n", This, graph, debugstr_w(name));
-
-    BaseFilterImpl_JoinFilterGraph(iface, graph, name);
-    This->oneShot = OneShot_None;
-
-    return S_OK;
-}
-
-/* SampleGrabber implementation of ISampleGrabber interface */
 
 /* IUnknown */
 static HRESULT WINAPI
@@ -525,7 +504,7 @@ static const IBaseFilterVtbl IBaseFilter_VTable =
     BaseFilterImpl_EnumPins,
     BaseFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
-    SampleGrabber_IBaseFilter_JoinFilterGraph,
+    BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo,
 };
 
