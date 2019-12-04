@@ -530,12 +530,15 @@ MSVCRT_wchar_t* CDECL _W_Getdays(void)
 char* CDECL _Getmonths(void)
 {
     MSVCRT___lc_time_data *cur = get_locinfo()->lc_time_curr;
-    int i, len, size;
+    int i, len, size = 0;
     char *out;
 
     TRACE("\n");
 
-    size = cur->str.names.am-cur->str.names.short_mon[0];
+    for(i=0; i<12; i++) {
+        size += strlen(cur->str.names.short_mon[i]) + 1;
+        size += strlen(cur->str.names.mon[i]) + 1;
+    }
     out = MSVCRT_malloc(size+1);
     if(!out)
         return NULL;
