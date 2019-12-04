@@ -604,7 +604,7 @@ MSVCRT_wchar_t* CDECL _W_Getmonths(void)
 void* CDECL _Gettnames(void)
 {
     MSVCRT___lc_time_data *ret, *cur = get_locinfo()->lc_time_curr;
-    unsigned int i, size = sizeof(MSVCRT___lc_time_data);
+    unsigned int i, len, size = sizeof(MSVCRT___lc_time_data);
 
     TRACE("\n");
 
@@ -614,12 +614,14 @@ void* CDECL _Gettnames(void)
     ret = MSVCRT_malloc(size);
     if(!ret)
         return NULL;
-    memcpy(ret, cur, size);
+    memcpy(ret, cur, sizeof(*ret));
 
     size = 0;
     for(i=0; i<ARRAY_SIZE(cur->str.str); i++) {
+        len = strlen(cur->str.str[i])+1;
+        memcpy(&ret->data[size], cur->str.str[i], len);
         ret->str.str[i] = &ret->data[size];
-        size += strlen(&ret->data[size])+1;
+        size += len;
     }
 
     return ret;
