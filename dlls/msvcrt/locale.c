@@ -568,11 +568,14 @@ MSVCRT_wchar_t* CDECL _W_Getmonths(void)
 {
     MSVCRT___lc_time_data *cur = get_locinfo()->lc_time_curr;
     MSVCRT_wchar_t *out;
-    int i, len, size;
+    int i, len, size = 0;
 
     TRACE("\n");
 
-    size = cur->wstr.names.am-cur->wstr.names.short_mon[0];
+    for(i=0; i<12; i++) {
+        size += strlenW(cur->wstr.names.short_mon[i]) + 1;
+        size += strlenW(cur->wstr.names.mon[i]) + 1;
+    }
     out = MSVCRT_malloc((size+1)*sizeof(*out));
     if(!out)
         return NULL;
