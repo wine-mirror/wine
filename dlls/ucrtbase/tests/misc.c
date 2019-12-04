@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <direct.h>
+#include <locale.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -162,6 +163,7 @@ static int* (CDECL *p_errno)(void);
 static char* (CDECL *p_asctime)(const struct tm *);
 static size_t (__cdecl *p_strftime)(char *, size_t, const char *, const struct tm *);
 static size_t (__cdecl *p__Strftime)(char*, size_t, const char*, const struct tm*, void*);
+static char* (__cdecl *p_setlocale)(int, const char*);
 static struct tm*  (__cdecl *p__gmtime32)(const __time32_t*);
 static void (CDECL *p_exit)(int);
 static int (CDECL *p__crt_atexit)(void (CDECL*)(void));
@@ -538,6 +540,7 @@ static BOOL init(void)
     p_asctime = (void*)GetProcAddress(module, "asctime");
     p_strftime = (void*)GetProcAddress(module, "strftime");
     p__Strftime = (void*)GetProcAddress(module, "_Strftime");
+    p_setlocale = (void*)GetProcAddress(module, "setlocale");
     p__gmtime32 = (void*)GetProcAddress(module, "_gmtime32");
     p__crt_atexit = (void*)GetProcAddress(module, "_crt_atexit");
     p_exit = (void*)GetProcAddress(module, "exit");
@@ -1185,6 +1188,18 @@ static void test_strftime(void)
                     i, j, buf, tests_yweek[i].ret[j]);
         }
     }
+
+    if(!p_setlocale(LC_ALL, "fr-FR")) {
+        win_skip("fr-FR locale not available\n");
+        return;
+    }
+    ret = p_strftime(buf, sizeof(buf), "%c", &epoch);
+    ok(ret == 19, "ret = %d\n", ret);
+    ok(!strcmp(buf, "01/01/1970 00:00:00"), "buf = \"%s\", expected \"%s\"\n", buf, "01/01/1970 00:00:00");
+    ret = p_strftime(buf, sizeof(buf), "%r", &epoch);
+    todo_wine ok(ret == 8, "ret = %d\n", ret);
+    todo_wine ok(!strcmp(buf, "00:00:00"), "buf = \"%s\", expected \"%s\"\n", buf, "00:00:00");
+    p_setlocale(LC_ALL, "C");
 }
 
 static LONG* get_failures_counter(HANDLE *map)
