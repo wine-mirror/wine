@@ -305,6 +305,7 @@ extern thread_data_t *msvcrt_get_thread_data(void) DECLSPEC_HIDDEN;
 
 LCID MSVCRT_locale_to_LCID(const char*, unsigned short*, BOOL*) DECLSPEC_HIDDEN;
 extern MSVCRT__locale_t MSVCRT_locale DECLSPEC_HIDDEN;
+extern MSVCRT___lc_time_data cloc_time_data DECLSPEC_HIDDEN;
 extern unsigned int MSVCRT___lc_codepage;
 extern int MSVCRT___lc_collate_cp;
 extern WORD MSVCRT__ctype [257];
