@@ -1324,7 +1324,7 @@ static HRESULT gstdemux_wait_state(struct strmbase_filter *iface, DWORD timeout)
         return S_OK;
 
     ret = gst_element_get_state(filter->container, NULL, NULL,
-            timeout == INFINITE ? GST_CLOCK_TIME_NONE : timeout * 1000);
+            timeout == INFINITE ? GST_CLOCK_TIME_NONE : timeout * 1000000);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
         ERR("Failed to get state.\n");
