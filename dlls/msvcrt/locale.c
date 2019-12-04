@@ -456,12 +456,15 @@ static inline char* construct_lc_all(MSVCRT_pthreadlocinfo locinfo) {
 char* CDECL _Getdays(void)
 {
     MSVCRT___lc_time_data *cur = get_locinfo()->lc_time_curr;
-    int i, len, size;
+    int i, len, size = 0;
     char *out;
 
     TRACE("\n");
 
-    size = cur->str.names.short_mon[0]-cur->str.names.short_wday[0];
+    for(i=0; i<7; i++) {
+        size += strlen(cur->str.names.short_wday[i]) + 1;
+        size += strlen(cur->str.names.wday[i]) + 1;
+    }
     out = MSVCRT_malloc(size+1);
     if(!out)
         return NULL;
