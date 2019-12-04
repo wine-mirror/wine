@@ -1016,7 +1016,7 @@ static MSVCRT___lc_time_data* create_time_data(LCID lcid)
     }
 #if _MSVCR_VER >= 110
     cur->locname = (MSVCRT_wchar_t*)&cur->data[ret];
-    LCIDToLocaleName(lcid, cur->locname, (size-ret)/sizeof(MSVCRT_wchar_t), 0);
+    LCIDToLocaleName(lcid, (MSVCRT_wchar_t*)&cur->data[ret], (size-ret)/sizeof(MSVCRT_wchar_t), 0);
 #else
     cur->lcid = lcid;
 #endif

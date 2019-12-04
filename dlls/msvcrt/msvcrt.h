@@ -125,17 +125,17 @@ typedef struct MSVCRT_tagLC_ID {
 
 typedef struct {
     union {
-        char *str[43];
+        const char *str[43];
         struct {
-            char *short_wday[7];
-            char *wday[7];
-            char *short_mon[12];
-            char *mon[12];
-            char *am;
-            char *pm;
-            char *short_date;
-            char *date;
-            char *time;
+            const char *short_wday[7];
+            const char *wday[7];
+            const char *short_mon[12];
+            const char *mon[12];
+            const char *am;
+            const char *pm;
+            const char *short_date;
+            const char *date;
+            const char *time;
         } names;
     } str;
 #if _MSVCR_VER < 110
@@ -143,21 +143,21 @@ typedef struct {
 #endif
     int  unk[2];
     union {
-        MSVCRT_wchar_t *wstr[43];
+        const MSVCRT_wchar_t *wstr[43];
         struct {
-            MSVCRT_wchar_t *short_wday[7];
-            MSVCRT_wchar_t *wday[7];
-            MSVCRT_wchar_t *short_mon[12];
-            MSVCRT_wchar_t *mon[12];
-            MSVCRT_wchar_t *am;
-            MSVCRT_wchar_t *pm;
-            MSVCRT_wchar_t *short_date;
-            MSVCRT_wchar_t *date;
-            MSVCRT_wchar_t *time;
+            const MSVCRT_wchar_t *short_wday[7];
+            const MSVCRT_wchar_t *wday[7];
+            const MSVCRT_wchar_t *short_mon[12];
+            const MSVCRT_wchar_t *mon[12];
+            const MSVCRT_wchar_t *am;
+            const MSVCRT_wchar_t *pm;
+            const MSVCRT_wchar_t *short_date;
+            const MSVCRT_wchar_t *date;
+            const MSVCRT_wchar_t *time;
         } names;
     } wstr;
 #if _MSVCR_VER >= 110
-    MSVCRT_wchar_t *locname;
+    const MSVCRT_wchar_t *locname;
 #endif
     char data[1];
 } MSVCRT___lc_time_data;
