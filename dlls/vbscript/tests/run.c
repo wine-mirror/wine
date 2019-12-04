@@ -2206,7 +2206,7 @@ static void test_callbacks(void)
                                               L"    on error resume next\n"
                                               L"    err.raise 2\n"
                                               L"    call test.globalCallback(new CallbackClass)\n"
-                                              L"    call ok(err.number = 2, \"err.number = \" & err.numner)\n"
+                                              L"    call ok(err.number = 2, \"err.number = \" & err.number)\n"
                                               L"end function\n",
                                               NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
@@ -2268,7 +2268,7 @@ static void test_callbacks(void)
     if(is_english) {
         ok(!wcscmp(ei.bstrSource, L"Microsoft VBScript runtime error"),
            "bstrSource = %s\n", wine_dbgstr_w(ei.bstrSource));
-        ok(!wcscmp(ei.bstrDescription, L"Object doesn't support this property or method"),
+        ok(!wcscmp(ei.bstrDescription, L"Unknown runtime error"),
            "bstrDescription = %s\n", wine_dbgstr_w(ei.bstrDescription));
     }
     ok(!ei.bstrHelpFile, "bstrHelpFile = %s\n", wine_dbgstr_w(ei.bstrHelpFile));
