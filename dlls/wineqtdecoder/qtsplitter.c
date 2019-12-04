@@ -1168,34 +1168,8 @@ static HRESULT WINAPI QTInPin_NewSegment(IPin *iface, REFERENCE_TIME tStart, REF
     return S_OK;
 }
 
-static HRESULT WINAPI QTInPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
-{
-    QTInPin *This = impl_from_IPin(iface);
-
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IPin))
-        *ppv = iface;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        return IBaseFilter_QueryInterface(&This->pin.filter->IBaseFilter_iface, &IID_IMediaSeeking, ppv);
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    FIXME("No interface for %s!\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
 static const IPinVtbl QT_InputPin_Vtbl = {
-    QTInPin_QueryInterface,
+    BasePinImpl_QueryInterface,
     BasePinImpl_AddRef,
     BasePinImpl_Release,
     BaseInputPinImpl_Connect,
