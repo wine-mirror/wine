@@ -381,37 +381,6 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
     return &This->filter.IUnknown_inner;
 }
 
-static HRESULT WINAPI QT_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID *ppv)
-{
-    QTSplitter *This = impl_from_IBaseFilter(iface);
-    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = &This->sourceSeeking;
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow) &&
-        !IsEqualIID(riid, &IID_IAMFilterMiscFlags))
-        FIXME("No interface for %s!\n", debugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
 static OSErr QT_Create_Extract_Session(QTSplitter *filter)
 {
     AudioStreamBasicDescription aDesc;
@@ -753,7 +722,7 @@ audio_error:
 }
 
 static const IBaseFilterVtbl QT_Vtbl = {
-    QT_QueryInterface,
+    BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
@@ -1220,7 +1189,7 @@ static HRESULT WINAPI QTOutPin_QueryInterface(IPin *iface, REFIID riid, void **p
     else if (IsEqualIID(riid, &IID_IPin))
         *ppv = iface;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        return IBaseFilter_QueryInterface(&This->pin.pin.filter->IBaseFilter_iface, &IID_IMediaSeeking, ppv);
+        *ppv = &This->sourceSeeking.IMediaSeeking_iface;
     else if (IsEqualIID(riid, &IID_IQualityControl))
         *ppv = &This->IQualityControl_iface;
 
