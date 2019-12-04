@@ -1004,8 +1004,8 @@ static void test_strftime(void)
         {"%y", "00", { 0, 0, 0, 0, 0, -1900, 0, 0, 0 }},
         {"%y", "99", { 0, 0, 0, 0, 0, 8099, 0, 0, 0 }},
         {"%y", "", { 0, 0, 0, 0, 0, 8100, 0, 0, 0 }},
-        {"%c", "Thu Jan  1 00:00:00 1970", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }, TRUE, TRUE},
-        {"%c", "Thu Feb 30 00:00:00 1970", { 0, 0, 0, 30, 1, 70, 4, 0, 0 }, TRUE, TRUE},
+        {"%c", "Thu Jan  1 00:00:00 1970", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
+        {"%c", "Thu Feb 30 00:00:00 1970", { 0, 0, 0, 30, 1, 70, 4, 0, 0 }},
         {"%#c", "Thursday, January 01, 1970 00:00:00", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
         {"%#c", "Thursday, February 30, 1970 00:00:00", { 0, 0, 0, 30, 1, 70, 4, 0, 0 }},
         {"%x", "01/01/70", { 0, 0, 0, 1, 0, 70, 4, 0, 0 }},
@@ -1197,8 +1197,8 @@ static void test_strftime(void)
     ok(ret == 19, "ret = %d\n", ret);
     ok(!strcmp(buf, "01/01/1970 00:00:00"), "buf = \"%s\", expected \"%s\"\n", buf, "01/01/1970 00:00:00");
     ret = p_strftime(buf, sizeof(buf), "%r", &epoch);
-    todo_wine ok(ret == 8, "ret = %d\n", ret);
-    todo_wine ok(!strcmp(buf, "00:00:00"), "buf = \"%s\", expected \"%s\"\n", buf, "00:00:00");
+    ok(ret == 8, "ret = %d\n", ret);
+    ok(!strcmp(buf, "00:00:00"), "buf = \"%s\", expected \"%s\"\n", buf, "00:00:00");
     p_setlocale(LC_ALL, "C");
 }
 

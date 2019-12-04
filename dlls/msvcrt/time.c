@@ -1234,6 +1234,18 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
 
         switch(*format) {
         case 'c':
+#if _MSVCR_VER>=140
+            if(time_data == &cloc_time_data && !alternate)
+            {
+                static const WCHAR datetime_format[] =
+                        { '%','a',' ','%','b',' ','%','e',' ','%','T',' ','%','Y',0 };
+                tmp = strftime_impl(str+ret, max-ret, datetime_format, mstm, time_data, loc);
+                if(!tmp)
+                    return 0;
+                ret += tmp;
+                break;
+            }
+#endif
             if(!strftime_format(str, &ret, max, mstm, time_data,
                     alternate ? STRFTIME_TD(time_data, date) : STRFTIME_TD(time_data, short_date)))
                 return 0;
@@ -1387,7 +1399,7 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
             break;
 #if _MSVCR_VER>=140
         case 'r':
-            if(time_data == MSVCRT_locale->locinfo->lc_time_curr)
+            if(time_data == &cloc_time_data)
             {
                 if(!MSVCRT_CHECK_PMT(mstm->tm_hour>=0 && mstm->tm_hour<=23))
                     goto einval_error;
