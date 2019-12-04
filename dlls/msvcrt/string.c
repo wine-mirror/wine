@@ -56,6 +56,7 @@ char* CDECL MSVCRT__strdup(const char* str)
  */
 int CDECL MSVCRT__strlwr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
 {
+    MSVCRT_pthreadlocinfo locinfo;
     char *ptr = str;
 
     if (!str || !len)
@@ -77,10 +78,27 @@ int CDECL MSVCRT__strlwr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t loca
         return MSVCRT_EINVAL;
     }
 
-    while (*str)
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    if(!locinfo->lc_handle[MSVCRT_LC_CTYPE])
     {
-        *str = MSVCRT__tolower_l((unsigned char)*str, locale);
-        str++;
+        while (*str)
+        {
+            if (*str >= 'A' && *str <= 'Z')
+                *str -= 'A' - 'a';
+            str++;
+        }
+    }
+    else
+    {
+        while (*str)
+        {
+            *str = MSVCRT__tolower_l((unsigned char)*str, locale);
+            str++;
+        }
     }
 
     return 0;

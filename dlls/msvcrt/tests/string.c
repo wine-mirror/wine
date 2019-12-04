@@ -2411,6 +2411,9 @@ static void test__strlwr_s(void)
     ok(!memcmp(buffer, "gorrister\0ELLEN", sizeof("gorrister\0ELLEN")),
        "Expected the output buffer to be \"gorrister\\0ELLEN\", got \"%s\"\n",
        buffer);
+
+    ret = p_strlwr_s((char *)"already_lowercase", sizeof("already_lowercase"));
+    ok(ret == 0, "Expected _strlwr_s to return 0, got %d\n", ret);
 }
 
 static void test_wcsncat_s(void)
@@ -3596,6 +3599,7 @@ static void test__memicmp_l(void)
 static void test__strupr(void)
 {
     const char str[] = "123";
+    const char *const_p;
     char str2[4];
     char *mem, *p;
     DWORD prot;
@@ -3613,6 +3617,10 @@ static void test__strupr(void)
     p = _strupr(mem);
     ok(p == mem, "_strupr returned %p\n", p);
     ok(!strcmp(mem, "123"), "mem = %s\n", mem);
+
+    const_p = "ALREADY_UPPERCASE";
+    p = _strupr((char *)const_p);
+    ok(p == const_p, "_strupr returned %p\n", p);
 
     if(!setlocale(LC_ALL, "english")) {
         VirtualFree(mem, sizeof(str), MEM_RELEASE);
