@@ -6674,11 +6674,11 @@ static HIMAGELIST LISTVIEW_GetImageList(const LISTVIEW_INFO *infoPtr, INT nImage
 static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 {
     ITEMHDR callbackHdr = { LPSTR_TEXTCALLBACKW, I_IMAGECALLBACK };
+    BOOL is_subitem_invalid = FALSE;
     NMLVDISPINFOW dispInfo;
     ITEM_INFO *lpItem;
     ITEMHDR* pItemHdr;
     HDPA hdpaSubItems;
-    INT isubitem;
 
     TRACE("(item=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
 
@@ -6688,10 +6688,7 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     if (lpLVItem->mask == 0) return TRUE;
     TRACE("mask=%x\n", lpLVItem->mask);
 
-    /* make a local copy */
-    isubitem = lpLVItem->iSubItem;
-
-    if (isubitem && (lpLVItem->mask & LVIF_STATE))
+    if (lpLVItem->iSubItem && (lpLVItem->mask & LVIF_STATE))
         lpLVItem->state = 0;
 
     /* a quick optimization if all we're asked is the focus state
@@ -6701,7 +6698,7 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	 !(infoPtr->uCallbackMask & LVIS_FOCUSED) )
     {
         lpLVItem->state = 0;
-        if (infoPtr->nFocusedItem == lpLVItem->iItem && isubitem == 0)
+        if (infoPtr->nFocusedItem == lpLVItem->iItem && !lpLVItem->iSubItem)
             lpLVItem->state |= LVIS_FOCUSED;
         return TRUE;
     }
@@ -6723,7 +6720,7 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	     *       depend on the uninitialized fields being 0 */
 	    dispInfo.item.mask = lpLVItem->mask & ~LVIF_PARAM;
 	    dispInfo.item.iItem = lpLVItem->iItem;
-	    dispInfo.item.iSubItem = isubitem;
+	    dispInfo.item.iSubItem = lpLVItem->iSubItem;
 	    if (lpLVItem->mask & LVIF_TEXT)
 	    {
 		if (lpLVItem->mask & LVIF_NORECOMPUTE)
@@ -6770,7 +6767,7 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	    lpLVItem->pszText = LPSTR_TEXTCALLBACKW;
 
 	/* we store only a little state, so if we're not asked, we're done */
-	if (!(lpLVItem->mask & LVIF_STATE) || isubitem) return TRUE;
+	if (!(lpLVItem->mask & LVIF_STATE) || lpLVItem->iSubItem) return TRUE;
 
 	/* if focus is handled by us, report it */
 	if ( lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED ) 
@@ -6796,21 +6793,22 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     lpItem = DPA_GetPtr(hdpaSubItems, 0);
     assert (lpItem);
 
-    if (isubitem)
+    if (lpLVItem->iSubItem)
     {
-        SUBITEM_INFO *lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, isubitem);
-        pItemHdr = lpSubItem ? &lpSubItem->hdr : &callbackHdr;
-        if (!lpSubItem)
+        SUBITEM_INFO *lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, lpLVItem->iSubItem);
+        if (lpSubItem)
+            pItemHdr = &lpSubItem->hdr;
+        else
         {
-            WARN(" iSubItem invalid (%08x), ignored.\n", isubitem);
-            isubitem = 0;
+            pItemHdr = &callbackHdr;
+            is_subitem_invalid = TRUE;
         }
     }
     else
 	pItemHdr = &lpItem->hdr;
 
     /* Do we need to query the state from the app? */
-    if ((lpLVItem->mask & LVIF_STATE) && infoPtr->uCallbackMask && isubitem == 0)
+    if ((lpLVItem->mask & LVIF_STATE) && infoPtr->uCallbackMask && (!lpLVItem->iSubItem || is_subitem_invalid))
     {
 	dispInfo.item.mask |= LVIF_STATE;
 	dispInfo.item.stateMask = infoPtr->uCallbackMask;
@@ -6818,15 +6816,14 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
   
     /* Do we need to enquire about the image? */
     if ((lpLVItem->mask & LVIF_IMAGE) && pItemHdr->iImage == I_IMAGECALLBACK &&
-        (isubitem == 0 || (infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES)))
+        (!lpLVItem->iSubItem || (infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES)))
     {
 	dispInfo.item.mask |= LVIF_IMAGE;
         dispInfo.item.iImage = I_IMAGECALLBACK;
     }
 
     /* Only items support indentation */
-    if ((lpLVItem->mask & LVIF_INDENT) && lpItem->iIndent == I_INDENTCALLBACK &&
-        (isubitem == 0))
+    if ((lpLVItem->mask & LVIF_INDENT) && lpItem->iIndent == I_INDENTCALLBACK && !lpLVItem->iSubItem)
     {
         dispInfo.item.mask |= LVIF_INDENT;
         dispInfo.item.iIndent = I_INDENTCALLBACK;
@@ -6847,14 +6844,14 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     if (dispInfo.item.mask)
     {
 	dispInfo.item.iItem = lpLVItem->iItem;
-	dispInfo.item.iSubItem = lpLVItem->iSubItem; /* yes: the original subitem */
+	dispInfo.item.iSubItem = lpLVItem->iSubItem;
 	dispInfo.item.lParam = lpItem->lParam;
 	notify_dispinfoT(infoPtr, LVN_GETDISPINFOW, &dispInfo, isW);
 	TRACE("   getdispinfo(2):item=%s\n", debuglvitem_t(&dispInfo.item, isW));
     }
 
     /* we should not store values for subitems */
-    if (isubitem) dispInfo.item.mask &= ~LVIF_DI_SETITEM;
+    if (lpLVItem->iSubItem) dispInfo.item.mask &= ~LVIF_DI_SETITEM;
 
     /* Now, handle the iImage field */
     if (dispInfo.item.mask & LVIF_IMAGE)
@@ -6865,7 +6862,7 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     }
     else if (lpLVItem->mask & LVIF_IMAGE)
     {
-        if(isubitem == 0 || (infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES))
+        if (!lpLVItem->iSubItem || (infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES))
             lpLVItem->iImage = pItemHdr->iImage;
         else
             lpLVItem->iImage = 0;
@@ -6897,7 +6894,7 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	lpLVItem->lParam = lpItem->lParam;
 
     /* if this is a subitem, we're done */
-    if (isubitem) return TRUE;
+    if (lpLVItem->iSubItem) return TRUE;
 
     /* ... the state field (this one is different due to uCallbackmask) */
     if (lpLVItem->mask & LVIF_STATE)
