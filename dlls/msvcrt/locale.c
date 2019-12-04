@@ -910,8 +910,7 @@ static inline BOOL category_needs_update(int cat, int user_cat,
     return lcid!=locinfo->lc_handle[cat] || cp!=locinfo->lc_id[cat].wCodePage;
 }
 
-static MSVCRT_pthreadlocinfo create_locinfo(int category,
-        const char *locale, MSVCRT_pthreadlocinfo old_locinfo)
+static MSVCRT___lc_time_data* create_time_data(LCID lcid)
 {
     static const DWORD time_data[] = {
         LOCALE_SABBREVDAYNAME7, LOCALE_SABBREVDAYNAME1, LOCALE_SABBREVDAYNAME2,
@@ -930,11 +929,6 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         LOCALE_SSHORTDATE, LOCALE_SLONGDATE,
         LOCALE_STIMEFORMAT
     };
-    static const char collate[] = "COLLATE=";
-    static const char ctype[] = "CTYPE=";
-    static const char monetary[] = "MONETARY=";
-    static const char numeric[] = "NUMERIC=";
-    static const char time[] = "TIME=";
     static const char cloc_short_date[] = "MM/dd/yy";
     static const MSVCRT_wchar_t cloc_short_dateW[] = {'M','M','/','d','d','/','y','y',0};
     static const char cloc_long_date[] = "dddd, MMMM dd, yyyy";
@@ -942,8 +936,91 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
     static const char cloc_time[] = "HH:mm:ss";
     static const MSVCRT_wchar_t cloc_timeW[] = {'H','H',':','m','m',':','s','s',0};
 
+    MSVCRT___lc_time_data *cur;
+    const DWORD flags = lcid ? 0 : LOCALE_NOUSEROVERRIDE;
+    const LCID lcid_tmp = lcid ? lcid : MAKELCID(LANG_ENGLISH, SORT_DEFAULT);
+    int i, ret, size;
+
+    size = sizeof(MSVCRT___lc_time_data);
+    for(i=0; i<ARRAY_SIZE(time_data); i++) {
+        if(time_data[i]==LOCALE_SSHORTDATE && !lcid) {
+            size += sizeof(cloc_short_date) + sizeof(cloc_short_dateW);
+        }else if(time_data[i]==LOCALE_SLONGDATE && !lcid) {
+            size += sizeof(cloc_long_date) + sizeof(cloc_long_dateW);
+        }else {
+            ret = GetLocaleInfoA(lcid_tmp, time_data[i]|flags, NULL, 0);
+            if(!ret)
+                return NULL;
+            size += ret;
+
+            ret = GetLocaleInfoW(lcid_tmp, time_data[i]|flags, NULL, 0);
+            if(!ret)
+                return NULL;
+            size += ret*sizeof(MSVCRT_wchar_t);
+        }
+    }
+#if _MSVCR_VER >= 110
+    size += LCIDToLocaleName(lcid, NULL, 0, 0)*sizeof(MSVCRT_wchar_t);
+#endif
+
+    cur = MSVCRT_malloc(size);
+    if(!cur)
+        return NULL;
+
+    ret = 0;
+    for(i=0; i<ARRAY_SIZE(time_data); i++) {
+        cur->str.str[i] = &cur->data[ret];
+        if(time_data[i]==LOCALE_SSHORTDATE && !lcid) {
+            memcpy(&cur->data[ret], cloc_short_date, sizeof(cloc_short_date));
+            ret += sizeof(cloc_short_date);
+        }else if(time_data[i]==LOCALE_SLONGDATE && !lcid) {
+            memcpy(&cur->data[ret], cloc_long_date, sizeof(cloc_long_date));
+            ret += sizeof(cloc_long_date);
+        }else if(time_data[i]==LOCALE_STIMEFORMAT && !lcid) {
+            memcpy(&cur->data[ret], cloc_time, sizeof(cloc_time));
+            ret += sizeof(cloc_time);
+        }else {
+            ret += GetLocaleInfoA(lcid_tmp, time_data[i]|flags,
+                &cur->data[ret], size-ret);
+        }
+    }
+    for(i=0; i<ARRAY_SIZE(time_data); i++) {
+        cur->wstr.wstr[i] = (MSVCRT_wchar_t*)&cur->data[ret];
+        if(time_data[i]==LOCALE_SSHORTDATE && !lcid) {
+            memcpy(&cur->data[ret], cloc_short_dateW, sizeof(cloc_short_dateW));
+            ret += sizeof(cloc_short_dateW);
+        }else if(time_data[i]==LOCALE_SLONGDATE && !lcid) {
+            memcpy(&cur->data[ret], cloc_long_dateW, sizeof(cloc_long_dateW));
+            ret += sizeof(cloc_long_dateW);
+        }else if(time_data[i]==LOCALE_STIMEFORMAT && !lcid) {
+            memcpy(&cur->data[ret], cloc_timeW, sizeof(cloc_timeW));
+            ret += sizeof(cloc_timeW);
+        }else {
+            ret += GetLocaleInfoW(lcid_tmp, time_data[i]|flags,
+                    (MSVCRT_wchar_t*)&cur->data[ret], size-ret)*sizeof(MSVCRT_wchar_t);
+        }
+    }
+#if _MSVCR_VER >= 110
+    cur->locname = (MSVCRT_wchar_t*)&cur->data[ret];
+    LCIDToLocaleName(lcid, cur->locname, (size-ret)/sizeof(MSVCRT_wchar_t), 0);
+#else
+    cur->lcid = lcid;
+#endif
+
+    return cur;
+}
+
+static MSVCRT_pthreadlocinfo create_locinfo(int category,
+        const char *locale, MSVCRT_pthreadlocinfo old_locinfo)
+{
+    static const char collate[] = "COLLATE=";
+    static const char ctype[] = "CTYPE=";
+    static const char monetary[] = "MONETARY=";
+    static const char numeric[] = "NUMERIC=";
+    static const char time[] = "TIME=";
+
     MSVCRT_pthreadlocinfo locinfo;
-    LCID lcid[6] = { 0 }, lcid_tmp;
+    LCID lcid[6] = { 0 };
     unsigned short cp[6] = { 0 };
     const char *locale_name[6] = { 0 };
     int locale_len[6] = { 0 };
@@ -952,7 +1029,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
 #if _MSVCR_VER >= 100
     MSVCRT_wchar_t wbuf[256];
 #endif
-    int i, ret, size;
+    int i;
 
     TRACE("(%d %s)\n", category, locale);
 
@@ -1588,8 +1665,6 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         locinfo->lc_handle[MSVCRT_LC_TIME] = old_locinfo->lc_handle[MSVCRT_LC_TIME];
         locinfo->lc_id[MSVCRT_LC_TIME].wCodePage = old_locinfo->lc_id[MSVCRT_LC_TIME].wCodePage;
     } else {
-        DWORD flags = lcid[MSVCRT_LC_TIME] ? 0 : LOCALE_NOUSEROVERRIDE;
-
         if(lcid[MSVCRT_LC_TIME] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_TIME)) {
             if(!update_threadlocinfo_category(lcid[MSVCRT_LC_TIME],
                         cp[MSVCRT_LC_TIME], locinfo, MSVCRT_LC_TIME)) {
@@ -1604,79 +1679,11 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         } else
             locinfo->lc_category[MSVCRT_LC_TIME].locale = MSVCRT__strdup("C");
 
-        size = sizeof(MSVCRT___lc_time_data);
-        lcid_tmp = lcid[MSVCRT_LC_TIME] ? lcid[MSVCRT_LC_TIME] : MAKELCID(LANG_ENGLISH, SORT_DEFAULT);
-        for(i=0; i<ARRAY_SIZE(time_data); i++) {
-            if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
-                size += sizeof(cloc_short_date) + sizeof(cloc_short_dateW);
-            }else if(time_data[i]==LOCALE_SLONGDATE && !lcid[MSVCRT_LC_TIME]) {
-                size += sizeof(cloc_long_date) + sizeof(cloc_long_dateW);
-            }else {
-                ret = GetLocaleInfoA(lcid_tmp, time_data[i]|flags, NULL, 0);
-                if(!ret) {
-                    free_locinfo(locinfo);
-                    return NULL;
-                }
-                size += ret;
-
-                ret = GetLocaleInfoW(lcid_tmp, time_data[i]|flags, NULL, 0);
-                if(!ret) {
-                    free_locinfo(locinfo);
-                    return NULL;
-                }
-                size += ret*sizeof(MSVCRT_wchar_t);
-            }
-        }
-#if _MSVCR_VER >= 110
-        size += LCIDToLocaleName(lcid[MSVCRT_LC_TIME], NULL, 0, 0)*sizeof(MSVCRT_wchar_t);
-#endif
-
-        locinfo->lc_time_curr = MSVCRT_malloc(size);
+        locinfo->lc_time_curr = create_time_data(lcid[MSVCRT_LC_TIME]);
         if(!locinfo->lc_time_curr) {
             free_locinfo(locinfo);
             return NULL;
         }
-
-        ret = 0;
-        for(i=0; i<ARRAY_SIZE(time_data); i++) {
-            locinfo->lc_time_curr->str.str[i] = &locinfo->lc_time_curr->data[ret];
-            if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
-                memcpy(&locinfo->lc_time_curr->data[ret], cloc_short_date, sizeof(cloc_short_date));
-                ret += sizeof(cloc_short_date);
-            }else if(time_data[i]==LOCALE_SLONGDATE && !lcid[MSVCRT_LC_TIME]) {
-                memcpy(&locinfo->lc_time_curr->data[ret], cloc_long_date, sizeof(cloc_long_date));
-                ret += sizeof(cloc_long_date);
-            }else if(time_data[i]==LOCALE_STIMEFORMAT && !lcid[MSVCRT_LC_TIME]) {
-                memcpy(&locinfo->lc_time_curr->data[ret], cloc_time, sizeof(cloc_time));
-                ret += sizeof(cloc_time);
-            }else {
-                ret += GetLocaleInfoA(lcid_tmp, time_data[i]|flags,
-                    &locinfo->lc_time_curr->data[ret], size-ret);
-            }
-        }
-        for(i=0; i<ARRAY_SIZE(time_data); i++) {
-            locinfo->lc_time_curr->wstr.wstr[i] = (MSVCRT_wchar_t*)&locinfo->lc_time_curr->data[ret];
-            if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
-                memcpy(&locinfo->lc_time_curr->data[ret], cloc_short_dateW, sizeof(cloc_short_dateW));
-                ret += sizeof(cloc_short_dateW);
-            }else if(time_data[i]==LOCALE_SLONGDATE && !lcid[MSVCRT_LC_TIME]) {
-                memcpy(&locinfo->lc_time_curr->data[ret], cloc_long_dateW, sizeof(cloc_long_dateW));
-                ret += sizeof(cloc_long_dateW);
-            }else if(time_data[i]==LOCALE_STIMEFORMAT && !lcid[MSVCRT_LC_TIME]) {
-                memcpy(&locinfo->lc_time_curr->data[ret], cloc_timeW, sizeof(cloc_timeW));
-                ret += sizeof(cloc_timeW);
-            }else {
-                ret += GetLocaleInfoW(lcid_tmp, time_data[i]|flags,
-                        (MSVCRT_wchar_t*)&locinfo->lc_time_curr->data[ret], size-ret)*sizeof(MSVCRT_wchar_t);
-            }
-        }
-#if _MSVCR_VER >= 110
-        locinfo->lc_time_curr->locname = (MSVCRT_wchar_t*)&locinfo->lc_time_curr->data[ret];
-        LCIDToLocaleName(lcid[MSVCRT_LC_TIME], locinfo->lc_time_curr->locname,
-                (size-ret)/sizeof(MSVCRT_wchar_t), 0);
-#else
-        locinfo->lc_time_curr->lcid = lcid[MSVCRT_LC_TIME];
-#endif
     }
 
     return locinfo;
