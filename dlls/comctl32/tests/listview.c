@@ -1546,6 +1546,19 @@ static void test_columns(void)
         "get subitem text after column added", FALSE);
 
     DestroyWindow(hwnd);
+
+    /* Columns are not created right away. */
+    hwnd = create_listview_control(LVS_REPORT);
+    ok(hwnd != NULL, "Failed to create a listview window.\n");
+
+    insert_item(hwnd, 0);
+
+    header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "Expected header handle.\n");
+    rc = SendMessageA(header, HDM_GETITEMCOUNT, 0, 0);
+    ok(!rc, "Unexpected column count.\n");
+
+    DestroyWindow(hwnd);
 }
 
 /* test setting imagelist between WM_NCCREATE and WM_CREATE */
@@ -3935,25 +3948,6 @@ static void test_getitemposition(void)
     expect(2, pt.x);
     /* offset by header height */
     expect(rect.bottom - rect.top, pt.y);
-
-    DestroyWindow(hwnd);
-}
-
-static void test_columnscreation(void)
-{
-    HWND hwnd, header;
-    DWORD r;
-
-    hwnd = create_listview_control(LVS_REPORT);
-    ok(hwnd != NULL, "failed to create a listview window\n");
-
-    insert_item(hwnd, 0);
-
-    /* headers columns aren't created automatically */
-    header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
-    ok(IsWindow(header), "Expected header handle\n");
-    r = SendMessageA(header, HDM_GETITEMCOUNT, 0, 0);
-    expect(0, r);
 
     DestroyWindow(hwnd);
 }
@@ -6577,7 +6571,6 @@ START_TEST(listview)
     test_hittest();
     test_getviewrect();
     test_getitemposition();
-    test_columnscreation();
     test_editbox();
     test_notifyformat();
     test_indentation();
@@ -6632,7 +6625,6 @@ START_TEST(listview)
     test_ownerdata();
     test_norecompute();
     test_nosortheader();
-    test_columnscreation();
     test_indentation();
     test_finditem();
     test_hover();
