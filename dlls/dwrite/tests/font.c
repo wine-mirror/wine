@@ -9259,16 +9259,7 @@ static void test_font_resource(void)
     ok(hr == S_OK, "Failed to get file object, hr %#x.\n", hr);
 
     hr = IDWriteFactory6_CreateFontResource(factory, fontfile, 0, &resource);
-todo_wine
     ok(hr == S_OK, "Failed to create font resource, hr %#x.\n", hr);
-
-    if (FAILED(hr))
-    {
-        IDWriteFactory6_Release(factory);
-        IDWriteFontFile_Release(fontfile);
-        IDWriteFontFace_Release(fontface);
-        return;
-    }
 
     hr = IDWriteFactory6_CreateFontResource(factory, fontfile, 0, &resource2);
     ok(hr == S_OK, "Failed to create font resource, hr %#x.\n", hr);
@@ -9283,17 +9274,28 @@ todo_wine
     index = IDWriteFontResource_GetFontFaceIndex(resource);
     ok(!index, "Unexpected index %u.\n", index);
 
+    EXPECT_REF(resource, 1);
     hr = IDWriteFontResource_CreateFontFaceReference(resource, DWRITE_FONT_SIMULATIONS_NONE, NULL, 0, &reference);
+todo_wine
     ok(hr == S_OK, "Failed to create reference object, hr %#x.\n", hr);
+    EXPECT_REF(resource, 1);
 
     hr = IDWriteFontResource_CreateFontFaceReference(resource, DWRITE_FONT_SIMULATIONS_NONE, NULL, 0, &reference2);
+todo_wine
     ok(hr == S_OK, "Failed to create reference object, hr %#x.\n", hr);
+
+if (SUCCEEDED(hr))
+{
     ok(reference != reference2, "Unexpected reference instance.\n");
     IDWriteFontFaceReference1_Release(reference2);
     IDWriteFontFaceReference1_Release(reference);
-
+}
     hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace5, (void **)&fontface5);
+todo_wine
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
+    if (FAILED(hr))
+        return;
 
     hr = IDWriteFontFace5_GetFontResource(fontface5, &resource2);
     ok(hr == S_OK, "Failed to get font resource, hr %#x.\n", hr);

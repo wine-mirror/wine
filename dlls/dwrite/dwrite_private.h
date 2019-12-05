@@ -279,6 +279,8 @@ extern void fontface_detach_from_cache(IDWriteFontFace5 *fontface) DECLSPEC_HIDD
 extern void factory_lock(IDWriteFactory5*) DECLSPEC_HIDDEN;
 extern void factory_unlock(IDWriteFactory5*) DECLSPEC_HIDDEN;
 extern HRESULT create_inmemory_fileloader(IDWriteFontFileLoader**) DECLSPEC_HIDDEN;
+extern HRESULT create_font_resource(IDWriteFactory7 *factory, IDWriteFontFile *file, UINT32 face_index,
+        IDWriteFontResource **resource) DECLSPEC_HIDDEN;
 
 struct dwrite_fontface;
 

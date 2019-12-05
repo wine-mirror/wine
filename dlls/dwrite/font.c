@@ -234,6 +234,16 @@ struct dwrite_fontfacereference
     IDWriteFactory5 *factory;
 };
 
+struct dwrite_fontresource
+{
+    IDWriteFontResource IDWriteFontResource_iface;
+    LONG refcount;
+
+    IDWriteFontFile *file;
+    UINT32 face_index;
+    IDWriteFactory7 *factory;
+};
+
 static void dwrite_grab_font_table(void *context, UINT32 table, const BYTE **data, UINT32 *size, void **data_context)
 {
     struct dwrite_fontface *fontface = context;
@@ -323,6 +333,11 @@ static inline struct dwrite_fontlist *impl_from_IDWriteFontList2(IDWriteFontList
 static inline struct dwrite_fontfacereference *impl_from_IDWriteFontFaceReference1(IDWriteFontFaceReference1 *iface)
 {
     return CONTAINING_RECORD(iface, struct dwrite_fontfacereference, IDWriteFontFaceReference1_iface);
+}
+
+static struct dwrite_fontresource *impl_from_IDWriteFontResource(IDWriteFontResource *iface)
+{
+    return CONTAINING_RECORD(iface, struct dwrite_fontresource, IDWriteFontResource_iface);
 }
 
 static HRESULT get_cached_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *metrics)
@@ -6552,6 +6567,208 @@ HRESULT create_inmemory_fileloader(IDWriteFontFileLoader **ret)
     loader->ref = 1;
 
     *ret = (IDWriteFontFileLoader *)&loader->IDWriteInMemoryFontFileLoader_iface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI dwritefontresource_QueryInterface(IDWriteFontResource *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IDWriteFontResource) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IDWriteFontResource_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dwritefontresource_AddRef(IDWriteFontResource *iface)
+{
+    struct dwrite_fontresource *resource = impl_from_IDWriteFontResource(iface);
+    ULONG refcount = InterlockedIncrement(&resource->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI dwritefontresource_Release(IDWriteFontResource *iface)
+{
+    struct dwrite_fontresource *resource = impl_from_IDWriteFontResource(iface);
+    ULONG refcount = InterlockedDecrement(&resource->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        IDWriteFactory7_Release(resource->factory);
+        IDWriteFontFile_Release(resource->file);
+        heap_free(resource);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI dwritefontresource_GetFontFile(IDWriteFontResource *iface, IDWriteFontFile **fontfile)
+{
+    struct dwrite_fontresource *resource = impl_from_IDWriteFontResource(iface);
+
+    TRACE("%p, %p.\n", iface, fontfile);
+
+    *fontfile = resource->file;
+    IDWriteFontFile_AddRef(*fontfile);
+
+    return S_OK;
+}
+
+static UINT32 WINAPI dwritefontresource_GetFontFaceIndex(IDWriteFontResource *iface)
+{
+    struct dwrite_fontresource *resource = impl_from_IDWriteFontResource(iface);
+
+    TRACE("%p.\n", iface);
+
+    return resource->face_index;
+}
+
+static UINT32 WINAPI dwritefontresource_GetFontAxisCount(IDWriteFontResource *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return 0;
+}
+
+static HRESULT WINAPI dwritefontresource_GetDefaultFontAxisValues(IDWriteFontResource *iface,
+        DWRITE_FONT_AXIS_VALUE const *values, UINT32 num_values)
+{
+    FIXME("%p, %p, %u.\n", iface, values, num_values);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritefontresource_GetFontAxisRanges(IDWriteFontResource *iface,
+        DWRITE_FONT_AXIS_RANGE const *ranges, UINT32 num_ranges)
+{
+    FIXME("%p, %p, %u.\n", iface, ranges, num_ranges);
+
+    return E_NOTIMPL;
+}
+
+static DWRITE_FONT_AXIS_ATTRIBUTES WINAPI dwritefontresource_GetFontAxisAttributes(IDWriteFontResource *iface,
+        UINT32 axis)
+{
+    FIXME("%p, %u.\n", iface, axis);
+
+    return DWRITE_FONT_AXIS_ATTRIBUTES_NONE;
+}
+
+static HRESULT WINAPI dwritefontresource_GetAxisNames(IDWriteFontResource *iface, UINT32 axis,
+        IDWriteLocalizedStrings **names)
+{
+    FIXME("%p, %u, %p.\n", iface, axis, names);
+
+    return E_NOTIMPL;
+}
+
+static UINT32 WINAPI dwritefontresource_GetAxisValueNameCount(IDWriteFontResource *iface, UINT32 axis)
+{
+    FIXME("%p, %u.\n", iface, axis);
+
+    return 0;
+}
+
+static HRESULT WINAPI dwritefontresource_GetAxisValueNames(IDWriteFontResource *iface, UINT32 axis,
+        UINT32 axis_value, DWRITE_FONT_AXIS_RANGE *axis_range, IDWriteLocalizedStrings **names)
+{
+    FIXME("%p, %u, %u, %p, %p.\n", iface, axis, axis_value, axis_range, names);
+
+    return E_NOTIMPL;
+}
+
+static BOOL WINAPI dwritefontresource_HasVariations(IDWriteFontResource *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return FALSE;
+}
+
+static HRESULT WINAPI dwritefontresource_CreateFontFace(IDWriteFontResource *iface,
+        DWRITE_FONT_SIMULATIONS simulations, DWRITE_FONT_AXIS_VALUE const *axis_values, UINT32 num_values,
+        IDWriteFontFace5 **fontface)
+{
+    struct dwrite_fontresource *resource = impl_from_IDWriteFontResource(iface);
+    IDWriteFontFaceReference1 *reference;
+    HRESULT hr;
+
+    TRACE("%p, %#x, %p, %u, %p.\n", iface, simulations, axis_values, num_values, fontface);
+
+    hr = IDWriteFactory7_CreateFontFaceReference(resource->factory, resource->file, resource->face_index,
+            simulations, axis_values, num_values, &reference);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDWriteFontFaceReference1_CreateFontFace(reference, fontface);
+        IDWriteFontFaceReference1_Release(reference);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI dwritefontresource_CreateFontFaceReference(IDWriteFontResource *iface,
+        DWRITE_FONT_SIMULATIONS simulations, DWRITE_FONT_AXIS_VALUE const *axis_values, UINT32 num_values,
+        IDWriteFontFaceReference1 **reference)
+{
+    struct dwrite_fontresource *resource = impl_from_IDWriteFontResource(iface);
+
+    TRACE("%p, %#x, %p, %u, %p.\n", iface, simulations, axis_values, num_values, reference);
+
+    return IDWriteFactory7_CreateFontFaceReference(resource->factory, resource->file, resource->face_index,
+            simulations, axis_values, num_values, reference);
+}
+
+static const IDWriteFontResourceVtbl fontresourcevtbl =
+{
+    dwritefontresource_QueryInterface,
+    dwritefontresource_AddRef,
+    dwritefontresource_Release,
+    dwritefontresource_GetFontFile,
+    dwritefontresource_GetFontFaceIndex,
+    dwritefontresource_GetFontAxisCount,
+    dwritefontresource_GetDefaultFontAxisValues,
+    dwritefontresource_GetFontAxisRanges,
+    dwritefontresource_GetFontAxisAttributes,
+    dwritefontresource_GetAxisNames,
+    dwritefontresource_GetAxisValueNameCount,
+    dwritefontresource_GetAxisValueNames,
+    dwritefontresource_HasVariations,
+    dwritefontresource_CreateFontFace,
+    dwritefontresource_CreateFontFaceReference,
+};
+
+HRESULT create_font_resource(IDWriteFactory7 *factory, IDWriteFontFile *file, UINT32 face_index,
+        IDWriteFontResource **ret)
+{
+    struct dwrite_fontresource *resource;
+
+    *ret = NULL;
+
+    resource = heap_alloc_zero(sizeof(*resource));
+    if (!resource)
+        return E_OUTOFMEMORY;
+
+    resource->IDWriteFontResource_iface.lpVtbl = &fontresourcevtbl;
+    resource->refcount = 1;
+    resource->face_index = face_index;
+    resource->file = file;
+    IDWriteFontFile_AddRef(resource->file);
+    resource->factory = factory;
+    IDWriteFactory7_AddRef(resource->factory);
+
+    *ret = &resource->IDWriteFontResource_iface;
 
     return S_OK;
 }

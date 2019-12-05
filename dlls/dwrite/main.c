@@ -1666,9 +1666,9 @@ static HRESULT WINAPI dwritefactory6_CreateFontFaceReference(IDWriteFactory7 *if
 static HRESULT WINAPI dwritefactory6_CreateFontResource(IDWriteFactory7 *iface, IDWriteFontFile *file,
         UINT32 face_index, IDWriteFontResource **resource)
 {
-    FIXME("%p, %p, %u, %p.\n", iface, file, face_index, resource);
+    TRACE("%p, %p, %u, %p.\n", iface, file, face_index, resource);
 
-    return E_NOTIMPL;
+    return create_font_resource(iface, file, face_index, resource);
 }
 
 static HRESULT WINAPI dwritefactory6_GetSystemFontSet(IDWriteFactory7 *iface, BOOL include_downloadable,
