@@ -167,19 +167,6 @@ static HRESULT avi_mux_query_interface(struct strmbase_filter *iface, REFIID iid
     return S_OK;
 }
 
-static const struct strmbase_filter_ops filter_ops =
-{
-    .filter_get_pin = avi_mux_get_pin,
-    .filter_destroy = avi_mux_destroy,
-    .filter_query_interface = avi_mux_query_interface,
-};
-
-static inline AviMux* impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    struct strmbase_filter *filter = CONTAINING_RECORD(iface, struct strmbase_filter, IBaseFilter_iface);
-    return impl_from_strmbase_filter(filter);
-}
-
 static HRESULT out_flush(AviMux *This)
 {
     ULONG written;
@@ -420,16 +407,11 @@ static HRESULT queue_sample(AviMux *avimux, AviMuxIn *avimuxin, IMediaSample *sa
     return flush_queue(avimux, avimuxin, FALSE);
 }
 
-static HRESULT WINAPI AviMux_Stop(IBaseFilter *iface)
+static HRESULT avi_mux_cleanup_stream(struct strmbase_filter *iface)
 {
-    AviMux *This = impl_from_IBaseFilter(iface);
+    AviMux *This = impl_from_strmbase_filter(iface);
     HRESULT hr;
     int i;
-
-    TRACE("(%p)\n", This);
-
-    if(This->filter.state == State_Stopped)
-        return S_OK;
 
     if (This->stream)
     {
@@ -559,35 +541,19 @@ static HRESULT WINAPI AviMux_Stop(IBaseFilter *iface)
         This->stream = NULL;
     }
 
-    This->filter.state = State_Stopped;
     return S_OK;
 }
 
-static HRESULT WINAPI AviMux_Pause(IBaseFilter *iface)
+static HRESULT avi_mux_init_stream(struct strmbase_filter *iface)
 {
-    AviMux *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
-{
-    AviMux *This = impl_from_IBaseFilter(iface);
+    AviMux *This = impl_from_strmbase_filter(iface);
     HRESULT hr;
     int i, stream_id;
-
-    TRACE("(%p)->(%s)\n", This, wine_dbgstr_longlong(tStart));
-
-    if(This->filter.state == State_Running)
-        return S_OK;
 
     if(This->mode != INTERLEAVE_FULL) {
         FIXME("mode not supported (%d)\n", This->mode);
         return E_NOTIMPL;
     }
-
-    if(tStart)
-        FIXME("tStart parameter ignored\n");
 
     for(i=0; i<This->input_pin_no; i++) {
         IMediaSeeking *ms;
@@ -694,18 +660,26 @@ static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
     This->avih.dwWidth = ((BITMAPINFOHEADER*)This->in[0]->strf->data)->biWidth;
     This->avih.dwHeight = ((BITMAPINFOHEADER*)This->in[0]->strf->data)->biHeight;
 
-    This->filter.state = State_Running;
     return S_OK;
 }
+
+static const struct strmbase_filter_ops filter_ops =
+{
+    .filter_get_pin = avi_mux_get_pin,
+    .filter_destroy = avi_mux_destroy,
+    .filter_query_interface = avi_mux_query_interface,
+    .filter_init_stream = avi_mux_init_stream,
+    .filter_cleanup_stream = avi_mux_cleanup_stream,
+};
 
 static const IBaseFilterVtbl AviMuxVtbl = {
     BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
-    AviMux_Stop,
-    AviMux_Pause,
-    AviMux_Run,
+    BaseFilterImpl_Stop,
+    BaseFilterImpl_Pause,
+    BaseFilterImpl_Run,
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
