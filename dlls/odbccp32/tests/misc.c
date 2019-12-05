@@ -751,10 +751,10 @@ static void test_SQLConfigDataSource(void)
     BOOL ret;
 
     ret = SQLConfigDataSource(0, ODBC_ADD_DSN, "SQL Server", "DSN=WINEMQIS\0Database=MQIS\0\0");
-    ok(ret, "got %d\n", ret);
+    todo_wine ok(ret, "got %d\n", ret);
 
     ret = SQLConfigDataSource(0, ODBC_REMOVE_DSN, "SQL Server", "DSN=WINEMQIS\0\0");
-    ok(ret, "got %d\n", ret);
+    todo_wine ok(ret, "got %d\n", ret);
 
     ret = SQLConfigDataSource(0, ODBC_REMOVE_DSN, "SQL Server", "DSN=WINEMQIS\0\0");
     if(!ret)
@@ -767,8 +767,8 @@ static void test_SQLConfigDataSource(void)
     }
 
     ret = SQLConfigDataSource(0, ODBC_ADD_DSN, "ODBC driver", "DSN=ODBC data source\0\0");
-    todo_wine ok(!ret, "got %d\n", ret);
-    todo_wine check_error(ODBC_ERROR_COMPONENT_NOT_FOUND);
+    ok(!ret, "got %d\n", ret);
+    check_error(ODBC_ERROR_COMPONENT_NOT_FOUND);
 }
 
 START_TEST(misc)
