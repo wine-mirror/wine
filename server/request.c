@@ -618,10 +618,36 @@ static void create_dir( const char *name, struct stat *st )
 /* create the server directory and chdir to it */
 static char *create_server_dir( int force )
 {
-    const char *config_dir = wine_get_config_dir();
-    char *p;
+    const char *prefix = getenv( "WINEPREFIX" );
+    char *p, *config_dir;
     struct stat st, st2;
     size_t len = sizeof("/server-") + 2 * sizeof(st.st_dev) + 2 * sizeof(st.st_ino) + 2;
+
+    /* open the configuration directory */
+
+    if (prefix)
+    {
+        if (!(config_dir = strdup( prefix ))) fatal_error( "out of memory\n" );
+        for (p = config_dir + strlen(config_dir); p > config_dir; p--) if (p[-1] != '/') break;
+        if (p > config_dir) *p = 0;
+        if (config_dir[0] != '/')
+            fatal_error( "invalid directory %s in WINEPREFIX: not an absolute path\n", prefix );
+    }
+    else
+    {
+        const char *home = getenv( "HOME" );
+        if (!home)
+        {
+            struct passwd *pwd = getpwuid( getuid() );
+            if (pwd) home = pwd->pw_dir;
+        }
+        if (!home) fatal_error( "could not determine your home directory\n" );
+        if (home[0] != '/') fatal_error( "your home directory %s is not an absolute path\n", home );
+        if (!(config_dir = malloc( strlen(home) + sizeof("/.wine") ))) fatal_error( "out of memory\n" );
+        strcpy( config_dir, home );
+        for (p = config_dir + strlen(config_dir); p > config_dir; p--) if (p[-1] != '/') break;
+        strcpy( p, "/.wine" );
+    }
 
     if (chdir( config_dir ) == -1)
     {
@@ -630,6 +656,10 @@ static char *create_server_dir( int force )
     }
     if ((config_dir_fd = open( ".", O_RDONLY )) == -1)
         fatal_error( "open %s: %s\n", config_dir, strerror( errno ));
+    if (fstat( config_dir_fd, &st ) == -1)
+        fatal_error( "stat %s: %s\n", config_dir, strerror( errno ));
+    if (st.st_uid != getuid())
+        fatal_error( "%s is not owned by you\n", config_dir );
 
     /* create the base directory if needed */
 
@@ -673,6 +703,7 @@ static char *create_server_dir( int force )
     if (st.st_dev != st2.st_dev || st.st_ino != st2.st_ino)
         fatal_error( "chdir did not end up in %s\n", server_dir );
 
+    free( config_dir );
     return server_dir;
 }
 
