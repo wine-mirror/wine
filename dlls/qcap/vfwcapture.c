@@ -62,11 +62,6 @@ static inline VfwCapture *impl_from_strmbase_filter(struct strmbase_filter *ifac
     return CONTAINING_RECORD(iface, VfwCapture, filter);
 }
 
-static inline VfwCapture *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    return CONTAINING_RECORD(iface, VfwCapture, filter.IBaseFilter_iface);
-}
-
 static inline VfwCapture *impl_from_IAMStreamConfig(IAMStreamConfig *iface)
 {
     return CONTAINING_RECORD(iface, VfwCapture, IAMStreamConfig_iface);
@@ -99,7 +94,7 @@ static void vfw_capture_destroy(struct strmbase_filter *iface)
     if (filter->init)
     {
         if (filter->filter.state != State_Stopped)
-            qcap_driver_stop(filter->driver_info, &filter->filter.state);
+            qcap_driver_stop_stream(filter->driver_info);
         qcap_driver_destroy(filter->driver_info);
     }
 
@@ -129,37 +124,48 @@ static HRESULT vfw_capture_query_interface(struct strmbase_filter *iface, REFIID
     return S_OK;
 }
 
+static HRESULT vfw_capture_init_stream(struct strmbase_filter *iface)
+{
+    VfwCapture *filter = impl_from_strmbase_filter(iface);
+
+    qcap_driver_init_stream(filter->driver_info);
+    return VFW_S_CANT_CUE;
+}
+
+static HRESULT vfw_capture_start_stream(struct strmbase_filter *iface, REFERENCE_TIME time)
+{
+    VfwCapture *filter = impl_from_strmbase_filter(iface);
+
+    qcap_driver_start_stream(filter->driver_info);
+    return S_OK;
+}
+
+static HRESULT vfw_capture_stop_stream(struct strmbase_filter *iface)
+{
+    VfwCapture *filter = impl_from_strmbase_filter(iface);
+
+    qcap_driver_stop_stream(filter->driver_info);
+    return VFW_S_CANT_CUE;
+}
+
+static HRESULT vfw_capture_cleanup_stream(struct strmbase_filter *iface)
+{
+    VfwCapture *filter = impl_from_strmbase_filter(iface);
+
+    qcap_driver_cleanup_stream(filter->driver_info);
+    return S_OK;
+}
+
 static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = vfw_capture_get_pin,
     .filter_destroy = vfw_capture_destroy,
     .filter_query_interface = vfw_capture_query_interface,
+    .filter_init_stream = vfw_capture_init_stream,
+    .filter_start_stream = vfw_capture_start_stream,
+    .filter_stop_stream = vfw_capture_stop_stream,
+    .filter_cleanup_stream = vfw_capture_cleanup_stream,
 };
-
-/** IMediaFilter methods **/
-
-static HRESULT WINAPI VfwCapture_Stop(IBaseFilter * iface)
-{
-    VfwCapture *This = impl_from_IBaseFilter(iface);
-
-    TRACE("()\n");
-    return qcap_driver_stop(This->driver_info, &This->filter.state);
-}
-
-static HRESULT WINAPI VfwCapture_Pause(IBaseFilter * iface)
-{
-    VfwCapture *This = impl_from_IBaseFilter(iface);
-
-    TRACE("()\n");
-    return qcap_driver_pause(This->driver_info, &This->filter.state);
-}
-
-static HRESULT WINAPI VfwCapture_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
-{
-    VfwCapture *This = impl_from_IBaseFilter(iface);
-    TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
-    return qcap_driver_run(This->driver_info, &This->filter.state);
-}
 
 static const IBaseFilterVtbl VfwCapture_Vtbl =
 {
@@ -167,9 +173,9 @@ static const IBaseFilterVtbl VfwCapture_Vtbl =
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
-    VfwCapture_Stop,
-    VfwCapture_Pause,
-    VfwCapture_Run,
+    BaseFilterImpl_Stop,
+    BaseFilterImpl_Pause,
+    BaseFilterImpl_Run,
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,

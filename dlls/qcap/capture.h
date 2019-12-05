@@ -31,8 +31,9 @@ HRESULT qcap_driver_get_format(const Capture*,AM_MEDIA_TYPE**) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_get_prop_range(Capture*,VideoProcAmpProperty,LONG*,LONG*,LONG*,LONG*,LONG*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_get_prop(Capture*,VideoProcAmpProperty,LONG*,LONG*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_set_prop(Capture*,VideoProcAmpProperty,LONG,LONG) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_run(Capture*,FILTER_STATE*) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_pause(Capture*,FILTER_STATE*) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_stop(Capture*,FILTER_STATE*) DECLSPEC_HIDDEN;
+void qcap_driver_init_stream(Capture *device) DECLSPEC_HIDDEN;
+void qcap_driver_start_stream(Capture *device) DECLSPEC_HIDDEN;
+void qcap_driver_stop_stream(Capture *device) DECLSPEC_HIDDEN;
+void qcap_driver_cleanup_stream(Capture *device) DECLSPEC_HIDDEN;
 
 #endif /* __QCAP_CAPTURE_H__ */
