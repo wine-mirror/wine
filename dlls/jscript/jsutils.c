@@ -657,37 +657,74 @@ HRESULT to_integer(script_ctx_t *ctx, jsval_t v, double *ret)
     return S_OK;
 }
 
+static INT32 double_to_int32(double number)
+{
+    INT32 exp, result;
+    union {
+        double d;
+        INT64 n;
+    } bits;
+
+    bits.d = number;
+    exp = ((INT32)(bits.n >> 52) & 0x7ff) - 0x3ff;
+
+    /* If exponent < 0 there will be no bits to the left of the decimal point
+     * after rounding; if the exponent is > 83 then no bits of precision can be
+     * left in the low 32-bit range of the result (IEEE-754 doubles have 52 bits
+     * of fractional precision).
+     * Note this case handles 0, -0, and all infinte, NaN, & denormal value. */
+    if(exp < 0 || exp > 83)
+        return 0;
+
+    /* Select the appropriate 32-bits from the floating point mantissa.  If the
+     * exponent is 52 then the bits we need to select are already aligned to the
+     * lowest bits of the 64-bit integer representation of tghe number, no need
+     * to shift.  If the exponent is greater than 52 we need to shift the value
+     * left by (exp - 52), if the value is less than 52 we need to shift right
+     * accordingly. */
+    result = (exp > 52) ? bits.n << (exp - 52) : bits.n >> (52 - exp);
+
+    /* IEEE-754 double precision values are stored omitting an implicit 1 before
+     * the decimal point; we need to reinsert this now.  We may also the shifted
+     * invalid bits into the result that are not a part of the mantissa (the sign
+     * and exponent bits from the floatingpoint representation); mask these out. */
+    if(exp < 32) {
+        INT32 missing_one = 1 << exp;
+        result &= missing_one - 1;
+        result += missing_one;
+    }
+
+    /* If the input value was negative (we could test either 'number' or 'bits',
+     * but testing 'bits' is likely faster) invert the result appropriately. */
+    return bits.n < 0 ? -result : result;
+}
+
 /* ECMA-262 3rd Edition    9.5 */
 HRESULT to_int32(script_ctx_t *ctx, jsval_t v, INT *ret)
 {
     double n;
     HRESULT hres;
 
-    const double p32 = (double)0xffffffff + 1;
-
     hres = to_number(ctx, v, &n);
     if(FAILED(hres))
         return hres;
 
-    if(is_finite(n))
-        n = n > 0 ? fmod(n, p32) : -fmod(-n, p32);
-    else
-        n = 0;
-
-    *ret = (UINT32)n;
+    *ret = double_to_int32(n);
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    9.6 */
 HRESULT to_uint32(script_ctx_t *ctx, jsval_t val, UINT32 *ret)
 {
-    INT32 n;
+    double n;
     HRESULT hres;
 
-    hres = to_int32(ctx, val, &n);
-    if(SUCCEEDED(hres))
-        *ret = n;
-    return hres;
+    hres = to_number(ctx, val, &n);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = double_to_int32(n);
+    return S_OK;
 }
 
 HRESULT double_to_string(double n, jsstr_t **str)
