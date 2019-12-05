@@ -56,12 +56,6 @@ static inline AVICompressor *impl_from_strmbase_filter(struct strmbase_filter *f
     return CONTAINING_RECORD(filter, AVICompressor, filter);
 }
 
-static inline AVICompressor *impl_from_IBaseFilter(IBaseFilter *iface)
-{
-    struct strmbase_filter *filter = CONTAINING_RECORD(iface, struct strmbase_filter, IBaseFilter_iface);
-    return impl_from_strmbase_filter(filter);
-}
-
 static inline AVICompressor *impl_from_strmbase_pin(struct strmbase_pin *pin)
 {
     return impl_from_strmbase_filter(pin->filter);
@@ -117,57 +111,14 @@ static HRESULT fill_format_info(AVICompressor *This, VIDEOINFOHEADER *src_videoi
     return S_OK;
 }
 
-static HRESULT WINAPI AVICompressor_Stop(IBaseFilter *iface)
-{
-    AVICompressor *This = impl_from_IBaseFilter(iface);
-
-    TRACE("(%p)\n", This);
-
-    if(This->filter.state == State_Stopped)
-        return S_OK;
-
-    ICCompressEnd(This->hic);
-    This->filter.state = State_Stopped;
-    return S_OK;
-}
-
-static HRESULT WINAPI AVICompressor_Pause(IBaseFilter *iface)
-{
-    AVICompressor *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AVICompressor_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
-{
-    AVICompressor *This = impl_from_IBaseFilter(iface);
-    HRESULT hres;
-
-    TRACE("(%p)->(%s)\n", This, wine_dbgstr_longlong(tStart));
-
-    if(This->filter.state == State_Running)
-        return S_OK;
-
-    if (This->source.pAllocator && FAILED(hres = IMemAllocator_Commit(This->source.pAllocator)))
-    {
-        FIXME("Commit failed: %08x\n", hres);
-        return hres;
-    }
-
-    This->frame_cnt = 0;
-
-    This->filter.state = State_Running;
-    return S_OK;
-}
-
 static const IBaseFilterVtbl AVICompressorVtbl = {
     BaseFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
     BaseFilterImpl_Release,
     BaseFilterImpl_GetClassID,
-    AVICompressor_Stop,
-    AVICompressor_Pause,
-    AVICompressor_Run,
+    BaseFilterImpl_Stop,
+    BaseFilterImpl_Pause,
+    BaseFilterImpl_Run,
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
@@ -215,11 +166,37 @@ static HRESULT avi_compressor_query_interface(struct strmbase_filter *iface, REF
     return S_OK;
 }
 
+static HRESULT avi_compressor_init_stream(struct strmbase_filter *iface)
+{
+    AVICompressor *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr;
+
+    if (filter->source.pAllocator && FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
+    {
+        ERR("Failed to commit allocator, hr %#x.\n", hr);
+        return hr;
+    }
+
+    filter->frame_cnt = 0;
+
+    return S_OK;
+}
+
+static HRESULT avi_compressor_cleanup_stream(struct strmbase_filter *iface)
+{
+    AVICompressor *filter = impl_from_strmbase_filter(iface);
+
+    ICCompressEnd(filter->hic);
+    return S_OK;
+}
+
 static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = avi_compressor_get_pin,
     .filter_destroy = avi_compressor_destroy,
     .filter_query_interface = avi_compressor_query_interface,
+    .filter_init_stream = avi_compressor_init_stream,
+    .filter_cleanup_stream = avi_compressor_cleanup_stream,
 };
 
 static AVICompressor *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
