@@ -1603,7 +1603,7 @@
 # @ stub WerpStringLookup
 @ stdcall WideCharToMultiByte(long long wstr long ptr long ptr ptr)
 @ stdcall WinExec(str long)
-@ stdcall Wow64EnableWow64FsRedirection(long)
+@ stdcall Wow64EnableWow64FsRedirection(long) KERNEL32_Wow64EnableWow64FsRedirection
 @ stdcall -import Wow64DisableWow64FsRedirection(ptr)
 @ stdcall Wow64GetThreadContext(long ptr)
 # @ stub Wow64GetThreadSelectorEntry

@@ -851,8 +851,10 @@ UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
 
 /***********************************************************************
  *           Wow64EnableWow64FsRedirection   (KERNEL32.@)
+ *
+ * Microsoft C++ Redistributable installers are depending on all %eax bits being set.
  */
-BOOLEAN WINAPI Wow64EnableWow64FsRedirection( BOOLEAN enable )
+DWORD /*BOOLEAN*/ WINAPI KERNEL32_Wow64EnableWow64FsRedirection( BOOLEAN enable )
 {
     return set_ntstatus( RtlWow64EnableFsRedirection( enable ));
 }
