@@ -1157,7 +1157,7 @@ static HRESULT WINAPI dwritefactory_GetGdiInterop(IDWriteFactory7 *iface, IDWrit
     if (factory->gdiinterop)
         IDWriteGdiInterop1_AddRef(factory->gdiinterop);
     else
-        hr = create_gdiinterop((IDWriteFactory5 *)iface, &factory->gdiinterop);
+        hr = create_gdiinterop(iface, &factory->gdiinterop);
 
     *gdi_interop = (IDWriteGdiInterop *)factory->gdiinterop;
 
@@ -1893,11 +1893,11 @@ void factory_detach_fontcollection(IDWriteFactory7 *iface, IDWriteFontCollection
     IDWriteFactory7_Release(iface);
 }
 
-void factory_detach_gdiinterop(IDWriteFactory5 *iface, IDWriteGdiInterop1 *interop)
+void factory_detach_gdiinterop(IDWriteFactory7 *iface, IDWriteGdiInterop1 *interop)
 {
-    struct dwritefactory *factory = impl_from_IDWriteFactory7((IDWriteFactory7 *)iface);
+    struct dwritefactory *factory = impl_from_IDWriteFactory7(iface);
     factory->gdiinterop = NULL;
-    IDWriteFactory5_Release(iface);
+    IDWriteFactory7_Release(iface);
 }
 
 HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE type, REFIID riid, IUnknown **ret)
