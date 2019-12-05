@@ -957,7 +957,7 @@
 # @ stub MoveFileWithProgressTransactedW
 @ stdcall MoveFileWithProgressW(wstr wstr ptr ptr long) kernel32.MoveFileWithProgressW
 @ stdcall MulDiv(long long long) kernel32.MulDiv
-@ stdcall MultiByteToWideChar(long long str long ptr long) kernel32.MultiByteToWideChar
+@ stdcall MultiByteToWideChar(long long str long ptr long)
 # @ stub NamedPipeEventEnum
 # @ stub NamedPipeEventSelect
 @ stdcall NeedCurrentDirectoryForExePathA(str)

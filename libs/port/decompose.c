@@ -2,7 +2,7 @@
 /* generated from http://www.unicode.org/Public/12.0.0/ucd/UnicodeData.txt */
 /* DO NOT EDIT!! */
 
-#include "wine/unicode.h"
+#include "windef.h"
 
 static const WCHAR table[5856] =
 {
@@ -2194,6 +2194,8 @@ static const WCHAR compatmap_table[8152] =
     0x3163, 0x00a2, 0x00a3, 0x00ac, 0x00af, 0x00a6, 0x00a5, 0x20a9,
     0x2502, 0x2190, 0x2191, 0x2192, 0x2193, 0x25a0, 0x25cb
 };
+
+#include "wine/unicode.h"
 
 static const WCHAR *get_compatmap_entry( WCHAR ch, unsigned int *len )
 {

@@ -41,6 +41,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 #define CALINFO_MAX_YEAR 2029
 
+extern UINT CDECL __wine_get_unix_codepage(void);
+extern unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen ) DECLSPEC_HIDDEN;
+
 static HANDLE kernel32_handle;
 
 static const struct registry_value
@@ -433,6 +436,409 @@ static int fold_digits( const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
     for (i = 0; i < srclen; i++)
         dst[i] = src[i] + wine_digitmap[wine_digitmap[src[i] >> 8] + (src[i] & 0xff)];
     return srclen;
+}
+
+
+static int mbstowcs_cpsymbol( DWORD flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+{
+    int len, i;
+
+    if (flags)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+    if (!dstlen) return srclen;
+    len = min( srclen, dstlen );
+    for (i = 0; i < len; i++)
+    {
+        unsigned char c = src[i];
+        dst[i] = (c < 0x20) ? c : c + 0xf000;
+    }
+    if (len < srclen)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return len;
+}
+
+
+static int mbstowcs_utf7( DWORD flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+{
+    static const signed char base64_decoding_table[] =
+    {
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x00-0x0F */
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x10-0x1F */
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, /* 0x20-0x2F */
+        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, /* 0x30-0x3F */
+        -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, /* 0x40-0x4F */
+        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, /* 0x50-0x5F */
+        -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, /* 0x60-0x6F */
+        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1  /* 0x70-0x7F */
+    };
+
+    const char *source_end = src + srclen;
+    int offset = 0, pos = 0;
+    DWORD byte_pair = 0;
+
+    if (flags)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+#define OUTPUT(ch) \
+    do { \
+        if (dstlen > 0) \
+        { \
+            if (pos >= dstlen) goto overflow; \
+            dst[pos] = (ch); \
+        } \
+        pos++; \
+    } while(0)
+
+    while (src < source_end)
+    {
+        if (*src == '+')
+        {
+            src++;
+            if (src >= source_end) break;
+            if (*src == '-')
+            {
+                /* just a plus sign escaped as +- */
+                OUTPUT( '+' );
+                src++;
+                continue;
+            }
+
+            do
+            {
+                signed char sextet = *src;
+                if (sextet == '-')
+                {
+                    /* skip over the dash and end base64 decoding
+                     * the current, unfinished byte pair is discarded */
+                    src++;
+                    offset = 0;
+                    break;
+                }
+                if (sextet < 0)
+                {
+                    /* the next character of src is < 0 and therefore not part of a base64 sequence
+                     * the current, unfinished byte pair is NOT discarded in this case
+                     * this is probably a bug in Windows */
+                    break;
+                }
+                sextet = base64_decoding_table[sextet];
+                if (sextet == -1)
+                {
+                    /* -1 means that the next character of src is not part of a base64 sequence
+                     * in other words, all sextets in this base64 sequence have been processed
+                     * the current, unfinished byte pair is discarded */
+                    offset = 0;
+                    break;
+                }
+
+                byte_pair = (byte_pair << 6) | sextet;
+                offset += 6;
+                if (offset >= 16)
+                {
+                    /* this byte pair is done */
+                    OUTPUT( byte_pair >> (offset - 16) );
+                    offset -= 16;
+                }
+                src++;
+            }
+            while (src < source_end);
+        }
+        else
+        {
+            OUTPUT( (unsigned char)*src );
+            src++;
+        }
+    }
+    return pos;
+
+overflow:
+    SetLastError( ERROR_INSUFFICIENT_BUFFER );
+    return 0;
+#undef OUTPUT
+}
+
+
+static int mbstowcs_utf8( DWORD flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+{
+    DWORD reslen;
+    NTSTATUS status;
+
+    if (flags & ~(MB_PRECOMPOSED | MB_COMPOSITE | MB_USEGLYPHCHARS | MB_ERR_INVALID_CHARS))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+    if (!dstlen) dst = NULL;
+    status = RtlUTF8ToUnicodeN( dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
+    if (status == STATUS_SOME_NOT_MAPPED)
+    {
+        if (flags & MB_ERR_INVALID_CHARS)
+        {
+            SetLastError( ERROR_NO_UNICODE_TRANSLATION );
+            return 0;
+        }
+    }
+    else if (!set_ntstatus( status )) reslen = 0;
+
+    return reslen / sizeof(WCHAR);
+}
+
+
+static inline int is_private_use_area_char( WCHAR code )
+{
+    return (code >= 0xe000 && code <= 0xf8ff);
+}
+
+
+static int check_invalid_chars( const CPTABLEINFO *info, const unsigned char *src, int srclen )
+{
+    if (info->DBCSOffsets)
+    {
+        for ( ; srclen; src++, srclen-- )
+        {
+            USHORT off = info->DBCSOffsets[*src];
+            if (off)
+            {
+                if (srclen == 1) break;  /* partial char, error */
+                if (info->DBCSOffsets[off + src[1]] == info->UniDefaultChar &&
+                    ((src[0] << 8) | src[1]) != info->TransDefaultChar) break;
+                src++;
+                srclen--;
+                continue;
+            }
+            if (info->MultiByteTable[*src] == info->UniDefaultChar && *src != info->TransDefaultChar)
+                break;
+            if (is_private_use_area_char( info->MultiByteTable[*src] )) break;
+        }
+    }
+    else
+    {
+        for ( ; srclen; src++, srclen-- )
+        {
+            if (info->MultiByteTable[*src] == info->UniDefaultChar && *src != info->TransDefaultChar)
+                break;
+            if (is_private_use_area_char( info->MultiByteTable[*src] )) break;
+        }
+    }
+    return !!srclen;
+
+}
+
+
+static int mbstowcs_decompose( const CPTABLEINFO *info, const unsigned char *src, int srclen,
+                               WCHAR *dst, int dstlen )
+{
+    WCHAR ch, dummy[4]; /* no decomposition is larger than 4 chars */
+    USHORT off;
+    int len, res;
+
+    if (info->DBCSOffsets)
+    {
+        if (!dstlen)  /* compute length */
+        {
+            for (len = 0; srclen; srclen--, src++)
+            {
+                if ((off = info->DBCSOffsets[*src]))
+                {
+                    if (srclen > 1 && src[1])
+                    {
+                        src++;
+                        srclen--;
+                        ch = info->DBCSOffsets[off + *src];
+                    }
+                    else ch = info->UniDefaultChar;
+                }
+                else ch = info->MultiByteTable[*src];
+                len += wine_decompose( 0, ch, dummy, 4 );
+            }
+            return len;
+        }
+
+        for (len = dstlen; srclen && len; srclen--, src++)
+        {
+            if ((off = info->DBCSOffsets[*src]))
+            {
+                if (srclen > 1 && src[1])
+                {
+                    src++;
+                    srclen--;
+                    ch = info->DBCSOffsets[off + *src];
+                }
+                else ch = info->UniDefaultChar;
+            }
+            else ch = info->MultiByteTable[*src];
+            if (!(res = wine_decompose( 0, ch, dst, len ))) break;
+            dst += res;
+            len -= res;
+        }
+    }
+    else
+    {
+        if (!dstlen)  /* compute length */
+        {
+            for (len = 0; srclen; srclen--, src++)
+                len += wine_decompose( 0, info->MultiByteTable[*src], dummy, 4 );
+            return len;
+        }
+
+        for (len = dstlen; srclen && len; srclen--, src++)
+        {
+            if (!(res = wine_decompose( 0, info->MultiByteTable[*src], dst, len ))) break;
+            len -= res;
+            dst += res;
+        }
+    }
+
+    if (srclen)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return dstlen - len;
+}
+
+
+static int mbstowcs_sbcs( const CPTABLEINFO *info, const unsigned char *src, int srclen,
+                          WCHAR *dst, int dstlen )
+{
+    const USHORT *table = info->MultiByteTable;
+    int ret = srclen;
+
+    if (!dstlen) return srclen;
+
+    if (dstlen < srclen)  /* buffer too small: fill it up to dstlen and return error */
+    {
+        srclen = dstlen;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        ret = 0;
+    }
+
+    while (srclen >= 16)
+    {
+        dst[0]  = table[src[0]];
+        dst[1]  = table[src[1]];
+        dst[2]  = table[src[2]];
+        dst[3]  = table[src[3]];
+        dst[4]  = table[src[4]];
+        dst[5]  = table[src[5]];
+        dst[6]  = table[src[6]];
+        dst[7]  = table[src[7]];
+        dst[8]  = table[src[8]];
+        dst[9]  = table[src[9]];
+        dst[10] = table[src[10]];
+        dst[11] = table[src[11]];
+        dst[12] = table[src[12]];
+        dst[13] = table[src[13]];
+        dst[14] = table[src[14]];
+        dst[15] = table[src[15]];
+        src += 16;
+        dst += 16;
+        srclen -= 16;
+    }
+
+    /* now handle the remaining characters */
+    src += srclen;
+    dst += srclen;
+    switch (srclen)
+    {
+    case 15: dst[-15] = table[src[-15]];
+    case 14: dst[-14] = table[src[-14]];
+    case 13: dst[-13] = table[src[-13]];
+    case 12: dst[-12] = table[src[-12]];
+    case 11: dst[-11] = table[src[-11]];
+    case 10: dst[-10] = table[src[-10]];
+    case 9:  dst[-9]  = table[src[-9]];
+    case 8:  dst[-8]  = table[src[-8]];
+    case 7:  dst[-7]  = table[src[-7]];
+    case 6:  dst[-6]  = table[src[-6]];
+    case 5:  dst[-5]  = table[src[-5]];
+    case 4:  dst[-4]  = table[src[-4]];
+    case 3:  dst[-3]  = table[src[-3]];
+    case 2:  dst[-2]  = table[src[-2]];
+    case 1:  dst[-1]  = table[src[-1]];
+    case 0: break;
+    }
+    return ret;
+}
+
+
+static int mbstowcs_dbcs( const CPTABLEINFO *info, const unsigned char *src, int srclen,
+                          WCHAR *dst, int dstlen )
+{
+    USHORT off;
+    int i;
+
+    if (!dstlen)
+    {
+        for (i = 0; srclen; i++, src++, srclen--)
+            if (info->DBCSOffsets[*src] && srclen > 1 && src[1]) { src++; srclen--; }
+        return i;
+    }
+
+    for (i = dstlen; srclen && i; i--, srclen--, src++, dst++)
+    {
+        if ((off = info->DBCSOffsets[*src]))
+        {
+            if (srclen > 1 && src[1])
+            {
+                src++;
+                srclen--;
+                *dst = info->DBCSOffsets[off + *src];
+            }
+            else *dst = info->UniDefaultChar;
+        }
+        else *dst = info->MultiByteTable[*src];
+    }
+    if (srclen)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return dstlen - i;
+}
+
+
+static int mbstowcs_codepage( UINT codepage, DWORD flags, const char *src, int srclen,
+                              WCHAR *dst, int dstlen )
+{
+    CPTABLEINFO local_info;
+    const CPTABLEINFO *info = get_codepage_table( codepage );
+    const unsigned char *str = (const unsigned char *)src;
+
+    if (!info)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (flags & ~(MB_PRECOMPOSED | MB_COMPOSITE | MB_USEGLYPHCHARS | MB_ERR_INVALID_CHARS))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    if ((flags & MB_USEGLYPHCHARS) && info->MultiByteTable[256] == 256)
+    {
+        local_info = *info;
+        local_info.MultiByteTable += 257;
+        info = &local_info;
+    }
+    if ((flags & MB_ERR_INVALID_CHARS) && check_invalid_chars( info, str, srclen ))
+    {
+        SetLastError( ERROR_NO_UNICODE_TRANSLATION );
+        return 0;
+    }
+
+    if (flags & MB_COMPOSITE) return mbstowcs_decompose( info, str, srclen, dst, dstlen );
+    if (info->DBCSOffsets) return mbstowcs_dbcs( info, str, srclen, dst, dstlen );
+    return mbstowcs_sbcs( info, str, srclen, dst, dstlen );
 }
 
 
@@ -1739,6 +2145,52 @@ LCID WINAPI DECLSPEC_HOTPATCH LocaleNameToLCID( const WCHAR *name, DWORD flags )
     if (!set_ntstatus( RtlLocaleNameToLcid( name, &lcid, 2 ))) return 0;
     if (!(flags & LOCALE_ALLOW_NEUTRAL_NAMES)) lcid = ConvertDefaultLocale( lcid );
     return lcid;
+}
+
+
+/******************************************************************************
+ *	MultiByteToWideChar   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH MultiByteToWideChar( UINT codepage, DWORD flags, const char *src, INT srclen,
+                                                  WCHAR *dst, INT dstlen )
+{
+    int ret;
+
+    if (!src || !srclen || (!dst && dstlen) || dstlen < 0)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (srclen < 0) srclen = strlen(src) + 1;
+
+    switch (codepage)
+    {
+    case CP_SYMBOL:
+        ret = mbstowcs_cpsymbol( flags, src, srclen, dst, dstlen );
+        break;
+    case CP_UTF7:
+        ret = mbstowcs_utf7( flags, src, srclen, dst, dstlen );
+        break;
+    case CP_UTF8:
+        ret = mbstowcs_utf8( flags, src, srclen, dst, dstlen );
+        break;
+    case CP_UNIXCP:
+        codepage = __wine_get_unix_codepage();
+        if (codepage == CP_UTF8)
+        {
+            ret = mbstowcs_utf8( flags, src, srclen, dst, dstlen );
+#ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
+            if (ret && dstlen) RtlNormalizeString( NormalizationC, dst, ret, dst, &ret );
+#endif
+            break;
+        }
+        /* fall through */
+    default:
+        ret = mbstowcs_codepage( codepage, flags, src, srclen, dst, dstlen );
+        break;
+    }
+    TRACE( "cp %d %s -> %s, ret = %d\n", codepage, debugstr_an(src, srclen), debugstr_wn(dst, ret), ret );
+    return ret;
 }
 
 
