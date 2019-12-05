@@ -357,7 +357,7 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *outer, HRESULT *phr)
     }
     ZeroMemory(This,sizeof(*This));
 
-    strmbase_filter_init(&This->filter, &QT_Vtbl, outer, &CLSID_QTSplitter, &filter_ops);
+    strmbase_filter_init(&This->filter, outer, &CLSID_QTSplitter, &filter_ops);
 
     InitializeCriticalSection(&This->csReceive);
     This->csReceive.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": QTSplitter.csReceive");
@@ -720,24 +720,6 @@ audio_error:
 
     return hr;
 }
-
-static const IBaseFilterVtbl QT_Vtbl = {
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseFilterImpl_Stop,
-    BaseFilterImpl_Pause,
-    BaseFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
 
 static void free_source_pin(QTOutPin *pin)
 {

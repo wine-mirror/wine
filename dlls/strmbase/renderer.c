@@ -448,25 +448,6 @@ HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *This, IMediaSa
     return hr;
 }
 
-static const IBaseFilterVtbl strmbase_renderer_vtbl =
-{
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseFilterImpl_Stop,
-    BaseFilterImpl_Pause,
-    BaseFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
-
 HRESULT WINAPI BaseRendererImpl_ClearPendingSample(struct strmbase_renderer *iface)
 {
     if (iface->pMediaSample)
@@ -483,7 +464,7 @@ HRESULT WINAPI strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown
     HRESULT hr;
 
     memset(filter, 0, sizeof(*filter));
-    strmbase_filter_init(&filter->filter, &strmbase_renderer_vtbl, outer, clsid, &filter_ops);
+    strmbase_filter_init(&filter->filter, outer, clsid, &filter_ops);
 
     filter->pFuncsTable = ops;
 

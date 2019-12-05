@@ -99,7 +99,6 @@ static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 static const IMediaSeekingVtbl GST_Seeking_Vtbl;
 static const IPinVtbl GST_OutputPin_Vtbl;
 static const IPinVtbl GST_InputPin_Vtbl;
-static const IBaseFilterVtbl GST_Vtbl;
 static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl;
 
 static struct gstdemux_source *create_pin(struct gstdemux *filter, const WCHAR *name);
@@ -1438,7 +1437,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_filter_init(&object->filter, &GST_Vtbl, outer, &CLSID_Gstreamer_Splitter, &filter_ops);
+    strmbase_filter_init(&object->filter, outer, &CLSID_Gstreamer_Splitter, &filter_ops);
 
     object->no_more_pads_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     object->sink.dir = PINDIR_INPUT;
@@ -1452,24 +1451,6 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *outer, HRESULT *phr)
     TRACE("Created GStreamer demuxer %p.\n", object);
     return &object->filter.IUnknown_inner;
 }
-
-static const IBaseFilterVtbl GST_Vtbl = {
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseFilterImpl_Stop,
-    BaseFilterImpl_Pause,
-    BaseFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
 
 static struct gstdemux *impl_from_IAMStreamSelect(IAMStreamSelect *iface)
 {
@@ -2383,7 +2364,7 @@ IUnknown * CALLBACK wave_parser_create(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_filter_init(&object->filter, &GST_Vtbl, outer, &CLSID_WAVEParser, &filter_ops);
+    strmbase_filter_init(&object->filter, outer, &CLSID_WAVEParser, &filter_ops);
 
     object->sink.dir = PINDIR_INPUT;
     object->sink.filter = &object->filter;
@@ -2489,7 +2470,7 @@ IUnknown * CALLBACK avi_splitter_create(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_filter_init(&object->filter, &GST_Vtbl, outer, &CLSID_AviSplitter, &filter_ops);
+    strmbase_filter_init(&object->filter, outer, &CLSID_AviSplitter, &filter_ops);
 
     object->no_more_pads_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     object->sink.dir = PINDIR_INPUT;
@@ -2627,7 +2608,7 @@ IUnknown * CALLBACK mpeg_splitter_create(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_filter_init(&object->filter, &GST_Vtbl, outer, &CLSID_MPEG1Splitter, &mpeg_splitter_ops);
+    strmbase_filter_init(&object->filter, outer, &CLSID_MPEG1Splitter, &mpeg_splitter_ops);
     object->IAMStreamSelect_iface.lpVtbl = &stream_select_vtbl;
 
     object->duration_event = CreateEventW(NULL, FALSE, FALSE, NULL);

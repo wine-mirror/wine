@@ -51,24 +51,6 @@ static inline SmartTeeFilter *impl_from_strmbase_pin(struct strmbase_pin *pin)
     return impl_from_strmbase_filter(pin->filter);
 }
 
-static const IBaseFilterVtbl SmartTeeFilterVtbl = {
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseFilterImpl_Stop,
-    BaseFilterImpl_Pause,
-    BaseFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
-
 static struct strmbase_pin *smart_tee_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     SmartTeeFilter *filter = impl_from_strmbase_filter(iface);
@@ -417,7 +399,7 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
     }
     memset(object, 0, sizeof(*object));
 
-    strmbase_filter_init(&object->filter, &SmartTeeFilterVtbl, outer, &CLSID_SmartTee, &filter_ops);
+    strmbase_filter_init(&object->filter, outer, &CLSID_SmartTee, &filter_ops);
     strmbase_sink_init(&object->sink, &SmartTeeFilterInputVtbl, &object->filter, inputW, &sink_ops, NULL);
     hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMemAllocator, (void **)&object->sink.pAllocator);

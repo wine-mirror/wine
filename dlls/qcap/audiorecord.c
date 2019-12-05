@@ -49,24 +49,6 @@ static inline AudioRecord *impl_from_IPersistPropertyBag(IPersistPropertyBag *if
     return CONTAINING_RECORD(iface, AudioRecord, IPersistPropertyBag_iface);
 }
 
-static const IBaseFilterVtbl AudioRecordVtbl = {
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseFilterImpl_Stop,
-    BaseFilterImpl_Pause,
-    BaseFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
-
 static struct strmbase_pin *audio_record_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     FIXME("iface %p, index %u, stub!\n", iface, index);
@@ -186,7 +168,7 @@ IUnknown* WINAPI QCAP_createAudioCaptureFilter(IUnknown *outer, HRESULT *phr)
     memset(This, 0, sizeof(*This));
     This->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
 
-    strmbase_filter_init(&This->filter, &AudioRecordVtbl, outer, &CLSID_AudioRecord, &filter_ops);
+    strmbase_filter_init(&This->filter, outer, &CLSID_AudioRecord, &filter_ops);
 
     *phr = S_OK;
     return &This->filter.IUnknown_inner;

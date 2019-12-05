@@ -489,25 +489,6 @@ SampleGrabber_In_IPin_ReceiveConnection(IPin *iface, IPin *connector, const AM_M
     return S_OK;
 }
 
-static const IBaseFilterVtbl IBaseFilter_VTable =
-{
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseFilterImpl_Stop,
-    BaseFilterImpl_Pause,
-    BaseFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo,
-};
-
 static const ISampleGrabberVtbl ISampleGrabber_VTable =
 {
     SampleGrabber_ISampleGrabber_QueryInterface,
@@ -714,7 +695,7 @@ HRESULT SampleGrabber_create(IUnknown *outer, void **out)
     }
     ZeroMemory(obj, sizeof(SG_Impl));
 
-    strmbase_filter_init(&obj->filter, &IBaseFilter_VTable, outer, &CLSID_SampleGrabber, &filter_ops);
+    strmbase_filter_init(&obj->filter, outer, &CLSID_SampleGrabber, &filter_ops);
     obj->ISampleGrabber_iface.lpVtbl = &ISampleGrabber_VTable;
     obj->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
 

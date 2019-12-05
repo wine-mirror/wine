@@ -555,7 +555,7 @@ static HRESULT WINAPI Basicaudio_QueryInterface(IBasicAudio *iface,
 
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
 
-    return BaseFilterImpl_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppvObj);
+    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppvObj);
 }
 
 static ULONG WINAPI Basicaudio_AddRef(IBasicAudio *iface) {
@@ -563,7 +563,7 @@ static ULONG WINAPI Basicaudio_AddRef(IBasicAudio *iface) {
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    return BaseFilterImpl_AddRef(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_AddRef(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI Basicaudio_Release(IBasicAudio *iface) {
@@ -571,7 +571,7 @@ static ULONG WINAPI Basicaudio_Release(IBasicAudio *iface) {
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    return BaseFilterImpl_Release(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_Release(This->renderer.filter.outer_unk);
 }
 
 HRESULT WINAPI basic_audio_GetTypeInfoCount(IBasicAudio *iface, UINT *count)
@@ -708,7 +708,7 @@ static HRESULT WINAPI AMDirectSound_QueryInterface(IAMDirectSound *iface,
 
     TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
 
-    return BaseFilterImpl_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppvObj);
+    return IUnknown_QueryInterface(This->renderer.filter.outer_unk, riid, ppvObj);
 }
 
 static ULONG WINAPI AMDirectSound_AddRef(IAMDirectSound *iface)
@@ -717,7 +717,7 @@ static ULONG WINAPI AMDirectSound_AddRef(IAMDirectSound *iface)
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    return BaseFilterImpl_AddRef(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_AddRef(This->renderer.filter.outer_unk);
 }
 
 static ULONG WINAPI AMDirectSound_Release(IAMDirectSound *iface)
@@ -726,7 +726,7 @@ static ULONG WINAPI AMDirectSound_Release(IAMDirectSound *iface)
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    return BaseFilterImpl_Release(&This->renderer.filter.IBaseFilter_iface);
+    return IUnknown_Release(This->renderer.filter.outer_unk);
 }
 
 /*** IAMDirectSound methods ***/

@@ -246,26 +246,6 @@ static const struct strmbase_source_ops source_ops =
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
-
-static const IBaseFilterVtbl transform_vtbl =
-{
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseFilterImpl_Stop,
-    BaseFilterImpl_Pause,
-    BaseFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
-
 static TransformFilter *impl_from_source_IQualityControl(IQualityControl *iface)
 {
     return CONTAINING_RECORD(iface, TransformFilter, source_IQualityControl_iface);
@@ -346,7 +326,7 @@ static HRESULT strmbase_transform_init(IUnknown *outer, const CLSID *clsid,
     ISeekingPassThru *passthru;
     HRESULT hr;
 
-    strmbase_filter_init(&filter->filter, &transform_vtbl, outer, clsid, &filter_ops);
+    strmbase_filter_init(&filter->filter, outer, clsid, &filter_ops);
 
     InitializeCriticalSection(&filter->csReceive);
     filter->csReceive.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": TransformFilter.csReceive");

@@ -672,24 +672,6 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_cleanup_stream = avi_mux_cleanup_stream,
 };
 
-static const IBaseFilterVtbl AviMuxVtbl = {
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseFilterImpl_Stop,
-    BaseFilterImpl_Pause,
-    BaseFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
-
 static inline AviMux* impl_from_IConfigAviMux(IConfigAviMux *iface)
 {
     return CONTAINING_RECORD(iface, AviMux, IConfigAviMux_iface);
@@ -1964,7 +1946,7 @@ IUnknown * WINAPI QCAP_createAVIMux(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_filter_init(&avimux->filter, &AviMuxVtbl, outer, &CLSID_AviDest, &filter_ops);
+    strmbase_filter_init(&avimux->filter, outer, &CLSID_AviDest, &filter_ops);
     avimux->IConfigAviMux_iface.lpVtbl = &ConfigAviMuxVtbl;
     avimux->IConfigInterleaving_iface.lpVtbl = &ConfigInterleavingVtbl;
     avimux->IMediaSeeking_iface.lpVtbl = &MediaSeekingVtbl;

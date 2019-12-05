@@ -90,7 +90,6 @@ static inline AsyncReader *impl_from_IFileSourceFilter(IFileSourceFilter *iface)
     return CONTAINING_RECORD(iface, AsyncReader, IFileSourceFilter_iface);
 }
 
-static const IBaseFilterVtbl AsyncReader_Vtbl;
 static const IFileSourceFilterVtbl FileSource_Vtbl;
 static const IAsyncReaderVtbl FileAsyncReader_Vtbl;
 
@@ -412,7 +411,7 @@ HRESULT AsyncReader_create(IUnknown *outer, void **out)
     if (!pAsyncRead)
         return E_OUTOFMEMORY;
 
-    strmbase_filter_init(&pAsyncRead->filter, &AsyncReader_Vtbl, outer, &CLSID_AsyncReader, &filter_ops);
+    strmbase_filter_init(&pAsyncRead->filter, outer, &CLSID_AsyncReader, &filter_ops);
 
     pAsyncRead->IFileSourceFilter_iface.lpVtbl = &FileSource_Vtbl;
 
@@ -427,25 +426,6 @@ HRESULT AsyncReader_create(IUnknown *outer, void **out)
 
     return S_OK;
 }
-
-static const IBaseFilterVtbl AsyncReader_Vtbl =
-{
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseFilterImpl_Stop,
-    BaseFilterImpl_Pause,
-    BaseFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
 
 static HRESULT WINAPI FileSource_QueryInterface(IFileSourceFilter * iface, REFIID riid, LPVOID * ppv)
 {

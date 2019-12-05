@@ -111,24 +111,6 @@ static HRESULT fill_format_info(AVICompressor *This, VIDEOINFOHEADER *src_videoi
     return S_OK;
 }
 
-static const IBaseFilterVtbl AVICompressorVtbl = {
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseFilterImpl_Stop,
-    BaseFilterImpl_Pause,
-    BaseFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo,
-};
-
 static struct strmbase_pin *avi_compressor_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     AVICompressor *filter = impl_from_strmbase_filter(iface);
@@ -576,7 +558,7 @@ IUnknown* WINAPI QCAP_createAVICompressor(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_filter_init(&compressor->filter, &AVICompressorVtbl, outer, &CLSID_AVICo, &filter_ops);
+    strmbase_filter_init(&compressor->filter, outer, &CLSID_AVICo, &filter_ops);
 
     compressor->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
 

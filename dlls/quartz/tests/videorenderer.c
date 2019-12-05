@@ -495,25 +495,6 @@ struct testfilter
     struct strmbase_source source;
 };
 
-static const IBaseFilterVtbl testfilter_vtbl =
-{
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseFilterImpl_Stop,
-    BaseFilterImpl_Pause,
-    BaseFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo,
-};
-
 static inline struct testfilter *impl_from_BaseFilter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, struct testfilter, filter);
@@ -597,7 +578,7 @@ static const struct strmbase_source_ops testsource_ops =
 static void testfilter_init(struct testfilter *filter)
 {
     static const GUID clsid = {0xabacab};
-    strmbase_filter_init(&filter->filter, &testfilter_vtbl, NULL, &clsid, &testfilter_ops);
+    strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
     strmbase_source_init(&filter->source, &testsource_vtbl, &filter->filter, L"", &testsource_ops);
 }
 

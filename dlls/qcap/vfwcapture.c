@@ -167,25 +167,6 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_cleanup_stream = vfw_capture_cleanup_stream,
 };
 
-static const IBaseFilterVtbl VfwCapture_Vtbl =
-{
-    BaseFilterImpl_QueryInterface,
-    BaseFilterImpl_AddRef,
-    BaseFilterImpl_Release,
-    BaseFilterImpl_GetClassID,
-    BaseFilterImpl_Stop,
-    BaseFilterImpl_Pause,
-    BaseFilterImpl_Run,
-    BaseFilterImpl_GetState,
-    BaseFilterImpl_SetSyncSource,
-    BaseFilterImpl_GetSyncSource,
-    BaseFilterImpl_EnumPins,
-    BaseFilterImpl_FindPin,
-    BaseFilterImpl_QueryFilterInfo,
-    BaseFilterImpl_JoinFilterGraph,
-    BaseFilterImpl_QueryVendorInfo
-};
-
 /* AMStreamConfig interface, we only need to implement {G,S}etFormat */
 static HRESULT WINAPI AMStreamConfig_QueryInterface(IAMStreamConfig *iface, REFIID iid, void **out)
 {
@@ -615,7 +596,7 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *outer, HRESULT *phr)
         return NULL;
     }
 
-    strmbase_filter_init(&object->filter, &VfwCapture_Vtbl, outer, &CLSID_VfwCapture, &filter_ops);
+    strmbase_filter_init(&object->filter, outer, &CLSID_VfwCapture, &filter_ops);
 
     object->IAMStreamConfig_iface.lpVtbl = &IAMStreamConfig_VTable;
     object->IAMVideoProcAmp_iface.lpVtbl = &IAMVideoProcAmp_VTable;

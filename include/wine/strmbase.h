@@ -176,25 +176,9 @@ struct strmbase_filter_ops
     HRESULT (*filter_wait_state)(struct strmbase_filter *iface, DWORD timeout);
 };
 
-HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
-ULONG WINAPI BaseFilterImpl_AddRef(IBaseFilter * iface);
-ULONG WINAPI BaseFilterImpl_Release(IBaseFilter * iface);
-HRESULT WINAPI BaseFilterImpl_Stop(IBaseFilter *iface);
-HRESULT WINAPI BaseFilterImpl_Pause(IBaseFilter *iface);
-HRESULT WINAPI BaseFilterImpl_Run(IBaseFilter *iface, REFERENCE_TIME start);
-HRESULT WINAPI BaseFilterImpl_GetClassID(IBaseFilter * iface, CLSID * pClsid);
-HRESULT WINAPI BaseFilterImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState );
-HRESULT WINAPI BaseFilterImpl_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock);
-HRESULT WINAPI BaseFilterImpl_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock);
-HRESULT WINAPI BaseFilterImpl_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum);
-HRESULT WINAPI BaseFilterImpl_FindPin(IBaseFilter *iface, const WCHAR *id, IPin **pin);
-HRESULT WINAPI BaseFilterImpl_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo);
-HRESULT WINAPI BaseFilterImpl_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName );
-HRESULT WINAPI BaseFilterImpl_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo);
-
 VOID WINAPI BaseFilterImpl_IncrementPinVersion(struct strmbase_filter *filter);
 
-void strmbase_filter_init(struct strmbase_filter *filter, const IBaseFilterVtbl *vtbl, IUnknown *outer,
+void strmbase_filter_init(struct strmbase_filter *filter, IUnknown *outer,
         const CLSID *clsid, const struct strmbase_filter_ops *func_table);
 void strmbase_filter_cleanup(struct strmbase_filter *filter);
 
