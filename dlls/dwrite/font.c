@@ -233,7 +233,7 @@ struct dwrite_fontfacereference
     USHORT simulations;
     DWRITE_FONT_AXIS_VALUE *axis_values;
     UINT32 axis_values_count;
-    IDWriteFactory5 *factory;
+    IDWriteFactory7 *factory;
 };
 
 struct dwrite_fontresource
@@ -6082,7 +6082,7 @@ static ULONG WINAPI fontfacereference_Release(IDWriteFontFaceReference1 *iface)
     if (!refcount)
     {
         IDWriteFontFile_Release(reference->file);
-        IDWriteFactory5_Release(reference->factory);
+        IDWriteFactory7_Release(reference->factory);
         heap_free(reference->axis_values);
         heap_free(reference);
     }
@@ -6116,7 +6116,7 @@ static HRESULT WINAPI fontfacereference_CreateFontFaceWithSimulations(IDWriteFon
     if (FAILED(hr))
         return hr;
 
-    hr = IDWriteFactory5_CreateFontFace(reference->factory, face_type, 1, &reference->file, reference->index,
+    hr = IDWriteFactory7_CreateFontFace(reference->factory, face_type, 1, &reference->file, reference->index,
             simulations, &fontface);
     if (SUCCEEDED(hr))
     {
@@ -6182,7 +6182,7 @@ static HRESULT WINAPI fontfacereference_GetFontFile(IDWriteFontFaceReference1 *i
     if (FAILED(hr))
         return hr;
 
-    hr = IDWriteFactory5_CreateCustomFontFileReference(reference->factory, key, key_size, loader, file);
+    hr = IDWriteFactory7_CreateCustomFontFileReference(reference->factory, key, key_size, loader, file);
     IDWriteFontFileLoader_Release(loader);
 
     return hr;
@@ -6295,7 +6295,7 @@ static const IDWriteFontFaceReference1Vtbl fontfacereferencevtbl =
     fontfacereference1_GetFontAxisValues,
 };
 
-HRESULT create_fontfacereference(IDWriteFactory5 *factory, IDWriteFontFile *file, UINT32 index,
+HRESULT create_fontfacereference(IDWriteFactory7 *factory, IDWriteFontFile *file, UINT32 index,
         DWRITE_FONT_SIMULATIONS simulations, DWRITE_FONT_AXIS_VALUE const *axis_values, UINT32 axis_values_count,
         IDWriteFontFaceReference1 **ret)
 {
@@ -6314,7 +6314,7 @@ HRESULT create_fontfacereference(IDWriteFactory5 *factory, IDWriteFontFile *file
     object->refcount = 1;
 
     object->factory = factory;
-    IDWriteFactory5_AddRef(object->factory);
+    IDWriteFactory7_AddRef(object->factory);
     object->file = file;
     IDWriteFontFile_AddRef(object->file);
     object->index = index;
