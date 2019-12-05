@@ -60,6 +60,7 @@ extern void close_master_socket( timeout_t timeout );
 extern void shutdown_master_socket(void);
 extern int wait_for_lock(void);
 extern int kill_lock_owner( int sig );
+extern char *server_dir;
 extern int server_dir_fd, config_dir_fd;
 
 extern void trace_request(void);

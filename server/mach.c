@@ -90,7 +90,7 @@ void init_tracing_mechanism(void)
                                  server_mach_port,
                                  MACH_MSG_TYPE_MAKE_SEND ) != KERN_SUCCESS)
             fatal_error("Error inserting rights\n");
-    if (bootstrap_register(bp, (char*)wine_get_server_dir(), server_mach_port) != KERN_SUCCESS)
+    if (bootstrap_register(bp, server_dir, server_mach_port) != KERN_SUCCESS)
         fatal_error("Can't check in server_mach_port\n");
     mach_port_deallocate(mach_task_self(), bp);
 }
