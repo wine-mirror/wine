@@ -4,6 +4,7 @@ IMPORTS   = uuid ntdll winecrt0 kernel32
 EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -mno-cygwin
 
 C_SRCS = \
+	compose.c \
 	console.c \
 	debug.c \
 	decompose.c \

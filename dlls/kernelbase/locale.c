@@ -43,6 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 extern UINT CDECL __wine_get_unix_codepage(void);
 extern unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen ) DECLSPEC_HIDDEN;
+extern WCHAR wine_compose( const WCHAR *str ) DECLSPEC_HIDDEN;
 
 static HANDLE kernel32_handle;
 
@@ -837,8 +838,536 @@ static int mbstowcs_codepage( UINT codepage, DWORD flags, const char *src, int s
     }
 
     if (flags & MB_COMPOSITE) return mbstowcs_decompose( info, str, srclen, dst, dstlen );
-    if (info->DBCSOffsets) return mbstowcs_dbcs( info, str, srclen, dst, dstlen );
-    return mbstowcs_sbcs( info, str, srclen, dst, dstlen );
+
+    if (info->DBCSOffsets)
+        return mbstowcs_dbcs( info, str, srclen, dst, dstlen );
+    else
+        return mbstowcs_sbcs( info, str, srclen, dst, dstlen );
+}
+
+
+static int wcstombs_cpsymbol( DWORD flags, const WCHAR *src, int srclen, char *dst, int dstlen,
+                              const char *defchar, BOOL *used )
+{
+    int len, i;
+
+    if (flags)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+    if (defchar || used)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (!dstlen) return srclen;
+    len = min( srclen, dstlen );
+    for (i = 0; i < len; i++)
+    {
+        if (src[i] < 0x20) dst[i] = src[i];
+        else if (src[i] >= 0xf020 && src[i] < 0xf100) dst[i] = src[i] - 0xf000;
+        else
+        {
+            SetLastError( ERROR_NO_UNICODE_TRANSLATION );
+            return 0;
+        }
+    }
+    if (srclen > len)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return len;
+}
+
+
+static int wcstombs_utf7( DWORD flags, const WCHAR *src, int srclen, char *dst, int dstlen,
+                          const char *defchar, BOOL *used )
+{
+    static const char directly_encodable[] =
+    {
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, /* 0x00 - 0x0f */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x10 - 0x1f */
+        1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, /* 0x20 - 0x2f */
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, /* 0x30 - 0x3f */
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* 0x40 - 0x4f */
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, /* 0x50 - 0x5f */
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* 0x60 - 0x6f */
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1                 /* 0x70 - 0x7a */
+    };
+#define ENCODABLE(ch) ((ch) <= 0x7a && directly_encodable[(ch)])
+
+    static const char base64_encoding_table[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    const WCHAR *source_end = src + srclen;
+    int pos = 0;
+
+    if (defchar || used)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (flags)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+#define OUTPUT(ch) \
+    do { \
+        if (dstlen > 0) \
+        { \
+            if (pos >= dstlen) goto overflow; \
+            dst[pos] = (ch); \
+        } \
+        pos++; \
+    } while (0)
+
+    while (src < source_end)
+    {
+        if (*src == '+')
+        {
+            OUTPUT( '+' );
+            OUTPUT( '-' );
+            src++;
+        }
+        else if (ENCODABLE(*src))
+        {
+            OUTPUT( *src );
+            src++;
+        }
+        else
+        {
+            unsigned int offset = 0, byte_pair = 0;
+
+            OUTPUT( '+' );
+            while (src < source_end && !ENCODABLE(*src))
+            {
+                byte_pair = (byte_pair << 16) | *src;
+                offset += 16;
+                while (offset >= 6)
+                {
+                    offset -= 6;
+                    OUTPUT( base64_encoding_table[(byte_pair >> offset) & 0x3f] );
+                }
+                src++;
+            }
+            if (offset)
+            {
+                /* Windows won't create a padded base64 character if there's no room for the - sign
+                 * as well ; this is probably a bug in Windows */
+                if (dstlen > 0 && pos + 1 >= dstlen) goto overflow;
+                byte_pair <<= (6 - offset);
+                OUTPUT( base64_encoding_table[byte_pair & 0x3f] );
+            }
+            /* Windows always explicitly terminates the base64 sequence
+               even though RFC 2152 (page 3, rule 2) does not require this */
+            OUTPUT( '-' );
+        }
+    }
+    return pos;
+
+overflow:
+    SetLastError( ERROR_INSUFFICIENT_BUFFER );
+    return 0;
+#undef OUTPUT
+#undef ENCODABLE
+}
+
+
+static int wcstombs_utf8( DWORD flags, const WCHAR *src, int srclen, char *dst, int dstlen,
+                          const char *defchar, BOOL *used )
+{
+    DWORD reslen;
+    NTSTATUS status;
+
+    if (defchar || used)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (flags & ~(WC_DISCARDNS | WC_SEPCHARS | WC_DEFAULTCHAR | WC_ERR_INVALID_CHARS |
+                  WC_COMPOSITECHECK | WC_NO_BEST_FIT_CHARS))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+    if (!dstlen) dst = NULL;
+    status = RtlUnicodeToUTF8N( dst, dstlen, &reslen, src, srclen * sizeof(WCHAR) );
+    if (status == STATUS_SOME_NOT_MAPPED)
+    {
+        if (flags & WC_ERR_INVALID_CHARS)
+        {
+            SetLastError( ERROR_NO_UNICODE_TRANSLATION );
+            return 0;
+        }
+    }
+    else if (!set_ntstatus( status )) reslen = 0;
+    return reslen;
+}
+
+
+static int wcstombs_sbcs( const CPTABLEINFO *info, const WCHAR *src, unsigned int srclen,
+                          char *dst, unsigned int dstlen )
+{
+    const char *table = info->WideCharTable;
+    int ret = srclen;
+
+    if (!dstlen) return srclen;
+
+    if (dstlen < srclen)
+    {
+        /* buffer too small: fill it up to dstlen and return error */
+        srclen = dstlen;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        ret = 0;
+    }
+
+    while (srclen >= 16)
+    {
+        dst[0]  = table[src[0]];
+        dst[1]  = table[src[1]];
+        dst[2]  = table[src[2]];
+        dst[3]  = table[src[3]];
+        dst[4]  = table[src[4]];
+        dst[5]  = table[src[5]];
+        dst[6]  = table[src[6]];
+        dst[7]  = table[src[7]];
+        dst[8]  = table[src[8]];
+        dst[9]  = table[src[9]];
+        dst[10] = table[src[10]];
+        dst[11] = table[src[11]];
+        dst[12] = table[src[12]];
+        dst[13] = table[src[13]];
+        dst[14] = table[src[14]];
+        dst[15] = table[src[15]];
+        src += 16;
+        dst += 16;
+        srclen -= 16;
+    }
+
+    /* now handle remaining characters */
+    src += srclen;
+    dst += srclen;
+    switch(srclen)
+    {
+    case 15: dst[-15] = table[src[-15]];
+    case 14: dst[-14] = table[src[-14]];
+    case 13: dst[-13] = table[src[-13]];
+    case 12: dst[-12] = table[src[-12]];
+    case 11: dst[-11] = table[src[-11]];
+    case 10: dst[-10] = table[src[-10]];
+    case 9:  dst[-9]  = table[src[-9]];
+    case 8:  dst[-8]  = table[src[-8]];
+    case 7:  dst[-7]  = table[src[-7]];
+    case 6:  dst[-6]  = table[src[-6]];
+    case 5:  dst[-5]  = table[src[-5]];
+    case 4:  dst[-4]  = table[src[-4]];
+    case 3:  dst[-3]  = table[src[-3]];
+    case 2:  dst[-2]  = table[src[-2]];
+    case 1:  dst[-1]  = table[src[-1]];
+    case 0: break;
+    }
+    return ret;
+}
+
+
+static int wcstombs_dbcs( const CPTABLEINFO *info, const WCHAR *src, unsigned int srclen,
+                          char *dst, unsigned int dstlen )
+{
+    const USHORT *table = info->WideCharTable;
+    int i;
+
+    if (!dstlen)
+    {
+        for (i = 0; srclen; src++, srclen--, i++) if (table[*src] & 0xff00) i++;
+        return i;
+    }
+
+    for (i = dstlen; srclen && i; i--, srclen--, src++)
+    {
+        if (table[*src] & 0xff00)
+        {
+            if (i == 1) break;  /* do not output a partial char */
+            i--;
+            *dst++ = table[*src] >> 8;
+        }
+        *dst++ = (char)table[*src];
+    }
+    if (srclen)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return dstlen - i;
+}
+
+
+static inline int is_valid_sbcs_mapping( const CPTABLEINFO *info, DWORD flags,
+                                         WCHAR wch, unsigned char ch )
+{
+    if ((flags & WC_NO_BEST_FIT_CHARS) || ch == info->DefaultChar)
+        return (info->MultiByteTable[ch] == wch);
+    return 1;
+}
+
+
+static inline int is_valid_dbcs_mapping( const CPTABLEINFO *info, DWORD flags,
+                                         WCHAR wch, unsigned short ch )
+{
+    if ((flags & WC_NO_BEST_FIT_CHARS) || ch == info->DefaultChar)
+        return info->DBCSOffsets[info->DBCSOffsets[ch >> 8] + (ch & 0xff)] == wch;
+    return 1;
+}
+
+
+static int wcstombs_sbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR *src, unsigned int srclen,
+                               char *dst, unsigned int dstlen, const char *defchar, BOOL *used )
+{
+    const char *table = info->WideCharTable;
+    const char def = defchar ? *defchar : (char)info->DefaultChar;
+    int i;
+    BOOL tmp;
+    WCHAR wch, composed;
+
+    if (!used) used = &tmp;  /* avoid checking on every char */
+    *used = FALSE;
+
+    if (!dstlen)
+    {
+        for (i = 0; srclen; i++, src++, srclen--)
+        {
+            wch = *src;
+            if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src )))
+            {
+                /* now check if we can use the composed char */
+                if (is_valid_sbcs_mapping( info, flags, composed, table[composed] ))
+                {
+                    /* we have a good mapping, use it */
+                    src++;
+                    srclen--;
+                    continue;
+                }
+                /* no mapping for the composed char, check the other flags */
+                if (flags & WC_DEFAULTCHAR) /* use the default char instead */
+                {
+                    *used = TRUE;
+                    src++;  /* skip the non-spacing char */
+                    srclen--;
+                    continue;
+                }
+                if (flags & WC_DISCARDNS) /* skip the second char of the composition */
+                {
+                    src++;
+                    srclen--;
+                }
+                /* WC_SEPCHARS is the default */
+            }
+            if (!*used) *used = !is_valid_sbcs_mapping( info, flags, wch, table[wch] );
+        }
+        return i;
+    }
+
+    for (i = dstlen; srclen && i; dst++, i--, src++, srclen--)
+    {
+        wch = *src;
+        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src )))
+        {
+            /* now check if we can use the composed char */
+            *dst = table[composed];
+            if (is_valid_sbcs_mapping( info, flags, composed, table[composed] ))
+            {
+                /* we have a good mapping, use it */
+                src++;
+                srclen--;
+                continue;
+            }
+            /* no mapping for the composed char, check the other flags */
+            if (flags & WC_DEFAULTCHAR) /* use the default char instead */
+            {
+                *dst = def;
+                *used = TRUE;
+                src++;  /* skip the non-spacing char */
+                srclen--;
+                continue;
+            }
+            if (flags & WC_DISCARDNS) /* skip the second char of the composition */
+            {
+                src++;
+                srclen--;
+            }
+            /* WC_SEPCHARS is the default */
+        }
+
+        *dst = table[wch];
+        if (!is_valid_sbcs_mapping( info, flags, wch, table[wch] ))
+        {
+            *dst = def;
+            *used = TRUE;
+        }
+    }
+    if (srclen)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return dstlen - i;
+}
+
+
+static int wcstombs_dbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR *src, unsigned int srclen,
+                               char *dst, unsigned int dstlen, const char *defchar, BOOL *used )
+{
+    const USHORT *table = info->WideCharTable;
+    WCHAR wch, composed, defchar_value;
+    unsigned short res;
+    BOOL tmp;
+    int i;
+
+    if (!defchar[1]) defchar_value = (unsigned char)defchar[0];
+    else defchar_value = ((unsigned char)defchar[0] << 8) | (unsigned char)defchar[1];
+
+    if (!used) used = &tmp;  /* avoid checking on every char */
+    *used = FALSE;
+
+    if (!dstlen)
+    {
+        if (!defchar && !used && !(flags & WC_COMPOSITECHECK))
+        {
+            for (i = 0; srclen; srclen--, src++, i++) if (table[*src] & 0xff00) i++;
+            return i;
+        }
+        for (i = 0; srclen; srclen--, src++, i++)
+        {
+            wch = *src;
+            if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src )))
+            {
+                /* now check if we can use the composed char */
+                res = table[composed];
+                if (is_valid_dbcs_mapping( info, flags, composed, res ))
+                {
+                    /* we have a good mapping for the composed char, use it */
+                    if (res & 0xff00) i++;
+                    src++;
+                    srclen--;
+                    continue;
+                }
+                /* no mapping for the composed char, check the other flags */
+                if (flags & WC_DEFAULTCHAR) /* use the default char instead */
+                {
+                    if (defchar_value & 0xff00) i++;
+                    *used = TRUE;
+                    src++;  /* skip the non-spacing char */
+                    srclen--;
+                    continue;
+                }
+                if (flags & WC_DISCARDNS) /* skip the second char of the composition */
+                {
+                    src++;
+                    srclen--;
+                }
+                /* WC_SEPCHARS is the default */
+            }
+
+            res = table[wch];
+            if (!is_valid_dbcs_mapping( info, flags, wch, res ))
+            {
+                res = defchar_value;
+                *used = TRUE;
+            }
+            if (res & 0xff00) i++;
+        }
+        return i;
+    }
+
+
+    for (i = dstlen; srclen && i; i--, srclen--, src++)
+    {
+        wch = *src;
+        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = wine_compose( src )))
+        {
+            /* now check if we can use the composed char */
+            res = table[composed];
+
+            if (is_valid_dbcs_mapping( info, flags, composed, res ))
+            {
+                /* we have a good mapping for the composed char, use it */
+                src++;
+                srclen--;
+                goto output_char;
+            }
+            /* no mapping for the composed char, check the other flags */
+            if (flags & WC_DEFAULTCHAR) /* use the default char instead */
+            {
+                res = defchar_value;
+                *used = TRUE;
+                src++;  /* skip the non-spacing char */
+                srclen--;
+                goto output_char;
+            }
+            if (flags & WC_DISCARDNS) /* skip the second char of the composition */
+            {
+                src++;
+                srclen--;
+            }
+            /* WC_SEPCHARS is the default */
+        }
+
+        res = table[wch];
+        if (!is_valid_dbcs_mapping( info, flags, wch, res ))
+        {
+            res = defchar_value;
+            *used = TRUE;
+        }
+
+    output_char:
+        if (res & 0xff00)
+        {
+            if (i == 1) break;  /* do not output a partial char */
+            i--;
+            *dst++ = res >> 8;
+        }
+        *dst++ = (char)res;
+    }
+    if (srclen)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return dstlen - i;
+}
+
+
+static int wcstombs_codepage( UINT codepage, DWORD flags, const WCHAR *src, int srclen,
+                              char *dst, int dstlen, const char *defchar, BOOL *used )
+{
+    const CPTABLEINFO *info = get_codepage_table( codepage );
+
+    if (!info)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (flags & ~(WC_DISCARDNS | WC_SEPCHARS | WC_DEFAULTCHAR | WC_ERR_INVALID_CHARS |
+                  WC_COMPOSITECHECK | WC_NO_BEST_FIT_CHARS))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+    if (flags || defchar || used)
+    {
+        if (!defchar) defchar = (const char *)&info->DefaultChar;
+        if (info->DBCSOffsets)
+            return wcstombs_dbcs_slow( info, flags, src, srclen, dst, dstlen, defchar, used );
+        else
+            return wcstombs_sbcs_slow( info, flags, src, srclen, dst, dstlen, defchar, used );
+    }
+    if (info->DBCSOffsets)
+        return wcstombs_dbcs( info, src, srclen, dst, dstlen );
+    else
+        return wcstombs_sbcs( info, src, srclen, dst, dstlen );
 }
 
 
@@ -2242,4 +2771,49 @@ DWORD WINAPI DECLSPEC_HOTPATCH VerLanguageNameA( DWORD lang, LPSTR buffer, DWORD
 DWORD WINAPI DECLSPEC_HOTPATCH VerLanguageNameW( DWORD lang, LPWSTR buffer, DWORD size )
 {
     return GetLocaleInfoW( MAKELCID( lang, SORT_DEFAULT ), LOCALE_SENGLANGUAGE, buffer, size );
+}
+
+
+/***********************************************************************
+ *	WideCharToMultiByte   (kernelbase.@)
+ */
+INT WINAPI DECLSPEC_HOTPATCH WideCharToMultiByte( UINT codepage, DWORD flags, LPCWSTR src, INT srclen,
+                                                  LPSTR dst, INT dstlen, LPCSTR defchar, BOOL *used )
+{
+    int ret;
+
+    if (!src || !srclen || (!dst && dstlen) || dstlen < 0)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (srclen < 0) srclen = lstrlenW(src) + 1;
+
+    switch (codepage)
+    {
+    case CP_SYMBOL:
+        ret = wcstombs_cpsymbol( flags, src, srclen, dst, dstlen, defchar, used );
+        break;
+    case CP_UTF7:
+        ret = wcstombs_utf7( flags, src, srclen, dst, dstlen, defchar, used );
+        break;
+    case CP_UTF8:
+        ret = wcstombs_utf8( flags, src, srclen, dst, dstlen, defchar, used );
+        break;
+    case CP_UNIXCP:
+        codepage = __wine_get_unix_codepage();
+        if (codepage == CP_UTF8)
+        {
+            if (used) *used = FALSE;
+            ret = wcstombs_utf8( flags, src, srclen, dst, dstlen, NULL, NULL );
+            break;
+        }
+        /* fall through */
+    default:
+        ret = wcstombs_codepage( codepage, flags, src, srclen, dst, dstlen, defchar, used );
+        break;
+    }
+    TRACE( "cp %d %s -> %s, ret = %d\n", codepage, debugstr_wn(src, srclen), debugstr_an(dst, ret), ret );
+    return ret;
 }
