@@ -551,7 +551,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
 
         freetype_notify_cacheremove(iface);
 
-        IDWriteFactory5_Release(fontface->factory);
+        IDWriteFactory7_Release(fontface->factory);
         heap_free(fontface);
     }
 
@@ -1518,7 +1518,7 @@ static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace5
     if (FAILED(hr = get_filestream_from_file(data->file, &desc.stream)))
         return hr;
 
-    desc.factory = font->family->collection->factory;
+    desc.factory = (IDWriteFactory7 *)font->family->collection->factory;
     desc.face_type = data->face_type;
     desc.files = &data->file;
     desc.files_number = 1;
@@ -4051,7 +4051,7 @@ HRESULT create_font_collection(IDWriteFactory5 *factory, IDWriteFontFileEnumerat
             WCHAR familyW[255];
             UINT32 index;
 
-            desc.factory = factory;
+            desc.factory = (IDWriteFactory7 *)factory;
             desc.face_type = face_type;
             desc.files = &file;
             desc.stream = stream;
@@ -4394,7 +4394,7 @@ static HRESULT eudc_collection_add_family(IDWriteFactory5 *factory, struct dwrit
         struct fontface_desc desc;
 
         /* alloc and init new font data structure */
-        desc.factory = factory;
+        desc.factory = (IDWriteFactory7 *)factory;
         desc.face_type = face_type;
         desc.index = i;
         desc.files = &file;
@@ -4660,7 +4660,8 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     fontface->colr.exists = TRUE;
     fontface->index = desc->index;
     fontface->simulations = desc->simulations;
-    IDWriteFactory5_AddRef(fontface->factory = desc->factory);
+    fontface->factory = desc->factory;
+    IDWriteFactory7_AddRef(fontface->factory);
 
     for (i = 0; i < fontface->file_count; i++) {
         fontface->files[i] = desc->files[i];

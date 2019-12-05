@@ -154,7 +154,7 @@ struct glyphrunanalysis_desc
 
 struct fontface_desc
 {
-    IDWriteFactory5 *factory;
+    IDWriteFactory7 *factory;
     DWRITE_FONT_FACE_TYPE face_type;
     IDWriteFontFile * const *files;
     IDWriteFontFileStream *stream;
@@ -193,7 +193,7 @@ struct dwrite_fontface
     UINT32 file_count;
     UINT32 index;
 
-    IDWriteFactory5 *factory;
+    IDWriteFactory7 *factory;
     struct fontfacecached *cached;
 
     USHORT simulations;
@@ -268,7 +268,7 @@ extern HRESULT factory_get_cached_fontface(IDWriteFactory5*,IDWriteFontFile*cons
         struct list**,REFIID,void**) DECLSPEC_HIDDEN;
 extern void factory_detach_fontcollection(IDWriteFactory5 *factory, IDWriteFontCollection3 *collection) DECLSPEC_HIDDEN;
 extern void factory_detach_gdiinterop(IDWriteFactory5*,IDWriteGdiInterop1*) DECLSPEC_HIDDEN;
-extern struct fontfacecached *factory_cache_fontface(IDWriteFactory5 *factory, struct list *fontfaces,
+extern struct fontfacecached *factory_cache_fontface(IDWriteFactory7 *factory, struct list *fontfaces,
         IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
 extern void    get_logfont_from_font(IDWriteFont*,LOGFONTW*) DECLSPEC_HIDDEN;
 extern void    get_logfont_from_fontface(IDWriteFontFace*,LOGFONTW*) DECLSPEC_HIDDEN;
@@ -276,8 +276,8 @@ extern HRESULT get_fontsig_from_font(IDWriteFont*,FONTSIGNATURE*) DECLSPEC_HIDDE
 extern HRESULT get_fontsig_from_fontface(IDWriteFontFace*,FONTSIGNATURE*) DECLSPEC_HIDDEN;
 extern HRESULT create_gdiinterop(IDWriteFactory5*,IDWriteGdiInterop1**) DECLSPEC_HIDDEN;
 extern void fontface_detach_from_cache(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
-extern void factory_lock(IDWriteFactory5*) DECLSPEC_HIDDEN;
-extern void factory_unlock(IDWriteFactory5*) DECLSPEC_HIDDEN;
+extern void factory_lock(IDWriteFactory7 *factory) DECLSPEC_HIDDEN;
+extern void factory_unlock(IDWriteFactory7 *factory) DECLSPEC_HIDDEN;
 extern HRESULT create_inmemory_fileloader(IDWriteFontFileLoader**) DECLSPEC_HIDDEN;
 extern HRESULT create_font_resource(IDWriteFactory7 *factory, IDWriteFontFile *file, UINT32 face_index,
         IDWriteFontResource **resource) DECLSPEC_HIDDEN;

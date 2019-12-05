@@ -847,15 +847,15 @@ static HRESULT WINAPI dwritefactory_CreateCustomFontFileReference(IDWriteFactory
     return create_font_file(loader, reference_key, key_size, font_file);
 }
 
-void factory_lock(IDWriteFactory5 *iface)
+void factory_lock(IDWriteFactory7 *iface)
 {
-    struct dwritefactory *factory = impl_from_IDWriteFactory7((IDWriteFactory7 *)iface);
+    struct dwritefactory *factory = impl_from_IDWriteFactory7(iface);
     EnterCriticalSection(&factory->cs);
 }
 
-void factory_unlock(IDWriteFactory5 *iface)
+void factory_unlock(IDWriteFactory7 *iface)
 {
-    struct dwritefactory *factory = impl_from_IDWriteFactory7((IDWriteFactory7 *)iface);
+    struct dwritefactory *factory = impl_from_IDWriteFactory7(iface);
     LeaveCriticalSection(&factory->cs);
 }
 
@@ -935,10 +935,10 @@ HRESULT factory_get_cached_fontface(IDWriteFactory5 *iface, IDWriteFontFile * co
     return *obj ? S_OK : S_FALSE;
 }
 
-struct fontfacecached *factory_cache_fontface(IDWriteFactory5 *iface, struct list *fontfaces,
+struct fontfacecached *factory_cache_fontface(IDWriteFactory7 *iface, struct list *fontfaces,
         IDWriteFontFace5 *fontface)
 {
-    struct dwritefactory *factory = impl_from_IDWriteFactory7((IDWriteFactory7 *)iface);
+    struct dwritefactory *factory = impl_from_IDWriteFactory7(iface);
     struct fontfacecached *cached;
 
     /* new cache entry */
@@ -1006,7 +1006,7 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory7 *iface, DWRIT
     if (hr != S_FALSE)
         goto failed;
 
-    desc.factory = (IDWriteFactory5 *)iface;
+    desc.factory = iface;
     desc.face_type = req_facetype;
     desc.files = font_files;
     desc.stream = stream;
