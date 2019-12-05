@@ -36,6 +36,7 @@
 #include "tlhelp32.h"
 
 #include "wine/test.h"
+#include "wine/heap.h"
 
 /* PROCESS_ALL_ACCESS in Vista+ PSDKs is incompatible with older Windows versions */
 #define PROCESS_ALL_ACCESS_NT4 (PROCESS_ALL_ACCESS & ~0xf000)
@@ -3808,6 +3809,120 @@ static void test_ProcThreadAttributeList(void)
     pDeleteProcThreadAttributeList(&list);
 }
 
+/* level 0: Main test process
+ * level 1: Process created by level 0 process without handle inheritance
+ * level 2: Process created by level 1 process with handle inheritance and level 0
+ *          process parent substitute. */
+void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
+{
+    PROCESS_BASIC_INFORMATION pbi;
+    char buffer[MAX_PATH + 64];
+    HANDLE write_pipe = NULL;
+    PROCESS_INFORMATION info;
+    SECURITY_ATTRIBUTES sa;
+    STARTUPINFOEXA si;
+    DWORD parent_id;
+    NTSTATUS status;
+    ULONG pbi_size;
+    HANDLE parent;
+    DWORD size;
+    BOOL ret;
+
+    struct
+    {
+        HANDLE parent;
+        DWORD parent_id;
+    }
+    parent_data;
+
+    if (!pInitializeProcThreadAttributeList)
+    {
+        win_skip("No support for ProcThreadAttributeList.\n");
+        return;
+    }
+
+    memset(&sa, 0, sizeof(sa));
+    sa.nLength = sizeof(sa);
+    sa.bInheritHandle = TRUE;
+
+    if (!level)
+    {
+        ret = CreatePipe(&read_pipe, &write_pipe, &sa, 0);
+        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+        parent_data.parent = OpenProcess(PROCESS_CREATE_PROCESS | PROCESS_QUERY_INFORMATION, TRUE, GetCurrentProcessId());
+        parent_data.parent_id = GetCurrentProcessId();
+    }
+    else
+    {
+        status = NtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), &pbi_size);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+        parent_id = pbi.InheritedFromUniqueProcessId;
+
+        memset(&parent_data, 0, sizeof(parent_data));
+        ret = ReadFile(read_pipe, &parent_data, sizeof(parent_data), &size, NULL);
+        todo_wine_if(level == 2) ok((level == 2 && ret) || (level == 1 && !ret && GetLastError() == ERROR_INVALID_HANDLE),
+                "Got unexpected ret %#x, level %u, GetLastError() %u.\n",
+                ret, level, GetLastError());
+    }
+
+    if (level == 2)
+    {
+        todo_wine ok(parent_id == parent_data.parent_id, "Got parent id %u, parent_data.parent_id %u.\n",
+                parent_id, parent_data.parent_id);
+        return;
+    }
+
+    memset(&si, 0, sizeof(si));
+    si.StartupInfo.cb = sizeof(si.StartupInfo);
+
+    if (level)
+    {
+        SIZE_T size;
+
+        ret = pInitializeProcThreadAttributeList(NULL, 1, 0, &size);
+        ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+                "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+        si.lpAttributeList = heap_alloc(size);
+        ret = pInitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size);
+        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+        parent = OpenProcess(PROCESS_CREATE_PROCESS, FALSE, parent_id);
+
+        ret = pUpdateProcThreadAttribute(si.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
+                &parent, sizeof(parent), NULL, NULL);
+        ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    }
+
+    sprintf(buffer, "\"%s\" tests/process.c parent %u %p", selfname, level + 1, read_pipe);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, level == 1, level == 1 ? EXTENDED_STARTUPINFO_PRESENT : 0,
+            NULL, NULL, (STARTUPINFOA *)&si, &info);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    if (level)
+    {
+        pDeleteProcThreadAttributeList(si.lpAttributeList);
+        heap_free(si.lpAttributeList);
+        CloseHandle(parent);
+    }
+    else
+    {
+        ret = WriteFile(write_pipe, &parent_data, sizeof(parent_data), &size, NULL);
+    }
+
+    /* wait for child to terminate */
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
+    CloseHandle(info.hThread);
+    CloseHandle(info.hProcess);
+
+    if (!level)
+    {
+        CloseHandle(read_pipe);
+        CloseHandle(write_pipe);
+        CloseHandle(parent_data.parent);
+    }
+}
+
 START_TEST(process)
 {
     HANDLE job;
@@ -3851,11 +3966,18 @@ START_TEST(process)
             CloseHandle(info.hThread);
             return;
         }
+        else if (!strcmp(myARGV[2], "parent") && myARGC >= 5)
+        {
+            HANDLE h;
+
+            sscanf(myARGV[4], "%p", &h);
+            test_parent_process_attribute(atoi(myARGV[3]), h);
+            return;
+        }
 
         ok(0, "Unexpected command %s\n", myARGV[2]);
         return;
     }
-
     hproc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId());
     if (hproc)
     {
@@ -3865,7 +3987,6 @@ START_TEST(process)
     else
         win_skip("PROCESS_QUERY_LIMITED_INFORMATION is not supported on this platform\n");
     test_process_info(GetCurrentProcess());
-
     test_TerminateProcess();
     test_Startup();
     test_CommandLine();
@@ -3919,4 +4040,5 @@ START_TEST(process)
     test_jobInheritance(job);
     test_BreakawayOk(job);
     CloseHandle(job);
+    test_parent_process_attribute(0, NULL);
 }
