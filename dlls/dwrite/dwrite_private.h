@@ -238,15 +238,15 @@ extern HRESULT add_localizedstring(IDWriteLocalizedStrings*,const WCHAR*,const W
 extern HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedStrings **strings) DECLSPEC_HIDDEN;
 extern void    set_en_localizedstring(IDWriteLocalizedStrings*,const WCHAR*) DECLSPEC_HIDDEN;
 extern void    sort_localizedstrings(IDWriteLocalizedStrings*) DECLSPEC_HIDDEN;
-extern HRESULT get_system_fontcollection(IDWriteFactory5*,IDWriteFontCollection1**) DECLSPEC_HIDDEN;
-extern HRESULT get_eudc_fontcollection(IDWriteFactory5 *factory, IDWriteFontCollection3 **collection) DECLSPEC_HIDDEN;
+extern HRESULT get_system_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection1 **collection) DECLSPEC_HIDDEN;
+extern HRESULT get_eudc_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection3 **collection) DECLSPEC_HIDDEN;
 extern IDWriteTextAnalyzer *get_text_analyzer(void) DECLSPEC_HIDDEN;
 extern HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *reference_key, UINT32 key_size, IDWriteFontFile **font_file) DECLSPEC_HIDDEN;
 extern void    init_local_fontfile_loader(void) DECLSPEC_HIDDEN;
 extern IDWriteFontFileLoader *get_local_fontfile_loader(void) DECLSPEC_HIDDEN;
 extern HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_list,
         IDWriteFontFace5 **fontface) DECLSPEC_HIDDEN;
-extern HRESULT create_font_collection(IDWriteFactory5 *factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system,
+extern HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system,
        IDWriteFontCollection3 **collection) DECLSPEC_HIDDEN;
 extern HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc*,IDWriteGlyphRunAnalysis**) DECLSPEC_HIDDEN;
 extern BOOL    is_system_collection(IDWriteFontCollection*) DECLSPEC_HIDDEN;
@@ -265,9 +265,9 @@ extern HRESULT create_matching_font(IDWriteFontCollection*,const WCHAR*,DWRITE_F
 extern HRESULT create_fontfacereference(IDWriteFactory7 *factory, IDWriteFontFile *file, UINT32 face_index,
         DWRITE_FONT_SIMULATIONS simulations, DWRITE_FONT_AXIS_VALUE const *axis_values, UINT32 axis_values_count,
         IDWriteFontFaceReference1 **reference) DECLSPEC_HIDDEN;
-extern HRESULT factory_get_cached_fontface(IDWriteFactory5*,IDWriteFontFile*const*,UINT32,DWRITE_FONT_SIMULATIONS,
-        struct list**,REFIID,void**) DECLSPEC_HIDDEN;
-extern void factory_detach_fontcollection(IDWriteFactory5 *factory, IDWriteFontCollection3 *collection) DECLSPEC_HIDDEN;
+extern HRESULT factory_get_cached_fontface(IDWriteFactory7 *factory, IDWriteFontFile * const *files, UINT32 num_files,
+        DWRITE_FONT_SIMULATIONS simulations, struct list **cache, REFIID riid, void **obj) DECLSPEC_HIDDEN;
+extern void factory_detach_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection3 *collection) DECLSPEC_HIDDEN;
 extern void factory_detach_gdiinterop(IDWriteFactory5*,IDWriteGdiInterop1*) DECLSPEC_HIDDEN;
 extern struct fontfacecached *factory_cache_fontface(IDWriteFactory7 *factory, struct list *fontfaces,
         IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;

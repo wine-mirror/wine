@@ -667,7 +667,7 @@ static IDWriteFontCollection1 *factory_get_system_collection(struct dwritefactor
         return factory->system_collection;
     }
 
-    if (FAILED(hr = get_system_fontcollection((IDWriteFactory5 *)&factory->IDWriteFactory7_iface, &collection)))
+    if (FAILED(hr = get_system_fontcollection(&factory->IDWriteFactory7_iface, &collection)))
     {
         WARN("Failed to create system font collection, hr %#x.\n", hr);
         return NULL;
@@ -757,7 +757,7 @@ static HRESULT WINAPI dwritefactory_CreateCustomFontCollection(IDWriteFactory7 *
     if (FAILED(hr))
         return hr;
 
-    hr = create_font_collection((IDWriteFactory5 *)iface, enumerator, FALSE, (IDWriteFontCollection3 **)collection);
+    hr = create_font_collection(iface, enumerator, FALSE, (IDWriteFontCollection3 **)collection);
     IDWriteFontFileEnumerator_Release(enumerator);
     return hr;
 }
@@ -859,10 +859,10 @@ void factory_unlock(IDWriteFactory7 *iface)
     LeaveCriticalSection(&factory->cs);
 }
 
-HRESULT factory_get_cached_fontface(IDWriteFactory5 *iface, IDWriteFontFile * const *font_files, UINT32 index,
+HRESULT factory_get_cached_fontface(IDWriteFactory7 *iface, IDWriteFontFile * const *font_files, UINT32 index,
         DWRITE_FONT_SIMULATIONS simulations, struct list **cached_list, REFIID riid, void **obj)
 {
-    struct dwritefactory *factory = impl_from_IDWriteFactory7((IDWriteFactory7 *)iface);
+    struct dwritefactory *factory = impl_from_IDWriteFactory7(iface);
     struct fontfacecached *cached;
     IDWriteFontFileLoader *loader;
     struct list *fontfaces;
@@ -1001,7 +1001,7 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory7 *iface, DWRIT
         goto failed;
     }
 
-    hr = factory_get_cached_fontface((IDWriteFactory5 *)iface, font_files, index, simulations, &fontfaces,
+    hr = factory_get_cached_fontface(iface, font_files, index, simulations, &fontfaces,
             &IID_IDWriteFontFace, (void **)fontface);
     if (hr != S_FALSE)
         goto failed;
@@ -1290,7 +1290,7 @@ static HRESULT WINAPI dwritefactory1_GetEudcFontCollection(IDWriteFactory7 *ifac
     else {
         IDWriteFontCollection3 *eudc_collection;
 
-        if (FAILED(hr = get_eudc_fontcollection((IDWriteFactory5 *)iface, &eudc_collection)))
+        if (FAILED(hr = get_eudc_fontcollection(iface, &eudc_collection)))
         {
             *collection = NULL;
             WARN("Failed to get EUDC collection, hr %#x.\n", hr);
@@ -1885,12 +1885,12 @@ static void init_dwritefactory(struct dwritefactory *factory, DWRITE_FACTORY_TYP
     factory->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": dwritefactory.lock");
 }
 
-void factory_detach_fontcollection(IDWriteFactory5 *iface, IDWriteFontCollection3 *collection)
+void factory_detach_fontcollection(IDWriteFactory7 *iface, IDWriteFontCollection3 *collection)
 {
-    struct dwritefactory *factory = impl_from_IDWriteFactory7((IDWriteFactory7 *)iface);
+    struct dwritefactory *factory = impl_from_IDWriteFactory7(iface);
     InterlockedCompareExchangePointer((void **)&factory->system_collection, NULL, collection);
     InterlockedCompareExchangePointer((void **)&factory->eudc_collection, NULL, collection);
-    IDWriteFactory5_Release(iface);
+    IDWriteFactory7_Release(iface);
 }
 
 void factory_detach_gdiinterop(IDWriteFactory5 *iface, IDWriteGdiInterop1 *interop)

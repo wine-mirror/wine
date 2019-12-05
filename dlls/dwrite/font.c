@@ -119,7 +119,7 @@ struct dwrite_fontcollection
     IDWriteFontCollection3 IDWriteFontCollection3_iface;
     LONG refcount;
 
-    IDWriteFactory5 *factory;
+    IDWriteFactory7 *factory;
     struct dwrite_fontfamily_data **family_data;
     size_t size;
     size_t count;
@@ -1828,12 +1828,12 @@ static BOOL WINAPI dwritefont3_Equals(IDWriteFont3 *iface, IDWriteFont *font)
 
 static HRESULT WINAPI dwritefont3_GetFontFaceReference(IDWriteFont3 *iface, IDWriteFontFaceReference **reference)
 {
-    struct dwrite_font *This = impl_from_IDWriteFont3(iface);
+    struct dwrite_font *font = impl_from_IDWriteFont3(iface);
 
-    TRACE("(%p)->(%p)\n", This, reference);
+    TRACE("%p, %p.\n", iface, reference);
 
-    return IDWriteFactory5_CreateFontFaceReference_(This->family->collection->factory, This->data->file,
-            This->data->face_index, This->data->simulations, reference);
+    return IDWriteFactory5_CreateFontFaceReference_((IDWriteFactory5 *)font->family->collection->factory,
+            font->data->file, font->data->face_index, font->data->simulations, reference);
 }
 
 static BOOL WINAPI dwritefont3_HasCharacter(IDWriteFont3 *iface, UINT32 ch)
@@ -3970,7 +3970,7 @@ static void fontcollection_add_replacements(struct dwrite_fontcollection *collec
     RegCloseKey(hkey);
 }
 
-HRESULT create_font_collection(IDWriteFactory5 *factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system,
+HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system,
     IDWriteFontCollection3 **ret)
 {
     struct fontfile_enum {
@@ -4126,7 +4126,7 @@ HRESULT create_font_collection(IDWriteFactory5 *factory, IDWriteFontFileEnumerat
         fontcollection_add_replacements(collection);
 
     collection->factory = factory;
-    IDWriteFactory5_AddRef(factory);
+    IDWriteFactory7_AddRef(factory);
 
     return hr;
 }
@@ -4136,7 +4136,7 @@ struct system_fontfile_enumerator
     IDWriteFontFileEnumerator IDWriteFontFileEnumerator_iface;
     LONG ref;
 
-    IDWriteFactory5 *factory;
+    IDWriteFactory7 *factory;
     HKEY hkey;
     int index;
 
@@ -4175,8 +4175,9 @@ static ULONG WINAPI systemfontfileenumerator_Release(IDWriteFontFileEnumerator *
     struct system_fontfile_enumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
     ULONG ref = InterlockedDecrement(&enumerator->ref);
 
-    if (!ref) {
-        IDWriteFactory5_Release(enumerator->factory);
+    if (!ref)
+    {
+        IDWriteFactory7_Release(enumerator->factory);
         RegCloseKey(enumerator->hkey);
         heap_free(enumerator->filename);
         heap_free(enumerator);
@@ -4185,7 +4186,7 @@ static ULONG WINAPI systemfontfileenumerator_Release(IDWriteFontFileEnumerator *
     return ref;
 }
 
-static HRESULT create_local_file_reference(IDWriteFactory5 *factory, const WCHAR *filename, IDWriteFontFile **file)
+static HRESULT create_local_file_reference(IDWriteFactory7 *factory, const WCHAR *filename, IDWriteFontFile **file)
 {
     HRESULT hr;
 
@@ -4198,10 +4199,10 @@ static HRESULT create_local_file_reference(IDWriteFactory5 *factory, const WCHAR
         strcatW(fullpathW, fontsW);
         strcatW(fullpathW, filename);
 
-        hr = IDWriteFactory5_CreateFontFileReference(factory, fullpathW, NULL, file);
+        hr = IDWriteFactory7_CreateFontFileReference(factory, fullpathW, NULL, file);
     }
     else
-        hr = IDWriteFactory5_CreateFontFileReference(factory, filename, NULL, file);
+        hr = IDWriteFactory7_CreateFontFileReference(factory, filename, NULL, file);
 
     return hr;
 }
@@ -4283,7 +4284,7 @@ static const struct IDWriteFontFileEnumeratorVtbl systemfontfileenumeratorvtbl =
     systemfontfileenumerator_GetCurrentFontFile
 };
 
-static HRESULT create_system_fontfile_enumerator(IDWriteFactory5 *factory, IDWriteFontFileEnumerator **ret)
+static HRESULT create_system_fontfile_enumerator(IDWriteFactory7 *factory, IDWriteFontFileEnumerator **ret)
 {
     struct system_fontfile_enumerator *enumerator;
     static const WCHAR fontslistW[] = {
@@ -4309,11 +4310,12 @@ static HRESULT create_system_fontfile_enumerator(IDWriteFactory5 *factory, IDWri
         return E_OUTOFMEMORY;
     }
 
-    IDWriteFactory5_AddRef(factory);
+    IDWriteFactory7_AddRef(factory);
 
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, fontslistW, 0, GENERIC_READ, &enumerator->hkey)) {
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, fontslistW, 0, GENERIC_READ, &enumerator->hkey))
+    {
         ERR("failed to open fonts list key\n");
-        IDWriteFactory5_Release(factory);
+        IDWriteFactory7_Release(factory);
         heap_free(enumerator->filename);
         heap_free(enumerator);
         return E_FAIL;
@@ -4324,7 +4326,7 @@ static HRESULT create_system_fontfile_enumerator(IDWriteFactory5 *factory, IDWri
     return S_OK;
 }
 
-HRESULT get_system_fontcollection(IDWriteFactory5 *factory, IDWriteFontCollection1 **collection)
+HRESULT get_system_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection1 **collection)
 {
     IDWriteFontFileEnumerator *enumerator;
     HRESULT hr;
@@ -4341,7 +4343,7 @@ HRESULT get_system_fontcollection(IDWriteFactory5 *factory, IDWriteFontCollectio
     return hr;
 }
 
-static HRESULT eudc_collection_add_family(IDWriteFactory5 *factory, struct dwrite_fontcollection *collection,
+static HRESULT eudc_collection_add_family(IDWriteFactory7 *factory, struct dwrite_fontcollection *collection,
     const WCHAR *keynameW, const WCHAR *pathW)
 {
     static const WCHAR defaultfontW[] = {'S','y','s','t','e','m','D','e','f','a','u','l','t','E','U','D','C','F','o','n','t',0};
@@ -4429,7 +4431,7 @@ static HRESULT eudc_collection_add_family(IDWriteFactory5 *factory, struct dwrit
     return hr;
 }
 
-HRESULT get_eudc_fontcollection(IDWriteFactory5 *factory, IDWriteFontCollection3 **ret)
+HRESULT get_eudc_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection3 **ret)
 {
     static const WCHAR eudckeyfmtW[] = {'E','U','D','C','\\','%','u',0};
     struct dwrite_fontcollection *collection;
@@ -4457,7 +4459,7 @@ HRESULT get_eudc_fontcollection(IDWriteFactory5 *factory, IDWriteFontCollection3
 
     *ret = &collection->IDWriteFontCollection3_iface;
     collection->factory = factory;
-    IDWriteFactory5_AddRef(factory);
+    IDWriteFactory7_AddRef(factory);
 
     /* return empty collection if EUDC fonts are not configured */
     sprintfW(eudckeypathW, eudckeyfmtW, GetACP());
