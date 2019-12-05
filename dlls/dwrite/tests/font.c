@@ -9294,28 +9294,19 @@ if (SUCCEEDED(hr))
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
 
     hr = IDWriteFontFace5_GetFontResource(fontface5, &resource2);
-todo_wine
     ok(hr == S_OK, "Failed to get font resource, hr %#x.\n", hr);
-
-if (SUCCEEDED(hr))
-{
     ok(resource != resource2, "Unexpected resource instance.\n");
     IDWriteFontResource_Release(resource);
-}
-    hr = IDWriteFontFace5_GetFontResource(fontface5, &resource);
-todo_wine
-    ok(hr == S_OK, "Failed to get font resource, hr %#x.\n", hr);
 
-if (SUCCEEDED(hr))
-{
+    hr = IDWriteFontFace5_GetFontResource(fontface5, &resource);
+    ok(hr == S_OK, "Failed to get font resource, hr %#x.\n", hr);
     ok(resource != resource2, "Unexpected resource instance.\n");
     EXPECT_REF(resource, 1);
     IDWriteFontResource_Release(resource);
     IDWriteFontResource_Release(resource2);
-}
+
     IDWriteFontFace5_Release(fontface5);
 
-    IDWriteFontResource_Release(resource);
     IDWriteFontFile_Release(fontfile);
 
     IDWriteFontFace_Release(fontface);

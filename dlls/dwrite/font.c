@@ -1435,9 +1435,11 @@ static BOOL WINAPI dwritefontface5_HasVariations(IDWriteFontFace5 *iface)
 
 static HRESULT WINAPI dwritefontface5_GetFontResource(IDWriteFontFace5 *iface, IDWriteFontResource **resource)
 {
-    FIXME("%p, %p: stub\n", iface, resource);
+    struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, resource);
+
+    return IDWriteFactory7_CreateFontResource(fontface->factory, fontface->files[0], fontface->index, resource);
 }
 
 static const IDWriteFontFace5Vtbl dwritefontfacevtbl =
