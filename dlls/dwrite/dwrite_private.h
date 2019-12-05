@@ -262,8 +262,9 @@ extern void release_system_fontfallback(IDWriteFontFallback1 *fallback) DECLSPEC
 extern HRESULT create_fontfallback_builder(IDWriteFactory5*,IDWriteFontFallbackBuilder**) DECLSPEC_HIDDEN;
 extern HRESULT create_matching_font(IDWriteFontCollection*,const WCHAR*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
     IDWriteFont**) DECLSPEC_HIDDEN;
-extern HRESULT create_fontfacereference(IDWriteFactory5*,IDWriteFontFile*,UINT32,DWRITE_FONT_SIMULATIONS,
-    IDWriteFontFaceReference**) DECLSPEC_HIDDEN;
+extern HRESULT create_fontfacereference(IDWriteFactory5 *factory, IDWriteFontFile *file, UINT32 face_index,
+        DWRITE_FONT_SIMULATIONS simulations, DWRITE_FONT_AXIS_VALUE const *axis_values, UINT32 axis_values_count,
+        IDWriteFontFaceReference1 **reference) DECLSPEC_HIDDEN;
 extern HRESULT factory_get_cached_fontface(IDWriteFactory5*,IDWriteFontFile*const*,UINT32,DWRITE_FONT_SIMULATIONS,
         struct list**,REFIID,void**) DECLSPEC_HIDDEN;
 extern void factory_detach_fontcollection(IDWriteFactory5 *factory, IDWriteFontCollection3 *collection) DECLSPEC_HIDDEN;

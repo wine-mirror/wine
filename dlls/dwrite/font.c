@@ -231,6 +231,8 @@ struct dwrite_fontfacereference
     IDWriteFontFile *file;
     UINT32 index;
     USHORT simulations;
+    DWRITE_FONT_AXIS_VALUE *axis_values;
+    UINT32 axis_values_count;
     IDWriteFactory5 *factory;
 };
 
@@ -6081,6 +6083,7 @@ static ULONG WINAPI fontfacereference_Release(IDWriteFontFaceReference1 *iface)
     {
         IDWriteFontFile_Release(reference->file);
         IDWriteFactory5_Release(reference->factory);
+        heap_free(reference->axis_values);
         heap_free(reference);
     }
 
@@ -6253,9 +6256,11 @@ static HRESULT WINAPI fontfacereference1_CreateFontFace(IDWriteFontFaceReference
 
 static UINT32 WINAPI fontfacereference1_GetFontAxisValueCount(IDWriteFontFaceReference1 *iface)
 {
-    FIXME("%p.\n", iface);
+    struct dwrite_fontfacereference *reference = impl_from_IDWriteFontFaceReference1(iface);
 
-    return 0;
+    TRACE("%p.\n", iface);
+
+    return reference->axis_values_count;
 }
 
 static HRESULT WINAPI fontfacereference1_GetFontAxisValues(IDWriteFontFaceReference1 *iface,
@@ -6291,7 +6296,8 @@ static const IDWriteFontFaceReference1Vtbl fontfacereferencevtbl =
 };
 
 HRESULT create_fontfacereference(IDWriteFactory5 *factory, IDWriteFontFile *file, UINT32 index,
-    DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFaceReference **ret)
+        DWRITE_FONT_SIMULATIONS simulations, DWRITE_FONT_AXIS_VALUE const *axis_values, UINT32 axis_values_count,
+        IDWriteFontFaceReference1 **ret)
 {
     struct dwrite_fontfacereference *object;
 
@@ -6300,7 +6306,7 @@ HRESULT create_fontfacereference(IDWriteFactory5 *factory, IDWriteFontFile *file
     if (!is_simulation_valid(simulations))
         return E_INVALIDARG;
 
-    object = heap_alloc(sizeof(*object));
+    object = heap_alloc_zero(sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
@@ -6313,8 +6319,18 @@ HRESULT create_fontfacereference(IDWriteFactory5 *factory, IDWriteFontFile *file
     IDWriteFontFile_AddRef(object->file);
     object->index = index;
     object->simulations = simulations;
+    if (axis_values_count)
+    {
+        if (!(object->axis_values = heap_alloc(axis_values_count * sizeof(*axis_values))))
+        {
+            IDWriteFontFaceReference1_Release(&object->IDWriteFontFaceReference1_iface);
+            return E_OUTOFMEMORY;
+        }
+        memcpy(object->axis_values, axis_values, axis_values_count * sizeof(*axis_values));
+        object->axis_values_count = axis_values_count;
+    }
 
-    *ret = (IDWriteFontFaceReference *)&object->IDWriteFontFaceReference1_iface;
+    *ret = &object->IDWriteFontFaceReference1_iface;
 
     return S_OK;
 }

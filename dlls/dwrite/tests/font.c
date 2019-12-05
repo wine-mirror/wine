@@ -9239,6 +9239,7 @@ static void test_font_resource(void)
     IDWriteFontFaceReference1 *reference, *reference2;
     IDWriteFontResource *resource, *resource2;
     IDWriteFontFile *fontfile, *fontfile2;
+    DWRITE_FONT_AXIS_VALUE axis_value;
     IDWriteFontFace5 *fontface5;
     IDWriteFontFace *fontface;
     IDWriteFactory6 *factory;
@@ -9274,22 +9275,34 @@ static void test_font_resource(void)
     index = IDWriteFontResource_GetFontFaceIndex(resource);
     ok(!index, "Unexpected index %u.\n", index);
 
+    /* Specify axis value, font has no variations. */
+    axis_value.axisTag = DWRITE_FONT_AXIS_TAG_WEIGHT;
+    axis_value.value = 400.0f;
+    hr = IDWriteFontResource_CreateFontFaceReference(resource, DWRITE_FONT_SIMULATIONS_NONE, &axis_value, 1, &reference);
+    ok(hr == S_OK, "Failed to create reference object, hr %#x.\n", hr);
+
+    count = IDWriteFontFaceReference1_GetFontAxisValueCount(reference);
+    ok(count == 1, "Unexpected axis value count.\n");
+
+    IDWriteFontFaceReference1_Release(reference);
+
+    hr = IDWriteFactory6_CreateFontFaceReference(factory, fontfile, 0, DWRITE_FONT_SIMULATIONS_NONE, &axis_value, 1,
+            &reference);
+    count = IDWriteFontFaceReference1_GetFontAxisValueCount(reference);
+    ok(count == 1, "Unexpected axis value count.\n");
+    IDWriteFontFaceReference1_Release(reference);
+
     EXPECT_REF(resource, 1);
     hr = IDWriteFontResource_CreateFontFaceReference(resource, DWRITE_FONT_SIMULATIONS_NONE, NULL, 0, &reference);
-todo_wine
     ok(hr == S_OK, "Failed to create reference object, hr %#x.\n", hr);
     EXPECT_REF(resource, 1);
 
     hr = IDWriteFontResource_CreateFontFaceReference(resource, DWRITE_FONT_SIMULATIONS_NONE, NULL, 0, &reference2);
-todo_wine
     ok(hr == S_OK, "Failed to create reference object, hr %#x.\n", hr);
-
-if (SUCCEEDED(hr))
-{
     ok(reference != reference2, "Unexpected reference instance.\n");
     IDWriteFontFaceReference1_Release(reference2);
     IDWriteFontFaceReference1_Release(reference);
-}
+
     hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace5, (void **)&fontface5);
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
 

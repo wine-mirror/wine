@@ -1443,7 +1443,8 @@ static HRESULT WINAPI dwritefactory3_CreateFontFaceReference_(IDWriteFactory7 *i
 {
     TRACE("%p, %p, %u, %x, %p.\n", iface, file, index, simulations, reference);
 
-    return create_fontfacereference((IDWriteFactory5 *)iface, file, index, simulations, reference);
+    return create_fontfacereference((IDWriteFactory5 *)iface, file, index, simulations, NULL, 0,
+            (IDWriteFontFaceReference1 **)reference);
 }
 
 static HRESULT WINAPI dwritefactory3_CreateFontFaceReference(IDWriteFactory7 *iface, WCHAR const *path,
@@ -1455,13 +1456,15 @@ static HRESULT WINAPI dwritefactory3_CreateFontFaceReference(IDWriteFactory7 *if
 
     TRACE("%p, %s, %p, %u, %#x, %p.\n", iface, debugstr_w(path), writetime, index, simulations, reference);
 
-    hr = IDWriteFactory5_CreateFontFileReference((IDWriteFactory5 *)iface, path, writetime, &file);
-    if (FAILED(hr)) {
+    hr = IDWriteFactory7_CreateFontFileReference(iface, path, writetime, &file);
+    if (FAILED(hr))
+    {
         *reference = NULL;
         return hr;
     }
 
-    hr = IDWriteFactory5_CreateFontFaceReference_((IDWriteFactory5 *)iface, file, index, simulations, reference);
+    hr = create_fontfacereference((IDWriteFactory5 *)iface, file, index, simulations, NULL, 0,
+            (IDWriteFontFaceReference1 **)reference);
     IDWriteFontFile_Release(file);
     return hr;
 }
@@ -1656,11 +1659,13 @@ static HRESULT WINAPI dwritefactory5_UnpackFontFile(IDWriteFactory7 *iface, DWRI
 
 static HRESULT WINAPI dwritefactory6_CreateFontFaceReference(IDWriteFactory7 *iface, IDWriteFontFile *file,
         UINT32 face_index, DWRITE_FONT_SIMULATIONS simulations, DWRITE_FONT_AXIS_VALUE const *axis_values,
-        UINT32 num_axis, IDWriteFontFaceReference1 **ref)
+        UINT32 axis_values_count, IDWriteFontFaceReference1 **reference)
 {
-    FIXME("%p, %p, %u, %#x, %p, %u, %p.\n", iface, file, face_index, simulations, axis_values, num_axis, ref);
+    TRACE("%p, %p, %u, %#x, %p, %u, %p.\n", iface, file, face_index, simulations, axis_values, axis_values_count,
+            reference);
 
-    return E_NOTIMPL;
+    return create_fontfacereference((IDWriteFactory5 *)iface, file, face_index, simulations, axis_values,
+            axis_values_count, reference);
 }
 
 static HRESULT WINAPI dwritefactory6_CreateFontResource(IDWriteFactory7 *iface, IDWriteFontFile *file,
