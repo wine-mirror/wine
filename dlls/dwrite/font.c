@@ -474,7 +474,8 @@ static HRESULT WINAPI dwritefontface_QueryInterface(IDWriteFontFace5 *iface, REF
 
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
-    if (IsEqualIID(riid, &IID_IDWriteFontFace4) ||
+    if (IsEqualIID(riid, &IID_IDWriteFontFace5) ||
+        IsEqualIID(riid, &IID_IDWriteFontFace4) ||
         IsEqualIID(riid, &IID_IDWriteFontFace3) ||
         IsEqualIID(riid, &IID_IDWriteFontFace2) ||
         IsEqualIID(riid, &IID_IDWriteFontFace1) ||
@@ -1425,7 +1426,7 @@ static HRESULT WINAPI dwritefontface5_GetFontAxisValues(IDWriteFontFace5 *iface,
     return E_NOTIMPL;
 }
 
-static BOOL WINAPI dwritefontface5_HasVariantions(IDWriteFontFace5 *iface)
+static BOOL WINAPI dwritefontface5_HasVariations(IDWriteFontFace5 *iface)
 {
     FIXME("%p: stub\n", iface);
 
@@ -1496,7 +1497,7 @@ static const IDWriteFontFace5Vtbl dwritefontfacevtbl =
     dwritefontface4_ReleaseGlyphImageData,
     dwritefontface5_GetFontAxisValueCount,
     dwritefontface5_GetFontAxisValues,
-    dwritefontface5_HasVariantions,
+    dwritefontface5_HasVariations,
     dwritefontface5_GetFontResource,
 };
 
