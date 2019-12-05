@@ -128,7 +128,7 @@ static inline BOOL is_simulation_valid(DWRITE_FONT_SIMULATIONS simulations)
 
 struct textlayout_desc
 {
-    IDWriteFactory5 *factory;
+    IDWriteFactory7 *factory;
     const WCHAR *string;
     UINT32 length;
     IDWriteTextFormat *format;
@@ -231,7 +231,8 @@ extern HRESULT create_numbersubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD,const
 extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
                                  FLOAT,const WCHAR*,IDWriteTextFormat**) DECLSPEC_HIDDEN;
 extern HRESULT create_textlayout(const struct textlayout_desc*,IDWriteTextLayout**) DECLSPEC_HIDDEN;
-extern HRESULT create_trimmingsign(IDWriteFactory5*,IDWriteTextFormat*,IDWriteInlineObject**) DECLSPEC_HIDDEN;
+extern HRESULT create_trimmingsign(IDWriteFactory7 *factory, IDWriteTextFormat *format,
+        IDWriteInlineObject **sign) DECLSPEC_HIDDEN;
 extern HRESULT create_typography(IDWriteTypography**) DECLSPEC_HIDDEN;
 extern HRESULT create_localizedstrings(IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT add_localizedstring(IDWriteLocalizedStrings*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;

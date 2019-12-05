@@ -1171,7 +1171,7 @@ static HRESULT WINAPI dwritefactory_CreateTextLayout(IDWriteFactory7 *iface, WCH
 
     TRACE("%p, %s:%u, %p, %.8e, %.8e, %p.\n", iface, debugstr_wn(string, length), length, format, max_width, max_height, layout);
 
-    desc.factory = (IDWriteFactory5 *)iface;
+    desc.factory = iface;
     desc.string = string;
     desc.length = length;
     desc.format = format;
@@ -1193,7 +1193,7 @@ static HRESULT WINAPI dwritefactory_CreateGdiCompatibleTextLayout(IDWriteFactory
     TRACE("%p, %s:%u, %p, %.8e, %.8e, %.8e, %p, %d, %p.\n", iface, debugstr_wn(string, length), length, format,
             max_width, max_height, pixels_per_dip, transform, use_gdi_natural, layout);
 
-    desc.factory = (IDWriteFactory5 *)iface;
+    desc.factory = iface;
     desc.string = string;
     desc.length = length;
     desc.format = format;
@@ -1211,7 +1211,7 @@ static HRESULT WINAPI dwritefactory_CreateEllipsisTrimmingSign(IDWriteFactory7 *
 {
     TRACE("%p, %p, %p.\n", iface, format, trimming_sign);
 
-    return create_trimmingsign((IDWriteFactory5 *)iface, format, trimming_sign);
+    return create_trimmingsign(iface, format, trimming_sign);
 }
 
 static HRESULT WINAPI dwritefactory_CreateTextAnalyzer(IDWriteFactory7 *iface, IDWriteTextAnalyzer **analyzer)
