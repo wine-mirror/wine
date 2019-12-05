@@ -61,7 +61,6 @@
 #include "winbase.h"
 #include "wincon.h"
 #include "winternl.h"
-#include "wine/library.h"
 
 #include "file.h"
 #include "process.h"

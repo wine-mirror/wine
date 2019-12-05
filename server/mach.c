@@ -41,7 +41,6 @@
 #include "process.h"
 #include "thread.h"
 #include "request.h"
-#include "wine/library.h"
 
 #ifdef USE_MACH
 
