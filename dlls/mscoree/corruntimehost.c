@@ -1478,7 +1478,7 @@ __int32 WINAPI _CorExeMain(void)
     wcscat(config_file, dotconfig);
 
     hr = parse_config_file(config_file, &parsed_config);
-    if (SUCCEEDED(hr) && parsed_config.private_path)
+    if (SUCCEEDED(hr) && parsed_config.private_path && parsed_config.private_path[0])
     {
         for(i = 0; parsed_config.private_path[i] != 0; i++)
             if (parsed_config.private_path[i] == ';') number_of_private_paths++;
