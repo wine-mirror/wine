@@ -32,8 +32,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
 struct stream
 {
-    _Stream Stream_iface;
-    LONG    refs;
+    _Stream         Stream_iface;
+    LONG            refs;
+    StreamTypeEnum  type;
 };
 
 static inline struct stream *impl_from_Stream( _Stream *iface )
@@ -130,14 +131,20 @@ static HRESULT WINAPI stream_put_Position( _Stream *iface, LONG pos )
 
 static HRESULT WINAPI stream_get_Type( _Stream *iface, StreamTypeEnum *type )
 {
-    FIXME( "%p, %p\n", iface, type );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    TRACE( "%p, %p\n", stream, type );
+
+    *type = stream->type;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_put_Type( _Stream *iface, StreamTypeEnum type )
 {
-    FIXME( "%p, %u\n", iface, type );
-    return E_NOTIMPL;
+    struct stream *stream = impl_from_Stream( iface );
+    TRACE( "%p, %u\n", stream, type );
+
+    stream->type = type;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_get_LineSeparator( _Stream *iface, LineSeparatorEnum *sep )
@@ -305,6 +312,7 @@ HRESULT Stream_create( void **obj )
     if (!(stream = heap_alloc_zero( sizeof(*stream) ))) return E_OUTOFMEMORY;
     stream->Stream_iface.lpVtbl = &stream_vtbl;
     stream->refs = 1;
+    stream->type = adTypeText;
 
     *obj = &stream->Stream_iface;
     TRACE( "returning iface %p\n", *obj );
