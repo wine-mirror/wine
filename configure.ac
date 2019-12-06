@@ -2009,22 +2009,6 @@ if test "x${GCC}" = "xyes"
 then
   EXTRACFLAGS="-Wall -pipe"
 
-  dnl Check for strength-reduce bug
-  AC_CACHE_CHECK( [for gcc strength-reduce bug], ac_cv_c_gcc_strength_bug,
-                  AC_RUN_IFELSE([AC_LANG_PROGRAM([[int L[[4]] = {0,1,2,3};]],
-[[static int Array[[3]];
-  unsigned int B = 3;
-  int i;
-  for(i=0; i<B; i++) Array[[i]] = i - 3;
-  for(i=0; i<4 - 1; i++) L[[i]] = L[[i + 1]];
-  L[[i]] = 4;
-  return (Array[[1]] != -2 || L[[2]] != 3)]])],
-    [ac_cv_c_gcc_strength_bug="no"],[ac_cv_c_gcc_strength_bug="yes"],[ac_cv_c_gcc_strength_bug="no"]) )
-  if test "$ac_cv_c_gcc_strength_bug" = "yes"
-  then
-    EXTRACFLAGS="$EXTRACFLAGS -fno-strength-reduce"
-  fi
-
   dnl Check for some compiler flags
   WINE_TRY_CFLAGS([-fcf-protection=none])
   WINE_TRY_CFLAGS([-fno-stack-protector])
