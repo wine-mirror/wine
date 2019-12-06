@@ -6,7 +6,8 @@ EXTRADLLFLAGS = -mno-cygwin
 C_SRCS = \
 	connection.c \
 	main.c \
-	recordset.c
+	recordset.c \
+	stream.c
 
 IDL_SRCS = \
 	msado15_classes.idl \

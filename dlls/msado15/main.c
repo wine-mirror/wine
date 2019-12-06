@@ -119,6 +119,7 @@ static const struct IClassFactoryVtbl msadocf_vtbl =
 
 static struct msadocf connection_cf = { { &msadocf_vtbl }, Connection_create };
 static struct msadocf recordset_cf = { { &msadocf_vtbl }, Recordset_create };
+static struct msadocf stream_cf = { { &msadocf_vtbl }, Stream_create };
 
 /***********************************************************************
  *          DllGetClassObject
@@ -136,6 +137,10 @@ HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID iid, void **obj )
     else if (IsEqualGUID( clsid, &CLSID_Recordset ))
     {
         cf = &recordset_cf.IClassFactory_iface;
+    }
+    else if (IsEqualGUID( clsid, &CLSID_Stream ))
+    {
+        cf = &stream_cf.IClassFactory_iface;
     }
     if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
     return IClassFactory_QueryInterface( cf, iid, obj );
