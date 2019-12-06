@@ -1871,6 +1871,18 @@ static HRESULT TLB_set_custdata(struct list *custdata_list, TLBGuid *tlbguid, VA
     return VariantCopy(&cust_data->data, var);
 }
 
+/* Used to update list pointers after list itself was moved. */
+static void TLB_relink_custdata(struct list *custdata_list)
+{
+    if (custdata_list->prev == custdata_list->next)
+        list_init(custdata_list);
+    else
+    {
+        custdata_list->prev->next = custdata_list;
+        custdata_list->next->prev = custdata_list;
+    }
+}
+
 static TLBString *TLB_append_str(struct list *string_list, BSTR new_str)
 {
     TLBString *str;
@@ -10806,15 +10818,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
 
         /* move custdata lists to the new memory location */
         for(i = 0; i < This->typeattr.cFuncs + 1; ++i){
-            if(index != i){
-                TLBFuncDesc *fd = &This->funcdescs[i];
-                if(fd->custdata_list.prev == fd->custdata_list.next)
-                    list_init(&fd->custdata_list);
-                else{
-                    fd->custdata_list.prev->next = &fd->custdata_list;
-                    fd->custdata_list.next->prev = &fd->custdata_list;
-                }
-            }
+            if(index != i)
+                TLB_relink_custdata(&This->funcdescs[i].custdata_list);
         }
     } else
         func_desc = This->funcdescs = heap_alloc(sizeof(TLBFuncDesc));
@@ -10875,15 +10880,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(ICreateTypeInfo2 *iface,
 
         /* move custdata lists to the new memory location */
         for(i = 0; i < This->typeattr.cImplTypes + 1; ++i){
-            if(index != i){
-                TLBImplType *it = &This->impltypes[i];
-                if(it->custdata_list.prev == it->custdata_list.next)
-                    list_init(&it->custdata_list);
-                else{
-                    it->custdata_list.prev->next = &it->custdata_list;
-                    it->custdata_list.next->prev = &it->custdata_list;
-                }
-            }
+            if(index != i)
+                TLB_relink_custdata(&This->impltypes[i].custdata_list);
         }
     } else
         impl_type = This->impltypes = heap_alloc(sizeof(TLBImplType));
@@ -10975,15 +10973,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(ICreateTypeInfo2 *iface,
 
         /* move custdata lists to the new memory location */
         for(i = 0; i < This->typeattr.cVars + 1; ++i){
-            if(index != i){
-                TLBVarDesc *var = &This->vardescs[i];
-                if(var->custdata_list.prev == var->custdata_list.next)
-                    list_init(&var->custdata_list);
-                else{
-                    var->custdata_list.prev->next = &var->custdata_list;
-                    var->custdata_list.next->prev = &var->custdata_list;
-                }
-            }
+            if(index != i)
+                TLB_relink_custdata(&This->vardescs[i].custdata_list);
         }
     } else
         var_desc = This->vardescs = heap_alloc_zero(sizeof(TLBVarDesc));
