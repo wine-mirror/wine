@@ -536,6 +536,7 @@ struct typeinfo_func {
 
 typedef struct {
     ITypeInfo ITypeInfo_iface;
+    ITypeComp ITypeComp_iface;
     LONG ref;
 
     UINT num_vars;
@@ -550,12 +551,19 @@ static inline ScriptTypeInfo *ScriptTypeInfo_from_ITypeInfo(ITypeInfo *iface)
     return CONTAINING_RECORD(iface, ScriptTypeInfo, ITypeInfo_iface);
 }
 
+static inline ScriptTypeInfo *ScriptTypeInfo_from_ITypeComp(ITypeComp *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptTypeInfo, ITypeComp_iface);
+}
+
 static HRESULT WINAPI ScriptTypeInfo_QueryInterface(ITypeInfo *iface, REFIID riid, void **ppv)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
 
     if (IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ITypeInfo, riid))
         *ppv = &This->ITypeInfo_iface;
+    else if (IsEqualGUID(&IID_ITypeComp, riid))
+        *ppv = &This->ITypeComp_iface;
     else
     {
         WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -633,9 +641,13 @@ static HRESULT WINAPI ScriptTypeInfo_GetTypeComp(ITypeInfo *iface, ITypeComp **p
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
 
-    FIXME("(%p)->(%p)\n", This, ppTComp);
+    TRACE("(%p)->(%p)\n", This, ppTComp);
 
-    return E_NOTIMPL;
+    if (!ppTComp) return E_INVALIDARG;
+
+    *ppTComp = &This->ITypeComp_iface;
+    ITypeInfo_AddRef(iface);
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetFuncDesc(ITypeInfo *iface, UINT index, FUNCDESC **ppFuncDesc)
@@ -898,6 +910,49 @@ static const ITypeInfoVtbl ScriptTypeInfoVtbl = {
     ScriptTypeInfo_ReleaseVarDesc
 };
 
+static HRESULT WINAPI ScriptTypeComp_QueryInterface(ITypeComp *iface, REFIID riid, void **ppv)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeComp(iface);
+    return ITypeInfo_QueryInterface(&This->ITypeInfo_iface, riid, ppv);
+}
+
+static ULONG WINAPI ScriptTypeComp_AddRef(ITypeComp *iface)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeComp(iface);
+    return ITypeInfo_AddRef(&This->ITypeInfo_iface);
+}
+
+static ULONG WINAPI ScriptTypeComp_Release(ITypeComp *iface)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeComp(iface);
+    return ITypeInfo_Release(&This->ITypeInfo_iface);
+}
+
+static HRESULT WINAPI ScriptTypeComp_Bind(ITypeComp *iface, LPOLESTR szName, ULONG lHashVal, WORD wFlags,
+        ITypeInfo **ppTInfo, DESCKIND *pDescKind, BINDPTR *pBindPtr)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeComp(iface);
+    FIXME("(%p)->(%s %08x %d %p %p %p)\n", This, debugstr_w(szName), lHashVal,
+          wFlags, ppTInfo, pDescKind, pBindPtr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptTypeComp_BindType(ITypeComp *iface, LPOLESTR szName, ULONG lHashVal,
+        ITypeInfo **ppTInfo, ITypeComp **ppTComp)
+{
+    ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeComp(iface);
+    FIXME("(%p)->(%s %08x %p %p)\n", This, debugstr_w(szName), lHashVal, ppTInfo, ppTComp);
+    return E_NOTIMPL;
+}
+
+static const ITypeCompVtbl ScriptTypeCompVtbl = {
+    ScriptTypeComp_QueryInterface,
+    ScriptTypeComp_AddRef,
+    ScriptTypeComp_Release,
+    ScriptTypeComp_Bind,
+    ScriptTypeComp_BindType
+};
+
 static inline ScriptDisp *ScriptDisp_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, ScriptDisp, IDispatchEx_iface);
@@ -996,6 +1051,7 @@ static HRESULT WINAPI ScriptDisp_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LC
             num_funcs++;
 
     type_info->ITypeInfo_iface.lpVtbl = &ScriptTypeInfoVtbl;
+    type_info->ITypeComp_iface.lpVtbl = &ScriptTypeCompVtbl;
     type_info->ref = 1;
     type_info->num_funcs = num_funcs;
     type_info->num_vars = This->global_vars_cnt;
