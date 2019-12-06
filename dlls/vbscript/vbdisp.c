@@ -24,6 +24,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
+static const GUID GUID_VBScriptTypeInfo = {0xc59c6b12,0xf6c1,0x11cf,{0x88,0x35,0x00,0xa0,0xc9,0x11,0xe8,0xb2}};
+
 #define DISPID_FUNCTION_MASK 0x20000000
 #define FDEX_VERSION_MASK 0xf0000000
 
@@ -599,10 +601,32 @@ static ULONG WINAPI ScriptTypeInfo_Release(ITypeInfo *iface)
 static HRESULT WINAPI ScriptTypeInfo_GetTypeAttr(ITypeInfo *iface, TYPEATTR **ppTypeAttr)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    TYPEATTR *attr;
 
-    FIXME("(%p)->(%p)\n", This, ppTypeAttr);
+    TRACE("(%p)->(%p)\n", This, ppTypeAttr);
 
-    return E_NOTIMPL;
+    if (!ppTypeAttr) return E_INVALIDARG;
+
+    attr = heap_alloc_zero(sizeof(*attr));
+    if (!attr) return E_OUTOFMEMORY;
+
+    attr->guid = GUID_VBScriptTypeInfo;
+    attr->lcid = LOCALE_USER_DEFAULT;
+    attr->memidConstructor = MEMBERID_NIL;
+    attr->memidDestructor = MEMBERID_NIL;
+    attr->cbSizeInstance = 4;
+    attr->typekind = TKIND_DISPATCH;
+    attr->cFuncs = This->num_funcs;
+    attr->cVars = This->num_vars;
+    attr->cImplTypes = 1;
+    attr->cbSizeVft = sizeof(IDispatchVtbl);
+    attr->cbAlignment = 4;
+    attr->wTypeFlags = TYPEFLAG_FDISPATCHABLE;
+    attr->wMajorVerNum = VBSCRIPT_MAJOR_VERSION;
+    attr->wMinorVerNum = VBSCRIPT_MINOR_VERSION;
+
+    *ppTypeAttr = attr;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptTypeInfo_GetTypeComp(ITypeInfo *iface, ITypeComp **ppTComp)
@@ -750,7 +774,9 @@ static void WINAPI ScriptTypeInfo_ReleaseTypeAttr(ITypeInfo *iface, TYPEATTR *pT
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
 
-    FIXME("(%p)->(%p)\n", This, pTypeAttr);
+    TRACE("(%p)->(%p)\n", This, pTypeAttr);
+
+    heap_free(pTypeAttr);
 }
 
 static void WINAPI ScriptTypeInfo_ReleaseFuncDesc(ITypeInfo *iface, FUNCDESC *pFuncDesc)
