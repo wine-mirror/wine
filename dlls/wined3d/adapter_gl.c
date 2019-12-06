@@ -4699,21 +4699,6 @@ static HRESULT adapter_gl_create_buffer(struct wined3d_device *device,
     return hr;
 }
 
-static void wined3d_buffer_gl_destroy_object(void *object)
-{
-    struct wined3d_buffer_gl *buffer_gl = object;
-    struct wined3d_context *context;
-
-    if (buffer_gl->b.buffer_object)
-    {
-        context = context_acquire(buffer_gl->b.resource.device, NULL, 0);
-        wined3d_buffer_gl_destroy_buffer_object(buffer_gl, wined3d_context_gl(context));
-        context_release(context);
-    }
-
-    heap_free(buffer_gl);
-}
-
 static void adapter_gl_destroy_buffer(struct wined3d_buffer *buffer)
 {
     struct wined3d_buffer_gl *buffer_gl = wined3d_buffer_gl(buffer);
@@ -4729,7 +4714,7 @@ static void adapter_gl_destroy_buffer(struct wined3d_buffer *buffer)
     if (swapchain_count)
         wined3d_device_incref(device);
     wined3d_buffer_cleanup(&buffer_gl->b);
-    wined3d_cs_destroy_object(device->cs, wined3d_buffer_gl_destroy_object, buffer_gl);
+    wined3d_cs_destroy_object(device->cs, heap_free, buffer_gl);
     if (swapchain_count)
         wined3d_device_decref(device);
 }

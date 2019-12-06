@@ -139,7 +139,7 @@ static void wined3d_buffer_gl_bind(struct wined3d_buffer_gl *buffer_gl, struct w
 }
 
 /* Context activation is done by the caller. */
-void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *buffer_gl,
+static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *buffer_gl,
         struct wined3d_context_gl *context_gl)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
@@ -602,6 +602,12 @@ static BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
     return buffer->buffer_ops->buffer_prepare_location(buffer, context, location);
 }
 
+static void wined3d_buffer_unload_location(struct wined3d_buffer *buffer,
+        struct wined3d_context *context, unsigned int location)
+{
+    buffer->buffer_ops->buffer_unload_location(buffer, context, location);
+}
+
 BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
         struct wined3d_context *context, DWORD location)
 {
@@ -699,7 +705,7 @@ DWORD wined3d_buffer_get_memory(struct wined3d_buffer *buffer,
     return 0;
 }
 
-static void buffer_unload(struct wined3d_resource *resource)
+static void buffer_resource_unload(struct wined3d_resource *resource)
 {
     struct wined3d_buffer *buffer = buffer_from_resource(resource);
 
@@ -713,7 +719,7 @@ static void buffer_unload(struct wined3d_resource *resource)
 
         wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
         wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_BUFFER);
-        wined3d_buffer_gl_destroy_buffer_object(wined3d_buffer_gl(buffer), wined3d_context_gl(context));
+        wined3d_buffer_unload_location(buffer, context, WINED3D_LOCATION_BUFFER);
         buffer_clear_dirty_areas(buffer);
 
         context_release(context);
@@ -731,21 +737,28 @@ static void buffer_unload(struct wined3d_resource *resource)
 static void wined3d_buffer_drop_bo(struct wined3d_buffer *buffer)
 {
     buffer->flags &= ~WINED3D_BUFFER_USE_BO;
-    buffer_unload(&buffer->resource);
+    buffer_resource_unload(&buffer->resource);
 }
 
 static void wined3d_buffer_destroy_object(void *object)
 {
     struct wined3d_buffer *buffer = object;
+    struct wined3d_context *context;
 
+    if (buffer->buffer_object)
+    {
+        context = context_acquire(buffer->resource.device, NULL, 0);
+        wined3d_buffer_unload_location(buffer, context, WINED3D_LOCATION_BUFFER);
+        context_release(context);
+    }
     heap_free(buffer->conversion_map);
     heap_free(buffer->maps);
 }
 
 void wined3d_buffer_cleanup(struct wined3d_buffer *buffer)
 {
-    resource_cleanup(&buffer->resource);
     wined3d_cs_destroy_object(buffer->resource.device->cs, wined3d_buffer_destroy_object, buffer);
+    resource_cleanup(&buffer->resource);
 }
 
 ULONG CDECL wined3d_buffer_decref(struct wined3d_buffer *buffer)
@@ -1264,7 +1277,7 @@ static const struct wined3d_resource_ops buffer_resource_ops =
     buffer_resource_incref,
     buffer_resource_decref,
     buffer_resource_preload,
-    buffer_unload,
+    buffer_resource_unload,
     buffer_resource_sub_resource_map,
     buffer_resource_sub_resource_unmap,
 };
@@ -1382,7 +1395,7 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
     if (!(buffer->maps = heap_alloc(sizeof(*buffer->maps))))
     {
         ERR("Out of memory.\n");
-        buffer_unload(resource);
+        buffer_resource_unload(resource);
         resource_cleanup(resource);
         wined3d_resource_wait_idle(resource);
         return E_OUTOFMEMORY;
@@ -1406,6 +1419,12 @@ static BOOL wined3d_buffer_no3d_prepare_location(struct wined3d_buffer *buffer,
     return FALSE;
 }
 
+static void wined3d_buffer_no3d_unload_location(struct wined3d_buffer *buffer,
+        struct wined3d_context *context, unsigned int location)
+{
+    TRACE("buffer %p, context %p, location %s.\n", buffer, context, wined3d_debug_location(location));
+}
+
 static void wined3d_buffer_no3d_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_map_range *ranges)
 {
@@ -1421,6 +1440,7 @@ static void wined3d_buffer_no3d_download_ranges(struct wined3d_buffer *buffer, s
 static const struct wined3d_buffer_ops wined3d_buffer_no3d_ops =
 {
     wined3d_buffer_no3d_prepare_location,
+    wined3d_buffer_no3d_unload_location,
     wined3d_buffer_no3d_upload_ranges,
     wined3d_buffer_no3d_download_ranges,
 };
@@ -1460,6 +1480,23 @@ static BOOL wined3d_buffer_gl_prepare_location(struct wined3d_buffer *buffer,
         default:
             ERR("Invalid location %s.\n", wined3d_debug_location(location));
             return FALSE;
+    }
+}
+
+static void wined3d_buffer_gl_unload_location(struct wined3d_buffer *buffer,
+        struct wined3d_context *context, unsigned int location)
+{
+    TRACE("buffer %p, context %p, location %s.\n", buffer, context, wined3d_debug_location(location));
+
+    switch (location)
+    {
+        case WINED3D_LOCATION_BUFFER:
+            wined3d_buffer_gl_destroy_buffer_object(wined3d_buffer_gl(buffer), wined3d_context_gl(context));
+            break;
+
+        default:
+            ERR("Unhandled location %s.\n", wined3d_debug_location(location));
+            break;
     }
 }
 
@@ -1506,6 +1543,7 @@ static void wined3d_buffer_gl_download_ranges(struct wined3d_buffer *buffer, str
 static const struct wined3d_buffer_ops wined3d_buffer_gl_ops =
 {
     wined3d_buffer_gl_prepare_location,
+    wined3d_buffer_gl_unload_location,
     wined3d_buffer_gl_upload_ranges,
     wined3d_buffer_gl_download_ranges,
 };
@@ -1542,6 +1580,12 @@ static BOOL wined3d_buffer_vk_prepare_location(struct wined3d_buffer *buffer,
     }
 }
 
+static void wined3d_buffer_vk_unload_location(struct wined3d_buffer *buffer,
+        struct wined3d_context *context, unsigned int location)
+{
+    FIXME("buffer %p, context %p, location %s.\n", buffer, context, wined3d_debug_location(location));
+}
+
 static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_map_range *ranges)
 {
@@ -1557,6 +1601,7 @@ static void wined3d_buffer_vk_download_ranges(struct wined3d_buffer *buffer, str
 static const struct wined3d_buffer_ops wined3d_buffer_vk_ops =
 {
     wined3d_buffer_vk_prepare_location,
+    wined3d_buffer_vk_unload_location,
     wined3d_buffer_vk_upload_ranges,
     wined3d_buffer_vk_download_ranges,
 };
