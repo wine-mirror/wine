@@ -3329,7 +3329,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
 
     if(file != pszFileName) heap_free(file);
 
-    h = CreateFileW(pszPath, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    h = CreateFileW(pszPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if(h != INVALID_HANDLE_VALUE){
         FILE_NAME_INFORMATION size_info;
         BOOL br;
