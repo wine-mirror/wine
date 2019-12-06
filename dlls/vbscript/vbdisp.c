@@ -527,9 +527,20 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
     return S_OK;
 }
 
+struct typeinfo_func {
+    function_t *func;
+    MEMBERID memid;
+};
+
 typedef struct {
     ITypeInfo ITypeInfo_iface;
     LONG ref;
+
+    UINT num_vars;
+    UINT num_funcs;
+    struct typeinfo_func *funcs;
+
+    ScriptDisp *disp;
 } ScriptTypeInfo;
 
 static inline ScriptTypeInfo *ScriptTypeInfo_from_ITypeInfo(ITypeInfo *iface)
@@ -569,11 +580,17 @@ static ULONG WINAPI ScriptTypeInfo_Release(ITypeInfo *iface)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
     LONG ref = InterlockedDecrement(&This->ref);
+    UINT i;
 
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (!ref)
     {
+        for (i = 0; i < This->num_funcs; i++)
+            release_vbscode(This->funcs[i].func->code_ctx);
+
+        IDispatchEx_Release(&This->disp->IDispatchEx_iface);
+        heap_free(This->funcs);
         heap_free(This);
     }
     return ref;
@@ -857,6 +874,8 @@ static HRESULT WINAPI ScriptDisp_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LC
 {
     ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
     ScriptTypeInfo *type_info;
+    UINT num_funcs = 0;
+    unsigned i, j;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ret);
 
@@ -866,8 +885,34 @@ static HRESULT WINAPI ScriptDisp_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LC
     if(!(type_info = heap_alloc(sizeof(*type_info))))
         return E_OUTOFMEMORY;
 
+    for(i = 0; i < This->global_funcs_cnt; i++)
+        if(This->global_funcs[i]->is_public)
+            num_funcs++;
+
     type_info->ITypeInfo_iface.lpVtbl = &ScriptTypeInfoVtbl;
     type_info->ref = 1;
+    type_info->num_funcs = num_funcs;
+    type_info->num_vars = This->global_vars_cnt;
+    type_info->disp = This;
+
+    type_info->funcs = heap_alloc(sizeof(*type_info->funcs) * num_funcs);
+    if(!type_info->funcs)
+    {
+        heap_free(type_info);
+        return E_OUTOFMEMORY;
+    }
+
+    for(j = 0, i = 0; i < This->global_funcs_cnt; i++)
+    {
+        if(!This->global_funcs[i]->is_public) continue;
+
+        type_info->funcs[j].memid = i + 1 + DISPID_FUNCTION_MASK;
+        type_info->funcs[j].func = This->global_funcs[i];
+        grab_vbscode(This->global_funcs[i]->code_ctx);
+        j++;
+    }
+
+    IDispatchEx_AddRef(&This->IDispatchEx_iface);
 
     *ret = &type_info->ITypeInfo_iface;
     return S_OK;

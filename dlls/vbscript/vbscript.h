@@ -357,6 +357,11 @@ struct _vbscode_t {
     struct list entry;
 };
 
+static inline void grab_vbscode(vbscode_t *code)
+{
+    code->ref++;
+}
+
 void release_vbscode(vbscode_t*) DECLSPEC_HIDDEN;
 HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,DWORD,vbscode_t**) DECLSPEC_HIDDEN;
 HRESULT compile_procedure(script_ctx_t*,const WCHAR*,const WCHAR*,DWORD,class_desc_t**) DECLSPEC_HIDDEN;
