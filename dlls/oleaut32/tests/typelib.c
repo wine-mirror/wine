@@ -6446,6 +6446,103 @@ static void test_dep(void) {
     DeleteFileW(filenameW);
 }
 
+static void test_DeleteImplType(void)
+{
+    static OLECHAR interface1W[] = L"interface1";
+    HREFTYPE hreftype, hreftype2;
+    ICreateTypeInfo2 *createti2;
+    ICreateTypeInfo *createti;
+    ICreateTypeLib2 *createtl;
+    WCHAR filenameW[MAX_PATH];
+    ITypeInfo *dispti, *ti;
+    ITypeLib *stdole, *tl;
+    TYPEATTR *typeattr;
+    HRESULT hr;
+    int flags;
+
+    hr = LoadTypeLib(L"stdole2.tlb", &stdole);
+    ok(hr == S_OK, "Failed to load stdole2, hr %#x.\n", hr);
+
+    hr = ITypeLib_GetTypeInfoOfGuid(stdole, &IID_IDispatch, &dispti);
+    ok(hr == S_OK, "Failed to get IDispatch typeinfo, hr %#x.\n", hr);
+
+    GetTempFileNameW(L".", L"tlb", 0, filenameW);
+
+    hr = CreateTypeLib2(SYS_WIN32, filenameW, &createtl);
+    ok(hr == S_OK, "Failed to create instance, hr %#x.\n", hr);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
+    ok(hr == S_OK, "Failed to create instance, hr %#x.\n", hr);
+    hr = ICreateTypeInfo_QueryInterface(createti, &IID_ICreateTypeInfo2, (void **)&createti2);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+    ICreateTypeInfo_Release(createti);
+
+    hr = ICreateTypeInfo2_AddRefTypeInfo(createti2, dispti, &hreftype);
+    ok(hr == S_OK, "Failed to add referenced typeinfo, hr %#x.\n", hr);
+
+    hr = ICreateTypeInfo2_QueryInterface(createti2, &IID_ITypeInfo, (void **)&ti);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "Failed to get type attr, hr %#x.\n", hr);
+    ok(!(typeattr->wTypeFlags & TYPEFLAG_FDISPATCHABLE), "Unexpected type flags %#x.\n", typeattr->wTypeFlags);
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    hr = ICreateTypeInfo2_AddImplType(createti2, 0, hreftype);
+    ok(hr == S_OK, "Failed to add impl type, hr %#x.\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "Failed to get type attr, hr %#x.\n", hr);
+    ok(typeattr->wTypeFlags & TYPEFLAG_FDISPATCHABLE, "Unexpected type flags %#x.\n", typeattr->wTypeFlags);
+    ok(typeattr->cImplTypes == 1, "Unexpected cImplTypes value.\n");
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    /* Delete impltype, check flags. */
+    hr = ICreateTypeInfo2_DeleteImplType(createti2, 0);
+    ok(hr == S_OK, "Failed to delete impl type, hr %#x.\n", hr);
+
+    hr = ICreateTypeInfo2_DeleteImplType(createti2, 0);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "Failed to get type attr, hr %#x.\n", hr);
+    ok(typeattr->wTypeFlags & TYPEFLAG_FDISPATCHABLE, "Unexpected type flags %#x.\n", typeattr->wTypeFlags);
+    ok(!typeattr->cImplTypes, "Unexpected cImplTypes value.\n");
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    hr = ITypeInfo_GetImplTypeFlags(ti, 0, &flags);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = ITypeInfo_GetRefTypeOfImplType(ti, 0, &hreftype2);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = ICreateTypeLib2_SaveAllChanges(createtl);
+    ok(hr == S_OK, "Failed to save changes, hr %#x.\n", hr);
+    ICreateTypeLib2_Release(createtl);
+    ITypeInfo_Release(ti);
+    ICreateTypeInfo2_Release(createti2);
+
+    /* Load and check typeinfo. */
+    hr = LoadTypeLibEx(filenameW, REGKIND_NONE, &tl);
+    ok(hr == S_OK, "Failed to load typelib, hr %#x.\n", hr);
+
+    hr = ITypeLib_GetTypeInfo(tl, 0, &ti);
+    ok(hr == S_OK, "Failed to get typeinfo, hr %#x.\n", hr);
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "Failed to get type attr, hr %#x.\n", hr);
+    ok(typeattr->wTypeFlags & TYPEFLAG_FDISPATCHABLE, "Unexpected type flags %#x.\n", typeattr->wTypeFlags);
+    ok(!typeattr->cImplTypes, "Unexpected cImplTypes value.\n");
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+    ITypeInfo_Release(ti);
+
+    ITypeLib_Release(tl);
+
+    ITypeLib_Release(stdole);
+    ITypeInfo_Release(dispti);
+
+    DeleteFileW(filenameW);
+}
+
 START_TEST(typelib)
 {
     const char *filename;
@@ -6486,4 +6583,5 @@ START_TEST(typelib)
     test_GetLibAttr();
     test_stub();
     test_dep();
+    test_DeleteImplType();
 }

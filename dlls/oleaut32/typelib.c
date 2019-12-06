@@ -11356,8 +11356,25 @@ static HRESULT WINAPI ICreateTypeInfo2_fnDeleteImplType(ICreateTypeInfo2 *iface,
         UINT index)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u - stub\n", This, index);
-    return E_NOTIMPL;
+    int i;
+
+    TRACE("%p %u\n", This, index);
+
+    if (index >= This->typeattr.cImplTypes)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    TLB_FreeCustData(&This->impltypes[index].custdata_list);
+    --This->typeattr.cImplTypes;
+
+    if (index < This->typeattr.cImplTypes)
+    {
+        memmove(This->impltypes + index, This->impltypes + index + 1, (This->typeattr.cImplTypes - index) *
+                sizeof(*This->impltypes));
+        for (i = index; i < This->typeattr.cImplTypes; ++i)
+            TLB_relink_custdata(&This->impltypes[i].custdata_list);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnSetCustData(ICreateTypeInfo2 *iface,
