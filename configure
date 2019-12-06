@@ -1409,6 +1409,7 @@ enable_mpr
 enable_mprapi
 enable_msacm32_drv
 enable_msacm32
+enable_msado15
 enable_msadp32_acm
 enable_msasn1
 enable_mscat32
@@ -20583,6 +20584,7 @@ wine_fn_config_makefile dlls/msacm.dll16 enable_win16
 wine_fn_config_makefile dlls/msacm32.drv enable_msacm32_drv
 wine_fn_config_makefile dlls/msacm32 enable_msacm32
 wine_fn_config_makefile dlls/msacm32/tests enable_tests
+wine_fn_config_makefile dlls/msado15 enable_msado15
 wine_fn_config_makefile dlls/msadp32.acm enable_msadp32_acm
 wine_fn_config_makefile dlls/msasn1 enable_msasn1
 wine_fn_config_makefile dlls/mscat32 enable_mscat32

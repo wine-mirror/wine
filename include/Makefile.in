@@ -394,6 +394,7 @@ SOURCES = \
 	msacm.h \
 	msacmdlg.h \
 	msacmdrv.h \
+	msado15_backcompat.idl \
 	msasn1.h \
 	mscat.h \
 	mscoree.idl \
