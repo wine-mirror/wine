@@ -1745,14 +1745,16 @@ static unsigned int get_thread_fpu_cw( unsigned long *fpu_cw )
 
 static void test_thread_fpu_cw(void)
 {
-    static const struct { unsigned int cw; unsigned long fpu_cw; } expected_cw[6] =
+    static const struct {
+        unsigned int cw; unsigned long fpu_cw; unsigned long fpu_cw_broken;
+    } expected_cw[6] =
     {
 #ifdef __i386__
         { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f80 ) },
         { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f80 ) },
-        { _EM_INEXACT | _RC_CHOP | _PC_24, MAKELONG( 0xc60, 0x7000 ) },
+        { _EM_INEXACT | _RC_CHOP | _PC_24, MAKELONG( 0xc60, 0x7000 ), MAKELONG( 0xc60, 0x1f80 ) },
         { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f80 ) },
-        { _EM_INEXACT | _RC_CHOP | _PC_24, MAKELONG( 0xc60, 0x7000 ) },
+        { _EM_INEXACT | _RC_CHOP | _PC_24, MAKELONG( 0xc60, 0x7000 ), MAKELONG( 0xc60, 0x1f80 ) },
         { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f80 ) }
 #elif defined(__x86_64__)
         { _MCW_EM | _PC_64, MAKELONG( 0x27f, 0x1f80 ) },
@@ -1788,7 +1790,9 @@ static void test_thread_fpu_cw(void)
     cw = _control87( 0, 0 );
     fpu_cw = get_fpu_cw();
     ok(cw == expected_cw[2].cw, "expected %#x got %#x\n", expected_cw[2].cw, cw);
-    ok(fpu_cw == expected_cw[2].fpu_cw, "expected %#lx got %#lx\n", expected_cw[2].fpu_cw, fpu_cw);
+    ok(fpu_cw == expected_cw[2].fpu_cw ||
+            broken(expected_cw[2].fpu_cw_broken && fpu_cw == expected_cw[2].fpu_cw_broken),
+        "expected %#lx got %#lx\n", expected_cw[2].fpu_cw, fpu_cw);
 
     cw = get_thread_fpu_cw( &fpu_cw );
     ok(cw == expected_cw[3].cw, "expected %#x got %#x\n", expected_cw[3].cw, cw);
@@ -1797,7 +1801,9 @@ static void test_thread_fpu_cw(void)
     cw = _control87( 0, 0 );
     fpu_cw = get_fpu_cw();
     ok(cw == expected_cw[4].cw, "expected %#x got %#x\n", expected_cw[4].cw, cw);
-    ok(fpu_cw == expected_cw[4].fpu_cw, "expected %#lx got %#lx\n", expected_cw[4].fpu_cw, fpu_cw);
+    ok(fpu_cw == expected_cw[4].fpu_cw ||
+            broken(expected_cw[4].fpu_cw_broken && fpu_cw == expected_cw[4].fpu_cw_broken),
+        "expected %#lx got %#lx\n", expected_cw[4].fpu_cw, fpu_cw);
 
     _control87( initial_cw, _MCW_EM | _MCW_RC | _MCW_PC );
     cw = _control87( 0, 0 );
