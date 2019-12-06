@@ -1812,10 +1812,27 @@ static void test_video_window_owner(IVideoWindow *window, HWND hwnd, HWND our_hw
     ok(state == OATRUE, "Got state %d.\n", state);
 }
 
+struct notify_message_params
+{
+    IVideoWindow *window;
+    HWND hwnd;
+    UINT message;
+};
+
+static DWORD CALLBACK notify_message_proc(void *arg)
+{
+    const struct notify_message_params *params = arg;
+    HRESULT hr = IVideoWindow_NotifyOwnerMessage(params->window, (OAHWND)params->hwnd, params->message, 0, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    return 0;
+}
+
 static void test_video_window_messages(IVideoWindow *window, HWND hwnd, HWND our_hwnd)
 {
+    struct notify_message_params params;
     unsigned int i;
     OAHWND oahwnd;
+    HANDLE thread;
     HRESULT hr;
     BOOL ret;
     MSG msg;
@@ -1886,14 +1903,33 @@ static void test_video_window_messages(IVideoWindow *window, HWND hwnd, HWND our
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret = GetQueueStatus(QS_SENDMESSAGE | QS_POSTMESSAGE);
-    todo_wine ok(!ret, "Got unexpected status %#x.\n", ret);
+    ok(!ret, "Got unexpected status %#x.\n", ret);
 
     hr = IVideoWindow_NotifyOwnerMessage(window, (OAHWND)our_hwnd, WM_SETCURSOR,
             (WPARAM)hwnd, MAKELONG(HTCLIENT, WM_MOUSEMOVE));
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret = GetQueueStatus(QS_SENDMESSAGE | QS_POSTMESSAGE);
-    todo_wine ok(!ret, "Got unexpected status %#x.\n", ret);
+    ok(!ret, "Got unexpected status %#x.\n", ret);
+
+    params.window = window;
+    params.hwnd = our_hwnd;
+    params.message = WM_SYSCOLORCHANGE;
+    thread = CreateThread(NULL, 0, notify_message_proc, &params, 0, NULL);
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block.\n");
+    ret = GetQueueStatus(QS_SENDMESSAGE | QS_POSTMESSAGE);
+    ok(ret == ((QS_SENDMESSAGE << 16) | QS_SENDMESSAGE), "Got unexpected status %#x.\n", ret);
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok(!WaitForSingleObject(thread, 1000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    params.message = WM_SETCURSOR;
+    thread = CreateThread(NULL, 0, notify_message_proc, &params, 0, NULL);
+    ok(!WaitForSingleObject(thread, 1000), "Thread should not block.\n");
+    CloseHandle(thread);
+    ret = GetQueueStatus(QS_SENDMESSAGE | QS_POSTMESSAGE);
+    ok(!ret, "Got unexpected status %#x.\n", ret);
 
     hr = IVideoWindow_put_Owner(window, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

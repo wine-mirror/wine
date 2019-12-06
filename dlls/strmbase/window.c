@@ -654,14 +654,28 @@ HRESULT WINAPI BaseControlWindowImpl_GetWindowPosition(IVideoWindow *iface, LONG
     return S_OK;
 }
 
-HRESULT WINAPI BaseControlWindowImpl_NotifyOwnerMessage(IVideoWindow *iface, OAHWND hwnd, LONG uMsg, LONG_PTR wParam, LONG_PTR lParam)
+HRESULT WINAPI BaseControlWindowImpl_NotifyOwnerMessage(IVideoWindow *iface,
+        OAHWND hwnd, LONG message, LONG_PTR wparam, LONG_PTR lparam)
 {
-    BaseControlWindow*  This = impl_from_IVideoWindow(iface);
+    BaseControlWindow *window = impl_from_IVideoWindow(iface);
 
-    TRACE("(%p/%p)->(%08lx, %d, %08lx, %08lx)\n", This, iface, hwnd, uMsg, wParam, lParam);
+    TRACE("window %p, hwnd %#lx, message %#x, wparam %#lx, lparam %#lx.\n",
+            window, hwnd, message, wparam, lparam);
 
-    if (!PostMessageW(This->baseWindow.hWnd, uMsg, wParam, lParam))
-        return E_FAIL;
+    /* That these messages are forwarded, and no others, is stated by the
+     * DirectX documentation, and supported by manual testing. */
+    switch (message)
+    {
+    case WM_ACTIVATEAPP:
+    case WM_DEVMODECHANGE:
+    case WM_DISPLAYCHANGE:
+    case WM_PALETTECHANGED:
+    case WM_PALETTEISCHANGING:
+    case WM_QUERYNEWPALETTE:
+    case WM_SYSCOLORCHANGE:
+        SendMessageW(window->baseWindow.hWnd, message, wparam, lparam);
+        break;
+    }
 
     return S_OK;
 }
