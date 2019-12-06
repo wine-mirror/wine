@@ -258,9 +258,9 @@ extern HRESULT get_family_names_from_stream(IDWriteFontFileStream*,UINT32,DWRITE
 extern HRESULT create_colorglyphenum(FLOAT,FLOAT,const DWRITE_GLYPH_RUN*,const DWRITE_GLYPH_RUN_DESCRIPTION*,DWRITE_MEASURING_MODE,
     const DWRITE_MATRIX*,UINT32,IDWriteColorGlyphRunEnumerator**) DECLSPEC_HIDDEN;
 extern BOOL lb_is_newline_char(WCHAR) DECLSPEC_HIDDEN;
-extern HRESULT create_system_fontfallback(IDWriteFactory5 *factory, IDWriteFontFallback1 **fallback) DECLSPEC_HIDDEN;
+extern HRESULT create_system_fontfallback(IDWriteFactory7 *factory, IDWriteFontFallback1 **fallback) DECLSPEC_HIDDEN;
 extern void release_system_fontfallback(IDWriteFontFallback1 *fallback) DECLSPEC_HIDDEN;
-extern HRESULT create_fontfallback_builder(IDWriteFactory5*,IDWriteFontFallbackBuilder**) DECLSPEC_HIDDEN;
+extern HRESULT create_fontfallback_builder(IDWriteFactory7 *factory, IDWriteFontFallbackBuilder **builder) DECLSPEC_HIDDEN;
 extern HRESULT create_matching_font(IDWriteFontCollection*,const WCHAR*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
     IDWriteFont**) DECLSPEC_HIDDEN;
 extern HRESULT create_fontfacereference(IDWriteFactory7 *factory, IDWriteFontFile *file, UINT32 face_index,

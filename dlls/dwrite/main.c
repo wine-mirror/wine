@@ -1337,7 +1337,7 @@ static HRESULT WINAPI dwritefactory2_GetSystemFontFallback(IDWriteFactory7 *ifac
 
     if (!factory->fallback)
     {
-        HRESULT hr = create_system_fontfallback((IDWriteFactory5 *)iface, &factory->fallback);
+        HRESULT hr = create_system_fontfallback(iface, &factory->fallback);
         if (FAILED(hr))
             return hr;
     }
@@ -1352,7 +1352,7 @@ static HRESULT WINAPI dwritefactory2_CreateFontFallbackBuilder(IDWriteFactory7 *
 {
     TRACE("%p, %p.\n", iface, fallbackbuilder);
 
-    return create_fontfallback_builder((IDWriteFactory5 *)iface, fallbackbuilder);
+    return create_fontfallback_builder(iface, fallbackbuilder);
 }
 
 static HRESULT WINAPI dwritefactory2_TranslateColorGlyphRun(IDWriteFactory7 *iface, FLOAT originX, FLOAT originY,
