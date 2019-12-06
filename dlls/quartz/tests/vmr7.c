@@ -1461,6 +1461,794 @@ static void test_overlay(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+/* try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    int diff = 200;
+    DWORD time;
+    MSG msg;
+
+    time = GetTickCount() + diff;
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects(0, NULL, FALSE, 100, QS_ALLINPUT) == WAIT_TIMEOUT)
+            break;
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
+        diff = time - GetTickCount();
+    }
+}
+
+static LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (winetest_debug > 1)
+        trace("hwnd %p, msg %#x, wparam %#lx, lparam %#lx.\n", hwnd, msg, wparam, lparam);
+
+    if (wparam == 0xdeadbeef)
+        return 0;
+
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static void test_video_window_caption(IVideoWindow *window, HWND hwnd)
+{
+    WCHAR text[50];
+    BSTR caption;
+    HRESULT hr;
+
+    hr = IVideoWindow_get_Caption(window, &caption);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!wcscmp(caption, L"ActiveMovie Window"), "Got caption %s.\n", wine_dbgstr_w(caption));
+    SysFreeString(caption);
+
+    GetWindowTextW(hwnd, text, ARRAY_SIZE(text));
+    ok(!wcscmp(text, L"ActiveMovie Window"), "Got caption %s.\n", wine_dbgstr_w(text));
+
+    caption = SysAllocString(L"foo");
+    hr = IVideoWindow_put_Caption(window, caption);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SysFreeString(caption);
+
+    hr = IVideoWindow_get_Caption(window, &caption);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!wcscmp(caption, L"foo"), "Got caption %s.\n", wine_dbgstr_w(caption));
+    SysFreeString(caption);
+
+    GetWindowTextW(hwnd, text, ARRAY_SIZE(text));
+    ok(!wcscmp(text, L"foo"), "Got caption %s.\n", wine_dbgstr_w(text));
+}
+
+static void test_video_window_style(IVideoWindow *window, HWND hwnd, HWND our_hwnd)
+{
+    HRESULT hr;
+    LONG style;
+
+    hr = IVideoWindow_get_WindowStyle(window, &style);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(style == (WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_OVERLAPPEDWINDOW),
+            "Got style %#x.\n", style);
+
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    todo_wine ok(style == (WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_OVERLAPPEDWINDOW),
+            "Got style %#x.\n", style);
+
+    hr = IVideoWindow_put_WindowStyle(window, style | WS_DISABLED);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IVideoWindow_put_WindowStyle(window, style | WS_HSCROLL);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IVideoWindow_put_WindowStyle(window, style | WS_VSCROLL);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IVideoWindow_put_WindowStyle(window, style | WS_MAXIMIZE);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IVideoWindow_put_WindowStyle(window, style | WS_MINIMIZE);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_put_WindowStyle(window, style & ~WS_CLIPCHILDREN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_WindowStyle(window, &style);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW), "Got style %#x.\n", style);
+
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    todo_wine ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW), "Got style %#x.\n", style);
+
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+
+    hr = IVideoWindow_get_WindowStyleEx(window, &style);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(style == WS_EX_WINDOWEDGE, "Got style %#x.\n", style);
+
+    style = GetWindowLongA(hwnd, GWL_EXSTYLE);
+    ok(style == WS_EX_WINDOWEDGE, "Got style %#x.\n", style);
+
+    hr = IVideoWindow_put_WindowStyleEx(window, style | WS_EX_TRANSPARENT);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_WindowStyleEx(window, &style);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(style == (WS_EX_WINDOWEDGE | WS_EX_TRANSPARENT), "Got style %#x.\n", style);
+
+    style = GetWindowLongA(hwnd, GWL_EXSTYLE);
+    ok(style == (WS_EX_WINDOWEDGE | WS_EX_TRANSPARENT), "Got style %#x.\n", style);
+}
+
+static BOOL CALLBACK top_window_cb(HWND hwnd, LPARAM ctx)
+{
+    DWORD pid;
+    GetWindowThreadProcessId(hwnd, &pid);
+    if (pid == GetCurrentProcessId() && (GetWindowLongW(hwnd, GWL_STYLE) & WS_VISIBLE))
+    {
+        *(HWND *)ctx = hwnd;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static HWND get_top_window(void)
+{
+    HWND hwnd;
+    EnumWindows(top_window_cb, (LPARAM)&hwnd);
+    return hwnd;
+}
+
+static void test_video_window_state(IVideoWindow *window, HWND hwnd, HWND our_hwnd)
+{
+    HRESULT hr;
+    LONG state;
+    HWND top;
+
+    SetWindowPos(our_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+    hr = IVideoWindow_get_WindowState(window, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == SW_HIDE, "Got state %d.\n", state);
+
+    hr = IVideoWindow_get_Visible(window, &state);
+    ok(state == OAFALSE, "Got state %d.\n", state);
+
+    ok(!IsWindowVisible(hwnd), "Window should not be visible.\n");
+    ok(!IsIconic(hwnd), "Window should not be minimized.\n");
+    ok(!IsZoomed(hwnd), "Window should not be maximized.\n");
+
+    hr = IVideoWindow_put_WindowState(window, SW_SHOWNA);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_WindowState(window, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == SW_SHOW, "Got state %d.\n", state);
+
+    hr = IVideoWindow_get_Visible(window, &state);
+    ok(state == OATRUE, "Got state %d.\n", state);
+
+    ok(IsWindowVisible(hwnd), "Window should be visible.\n");
+    ok(!IsIconic(hwnd), "Window should not be minimized.\n");
+    ok(!IsZoomed(hwnd), "Window should not be maximized.\n");
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+    top = get_top_window();
+    ok(top == hwnd, "Got top window %p.\n", top);
+
+    hr = IVideoWindow_put_WindowState(window, SW_MINIMIZE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_WindowState(window, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == SW_MINIMIZE, "Got state %d.\n", state);
+
+    hr = IVideoWindow_get_Visible(window, &state);
+    ok(state == OATRUE, "Got state %d.\n", state);
+
+    ok(IsWindowVisible(hwnd), "Window should be visible.\n");
+    ok(IsIconic(hwnd), "Window should be minimized.\n");
+    ok(!IsZoomed(hwnd), "Window should not be maximized.\n");
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+
+    hr = IVideoWindow_put_WindowState(window, SW_RESTORE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_WindowState(window, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == SW_SHOW, "Got state %d.\n", state);
+
+    hr = IVideoWindow_get_Visible(window, &state);
+    ok(state == OATRUE, "Got state %d.\n", state);
+
+    ok(IsWindowVisible(hwnd), "Window should be visible.\n");
+    ok(!IsIconic(hwnd), "Window should not be minimized.\n");
+    ok(!IsZoomed(hwnd), "Window should not be maximized.\n");
+    ok(GetActiveWindow() == hwnd, "Got active window %p.\n", GetActiveWindow());
+
+    hr = IVideoWindow_put_WindowState(window, SW_MAXIMIZE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_WindowState(window, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == SW_MAXIMIZE, "Got state %d.\n", state);
+
+    hr = IVideoWindow_get_Visible(window, &state);
+    ok(state == OATRUE, "Got state %d.\n", state);
+
+    ok(IsWindowVisible(hwnd), "Window should be visible.\n");
+    ok(!IsIconic(hwnd), "Window should be minimized.\n");
+    ok(IsZoomed(hwnd), "Window should not be maximized.\n");
+    ok(GetActiveWindow() == hwnd, "Got active window %p.\n", GetActiveWindow());
+
+    hr = IVideoWindow_put_WindowState(window, SW_RESTORE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_put_WindowState(window, SW_HIDE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_WindowState(window, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == SW_HIDE, "Got state %d.\n", state);
+
+    hr = IVideoWindow_get_Visible(window, &state);
+    ok(state == OAFALSE, "Got state %d.\n", state);
+
+    ok(!IsWindowVisible(hwnd), "Window should not be visible.\n");
+    ok(!IsIconic(hwnd), "Window should not be minimized.\n");
+    ok(!IsZoomed(hwnd), "Window should not be maximized.\n");
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+
+    hr = IVideoWindow_put_Visible(window, OATRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_WindowState(window, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == SW_SHOW, "Got state %d.\n", state);
+
+    hr = IVideoWindow_get_Visible(window, &state);
+    ok(state == OATRUE, "Got state %d.\n", state);
+
+    ok(IsWindowVisible(hwnd), "Window should be visible.\n");
+    ok(!IsIconic(hwnd), "Window should not be minimized.\n");
+    ok(!IsZoomed(hwnd), "Window should not be maximized.\n");
+    ok(GetActiveWindow() == hwnd, "Got active window %p.\n", GetActiveWindow());
+
+    hr = IVideoWindow_put_Visible(window, OAFALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_WindowState(window, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == SW_HIDE, "Got state %d.\n", state);
+
+    hr = IVideoWindow_get_Visible(window, &state);
+    ok(state == OAFALSE, "Got state %d.\n", state);
+
+    ok(!IsWindowVisible(hwnd), "Window should not be visible.\n");
+    ok(!IsIconic(hwnd), "Window should not be minimized.\n");
+    ok(!IsZoomed(hwnd), "Window should not be maximized.\n");
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+
+    hr = IVideoWindow_put_WindowState(window, SW_SHOWNA);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_SetWindowForeground(window, TRUE);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    SetWindowPos(our_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    hr = IVideoWindow_SetWindowForeground(window, OATRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(GetActiveWindow() == hwnd, "Got active window %p.\n", GetActiveWindow());
+    ok(GetFocus() == hwnd, "Got focus window %p.\n", GetFocus());
+    ok(GetForegroundWindow() == hwnd, "Got foreground window %p.\n", GetForegroundWindow());
+    top = get_top_window();
+    ok(top == hwnd, "Got top window %p.\n", top);
+
+    hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(GetActiveWindow() == hwnd, "Got active window %p.\n", GetActiveWindow());
+    ok(GetFocus() == hwnd, "Got focus window %p.\n", GetFocus());
+    ok(GetForegroundWindow() == hwnd, "Got foreground window %p.\n", GetForegroundWindow());
+    top = get_top_window();
+    ok(top == hwnd, "Got top window %p.\n", top);
+
+    SetWindowPos(our_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+    ok(GetFocus() == our_hwnd, "Got focus window %p.\n", GetFocus());
+    ok(GetForegroundWindow() == our_hwnd, "Got foreground window %p.\n", GetForegroundWindow());
+    top = get_top_window();
+    ok(top == hwnd, "Got top window %p.\n", top);
+}
+
+static void test_video_window_position(IVideoWindow *window, HWND hwnd, HWND our_hwnd)
+{
+    LONG left, width, top, height, expect_width, expect_height;
+    RECT rect = {0, 0, 600, 400};
+    HWND top_hwnd;
+    HRESULT hr;
+
+    SetWindowPos(our_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+    AdjustWindowRect(&rect, GetWindowLongA(hwnd, GWL_STYLE), FALSE);
+    expect_width = rect.right - rect.left;
+    expect_height = rect.bottom - rect.top;
+
+    hr = IVideoWindow_put_Left(window, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IVideoWindow_put_Top(window, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_Left(window, &left);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(left == 0, "Got left %d.\n", left);
+    hr = IVideoWindow_get_Top(window, &top);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(top == 0, "Got top %d.\n", top);
+    hr = IVideoWindow_get_Width(window, &width);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    hr = IVideoWindow_get_Height(window, &height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(height == expect_height, "Got height %d.\n", height);
+    hr = IVideoWindow_GetWindowPosition(window, &left, &top, &width, &height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(left == 0, "Got left %d.\n", left);
+    ok(top == 0, "Got top %d.\n", top);
+    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    todo_wine ok(height == expect_height, "Got height %d.\n", height);
+    GetWindowRect(hwnd, &rect);
+    ok(rect.left == 0, "Got window left %d.\n", rect.left);
+    ok(rect.top == 0, "Got window top %d.\n", rect.top);
+    todo_wine ok(rect.right == expect_width, "Got window right %d.\n", rect.right);
+    todo_wine ok(rect.bottom == expect_height, "Got window bottom %d.\n", rect.bottom);
+
+    hr = IVideoWindow_put_Left(window, 10);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_Left(window, &left);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(left == 10, "Got left %d.\n", left);
+    hr = IVideoWindow_get_Top(window, &top);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(top == 0, "Got top %d.\n", top);
+    hr = IVideoWindow_get_Width(window, &width);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    hr = IVideoWindow_get_Height(window, &height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(height == expect_height, "Got height %d.\n", height);
+    hr = IVideoWindow_GetWindowPosition(window, &left, &top, &width, &height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(left == 10, "Got left %d.\n", left);
+    ok(top == 0, "Got top %d.\n", top);
+    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    todo_wine ok(height == expect_height, "Got height %d.\n", height);
+    GetWindowRect(hwnd, &rect);
+    ok(rect.left == 10, "Got window left %d.\n", rect.left);
+    ok(rect.top == 0, "Got window top %d.\n", rect.top);
+    todo_wine ok(rect.right == 10 + expect_width, "Got window right %d.\n", rect.right);
+    todo_wine ok(rect.bottom == expect_height, "Got window bottom %d.\n", rect.bottom);
+
+    hr = IVideoWindow_put_Height(window, 200);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_Left(window, &left);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(left == 10, "Got left %d.\n", left);
+    hr = IVideoWindow_get_Top(window, &top);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(top == 0, "Got top %d.\n", top);
+    hr = IVideoWindow_get_Width(window, &width);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    hr = IVideoWindow_get_Height(window, &height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(height == 200, "Got height %d.\n", height);
+    hr = IVideoWindow_GetWindowPosition(window, &left, &top, &width, &height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(left == 10, "Got left %d.\n", left);
+    ok(top == 0, "Got top %d.\n", top);
+    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    ok(height == 200, "Got height %d.\n", height);
+    GetWindowRect(hwnd, &rect);
+    ok(rect.left == 10, "Got window left %d.\n", rect.left);
+    ok(rect.top == 0, "Got window top %d.\n", rect.top);
+    todo_wine ok(rect.right == 10 + expect_width, "Got window right %d.\n", rect.right);
+    ok(rect.bottom == 200, "Got window bottom %d.\n", rect.bottom);
+
+    hr = IVideoWindow_SetWindowPosition(window, 100, 200, 300, 400);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_Left(window, &left);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(left == 100, "Got left %d.\n", left);
+    hr = IVideoWindow_get_Top(window, &top);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(top == 200, "Got top %d.\n", top);
+    hr = IVideoWindow_get_Width(window, &width);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(width == 300, "Got width %d.\n", width);
+    hr = IVideoWindow_get_Height(window, &height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(height == 400, "Got height %d.\n", height);
+    hr = IVideoWindow_GetWindowPosition(window, &left, &top, &width, &height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(left == 100, "Got left %d.\n", left);
+    ok(top == 200, "Got top %d.\n", top);
+    ok(width == 300, "Got width %d.\n", width);
+    ok(height == 400, "Got height %d.\n", height);
+    GetWindowRect(hwnd, &rect);
+    ok(rect.left == 100, "Got window left %d.\n", rect.left);
+    ok(rect.top == 200, "Got window top %d.\n", rect.top);
+    ok(rect.right == 400, "Got window right %d.\n", rect.right);
+    ok(rect.bottom == 600, "Got window bottom %d.\n", rect.bottom);
+
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+    top_hwnd = get_top_window();
+    ok(top_hwnd == our_hwnd, "Got top window %p.\n", top_hwnd);
+}
+
+static void test_video_window_owner(IVideoWindow *window, HWND hwnd, HWND our_hwnd)
+{
+    HWND parent, top_hwnd;
+    LONG style, state;
+    OAHWND oahwnd;
+    HRESULT hr;
+
+    SetWindowPos(our_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+    hr = IVideoWindow_get_Owner(window, &oahwnd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!oahwnd, "Got owner %#lx.\n", oahwnd);
+
+    parent = GetAncestor(hwnd, GA_PARENT);
+    ok(parent == GetDesktopWindow(), "Got parent %p.\n", parent);
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    ok(!(style & WS_CHILD), "Got style %#x.\n", style);
+
+    hr = IVideoWindow_put_Owner(window, (OAHWND)our_hwnd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_Owner(window, &oahwnd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(oahwnd == (OAHWND)our_hwnd, "Got owner %#lx.\n", oahwnd);
+
+    parent = GetAncestor(hwnd, GA_PARENT);
+    ok(parent == our_hwnd, "Got parent %p.\n", parent);
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    ok((style & WS_CHILD), "Got style %#x.\n", style);
+
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+    top_hwnd = get_top_window();
+    ok(top_hwnd == our_hwnd, "Got top window %p.\n", top_hwnd);
+
+    ShowWindow(our_hwnd, SW_HIDE);
+
+    hr = IVideoWindow_put_Visible(window, OATRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_Visible(window, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == OAFALSE, "Got state %d.\n", state);
+
+    hr = IVideoWindow_put_Owner(window, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_Owner(window, &oahwnd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!oahwnd, "Got owner %#lx.\n", oahwnd);
+
+    parent = GetAncestor(hwnd, GA_PARENT);
+    ok(parent == GetDesktopWindow(), "Got parent %p.\n", parent);
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    ok(!(style & WS_CHILD), "Got style %#x.\n", style);
+
+    ok(GetActiveWindow() == hwnd, "Got active window %p.\n", GetActiveWindow());
+    top_hwnd = get_top_window();
+    ok(top_hwnd == hwnd, "Got top window %p.\n", top_hwnd);
+
+    hr = IVideoWindow_get_Visible(window, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == OATRUE, "Got state %d.\n", state);
+}
+
+struct notify_message_params
+{
+    IVideoWindow *window;
+    HWND hwnd;
+    UINT message;
+};
+
+static DWORD CALLBACK notify_message_proc(void *arg)
+{
+    const struct notify_message_params *params = arg;
+    HRESULT hr = IVideoWindow_NotifyOwnerMessage(params->window, (OAHWND)params->hwnd, params->message, 0, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    return 0;
+}
+
+static void test_video_window_messages(IVideoWindow *window, HWND hwnd, HWND our_hwnd)
+{
+    struct notify_message_params params;
+    unsigned int i;
+    OAHWND oahwnd;
+    HANDLE thread;
+    HRESULT hr;
+    BOOL ret;
+    MSG msg;
+
+    static UINT drain_tests[] =
+    {
+        WM_MOUSEACTIVATE,
+        WM_NCLBUTTONDOWN,
+        WM_NCLBUTTONUP,
+        WM_NCLBUTTONDBLCLK,
+        WM_NCRBUTTONDOWN,
+        WM_NCRBUTTONUP,
+        WM_NCRBUTTONDBLCLK,
+        WM_NCMBUTTONDOWN,
+        WM_NCMBUTTONUP,
+        WM_NCMBUTTONDBLCLK,
+        WM_KEYDOWN,
+        WM_KEYUP,
+        WM_MOUSEMOVE,
+        WM_LBUTTONDOWN,
+        WM_LBUTTONUP,
+        WM_LBUTTONDBLCLK,
+        WM_RBUTTONDOWN,
+        WM_RBUTTONUP,
+        WM_RBUTTONDBLCLK,
+        WM_MBUTTONDOWN,
+        WM_MBUTTONUP,
+        WM_MBUTTONDBLCLK,
+    };
+
+    flush_events();
+
+    hr = IVideoWindow_get_MessageDrain(window, &oahwnd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!oahwnd, "Got window %#lx.\n", oahwnd);
+
+    hr = IVideoWindow_put_MessageDrain(window, (OAHWND)our_hwnd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_MessageDrain(window, &oahwnd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(oahwnd == (OAHWND)our_hwnd, "Got window %#lx.\n", oahwnd);
+
+    for (i = 0; i < ARRAY_SIZE(drain_tests); ++i)
+    {
+        SendMessageA(hwnd, drain_tests[i], 0xdeadbeef, 0);
+        ret = PeekMessageA(&msg, 0, drain_tests[i], drain_tests[i], PM_REMOVE);
+        ok(ret, "Expected a message.\n");
+        ok(msg.hwnd == our_hwnd, "Got hwnd %p.\n", msg.hwnd);
+        ok(msg.message == drain_tests[i], "Got message %#x.\n", msg.message);
+        ok(msg.wParam == 0xdeadbeef, "Got wparam %#lx.\n", msg.wParam);
+        ok(!msg.lParam, "Got lparam %#lx.\n", msg.lParam);
+        DispatchMessageA(&msg);
+
+        ret = PeekMessageA(&msg, 0, drain_tests[i], drain_tests[i], PM_REMOVE);
+        ok(!ret, "Got unexpected message %#x.\n", msg.message);
+    }
+
+    hr = IVideoWindow_put_MessageDrain(window, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_put_Owner(window, (OAHWND)our_hwnd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    flush_events();
+
+    hr = IVideoWindow_NotifyOwnerMessage(window, (OAHWND)our_hwnd, WM_SYSCOLORCHANGE, 0, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = GetQueueStatus(QS_SENDMESSAGE | QS_POSTMESSAGE);
+    ok(!ret, "Got unexpected status %#x.\n", ret);
+
+    hr = IVideoWindow_NotifyOwnerMessage(window, (OAHWND)our_hwnd, WM_SETCURSOR,
+            (WPARAM)hwnd, MAKELONG(HTCLIENT, WM_MOUSEMOVE));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ret = GetQueueStatus(QS_SENDMESSAGE | QS_POSTMESSAGE);
+    ok(!ret, "Got unexpected status %#x.\n", ret);
+
+    params.window = window;
+    params.hwnd = our_hwnd;
+    params.message = WM_SYSCOLORCHANGE;
+    thread = CreateThread(NULL, 0, notify_message_proc, &params, 0, NULL);
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block.\n");
+    ret = GetQueueStatus(QS_SENDMESSAGE | QS_POSTMESSAGE);
+    ok(ret == ((QS_SENDMESSAGE << 16) | QS_SENDMESSAGE), "Got unexpected status %#x.\n", ret);
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok(!WaitForSingleObject(thread, 1000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    params.message = WM_SETCURSOR;
+    thread = CreateThread(NULL, 0, notify_message_proc, &params, 0, NULL);
+    ok(!WaitForSingleObject(thread, 1000), "Thread should not block.\n");
+    CloseHandle(thread);
+    ret = GetQueueStatus(QS_SENDMESSAGE | QS_POSTMESSAGE);
+    ok(!ret, "Got unexpected status %#x.\n", ret);
+
+    hr = IVideoWindow_put_Owner(window, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
+static void test_video_window_autoshow(IVideoWindow *window, IFilterGraph2 *graph, HWND hwnd)
+{
+    IMediaControl *control;
+    HRESULT hr;
+    LONG l;
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+
+    hr = IVideoWindow_get_AutoShow(window, &l);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(l == OATRUE, "Got %d.\n", l);
+
+    hr = IVideoWindow_put_Visible(window, OAFALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_Visible(window, &l);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(l == OATRUE, "Got %d.\n", l);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_Visible(window, &l);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(l == OATRUE, "Got %d.\n", l);
+
+    hr = IVideoWindow_put_AutoShow(window, OAFALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_put_Visible(window, OAFALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_Visible(window, &l);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(l == OAFALSE, "Got %d.\n", l);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IMediaControl_Release(control);
+}
+
+static void test_video_window(void)
+{
+    ALLOCATOR_PROPERTIES req_props = {1, 600 * 400 * 4, 1, 0}, ret_props;
+    VIDEOINFOHEADER vih =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biBitCount = 32,
+        .bmiHeader.biWidth = 600,
+        .bmiHeader.biHeight = 400,
+        .bmiHeader.biPlanes = 1,
+        .bmiHeader.biCompression = BI_RGB,
+    };
+    AM_MEDIA_TYPE req_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_RGB32,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(vih),
+        .pbFormat = (BYTE *)&vih,
+    };
+    IFilterGraph2 *graph = create_graph();
+    WNDCLASSA window_class = {0};
+    struct testfilter source;
+    IMemAllocator *allocator;
+    LONG width, height, l;
+    IVideoWindow *window;
+    IMemInputPin *input;
+    IBaseFilter *filter;
+    HWND hwnd, our_hwnd;
+    IOverlay *overlay;
+    BSTR caption;
+    HRESULT hr;
+    DWORD tid;
+    ULONG ref;
+    IPin *pin;
+    RECT rect;
+
+    window_class.lpszClassName = "wine_test_class";
+    window_class.lpfnWndProc = window_proc;
+    RegisterClassA(&window_class);
+    our_hwnd = CreateWindowA("wine_test_class", "test window", WS_VISIBLE | WS_OVERLAPPEDWINDOW,
+            100, 200, 300, 400, NULL, NULL, NULL, NULL);
+    flush_events();
+
+    filter = create_vmr7(0);
+    flush_events();
+
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
+
+    hr = IPin_QueryInterface(pin, &IID_IOverlay, (void **)&overlay);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IOverlay_GetWindowHandle(overlay, &hwnd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (winetest_debug > 1) trace("ours %p, theirs %p\n", our_hwnd, hwnd);
+    GetWindowRect(hwnd, &rect);
+
+    tid = GetWindowThreadProcessId(hwnd, NULL);
+    ok(tid == GetCurrentThreadId(), "Expected tid %#x, got %#x.\n", GetCurrentThreadId(), tid);
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IVideoWindow, (void **)&window);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_Caption(window, &caption);
+    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_WindowStyle(window, &l);
+    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_get_AutoShow(window, &l);
+    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    testfilter_init(&source);
+    IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, filter, NULL);
+    hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+    if (hr == VFW_E_TYPE_NOT_ACCEPTED) /* w7u */
+    {
+        req_mt.subtype = MEDIASUBTYPE_RGB24;
+        vih.bmiHeader.biBitCount = 24;
+        req_props.cbBuffer = 32 * 16 * 3;
+        hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(!memcmp(&ret_props, &req_props, sizeof(req_props)), "Properties did not match.\n");
+        hr = IMemAllocator_Commit(allocator);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        IMemAllocator_Release(allocator);
+    }
+
+    ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
+
+    test_video_window_caption(window, hwnd);
+    test_video_window_style(window, hwnd, our_hwnd);
+    test_video_window_state(window, hwnd, our_hwnd);
+    test_video_window_position(window, hwnd, our_hwnd);
+    test_video_window_autoshow(window, graph, hwnd);
+    test_video_window_owner(window, hwnd, our_hwnd);
+    test_video_window_messages(window, hwnd, our_hwnd);
+
+    hr = IVideoWindow_put_FullScreenMode(window, OATRUE);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    hr = IVideoWindow_get_FullScreenMode(window, &l);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    hr = IVideoWindow_GetMinIdealImageSize(window, &width, &height);
+    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    hr = IVideoWindow_GetMaxIdealImageSize(window, &width, &height);
+    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+
+    IFilterGraph2_Release(graph);
+    IVideoWindow_Release(window);
+    IOverlay_Release(overlay);
+    IMemInputPin_Release(input);
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    DestroyWindow(our_hwnd);
+}
+
 START_TEST(vmr7)
 {
     CoInitialize(NULL);
@@ -1476,6 +2264,7 @@ START_TEST(vmr7)
     test_unconnected_filter_state();
     test_connect_pin();
     test_overlay();
+    test_video_window();
 
     CoUninitialize();
 }
