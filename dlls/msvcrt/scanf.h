@@ -197,14 +197,14 @@ _FUNCTION_ {
 		format++;
 		suppress=1;
 	    }
-	    /* look for width specification */
-	    while (_ISDIGIT_(*format)) {
-		width*=10;
-		width+=*format++ - '0';
-	    }
-	    if (width==0) width=-1; /* no width spec seen */
 	    /* read prefix (if any) */
 	    while (!prefix_finished) {
+                /* look for width specification */
+                while (_ISDIGIT_(*format)) {
+                    width *= 10;
+                    width += *format++ - '0';
+                }
+
 		switch(*format) {
 		case 'h': h_prefix++; break;
 		case 'l':
@@ -228,6 +228,7 @@ _FUNCTION_ {
 		}
 		if (!prefix_finished) format++;
 	    }
+	    if (width==0) width=-1; /* no width spec seen */
 	    /* read type */
             switch(*format) {
 	    case 'p':

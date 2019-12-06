@@ -206,6 +206,30 @@ static void test_sscanf( void )
     ok(result == 0xdead614e, "Wrong number read (%x)\n", result);
 
     result = 0xdeadbeef;
+    strcpy(buffer,"12345678");
+    ret = p_sscanf(buffer, "%02hd", &result);
+    ok(ret == 1, "Wrong number of arguments read: %d\n", ret);
+    ok(result == 0xdead000c, "Wrong number read (%x)\n", result);
+
+    result = 0xdeadbeef;
+    strcpy(buffer,"12345678");
+    ret = p_sscanf(buffer, "%h02d", &result);
+    ok(ret == 1, "Wrong number of arguments read: %d\n", ret);
+    ok(result == 0xdead000c, "Wrong number read (%x)\n", result);
+
+    result = 0xdeadbeef;
+    strcpy(buffer,"12345678");
+    ret = p_sscanf(buffer, "%000h02d", &result);
+    ok(ret == 1, "Wrong number of arguments read: %d\n", ret);
+    ok(result == 0xdead000c, "Wrong number read (%x)\n", result);
+
+    result = 0xdeadbeef;
+    strcpy(buffer,"12345678");
+    ret = p_sscanf(buffer, "%2h0d", &result);
+    ok(ret == 1, "Wrong number of arguments read: %d\n", ret);
+    ok(result == 0xdead614e, "Wrong number read (%x)\n", result);
+
+    result = 0xdeadbeef;
     ret = p_sscanf(buffer, "%hhd", &result);
     ok(ret == 1, "Wrong number of arguments read: %d\n", ret);
     ok(result == 0xbc614e, "Wrong number read (%x)\n", result);
