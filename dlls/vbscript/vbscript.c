@@ -223,7 +223,10 @@ static void release_script(script_ctx_t *ctx)
             if(code->last_class) code->last_class->next = NULL;
         }
         else
+        {
+            list_remove(&code->entry);
             release_vbscode(code);
+        }
     }
 
     while(!list_empty(&ctx->named_items)) {
@@ -262,8 +265,12 @@ static void release_script(script_ctx_t *ctx)
 
 static void release_code_list(script_ctx_t *ctx)
 {
-    while(!list_empty(&ctx->code_list))
-        release_vbscode(LIST_ENTRY(list_head(&ctx->code_list), vbscode_t, entry));
+    while(!list_empty(&ctx->code_list)) {
+        vbscode_t *iter = LIST_ENTRY(list_head(&ctx->code_list), vbscode_t, entry);
+
+        list_remove(&iter->entry);
+        release_vbscode(iter);
+    }
 }
 
 static void decrease_state(VBScript *This, SCRIPTSTATE state)

@@ -1832,7 +1832,8 @@ void release_vbscode(vbscode_t *code)
 {
     unsigned i;
 
-    list_remove(&code->entry);
+    if(--code->ref)
+        return;
 
     for(i=0; i < code->bstr_cnt; i++)
         SysFreeString(code->bstr_pool[i]);
@@ -1875,6 +1876,7 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
 
     ret->main_code.type = FUNC_GLOBAL;
     ret->main_code.code_ctx = ret;
+    ret->ref = 1;
 
     list_init(&ret->entry);
     return ret;

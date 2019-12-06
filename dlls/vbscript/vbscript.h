@@ -336,6 +336,7 @@ struct _function_t {
 struct _vbscode_t {
     instr_t *instrs;
     WCHAR *source;
+    unsigned ref;
 
     BOOL option_explicit;
 
