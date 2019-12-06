@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-05-10 10:54+0200\n"
+"PO-Revision-Date: 2019-12-06 16:25+0100\n"
 "Last-Translator: Julian Rüger <jr98@gmx.net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -627,7 +627,7 @@ msgstr "Selbs&t definierte Farben:"
 
 #: comdlg32.rc:289
 msgid "|S&olid"
-msgstr ""
+msgstr "|Bas&is"
 
 #: comdlg32.rc:290
 msgid "&Red:"
@@ -657,18 +657,16 @@ msgstr "H&ell:"
 
 #: comdlg32.rc:310
 msgid "&Add to Custom Colors"
-msgstr "Farbe hin&zufügen"
+msgstr "Farbe &hinzufügen"
 
 #: comdlg32.rc:311
 msgid "&Define Custom Colors >>"
 msgstr "Farben &definieren >>"
 
 #: comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "&Nein"
+msgstr "&i"
 
 #: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
@@ -6835,10 +6833,8 @@ msgid "Begin request has already been made.\n"
 msgstr "Startanfrage wurde bereits gestellt.\n"
 
 #: mferror.mc:599
-#, fuzzy
-#| msgid "Object is not initialized.\n"
 msgid "Sink has not been finalized.\n"
-msgstr "Objekt nicht initialisiert.\n"
+msgstr "Ausgang wurde nicht finalisiert.\n"
 
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7114,68 +7110,52 @@ msgid "Unsupported media source characteristics.\n"
 msgstr "Nicht unterstützte Medienquellen-Charakteristik.\n"
 
 #: mferror.mc:536
-#, fuzzy
-#| msgid "Rate change was preempted.\n"
 msgid "Stream sink was removed.\n"
-msgstr "Ratenänderung wurde blockiert.\n"
+msgstr "Datenstromausgang wurde entfernt.\n"
 
 #: mferror.mc:543
 msgid "Stream sinks are out of sync.\n"
-msgstr ""
+msgstr "Datenstromausgänge nicht mehr synchron.\n"
 
 #: mferror.mc:550
-#, fuzzy
-#| msgid "Media stream has no duration set.\n"
 msgid "Media sink stream sinks set is fixed.\n"
-msgstr "Für den Medienstrom wurde keine Dauer gesetzt.\n"
+msgstr "Datenstrom-Ausgangssatz des Medienausgangs ist nicht änderbar.\n"
 
 #: mferror.mc:557
-#, fuzzy
-#| msgid "Domain already exists.\n"
 msgid "Stream sink already exists.\n"
-msgstr "Domäne existiert bereits.\n"
+msgstr "Datenstromausgang existiert bereits.\n"
 
 #: mferror.mc:564
-#, fuzzy
-#| msgid "Operation was cancelled.\n"
 msgid "Sample allocation was canceled.\n"
-msgstr "Vorgang wurde abgebrochen.\n"
+msgstr "Allokation des Abtastwerts wurde abgebrochen.\n"
 
 #: mferror.mc:571
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Sample allocator is empty.\n"
-msgstr "Verzeichnis ist nicht leer.\n"
+msgstr "Abtastwert-Allokator ist leer.\n"
 
 #: mferror.mc:578
-#, fuzzy
-#| msgid "Clock state was already set.\n"
 msgid "Sink was already stopped.\n"
-msgstr "Zeitgeberstatus wurde bereits gesetzt.\n"
+msgstr "Ausgang wurde bereits gestoppt.\n"
 
 #: mferror.mc:585
 msgid "Bitrate was unknown for ASF file sink.\n"
-msgstr ""
+msgstr "Unbekannte Bitrate für ASF-Dateiausgang.\n"
 
 #: mferror.mc:592
-#, fuzzy
-#| msgid "No media streams were selected.\n"
 msgid "No streams were selected for the sink.\n"
-msgstr "Keine Medienströme ausgewählt.\n"
+msgstr "Keine Datenströme für den Ausgang gewählt.\n"
 
 #: mferror.mc:606
-#, fuzzy
-#| msgid "File name is too long.\n"
 msgid "Metadata was too long.\n"
-msgstr "Dateiname zu lang.\n"
+msgstr "Metadaten waren zu lang.\n"
 
 #: mferror.mc:613
 msgid "No samples were processed by the sink.\n"
-msgstr ""
+msgstr "Es wurden keine Abtastwerte durch den Ausgang verarbeitet.\n"
 
 #: mferror.mc:620
 msgid "Sink was not provided with required headers.\n"
-msgstr ""
+msgstr "Ausgang wurde nicht mit den nötigen Headern bereitgestellt.\n"
 
 #: mferror.mc:627
 msgid "Optional node is invalid.\n"
