@@ -20,5 +20,6 @@
 #define _WINE_MSADO15_PRIVATE_H_
 
 HRESULT Connection_create( void ** ) DECLSPEC_HIDDEN;
+HRESULT Recordset_create( void ** ) DECLSPEC_HIDDEN;
 
 #endif /* _WINE_MSADO15_PRIVATE_H_ */

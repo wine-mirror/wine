@@ -25,3 +25,11 @@
     uuid(00000514-0000-0010-8000-00aa006d2ea4)
 ]
 coclass Connection { interface _Connection; }
+
+[
+    threading(both),
+    progid("ADODB.Recordset.6.0"),
+    vi_progid("ADODB.Recordset"),
+    uuid(00000535-0000-0010-8000-00aa006d2ea4)
+]
+coclass Recordset { interface _Recordset; }
