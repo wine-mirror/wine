@@ -1525,11 +1525,11 @@ static void test_video_window_style(IVideoWindow *window, HWND hwnd, HWND our_hw
 
     hr = IVideoWindow_get_WindowStyle(window, &style);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(style == (WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_OVERLAPPEDWINDOW),
+    ok(style == (WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_OVERLAPPEDWINDOW),
             "Got style %#x.\n", style);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    todo_wine ok(style == (WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_OVERLAPPEDWINDOW),
+    ok(style == (WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_OVERLAPPEDWINDOW),
             "Got style %#x.\n", style);
 
     hr = IVideoWindow_put_WindowStyle(window, style | WS_DISABLED);
@@ -1548,10 +1548,10 @@ static void test_video_window_style(IVideoWindow *window, HWND hwnd, HWND our_hw
 
     hr = IVideoWindow_get_WindowStyle(window, &style);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW), "Got style %#x.\n", style);
+    ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW), "Got style %#x.\n", style);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    todo_wine ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW), "Got style %#x.\n", style);
+    ok(style == (WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW), "Got style %#x.\n", style);
 
     ok(GetActiveWindow() == our_hwnd, "Got active window %p.\n", GetActiveWindow());
 

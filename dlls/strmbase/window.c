@@ -118,7 +118,8 @@ HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This)
         return E_FAIL;
     }
 
-    This->hWnd = CreateWindowExW(0, class_nameW, windownameW, WS_SIZEBOX,
+    This->hWnd = CreateWindowExW(0, class_nameW, windownameW,
+            WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
             NULL, NULL, NULL, NULL);
 
