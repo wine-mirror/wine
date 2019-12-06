@@ -841,10 +841,10 @@ WCHAR WINAPI RtlAnsiCharToUnicodeChar( char **ansi )
     if (nls_info.AnsiTableInfo.DBCSOffsets)
     {
         USHORT off = nls_info.AnsiTableInfo.DBCSOffsets[(unsigned char)**ansi];
-        if (off && (*ansi)[1])
+        if (off)
         {
             (*ansi)++;
-            return nls_info.AnsiTableInfo.MultiByteTable[off + (unsigned char)*(*ansi)++];
+            return nls_info.AnsiTableInfo.DBCSOffsets[off + (unsigned char)*(*ansi)++];
         }
     }
     return nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)*(*ansi)++];
@@ -919,11 +919,11 @@ NTSTATUS WINAPI RtlCustomCPToUnicodeN( CPTABLEINFO *info, WCHAR *dst, DWORD dstl
         for (i = dstlen; srclen && i; i--, srclen--, src++, dst++)
         {
             USHORT off = info->DBCSOffsets[(unsigned char)*src];
-            if (off && srclen > 1 && src[1])
+            if (off && srclen > 1)
             {
                 src++;
                 srclen--;
-                *dst = info->MultiByteTable[off + (unsigned char)*src];
+                *dst = info->DBCSOffsets[off + (unsigned char)*src];
             }
             else *dst = info->MultiByteTable[(unsigned char)*src];
         }

@@ -89,6 +89,7 @@ static NTSTATUS (WINAPI *pRtlNormalizeString)(ULONG, LPCWSTR, INT, LPWSTR, INT*)
 static NTSTATUS (WINAPI *pRtlIsNormalizedString)(ULONG, LPCWSTR, INT, BOOLEAN*);
 static NTSTATUS (WINAPI *pNtGetNlsSectionPtr)(ULONG,ULONG,void*,void**,SIZE_T*);
 static void (WINAPI *pRtlInitCodePageTable)(USHORT*,CPTABLEINFO*);
+static NTSTATUS (WINAPI *pRtlCustomCPToUnicodeN)(CPTABLEINFO*,WCHAR*,DWORD,DWORD*,const char*,DWORD);
 
 static void InitFunctionPointers(void)
 {
@@ -134,6 +135,7 @@ static void InitFunctionPointers(void)
   X(RtlIsNormalizedString);
   X(NtGetNlsSectionPtr);
   X(RtlInitCodePageTable);
+  X(RtlCustomCPToUnicodeN);
 #undef X
 }
 
@@ -4196,17 +4198,40 @@ static void test_GetCPInfo(void)
         ret = UnmapViewOfFile( ptr );
         todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
 
-        status = pNtGetNlsSectionPtr( 11, 932, NULL, &ptr, &size );
+        status = pNtGetNlsSectionPtr( 11, 936, NULL, &ptr, &size );
         ok( !status, "failed %x\n", status );
-        ok( size > 0x20000 && size <= 0x30000, "wrong size %lx\n", size );
+        ok( size > 0x30000 && size <= 0x40000, "wrong size %lx\n", size );
         memset( &table, 0xcc, sizeof(table) );
         if (pRtlInitCodePageTable)
         {
             pRtlInitCodePageTable( ptr, &table );
-            ok( table.CodePage == 932, "wrong codepage %u\n", table.CodePage );
+            ok( table.CodePage == 936, "wrong codepage %u\n", table.CodePage );
             ok( table.MaximumCharacterSize == 2, "wrong char size %u\n", table.MaximumCharacterSize );
             ok( table.DefaultChar == '?', "wrong default char %x\n", table.DefaultChar );
             ok( table.DBCSCodePage == TRUE, "wrong dbcs %u\n", table.DBCSCodePage );
+
+            if (pRtlCustomCPToUnicodeN)
+            {
+                static const unsigned char buf[] = { 0xbf, 0xb4, 0xc7, 0, 0x78 };
+                static const WCHAR expect[][4] = { { 0xcccc, 0xcccc, 0xcccc, 0xcccc },
+                                                   { 0x0000, 0xcccc, 0xcccc, 0xcccc },
+                                                   { 0x770b, 0xcccc, 0xcccc, 0xcccc },
+                                                   { 0x770b, 0x0000, 0xcccc, 0xcccc },
+                                                   { 0x770b, 0x003f, 0xcccc, 0xcccc },
+                                                   { 0x770b, 0x003f, 0x0078, 0xcccc } };
+                WCHAR wbuf[5];
+                DWORD i, j, reslen;
+
+                for (i = 0; i <= sizeof(buf); i++)
+                {
+                    memset( wbuf, 0xcc, sizeof(wbuf) );
+                    RtlCustomCPToUnicodeN( &table, wbuf, sizeof(wbuf), &reslen, (char *)buf, i );
+                    for (j = 0; j < 4; j++) if (expect[i][j] == 0xcccc) break;
+                    ok( reslen == j * sizeof(WCHAR), "%u: wrong len %u\n", i, reslen );
+                    for (j = 0; j < 4; j++)
+                        ok( wbuf[j] == expect[i][j], "%u: char %u got %04x\n", i, j, wbuf[j] );
+                }
+            }
         }
         ret = UnmapViewOfFile( ptr );
         todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
