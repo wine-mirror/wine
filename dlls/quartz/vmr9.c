@@ -294,7 +294,7 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
         info.dwFlags |= VMR9Sample_SyncPoint;
 
     /* If we render ourselves, and this is a preroll sample, discard it */
-    if (This->baseControlWindow.baseWindow.hWnd && (info.dwFlags & VMR9Sample_Preroll))
+    if (info.dwFlags & VMR9Sample_Preroll)
     {
         return S_OK;
     }
@@ -374,7 +374,7 @@ static HRESULT VMR9_maybe_init(struct quartz_vmr *This, BOOL force)
     HRESULT hr;
 
     TRACE("my mode: %u, my window: %p, my last window: %p\n", This->mode, This->baseControlWindow.baseWindow.hWnd, This->hWndClippingWindow);
-    if (This->baseControlWindow.baseWindow.hWnd || !This->renderer.sink.pin.peer)
+    if (This->num_surfaces || !This->renderer.sink.pin.peer)
         return S_OK;
 
     if (This->mode == VMR9Mode_Windowless && !This->hWndClippingWindow)
@@ -516,6 +516,7 @@ static void vmr_destroy(struct strmbase_renderer *iface)
 
     CloseHandle(filter->run_event);
     FreeLibrary(filter->hD3d9);
+    BaseControlWindow_Destroy(&filter->baseControlWindow);
     strmbase_renderer_cleanup(&filter->renderer);
     CoTaskMemFree(filter);
 }
@@ -1510,13 +1511,10 @@ static HRESULT WINAPI VMR7WindowlessControl_SetVideoPosition(IVMRWindowlessContr
     if (dest)
     {
         This->target_rect = *dest;
-        if (This->baseControlWindow.baseWindow.hWnd)
-        {
-            FIXME("Output rectangle: %s\n", wine_dbgstr_rect(dest));
-            SetWindowPos(This->baseControlWindow.baseWindow.hWnd, NULL,
-                         dest->left, dest->top, dest->right - dest->left, dest->bottom-dest->top,
-                         SWP_NOACTIVATE|SWP_NOCOPYBITS|SWP_NOOWNERZORDER|SWP_NOREDRAW);
-        }
+        FIXME("Output rectangle: %s.\n", wine_dbgstr_rect(dest));
+        SetWindowPos(This->baseControlWindow.baseWindow.hWnd, NULL,
+                dest->left, dest->top, dest->right - dest->left, dest->bottom-dest->top,
+                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOOWNERZORDER | SWP_NOREDRAW);
     }
 
     LeaveCriticalSection(&This->renderer.filter.csFilter);
@@ -1714,12 +1712,10 @@ static HRESULT WINAPI VMR9WindowlessControl_SetVideoPosition(IVMRWindowlessContr
     if (dest)
     {
         This->target_rect = *dest;
-        if (This->baseControlWindow.baseWindow.hWnd)
-        {
-            FIXME("Output rectangle: %s\n", wine_dbgstr_rect(dest));
-            SetWindowPos(This->baseControlWindow.baseWindow.hWnd, NULL, dest->left, dest->top, dest->right - dest->left,
-                         dest->bottom-dest->top, SWP_NOACTIVATE|SWP_NOCOPYBITS|SWP_NOOWNERZORDER|SWP_NOREDRAW);
-        }
+        FIXME("Output rectangle: %s.\n", wine_dbgstr_rect(dest));
+        SetWindowPos(This->baseControlWindow.baseWindow.hWnd, NULL,
+                dest->left, dest->top, dest->right - dest->left, dest->bottom - dest->top,
+                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOOWNERZORDER | SWP_NOREDRAW);
     }
 
     LeaveCriticalSection(&This->renderer.filter.csFilter);
@@ -2251,6 +2247,9 @@ static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
     if (FAILED(hr))
         goto fail;
 
+    if (FAILED(hr = BaseWindowImpl_PrepareWindow(&pVMR->baseControlWindow.baseWindow)))
+        goto fail;
+
     hr = strmbase_video_init(&pVMR->baseControlVideo, &pVMR->renderer.filter,
             &pVMR->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
     if (FAILED(hr))
@@ -2265,6 +2264,7 @@ static HRESULT vmr_create(IUnknown *outer, void **out, const CLSID *clsid)
     return hr;
 
 fail:
+    BaseWindowImpl_DoneWithWindow(&pVMR->baseControlWindow.baseWindow);
     strmbase_renderer_cleanup(&pVMR->renderer);
     FreeLibrary(pVMR->hD3d9);
     CoTaskMemFree(pVMR);
@@ -2594,9 +2594,6 @@ static BOOL CreateRenderingWindow(VMR9DefaultAllocatorPresenterImpl *This, VMR9A
 
     TRACE("(%p)->()\n", This);
 
-    if (FAILED(BaseWindowImpl_PrepareWindow(&This->pVMR9->baseControlWindow.baseWindow)))
-        return FALSE;
-
     /* Obtain a monitor and d3d9 device */
     d3d9_adapter = d3d9_adapter_from_hwnd(This->d3d9_ptr, This->pVMR9->baseControlWindow.baseWindow.hWnd, &This->hMon);
 
@@ -2612,7 +2609,6 @@ static BOOL CreateRenderingWindow(VMR9DefaultAllocatorPresenterImpl *This, VMR9A
     if (FAILED(hr))
     {
         ERR("Could not create device: %08x\n", hr);
-        BaseWindowImpl_DoneWithWindow(&This->pVMR9->baseControlWindow.baseWindow);
         return FALSE;
     }
     IVMRSurfaceAllocatorNotify9_SetD3DDevice(This->SurfaceAllocatorNotify, This->d3d9_dev, This->hMon);
@@ -2634,7 +2630,6 @@ static BOOL CreateRenderingWindow(VMR9DefaultAllocatorPresenterImpl *This, VMR9A
     if (FAILED(hr))
     {
         IVMRSurfaceAllocatorEx9_TerminateDevice(This->pVMR9->allocator, This->pVMR9->cookie);
-        BaseWindowImpl_DoneWithWindow(&This->pVMR9->baseControlWindow.baseWindow);
         return FALSE;
     }
 
@@ -2666,14 +2661,7 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocato
 
 static HRESULT WINAPI VMR9_SurfaceAllocator_TerminateDevice(IVMRSurfaceAllocatorEx9 *iface, DWORD_PTR id)
 {
-    VMR9DefaultAllocatorPresenterImpl *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
-
-    if (!This->pVMR9->baseControlWindow.baseWindow.hWnd)
-    {
-        return S_OK;
-    }
-
-    BaseWindowImpl_DoneWithWindow(&This->pVMR9->baseControlWindow.baseWindow);
+    TRACE("iface %p, id %#lx.\n", iface, id);
 
     return S_OK;
 }
@@ -2687,12 +2675,6 @@ static HRESULT VMR9_SurfaceAllocator_UpdateDeviceReset(VMR9DefaultAllocatorPrese
     void *bits = NULL;
     D3DPRESENT_PARAMETERS d3dpp;
     HRESULT hr;
-
-    if (!This->pVMR9->baseControlWindow.baseWindow.hWnd)
-    {
-        ERR("No window\n");
-        return E_FAIL;
-    }
 
     if (!This->d3d9_surfaces || !This->reset)
         return S_OK;

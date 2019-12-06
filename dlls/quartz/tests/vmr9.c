@@ -1453,7 +1453,7 @@ static void test_overlay(void)
     hwnd = (HWND)0xdeadbeef;
     hr = IOverlay_GetWindowHandle(overlay, &hwnd);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(hwnd && hwnd != (HWND)0xdeadbeef, "Got invalid window %p.\n", hwnd);
+    ok(hwnd && hwnd != (HWND)0xdeadbeef, "Got invalid window %p.\n", hwnd);
 
     IOverlay_Release(overlay);
     IPin_Release(pin);
