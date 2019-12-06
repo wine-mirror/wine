@@ -268,7 +268,7 @@ static BOOL write_display_settings(HKEY parent_hkey, CGDirectDisplayID displayID
         goto fail;
 
 #if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
-    if (CGDisplayModeGetPixelWidth != NULL && CGDisplayModeGetPixelHeight != NULL)
+    if (&CGDisplayModeGetPixelWidth != NULL && &CGDisplayModeGetPixelHeight != NULL)
     {
         val = CGDisplayModeGetPixelWidth(display_mode);
         if (RegSetValueExA(display_hkey, "PixelWidth", 0, REG_DWORD, (const BYTE*)&val, sizeof(val)))
@@ -456,7 +456,7 @@ static BOOL display_mode_matches_descriptor(CGDisplayModeRef mode, const struct 
         return FALSE;
 
 #if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
-    if (CGDisplayModeGetPixelWidth != NULL && CGDisplayModeGetPixelHeight != NULL)
+    if (&CGDisplayModeGetPixelWidth != NULL && &CGDisplayModeGetPixelHeight != NULL)
     {
         if (CGDisplayModeGetPixelWidth(mode) != desc->pixel_width ||
             CGDisplayModeGetPixelHeight(mode) != desc->pixel_height)
@@ -616,8 +616,7 @@ static CFArrayRef copy_display_modes(CGDirectDisplayID display)
     CFArrayRef modes = NULL;
 
 #if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
-    if (&kCGDisplayShowDuplicateLowResolutionModes != NULL &&
-        CGDisplayModeGetPixelWidth != NULL && CGDisplayModeGetPixelHeight != NULL)
+    if (&CGDisplayModeGetPixelWidth != NULL && &CGDisplayModeGetPixelHeight != NULL)
     {
         CFDictionaryRef options;
         struct display_mode_descriptor* desc;

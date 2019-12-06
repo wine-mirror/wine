@@ -769,9 +769,9 @@ static NSString* WineLocalizedString(unsigned int stringID)
         if (CGDisplayModeGetHeight(mode1) != CGDisplayModeGetHeight(mode2)) return FALSE;
 
 #if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
-        if (CGDisplayModeGetPixelWidth != NULL &&
+        if (&CGDisplayModeGetPixelWidth != NULL &&
             CGDisplayModeGetPixelWidth(mode1) != CGDisplayModeGetPixelWidth(mode2)) return FALSE;
-        if (CGDisplayModeGetPixelHeight != NULL &&
+        if (&CGDisplayModeGetPixelHeight != NULL &&
             CGDisplayModeGetPixelHeight(mode1) != CGDisplayModeGetPixelHeight(mode2)) return FALSE;
 #endif
 
@@ -801,9 +801,8 @@ static NSString* WineLocalizedString(unsigned int stringID)
         NSDictionary* options = nil;
 
 #if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
-        if (&kCGDisplayShowDuplicateLowResolutionModes != NULL)
-            options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:TRUE]
-                                                  forKey:(NSString*)kCGDisplayShowDuplicateLowResolutionModes];
+        options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:TRUE]
+                                              forKey:(NSString*)kCGDisplayShowDuplicateLowResolutionModes];
 #endif
 
         NSArray *modes = [(NSArray*)CGDisplayCopyAllDisplayModes(displayID, (CFDictionaryRef)options) autorelease];
