@@ -37,3 +37,7 @@ float sqrtf(float x) { return sqrt(x); }
 float floorf(float x) { return floor(x); }
 float ceilf(float x) { return ceil(x); }
 #endif
+
+#if _MSVCR_VER < 120
+double exp2(double x) { return pow(2.0, x); }
+#endif
