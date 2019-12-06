@@ -350,7 +350,7 @@ static USHORT *build_cptable( const union cptable *src, SIZE_T *size )
         if (src->sbcs.cp2uni_glyphs != src->sbcs.cp2uni)
         {
             *ptr++ = 256;
-            memcpy( ptr + 1, src->sbcs.cp2uni_glyphs, 256 );
+            memcpy( ptr, src->sbcs.cp2uni_glyphs, 256 * sizeof(USHORT) );
             ptr += 256;
         }
         else *ptr++ = 0;
