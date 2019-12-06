@@ -1522,7 +1522,7 @@ static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace5
     if (FAILED(hr = get_filestream_from_file(data->file, &desc.stream)))
         return hr;
 
-    desc.factory = (IDWriteFactory7 *)font->family->collection->factory;
+    desc.factory = font->family->collection->factory;
     desc.face_type = data->face_type;
     desc.files = &data->file;
     desc.files_number = 1;
@@ -4055,7 +4055,7 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
             WCHAR familyW[255];
             UINT32 index;
 
-            desc.factory = (IDWriteFactory7 *)factory;
+            desc.factory = factory;
             desc.face_type = face_type;
             desc.files = &file;
             desc.stream = stream;
@@ -4400,7 +4400,7 @@ static HRESULT eudc_collection_add_family(IDWriteFactory7 *factory, struct dwrit
         struct fontface_desc desc;
 
         /* alloc and init new font data structure */
-        desc.factory = (IDWriteFactory7 *)factory;
+        desc.factory = factory;
         desc.face_type = face_type;
         desc.index = i;
         desc.files = &file;
