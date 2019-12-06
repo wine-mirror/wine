@@ -16875,7 +16875,32 @@ $as_echo "$ac_cv_c_gcc_strength_bug" >&6; }
     EXTRACFLAGS="$EXTRACFLAGS -fno-strength-reduce"
   fi
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-strict-aliasing" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fcf-protection=none" >&5
+$as_echo_n "checking whether the compiler supports -fcf-protection=none... " >&6; }
+if ${ac_cv_cflags__fcf_protection_none+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -fcf-protection=none"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__fcf_protection_none=yes
+else
+  ac_cv_cflags__fcf_protection_none=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fcf_protection_none" >&5
+$as_echo "$ac_cv_cflags__fcf_protection_none" >&6; }
+if test "x$ac_cv_cflags__fcf_protection_none" = xyes; then :
+  EXTRACFLAGS="$EXTRACFLAGS -fcf-protection=none"
+fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-strict-aliasing" >&5
 $as_echo_n "checking whether the compiler supports -fno-strict-aliasing... " >&6; }
 if ${ac_cv_cflags__fno_strict_aliasing+:} false; then :
   $as_echo_n "(cached) " >&6
