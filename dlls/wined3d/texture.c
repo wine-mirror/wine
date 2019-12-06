@@ -636,51 +636,6 @@ static void wined3d_texture_gl_allocate_immutable_storage(struct wined3d_texture
     checkGLcall("allocate immutable storage");
 }
 
-void wined3d_texture_gl_unload_texture(struct wined3d_texture_gl *texture_gl)
-{
-    struct wined3d_device *device = texture_gl->t.resource.device;
-    const struct wined3d_gl_info *gl_info = NULL;
-    struct wined3d_context *context = NULL;
-
-    if (texture_gl->t.resource.bind_count)
-        device_invalidate_state(device, STATE_SAMPLER(texture_gl->t.sampler));
-
-    if (texture_gl->texture_rgb.name || texture_gl->texture_srgb.name
-            || texture_gl->rb_multisample || texture_gl->rb_resolved)
-    {
-        context = context_acquire(device, NULL, 0);
-        gl_info = wined3d_context_gl(context)->gl_info;
-    }
-
-    if (texture_gl->texture_rgb.name)
-        gltexture_delete(device, gl_info, &texture_gl->texture_rgb);
-
-    if (texture_gl->texture_srgb.name)
-        gltexture_delete(device, gl_info, &texture_gl->texture_srgb);
-
-    if (texture_gl->rb_multisample)
-    {
-        TRACE("Deleting multisample renderbuffer %u.\n", texture_gl->rb_multisample);
-        context_gl_resource_released(device, texture_gl->rb_multisample, TRUE);
-        gl_info->fbo_ops.glDeleteRenderbuffers(1, &texture_gl->rb_multisample);
-        texture_gl->rb_multisample = 0;
-    }
-
-    if (texture_gl->rb_resolved)
-    {
-        TRACE("Deleting resolved renderbuffer %u.\n", texture_gl->rb_resolved);
-        context_gl_resource_released(device, texture_gl->rb_resolved, TRUE);
-        gl_info->fbo_ops.glDeleteRenderbuffers(1, &texture_gl->rb_resolved);
-        texture_gl->rb_resolved = 0;
-    }
-
-    if (context) context_release(context);
-
-    wined3d_texture_set_dirty(&texture_gl->t);
-
-    resource_unload(&texture_gl->t.resource);
-}
-
 void wined3d_texture_sub_resources_destroyed(struct wined3d_texture *texture)
 {
     unsigned int sub_count = texture->level_count * texture->layer_count;
@@ -1119,12 +1074,14 @@ ULONG CDECL wined3d_texture_incref(struct wined3d_texture *texture)
 static void wined3d_texture_destroy_object(void *object)
 {
     struct wined3d_texture *texture = object;
+    struct wined3d_resource *resource;
     struct wined3d_dc_info *dc_info;
     unsigned int sub_count;
     unsigned int i;
 
     TRACE("texture %p.\n", texture);
 
+    resource = &texture->resource;
     sub_count = texture->level_count * texture->layer_count;
 
     if ((dc_info = texture->dc_info))
@@ -1156,12 +1113,14 @@ static void wined3d_texture_destroy_object(void *object)
         }
         heap_free(texture->overlay_info);
     }
+
+    resource->resource_ops->resource_unload(resource);
 }
 
 void wined3d_texture_cleanup(struct wined3d_texture *texture)
 {
-    resource_cleanup(&texture->resource);
     wined3d_cs_destroy_object(texture->resource.device->cs, wined3d_texture_destroy_object, texture);
+    resource_cleanup(&texture->resource);
 }
 
 static void wined3d_texture_cleanup_sync(struct wined3d_texture *texture)
@@ -1787,6 +1746,12 @@ BOOL wined3d_texture_prepare_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context *context, unsigned int location)
 {
     return texture->texture_ops->texture_prepare_location(texture, sub_resource_idx, context, location);
+}
+
+static void wined3d_texture_unload_location(struct wined3d_texture *texture,
+        struct wined3d_context *context, unsigned int location)
+{
+    texture->texture_ops->texture_unload_location(texture, context, location);
 }
 
 static struct wined3d_texture_sub_resource *wined3d_texture_get_sub_resource(struct wined3d_texture *texture,
@@ -2903,10 +2868,79 @@ static BOOL wined3d_texture_gl_load_location(struct wined3d_texture *texture,
     }
 }
 
+static void wined3d_texture_gl_unload_location(struct wined3d_texture *texture,
+        struct wined3d_context *context, unsigned int location)
+{
+    struct wined3d_texture_gl *texture_gl = wined3d_texture_gl(texture);
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    struct wined3d_renderbuffer_entry *entry, *entry2;
+    unsigned int i, sub_count;
+
+    TRACE("texture %p, context %p, location %s.\n", texture, context, wined3d_debug_location(location));
+
+    switch (location)
+    {
+        case WINED3D_LOCATION_BUFFER:
+            sub_count = texture->level_count * texture->layer_count;
+            for (i = 0; i < sub_count; ++i)
+            {
+                if (texture_gl->t.sub_resources[i].buffer_object)
+                    wined3d_texture_remove_buffer_object(&texture_gl->t, i, context_gl->gl_info);
+            }
+            break;
+
+        case WINED3D_LOCATION_TEXTURE_RGB:
+            if (texture_gl->texture_rgb.name)
+                gltexture_delete(texture_gl->t.resource.device, context_gl->gl_info, &texture_gl->texture_rgb);
+            break;
+
+        case WINED3D_LOCATION_TEXTURE_SRGB:
+            if (texture_gl->texture_srgb.name)
+                gltexture_delete(texture_gl->t.resource.device, context_gl->gl_info, &texture_gl->texture_srgb);
+            break;
+
+        case WINED3D_LOCATION_RB_MULTISAMPLE:
+            if (texture_gl->rb_multisample)
+            {
+                TRACE("Deleting multisample renderbuffer %u.\n", texture_gl->rb_multisample);
+                context_gl_resource_released(texture_gl->t.resource.device, texture_gl->rb_multisample, TRUE);
+                context_gl->gl_info->fbo_ops.glDeleteRenderbuffers(1, &texture_gl->rb_multisample);
+                texture_gl->rb_multisample = 0;
+            }
+            break;
+
+        case WINED3D_LOCATION_RB_RESOLVED:
+            LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &texture_gl->renderbuffers,
+                    struct wined3d_renderbuffer_entry, entry)
+            {
+                context_gl_resource_released(texture_gl->t.resource.device, entry->id, TRUE);
+                context_gl->gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
+                list_remove(&entry->entry);
+                heap_free(entry);
+            }
+            list_init(&texture_gl->renderbuffers);
+            texture_gl->current_renderbuffer = NULL;
+
+            if (texture_gl->rb_resolved)
+            {
+                TRACE("Deleting resolved renderbuffer %u.\n", texture_gl->rb_resolved);
+                context_gl_resource_released(texture_gl->t.resource.device, texture_gl->rb_resolved, TRUE);
+                context_gl->gl_info->fbo_ops.glDeleteRenderbuffers(1, &texture_gl->rb_resolved);
+                texture_gl->rb_resolved = 0;
+            }
+            break;
+
+        default:
+            ERR("Unhandled location %s.\n", wined3d_debug_location(location));
+            break;
+    }
+}
+
 static const struct wined3d_texture_ops texture_gl_ops =
 {
     wined3d_texture_gl_prepare_location,
     wined3d_texture_gl_load_location,
+    wined3d_texture_gl_unload_location,
     wined3d_texture_gl_upload_data,
     wined3d_texture_gl_download_data,
 };
@@ -2936,65 +2970,59 @@ static void texture_resource_preload(struct wined3d_resource *resource)
     context_release(context);
 }
 
-static void wined3d_texture_gl_unload(struct wined3d_resource *resource)
+static void texture_resource_unload(struct wined3d_resource *resource)
 {
-    struct wined3d_texture_gl *texture_gl = wined3d_texture_gl(texture_from_resource(resource));
-    UINT sub_count = texture_gl->t.level_count * texture_gl->t.layer_count;
-    struct wined3d_renderbuffer_entry *entry, *entry2;
+    struct wined3d_texture *texture = texture_from_resource(resource);
     struct wined3d_device *device = resource->device;
     unsigned int location = resource->map_binding;
-    const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
-    UINT i;
+    unsigned int sub_count, i;
 
-    TRACE("texture_gl %p.\n", texture_gl);
+    TRACE("resource %p.\n", resource);
+
+    /* D3D is not initialised, so no GPU locations should currently exist.
+     * Moreover, we may not be able to acquire a valid context. */
+    if (!device->d3d_initialized)
+        return;
 
     context = context_acquire(device, NULL, 0);
-    gl_info = wined3d_context_gl(context)->gl_info;
 
     if (location == WINED3D_LOCATION_BUFFER)
         location = WINED3D_LOCATION_SYSMEM;
 
+    sub_count = texture->level_count * texture->layer_count;
     for (i = 0; i < sub_count; ++i)
     {
-        struct wined3d_texture_sub_resource *sub_resource = &texture_gl->t.sub_resources[i];
-
         if (resource->access & WINED3D_RESOURCE_ACCESS_CPU
-                && wined3d_texture_load_location(&texture_gl->t, i, context, location))
+                && wined3d_texture_load_location(texture, i, context, location))
         {
-            wined3d_texture_invalidate_location(&texture_gl->t, i, ~location);
+            wined3d_texture_invalidate_location(texture, i, ~location);
         }
         else
         {
-            /* We should only get here on device reset/teardown for implicit
-             * resources. */
-            if (resource->access & WINED3D_RESOURCE_ACCESS_CPU
-                    || resource->type != WINED3D_RTYPE_TEXTURE_2D)
+            if (resource->access & WINED3D_RESOURCE_ACCESS_CPU)
                 ERR("Discarding %s %p sub-resource %u with resource access %s.\n",
                         debug_d3dresourcetype(resource->type), resource, i,
                         wined3d_debug_resource_access(resource->access));
-            wined3d_texture_validate_location(&texture_gl->t, i, WINED3D_LOCATION_DISCARDED);
-            wined3d_texture_invalidate_location(&texture_gl->t, i, ~WINED3D_LOCATION_DISCARDED);
+            wined3d_texture_validate_location(texture, i, WINED3D_LOCATION_DISCARDED);
+            wined3d_texture_invalidate_location(texture, i, ~WINED3D_LOCATION_DISCARDED);
         }
-
-        if (sub_resource->buffer_object)
-            wined3d_texture_remove_buffer_object(&texture_gl->t, i, gl_info);
     }
 
-    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &texture_gl->renderbuffers, struct wined3d_renderbuffer_entry, entry)
-    {
-        context_gl_resource_released(device, entry->id, TRUE);
-        gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
-        list_remove(&entry->entry);
-        heap_free(entry);
-    }
-    list_init(&texture_gl->renderbuffers);
-    texture_gl->current_renderbuffer = NULL;
+    wined3d_texture_unload_location(texture, context, WINED3D_LOCATION_BUFFER);
+    wined3d_texture_unload_location(texture, context, WINED3D_LOCATION_TEXTURE_RGB);
+    wined3d_texture_unload_location(texture, context, WINED3D_LOCATION_TEXTURE_SRGB);
+    wined3d_texture_unload_location(texture, context, WINED3D_LOCATION_RB_MULTISAMPLE);
+    wined3d_texture_unload_location(texture, context, WINED3D_LOCATION_RB_RESOLVED);
 
     context_release(context);
 
-    wined3d_texture_force_reload(&texture_gl->t);
-    wined3d_texture_gl_unload_texture(texture_gl);
+    wined3d_texture_force_reload(texture);
+    if (texture->resource.bind_count)
+        device_invalidate_state(device, STATE_SAMPLER(texture->sampler));
+    wined3d_texture_set_dirty(texture);
+
+    resource_unload(&texture->resource);
 }
 
 static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
@@ -3177,7 +3205,7 @@ static const struct wined3d_resource_ops texture_resource_ops =
     texture_resource_incref,
     texture_resource_decref,
     texture_resource_preload,
-    wined3d_texture_gl_unload,
+    texture_resource_unload,
     texture_resource_sub_resource_map,
     texture_resource_sub_resource_unmap,
 };
@@ -4088,10 +4116,17 @@ static BOOL wined3d_texture_no3d_load_location(struct wined3d_texture *texture,
     return FALSE;
 }
 
+static void wined3d_texture_no3d_unload_location(struct wined3d_texture *texture,
+        struct wined3d_context *context, unsigned int location)
+{
+    TRACE("texture %p, context %p, location %s.\n", texture, context, wined3d_debug_location(location));
+}
+
 static const struct wined3d_texture_ops wined3d_texture_no3d_ops =
 {
     wined3d_texture_no3d_prepare_location,
     wined3d_texture_no3d_load_location,
+    wined3d_texture_no3d_unload_location,
     wined3d_texture_no3d_upload_data,
     wined3d_texture_no3d_download_data,
 };
@@ -4158,10 +4193,17 @@ static BOOL wined3d_texture_vk_load_location(struct wined3d_texture *texture,
     return FALSE;
 }
 
+static void wined3d_texture_vk_unload_location(struct wined3d_texture *texture,
+        struct wined3d_context *context, unsigned int location)
+{
+    FIXME("texture %p, context %p, location %s.\n", texture, context, wined3d_debug_location(location));
+}
+
 static const struct wined3d_texture_ops wined3d_texture_vk_ops =
 {
     wined3d_texture_vk_prepare_location,
     wined3d_texture_vk_load_location,
+    wined3d_texture_vk_unload_location,
     wined3d_texture_vk_upload_data,
     wined3d_texture_vk_download_data,
 };

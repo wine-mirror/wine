@@ -3470,6 +3470,8 @@ struct wined3d_texture_ops
             struct wined3d_context *context, unsigned int location);
     BOOL (*texture_load_location)(struct wined3d_texture *texture, unsigned int sub_resource_idx,
             struct wined3d_context *context, unsigned int location);
+    void (*texture_unload_location)(struct wined3d_texture *texture,
+            struct wined3d_context *context, unsigned int location);
     void (*texture_upload_data)(struct wined3d_context *context, const struct wined3d_const_bo_address *src_bo_addr,
             const struct wined3d_format *src_format, const struct wined3d_box *src_box, unsigned int src_row_pitch,
             unsigned int src_slice_pitch, struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
@@ -3745,7 +3747,6 @@ void wined3d_texture_gl_prepare_texture(struct wined3d_texture_gl *texture_gl,
 void wined3d_texture_gl_set_compatible_renderbuffer(struct wined3d_texture_gl *texture_gl,
         struct wined3d_context_gl *context_gl, unsigned int level,
         const struct wined3d_rendertarget_info *rt) DECLSPEC_HIDDEN;
-void wined3d_texture_gl_unload_texture(struct wined3d_texture_gl *texture_gl) DECLSPEC_HIDDEN;
 
 struct wined3d_texture_vk
 {

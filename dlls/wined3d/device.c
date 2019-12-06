@@ -1146,6 +1146,7 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
 
     device->adapter->adapter_ops->adapter_uninit_3d(device);
+    device->d3d_initialized = FALSE;
 
     if ((view = device->fb.depth_stencil))
     {
@@ -1170,8 +1171,6 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
 
     heap_free(device->swapchains);
     device->swapchains = NULL;
-
-    device->d3d_initialized = FALSE;
 }
 
 /* Enables thread safety in the wined3d device and its resources. Called by DirectDraw
