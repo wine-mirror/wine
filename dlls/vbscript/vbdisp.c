@@ -723,10 +723,51 @@ static HRESULT WINAPI ScriptTypeInfo_GetIDsOfNames(ITypeInfo *iface, LPOLESTR *r
         MEMBERID *pMemId)
 {
     ScriptTypeInfo *This = ScriptTypeInfo_from_ITypeInfo(iface);
+    ITypeInfo *disp_typeinfo;
+    const WCHAR *name;
+    HRESULT hr = S_OK;
+    int i, j, arg;
 
-    FIXME("(%p)->(%p %u %p)\n", This, rgszNames, cNames, pMemId);
+    TRACE("(%p)->(%p %u %p)\n", This, rgszNames, cNames, pMemId);
 
-    return E_NOTIMPL;
+    if (!rgszNames || !cNames || !pMemId) return E_INVALIDARG;
+
+    for (i = 0; i < cNames; i++) pMemId[i] = MEMBERID_NIL;
+    name = rgszNames[0];
+
+    for (i = 0; i < This->num_funcs; i++)
+    {
+        function_t *func = This->funcs[i].func;
+
+        if (wcsicmp(name, func->name)) continue;
+        pMemId[0] = This->funcs[i].memid;
+
+        for (j = 1; j < cNames; j++)
+        {
+            name = rgszNames[j];
+            for (arg = func->arg_cnt; --arg >= 0;)
+                if (!wcsicmp(name, func->args[arg].name))
+                    break;
+            if (arg >= 0)
+                pMemId[j] = arg;
+            else
+                hr = DISP_E_UNKNOWNNAME;
+        }
+        return hr;
+    }
+
+    for (i = 0; i < This->num_vars; i++)
+    {
+        if (wcsicmp(name, This->disp->global_vars[i]->name)) continue;
+        pMemId[0] = i + 1;
+        return S_OK;
+    }
+
+    /* Look into the inherited IDispatch */
+    hr = get_dispatch_typeinfo(&disp_typeinfo);
+    if (FAILED(hr)) return hr;
+
+    return ITypeInfo_GetIDsOfNames(disp_typeinfo, rgszNames, cNames, pMemId);
 }
 
 static HRESULT WINAPI ScriptTypeInfo_Invoke(ITypeInfo *iface, PVOID pvInstance, MEMBERID memid, WORD wFlags,
