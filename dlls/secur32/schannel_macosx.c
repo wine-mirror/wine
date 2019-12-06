@@ -1202,7 +1202,7 @@ BOOL schan_imp_init(void)
     supported_protocols = SP_PROT_SSL2_CLIENT | SP_PROT_SSL3_CLIENT | SP_PROT_TLS1_0_CLIENT;
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
-    if(SSLGetProtocolVersionMax != NULL) {
+    if(&SSLGetProtocolVersionMax != NULL) {
         SSLProtocol max_protocol;
         SSLContextRef ctx;
         OSStatus status;
