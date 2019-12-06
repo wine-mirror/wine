@@ -63,6 +63,14 @@ typedef struct {
     EXCEPINFO ei;
 } VBScriptError;
 
+static inline WCHAR *heap_pool_strdup(heap_pool_t *heap, const WCHAR *str)
+{
+    size_t size = (lstrlenW(str) + 1) * sizeof(WCHAR);
+    WCHAR *ret = heap_pool_alloc(heap, size);
+    if (ret) memcpy(ret, str, size);
+    return ret;
+}
+
 static void change_state(VBScript *This, SCRIPTSTATE state)
 {
     if(This->state == state)
@@ -120,7 +128,9 @@ static HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res
         if (!(var = heap_pool_alloc(&obj->heap, sizeof(*var))))
             return E_OUTOFMEMORY;
 
-        var->name = code->main_code.vars[i].name;
+        var->name = heap_pool_strdup(&obj->heap, code->main_code.vars[i].name);
+        if (!var->name)
+            return E_OUTOFMEMORY;
         V_VT(&var->v) = VT_EMPTY;
         var->is_const = FALSE;
         var->array = NULL;
